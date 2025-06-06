@@ -140,7 +140,6 @@ export function getFilterOptionFromQueryParams({
       } as VideoFilter;
   }
 
-  console.log(baseFilter);
   // Overwrite defaults with query params if found
   if (querySortKey) {
     const querySortString = searchParams.get(querySortKey);

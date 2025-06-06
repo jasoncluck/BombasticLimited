@@ -7,8 +7,14 @@
   import type { Snapshot } from "@sveltejs/kit";
 
   let { data } = $props();
-  let { supabase, session, sourceVideos, playlists, contentFilter } =
-    $derived(data);
+  let {
+    supabase,
+    session,
+    sourceVideos,
+    playlistSearchResults,
+    playlists,
+    contentFilter,
+  } = $derived(data);
 
   export const snapshot: Snapshot<CarouselsState> = {
     capture: () => carouselsState,
@@ -24,12 +30,24 @@
       SOURCES.map((key) => [key, { startIndex: 0 }]),
     ) as CarouselsState,
   );
+  console.log(playlistSearchResults);
 </script>
 
 <div class="flex flex-col gap-2">
   <h1 class="header-primary">
     <div class="flex items-center">Results</div>
   </h1>
+
+  {#each playlistSearchResults as playlist (playlist.id)}
+    <div class="grid grid-cols-5">
+      <div>
+        {playlist.name}
+      </div>
+      <div>
+        {playlist.created_at}
+      </div>
+    </div>
+  {/each}
 
   {#each SOURCES as source (source)}
     {#if sourceVideos[source].length > 0}

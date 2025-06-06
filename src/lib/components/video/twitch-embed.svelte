@@ -4,16 +4,55 @@
 
   const { channel } = $props();
 
-  onMount(() => {
+  let player: any = null;
+  let mounted = false;
+
+  function createOrUpdatePlayer() {
     const windowRef: any = window;
 
-    if (typeof windowRef.Twitch !== "undefined") {
-      const player = new windowRef.Twitch.Player("twitch-embed", {
+    if (!mounted || typeof windowRef.Twitch === "undefined") {
+      return;
+    }
+
+    // If player exists, destroy it first
+    if (player) {
+      try {
+        player.destroy();
+      } catch (error) {
+        console.warn("Error destroying Twitch player:", error);
+      }
+      player = null;
+    }
+
+    // Create new player with updated channel
+    if (channel) {
+      player = new windowRef.Twitch.Player("twitch-embed", {
         width: "100%",
         height: "100%",
         channel,
       });
     }
+  }
+
+  onMount(() => {
+    mounted = true;
+    createOrUpdatePlayer();
+
+    return () => {
+      // Cleanup on unmount
+      if (player) {
+        try {
+          player.destroy();
+        } catch (error) {
+          console.warn("Error destroying Twitch player on unmount:", error);
+        }
+      }
+    };
+  });
+
+  // React to channel changes
+  $effect(() => {
+    createOrUpdatePlayer();
   });
 </script>
 

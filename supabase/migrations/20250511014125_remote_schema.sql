@@ -161,48 +161,11 @@ END;$$;
 
 ALTER FUNCTION "public"."get_videos_with_timestamps"() OWNER TO "postgres";
 
-
-CREATE OR REPLACE FUNCTION "public"."search_playlists"("search_term" "text") RETURNS TABLE("id" bigint, "title" "text", "created_at" timestamp with time zone)
-    LANGUAGE "plpgsql"
-    AS $$DECLARE
-    search_query text;
-BEGIN
-    -- Normalize the search term by replacing multiple spaces with a single space
-    search_term := regexp_replace(search_term, '\\s+', ' ', 'g');
-    -- Sanitize the search term by removing unexpected characters
-    search_term := regexp_replace(search_term, '[^a-zA-Z0-9\\s]', '', 'g'); -- Remove non-alphanumeric characters except spaces
-
-    search_term := trim(search_term);  -- Trim whitespace
-
-    -- Check if the sanitized search term is empty
-    IF search_term = '' THEN
-        RETURN;  -- Return an empty result set
-    END IF;
-
-    -- Construct the search query for prefix matching
-    search_query := replace(search_term, ' ', ' & ') || ':*';
-
-    -- Remove any leading or trailing '&' characters
-    search_query := trim(both '&' from search_query);
-
-    RETURN QUERY
-    SELECT p.id, p.name, p.created_at
-    FROM public.playlists p
-    WHERE p.search_vector @@ to_tsquery('english', search_query)
-    ORDER BY 
-        ts_rank(p.search_vector, to_tsquery('english', search_query)) DESC;
-END;$$;
-
-
-ALTER FUNCTION "public"."search_playlists"("search_term" "text") OWNER TO "postgres";
-
-
 CREATE OR REPLACE FUNCTION "public"."search_videos"("search_term" "text", "video_limit" integer DEFAULT 100, "video_source" "public"."source" DEFAULT NULL::"public"."source", "last_seen_video" "jsonb" DEFAULT NULL::"jsonb", "sort_option" "text" DEFAULT 'default'::"text", "sort_order" "text" DEFAULT 'ascending'::"text") RETURNS TABLE("id" "text", "source" "public"."source", "title" "text", "description" "text", "thumbnail_url" "text", "published_at" timestamp with time zone, "duration" "text", "video_start_seconds" numeric, "updated_at" timestamp with time zone)
     LANGUAGE "plpgsql"
     AS $$
 DECLARE
     search_query text;
-    sort_column text;
 BEGIN
     -- Normalize the search term by replacing multiple spaces with a single space
     search_term := regexp_replace(search_term, '\s+', ' ', 'g');
@@ -219,15 +182,6 @@ BEGIN
     -- Construct the search query for prefix matching
     search_query := replace(search_term, ' ', ' & ') || ':*';
     search_query := trim(both '&' from search_query);
-
-    -- Determine the sort column based on the sort option
-    IF sort_option = 'date' THEN
-        sort_column := 'published_at';
-    ELSIF sort_option = 'title' THEN
-        sort_column := 'title';
-    ELSE
-        sort_column := 'id'; -- Default sort column
-    END IF;
 
     RETURN QUERY
     SELECT 
@@ -249,27 +203,6 @@ BEGIN
     FROM public.videos v
     LEFT JOIN public.timestamps t ON v.id = t.video_id -- Use LEFT JOIN to include videos without timestamps
     WHERE v.search_vector @@ to_tsquery('english', search_query)
-    AND (video_source IS NULL OR v.source = video_source)
-    AND (last_seen_video IS NULL OR 
-        (sort_order = 'ascending' AND v.id > (last_seen_video->>'id')::text) OR 
-        (sort_order = 'descending' AND v.id < (last_seen_video->>'id')::text))
-    ORDER BY 
-        CASE 
-            WHEN sort_column = 'published_at' THEN 
-                CASE WHEN sort_order = 'ascending' THEN v.published_at::text ELSE NULL END
-            WHEN sort_column = 'title' THEN 
-                CASE WHEN sort_order = 'ascending' THEN v.title ELSE NULL END
-            ELSE 
-                CASE WHEN sort_order = 'ascending' THEN v.id::text ELSE NULL END
-        END ASC,
-        CASE 
-            WHEN sort_column = 'published_at' THEN 
-                CASE WHEN sort_order = 'descending' THEN v.published_at::text ELSE NULL END
-            WHEN sort_column = 'title' THEN 
-                CASE WHEN sort_order = 'descending' THEN v.title ELSE NULL END
-            ELSE 
-                CASE WHEN sort_order = 'descending' THEN v.id::text ELSE NULL END
-        END DESC
     LIMIT video_limit;
 END;
 $$;
@@ -1362,12 +1295,6 @@ GRANT ALL ON FUNCTION "public"."delete_pending_videos"() TO "service_role";
 GRANT ALL ON FUNCTION "public"."get_videos_with_timestamps"() TO "anon";
 GRANT ALL ON FUNCTION "public"."get_videos_with_timestamps"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."get_videos_with_timestamps"() TO "service_role";
-
-
-
-GRANT ALL ON FUNCTION "public"."search_playlists"("search_term" "text") TO "anon";
-GRANT ALL ON FUNCTION "public"."search_playlists"("search_term" "text") TO "authenticated";
-GRANT ALL ON FUNCTION "public"."search_playlists"("search_term" "text") TO "service_role";
 
 
 

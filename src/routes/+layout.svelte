@@ -372,14 +372,12 @@
 
 <div class="m-2 flex flex-col h-full">
   <nav class="flex items-center p-1 mb-2 relative">
-    <!-- Left section - SideDrawer (mobile only) -->
     <div class="flex items-center">
       <div class="sm:hidden">
         <SideDrawer {playlists} {supabase} {session} />
       </div>
     </div>
 
-    <!-- Center section - House and Search (absolutely positioned to page center) -->
     <div
       class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-4"
     >
@@ -399,7 +397,6 @@
       />
     </div>
 
-    <!-- Right section - User menu/Login -->
     <div class="flex items-center ml-auto">
       {#if user}
         <DropdownMenu.Root>

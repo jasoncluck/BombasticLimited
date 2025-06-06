@@ -1,5 +1,6 @@
 import { isVideoFilter } from "$lib/components/content/content-filter";
 import { SOURCES } from "$lib/constants/source";
+import { searchPlaylists } from "$lib/supabase/playlists";
 import { getVideos, type SourceVideos } from "$lib/supabase/videos";
 import type { PageServerLoad } from "./$types";
 
@@ -34,10 +35,17 @@ export const load: PageServerLoad = async ({
     sourceVideos[source] = videos;
   }
 
+  const playlistSearchResults = await searchPlaylists({
+    searchString,
+    supabase,
+  });
+  console.log(playlistSearchResults);
+
   // TODO: Add public playlists results to search results
   return {
     sourceVideos: sourceVideos ?? [],
     playlists,
+    playlistSearchResults,
     contentFilter,
   };
 };

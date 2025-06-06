@@ -330,10 +330,16 @@ export type Database = {
         Returns: string[]
       }
       search_playlists: {
-        Args: { search_term: string }
+        Args: {
+          search_term: string
+          playlist_limit?: number
+          last_seen_playlist?: Json
+          sort_option?: string
+          sort_order?: string
+        }
         Returns: {
           id: number
-          title: string
+          name: string
           created_at: string
         }[]
       }
