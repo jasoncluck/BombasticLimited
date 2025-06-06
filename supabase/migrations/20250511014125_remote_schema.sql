@@ -1,0 +1,1533 @@
+
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+
+CREATE EXTENSION IF NOT EXISTS "pg_cron" WITH SCHEMA "pg_catalog";
+
+
+
+
+
+
+CREATE EXTENSION IF NOT EXISTS "pg_net" WITH SCHEMA "extensions";
+
+
+
+
+
+
+CREATE EXTENSION IF NOT EXISTS "pgsodium";
+
+
+
+
+
+
+COMMENT ON SCHEMA "public" IS 'standard public schema';
+
+
+
+CREATE EXTENSION IF NOT EXISTS "fuzzystrmatch" WITH SCHEMA "extensions";
+
+
+
+
+
+
+CREATE EXTENSION IF NOT EXISTS "pg_graphql" WITH SCHEMA "graphql";
+
+
+
+
+
+
+CREATE EXTENSION IF NOT EXISTS "pg_hashids" WITH SCHEMA "extensions";
+
+
+
+
+
+
+CREATE EXTENSION IF NOT EXISTS "pg_stat_statements" WITH SCHEMA "extensions";
+
+
+
+
+
+
+CREATE EXTENSION IF NOT EXISTS "pg_trgm" WITH SCHEMA "extensions";
+
+
+
+
+
+
+CREATE EXTENSION IF NOT EXISTS "pgcrypto" WITH SCHEMA "extensions";
+
+
+
+
+
+
+CREATE EXTENSION IF NOT EXISTS "pgjwt" WITH SCHEMA "extensions";
+
+
+
+
+
+
+CREATE EXTENSION IF NOT EXISTS "supabase_vault" WITH SCHEMA "vault";
+
+
+
+
+
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "extensions";
+
+
+
+
+
+
+CREATE EXTENSION IF NOT EXISTS "vector" WITH SCHEMA "extensions";
+
+
+
+
+
+
+CREATE TYPE "public"."source" AS ENUM (
+    'giantbomb',
+    'nextlander',
+    'remap'
+);
+
+
+ALTER TYPE "public"."source" OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."delete_pending_videos"() RETURNS "void"
+    LANGUAGE "plpgsql"
+    AS $$BEGIN
+    -- Delete associated user_video_timestamps for videos marked for deletion
+    DELETE FROM public.timestamps
+    WHERE video_id IN (SELECT id FROM public.videos WHERE pending_delete = TRUE);
+
+    -- Delete videos marked for deletion
+    DELETE FROM public.videos
+    WHERE pending_delete = TRUE;
+END;$$;
+
+
+ALTER FUNCTION "public"."delete_pending_videos"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps"() RETURNS TABLE("id" "text", "source" "public"."source", "title" "text", "description" "text", "thumbnail_url" "text", "published_at" timestamp with time zone, "duration" "text", "video_start_seconds" numeric, "updated_at" timestamp with time zone)
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        v.id, 
+        v.source, 
+        v.title, 
+        v.description, 
+        v.thumbnail_url, 
+        v.published_at, 
+        v.duration, 
+        CASE 
+            WHEN t.user_id = (select auth.uid()) THEN t.video_start_seconds 
+            ELSE NULL 
+        END AS video_start_seconds, 
+        CASE 
+            WHEN t.user_id = (select auth.uid()) THEN t.updated_at 
+            ELSE NULL 
+        END AS updated_at
+    FROM public.videos v
+    LEFT JOIN public.timestamps t ON v.id = t.video_id; -- Use LEFT JOIN to include videos without timestamps
+END;$$;
+
+
+ALTER FUNCTION "public"."get_videos_with_timestamps"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."search_playlists"("search_term" "text") RETURNS TABLE("id" bigint, "title" "text", "created_at" timestamp with time zone)
+    LANGUAGE "plpgsql"
+    AS $$DECLARE
+    search_query text;
+BEGIN
+    -- Normalize the search term by replacing multiple spaces with a single space
+    search_term := regexp_replace(search_term, '\\s+', ' ', 'g');
+    -- Sanitize the search term by removing unexpected characters
+    search_term := regexp_replace(search_term, '[^a-zA-Z0-9\\s]', '', 'g'); -- Remove non-alphanumeric characters except spaces
+
+    search_term := trim(search_term);  -- Trim whitespace
+
+    -- Check if the sanitized search term is empty
+    IF search_term = '' THEN
+        RETURN;  -- Return an empty result set
+    END IF;
+
+    -- Construct the search query for prefix matching
+    search_query := replace(search_term, ' ', ' & ') || ':*';
+
+    -- Remove any leading or trailing '&' characters
+    search_query := trim(both '&' from search_query);
+
+    RETURN QUERY
+    SELECT p.id, p.name, p.created_at
+    FROM public.playlists p
+    WHERE p.search_vector @@ to_tsquery('english', search_query)
+    ORDER BY 
+        ts_rank(p.search_vector, to_tsquery('english', search_query)) DESC;
+END;$$;
+
+
+ALTER FUNCTION "public"."search_playlists"("search_term" "text") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."search_videos"("search_term" "text", "video_limit" integer DEFAULT 100, "video_source" "public"."source" DEFAULT NULL::"public"."source", "last_seen_video" "jsonb" DEFAULT NULL::"jsonb", "sort_option" "text" DEFAULT 'default'::"text", "sort_order" "text" DEFAULT 'ascending'::"text") RETURNS TABLE("id" "text", "source" "public"."source", "title" "text", "description" "text", "thumbnail_url" "text", "published_at" timestamp with time zone, "duration" "text", "video_start_seconds" numeric, "updated_at" timestamp with time zone)
+    LANGUAGE "plpgsql"
+    AS $$
+DECLARE
+    search_query text;
+    sort_column text;
+BEGIN
+    -- Normalize the search term by replacing multiple spaces with a single space
+    search_term := regexp_replace(search_term, '\s+', ' ', 'g');
+    -- Sanitize the search term by removing unexpected characters, keeping periods
+    search_term := regexp_replace(search_term, '[^a-zA-Z0-9\s.]', '', 'g'); -- Remove non-alphanumeric characters except spaces and periods
+
+    search_term := trim(search_term);  -- Trim whitespace
+
+    -- Check if the sanitized search term is empty
+    IF search_term = '' THEN
+        RETURN;  -- Return an empty result set
+    END IF;
+
+    -- Construct the search query for prefix matching
+    search_query := replace(search_term, ' ', ' & ') || ':*';
+    search_query := trim(both '&' from search_query);
+
+    -- Determine the sort column based on the sort option
+    IF sort_option = 'date' THEN
+        sort_column := 'published_at';
+    ELSIF sort_option = 'title' THEN
+        sort_column := 'title';
+    ELSE
+        sort_column := 'id'; -- Default sort column
+    END IF;
+
+    RETURN QUERY
+    SELECT 
+        v.id, 
+        v.source, 
+        v.title, 
+        v.description, 
+        v.thumbnail_url, 
+        v.published_at, 
+        v.duration, 
+        CASE 
+            WHEN t.user_id = (select auth.uid()) THEN t.video_start_seconds 
+            ELSE NULL 
+        END AS video_start_seconds, 
+        CASE 
+            WHEN t.user_id = (select auth.uid()) THEN t.updated_at 
+            ELSE NULL 
+        END AS updated_at
+    FROM public.videos v
+    LEFT JOIN public.timestamps t ON v.id = t.video_id -- Use LEFT JOIN to include videos without timestamps
+    WHERE v.search_vector @@ to_tsquery('english', search_query)
+    AND (video_source IS NULL OR v.source = video_source)
+    AND (last_seen_video IS NULL OR 
+        (sort_order = 'ascending' AND v.id > (last_seen_video->>'id')::text) OR 
+        (sort_order = 'descending' AND v.id < (last_seen_video->>'id')::text))
+    ORDER BY 
+        CASE 
+            WHEN sort_column = 'published_at' THEN 
+                CASE WHEN sort_order = 'ascending' THEN v.published_at::text ELSE NULL END
+            WHEN sort_column = 'title' THEN 
+                CASE WHEN sort_order = 'ascending' THEN v.title ELSE NULL END
+            ELSE 
+                CASE WHEN sort_order = 'ascending' THEN v.id::text ELSE NULL END
+        END ASC,
+        CASE 
+            WHEN sort_column = 'published_at' THEN 
+                CASE WHEN sort_order = 'descending' THEN v.published_at::text ELSE NULL END
+            WHEN sort_column = 'title' THEN 
+                CASE WHEN sort_order = 'descending' THEN v.title ELSE NULL END
+            ELSE 
+                CASE WHEN sort_order = 'descending' THEN v.id::text ELSE NULL END
+        END DESC
+    LIMIT video_limit;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."search_videos"("search_term" "text", "video_limit" integer, "video_source" "public"."source", "last_seen_video" "jsonb", "sort_option" "text", "sort_order" "text") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."set_playlist_search_vector"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$BEGIN
+  NEW.search_vector := to_tsvector('english', NEW.name);
+  RETURN NEW;
+END;$$;
+
+
+ALTER FUNCTION "public"."set_playlist_search_vector"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."set_short_id"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+    NEW.short_id := id_encode(NEW.id);
+    RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."set_short_id"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."set_video_search_vector"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$BEGIN
+  NEW.search_vector := 
+      setweight(to_tsvector('english', NEW.title), 'A') || 
+      setweight(to_tsvector('english', NEW.description), 'B');
+  RETURN NEW;
+END;$$;
+
+
+ALTER FUNCTION "public"."set_video_search_vector"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."update_timestamp"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."update_timestamp"() OWNER TO "postgres";
+
+SET default_tablespace = '';
+
+SET default_table_access_method = "heap";
+
+
+CREATE TABLE IF NOT EXISTS "public"."playlist_videos" (
+    "playlist_id" bigint NOT NULL,
+    "video_id" "text" NOT NULL,
+    "id" bigint NOT NULL
+);
+
+
+ALTER TABLE "public"."playlist_videos" OWNER TO "postgres";
+
+
+ALTER TABLE "public"."playlist_videos" ALTER COLUMN "id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME "public"."playlist_videos_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+
+CREATE SEQUENCE IF NOT EXISTS "public"."playlists_custom_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE "public"."playlists_custom_seq" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."playlists" (
+    "user_id" "uuid" NOT NULL,
+    "created_by" "uuid" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "name" "text" NOT NULL,
+    "short_id" "text" DEFAULT 'NULL'::"text" NOT NULL,
+    "search_vector" "tsvector",
+    "image_url" "text",
+    "id" bigint DEFAULT "nextval"('"public"."playlists_custom_seq"'::"regclass") NOT NULL,
+    CONSTRAINT "playlists_name_check" CHECK (("length"("name") < 50))
+);
+
+
+ALTER TABLE "public"."playlists" OWNER TO "postgres";
+
+
+COMMENT ON COLUMN "public"."playlists"."name" IS 'Playlist name';
+
+
+
+COMMENT ON COLUMN "public"."playlists"."short_id" IS 'Short ID for nicer URLs';
+
+
+
+CREATE TABLE IF NOT EXISTS "public"."timestamps" (
+    "id" bigint NOT NULL,
+    "user_id" "uuid",
+    "video_id" "text" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "video_start_seconds" numeric,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "playlist_id" bigint,
+    "watched_at" timestamp with time zone
+);
+
+
+ALTER TABLE "public"."timestamps" OWNER TO "postgres";
+
+
+COMMENT ON COLUMN "public"."timestamps"."video_start_seconds" IS 'Offset in seconds to start video playback.';
+
+
+
+COMMENT ON COLUMN "public"."timestamps"."playlist_id" IS 'Playlist for the timestamp';
+
+
+
+COMMENT ON COLUMN "public"."timestamps"."watched_at" IS 'Datetime for when the video was last watched.';
+
+
+
+ALTER TABLE "public"."timestamps" ALTER COLUMN "id" ADD GENERATED BY DEFAULT AS IDENTITY (
+    SEQUENCE NAME "public"."user_video_timestamps_id_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+
+
+CREATE TABLE IF NOT EXISTS "public"."videos" (
+    "id" "text" NOT NULL,
+    "source" "public"."source" NOT NULL,
+    "title" "text" NOT NULL,
+    "description" "text" NOT NULL,
+    "thumbnail_url" "text" NOT NULL,
+    "published_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "search_vector" "tsvector",
+    "pending_delete" boolean DEFAULT true,
+    "duration" "text" DEFAULT ''::"text",
+    "thumbnail_maxres_url" "text"
+);
+
+
+ALTER TABLE "public"."videos" OWNER TO "postgres";
+
+
+COMMENT ON COLUMN "public"."videos"."pending_delete" IS 'Pending delete flag is used for detecting and removing deleted videos from YouTube';
+
+
+
+COMMENT ON COLUMN "public"."videos"."thumbnail_maxres_url" IS 'Max res url';
+
+
+
+ALTER TABLE ONLY "public"."playlist_videos"
+    ADD CONSTRAINT "playlist_videos_id_key" UNIQUE ("id");
+
+
+
+ALTER TABLE ONLY "public"."playlist_videos"
+    ADD CONSTRAINT "playlist_videos_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."playlists"
+    ADD CONSTRAINT "playlists_id_key" UNIQUE ("id");
+
+
+
+ALTER TABLE ONLY "public"."playlists"
+    ADD CONSTRAINT "playlists_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."playlists"
+    ADD CONSTRAINT "playlists_short_id_key" UNIQUE ("short_id");
+
+
+
+ALTER TABLE ONLY "public"."playlist_videos"
+    ADD CONSTRAINT "unique_playlist_video" UNIQUE ("playlist_id", "video_id");
+
+
+
+ALTER TABLE ONLY "public"."playlists"
+    ADD CONSTRAINT "unique_user_playlist" UNIQUE ("user_id", "name");
+
+
+
+ALTER TABLE ONLY "public"."timestamps"
+    ADD CONSTRAINT "unique_user_video" UNIQUE ("user_id", "video_id");
+
+
+
+ALTER TABLE ONLY "public"."timestamps"
+    ADD CONSTRAINT "user_video_timestamps_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."videos"
+    ADD CONSTRAINT "videos_id_key" UNIQUE ("id");
+
+
+
+ALTER TABLE ONLY "public"."videos"
+    ADD CONSTRAINT "videos_pkey" PRIMARY KEY ("id");
+
+
+
+CREATE INDEX "idx_user_video_timestamps_video_id" ON "public"."timestamps" USING "btree" ("video_id");
+
+
+
+CREATE OR REPLACE TRIGGER "before_insert_set_short_id" BEFORE INSERT ON "public"."playlists" FOR EACH ROW EXECUTE FUNCTION "public"."set_short_id"();
+
+
+
+CREATE OR REPLACE TRIGGER "update_playlist_search_vector" BEFORE INSERT OR UPDATE ON "public"."playlists" FOR EACH ROW EXECUTE FUNCTION "public"."set_playlist_search_vector"();
+
+
+
+CREATE OR REPLACE TRIGGER "update_user_video_timestamps_updated_at" BEFORE UPDATE ON "public"."timestamps" FOR EACH ROW EXECUTE FUNCTION "public"."update_timestamp"();
+
+
+
+CREATE OR REPLACE TRIGGER "update_video_search_vector" BEFORE INSERT OR UPDATE ON "public"."videos" FOR EACH ROW EXECUTE FUNCTION "public"."set_video_search_vector"();
+
+
+
+ALTER TABLE ONLY "public"."playlist_videos"
+    ADD CONSTRAINT "playlist_videos_video_id_fkey" FOREIGN KEY ("video_id") REFERENCES "public"."videos"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."playlists"
+    ADD CONSTRAINT "playlists_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."playlists"
+    ADD CONSTRAINT "playlists_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."timestamps"
+    ADD CONSTRAINT "timestamps_playlist_id_fkey" FOREIGN KEY ("playlist_id") REFERENCES "public"."playlists"("id") ON UPDATE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."timestamps"
+    ADD CONSTRAINT "user_video_timestamps_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."timestamps"
+    ADD CONSTRAINT "user_video_timestamps_video_id_fkey" FOREIGN KEY ("video_id") REFERENCES "public"."videos"("id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+
+CREATE POLICY "Allow users to update their own playlists" ON "public"."playlists" FOR UPDATE TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "created_by")) WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "created_by"));
+
+
+
+CREATE POLICY "Authenticated users can insert their own video timestamps" ON "public"."timestamps" FOR INSERT TO "authenticated" WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
+
+
+
+CREATE POLICY "Authenticated users can select their own video timestamps" ON "public"."timestamps" FOR SELECT TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
+
+
+
+CREATE POLICY "Authenticated users can update their own video timestamps" ON "public"."timestamps" FOR UPDATE TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id")) WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
+
+
+
+CREATE POLICY "Enable delete for users based on user_id" ON "public"."playlists" FOR DELETE TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
+
+
+
+CREATE POLICY "Enable delete for users based on user_id" ON "public"."timestamps" FOR DELETE USING ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
+
+
+
+CREATE POLICY "Enable insert for authenticated users only" ON "public"."playlist_videos" FOR INSERT TO "authenticated" WITH CHECK (true);
+
+
+
+CREATE POLICY "Enable insert for users based on user_id" ON "public"."playlists" FOR INSERT TO "authenticated" WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
+
+
+
+CREATE POLICY "Enable read access for all users" ON "public"."playlist_videos" FOR SELECT USING (true);
+
+
+
+CREATE POLICY "Enable read access for all users" ON "public"."playlists" FOR SELECT USING (true);
+
+
+
+CREATE POLICY "Enable read access for all users" ON "public"."videos" FOR SELECT USING (true);
+
+
+
+ALTER TABLE "public"."playlist_videos" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."playlists" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."timestamps" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."videos" ENABLE ROW LEVEL SECURITY;
+
+
+
+
+ALTER PUBLICATION "supabase_realtime" OWNER TO "postgres";
+
+
+
+
+
+
+
+
+GRANT USAGE ON SCHEMA "public" TO "postgres";
+GRANT USAGE ON SCHEMA "public" TO "anon";
+GRANT USAGE ON SCHEMA "public" TO "authenticated";
+GRANT USAGE ON SCHEMA "public" TO "service_role";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GRANT ALL ON FUNCTION "public"."delete_pending_videos"() TO "anon";
+GRANT ALL ON FUNCTION "public"."delete_pending_videos"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."delete_pending_videos"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."get_videos_with_timestamps"() TO "anon";
+GRANT ALL ON FUNCTION "public"."get_videos_with_timestamps"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_videos_with_timestamps"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."search_playlists"("search_term" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."search_playlists"("search_term" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."search_playlists"("search_term" "text") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."search_videos"("search_term" "text", "video_limit" integer, "video_source" "public"."source", "last_seen_video" "jsonb", "sort_option" "text", "sort_order" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."search_videos"("search_term" "text", "video_limit" integer, "video_source" "public"."source", "last_seen_video" "jsonb", "sort_option" "text", "sort_order" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."search_videos"("search_term" "text", "video_limit" integer, "video_source" "public"."source", "last_seen_video" "jsonb", "sort_option" "text", "sort_order" "text") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."set_playlist_search_vector"() TO "anon";
+GRANT ALL ON FUNCTION "public"."set_playlist_search_vector"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."set_playlist_search_vector"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."set_short_id"() TO "anon";
+GRANT ALL ON FUNCTION "public"."set_short_id"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."set_short_id"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."set_video_search_vector"() TO "anon";
+GRANT ALL ON FUNCTION "public"."set_video_search_vector"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."set_video_search_vector"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."update_timestamp"() TO "anon";
+GRANT ALL ON FUNCTION "public"."update_timestamp"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."update_timestamp"() TO "service_role";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GRANT ALL ON TABLE "public"."playlist_videos" TO "anon";
+GRANT ALL ON TABLE "public"."playlist_videos" TO "authenticated";
+GRANT ALL ON TABLE "public"."playlist_videos" TO "service_role";
+
+
+
+GRANT ALL ON SEQUENCE "public"."playlist_videos_id_seq" TO "anon";
+GRANT ALL ON SEQUENCE "public"."playlist_videos_id_seq" TO "authenticated";
+GRANT ALL ON SEQUENCE "public"."playlist_videos_id_seq" TO "service_role";
+
+
+
+GRANT ALL ON SEQUENCE "public"."playlists_custom_seq" TO "anon";
+GRANT ALL ON SEQUENCE "public"."playlists_custom_seq" TO "authenticated";
+GRANT ALL ON SEQUENCE "public"."playlists_custom_seq" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."playlists" TO "anon";
+GRANT ALL ON TABLE "public"."playlists" TO "authenticated";
+GRANT ALL ON TABLE "public"."playlists" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."timestamps" TO "anon";
+GRANT ALL ON TABLE "public"."timestamps" TO "authenticated";
+GRANT ALL ON TABLE "public"."timestamps" TO "service_role";
+
+
+
+GRANT ALL ON SEQUENCE "public"."user_video_timestamps_id_seq" TO "anon";
+GRANT ALL ON SEQUENCE "public"."user_video_timestamps_id_seq" TO "authenticated";
+GRANT ALL ON SEQUENCE "public"."user_video_timestamps_id_seq" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."videos" TO "anon";
+GRANT ALL ON TABLE "public"."videos" TO "authenticated";
+GRANT ALL ON TABLE "public"."videos" TO "service_role";
+
+
+
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES  TO "postgres";
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES  TO "anon";
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES  TO "authenticated";
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON SEQUENCES  TO "service_role";
+
+
+
+
+
+
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS  TO "postgres";
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS  TO "anon";
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS  TO "authenticated";
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON FUNCTIONS  TO "service_role";
+
+
+
+
+
+
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES  TO "postgres";
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES  TO "anon";
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES  TO "authenticated";
+ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES  TO "service_role";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+RESET ALL;

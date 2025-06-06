@@ -1,0 +1,63 @@
+export const SOURCES: Database["public"]["Enums"]["source"][] = [
+  "nextlander",
+  "giantbomb",
+  "remap",
+] as const;
+export type Source = (typeof SOURCES)[number];
+
+import nextlanderImage from "$lib/assets/nextlander.jpg";
+import giantbombImage from "$lib/assets/giantbomb.jpg";
+import remapImage from "$lib/assets/remap.jpg";
+import type { Database } from "$lib/supabase/database.types";
+
+interface SourceInfo {
+  displayName: string;
+  urlParam: string;
+  image: string;
+  twitchId: string;
+  youtubeId: string;
+  websiteUrl: string;
+  supportUrl: string;
+}
+
+export const SOURCE_INFO: Record<Source, SourceInfo> = {
+  nextlander: {
+    displayName: "Nextlander",
+    urlParam: "nextlander",
+    image: nextlanderImage,
+    twitchId: "689331234",
+    youtubeId: "UCO0gHyqLNeIrCAjwlO2BmiA",
+    websiteUrl: "https://www.patreon.com/nextlander",
+    supportUrl: "https://www.patreon.com/nextlander/",
+  },
+  giantbomb: {
+    displayName: "Giant Bomb",
+    urlParam: "giantbomb",
+    image: giantbombImage,
+    twitchId: "504350",
+    youtubeId: "UCmeds0MLhjfkjD_5acPnFlQ",
+    websiteUrl: "https://www.giantbomb.com/",
+    supportUrl: "https://www.giantbomb.com/upgrade/",
+  },
+  remap: {
+    displayName: "Remap",
+    urlParam: "remap",
+    image: remapImage,
+    twitchId: "913491352",
+    youtubeId: "UCpcSq3A3Z4tUJsHKfn8zpnA",
+    websiteUrl: "https://remapradio.com/",
+    supportUrl: "https://remapradio.com/signup/",
+  },
+} as const;
+
+export type Sources = keyof typeof SOURCE_INFO;
+
+export function isSourceArray(value: unknown): value is Source[] {
+  return (
+    value instanceof Array && value.every((item) => typeof item === "string")
+  );
+}
+
+export function isSource(value: unknown): value is Source {
+  return typeof value === "string" && Object.keys(SOURCE_INFO).includes(value);
+}

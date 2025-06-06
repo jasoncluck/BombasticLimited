@@ -1,0 +1,14 @@
+{
+  "record": {
+    "hosts": [
+      "localhost",
+      "127.0.0.1",
+      "192.168.86.34"
+    ],
+    "hash": {
+      "key": "968048cfeb61bb20e5265693dc34c31383811538452f870b6525eda22fdeb752",
+      "cert": "73bf6da9fd29af9837f5826097908febbe47ebe3472516ec3d16996cd6dbd6e5"
+    }
+  },
+  "configFilePath": "/Users/jasoncluck/code/gbu/ssl/config.json"
+}

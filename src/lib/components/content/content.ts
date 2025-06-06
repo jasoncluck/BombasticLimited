@@ -1,0 +1,59 @@
+import { SOURCES } from "$lib/constants/source";
+import type { Database } from "$lib/supabase/database.types";
+import type { Playlist } from "$lib/supabase/playlists";
+import type { Video } from "$lib/supabase/videos";
+import type { Session, SupabaseClient } from "@supabase/supabase-js";
+import type { PlaylistVideosFilter } from "./content-filter";
+
+export interface CarouselVideoDragInfo {
+  readonly videoId: string;
+  readonly videoThumbnailUrl: string;
+}
+
+export const CONTENT_DISPLAY = {
+  CAROUSEL: "CAROUSEL",
+  TILES: "TILES",
+  TABLE: "TABLE",
+} as const;
+
+export type ContentView = "continueWatching" | "playlist" | "default";
+
+export type ContentDisplay =
+  (typeof CONTENT_DISPLAY)[keyof typeof CONTENT_DISPLAY];
+
+export interface ContentDragInfo {
+  readonly id: string;
+  readonly thumbnailUrl: string;
+}
+
+export interface ContentDisplayProps {
+  readonly videos: Video[];
+  readonly videosCount?: number | null;
+  readonly playlists: Playlist[];
+  readonly isContinueVideos?: boolean;
+  readonly invalidateOnVideoChange: boolean;
+  readonly playlist?: Playlist;
+  readonly playlistContentFilter?: PlaylistVideosFilter;
+  readonly supabase: SupabaseClient<Database>;
+  readonly session: Session | null;
+
+  // This is the only shared drag operation, tiles contain more due to all playlists being tiles
+  readonly handleDragStart: (
+    event: DragEvent & { currentTarget: HTMLDivElement },
+    index: number,
+  ) => void;
+}
+
+export const CONTENT_DIPSLAY = {
+  FULL: "FULL",
+  BRIEF: "BRIEF",
+  NONE: "NONE",
+} as const;
+
+export type ContentDescription =
+  (typeof CONTENT_DIPSLAY)[keyof typeof CONTENT_DIPSLAY];
+
+export const carouselStateKeys = ["continueWatching", ...SOURCES] as const;
+export type CarouselKeys = (typeof carouselStateKeys)[number];
+export type CarouselState = { startIndex: number };
+export type CarouselsState = Record<CarouselKeys, CarouselState>;
