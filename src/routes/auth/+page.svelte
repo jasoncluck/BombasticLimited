@@ -60,7 +60,7 @@
           <Input
             name="email"
             type="email"
-            placeholder="gbu@example.com"
+            placeholder="bombify@example.com"
             bind:value={email}
             autocomplete="email"
           />

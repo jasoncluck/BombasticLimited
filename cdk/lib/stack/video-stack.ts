@@ -27,9 +27,9 @@ export class VideoStack extends Stack {
     // Lambda to populate the database with the current videos.
     const populateVideosLambda = new nodejs.NodejsFunction(
       this,
-      "GbuPopulateVideos",
+      "BombifyPopulateVideos",
       {
-        functionName: "GbuPopulateVideos",
+        functionName: "BombifyPopulateVideos",
         description: "Populates a table with videos using the YouTube API",
         entry: path.join(__dirname, "../lambda/populate-videos.ts"),
         handler: "populateVideos",
