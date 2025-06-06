@@ -60,6 +60,7 @@
 <SharedContentHeader
   {breadcrumbs}
   bind:showFloatingBreadcrumbs
+  view="playlist"
   {videosCount}
   {contentFilter}
   {playlist}

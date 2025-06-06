@@ -22,6 +22,7 @@ export const load: PageServerLoad = async ({
   }
   const searchString = params.query;
 
+  console.log(contentFilter);
   if (!isVideoFilter(contentFilter)) {
     throw new Error("Invalid content filter");
   }

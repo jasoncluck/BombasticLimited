@@ -6,11 +6,13 @@
   import type { Database } from "$lib/supabase/database.types";
   import SharedContentHeader from "./shared-content-header.svelte";
   import { SOURCE_INFO, type Source } from "$lib/constants/source";
+  import type { ContentView } from "./content";
 
   let {
     breadcrumbs,
     contentFilter,
     currentPage = $bindable(),
+    view = "default",
     playlist,
     playlists,
     showFloatingBreadcrumbs = $bindable(),
@@ -23,8 +25,8 @@
     breadcrumbs: BreadcrumbItem[];
     contentFilter: CombinedContentFilter;
     currentPage: number;
+    view?: ContentView;
     imageUrl?: string | null;
-    isContinueVideos?: boolean;
     playlist?: Playlist;
     playlists: Playlist[];
     showFloatingBreadcrumbs: boolean;
@@ -40,6 +42,7 @@
   {breadcrumbs}
   bind:showFloatingBreadcrumbs
   bind:currentPage
+  {view}
   {videosCount}
   {contentFilter}
   {playlist}
@@ -50,7 +53,7 @@
   <div class="flex gap-6">
     <div class="flex flex-col relative">
       <div
-        class="flex flex-col cursor-pointer items-start text-left border-none bg-transparent p-0"
+        class="flex flex-col items-start text-left border-none bg-transparent p-0"
       >
         <p class="text-sm text-muted-foreground tracking-tight"></p>
 

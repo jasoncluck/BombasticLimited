@@ -47,6 +47,7 @@
   <ContentHeader
     title="Continue Watching"
     {contentFilter}
+    view="continueWatching"
     videosCount={videosCount ?? 0}
     {currentPage}
     bind:showFloatingBreadcrumbs

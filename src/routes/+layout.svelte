@@ -38,7 +38,7 @@
   import SideDrawer from "$lib/components/side-drawer.svelte";
   import { getContentState, setContentState } from "$lib/state/content.svelte";
 
-  const SEARCH_DEBOUNCE_MS = 1000;
+  const SEARCH_DEBOUNCE_MS = 500;
 
   setContentState();
 
@@ -371,58 +371,69 @@
 </svelte:head>
 
 <div class="m-2 flex flex-col h-full">
-  <nav class="flex items-center p-1 mb-2">
-    <div class="flex gap-2">
+  <nav class="flex items-center p-1 mb-2 relative">
+    <!-- Left section - SideDrawer (mobile only) -->
+    <div class="flex items-center">
       <div class="sm:hidden">
         <SideDrawer {playlists} {supabase} {session} />
       </div>
+    </div>
+
+    <!-- Center section - House and Search (absolutely positioned to page center) -->
+    <div
+      class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-4"
+    >
       <a
         href="/"
         class="text-sm font-medium transition-colors hover:text-primary"
-        ><House />
+      >
+        <House />
         <span class="sr-only">Home</span>
       </a>
+
+      <Input
+        oninput={handleSearch}
+        placeholder="Search"
+        class="w-72"
+        value={page.params.query}
+      />
     </div>
 
-    <Input
-      oninput={handleSearch}
-      placeholder="Search"
-      class="ml-4 w-64"
-      value={page.params.query}
-    />
-    {#if user}
-      <DropdownMenu.Root>
-        <DropdownMenu.Trigger
-          class={buttonVariants({
-            variant: "outline",
-            size: "icon",
-            className: "ml-auto",
-          })}
+    <!-- Right section - User menu/Login -->
+    <div class="flex items-center ml-auto">
+      {#if user}
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger
+            class={buttonVariants({
+              variant: "outline",
+              size: "icon",
+            })}
+          >
+            <UserCircle class="h-[1.2rem] w-[1.2rem]" />
+            <span class="sr-only">Profile</span>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content>
+            <DropdownMenu.Group>
+              <DropdownMenu.Item
+                class="cursor-pointer"
+                onclick={() => goto("/account")}>Account</DropdownMenu.Item
+              >
+              <DropdownMenu.Item class="cursor-pointer" onclick={handleLogout}
+                >Log out</DropdownMenu.Item
+              >
+            </DropdownMenu.Group>
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
+      {:else}
+        <Button
+          class="cursor-pointer"
+          onclick={() => goto("/auth")}
+          variant="outline"
         >
-          <UserCircle class="h-[1.2rem] w-[1.2rem]" />
-          <span class="sr-only">Profile</span>
-        </DropdownMenu.Trigger>
-        <DropdownMenu.Content>
-          <DropdownMenu.Group>
-            <DropdownMenu.Item
-              class="cursor-pointer"
-              onclick={() => goto("/account")}>Account</DropdownMenu.Item
-            >
-            <DropdownMenu.Item class="cursor-pointer" onclick={handleLogout}
-              >Log out</DropdownMenu.Item
-            >
-          </DropdownMenu.Group>
-        </DropdownMenu.Content>
-      </DropdownMenu.Root>
-    {:else}
-      <Button
-        class="ml-auto cursor-pointer"
-        onclick={() => goto("/auth")}
-        variant="outline"
-      >
-        Login
-      </Button>
-    {/if}
+          Login
+        </Button>
+      {/if}
+    </div>
   </nav>
 
   <Resizable.PaneGroup

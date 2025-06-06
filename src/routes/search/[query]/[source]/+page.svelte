@@ -54,7 +54,7 @@
 
 <div class="relative">
   <ContentHeader
-    title="Latest Videos"
+    title="Search Results"
     {contentFilter}
     videosCount={videosCount ?? 0}
     {currentPage}

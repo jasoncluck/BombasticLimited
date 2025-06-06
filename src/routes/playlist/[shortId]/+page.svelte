@@ -33,7 +33,9 @@
       };
     },
     restore: (restored) => {
-      showFloatingBreadcrumbs = restored.showFloatingBreadcrumbs;
+      if (restored?.showFloatingBreadcrumbs) {
+        showFloatingBreadcrumbs = restored.showFloatingBreadcrumbs;
+      }
     },
   };
 </script>
@@ -45,11 +47,12 @@
       bind:showFloatingBreadcrumbs
       {contentFilter}
       {currentPage}
+      view="playlist"
       {form}
       {playlist}
       {playlists}
       {playlistDuration}
-      {videosCount}
+      videosCount={videosCount ?? 0}
       {supabase}
       {session}
     />

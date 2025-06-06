@@ -14,10 +14,12 @@
   import ContentPagination from "./pagination/content-pagination.svelte";
   import { getNumberOfPages } from "./pagination/content-pagination";
   import { DEFAULT_NUM_VIDEOS_TILES } from "$lib/supabase/videos";
+  import type { ContentView } from "./content";
 
   interface SharedContentHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
     showFloatingBreadcrumbs: boolean;
+    view: ContentView;
     contentFilter: CombinedContentFilter;
     playlists: Playlist[];
     children: Snippet<[]>;
@@ -31,6 +33,7 @@
   let {
     breadcrumbs,
     children,
+    view,
     contentFilter,
     playlist,
     playlists,
@@ -76,7 +79,7 @@
 
     <div class="flex md:justify-end items-end">
       <div class="flex flex-col items-start">
-        <ContentFilters {contentFilter} view="playlist" />
+        <ContentFilters {contentFilter} {view} />
         <ContentSelect {playlist} {playlists} {supabase} {session} />
       </div>
     </div>
