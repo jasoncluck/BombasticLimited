@@ -47,7 +47,6 @@
       bind:showFloatingBreadcrumbs
       {contentFilter}
       {currentPage}
-      view="playlist"
       {form}
       {playlist}
       {playlists}

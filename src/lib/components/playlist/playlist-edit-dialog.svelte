@@ -65,6 +65,8 @@
         if (event.form.valid) {
           const { isDeletingPlaylistImage, ...data } = event.form.data;
           open = false;
+          isSubmitting = false;
+          playlistForm.reset();
 
           const updatedPlaylist = Object.assign(playlist, data);
           if (isDeletingPlaylistImage) {
@@ -94,14 +96,6 @@
 
     cropperState.rootState.tempUrl =
       playlist.thumbnail_maxres_url ?? playlist.thumbnail_url;
-
-    if (open) {
-      playlistForm.reset();
-    } else if (!open) {
-      isSubmitting = false;
-      $formData.isDeletingPlaylistImage = false;
-      isPublic = playlist.type === "Public";
-    }
   });
 </script>
 
@@ -227,12 +221,12 @@
                 <Form.Control>
                   {#snippet children({ props })}
                     <!-- textarea border + pad = 9px -->
-                    <Form.Label for="isPublic" class="text-right"
+                    <Form.Label for="isPublic" class="text-right cursor-pointer"
                       >Public Playlist</Form.Label
                     >
                     <Checkbox
                       {...props}
-                      class="col-span-3"
+                      class="col-span-3 cursor-pointer"
                       bind:checked={isPublic}
                     />
                   {/snippet}

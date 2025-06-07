@@ -334,7 +334,7 @@
   </div>
 
   <div
-    class="flex flex-col m-2 border-1 overflow-auto
+    class="flex flex-col m-2 border-1
     {contentState.dragContentType === 'video'
       ? 'border-secondary border-1 '
       : 'border-transparent'}"
