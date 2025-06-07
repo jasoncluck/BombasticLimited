@@ -5,6 +5,8 @@
   import { userPreferences } from "$lib/state/user-preferences.svelte.js";
   import { type CarouselsState } from "$lib/components/content/content.js";
   import type { Snapshot } from "@sveltejs/kit";
+  import { getCroppedPlaylistImageUrl } from "$lib/components/playlist/playlist-service.js";
+  import { onMount } from "svelte";
 
   let { data } = $props();
   let {
@@ -15,6 +17,9 @@
     playlists,
     contentFilter,
   } = $derived(data);
+
+  let playlistImagesLoaded = $state(false);
+  let playlistImages = $state<Record<string, string | undefined>>();
 
   export const snapshot: Snapshot<CarouselsState> = {
     capture: () => carouselsState,
@@ -30,7 +35,29 @@
       SOURCES.map((key) => [key, { startIndex: 0 }]),
     ) as CarouselsState,
   );
-  console.log(playlistSearchResults);
+  onMount(() => {
+    const playlistImageUrls = playlistSearchResults.map(async (p) => {
+      const imageUrl = await getCroppedPlaylistImageUrl({
+        imageProperties: p.image_properties,
+        thumbnailMaxResUrl: p.thumbnail_maxres_url,
+        thumbnailUrl: p.thumbnail_url,
+      });
+      return { id: p.id, imageUrl };
+    });
+    Promise.all(playlistImageUrls)
+      .then((results) => {
+        const imagesMap: Record<string, string | undefined> = {};
+        results.forEach(({ id, imageUrl }) => {
+          imagesMap[id] = imageUrl;
+        });
+        playlistImagesLoaded = true;
+        playlistImages = imagesMap;
+      })
+      .catch((error) => {
+        console.error("Error loading playlist images:", error);
+        playlistImagesLoaded = true; // Still mark as loaded so UI can render with fallbacks
+      });
+  });
 </script>
 
 <div class="flex flex-col gap-2">
@@ -40,6 +67,11 @@
 
   {#each playlistSearchResults as playlist (playlist.id)}
     <div class="grid grid-cols-5">
+      {#if playlistImagesLoaded && playlistImages}
+        <div>
+          <img src={playlistImages[playlist.id]} alt={playlist.name} />
+        </div>
+      {/if}
       <div>
         {playlist.name}
       </div>

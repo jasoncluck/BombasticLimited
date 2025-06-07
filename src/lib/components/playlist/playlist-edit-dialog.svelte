@@ -73,7 +73,9 @@
           } else {
             contentState.playlistImages[playlist.id] =
               await getCroppedPlaylistImageUrl({
-                playlist: updatedPlaylist,
+                imageProperties: playlist.image_properties,
+                thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
+                thumbnailUrl: playlist.thumbnail_url,
               });
           }
         }

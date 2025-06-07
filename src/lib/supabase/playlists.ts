@@ -460,7 +460,6 @@ export async function updatePlaylistImage({
 
   if (updateError) {
     console.error("Error updating playlist:", updateError);
-    invalidate("supabase:db:playlists");
   }
 
   return { updatedPlaylist, error: updateError };

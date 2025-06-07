@@ -64,26 +64,28 @@
   }
 
   onMount(() => {
-    if (playlists) {
-      const playlistImageUrls = playlists.map(async (p) => {
-        const imageUrl = await getCroppedPlaylistImageUrl({ playlist: p });
-        return { id: p.id, imageUrl };
+    const playlistImageUrls = playlists.map(async (p) => {
+      const imageUrl = await getCroppedPlaylistImageUrl({
+        imageProperties: p.image_properties,
+        thumbnailMaxResUrl: p.thumbnail_maxres_url,
+        thumbnailUrl: p.thumbnail_url,
       });
-      // Wait for all promises to resolve before updating the UI
-      Promise.all(playlistImageUrls)
-        .then((results) => {
-          const imagesMap: Record<string, string | undefined> = {};
-          results.forEach(({ id, imageUrl }) => {
-            imagesMap[id] = imageUrl;
-          });
-          contentState.playlistImages = imagesMap;
-          playlistImagesLoaded = true;
-        })
-        .catch((error) => {
-          console.error("Error loading playlist images:", error);
-          playlistImagesLoaded = true; // Still mark as loaded so UI can render with fallbacks
+      return { id: p.id, imageUrl };
+    });
+    // Wait for all promises to resolve before updating the UI
+    Promise.all(playlistImageUrls)
+      .then((results) => {
+        const imagesMap: Record<string, string | undefined> = {};
+        results.forEach(({ id, imageUrl }) => {
+          imagesMap[id] = imageUrl;
         });
-    }
+        contentState.playlistImages = imagesMap;
+        playlistImagesLoaded = true;
+      })
+      .catch((error) => {
+        console.error("Error loading playlist images:", error);
+        playlistImagesLoaded = true; // Still mark as loaded so UI can render with fallbacks
+      });
   });
 
   function getDropzoneClasses() {
@@ -326,13 +328,13 @@
         </Button>
       {/if}
       {#if !isSidebarCollapsed}
-        <h2 class="mx-4 text-lg font-semibold tracking-tight">Playlists</h2>
+        <h2 class="ml-4 text-lg font-semibold tracking-tight">Playlists</h2>
       {/if}
     </div>
   </div>
 
   <div
-    class="flex flex-col my-2 mx-2 border-1
+    class="flex flex-col m-2 border-1 overflow-auto
     {contentState.dragContentType === 'video'
       ? 'border-secondary border-1 '
       : 'border-transparent'}"

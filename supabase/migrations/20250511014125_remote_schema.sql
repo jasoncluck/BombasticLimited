@@ -1297,7 +1297,6 @@ GRANT ALL ON FUNCTION "public"."get_videos_with_timestamps"() TO "authenticated"
 GRANT ALL ON FUNCTION "public"."get_videos_with_timestamps"() TO "service_role";
 
 
-
 GRANT ALL ON FUNCTION "public"."search_videos"("search_term" "text", "video_limit" integer, "video_source" "public"."source", "last_seen_video" "jsonb", "sort_option" "text", "sort_order" "text") TO "anon";
 GRANT ALL ON FUNCTION "public"."search_videos"("search_term" "text", "video_limit" integer, "video_source" "public"."source", "last_seen_video" "jsonb", "sort_option" "text", "sort_order" "text") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."search_videos"("search_term" "text", "video_limit" integer, "video_source" "public"."source", "last_seen_video" "jsonb", "sort_option" "text", "sort_order" "text") TO "service_role";

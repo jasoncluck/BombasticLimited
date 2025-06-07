@@ -1,7 +1,7 @@
 import { goto, invalidate } from "$app/navigation";
 import { page } from "$app/state";
 import { showNotification } from "$lib/stores/notification";
-import type { Database } from "$lib/supabase/database.types";
+import type { Database, Json } from "$lib/supabase/database.types";
 import {
   addVideosToPlaylist,
   createPlaylist,
@@ -103,23 +103,25 @@ export async function handleDeletePlaylist({
 }
 
 export async function getCroppedPlaylistImageUrl({
-  playlist,
+  imageProperties,
+  thumbnailMaxResUrl,
+  thumbnailUrl,
 }: {
-  playlist: Playlist;
+  imageProperties: Json;
+  thumbnailMaxResUrl: string | null;
+  thumbnailUrl: string | null;
 }) {
   let croppedPlaylistImageUrl: string | undefined;
   let playlistImageProperties: PlaylistImageProperties | undefined;
-  if (playlist.image_properties) {
+  if (imageProperties) {
     // JSONB data is already an object, inferred types need overridden
     playlistImageProperties =
-      playlist.image_properties as unknown as PlaylistImageProperties;
+      imageProperties as unknown as PlaylistImageProperties;
   }
 
-  const playlistImage = playlist.thumbnail_maxres_url
-    ? playlist.thumbnail_maxres_url
-    : playlist.thumbnail_url;
+  const playlistImage = thumbnailMaxResUrl ? thumbnailMaxResUrl : thumbnailUrl;
 
-  const { x, y, width, height } = playlist.thumbnail_maxres_url
+  const { x, y, width, height } = thumbnailMaxResUrl
     ? PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS
     : PLAYLIST_IMAGE_CROP_DEFAULTS;
 
@@ -256,7 +258,11 @@ export async function handleUpdatePlaylistImage({
     showNotification("Unable update playlist image");
   } else if (updatedPlaylist && !isResetImage) {
     contentState.playlistImages[updatedPlaylist.id] =
-      await getCroppedPlaylistImageUrl({ playlist: updatedPlaylist });
+      await getCroppedPlaylistImageUrl({
+        imageProperties: playlist.image_properties,
+        thumbnailMaxResUrl,
+        thumbnailUrl,
+      });
   }
 }
 

@@ -1,13 +1,15 @@
 CREATE OR REPLACE FUNCTION "public"."search_playlists"(
-    "search_term" "text", 
-    "playlist_limit" integer DEFAULT 100, 
-    "last_seen_playlist" "jsonb" DEFAULT NULL::"jsonb", 
-    "sort_option" "text" DEFAULT 'default'::"text", 
-    "sort_order" "text" DEFAULT 'ascending'::"text"
+    "search_term" "text",
+    "playlist_limit" integer DEFAULT 100
 ) RETURNS TABLE(
     "id" bigint, 
-    "name" "text", 
-    "created_at" timestamp with time zone
+    "name" text, 
+    "description" text,
+    "thumbnail_url" text,
+    "thumbnail_maxres_url" text,
+    "image_properties" jsonb,
+    "created_at" timestamp with time zone,
+    "created_by" uuid
 )
 LANGUAGE "plpgsql"
 AS $$
@@ -34,9 +36,16 @@ BEGIN
     SELECT 
         p.id, 
         p.name, 
-        p.created_at
+        p.description,
+        p.thumbnail_url,
+        p.thumbnail_maxres_url,
+        p.image_properties,
+        p.created_at,
+        p.created_by
     FROM public.playlists p
     WHERE p.search_vector @@ to_tsquery('english', search_query)
+    ORDER BY 
+        ts_rank(p.search_vector, to_tsquery('english', search_query)) DESC
     LIMIT playlist_limit;
 END;
 $$;
