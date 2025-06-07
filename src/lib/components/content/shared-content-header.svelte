@@ -77,8 +77,8 @@
   >
     {@render children()}
 
-    <div class="flex md:justify-end items-end">
-      <div class="flex flex-col items-start">
+    <div class="flex md:justify-end items-end flex-shrink-1">
+      <div class="flex flex-col items-start flex-1">
         <ContentFilters {contentFilter} {view} />
         <ContentSelect {playlist} {playlists} {supabase} {session} />
       </div>

@@ -106,7 +106,7 @@
         <h2 class="header-primary text-left">
           {playlist.name}
         </h2>
-        <p class="text-sm text-muted-foreground mb-2 text-left">
+        <p class="text-sm text-muted-foreground mb-2 text-left max-w-96">
           {playlist.description}
         </p>
       </button>
