@@ -3,6 +3,7 @@ CREATE OR REPLACE FUNCTION "public"."search_playlists"(
     "playlist_limit" integer DEFAULT 100
 ) RETURNS TABLE(
     "id" bigint, 
+    "short_id" text,
     "name" text, 
     "description" text,
     "thumbnail_url" text,
@@ -35,6 +36,7 @@ BEGIN
     RETURN QUERY
     SELECT 
         p.id, 
+        p.short_id,
         p.name, 
         p.description,
         p.thumbnail_url,

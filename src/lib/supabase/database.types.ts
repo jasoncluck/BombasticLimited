@@ -333,6 +333,7 @@ export type Database = {
         Args: { search_term: string; playlist_limit?: number }
         Returns: {
           id: number
+          short_id: string
           name: string
           description: string
           thumbnail_url: string

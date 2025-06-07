@@ -44,6 +44,7 @@ export const load: PageServerLoad = async ({
   // TODO: Add public playlists results to search results
   return {
     sourceVideos: sourceVideos ?? [],
+    searchString,
     playlists,
     playlistSearchResults,
     contentFilter,
