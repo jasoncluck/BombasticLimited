@@ -251,7 +251,6 @@ RETURNS BOOLEAN AS $$
 DECLARE
   deleted_position int2;
   max_position int2;
-  affected_rows int;
 BEGIN
   -- Start a transaction to ensure consistency
   BEGIN
@@ -268,8 +267,7 @@ BEGIN
 
     -- Delete the playlist
     DELETE FROM playlists p
-    WHERE p.id = p_playlist_id AND p.user_id = p_user_id
-    RETURNING 1 INTO affected_rows;
+    WHERE p.id = p_playlist_id AND p.user_id = p_user_id;
 
     -- Find the maximum position after deletion
     SELECT COALESCE(MAX(p.playlist_position), 0)

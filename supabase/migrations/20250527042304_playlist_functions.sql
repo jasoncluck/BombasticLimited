@@ -120,7 +120,6 @@ DECLARE
   deleted_positions int2[];
   affected_count int;
   max_position int2;
-  result_row record;
 BEGIN
   -- Check if video array is empty
   IF array_length(p_video_ids, 1) IS NULL OR array_length(p_video_ids, 1) = 0 THEN
@@ -208,7 +207,7 @@ BEGIN
         -- Check if we've already returned a result for this video
         -- Fixed: reference to the correct function name
         SELECT COUNT(*) INTO affected_count
-        FROM (SELECT * FROM delete_playlist_videos) AS results 
+        FROM (SELECT * FROM playlist_videos) AS results 
         WHERE results.video_id = v_id;
         
         IF affected_count = 0 THEN
@@ -266,4 +265,4 @@ BEGIN
   -- Return true only if both URLs are valid
   RETURN thumbnail_valid AND maxres_valid;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;

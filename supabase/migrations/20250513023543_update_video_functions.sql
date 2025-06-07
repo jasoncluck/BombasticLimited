@@ -29,12 +29,11 @@ END;$$;
 
 DROP FUNCTION public.search_videos;
 
-CREATE OR REPLACE FUNCTION "public"."search_videos"("search_term" "text", "video_limit" integer DEFAULT 100, "video_source" "public"."source" DEFAULT NULL::"public"."source", "last_seen_video" "jsonb" DEFAULT NULL::"jsonb", "sort_option" "text" DEFAULT 'default'::"text", "sort_order" "text" DEFAULT 'ascending'::"text") RETURNS TABLE("id" "text", "source" "public"."source", "title" "text", "description" "text", "thumbnail_url" "text", "thumbnail_maxres_url" "text", "published_at" timestamp with time zone, "duration" "text", "video_start_seconds" numeric, "updated_at" timestamp with time zone)
+CREATE OR REPLACE FUNCTION "public"."search_videos"("search_term" "text" ) RETURNS TABLE("id" "text", "source" "public"."source", "title" "text", "description" "text", "thumbnail_url" "text", "thumbnail_maxres_url" "text", "published_at" timestamp with time zone, "duration" "text", "video_start_seconds" numeric, "updated_at" timestamp with time zone)
     LANGUAGE "plpgsql"
     AS $$
 DECLARE
     search_query text;
-    sort_column text;
 BEGIN
     -- Normalize the search term by replacing multiple spaces with a single space
     search_term := regexp_replace(search_term, '\s+', ' ', 'g');
@@ -51,15 +50,6 @@ BEGIN
     -- Construct the search query for prefix matching
     search_query := replace(search_term, ' ', ' & ') || ':*';
     search_query := trim(both '&' from search_query);
-
-    -- Determine the sort column based on the sort option
-    IF sort_option = 'date' THEN
-        sort_column := 'published_at';
-    ELSIF sort_option = 'title' THEN
-        sort_column := 'title';
-    ELSE
-        sort_column := 'id'; -- Default sort column
-    END IF;
 
     RETURN QUERY
     SELECT 

@@ -125,15 +125,17 @@ RETURNS TABLE (
   video_id text,
   user_id uuid,
   video_position int2
-) AS $$
+) 
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
 DECLARE
   current_position int2;
   max_position int2;
   v_id int8;
   updated_row playlist_videos%ROWTYPE;
 BEGIN
-  -- Start a transaction to ensure consistency
-  BEGIN
+
     -- Find the current position of the video and get its ID
     SELECT pv.video_position, pv.id
     INTO current_position, v_id
@@ -216,59 +218,6 @@ BEGIN
   EXCEPTION
     WHEN OTHERS THEN
       RAISE;
-  END;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
--- CREATE OR REPLACE FUNCTION delete_playlist_video(
---   p_playlist_id int8,
---   p_video_id text
--- )
--- RETURNS BOOLEAN AS $$
--- DECLARE
---   deleted_position int2;
---   max_position int2;
---   affected_rows int;
--- BEGIN
---   -- Start a transaction to ensure consistency
---   BEGIN
---     -- Find the position of the video to be deleted
---     SELECT pv.video_position
---     INTO deleted_position
---     FROM playlist_videos pv
---     WHERE pv.playlist_id = p_playlist_id AND pv.video_id = p_video_id;
---
---     -- If video not found, raise an exception
---     IF NOT FOUND THEN
---       RAISE EXCEPTION 'Video not found in playlist';
---     END IF;
---
---     -- Delete the video
---     DELETE FROM playlist_videos pv
---     WHERE pv.playlist_id = p_playlist_id AND pv.video_id = p_video_id
---     RETURNING 1 INTO affected_rows;
---
---     -- Find the maximum position after deletion
---     SELECT COALESCE(MAX(pv.video_position), 0)
---     INTO max_position
---     FROM playlist_videos pv
---     WHERE pv.playlist_id = p_playlist_id;
---
---     -- If there are videos with higher positions than the deleted one,
---     -- decrement their positions to fill the gap
---     IF deleted_position <= max_position THEN
---       UPDATE playlist_videos pv
---       SET video_position = pv.video_position - 1
---       WHERE pv.playlist_id = p_playlist_id
---         AND pv.video_position > deleted_position;
---     END IF;
---
---     RETURN TRUE;
---   EXCEPTION
---     WHEN OTHERS THEN
---       -- Log the error and return false
---       RAISE INFO 'Error in delete_playlist_video: %', SQLERRM;
---       RETURN FALSE;
---   END;
--- END;
--- $$ LANGUAGE plpgsql;
