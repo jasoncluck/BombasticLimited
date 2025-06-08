@@ -67,7 +67,7 @@
 
 <IntersectionObserver
   disableObserver={false}
-  threshold={0}
+  threshold={0.25}
   onActive={() => (showFloatingBreadcrumbs = false)}
   onInactive={() => (showFloatingBreadcrumbs = true)}
 >
@@ -77,8 +77,8 @@
   >
     {@render children()}
 
-    <div class="flex md:justify-end items-end flex-shrink-1">
-      <div class="flex flex-col items-start flex-1">
+    <div class="flex md:justify-end items-end flex-shrink-o">
+      <div class="flex flex-col items-start">
         <ContentFilters {contentFilter} {view} />
         <ContentSelect {playlist} {playlists} {supabase} {session} />
       </div>

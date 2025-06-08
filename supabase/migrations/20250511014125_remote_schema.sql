@@ -183,7 +183,7 @@ CREATE OR REPLACE FUNCTION "public"."set_short_id"() RETURNS "trigger"
     SET search_path = ''
     AS $$
 BEGIN
-    NEW.short_id := id_encode(NEW.id);
+    NEW.short_id := extensions.id_encode(NEW.id);
     RETURN NEW;
 END;
 $$;

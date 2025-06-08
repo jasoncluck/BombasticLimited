@@ -247,8 +247,8 @@ BEGIN
   IF p_thumbnail_url IS NOT NULL THEN
     SELECT EXISTS (
       SELECT 1
-      FROM playlist_videos pv
-      JOIN videos v ON pv.video_id = v.id
+      FROM public.playlist_videos pv
+      JOIN public.videos v ON pv.video_id = v.id
       WHERE pv.playlist_id = p_playlist_id
       AND v.thumbnail_url = p_thumbnail_url
     ) INTO thumbnail_valid;
@@ -258,8 +258,8 @@ BEGIN
   IF p_thumbnail_maxres_url IS NOT NULL THEN
     SELECT EXISTS (
       SELECT 1
-      FROM playlist_videos pv
-      JOIN videos v ON pv.video_id = v.id
+      FROM public.playlist_videos pv
+      JOIN public.videos v ON pv.video_id = v.id
       WHERE pv.playlist_id = p_playlist_id
       AND v.thumbnail_maxres_url = p_thumbnail_maxres_url
     ) INTO maxres_valid;
