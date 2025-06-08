@@ -127,19 +127,19 @@ RETURNS TABLE (
   video_position int2
 ) 
 LANGUAGE plpgsql
-SET search_path = public
+SET search_path TO ''
 AS $$
 DECLARE
   current_position int2;
   max_position int2;
   v_id int8;
-  updated_row playlist_videos%ROWTYPE;
+  updated_row public.playlist_videos%ROWTYPE;
 BEGIN
 
     -- Find the current position of the video and get its ID
     SELECT pv.video_position, pv.id
     INTO current_position, v_id
-    FROM playlist_videos pv
+    FROM public.playlist_videos pv
     WHERE pv.playlist_id = p_playlist_id AND pv.video_id = p_video_id;
     
     -- If video not found, raise an exception
@@ -150,7 +150,7 @@ BEGIN
     -- Find the maximum position in this playlist
     SELECT COALESCE(MAX(pv.video_position), 0)
     INTO max_position
-    FROM playlist_videos pv
+    FROM public.playlist_videos pv
     WHERE pv.playlist_id = p_playlist_id;
     
     -- Validate new position range
@@ -161,7 +161,7 @@ BEGIN
     -- If position isn't changing, do nothing
     IF current_position = p_new_position THEN
       -- Return the unchanged row
-      SELECT * FROM playlist_videos pv
+      SELECT * FROM public.playlist_videos pv
       WHERE pv.id = v_id
       INTO updated_row;
       
@@ -177,14 +177,14 @@ BEGIN
     
     -- Temporarily set the video's position to a large negative number
     -- to avoid conflicts during the update
-    UPDATE playlist_videos pv
+    UPDATE public.playlist_videos pv
     SET video_position = -9999
     WHERE pv.id = v_id;
     
     -- Moving down (to a higher number)
     IF p_new_position > current_position THEN
       -- Shift items between current and new position down by 1
-      UPDATE playlist_videos pv
+      UPDATE public.playlist_videos pv
       SET video_position = pv.video_position - 1
       WHERE pv.playlist_id = p_playlist_id
         AND pv.video_position > current_position
@@ -192,7 +192,7 @@ BEGIN
     -- Moving up (to a lower number)
     ELSE
       -- Shift items between new and current position up by 1
-      UPDATE playlist_videos pv
+      UPDATE public.playlist_videos pv
       SET video_position = pv.video_position + 1
       WHERE pv.playlist_id = p_playlist_id
         AND pv.video_position >= p_new_position
@@ -200,7 +200,7 @@ BEGIN
     END IF;
     
     -- Set the video to its new position
-    UPDATE playlist_videos pv
+    UPDATE public.playlist_videos pv
     SET video_position = p_new_position
     WHERE pv.id = v_id
     RETURNING *
@@ -220,4 +220,3 @@ BEGIN
       RAISE;
 END;
 $$;
-
