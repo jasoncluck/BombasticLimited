@@ -53,9 +53,9 @@ BEGIN
       SELECT jsonb_object_keys(existing_video_positions) AS vid
     ) AS subquery;
     
-    -- Ensure we don't exceed the maximum of 250 items
-    IF max_position + array_length > 250 THEN
-      RAISE EXCEPTION 'Cannot add items beyond the maximum position of 250';
+    -- Ensure we don't exceed the maximum of 100 items
+    IF max_position + array_length > 100 THEN
+      RAISE EXCEPTION 'Cannot add items beyond the maximum position of 100';
     END IF;
     
     -- Start inserting after the current maximum position

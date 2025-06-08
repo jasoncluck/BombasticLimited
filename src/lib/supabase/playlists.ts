@@ -14,7 +14,7 @@ import type { CropArea } from "svelte-easy-crop";
 import { type Video } from "./videos";
 import type { Source } from "$lib/constants/source";
 
-export const PLAYLIST_VIDEO_LIMIT = 250;
+export const PLAYLIST_VIDEO_LIMIT = 100;
 
 export type Playlist = Omit<Tables<"playlists">, "search_vector"> & {
   croppedImageUrlData?: Promise<string | undefined>;
