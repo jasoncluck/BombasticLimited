@@ -401,10 +401,10 @@
       {#if user}
         <DropdownMenu.Root>
           <DropdownMenu.Trigger
-            class={buttonVariants({
-              variant: "outline",
-              size: "icon",
-            })}
+            class="cursor-pointer {buttonVariants({
+              variant: 'outline',
+              size: 'icon',
+            })}"
           >
             <UserCircle class="h-[1.2rem] w-[1.2rem]" />
             <span class="sr-only">Profile</span>

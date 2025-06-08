@@ -6,7 +6,6 @@ import {
   PUBLIC_SUPABASE_URL,
   PUBLIC_SUPABASE_ANON_KEY,
 } from "$env/static/public";
-import { getFilterOptionFromQueryParams } from "$lib/components/content/content-filter";
 
 const supabase: Handle = async ({ event, resolve }) => {
   /**
@@ -75,7 +74,7 @@ const authGuard: Handle = async ({ event, resolve }) => {
   event.locals.session = session;
   event.locals.user = user;
 
-  if (!event.locals.session && event.url.pathname.startsWith("/private")) {
+  if (!event.locals.session && (event.url.pathname.startsWith("/private") || event.url.pathname.startsWith("/account")  )) {
     redirect(303, "/auth");
   }
 
