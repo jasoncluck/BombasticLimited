@@ -67,41 +67,44 @@
     <div class="flex items-center">Results</div>
   </h1>
 
-  <a class="header-link" href={`/search/${searchString}/playlists`}>Playlists</a
-  >
+  {#if playlistSearchResults.length > 0}
+    <a class="header-link" href={`/search/${searchString}/playlists`}
+      >Playlists</a
+    >
 
-  <div class="w-[90%] mx-auto grid grid-cols-2 gap-4">
-    {#each playlistSearchResults as playlist (playlist.id)}
-      <a
-        class="grid grid-cols-[4rem_1fr] p-3 gap-4 items-center hover:bg-secondary
+    <div class="w-[90%] grid grid-cols-3 gap-4">
+      {#each playlistSearchResults as playlist (playlist.id)}
+        <a
+          class="grid grid-cols-[4rem_1fr] p-3 gap-4 items-center hover:bg-secondary
       transform ease-out transition-colors duration-150 cursor-pointer rounded"
-        href={`/playlist/${playlist.short_id}`}
-      >
-        {#if playlistImagesLoaded && playlistImages && playlistImages[playlist.id]}
-          <img
-            src={playlistImages[playlist.id]}
-            alt={playlist.name}
-            class="w-full h-full max-w-16 max-h-16 object-cover rounded justify-self-center"
-          />
-        {:else}
-          <div
-            class="h-12 w-12 flex items-center justify-center justify-self-center"
-          >
-            <ListVideo class="!h-12 !w-12" />
-          </div>
-        {/if}
+          href={`/playlist/${playlist.short_id}`}
+        >
+          {#if playlistImagesLoaded && playlistImages && playlistImages[playlist.id]}
+            <img
+              src={playlistImages[playlist.id]}
+              alt={playlist.name}
+              class="w-full h-full max-w-16 max-h-16 object-cover rounded justify-self-center"
+            />
+          {:else}
+            <div
+              class="h-12 w-12 flex items-center justify-center justify-self-center"
+            >
+              <ListVideo class="!h-12 !w-12" />
+            </div>
+          {/if}
 
-        <div class="min-w-0">
-          <p class="text-sm font-medium truncate mb-1">
-            {playlist.name}
-          </p>
-          <p class="text-xs text-muted-foreground line-clamp-3">
-            {playlist.description}
-          </p>
-        </div>
-      </a>
-    {/each}
-  </div>
+          <div class="min-w-0">
+            <p class="text-sm font-medium truncate mb-1">
+              {playlist.name}
+            </p>
+            <p class="text-xs text-muted-foreground line-clamp-3">
+              {playlist.description}
+            </p>
+          </div>
+        </a>
+      {/each}
+    </div>
+  {/if}
 
   {#each SOURCES as source (source)}
     {#if sourceVideos[source].length > 0}
