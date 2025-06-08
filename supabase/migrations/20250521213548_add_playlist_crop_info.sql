@@ -2,7 +2,7 @@
 BEGIN;
 
 -- Create the pg_jsonschema extension if it does not already exist
-CREATE EXTENSION IF NOT EXISTS pg_jsonschema;
+CREATE EXTENSION IF NOT EXISTS pg_jsonschema WITH SCHEMA extensions;
 
 COMMIT;
 

@@ -119,6 +119,7 @@ ALTER TYPE "public"."source" OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."delete_pending_videos"() RETURNS "void"
     LANGUAGE "plpgsql"
+    SET search_path = ''
     AS $$BEGIN
     -- Delete associated user_video_timestamps for videos marked for deletion
     DELETE FROM public.timestamps
@@ -135,6 +136,7 @@ ALTER FUNCTION "public"."delete_pending_videos"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps"() RETURNS TABLE("id" "text", "source" "public"."source", "title" "text", "description" "text", "thumbnail_url" "text", "published_at" timestamp with time zone, "duration" "text", "video_start_seconds" numeric, "updated_at" timestamp with time zone)
     LANGUAGE "plpgsql"
+    SET search_path = ''
     AS $$
 BEGIN
     RETURN QUERY
@@ -161,58 +163,12 @@ END;$$;
 
 ALTER FUNCTION "public"."get_videos_with_timestamps"() OWNER TO "postgres";
 
-CREATE OR REPLACE FUNCTION "public"."search_videos"("search_term" "text", "video_limit" integer DEFAULT 100, "video_source" "public"."source" DEFAULT NULL::"public"."source", "last_seen_video" "jsonb" DEFAULT NULL::"jsonb", "sort_option" "text" DEFAULT 'default'::"text", "sort_order" "text" DEFAULT 'ascending'::"text") RETURNS TABLE("id" "text", "source" "public"."source", "title" "text", "description" "text", "thumbnail_url" "text", "published_at" timestamp with time zone, "duration" "text", "video_start_seconds" numeric, "updated_at" timestamp with time zone)
-    LANGUAGE "plpgsql"
-    AS $$
-DECLARE
-    search_query text;
-BEGIN
-    -- Normalize the search term by replacing multiple spaces with a single space
-    search_term := regexp_replace(search_term, '\s+', ' ', 'g');
-    -- Sanitize the search term by removing unexpected characters, keeping periods
-    search_term := regexp_replace(search_term, '[^a-zA-Z0-9\s.]', '', 'g'); -- Remove non-alphanumeric characters except spaces and periods
 
-    search_term := trim(search_term);  -- Trim whitespace
-
-    -- Check if the sanitized search term is empty
-    IF search_term = '' THEN
-        RETURN;  -- Return an empty result set
-    END IF;
-
-    -- Construct the search query for prefix matching
-    search_query := replace(search_term, ' ', ' & ') || ':*';
-    search_query := trim(both '&' from search_query);
-
-    RETURN QUERY
-    SELECT 
-        v.id, 
-        v.source, 
-        v.title, 
-        v.description, 
-        v.thumbnail_url, 
-        v.published_at, 
-        v.duration, 
-        CASE 
-            WHEN t.user_id = (select auth.uid()) THEN t.video_start_seconds 
-            ELSE NULL 
-        END AS video_start_seconds, 
-        CASE 
-            WHEN t.user_id = (select auth.uid()) THEN t.updated_at 
-            ELSE NULL 
-        END AS updated_at
-    FROM public.videos v
-    LEFT JOIN public.timestamps t ON v.id = t.video_id -- Use LEFT JOIN to include videos without timestamps
-    WHERE v.search_vector @@ to_tsquery('english', search_query)
-    LIMIT video_limit;
-END;
-$$;
-
-
-ALTER FUNCTION "public"."search_videos"("search_term" "text", "video_limit" integer, "video_source" "public"."source", "last_seen_video" "jsonb", "sort_option" "text", "sort_order" "text") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."set_playlist_search_vector"() RETURNS "trigger"
     LANGUAGE "plpgsql"
+    SET search_path = ''
     AS $$BEGIN
   NEW.search_vector := to_tsvector('english', NEW.name);
   RETURN NEW;
@@ -224,6 +180,7 @@ ALTER FUNCTION "public"."set_playlist_search_vector"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."set_short_id"() RETURNS "trigger"
     LANGUAGE "plpgsql"
+    SET search_path = ''
     AS $$
 BEGIN
     NEW.short_id := id_encode(NEW.id);
@@ -237,6 +194,7 @@ ALTER FUNCTION "public"."set_short_id"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."set_video_search_vector"() RETURNS "trigger"
     LANGUAGE "plpgsql"
+    SET search_path = ''
     AS $$BEGIN
   NEW.search_vector := 
       setweight(to_tsvector('english', NEW.title), 'A') || 
@@ -250,6 +208,7 @@ ALTER FUNCTION "public"."set_video_search_vector"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."update_timestamp"() RETURNS "trigger"
     LANGUAGE "plpgsql"
+    SET search_path = ''
     AS $$
 BEGIN
     NEW.updated_at = now();
@@ -1295,12 +1254,6 @@ GRANT ALL ON FUNCTION "public"."delete_pending_videos"() TO "service_role";
 GRANT ALL ON FUNCTION "public"."get_videos_with_timestamps"() TO "anon";
 GRANT ALL ON FUNCTION "public"."get_videos_with_timestamps"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."get_videos_with_timestamps"() TO "service_role";
-
-
-GRANT ALL ON FUNCTION "public"."search_videos"("search_term" "text", "video_limit" integer, "video_source" "public"."source", "last_seen_video" "jsonb", "sort_option" "text", "sort_order" "text") TO "anon";
-GRANT ALL ON FUNCTION "public"."search_videos"("search_term" "text", "video_limit" integer, "video_source" "public"."source", "last_seen_video" "jsonb", "sort_option" "text", "sort_order" "text") TO "authenticated";
-GRANT ALL ON FUNCTION "public"."search_videos"("search_term" "text", "video_limit" integer, "video_source" "public"."source", "last_seen_video" "jsonb", "sort_option" "text", "sort_order" "text") TO "service_role";
-
 
 
 GRANT ALL ON FUNCTION "public"."set_playlist_search_vector"() TO "anon";

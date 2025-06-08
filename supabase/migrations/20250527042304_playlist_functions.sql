@@ -13,7 +13,7 @@ RETURNS TABLE (
 DECLARE
   max_position int2;
   current_position int2;
-  inserted_row playlist_videos%ROWTYPE;
+  inserted_row public.playlist_videos%ROWTYPE;
   v_id text;
   array_length int;
   existing_video_positions jsonb;
@@ -29,13 +29,13 @@ BEGIN
     -- Find the maximum position for this playlist
     SELECT COALESCE(MAX(pv.video_position), 0)
     INTO max_position
-    FROM playlist_videos pv
+    FROM public.playlist_videos pv
     WHERE pv.playlist_id = p_playlist_id;
     
     -- Get existing videos with their positions as a JSONB map for quick lookup
     SELECT jsonb_object_agg(pv.video_id, pv.video_position)
     INTO existing_video_positions
-    FROM playlist_videos pv
+    FROM public.playlist_videos pv
     WHERE pv.playlist_id = p_playlist_id
     AND pv.video_id = ANY(p_video_ids);
     
@@ -69,12 +69,12 @@ BEGIN
         -- Get the existing record without modifying it
         SELECT * 
         INTO inserted_row
-        FROM playlist_videos pv
+        FROM public.playlist_videos pv
         WHERE pv.playlist_id = p_playlist_id
           AND pv.video_id = v_id;
       ELSE
         -- Insert the new item
-        INSERT INTO playlist_videos (playlist_id, video_id, user_id, video_position)
+        INSERT INTO public.playlist_videos (playlist_id, video_id, user_id, video_position)
         VALUES (
           p_playlist_id,
           v_id::text,  -- Explicitly cast to text
@@ -103,7 +103,9 @@ BEGIN
       RAISE;
   END;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql
+SET search_path = '';
+
 
 CREATE OR REPLACE FUNCTION delete_playlist_videos(
   p_playlist_id int8,
@@ -131,7 +133,7 @@ BEGIN
     -- Get the positions of all videos to be deleted and store in a jsonb map
     SELECT jsonb_object_agg(pv.video_id, pv.video_position)
     INTO video_positions
-    FROM playlist_videos pv
+    FROM public.playlist_videos pv
     WHERE pv.playlist_id = p_playlist_id
     AND pv.video_id = ANY(p_video_ids);
     
@@ -147,7 +149,7 @@ BEGIN
         deleted_positions := array_append(deleted_positions, (video_positions->v_id)::int2);
         
         -- Delete the video
-        DELETE FROM playlist_videos pv
+        DELETE FROM public.playlist_videos pv
         WHERE pv.playlist_id = p_playlist_id AND pv.video_id = v_id;
         
         -- Return success for this video
@@ -173,7 +175,7 @@ BEGIN
     -- Find the maximum position after deletions
     SELECT COALESCE(MAX(pv.video_position), 0)
     INTO max_position
-    FROM playlist_videos pv
+    FROM public.playlist_videos pv
     WHERE pv.playlist_id = p_playlist_id;
     
     -- If we have deleted positions and there are still videos in the playlist,
@@ -186,10 +188,10 @@ BEGIN
           pv.id,
           pv.video_position,
           (SELECT COUNT(*) FROM unnest(deleted_positions) AS del_pos WHERE del_pos < pv.video_position) AS shift_count
-        FROM playlist_videos pv
+        FROM public.playlist_videos pv
         WHERE pv.playlist_id = p_playlist_id
       )
-      UPDATE playlist_videos pv
+      UPDATE public.playlist_videos pv
       SET video_position = pc.video_position - pc.shift_count
       FROM position_counts pc
       WHERE pv.id = pc.id
@@ -207,7 +209,7 @@ BEGIN
         -- Check if we've already returned a result for this video
         -- Fixed: reference to the correct function name
         SELECT COUNT(*) INTO affected_count
-        FROM (SELECT * FROM playlist_videos) AS results 
+        FROM (SELECT * FROM public.playlist_videos) AS results 
         WHERE results.video_id = v_id;
         
         IF affected_count = 0 THEN
@@ -224,7 +226,8 @@ BEGIN
 
   RETURN;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql
+SET search_path = '';
 
 CREATE OR REPLACE FUNCTION validate_playlist_thumbnail_urls(
   p_playlist_id INT8,
@@ -265,4 +268,5 @@ BEGIN
   -- Return true only if both URLs are valid
   RETURN thumbnail_valid AND maxres_valid;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql
+SET search_path = '';

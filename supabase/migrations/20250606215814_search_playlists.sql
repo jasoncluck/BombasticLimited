@@ -13,6 +13,7 @@ CREATE OR REPLACE FUNCTION "public"."search_playlists"(
     "created_by" uuid
 )
 LANGUAGE "plpgsql"
+SET search_path = ''
 AS $$
 DECLARE
     search_query text;

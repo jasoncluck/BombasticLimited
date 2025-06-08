@@ -31,16 +31,17 @@ RETURNS TABLE (
   playlist_position int2
 ) 
 LANGUAGE plpgsql
+SET search_path = ''
 AS $$
 DECLARE
   max_position int2;
   actual_position int2;
-  inserted_row playlists%ROWTYPE;
+  inserted_row public.playlists%ROWTYPE;
 BEGIN
   -- Find the maximum position for this user's playlists
   SELECT COALESCE(MAX(p.playlist_position), 0)
   INTO max_position
-  FROM playlists p
+  FROM public.playlists p
   WHERE p.user_id = p_user_id;
 
   -- If no position specified, use max_position + 1
@@ -59,7 +60,7 @@ BEGIN
   IF actual_position <= max_position THEN
     -- Process rows in descending order
     FOR i IN REVERSE actual_position..max_position LOOP
-      UPDATE playlists p
+      UPDATE public.playlists p
       SET playlist_position = i + 1
       WHERE p.user_id = p_user_id
         AND p.playlist_position = i;
@@ -67,7 +68,7 @@ BEGIN
   END IF;
 
   -- Insert the new playlist
-  INSERT INTO playlists (
+  INSERT INTO public.playlists (
     user_id, 
     created_by, 
     name, 
@@ -291,6 +292,7 @@ $$;
 CREATE OR REPLACE FUNCTION initialize_playlist_positions()
 RETURNS VOID
 LANGUAGE plpgsql
+ SET search_path = ''
 AS $$
 DECLARE
   r RECORD;

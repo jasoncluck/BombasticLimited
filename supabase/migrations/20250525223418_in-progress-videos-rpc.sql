@@ -1,6 +1,7 @@
 CREATE OR REPLACE FUNCTION public.get_in_progress_videos_with_timestamps()
  RETURNS TABLE(id text, source source, title text, description text, thumbnail_url text, thumbnail_maxres_url text, published_at timestamp with time zone, duration text, video_start_seconds numeric, updated_at timestamp with time zone)
  LANGUAGE plpgsql
+ SET search_path = ''
 AS $function$
 BEGIN
     RETURN QUERY
@@ -23,6 +24,7 @@ END;$function$;
 CREATE OR REPLACE FUNCTION public.get_playlist_videos(p_playlist_id int8)
  RETURNS TABLE(id text, video_position int2, source source, title text, description text, thumbnail_url text, thumbnail_maxres_url text, published_at timestamp with time zone, duration text, video_start_seconds numeric, updated_at timestamp with time zone)
  LANGUAGE plpgsql
+  SET search_path = ''
 AS $function$
 BEGIN
     RETURN QUERY
