@@ -2,23 +2,36 @@
   import * as Card from "$lib/components/ui/card";
   import { Button } from "$lib/components/ui/button";
   import { Input } from "$lib/components/ui/input";
-  import { Alert } from "$lib/components/ui/alert";
   import { Github, Loader } from "@lucide/svelte";
   import { superForm, type SuperValidated } from "sveltekit-superforms";
   import { zodClient, type Infer } from "sveltekit-superforms/adapters";
   import * as Form from "$lib/components/ui/form";
   import { signupSchema, type SignupSchema } from "./schema";
+  import type { AuthFlash } from "./+page.svelte";
+  import * as Alert from "$lib/components/ui/alert/index.js";
+  import { onMount } from "svelte";
 
   let {
     data,
     onToggle,
+    flash,
+    currentEmail = $bindable(),
   }: {
     data: { form: SuperValidated<Infer<SignupSchema>> };
     onToggle: () => void;
+    flash: AuthFlash;
+    currentEmail: string;
   } = $props();
 
   const signupForm = superForm(data.form, {
     validators: zodClient(signupSchema),
+    validationMethod: "onsubmit",
+    onChange() {
+      if ($flash && $flash.message) {
+        $flash.message = null;
+        $flash.type = null;
+      }
+    },
     onResult() {
       console.log("signup: in on result");
     },
@@ -31,6 +44,12 @@
   let isSubmitting = $state(false);
 
   const { form: formData, enhance } = signupForm;
+
+  onMount(() => {
+    if (currentEmail) {
+      $formData.email = currentEmail;
+    }
+  });
 </script>
 
 <Card.Root class="p-6">
@@ -42,7 +61,7 @@
   </Card.Header>
 
   <form method="POST" action="?/signup" use:enhance>
-    <Card.Content class="grid gap-4">
+    <Card.Content class="grid gap-4 mb-4">
       <div class="grid grid-cols-2 gap-6">
         <Button variant="outline" type="button">
           <Github />
@@ -93,8 +112,6 @@
                 {...props}
                 class="col-span-3"
                 bind:value={$formData.username}
-                autocomplete="username"
-                placeholder="johndoe"
               />
             {/snippet}
           </Form.Control>
@@ -121,8 +138,15 @@
         </div>
         <Form.FieldErrors class="mb-2" />
       </Form.Field>
+      {#if $flash?.message && $flash?.type}
+        <Alert.Root>
+          <Alert.Title
+            >{$flash.type === "error" ? "Error" : "Success"}</Alert.Title
+          >
+          <Alert.Description>{$flash.message}</Alert.Description>
+        </Alert.Root>
+      {/if}
     </Card.Content>
-
     <Card.Footer class="grid gap-4">
       <Button class="w-full" type="submit" disabled={isSubmitting}>
         {#if isSubmitting}
@@ -136,7 +160,10 @@
         type="button"
         class="w-full cursor-pointer"
         disabled={isSubmitting}
-        onclick={onToggle}
+        onclick={() => {
+          currentEmail = $formData.email;
+          onToggle();
+        }}
       >
         Already have an account? Login
       </Button>

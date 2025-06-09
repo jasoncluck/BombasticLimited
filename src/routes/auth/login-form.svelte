@@ -8,29 +8,54 @@
   import * as Alert from "$lib/components/ui/alert/index.js";
   import * as Form from "$lib/components/ui/form";
   import { type LoginSchema, loginSchema } from "./schema";
+  import type { Writable } from "svelte/store";
+  import type { AuthFlash } from "./+page.svelte";
+  import { onMount } from "svelte";
 
   let {
     data,
     onToggle,
+    flash,
+    currentEmail = $bindable(),
   }: {
     data: { form: SuperValidated<Infer<LoginSchema>> };
     onToggle: () => void;
+    flash: AuthFlash;
+    currentEmail: string;
   } = $props();
 
   const loginForm = superForm(data.form, {
     validators: zodClient(loginSchema),
-    onResult() {
-      console.log("login: in on result");
+    validationMethod: "onsubmit",
+    onChange() {
+      console.log("on change");
+      if ($flash && $flash.message) {
+        $flash.message = null;
+        $flash.type = null;
+      }
     },
-    onUpdated(event) {
-      console.log("login: in on updated");
-      console.log(event);
+
+    onSubmit() {
+      console.log($flash);
+      isSubmitting = true;
     },
+    onResult(event) {
+      if (event.result.type !== "success") {
+        isSubmitting = false;
+      }
+    },
+    onUpdated(event) {},
   });
 
   let isSubmitting = $state(false);
 
   const { form: formData, enhance } = loginForm;
+
+  onMount(() => {
+    if (currentEmail) {
+      $formData.email = currentEmail;
+    }
+  });
 </script>
 
 <Card.Root class="p-6 gap-6">
@@ -59,60 +84,65 @@
         </div>
       </div>
 
-      <Form.Field form={loginForm} name="email">
-        <div
-          class="md:grid md:grid-cols-4 items-center flex flex-wrap gap-2 md:gap-4"
-        >
-          <Form.Control>
-            {#snippet children({ props })}
-              <Form.Label class="text-right">Email</Form.Label>
-              <Input
-                {...props}
-                class="col-span-3"
-                bind:value={$formData.email}
-                autocomplete="email"
-                type="email"
-                placeholder="user@example.com"
-              />
-            {/snippet}
-          </Form.Control>
-        </div>
-        <Form.FieldErrors class="mb-2" />
-      </Form.Field>
+      <div class="flex flex-col gap-4 mb-4">
+        <Form.Field form={loginForm} name="email">
+          <div
+            class="md:grid md:grid-cols-4 items-center flex flex-wrap gap-2 md:gap-4"
+          >
+            <Form.Control>
+              {#snippet children({ props })}
+                <Form.Label class="text-right">Email</Form.Label>
+                <Input
+                  {...props}
+                  class="col-span-3"
+                  bind:value={$formData.email}
+                  autocomplete="email"
+                  type="email"
+                  placeholder="user@example.com"
+                />
+              {/snippet}
+            </Form.Control>
+          </div>
+          <Form.FieldErrors class="mb-2" />
+        </Form.Field>
 
-      <Form.Field form={loginForm} name="password">
-        <div
-          class="md:grid md:grid-cols-4 items-center flex flex-wrap gap-2 md:gap-4"
-        >
-          <Form.Control>
-            {#snippet children({ props })}
-              <Form.Label class="text-right">Password</Form.Label>
-              <Input
-                {...props}
-                class="col-span-3"
-                bind:value={$formData.password}
-                autocomplete="current-password"
-                type="password"
-              />
-            {/snippet}
-          </Form.Control>
-        </div>
-        <Form.FieldErrors class="mb-2" />
-      </Form.Field>
-      <Alert.Root>
-        <Alert.Title>Success! Your changes have been saved</Alert.Title>
-        <Alert.Description
-          >This is an alert with icon, title and description.</Alert.Description
-        >
-      </Alert.Root>
+        <Form.Field form={loginForm} name="password">
+          <div
+            class="md:grid md:grid-cols-4 items-center flex flex-wrap gap-2 md:gap-4"
+          >
+            <Form.Control>
+              {#snippet children({ props })}
+                <Form.Label class="text-right">Password</Form.Label>
+                <Input
+                  {...props}
+                  class="col-span-3"
+                  bind:value={$formData.password}
+                  autocomplete="current-password"
+                  type="password"
+                />
+              {/snippet}
+            </Form.Control>
+          </div>
+          <Form.FieldErrors class="mb-2" />
+        </Form.Field>
+        {#if $flash?.message && $flash?.type}
+          <Alert.Root>
+            <Alert.Title
+              >{$flash.type === "error" ? "Error" : "Success"}</Alert.Title
+            >
+            <Alert.Description>{$flash.message}</Alert.Description>
+          </Alert.Root>
+        {/if}
+      </div>
     </Card.Content>
 
-    <Card.Footer>
+    <Card.Footer class="grid gap-4">
       <Button class="w-full" type="submit" disabled={isSubmitting}>
         {#if isSubmitting}
           <Loader class="animate-spin mr-2" />
+        {:else}
+          Login
         {/if}
-        Login
       </Button>
 
       <Button
@@ -120,7 +150,10 @@
         type="button"
         class="w-full cursor-pointer"
         disabled={isSubmitting}
-        onclick={onToggle}
+        onclick={() => {
+          currentEmail = $formData.email;
+          onToggle();
+        }}
       >
         Create a new account
       </Button>

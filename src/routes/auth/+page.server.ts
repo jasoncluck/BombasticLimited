@@ -63,6 +63,7 @@ export const actions: Actions = {
           type: "signup",
           email,
         });
+
         redirect(`/auth/verify?email=${email}`, {
           type: 'success', message: "Account verification needed"
         }, cookies);

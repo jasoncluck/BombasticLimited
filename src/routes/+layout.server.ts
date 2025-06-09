@@ -2,8 +2,9 @@ import type { ContentView } from "$lib/components/content/content";
 import { getFilterOptionFromQueryParams } from "$lib/components/content/content-filter";
 import { getPlaylists } from "$lib/supabase/playlists";
 import type { LayoutServerLoad } from "./$types";
+import { loadFlash } from 'sveltekit-flash-message/server';
 
-export const load: LayoutServerLoad = async ({
+export const load: LayoutServerLoad = loadFlash(async ({
   locals: { safeGetSession, supabase },
   cookies,
   url,
@@ -45,4 +46,4 @@ export const load: LayoutServerLoad = async ({
     cookies: cookies.getAll(),
     layout,
   };
-};
+});
