@@ -64,6 +64,10 @@
   }
 
   onMount(() => {
+    if (!session) {
+      playlistImagesLoaded = true;
+      return;
+    }
     const playlistImageUrls = playlists.map(async (p) => {
       const imageUrl = await getCroppedPlaylistImageUrl({
         imageProperties: p.image_properties,
@@ -249,7 +253,7 @@
 </script>
 
 <nav class="h-full">
-  <div class="flex flex-col gap-2 mx-2 my-3">
+  <div class="flex flex-col my-3">
     {#each SOURCES as source (source)}
       <Button
         variant="ghost"
@@ -291,9 +295,8 @@
   </div>
   <hr class="mx-2" />
   <div
-    class="flex flex-col gap-2 px-4 mt-3 mb-3
-    min-w-[4px] mx-2
-    {!isSidebarCollapsed ? 'items-start' : 'items-center'}"
+    class="flex flex-col my-3 min-w-[4px]
+    {!isSidebarCollapsed ? 'items-start ml-6' : 'items-center'}"
   >
     <div class="flex items-center h-[44px]">
       {#if !session?.user.id}
@@ -334,13 +337,13 @@
   </div>
 
   <div
-    class="flex flex-col m-2 border-1
+    class="flex flex-col mr-1 border-1
     {contentState.dragContentType === 'video'
       ? 'border-secondary border-1 '
       : 'border-transparent'}"
   >
     {#if playlists === null || !playlistImagesLoaded}
-      <Loader class="animate-spin mr-2 w-full" />
+      <Loader class="animate-spin  w-full" />
     {:else}
       {#each playlists as playlist, i (playlist.id)}
         <PlaylistContextMenu

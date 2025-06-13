@@ -8,7 +8,6 @@
   import * as Alert from "$lib/components/ui/alert/index.js";
   import * as Form from "$lib/components/ui/form";
   import { type LoginSchema, loginSchema } from "./schema";
-  import type { Writable } from "svelte/store";
   import type { AuthFlash } from "./+page.svelte";
   import { onMount } from "svelte";
 
@@ -40,11 +39,11 @@
       isSubmitting = true;
     },
     onResult(event) {
-      if (event.result.type !== "success") {
+      if (event.result.type !== "redirect") {
+        console.log("in not success");
         isSubmitting = false;
       }
     },
-    onUpdated(event) {},
   });
 
   let isSubmitting = $state(false);
