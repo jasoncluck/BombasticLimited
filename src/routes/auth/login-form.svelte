@@ -8,30 +8,27 @@
   import * as Alert from "$lib/components/ui/alert/index.js";
   import * as Form from "$lib/components/ui/form";
   import { type LoginSchema, loginSchema } from "./schema";
-  import type { AuthFlash } from "./+page.svelte";
   import { onMount } from "svelte";
+  import { getFlash } from "sveltekit-flash-message";
+  import { page } from "$app/state";
 
   let {
     data,
     onToggle,
-    flash,
     currentEmail = $bindable(),
   }: {
     data: { form: SuperValidated<Infer<LoginSchema>> };
     onToggle: () => void;
-    flash: AuthFlash;
     currentEmail: string;
   } = $props();
+
+  const flash = getFlash(page);
 
   const loginForm = superForm(data.form, {
     validators: zodClient(loginSchema),
     validationMethod: "onsubmit",
     onChange() {
       console.log("on change");
-      if ($flash && $flash.message) {
-        $flash.message = null;
-        $flash.type = null;
-      }
     },
 
     onSubmit() {
@@ -58,7 +55,7 @@
 </script>
 
 <Card.Root class="p-6 gap-6">
-  <Card.Header class="">
+  <Card.Header>
     <Card.Title class="text-2xl">Login</Card.Title>
     <Card.Description>Enter your email and password to log in</Card.Description>
   </Card.Header>
@@ -85,9 +82,7 @@
 
       <div class="flex flex-col gap-4 mb-4">
         <Form.Field form={loginForm} name="email">
-          <div
-            class="md:grid md:grid-cols-4 items-center flex flex-wrap gap-2 md:gap-4"
-          >
+          <div class="items-center flex flex-wrap gap-2">
             <Form.Control>
               {#snippet children({ props })}
                 <Form.Label class="text-right">Email</Form.Label>
@@ -106,9 +101,7 @@
         </Form.Field>
 
         <Form.Field form={loginForm} name="password">
-          <div
-            class="md:grid md:grid-cols-4 items-center flex flex-wrap gap-2 md:gap-4"
-          >
+          <div class=" items-center flex flex-wrap gap-2">
             <Form.Control>
               {#snippet children({ props })}
                 <Form.Label class="text-right">Password</Form.Label>
@@ -136,7 +129,11 @@
     </Card.Content>
 
     <Card.Footer class="grid gap-4">
-      <Button class="w-full" type="submit" disabled={isSubmitting}>
+      <Button
+        class="w-full cursor-pointer"
+        type="submit"
+        disabled={isSubmitting}
+      >
         {#if isSubmitting}
           <Loader class="animate-spin mr-2" />
         {:else}

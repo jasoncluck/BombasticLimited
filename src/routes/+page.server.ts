@@ -8,16 +8,22 @@ import {
   getVideos,
   type SourceVideos,
 } from "$lib/supabase/videos";
+import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({
   parent,
   locals: { supabase, session },
+  url,
   depends,
 }) => {
   depends("supabase:db:videos");
 
   const { playlists } = await parent();
+
+  if (url.searchParams.has("error")) {
+    redirect(303, "/auth/error");
+  }
 
   const NUM_CAROUSEL_VIDEOS = 30;
 

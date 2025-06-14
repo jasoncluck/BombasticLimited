@@ -7,31 +7,26 @@
   import { zodClient, type Infer } from "sveltekit-superforms/adapters";
   import * as Form from "$lib/components/ui/form";
   import { signupSchema, type SignupSchema } from "./schema";
-  import type { AuthFlash } from "./+page.svelte";
   import * as Alert from "$lib/components/ui/alert/index.js";
   import { onMount } from "svelte";
+  import { page } from "$app/state";
+  import { getFlash } from "sveltekit-flash-message";
 
   let {
     data,
     onToggle,
-    flash,
     currentEmail = $bindable(),
   }: {
     data: { form: SuperValidated<Infer<SignupSchema>> };
     onToggle: () => void;
-    flash: AuthFlash;
     currentEmail: string;
   } = $props();
+
+  const flash = getFlash(page);
 
   const signupForm = superForm(data.form, {
     validators: zodClient(signupSchema),
     validationMethod: "onsubmit",
-    onChange() {
-      if ($flash && $flash.message) {
-        $flash.message = null;
-        $flash.type = null;
-      }
-    },
     onResult() {
       console.log("signup: in on result");
     },
@@ -81,9 +76,7 @@
       </div>
 
       <Form.Field form={signupForm} name="email">
-        <div
-          class="md:grid md:grid-cols-4 items-center flex flex-wrap gap-2 md:gap-4"
-        >
+        <div class=" items-center flex flex-wrap gap-2">
           <Form.Control>
             {#snippet children({ props })}
               <Form.Label class="text-right">Email</Form.Label>
@@ -102,9 +95,7 @@
       </Form.Field>
 
       <Form.Field form={signupForm} name="username">
-        <div
-          class="md:grid md:grid-cols-4 items-center flex flex-wrap gap-2 md:gap-4"
-        >
+        <div class="items-center flex flex-wrap gap-2">
           <Form.Control>
             {#snippet children({ props })}
               <Form.Label class="text-right">Username</Form.Label>
@@ -120,9 +111,7 @@
       </Form.Field>
 
       <Form.Field form={signupForm} name="password">
-        <div
-          class="md:grid md:grid-cols-4 items-center flex flex-wrap gap-2 md:gap-4"
-        >
+        <div class="items-center flex flex-wrap gap-2">
           <Form.Control>
             {#snippet children({ props })}
               <Form.Label class="text-right">Password</Form.Label>
@@ -148,7 +137,11 @@
       {/if}
     </Card.Content>
     <Card.Footer class="grid gap-4">
-      <Button class="w-full" type="submit" disabled={isSubmitting}>
+      <Button
+        class="w-full cursor-pointer"
+        type="submit"
+        disabled={isSubmitting}
+      >
         {#if isSubmitting}
           <Loader class="animate-spin mr-2" />
         {/if}

@@ -3,68 +3,123 @@
   import Input from "$lib/components/ui/input/input.svelte";
   import { superForm, type SuperValidated } from "sveltekit-superforms";
   import { zodClient, type Infer } from "sveltekit-superforms/adapters";
-  import { signupSchema, type SignupSchema } from "./schema";
+  import * as Alert from "$lib/components/ui/alert/index.js";
+  import {
+    emailSchema,
+    passwordSchema,
+    usernameSchema,
+    type EmailSchema,
+    type PasswordSchema,
+    type UsernameSchema,
+  } from "../auth/schema";
   import Button from "$lib/components/ui/button/button.svelte";
-  import { Loader } from "@lucide/svelte";
+  import { getFlash } from "sveltekit-flash-message";
+  import { page } from "$app/state";
+  import type { Session } from "@supabase/supabase-js";
 
-  let { data }: { data: { form: SuperValidated<Infer<SignupSchema>> } } =
-    $props();
+  let {
+    data,
+  }: {
+    data: {
+      emailForm: SuperValidated<Infer<EmailSchema>>;
+      usernameForm: SuperValidated<Infer<UsernameSchema>>;
+      passwordForm: SuperValidated<Infer<PasswordSchema>>;
+      session: Session;
+    };
+  } = $props();
 
-  console.log(data.form);
+  const { session } = $derived(data);
 
-  const accountForm = superForm(data.form, {
-    validators: zodClient(signupSchema),
+  const flash = getFlash(page);
+
+  let isPendingVerificationEmail = $state(false);
+
+  const emailForm = superForm(data.emailForm, {
+    validators: zodClient(emailSchema),
+    onUpdated(event) {
+      isPendingVerificationEmail = true;
+      console.log("in updated");
+      console.log(event.form.message);
+    },
   });
 
-  let isSubmitting = $state(false);
+  const usernameForm = superForm(data.usernameForm, {
+    validators: zodClient(usernameSchema),
+  });
 
-  const { form: formData, enhance } = $derived(accountForm);
+  const passwordForm = superForm(data.passwordForm, {
+    validators: zodClient(passwordSchema),
+  });
+
+  const { form: emailFormData, enhance: emailEnhance } = $derived(emailForm);
+  const { form: usernameFormData, enhance: usernameEnhance } =
+    $derived(usernameForm);
+  // TODO: Add change password
+  // const { form: passwordFormData, enhance: passwordEnhance } =
+  //   $derived(passwordSchema);
+  //
 </script>
 
 <div class="flex flex-row justify-center">
-  <form use:enhance method="POST" class="mt-24 grid grid-cols-2">
-    <div class="flex flex-col relative grow gap-2">
-      <Form.Field form={accountForm} name="email">
-        <div
-          class="md:grid md:grid-cols-4 items-center flex flex-wrap gap-2 md:gap-4"
-        >
+  <div class="flex flex-col gap-4">
+    <h1 class="header-primary">Account settings</h1>
+    <form use:emailEnhance method="POST" action="?/updateEmail">
+      <Form.Field form={emailForm} name="email">
+        <div class="grid grid-cols-5 items-center gap-4">
           <Form.Control>
             {#snippet children({ props })}
               <Form.Label for="name" class="text-right">Email</Form.Label>
               <Input
                 {...props}
                 class="col-span-3"
-                bind:value={$formData.email}
+                bind:value={$emailFormData.email}
               />
+              <Button
+                type="submit"
+                variant="secondary"
+                class="cursor-pointer col-span-1"
+                disabled={$emailFormData.email === session.user.email}
+              >
+                Update</Button
+              >
             {/snippet}
           </Form.Control>
         </div>
         <Form.FieldErrors class="mb-2" />
       </Form.Field>
-      <Form.Field form={accountForm} name="username">
-        <div
-          class="md:grid md:grid-cols-4 items-center flex flex-wrap gap-2 md:gap-4"
-        >
+      {#if $flash?.message && $flash?.type}
+        <Alert.Root>
+          <Alert.Title
+            >{$flash.type === "error" ? "Error" : "Success"}</Alert.Title
+          >
+          <Alert.Description>{$flash.message}</Alert.Description>
+        </Alert.Root>
+      {:else if isPendingVerificationEmail}
+        <Alert.Root>
+          <Alert.Title>Email sent</Alert.Title>
+          <Alert.Description
+            >Click the verification link in the sent email to change your
+            account email.</Alert.Description
+          >
+        </Alert.Root>
+      {/if}
+    </form>
+    <form use:usernameEnhance method="POST">
+      <Form.Field form={usernameForm} name="username">
+        <div class="grid grid-cols-5 items-center gap-2">
           <Form.Control>
             {#snippet children({ props })}
               <Form.Label for="name" class="text-right">Username</Form.Label>
               <Input
                 {...props}
                 class="col-span-3"
-                bind:value={$formData.username}
+                bind:value={$usernameFormData.username}
               />
             {/snippet}
           </Form.Control>
         </div>
         <Form.FieldErrors class="mb-2" />
       </Form.Field>
-      <Button type="submit">
-        {#if isSubmitting}
-          <Loader class="animate-spin" />
-        {:else}
-          Save Changes
-        {/if}
-      </Button>
-    </div>
-  </form>
+    </form>
+  </div>
 </div>

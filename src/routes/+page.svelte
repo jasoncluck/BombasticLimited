@@ -26,7 +26,7 @@
 </script>
 
 <div class="flex flex-col w-full relative">
-  {#if session}
+  {#if session && continueWatchingVideos.length > 0}
     <div class="flex flex-col bg-background-lighter mb-10 gap-4">
       <a href="/continue" class="header-link hover:underline cursor-pointer">
         Continue Watching

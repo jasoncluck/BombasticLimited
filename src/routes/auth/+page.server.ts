@@ -1,6 +1,6 @@
 import { fail } from "@sveltejs/kit";
 
-import { redirect, setFlash } from 'sveltekit-flash-message/server';
+import { redirect, setFlash } from "sveltekit-flash-message/server";
 import type { Actions, PageServerLoad } from "./$types";
 import { superValidate } from "sveltekit-superforms";
 import { zod } from "sveltekit-superforms/adapters";
@@ -12,14 +12,12 @@ export const load: PageServerLoad = async () => {
 
   return {
     loginForm,
-    signupForm
+    signupForm,
   };
-
 };
 
 export const actions: Actions = {
   signup: async ({ request, cookies, locals: { supabase } }) => {
-
     const form = await superValidate(request, zod(signupSchema));
     const { email, username, password } = form.data;
 
@@ -29,17 +27,20 @@ export const actions: Actions = {
       options: {
         data: {
           username,
-        }
-      }
+        },
+      },
     });
 
     if (error) {
-      setFlash({ type: 'error', message: error.message }, cookies);
-      console.log(error)
-      return fail(400, { form })
+      setFlash({ type: "error", message: error.message }, cookies);
+      console.log(error);
+      return fail(400, { form });
     } else {
-      redirect(`/auth/verify?email=${email}`, { type: 'success', message: "Account created successfully" }, cookies);
-
+      redirect(
+        `/auth/verify?email=${email}`,
+        { type: "success", message: "Account created successfully" },
+        cookies,
+      );
     }
   },
   login: async ({ request, cookies, locals: { supabase } }) => {
@@ -64,13 +65,18 @@ export const actions: Actions = {
           email,
         });
 
-        redirect(`/auth/verify?email=${email}`, {
-          type: 'success', message: "Account verification needed"
-        }, cookies);
+        redirect(
+          `/auth/verify?email=${email}`,
+          {
+            type: "success",
+            message: "Account verification needed",
+          },
+          cookies,
+        );
       }
 
-      setFlash({ type: 'error', message: error.message }, cookies);
-      console.log(error)
+      setFlash({ type: "error", message: error.message }, cookies);
+      console.log(error);
       return fail(400, { form });
     } else {
       redirect(303, "/");

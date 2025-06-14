@@ -44,7 +44,7 @@
   const selectedPlaylistIdParam = $derived(page.params.shortId);
 
   const contentState = getContentState();
-  let playlistImagesLoaded = $state(false);
+  let playlistImagesLoaded = $state(!session);
 
   let draggedIndex = $state<number | null>(null);
   let targetIndex = $state<number | null>(null);
@@ -305,7 +305,7 @@
             class={buttonVariants({
               variant: "secondary",
               size: "icon",
-              class: "my-1 rounded-full",
+              class: "my-1 rounded-full cursor-pointer",
             })}
           >
             <Plus />

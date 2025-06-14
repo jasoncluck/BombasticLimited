@@ -3,7 +3,7 @@
 </script>
 
 <div class="flex justify-center w-full h-full">
-  <div class="w-full h-full max-w-[1400px]">
+  <div class="w-full h-full max-w-[1000px]">
     <div class="relative pb-[56.25%] h-0">
       <div
         id={divId}

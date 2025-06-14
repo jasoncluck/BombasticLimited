@@ -485,7 +485,7 @@
       >
         <div class="flex flex-col p-4 justify-center items-center">
           <div class="@xl:max-w-[1450px] max-w-[1000px] w-full">
-            <div class="flex flex-col mb-20 gap-1">
+            <div class="flex flex-col mb-20">
               {@render children()}
             </div>
           </div>
