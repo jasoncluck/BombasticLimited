@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from "$app/state";
   import {
     carouselStateKeys,
     type CarouselsState,
@@ -6,12 +7,16 @@
   import Content from "$lib/components/content/content.svelte";
   import { SOURCE_INFO, SOURCES } from "$lib/constants/source";
 
+  import * as Alert from "$lib/components/ui/alert/index.js";
   import { userPreferences } from "$lib/state/user-preferences.svelte.js";
   import type { Snapshot } from "./$types.js";
   let { data } = $props();
 
   let { sourceVideos, continueWatchingVideos, playlists, session, supabase } =
     $derived(data);
+
+  console.log(page.url.searchParams);
+  const hasUpdatedEmail = $derived(page.url.searchParams.has("code"));
 
   export const snapshot: Snapshot<CarouselsState> = {
     capture: () => carouselsState,
@@ -24,6 +29,15 @@
     ) as CarouselsState,
   );
 </script>
+
+{#if hasUpdatedEmail}
+  <Alert.Root>
+    <Alert.Title>Email updated</Alert.Title>
+    <Alert.Description
+      >The email address for your account has been updated successfully.</Alert.Description
+    >
+  </Alert.Root>
+{/if}
 
 <div class="flex flex-col w-full relative">
   {#if session && continueWatchingVideos.length > 0}

@@ -16,7 +16,7 @@
   import { pageState } from "$lib/state/page.svelte";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
-  import { getFilterKeysForView, getSortKeysForView } from "./content-filter";
+  import { getFilterKeysForView } from "./content-filter";
 
   type ContentCardProps = {
     video: Video | VideoWithTimestamp;
@@ -148,7 +148,7 @@
 </script>
 
 <a
-  class="group transition-transform duration-300 transform
+  class="group transition-transform duration-150 transform
   will-change-transform bg-background-lighter cursor-pointer block mb-6
   hover:z-auto {manualHover ? 'z-40' : ''}"
   onclick={contentState.isSelectionMode
@@ -231,7 +231,7 @@
       {/if}
     </div>
     <p
-      class="text-sm p-2 bg-background-lighter transition-colors duration-300 ease-out
+      class="text-sm p-2 bg-background-lighter transition-colors duration-150 ease-out
       {manualHover ? '@sm:bg-secondary' : ''}"
     >
       {video.title}

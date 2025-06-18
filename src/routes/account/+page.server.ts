@@ -3,6 +3,7 @@ import type { Actions, PageServerLoad } from "./$types";
 import { fail, superValidate } from "sveltekit-superforms";
 import { emailSchema, passwordSchema, usernameSchema } from "../auth/schema";
 import { redirect, setFlash } from "sveltekit-flash-message/server";
+import { isUsernameUnique } from "$lib/supabase/accounts";
 
 export const load: PageServerLoad = async ({ locals: { session } }) => {
   if (!session) {
@@ -40,15 +41,69 @@ export const actions: Actions = {
       {
         email: email,
       },
-      { emailRedirectTo: "http://localhost:5173/auth/confirm" },
+      { emailRedirectTo: "http://localhost:5173/auth/email/confirm" },
     );
 
     if (error) {
-      setFlash({ type: "error", message: error.message }, cookies);
-      console.log(error);
+      setFlash(
+        { type: "error", message: error.message, field: "email" },
+        cookies,
+      );
+      console.error(error);
       return fail(400, { form });
     } else {
-      console.log(data);
+      setFlash(
+        {
+          type: "success",
+          message: `Emails with confirmation links have sent to both the new email: ${data.user.new_email} and the current email ${data.user.email}. The email will be updated once both links have been confirmed. `,
+          field: "email",
+        },
+        cookies,
+      );
+      return {
+        form,
+      };
+    }
+  },
+
+  updateUsername: async ({ request, cookies, locals: { supabase } }) => {
+    const form = await superValidate(request, zod(usernameSchema));
+    const { username } = form.data;
+
+    const isUnique = await isUsernameUnique({ username, supabase });
+
+    if (!isUnique) {
+      setFlash(
+        {
+          type: "error",
+          message: "Username already taken, please choose another one.",
+          field: "username",
+        },
+        cookies,
+      );
+      return fail(400, { form });
+    }
+
+    const { data, error } = await supabase.auth.updateUser({
+      data: { username },
+    });
+
+    if (error) {
+      setFlash(
+        { type: "error", message: error.message, field: "username" },
+        cookies,
+      );
+      console.error(error);
+      return fail(400, { form });
+    } else {
+      setFlash(
+        {
+          type: "success",
+          message: `Updated username to ${data.user.user_metadata.username}`,
+          field: "username",
+        },
+        cookies,
+      );
       return {
         form,
       };

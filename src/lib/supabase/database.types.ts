@@ -206,6 +206,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_unique_username: {
+        Args: { p_username: string }
+        Returns: boolean
+      }
       delete_pending_videos: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -313,22 +317,6 @@ export type Database = {
           video_position: number
         }[]
       }
-      json_matches_schema: {
-        Args: { schema: Json; instance: Json }
-        Returns: boolean
-      }
-      jsonb_matches_schema: {
-        Args: { schema: Json; instance: Json }
-        Returns: boolean
-      }
-      jsonschema_is_valid: {
-        Args: { schema: Json }
-        Returns: boolean
-      }
-      jsonschema_validation_errors: {
-        Args: { schema: Json; instance: Json }
-        Returns: string[]
-      }
       search_playlists: {
         Args: { search_term: string; playlist_limit?: number }
         Returns: {
@@ -344,14 +332,7 @@ export type Database = {
         }[]
       }
       search_videos: {
-        Args: {
-          search_term: string
-          video_limit?: number
-          video_source?: Database["public"]["Enums"]["source"]
-          last_seen_video?: Json
-          sort_option?: string
-          sort_order?: string
-        }
+        Args: { search_term: string }
         Returns: {
           id: string
           source: Database["public"]["Enums"]["source"]

@@ -15,10 +15,14 @@ declare global {
     }
     interface PageData {
       session: Session | null;
-      flash?: { type: 'success' | 'error'; message: string };
+      flash?: {
+        type: "success" | "error";
+        message: string;
+        field?: "email" | "username" | "password";
+      };
     }
     // interface PageState {}
     // interface Platform {}
   }
 }
-export { };
+export {};

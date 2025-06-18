@@ -34,11 +34,6 @@ export const populateVideos = async ({
     auth: process.env.GOOGLE_API_KEY,
   });
 
-  /*
-   * There is some odd curPage logic in here but the idea is to clean up removed videos by tagging the first 50 videos as pending delete then getting 100 videos.
-   * Assuming there are less than 50 videos since the last run there won't be any missed videos during the update.
-   * The repopulate flag should be used to check for staleness across all videos from a source.
-   */
   let curPage = 1;
   const videosToCheck = repopulate
     ? Number.MAX_SAFE_INTEGER
@@ -51,13 +46,38 @@ export const populateVideos = async ({
       .update({ pending_delete: true })
       .eq("source", source);
   } else {
-    // Only mark the number of videos we'll actually fetch from YouTube
-    await supabaseClient
+    // First, get the IDs of the videos we want to mark as pending_delete
+    const { data: videosToMark, error } = await supabaseClient
       .from("videos")
-      .update({ pending_delete: true })
+      .select("id")
       .eq("source", source)
       .order("published_at", { ascending: false })
-      .limit(videosToCheck); // This ensures we only mark videos we'll check
+      .limit(videosToCheck);
+
+    if (error) {
+      console.error("Error fetching videos to mark:", error);
+      throw new Error("Failed to fetch videos for marking");
+    }
+
+    // Only mark videos as pending_delete if we found any
+    if (videosToMark && videosToMark.length > 0) {
+      const videoIds = videosToMark.map((video) => video.id);
+
+      const { error: updateError } = await supabaseClient
+        .from("videos")
+        .update({ pending_delete: true })
+        .eq("source", source)
+        .in("id", videoIds);
+
+      if (updateError) {
+        console.error("Error marking videos as pending delete:", updateError);
+        throw new Error("Failed to mark videos as pending delete");
+      }
+
+      console.log(
+        `Marked ${videoIds.length} videos as pending delete for source: ${source}`,
+      );
+    }
   }
 
   let pageToken: string | null | undefined;
@@ -81,7 +101,7 @@ export const populateVideos = async ({
       .filter((id): id is string => !!id);
 
     let videoDetails: { id: string; duration: string }[] = [];
-    if (videoIds) {
+    if (videoIds.length > 0) {
       const { data: videoData } = await youtubeClient.videos.list({
         part: ["id", "contentDetails"],
         id: videoIds,
@@ -126,12 +146,12 @@ export const populateVideos = async ({
 
     try {
       for (const video of videos) {
-        const response = await supabaseClient
+        const { error } = await supabaseClient
           .from("videos")
           .upsert(video, { onConflict: "id" });
 
-        if (response.status > 201) {
-          console.error(response);
+        if (error) {
+          console.error("Error upserting video:", error);
         } else {
           console.log(`Stored video: ${video.title}`);
         }
@@ -142,10 +162,29 @@ export const populateVideos = async ({
 
     if (repopulate || curPage <= DEFAULT_NUM_PAGES) {
       curPage++;
-      if (!repopulate && curPage === DEFAULT_NUM_PAGES) {
+      if (!repopulate && curPage > DEFAULT_NUM_PAGES) {
         break;
       }
       pageToken = nextPageToken;
     }
   } while (pageToken);
+
+  // At the end, you should clean up videos that are still marked as pending_delete
+  // This is the final step that actually removes videos that are no longer in the YouTube playlist
+  const { error: deleteError } = await supabaseClient
+    .from("videos")
+    .delete()
+    .eq("source", source)
+    .eq("pending_delete", true);
+
+  if (deleteError) {
+    console.error(
+      "Error deleting videos marked as pending_delete:",
+      deleteError,
+    );
+  } else {
+    console.log(
+      `Cleaned up videos marked as pending_delete for source: ${source}`,
+    );
+  }
 };

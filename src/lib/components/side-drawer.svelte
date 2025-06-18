@@ -49,7 +49,7 @@
         {#each SOURCES as source (source)}
           <Button
             variant="ghost"
-            class="w-full flex justify-start h-[64px]"
+            class="w-full flex justify-start h-[64px] relative"
             onclick={() => {
               goto(`/${source}`);
               isOpen = false;
@@ -58,7 +58,7 @@
           >
             {#if activeStreams.sources.includes(source)}
               <Circle
-                class="absolute left-0 bottom-0"
+                class="absolute left-2 bottom-2"
                 fill="#eb0400"
                 strokeWidth={0}
               />

@@ -1,48 +1,23 @@
-import { fail } from "@sveltejs/kit";
-
-import { redirect, setFlash } from "sveltekit-flash-message/server";
-import type { Actions, PageServerLoad } from "./$types";
-import { superValidate } from "sveltekit-superforms";
+import { type Actions } from "@sveltejs/kit";
+import { fail, superValidate } from "sveltekit-superforms";
 import { zod } from "sveltekit-superforms/adapters";
-import { loginSchema, signupSchema } from "./schema";
+import { loginSchema } from "../schema";
+import { redirect, setFlash } from "sveltekit-flash-message/server";
+import type { PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals: { session } }) => {
   const loginForm = await superValidate(zod(loginSchema));
-  const signupForm = await superValidate(zod(signupSchema));
+
+  if (session) {
+    redirect(303, "/");
+  }
 
   return {
     loginForm,
-    signupForm,
   };
 };
 
 export const actions: Actions = {
-  signup: async ({ request, cookies, locals: { supabase } }) => {
-    const form = await superValidate(request, zod(signupSchema));
-    const { email, username, password } = form.data;
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          username,
-        },
-      },
-    });
-
-    if (error) {
-      setFlash({ type: "error", message: error.message }, cookies);
-      console.log(error);
-      return fail(400, { form });
-    } else {
-      redirect(
-        `/auth/verify?email=${email}`,
-        { type: "success", message: "Account created successfully" },
-        cookies,
-      );
-    }
-  },
   login: async ({ request, cookies, locals: { supabase } }) => {
     const form = await superValidate(request, zod(loginSchema));
     if (!form.valid) {

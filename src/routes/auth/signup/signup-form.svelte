@@ -6,19 +6,18 @@
   import { superForm, type SuperValidated } from "sveltekit-superforms";
   import { zodClient, type Infer } from "sveltekit-superforms/adapters";
   import * as Form from "$lib/components/ui/form";
-  import { signupSchema, type SignupSchema } from "./schema";
   import * as Alert from "$lib/components/ui/alert/index.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { getFlash } from "sveltekit-flash-message";
+  import { signupSchema, type SignupSchema } from "../schema";
+  import { goto } from "$app/navigation";
 
   let {
     data,
-    onToggle,
     currentEmail = $bindable(),
   }: {
     data: { form: SuperValidated<Infer<SignupSchema>> };
-    onToggle: () => void;
     currentEmail: string;
   } = $props();
 
@@ -154,8 +153,7 @@
         class="w-full cursor-pointer"
         disabled={isSubmitting}
         onclick={() => {
-          currentEmail = $formData.email;
-          onToggle();
+          goto("/auth/login");
         }}
       >
         Already have an account? Login

@@ -7,18 +7,17 @@
   import { zodClient, type Infer } from "sveltekit-superforms/adapters";
   import * as Alert from "$lib/components/ui/alert/index.js";
   import * as Form from "$lib/components/ui/form";
-  import { type LoginSchema, loginSchema } from "./schema";
   import { onMount } from "svelte";
   import { getFlash } from "sveltekit-flash-message";
   import { page } from "$app/state";
+  import { loginSchema, type LoginSchema } from "../schema";
+  import { goto } from "$app/navigation";
 
   let {
     data,
-    onToggle,
     currentEmail = $bindable(),
   }: {
     data: { form: SuperValidated<Infer<LoginSchema>> };
-    onToggle: () => void;
     currentEmail: string;
   } = $props();
 
@@ -147,8 +146,7 @@
         class="w-full cursor-pointer"
         disabled={isSubmitting}
         onclick={() => {
-          currentEmail = $formData.email;
-          onToggle();
+          goto("/auth/signup");
         }}
       >
         Create a new account
