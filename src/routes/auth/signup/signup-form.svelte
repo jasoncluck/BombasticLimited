@@ -9,7 +9,7 @@
   import * as Alert from "$lib/components/ui/alert/index.js";
   import { onMount } from "svelte";
   import { page } from "$app/state";
-  import { getFlash } from "sveltekit-flash-message";
+  import { getFlash, updateFlash } from "sveltekit-flash-message";
   import { signupSchema, type SignupSchema } from "../schema";
   import { goto } from "$app/navigation";
   import { checkIfUsernameIsUnique } from "$lib/supabase/accounts";
@@ -42,9 +42,8 @@
     onResult() {
       console.log("signup: in on result");
     },
-    onUpdated(event) {
-      console.log("signup: in on updated");
-      console.log(event);
+    onUpdated() {
+      updateFlash(page);
     },
   });
 
@@ -53,7 +52,7 @@
   const { form: formData, enhance } = signupForm;
   let isUsernameUnique = $state<boolean | null>(null);
   let isCheckingUsername = $state(false);
-  let timeoutId: NodeJS.Timeout | null = null;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
   const currentUsername = $derived($formData.username);
 

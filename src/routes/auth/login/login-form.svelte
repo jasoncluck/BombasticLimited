@@ -7,7 +7,7 @@
   import { zodClient, type Infer } from "sveltekit-superforms/adapters";
   import * as Alert from "$lib/components/ui/alert/index.js";
   import * as Form from "$lib/components/ui/form";
-  import { getFlash } from "sveltekit-flash-message";
+  import { getFlash, updateFlash } from "sveltekit-flash-message";
   import { page } from "$app/state";
   import { loginSchema, type LoginSchema } from "../schema";
   import { goto } from "$app/navigation";
@@ -33,9 +33,11 @@
     },
     onResult(event) {
       if (event.result.type !== "redirect") {
-        console.log("in not success");
         isSubmitting = false;
       }
+    },
+    onUpdated() {
+      updateFlash(page);
     },
   });
 

@@ -1,6 +1,6 @@
 import type { Session, SupabaseClient, User } from "@supabase/supabase-js";
 import type { Database } from "$lib/supabase/database.types"; // import generated types
-import type { ContentFilter } from "$lib/components/content/content-filter";
+
 declare global {
   namespace App {
     // interface Error {}
