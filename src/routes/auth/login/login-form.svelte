@@ -7,7 +7,6 @@
   import { zodClient, type Infer } from "sveltekit-superforms/adapters";
   import * as Alert from "$lib/components/ui/alert/index.js";
   import * as Form from "$lib/components/ui/form";
-  import { onMount } from "svelte";
   import { getFlash } from "sveltekit-flash-message";
   import { page } from "$app/state";
   import { loginSchema, type LoginSchema } from "../schema";
@@ -15,10 +14,8 @@
 
   let {
     data,
-    currentEmail = $bindable(),
   }: {
     data: { form: SuperValidated<Infer<LoginSchema>> };
-    currentEmail: string;
   } = $props();
 
   const flash = getFlash(page);
@@ -45,12 +42,6 @@
   let isSubmitting = $state(false);
 
   const { form: formData, enhance } = loginForm;
-
-  onMount(() => {
-    if (currentEmail) {
-      $formData.email = currentEmail;
-    }
-  });
 </script>
 
 <Card.Root class="p-6 gap-6">

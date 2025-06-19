@@ -338,7 +338,7 @@
 
   <div
     class="flex flex-col mr-1 border-1
-    {contentState.dragContentType === 'video'
+    {playlists.length > 0 && contentState.dragContentType === 'video'
       ? 'border-secondary border-1 '
       : 'border-transparent'}"
   >

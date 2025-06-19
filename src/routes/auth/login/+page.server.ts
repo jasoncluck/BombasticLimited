@@ -20,11 +20,6 @@ export const load: PageServerLoad = async ({ locals: { session } }) => {
 export const actions: Actions = {
   login: async ({ request, cookies, locals: { supabase } }) => {
     const form = await superValidate(request, zod(loginSchema));
-    if (!form.valid) {
-      return fail(400, {
-        form,
-      });
-    }
     const { email, password } = form.data;
 
     const { error } = await supabase.auth.signInWithPassword({

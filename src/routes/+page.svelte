@@ -15,8 +15,7 @@
   let { sourceVideos, continueWatchingVideos, playlists, session, supabase } =
     $derived(data);
 
-  console.log(page.url.searchParams);
-  const hasUpdatedEmail = $derived(page.url.searchParams.has("code"));
+  const isNewAccount = $derived(page.url.searchParams.has("code"));
 
   export const snapshot: Snapshot<CarouselsState> = {
     capture: () => carouselsState,
@@ -30,11 +29,12 @@
   );
 </script>
 
-{#if hasUpdatedEmail}
-  <Alert.Root>
-    <Alert.Title>Email updated</Alert.Title>
+{#if isNewAccount}
+  <Alert.Root class="mb-4">
+    <Alert.Title>Account created</Alert.Title>
     <Alert.Description
-      >The email address for your account has been updated successfully.</Alert.Description
+      >Manage your settings at any time by clicking the icon in the upper right
+      corner.</Alert.Description
     >
   </Alert.Root>
 {/if}

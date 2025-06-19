@@ -3,7 +3,7 @@ import type { Actions, PageServerLoad } from "./$types";
 import { fail, superValidate } from "sveltekit-superforms";
 import { emailSchema, passwordSchema, usernameSchema } from "../auth/schema";
 import { redirect, setFlash } from "sveltekit-flash-message/server";
-import { isUsernameUnique } from "$lib/supabase/accounts";
+import { checkIfUsernameIsUnique } from "$lib/supabase/accounts";
 
 export const load: PageServerLoad = async ({ locals: { session } }) => {
   if (!session) {
@@ -70,7 +70,7 @@ export const actions: Actions = {
     const form = await superValidate(request, zod(usernameSchema));
     const { username } = form.data;
 
-    const isUnique = await isUsernameUnique({ username, supabase });
+    const isUnique = await checkIfUsernameIsUnique({ username, supabase });
 
     if (!isUnique) {
       setFlash(

@@ -12,16 +12,29 @@
   import { getFlash } from "sveltekit-flash-message";
   import { signupSchema, type SignupSchema } from "../schema";
   import { goto } from "$app/navigation";
+  import { checkIfUsernameIsUnique } from "$lib/supabase/accounts";
+  import type { SupabaseClient } from "@supabase/supabase-js";
+  import type { Database } from "$lib/supabase/database.types";
 
   let {
     data,
-    currentEmail = $bindable(),
   }: {
-    data: { form: SuperValidated<Infer<SignupSchema>> };
-    currentEmail: string;
+    data: {
+      form: SuperValidated<Infer<SignupSchema>>;
+      supabase: SupabaseClient<Database>;
+    };
   } = $props();
 
+  const { supabase } = $derived(data);
+
   const flash = getFlash(page);
+  console.log($flash);
+
+  $effect(() => {
+    if ($flash) {
+      console.log($flash);
+    }
+  });
 
   const signupForm = superForm(data.form, {
     validators: zodClient(signupSchema),
@@ -38,15 +51,62 @@
   let isSubmitting = $state(false);
 
   const { form: formData, enhance } = signupForm;
+  let isUsernameUnique = $state<boolean | null>(null);
+  let isCheckingUsername = $state(false);
+  let timeoutId: NodeJS.Timeout | null = null;
 
-  onMount(() => {
-    if (currentEmail) {
-      $formData.email = currentEmail;
+  const currentUsername = $derived($formData.username);
+
+  $effect(() => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
     }
+
+    isCheckingUsername = false;
+    isUsernameUnique = null;
+
+    if (currentUsername && currentUsername.length >= 2) {
+      isCheckingUsername = true;
+
+      timeoutId = setTimeout(async () => {
+        try {
+          const result = await checkIfUsernameIsUnique({
+            username: currentUsername,
+            supabase,
+          });
+
+          if (currentUsername === $formData.username) {
+            if (typeof result === "boolean") {
+              isUsernameUnique = result;
+            } else {
+              isUsernameUnique = false;
+            }
+          }
+        } catch {
+          if (currentUsername === $formData.username) {
+            isUsernameUnique = false;
+          }
+        } finally {
+          if (currentUsername === $formData.username) {
+            isCheckingUsername = false;
+          }
+        }
+      }, 500);
+    }
+  });
+
+  // Cleanup on component destroy
+  onMount(() => {
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   });
 </script>
 
-<Card.Root class="p-6">
+<Card.Root class="p-6 w-full max-w-md mx-auto">
   <Card.Header class="space-y-1">
     <Card.Title class="text-2xl">Create an account</Card.Title>
     <Card.Description>
@@ -57,7 +117,7 @@
   <form method="POST" action="?/signup" use:enhance>
     <Card.Content class="grid gap-4 mb-4">
       <div class="grid grid-cols-2 gap-6">
-        <Button variant="outline" type="button">
+        <Button variant="outline" type="button" class="w-full">
           <Github />
           GitHub
         </Button>
@@ -75,13 +135,13 @@
       </div>
 
       <Form.Field form={signupForm} name="email">
-        <div class=" items-center flex flex-wrap gap-2">
+        <div class="space-y-2">
           <Form.Control>
             {#snippet children({ props })}
-              <Form.Label class="text-right">Email</Form.Label>
+              <Form.Label>Email</Form.Label>
               <Input
                 {...props}
-                class="col-span-3"
+                class="w-full"
                 bind:value={$formData.email}
                 autocomplete="email"
                 type="email"
@@ -89,43 +149,54 @@
               />
             {/snippet}
           </Form.Control>
+          <Form.FieldErrors />
         </div>
-        <Form.FieldErrors class="mb-2" />
       </Form.Field>
 
       <Form.Field form={signupForm} name="username">
-        <div class="items-center flex flex-wrap gap-2">
+        <div class="space-y-2">
           <Form.Control>
             {#snippet children({ props })}
-              <Form.Label class="text-right">Username</Form.Label>
+              <Form.Label>Username</Form.Label>
               <Input
                 {...props}
-                class="col-span-3"
+                class="w-full"
                 bind:value={$formData.username}
               />
             {/snippet}
           </Form.Control>
+          <!-- Fixed height container to prevent layout shift -->
+          {#if currentUsername && currentUsername.length >= 2}
+            {#if isCheckingUsername}
+              <p class="text-xs text-gray-400">Checking availability...</p>
+            {:else if isUsernameUnique === true}
+              <p class="text-xs text-green-300">Username is available</p>
+            {:else if isUsernameUnique === false}
+              <p class="text-xs text-red-300">Username is not available</p>
+            {/if}
+          {/if}
+          <Form.FieldErrors />
         </div>
-        <Form.FieldErrors class="mb-2" />
       </Form.Field>
 
       <Form.Field form={signupForm} name="password">
-        <div class="items-center flex flex-wrap gap-2">
+        <div class="space-y-2">
           <Form.Control>
             {#snippet children({ props })}
-              <Form.Label class="text-right">Password</Form.Label>
+              <Form.Label>Password</Form.Label>
               <Input
                 {...props}
-                class="col-span-3"
+                class="w-full"
                 bind:value={$formData.password}
                 autocomplete="new-password"
                 type="password"
               />
             {/snippet}
           </Form.Control>
+          <Form.FieldErrors />
         </div>
-        <Form.FieldErrors class="mb-2" />
       </Form.Field>
+
       {#if $flash?.message && $flash?.type}
         <Alert.Root>
           <Alert.Title
@@ -135,12 +206,9 @@
         </Alert.Root>
       {/if}
     </Card.Content>
+
     <Card.Footer class="grid gap-4">
-      <Button
-        class="w-full cursor-pointer"
-        type="submit"
-        disabled={isSubmitting}
-      >
+      <Button class="w-full" type="submit" disabled={isSubmitting}>
         {#if isSubmitting}
           <Loader class="animate-spin mr-2" />
         {/if}
@@ -150,7 +218,7 @@
       <Button
         variant="link"
         type="button"
-        class="w-full cursor-pointer"
+        class="w-full"
         disabled={isSubmitting}
         onclick={() => {
           goto("/auth/login");

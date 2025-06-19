@@ -424,7 +424,7 @@
       {:else}
         <Button
           class="cursor-pointer"
-          onclick={() => goto("/auth")}
+          onclick={() => goto("/auth/login")}
           variant="outline"
         >
           Login

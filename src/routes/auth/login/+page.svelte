@@ -17,12 +17,10 @@
       loginForm: SuperValidated<Infer<LoginSchema>>;
     };
   } = $props();
-
-  let currentEmail = $state("");
 </script>
 
 <div class="flex flex-row justify-center">
   <div class="mt-24">
-    <LoginForm data={{ form: data.loginForm }} bind:currentEmail />
+    <LoginForm data={{ form: data.loginForm }} />
   </div>
 </div>

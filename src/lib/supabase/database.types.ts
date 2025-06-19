@@ -114,6 +114,36 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          content_description:
+            | Database["public"]["Enums"]["contentdescription"]
+            | null
+          content_display: Database["public"]["Enums"]["contentdisplay"] | null
+          id: string
+          sources: Database["public"]["Enums"]["source"][] | null
+          username: string | null
+        }
+        Insert: {
+          content_description?:
+            | Database["public"]["Enums"]["contentdescription"]
+            | null
+          content_display?: Database["public"]["Enums"]["contentdisplay"] | null
+          id: string
+          sources?: Database["public"]["Enums"]["source"][] | null
+          username?: string | null
+        }
+        Update: {
+          content_description?:
+            | Database["public"]["Enums"]["contentdescription"]
+            | null
+          content_display?: Database["public"]["Enums"]["contentdisplay"] | null
+          id?: string
+          sources?: Database["public"]["Enums"]["source"][] | null
+          username?: string | null
+        }
+        Relationships: []
+      }
       timestamps: {
         Row: {
           created_at: string
@@ -206,10 +236,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      check_unique_username: {
-        Args: { p_username: string }
-        Returns: boolean
-      }
       delete_pending_videos: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -317,6 +343,10 @@ export type Database = {
           video_position: number
         }[]
       }
+      is_unique_username: {
+        Args: { p_username: string }
+        Returns: boolean
+      }
       search_playlists: {
         Args: { search_term: string; playlist_limit?: number }
         Returns: {
@@ -391,6 +421,8 @@ export type Database = {
       }
     }
     Enums: {
+      contentdescription: "FULL" | "BRIEF" | "NONE"
+      contentdisplay: "TILES" | "CAROUSEL"
       playlist_type: "Official" | "Public" | "Private"
       source: "giantbomb" | "nextlander" | "remap"
     }
@@ -511,6 +543,8 @@ export const Constants = {
   },
   public: {
     Enums: {
+      contentdescription: ["FULL", "BRIEF", "NONE"],
+      contentdisplay: ["TILES", "CAROUSEL"],
       playlist_type: ["Official", "Public", "Private"],
       source: ["giantbomb", "nextlander", "remap"],
     },
