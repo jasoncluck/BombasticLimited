@@ -9,7 +9,6 @@ export const load: PageServerLoad = async ({ locals: { session } }) => {
   if (!session) {
     redirect(303, "/auth");
   }
-  console.log(session.user.user_metadata);
 
   return {
     emailForm: await superValidate(
@@ -33,7 +32,7 @@ export const load: PageServerLoad = async ({ locals: { session } }) => {
 };
 
 export const actions: Actions = {
-  updateEmail: async ({ request, cookies, locals: { supabase } }) => {
+  updateEmail: async ({ url, request, cookies, locals: { supabase } }) => {
     const form = await superValidate(request, zod(emailSchema));
     const { email } = form.data;
 
@@ -41,7 +40,7 @@ export const actions: Actions = {
       {
         email: email,
       },
-      { emailRedirectTo: "http://localhost:5173/auth/email/confirm" },
+      { emailRedirectTo: `${url.origin}/auth/email/confirm` },
     );
 
     if (error) {
@@ -49,6 +48,15 @@ export const actions: Actions = {
         { type: "error", message: error.message, field: "email" },
         cookies,
       );
+
+      // Update this message to differentiate a bit more from 'username'
+      if (error.code === "user_already_exists") {
+        setFlash(
+          { type: "error", message: "Email address already registered." },
+          cookies,
+        );
+      }
+
       console.error(error);
       return fail(400, { form });
     } else {
@@ -76,7 +84,7 @@ export const actions: Actions = {
       setFlash(
         {
           type: "error",
-          message: "Username already taken, please choose another one.",
+          message: "Username already exists and must be unique.",
           field: "username",
         },
         cookies,
@@ -107,6 +115,33 @@ export const actions: Actions = {
       return {
         form,
       };
+    }
+  },
+
+  resetPassword: async ({ cookies, url, locals: { supabase, session } }) => {
+    if (!session || !session.user.email) {
+      throw new Error(`Could not find email for account: ${session?.user.id}`);
+    }
+
+    const { error } = await supabase.auth.resetPasswordForEmail(
+      session.user.email,
+      { redirectTo: `/auth/password/update` },
+    );
+    if (error) {
+      setFlash(
+        { type: "error", message: error.message, field: "password" },
+        cookies,
+      );
+      return fail(400);
+    } else {
+      setFlash(
+        {
+          type: "success",
+          message: `Password reset email sent to ${session.user.email}.`,
+          field: "password",
+        },
+        cookies,
+      );
     }
   },
 };

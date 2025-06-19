@@ -12,6 +12,5 @@ export async function checkIfUsernameIsUnique({
     p_username: username,
   });
 
-  console.log(isUnique);
   return isUnique;
 }

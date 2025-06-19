@@ -74,13 +74,11 @@ export const load: PageServerLoad = async ({
 
 export const actions: Actions = {
   default: async ({ request, locals: { supabase, session } }: RequestEvent) => {
-
     if (!session) {
       redirect(302, "/auth");
     }
 
     const form = await superValidate(request, zod(playlistSchema));
-    console.log(form)
     if (!form.valid) {
       return fail(400, {
         form,
@@ -99,7 +97,6 @@ export const actions: Actions = {
       });
     }
 
-
     if (type === "Official") {
       throw new Error("Unable to create Official playlists.");
     }
@@ -112,7 +109,6 @@ export const actions: Actions = {
     ) {
       imageProperties = null;
     }
-
 
     const { updatedPlaylist } = await updatePlaylistInfo({
       playlistId: id,

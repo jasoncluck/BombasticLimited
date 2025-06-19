@@ -48,23 +48,52 @@ FOR SELECT
 TO authenticated
 USING (true);
 
--- Inserts a row into public.profiles
-CREATE FUNCTION public.handle_new_user()
+CREATE OR REPLACE FUNCTION public.handle_user_changes()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = ''
 AS $$
 BEGIN
-  INSERT INTO public.profiles (id, username)
-  VALUES (
-    new.id, 
-    new.raw_user_meta_data ->> 'username'
-  );
-  RETURN new;
+  IF TG_OP = 'INSERT' THEN
+    -- Create new profile
+    INSERT INTO public.profiles (id, username)
+    VALUES (
+      NEW.id, 
+      NEW.raw_user_meta_data ->> 'username'
+    )
+    ON CONFLICT (id) DO NOTHING; -- Prevent duplicate key errors
+    
+    RETURN NEW;
+  END IF;
+  
+  IF TG_OP = 'UPDATE' THEN
+    -- Only update if username changed and profile exists
+    IF (OLD.raw_user_meta_data ->> 'username') IS DISTINCT FROM (NEW.raw_user_meta_data ->> 'username') THEN
+      UPDATE public.profiles 
+      SET username = NEW.raw_user_meta_data ->> 'username'
+      WHERE id = NEW.id;
+      
+      -- If no profile exists, create one
+      IF NOT FOUND THEN
+        INSERT INTO public.profiles (id, username)
+        VALUES (
+          NEW.id, 
+          NEW.raw_user_meta_data ->> 'username'
+        )
+        ON CONFLICT (id) DO NOTHING;
+      END IF;
+    END IF;
+    
+    RETURN NEW;
+  END IF;
+  
+  RETURN NEW;
 END;
 $$;
 
--- Trigger the function every time a user is created
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+-- Replace existing trigger
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+
+CREATE TRIGGER on_auth_user_changes
+  AFTER INSERT OR UPDATE ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_user_changes();

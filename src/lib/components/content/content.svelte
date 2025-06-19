@@ -53,7 +53,6 @@
 
   $effect(() => {
     if (mostRecentVideo.timestamp) {
-      console.log("most recent video changed");
       invalidate("supabase:db:videos");
       mostRecentVideo.timestamp = null;
     }

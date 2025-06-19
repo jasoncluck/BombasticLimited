@@ -8,7 +8,7 @@ export const usernameSchema = z.object({
   username: z.string().min(2).max(32).default(""),
 });
 
-export const passwordSchema = emailSchema.extend({
+export const passwordSchema = z.object({
   password: z.string().min(8).max(256).default(""),
 });
 

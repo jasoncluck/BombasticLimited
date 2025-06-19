@@ -39,7 +39,6 @@ export const load: PageServerLoad = async ({
     searchString,
     supabase,
   });
-  console.log(playlistSearchResults);
 
   // TODO: Add public playlists results to search results
   return {

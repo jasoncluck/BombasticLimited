@@ -28,20 +28,10 @@
   const { supabase } = $derived(data);
 
   const flash = getFlash(page);
-  console.log($flash);
-
-  $effect(() => {
-    if ($flash) {
-      console.log($flash);
-    }
-  });
 
   const signupForm = superForm(data.form, {
     validators: zodClient(signupSchema),
     validationMethod: "onsubmit",
-    onResult() {
-      console.log("signup: in on result");
-    },
     onUpdated() {
       updateFlash(page);
     },
@@ -128,7 +118,7 @@
         </div>
         <div class="relative flex justify-center text-xs uppercase">
           <span class="bg-card text-muted-foreground px-2">
-            Or continue with
+            Or create using email
           </span>
         </div>
       </div>
@@ -148,7 +138,7 @@
               />
             {/snippet}
           </Form.Control>
-          <Form.FieldErrors />
+          <Form.FieldErrors class="text-xs" />
         </div>
       </Form.Field>
 
@@ -174,7 +164,7 @@
               <p class="text-xs text-red-300">Username is not available</p>
             {/if}
           {/if}
-          <Form.FieldErrors />
+          <Form.FieldErrors class="text-xs" />
         </div>
       </Form.Field>
 
@@ -192,7 +182,7 @@
               />
             {/snippet}
           </Form.Control>
-          <Form.FieldErrors />
+          <Form.FieldErrors class="text-xs" />
         </div>
       </Form.Field>
 

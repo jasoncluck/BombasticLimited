@@ -20,6 +20,8 @@ export const GET: RequestHandler = async ({ url, locals: { supabase } }) => {
     if (!error) {
       redirectTo.searchParams.delete("next");
       redirect(303, redirectTo);
+    } else {
+      redirectTo.searchParams.set("error", error.message);
     }
   }
   redirectTo.pathname = "/auth/error";

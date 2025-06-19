@@ -20,7 +20,7 @@
 </script>
 
 <div class="flex flex-row justify-center">
-  <div class="mt-24">
+  <div class="mt-24 w-[400px]">
     <LoginForm data={{ form: data.loginForm }} />
   </div>
 </div>

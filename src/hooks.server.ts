@@ -17,6 +17,10 @@ const supabase: Handle = async ({ event, resolve }) => {
     PUBLIC_SUPABASE_URL,
     PUBLIC_SUPABASE_ANON_KEY,
     {
+      auth: {
+        detectSessionInUrl: true,
+        flowType: "pkce",
+      },
       cookies: {
         getAll: () => event.cookies.getAll(),
         /**
@@ -32,6 +36,19 @@ const supabase: Handle = async ({ event, resolve }) => {
       },
     },
   );
+  const code = event.url.searchParams.get("code");
+  if (code && event.url.pathname === "/auth/password/update") {
+    try {
+      const { data, error } =
+        await event.locals.supabase.auth.exchangeCodeForSession(code);
+      if (!error && data.session) {
+        // Session established, the user can now update their password
+        console.log("Password reset session established");
+      }
+    } catch (err) {
+      console.error("Error exchanging code for session:", err);
+    }
+  }
 
   /**
    * Unlike `supabase.auth.getSession()`, which returns the session _without_
@@ -79,7 +96,7 @@ const authGuard: Handle = async ({ event, resolve }) => {
     (event.url.pathname.startsWith("/private") ||
       event.url.pathname.startsWith("/account"))
   ) {
-    redirect(303, "/auth");
+    redirect(303, "/auth/login");
   }
 
   return resolve(event);

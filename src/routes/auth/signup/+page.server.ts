@@ -5,12 +5,8 @@ import { zod } from "sveltekit-superforms/adapters";
 import type { PageServerLoad } from "./$types";
 import { signupSchema } from "../schema";
 import { checkIfUsernameIsUnique } from "$lib/supabase/accounts";
-import { updateFlash } from "sveltekit-flash-message";
 
-export const load: PageServerLoad = async ({
-  cookies,
-  locals: { session },
-}) => {
+export const load: PageServerLoad = async ({ locals: { session } }) => {
   const signupForm = await superValidate(zod(signupSchema));
 
   if (session) {
@@ -25,7 +21,6 @@ export const actions: Actions = {
   signup: async ({ request, cookies, locals: { supabase } }) => {
     const form = await superValidate(request, zod(signupSchema));
     const { email, username, password } = form.data;
-    console.log(email, username, password);
 
     const isUnique = await checkIfUsernameIsUnique({ username, supabase });
 
@@ -53,13 +48,13 @@ export const actions: Actions = {
     if (error) {
       setFlash({ type: "error", message: error.message }, cookies);
 
+      // Update this message to differentiate a bit more from 'username'
       if (error.code === "user_already_exists") {
         setFlash(
           { type: "error", message: "Email address already registered." },
           cookies,
         );
       }
-      console.log(error);
       return fail(400, { form });
     } else {
       redirect(

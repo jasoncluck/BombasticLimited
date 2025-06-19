@@ -28,7 +28,6 @@ export const actions: Actions = {
     });
 
     if (error) {
-      console.error(error);
       if (error.code === "email_not_confirmed") {
         await supabase.auth.resend({
           type: "signup",
@@ -46,7 +45,6 @@ export const actions: Actions = {
       }
 
       setFlash({ type: "error", message: error.message }, cookies);
-      console.log(error);
       return fail(400, { form });
     } else {
       redirect(303, "/");

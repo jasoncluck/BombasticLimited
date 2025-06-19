@@ -23,12 +23,8 @@
   const loginForm = superForm(data.form, {
     validators: zodClient(loginSchema),
     validationMethod: "onsubmit",
-    onChange() {
-      console.log("on change");
-    },
 
     onSubmit() {
-      console.log($flash);
       isSubmitting = true;
     },
     onResult(event) {
@@ -89,7 +85,7 @@
               {/snippet}
             </Form.Control>
           </div>
-          <Form.FieldErrors class="mb-2" />
+          <Form.FieldErrors class="text-xs" />
         </Form.Field>
 
         <Form.Field form={loginForm} name="password">
@@ -107,7 +103,7 @@
               {/snippet}
             </Form.Control>
           </div>
-          <Form.FieldErrors class="mb-2" />
+          <Form.FieldErrors class="text-xs" />
         </Form.Field>
         {#if $flash?.message && $flash?.type}
           <Alert.Root>

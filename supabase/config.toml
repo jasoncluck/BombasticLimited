@@ -107,7 +107,7 @@ enabled = true
 # in emails.
 site_url = "http://localhost:5173"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = []
+additional_redirect_urls = ["/auth/password/update", "/auth/email/confirm"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # If disabled, the refresh token will never expire.
@@ -174,12 +174,18 @@ otp_expiry = 86400
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
-# Uncomment to customize email template
-# [auth.email.template.invite]
-# subject = "You have been invited"
-# content_path = "./supabase/templates/invite.html"
+# Custom email template
+[auth.email.template.confirmation]
+subject = "Finish creating your Bombify account"
+content_path = "./supabase/templates/create-account.html"
+
+# Custom recovery template
+[auth.email.template.recovery]
+subject = "Reset your Bombify password"
+content_path = "./supabase/templates/reset-password.html"
 
 [auth.sms]
+
 # Allow/disallow new user signups via SMS to your project.
 enable_signup = false
 # If enabled, users need to confirm their phone number before signing in.

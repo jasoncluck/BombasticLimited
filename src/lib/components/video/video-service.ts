@@ -106,7 +106,6 @@ export async function updateVideoTimestampState({
   mostRecentVideo: MostRecentVideo;
   isContinueVideos?: boolean;
 }) {
-  console.log("IN UPDATE VIDEO TIMESTAMP");
   if (mostRecentVideo.timestamp) {
     const videoIndexToUpdate = videos.findIndex((video) => {
       return video.id === mostRecentVideo.timestamp?.video_id;

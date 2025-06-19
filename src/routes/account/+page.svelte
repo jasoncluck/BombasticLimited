@@ -8,13 +8,17 @@
     emailSchema,
     usernameSchema,
     type EmailSchema,
-    type PasswordSchema,
     type UsernameSchema,
   } from "../auth/schema";
   import Button from "$lib/components/ui/button/button.svelte";
-  import { getFlash } from "sveltekit-flash-message";
+  import { getFlash, updateFlash } from "sveltekit-flash-message";
   import { page } from "$app/state";
-  import type { Session } from "@supabase/supabase-js";
+  import type { Session, SupabaseClient } from "@supabase/supabase-js";
+  import { checkIfUsernameIsUnique } from "$lib/supabase/accounts";
+  import type { Database } from "$lib/supabase/database.types";
+  import { onMount } from "svelte";
+  import { enhance } from "$app/forms";
+  import Label from "$lib/components/ui/label/label.svelte";
 
   let {
     data,
@@ -22,12 +26,12 @@
     data: {
       emailForm: SuperValidated<Infer<EmailSchema>>;
       usernameForm: SuperValidated<Infer<UsernameSchema>>;
-      passwordForm: SuperValidated<Infer<PasswordSchema>>;
+      supabase: SupabaseClient<Database>;
       session: Session;
     };
   } = $props();
 
-  const { session } = $derived(data);
+  const { supabase, session } = $derived(data);
 
   const flash = getFlash(page);
 
@@ -35,24 +39,77 @@
     validators: zodClient(emailSchema),
     resetForm: false,
     onChange() {},
-    onUpdated(event) {
-      console.log("in updated");
-      console.log(event.form.message);
+    onUpdated() {
+      updateFlash(page);
     },
   });
 
   const usernameForm = superForm(data.usernameForm, {
     validators: zodClient(usernameSchema),
     resetForm: false,
+    onUpdated() {
+      updateFlash(page);
+    },
   });
 
-  const { form: emailFormData, enhance: emailEnhance } = $derived(emailForm);
-  const { form: usernameFormData, enhance: usernameEnhance } =
-    $derived(usernameForm);
-  // TODO: Add change password
-  // const { form: passwordFormData, enhance: passwordEnhance } =
-  //   $derived(passwordSchema);
-  //
+  const { form: emailFormData, enhance: emailEnhance } = emailForm;
+  const { form: usernameFormData, enhance: usernameEnhance } = usernameForm;
+  let isUsernameUnique = $state<boolean | null>(null);
+  let isCheckingUsername = $state(false);
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  const currentUsername = $derived($usernameFormData.username);
+
+  $effect(() => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+
+    isCheckingUsername = false;
+    isUsernameUnique = null;
+
+    if (
+      currentUsername &&
+      currentUsername !== session.user.user_metadata.username &&
+      currentUsername.length >= 2
+    ) {
+      isCheckingUsername = true;
+
+      timeoutId = setTimeout(async () => {
+        try {
+          const result = await checkIfUsernameIsUnique({
+            username: currentUsername,
+            supabase,
+          });
+
+          if (currentUsername === $usernameFormData.username) {
+            if (typeof result === "boolean") {
+              isUsernameUnique = result;
+            } else {
+              isUsernameUnique = false;
+            }
+          }
+        } catch {
+          if (currentUsername === $usernameFormData.username) {
+            isUsernameUnique = false;
+          }
+        } finally {
+          if (currentUsername === $usernameFormData.username) {
+            isCheckingUsername = false;
+          }
+        }
+      }, 500);
+    }
+  });
+
+  // Cleanup on component destroy
+  onMount(() => {
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  });
 </script>
 
 <div class="flex flex-row justify-center">
@@ -63,7 +120,7 @@
         <div class="flex flex-wrap sm:flex-nowrap items-center gap-4 w-full">
           <Form.Control>
             {#snippet children({ props })}
-              <Form.Label class="flex w-22">Email</Form.Label>
+              <Form.Label class="w-22">Email</Form.Label>
               <Input
                 {...props}
                 class="flex-1 min-w-[300px]"
@@ -109,13 +166,24 @@
                 variant="secondary"
                 class="cursor-pointer sm:max-w-24 w-full"
                 disabled={$usernameFormData.username ===
-                  session.user.user_metadata.username}
+                  session.user.user_metadata.username ||
+                  isCheckingUsername ||
+                  isUsernameUnique === false}
               >
                 Update
               </Button>
             {/snippet}
           </Form.Control>
         </div>
+        {#if currentUsername && currentUsername.length >= 2}
+          {#if isCheckingUsername}
+            <p class="text-xs text-gray-400">Checking availability...</p>
+          {:else if isUsernameUnique === true}
+            <p class="text-xs text-green-300">Username is available</p>
+          {:else if isUsernameUnique === false}
+            <p class="text-xs text-red-300">Username is not available</p>
+          {/if}
+        {/if}
         <Form.FieldErrors class="mb-2" />
       </Form.Field>
     </form>
@@ -123,6 +191,33 @@
       <Alert.Root>
         <Alert.Title
           >{$flash.type === "error" ? "Error" : "Updated username"}</Alert.Title
+        >
+        <Alert.Description>{$flash.message}</Alert.Description>
+      </Alert.Root>
+    {/if}
+    <form
+      use:enhance={() => {
+        return async () => {
+          await updateFlash(page);
+        };
+      }}
+      method="POST"
+      action="?/resetPassword"
+    >
+      <div class="flex flex-wrap sm:flex-nowrap items-center gap-4 w-full">
+        <Label for="password" class="w-18">Password</Label>
+        <Button
+          id="password"
+          variant="secondary"
+          class="cursor-pointer"
+          type="submit">Reset Password</Button
+        >
+      </div>
+    </form>
+    {#if $flash?.field === "password" && $flash?.message && $flash?.type}
+      <Alert.Root>
+        <Alert.Title
+          >{$flash.type === "error" ? "Error" : "Reset password"}</Alert.Title
         >
         <Alert.Description>{$flash.message}</Alert.Description>
       </Alert.Root>
