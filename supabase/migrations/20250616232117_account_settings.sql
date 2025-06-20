@@ -97,3 +97,40 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_changes
   AFTER INSERT OR UPDATE ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_user_changes();
+
+
+-- Add SELECT policy to allow users to read their own user record
+CREATE POLICY "Allow users to read their own account" 
+ON auth.users 
+FOR SELECT 
+TO authenticated 
+USING (id = auth.uid());
+
+-- Keep the existing DELETE policy
+CREATE POLICY "Allow users to delete their own account" 
+ON auth.users 
+FOR DELETE 
+TO authenticated 
+USING (id = auth.uid());
+
+CREATE OR REPLACE FUNCTION delete_user()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    user_id uuid := (SELECT auth.uid());
+    deleted_count integer;
+BEGIN
+    -- Attempt to delete the user and check if any rows were affected
+    DELETE FROM auth.users 
+    WHERE id = user_id;
+    
+    GET DIAGNOSTICS deleted_count = ROW_COUNT;
+    
+    IF deleted_count = 0 THEN
+        RAISE EXCEPTION 'User not found or could not be deleted';
+    END IF;
+END;
+$$;
+

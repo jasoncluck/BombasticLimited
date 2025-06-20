@@ -18,7 +18,7 @@ declare global {
       flash?: {
         type: "success" | "error";
         message: string;
-        field?: "email" | "username" | "password";
+        field?: "email" | "username" | "password" | "delete";
       };
     }
     // interface PageState {}

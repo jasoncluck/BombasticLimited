@@ -252,6 +252,10 @@ export type Database = {
           message: string
         }[]
       }
+      delete_user: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_in_progress_videos_with_timestamps: {
         Args: Record<PropertyKey, never>
         Returns: {

@@ -118,7 +118,7 @@ export const actions: Actions = {
     }
   },
 
-  resetPassword: async ({ cookies, url, locals: { supabase, session } }) => {
+  resetPassword: async ({ cookies, locals: { supabase, session } }) => {
     if (!session || !session.user.email) {
       throw new Error(`Could not find email for account: ${session?.user.id}`);
     }
@@ -142,6 +142,25 @@ export const actions: Actions = {
         },
         cookies,
       );
+    }
+  },
+
+  deleteAccount: async ({ cookies, locals: { supabase, session } }) => {
+    console.log("in delete account");
+    if (!session) {
+      redirect(303, "/login");
+    }
+
+    const { error } = await supabase.rpc("delete_user");
+
+    if (error) {
+      setFlash(
+        { type: "error", message: error.message, field: "delete" },
+        cookies,
+      );
+      return fail(400);
+    } else {
+      redirect(303, "/");
     }
   },
 };

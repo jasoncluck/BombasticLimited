@@ -209,7 +209,7 @@
         <Button
           id="password"
           variant="secondary"
-          class="cursor-pointer"
+          class="cursor-pointer sm:w-auto w-full"
           type="submit">Reset Password</Button
         >
       </div>
@@ -219,6 +219,21 @@
         <Alert.Title
           >{$flash.type === "error" ? "Error" : "Reset password"}</Alert.Title
         >
+        <Alert.Description>{$flash.message}</Alert.Description>
+      </Alert.Root>
+    {/if}
+    <form use:enhance method="POST" action="?/deleteAccount">
+      <div class="flex flex-wrap sm:flex-nowrap items-center w-full mt-20">
+        <Button
+          variant="destructive"
+          class="cursor-pointer sm:w-auto w-full"
+          type="submit">Delete Account</Button
+        >
+      </div>
+    </form>
+    {#if $flash?.field === "delete" && $flash?.message && $flash?.type}
+      <Alert.Root>
+        <Alert.Title>Unable to delete account</Alert.Title>
         <Alert.Description>{$flash.message}</Alert.Description>
       </Alert.Root>
     {/if}

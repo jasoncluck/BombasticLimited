@@ -15,8 +15,6 @@
   let { sourceVideos, continueWatchingVideos, playlists, session, supabase } =
     $derived(data);
 
-  const isNewAccount = $derived(page.url.searchParams.has("code"));
-
   export const snapshot: Snapshot<CarouselsState> = {
     capture: () => carouselsState,
     restore: async (restored) => (carouselsState = restored),
@@ -28,16 +26,6 @@
     ) as CarouselsState,
   );
 </script>
-
-{#if isNewAccount}
-  <Alert.Root class="mb-4">
-    <Alert.Title>Account created</Alert.Title>
-    <Alert.Description
-      >Manage your settings at any time by clicking the icon in the upper right
-      corner.</Alert.Description
-    >
-  </Alert.Root>
-{/if}
 
 <div class="flex flex-col w-full relative">
   {#if session && continueWatchingVideos.length > 0}
