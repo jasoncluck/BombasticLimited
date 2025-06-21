@@ -64,4 +64,18 @@ export const actions: Actions = {
       );
     }
   },
+
+  signupWithDiscord: async ({ locals: { supabase } }) => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "github",
+    });
+    if (error) {
+      console.error(error);
+    }
+    console.log(data);
+
+    return {
+      data,
+    };
+  },
 };

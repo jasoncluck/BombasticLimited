@@ -10,7 +10,9 @@
     type EmailSchema,
     type UsernameSchema,
   } from "../auth/schema";
-  import Button from "$lib/components/ui/button/button.svelte";
+  import Button, {
+    buttonVariants,
+  } from "$lib/components/ui/button/button.svelte";
   import { getFlash, updateFlash } from "sveltekit-flash-message";
   import { page } from "$app/state";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
@@ -18,6 +20,8 @@
   import type { Database } from "$lib/supabase/database.types";
   import { onMount } from "svelte";
   import { enhance } from "$app/forms";
+  import * as Dialog from "$lib/components/ui/dialog/index.js";
+
   import Label from "$lib/components/ui/label/label.svelte";
 
   let {
@@ -117,7 +121,7 @@
     <h1 class="header-primary">Account settings</h1>
     <form use:emailEnhance method="POST" action="?/updateEmail">
       <Form.Field form={emailForm} name="email">
-        <div class="flex flex-wrap sm:flex-nowrap items-center gap-4 w-full">
+        <div class="flex flex-wrap @md:flex-nowrap items-center gap-4 w-full">
           <Form.Control>
             {#snippet children({ props })}
               <Form.Label class="w-22">Email</Form.Label>
@@ -129,7 +133,7 @@
               <Button
                 type="submit"
                 variant="secondary"
-                class="cursor-pointer sm:max-w-24 w-full"
+                class="cursor-pointer @md:max-w-24 w-full"
                 disabled={$emailFormData.email === session.user.email}
               >
                 Update
@@ -152,7 +156,7 @@
     {/if}
     <form use:usernameEnhance method="POST" action="?/updateUsername">
       <Form.Field form={usernameForm} name="username">
-        <div class="flex flex-wrap sm:flex-nowrap items-center gap-4 w-full">
+        <div class="flex flex-wrap @md:flex-nowrap items-center gap-4 w-full">
           <Form.Control>
             {#snippet children({ props })}
               <Form.Label class="w-22">Username</Form.Label>
@@ -164,7 +168,7 @@
               <Button
                 type="submit"
                 variant="secondary"
-                class="cursor-pointer sm:max-w-24 w-full"
+                class="cursor-pointer @md:max-w-24 w-full"
                 disabled={$usernameFormData.username ===
                   session.user.user_metadata.username ||
                   isCheckingUsername ||
@@ -204,12 +208,12 @@
       method="POST"
       action="?/resetPassword"
     >
-      <div class="flex flex-wrap sm:flex-nowrap items-center gap-4 w-full">
+      <div class="flex flex-wrap @md:flex-nowrap items-center gap-4 w-full">
         <Label for="password" class="w-18">Password</Label>
         <Button
           id="password"
           variant="secondary"
-          class="cursor-pointer sm:w-auto w-full"
+          class="cursor-pointer @md:w-auto w-full"
           type="submit">Reset Password</Button
         >
       </div>
@@ -222,20 +226,45 @@
         <Alert.Description>{$flash.message}</Alert.Description>
       </Alert.Root>
     {/if}
-    <form use:enhance method="POST" action="?/deleteAccount">
-      <div class="flex flex-wrap sm:flex-nowrap items-center w-full mt-20">
-        <Button
-          variant="destructive"
-          class="cursor-pointer sm:w-auto w-full"
-          type="submit">Delete Account</Button
-        >
-      </div>
-    </form>
-    {#if $flash?.field === "delete" && $flash?.message && $flash?.type}
-      <Alert.Root>
-        <Alert.Title>Unable to delete account</Alert.Title>
-        <Alert.Description>{$flash.message}</Alert.Description>
-      </Alert.Root>
-    {/if}
+    <Dialog.Root>
+      <Dialog.Trigger
+        class="@md:w-[200px] w-full mt-20 {buttonVariants({
+          variant: 'destructive',
+        })}">Delete Account</Dialog.Trigger
+      >
+      <Dialog.Content>
+        <form use:enhance method="POST" action="?/deleteAccount">
+          <Dialog.Header class="mb-4">
+            <Dialog.Title>Delete Account</Dialog.Title>
+          </Dialog.Header>
+
+          <p class="mb-8">
+            This action cannot be undone. Deleting your account will delete all
+            associated data including any public playlists.
+          </p>
+          <Dialog.Footer>
+            <Dialog.Close>
+              <Button
+                class="cursor-pointer"
+                variant="secondary"
+                type="button"
+                onclick={(e) => {
+                  e.preventDefault();
+                }}>Cancel</Button
+              >
+            </Dialog.Close>
+            <Button class="cursor-pointer" variant="destructive" type="submit"
+              >Delete Account</Button
+            ></Dialog.Footer
+          >
+        </form>
+        {#if $flash?.field === "delete" && $flash?.message && $flash?.type}
+          <Alert.Root>
+            <Alert.Title>Unable to delete account</Alert.Title>
+            <Alert.Description>{$flash.message}</Alert.Description>
+          </Alert.Root>
+        {/if}
+      </Dialog.Content>
+    </Dialog.Root>
   </div>
 </div>

@@ -10,8 +10,7 @@
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { getFlash, updateFlash } from "sveltekit-flash-message";
-  import { signupSchema, type SignupSchema } from "../schema";
-  import { goto } from "$app/navigation";
+  import { usernameSchema, type UsernameSchema } from "../schema";
   import { checkIfUsernameIsUnique } from "$lib/supabase/accounts";
   import type { SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
@@ -20,7 +19,7 @@
     data,
   }: {
     data: {
-      form: SuperValidated<Infer<SignupSchema>>;
+      form: SuperValidated<Infer<UsernameSchema>>;
       supabase: SupabaseClient<Database>;
     };
   } = $props();
@@ -29,9 +28,8 @@
 
   const flash = getFlash(page);
 
-  const signupForm = superForm(data.form, {
-    validators: zodClient(signupSchema),
-    validationMethod: "onsubmit",
+  const usernameForm = superForm(data.form, {
+    validators: zodClient(usernameSchema),
     onUpdated() {
       updateFlash(page);
     },
@@ -39,7 +37,7 @@
 
   let isSubmitting = $state(false);
 
-  const { form: formData, enhance } = signupForm;
+  const { form: formData, enhance } = usernameForm;
   let isUsernameUnique = $state<boolean | null>(null);
   let isCheckingUsername = $state(false);
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -95,64 +93,17 @@
   });
 </script>
 
-<Card.Root class="p-6 w-full max-w-md mx-auto">
-  <Card.Header class="space-y-1">
-    <Card.Title class="text-2xl">Create an account</Card.Title>
-    <Card.Description>
-      Enter your details to create your account
-    </Card.Description>
-  </Card.Header>
+<form method="POST" use:enhance>
+  <Card.Root class="p-6 w-full max-w-md mx-auto">
+    <Card.Header class="space-y-1">
+      <Card.Title class="text-2xl">Create an account</Card.Title>
+      <Card.Description>
+        <p>Finish creating your account by selecting a username.</p>
+      </Card.Description>
+    </Card.Header>
 
-  <form method="POST" action="?/signup" use:enhance>
-    <Card.Content class="grid gap-4 mb-4">
-      <div class="grid grid-cols-2">
-        <Button
-          onclick={async () => {
-            const { data, error } = await supabase.auth.signInWithOAuth({
-              provider: "discord",
-            });
-            if (error) {
-              console.error(error);
-            }
-            console.log(data);
-          }}
-          variant="outline"
-          type="button"
-          class="cursor-pointer w-full">Discord</Button
-        >
-      </div>
-
-      <div class="relative">
-        <div class="absolute inset-0 flex items-center">
-          <span class="w-full border-t"></span>
-        </div>
-        <div class="relative flex justify-center text-xs uppercase">
-          <span class="bg-card text-muted-foreground px-2">
-            Or create using email
-          </span>
-        </div>
-      </div>
-
-      <Form.Field form={signupForm} name="email">
-        <div class="space-y-2">
-          <Form.Control>
-            {#snippet children({ props })}
-              <Form.Label>Email</Form.Label>
-              <Input
-                {...props}
-                class="w-full"
-                bind:value={$formData.email}
-                autocomplete="email"
-                type="email"
-                placeholder="user@example.com"
-              />
-            {/snippet}
-          </Form.Control>
-          <Form.FieldErrors class="text-xs" />
-        </div>
-      </Form.Field>
-
-      <Form.Field form={signupForm} name="username">
+    <Card.Content class="grid gap-4 ">
+      <Form.Field form={usernameForm} name="username">
         <div class="space-y-2">
           <Form.Control>
             {#snippet children({ props })}
@@ -178,24 +129,6 @@
         </div>
       </Form.Field>
 
-      <Form.Field form={signupForm} name="password">
-        <div class="space-y-2">
-          <Form.Control>
-            {#snippet children({ props })}
-              <Form.Label>Password</Form.Label>
-              <Input
-                {...props}
-                class="w-full"
-                bind:value={$formData.password}
-                autocomplete="new-password"
-                type="password"
-              />
-            {/snippet}
-          </Form.Control>
-          <Form.FieldErrors class="text-xs" />
-        </div>
-      </Form.Field>
-
       {#if $flash?.message && $flash?.type}
         <Alert.Root>
           <Alert.Title
@@ -215,20 +148,8 @@
         {#if isSubmitting}
           <Loader class="animate-spin mr-2" />
         {/if}
-        Create account
-      </Button>
-
-      <Button
-        variant="link"
-        type="button"
-        class="w-full"
-        disabled={isSubmitting}
-        onclick={() => {
-          goto("/auth/login");
-        }}
-      >
-        Already have an account? Login
+        Create Account
       </Button>
     </Card.Footer>
-  </form>
-</Card.Root>
+  </Card.Root>
+</form>

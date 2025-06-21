@@ -7,7 +7,7 @@ import { checkIfUsernameIsUnique } from "$lib/supabase/accounts";
 
 export const load: PageServerLoad = async ({ locals: { session } }) => {
   if (!session) {
-    redirect(303, "/auth");
+    redirect(303, "/auth/login");
   }
 
   return {
