@@ -6,8 +6,9 @@ import { superValidate } from "sveltekit-superforms";
 import { zod } from "sveltekit-superforms/adapters";
 import { usernameSchema } from "../schema";
 
-export const load: PageServerLoad = async ({ locals: { session } }) => {
+export const load: PageServerLoad = async ({ parent, locals: { session } }) => {
   const usernameForm = await superValidate(zod(usernameSchema));
+  await parent();
 
   if (!session) {
     redirect(303, "/auth/login");

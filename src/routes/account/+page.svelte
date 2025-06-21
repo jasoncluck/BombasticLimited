@@ -42,6 +42,7 @@
   const emailForm = superForm(data.emailForm, {
     validators: zodClient(emailSchema),
     resetForm: false,
+
     onChange() {},
     onUpdated() {
       updateFlash(page);
@@ -121,10 +122,10 @@
     <h1 class="header-primary">Account settings</h1>
     <form use:emailEnhance method="POST" action="?/updateEmail">
       <Form.Field form={emailForm} name="email">
-        <div class="flex flex-wrap @md:flex-nowrap items-center gap-4 w-full">
+        <div class="flex flex-wrap @lg:flex-nowrap items-center gap-4 w-full">
           <Form.Control>
             {#snippet children({ props })}
-              <Form.Label class="w-22">Email</Form.Label>
+              <Form.Label class="min-w-20">Email</Form.Label>
               <Input
                 {...props}
                 class="flex-1 min-w-[300px]"
@@ -133,7 +134,7 @@
               <Button
                 type="submit"
                 variant="secondary"
-                class="cursor-pointer @md:max-w-24 w-full"
+                class="cursor-pointer @lg:max-w-24 w-full"
                 disabled={$emailFormData.email === session.user.email}
               >
                 Update
@@ -156,19 +157,46 @@
     {/if}
     <form use:usernameEnhance method="POST" action="?/updateUsername">
       <Form.Field form={usernameForm} name="username">
-        <div class="flex flex-wrap @md:flex-nowrap items-center gap-4 w-full">
+        <div class="flex flex-wrap @lg:flex-nowrap items-center gap-4 w-full">
           <Form.Control>
             {#snippet children({ props })}
-              <Form.Label class="w-22">Username</Form.Label>
+              <Form.Label class="min-w-20">Username</Form.Label>
               <Input
                 {...props}
                 class="flex-1 min-w-[300px]"
                 bind:value={$usernameFormData.username}
               />
+              <!-- Button and status messages for smaller viewports -->
+              <div class="flex flex-col-reverse w-full @lg:hidden">
+                <Button
+                  type="submit"
+                  variant="secondary"
+                  class="cursor-pointer mt-3 w-full"
+                  disabled={$usernameFormData.username ===
+                    session.user.user_metadata.username ||
+                    isCheckingUsername ||
+                    isUsernameUnique === false}
+                >
+                  Update
+                </Button>
+                {#if currentUsername && currentUsername.length >= 2}
+                  {#if isCheckingUsername}
+                    <p class="text-xs text-gray-400">
+                      Checking availability...
+                    </p>
+                  {:else if isUsernameUnique === true}
+                    <p class="text-xs text-green-300">Username is available</p>
+                  {:else if isUsernameUnique === false}
+                    <p class="text-xs text-red-300">
+                      Username is not available
+                    </p>
+                  {/if}
+                {/if}
+              </div>
               <Button
                 type="submit"
                 variant="secondary"
-                class="cursor-pointer @md:max-w-24 w-full"
+                class="cursor-pointer max-w-24 w-full hidden @lg:block"
                 disabled={$usernameFormData.username ===
                   session.user.user_metadata.username ||
                   isCheckingUsername ||
@@ -178,17 +206,20 @@
               </Button>
             {/snippet}
           </Form.Control>
+          <Form.FieldErrors class="mb-2" />
         </div>
-        {#if currentUsername && currentUsername.length >= 2}
-          {#if isCheckingUsername}
-            <p class="text-xs text-gray-400">Checking availability...</p>
-          {:else if isUsernameUnique === true}
-            <p class="text-xs text-green-300">Username is available</p>
-          {:else if isUsernameUnique === false}
-            <p class="text-xs text-red-300">Username is not available</p>
+        <!-- Status messages below the main row for larger viewports -->
+        <div class="hidden @lg:block mt-2">
+          {#if currentUsername && currentUsername.length >= 2}
+            {#if isCheckingUsername}
+              <p class="text-xs text-gray-400">Checking availability...</p>
+            {:else if isUsernameUnique === true}
+              <p class="text-xs text-green-300">Username is available</p>
+            {:else if isUsernameUnique === false}
+              <p class="text-xs text-red-300">Username is not available</p>
+            {/if}
           {/if}
-        {/if}
-        <Form.FieldErrors class="mb-2" />
+        </div>
       </Form.Field>
     </form>
     {#if $flash?.field === "username" && $flash?.message && $flash?.type}
@@ -208,12 +239,12 @@
       method="POST"
       action="?/resetPassword"
     >
-      <div class="flex flex-wrap @md:flex-nowrap items-center gap-4 w-full">
-        <Label for="password" class="w-18">Password</Label>
+      <div class="flex flex-wrap @lg:flex-nowrap items-center gap-4 w-full">
+        <Label for="password" class="min-w-20">Password</Label>
         <Button
           id="password"
           variant="secondary"
-          class="cursor-pointer @md:w-auto w-full"
+          class="cursor-pointer @lg:w-auto w-full"
           type="submit">Reset Password</Button
         >
       </div>
@@ -228,7 +259,7 @@
     {/if}
     <Dialog.Root>
       <Dialog.Trigger
-        class="@md:w-[200px] w-full mt-20 {buttonVariants({
+        class="@lg:w-[200px] w-full mt-20 {buttonVariants({
           variant: 'destructive',
         })}">Delete Account</Dialog.Trigger
       >

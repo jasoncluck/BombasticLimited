@@ -374,7 +374,7 @@
   <nav class="flex items-center p-1 mb-2 relative">
     <div class="flex items-center">
       <div class="sm:hidden">
-        <SideDrawer {playlists} {supabase} {session} />
+        <SideDrawer {playlists} {supabase} {session} {handleLogout} />
       </div>
     </div>
 
@@ -383,7 +383,7 @@
     >
       <a
         href="/"
-        class="text-sm font-medium transition-colors hover:text-primary"
+        class="hidden sm:block text-sm font-medium transition-colors hover:text-primary"
       >
         <House />
         <span class="sr-only">Home</span>
@@ -392,12 +392,12 @@
       <Input
         oninput={handleSearch}
         placeholder="Search"
-        class="w-72"
+        class="sm:w-72"
         value={page.params.query}
       />
     </div>
 
-    <div class="flex items-center ml-auto">
+    <div class="items-center ml-auto hidden sm:flex">
       {#if user}
         <DropdownMenu.Root>
           <DropdownMenu.Trigger
@@ -467,13 +467,14 @@
     </Resizable.Pane>
     <Resizable.Handle
       onDraggingChange={handleResize}
-      class="bg-background w-[8px] end-[2px] after:transition after:duration-300 after:ease-out)] after:h-[calc(100%-16px)] 
+      class="bg-background w-[8px] end-[2px] after:transition after:duration-300 after:ease-out)] 
+      after:h-[calc(100%-16px)] sm:flex hidden
     {isDraggingDivider
         ? 'after:w-[1px] after:bg-foreground'
         : 'after:w-[1px] hover:after:bg-muted-foreground'}"
     />
     <Resizable.Pane
-      class="@container pane flex min-w-[350px]"
+      class="@container pane flex min-w-[300px] "
       defaultSize={layout ? parseFloat(layout[1]) : 79}
     >
       <ScrollArea

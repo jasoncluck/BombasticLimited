@@ -63,7 +63,7 @@
     }
   }
 
-  onMount(() => {
+  $effect(() => {
     if (!session) {
       playlistImagesLoaded = true;
       return;
@@ -252,7 +252,7 @@
   }
 </script>
 
-<nav class="h-full">
+<aside class="h-full">
   <div class="flex flex-col my-3">
     {#each SOURCES as source (source)}
       <Button
@@ -407,4 +407,4 @@
       {/each}
     {/if}
   </div>
-</nav>
+</aside>

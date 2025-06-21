@@ -43,7 +43,8 @@ export async function handleCreatePlaylist({
   session: Session | null;
   supabase: SupabaseClient<Database>;
 }) {
-  if (!session?.user) {
+  console.log(session);
+  if (!session) {
     console.error("Attempted to create a playlist without a valid session.");
     goto("/login");
     return;
@@ -68,6 +69,7 @@ export async function handleCreatePlaylist({
     showNotification(`Created Playlist: ${playlist.name}`);
     goto(`/playlist/${encodeURI(playlist.short_id)}`);
   }
+  invalidate("supabase:db:playlists");
 }
 
 export async function handleDeletePlaylist({

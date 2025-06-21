@@ -2,7 +2,16 @@
   import { goto } from "$app/navigation";
   import { SOURCES, SOURCE_INFO } from "$lib/constants/source";
   import { activeStreams } from "$lib/state/streaming.svelte";
-  import { Circle, House, ListVideo, Menu, Plus } from "@lucide/svelte";
+  import {
+    Circle,
+    House,
+    ListVideo,
+    LogIn,
+    LogOut,
+    Menu,
+    Plus,
+    Settings,
+  } from "@lucide/svelte";
   import * as Sheet from "$lib/components/ui/sheet/index.js";
   import { Button } from "$lib/components/ui/button";
   import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
@@ -14,21 +23,26 @@
   import type { Database } from "$lib/supabase/database.types";
   import { fade } from "svelte/transition";
   import type { Playlist } from "$lib/supabase/playlists";
+  import { getContentState } from "$lib/state/content.svelte";
 
   let {
     playlists,
+    handleLogout,
     session,
     supabase,
   }: {
     playlists: Playlist[];
+    handleLogout: () => void;
     supabase: SupabaseClient<Database>;
     session: Session | null;
   } = $props();
   let isOpen = $state(false);
+
+  const contentState = getContentState();
 </script>
 
 <Sheet.Root bind:open={isOpen}>
-  <Sheet.Trigger><Menu /></Sheet.Trigger>
+  <Sheet.Trigger><Menu class="cursor-pointer" /></Sheet.Trigger>
   <Sheet.Content
     side="left"
     class="flex flex-col gap-2 mx-2 pt-12 min-w-[300px]"
@@ -37,19 +51,22 @@
       <div transition:fade>
         <Button
           variant="ghost"
-          class="w-full flex justify-start h-[64px]"
+          class="cursor-pointer w-full flex justify-start h-[64px]"
           onclick={() => {
             goto(`/`);
             isOpen = false;
           }}
         >
-          <House class="flex !w-8 !h-8 mx-2 " />
+          <div class="flex items-center w-12 h-12">
+            <House class="!w-8 !h-8 mx-2 " />
+          </div>
           <span class="text-sm font-medium m-3 overflow-ellipsis"> Home </span>
         </Button>
+
         {#each SOURCES as source (source)}
           <Button
             variant="ghost"
-            class="w-full flex justify-start h-[64px] relative"
+            class="cursor-pointer w-full flex justify-start h-[64px] relative"
             onclick={() => {
               goto(`/${source}`);
               isOpen = false;
@@ -74,24 +91,34 @@
             </span>
           </Button>
         {/each}
-        <Sheet.Title class="pt-4">Playlists</Sheet.Title>
-        <Button
-          variant="ghost"
-          class="w-full flex justify-start h-[64px]"
-          onclick={() => {
-            handleCreatePlaylist({
-              playlists,
-              session,
-              supabase,
-            });
-            isOpen = false;
-          }}
-        >
-          <Plus class="flex !w-8 !h-8 mx-2" />
-          <span class="text-sm font-medium m-3 overflow-ellipsis">
-            Add Playlist
-          </span>
-        </Button>
+        <Sheet.Title class="mx-4 mt-4 mb-2">Playlists</Sheet.Title>
+        {#if session}
+          <Button
+            variant="ghost"
+            class="cursor-pointer w-full flex justify-start h-[64px]"
+            onclick={() => {
+              handleCreatePlaylist({
+                playlists,
+                session,
+                supabase,
+              });
+              isOpen = false;
+            }}
+          >
+            <div class="flex items-center w-12 h-12">
+              <Plus class="flex !w-8 !h-8 mx-2" />
+            </div>
+            <span class="text-sm font-medium m-3 overflow-ellipsis">
+              Add Playlist
+            </span>
+          </Button>
+        {:else}
+          <Sheet.Description>
+            <p class="text-sm font-medium m-3 overflow-ellipsis">
+              Create an account or login to use Playlists
+            </p>
+          </Sheet.Description>
+        {/if}
         {#each playlists as playlist (playlist.id)}
           <ContextMenu.Root>
             <ContextMenu.Content>
@@ -107,21 +134,21 @@
             <ContextMenu.Trigger>
               <Button
                 variant="ghost"
-                class="w-full flex justify-start h-[64px]"
+                class="cursor-pointer w-full flex justify-start h-[64px]"
                 onclick={() => {
                   goto(`/playlist/${encodeURI(playlist.short_id)}`);
                   isOpen = false;
                 }}
                 title={playlist.name}
               >
-                {#if playlist.thumbnail_maxres_url || playlist.thumbnail_url}
-                  <div
-                    class="h-12 min-w-12 bg-cover bg-center"
-                    style="background-image: url('{playlist.thumbnail_maxres_url ??
-                      playlist.thumbnail_url}');"
-                    aria-label={playlist.name}
-                    role="img"
-                  ></div>
+                {#if contentState.playlistImages[playlist.id]}
+                  <div class="w-12 h-12">
+                    <img
+                      src={contentState.playlistImages[playlist.id]}
+                      class="h-full w-full cursor-pointer"
+                      alt={`Image for playlist: ${playlist.name}`}
+                    />
+                  </div>
                 {:else}
                   <div class="h-12 min-w-12 flex items-center justify-center">
                     <ListVideo class="!h-8 !w-8" />
@@ -135,6 +162,56 @@
             </ContextMenu.Trigger>
           </ContextMenu.Root>
         {/each}
+
+        <Sheet.Title class="mx-4 mt-4 mb-2">Account</Sheet.Title>
+        {#if session}
+          <Button
+            variant="ghost"
+            class="cursor-pointer w-full flex justify-start h-[64px]"
+            onclick={() => {
+              goto(`/account`);
+              isOpen = false;
+            }}
+          >
+            <div class="flex items-center w-12 h-12">
+              <Settings class="flex !w-8 !h-8 mx-2" />
+            </div>
+            <span class="text-sm font-medium m-3 overflow-ellipsis">
+              Settings
+            </span>
+          </Button>
+          <Button
+            variant="ghost"
+            class="cursor-pointer w-full flex justify-start h-[64px]"
+            onclick={() => {
+              handleLogout();
+              isOpen = false;
+            }}
+          >
+            <div class="flex items-center w-12 h-12">
+              <LogOut class="flex !w-8 !h-8 mx-2" />
+            </div>
+            <span class="text-sm font-medium m-3 overflow-ellipsis">
+              Logout
+            </span>
+          </Button>
+        {:else}
+          <Button
+            variant="ghost"
+            class="cursor-pointer w-full flex justify-start h-[64px]"
+            onclick={() => {
+              goto("/auth/login");
+              isOpen = false;
+            }}
+          >
+            <div class="flex items-center w-12 h-12">
+              <LogIn class="flex !w-8 !h-8 mx-2" />
+            </div>
+            <span class="text-sm font-medium m-3 overflow-ellipsis">
+              Login
+            </span>
+          </Button>
+        {/if}
       </div>
     {/if}
   </Sheet.Content>

@@ -91,14 +91,21 @@
       }
     };
   });
+  const errorDescription = page.url.searchParams.get("error_description");
 </script>
 
+{#if errorDescription}
+  <Alert.Root class="mb-8">
+    <Alert.Title>Error</Alert.Title>
+    <Alert.Description>{errorDescription}</Alert.Description>
+  </Alert.Root>
+{/if}
 <form method="POST" use:enhance>
   <Card.Root class="p-6 w-full max-w-md mx-auto">
     <Card.Header class="space-y-1">
-      <Card.Title class="text-2xl">Create an account</Card.Title>
+      <Card.Title class="text-2xl">Create Account</Card.Title>
       <Card.Description>
-        <p>Finish creating your account by selecting a username.</p>
+        Finish creating your account by selecting a username.
       </Card.Description>
     </Card.Header>
 
