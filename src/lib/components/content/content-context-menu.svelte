@@ -79,20 +79,22 @@
         {#if playlists.length < 1}
           <ContextMenu.Item>No playlists found</ContextMenu.Item>
         {:else}
-          {#each playlists as playlist (playlist.id)}
-            <ContextMenu.Item
-              inset
-              onclick={() =>
-                handleAddVideosToPlaylist({
-                  videos: contentState.selectedVideos,
-                  playlist,
-                  contentState,
-                  supabase,
-                  session,
-                })}
-            >
-              {playlist.name}
-            </ContextMenu.Item>
+          {#each playlists as addPlaylist (addPlaylist.id)}
+            {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
+              <ContextMenu.Item
+                inset
+                onclick={() =>
+                  handleAddVideosToPlaylist({
+                    videos: contentState.selectedVideos,
+                    playlist: addPlaylist,
+                    contentState,
+                    supabase,
+                    session,
+                  })}
+              >
+                {addPlaylist.name}
+              </ContextMenu.Item>
+            {/if}
           {/each}
         {/if}
       </ContextMenu.SubContent>
