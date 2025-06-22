@@ -2,7 +2,7 @@
   import * as Card from "$lib/components/ui/card";
   import { Button } from "$lib/components/ui/button";
   import { Input } from "$lib/components/ui/input";
-  import { Github, Loader } from "@lucide/svelte";
+  import { Loader } from "@lucide/svelte";
   import { superForm, type SuperValidated } from "sveltekit-superforms";
   import { zodClient, type Infer } from "sveltekit-superforms/adapters";
   import * as Alert from "$lib/components/ui/alert/index.js";
@@ -11,13 +11,19 @@
   import { page } from "$app/state";
   import { loginSchema, type LoginSchema } from "../schema";
   import { goto } from "$app/navigation";
+  import type { SupabaseClient } from "@supabase/supabase-js";
+  import type { Database } from "$lib/supabase/database.types";
 
   let {
     data,
   }: {
-    data: { form: SuperValidated<Infer<LoginSchema>> };
+    data: {
+      form: SuperValidated<Infer<LoginSchema>>;
+      supabase: SupabaseClient<Database>;
+    };
   } = $props();
 
+  const { supabase } = $derived(data);
   const flash = getFlash(page);
 
   const loginForm = superForm(data.form, {
@@ -51,10 +57,20 @@
   <form method="POST" action="?/login" use:enhance>
     <Card.Content class="grid gap-4">
       <div class="grid grid-cols-2 gap-6">
-        <Button variant="outline" type="button">
-          <Github />
-          GitHub
-        </Button>
+        <Button
+          onclick={async () => {
+            const { data, error } = await supabase.auth.signInWithOAuth({
+              provider: "discord",
+            });
+            if (error) {
+              console.error(error);
+            }
+            console.log(data);
+          }}
+          variant="outline"
+          type="button"
+          class="cursor-pointer w-full">Discord</Button
+        >
       </div>
 
       <div class="relative">

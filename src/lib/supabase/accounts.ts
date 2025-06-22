@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "./database.types";
+import type { Database, Tables } from "./database.types";
+
+export type Profile = Tables<"profiles">;
 
 export async function checkIfUsernameIsUnique({
   username,
@@ -13,4 +15,23 @@ export async function checkIfUsernameIsUnique({
   });
 
   return isUnique;
+}
+
+export async function getUserProfile({
+  userId,
+  supabase,
+}: {
+  userId: string;
+  supabase: SupabaseClient<Database>;
+}) {
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select()
+    .eq("id", userId)
+    .single();
+
+  if (error) {
+    console.error(error);
+  }
+  return { profile, error };
 }

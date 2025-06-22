@@ -1,16 +1,27 @@
 import { zod } from "sveltekit-superforms/adapters";
-import type { Actions, PageServerLoad } from "./$types";
 import { fail, superValidate } from "sveltekit-superforms";
 import { emailSchema, passwordSchema, usernameSchema } from "../auth/schema";
 import { redirect, setFlash } from "sveltekit-flash-message/server";
-import { checkIfUsernameIsUnique } from "$lib/supabase/accounts";
+import {
+  checkIfUsernameIsUnique,
+  getUserProfile,
+} from "$lib/supabase/accounts";
+import type { Actions, PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async ({ locals: { session } }) => {
+export const load: PageServerLoad = async ({
+  locals: { supabase, session },
+}) => {
   if (!session) {
     redirect(303, "/auth/login");
   }
 
+  const { profile } = await getUserProfile({
+    supabase,
+    userId: session.user.id,
+  });
+
   return {
+    profile,
     emailForm: await superValidate(
       { email: session.user.email },
       zod(emailSchema),
@@ -19,7 +30,7 @@ export const load: PageServerLoad = async ({ locals: { session } }) => {
       },
     ),
     usernameForm: await superValidate(
-      { username: session.user.user_metadata.username },
+      { username: profile?.username ?? "" },
       zod(usernameSchema),
       {
         errors: false,
@@ -92,7 +103,7 @@ export const actions: Actions = {
       return fail(400, { form });
     }
 
-    const { data, error } = await supabase.auth.updateUser({
+    const { error } = await supabase.auth.updateUser({
       data: { username },
     });
 
@@ -107,7 +118,7 @@ export const actions: Actions = {
       setFlash(
         {
           type: "success",
-          message: `Updated username to ${data.user.user_metadata.username}`,
+          message: `Updated username to ${username}`,
           field: "username",
         },
         cookies,

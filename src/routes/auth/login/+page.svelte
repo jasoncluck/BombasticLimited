@@ -4,6 +4,8 @@
   import type { Writable } from "svelte/store";
   import type { LoginSchema } from "../schema";
   import LoginForm from "./login-form.svelte";
+  import type { SupabaseClient } from "@supabase/supabase-js";
+  import type { Database } from "$lib/supabase/database.types";
 
   export type AuthFlash = Writable<{
     message: string | null;
@@ -15,12 +17,14 @@
   }: {
     data: {
       loginForm: SuperValidated<Infer<LoginSchema>>;
+
+      supabase: SupabaseClient<Database>;
     };
   } = $props();
 </script>
 
 <div class="flex flex-row justify-center">
   <div class="mt-24 w-[400px]">
-    <LoginForm data={{ form: data.loginForm }} />
+    <LoginForm data={{ form: data.loginForm, ...data }} />
   </div>
 </div>

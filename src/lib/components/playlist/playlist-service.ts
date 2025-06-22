@@ -43,7 +43,6 @@ export async function handleCreatePlaylist({
   session: Session | null;
   supabase: SupabaseClient<Database>;
 }) {
-  console.log(session);
   if (!session) {
     console.error("Attempted to create a playlist without a valid session.");
     goto("/login");

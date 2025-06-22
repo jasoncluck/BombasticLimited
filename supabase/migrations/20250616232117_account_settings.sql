@@ -21,6 +21,7 @@ USING (true);
 -- RPC function to check if username is unique
 CREATE OR REPLACE FUNCTION is_unique_username(p_username text)
 RETURNS boolean 
+LANGUAGE plpgsql
 SET search_path = public
 AS $$
 DECLARE
@@ -36,7 +37,7 @@ BEGIN
     -- Return true if username is unique (does not exist)
     RETURN NOT username_exists;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Grant execute permission to authenticated users
 GRANT EXECUTE ON FUNCTION is_unique_username(text) TO authenticated;
@@ -48,29 +49,143 @@ FOR SELECT
 TO authenticated
 USING (true);
 
+-- Debug logging table
+CREATE TABLE IF NOT EXISTS public.username_debug_logs (
+    id SERIAL PRIMARY KEY,
+    user_id uuid,
+    operation text,
+    raw_username text,
+    raw_fullname text,
+    fullname_available boolean,
+    target_username text,
+    created_at timestamp DEFAULT NOW()
+);
+
+-- Helper function to generate a unique username from full_name
+CREATE OR REPLACE FUNCTION generate_unique_username(base_username text, exclude_user_id uuid DEFAULT NULL)
+RETURNS text
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+    candidate_username text;
+    random_suffix text;
+    max_attempts integer := 100;
+    attempt_count integer := 0;
+BEGIN
+    -- First try the base username without any suffix
+    candidate_username := base_username;
+    
+    -- Check if the base username is already unique (excluding the current user)
+    IF exclude_user_id IS NULL THEN
+        IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE username = candidate_username) THEN
+            RETURN candidate_username;
+        END IF;
+    ELSE
+        IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE username = candidate_username AND id != exclude_user_id) THEN
+            RETURN candidate_username;
+        END IF;
+    END IF;
+    
+    -- If not unique, keep trying with random suffixes
+    WHILE attempt_count < max_attempts LOOP
+        -- Generate a 5-character random number (10000-99999)
+        random_suffix := (FLOOR(RANDOM() * 90000) + 10000)::text;
+        candidate_username := base_username || '#' || random_suffix;
+        
+        -- Check if this combination is unique (excluding the current user)
+        IF exclude_user_id IS NULL THEN
+            IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE username = candidate_username) THEN
+                RETURN candidate_username;
+            END IF;
+        ELSE
+            IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE username = candidate_username AND id != exclude_user_id) THEN
+                RETURN candidate_username;
+            END IF;
+        END IF;
+        
+        attempt_count := attempt_count + 1;
+    END LOOP;
+    
+    -- If we couldn't find a unique username after max_attempts, fallback
+    RETURN base_username || '#' || EXTRACT(EPOCH FROM NOW())::bigint::text;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION public.handle_user_changes()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = ''
 AS $$
+DECLARE
+    target_username text;
+    full_name_value text;
+    raw_username text;
+    fullname_available boolean := false;
 BEGIN
   IF TG_OP = 'INSERT' THEN
+    -- Determine username to use
+    raw_username := NEW.raw_user_meta_data ->> 'username';
+    target_username := raw_username;
+    
+    -- If username is undefined but full_name is defined, use full_name as username
+    IF target_username IS NULL AND (NEW.raw_user_meta_data ->> 'full_name') IS NOT NULL THEN
+        full_name_value := NEW.raw_user_meta_data ->> 'full_name';
+        
+        -- First check if the full_name is available as-is
+        IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE username = full_name_value) THEN
+            target_username := full_name_value;
+            fullname_available := true;
+        ELSE
+            -- Only call generate_unique_username if full_name is already taken
+            target_username := public.generate_unique_username(full_name_value, NEW.id);
+            fullname_available := false;
+        END IF;
+    END IF;
+    
+    -- Log the debug information
+    INSERT INTO public.username_debug_logs (user_id, operation, raw_username, raw_fullname, fullname_available, target_username)
+    VALUES (NEW.id, 'INSERT', raw_username, full_name_value, fullname_available, target_username);
+    
     -- Create new profile
     INSERT INTO public.profiles (id, username)
     VALUES (
       NEW.id, 
-      NEW.raw_user_meta_data ->> 'username'
+      target_username
     )
-    ON CONFLICT (id) DO NOTHING; -- Prevent duplicate key errors
+    ON CONFLICT (id) DO NOTHING;
     
     RETURN NEW;
   END IF;
   
   IF TG_OP = 'UPDATE' THEN
+    -- Determine username to use
+    raw_username := NEW.raw_user_meta_data ->> 'username';
+    target_username := raw_username;
+    
+    -- If username is undefined but full_name is defined, use full_name as username
+    IF target_username IS NULL AND (NEW.raw_user_meta_data ->> 'full_name') IS NOT NULL THEN
+        full_name_value := NEW.raw_user_meta_data ->> 'full_name';
+        
+        -- First check if the full_name is available as-is (excluding current user)
+        IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE username = full_name_value AND id != NEW.id) THEN
+            target_username := full_name_value;
+            fullname_available := true;
+        ELSE
+            -- Only call generate_unique_username if full_name is already taken by someone else
+            target_username := public.generate_unique_username(full_name_value, NEW.id);
+            fullname_available := false;
+        END IF;
+    END IF;
+    
+    -- Log the debug information
+    INSERT INTO public.username_debug_logs (user_id, operation, raw_username, raw_fullname, fullname_available, target_username)
+    VALUES (NEW.id, 'UPDATE', raw_username, full_name_value, fullname_available, target_username);
+    
     -- Only update if username changed and profile exists
-    IF (OLD.raw_user_meta_data ->> 'username') IS DISTINCT FROM (NEW.raw_user_meta_data ->> 'username') THEN
+    IF (OLD.raw_user_meta_data ->> 'username') IS DISTINCT FROM target_username THEN
       UPDATE public.profiles 
-      SET username = NEW.raw_user_meta_data ->> 'username'
+      SET username = target_username
       WHERE id = NEW.id;
       
       -- If no profile exists, create one
@@ -78,7 +193,7 @@ BEGIN
         INSERT INTO public.profiles (id, username)
         VALUES (
           NEW.id, 
-          NEW.raw_user_meta_data ->> 'username'
+          target_username
         )
         ON CONFLICT (id) DO NOTHING;
       END IF;
@@ -93,13 +208,14 @@ $$;
 
 -- Replace existing trigger
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP TRIGGER IF EXISTS on_auth_user_changes ON auth.users;
 
 CREATE TRIGGER on_auth_user_changes
   AFTER INSERT OR UPDATE ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_user_changes();
 
-
 -- Add SELECT policy to allow users to read their own user record
+DROP POLICY IF EXISTS "Allow users to read their own account" ON auth.users;
 CREATE POLICY "Allow users to read their own account" 
 ON auth.users 
 FOR SELECT 
@@ -107,6 +223,7 @@ TO authenticated
 USING (id = auth.uid());
 
 -- Keep the existing DELETE policy
+DROP POLICY IF EXISTS "Allow users to delete their own account" ON auth.users;
 CREATE POLICY "Allow users to delete their own account" 
 ON auth.users 
 FOR DELETE 
@@ -133,4 +250,3 @@ BEGIN
     END IF;
 END;
 $$;
-

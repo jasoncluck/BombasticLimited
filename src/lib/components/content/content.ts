@@ -55,5 +55,5 @@ export type ContentDescription =
 
 export const carouselStateKeys = ["continueWatching", ...SOURCES] as const;
 export type CarouselKeys = (typeof carouselStateKeys)[number];
-export type CarouselState = { startIndex: number };
+export type CarouselState = { lastViewedIndex?: number };
 export type CarouselsState = Record<CarouselKeys, CarouselState>;

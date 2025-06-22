@@ -11,7 +11,6 @@ import type { LayoutLoad } from "./$types";
 import { COLLAPSED_SIDEBAR_SIZE } from "$lib/constants/layout";
 import type { Playlist } from "$lib/supabase/playlists";
 import type { CombinedContentFilter } from "$lib/components/content/content-filter";
-import { goto } from "$app/navigation";
 
 export const load: LayoutLoad = async ({ data, depends, fetch }) => {
   /**
@@ -49,20 +48,6 @@ export const load: LayoutLoad = async ({ data, depends, fetch }) => {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  supabase.auth.onAuthStateChange((event, session) => {
-    console.log(event);
-    console.log(session);
-    console.log(session?.user?.user_metadata.username);
-    if (
-      isBrowser() &&
-      event === "INITIAL_SESSION" &&
-      session &&
-      !session?.user?.user_metadata.username
-    ) {
-      goto("/auth/username");
-    }
-  });
 
   const {
     playlists,

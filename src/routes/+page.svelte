@@ -16,13 +16,16 @@
     $derived(data);
 
   export const snapshot: Snapshot<CarouselsState> = {
-    capture: () => carouselsState,
+    capture: () => {
+      console.log(carouselsState);
+      return carouselsState;
+    },
     restore: async (restored) => (carouselsState = restored),
   };
 
   let carouselsState = $state<CarouselsState>(
     Object.fromEntries(
-      carouselStateKeys.map((key) => [key, { startIndex: 0 }]),
+      carouselStateKeys.map((key) => [key, { lastViewedIndex: 0 }]),
     ) as CarouselsState,
   );
 </script>

@@ -302,7 +302,6 @@
 
     return () => {
       // Clean up event listeners
-      window.removeEventListener("dragstart", () => {});
       window.removeEventListener("dragover", handleDragOver);
       window.removeEventListener("dragend", handleDragEnd);
       window.removeEventListener("drop", handleDrop);

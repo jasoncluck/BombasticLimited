@@ -16,7 +16,10 @@
   import { getFlash, updateFlash } from "sveltekit-flash-message";
   import { page } from "$app/state";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
-  import { checkIfUsernameIsUnique } from "$lib/supabase/accounts";
+  import {
+    checkIfUsernameIsUnique,
+    type Profile,
+  } from "$lib/supabase/accounts";
   import type { Database } from "$lib/supabase/database.types";
   import { onMount } from "svelte";
   import { enhance } from "$app/forms";
@@ -28,6 +31,7 @@
     data,
   }: {
     data: {
+      profile: Profile;
       emailForm: SuperValidated<Infer<EmailSchema>>;
       usernameForm: SuperValidated<Infer<UsernameSchema>>;
       supabase: SupabaseClient<Database>;
@@ -35,7 +39,7 @@
     };
   } = $props();
 
-  const { supabase, session } = $derived(data);
+  const { profile, supabase, session } = $derived(data);
 
   const flash = getFlash(page);
 
@@ -75,7 +79,7 @@
 
     if (
       currentUsername &&
-      currentUsername !== session.user.user_metadata.username &&
+      currentUsername !== profile.username &&
       currentUsername.length >= 2
     ) {
       isCheckingUsername = true;
@@ -172,8 +176,7 @@
                   type="submit"
                   variant="secondary"
                   class="cursor-pointer mt-3 w-full"
-                  disabled={$usernameFormData.username ===
-                    session.user.user_metadata.username ||
+                  disabled={$usernameFormData.username === profile.username ||
                     isCheckingUsername ||
                     isUsernameUnique === false}
                 >
@@ -197,8 +200,7 @@
                 type="submit"
                 variant="secondary"
                 class="cursor-pointer max-w-24 w-full hidden @lg:block"
-                disabled={$usernameFormData.username ===
-                  session.user.user_metadata.username ||
+                disabled={$usernameFormData.username === profile.username ||
                   isCheckingUsername ||
                   isUsernameUnique === false}
               >

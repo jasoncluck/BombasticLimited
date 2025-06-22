@@ -35,7 +35,7 @@
   let {
     videos,
     videosCount,
-    carouselState = $bindable({ startIndex: 0 }),
+    carouselState = $bindable(),
     contentDisplay,
     playlist,
     playlists,
@@ -108,7 +108,7 @@
         {handleDragStart}
         {invalidateOnVideoChange}
         {isContinueVideos}
-        bind:startIndex={carouselState.startIndex}
+        bind:carouselState
         {supabase}
         {session}
       />
