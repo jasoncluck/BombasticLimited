@@ -24,17 +24,20 @@
 </script>
 
 <div class="flex items-center gap-2">
-  <Label for="isSelectionMode" class="py-3 cursor-pointer">Select</Label>
-  <Checkbox
-    id="isSelectionMode"
-    class="cursor-pointer"
-    bind:checked={contentState.isSelectionMode}
-    onclick={() => {
-      if (contentState.selectedVideos.length > 0) {
-        contentState.selectedVideos = [];
-      }
-    }}
-  />
+  <Label for="isSelectionMode" class="flex text-xs cursor-pointer">Select</Label
+  >
+  <div class="flex h-[20px] w-[20px] items-center">
+    <Checkbox
+      id="isSelectionMode"
+      class="cursor-pointer items-center "
+      bind:checked={contentState.isSelectionMode}
+      onclick={() => {
+        if (contentState.selectedVideos.length > 0) {
+          contentState.selectedVideos = [];
+        }
+      }}
+    />
+  </div>
   {#if contentState.isSelectionMode && contentState.selectedVideos.length > 0}
     <ContentDropdown {playlist} {playlists} {supabase} {session} />
   {/if}

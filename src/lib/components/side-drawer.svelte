@@ -14,7 +14,6 @@
   } from "@lucide/svelte";
   import * as Sheet from "$lib/components/ui/sheet/index.js";
   import { Button } from "$lib/components/ui/button";
-  import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
   import {
     handleCreatePlaylist,
     handleDeletePlaylist,
@@ -54,9 +53,6 @@
   let touchStartTime = $state<number | null>(null);
   let isDragging = $state(false);
   let touchMoved = $state(false);
-
-  // Context menu state tracking
-  let contextMenuOpen = $state<{ [key: number]: boolean }>({});
 
   const endDropzoneClasses = ["border-transparent"];
 
@@ -135,9 +131,6 @@
 
     hoveredIndex = null;
     createDragImage(e, playlists[index].name);
-
-    // Close any open context menus when starting drag
-    closeAllContextMenus();
   }
 
   function handleDragOver(e: DragEvent, index: number) {
@@ -171,36 +164,6 @@
     }
   }
 
-  // Function to close all context menus
-  function closeAllContextMenus() {
-    // Close all context menus by setting their open state to false
-    contextMenuOpen = {};
-
-    // Also trigger a click outside to ensure they close
-    setTimeout(() => {
-      document.dispatchEvent(
-        new MouseEvent("click", {
-          bubbles: true,
-          cancelable: true,
-          clientX: 0,
-          clientY: 0,
-        }),
-      );
-    }, 0);
-  }
-
-  // Handle context menu open state
-  function handleContextMenuOpenChange(index: number, open: boolean) {
-    if (open) {
-      // Close all other context menus first
-      contextMenuOpen = { [index]: true };
-    } else {
-      const newState = { ...contextMenuOpen };
-      delete newState[index];
-      contextMenuOpen = newState;
-    }
-  }
-
   // Touch event handlers
   function handleTouchStart(e: TouchEvent, index: number) {
     const touch = e.touches[0];
@@ -219,9 +182,6 @@
         draggedIndex = index;
         contentState.dragContentType = "playlist";
         hoveredIndex = null;
-
-        // Close any open context menus when starting touch drag
-        closeAllContextMenus();
       }
     }, 150);
   }
@@ -235,9 +195,6 @@
     // If user moved significantly, they're probably scrolling or dragging
     if (deltaY > 10) {
       touchMoved = true;
-
-      // Close context menu on touch movement
-      closeAllContextMenus();
 
       if (!isDragging) return;
     }
@@ -282,16 +239,6 @@
     touchMoved = false;
     handleDragEnd();
   }
-
-  // Close context menu when scrolling is detected
-  $effect(() => {
-    if (
-      pageState.sidebarScrollState?.scrolling ||
-      pageState.drawerScrollState?.scrolling
-    ) {
-      closeAllContextMenus();
-    }
-  });
 
   async function handlePlaylistDrop(
     e: DragEvent | TouchEvent,
@@ -406,78 +353,61 @@
             </Sheet.Description>
           {/if}
           {#each playlists as playlist, i (playlist.id)}
-            <ContextMenu.Root
-              open={contextMenuOpen[i] || false}
-              onOpenChange={(open) => handleContextMenuOpenChange(i, open)}
+            {@const isSelectedPlaylist =
+              selectedPlaylistIdParam === playlist.short_id}
+            <Button
+              variant="ghost"
+              class="{getButtonClasses(
+                i,
+                isSelectedPlaylist,
+              )} cursor-pointer w-full flex justify-start h-[64px]"
+              draggable={true}
+              data-playlist-index={i}
+              onmouseenter={() => handleMouseEnter(i)}
+              onmouseleave={() => handleMouseLeave(i)}
+              ondragstart={(e) => handleDragStart(e, i)}
+              ondragover={(e) => {
+                handleDragOver(e, i);
+              }}
+              ondragleave={(e) => {
+                handleDragLeave(e);
+              }}
+              ondrop={(e) => {
+                handlePlaylistDrop(e, i);
+              }}
+              ondragend={handleDragEnd}
+              ontouchstart={(e) => handleTouchStart(e, i)}
+              ontouchmove={(e) => handleTouchMove(e, i)}
+              ontouchend={(e) => handleTouchEnd(e, i)}
+              onclick={async (e) => {
+                // Prevent navigation if we just finished a drag
+                if (isDragging || touchMoved) {
+                  e.preventDefault();
+                  return;
+                }
+                goto(`/playlist/${encodeURI(playlist.short_id)}`);
+                isOpen = false;
+              }}
+              title={playlist.name}
             >
-              <ContextMenu.Content>
-                <ContextMenu.Item
-                  onclick={() =>
-                    handleDeletePlaylist({
-                      playlist,
-                      session,
-                      supabase,
-                    })}>Delete Playlist</ContextMenu.Item
-                >
-              </ContextMenu.Content>
-              {@const isSelectedPlaylist =
-                selectedPlaylistIdParam === playlist.short_id}
-              <ContextMenu.Trigger>
-                <Button
-                  variant="ghost"
-                  class="{getButtonClasses(
-                    i,
-                    isSelectedPlaylist,
-                  )} cursor-pointer w-full flex justify-start h-[64px]"
-                  draggable={true}
-                  data-playlist-index={i}
-                  onmouseenter={() => handleMouseEnter(i)}
-                  onmouseleave={() => handleMouseLeave(i)}
-                  ondragstart={(e) => handleDragStart(e, i)}
-                  ondragover={(e) => {
-                    handleDragOver(e, i);
-                  }}
-                  ondragleave={(e) => {
-                    handleDragLeave(e);
-                  }}
-                  ondrop={(e) => {
-                    handlePlaylistDrop(e, i);
-                  }}
-                  ondragend={handleDragEnd}
-                  ontouchstart={(e) => handleTouchStart(e, i)}
-                  ontouchmove={(e) => handleTouchMove(e, i)}
-                  ontouchend={(e) => handleTouchEnd(e, i)}
-                  onclick={(e) => {
-                    // Prevent navigation if we just finished a drag
-                    if (isDragging || touchMoved) {
-                      e.preventDefault();
-                      return;
-                    }
-                    goto(`/playlist/${encodeURI(playlist.short_id)}`);
-                    isOpen = false;
-                  }}
-                  title={playlist.name}
-                >
-                  {#if contentState.playlistImages[playlist.id]}
-                    <div class="w-12 h-12">
-                      <img
-                        src={contentState.playlistImages[playlist.id]}
-                        class="h-full w-full cursor-pointer"
-                        alt={`Image for playlist: ${playlist.name}`}
-                      />
-                    </div>
-                  {:else}
-                    <div class="h-12 min-w-12 flex items-center justify-center">
-                      <ListVideo class="!h-8 !w-8" />
-                    </div>
-                  {/if}
+              {#if contentState.playlistImages[playlist.id]}
+                <div class="w-12 h-12">
+                  <img
+                    src={contentState.playlistImages[playlist.id]}
+                    class="h-full w-full cursor-pointer"
+                    alt={`Image for playlist: ${playlist.name}`}
+                  />
+                </div>
+              {:else}
+                <div class="h-12 min-w-12 flex items-center justify-center">
+                  <ListVideo class="!h-8 !w-8" />
+                </div>
+              {/if}
 
-                  <span class="text-sm font-medium m-3 max-w-[100px]">
-                    {playlist.name}
-                  </span>
-                </Button>
-              </ContextMenu.Trigger>
-            </ContextMenu.Root>
+              <span class="text-sm font-medium m-3 max-w-[100px]">
+                {playlist.name}
+              </span>
+            </Button>
           {/each}
 
           <Sheet.Title class="mx-4 mt-4 mb-2">Account</Sheet.Title>

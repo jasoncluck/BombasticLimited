@@ -51,8 +51,7 @@
     class={cn(
       buttonVariants({
         variant: "outline",
-        class:
-          "max-w-[240px] min-w-[140px] justify-start text-left font-normal",
+        class: "max-w-[240px] justify-start text-left font-normal text-xs",
       }),
       !value && "text-muted-foreground",
     )}

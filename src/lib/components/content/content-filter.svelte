@@ -165,7 +165,7 @@
   }
 </script>
 
-<div class="flex flex-col gap-4 mb-2">
+<div class="flex flex-col gap-4">
   <DropdownMenu.Root>
     <DropdownMenu.Trigger
       class="cursor-pointer hover:text-primary flex items-center"

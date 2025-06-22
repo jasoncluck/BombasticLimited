@@ -76,17 +76,14 @@
     {...restProps}
   >
     {@render children()}
-
-    <div class="flex md:justify-end items-end flex-shrink-o">
-      <div class="flex flex-col items-start">
-        <ContentFilters {contentFilter} {view} />
-        <ContentSelect {playlist} {playlists} {supabase} {session} />
-      </div>
-    </div>
   </div>
   <div class="mb-4">
     {#if currentPage && numPages > 1}
       <ContentPagination count={videosCount} bind:currentPage />
     {/if}
+  </div>
+  <div class="flex flex-row justify-end items-start gap-4">
+    <ContentSelect {playlist} {playlists} {supabase} {session} />
+    <ContentFilters {contentFilter} {view} />
   </div>
 </IntersectionObserver>

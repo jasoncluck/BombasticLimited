@@ -175,7 +175,9 @@ export async function handleAddVideosToPlaylist({
     }
     console.error(error);
   } else {
-    showNotification(`Added videos to ${playlist.name}`);
+    showNotification(
+      `Added ${videos.length > 1 ? "videos" : "video"} to ${playlist.name}`,
+    );
 
     if (!playlist.thumbnail_maxres_url || !playlist.thumbnail_url) {
       await handleUpdatePlaylistImage({

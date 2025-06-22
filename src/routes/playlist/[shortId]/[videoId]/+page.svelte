@@ -28,7 +28,7 @@
 
 {#if videos.length > 0}
   <a class="header-link" href={`/playlist/${playlist.short_id}`}>
-    {playlist.name}: Next up
+    Next up - {playlist.name}
   </a>
   <Content
     {videos}

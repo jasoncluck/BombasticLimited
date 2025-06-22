@@ -31,9 +31,10 @@
     class={buttonVariants({
       variant: "ghost",
       size: "icon",
+      class: "size-3",
     })}
   >
-    <Button variant="ghost" class="h-auto "><Ellipsis /></Button>
+    <Ellipsis size="14" />
     <span class="sr-only">Actions for selected items</span>
   </DropdownMenu.Trigger>
   <DropdownMenu.Content>
@@ -54,9 +55,12 @@
         >Add {contentState.selectedVideos.length === 1 ? "video" : "videos"}
         to Playlist</DropdownMenu.SubTrigger
       >
-      <DropdownMenu.SubContent class="w-56 max-h-64 overflow-scroll">
+      <DropdownMenu.SubContent
+        class="w-56 max-h-64 overflow-scroll data-[state=closed]:opacity-0"
+        sideOffset={5}
+      >
         {#each playlists as addPlaylist (addPlaylist.id)}
-          {#if playlist && playlist.id !== addPlaylist.id}
+          {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
             <DropdownMenu.Item
               onclick={() =>
                 handleAddVideosToPlaylist({
