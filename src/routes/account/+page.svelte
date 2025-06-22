@@ -132,7 +132,7 @@
               <Form.Label class="min-w-20">Email</Form.Label>
               <Input
                 {...props}
-                class="flex-1 min-w-[300px]"
+                class="flex-1 min-w-[350px]"
                 bind:value={$emailFormData.email}
               />
               <Button
@@ -167,7 +167,7 @@
               <Form.Label class="min-w-20">Username</Form.Label>
               <Input
                 {...props}
-                class="flex-1 min-w-[300px]"
+                class="flex-1 min-w-[350px]"
                 bind:value={$usernameFormData.username}
               />
               <!-- Button and status messages for smaller viewports -->

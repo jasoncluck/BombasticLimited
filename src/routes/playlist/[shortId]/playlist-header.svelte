@@ -85,7 +85,7 @@
       {:else}
         <button
           type="button"
-          class="flex justify-center items-center h-56 w-56 cursor-pointer border-none bg-transparent p-0"
+          class="flex justify-center items-center min-h-16 min-w-16 max-h-56 max-w-56 cursor-pointer border-none bg-transparent p-0"
           onclick={openDialog}
         >
           <ListVideo size={128} />

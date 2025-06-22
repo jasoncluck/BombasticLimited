@@ -13,7 +13,6 @@
     handleUpdatePlaylistPosition,
   } from "./playlist/playlist-service";
   import { goto } from "$app/navigation";
-  import { onMount } from "svelte";
   import { getContentState } from "$lib/state/content.svelte";
   import { page } from "$app/state";
   import PlaylistContextMenu from "./playlist/playlist-context-menu.svelte";
@@ -207,10 +206,6 @@
       e.currentTarget.classList.remove(...classes);
       e.currentTarget.classList.add(...endDropzoneClasses);
     }
-
-    // Only add bg-transparent if not a selected playlist
-    // e.currentTarget.classList.add("bg-transparent");
-    // e.currentTarget.classList.add("border-transparent");
   }
 
   async function handlePlaylistDrop(e: DragEvent, playlistTargetIndex: number) {
