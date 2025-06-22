@@ -63,6 +63,7 @@
   view="playlist"
   {videosCount}
   {contentFilter}
+  openPlaylistModal={() => (open = true)}
   {playlist}
   {playlists}
   {supabase}
@@ -103,12 +104,11 @@
         <p class="text-sm text-muted-foreground tracking-tight">
           {playlist.type === "Public" ? "Public Playlist" : "Private Playlist"}
         </p>
-        <h2 class="header-primary text-left">
+        <h2 class="header-primary text-wrap break-words">
           {playlist.name}
         </h2>
         <p
-          class="text-sm text-muted-foreground mb-2 text-left
-          w-96 overflow- text-wrap break-words"
+          class="text-sm text-muted-foreground mb-2 text-left max-w-full sm:max-w-96 break-words"
         >
           {playlist.description}
         </p>

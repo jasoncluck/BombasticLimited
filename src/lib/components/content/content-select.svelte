@@ -23,13 +23,12 @@
   const contentState = getContentState();
 </script>
 
-<div class="flex items-center gap-2">
-  <Label for="isSelectionMode" class="flex text-xs cursor-pointer">Select</Label
-  >
-  <div class="flex h-[20px] w-[20px] items-center">
+<div class="flex gap-2 h-[20px] items-center">
+  <Label for="isSelectionMode" class="text-xs cursor-pointer">Select</Label>
+  <div class="w-[20px]">
     <Checkbox
       id="isSelectionMode"
-      class="cursor-pointer items-center "
+      class="items-center cursor-pointer"
       bind:checked={contentState.isSelectionMode}
       onclick={() => {
         if (contentState.selectedVideos.length > 0) {

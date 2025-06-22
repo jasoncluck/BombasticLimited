@@ -165,13 +165,13 @@
   }
 </script>
 
-<div class="flex flex-col gap-4">
+<div class="flex flex-col items-start gap-4">
   <DropdownMenu.Root>
     <DropdownMenu.Trigger
-      class="cursor-pointer hover:text-primary flex items-center"
+      class="cursor-pointer hover:text-primary flex items-center gap-1"
     >
       <span class="text-xs">{sortOptionInfo.displayName}</span>
-      <List size={20} class="ml-1" />
+      <List size={20} />
     </DropdownMenu.Trigger>
     <DropdownMenu.Content>
       <DropdownMenu.Group>
@@ -208,7 +208,7 @@
     </DropdownMenu.Content>
   </DropdownMenu.Root>
   {#if contentFilter.sort.key !== "playlistOrder"}
-    <div class="flex flex-col gap-4 justify-start @md:justify-end">
+    <div class="flex flex-col gap-2">
       <DatePicker
         label="Start Date"
         bind:value={startDateValue}

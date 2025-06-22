@@ -14,6 +14,7 @@
   } from "@lucide/svelte";
   import * as Sheet from "$lib/components/ui/sheet/index.js";
   import { Button } from "$lib/components/ui/button";
+  import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
   import {
     handleCreatePlaylist,
     handleDeletePlaylist,
@@ -48,11 +49,6 @@
   let draggedIndex = $state<number | null>(null);
   let targetIndex = $state<number | null>(null);
   let hoveredIndex = $state<number | null>(null);
-
-  let touchStartY = $state<number | null>(null);
-  let touchStartTime = $state<number | null>(null);
-  let isDragging = $state(false);
-  let touchMoved = $state(false);
 
   const endDropzoneClasses = ["border-transparent"];
 
@@ -148,8 +144,6 @@
     draggedIndex = null;
     targetIndex = null;
     hoveredIndex = null;
-    isDragging = false;
-    touchMoved = false;
   }
 
   function handleDragLeave(
@@ -164,86 +158,7 @@
     }
   }
 
-  // Touch event handlers
-  function handleTouchStart(e: TouchEvent, index: number) {
-    const touch = e.touches[0];
-    touchStartY = touch.clientY;
-    touchStartTime = Date.now();
-    touchMoved = false;
-
-    // Start drag after a short delay to distinguish from scrolling
-    setTimeout(() => {
-      if (
-        touchStartY !== null &&
-        !touchMoved &&
-        Date.now() - (touchStartTime || 0) >= 50
-      ) {
-        isDragging = true;
-        draggedIndex = index;
-        contentState.dragContentType = "playlist";
-        hoveredIndex = null;
-      }
-    }, 150);
-  }
-
-  function handleTouchMove(e: TouchEvent, index: number) {
-    if (!touchStartY) return;
-
-    const touch = e.touches[0];
-    const deltaY = Math.abs(touch.clientY - touchStartY);
-
-    // If user moved significantly, they're probably scrolling or dragging
-    if (deltaY > 10) {
-      touchMoved = true;
-
-      if (!isDragging) return;
-    }
-
-    if (isDragging && draggedIndex !== null) {
-      // Find the element under the touch point
-      const elementBelow = document.elementFromPoint(
-        touch.clientX,
-        touch.clientY,
-      );
-      const buttonElement = elementBelow?.closest("[data-playlist-index]");
-
-      if (buttonElement) {
-        const targetIdx = parseInt(
-          buttonElement.getAttribute("data-playlist-index") || "-1",
-        );
-        if (
-          targetIdx !== -1 &&
-          targetIdx !== draggedIndex &&
-          targetIndex !== targetIdx
-        ) {
-          targetIndex = targetIdx;
-        }
-      }
-    }
-  }
-
-  function handleTouchEnd(e: TouchEvent, index: number) {
-    if (isDragging && draggedIndex !== null && targetIndex !== null) {
-      // Perform the drop
-      handlePlaylistDrop(e as any, targetIndex);
-    } else if (!touchMoved && !isDragging) {
-      // This was a tap, navigate to the playlist
-      goto(`/playlist/${encodeURI(playlists[index].short_id)}`);
-      isOpen = false;
-    }
-
-    // Reset touch state
-    touchStartY = null;
-    touchStartTime = null;
-    isDragging = false;
-    touchMoved = false;
-    handleDragEnd();
-  }
-
-  async function handlePlaylistDrop(
-    e: DragEvent | TouchEvent,
-    playlistTargetIndex: number,
-  ) {
+  async function handlePlaylistDrop(e: DragEvent, playlistTargetIndex: number) {
     if (!session) {
       return;
     }
@@ -353,61 +268,66 @@
             </Sheet.Description>
           {/if}
           {#each playlists as playlist, i (playlist.id)}
-            {@const isSelectedPlaylist =
-              selectedPlaylistIdParam === playlist.short_id}
-            <Button
-              variant="ghost"
-              class="{getButtonClasses(
-                i,
-                isSelectedPlaylist,
-              )} cursor-pointer w-full flex justify-start h-[64px]"
-              draggable={true}
-              data-playlist-index={i}
-              onmouseenter={() => handleMouseEnter(i)}
-              onmouseleave={() => handleMouseLeave(i)}
-              ondragstart={(e) => handleDragStart(e, i)}
-              ondragover={(e) => {
-                handleDragOver(e, i);
-              }}
-              ondragleave={(e) => {
-                handleDragLeave(e);
-              }}
-              ondrop={(e) => {
-                handlePlaylistDrop(e, i);
-              }}
-              ondragend={handleDragEnd}
-              ontouchstart={(e) => handleTouchStart(e, i)}
-              ontouchmove={(e) => handleTouchMove(e, i)}
-              ontouchend={(e) => handleTouchEnd(e, i)}
-              onclick={async (e) => {
-                // Prevent navigation if we just finished a drag
-                if (isDragging || touchMoved) {
-                  e.preventDefault();
-                  return;
-                }
-                goto(`/playlist/${encodeURI(playlist.short_id)}`);
-                isOpen = false;
-              }}
-              title={playlist.name}
-            >
-              {#if contentState.playlistImages[playlist.id]}
-                <div class="w-12 h-12">
-                  <img
-                    src={contentState.playlistImages[playlist.id]}
-                    class="h-full w-full cursor-pointer"
-                    alt={`Image for playlist: ${playlist.name}`}
-                  />
-                </div>
-              {:else}
-                <div class="h-12 min-w-12 flex items-center justify-center">
-                  <ListVideo class="!h-8 !w-8" />
-                </div>
-              {/if}
+            <ContextMenu.Root>
+              <ContextMenu.Content>
+                <ContextMenu.Item
+                  onclick={() =>
+                    handleDeletePlaylist({
+                      playlist,
+                      session,
+                      supabase,
+                    })}>Delete Playlist</ContextMenu.Item
+                >
+              </ContextMenu.Content>
+              {@const isSelectedPlaylist =
+                selectedPlaylistIdParam === playlist.short_id}
+              <ContextMenu.Trigger>
+                <Button
+                  variant="ghost"
+                  class="{getButtonClasses(
+                    i,
+                    isSelectedPlaylist,
+                  )} cursor-pointer w-full flex justify-start h-[64px]"
+                  draggable={true}
+                  onmouseenter={() => handleMouseEnter(i)}
+                  onmouseleave={() => handleMouseLeave(i)}
+                  ondragstart={(e) => handleDragStart(e, i)}
+                  ondragover={(e) => {
+                    handleDragOver(e, i);
+                  }}
+                  ondragleave={(e) => {
+                    handleDragLeave(e);
+                  }}
+                  ondrop={(e) => {
+                    handlePlaylistDrop(e, i);
+                  }}
+                  ondragend={handleDragEnd}
+                  onclick={() => {
+                    goto(`/playlist/${encodeURI(playlist.short_id)}`);
+                    isOpen = false;
+                  }}
+                  title={playlist.name}
+                >
+                  {#if contentState.playlistImages[playlist.id]}
+                    <div class="w-12 h-12">
+                      <img
+                        src={contentState.playlistImages[playlist.id]}
+                        class="h-full w-full cursor-pointer"
+                        alt={`Image for playlist: ${playlist.name}`}
+                      />
+                    </div>
+                  {:else}
+                    <div class="h-12 min-w-12 flex items-center justify-center">
+                      <ListVideo class="!h-8 !w-8" />
+                    </div>
+                  {/if}
 
-              <span class="text-sm font-medium m-3 max-w-[100px]">
-                {playlist.name}
-              </span>
-            </Button>
+                  <span class="text-sm font-medium m-3 max-w-[100px]">
+                    {playlist.name}
+                  </span>
+                </Button>
+              </ContextMenu.Trigger>
+            </ContextMenu.Root>
           {/each}
 
           <Sheet.Title class="mx-4 mt-4 mb-2">Account</Sheet.Title>
