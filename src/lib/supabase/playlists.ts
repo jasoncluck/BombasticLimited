@@ -267,16 +267,18 @@ export async function deletePlaylist({
 
 export async function searchPlaylists({
   searchString,
+  limit = 15,
   supabase,
 }: {
   searchString: string;
+  limit?: number;
   supabase: SupabaseClient<Database>;
 }) {
   const { data, error } = await supabase
     .rpc("search_playlists", {
       search_term: searchString,
     })
-    .limit(15);
+    .limit(limit);
 
   if (error) {
     showNotification(

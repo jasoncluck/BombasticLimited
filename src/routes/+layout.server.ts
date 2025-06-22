@@ -21,7 +21,7 @@ export const load: LayoutServerLoad = async ({
 
   if (url.pathname === "/continue") {
     view = "continueWatching";
-  } else if (/\/playlist\//.test(url.pathname)) {
+  } else if (/^\/playlist\//.test(url.pathname)) {
     view = "playlist";
   } else {
     view = "default";

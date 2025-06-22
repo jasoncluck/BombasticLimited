@@ -40,7 +40,6 @@ export const load: PageServerLoad = async ({
     supabase,
   });
 
-  // TODO: Add public playlists results to search results
   return {
     sourceVideos: sourceVideos ?? [],
     searchString,
