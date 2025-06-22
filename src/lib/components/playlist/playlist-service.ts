@@ -66,7 +66,7 @@ export async function handleCreatePlaylist({
   // Trigger populates short ID
   if (!error && playlist) {
     showNotification(`Created Playlist: ${playlist.name}`);
-    goto(`/playlist/${encodeURI(playlist.short_id)}`);
+    // goto(`/playlist/${encodeURI(playlist.short_id)}`);
   }
   invalidate("supabase:db:playlists");
 }
