@@ -16,10 +16,8 @@
     $derived(data);
 
   export const snapshot: Snapshot<CarouselsState> = {
-    capture: () => {
-      console.log(carouselsState);
-      return carouselsState;
-    },
+    capture: () => carouselsState,
+
     restore: async (restored) => (carouselsState = restored),
   };
 

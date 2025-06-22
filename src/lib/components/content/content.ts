@@ -31,7 +31,6 @@ export interface ContentDisplayProps {
   readonly videosCount?: number | null;
   readonly playlists: Playlist[];
   readonly isContinueVideos?: boolean;
-  readonly invalidateOnVideoChange: boolean;
   readonly playlist?: Playlist;
   readonly playlistContentFilter?: PlaylistVideosFilter;
   readonly supabase: SupabaseClient<Database>;

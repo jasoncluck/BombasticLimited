@@ -26,7 +26,6 @@
     | "isContinueVideos"
     | "playlist"
     | "playlistContentFilter"
-    | "invalidateOnVideoChange"
     | "videos"
     | "playlists"
     | "supabase"
@@ -39,7 +38,6 @@
     videos,
     playlist,
     isContinueVideos,
-    invalidateOnVideoChange,
     supabase,
     session,
     ...restProps
@@ -212,7 +210,6 @@
             {manualHover}
             {video}
             {videos}
-            {invalidateOnVideoChange}
             {supabase}
             {session}
           />

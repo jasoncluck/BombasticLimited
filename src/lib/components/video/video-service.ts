@@ -132,7 +132,6 @@ export async function handleDeleteVideoTimestamp({
   e,
   videoId,
   isContinueVideos,
-  invalidateOnVideoChange,
   supabase,
   session,
 }: {
@@ -140,7 +139,6 @@ export async function handleDeleteVideoTimestamp({
   videoId: string;
   videos: Video[];
   isContinueVideos?: boolean;
-  invalidateOnVideoChange: boolean;
   supabase: SupabaseClient<Database>;
   session: Session | null;
 }) {
@@ -164,9 +162,7 @@ export async function handleDeleteVideoTimestamp({
         ? "Removed from Continue Watching"
         : "Video progress reset.",
     );
-    if (invalidateOnVideoChange) {
-      invalidate("supabase:db:videos");
-    }
+    invalidate("supabase:db:videos");
   }
 }
 

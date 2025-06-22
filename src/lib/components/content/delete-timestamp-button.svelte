@@ -10,7 +10,6 @@
     videos,
     manualHover,
     isContinueVideos,
-    invalidateOnVideoChange = true,
     supabase,
     session,
   }: Pick<
@@ -19,7 +18,6 @@
   > & {
     video: Video;
     manualHover: boolean;
-    invalidateOnVideoChange: boolean;
   } = $props();
 </script>
 
@@ -32,7 +30,6 @@
     handleDeleteVideoTimestamp({
       e,
       videoId: video.id,
-      invalidateOnVideoChange,
       session,
       supabase,
       videos,

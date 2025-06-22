@@ -13,7 +13,6 @@
     playlist,
     playlistContentFilter,
     carouselState = $bindable(),
-    invalidateOnVideoChange,
     supabase,
     session,
   }: { carouselState?: CarouselState } & ContentDisplayProps = $props();
@@ -176,7 +175,6 @@
           {playlist}
           {playlistContentFilter}
           {playlists}
-          {invalidateOnVideoChange}
           {isContinueVideos}
           {supabase}
           {session}

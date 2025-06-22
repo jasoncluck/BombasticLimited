@@ -51,7 +51,6 @@
     {#key source}
       <Content
         contentDisplay={userPreferences.contentDisplay}
-        invalidateOnVideoChange={false}
         {videos}
         bind:carouselState
         {playlists}

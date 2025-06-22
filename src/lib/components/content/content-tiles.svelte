@@ -22,7 +22,6 @@
     playlists,
     allowVideoReorder,
     contentFilter,
-    invalidateOnVideoChange,
     supabase,
     session,
   }: ContentTilesProps = $props();
@@ -143,7 +142,6 @@
         {playlist}
         {playlists}
         {isContinueVideos}
-        {invalidateOnVideoChange}
         {supabase}
         {session}
       />

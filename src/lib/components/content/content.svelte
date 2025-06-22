@@ -21,7 +21,6 @@
     playlists: Playlist[];
     contentDisplay: ContentDisplay;
     carouselState?: CarouselState;
-    invalidateOnVideoChange?: boolean;
     isContinueVideos?: boolean;
     updateVideosState?: boolean;
     // Only to be used when rendering videos in a playlist view
@@ -42,7 +41,6 @@
     isContinueVideos = false,
     supabase,
     session,
-    invalidateOnVideoChange = true,
     allowVideoReorder,
     contentFilter,
     ...restProps
@@ -106,7 +104,6 @@
         {playlists}
         {playlist}
         {handleDragStart}
-        {invalidateOnVideoChange}
         {isContinueVideos}
         bind:carouselState
         {supabase}
@@ -121,7 +118,6 @@
           {playlist}
           {handleDragStart}
           {isContinueVideos}
-          {invalidateOnVideoChange}
           {allowVideoReorder}
           {contentFilter}
           {supabase}
