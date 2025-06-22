@@ -59,20 +59,17 @@
   let scrollDirection = $state<"up" | "down" | null>(null);
   let isScrolling = $state(false);
 
-  // Additional variables for better scroll vs drag detection
   let initialTouchY = $state<number | null>(null);
   let hasDragStarted = $state(false);
   let dragTimeoutId = $state<number | null>(null);
   let scrollThreshold = 25; // Increased threshold
   let dragThreshold = 300; // Longer delay
 
-  // Config
   const scrollSpeed = 8; // Slower scroll speed
   const scrollZoneSize = 60; // Larger scroll zones
 
   const endDropzoneClasses = ["border-transparent"];
 
-  // Auto-scroll functions
   function startAutoScroll() {
     if (scrollInterval !== null) {
       window.clearInterval(scrollInterval);
@@ -282,7 +279,7 @@
     }, dragThreshold);
   }
 
-  function handleTouchMove(e: TouchEvent, index: number) {
+  function handleTouchMove(e: TouchEvent) {
     if (!touchStartY || !initialTouchY) return;
 
     const touch = e.touches[0];
@@ -349,7 +346,6 @@
   }
 
   function handleTouchEnd(e: TouchEvent, index: number) {
-    // Clear drag timeout
     if (dragTimeoutId !== null) {
       window.clearTimeout(dragTimeoutId);
       dragTimeoutId = null;
@@ -361,13 +357,12 @@
       targetIndex !== null &&
       hasDragStarted
     ) {
-      handlePlaylistDrop(e as any, targetIndex);
+      handlePlaylistDrop(e, targetIndex);
     } else if (!touchMoved && !isDragging && !hasDragStarted) {
       goto(`/playlist/${encodeURI(playlists[index].short_id)}`);
       isOpen = false;
     }
 
-    // Reset all state
     touchStartY = null;
     initialTouchY = null;
     touchStartTime = null;
@@ -530,7 +525,7 @@
               }}
               ondragend={handleDragEnd}
               ontouchstart={(e) => handleTouchStart(e, i)}
-              ontouchmove={(e) => handleTouchMove(e, i)}
+              ontouchmove={(e) => handleTouchMove(e)}
               ontouchend={(e) => handleTouchEnd(e, i)}
               onclick={async (e) => {
                 if (isDragging || touchMoved || hasDragStarted) {

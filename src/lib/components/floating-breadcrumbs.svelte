@@ -33,7 +33,7 @@
 <div
   class="absolute w-full py-1 bg-background-lighter grid grid-cols-3 items-center"
 >
-  <div class="justify-self-start relative">
+  <div class="justify-self-start relative py-2">
     <BreadcrumbLayout {breadcrumbs} />
   </div>
   <div class="justify-self-center">
