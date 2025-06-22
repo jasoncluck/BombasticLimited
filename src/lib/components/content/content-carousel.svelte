@@ -21,53 +21,44 @@
   let api = $state<CarouselAPI>();
   let showPreviousButton = $state(false);
   let showNextButton = $state(videos.length > 0);
+  let isInitializing = $state(true);
+  let userInteracting = $state(false);
 
-  // Function to check if target index is in the currently visible range
-  function isIndexInView(targetIndex: number): boolean {
+  function isVideoIndexInView(videoIndex: number): boolean {
     if (!api) return false;
-
     const slidesInView = api.slidesInView();
-    console.log(slidesInView);
-    return slidesInView.includes(targetIndex);
+    return slidesInView.includes(videoIndex);
   }
 
-  // Function to scroll to target index incrementally
-  async function scrollToIndex(targetIndex: number) {
-    if (!api || targetIndex < 0 || targetIndex >= videos.length) return;
+  function getFirstVisibleVideoIndex(): number {
+    if (!api) return 0;
+    const slidesInView = api.slidesInView();
+    return slidesInView.length > 0 ? slidesInView[0] : 0;
+  }
 
-    console.log("Scrolling to target index:", targetIndex);
+  async function scrollToVideoIndex(targetVideoIndex: number) {
+    if (!api || targetVideoIndex < 0 || targetVideoIndex >= videos.length)
+      return;
 
-    // If target is already in view, we're done
-    if (isIndexInView(targetIndex)) {
-      console.log("Target index already in view");
+    if (isVideoIndexInView(targetVideoIndex)) {
       updateButtonStates();
+      isInitializing = false;
       return;
     }
 
-    const currentSnap = api.selectedScrollSnap();
+    // Calculate the "snap" index that should show our target
+    const slidesInView = api.slidesInView();
+    const itemsPerView = slidesInView.length;
 
-    // Determine if we need to scroll forward or backward
-    if (targetIndex > currentSnap) {
-      console.log(targetIndex);
-      console.log(currentSnap);
-      // Scroll forward until target is in view
-      while (!isIndexInView(targetIndex) && api.canScrollNext()) {
-        api.scrollNext();
-      }
-    } else {
-      // Scroll backward until target is in view
-      while (!isIndexInView(targetIndex) && api.canScrollPrev()) {
-        api.scrollPrev();
-      }
-    }
+    // Calculate which "snap" (page) should contain our target
+    const targetSnapIndex = Math.floor(targetVideoIndex / itemsPerView);
+
+    api.scrollTo(targetSnapIndex);
+    await new Promise((resolve) => setTimeout(resolve, 200));
 
     updateButtonStates();
-    console.log(
-      "Finished scrolling. Target index in view:",
-      isIndexInView(targetIndex),
-    );
+    isInitializing = false;
   }
-
   function updateButtonStates() {
     if (api) {
       showPreviousButton = api.canScrollPrev();
@@ -75,55 +66,74 @@
     }
   }
 
+  async function waitForCarouselReady(
+    api: CarouselAPI,
+    maxWait = 2000,
+  ): Promise<boolean> {
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < maxWait) {
+      const slidesInView = api.slidesInView();
+      if (slidesInView.length > 0) {
+        return true;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+
+    return false;
+  }
+
   $effect(() => {
     if (
       api &&
+      isInitializing &&
+      !userInteracting &&
       carouselState?.lastViewedIndex !== undefined &&
       carouselState.lastViewedIndex > -1
     ) {
-      console.log(
-        "Setting carousel to last viewed index:",
-        carouselState.lastViewedIndex,
-      );
-      scrollToIndex(carouselState.lastViewedIndex);
+      // Wait for carousel to be ready before scrolling
+      waitForCarouselReady(api).then((isReady) => {
+        if (isReady) {
+          scrollToVideoIndex(carouselState.lastViewedIndex);
+        } else {
+          isInitializing = false;
+        }
+      });
     }
   });
 
   onDestroy(() => {
-    if (
-      api?.selectedScrollSnap() !== undefined &&
-      api?.selectedScrollSnap() > -1
-    ) {
-      const currentIndex = api.selectedScrollSnap();
-      console.log("Saving last viewed index on destroy:", currentIndex);
-
-      if (carouselState) {
-        carouselState.lastViewedIndex = currentIndex;
-      }
+    if (api && carouselState && carouselState.lastViewedIndex === undefined) {
+      const firstVisibleVideoIndex = getFirstVisibleVideoIndex();
+      carouselState.lastViewedIndex = firstVisibleVideoIndex;
     }
   });
 
   function handlePreviousButtonClick() {
     if (api) {
+      userInteracting = true;
+      isInitializing = false;
+
       api.scrollPrev();
       updateButtonStates();
 
-      // Update the carousel state with new position
-      if (carouselState) {
-        carouselState.lastViewedIndex = api.selectedScrollSnap();
-      }
+      setTimeout(() => {
+        userInteracting = false;
+      }, 100);
     }
   }
 
   function handleNextButtonClick() {
     if (api) {
+      userInteracting = true;
+      isInitializing = false;
+
       api.scrollNext();
       updateButtonStates();
 
-      // Update the carousel state with new position
-      if (carouselState) {
-        carouselState.lastViewedIndex = api.selectedScrollSnap();
-      }
+      setTimeout(() => {
+        userInteracting = false;
+      }, 100);
     }
   }
 </script>
@@ -132,6 +142,7 @@
   opts={{
     slidesToScroll: "auto",
     watchDrag: false,
+    inViewThreshold: 0.5,
   }}
   class="hover:z-20 overflow-x-clip"
   setApi={(emblaApi) => {
@@ -153,6 +164,11 @@
           basis-full duration-300 transform px-3 transition-transform"
         draggable="true"
         ondragstart={(e) => handleDragStart(e, i)}
+        onclick={() => {
+          if (carouselState) {
+            carouselState.lastViewedIndex = i;
+          }
+        }}
       >
         <ContentCard
           {video}

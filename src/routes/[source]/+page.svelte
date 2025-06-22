@@ -6,10 +6,19 @@
   import { userPreferences } from "$lib/state/user-preferences.svelte.js";
   import { SOURCE_INFO } from "$lib/constants/source";
   import Button from "$lib/components/ui/button/button.svelte";
+  import type { CarouselState } from "$lib/components/content/content.js";
+  import type { Snapshot } from "@sveltejs/kit";
 
   let { data } = $props();
   const { videos, playlists, session, supabase, source, contentFilter } =
     $derived(data);
+
+  let carouselState = $state<CarouselState>({ lastViewedIndex: 0 });
+
+  export const snapshot: Snapshot<CarouselState> = {
+    capture: () => carouselState,
+    restore: async (restored) => (carouselState = restored),
+  };
 </script>
 
 <div class="flex flex-col">
@@ -39,14 +48,17 @@
     >
       Latest Videos
     </a>
-    <Content
-      contentDisplay={userPreferences.contentDisplay}
-      invalidateOnVideoChange={false}
-      {videos}
-      {playlists}
-      {contentFilter}
-      {session}
-      {supabase}
-    />
+    {#key source}
+      <Content
+        contentDisplay={userPreferences.contentDisplay}
+        invalidateOnVideoChange={false}
+        {videos}
+        bind:carouselState
+        {playlists}
+        {contentFilter}
+        {session}
+        {supabase}
+      />
+    {/key}
   </div>
 </div>
