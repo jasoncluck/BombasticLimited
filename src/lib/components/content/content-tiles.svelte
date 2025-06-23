@@ -109,17 +109,20 @@
     if (targetIndex === index) {
       if (!draggedIndex || draggedIndex < targetIndex) {
         classes +=
-          " after:absolute after:-right-1 after:top-0 after:h-full after:w-1 after:bg-primary after:z-10";
+          " after:absolute after:-right-1 @sm:after:-bottom-1 after:top-0 @sm:after:top-auto after:h-full @sm:after:h-1 after:w-1 @sm:after:w-full after:bg-primary after:z-10";
       } else {
         classes +=
-          " before:absolute before:-left-1 before:top-0 before:h-full before:w-1 before:bg-primary before:z-10";
+          " before:absolute before:-left-1 @sm:before:-top-1 before:top-0 @sm:before:top-auto before:h-full @sm:before:h-1 before:w-1 @sm:before:w-full before:bg-primary before:z-10";
       }
     }
     return classes;
   };
 </script>
 
-<div class="grid @4xl:grid-cols-5 @sm:grid-cols-3 gap-6 relative">
+<!-- Switch to single column layout for smaller sizes, grid for larger -->
+<div
+  class="flex flex-col @sm:grid @4xl:grid-cols-5 @sm:grid-cols-3 gap-6 relative"
+>
   {#each videos as video, i (video.id)}
     <div
       role="region"

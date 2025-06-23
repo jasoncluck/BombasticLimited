@@ -149,7 +149,8 @@
 <a
   class="group transition-transform duration-150 transform
   will-change-transform bg-background-lighter cursor-pointer block mb-6
-  hover:z-auto {manualHover ? 'z-40' : ''}"
+  hover:z-auto {manualHover ? 'z-40' : ''} 
+  flex @sm:flex-col gap-3 @sm:gap-0"
   onclick={contentState.isSelectionMode
     ? (e) => {
         e.preventDefault();
@@ -180,11 +181,11 @@
       }}
   {...restProps}
 >
-  <!-- Upper portion that triggers description hover -->
+  <!-- Image section - left side on row layout, top on card layout -->
   <div
     role="button"
     tabindex="0"
-    class="text-left cursor-pointer"
+    class="text-left cursor-pointer flex-shrink-0 w-32 @sm:w-full"
     onmouseenter={handleMouseEnter}
     onmouseleave={handleMouseLeave}
   >
@@ -228,37 +229,44 @@
         />
       {/if}
     </div>
+  </div>
+
+  <!-- Content section - right side on row layout, bottom on card layout -->
+  <div class="flex-1 min-w-0 @sm:relative">
+    <!-- Title -->
     <p
-      class="text-sm p-2 bg-background-lighter transition-colors duration-150 ease-out
+      class="text-sm p-2 @sm:bg-background-lighter transition-colors duration-150 ease-out
       {manualHover ? '@sm:bg-secondary' : ''}"
     >
       {video.title}
     </p>
-  </div>
 
-  <p
-    class="text-xs/4 text-muted-foreground transform px-2 bg-background-lighter
-      @sm:group-hover:bg-transparent @sm:absolute pointer-events-none
-      {manualHover ? '@sm:bg-secondary @sm:invisible' : ''}"
-  >
-    {new Date(video.published_at).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })}
-  </p>
-  <!-- Description area - separate from hover trigger -->
-  {#if userPreferences.contentDescription !== "NONE"}
+    <!-- Date -->
     <p
-      class=" @sm:opacity-0 text-sm
-    @sm:absolute p-2 w-full bg-transparent pointer-events-none
-  {manualHover ? '@sm:opacity-100 @sm:bg-secondary ' : ''}
-    transition-all ease-out duration-150 transform will-change-transform
-    z-40 break-anywhere whitespace-pre-line
-          {userPreferences.contentDescription === 'BRIEF' &&
-        'line-clamp-3  py-1'}"
+      class="text-xs/4 text-muted-foreground px-2 @sm:bg-background-lighter
+        @sm:group-hover:bg-transparent @sm:absolute pointer-events-none
+        {manualHover ? '@sm:bg-secondary @sm:invisible' : ''}"
     >
-      {video.description}
+      {new Date(video.published_at).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })}
     </p>
-  {/if}
+
+    <!-- Description area - separate from hover trigger -->
+    {#if userPreferences.contentDescription !== "NONE"}
+      <p
+        class="hidden @sm:block @sm:opacity-0 text-sm px-2 pb-2 @sm:p-2
+      @sm:absolute @sm:w-full @sm:bg-transparent pointer-events-none
+    {manualHover ? '@sm:opacity-100 @sm:bg-secondary ' : ''}
+      transition-all ease-out duration-150 transform will-change-transform
+      @sm:z-40 break-anywhere whitespace-pre-line
+            {userPreferences.contentDescription === 'BRIEF' &&
+          'line-clamp-3 @sm:py-1'}"
+      >
+        {video.description}
+      </p>
+    {/if}
+  </div>
 </a>

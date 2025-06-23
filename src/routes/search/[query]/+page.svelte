@@ -62,14 +62,14 @@
   });
 </script>
 
-<div class="flex flex-col gap-2">
+<div class="flex flex-col gap-3">
   <h1 class="header-primary">
     <div class="flex items-center">Results</div>
   </h1>
 
   <div class="flex flex-col gap-8">
     {#if playlistSearchResults.length > 0}
-      <div class="flex flex-col gap-2">
+      <div class="flex flex-col gap-3">
         <a class="header-link" href={`/search/${searchString}/playlists`}
           >Playlists</a
         >
@@ -111,7 +111,7 @@
 
     {#each SOURCES as source (source)}
       {#if sourceVideos[source].length > 0}
-        <div class="flex flex-col bg-background-lighter gap-2">
+        <div class="flex flex-col bg-background-lighter gap-3">
           <a href={`${page.url}/${source}`} class="header-link">
             {SOURCE_INFO[source].displayName}
           </a>

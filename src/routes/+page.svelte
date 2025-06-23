@@ -28,7 +28,7 @@
 
 <div class="flex flex-col w-full relative">
   {#if session && continueWatchingVideos.length > 0}
-    <div class="flex flex-col bg-background-lighter mb-10 gap-2">
+    <div class="flex flex-col bg-background-lighter mb-10 gap-3">
       <a href="/continue" class="header-link hover:underline cursor-pointer">
         Continue Watching
       </a>
@@ -47,7 +47,7 @@
   {/if}
   <h1 class="header-primary">Latest Videos</h1>
 
-  <div class="flex flex-col gap-2">
+  <div class="flex flex-col gap-3">
     {#each SOURCES as source (source)}
       <a href={`/${source}/latest`} class="header-link">
         {SOURCE_INFO[source].displayName}
