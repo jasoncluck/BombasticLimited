@@ -359,7 +359,6 @@
     {#if playlists === null || !playlistImagesLoaded}
       <Loader class="animate-spin  w-full" />
     {:else if session && dndPlaylists.length > 0}
-      <!-- DnD Zone for Playlists -->
       <div
         use:dndzone={{
           items: dndPlaylists,
@@ -372,10 +371,10 @@
         }}
         onconsider={handleDndConsider}
         onfinalize={handleDndFinalize}
-        class="flex flex-col"
+        class="flex flex-col w-full"
       >
         {#each dndPlaylists as playlist, i (playlist.id)}
-          <div animate:flip={{ duration: flipDurationMs }}>
+          <div animate:flip={{ duration: flipDurationMs }} class="w-full">
             <PlaylistContextMenu
               {playlist}
               {selectedPlaylistIdParam}
@@ -401,7 +400,9 @@
               >
                 <div
                   class="flex items-center grow absolute
-                  {!isSidebarCollapsed ? 'items-start grow' : 'item-center'}"
+                  {!isSidebarCollapsed
+                    ? 'items-start grow w-full'
+                    : 'item-center'}"
                 >
                   {#if contentState.playlistImages[playlist.id]}
                     <div class="w-12 h-12">
@@ -418,7 +419,7 @@
                   {/if}
                   {#if !isSidebarCollapsed}
                     <span
-                      class="text-sm font-medium m-3 max-w-[100px] overflow-ellipsis"
+                      class="text-sm font-medium p-3 max-w-[100px] overflow-ellipsis"
                     >
                       {playlist.name}
                     </span>

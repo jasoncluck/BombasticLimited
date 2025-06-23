@@ -11,6 +11,7 @@
     handleUpdatePlaylistImage,
   } from "../playlist/playlist-service";
   import type { Snippet } from "svelte";
+  import { ScrollArea } from "../ui/scroll-area";
 
   interface ContentContextMenuProps {
     playlist?: Playlist;
@@ -72,29 +73,31 @@
         >Add {contentState.selectedVideos.length === 1 ? "video" : "videos"} to Playlist</ContextMenu.SubTrigger
       >
       <ContextMenu.SubContent
-        class="z-50 transition-opacity duration-150 data-[state=closed]:opacity-0"
+        class="z-50 transition-opacity duration-150 data-[state=closed]:opacity-0 max-h-56 overflow-hidden"
         sideOffset={5}
       >
-        {#if playlists.length < 1}
-          <ContextMenu.Item>No playlists found</ContextMenu.Item>
-        {:else}
-          {#each playlists as addPlaylist (addPlaylist.id)}
-            {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
-              <ContextMenu.Item
-                onclick={() =>
-                  handleAddVideosToPlaylist({
-                    videos: contentState.selectedVideos,
-                    playlist: addPlaylist,
-                    contentState,
-                    supabase,
-                    session,
-                  })}
-              >
-                {addPlaylist.name}
-              </ContextMenu.Item>
-            {/if}
-          {/each}
-        {/if}
+        <ScrollArea class="h-56">
+          {#if playlists.length < 1}
+            <ContextMenu.Item>No playlists found</ContextMenu.Item>
+          {:else}
+            {#each playlists as addPlaylist (addPlaylist.id)}
+              {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
+                <ContextMenu.Item
+                  onclick={() =>
+                    handleAddVideosToPlaylist({
+                      videos: contentState.selectedVideos,
+                      playlist: addPlaylist,
+                      contentState,
+                      supabase,
+                      session,
+                    })}
+                >
+                  {addPlaylist.name}
+                </ContextMenu.Item>
+              {/if}
+            {/each}
+          {/if}
+        </ScrollArea>
       </ContextMenu.SubContent>
     </ContextMenu.Sub>
     {#if playlist && !contentState.isSelectionMode}

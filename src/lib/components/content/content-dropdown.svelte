@@ -10,6 +10,7 @@
   import type { Playlist } from "$lib/supabase/playlists";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
+  import ScrollArea from "../ui/scroll-area/scroll-area.svelte";
 
   const {
     playlist,
@@ -56,25 +57,27 @@
           to Playlist</DropdownMenu.SubTrigger
         >
         <DropdownMenu.SubContent
-          class="max-h-64 overflow-auto data-[state=closed]:opacity-0"
+          class="z-50 transition-opacity duration-150 data-[state=closed]:opacity-0 max-h-56 overflow-hidden"
           sideOffset={5}
         >
-          {#each playlists as addPlaylist (addPlaylist.id)}
-            {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
-              <DropdownMenu.Item
-                onclick={() =>
-                  handleAddVideosToPlaylist({
-                    videos: contentState.selectedVideos,
-                    playlist: addPlaylist,
-                    contentState,
-                    supabase,
-                    session,
-                  })}
-              >
-                {addPlaylist.name}
-              </DropdownMenu.Item>
-            {/if}
-          {/each}
+          <ScrollArea class="h-56">
+            {#each playlists as addPlaylist (addPlaylist.id)}
+              {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
+                <DropdownMenu.Item
+                  onclick={() =>
+                    handleAddVideosToPlaylist({
+                      videos: contentState.selectedVideos,
+                      playlist: addPlaylist,
+                      contentState,
+                      supabase,
+                      session,
+                    })}
+                >
+                  {addPlaylist.name}
+                </DropdownMenu.Item>
+              {/if}
+            {/each}
+          </ScrollArea>
         </DropdownMenu.SubContent>
       </DropdownMenu.Sub>
     {/if}

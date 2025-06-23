@@ -122,7 +122,7 @@
       <ContentFilters {contentFilter} {view} />
     </div>
   </div>
-  <div class="my-4">
+  <div class="mt-4 mb-6">
     {#if currentPage && numPages > 1}
       <ContentPagination count={videosCount} bind:currentPage />
     {/if}

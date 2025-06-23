@@ -259,25 +259,29 @@
                     onclick={() => handlePlaylistClick(playlist)}
                     title={playlist.name}
                   >
-                    {#if contentState.playlistImages[playlist.id]}
-                      <div class="w-12 h-12">
-                        <img
-                          src={contentState.playlistImages[playlist.id]}
-                          class="h-full w-full cursor-pointer"
-                          alt={`Image for playlist: ${playlist.name}`}
-                        />
-                      </div>
-                    {:else}
-                      <div
-                        class="h-12 min-w-12 flex items-center justify-center"
-                      >
-                        <ListVideo class="!h-8 !w-8" />
-                      </div>
-                    {/if}
+                    <div class="flex items-center grow absolute w-full">
+                      {#if contentState.playlistImages[playlist.id]}
+                        <div class="w-12 h-12">
+                          <img
+                            src={contentState.playlistImages[playlist.id]}
+                            class="h-full w-full cursor-pointer"
+                            alt={`Image for playlist: ${playlist.name}`}
+                          />
+                        </div>
+                      {:else}
+                        <div
+                          class="h-12 min-w-12 flex items-center justify-center"
+                        >
+                          <ListVideo class="!h-8 !w-8" />
+                        </div>
+                      {/if}
 
-                    <span class="text-sm font-medium m-3 overflow-ellipsis">
-                      {playlist.name}
-                    </span>
+                      <span
+                        class="text-sm font-medium p-3 max-w-[100px] overflow-ellipsis"
+                      >
+                        {playlist.name}
+                      </span>
+                    </div>
                   </Button>
                 </div>
               {/each}
