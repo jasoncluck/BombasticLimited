@@ -49,17 +49,6 @@ FOR SELECT
 TO authenticated
 USING (true);
 
--- Debug logging table
-CREATE TABLE IF NOT EXISTS public.username_debug_logs (
-    id SERIAL PRIMARY KEY,
-    user_id uuid,
-    operation text,
-    raw_username text,
-    raw_fullname text,
-    fullname_available boolean,
-    target_username text,
-    created_at timestamp DEFAULT NOW()
-);
 
 -- Helper function to generate a unique username from full_name
 CREATE OR REPLACE FUNCTION generate_unique_username(base_username text, exclude_user_id uuid DEFAULT NULL)
@@ -68,7 +57,7 @@ LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = ''
 AS $$
 DECLARE
-    candidate_username text;
+    candidate_username text; 
     random_suffix text;
     max_attempts integer := 100;
     attempt_count integer := 0;
@@ -143,9 +132,6 @@ BEGIN
         END IF;
     END IF;
     
-    -- Log the debug information
-    INSERT INTO public.username_debug_logs (user_id, operation, raw_username, raw_fullname, fullname_available, target_username)
-    VALUES (NEW.id, 'INSERT', raw_username, full_name_value, fullname_available, target_username);
     
     -- Create new profile
     INSERT INTO public.profiles (id, username)
@@ -177,10 +163,6 @@ BEGIN
             fullname_available := false;
         END IF;
     END IF;
-    
-    -- Log the debug information
-    INSERT INTO public.username_debug_logs (user_id, operation, raw_username, raw_fullname, fullname_available, target_username)
-    VALUES (NEW.id, 'UPDATE', raw_username, full_name_value, fullname_available, target_username);
     
     -- Only update if username changed and profile exists
     IF (OLD.raw_user_meta_data ->> 'username') IS DISTINCT FROM target_username THEN
