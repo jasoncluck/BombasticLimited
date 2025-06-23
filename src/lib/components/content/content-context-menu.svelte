@@ -46,7 +46,7 @@
   </ContextMenu.Trigger>
 
   <ContextMenu.Content
-    class="max-h-64 overflow-visible"
+    class="max-h-64 overflow-visible hidden sm:block"
     onmouseenter={() => {
       contentState.isMouseOverContextMenu = true;
     }}

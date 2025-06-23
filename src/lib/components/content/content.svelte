@@ -14,6 +14,7 @@
   import ContentContextMenu from "./content-context-menu.svelte";
   import type { CombinedContentFilter } from "./content-filter";
   import { createDragImage } from "$lib/utils/dragdrop";
+  import { getMediaQueryState } from "$lib/state/media-query.svelte";
 
   type ContentProps = HTMLAttributes<HTMLDivElement> & {
     videos: Video[] | VideoWithTimestamp[];
@@ -45,6 +46,8 @@
     contentFilter,
     ...restProps
   }: ContentProps = $props();
+
+  const mediaQueryState = getMediaQueryState();
 
   const contentState = getContentState();
   let contextMenuIsOpen = $state(false);
@@ -97,7 +100,7 @@
 
 <ContentContextMenu {videos} {playlist} {playlists} {supabase} {session}>
   <div {...restProps} class="flex flex-col gap-5 relative">
-    {#if contentDisplay === "CAROUSEL"}
+    {#if contentDisplay === "CAROUSEL" && !mediaQueryState.isMobile}
       <ContentCarousel
         {videos}
         {videosCount}
@@ -109,7 +112,7 @@
         {supabase}
         {session}
       />
-    {:else if contentDisplay === "TILES"}
+    {:else}
       <div class="mb-20">
         <ContentTiles
           bind:videos

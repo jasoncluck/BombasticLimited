@@ -4,7 +4,6 @@
   import type { CarouselState, ContentDisplayProps } from "./content";
   import type { CarouselAPI } from "../ui/carousel/context";
   import { onDestroy, onMount } from "svelte";
-  import { browser } from "$app/environment";
 
   let {
     videos,
@@ -23,34 +22,34 @@
   let showNextButton = $state(videos.length > 0);
   let isInitializing = $state(true);
   let userInteracting = $state(false);
-  let isSmallViewport = $state(false);
 
-  let mediaQuery: MediaQueryList | undefined;
+  // NOTE: Can remove if not using carousel at smaller viewports
+  // let isSmallViewport = $state(false);
 
-  onMount(() => {
-    if (browser) {
-      mediaQuery = window.matchMedia("(max-width: 639px)"); // sm: is 640px, so < 640px is smaller than sm:
-      isSmallViewport = mediaQuery.matches;
-
-      const handleMediaChange = (e: MediaQueryListEvent) => {
-        isSmallViewport = e.matches;
-      };
-
-      mediaQuery.addEventListener("change", handleMediaChange);
-
-      return () => {
-        if (mediaQuery) {
-          mediaQuery.removeEventListener("change", handleMediaChange);
-        }
-      };
-    }
-  });
-
-  $effect(() => {
-    if (api && mediaQuery) {
-      api.reInit({ watchDrag: isSmallViewport });
-    }
-  });
+  // let mediaQuery: MediaQueryList | undefined;
+  //
+  // onMount(() => {
+  //   mediaQuery = window.matchMedia("(max-width: 639px)"); // sm: is 640px, so < 640px is smaller than sm:
+  //   isSmallViewport = mediaQuery.matches;
+  //
+  //   const handleMediaChange = (e: MediaQueryListEvent) => {
+  //     isSmallViewport = e.matches;
+  //   };
+  //
+  //   mediaQuery.addEventListener("change", handleMediaChange);
+  //
+  //   return () => {
+  //     if (mediaQuery) {
+  //       mediaQuery.removeEventListener("change", handleMediaChange);
+  //     }
+  //   };
+  // });
+  //
+  // $effect(() => {
+  //   if (api && mediaQuery) {
+  //     api.reInit({ watchDrag: isSmallViewport });
+  //   }
+  // });
 
   function isVideoIndexInView(videoIndex: number): boolean {
     if (!api) return false;
@@ -166,7 +165,7 @@
 <Carousel.Root
   opts={{
     slidesToScroll: "auto",
-    watchDrag: isSmallViewport, // Enable drag on small viewports
+    watchDrag: false,
     inViewThreshold: 0.5,
   }}
   class="hover:z-20 overflow-x-clip"

@@ -37,10 +37,23 @@
   import type { Snapshot } from "./$types.js";
   import SideDrawer from "$lib/components/side-drawer.svelte";
   import { getContentState, setContentState } from "$lib/state/content.svelte";
+  import { setMediaQueryState } from "$lib/state/media-query.svelte";
 
   const SEARCH_DEBOUNCE_MS = 500;
 
   setContentState();
+
+  const mediaQuery = setMediaQueryState({
+    // breakpoints: ["max-sm"],
+    // customQueries: {
+    //   hover: "(hover: hover)",
+    //   "reduced-motion": "(prefers-reduced-motion: reduce)",
+    // },
+  });
+
+  onMount(() => {
+    return mediaQuery.initialize();
+  });
 
   let { data, children } = $props();
   let { session, supabase, playlists, user, layout, isSidebarCollapsed } =
