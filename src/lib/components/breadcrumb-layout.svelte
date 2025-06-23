@@ -17,11 +17,11 @@
     {#each breadcrumbs as breadcrumb, i (breadcrumb.label)}
       <Breadcrumb.Item>
         {#if breadcrumb.href}
-          <Breadcrumb.Link href={breadcrumb.href}>
+          <Breadcrumb.Link href={breadcrumb.href} class="text-xs">
             {breadcrumb.label}
           </Breadcrumb.Link>
         {:else}
-          <Breadcrumb.Page>{breadcrumb.label}</Breadcrumb.Page>
+          <Breadcrumb.Page class="text-xs">{breadcrumb.label}</Breadcrumb.Page>
         {/if}
       </Breadcrumb.Item>
       {#if i < breadcrumbs.length - 1}
