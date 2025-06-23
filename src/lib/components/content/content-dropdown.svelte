@@ -31,7 +31,6 @@
     class={buttonVariants({
       variant: "ghost",
       size: "icon",
-      class: "size-3",
     })}
   >
     <Ellipsis size="14" />
