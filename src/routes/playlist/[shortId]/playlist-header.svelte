@@ -107,9 +107,7 @@
         <h2 class="header-primary text-wrap break-words">
           {playlist.name}
         </h2>
-        <p
-          class="text-sm text-muted-foreground mb-2 text-left max-w-full sm:max-w-96 break-words"
-        >
+        <p class="text-sm text-muted-foreground mb-2 text-left break-words">
           {playlist.description}
         </p>
       </button>

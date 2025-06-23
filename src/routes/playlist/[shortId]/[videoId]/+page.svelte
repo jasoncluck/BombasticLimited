@@ -27,16 +27,18 @@
 </div>
 
 {#if videos.length > 0}
-  <a class="header-link" href={`/playlist/${playlist.short_id}`}>
-    Next up - {playlist.name}
-  </a>
-  <Content
-    {videos}
-    contentDisplay="CAROUSEL"
-    {contentFilter}
-    {playlist}
-    {playlists}
-    {supabase}
-    {session}
-  />
+  <div class="flex flex-col gap-2">
+    <a class="header-link" href={`/playlist/${playlist.short_id}`}>
+      Next up - {playlist.name}
+    </a>
+    <Content
+      {videos}
+      contentDisplay="CAROUSEL"
+      {contentFilter}
+      {playlist}
+      {playlists}
+      {supabase}
+      {session}
+    />
+  </div>
 {/if}

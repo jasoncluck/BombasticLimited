@@ -74,10 +74,10 @@
           >Playlists</a
         >
 
-        <div class="w-[90%] grid grid-cols-3 gap-4">
+        <div class="w-[90%] grid grid-cols-3 gap-2">
           {#each playlistSearchResults as playlist (playlist.id)}
             <a
-              class="grid grid-cols-[4rem_1fr] p-3 gap-4 items-center hover:bg-secondary
+              class="grid grid-cols-[4rem_1fr] p-3 gap-2 items-center hover:bg-secondary
       transform ease-out transition-colors duration-150 cursor-pointer rounded"
               href={`/playlist/${playlist.short_id}`}
             >
@@ -111,7 +111,7 @@
 
     {#each SOURCES as source (source)}
       {#if sourceVideos[source].length > 0}
-        <div class="flex flex-col bg-background-lighter gap-4">
+        <div class="flex flex-col bg-background-lighter gap-2">
           <a href={`${page.url}/${source}`} class="header-link">
             {SOURCE_INFO[source].displayName}
           </a>

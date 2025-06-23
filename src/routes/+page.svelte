@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { page } from "$app/state";
   import {
     carouselStateKeys,
     type CarouselsState,
@@ -7,7 +6,6 @@
   import Content from "$lib/components/content/content.svelte";
   import { SOURCE_INFO, SOURCES } from "$lib/constants/source";
 
-  import * as Alert from "$lib/components/ui/alert/index.js";
   import { userPreferences } from "$lib/state/user-preferences.svelte.js";
   import type { Snapshot } from "./$types.js";
   let { data } = $props();
@@ -30,7 +28,7 @@
 
 <div class="flex flex-col w-full relative">
   {#if session && continueWatchingVideos.length > 0}
-    <div class="flex flex-col bg-background-lighter mb-10 gap-4">
+    <div class="flex flex-col bg-background-lighter mb-10 gap-2">
       <a href="/continue" class="header-link hover:underline cursor-pointer">
         Continue Watching
       </a>
@@ -49,12 +47,9 @@
   {/if}
   <h1 class="header-primary">Latest Videos</h1>
 
-  <div class="flex flex-col bg-background-lighter gap-4">
+  <div class="flex flex-col gap-2">
     {#each SOURCES as source (source)}
-      <a
-        href={`/${source}/latest`}
-        class="header-link hover:underline cursor-pointer"
-      >
+      <a href={`/${source}/latest`} class="header-link">
         {SOURCE_INFO[source].displayName}
       </a>
       <Content
