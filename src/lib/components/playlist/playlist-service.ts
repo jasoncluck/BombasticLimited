@@ -310,5 +310,4 @@ export async function handleUpdatePlaylistPosition({
     supabase,
     session,
   });
-  invalidate("supabase:db:playlists");
 }

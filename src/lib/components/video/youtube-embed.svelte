@@ -7,6 +7,7 @@
     saveVideoTimestamp,
   } from "$lib/supabase/timestamps";
   import { beforeNavigate, invalidate } from "$app/navigation";
+  import type { Playlist } from "$lib/supabase/playlists";
 
   // Amount of seconds to wait before saving a new timestamp if none exists
   const VIDEO_SAVE_SECONDS_START = 15;
@@ -21,12 +22,14 @@
     supabase,
     session,
     durationSeconds,
+    playlist,
   }: {
     videoId: string;
     startSeconds: number | undefined | null;
     supabase: SupabaseClient;
     session: Session | null;
     durationSeconds: number;
+    playlist?: Playlist;
   } = $props();
 
   let player = $state<any>();
