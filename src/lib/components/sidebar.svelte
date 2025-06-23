@@ -43,6 +43,13 @@
 
   const flipDurationMs = 200;
 
+  const endDropzoneClasses = ["border-transparent"];
+  const videoDropzoneClasses = [
+    "border-solid",
+    "border-primary",
+    "bg-primary/10",
+  ];
+
   // Transform playlists to include proper id for dnd-action
   $effect(() => {
     dndPlaylists = playlists.map((playlist, index) => ({
@@ -93,6 +100,13 @@
       });
   });
 
+  function getDropzoneClasses() {
+    if (contentState.dragContentType === "video") {
+      return videoDropzoneClasses;
+    }
+    return [];
+  }
+
   function getButtonClasses(index: number, isSelectedPlaylist: boolean) {
     let classes =
       "h-[64px] w-full border border-transparent relative cursor-pointer transition-colors duration-200";
@@ -130,49 +144,69 @@
 
     const updatedItems = e.detail.items as typeof dndPlaylists;
 
-    // Create a map to track position changes
-    const originalPositions = new Map();
-    playlists.forEach((playlist, index) => {
-      originalPositions.set(playlist.id, { index, playlist });
+    // Check if the order actually changed by comparing IDs
+    const originalOrder = playlists.map((p) => p.id);
+    const newOrder = updatedItems.map((item) => item.id);
+
+    const orderChanged = !originalOrder.every(
+      (id, index) => id === newOrder[index],
+    );
+
+    if (!orderChanged) {
+      // No change, just update dndPlaylists to match current playlists
+      dndPlaylists = playlists.map((playlist, index) => ({
+        ...playlist,
+        id: playlist.id || index,
+      }));
+      return;
+    }
+
+    // Find the item that moved the MOST positions (this is the dragged item)
+    let movedPlaylistId: string | number | null = null;
+    let maxPositionChange = 0;
+    let newIndex = -1;
+
+    originalOrder.forEach((id, origIndex) => {
+      const newPos = newOrder.indexOf(id);
+      const positionChange = Math.abs(origIndex - newPos);
+
+      if (positionChange > maxPositionChange) {
+        maxPositionChange = positionChange;
+        movedPlaylistId = id;
+        newIndex = newPos;
+      }
     });
 
-    // Find the moved playlist and calculate new positions
-    const movedPlaylist = updatedItems.find((newItem, newIndex) => {
-      const originalData = originalPositions.get(newItem.id);
-      return originalData && originalData.index !== newIndex;
-    });
+    if (movedPlaylistId && maxPositionChange > 0) {
+      const movedPlaylist = playlists.find((p) => p.id === movedPlaylistId);
 
-    if (movedPlaylist) {
-      const newIndex = updatedItems.findIndex(
-        (item) => item.id === movedPlaylist.id,
-      );
-      const originalPlaylist = originalPositions.get(movedPlaylist.id).playlist;
+      if (movedPlaylist) {
+        // Calculate the new position based on the target index
+        // Your system appears to use higher numbers for items at the top
+        const newPosition = playlists.length - newIndex;
 
-      // Calculate the new position based on the target index
-      // Your system appears to use higher numbers for items at the top
-      const newPosition = playlists.length - newIndex;
-
-      try {
-        await handleUpdatePlaylistPosition({
-          playlist: originalPlaylist,
-          position: newPosition,
-          supabase,
-          session,
-        });
-      } catch (error) {
-        console.error("Error updating playlist position:", error);
-        // Revert to original order on error
-        dndPlaylists = playlists.map((playlist, index) => ({
-          ...playlist,
-          id: playlist.id || index,
-        }));
-        return;
+        try {
+          await handleUpdatePlaylistPosition({
+            playlist: movedPlaylist,
+            position: newPosition,
+            supabase,
+            session,
+          });
+        } catch (error) {
+          console.error("Error updating playlist position:", error);
+          // Revert to original order on error
+          dndPlaylists = playlists.map((playlist, index) => ({
+            ...playlist,
+            id: playlist.id || index,
+          }));
+          return;
+        }
       }
     }
 
     // Update the final playlists state to match the new order
     const reorderedPlaylists = updatedItems.map((item, newIndex) => {
-      const originalPlaylist = originalPositions.get(item.id).playlist;
+      const originalPlaylist = playlists.find((p) => p.id === item.id)!;
       return {
         ...originalPlaylist,
         // Update the playlist_position to match the new order
@@ -183,10 +217,41 @@
     playlists = reorderedPlaylists;
   }
 
-  // Handle video drops on playlists
-  function handleVideoDrop(e: CustomEvent, playlist: Playlist) {
+  // Video drag and drop handlers
+  function handleVideoDragOver(e: DragEvent) {
+    e.preventDefault();
+    if (contentState.dragContentType === "video") {
+      if (e.currentTarget instanceof HTMLElement) {
+        const classes = getDropzoneClasses();
+        e.currentTarget.classList.add(...classes);
+        e.currentTarget.classList.remove(...endDropzoneClasses);
+      }
+    }
+  }
+
+  function handleVideoDragLeave(e: DragEvent) {
+    const relatedTarget = e.relatedTarget as Node;
+    if (
+      e.currentTarget instanceof HTMLElement &&
+      !e.currentTarget.contains(relatedTarget)
+    ) {
+      const classes = getDropzoneClasses();
+      e.currentTarget.classList.remove(...classes);
+      e.currentTarget.classList.add(...endDropzoneClasses);
+    }
+  }
+
+  function handleVideoDrop(e: DragEvent, index: number) {
+    e.preventDefault();
     if (!session || contentState.dragContentType !== "video") return;
 
+    if (e.currentTarget instanceof HTMLElement) {
+      const classes = getDropzoneClasses();
+      e.currentTarget.classList.remove(...classes);
+      e.currentTarget.classList.add(...endDropzoneClasses);
+    }
+
+    const playlist = playlists[index];
     handleAddVideosToPlaylist({
       playlist,
       videos: contentState.selectedVideos,
@@ -320,60 +385,46 @@
             >
               {@const isSelectedPlaylist =
                 selectedPlaylistIdParam === playlist.short_id}
-              <!-- Video Drop Zone Wrapper -->
-              <div
-                use:dndzone={{
-                  items: [],
-                  type: "video-to-playlist",
-                  dropFromOthersDisabled: false,
-                  dragDisabled: true,
-                  dropTargetStyle:
-                    contentState.dragContentType === "video"
-                      ? {
-                          border: "2px solid rgb(99, 102, 241)",
-                          backgroundColor: "rgba(99, 102, 241, 0.1)",
-                        }
-                      : {},
-                }}
-                onfinalize={(e) => handleVideoDrop(e, playlist)}
+
+              <Button
+                variant="ghost"
+                class={getButtonClasses(i, isSelectedPlaylist)}
+                size={!isSidebarCollapsed ? "default" : "icon"}
+                onclick={() => handlePlaylistClick(playlist)}
+                title={playlist.name}
+                value={playlist.name}
+                onmouseenter={() => handleMouseEnter(i)}
+                onmouseleave={() => handleMouseLeave(i)}
+                ondragover={(e) => handleVideoDragOver(e)}
+                ondragleave={(e) => handleVideoDragLeave(e)}
+                ondrop={(e) => handleVideoDrop(e, i)}
               >
-                <Button
-                  variant="ghost"
-                  class={getButtonClasses(i, isSelectedPlaylist)}
-                  size={!isSidebarCollapsed ? "default" : "icon"}
-                  onclick={() => handlePlaylistClick(playlist)}
-                  title={playlist.name}
-                  value={playlist.name}
-                  onmouseenter={() => handleMouseEnter(i)}
-                  onmouseleave={() => handleMouseLeave(i)}
+                <div
+                  class="flex items-center grow absolute
+                  {!isSidebarCollapsed ? 'items-start grow' : 'item-center'}"
                 >
-                  <div
-                    class="flex items-center grow absolute
-                    {!isSidebarCollapsed ? 'items-start grow' : 'item-center'}"
-                  >
-                    {#if contentState.playlistImages[playlist.id]}
-                      <div class="w-12 h-12">
-                        <img
-                          src={contentState.playlistImages[playlist.id]}
-                          class="h-full w-full cursor-pointer"
-                          alt={`Image for playlist: ${playlist.name}`}
-                        />
-                      </div>
-                    {:else}
-                      <div class="h-12 w-12 flex items-center justify-center">
-                        <ListVideo class="!h-8 !w-8" />
-                      </div>
-                    {/if}
-                    {#if !isSidebarCollapsed}
-                      <span
-                        class="text-sm font-medium m-3 max-w-[100px] overflow-ellipsis"
-                      >
-                        {playlist.name}
-                      </span>
-                    {/if}
-                  </div>
-                </Button>
-              </div>
+                  {#if contentState.playlistImages[playlist.id]}
+                    <div class="w-12 h-12">
+                      <img
+                        src={contentState.playlistImages[playlist.id]}
+                        class="h-full w-full cursor-pointer"
+                        alt={`Image for playlist: ${playlist.name}`}
+                      />
+                    </div>
+                  {:else}
+                    <div class="h-12 w-12 flex items-center justify-center">
+                      <ListVideo class="!h-8 !w-8" />
+                    </div>
+                  {/if}
+                  {#if !isSidebarCollapsed}
+                    <span
+                      class="text-sm font-medium m-3 max-w-[100px] overflow-ellipsis"
+                    >
+                      {playlist.name}
+                    </span>
+                  {/if}
+                </div>
+              </Button>
             </PlaylistContextMenu>
           </div>
         {/each}
