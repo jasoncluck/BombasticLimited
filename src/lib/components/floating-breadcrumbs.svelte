@@ -37,7 +37,9 @@
     <BreadcrumbLayout {breadcrumbs} />
   </div>
   <div class="justify-self-center">
-    <ContentSelect {playlist} {playlists} {supabase} {session} />
+    {#if session}
+      <ContentSelect {playlist} {playlists} {supabase} {session} />
+    {/if}
   </div>
   <div class="justify-self-end">
     <Button variant="ghost" class="h-auto w-4" onclick={handleChevronClick}>

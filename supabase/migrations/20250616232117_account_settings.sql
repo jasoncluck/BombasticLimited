@@ -7,6 +7,7 @@ CREATE TABLE public.profiles (
   sources Source[] DEFAULT ARRAY['giantbomb', 'nextlander', 'remap']::Source[],
   content_description ContentDescription DEFAULT 'BRIEF',
   content_display ContentDisplay DEFAULT 'CAROUSEL',
+  playlists uuid[] DEFAULT ARRAY[]::uuid[],
   PRIMARY KEY (id)
 );
 
@@ -27,11 +28,11 @@ AS $$
 DECLARE
     username_exists boolean;
 BEGIN
-    -- Check if username exists in profiles table
+    -- Check if username exists in profiles table (case-insensitive comparison)
     SELECT EXISTS (
         SELECT 1
         FROM public.profiles
-        WHERE username = p_username
+        WHERE LOWER(username) = LOWER(p_username)
     ) INTO username_exists;
 
     -- Return true if username is unique (does not exist)
@@ -49,6 +50,36 @@ FOR SELECT
 TO authenticated
 USING (true);
 
+-- Helper function to add a playlist to user's playlists array
+CREATE OR REPLACE FUNCTION add_playlist_to_user(user_id uuid, playlist_id number)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+    UPDATE public.profiles 
+    SET playlists = array_append(playlists, playlist_id)
+    WHERE id = user_id 
+    AND NOT (playlist_id = ANY(playlists)); -- Only add if not already present
+END;
+$$;
+
+-- Helper function to remove a playlist from user's playlists array
+CREATE OR REPLACE FUNCTION remove_playlist_from_user(user_id uuid, playlist_id number)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+    UPDATE public.profiles 
+    SET playlists = array_remove(playlists, playlist_id)
+    WHERE id = user_id;
+END;
+$$;
+
+-- Grant execute permission to authenticated users for playlist functions
+GRANT EXECUTE ON FUNCTION add_playlist_to_user(uuid, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION remove_playlist_from_user(uuid, uuid) TO authenticated;
 
 -- Helper function to generate a unique username from full_name
 CREATE OR REPLACE FUNCTION generate_unique_username(base_username text, exclude_user_id uuid DEFAULT NULL)
@@ -62,16 +93,19 @@ DECLARE
     max_attempts integer := 100;
     attempt_count integer := 0;
 BEGIN
+    -- Convert base_username to lowercase
+    base_username := LOWER(base_username);
+    
     -- First try the base username without any suffix
     candidate_username := base_username;
     
     -- Check if the base username is already unique (excluding the current user)
     IF exclude_user_id IS NULL THEN
-        IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE username = candidate_username) THEN
+        IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE LOWER(username) = candidate_username) THEN
             RETURN candidate_username;
         END IF;
     ELSE
-        IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE username = candidate_username AND id != exclude_user_id) THEN
+        IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE LOWER(username) = candidate_username AND id != exclude_user_id) THEN
             RETURN candidate_username;
         END IF;
     END IF;
@@ -84,11 +118,11 @@ BEGIN
         
         -- Check if this combination is unique (excluding the current user)
         IF exclude_user_id IS NULL THEN
-            IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE username = candidate_username) THEN
+            IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE LOWER(username) = candidate_username) THEN
                 RETURN candidate_username;
             END IF;
         ELSE
-            IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE username = candidate_username AND id != exclude_user_id) THEN
+            IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE LOWER(username) = candidate_username AND id != exclude_user_id) THEN
                 RETURN candidate_username;
             END IF;
         END IF;
@@ -115,14 +149,14 @@ BEGIN
   IF TG_OP = 'INSERT' THEN
     -- Determine username to use
     raw_username := NEW.raw_user_meta_data ->> 'username';
-    target_username := raw_username;
+    target_username := LOWER(raw_username);  -- Convert to lowercase
     
     -- If username is undefined but full_name is defined, use full_name as username
     IF target_username IS NULL AND (NEW.raw_user_meta_data ->> 'full_name') IS NOT NULL THEN
-        full_name_value := NEW.raw_user_meta_data ->> 'full_name';
+        full_name_value := LOWER(NEW.raw_user_meta_data ->> 'full_name');  -- Convert to lowercase
         
         -- First check if the full_name is available as-is
-        IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE username = full_name_value) THEN
+        IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE LOWER(username) = full_name_value) THEN
             target_username := full_name_value;
             fullname_available := true;
         ELSE
@@ -147,14 +181,14 @@ BEGIN
   IF TG_OP = 'UPDATE' THEN
     -- Determine username to use
     raw_username := NEW.raw_user_meta_data ->> 'username';
-    target_username := raw_username;
+    target_username := LOWER(raw_username);  -- Convert to lowercase
     
     -- If username is undefined but full_name is defined, use full_name as username
     IF target_username IS NULL AND (NEW.raw_user_meta_data ->> 'full_name') IS NOT NULL THEN
-        full_name_value := NEW.raw_user_meta_data ->> 'full_name';
+        full_name_value := LOWER(NEW.raw_user_meta_data ->> 'full_name');  -- Convert to lowercase
         
         -- First check if the full_name is available as-is (excluding current user)
-        IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE username = full_name_value AND id != NEW.id) THEN
+        IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE LOWER(username) = full_name_value AND id != NEW.id) THEN
             target_username := full_name_value;
             fullname_available := true;
         ELSE
@@ -165,7 +199,7 @@ BEGIN
     END IF;
     
     -- Only update if username changed and profile exists
-    IF (OLD.raw_user_meta_data ->> 'username') IS DISTINCT FROM target_username THEN
+    IF LOWER(OLD.raw_user_meta_data ->> 'username') IS DISTINCT FROM target_username THEN
       UPDATE public.profiles 
       SET username = target_username
       WHERE id = NEW.id;

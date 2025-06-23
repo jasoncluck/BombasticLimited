@@ -116,7 +116,9 @@
       </DropdownMenu.Root>
     {/if}
     <div class="ml-auto flex gap-4">
-      <ContentSelect {playlist} {playlists} {supabase} {session} />
+      {#if session}
+        <ContentSelect {playlist} {playlists} {supabase} {session} />
+      {/if}
       <ContentFilters {contentFilter} {view} />
     </div>
   </div>

@@ -159,7 +159,7 @@
               <Form.Label>Username</Form.Label>
               <Input
                 {...props}
-                class="w-full"
+                class="w-full lowercase"
                 bind:value={$formData.username}
               />
             {/snippet}

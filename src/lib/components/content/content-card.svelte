@@ -48,6 +48,11 @@
   // manual hover for overriding inconsistent browser hover behavior
   let manualHover = $state(false);
 
+  // Touch handling state
+  let touchStartTime = $state(0);
+  let touchTimer: ReturnType<typeof setTimeout> | null = null;
+  let longPressTriggered = $state(false);
+
   function handleSelectVideos(event: MouseEvent) {
     const isShiftPressed = event.shiftKey;
     const videoIndex = contentState.selectedVideos.findIndex(
@@ -138,6 +143,80 @@
     }
   }
 
+  // Touch event handlers for mobile context menu
+  function handleTouchStart(event: TouchEvent) {
+    touchStartTime = Date.now();
+    longPressTriggered = false;
+
+    // Clear any existing timer
+    if (touchTimer) {
+      clearTimeout(touchTimer);
+    }
+
+    // Set up long press detection
+    touchTimer = setTimeout(() => {
+      longPressTriggered = true;
+      // Trigger context menu behavior
+      contentState.selectedVideos = [video];
+      manualHover = true;
+
+      // Prevent default behaviors
+      event.preventDefault();
+      event.stopPropagation();
+    }, 500); // 500ms for long press
+  }
+
+  function handleTouchEnd(event: TouchEvent) {
+    if (touchTimer) {
+      clearTimeout(touchTimer);
+      touchTimer = null;
+    }
+
+    const touchDuration = Date.now() - touchStartTime;
+
+    if (longPressTriggered) {
+      // This was a long press, prevent navigation
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    // Short tap - proceed with normal navigation if not in selection mode
+    if (touchDuration < 500 && !contentState.isSelectionMode) {
+      handleNavigation();
+    }
+  }
+
+  function handleTouchMove(event: TouchEvent) {
+    // Cancel long press if user moves finger
+    if (touchTimer) {
+      clearTimeout(touchTimer);
+      touchTimer = null;
+    }
+  }
+
+  function handleNavigation() {
+    if (playlist) {
+      const targetUrl = new URL(
+        `/playlist/${playlist.short_id}/${video.id}`,
+        window.location.origin,
+      );
+
+      getFilterKeysForView("playlist").forEach((key) => {
+        const searchParamForKey = page.url.searchParams.get(key);
+        if (searchParamForKey) {
+          targetUrl.searchParams.set(key, searchParamForKey);
+        }
+      });
+
+      goto(targetUrl.pathname + targetUrl.search, {
+        invalidate: ["supabase:db:videos"],
+      });
+    } else {
+      goto(`/video/${video.id}`);
+    }
+  }
+
   $effect(() => {
     if (contentState.dragContentType) {
       manualHover = false;
@@ -156,26 +235,7 @@
       }
     : (e) => {
         e.preventDefault();
-
-        if (playlist) {
-          const targetUrl = new URL(
-            `/playlist/${playlist.short_id}/${video.id}`,
-            window.location.origin,
-          );
-
-          getFilterKeysForView("playlist").forEach((key) => {
-            const searchParamForKey = page.url.searchParams.get(key);
-            if (searchParamForKey) {
-              targetUrl.searchParams.set(key, searchParamForKey);
-            }
-          });
-
-          goto(targetUrl.pathname + targetUrl.search, {
-            invalidate: ["supabase:db:videos"],
-          });
-        } else {
-          goto(`/video/${video.id}`);
-        }
+        handleNavigation();
       }}
   {...restProps}
 >
@@ -186,6 +246,17 @@
     class="text-left cursor-pointer"
     onmouseenter={handleMouseEnter}
     onmouseleave={handleMouseLeave}
+    ontouchstart={handleTouchStart}
+    ontouchend={handleTouchEnd}
+    ontouchmove={handleTouchMove}
+    style="
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    "
   >
     <div class="relative">
       <img
@@ -194,6 +265,14 @@
         src={video.thumbnail_url}
         alt={video.title}
         loading="lazy"
+        style="
+          -webkit-touch-callout: none;
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+          pointer-events: none;
+        "
       />
       {#if contentState.isSelectionMode}
         <div class="absolute top-0.5 right-0.5">
@@ -230,6 +309,13 @@
     <p
       class="text-sm p-2 bg-background-lighter transition-colors duration-150 ease-out
       {manualHover ? '@sm:bg-secondary' : ''}"
+      style="
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      "
     >
       {video.title}
     </p>
@@ -256,6 +342,13 @@
     z-40 break-anywhere whitespace-pre-line
           {userPreferences.contentDescription === 'BRIEF' &&
         'line-clamp-3  py-1'}"
+      style="
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      "
     >
       {video.description}
     </p>

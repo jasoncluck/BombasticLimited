@@ -123,3 +123,21 @@
 .sidebar-icon-image {
   @apply h-full w-full bg-no-repeat bg-cover bg-center rounded-full;
 }
+
+.content-card-touch-area {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.content-card-touch-area img {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  pointer-events: none;
+}

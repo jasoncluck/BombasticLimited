@@ -132,7 +132,7 @@
               <Form.Label class="min-w-20">Email</Form.Label>
               <Input
                 {...props}
-                class="flex-1 min-w-[350px]"
+                class="flex-1 min-w-[300px]"
                 bind:value={$emailFormData.email}
               />
               <Button
@@ -167,7 +167,7 @@
               <Form.Label class="min-w-20">Username</Form.Label>
               <Input
                 {...props}
-                class="flex-1 min-w-[350px]"
+                class="flex-1 min-w-[300px] lowercase"
                 bind:value={$usernameFormData.username}
               />
               <!-- Button and status messages for smaller viewports -->
@@ -208,7 +208,7 @@
               </Button>
             {/snippet}
           </Form.Control>
-          <Form.FieldErrors class="mb-2" />
+          <Form.FieldErrors />
         </div>
         <!-- Status messages below the main row for larger viewports -->
         <div class="hidden @lg:block mt-2">
@@ -222,16 +222,18 @@
             {/if}
           {/if}
         </div>
+        {#if $flash?.field === "username" && $flash?.message && $flash?.type}
+          <Alert.Root>
+            <Alert.Title
+              >{$flash.type === "error"
+                ? "Error"
+                : "Updated username"}</Alert.Title
+            >
+            <Alert.Description>{$flash.message}</Alert.Description>
+          </Alert.Root>
+        {/if}
       </Form.Field>
     </form>
-    {#if $flash?.field === "username" && $flash?.message && $flash?.type}
-      <Alert.Root>
-        <Alert.Title
-          >{$flash.type === "error" ? "Error" : "Updated username"}</Alert.Title
-        >
-        <Alert.Description>{$flash.message}</Alert.Description>
-      </Alert.Root>
-    {/if}
     <form
       use:enhance={() => {
         return async () => {
