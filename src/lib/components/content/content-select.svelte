@@ -23,7 +23,7 @@
   const contentState = getContentState();
 </script>
 
-<div class="flex gap-2 h-[20px] items-center">
+<div class="flex gap-4 h-[20px] items-center">
   <Label for="isSelectionMode" class="text-xs cursor-pointer">Select</Label>
   <div class="w-[20px]">
     <Checkbox

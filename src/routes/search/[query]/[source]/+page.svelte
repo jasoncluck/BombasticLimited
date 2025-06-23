@@ -69,13 +69,6 @@
         label: SOURCE_INFO[source].displayName,
         href: `/${page.params.source}`,
       },
-      ...(currentPage > 1
-        ? [
-            {
-              label: `Page ${currentPage}`,
-            },
-          ]
-        : []),
     ]}
     {playlists}
     {supabase}

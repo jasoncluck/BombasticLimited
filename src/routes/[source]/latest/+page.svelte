@@ -67,13 +67,6 @@
       {
         label: "Latest",
       },
-      ...(currentPage > 1
-        ? [
-            {
-              label: `Page ${currentPage}`,
-            },
-          ]
-        : []),
     ]}
     {playlists}
     {supabase}
