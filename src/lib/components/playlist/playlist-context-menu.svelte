@@ -33,7 +33,6 @@
 <ContextMenu.Root>
   <ContextMenu.Content class="max-h-64">
     <ContextMenu.Item
-      inset
       onclick={() =>
         handleDeletePlaylist({
           session,

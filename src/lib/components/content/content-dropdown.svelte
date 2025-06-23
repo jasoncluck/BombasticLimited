@@ -50,14 +50,14 @@
         playlist</DropdownMenu.Item
       >
     {/if}
-    {#if playlists.length > 0}
+    {#if playlists.filter((pl) => pl.id !== playlist?.id).length > 0}
       <DropdownMenu.Sub>
         <DropdownMenu.SubTrigger
           >Add {contentState.selectedVideos.length === 1 ? "video" : "videos"}
           to Playlist</DropdownMenu.SubTrigger
         >
         <DropdownMenu.SubContent
-          class="w-56 max-h-64 overflow-scroll data-[state=closed]:opacity-0"
+          class="max-h-64 overflow-auto data-[state=closed]:opacity-0"
           sideOffset={5}
         >
           {#each playlists as addPlaylist (addPlaylist.id)}

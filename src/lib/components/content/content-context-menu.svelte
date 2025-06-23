@@ -46,7 +46,7 @@
   </ContextMenu.Trigger>
 
   <ContextMenu.Content
-    class="min-w-48 max-h-64 overflow-visible"
+    class="max-h-64 overflow-visible"
     onmouseenter={() => {
       contentState.isMouseOverContextMenu = true;
     }}
@@ -56,7 +56,6 @@
   >
     {#if playlist}
       <ContextMenu.Item
-        inset
         onclick={() =>
           handleRemoveVideosFromPlaylist({
             playlist,
@@ -69,11 +68,11 @@
       >
     {/if}
     <ContextMenu.Sub>
-      <ContextMenu.SubTrigger inset
+      <ContextMenu.SubTrigger
         >Add {contentState.selectedVideos.length === 1 ? "video" : "videos"} to Playlist</ContextMenu.SubTrigger
       >
       <ContextMenu.SubContent
-        class="w-48 z-50 transition-opacity duration-150 data-[state=closed]:opacity-0"
+        class="z-50 transition-opacity duration-150 data-[state=closed]:opacity-0"
         sideOffset={5}
       >
         {#if playlists.length < 1}
@@ -82,7 +81,6 @@
           {#each playlists as addPlaylist (addPlaylist.id)}
             {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
               <ContextMenu.Item
-                inset
                 onclick={() =>
                   handleAddVideosToPlaylist({
                     videos: contentState.selectedVideos,
@@ -101,7 +99,6 @@
     </ContextMenu.Sub>
     {#if playlist && !contentState.isSelectionMode}
       <ContextMenu.Item
-        inset
         onclick={() =>
           handleUpdatePlaylistImage({
             playlist,
