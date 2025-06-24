@@ -1,10 +1,16 @@
 <script lang="ts" generics="TData, TValue">
-  import { type ColumnDef, getCoreRowModel } from "@tanstack/table-core";
+  import {
+    type ColumnDef,
+    getCoreRowModel,
+    type Row,
+  } from "@tanstack/table-core";
   import {
     createSvelteTable,
     FlexRender,
   } from "$lib/components/ui/data-table/index.js";
   import * as Table from "$lib/components/ui/table/index.js";
+  import { getContentState } from "$lib/state/content.svelte";
+  import { pageState } from "$lib/state/page.svelte";
 
   type DataTableProps<TData, TValue> = {
     columns: ColumnDef<TData, TValue>[];
@@ -12,6 +18,8 @@
   };
 
   let { data, columns }: DataTableProps<TData, TValue> = $props();
+  const contentState = getContentState();
+  let isHoveringCard = $state(false);
 
   const table = createSvelteTable({
     get data() {
@@ -55,7 +63,7 @@
       {:else}
         <Table.Row>
           <Table.Cell colspan={columns.length} class="h-24 text-center">
-            No results.
+            No Results Found
           </Table.Cell>
         </Table.Row>
       {/each}

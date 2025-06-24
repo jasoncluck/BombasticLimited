@@ -72,6 +72,7 @@
     {supabase}
     {session}
   />
+
   <Content
     {videos}
     {videosCount}

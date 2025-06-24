@@ -11,13 +11,16 @@
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
   import ScrollArea from "../ui/scroll-area/scroll-area.svelte";
+  import type { Video } from "$lib/supabase/videos";
 
   const {
+    video,
     playlist,
     playlists,
     supabase,
     session,
   }: {
+    video: Video;
     playlist: Playlist | undefined;
     playlists: Playlist[];
     supabase: SupabaseClient<Database>;
@@ -25,6 +28,12 @@
   } = $props();
 
   const contentState = getContentState();
+
+  $effect(() => {
+    if (video) {
+      contentState.selectedVideos = [video];
+    }
+  });
 </script>
 
 <DropdownMenu.Root>
@@ -60,7 +69,7 @@
           class="z-50 transition-opacity duration-150 data-[state=closed]:opacity-0 max-h-56 overflow-hidden"
           sideOffset={5}
         >
-          <ScrollArea class="h-56">
+          <ScrollArea class="max-h-56">
             {#each playlists as addPlaylist (addPlaylist.id)}
               {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
                 <DropdownMenu.Item

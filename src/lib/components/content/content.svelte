@@ -2,8 +2,6 @@
   import type { Database } from "$lib/supabase/database.types";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { CarouselState, ContentDisplay } from "./content";
-  import ContentTiles from "./content-tiles.svelte";
-  import ContentCarousel from "./content-carousel.svelte";
   import { invalidate } from "$app/navigation";
   import { type Video, type VideoWithTimestamp } from "$lib/supabase/videos";
   import { mostRecentVideo } from "$lib/state/videos.svelte";
@@ -11,12 +9,11 @@
   import { type Playlist } from "$lib/supabase/playlists";
   import { onMount } from "svelte";
   import { getContentState } from "$lib/state/content.svelte";
-  import ContentContextMenu from "./content-context-menu.svelte";
   import type { CombinedContentFilter } from "./content-filter";
   import { createDragImage } from "$lib/utils/dragdrop";
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
+  import { createContentColumns } from "./table/content-table-columns";
   import ContentTable from "./table/content-table.svelte";
-  import { columns } from "./table/columns";
 
   type ContentProps = HTMLAttributes<HTMLDivElement> & {
     videos: Video[] | VideoWithTimestamp[];
@@ -50,6 +47,10 @@
   }: ContentProps = $props();
 
   const mediaQueryState = getMediaQueryState();
+
+  const columns = $derived(
+    createContentColumns({ playlist, playlists, supabase, session }),
+  );
 
   const contentState = getContentState();
   let contextMenuIsOpen = $state(false);
