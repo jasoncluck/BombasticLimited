@@ -22,13 +22,13 @@
   });
 </script>
 
-<div class="rounded-md border max-h-[70vh] overflow-auto">
+<div class="rounded-md">
   <Table.Root>
-    <Table.Header class="sticky top-0 z-10 bg-background">
+    <Table.Header class="sticky top-[44px] left-0 z-10 w-full">
       {#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
         <Table.Row class="border-b">
           {#each headerGroup.headers as header (header.id)}
-            <Table.Head class="bg-background sticky top-0">
+            <Table.Head class="bg-background-lighter sticky top-0">
               {#if !header.isPlaceholder}
                 <FlexRender
                   content={header.column.columnDef.header}

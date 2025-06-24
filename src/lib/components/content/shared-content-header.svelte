@@ -73,7 +73,7 @@
 
 <IntersectionObserver
   disableObserver={false}
-  threshold={0.25}
+  threshold={0.75}
   onActive={() => (showFloatingBreadcrumbs = false)}
   onInactive={() => (showFloatingBreadcrumbs = true)}
 >
@@ -115,10 +115,12 @@
         </DropdownMenu.Content>
       </DropdownMenu.Root>
     {/if}
-    <div class="ml-auto flex gap-4">
+    <div class="flex gap-4">
       {#if session}
         <ContentSelect {playlist} {playlists} {supabase} {session} />
       {/if}
+    </div>
+    <div class="flex ml-auto">
       <ContentFilters {contentFilter} {view} />
     </div>
   </div>

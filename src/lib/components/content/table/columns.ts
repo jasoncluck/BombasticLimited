@@ -37,33 +37,54 @@ export const columns: ColumnDef<Video>[] = [
   },
   {
     accessorKey: "title",
-    header: "Title",
-    cell: ({ row }) => {
-      const videoTitleSnippet = createRawSnippet<[string]>(() => {
+    header: () => {
+      const snippet = createRawSnippet<[string]>(() => {
         return {
           render: () =>
             `
-            <div class="min-w-0 max-w-xs">
-              <p class="text-sm font-medium leading-tight break-words whitespace-normal"> ${row.getValue("title")} </p>
+              <span class="text-xs"> Title</span>
+            `,
+        };
+      });
+
+      return renderSnippet(snippet);
+    },
+    cell: ({ row }) => {
+      const snippet = createRawSnippet<[string]>(() => {
+        return {
+          render: () =>
+            `
+            <div class="min-w-[200px] max-w-xs">
+              <p class="text-sm  break-words whitespace-normal"> ${row.getValue("title")} </p>
             </div>
             `,
         };
       });
 
-      return renderSnippet(videoTitleSnippet);
+      return renderSnippet(snippet);
     },
-    size: 250,
   },
   {
     accessorKey: "description",
-    header: "Description",
+
+    header: () => {
+      const snippet = createRawSnippet<[string]>(() => {
+        return {
+          render: () =>
+            `
+              <span class="text-xs">Description</span>
+            `,
+        };
+      });
+      return renderSnippet(snippet);
+    },
     cell: ({ row }) => {
       const videoDescriptionSnippet = createRawSnippet<[string]>(() => {
         return {
           render: () =>
             `
-            <div class="min-w-0 max-w-md">
-              <p class="text-sm text-muted-foreground leading-relaxed break-words whitespace-normal line-clamp-1"> ${row.getValue("description")} </p>
+            <div class="min-w-0 max-w-xs">
+              <p class="text-sm text-muted-foreground leading-relaxed break-words whitespace-normal line-clamp-2"> ${row.getValue("description")} </p>
             </div>
             `,
         };
@@ -71,6 +92,23 @@ export const columns: ColumnDef<Video>[] = [
 
       return renderSnippet(videoDescriptionSnippet);
     },
-    size: 350,
+  },
+  {
+    accessorKey: "id",
+    header: () => {
+      return;
+    },
+    cell: ({ row }) => {
+      const snippet = createRawSnippet<[string]>(() => {
+        return {
+          render: () =>
+            `
+            <Ellipsis />
+            `,
+        };
+      });
+
+      return renderSnippet(snippet);
+    },
   },
 ];

@@ -51,7 +51,7 @@
   );
 </script>
 
-<div class="relative">
+<div>
   <ContentHeader
     title="Latest Videos"
     {contentFilter}
