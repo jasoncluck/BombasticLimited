@@ -21,8 +21,8 @@
   };
 </script>
 
-<div class="flex flex-col">
-  <div class="flex justify-between">
+<div class="flex flex-col gap-2">
+  <div class="flex justify-between gap-4">
     <h1 class="header-primary mb-2">
       {SOURCE_INFO[source].displayName}
     </h1>

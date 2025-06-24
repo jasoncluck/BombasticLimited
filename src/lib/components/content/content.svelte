@@ -15,6 +15,8 @@
   import type { CombinedContentFilter } from "./content-filter";
   import { createDragImage } from "$lib/utils/dragdrop";
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
+  import ContentTable from "./table/content-table.svelte";
+  import { columns } from "./table/columns";
 
   type ContentProps = HTMLAttributes<HTMLDivElement> & {
     videos: Video[] | VideoWithTimestamp[];
@@ -98,35 +100,36 @@
   </div>
 {/if}
 
-<ContentContextMenu {videos} {playlist} {playlists} {supabase} {session}>
-  <div {...restProps} class="flex flex-col gap-5 relative">
-    {#if contentDisplay === "CAROUSEL" && !mediaQueryState.isMobile}
-      <ContentCarousel
-        {videos}
-        {videosCount}
-        {playlists}
-        {playlist}
-        {handleDragStart}
-        {isContinueVideos}
-        bind:carouselState
-        {supabase}
-        {session}
-      />
-    {:else}
-      <div class="mb-20">
-        <ContentTiles
-          bind:videos
-          {videosCount}
-          {playlists}
-          {playlist}
-          {handleDragStart}
-          {isContinueVideos}
-          {allowVideoReorder}
-          {contentFilter}
-          {supabase}
-          {session}
-        />
-      </div>
-    {/if}
-  </div>
-</ContentContextMenu>
+<!-- <ContentContextMenu {videos} {playlist} {playlists} {supabase} {session}> -->
+<div {...restProps} class="flex flex-col gap-5 relative">
+  <ContentTable data={videos} {columns} />
+  <!-- {#if contentDisplay === "CAROUSEL" && !mediaQueryState.isMobile} -->
+  <!--   <ContentCarousel -->
+  <!--     {videos} -->
+  <!--     {videosCount} -->
+  <!--     {playlists} -->
+  <!--     {playlist} -->
+  <!--     {handleDragStart} -->
+  <!--     {isContinueVideos} -->
+  <!--     bind:carouselState -->
+  <!--     {supabase} -->
+  <!--     {session} -->
+  <!--   /> -->
+  <!-- {:else} -->
+  <!--   <div class="mb-20"> -->
+  <!--     <ContentTiles -->
+  <!--       bind:videos -->
+  <!--       {videosCount} -->
+  <!--       {playlists} -->
+  <!--       {playlist} -->
+  <!--       {handleDragStart} -->
+  <!--       {isContinueVideos} -->
+  <!--       {allowVideoReorder} -->
+  <!--       {contentFilter} -->
+  <!--       {supabase} -->
+  <!--       {session} -->
+  <!--     /> -->
+  <!--   </div> -->
+  <!-- {/if} -->
+</div>
+<!-- </ContentContextMenu> -->
