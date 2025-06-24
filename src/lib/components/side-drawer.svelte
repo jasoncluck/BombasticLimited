@@ -253,7 +253,7 @@
                 <div animate:flip={{ duration: flipDurationMs }} class="w-full">
                   <Button
                     variant="ghost"
-                    class="cursor-pointer w-full flex justify-start h-[64px] select-none transition-colors duration-200 hover:bg-secondary {isSelectedPlaylist
+                    class="cursor-pointer relative w-full flex justify-start h-[64px] select-none transition-colors duration-200 hover:bg-secondary {isSelectedPlaylist
                       ? 'bg-secondary'
                       : ''}"
                     onclick={() => handlePlaylistClick(playlist)}
