@@ -17,8 +17,9 @@ import {
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import { getCroppedImg } from "../ui/image-cropper/utils";
 import type { CropArea } from "svelte-easy-crop";
-import type { ContentState } from "$lib/state/content.svelte";
 import type { Video } from "$lib/supabase/videos";
+
+export type PlaylistImages = Record<string, string | undefined>;
 
 export const PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS: CropArea = {
   x: 280,
@@ -142,24 +143,26 @@ export async function getCroppedPlaylistImageUrl({
 
 export async function handleAddVideosToPlaylist({
   playlist,
+  playlistImages,
   videos,
-  contentState,
   supabase,
   session,
 }: {
   playlist: Playlist;
+  playlistImages: PlaylistImages;
   videos: Video[];
-  contentState: ContentState;
   supabase: SupabaseClient<Database>;
   session: Session | null;
 }) {
+  console.log(videos);
+  console.log(playlist);
   if (!session) {
     goto("/auth");
     return;
   }
 
   const { error } = await addVideosToPlaylist({
-    videoIds: contentState.selectedVideos.map((v) => v.id),
+    videoIds: videos.map((v) => v.id),
     playlistId: playlist.id,
     supabase,
     session,
@@ -182,7 +185,7 @@ export async function handleAddVideosToPlaylist({
     if (!playlist.thumbnail_maxres_url || !playlist.thumbnail_url) {
       await handleUpdatePlaylistImage({
         playlist,
-        contentState,
+        playlistImages,
         thumbnailMaxResUrl: videos[0].thumbnail_maxres_url,
         thumbnailUrl: videos[0].thumbnail_url,
         supabase,
@@ -192,29 +195,32 @@ export async function handleAddVideosToPlaylist({
 }
 
 export async function handleRemoveVideosFromPlaylist({
+  videos,
   playlist,
-  contentState,
+  playlistImages,
   supabase,
 }: {
+  videos: Video[];
   playlist: Playlist;
-  contentState: ContentState;
+  playlistImages: PlaylistImages;
   supabase: SupabaseClient<Database>;
 }) {
-  const videosToRemove = contentState.selectedVideos;
   const { error } = await deleteVideosFromPlaylist({
-    videoIds: videosToRemove.map((v) => v.id),
+    videoIds: videos.map((v) => v.id),
     playlistId: playlist.id,
     supabase,
   });
+  console.log(videos);
+  console.log(playlist);
 
-  for (const video of videosToRemove) {
+  for (const video of videos) {
     if (
       playlist.thumbnail_maxres_url === video.thumbnail_maxres_url ||
       playlist.thumbnail_url === video.thumbnail_url
     ) {
       await handleUpdatePlaylistImage({
         playlist,
-        contentState,
+        playlistImages,
         thumbnailMaxResUrl: null,
         thumbnailUrl: null,
         supabase,
@@ -232,20 +238,20 @@ export async function handleRemoveVideosFromPlaylist({
 
 export async function handleUpdatePlaylistImage({
   playlist,
+  playlistImages,
   thumbnailUrl,
   thumbnailMaxResUrl,
-  contentState,
   supabase,
 }: {
   playlist: Playlist;
+  playlistImages: PlaylistImages;
   thumbnailUrl: string | null;
   thumbnailMaxResUrl: string | null;
-  contentState: ContentState;
   supabase: SupabaseClient<Database>;
 }) {
   const isResetImage = thumbnailUrl === null && thumbnailMaxResUrl === null;
   if (isResetImage) {
-    contentState.playlistImages[playlist.id] = undefined;
+    playlistImages[playlist.id] = undefined;
   }
 
   const { updatedPlaylist, error } = await updatePlaylistImage({
@@ -260,12 +266,11 @@ export async function handleUpdatePlaylistImage({
     console.error(error);
     showNotification("Unable update playlist image");
   } else if (updatedPlaylist && !isResetImage) {
-    contentState.playlistImages[updatedPlaylist.id] =
-      await getCroppedPlaylistImageUrl({
-        imageProperties: playlist.image_properties,
-        thumbnailMaxResUrl,
-        thumbnailUrl,
-      });
+    return getCroppedPlaylistImageUrl({
+      imageProperties: playlist.image_properties,
+      thumbnailMaxResUrl,
+      thumbnailUrl,
+    });
   }
 }
 

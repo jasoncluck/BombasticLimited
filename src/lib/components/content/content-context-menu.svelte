@@ -59,8 +59,9 @@
       <ContextMenu.Item
         onclick={() =>
           handleRemoveVideosFromPlaylist({
+            videos: contentState.selectedVideos,
             playlist,
-            contentState,
+            playlistImages: contentState.playlistImages,
             supabase,
           })}
       >
@@ -87,7 +88,7 @@
                     handleAddVideosToPlaylist({
                       videos: contentState.selectedVideos,
                       playlist: addPlaylist,
-                      contentState,
+                      playlistImages: contentState.playlistImages,
                       supabase,
                       session,
                     })}
@@ -102,15 +103,16 @@
     </ContextMenu.Sub>
     {#if playlist && !contentState.isSelectionMode}
       <ContextMenu.Item
-        onclick={() =>
-          handleUpdatePlaylistImage({
-            playlist,
-            thumbnailUrl: contentState.selectedVideos[0].thumbnail_url,
-            thumbnailMaxResUrl:
-              contentState.selectedVideos[0].thumbnail_maxres_url,
-            contentState,
-            supabase,
-          })}>Set as playlist image</ContextMenu.Item
+        onclick={async () =>
+          (contentState.playlistImages[playlist.id] =
+            await handleUpdatePlaylistImage({
+              playlist,
+              thumbnailUrl: contentState.selectedVideos[0].thumbnail_url,
+              thumbnailMaxResUrl:
+                contentState.selectedVideos[0].thumbnail_maxres_url,
+              playlistImages: contentState.playlistImages,
+              supabase,
+            }))}>Set as playlist image</ContextMenu.Item
       >
     {/if}
   </ContextMenu.Content>

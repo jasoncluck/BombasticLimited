@@ -39,7 +39,13 @@
   </div>
   {#if contentState.isSelectionMode && contentState.selectedVideos.length > 0}
     <div class="ml-2">
-      <ContentDropdown {playlist} {playlists} {supabase} {session} />
+      <ContentDropdown
+        bind:videos={contentState.selectedVideos}
+        {playlist}
+        {playlists}
+        {supabase}
+        {session}
+      />
     </div>
   {/if}
 </div>

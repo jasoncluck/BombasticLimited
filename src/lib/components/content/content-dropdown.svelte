@@ -13,14 +13,14 @@
   import ScrollArea from "../ui/scroll-area/scroll-area.svelte";
   import type { Video } from "$lib/supabase/videos";
 
-  const {
-    video,
+  let {
+    videos = $bindable(),
     playlist,
     playlists,
     supabase,
     session,
   }: {
-    video: Video;
+    videos: Video[];
     playlist: Playlist | undefined;
     playlists: Playlist[];
     supabase: SupabaseClient<Database>;
@@ -28,12 +28,6 @@
   } = $props();
 
   const contentState = getContentState();
-
-  $effect(() => {
-    if (video) {
-      contentState.selectedVideos = [video];
-    }
-  });
 </script>
 
 <DropdownMenu.Root>
@@ -49,38 +43,40 @@
   <DropdownMenu.Content>
     {#if playlist}
       <DropdownMenu.Item
-        onclick={() =>
+        onclick={() => {
           handleRemoveVideosFromPlaylist({
+            videos,
             playlist,
-            contentState,
+            playlistImages: contentState.playlistImages,
             supabase,
-          })}
-        >Remove {contentState.selectedVideos.length === 1 ? "video" : "videos"} from
-        playlist</DropdownMenu.Item
+          });
+        }}
+        >Remove {videos.length === 1 ? "video" : "videos"} from playlist</DropdownMenu.Item
       >
     {/if}
     {#if playlists.filter((pl) => pl.id !== playlist?.id).length > 0}
       <DropdownMenu.Sub>
         <DropdownMenu.SubTrigger
-          >Add {contentState.selectedVideos.length === 1 ? "video" : "videos"}
+          >Add {videos.length === 1 ? "video" : "videos"}
           to Playlist</DropdownMenu.SubTrigger
         >
         <DropdownMenu.SubContent
           class="z-50 transition-opacity duration-150 data-[state=closed]:opacity-0 max-h-56 overflow-hidden"
           sideOffset={5}
         >
-          <ScrollArea class="max-h-56">
+          <ScrollArea class="h-56">
             {#each playlists as addPlaylist (addPlaylist.id)}
               {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
                 <DropdownMenu.Item
-                  onclick={() =>
+                  onclick={() => {
                     handleAddVideosToPlaylist({
-                      videos: contentState.selectedVideos,
+                      videos,
                       playlist: addPlaylist,
-                      contentState,
+                      playlistImages: contentState.playlistImages,
                       supabase,
                       session,
-                    })}
+                    });
+                  }}
                 >
                   {addPlaylist.name}
                 </DropdownMenu.Item>
@@ -90,10 +86,13 @@
         </DropdownMenu.SubContent>
       </DropdownMenu.Sub>
     {/if}
-    <DropdownMenu.Item
-      onclick={() => {
-        contentState.selectedVideos = [];
-      }}>Clear selected</DropdownMenu.Item
-    >
+    {#if contentState.isSelectionMode && videos.length > 0}
+      <DropdownMenu.Item
+        onclick={() => {
+          contentState.isSelectionMode = false;
+          videos = [];
+        }}>Deselect all</DropdownMenu.Item
+      >
+    {/if}
   </DropdownMenu.Content>
 </DropdownMenu.Root>

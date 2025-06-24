@@ -1,6 +1,5 @@
 import { getContext, setContext } from "svelte";
 
-// Common breakpoint utilities
 export const breakpoints = {
   sm: "(min-width: 640px)",
   md: "(min-width: 768px)",
@@ -13,6 +12,8 @@ export const breakpoints = {
   "max-lg": "(max-width: 1023px)",
   "max-xl": "(max-width: 1279px)",
   "max-2xl": "(max-width: 1535px)",
+  hover: "(hover: hover)",
+  "no-hover": "(hover: none)",
 } as const;
 
 export type Breakpoint = keyof typeof breakpoints;
@@ -39,7 +40,6 @@ class MediaQueryState {
     this.props = props;
   }
 
-  // Reactive getters for common breakpoints
   get isSm() {
     return this.#matches["sm"] ?? false;
   }
@@ -72,31 +72,36 @@ class MediaQueryState {
     return this.#matches["max-2xl"] ?? false;
   }
 
-  // Convenience getters
-  get isMobile() {
-    return this.isMaxSm;
+  /**
+   * Check if the device supports hover interactions (like desktop with mouse)
+   */
+  get canHover() {
+    return this.#matches["hover"] ?? false;
   }
-  get isTablet() {
-    return this.isMd && !this.isLg;
+
+  /**
+   * Check if the device does not support hover interactions (like touch devices)
+   */
+  get cannotHover() {
+    return this.#matches["no-hover"] ?? false;
   }
-  get isDesktop() {
-    return this.isLg;
+
+  get supportsHover() {
+    return this.canHover;
+  }
+
+  get isTouchDevice() {
+    return this.cannotHover;
   }
 
   get initialized() {
     return this.#initialized;
   }
 
-  /**
-   * Check if a specific breakpoint or custom query matches
-   */
   matches(key: string): boolean {
     return this.#matches[key] ?? false;
   }
 
-  /**
-   * Get all current matches
-   */
   get allMatches(): Record<string, boolean> {
     return { ...this.#matches };
   }
@@ -117,6 +122,10 @@ class MediaQueryState {
     for (const bp of breakpointsToWatch) {
       queriesToWatch.set(bp, breakpoints[bp]);
     }
+
+    // Add hover detection by default (unless explicitly disabled)
+    queriesToWatch.set("hover", breakpoints.hover);
+    queriesToWatch.set("no-hover", breakpoints["no-hover"]);
 
     // Add custom queries
     if (this.props.customQueries) {

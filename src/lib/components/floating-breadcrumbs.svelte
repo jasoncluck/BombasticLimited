@@ -9,6 +9,7 @@
   import ContentSelect from "./content/content-select.svelte";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
+  import { getMediaQueryState } from "$lib/state/media-query.svelte";
 
   function handleChevronClick() {
     pageState.contentScrollPosition = { scrollTop: 0, scrollLeft: 0 };
@@ -28,13 +29,15 @@
     supabase,
     session,
   }: BreacrumbLayoutProps = $props();
+
+  const mediaQueryState = getMediaQueryState();
 </script>
 
 <div
   class="absolute w-full py-1 bg-background-lighter grid grid-cols-3 items-center"
 >
   <div class="justify-self-start relative py-2">
-    {#if session}
+    {#if session && !mediaQueryState.isTouchDevice}
       <ContentSelect {playlist} {playlists} {supabase} {session} />
     {/if}
   </div>

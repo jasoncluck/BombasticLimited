@@ -7,16 +7,6 @@ import type { Database } from "$lib/supabase/database.types";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import type { Playlist } from "$lib/supabase/playlists";
 
-// This type is used to define the shape of our data.
-// You can use a Zod schema here if you want.
-export type Payment = {
-  id: string;
-  amount: number;
-  status: "pending" | "processing" | "success" | "failed";
-  email: string;
-};
-
-// Define a function that takes the required props and returns columns
 export function createContentColumns({
   playlist,
   playlists,
@@ -115,11 +105,10 @@ export function createContentColumns({
         return;
       },
       cell: ({ row }) => {
-        // Get the current video data from the row
         const video = row.original;
 
         return renderComponent(ContentDropdown, {
-          video,
+          videos: [video],
           playlist,
           playlists,
           session,

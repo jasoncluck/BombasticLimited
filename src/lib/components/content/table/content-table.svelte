@@ -1,16 +1,12 @@
 <script lang="ts" generics="TData, TValue">
-  import {
-    type ColumnDef,
-    getCoreRowModel,
-    type Row,
-  } from "@tanstack/table-core";
+  import { type ColumnDef, getCoreRowModel } from "@tanstack/table-core";
   import {
     createSvelteTable,
     FlexRender,
   } from "$lib/components/ui/data-table/index.js";
   import * as Table from "$lib/components/ui/table/index.js";
-  import { getContentState } from "$lib/state/content.svelte";
-  import { pageState } from "$lib/state/page.svelte";
+  import IntersectionObserver from "$lib/components/intersection-observer.svelte";
+  import { goto } from "$app/navigation";
 
   type DataTableProps<TData, TValue> = {
     columns: ColumnDef<TData, TValue>[];
@@ -18,8 +14,8 @@
   };
 
   let { data, columns }: DataTableProps<TData, TValue> = $props();
-  const contentState = getContentState();
-  let isHoveringCard = $state(false);
+
+  let isTableVisible = $state(true);
 
   const table = createSvelteTable({
     get data() {
@@ -30,13 +26,22 @@
   });
 </script>
 
-<div class="rounded-md">
+<IntersectionObserver
+  threshold={0.1}
+  disableObserver={false}
+  onActive={() => (isTableVisible = true)}
+  onInactive={() => (isTableVisible = false)}
+>
   <Table.Root>
-    <Table.Header class="sticky top-[44px] left-0 z-10 w-full">
+    <Table.Header
+      class="sticky top-[44px] left-0 z-10 w-full {isTableVisible
+        ? 'visible'
+        : 'invisible'}"
+    >
       {#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
         <Table.Row class="border-b">
           {#each headerGroup.headers as header (header.id)}
-            <Table.Head class="bg-background-lighter sticky top-0">
+            <Table.Head class="bg-background-lighter">
               {#if !header.isPlaceholder}
                 <FlexRender
                   content={header.column.columnDef.header}
@@ -50,7 +55,13 @@
     </Table.Header>
     <Table.Body>
       {#each table.getRowModel().rows as row (row.id)}
-        <Table.Row data-state={row.getIsSelected() && "selected"}>
+        <Table.Row
+          data-state={row.getIsSelected() && "selected"}
+          class="cursor-pointer"
+          onclick={() => {
+            goto(`/video/${row.getValue("id")}`);
+          }}
+        >
           {#each row.getVisibleCells() as cell (cell.id)}
             <Table.Cell>
               <FlexRender
@@ -69,4 +80,4 @@
       {/each}
     </Table.Body>
   </Table.Root>
-</div>
+</IntersectionObserver>

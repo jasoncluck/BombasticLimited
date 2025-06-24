@@ -19,6 +19,7 @@
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import { buttonVariants } from "../ui/button";
   import { handleDeletePlaylist } from "../playlist/playlist-service";
+  import { getMediaQueryState } from "$lib/state/media-query.svelte";
 
   interface SharedContentHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
@@ -50,6 +51,8 @@
     session,
     ...restProps
   }: SharedContentHeaderProps = $props();
+
+  const mediaQueryState = getMediaQueryState();
 
   const numPages = $derived(
     getNumberOfPages({
@@ -116,7 +119,7 @@
       </DropdownMenu.Root>
     {/if}
     <div class="flex gap-4">
-      {#if session}
+      {#if session && !mediaQueryState.isTouchDevice}
         <ContentSelect {playlist} {playlists} {supabase} {session} />
       {/if}
     </div>
