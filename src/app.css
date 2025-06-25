@@ -127,3 +127,10 @@
 .sidebar-icon-image {
   @apply h-full w-full bg-no-repeat bg-cover bg-center rounded-full;
 }
+
+.selection-mode {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}

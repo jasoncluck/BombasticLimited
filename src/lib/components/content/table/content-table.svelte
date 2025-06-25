@@ -1,4 +1,4 @@
-<script lang="ts" generics="TData, TValue">
+<script lang="ts" generics="TValue">
   import { type ColumnDef, getCoreRowModel } from "@tanstack/table-core";
   import {
     createSvelteTable,
@@ -11,25 +11,92 @@
   import type { Video } from "$lib/supabase/videos";
   import { getContentState } from "$lib/state/content.svelte";
   import Checkbox from "$lib/components/ui/checkbox/checkbox.svelte";
+  import type { Session, SupabaseClient } from "@supabase/supabase-js";
+  import type { Database } from "$lib/supabase/database.types";
+  import type { CombinedContentFilter } from "../content-filter";
 
-  type DataTableProps<TData, TValue> = {
-    columns: ColumnDef<TData, TValue>[];
-    data: TData[];
+  type DataTableProps<TValue> = {
+    columns: ColumnDef<Video, TValue>[];
+    videos: Video[];
     playlist?: Playlist;
+    allowVideoReorder?: boolean;
+    contentFilter?: CombinedContentFilter;
+    supabase?: SupabaseClient<Database>;
+    session?: Session | null;
+    videosCount?: number | null;
+    onDataUpdate?: (data: Video[]) => void;
+    handleDragStart?: (
+      e: DragEvent & { currentTarget: HTMLDivElement },
+      index: number,
+    ) => void;
   };
 
-  let { data, columns, playlist }: DataTableProps<TData, TValue> = $props();
+  let {
+    videos = $bindable(),
+    columns,
+    playlist,
+    allowVideoReorder = false,
+    contentFilter,
+    videosCount,
+    onDataUpdate,
+    supabase,
+    session,
+  }: DataTableProps<TValue> = $props();
 
   let isTableVisible = $state(true);
   const contentState = getContentState();
 
+  // Create drag drop functionality if reordering is allowed and we have the required dependencies
+  const dragDrop = session
+    ? contentState.createDragDrop({
+        allowVideoReorder,
+        videos,
+        videosCount,
+        playlist,
+        contentFilter,
+        supabase,
+        onVideosUpdate: (updatedVideos) => {
+          videos = updatedVideos;
+          onDataUpdate?.(videos);
+        },
+      })
+    : null;
+
   const table = createSvelteTable({
     get data() {
-      return data;
+      return videos;
     },
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
+
+  function getRowClasses(index: number) {
+    let classes = `cursor-pointer ${contentState.isSelectionMode ? "selection-mode" : ""}`;
+
+    // Add selection highlighting
+    if (contentState.selectedVideos.some((v) => v.id === videos[index].id)) {
+      classes += " bg-muted/50";
+    }
+
+    // Add drag drop classes if enabled
+    if (dragDrop && allowVideoReorder) {
+      if (contentState.draggedIndex === index) {
+        classes += " opacity-60";
+      }
+      if (contentState.targetIndex === index) {
+        if (
+          !contentState.draggedIndex ||
+          contentState.draggedIndex < contentState.targetIndex
+        ) {
+          classes += " border-b-2 border-primary";
+        } else {
+          classes += " border-t-2 border-primary";
+        }
+      }
+    }
+
+    return classes;
+  }
 
   function handleSelectVideos(event: MouseEvent, video: Video) {
     const isShiftPressed = event.shiftKey;
@@ -38,6 +105,7 @@
     );
 
     if (!isShiftPressed) {
+      event.preventDefault();
       // Original behavior when SHIFT is not pressed
       if (videoIndex === -1) {
         contentState.selectedVideos.push(video);
@@ -53,12 +121,10 @@
         const lastSelectedVideo =
           contentState.selectedVideos[contentState.selectedVideos.length - 1];
 
-        const lastSelectedIndex = data.findIndex(
-          (v) => (v as Video).id === lastSelectedVideo.id,
+        const lastSelectedIndex = videos.findIndex(
+          (v) => v.id === lastSelectedVideo.id,
         );
-        const currentIndex = data.findIndex(
-          (v) => (v as Video).id === video.id,
-        );
+        const currentIndex = videos.findIndex((v) => v.id === video.id);
 
         // Determine start and end indices for the range
         const startIndex = Math.min(lastSelectedIndex, currentIndex);
@@ -66,7 +132,7 @@
 
         // Select all videos in the range
         for (let i = startIndex; i <= endIndex; i++) {
-          const rangeVideo = data[i] as Video;
+          const rangeVideo = videos[i];
           // Check if this video is not already in selectedVideos
           if (
             !contentState.selectedVideos.some((v) => v.id === rangeVideo.id)
@@ -75,34 +141,6 @@
           }
         }
       }
-    }
-  }
-
-  function handleMouseEnter(video: Video) {
-    if (!contentState.isSelectionMode && !contentState.dragContentType) {
-      // Clear any existing timeout when entering a new row
-      if (contentState.hoverTimeoutId) {
-        clearTimeout(contentState.hoverTimeoutId);
-        contentState.hoverTimeoutId = null;
-      }
-
-      contentState.selectedVideos = [video];
-    }
-  }
-
-  function handleMouseLeave() {
-    if (!contentState.isSelectionMode) {
-      // Store the timeout ID so it can be cleared if needed
-      const timeoutId = setTimeout(() => {
-        if (
-          !contentState.dragContentType &&
-          !contentState.isMouseOverContextMenu
-        ) {
-          contentState.selectedVideos = [];
-        }
-        contentState.hoverTimeoutId = null;
-      }, 50);
-      contentState.hoverTimeoutId = timeoutId;
     }
   }
 </script>
@@ -115,35 +153,44 @@
 >
   <Table.Root>
     <Table.Body class="-mx-2">
-      {#each table.getRowModel().rows as row (row.id)}
+      {#each table.getRowModel().rows as row, i (row.id)}
         <Table.Row
           data-state={row.getIsSelected() && "selected"}
-          class="cursor-pointer {contentState.selectedVideos.some(
-            (v) => v.id === (row.original as Video).id,
-          )
-            ? 'bg-muted/50'
-            : ''}"
+          class={getRowClasses(i)}
+          draggable={true}
+          ondragstart={dragDrop
+            ? (e) => dragDrop.handleDragStart(e, i)
+            : undefined}
+          ondragover={dragDrop
+            ? (e) => dragDrop.handleDragOver(e, i)
+            : undefined}
+          ondragleave={dragDrop
+            ? (e) => dragDrop.handleDragLeave(e)
+            : undefined}
+          ondrop={dragDrop ? (e) => dragDrop.handleDrop(e, i) : undefined}
+          ondragend={dragDrop ? dragDrop.handleDragEnd : undefined}
           onclick={contentState.isSelectionMode
             ? (e) => {
                 e.preventDefault();
-                handleSelectVideos(e, row.original as Video);
+                handleSelectVideos(e, row.original);
               }
             : (e) => {
                 e.preventDefault();
                 handleContentNavigation({
-                  video: row.original as Video,
+                  video: row.original,
                   playlist,
                 });
               }}
-          onmouseenter={() => handleMouseEnter(row.original as Video)}
-          onmouseleave={handleMouseLeave}
+          onmouseenter={() =>
+            contentState.handleMouseEnter({ video: row.original })}
+          onmouseleave={() => contentState.handleMouseLeave()}
         >
           {#if contentState.isSelectionMode}
             <Table.Cell class="w-12">
               <Checkbox
-                id={(row.original as Video).id}
+                id={row.original.id}
                 checked={contentState.selectedVideos.some(
-                  (v) => v.id === (row.original as Video).id,
+                  (v) => v.id === row.original.id,
                 )}
                 class="pointer-events-none"
               />

@@ -4,18 +4,45 @@
   import type { CarouselState, ContentDisplayProps } from "./content";
   import type { CarouselAPI } from "../ui/carousel/context";
   import { onDestroy } from "svelte";
+  import { getContentState } from "$lib/state/content.svelte";
+  import type { CombinedContentFilter } from "./content-filter";
+
+  type ContentCarouselProps = ContentDisplayProps & {
+    carouselState?: CarouselState;
+    allowVideoReorder?: boolean;
+    contentFilter?: CombinedContentFilter;
+  };
 
   let {
     videos,
-    handleDragStart,
+    videosCount,
     isContinueVideos,
     playlists,
     playlist,
     playlistContentFilter,
     carouselState = $bindable(),
+    allowVideoReorder = false,
+    contentFilter,
     supabase,
     session,
-  }: { carouselState?: CarouselState } & ContentDisplayProps = $props();
+  }: ContentCarouselProps = $props();
+
+  const contentState = getContentState();
+
+  // Create drag drop functionality
+  const dragDrop = contentState.createDragDrop({
+    allowVideoReorder,
+    videos,
+    videosCount,
+    playlist,
+    contentFilter,
+    supabase,
+    onVideosUpdate: (updatedVideos) => {
+      // For carousel, we might need to update the parent component
+      // This would require videos to be bindable in the parent
+      videos = updatedVideos;
+    },
+  });
 
   let api = $state<CarouselAPI>();
   let showPreviousButton = $state(false);
@@ -132,6 +159,30 @@
       }, 100);
     }
   }
+
+  function getItemClasses(index: number) {
+    let classes =
+      "group @4xl:basis-1/5 @sm:basis-1/3 basis-full duration-300 transform px-3 transition-transform";
+
+    // Add drag visual feedback if reordering is enabled
+    if (allowVideoReorder) {
+      if (contentState.draggedIndex === index) {
+        classes += " opacity-60";
+      }
+      if (contentState.targetIndex === index) {
+        if (
+          !contentState.draggedIndex ||
+          contentState.draggedIndex < contentState.targetIndex
+        ) {
+          classes += " border-r-2 border-primary";
+        } else {
+          classes += " border-l-2 border-primary";
+        }
+      }
+    }
+
+    return classes;
+  }
 </script>
 
 <Carousel.Root
@@ -156,10 +207,21 @@
   <Carousel.Content>
     {#each videos as video, i (video.id)}
       <Carousel.Item
-        class="group @4xl:basis-1/5 @sm:basis-1/3 
-          basis-full duration-300 transform px-3 transition-transform"
+        class={getItemClasses(i)}
         draggable="true"
-        ondragstart={(e) => handleDragStart(e, i)}
+        ondragstart={(e) => dragDrop.handleDragStart(e, i)}
+        ondragover={allowVideoReorder
+          ? (e) => dragDrop.handleDragOver(e, i)
+          : undefined}
+        ondragleave={allowVideoReorder
+          ? (e) => dragDrop.handleDragLeave(e)
+          : undefined}
+        ondrop={allowVideoReorder
+          ? (e) => dragDrop.handleDrop(e, i)
+          : undefined}
+        ondragend={allowVideoReorder ? dragDrop.handleDragEnd : undefined}
+        onmouseenter={() => contentState.handleMouseEnter({ video })}
+        onmouseleave={() => contentState.handleMouseLeave()}
         onclick={() => {
           if (carouselState) {
             carouselState.lastViewedIndex = i;

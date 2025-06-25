@@ -14,6 +14,7 @@
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
   import { createContentColumns } from "./table/content-table-columns";
   import ContentTable from "./table/content-table.svelte";
+  import ContentContextMenu from "./content-context-menu.svelte";
 
   type ContentProps = HTMLAttributes<HTMLDivElement> & {
     videos: Video[] | VideoWithTimestamp[];
@@ -70,29 +71,6 @@
     contentState.isSelectionMode = false;
     contentState.selectedVideos = [];
   });
-
-  function handleDragStart(
-    e: DragEvent & { currentTarget: HTMLDivElement },
-    index: number,
-  ) {
-    contentState.dragContentType = "video";
-
-    if (e.dataTransfer) {
-      e.dataTransfer.effectAllowed = "move";
-      e.dataTransfer.setData("text/plain", index.toString());
-
-      // If videos aren't already selected a single video is being dragged so set that
-      if (contentState.selectedVideos.length < 1) {
-        contentState.selectedVideos = [videos[index]];
-      }
-
-      const dragImageText =
-        contentState.selectedVideos.length === 1
-          ? contentState.selectedVideos[0].title
-          : `${contentState.selectedVideos.length} videos`;
-      createDragImage(e, dragImageText);
-    }
-  }
 </script>
 
 {#if videos.length < 1}
@@ -101,36 +79,36 @@
   </div>
 {/if}
 
-<!-- <ContentContextMenu {videos} {playlist} {playlists} {supabase} {session}> -->
-<div {...restProps} class="m-4 flex flex-col gap-5">
-  <ContentTable data={videos} {columns} {playlist} />
-  <!-- {#if contentDisplay === "CAROUSEL" && !mediaQueryState.isMobile} -->
-  <!--   <ContentCarousel -->
-  <!--     {videos} -->
-  <!--     {videosCount} -->
-  <!--     {playlists} -->
-  <!--     {playlist} -->
-  <!--     {handleDragStart} -->
-  <!--     {isContinueVideos} -->
-  <!--     bind:carouselState -->
-  <!--     {supabase} -->
-  <!--     {session} -->
-  <!--   /> -->
-  <!-- {:else} -->
-  <!--   <div class="mb-20"> -->
-  <!--     <ContentTiles -->
-  <!--       bind:videos -->
-  <!--       {videosCount} -->
-  <!--       {playlists} -->
-  <!--       {playlist} -->
-  <!--       {handleDragStart} -->
-  <!--       {isContinueVideos} -->
-  <!--       {allowVideoReorder} -->
-  <!--       {contentFilter} -->
-  <!--       {supabase} -->
-  <!--       {session} -->
-  <!--     /> -->
-  <!--   </div> -->
-  <!-- {/if} -->
-</div>
-<!-- </ContentContextMenu> -->
+<ContentContextMenu {videos} {playlist} {playlists} {supabase} {session}>
+  <div {...restProps} class="m-4 flex flex-col gap-5">
+    <ContentTable {videos} {columns} {playlist} {supabase} {session} />
+    <!-- {#if contentDisplay === "CAROUSEL" && !mediaQueryState.isMobile} -->
+    <!--   <ContentCarousel -->
+    <!--     {videos} -->
+    <!--     {videosCount} -->
+    <!--     {playlists} -->
+    <!--     {playlist} -->
+    <!--     {handleDragStart} -->
+    <!--     {isContinueVideos} -->
+    <!--     bind:carouselState -->
+    <!--     {supabase} -->
+    <!--     {session} -->
+    <!--   /> -->
+    <!-- {:else} -->
+    <!--   <div class="mb-20"> -->
+    <!--     <ContentTiles -->
+    <!--       bind:videos -->
+    <!--       {videosCount} -->
+    <!--       {playlists} -->
+    <!--       {playlist} -->
+    <!--       {handleDragStart} -->
+    <!--       {isContinueVideos} -->
+    <!--       {allowVideoReorder} -->
+    <!--       {contentFilter} -->
+    <!--       {supabase} -->
+    <!--       {session} -->
+    <!--     /> -->
+    <!--   </div> -->
+    <!-- {/if} -->
+  </div>
+</ContentContextMenu>

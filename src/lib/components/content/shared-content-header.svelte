@@ -15,10 +15,6 @@
   import { getNumberOfPages } from "./pagination/content-pagination";
   import { DEFAULT_NUM_VIDEOS_TILES } from "$lib/supabase/videos";
   import type { ContentView } from "./content";
-  import { Ellipsis } from "@lucide/svelte";
-  import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
-  import { buttonVariants } from "../ui/button";
-  import { handleDeletePlaylist } from "../playlist/playlist-service";
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
 
   interface SharedContentHeaderProps extends HTMLAttributes<HTMLDivElement> {
@@ -29,7 +25,6 @@
     playlists: Playlist[];
     children: Snippet<[]>;
     playlist?: Playlist;
-    openPlaylistModal?: () => void;
     videosCount: number;
     currentPage?: number;
     supabase: SupabaseClient<Database>;
@@ -43,7 +38,6 @@
     contentFilter,
     playlist,
     playlists,
-    openPlaylistModal,
     showFloatingBreadcrumbs = $bindable(),
     videosCount,
     currentPage = $bindable(),
@@ -90,39 +84,8 @@
     {@render children()}
   </div>
   <div class="flex justify-between items-center">
-    <!-- Left side: Playlist actions -->
     <div class="flex items-center">
-      {#if playlist}
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger
-            class="cursor-pointer {buttonVariants({
-              variant: 'ghost',
-              size: 'icon',
-            })}"
-          >
-            <Ellipsis size="16" />
-            <span class="sr-only">Playlist Actions</span>
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Content>
-            <DropdownMenu.Group>
-              {#if openPlaylistModal}
-                <DropdownMenu.Item
-                  class="cursor-pointer"
-                  onclick={openPlaylistModal}
-                >
-                  Edit Playlist</DropdownMenu.Item
-                >
-              {/if}
-              <DropdownMenu.Item
-                class="cursor-pointer"
-                onclick={() =>
-                  handleDeletePlaylist({ playlist, supabase, session })}
-                >Delete Playlist</DropdownMenu.Item
-              >
-            </DropdownMenu.Group>
-          </DropdownMenu.Content>
-        </DropdownMenu.Root>
-      {/if}
+      {#if playlist}{/if}
     </div>
   </div>
 
@@ -138,9 +101,9 @@
       <ContentFilters {contentFilter} {view} />
     </div>
   </div>
-  <div class="mt-4 mb-6">
-    {#if currentPage && numPages > 1}
+  {#if currentPage && numPages > 1}
+    <div class="mt-4 mb-6">
       <ContentPagination count={videosCount} bind:currentPage />
-    {/if}
-  </div>
+    </div>
+  {/if}
 </IntersectionObserver>

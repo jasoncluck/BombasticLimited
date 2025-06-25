@@ -355,86 +355,89 @@
     </div>
   </div>
 
+  <!-- Fixed: Border is always present but transparent when not dragging -->
   <div
-    class="flex flex-col px-1
+    class="border-2 rounded-md mx-1 transition-colors duration-200
     {playlists.length > 0 && contentState.dragContentType === 'video'
-      ? 'border-secondary border-1 '
+      ? 'border-secondary'
       : 'border-transparent'}"
   >
-    {#if playlists === null || !playlistImagesLoaded}
-      <Loader class="animate-spin  w-full" />
-    {:else if session && dndPlaylists.length > 0}
-      <div
-        use:dndzone={{
-          items: dndPlaylists,
-          flipDurationMs,
-          type: "playlist",
-          dropTargetStyle: {
-            outline: "rgba(99, 102, 241, 0.5) solid 2px",
-            backgroundColor: "rgba(99, 102, 241, 0.1)",
-          },
-        }}
-        onconsider={handleDndConsider}
-        onfinalize={handleDndFinalize}
-        class="flex flex-col w-full"
-      >
-        {#each dndPlaylists as playlist, i (playlist.id)}
-          <div animate:flip={{ duration: flipDurationMs }} class="w-full">
-            <PlaylistContextMenu
-              {playlist}
-              {selectedPlaylistIdParam}
-              {isSidebarCollapsed}
-              {supabase}
-              {session}
-            >
-              {@const isSelectedPlaylist =
-                selectedPlaylistIdParam === playlist.short_id}
-
-              <Button
-                variant="ghost"
-                class={getButtonClasses(i, isSelectedPlaylist)}
-                size={!isSidebarCollapsed ? "default" : "icon"}
-                onclick={() => handlePlaylistClick(playlist)}
-                title={playlist.name}
-                value={playlist.name}
-                onmouseenter={() => handleMouseEnter(i)}
-                onmouseleave={() => handleMouseLeave(i)}
-                ondragover={(e) => handleVideoDragOver(e)}
-                ondragleave={(e) => handleVideoDragLeave(e)}
-                ondrop={(e) => handleVideoDrop(e, i)}
+    <div class="flex flex-col px-1">
+      {#if playlists === null || !playlistImagesLoaded}
+        <Loader class="animate-spin w-full" />
+      {:else if session && dndPlaylists.length > 0}
+        <div
+          use:dndzone={{
+            items: dndPlaylists,
+            flipDurationMs,
+            type: "playlist",
+            dropTargetStyle: {
+              outline: "rgba(99, 102, 241, 0.5) solid 2px",
+              backgroundColor: "rgba(99, 102, 241, 0.1)",
+            },
+          }}
+          onconsider={handleDndConsider}
+          onfinalize={handleDndFinalize}
+          class="flex flex-col w-full"
+        >
+          {#each dndPlaylists as playlist, i (playlist.id)}
+            <div animate:flip={{ duration: flipDurationMs }} class="w-full">
+              <PlaylistContextMenu
+                {playlist}
+                {selectedPlaylistIdParam}
+                {isSidebarCollapsed}
+                {supabase}
+                {session}
               >
-                <div
-                  class="flex items-center grow absolute
-                  {!isSidebarCollapsed ? 'grow w-full' : 'item-center'}"
+                {@const isSelectedPlaylist =
+                  selectedPlaylistIdParam === playlist.short_id}
+
+                <Button
+                  variant="ghost"
+                  class={getButtonClasses(i, isSelectedPlaylist)}
+                  size={!isSidebarCollapsed ? "default" : "icon"}
+                  onclick={() => handlePlaylistClick(playlist)}
+                  title={playlist.name}
+                  value={playlist.name}
+                  onmouseenter={() => handleMouseEnter(i)}
+                  onmouseleave={() => handleMouseLeave(i)}
+                  ondragover={(e) => handleVideoDragOver(e)}
+                  ondragleave={(e) => handleVideoDragLeave(e)}
+                  ondrop={(e) => handleVideoDrop(e, i)}
                 >
-                  {#if contentState.playlistImages[playlist.id]}
-                    <div class="h-12 w-12 flex-shrink-0">
-                      <img
-                        src={contentState.playlistImages[playlist.id]}
-                        class="h-full w-full object-cover cursor-pointer"
-                        alt={`Image for playlist: ${playlist.name}`}
-                      />
-                    </div>
-                  {:else}
-                    <div
-                      class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
-                    >
-                      <ListVideo class="!h-8 !w-8" />
-                    </div>
-                  {/if}
-                  {#if !isSidebarCollapsed}
-                    <span
-                      class="text-sm mr-6 overflow-hidden px-3 text-clip justify-start whitespace-nowrap break-keep"
-                    >
-                      {playlist.name}
-                    </span>
-                  {/if}
-                </div>
-              </Button>
-            </PlaylistContextMenu>
-          </div>
-        {/each}
-      </div>
-    {/if}
+                  <div
+                    class="flex items-center grow absolute
+                    {!isSidebarCollapsed ? 'grow w-full' : 'item-center'}"
+                  >
+                    {#if contentState.playlistImages[playlist.id]}
+                      <div class="h-12 w-12 flex-shrink-0">
+                        <img
+                          src={contentState.playlistImages[playlist.id]}
+                          class="h-full w-full object-cover cursor-pointer"
+                          alt={`Image for playlist: ${playlist.name}`}
+                        />
+                      </div>
+                    {:else}
+                      <div
+                        class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
+                      >
+                        <ListVideo class="!h-8 !w-8" />
+                      </div>
+                    {/if}
+                    {#if !isSidebarCollapsed}
+                      <span
+                        class="text-sm mr-6 overflow-hidden px-3 text-clip justify-start whitespace-nowrap break-keep"
+                      >
+                        {playlist.name}
+                      </span>
+                    {/if}
+                  </div>
+                </Button>
+              </PlaylistContextMenu>
+            </div>
+          {/each}
+        </div>
+      {/if}
+    </div>
   </div>
 </aside>

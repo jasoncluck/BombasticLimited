@@ -1,8 +1,45 @@
 import type { Video } from "$lib/supabase/videos";
+import type { Playlist } from "$lib/supabase/playlists";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "$lib/supabase/database.types";
 import { getContext, setContext } from "svelte";
+import { createDragImage } from "$lib/utils/dragdrop";
+import {
+  isPlaylistVideosFilter,
+  type CombinedContentFilter,
+} from "$lib/components/content/content-filter";
+import { handleUpdatePlaylistVideoPosition } from "$lib/components/playlist/playlist-service";
 
-// Define the drag content type
 export type DragContentType = "video" | "playlist" | null;
+
+export interface DragDropOptions {
+  allowVideoReorder?: boolean;
+  videos: Video[];
+  videosCount?: number | null;
+  playlist?: Playlist;
+  contentFilter?: CombinedContentFilter;
+  supabase?: SupabaseClient<Database>;
+  onVideosUpdate?: (videos: Video[]) => void;
+}
+
+export interface DragDropHandlers {
+  handleDragOver: (event: DragEvent, index: number) => void;
+  handleDragEnd: () => void;
+  handleDragLeave: (
+    e: DragEvent & { currentTarget: EventTarget & HTMLElement },
+  ) => void;
+  handleDrop: (event: DragEvent, index: number) => void;
+  handleDragStart: (
+    event: DragEvent & { currentTarget: HTMLElement },
+    index: number,
+  ) => void;
+}
+
+export interface MouseHoverOptions {
+  video: Video;
+  isHoveringElement?: boolean;
+  shouldScrollCheck?: boolean;
+}
 
 export interface ContentState {
   selectedVideos: Video[];
@@ -12,18 +49,191 @@ export interface ContentState {
   isSelectionMode: boolean;
   isMouseOverContextMenu: boolean;
   // ID of setTimeout event when hovering over a video
-  hoverTimeoutId: NodeJS.Timeout | null;
+  hoverTimeoutId: ReturnType<typeof setTimeout> | null;
   // Storing cropped images in local state to avoid refetching these
   playlistImages: Record<string, string | undefined>;
+
+  // Drag and drop state
+  draggedIndex: number | null;
+  targetIndex: number | null;
+
+  // Drag and drop method
+  createDragDrop: (options: DragDropOptions) => DragDropHandlers;
+
+  // Mouse hover methods
+  handleMouseEnter: (options: MouseHoverOptions) => void;
+  handleMouseLeave: (isHoveringElement?: boolean) => void;
 }
 
 export class ContentStateClass implements ContentState {
-  selectedVideos = $state([]);
-  dragContentType = $state(null);
+  selectedVideos = $state<Video[]>([]);
+  dragContentType = $state<DragContentType>(null);
   isSelectionMode = $state(false);
   isMouseOverContextMenu = $state(false);
-  hoverTimeoutId = $state(null);
+  hoverTimeoutId = $state<ReturnType<typeof setTimeout> | null>(null);
   playlistImages = $state({});
+
+  // Drag and drop state
+  draggedIndex = $state<number | null>(null);
+  targetIndex = $state<number | null>(null);
+
+  // Mouse hover methods
+  handleMouseEnter(options: MouseHoverOptions) {
+    const {
+      video,
+      isHoveringElement = false,
+      shouldScrollCheck = false,
+    } = options;
+
+    // For content cards that need to check scrolling state
+    if (shouldScrollCheck) {
+      // Import pageState here to avoid circular dependencies
+      // You might need to adjust this based on your actual pageState implementation
+      const scrolling = false; // Replace with actual scroll state check if needed
+
+      if (scrolling && this.dragContentType === null) {
+        return;
+      }
+    }
+
+    if (!this.isSelectionMode && !this.dragContentType) {
+      // Clear any existing timeout when entering a new element
+      if (this.hoverTimeoutId) {
+        clearTimeout(this.hoverTimeoutId);
+        this.hoverTimeoutId = null;
+      }
+
+      this.selectedVideos = [video];
+    }
+  }
+
+  handleMouseLeave(isHoveringElement: boolean = false) {
+    if (!this.isSelectionMode) {
+      // Store the timeout ID so it can be cleared if needed
+      const timeoutId = setTimeout(() => {
+        if (
+          !this.dragContentType &&
+          !isHoveringElement &&
+          !this.isMouseOverContextMenu
+        ) {
+          this.selectedVideos = [];
+        }
+        this.hoverTimeoutId = null;
+      }, 50);
+      this.hoverTimeoutId = timeoutId;
+    }
+  }
+
+  // Drag and drop methods for reordering
+  createDragDrop(options: DragDropOptions): DragDropHandlers {
+    const handleDragOver = (event: DragEvent, index: number) => {
+      if (!options.allowVideoReorder) return;
+
+      event.preventDefault();
+      if (
+        this.draggedIndex !== null &&
+        this.draggedIndex !== index &&
+        this.targetIndex !== index
+      ) {
+        this.targetIndex = index;
+      }
+    };
+
+    const handleDragEnd = () => {
+      this.draggedIndex = null;
+      this.targetIndex = null;
+    };
+
+    const handleDragLeave = (
+      e: DragEvent & { currentTarget: EventTarget & HTMLElement },
+    ) => {
+      if (!options.allowVideoReorder) return;
+      // Only set targetIndex to null if we're actually leaving the container
+      // and not just moving between its child elements. This avoids having a flickering issue.
+      const relatedTarget = e.relatedTarget as Node;
+      if (!e.currentTarget.contains(relatedTarget)) {
+        this.targetIndex = null;
+      }
+    };
+
+    const handleDrop = (event: DragEvent, index: number) => {
+      if (!options.allowVideoReorder || !options.supabase) return;
+      if (
+        !options.playlist ||
+        options.contentFilter?.sort.key !== "playlistOrder"
+      ) {
+        return;
+      }
+      event.preventDefault();
+      if (this.draggedIndex !== null && this.draggedIndex !== index) {
+        // Reorder the videos array
+        const updatedVideos = [...options.videos];
+        const [movedItem] = updatedVideos.splice(this.draggedIndex, 1);
+        updatedVideos.splice(index, 0, movedItem);
+
+        // Update the videos through the callback
+        options.onVideosUpdate?.(updatedVideos);
+
+        if (!isPlaylistVideosFilter(options.contentFilter)) {
+          throw new Error("Invalid content filter, expected playlist filter");
+        }
+
+        if (!options.videosCount) {
+          throw new Error(
+            "Could not find total video count, unable to reorder videos.",
+          );
+        }
+
+        handleUpdatePlaylistVideoPosition({
+          video: movedItem,
+          position:
+            options.contentFilter.sort.order === "ascending"
+              ? index + 1
+              : options.videosCount - index,
+          playlist: options.playlist,
+          supabase: options.supabase,
+        });
+      }
+      this.draggedIndex = null;
+      this.targetIndex = null;
+    };
+
+    const handleDragStart = (
+      event: DragEvent & { currentTarget: HTMLElement },
+      index: number,
+    ) => {
+      // Set the drag index for visual feedback
+      this.draggedIndex = index;
+
+      // Set drag content type
+      this.dragContentType = "video";
+
+      // Handle drag data transfer and drag image
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", index.toString());
+
+        // If videos aren't already selected a single video is being dragged so set that
+        if (this.selectedVideos.length < 1) {
+          this.selectedVideos = [options.videos[index]];
+        }
+
+        const dragImageText =
+          this.selectedVideos.length === 1
+            ? this.selectedVideos[0].title
+            : `${this.selectedVideos.length} videos`;
+        createDragImage(event, dragImageText);
+      }
+    };
+
+    return {
+      handleDragOver,
+      handleDragEnd,
+      handleDragLeave,
+      handleDrop,
+      handleDragStart,
+    };
+  }
 }
 
 const DEFAULT_KEY = "$_content_state";

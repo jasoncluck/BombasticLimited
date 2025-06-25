@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ListVideo } from "@lucide/svelte";
+  import { Ellipsis, ListVideo } from "@lucide/svelte";
   import type { Infer, SuperValidated } from "sveltekit-superforms";
   import type { PlaylistSchema } from "../../../routes/playlist/[shortId]/schema";
   import type { BreadcrumbItem } from "$lib/components/breadcrumb-layout.svelte";
@@ -9,8 +9,11 @@
   import type { Database } from "$lib/supabase/database.types";
   import { getContentState } from "$lib/state/content.svelte";
   import type { HTMLAttributes } from "svelte/elements";
+  import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import SharedContentHeader from "$lib/components/content/shared-content-header.svelte";
   import PlaylistEditDialog from "$lib/components/playlist/playlist-edit-dialog.svelte";
+  import { buttonVariants } from "$lib/components/ui/button";
+  import { handleDeletePlaylist } from "$lib/components/playlist/playlist-service";
 
   interface PlaylistHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
@@ -63,7 +66,6 @@
   view="playlist"
   {videosCount}
   {contentFilter}
-  openPlaylistModal={() => (open = true)}
   {playlist}
   {playlists}
   {supabase}
@@ -130,4 +132,28 @@
       </p>
     </div>
   </div>
+
+  <DropdownMenu.Root>
+    <DropdownMenu.Trigger
+      class="cursor-pointer {buttonVariants({
+        variant: 'ghost',
+        size: 'icon',
+      })}"
+    >
+      <Ellipsis size="16" />
+      <span class="sr-only">Playlist Actions</span>
+    </DropdownMenu.Trigger>
+    <DropdownMenu.Content>
+      <DropdownMenu.Group>
+        <DropdownMenu.Item class="cursor-pointer" onclick={() => (open = true)}>
+          Edit Playlist</DropdownMenu.Item
+        >
+        <DropdownMenu.Item
+          class="cursor-pointer"
+          onclick={() => handleDeletePlaylist({ playlist, supabase, session })}
+          >Delete Playlist</DropdownMenu.Item
+        >
+      </DropdownMenu.Group>
+    </DropdownMenu.Content>
+  </DropdownMenu.Root>
 </SharedContentHeader>

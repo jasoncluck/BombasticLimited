@@ -89,20 +89,14 @@
   function handleMouseEnter() {
     isHoveringCard = true;
 
-    if (
-      !contentState.isSelectionMode &&
-      !contentState.dragContentType &&
-      !pageState.contentScrollState.scrolling
-    ) {
-      // Clear any existing timeout when entering a new card
-      if (contentState.hoverTimeoutId) {
-        clearTimeout(contentState.hoverTimeoutId);
-        contentState.hoverTimeoutId = null;
-      }
+    // Use the centralized mouse enter handler
+    contentState.handleMouseEnter({
+      video,
+      isHoveringElement: isHoveringCard,
+      shouldScrollCheck: true,
+    });
 
-      contentState.selectedVideos = [video];
-    }
-
+    // Manual hover logic for card-specific behavior
     if (
       !pageState.contentScrollState.scrolling &&
       contentState.dragContentType === null
@@ -115,20 +109,8 @@
     manualHover = false; // Clear manual hover
     isHoveringCard = false;
 
-    if (!contentState.isSelectionMode) {
-      // Store the timeout ID so it can be cleared if needed
-      const timeoutId = setTimeout(() => {
-        if (
-          !contentState.dragContentType &&
-          !isHoveringCard &&
-          !contentState.isMouseOverContextMenu
-        ) {
-          contentState.selectedVideos = [];
-        }
-        contentState.hoverTimeoutId = null;
-      }, 50);
-      contentState.hoverTimeoutId = timeoutId;
-    }
+    // Use the centralized mouse leave handler
+    contentState.handleMouseLeave(isHoveringCard);
   }
 
   $effect(() => {
@@ -166,7 +148,6 @@
           'opacity-50'}"
         src={video.thumbnail_url}
         alt={video.title}
-        loading="lazy"
       />
       {#if contentState.isSelectionMode}
         <div class="absolute top-0.5 right-0.5">
