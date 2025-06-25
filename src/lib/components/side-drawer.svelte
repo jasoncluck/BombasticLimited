@@ -149,10 +149,7 @@
 
 <Sheet.Root bind:open={isOpen}>
   <Sheet.Trigger><Menu class="cursor-pointer" /></Sheet.Trigger>
-  <Sheet.Content
-    side="left"
-    class="flex flex-col gap-2 mx-2 pt-12 min-w-[300px]"
-  >
+  <Sheet.Content side="left" class="flex flex-col gap-2 mx-2 pt-12 w-[90%]">
     <ScrollArea>
       {#if isOpen}
         <div transition:fade>
@@ -250,7 +247,7 @@
               {#each dndPlaylists as playlist (playlist.id)}
                 {@const isSelectedPlaylist =
                   selectedPlaylistIdParam === playlist.short_id}
-                <div animate:flip={{ duration: flipDurationMs }} class="w-full">
+                <div animate:flip={{ duration: flipDurationMs }}>
                   <Button
                     variant="ghost"
                     class="cursor-pointer relative w-full flex justify-start h-[64px] select-none transition-colors duration-200 hover:bg-secondary {isSelectedPlaylist
@@ -259,7 +256,7 @@
                     onclick={() => handlePlaylistClick(playlist)}
                     title={playlist.name}
                   >
-                    <div class="flex items-center grow absolute w-full">
+                    <div class="flex items-center grow absolute">
                       {#if contentState.playlistImages[playlist.id]}
                         <div class="w-12 h-12">
                           <img

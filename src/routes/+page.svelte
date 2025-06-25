@@ -29,12 +29,7 @@
 <div class="flex flex-col w-full relative bg-background-lighter">
   {#if session && continueWatchingVideos.length > 0}
     <div class="flex flex-col mb-10 gap-3">
-      <a
-        href="/continue"
-        class="header-link bg-background-lighter sticky top-0 hover:underline cursor-pointer py-3 z-20"
-      >
-        Continue Watching
-      </a>
+      <a href="/continue" class="header-link-sticky"> Continue Watching </a>
 
       <Content
         videos={continueWatchingVideos}
@@ -52,10 +47,7 @@
 
   <div class="flex flex-col gap-3">
     {#each SOURCES as source (source)}
-      <a
-        href={`/${source}/latest`}
-        class="header-link bg-background-lighter sticky top-0 hover:underline cursor-pointer py-3"
-      >
+      <a href={`/${source}/latest`} class="header-link-sticky">
         {SOURCE_INFO[source].displayName}
       </a>
       <Content

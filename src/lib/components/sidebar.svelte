@@ -255,7 +255,7 @@
     handleAddVideosToPlaylist({
       playlist,
       videos: contentState.selectedVideos,
-      contentState,
+      playlistImages: contentState.playlistImages,
       supabase,
       session,
     });

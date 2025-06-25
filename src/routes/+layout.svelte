@@ -385,7 +385,7 @@
 <div class="m-2 flex flex-col h-full">
   <nav class="flex items-center p-1 mb-2 relative">
     <div class="flex items-center">
-      <div class="sm:hidden">
+      <div class="sm:hidden w-full">
         <SideDrawer {playlists} {supabase} {session} {handleLogout} />
       </div>
     </div>

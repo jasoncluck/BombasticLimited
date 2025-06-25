@@ -108,7 +108,11 @@
 }
 
 .header-link {
-  @apply scroll-m-20 xl:text-4xl text-2xl font-semibold transition-colors hover:underline cursor-pointer mb-2;
+  @apply scroll-m-20 xl:text-4xl text-2xl font-semibold transition-colors  hover:underline cursor-pointer mb-2;
+}
+
+.header-link-sticky {
+  @apply scroll-m-20 xl:text-4xl text-2xl font-semibold transition-colors hover:underline cursor-pointer mb-2 bg-background-lighter sticky top-0 py-3 z-20;
 }
 
 /* New elevated effect class */

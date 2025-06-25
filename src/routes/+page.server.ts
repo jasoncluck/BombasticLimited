@@ -4,6 +4,7 @@ import type {
 } from "$lib/components/content/content-filter";
 import { SOURCES } from "$lib/constants/source";
 import {
+  DEFAULT_NUM_VIDEOS_CAROUSEL,
   getInProgressVideos,
   getVideos,
   type SourceVideos,
@@ -25,8 +26,6 @@ export const load: PageServerLoad = async ({
     redirect(303, "/auth/error");
   }
 
-  const NUM_CAROUSEL_VIDEOS = 30;
-
   const sourceVideos: SourceVideos = {
     giantbomb: [],
     nextlander: [],
@@ -44,7 +43,7 @@ export const load: PageServerLoad = async ({
   for (const source of SOURCES) {
     const { videos } = await getVideos({
       source,
-      limit: NUM_CAROUSEL_VIDEOS,
+      limit: DEFAULT_NUM_VIDEOS_CAROUSEL,
       contentFilter: sourceVideosDataFilters,
       supabase,
       session,
@@ -62,7 +61,7 @@ export const load: PageServerLoad = async ({
 
   const { videos: continueWatchingVideos } = await getInProgressVideos({
     contentFilter: continueWatchingDataFilters,
-    limit: NUM_CAROUSEL_VIDEOS,
+    limit: DEFAULT_NUM_VIDEOS_CAROUSEL,
     supabase,
     session,
   });

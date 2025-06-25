@@ -13,7 +13,7 @@ import {
 } from "$lib/components/content/content-filter";
 
 export const DEFAULT_NUM_VIDEOS_TILES = 250;
-export const DEFAULT_NUM_VIDEOS_CAROUSEL = 30;
+export const DEFAULT_NUM_VIDEOS_CAROUSEL = 15;
 export type TimestampResponse = Tables<"timestamps">;
 
 export type VideoTimestamp = Pick<
@@ -64,12 +64,12 @@ export async function getVideos({
 }> {
   const query = searchString
     ? supabase.rpc(
-      "search_videos",
-      {
-        search_term: searchString,
-      },
-      { count: "exact" },
-    )
+        "search_videos",
+        {
+          search_term: searchString,
+        },
+        { count: "exact" },
+      )
     : supabase.rpc("get_videos_with_timestamps", {}, { count: "exact" });
 
   query.limit(limit);
