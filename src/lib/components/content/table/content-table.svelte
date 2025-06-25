@@ -33,26 +33,26 @@
   onInactive={() => (isTableVisible = false)}
 >
   <Table.Root>
-    <Table.Header
-      class="sticky top-[44px] left-0 z-10 w-full {isTableVisible
-        ? 'visible'
-        : 'invisible'}"
-    >
-      {#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
-        <Table.Row class="border-b">
-          {#each headerGroup.headers as header (header.id)}
-            <Table.Head class="bg-background-lighter">
-              {#if !header.isPlaceholder}
-                <FlexRender
-                  content={header.column.columnDef.header}
-                  context={header.getContext()}
-                />
-              {/if}
-            </Table.Head>
-          {/each}
-        </Table.Row>
-      {/each}
-    </Table.Header>
+    <!-- <Table.Header -->
+    <!--   class="sticky top-[44px] left-0 z-10 w-full {isTableVisible -->
+    <!--     ? 'visible' -->
+    <!--     : 'invisible'}" -->
+    <!-- > -->
+    <!--   {#each table.getHeaderGroups() as headerGroup (headerGroup.id)} -->
+    <!--     <Table.Row class="border-b"> -->
+    <!--       {#each headerGroup.headers as header (header.id)} -->
+    <!--         <Table.Head class="bg-background-lighter"> -->
+    <!--           {#if !header.isPlaceholder} -->
+    <!--             <FlexRender -->
+    <!--               content={header.column.columnDef.header} -->
+    <!--               context={header.getContext()} -->
+    <!--             /> -->
+    <!--           {/if} -->
+    <!--         </Table.Head> -->
+    <!--       {/each} -->
+    <!--     </Table.Row> -->
+    <!--   {/each} -->
+    <!-- </Table.Header> -->
     <Table.Body>
       {#each table.getRowModel().rows as row (row.id)}
         <Table.Row

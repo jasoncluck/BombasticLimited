@@ -44,23 +44,24 @@ export function createContentColumns({
     {
       accessorKey: "title",
       header: () => {
-        const snippet = createRawSnippet<[string]>(() => {
-          return {
-            render: () =>
-              `
-                <span class="text-xs"> Title</span>
-              `,
-          };
-        });
-
-        return renderSnippet(snippet);
+        return;
+        // const snippet = createRawSnippet<[string]>(() => {
+        //   return {
+        //     render: () =>
+        //       `
+        //         <span class="text-xs"> Title</span>
+        //       `,
+        //   };
+        // });
+        //
+        // return renderSnippet(snippet);
       },
       cell: ({ row }) => {
         const snippet = createRawSnippet<[string]>(() => {
           return {
             render: () =>
               `
-              <div class="min-w-[200px] max-w-xs">
+              <div class="min-w-[100px] max-w-xs">
                 <p class="text-sm  break-words whitespace-normal"> ${row.getValue("title")} </p>
               </div>
               `,
@@ -74,15 +75,16 @@ export function createContentColumns({
       accessorKey: "description",
 
       header: () => {
-        const snippet = createRawSnippet<[string]>(() => {
-          return {
-            render: () =>
-              `
-                <span class="text-xs">Description</span>
-              `,
-          };
-        });
-        return renderSnippet(snippet);
+        return;
+        // const snippet = createRawSnippet<[string]>(() => {
+        //   return {
+        //     render: () =>
+        //       `
+        //         <span class="text-xs shrink-1 @lg:flex hidden ">Description</span>
+        //       `,
+        //   };
+        // });
+        // return renderSnippet(snippet);
       },
       cell: ({ row }) => {
         const videoDescriptionSnippet = createRawSnippet<[string]>(() => {
@@ -90,7 +92,7 @@ export function createContentColumns({
             render: () =>
               `
               <div class="min-w-0 max-w-xs">
-                <p class="text-sm text-muted-foreground leading-relaxed break-words whitespace-normal line-clamp-2"> ${row.getValue("description")} </p>
+                <p class="@lg:line-clamp-2 hidden text-sm text-muted-foreground leading-relaxed break-words whitespace-normal"> ${row.getValue("description")} </p>
               </div>
               `,
           };
