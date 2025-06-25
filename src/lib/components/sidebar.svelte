@@ -266,7 +266,7 @@
   }
 </script>
 
-<aside class="h-full">
+<aside class="h-full overflow-hidden">
   <div class="flex flex-col my-3">
     {#each SOURCES as source (source)}
       <Button
@@ -351,7 +351,7 @@
   </div>
 
   <div
-    class="flex flex-col mr-1 border-1
+    class="flex flex-col px-1
     {playlists.length > 0 && contentState.dragContentType === 'video'
       ? 'border-secondary border-1 '
       : 'border-transparent'}"
@@ -400,26 +400,26 @@
               >
                 <div
                   class="flex items-center grow absolute
-                  {!isSidebarCollapsed
-                    ? 'items-start grow w-full'
-                    : 'item-center'}"
+                  {!isSidebarCollapsed ? 'grow w-full' : 'item-center'}"
                 >
                   {#if contentState.playlistImages[playlist.id]}
-                    <div class="w-12 h-12">
+                    <div class="h-12 w-12 flex-shrink-0">
                       <img
                         src={contentState.playlistImages[playlist.id]}
-                        class="h-full w-full cursor-pointer"
+                        class="h-full w-full object-cover cursor-pointer"
                         alt={`Image for playlist: ${playlist.name}`}
                       />
                     </div>
                   {:else}
-                    <div class="h-12 w-12 flex items-center justify-center">
+                    <div
+                      class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
+                    >
                       <ListVideo class="!h-8 !w-8" />
                     </div>
                   {/if}
                   {#if !isSidebarCollapsed}
                     <span
-                      class="text-sm font-medium p-3 max-w-[100px] overflow-ellipsis"
+                      class="text-sm mr-6 overflow-hidden px-3 text-clip justify-start whitespace-nowrap break-keep"
                     >
                       {playlist.name}
                     </span>

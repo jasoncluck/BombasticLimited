@@ -40,7 +40,6 @@
         {supabase}
         {session}
       />
-      <hr />
     </div>
   {/if}
   <h1 class="header-primary">Latest Videos</h1>

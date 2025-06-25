@@ -41,6 +41,8 @@
     session: Session | null;
   } = $props();
 
+  const flipDurationMs = 300;
+
   let isOpen = $state(false);
   let dndPlaylists = $derived<(Playlist & { id: string | number })[]>([]);
 
@@ -54,8 +56,6 @@
       id: playlist.id || index, // Ensure each item has an id
     }));
   });
-
-  const flipDurationMs = 300;
 
   function handleDndConsider(e: CustomEvent<DndEvent>) {
     // Update the playlists during drag (for visual feedback)
@@ -149,10 +149,13 @@
 
 <Sheet.Root bind:open={isOpen}>
   <Sheet.Trigger><Menu class="cursor-pointer" /></Sheet.Trigger>
-  <Sheet.Content side="left" class="flex flex-col gap-2 mx-2 pt-12 w-[90%]">
-    <ScrollArea>
+  <Sheet.Content
+    side="left"
+    class="flex flex-col gap-2 pt-12 w-[300px] overflow-hidden"
+  >
+    <ScrollArea class="pr-2">
       {#if isOpen}
-        <div transition:fade>
+        <div transition:fade class="px-2">
           <Button
             variant="ghost"
             class="cursor-pointer w-full flex justify-start h-[64px]"
@@ -185,20 +188,22 @@
                   fill="#eb0400"
                   strokeWidth={0}
                 />
+                <span class="sr-only">Live now</span>
               {/if}
-              <span class="sr-only">Live now</span>
-              <img
-                src={SOURCE_INFO[source].image}
-                alt={SOURCE_INFO[source].displayName}
-                class="w-12 h-12"
-              />
+              <div class="w-12 h-12">
+                <img
+                  src={SOURCE_INFO[source].image}
+                  alt={SOURCE_INFO[source].displayName}
+                  class="h-full w-full cursor-pointer"
+                />
+              </div>
               <span class="text-sm font-medium m-3 overflow-ellipsis">
                 {SOURCE_INFO[source].displayName}
               </span>
             </Button>
           {/each}
 
-          <Sheet.Title class="mx-4 mt-4 mb-2">Playlists</Sheet.Title>
+          <Sheet.Title class="mx-2 mt-4 mb-2">Playlists</Sheet.Title>
 
           {#if session}
             <Button
@@ -239,15 +244,15 @@
                   outline: "rgba(99, 102, 241, 0.5) solid 2px",
                   backgroundColor: "rgba(99, 102, 241, 0.1)",
                 },
+                dropTargetClasses: ["dnd-drop-target"],
               }}
               onconsider={handleDndConsider}
               onfinalize={handleDndFinalize}
-              class="space-y-0"
             >
               {#each dndPlaylists as playlist (playlist.id)}
                 {@const isSelectedPlaylist =
                   selectedPlaylistIdParam === playlist.short_id}
-                <div animate:flip={{ duration: flipDurationMs }}>
+                <div animate:flip={{ duration: flipDurationMs }} class="w-full">
                   <Button
                     variant="ghost"
                     class="cursor-pointer relative w-full flex justify-start h-[64px] select-none transition-colors duration-200 hover:bg-secondary {isSelectedPlaylist
@@ -256,25 +261,25 @@
                     onclick={() => handlePlaylistClick(playlist)}
                     title={playlist.name}
                   >
-                    <div class="flex items-center grow absolute">
+                    <div class="flex items-center overflow-hidden">
                       {#if contentState.playlistImages[playlist.id]}
-                        <div class="w-12 h-12">
+                        <div class="w-12 h-12 flex-shrink-0">
                           <img
                             src={contentState.playlistImages[playlist.id]}
-                            class="h-full w-full cursor-pointer"
+                            class="h-full w-full cursor-pointer object-cover"
                             alt={`Image for playlist: ${playlist.name}`}
                           />
                         </div>
                       {:else}
                         <div
-                          class="h-12 min-w-12 flex items-center justify-center"
+                          class="h-12 w-12 flex items-center justify-center flex-shrink-0"
                         >
                           <ListVideo class="!h-8 !w-8" />
                         </div>
                       {/if}
 
                       <span
-                        class="text-sm font-medium p-3 max-w-[100px] overflow-ellipsis"
+                        class="text-sm pl-3 mr-4 overflow-hidden text-clip whitespace-nowrap flex-1 min-w-0 [word-break:keep-all]"
                       >
                         {playlist.name}
                       </span>
@@ -285,7 +290,7 @@
             </div>
           {/if}
 
-          <Sheet.Title class="mx-4 mt-4 mb-2">Account</Sheet.Title>
+          <Sheet.Title class="mx-2 mt-4 mb-2">Account</Sheet.Title>
           {#if session}
             <Button
               variant="ghost"
@@ -339,3 +344,9 @@
     </ScrollArea>
   </Sheet.Content>
 </Sheet.Root>
+
+<style>
+  :global(.dnd-drop-target) {
+    box-sizing: border-box !important;
+  }
+</style>
