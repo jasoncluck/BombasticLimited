@@ -104,15 +104,15 @@
 }
 
 .header-primary {
-  @apply scroll-m-20 xl:text-5xl text-3xl font-semibold transition-colors mb-2;
+  @apply xl:text-5xl text-3xl font-semibold transition-colors mb-2;
 }
 
 .header-link {
-  @apply scroll-m-20 xl:text-4xl text-2xl font-semibold transition-colors  hover:underline cursor-pointer mb-2;
+  @apply xl:text-4xl text-2xl font-semibold transition-colors  hover:underline cursor-pointer mb-2 py-2;
 }
 
 .header-link-sticky {
-  @apply scroll-m-20 xl:text-4xl text-2xl font-semibold transition-colors hover:underline cursor-pointer mb-2 bg-background-lighter sticky top-0 py-3 z-20;
+  @apply xl:text-4xl text-2xl font-semibold transition-colors hover:underline cursor-pointer bg-background-lighter sticky top-0 py-2 z-20;
 }
 
 /* New elevated effect class */

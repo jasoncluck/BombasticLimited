@@ -382,8 +382,8 @@
   <script src="https://embed.twitch.tv/embed/v1.js"></script>
 </svelte:head>
 
-<div class="m-2 flex flex-col h-full">
-  <nav class="flex items-center p-1 mb-2 relative">
+<div class="flex flex-col h-full">
+  <nav class="flex items-center p-1 m-2 relative">
     <div class="flex items-center">
       <div class="sm:hidden w-full">
         <SideDrawer {playlists} {supabase} {session} {handleLogout} />
@@ -479,14 +479,14 @@
     </Resizable.Pane>
     <Resizable.Handle
       onDraggingChange={handleResize}
-      class="bg-background w-[8px] end-[2px] after:transition after:duration-300 after:ease-out)] 
+      class="bg-background w-2 end-[2px] after:transition after:duration-300 after:ease-out)] 
       after:h-[calc(100%-16px)] sm:flex hidden
     {isDraggingDivider
         ? 'after:w-[1px] after:bg-foreground'
         : 'after:w-[1px] hover:after:bg-muted-foreground'}"
     />
     <Resizable.Pane
-      class="@container pane flex min-w-[350px] "
+      class="@container pane flex min-w-[350px] mr-2 "
       defaultSize={layout ? parseFloat(layout[1]) : 79}
     >
       <ScrollArea
@@ -496,7 +496,7 @@
         bind:viewportRef={contentViewportRef}
         data-scroll-area="content"
       >
-        <div class="flex flex-col justify-center items-center">
+        <div class="flex flex-col relative justify-center items-center">
           <div class="@xl:max-w-[1450px] max-w-[1000px] w-full">
             <div class="flex flex-col mb-20">
               {@render children()}

@@ -43,7 +43,7 @@
   );
 </script>
 
-<div class="relative">
+<div>
   <ContentHeader
     title="Continue Watching"
     {contentFilter}

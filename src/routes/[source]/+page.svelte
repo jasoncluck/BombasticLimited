@@ -21,8 +21,8 @@
   };
 </script>
 
-<div class="flex flex-col gap-2">
-  <div class="flex justify-between gap-4">
+<div class="flex flex-col">
+  <div class="flex justify-between m-4">
     <h1 class="header-primary mb-2">
       {SOURCE_INFO[source].displayName}
     </h1>
@@ -41,10 +41,10 @@
     </div>
   {/if}
 
-  <div class="flex flex-col bg-background-lighter gap-4">
+  <div class="flex flex-col bg-background-lighter">
     <a
       href={`/${source}/latest`}
-      class="header-link hover:underline cursor-pointer"
+      class="header-link-sticky hover:underline cursor-pointer mx-4"
     >
       Latest Videos
     </a>

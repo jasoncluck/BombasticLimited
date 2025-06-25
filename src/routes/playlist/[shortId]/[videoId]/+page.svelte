@@ -15,30 +15,32 @@
   } = $derived(data);
 </script>
 
-<div class="mb-20">
-  <VideoPlayer
-    {video}
-    baseUrl={`/playlist/${playlist.short_id}`}
-    videoId={video.id}
-    {startSeconds}
-    {supabase}
-    {session}
-  />
-</div>
-
-{#if videos.length > 0}
-  <div class="flex flex-col gap-2">
-    <a class="header-link" href={`/playlist/${playlist.short_id}`}>
-      Next up - {playlist.name}
-    </a>
-    <Content
-      {videos}
-      contentDisplay="CAROUSEL"
-      {contentFilter}
-      {playlist}
-      {playlists}
+<div class="m-4">
+  <div class="mb-20">
+    <VideoPlayer
+      {video}
+      baseUrl={`/playlist/${playlist.short_id}`}
+      videoId={video.id}
+      {startSeconds}
       {supabase}
       {session}
     />
   </div>
-{/if}
+
+  {#if videos.length > 0}
+    <div class="flex flex-col gap-2">
+      <a class="header-link" href={`/playlist/${playlist.short_id}`}>
+        Next up - {playlist.name}
+      </a>
+      <Content
+        {videos}
+        contentDisplay="CAROUSEL"
+        {contentFilter}
+        {playlist}
+        {playlists}
+        {supabase}
+        {session}
+      />
+    </div>
+  {/if}
+</div>

@@ -34,7 +34,7 @@
 </script>
 
 <div
-  class="absolute w-full py-1 px-2 bg-background-lighter grid grid-cols-3 items-center"
+  class="absolute w-full py-1 px-4 bg-background-lighter grid grid-cols-3 items-center"
 >
   <div class="justify-self-start relative py-2">
     {#if session && !mediaQueryState.isTouchDevice}

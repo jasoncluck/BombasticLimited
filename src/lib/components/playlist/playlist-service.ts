@@ -45,9 +45,8 @@ export async function handleCreatePlaylist({
   supabase: SupabaseClient<Database>;
 }) {
   if (!session) {
-    console.error("Attempted to create a playlist without a valid session.");
     goto("/login");
-    return;
+    throw new Error("Attempted to create a playlist without a valid session.");
   }
   const baseName = "New Playlist";
   let playlistName = baseName;
@@ -67,9 +66,8 @@ export async function handleCreatePlaylist({
   // Trigger populates short ID
   if (!error && playlist) {
     showNotification(`Created Playlist: ${playlist.name}`);
-    // goto(`/playlist/${encodeURI(playlist.short_id)}`);
   }
-  invalidate("supabase:db:playlists");
+  return { playlist, error };
 }
 
 export async function handleDeletePlaylist({
@@ -210,8 +208,6 @@ export async function handleRemoveVideosFromPlaylist({
     playlistId: playlist.id,
     supabase,
   });
-  console.log(videos);
-  console.log(playlist);
 
   for (const video of videos) {
     if (

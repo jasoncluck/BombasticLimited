@@ -10,9 +10,6 @@
   import Checkbox from "../ui/checkbox/checkbox.svelte";
   import { getContentState } from "$lib/state/content.svelte";
   import { pageState } from "$lib/state/page.svelte";
-  import { goto } from "$app/navigation";
-  import { page } from "$app/state";
-  import { getFilterKeysForView } from "./content-filter";
 
   type ContentCardProps = {
     video: Video;
@@ -156,7 +153,6 @@
       }}
   {...restProps}
 >
-  <!-- Upper portion that triggers description hover -->
   <div
     role="button"
     tabindex="0"
@@ -223,7 +219,6 @@
       day: "numeric",
     })}
   </p>
-  <!-- Description area - separate from hover trigger -->
   {#if userPreferences.contentDescription !== "NONE"}
     <p
       class=" @sm:opacity-0 text-sm

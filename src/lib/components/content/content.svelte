@@ -102,7 +102,7 @@
 {/if}
 
 <!-- <ContentContextMenu {videos} {playlist} {playlists} {supabase} {session}> -->
-<div {...restProps} class="flex flex-col gap-5">
+<div {...restProps} class="m-4 flex flex-col gap-5">
   <ContentTable data={videos} {columns} {playlist} />
   <!-- {#if contentDisplay === "CAROUSEL" && !mediaQueryState.isMobile} -->
   <!--   <ContentCarousel -->

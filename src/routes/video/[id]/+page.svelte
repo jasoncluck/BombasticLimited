@@ -6,10 +6,12 @@
   let { video, startSeconds, supabase, session } = $derived(data);
 </script>
 
-<VideoPlayer
-  {video}
-  videoId={page.params.id}
-  {startSeconds}
-  {supabase}
-  {session}
-/>
+<div class="m-4">
+  <VideoPlayer
+    {video}
+    videoId={page.params.id}
+    {startSeconds}
+    {supabase}
+    {session}
+  />
+</div>

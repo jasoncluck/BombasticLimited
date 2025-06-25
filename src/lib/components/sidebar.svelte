@@ -334,12 +334,17 @@
           title="Create Playlist"
           class="my-1 rounded-full cursor-pointer"
           size="icon"
-          onclick={() =>
-            handleCreatePlaylist({
+          onclick={async () => {
+            const { playlist } = await handleCreatePlaylist({
               playlists,
               session,
               supabase,
-            })}
+            });
+
+            if (playlist) {
+              goto(`/playlist/${encodeURI(playlist.short_id)}`);
+            }
+          }}
         >
           <Plus />
         </Button>

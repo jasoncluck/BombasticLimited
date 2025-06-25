@@ -3,6 +3,8 @@ import type { Video } from "$lib/supabase/videos";
 import type { ColumnDef } from "@tanstack/table-core";
 import { createRawSnippet } from "svelte";
 import ContentDropdown from "../content-dropdown.svelte";
+import ContentTableTitle from "./content-table-title.svelte";
+import ContentTableImage from "./content-table-image.svelte";
 import type { Database } from "$lib/supabase/database.types";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import type { Playlist } from "$lib/supabase/playlists";
@@ -22,18 +24,11 @@ export function createContentColumns({
     {
       accessorKey: "thumbnail_maxres_url",
       cell: ({ row }) => {
-        const videoThumbnailSnippet = createRawSnippet<[string]>(() => {
-          return {
-            render: () =>
-              `
-              <div class="w-24  flex-shrink-0">
-                  <img src="${row.getValue("thumbnail_maxres_url")}" class="w-full h-full object-cover rounded" alt="Video thumbnail" loading="lazy" />
-              </div>
-              `,
-          };
-        });
+        const video = row.original;
 
-        return renderSnippet(videoThumbnailSnippet);
+        return renderComponent(ContentTableImage, {
+          video,
+        });
       },
       size: 120,
       enableSorting: false,
@@ -41,18 +36,11 @@ export function createContentColumns({
     {
       accessorKey: "title",
       cell: ({ row }) => {
-        const snippet = createRawSnippet<[string]>(() => {
-          return {
-            render: () =>
-              `
-              <div class="min-w-[100px] max-w-xs">
-                <p class="text-sm  break-words whitespace-normal"> ${row.getValue("title")} </p>
-              </div>
-              `,
-          };
-        });
+        const video = row.original;
 
-        return renderSnippet(snippet);
+        return renderComponent(ContentTableTitle, {
+          video,
+        });
       },
     },
     {
@@ -63,7 +51,7 @@ export function createContentColumns({
             render: () =>
               `
               <div class="min-w-0 max-w-xs">
-                <p class="@lg:line-clamp-2 hidden text-sm text-muted-foreground leading-relaxed break-words whitespace-normal"> ${row.getValue("description")} </p>
+                <p class="@2xl:line-clamp-2 hidden text-sm text-muted-foreground leading-relaxed break-words whitespace-normal"> ${row.getValue("description")} </p>
               </div>
               `,
           };

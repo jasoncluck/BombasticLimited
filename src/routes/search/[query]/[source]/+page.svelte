@@ -67,7 +67,6 @@
       },
       {
         label: SOURCE_INFO[source].displayName,
-        href: `/${page.params.source}`,
       },
     ]}
     {playlists}

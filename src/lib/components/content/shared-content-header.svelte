@@ -63,7 +63,10 @@
 </script>
 
 {#if showFloatingBreadcrumbs}
-  <div transition:fade class="sticky w-full top-0 z-50 bg-background-lighter">
+  <div
+    transition:fade
+    class="sticky w-full top-0 left-0 z-50 bg-background-lighter"
+  >
     <FloatingBreadcrumbs
       {breadcrumbs}
       {playlist}
@@ -76,7 +79,7 @@
 
 <IntersectionObserver
   disableObserver={false}
-  threshold={0.75}
+  threshold={0.5}
   onActive={() => (showFloatingBreadcrumbs = false)}
   onInactive={() => (showFloatingBreadcrumbs = true)}
 >
@@ -121,12 +124,17 @@
         </DropdownMenu.Root>
       {/if}
     </div>
+  </div>
 
-    <!-- Right side: ContentSelect and ContentFilters on same row -->
-    <div class="flex items-center gap-4 ml-auto">
-      {#if session && !mediaQueryState.isTouchDevice}
+  <!-- Right side: ContentSelect and ContentFilters on same row -->
+  <hr class="border-1 m-2" />
+  <div class="flex justify-between mt-4">
+    {#if session && !mediaQueryState.isTouchDevice}
+      <div class="mr-auto ml-4">
         <ContentSelect {playlist} {playlists} {supabase} {session} />
-      {/if}
+      </div>
+    {/if}
+    <div class="flex items-center gap-4 ml-auto mr-4">
       <ContentFilters {contentFilter} {view} />
     </div>
   </div>
