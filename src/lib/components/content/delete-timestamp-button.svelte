@@ -17,7 +17,7 @@
     "isContinueVideos" | "videos" | "supabase" | "session"
   > & {
     video: Video;
-    manualHover: boolean;
+    manualHover?: boolean;
   } = $props();
 </script>
 

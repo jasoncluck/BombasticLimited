@@ -1,13 +1,9 @@
 <script lang="ts">
   import Progress from "../ui/progress/progress.svelte";
   import { getVideoSecondsOffset } from "../video/video-service";
-  import {
-    isVideoWithTimestamp,
-    type Video,
-    type VideoWithTimestamp,
-  } from "$lib/supabase/videos";
+  import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
   import { userPreferences } from "$lib/state/user-preferences.svelte";
-  import type { ContentDisplayProps } from "./content";
+  import { handleContentNavigation, type ContentDisplayProps } from "./content";
   import DeleteTimestampButton from "./delete-timestamp-button.svelte";
   import type { HTMLAnchorAttributes } from "svelte/elements";
   import type { Playlist } from "$lib/supabase/playlists";
@@ -19,7 +15,7 @@
   import { getFilterKeysForView } from "./content-filter";
 
   type ContentCardProps = {
-    video: Video | VideoWithTimestamp;
+    video: Video;
     playlist?: Playlist;
   } & Pick<
     ContentDisplayProps,
@@ -138,28 +134,6 @@
     }
   }
 
-  function handleNavigation() {
-    if (playlist) {
-      const targetUrl = new URL(
-        `/playlist/${playlist.short_id}/${video.id}`,
-        window.location.origin,
-      );
-
-      getFilterKeysForView("playlist").forEach((key) => {
-        const searchParamForKey = page.url.searchParams.get(key);
-        if (searchParamForKey) {
-          targetUrl.searchParams.set(key, searchParamForKey);
-        }
-      });
-
-      goto(targetUrl.pathname + targetUrl.search, {
-        invalidate: ["supabase:db:videos"],
-      });
-    } else {
-      goto(`/video/${video.id}`);
-    }
-  }
-
   $effect(() => {
     if (contentState.dragContentType) {
       manualHover = false;
@@ -178,7 +152,7 @@
       }
     : (e) => {
         e.preventDefault();
-        handleNavigation();
+        handleContentNavigation({ video, playlist });
       }}
   {...restProps}
 >

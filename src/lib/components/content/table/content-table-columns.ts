@@ -21,15 +21,12 @@ export function createContentColumns({
   return [
     {
       accessorKey: "thumbnail_maxres_url",
-      header: () => {
-        return;
-      },
       cell: ({ row }) => {
         const videoThumbnailSnippet = createRawSnippet<[string]>(() => {
           return {
             render: () =>
               `
-              <div class="h-auto w-24 aspect-[16/9] flex-shrink-0">
+              <div class="w-24  flex-shrink-0">
                   <img src="${row.getValue("thumbnail_maxres_url")}" class="w-full h-full object-cover rounded" alt="Video thumbnail" loading="lazy" />
               </div>
               `,
@@ -43,19 +40,6 @@ export function createContentColumns({
     },
     {
       accessorKey: "title",
-      header: () => {
-        return;
-        // const snippet = createRawSnippet<[string]>(() => {
-        //   return {
-        //     render: () =>
-        //       `
-        //         <span class="text-xs"> Title</span>
-        //       `,
-        //   };
-        // });
-        //
-        // return renderSnippet(snippet);
-      },
       cell: ({ row }) => {
         const snippet = createRawSnippet<[string]>(() => {
           return {
@@ -73,19 +57,6 @@ export function createContentColumns({
     },
     {
       accessorKey: "description",
-
-      header: () => {
-        return;
-        // const snippet = createRawSnippet<[string]>(() => {
-        //   return {
-        //     render: () =>
-        //       `
-        //         <span class="text-xs shrink-1 @lg:flex hidden ">Description</span>
-        //       `,
-        //   };
-        // });
-        // return renderSnippet(snippet);
-      },
       cell: ({ row }) => {
         const videoDescriptionSnippet = createRawSnippet<[string]>(() => {
           return {

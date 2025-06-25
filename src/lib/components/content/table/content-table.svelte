@@ -6,14 +6,17 @@
   } from "$lib/components/ui/data-table/index.js";
   import * as Table from "$lib/components/ui/table/index.js";
   import IntersectionObserver from "$lib/components/intersection-observer.svelte";
-  import { goto } from "$app/navigation";
+  import { handleContentNavigation } from "../content";
+  import type { Playlist } from "$lib/supabase/playlists";
+  import type { Video } from "$lib/supabase/videos";
 
   type DataTableProps<TData, TValue> = {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
+    playlist?: Playlist;
   };
 
-  let { data, columns }: DataTableProps<TData, TValue> = $props();
+  let { data, columns, playlist }: DataTableProps<TData, TValue> = $props();
 
   let isTableVisible = $state(true);
 
@@ -59,7 +62,7 @@
           data-state={row.getIsSelected() && "selected"}
           class="cursor-pointer"
           onclick={() => {
-            goto(`/video/${row.getValue("id")}`);
+            handleContentNavigation({ video: row.original as Video, playlist });
           }}
         >
           {#each row.getVisibleCells() as cell (cell.id)}

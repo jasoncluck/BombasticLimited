@@ -51,28 +51,28 @@
   );
 </script>
 
-<div>
-  <ContentHeader
-    title="Latest Videos"
-    {contentFilter}
-    videosCount={videosCount ?? 0}
-    {currentPage}
-    {source}
-    bind:showFloatingBreadcrumbs
-    breadcrumbs={[
-      {
-        label: SOURCE_INFO[source].displayName,
-        href: `/${page.params.source}`,
-      },
-      {
-        label: "Latest",
-      },
-    ]}
-    {playlists}
-    {supabase}
-    {session}
-  />
+<ContentHeader
+  title="Latest Videos"
+  {contentFilter}
+  videosCount={videosCount ?? 0}
+  {currentPage}
+  {source}
+  bind:showFloatingBreadcrumbs
+  breadcrumbs={[
+    {
+      label: SOURCE_INFO[source].displayName,
+      href: `/${page.params.source}`,
+    },
+    {
+      label: "Latest",
+    },
+  ]}
+  {playlists}
+  {supabase}
+  {session}
+/>
 
+<div class="m-4">
   <Content
     {videos}
     {videosCount}

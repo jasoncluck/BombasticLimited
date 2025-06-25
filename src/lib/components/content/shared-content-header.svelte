@@ -81,49 +81,52 @@
   onInactive={() => (showFloatingBreadcrumbs = true)}
 >
   <div
-    class="flex flex-col md:flex-row md:flex-wrap justify-between gap-y-8 mb-2"
+    class="flex flex-col m-4 md:flex-row md:flex-wrap justify-between gap-y-8 mb-2"
     {...restProps}
   >
     {@render children()}
   </div>
   <div class="flex justify-between items-center">
-    {#if playlist}
-      <DropdownMenu.Root>
-        <DropdownMenu.Trigger
-          class="cursor-pointer {buttonVariants({
-            variant: 'ghost',
-            size: 'icon',
-          })}"
-        >
-          <Ellipsis size="16" />
-          <span class="sr-only">Playlist Actions</span>
-        </DropdownMenu.Trigger>
-        <DropdownMenu.Content>
-          <DropdownMenu.Group>
-            {#if openPlaylistModal}
+    <!-- Left side: Playlist actions -->
+    <div class="flex items-center">
+      {#if playlist}
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger
+            class="cursor-pointer {buttonVariants({
+              variant: 'ghost',
+              size: 'icon',
+            })}"
+          >
+            <Ellipsis size="16" />
+            <span class="sr-only">Playlist Actions</span>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content>
+            <DropdownMenu.Group>
+              {#if openPlaylistModal}
+                <DropdownMenu.Item
+                  class="cursor-pointer"
+                  onclick={openPlaylistModal}
+                >
+                  Edit Playlist</DropdownMenu.Item
+                >
+              {/if}
               <DropdownMenu.Item
                 class="cursor-pointer"
-                onclick={openPlaylistModal}
+                onclick={() =>
+                  handleDeletePlaylist({ playlist, supabase, session })}
+                >Delete Playlist</DropdownMenu.Item
               >
-                Edit Playlist</DropdownMenu.Item
-              >
-            {/if}
-            <DropdownMenu.Item
-              class="cursor-pointer"
-              onclick={() =>
-                handleDeletePlaylist({ playlist, supabase, session })}
-              >Delete Playlist</DropdownMenu.Item
-            >
-          </DropdownMenu.Group>
-        </DropdownMenu.Content>
-      </DropdownMenu.Root>
-    {/if}
-    <div class="flex gap-4">
+            </DropdownMenu.Group>
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
+      {/if}
+    </div>
+
+    <!-- Right side: ContentSelect and ContentFilters on same row -->
+    <div class="flex items-center gap-4 ml-auto">
       {#if session && !mediaQueryState.isTouchDevice}
         <ContentSelect {playlist} {playlists} {supabase} {session} />
       {/if}
-    </div>
-    <div class="flex ml-auto">
       <ContentFilters {contentFilter} {view} />
     </div>
   </div>

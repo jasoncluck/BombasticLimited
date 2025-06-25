@@ -49,12 +49,7 @@
   const mediaQueryState = getMediaQueryState();
 
   const columns = $derived(
-    createContentColumns({
-      playlist,
-      playlists,
-      supabase,
-      session,
-    }),
+    createContentColumns({ playlist, playlists, supabase, session }),
   );
 
   const contentState = getContentState();
@@ -108,9 +103,7 @@
 
 <!-- <ContentContextMenu {videos} {playlist} {playlists} {supabase} {session}> -->
 <div {...restProps} class="flex flex-col gap-5">
-  {#key columns}
-    <ContentTable data={videos} {columns} />
-  {/key}
+  <ContentTable data={videos} {columns} {playlist} />
   <!-- {#if contentDisplay === "CAROUSEL" && !mediaQueryState.isMobile} -->
   <!--   <ContentCarousel -->
   <!--     {videos} -->
