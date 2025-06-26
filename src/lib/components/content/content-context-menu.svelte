@@ -12,6 +12,7 @@
   import type { Snippet } from "svelte";
   import { ScrollArea } from "../ui/scroll-area";
   import type { Video } from "$lib/supabase/videos";
+  import { getMediaQueryState } from "$lib/state/media-query.svelte";
 
   interface ContentContextMenuProps {
     videos: Video[];
@@ -32,6 +33,7 @@
   }: ContentContextMenuProps = $props();
 
   const contentState = getContentState();
+  const mediaQueryState = getMediaQueryState();
 
   let open = $state(false);
 
@@ -48,7 +50,8 @@
   </ContextMenu.Trigger>
 
   <ContextMenu.Content
-    class="p-1 max-h-64 overflow-visible hidden sm:block"
+    class="p-1 max-h-64 overflow-visible {mediaQueryState.isTouchDevice &&
+      'hidden'}"
     onmouseenter={() => {
       contentState.isMouseOverContextMenu = true;
     }}

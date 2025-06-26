@@ -129,15 +129,12 @@ export async function updateVideoTimestampState({
 }
 
 export async function handleDeleteVideoTimestamp({
-  e,
   videoId,
   isContinueVideos,
   supabase,
   session,
 }: {
-  e: Event;
   videoId: string;
-  videos: Video[];
   isContinueVideos?: boolean;
   supabase: SupabaseClient<Database>;
   session: Session | null;
@@ -146,8 +143,6 @@ export async function handleDeleteVideoTimestamp({
     goto("/");
     return;
   }
-
-  e.preventDefault();
 
   const { error } = await deleteVideoTimestamp({
     videoId,

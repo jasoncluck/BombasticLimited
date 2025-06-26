@@ -80,7 +80,7 @@
 
 {#if videos.length < 1}
   <div {...restProps} class="flex items-center justify-center h-[180px]">
-    <p>No results found</p>
+    <p>{playlist ? "Playlist is empty" : "No results found"}</p>
   </div>
 {/if}
 

@@ -7,7 +7,6 @@
 
   let {
     video = $bindable(),
-    videos,
     manualHover,
     isContinueVideos,
     supabase,
@@ -26,15 +25,14 @@
   size="icon"
   class="flex flex-row-reverse items-center relative visible
                    cursor-pointer will-change-transform group/remove w-full h-fit"
-  onclick={(e) =>
+  onclick={(e) => {
+    e.preventDefault();
     handleDeleteVideoTimestamp({
-      e,
       videoId: video.id,
       session,
       supabase,
-      videos,
-      isContinueVideos,
-    })}
+    });
+  }}
 >
   <X
     class="peer invisible {manualHover &&

@@ -12,7 +12,9 @@
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
   import ScrollArea from "../ui/scroll-area/scroll-area.svelte";
-  import type { Video } from "$lib/supabase/videos";
+  import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
+  import { deleteVideoTimestamp } from "$lib/supabase/timestamps";
+  import { handleDeleteVideoTimestamp } from "../video/video-service";
 
   let {
     videos = $bindable(),
@@ -110,18 +112,33 @@
         }}>Deselect all</DropdownMenu.Item
       >
     {/if}
+
+    {@const firstVideo = videos[0]}
     {#if playlist && !isContentSelect}
       <DropdownMenu.Item
         onclick={async () =>
           (contentState.playlistImages[playlist.id] =
             await handleUpdatePlaylistImage({
               playlist,
-              thumbnailUrl: videos[0].thumbnail_url,
-              thumbnailMaxResUrl: videos[0].thumbnail_maxres_url,
+              thumbnailUrl: firstVideo.thumbnail_url,
+              thumbnailMaxResUrl: firstVideo.thumbnail_maxres_url,
               playlistImages: contentState.playlistImages,
               supabase,
             }))}>Set as playlist image</DropdownMenu.Item
       >
+    {/if}
+    {#if session && isVideoWithTimestamp(firstVideo) && firstVideo.video_start_seconds}
+      <DropdownMenu.Item
+        onclick={async () => {
+          handleDeleteVideoTimestamp({
+            videoId: firstVideo.id,
+            supabase,
+            session,
+          });
+        }}
+      >
+        Reset Progress
+      </DropdownMenu.Item>
     {/if}
   </DropdownMenu.Content>
 </DropdownMenu.Root>

@@ -9,7 +9,6 @@
   import type { Playlist } from "$lib/supabase/playlists";
   import type { Video } from "$lib/supabase/videos";
   import { getContentState } from "$lib/state/content.svelte";
-  import Checkbox from "$lib/components/ui/checkbox/checkbox.svelte";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
   import type { CombinedContentFilter } from "../content-filter";
@@ -139,12 +138,6 @@
             />
           </Table.Cell>
         {/each}
-      </Table.Row>
-    {:else}
-      <Table.Row>
-        <Table.Cell colspan={columns.length} class="h-24 text-center">
-          No Results Found
-        </Table.Cell>
       </Table.Row>
     {/each}
   </Table.Body>
