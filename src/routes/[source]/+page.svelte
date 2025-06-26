@@ -23,7 +23,7 @@
 
 <div class="flex flex-col">
   <div class="flex justify-between m-4">
-    <h1 class="header-primary mb-2">
+    <h1 class="header-primary">
       {SOURCE_INFO[source].displayName}
     </h1>
     <Button variant="secondary" href={SOURCE_INFO[source].supportUrl}
@@ -44,7 +44,7 @@
   <div class="flex flex-col bg-background-lighter">
     <a
       href={`/${source}/latest`}
-      class="header-link-sticky hover:underline cursor-pointer mx-4 mb-2"
+      class="header-link-sticky hover:underline cursor-pointer mx-4"
     >
       Latest Videos
     </a>

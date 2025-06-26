@@ -38,45 +38,43 @@
   } = $props();
 </script>
 
-<div class="relative">
-  <SharedContentHeader
-    {breadcrumbs}
-    bind:showFloatingBreadcrumbs
-    bind:currentPage
-    {view}
-    {videosCount}
-    {contentFilter}
-    {playlist}
-    {playlists}
-    {supabase}
-    {session}
-  >
-    <div class="flex gap-6">
-      <div class="flex flex-col relative">
-        <div
-          class="flex flex-col items-start text-left border-none bg-transparent p-0"
-        >
-          <p class="text-sm text-muted-foreground tracking-tight"></p>
+<SharedContentHeader
+  {breadcrumbs}
+  bind:showFloatingBreadcrumbs
+  bind:currentPage
+  {view}
+  {videosCount}
+  {contentFilter}
+  {playlist}
+  {playlists}
+  {supabase}
+  {session}
+>
+  <div class="flex gap-6">
+    <div class="flex flex-col relative">
+      <div
+        class="flex flex-col items-start text-left border-none bg-transparent p-0"
+      >
+        <p class="text-sm text-muted-foreground tracking-tight"></p>
 
-          {#if source}
-            <p class="text-sm text-muted-foreground tracking-tight">
-              {title}
-            </p>
-            <h2 class="header-primary text-left">
-              {SOURCE_INFO[source].displayName}
-            </h2>
-          {:else}
-            <h2 class="header-primary text-left">
-              {title}
-            </h2>
-          {/if}
-        </div>
-
-        <p class="text-sm text-muted-foreground tracking-tight">
-          {videosCount}
-          {videosCount === 1 ? "video" : "videos"}
-        </p>
+        {#if source}
+          <p class="text-sm text-muted-foreground tracking-tight">
+            {title}
+          </p>
+          <h2 class="header-primary text-left">
+            {SOURCE_INFO[source].displayName}
+          </h2>
+        {:else}
+          <h2 class="header-primary text-left">
+            {title}
+          </h2>
+        {/if}
       </div>
+
+      <p class="text-sm text-muted-foreground tracking-tight">
+        {videosCount}
+        {videosCount === 1 ? "video" : "videos"}
+      </p>
     </div>
-  </SharedContentHeader>
-</div>
+  </div>
+</SharedContentHeader>

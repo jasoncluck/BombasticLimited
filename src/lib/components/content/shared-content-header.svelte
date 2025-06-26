@@ -46,8 +46,6 @@
     ...restProps
   }: SharedContentHeaderProps = $props();
 
-  const mediaQueryState = getMediaQueryState();
-
   const numPages = $derived(
     getNumberOfPages({
       videosCount,

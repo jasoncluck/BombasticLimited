@@ -267,7 +267,7 @@
 </script>
 
 <aside class="h-full overflow-hidden">
-  <div class="flex flex-col my-3 mx-1">
+  <div class="flex flex-col my-3 mx-2">
     {#each SOURCES as source (source)}
       <Button
         variant="ghost"

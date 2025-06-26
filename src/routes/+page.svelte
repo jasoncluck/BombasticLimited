@@ -29,9 +29,7 @@
 <div class="flex flex-col relative bg-background-lighter">
   {#if session && continueWatchingVideos.length > 0}
     <div class="flex flex-col mb-10">
-      <a href="/continue" class="header-link-sticky mx-4 mt-2">
-        Continue Watching
-      </a>
+      <a href="/continue" class="header-link-sticky"> Continue Watching </a>
 
       <Content
         videos={continueWatchingVideos}
@@ -54,7 +52,7 @@
 
   <div class="flex flex-col">
     {#each SOURCES as source (source)}
-      <a href={`/${source}/latest`} class="header-link-sticky mx-4 mt-2">
+      <a href={`/${source}/latest`} class="header-link-sticky">
         {SOURCE_INFO[source].displayName}
       </a>
       <Content

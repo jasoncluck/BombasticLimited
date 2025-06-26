@@ -22,6 +22,7 @@
 
   /* New dark theme colors */
   :root {
+    --radius: 0.625rem;
     --background: hsl(224 71.4% 4.1%);
     --background-lighter: hsl(
       224 71.4% 7%
@@ -112,7 +113,7 @@
 }
 
 .header-link-sticky {
-  @apply xl:text-4xl text-2xl font-semibold transition-colors hover:underline cursor-pointer bg-background-lighter sticky top-0 py-2 z-20;
+  @apply xl:text-4xl text-2xl font-semibold transition-colors hover:underline cursor-pointer bg-background-lighter sticky top-0 py-2 z-20 mx-4 mb-2;
 }
 
 /* New elevated effect class */

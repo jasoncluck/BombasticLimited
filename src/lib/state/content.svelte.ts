@@ -9,6 +9,7 @@ import {
   type CombinedContentFilter,
 } from "$lib/components/content/content-filter";
 import { handleUpdatePlaylistVideoPosition } from "$lib/components/playlist/playlist-service";
+import { pageState } from "./page.svelte";
 
 export type DragContentType = "video" | "playlist" | null;
 
@@ -60,9 +61,21 @@ export interface ContentState {
   // Drag and drop method
   createDragDrop: (options: DragDropOptions) => DragDropHandlers;
 
+  // Selection
+  handleSelectVideos: ({
+    event,
+    video,
+    videos,
+  }: {
+    event: MouseEvent;
+    video: Video;
+    videos: Video[];
+  }) => void;
+
   // Mouse hover methods
   handleMouseEnter: (options: MouseHoverOptions) => void;
   handleMouseLeave: (isHoveringElement?: boolean) => void;
+  manualHover: boolean;
 }
 
 export class ContentStateClass implements ContentState {
@@ -72,6 +85,7 @@ export class ContentStateClass implements ContentState {
   isMouseOverContextMenu = $state(false);
   hoverTimeoutId = $state<ReturnType<typeof setTimeout> | null>(null);
   playlistImages = $state({});
+  manualHover = $state(false);
 
   // Drag and drop state
   draggedIndex = $state<number | null>(null);
@@ -87,12 +101,11 @@ export class ContentStateClass implements ContentState {
 
     // For content cards that need to check scrolling state
     if (shouldScrollCheck) {
-      // Import pageState here to avoid circular dependencies
-      // You might need to adjust this based on your actual pageState implementation
-      const scrolling = false; // Replace with actual scroll state check if needed
-
-      if (scrolling && this.dragContentType === null) {
-        return;
+      if (
+        pageState.contentScrollState.scrolling &&
+        this.dragContentType === null
+      ) {
+        this.manualHover = true;
       }
     }
 
@@ -108,6 +121,7 @@ export class ContentStateClass implements ContentState {
   }
 
   handleMouseLeave(isHoveringElement: boolean = false) {
+    this.manualHover = false;
     if (!this.isSelectionMode) {
       // Store the timeout ID so it can be cleared if needed
       const timeoutId = setTimeout(() => {
@@ -233,6 +247,55 @@ export class ContentStateClass implements ContentState {
       handleDrop,
       handleDragStart,
     };
+  }
+
+  handleSelectVideos({
+    event,
+    video,
+    videos,
+  }: {
+    event: MouseEvent;
+    video: Video;
+    videos: Video[];
+  }) {
+    const isShiftPressed = event.shiftKey;
+    const videoIndex = this.selectedVideos.findIndex((v) => v.id === video.id);
+
+    if (!isShiftPressed) {
+      // Original behavior when SHIFT is not pressed
+      if (videoIndex === -1) {
+        this.selectedVideos.push(video);
+      } else {
+        this.selectedVideos.splice(videoIndex, 1);
+      }
+    } else {
+      // SHIFT key is pressed - implement range selection
+      // If no videos are selected yet, just add this one
+      if (this.selectedVideos.length === 0) {
+        this.selectedVideos.push(video);
+      } else {
+        const lastSelectedVideo =
+          this.selectedVideos[this.selectedVideos.length - 1];
+
+        const lastSelectedIndex = videos.findIndex(
+          (v) => v.id === lastSelectedVideo.id,
+        );
+        const currentIndex = videos.findIndex((v) => v.id === video.id);
+
+        // Determine start and end indices for the range
+        const startIndex = Math.min(lastSelectedIndex, currentIndex);
+        const endIndex = Math.max(lastSelectedIndex, currentIndex);
+
+        // Select all videos in the range
+        for (let i = startIndex; i <= endIndex; i++) {
+          const rangeVideo = videos[i];
+          // Check if this video is not already in selectedVideos
+          if (!this.selectedVideos.some((v) => v.id === rangeVideo.id)) {
+            this.selectedVideos.push(rangeVideo);
+          }
+        }
+      }
+    }
   }
 }
 

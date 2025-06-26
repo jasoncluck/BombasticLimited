@@ -138,7 +138,7 @@ export async function getVideo({ videoId, supabase }: VideoQuerySingleProps) {
  * Ordered by latest timestamp descending.
  */
 export async function getInProgressVideos({
-  limit = DEFAULT_NUM_VIDEOS_TILES,
+  limit = DEFAULT_NUM_VIDEOS_OVERVIEW,
   contentFilter,
   supabase,
   session,
