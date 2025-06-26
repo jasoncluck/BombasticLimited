@@ -118,7 +118,7 @@ export async function getPlaylistVideos({
     ascending: contentFilter.sort.order === "ascending",
   });
 
-  if (contentFilter.startDate) {
+  if (contentFilter.sort.key !== "playlistOrder" && contentFilter.startDate) {
     try {
       // Parse the input date string and explicitly set it to midnight (local time)
       const startDate = new Date(`${contentFilter.startDate}T00:00:00`);
@@ -127,7 +127,7 @@ export async function getPlaylistVideos({
       console.error("Unable to parse start date, ignoring.");
     }
   }
-  if (contentFilter.endDate) {
+  if (contentFilter.sort.key !== "playlistOrder" && contentFilter.endDate) {
     try {
       // Parse the input date string and set it to the end of the day (local time)
       const endDate = new Date(`${contentFilter.endDate}T23:59:59.999`);

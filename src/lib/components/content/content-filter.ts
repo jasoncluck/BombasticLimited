@@ -223,7 +223,11 @@ export function updateFilterQueryParams({
     searchParams.set("endDate", endDateValue.toString());
   }
 
-  goto(newUrl.toString(), { invalidate: ["supabase:db:videos"] });
+  goto(newUrl.toString(), {
+    invalidate: ["supabase:db:videos"],
+    noScroll: true,
+    keepFocus: true,
+  });
 }
 
 export function isSortKey<T extends Video | VideoTimestamp | PlaylistVideo>(

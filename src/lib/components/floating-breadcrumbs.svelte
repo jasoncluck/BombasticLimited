@@ -30,18 +30,21 @@
   }: BreacrumbLayoutProps = $props();
 </script>
 
-<div
-  class="absolute w-full py-1 px-4 bg-background-lighter grid grid-cols-3 items-center"
->
-  <div class="justify-self-start relative py-2">
+<div class=" w-full py-1 px-4 bg-background-lighter flex items-center relative">
+  <div class="relative py-2">
     {#if session}
       <ContentSelect {playlist} {playlists} {supabase} {session} />
     {/if}
   </div>
-  <div class="justify-self-center">
+
+  <!-- Absolutely positioned center breadcrumbs -->
+  <div
+    class="absolute left-1/2 transform -translate-x-1/2 max-w-[50%] overflow-hidden"
+  >
     <BreadcrumbLayout {breadcrumbs} />
   </div>
-  <div class="justify-self-end">
+
+  <div class="ml-auto">
     <Button variant="ghost" class="h-auto w-4" onclick={handleChevronClick}>
       <ChevronUp />
     </Button>

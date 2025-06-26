@@ -13,15 +13,22 @@
 </script>
 
 <Breadcrumb.Root>
-  <Breadcrumb.List>
+  <Breadcrumb.List class="overflow-hidden">
     {#each breadcrumbs as breadcrumb, i (breadcrumb.label)}
-      <Breadcrumb.Item>
+      <Breadcrumb.Item class="overflow-hidden">
         {#if breadcrumb.href}
-          <Breadcrumb.Link href={breadcrumb.href} class="text-xs">
+          <Breadcrumb.Link
+            href={breadcrumb.href}
+            class="text-xs overflow-hidden text-ellipsis whitespace-nowrap block max-w-full"
+          >
             {breadcrumb.label}
           </Breadcrumb.Link>
         {:else}
-          <Breadcrumb.Page class="text-xs">{breadcrumb.label}</Breadcrumb.Page>
+          <Breadcrumb.Page
+            class="text-xs overflow-hidden text-ellipsis whitespace-nowrap block max-w-full"
+          >
+            {breadcrumb.label}
+          </Breadcrumb.Page>
         {/if}
       </Breadcrumb.Item>
       {#if i < breadcrumbs.length - 1}

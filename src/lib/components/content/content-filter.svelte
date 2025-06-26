@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ArrowDown, ArrowUp, List } from "@lucide/svelte";
+  import { ArrowDown, ArrowUp, Check, List, Loader } from "@lucide/svelte";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import {
     SORT_OPTIONS_VIDEO,
@@ -112,7 +112,11 @@
         type: "playlist",
         sort: {
           key: sortKey as SortKey<PlaylistVideo>,
-          order: sortOrder,
+          // Only ascending allowed for custom playlist ordering
+          order:
+            (sortKey as SortKey<PlaylistVideo>) === "playlistOrder"
+              ? "ascending"
+              : sortOrder,
         },
         startDate: contentFilter.startDate,
         endDate: contentFilter.endDate,
@@ -191,7 +195,11 @@
               {SORT_OPTIONS_VIDEO[sortKey as SortKey<Video>].displayName}
             {/if}
 
-            {#if contentFilter.sort.key === sortKey && contentFilter.sort.order === "ascending"}
+            {#if contentFilter.sort.key === sortKey && sortKey === "playlistOrder"}
+              <Check
+                class={contentFilter.sort.key === sortKey ? "text-primary" : ""}
+              />
+            {:else if contentFilter.sort.key === sortKey && contentFilter.sort.order === "ascending"}
               <ArrowUp
                 class={contentFilter.sort.key === sortKey ? "text-primary" : ""}
               />

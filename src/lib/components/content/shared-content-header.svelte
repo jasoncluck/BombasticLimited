@@ -70,7 +70,7 @@
 
 <IntersectionObserver
   disableObserver={false}
-  threshold={0.5}
+  threshold={0.1}
   onActive={() => (showFloatingBreadcrumbs = false)}
   onInactive={() => (showFloatingBreadcrumbs = true)}
 >

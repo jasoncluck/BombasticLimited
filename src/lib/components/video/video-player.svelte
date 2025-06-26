@@ -97,7 +97,7 @@
   />
 
   <div class="flex justify-between">
-    <h2 class="font-semibold tracking-normal">{video.title}</h2>
+    <h2 class="font-semibold pr-4">{video.title}</h2>
     <span class="text-muted-foreground">
       {formatPublishedDate(video.published_at)}
     </span>
@@ -116,7 +116,7 @@
             </a>
           </div>
         {:else}
-          <div>{line.text}</div>
+          <p>{line.text}</p>
         {/if}
       {/each}
     </div>

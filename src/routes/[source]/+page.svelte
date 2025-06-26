@@ -44,7 +44,7 @@
   <div class="flex flex-col bg-background-lighter">
     <a
       href={`/${source}/latest`}
-      class="header-link-sticky hover:underline cursor-pointer mx-4"
+      class="header-link-sticky hover:underline cursor-pointer"
     >
       Latest Videos
     </a>
