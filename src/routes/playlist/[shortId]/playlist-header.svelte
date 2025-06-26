@@ -72,28 +72,30 @@
   {session}
   {...props}
 >
-  <div class="flex gap-6">
+  <div class="flex flex-col @md:flex-row gap-6">
     <PlaylistEditDialog {form} {playlist} bind:open>
-      {#if playlistImageUrl}
-        <button
-          type="button"
-          class="flex justify-center items-center min-h-32 min-w-32 max-h-56 max-w-56 cursor-pointer border-none bg-transparent p-0"
-          onclick={openDialog}
-        >
-          <img
-            src={playlistImageUrl}
-            alt={`Image for playlist: ${playlist.name}`}
-          />
-        </button>
-      {:else}
-        <button
-          type="button"
-          class="flex justify-center items-center min-h-16 min-w-16 max-h-56 max-w-56 cursor-pointer border-none bg-transparent p-0"
-          onclick={openDialog}
-        >
-          <ListVideo size={256} />
-        </button>
-      {/if}
+      <div class="flex justify-center">
+        {#if playlistImageUrl}
+          <button
+            type="button"
+            class="flex justify-center items-center min-h-32 min-w-32 max-h-56 max-w-56 cursor-pointer border-none bg-transparent p-0"
+            onclick={openDialog}
+          >
+            <img
+              src={playlistImageUrl}
+              alt={`Image for playlist: ${playlist.name}`}
+            />
+          </button>
+        {:else}
+          <button
+            type="button"
+            class="flex justify-center items-center min-h-16 min-w-16 max-h-56 max-w-56 cursor-pointer border-none bg-transparent p-0"
+            onclick={openDialog}
+          >
+            <ListVideo size={128} />
+          </button>
+        {/if}
+      </div>
     </PlaylistEditDialog>
 
     <div class="flex flex-col relative">
@@ -106,7 +108,7 @@
         <p class="text-sm text-muted-foreground tracking-tight">
           {playlist.type === "Public" ? "Public Playlist" : "Private Playlist"}
         </p>
-        <h2 class="header-primary text-wrap break-words">
+        <h2 class="header-primary text-wrap break-anywhere">
           {playlist.name}
         </h2>
         <p class="text-sm text-muted-foreground mb-2 text-left break-words">

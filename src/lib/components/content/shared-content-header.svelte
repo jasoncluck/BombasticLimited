@@ -15,7 +15,6 @@
   import { getNumberOfPages } from "./pagination/content-pagination";
   import { DEFAULT_NUM_VIDEOS_PAGINATION } from "$lib/supabase/videos";
   import type { ContentView } from "./content";
-  import { getMediaQueryState } from "$lib/state/media-query.svelte";
 
   interface SharedContentHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];

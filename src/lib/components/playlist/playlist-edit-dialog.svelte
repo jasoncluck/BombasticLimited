@@ -194,7 +194,7 @@
               </div>
               <Form.FieldErrors class="mb-2" />
             </Form.Field>
-            <Form.Field form={playlistForm} name="description">
+            <Form.Field form={playlistForm} name="description" class="mb-2">
               <div
                 class="md:grid md:grid-cols-4 items-center md:items-start flex flex-wrap gap-2 md:gap-4"
               >
