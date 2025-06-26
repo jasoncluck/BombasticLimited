@@ -8,8 +8,8 @@
     getNumberOfPages,
     PAGINATION_QUERY_KEY,
   } from "$lib/components/content/pagination/content-pagination.js";
-  import { DEFAULT_NUM_VIDEOS_TILES } from "$lib/supabase/videos.js";
   import SharedContentFooter from "$lib/components/content/pagination/shared-content-footer.svelte";
+  import { DEFAULT_NUM_VIDEOS_PAGINATION } from "$lib/supabase/videos.js";
 
   const { data } = $props();
   const {
@@ -47,7 +47,7 @@
   const numPages = $derived(
     getNumberOfPages({
       videosCount: videosCount ?? 0,
-      videosPerPage: DEFAULT_NUM_VIDEOS_TILES,
+      videosPerPage: DEFAULT_NUM_VIDEOS_PAGINATION,
     }),
   );
 </script>

@@ -344,9 +344,3 @@
     </ScrollArea>
   </Sheet.Content>
 </Sheet.Root>
-
-<style>
-  :global(.dnd-drop-target) {
-    box-sizing: border-box !important;
-  }
-</style>

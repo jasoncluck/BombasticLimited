@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from "$app/state";
   import * as Pagination from "$lib/components/ui/pagination/index.js";
-  import { DEFAULT_NUM_VIDEOS_TILES } from "$lib/supabase/videos";
+  import { DEFAULT_NUM_VIDEOS_PAGINATION } from "$lib/supabase/videos";
   import { updatePaginationQueryParams } from "./content-pagination";
 
   let {
@@ -16,7 +16,7 @@
 <div class="flex justify-center w-full px-2">
   <Pagination.Root
     {count}
-    perPage={DEFAULT_NUM_VIDEOS_TILES}
+    perPage={DEFAULT_NUM_VIDEOS_PAGINATION}
     bind:page={currentPage}
     onPageChange={(pageNum) =>
       updatePaginationQueryParams({ url: page.url, pageNum })}

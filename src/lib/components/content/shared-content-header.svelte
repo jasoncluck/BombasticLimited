@@ -13,7 +13,7 @@
   import type { CombinedContentFilter } from "./content-filter";
   import ContentPagination from "./pagination/content-pagination.svelte";
   import { getNumberOfPages } from "./pagination/content-pagination";
-  import { DEFAULT_NUM_VIDEOS_TILES } from "$lib/supabase/videos";
+  import { DEFAULT_NUM_VIDEOS_PAGINATION } from "$lib/supabase/videos";
   import type { ContentView } from "./content";
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
 
@@ -51,7 +51,7 @@
   const numPages = $derived(
     getNumberOfPages({
       videosCount,
-      videosPerPage: DEFAULT_NUM_VIDEOS_TILES,
+      videosPerPage: DEFAULT_NUM_VIDEOS_PAGINATION,
     }),
   );
 </script>
@@ -92,7 +92,7 @@
   <!-- Right side: ContentSelect and ContentFilters on same row -->
   <hr class="border-1 m-2" />
   <div class="flex justify-between mt-4">
-    {#if session && !mediaQueryState.isTouchDevice}
+    {#if session}
       <div class="mr-auto ml-4">
         <ContentSelect {playlist} {playlists} {supabase} {session} />
       </div>

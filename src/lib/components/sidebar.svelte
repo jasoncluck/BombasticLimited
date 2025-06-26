@@ -267,11 +267,11 @@
 </script>
 
 <aside class="h-full overflow-hidden">
-  <div class="flex flex-col my-3">
+  <div class="flex flex-col my-3 mx-1">
     {#each SOURCES as source (source)}
       <Button
         variant="ghost"
-        class="h-[64px]  w-full cursor-pointer duration-0
+        class="h-[64px] w-full cursor-pointer duration-0
         {selectedSource === source ? 'bg-secondary' : ''}  
         {!isSidebarCollapsed ? 'min-w-[150px] justify-normal' : 'align-middle'}"
         size={!isSidebarCollapsed ? "default" : "icon"}
@@ -357,12 +357,12 @@
 
   <!-- Fixed: Border is always present but transparent when not dragging -->
   <div
-    class="border-2 rounded-md mx-1 transition-colors duration-200
+    class="border-2 mx-1 transition-colors duration-200
     {playlists.length > 0 && contentState.dragContentType === 'video'
       ? 'border-secondary'
       : 'border-transparent'}"
   >
-    <div class="flex flex-col px-1">
+    <div class="flex flex-col">
       {#if playlists === null || !playlistImagesLoaded}
         <Loader class="animate-spin w-full" />
       {:else if session && dndPlaylists.length > 0}

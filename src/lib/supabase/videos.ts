@@ -12,8 +12,8 @@ import {
   type ContentFilter,
 } from "$lib/components/content/content-filter";
 
-export const DEFAULT_NUM_VIDEOS_TILES = 250;
-export const DEFAULT_NUM_VIDEOS_CAROUSEL = 15;
+export const DEFAULT_NUM_VIDEOS_PAGINATION = 250;
+export const DEFAULT_NUM_VIDEOS_OVERVIEW = 15;
 export type TimestampResponse = Tables<"timestamps">;
 
 export type VideoTimestamp = Pick<
@@ -54,7 +54,7 @@ export async function getVideos({
   source,
   contentFilter,
   currentPage = 1,
-  limit = DEFAULT_NUM_VIDEOS_TILES,
+  limit = DEFAULT_NUM_VIDEOS_OVERVIEW,
   searchString,
   supabase,
 }: VideoQueryMultipleProps<Video>): Promise<{
