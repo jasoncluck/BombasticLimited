@@ -91,7 +91,7 @@
           class="flex justify-center items-center min-h-16 min-w-16 max-h-56 max-w-56 cursor-pointer border-none bg-transparent p-0"
           onclick={openDialog}
         >
-          <ListVideo size={128} />
+          <ListVideo size={256} />
         </button>
       {/if}
     </PlaylistEditDialog>

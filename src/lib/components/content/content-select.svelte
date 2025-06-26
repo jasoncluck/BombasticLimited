@@ -41,6 +41,7 @@
     <div class="ml-2">
       <ContentDropdown
         bind:videos={contentState.selectedVideos}
+        isContentSelect={true}
         {playlist}
         {playlists}
         {supabase}

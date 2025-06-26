@@ -486,7 +486,7 @@
         : 'after:w-[1px] hover:after:bg-muted-foreground'}"
     />
     <Resizable.Pane
-      class="@container pane flex min-w-[350px] mr-2 "
+      class="@container pane flex min-w-[350px] sm:mr-2 "
       defaultSize={layout ? parseFloat(layout[1]) : 79}
     >
       <ScrollArea

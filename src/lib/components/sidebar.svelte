@@ -47,7 +47,7 @@
   const videoDropzoneClasses = [
     "border-solid",
     "border-primary",
-    "bg-primary/10",
+    "bg-primary/20",
   ];
 
   // Transform playlists to include proper id for dnd-action
@@ -105,32 +105,6 @@
       return videoDropzoneClasses;
     }
     return [];
-  }
-
-  function getButtonClasses(index: number, isSelectedPlaylist: boolean) {
-    let classes =
-      "h-[64px] w-full border border-transparent relative cursor-pointer transition-colors duration-200";
-
-    // Manual hover effect (only when appropriate)
-    if (hoveredIndex === index && !pageState.sidebarScrollState.scrolling) {
-      classes += " hover:bg-secondary";
-    } else if (!isSelectedPlaylist) {
-      classes += " hover:bg-transparent ";
-    }
-
-    // Selected playlist styling
-    if (isSelectedPlaylist) {
-      classes += " bg-secondary";
-    }
-
-    // Sidebar layout classes
-    if (!isSidebarCollapsed) {
-      classes += " min-w-[150px] justify-normal";
-    } else {
-      classes += " align-middle";
-    }
-
-    return classes;
   }
 
   function handleDndConsider(e: CustomEvent<DndEvent>) {
@@ -271,8 +245,8 @@
     {#each SOURCES as source (source)}
       <Button
         variant="ghost"
-        class="h-[64px] w-full cursor-pointer duration-0
-        {selectedSource === source ? 'bg-secondary' : ''}  
+        class="h-[64px] w-full cursor-pointer  transition-colors duration-100 
+        {selectedSource === source ? 'bg-secondary' : 'hover:bg-secondary/50'}  
         {!isSidebarCollapsed ? 'min-w-[150px] justify-normal' : 'align-middle'}"
         size={!isSidebarCollapsed ? "default" : "icon"}
         onclick={() => goto(`/${source}`)}
@@ -357,9 +331,9 @@
 
   <!-- Fixed: Border is always present but transparent when not dragging -->
   <div
-    class="border-2 mx-1 transition-colors duration-200
+    class="border-2 rounded-md mx-1 transition-colors duration-200
     {playlists.length > 0 && contentState.dragContentType === 'video'
-      ? 'border-secondary'
+      ? 'border-secondary/80'
       : 'border-transparent'}"
   >
     <div class="flex flex-col">
@@ -394,7 +368,16 @@
 
                 <Button
                   variant="ghost"
-                  class={getButtonClasses(i, isSelectedPlaylist)}
+                  class="h-[64px] w-full border border-transparent relative cursor-pointer transition-colors duration-200
+                  {hoveredIndex === i && !pageState.sidebarScrollState.scrolling
+                    ? 'hover:bg-secondary'
+                    : 'hover:bg-transparent'}
+                  {isSelectedPlaylist
+                    ? 'bg-secondary'
+                    : 'hover:bg-secondary/50'}  
+                  {!isSidebarCollapsed
+                    ? 'min-w-[150px] justify-normal'
+                    : 'align-middle'}"
                   size={!isSidebarCollapsed ? "default" : "icon"}
                   onclick={() => handlePlaylistClick(playlist)}
                   title={playlist.name}

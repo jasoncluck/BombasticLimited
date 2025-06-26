@@ -4,7 +4,6 @@
   import type { Playlist } from "$lib/supabase/playlists";
   import type { Database } from "$lib/supabase/database.types";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
-  import type { Video, VideoWithTimestamp } from "$lib/supabase/videos";
   import {
     handleAddVideosToPlaylist,
     handleRemoveVideosFromPlaylist,
@@ -12,17 +11,19 @@
   } from "../playlist/playlist-service";
   import type { Snippet } from "svelte";
   import { ScrollArea } from "../ui/scroll-area";
+  import type { Video } from "$lib/supabase/videos";
 
   interface ContentContextMenuProps {
+    videos: Video[];
     playlist?: Playlist;
     playlists: Playlist[];
-    videos: Video[] | VideoWithTimestamp[];
     supabase: SupabaseClient<Database>;
     session: Session | null;
     children: Snippet<[]>;
   }
 
   let {
+    videos = $bindable(),
     playlist,
     playlists,
     supabase,
@@ -35,7 +36,7 @@
   let open = $state(false);
 
   $effect(() => {
-    if (open && contentState.selectedVideos.length < 1) {
+    if (open && videos.length < 1) {
       open = false;
     }
   });
@@ -47,7 +48,7 @@
   </ContextMenu.Trigger>
 
   <ContextMenu.Content
-    class="max-h-64 overflow-visible hidden sm:block"
+    class="p-1 max-h-64 overflow-visible hidden sm:block"
     onmouseenter={() => {
       contentState.isMouseOverContextMenu = true;
     }}
@@ -59,57 +60,72 @@
       <ContextMenu.Item
         onclick={() =>
           handleRemoveVideosFromPlaylist({
-            videos: contentState.selectedVideos,
+            videos,
             playlist,
             playlistImages: contentState.playlistImages,
             supabase,
           })}
       >
-        Remove {contentState.selectedVideos.length === 1 ? "video" : "videos"} from
-        playlist</ContextMenu.Item
+        Remove {videos.length === 1 ? "video" : "videos"} from playlist</ContextMenu.Item
       >
     {/if}
-    <ContextMenu.Sub>
-      <ContextMenu.SubTrigger
-        >Add {contentState.selectedVideos.length === 1 ? "video" : "videos"} to Playlist</ContextMenu.SubTrigger
+    {@const filteredPlaylists = playlists.filter(
+      (pl) => pl.id !== playlist?.id,
+    )}
+    {#if filteredPlaylists.length > 0}
+      <ContextMenu.Sub>
+        <ContextMenu.SubTrigger
+          >Add {videos.length === 1 ? "video" : "videos"} to Playlist</ContextMenu.SubTrigger
+        >
+        <ContextMenu.SubContent
+          class="py-1 px-2 z-50 transition-opacity duration-150 overflow-hidden"
+          sideOffset={5}
+        >
+          <ScrollArea
+            type="scroll"
+            class="max-w-40 p-1 {filteredPlaylists.length <= 6
+              ? 'h-auto'
+              : 'h-56'}"
+          >
+            {#if playlists.length < 1}
+              <ContextMenu.Item>No playlists found</ContextMenu.Item>
+            {:else}
+              {#each playlists as addPlaylist (addPlaylist.id)}
+                {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
+                  <ContextMenu.Item
+                    onclick={() =>
+                      handleAddVideosToPlaylist({
+                        videos,
+                        playlist: addPlaylist,
+                        playlistImages: contentState.playlistImages,
+                        supabase,
+                        session,
+                      })}
+                  >
+                    {addPlaylist.name}
+                  </ContextMenu.Item>
+                {/if}
+              {/each}
+            {/if}
+          </ScrollArea>
+        </ContextMenu.SubContent>
+      </ContextMenu.Sub>
+    {/if}
+    {#if contentState.isSelectionMode && videos.length > 0}
+      <ContextMenu.Item
+        onclick={() => {
+          videos = [];
+        }}>Deselect all</ContextMenu.Item
       >
-      <ContextMenu.SubContent
-        class="z-50 transition-opacity duration-150 data-[state=closed]:opacity-0 max-h-56 overflow-hidden"
-        sideOffset={5}
-      >
-        <ScrollArea class="h-56">
-          {#if playlists.length < 1}
-            <ContextMenu.Item>No playlists found</ContextMenu.Item>
-          {:else}
-            {#each playlists as addPlaylist (addPlaylist.id)}
-              {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
-                <ContextMenu.Item
-                  onclick={() =>
-                    handleAddVideosToPlaylist({
-                      videos: contentState.selectedVideos,
-                      playlist: addPlaylist,
-                      playlistImages: contentState.playlistImages,
-                      supabase,
-                      session,
-                    })}
-                >
-                  {addPlaylist.name}
-                </ContextMenu.Item>
-              {/if}
-            {/each}
-          {/if}
-        </ScrollArea>
-      </ContextMenu.SubContent>
-    </ContextMenu.Sub>
+    {/if}
     {#if playlist && !contentState.isSelectionMode}
       <ContextMenu.Item
         onclick={async () =>
           (contentState.playlistImages[playlist.id] =
             await handleUpdatePlaylistImage({
               playlist,
-              thumbnailUrl: contentState.selectedVideos[0].thumbnail_url,
-              thumbnailMaxResUrl:
-                contentState.selectedVideos[0].thumbnail_maxres_url,
+              thumbnailUrl: videos[0].thumbnail_url,
+              thumbnailMaxResUrl: videos[0].thumbnail_maxres_url,
               playlistImages: contentState.playlistImages,
               supabase,
             }))}>Set as playlist image</ContextMenu.Item

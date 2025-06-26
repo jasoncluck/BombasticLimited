@@ -9,7 +9,10 @@
     PAGINATION_QUERY_KEY,
   } from "$lib/components/content/pagination/content-pagination.js";
   import SharedContentFooter from "$lib/components/content/pagination/shared-content-footer.svelte";
-  import { DEFAULT_NUM_VIDEOS_PAGINATION } from "$lib/supabase/videos.js";
+  import {
+    DEFAULT_NUM_VIDEOS_PAGINATION,
+    type Video,
+  } from "$lib/supabase/videos.js";
 
   const { data } = $props();
   const {
@@ -23,6 +26,7 @@
   } = $derived(data);
 
   let showFloatingBreadcrumbs = $state(false);
+  let selectedVideos = $derived(videos);
 
   const pageFromQueryParams = page.url.searchParams.get(PAGINATION_QUERY_KEY);
   let currentPage = $state(
@@ -31,16 +35,19 @@
 
   export const snapshot: Snapshot<{
     showFloatingBreadcrumbs: boolean;
+    selectedVideos: Video[];
   }> = {
     capture: () => {
       return {
         showFloatingBreadcrumbs,
+        selectedVideos,
       };
     },
     restore: (restored) => {
       if (restored?.showFloatingBreadcrumbs) {
         showFloatingBreadcrumbs = restored.showFloatingBreadcrumbs;
       }
+      selectedVideos = restored.selectedVideos;
     },
   };
   const numPages = $derived(

@@ -10,13 +10,13 @@ import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import type { Playlist } from "$lib/supabase/playlists";
 
 export function createContentColumns({
-  playlist,
-  playlists,
+  getPlaylist,
+  getPlaylists, // Function that returns current playlists
   supabase,
   session,
 }: {
-  playlist: Playlist | undefined;
-  playlists: Playlist[];
+  getPlaylist: () => Playlist;
+  getPlaylists: () => Playlist[];
   session: Session | null;
   supabase: SupabaseClient<Database>;
 }): ColumnDef<Video>[] {
@@ -70,8 +70,8 @@ export function createContentColumns({
 
         return renderComponent(ContentDropdown, {
           videos: [video],
-          playlist,
-          playlists,
+          playlist: getPlaylist(),
+          playlists: getPlaylists(),
           session,
           supabase,
         });

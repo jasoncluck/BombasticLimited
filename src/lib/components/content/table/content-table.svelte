@@ -121,7 +121,7 @@
               });
             }
           : (e) => {
-              e.preventDefault();
+              e.stopPropagation();
               handleContentNavigation({
                 video: row.original,
                 playlist,

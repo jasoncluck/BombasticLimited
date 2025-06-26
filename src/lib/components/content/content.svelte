@@ -50,7 +50,12 @@
   const mediaQueryState = getMediaQueryState();
 
   const columns = $derived(
-    createContentColumns({ playlist, playlists, supabase, session }),
+    createContentColumns({
+      getPlaylist: () => playlist,
+      getPlaylists: () => playlists,
+      supabase,
+      session,
+    }),
   );
 
   const contentState = getContentState();
@@ -79,7 +84,13 @@
   </div>
 {/if}
 
-<ContentContextMenu {videos} {playlist} {playlists} {supabase} {session}>
+<ContentContextMenu
+  bind:videos={contentState.selectedVideos}
+  {playlist}
+  {playlists}
+  {supabase}
+  {session}
+>
   <div {...restProps} class="mx-4 flex flex-col gap-5">
     <ContentTable {videos} {columns} {playlist} {supabase} {session} />
     <!-- {#if contentDisplay === "CAROUSEL" && !mediaQueryState.isMobile} -->

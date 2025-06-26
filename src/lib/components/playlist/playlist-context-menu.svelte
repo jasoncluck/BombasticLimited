@@ -31,7 +31,7 @@
 </script>
 
 <ContextMenu.Root>
-  <ContextMenu.Content class="max-h-64">
+  <ContextMenu.Content class="p-1">
     <ContextMenu.Item
       onclick={() =>
         handleDeletePlaylist({
