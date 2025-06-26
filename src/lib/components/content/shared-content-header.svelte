@@ -91,7 +91,13 @@
   <div class="flex justify-between mt-4">
     {#if session}
       <div class="mr-auto ml-4">
-        <ContentSelect {playlist} {playlists} {supabase} {session} />
+        <ContentSelect
+          {playlist}
+          {playlists}
+          {supabase}
+          {session}
+          displayLabel={true}
+        />
       </div>
     {/if}
     <div class="flex items-center gap-4 ml-auto mr-4">

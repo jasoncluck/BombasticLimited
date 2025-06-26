@@ -6,7 +6,7 @@
     deleteVideoTimestamp,
     saveVideoTimestamp,
   } from "$lib/supabase/timestamps";
-  import { beforeNavigate, invalidate } from "$app/navigation";
+  import { beforeNavigate } from "$app/navigation";
   import type { Playlist } from "$lib/supabase/playlists";
 
   // Amount of seconds to wait before saving a new timestamp if none exists
@@ -33,72 +33,38 @@
   } = $props();
 
   let player = $state<any>();
-  let currentVideoId = $state<string>();
-  let currentVideoDuration = $state<number>();
 
   $effect(() => {
+    console.log(startSeconds);
     if (!player || !window) return;
 
-    try {
-      // If the videoId has changed, load the new video
-      if (currentVideoId !== videoId) {
-        // Save current time for the previous video before switching
-        if (currentVideoId && player.getCurrentTime && currentVideoDuration) {
-          try {
-            const currentTimeSeconds = player.getCurrentTime() as number;
-            saveTimestampForVideo(
-              currentVideoId,
-              currentTimeSeconds,
-              currentVideoDuration,
-            );
-          } catch (error) {
-            console.error(
-              "Error getting current time before video change:",
-              error,
-            );
-          }
-        }
-
-        // Update to new video
-        currentVideoId = videoId;
-        currentVideoDuration = durationSeconds;
-        player.loadVideoById(videoId);
-
-        // Wait for the video to load before seeking
-        const checkAndSeek = () => {
-          try {
-            if (player.getPlayerState && player.getPlayerState() !== -1) {
-              // Video is loaded, now seek to the start time
-              if (player.seekTo && startSeconds) {
-                player.seekTo(startSeconds);
-              } else if (player.seekTo) {
-                player.seekTo(0);
-              }
-            } else {
-              // Video not loaded yet, check again in a bit
-              setTimeout(checkAndSeek, 100);
-            }
-          } catch (error) {
-            console.error("Error seeking in video:", error);
-          }
-        };
-
-        // Start checking if video is ready
-        setTimeout(checkAndSeek, 100);
-      } else {
-        // Same video, just update duration if it changed and seek to new time
-        currentVideoDuration = durationSeconds;
-
-        if (player.seekTo) {
-          if (startSeconds) {
+    // Wait for the video to load before seeking
+    const checkAndSeek = () => {
+      try {
+        if (player.getPlayerState && player.getPlayerState() !== -1) {
+          // Video is loaded, now seek to the start time
+          if (player.seekTo && startSeconds) {
             player.seekTo(startSeconds);
-          } else {
+          } else if (player.seekTo) {
             player.seekTo(0);
           }
+        } else {
+          // Video not loaded yet, check again in a bit
+          setTimeout(checkAndSeek, 100);
         }
+      } catch (error) {
+        console.error("Error seeking in video:", error);
       }
-    } catch (error) {
-      console.error("Error updating video:", error);
+    };
+
+    // Start checking if video is ready
+    setTimeout(checkAndSeek, 100);
+    if (player.seekTo) {
+      if (startSeconds) {
+        player.seekTo(startSeconds);
+      } else {
+        player.seekTo(0);
+      }
     }
   });
 
@@ -119,10 +85,6 @@
           // onStateChange: onPlayerStateChange,
         },
       });
-
-      // Set the initial video ID and duration
-      currentVideoId = videoId;
-      currentVideoDuration = durationSeconds;
     }
 
     window.addEventListener("beforeunload", saveCurrentTime);
@@ -171,12 +133,7 @@
   }
 
   function saveCurrentTime() {
-    if (
-      player &&
-      player.getCurrentTime &&
-      currentVideoId &&
-      currentVideoDuration
-    ) {
+    if (player && player.getCurrentTime) {
       try {
         const currentTimeSeconds = player.getCurrentTime() as number;
 
@@ -185,14 +142,10 @@
           !startSeconds ||
           Math.abs(currentTimeSeconds - startSeconds) > VIDEO_SAVE_SECONDS_DELTA
         ) {
-          saveTimestampForVideo(
-            currentVideoId,
-            currentTimeSeconds,
-            currentVideoDuration,
-          );
+          saveTimestampForVideo(videoId, currentTimeSeconds, durationSeconds);
         }
       } catch (error) {
-        console.error("Error in saveCurrentTime:", error);
+        console.error("Error while trying to save current video time.", error);
       }
     }
   }

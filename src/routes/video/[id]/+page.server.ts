@@ -3,15 +3,7 @@ import type { PageServerLoad } from "./$types";
 export const load: PageServerLoad = async ({
   locals: { supabase, session },
   params,
-  url,
 }) => {
-  let urlStartSeconds;
-  let urlStartSecondsQueryParam = url.searchParams.get("t");
-
-  if (urlStartSecondsQueryParam) {
-    urlStartSeconds = parseInt(urlStartSecondsQueryParam);
-  }
-
   const { video } = await getVideo({
     supabase,
     videoId: params.id,
@@ -24,11 +16,8 @@ export const load: PageServerLoad = async ({
 
   return {
     video,
-    startSeconds:
-      urlStartSeconds === 0
-        ? null
-        : isVideoWithTimestamp(video)
-          ? video.video_start_seconds
-          : urlStartSeconds,
+    timestampStartSeconds: isVideoWithTimestamp(video)
+      ? video.video_start_seconds
+      : 0,
   };
 };

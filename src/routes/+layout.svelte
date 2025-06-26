@@ -216,11 +216,8 @@
 
   afterNavigate(({ from, to, delta }) => {
     contentState.isSelectionMode = false;
-    console.log(from?.url);
-    console.log(to?.url);
     // Reset scroll state if new page
     if (!delta && from?.url.pathname !== to?.url.pathname) {
-      console.log("in delta change");
       if (contentViewportRef) {
         contentViewportRef.scrollTop = 0;
         contentViewportRef.scrollLeft = 0;
@@ -228,21 +225,19 @@
     }
   });
 
-  // TODO: Verify this is doing anything
-  // $effect(() => {
-  //   console.log("in effect");
-  //   // Restore content viewport scroll
-  //   restoreViewportScroll(contentViewportRef, pageState.contentScrollPosition);
-  //   if (pageState.contentScrollPosition) {
-  //     pageState.contentScrollPosition = null;
-  //   }
-  //
-  //   // Restore sidebar viewport scroll
-  //   restoreViewportScroll(sidebarViewportRef, pageState.sidebarScrollPosition);
-  //   if (pageState.sidebarScrollPosition) {
-  //     pageState.sidebarScrollPosition = null;
-  //   }
-  // });
+  $effect(() => {
+    // Restore content viewport scroll
+    restoreViewportScroll(contentViewportRef, pageState.contentScrollPosition);
+    if (pageState.contentScrollPosition) {
+      pageState.contentScrollPosition = null;
+    }
+
+    // Restore sidebar viewport scroll
+    restoreViewportScroll(sidebarViewportRef, pageState.sidebarScrollPosition);
+    if (pageState.sidebarScrollPosition) {
+      pageState.sidebarScrollPosition = null;
+    }
+  });
 
   onMount(() => {
     // Set up event listeners for drag operations

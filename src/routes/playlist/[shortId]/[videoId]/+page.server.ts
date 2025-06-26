@@ -12,15 +12,8 @@ export const load: PageServerLoad = async ({
   depends,
   params,
   parent,
-  url,
 }) => {
   depends("supabase:db:videos");
-  let urlStartSeconds;
-  const urlStartSecondsQueryParam = url.searchParams.get("t");
-
-  if (urlStartSecondsQueryParam) {
-    urlStartSeconds = parseInt(urlStartSecondsQueryParam);
-  }
 
   const videoId = params.videoId;
 
@@ -64,11 +57,8 @@ export const load: PageServerLoad = async ({
     playlist,
     playlists,
     contentFilter,
-    startSeconds:
-      urlStartSeconds === 0
-        ? null
-        : isVideoWithTimestamp(video)
-          ? video.video_start_seconds
-          : urlStartSeconds,
+    timestampStartSeconds: isVideoWithTimestamp(video)
+      ? video.video_start_seconds
+      : 0,
   };
 };

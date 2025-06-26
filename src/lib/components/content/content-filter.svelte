@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ArrowDown, ArrowUp, Check, List, Loader } from "@lucide/svelte";
+  import { ArrowDown, ArrowUp, Check, List } from "@lucide/svelte";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import {
     SORT_OPTIONS_VIDEO,

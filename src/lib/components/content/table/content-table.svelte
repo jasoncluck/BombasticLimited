@@ -121,7 +121,7 @@
               });
             }
           : (e) => {
-              e.stopPropagation();
+              e.preventDefault();
               handleContentNavigation({
                 video: row.original,
                 playlist,
@@ -131,17 +131,6 @@
           contentState.handleMouseEnter({ video: row.original })}
         onmouseleave={() => contentState.handleMouseLeave()}
       >
-        {#if contentState.isSelectionMode}
-          <Table.Cell class="w-12">
-            <Checkbox
-              id={row.original.id}
-              checked={contentState.selectedVideos.some(
-                (v) => v.id === row.original.id,
-              )}
-              class="pointer-events-none"
-            />
-          </Table.Cell>
-        {/if}
         {#each row.getVisibleCells() as cell (cell.id)}
           <Table.Cell>
             <FlexRender

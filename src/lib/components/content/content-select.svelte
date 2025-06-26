@@ -11,11 +11,13 @@
   const {
     playlist,
     playlists,
+    displayLabel,
     supabase,
     session,
   }: {
     playlist?: Playlist;
     playlists: Playlist[];
+    displayLabel: boolean;
     supabase: SupabaseClient<Database>;
     session: Session | null;
   } = $props();
@@ -24,7 +26,9 @@
 </script>
 
 <div class="flex gap-2 h-[20px] items-center">
-  <Label for="isSelectionMode" class="text-xs cursor-pointer">Select</Label>
+  {#if displayLabel}
+    <Label for="isSelectionMode" class="text-xs cursor-pointer">Select</Label>
+  {/if}
   <div class="w-[20px]">
     <Checkbox
       id="isSelectionMode"
@@ -38,7 +42,7 @@
     />
   </div>
   {#if contentState.isSelectionMode && contentState.selectedVideos.length > 0}
-    <div class="ml-2">
+    <div>
       <ContentDropdown
         bind:videos={contentState.selectedVideos}
         isContentSelect={true}

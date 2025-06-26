@@ -44,7 +44,7 @@
       size: "icon",
     })}
   >
-    <Ellipsis size="14" />
+    <Ellipsis />
     <span class="sr-only">Actions for selected items</span>
   </DropdownMenu.Trigger>
   <DropdownMenu.Content class="p-1">

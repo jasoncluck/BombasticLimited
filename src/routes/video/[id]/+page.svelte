@@ -3,7 +3,14 @@
   import VideoPlayer from "$lib/components/video/video-player.svelte";
 
   const { data } = $props();
-  let { video, startSeconds, supabase, session } = $derived(data);
+  let { video, timestampStartSeconds, supabase, session } = $derived(data);
+
+  const startSeconds = $derived.by(() => {
+    const startSecondsSearchParam = page.url.searchParams.get("t");
+    return startSecondsSearchParam
+      ? parseInt(startSecondsSearchParam)
+      : timestampStartSeconds;
+  });
 </script>
 
 <div class="m-4">

@@ -30,10 +30,18 @@
   }: BreacrumbLayoutProps = $props();
 </script>
 
-<div class=" w-full py-1 px-4 bg-background-lighter flex items-center relative">
+<div
+  class=" w-full py-1 px-4 bg-background-lighter flex items-center relative pointer-events-auto"
+>
   <div class="relative py-2">
     {#if session}
-      <ContentSelect {playlist} {playlists} {supabase} {session} />
+      <ContentSelect
+        {playlist}
+        {playlists}
+        {supabase}
+        {session}
+        displayLabel={false}
+      />
     {/if}
   </div>
 

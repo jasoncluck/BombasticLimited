@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from "$app/state";
   import Content from "$lib/components/content/content.svelte";
   import VideoPlayer from "$lib/components/video/video-player.svelte";
 
@@ -9,22 +10,31 @@
     playlist,
     playlists,
     contentFilter,
-    startSeconds,
+    timestampStartSeconds,
     supabase,
     session,
   } = $derived(data);
+
+  const startSeconds = $derived.by(() => {
+    const startSecondsSearchParam = page.url.searchParams.get("t");
+    return startSecondsSearchParam
+      ? parseInt(startSecondsSearchParam)
+      : timestampStartSeconds;
+  });
 </script>
 
 <div class="m-4">
   <div class="mb-20">
-    <VideoPlayer
-      {video}
-      baseUrl={`/playlist/${playlist.short_id}`}
-      videoId={video.id}
-      {startSeconds}
-      {supabase}
-      {session}
-    />
+    {#key video}
+      <VideoPlayer
+        {video}
+        baseUrl={`/playlist/${playlist.short_id}`}
+        videoId={video.id}
+        {startSeconds}
+        {supabase}
+        {session}
+      />
+    {/key}
   </div>
 
   {#if videos.length > 0}

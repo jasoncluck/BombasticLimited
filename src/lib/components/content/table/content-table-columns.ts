@@ -5,6 +5,7 @@ import { createRawSnippet } from "svelte";
 import ContentDropdown from "../content-dropdown.svelte";
 import ContentTableTitle from "./content-table-title.svelte";
 import ContentTableImage from "./content-table-image.svelte";
+import ContentTableSelect from "./content-table-select.svelte";
 import type { Database } from "$lib/supabase/database.types";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import type { Playlist } from "$lib/supabase/playlists";
@@ -21,6 +22,19 @@ export function createContentColumns({
   supabase: SupabaseClient<Database>;
 }): ColumnDef<Video>[] {
   return [
+    {
+      accessorKey: "selected",
+      header: () => {
+        return;
+      },
+      cell: ({ row }) => {
+        const video = row.original;
+
+        return renderComponent(ContentTableSelect, {
+          video,
+        });
+      },
+    },
     {
       accessorKey: "thumbnail_maxres_url",
       cell: ({ row }) => {

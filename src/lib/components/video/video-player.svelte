@@ -1,6 +1,7 @@
 <script lang="ts">
   import { videoDurationToSeconds } from "$lib/components/video/video-service.js";
   import YoutubeEmbed from "$lib/components/video/youtube-embed.svelte";
+  import { pageState } from "$lib/state/page.svelte";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
 
   interface VideoData {
@@ -111,6 +112,9 @@
             <a
               class="timestamp-link text-left w-full hover:underline hover:text-primary"
               href="{baseUrl}/{videoId}?t={line.timestamp}"
+              onclick={() => {
+                pageState.contentScrollPosition = { scrollTop: 0 };
+              }}
             >
               {line.text}
             </a>
