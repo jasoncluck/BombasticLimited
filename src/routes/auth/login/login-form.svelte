@@ -61,6 +61,12 @@
           onclick={async () => {
             const { data, error } = await supabase.auth.signInWithOAuth({
               provider: "discord",
+              options: {
+                queryParams: {
+                  foobar: "test",
+                  oauth: "success",
+                },
+              },
             });
             if (error) {
               console.error(error);

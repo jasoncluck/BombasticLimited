@@ -11,13 +11,16 @@
   } from "../playlist/playlist-service";
   import type { Snippet } from "svelte";
   import { ScrollArea } from "../ui/scroll-area";
-  import type { Video } from "$lib/supabase/videos";
+  import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
+  import { handleDeleteVideoTimestamp } from "../video/video-service";
 
   interface ContentContextMenuProps {
     videos: Video[];
     playlist?: Playlist;
     playlists: Playlist[];
+    // For items like deselecting only makes sense when using the content selector
+    isContentSelect?: boolean;
     supabase: SupabaseClient<Database>;
     session: Session | null;
     children: Snippet<[]>;
@@ -114,25 +117,40 @@
         </ContextMenu.SubContent>
       </ContextMenu.Sub>
     {/if}
-    {#if contentState.isSelectionMode && videos.length > 0}
+    {#if videos.length > 0 && contentState.isSelectionMode}
       <ContextMenu.Item
         onclick={() => {
           videos = [];
         }}>Deselect all</ContextMenu.Item
       >
     {/if}
-    {#if playlist && !contentState.isSelectionMode}
+
+    {@const lastVideo = videos[videos.length - 1]}
+    {#if playlist}
       <ContextMenu.Item
         onclick={async () =>
           (contentState.playlistImages[playlist.id] =
             await handleUpdatePlaylistImage({
               playlist,
-              thumbnailUrl: videos[0].thumbnail_url,
-              thumbnailMaxResUrl: videos[0].thumbnail_maxres_url,
+              thumbnailUrl: lastVideo.thumbnail_url,
+              thumbnailMaxResUrl: lastVideo.thumbnail_maxres_url,
               playlistImages: contentState.playlistImages,
               supabase,
             }))}>Set as playlist image</ContextMenu.Item
       >
+    {/if}
+    {#if session && isVideoWithTimestamp(lastVideo) && lastVideo.video_start_seconds}
+      <ContextMenu.Item
+        onclick={async () => {
+          handleDeleteVideoTimestamp({
+            videoId: lastVideo.id,
+            supabase,
+            session,
+          });
+        }}
+      >
+        Reset Video Progress
+      </ContextMenu.Item>
     {/if}
   </ContextMenu.Content>
 </ContextMenu.Root>

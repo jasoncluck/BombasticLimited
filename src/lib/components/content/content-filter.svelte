@@ -215,26 +215,27 @@
       </DropdownMenu.Group>
     </DropdownMenu.Content>
   </DropdownMenu.Root>
-  {#if contentFilter.sort.key !== "playlistOrder"}
-    <div class="flex flex-col gap-2">
-      <DatePicker
-        label="Start Date"
-        bind:value={startDateValue}
-        isOpen={false}
-        {items}
-        dateFormatter={df}
-        onChange={handleStartDateChange}
-        onClear={() => handleStartDateChange(undefined)}
-      />
-      <DatePicker
-        label="End Date"
-        bind:value={endDateValue}
-        isOpen={false}
-        {items}
-        dateFormatter={df}
-        onChange={handleEndDateChange}
-        onClear={() => handleEndDateChange(undefined)}
-      />
-    </div>
-  {/if}
+  <!-- NOTE: Disabling date filters for now, would like to implement a year selection dropdown before release -->
+  <!-- {#if contentFilter.sort.key !== "playlistOrder"} -->
+  <!--   <div class="flex flex-col gap-2"> -->
+  <!--     <DatePicker -->
+  <!--       label="Start Date" -->
+  <!--       bind:value={startDateValue} -->
+  <!--       isOpen={false} -->
+  <!--       {items} -->
+  <!--       dateFormatter={df} -->
+  <!--       onChange={handleStartDateChange} -->
+  <!--       onClear={() => handleStartDateChange(undefined)} -->
+  <!--     /> -->
+  <!--     <DatePicker -->
+  <!--       label="End Date" -->
+  <!--       bind:value={endDateValue} -->
+  <!--       isOpen={false} -->
+  <!--       {items} -->
+  <!--       dateFormatter={df} -->
+  <!--       onChange={handleEndDateChange} -->
+  <!--       onClear={() => handleEndDateChange(undefined)} -->
+  <!--     /> -->
+  <!--   </div> -->
+  <!-- {/if} -->
 </div>

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { invalidate, invalidateAll } from "$app/navigation";
+  import { page } from "$app/state";
   import {
     carouselStateKeys,
     type CarouselsState,
@@ -7,11 +9,19 @@
   import { SOURCE_INFO, SOURCES } from "$lib/constants/source";
 
   import { userPreferences } from "$lib/state/user-preferences.svelte.js";
+  import { isBrowser } from "@supabase/ssr";
   import type { Snapshot } from "./$types.js";
   let { data } = $props();
 
   let { sourceVideos, continueWatchingVideos, playlists, session, supabase } =
     $derived(data);
+
+  // After oauth authn there is a history stack update that doesn't trigger a proper invalidation.
+  // This will look for the oauth success code returned and invalidate the playlists which are the only resource effected here
+  if (isBrowser() && page.url.searchParams.get("code")) {
+    invalidate("supabase:db:playlists");
+    invalidate("supabase:db:videos");
+  }
 
   export const snapshot: Snapshot<CarouselsState> = {
     capture: () => carouselsState,

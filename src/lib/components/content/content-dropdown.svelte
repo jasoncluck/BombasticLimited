@@ -13,7 +13,6 @@
   import type { Database } from "$lib/supabase/database.types";
   import ScrollArea from "../ui/scroll-area/scroll-area.svelte";
   import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
-  import { deleteVideoTimestamp } from "$lib/supabase/timestamps";
   import { handleDeleteVideoTimestamp } from "../video/video-service";
 
   let {
@@ -137,7 +136,7 @@
           });
         }}
       >
-        Reset Progress
+        Reset Video Progress
       </DropdownMenu.Item>
     {/if}
   </DropdownMenu.Content>

@@ -35,7 +35,6 @@
   let player = $state<any>();
 
   $effect(() => {
-    console.log(startSeconds);
     if (!player || !window) return;
 
     // Wait for the video to load before seeking
