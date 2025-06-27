@@ -148,9 +148,8 @@ export type Database = {
         Row: {
           created_at: string
           id: number
-          playlist_id: number | null
           updated_at: string
-          user_id: string | null
+          user_id: string
           video_id: string
           video_start_seconds: number | null
           watched_at: string | null
@@ -158,9 +157,8 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: number
-          playlist_id?: number | null
           updated_at?: string
-          user_id?: string | null
+          user_id: string
           video_id: string
           video_start_seconds?: number | null
           watched_at?: string | null
@@ -168,26 +166,41 @@ export type Database = {
         Update: {
           created_at?: string
           id?: number
-          playlist_id?: number | null
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
           video_id?: string
           video_start_seconds?: number | null
           watched_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "timestamps_playlist_id_fkey"
-            columns: ["playlist_id"]
-            isOneToOne: false
-            referencedRelation: "playlists"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "user_video_timestamps_video_id_fkey"
             columns: ["video_id"]
             isOneToOne: false
             referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_playlists: {
+        Row: {
+          playlist_id: number
+          user_id: string
+        }
+        Insert: {
+          playlist_id: number
+          user_id: string
+        }
+        Update: {
+          playlist_id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_playlists_playlist_id_fkey"
+            columns: ["playlist_id"]
+            isOneToOne: false
+            referencedRelation: "playlists"
             referencedColumns: ["id"]
           },
         ]
@@ -255,6 +268,10 @@ export type Database = {
       delete_user: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      generate_unique_username: {
+        Args: { base_username: string; exclude_user_id?: string }
+        Returns: string
       }
       get_in_progress_videos_with_timestamps: {
         Args: Record<PropertyKey, never>

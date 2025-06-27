@@ -40,7 +40,7 @@
   };
 </script>
 
-<div class="flex flex-col grow relative gap-10">
+<div class="flex flex-col grow relative">
   <ImageCropper.Root src={playlistImageUrl}>
     <PlaylistHeader
       breadcrumbs={[{ label: playlist.name }]}

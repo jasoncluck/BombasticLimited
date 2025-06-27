@@ -7,7 +7,6 @@ CREATE TABLE public.profiles (
   sources Source[] DEFAULT ARRAY['giantbomb', 'nextlander', 'remap']::Source[],
   content_description ContentDescription DEFAULT 'BRIEF',
   content_display ContentDisplay DEFAULT 'CAROUSEL',
-  playlists uuid[] DEFAULT ARRAY[]::uuid[],
   PRIMARY KEY (id)
 );
 
@@ -49,37 +48,6 @@ ON public.profiles
 FOR SELECT
 TO authenticated
 USING (true);
-
--- Helper function to add a playlist to user's playlists array
-CREATE OR REPLACE FUNCTION add_playlist_to_user(user_id uuid, playlist_id number)
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = ''
-AS $$
-BEGIN
-    UPDATE public.profiles 
-    SET playlists = array_append(playlists, playlist_id)
-    WHERE id = user_id 
-    AND NOT (playlist_id = ANY(playlists)); -- Only add if not already present
-END;
-$$;
-
--- Helper function to remove a playlist from user's playlists array
-CREATE OR REPLACE FUNCTION remove_playlist_from_user(user_id uuid, playlist_id number)
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = ''
-AS $$
-BEGIN
-    UPDATE public.profiles 
-    SET playlists = array_remove(playlists, playlist_id)
-    WHERE id = user_id;
-END;
-$$;
-
--- Grant execute permission to authenticated users for playlist functions
-GRANT EXECUTE ON FUNCTION add_playlist_to_user(uuid, uuid) TO authenticated;
-GRANT EXECUTE ON FUNCTION remove_playlist_from_user(uuid, uuid) TO authenticated;
 
 -- Helper function to generate a unique username from full_name
 CREATE OR REPLACE FUNCTION generate_unique_username(base_username text, exclude_user_id uuid DEFAULT NULL)

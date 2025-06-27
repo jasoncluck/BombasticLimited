@@ -38,7 +38,7 @@
 
 <div class="flex flex-col relative bg-background-lighter">
   {#if session && continueWatchingVideos.length > 0}
-    <div class="flex flex-col mb-10">
+    <div class="flex flex-col mb-8">
       <a href="/continue" class="header-link-sticky"> Continue Watching </a>
 
       <Content
@@ -60,19 +60,21 @@
     Latest Videos
   </h1>
 
-  <div class="flex flex-col">
+  <div class="flex flex-col gap-8">
     {#each SOURCES as source (source)}
-      <a href={`/${source}/latest`} class="header-link-sticky">
-        {SOURCE_INFO[source].displayName}
-      </a>
-      <Content
-        videos={sourceVideos[source]}
-        {playlists}
-        contentDisplay={userPreferences.contentDisplay}
-        bind:carouselState={carouselsState[source]}
-        {supabase}
-        {session}
-      />
+      <div class="flex flex-col gap-4">
+        <a href={`/${source}/latest`} class="header-link-sticky">
+          {SOURCE_INFO[source].displayName}
+        </a>
+        <Content
+          videos={sourceVideos[source]}
+          {playlists}
+          contentDisplay={userPreferences.contentDisplay}
+          bind:carouselState={carouselsState[source]}
+          {supabase}
+          {session}
+        />
+      </div>
     {/each}
   </div>
 </div>

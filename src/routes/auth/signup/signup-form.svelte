@@ -110,9 +110,6 @@
           onclick={async () => {
             const { data, error } = await supabase.auth.signInWithOAuth({
               provider: "discord",
-              options: {
-                redirectTo: "/auth/callback",
-              },
             });
             if (error) {
               console.error(error);

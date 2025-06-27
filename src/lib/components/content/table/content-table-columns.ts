@@ -2,7 +2,7 @@ import { renderComponent, renderSnippet } from "$lib/components/ui/data-table";
 import type { Video } from "$lib/supabase/videos";
 import type { ColumnDef } from "@tanstack/table-core";
 import { createRawSnippet } from "svelte";
-import ContentDropdown from "../content-dropdown.svelte";
+import ContentActionsDropdown from "../content-actions-dropdown.svelte";
 import ContentTableTitle from "./content-table-title.svelte";
 import ContentTableImage from "./content-table-image.svelte";
 import ContentTableSelect from "./content-table-select.svelte";
@@ -82,7 +82,7 @@ export function createContentColumns({
       cell: ({ row }) => {
         const video = row.original;
 
-        return renderComponent(ContentDropdown, {
+        return renderComponent(ContentActionsDropdown, {
           videos: [video],
           playlist: getPlaylist(),
           playlists: getPlaylists(),

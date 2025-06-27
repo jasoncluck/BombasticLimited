@@ -8,11 +8,13 @@ import type { Database } from "./database.types";
 export async function saveVideoTimestamp({
   videoId,
   currentTimeSeconds,
+  watchedAt,
   supabase,
   session,
 }: {
   videoId: string;
   currentTimeSeconds: number;
+  watchedAt?: Date;
   supabase: SupabaseClient<Database>;
   session: Session | null;
 }) {
@@ -24,6 +26,7 @@ export async function saveVideoTimestamp({
         user_id: session?.user.id,
         video_id: videoId,
         video_start_seconds: currentTimeSeconds,
+        watched_at: watchedAt?.toISOString() ?? null,
       },
       { onConflict: "user_id,video_id" },
     );

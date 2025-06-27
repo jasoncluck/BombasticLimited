@@ -6,7 +6,7 @@
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
   import { getContentState } from "$lib/state/content.svelte";
-  import ContentDropdown from "./content-dropdown.svelte";
+  import ContentActionsDropdown from "./content-actions-dropdown.svelte";
 
   const {
     playlist,
@@ -43,7 +43,7 @@
   </div>
   {#if contentState.isSelectionMode && contentState.selectedVideos.length > 0}
     <div>
-      <ContentDropdown
+      <ContentActionsDropdown
         bind:videos={contentState.selectedVideos}
         isContentSelect={true}
         {playlist}

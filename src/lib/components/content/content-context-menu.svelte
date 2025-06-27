@@ -64,13 +64,18 @@
   >
     {#if playlist}
       <ContextMenu.Item
-        onclick={() =>
-          handleRemoveVideosFromPlaylist({
+        onclick={async () => {
+          const { error } = await handleRemoveVideosFromPlaylist({
             videos,
             playlist,
             playlistImages: contentState.playlistImages,
             supabase,
-          })}
+          });
+
+          if (!error) {
+            videos = [];
+          }
+        }}
       >
         Remove {videos.length === 1 ? "video" : "videos"} from playlist</ContextMenu.Item
       >
@@ -126,7 +131,7 @@
     {/if}
 
     {@const lastVideo = videos[videos.length - 1]}
-    {#if playlist}
+    {#if playlist && videos.length === 1}
       <ContextMenu.Item
         onclick={async () =>
           (contentState.playlistImages[playlist.id] =
@@ -139,7 +144,7 @@
             }))}>Set as playlist image</ContextMenu.Item
       >
     {/if}
-    {#if session && isVideoWithTimestamp(lastVideo) && lastVideo.video_start_seconds}
+    {#if session && videos.length === 1 && isVideoWithTimestamp(lastVideo) && (lastVideo.video_start_seconds || lastVideo?.watched_at)}
       <ContextMenu.Item
         onclick={async () => {
           handleDeleteVideoTimestamp({
@@ -149,7 +154,7 @@
           });
         }}
       >
-        Reset Video Progress
+        Reset video Progress
       </ContextMenu.Item>
     {/if}
   </ContextMenu.Content>

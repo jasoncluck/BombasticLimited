@@ -49,6 +49,7 @@ export const load: PageServerLoad = async ({
       session,
     });
     sourceVideos[source] = videos;
+    console.log(videos);
   }
 
   const continueWatchingDataFilters: TimestampFilter = {

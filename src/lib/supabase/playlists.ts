@@ -115,7 +115,9 @@ export async function getPlaylistVideos({
 
   // Sorting by playlist order
   query.order(sortOptionInfo.tableColumn, {
-    ascending: contentFilter.sort.order === "ascending",
+    ascending:
+      contentFilter.sort.key === "playlistOrder" ||
+      contentFilter.sort.order === "ascending",
   });
 
   if (contentFilter.sort.key !== "playlistOrder" && contentFilter.startDate) {

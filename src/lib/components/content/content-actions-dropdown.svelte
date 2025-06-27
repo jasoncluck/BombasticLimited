@@ -51,13 +51,17 @@
   <DropdownMenu.Content class="p-1">
     {#if playlist}
       <DropdownMenu.Item
-        onclick={() => {
-          handleRemoveVideosFromPlaylist({
+        onclick={async () => {
+          const { error } = await handleRemoveVideosFromPlaylist({
             videos,
             playlist,
             playlistImages: contentState.playlistImages,
             supabase,
           });
+
+          if (!error) {
+            videos = [];
+          }
         }}
         >Remove {videos.length === 1 ? "video" : "videos"} from playlist</DropdownMenu.Item
       >
@@ -106,7 +110,6 @@
     {#if isContentSelect && videos.length > 0}
       <DropdownMenu.Item
         onclick={() => {
-          contentState.isSelectionMode = false;
           videos = [];
         }}>Deselect all</DropdownMenu.Item
       >
@@ -126,7 +129,7 @@
             }))}>Set as playlist image</DropdownMenu.Item
       >
     {/if}
-    {#if session && isVideoWithTimestamp(firstVideo) && firstVideo.video_start_seconds}
+    {#if session && !isContentSelect && isVideoWithTimestamp(firstVideo) && firstVideo.video_start_seconds}
       <DropdownMenu.Item
         onclick={async () => {
           handleDeleteVideoTimestamp({
@@ -136,7 +139,7 @@
           });
         }}
       >
-        Reset Video Progress
+        Reset video Progress
       </DropdownMenu.Item>
     {/if}
   </DropdownMenu.Content>

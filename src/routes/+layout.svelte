@@ -215,9 +215,9 @@
   });
 
   afterNavigate(({ from, to, delta }) => {
-    contentState.isSelectionMode = false;
     // Reset scroll state if new page
     if (!delta && from?.url.pathname !== to?.url.pathname) {
+      contentState.isSelectionMode = false;
       if (contentViewportRef) {
         contentViewportRef.scrollTop = 0;
         contentViewportRef.scrollLeft = 0;

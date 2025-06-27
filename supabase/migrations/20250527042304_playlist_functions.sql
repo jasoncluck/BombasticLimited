@@ -1,3 +1,4 @@
+
 CREATE OR REPLACE FUNCTION insert_playlist_videos(
   p_playlist_id int8,
   p_video_ids text[],  
@@ -23,6 +24,11 @@ BEGIN
   IF array_length IS NULL OR array_length = 0 THEN
     RAISE EXCEPTION 'Video IDs array cannot be empty';
   END IF;
+
+  -- Ensure the playlist is associated with the user's profile
+  INSERT INTO public.user_playlists (user_id, playlist_id)
+  VALUES (p_user_id, p_playlist_id)
+  ON CONFLICT DO NOTHING;
 
   -- Start a transaction to ensure consistency
   BEGIN

@@ -2,6 +2,7 @@
   import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
   import Progress from "$lib/components/ui/progress/progress.svelte";
   import { getVideoSecondsOffset } from "$lib/components/video/video-service";
+  import { Check, Loader } from "@lucide/svelte";
 
   type ContentCardProps = {
     video: Video;
@@ -12,7 +13,7 @@
 
 <div class="relative min-w-24 max-w-32 shrink-0">
   <img class="w-full h-full" src={video.thumbnail_url} alt={video.title} />
-  {#if isVideoWithTimestamp(video) && video.video_start_seconds && video.duration}
+  {#if isVideoWithTimestamp(video) && !video.watched_at && video.video_start_seconds && video.duration}
     <Progress
       class="absolute -bottom-1 left-0 h-[5%]"
       value={Math.floor(
@@ -22,5 +23,12 @@
         }),
       )}
     />
+  {:else if isVideoWithTimestamp(video) && video.watched_at}
+    <div
+      class="absolute bottom-0 right-0 flex bg-background-lighter w-full gap-1 px-1 items-center justify-center"
+    >
+      <Check class="text-primary" />
+      <p class="text-xs text-primary">Watched</p>
+    </div>
   {/if}
 </div>

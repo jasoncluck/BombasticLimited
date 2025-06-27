@@ -18,7 +18,7 @@ export type TimestampResponse = Tables<"timestamps">;
 
 export type VideoTimestamp = Pick<
   TimestampResponse,
-  "video_start_seconds" | "updated_at"
+  "video_start_seconds" | "updated_at" | "watched_at"
 >;
 
 export type VideoResponse = Tables<"videos">;

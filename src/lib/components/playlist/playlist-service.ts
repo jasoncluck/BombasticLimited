@@ -66,7 +66,6 @@ export async function handleCreatePlaylist({
   // Trigger populates short ID
   if (!error && playlist) {
     showNotification(`Created Playlist: ${playlist.name}`);
-    invalidate("supabase:db:playlists");
   }
   return { playlist, error };
 }
@@ -229,6 +228,7 @@ export async function handleRemoveVideosFromPlaylist({
     showNotification(`Removed video from ${playlist.name}.`);
   }
   invalidate("supabase:db:playlists");
+  return { error };
 }
 
 export async function handleUpdatePlaylistImage({

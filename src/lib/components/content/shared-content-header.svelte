@@ -74,39 +74,41 @@
   onActive={() => (showFloatingBreadcrumbs = false)}
   onInactive={() => (showFloatingBreadcrumbs = true)}
 >
-  <div
-    class="flex flex-col m-4 md:flex-row md:flex-wrap justify-between gap-y-8 mb-2"
-    {...restProps}
-  >
-    {@render children()}
-  </div>
-  <div class="flex justify-between items-center">
-    <div class="flex items-center">
-      {#if playlist}{/if}
+  <div class="mb-6">
+    <div
+      class="flex flex-col m-4 md:flex-row md:flex-wrap justify-between gap-y-8 mb-2"
+      {...restProps}
+    >
+      {@render children()}
     </div>
-  </div>
+    <div class="flex justify-between items-center">
+      <div class="flex items-center">
+        {#if playlist}{/if}
+      </div>
+    </div>
 
-  <!-- Right side: ContentSelect and ContentFilters on same row -->
-  <hr class="border-1 m-2" />
-  <div class="flex justify-between mt-4">
-    {#if session}
-      <div class="mr-auto ml-4">
-        <ContentSelect
-          {playlist}
-          {playlists}
-          {supabase}
-          {session}
-          displayLabel={true}
-        />
+    <!-- Right side: ContentSelect and ContentFilters on same row -->
+    <hr class="border-1 m-2" />
+    <div class="flex justify-between mt-4">
+      {#if session}
+        <div class="mr-auto ml-4">
+          <ContentSelect
+            {playlist}
+            {playlists}
+            {supabase}
+            {session}
+            displayLabel={true}
+          />
+        </div>
+      {/if}
+      <div class="flex items-center gap-4 ml-auto mr-4">
+        <ContentFilters {contentFilter} {view} />
+      </div>
+    </div>
+    {#if currentPage && numPages > 1}
+      <div class="mt-4">
+        <ContentPagination count={videosCount} bind:currentPage />
       </div>
     {/if}
-    <div class="flex items-center gap-4 ml-auto mr-4">
-      <ContentFilters {contentFilter} {view} />
-    </div>
   </div>
-  {#if currentPage && numPages > 1}
-    <div class="mt-4 mb-6">
-      <ContentPagination count={videosCount} bind:currentPage />
-    </div>
-  {/if}
 </IntersectionObserver>
