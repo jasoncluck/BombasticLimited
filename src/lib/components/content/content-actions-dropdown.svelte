@@ -132,7 +132,7 @@
             }))}>Set as playlist image</DropdownMenu.Item
       >
     {/if}
-    {#if session && !isContentSelect && isVideoWithTimestamp(firstVideo) && (firstVideo.video_start_seconds || firstVideo.watched_at)}
+    {#if session && !isContentSelect && isVideoWithTimestamp(firstVideo)}
       <DropdownMenu.Item
         onclick={async () => {
           handleDeleteVideoTimestamp({
@@ -148,7 +148,7 @@
     {#if (session && !isContentSelect && !isVideoWithTimestamp(firstVideo)) || (isVideoWithTimestamp(firstVideo) && !firstVideo.watched_at)}
       <DropdownMenu.Item
         onclick={async () => {
-          handleAddVideoTimestamp({
+          await handleAddVideoTimestamp({
             watchedAt: new Date(),
             video: firstVideo,
             session,

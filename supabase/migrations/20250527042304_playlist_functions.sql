@@ -1,8 +1,7 @@
 
 CREATE OR REPLACE FUNCTION insert_playlist_videos(
   p_playlist_id int8,
-  p_video_ids text[],  
-  p_user_id uuid
+  p_video_ids text[]
 )
 RETURNS TABLE (
   id int8,
@@ -26,8 +25,8 @@ BEGIN
   END IF;
 
   -- Ensure the playlist is associated with the user's profile
-  INSERT INTO public.user_playlists (user_id, playlist_id)
-  VALUES (p_user_id, p_playlist_id)
+  INSERT INTO public.user_playlists (playlist_id)
+  VALUES (p_playlist_id)
   ON CONFLICT DO NOTHING;
 
   -- Start a transaction to ensure consistency
@@ -80,11 +79,10 @@ BEGIN
           AND pv.video_id = v_id;
       ELSE
         -- Insert the new item
-        INSERT INTO public.playlist_videos (playlist_id, video_id, user_id, video_position)
+        INSERT INTO public.playlist_videos (playlist_id, video_id, video_position)
         VALUES (
           p_playlist_id,
           v_id::text,  -- Explicitly cast to text
-          p_user_id,
           current_position
         )
         RETURNING * INTO inserted_row;
@@ -97,7 +95,6 @@ BEGIN
       id := inserted_row.id;
       playlist_id := inserted_row.playlist_id;
       video_id := inserted_row.video_id;
-      user_id := inserted_row.user_id;
       video_position := inserted_row.video_position;
       
       RETURN NEXT;

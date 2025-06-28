@@ -10,8 +10,14 @@
   import type { Snapshot } from "@sveltejs/kit";
 
   let { data } = $props();
-  const { videos, playlists, session, supabase, source, contentFilter } =
-    $derived(data);
+  const {
+    videos = [],
+    playlists,
+    session,
+    supabase,
+    source,
+    contentFilter,
+  } = $derived(data);
 
   let carouselState = $state<CarouselState>({ lastViewedIndex: 0 });
 

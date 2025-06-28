@@ -7,8 +7,11 @@ import { isVideoFilter } from "$lib/components/content/content-filter";
 export const load: PageServerLoad = async ({
   params,
   parent,
+  depends,
   locals: { supabase, session },
 }) => {
+  depends("supabase:db:videos");
+
   if (!isSource(params.source)) {
     redirect(303, "/");
   }

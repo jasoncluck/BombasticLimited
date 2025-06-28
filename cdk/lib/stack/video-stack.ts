@@ -44,6 +44,25 @@ export class VideoStack extends Stack {
       },
     );
 
+    const populatePlaylistsLambda = new nodejs.NodejsFunction(
+      this,
+      "BombifyPopulatePlaylists",
+      {
+        functionName: "BombifyPopulatePlaylists",
+        description: "Populates the playlists table using the YouTube API",
+        entry: path.join(__dirname, "../lambda/populate-playlists.ts"),
+        handler: "populatePlaylists",
+        runtime: lambda.Runtime.NODEJS_20_X,
+        timeout: Duration.minutes(5),
+        environment: {
+          GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,
+          SUPABASE_SERVICE_API_KEY_PROD:
+            process.env.SUPABASE_SERVICE_API_KEY_PROD,
+          PUBLIC_SUPABASE_URL_PROD: process.env.PUBLIC_SUPABASE_URL_PROD,
+        },
+      },
+    );
+
     for (const source of CHANNEL_SOURCES) {
       // Schedule the lambda to run daily and every 30 minutes
       const sourceRule = new events.Rule(this, `${source}_Rule`, {

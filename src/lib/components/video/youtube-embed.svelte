@@ -121,20 +121,20 @@
 
     const watchedPercent = currentTimeSeconds / videoDurationSeconds;
     if (watchedPercent >= VIDEO_DELETE_SECONDS_PERCENT) {
-      handleAddVideoTimestamp({
-        timestampSeconds: currentTimeSeconds,
+      saveVideoTimestamp({
         watchedAt: new Date(),
-        video,
+        currentTimeSeconds,
+        videoId: video.id,
         session,
         supabase,
       });
     } else {
-      handleAddVideoTimestamp({
-        timestampSeconds: currentTimeSeconds,
-        video,
+      saveVideoTimestamp({
+        watchedAt: null,
+        currentTimeSeconds,
+        videoId: video.id,
         session,
         supabase,
-        watchedAt: null,
       });
     }
   }

@@ -261,14 +261,14 @@ ALTER TABLE "public"."playlists_custom_seq" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."playlists" (
-    "user_id" uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    "created_by" "uuid" NOT NULL,
+    "id" bigint DEFAULT "nextval"('"public"."playlists_custom_seq"'::"regclass") NOT NULL,
+    "created_by" uuid REFERENCES auth.users(id) ON DELETE CASCADE DEFAULT NULL,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "name" "text" NOT NULL,
     "short_id" "text" DEFAULT 'NULL'::"text" NOT NULL,
     "search_vector" "tsvector",
     "image_url" "text",
-    "id" bigint DEFAULT "nextval"('"public"."playlists_custom_seq"'::"regclass") NOT NULL,
+    "youtube_id" text DEFAULT NULL,
     CONSTRAINT "playlists_name_check" CHECK (("length"("name") < 50))
 );
 
@@ -370,11 +370,6 @@ ALTER TABLE ONLY "public"."playlist_videos"
 
 
 
-ALTER TABLE ONLY "public"."playlists"
-    ADD CONSTRAINT "unique_user_playlist" UNIQUE ("user_id", "name");
-
-
-
 ALTER TABLE ONLY "public"."timestamps"
     ADD CONSTRAINT "unique_user_video" UNIQUE ("user_id", "video_id");
 
@@ -419,13 +414,6 @@ ALTER TABLE ONLY "public"."playlist_videos"
     ADD CONSTRAINT "playlist_videos_video_id_fkey" FOREIGN KEY ("video_id") REFERENCES "public"."videos"("id") ON DELETE CASCADE;
 
 
-
-ALTER TABLE ONLY "public"."playlists"
-    ADD CONSTRAINT "playlists_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
-
-
-
-
 ALTER TABLE ONLY "public"."timestamps"
     ADD CONSTRAINT "user_video_timestamps_video_id_fkey" FOREIGN KEY ("video_id") REFERENCES "public"."videos"("id") ON UPDATE CASCADE ON DELETE CASCADE;
 
@@ -447,10 +435,6 @@ CREATE POLICY "Authenticated users can update their own video timestamps" ON "pu
 
 
 
-CREATE POLICY "Enable delete for users based on user_id" ON "public"."playlists" FOR DELETE TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
-
-
-
 CREATE POLICY "Enable delete for users based on user_id" ON "public"."timestamps" FOR DELETE USING ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
 
 
@@ -459,7 +443,7 @@ CREATE POLICY "Enable insert for authenticated users only" ON "public"."playlist
 
 
 
-CREATE POLICY "Enable insert for users based on user_id" ON "public"."playlists" FOR INSERT TO "authenticated" WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
+CREATE POLICY "Enable insert for users based on created_by" ON "public"."playlists" FOR INSERT TO "authenticated" WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "created_by"));
 
 
 

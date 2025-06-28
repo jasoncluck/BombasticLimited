@@ -116,7 +116,7 @@ export async function handleAddVideoTimestamp({
   if (error) {
     showNotification("Unable to save timestamp");
   }
-  // invalidate("supabase:db:videos");
+  invalidate("supabase:db:videos");
 }
 
 export async function handleDeleteVideoTimestamp({
