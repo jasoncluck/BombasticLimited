@@ -52,7 +52,7 @@ export const populateVideos = async ({
       .select("id")
       .eq("source", source)
       .order("published_at", { ascending: false })
-      .limit(videosToCheck);
+      .limit(videosToCheck / 2);
 
     if (error) {
       console.error("Error fetching videos to mark:", error);
