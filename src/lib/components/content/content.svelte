@@ -2,7 +2,7 @@
   import type { Database } from "$lib/supabase/database.types";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { CarouselState, ContentDisplay } from "./content";
-  import { invalidate } from "$app/navigation";
+  import { afterNavigate, invalidate, onNavigate } from "$app/navigation";
   import { type Video, type VideoWithTimestamp } from "$lib/supabase/videos";
   import { mostRecentVideo } from "$lib/state/videos.svelte";
   import type { HTMLAttributes } from "svelte/elements";
@@ -95,32 +95,32 @@
   {session}
 >
   <div {...restProps} class="mx-4 flex flex-col gap-5">
-    <!-- <ContentTable {videos} {columns} {playlist} {supabase} {session} /> -->
-    {#if contentDisplay === "CAROUSEL"}
-      <ContentCarousel
-        {videos}
-        {videosCount}
-        {playlists}
-        {playlist}
-        {isContinueVideos}
-        bind:carouselState
-        {supabase}
-        {session}
-      />
-    {:else}
-      <div class="mb-20">
-        <ContentTiles
-          bind:videos
-          {videosCount}
-          {playlists}
-          {playlist}
-          {isContinueVideos}
-          {allowVideoReorder}
-          {contentFilter}
-          {supabase}
-          {session}
-        />
-      </div>
-    {/if}
+    <ContentTable {videos} {columns} {playlist} {supabase} {session} />
+    <!-- {#if contentDisplay === "CAROUSEL"} -->
+    <!--   <ContentCarousel -->
+    <!--     {videos} -->
+    <!--     {videosCount} -->
+    <!--     {playlists} -->
+    <!--     {playlist} -->
+    <!--     {isContinueVideos} -->
+    <!--     bind:carouselState -->
+    <!--     {supabase} -->
+    <!--     {session} -->
+    <!--   /> -->
+    <!-- {:else} -->
+    <!--   <div class="mb-20"> -->
+    <!--     <ContentTiles -->
+    <!--       bind:videos -->
+    <!--       {videosCount} -->
+    <!--       {playlists} -->
+    <!--       {playlist} -->
+    <!--       {isContinueVideos} -->
+    <!--       {allowVideoReorder} -->
+    <!--       {contentFilter} -->
+    <!--       {supabase} -->
+    <!--       {session} -->
+    <!--     /> -->
+    <!--   </div> -->
+    <!-- {/if} -->
   </div>
 </ContentContextMenu>

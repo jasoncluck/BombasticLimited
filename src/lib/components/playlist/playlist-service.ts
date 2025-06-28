@@ -14,7 +14,7 @@ import {
   type Playlist,
   type PlaylistImageProperties,
 } from "$lib/supabase/playlists";
-import type { Session, SupabaseClient } from "@supabase/supabase-js";
+import { type Session, type SupabaseClient } from "@supabase/supabase-js";
 import { getCroppedImg } from "../ui/image-cropper/utils";
 import type { CropArea } from "svelte-easy-crop";
 import type { Video } from "$lib/supabase/videos";

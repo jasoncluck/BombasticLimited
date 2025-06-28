@@ -191,9 +191,9 @@ export function isVideoWithTimestamp(
 ): video is VideoWithTimestamp {
   return (
     !!video &&
-    "video_start_seconds" in video &&
+    (("watched_at" in video && !!video.watched_at) ||
+      ("video_start_seconds" in video && !!video.video_start_seconds)) &&
     "updated_at" in video &&
-    !!video.video_start_seconds &&
     !!video.updated_at
   );
 }

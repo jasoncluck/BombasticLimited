@@ -2,14 +2,8 @@
   import { videoDurationToSeconds } from "$lib/components/video/video-service.js";
   import YoutubeEmbed from "$lib/components/video/youtube-embed.svelte";
   import { pageState } from "$lib/state/page.svelte";
+  import type { Video } from "$lib/supabase/videos";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
-
-  interface VideoData {
-    title: string;
-    description?: string;
-    duration: string;
-    published_at: string;
-  }
 
   interface ProcessedLine {
     text: string;
@@ -25,7 +19,7 @@
     session,
     baseUrl = "/video",
   }: {
-    video: VideoData;
+    video: Video;
     videoId: string;
     startSeconds: number | undefined | null;
     supabase: SupabaseClient;
@@ -92,7 +86,7 @@
   <YoutubeEmbed
     {supabase}
     {session}
-    {videoId}
+    {video}
     {startSeconds}
     durationSeconds={videoDurationToSeconds(video?.duration)}
   />

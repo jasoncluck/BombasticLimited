@@ -5,23 +5,24 @@
   import { saveVideoTimestamp } from "$lib/supabase/timestamps";
   import { beforeNavigate } from "$app/navigation";
   import type { Playlist } from "$lib/supabase/playlists";
-  import { mostRecentVideo } from "$lib/state/videos.svelte";
+  import { handleAddVideoTimestamp } from "./video-service";
+  import type { Video } from "$lib/supabase/videos";
 
   // Amount of seconds to wait before saving a new timestamp if none exists
   const VIDEO_SAVE_SECONDS_START = 15;
   // Amount of seconds offset from the end of the video to delete a timstamp
-  const VIDEO_DELETE_SECONDS_OFFSET = 60 * 5;
+  const VIDEO_DELETE_SECONDS_PERCENT = 0.9;
   // Amount of seconds offset to save a new timestamp if one already exists
   const VIDEO_SAVE_SECONDS_DELTA = 15;
 
   const {
-    videoId,
+    video,
     startSeconds,
     supabase,
     session,
     durationSeconds,
   }: {
-    videoId: string;
+    video: Video;
     startSeconds: number | undefined | null;
     supabase: SupabaseClient;
     session: Session | null;
@@ -64,12 +65,12 @@
     }
   });
 
-  onMount(async () => {
+  onMount(() => {
     const windowRef: any = window;
 
     if (typeof windowRef.YT !== "undefined") {
       player = new windowRef.YT.Player("player", {
-        videoId,
+        videoId: video.id,
         playerVars: {
           playsinline: 1,
           fs: 1, // Enable fullscreen button
@@ -107,7 +108,7 @@
 
   // Helper function to save timestamp for a specific video with its duration
   function saveTimestampForVideo(
-    targetVideoId: string,
+    video: Video,
     currentTimeSeconds: number,
     videoDurationSeconds: number,
   ) {
@@ -118,21 +119,19 @@
       return;
     }
 
-    if (
-      videoDurationSeconds - currentTimeSeconds <=
-      VIDEO_DELETE_SECONDS_OFFSET
-    ) {
-      saveVideoTimestamp({
-        currentTimeSeconds,
+    const watchedPercent = currentTimeSeconds / videoDurationSeconds;
+    if (watchedPercent >= VIDEO_DELETE_SECONDS_PERCENT) {
+      handleAddVideoTimestamp({
+        timestampSeconds: currentTimeSeconds,
         watchedAt: new Date(),
-        videoId: targetVideoId,
+        video,
         session,
         supabase,
       });
     } else {
-      saveVideoTimestamp({
-        currentTimeSeconds,
-        videoId: targetVideoId,
+      handleAddVideoTimestamp({
+        timestampSeconds: currentTimeSeconds,
+        video,
         session,
         supabase,
         watchedAt: null,
@@ -150,12 +149,11 @@
           !startSeconds ||
           Math.abs(currentTimeSeconds - startSeconds) > VIDEO_SAVE_SECONDS_DELTA
         ) {
-          saveTimestampForVideo(videoId, currentTimeSeconds, durationSeconds);
+          saveTimestampForVideo(video, currentTimeSeconds, durationSeconds);
         }
       } catch (error) {
         console.error("Error while trying to save current video time.", error);
       }
-      // invalidate("supabase:db:videos");
     }
   }
 </script>

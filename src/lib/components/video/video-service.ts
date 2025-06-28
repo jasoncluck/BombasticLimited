@@ -10,7 +10,10 @@ import type { Database } from "$lib/supabase/database.types";
 import type { Source } from "$lib/constants/source";
 import type { TimestampFilter, VideoFilter } from "../content/content-filter";
 import { goto, invalidate } from "$app/navigation";
-import { deleteVideoTimestamp } from "$lib/supabase/timestamps";
+import {
+  deleteVideoTimestamp,
+  saveVideoTimestamp,
+} from "$lib/supabase/timestamps";
 
 export async function fetchMoreInProgressVideos({
   contentFilter,
@@ -87,6 +90,33 @@ export async function fetchMoreSourceVideos({
   }
 
   return newVideos;
+}
+
+export async function handleAddVideoTimestamp({
+  video,
+  timestampSeconds,
+  watchedAt,
+  session,
+  supabase,
+}: {
+  video: Video;
+  timestampSeconds?: number;
+  watchedAt: Date | null;
+  session: Session | null;
+  supabase: SupabaseClient<Database>;
+}) {
+  const { error } = await saveVideoTimestamp({
+    watchedAt,
+    currentTimeSeconds: timestampSeconds,
+    videoId: video.id,
+    session,
+    supabase,
+  });
+
+  if (error) {
+    showNotification("Unable to save timestamp");
+  }
+  // invalidate("supabase:db:videos");
 }
 
 export async function handleDeleteVideoTimestamp({

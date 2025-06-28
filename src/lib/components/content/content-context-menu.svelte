@@ -154,7 +154,7 @@
           });
         }}
       >
-        Reset video Progress
+        Reset video progress
       </ContextMenu.Item>
     {/if}
   </ContextMenu.Content>

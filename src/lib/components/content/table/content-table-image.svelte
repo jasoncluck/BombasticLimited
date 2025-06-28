@@ -11,8 +11,12 @@
   const { video = $bindable() }: ContentCardProps = $props();
 </script>
 
-<div class="relative min-w-24 max-w-32 shrink-0">
-  <img class="w-full h-full" src={video.thumbnail_url} alt={video.title} />
+<div class="relative w-32 h-18 hrink-0 aspect-video">
+  <img
+    class="w-full h-full object-cover"
+    src={video.thumbnail_url}
+    alt={video.title}
+  />
   {#if isVideoWithTimestamp(video) && !video.watched_at && video.video_start_seconds && video.duration}
     <Progress
       class="absolute -bottom-1 left-0 h-[5%]"
@@ -23,7 +27,7 @@
         }),
       )}
     />
-  {:else if isVideoWithTimestamp(video) && video.watched_at}
+  {:else if "watched_at" in video && video.watched_at}
     <div
       class="absolute bottom-0 right-0 flex bg-background-lighter w-full gap-1 px-1 items-center justify-center"
     >

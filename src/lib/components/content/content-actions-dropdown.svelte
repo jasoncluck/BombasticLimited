@@ -13,7 +13,10 @@
   import type { Database } from "$lib/supabase/database.types";
   import ScrollArea from "../ui/scroll-area/scroll-area.svelte";
   import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
-  import { handleDeleteVideoTimestamp } from "../video/video-service";
+  import {
+    handleAddVideoTimestamp,
+    handleDeleteVideoTimestamp,
+  } from "../video/video-service";
 
   let {
     videos = $bindable(),
@@ -129,7 +132,7 @@
             }))}>Set as playlist image</DropdownMenu.Item
       >
     {/if}
-    {#if session && !isContentSelect && isVideoWithTimestamp(firstVideo) && firstVideo.video_start_seconds}
+    {#if session && !isContentSelect && isVideoWithTimestamp(firstVideo) && (firstVideo.video_start_seconds || firstVideo.watched_at)}
       <DropdownMenu.Item
         onclick={async () => {
           handleDeleteVideoTimestamp({
@@ -139,7 +142,21 @@
           });
         }}
       >
-        Reset video Progress
+        Reset video progress
+      </DropdownMenu.Item>
+    {/if}
+    {#if (session && !isContentSelect && !isVideoWithTimestamp(firstVideo)) || (isVideoWithTimestamp(firstVideo) && !firstVideo.watched_at)}
+      <DropdownMenu.Item
+        onclick={async () => {
+          handleAddVideoTimestamp({
+            watchedAt: new Date(),
+            video: firstVideo,
+            session,
+            supabase,
+          });
+        }}
+      >
+        Mark video as watched
       </DropdownMenu.Item>
     {/if}
   </DropdownMenu.Content>
