@@ -19,7 +19,7 @@ BEGIN
     FROM public.timestamps t
     JOIN public.videos v ON t.video_id = v.id
     WHERE t.user_id = (SELECT auth.uid())
-      AND t.watched_at IS NULL;
+    AND t.watched_at IS NULL;
 END;$function$;
 
 CREATE OR REPLACE FUNCTION public.get_playlist_videos(p_playlist_id int8)
@@ -40,8 +40,8 @@ BEGIN
         v.published_at, 
         v.duration,
         t.video_start_seconds,
-        t.updated_at,
-        t.watched_at
+        t.watched_at,
+        t.updated_at
     FROM public.playlist_videos pv
     JOIN public.videos v ON pv.video_id = v.id
     LEFT JOIN public.timestamps t ON pv.video_id = t.video_id AND t.user_id = (select auth.uid())

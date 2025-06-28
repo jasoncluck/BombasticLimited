@@ -1,8 +1,6 @@
 import { type TimestampResponse } from "$lib/supabase/videos";
 
 export interface MostRecentVideo {
-  timestamp: TimestampResponse | null;
+  videoId: string | null;
 }
-export let mostRecentVideo = $state<MostRecentVideo>({
-  timestamp: null,
-});
+export let mostRecentVideo = $state<MostRecentVideo>({ videoId: null });

@@ -15,6 +15,8 @@
   import { createContentColumns } from "./table/content-table-columns";
   import ContentTable from "./table/content-table.svelte";
   import ContentContextMenu from "./content-context-menu.svelte";
+  import ContentCarousel from "./content-carousel.svelte";
+  import ContentTiles from "./content-tiles.svelte";
 
   type ContentProps = HTMLAttributes<HTMLDivElement> & {
     videos: Video[] | VideoWithTimestamp[];
@@ -62,10 +64,11 @@
   let contextMenuIsOpen = $state(false);
 
   $effect(() => {
-    if (mostRecentVideo.timestamp) {
-      invalidate("supabase:db:videos");
-      mostRecentVideo.timestamp = null;
-    }
+    // if (mostRecentVideo?.videoId) {
+    //   console.log("detected change, invalidating");
+    //   invalidate("supabase:db:videos");
+    //   mostRecentVideo.videoId = null;
+    // }
 
     if (contextMenuIsOpen && contentState.selectedVideos.length < 1) {
       contextMenuIsOpen = false;
@@ -92,34 +95,32 @@
   {session}
 >
   <div {...restProps} class="mx-4 flex flex-col gap-5">
-    <ContentTable {videos} {columns} {playlist} {supabase} {session} />
-    <!-- {#if contentDisplay === "CAROUSEL" && !mediaQueryState.isMobile} -->
-    <!--   <ContentCarousel -->
-    <!--     {videos} -->
-    <!--     {videosCount} -->
-    <!--     {playlists} -->
-    <!--     {playlist} -->
-    <!--     {handleDragStart} -->
-    <!--     {isContinueVideos} -->
-    <!--     bind:carouselState -->
-    <!--     {supabase} -->
-    <!--     {session} -->
-    <!--   /> -->
-    <!-- {:else} -->
-    <!--   <div class="mb-20"> -->
-    <!--     <ContentTiles -->
-    <!--       bind:videos -->
-    <!--       {videosCount} -->
-    <!--       {playlists} -->
-    <!--       {playlist} -->
-    <!--       {handleDragStart} -->
-    <!--       {isContinueVideos} -->
-    <!--       {allowVideoReorder} -->
-    <!--       {contentFilter} -->
-    <!--       {supabase} -->
-    <!--       {session} -->
-    <!--     /> -->
-    <!--   </div> -->
-    <!-- {/if} -->
+    <!-- <ContentTable {videos} {columns} {playlist} {supabase} {session} /> -->
+    {#if contentDisplay === "CAROUSEL"}
+      <ContentCarousel
+        {videos}
+        {videosCount}
+        {playlists}
+        {playlist}
+        {isContinueVideos}
+        bind:carouselState
+        {supabase}
+        {session}
+      />
+    {:else}
+      <div class="mb-20">
+        <ContentTiles
+          bind:videos
+          {videosCount}
+          {playlists}
+          {playlist}
+          {isContinueVideos}
+          {allowVideoReorder}
+          {contentFilter}
+          {supabase}
+          {session}
+        />
+      </div>
+    {/if}
   </div>
 </ContentContextMenu>

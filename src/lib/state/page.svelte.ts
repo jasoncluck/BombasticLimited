@@ -15,7 +15,6 @@ interface PageState {
   sidebarScrollPosition: ScrollPosition | null;
   contentScrollState: ScrollState;
   sidebarScrollState: ScrollState;
-  drawerScrollState: ScrollState;
 }
 
 export let pageState = $state<PageState>({
@@ -23,7 +22,6 @@ export let pageState = $state<PageState>({
   sidebarScrollPosition: null,
   contentScrollState: { scrolling: false, direction: null, interval: null },
   sidebarScrollState: { scrolling: false, direction: null, interval: null },
-  drawerScrollState: { scrolling: false, direction: null, interval: null },
 });
 
 // Function to create a snapshot for each viewport

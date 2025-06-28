@@ -58,13 +58,13 @@
     transition:fade
     class="sticky w-full top-0 left-0 z-50 bg-background-lighter"
   >
-    <FloatingBreadcrumbs
-      {breadcrumbs}
-      {playlist}
-      {playlists}
-      {supabase}
-      {session}
-    />
+    <!-- <FloatingBreadcrumbs -->
+    <!--   {breadcrumbs} -->
+    <!--   {playlist} -->
+    <!--   {playlists} -->
+    <!--   {supabase} -->
+    <!--   {session} -->
+    <!-- /> -->
   </div>
 {/if}
 

@@ -301,6 +301,7 @@ export type Database = {
           published_at: string
           duration: string
           video_start_seconds: number
+          watched_at: string
           updated_at: string
         }[]
       }

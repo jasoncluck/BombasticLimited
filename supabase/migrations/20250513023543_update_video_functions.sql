@@ -1,7 +1,7 @@
 
 DROP FUNCTION public.get_videos_with_timestamps;
 
-CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps"() RETURNS TABLE("id" "text", "source" "public"."source", "title" "text", "description" "text", "thumbnail_url" "text", "thumbnail_maxres_url" "text", "published_at" timestamp with time zone, "duration" "text", "video_start_seconds" numeric, "updated_at" timestamp with time zone)
+CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps"() RETURNS TABLE("id" "text", "source" "public"."source", "title" "text", "description" "text", "thumbnail_url" "text", "thumbnail_maxres_url" "text", "published_at" timestamp with time zone, "duration" "text", "video_start_seconds" numeric,"watched_at" timestamp with time zone, "updated_at" timestamp with time zone)
     LANGUAGE "plpgsql"
     SET search_path = ''
     AS $$
@@ -20,6 +20,10 @@ BEGIN
             WHEN t.user_id = (select auth.uid()) THEN t.video_start_seconds 
             ELSE NULL 
         END AS video_start_seconds, 
+        CASE 
+            WHEN t.user_id = (select auth.uid()) THEN t.watched_at 
+            ELSE NULL 
+        END AS watched_at,
         CASE 
             WHEN t.user_id = (select auth.uid()) THEN t.updated_at 
             ELSE NULL 

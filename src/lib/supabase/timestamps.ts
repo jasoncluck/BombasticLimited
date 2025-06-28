@@ -14,7 +14,7 @@ export async function saveVideoTimestamp({
 }: {
   videoId: string;
   currentTimeSeconds: number;
-  watchedAt?: Date;
+  watchedAt: Date | null;
   supabase: SupabaseClient<Database>;
   session: Session | null;
 }) {

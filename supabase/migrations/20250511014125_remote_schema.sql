@@ -155,7 +155,7 @@ BEGIN
         CASE 
             WHEN t.user_id = (select auth.uid()) THEN t.watched_at 
             ELSE NULL 
-        END AS watched_at
+        END AS watched_at,
         CASE 
             WHEN t.user_id = (select auth.uid()) THEN t.updated_at 
             ELSE NULL 
@@ -290,8 +290,8 @@ CREATE TABLE IF NOT EXISTS "public"."timestamps" (
     "video_id" "text" NOT NULL,
     "video_start_seconds" numeric,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
-    "watched_at" timestamp with time zone
+    "watched_at" timestamp with time zone,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
 );
 
 

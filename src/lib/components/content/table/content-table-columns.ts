@@ -16,7 +16,7 @@ export function createContentColumns({
   supabase,
   session,
 }: {
-  getPlaylist: () => Playlist;
+  getPlaylist: () => Playlist | undefined;
   getPlaylists: () => Playlist[];
   session: Session | null;
   supabase: SupabaseClient<Database>;

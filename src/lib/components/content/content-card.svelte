@@ -9,6 +9,7 @@
   import type { Playlist } from "$lib/supabase/playlists";
   import Checkbox from "../ui/checkbox/checkbox.svelte";
   import { getContentState } from "$lib/state/content.svelte";
+  import { Check } from "@lucide/svelte";
 
   type ContentCardProps = {
     video: Video;
@@ -93,9 +94,9 @@
           />
         </div>
       {/if}
-      {#if isVideoWithTimestamp(video) && video.video_start_seconds && video.duration}
+      {#if isVideoWithTimestamp(video) && !video.watched_at && video.video_start_seconds && video.duration}
         <Progress
-          class="absolute bottom-0 left-0 h-[2%]"
+          class="absolute -bottom-1 left-0 h-[5%]"
           value={Math.floor(
             getVideoSecondsOffset({
               duration: video.duration,
@@ -103,6 +104,13 @@
             }),
           )}
         />
+      {:else if isVideoWithTimestamp(video) && video.watched_at}
+        <div
+          class="absolute bottom-0 right-0 flex bg-background-lighter w-full gap-1 px-1 items-center justify-center"
+        >
+          <Check class="text-primary" />
+          <p class="text-xs text-primary">Watched</p>
+        </div>
       {/if}
     </div>
     <p

@@ -21,11 +21,15 @@
       ? parseInt(startSecondsSearchParam)
       : timestampStartSeconds;
   });
+
+  $effect(() => {
+    console.log(startSeconds);
+  });
 </script>
 
 <div class="m-4">
   <div class="mb-20">
-    {#key video}
+    {#key video.id}
       <VideoPlayer
         {video}
         baseUrl={`/playlist/${playlist.short_id}`}

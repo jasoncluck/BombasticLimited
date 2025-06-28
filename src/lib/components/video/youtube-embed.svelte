@@ -3,9 +3,9 @@
   import { onMount, onDestroy } from "svelte";
   import VideoEmbed from "$lib/components/video/video-embed.svelte";
   import { saveVideoTimestamp } from "$lib/supabase/timestamps";
-  import { invalidate } from "$app/navigation";
+  import { beforeNavigate } from "$app/navigation";
   import type { Playlist } from "$lib/supabase/playlists";
-  import { showNotification } from "$lib/stores/notification";
+  import { mostRecentVideo } from "$lib/state/videos.svelte";
 
   // Amount of seconds to wait before saving a new timestamp if none exists
   const VIDEO_SAVE_SECONDS_START = 15;
@@ -20,7 +20,6 @@
     supabase,
     session,
     durationSeconds,
-    playlist,
   }: {
     videoId: string;
     startSeconds: number | undefined | null;
@@ -87,11 +86,13 @@
     window.addEventListener("beforeunload", saveCurrentTime);
   });
 
-  // beforeNavigate(() => {
-  //   saveCurrentTime();
-  // });
+  beforeNavigate(() => {
+    console.log("in before navigat");
+    saveCurrentTime();
+  });
 
   onDestroy(() => {
+    console.log("in on destroy");
     saveCurrentTime();
   });
 
@@ -105,7 +106,7 @@
   }
 
   // Helper function to save timestamp for a specific video with its duration
-  async function saveTimestampForVideo(
+  function saveTimestampForVideo(
     targetVideoId: string,
     currentTimeSeconds: number,
     videoDurationSeconds: number,
@@ -121,28 +122,25 @@
       videoDurationSeconds - currentTimeSeconds <=
       VIDEO_DELETE_SECONDS_OFFSET
     ) {
-      console.log("IN HERE");
-      const { error } = await saveVideoTimestamp({
+      saveVideoTimestamp({
         currentTimeSeconds,
         watchedAt: new Date(),
         videoId: targetVideoId,
         session,
         supabase,
       });
-      if (!error) {
-        showNotification("Marked video as watched.");
-      }
     } else {
-      await saveVideoTimestamp({
+      saveVideoTimestamp({
         currentTimeSeconds,
         videoId: targetVideoId,
         session,
         supabase,
+        watchedAt: null,
       });
     }
   }
 
-  async function saveCurrentTime() {
+  function saveCurrentTime() {
     if (player && player.getCurrentTime) {
       try {
         const currentTimeSeconds = player.getCurrentTime() as number;
@@ -152,16 +150,12 @@
           !startSeconds ||
           Math.abs(currentTimeSeconds - startSeconds) > VIDEO_SAVE_SECONDS_DELTA
         ) {
-          await saveTimestampForVideo(
-            videoId,
-            currentTimeSeconds,
-            durationSeconds,
-          );
-          invalidate("supabase:db:videos");
+          saveTimestampForVideo(videoId, currentTimeSeconds, durationSeconds);
         }
       } catch (error) {
         console.error("Error while trying to save current video time.", error);
       }
+      // invalidate("supabase:db:videos");
     }
   }
 </script>

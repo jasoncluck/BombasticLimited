@@ -40,12 +40,6 @@ export interface ContentDisplayProps {
   readonly playlistContentFilter?: PlaylistVideosFilter;
   readonly supabase: SupabaseClient<Database>;
   readonly session: Session | null;
-
-  // This is the only shared drag operation, tiles contain more due to all playlists being tiles
-  readonly handleDragStart: (
-    event: DragEvent & { currentTarget: HTMLDivElement },
-    index: number,
-  ) => void;
 }
 
 export const CONTENT_DIPSLAY = {
@@ -71,7 +65,7 @@ export function handleContentNavigation({
 }) {
   if (playlist) {
     const targetUrl = new URL(
-      `/playlist/${playlist.short_id}/${video.id}`,
+      `/playlist/${playlist.short_id}/video/${video.id}`,
       window.location.origin,
     );
 
@@ -82,7 +76,7 @@ export function handleContentNavigation({
       }
     });
 
-    goto(targetUrl.pathname + targetUrl.search, {
+    goto(targetUrl.pathname + targetUrl.searchParams, {
       invalidate: ["supabase:db:videos"],
     });
   } else {

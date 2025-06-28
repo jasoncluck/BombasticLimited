@@ -2,18 +2,13 @@
  * Video service contains some clientside "helper" functions that
  * do not interact directly with the supabase API directly.
  */
-import {
-  type Video,
-  getInProgressVideos,
-  type VideoWithTimestamp,
-} from "$lib/supabase/videos";
+import { type Video, getInProgressVideos } from "$lib/supabase/videos";
 import { getVideos } from "$lib/supabase/videos";
 import { showNotification } from "$lib/stores/notification.js";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "$lib/supabase/database.types";
 import type { Source } from "$lib/constants/source";
 import type { TimestampFilter, VideoFilter } from "../content/content-filter";
-import { type MostRecentVideo } from "$lib/state/videos.svelte";
 import { goto, invalidate } from "$app/navigation";
 import { deleteVideoTimestamp } from "$lib/supabase/timestamps";
 
@@ -92,40 +87,6 @@ export async function fetchMoreSourceVideos({
   }
 
   return newVideos;
-}
-
-/**
- * Optimistically update a video timestamp local state - only to be used for videos cached on client
- */
-export async function updateVideoTimestampState({
-  videos,
-  mostRecentVideo,
-  isContinueVideos = false,
-}: {
-  videos: Video[];
-  mostRecentVideo: MostRecentVideo;
-  isContinueVideos?: boolean;
-}) {
-  if (mostRecentVideo.timestamp) {
-    const videoIndexToUpdate = videos.findIndex((video) => {
-      return video.id === mostRecentVideo.timestamp?.video_id;
-    });
-
-    if (videoIndexToUpdate >= -1) {
-      videos[videoIndexToUpdate] = {
-        ...videos[videoIndexToUpdate],
-        video_start_seconds: mostRecentVideo.timestamp.video_start_seconds,
-        updated_at: mostRecentVideo.timestamp.updated_at,
-      } as VideoWithTimestamp;
-
-      // Only reorder the continue watching view
-      if (isContinueVideos) {
-        const videoToMove = videos[videoIndexToUpdate];
-        videos.splice(videoIndexToUpdate, 1);
-        videos.unshift(videoToMove);
-      }
-    }
-  }
 }
 
 export async function handleDeleteVideoTimestamp({

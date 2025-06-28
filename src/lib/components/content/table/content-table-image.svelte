@@ -2,7 +2,7 @@
   import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
   import Progress from "$lib/components/ui/progress/progress.svelte";
   import { getVideoSecondsOffset } from "$lib/components/video/video-service";
-  import { Check, Loader } from "@lucide/svelte";
+  import { Check } from "@lucide/svelte";
 
   type ContentCardProps = {
     video: Video;
