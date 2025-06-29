@@ -375,7 +375,7 @@
   }
 </script>
 
-<Toaster />
+<Toaster position="bottom-center" />
 
 <svelte:head>
   <script src="https://www.youtube.com/iframe_api"></script>

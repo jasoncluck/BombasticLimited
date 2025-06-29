@@ -9,7 +9,7 @@ import {
 } from "$env/static/public";
 import type { LayoutLoad } from "./$types";
 import { COLLAPSED_SIDEBAR_SIZE } from "$lib/constants/layout";
-import type { Playlist } from "$lib/supabase/playlists";
+import type { UserPlaylist } from "$lib/supabase/playlists";
 import type { CombinedContentFilter } from "$lib/components/content/content-filter";
 
 export const load: LayoutLoad = async ({ data, depends, fetch }) => {
@@ -55,7 +55,7 @@ export const load: LayoutLoad = async ({ data, depends, fetch }) => {
     layout,
     contentFilter,
   }: {
-    playlists: Playlist[];
+    playlists: UserPlaylist[];
     playlistsCount?: number | null;
     layout?: string;
     contentFilter: CombinedContentFilter;

@@ -1,26 +1,25 @@
 <script lang="ts">
-  import { Circle, Ellipsis, ListVideo, Play } from "@lucide/svelte";
+  import { Circle, ListVideo } from "@lucide/svelte";
   import type { Infer, SuperValidated } from "sveltekit-superforms";
   import type { PlaylistSchema } from "../../../routes/playlist/[shortId]/schema";
   import type { BreadcrumbItem } from "$lib/components/breadcrumb-layout.svelte";
   import type { PlaylistVideosFilter } from "$lib/components/content/content-filter";
-  import type { Playlist } from "$lib/supabase/playlists";
+  import type { Playlist, ProfilePlaylist } from "$lib/supabase/playlists";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
   import type { HTMLAttributes } from "svelte/elements";
   import SharedContentHeader from "$lib/components/content/shared-content-header.svelte";
   import PlaylistEditDialog from "$lib/components/playlist/playlist-edit-dialog.svelte";
-  import type { Profile } from "$lib/supabase/accounts";
+  import { isSource, SOURCE_INFO } from "$lib/constants/source";
 
   interface PlaylistHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
     showFloatingBreadcrumbs: boolean;
     contentFilter: PlaylistVideosFilter;
     form: SuperValidated<Infer<PlaylistSchema>>;
-    playlist: Playlist;
+    profilePlaylist: ProfilePlaylist;
     playlistImageUrl?: string;
     playlists: Playlist[];
-    playlistCreatorProfile: Profile | null;
     playlistDuration: { hours: number; minutes: number; seconds: number };
     videosCount: number;
     currentPage: number;
@@ -33,10 +32,9 @@
     showFloatingBreadcrumbs = $bindable(),
     contentFilter,
     form,
-    playlist,
+    profilePlaylist,
     playlistImageUrl,
     playlists,
-    playlistCreatorProfile,
     playlistDuration,
     videosCount,
     supabase,
@@ -59,11 +57,6 @@
   );
   const showComma = $derived(formattedDuration.length > 0);
 
-  const hasDuration =
-    playlistDuration.hours > 0 ||
-    playlistDuration.minutes > 0 ||
-    playlistDuration.seconds > 0;
-
   function openDialog() {
     open = true;
   }
@@ -83,7 +76,7 @@
   view="playlist"
   {videosCount}
   {contentFilter}
-  {playlist}
+  {profilePlaylist}
   {playlists}
   {supabase}
   {session}
@@ -92,7 +85,7 @@
   <div class="flex flex-col gap-4">
     <!-- Main content row (image + text) -->
     <div class="flex flex-col @md:flex-row gap-6">
-      <PlaylistEditDialog {form} {playlist} bind:open>
+      <PlaylistEditDialog {form} playlist={profilePlaylist} bind:open>
         <div class="flex justify-center">
           {#if playlistImageUrl}
             <button
@@ -102,7 +95,7 @@
             >
               <img
                 src={playlistImageUrl}
-                alt={`Image for playlist: ${playlist.name}`}
+                alt={`Image for playlist: ${profilePlaylist.name}`}
               />
             </button>
           {:else}
@@ -125,24 +118,42 @@
           onkeydown={handleKeydown}
         >
           <p class="text-sm text-muted-foreground tracking-tight">
-            {playlist.type === "Public"
+            {profilePlaylist.type === "Public" ||
+            profilePlaylist.type === "Official"
               ? "Public Playlist"
               : "Private Playlist"}
           </p>
           <h2 class="header-primary text-wrap break-anywhere font-extrabold">
-            {playlist.name}
+            {profilePlaylist.name}
           </h2>
           <p class="text-sm text-muted-foreground mb-2 text-left break-words">
-            {playlist.description}
+            {profilePlaylist.description}
           </p>
         </button>
 
         <div class="flex items-center">
-          <p class="text-sm">{playlistCreatorProfile?.username}</p>
-          <Circle
-            size="5"
-            class="stroke-muted-foreground mx-2 fill-muted-foreground justify-center"
-          />
+          {#if profilePlaylist.profile_username}
+            {#if isSource(profilePlaylist.profile_username)}
+              {@const sourceInfo =
+                SOURCE_INFO[profilePlaylist.profile_username]}
+              <div class="flex items-center gap-2">
+                <img
+                  alt={`Official ${sourceInfo.displayName} playlist`}
+                  class="h-6 w-6"
+                  src={sourceInfo.image}
+                />
+                <p class="text-sm">
+                  {sourceInfo.displayName}
+                </p>
+              </div>
+            {:else}
+              <p class="text-sm">{profilePlaylist.profile_username}</p>
+            {/if}
+            <Circle
+              size="5"
+              class="stroke-muted-foreground mx-2 fill-muted-foreground justify-center"
+            />
+          {/if}
           <p class="text-sm text-muted-foreground">
             {videosLabel}{showComma ? ", " : ""}
             {formattedDuration}

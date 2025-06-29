@@ -1,5 +1,4 @@
 import { goto, invalidate } from "$app/navigation";
-import { page } from "$app/state";
 import { showNotification } from "$lib/stores/notification";
 import type { Database, Json } from "$lib/supabase/database.types";
 import {
@@ -96,10 +95,7 @@ export async function handleDeletePlaylist({
     showNotification(`Deleted ${playlist.name}.`, "success");
   }
   invalidate("supabase:db:playlists");
-
-  if (page.url.pathname === `/playlist/${playlist.short_id}`) {
-    goto("/");
-  }
+  return { error };
 }
 
 export async function getCroppedPlaylistImageUrl({

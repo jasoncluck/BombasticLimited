@@ -6,6 +6,8 @@
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import { handleDeletePlaylist } from "../playlist/playlist-service";
   import type { Snippet } from "svelte";
+  import { goto } from "$app/navigation";
+  import { page } from "$app/state";
 
   interface ContentContextMenuProps {
     playlist: Playlist;
@@ -33,12 +35,20 @@
 <ContextMenu.Root>
   <ContextMenu.Content class="p-1">
     <ContextMenu.Item
-      onclick={() =>
-        handleDeletePlaylist({
-          session,
+      onclick={async () => {
+        const data = await handleDeletePlaylist({
           playlist,
           supabase,
-        })}>Delete Playlist</ContextMenu.Item
+          session,
+        });
+
+        if (
+          !data?.error &&
+          page.url.pathname === `/playlist/${playlist.short_id}`
+        ) {
+          goto("/");
+        }
+      }}>Delete Playlist</ContextMenu.Item
     >
   </ContextMenu.Content>
   <ContextMenu.Trigger class="h-full">

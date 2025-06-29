@@ -11,12 +11,11 @@
   const {
     contentFilter,
     form,
-    playlist,
+    profilePlaylist,
     playlists,
     currentPage,
     videos = [],
     videosCount,
-    playlistCreatorProfile,
     supabase,
     session,
     playlistDuration,
@@ -25,16 +24,16 @@
   const contentState = getContentState();
 
   const userPlaylistImageUrl = $derived(
-    contentState.playlistImages[playlist.id],
+    contentState.playlistImages[profilePlaylist.id],
   );
   let playlistImageUrlData = $state<Promise<string | undefined>>();
 
   onMount(() => {
     if (!userPlaylistImageUrl) {
       playlistImageUrlData = getCroppedPlaylistImageUrl({
-        imageProperties: playlist.image_properties,
-        thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
-        thumbnailUrl: playlist.thumbnail_url,
+        imageProperties: profilePlaylist.image_properties,
+        thumbnailMaxResUrl: profilePlaylist.thumbnail_maxres_url,
+        thumbnailUrl: profilePlaylist.thumbnail_url,
       });
     }
   });
@@ -61,14 +60,13 @@
   {#if userPlaylistImageUrl}
     <ImageCropper.Root src={userPlaylistImageUrl}>
       <PlaylistHeader
-        breadcrumbs={[{ label: playlist.name }]}
+        breadcrumbs={[{ label: profilePlaylist.name }]}
         bind:showFloatingBreadcrumbs
         {contentFilter}
         {currentPage}
         {form}
-        {playlist}
+        {profilePlaylist}
         playlistImageUrl={userPlaylistImageUrl}
-        {playlistCreatorProfile}
         {playlists}
         {playlistDuration}
         videosCount={videosCount ?? 0}
@@ -80,14 +78,13 @@
     {#await playlistImageUrlData then playlistImageUrl}
       <ImageCropper.Root src={playlistImageUrl}>
         <PlaylistHeader
-          breadcrumbs={[{ label: playlist.name }]}
+          breadcrumbs={[{ label: profilePlaylist.name }]}
           bind:showFloatingBreadcrumbs
           {contentFilter}
           {currentPage}
           {form}
-          {playlist}
+          {profilePlaylist}
           {playlistImageUrl}
-          {playlistCreatorProfile}
           {playlists}
           {playlistDuration}
           videosCount={videosCount ?? 0}
@@ -99,7 +96,7 @@
   {/if}
 
   <Content
-    {playlist}
+    playlist={profilePlaylist}
     contentDisplay="TILES"
     {playlists}
     {videos}

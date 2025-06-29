@@ -6,8 +6,8 @@
   import { type CarouselsState } from "$lib/components/content/content.js";
   import type { Snapshot } from "@sveltejs/kit";
   import { getCroppedPlaylistImageUrl } from "$lib/components/playlist/playlist-service.js";
-  import { onMount } from "svelte";
   import { ListVideo } from "@lucide/svelte";
+  import Skeleton from "$lib/components/ui/skeleton/skeleton.svelte";
 
   let { data } = $props();
   let {
@@ -19,9 +19,6 @@
     playlists,
     contentFilter,
   } = $derived(data);
-
-  let playlistImagesLoaded = $state(false);
-  let playlistImages = $state<Record<string, string | undefined>>();
 
   export const snapshot: Snapshot<CarouselsState> = {
     capture: () => carouselsState,
@@ -56,7 +53,7 @@
           });
           return imagesMap;
         })
-      : Promise.resolve({}),
+      : Promise.resolve(),
   );
 </script>
 
@@ -71,7 +68,18 @@
         </a>
 
         <!-- Await the playlistImagesPromise -->
-        {#await playlistImagesPromise then playlistImages}
+        {#await playlistImagesPromise}
+          <div class="w-[90%] grid grid-cols-3 gap-2">
+            {#each playlistSearchResults as playlist (playlist.id)}
+              <div
+                class="grid grid-cols-[4rem_1fr] p-3 gap-2 items-center rounded"
+              >
+                <Skeleton class="w-16 h-16" />
+                <Skeleton class="w-32 h-16" />
+              </div>
+            {/each}
+          </div>
+        {:then playlistImages}
           <div class="w-[90%] grid grid-cols-3 gap-2">
             {#each playlistSearchResults as playlist (playlist.id)}
               <a
@@ -94,8 +102,11 @@
                 {/if}
 
                 <div class="min-w-0">
-                  <p class="text-sm font-medium truncate text-clip mb-1">
+                  <p class="text-sm font-medium mb-1">
                     {playlist.name}
+                  </p>
+                  <p class="text-xs text-muted-foreground line-clamp-3">
+                    {playlist.description}
                   </p>
                   <p class="text-xs text-muted-foreground line-clamp-3">
                     {playlist.description}

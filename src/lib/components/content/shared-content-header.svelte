@@ -1,11 +1,10 @@
 <script lang="ts">
-  import { fade } from "svelte/transition";
   import { type BreadcrumbItem } from "$lib/components/breadcrumb-layout.svelte";
   import ContentFilters from "$lib/components/content/content-filter.svelte";
   import FloatingBreadcrumbs from "$lib/components/floating-breadcrumbs.svelte";
   import IntersectionObserver from "$lib/components/intersection-observer.svelte";
   import ContentSelect from "$lib/components/content/content-select.svelte";
-  import type { Playlist } from "$lib/supabase/playlists";
+  import type { Playlist, ProfilePlaylist } from "$lib/supabase/playlists";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
   import type { HTMLAttributes } from "svelte/elements";
@@ -17,8 +16,11 @@
   import type { ContentView } from "./content";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import { handleDeletePlaylist } from "../playlist/playlist-service";
-  import { Ellipsis, Play } from "@lucide/svelte";
+  import { Ellipsis, Play, PlusCircle } from "@lucide/svelte";
   import { buttonVariants } from "../ui/button";
+  import { fade } from "svelte/transition";
+  import { page } from "$app/state";
+  import { goto } from "$app/navigation";
 
   interface SharedContentHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
@@ -28,7 +30,7 @@
     playlists: Playlist[];
     open: boolean;
     children: Snippet<[]>;
-    playlist?: Playlist;
+    profilePlaylist?: ProfilePlaylist;
     videosCount: number;
     currentPage?: number;
     supabase: SupabaseClient<Database>;
@@ -41,7 +43,7 @@
     open = $bindable(),
     view,
     contentFilter,
-    playlist,
+    profilePlaylist,
     playlists,
     showFloatingBreadcrumbs = $bindable(),
     videosCount,
@@ -66,7 +68,7 @@
   >
     <FloatingBreadcrumbs
       {breadcrumbs}
-      {playlist}
+      playlist={profilePlaylist}
       {playlists}
       {supabase}
       {session}
@@ -90,19 +92,22 @@
 
     <!-- Right side: ContentSelect and ContentFilters on same row -->
     <hr class="border-1 m-4" />
-    <div class="flex justify-between m-4 items-center gap-2">
-      {#if session && playlist}
+    <div class="flex justify-between m-4 items-center gap-3">
+      {#if profilePlaylist}
         <!-- Action row: move Ellipsis here -->
-        <Play size="30" />
+        <Play size="24" />
+        {#if playlists.find((pl) => pl.id !== profilePlaylist.id)}
+          <PlusCircle size="30" />
+        {/if}
         <DropdownMenu.Root>
           <DropdownMenu.Trigger
             class={buttonVariants({
               variant: "ghost",
-              class: "cursor-pointer ",
+              class: "ghost-button-simple",
               size: "icon",
             })}
           >
-            <Ellipsis size="16" />
+            <Ellipsis size="30" />
             <span class="sr-only">Playlist Actions</span>
           </DropdownMenu.Trigger>
           <DropdownMenu.Content>
@@ -115,8 +120,21 @@
               </DropdownMenu.Item>
               <DropdownMenu.Item
                 class="cursor-pointer"
-                onclick={() =>
-                  handleDeletePlaylist({ playlist, supabase, session })}
+                onclick={async () => {
+                  const data = await handleDeletePlaylist({
+                    playlist: profilePlaylist,
+                    supabase,
+                    session,
+                  });
+
+                  if (
+                    !data?.error &&
+                    page.url.pathname ===
+                      `/playlist/${profilePlaylist.short_id}`
+                  ) {
+                    goto("/");
+                  }
+                }}
               >
                 Delete Playlist
               </DropdownMenu.Item>
@@ -127,7 +145,7 @@
       {#if session}
         <div class="mr-auto">
           <ContentSelect
-            {playlist}
+            playlist={profilePlaylist}
             {playlists}
             {supabase}
             {session}

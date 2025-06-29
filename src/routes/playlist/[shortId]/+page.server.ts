@@ -1,6 +1,5 @@
 import {
   getPlaylistByShortId,
-  getPlaylistCreatorProfile,
   getPlaylistVideos,
   updatePlaylistImage,
   updatePlaylistInfo,
@@ -30,13 +29,12 @@ export const load: PageServerLoad = async ({
   }
 
   const { playlists, contentFilter } = await parent();
-  console.log(params.shortId);
 
-  const { playlist } = await getPlaylistByShortId({
+  const { playlist: profilePlaylist } = await getPlaylistByShortId({
     shortId: params.shortId,
     supabase,
   });
-  if (!playlist) {
+  if (!profilePlaylist) {
     console.error(`Playlist was not found`);
     redirect(302, "/");
   }
@@ -52,9 +50,8 @@ export const load: PageServerLoad = async ({
   const { videos, count: videosCount } = await getPlaylistVideos({
     supabase,
     contentFilter,
-    playlistId: playlist?.id,
+    playlistId: profilePlaylist.id,
   });
-  console.log(videos);
 
   // Calculate total duration for all videos
   let playlistDurationSeconds = 0;
@@ -64,22 +61,15 @@ export const load: PageServerLoad = async ({
 
   const playlistDuration = videoDurationSecondsToTime(playlistDurationSeconds);
 
-  // Get the username of the playlist owner
-  const { profile: playlistCreatorProfile } = await getPlaylistCreatorProfile({
-    playlist,
-    supabase,
-  });
-
   return {
-    playlist,
+    profilePlaylist,
     playlists,
     videos,
     videosCount,
     contentFilter,
     currentPage,
     playlistDuration,
-    playlistCreatorProfile,
-    form: await superValidate(playlist, zod(playlistSchema)),
+    form: await superValidate(profilePlaylist, zod(playlistSchema)),
   };
 };
 

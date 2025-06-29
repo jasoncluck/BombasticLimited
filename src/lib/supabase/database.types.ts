@@ -55,6 +55,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "playlist_videos_playlist_id_fkey"
+            columns: ["playlist_id"]
+            isOneToOne: false
+            referencedRelation: "playlists"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "playlist_videos_video_id_fkey"
             columns: ["video_id"]
             isOneToOne: false
@@ -86,7 +93,7 @@ export type Database = {
           image_properties?: Json | null
           name: string
           search_vector?: unknown | null
-          short_id?: string
+          short_id: string
           thumbnail_maxres_url?: string | null
           thumbnail_url?: string | null
           type?: Database["public"]["Enums"]["playlist_type"]
@@ -246,6 +253,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_user: {
+        Args: { email: string; password: string; username: string }
+        Returns: string
+      }
       delete_pending_videos: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -284,6 +295,23 @@ export type Database = {
           video_start_seconds: number
           watched_at: string
           updated_at: string
+        }[]
+      }
+      get_playlist_by_short_id: {
+        Args: { p_short_id: string }
+        Returns: {
+          id: number
+          created_at: string
+          name: string
+          short_id: string
+          created_by: string
+          description: string
+          thumbnail_url: string
+          thumbnail_maxres_url: string
+          type: Database["public"]["Enums"]["playlist_type"]
+          image_properties: Json
+          youtube_id: string
+          profile_username: string
         }[]
       }
       get_playlist_videos: {

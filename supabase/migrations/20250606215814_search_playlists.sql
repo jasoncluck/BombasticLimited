@@ -10,7 +10,8 @@ CREATE OR REPLACE FUNCTION "public"."search_playlists"(
     "thumbnail_maxres_url" text,
     "image_properties" jsonb,
     "created_at" timestamp with time zone,
-    "created_by" uuid
+    "created_by" uuid,
+    "profile_username" text
 )
 LANGUAGE "plpgsql"
 SET search_path = ''
@@ -44,8 +45,10 @@ BEGIN
         p.thumbnail_maxres_url,
         p.image_properties,
         p.created_at,
-        p.created_by
+        p.created_by,
+        prof.username AS profile_username
     FROM public.playlists p
+    LEFT JOIN public.profiles prof ON p.created_by = prof.id
     WHERE p.search_vector @@ to_tsquery('english', search_query)
     ORDER BY 
         ts_rank(p.search_vector, to_tsquery('english', search_query)) DESC

@@ -414,7 +414,8 @@ $$;
 
 CREATE OR REPLACE FUNCTION public.create_user(
     email text,
-    password text
+    password text,
+    username text
 ) RETURNS uuid AS $$
 DECLARE
   user_id uuid;
@@ -428,7 +429,25 @@ BEGIN
     INSERT INTO auth.users
       (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, recovery_sent_at, last_sign_in_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token)
     VALUES
-      ('00000000-0000-0000-0000-000000000000', user_id, 'authenticated', 'authenticated', email, encrypted_pw, '2023-05-03 19:41:43.585805+00', '2023-04-22 13:10:03.275387+00', '2023-04-22 13:10:31.458239+00', '{"provider":"email","providers":["email"]}', '{}', '2023-05-03 19:41:43.580424+00', '2023-05-03 19:41:43.585948+00', '', '', '', '');
+      (
+        '00000000-0000-0000-0000-000000000000',
+        user_id,
+        'authenticated',
+        'authenticated',
+        email,
+        encrypted_pw,
+        '2023-05-03 19:41:43.585805+00',
+        '2023-04-22 13:10:03.275387+00',
+        '2023-04-22 13:10:31.458239+00',
+        '{"provider":"email","providers":["email"]}',
+        format('{"username": "%s"}', username)::jsonb,
+        '2023-05-03 19:41:43.580424+00',
+        '2023-05-03 19:41:43.585948+00',
+        '',
+        '',
+        '',
+        ''
+      );
 
     -- Only if the user was created, add identity
     INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at)
@@ -452,3 +471,41 @@ BEGIN
   RETURN user_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION public.get_playlist_by_short_id(p_short_id text) RETURNS TABLE (
+  -- Playlist columns
+  id bigint,
+  created_at timestamp with time zone,
+  name text,
+  short_id text,
+  created_by uuid,
+  description text,
+  thumbnail_url text,
+  thumbnail_maxres_url text,
+  type playlist_type,
+  image_properties jsonb,
+  youtube_id text,
+
+  -- Profile columns (nullable because of LEFT JOIN)
+  profile_username text
+)
+LANGUAGE sql
+AS $$
+  SELECT
+    p.id,
+    p.created_at,
+    p.name,
+    p.short_id,
+    p.created_by,
+    p.description,
+    p.thumbnail_url,
+    p.thumbnail_maxres_url,
+    p.type,
+    p.image_properties,
+    p.youtube_id,
+    prof.username AS profile_username
+  FROM public.playlists p
+  LEFT JOIN public.profiles prof ON p.created_by = prof.id
+  WHERE p.short_id = get_playlist_by_short_id.p_short_id
+  LIMIT 1;
+$$;

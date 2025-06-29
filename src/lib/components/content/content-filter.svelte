@@ -15,14 +15,7 @@
   } from "./content-filter";
   import { page } from "$app/state";
   import type { VideoTimestamp, Video } from "$lib/supabase/videos";
-  import {
-    DateFormatter,
-    getLocalTimeZone,
-    parseDate,
-    today,
-    type DateValue,
-  } from "@internationalized/date";
-  import DatePicker from "../date-picker.svelte";
+  import { parseDate, type DateValue } from "@internationalized/date";
   import type { PlaylistVideo } from "$lib/supabase/playlists";
   import type { ContentView } from "./content";
 
@@ -59,9 +52,10 @@
     }
   });
 
-  const df = new DateFormatter("en-US", {
-    dateStyle: "long",
-  });
+  // NOTE: Datepickers removed for now
+  // const df = new DateFormatter("en-US", {
+  //   dateStyle: "long",
+  // });
 
   let startDateValue = $state<DateValue | undefined>(
     contentFilter.startDate ? parseDate(contentFilter.startDate) : undefined,
@@ -70,20 +64,21 @@
     contentFilter.endDate ? parseDate(contentFilter.endDate) : undefined,
   );
 
-  const getDaysInPreviousMonth = (year: number, month: number) =>
-    new Date(year, month - 1, 0).getDate();
+  // NOTE: Datepickers removed for now
+  // const getDaysInPreviousMonth = (year: number, month: number) =>
+  //   new Date(year, month - 1, 0).getDate();
+  //
+  // const { year, month } = today(getLocalTimeZone());
 
-  const { year, month } = today(getLocalTimeZone());
-
-  const items = [
-    { value: 0, label: "Today" },
-    {
-      value: -7,
-      label: "Last Week",
-    },
-    { value: -getDaysInPreviousMonth(year, month), label: "Last Month" },
-    { value: -365, label: "Last Year" },
-  ];
+  // const items = [
+  //   { value: 0, label: "Today" },
+  //   {
+  //     value: -7,
+  //     label: "Last Week",
+  //   },
+  //   { value: -getDaysInPreviousMonth(year, month), label: "Last Month" },
+  //   { value: -365, label: "Last Year" },
+  // ];
 
   function handleSort(sortKey: string) {
     let sortOrder: SortOrder = "ascending";
@@ -146,27 +141,29 @@
     });
   }
 
-  function handleStartDateChange(value: DateValue | undefined) {
-    startDateValue = value;
-    updateFilterQueryParams({
-      url: page.url,
-      contentFilter,
-      startDateValue,
-      endDateValue,
-      view,
-    });
-  }
-
-  function handleEndDateChange(value: DateValue | undefined) {
-    endDateValue = value;
-    updateFilterQueryParams({
-      url: page.url,
-      contentFilter,
-      startDateValue,
-      endDateValue,
-      view,
-    });
-  }
+  // NOTE: Datepickers removed for now
+  // function handleStartDateChange(value: DateValue | undefined) {
+  //   startDateValue = value;
+  //   updateFilterQueryParams({
+  //     url: page.url,
+  //     contentFilter,
+  //     startDateValue,
+  //     endDateValue,
+  //     view,
+  //   });
+  // }
+  //
+  // NOTE: Datepickers removed for now
+  // function handleEndDateChange(value: DateValue | undefined) {
+  //   endDateValue = value;
+  //   updateFilterQueryParams({
+  //     url: page.url,
+  //     contentFilter,
+  //     startDateValue,
+  //     endDateValue,
+  //     view,
+  //   });
+  // }
 </script>
 
 <div class="flex flex-col items-start gap-4">

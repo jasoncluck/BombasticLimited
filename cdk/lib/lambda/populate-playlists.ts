@@ -1,7 +1,7 @@
 import { youtube } from "@googleapis/youtube";
 import { createClient } from "@supabase/supabase-js";
 import { randomBytes } from "crypto";
-import { CHANNEL_INFO, ChannelSource } from "../channel";
+import { CHANNEL_INFO, CHANNEL_SOURCES, ChannelSource } from "../channel";
 
 const MAX_RESULTS = 50;
 
@@ -30,12 +30,15 @@ export const populatePlaylists = async ({
   // Securely generate a random password (never used for login)
   const password = randomBytes(32).toString("base64url");
 
+  const username = source;
+
   // Call the RPC and extract the userId
   const { data: userId, error: userError } = await supabaseClient.rpc(
     "create_user",
     {
       email,
       password,
+      username,
     },
   );
 

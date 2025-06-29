@@ -22,6 +22,11 @@ SET row_security = off;
 -- Data for Name: audit_log_entries; Type: TABLE DATA; Schema: auth; Owner: supabase_auth_admin
 --
 
+INSERT INTO "auth"."audit_log_entries" ("instance_id", "id", "payload", "created_at", "ip_address") VALUES
+	('00000000-0000-0000-0000-000000000000', '5cc15be5-b7a5-44a8-abb2-bd2f83334386', '{"action":"user_deleted","actor_id":"00000000-0000-0000-0000-000000000000","actor_username":"service_role","actor_via_sso":false,"log_type":"team","traits":{"user_email":"nextlander@bombify.net","user_id":"ff0372ae-ef14-402f-832f-af1fd1e49a11","user_phone":""}}', '2025-06-29 17:37:03.677511+00', ''),
+	('00000000-0000-0000-0000-000000000000', '2b4c526e-f1fb-4282-a33d-2ef5f7ae50ac', '{"action":"user_deleted","actor_id":"00000000-0000-0000-0000-000000000000","actor_username":"service_role","actor_via_sso":false,"log_type":"team","traits":{"user_email":"nextlander@bombify.net","user_id":"8c6d7b8c-c0c3-439e-8299-d4847db8a899","user_phone":""}}', '2025-06-29 17:38:49.631368+00', ''),
+	('00000000-0000-0000-0000-000000000000', 'a472b423-f63c-4ece-bcd0-29efc6800ac2', '{"action":"user_deleted","actor_id":"00000000-0000-0000-0000-000000000000","actor_username":"service_role","actor_via_sso":false,"log_type":"team","traits":{"user_email":"giantbomb@bombify.net","user_id":"49a5ecb2-8702-4719-a2cd-418fccbb93b2","user_phone":""}}', '2025-06-29 17:37:03.677509+00', ''),
+	('00000000-0000-0000-0000-000000000000', 'cc5824e1-d6c4-4fcd-a273-ea5a428b0df5', '{"action":"user_deleted","actor_id":"00000000-0000-0000-0000-000000000000","actor_username":"service_role","actor_via_sso":false,"log_type":"team","traits":{"user_email":"remap@bombify.net","user_id":"8bf56330-7128-4231-8143-a165272d6790","user_phone":""}}', '2025-06-29 17:37:07.124379+00', '');
 
 
 --
@@ -35,9 +40,7 @@ SET row_security = off;
 --
 
 INSERT INTO "auth"."users" ("instance_id", "id", "aud", "role", "email", "encrypted_password", "email_confirmed_at", "invited_at", "confirmation_token", "confirmation_sent_at", "recovery_token", "recovery_sent_at", "email_change_token_new", "email_change", "email_change_sent_at", "last_sign_in_at", "raw_app_meta_data", "raw_user_meta_data", "is_super_admin", "created_at", "updated_at", "phone", "phone_confirmed_at", "phone_change", "phone_change_token", "phone_change_sent_at", "email_change_token_current", "email_change_confirm_status", "banned_until", "reauthentication_token", "reauthentication_sent_at", "is_sso_user", "deleted_at", "is_anonymous") VALUES
-	('00000000-0000-0000-0000-000000000000', 'ff0372ae-ef14-402f-832f-af1fd1e49a11', 'authenticated', 'authenticated', 'nextlander@bombify.net', '$2a$06$4p3aQCyP0ID/FJNm27O85uEHDxyXPP.hQjw3LNjwwA8iQxmghGRgK', '2023-05-03 19:41:43.585805+00', NULL, '', NULL, '', '2023-04-22 13:10:03.275387+00', '', '', NULL, '2023-04-22 13:10:31.458239+00', '{"provider": "email", "providers": ["email"]}', '{}', NULL, '2023-05-03 19:41:43.580424+00', '2023-05-03 19:41:43.585948+00', NULL, NULL, '', '', NULL, '', 0, NULL, '', NULL, false, NULL, false),
-	('00000000-0000-0000-0000-000000000000', '49a5ecb2-8702-4719-a2cd-418fccbb93b2', 'authenticated', 'authenticated', 'giantbomb@bombify.net', '$2a$06$E5xZ.YGon1AvzBgA8BoP.OsWsgIViR0e9/cI3D74ej5TCZVqsiXOq', '2023-05-03 19:41:43.585805+00', NULL, '', NULL, '', '2023-04-22 13:10:03.275387+00', '', '', NULL, '2023-04-22 13:10:31.458239+00', '{"provider": "email", "providers": ["email"]}', '{}', NULL, '2023-05-03 19:41:43.580424+00', '2023-05-03 19:41:43.585948+00', NULL, NULL, '', '', NULL, '', 0, NULL, '', NULL, false, NULL, false),
-	('00000000-0000-0000-0000-000000000000', '8bf56330-7128-4231-8143-a165272d6790', 'authenticated', 'authenticated', 'remap@bombify.net', '$2a$06$OeLQPk8NORBareAZmJoaXeN.BR6LgplJDy9ZeXjYP31rjYpeVtMqy', '2023-05-03 19:41:43.585805+00', NULL, '', NULL, '', '2023-04-22 13:10:03.275387+00', '', '', NULL, '2023-04-22 13:10:31.458239+00', '{"provider": "email", "providers": ["email"]}', '{}', NULL, '2023-05-03 19:41:43.580424+00', '2023-05-03 19:41:43.585948+00', NULL, NULL, '', '', NULL, '', 0, NULL, '', NULL, false, NULL, false);
+	('00000000-0000-0000-0000-000000000000', '49c79727-f5b7-4cd8-b5ca-f005023b1f12', 'authenticated', 'authenticated', 'nextlander@bombify.net', '$2a$06$fYZxePwCl8p3Ucq10c6M8.Krgp4bhwCruTnp6pbHifIzdARcWwfT2', '2023-05-03 19:41:43.585805+00', NULL, '', NULL, '', '2023-04-22 13:10:03.275387+00', '', '', NULL, '2023-04-22 13:10:31.458239+00', '{"provider": "email", "providers": ["email"]}', '{"username": "nextlander"}', NULL, '2023-05-03 19:41:43.580424+00', '2023-05-03 19:41:43.585948+00', NULL, NULL, '', '', NULL, '', 0, NULL, '', NULL, false, NULL, false);
 
 
 --
@@ -45,9 +48,7 @@ INSERT INTO "auth"."users" ("instance_id", "id", "aud", "role", "email", "encryp
 --
 
 INSERT INTO "auth"."identities" ("provider_id", "user_id", "identity_data", "provider", "last_sign_in_at", "created_at", "updated_at", "id") VALUES
-	('ff0372ae-ef14-402f-832f-af1fd1e49a11', 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '{"sub": "ff0372ae-ef14-402f-832f-af1fd1e49a11", "email": "nextlander@bombify.net"}', 'email', '2023-05-03 19:41:43.582456+00', '2023-05-03 19:41:43.582497+00', '2023-05-03 19:41:43.582497+00', 'a317d0ab-51d1-49a1-b3b9-c7ea99e2e181'),
-	('49a5ecb2-8702-4719-a2cd-418fccbb93b2', '49a5ecb2-8702-4719-a2cd-418fccbb93b2', '{"sub": "49a5ecb2-8702-4719-a2cd-418fccbb93b2", "email": "giantbomb@bombify.net"}', 'email', '2023-05-03 19:41:43.582456+00', '2023-05-03 19:41:43.582497+00', '2023-05-03 19:41:43.582497+00', '03fe7033-3b45-4d85-be8e-d965f357669e'),
-	('8bf56330-7128-4231-8143-a165272d6790', '8bf56330-7128-4231-8143-a165272d6790', '{"sub": "8bf56330-7128-4231-8143-a165272d6790", "email": "remap@bombify.net"}', 'email', '2023-05-03 19:41:43.582456+00', '2023-05-03 19:41:43.582497+00', '2023-05-03 19:41:43.582497+00', 'f519646c-0411-40e3-affd-34cf653f7546');
+	('49c79727-f5b7-4cd8-b5ca-f005023b1f12', '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '{"sub": "49c79727-f5b7-4cd8-b5ca-f005023b1f12", "email": "nextlander@bombify.net"}', 'email', '2023-05-03 19:41:43.582456+00', '2023-05-03 19:41:43.582497+00', '2023-05-03 19:41:43.582497+00', 'f97bb453-6504-4eb8-81d0-7f2cbe1f0d03');
 
 
 --
@@ -121,34 +122,34 @@ INSERT INTO "auth"."identities" ("provider_id", "user_id", "identity_data", "pro
 --
 
 INSERT INTO "public"."playlists" ("id", "created_by", "created_at", "name", "short_id", "search_vector", "thumbnail_maxres_url", "youtube_id", "description", "type", "image_properties", "thumbnail_url") VALUES
-	(1000354, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:43:59.960306+00', 'X Files FMV', 'v931L', '''file'':2 ''fmv'':3 ''x'':1', 'https://i.ytimg.com/vi/pyOGB-RTjDo/maxresdefault.jpg', 'PL8GKXV8flVOacmltgaGacWW3TQLznNOep', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/pyOGB-RTjDo/default.jpg'),
-	(1000355, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:00.85098+00', 'Silent Hill 2 Playthrough', 'wR31g', '''2'':3 ''hill'':2 ''playthrough'':4 ''silent'':1', 'https://i.ytimg.com/vi/qjan6CRSd8Q/maxresdefault.jpg', 'PL8GKXV8flVOamIPgCFhTsLAyMU3na3Jzv', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/qjan6CRSd8Q/default.jpg'),
-	(1000356, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:01.815323+00', 'Brad and Patrick Play Volgarr!', 'x73gz', '''brad'':1 ''patrick'':3 ''play'':4 ''volgarr'':5', 'https://i.ytimg.com/vi/1hsGeMGPR7M/maxresdefault.jpg', 'PL8GKXV8flVObEeUfhV2EGYBsLodt9hBnL', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/1hsGeMGPR7M/default.jpg'),
-	(1000357, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:02.614531+00', 'Brad''s First Fallout', 'yJ3jz', '''brad'':1 ''fallout'':4 ''first'':3', 'https://i.ytimg.com/vi/pX70BWGkpo8/maxresdefault.jpg', 'PL8GKXV8flVOYxow2wfA0b_yIkY_0I394g', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/pX70BWGkpo8/default.jpg'),
-	(1000358, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:03.692722+00', 'NXL Highlights', 'zx3k5', '''highlight'':2 ''nxl'':1', 'https://i.ytimg.com/vi/-iDJxDweQTs/maxresdefault.jpg', 'PL8GKXV8flVOZkcetVtA7l9Z0SVIIIvUQ_', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/-iDJxDweQTs/default.jpg'),
-	(1000359, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:04.022052+00', 'All By Brad''s Lonesome', 'A9Vp7', '''brad'':3 ''lonesom'':5', 'https://i.ytimg.com/vi/HwSQAQCDxNg/maxresdefault.jpg', 'PL8GKXV8flVObhgLRKdiKWzZrg82kdYev6', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/HwSQAQCDxNg/default.jpg'),
-	(1000360, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:04.919523+00', 'Cyberpunk 2077', 'BRWq2', '''2077'':2 ''cyberpunk'':1', 'https://i.ytimg.com/vi/Giakz6_7K3o/maxresdefault.jpg', 'PL8GKXV8flVOZdYMpNcy_PIsr1hEnyCyQP', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/Giakz6_7K3o/default.jpg'),
-	(1000361, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:06.979907+00', 'Sons of the Forest', 'DJgvA', '''forest'':4 ''son'':1', 'https://i.ytimg.com/vi/_UcO02Imywo/maxresdefault.jpg', 'PL8GKXV8flVOZ4S2p4tiuZu2BHA-4sCYTr', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/_UcO02Imywo/default.jpg'),
-	(1000362, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:07.648537+00', 'Remnant II', 'E6jwm', '''ii'':2 ''remnant'':1', 'https://i.ytimg.com/vi/bc7PK7kjeRA/maxresdefault.jpg', 'PL8GKXV8flVObZRcls3J5KLh2M2hciUhho', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/bc7PK7kjeRA/default.jpg'),
-	(1000363, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:09.166571+00', 'Resident Evil 7, Virtually', 'GQl0r', '''7'':3 ''evil'':2 ''resid'':1 ''virtual'':4', 'https://i.ytimg.com/vi/GA9bh7O9U8M/maxresdefault.jpg', 'PL8GKXV8flVOYx-RpVzTWVSZ8MAj3CfCeG', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/GA9bh7O9U8M/default.jpg'),
-	(1000364, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:09.71756+00', 'Grab Bag', 'J7oB9', '''bag'':2 ''grab'':1', 'https://i.ytimg.com/vi/SHJqt6H4vD0/maxresdefault.jpg', 'PL8GKXV8flVOagb3_IrRVSKU5WFZ6yK1J9', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/SHJqt6H4vD0/default.jpg'),
-	(1000365, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:12.657206+00', 'Star Trek 25th Anniversary', 'K5pDl', '''25th'':3 ''anniversari'':4 ''star'':1 ''trek'':2', 'https://i.ytimg.com/vi/pP9AEDxh2H8/maxresdefault.jpg', 'PL8GKXV8flVOYu_8YwcELqMvZvODCSx4IA', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/pP9AEDxh2H8/default.jpg'),
-	(1000366, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:13.003574+00', 'Patron''s Choice Streams', 'L5qEp', '''choic'':3 ''patron'':1 ''stream'':4', 'https://i.ytimg.com/vi/xgRrTeHgC30/maxresdefault.jpg', 'PL8GKXV8flVOZHp20zbwR6mWXdjVyKdsDD', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/xgRrTeHgC30/default.jpg'),
-	(1000367, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:15.601696+00', 'Gabriel Knight 1', 'M5rGP', '''1'':3 ''gabriel'':1 ''knight'':2', 'https://i.ytimg.com/vi/7fL5BytkNTg/maxresdefault.jpg', 'PL8GKXV8flVOZ35YDTiP80Wi9ww2DyuKRf', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/7fL5BytkNTg/default.jpg'),
-	(1000368, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:16.237337+00', 'Gabriel Knight 2', 'N5vJm', '''2'':3 ''gabriel'':1 ''knight'':2', 'https://i.ytimg.com/vi/aXkeB8z0np8/maxresdefault.jpg', 'PL8GKXV8flVOZlAqFiryxZNYLuT_X3aYXz', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/aXkeB8z0np8/default.jpg'),
-	(1000369, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:16.719482+00', 'The Quarry', 'O5wKB', '''quarri'':2', 'https://i.ytimg.com/vi/TOVxhZ-NGLA/maxresdefault.jpg', 'PL8GKXV8flVOYVmWyVzXWma3Dd4h7tplM5', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/TOVxhZ-NGLA/default.jpg'),
-	(1000370, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:17.020266+00', 'Final Fantasy XIV', 'P5xLy', '''fantasi'':2 ''final'':1 ''xiv'':3', 'https://i.ytimg.com/vi/6GAcrrNyGbs/maxresdefault.jpg', 'PL8GKXV8flVOZ4-fDpWI0fspD_VLArOa-A', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/6GAcrrNyGbs/default.jpg'),
-	(1000371, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:17.777415+00', 'The Trials of Scrap Mechanic', 'Q5yMM', '''mechan'':5 ''scrap'':4 ''trial'':2', 'https://i.ytimg.com/vi/O24BnQglOhk/maxresdefault.jpg', 'PL8GKXV8flVOYpTzmChZKpQr_rIxGBKRW1', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/O24BnQglOhk/default.jpg'),
-	(1000372, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:18.685923+00', 'Alex-y Quest', 'R5zNz', '''alex'':2 ''alex-i'':1 ''quest'':4 ''y'':3', 'https://i.ytimg.com/vi/DRHRmaQgNVc/maxresdefault.jpg', 'PL8GKXV8flVOawyibB1c_Z8oLUciVhtvlD', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/DRHRmaQgNVc/default.jpg'),
-	(1000373, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:20.694951+00', 'Comfy Crew', 'V0ERB', '''comfi'':1 ''crew'':2', 'https://i.ytimg.com/vi/IkQRaVOhb3E/maxresdefault.jpg', 'PL8GKXV8flVOZMqPqVE9j3EoeORYgsMNZF', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/IkQRaVOhb3E/default.jpg'),
-	(1000374, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:21.063283+00', 'Absolutely Alex Mornings', 'WjGV4', '''absolut'':1 ''alex'':2 ''morn'':3', 'https://i.ytimg.com/vi/c_d8FIhGTh0/maxresdefault.jpg', 'PL8GKXV8flVObwClYI4mMaqAeuifnUFund', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/c_d8FIhGTh0/default.jpg'),
-	(1000375, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:21.660054+00', 'Life is Strange: True Colors', 'XkJW8', '''color'':5 ''life'':1 ''strang'':3 ''true'':4', 'https://i.ytimg.com/vi/5Vib_197Un0/maxresdefault.jpg', 'PL8GKXV8flVObhjuSegfTucMOg6eAX9IpV', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/5Vib_197Un0/default.jpg'),
-	(1000376, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:22.317771+00', 'Pretty Good Assassin Tour', 'YlK8O', '''assassin'':3 ''good'':2 ''pretti'':1 ''tour'':4', 'https://i.ytimg.com/vi/pQHqogxVzJU/maxresdefault.jpg', 'PL8GKXV8flVOZKGHnPOe07Bbb_wOOYvKLp', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/pQHqogxVzJU/default.jpg'),
-	(1000377, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:22.813479+00', 'Very Vinny Mornings', 'ZmL12', '''morn'':3 ''vinni'':2', 'https://i.ytimg.com/vi/b4Yj47vIFuU/maxresdefault.jpg', 'PL8GKXV8flVOblEWt7vva6cZTDUtB6x-4z', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/b4Yj47vIFuU/default.jpg'),
-	(1000378, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:23.718487+00', 'Talkin'' Over Things', '1ByL0', '''talkin'':1 ''thing'':3', 'https://i.ytimg.com/vi/wsFUb9PQbuI/maxresdefault.jpg', 'PL8GKXV8flVOaonOnH-Am9gz-FEfFGb8xz', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/wsFUb9PQbuI/default.jpg'),
-	(1000379, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:25.439367+00', 'Sea of Thieves With Abby Russell', '210Mj', '''abbi'':5 ''russel'':6 ''sea'':1 ''thiev'':3', 'https://i.ytimg.com/vi/22FMR5wMz2o/maxresdefault.jpg', 'PL8GKXV8flVOaBu2H7w0WriTezkazdidbc', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/22FMR5wMz2o/default.jpg'),
-	(1000380, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:25.756088+00', 'Here Decay, Gone Tomorrow!', '3KAN4', '''decay'':2 ''gone'':3 ''tomorrow'':4', 'https://i.ytimg.com/vi/1Pn0MafWCxA/maxresdefault.jpg', 'PL8GKXV8flVOaBJpOSaN6YqF4Bd3VFarsk', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/1Pn0MafWCxA/default.jpg'),
-	(1000381, 'ff0372ae-ef14-402f-832f-af1fd1e49a11', '2025-06-29 02:44:26.381998+00', 'Full Motion Vinny', '4YBOg', '''full'':1 ''motion'':2 ''vinni'':3', 'https://i.ytimg.com/vi/YgXg06521Zc/maxresdefault.jpg', 'PL8GKXV8flVOb07EkQ_8ofwcQP0AjuK3HW', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/YgXg06521Zc/default.jpg');
+	(1000466, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:36.401539+00', 'X Files FMV', 'L5qoj', '''file'':2 ''fmv'':3 ''x'':1', 'https://i.ytimg.com/vi/pyOGB-RTjDo/maxresdefault.jpg', 'PL8GKXV8flVOacmltgaGacWW3TQLznNOep', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/pyOGB-RTjDo/default.jpg'),
+	(1000467, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:37.532528+00', 'Silent Hill 2 Playthrough', 'M5rpR', '''2'':3 ''hill'':2 ''playthrough'':4 ''silent'':1', 'https://i.ytimg.com/vi/qjan6CRSd8Q/maxresdefault.jpg', 'PL8GKXV8flVOamIPgCFhTsLAyMU3na3Jzv', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/qjan6CRSd8Q/default.jpg'),
+	(1000468, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:38.534282+00', 'Brad and Patrick Play Volgarr!', 'N5vqN', '''brad'':1 ''patrick'':3 ''play'':4 ''volgarr'':5', 'https://i.ytimg.com/vi/1hsGeMGPR7M/maxresdefault.jpg', 'PL8GKXV8flVObEeUfhV2EGYBsLodt9hBnL', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/1hsGeMGPR7M/default.jpg'),
+	(1000469, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:39.102461+00', 'Brad''s First Fallout', 'O5wrQ', '''brad'':1 ''fallout'':4 ''first'':3', 'https://i.ytimg.com/vi/pX70BWGkpo8/maxresdefault.jpg', 'PL8GKXV8flVOYxow2wfA0b_yIkY_0I394g', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/pX70BWGkpo8/default.jpg'),
+	(1000470, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:40.012267+00', 'NXL Highlights', 'P5xv2', '''highlight'':2 ''nxl'':1', 'https://i.ytimg.com/vi/-iDJxDweQTs/maxresdefault.jpg', 'PL8GKXV8flVOZkcetVtA7l9Z0SVIIIvUQ_', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/-iDJxDweQTs/default.jpg'),
+	(1000471, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:40.335214+00', 'All By Brad''s Lonesome', 'Q5ywZ', '''brad'':3 ''lonesom'':5', 'https://i.ytimg.com/vi/HwSQAQCDxNg/maxresdefault.jpg', 'PL8GKXV8flVObhgLRKdiKWzZrg82kdYev6', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/HwSQAQCDxNg/default.jpg'),
+	(1000472, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:41.097541+00', 'Cyberpunk 2077', 'R5z9Y', '''2077'':2 ''cyberpunk'':1', 'https://i.ytimg.com/vi/Giakz6_7K3o/maxresdefault.jpg', 'PL8GKXV8flVOZdYMpNcy_PIsr1hEnyCyQP', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/Giakz6_7K3o/default.jpg'),
+	(1000473, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:43.012202+00', 'Sons of the Forest', 'V0E6O', '''forest'':4 ''son'':1', 'https://i.ytimg.com/vi/_UcO02Imywo/maxresdefault.jpg', 'PL8GKXV8flVOZ4S2p4tiuZu2BHA-4sCYTr', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/_UcO02Imywo/default.jpg'),
+	(1000474, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:44.19077+00', 'Remnant II', 'WjG4n', '''ii'':2 ''remnant'':1', 'https://i.ytimg.com/vi/bc7PK7kjeRA/maxresdefault.jpg', 'PL8GKXV8flVObZRcls3J5KLh2M2hciUhho', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/bc7PK7kjeRA/default.jpg'),
+	(1000475, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:45.118297+00', 'Resident Evil 7, Virtually', 'XkJ4o', '''7'':3 ''evil'':2 ''resid'':1 ''virtual'':4', 'https://i.ytimg.com/vi/GA9bh7O9U8M/maxresdefault.jpg', 'PL8GKXV8flVOYx-RpVzTWVSZ8MAj3CfCeG', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/GA9bh7O9U8M/default.jpg'),
+	(1000476, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:45.572762+00', 'Grab Bag', 'YlKgW', '''bag'':2 ''grab'':1', 'https://i.ytimg.com/vi/SHJqt6H4vD0/maxresdefault.jpg', 'PL8GKXV8flVOagb3_IrRVSKU5WFZ6yK1J9', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/SHJqt6H4vD0/default.jpg'),
+	(1000477, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:48.173283+00', 'Star Trek 25th Anniversary', 'ZmLj8', '''25th'':3 ''anniversari'':4 ''star'':1 ''trek'':2', 'https://i.ytimg.com/vi/pP9AEDxh2H8/maxresdefault.jpg', 'PL8GKXV8flVOYu_8YwcELqMvZvODCSx4IA', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/pP9AEDxh2H8/default.jpg'),
+	(1000478, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:48.552074+00', 'Patron''s Choice Streams', '1ByRG', '''choic'':3 ''patron'':1 ''stream'':4', 'https://i.ytimg.com/vi/xgRrTeHgC30/maxresdefault.jpg', 'PL8GKXV8flVOZHp20zbwR6mWXdjVyKdsDD', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/xgRrTeHgC30/default.jpg'),
+	(1000479, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:51.052631+00', 'Gabriel Knight 1', '210VW', '''1'':3 ''gabriel'':1 ''knight'':2', 'https://i.ytimg.com/vi/7fL5BytkNTg/maxresdefault.jpg', 'PL8GKXV8flVOZ35YDTiP80Wi9ww2DyuKRf', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/7fL5BytkNTg/default.jpg'),
+	(1000480, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:51.603537+00', 'Gabriel Knight 2', '3KAW9', '''2'':3 ''gabriel'':1 ''knight'':2', 'https://i.ytimg.com/vi/aXkeB8z0np8/maxresdefault.jpg', 'PL8GKXV8flVOZlAqFiryxZNYLuT_X3aYXz', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/aXkeB8z0np8/default.jpg'),
+	(1000481, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:52.295816+00', 'The Quarry', '4YBXk', '''quarri'':2', 'https://i.ytimg.com/vi/TOVxhZ-NGLA/maxresdefault.jpg', 'PL8GKXV8flVOYVmWyVzXWma3Dd4h7tplM5', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/TOVxhZ-NGLA/default.jpg'),
+	(1000482, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:52.617094+00', 'Final Fantasy XIV', '51DYA', '''fantasi'':2 ''final'':1 ''xiv'':3', 'https://i.ytimg.com/vi/6GAcrrNyGbs/maxresdefault.jpg', 'PL8GKXV8flVOZ4-fDpWI0fspD_VLArOa-A', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/6GAcrrNyGbs/default.jpg'),
+	(1000483, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:53.312389+00', 'The Trials of Scrap Mechanic', '6zEZz', '''mechan'':5 ''scrap'':4 ''trial'':2', 'https://i.ytimg.com/vi/O24BnQglOhk/maxresdefault.jpg', 'PL8GKXV8flVOYpTzmChZKpQr_rIxGBKRW1', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/O24BnQglOhk/default.jpg'),
+	(1000484, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:54.91635+00', 'Alex-y Quest', '7WG4O', '''alex'':2 ''alex-i'':1 ''quest'':4 ''y'':3', 'https://i.ytimg.com/vi/DRHRmaQgNVc/maxresdefault.jpg', 'PL8GKXV8flVOawyibB1c_Z8oLUciVhtvlD', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/DRHRmaQgNVc/default.jpg'),
+	(1000485, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:56.448784+00', 'Comfy Crew', '8BJ4W', '''comfi'':1 ''crew'':2', 'https://i.ytimg.com/vi/IkQRaVOhb3E/maxresdefault.jpg', 'PL8GKXV8flVOZMqPqVE9j3EoeORYgsMNZF', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/IkQRaVOhb3E/default.jpg'),
+	(1000486, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:56.851209+00', 'Absolutely Alex Mornings', '9LK4Y', '''absolut'':1 ''alex'':2 ''morn'':3', 'https://i.ytimg.com/vi/c_d8FIhGTh0/maxresdefault.jpg', 'PL8GKXV8flVObwClYI4mMaqAeuifnUFund', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/c_d8FIhGTh0/default.jpg'),
+	(1000487, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:57.277738+00', 'Life is Strange: True Colors', '0XxQ3', '''color'':5 ''life'':1 ''strang'':3 ''true'':4', 'https://i.ytimg.com/vi/5Vib_197Un0/maxresdefault.jpg', 'PL8GKXV8flVObhjuSegfTucMOg6eAX9IpV', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/5Vib_197Un0/default.jpg'),
+	(1000488, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:58.293114+00', 'Pretty Good Assassin Tour', 'gQ3zD', '''assassin'':3 ''good'':2 ''pretti'':1 ''tour'':4', 'https://i.ytimg.com/vi/pQHqogxVzJU/maxresdefault.jpg', 'PL8GKXV8flVOZKGHnPOe07Bbb_wOOYvKLp', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/pQHqogxVzJU/default.jpg'),
+	(1000489, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:58.844931+00', 'Very Vinny Mornings', 'jO3DB', '''morn'':3 ''vinni'':2', 'https://i.ytimg.com/vi/b4Yj47vIFuU/maxresdefault.jpg', 'PL8GKXV8flVOblEWt7vva6cZTDUtB6x-4z', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/b4Yj47vIFuU/default.jpg'),
+	(1000490, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:59.47332+00', 'Talkin'' Over Things', 'kO3EK', '''talkin'':1 ''thing'':3', 'https://i.ytimg.com/vi/wsFUb9PQbuI/maxresdefault.jpg', 'PL8GKXV8flVOaonOnH-Am9gz-FEfFGb8xz', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/wsFUb9PQbuI/default.jpg'),
+	(1000491, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:40:01.154305+00', 'Sea of Thieves With Abby Russell', 'lM3GV', '''abbi'':5 ''russel'':6 ''sea'':1 ''thiev'':3', 'https://i.ytimg.com/vi/22FMR5wMz2o/maxresdefault.jpg', 'PL8GKXV8flVOaBu2H7w0WriTezkazdidbc', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/22FMR5wMz2o/default.jpg'),
+	(1000492, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:40:01.549116+00', 'Here Decay, Gone Tomorrow!', 'mM3Jn', '''decay'':2 ''gone'':3 ''tomorrow'':4', 'https://i.ytimg.com/vi/1Pn0MafWCxA/maxresdefault.jpg', 'PL8GKXV8flVOaBJpOSaN6YqF4Bd3VFarsk', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/1Pn0MafWCxA/default.jpg'),
+	(1000493, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:40:02.186919+00', 'Full Motion Vinny', 'nN3KP', '''full'':1 ''motion'':2 ''vinni'':3', 'https://i.ytimg.com/vi/YgXg06521Zc/maxresdefault.jpg', 'PL8GKXV8flVOb07EkQ_8ofwcQP0AjuK3HW', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/YgXg06521Zc/default.jpg');
 
 
 --
@@ -2128,12 +2129,6 @@ Call into the Voicemail Dump Truck at (707)EXIT-FLU
 	('1f-nPKb0kG0', 'giantbomb', 'Tiles of the Year in Fire Emblem Engage | Quick Look', 'Jan and Jeff Grubb finally put a ring on all their anime friends in Fire Emblem Engage!
 
 #giantbomb #quicklook #fireemblem #fireemblemengage', 'https://i.ytimg.com/vi/1f-nPKb0kG0/mqdefault.jpg', '2023-01-24 19:02:23+00', '''anim'':22B ''emblem'':7A,26B ''engag'':8A,27B ''final'':15B ''fire'':6A,25B ''fireemblem'':30B ''fireemblemengag'':31B ''friend'':23B ''giantbomb'':28B ''grubb'':14B ''jan'':11B ''jeff'':13B ''look'':10A ''put'':16B ''quick'':9A ''quicklook'':29B ''ring'':18B ''tile'':1A ''year'':4A', false, 'PT44M32S', 'https://i.ytimg.com/vi/1f-nPKb0kG0/maxresdefault.jpg'),
-	('qpQRFd2cC6w', 'nextlander', 'Abby and Vinny are Back for More Rooting Around! (Part 03)', 'The Roottrees may be dead but that doesn''t mean the fun has to stop!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/qpQRFd2cC6w/mqdefault.jpg', '2025-02-11 00:07:48+00', '''/nextlander'':35B ''03'':11A ''abbi'':1A ''around'':9A ''back'':5A ''communiti'':32B ''dead'':16B ''doesn'':19B ''fun'':23B ''may'':14B ''mean'':21B ''nextland'':27B ''part'':10A ''root'':8A ''roottre'':13B ''stop'':26B ''support'':29B ''thank'':36B ''vinni'':3A ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT2H25M51S', 'https://i.ytimg.com/vi/qpQRFd2cC6w/maxresdefault.jpg'),
 	('vKyA4m_A-xA', 'giantbomb', 'Call of Duty: Ghosts: Giant Bomb Quick Look', 'Jeff, Vinny, and the spectral presence of Brad fight spacemen, dogs, and draw distance in the new COD.
 
 If you like this, maybe you''d like to check out our website! http://bit.ly/bxFRTC
@@ -2266,12 +2261,6 @@ And Twitch! http://bit.ly/shzAI2', 'https://i.ytimg.com/vi/naN35lDLDnk/mqdefault
 49:40 Drake has a gold PSP
 52:58 Polls
 55:22 What''s up, Giant Bomb?', 'https://i.ytimg.com/vi/QfYZyz9mgCU/mqdefault.jpg', '2023-01-19 21:34:52+00', '''00'':35B,36B ''01/19/23'':11A ''03'':38B ''13'':42B ''14'':80B ''15'':43B ''17'':49B ''21'':76B ''22'':100B ''24'':57B ''30'':85B ''31'':66B ''343'':48B ''35'':67B,71B ''40'':75B,90B ''43'':79B ''46'':84B ''48'':72B ''49'':89B ''50'':39B,50B ''52'':96B ''55'':58B,99B ''58'':97B ''apolog'':70B ''ar'':82B ''bomb'':105B ''boss'':45B ''ceo'':69B ''come'':27B ''critic'':65B ''cultur'':63B ''dev'':54B ''develop'':7A ''discuss'':19B ''drake'':91B ''ex'':52B ''ex-halo'':51B ''game'':8A ''gamemessmorn'':34B ''giant'':104B ''gmm'':33B ''gold'':94B ''grubb'':12B,32B ''halo'':4A,44B,53B ''hit'':3A ''intro'':37B ''jan'':16B ''join'':14B ''layoff'':2A,41B,74B ''leav'':47B ''mario'':86B ''mess'':9A ''microsoft'':1A,23B,40B,56B ''morn'':10A ''nintendo'':81B ''ochoa'':17B ''parti'':87B ''patent'':83B ''pc'':29B,78B ''phil'':59B ''poll'':98B ''psp'':95B ''return'':26B,77B ''riot'':73B ''rpg'':88B ''slam'':55B ''spencer'':60B ''starfield'':6A ''ubisoft'':25B,68B ''woe'':21B ''worri'':61B', false, 'PT58M27S', 'https://i.ytimg.com/vi/QfYZyz9mgCU/maxresdefault.jpg'),
-	('VOft5gfNqBA', 'nextlander', 'Vinny, Alex, and James Are Ready to Finish Silent Hill 2! (Part 07)', 'Is this the final adventures for our Silent Hill 2 team? Maybe? Maybe not... Let''s find out!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/VOft5gfNqBA/mqdefault.jpg', '2024-12-09 23:13:18+00', '''/nextlander'':40B ''07'':13A ''2'':11A,23B ''adventur'':18B ''alex'':2A ''communiti'':37B ''final'':17B ''find'':30B ''finish'':8A ''hill'':10A,22B ''jame'':4A ''let'':28B ''mayb'':25B,26B ''nextland'':32B ''part'':12A ''readi'':6A ''silent'':9A,21B ''support'':34B ''team'':24B ''thank'':41B ''vinni'':1A ''watch'':43B ''www.patreon.com'':39B ''www.patreon.com/nextlander'':38B', false, 'PT1H38M54S', 'https://i.ytimg.com/vi/VOft5gfNqBA/maxresdefault.jpg'),
 	('gp3i_EgXK6A', 'giantbomb', 'Arcade Pit: Team DreadXP  VS. Team Don''t Touch The Door', 'DreadXP 
 Abbey ''Scruncho'' Smith @scruncho_speak
 Ted Hentschke @DreadXP_
@@ -2364,12 +2353,6 @@ I''m gonna merge with my eyes closed~
 	('EASo1Chaxb8', 'giantbomb', 'One Piece Odyssey is Completely Fine | Quick Look', 'Jan and Jeff hit the high seas to find CUBES and join this motley crew with a stretchyman and other assorted himbos.
 
 #quicklook #giantbomb #onepiece #onepieceodyssey', 'https://i.ytimg.com/vi/EASo1Chaxb8/mqdefault.jpg', '2023-01-12 23:52:46+00', '''assort'':29B ''complet'':5A ''crew'':23B ''cube'':18B ''find'':17B ''fine'':6A ''giantbomb'':32B ''high'':14B ''himbo'':30B ''hit'':12B ''jan'':9B ''jeff'':11B ''join'':20B ''look'':8A ''motley'':22B ''odyssey'':3A ''one'':1A ''onepiec'':33B ''onepieceodyssey'':34B ''piec'':2A ''quick'':7A ''quicklook'':31B ''sea'':15B ''stretchyman'':26B', false, 'PT31M1S', 'https://i.ytimg.com/vi/EASo1Chaxb8/maxresdefault.jpg'),
-	('xaFtWbU3PYs', 'nextlander', 'Nextlander and Steam Next Fest October 2024!', 'Vinny and Alex have downloaded SO MANY DEMOS. We will get to maybe a quarter of them.
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/xaFtWbU3PYs/mqdefault.jpg', '2024-10-18 19:39:23+00', '''/nextlander'':33B ''2024'':7A ''alex'':10B ''communiti'':30B ''demo'':15B ''download'':12B ''fest'':5A ''get'':18B ''mani'':14B ''mayb'':20B ''next'':4A ''nextland'':1A,25B ''octob'':6A ''quarter'':22B ''steam'':3A ''support'':27B ''thank'':34B ''vinni'':8B ''watch'':36B ''www.patreon.com'':32B ''www.patreon.com/nextlander'':31B', false, 'PT2H13M38S', 'https://i.ytimg.com/vi/xaFtWbU3PYs/maxresdefault.jpg'),
 	('2eyubgDwScc', 'giantbomb', 'Cheese has Milk in it? | Voicemail Dump Truck 53', 'Friend of the site Emily Panic joins us this week as the dumptruck covers a whole variety of topics like: milk and cheese, beans in your chili, and proper driving etiquette.
 
 call into the Voicemail Dump Truck at (707)EXIT-FLU
@@ -3180,12 +3163,6 @@ If you like this, maybe you''d like to check out our website! http://bit.ly/bxFR
 And our Facebook page! http://on.fb.me/hcyG1R
 And Twitter! http://bit.ly/9SzULe
 And Twitch! http://bit.ly/shzAI2', 'https://i.ytimg.com/vi/S5UHpAUYHl0/mqdefault.jpg', '2013-09-12 13:02:20+00', '''/9szule'':54B ''/bxfrtc'':42B ''/hcyg1r'':49B ''/shzai2'':59B ''arm'':25B ''bit.ly'':41B,53B,58B ''bit.ly/9szule'':52B ''bit.ly/bxfrtc'':40B ''bit.ly/shzai2'':57B ''bomb'':5A ''brad'':11B ''check'':36B ''cyber'':24B ''d'':33B ''dead'':3A ''facebook'':45B ''fight'':17B ''giant'':4A ''go'':12B ''hulk'':23B ''jeff'':9B ''killer'':1A ''like'':29B,34B ''look'':7A ''mayb'':31B ''model'':20B ''moon'':15B ''on.fb.me'':48B ''on.fb.me/hcyg1r'':47B ''page'':46B ''quick'':6A ''twitch'':56B ''twitter'':51B ''underwear'':19B ''vinni'':8B ''websit'':39B ''yep'':26B', false, 'PT52M58S', 'https://i.ytimg.com/vi/S5UHpAUYHl0/maxresdefault.jpg'),
-	('0uu0FOlhM2E', 'nextlander', 'This Stream Is Peak Nextlander!', 'Will Smith joins us to try and climb a mountain! How difficult could that be?
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/0uu0FOlhM2E/mqdefault.jpg', '2025-06-16 23:29:27+00', '''/nextlander'':29B ''climb'':13B ''communiti'':26B ''could'':18B ''difficult'':17B ''join'':8B ''mountain'':15B ''nextland'':5A,21B ''peak'':4A ''smith'':7B ''stream'':2A ''support'':23B ''thank'':30B ''tri'':11B ''us'':9B ''watch'':32B ''www.patreon.com'':28B ''www.patreon.com/nextlander'':27B', false, 'PT2H23M36S', 'https://i.ytimg.com/vi/0uu0FOlhM2E/maxresdefault.jpg'),
 	('pViCyPZ7pBA', 'giantbomb', 'Grubbkatana 01 | NEW SEASON OF BLIGHT CLUB', 'John Romero''s about to make you his MITCH! 
 
 #blightclub', 'https://i.ytimg.com/vi/pViCyPZ7pBA/mqdefault.jpg', '2024-05-01 21:32:58+00', '''01'':2A ''blight'':6A ''blightclub'':17B ''club'':7A ''grubbkatana'':1A ''john'':8B ''make'':13B ''mitch'':16B ''new'':3A ''romero'':9B ''season'':4A', false, 'PT2H18M43S', 'https://i.ytimg.com/vi/pViCyPZ7pBA/maxresdefault.jpg'),
@@ -3548,9 +3525,6 @@ Make sure to check out ChefReactions on all platforms!
 	('nszWU_Y0X8k', 'giantbomb', 'SuperDan 64: Dan of Steel | 005 | Blight Club', 'SuperDan is back! Watch as he guides Superman to fight his greatest nemesis, GIANT CRABS!
 
 #superman #superman64 #nintendo64', 'https://i.ytimg.com/vi/nszWU_Y0X8k/mqdefault.jpg', '2024-04-17 21:37:16+00', '''005'':6A ''64'':2A ''back'':11B ''blight'':7A ''club'':8A ''crab'':23B ''dan'':3A ''fight'':18B ''giant'':22B ''greatest'':20B ''guid'':15B ''nemesi'':21B ''nintendo64'':26B ''steel'':5A ''superdan'':1A,9B ''superman'':16B,24B ''superman64'':25B ''watch'':12B', false, 'PT2H25M39S', 'https://i.ytimg.com/vi/nszWU_Y0X8k/maxresdefault.jpg'),
-	('6yZWQsznwlw', 'remap', 'Remap Talks Over The Game Awards', 'Hey, uh, this year''s show was actually...pretty good?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/6yZWQsznwlw/mqdefault.jpg', '2024-12-13 05:35:57+00', '''actual'':14B ''audienc'':20B ''award'':6A ''consid'':30B ''content'':28B ''continu'':25B ''game'':5A ''good'':16B ''help'':23B ''hey'':7B ''make'':26B ''pleas'':29B ''pretti'':15B ''radio'':18B ''remap'':1A,17B ''show'':12B ''subscrib'':31B ''support'':21B ''talk'':2A ''uh'':8B ''us'':24B ''www.remapradio.com'':33B ''year'':10B', false, 'PT3H31M6S', 'https://i.ytimg.com/vi/6yZWQsznwlw/maxresdefault.jpg'),
 	('NeftU4AErvw', 'giantbomb', 'Next big Assassin''s Creed confirmed by Ubisoft | Game Mess Mornings 09/02/22', 'Jeff Grubb is joined by Jon from SpawnWave to discuss the new Assassin''s Creed, Pokemon Go, and more! Game Mess Mornings will return next Wednesday!
 
 #gamemessmornings #gmm #videogamenews #jeffgrubb #giantbomb 
@@ -3704,12 +3678,6 @@ And Twitch! http://www.twitch.tv/giantbomb If you like this, maybe you''d like t
 And our Facebook page! http://on.fb.me/hcyG1R
 And Twitter! http://bit.ly/9SzULe
 And Twitch! http://bit.ly/shzAI2', 'https://i.ytimg.com/vi/lTXPloElEwI/mqdefault.jpg', '2013-08-21 16:02:22+00', '''/9szule'':84B ''/bxfrtc'':72B ''/giantbomb'':51B,56B ''/giantbombdotcom'':46B ''/hcyg1r'':79B ''/shzai2'':89B ''battl'':18B ''bit.ly'':71B,83B,88B ''bit.ly/9szule'':82B ''bit.ly/bxfrtc'':70B ''bit.ly/shzai2'':87B ''bomb'':3A ''brad'':8B ''card'':12B,23B ''check'':34B,66B ''collect'':22B ''d'':31B,40B,63B ''drew'':6B ''effect'':15B ''facebook'':42B,75B ''free'':21B ''game'':24B ''giant'':2A ''like'':27B,32B,59B,64B ''look'':5A ''maximum'':14B ''mayb'':29B,61B ''on.fb.me'':78B ''on.fb.me/hcyg1r'':77B ''page'':43B,76B ''play'':9B ''quick'':4A ''rori'':11B ''solforg'':1A ''twitch'':53B,86B ''twitter'':48B,81B ''twitter.com'':50B ''twitter.com/giantbomb'':49B ''websit'':37B,69B ''www.facebook.com'':45B ''www.facebook.com/giantbombdotcom'':44B ''www.giantbomb.com'':38B ''www.twitch.tv'':55B ''www.twitch.tv/giantbomb'':54B', false, 'PT28M47S', 'https://i.ytimg.com/vi/lTXPloElEwI/maxresdefault.jpg'),
-	('EkFLq9_VfGA', 'nextlander', 'Friday Fun Stream: The Assassination of Mads Mikkelsen by the Hitmen of Nextlander', 'Let''s do the Hitman dance and see if any of us can take down this elusive target!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/EkFLq9_VfGA/mqdefault.jpg', '2025-06-13 19:55:41+00', '''/nextlander'':40B ''assassin'':5A ''communiti'':37B ''danc'':19B ''elus'':30B ''friday'':1A ''fun'':2A ''hitman'':18B ''hitmen'':11A ''let'':14B ''mad'':7A ''mikkelsen'':8A ''nextland'':13A,32B ''see'':21B ''stream'':3A ''support'':34B ''take'':27B ''target'':31B ''thank'':41B ''us'':25B ''watch'':43B ''www.patreon.com'':39B ''www.patreon.com/nextlander'':38B', false, 'PT2H27S', 'https://i.ytimg.com/vi/EkFLq9_VfGA/maxresdefault.jpg'),
 	('6BC7MHsukzQ', 'giantbomb', 'Drafting a Team of the 5 Best PS1 Games | Giant Bombcast 834: Revengeance', 'Grubb, Mike, Shawn and Niki talk about their time in Dragon''s Dogma 2, Like a Dragon: Infinite Wealth, and Content Warning! Afterwards, they do a console "fantasy draft" to craft the best "team" of PS1 games!
 
 Vote on your favorite of the 4 drafted consoles here: https://twitter.com/JeffGrubb/status/1776340289818431532
@@ -3735,12 +3703,6 @@ Jordan Middler @JordanMiddler
 
 #arcadepit
 #retrogames #giantbomb #fanbyte', 'https://i.ytimg.com/vi/ezbd5D9IxyQ/mqdefault.jpg', '2022-08-31 19:06:11+00', '''arcad'':1A ''arcadepit'':37B ''bald'':6A,31B ''fanbyt'':40B ''giantbomb'':39B ''got'':18B ''hollywood'':5A,30B ''jan'':32B ''janjerom'':33B ''jason'':25B ''jordan'':34B ''jordanmiddl'':36B ''middler'':35B ''pit'':2A,15B ''retrogam'':38B ''ryu'':10A,21B ''team'':3A,8A,19B,28B ''theori'':11A,22B ''tietuesday'':23B ''tietuesdaylp'':24B ''today'':13B ''unastrik'':26B ''ve'':17B ''vs'':7A,27B ''wider'':9A,20B', false, 'PT1H3M21S', 'https://i.ytimg.com/vi/ezbd5D9IxyQ/maxresdefault.jpg'),
-	('yWKRiKQNN2c', 'nextlander', 'Friday Fun Stream: More Schedule I w/ Abby Russell!', 'Time to follow Drugs Bunny down the rabbit hole of low level drug dealing in Schedule I!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/yWKRiKQNN2c/mqdefault.jpg', '2025-04-18 20:23:32+00', '''/nextlander'':35B ''abbi'':8A ''bunni'':14B ''communiti'':32B ''deal'':23B ''drug'':13B,22B ''follow'':12B ''friday'':1A ''fun'':2A ''hole'':18B ''level'':21B ''low'':20B ''nextland'':27B ''rabbit'':17B ''russel'':9A ''schedul'':5A,25B ''stream'':3A ''support'':29B ''thank'':36B ''time'':10B ''w'':7A ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT2H19M37S', 'https://i.ytimg.com/vi/yWKRiKQNN2c/maxresdefault.jpg'),
 	('9MZTA6PE1YU', 'giantbomb', 'There''s a new version of the PlayStation 5 | Game Mess Mornings 08/26/22', 'Jeff Grubb is joined by Rachel Kaser to discuss lots of Sony news, the Steam Deck 2, System Shock, and more.
 
 00:00 Intro
@@ -3861,12 +3823,6 @@ And Twitch! http://www.twitch.tv/giantbomb If you like this, maybe you''d like t
 And our Facebook page! http://on.fb.me/hcyG1R
 And Twitter! http://bit.ly/9SzULe
 And Twitch! http://bit.ly/shzAI2', 'https://i.ytimg.com/vi/0YXOVY-4pkM/mqdefault.jpg', '2013-08-16 22:54:07+00', '''/2012/12/slave-of-god/'':34B ''/9szule'':88B ''/bxfrtc'':76B ''/games/save-the-date/'':42B ''/giantbomb'':55B,60B ''/giantbombdotcom'':50B ''/hcyg1r'':83B ''/shzai2'':93B ''08/16/2013'':3A ''bit.ly'':75B,87B,92B ''bit.ly/9szule'':86B ''bit.ly/bxfrtc'':74B ''bit.ly/shzai2'':91B ''check'':17B,43B,70B ''club'':10B ''d'':67B ''date'':26B,39B ''delver'':22B,35B ''facebook'':47B,79B ''god'':21B,31B ''guy'':13B ''learn'':8B ''like'':63B,68B ''link'':27B ''mayb'':65B ''on.fb.me'':82B ''on.fb.me/hcyg1r'':81B ''page'':80B ''paperdino.com'':41B ''paperdino.com/games/save-the-date/'':40B ''play'':2A ''save'':24B,37B ''slave'':19B,29B ''time'':6B ''twitch'':57B,90B ''twitter'':52B,85B ''twitter.com'':54B ''twitter.com/giantbomb'':53B ''us'':44B ''websit'':73B ''week'':15B ''worth'':1A ''www.delvergame.com'':36B ''www.facebook.com'':49B ''www.facebook.com/giantbombdotcom'':48B ''www.increpare.com'':33B ''www.increpare.com/2012/12/slave-of-god/'':32B ''www.twitch.tv'':59B ''www.twitch.tv/giantbomb'':58B', false, 'PT25M36S', 'https://i.ytimg.com/vi/0YXOVY-4pkM/maxresdefault.jpg'),
-	('O7jh9bKrf84', 'nextlander', 'Vinny and Will Tame a Savage Planet (Again!)', 'Come party with us as we run around like maniacs and cover each other with goo!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/O7jh9bKrf84/mqdefault.jpg', '2025-05-12 23:37:27+00', '''/nextlander'':32B ''around'':15B ''come'':8B ''communiti'':29B ''cover'':19B ''goo'':23B ''like'':16B ''maniac'':17B ''nextland'':24B ''parti'':9B ''planet'':7A ''run'':14B ''savag'':6A ''support'':26B ''tame'':4A ''thank'':33B ''us'':11B ''vinni'':1A ''watch'':35B ''www.patreon.com'':31B ''www.patreon.com/nextlander'':30B', false, 'PT2H22M48S', 'https://i.ytimg.com/vi/O7jh9bKrf84/maxresdefault.jpg'),
 	('wWEsWCHeo7Y', 'giantbomb', 'Big Daddys Pizza.mp3 | Voicemail Dump Truck 110', 'This week, the Dump Truck crashes its way through conversations about weird food takes, bizarrely hot video game characters, and how we still have no idea where Delaware is.
 
 #vmdt #voicemaildumptruck #giantbomb', 'https://i.ytimg.com/vi/wWEsWCHeo7Y/mqdefault.jpg', '2024-04-04 21:37:45+00', '''110'':7A ''big'':1A ''bizarr'':22B ''charact'':26B ''convers'':17B ''crash'':13B ''daddi'':2A ''delawar'':35B ''dump'':5A,11B ''food'':20B ''game'':25B ''giantbomb'':39B ''hot'':23B ''idea'':33B ''pizza.mp3'':3A ''still'':30B ''take'':21B ''truck'':6A,12B ''video'':24B ''vmdt'':37B ''voicemail'':4A ''voicemaildumptruck'':38B ''way'':15B ''week'':9B ''weird'':19B', false, 'PT1H27M44S', 'https://i.ytimg.com/vi/wWEsWCHeo7Y/maxresdefault.jpg'),
@@ -3948,15 +3904,6 @@ And Twitch! http://bit.ly/shzAI2', 'https://i.ytimg.com/vi/_TvIJAq8Afo/mqdefault
 51:49 What''s up, Giant Bomb?
 
 #jeffgrubb #giantbomb #kirby', 'https://i.ytimg.com/vi/wLlT-DQZUAs/mqdefault.jpg', '2022-08-11 17:08:50+00', '''00'':29B,30B,77B ''02'':73B ''03'':32B ''05'':67B ''08/11/22'':12A ''10'':38B ''15'':43B ''20'':50B,58B ''22'':49B ''26'':57B ''29'':66B ''30'':85B ''31'':72B ''33'':81B ''35'':76B ''37'':80B ''40'':84B ''44'':39B ''45'':33B,44B ''49'':88B ''51'':87B ''bomb'':93B ''bug'':71B ''call'':24B ''clean'':52B ''cloud'':70B ''date'':8A ''dbz'':74B ''drag'':78B ''duti'':26B ''elden'':68B ''feast'':35B ''forspoken'':79B ''fortnit'':75B ''game'':4A,9A,83B ''get'':5A ''giant'':92B ''giantbomb'':95B ''grubb'':14B ''id'':51B ''ii'':48B ''intro'':31B ''jan'':18B ''jeff'':13B ''jeffgrubb'':94B ''join'':16B ''kirbi'':1A,23B,34B,96B ''may'':63B ''mess'':10A ''microsoft'':40B,45B ''morn'':11A ''need'':64B ''next'':36B ''ochoa'':19B ''pc'':62B ''playstat'':59B ''poll'':86B ''port'':60B ''ps'':82B ''psn'':65B ''quake/doom'':54B ''releas'':7A ''ring'':69B ''soni'':42B,47B ''steam'':56B ''surpris'':3A ''talk'':21B ''v'':41B,46B ''week'':37B', false, 'PT54M7S', 'https://i.ytimg.com/vi/wLlT-DQZUAs/maxresdefault.jpg'),
-	('LaEG6Sp0JoA', 'remap', 'The Wheel Enters The Long Dark', 'Our plans to build Japanese trains thwarted, we instead turn our attention towards a geomagnetic apocalypse in The Long Dark. We also tear our pants.
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/LaEG6Sp0JoA/mqdefault.jpg', '2024-12-06 16:12:29+00', '''also'':28B ''apocalyps'':22B ''attent'':18B ''audienc'':35B ''build'':10B ''consid'':45B ''content'':43B ''continu'':40B ''dark'':6A,26B ''enter'':3A ''geomagnet'':21B ''help'':38B ''instead'':15B ''japanes'':11B ''long'':5A,25B ''make'':41B ''pant'':31B ''plan'':8B ''pleas'':44B ''radio'':33B ''remap'':32B ''subscrib'':46B ''support'':36B ''tear'':29B ''thwart'':13B ''toward'':19B ''train'':12B ''turn'':16B ''us'':39B ''wheel'':2A ''www.remapradio.com'':48B', false, 'PT2H42M36S', 'https://i.ytimg.com/vi/LaEG6Sp0JoA/maxresdefault.jpg'),
-	('t2gFHdaM6mM', 'nextlander', 'Patron''s Choice for March 2025: R.E.P.O. Men!', 'Alex is about to take off for a couple of weeks, but before he ducks out he''ll be joining the gang and Will Smith to check out R.E.P.O.!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/t2gFHdaM6mM/mqdefault.jpg', '2025-03-28 20:14:23+00', '''/nextlander'':46B ''2025'':6A ''alex'':9B ''check'':35B ''choic'':3A ''communiti'':43B ''coupl'':17B ''duck'':23B ''gang'':30B ''join'':28B ''ll'':26B ''march'':5A ''men'':8A ''nextland'':38B ''patron'':1A ''r.e.p.o'':7A,37B ''smith'':33B ''support'':40B ''take'':13B ''thank'':47B ''watch'':49B ''week'':19B ''www.patreon.com'':45B ''www.patreon.com/nextlander'':44B', false, 'PT1H50M1S', 'https://i.ytimg.com/vi/t2gFHdaM6mM/maxresdefault.jpg'),
 	('Ve42OE47870', 'giantbomb', 'Will Splatoon 3 and Overwatch 2 win over new fans? | Game Mess Mornings 08/08/22', 'Jeff Grubb is joined by Lucy James to talk about Splatoon 3, Overwatch, and more!
 
 00:00 Intro
@@ -3976,6 +3923,9 @@ Thanks for watching.', 'https://i.ytimg.com/vi/t2gFHdaM6mM/mqdefault.jpg', '2025
 49:45 What''s up, Giant Bomb?
 
 #giantbomb #gamenews #jeffgrubb #splatoon3 #overwatch2  #gamemessmornings', 'https://i.ytimg.com/vi/Ve42OE47870/mqdefault.jpg', '2022-08-10 19:19:43+00', '''00'':30B,31B ''03'':33B ''08/08/22'':14A ''10m'':46B ''11'':34B ''14'':37B ''19'':38B,43B,52B ''2'':6A,65B ''21'':48B ''22'':51B ''25'':55B ''26'':54B ''28'':61B ''3'':3A,26B,36B ''30'':68B,103B ''33'':76B,91B ''35'':77B,82B ''40'':49B ''43'':69B,90B,95B ''45'':106B ''46'':62B ''47'':102B ''49'':105B ''55'':83B ''58'':96B ''59'':44B ''addi'':50B ''bomb'':111B ''chronicl'':94B ''cloud'':71B ''control'':67B ''cult'':84B ''diofield'':93B ''dragoon'':80B ''elit'':64B ''end'':40B ''fan'':10A ''game'':11A,75B ''gamemessmorn'':117B ''gamenew'':113B ''gamescom'':53B ''giant'':110B ''giantbomb'':112B ''grubb'':16B ''intro'':32B ''jame'':21B ''jeff'':15B ''jeffgrubb'':114B ''join'':18B ''lamb'':87B ''legend'':78B ''lootbox'':41B ''luci'':20B ''mad'':98B ''mess'':12A ''morn'':13A ''multiversus'':45B ''new'':9A ''overwatch'':5A,27B,39B ''overwatch2'':116B ''own'':74B ''peopl'':97B ''player'':47B ''poll'':104B ''ps'':100B ''ps4'':59B ''report'':58B ''return'':81B ''review'':88B ''roundup'':89B ''sale'':42B,60B ''soni'':56B ''splatoon'':2A,25B,35B ''splatoon3'':115B ''stop'':57B ''store'':101B ''stream'':72B ''talk'':23B ''white'':66B ''win'':7A ''xbox'':63B,70B', false, 'PT51M33S', 'https://i.ytimg.com/vi/Ve42OE47870/maxresdefault.jpg'),
+	('LaEG6Sp0JoA', 'remap', 'The Wheel Enters The Long Dark', 'Our plans to build Japanese trains thwarted, we instead turn our attention towards a geomagnetic apocalypse in The Long Dark. We also tear our pants.
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/LaEG6Sp0JoA/mqdefault.jpg', '2024-12-06 16:12:29+00', '''also'':28B ''apocalyps'':22B ''attent'':18B ''audienc'':35B ''build'':10B ''consid'':45B ''content'':43B ''continu'':40B ''dark'':6A,26B ''enter'':3A ''geomagnet'':21B ''help'':38B ''instead'':15B ''japanes'':11B ''long'':5A,25B ''make'':41B ''pant'':31B ''plan'':8B ''pleas'':44B ''radio'':33B ''remap'':32B ''subscrib'':46B ''support'':36B ''tear'':29B ''thwart'':13B ''toward'':19B ''train'':12B ''turn'':16B ''us'':39B ''wheel'':2A ''www.remapradio.com'':48B', false, 'PT2H42M36S', 'https://i.ytimg.com/vi/LaEG6Sp0JoA/maxresdefault.jpg'),
 	('QufmkM7IZog', 'giantbomb', 'Swarovski Pokemon and a PureBREAD Dog? | Giant Bomb Talks Over Pokemon Presents 08/02/22', 'Resident Pokemon Professor Jan woke up to talk about some new crystal Pokemons! LOOK AT THAT BREADDOG!
 
 #pokemonscarlet #pokemonviolet #pokemon #giantbomb 
@@ -6931,9 +6881,6 @@ Check us out on Twitter: https://twitter.com/giantbomb', 'https://i.ytimg.com/vi
 Check out our website: http://www.giantbomb.com/
 Check us out on Facebook: https://www.facebook.com/giantbombdotcom
 Check us out on Twitter: https://twitter.com/giantbomb', 'https://i.ytimg.com/vi/oWpZ59ir5gc/mqdefault.jpg', '2020-04-16 02:18:36+00', '''/giantbomb'':45B ''/giantbombdotcom'':37B ''boy'':11B ''check'':25B,30B,38B ''count'':21B ''facebook'':34B ''fun'':8A ''get'':6A ''loud'':10B ''re'':20B ''stop'':5A ''three'':24B ''time'':18B ''twitter'':42B ''twitter.com'':44B ''twitter.com/giantbomb'':43B ''us'':31B,39B ''websit'':28B ''www.facebook.com'':36B ''www.facebook.com/giantbombdotcom'':35B ''www.giantbomb.com'':29B', false, 'PT1H45M50S', 'https://i.ytimg.com/vi/oWpZ59ir5gc/maxresdefault.jpg'),
-	('lSOOodKYyyU', 'giantbomb', 'PEAK | Giant Bomb Plays', 'Dan, Jan, Jeff, and Jeff crashland on an island to eat miscellaneous fruit, help each other up, and climb a mountain in PEAK!
-
-#peak #giantbomb', 'https://i.ytimg.com/vi/lSOOodKYyyU/mqdefault.jpg', '2025-06-16 19:31:36+00', '''bomb'':3A ''climb'':23B ''crashland'':10B ''dan'':5B ''eat'':15B ''fruit'':17B ''giant'':2A ''giantbomb'':29B ''help'':18B ''island'':13B ''jan'':6B ''jeff'':7B,9B ''miscellan'':16B ''mountain'':25B ''peak'':1A,27B,28B ''play'':4A', false, 'PT1H25M24S', 'https://i.ytimg.com/vi/lSOOodKYyyU/maxresdefault.jpg'),
 	('SuZVnC8UbGE', 'giantbomb', 'Giant Bombcast 631: Doom Nuts & Bolts', 'This week we dig into Persona 5 Royal, the Guilty Gear -Strive- beta, more Fallout 76 (?), the final Mario Maker 2 update (?!), Sony''s PlayStation 5 production plans, Jan''s good Internet, and how to eat 30 eggs in one day.
 
 Check out our website: http://www.giantbomb.com/
@@ -9067,9 +9014,6 @@ And Twitch! http://bit.ly/shzAI2', 'https://i.ytimg.com/vi/4Zg87YI9yrw/mqdefault
 And our Facebook page! http://on.fb.me/hcyG1R
 And Twitter! http://bit.ly/9SzULe
 And Twitch! http://bit.ly/shzAI2', 'https://i.ytimg.com/vi/BTOfuuOBYWU/mqdefault.jpg', '2013-03-20 16:00:12+00', '''/9szule'':51B ''/bxfrtc'':39B ''/hcyg1r'':46B ''/shzai2'':56B ''alien'':1A ''bit.ly'':38B,50B,55B ''bit.ly/9szule'':49B ''bit.ly/bxfrtc'':37B ''bit.ly/shzai2'':54B ''bomb'':4A ''brand'':21B ''brown'':8B ''check'':33B ''could'':13B ''d'':30B ''facebook'':42B ''funnel'':11B ''giant'':3A ''learn'':14B ''like'':26B,31B ''look'':6A ''mayb'':28B ''on.fb.me'':45B ''on.fb.me/hcyg1r'':44B ''page'':43B ''pr'':23B ''quick'':5A ''reclus'':9B ''spidey'':19B ''spidi'':2A ''thing'':16B ''twitch'':53B ''twitter'':48B ''web'':12B ''websit'':36B', false, 'PT10M18S', 'https://i.ytimg.com/vi/BTOfuuOBYWU/maxresdefault.jpg'),
-	('eq6QJTpgoUU', 'giantbomb', 'Nintendo Apologizing for Not Enough Switch 2s | GameBreaking News 04/23/25', 'Jeff Grubb is joined by Jake Randall today to chat about Nintendo Switch 2 preorders going up tonight in North America, the Oblivion remaster blowing up, sales numbers for March, and more for your Wednesday! 
-
-#gamebreakingnews #videogamenews', 'https://i.ytimg.com/vi/eq6QJTpgoUU/mqdefault.jpg', '2025-04-23 17:04:03+00', '''04/23/25'':10A ''2'':24B ''2s'':7A ''america'':31B ''apolog'':2A ''blow'':35B ''chat'':20B ''enough'':5A ''gamebreak'':8A ''gamebreakingnew'':46B ''go'':26B ''grubb'':12B ''jake'':16B ''jeff'':11B ''join'':14B ''march'':40B ''news'':9A ''nintendo'':1A,22B ''north'':30B ''number'':38B ''oblivion'':33B ''preorder'':25B ''randal'':17B ''remast'':34B ''sale'':37B ''switch'':6A,23B ''today'':18B ''tonight'':28B ''videogamenew'':47B ''wednesday'':45B', false, 'PT59M41S', 'https://i.ytimg.com/vi/eq6QJTpgoUU/maxresdefault.jpg'),
 	('LX9jemY8vfE', 'giantbomb', 'League of Extraordinary Gentlemen', 'I used to play dota. What happened to me?
 
 -------------------------------------------------------------------------------------
@@ -9368,10 +9312,6 @@ Sunless Skies: Quick Look
 Check out our website: http://www.giantbomb.com/
 Check us out on Facebook: https://www.facebook.com/giantbombdotcom
 Check us out on Twitter: https://twitter.com/giantbomb', 'https://i.ytimg.com/vi/ndludQf-NdA/mqdefault.jpg', '2019-03-10 12:00:06+00', '''/giantbomb'':66B ''/giantbombdotcom'':58B ''bit'':31B ''cat'':23B ''check'':46B,51B,59B ''current'':19B ''d'':6B ''facebook'':55B ''follow'':35B ''follow-up'':34B ''francoi'':25B ''go'':9B ''journey'':15B ''let'':26B ''littl'':30B ''look'':4A,20B,45B ''love'':7B ''m'':18B ''monsieur'':24B ''play'':28B ''quick'':3A,44B ''sea'':39B ''shall'':40B ''sky'':2A,43B ''space'':13B ''space-train'':12B ''sunless'':1A,38B,42B ''train'':14B ''twitter'':63B ''twitter.com'':65B ''twitter.com/giantbomb'':64B ''us'':52B,60B ''websit'':49B ''www.facebook.com'':57B ''www.facebook.com/giantbombdotcom'':56B ''www.giantbomb.com'':50B', false, 'PT41M8S', 'https://i.ytimg.com/vi/ndludQf-NdA/maxresdefault.jpg'),
-	('d1x97nMy3Ew', 'giantbomb', 'Giant Bomb Talks Over the Xbox Showcase | Presented by Annapurna Interactive', 'Let''s talk over some Xbox!', 'https://i.ytimg.com/vi/d1x97nMy3Ew/mqdefault.jpg', '2025-06-08 18:21:50+00', '''annapurna'':10A ''bomb'':2A ''giant'':1A ''interact'':11A ''let'':12B ''present'':8A ''showcas'':7A ''talk'':3A,14B ''xbox'':6A,17B', false, 'PT1H14M13S', 'https://i.ytimg.com/vi/d1x97nMy3Ew/maxresdefault.jpg'),
-	('3WIYp-ihy_w', 'giantbomb', 'Roadcraft and Elden Ring: Nightreign | Unprofessional Fridays', 'We get down in the mud and drive to the end of the week! 
-
-#upf #unprofessionalfridays #roadcraft #giantbomb', 'https://i.ytimg.com/vi/3WIYp-ihy_w/mqdefault.jpg', '2025-05-30 21:57:45+00', '''drive'':15B ''elden'':3A ''end'':18B ''friday'':7A ''get'':9B ''giantbomb'':25B ''mud'':13B ''nightreign'':5A ''ring'':4A ''roadcraft'':1A,24B ''unprofession'':6A ''unprofessionalfriday'':23B ''upf'':22B ''week'':21B', false, 'PT2H39M59S', 'https://i.ytimg.com/vi/3WIYp-ihy_w/maxresdefault.jpg'),
 	('IkIGHJ6BOvQ', 'giantbomb', 'Ranking of Fighters 0032: Kensei: Sacred Fist & Tatsunoko vs. Capcom', 'There is nothing sacred about the science of fighting!
 
 Our crack team of fighting game scientists build the list of the best and worst fighting games and this time out they''re here to weigh Kensei: Sacred Fist and Tatsunoko vs. Capcom.
@@ -13724,9 +13664,6 @@ And Twitch! http://bit.ly/shzAI2', 'https://i.ytimg.com/vi/vaLDNxizs6g/mqdefault
 And our Facebook page! http://on.fb.me/hcyG1R
 And Twitter! http://bit.ly/9SzULe
 And Twitch! http://bit.ly/shzAI2', 'https://i.ytimg.com/vi/TLAyqUyRZvY/mqdefault.jpg', '2012-11-19 23:17:29+00', '''/9szule'':65B ''/bxfrtc'':53B ''/hcyg1r'':60B ''/shzai2'':70B ''11/19/2012'':4A ''also'':27B ''bit.ly'':52B,64B,69B ''bit.ly/9szule'':63B ''bit.ly/bxfrtc'':51B ''bit.ly/shzai2'':68B ''check'':47B ''cram'':19B ''d'':44B ''due'':10B ''facebook'':56B ''finish'':36B ''holiday'':13B ''like'':40B,45B ''look'':29B ''love'':2A ''mayb'':42B ''moment'':33B ''monday'':3A ''much'':22B ''on.fb.me'':59B ''on.fb.me/hcyg1r'':58B ''page'':57B ''patrick'':32B ''re'':16B ''short'':8B ''today'':26B ''tri'':17B ''twitch'':67B ''twitter'':62B ''websit'':50B ''week'':9B ''zombiu'':37B', false, 'PT12M55S', 'https://i.ytimg.com/vi/TLAyqUyRZvY/maxresdefault.jpg'),
-	('BbfudQSAOxw', 'remap', 'Trying to Dress to Impress in Infinity Nikki', 'The world of Infinity Nikki so much weirder than we could have anticipated. 
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/BbfudQSAOxw/mqdefault.jpg', '2024-12-17 22:14:20+00', '''anticip'':21B ''audienc'':25B ''consid'':35B ''content'':33B ''continu'':30B ''could'':19B ''dress'':3A ''help'':28B ''impress'':5A ''infin'':7A,12B ''make'':31B ''much'':15B ''nikki'':8A,13B ''pleas'':34B ''radio'':23B ''remap'':22B ''subscrib'':36B ''support'':26B ''tri'':1A ''us'':29B ''weirder'':16B ''world'':10B ''www.remapradio.com'':38B', false, 'PT2H21M16S', 'https://i.ytimg.com/vi/BbfudQSAOxw/maxresdefault.jpg'),
 	('7tRan7ynJkM', 'giantbomb', 'Ten Brief Trips to Nintendo Land', 'Want to know about the freshest part of Nintendo''s Nintendo Land by Nintendo? Want to see what might be the first ringtone ever created using Wii U audio? OK, how about a mountain of cardboard boxes? If you like this, maybe you''d like to check out our website! http://bit.ly/bxFRTC
 And our Facebook page! http://on.fb.me/hcyG1R
 And Twitter! http://bit.ly/9SzULe
@@ -14047,9 +13984,6 @@ And Twitch! http://bit.ly/shzAI2', 'https://i.ytimg.com/vi/b-lc3TNV9rE/mqdefault
 And our Facebook page! http://on.fb.me/hcyG1R
 And Twitter! http://bit.ly/9SzULe
 And Twitch! http://bit.ly/shzAI2', 'https://i.ytimg.com/vi/pITWjtprLD8/mqdefault.jpg', '2012-08-29 13:00:11+00', '''/9szule'':52B ''/bxfrtc'':40B ''/hcyg1r'':47B ''/shzai2'':57B ''2'':3A ''arenanet'':19B ''beard'':10B ''bit.ly'':39B,51B,56B ''bit.ly/9szule'':50B ''bit.ly/bxfrtc'':38B ''bit.ly/shzai2'':55B ''bomb'':5A ''check'':34B ''d'':31B ''facebook'':43B ''giant'':4A ''gigant'':12B ''guild'':1A ''less'':23B ''like'':27B,32B ''look'':7A ''mayb'':29B ''metal'':9B ''mmo'':24B ''on.fb.me'':46B ''on.fb.me/hcyg1r'':45B ''page'':44B ''quick'':6A ''rage'':17B ''sick'':8B ''subscript'':22B ''subscription-less'':21B ''throne'':13B ''twitch'':54B ''twitter'':49B ''war'':2A ''websit'':37B', false, 'PT52M54S', 'https://i.ytimg.com/vi/pITWjtprLD8/maxresdefault.jpg'),
-	('jop6105ad8M', 'giantbomb', 'The Rest of the Trailers from Summer Game Fest | We Talk Over', 'We cover some of the trailers we liked or may have missed from Summer Game Fest weekend. We look at people walking, people talking, and the ROLE OF THE LIFETIME! 
-
-#sgf #summergamefest #giantbomb #trailers', 'https://i.ytimg.com/vi/jop6105ad8M/mqdefault.jpg', '2025-06-16 21:08:26+00', '''cover'':13B ''fest'':9A,27B ''game'':8A,26B ''giantbomb'':44B ''lifetim'':41B ''like'':19B ''look'':30B ''may'':21B ''miss'':23B ''peopl'':32B,34B ''rest'':2A ''role'':38B ''sgf'':42B ''summer'':7A,25B ''summergamefest'':43B ''talk'':11A,35B ''trailer'':5A,17B,45B ''walk'':33B ''weekend'':28B', false, 'PT1H21M57S', 'https://i.ytimg.com/vi/jop6105ad8M/maxresdefault.jpg'),
 	('MXgpvqv5pDw', 'giantbomb', 'Skyrim''s ''Hearthfire'' DLC Brings Domestic Life to the Dragonborn', 'Oh great, now everyone''s going to start hoarding orphans. If you like this, maybe you''d like to check out our website! http://bit.ly/bxFRTC
 And our Facebook page! http://on.fb.me/hcyG1R
 And Twitter! http://bit.ly/9SzULe
@@ -14206,12 +14140,6 @@ And Twitch! http://bit.ly/shzAI2', 'https://i.ytimg.com/vi/R1TDFrwZi94/mqdefault
 And our Facebook page! http://on.fb.me/hcyG1R
 And Twitter! http://bit.ly/9SzULe
 And Twitch! http://bit.ly/shzAI2', 'https://i.ytimg.com/vi/mJe2qm_Xh2A/mqdefault.jpg', '2012-08-15 17:11:14+00', '''/9szule'':48B ''/bxfrtc'':36B ''/hcyg1r'':43B ''/shzai2'':53B ''2'':3A ''bit.ly'':35B,47B,52B ''bit.ly/9szule'':46B ''bit.ly/bxfrtc'':34B ''bit.ly/shzai2'':51B ''check'':30B ''co'':7A ''co-op'':6A ''d'':27B ''facebook'':39B ''fortress'':2A ''get'':4A ''like'':14B,23B,28B ''mayb'':25B ''on.fb.me'':42B ''on.fb.me/hcyg1r'':41B ''op'':8A ''page'':40B ''rest'':18B ''robot'':5A ''sort'':12B ''team'':1A ''tf2'':15B ''today'':9A ''twitch'':50B ''twitter'':45B ''us'':20B ''websit'':33B', false, 'PT3M1S', 'https://i.ytimg.com/vi/mJe2qm_Xh2A/maxresdefault.jpg'),
-	('Xtv6Y-Q6AFs', 'nextlander', 'We''re Going to Kill the Devil', 'It''s time for more 33 Immortals, except maybe this week it''ll be 22 Immortals?
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/Xtv6Y-Q6AFs/mqdefault.jpg', '2025-03-31 23:09:20+00', '''/nextlander'':32B ''22'':22B ''33'':13B ''communiti'':29B ''devil'':7A ''except'':15B ''go'':3A ''immort'':14B,23B ''kill'':5A ''ll'':20B ''mayb'':16B ''nextland'':24B ''re'':2A ''support'':26B ''thank'':33B ''time'':10B ''watch'':35B ''week'':18B ''www.patreon.com'':31B ''www.patreon.com/nextlander'':30B', false, 'PT2H13M17S', 'https://i.ytimg.com/vi/Xtv6Y-Q6AFs/maxresdefault.jpg'),
 	('mrsG9GUXdb8', 'giantbomb', 'Wanderlust: Rebirth: Giant Bomb Quick Look', 'Jeff, Brad, and a fighter named Fighter take on hairy chests and more in this retro-styled online action RPG. If you like this, maybe you''d like to check out our website! http://bit.ly/bxFRTC
 And our Facebook page! http://on.fb.me/hcyG1R
 And Twitter! http://bit.ly/9SzULe
@@ -15993,9 +15921,6 @@ And Twitch! http://bit.ly/shzAI2', 'https://i.ytimg.com/vi/MBjU1zvxIPM/mqdefault
 And our Facebook page! http://on.fb.me/hcyG1R
 And Twitter! http://bit.ly/9SzULe
 And Twitch! http://bit.ly/shzAI2', 'https://i.ytimg.com/vi/TLvTYcVTRnA/mqdefault.jpg', '2011-10-26 07:14:39+00', '''/9szule'':48B ''/bxfrtc'':36B ''/hcyg1r'':43B ''/shzai2'':53B ''113'':6A ''4'':4A ''activ'':16B ''around'':17B ''bit.ly'':35B,47B,52B ''bit.ly/9szule'':46B ''bit.ly/bxfrtc'':34B ''bit.ly/shzai2'':51B ''check'':30B ''curricular'':15B ''d'':27B ''endur'':1A ''extra'':14B ''extra-curricular'':13B ''facebook'':39B ''like'':23B,28B ''manag'':8B ''mayb'':25B ''on.fb.me'':42B ''on.fb.me/hcyg1r'':41B ''page'':40B ''part'':5A ''persona'':3A ''run'':2A ''studi'':19B ''time'':20B ''twitch'':50B ''twitter'':45B ''websit'':33B ''work'':10B', false, 'PT1H9M41S', NULL),
-	('9rLj0vsGeyo', 'remap', 'Swords, Sliding Puzzles, and Onimusha', 'Patrick has felt the call of the ninja. But can Cado help him solve a sliding puzzle, or will their journey end here?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/9rLj0vsGeyo/mqdefault.jpg', '2025-02-18 23:18:34+00', '''audienc'':32B ''cado'':16B ''call'':10B ''consid'':42B ''content'':40B ''continu'':37B ''end'':27B ''felt'':8B ''help'':17B,35B ''journey'':26B ''make'':38B ''ninja'':13B ''onimusha'':5A ''patrick'':6B ''pleas'':41B ''puzzl'':3A,22B ''radio'':30B ''remap'':29B ''slide'':2A,21B ''solv'':19B ''subscrib'':43B ''support'':33B ''sword'':1A ''us'':36B ''www.remapradio.com'':45B', false, 'PT2H52M41S', 'https://i.ytimg.com/vi/9rLj0vsGeyo/maxresdefault.jpg'),
 	('lejGlmLqyVc', 'giantbomb', 'Endurance Run: Persona 4 - Part 105', 'Hey, did you know you can use tentarafoo to confuse enemies? If you like this, maybe you''d like to check out our website! http://bit.ly/bxFRTC
 And our Facebook page! http://on.fb.me/hcyG1R
 And Twitter! http://bit.ly/9SzULe
@@ -18808,7 +18733,6 @@ http://www.giantbomb.com If you like this, maybe you''d like to check out our we
 And our Facebook page! http://on.fb.me/hcyG1R
 And Twitter! http://bit.ly/9SzULe
 And Twitch! http://bit.ly/shzAI2', 'https://i.ytimg.com/vi/4UzKlUKNcfg/mqdefault.jpg', '2010-01-11 20:43:01+00', '''/9szule'':44B ''/bxfrtc'':32B ''/hcyg1r'':39B ''/shzai2'':49B ''01/11/10'':4A ''bit.ly'':31B,43B,48B ''bit.ly/9szule'':42B ''bit.ly/bxfrtc'':30B ''bit.ly/shzai2'':47B ''check'':26B ''d'':23B ''facebook'':35B ''first'':8B ''like'':19B,24B ''live'':15B ''love'':2A ''mayb'':21B ''monday'':3A,9B ''on.fb.me'':38B ''on.fb.me/hcyg1r'':37B ''page'':36B ''rest'':12B ''twitch'':46B ''twitter'':41B ''websit'':29B ''welcom'':5B ''www.giantbomb.com'':16B', false, 'PT2M56S', NULL),
-	('bdhF3Powth4', 'giantbomb', 'Ben Starr on the Death Stranding 2 Red Carpet #ds2 #deathstranding2 #kojima #benstarr', 'Dan asks voice actor extrodinaire, Ben Starr, about working on Final Fantasy and what he loves about the French!', 'https://i.ytimg.com/vi/bdhF3Powth4/mqdefault.jpg', '2025-06-11 22:00:21+00', '''2'':7A ''actor'':17B ''ask'':15B ''ben'':1A,19B ''benstarr'':13A ''carpet'':9A ''dan'':14B ''death'':5A ''deathstranding2'':11A ''ds2'':10A ''extrodinair'':18B ''fantasi'':25B ''final'':24B ''french'':32B ''kojima'':12A ''love'':29B ''red'':8A ''starr'':2A,20B ''strand'':6A ''voic'':16B ''work'':22B', false, 'PT54S', 'https://i.ytimg.com/vi/bdhF3Powth4/maxresdefault.jpg'),
 	('1fTFQfggD-E', 'giantbomb', 'Star Wars: The Old Republic Interview', 'Ryan talks new classes, companion characters, and more with Mr. Christine of BioWare.
 
 http://www.giantbomb.com If you like this, maybe you''d like to check out our website! http://bit.ly/bxFRTC
@@ -19056,9 +18980,6 @@ http://www.giantbomb.com If you like this, maybe you''d like to check out our we
 And our Facebook page! http://on.fb.me/hcyG1R
 And Twitter! http://bit.ly/9SzULe
 And Twitch! http://bit.ly/shzAI2', 'https://i.ytimg.com/vi/r3xKVrO0zhU/mqdefault.jpg', '2009-02-05 01:22:21+00', '''/9szule'':43B ''/bxfrtc'':31B ''/hcyg1r'':38B ''/shzai2'':48B ''360'':13B ''arc'':9B ''battl'':1A ''bit.ly'':30B,42B,47B ''bit.ly/9szule'':41B ''bit.ly/bxfrtc'':29B ''bit.ly/shzai2'':46B ''check'':25B ''d'':22B ''facebook'':34B ''fantasia'':2A ''fighter'':14B ''jeff'':5B ''latest'':11B ''like'':18B,23B ''look'':4A ''mayb'':20B ''on.fb.me'':37B ''on.fb.me/hcyg1r'':36B ''page'':35B ''quick'':3A ''twitch'':45B ''twitter'':40B ''walk'':6B ''websit'':28B ''www.giantbomb.com'':15B ''xbox'':12B', false, 'PT8M58S', NULL),
-	('-lhs32v9yns', 'giantbomb', 'M.E.G.A.M.A.N. - Pipistrello and the Cursed Yoyo', 'Welcome to Monday Evening Games at Mike''s at Night (M.E.G.A.M.A.N.) where we''re all going to head over to Mike''s place to check out Pipistrello and the Cursed Yoyo! 
-
-#pipistrello #mike #megaman', 'https://i.ytimg.com/vi/-lhs32v9yns/mqdefault.jpg', '2025-06-24 02:45:38+00', '''check'':31B ''curs'':5A,36B ''even'':10B ''game'':11B ''go'':22B ''head'':24B ''m.e.g.a.m.a.n'':1A,17B ''megaman'':40B ''mike'':13B,27B,39B ''monday'':9B ''night'':16B ''pipistrello'':2A,33B,38B ''place'':29B ''re'':20B ''welcom'':7B ''yoyo'':6A,37B', false, 'PT2H30M59S', 'https://i.ytimg.com/vi/-lhs32v9yns/maxresdefault.jpg'),
 	('ZVSzV4zirUs', 'giantbomb', 'Lord of the Rings: Conquest Review', 'Brad warns of the evil that could befall you if you give into the Ring''s call.
 
 http://www.giantbomb.com If you like this, maybe you''d like to check out our website! http://bit.ly/bxFRTC
@@ -19089,42 +19010,6 @@ http://www.giantbomb.com If you like this, maybe you''d like to check out our we
 And our Facebook page! http://on.fb.me/hcyG1R
 And Twitter! http://bit.ly/9SzULe
 And Twitch! http://bit.ly/shzAI2', 'https://i.ytimg.com/vi/5INDSnCW_uQ/mqdefault.jpg', '2009-02-03 19:26:00+00', '''/9szule'':49B ''/bxfrtc'':37B ''/hcyg1r'':44B ''/shzai2'':54B ''1'':6A ''2'':4A ''bit.ly'':36B,48B,53B ''bit.ly/9szule'':47B ''bit.ly/bxfrtc'':35B ''bit.ly/shzai2'':52B ''check'':31B ''creativ'':20B ''d'':28B ''facebook'':40B ''gameplay'':15B ''get'':19B ''killzon'':3A ''like'':24B,29B ''look'':2A ''mayb'':26B ''minut'':13B ''on.fb.me'':43B ''on.fb.me/hcyg1r'':42B ''page'':41B ''pt'':5A ''quick'':1A ''show'':11B ''three'':12B ''twitch'':51B ''twitter'':46B ''websit'':34B ''www.giantbomb.com'':21B', false, 'PT5M46S', NULL),
-	('1pfYGGySrhI', 'giantbomb', 'Rascal (PS1) | 05 | Blight Club', 'Will Mike Minotti make any progress today on Blight Club? Will he be able to figure out what any of the buttons or crabs do? Tune in to find out! 
-
-#blightclub #giantbomb #badgames #rascal', 'https://i.ytimg.com/vi/1pfYGGySrhI/mqdefault.jpg', '2025-06-18 20:21:00+00', '''05'':3A ''abl'':19B ''badgam'':38B ''blight'':4A,14B ''blightclub'':36B ''button'':27B ''club'':5A,15B ''crab'':29B ''figur'':21B ''find'':34B ''giantbomb'':37B ''make'':9B ''mike'':7B ''minotti'':8B ''progress'':11B ''ps1'':2A ''rascal'':1A,39B ''today'':12B ''tune'':31B', false, 'PT1H53M28S', 'https://i.ytimg.com/vi/1pfYGGySrhI/maxresdefault.jpg'),
-	('fzgX_arrhSM', 'giantbomb', 'Very accurate physics in PEAK  #giantbomb #peak', 'We played PEAK and climbing is not the most dangerous thing around! 
-
-Check out the full video:
-https://youtube.com/live/lSOOodKYyyU', 'https://i.ytimg.com/vi/fzgX_arrhSM/mqdefault.jpg', '2025-06-16 22:01:05+00', '''/live/lsooodkyyyu'':27B ''accur'':2A ''around'':19B ''check'':20B ''climb'':12B ''danger'':17B ''full'':23B ''giantbomb'':6A ''peak'':5A,7A,10B ''physic'':3A ''play'':9B ''thing'':18B ''video'':24B ''youtube.com'':26B ''youtube.com/live/lsooodkyyyu'':25B', false, 'PT23S', 'https://i.ytimg.com/vi/fzgX_arrhSM/maxresdefault.jpg'),
-	('65YlgbgE1qY', 'giantbomb', 'A Quick Look at Summer Game Fest 2025', 'We went to Summer Game Fest in LA and shenanigans ensued! Check out our time together setting up for Giant Bomb @ Nite, heading to Play Days, and all of the other things in between. We played a couple games, made some burgers, interviewed Hideo Kojima, and experienced mustard for the first time. 
-
-Thanks to our friends at Warframe for their support of Giant Bomb at Summer Game Fest! 
-Visit TennoCon 2025! https://www.warframe.com/tennocon
-
-Special thanks to our friends at Annapurna Interactive for sponsoring a segment of this video! Check out Mixtape, coming soon! https://annapurnainteractive.com/en/games/mixtape
-
-#sgf #summergamefest #giantbomb', 'https://i.ytimg.com/vi/65YlgbgE1qY/mqdefault.jpg', '2025-06-14 01:51:05+00', '''/en/games/mixtape'':105B ''/tennocon'':82B ''2025'':8A,79B ''annapurna'':89B ''annapurnainteractive.com'':104B ''annapurnainteractive.com/en/games/mixtape'':103B ''bomb'':29B,72B ''burger'':50B ''check'':20B,98B ''come'':101B ''coupl'':46B ''day'':34B ''ensu'':19B ''experienc'':55B ''fest'':7A,14B,76B ''first'':59B ''friend'':64B,87B ''game'':6A,13B,47B,75B ''giant'':28B,71B ''giantbomb'':108B ''head'':31B ''hideo'':52B ''interact'':90B ''interview'':51B ''kojima'':53B ''la'':16B ''look'':3A ''made'':48B ''mixtap'':100B ''mustard'':56B ''nite'':30B ''play'':33B,44B ''quick'':2A ''segment'':94B ''set'':25B ''sgf'':106B ''shenanigan'':18B ''soon'':102B ''special'':83B ''sponsor'':92B ''summer'':5A,12B,74B ''summergamefest'':107B ''support'':69B ''tennocon'':78B ''thank'':61B,84B ''thing'':40B ''time'':23B,60B ''togeth'':24B ''video'':97B ''visit'':77B ''warfram'':66B ''went'':10B ''www.warframe.com'':81B ''www.warframe.com/tennocon'':80B', false, 'PT49M3S', 'https://i.ytimg.com/vi/65YlgbgE1qY/maxresdefault.jpg'),
-	('JOTTt0KRWwI', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 2-3 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
-
-We got Kelsey Lewin, Janet Garcia, Jacob Geller, Marcus Stewart, and Alex Van Aken on the couch! We chat about Game Informer''s relaunch, working as a small team in Games Media, and all the stuff we saw at Summer Game Fest. 
-
-Thanks to our friends at Annapurna Interactive for presenting this stream!
-
-#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/JOTTt0KRWwI/mqdefault.jpg', '2025-06-12 18:00:19+00', '''-3'':10A ''2'':9A ''aken'':53B ''alex'':51B ''angel'':21B ''annapurna'':13A,87B ''around'':30B ''bomb'':2A ''chat'':58B ''couch'':18B,56B ''fest'':81B ''found'':16B ''friend'':27B,85B ''game'':60B,70B,80B ''garcia'':45B ''geller'':47B ''get'':25B ''giant'':1A ''giantbomb'':95B ''got'':41B ''hang'':34B ''industri'':32B ''inform'':61B ''interact'':14A,88B ''jacob'':46B ''janet'':44B ''kelsey'':42B ''lewin'':43B ''los'':20B ''marcus'':48B ''media'':71B ''nite'':3A,8A ''present'':11A,90B ''re'':24B ''relaunch'':63B ''saw'':77B ''sgf'':93B ''small'':67B ''stewart'':49B ''stream'':92B ''stuff'':75B ''summer'':79B ''summergamefest'':94B ''team'':68B ''thank'':82B ''van'':52B ''villa'':7A,39B ''warfram'':6A,38B ''work'':64B', false, 'PT38M37S', 'https://i.ytimg.com/vi/JOTTt0KRWwI/maxresdefault.jpg'),
-	('NWieJ8tP8Og', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 1-4 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
-
-We got Rashad Redic, Bryna Dabby Smith, Riana Manuel-Peña, and Danny Peña to chat about the upcoming Wu-Tang: Rise of the Deceiver and all the insane amount of work that has gone into making it. 
-
-
-Thanks to our friends at Annapurna Interactive for presenting this stream!
-
-#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/NWieJ8tP8Og/mqdefault.jpg', '2025-06-11 22:00:32+00', '''-4'':10A ''1'':9A ''amount'':70B ''angel'':21B ''annapurna'':13A,84B ''around'':30B ''bomb'':2A ''bryna'':44B ''chat'':55B ''couch'':18B ''dabbi'':45B ''danni'':52B ''deceiv'':65B ''found'':16B ''friend'':27B,82B ''get'':25B ''giant'':1A ''giantbomb'':92B ''gone'':75B ''got'':41B ''hang'':34B ''industri'':32B ''insan'':69B ''interact'':14A,85B ''los'':20B ''make'':77B ''manuel'':49B ''manuel-peña'':48B ''nite'':3A,8A ''peña'':50B,53B ''present'':11A,87B ''rashad'':42B ''re'':24B ''redic'':43B ''riana'':47B ''rise'':62B ''sgf'':90B ''smith'':46B ''stream'':89B ''summergamefest'':91B ''tang'':61B ''thank'':79B ''upcom'':58B ''villa'':7A,39B ''warfram'':6A,38B ''work'':72B ''wu'':60B ''wu-tang'':59B', false, 'PT21M33S', 'https://i.ytimg.com/vi/NWieJ8tP8Og/maxresdefault.jpg'),
-	('sQpMuV_RmKY', 'giantbomb', 'Monday Mornings Myst with Mitch', 'Mike Minotti leads Jan Ochoa and Jeff Grubb through a MYSTerious island full of switches, books, questionable paraphernalia, and more in the remastered version of MYST! 
-
-#MYST', 'https://i.ytimg.com/vi/sQpMuV_RmKY/mqdefault.jpg', '2025-06-23 19:32:25+00', '''book'':21B ''full'':18B ''grubb'':13B ''island'':17B ''jan'':9B ''jeff'':12B ''lead'':8B ''mike'':6B ''minotti'':7B ''mitch'':5A ''monday'':1A ''morn'':2A ''myst'':3A,31B,32B ''mysteri'':16B ''ochoa'':10B ''paraphernalia'':23B ''question'':22B ''remast'':28B ''switch'':20B ''version'':29B', false, 'PT1H33M35S', 'https://i.ytimg.com/vi/sQpMuV_RmKY/maxresdefault.jpg'),
-	('XHR7zdUy2sQ', 'giantbomb', 'Death Stranding 2 Review Round Up | Game Mess Mornings 06/23/25', 'Jeff Grubb and Jason Fanelli go over review scores and how Death Stranding 2 is tracking, indie developers having difficulties with Switch 2 Dev Kits, problems with secondhand Switch 2s, layoffs at MindsEye, and even more to start the week! 
-
-#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/XHR7zdUy2sQ/mqdefault.jpg', '2025-06-23 16:17:38+00', '''06/23/25'':10A ''2'':3A,24B,33B ''2s'':40B ''death'':1A,22B ''dev'':34B ''develop'':28B ''difficulti'':30B ''even'':45B ''fanelli'':15B ''game'':7A ''gamemessmorn'':52B ''giantbomb'':53B ''gmm'':51B ''go'':16B ''grubb'':12B ''indi'':27B ''jason'':14B ''jeff'':11B ''kit'':35B ''layoff'':41B ''mess'':8A ''mindsey'':43B ''morn'':9A ''problem'':36B ''review'':4A,18B ''round'':5A ''score'':19B ''secondhand'':38B ''start'':48B ''strand'':2A,23B ''switch'':32B,39B ''track'':26B ''videogamenew'':54B ''week'':50B', false, 'PT1H4M54S', 'https://i.ytimg.com/vi/XHR7zdUy2sQ/maxresdefault.jpg'),
 	('x9Upp-LRSRs', 'giantbomb', 'Giant Bomb @ Nite, LIVE from the Warframe Villa! | Presented by Annapurna Interactive | Nite 2', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
 
 Thanks to our friends at Annapurna Interactive for presenting this stream!
@@ -19143,13 +19028,9 @@ Thanks to Annapurna Interactive for presnting this Talk Over.
 	('Rq-j55tXcXU', 'remap', 'Rob''s Coffee Journey Continues', 'Unsatisfied with one recent coffee related purchase, Rob and Cado sit down to figure out what else is missing from Rob''s personal coffee collection.
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/Rq-j55tXcXU/mqdefault.jpg', '2025-02-05 17:45:57+00', '''audienc'':34B ''cado'':15B ''coffe'':3A,10B,29B ''collect'':30B ''consid'':44B ''content'':42B ''continu'':5A,39B ''els'':22B ''figur'':19B ''help'':37B ''journey'':4A ''make'':40B ''miss'':24B ''one'':8B ''person'':28B ''pleas'':43B ''purchas'':12B ''radio'':32B ''recent'':9B ''relat'':11B ''remap'':31B ''rob'':1A,13B,26B ''sit'':16B ''subscrib'':45B ''support'':35B ''unsatisfi'':6B ''us'':38B ''www.remapradio.com'':47B', false, 'PT1H31M26S', 'https://i.ytimg.com/vi/Rq-j55tXcXU/maxresdefault.jpg'),
-	('k-wv9pC03JY', 'giantbomb', '2K is Preparing an Announcement for BioShock Franchise? | Game Mess Mornings 05/23/25', 'Jeff Grubb and Kahlief Adams end your week with a bunch of gaming news! We cover reports of something happening with the BioShock IP, Warhammer 40K: Space Marine II getting a new mode and a Master Crafted Edition, fans of ARC Raiders think they''ve uncovered a release date, Elden Ring getting a live-action film, and even more! 
+	('3d13XdivMRk', 'giantbomb', 'Power Stone 2 and MORE | Unprofessional Fridays', 'It''s time to get unprofessional and fight a bunch of high schoolers! 
 
-#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/k-wv9pC03JY/mqdefault.jpg', '2025-05-23 16:05:34+00', '''05/23/25'':12A ''2k'':1A ''40k'':38B ''action'':68B ''adam'':17B ''announc'':5A ''arc'':53B ''bioshock'':7A,35B ''bunch'':23B ''cover'':28B ''craft'':49B ''date'':61B ''edit'':50B ''elden'':62B ''end'':18B ''even'':71B ''fan'':51B ''film'':69B ''franchis'':8A ''game'':9A,25B ''gamemessmorn'':74B ''get'':42B,64B ''giantbomb'':75B ''gmm'':73B ''grubb'':14B ''happen'':32B ''ii'':41B ''ip'':36B ''jeff'':13B ''kahlief'':16B ''live'':67B ''live-act'':66B ''marin'':40B ''master'':48B ''mess'':10A ''mode'':45B ''morn'':11A ''new'':44B ''news'':26B ''prepar'':3A ''raider'':54B ''releas'':60B ''report'':29B ''ring'':63B ''someth'':31B ''space'':39B ''think'':55B ''uncov'':58B ''ve'':57B ''videogamenew'':76B ''warhamm'':37B ''week'':20B', false, 'PT1H42S', 'https://i.ytimg.com/vi/k-wv9pC03JY/maxresdefault.jpg'),
-	('a5FqE18adfU', 'giantbomb', 'MindsEye Devs "Working Around the Clock" to Fix Game | Game Mess Mornings 06/11/25', 'Jeff Grubb is joined by Jason Fanelli to chat about Resident Evil Requiem and other games they saw at Capcom over Summer Game Fest, MindsEye''s devs working around the clock to fix the buggy game, Sony is laying off 30% of Bend Studio, the Switch 2 becoming the fastest selling home console of all time, and even more! 
-
-#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/a5FqE18adfU/mqdefault.jpg', '2025-06-11 16:15:41+00', '''06/11/25'':13A ''2'':60B ''30'':54B ''around'':4A,42B ''becom'':61B ''bend'':56B ''buggi'':48B ''capcom'':33B ''chat'':22B ''clock'':6A,44B ''consol'':66B ''dev'':2A,40B ''even'':71B ''evil'':25B ''fanelli'':20B ''fastest'':63B ''fest'':37B ''fix'':8A,46B ''game'':9A,10A,29B,36B,49B ''gamemessmorn'':74B ''giantbomb'':75B ''gmm'':73B ''grubb'':15B ''home'':65B ''jason'':19B ''jeff'':14B ''join'':17B ''lay'':52B ''mess'':11A ''mindsey'':1A,38B ''morn'':12A ''requiem'':26B ''resid'':24B ''saw'':31B ''sell'':64B ''soni'':50B ''studio'':57B ''summer'':35B ''switch'':59B ''time'':69B ''videogamenew'':76B ''work'':3A,41B', false, 'PT1H10M50S', 'https://i.ytimg.com/vi/a5FqE18adfU/maxresdefault.jpg'),
-	('JeB10lSTFpY', 'giantbomb', 'Mike Minotti doesn''t know about this', 'he doesn''t know this happened', 'https://i.ytimg.com/vi/JeB10lSTFpY/mqdefault.jpg', '2025-05-21 23:32:09+00', '''doesn'':3A,7B ''happen'':11B ''know'':5A,9B ''mike'':1A ''minotti'':2A', false, 'PT1M24S', 'https://i.ytimg.com/vi/JeB10lSTFpY/maxresdefault.jpg'),
+#upf #unprofessional #giantbomb', 'https://i.ytimg.com/vi/3d13XdivMRk/mqdefault.jpg', '2025-05-16 20:58:59+00', '''2'':3A ''bunch'':17B ''fight'':15B ''friday'':7A ''get'':12B ''giantbomb'':23B ''high'':19B ''power'':1A ''schooler'':20B ''stone'':2A ''time'':10B ''unprofession'':6A,13B,22B ''upf'':21B', false, 'PT1H36M30S', 'https://i.ytimg.com/vi/3d13XdivMRk/maxresdefault.jpg'),
 	('trxyoNIdPHs', 'remap', 'Remap in New York (Day One)', 'We dipped into America''s favorite video game, Hexen, before spending far too many hours judging where food is from, where photos say we might be, what housing prices are, and giving Rob a bunch of tiny little presents that revealed a conductor costume. Then, we made Rob drive trains. Oh, and he also told a hellish story.
 
 Timestamps: 
@@ -19167,89 +19048,43 @@ Timestamps:
 07:05:25 – JR East Train Simulator
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/trxyoNIdPHs/mqdefault.jpg', '2025-04-07 19:13:45+00', '''00'':66B,67B,76B ''01'':70B,74B,78B ''02'':84B,93B,95B,117B ''03'':97B ''04'':101B,107B ''05'':68B,116B,130B ''06'':122B ''07'':102B,129B ''11'':71B,123B ''16'':98B ''20'':108B ''24'':80B ''25'':131B ''27'':118B ''31'':103B ''37'':99B ''38'':86B ''39'':75B ''48'':79B ''52'':85B,124B ''53'':94B ''55'':72B ''58'':109B ''also'':60B ''america'':10B ''audienc'':139B ''back'':104B ''break'':100B,106B ''bunch'':41B ''conductor'':49B ''consid'':149B ''content'':147B ''continu'':144B ''copyright'':91B ''costcodl'':96B ''costum'':50B ''day'':5A ''de'':126B ''delet'':89B ''densha'':125B ''dip'':8B ''dog'':113B ''drive'':55B ''east'':133B ''far'':18B ''favorit'':12B ''food'':24B ''foodguessr'':73B ''game'':14B ''geoguessr'':77B ''give'':38B ''go'':127B ''guessr'':121B ''hellish'':63B ''help'':142B ''hexen'':15B,69B ''hou'':119B ''hour'':21B ''hous'':34B ''jr'':132B ''judg'':22B ''le/house'':120B ''littl'':44B ''made'':53B ''make'':145B ''mani'':20B ''might'':31B ''mysteri'':88B ''new'':3A ''oh'':57B ''one'':6A ''photo'':28B ''pictur'':114B ''pleas'':148B ''present'':45B ''price'':35B ''radio'':137B ''reason'':92B ''remap'':1A,136B ''reveal'':47B ''rob'':39B,54B,110B ''say'':29B ''scran'':81B ''sequenc'':87B ''simul'':135B ''spend'':17B ''stori'':64B,115B ''subscrib'':150B ''support'':140B ''switch'':128B ''timestamp'':65B ''tini'':43B ''told'':61B ''train'':56B,134B ''upset'':112B ''us'':143B ''video'':13B ''www.remapradio.com'':152B ''york'':4A', false, 'PT7H45M51S', 'https://i.ytimg.com/vi/trxyoNIdPHs/maxresdefault.jpg'),
+	('k-wv9pC03JY', 'giantbomb', '2K is Preparing an Announcement for BioShock Franchise? | Game Mess Mornings 05/23/25', 'Jeff Grubb and Kahlief Adams end your week with a bunch of gaming news! We cover reports of something happening with the BioShock IP, Warhammer 40K: Space Marine II getting a new mode and a Master Crafted Edition, fans of ARC Raiders think they''ve uncovered a release date, Elden Ring getting a live-action film, and even more! 
+
+#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/k-wv9pC03JY/mqdefault.jpg', '2025-05-23 16:05:34+00', '''05/23/25'':12A ''2k'':1A ''40k'':38B ''action'':68B ''adam'':17B ''announc'':5A ''arc'':53B ''bioshock'':7A,35B ''bunch'':23B ''cover'':28B ''craft'':49B ''date'':61B ''edit'':50B ''elden'':62B ''end'':18B ''even'':71B ''fan'':51B ''film'':69B ''franchis'':8A ''game'':9A,25B ''gamemessmorn'':74B ''get'':42B,64B ''giantbomb'':75B ''gmm'':73B ''grubb'':14B ''happen'':32B ''ii'':41B ''ip'':36B ''jeff'':13B ''kahlief'':16B ''live'':67B ''live-act'':66B ''marin'':40B ''master'':48B ''mess'':10A ''mode'':45B ''morn'':11A ''new'':44B ''news'':26B ''prepar'':3A ''raider'':54B ''releas'':60B ''report'':29B ''ring'':63B ''someth'':31B ''space'':39B ''think'':55B ''uncov'':58B ''ve'':57B ''videogamenew'':76B ''warhamm'':37B ''week'':20B', false, 'PT1H42S', 'https://i.ytimg.com/vi/k-wv9pC03JY/maxresdefault.jpg'),
+	('JeB10lSTFpY', 'giantbomb', 'Mike Minotti doesn''t know about this', 'he doesn''t know this happened', 'https://i.ytimg.com/vi/JeB10lSTFpY/mqdefault.jpg', '2025-05-21 23:32:09+00', '''doesn'':3A,7B ''happen'':11B ''know'':5A,9B ''mike'':1A ''minotti'':2A', false, 'PT1M24S', 'https://i.ytimg.com/vi/JeB10lSTFpY/maxresdefault.jpg'),
 	('7y7B2zNNcEc', 'giantbomb', 'Rascal (PS1) | 02 | Blight Club', 'Will Mike Minotti make any progress today on Blight Club? Will he be able to figure out what any of the buttons or crabs do? Tune in to find out! 
 
 #blightclub #giantbomb #badgames #rascal', 'https://i.ytimg.com/vi/7y7B2zNNcEc/mqdefault.jpg', '2025-05-21 20:25:12+00', '''02'':3A ''abl'':19B ''badgam'':38B ''blight'':4A,14B ''blightclub'':36B ''button'':27B ''club'':5A,15B ''crab'':29B ''figur'':21B ''find'':34B ''giantbomb'':37B ''make'':9B ''mike'':7B ''minotti'':8B ''progress'':11B ''ps1'':2A ''rascal'':1A,39B ''today'':12B ''tune'':31B', false, 'PT2H10M53S', 'https://i.ytimg.com/vi/7y7B2zNNcEc/maxresdefault.jpg'),
-	('3d13XdivMRk', 'giantbomb', 'Power Stone 2 and MORE | Unprofessional Fridays', 'It''s time to get unprofessional and fight a bunch of high schoolers! 
-
-#upf #unprofessional #giantbomb', 'https://i.ytimg.com/vi/3d13XdivMRk/mqdefault.jpg', '2025-05-16 20:58:59+00', '''2'':3A ''bunch'':17B ''fight'':15B ''friday'':7A ''get'':12B ''giantbomb'':23B ''high'':19B ''power'':1A ''schooler'':20B ''stone'':2A ''time'':10B ''unprofession'':6A,13B,22B ''upf'':21B', false, 'PT1H36M30S', 'https://i.ytimg.com/vi/3d13XdivMRk/maxresdefault.jpg'),
 	('6OzhzYN-cTM', 'remap', 'Our First Switch 2 Hands-On Impressions', 'Much of the Remap crew has spent the last week playing with their shiny new Switch 2. What do we think of Nintendo''s new console?
 
 What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/6OzhzYN-cTM/mqdefault.jpg', '2025-06-23 14:00:19+00', '''/us/podcast/remap-radio/id1690437343'':56B ''2'':4A,25B ''audienc'':60B ''consid'':70B ''consol'':34B ''content'':68B ''continu'':65B ''crew'':13B ''episod'':46B ''first'':2A ''full'':45B ''hand'':6A ''hands-on'':5A ''help'':63B ''impress'':8A ''last'':17B ''listen'':38B ''make'':66B ''much'':9B ''new'':23B,33B ''nintendo'':31B ''play'':19B ''pleas'':69B ''podcast'':53B ''podcasts.apple.com'':55B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':54B ''radio'':49B,58B ''re'':37B ''remap'':12B,48B,57B ''segment'':42B ''shini'':22B ''spent'':15B ''subscrib'':50B,71B ''support'':61B ''switch'':3A,24B ''think'':29B ''us'':64B ''week'':18B ''www.remapradio.com'':73B', false, 'PT47M20S', 'https://i.ytimg.com/vi/6OzhzYN-cTM/maxresdefault.jpg'),
-	('EL-wEoBYW4k', 'remap', 'It''s a Narrative Video Game Demo Lightning Round', 'Patrick and Cado are back for this year''s LudoNarraCon, checking out a whole bunch of story-focused games!
-
-Timestamps:
-00:04:48 — inKONBINI
-00:20:43 — The Horror at Highrook
-00:38:22 — Psychotic Bathtub
-00:54:28 — Promise Mascot Agency
-01:19:18 — We Harvest Shadows
-01:45:53 — Scrabdackle
-02:05:45 — Usual June
-02:22:13 — Herald
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/EL-wEoBYW4k/mqdefault.jpg', '2025-04-29 19:30:25+00', '''00'':31B,35B,42B,47B ''01'':53B,59B ''02'':63B,68B ''04'':32B ''05'':64B ''13'':70B ''18'':55B ''19'':54B ''20'':36B ''22'':44B,69B ''28'':49B ''38'':43B ''43'':37B ''45'':60B,65B ''48'':33B ''53'':61B ''54'':48B ''agenc'':52B ''audienc'':75B ''back'':14B ''bathtub'':46B ''bunch'':24B ''cado'':12B ''check'':20B ''consid'':85B ''content'':83B ''continu'':80B ''demo'':7A ''focus'':28B ''game'':6A,29B ''harvest'':57B ''help'':78B ''herald'':71B ''highrook'':41B ''horror'':39B ''inkonbini'':34B ''june'':67B ''lightn'':8A ''ludonarracon'':19B ''make'':81B ''mascot'':51B ''narrat'':4A ''patrick'':10B ''pleas'':84B ''promis'':50B ''psychot'':45B ''radio'':73B ''remap'':72B ''round'':9A ''scrabdackl'':62B ''shadow'':58B ''stori'':27B ''story-focus'':26B ''subscrib'':86B ''support'':76B ''timestamp'':30B ''us'':79B ''usual'':66B ''video'':5A ''whole'':23B ''www.remapradio.com'':88B ''year'':17B', false, 'PT2H45M1S', 'https://i.ytimg.com/vi/EL-wEoBYW4k/maxresdefault.jpg'),
-	('wHC97IuaYCM', 'remap', 'Do You Have Trouble Finishing Video Games?', 'One of the reasons Cado and Rob have trouble finishing video games is because they want it to happen at the perfect moment. But what if that perfect moment never arrives and you never finish the game?
-
-What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/wHC97IuaYCM/mqdefault.jpg', '2025-06-13 14:01:28+00', '''/us/podcast/remap-radio/id1690437343'':66B ''arriv'':38B ''audienc'':70B ''cado'':12B ''consid'':80B ''content'':78B ''continu'':75B ''episod'':56B ''finish'':5A,17B,42B ''full'':55B ''game'':7A,19B,44B ''happen'':26B ''help'':73B ''listen'':48B ''make'':76B ''moment'':30B,36B ''never'':37B,41B ''one'':8B ''perfect'':29B,35B ''pleas'':79B ''podcast'':63B ''podcasts.apple.com'':65B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':64B ''radio'':59B,68B ''re'':47B ''reason'':11B ''remap'':58B,67B ''rob'':14B ''segment'':52B ''subscrib'':60B,81B ''support'':71B ''troubl'':4A,16B ''us'':74B ''video'':6A,18B ''want'':23B ''www.remapradio.com'':83B', false, 'PT18M57S', 'https://i.ytimg.com/vi/wHC97IuaYCM/maxresdefault.jpg'),
-	('wWevbah9FEY', 'remap', 'The Power of GeForce Now and French RPGs', 'Clair Obscur: Expedition 33 is the hot new game, but question is: can Rob parry a mime?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/wWevbah9FEY/mqdefault.jpg', '2025-05-01 23:37:37+00', '''33'':12B ''audienc'':29B ''clair'':9B ''consid'':39B ''content'':37B ''continu'':34B ''expedit'':11B ''french'':7A ''game'':17B ''geforc'':4A ''help'':32B ''hot'':15B ''make'':35B ''mime'':25B ''new'':16B ''obscur'':10B ''parri'':23B ''pleas'':38B ''power'':2A ''question'':19B ''radio'':27B ''remap'':26B ''rob'':22B ''rpgs'':8A ''subscrib'':40B ''support'':30B ''us'':33B ''www.remapradio.com'':42B', false, 'PT2H27M43S', 'https://i.ytimg.com/vi/wWevbah9FEY/maxresdefault.jpg'),
-	('K_hqL1TeACM', 'giantbomb', 'Capcom Fighting Collection 2 is EXCELLENT | Giant Bombcast 891: Ace Attorney Pet Detective', 'This week we hit the road and talk about Deliver At All Costs, Roadcraft, Capcom Fighting Collection 2 being a dope collection of Capcom games, To a T, Skin Deep, and more DOOM: The Dark Ages! We also chat about a grip of Nintendo news, the vibe over at Bungie with Marathon, Jade Raymond leaving the studio she founded, and more! 
-
-Support Giant Bomb by going to:
-giantbomb.com/join
-
-#videogamepodcast #giantbomb #giantbombcast', 'https://i.ytimg.com/vi/K_hqL1TeACM/mqdefault.jpg', '2025-05-20 18:52:58+00', '''/join'':83B ''2'':4A,31B ''891'':9A ''ace'':10A ''age'':49B ''also'':51B ''attorney'':11A ''bomb'':77B ''bombcast'':8A ''bungi'':63B ''capcom'':1A,28B,37B ''chat'':52B ''collect'':3A,30B,35B ''cost'':26B ''dark'':48B ''deep'':43B ''deliv'':23B ''detect'':13A ''doom'':46B ''dope'':34B ''excel'':6A ''fight'':2A,29B ''found'':72B ''game'':38B ''giant'':7A,76B ''giantbomb'':85B ''giantbomb.com'':82B ''giantbomb.com/join'':81B ''giantbombcast'':86B ''go'':79B ''grip'':55B ''hit'':17B ''jade'':66B ''leav'':68B ''marathon'':65B ''news'':58B ''nintendo'':57B ''pet'':12A ''raymond'':67B ''road'':19B ''roadcraft'':27B ''skin'':42B ''studio'':70B ''support'':75B ''talk'':21B ''vibe'':60B ''videogamepodcast'':84B ''week'':15B', false, 'PT2H28M42S', 'https://i.ytimg.com/vi/K_hqL1TeACM/maxresdefault.jpg'),
-	('2qSFIMRtrNQ', 'remap', 'Steam Next Fest Lightning Round [Part 2]', 'We''re headed back into Steam Next Fest, with Patrick and Cado playing another bouncy of interesting games. First up, can we manage to take Baby Steps?
-
-Timestamps:
-09:00 Baby Steps
-30:57 Everdeep Aurora
-48:15 Ninja Gaiden: Ragebound
-01:41 Morse
-01:18:10 Ooo
-01:32:00 The Drifter
-01:45:15 Solitaire of Stygian Shadows
-01:59:36 Consume Me
-02:15:52 Unbeatable
-02:31:03 Cast ''n Chill
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/2qSFIMRtrNQ/mqdefault.jpg', '2025-06-17 18:25:13+00', '''00'':37B,58B ''01'':49B,52B,56B,61B,68B ''02'':73B,77B ''03'':79B ''09'':36B ''10'':54B ''15'':45B,63B,74B ''18'':53B ''2'':7A ''30'':40B ''31'':78B ''32'':57B ''36'':70B ''41'':50B ''45'':62B ''48'':44B ''52'':75B ''57'':41B ''59'':69B ''anoth'':21B ''audienc'':86B ''aurora'':43B ''babi'':33B,38B ''back'':11B ''bounci'':22B ''cado'':19B ''cast'':80B ''chill'':82B ''consid'':96B ''consum'':71B ''content'':94B ''continu'':91B ''drifter'':60B ''everdeep'':42B ''fest'':3A,15B ''first'':26B ''gaiden'':47B ''game'':25B ''head'':10B ''help'':89B ''interest'':24B ''lightn'':4A ''make'':92B ''manag'':30B ''mors'':51B ''n'':81B ''next'':2A,14B ''ninja'':46B ''ooo'':55B ''part'':6A ''patrick'':17B ''play'':20B ''pleas'':95B ''radio'':84B ''ragebound'':48B ''re'':9B ''remap'':83B ''round'':5A ''shadow'':67B ''solitair'':64B ''steam'':1A,13B ''step'':34B,39B ''stygian'':66B ''subscrib'':97B ''support'':87B ''take'':32B ''timestamp'':35B ''unbeat'':76B ''us'':90B ''www.remapradio.com'':99B', false, 'PT2H47M56S', 'https://i.ytimg.com/vi/2qSFIMRtrNQ/maxresdefault.jpg'),
-	('vcp4CLdVikw', 'remap', 'The Wheel Spins Towards Assassin''s Creed Shadows', 'A tour of Japan prompts the group to wonder: could we make this game run at 300 frames per second?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/vcp4CLdVikw/mqdefault.jpg', '2025-03-21 00:11:32+00', '''300'':25B ''assassin'':5A ''audienc'':32B ''consid'':42B ''content'':40B ''continu'':37B ''could'':18B ''creed'':7A ''frame'':26B ''game'':22B ''group'':15B ''help'':35B ''japan'':12B ''make'':20B,38B ''per'':27B ''pleas'':41B ''prompt'':13B ''radio'':30B ''remap'':29B ''run'':23B ''second'':28B ''shadow'':8A ''spin'':3A ''subscrib'':43B ''support'':33B ''tour'':10B ''toward'':4A ''us'':36B ''wheel'':2A ''wonder'':17B ''www.remapradio.com'':45B', false, 'PT2H42M6S', 'https://i.ytimg.com/vi/vcp4CLdVikw/maxresdefault.jpg'),
-	('k_9_ACzrmW8', 'remap', 'Save Point 2024 -- Twilight Breaking Dawn Part 1', 'When Remap came together in New York to raise money for Save Point, there was only one way to celebrate a reunion with Natalie: continue watching the Twilight movies. We’ve already watched most of them, but did you know the last one was split into two parts? Sure, why not?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/k_9_ACzrmW8/mqdefault.jpg', '2024-12-06 16:14:15+00', '''1'':8A ''2024'':3A ''alreadi'':40B ''audienc'':63B ''break'':5A ''came'':11B ''celebr'':28B ''consid'':73B ''content'':71B ''continu'':33B,68B ''dawn'':6A ''help'':66B ''know'':48B ''last'':50B ''make'':69B ''money'':18B ''movi'':37B ''natali'':32B ''new'':14B ''one'':25B,51B ''part'':7A,56B ''pleas'':72B ''point'':2A,21B ''radio'':61B ''rais'':17B ''remap'':10B,60B ''reunion'':30B ''save'':1A,20B ''split'':53B ''subscrib'':74B ''support'':64B ''sure'':57B ''togeth'':12B ''twilight'':4A,36B ''two'':55B ''us'':67B ''ve'':39B ''watch'':34B,41B ''way'':26B ''www.remapradio.com'':76B ''york'':15B', false, 'PT2H41M5S', 'https://i.ytimg.com/vi/k_9_ACzrmW8/maxresdefault.jpg'),
 	('9vNM9_H0qrA', 'giantbomb', 'Forget Roguelikes, Let Make More Pegglelikes like Peglin | Unfinished', 'There is NOTHING more satisfying than a good multi-ball.
 
 
 #peglin
 #peggle
 #roguelike', 'https://i.ytimg.com/vi/9vNM9_H0qrA/mqdefault.jpg', '2022-05-09 21:43:46+00', '''ball'':20B ''forget'':1A ''good'':17B ''let'':3A ''like'':7A ''make'':4A ''multi'':19B ''multi-bal'':18B ''noth'':12B ''peggl'':22B ''pegglelik'':6A ''peglin'':8A,21B ''roguelik'':2A,23B ''satisfi'':14B ''unfinish'':9A', false, 'PT47M8S', 'https://i.ytimg.com/vi/9vNM9_H0qrA/maxresdefault.jpg'),
-	('0AUtfTlWx0M', 'remap', 'P.A.T.R.I.C.K. Enters The Zone', 'Patrick needs to do his gaming homework before our GOTY discussions, so he''s finally playing S.T.A.L.K.E.R. 2 for real.
+	('K_hqL1TeACM', 'giantbomb', 'Capcom Fighting Collection 2 is EXCELLENT | Giant Bombcast 891: Ace Attorney Pet Detective', 'This week we hit the road and talk about Deliver At All Costs, Roadcraft, Capcom Fighting Collection 2 being a dope collection of Capcom games, To a T, Skin Deep, and more DOOM: The Dark Ages! We also chat about a grip of Nintendo news, the vibe over at Bungie with Marathon, Jade Raymond leaving the studio she founded, and more! 
 
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/0AUtfTlWx0M/mqdefault.jpg', '2025-01-10 00:37:30+00', '''2'':22B ''audienc'':28B ''consid'':38B ''content'':36B ''continu'':33B ''discuss'':15B ''enter'':2A ''final'':19B ''game'':10B ''goti'':14B ''help'':31B ''homework'':11B ''make'':34B ''need'':6B ''p.a.t.r.i.c.k'':1A ''patrick'':5B ''play'':20B ''pleas'':37B ''radio'':26B ''real'':24B ''remap'':25B ''s.t.a.l.k.e.r'':21B ''subscrib'':39B ''support'':29B ''us'':32B ''www.remapradio.com'':41B ''zone'':4A', false, 'PT2H30M46S', 'https://i.ytimg.com/vi/0AUtfTlWx0M/maxresdefault.jpg'),
-	('lGqsDk2mqTM', 'nextlander', 'Friday Fun Stream: It''s a Grab Bag! A GRAB BAAAAAAG!', 'Brad unfortunately has been called to jury duty, but Vinny and Alex are here to check out the ARC Raiders Tech Test, and more!
+Support Giant Bomb by going to:
+giantbomb.com/join
 
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
+#videogamepodcast #giantbomb #giantbombcast', 'https://i.ytimg.com/vi/K_hqL1TeACM/mqdefault.jpg', '2025-05-20 18:52:58+00', '''/join'':83B ''2'':4A,31B ''891'':9A ''ace'':10A ''age'':49B ''also'':51B ''attorney'':11A ''bomb'':77B ''bombcast'':8A ''bungi'':63B ''capcom'':1A,28B,37B ''chat'':52B ''collect'':3A,30B,35B ''cost'':26B ''dark'':48B ''deep'':43B ''deliv'':23B ''detect'':13A ''doom'':46B ''dope'':34B ''excel'':6A ''fight'':2A,29B ''found'':72B ''game'':38B ''giant'':7A,76B ''giantbomb'':85B ''giantbomb.com'':82B ''giantbomb.com/join'':81B ''giantbombcast'':86B ''go'':79B ''grip'':55B ''hit'':17B ''jade'':66B ''leav'':68B ''marathon'':65B ''news'':58B ''nintendo'':57B ''pet'':12A ''raymond'':67B ''road'':19B ''roadcraft'':27B ''skin'':42B ''studio'':70B ''support'':75B ''talk'':21B ''vibe'':60B ''videogamepodcast'':84B ''week'':15B', false, 'PT2H28M42S', 'https://i.ytimg.com/vi/K_hqL1TeACM/maxresdefault.jpg'),
+	('vcp4CLdVikw', 'remap', 'The Wheel Spins Towards Assassin''s Creed Shadows', 'A tour of Japan prompts the group to wonder: could we make this game run at 300 frames per second?
 
-Thanks for watching.', 'https://i.ytimg.com/vi/lGqsDk2mqTM/mqdefault.jpg', '2025-05-02 21:09:56+00', '''/nextlander'':44B ''alex'':23B ''arc'':30B ''baaaaaag'':11A ''bag'':8A ''brad'':12B ''call'':16B ''check'':27B ''communiti'':41B ''duti'':19B ''friday'':1A ''fun'':2A ''grab'':7A,10A ''juri'':18B ''nextland'':36B ''raider'':31B ''stream'':3A ''support'':38B ''tech'':32B ''test'':33B ''thank'':45B ''unfortun'':13B ''vinni'':21B ''watch'':47B ''www.patreon.com'':43B ''www.patreon.com/nextlander'':42B', false, 'PT2H11M9S', 'https://i.ytimg.com/vi/lGqsDk2mqTM/maxresdefault.jpg'),
-	('EQp7KnfrQMM', 'nextlander', 'Friday Fun Stream: Truckin'' into the Weekend in American Truck Simulator', 'Vinny and Alex are ready to get back behind the wheel and transport you all to a magical world of 16-wheelers and oversized cargo!
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/vcp4CLdVikw/mqdefault.jpg', '2025-03-21 00:11:32+00', '''300'':25B ''assassin'':5A ''audienc'':32B ''consid'':42B ''content'':40B ''continu'':37B ''could'':18B ''creed'':7A ''frame'':26B ''game'':22B ''group'':15B ''help'':35B ''japan'':12B ''make'':20B,38B ''per'':27B ''pleas'':41B ''prompt'':13B ''radio'':30B ''remap'':29B ''run'':23B ''second'':28B ''shadow'':8A ''spin'':3A ''subscrib'':43B ''support'':33B ''tour'':10B ''toward'':4A ''us'':36B ''wheel'':2A ''wonder'':17B ''www.remapradio.com'':45B', false, 'PT2H42M6S', 'https://i.ytimg.com/vi/vcp4CLdVikw/maxresdefault.jpg'),
+	('k_9_ACzrmW8', 'remap', 'Save Point 2024 -- Twilight Breaking Dawn Part 1', 'When Remap came together in New York to raise money for Save Point, there was only one way to celebrate a reunion with Natalie: continue watching the Twilight movies. We’ve already watched most of them, but did you know the last one was split into two parts? Sure, why not?
 
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/EQp7KnfrQMM/mqdefault.jpg', '2025-05-16 21:11:25+00', '''/nextlander'':45B ''16'':32B ''alex'':14B ''american'':9A ''back'':19B ''behind'':20B ''cargo'':36B ''communiti'':42B ''friday'':1A ''fun'':2A ''get'':18B ''magic'':29B ''nextland'':37B ''overs'':35B ''readi'':16B ''simul'':11A ''stream'':3A ''support'':39B ''thank'':46B ''transport'':24B ''truck'':10A ''truckin'':4A ''vinni'':12B ''watch'':48B ''weekend'':7A ''wheel'':22B ''wheeler'':33B ''world'':30B ''www.patreon.com'':44B ''www.patreon.com/nextlander'':43B', false, 'PT2H48M58S', 'https://i.ytimg.com/vi/EQp7KnfrQMM/maxresdefault.jpg'),
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/k_9_ACzrmW8/mqdefault.jpg', '2024-12-06 16:14:15+00', '''1'':8A ''2024'':3A ''alreadi'':40B ''audienc'':63B ''break'':5A ''came'':11B ''celebr'':28B ''consid'':73B ''content'':71B ''continu'':33B,68B ''dawn'':6A ''help'':66B ''know'':48B ''last'':50B ''make'':69B ''money'':18B ''movi'':37B ''natali'':32B ''new'':14B ''one'':25B,51B ''part'':7A,56B ''pleas'':72B ''point'':2A,21B ''radio'':61B ''rais'':17B ''remap'':10B,60B ''reunion'':30B ''save'':1A,20B ''split'':53B ''subscrib'':74B ''support'':64B ''sure'':57B ''togeth'':12B ''twilight'':4A,36B ''two'':55B ''us'':67B ''ve'':39B ''watch'':34B,41B ''way'':26B ''www.remapradio.com'':76B ''york'':15B', false, 'PT2H41M5S', 'https://i.ytimg.com/vi/k_9_ACzrmW8/maxresdefault.jpg'),
+	('7mmmL5rSNdE', 'giantbomb', 'Tiny Brains: Giant Bomb Quick Look', 'As we all know, it''s not the size of the brain that counts, but how good its Unreal engine implementation is.', 'https://i.ytimg.com/vi/7mmmL5rSNdE/mqdefault.jpg', '2014-01-08 17:03:00+00', '''bomb'':4A ''brain'':2A,18B ''count'':20B ''engin'':26B ''giant'':3A ''good'':23B ''implement'':27B ''know'':10B ''look'':6A ''quick'':5A ''size'':15B ''tini'':1A ''unreal'':25B', false, 'PT25M1S', 'https://i.ytimg.com/vi/7mmmL5rSNdE/maxresdefault.jpg'),
 	('gEvlhYvUDmQ', 'remap', 'Save Point 2024 — Obscure 2', 'We simply had to show the whole gang this extremely weird co-op survival horror game. They "loved" it!
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/gEvlhYvUDmQ/mqdefault.jpg', '2024-11-21 22:40:24+00', '''2'':5A ''2024'':3A ''audienc'':29B ''co'':18B ''co-op'':17B ''consid'':39B ''content'':37B ''continu'':34B ''extrem'':15B ''game'':22B ''gang'':13B ''help'':32B ''horror'':21B ''love'':24B ''make'':35B ''obscur'':4A ''op'':19B ''pleas'':38B ''point'':2A ''radio'':27B ''remap'':26B ''save'':1A ''show'':10B ''simpli'':7B ''subscrib'':40B ''support'':30B ''surviv'':20B ''us'':33B ''weird'':16B ''whole'':12B ''www.remapradio.com'':42B', false, 'PT1H38M8S', 'https://i.ytimg.com/vi/gEvlhYvUDmQ/maxresdefault.jpg'),
+	('FKck_LxVcoE', 'remap', 'Save Point 2024 — Returning to the Bloodborne Board Game', 'Yes, we kept the game in exactly the same place the last time we played this game several years ago. But will we finish another turn before we''re done?
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/FKck_LxVcoE/mqdefault.jpg', '2024-11-21 22:39:36+00', '''2024'':3A ''ago'':29B ''anoth'':34B ''audienc'':43B ''bloodborn'':7A ''board'':8A ''consid'':53B ''content'':51B ''continu'':48B ''done'':39B ''exact'':16B ''finish'':33B ''game'':9A,14B,26B ''help'':46B ''kept'':12B ''last'':21B ''make'':49B ''place'':19B ''play'':24B ''pleas'':52B ''point'':2A ''radio'':41B ''re'':38B ''remap'':40B ''return'':4A ''save'':1A ''sever'':27B ''subscrib'':54B ''support'':44B ''time'':22B ''turn'':35B ''us'':47B ''www.remapradio.com'':56B ''year'':28B ''yes'':10B', false, 'PT4H38M47S', 'https://i.ytimg.com/vi/FKck_LxVcoE/maxresdefault.jpg'),
 	('MIz_y3ebR5k', 'nextlander', 'Vinny and Alex Check Out Lost Records: Bloom & Rage!', 'The makers of Life is Strange have a new game about old friends and, of course, lots of drama!
 
 Nextlander is supported by its community:
@@ -19259,124 +19094,48 @@ Thanks for watching.', 'https://i.ytimg.com/vi/MIz_y3ebR5k/mqdefault.jpg', '2025
 	('dbmV0DNFs3M', 'remap', 'The Premiere of Steam Vent', 'There''s so much that arrives on Steam every single day. Come join us and find out what''s actually there!
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/dbmV0DNFs3M/mqdefault.jpg', '2025-01-29 05:09:10+00', '''actual'':25B ''arriv'':11B ''audienc'':30B ''come'':17B ''consid'':40B ''content'':38B ''continu'':35B ''day'':16B ''everi'':14B ''find'':21B ''help'':33B ''join'':18B ''make'':36B ''much'':9B ''pleas'':39B ''premier'':2A ''radio'':28B ''remap'':27B ''singl'':15B ''steam'':4A,13B ''subscrib'':41B ''support'':31B ''us'':19B,34B ''vent'':5A ''www.remapradio.com'':43B', false, 'PT2H14M36S', 'https://i.ytimg.com/vi/dbmV0DNFs3M/maxresdefault.jpg'),
-	('FKck_LxVcoE', 'remap', 'Save Point 2024 — Returning to the Bloodborne Board Game', 'Yes, we kept the game in exactly the same place the last time we played this game several years ago. But will we finish another turn before we''re done?
+	('0AUtfTlWx0M', 'remap', 'P.A.T.R.I.C.K. Enters The Zone', 'Patrick needs to do his gaming homework before our GOTY discussions, so he''s finally playing S.T.A.L.K.E.R. 2 for real.
 
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/FKck_LxVcoE/mqdefault.jpg', '2024-11-21 22:39:36+00', '''2024'':3A ''ago'':29B ''anoth'':34B ''audienc'':43B ''bloodborn'':7A ''board'':8A ''consid'':53B ''content'':51B ''continu'':48B ''done'':39B ''exact'':16B ''finish'':33B ''game'':9A,14B,26B ''help'':46B ''kept'':12B ''last'':21B ''make'':49B ''place'':19B ''play'':24B ''pleas'':52B ''point'':2A ''radio'':41B ''re'':38B ''remap'':40B ''return'':4A ''save'':1A ''sever'':27B ''subscrib'':54B ''support'':44B ''time'':22B ''turn'':35B ''us'':47B ''www.remapradio.com'':56B ''year'':28B ''yes'':10B', false, 'PT4H38M47S', 'https://i.ytimg.com/vi/FKck_LxVcoE/maxresdefault.jpg'),
-	('8zM7P4-jK74', 'nextlander', 'NXL and Assassin''s Creed Shadows!', 'Assassin''s Creed Shadows is almost here and with a long history of the series we''ve got some early thoughts on it. 
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/8zM7P4-jK74/mqdefault.jpg', '2025-03-18 19:54:17+00', '''/nextlander'':38B ''almost'':12B ''assassin'':3A,7B ''communiti'':35B ''creed'':5A,9B ''earli'':26B ''got'':24B ''histori'':18B ''long'':17B ''nextland'':30B ''nxl'':1A ''seri'':21B ''shadow'':6A,10B ''support'':32B ''thank'':39B ''thought'':27B ''ve'':23B ''watch'':41B ''www.patreon.com'':37B ''www.patreon.com/nextlander'':36B', false, 'PT2H6M48S', 'https://i.ytimg.com/vi/8zM7P4-jK74/maxresdefault.jpg'),
-	('lQOVwW_UKcs', 'nextlander', 'Us and 30 of Our Closest Friends', 'Gonna get a little posse together and play some 33 Immortals!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/lQOVwW_UKcs/mqdefault.jpg', '2025-03-25 00:15:39+00', '''/nextlander'':27B ''30'':3A ''33'':17B ''closest'':6A ''communiti'':24B ''friend'':7A ''get'':9B ''gonna'':8B ''immort'':18B ''littl'':11B ''nextland'':19B ''play'':15B ''poss'':12B ''support'':21B ''thank'':28B ''togeth'':13B ''us'':1A ''watch'':30B ''www.patreon.com'':26B ''www.patreon.com/nextlander'':25B', false, 'PT2H8M32S', 'https://i.ytimg.com/vi/lQOVwW_UKcs/maxresdefault.jpg'),
-	('7mmmL5rSNdE', 'giantbomb', 'Tiny Brains: Giant Bomb Quick Look', 'As we all know, it''s not the size of the brain that counts, but how good its Unreal engine implementation is.', 'https://i.ytimg.com/vi/7mmmL5rSNdE/mqdefault.jpg', '2014-01-08 17:03:00+00', '''bomb'':4A ''brain'':2A,18B ''count'':20B ''engin'':26B ''giant'':3A ''good'':23B ''implement'':27B ''know'':10B ''look'':6A ''quick'':5A ''size'':15B ''tini'':1A ''unreal'':25B', false, 'PT25M1S', 'https://i.ytimg.com/vi/7mmmL5rSNdE/maxresdefault.jpg'),
-	('ssiE-LQJwxA', 'nextlander', 'Solving Crimes in Alex Hill: Whispers at White Oak Inn! (Part 02)', 'Things are heating up and escalating quickly as we continue to investigate this "ghost"!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/ssiE-LQJwxA/mqdefault.jpg', '2025-04-15 19:44:39+00', '''/nextlander'':35B ''02'':12A ''alex'':4A ''communiti'':32B ''continu'':22B ''crime'':2A ''escal'':18B ''ghost'':26B ''heat'':15B ''hill'':5A ''inn'':10A ''investig'':24B ''nextland'':27B ''oak'':9A ''part'':11A ''quick'':19B ''solv'':1A ''support'':29B ''thank'':36B ''thing'':13B ''watch'':38B ''whisper'':6A ''white'':8A ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT2H3M', 'https://i.ytimg.com/vi/ssiE-LQJwxA/maxresdefault.jpg'),
-	('Vp6lKfoCUSc', 'nextlander', 'Let''s Get Some Resolution with Lost Records and Roottrees!', 'Abby Russell joins us to finally put a bit of (temporary?) closure on Lost Records: Bloom and Rage and The Roottrees!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/Vp6lKfoCUSc/mqdefault.jpg', '2025-03-12 16:10:41+00', '''/nextlander'':40B ''abbi'':11B ''bit'':19B ''bloom'':26B ''closur'':22B ''communiti'':37B ''final'':16B ''get'':3A ''join'':13B ''let'':1A ''lost'':7A,24B ''nextland'':32B ''put'':17B ''rage'':28B ''record'':8A,25B ''resolut'':5A ''roottre'':10A,31B ''russel'':12B ''support'':34B ''temporari'':21B ''thank'':41B ''us'':14B ''watch'':43B ''www.patreon.com'':39B ''www.patreon.com/nextlander'':38B', false, 'PT1H56M13S', 'https://i.ytimg.com/vi/Vp6lKfoCUSc/maxresdefault.jpg'),
-	('KB8DIZDa2L0', 'nextlander', 'Vinny Plays Some (Later Game) Tactical Breach Wizards', 'Just a bit of Tactical Breach Wizards while we wait for Alex so we can finish off Silent Hill 2 (which is in another video).
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/KB8DIZDa2L0/mqdefault.jpg', '2024-12-12 20:16:56+00', '''/nextlander'':42B ''2'':28B ''alex'':20B ''anoth'':32B ''bit'':11B ''breach'':7A,14B ''communiti'':39B ''finish'':24B ''game'':5A ''hill'':27B ''later'':4A ''nextland'':34B ''play'':2A ''silent'':26B ''support'':36B ''tactic'':6A,13B ''thank'':43B ''video'':33B ''vinni'':1A ''wait'':18B ''watch'':45B ''wizard'':8A,15B ''www.patreon.com'':41B ''www.patreon.com/nextlander'':40B', false, 'PT1H1M42S', 'https://i.ytimg.com/vi/KB8DIZDa2L0/maxresdefault.jpg'),
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/0AUtfTlWx0M/mqdefault.jpg', '2025-01-10 00:37:30+00', '''2'':22B ''audienc'':28B ''consid'':38B ''content'':36B ''continu'':33B ''discuss'':15B ''enter'':2A ''final'':19B ''game'':10B ''goti'':14B ''help'':31B ''homework'':11B ''make'':34B ''need'':6B ''p.a.t.r.i.c.k'':1A ''patrick'':5B ''play'':20B ''pleas'':37B ''radio'':26B ''real'':24B ''remap'':25B ''s.t.a.l.k.e.r'':21B ''subscrib'':39B ''support'':29B ''us'':32B ''www.remapradio.com'':41B ''zone'':4A', false, 'PT2H30M46S', 'https://i.ytimg.com/vi/0AUtfTlWx0M/maxresdefault.jpg'),
+	('ZjQv_i12a9U', 'giantbomb', 'Spelunkin'' With Scoops: 01/07/2014', 'Where we''re going, we don''t need roads. We need teleporters.', 'https://i.ytimg.com/vi/ZjQv_i12a9U/mqdefault.jpg', '2014-01-07 23:11:57+00', '''01/07/2014'':4A ''go'':8B ''need'':12B,15B ''re'':7B ''road'':13B ''scoop'':3A ''spelunkin'':1A ''teleport'':16B', false, 'PT55M43S', 'https://i.ytimg.com/vi/ZjQv_i12a9U/maxresdefault.jpg'),
+	('RZFvcRY4ssw', 'nextlander', 'Nextlander and Waypoint E3 2021: Square Enix!', 'What we''re getting from this Square Enix presentation is that we need a hero to use their psychic power of empathy to kill chaos.', 'https://i.ytimg.com/vi/RZFvcRY4ssw/mqdefault.jpg', '2021-06-14 20:00:03+00', '''2021'':5A ''chao'':32B ''e3'':4A ''empathi'':29B ''enix'':7A,15B ''get'':11B ''hero'':22B ''kill'':31B ''need'':20B ''nextland'':1A ''power'':27B ''present'':16B ''psychic'':26B ''re'':10B ''squar'':6A,14B ''use'':24B ''waypoint'':3A', false, 'PT1H12M22S', 'https://i.ytimg.com/vi/RZFvcRY4ssw/maxresdefault.jpg'),
 	('BFm8wcOMVTQ', 'nextlander', 'Brad and Vinny Remain Here Together - Part 02', 'These co-op puzzles are getting kind of devilish. Why are there so many color puzzles?!
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/BFm8wcOMVTQ/mqdefault.jpg', '2025-02-06 21:54:12+00', '''/nextlander'':34B ''02'':8A ''brad'':1A ''co'':11B ''co-op'':10B ''color'':24B ''communiti'':31B ''devilish'':18B ''get'':15B ''kind'':16B ''mani'':23B ''nextland'':26B ''op'':12B ''part'':7A ''puzzl'':13B,25B ''remain'':4A ''support'':28B ''thank'':35B ''togeth'':6A ''vinni'':3A ''watch'':37B ''www.patreon.com'':33B ''www.patreon.com/nextlander'':32B', false, 'PT2H6M12S', 'https://i.ytimg.com/vi/BFm8wcOMVTQ/maxresdefault.jpg'),
-	('M8I8GE2VdTE', 'nextlander', 'Brad and Patrick Can''t Stop Volgarr! (Part 04)', 'Patrick and Brad are trying their best to each beat Volgarr the Viking II! Who will finish first?
+	('KB8DIZDa2L0', 'nextlander', 'Vinny Plays Some (Later Game) Tactical Breach Wizards', 'Just a bit of Tactical Breach Wizards while we wait for Alex so we can finish off Silent Hill 2 (which is in another video).
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
-Thanks for watching.', 'https://i.ytimg.com/vi/M8I8GE2VdTE/mqdefault.jpg', '2024-10-25 21:02:20+00', '''/nextlander'':36B ''04'':9A ''beat'':19B ''best'':16B ''brad'':1A,12B ''communiti'':33B ''finish'':26B ''first'':27B ''ii'':23B ''nextland'':28B ''part'':8A ''patrick'':3A,10B ''stop'':6A ''support'':30B ''thank'':37B ''tri'':14B ''vike'':22B ''volgarr'':7A,20B ''watch'':39B ''www.patreon.com'':35B ''www.patreon.com/nextlander'':34B', false, 'PT2H19M', 'https://i.ytimg.com/vi/M8I8GE2VdTE/maxresdefault.jpg'),
+Thanks for watching.', 'https://i.ytimg.com/vi/KB8DIZDa2L0/mqdefault.jpg', '2024-12-12 20:16:56+00', '''/nextlander'':42B ''2'':28B ''alex'':20B ''anoth'':32B ''bit'':11B ''breach'':7A,14B ''communiti'':39B ''finish'':24B ''game'':5A ''hill'':27B ''later'':4A ''nextland'':34B ''play'':2A ''silent'':26B ''support'':36B ''tactic'':6A,13B ''thank'':43B ''video'':33B ''vinni'':1A ''wait'':18B ''watch'':45B ''wizard'':8A,15B ''www.patreon.com'':41B ''www.patreon.com/nextlander'':40B', false, 'PT1H1M42S', 'https://i.ytimg.com/vi/KB8DIZDa2L0/maxresdefault.jpg'),
 	('bAKYxL2Uw1g', 'nextlander', 'Alex Checks Out Metal Slug Tactics and Vampire Survivors: Ode to Castlevania', 'On this time capsule from the before times, Alex tries out Metal Slug Tactics for the first time, then trips the light fantastic in Vampire Survivors'' Ode to Castlevania DLC.
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/bAKYxL2Uw1g/mqdefault.jpg', '2024-11-08 11:00:53+00', '''/nextlander'':51B ''alex'':1A,21B ''capsul'':16B ''castlevania'':12A,41B ''check'':2A ''communiti'':48B ''dlc'':42B ''fantast'':35B ''first'':29B ''light'':34B ''metal'':4A,24B ''nextland'':43B ''ode'':10A,39B ''slug'':5A,25B ''support'':45B ''survivor'':9A,38B ''tactic'':6A,26B ''thank'':52B ''time'':15B,20B,30B ''tri'':22B ''trip'':32B ''vampir'':8A,37B ''watch'':54B ''www.patreon.com'':50B ''www.patreon.com/nextlander'':49B', false, 'PT2H26M22S', 'https://i.ytimg.com/vi/bAKYxL2Uw1g/maxresdefault.jpg'),
-	('7sDpPjWzGeQ', 'giantbomb', 'Sony Has Ideas for the PlayStation 6 | Game Mess Mornings 06/13/25', 'Jeff Grubb and Jesse Norris from XboxEra end the week with a slew of updates from PlayStation like the possibility of a PlayStation 6, more monthly players are finally on the PlayStation 5, pricing adjustments coming to PS Plus, and more news in and around the industry! 
-
-#gmm #gamemessmornings #giantbomb', 'https://i.ytimg.com/vi/7sDpPjWzGeQ/mqdefault.jpg', '2025-06-13 16:11:53+00', '''06/13/25'':11A ''5'':44B ''6'':7A,35B ''adjust'':46B ''around'':56B ''come'':47B ''end'':19B ''final'':40B ''game'':8A ''gamemessmorn'':60B ''giantbomb'':61B ''gmm'':59B ''grubb'':13B ''idea'':3A ''industri'':58B ''jeff'':12B ''jess'':15B ''like'':29B ''mess'':9A ''month'':37B ''morn'':10A ''news'':53B ''norri'':16B ''player'':38B ''playstat'':6A,28B,34B,43B ''plus'':50B ''possibl'':31B ''price'':45B ''ps'':49B ''slew'':24B ''soni'':1A ''updat'':26B ''week'':21B ''xboxera'':18B', false, 'PT1H32S', 'https://i.ytimg.com/vi/7sDpPjWzGeQ/maxresdefault.jpg'),
-	('jf24cn1wr9Y', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 2-4 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
-
-We got Johnny Galvatron, Dean Woodward, Cessia Castillo, Kristy Norindr, and Mark Essen on the couch! We chat about switching careers and getting into Indie Game development, the indie game community, and future products! 
-
-Thanks to our friends at Annapurna Interactive for presenting this stream!
-
-Games featured in this segment include:
-
-Mixtape - https://annapurnainteractive.com/en/games/mixtape
-Wheel World - https://annapurnainteractive.com/en/games/wheel-world
-Snap & Grab - https://annapurnainteractive.com/en/games/snap-and-grab
-Lego Voyagers - https://annapurnainteractive.com/en/games/lego-voyagers
-
-Tenno Tub Fishing segment presented by Digital Extremes
-
-
-#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/jf24cn1wr9Y/mqdefault.jpg', '2025-06-12 18:15:08+00', '''-4'':10A ''/en/games/lego-voyagers'':109B ''/en/games/mixtape'':94B ''/en/games/snap-and-grab'':104B ''/en/games/wheel-world'':99B ''2'':9A ''angel'':21B ''annapurna'':13A,79B ''annapurnainteractive.com'':93B,98B,103B,108B ''annapurnainteractive.com/en/games/lego-voyagers'':107B ''annapurnainteractive.com/en/games/mixtape'':92B ''annapurnainteractive.com/en/games/snap-and-grab'':102B ''annapurnainteractive.com/en/games/wheel-world'':97B ''around'':30B ''bomb'':2A ''career'':60B ''castillo'':47B ''cessia'':46B ''chat'':57B ''communiti'':70B ''couch'':18B,55B ''dean'':44B ''develop'':66B ''digit'':116B ''essen'':52B ''extrem'':117B ''featur'':86B ''fish'':112B ''found'':16B ''friend'':27B,77B ''futur'':72B ''galvatron'':43B ''game'':65B,69B,85B ''get'':25B,62B ''giant'':1A ''giantbomb'':120B ''got'':41B ''grab'':101B ''hang'':34B ''includ'':90B ''indi'':64B,68B ''industri'':32B ''interact'':14A,80B ''johnni'':42B ''kristi'':48B ''lego'':105B ''los'':20B ''mark'':51B ''mixtap'':91B ''nite'':3A,8A ''norindr'':49B ''present'':11A,82B,114B ''product'':73B ''re'':24B ''segment'':89B,113B ''sgf'':118B ''snap'':100B ''stream'':84B ''summergamefest'':119B ''switch'':59B ''tenno'':110B ''thank'':74B ''tub'':111B ''villa'':7A,39B ''voyag'':106B ''warfram'':6A,38B ''wheel'':95B ''woodward'':45B ''world'':96B', false, 'PT51M22S', 'https://i.ytimg.com/vi/jf24cn1wr9Y/maxresdefault.jpg'),
-	('ZjQv_i12a9U', 'giantbomb', 'Spelunkin'' With Scoops: 01/07/2014', 'Where we''re going, we don''t need roads. We need teleporters.', 'https://i.ytimg.com/vi/ZjQv_i12a9U/mqdefault.jpg', '2014-01-07 23:11:57+00', '''01/07/2014'':4A ''go'':8B ''need'':12B,15B ''re'':7B ''road'':13B ''scoop'':3A ''spelunkin'':1A ''teleport'':16B', false, 'PT55M43S', 'https://i.ytimg.com/vi/ZjQv_i12a9U/maxresdefault.jpg'),
-	('RZFvcRY4ssw', 'nextlander', 'Nextlander and Waypoint E3 2021: Square Enix!', 'What we''re getting from this Square Enix presentation is that we need a hero to use their psychic power of empathy to kill chaos.', 'https://i.ytimg.com/vi/RZFvcRY4ssw/mqdefault.jpg', '2021-06-14 20:00:03+00', '''2021'':5A ''chao'':32B ''e3'':4A ''empathi'':29B ''enix'':7A,15B ''get'':11B ''hero'':22B ''kill'':31B ''need'':20B ''nextland'':1A ''power'':27B ''present'':16B ''psychic'':26B ''re'':10B ''squar'':6A,14B ''use'':24B ''waypoint'':3A', false, 'PT1H12M22S', 'https://i.ytimg.com/vi/RZFvcRY4ssw/maxresdefault.jpg'),
-	('HZ0M1LWm_FQ', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 1-6 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
-
-We got Andrea Rene, Niki Grayson, Charles Harte, Guillermo Leoz, Michael Fitch, and Peter Hunt Szyptek on the couch! We chat about existing on the internet and independant media, the current situation happening in Los Angeles, and how do you cover big gaming events anymore? 
-
-Thanks to our friends at Annapurna Interactive for presenting this stream!
-
-#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/HZ0M1LWm_FQ/mqdefault.jpg', '2025-06-11 23:00:17+00', '''-6'':10A ''1'':9A ''andrea'':42B ''angel'':21B,75B ''annapurna'':13A,90B ''anymor'':84B ''around'':30B ''big'':81B ''bomb'':2A ''charl'':46B ''chat'':60B ''couch'':18B,58B ''cover'':80B ''current'':70B ''event'':83B ''exist'':62B ''fitch'':51B ''found'':16B ''friend'':27B,88B ''game'':82B ''get'':25B ''giant'':1A ''giantbomb'':98B ''got'':41B ''grayson'':45B ''guillermo'':48B ''hang'':34B ''happen'':72B ''hart'':47B ''hunt'':54B ''independ'':67B ''industri'':32B ''interact'':14A,91B ''internet'':65B ''leoz'':49B ''los'':20B,74B ''media'':68B ''michael'':50B ''niki'':44B ''nite'':3A,8A ''peter'':53B ''present'':11A,93B ''re'':24B ''rene'':43B ''sgf'':96B ''situat'':71B ''stream'':95B ''summergamefest'':97B ''szyptek'':55B ''thank'':85B ''villa'':7A,39B ''warfram'':6A,38B', false, 'PT44M32S', 'https://i.ytimg.com/vi/HZ0M1LWm_FQ/maxresdefault.jpg'),
-	('YcKKGvWB3e0', 'giantbomb', 'Mario Kart World: Knockout Tour | Unprofessional Fridays', 'We pop into Mario Kart World and play Knockout Tour with the community (that''s you)!
-
-#mariokartworld #knockouttour #giantbomb #unprofessionalfridays', 'https://i.ytimg.com/vi/YcKKGvWB3e0/mqdefault.jpg', '2025-06-13 18:14:19+00', '''communiti'':20B ''friday'':7A ''giantbomb'':26B ''kart'':2A,12B ''knockout'':4A,16B ''knockouttour'':25B ''mario'':1A,11B ''mariokartworld'':24B ''play'':15B ''pop'':9B ''tour'':5A,17B ''unprofession'':6A ''unprofessionalfriday'':27B ''world'':3A,13B', false, 'PT1H53M47S', 'https://i.ytimg.com/vi/YcKKGvWB3e0/maxresdefault.jpg'),
-	('RxCk9gVqVmU', 'giantbomb', 'Netflix Backing Away from Games | Game Mess Mornings 06/25/25', 'Jeff Grubb and Jan Ochoa start your Wednesday with news that Netflix is slowly stepping away from their video game initiative, Jurassic World Evolution 3 developers removing AI from the game, Nintendo had a hand in Death Stranding 2, and even more news! 
-
-Support Giant Bomb by going to:
-giantbomb.com/join
-
-#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/RxCk9gVqVmU/mqdefault.jpg', '2025-06-25 16:06:53+00', '''/join'':61B ''06/25/25'':9A ''2'':48B ''3'':34B ''ai'':37B ''away'':3A,25B ''back'':2A ''bomb'':55B ''death'':46B ''develop'':35B ''even'':50B ''evolut'':33B ''game'':5A,6A,29B,40B ''gamemessmorn'':63B ''giant'':54B ''giantbomb'':64B ''giantbomb.com'':60B ''giantbomb.com/join'':59B ''gmm'':62B ''go'':57B ''grubb'':11B ''hand'':44B ''initi'':30B ''jan'':13B ''jeff'':10B ''jurass'':31B ''mess'':7A ''morn'':8A ''netflix'':1A,21B ''news'':19B,52B ''nintendo'':41B ''ochoa'':14B ''remov'':36B ''slowli'':23B ''start'':15B ''step'':24B ''strand'':47B ''support'':53B ''video'':28B ''videogamenew'':65B ''wednesday'':17B ''world'':32B', false, 'PT58M50S', 'https://i.ytimg.com/vi/RxCk9gVqVmU/maxresdefault.jpg'),
-	('1zcPILkebEs', 'giantbomb', 'The Switch 2 is Pretty Great | Giant Bombcast 895: Raw Dog Mayo', 'This week we dive into why we''re digging the Switch 2 so much and circling back to some gems from the Switch 1 like Splatoon 3 and Paper Mario, Mike talks about slicing and dicing his way through Sekiro, Grubb''s lackluster time in MindsEye, and all of us climbing together in PEAK. We also chat about Microsoft''s new deal with AMD, rumors of a PlayStation 6 on the horizon, a Golden Tee remaster, and even more news to catch up on! 
-
-#giantbomb #bombcast #giantbombcast', 'https://i.ytimg.com/vi/1zcPILkebEs/mqdefault.jpg', '2025-06-17 18:54:04+00', '''1'':36B ''2'':3A,24B ''3'':39B ''6'':81B ''895'':9A ''also'':68B ''amd'':76B ''back'':29B ''bombcast'':8A,98B ''catch'':94B ''chat'':69B ''circl'':28B ''climb'':63B ''deal'':74B ''dice'':48B ''dig'':21B ''dive'':16B ''dog'':11A ''even'':90B ''gem'':32B ''giant'':7A ''giantbomb'':97B ''giantbombcast'':99B ''golden'':86B ''great'':6A ''grubb'':53B ''horizon'':84B ''lacklust'':55B ''like'':37B ''mario'':42B ''mayo'':12A ''microsoft'':71B ''mike'':43B ''mindsey'':58B ''much'':26B ''new'':73B ''news'':92B ''paper'':41B ''peak'':66B ''playstat'':80B ''pretti'':5A ''raw'':10A ''re'':20B ''remast'':88B ''rumor'':77B ''sekiro'':52B ''slice'':46B ''splatoon'':38B ''switch'':2A,23B,35B ''talk'':44B ''tee'':87B ''time'':56B ''togeth'':64B ''us'':62B ''way'':50B ''week'':14B', false, 'PT2H34M40S', 'https://i.ytimg.com/vi/1zcPILkebEs/maxresdefault.jpg'),
-	('DuXUDtR6H0U', 'remap', 'Patrick vs. Hopshot [Part 6]', 'It''s just The Final Jump, Patrick. How hard could The Final Jump in Hopshot be?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/DuXUDtR6H0U/mqdefault.jpg', '2025-05-27 21:22:04+00', '''6'':5A ''audienc'':25B ''consid'':35B ''content'':33B ''continu'':30B ''could'':15B ''final'':10B,17B ''hard'':14B ''help'':28B ''hopshot'':3A,20B ''jump'':11B,18B ''make'':31B ''part'':4A ''patrick'':1A,12B ''pleas'':34B ''radio'':23B ''remap'':22B ''subscrib'':36B ''support'':26B ''us'':29B ''vs'':2A ''www.remapradio.com'':38B', false, 'PT1H56M26S', 'https://i.ytimg.com/vi/DuXUDtR6H0U/maxresdefault.jpg'),
-	('DqddR_wnF08', 'remap', 'The Wheel of Command & Conquer', 'Look. We''re just going to play a ton of Command & Conquer and games like Command & Conquer, okay?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/DqddR_wnF08/mqdefault.jpg', '2025-04-25 03:36:22+00', '''audienc'':27B ''command'':4A,16B,21B ''conquer'':5A,17B,22B ''consid'':37B ''content'':35B ''continu'':32B ''game'':19B ''go'':10B ''help'':30B ''like'':20B ''look'':6B ''make'':33B ''okay'':23B ''play'':12B ''pleas'':36B ''radio'':25B ''re'':8B ''remap'':24B ''subscrib'':38B ''support'':28B ''ton'':14B ''us'':31B ''wheel'':2A ''www.remapradio.com'':40B', false, 'PT2H13M36S', 'https://i.ytimg.com/vi/DqddR_wnF08/maxresdefault.jpg'),
-	('EvZGKo3IMRI', 'remap', 'Patrick vs. Hopshot [Part 2]', 'It''s just a few jumps. How hard could just a few jumps be? And lo, Patrick did descend into madness and promise to buy a frog suit.
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/EvZGKo3IMRI/mqdefault.jpg', '2025-05-06 21:10:57+00', '''2'':5A ''audienc'':37B ''buy'':30B ''consid'':47B ''content'':45B ''continu'':42B ''could'':14B ''descend'':24B ''frog'':32B ''hard'':13B ''help'':40B ''hopshot'':3A ''jump'':11B,18B ''lo'':21B ''mad'':26B ''make'':43B ''part'':4A ''patrick'':1A,22B ''pleas'':46B ''promis'':28B ''radio'':35B ''remap'':34B ''subscrib'':48B ''suit'':33B ''support'':38B ''us'':41B ''vs'':2A ''www.remapradio.com'':50B', false, 'PT2H49M56S', 'https://i.ytimg.com/vi/EvZGKo3IMRI/maxresdefault.jpg'),
-	('3Sa9f6hkDcw', 'nextlander', 'Let''s Check Out Len''s Island w/ Abby Russell', 'Farming? Dungeon crawling? All in one game? What a concept!
+	('M8I8GE2VdTE', 'nextlander', 'Brad and Patrick Can''t Stop Volgarr! (Part 04)', 'Patrick and Brad are trying their best to each beat Volgarr the Viking II! Who will finish first?
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
-Thanks for watching.', 'https://i.ytimg.com/vi/3Sa9f6hkDcw/mqdefault.jpg', '2025-06-24 19:59:53+00', '''/nextlander'':29B ''abbi'':9A ''check'':3A ''communiti'':26B ''concept'':20B ''crawl'':13B ''dungeon'':12B ''farm'':11B ''game'':17B ''island'':7A ''len'':5A ''let'':1A ''nextland'':21B ''one'':16B ''russel'':10A ''support'':23B ''thank'':30B ''w'':8A ''watch'':32B ''www.patreon.com'':28B ''www.patreon.com/nextlander'':27B', false, 'PT1H55M31S', 'https://i.ytimg.com/vi/3Sa9f6hkDcw/maxresdefault.jpg'),
-	('vJq8lHcbbig', 'remap', 'Hands-Off Impressions With Resident Evil 9', 'Janet and Patrick watched a theater presentation that promised Resident Evil 9 would be returning the series to its roots. But didn''t we just do that with Resident Evil 7? And what is there for people who aren''t enthused by games where you''re constantly being chased?
+Thanks for watching.', 'https://i.ytimg.com/vi/M8I8GE2VdTE/mqdefault.jpg', '2024-10-25 21:02:20+00', '''/nextlander'':36B ''04'':9A ''beat'':19B ''best'':16B ''brad'':1A,12B ''communiti'':33B ''finish'':26B ''first'':27B ''ii'':23B ''nextland'':28B ''part'':8A ''patrick'':3A,10B ''stop'':6A ''support'':30B ''thank'':37B ''tri'':14B ''vike'':22B ''volgarr'':7A,20B ''watch'':39B ''www.patreon.com'':35B ''www.patreon.com/nextlander'':34B', false, 'PT2H19M', 'https://i.ytimg.com/vi/M8I8GE2VdTE/maxresdefault.jpg'),
+	('DuXUDtR6H0U', 'remap', 'Patrick vs. Hopshot [Part 6]', 'It''s just The Final Jump, Patrick. How hard could The Final Jump in Hopshot be?
 
-What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/DuXUDtR6H0U/mqdefault.jpg', '2025-05-27 21:22:04+00', '''6'':5A ''audienc'':25B ''consid'':35B ''content'':33B ''continu'':30B ''could'':15B ''final'':10B,17B ''hard'':14B ''help'':28B ''hopshot'':3A,20B ''jump'':11B,18B ''make'':31B ''part'':4A ''patrick'':1A,12B ''pleas'':34B ''radio'':23B ''remap'':22B ''subscrib'':36B ''support'':26B ''us'':29B ''vs'':2A ''www.remapradio.com'':38B', false, 'PT1H56M26S', 'https://i.ytimg.com/vi/DuXUDtR6H0U/maxresdefault.jpg'),
+	('EvZGKo3IMRI', 'remap', 'Patrick vs. Hopshot [Part 2]', 'It''s just a few jumps. How hard could just a few jumps be? And lo, Patrick did descend into madness and promise to buy a frog suit.
 
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/vJq8lHcbbig/mqdefault.jpg', '2025-06-18 14:01:25+00', '''/us/podcast/remap-radio/id1690437343'':79B ''7'':39B ''9'':8A,20B ''aren'':47B ''audienc'':83B ''chase'':57B ''consid'':93B ''constant'':55B ''content'':91B ''continu'':88B ''didn'':30B ''enthus'':49B ''episod'':69B ''evil'':7A,19B,38B ''full'':68B ''game'':51B ''hand'':2A ''hands-off'':1A ''help'':86B ''impress'':4A ''janet'':9B ''listen'':61B ''make'':89B ''patrick'':11B ''peopl'':45B ''pleas'':92B ''podcast'':76B ''podcasts.apple.com'':78B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':77B ''present'':15B ''promis'':17B ''radio'':72B,81B ''re'':54B,60B ''remap'':71B,80B ''resid'':6A,18B,37B ''return'':23B ''root'':28B ''segment'':65B ''seri'':25B ''subscrib'':73B,94B ''support'':84B ''theater'':14B ''us'':87B ''watch'':12B ''would'':21B ''www.remapradio.com'':96B', false, 'PT25M54S', 'https://i.ytimg.com/vi/vJq8lHcbbig/maxresdefault.jpg'),
-	('WSl1a3RBzME', 'remap', 'Hey Friends, Does Metroid + Puzzles = MetroidBrainia?', 'We continue to walk down a Metroidvania genre discussion rabbit hole by acknowledging we forgot about the "soulsborne" term, but then pivot to a bigger question: is "MetroidBrania" a thing?
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/EvZGKo3IMRI/mqdefault.jpg', '2025-05-06 21:10:57+00', '''2'':5A ''audienc'':37B ''buy'':30B ''consid'':47B ''content'':45B ''continu'':42B ''could'':14B ''descend'':24B ''frog'':32B ''hard'':13B ''help'':40B ''hopshot'':3A ''jump'':11B,18B ''lo'':21B ''mad'':26B ''make'':43B ''part'':4A ''patrick'':1A,22B ''pleas'':46B ''promis'':28B ''radio'':35B ''remap'':34B ''subscrib'':48B ''suit'':33B ''support'':38B ''us'':41B ''vs'':2A ''www.remapradio.com'':50B', false, 'PT2H49M56S', 'https://i.ytimg.com/vi/EvZGKo3IMRI/maxresdefault.jpg'),
+	('YcKKGvWB3e0', 'giantbomb', 'Mario Kart World: Knockout Tour | Unprofessional Fridays', 'We pop into Mario Kart World and play Knockout Tour with the community (that''s you)!
 
-What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+#mariokartworld #knockouttour #giantbomb #unprofessionalfridays', 'https://i.ytimg.com/vi/YcKKGvWB3e0/mqdefault.jpg', '2025-06-13 18:14:19+00', '''communiti'':20B ''friday'':7A ''giantbomb'':26B ''kart'':2A,12B ''knockout'':4A,16B ''knockouttour'':25B ''mario'':1A,11B ''mariokartworld'':24B ''play'':15B ''pop'':9B ''tour'':5A,17B ''unprofession'':6A ''unprofessionalfriday'':27B ''world'':3A,13B', false, 'PT1H53M47S', 'https://i.ytimg.com/vi/YcKKGvWB3e0/maxresdefault.jpg'),
+	('DqddR_wnF08', 'remap', 'The Wheel of Command & Conquer', 'Look. We''re just going to play a ton of Command & Conquer and games like Command & Conquer, okay?
 
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/WSl1a3RBzME/mqdefault.jpg', '2025-06-11 14:00:49+00', '''/us/podcast/remap-radio/id1690437343'':58B ''acknowledg'':19B ''audienc'':62B ''bigger'':31B ''consid'':72B ''content'':70B ''continu'':8B,67B ''discuss'':15B ''episod'':48B ''forgot'':21B ''friend'':2A ''full'':47B ''genr'':14B ''help'':65B ''hey'':1A ''hole'':17B ''listen'':40B ''make'':68B ''metroid'':4A ''metroidbrainia'':6A ''metroidbrania'':34B ''metroidvania'':13B ''pivot'':28B ''pleas'':71B ''podcast'':55B ''podcasts.apple.com'':57B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':56B ''puzzl'':5A ''question'':32B ''rabbit'':16B ''radio'':51B,60B ''re'':39B ''remap'':50B,59B ''segment'':44B ''soulsborn'':24B ''subscrib'':52B,73B ''support'':63B ''term'':25B ''thing'':36B ''us'':66B ''walk'':10B ''www.remapradio.com'':75B', false, 'PT34M53S', 'https://i.ytimg.com/vi/WSl1a3RBzME/maxresdefault.jpg'),
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/DqddR_wnF08/mqdefault.jpg', '2025-04-25 03:36:22+00', '''audienc'':27B ''command'':4A,16B,21B ''conquer'':5A,17B,22B ''consid'':37B ''content'':35B ''continu'':32B ''game'':19B ''go'':10B ''help'':30B ''like'':20B ''look'':6B ''make'':33B ''okay'':23B ''play'':12B ''pleas'':36B ''radio'':25B ''re'':8B ''remap'':24B ''subscrib'':38B ''support'':28B ''ton'':14B ''us'':31B ''wheel'':2A ''www.remapradio.com'':40B', false, 'PT2H13M36S', 'https://i.ytimg.com/vi/DqddR_wnF08/maxresdefault.jpg'),
+	('Uzw-eTBy4PQ', 'giantbomb', 'Killzone: Shadow Fall: Giant Bomb Quick Look', 'With the release of Killzone on the PS4, things are looking up for this generation. Like, literally.', 'https://i.ytimg.com/vi/Uzw-eTBy4PQ/mqdefault.jpg', '2013-11-13 14:02:19+00', '''bomb'':5A ''fall'':3A ''generat'':22B ''giant'':4A ''killzon'':1A,12B ''like'':23B ''liter'':24B ''look'':7A,18B ''ps4'':15B ''quick'':6A ''releas'':10B ''shadow'':2A ''thing'':16B', false, 'PT45M54S', 'https://i.ytimg.com/vi/Uzw-eTBy4PQ/maxresdefault.jpg'),
 	('VhtGZVZ6ESs', 'remap', 'Exploring the Spooky Haunted PS1 Demo Disc: Flipside Frights', 'Patrick and Cado descent into a world of creepy polygons and old school horror.
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/VhtGZVZ6ESs/mqdefault.jpg', '2025-02-05 17:45:04+00', '''audienc'':27B ''cado'':12B ''consid'':37B ''content'':35B ''continu'':32B ''creepi'':18B ''demo'':6A ''descent'':13B ''disc'':7A ''explor'':1A ''flipsid'':8A ''fright'':9A ''haunt'':4A ''help'':30B ''horror'':23B ''make'':33B ''old'':21B ''patrick'':10B ''pleas'':36B ''polygon'':19B ''ps1'':5A ''radio'':25B ''remap'':24B ''school'':22B ''spooki'':3A ''subscrib'':38B ''support'':28B ''us'':31B ''world'':16B ''www.remapradio.com'':40B', false, 'PT2H10M1S', 'https://i.ytimg.com/vi/VhtGZVZ6ESs/maxresdefault.jpg'),
@@ -19391,26 +19150,7 @@ Timestamps:
 02:22:29 — Nubby''s Number Factory
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/qy-zAd_CeI8/mqdefault.jpg', '2025-03-19 03:34:03+00', '''00'':28B ''01'':32B,33B,39B,43B ''02'':48B,52B ''03'':30B ''06'':49B ''18'':29B ''22'':53B ''24'':41B ''29'':54B ''32'':34B ''42'':45B ''43'':40B ''52'':50B ''55'':44B ''among'':20B ''audienc'':62B ''builder'':38B ''cado'':12B ''cat'':47B ''consid'':72B ''content'':70B ''continu'':67B ''deck'':37B ''discov'':3A ''factori'':58B ''find'':19B ''frog'':6A ''gay'':5A ''gun'':9A ''help'':65B ''hopshot'':31B ''light'':36B ''make'':68B ''mine'':17B ''new'':24B ''nubbi'':55B ''number'':57B ''obsess'':26B ''patrick'':10B ''platform'':25B ''pleas'':71B ''proppl'':42B ''radio'':60B ''reignbreak'':51B ''remap'':59B ''return'':13B ''rogu'':35B ''sausag'':46B ''steam'':1A,16B ''subscrib'':73B ''support'':63B ''thing'':22B ''timestamp'':27B ''us'':66B ''vent'':2A ''www.remapradio.com'':75B', false, 'PT2H34M51S', 'https://i.ytimg.com/vi/qy-zAd_CeI8/maxresdefault.jpg'),
-	('c5vabBHE1W4', 'remap', 'Steam Vent Discovers a World of UFOs and Pets', 'Another adventure into Steam''s New Releases once again takes us to some surprising places. Now with timestamps!
-
-10:10 — Death Howl
-32:54 — Bauhaus Bonk
-44:10 — To the Top, Mammoth!
-01:05:46 — Purfect Climb
-01:13:07 — Jumping Kitten
-01:33:05 — Fear the Unknown: Dave Story
-01:59:48 — Spacepunk Survival
-02:10:20 — Fear the Unknown: Dave Story (Part 2)
-02:22:44 — PETS
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/c5vabBHE1W4/mqdefault.jpg', '2025-02-06 22:58:32+00', '''01'':42B,47B,52B,60B ''02'':65B,75B ''05'':43B,54B ''07'':49B ''10'':28B,29B,37B,66B ''13'':48B ''2'':74B ''20'':67B ''22'':76B ''32'':32B ''33'':53B ''44'':36B,77B ''46'':44B ''48'':62B ''54'':33B ''59'':61B ''adventur'':11B ''anoth'':10B ''audienc'':82B ''bauhaus'':34B ''bonk'':35B ''climb'':46B ''consid'':92B ''content'':90B ''continu'':87B ''dave'':58B,71B ''death'':30B ''discov'':3A ''fear'':55B,68B ''help'':85B ''howl'':31B ''jump'':50B ''kitten'':51B ''make'':88B ''mammoth'':41B ''new'':15B ''part'':73B ''pet'':9A,78B ''place'':24B ''pleas'':91B ''purfect'':45B ''radio'':80B ''releas'':16B ''remap'':79B ''spacepunk'':63B ''steam'':1A,13B ''stori'':59B,72B ''subscrib'':93B ''support'':83B ''surpris'':23B ''surviv'':64B ''take'':19B ''timestamp'':27B ''top'':40B ''ufo'':7A ''unknown'':57B,70B ''us'':20B,86B ''vent'':2A ''world'':5A ''www.remapradio.com'':95B', false, 'PT2H39M36S', 'https://i.ytimg.com/vi/c5vabBHE1W4/maxresdefault.jpg'),
-	('cgslVzgsYvw', 'nextlander', 'Trying Out That Marathon Alpha', 'It''s time to extract, but like, in a cyber fashion.
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/cgslVzgsYvw/mqdefault.jpg', '2025-04-28 23:08:48+00', '''/nextlander'':25B ''alpha'':5A ''communiti'':22B ''cyber'':15B ''extract'':10B ''fashion'':16B ''like'':12B ''marathon'':4A ''nextland'':17B ''support'':19B ''thank'':26B ''time'':8B ''tri'':1A ''watch'':28B ''www.patreon.com'':24B ''www.patreon.com/nextlander'':23B', false, 'PT2H7M30S', 'https://i.ytimg.com/vi/cgslVzgsYvw/maxresdefault.jpg'),
-	('Uzw-eTBy4PQ', 'giantbomb', 'Killzone: Shadow Fall: Giant Bomb Quick Look', 'With the release of Killzone on the PS4, things are looking up for this generation. Like, literally.', 'https://i.ytimg.com/vi/Uzw-eTBy4PQ/mqdefault.jpg', '2013-11-13 14:02:19+00', '''bomb'':5A ''fall'':3A ''generat'':22B ''giant'':4A ''killzon'':1A,12B ''like'':23B ''liter'':24B ''look'':7A,18B ''ps4'':15B ''quick'':6A ''releas'':10B ''shadow'':2A ''thing'':16B', false, 'PT45M54S', 'https://i.ytimg.com/vi/Uzw-eTBy4PQ/maxresdefault.jpg'),
+	('EllmS804YO4', 'giantbomb', 'Resogun: Giant Bomb Quick Look', 'VOXELS', 'https://i.ytimg.com/vi/EllmS804YO4/mqdefault.jpg', '2013-11-11 20:13:21+00', '''bomb'':3A ''giant'':2A ''look'':5A ''quick'':4A ''resogun'':1A ''voxel'':6B', false, 'PT32M9S', 'https://i.ytimg.com/vi/EllmS804YO4/maxresdefault.jpg'),
 	('nmFmvqwGZHI', 'remap', 'Steam Vent Dives into Grids and Food Parks', 'There''s a never-ending supply of Steam games, which means it''s time to go diving for hidden treasures. We found some good ones this week.
 
 Timestamps:
@@ -19423,55 +19163,15 @@ Timestamps:
 02:10:03 – Food Park Manager
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/nmFmvqwGZHI/mqdefault.jpg', '2025-04-15 19:58:33+00', '''00'':38B,42B,47B,62B ''01'':39B,51B,56B ''02'':40B,61B,69B ''03'':71B ''07'':52B ''10'':70B ''21'':43B ''29'':53B ''35'':48B ''43'':57B ''46'':58B ''51'':44B ''52'':63B ''56'':49B ''anoth'':54B ''audienc'':78B ''blingo'':45B ''consid'':88B ''content'':86B ''continu'':83B ''depth'':59B ''dive'':3A,26B ''dweller'':60B ''end'':14B ''food'':7A,72B ''found'':31B ''game'':18B ''go'':25B ''good'':33B ''grid'':5A ''help'':81B ''hidden'':28B ''hopshot'':41B ''lunacid'':64B ''make'':84B ''manag'':74B ''mean'':20B ''moon'':68B ''never'':13B ''never-end'':12B ''one'':34B ''park'':8A,73B ''pet'':46B ''pleas'':87B ''radio'':76B ''remap'':75B ''repos'':50B ''round'':55B ''steam'':1A,17B ''subscrib'':89B ''suppli'':15B ''support'':79B ''tear'':65B ''time'':23B ''timestamp'':37B ''treasur'':29B ''us'':82B ''vent'':2A ''week'':36B ''www.remapradio.com'':91B', false, 'PT2H44M55S', 'https://i.ytimg.com/vi/nmFmvqwGZHI/maxresdefault.jpg'),
-	('b0h7xld8uYY', 'nextlander', 'We Return to the [Newly Updated] Void Crew!', 'They got rid of sanctified hull plates and added payloads and we can save our game now!
+	('HlmlmubTQ28', 'giantbomb', 'Gex Trilogy Quick Look EX LIVE', 'Let''s get Gexual. 
 
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
+#gmm #gamemessmornings #giantbomb', 'https://i.ytimg.com/vi/HlmlmubTQ28/mqdefault.jpg', '2025-06-19 17:46:57+00', '''ex'':5A ''gamemessmorn'':12B ''get'':9B ''gex'':1A ''gexual'':10B ''giantbomb'':13B ''gmm'':11B ''let'':7B ''live'':6A ''look'':4A ''quick'':3A ''trilog'':2A', false, 'PT37M', 'https://i.ytimg.com/vi/HlmlmubTQ28/maxresdefault.jpg'),
+	('Q1iaDJngvKY', 'giantbomb', 'Game Mess Mornings 06/26/25', 'Jeff Grubb and friends break down today''s top stories in video games. 
 
-Thanks for watching.', 'https://i.ytimg.com/vi/b0h7xld8uYY/mqdefault.jpg', '2025-04-22 00:38:11+00', '''/nextlander'':34B ''ad'':17B ''communiti'':31B ''crew'':8A ''game'':24B ''got'':10B ''hull'':14B ''newli'':5A ''nextland'':26B ''payload'':18B ''plate'':15B ''return'':2A ''rid'':11B ''sanctifi'':13B ''save'':22B ''support'':28B ''thank'':35B ''updat'':6A ''void'':7A ''watch'':37B ''www.patreon.com'':33B ''www.patreon.com/nextlander'':32B', false, 'PT2H20M50S', 'https://i.ytimg.com/vi/b0h7xld8uYY/maxresdefault.jpg'),
-	('b-u7xrRFU8Q', 'nextlander', 'It''s Time to Return to Helldivers 2!', 'Will Smith joins us for our Monday Multiplayer Mayhem to revisit Helldivers 2!
+Support Giant Bomb by going to:
+giantbomb.com/join
 
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/b-u7xrRFU8Q/mqdefault.jpg', '2025-04-14 23:36:17+00', '''/nextlander'':30B ''2'':8A,21B ''communiti'':27B ''helldiv'':7A,20B ''join'':11B ''mayhem'':17B ''monday'':15B ''multiplay'':16B ''nextland'':22B ''return'':5A ''revisit'':19B ''smith'':10B ''support'':24B ''thank'':31B ''time'':3A ''us'':12B ''watch'':33B ''www.patreon.com'':29B ''www.patreon.com/nextlander'':28B', false, 'PT2H25M32S', 'https://i.ytimg.com/vi/b-u7xrRFU8Q/maxresdefault.jpg'),
-	('F_NWGbxYYTc', 'nextlander', 'A Very Special Thursday Grab Bag with The Midnight Walk!', 'While you''re all out there electing Popes and such, we''re over here, GAMING.
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/F_NWGbxYYTc/mqdefault.jpg', '2025-05-08 20:49:51+00', '''/nextlander'':34B ''bag'':6A ''communiti'':31B ''elect'':17B ''game'':25B ''grab'':5A ''midnight'':9A ''nextland'':26B ''pope'':18B ''re'':13B,22B ''special'':3A ''support'':28B ''thank'':35B ''thursday'':4A ''walk'':10A ''watch'':37B ''www.patreon.com'':33B ''www.patreon.com/nextlander'':32B', false, 'PT1H51M11S', 'https://i.ytimg.com/vi/F_NWGbxYYTc/maxresdefault.jpg'),
-	('HsjyU4mLwnM', 'nextlander', 'DRUUUUUUUGS! Our Journey into Schedule I!', 'We''re going to build a criminal empire! In a video game! Criminal video game empires!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/HsjyU4mLwnM/mqdefault.jpg', '2025-04-07 15:56:17+00', '''/nextlander'':30B ''build'':10B ''communiti'':27B ''crimin'':12B,18B ''druuuuuuug'':1A ''empir'':13B,21B ''game'':17B,20B ''go'':8B ''journey'':3A ''nextland'':22B ''re'':7B ''schedul'':5A ''support'':24B ''thank'':31B ''video'':16B,19B ''watch'':33B ''www.patreon.com'':29B ''www.patreon.com/nextlander'':28B', false, 'PT2H3M11S', 'https://i.ytimg.com/vi/HsjyU4mLwnM/maxresdefault.jpg'),
-	('WwXCUmV-Hhw', 'nextlander', 'Let''s Finish Alex Hill!', 'Abby''s back, and it''s time to solve a mystery! Maybe even rewrite history?!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/WwXCUmV-Hhw/mqdefault.jpg', '2025-04-29 21:15:51+00', '''/nextlander'':29B ''abbi'':6B ''alex'':4A ''back'':8B ''communiti'':26B ''even'':18B ''finish'':3A ''hill'':5A ''histori'':20B ''let'':1A ''mayb'':17B ''mysteri'':16B ''nextland'':21B ''rewrit'':19B ''solv'':14B ''support'':23B ''thank'':30B ''time'':12B ''watch'':32B ''www.patreon.com'':28B ''www.patreon.com/nextlander'':27B', false, 'PT2H48S', 'https://i.ytimg.com/vi/WwXCUmV-Hhw/maxresdefault.jpg'),
-	('P2wR9HADfHo', 'nextlander', 'Patron''s Choice for April 2025: Vinny Tries The Last Express for the First Time!', 'Our patrons voted to see Vinny dig into a classic adventure for the first time!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/P2wR9HADfHo/mqdefault.jpg', '2025-04-25 22:24:52+00', '''/nextlander'':39B ''2025'':6A ''adventur'':26B ''april'':5A ''choic'':3A ''classic'':25B ''communiti'':36B ''dig'':22B ''express'':11A ''first'':14A,29B ''last'':10A ''nextland'':31B ''patron'':1A,17B ''see'':20B ''support'':33B ''thank'':40B ''time'':15A,30B ''tri'':8A ''vinni'':7A,21B ''vote'':18B ''watch'':42B ''www.patreon.com'':38B ''www.patreon.com/nextlander'':37B', false, 'PT2H19M43S', 'https://i.ytimg.com/vi/P2wR9HADfHo/maxresdefault.jpg'),
-	('SI7eHKCP1us', 'nextlander', 'Brad and Patrick are Back for One Last Volgarr! [Part 08]', 'Will this be the stunning conclusion of the Volgarr saga?! In this non-competitive run who will emerge victorious?!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/SI7eHKCP1us/mqdefault.jpg', '2025-03-07 21:38:02+00', '''/nextlander'':40B ''08'':11A ''back'':5A ''brad'':1A ''communiti'':37B ''competit'':26B ''conclus'':17B ''emerg'':30B ''last'':8A ''nextland'':32B ''non'':25B ''non-competit'':24B ''one'':7A ''part'':10A ''patrick'':3A ''run'':27B ''saga'':21B ''stun'':16B ''support'':34B ''thank'':41B ''victori'':31B ''volgarr'':9A,20B ''watch'':43B ''www.patreon.com'':39B ''www.patreon.com/nextlander'':38B', false, 'PT1H52M6S', 'https://i.ytimg.com/vi/SI7eHKCP1us/maxresdefault.jpg'),
-	('Fa6I3CAz7uE', 'nextlander', 'You''ve Seen the Bloom, Now it''s Time to Rage in Lost Records!', 'The conclusion of Alex Hill will have to wait a week, as Vinny and Alex are about to dive into part 2 of Lost Records.
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/Fa6I3CAz7uE/mqdefault.jpg', '2025-04-22 23:19:26+00', '''/nextlander'':48B ''2'':36B ''alex'':18B,29B ''bloom'':5A ''communiti'':45B ''conclus'':16B ''dive'':33B ''hill'':19B ''lost'':13A,38B ''nextland'':40B ''part'':35B ''rage'':11A ''record'':14A,39B ''seen'':3A ''support'':42B ''thank'':49B ''time'':9A ''ve'':2A ''vinni'':27B ''wait'':23B ''watch'':51B ''week'':25B ''www.patreon.com'':47B ''www.patreon.com/nextlander'':46B', false, 'PT2H45M10S', 'https://i.ytimg.com/vi/Fa6I3CAz7uE/maxresdefault.jpg'),
-	('EllmS804YO4', 'giantbomb', 'Resogun: Giant Bomb Quick Look', 'VOXELS', 'https://i.ytimg.com/vi/EllmS804YO4/mqdefault.jpg', '2013-11-11 20:13:21+00', '''bomb'':3A ''giant'':2A ''look'':5A ''quick'':4A ''resogun'':1A ''voxel'':6B', false, 'PT32M9S', 'https://i.ytimg.com/vi/EllmS804YO4/maxresdefault.jpg'),
+#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/Q1iaDJngvKY/mqdefault.jpg', '2025-06-26 16:15:49+00', '''/join'':26B ''06/26/25'':4A ''bomb'':20B ''break'':9B ''friend'':8B ''game'':1A,17B ''gamemessmorn'':28B ''giant'':19B ''giantbomb'':29B ''giantbomb.com'':25B ''giantbomb.com/join'':24B ''gmm'':27B ''go'':22B ''grubb'':6B ''jeff'':5B ''mess'':2A ''morn'':3A ''stori'':14B ''support'':18B ''today'':11B ''top'':13B ''video'':16B ''videogamenew'':30B', false, 'PT1H3M25S', 'https://i.ytimg.com/vi/Q1iaDJngvKY/maxresdefault.jpg'),
 	('qu3b5jr5-lc', 'giantbomb', 'Recapping Summer Game Fest 2025! | Giant Bombcast 894: Sweet as Honey', 'We''re somehow back from Summer Game Fest and all in one piece! We chat about setting up and operating out of the Warfram Villa, all the things that we saw and played at Summer Game Fest, and all the other news that popped up over the week! 
 
 We can''t believe it! Someone let Jeff Bakalar take control of a webcomic, sign up at https://www.belowthelilies.com/ for more info in the coming weeks!
@@ -19492,70 +19192,7 @@ Games featured below:
 02:20:37 — He Is Coming
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/4Ck5qS5pA8U/mqdefault.jpg', '2025-02-25 23:17:55+00', '''00'':29B,35B,41B,47B,53B ''01'':61B,66B,71B,76B ''02'':31B,81B ''04'':37B ''05'':30B ''12'':62B ''17'':36B ''20'':78B,82B ''26'':67B ''27'':63B ''29'':42B,49B ''34'':55B ''37'':83B ''41'':72B ''44'':48B ''50'':73B ''52'':68B ''54'':43B ''57'':54B ''59'':77B ''audienc'':90B ''back'':13B ''broken'':45B ''bunch'':20B ''bundl'':50B ''cado'':17B ''chao'':80B ''come'':23B,86B ''consid'':100B ''content'':98B ''continu'':95B ''dead'':39B ''deep'':75B ''demon'':59B,69B ''drop'':64B ''duchi'':65B ''dx'':34B ''favorit'':10B ''featur'':27B ''fest'':3A ''game'':22B,26B ''hast'':44B ''help'':93B ''hors'':32B ''joy'':52B ''king'':60B ''labyrinth'':56B ''lightn'':4A ''make'':96B ''next'':2A ''one'':7B ''path'':40B ''patrick'':15B ''pleas'':99B ''radio'':88B ''remap'':87B ''return'':6A ''round'':5A ''runner'':33B ''skin'':74B ''speedrun'':18B ''steam'':1A,25B ''stream'':11B ''subscrib'':101B ''support'':91B ''tide'':70B ''total'':79B ''us'':94B ''world'':46B ''www.remapradio.com'':103B', false, 'PT2H38M21S', 'https://i.ytimg.com/vi/4Ck5qS5pA8U/maxresdefault.jpg'),
-	('MgYgD6ayVmY', 'nextlander', 'Vinny Plays Some Computer Games!', 'There are a few newer games that involve typing into a computer console that seem pretty cool! Let''s have a look.
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/MgYgD6ayVmY/mqdefault.jpg', '2025-04-02 02:24:26+00', '''/nextlander'':36B ''communiti'':33B ''comput'':4A,17B ''consol'':18B ''cool'':22B ''game'':5A,11B ''involv'':13B ''let'':23B ''look'':27B ''newer'':10B ''nextland'':28B ''play'':2A ''pretti'':21B ''seem'':20B ''support'':30B ''thank'':37B ''type'':14B ''vinni'':1A ''watch'':39B ''www.patreon.com'':35B ''www.patreon.com/nextlander'':34B', false, 'PT3H51M13S', 'https://i.ytimg.com/vi/MgYgD6ayVmY/maxresdefault.jpg'),
-	('L2Z85VckOf8', 'nextlander', 'Solving Crimes in Alex Hill: Whispers at White Oak Inn! (Part 01)', 'The Clue Crew reunites to see what kinds of crimes need to be solved!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/L2Z85VckOf8/mqdefault.jpg', '2025-03-25 22:27:30+00', '''/nextlander'':35B ''01'':12A ''alex'':4A ''clue'':14B ''communiti'':32B ''crew'':15B ''crime'':2A,22B ''hill'':5A ''inn'':10A ''kind'':20B ''need'':23B ''nextland'':27B ''oak'':9A ''part'':11A ''reunit'':16B ''see'':18B ''solv'':1A,26B ''support'':29B ''thank'':36B ''watch'':38B ''whisper'':6A ''white'':8A ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT2H5M47S', 'https://i.ytimg.com/vi/L2Z85VckOf8/maxresdefault.jpg'),
-	('ZHrxoA4bGz0', 'nextlander', 'Lost Records, Bloom and Rage, Things of That Nature (The Finale!)', 'We continue to soldier on in Lost Records in the hope of achieving something. Like opening a box, maybe?
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/ZHrxoA4bGz0/mqdefault.jpg', '2025-05-06 22:05:28+00', '''/nextlander'':39B ''achiev'':24B ''bloom'':3A ''box'':29B ''communiti'':36B ''continu'':13B ''final'':11A ''hope'':22B ''like'':26B ''lost'':1A,18B ''mayb'':30B ''natur'':9A ''nextland'':31B ''open'':27B ''rage'':5A ''record'':2A,19B ''soldier'':15B ''someth'':25B ''support'':33B ''thank'':40B ''thing'':6A ''watch'':42B ''www.patreon.com'':38B ''www.patreon.com/nextlander'':37B', false, 'PT2H3M20S', 'https://i.ytimg.com/vi/ZHrxoA4bGz0/maxresdefault.jpg'),
-	('xrjqqpfEXyU', 'nextlander', 'Nextlander''s R.E.P.O. Madness in Under 20 Minutes!', 'Don''t have time to enjoy all the hijinks from our full two hour stream or just want a refresher? We''ve got you covered! 
-
-Edited by Will Crosby
-
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/xrjqqpfEXyU/mqdefault.jpg', '2025-04-08 15:00:58+00', '''/nextlander'':46B ''20'':7A ''communiti'':43B ''cover'':33B ''crosbi'':37B ''edit'':34B ''enjoy'':14B ''full'':20B ''got'':31B ''hijink'':17B ''hour'':22B ''mad'':4A ''minut'':8A ''nextland'':1A,38B ''r.e.p.o'':3A ''refresh'':28B ''stream'':23B ''support'':40B ''thank'':47B ''time'':12B ''two'':21B ''ve'':30B ''want'':26B ''watch'':49B ''www.patreon.com'':45B ''www.patreon.com/nextlander'':44B', false, 'PT17M44S', 'https://i.ytimg.com/vi/xrjqqpfEXyU/maxresdefault.jpg'),
-	('MqFxzkGTm7M', 'nextlander', 'Void Crew Monday: This Time It''s Serious', 'This is the week we finish a run! Or at least get to a boss...
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/MqFxzkGTm7M/mqdefault.jpg', '2025-03-04 00:18:47+00', '''/nextlander'':32B ''boss'':23B ''communiti'':29B ''crew'':2A ''finish'':14B ''get'':20B ''least'':19B ''monday'':3A ''nextland'':24B ''run'':16B ''serious'':8A ''support'':26B ''thank'':33B ''time'':5A ''void'':1A ''watch'':35B ''week'':12B ''www.patreon.com'':31B ''www.patreon.com/nextlander'':30B', false, 'PT3H4M50S', 'https://i.ytimg.com/vi/MqFxzkGTm7M/maxresdefault.jpg'),
-	('HlmlmubTQ28', 'giantbomb', 'Gex Trilogy Quick Look EX LIVE', 'Let''s get Gexual. 
-
-#gmm #gamemessmornings #giantbomb', 'https://i.ytimg.com/vi/HlmlmubTQ28/mqdefault.jpg', '2025-06-19 17:46:57+00', '''ex'':5A ''gamemessmorn'':12B ''get'':9B ''gex'':1A ''gexual'':10B ''giantbomb'':13B ''gmm'':11B ''let'':7B ''live'':6A ''look'':4A ''quick'':3A ''trilog'':2A', false, 'PT37M', 'https://i.ytimg.com/vi/HlmlmubTQ28/maxresdefault.jpg'),
-	('Q1iaDJngvKY', 'giantbomb', 'Game Mess Mornings 06/26/25', 'Jeff Grubb and friends break down today''s top stories in video games. 
-
-Support Giant Bomb by going to:
-giantbomb.com/join
-
-#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/Q1iaDJngvKY/mqdefault.jpg', '2025-06-26 16:15:49+00', '''/join'':26B ''06/26/25'':4A ''bomb'':20B ''break'':9B ''friend'':8B ''game'':1A,17B ''gamemessmorn'':28B ''giant'':19B ''giantbomb'':29B ''giantbomb.com'':25B ''giantbomb.com/join'':24B ''gmm'':27B ''go'':22B ''grubb'':6B ''jeff'':5B ''mess'':2A ''morn'':3A ''stori'':14B ''support'':18B ''today'':11B ''top'':13B ''video'':16B ''videogamenew'':30B', false, 'PT1H3M25S', 'https://i.ytimg.com/vi/Q1iaDJngvKY/maxresdefault.jpg'),
-	('sHFmvE7W1zU', 'giantbomb', 'Death Stranding 2 is Absolutely Fantastic | Giant Bombcast 896: Current Next Gen', 'Folks it''s time to trek from Mexico to Austrailia as we talk about our time so far with Death Stranding 2, putting out fires in FBC: Firebreak, painting and splatting in Splatoon, the ups and downs of Pipestrello and the Cursed Yoyo, and getting sometime with Rematch. We also chat about the next generation of consoles slowly getting underway, some heat advisory for your Switch 2, Mario Kart World characters, and even more! 
-
-#bombcast #giantbombcast #giantbomb', 'https://i.ytimg.com/vi/sHFmvE7W1zU/mqdefault.jpg', '2025-06-24 19:06:11+00', '''2'':3A,34B,79B ''896'':9A ''absolut'':5A ''advisori'':75B ''also'':62B ''austrailia'':22B ''bombcast'':8A,87B ''charact'':83B ''chat'':63B ''consol'':69B ''current'':10A ''curs'':54B ''death'':1A,32B ''down'':49B ''even'':85B ''fantast'':6A ''far'':30B ''fbc'':39B ''fire'':37B ''firebreak'':40B ''folk'':13B ''gen'':12A ''generat'':67B ''get'':57B,71B ''giant'':7A ''giantbomb'':89B ''giantbombcast'':88B ''heat'':74B ''kart'':81B ''mario'':80B ''mexico'':20B ''next'':11A,66B ''paint'':41B ''pipestrello'':51B ''put'':35B ''rematch'':60B ''slowli'':70B ''sometim'':58B ''splat'':43B ''splatoon'':45B ''strand'':2A,33B ''switch'':78B ''talk'':25B ''time'':16B,28B ''trek'':18B ''underway'':72B ''up'':47B ''world'':82B ''yoyo'':55B', false, 'PT2H44M56S', 'https://i.ytimg.com/vi/sHFmvE7W1zU/maxresdefault.jpg'),
-	('BbehXM0vQjE', 'remap', 'The Media Can''t Review the Switch 2 Until Launch', 'It''s been reported that Nintendo won''t be sending Switch 2 machines in advance to game journalists. What does it mean for Nintendo to dodge reviews, and is the a bigger conversation about the death of expertise? What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/BbehXM0vQjE/mqdefault.jpg', '2025-06-04 14:00:18+00', '''/us/podcast/remap-radio/id1690437343'':70B ''2'':8A,22B ''advanc'':25B ''audienc'':74B ''bigger'':42B ''consid'':84B ''content'':82B ''continu'':79B ''convers'':43B ''death'':46B ''dodg'':36B ''episod'':60B ''expertis'':48B ''full'':59B ''game'':27B ''help'':77B ''journalist'':28B ''launch'':10A ''listen'':52B ''machin'':23B ''make'':80B ''mean'':32B ''media'':2A ''nintendo'':16B,34B ''pleas'':83B ''podcast'':67B ''podcasts.apple.com'':69B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':68B ''radio'':63B,72B ''re'':51B ''remap'':62B,71B ''report'':14B ''review'':5A,37B ''segment'':56B ''send'':20B ''subscrib'':64B,85B ''support'':75B ''switch'':7A,21B ''us'':78B ''won'':17B ''www.remapradio.com'':87B', false, 'PT26M53S', 'https://i.ytimg.com/vi/BbehXM0vQjE/maxresdefault.jpg'),
-	('8t5L5vzhnWA', 'remap', 'Pre-Ordering a Switch 2 Was a Chaotic Journey', 'Last week, Janet and Patrick decided to pre-order at Switch 2. What followed was crashed websites, attempting to boycott Target, standing in line with crypto bros at GameStop, and more. Plus, we discuss Switch 2''s "game key cards" and what they say about the future of physical preservation of video games.
-
-What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/8t5L5vzhnWA/mqdefault.jpg', '2025-05-02 21:59:04+00', '''/us/podcast/remap-radio/id1690437343'':86B ''2'':6A,23B,47B ''attempt'':29B ''audienc'':90B ''boycott'':31B ''bros'':38B ''card'':51B ''chaotic'':9A ''consid'':100B ''content'':98B ''continu'':95B ''crash'':27B ''crypto'':37B ''decid'':16B ''discuss'':45B ''episod'':76B ''follow'':25B ''full'':75B ''futur'':58B ''game'':49B,64B ''gamestop'':40B ''help'':93B ''janet'':13B ''journey'':10A ''key'':50B ''last'':11B ''line'':35B ''listen'':68B ''make'':96B ''order'':3A,20B ''patrick'':15B ''physic'':60B ''pleas'':99B ''plus'':43B ''podcast'':83B ''podcasts.apple.com'':85B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':84B ''pre'':2A,19B ''pre-ord'':1A,18B ''preserv'':61B ''radio'':79B,88B ''re'':67B ''remap'':78B,87B ''say'':55B ''segment'':72B ''stand'':33B ''subscrib'':80B,101B ''support'':91B ''switch'':5A,22B,46B ''target'':32B ''us'':94B ''video'':63B ''websit'':28B ''week'':12B ''www.remapradio.com'':103B', false, 'PT40M41S', 'https://i.ytimg.com/vi/8t5L5vzhnWA/maxresdefault.jpg'),
-	('qXvLJCyEdHA', 'remap', 'Should You Take Your Shoes Off Before Entering a House?', 'Someone walks into your house and doesn''t take their shows off. What do you do next? What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/qXvLJCyEdHA/mqdefault.jpg', '2025-06-06 14:01:19+00', '''/us/podcast/remap-radio/id1690437343'':49B ''audienc'':53B ''consid'':63B ''content'':61B ''continu'':58B ''doesn'':17B ''enter'':8A ''episod'':39B ''full'':38B ''help'':56B ''hous'':10A,15B ''listen'':31B ''make'':59B ''next'':27B ''pleas'':62B ''podcast'':46B ''podcasts.apple.com'':48B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':47B ''radio'':42B,51B ''re'':30B ''remap'':41B,50B ''segment'':35B ''shoe'':5A ''show'':21B ''someon'':11B ''subscrib'':43B,64B ''support'':54B ''take'':3A,19B ''us'':57B ''walk'':12B ''www.remapradio.com'':66B', false, 'PT23M57S', 'https://i.ytimg.com/vi/qXvLJCyEdHA/maxresdefault.jpg'),
-	('-IKsRwmIxsE', 'remap', 'Patrick vs. Hopshot [Part 3]', 'Is this the final journey? Will all this hopping come to an end? Does Patrick have a funny costume? The answers will surprise you!
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/-IKsRwmIxsE/mqdefault.jpg', '2025-05-13 19:56:57+00', '''3'':5A ''answer'':26B ''audienc'':33B ''come'':15B ''consid'':43B ''content'':41B ''continu'':38B ''costum'':24B ''end'':18B ''final'':9B ''funni'':23B ''help'':36B ''hop'':14B ''hopshot'':3A ''journey'':10B ''make'':39B ''part'':4A ''patrick'':1A,20B ''pleas'':42B ''radio'':31B ''remap'':30B ''subscrib'':44B ''support'':34B ''surpris'':28B ''us'':37B ''vs'':2A ''www.remapradio.com'':46B', false, 'PT2H23M52S', 'https://i.ytimg.com/vi/-IKsRwmIxsE/maxresdefault.jpg'),
-	('E3jC7quwe4Q', 'remap', 'The Latest on Rob (Probably) Buying a House', 'Rob has been thinking about a single house for nearly two years. He appears to be on the brink of making it all happen. Or is he? (He is.)
-
-This podcast is a segment from HOA, a subscriber-only Remap podcast about our relationship with the places we live in. You can listen to the entire episode by becoming a subscriber.
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/E3jC7quwe4Q/mqdefault.jpg', '2025-06-25 14:00:21+00', '''appear'':22B ''audienc'':74B ''becom'':68B ''brink'':27B ''buy'':6A ''consid'':84B ''content'':82B ''continu'':79B ''entir'':65B ''episod'':66B ''happen'':32B ''help'':77B ''hoa'':44B ''hous'':8A,16B ''latest'':2A ''listen'':62B ''live'':58B ''make'':29B,80B ''near'':18B ''place'':56B ''pleas'':83B ''podcast'':39B,50B ''probabl'':5A ''radio'':72B ''relationship'':53B ''remap'':49B,71B ''rob'':4A,9B ''segment'':42B ''singl'':15B ''subscrib'':47B,70B,85B ''subscriber-on'':46B ''support'':75B ''think'':12B ''two'':19B ''us'':78B ''www.remapradio.com'':87B ''year'':20B', false, 'PT21M8S', 'https://i.ytimg.com/vi/E3jC7quwe4Q/maxresdefault.jpg'),
+	('KvdwRiXduNI', 'giantbomb', 'Bombin'' the A.M. With Scoops and the Wolf: 11/08/2013', 'Because who doesn''t love a good discussion about Kameo: Elements of Power.', 'https://i.ytimg.com/vi/KvdwRiXduNI/mqdefault.jpg', '2013-11-08 18:35:55+00', '''11/08/2013'':9A ''a.m'':3A ''bombin'':1A ''discuss'':17B ''doesn'':12B ''element'':20B ''good'':16B ''kameo'':19B ''love'':14B ''power'':22B ''scoop'':5A ''wolf'':8A', false, 'PT59M59S', 'https://i.ytimg.com/vi/KvdwRiXduNI/maxresdefault.jpg'),
 	('6MCkeLReeHc', 'giantbomb', 'The Boys are Back in Town | Giant Bombcast 890: UPPIES', 'We''re back! We''ve got a Fab 5 here assembled to talk about the current state of ownership and updates with the website, impressions on Doom: The Dark Ages, Death Stranding 2, Drop Duchy, kicking it in Despelote, and our time so far with Clair Obscur: Expedition 33! We also recap all of the biggest gaming news in the past week along with all of your lovely emails! 
 
 Support Giant Bomb by signing up at
@@ -19578,52 +19215,19 @@ Timestamps:
 09:29:31 — Should We Buy a Golf Simulator?
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/2xTMdrg7YUg/mqdefault.jpg', '2025-04-07 19:22:50+00', '''00'':82B,83B,84B ''03'':89B ''04'':99B ''05'':103B ''07'':110B,119B ''09'':132B ''1'':8A ''17'':90B ''19'':100B ''1998'':128B ''2'':35B ''23'':101B ''24'':105B ''29'':111B,133B ''30'':104B ''31'':134B ''33'':120B ''386'':130B ''39'':112B,121B ''42'':91B ''addit'':25B ''audienc'':144B ''beatl'':117B ''break'':102B ''bunch'':32B ''buy'':137B ''channel'':63B ''classic'':64B ''commentari'':76B ''conclud'':57B ''consid'':154B ''content'':152B ''continu'':149B ''day'':5A ''direct'':23B ''disney'':62B ''felt'':39B ''four'':116B ''game'':36B,55B,98B,123B ''golf'':54B,122B,125B,139B ''happen'':77B ''help'':147B ''hitman'':48B,108B ''irish'':69B,75B ''let'':92B ''liber'':37B ''link'':126B,129B ''live'':10B,87B ''ls'':127B ''luck'':66B,72B ''make'':115B,150B ''mani'':53B ''movi'':118B ''new'':3A ''news'':19B ''nintendo'':22B ''note'':70B ''old'':96B ''part'':7A,79B ''patrick'':27B ''pc'':97B ''play'':30B,51B,107B ''pleas'':153B ''pro'':131B ''radio'':14B,86B,142B ''re'':114B ''record'':11B,88B ''remap'':1A,13B,85B,141B ''rememb'':94B ''rob'':44B,106B ''sent'':46B ''simul'':140B ''subscrib'':155B ''support'':145B ''switch'':34B ''take'':59B ''three'':6A ''time'':29B ''timestamp'':81B ''two'':80B ''us'':148B ''vr'':49B,109B ''went'':15B ''www.remapradio.com'':157B ''york'':4A ''zani'':124B', false, 'PT10H3M1S', 'https://i.ytimg.com/vi/2xTMdrg7YUg/maxresdefault.jpg'),
-	('eKfF4L0pEAw', 'nextlander', 'Nextlander, FBC: Firebreak, And A Lot of Sticky Notes!', 'The gang''s all here and now it''s time to dive into the depths of the Oldest House and put out some supernatural fires!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/eKfF4L0pEAw/mqdefault.jpg', '2025-06-20 20:14:14+00', '''/nextlander'':43B ''communiti'':40B ''depth'':24B ''dive'':21B ''fbc'':2A ''fire'':34B ''firebreak'':3A ''gang'':11B ''hous'':28B ''lot'':6A ''nextland'':1A,35B ''note'':9A ''oldest'':27B ''put'':30B ''sticki'':8A ''supernatur'':33B ''support'':37B ''thank'':44B ''time'':19B ''watch'':46B ''www.patreon.com'':42B ''www.patreon.com/nextlander'':41B', false, 'PT1H59M24S', 'https://i.ytimg.com/vi/eKfF4L0pEAw/maxresdefault.jpg'),
-	('qgysHQqqDHg', 'nextlander', 'NINTENDO! SWITCH! 2! TALK! OVER!', 'The Nextlander boys are up BRIGHT AND EARLY to bring you the most trenchant and thoughtful commentary on Nintendo''s new Switch!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/qgysHQqqDHg/mqdefault.jpg', '2025-04-02 16:27:58+00', '''/nextlander'':35B ''2'':3A ''boy'':7B ''bright'':10B ''bring'':14B ''commentari'':21B ''communiti'':32B ''earli'':12B ''new'':25B ''nextland'':6B,27B ''nintendo'':1A,23B ''support'':29B ''switch'':2A,26B ''talk'':4A ''thank'':36B ''thought'':20B ''trenchant'':18B ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT1H39M', 'https://i.ytimg.com/vi/qgysHQqqDHg/maxresdefault.jpg'),
-	('PcAAAVcWyPA', 'nextlander', 'The #1 Fortnite Streamers and Will Smith!', 'Last week checked in with PUBG and this week we''re checking out Fortnite!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/PcAAAVcWyPA/mqdefault.jpg', '2025-03-17 22:23:07+00', '''/nextlander'':30B ''1'':2A ''check'':10B,19B ''communiti'':27B ''fortnit'':3A,21B ''last'':8B ''nextland'':22B ''pubg'':13B ''re'':18B ''smith'':7A ''streamer'':4A ''support'':24B ''thank'':31B ''watch'':33B ''week'':9B,16B ''www.patreon.com'':29B ''www.patreon.com/nextlander'':28B', false, 'PT1H58M29S', 'https://i.ytimg.com/vi/PcAAAVcWyPA/maxresdefault.jpg'),
-	('npk_UwPTGeY', 'nextlander', 'Brad, Will, and Vinny Return to PUBG!', 'For some of us it''s been years, for others it''s been months or days but for all of us it''s time to see how that Chicken Dinner still tastes.
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/npk_UwPTGeY/mqdefault.jpg', '2025-03-10 22:50:39+00', '''/nextlander'':48B ''brad'':1A ''chicken'':36B ''communiti'':45B ''day'':23B ''dinner'':37B ''month'':21B ''nextland'':40B ''other'':17B ''pubg'':7A ''return'':5A ''see'':33B ''still'':38B ''support'':42B ''tast'':39B ''thank'':49B ''time'':31B ''us'':11B,28B ''vinni'':4A ''watch'':51B ''www.patreon.com'':47B ''www.patreon.com/nextlander'':46B ''year'':15B', false, 'PT2H5M33S', 'https://i.ytimg.com/vi/npk_UwPTGeY/maxresdefault.jpg'),
 	('_yXTrYnIs2c', 'remap', 'Councilman Rob Enters the Arena of Civilization VII', 'Cado might have started this empire, but now, it''s Rob''s turn. What kind of coffee will this empire serve?
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/_yXTrYnIs2c/mqdefault.jpg', '2025-02-20 23:43:37+00', '''arena'':5A ''audienc'':33B ''cado'':9B ''civil'':7A ''coffe'':25B ''consid'':43B ''content'':41B ''continu'':38B ''councilman'':1A ''empir'':14B,28B ''enter'':3A ''help'':36B ''kind'':23B ''make'':39B ''might'':10B ''pleas'':42B ''radio'':31B ''remap'':30B ''rob'':2A,19B ''serv'':29B ''start'':12B ''subscrib'':44B ''support'':34B ''turn'':21B ''us'':37B ''vii'':8A ''www.remapradio.com'':46B', false, 'PT2H56M16S', 'https://i.ytimg.com/vi/_yXTrYnIs2c/maxresdefault.jpg'),
-	('xYQzSZagFLY', 'nextlander', 'Vinny, Will, and a Savage Planet!', 'With Brad in jury duty limbo, we''re booting up Revenge of the Savage Planet and playing some co-op!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/xYQzSZagFLY/mqdefault.jpg', '2025-05-06 00:39:11+00', '''/nextlander'':36B ''boot'':15B ''brad'':8B ''co'':26B ''co-op'':25B ''communiti'':33B ''duti'':11B ''juri'':10B ''limbo'':12B ''nextland'':28B ''op'':27B ''planet'':6A,21B ''play'':23B ''re'':14B ''reveng'':17B ''savag'':5A,20B ''support'':30B ''thank'':37B ''vinni'':1A ''watch'':39B ''www.patreon.com'':35B ''www.patreon.com/nextlander'':34B', false, 'PT2H28M40S', 'https://i.ytimg.com/vi/xYQzSZagFLY/maxresdefault.jpg'),
-	('KvdwRiXduNI', 'giantbomb', 'Bombin'' the A.M. With Scoops and the Wolf: 11/08/2013', 'Because who doesn''t love a good discussion about Kameo: Elements of Power.', 'https://i.ytimg.com/vi/KvdwRiXduNI/mqdefault.jpg', '2013-11-08 18:35:55+00', '''11/08/2013'':9A ''a.m'':3A ''bombin'':1A ''discuss'':17B ''doesn'':12B ''element'':20B ''good'':16B ''kameo'':19B ''love'':14B ''power'':22B ''scoop'':5A ''wolf'':8A', false, 'PT59M59S', 'https://i.ytimg.com/vi/KvdwRiXduNI/maxresdefault.jpg'),
-	('Qx0x0Qx2JNc', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 2-6 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
-
-We got Mike Minotti, Dan Ryckert, HBomberguy, Jeff Bakalar, Jan Ochoa, and Niki Grayson on the couch to end the day! Burgers are slopped, buzzballs are taped, and the day has ended. 
+	('EC3wTMSQYlw', 'giantbomb', 'Giant Bomb @ Nite, LIVE from the Warframe Villa! | Presented by Annapurna Interactive | Nite 1', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
 
 Thanks to our friends at Annapurna Interactive for presenting this stream!
 
-#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/Qx0x0Qx2JNc/mqdefault.jpg', '2025-06-12 19:00:21+00', '''-6'':10A ''2'':9A ''angel'':21B ''annapurna'':13A,77B ''around'':30B ''bakalar'':48B ''bomb'':2A ''burger'':61B ''buzzbal'':64B ''couch'':18B,56B ''dan'':44B ''day'':60B,69B ''end'':58B,71B ''found'':16B ''friend'':27B,75B ''get'':25B ''giant'':1A ''giantbomb'':85B ''got'':41B ''grayson'':53B ''hang'':34B ''hbomberguy'':46B ''industri'':32B ''interact'':14A,78B ''jan'':49B ''jeff'':47B ''los'':20B ''mike'':42B ''minotti'':43B ''niki'':52B ''nite'':3A,8A ''ochoa'':50B ''present'':11A,80B ''re'':24B ''ryckert'':45B ''sgf'':83B ''slop'':63B ''stream'':82B ''summergamefest'':84B ''tape'':66B ''thank'':72B ''villa'':7A,39B ''warfram'':6A,38B', false, 'PT33M7S', 'https://i.ytimg.com/vi/Qx0x0Qx2JNc/maxresdefault.jpg'),
-	('1nIy7Te_rO8', 'remap', 'Okay, Maybe Elden Ring: Neightreign Actually Rules', 'Patrick didn''t have a good time trying Elden Ring: Neightreign solo, but when Remap played the game together (and with some strangers), we had a much different experience. Maybe this game is great? 
+Thanks to Young Horses for their support of Giant Bomb @ Nite! 
+Bugsnax VR is out now, go play it!
+Sign up for the Young Horses newsletter here: http://eepurl.com/g5DUzT
+And check out their Steam page! https://store.steampowered.com/developer/younghorses/
 
-What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/1nIy7Te_rO8/mqdefault.jpg', '2025-06-09 14:00:03+00', '''/us/podcast/remap-radio/id1690437343'':63B ''actual'':6A ''audienc'':67B ''consid'':77B ''content'':75B ''continu'':72B ''didn'':9B ''differ'':35B ''elden'':3A,16B ''episod'':53B ''experi'':36B ''full'':52B ''game'':25B,39B ''good'':13B ''great'':41B ''help'':70B ''listen'':45B ''make'':73B ''mayb'':2A,37B ''much'':34B ''neightreign'':5A,18B ''okay'':1A ''patrick'':8B ''play'':23B ''pleas'':76B ''podcast'':60B ''podcasts.apple.com'':62B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':61B ''radio'':56B,65B ''re'':44B ''remap'':22B,55B,64B ''ring'':4A,17B ''rule'':7A ''segment'':49B ''solo'':19B ''stranger'':30B ''subscrib'':57B,78B ''support'':68B ''time'':14B ''togeth'':26B ''tri'':15B ''us'':71B ''www.remapradio.com'':80B', false, 'PT37M19S', 'https://i.ytimg.com/vi/1nIy7Te_rO8/maxresdefault.jpg'),
+#sgf #summergamefest #giantbomb', 'https://i.ytimg.com/vi/EC3wTMSQYlw/mqdefault.jpg', '2025-06-07 06:09:50+00', '''/developer/younghorses/'':89B ''/g5duzt'':80B ''1'':14A ''angel'':21B ''annapurna'':11A,45B ''around'':30B ''bomb'':2A,60B ''bugsnax'':62B ''check'':82B ''couch'':18B ''eepurl.com'':79B ''eepurl.com/g5duzt'':78B ''found'':16B ''friend'':27B,43B ''get'':25B ''giant'':1A,59B ''giantbomb'':92B ''go'':67B ''hang'':34B ''hors'':54B,75B ''industri'':32B ''interact'':12A,46B ''live'':4A ''los'':20B ''newslett'':76B ''nite'':3A,13A,61B ''page'':86B ''play'':68B ''present'':9A,48B ''re'':24B ''sgf'':90B ''sign'':70B ''steam'':85B ''store.steampowered.com'':88B ''store.steampowered.com/developer/younghorses/'':87B ''stream'':50B ''summergamefest'':91B ''support'':57B ''thank'':40B,51B ''villa'':8A,39B ''vr'':63B ''warfram'':7A,38B ''young'':53B,74B', false, 'PT5H21M3S', 'https://i.ytimg.com/vi/EC3wTMSQYlw/maxresdefault.jpg'),
 	('BLz2HvxBaf0', 'remap', 'Did We Just Watch Polygon and Giant Bomb Die?', 'The day after recording Remap Radio, a bunch of huge news broke, including the presumed deaths of beloved media outlets Polygon and Giant Bomb. They might continue to exist, but in what form? Plus, Xbox announced massive, sweeping, and unprecedented price hikes across hardware and software. Rob and Patrick hopped on to react in real-time and get really upset.
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com
@@ -19640,35 +19244,7 @@ Links:
 https://nymag.com/intelligencer/article/the-group-chat-is-where-tech-elites-drive-one-another-mad.html
 https://www.theverge.com/news/659430/microsoft-xbox-console-controller-game-price-increases-worldwide
 https://kotaku.com/polygon-sold-vox-media-valnet-layoffs-digital-gaming-1851778655', 'https://i.ytimg.com/vi/BLz2HvxBaf0/mqdefault.jpg', '2025-05-01 19:03:27+00', '''/intelligencer/article/the-group-chat-is-where-tech-elites-drive-one-another-mad.html'':129B ''/news/659430/microsoft-xbox-console-controller-game-price-increases-worldwide'':132B ''/polygon-sold-vox-media-valnet-layoffs-digital-gaming-1851778655'':135B ''/us/podcast/remap-radio/id1690437343'':94B ''0'':96B,99B ''00'':97B ''11'':100B,111B ''17'':119B ''27'':110B ''56'':118B ''across'':52B ''announc'':45B ''audienc'':74B ''belov'':27B ''bomb'':8A,33B,108B,117B ''broke'':21B ''bunch'':17B ''chapter'':95B ''consid'':84B ''content'':82B ''continu'':36B,79B ''day'':11B ''death'':25B ''die'':9A,109B ''drastic'':122B ''exist'':38B ''form'':42B ''get'':68B ''giant'':7A,32B,107B,116B ''happen'':114B ''hardwar'':53B ''help'':77B ''hike'':51B ''hop'':59B ''huge'':19B ''includ'':22B ''intro'':98B ''kotaku.com'':134B ''kotaku.com/polygon-sold-vox-media-valnet-layoffs-digital-gaming-1851778655'':133B ''link'':126B ''make'':80B ''massiv'':46B ''media'':28B ''might'':35B ''news'':20B ''nymag.com'':128B ''nymag.com/intelligencer/article/the-group-chat-is-where-tech-elites-drive-one-another-mad.html'':127B ''outlet'':29B ''patrick'':58B ''pleas'':83B ''plus'':43B ''podcast'':91B ''podcasts.apple.com'':93B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':92B ''polygon'':5A,30B,105B ''presum'':24B ''price'':50B,125B ''radio'':15B,72B ''rais'':123B ''react'':62B ''real'':65B ''real-tim'':64B ''realli'':69B ''record'':13B ''remap'':14B,71B ''rob'':56B ''softwar'':55B ''subscrib'':85B,88B ''support'':75B ''sweep'':47B ''time'':66B ''unpreced'':49B ''upset'':70B ''us'':78B ''watch'':4A,104B ''www.remapradio.com'':87B ''www.theverge.com'':131B ''www.theverge.com/news/659430/microsoft-xbox-console-controller-game-price-increases-worldwide'':130B ''xbox'':44B,120B', false, 'PT1H16M26S', 'https://i.ytimg.com/vi/BLz2HvxBaf0/maxresdefault.jpg'),
-	('Ypazwe1UrbE', 'giantbomb', 'Voicemail Dump Truck 161 | Mug Culture.mp3', 'We''re back from LA and we''re all backed up on voicemails! We discuss what can be pretty, the answer on who may actually be the weirdest, rolling Rs, gambling, and more of your voicemails! 
-
-#vmdt #voicemaildumptruck #giantbomb', 'https://i.ytimg.com/vi/Ypazwe1UrbE/mqdefault.jpg', '2025-06-13 20:36:00+00', '''161'':4A ''actual'':31B ''answer'':27B ''back'':9B,16B ''culture.mp3'':6A ''discuss'':21B ''dump'':2A ''gambl'':37B ''giantbomb'':45B ''la'':11B ''may'':30B ''mug'':5A ''pretti'':25B ''re'':8B,14B ''roll'':35B ''rs'':36B ''truck'':3A ''vmdt'':43B ''voicemail'':1A,19B,42B ''voicemaildumptruck'':44B ''weirdest'':34B', false, 'PT1H20M24S', 'https://i.ytimg.com/vi/Ypazwe1UrbE/maxresdefault.jpg'),
-	('Q8cPe1YYU6Y', 'remap', 'Giant Bomb Buys Giant Bomb, But What''s Next?', 'The absolutely wild resolution to the unrest at Giant Bomb has Patrick, Rob, Janet, and Chia celebrating Giant Bomb’s newfound independence, contrasting it with their own breakup with Vice, and more. This is a segment from Remap Radio, the flagship video game podcast from Remap.
-
-What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/Q8cPe1YYU6Y/mqdefault.jpg', '2025-05-19 14:00:41+00', '''/us/podcast/remap-radio/id1690437343'':77B ''absolut'':11B ''audienc'':81B ''bomb'':2A,5A,19B,28B ''breakup'':37B ''buy'':3A ''celebr'':26B ''chia'':25B ''consid'':91B ''content'':89B ''continu'':86B ''contrast'':32B ''episod'':67B ''flagship'':50B ''full'':66B ''game'':52B ''giant'':1A,4A,18B,27B ''help'':84B ''independ'':31B ''janet'':23B ''listen'':59B ''make'':87B ''newfound'':30B ''next'':9A ''patrick'':21B ''pleas'':90B ''podcast'':53B,74B ''podcasts.apple.com'':76B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':75B ''radio'':48B,70B,79B ''re'':58B ''remap'':47B,55B,69B,78B ''resolut'':13B ''rob'':22B ''segment'':45B,63B ''subscrib'':71B,92B ''support'':82B ''unrest'':16B ''us'':85B ''vice'':39B ''video'':51B ''wild'':12B ''www.remapradio.com'':94B', false, 'PT49M9S', 'https://i.ytimg.com/vi/Q8cPe1YYU6Y/maxresdefault.jpg'),
-	('EC3wTMSQYlw', 'giantbomb', 'Giant Bomb @ Nite, LIVE from the Warframe Villa! | Presented by Annapurna Interactive | Nite 1', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
-
-Thanks to our friends at Annapurna Interactive for presenting this stream!
-
-Thanks to Young Horses for their support of Giant Bomb @ Nite! 
-Bugsnax VR is out now, go play it!
-Sign up for the Young Horses newsletter here: http://eepurl.com/g5DUzT
-And check out their Steam page! https://store.steampowered.com/developer/younghorses/
-
-#sgf #summergamefest #giantbomb', 'https://i.ytimg.com/vi/EC3wTMSQYlw/mqdefault.jpg', '2025-06-07 06:09:50+00', '''/developer/younghorses/'':89B ''/g5duzt'':80B ''1'':14A ''angel'':21B ''annapurna'':11A,45B ''around'':30B ''bomb'':2A,60B ''bugsnax'':62B ''check'':82B ''couch'':18B ''eepurl.com'':79B ''eepurl.com/g5duzt'':78B ''found'':16B ''friend'':27B,43B ''get'':25B ''giant'':1A,59B ''giantbomb'':92B ''go'':67B ''hang'':34B ''hors'':54B,75B ''industri'':32B ''interact'':12A,46B ''live'':4A ''los'':20B ''newslett'':76B ''nite'':3A,13A,61B ''page'':86B ''play'':68B ''present'':9A,48B ''re'':24B ''sgf'':90B ''sign'':70B ''steam'':85B ''store.steampowered.com'':88B ''store.steampowered.com/developer/younghorses/'':87B ''stream'':50B ''summergamefest'':91B ''support'':57B ''thank'':40B,51B ''villa'':8A,39B ''vr'':63B ''warfram'':7A,38B ''young'':53B,74B', false, 'PT5H21M3S', 'https://i.ytimg.com/vi/EC3wTMSQYlw/maxresdefault.jpg'),
-	('LczJ2eC7x6c', 'giantbomb', 'Microsoft is Pausing Development on Xbox Handheld | Game Mess Mornings 05/30/25', 'Jeff Grubb is joined by Jason Fanelli to chat about morale at EA being an all-time low amidst studio closures and more potential layoffs, Microsoft pausing development on the rumored Xbox handheld, Elden Ring: Nightreign exploding on Steam, MultiVersus is shutting down now, and even more news to end the week! 
-
-#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/LczJ2eC7x6c/mqdefault.jpg', '2025-05-30 16:07:08+00', '''05/30/25'':11A ''all-tim'':27B ''amidst'':31B ''chat'':20B ''closur'':33B ''develop'':4A,40B ''ea'':24B ''elden'':46B ''end'':62B ''even'':58B ''explod'':49B ''fanelli'':18B ''game'':8A ''gamemessmorn'':66B ''giantbomb'':67B ''gmm'':65B ''grubb'':13B ''handheld'':7A,45B ''jason'':17B ''jeff'':12B ''join'':15B ''layoff'':37B ''low'':30B ''mess'':9A ''microsoft'':1A,38B ''moral'':22B ''morn'':10A ''multiversus'':52B ''news'':60B ''nightreign'':48B ''paus'':3A,39B ''potenti'':36B ''ring'':47B ''rumor'':43B ''shut'':54B ''steam'':51B ''studio'':32B ''time'':29B ''videogamenew'':68B ''week'':64B ''xbox'':6A,44B', false, 'PT1H10S', 'https://i.ytimg.com/vi/LczJ2eC7x6c/maxresdefault.jpg'),
-	('Uoya8Lg8MpM', 'giantbomb', 'Does Clair Obscur: Expedition 33 Have a Leveling Problem? | Giant Bombcast 893: Uncle Baby', 'We got one more podcast before we head down to Los Angeles for Summer Game Fest! This week we talk about Mikey finishing up Clair Obscur, our time running around in Elden Ring: Nightreign, Hell is Us, and a bit of Lushfoil Photography Sim. We also chat about the hottest news like their being Nintendo Switch 2 reviews, IO Interactive showing off multiple games this week, a State of Play popping off tomorrow, and more news and emails! 
-
-#bombcast #giantbombcast #giantbomb', 'https://i.ytimg.com/vi/Uoya8Lg8MpM/mqdefault.jpg', '2025-06-03 18:40:56+00', '''2'':71B ''33'':5A ''893'':12A ''also'':60B ''angel'':26B ''around'':44B ''babi'':14A ''bit'':54B ''bombcast'':11A,93B ''chat'':61B ''clair'':2A,39B ''elden'':46B ''email'':92B ''expedit'':4A ''fest'':30B ''finish'':37B ''game'':29B,78B ''giant'':10A ''giantbomb'':95B ''giantbombcast'':94B ''got'':16B ''head'':22B ''hell'':49B ''hottest'':64B ''interact'':74B ''io'':73B ''level'':8A ''like'':66B ''los'':25B ''lushfoil'':56B ''mikey'':36B ''multipl'':77B ''news'':65B,90B ''nightreign'':48B ''nintendo'':69B ''obscur'':3A,40B ''one'':17B ''photographi'':57B ''play'':84B ''podcast'':19B ''pop'':85B ''problem'':9A ''review'':72B ''ring'':47B ''run'':43B ''show'':75B ''sim'':58B ''state'':82B ''summer'':28B ''switch'':70B ''talk'':34B ''time'':42B ''tomorrow'':87B ''uncl'':13A ''us'':51B ''week'':32B,80B', false, 'PT2H18M41S', 'https://i.ytimg.com/vi/Uoya8Lg8MpM/maxresdefault.jpg'),
-	('K5eaJB7sLFo', 'remap', 'AI Is Still a Major Threat to Voice Actors', 'The SAG-AFTRA strike appears over, but in the long term, it feels like artificial intelligence is going to have a massive negative impact on the acting profession in video games.
-
-What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/K5eaJB7sLFo/mqdefault.jpg', '2025-06-27 14:00:34+00', '''/us/podcast/remap-radio/id1690437343'':63B ''act'':37B ''actor'':9A ''aftra'':13B ''ai'':1A ''appear'':15B ''artifici'':25B ''audienc'':67B ''consid'':77B ''content'':75B ''continu'':72B ''episod'':53B ''feel'':23B ''full'':52B ''game'':41B ''go'':28B ''help'':70B ''impact'':34B ''intellig'':26B ''like'':24B ''listen'':45B ''long'':20B ''major'':5A ''make'':73B ''massiv'':32B ''negat'':33B ''pleas'':76B ''podcast'':60B ''podcasts.apple.com'':62B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':61B ''profess'':38B ''radio'':56B,65B ''re'':44B ''remap'':55B,64B ''sag'':12B ''sag-aftra'':11B ''segment'':49B ''still'':3A ''strike'':14B ''subscrib'':57B,78B ''support'':68B ''term'':21B ''threat'':6A ''us'':71B ''video'':40B ''voic'':8A ''www.remapradio.com'':80B', false, 'PT28M27S', 'https://i.ytimg.com/vi/K5eaJB7sLFo/maxresdefault.jpg'),
+	('8UtJMAM_mRc', 'giantbomb', 'Teach Me FIFA, Danny', 'Drew doesn''t want to be the ugliest player while playing The Beautiful Game so he asks Danny for help.', 'https://i.ytimg.com/vi/8UtJMAM_mRc/mqdefault.jpg', '2014-07-11 21:42:58+00', '''ask'':21B ''beauti'':17B ''danni'':4A,22B ''doesn'':6B ''drew'':5B ''fifa'':3A ''game'':18B ''help'':24B ''play'':15B ''player'':13B ''teach'':1A ''ugliest'':12B ''want'':8B', false, 'PT57M37S', 'https://i.ytimg.com/vi/8UtJMAM_mRc/maxresdefault.jpg'),
 	('0i4pJWB7cFM', 'remap', 'Remap in New York (Day Two)', 'While Patrick was secretly attending a Switch 2 event, Rob and Cado were joined by Ren and Austin for a day of talking over an increasingly broken Nintendo Direct, before playing a board game. Well, the plan was to play two games. They played one.
 
 Timestamps: 
@@ -19685,54 +19261,15 @@ Remap Radio is audience supported, to help us continue making this content pleas
 	('MV99plMwOnA', 'remap', 'Orb Maxing in Onimusha: Warlords (Part 2)', 'After a harrowing encounter with a sliding block puzzle, Patrick and Cado are back to watch meters fill up and slash demons.
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/MV99plMwOnA/mqdefault.jpg', '2025-03-04 18:34:05+00', '''2'':7A ''audienc'':33B ''back'':21B ''block'':15B ''cado'':19B ''consid'':43B ''content'':41B ''continu'':38B ''demon'':29B ''encount'':11B ''fill'':25B ''harrow'':10B ''help'':36B ''make'':39B ''max'':2A ''meter'':24B ''onimusha'':4A ''orb'':1A ''part'':6A ''patrick'':17B ''pleas'':42B ''puzzl'':16B ''radio'':31B ''remap'':30B ''slash'':28B ''slide'':14B ''subscrib'':44B ''support'':34B ''us'':37B ''warlord'':5A ''watch'':23B ''www.remapradio.com'':46B', false, 'PT2H28M31S', 'https://i.ytimg.com/vi/MV99plMwOnA/maxresdefault.jpg'),
-	('Qk7UYFBorg0', 'nextlander', 'Friday Fun Stream: It''s Time to Solve the X-Files', 'Is it going to be aliens? Yes. Yes it is going to be aliens.
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/Qk7UYFBorg0/mqdefault.jpg', '2025-03-21 20:05:24+00', '''/nextlander'':35B ''alien'':18B,26B ''communiti'':32B ''file'':12A ''friday'':1A ''fun'':2A ''go'':15B,23B ''nextland'':27B ''solv'':8A ''stream'':3A ''support'':29B ''thank'':36B ''time'':6A ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B ''x'':11A ''x-file'':10A ''yes'':19B,20B', false, 'PT2H21M12S', 'https://i.ytimg.com/vi/Qk7UYFBorg0/maxresdefault.jpg'),
-	('8UtJMAM_mRc', 'giantbomb', 'Teach Me FIFA, Danny', 'Drew doesn''t want to be the ugliest player while playing The Beautiful Game so he asks Danny for help.', 'https://i.ytimg.com/vi/8UtJMAM_mRc/mqdefault.jpg', '2014-07-11 21:42:58+00', '''ask'':21B ''beauti'':17B ''danni'':4A,22B ''doesn'':6B ''drew'':5B ''fifa'':3A ''game'':18B ''help'':24B ''play'':15B ''player'':13B ''teach'':1A ''ugliest'':12B ''want'':8B', false, 'PT57M37S', 'https://i.ytimg.com/vi/8UtJMAM_mRc/maxresdefault.jpg'),
-	('NhZUU3xsYTI', 'giantbomb', 'Assassin''s Creed 4: Black Flag Remake All But Confirmed | Game Mess Mornings 06/02/25', 'Jeff Grubb and Jan Ochoa start off the week with news of a possible Assassin''s Creed 4: Black Flag remake coming, an Xbox Elite Series 3 controller possibly popping up this week, Resident Evil 9 might be making an appearence at Summer Game Fest, People Can Fly cancels 2 games, and even more! 
-
-#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/NhZUU3xsYTI/mqdefault.jpg', '2025-06-02 16:05:35+00', '''06/02/25'':14A ''2'':64B ''3'':41B ''4'':4A,32B ''9'':50B ''appear'':55B ''assassin'':1A,29B ''black'':5A,33B ''cancel'':63B ''come'':36B ''confirm'':10A ''control'':42B ''creed'':3A,31B ''elit'':39B ''even'':67B ''evil'':49B ''fest'':59B ''flag'':6A,34B ''fli'':62B ''game'':11A,58B,65B ''gamemessmorn'':70B ''giantbomb'':71B ''gmm'':69B ''grubb'':16B ''jan'':18B ''jeff'':15B ''make'':53B ''mess'':12A ''might'':51B ''morn'':13A ''news'':25B ''ochoa'':19B ''peopl'':60B ''pop'':44B ''possibl'':28B,43B ''remak'':7A,35B ''resid'':48B ''seri'':40B ''start'':20B ''summer'':57B ''videogamenew'':72B ''week'':23B,47B ''xbox'':38B', false, 'PT58M29S', 'https://i.ytimg.com/vi/NhZUU3xsYTI/maxresdefault.jpg'),
-	('cm607zMf3qQ', 'remap', 'A New Genre Has Been Invented: Lore and Logic', 'We''re still refining what it means to mash up a puzzle game with a Metroidvania. MetroidBrania? Well, we''ve got a new idea from a listener: lore and logic. What do you think?
-
-What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/cm607zMf3qQ/mqdefault.jpg', '2025-06-18 14:00:54+00', '''/us/podcast/remap-radio/id1690437343'':65B ''audienc'':69B ''consid'':79B ''content'':77B ''continu'':74B ''episod'':55B ''full'':54B ''game'':22B ''genr'':3A ''got'':30B ''help'':72B ''idea'':33B ''invent'':6A ''listen'':36B,47B ''logic'':9A,39B ''lore'':7A,37B ''make'':75B ''mash'':18B ''mean'':16B ''metroidbrania'':26B ''metroidvania'':25B ''new'':2A,32B ''pleas'':78B ''podcast'':62B ''podcasts.apple.com'':64B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':63B ''puzzl'':21B ''radio'':58B,67B ''re'':11B,46B ''refin'':13B ''remap'':57B,66B ''segment'':51B ''still'':12B ''subscrib'':59B,80B ''support'':70B ''think'':43B ''us'':73B ''ve'':29B ''well'':27B ''www.remapradio.com'':82B', false, 'PT10M56S', 'https://i.ytimg.com/vi/cm607zMf3qQ/maxresdefault.jpg'),
-	('PEA70endQTM', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 1-3 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
-
-We got Ben Starr, Jen English, and Gavin Verhey on the couch! We talk about the impact that Clair Obscur: Expedition 33 and Magic: The Gathering have had over the past year! 
-
-Thanks to our friends at Annapurna Interactive for presenting this stream!
-
-#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/PEA70endQTM/mqdefault.jpg', '2025-06-11 21:30:10+00', '''-3'':10A ''1'':9A ''33'':61B ''angel'':21B ''annapurna'':13A,77B ''around'':30B ''ben'':42B ''bomb'':2A ''clair'':58B ''couch'':18B,51B ''english'':45B ''expedit'':60B ''found'':16B ''friend'':27B,75B ''gather'':65B ''gavin'':47B ''get'':25B ''giant'':1A ''giantbomb'':85B ''got'':41B ''hang'':34B ''impact'':56B ''industri'':32B ''interact'':14A,78B ''jen'':44B ''los'':20B ''magic'':63B ''nite'':3A,8A ''obscur'':59B ''past'':70B ''present'':11A,80B ''re'':24B ''sgf'':83B ''starr'':43B ''stream'':82B ''summergamefest'':84B ''talk'':53B ''thank'':72B ''verhey'':48B ''villa'':7A,39B ''warfram'':6A,38B ''year'':71B', false, 'PT22M17S', 'https://i.ytimg.com/vi/PEA70endQTM/maxresdefault.jpg'),
-	('Jzv8hE_Lz5s', 'nextlander', 'Patron''s Choice for November 2024: Nuclear Nightmare!', 'It''s slightly belated, but it''s time for our Patron''s Choice stream, and we''re trying out the decidedly Thing-like Nuclear Nightmare!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/Jzv8hE_Lz5s/mqdefault.jpg', '2024-12-05 22:22:37+00', '''/nextlander'':43B ''2024'':6A ''belat'':12B ''choic'':3A,21B ''communiti'':40B ''decid'':29B ''like'':32B ''nextland'':35B ''nightmar'':8A,34B ''novemb'':5A ''nuclear'':7A,33B ''patron'':1A,19B ''re'':25B ''slight'':11B ''stream'':22B ''support'':37B ''thank'':44B ''thing'':31B ''thing-lik'':30B ''time'':16B ''tri'':26B ''watch'':46B ''www.patreon.com'':42B ''www.patreon.com/nextlander'':41B', false, 'PT2H25M32S', 'https://i.ytimg.com/vi/Jzv8hE_Lz5s/maxresdefault.jpg'),
 	('wrUoSYz3E1E', 'remap', 'Will Most Video Games in the Future Be Priced at $80?', 'With Gearbox CEO entertaining the idea that Borderlands 4 could be $80, we wonder whether the will become the norm or exception in the future. What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/wrUoSYz3E1E/mqdefault.jpg', '2025-05-26 14:01:24+00', '''/us/podcast/remap-radio/id1690437343'':58B ''4'':20B ''80'':11A,23B ''audienc'':62B ''becom'':29B ''borderland'':19B ''ceo'':14B ''consid'':72B ''content'':70B ''continu'':67B ''could'':21B ''entertain'':15B ''episod'':48B ''except'':33B ''full'':47B ''futur'':7A,36B ''game'':4A ''gearbox'':13B ''help'':65B ''idea'':17B ''listen'':40B ''make'':68B ''norm'':31B ''pleas'':71B ''podcast'':55B ''podcasts.apple.com'':57B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':56B ''price'':9A ''radio'':51B,60B ''re'':39B ''remap'':50B,59B ''segment'':44B ''subscrib'':52B,73B ''support'':63B ''us'':66B ''video'':3A ''whether'':26B ''wonder'':25B ''www.remapradio.com'':75B', false, 'PT26M31S', 'https://i.ytimg.com/vi/wrUoSYz3E1E/maxresdefault.jpg'),
 	('Nird_cmJV4M', 'giantbomb', 'Game Mess Mornings 06/18/25', 'Jeff Grubb and friends break down today''s top stories in video games. 
 
 #gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/Nird_cmJV4M/mqdefault.jpg', '2025-06-18 16:05:52+00', '''06/18/25'':4A ''break'':9B ''friend'':8B ''game'':1A,17B ''gamemessmorn'':19B ''giantbomb'':20B ''gmm'':18B ''grubb'':6B ''jeff'':5B ''mess'':2A ''morn'':3A ''stori'':14B ''today'':11B ''top'':13B ''video'':16B ''videogamenew'':21B', false, 'PT52M46S', 'https://i.ytimg.com/vi/Nird_cmJV4M/maxresdefault.jpg'),
-	('xKKb-QVQX-8', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 2-2 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
+	('NhZUU3xsYTI', 'giantbomb', 'Assassin''s Creed 4: Black Flag Remake All But Confirmed | Game Mess Mornings 06/02/25', 'Jeff Grubb and Jan Ochoa start off the week with news of a possible Assassin''s Creed 4: Black Flag remake coming, an Xbox Elite Series 3 controller possibly popping up this week, Resident Evil 9 might be making an appearence at Summer Game Fest, People Can Fly cancels 2 games, and even more! 
 
-We got Kate Sanchez, Phil Salvador, Chandana Ekanayake, Jill Grodt, and Jason Schrier on the couch! We chat about Indie Game development and coverage, game preservation, breaking in and being sustainable in the video games media industry. 
-
-Thanks to our friends at Annapurna Interactive for presenting this stream!
-
-#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/xKKb-QVQX-8/mqdefault.jpg', '2025-06-12 17:45:07+00', '''-2'':10A ''2'':9A ''angel'':21B ''annapurna'':13A,82B ''around'':30B ''bomb'':2A ''break'':66B ''chandana'':46B ''chat'':57B ''couch'':18B,55B ''coverag'':63B ''develop'':61B ''ekanayak'':47B ''found'':16B ''friend'':27B,80B ''game'':60B,64B,74B ''get'':25B ''giant'':1A ''giantbomb'':90B ''got'':41B ''grodt'':49B ''hang'':34B ''indi'':59B ''industri'':32B,76B ''interact'':14A,83B ''jason'':51B ''jill'':48B ''kate'':42B ''los'':20B ''media'':75B ''nite'':3A,8A ''phil'':44B ''present'':11A,85B ''preserv'':65B ''re'':24B ''salvador'':45B ''sanchez'':43B ''schrier'':52B ''sgf'':88B ''stream'':87B ''summergamefest'':89B ''sustain'':70B ''thank'':77B ''video'':73B ''villa'':7A,39B ''warfram'':6A,38B', false, 'PT36M39S', 'https://i.ytimg.com/vi/xKKb-QVQX-8/maxresdefault.jpg'),
-	('On3a_5dnPrs', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 1-5 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
-
-We got Alanah Pearce, Wout Van Halderen, Whyatt Bushnell, Mike Salyh, and Billy Shibley on the couch! We talk about exploitation in the industry, a new Escape Academy game, publishing games, and even more! 
-
-Thanks to our friends at Annapurna Interactive for presenting this stream!
-
-#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/On3a_5dnPrs/mqdefault.jpg', '2025-06-11 22:30:05+00', '''-5'':10A ''1'':9A ''academi'':67B ''alanah'':42B ''angel'':21B ''annapurna'':13A,79B ''around'':30B ''billi'':52B ''bomb'':2A ''bushnel'':48B ''couch'':18B,56B ''escap'':66B ''even'':72B ''exploit'':60B ''found'':16B ''friend'':27B,77B ''game'':68B,70B ''get'':25B ''giant'':1A ''giantbomb'':87B ''got'':41B ''halderen'':46B ''hang'':34B ''industri'':32B,63B ''interact'':14A,80B ''los'':20B ''mike'':49B ''new'':65B ''nite'':3A,8A ''pearc'':43B ''present'':11A,82B ''publish'':69B ''re'':24B ''salyh'':50B ''sgf'':85B ''shibley'':53B ''stream'':84B ''summergamefest'':86B ''talk'':58B ''thank'':74B ''van'':45B ''villa'':7A,39B ''warfram'':6A,38B ''whyatt'':47B ''wout'':44B', false, 'PT28M54S', 'https://i.ytimg.com/vi/On3a_5dnPrs/maxresdefault.jpg'),
+#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/NhZUU3xsYTI/mqdefault.jpg', '2025-06-02 16:05:35+00', '''06/02/25'':14A ''2'':64B ''3'':41B ''4'':4A,32B ''9'':50B ''appear'':55B ''assassin'':1A,29B ''black'':5A,33B ''cancel'':63B ''come'':36B ''confirm'':10A ''control'':42B ''creed'':3A,31B ''elit'':39B ''even'':67B ''evil'':49B ''fest'':59B ''flag'':6A,34B ''fli'':62B ''game'':11A,58B,65B ''gamemessmorn'':70B ''giantbomb'':71B ''gmm'':69B ''grubb'':16B ''jan'':18B ''jeff'':15B ''make'':53B ''mess'':12A ''might'':51B ''morn'':13A ''news'':25B ''ochoa'':19B ''peopl'':60B ''pop'':44B ''possibl'':28B,43B ''remak'':7A,35B ''resid'':48B ''seri'':40B ''start'':20B ''summer'':57B ''videogamenew'':72B ''week'':23B,47B ''xbox'':38B', false, 'PT58M29S', 'https://i.ytimg.com/vi/NhZUU3xsYTI/maxresdefault.jpg'),
 	('VbKA1llgGvw', 'giantbomb', 'Roadcraft Gets the Mud Right! | Giant Bombcast 892: GURL', 'This week we got some Magic: The Gathering cards to reveal, we chat about TMNT: Tactical Takedown, Grandma, No!, Doom 2, typing in Warhammer: Boltgun: Words of Vengeance, The Mosquito Gang, and Grubb shares his love for driving and mud in Roadcraft. We also chat about how some Nintendo Switch 2 consoles may be out in the wild, a possible State of Play popping up in June,  Alex Garland getting tapped as the director for the Elden Ring movie, and more news this week! Dang gurl!
 
 Support Giant Bomb by heading to:
@@ -19742,141 +19279,13 @@ giantbomb.com/join
 	('DnKE7sxqOAg', 'remap', 'Delivery at All Costs Is a Supremely Weird And Cool Game', 'The vibes are off but in the best way possible in Konami''s new GTA-influenced throwback action/racing game about, well, delivering stuff. 
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/DnKE7sxqOAg/mqdefault.jpg', '2025-05-29 22:11:31+00', '''action/racing'':30B ''audienc'':39B ''best'':19B ''consid'':49B ''content'':47B ''continu'':44B ''cool'':10A ''cost'':4A ''deliv'':34B ''deliveri'':1A ''game'':11A,31B ''gta'':27B ''gta-influenc'':26B ''help'':42B ''influenc'':28B ''konami'':23B ''make'':45B ''new'':25B ''pleas'':48B ''possibl'':21B ''radio'':37B ''remap'':36B ''stuff'':35B ''subscrib'':50B ''support'':40B ''suprem'':7A ''throwback'':29B ''us'':43B ''vibe'':13B ''way'':20B ''weird'':8A ''well'':33B ''www.remapradio.com'':52B', false, 'PT1H35M1S', 'https://i.ytimg.com/vi/DnKE7sxqOAg/maxresdefault.jpg'),
-	('QJC3vLrUX_Y', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 1-7 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
-
-We got Russ Frushtick, Brad Shoemaker, Niki Grayson, Abby Russell, and Jeff Bakalar on the couch! We end the evening with talking about the Switch LITE and Doordashing consoles, using games to learn another language, and if Mario Kart World is good. 
-
-Thanks to our friends at Annapurna Interactive for presenting this stream!
-
-Thanks to Young Horses for their support of Giant Bomb @ Nite! Bugsnax VR is out now, go play it!
-Sign up for the Young Horses newsletter here: http://eepurl.com/g5DUzT
-And check out their Steam page! https://store.steampowered.com/developer/younghorses/ 
-
-#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/QJC3vLrUX_Y/mqdefault.jpg', '2025-06-11 23:30:07+00', '''-7'':10A ''/developer/younghorses/'':131B ''/g5duzt'':122B ''1'':9A ''abbi'':48B ''angel'':21B ''annapurna'':13A,87B ''anoth'':73B ''around'':30B ''bakalar'':52B ''bomb'':2A,102B ''brad'':44B ''bugsnax'':104B ''check'':124B ''consol'':68B ''couch'':18B,55B ''doordash'':67B ''eepurl.com'':121B ''eepurl.com/g5duzt'':120B ''end'':57B ''even'':59B ''found'':16B ''friend'':27B,85B ''frushtick'':43B ''game'':70B ''get'':25B ''giant'':1A,101B ''giantbomb'':134B ''go'':109B ''good'':81B ''got'':41B ''grayson'':47B ''hang'':34B ''hors'':96B,117B ''industri'':32B ''interact'':14A,88B ''jeff'':51B ''kart'':78B ''languag'':74B ''learn'':72B ''lite'':65B ''los'':20B ''mario'':77B ''newslett'':118B ''niki'':46B ''nite'':3A,8A,103B ''page'':128B ''play'':110B ''present'':11A,90B ''re'':24B ''russ'':42B ''russel'':49B ''sgf'':132B ''shoemak'':45B ''sign'':112B ''steam'':127B ''store.steampowered.com'':130B ''store.steampowered.com/developer/younghorses/'':129B ''stream'':92B ''summergamefest'':133B ''support'':99B ''switch'':64B ''talk'':61B ''thank'':82B,93B ''use'':69B ''villa'':7A,39B ''vr'':105B ''warfram'':6A,38B ''world'':79B ''young'':95B,116B', false, 'PT44M39S', 'https://i.ytimg.com/vi/QJC3vLrUX_Y/maxresdefault.jpg'),
-	('JFUpy023mgE', 'remap', 'Celebrating Remap''s 2nd Birthday With an All-Day Stream', 'We''ve somehow made it two years into this wild project, so come join Rob, Patrick, and Cado as they play a variety of games to celebrate two years as an independent media company!
-
-Timestamps:
-00:05:14 — POPUCOM
-01:38:27 — Hopshot
-02:45:12 — HAELE 3D - Feet Poses Pro 
-02:56:36 — Baccarat
-03:04:45 — Pokertown: Cheater''s Paradise
-03:21:31 — Lunch Break
-04:04:06 — Elden Ring: Nightreign
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/JFUpy023mgE/mqdefault.jpg', '2025-06-04 02:57:21+00', '''00'':47B ''01'':51B ''02'':55B,63B ''03'':67B,74B ''04'':68B,79B,80B ''05'':48B ''06'':81B ''12'':57B ''14'':49B ''21'':75B ''27'':53B ''2nd'':4A ''31'':76B ''36'':65B ''38'':52B ''3d'':59B ''45'':56B,69B ''56'':64B ''all-day'':8A ''audienc'':88B ''baccarat'':66B ''birthday'':5A ''break'':78B ''cado'':29B ''celebr'':1A,38B ''cheater'':71B ''come'':24B ''compani'':45B ''consid'':98B ''content'':96B ''continu'':93B ''day'':10A ''elden'':82B ''feet'':60B ''game'':36B ''hael'':58B ''help'':91B ''hopshot'':54B ''independ'':43B ''join'':25B ''lunch'':77B ''made'':15B ''make'':94B ''media'':44B ''nightreign'':84B ''paradis'':73B ''patrick'':27B ''play'':32B ''pleas'':97B ''pokertown'':70B ''popucom'':50B ''pose'':61B ''pro'':62B ''project'':22B ''radio'':86B ''remap'':2A,85B ''ring'':83B ''rob'':26B ''somehow'':14B ''stream'':11A ''subscrib'':99B ''support'':89B ''timestamp'':46B ''two'':17B,39B ''us'':92B ''varieti'':34B ''ve'':13B ''wild'':21B ''www.remapradio.com'':101B ''year'':18B,40B', false, 'PT6H51M55S', 'https://i.ytimg.com/vi/JFUpy023mgE/maxresdefault.jpg'),
-	('mzKLWT5_xwY', 'giantbomb', 'An Ad Claims Metroid Prime 4 is Out Now | Game Mess Mornings 06/20/25', 'Jeff Grubb and Jesse Vitelli end the week with confusion around a London Underground ad claiming Metroid Prime 4 is out, a Donkey Kong Bananza Switch 2 Demo is spotted in the wild, updates on the Death Stranding movie, Crash Team Racing getting a big update, and more! 
-
-#gmm #gamemessmornings #giantbomb', 'https://i.ytimg.com/vi/mzKLWT5_xwY/mqdefault.jpg', '2025-06-20 16:09:54+00', '''06/20/25'':13A ''2'':40B ''4'':6A,32B ''ad'':2A,28B ''around'':24B ''bananza'':38B ''big'':58B ''claim'':3A,29B ''confus'':23B ''crash'':53B ''death'':50B ''demo'':41B ''donkey'':36B ''end'':19B ''game'':10A ''gamemessmorn'':63B ''get'':56B ''giantbomb'':64B ''gmm'':62B ''grubb'':15B ''jeff'':14B ''jess'':17B ''kong'':37B ''london'':26B ''mess'':11A ''metroid'':4A,30B ''morn'':12A ''movi'':52B ''prime'':5A,31B ''race'':55B ''spot'':43B ''strand'':51B ''switch'':39B ''team'':54B ''underground'':27B ''updat'':47B,59B ''vitelli'':18B ''week'':21B ''wild'':46B', false, 'PT1H1M22S', 'https://i.ytimg.com/vi/mzKLWT5_xwY/maxresdefault.jpg'),
-	('tva1CsRWxA0', 'remap', 'Steam Vent Returns to Gay Frogs and Jump Scares', 'You turn away for one second and an evil witch gets you out of nowhere, huh?
-
-Timestamps:
-00:03:04 — Hopshop
-00:39:22 — Silverpine Creek
-00:58:20 — A Game About Mowing Your Lawn
-01:18:15 — Level Devil
-01:31:39 — Paper 2: Origami Unfolded
-02:02:36 – The Gallery
-02:20:24 — Tick Hop
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/tva1CsRWxA0/mqdefault.jpg', '2025-03-25 22:23:34+00', '''00'':27B,31B,36B ''01'':45B,50B ''02'':57B,58B,62B ''03'':28B ''04'':29B ''15'':47B ''18'':46B ''2'':54B ''20'':38B,63B ''22'':33B ''24'':64B ''31'':51B ''36'':59B ''39'':32B,52B ''58'':37B ''audienc'':70B ''away'':12B ''consid'':80B ''content'':78B ''continu'':75B ''creek'':35B ''devil'':49B ''evil'':18B ''frog'':6A ''galleri'':61B ''game'':40B ''gay'':5A ''get'':20B ''help'':73B ''hop'':66B ''hopshop'':30B ''huh'':25B ''jump'':8A ''lawn'':44B ''level'':48B ''make'':76B ''mow'':42B ''nowher'':24B ''one'':14B ''origami'':55B ''paper'':53B ''pleas'':79B ''radio'':68B ''remap'':67B ''return'':3A ''scare'':9A ''second'':15B ''silverpin'':34B ''steam'':1A ''subscrib'':81B ''support'':71B ''tick'':65B ''timestamp'':26B ''turn'':11B ''unfold'':56B ''us'':74B ''vent'':2A ''witch'':19B ''www.remapradio.com'':83B', false, 'PT2H41M46S', 'https://i.ytimg.com/vi/tva1CsRWxA0/maxresdefault.jpg'),
+	('-BGR_lLt5Vw', 'giantbomb', 'Giant Bomb Extra Life 2015 - Drew & Alexis: Part 02', 'Hey, have you met the Warden? He''s a really great guy. You guys should hang out. A lot.', 'https://i.ytimg.com/vi/-BGR_lLt5Vw/mqdefault.jpg', '2015-11-15 08:02:00+00', '''02'':9A ''2015'':5A ''alexi'':7A ''bomb'':2A ''drew'':6A ''extra'':3A ''giant'':1A ''great'':20B ''guy'':21B,23B ''hang'':25B ''hey'':10B ''life'':4A ''lot'':28B ''met'':13B ''part'':8A ''realli'':19B ''warden'':15B', false, 'PT3H5M34S', 'https://i.ytimg.com/vi/-BGR_lLt5Vw/maxresdefault.jpg'),
 	('XLM9AizRDNg', 'nextlander', 'The Jackbox with Special Guests Abby and Rich!', 'Abby Russell and Rich Gallup join us to hang out and play some Survey Scramble, Fibbage, and more!
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/XLM9AizRDNg/mqdefault.jpg', '2024-11-08 21:02:01+00', '''/nextlander'':35B ''abbi'':6A,9B ''communiti'':32B ''fibbag'':24B ''gallup'':13B ''guest'':5A ''hang'':17B ''jackbox'':2A ''join'':14B ''nextland'':27B ''play'':20B ''rich'':8A,12B ''russel'':10B ''scrambl'':23B ''special'':4A ''support'':29B ''survey'':22B ''thank'':36B ''us'':15B ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT2H9M26S', 'https://i.ytimg.com/vi/XLM9AizRDNg/maxresdefault.jpg'),
-	('pBato9wzRmU', 'nextlander', 'Fading into the Fog with Silent Hill 2! (Part 03)', 'Hey Folks.
-
-Taking a break from all your worries sure would help a lot. Wouldn''t you like to get away?
-
-Let''s go to Silent Hill.
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/pBato9wzRmU/mqdefault.jpg', '2024-11-07 21:29:19+00', '''/nextlander'':46B ''03'':10A ''2'':8A ''away'':31B ''break'':15B ''communiti'':43B ''fade'':1A ''fog'':4A ''folk'':12B ''get'':30B ''go'':34B ''help'':22B ''hey'':11B ''hill'':7A,37B ''let'':32B ''like'':28B ''lot'':24B ''nextland'':38B ''part'':9A ''silent'':6A,36B ''support'':40B ''sure'':20B ''take'':13B ''thank'':47B ''watch'':49B ''worri'':19B ''would'':21B ''wouldn'':25B ''www.patreon.com'':45B ''www.patreon.com/nextlander'':44B', false, 'PT4H8M32S', 'https://i.ytimg.com/vi/pBato9wzRmU/maxresdefault.jpg'),
-	('8q8fDHZRNJY', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 1-2 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
-
-We got Imran Khan, Bailey Meyers, Tyler Gardner, Mike Vayatta, and Adam Cole on the couch! We chat about Table Top games, the state of Games Journalism, Firebreak, and being a wrestler! 
-
-Thanks to our friends at Annapurna Interactive for presenting this stream!
-
-Thanks to Young Horses for their support of Giant Bomb @ Nite! Bugsnax VR is out now, go play it!
-Sign up for the Young Horses newsletter here: 
-http://eepurl.com/g5DUzTAnd check out their Steam page! https://store.steampowered.com/developer/younghorses/ 
-#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/8q8fDHZRNJY/mqdefault.jpg', '2025-06-11 21:00:09+00', '''-2'':10A ''/developer/younghorses/'':120B ''/g5duztand'':112B ''1'':9A ''adam'':51B ''angel'':21B ''annapurna'':13A,77B ''around'':30B ''bailey'':44B ''bomb'':2A,92B ''bugsnax'':94B ''chat'':57B ''check'':113B ''cole'':52B ''couch'':18B,55B ''eepurl.com'':111B ''eepurl.com/g5duztand'':110B ''firebreak'':67B ''found'':16B ''friend'':27B,75B ''game'':61B,65B ''gardner'':47B ''get'':25B ''giant'':1A,91B ''giantbomb'':123B ''go'':99B ''got'':41B ''hang'':34B ''hors'':86B,107B ''imran'':42B ''industri'':32B ''interact'':14A,78B ''journal'':66B ''khan'':43B ''los'':20B ''meyer'':45B ''mike'':48B ''newslett'':108B ''nite'':3A,8A,93B ''page'':117B ''play'':100B ''present'':11A,80B ''re'':24B ''sgf'':121B ''sign'':102B ''state'':63B ''steam'':116B ''store.steampowered.com'':119B ''store.steampowered.com/developer/younghorses/'':118B ''stream'':82B ''summergamefest'':122B ''support'':89B ''tabl'':59B ''thank'':72B,83B ''top'':60B ''tyler'':46B ''vayatta'':49B ''villa'':7A,39B ''vr'':95B ''warfram'':6A,38B ''wrestler'':71B ''young'':85B,106B', false, 'PT25M40S', 'https://i.ytimg.com/vi/8q8fDHZRNJY/maxresdefault.jpg'),
-	('164N0JABnkE', 'remap', 'Riding Summer Game Fest into Steam Next Fest', 'Summer Game Fest might be over, but Steam Next Fest is here, and we''ve got Janet and Chia checking out a ton of cool games.
-
-Timestamps:
-00:07:12 — Windswept
-00:18:49 — Into the Grid
-00:34:01 — ILA: A Frosty Glide
-00:45:21 — Soul Nexus
-00:58:25 — Flick Shot Rogues
-01:12:06 — Ratatan
-01:25:21 — Anura
-01:36:42 — MotionRec
-01:48:41 — Vessels of Decay
-02:00:48 — The Hatchling
-02:13:32 — Tired to Fall
-02:25:29 — Crown Gambit
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/164N0JABnkE/mqdefault.jpg', '2025-06-11 20:36:11+00', '''00'':36B,40B,46B,53B,58B,83B ''01'':48B,64B,68B,72B,76B ''02'':82B,87B,93B ''06'':66B ''07'':37B ''12'':38B,65B ''13'':88B ''18'':41B ''21'':55B,70B ''25'':60B,69B,94B ''29'':95B ''32'':89B ''34'':47B ''36'':73B ''41'':78B ''42'':74B ''45'':54B ''48'':77B,84B ''49'':42B ''58'':59B ''anura'':71B ''audienc'':101B ''check'':28B ''chia'':27B ''consid'':111B ''content'':109B ''continu'':106B ''cool'':33B ''crown'':96B ''decay'':81B ''fall'':92B ''fest'':4A,8A,11B,18B ''flick'':61B ''frosti'':51B ''gambit'':97B ''game'':3A,10B,34B ''glide'':52B ''got'':24B ''grid'':45B ''hatchl'':86B ''help'':104B ''ila'':49B ''janet'':25B ''make'':107B ''might'':12B ''motionrec'':75B ''next'':7A,17B ''nexus'':57B ''pleas'':110B ''radio'':99B ''ratatan'':67B ''remap'':98B ''ride'':1A ''rogu'':63B ''shot'':62B ''soul'':56B ''steam'':6A,16B ''subscrib'':112B ''summer'':2A,9B ''support'':102B ''timestamp'':35B ''tire'':90B ''ton'':31B ''us'':105B ''ve'':23B ''vessel'':79B ''windswept'':39B ''www.remapradio.com'':114B', false, 'PT2H41M34S', 'https://i.ytimg.com/vi/164N0JABnkE/maxresdefault.jpg'),
-	('-BGR_lLt5Vw', 'giantbomb', 'Giant Bomb Extra Life 2015 - Drew & Alexis: Part 02', 'Hey, have you met the Warden? He''s a really great guy. You guys should hang out. A lot.', 'https://i.ytimg.com/vi/-BGR_lLt5Vw/mqdefault.jpg', '2015-11-15 08:02:00+00', '''02'':9A ''2015'':5A ''alexi'':7A ''bomb'':2A ''drew'':6A ''extra'':3A ''giant'':1A ''great'':20B ''guy'':21B,23B ''hang'':25B ''hey'':10B ''life'':4A ''lot'':28B ''met'':13B ''part'':8A ''realli'':19B ''warden'':15B', false, 'PT3H5M34S', 'https://i.ytimg.com/vi/-BGR_lLt5Vw/maxresdefault.jpg'),
-	('CApxQO5YnY4', 'nextlander', 'Another Peek at Peak!', 'Let''s climb a mountain together! Or several of them!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/CApxQO5YnY4/mqdefault.jpg', '2025-06-24 01:19:21+00', '''/nextlander'':23B ''anoth'':1A ''climb'':7B ''communiti'':20B ''let'':5B ''mountain'':9B ''nextland'':15B ''peak'':4A ''peek'':2A ''sever'':12B ''support'':17B ''thank'':24B ''togeth'':10B ''watch'':26B ''www.patreon.com'':22B ''www.patreon.com/nextlander'':21B', false, 'PT3H11M6S', 'https://i.ytimg.com/vi/CApxQO5YnY4/maxresdefault.jpg'),
-	('YTv-9MqBf0I', 'remap', 'Remap Radio — Live at PAX East!', 'Well, live in the sense that we recorded this in-person with one another from Rob''s hotel room. Rob, Patrick, and Chia have traveled to PAX East, though only two of us actually spent time wandering around the show floor before sitting down to record an in-person version of Remap Radio. But Patrick and Chia played a bunch of very cool games, including Demonschool, Fretless, that grimdark Pac-Man game, Aksun, A Good Night’s Rest, and more. Plus, an exciting brand-new segment: buying or selling.
-
-Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com
-
-Discussed: 
-0:00 Boston Talk
-06:13 Intro
-13:25 Derek Carr Retired
-16:19 What Is PAX East Anymore?
-20:47 Demonschool/A Good Night’s Rest
-28:16 Askun
-31:59 Shadow Labyrinth
-35:48 Missile Command
-38:28 VCTV 9000
-46:39 GunnRunner
-50:23 New segment: Buying or Selling?
-01:18:57 Hank: Drowning on Dry Land
-01:23:58 Love Eternal
-01:25:49 Fretless
-01:35:33 Crimson Desert
-01:40:29 Tariffs and Board Games
-01:48:20 Europa Universalis V
-01:59:42 WRC and Codemasters
-02:05:55 The Question Bucket', 'https://i.ytimg.com/vi/YTv-9MqBf0I/mqdefault.jpg', '2025-05-14 21:02:56+00', '''/us/podcast/remap-radio/id1690437343'':106B ''0'':125B ''00'':126B ''01'':176B,184B,189B,193B,198B,205B,211B ''02'':217B ''05'':218B ''06'':129B ''13'':130B,132B ''16'':137B,152B ''18'':177B ''19'':138B ''20'':144B,207B ''23'':170B,185B ''25'':133B,190B ''28'':151B,163B ''29'':200B ''31'':154B ''33'':195B ''35'':158B,194B ''38'':162B ''39'':167B ''40'':199B ''42'':213B ''46'':166B ''47'':145B ''48'':159B,206B ''49'':191B ''50'':169B ''55'':219B ''57'':178B ''58'':186B ''59'':155B,212B ''9000'':165B ''actual'':41B ''aksun'':82B ''anoth'':21B ''anymor'':143B ''around'':45B ''askun'':153B ''audienc'':110B ''board'':203B ''boston'':127B ''brand'':94B ''brand-new'':93B ''bucket'':222B ''bunch'':68B ''buy'':97B,173B ''carr'':135B ''chia'':30B,65B ''codemast'':216B ''command'':161B ''consid'':120B ''content'':118B ''continu'':115B ''cool'':71B ''crimson'':196B ''demonschool'':74B ''demonschool/a'':146B ''derek'':134B ''desert'':197B ''discuss'':124B ''dri'':182B ''drown'':180B ''east'':6A,35B,142B ''etern'':188B ''europa'':208B ''excit'':92B ''floor'':48B ''fretless'':75B,192B ''game'':72B,81B,204B ''good'':84B,147B ''grimdark'':77B ''gunnrunn'':168B ''hank'':179B ''help'':113B ''hotel'':25B ''in-person'':16B,55B ''includ'':73B ''intro'':131B ''labyrinth'':157B ''land'':183B ''live'':3A,8B ''love'':187B ''make'':116B ''man'':80B ''missil'':160B ''new'':95B,171B ''night'':85B,148B ''one'':20B ''pac'':79B ''pac-man'':78B ''patrick'':28B,63B ''pax'':5A,34B,141B ''person'':18B,57B ''play'':66B ''pleas'':119B ''plus'':90B ''podcast'':103B ''podcasts.apple.com'':105B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':104B ''question'':221B ''radio'':2A,61B,108B ''record'':14B,53B ''remap'':1A,60B,107B ''rest'':87B,150B ''retir'':136B ''rob'':23B,27B ''room'':26B ''segment'':96B,172B ''sell'':99B,175B ''sens'':11B ''shadow'':156B ''show'':47B ''sit'':50B ''spent'':42B ''subscrib'':100B,121B ''support'':111B ''talk'':128B ''tariff'':201B ''though'':36B ''time'':43B ''travel'':32B ''two'':38B ''universali'':209B ''us'':40B,114B ''v'':210B ''vctv'':164B ''version'':58B ''wander'':44B ''well'':7B ''wrc'':214B ''www.remapradio.com'':123B', false, 'PT2H23M37S', 'https://i.ytimg.com/vi/YTv-9MqBf0I/maxresdefault.jpg'),
-	('vEpjiZYVSEs', 'remap', '80 For Brady Is a Shockingly Underrated Movie', 'My Turn returns to the realm of sports movies with 80 for Brady, the based-on-a-true story of a group of elderly women who get into escalating shenanigans when they decide to go to the Super Bowl to watch their favorite player, Tom Brady, play. What at first seems like a run of the mill comedy with an all-star cast ends up touching on some heavy subject matter in a touching and charming way. And then Tom Brady is also there. 
-
-This podcast is a segment from My Turn, a subscriber-only Remap podcast about movies that have tangential relationships to one another.
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/vEpjiZYVSEs/mqdefault.jpg', '2025-05-23 14:01:27+00', '''80'':1A,19B ''all-star'':70B ''also'':93B ''anoth'':117B ''audienc'':121B ''base'':24B ''based-on-a-tru'':23B ''bowl'':48B ''bradi'':3A,21B,55B,91B ''cast'':73B ''charm'':86B ''comedi'':67B ''consid'':131B ''content'':129B ''continu'':126B ''decid'':42B ''elder'':33B ''end'':74B ''escal'':38B ''favorit'':52B ''first'':59B ''get'':36B ''go'':44B ''group'':31B ''heavi'':79B ''help'':124B ''like'':61B ''make'':127B ''matter'':81B ''mill'':66B ''movi'':8A,17B,110B ''one'':116B ''play'':56B ''player'':53B ''pleas'':130B ''podcast'':96B,108B ''radio'':119B ''realm'':14B ''relationship'':114B ''remap'':107B,118B ''return'':11B ''run'':63B ''seem'':60B ''segment'':99B ''shenanigan'':39B ''shock'':6A ''sport'':16B ''star'':72B ''stori'':28B ''subject'':80B ''subscrib'':105B,132B ''subscriber-on'':104B ''super'':47B ''support'':122B ''tangenti'':113B ''tom'':54B,90B ''touch'':76B,84B ''true'':27B ''turn'':10B,102B ''underr'':7A ''us'':125B ''watch'':50B ''way'':87B ''women'':34B ''www.remapradio.com'':134B', false, 'PT19M33S', 'https://i.ytimg.com/vi/vEpjiZYVSEs/maxresdefault.jpg'),
-	('FzFQE6DBF48', 'remap', 'What Video Game Could You Dump 1,000 Hours into?', 'Everyone''s lives are busy, but stay with us for a moment: if you could pick one game to play for 1,000 hours, what video game would it be? This is a segment from Remap Radio, the flagship video game podcast from Remap.
-
-What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/FzFQE6DBF48/mqdefault.jpg', '2025-05-21 14:00:32+00', '''/us/podcast/remap-radio/id1690437343'':75B ''000'':8A,32B ''1'':7A,31B ''audienc'':79B ''busi'':14B ''consid'':89B ''content'':87B ''continu'':84B ''could'':4A,24B ''dump'':6A ''episod'':65B ''everyon'':10B ''flagship'':48B ''full'':64B ''game'':3A,27B,36B,50B ''help'':82B ''hour'':9A,33B ''listen'':57B ''live'':12B ''make'':85B ''moment'':21B ''one'':26B ''pick'':25B ''play'':29B ''pleas'':88B ''podcast'':51B,72B ''podcasts.apple.com'':74B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':73B ''radio'':46B,68B,77B ''re'':56B ''remap'':45B,53B,67B,76B ''segment'':43B,61B ''stay'':16B ''subscrib'':69B,90B ''support'':80B ''us'':18B,83B ''video'':2A,35B,49B ''would'':37B ''www.remapradio.com'':92B', false, 'PT27M50S', 'https://i.ytimg.com/vi/FzFQE6DBF48/maxresdefault.jpg'),
-	('jYIUfvalJnI', 'remap', 'Clair Obscur: Expedition 33 Is Already a GOTY Candidate', 'Janet and Patrick have become fully French-pilled by the new JRPG-inspired Clair Obscur: Expedition 33. Can they convert Rob and Cado into joining their revolution against the Paintress?
-
-What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/jYIUfvalJnI/mqdefault.jpg', '2025-05-05 14:01:00+00', '''/us/podcast/remap-radio/id1690437343'':63B ''33'':4A,28B ''alreadi'':6A ''audienc'':67B ''becom'':14B ''cado'':34B ''candid'':9A ''clair'':1A,25B ''consid'':77B ''content'':75B ''continu'':72B ''convert'':31B ''episod'':53B ''expedit'':3A,27B ''french'':17B ''french-pil'':16B ''full'':52B ''fulli'':15B ''goti'':8A ''help'':70B ''inspir'':24B ''janet'':10B ''join'':36B ''jrpg'':23B ''jrpg-inspir'':22B ''listen'':45B ''make'':73B ''new'':21B ''obscur'':2A,26B ''paintress'':41B ''patrick'':12B ''pill'':18B ''pleas'':76B ''podcast'':60B ''podcasts.apple.com'':62B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':61B ''radio'':56B,65B ''re'':44B ''remap'':55B,64B ''revolut'':38B ''rob'':32B ''segment'':49B ''subscrib'':57B,78B ''support'':68B ''us'':71B ''www.remapradio.com'':80B', false, 'PT39M4S', 'https://i.ytimg.com/vi/jYIUfvalJnI/maxresdefault.jpg'),
-	('pyOGB-RTjDo', 'nextlander', 'Patron''s Choice for January 2025: The Truth Is Out There in The X-Files Game! [Part 02]', 'Vinny puts on his best FBI trenchcoat to team up with Mulder and Scully in The X-Files Game! The FMV one, specifically!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/pyOGB-RTjDo/mqdefault.jpg', '2025-01-31 20:55:51+00', '''/nextlander'':52B ''02'':19A ''2025'':6A ''best'':24B ''choic'':3A ''communiti'':49B ''fbi'':25B ''file'':16A,38B ''fmv'':41B ''game'':17A,39B ''januari'':5A ''mulder'':31B ''nextland'':44B ''one'':42B ''part'':18A ''patron'':1A ''put'':21B ''sculli'':33B ''specif'':43B ''support'':46B ''team'':28B ''thank'':53B ''trenchcoat'':26B ''truth'':8A ''vinni'':20B ''watch'':55B ''www.patreon.com'':51B ''www.patreon.com/nextlander'':50B ''x'':15A,37B ''x-file'':14A,36B', false, 'PT2H13M39S', 'https://i.ytimg.com/vi/pyOGB-RTjDo/maxresdefault.jpg'),
 	('kp7es5wPVac', 'giantbomb', 'Live From Vinny''s Basement: Fallout 4', 'Maybe it''s time to do some falling back in with Fallout 4.', 'https://i.ytimg.com/vi/kp7es5wPVac/mqdefault.jpg', '2016-04-28 03:20:59+00', '''4'':7A,20B ''back'':16B ''basement'':5A ''fall'':15B ''fallout'':6A,19B ''live'':1A ''mayb'':8B ''time'':11B ''vinni'':3A', false, 'PT1H23M55S', 'https://i.ytimg.com/vi/kp7es5wPVac/maxresdefault.jpg'),
 	('Byr6HNdz-Hc', 'giantbomb', 'Shenmue: Endurance Run - Part 05', 'Sailors! I knew I''d find sailors in a THAT place at THAT time!', 'https://i.ytimg.com/vi/Byr6HNdz-Hc/mqdefault.jpg', '2016-09-08 10:00:01+00', '''05'':5A ''d'':10B ''endur'':2A ''find'':11B ''knew'':8B ''part'':4A ''place'':16B ''run'':3A ''sailor'':6B,12B ''shenmu'':1A ''time'':19B', false, 'PT58M26S', 'https://i.ytimg.com/vi/Byr6HNdz-Hc/maxresdefault.jpg'),
 	('1D09sqE01F0', 'giantbomb', 'You Can Surf On Hoverjets in Saints Row: The Third', 'Because why not? If you like this, maybe you''d like to check out our website! http://bit.ly/bxFRTC
@@ -20032,9 +19441,6 @@ http://www.giantbomb.com If you like this, maybe you''d like to check out our we
 And our Facebook page! http://on.fb.me/hcyG1R
 And Twitter! http://bit.ly/9SzULe
 And Twitch! http://bit.ly/shzAI2', 'https://i.ytimg.com/vi/2KIz9GszqWo/mqdefault.jpg', '2009-02-05 01:44:48+00', '''/9szule'':41B ''/bxfrtc'':29B ''/hcyg1r'':36B ''/shzai2'':46B ''bit.ly'':28B,40B,45B ''bit.ly/9szule'':39B ''bit.ly/bxfrtc'':27B ''bit.ly/shzai2'':44B ''check'':23B ''creat'':4B ''d'':20B ''facebook'':32B ''like'':16B,21B ''mayb'':18B ''on.fb.me'':35B ''on.fb.me/hcyg1r'':34B ''page'':33B ''power'':10B ''review'':2A,7B ''spore'':1A,12B ''twitch'':43B ''twitter'':38B ''use'':8B ''video'':6B ''websit'':26B ''www.giantbomb.com'':13B', false, 'PT6M59S', NULL),
-	('mWmPM300zIs', 'giantbomb', 'Capcom Spotlight | We Talk Over', 'I hope there''s a Viewtiful Joe in here! 
-
-#capcom #giantbomb', 'https://i.ytimg.com/vi/mWmPM300zIs/mqdefault.jpg', '2025-06-26 22:47:42+00', '''capcom'':1A,14B ''giantbomb'':15B ''hope'':6B ''joe'':11B ''spotlight'':2A ''talk'':4A ''viewti'':10B', false, 'PT49M54S', 'https://i.ytimg.com/vi/mWmPM300zIs/maxresdefault.jpg'),
 	('J4QpLmGYHjY', 'giantbomb', 'Mortal Kombat vs. DC Universe Review', 'Jeff tests the might of the latest entry in the Mortal Kombat franchise.
 
 http://www.giantbomb.com If you like this, maybe you''d like to check out our website! http://bit.ly/bxFRTC
@@ -20047,37 +19453,7 @@ http://www.giantbomb.com If you like this, maybe you''d like to check out our we
 And our Facebook page! http://on.fb.me/hcyG1R
 And Twitter! http://bit.ly/9SzULe
 And Twitch! http://bit.ly/shzAI2', 'https://i.ytimg.com/vi/zn02q7bkNJk/mqdefault.jpg', '2009-02-02 23:15:56+00', '''/9szule'':49B ''/bxfrtc'':37B ''/hcyg1r'':44B ''/shzai2'':54B ''3'':5A ''addit'':15B ''alert'':4A,19B ''bit.ly'':36B,48B,53B ''bit.ly/9szule'':47B ''bit.ly/bxfrtc'':35B ''bit.ly/shzai2'':52B ''check'':31B ''d'':28B ''everyth'':7B ''facebook'':40B ''franchis'':20B ''know'':11B ''like'':24B,29B ''mayb'':26B ''need'':9B ''newest'':14B ''on.fb.me'':43B ''on.fb.me/hcyg1r'':42B ''page'':41B ''red'':3A,18B ''thing'':2A ''twitch'':51B ''twitter'':46B ''upris'':6A ''video'':1A ''websit'':34B ''www.giantbomb.com'':21B', false, 'PT52S', NULL),
-	('plQFe_7nbqo', 'giantbomb', 'Game Mess Mornings 06/27/25', 'Jeff Grubb and friends break down today''s top stories in video games. 
-
-Support Giant Bomb by going to:
-giantbomb.com/join
-
-#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/plQFe_7nbqo/mqdefault.jpg', '2025-06-27 16:03:06+00', '''/join'':26B ''06/27/25'':4A ''bomb'':20B ''break'':9B ''friend'':8B ''game'':1A,17B ''gamemessmorn'':28B ''giant'':19B ''giantbomb'':29B ''giantbomb.com'':25B ''giantbomb.com/join'':24B ''gmm'':27B ''go'':22B ''grubb'':6B ''jeff'':5B ''mess'':2A ''morn'':3A ''stori'':14B ''support'':18B ''today'':11B ''top'':13B ''video'':16B ''videogamenew'':30B', false, 'PT55M15S', 'https://i.ytimg.com/vi/plQFe_7nbqo/maxresdefault.jpg'),
 	('AWfg84EecEg', 'giantbomb', 'NBA 2K16: Giant Bomb Quick Look [Extended HD Gameplay]', 'SHAZAM! Alex is transported into a mysterious world of demons, Spike Lee, and basketball.', 'https://i.ytimg.com/vi/AWfg84EecEg/mqdefault.jpg', '2015-09-30 13:00:01+00', '''2k16'':2A ''alex'':11B ''basketbal'':23B ''bomb'':4A ''demon'':19B ''extend'':7A ''gameplay'':9A ''giant'':3A ''hd'':8A ''lee'':21B ''look'':6A ''mysteri'':16B ''nba'':1A ''quick'':5A ''shazam'':10B ''spike'':20B ''transport'':13B ''world'':17B', false, 'PT1H19M29S', 'https://i.ytimg.com/vi/AWfg84EecEg/maxresdefault.jpg'),
-	('4faLzNNR3lk', 'giantbomb', 'THE MUSTARD ARC', 'Watch as a 40 year old man discovers mustard for the first time in his life! Somehow there is almost 13 minutes of footage left out of the Summer Game Fest travelogue that has been collected HERE for your eyes and ears. 
-
-#mustard', 'https://i.ytimg.com/vi/4faLzNNR3lk/mqdefault.jpg', '2025-06-23 03:14:51+00', '''13'':24B ''40'':7B ''almost'':23B ''arc'':3A ''collect'':39B ''discov'':11B ''ear'':45B ''eye'':43B ''fest'':34B ''first'':15B ''footag'':27B ''game'':33B ''left'':28B ''life'':19B ''man'':10B ''minut'':25B ''mustard'':2A,12B,46B ''old'':9B ''somehow'':20B ''summer'':32B ''time'':16B ''travelogu'':35B ''watch'':4B ''year'':8B', false, 'PT12M53S', 'https://i.ytimg.com/vi/4faLzNNR3lk/maxresdefault.jpg'),
-	('dh5w81RN6V0', 'giantbomb', 'Rascal, but Mike | FINALE | Blight Club', 'Will Mike Minotti make any progress today on Blight Club? Will he be able to figure out what any of the buttons or crabs do? Will he ever stop looking so cool?
-
-#rascal #blightclub', 'https://i.ytimg.com/vi/dh5w81RN6V0/mqdefault.jpg', '2025-06-25 22:00:36+00', '''abl'':20B ''blight'':5A,15B ''blightclub'':40B ''button'':28B ''club'':6A,16B ''cool'':38B ''crab'':30B ''ever'':34B ''figur'':22B ''final'':4A ''look'':36B ''make'':10B ''mike'':3A,8B ''minotti'':9B ''progress'':12B ''rascal'':1A,39B ''stop'':35B ''today'':13B', false, 'PT2H27M3S', 'https://i.ytimg.com/vi/dh5w81RN6V0/maxresdefault.jpg'),
-	('HcsnNYtmkMI', 'giantbomb', 'FBC: Firebreak | Unprofessional Fridays 06/20/25', 'We''re gonna run through this office and take all of the batteries! Do you think we can find a flashlight that hurts people?
-
-#upf #fbcfirebreak #unprofessionalfridays #giantbomb', 'https://i.ytimg.com/vi/HcsnNYtmkMI/mqdefault.jpg', '2025-06-20 21:02:18+00', '''06/20/25'':5A ''batteri'':18B ''fbc'':1A ''fbcfirebreak'':31B ''find'':24B ''firebreak'':2A ''flashlight'':26B ''friday'':4A ''giantbomb'':33B ''gonna'':8B ''hurt'':28B ''offic'':12B ''peopl'':29B ''re'':7B ''run'':9B ''take'':14B ''think'':21B ''unprofession'':3A ''unprofessionalfriday'':32B ''upf'':30B', false, 'PT1H50M19S', 'https://i.ytimg.com/vi/HcsnNYtmkMI/maxresdefault.jpg'),
-	('IOzNhF2Z0e0', 'giantbomb', 'Game Mess Mornings 06/19/25', 'Jeff Grubb and friends break down today''s top stories in video games. 
-
-#gmm #gamemessmornings #giantbomb', 'https://i.ytimg.com/vi/IOzNhF2Z0e0/mqdefault.jpg', '2025-06-19 16:13:05+00', '''06/19/25'':4A ''break'':9B ''friend'':8B ''game'':1A,17B ''gamemessmorn'':19B ''giantbomb'':20B ''gmm'':18B ''grubb'':6B ''jeff'':5B ''mess'':2A ''morn'':3A ''stori'':14B ''today'':11B ''top'':13B ''video'':16B', false, 'PT58M27S', 'https://i.ytimg.com/vi/IOzNhF2Z0e0/maxresdefault.jpg'),
-	('IYvUFtzbVF8', 'giantbomb', 'Punch-Out!!! (2009) | Giant Bomb Plays', 'Grubb has a hankering to get back in the ring! 
-
-#punchout #giantbomb', 'https://i.ytimg.com/vi/IYvUFtzbVF8/mqdefault.jpg', '2025-06-18 17:09:51+00', '''2009'':4A ''back'':14B ''bomb'':6A ''get'':13B ''giant'':5A ''giantbomb'':19B ''grubb'':8B ''hanker'':11B ''play'':7A ''punch'':2A ''punch-out'':1A ''punchout'':18B ''ring'':17B', false, 'PT54M49S', 'https://i.ytimg.com/vi/IYvUFtzbVF8/maxresdefault.jpg'),
-	('PWRZtzf84yM', 'giantbomb', 'Donkey Kong Direct | We Talk Over', 'We''re going BANANAS this early in the morning! Let''s see what Nintendo is going to show off today. 
-
-#nintendodirect #donkeykong #giantbomb', 'https://i.ytimg.com/vi/PWRZtzf84yM/mqdefault.jpg', '2025-06-18 13:34:44+00', '''banana'':9B ''direct'':3A ''donkey'':1A ''donkeykong'':27B ''earli'':11B ''giantbomb'':28B ''go'':8B,21B ''kong'':2A ''let'':15B ''morn'':14B ''nintendo'':19B ''nintendodirect'':26B ''re'':7B ''see'':17B ''show'':23B ''talk'':5A ''today'':25B', false, 'PT28M28S', 'https://i.ytimg.com/vi/PWRZtzf84yM/maxresdefault.jpg'),
-	('QSbUCEl7SU8', 'giantbomb', 'REMATCH against MinnMax! | Unprofessional Fridays', 'Bakalar, Dan, and Grubb put on a pair of cleats to take on MinnMax to see who can do best at real life Rocket League! 
-
-#rematch #giantbomb #upf #unprofessionalfridays', 'https://i.ytimg.com/vi/QSbUCEl7SU8/mqdefault.jpg', '2025-06-27 20:33:34+00', '''bakalar'':6B ''best'':25B ''cleat'':15B ''dan'':7B ''friday'':5A ''giantbomb'':32B ''grubb'':9B ''leagu'':30B ''life'':28B ''minnmax'':3A,19B ''pair'':13B ''put'':10B ''real'':27B ''rematch'':1A,31B ''rocket'':29B ''see'':21B ''take'':17B ''unprofession'':4A ''unprofessionalfriday'':34B ''upf'':33B', false, 'PT1H13M38S', 'https://i.ytimg.com/vi/QSbUCEl7SU8/maxresdefault.jpg'),
-	('ivJCbeqUCd8', 'giantbomb', 'System Shock 25th Anniversary Remaster | GB Plays EX', 'System Shock the monkey (Jeff Grubb).
-
-#systemshock2 #giantbomb', 'https://i.ytimg.com/vi/ivJCbeqUCd8/mqdefault.jpg', '2025-06-25 17:46:07+00', '''25th'':3A ''anniversari'':4A ''ex'':8A ''gb'':6A ''giantbomb'':16B ''grubb'':14B ''jeff'':13B ''monkey'':12B ''play'':7A ''remast'':5A ''shock'':2A,10B ''system'':1A,9B ''systemshock2'':15B', false, 'PT38M40S', 'https://i.ytimg.com/vi/ivJCbeqUCd8/maxresdefault.jpg'),
 	('3ojn0A0WhI0', 'nextlander', 'Nextlander Encounters Hellish Quart', 'Having a go at swordplay with your friends is all fun and games until someone turns your muscles to jelly.
 
 Nextlander is supported by its community:
@@ -20088,157 +19464,44 @@ Thanks for watching.', 'https://i.ytimg.com/vi/3ojn0A0WhI0/mqdefault.jpg', '2022
 	('EiruL7xQe1Q', 'giantbomb', 'Arcade Archives: Round 06: Giant Bomb Quick Look [Extended HD Gameplay]', 'Does Jeff keep buying these because Hamster keeps releasing them or is it the other way around? Either way, here''s the latest batch.', 'https://i.ytimg.com/vi/EiruL7xQe1Q/mqdefault.jpg', '2015-10-13 13:00:01+00', '''06'':4A ''arcad'':1A ''archiv'':2A ''around'':28B ''batch'':35B ''bomb'':6A ''buy'':15B ''either'':29B ''extend'':9A ''gameplay'':11A ''giant'':5A ''hamster'':18B ''hd'':10A ''jeff'':13B ''keep'':14B,19B ''latest'':34B ''look'':8A ''quick'':7A ''releas'':20B ''round'':3A ''way'':27B,30B', false, 'PT31M12S', 'https://i.ytimg.com/vi/EiruL7xQe1Q/maxresdefault.jpg'),
 	('S8O5DJp_RCk', 'giantbomb', 'Yoshi''s Woolly World: Giant Bomb Quick Look [Extended HD Gameplay]', 'Don''t let the cuddly exterior fool you. Yoshi is a stone cold killer capable of some really heinous acts. Dan and Drew demonstrate.', 'https://i.ytimg.com/vi/S8O5DJp_RCk/mqdefault.jpg', '2015-10-10 13:00:00+00', '''act'':31B ''bomb'':6A ''capabl'':26B ''cold'':24B ''cudd'':16B ''dan'':32B ''demonstr'':35B ''drew'':34B ''extend'':9A ''exterior'':17B ''fool'':18B ''gameplay'':11A ''giant'':5A ''hd'':10A ''heinous'':30B ''killer'':25B ''let'':14B ''look'':8A ''quick'':7A ''realli'':29B ''stone'':23B ''woolli'':3A ''world'':4A ''yoshi'':1A,20B', false, 'PT39M9S', 'https://i.ytimg.com/vi/S8O5DJp_RCk/maxresdefault.jpg'),
 	('WbTbFzos78g', 'giantbomb', 'Transformers: Devastation: Giant Bomb Quick Look [Extended HD Gameplay]', 'Any game where you can beat the crap out of Megatron with Bumblebee is definitely worth a look.', 'https://i.ytimg.com/vi/WbTbFzos78g/mqdefault.jpg', '2015-10-08 13:00:00+00', '''beat'':15B ''bomb'':4A ''bumblebe'':22B ''crap'':17B ''definit'':24B ''devast'':2A ''extend'':7A ''game'':11B ''gameplay'':9A ''giant'':3A ''hd'':8A ''look'':6A,27B ''megatron'':20B ''quick'':5A ''transform'':1A ''worth'':25B', false, 'PT30M18S', 'https://i.ytimg.com/vi/WbTbFzos78g/maxresdefault.jpg'),
-	('sr-b60xsM4c', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 2-5 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
-
-We got Jeff Gerstmann, Dan Ryckert, Mark MacDonald, Jordan Middler, Greg Miller, and Danny O''Dwyer on the couch! NOTHING BUT HEAVYWEIGHTS AND WILD STUFF HERE! 
-
-Thanks to our friends at Annapurna Interactive for presenting this stream!
-
-#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/sr-b60xsM4c/mqdefault.jpg', '2025-06-12 18:31:17+00', '''-5'':10A ''2'':9A ''angel'':21B ''annapurna'':13A,71B ''around'':30B ''bomb'':2A ''couch'':18B,58B ''dan'':44B ''danni'':53B ''dwyer'':55B ''found'':16B ''friend'':27B,69B ''gerstmann'':43B ''get'':25B ''giant'':1A ''giantbomb'':79B ''got'':41B ''greg'':50B ''hang'':34B ''heavyweight'':61B ''industri'':32B ''interact'':14A,72B ''jeff'':42B ''jordan'':48B ''los'':20B ''macdonald'':47B ''mark'':46B ''middler'':49B ''miller'':51B ''nite'':3A,8A ''noth'':59B ''o'':54B ''present'':11A,74B ''re'':24B ''ryckert'':45B ''sgf'':77B ''stream'':76B ''stuff'':64B ''summergamefest'':78B ''thank'':66B ''villa'':7A,39B ''warfram'':6A,38B ''wild'':63B', false, 'PT1H2M13S', 'https://i.ytimg.com/vi/sr-b60xsM4c/maxresdefault.jpg'),
 	('4ABsM7QjoLw', 'remap', 'The Wheel''s Biggest Challenge Yet: MindsEye', 'The game that "everyone" is "talking about" is the focus of this week''s Wheel of GeForce Now, before Rob almost ragequits trying to jump in a platformer.
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/4ABsM7QjoLw/mqdefault.jpg', '2025-06-13 00:14:50+00', '''almost'':28B ''audienc'':39B ''biggest'':4A ''challeng'':5A ''consid'':49B ''content'':47B ''continu'':44B ''everyon'':11B ''focus'':17B ''game'':9B ''geforc'':24B ''help'':42B ''jump'':32B ''make'':45B ''mindsey'':7A ''platform'':35B ''pleas'':48B ''radio'':37B ''ragequit'':29B ''remap'':36B ''rob'':27B ''subscrib'':50B ''support'':40B ''talk'':13B ''tri'':30B ''us'':43B ''week'':20B ''wheel'':2A,22B ''www.remapradio.com'':52B ''yet'':6A', false, 'PT2H21M56S', 'https://i.ytimg.com/vi/4ABsM7QjoLw/maxresdefault.jpg'),
-	('b8m3oPsLg4g', 'remap', 'Exploring Arrakis with The Wheel of Geforce Now', 'Rob and Cado check out the new Dune game, and then a spin of the Wheel takes us to a familiar but excellent tactics game.', 'https://i.ytimg.com/vi/b8m3oPsLg4g/mqdefault.jpg', '2025-06-06 04:28:17+00', '''arraki'':2A ''cado'':10B ''check'':11B ''dune'':15B ''excel'':30B ''explor'':1A ''familiar'':28B ''game'':16B,32B ''geforc'':7A ''new'':14B ''rob'':8B ''spin'':20B ''tactic'':31B ''take'':24B ''us'':25B ''wheel'':5A,23B', false, 'PT2H16M41S', 'https://i.ytimg.com/vi/b8m3oPsLg4g/maxresdefault.jpg'),
-	('4vbEX_Q87xM', 'remap', 'Why Do We Call Games "Metroidvanias"?', 'If Metroidvania was a math problem, what percentage is "Metroid" and what percentage is "Castlevania"? An exploration of the ongoing confusion over what video game genres are trying to accomplish. What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/4vbEX_Q87xM/mqdefault.jpg', '2025-06-02 14:00:15+00', '''/us/podcast/remap-radio/id1690437343'':58B ''accomplish'':36B ''audienc'':62B ''call'':4A ''castlevania'':21B ''confus'':27B ''consid'':72B ''content'':70B ''continu'':67B ''episod'':48B ''explor'':23B ''full'':47B ''game'':5A,31B ''genr'':32B ''help'':65B ''listen'':40B ''make'':68B ''math'':11B ''metroid'':16B ''metroidvania'':6A,8B ''ongo'':26B ''percentag'':14B,19B ''pleas'':71B ''podcast'':55B ''podcasts.apple.com'':57B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':56B ''problem'':12B ''radio'':51B,60B ''re'':39B ''remap'':50B,59B ''segment'':44B ''subscrib'':52B,73B ''support'':63B ''tri'':34B ''us'':66B ''video'':30B ''www.remapradio.com'':75B', false, 'PT22M19S', 'https://i.ytimg.com/vi/4vbEX_Q87xM/maxresdefault.jpg'),
-	('a-d3Ckw2yso', 'remap', 'Rob Experiences Buyer''s Remorse in Civilization VII', 'Victory is at hand, but at what cost? At what cost?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/a-d3Ckw2yso/mqdefault.jpg', '2025-04-26 02:17:19+00', '''audienc'':23B ''buyer'':3A ''civil'':7A ''consid'':33B ''content'':31B ''continu'':28B ''cost'':16B,19B ''experi'':2A ''hand'':12B ''help'':26B ''make'':29B ''pleas'':32B ''radio'':21B ''remap'':20B ''remors'':5A ''rob'':1A ''subscrib'':34B ''support'':24B ''us'':27B ''victori'':9B ''vii'':8A ''www.remapradio.com'':36B', false, 'PT2H32M11S', 'https://i.ytimg.com/vi/a-d3Ckw2yso/maxresdefault.jpg'),
-	('7ZF2vOvsWwQ', 'remap', 'Is a Dollar Store a Mailroom?', 'Obviously, it''s extremely normal to pick up your packages at the neighborhood dollar store, right? 
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/7ZF2vOvsWwQ/mqdefault.jpg', '2025-06-24 17:02:18+00', '''audienc'':26B ''consid'':36B ''content'':34B ''continu'':31B ''dollar'':3A,20B ''extrem'':10B ''help'':29B ''mailroom'':6A ''make'':32B ''neighborhood'':19B ''normal'':11B ''obvious'':7B ''packag'':16B ''pick'':13B ''pleas'':35B ''radio'':24B ''remap'':23B ''right'':22B ''store'':4A,21B ''subscrib'':37B ''support'':27B ''us'':30B ''www.remapradio.com'':39B', false, 'PT57S', 'https://i.ytimg.com/vi/7ZF2vOvsWwQ/maxresdefault.jpg'),
-	('Bz0yxYs7vog', 'remap', 'What Summer Game Fest Was Like During the ICE Protests', 'Patrick and Janet were in Los Angeles for Summer Game Fest, which took place just blocks from some of the most intense ICE protests in Los Angeles this weekend.
-
-What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/Bz0yxYs7vog/mqdefault.jpg', '2025-06-16 14:00:31+00', '''/us/podcast/remap-radio/id1690437343'':61B ''angel'':17B,37B ''audienc'':65B ''block'':26B ''consid'':75B ''content'':73B ''continu'':70B ''episod'':51B ''fest'':4A,21B ''full'':50B ''game'':3A,20B ''help'':68B ''ice'':9A,33B ''intens'':32B ''janet'':13B ''like'':6A ''listen'':43B ''los'':16B,36B ''make'':71B ''patrick'':11B ''place'':24B ''pleas'':74B ''podcast'':58B ''podcasts.apple.com'':60B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':59B ''protest'':10A,34B ''radio'':54B,63B ''re'':42B ''remap'':53B,62B ''segment'':47B ''subscrib'':55B,76B ''summer'':2A,19B ''support'':66B ''took'':23B ''us'':69B ''weekend'':39B ''www.remapradio.com'':78B', false, 'PT43M', 'https://i.ytimg.com/vi/Bz0yxYs7vog/maxresdefault.jpg'),
-	('fJS9ujhavgs', 'remap', 'Oh, Buddy, This Video Game Is Soaking Wet', 'We''re clearly having a good time with FBC Firebreak. #shorts
-
-https://www.twitch.tv/remapradio', 'https://i.ytimg.com/vi/fJS9ujhavgs/mqdefault.jpg', '2025-06-23 17:17:02+00', '''/remapradio'':22B ''buddi'':2A ''clear'':11B ''fbc'':17B ''firebreak'':18B ''game'':5A ''good'':14B ''oh'':1A ''re'':10B ''short'':19B ''soak'':7A ''time'':15B ''video'':4A ''wet'':8A ''www.twitch.tv'':21B ''www.twitch.tv/remapradio'':20B', false, 'PT35S', 'https://i.ytimg.com/vi/fJS9ujhavgs/maxresdefault.jpg'),
-	('eGUa-FZUgEk', 'remap', 'Is Baby Steps About to be GOTY?', 'What other video game lets you shake your butt like this? #shorts #videogames
-
-https://www.twitch.tv/remapradio', 'https://i.ytimg.com/vi/eGUa-FZUgEk/mqdefault.jpg', '2025-06-20 15:45:25+00', '''/remapradio'':23B ''babi'':2A ''butt'':16B ''game'':11B ''goti'':7A ''let'':12B ''like'':17B ''shake'':14B ''short'':19B ''step'':3A ''video'':10B ''videogam'':20B ''www.twitch.tv'':22B ''www.twitch.tv/remapradio'':21B', false, 'PT30S', 'https://i.ytimg.com/vi/eGUa-FZUgEk/maxresdefault.jpg'),
-	('GKBG84h7ggk', 'remap', 'Giving AI to Children Seems Like a Terrible Idea', 'Rob and Patrick have a slight mental break while considering the prospects of AI entering the lives of children. This podcast is a segment from HOA, a subscriber-only Remap podcast about the spaces we live in.
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/GKBG84h7ggk/mqdefault.jpg', '2025-05-15 16:53:46+00', '''ai'':2A,23B ''audienc'':51B ''break'':17B ''children'':4A,28B ''consid'':19B,61B ''content'':59B ''continu'':56B ''enter'':24B ''give'':1A ''help'':54B ''hoa'':35B ''idea'':9A ''like'':6A ''live'':26B,46B ''make'':57B ''mental'':16B ''patrick'':12B ''pleas'':60B ''podcast'':30B,41B ''prospect'':21B ''radio'':49B ''remap'':40B,48B ''rob'':10B ''seem'':5A ''segment'':33B ''slight'':15B ''space'':44B ''subscrib'':38B,62B ''subscriber-on'':37B ''support'':52B ''terribl'':8A ''us'':55B ''www.remapradio.com'':64B', false, 'PT18M53S', 'https://i.ytimg.com/vi/GKBG84h7ggk/maxresdefault.jpg'),
 	('Lr02CKphAt4', 'remap', 'It''s a Continued Declaration of War in Civilization VII', 'The best way to make friends is to blow them up imo.
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/Lr02CKphAt4/mqdefault.jpg', '2025-05-08 02:08:55+00', '''audienc'':26B ''best'':12B ''blow'':19B ''civil'':9A ''consid'':36B ''content'':34B ''continu'':4A,31B ''declar'':5A ''friend'':16B ''help'':29B ''imo'':22B ''make'':15B,32B ''pleas'':35B ''radio'':24B ''remap'':23B ''subscrib'':37B ''support'':27B ''us'':30B ''vii'':10A ''war'':7A ''way'':13B ''www.remapradio.com'':39B', false, 'PT3H31M16S', 'https://i.ytimg.com/vi/Lr02CKphAt4/maxresdefault.jpg'),
-	('k4YzqfY60vM', 'remap', 'The Wheel Spins Towards the Backrooms', 'Our first choice was unavailable, so we let the wheel decide our fate. And it made some big choices. #sponsored 
-
-Timestamps:
-00:09:08 — Deep Rock Galactic: Survivor 
-00:42:11 — Postal Redux
-00:58:34 — Backrooms: Escape Together
-02:09:58 — Ravenbound
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/k4YzqfY60vM/mqdefault.jpg', '2025-04-17 23:46:55+00', '''00'':28B,35B,40B ''02'':46B ''08'':30B ''09'':29B,47B ''11'':37B ''34'':42B ''42'':36B ''58'':41B,48B ''audienc'':53B ''backroom'':6A,43B ''big'':24B ''choic'':9B,25B ''consid'':63B ''content'':61B ''continu'':58B ''decid'':17B ''deep'':31B ''escap'':44B ''fate'':19B ''first'':8B ''galact'':33B ''help'':56B ''let'':14B ''made'':22B ''make'':59B ''pleas'':62B ''postal'':38B ''radio'':51B ''ravenbound'':49B ''redux'':39B ''remap'':50B ''rock'':32B ''spin'':3A ''sponsor'':26B ''subscrib'':64B ''support'':54B ''survivor'':34B ''timestamp'':27B ''togeth'':45B ''toward'':4A ''unavail'':11B ''us'':57B ''wheel'':2A,16B ''www.remapradio.com'':66B', false, 'PT2H51M16S', 'https://i.ytimg.com/vi/k4YzqfY60vM/maxresdefault.jpg'),
-	('ik_uXoeUlAA', 'remap', 'What Happened the Day Mass Layoffs Hit Polygon', 'Former Polygon senior reporter Nicole Carpenter joins us to talk about what happened when most of the Polygon staff lost their jobs recently. What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/ik_uXoeUlAA/mqdefault.jpg', '2025-05-28 14:01:08+00', '''/us/podcast/remap-radio/id1690437343'':53B ''audienc'':57B ''carpent'':14B ''consid'':67B ''content'':65B ''continu'':62B ''day'':4A ''episod'':43B ''former'':9B ''full'':42B ''happen'':2A,21B ''help'':60B ''hit'':7A ''job'':30B ''join'':15B ''layoff'':6A ''listen'':35B ''lost'':28B ''make'':63B ''mass'':5A ''nicol'':13B ''pleas'':66B ''podcast'':50B ''podcasts.apple.com'':52B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':51B ''polygon'':8A,10B,26B ''radio'':46B,55B ''re'':34B ''recent'':31B ''remap'':45B,54B ''report'':12B ''segment'':39B ''senior'':11B ''staff'':27B ''subscrib'':47B,68B ''support'':58B ''talk'':18B ''us'':16B,61B ''www.remapradio.com'':70B', false, 'PT53M42S', 'https://i.ytimg.com/vi/ik_uXoeUlAA/maxresdefault.jpg'),
-	('uNL7U4ptOdY', 'remap', 'Now, Cado''s in Control of Civilization VII', 'Rob and Cado''s adventures in Civilization VII continue, but this time, Cado''s back in in the driver''s seat!
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/uNL7U4ptOdY/mqdefault.jpg', '2025-05-16 18:47:52+00', '''adventur'':13B ''audienc'':33B ''back'':23B ''cado'':2A,11B,21B ''civil'':7A,15B ''consid'':43B ''content'':41B ''continu'':17B,38B ''control'':5A ''driver'':27B ''help'':36B ''make'':39B ''pleas'':42B ''radio'':31B ''remap'':30B ''rob'':9B ''seat'':29B ''subscrib'':44B ''support'':34B ''time'':20B ''us'':37B ''vii'':8A,16B ''www.remapradio.com'':46B', false, 'PT2H39M11S', 'https://i.ytimg.com/vi/uNL7U4ptOdY/maxresdefault.jpg'),
-	('4vzM5tQljOw', 'remap', 'Remap Dives Back into FBC Firebreak', 'We were so charmed by Remedy''s multiplayer game that we couldn''t help but dive back into the world of Sticky Ricky and friends.
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/4vzM5tQljOw/mqdefault.jpg', '2025-06-26 02:32:59+00', '''audienc'':35B ''back'':3A,23B ''charm'':10B ''consid'':45B ''content'':43B ''continu'':40B ''couldn'':18B ''dive'':2A,22B ''fbc'':5A ''firebreak'':6A ''friend'':31B ''game'':15B ''help'':20B,38B ''make'':41B ''multiplay'':14B ''pleas'':44B ''radio'':33B ''remap'':1A,32B ''remedi'':12B ''ricki'':29B ''sticki'':28B ''subscrib'':46B ''support'':36B ''us'':39B ''world'':26B ''www.remapradio.com'':48B', false, 'PT1H50M21S', 'https://i.ytimg.com/vi/4vzM5tQljOw/maxresdefault.jpg'),
-	('yDQtLQXEksI', 'remap', 'Hey, Uh, Where''s My Switch 2?', 'That feeling when a Switch 2 shows up at your door but someone else signs up for it. #shorts
-
-https://www.twitch.tv/remapradio', 'https://i.ytimg.com/vi/yDQtLQXEksI/mqdefault.jpg', '2025-06-19 17:15:22+00', '''/remapradio'':29B ''2'':7A,13B ''door'':18B ''els'':21B ''feel'':9B ''hey'':1A ''short'':26B ''show'':14B ''sign'':22B ''someon'':20B ''switch'':6A,12B ''uh'':2A ''www.twitch.tv'':28B ''www.twitch.tv/remapradio'':27B', false, 'PT42S', NULL),
-	('y9eQsOTo8sE', 'remap', 'The Longest Fall in Video Game History', 'What happens when you spend 13 hours getting ready for one jump, only to screw it up?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/y9eQsOTo8sE/mqdefault.jpg', '2025-05-28 18:09:39+00', '''13'':13B ''audienc'':28B ''consid'':38B ''content'':36B ''continu'':33B ''fall'':3A ''game'':6A ''get'':15B ''happen'':9B ''help'':31B ''histori'':7A ''hour'':14B ''jump'':19B ''longest'':2A ''make'':34B ''one'':18B ''pleas'':37B ''radio'':26B ''readi'':16B ''remap'':25B ''screw'':22B ''spend'':12B ''subscrib'':39B ''support'':29B ''us'':32B ''video'':5A ''www.remapradio.com'':41B', false, 'PT57S', 'https://i.ytimg.com/vi/y9eQsOTo8sE/maxresdefault.jpg'),
-	('D24Qxyx-7fM', 'nextlander', 'Will We Discover Who Abby Is or Will We Just Date Everything?', 'We''re going to play some more Who Is Abby, and if we finish that or it sucks too much, we''ve got the demo for Date Everything!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/D24Qxyx-7fM/mqdefault.jpg', '2025-06-03 22:32:03+00', '''/nextlander'':49B ''abbi'':5A,22B ''communiti'':46B ''date'':11A,39B ''demo'':37B ''discov'':3A ''everyth'':12A,40B ''finish'':26B ''go'':15B ''got'':35B ''much'':32B ''nextland'':41B ''play'':17B ''re'':14B ''suck'':30B ''support'':43B ''thank'':50B ''ve'':34B ''watch'':52B ''www.patreon.com'':48B ''www.patreon.com/nextlander'':47B', false, 'PT2H5M15S', 'https://i.ytimg.com/vi/D24Qxyx-7fM/maxresdefault.jpg'),
-	('z2MlzmrMKkE', 'remap', 'Remap Watches Summer Game Fest 2025', 'With Patrick traveling, come hang out with Rob and Cado as they watch the latest Keighley trailer showcase.
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/z2MlzmrMKkE/mqdefault.jpg', '2025-06-08 15:31:25+00', '''2025'':6A ''audienc'':28B ''cado'':16B ''come'':10B ''consid'':38B ''content'':36B ''continu'':33B ''fest'':5A ''game'':4A ''hang'':11B ''help'':31B ''keighley'':22B ''latest'':21B ''make'':34B ''patrick'':8B ''pleas'':37B ''radio'':26B ''remap'':1A,25B ''rob'':14B ''showcas'':24B ''subscrib'':39B ''summer'':3A ''support'':29B ''trailer'':23B ''travel'':9B ''us'':32B ''watch'':2A,19B ''www.remapradio.com'':41B', false, 'PT2H25M36S', 'https://i.ytimg.com/vi/z2MlzmrMKkE/maxresdefault.jpg'),
-	('4PD3gdxiFlI', 'giantbomb', 'Rascal (PS1) | 03 | Blight Club', 'This game continues to be bad, but it''s okay because Mike continues to look COOL! Watch as Mike has to redo a level and fight time. 
-
-Support Giant Bomb by going to
-giantbomb.com/join
-
-#ps1 #rascal #giantbomb #blightclub', 'https://i.ytimg.com/vi/4PD3gdxiFlI/mqdefault.jpg', '2025-05-28 20:02:37+00', '''/join'':41B ''03'':3A ''bad'':11B ''blight'':4A ''blightclub'':45B ''bomb'':35B ''club'':5A ''continu'':8B,18B ''cool'':21B ''fight'':31B ''game'':7B ''giant'':34B ''giantbomb'':44B ''giantbomb.com'':40B ''giantbomb.com/join'':39B ''go'':37B ''level'':29B ''look'':20B ''mike'':17B,24B ''okay'':15B ''ps1'':2A,42B ''rascal'':1A,43B ''redo'':27B ''support'':33B ''time'':32B ''watch'':22B', false, 'PT1H17M31S', 'https://i.ytimg.com/vi/4PD3gdxiFlI/maxresdefault.jpg'),
-	('BkWSiH00qEs', 'giantbomb', 'Giant Bomb @ Nite, LIVE from the Warframe Villa! | Presented by Annapurna Interactive | Nite 2', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
-
-Thanks to our friends at Annapurna Interactive for presenting this stream!
-
-Thanks to Young Horses for their support of Giant Bomb @ Nite! 
-Bugsnax VR is out now, go play it!
-Sign up for the Young Horses newsletter here: http://eepurl.com/g5DUzT
-And check out their Steam page! https://store.steampowered.com/developer/younghorses/
-
-#sgf #summergamefest #giantbomb', 'https://i.ytimg.com/vi/BkWSiH00qEs/mqdefault.jpg', '2025-06-08 05:13:29+00', '''/developer/younghorses/'':89B ''/g5duzt'':80B ''2'':14A ''angel'':21B ''annapurna'':11A,45B ''around'':30B ''bomb'':2A,60B ''bugsnax'':62B ''check'':82B ''couch'':18B ''eepurl.com'':79B ''eepurl.com/g5duzt'':78B ''found'':16B ''friend'':27B,43B ''get'':25B ''giant'':1A,59B ''giantbomb'':92B ''go'':67B ''hang'':34B ''hors'':54B,75B ''industri'':32B ''interact'':12A,46B ''live'':4A ''los'':20B ''newslett'':76B ''nite'':3A,13A,61B ''page'':86B ''play'':68B ''present'':9A,48B ''re'':24B ''sgf'':90B ''sign'':70B ''steam'':85B ''store.steampowered.com'':88B ''store.steampowered.com/developer/younghorses/'':87B ''stream'':50B ''summergamefest'':91B ''support'':57B ''thank'':40B,51B ''villa'':8A,39B ''vr'':63B ''warfram'':7A,38B ''young'':53B,74B', false, 'PT4H6M53S', 'https://i.ytimg.com/vi/BkWSiH00qEs/maxresdefault.jpg'),
-	('l_cQ7qsJpzQ', 'giantbomb', 'THE MOSQUITO GANG | Unprofessional Fridays', 'Jeff, Jeff, Dan, Mike, and Jan get together and take turns sucking blood from each other and depositing blood into the bank! 
-
-Support Giant Bomb by going to:
-giantbomb.com/join
-
-#upf #unprofessionalfridays #themosquitogang', 'https://i.ytimg.com/vi/l_cQ7qsJpzQ/mqdefault.jpg', '2025-05-23 20:33:34+00', '''/join'':36B ''bank'':27B ''blood'':18B,24B ''bomb'':30B ''dan'':8B ''deposit'':23B ''friday'':5A ''gang'':3A ''get'':12B ''giant'':29B ''giantbomb.com'':35B ''giantbomb.com/join'':34B ''go'':32B ''jan'':11B ''jeff'':6B,7B ''mike'':9B ''mosquito'':2A ''suck'':17B ''support'':28B ''take'':15B ''themosquitogang'':39B ''togeth'':13B ''turn'':16B ''unprofession'':4A ''unprofessionalfriday'':38B ''upf'':37B', false, 'PT1H18M34S', 'https://i.ytimg.com/vi/l_cQ7qsJpzQ/maxresdefault.jpg'),
-	('d03tTk07hCI', 'giantbomb', 'FAYGO ARMAGEDDON #juggalos #ninja #faygo', 'We learned more about the Gathering of the Juggalos and Faygo Armageddon. Mike learns about some words...', 'https://i.ytimg.com/vi/d03tTk07hCI/mqdefault.jpg', '2025-05-21 00:47:52+00', '''armageddon'':2A,17B ''faygo'':1A,5A,16B ''gather'':11B ''juggalo'':3A,14B ''learn'':7B,19B ''mike'':18B ''ninja'':4A ''word'':22B', false, 'PT52S', 'https://i.ytimg.com/vi/d03tTk07hCI/maxresdefault.jpg'),
-	('B1O6ZOWu5w0', 'giantbomb', 'Voicemail Dump Truck 159 | Faygo FOMO.mp3', 'Everybody welcome back out dear friend BAILEY MEYERS back to the truck! We chat about the nuts and bolts of busting things, inside jokes with animals, and somehow the Gathering of the Juggalos! 
-
-Support Giant Bomb by going to:
-giantbomb.com/join
-
-#vmdt #voicemaildumptruck #giantbomb', 'https://i.ytimg.com/vi/B1O6ZOWu5w0/mqdefault.jpg', '2025-05-22 19:27:13+00', '''/join'':48B ''159'':4A ''anim'':32B ''back'':9B,15B ''bailey'':13B ''bolt'':25B ''bomb'':42B ''bust'':27B ''chat'':20B ''dear'':11B ''dump'':2A ''everybodi'':7B ''faygo'':5A ''fomo.mp3'':6A ''friend'':12B ''gather'':36B ''giant'':41B ''giantbomb'':51B ''giantbomb.com'':47B ''giantbomb.com/join'':46B ''go'':44B ''insid'':29B ''joke'':30B ''juggalo'':39B ''meyer'':14B ''nut'':23B ''somehow'':34B ''support'':40B ''thing'':28B ''truck'':3A,18B ''vmdt'':49B ''voicemail'':1A ''voicemaildumptruck'':50B ''welcom'':8B', false, 'PT1H12M43S', 'https://i.ytimg.com/vi/B1O6ZOWu5w0/maxresdefault.jpg'),
-	('HwDGJTBWEZU', 'giantbomb', 'Randy Pitchford''s Comments on Borderlands 4''s Pricing | Game Mess Mornings 05/21/25', 'Jeff Grubb is joined by Jon Martin to chat about how Randy Pitchford feels about a prospective price of the next Borderlands game, the latest Circana reports, Senua''s Saga II headed to PS5, DOOM: The Dark Ages reaching 3 million players, and even more!
-
-Support Giant Bomb by going to:
-giantbomb.com/join
-
-#gmm #gamemessmornings #giantbomb', 'https://i.ytimg.com/vi/HwDGJTBWEZU/mqdefault.jpg', '2025-05-21 16:03:44+00', '''/join'':67B ''05/21/25'':13A ''3'':53B ''4'':7A ''age'':51B ''bomb'':61B ''borderland'':6A,35B ''chat'':22B ''circana'':39B ''comment'':4A ''dark'':50B ''doom'':48B ''even'':57B ''feel'':27B ''game'':10A,36B ''gamemessmorn'':69B ''giant'':60B ''giantbomb'':70B ''giantbomb.com'':66B ''giantbomb.com/join'':65B ''gmm'':68B ''go'':63B ''grubb'':15B ''head'':45B ''ii'':44B ''jeff'':14B ''join'':17B ''jon'':19B ''latest'':38B ''martin'':20B ''mess'':11A ''million'':54B ''morn'':12A ''next'':34B ''pitchford'':2A,26B ''player'':55B ''price'':9A,31B ''prospect'':30B ''ps5'':47B ''randi'':1A,25B ''reach'':52B ''report'':40B ''saga'':43B ''senua'':41B ''support'':59B', false, 'PT58M49S', 'https://i.ytimg.com/vi/HwDGJTBWEZU/maxresdefault.jpg'),
 	('2SK_FAMHxpY', 'remap', 'Talking over the Day of the Devs + E-Notebook Shopping', 'We talk over Day of the Devs, The Wholesome Snack, and then go E-notebook shopping.
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/2SK_FAMHxpY/mqdefault.jpg', '2023-12-07 19:24:19+00', '''audienc'':32B ''consid'':42B ''content'':40B ''continu'':37B ''day'':4A,15B ''dev'':7A,18B ''e'':9A,26B ''e-notebook'':8A,25B ''go'':24B ''help'':35B ''make'':38B ''notebook'':10A,27B ''pleas'':41B ''radio'':30B ''remap'':29B ''shop'':11A,28B ''snack'':21B ''subscrib'':43B ''support'':33B ''talk'':1A,13B ''us'':36B ''wholesom'':20B ''www.remapradio.com'':45B', false, 'PT2H31M22S', 'https://i.ytimg.com/vi/2SK_FAMHxpY/maxresdefault.jpg'),
 	('7J8FAGdmfrs', 'remap', 'It''s Chewsday Innit? | #remapradio on #Twitch', 'A flawless accent from Cado
 
 https://www.twitch.tv/remapradio', 'https://i.ytimg.com/vi/7J8FAGdmfrs/mqdefault.jpg', '2024-10-10 16:16:51+00', '''/remapradio'':15B ''accent'':10B ''cado'':12B ''chewsday'':3A ''flawless'':9B ''innit'':4A ''remapradio'':5A ''twitch'':7A ''www.twitch.tv'':14B ''www.twitch.tv/remapradio'':13B', false, 'PT31S', NULL),
-	('D84rRrHGoOw', 'giantbomb', 'You Can Talk to an AI-Darth Vader in Fortnite | Game Mess Mornings 05/16/25', 'Jeff Grubb is joined by Lex Luddy to talk about her new gaming website Rewinder! We also find the time to talk about how upsetting it is to speak to an AI-Generated voice of James Earl Jones in Fortnite, a whole lot of Switch 2 updates, Diddy Kong, and even more! 
+	('4PD3gdxiFlI', 'giantbomb', 'Rascal (PS1) | 03 | Blight Club', 'This game continues to be bad, but it''s okay because Mike continues to look COOL! Watch as Mike has to redo a level and fight time. 
 
-Check out Rewinder:
-https://rewinder.co.uk/
-
-Support Giant Bomb
+Support Giant Bomb by going to
 giantbomb.com/join
 
-#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/D84rRrHGoOw/mqdefault.jpg', '2025-05-16 16:08:34+00', '''/join'':78B ''05/16/25'':15A ''2'':62B ''ai'':7A,48B ''ai-darth'':6A ''ai-gener'':47B ''also'':32B ''bomb'':75B ''check'':69B ''darth'':8A ''diddi'':64B ''earl'':53B ''even'':67B ''find'':33B ''fortnit'':11A,56B ''game'':12A,28B ''gamemessmorn'':80B ''generat'':49B ''giant'':74B ''giantbomb'':81B ''giantbomb.com'':77B ''giantbomb.com/join'':76B ''gmm'':79B ''grubb'':17B ''jame'':52B ''jeff'':16B ''join'':19B ''jone'':54B ''kong'':65B ''lex'':21B ''lot'':59B ''luddi'':22B ''mess'':13A ''morn'':14A ''new'':27B ''rewind'':30B,71B ''rewinder.co.uk'':72B ''speak'':44B ''support'':73B ''switch'':61B ''talk'':3A,24B,37B ''time'':35B ''updat'':63B ''upset'':40B ''vader'':9A ''videogamenew'':82B ''voic'':50B ''websit'':29B ''whole'':58B', false, 'PT1H1M46S', 'https://i.ytimg.com/vi/D84rRrHGoOw/maxresdefault.jpg'),
+#ps1 #rascal #giantbomb #blightclub', 'https://i.ytimg.com/vi/4PD3gdxiFlI/mqdefault.jpg', '2025-05-28 20:02:37+00', '''/join'':41B ''03'':3A ''bad'':11B ''blight'':4A ''blightclub'':45B ''bomb'':35B ''club'':5A ''continu'':8B,18B ''cool'':21B ''fight'':31B ''game'':7B ''giant'':34B ''giantbomb'':44B ''giantbomb.com'':40B ''giantbomb.com/join'':39B ''go'':37B ''level'':29B ''look'':20B ''mike'':17B,24B ''okay'':15B ''ps1'':2A,42B ''rascal'':1A,43B ''redo'':27B ''support'':33B ''time'':32B ''watch'':22B', false, 'PT1H17M31S', 'https://i.ytimg.com/vi/4PD3gdxiFlI/maxresdefault.jpg'),
+	('d03tTk07hCI', 'giantbomb', 'FAYGO ARMAGEDDON #juggalos #ninja #faygo', 'We learned more about the Gathering of the Juggalos and Faygo Armageddon. Mike learns about some words...', 'https://i.ytimg.com/vi/d03tTk07hCI/mqdefault.jpg', '2025-05-21 00:47:52+00', '''armageddon'':2A,17B ''faygo'':1A,5A,16B ''gather'':11B ''juggalo'':3A,14B ''learn'':7B,19B ''mike'':18B ''ninja'':4A ''word'':22B', false, 'PT52S', 'https://i.ytimg.com/vi/d03tTk07hCI/maxresdefault.jpg'),
+	('l_cQ7qsJpzQ', 'giantbomb', 'THE MOSQUITO GANG | Unprofessional Fridays', 'Jeff, Jeff, Dan, Mike, and Jan get together and take turns sucking blood from each other and depositing blood into the bank! 
+
+Support Giant Bomb by going to:
+giantbomb.com/join
+
+#upf #unprofessionalfridays #themosquitogang', 'https://i.ytimg.com/vi/l_cQ7qsJpzQ/mqdefault.jpg', '2025-05-23 20:33:34+00', '''/join'':36B ''bank'':27B ''blood'':18B,24B ''bomb'':30B ''dan'':8B ''deposit'':23B ''friday'':5A ''gang'':3A ''get'':12B ''giant'':29B ''giantbomb.com'':35B ''giantbomb.com/join'':34B ''go'':32B ''jan'':11B ''jeff'':6B,7B ''mike'':9B ''mosquito'':2A ''suck'':17B ''support'':28B ''take'':15B ''themosquitogang'':39B ''togeth'':13B ''turn'':16B ''unprofession'':4A ''unprofessionalfriday'':38B ''upf'':37B', false, 'PT1H18M34S', 'https://i.ytimg.com/vi/l_cQ7qsJpzQ/maxresdefault.jpg'),
+	('z2MlzmrMKkE', 'remap', 'Remap Watches Summer Game Fest 2025', 'With Patrick traveling, come hang out with Rob and Cado as they watch the latest Keighley trailer showcase.
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/z2MlzmrMKkE/mqdefault.jpg', '2025-06-08 15:31:25+00', '''2025'':6A ''audienc'':28B ''cado'':16B ''come'':10B ''consid'':38B ''content'':36B ''continu'':33B ''fest'':5A ''game'':4A ''hang'':11B ''help'':31B ''keighley'':22B ''latest'':21B ''make'':34B ''patrick'':8B ''pleas'':37B ''radio'':26B ''remap'':1A,25B ''rob'':14B ''showcas'':24B ''subscrib'':39B ''summer'':3A ''support'':29B ''trailer'':23B ''travel'':9B ''us'':32B ''watch'':2A,19B ''www.remapradio.com'':41B', false, 'PT2H25M36S', 'https://i.ytimg.com/vi/z2MlzmrMKkE/maxresdefault.jpg'),
 	('VF2GOc9cNYo', 'giantbomb', 'PS5 Could Get More Expensive Soon | Game Mess Mornings with EposVox 05/14/25', 'Jeff Grubb is joined by EposVox today to talk about how to talk about how the PS5 is still close to PS4 total sales and the price could go up fairly soon, Best Buy might have Switch 2s in stock for release day, Clair Obscur: Expedition 33 possibly coming out on the Switch 2, and so much more! 
 
 #gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/VF2GOc9cNYo/mqdefault.jpg', '2025-05-14 15:59:12+00', '''05/14/25'':12A ''2'':66B ''2s'':50B ''33'':59B ''best'':45B ''buy'':46B ''clair'':56B ''close'':32B ''come'':61B ''could'':2A,40B ''day'':55B ''eposvox'':11A,18B ''expedit'':58B ''expens'':5A ''fair'':43B ''game'':7A ''gamemessmorn'':72B ''get'':3A ''giantbomb'':73B ''gmm'':71B ''go'':41B ''grubb'':14B ''jeff'':13B ''join'':16B ''mess'':8A ''might'':47B ''morn'':9A ''much'':69B ''obscur'':57B ''possibl'':60B ''price'':39B ''ps4'':34B ''ps5'':1A,29B ''releas'':54B ''sale'':36B ''soon'':6A,44B ''still'':31B ''stock'':52B ''switch'':49B,65B ''talk'':21B,25B ''today'':19B ''total'':35B ''videogamenew'':74B', false, 'PT52M49S', 'https://i.ytimg.com/vi/VF2GOc9cNYo/maxresdefault.jpg'),
+	('Lq3aTApAvb4', 'remap', 'Hamburger Is Over Hole', 'This is a test of the Remap broadcasting system.
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/Lq3aTApAvb4/mqdefault.jpg', '2025-04-02 02:49:03+00', '''audienc'':17B ''broadcast'':12B ''consid'':27B ''content'':25B ''continu'':22B ''hamburg'':1A ''help'':20B ''hole'':4A ''make'':23B ''pleas'':26B ''radio'':15B ''remap'':11B,14B ''subscrib'':28B ''support'':18B ''system'':13B ''test'':8B ''us'':21B ''www.remapradio.com'':30B', false, 'PT26M55S', 'https://i.ytimg.com/vi/Lq3aTApAvb4/maxresdefault.jpg'),
 	('XgWd88UI0w0', 'giantbomb', 'GIANT BOMB IS INDEPENDENT NOW! | Game Mess Mornings 05/12/25', 'Jeff Grubb and Mike Minotti are here to chat about all the hottest video game news! Today we cover that GIANT BOMB HAS GONE INDEPENDENT, some drama with Moon Studios the team behind Ori and the Blind Forest, a review roundup of Doom: The Dark Ages, and a whole lot more! 
 
 Help support Giant Bomb by going to:
 https://www.giantbomb.com/join', 'https://i.ytimg.com/vi/XgWd88UI0w0/mqdefault.jpg', '2025-05-12 16:00:38+00', '''/join'':70B ''05/12/25'':9A ''age'':55B ''behind'':42B ''blind'':46B ''bomb'':2A,31B,64B ''chat'':18B ''cover'':28B ''dark'':54B ''doom'':52B ''drama'':36B ''forest'':47B ''game'':6A,24B ''giant'':1A,30B,63B ''go'':66B ''gone'':33B ''grubb'':11B ''help'':61B ''hottest'':22B ''independ'':4A,34B ''jeff'':10B ''lot'':59B ''mess'':7A ''mike'':13B ''minotti'':14B ''moon'':38B ''morn'':8A ''news'':25B ''ori'':43B ''review'':49B ''roundup'':50B ''studio'':39B ''support'':62B ''team'':41B ''today'':26B ''video'':23B ''whole'':58B ''www.giantbomb.com'':69B ''www.giantbomb.com/join'':68B', false, 'PT53M40S', 'https://i.ytimg.com/vi/XgWd88UI0w0/maxresdefault.jpg'),
-	('UZvdQtpJRJ8', 'giantbomb', 'The Hundred Line is a Danganropa X Fire Emblem? | Giant Bombcast 887: Burgertory', 'There''s a new Oblivion game and we recapped the news that came from the Bethesda stream this morning, we chat about how The Hundred Line: Defense Academy is extremely up our alley, some older SNES games, the Lunar Collection, and even more hot news and game talk this week on the Giant Bombcast.
-
-#podcast #giantbomb #giantbombcast', 'https://i.ytimg.com/vi/UZvdQtpJRJ8/mqdefault.jpg', '2025-04-22 18:27:11+00', '''887'':12A ''academi'':41B ''alley'':46B ''bethesda'':29B ''bombcast'':11A,67B ''burgertori'':13A ''came'':26B ''chat'':34B ''collect'':53B ''danganropa'':6A ''defens'':40B ''emblem'':9A ''even'':55B ''extrem'':43B ''fire'':8A ''game'':19B,50B,60B ''giant'':10A,66B ''giantbomb'':69B ''giantbombcast'':70B ''hot'':57B ''hundr'':2A,38B ''line'':3A,39B ''lunar'':52B ''morn'':32B ''new'':17B ''news'':24B,58B ''oblivion'':18B ''older'':48B ''podcast'':68B ''recap'':22B ''snes'':49B ''stream'':30B ''talk'':61B ''week'':63B ''x'':7A', false, 'PT2H6M23S', 'https://i.ytimg.com/vi/UZvdQtpJRJ8/maxresdefault.jpg'),
-	('Lq3aTApAvb4', 'remap', 'Hamburger Is Over Hole', 'This is a test of the Remap broadcasting system.
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/Lq3aTApAvb4/mqdefault.jpg', '2025-04-02 02:49:03+00', '''audienc'':17B ''broadcast'':12B ''consid'':27B ''content'':25B ''continu'':22B ''hamburg'':1A ''help'':20B ''hole'':4A ''make'':23B ''pleas'':26B ''radio'':15B ''remap'':11B,14B ''subscrib'':28B ''support'':18B ''system'':13B ''test'':8B ''us'':21B ''www.remapradio.com'':30B', false, 'PT26M55S', 'https://i.ytimg.com/vi/Lq3aTApAvb4/maxresdefault.jpg'),
-	('2YkUDFVlecQ', 'nextlander', 'Friday Fun Stream: The Grab Bag to End All Grab Bags', 'There are SO MANY VIDEO GAMES right now, and we''re going to play several of them! And our good friend Samantha Kalman is here to hang out!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/2YkUDFVlecQ/mqdefault.jpg', '2025-05-23 20:22:35+00', '''/nextlander'':48B ''bag'':6A,11A ''communiti'':45B ''end'':8A ''friday'':1A ''friend'':32B ''fun'':2A ''game'':17B ''go'':23B ''good'':31B ''grab'':5A,10A ''hang'':38B ''kalman'':34B ''mani'':15B ''nextland'':40B ''play'':25B ''re'':22B ''right'':18B ''samantha'':33B ''sever'':26B ''stream'':3A ''support'':42B ''thank'':49B ''video'':16B ''watch'':51B ''www.patreon.com'':47B ''www.patreon.com/nextlander'':46B', false, 'PT2H3M4S', 'https://i.ytimg.com/vi/2YkUDFVlecQ/maxresdefault.jpg'),
-	('8KDahG27Alc', 'nextlander', 'Will and Vinny Take a Final Swing at the Savage Planet!', 'We''ve been enjoying our time with Revenge of the Savage Planet so let''s do one more run!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/8KDahG27Alc/mqdefault.jpg', '2025-05-19 23:35:45+00', '''/nextlander'':39B ''communiti'':36B ''enjoy'':15B ''final'':6A ''let'':25B ''nextland'':31B ''one'':28B ''planet'':11A,23B ''reveng'':19B ''run'':30B ''savag'':10A,22B ''support'':33B ''swing'':7A ''take'':4A ''thank'':40B ''time'':17B ''ve'':13B ''vinni'':3A ''watch'':42B ''www.patreon.com'':38B ''www.patreon.com/nextlander'':37B', false, 'PT2H29M7S', 'https://i.ytimg.com/vi/8KDahG27Alc/maxresdefault.jpg'),
-	('WYmAd2M2mzc', 'nextlander', 'Who Is Abby? The Answer May (Mildly) Shock You!', 'We''re going to check in on Who Is Abby and head towards its big finale!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/WYmAd2M2mzc/mqdefault.jpg', '2025-06-17 21:00:13+00', '''/nextlander'':33B ''abbi'':3A,18B ''answer'':5A ''big'':23B ''check'':13B ''communiti'':30B ''final'':24B ''go'':11B ''head'':20B ''may'':6A ''mild'':7A ''nextland'':25B ''re'':10B ''shock'':8A ''support'':27B ''thank'':34B ''toward'':21B ''watch'':36B ''www.patreon.com'':32B ''www.patreon.com/nextlander'':31B', false, 'PT2H32M16S', 'https://i.ytimg.com/vi/WYmAd2M2mzc/maxresdefault.jpg'),
 	('4B-mUPid9E0', 'giantbomb', 'Disney Illusion Island is a Mickey-Vania | Quick Look', 'Grubb and Mike bounce around the world as the most powerful and disgruntled wizard in all of Final Fantasy!
 
 #disneyillusionisland #quicklook #giantbomb', 'https://i.ytimg.com/vi/4B-mUPid9E0/mqdefault.jpg', '2023-08-11 20:01:47+00', '''around'':15B ''bounc'':14B ''disgruntl'':23B ''disney'':1A ''disneyillusionisland'':30B ''fantasi'':29B ''final'':28B ''giantbomb'':32B ''grubb'':11B ''illus'':2A ''island'':3A ''look'':10A ''mickey'':7A ''mickey-vania'':6A ''mike'':13B ''power'':21B ''quick'':9A ''quicklook'':31B ''vania'':8A ''wizard'':24B ''world'':17B', false, 'PT25M7S', 'https://i.ytimg.com/vi/4B-mUPid9E0/maxresdefault.jpg'),
@@ -20260,18 +19523,6 @@ Thanks for watching.', 'https://i.ytimg.com/vi/WYmAd2M2mzc/mqdefault.jpg', '2025
 	('jgCUaCYjmEU', 'giantbomb', 'Mini Bomb: Dan Ryckert learns about thermodynamics', 'Full video: https://www.youtube.com/watch?v=29hr-mzx1gE
 
 #gaming #giantbomb #funny #funnyvideos #exoprimal #thermodynamics #thermos #til #todayilearned #science #fail #fails', 'https://i.ytimg.com/vi/jgCUaCYjmEU/mqdefault.jpg', '2023-07-19 23:02:09+00', '''/watch?v=29hr-mzx1ge'':12B ''bomb'':2A ''dan'':3A ''exoprim'':17B ''fail'':23B,24B ''full'':8B ''funni'':15B ''funnyvideo'':16B ''game'':13B ''giantbomb'':14B ''learn'':5A ''mini'':1A ''ryckert'':4A ''scienc'':22B ''thermo'':19B ''thermodynam'':7A,18B ''til'':20B ''todayilearn'':21B ''video'':9B ''www.youtube.com'':11B ''www.youtube.com/watch?v=29hr-mzx1ge'':10B', false, 'PT2M4S', 'https://i.ytimg.com/vi/jgCUaCYjmEU/maxresdefault.jpg'),
-	('ebwzoHh-6MU', 'nextlander', 'The Clue Crew Investigates ''Who is Abby''!', 'Who is Abby? We have Abby Russell here to answer that question, because we can''t think of anyone better to weigh in.
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/ebwzoHh-6MU/mqdefault.jpg', '2025-05-27 21:21:57+00', '''/nextlander'':39B ''abbi'':7A,10B,13B ''answer'':17B ''anyon'':26B ''better'':27B ''clue'':2A ''communiti'':36B ''crew'':3A ''investig'':4A ''nextland'':31B ''question'':19B ''russel'':14B ''support'':33B ''thank'':40B ''think'':24B ''watch'':42B ''weigh'':29B ''www.patreon.com'':38B ''www.patreon.com/nextlander'':37B', false, 'PT2H2M11S', 'https://i.ytimg.com/vi/ebwzoHh-6MU/maxresdefault.jpg'),
-	('HbjK70AT3sE', 'nextlander', 'We Assemble Our Strongest Animal Adventurers in Sunderfolk!', 'Abby Russell joins us for some hot cooperative action as we check out the Gloomhaven-like Sunderfolk!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/HbjK70AT3sE/mqdefault.jpg', '2025-05-20 20:32:24+00', '''/nextlander'':35B ''abbi'':9B ''action'':17B ''adventur'':6A ''anim'':5A ''assembl'':2A ''check'':20B ''communiti'':32B ''cooper'':16B ''gloomhaven'':24B ''gloomhaven-lik'':23B ''hot'':15B ''join'':11B ''like'':25B ''nextland'':27B ''russel'':10B ''strongest'':4A ''sunderfolk'':8A,26B ''support'':29B ''thank'':36B ''us'':12B ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT1H59M18S', 'https://i.ytimg.com/vi/HbjK70AT3sE/maxresdefault.jpg'),
 	('5bGFrETErCg', 'giantbomb', 'Connectivity Compadres: Four Swords Fiesta 06', 'This...this doesn''t feel like a fiesta anymore...
 
 #fourswordsadventures #legendofzelda #giantbomb', 'https://i.ytimg.com/vi/5bGFrETErCg/mqdefault.jpg', '2023-07-19 21:14:01+00', '''06'':6A ''anymor'':15B ''compadr'':2A ''connect'':1A ''doesn'':9B ''feel'':11B ''fiesta'':5A,14B ''four'':3A ''fourswordsadventur'':16B ''giantbomb'':18B ''legendofzelda'':17B ''like'':12B ''sword'':4A', false, 'PT1H3M25S', 'https://i.ytimg.com/vi/5bGFrETErCg/maxresdefault.jpg'),
@@ -20293,12 +19544,6 @@ Thanks for watching.', 'https://i.ytimg.com/vi/HbjK70AT3sE/mqdefault.jpg', '2025
 
 Call the Dump Truck and leave a voicemail at (707)EXIT-FLU', 'https://i.ytimg.com/vi/3jT5ULE3Ik4/mqdefault.jpg', '2023-07-13 21:37:37+00', '''07/13/23'':8A ''707'':45B ''around'':15B ''back'':14B ''bore'':4A ''call'':36B ''chees'':2A,27B ''cours'':18B ''discours'':22B ''dump'':6A,10B,38B ''exit'':47B ''exit-flu'':46B ''fanni'':29B ''flu'':48B ''food'':21B ''giantbomb'':35B ''got'':24B ''leav'':41B ''opnion'':25B ''pack'':30B ''pizza'':3A,28B ''roll'':13B ''truck'':7A,11B,39B ''vmdt'':33B ''voicemail'':5A,43B ''voicemaildumptruck'':34B', false, 'PT1H26M57S', 'https://i.ytimg.com/vi/3jT5ULE3Ik4/maxresdefault.jpg'),
 	('-coN7IUMzNw', 'giantbomb', 'A Bit of Star Wars Battlefront Beta', 'I''ve got a snowspeeder, a tow cable, and limited knowledge of the controls! Look out Empire!', 'https://i.ytimg.com/vi/-coN7IUMzNw/mqdefault.jpg', '2015-10-07 23:33:22+00', '''battlefront'':6A ''beta'':7A ''bit'':2A ''cabl'':15B ''control'':21B ''empir'':24B ''got'':10B ''knowledg'':18B ''limit'':17B ''look'':22B ''snowspeed'':12B ''star'':4A ''tow'':14B ''ve'':9B ''war'':5A', false, 'PT47M43S', 'https://i.ytimg.com/vi/-coN7IUMzNw/maxresdefault.jpg'),
-	('oi738e8B9_Y', 'nextlander', 'Patron''s Choice for May 2025: Riding the Nightreign', 'It''s time for some multiplayer Elden Ring from the greatest Elden Ring players in the known universe.
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/oi738e8B9_Y/mqdefault.jpg', '2025-06-01 06:14:09+00', '''/nextlander'':36B ''2025'':6A ''choic'':3A ''communiti'':33B ''elden'':16B,21B ''greatest'':20B ''known'':26B ''may'':5A ''multiplay'':15B ''nextland'':28B ''nightreign'':9A ''patron'':1A ''player'':23B ''ride'':7A ''ring'':17B,22B ''support'':30B ''thank'':37B ''time'':12B ''univers'':27B ''watch'':39B ''www.patreon.com'':35B ''www.patreon.com/nextlander'':34B', false, 'PT2H29M31S', 'https://i.ytimg.com/vi/oi738e8B9_Y/maxresdefault.jpg'),
 	('wsFUb9PQbuI', 'nextlander', 'Nextlander and Summer Game Fest 2025', 'Summer Game Fest is back and we''re ready to absorb all the good, the bad, and the unexpected!
 http://www.patreon.com/nextlander
 
@@ -20366,48 +19611,21 @@ CHAPTERS:
 (02:06:12) Resident Evil: Requiem  |  [PC (Microsoft Windows), PlayStation 5, Xbox Series X|S]  |  Feb 27, 2026
 (02:06:12) Wrapping up
 (02:15:13) See ya!', 'https://i.ytimg.com/vi/wsFUb9PQbuI/mqdefault.jpg', '2025-06-07 00:04:36+00', '''/nextlander'':28B ''00'':30B,31B,32B,34B,39B,55B,86B,100B,111B,133B,149B,155B,181B,190B,196B,201B,227B,245B,255B,260B,277B,288B,303B,324B,347B,354B,627B,778B ''007'':609B ''01'':353B,372B,377B,385B,409B,414B,420B,431B,447B,464B,477B,487B,496B,519B,533B,550B,560B,571B,578B,590B,606B,625B,634B,648B,656B,664B,679B,687B,697B,702B,720B,734B,746B,752B,765B ''02'':84B,373B,689B,777B,798B,803B,821B,826B ''03'':466B,799B ''04'':378B ''05'':386B,763B ''06'':407B,796B,804B,822B ''07'':410B,767B ''08'':36B,290B,370B,681B ''09'':415B,722B ''1'':63B ''10'':286B,421B,604B ''11'':432B,448B,580B,636B ''12'':35B,322B,805B,823B ''13'':828B ''14'':113B,374B,465B,478B ''15'':498B,827B ''16'':40B,41B,488B,552B ''17'':198B,416B,433B,535B ''18'':56B,102B,349B,548B,592B ''19'':87B,422B,497B ''2'':91B,179B,224B,614B,739B,761B,781B ''2012'':745B ''2018'':589B ''2025'':6A,85B,99B,180B,226B,276B,287B,323B,346B,371B,408B,430B,446B,476B,518B,532B,549B,605B,633B,647B,678B,719B,764B,797B ''2026'':54B,110B,148B,244B,570B,624B,655B,820B ''2077'':756B ''21'':411B,475B,520B ''22'':183B,517B ''23'':534B ''24'':666B,718B ''25'':157B,551B,744B ''26'':98B,101B,561B,800B ''27'':608B,819B ''28'':112B,445B ''29'':572B,588B,699B ''3'':470B,494B,694B ''30'':57B,275B,521B,658B,748B ''31'':134B,579B,591B ''33'':150B,573B,607B,704B ''34'':326B,355B,387B ''35'':156B ''36'':182B ''38'':191B,626B ''39'':635B,736B ''4'':70B,118B,168B,213B,339B,397B,460B,507B,794B ''40'':449B,649B ''41'':135B,305B ''42'':203B,657B ''43'':197B,202B,489B ''44'':228B,665B ''45'':379B,754B,779B ''46'':246B ''47'':88B,680B ''48'':247B,256B ''49'':262B ''5'':53B,72B,96B,120B,147B,170B,215B,236B,269B,297B,315B,337B,361B,399B,443B,509B,531B,598B,623B,643B,670B,716B,783B,813B ''50'':261B,688B ''51'':698B ''52'':151B,229B,278B,650B ''53'':703B ''54'':192B ''55'':257B,721B ''56'':279B,289B,479B,735B ''57'':304B,562B,747B ''58'':325B,753B ''59'':348B,766B ''6'':60B,692B ''absorb'':17B ''abyss'':154B ''access'':106B,583B,772B ''act'':553B ''android'':82B,317B,441B ''arc'':263B ''atlan'':436B ''atom'':193B ''aug'':369B,516B,587B,743B ''awaken'':281B ''back'':11B ''bad'':22B ''battl'':65B ''beach'':94B ''beast'':502B ''blade'':417B,423B ''blight'':651B ''blood'':555B ''bloom'':413B ''box'':250B ''break'':668B ''breakthrough'':577B ''centuri'':802B ''chapter'':29B,59B ''charact'':695B ''chronicl'':103B ''chrono'':291B ''code'':136B ''cosmic'':205B ''countri'':359B ''crossworld'':116B ''crown'':312B ''crystal'':434B ''cube'':200B ''cyberpunk'':755B ''dead'':452B ''deadpool'':490B ''death'':89B ''deceiv'':729B ''descend'':576B ''destini'':384B ''dice'':382B ''die'':499B ''dive'':751B ''dune'':280B ''earli'':105B,582B,771B ''edit'':758B ''end'':152B ''evil'':807B ''evolut'':469B ''ex'':565B ''fallen'':706B ''feather'':707B ''feb'':818B ''felt'':248B ''fest'':5A,9B ''fighter'':691B ''first'':575B,610B ''flag'':701B ''fortnit'':58B ''fractur'':412B ''galact'':64B ''game'':4A,8B,184B ''good'':20B ''guardian'':539B ''guild'':737B ''heart'':194B ''hero'':425B ''hire'':161B ''hollow'':482B ''ii'':44B,138B,195B ''ill'':659B ''infinitesim'':682B ''inn'':259B ''intro'':33B ''invas'':206B ''io'':66B,313B,437B,458B ''jul'':717B ''jun'':97B,285B,321B,406B,603B,762B,795B ''jurass'':467B ''killer'':258B ''last'':700B ''lego'':375B,628B ''lie'':388B ''light'':308B,500B,611B ''linux'':569B ''mac'':316B,392B ''mafia'':356B ''marvel'':204B ''may'':83B,444B ''mecha'':667B ''mediev'':104B ''memori'':328B ''meta'':492B ''microsoft'':46B,80B,108B,130B,140B,163B,210B,242B,252B,266B,283B,294B,319B,334B,363B,394B,427B,439B,456B,472B,484B,504B,524B,545B,557B,567B,585B,595B,616B,631B,645B,653B,661B,676B,684B,709B,731B,741B,774B,791B,810B ''mina'':480B ''mindsey'':593B ''mini'':61B ''mio'':327B ''mixtap'':522B ''mongil'':749B ''mortal'':42B ''mous'':158B ''neo'':419B ''nextland'':1A ''nicktoon'':380B ''nintendo'':67B,127B,165B,177B,207B,222B,331B,612B,759B ''oct'':274B,474B ''odyssey'':292B ''old'':358B ''one'':74B,126B,172B,217B,345B,401B,462B,511B,785B ''onimusha'':230B ''orbit'':330B ''origin'':454B ''overtur'':391B ''p'':390B ''p.i'':159B ''parti'':629B ''pass'':696B ''pc'':45B,79B,107B,129B,139B,162B,209B,241B,251B,265B,282B,293B,318B,333B,362B,393B,426B,438B,455B,471B,483B,503B,523B,544B,556B,566B,584B,594B,615B,630B,644B,652B,660B,675B,683B,708B,730B,740B,773B,790B,809B ''pilgrim'':564B ''playstat'':52B,69B,71B,95B,117B,119B,146B,167B,169B,212B,214B,235B,268B,296B,314B,336B,338B,360B,396B,398B,442B,459B,506B,508B,530B,597B,622B,642B,669B,715B,782B,793B,812B ''project'':801B ''q4'':225B ''quest'':493B ''race'':115B ''raider'':264B ''re'':14B ''readi'':15B ''requiem'':808B ''resid'':806B ''rise'':726B ''sacr'':542B ''scott'':563B ''scum'':581B ''season'':62B ''see'':829B ''sep'':429B,547B ''seri'':49B,76B,122B,143B,174B,219B,238B,271B,299B,341B,366B,403B,513B,527B,600B,619B,639B,672B,712B,787B,815B ''seven'':451B ''shell'':43B ''show'':37B ''sin'':453B ''sonic'':114B ''soul'':418B,424B ''splitgat'':780B ''star'':750B ''start'':38B ''strand'':90B ''street'':690B ''summer'':3A,7B ''switch'':68B,128B,166B,178B,208B,223B,332B,613B,760B ''sword'':234B ''tang'':725B ''tbd'':132B,254B,302B,463B,486B,495B,559B,663B,686B,733B,776B ''throne'':186B ''toss'':310B ''towa'':536B ''tree'':543B ''ultim'':757B ''unexpect'':25B ''unwel'':770B ''vein'':137B ''voyag'':376B ''vr'':491B ''war'':187B,738B ''wave'':307B ''way'':231B ''westero'':189B ''wildgat'':637B ''window'':47B,81B,109B,131B,141B,164B,211B,243B,253B,267B,284B,295B,320B,335B,364B,395B,428B,440B,457B,473B,485B,505B,525B,546B,558B,568B,586B,596B,617B,632B,646B,654B,662B,677B,685B,710B,732B,742B,775B,792B,811B ''word'':352B ''world'':468B ''wrap'':824B ''wu'':724B ''wu-tang'':723B ''wuchang'':705B ''wuther'':306B ''www.patreon.com'':27B ''www.patreon.com/nextlander'':26B ''x'':50B,77B,123B,144B,175B,220B,239B,272B,300B,342B,367B,404B,514B,528B,601B,620B,640B,673B,713B,788B,816B ''xbox'':48B,73B,75B,121B,125B,142B,171B,173B,216B,218B,237B,270B,298B,340B,344B,365B,400B,402B,461B,510B,512B,526B,599B,618B,638B,671B,711B,784B,786B,814B ''ya'':830B ''year'':693B', false, 'PT2H16M27S', 'https://i.ytimg.com/vi/wsFUb9PQbuI/maxresdefault.jpg'),
-	('w8PmznjJN9s', 'nextlander', 'May the Fort Be Nite You', 'The Star Wars Fortnite season is almost over, and by God, Brad''s got skins to show off!
+	('FFt0-rcnmHI', 'nextlander', 'Fallout 1 Part 13: THE END', 'Vinny and Brad spend some time getting Brad''s new audio gear sounding right and then finish this darn game!
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
-Thanks for watching.', 'https://i.ytimg.com/vi/w8PmznjJN9s/mqdefault.jpg', '2025-06-02 23:18:50+00', '''/nextlander'':32B ''almost'':12B ''brad'':17B ''communiti'':29B ''fort'':3A ''fortnit'':9B ''god'':16B ''got'':19B ''may'':1A ''nextland'':24B ''nite'':5A ''season'':10B ''show'':22B ''skin'':20B ''star'':7B ''support'':26B ''thank'':33B ''war'':8B ''watch'':35B ''www.patreon.com'':31B ''www.patreon.com/nextlander'':30B', false, 'PT2H19M33S', 'https://i.ytimg.com/vi/w8PmznjJN9s/maxresdefault.jpg'),
-	('pD4V43tNU5k', 'nextlander', 'Vinny''s Big Not-E3 Roundup Review!', 'A lot has happened and I''m sure there is still a lot we can discover together!
+Thanks for watching.', 'https://i.ytimg.com/vi/FFt0-rcnmHI/mqdefault.jpg', '2024-11-14 23:39:00+00', '''/nextlander'':35B ''1'':2A ''13'':4A ''audio'':17B ''brad'':9B,14B ''communiti'':32B ''darn'':25B ''end'':6A ''fallout'':1A ''finish'':23B ''game'':26B ''gear'':18B ''get'':13B ''new'':16B ''nextland'':27B ''part'':3A ''right'':20B ''sound'':19B ''spend'':10B ''support'':29B ''thank'':36B ''time'':12B ''vinni'':7B ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT5H49M13S', 'https://i.ytimg.com/vi/FFt0-rcnmHI/maxresdefault.jpg'),
+	('qAA7HJR71cE', 'remap', 'Rob the Conqueror Enters Civilization VII', 'Rob and Cado continue their shared save file of Civilization VII, where their peaceful wonder making civ is currently in the middle of two different wars!
 
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/qAA7HJR71cE/mqdefault.jpg', '2025-03-22 14:26:17+00', '''audienc'':36B ''cado'':9B ''civ'':23B ''civil'':5A,16B ''conqueror'':3A ''consid'':46B ''content'':44B ''continu'':10B,41B ''current'':25B ''differ'':31B ''enter'':4A ''file'':14B ''help'':39B ''make'':22B,42B ''middl'':28B ''peac'':20B ''pleas'':45B ''radio'':34B ''remap'':33B ''rob'':1A,7B ''save'':13B ''share'':12B ''subscrib'':47B ''support'':37B ''two'':30B ''us'':40B ''vii'':6A,17B ''war'':32B ''wonder'':21B ''www.remapradio.com'':49B', false, 'PT2H46M26S', 'https://i.ytimg.com/vi/qAA7HJR71cE/maxresdefault.jpg'),
+	('TaRK2oSkIPI', 'remap', 'Remap Talks Over the Xbox Developer Direct', 'How long will Microsoft make Patrick wait to download Ninja Gaiden?
 
-Thanks for watching.', 'https://i.ytimg.com/vi/pD4V43tNU5k/mqdefault.jpg', '2025-06-10 00:42:36+00', '''/nextlander'':34B ''big'':3A ''communiti'':31B ''discov'':24B ''e3'':6A ''happen'':12B ''lot'':10B,21B ''m'':15B ''nextland'':26B ''not-e3'':4A ''review'':8A ''roundup'':7A ''still'':19B ''support'':28B ''sure'':16B ''thank'':35B ''togeth'':25B ''vinni'':1A ''watch'':37B ''www.patreon.com'':33B ''www.patreon.com/nextlander'':32B', false, 'PT3H45M33S', 'https://i.ytimg.com/vi/pD4V43tNU5k/maxresdefault.jpg'),
-	('rfMntjiyYgk', 'nextlander', 'Mario Kart World and the Switch 2 are Here!', 'Alex got his Switch 2, so let''s boot this thing up and play the game(s) that are currently available!
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/TaRK2oSkIPI/mqdefault.jpg', '2025-01-24 15:38:16+00', '''audienc'':22B ''consid'':32B ''content'':30B ''continu'':27B ''develop'':6A ''direct'':7A ''download'':16B ''gaiden'':18B ''help'':25B ''long'':9B ''make'':12B,28B ''microsoft'':11B ''ninja'':17B ''patrick'':13B ''pleas'':31B ''radio'':20B ''remap'':1A,19B ''subscrib'':33B ''support'':23B ''talk'':2A ''us'':26B ''wait'':14B ''www.remapradio.com'':35B ''xbox'':5A', false, 'PT1H14M56S', 'https://i.ytimg.com/vi/TaRK2oSkIPI/maxresdefault.jpg'),
+	('IPjcsGweuOw', 'remap', 'Dresses, Deep Lore, and More Infinity Nikki', 'One stream wasn''t enough for Patrick and Cado. There''s so much more to learn (and wear)!
 
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/rfMntjiyYgk/mqdefault.jpg', '2025-06-06 20:52:29+00', '''/nextlander'':37B ''2'':7A,12B ''alex'':8B ''avail'':28B ''boot'':16B ''communiti'':34B ''current'':27B ''game'':23B ''got'':9B ''kart'':2A ''let'':14B ''mario'':1A ''nextland'':29B ''play'':21B ''support'':31B ''switch'':6A,11B ''thank'':38B ''thing'':18B ''watch'':40B ''world'':3A ''www.patreon.com'':36B ''www.patreon.com/nextlander'':35B', false, 'PT2H27M23S', 'https://i.ytimg.com/vi/rfMntjiyYgk/maxresdefault.jpg'),
-	('5iAYIsm-irE', 'nextlander', 'Vinny and Abby Have An Adventure (Game)', 'There are so many adventure games we want to play and so little time!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/5iAYIsm-irE/mqdefault.jpg', '2025-05-13 20:35:32+00', '''/nextlander'':30B ''abbi'':3A ''adventur'':6A,12B ''communiti'':27B ''game'':7A,13B ''littl'':20B ''mani'':11B ''nextland'':22B ''play'':17B ''support'':24B ''thank'':31B ''time'':21B ''vinni'':1A ''want'':15B ''watch'':33B ''www.patreon.com'':29B ''www.patreon.com/nextlander'':28B', false, 'PT1H39M30S', 'https://i.ytimg.com/vi/5iAYIsm-irE/maxresdefault.jpg'),
-	('DqdWIjuBypg', 'nextlander', 'Abby and Vinny Dive into Steam Next Fest 2025!', 'There are so many demo, I mean a lot of demos. We stand no chance.
-
-We Check Out:
-Escape Simulator 2
-Dispatch
-Baby Steps
-BALL x PIT
-The Joker''s Game
-Quantum Witch
-Mina the Hollower
-
-
-
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/DqdWIjuBypg/mqdefault.jpg', '2025-06-10 20:41:04+00', '''/nextlander'':54B ''2'':30B ''2025'':9A ''abbi'':1A ''babi'':32B ''ball'':34B ''chanc'':24B ''check'':26B ''communiti'':51B ''demo'':14B,20B ''dispatch'':31B ''dive'':4A ''escap'':28B ''fest'':8A ''game'':40B ''hollow'':45B ''joker'':38B ''lot'':18B ''mani'':13B ''mean'':16B ''mina'':43B ''next'':7A ''nextland'':46B ''pit'':36B ''quantum'':41B ''simul'':29B ''stand'':22B ''steam'':6A ''step'':33B ''support'':48B ''thank'':55B ''vinni'':3A ''watch'':57B ''witch'':42B ''www.patreon.com'':53B ''www.patreon.com/nextlander'':52B ''x'':35B', false, 'PT1H59M39S', 'https://i.ytimg.com/vi/DqdWIjuBypg/maxresdefault.jpg'),
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/IPjcsGweuOw/mqdefault.jpg', '2025-01-07 22:48:23+00', '''audienc'':29B ''cado'':16B ''consid'':39B ''content'':37B ''continu'':34B ''deep'':2A ''dress'':1A ''enough'':12B ''help'':32B ''infin'':6A ''learn'':23B ''lore'':3A ''make'':35B ''much'':20B ''nikki'':7A ''one'':8B ''patrick'':14B ''pleas'':38B ''radio'':27B ''remap'':26B ''stream'':9B ''subscrib'':40B ''support'':30B ''us'':33B ''wasn'':10B ''wear'':25B ''www.remapradio.com'':42B', false, 'PT2H19M11S', 'https://i.ytimg.com/vi/IPjcsGweuOw/maxresdefault.jpg'),
 	('4uSoRzmEZEQ', 'nextlander', 'Friday Fun Stream Special: Austin Walker Takes Us Through Realis!', 'Our good friend and yours Austin Walker is here to show us his new game, Realis. Join us as we head to space and go moon hopping!
 
 Support Realis here: https://thecalcutec.itch.io/realis
@@ -20422,74 +19640,47 @@ Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/niDSTu1Gxt8/mqdefault.jpg', '2025-02-17 23:55:57+00', '''/nextlander'':42B ''abl'':27B ''communiti'':39B ''cours'':33B ''crew'':7A ''first'':4A ''go'':15B ''hear'':29B ''monday'':5A ''nextland'':34B ''re'':14B ''smith'':9B ''space'':17B ''support'':36B ''surviv'':20B ''thank'':43B ''thrive'':23B ''void'':6A ''watch'':45B ''www.patreon.com'':41B ''www.patreon.com/nextlander'':40B', false, 'PT2H36M16S', 'https://i.ytimg.com/vi/niDSTu1Gxt8/maxresdefault.jpg'),
-	('PsjZ6qakyJY', 'nextlander', 'Abby, Vinny, and The Roottrees! (Part 01)', 'Abby and Vinny are back and ready to do more investigation into this interesting family!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/PsjZ6qakyJY/mqdefault.jpg', '2025-01-27 23:20:39+00', '''/nextlander'':31B ''01'':7A ''abbi'':1A,8B ''back'':12B ''communiti'':28B ''famili'':22B ''interest'':21B ''investig'':18B ''nextland'':23B ''part'':6A ''readi'':14B ''roottre'':5A ''support'':25B ''thank'':32B ''vinni'':2A,10B ''watch'':34B ''www.patreon.com'':30B ''www.patreon.com/nextlander'':29B', false, 'PT1H50M', 'https://i.ytimg.com/vi/PsjZ6qakyJY/maxresdefault.jpg'),
-	('FFt0-rcnmHI', 'nextlander', 'Fallout 1 Part 13: THE END', 'Vinny and Brad spend some time getting Brad''s new audio gear sounding right and then finish this darn game!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/FFt0-rcnmHI/mqdefault.jpg', '2024-11-14 23:39:00+00', '''/nextlander'':35B ''1'':2A ''13'':4A ''audio'':17B ''brad'':9B,14B ''communiti'':32B ''darn'':25B ''end'':6A ''fallout'':1A ''finish'':23B ''game'':26B ''gear'':18B ''get'':13B ''new'':16B ''nextland'':27B ''part'':3A ''right'':20B ''sound'':19B ''spend'':10B ''support'':29B ''thank'':36B ''time'':12B ''vinni'':7B ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT5H49M13S', 'https://i.ytimg.com/vi/FFt0-rcnmHI/maxresdefault.jpg'),
-	('IPjcsGweuOw', 'remap', 'Dresses, Deep Lore, and More Infinity Nikki', 'One stream wasn''t enough for Patrick and Cado. There''s so much more to learn (and wear)!
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/IPjcsGweuOw/mqdefault.jpg', '2025-01-07 22:48:23+00', '''audienc'':29B ''cado'':16B ''consid'':39B ''content'':37B ''continu'':34B ''deep'':2A ''dress'':1A ''enough'':12B ''help'':32B ''infin'':6A ''learn'':23B ''lore'':3A ''make'':35B ''much'':20B ''nikki'':7A ''one'':8B ''patrick'':14B ''pleas'':38B ''radio'':27B ''remap'':26B ''stream'':9B ''subscrib'':40B ''support'':30B ''us'':33B ''wasn'':10B ''wear'':25B ''www.remapradio.com'':42B', false, 'PT2H19M11S', 'https://i.ytimg.com/vi/IPjcsGweuOw/maxresdefault.jpg'),
 	('Idqp33nwoa8', 'nextlander', 'Friday Fun Stream: Grab Baggin'' with Avowed and Civilzation VII!', 'We shall return to the world of X-Files in the not-too-distant future, but this week we''ve got some big releases we want to check out.
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/Idqp33nwoa8/mqdefault.jpg', '2025-02-14 21:09:35+00', '''/nextlander'':50B ''avow'':7A ''baggin'':5A ''big'':35B ''check'':40B ''civilz'':9A ''communiti'':47B ''distant'':26B ''file'':20B ''friday'':1A ''fun'':2A ''futur'':27B ''got'':33B ''grab'':4A ''nextland'':42B ''not-too-dist'':23B ''releas'':36B ''return'':13B ''shall'':12B ''stream'':3A ''support'':44B ''thank'':51B ''ve'':32B ''vii'':10A ''want'':38B ''watch'':53B ''week'':30B ''world'':16B ''www.patreon.com'':49B ''www.patreon.com/nextlander'':48B ''x'':19B ''x-file'':18B', false, 'PT1H49M3S', 'https://i.ytimg.com/vi/Idqp33nwoa8/maxresdefault.jpg'),
-	('qAA7HJR71cE', 'remap', 'Rob the Conqueror Enters Civilization VII', 'Rob and Cado continue their shared save file of Civilization VII, where their peaceful wonder making civ is currently in the middle of two different wars!
+	('PsjZ6qakyJY', 'nextlander', 'Abby, Vinny, and The Roottrees! (Part 01)', 'Abby and Vinny are back and ready to do more investigation into this interesting family!
 
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/qAA7HJR71cE/mqdefault.jpg', '2025-03-22 14:26:17+00', '''audienc'':36B ''cado'':9B ''civ'':23B ''civil'':5A,16B ''conqueror'':3A ''consid'':46B ''content'':44B ''continu'':10B,41B ''current'':25B ''differ'':31B ''enter'':4A ''file'':14B ''help'':39B ''make'':22B,42B ''middl'':28B ''peac'':20B ''pleas'':45B ''radio'':34B ''remap'':33B ''rob'':1A,7B ''save'':13B ''share'':12B ''subscrib'':47B ''support'':37B ''two'':30B ''us'':40B ''vii'':6A,17B ''war'':32B ''wonder'':21B ''www.remapradio.com'':49B', false, 'PT2H46M26S', 'https://i.ytimg.com/vi/qAA7HJR71cE/maxresdefault.jpg'),
-	('TaRK2oSkIPI', 'remap', 'Remap Talks Over the Xbox Developer Direct', 'How long will Microsoft make Patrick wait to download Ninja Gaiden?
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
 
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/TaRK2oSkIPI/mqdefault.jpg', '2025-01-24 15:38:16+00', '''audienc'':22B ''consid'':32B ''content'':30B ''continu'':27B ''develop'':6A ''direct'':7A ''download'':16B ''gaiden'':18B ''help'':25B ''long'':9B ''make'':12B,28B ''microsoft'':11B ''ninja'':17B ''patrick'':13B ''pleas'':31B ''radio'':20B ''remap'':1A,19B ''subscrib'':33B ''support'':23B ''talk'':2A ''us'':26B ''wait'':14B ''www.remapradio.com'':35B ''xbox'':5A', false, 'PT1H14M56S', 'https://i.ytimg.com/vi/TaRK2oSkIPI/maxresdefault.jpg'),
-	('4V43JvjvLHw', 'remap', 'Volgarr the Viking x Nextlander [Part 7]', 'Patrick and Brad have, once again, returned to the prison of their own making. Will either make it out alive?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/4V43JvjvLHw/mqdefault.jpg', '2025-01-17 21:01:55+00', '''7'':7A ''aliv'':27B ''audienc'':31B ''brad'':10B ''consid'':41B ''content'':39B ''continu'':36B ''either'':23B ''help'':34B ''make'':21B,24B,37B ''nextland'':5A ''part'':6A ''patrick'':8B ''pleas'':40B ''prison'':17B ''radio'':29B ''remap'':28B ''return'':14B ''subscrib'':42B ''support'':32B ''us'':35B ''vike'':3A ''volgarr'':1A ''www.remapradio.com'':44B ''x'':4A', false, 'PT1H47M51S', 'https://i.ytimg.com/vi/4V43JvjvLHw/maxresdefault.jpg'),
+Thanks for watching.', 'https://i.ytimg.com/vi/PsjZ6qakyJY/mqdefault.jpg', '2025-01-27 23:20:39+00', '''/nextlander'':31B ''01'':7A ''abbi'':1A,8B ''back'':12B ''communiti'':28B ''famili'':22B ''interest'':21B ''investig'':18B ''nextland'':23B ''part'':6A ''readi'':14B ''roottre'':5A ''support'':25B ''thank'':32B ''vinni'':2A,10B ''watch'':34B ''www.patreon.com'':30B ''www.patreon.com/nextlander'':29B', false, 'PT1H50M', 'https://i.ytimg.com/vi/PsjZ6qakyJY/maxresdefault.jpg'),
 	('S69rZ93RQHQ', 'remap', 'Oh Yes, Helldivers Has Mechs Now', 'Democracy won''t defend itself, but having mechs definitely helps.  
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/S69rZ93RQHQ/mqdefault.jpg', '2024-03-10 16:27:50+00', '''audienc'':19B ''consid'':29B ''content'':27B ''continu'':24B ''defend'':9B ''definit'':14B ''democraci'':6B ''helldiv'':3A ''help'':15B,22B ''make'':25B ''mech'':5A,13B ''oh'':1A ''pleas'':28B ''radio'':17B ''remap'':16B ''subscrib'':30B ''support'':20B ''us'':23B ''won'':7B ''www.remapradio.com'':32B ''yes'':2A', false, 'PT2H39M15S', 'https://i.ytimg.com/vi/S69rZ93RQHQ/maxresdefault.jpg'),
-	('jzq1LURSgjw', 'remap', 'The Return of Oberhoff', 'Actual racing might be a little quiet right now, but Rob and Cado are back in Motorsports Manager. 
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/jzq1LURSgjw/mqdefault.jpg', '2025-01-15 04:43:15+00', '''actual'':5B ''audienc'':26B ''back'':19B ''cado'':17B ''consid'':36B ''content'':34B ''continu'':31B ''help'':29B ''littl'':10B ''make'':32B ''manag'':22B ''might'':7B ''motorsport'':21B ''oberhoff'':4A ''pleas'':35B ''quiet'':11B ''race'':6B ''radio'':24B ''remap'':23B ''return'':2A ''right'':12B ''rob'':15B ''subscrib'':37B ''support'':27B ''us'':30B ''www.remapradio.com'':39B', false, 'PT2H23M11S', 'https://i.ytimg.com/vi/jzq1LURSgjw/maxresdefault.jpg'),
 	('SnDvu5q_Kp8', 'giantbomb', 'Important Cheese Pizza Discourse | Voicemail Dump Truck 07/20/23', 'Will it be a debate about cheese pizza that drives a wedge between us?
 
 Call into the Dump Truck at (707)EXIT-FLU
 
 #vmdt #voicemaildumptruck #giantbomb', 'https://i.ytimg.com/vi/SnDvu5q_Kp8/mqdefault.jpg', '2023-07-20 21:34:19+00', '''07/20/23'':8A ''707'':29B ''call'':23B ''chees'':2A,15B ''debat'':13B ''discours'':4A ''drive'':18B ''dump'':6A,26B ''exit'':31B ''exit-flu'':30B ''flu'':32B ''giantbomb'':35B ''import'':1A ''pizza'':3A,16B ''truck'':7A,27B ''us'':22B ''vmdt'':33B ''voicemail'':5A ''voicemaildumptruck'':34B ''wedg'':20B', false, 'PT1H25M47S', 'https://i.ytimg.com/vi/SnDvu5q_Kp8/maxresdefault.jpg'),
-	('cBNXiffTwvw', 'remap', 'Save Point 2024 -- Rob Enters the VR Zone', 'Once he''s gone in, will he ever come back?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/cBNXiffTwvw/mqdefault.jpg', '2024-12-06 16:15:47+00', '''2024'':3A ''audienc'':22B ''back'':18B ''come'':17B ''consid'':32B ''content'':30B ''continu'':27B ''enter'':5A ''ever'':16B ''gone'':12B ''help'':25B ''make'':28B ''pleas'':31B ''point'':2A ''radio'':20B ''remap'':19B ''rob'':4A ''save'':1A ''subscrib'':33B ''support'':23B ''us'':26B ''vr'':7A ''www.remapradio.com'':35B ''zone'':8A', false, 'PT3H5M47S', 'https://i.ytimg.com/vi/cBNXiffTwvw/maxresdefault.jpg'),
-	('bGa2e7rxX4g', 'remap', 'The Zone Compels Rob to Return', 'S.T.A.L.K.E.R. 2 is here. What else are Rob and Cado to do, except continue into The Zone?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/bGa2e7rxX4g/mqdefault.jpg', '2024-11-22 22:52:48+00', '''2'':8B ''audienc'':27B ''cado'':16B ''compel'':3A ''consid'':37B ''content'':35B ''continu'':20B,32B ''els'':12B ''except'':19B ''help'':30B ''make'':33B ''pleas'':36B ''radio'':25B ''remap'':24B ''return'':6A ''rob'':4A,14B ''s.t.a.l.k.e.r'':7B ''subscrib'':38B ''support'':28B ''us'':31B ''www.remapradio.com'':40B ''zone'':2A,23B', false, 'PT2H22M6S', 'https://i.ytimg.com/vi/bGa2e7rxX4g/maxresdefault.jpg'),
-	('1dghKCTSQyc', 'remap', 'Let''s Build a 3D Model of Patrick''s New Office', 'What if instead of one L-shaped desk in a cramped space, there were TWO L-shaped desks in a cramped space?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/1dghKCTSQyc/mqdefault.jpg', '2024-11-19 22:30:46+00', '''3d'':5A ''audienc'':39B ''build'':3A ''consid'':49B ''content'':47B ''continu'':44B ''cramp'':23B,34B ''desk'':20B,31B ''help'':42B ''instead'':14B ''l'':18B,29B ''l-shape'':17B,28B ''let'':1A ''make'':45B ''model'':6A ''new'':10A ''offic'':11A ''one'':16B ''patrick'':8A ''pleas'':48B ''radio'':37B ''remap'':36B ''shape'':19B,30B ''space'':24B,35B ''subscrib'':50B ''support'':40B ''two'':27B ''us'':43B ''www.remapradio.com'':52B', false, 'PT1H57M16S', 'https://i.ytimg.com/vi/1dghKCTSQyc/maxresdefault.jpg'),
-	('uTs_vnv8zuQ', 'remap', 'The Zone Rules Everything Around Rob', 'What kind of anomalies do you think they serve during Thanksgiving dinner in the zone?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/uTs_vnv8zuQ/mqdefault.jpg', '2024-12-04 00:02:45+00', '''anomali'':10B ''around'':5A ''audienc'':25B ''consid'':35B ''content'':33B ''continu'':30B ''dinner'':18B ''everyth'':4A ''help'':28B ''kind'':8B ''make'':31B ''pleas'':34B ''radio'':23B ''remap'':22B ''rob'':6A ''rule'':3A ''serv'':15B ''subscrib'':36B ''support'':26B ''thanksgiv'':17B ''think'':13B ''us'':29B ''www.remapradio.com'':38B ''zone'':2A,21B', false, 'PT1H48M46S', 'https://i.ytimg.com/vi/uTs_vnv8zuQ/maxresdefault.jpg'),
-	('zwF3T4s0ygw', 'remap', 'The Wheel of S.T.A.L.K.E.R.', 'Before we head back into The Zone, who''s ready for a brief stop to anime girl bullet hell?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/zwF3T4s0ygw/mqdefault.jpg', '2024-11-21 23:18:16+00', '''anim'':20B ''audienc'':27B ''back'':8B ''brief'':17B ''bullet'':22B ''consid'':37B ''content'':35B ''continu'':32B ''girl'':21B ''head'':7B ''hell'':23B ''help'':30B ''make'':33B ''pleas'':36B ''radio'':25B ''readi'':14B ''remap'':24B ''s.t.a.l.k.e.r'':4A ''stop'':18B ''subscrib'':38B ''support'':28B ''us'':31B ''wheel'':2A ''www.remapradio.com'':40B ''zone'':11B', false, 'PT2H40M55S', 'https://i.ytimg.com/vi/zwF3T4s0ygw/maxresdefault.jpg'),
 	('GGq0CAfbjWY', 'remap', 'The Wheel Returns to the Sea', 'Ah, yes. The wheel returns, taking us to the sea, questionable MMOs, and, of course, space.
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/GGq0CAfbjWY/mqdefault.jpg', '2024-11-14 23:00:26+00', '''ah'':7B ''audienc'':26B ''consid'':36B ''content'':34B ''continu'':31B ''cours'':21B ''help'':29B ''make'':32B ''mmos'':18B ''pleas'':35B ''question'':17B ''radio'':24B ''remap'':23B ''return'':3A,11B ''sea'':6A,16B ''space'':22B ''subscrib'':37B ''support'':27B ''take'':12B ''us'':13B,30B ''wheel'':2A,10B ''www.remapradio.com'':39B ''yes'':8B', false, 'PT2H10M16S', 'https://i.ytimg.com/vi/GGq0CAfbjWY/maxresdefault.jpg'),
-	('ftldjJYSdoE', 'remap', 'Volgarr the Viking x Nextlander [Part 6]', 'For once, Patrick has a slight edge on Brad in Volgarr the Viking, but will it hold?
+	('bGa2e7rxX4g', 'remap', 'The Zone Compels Rob to Return', 'S.T.A.L.K.E.R. 2 is here. What else are Rob and Cado to do, except continue into The Zone?
 
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/ftldjJYSdoE/mqdefault.jpg', '2024-12-13 22:01:57+00', '''6'':7A ''audienc'':28B ''brad'':16B ''consid'':38B ''content'':36B ''continu'':33B ''edg'':14B ''help'':31B ''hold'':24B ''make'':34B ''nextland'':5A ''part'':6A ''patrick'':10B ''pleas'':37B ''radio'':26B ''remap'':25B ''slight'':13B ''subscrib'':39B ''support'':29B ''us'':32B ''vike'':3A,20B ''volgarr'':1A,18B ''www.remapradio.com'':41B ''x'':4A', false, 'PT2H8M36S', 'https://i.ytimg.com/vi/ftldjJYSdoE/maxresdefault.jpg'),
-	('N9Q5WzCxF1E', 'remap', 'The Wheel Turns Towards Civilization VII', 'Perhaps the secret to unlocking Rob and Cado''s great empire is, in fact, cloud streaming.
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/bGa2e7rxX4g/mqdefault.jpg', '2024-11-22 22:52:48+00', '''2'':8B ''audienc'':27B ''cado'':16B ''compel'':3A ''consid'':37B ''content'':35B ''continu'':20B,32B ''els'':12B ''except'':19B ''help'':30B ''make'':33B ''pleas'':36B ''radio'':25B ''remap'':24B ''return'':6A ''rob'':4A,14B ''s.t.a.l.k.e.r'':7B ''subscrib'':38B ''support'':28B ''us'':31B ''www.remapradio.com'':40B ''zone'':2A,23B', false, 'PT2H22M6S', 'https://i.ytimg.com/vi/bGa2e7rxX4g/maxresdefault.jpg'),
+	('zwF3T4s0ygw', 'remap', 'The Wheel of S.T.A.L.K.E.R.', 'Before we head back into The Zone, who''s ready for a brief stop to anime girl bullet hell?
 
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/N9Q5WzCxF1E/mqdefault.jpg', '2025-02-28 15:46:17+00', '''audienc'':26B ''cado'':14B ''civil'':5A ''cloud'':21B ''consid'':36B ''content'':34B ''continu'':31B ''empir'':17B ''fact'':20B ''great'':16B ''help'':29B ''make'':32B ''perhap'':7B ''pleas'':35B ''radio'':24B ''remap'':23B ''rob'':12B ''secret'':9B ''stream'':22B ''subscrib'':37B ''support'':27B ''toward'':4A ''turn'':3A ''unlock'':11B ''us'':30B ''vii'':6A ''wheel'':2A ''www.remapradio.com'':39B', false, 'PT2H37M41S', 'https://i.ytimg.com/vi/N9Q5WzCxF1E/maxresdefault.jpg'),
-	('VEvmEKQPpZs', 'remap', 'FeBOOary Continues With More Haunted PS1', 'One journey into nostalgic horror wasn''t enough. We have to go deeper. We require arcane UI.
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/zwF3T4s0ygw/mqdefault.jpg', '2024-11-21 23:18:16+00', '''anim'':20B ''audienc'':27B ''back'':8B ''brief'':17B ''bullet'':22B ''consid'':37B ''content'':35B ''continu'':32B ''girl'':21B ''head'':7B ''hell'':23B ''help'':30B ''make'':33B ''pleas'':36B ''radio'':25B ''readi'':14B ''remap'':24B ''s.t.a.l.k.e.r'':4A ''stop'':18B ''subscrib'':38B ''support'':28B ''us'':31B ''wheel'':2A ''www.remapradio.com'':40B ''zone'':11B', false, 'PT2H40M55S', 'https://i.ytimg.com/vi/zwF3T4s0ygw/maxresdefault.jpg'),
+	('1dghKCTSQyc', 'remap', 'Let''s Build a 3D Model of Patrick''s New Office', 'What if instead of one L-shaped desk in a cramped space, there were TWO L-shaped desks in a cramped space?
 
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/VEvmEKQPpZs/mqdefault.jpg', '2025-02-13 23:16:32+00', '''arcan'':22B ''audienc'':27B ''consid'':37B ''content'':35B ''continu'':2A,32B ''deeper'':19B ''enough'':14B ''febooari'':1A ''go'':18B ''haunt'':5A ''help'':30B ''horror'':11B ''journey'':8B ''make'':33B ''nostalg'':10B ''one'':7B ''pleas'':36B ''ps1'':6A ''radio'':25B ''remap'':24B ''requir'':21B ''subscrib'':38B ''support'':28B ''ui'':23B ''us'':31B ''wasn'':12B ''www.remapradio.com'':40B', false, 'PT2H43M36S', 'https://i.ytimg.com/vi/VEvmEKQPpZs/maxresdefault.jpg'),
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/1dghKCTSQyc/mqdefault.jpg', '2024-11-19 22:30:46+00', '''3d'':5A ''audienc'':39B ''build'':3A ''consid'':49B ''content'':47B ''continu'':44B ''cramp'':23B,34B ''desk'':20B,31B ''help'':42B ''instead'':14B ''l'':18B,29B ''l-shape'':17B,28B ''let'':1A ''make'':45B ''model'':6A ''new'':10A ''offic'':11A ''one'':16B ''patrick'':8A ''pleas'':48B ''radio'':37B ''remap'':36B ''shape'':19B,30B ''space'':24B,35B ''subscrib'':50B ''support'':40B ''two'':27B ''us'':43B ''www.remapradio.com'':52B', false, 'PT1H57M16S', 'https://i.ytimg.com/vi/1dghKCTSQyc/maxresdefault.jpg'),
+	('jzq1LURSgjw', 'remap', 'The Return of Oberhoff', 'Actual racing might be a little quiet right now, but Rob and Cado are back in Motorsports Manager. 
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/jzq1LURSgjw/mqdefault.jpg', '2025-01-15 04:43:15+00', '''actual'':5B ''audienc'':26B ''back'':19B ''cado'':17B ''consid'':36B ''content'':34B ''continu'':31B ''help'':29B ''littl'':10B ''make'':32B ''manag'':22B ''might'':7B ''motorsport'':21B ''oberhoff'':4A ''pleas'':35B ''quiet'':11B ''race'':6B ''radio'':24B ''remap'':23B ''return'':2A ''right'':12B ''rob'':15B ''subscrib'':37B ''support'':27B ''us'':30B ''www.remapradio.com'':39B', false, 'PT2H23M11S', 'https://i.ytimg.com/vi/jzq1LURSgjw/maxresdefault.jpg'),
+	('cBNXiffTwvw', 'remap', 'Save Point 2024 -- Rob Enters the VR Zone', 'Once he''s gone in, will he ever come back?
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/cBNXiffTwvw/mqdefault.jpg', '2024-12-06 16:15:47+00', '''2024'':3A ''audienc'':22B ''back'':18B ''come'':17B ''consid'':32B ''content'':30B ''continu'':27B ''enter'':5A ''ever'':16B ''gone'':12B ''help'':25B ''make'':28B ''pleas'':31B ''point'':2A ''radio'':20B ''remap'':19B ''rob'':4A ''save'':1A ''subscrib'':33B ''support'':23B ''us'':26B ''vr'':7A ''www.remapradio.com'':35B ''zone'':8A', false, 'PT3H5M47S', 'https://i.ytimg.com/vi/cBNXiffTwvw/maxresdefault.jpg'),
+	('uTs_vnv8zuQ', 'remap', 'The Zone Rules Everything Around Rob', 'What kind of anomalies do you think they serve during Thanksgiving dinner in the zone?
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/uTs_vnv8zuQ/mqdefault.jpg', '2024-12-04 00:02:45+00', '''anomali'':10B ''around'':5A ''audienc'':25B ''consid'':35B ''content'':33B ''continu'':30B ''dinner'':18B ''everyth'':4A ''help'':28B ''kind'':8B ''make'':31B ''pleas'':34B ''radio'':23B ''remap'':22B ''rob'':6A ''rule'':3A ''serv'':15B ''subscrib'':36B ''support'':26B ''thanksgiv'':17B ''think'':13B ''us'':29B ''www.remapradio.com'':38B ''zone'':2A,21B', false, 'PT1H48M46S', 'https://i.ytimg.com/vi/uTs_vnv8zuQ/maxresdefault.jpg'),
 	('QhQXLUhpYYw', 'remap', 'Steam Next Lightning Round [Halloween Edition]', 'Patrick and Cado are checking out a smattering of demos of Steam Next Fest, including Windblown, Heartworm, and more.
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/QhQXLUhpYYw/mqdefault.jpg', '2024-10-16 18:34:34+00', '''audienc'':29B ''cado'':9B ''check'':11B ''consid'':39B ''content'':37B ''continu'':34B ''demo'':16B ''edit'':6A ''fest'':20B ''halloween'':5A ''heartworm'':23B ''help'':32B ''includ'':21B ''lightn'':3A ''make'':35B ''next'':2A,19B ''patrick'':7B ''pleas'':38B ''radio'':27B ''remap'':26B ''round'':4A ''smatter'':14B ''steam'':1A,18B ''subscrib'':40B ''support'':30B ''us'':33B ''windblown'':22B ''www.remapradio.com'':42B', false, 'PT2H49M31S', 'https://i.ytimg.com/vi/QhQXLUhpYYw/maxresdefault.jpg'),
@@ -20499,21 +19690,21 @@ Remap Radio is audience supported, to help us continue making this content pleas
 FIFA 16 is EA''s soccer game for the year 2015.
 
 FIFA 16: Giant Bomb Quick Look [Extended HD Gameplay]', 'https://i.ytimg.com/vi/qZWufNaMpZQ/mqdefault.jpg', '2015-10-01 13:00:01+00', '''16'':2A,30B,41B ''2015'':39B ''ball'':28B ''bomb'':4A,43B ''contain'':24B ''dan'':12B ''danni'':17B ''drop'':26B ''dwyer'':19B ''ea'':32B ''extend'':7A,46B ''fifa'':1A,29B,40B ''friend'':22B ''game'':35B ''gameplay'':9A,48B ''gamespot'':15B ''gerstmann'':11B ''giant'':3A,42B ''hd'':8A,47B ''hold'':23B ''jeff'':10B ''kick'':27B ''look'':6A,45B ''o'':18B ''quick'':5A,44B ''ryckert'':13B ''soccer'':34B ''year'':38B', false, 'PT47M45S', 'https://i.ytimg.com/vi/qZWufNaMpZQ/maxresdefault.jpg'),
-	('P9IgzulGatI', 'remap', 'Volgarr the Viking x Nextlander [Part 8]', 'It''s all come down to this. Who will win: Brad or Patrick? Or...will we ALL lose?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/P9IgzulGatI/mqdefault.jpg', '2025-03-07 21:53:56+00', '''8'':7A ''audienc'':29B ''brad'':18B ''come'':11B ''consid'':39B ''content'':37B ''continu'':34B ''help'':32B ''lose'':25B ''make'':35B ''nextland'':5A ''part'':6A ''patrick'':20B ''pleas'':38B ''radio'':27B ''remap'':26B ''subscrib'':40B ''support'':30B ''us'':33B ''vike'':3A ''volgarr'':1A ''win'':17B ''www.remapradio.com'':42B ''x'':4A', false, 'PT1H52M31S', 'https://i.ytimg.com/vi/P9IgzulGatI/maxresdefault.jpg'),
-	('sUacCE5rXp8', 'remap', 'It''s Raining Money in Motorsports Manager', 'Rob and Cado are back on that grind, getting paid (by their drivers) and making bank (blowing it immediately on new parts).
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/sUacCE5rXp8/mqdefault.jpg', '2025-01-31 16:56:55+00', '''audienc'':33B ''back'':12B ''bank'':23B ''blow'':24B ''cado'':10B ''consid'':43B ''content'':41B ''continu'':38B ''driver'':20B ''get'':16B ''grind'':15B ''help'':36B ''immedi'':26B ''make'':22B,39B ''manag'':7A ''money'':4A ''motorsport'':6A ''new'':28B ''paid'':17B ''part'':29B ''pleas'':42B ''radio'':31B ''rain'':3A ''remap'':30B ''rob'':8B ''subscrib'':44B ''support'':34B ''us'':37B ''www.remapradio.com'':46B', false, 'PT3H15M36S', 'https://i.ytimg.com/vi/sUacCE5rXp8/maxresdefault.jpg'),
 	('7sxo4p5MrD8', 'remap', 'Volgarr the Viking x Nextlander [Part 5]', 'Patrick and Brad are neck-and-neck, struggling to stay afloat in this nightmarish  water area. Can anyone make progress?
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/7sxo4p5MrD8/mqdefault.jpg', '2024-11-15 21:54:27+00', '''5'':7A ''afloat'':19B ''anyon'':26B ''area'':24B ''audienc'':32B ''brad'':10B ''consid'':42B ''content'':40B ''continu'':37B ''help'':35B ''make'':27B,38B ''neck'':13B,15B ''neck-and-neck'':12B ''nextland'':5A ''nightmarish'':22B ''part'':6A ''patrick'':8B ''pleas'':41B ''progress'':28B ''radio'':30B ''remap'':29B ''stay'':18B ''struggl'':16B ''subscrib'':43B ''support'':33B ''us'':36B ''vike'':3A ''volgarr'':1A ''water'':23B ''www.remapradio.com'':45B ''x'':4A', false, 'PT2H4M56S', 'https://i.ytimg.com/vi/7sxo4p5MrD8/maxresdefault.jpg'),
 	('DBwk8dVwRek', 'remap', 'Cado''s RPG Corner  - Checking Out Metaphor: ReFantazio!', 'Cado is ringing in the weekend with Metaphor: ReFantazio
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/DBwk8dVwRek/mqdefault.jpg', '2024-10-12 12:00:12+00', '''audienc'':21B ''cado'':1A,9B ''check'':5A ''consid'':31B ''content'':29B ''continu'':26B ''corner'':4A ''help'':24B ''make'':27B ''metaphor'':7A,16B ''pleas'':30B ''radio'':19B ''refantazio'':8A,17B ''remap'':18B ''ring'':11B ''rpg'':3A ''subscrib'':32B ''support'':22B ''us'':25B ''weekend'':14B ''www.remapradio.com'':34B', false, 'PT2H59M1S', 'https://i.ytimg.com/vi/DBwk8dVwRek/maxresdefault.jpg'),
-	('UAa9dzxBTtk', 'remap', 'Save Point 2024 — Ranking Video Game Console Startups (Part 2)', 'Who knew the best way to raise money for charity was to watch YouTube videos on loop for hours?
+	('VEvmEKQPpZs', 'remap', 'FeBOOary Continues With More Haunted PS1', 'One journey into nostalgic horror wasn''t enough. We have to go deeper. We require arcane UI.
 
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/UAa9dzxBTtk/mqdefault.jpg', '2024-11-19 19:31:27+00', '''2'':10A ''2024'':3A ''audienc'':33B ''best'':14B ''chariti'':20B ''consid'':43B ''consol'':7A ''content'':41B ''continu'':38B ''game'':6A ''help'':36B ''hour'':29B ''knew'':12B ''loop'':27B ''make'':39B ''money'':18B ''part'':9A ''pleas'':42B ''point'':2A ''radio'':31B ''rais'':17B ''rank'':4A ''remap'':30B ''save'':1A ''startup'':8A ''subscrib'':44B ''support'':34B ''us'':37B ''video'':5A,25B ''watch'':23B ''way'':15B ''www.remapradio.com'':46B ''youtub'':24B', false, 'PT2H20M6S', 'https://i.ytimg.com/vi/UAa9dzxBTtk/maxresdefault.jpg'),
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/VEvmEKQPpZs/mqdefault.jpg', '2025-02-13 23:16:32+00', '''arcan'':22B ''audienc'':27B ''consid'':37B ''content'':35B ''continu'':2A,32B ''deeper'':19B ''enough'':14B ''febooari'':1A ''go'':18B ''haunt'':5A ''help'':30B ''horror'':11B ''journey'':8B ''make'':33B ''nostalg'':10B ''one'':7B ''pleas'':36B ''ps1'':6A ''radio'':25B ''remap'':24B ''requir'':21B ''subscrib'':38B ''support'':28B ''ui'':23B ''us'':31B ''wasn'':12B ''www.remapradio.com'':40B', false, 'PT2H43M36S', 'https://i.ytimg.com/vi/VEvmEKQPpZs/maxresdefault.jpg'),
+	('N9Q5WzCxF1E', 'remap', 'The Wheel Turns Towards Civilization VII', 'Perhaps the secret to unlocking Rob and Cado''s great empire is, in fact, cloud streaming.
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/N9Q5WzCxF1E/mqdefault.jpg', '2025-02-28 15:46:17+00', '''audienc'':26B ''cado'':14B ''civil'':5A ''cloud'':21B ''consid'':36B ''content'':34B ''continu'':31B ''empir'':17B ''fact'':20B ''great'':16B ''help'':29B ''make'':32B ''perhap'':7B ''pleas'':35B ''radio'':24B ''remap'':23B ''rob'':12B ''secret'':9B ''stream'':22B ''subscrib'':37B ''support'':27B ''toward'':4A ''turn'':3A ''unlock'':11B ''us'':30B ''vii'':6A ''wheel'':2A ''www.remapradio.com'':39B', false, 'PT2H37M41S', 'https://i.ytimg.com/vi/N9Q5WzCxF1E/maxresdefault.jpg'),
+	('ftldjJYSdoE', 'remap', 'Volgarr the Viking x Nextlander [Part 6]', 'For once, Patrick has a slight edge on Brad in Volgarr the Viking, but will it hold?
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/ftldjJYSdoE/mqdefault.jpg', '2024-12-13 22:01:57+00', '''6'':7A ''audienc'':28B ''brad'':16B ''consid'':38B ''content'':36B ''continu'':33B ''edg'':14B ''help'':31B ''hold'':24B ''make'':34B ''nextland'':5A ''part'':6A ''patrick'':10B ''pleas'':37B ''radio'':26B ''remap'':25B ''slight'':13B ''subscrib'':39B ''support'':29B ''us'':32B ''vike'':3A,20B ''volgarr'':1A,18B ''www.remapradio.com'':41B ''x'':4A', false, 'PT2H8M36S', 'https://i.ytimg.com/vi/ftldjJYSdoE/maxresdefault.jpg'),
 	('3IZzXOdVkFU', 'giantbomb', 'Tony Hawk''s Pro Skater 5: Giant Bomb Quick Look [Extended HD Gameplay]', 'Not even "Lil Wayne in space" can stop the Tony Hawk series'' steep jam downhill.
 
 Check out our website: http://www.giantbomb.com/
@@ -21099,9 +20290,6 @@ Remap Radio is audience supported, to help us continue making this content pleas
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/ucPEiuSPR0E/mqdefault.jpg', '2023-06-13 15:00:48+00', '''audienc'':48B ''cado'':15B,33B ''come'':29B ''consid'':58B ''content'':56B ''continu'':53B ''dagger'':9B ''danc'':6B ''dash'':7B ''forward'':5A ''game'':23B,44B ''gather'':16B ''help'':51B ''least'':36B ''light'':37B ''make'':54B ''most'':25B ''next'':31B ''oh'':10B ''one'':41B ''optimist'':38B ''pleas'':57B ''radio'':46B ''remap'':1A,45B ''ren'':13B ''rob'':12B ''seem'':26B ''showcas'':21B ''star'':42B ''subscrib'':59B ''support'':49B ''talk'':2A ''ubisoft'':4A,19B ''us'':52B ''war'':43B ''watch'':18B ''www.remapradio.com'':61B ''year'':32B', false, 'PT1H46M17S', 'https://i.ytimg.com/vi/ucPEiuSPR0E/maxresdefault.jpg'),
 	('WejThaKVo0Q', 'remap', 'SYSTEM SHOCK RETURNS', 'Natalie Watson is back to continue the journey she started with Rob all those months ago...', 'https://i.ytimg.com/vi/WejThaKVo0Q/mqdefault.jpg', '2023-06-09 19:00:13+00', '''ago'':19B ''back'':7B ''continu'':9B ''journey'':11B ''month'':18B ''natali'':4B ''return'':3A ''rob'':15B ''shock'':2A ''start'':13B ''system'':1A ''watson'':5B', false, 'PT4H13M14S', 'https://i.ytimg.com/vi/WejThaKVo0Q/maxresdefault.jpg'),
-	('1RtxC1wF98Q', 'remap', 'Patrick vs. Hopshot [Part 4]', 'It''s Happening Again. Your favorite bubble gum is coming back in style. Patrick is debuting a new costume. He swears he''ll beat the game this time. But will he?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/1RtxC1wF98Q/mqdefault.jpg', '2025-05-20 18:51:12+00', '''4'':5A ''audienc'':40B ''back'':16B ''beat'':29B ''bubbl'':12B ''come'':15B ''consid'':50B ''content'':48B ''continu'':45B ''costum'':24B ''debut'':21B ''favorit'':11B ''game'':31B ''gum'':13B ''happen'':8B ''help'':43B ''hopshot'':3A ''ll'':28B ''make'':46B ''new'':23B ''part'':4A ''patrick'':1A,19B ''pleas'':49B ''radio'':38B ''remap'':37B ''style'':18B ''subscrib'':51B ''support'':41B ''swear'':26B ''time'':33B ''us'':44B ''vs'':2A ''www.remapradio.com'':53B', false, 'PT2H41M50S', 'https://i.ytimg.com/vi/1RtxC1wF98Q/maxresdefault.jpg'),
 	('j5PBwlLPLX8', 'remap', 'System Shock Remake... The Second Deck!', 'Rob and Natalie learn about proper save file management, the hard way.
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/j5PBwlLPLX8/mqdefault.jpg', '2023-06-16 23:01:05+00', '''audienc'':22B ''consid'':32B ''content'':30B ''continu'':27B ''deck'':6A ''file'':14B ''hard'':17B ''help'':25B ''learn'':10B ''make'':28B ''manag'':15B ''natali'':9B ''pleas'':31B ''proper'':12B ''radio'':20B ''remak'':3A ''remap'':19B ''rob'':7B ''save'':13B ''second'':5A ''shock'':2A ''subscrib'':33B ''support'':23B ''system'':1A ''us'':26B ''way'':18B ''www.remapradio.com'':35B', false, 'PT3H33M13S', 'https://i.ytimg.com/vi/j5PBwlLPLX8/maxresdefault.jpg'),
@@ -21116,22 +20304,10 @@ Remap Radio is audience supported, to help us continue making this content pleas
 Originally streamed on https://twitch.tv/remapradio
 
 If you like what we do, please consider supporting us at https://www.remapradio.com!', 'https://i.ytimg.com/vi/ZvT_cP4nNhY/mqdefault.jpg', '2023-06-09 16:00:25+00', '''/remapradio'':36B ''announc'':27B ''cado'':14B ''consid'':44B ''day'':9A ''delug'':24B ''dev'':12A ''eventu'':17B ''fest'':7A ''game'':6A,26B ''let'':22B ''like'':39B ''origin'':31B ''patrick'':18B ''pleas'':43B ''ren'':15B ''rob'':13B ''sit'':19B ''stream'':32B ''summer'':5A ''support'':45B ''talk'':2A ''twitch.tv'':35B ''twitch.tv/remapradio'':34B ''us'':46B ''wash'':28B ''www.remapradio.com'':48B', false, 'PT3H32M6S', 'https://i.ytimg.com/vi/ZvT_cP4nNhY/maxresdefault.jpg'),
-	('U0NSoRAscxQ', 'remap', 'One Final Return to Onimusha [Part 3]', 'With our orbs (almost) leveled, Patrick and Cado have one last battle: remembering which way they were going.
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/U0NSoRAscxQ/mqdefault.jpg', '2025-03-11 21:39:16+00', '''3'':7A ''almost'':11B ''audienc'':29B ''battl'':19B ''cado'':15B ''consid'':39B ''content'':37B ''continu'':34B ''final'':2A ''go'':25B ''help'':32B ''last'':18B ''level'':12B ''make'':35B ''one'':1A,17B ''onimusha'':5A ''orb'':10B ''part'':6A ''patrick'':13B ''pleas'':38B ''radio'':27B ''remap'':26B ''rememb'':20B ''return'':3A ''subscrib'':40B ''support'':30B ''us'':33B ''way'':22B ''www.remapradio.com'':42B', false, 'PT2H7M11S', 'https://i.ytimg.com/vi/U0NSoRAscxQ/maxresdefault.jpg'),
-	('qj_AIXB7J28', 'remap', 'Patrick vs. Hopshot', 'Patrick is ready to conquer the challenge of Hopshot, but will the gay frogs allow it? 
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/qj_AIXB7J28/mqdefault.jpg', '2025-04-22 17:53:38+00', '''allow'':18B ''audienc'':23B ''challeng'':10B ''conquer'':8B ''consid'':33B ''content'':31B ''continu'':28B ''frog'':17B ''gay'':16B ''help'':26B ''hopshot'':3A,12B ''make'':29B ''patrick'':1A,4B ''pleas'':32B ''radio'':21B ''readi'':6B ''remap'':20B ''subscrib'':34B ''support'':24B ''us'':27B ''vs'':2A ''www.remapradio.com'':36B', false, 'PT2H25M11S', 'https://i.ytimg.com/vi/qj_AIXB7J28/maxresdefault.jpg'),
-	('Wud5OEvx_fM', 'remap', 'The Wheel Visits the Oldest House', 'We fell for Elden Ring: Nightreign. Can we fall for FBC: Firebreak, too?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/Wud5OEvx_fM/mqdefault.jpg', '2025-06-20 03:06:21+00', '''audienc'':23B ''consid'':33B ''content'':31B ''continu'':28B ''elden'':10B ''fall'':15B ''fbc'':17B ''fell'':8B ''firebreak'':18B ''help'':26B ''hous'':6A ''make'':29B ''nightreign'':12B ''oldest'':5A ''pleas'':32B ''radio'':21B ''remap'':20B ''ring'':11B ''subscrib'':34B ''support'':24B ''us'':27B ''visit'':3A ''wheel'':2A ''www.remapradio.com'':36B', false, 'PT2H34M26S', 'https://i.ytimg.com/vi/Wud5OEvx_fM/maxresdefault.jpg'),
 	('vl00rb6Hr7U', 'giantbomb', 'Did Hideo Kojima really announce a podcast | Game Mess Mornings 08/24/22', 'Grubb is joined by Mike and AJ Minotti to talk about podcasts, Pokemon, and more!
 
 #hideokojima #gamemessmornings #giantbomb', 'https://i.ytimg.com/vi/vl00rb6Hr7U/mqdefault.jpg', '2022-08-24 17:05:00+00', '''08/24/22'':11A ''aj'':18B ''announc'':5A ''game'':8A ''gamemessmorn'':28B ''giantbomb'':29B ''grubb'':12B ''hideo'':2A ''hideokojima'':27B ''join'':14B ''kojima'':3A ''mess'':9A ''mike'':16B ''minotti'':19B ''morn'':10A ''podcast'':7A,23B ''pokemon'':24B ''realli'':4A ''talk'':21B', false, 'PT56M5S', 'https://i.ytimg.com/vi/vl00rb6Hr7U/maxresdefault.jpg'),
 	('D_O2SbUtnpQ', 'giantbomb', 'Worth Playing: 07/11/2014', 'Why is Yoshi dead? How come Mario is crying? These questions and more, courtesy of Nintendo World EX 2 and Detuned.', 'https://i.ytimg.com/vi/D_O2SbUtnpQ/mqdefault.jpg', '2014-07-11 19:21:58+00', '''07/11/2014'':3A ''2'':22B ''come'':9B ''courtesi'':17B ''cri'':12B ''dead'':7B ''detun'':24B ''ex'':21B ''mario'':10B ''nintendo'':19B ''play'':2A ''question'':14B ''world'':20B ''worth'':1A ''yoshi'':6B', false, 'PT16M58S', 'https://i.ytimg.com/vi/D_O2SbUtnpQ/maxresdefault.jpg'),
-	('Pfh-5czXBLU', 'remap', 'Patrick vs. Hopshot [Part 5]', 'Do you want to watch a person publicly tilt? Well, we''ve got the video for you.
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/Pfh-5czXBLU/mqdefault.jpg', '2025-05-22 21:34:48+00', '''5'':5A ''audienc'':26B ''consid'':36B ''content'':34B ''continu'':31B ''got'':18B ''help'':29B ''hopshot'':3A ''make'':32B ''part'':4A ''patrick'':1A ''person'':12B ''pleas'':35B ''public'':13B ''radio'':24B ''remap'':23B ''subscrib'':37B ''support'':27B ''tilt'':14B ''us'':30B ''ve'':17B ''video'':20B ''vs'':2A ''want'':8B ''watch'':10B ''well'':15B ''www.remapradio.com'':39B', false, 'PT1H29M6S', 'https://i.ytimg.com/vi/Pfh-5czXBLU/maxresdefault.jpg'),
 	('HyDXEumvKX8', 'giantbomb', 'Official Playstation Magazine Issue 73 | Demo Derby', 'Jeff Grubb and Dan Ryckert roll back into the derby to check out the disc for Official Playstation Magazine Issue 73. They discover they love True Crime, snowboarding, and being a GAMER!
 
 #demoderby #demodisc #giantbomb', 'https://i.ytimg.com/vi/HyDXEumvKX8/mqdefault.jpg', '2023-02-28 16:00:11+00', '''73'':5A,28B ''back'':14B ''check'':19B ''crime'':34B ''dan'':11B ''demo'':6A ''demoderbi'':40B ''demodisc'':41B ''derbi'':7A,17B ''disc'':22B ''discov'':30B ''gamer'':39B ''giantbomb'':42B ''grubb'':9B ''issu'':4A,27B ''jeff'':8B ''love'':32B ''magazin'':3A,26B ''offici'':1A,24B ''playstat'':2A,25B ''roll'':13B ''ryckert'':12B ''snowboard'':35B ''true'':33B', false, 'PT1H53M44S', 'https://i.ytimg.com/vi/HyDXEumvKX8/maxresdefault.jpg'),
@@ -21143,22 +20319,9 @@ Call (707)EXIT-FLU and leave a voicemail!
 	('ZrxV6OnWp60', 'remap', 'The Wheel of GeForce Now: Origins', 'While Patrick battles a Comcast appointment, Rob and Cado enter the world of Commandos: Origins, before we take the wheel for a spin and fight in the streets.
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/ZrxV6OnWp60/mqdefault.jpg', '2025-04-11 03:23:38+00', '''appoint'':12B ''audienc'':38B ''battl'':9B ''cado'':15B ''comcast'':11B ''commando'':20B ''consid'':48B ''content'':46B ''continu'':43B ''enter'':16B ''fight'':31B ''geforc'':4A ''help'':41B ''make'':44B ''origin'':6A,21B ''patrick'':8B ''pleas'':47B ''radio'':36B ''remap'':35B ''rob'':13B ''spin'':29B ''street'':34B ''subscrib'':49B ''support'':39B ''take'':24B ''us'':42B ''wheel'':2A,26B ''world'':18B ''www.remapradio.com'':51B', false, 'PT2H23M1S', 'https://i.ytimg.com/vi/ZrxV6OnWp60/maxresdefault.jpg'),
-	('9ITqdDLYXx0', 'remap', 'The Wheel of S.H.O.D.A.N.', 'Naturally, our final spin during this round of the wheel includes one of the great immersive sims.
+	('U0NSoRAscxQ', 'remap', 'One Final Return to Onimusha [Part 3]', 'With our orbs (almost) leveled, Patrick and Cado have one last battle: remembering which way they were going.
 
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/9ITqdDLYXx0/mqdefault.jpg', '2025-06-26 22:32:37+00', '''audienc'':25B ''consid'':35B ''content'':33B ''continu'':30B ''final'':7B ''great'':19B ''help'':28B ''immers'':20B ''includ'':15B ''make'':31B ''natur'':5B ''one'':16B ''pleas'':34B ''radio'':23B ''remap'':22B ''round'':11B ''s.h.o.d.a.n'':4A ''sim'':21B ''spin'':8B ''subscrib'':36B ''support'':26B ''us'':29B ''wheel'':2A,14B ''www.remapradio.com'':38B', false, 'PT2H33M21S', 'https://i.ytimg.com/vi/9ITqdDLYXx0/maxresdefault.jpg'),
-	('ixGonKvGFto', 'remap', 'The Wheel of Monster Hunter', 'What if Rob used the charge blade as a treat? And what if the wheel decided to land on Crusader Kings III?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/ixGonKvGFto/mqdefault.jpg', '2025-03-14 01:27:30+00', '''audienc'':31B ''blade'':12B ''charg'':11B ''consid'':41B ''content'':39B ''continu'':36B ''crusad'':25B ''decid'':21B ''help'':34B ''hunter'':5A ''iii'':27B ''king'':26B ''land'':23B ''make'':37B ''monster'':4A ''pleas'':40B ''radio'':29B ''remap'':28B ''rob'':8B ''subscrib'':42B ''support'':32B ''treat'':15B ''us'':35B ''use'':9B ''wheel'':2A,20B ''www.remapradio.com'':44B', false, 'PT3H13M46S', 'https://i.ytimg.com/vi/ixGonKvGFto/maxresdefault.jpg'),
-	('ISuS0LId9_s', 'remap', 'Happy Holidays to Space Marine 2 [Part 6]', 'Rob, Patrick, and Cado have one last thing to take care off before the holidays: chaos.
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/ISuS0LId9_s/mqdefault.jpg', '2024-12-20 03:59:48+00', '''2'':6A ''6'':8A ''audienc'':28B ''cado'':12B ''care'':19B ''chao'':24B ''consid'':38B ''content'':36B ''continu'':33B ''happi'':1A ''help'':31B ''holiday'':2A,23B ''last'':15B ''make'':34B ''marin'':5A ''one'':14B ''part'':7A ''patrick'':10B ''pleas'':37B ''radio'':26B ''remap'':25B ''rob'':9B ''space'':4A ''subscrib'':39B ''support'':29B ''take'':18B ''thing'':16B ''us'':32B ''www.remapradio.com'':41B', false, 'PT2H49M56S', 'https://i.ytimg.com/vi/ISuS0LId9_s/maxresdefault.jpg'),
-	('lrszP6ZvDXs', 'remap', 'The Wheel of Split Fiction', 'Cado and Patrick head to the latest co-op game from the developers of It Takes Two, before they descent into rugby and goblins.', 'https://i.ytimg.com/vi/lrszP6ZvDXs/mqdefault.jpg', '2025-03-07 16:19:30+00', '''cado'':6B ''co'':14B ''co-op'':13B ''descent'':26B ''develop'':19B ''fiction'':5A ''game'':16B ''goblin'':30B ''head'':9B ''latest'':12B ''op'':15B ''patrick'':8B ''rugbi'':28B ''split'':4A ''take'':22B ''two'':23B ''wheel'':2A', false, 'PT2H13M31S', 'https://i.ytimg.com/vi/lrszP6ZvDXs/maxresdefault.jpg'),
-	('Qq8SmMX32Kc', 'remap', 'Save Point 2024 — Ranking Video Game Console Startups (Part 1)', 'A note to the audience: this segment was supposed to last two hours.
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/Qq8SmMX32Kc/mqdefault.jpg', '2024-11-19 19:30:37+00', '''1'':10A ''2024'':3A ''audienc'':15B,27B ''consid'':37B ''consol'':7A ''content'':35B ''continu'':32B ''game'':6A ''help'':30B ''hour'':23B ''last'':21B ''make'':33B ''note'':12B ''part'':9A ''pleas'':36B ''point'':2A ''radio'':25B ''rank'':4A ''remap'':24B ''save'':1A ''segment'':17B ''startup'':8A ''subscrib'':38B ''support'':28B ''suppos'':19B ''two'':22B ''us'':31B ''video'':5A ''www.remapradio.com'':40B', false, 'PT2H9M15S', 'https://i.ytimg.com/vi/Qq8SmMX32Kc/maxresdefault.jpg'),
-	('fRYmLlJtpQ0', 'remap', 'Entering a New Era in Civilization VII', 'Join Cado as they explore the world of Civilization VII, and try to out culture the rest of the world. Hope no one attacks this totally undefended city...
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/fRYmLlJtpQ0/mqdefault.jpg', '2025-02-12 16:27:53+00', '''attack'':31B ''audienc'':39B ''cado'':9B ''citi'':35B ''civil'':6A,16B ''consid'':49B ''content'':47B ''continu'':44B ''cultur'':22B ''enter'':1A ''era'':4A ''explor'':12B ''help'':42B ''hope'':28B ''join'':8B ''make'':45B ''new'':3A ''one'':30B ''pleas'':48B ''radio'':37B ''remap'':36B ''rest'':24B ''subscrib'':50B ''support'':40B ''total'':33B ''tri'':19B ''undefend'':34B ''us'':43B ''vii'':7A,17B ''world'':14B,27B ''www.remapradio.com'':52B', false, 'PT3H4M28S', 'https://i.ytimg.com/vi/fRYmLlJtpQ0/maxresdefault.jpg'),
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/U0NSoRAscxQ/mqdefault.jpg', '2025-03-11 21:39:16+00', '''3'':7A ''almost'':11B ''audienc'':29B ''battl'':19B ''cado'':15B ''consid'':39B ''content'':37B ''continu'':34B ''final'':2A ''go'':25B ''help'':32B ''last'':18B ''level'':12B ''make'':35B ''one'':1A,17B ''onimusha'':5A ''orb'':10B ''part'':6A ''patrick'':13B ''pleas'':38B ''radio'':27B ''remap'':26B ''rememb'':20B ''return'':3A ''subscrib'':40B ''support'':30B ''us'':33B ''way'':22B ''www.remapradio.com'':42B', false, 'PT2H7M11S', 'https://i.ytimg.com/vi/U0NSoRAscxQ/maxresdefault.jpg'),
 	('grgY02TJQns', 'remap', 'The Wisdom of Chat in Echoes of Wisdom', 'Cado finds out what happens when you imbue the audience with true power.
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/grgY02TJQns/mqdefault.jpg', '2024-10-07 21:23:05+00', '''audienc'':18B,25B ''cado'':9B ''chat'':4A ''consid'':35B ''content'':33B ''continu'':30B ''echo'':6A ''find'':10B ''happen'':13B ''help'':28B ''imbu'':16B ''make'':31B ''pleas'':34B ''power'':21B ''radio'':23B ''remap'':22B ''subscrib'':36B ''support'':26B ''true'':20B ''us'':29B ''wisdom'':2A,8A ''www.remapradio.com'':38B', false, 'PT2H23M16S', 'https://i.ytimg.com/vi/grgY02TJQns/maxresdefault.jpg'),
@@ -21174,18 +20337,13 @@ Remap Radio is audience supported, to help us continue making this content pleas
 	('1vSWg01tb2w', 'remap', 'The Wheel of UFO 50 Spins Again', 'We played a bunch of UFO 50 games last week, but apparently, there are more left. Spin!
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/1vSWg01tb2w/mqdefault.jpg', '2024-10-03 21:34:20+00', '''50'':5A,13B ''appar'':18B ''audienc'':27B ''bunch'':10B ''consid'':37B ''content'':35B ''continu'':32B ''game'':14B ''help'':30B ''last'':15B ''left'':22B ''make'':33B ''play'':8B ''pleas'':36B ''radio'':25B ''remap'':24B ''spin'':6A,23B ''subscrib'':38B ''support'':28B ''ufo'':4A,12B ''us'':31B ''week'':16B ''wheel'':2A ''www.remapradio.com'':40B', false, 'PT2H2M56S', 'https://i.ytimg.com/vi/1vSWg01tb2w/maxresdefault.jpg'),
-	('QYEKloE8VTg', 'remap', 'Remap in New York (Day Three) – Part 2', 'For years, Chia has been telling us “Hey, we really need to watch the Disney Channel original movie The Luck of the Irish.” It has layers. It has much say about the state of America, diversity, and what exactly “white culture” is. Out of Twilight movies, we caved while in New York. Now, you can listen to our reaction, and wonder if we’re about to embark on an ambitious journey: more Disney Channel movies. Sync this with a copy of The Luck of the Irish and listen along!
+	('lrszP6ZvDXs', 'remap', 'The Wheel of Split Fiction', 'Cado and Patrick head to the latest co-op game from the developers of It Takes Two, before they descent into rugby and goblins.', 'https://i.ytimg.com/vi/lrszP6ZvDXs/mqdefault.jpg', '2025-03-07 16:19:30+00', '''cado'':6B ''co'':14B ''co-op'':13B ''descent'':26B ''develop'':19B ''fiction'':5A ''game'':16B ''goblin'':30B ''head'':9B ''latest'':12B ''op'':15B ''patrick'':8B ''rugbi'':28B ''split'':4A ''take'':22B ''two'':23B ''wheel'':2A', false, 'PT2H13M31S', 'https://i.ytimg.com/vi/lrszP6ZvDXs/maxresdefault.jpg'),
+	('Qq8SmMX32Kc', 'remap', 'Save Point 2024 — Ranking Video Game Console Startups (Part 1)', 'A note to the audience: this segment was supposed to last two hours.
 
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/QYEKloE8VTg/mqdefault.jpg', '2025-04-07 19:25:25+00', '''2'':8A ''along'':97B ''ambiti'':78B ''america'':43B ''audienc'':101B ''cave'':56B ''channel'':24B,82B ''chia'':11B ''consid'':111B ''content'':109B ''continu'':106B ''copi'':88B ''cultur'':49B ''day'':5A ''disney'':23B,81B ''divers'':44B ''embark'':75B ''exact'':47B ''help'':104B ''hey'':16B ''irish'':31B,94B ''journey'':79B ''layer'':34B ''listen'':64B,96B ''luck'':28B,91B ''make'':107B ''movi'':26B,54B,83B ''much'':37B ''need'':19B ''new'':3A,59B ''origin'':25B ''part'':7A ''pleas'':110B ''radio'':99B ''re'':72B ''reaction'':67B ''realli'':18B ''remap'':1A,98B ''say'':38B ''state'':41B ''subscrib'':112B ''support'':102B ''sync'':84B ''tell'':14B ''three'':6A ''twilight'':53B ''us'':15B,105B ''watch'':21B ''white'':48B ''wonder'':69B ''www.remapradio.com'':114B ''year'':10B ''york'':4A,60B', false, 'PT2H6M32S', 'https://i.ytimg.com/vi/QYEKloE8VTg/maxresdefault.jpg'),
-	('mTNxnOrMWgk', 'remap', 'SAVE POINT 2024 - Twilight Breaking Dawn Part 2 - Raising Aid for Palestine and Lebanon', 'One Twilight movie wasn’t enough for us during Save Point. We had to keep going. And fortunately, Austin was kind enough to join us for the complete madness that is Twilight: Breaking Dawn – Part 2. And no, we could not get enough of this movie’s very weird baby.
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/Qq8SmMX32Kc/mqdefault.jpg', '2024-11-19 19:30:37+00', '''1'':10A ''2024'':3A ''audienc'':15B,27B ''consid'':37B ''consol'':7A ''content'':35B ''continu'':32B ''game'':6A ''help'':30B ''hour'':23B ''last'':21B ''make'':33B ''note'':12B ''part'':9A ''pleas'':36B ''point'':2A ''radio'':25B ''rank'':4A ''remap'':24B ''save'':1A ''segment'':17B ''startup'':8A ''subscrib'':38B ''support'':28B ''suppos'':19B ''two'':22B ''us'':31B ''video'':5A ''www.remapradio.com'':40B', false, 'PT2H9M15S', 'https://i.ytimg.com/vi/Qq8SmMX32Kc/maxresdefault.jpg'),
+	('ISuS0LId9_s', 'remap', 'Happy Holidays to Space Marine 2 [Part 6]', 'Rob, Patrick, and Cado have one last thing to take care off before the holidays: chaos.
 
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/mTNxnOrMWgk/mqdefault.jpg', '2024-12-06 16:14:49+00', '''2'':8A,50B ''2024'':3A ''aid'':10A ''audienc'':68B ''austin'':33B ''babi'':64B ''break'':5A,47B ''complet'':42B ''consid'':78B ''content'':76B ''continu'':73B ''could'':54B ''dawn'':6A,48B ''enough'':20B,36B,57B ''fortun'':32B ''get'':56B ''go'':30B ''help'':71B ''join'':38B ''keep'':29B ''kind'':35B ''lebanon'':14A ''mad'':43B ''make'':74B ''movi'':17B,60B ''one'':15B ''palestin'':12A ''part'':7A,49B ''pleas'':77B ''point'':2A,25B ''radio'':66B ''rais'':9A ''remap'':65B ''save'':1A,24B ''subscrib'':79B ''support'':69B ''twilight'':4A,16B,46B ''us'':22B,39B,72B ''wasn'':18B ''weird'':63B ''www.remapradio.com'':81B', false, 'PT2H20M22S', 'https://i.ytimg.com/vi/mTNxnOrMWgk/maxresdefault.jpg'),
-	('zE0nNqww4eA', 'remap', 'Rob and Cado''s Quest for Gold in Civilization VII', 'Rob and Cado continue their shared save file of Civilization VII, in which the age of exploration means Rob''s trying to boat-max. 
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/zE0nNqww4eA/mqdefault.jpg', '2025-03-28 16:57:24+00', '''age'':25B ''audienc'':39B ''boat'':34B ''boat-max'':33B ''cado'':3A,13B ''civil'':9A,20B ''consid'':49B ''content'':47B ''continu'':14B,44B ''explor'':27B ''file'':18B ''gold'':7A ''help'':42B ''make'':45B ''max'':35B ''mean'':28B ''pleas'':48B ''quest'':5A ''radio'':37B ''remap'':36B ''rob'':1A,11B,29B ''save'':17B ''share'':16B ''subscrib'':50B ''support'':40B ''tri'':31B ''us'':43B ''vii'':10A,21B ''www.remapradio.com'':52B', false, 'PT3H29M46S', 'https://i.ytimg.com/vi/zE0nNqww4eA/maxresdefault.jpg'),
-	('QNnQYw8N0JA', 'remap', 'Indiana Jones and the Japanese Train of GeForce Now', 'It''s quite a journey on today''s stream, which has us learning how to drive Japanese trains and punch fascists!
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/QNnQYw8N0JA/mqdefault.jpg', '2024-12-11 01:17:52+00', '''audienc'':33B ''consid'':43B ''content'':41B ''continu'':38B ''drive'':24B ''fascist'':29B ''geforc'':8A ''help'':36B ''indiana'':1A ''japanes'':5A,25B ''jone'':2A ''journey'':13B ''learn'':21B ''make'':39B ''pleas'':42B ''punch'':28B ''quit'':11B ''radio'':31B ''remap'':30B ''stream'':17B ''subscrib'':44B ''support'':34B ''today'':15B ''train'':6A,26B ''us'':20B,37B ''www.remapradio.com'':46B', false, 'PT2H46M41S', 'https://i.ytimg.com/vi/QNnQYw8N0JA/maxresdefault.jpg'),
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/ISuS0LId9_s/mqdefault.jpg', '2024-12-20 03:59:48+00', '''2'':6A ''6'':8A ''audienc'':28B ''cado'':12B ''care'':19B ''chao'':24B ''consid'':38B ''content'':36B ''continu'':33B ''happi'':1A ''help'':31B ''holiday'':2A,23B ''last'':15B ''make'':34B ''marin'':5A ''one'':14B ''part'':7A ''patrick'':10B ''pleas'':37B ''radio'':26B ''remap'':25B ''rob'':9B ''space'':4A ''subscrib'':39B ''support'':29B ''take'':18B ''thing'':16B ''us'':32B ''www.remapradio.com'':41B', false, 'PT2H49M56S', 'https://i.ytimg.com/vi/ISuS0LId9_s/maxresdefault.jpg'),
 	('IOYZb2u4D8I', 'remap', 'Save Point 2024 — Day Three (Part 2)', 'Save Point heads towards the finish line with the group watching Twilight: Breaking Dawn — Part 2, before the community plays a handful of games to close out the night.
 
 Timestamps:
@@ -21208,6 +20366,15 @@ Timestamps:
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/1TrZbNxsQPA/mqdefault.jpg', '2024-11-13 02:45:05+00', '''00'':35B,36B,56B ''05'':55B ''07'':59B ''1'':7A ''14'':43B ''19'':68B ''2024'':3A ''29'':42B ''3'':54B,58B ''35'':60B ''4'':66B ''40'':67B ''alyx'':53B ''arkham'':48B ''audienc'':75B ''batman'':47B ''bloodborn'':31B,69B ''board'':32B,70B ''break'':57B ''come'':21B ''communiti'':62B ''consid'':85B ''content'':83B ''continu'':80B ''day'':4A ''enter'':9B,38B ''ever'':20B ''game'':33B,45B,71B ''gear'':65B ''guilti'':64B ''half'':51B ''half-lif'':50B ''help'':78B ''last'':26B ''life'':52B ''ll'':19B ''long'':25B ''make'':81B ''ovrlrd'':46B ''part'':6A ''play'':63B ''pleas'':84B ''plus'':23B ''point'':2A ''radio'':73B ''re'':15B ''remap'':61B,72B ''return'':28B ''rob'':8B,37B ''save'':1A ''shadow'':49B ''subscrib'':86B ''support'':76B ''sure'':17B ''three'':5A ''timestamp'':34B ''us'':79B ''virtual'':11B,40B ''vr'':44B ''world'':12B,41B ''www.remapradio.com'':88B', false, 'PT9H18M20S', 'https://i.ytimg.com/vi/1TrZbNxsQPA/maxresdefault.jpg'),
 	('r9U2F3gt-vk', 'nextlander', 'Alex and Vinny Play Life is Strange: True Colors - Part 05', 'We attend a party, sing a song, find happiness for the first in our life... what could go wrong?!', 'https://i.ytimg.com/vi/r9U2F3gt-vk/mqdefault.jpg', '2021-10-13 15:00:33+00', '''05'':11A ''alex'':1A ''attend'':13B ''color'':9A ''could'':28B ''find'':19B ''first'':23B ''go'':29B ''happi'':20B ''life'':5A,26B ''part'':10A ''parti'':15B ''play'':4A ''sing'':16B ''song'':18B ''strang'':7A ''true'':8A ''vinni'':3A ''wrong'':30B', false, 'PT1H26M22S', 'https://i.ytimg.com/vi/r9U2F3gt-vk/maxresdefault.jpg'),
+	('zE0nNqww4eA', 'remap', 'Rob and Cado''s Quest for Gold in Civilization VII', 'Rob and Cado continue their shared save file of Civilization VII, in which the age of exploration means Rob''s trying to boat-max. 
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/zE0nNqww4eA/mqdefault.jpg', '2025-03-28 16:57:24+00', '''age'':25B ''audienc'':39B ''boat'':34B ''boat-max'':33B ''cado'':3A,13B ''civil'':9A,20B ''consid'':49B ''content'':47B ''continu'':14B,44B ''explor'':27B ''file'':18B ''gold'':7A ''help'':42B ''make'':45B ''max'':35B ''mean'':28B ''pleas'':48B ''quest'':5A ''radio'':37B ''remap'':36B ''rob'':1A,11B,29B ''save'':17B ''share'':16B ''subscrib'':50B ''support'':40B ''tri'':31B ''us'':43B ''vii'':10A,21B ''www.remapradio.com'':52B', false, 'PT3H29M46S', 'https://i.ytimg.com/vi/zE0nNqww4eA/maxresdefault.jpg'),
+	('QNnQYw8N0JA', 'remap', 'Indiana Jones and the Japanese Train of GeForce Now', 'It''s quite a journey on today''s stream, which has us learning how to drive Japanese trains and punch fascists!
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/QNnQYw8N0JA/mqdefault.jpg', '2024-12-11 01:17:52+00', '''audienc'':33B ''consid'':43B ''content'':41B ''continu'':38B ''drive'':24B ''fascist'':29B ''geforc'':8A ''help'':36B ''indiana'':1A ''japanes'':5A,25B ''jone'':2A ''journey'':13B ''learn'':21B ''make'':39B ''pleas'':42B ''punch'':28B ''quit'':11B ''radio'':31B ''remap'':30B ''stream'':17B ''subscrib'':44B ''support'':34B ''today'':15B ''train'':6A,26B ''us'':20B,37B ''www.remapradio.com'':46B', false, 'PT2H46M41S', 'https://i.ytimg.com/vi/QNnQYw8N0JA/maxresdefault.jpg'),
+	('mTNxnOrMWgk', 'remap', 'SAVE POINT 2024 - Twilight Breaking Dawn Part 2 - Raising Aid for Palestine and Lebanon', 'One Twilight movie wasn’t enough for us during Save Point. We had to keep going. And fortunately, Austin was kind enough to join us for the complete madness that is Twilight: Breaking Dawn – Part 2. And no, we could not get enough of this movie’s very weird baby.
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/mTNxnOrMWgk/mqdefault.jpg', '2024-12-06 16:14:49+00', '''2'':8A,50B ''2024'':3A ''aid'':10A ''audienc'':68B ''austin'':33B ''babi'':64B ''break'':5A,47B ''complet'':42B ''consid'':78B ''content'':76B ''continu'':73B ''could'':54B ''dawn'':6A,48B ''enough'':20B,36B,57B ''fortun'':32B ''get'':56B ''go'':30B ''help'':71B ''join'':38B ''keep'':29B ''kind'':35B ''lebanon'':14A ''mad'':43B ''make'':74B ''movi'':17B,60B ''one'':15B ''palestin'':12A ''part'':7A,49B ''pleas'':77B ''point'':2A,25B ''radio'':66B ''rais'':9A ''remap'':65B ''save'':1A,24B ''subscrib'':79B ''support'':69B ''twilight'':4A,16B,46B ''us'':22B,39B,72B ''wasn'':18B ''weird'':63B ''www.remapradio.com'':81B', false, 'PT2H20M22S', 'https://i.ytimg.com/vi/mTNxnOrMWgk/maxresdefault.jpg'),
 	('AGo28dPgXK8', 'remap', 'Welcome to the UFO 50 Lightning Round!', 'Patrick, Cado, and Janet are checking out games from this old system no one has heard of before. Better do it in 10 minute chunks!
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/AGo28dPgXK8/mqdefault.jpg', '2024-09-27 22:14:37+00', '''10'':30B ''50'':5A ''audienc'':36B ''better'':26B ''cado'':9B ''check'':13B ''chunk'':32B ''consid'':46B ''content'':44B ''continu'':41B ''game'':15B ''heard'':23B ''help'':39B ''janet'':11B ''lightn'':6A ''make'':42B ''minut'':31B ''old'':18B ''one'':21B ''patrick'':8B ''pleas'':45B ''radio'':34B ''remap'':33B ''round'':7A ''subscrib'':47B ''support'':37B ''system'':19B ''ufo'':4A ''us'':40B ''welcom'':1A ''www.remapradio.com'':49B', false, 'PT2H38M31S', 'https://i.ytimg.com/vi/AGo28dPgXK8/maxresdefault.jpg'),
@@ -21357,24 +20524,6 @@ http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/olPHfLbbxs4/mqdefault.jpg', '2024-02-13 20:00:28+00', '''/nextlander'':66B ''2024'':9A ''alex'':30B ''allur'':54B ''apocalyps'':35B ''build'':33B ''communiti'':63B ''degener'':56B ''delight'':25B ''demo'':11B,23B ''edit'':10A ''em'':16B ''extrem'':45B ''favorit'':3A ''feb'':8A ''fest'':6A ''fish'':47B ''gambl'':57B ''game'':7A ''give'':49B ''join'':27B ''know'':13B ''love'':15B ''next'':5A ''nextfest'':22B ''nextland'':1A,58B ''normal'':46B ''nun'':39B ''platform'':42B ''ride'':36B ''round'':19B ''steam'':4A,21B ''steer'':37B ''support'':60B ''thank'':67B ''vinni'':28B ''watch'':69B ''weird'':26B ''www.patreon.com'':65B ''www.patreon.com/nextlander'':64B', false, 'PT2H19M14S', 'https://i.ytimg.com/vi/olPHfLbbxs4/maxresdefault.jpg'),
 	('Iu4MEqZCCLU', 'nextlander', 'Very Vinny Mornings: Jupiter Hell', 'Seems like Jupiter has some issues and we''re here to solve them one step, one reload, and one shot at a time.', 'https://i.ytimg.com/vi/Iu4MEqZCCLU/mqdefault.jpg', '2021-08-11 15:00:10+00', '''hell'':5A ''issu'':11B ''jupit'':4A,8B ''like'':7B ''morn'':3A ''one'':19B,21B,24B ''re'':14B ''reload'':22B ''seem'':6B ''shot'':25B ''solv'':17B ''step'':20B ''time'':28B ''vinni'':2A', false, 'PT1H39M23S', 'https://i.ytimg.com/vi/Iu4MEqZCCLU/maxresdefault.jpg'),
-	('HwSQAQCDxNg', 'nextlander', 'Hollow Knight: Is It Any Good?', 'Brad dips into the backlog to sample an obscure indie game of some sort.
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/HwSQAQCDxNg/mqdefault.jpg', '2025-01-24 23:30:08+00', '''/nextlander'':29B ''backlog'':11B ''brad'':7B ''communiti'':26B ''dip'':8B ''game'':17B ''good'':6A ''hollow'':1A ''indi'':16B ''knight'':2A ''nextland'':21B ''obscur'':15B ''sampl'':13B ''sort'':20B ''support'':23B ''thank'':30B ''watch'':32B ''www.patreon.com'':28B ''www.patreon.com/nextlander'':27B', false, 'PT1H56M12S', 'https://i.ytimg.com/vi/HwSQAQCDxNg/maxresdefault.jpg'),
-	('Bh26oQNRh1g', 'nextlander', 'Abby and Vinny and the Roottrees are Back! (Part 02)', 'Our master detective team is back on the case and ready to find a bunch of cousins!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/Bh26oQNRh1g/mqdefault.jpg', '2025-02-03 23:16:06+00', '''/nextlander'':36B ''02'':10A ''abbi'':1A ''back'':8A,16B ''bunch'':25B ''case'':19B ''communiti'':33B ''cousin'':27B ''detect'':13B ''find'':23B ''master'':12B ''nextland'':28B ''part'':9A ''readi'':21B ''roottre'':6A ''support'':30B ''team'':14B ''thank'':37B ''vinni'':3A ''watch'':39B ''www.patreon.com'':35B ''www.patreon.com/nextlander'':34B', false, 'PT1H48M1S', 'https://i.ytimg.com/vi/Bh26oQNRh1g/maxresdefault.jpg'),
-	('qMmjUQCEUPo', 'nextlander', 'Brad and Vinny are Still Here, Together!', 'More cooperative puzzle-solving? On a Thursday?? What could go wrong?!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/qMmjUQCEUPo/mqdefault.jpg', '2025-01-30 23:30:37+00', '''/nextlander'':28B ''brad'':1A ''communiti'':25B ''cooper'':9B ''could'':17B ''go'':18B ''nextland'':20B ''puzzl'':11B ''puzzle-solv'':10B ''solv'':12B ''still'':5A ''support'':22B ''thank'':29B ''thursday'':15B ''togeth'':7A ''vinni'':3A ''watch'':31B ''wrong'':19B ''www.patreon.com'':27B ''www.patreon.com/nextlander'':26B', false, 'PT2H10M', 'https://i.ytimg.com/vi/qMmjUQCEUPo/maxresdefault.jpg'),
 	('OHYBEMvFKp8', 'nextlander', 'Nextlander Buddies Up for Palworld', 'If you unabashedly mash elements together from the most popular games of all time and put them into a single product, does it gain all of their strength?
 
 Nextlander is supported by its community:
@@ -21387,13 +20536,38 @@ Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/4IsYc6xeab0/mqdefault.jpg', '2022-09-23 19:00:02+00', '''/nextlander'':34B ''25th'':8A,18B ''anniversari'':9A,19B ''close'':12B ''communiti'':31B ''end'':2A,16B ''journey'':4A ''match'':25B ''met'':23B ''nextland'':1A,26B ''run'':20B ''star'':6A ''support'':28B ''thank'':35B ''trek'':7A ''watch'':37B ''www.patreon.com'':33B ''www.patreon.com/nextlander'':32B', false, 'PT3H56S', 'https://i.ytimg.com/vi/4IsYc6xeab0/maxresdefault.jpg'),
+	('HwSQAQCDxNg', 'nextlander', 'Hollow Knight: Is It Any Good?', 'Brad dips into the backlog to sample an obscure indie game of some sort.
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/HwSQAQCDxNg/mqdefault.jpg', '2025-01-24 23:30:08+00', '''/nextlander'':29B ''backlog'':11B ''brad'':7B ''communiti'':26B ''dip'':8B ''game'':17B ''good'':6A ''hollow'':1A ''indi'':16B ''knight'':2A ''nextland'':21B ''obscur'':15B ''sampl'':13B ''sort'':20B ''support'':23B ''thank'':30B ''watch'':32B ''www.patreon.com'':28B ''www.patreon.com/nextlander'':27B', false, 'PT1H56M12S', 'https://i.ytimg.com/vi/HwSQAQCDxNg/maxresdefault.jpg'),
+	('qMmjUQCEUPo', 'nextlander', 'Brad and Vinny are Still Here, Together!', 'More cooperative puzzle-solving? On a Thursday?? What could go wrong?!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/qMmjUQCEUPo/mqdefault.jpg', '2025-01-30 23:30:37+00', '''/nextlander'':28B ''brad'':1A ''communiti'':25B ''cooper'':9B ''could'':17B ''go'':18B ''nextland'':20B ''puzzl'':11B ''puzzle-solv'':10B ''solv'':12B ''still'':5A ''support'':22B ''thank'':29B ''thursday'':15B ''togeth'':7A ''vinni'':3A ''watch'':31B ''wrong'':19B ''www.patreon.com'':27B ''www.patreon.com/nextlander'':26B', false, 'PT2H10M', 'https://i.ytimg.com/vi/qMmjUQCEUPo/maxresdefault.jpg'),
 	('Ugff1M-dOHM', 'nextlander', 'Patron''s Choice for July: Besiege and Dark Side of the Moon', 'For our first Mission Control-voted thank you stream, Vinny returns to Besiege to build death machines of incredible efficiency and effectiveness. And as a little bonus, we finally wrap up the newest entry in the FMV hall of fame, Dark Side of the Moon!', 'https://i.ytimg.com/vi/Ugff1M-dOHM/mqdefault.jpg', '2021-07-31 16:00:20+00', '''besieg'':6A,26B ''bonus'':40B ''build'':28B ''choic'':3A ''control'':18B ''control-vot'':17B ''dark'':8A,54B ''death'':29B ''effect'':35B ''effici'':33B ''entri'':47B ''fame'':53B ''final'':42B ''first'':15B ''fmv'':50B ''hall'':51B ''incred'':32B ''juli'':5A ''littl'':39B ''machin'':30B ''mission'':16B ''moon'':12A,58B ''newest'':46B ''patron'':1A ''return'':24B ''side'':9A,55B ''stream'':22B ''thank'':20B ''vinni'':23B ''vote'':19B ''wrap'':43B', false, 'PT3H12M26S', 'https://i.ytimg.com/vi/Ugff1M-dOHM/maxresdefault.jpg'),
+	('6Di6RDB4eTw', 'nextlander', 'Here Decay, Gone Tomorrow! - Episode 05', 'Nobody said defeating the zombie horde would be easy and there wouldn''t be losses. There was some talk about not using explosives in a small, enclosed area though, that was definitely said somewhere.', 'https://i.ytimg.com/vi/6Di6RDB4eTw/mqdefault.jpg', '2021-08-03 18:00:05+00', '''05'':6A ''area'':34B ''decay'':2A ''defeat'':9B ''definit'':38B ''easi'':15B ''enclos'':33B ''episod'':5A ''explos'':29B ''gone'':3A ''hord'':12B ''loss'':21B ''nobodi'':7B ''said'':8B,39B ''small'':32B ''somewher'':40B ''talk'':25B ''though'':35B ''tomorrow'':4A ''use'':28B ''would'':13B ''wouldn'':18B ''zombi'':11B', false, 'PT2H5M42S', 'https://i.ytimg.com/vi/6Di6RDB4eTw/maxresdefault.jpg'),
+	('4fc1btUKrH8', 'nextlander', 'It''s Been a Dragon Age! Let''s Return!', 'Vinny jumps back into The Veilguard to reassess if he will finish it or not. Some mid-game spoilers abound!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/4fc1btUKrH8/mqdefault.jpg', '2025-01-13 23:37:39+00', '''/nextlander'':39B ''abound'':30B ''age'':6A ''back'':12B ''communiti'':36B ''dragon'':5A ''finish'':21B ''game'':28B ''jump'':11B ''let'':7A ''mid'':27B ''mid-gam'':26B ''nextland'':31B ''reassess'':17B ''return'':9A ''spoiler'':29B ''support'':33B ''thank'':40B ''veilguard'':15B ''vinni'':10B ''watch'':42B ''www.patreon.com'':38B ''www.patreon.com/nextlander'':37B', false, 'PT2H28M11S', 'https://i.ytimg.com/vi/4fc1btUKrH8/maxresdefault.jpg'),
 	('HkKXYqwCp-s', 'nextlander', 'NXL''s Triumphant Return to Helldivers II!', 'There''s a brand new (to us, anyway) faction in Helldivers II, and Will Smith''s joining us to check it out!
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/HkKXYqwCp-s/mqdefault.jpg', '2025-01-10 21:48:34+00', '''/nextlander'':38B ''anyway'':15B ''brand'':11B ''check'':27B ''communiti'':35B ''faction'':16B ''helldiv'':6A,18B ''ii'':7A,19B ''join'':24B ''new'':12B ''nextland'':30B ''nxl'':1A ''return'':4A ''smith'':22B ''support'':32B ''thank'':39B ''triumphant'':3A ''us'':14B,25B ''watch'':41B ''www.patreon.com'':37B ''www.patreon.com/nextlander'':36B', false, 'PT2H56M54S', 'https://i.ytimg.com/vi/HkKXYqwCp-s/maxresdefault.jpg'),
+	('jKhJBDut9Vk', 'nextlander', 'Brad and Vinny Were Here!', 'Brad and Vinny join together to try and puzzle their way out of various predicaments in We Were Here!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/jKhJBDut9Vk/mqdefault.jpg', '2025-01-09 21:54:47+00', '''/nextlander'':31B ''brad'':1A,4B ''communiti'':28B ''join'':7B ''nextland'':23B ''predica'':18B ''puzzl'':12B ''support'':25B ''thank'':32B ''togeth'':8B ''tri'':10B ''various'':17B ''vinni'':3A,6B ''watch'':34B ''way'':14B ''www.patreon.com'':30B ''www.patreon.com/nextlander'':29B', false, 'PT2H10M5S', 'https://i.ytimg.com/vi/jKhJBDut9Vk/maxresdefault.jpg'),
 	('df_AH4IykaA', 'nextlander', 'Vinny''s Streamland of Various Games', 'Come join me as we get back into things with a chill bebop around the land of video games.
 
 Nextlander is supported by its community:
@@ -21406,62 +20580,19 @@ Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/E0Sg-5GyMdA/mqdefault.jpg', '2024-12-12 20:28:16+00', '''/nextlander'':51B ''08'':15A ''2'':7A ''actual'':20B ''alex'':3A ''check'':37B ''communiti'':48B ''earn'':31B ''end'':13A,25B,29B ''find'':26B ''finish'':4A ''get'':22B ''hill'':6A ''join'':34B ''nextland'':43B ''part'':14A ''rest'':40B ''silent'':5A ''support'':45B ''thank'':52B ''time'':18B ''us'':35B ''vinni'':1A ''watch'':10A,54B ''welll'':16B ''www.patreon.com'':50B ''www.patreon.com/nextlander'':49B', false, 'PT1H47M30S', 'https://i.ytimg.com/vi/E0Sg-5GyMdA/maxresdefault.jpg'),
-	('Zhsiz9xG7Tg', 'nextlander', 'Brad and Vinny Are Here, Too!', 'Time for more cooperative puzzle-solving with walkie-talkies!?!?!?!?!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/Zhsiz9xG7Tg/mqdefault.jpg', '2025-01-16 21:48:57+00', '''/nextlander'':23B ''brad'':1A ''communiti'':20B ''cooper'':7B ''nextland'':15B ''puzzl'':9B ''puzzle-solv'':8B ''solv'':10B ''support'':17B ''talki'':14B ''thank'':24B ''time'':4B ''vinni'':3A ''walki'':13B ''walkie-talki'':12B ''watch'':26B ''www.patreon.com'':22B ''www.patreon.com/nextlander'':21B', false, 'PT2H5M24S', 'https://i.ytimg.com/vi/Zhsiz9xG7Tg/maxresdefault.jpg'),
-	('4fc1btUKrH8', 'nextlander', 'It''s Been a Dragon Age! Let''s Return!', 'Vinny jumps back into The Veilguard to reassess if he will finish it or not. Some mid-game spoilers abound!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/4fc1btUKrH8/mqdefault.jpg', '2025-01-13 23:37:39+00', '''/nextlander'':39B ''abound'':30B ''age'':6A ''back'':12B ''communiti'':36B ''dragon'':5A ''finish'':21B ''game'':28B ''jump'':11B ''let'':7A ''mid'':27B ''mid-gam'':26B ''nextland'':31B ''reassess'':17B ''return'':9A ''spoiler'':29B ''support'':33B ''thank'':40B ''veilguard'':15B ''vinni'':10B ''watch'':42B ''www.patreon.com'':38B ''www.patreon.com/nextlander'':37B', false, 'PT2H28M11S', 'https://i.ytimg.com/vi/4fc1btUKrH8/maxresdefault.jpg'),
-	('jKhJBDut9Vk', 'nextlander', 'Brad and Vinny Were Here!', 'Brad and Vinny join together to try and puzzle their way out of various predicaments in We Were Here!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/jKhJBDut9Vk/mqdefault.jpg', '2025-01-09 21:54:47+00', '''/nextlander'':31B ''brad'':1A,4B ''communiti'':28B ''join'':7B ''nextland'':23B ''predica'':18B ''puzzl'':12B ''support'':25B ''thank'':32B ''togeth'':8B ''tri'':10B ''various'':17B ''vinni'':3A,6B ''watch'':34B ''way'':14B ''www.patreon.com'':30B ''www.patreon.com/nextlander'':29B', false, 'PT2H10M5S', 'https://i.ytimg.com/vi/jKhJBDut9Vk/maxresdefault.jpg'),
-	('gm9x0s0NVnI', 'nextlander', 'One Last 2024 Video Game Afternoon', 'Brad came perilously close to getting that million-point Geometry Wars achievement, and also played some Kill Knight and also Peglin!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/gm9x0s0NVnI/mqdefault.jpg', '2024-12-21 00:36:47+00', '''/nextlander'':37B ''2024'':3A ''achiev'':19B ''afternoon'':6A ''also'':21B,27B ''brad'':7B ''came'':8B ''close'':10B ''communiti'':34B ''game'':5A ''geometri'':17B ''get'':12B ''kill'':24B ''knight'':25B ''last'':2A ''million'':15B ''million-point'':14B ''nextland'':29B ''one'':1A ''peglin'':28B ''peril'':9B ''play'':22B ''point'':16B ''support'':31B ''thank'':38B ''video'':4A ''war'':18B ''watch'':40B ''www.patreon.com'':36B ''www.patreon.com/nextlander'':35B', false, 'PT1H55M37S', 'https://i.ytimg.com/vi/gm9x0s0NVnI/maxresdefault.jpg'),
-	('6Di6RDB4eTw', 'nextlander', 'Here Decay, Gone Tomorrow! - Episode 05', 'Nobody said defeating the zombie horde would be easy and there wouldn''t be losses. There was some talk about not using explosives in a small, enclosed area though, that was definitely said somewhere.', 'https://i.ytimg.com/vi/6Di6RDB4eTw/mqdefault.jpg', '2021-08-03 18:00:05+00', '''05'':6A ''area'':34B ''decay'':2A ''defeat'':9B ''definit'':38B ''easi'':15B ''enclos'':33B ''episod'':5A ''explos'':29B ''gone'':3A ''hord'':12B ''loss'':21B ''nobodi'':7B ''said'':8B,39B ''small'':32B ''somewher'':40B ''talk'':25B ''though'':35B ''tomorrow'':4A ''use'':28B ''would'':13B ''wouldn'':18B ''zombi'':11B', false, 'PT2H5M42S', 'https://i.ytimg.com/vi/6Di6RDB4eTw/maxresdefault.jpg'),
 	('7tniW9HrHTE', 'nextlander', 'Brad and Patrick Can''t Quit That Volgarr! (Part 05)', 'We''re on Volgarr 2 and making slow and steady progress, but the threat of someone breaking feels real.
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/7tniW9HrHTE/mqdefault.jpg', '2024-11-15 22:01:36+00', '''/nextlander'':38B ''05'':10A ''2'':15B ''brad'':1A ''break'':27B ''communiti'':35B ''feel'':28B ''make'':17B ''nextland'':30B ''part'':9A ''patrick'':3A ''progress'':21B ''quit'':6A ''re'':12B ''real'':29B ''slow'':18B ''someon'':26B ''steadi'':20B ''support'':32B ''thank'':39B ''threat'':24B ''volgarr'':8A,14B ''watch'':41B ''www.patreon.com'':37B ''www.patreon.com/nextlander'':36B', false, 'PT2H4M15S', 'https://i.ytimg.com/vi/7tniW9HrHTE/maxresdefault.jpg'),
-	('cRjMIbJJvAc', 'nextlander', 'Vinny is Looking for Answers in Silent Hill 2 (Part 04)', 'We''re in too deep now! We need to know what fate awaits us in Silent Hill!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/cRjMIbJJvAc/mqdefault.jpg', '2024-11-11 23:35:58+00', '''/nextlander'':37B ''04'':11A ''2'':9A ''answer'':5A ''await'':24B ''communiti'':34B ''deep'':16B ''fate'':23B ''hill'':8A,28B ''know'':21B ''look'':3A ''need'':19B ''nextland'':29B ''part'':10A ''re'':13B ''silent'':7A,27B ''support'':31B ''thank'':38B ''us'':25B ''vinni'':1A ''watch'':40B ''www.patreon.com'':36B ''www.patreon.com/nextlander'':35B', false, 'PT2H3M22S', 'https://i.ytimg.com/vi/cRjMIbJJvAc/maxresdefault.jpg'),
-	('cSe_5CykzxA', 'nextlander', 'Nextlander Explores Dragon Age: The Veilguard', 'We boot up the next installment of Dragon Age to see what''s new, what''s old, and how many times they say "You''ve Got This"!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/cSe_5CykzxA/mqdefault.jpg', '2024-11-01 20:59:42+00', '''/nextlander'':42B ''age'':4A,15B ''boot'':8B ''communiti'':39B ''dragon'':3A,14B ''explor'':2A ''got'':32B ''instal'':12B ''mani'':26B ''new'':20B ''next'':11B ''nextland'':1A,34B ''old'':23B ''say'':29B ''see'':17B ''support'':36B ''thank'':43B ''time'':27B ''ve'':31B ''veilguard'':6A ''watch'':45B ''www.patreon.com'':41B ''www.patreon.com/nextlander'':40B', false, 'PT2H30M34S', 'https://i.ytimg.com/vi/cSe_5CykzxA/maxresdefault.jpg'),
-	('Mfpq_gftuYs', 'nextlander', 'Flight Simulator 2024 Attempts to Take Flight', 'The launch for Flight Simulator 2024 has been, uh, less than ideal. Will we be able to get the game working? Tune in to find out!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/Mfpq_gftuYs/mqdefault.jpg', '2024-11-21 22:21:44+00', '''/nextlander'':42B ''2024'':3A,13B ''abl'':23B ''attempt'':4A ''communiti'':39B ''find'':32B ''flight'':1A,7A,11B ''game'':27B ''get'':25B ''ideal'':19B ''launch'':9B ''less'':17B ''nextland'':34B ''simul'':2A,12B ''support'':36B ''take'':6A ''thank'':43B ''tune'':29B ''uh'':16B ''watch'':45B ''work'':28B ''www.patreon.com'':41B ''www.patreon.com/nextlander'':40B', false, 'PT2H38M12S', 'https://i.ytimg.com/vi/Mfpq_gftuYs/maxresdefault.jpg'),
+	('F1tLL25wDtI', 'nextlander', 'Here Decay, Gone Tomorrow! - Episode 04', 'It''s a big day in our personal State of Decay [2]. We''ve got truck upgrades, base upgrades, and um... available occupancy upgrades?', 'https://i.ytimg.com/vi/F1tLL25wDtI/mqdefault.jpg', '2021-07-27 18:00:09+00', '''04'':6A ''2'':18B ''avail'':28B ''base'':24B ''big'':10B ''day'':11B ''decay'':2A,17B ''episod'':5A ''gone'':3A ''got'':21B ''occup'':29B ''person'':14B ''state'':15B ''tomorrow'':4A ''truck'':22B ''um'':27B ''upgrad'':23B,25B,30B ''ve'':20B', false, 'PT2H19M35S', 'https://i.ytimg.com/vi/F1tLL25wDtI/maxresdefault.jpg'),
 	('3We75HqAO9M', 'nextlander', 'Patron''s Choice for October 2024: Phasmophobia w/ Abby Russell!', 'Happy Halloween, everyone! Let''s hunt some ghosts with virtual reality!
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/3We75HqAO9M/mqdefault.jpg', '2024-10-31 23:30:52+00', '''/nextlander'':30B ''2024'':6A ''abbi'':9A ''choic'':3A ''communiti'':27B ''everyon'':13B ''ghost'':18B ''halloween'':12B ''happi'':11B ''hunt'':16B ''let'':14B ''nextland'':22B ''octob'':5A ''patron'':1A ''phasmophobia'':7A ''realiti'':21B ''russel'':10A ''support'':24B ''thank'':31B ''virtual'':20B ''w'':8A ''watch'':33B ''www.patreon.com'':29B ''www.patreon.com/nextlander'':28B', false, 'PT2H17M52S', 'https://i.ytimg.com/vi/3We75HqAO9M/maxresdefault.jpg'),
-	('F1tLL25wDtI', 'nextlander', 'Here Decay, Gone Tomorrow! - Episode 04', 'It''s a big day in our personal State of Decay [2]. We''ve got truck upgrades, base upgrades, and um... available occupancy upgrades?', 'https://i.ytimg.com/vi/F1tLL25wDtI/mqdefault.jpg', '2021-07-27 18:00:09+00', '''04'':6A ''2'':18B ''avail'':28B ''base'':24B ''big'':10B ''day'':11B ''decay'':2A,17B ''episod'':5A ''gone'':3A ''got'':21B ''occup'':29B ''person'':14B ''state'':15B ''tomorrow'':4A ''truck'':22B ''um'':27B ''upgrad'':23B,25B,30B ''ve'':20B', false, 'PT2H19M35S', 'https://i.ytimg.com/vi/F1tLL25wDtI/maxresdefault.jpg'),
 	('UftM1dA4JcY', 'nextlander', 'Vinny Returns For Even More Silent Hill 2! (Part 02)', 'We meet a new friend and she really doesn''t like how many windows we''ve been breaking!
 
 Nextlander is supported by its community:
@@ -21480,24 +20611,30 @@ Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/U4f-S4_OTmg/mqdefault.jpg', '2024-10-15 22:22:37+00', '''/nextlander'':46B ''alex'':2A ''come'':35B ''communiti'':43B ''even'':29B ''exceed'':26B ''expect'':11B ''explor'':5A ''find'':36B ''get'':30B ''go'':15B ''got'':10B ''insid'':17B ''larri'':4A ''met'':22B ''metaphor'':6A ''nextland'':38B ''refantazio'':7A ''support'':40B ''thank'':47B ''tutori'':34B ''ve'':9B ''vinni'':1A ''watch'':49B ''www.patreon.com'':45B ''www.patreon.com/nextlander'':44B', false, 'PT2H32M23S', 'https://i.ytimg.com/vi/U4f-S4_OTmg/maxresdefault.jpg'),
-	('22bkJ1EnjeY', 'nextlander', 'Patron''s Choice for December 2024: Holiday Drumming Alex!', 'Y''all have spoken, and what you said was that you want to hear Alex drum the holiday hits.
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/22bkJ1EnjeY/mqdefault.jpg', '2024-12-20 21:48:04+00', '''/nextlander'':37B ''2024'':6A ''alex'':9A,24B ''choic'':3A ''communiti'':34B ''decemb'':5A ''drum'':8A,25B ''hear'':23B ''hit'':28B ''holiday'':7A,27B ''nextland'':29B ''patron'':1A ''said'':17B ''spoken'':13B ''support'':31B ''thank'':38B ''want'':21B ''watch'':40B ''www.patreon.com'':36B ''www.patreon.com/nextlander'':35B ''y'':10B', false, 'PT2H38M23S', 'https://i.ytimg.com/vi/22bkJ1EnjeY/maxresdefault.jpg'),
 	('NAOSoSr1U98', 'nextlander', 'Stalkin'' Around in S.T.A.L.K.E.R. 2!', 'Will Smith sits in with Vinny and Alex as we attempt to get to the Heart of Chornobyl. What surprises await for our team and for Gloomy? Find out!
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/NAOSoSr1U98/mqdefault.jpg', '2024-11-22 21:23:26+00', '''/nextlander'':43B ''2'':5A ''alex'':13B ''around'':2A ''attempt'':16B ''await'':26B ''chornobyl'':23B ''communiti'':40B ''find'':33B ''get'':18B ''gloomi'':32B ''heart'':21B ''nextland'':35B ''s.t.a.l.k.e.r'':4A ''sit'':8B ''smith'':7B ''stalkin'':1A ''support'':37B ''surpris'':25B ''team'':29B ''thank'':44B ''vinni'':11B ''watch'':46B ''www.patreon.com'':42B ''www.patreon.com/nextlander'':41B', false, 'PT2H18M48S', 'https://i.ytimg.com/vi/NAOSoSr1U98/maxresdefault.jpg'),
-	('oOhCPK6lUbs', 'nextlander', 'Fallout 1 Part 12: The End Is Nigh', 'This week, Brad gets power armor, S.P.E.C.I.A.L. implants, and some other nice upgrades before breaching super mutant HQ and... what''s this? Is it the endgame?!
+	('Mfpq_gftuYs', 'nextlander', 'Flight Simulator 2024 Attempts to Take Flight', 'The launch for Flight Simulator 2024 has been, uh, less than ideal. Will we be able to get the game working? Tune in to find out!
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
-Thanks for watching.', 'https://i.ytimg.com/vi/oOhCPK6lUbs/mqdefault.jpg', '2024-10-25 21:00:39+00', '''/nextlander'':43B ''1'':2A ''12'':4A ''armor'':14B ''brad'':11B ''breach'':23B ''communiti'':40B ''end'':6A ''endgam'':34B ''fallout'':1A ''get'':12B ''hq'':26B ''implant'':16B ''mutant'':25B ''nextland'':35B ''nice'':20B ''nigh'':8A ''part'':3A ''power'':13B ''s.p.e.c.i.a.l'':15B ''super'':24B ''support'':37B ''thank'':44B ''upgrad'':21B ''watch'':46B ''week'':10B ''www.patreon.com'':42B ''www.patreon.com/nextlander'':41B', false, 'PT3H8M34S', 'https://i.ytimg.com/vi/oOhCPK6lUbs/maxresdefault.jpg'),
+Thanks for watching.', 'https://i.ytimg.com/vi/Mfpq_gftuYs/mqdefault.jpg', '2024-11-21 22:21:44+00', '''/nextlander'':42B ''2024'':3A,13B ''abl'':23B ''attempt'':4A ''communiti'':39B ''find'':32B ''flight'':1A,7A,11B ''game'':27B ''get'':25B ''ideal'':19B ''launch'':9B ''less'':17B ''nextland'':34B ''simul'':2A,12B ''support'':36B ''take'':6A ''thank'':43B ''tune'':29B ''uh'':16B ''watch'':45B ''work'':28B ''www.patreon.com'':41B ''www.patreon.com/nextlander'':40B', false, 'PT2H38M12S', 'https://i.ytimg.com/vi/Mfpq_gftuYs/maxresdefault.jpg'),
+	('cRjMIbJJvAc', 'nextlander', 'Vinny is Looking for Answers in Silent Hill 2 (Part 04)', 'We''re in too deep now! We need to know what fate awaits us in Silent Hill!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/cRjMIbJJvAc/mqdefault.jpg', '2024-11-11 23:35:58+00', '''/nextlander'':37B ''04'':11A ''2'':9A ''answer'':5A ''await'':24B ''communiti'':34B ''deep'':16B ''fate'':23B ''hill'':8A,28B ''know'':21B ''look'':3A ''need'':19B ''nextland'':29B ''part'':10A ''re'':13B ''silent'':7A,27B ''support'':31B ''thank'':38B ''us'':25B ''vinni'':1A ''watch'':40B ''www.patreon.com'':36B ''www.patreon.com/nextlander'':35B', false, 'PT2H3M22S', 'https://i.ytimg.com/vi/cRjMIbJJvAc/maxresdefault.jpg'),
+	('cSe_5CykzxA', 'nextlander', 'Nextlander Explores Dragon Age: The Veilguard', 'We boot up the next installment of Dragon Age to see what''s new, what''s old, and how many times they say "You''ve Got This"!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/cSe_5CykzxA/mqdefault.jpg', '2024-11-01 20:59:42+00', '''/nextlander'':42B ''age'':4A,15B ''boot'':8B ''communiti'':39B ''dragon'':3A,14B ''explor'':2A ''got'':32B ''instal'':12B ''mani'':26B ''new'':20B ''next'':11B ''nextland'':1A,34B ''old'':23B ''say'':29B ''see'':17B ''support'':36B ''thank'':43B ''time'':27B ''ve'':31B ''veilguard'':6A ''watch'':45B ''www.patreon.com'':41B ''www.patreon.com/nextlander'':40B', false, 'PT2H30M34S', 'https://i.ytimg.com/vi/cSe_5CykzxA/maxresdefault.jpg'),
 	('XPAUJtf9bs8', 'nextlander', 'Watch Abby, Vinny, and Starfield in 20-ish Minutes!', 'We''ve got our recent adventures in Starfield cut down to the purest chaos and fun! Sam will never be the same.
 
 Edited by Will Crosby
@@ -24099,81 +23236,21 @@ Thanks for watching.', 'https://i.ytimg.com/vi/KeStrsVf4so/mqdefault.jpg', '2021
 	('vY5JG2I0OzU', 'nextlander', 'Nextlander Attempts to Defeat the Trials of Scrap Mechanic!', 'There was exactly one thing missing from these ongoing Scrap Mechanic adventures up to this point: a gun what shoots potatoes.', 'https://i.ytimg.com/vi/vY5JG2I0OzU/mqdefault.jpg', '2021-09-21 18:00:30+00', '''adventur'':21B ''attempt'':2A ''defeat'':4A ''exact'':12B ''gun'':27B ''mechan'':9A,20B ''miss'':15B ''nextland'':1A ''one'':13B ''ongo'':18B ''point'':25B ''potato'':30B ''scrap'':8A,19B ''shoot'':29B ''thing'':14B ''trial'':6A', false, 'PT2H21S', 'https://i.ytimg.com/vi/vY5JG2I0OzU/maxresdefault.jpg'),
 	('7BkOHHb9DNc', 'nextlander', 'Full Motion Vinny: Ripper - Part 03', 'We continue to have a rippin'' good time tracking the path of the fabled Ripper, and tracking the TV police procedural path taken by nearly every actor in this thing.', 'https://i.ytimg.com/vi/7BkOHHb9DNc/mqdefault.jpg', '2021-09-17 18:00:07+00', '''03'':6A ''actor'':33B ''continu'':8B ''everi'':32B ''fabl'':20B ''full'':1A ''good'':13B ''motion'':2A ''near'':31B ''part'':5A ''path'':17B,28B ''polic'':26B ''procedur'':27B ''ripper'':4A,21B ''rippin'':12B ''taken'':29B ''thing'':36B ''time'':14B ''track'':15B,23B ''tv'':25B ''vinni'':3A', false, 'PT2H3M12S', 'https://i.ytimg.com/vi/7BkOHHb9DNc/maxresdefault.jpg'),
 	('dp7DCQhBwYk', 'nextlander', 'Getting Deathloopy in Deathloop', 'Vinny and Brad put Arkane''s latest through its paces and discover that whether you play stealthy or as a murder machine, Deathloop has a lot to offer.', 'https://i.ytimg.com/vi/dp7DCQhBwYk/mqdefault.jpg', '2021-09-14 17:00:21+00', '''arkan'':9B ''brad'':7B ''deathloop'':4A,27B ''deathloopi'':2A ''discov'':16B ''get'':1A ''latest'':11B ''lot'':30B ''machin'':26B ''murder'':25B ''offer'':32B ''pace'':14B ''play'':20B ''put'':8B ''stealthi'':21B ''vinni'':5B ''whether'':18B', false, 'PT1H51M24S', 'https://i.ytimg.com/vi/dp7DCQhBwYk/maxresdefault.jpg'),
+	('a3htgw26xMg', 'giantbomb', 'Fallout: New Vegas (Part 03) | GB Plays', 'Grubb is joined by Bailey and Niki to continue his quest through New Vegas! 
+
+#fallout #falloutnewvegas #giantbomb', 'https://i.ytimg.com/vi/a3htgw26xMg/mqdefault.jpg', '2024-05-02 20:00:38+00', '''03'':5A ''bailey'':12B ''continu'':16B ''fallout'':1A,22B ''falloutnewvega'':23B ''gb'':6A ''giantbomb'':24B ''grubb'':8B ''join'':10B ''new'':2A,20B ''niki'':14B ''part'':4A ''play'':7A ''quest'':18B ''vega'':3A,21B', false, 'PT2H28M10S', 'https://i.ytimg.com/vi/a3htgw26xMg/maxresdefault.jpg'),
 	('NLK4ImT_iBA', 'nextlander', 'More Lost Records, Now with Abby Russell! [Part 02]', 'Vinny and Alex are joined by our good friend Abby as we continue through Don''t Nod''s latest teen adventure!
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/NLK4ImT_iBA/mqdefault.jpg', '2025-02-25 21:13:38+00', '''/nextlander'':39B ''02'':9A ''abbi'':6A,19B ''adventur'':30B ''alex'':12B ''communiti'':36B ''continu'':22B ''friend'':18B ''good'':17B ''join'':14B ''latest'':28B ''lost'':2A ''nextland'':31B ''nod'':26B ''part'':8A ''record'':3A ''russel'':7A ''support'':33B ''teen'':29B ''thank'':40B ''vinni'':10B ''watch'':42B ''www.patreon.com'':38B ''www.patreon.com/nextlander'':37B', false, 'PT1H57M46S', 'https://i.ytimg.com/vi/NLK4ImT_iBA/maxresdefault.jpg'),
-	('5z1MYHh0Ct0', 'nextlander', 'Nextlander Returns to the X-Files FMV! (Part 03)', 'Things are getting serious, not only with action but with the special appearances in the game!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/5z1MYHh0Ct0/mqdefault.jpg', '2025-03-14 19:38:43+00', '''/nextlander'':35B ''03'':10A ''action'':18B ''appear'':23B ''communiti'':32B ''file'':7A ''fmv'':8A ''game'':26B ''get'':13B ''nextland'':1A,27B ''part'':9A ''return'':2A ''serious'':14B ''special'':22B ''support'':29B ''thank'':36B ''thing'':11B ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B ''x'':6A ''x-file'':5A', false, 'PT1H51M45S', 'https://i.ytimg.com/vi/5z1MYHh0Ct0/maxresdefault.jpg'),
 	('pbL6DPRwn0c', 'nextlander', 'Patron''s Choice for February: Dark Souls III, Now with (Modded) Co-Op!', 'A wizard, a fighter, and a rogue walk into a boss... but do they walk out?
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/pbL6DPRwn0c/mqdefault.jpg', '2025-02-28 20:34:31+00', '''/nextlander'':39B ''boss'':25B ''choic'':3A ''co'':13A ''co-op'':12A ''communiti'':36B ''dark'':6A ''februari'':5A ''fighter'':18B ''iii'':8A ''mod'':11A ''nextland'':31B ''op'':14A ''patron'':1A ''rogu'':21B ''soul'':7A ''support'':33B ''thank'':40B ''walk'':22B,29B ''watch'':42B ''wizard'':16B ''www.patreon.com'':38B ''www.patreon.com/nextlander'':37B', false, 'PT1H59M8S', 'https://i.ytimg.com/vi/pbL6DPRwn0c/maxresdefault.jpg'),
-	('h7N9K-W4kNA', 'nextlander', 'Let''s (TRY TO) Finish the First Half of Lost Records: Bloom & Rage!', 'Are we gonna finish it?! And by it, we mean the currently released half of Lost Records: Bloom & Rage!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/h7N9K-W4kNA/mqdefault.jpg', '2025-03-04 20:49:10+00', '''/nextlander'':41B ''bloom'':12A,31B ''communiti'':38B ''current'':25B ''finish'':5A,17B ''first'':7A ''gonna'':16B ''half'':8A,27B ''let'':1A ''lost'':10A,29B ''mean'':23B ''nextland'':33B ''rage'':13A,32B ''record'':11A,30B ''releas'':26B ''support'':35B ''thank'':42B ''tri'':3A ''watch'':44B ''www.patreon.com'':40B ''www.patreon.com/nextlander'':39B', false, 'PT2H9M59S', 'https://i.ytimg.com/vi/h7N9K-W4kNA/maxresdefault.jpg'),
-	('AejrAJjntXM', 'nextlander', 'Patron''s Choice for June 2025: Star Trek: Judgment Rites!', '*Biohazard voice* JUUUUDGEMEEEENT RIIIIIIIIIITES
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/AejrAJjntXM/mqdefault.jpg', '2025-06-27 20:10:27+00', '''/nextlander'':23B ''2025'':6A ''biohazard'':11B ''choic'':3A ''communiti'':20B ''judgment'':9A ''june'':5A ''juuuudgemee'':13B ''nextland'':15B ''patron'':1A ''riiiiiiiiiit'':14B ''rite'':10A ''star'':7A ''support'':17B ''thank'':24B ''trek'':8A ''voic'':12B ''watch'':26B ''www.patreon.com'':22B ''www.patreon.com/nextlander'':21B', false, 'PT2H21M16S', 'https://i.ytimg.com/vi/AejrAJjntXM/maxresdefault.jpg'),
-	('a3htgw26xMg', 'giantbomb', 'Fallout: New Vegas (Part 03) | GB Plays', 'Grubb is joined by Bailey and Niki to continue his quest through New Vegas! 
-
-#fallout #falloutnewvegas #giantbomb', 'https://i.ytimg.com/vi/a3htgw26xMg/mqdefault.jpg', '2024-05-02 20:00:38+00', '''03'':5A ''bailey'':12B ''continu'':16B ''fallout'':1A,22B ''falloutnewvega'':23B ''gb'':6A ''giantbomb'':24B ''grubb'':8B ''join'':10B ''new'':2A,20B ''niki'':14B ''part'':4A ''play'':7A ''quest'':18B ''vega'':3A,21B', false, 'PT2H28M10S', 'https://i.ytimg.com/vi/a3htgw26xMg/maxresdefault.jpg'),
-	('qZKTFUKUn40', 'nextlander', 'Nextlander Adventures with Indiana Jones and the Great Circle!', 'Indy has arrived (for everyone who bought the fancy edition) and we''re gonna take Mr. Jones'' latest adventure for a spin!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/qZKTFUKUn40/mqdefault.jpg', '2024-12-06 23:55:29+00', '''/nextlander'':40B ''adventur'':2A,28B ''arriv'':12B ''bought'':16B ''circl'':9A ''communiti'':37B ''edit'':19B ''everyon'':14B ''fanci'':18B ''gonna'':23B ''great'':8A ''indi'':10B ''indiana'':4A ''jone'':5A,26B ''latest'':27B ''mr'':25B ''nextland'':1A,32B ''re'':22B ''spin'':31B ''support'':34B ''take'':24B ''thank'':41B ''watch'':43B ''www.patreon.com'':39B ''www.patreon.com/nextlander'':38B', false, 'PT2H32M19S', 'https://i.ytimg.com/vi/qZKTFUKUn40/maxresdefault.jpg'),
-	('vAQY6Q6RYxY', 'nextlander', 'Brad and Vinny Were, and Are, Here Together, Again - Part 03', 'OK these puzzles are just getting kind of mean now...
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/vAQY6Q6RYxY/mqdefault.jpg', '2025-02-13 22:16:57+00', '''/nextlander'':30B ''03'':11A ''brad'':1A ''communiti'':27B ''get'':17B ''kind'':18B ''mean'':20B ''nextland'':22B ''ok'':12B ''part'':10A ''puzzl'':14B ''support'':24B ''thank'':31B ''togeth'':8A ''vinni'':3A ''watch'':33B ''www.patreon.com'':29B ''www.patreon.com/nextlander'':28B', false, 'PT2H28M31S', 'https://i.ytimg.com/vi/vAQY6Q6RYxY/maxresdefault.jpg'),
-	('6k0fbLJ4XtA', 'nextlander', 'Vinny? Sonic?! Shadow?!?! Maybe... Silent Hill?!!!!?', 'It''s Monday and anything could happen. That''s the magic of Monday! It''s the only magic it has.
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/6k0fbLJ4XtA/mqdefault.jpg', '2024-10-28 22:16:54+00', '''/nextlander'':35B ''anyth'':11B ''communiti'':32B ''could'':12B ''happen'':13B ''hill'':6A ''magic'':17B,24B ''mayb'':4A ''monday'':9B,19B ''nextland'':27B ''shadow'':3A ''silent'':5A ''sonic'':2A ''support'':29B ''thank'':36B ''vinni'':1A ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT2H18M33S', 'https://i.ytimg.com/vi/6k0fbLJ4XtA/maxresdefault.jpg'),
-	('-7OvdeDgJUo', 'nextlander', 'Friday Fun Stream: The Truth Is Probably Out There in The X-Files FMV Game! [Part 02]', 'We had so much fun with last week''s Patron''s Choice game that we just had to continue on! Let''s rescue Mulder and Scully!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/-7OvdeDgJUo/mqdefault.jpg', '2025-02-07 20:36:13+00', '''/nextlander'':53B ''02'':18A ''choic'':30B ''communiti'':50B ''continu'':37B ''file'':14A ''fmv'':15A ''friday'':1A ''fun'':2A,23B ''game'':16A,31B ''last'':25B ''let'':39B ''much'':22B ''mulder'':42B ''nextland'':45B ''part'':17A ''patron'':28B ''probabl'':7A ''rescu'':41B ''sculli'':44B ''stream'':3A ''support'':47B ''thank'':54B ''truth'':5A ''watch'':56B ''week'':26B ''www.patreon.com'':52B ''www.patreon.com/nextlander'':51B ''x'':13A ''x-file'':12A', false, 'PT1H57M30S', 'https://i.ytimg.com/vi/-7OvdeDgJUo/maxresdefault.jpg'),
-	('8QJYYuj7AHA', 'nextlander', 'Alex Joins Vinny in His Silent Hill 2 Adventures! (Part 06)', 'Vinny is making his way through Silent Hill 2 and this time he''s brought a friend! Let''s put our arm in things... Together!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/8QJYYuj7AHA/mqdefault.jpg', '2024-12-03 00:48:11+00', '''/nextlander'':45B ''06'':11A ''2'':8A,20B ''adventur'':9A ''alex'':1A ''arm'':33B ''brought'':26B ''communiti'':42B ''friend'':28B ''hill'':7A,19B ''join'':2A ''let'':29B ''make'':14B ''nextland'':37B ''part'':10A ''put'':31B ''silent'':6A,18B ''support'':39B ''thank'':46B ''thing'':35B ''time'':23B ''togeth'':36B ''vinni'':3A,12B ''watch'':48B ''way'':16B ''www.patreon.com'':44B ''www.patreon.com/nextlander'':43B', false, 'PT1H56M52S', 'https://i.ytimg.com/vi/8QJYYuj7AHA/maxresdefault.jpg'),
-	('_laXHoQgGcs', 'nextlander', 'Just Don''t Put Your Hand In There James! (Part 05)', 'Vinny and James plunge themselves into the dark and murky sludge of Silent Hill 2. 
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/_laXHoQgGcs/mqdefault.jpg', '2024-11-18 23:12:31+00', '''/nextlander'':35B ''05'':11A ''2'':26B ''communiti'':32B ''dark'':19B ''hand'':6A ''hill'':25B ''jame'':9A,14B ''murki'':21B ''nextland'':27B ''part'':10A ''plung'':15B ''put'':4A ''silent'':24B ''sludg'':22B ''support'':29B ''thank'':36B ''vinni'':12B ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT2H41M21S', 'https://i.ytimg.com/vi/_laXHoQgGcs/maxresdefault.jpg'),
-	('bmZJ8Chc09E', 'nextlander', 'Monday Void Crew: Void Harder', 'We''ve all got some skill points now and we''re ready to... probably die again.
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/bmZJ8Chc09E/mqdefault.jpg', '2025-02-24 23:09:34+00', '''/nextlander'':30B ''communiti'':27B ''crew'':3A ''die'':20B ''got'':9B ''harder'':5A ''monday'':1A ''nextland'':22B ''point'':12B ''probabl'':19B ''re'':16B ''readi'':17B ''skill'':11B ''support'':24B ''thank'':31B ''ve'':7B ''void'':2A,4A ''watch'':33B ''www.patreon.com'':29B ''www.patreon.com/nextlander'':28B', false, 'PT2H31M55S', 'https://i.ytimg.com/vi/bmZJ8Chc09E/maxresdefault.jpg'),
 	('vTQ4ASrMA_Q', 'nextlander', 'Abby and Vinny Return to Starfield', 'While we''re not quite ready for the DLC I''m also not quite sure Starfield is ready for us to bang on it again! 
 
 Nextlander is supported by its community:
@@ -24192,30 +23269,48 @@ Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/MqLIBQAO6Qk/mqdefault.jpg', '2024-09-20 21:00:04+00', '''/nextlander'':48B ''03'':7A ''2'':17B ''brad'':1A,26B ''communiti'':45B ''continu'':27B ''defeat'':34B ''finish'':4A ''first'':23B ''get'':21B ''make'':13B ''mayb'':38B ''neck'':29B,31B ''nextland'':40B ''part'':6A ''patrick'':3A,24B ''race'':11B,32B ''support'':42B ''thank'':49B ''volgarr'':5A,16B ''watch'':51B ''www.patreon.com'':47B ''www.patreon.com/nextlander'':46B', false, 'PT2H26M49S', 'https://i.ytimg.com/vi/MqLIBQAO6Qk/maxresdefault.jpg'),
+	('_laXHoQgGcs', 'nextlander', 'Just Don''t Put Your Hand In There James! (Part 05)', 'Vinny and James plunge themselves into the dark and murky sludge of Silent Hill 2. 
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/_laXHoQgGcs/mqdefault.jpg', '2024-11-18 23:12:31+00', '''/nextlander'':35B ''05'':11A ''2'':26B ''communiti'':32B ''dark'':19B ''hand'':6A ''hill'':25B ''jame'':9A,14B ''murki'':21B ''nextland'':27B ''part'':10A ''plung'':15B ''put'':4A ''silent'':24B ''sludg'':22B ''support'':29B ''thank'':36B ''vinni'':12B ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT2H41M21S', 'https://i.ytimg.com/vi/_laXHoQgGcs/maxresdefault.jpg'),
+	('6k0fbLJ4XtA', 'nextlander', 'Vinny? Sonic?! Shadow?!?! Maybe... Silent Hill?!!!!?', 'It''s Monday and anything could happen. That''s the magic of Monday! It''s the only magic it has.
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/6k0fbLJ4XtA/mqdefault.jpg', '2024-10-28 22:16:54+00', '''/nextlander'':35B ''anyth'':11B ''communiti'':32B ''could'':12B ''happen'':13B ''hill'':6A ''magic'':17B,24B ''mayb'':4A ''monday'':9B,19B ''nextland'':27B ''shadow'':3A ''silent'':5A ''sonic'':2A ''support'':29B ''thank'':36B ''vinni'':1A ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT2H18M33S', 'https://i.ytimg.com/vi/6k0fbLJ4XtA/maxresdefault.jpg'),
+	('vAQY6Q6RYxY', 'nextlander', 'Brad and Vinny Were, and Are, Here Together, Again - Part 03', 'OK these puzzles are just getting kind of mean now...
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/vAQY6Q6RYxY/mqdefault.jpg', '2025-02-13 22:16:57+00', '''/nextlander'':30B ''03'':11A ''brad'':1A ''communiti'':27B ''get'':17B ''kind'':18B ''mean'':20B ''nextland'':22B ''ok'':12B ''part'':10A ''puzzl'':14B ''support'':24B ''thank'':31B ''togeth'':8A ''vinni'':3A ''watch'':33B ''www.patreon.com'':29B ''www.patreon.com/nextlander'':28B', false, 'PT2H28M31S', 'https://i.ytimg.com/vi/vAQY6Q6RYxY/maxresdefault.jpg'),
+	('-7OvdeDgJUo', 'nextlander', 'Friday Fun Stream: The Truth Is Probably Out There in The X-Files FMV Game! [Part 02]', 'We had so much fun with last week''s Patron''s Choice game that we just had to continue on! Let''s rescue Mulder and Scully!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/-7OvdeDgJUo/mqdefault.jpg', '2025-02-07 20:36:13+00', '''/nextlander'':53B ''02'':18A ''choic'':30B ''communiti'':50B ''continu'':37B ''file'':14A ''fmv'':15A ''friday'':1A ''fun'':2A,23B ''game'':16A,31B ''last'':25B ''let'':39B ''much'':22B ''mulder'':42B ''nextland'':45B ''part'':17A ''patron'':28B ''probabl'':7A ''rescu'':41B ''sculli'':44B ''stream'':3A ''support'':47B ''thank'':54B ''truth'':5A ''watch'':56B ''week'':26B ''www.patreon.com'':52B ''www.patreon.com/nextlander'':51B ''x'':13A ''x-file'':12A', false, 'PT1H57M30S', 'https://i.ytimg.com/vi/-7OvdeDgJUo/maxresdefault.jpg'),
+	('qZKTFUKUn40', 'nextlander', 'Nextlander Adventures with Indiana Jones and the Great Circle!', 'Indy has arrived (for everyone who bought the fancy edition) and we''re gonna take Mr. Jones'' latest adventure for a spin!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/qZKTFUKUn40/mqdefault.jpg', '2024-12-06 23:55:29+00', '''/nextlander'':40B ''adventur'':2A,28B ''arriv'':12B ''bought'':16B ''circl'':9A ''communiti'':37B ''edit'':19B ''everyon'':14B ''fanci'':18B ''gonna'':23B ''great'':8A ''indi'':10B ''indiana'':4A ''jone'':5A,26B ''latest'':27B ''mr'':25B ''nextland'':1A,32B ''re'':22B ''spin'':31B ''support'':34B ''take'':24B ''thank'':41B ''watch'':43B ''www.patreon.com'':39B ''www.patreon.com/nextlander'':38B', false, 'PT2H32M19S', 'https://i.ytimg.com/vi/qZKTFUKUn40/maxresdefault.jpg'),
+	('8QJYYuj7AHA', 'nextlander', 'Alex Joins Vinny in His Silent Hill 2 Adventures! (Part 06)', 'Vinny is making his way through Silent Hill 2 and this time he''s brought a friend! Let''s put our arm in things... Together!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/8QJYYuj7AHA/mqdefault.jpg', '2024-12-03 00:48:11+00', '''/nextlander'':45B ''06'':11A ''2'':8A,20B ''adventur'':9A ''alex'':1A ''arm'':33B ''brought'':26B ''communiti'':42B ''friend'':28B ''hill'':7A,19B ''join'':2A ''let'':29B ''make'':14B ''nextland'':37B ''part'':10A ''put'':31B ''silent'':6A,18B ''support'':39B ''thank'':46B ''thing'':35B ''time'':23B ''togeth'':36B ''vinni'':3A,12B ''watch'':48B ''way'':16B ''www.patreon.com'':44B ''www.patreon.com/nextlander'':43B', false, 'PT1H56M52S', 'https://i.ytimg.com/vi/8QJYYuj7AHA/maxresdefault.jpg'),
 	('ldHDOkIi59I', 'nextlander', 'Fallout 1 Part 10: A Two-Person Stream?!', 'Vinny hops in to watch Brad do battle with the fearsome enemy the Mother Deathclaw, and the even more fearsome enemy, Some Guys Standing on a Bridge.
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/ldHDOkIi59I/mqdefault.jpg', '2024-09-20 19:30:06+00', '''/nextlander'':45B ''1'':2A ''10'':4A ''battl'':17B ''brad'':15B ''bridg'':36B ''communiti'':42B ''deathclaw'':24B ''enemi'':21B,30B ''even'':27B ''fallout'':1A ''fearsom'':20B,29B ''guy'':32B ''hop'':11B ''mother'':23B ''nextland'':37B ''part'':3A ''person'':8A ''stand'':33B ''stream'':9A ''support'':39B ''thank'':46B ''two'':7A ''two-person'':6A ''vinni'':10B ''watch'':14B,48B ''www.patreon.com'':44B ''www.patreon.com/nextlander'':43B', false, 'PT2H13M31S', 'https://i.ytimg.com/vi/ldHDOkIi59I/maxresdefault.jpg'),
-	('S5PP-NJ7X5A', 'nextlander', 'Brad, Patrick, and Volgarr''s Year End Party! (Part 06)', 'We''re nearing the end of the year and Brad and Patrick would love to end it on high note regarding Volgarr, but will they?
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/S5PP-NJ7X5A/mqdefault.jpg', '2024-12-13 22:58:23+00', '''/nextlander'':44B ''06'':10A ''brad'':1A,20B ''communiti'':41B ''end'':7A,15B,26B ''high'':29B ''love'':24B ''near'':13B ''nextland'':36B ''note'':30B ''part'':9A ''parti'':8A ''patrick'':2A,22B ''re'':12B ''regard'':31B ''support'':38B ''thank'':45B ''volgarr'':4A,32B ''watch'':47B ''would'':23B ''www.patreon.com'':43B ''www.patreon.com/nextlander'':42B ''year'':6A,18B', false, 'PT2H8M10S', 'https://i.ytimg.com/vi/S5PP-NJ7X5A/maxresdefault.jpg'),
-	('TFJ17kKmMnA', 'nextlander', 'Grab Bag Friday with The Roottrees, Dynasty Warriors, and a Surprise!', 'Abby Russell joins us to do some detective work, watch Alex bash hordes of soldiers, and see if Brad can conquer an old nemesis!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/TFJ17kKmMnA/mqdefault.jpg', '2025-01-24 21:53:41+00', '''/nextlander'':44B ''abbi'':12B ''alex'':22B ''bag'':2A ''bash'':23B ''brad'':30B ''communiti'':41B ''conquer'':32B ''detect'':19B ''dynasti'':7A ''friday'':3A ''grab'':1A ''hord'':24B ''join'':14B ''nemesi'':35B ''nextland'':36B ''old'':34B ''roottre'':6A ''russel'':13B ''see'':28B ''soldier'':26B ''support'':38B ''surpris'':11A ''thank'':45B ''us'':15B ''warrior'':8A ''watch'':21B,47B ''work'':20B ''www.patreon.com'':43B ''www.patreon.com/nextlander'':42B', false, 'PT2H28M20S', 'https://i.ytimg.com/vi/TFJ17kKmMnA/maxresdefault.jpg'),
-	('3nFn-uT5g_k', 'nextlander', 'Brad and Patrick are back to Volgarrrrrrr in 2025!! [Part 07]', 'Will they finish today?! Is this the last Volgarr? Let''s find out!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/3nFn-uT5g_k/mqdefault.jpg', '2025-01-17 20:19:48+00', '''/nextlander'':33B ''07'':11A ''2025'':9A ''back'':5A ''brad'':1A ''communiti'':30B ''find'':23B ''finish'':14B ''last'':19B ''let'':21B ''nextland'':25B ''part'':10A ''patrick'':3A ''support'':27B ''thank'':34B ''today'':15B ''volgarr'':20B ''volgarrrrrrr'':7A ''watch'':36B ''www.patreon.com'':32B ''www.patreon.com/nextlander'':31B', false, 'PT1H47M49S', 'https://i.ytimg.com/vi/3nFn-uT5g_k/maxresdefault.jpg'),
 	('JyzghIuDxa0', 'nextlander', 'Alex and Vinny Playthrough Mouthwashing!', 'What is Mouthwashing? Well, grab a beverage, grab some cake, and come join us as we experience it together.
 
 Nextlander is supported by its community:
@@ -24247,6 +23342,18 @@ Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/hYLFcUPRQ00/mqdefault.jpg', '2023-10-06 18:00:19+00', '''/nextlander'':48B ''alex'':8B ''bag'':3A ''beauti'':37B ''brad'':30B ''car'':27B ''chat'':26B ''cocoon'':7A,39B ''communiti'':45B ''forza'':5A,21B ''grab'':2A ''in'':15B ''motorsport'':22B ''new'':20B ''nextland'':1A,40B ''out'':17B ''puzzl'':36B ''show'':31B ''support'':42B ''take'':9B ''thank'':49B ''us'':10B ''watch'':51B ''www.patreon.com'':47B ''www.patreon.com/nextlander'':46B', false, 'PT1H57M25S', 'https://i.ytimg.com/vi/hYLFcUPRQ00/maxresdefault.jpg'),
+	('S5PP-NJ7X5A', 'nextlander', 'Brad, Patrick, and Volgarr''s Year End Party! (Part 06)', 'We''re nearing the end of the year and Brad and Patrick would love to end it on high note regarding Volgarr, but will they?
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/S5PP-NJ7X5A/mqdefault.jpg', '2024-12-13 22:58:23+00', '''/nextlander'':44B ''06'':10A ''brad'':1A,20B ''communiti'':41B ''end'':7A,15B,26B ''high'':29B ''love'':24B ''near'':13B ''nextland'':36B ''note'':30B ''part'':9A ''parti'':8A ''patrick'':2A,22B ''re'':12B ''regard'':31B ''support'':38B ''thank'':45B ''volgarr'':4A,32B ''watch'':47B ''would'':23B ''www.patreon.com'':43B ''www.patreon.com/nextlander'':42B ''year'':6A,18B', false, 'PT2H8M10S', 'https://i.ytimg.com/vi/S5PP-NJ7X5A/maxresdefault.jpg'),
+	('3nFn-uT5g_k', 'nextlander', 'Brad and Patrick are back to Volgarrrrrrr in 2025!! [Part 07]', 'Will they finish today?! Is this the last Volgarr? Let''s find out!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/3nFn-uT5g_k/mqdefault.jpg', '2025-01-17 20:19:48+00', '''/nextlander'':33B ''07'':11A ''2025'':9A ''back'':5A ''brad'':1A ''communiti'':30B ''find'':23B ''finish'':14B ''last'':19B ''let'':21B ''nextland'':25B ''part'':10A ''patrick'':3A ''support'':27B ''thank'':34B ''today'':15B ''volgarr'':20B ''volgarrrrrrr'':7A ''watch'':36B ''www.patreon.com'':32B ''www.patreon.com/nextlander'':31B', false, 'PT1H47M49S', 'https://i.ytimg.com/vi/3nFn-uT5g_k/maxresdefault.jpg'),
 	('sckiW5xVacw', 'nextlander', 'Brad and Vinny Return to Fallout 76', 'Has Fallout 76 gotten better in the last six years? Are we really just chasing the high of that TV show? Can we make it through a stream without falling through the world? Brad and Vinny investigate.
 
 Nextlander is supported by its community:
@@ -25477,12 +24584,6 @@ Call into the Dump Truck (707)EXIT-FLU
 	('Fm50UIe2GPQ', 'giantbomb', 'Mortal Kombat Mitchologies: Mike Miquanchi | FINALE | BLIGHT CLUB', 'Against all odds, Mike Miquanchi has finally ended this terrible blight that been inflicted on him. You can sometimes trust a wizard. 
 
 #mortalkombat  #blightclub #giantbomb', 'https://i.ytimg.com/vi/Fm50UIe2GPQ/mqdefault.jpg', '2024-02-28 22:22:10+00', '''blight'':7A,19B ''blightclub'':32B ''club'':8A ''end'':16B ''final'':6A,15B ''giantbomb'':33B ''inflict'':22B ''kombat'':2A ''mike'':4A,12B ''miquanchi'':5A,13B ''mitcholog'':3A ''mortal'':1A ''mortalkombat'':31B ''odd'':11B ''sometim'':27B ''terribl'':18B ''trust'':28B ''wizard'':30B', false, 'PT2H44M22S', 'https://i.ytimg.com/vi/Fm50UIe2GPQ/maxresdefault.jpg'),
-	('PCsaD2dB1Pw', 'giantbomb', 'Big Hops | Unfinished', 'Jeff Grubb and Mike Minotti hop and bop around as a cute little frog!
-
-#unfinished #demo #bighops', 'https://i.ytimg.com/vi/PCsaD2dB1Pw/mqdefault.jpg', '2025-06-03 15:00:42+00', '''around'':12B ''big'':1A ''bighop'':20B ''bop'':11B ''cute'':15B ''demo'':19B ''frog'':17B ''grubb'':5B ''hop'':2A,9B ''jeff'':4B ''littl'':16B ''mike'':7B ''minotti'':8B ''unfinish'':3A,18B', false, 'PT19M18S', 'https://i.ytimg.com/vi/PCsaD2dB1Pw/maxresdefault.jpg'),
-	('0BUigORGKi0', 'giantbomb', 'One of the WORST PS1 Games? | Rascal 01 | Blight Club', 'It''s Mike Minotti''s turn for a blight and this one is a 90s delight! Watch as he tries to save his uncle and maybe NATO from the evil clutches of time. 
-
-#blightclub #giantbomb #badgames', 'https://i.ytimg.com/vi/0BUigORGKi0/mqdefault.jpg', '2025-05-14 19:54:18+00', '''01'':8A ''90s'':25B ''badgam'':46B ''blight'':9A,19B ''blightclub'':44B ''club'':10A ''clutch'':41B ''delight'':26B ''evil'':40B ''game'':6A ''giantbomb'':45B ''mayb'':36B ''mike'':13B ''minotti'':14B ''nato'':37B ''one'':1A,22B ''ps1'':5A ''rascal'':7A ''save'':32B ''time'':43B ''tri'':30B ''turn'':16B ''uncl'':34B ''watch'':27B ''worst'':4A', false, 'PT1H44M9S', 'https://i.ytimg.com/vi/0BUigORGKi0/maxresdefault.jpg'),
 	('BgnnbvukYns', 'giantbomb', 'Monaco 2 with Kinda Funny!', 'Our own copadres (Jan, Dan, Mike, and Grubb), go against Kinda Funny to see who is better at heisting in Monaco 2! 
 
 #giantbomb #monaco2', 'https://i.ytimg.com/vi/BgnnbvukYns/mqdefault.jpg', '2025-04-09 22:55:36+00', '''2'':2A,27B ''better'':22B ''copadr'':8B ''dan'':10B ''funni'':5A,17B ''giantbomb'':28B ''go'':14B ''grubb'':13B ''heist'':24B ''jan'':9B ''kinda'':4A,16B ''mike'':11B ''monaco'':1A,26B ''monaco2'':29B ''see'':19B', false, 'PT1H44M35S', 'https://i.ytimg.com/vi/BgnnbvukYns/maxresdefault.jpg'),
@@ -25492,34 +24593,22 @@ Watch the complete series here! https://www.youtube.com/playlist?list=PLXlhzeWIu
 	('s16yTbx0RH0', 'giantbomb', 'Cocoon is captivating! #gaming #indiegame #puzzle', 'Full video: https://www.youtube.com/watch?v=xW5dn7-5wJc
 
 #gaming #videogames #indiegame #puzzle #cocoon #limbo #inside #chill #cozy #wtf #mindblown #mindblowing #BUG', 'https://i.ytimg.com/vi/s16yTbx0RH0/mqdefault.jpg', '2023-10-04 21:20:56+00', '''/watch?v=xw5dn7-5wjc'':11B ''bug'':24B ''captiv'':3A ''chill'':19B ''cocoon'':1A,16B ''cozi'':20B ''full'':7B ''game'':4A,12B ''indiegam'':5A,14B ''insid'':18B ''limbo'':17B ''mindblow'':23B ''mindblown'':22B ''puzzl'':6A,15B ''video'':8B ''videogam'':13B ''wtf'':21B ''www.youtube.com'':10B ''www.youtube.com/watch?v=xw5dn7-5wjc'':9B', false, 'PT47S', 'https://i.ytimg.com/vi/s16yTbx0RH0/maxresdefault.jpg'),
-	('ij2mpglwYvw', 'giantbomb', 'A Quick Look at Teenage Mutant Ninja Turtles: Tactical Takedown', 'Jan and Grubb appreciate tiles, tactics, and turtles! 
-
-Support Giant Bomb by going to:
-giantbomb.com/join
-
-#tmnt #quicklook #giantbomb #teenagemutantninjaturtle', 'https://i.ytimg.com/vi/ij2mpglwYvw/mqdefault.jpg', '2025-05-24 13:01:24+00', '''/join'':27B ''appreci'':14B ''bomb'':21B ''giant'':20B ''giantbomb'':30B ''giantbomb.com'':26B ''giantbomb.com/join'':25B ''go'':23B ''grubb'':13B ''jan'':11B ''look'':3A ''mutant'':6A ''ninja'':7A ''quick'':2A ''quicklook'':29B ''support'':19B ''tactic'':9A,16B ''takedown'':10A ''teenag'':5A ''teenagemutantninjaturtl'':31B ''tile'':15B ''tmnt'':28B ''turtl'':8A,18B', false, 'PT23M20S', 'https://i.ytimg.com/vi/ij2mpglwYvw/maxresdefault.jpg'),
-	('x0VLS_XRfbY', 'giantbomb', 'A Quick Look at Deliver At All Costs', 'Dan and Mike hop in a truck to deliver melons, navigate through a bomb field with a trampoline, and drive through every single building possible!
-
-#quicklook #giantbomb #deliveratallcosts', 'https://i.ytimg.com/vi/x0VLS_XRfbY/mqdefault.jpg', '2025-05-20 08:01:05+00', '''bomb'':22B ''build'':32B ''cost'':8A ''dan'':9B ''deliv'':5A,17B ''deliveratallcost'':36B ''drive'':28B ''everi'':30B ''field'':23B ''giantbomb'':35B ''hop'':12B ''look'':3A ''melon'':18B ''mike'':11B ''navig'':19B ''possibl'':33B ''quick'':2A ''quicklook'':34B ''singl'':31B ''trampolin'':26B ''truck'':15B', false, 'PT33M57S', 'https://i.ytimg.com/vi/x0VLS_XRfbY/maxresdefault.jpg'),
 	('vDRqsxpzKaQ', 'giantbomb', 'Stasis: Giant Bomb Quick Look [Extended HD Gameplay]', 'Return to the days when pointing was pointing and clicking was disturbing and gruesome.', 'https://i.ytimg.com/vi/vDRqsxpzKaQ/mqdefault.jpg', '2015-10-05 13:00:01+00', '''bomb'':3A ''click'':18B ''day'':12B ''disturb'':20B ''extend'':6A ''gameplay'':8A ''giant'':2A ''gruesom'':22B ''hd'':7A ''look'':5A ''point'':14B,16B ''quick'':4A ''return'':9B ''stasi'':1A', false, 'PT44M56S', 'https://i.ytimg.com/vi/vDRqsxpzKaQ/maxresdefault.jpg'),
+	('yJD8eSR_Qao', 'giantbomb', 'Steal My Sunshine: Episode 12', '***NOTE***: This is a legacy video that appears exactly how it originally did on Giant Bomb Dot Com. No further editing, re-exporting, etc. has been done. Enjoy!
+
+Watch the complete series here! https://www.youtube.com/playlist?list=PLXlhzeWIuTHISwjRdU79QjKBX66P7YLfS', 'https://i.ytimg.com/vi/yJD8eSR_Qao/mqdefault.jpg', '2025-04-04 22:12:56+00', '''/playlist?list=plxlhzewiuthiswjrdu79qjkbx66p7ylfs'':42B ''12'':5A ''appear'':13B ''bomb'':21B ''com'':23B ''complet'':37B ''done'':33B ''dot'':22B ''edit'':26B ''enjoy'':34B ''episod'':4A ''etc'':30B ''exact'':14B ''export'':29B ''giant'':20B ''legaci'':10B ''note'':6B ''origin'':17B ''re'':28B ''re-export'':27B ''seri'':38B ''steal'':1A ''sunshin'':3A ''video'':11B ''watch'':35B ''www.youtube.com'':41B ''www.youtube.com/playlist?list=plxlhzewiuthiswjrdu79qjkbx66p7ylfs'':40B', false, 'PT1H57M22S', 'https://i.ytimg.com/vi/yJD8eSR_Qao/maxresdefault.jpg'),
 	('18jU5xvv24g', 'giantbomb', 'Official U.S. PlayStation Magazine: Issue 55', 'Demo Discs are some good ol'' sweet sweet candy! Mike, Dan, and Grubb dip into the PlayStation 2 to snowboard, hoverboard, play the guitar, and play some baseball!
 
 #giantbomb #opm #demo #demodisc', 'https://i.ytimg.com/vi/18jU5xvv24g/mqdefault.jpg', '2025-05-21 16:00:06+00', '''2'':24B ''55'':6A ''basebal'':34B ''candi'':15B ''dan'':17B ''demo'':7B,37B ''demodisc'':38B ''dip'':20B ''disc'':8B ''giantbomb'':35B ''good'':11B ''grubb'':19B ''guitar'':30B ''hoverboard'':27B ''issu'':5A ''magazin'':4A ''mike'':16B ''offici'':1A ''ol'':12B ''opm'':36B ''play'':28B,32B ''playstat'':3A,23B ''snowboard'':26B ''sweet'':13B,14B ''u.s'':2A', false, 'PT1H34M5S', 'https://i.ytimg.com/vi/18jU5xvv24g/maxresdefault.jpg'),
-	('YeJWsYdEMeo', 'giantbomb', 'Voicemail Dump Truck158 | The Filipino Thing.mp3', 'The Dump Truck is back and ready to take a big ol'' dump! We talk about being silent partners, hereditary knowledge of doctoring, what the Philippines is, factories, saying names, and even more bruh! LET''S GO!
+	('x0VLS_XRfbY', 'giantbomb', 'A Quick Look at Deliver At All Costs', 'Dan and Mike hop in a truck to deliver melons, navigate through a bomb field with a trampoline, and drive through every single building possible!
 
-Support Giant Bomb by going to
-giantbomb.com/join
-
-#vmdt #voicemaildumptruck #giantbomb', 'https://i.ytimg.com/vi/YeJWsYdEMeo/mqdefault.jpg', '2025-05-15 21:25:24+00', '''/join'':52B ''back'':11B ''big'':17B ''bomb'':46B ''bruh'':40B ''doctor'':29B ''dump'':2A,8B,19B ''even'':38B ''factori'':34B ''filipino'':5A ''giant'':45B ''giantbomb'':55B ''giantbomb.com'':51B ''giantbomb.com/join'':50B ''go'':43B,48B ''hereditari'':26B ''knowledg'':27B ''let'':41B ''name'':36B ''ol'':18B ''partner'':25B ''philippin'':32B ''readi'':13B ''say'':35B ''silent'':24B ''support'':44B ''take'':15B ''talk'':21B ''thing.mp3'':6A ''truck'':9B ''truck158'':3A ''vmdt'':53B ''voicemail'':1A ''voicemaildumptruck'':54B', false, 'PT1H11M', 'https://i.ytimg.com/vi/YeJWsYdEMeo/maxresdefault.jpg'),
+#quicklook #giantbomb #deliveratallcosts', 'https://i.ytimg.com/vi/x0VLS_XRfbY/mqdefault.jpg', '2025-05-20 08:01:05+00', '''bomb'':22B ''build'':32B ''cost'':8A ''dan'':9B ''deliv'':5A,17B ''deliveratallcost'':36B ''drive'':28B ''everi'':30B ''field'':23B ''giantbomb'':35B ''hop'':12B ''look'':3A ''melon'':18B ''mike'':11B ''navig'':19B ''possibl'':33B ''quick'':2A ''quicklook'':34B ''singl'':31B ''trampolin'':26B ''truck'':15B', false, 'PT33M57S', 'https://i.ytimg.com/vi/x0VLS_XRfbY/maxresdefault.jpg'),
 	('giab5Xg--0w', 'giantbomb', 'Kojima and Death Stranding 2 are Going on Tour | Game Mess Mornings 05/15/25', 'Jeff Grubb is joined by AJ Minotti to chat about a Death Stranding 2 tour and how early reviews looking positive, PS5 prices going up, Nintendo Switch 2 specs getting finalized, and even more this Thursday morning! 
 
  #gmm #gamemessmornings #giantbomb', 'https://i.ytimg.com/vi/giab5Xg--0w/mqdefault.jpg', '2025-05-15 16:37:13+00', '''05/15/25'':13A ''2'':5A,27B,41B ''aj'':19B ''chat'':22B ''death'':3A,25B ''earli'':31B ''even'':46B ''final'':44B ''game'':10A ''gamemessmorn'':52B ''get'':43B ''giantbomb'':53B ''gmm'':51B ''go'':7A,37B ''grubb'':15B ''jeff'':14B ''join'':17B ''kojima'':1A ''look'':33B ''mess'':11A ''minotti'':20B ''morn'':12A,50B ''nintendo'':39B ''posit'':34B ''price'':36B ''ps5'':35B ''review'':32B ''spec'':42B ''strand'':4A,26B ''switch'':40B ''thursday'':49B ''tour'':9A,28B', false, 'PT54M29S', 'https://i.ytimg.com/vi/giab5Xg--0w/maxresdefault.jpg'),
 	('hpzJ4xs8SY8', 'giantbomb', 'The Elder Scrolls IV: Oblivion Remastered Reveal | Giant Bomb Talks Over', 'Sure it could be Elder Scrolls IV, but IV could be plenty of things! 
 
 #elderscrolls #oblivion #bethesda', 'https://i.ytimg.com/vi/hpzJ4xs8SY8/mqdefault.jpg', '2025-04-22 15:39:34+00', '''bethesda'':27B ''bomb'':9A ''could'':13B,20B ''elder'':2A,15B ''elderscrol'':25B ''giant'':8A ''iv'':4A,17B,19B ''oblivion'':5A,26B ''plenti'':22B ''remast'':6A ''reveal'':7A ''scroll'':3A,16B ''sure'':11B ''talk'':10A ''thing'':24B', false, 'PT39M6S', 'https://i.ytimg.com/vi/hpzJ4xs8SY8/maxresdefault.jpg'),
-	('yJD8eSR_Qao', 'giantbomb', 'Steal My Sunshine: Episode 12', '***NOTE***: This is a legacy video that appears exactly how it originally did on Giant Bomb Dot Com. No further editing, re-exporting, etc. has been done. Enjoy!
-
-Watch the complete series here! https://www.youtube.com/playlist?list=PLXlhzeWIuTHISwjRdU79QjKBX66P7YLfS', 'https://i.ytimg.com/vi/yJD8eSR_Qao/mqdefault.jpg', '2025-04-04 22:12:56+00', '''/playlist?list=plxlhzewiuthiswjrdu79qjkbx66p7ylfs'':42B ''12'':5A ''appear'':13B ''bomb'':21B ''com'':23B ''complet'':37B ''done'':33B ''dot'':22B ''edit'':26B ''enjoy'':34B ''episod'':4A ''etc'':30B ''exact'':14B ''export'':29B ''giant'':20B ''legaci'':10B ''note'':6B ''origin'':17B ''re'':28B ''re-export'':27B ''seri'':38B ''steal'':1A ''sunshin'':3A ''video'':11B ''watch'':35B ''www.youtube.com'':41B ''www.youtube.com/playlist?list=plxlhzewiuthiswjrdu79qjkbx66p7ylfs'':40B', false, 'PT1H57M22S', 'https://i.ytimg.com/vi/yJD8eSR_Qao/maxresdefault.jpg'),
 	('BnmXYzNiG3k', 'giantbomb', 'POWER BLOCK 4/16/25 | GameBreaking News and Blight Club!', 'GameSpot and Giant Bomb are teaming up for The Power Block, an all day livestream featuring breaking news, coverage on the latest games, let''s plays, and more!
 
 Timestamps:
@@ -25532,24 +24621,6 @@ Timestamps:
 	('vKevsSccsJE', 'giantbomb', 'Assassin''s Creed Shadows | Giant Bomb Plays', 'Shawn''s been playing Assassin''s Creed Shadows, and he''s joined by Grubb and Niki today to show you what the game is like about 7 hours in!
 
 #assassinscreed #assassinscreedshadows #ubisoft', 'https://i.ytimg.com/vi/vKevsSccsJE/mqdefault.jpg', '2025-03-19 02:55:43+00', '''7'':34B ''assassin'':1A,12B ''assassinscre'':37B ''assassinscreedshadow'':38B ''bomb'':6A ''creed'':3A,14B ''game'':30B ''giant'':5A ''grubb'':21B ''hour'':35B ''join'':19B ''like'':32B ''niki'':23B ''play'':7A,11B ''shadow'':4A,15B ''shawn'':8B ''show'':26B ''today'':24B ''ubisoft'':39B', false, 'PT2H2M32S', NULL),
-	('ERNCwRTrxfI', 'giantbomb', 'Bethesda Announces Oblivion Stream for Tomorrow | GameBreaking News 04/21/25', 'Jeff Grubb is joined by Emma Fyffe to recap gamebreaking news such as the possibility of a new Mario game coming out for the Switch 2, big box retailers announce their dates for Switch 2 preorders, renting consoles becoming a big thing in Japan, and Bethesda announcing an Oblivion stream for tomorrow (04/22/25).
-
-#gamebreakingnews #videogamenews', 'https://i.ytimg.com/vi/ERNCwRTrxfI/mqdefault.jpg', '2025-04-21 17:05:08+00', '''04/21/25'':9A ''04/22/25'':62B ''2'':35B,44B ''announc'':2A,39B,56B ''becom'':48B ''bethesda'':1A,55B ''big'':36B,50B ''box'':37B ''come'':30B ''consol'':47B ''date'':41B ''emma'':15B ''fyff'':16B ''game'':29B ''gamebreak'':7A,19B ''gamebreakingnew'':63B ''grubb'':11B ''japan'':53B ''jeff'':10B ''join'':13B ''mario'':28B ''new'':27B ''news'':8A,20B ''oblivion'':3A,58B ''possibl'':24B ''preorder'':45B ''recap'':18B ''rent'':46B ''retail'':38B ''stream'':4A,59B ''switch'':34B,43B ''thing'':51B ''tomorrow'':6A,61B ''videogamenew'':64B', false, 'PT59M48S', 'https://i.ytimg.com/vi/ERNCwRTrxfI/maxresdefault.jpg'),
-	('rjtBaaXMSQo', 'giantbomb', 'EA Cancels Black Panther Game and Closes Cliffhanger Games | Game Mess Mornings 05/29/25', 'Jeff Grubb is joined by Lex Luddy to chat about EA cancelling their upcoming Black Panther game, Trump''s tariffs getting blocked by courts, Cyberpunk 2 is further away than you thought, another Persona 4 voice actor getting snubbed, a Death Stranding anime in the works, and WHAT IS MINDSEYE?
-
-Check out Rewinder:
-https://www.patreon.com/rewinder
-
-Support Giant Bomb at:
-giantbomb.com/join
-
-#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/rjtBaaXMSQo/mqdefault.jpg', '2025-05-29 16:08:15+00', '''/join'':76B ''/rewinder'':69B ''05/29/25'':13A ''2'':39B ''4'':48B ''actor'':50B ''anim'':56B ''anoth'':46B ''away'':42B ''black'':3A,28B ''block'':35B ''bomb'':72B ''cancel'':2A,25B ''chat'':22B ''check'':64B ''cliffhang'':8A ''close'':7A ''court'':37B ''cyberpunk'':38B ''death'':54B ''ea'':1A,24B ''game'':5A,9A,10A,30B ''gamemessmorn'':78B ''get'':34B,51B ''giant'':71B ''giantbomb'':79B ''giantbomb.com'':75B ''giantbomb.com/join'':74B ''gmm'':77B ''grubb'':15B ''jeff'':14B ''join'':17B ''lex'':19B ''luddi'':20B ''mess'':11A ''mindsey'':63B ''morn'':12A ''panther'':4A,29B ''persona'':47B ''rewind'':66B ''snub'':52B ''strand'':55B ''support'':70B ''tariff'':33B ''thought'':45B ''trump'':31B ''upcom'':27B ''videogamenew'':80B ''voic'':49B ''work'':59B ''www.patreon.com'':68B ''www.patreon.com/rewinder'':67B', false, 'PT1H2M14S', 'https://i.ytimg.com/vi/rjtBaaXMSQo/maxresdefault.jpg'),
-	('P82sJxXkNeA', 'giantbomb', 'A Quick Look at Capcom Fighting Collection 2', 'Mike Minotti and Jan Ochoa fight as a giant dinosaur with horns outside of a high school! Also Power Stone 2 is still pretty cool. 
-
-Support Giant Bomb at:
-giantbomb.com/join
-
-#capcomfightingcollection2 #powerstone2 #capcomvssnk2', 'https://i.ytimg.com/vi/P82sJxXkNeA/mqdefault.jpg', '2025-05-16 14:17:37+00', '''/join'':40B ''2'':8A,29B ''also'':26B ''bomb'':36B ''capcom'':5A ''capcomfightingcollection2'':41B ''capcomvssnk2'':43B ''collect'':7A ''cool'':33B ''dinosaur'':18B ''fight'':6A,14B ''giant'':17B,35B ''giantbomb.com'':39B ''giantbomb.com/join'':38B ''high'':24B ''horn'':20B ''jan'':12B ''look'':3A ''mike'':9B ''minotti'':10B ''ochoa'':13B ''outsid'':21B ''power'':27B ''powerstone2'':42B ''pretti'':32B ''quick'':2A ''school'':25B ''still'':31B ''stone'':28B ''support'':34B', false, 'PT35M14S', 'https://i.ytimg.com/vi/P82sJxXkNeA/maxresdefault.jpg'),
 	('ciofAYgjBF8', 'giantbomb', 'Hands-On With the Nintendo Switch 2', 'Dan and Jan had a baDANza/baJANza visiting New York City to check out the Nintendo Switch 2. Check it out as Dan gets to play Mario Kart World, Metroid Prime 4, Donkey Kong Bananza, and more! They also sit down and give their immediate impressions after spending the day with the Switch 2. 
 
 *This was filmed before we knew the projected price of the console and how the tariff situation would affect it!
@@ -25578,6 +24649,15 @@ giantbomb.com/join
 	('RDPer6tDm88', 'giantbomb', 'Fallout 3 Remaster In The Works, But It''s Not Arriving Anytime Soon | GameBreaking News 04/16/25', 'Jeff Grubb and Jan Ochoa join forces to tackle the gaming news of the day, including some Switch 2 updates, Discord''s weird new age verification system, and a Fallout 3 remaster being rumored.
 
 #fallout3 #bethesda #doomthedarkages', 'https://i.ytimg.com/vi/RDPer6tDm88/mqdefault.jpg', '2025-04-16 19:26:26+00', '''04/16/25'':16A ''2'':35B ''3'':2A,47B ''age'':41B ''anytim'':12A ''arriv'':11A ''bethesda'':52B ''day'':31B ''discord'':37B ''doomthedarkag'':53B ''fallout'':1A,46B ''fallout3'':51B ''forc'':23B ''game'':27B ''gamebreak'':14A ''grubb'':18B ''includ'':32B ''jan'':20B ''jeff'':17B ''join'':22B ''new'':40B ''news'':15A,28B ''ochoa'':21B ''remast'':3A,48B ''rumor'':50B ''soon'':13A ''switch'':34B ''system'':43B ''tackl'':25B ''updat'':36B ''verif'':42B ''weird'':39B ''work'':6A', false, 'PT59M24S', 'https://i.ytimg.com/vi/RDPer6tDm88/maxresdefault.jpg'),
+	('P82sJxXkNeA', 'giantbomb', 'A Quick Look at Capcom Fighting Collection 2', 'Mike Minotti and Jan Ochoa fight as a giant dinosaur with horns outside of a high school! Also Power Stone 2 is still pretty cool. 
+
+Support Giant Bomb at:
+giantbomb.com/join
+
+#capcomfightingcollection2 #powerstone2 #capcomvssnk2', 'https://i.ytimg.com/vi/P82sJxXkNeA/mqdefault.jpg', '2025-05-16 14:17:37+00', '''/join'':40B ''2'':8A,29B ''also'':26B ''bomb'':36B ''capcom'':5A ''capcomfightingcollection2'':41B ''capcomvssnk2'':43B ''collect'':7A ''cool'':33B ''dinosaur'':18B ''fight'':6A,14B ''giant'':17B,35B ''giantbomb.com'':39B ''giantbomb.com/join'':38B ''high'':24B ''horn'':20B ''jan'':12B ''look'':3A ''mike'':9B ''minotti'':10B ''ochoa'':13B ''outsid'':21B ''power'':27B ''powerstone2'':42B ''pretti'':32B ''quick'':2A ''school'':25B ''still'':31B ''stone'':28B ''support'':34B', false, 'PT35M14S', 'https://i.ytimg.com/vi/P82sJxXkNeA/maxresdefault.jpg'),
+	('ERNCwRTrxfI', 'giantbomb', 'Bethesda Announces Oblivion Stream for Tomorrow | GameBreaking News 04/21/25', 'Jeff Grubb is joined by Emma Fyffe to recap gamebreaking news such as the possibility of a new Mario game coming out for the Switch 2, big box retailers announce their dates for Switch 2 preorders, renting consoles becoming a big thing in Japan, and Bethesda announcing an Oblivion stream for tomorrow (04/22/25).
+
+#gamebreakingnews #videogamenews', 'https://i.ytimg.com/vi/ERNCwRTrxfI/mqdefault.jpg', '2025-04-21 17:05:08+00', '''04/21/25'':9A ''04/22/25'':62B ''2'':35B,44B ''announc'':2A,39B,56B ''becom'':48B ''bethesda'':1A,55B ''big'':36B,50B ''box'':37B ''come'':30B ''consol'':47B ''date'':41B ''emma'':15B ''fyff'':16B ''game'':29B ''gamebreak'':7A,19B ''gamebreakingnew'':63B ''grubb'':11B ''japan'':53B ''jeff'':10B ''join'':13B ''mario'':28B ''new'':27B ''news'':8A,20B ''oblivion'':3A,58B ''possibl'':24B ''preorder'':45B ''recap'':18B ''rent'':46B ''retail'':38B ''stream'':4A,59B ''switch'':34B,43B ''thing'':51B ''tomorrow'':6A,61B ''videogamenew'':64B', false, 'PT59M48S', 'https://i.ytimg.com/vi/ERNCwRTrxfI/maxresdefault.jpg'),
 	('x74LIB6Roow', 'giantbomb', 'Does Warside Stack Up to Advance Wars? | Giant Bombcast 886: Plate of Spaghetti', 'We''ve got more Blue Prince on the brain as we continue to explore and unlock more rooms, rolling around in Katamari Damacy, strategizing some advanced tactics in Warside, and playing with balls in PegIdle! We also chat about Elder Scrolls IV: Oblivion Remastered screenshots getting leaked, PS5 prices getting increased in certain regions, details on Marathon, and more!', 'https://i.ytimg.com/vi/x74LIB6Roow/mqdefault.jpg', '2025-04-16 00:25:59+00', '''886'':10A ''advanc'':6A,39B ''also'':50B ''around'':33B ''ball'':46B ''blue'':18B ''bombcast'':9A ''brain'':22B ''certain'':66B ''chat'':51B ''continu'':25B ''damaci'':36B ''detail'':68B ''elder'':53B ''explor'':27B ''get'':59B,63B ''giant'':8A ''got'':16B ''increas'':64B ''iv'':55B ''katamari'':35B ''leak'':60B ''marathon'':70B ''oblivion'':56B ''pegidl'':48B ''plate'':11A ''play'':44B ''price'':62B ''princ'':19B ''ps5'':61B ''region'':67B ''remast'':57B ''roll'':32B ''room'':31B ''screenshot'':58B ''scroll'':54B ''spaghetti'':13A ''stack'':3A ''strateg'':37B ''tactic'':40B ''unlock'':29B ''ve'':15B ''war'':7A ''warsid'':2A,42B', false, 'PT1H49M50S', 'https://i.ytimg.com/vi/x74LIB6Roow/maxresdefault.jpg'),
 	('KlYcJMUOUqo', 'giantbomb', 'POWER BLOCK 4/15/25 | Giant Bombcast, Opening Magic the Gathering Cards', 'GameSpot and Giant Bomb are teaming up for The Power Block, an all day livestream featuring breaking news, coverage on the latest games, let''s plays, and more!
 
@@ -58660,60 +57740,20 @@ And Twitch! http://bit.ly/shzAI2', 'https://i.ytimg.com/vi/WK6uq4PDH4w/mqdefault
 	('2OTiLmqEQf4', 'giantbomb', 'Bloober Team Announces Silent Hill 1 Remake | Game Mess Mornings 06/12/25', 'Jeff Grubb and Jan Ochoa start your Thursday with news that Bloober Team is going to remake the original Silent Hill, MindsEye is off to a rough launch, FIFA''s new game has a lot of WEB3 stuff in it, and even more! 
 
 #gmm #gamemessmornings #giantbomb', 'https://i.ytimg.com/vi/2OTiLmqEQf4/mqdefault.jpg', '2025-06-12 16:09:20+00', '''06/12/25'':11A ''1'':6A ''announc'':3A ''bloober'':1A,23B ''even'':53B ''fifa'':40B ''game'':8A,43B ''gamemessmorn'':56B ''giantbomb'':57B ''gmm'':55B ''go'':26B ''grubb'':13B ''hill'':5A,32B ''jan'':15B ''jeff'':12B ''launch'':39B ''lot'':46B ''mess'':9A ''mindsey'':33B ''morn'':10A ''new'':42B ''news'':21B ''ochoa'':16B ''origin'':30B ''remak'':7A,28B ''rough'':38B ''silent'':4A,31B ''start'':17B ''stuff'':49B ''team'':2A,24B ''thursday'':19B ''web3'':48B', false, 'PT59M53S', 'https://i.ytimg.com/vi/2OTiLmqEQf4/maxresdefault.jpg'),
-	('4VmAlYtHSeM', 'giantbomb', 'Rascal (PS1) | 04 | Blight Club', 'Will Mike Minotti make any progress today on Blight Club? Will he be able to figure out what any of the buttons or crabs do? Tune in to find out! 
+	('gTpwJ2STQZ8', 'giantbomb', 'A Quick Look at Despelote', 'Jeff Grubb and Jan Ochoa check out Despelote to answer the age old question: Can I kick it? Yes, you can.
 
-#blightclub #giantbomb #badgames #rascal', 'https://i.ytimg.com/vi/4VmAlYtHSeM/mqdefault.jpg', '2025-06-11 20:01:58+00', '''04'':3A ''abl'':19B ''badgam'':38B ''blight'':4A,14B ''blightclub'':36B ''button'':27B ''club'':5A,15B ''crab'':29B ''figur'':21B ''find'':34B ''giantbomb'':37B ''make'':9B ''mike'':7B ''minotti'':8B ''progress'':11B ''ps1'':2A ''rascal'':1A,39B ''today'':12B ''tune'':31B', false, 'PT1H46M26S', 'https://i.ytimg.com/vi/4VmAlYtHSeM/maxresdefault.jpg'),
-	('jWJYUy5Vi4s', 'giantbomb', 'A Big Bowl of Sebghetti in MindsEye #mindseye #spaghetti #giantbomb', 'We turn one of our allies into a bowl of human spaghetti in MindsEye.', 'https://i.ytimg.com/vi/jWJYUy5Vi4s/mqdefault.jpg', '2025-06-12 18:24:21+00', '''alli'':16B ''big'':2A ''bowl'':3A,19B ''giantbomb'':10A ''human'':21B ''mindsey'':7A,8A,24B ''one'':13B ''sebghetti'':5A ''spaghetti'':9A,22B ''turn'':12B', false, 'PT43S', 'https://i.ytimg.com/vi/jWJYUy5Vi4s/maxresdefault.jpg'),
-	('foaNXrT-UPU', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 1-1 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
+Support Giant Bomb by heading over to
+giantbomb.com/join
 
-We got Jesse Vitelli and John Carson on the couch. In this segment we have a World Premiere of our own and celebrate a little too hard. 
-
-Thanks to our friends at Annapurna Interactive for presenting this stream!
-
-Thanks to popagenda for letting us debut their awesome new logo! Check them out here: https://popagenda.co/
-
-#sgf #summergamefest #giantbomb', 'https://i.ytimg.com/vi/foaNXrT-UPU/mqdefault.jpg', '2025-06-11 20:18:53+00', '''-1'':10A ''1'':9A ''angel'':21B ''annapurna'':13A,72B ''around'':30B ''awesom'':86B ''bomb'':2A ''carson'':46B ''celebr'':62B ''check'':89B ''couch'':18B,49B ''debut'':84B ''found'':16B ''friend'':27B,70B ''get'':25B ''giant'':1A ''giantbomb'':96B ''got'':41B ''hang'':34B ''hard'':66B ''industri'':32B ''interact'':14A,73B ''jess'':42B ''john'':45B ''let'':82B ''littl'':64B ''logo'':88B ''los'':20B ''new'':87B ''nite'':3A,8A ''popagenda'':80B ''popagenda.co'':93B ''premier'':57B ''present'':11A,75B ''re'':24B ''segment'':52B ''sgf'':94B ''stream'':77B ''summergamefest'':95B ''thank'':67B,78B ''us'':83B ''villa'':7A,39B ''vitelli'':43B ''warfram'':6A,38B ''world'':56B', false, 'PT18M58S', 'https://i.ytimg.com/vi/foaNXrT-UPU/maxresdefault.jpg'),
-	('BoReAT8Nt9s', 'giantbomb', 'A Quick Look at Death Stranding 2', 'Dan Ryckert takes Jeff Grubb on a long hike through the world of Death Stranding 2 and find some time to relax in some hot springs.
-
-#deathstranding2 #ds2 #quicklook #giantbomb', 'https://i.ytimg.com/vi/BoReAT8Nt9s/mqdefault.jpg', '2025-06-26 04:00:12+00', '''2'':7A,23B ''dan'':8B ''death'':5A,21B ''deathstranding2'':34B ''ds2'':35B ''find'':25B ''giantbomb'':37B ''grubb'':12B ''hike'':16B ''hot'':32B ''jeff'':11B ''long'':15B ''look'':3A ''quick'':2A ''quicklook'':36B ''relax'':29B ''ryckert'':9B ''spring'':33B ''strand'':6A,22B ''take'':10B ''time'':27B ''world'':19B', false, 'PT52M20S', 'https://i.ytimg.com/vi/BoReAT8Nt9s/maxresdefault.jpg'),
-	('Rq8_sTQDIho', 'giantbomb', 'A Quick Look (LIVE) at the Switch 2', 'Grubb, Dan, and maybe more are going to check out the Switch 2 and all that it has to offer! 
-
-#switch2 #nintendoswitch2', 'https://i.ytimg.com/vi/Rq8_sTQDIho/mqdefault.jpg', '2025-06-12 21:30:04+00', '''2'':8A,21B ''check'':17B ''dan'':10B ''go'':15B ''grubb'':9B ''live'':4A ''look'':3A ''mayb'':12B ''nintendoswitch2'':30B ''offer'':28B ''quick'':2A ''switch'':7A,20B ''switch2'':29B', false, 'PT4H42M', 'https://i.ytimg.com/vi/Rq8_sTQDIho/maxresdefault.jpg'),
-	('hNpyE9eVJs8', 'giantbomb', 'Voicemail Dump Truck', 'The dump truck is full of fancy East Coast joggers.
-
-Call into the Dump Truck (707)EXIT-FLU
-
-#vmdt #voicemaildumptruck #giantbomb', 'https://i.ytimg.com/vi/hNpyE9eVJs8/mqdefault.jpg', '2025-06-19 19:57:31+00', '''707'':19B ''call'':14B ''coast'':12B ''dump'':2A,5B,17B ''east'':11B ''exit'':21B ''exit-flu'':20B ''fanci'':10B ''flu'':22B ''full'':8B ''giantbomb'':25B ''jogger'':13B ''truck'':3A,6B,18B ''vmdt'':23B ''voicemail'':1A ''voicemaildumptruck'':24B', false, 'PT1H42M6S', 'https://i.ytimg.com/vi/hNpyE9eVJs8/maxresdefault.jpg'),
-	('esB-EiT19lk', 'giantbomb', 'MindsEye''s Review Scores Hit Rock Bottom | Game Mess Mornings 06/16/25', 'Jeff Grubb and Jan Ochoa chat about the Donkey Kong Direct coming soon, MindsEye review scores being very low, a whole grip of Xbox related stories, and even more to start your gaming life on a Monday! 
-
-#gmm #gamemessmornings #giantbomb', 'https://i.ytimg.com/vi/esB-EiT19lk/mqdefault.jpg', '2025-06-16 16:05:10+00', '''06/16/25'':11A ''bottom'':7A ''chat'':17B ''come'':23B ''direct'':22B ''donkey'':20B ''even'':39B ''game'':8A,44B ''gamemessmorn'':50B ''giantbomb'':51B ''gmm'':49B ''grip'':33B ''grubb'':13B ''hit'':5A ''jan'':15B ''jeff'':12B ''kong'':21B ''life'':45B ''low'':30B ''mess'':9A ''mindsey'':1A,25B ''monday'':48B ''morn'':10A ''ochoa'':16B ''relat'':36B ''review'':3A,26B ''rock'':6A ''score'':4A,27B ''soon'':24B ''start'':42B ''stori'':37B ''whole'':32B ''xbox'':35B', false, 'PT59M34S', 'https://i.ytimg.com/vi/esB-EiT19lk/maxresdefault.jpg'),
-	('vOFr8KslOZo', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 2-1 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
-
-We got Jason Fanelli, Celia Bee, Emmet Nahil, Nikky Armstrong, Son M. on the couch! We start the day by talking about Mina the Hollower, starting a farm in a Horror Game, and iputting in WORK over SGF week. 
-
-Thanks to our friends at Annapurna Interactive for presenting this stream!
-
-Check out that hot new popagenda logo! https://popagenda.co/
-
-Stay tuned to the end of this segment and join Dan Ryckert as he tries to cook a hamburger for the first time. That''s right, you''ve read correctly. Shout out to our friends at Outerloop Games, the crew behind the new game, Dosa Divas, for their support on this segment! 
-
-Peep Dosa Divas here: https://outerloopgames.com/
-
-#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/vOFr8KslOZo/mqdefault.jpg', '2025-06-12 17:32:19+00', '''-1'':10A ''2'':9A ''angel'':21B ''annapurna'':13A,84B ''armstrong'':49B ''around'':30B ''bee'':45B ''behind'':138B ''bomb'':2A ''celia'':44B ''check'':90B ''cook'':114B ''correct'':127B ''couch'':18B,54B ''crew'':137B ''dan'':108B ''day'':58B ''diva'':143B,152B ''dosa'':142B,151B ''emmet'':46B ''end'':102B ''fanelli'':43B ''farm'':67B ''first'':119B ''found'':16B ''friend'':27B,82B,132B ''game'':71B,135B,141B ''get'':25B ''giant'':1A ''giantbomb'':157B ''got'':41B ''hamburg'':116B ''hang'':34B ''hollow'':64B ''horror'':70B ''hot'':93B ''industri'':32B ''interact'':14A,85B ''iput'':73B ''jason'':42B ''join'':107B ''logo'':96B ''los'':20B ''m'':51B ''mina'':62B ''nahil'':47B ''new'':94B,140B ''nikki'':48B ''nite'':3A,8A ''outerloop'':134B ''outerloopgames.com'':154B ''peep'':150B ''popagenda'':95B ''popagenda.co'':97B ''present'':11A,87B ''re'':24B ''read'':126B ''right'':123B ''ryckert'':109B ''segment'':105B,149B ''sgf'':77B,155B ''shout'':128B ''son'':50B ''start'':56B,65B ''stay'':98B ''stream'':89B ''summergamefest'':156B ''support'':146B ''talk'':60B ''thank'':79B ''time'':120B ''tri'':112B ''tune'':99B ''ve'':125B ''villa'':7A,39B ''warfram'':6A,38B ''week'':78B ''work'':75B', false, 'PT46M5S', 'https://i.ytimg.com/vi/vOFr8KslOZo/maxresdefault.jpg'),
-	('hEzFtOrm62M', 'giantbomb', 'Giant Bomb @ Nite, LIVE from the Warframe Villa! | Presented by Annapurna Interactive | Nite 2', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
-
-Thanks to our friends at Annapurna Interactive for presenting this stream!
-
-
-#sgf #summergamefest #giantbomb', 'https://i.ytimg.com/vi/hEzFtOrm62M/mqdefault.jpg', '2025-06-08 00:54:38+00', '''2'':14A ''angel'':21B ''annapurna'':11A,45B ''around'':30B ''bomb'':2A ''couch'':18B ''found'':16B ''friend'':27B,43B ''get'':25B ''giant'':1A ''giantbomb'':53B ''hang'':34B ''industri'':32B ''interact'':12A,46B ''live'':4A ''los'':20B ''nite'':3A,13A ''present'':9A,48B ''re'':24B ''sgf'':51B ''stream'':50B ''summergamefest'':52B ''thank'':40B ''villa'':8A,39B ''warfram'':7A,38B', false, 'PT26M48S', 'https://i.ytimg.com/vi/hEzFtOrm62M/maxresdefault.jpg'),
-	('n4BbfgSeqns', 'giantbomb', 'Nintendo Switch 2 Preorders Begin April 24 in US | GameBreaking News 04/18/25', 'Jeff Grubb and friends breakdown today''s top stories in video games! Today we chat about Nintendo finally opening up Switch 2 Preorders in the US, the Mario Kart World bundle getting discounted, Indiana Jones might be getting a sequel, the new Ryan Gosling Star Wars movie sharing the same name as a PS2 game, a Diablo 4 crossover, and more stories to end your week.
-
-#gamebreakingnews #switch2 #starwars', 'https://i.ytimg.com/vi/n4BbfgSeqns/mqdefault.jpg', '2025-04-18 17:09:40+00', '''04/18/25'':12A ''2'':3A,34B ''24'':7A ''4'':70B ''april'':6A ''begin'':5A ''breakdown'':17B ''bundl'':43B ''chat'':27B ''crossov'':71B ''diablo'':69B ''discount'':45B ''end'':76B ''final'':30B ''friend'':16B ''game'':24B,67B ''gamebreak'':10A ''gamebreakingnew'':79B ''get'':44B,50B ''gosl'':56B ''grubb'':14B ''indiana'':46B ''jeff'':13B ''jone'':47B ''kart'':41B ''mario'':40B ''might'':48B ''movi'':59B ''name'':63B ''new'':54B ''news'':11A ''nintendo'':1A,29B ''open'':31B ''preorder'':4A,35B ''ps2'':66B ''ryan'':55B ''sequel'':52B ''share'':60B ''star'':57B ''starwar'':81B ''stori'':21B,74B ''switch'':2A,33B ''switch2'':80B ''today'':18B,25B ''top'':20B ''us'':9A,38B ''video'':23B ''war'':58B ''week'':78B ''world'':42B', false, 'PT1H4M6S', 'https://i.ytimg.com/vi/n4BbfgSeqns/maxresdefault.jpg'),
+#quicklook #giantbomb #despelote', 'https://i.ytimg.com/vi/gTpwJ2STQZ8/mqdefault.jpg', '2025-05-27 21:26:19+00', '''/join'':36B ''age'':17B ''answer'':15B ''bomb'':29B ''check'':11B ''despelot'':5A,13B,39B ''giant'':28B ''giantbomb'':38B ''giantbomb.com'':35B ''giantbomb.com/join'':34B ''grubb'':7B ''head'':31B ''jan'':9B ''jeff'':6B ''kick'':22B ''look'':3A ''ochoa'':10B ''old'':18B ''question'':19B ''quick'':2A ''quicklook'':37B ''support'':27B ''yes'':24B', false, 'PT26M50S', 'https://i.ytimg.com/vi/gTpwJ2STQZ8/maxresdefault.jpg'),
 	('3QZD02ecLLo', 'giantbomb', 'Voicemail Dump Truck with Abby Russell!', 'Do you think Sandra Bullock has ever been on a dump truck?
 
 Call into the show and get your voicemail on at (707)EXIT-FLU
 
 #vmdt #voicemaildumptruck #giantbomb', 'https://i.ytimg.com/vi/3QZD02ecLLo/mqdefault.jpg', '2025-06-26 19:51:46+00', '''707'':29B ''abbi'':5A ''bullock'':11B ''call'':19B ''dump'':2A,17B ''ever'':13B ''exit'':31B ''exit-flu'':30B ''flu'':32B ''get'':24B ''giantbomb'':35B ''russel'':6A ''sandra'':10B ''show'':22B ''think'':9B ''truck'':3A,18B ''vmdt'':33B ''voicemail'':1A,26B ''voicemaildumptruck'':34B', false, 'PT1H24M51S', 'https://i.ytimg.com/vi/3QZD02ecLLo/maxresdefault.jpg'),
+	('RIG346jpGP4', 'giantbomb', 'What is MindsEye?', 'Jeff Grubb and potentially more, try and figure out what IS MindsEye.
+
+#mindseye #giantbomb', 'https://i.ytimg.com/vi/RIG346jpGP4/mqdefault.jpg', '2025-06-11 18:04:49+00', '''figur'':11B ''giantbomb'':17B ''grubb'':5B ''jeff'':4B ''mindsey'':3A,15B,16B ''potenti'':7B ''tri'':9B', false, 'PT1H19S', 'https://i.ytimg.com/vi/RIG346jpGP4/maxresdefault.jpg'),
 	('e-FT-KVzLxI', 'giantbomb', 'Kojima''s Physint is 5-6 Years Away | Game Mess Mornings 05/19/25', 'Jeff Grubb and Jan Ochoa start off your week with a big bowl of gaming news! We cover Kojima''s next game being 5-6 years away, the vibes being off at Bungie, an Injustice 3 game maybe being in the works, and even more!
 
 Support Giant Bomb by heading to
@@ -58728,15 +57768,12 @@ https://www.giantbomb.com/join
 #quicklook #giantbomb #doomthedarkages #doomthedarkages 
 
 Subscribe to Kinda Funny FOR FREE today: youtube.com/kindafunnygames', 'https://i.ytimg.com/vi/pBrZtR-wpOs/mqdefault.jpg', '2025-05-13 14:00:59+00', '''/join'':39B ''/kindafunnygames'':53B ''age'':8A,17B ''bomb'':33B ''check'':12B ''dan'':9B ''dark'':7A,16B ''del'':26B ''doom'':5A,14B ''doomthedarkag'':42B,43B ''featur'':20B ''free'':49B ''funni'':47B ''giant'':32B ''giantbomb'':41B ''go'':35B ''grubb'':11B ''guillermo'':25B ''kinda'':46B ''lair'':23B ''look'':3A ''pacif'':29B ''ps3'':21B ''quick'':2A ''quicklook'':40B ''rim'':30B ''subscrib'':44B ''support'':31B ''today'':50B ''toro'':27B ''www.giantbomb.com'':38B ''www.giantbomb.com/join'':37B ''youtube.com'':52B ''youtube.com/kindafunnygames'':51B', false, 'PT41M28S', 'https://i.ytimg.com/vi/pBrZtR-wpOs/maxresdefault.jpg'),
-	('RIG346jpGP4', 'giantbomb', 'What is MindsEye?', 'Jeff Grubb and potentially more, try and figure out what IS MindsEye.
+	('hEzFtOrm62M', 'giantbomb', 'Giant Bomb @ Nite, LIVE from the Warframe Villa! | Presented by Annapurna Interactive | Nite 2', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
 
-#mindseye #giantbomb', 'https://i.ytimg.com/vi/RIG346jpGP4/mqdefault.jpg', '2025-06-11 18:04:49+00', '''figur'':11B ''giantbomb'':17B ''grubb'':5B ''jeff'':4B ''mindsey'':3A,15B,16B ''potenti'':7B ''tri'':9B', false, 'PT1H19S', 'https://i.ytimg.com/vi/RIG346jpGP4/maxresdefault.jpg'),
-	('gTpwJ2STQZ8', 'giantbomb', 'A Quick Look at Despelote', 'Jeff Grubb and Jan Ochoa check out Despelote to answer the age old question: Can I kick it? Yes, you can.
+Thanks to our friends at Annapurna Interactive for presenting this stream!
 
-Support Giant Bomb by heading over to
-giantbomb.com/join
 
-#quicklook #giantbomb #despelote', 'https://i.ytimg.com/vi/gTpwJ2STQZ8/mqdefault.jpg', '2025-05-27 21:26:19+00', '''/join'':36B ''age'':17B ''answer'':15B ''bomb'':29B ''check'':11B ''despelot'':5A,13B,39B ''giant'':28B ''giantbomb'':38B ''giantbomb.com'':35B ''giantbomb.com/join'':34B ''grubb'':7B ''head'':31B ''jan'':9B ''jeff'':6B ''kick'':22B ''look'':3A ''ochoa'':10B ''old'':18B ''question'':19B ''quick'':2A ''quicklook'':37B ''support'':27B ''yes'':24B', false, 'PT26M50S', 'https://i.ytimg.com/vi/gTpwJ2STQZ8/maxresdefault.jpg'),
+#sgf #summergamefest #giantbomb', 'https://i.ytimg.com/vi/hEzFtOrm62M/mqdefault.jpg', '2025-06-08 00:54:38+00', '''2'':14A ''angel'':21B ''annapurna'':11A,45B ''around'':30B ''bomb'':2A ''couch'':18B ''found'':16B ''friend'':27B,43B ''get'':25B ''giant'':1A ''giantbomb'':53B ''hang'':34B ''industri'':32B ''interact'':12A,46B ''live'':4A ''los'':20B ''nite'':3A,13A ''present'':9A,48B ''re'':24B ''sgf'':51B ''stream'':50B ''summergamefest'':52B ''thank'':40B ''villa'':8A,39B ''warfram'':7A,38B', false, 'PT26M48S', 'https://i.ytimg.com/vi/hEzFtOrm62M/maxresdefault.jpg'),
 	('0_ONk_GmF-Q', 'giantbomb', 'PS5 Prices Increasing in Some Regions | GameBreaking News 04/14/25', 'Jeff Grubb and Emma Fyffe start your week with news about a price increase happening around the world for the PS5, updates on how tariff exemptions might affect the Switch 2, rumors of a new Prototype game, a recap on what to expect from Marathon, and other stories to start your Monday.
 
 #gamebreakingnews #ps5 #switch2', 'https://i.ytimg.com/vi/0_ONk_GmF-Q/mqdefault.jpg', '2025-04-14 17:54:59+00', '''04/14/25'':9A ''2'':40B ''affect'':37B ''around'':25B ''emma'':13B ''exempt'':35B ''expect'':52B ''fyff'':14B ''game'':46B ''gamebreak'':7A ''gamebreakingnew'':62B ''grubb'':11B ''happen'':24B ''increas'':3A,23B ''jeff'':10B ''marathon'':54B ''might'':36B ''monday'':61B ''new'':44B ''news'':8A,19B ''price'':2A,22B ''prototyp'':45B ''ps5'':1A,30B,63B ''recap'':48B ''region'':6A ''rumor'':41B ''start'':15B,59B ''stori'':57B ''switch'':39B ''switch2'':64B ''tariff'':34B ''updat'':31B ''week'':17B ''world'':27B', false, 'PT56M21S', 'https://i.ytimg.com/vi/0_ONk_GmF-Q/maxresdefault.jpg'),
@@ -58746,6 +57783,15 @@ giantbomb.com/join
 	('OZgo7piqfho', 'giantbomb', 'Steal My Sunshine: Episode 09', '***NOTE***: This is a legacy video that appears exactly how it originally did on Giant Bomb Dot Com. No further editing, re-exporting, etc. has been done. Enjoy!
 
 Watch the complete series here! https://www.youtube.com/playlist?list=PLXlhzeWIuTHISwjRdU79QjKBX66P7YLfS', 'https://i.ytimg.com/vi/OZgo7piqfho/mqdefault.jpg', '2025-04-04 22:12:46+00', '''/playlist?list=plxlhzewiuthiswjrdu79qjkbx66p7ylfs'':42B ''09'':5A ''appear'':13B ''bomb'':21B ''com'':23B ''complet'':37B ''done'':33B ''dot'':22B ''edit'':26B ''enjoy'':34B ''episod'':4A ''etc'':30B ''exact'':14B ''export'':29B ''giant'':20B ''legaci'':10B ''note'':6B ''origin'':17B ''re'':28B ''re-export'':27B ''seri'':38B ''steal'':1A ''sunshin'':3A ''video'':11B ''watch'':35B ''www.youtube.com'':41B ''www.youtube.com/playlist?list=plxlhzewiuthiswjrdu79qjkbx66p7ylfs'':40B', false, 'PT1H47M59S', 'https://i.ytimg.com/vi/OZgo7piqfho/maxresdefault.jpg'),
+	('zyXiksYNv3E', 'giantbomb', 'Everything From Today''s Mario Kart World Direct | GameBreaking News 04/17/25', 'Jeff Grubb is joined by Lex Luddy to chat about all of the things revealed from today''s Mario Kart World direct, Ubisoft making another Battle Royale, PlayStation Plus prices going up, and more for your Thursday morning!', 'https://i.ytimg.com/vi/zyXiksYNv3E/mqdefault.jpg', '2025-04-17 19:32:57+00', '''04/17/25'':11A ''anoth'':36B ''battl'':37B ''chat'':20B ''direct'':8A,33B ''everyth'':1A ''gamebreak'':9A ''go'':42B ''grubb'':13B ''jeff'':12B ''join'':15B ''kart'':6A,31B ''lex'':17B ''luddi'':18B ''make'':35B ''mario'':5A,30B ''morn'':49B ''news'':10A ''playstat'':39B ''plus'':40B ''price'':41B ''reveal'':26B ''royal'':38B ''thing'':25B ''thursday'':48B ''today'':3A,28B ''ubisoft'':34B ''world'':7A,32B', false, 'PT58M17S', 'https://i.ytimg.com/vi/zyXiksYNv3E/maxresdefault.jpg'),
+	('cdT-JowTvF8', 'giantbomb', 'Voicemail Dump Truck 160 | Taco Bell Sweet.mp3', 'This week on the Dump Truck we answer all of your calls about what sweetness actually is, if we should adopt using "JAWN" as a term, annointing a restaurant, the Switch 2, helping out our SEO, and what IS Dungeons and Dragons?
+
+Call into the DumpTruck at (707)EXIT-FLU
+
+Support Giant Bomb at 
+giantbomb.com/join
+
+#vmdt #voicemaildumptruck #giantbomb', 'https://i.ytimg.com/vi/cdT-JowTvF8/mqdefault.jpg', '2025-05-29 19:35:32+00', '''/join'':65B ''160'':4A ''2'':39B ''707'':55B ''actual'':23B ''adopt'':28B ''annoint'':34B ''answer'':15B ''bell'':6A ''bomb'':61B ''call'':19B,50B ''dragon'':49B ''dump'':2A,12B ''dumptruck'':53B ''dungeon'':47B ''exit'':57B ''exit-flu'':56B ''flu'':58B ''giant'':60B ''giantbomb'':68B ''giantbomb.com'':64B ''giantbomb.com/join'':63B ''help'':40B ''jawn'':30B ''restaur'':36B ''seo'':43B ''support'':59B ''sweet'':22B ''sweet.mp3'':7A ''switch'':38B ''taco'':5A ''term'':33B ''truck'':3A,13B ''use'':29B ''vmdt'':66B ''voicemail'':1A ''voicemaildumptruck'':67B ''week'':9B', false, 'PT1H12M54S', 'https://i.ytimg.com/vi/cdT-JowTvF8/maxresdefault.jpg'),
 	('DcmxCaoQKx0', 'giantbomb', 'Elden Ring: Nightreign Review Round-Up! | Game Mess Mornings 05/28/25', 'Jeff Grubb is joined by Chris Plante to chat about Elden Ring: Nightreign reviews, a Pokemon Presents is announced for July, Apple is launching a dedicated video game app, GameStop just bought half a billion worth of bitcoin, and even more stories! 
 
 Check out Chris Plante''s new podcast Post Games:
@@ -58755,18 +57801,6 @@ Support Giant Bomb at
 giantbomb.com/join
 
 #gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/DcmxCaoQKx0/mqdefault.jpg', '2025-05-28 16:10:18+00', '''/join'':70B ''05/28/25'':11A ''announc'':30B ''app'':40B ''appl'':33B ''billion'':46B ''bitcoin'':49B ''bomb'':66B ''bought'':43B ''chat'':20B ''check'':54B ''chris'':17B,56B ''dedic'':37B ''elden'':1A,22B ''even'':51B ''game'':8A,39B,62B ''gamemessmorn'':72B ''gamestop'':41B ''giant'':65B ''giantbomb'':73B ''giantbomb.com'':69B ''giantbomb.com/join'':68B ''gmm'':71B ''grubb'':13B ''half'':44B ''jeff'':12B ''join'':15B ''juli'':32B ''launch'':35B ''mess'':9A ''morn'':10A ''new'':59B ''nightreign'':3A,24B ''plant'':18B,57B ''podcast'':60B ''pokemon'':27B ''post'':61B ''post.games'':63B ''present'':28B ''review'':4A,25B ''ring'':2A,23B ''round'':6A ''round-up'':5A ''stori'':53B ''support'':64B ''video'':38B ''videogamenew'':74B ''worth'':47B', false, 'PT1H3M12S', 'https://i.ytimg.com/vi/DcmxCaoQKx0/maxresdefault.jpg'),
-	('M1xo_zVf4v4', 'giantbomb', 'State of Play (06/04/25) | We Talk Over', 'Before we head down to Los Angeles, we''re gonna talk over the State of Play! We got surfing on swords, origami people, Silent Hill F, a peak at the new James Bond game, proof that Pramata exists, a NEW Marvel fighting game, TILES, and even more before SGF season pops off. 
-
-#stateofplay #playstation #giantbomb', 'https://i.ytimg.com/vi/M1xo_zVf4v4/mqdefault.jpg', '2025-06-04 22:15:20+00', '''06/04/25'':4A ''angel'':13B ''bond'':39B ''even'':52B ''exist'':44B ''f'':32B ''fight'':48B ''game'':40B,49B ''giantbomb'':61B ''gonna'':16B ''got'':24B ''head'':9B ''hill'':31B ''jame'':38B ''los'':12B ''marvel'':47B ''new'':37B,46B ''origami'':28B ''peak'':34B ''peopl'':29B ''play'':3A,22B ''playstat'':60B ''pop'':57B ''pramata'':43B ''proof'':41B ''re'':15B ''season'':56B ''sgf'':55B ''silent'':30B ''state'':1A,20B ''stateofplay'':59B ''surf'':25B ''sword'':27B ''talk'':6A,17B ''tile'':50B', false, 'PT1H12M24S', 'https://i.ytimg.com/vi/M1xo_zVf4v4/maxresdefault.jpg'),
-	('cdT-JowTvF8', 'giantbomb', 'Voicemail Dump Truck 160 | Taco Bell Sweet.mp3', 'This week on the Dump Truck we answer all of your calls about what sweetness actually is, if we should adopt using "JAWN" as a term, annointing a restaurant, the Switch 2, helping out our SEO, and what IS Dungeons and Dragons?
-
-Call into the DumpTruck at (707)EXIT-FLU
-
-Support Giant Bomb at 
-giantbomb.com/join
-
-#vmdt #voicemaildumptruck #giantbomb', 'https://i.ytimg.com/vi/cdT-JowTvF8/mqdefault.jpg', '2025-05-29 19:35:32+00', '''/join'':65B ''160'':4A ''2'':39B ''707'':55B ''actual'':23B ''adopt'':28B ''annoint'':34B ''answer'':15B ''bell'':6A ''bomb'':61B ''call'':19B,50B ''dragon'':49B ''dump'':2A,12B ''dumptruck'':53B ''dungeon'':47B ''exit'':57B ''exit-flu'':56B ''flu'':58B ''giant'':60B ''giantbomb'':68B ''giantbomb.com'':64B ''giantbomb.com/join'':63B ''help'':40B ''jawn'':30B ''restaur'':36B ''seo'':43B ''support'':59B ''sweet'':22B ''sweet.mp3'':7A ''switch'':38B ''taco'':5A ''term'':33B ''truck'':3A,13B ''use'':29B ''vmdt'':66B ''voicemail'':1A ''voicemaildumptruck'':67B ''week'':9B', false, 'PT1H12M54S', 'https://i.ytimg.com/vi/cdT-JowTvF8/maxresdefault.jpg'),
-	('zyXiksYNv3E', 'giantbomb', 'Everything From Today''s Mario Kart World Direct | GameBreaking News 04/17/25', 'Jeff Grubb is joined by Lex Luddy to chat about all of the things revealed from today''s Mario Kart World direct, Ubisoft making another Battle Royale, PlayStation Plus prices going up, and more for your Thursday morning!', 'https://i.ytimg.com/vi/zyXiksYNv3E/mqdefault.jpg', '2025-04-17 19:32:57+00', '''04/17/25'':11A ''anoth'':36B ''battl'':37B ''chat'':20B ''direct'':8A,33B ''everyth'':1A ''gamebreak'':9A ''go'':42B ''grubb'':13B ''jeff'':12B ''join'':15B ''kart'':6A,31B ''lex'':17B ''luddi'':18B ''make'':35B ''mario'':5A,30B ''morn'':49B ''news'':10A ''playstat'':39B ''plus'':40B ''price'':41B ''reveal'':26B ''royal'':38B ''thing'':25B ''thursday'':48B ''today'':3A,28B ''ubisoft'':34B ''world'':7A,32B', false, 'PT58M17S', 'https://i.ytimg.com/vi/zyXiksYNv3E/maxresdefault.jpg'),
 	('0BfAz47WkKI', 'giantbomb', 'Kura5: Bonds of the Undying | GB Kidz', 'Hey, remember Boktai? What if they made a fifth one of those? Niki and Shawn check out the fanmade Kura5: Bonds of the Undying and play a whole bunch of Wordle knockoffs when their babby attention spans inevitably wane.
 
 Timestamps:
@@ -58789,15 +57823,6 @@ Timestamps:
 4:57:22 GameSpot After Dark 264
 
 #switch2 #nintendoswitch2 #croclegendofthegobbos', 'https://i.ytimg.com/vi/c4D6edbEp1o/mqdefault.jpg', '2025-04-04 22:19:09+00', '''0'':41B,47B ''00'':42B,43B,48B ''01'':53B ''09'':66B ''1'':52B,56B,57B ''13'':54B ''16'':70B ''2'':64B,68B ''22'':95B ''24'':58B ''26'':71B ''264'':99B ''3'':69B,92B ''4'':88B,93B ''4/03/25'':3A ''41'':90B ''46'':49B ''47'':89B ''49'':59B,65B ''57'':94B ''884'':62B ''bcr'':6A ''block'':2A,22B ''bomb'':15B ''bombcast'':61B ''break'':28B,55B,67B,91B ''coverag'':30B ''croc'':83B ''croclegendofthegobbo'':102B ''dark'':11A,98B ''day'':25B ''featur'':27B ''friday'':8A,73B ''game'':34B ''gamebreak'':4A,50B ''gamespot'':9A,12B,96B ''giant'':14B,60B ''gobbo'':87B ''latest'':33B ''legend'':84B ''let'':35B ''livestream'':26B ''news'':5A,29B,51B ''nintendoswitch2'':101B ''parkour'':75B ''patrol'':78B ''play'':37B ''power'':1A,21B ''pre'':45B ''pre-show'':44B ''pro'':76B ''psycho'':77B ''r'':79B ''rampag'':80B ''reveng'':63B ''show'':46B ''storror'':74B ''switch2'':100B ''team'':17B ''timestamp'':40B ''tour'':82B ''unprofession'':7A,72B ''world'':81B', false, 'PT5H57M52S', 'https://i.ytimg.com/vi/c4D6edbEp1o/maxresdefault.jpg'),
-	('euU2xr_9AY0', 'giantbomb', 'Giant Bombcast 889: PAX EAST 2025', 'We''re BACK and with some big news! Giant Bomb has new owners and it''s US! Giant Bomb is now fully independent and we get into the deets of how that happened at PAX East 2025. Join us as Grubb, Bakalar, Dan, Jan, and lil cameo from Mike Minotti explain the situation happening at Giant Bomb.
-
-Help support Giant Bomb by going to:
-https://giantbomb.com/join 
-
-#bombcast #giantbombcast #giantbomb #paxeast', 'https://i.ytimg.com/vi/euU2xr_9AY0/mqdefault.jpg', '2025-05-12 19:16:43+00', '''/join'':73B ''2025'':6A,43B ''889'':3A ''back'':9B ''bakalar'':48B ''big'':13B ''bomb'':16B,25B,63B,67B ''bombcast'':2A,74B ''cameo'':53B ''dan'':49B ''deet'':35B ''east'':5A,42B ''explain'':57B ''fulli'':28B ''get'':32B ''giant'':1A,15B,24B,62B,66B ''giantbomb'':76B ''giantbomb.com'':72B ''giantbomb.com/join'':71B ''giantbombcast'':75B ''go'':69B ''grubb'':47B ''happen'':39B,60B ''help'':64B ''independ'':29B ''jan'':50B ''join'':44B ''lil'':52B ''mike'':55B ''minotti'':56B ''new'':18B ''news'':14B ''owner'':19B ''pax'':4A,41B ''paxeast'':77B ''re'':8B ''situat'':59B ''support'':65B ''us'':23B,45B', false, 'PT58M52S', 'https://i.ytimg.com/vi/euU2xr_9AY0/maxresdefault.jpg'),
-	('P-BnQ9OIHOg', 'giantbomb', 'PlayStation Stars is Closing Down | Game Mess Mornings 05/22/25', 'Jeff Grubb and Jesse Vitelli lament about the the closing of PlayStation Stars and a State of Play event in May is becoming unlikely, Lies of P is getting difficulty options to become more accessible, Destiny 2 could have been a subscription service, GameChat requires a phone number linked to your Nintendo account, and more! 
-
-#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/P-BnQ9OIHOg/mqdefault.jpg', '2025-05-22 16:10:50+00', '''05/22/25'':9A ''2'':46B ''access'':44B ''account'':62B ''becom'':32B,42B ''close'':4A,19B ''could'':47B ''destini'':45B ''difficulti'':39B ''event'':28B ''game'':6A ''gamechat'':53B ''gamemessmorn'':66B ''get'':38B ''giantbomb'':67B ''gmm'':65B ''grubb'':11B ''jeff'':10B ''jess'':13B ''lament'':15B ''lie'':34B ''link'':58B ''may'':30B ''mess'':7A ''morn'':8A ''nintendo'':61B ''number'':57B ''option'':40B ''p'':36B ''phone'':56B ''play'':27B ''playstat'':1A,21B ''requir'':54B ''servic'':52B ''star'':2A,22B ''state'':25B ''subscript'':51B ''unlik'':33B ''videogamenew'':68B ''vitelli'':14B', false, 'PT57M52S', 'https://i.ytimg.com/vi/P-BnQ9OIHOg/maxresdefault.jpg'),
 	('A-NmSyhYUco', 'giantbomb', 'POWER BLOCK 4/08/25 | Giant Bombcast, South of Midnight Let''s Play', 'GameSpot and Giant Bomb are teaming up for The Power Block, an all day livestream featuring breaking news, coverage on the latest games, let''s plays, and more!
 
 Timestamps:
@@ -58816,6 +57841,12 @@ Timestamps:
 3:10:20 Ryckert''s Roulette: Mirror''s Edge
 
 #switch2 #boktai #mirrorsedge', 'https://i.ytimg.com/vi/Ifsfg5XFuRI/mqdefault.jpg', '2025-04-07 21:06:04+00', '''0'':44B,49B ''00'':45B,46B ''02'':61B ''05'':55B ''1'':53B,54B ''10'':66B ''2'':64B ''20'':67B ''3'':60B,65B ''30'':56B ''4/07/25'':3A ''51'':51B ''53'':62B ''55'':50B ''block'':2A,25B ''boktai'':75B ''bomb'':18B ''break'':31B,52B,63B ''coverag'':33B ''day'':28B ''edg'':11A,73B ''featur'':30B ''game'':37B ''gamebreak'':4A,47B ''gamespot'':15B ''gb'':6A,57B ''giant'':17B ''kidz'':7A,58B ''kura5'':59B ''latest'':36B ''let'':12A,38B ''livestream'':29B ''mirror'':9A,71B ''mirrorsedg'':76B ''news'':5A,32B,48B ''play'':14A,40B ''power'':1A,24B ''roulett'':70B ''ryckert'':68B ''switch2'':74B ''team'':20B ''timestamp'':43B', false, 'PT4H44M28S', 'https://i.ytimg.com/vi/Ifsfg5XFuRI/maxresdefault.jpg'),
+	('euU2xr_9AY0', 'giantbomb', 'Giant Bombcast 889: PAX EAST 2025', 'We''re BACK and with some big news! Giant Bomb has new owners and it''s US! Giant Bomb is now fully independent and we get into the deets of how that happened at PAX East 2025. Join us as Grubb, Bakalar, Dan, Jan, and lil cameo from Mike Minotti explain the situation happening at Giant Bomb.
+
+Help support Giant Bomb by going to:
+https://giantbomb.com/join 
+
+#bombcast #giantbombcast #giantbomb #paxeast', 'https://i.ytimg.com/vi/euU2xr_9AY0/mqdefault.jpg', '2025-05-12 19:16:43+00', '''/join'':73B ''2025'':6A,43B ''889'':3A ''back'':9B ''bakalar'':48B ''big'':13B ''bomb'':16B,25B,63B,67B ''bombcast'':2A,74B ''cameo'':53B ''dan'':49B ''deet'':35B ''east'':5A,42B ''explain'':57B ''fulli'':28B ''get'':32B ''giant'':1A,15B,24B,62B,66B ''giantbomb'':76B ''giantbomb.com'':72B ''giantbomb.com/join'':71B ''giantbombcast'':75B ''go'':69B ''grubb'':47B ''happen'':39B,60B ''help'':64B ''independ'':29B ''jan'':50B ''join'':44B ''lil'':52B ''mike'':55B ''minotti'':56B ''new'':18B ''news'':14B ''owner'':19B ''pax'':4A,41B ''paxeast'':77B ''re'':8B ''situat'':59B ''support'':65B ''us'':23B,45B', false, 'PT58M52S', 'https://i.ytimg.com/vi/euU2xr_9AY0/maxresdefault.jpg'),
 	('TJWCWD63E8o', 'giantbomb', 'POWER BLOCK 4/03/25 | SWITCH 2 HANDS-ON, South of Midnight Review, Verdansk In Warzone', 'GameSpot and Giant Bomb are teaming up for The Power Block, an all day livestream featuring breaking news, coverage on the latest games, let''s plays, and more!
 
 Timestamps:
@@ -59919,6 +58950,12 @@ Jeff Grubb is joined by Jordan Middler to talk about the new Legacy of Kain rema
 2:52:59 What did we learn today?
 
 #japan #evo #evo2024', 'https://i.ytimg.com/vi/UKfPWNssfVE/mqdefault.jpg', '2024-07-23 19:16:47+00', '''0'':66B,70B,77B,84B ''00'':67B,68B ''02'':119B ''04'':105B ''05'':71B ''06'':78B ''1'':91B,95B,96B ''11'':115B ''14'':92B ''2'':104B,108B,112B,113B,117B,125B ''20'':97B ''2024'':27B ''32'':109B ''34'':93B ''35'':114B ''39'':72B ''40'':85B ''43'':79B ''46'':98B ''51'':86B,118B ''52'':126B ''54'':106B ''56'':110B ''59'':127B ''850'':3A ''also'':50B ''biggest'':54B ''bomb'':124B ''bombcast'':2A ''break'':94B,111B ''championship'':38B ''concord'':45B ''crossword'':35B ''dan'':73B ''edit'':40B ''email'':64B,116B ''evo'':26B,90B,134B ''evo2024'':135B ''game'':58B ''gang'':29B ''giant'':1A,123B ''go'':24B ''intro'':69B ''jan'':12B,80B ''japan'':17B,83B,133B ''jean'':65B ''kansa'':76B ''learn'':131B ''live'':43B ''mini'':34B ''nes'':39B ''news'':59B,107B ''nintendo'':36B ''nyt'':33B ''okay'':48B ''play'':103B ''potent'':4A ''re'':6B ''recount'':13B ''shawn'':19B,87B ''simpli'':47B ''stori'':55B ''take'':41B ''talk'':20B,30B,51B ''time'':23B ''today'':132B ''travel'':8B,15B ''ve'':101B ''video'':57B ''week'':10B,121B ''well'':7B ''went'':74B,81B,88B ''world'':37B', false, 'PT2H54M27S', 'https://i.ytimg.com/vi/UKfPWNssfVE/maxresdefault.jpg'),
+	('b0h7xld8uYY', 'nextlander', 'We Return to the [Newly Updated] Void Crew!', 'They got rid of sanctified hull plates and added payloads and we can save our game now!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/b0h7xld8uYY/mqdefault.jpg', '2025-04-22 00:38:11+00', '''/nextlander'':34B ''ad'':17B ''communiti'':31B ''crew'':8A ''game'':24B ''got'':10B ''hull'':14B ''newli'':5A ''nextland'':26B ''payload'':18B ''plate'':15B ''return'':2A ''rid'':11B ''sanctifi'':13B ''save'':22B ''support'':28B ''thank'':35B ''updat'':6A ''void'':7A ''watch'':37B ''www.patreon.com'':33B ''www.patreon.com/nextlander'':32B', false, 'PT2H20M50S', 'https://i.ytimg.com/vi/b0h7xld8uYY/maxresdefault.jpg'),
 	('g7PCthn2Gk8', 'giantbomb', 'Funny Beverage Company.mp3 | Voicemail Dump Truck 123', 'Grubb, Bakalar, Dan, and Mike take the dump truck down a path of ugly cars, pretty denim, and water. ...JUST water. The inorganic compound with the chemical formula H2O. The transparent, tasteless, odorless, and nearly colorless chemical substance. The main constituent of Earth''s hydrosphere and the fluids of all known living organisms. The vital component for all known forms of life, despite not providing food energy or organic micronutrients. The thing where its chemical formula, H2O, indicates that each of its molecules contains one oxygen and two hydrogen atoms, connected by covalent bonds. The substance where hydrogen atoms are attached to the oxygen atom at an angle of 104.45°. You know it on Earth as a solid, a liquid, and a gas, in which it forms precipitation in the form of rain and aerosols in the form of fog. It pops up as clouds, which consist of suspended droplets of water and ice. When finely divided, crystalline ice may precipitate in the form of snow. You might see its gaseous states, steam or water vapor. It''s what covers about 71% of the Earth''s surface, with seas and oceans making up most of the water volume (about 96.5%). Small portions of water occur as groundwater (1.7%), in the glaciers and the ice caps of Antarctica and Greenland (1.7%), and in the air as vapor, clouds (consisting of ice and liquid water suspended in air), and precipitation. Water moves continually through the water cycle of evaporation, transpiration (evapotranspiration), condensation, precipitation, and runoff, usually reaching the sea. It plays an important role in the world economy, since approximately 70% of the fresh water used by humans goes to agriculture. It''s in your house right now; large quantities of water, ice, and steam are used for cooling and heating in industry and homes. Not just constructive, but destructive, it''s an excellent solvent for a wide variety of substances, both mineral and organic; as such, it is widely used in industrial processes and in cooking and washing. Water in its many forms can be a key part of your daily entertainment if you love swimming, pleasure boating, boat racing, surfing, sport fishing, diving, ice skating, snowboarding, or skiing. It''s water. Just. F***ing. Water.
 
 #vmdt #voicemaildumptruck', 'https://i.ytimg.com/vi/g7PCthn2Gk8/mqdefault.jpg', '2024-07-25 22:47:51+00', '''1.7'':215B,227B ''104.45'':117B ''123'':7A ''70'':276B ''71'':189B ''96.5'':207B ''aerosol'':142B ''agricultur'':286B ''air'':231B,243B ''angl'':115B ''antarctica'':224B ''approxim'':275B ''atom'':97B,106B,112B ''attach'':108B ''bakalar'':9B ''beverag'':2A ''boat'':364B,365B ''bond'':101B ''cap'':222B ''car'':22B ''chemic'':34B,44B,82B ''cloud'':152B,234B ''colorless'':43B ''company.mp3'':3A ''compon'':63B ''compound'':31B ''condens'':257B ''connect'':98B ''consist'':154B,235B ''constitu'':48B ''construct'':313B ''contain'':91B ''continu'':248B ''cook'':342B ''cool'':304B ''coval'':100B ''cover'':187B ''crystallin'':165B ''cycl'':252B ''daili'':357B ''dan'':10B ''denim'':24B ''despit'':70B ''destruct'':315B ''dive'':370B ''divid'':164B ''droplet'':157B ''dump'':5A,15B ''earth'':50B,122B,192B ''economi'':273B ''energi'':74B ''entertain'':358B ''evapor'':254B ''evapotranspir'':256B ''excel'':319B ''f'':380B ''fine'':163B ''fish'':369B ''fluid'':55B ''fog'':147B ''food'':73B ''form'':67B,134B,138B,145B,171B,349B ''formula'':35B,83B ''fresh'':279B ''funni'':1A ''gas'':130B ''gaseous'':178B ''glacier'':218B ''goe'':284B ''greenland'':226B ''groundwat'':214B ''grubb'':8B ''h2o'':36B,84B ''heat'':306B ''home'':310B ''hous'':291B ''human'':283B ''hydrogen'':96B,105B ''hydrospher'':52B ''ice'':161B,166B,221B,237B,298B,371B ''import'':268B ''indic'':85B ''industri'':308B,338B ''ing'':381B ''inorgan'':30B ''key'':353B ''know'':119B ''known'':58B,66B ''larg'':294B ''life'':69B ''liquid'':127B,239B ''live'':59B ''love'':361B ''main'':47B ''make'':199B ''mani'':348B ''may'':167B ''micronutri'':77B ''might'':175B ''mike'':12B ''miner'':328B ''molecul'':90B ''move'':247B ''near'':42B ''occur'':212B ''ocean'':198B ''odorless'':40B ''one'':92B ''organ'':60B,76B,330B ''oxygen'':93B,111B ''part'':354B ''path'':19B ''play'':266B ''pleasur'':363B ''pop'':149B ''portion'':209B ''precipit'':135B,168B,245B,258B ''pretti'':23B ''process'':339B ''provid'':72B ''quantiti'':295B ''race'':366B ''rain'':140B ''reach'':262B ''right'':292B ''role'':269B ''runoff'':260B ''sea'':196B,264B ''see'':176B ''sinc'':274B ''skate'':372B ''ski'':375B ''small'':208B ''snow'':173B ''snowboard'':373B ''solid'':125B ''solvent'':320B ''sport'':368B ''state'':179B ''steam'':180B,300B ''substanc'':45B,103B,326B ''surf'':367B ''surfac'':194B ''suspend'':156B,241B ''swim'':362B ''take'':13B ''tasteless'':39B ''thing'':79B ''transpar'':38B ''transpir'':255B ''truck'':6A,16B ''two'':95B ''ugli'':21B ''use'':281B,302B,336B ''usual'':261B ''vapor'':183B,233B ''varieti'':324B ''vital'':62B ''vmdt'':383B ''voicemail'':4A ''voicemaildumptruck'':384B ''volum'':205B ''wash'':344B ''water'':26B,28B,159B,182B,204B,211B,240B,246B,251B,280B,297B,345B,378B,382B ''wide'':323B,335B ''world'':272B', false, 'PT1H32M56S', 'https://i.ytimg.com/vi/g7PCthn2Gk8/maxresdefault.jpg'),
@@ -60054,7 +59091,971 @@ Watch the complete series here! https://www.youtube.com/playlist?list=PLXlhzeWIu
 51:41 John Romero''s autobiography to get two adaptations
 55:18 Polls & outro
 
-#gmm #gamemessmornings #giantbomb', 'https://i.ytimg.com/vi/ZSBVrFZrOD0/mqdefault.jpg', '2024-06-03 16:09:07+00', '''00'':60B,61B ''03'':63B ''06/03/24'':17A ''08'':137B ''1'':143B ''12'':79B ''17'':171B ''18'':193B ''23'':99B ''25'':153B ''28'':109B ''3'':129B ''30'':80B ''32'':123B ''37'':122B ''38'':100B ''41'':183B ''43'':136B ''45'':152B ''47'':170B ''50'':64B,110B ''51'':182B ''55'':192B ''6'':36B,76B ''7'':108B ''adapt'':54B,103B,191B ''alli'':113B ''announc'':32B,72B ''astro'':1A,11A,40B,83B,93B ''asus'':111B ''august'':107B,142B ''auto'':35B,75B ''autobiographi'':187B ''bigger'':45B ''bot'':2A,41B,84B ''chat'':23B ''combat'':134B ''come'':55B ''decis'':29B,69B ''discuss'':68B ''divis'':181B ''edit'':140B ''emma'':21B ''even'':132B ''fall'':159B ''fantasi'':125B ''featur'':131B ''final'':124B ''four'':6A,88B ''full'':115B ''fyff'':22B ''game'':14A,46B ''gamemessmorn'':197B ''get'':189B ''giantbomb'':198B ''gmm'':196B ''grand'':33B,73B ''grubb'':19B ''intro'':62B ''jeff'':18B ''john'':184B ''later'':149B ''launch'':106B,141B,157B ''mess'':15A ''metal'':154B ''microtransact'':98B ''morn'':16A ''much'':44B,58B ''one'':166B ''option'':135B ''outro'':195B ''part'':128B ''pc'':39B,53B,78B,105B,148B,169B ''playroom'':13A,95B ''poll'':194B ''predecessor'':49B ''preorder'':120B ''privat'':180B ''ps'':50B,101B ''ps4'':151B,164B ''ps5'':145B,161B ''quiet'':177B ''remak'':127B ''report'':42B,172B ''reveal'':117B ''rog'':112B ''romero'':185B ''say'':82B ''seri'':163B ''shut'':178B ''size'':9A,91B ''slug'':155B ''soni'':81B ''soon'':56B ''spec'':116B ''special'':139B ''switch'':146B,167B ''tactic'':156B ''take'':26B,66B,174B ''take-two'':25B,65B,173B ''theft'':34B,74B ''time'':7A,89B ''tomba'':138B ''two'':27B,67B,175B,190B ''vii'':126B ''vr2'':51B,102B ''x'':114B ''xbox'':162B,165B', false, 'PT59M52S', 'https://i.ytimg.com/vi/ZSBVrFZrOD0/maxresdefault.jpg');
+#gmm #gamemessmornings #giantbomb', 'https://i.ytimg.com/vi/ZSBVrFZrOD0/mqdefault.jpg', '2024-06-03 16:09:07+00', '''00'':60B,61B ''03'':63B ''06/03/24'':17A ''08'':137B ''1'':143B ''12'':79B ''17'':171B ''18'':193B ''23'':99B ''25'':153B ''28'':109B ''3'':129B ''30'':80B ''32'':123B ''37'':122B ''38'':100B ''41'':183B ''43'':136B ''45'':152B ''47'':170B ''50'':64B,110B ''51'':182B ''55'':192B ''6'':36B,76B ''7'':108B ''adapt'':54B,103B,191B ''alli'':113B ''announc'':32B,72B ''astro'':1A,11A,40B,83B,93B ''asus'':111B ''august'':107B,142B ''auto'':35B,75B ''autobiographi'':187B ''bigger'':45B ''bot'':2A,41B,84B ''chat'':23B ''combat'':134B ''come'':55B ''decis'':29B,69B ''discuss'':68B ''divis'':181B ''edit'':140B ''emma'':21B ''even'':132B ''fall'':159B ''fantasi'':125B ''featur'':131B ''final'':124B ''four'':6A,88B ''full'':115B ''fyff'':22B ''game'':14A,46B ''gamemessmorn'':197B ''get'':189B ''giantbomb'':198B ''gmm'':196B ''grand'':33B,73B ''grubb'':19B ''intro'':62B ''jeff'':18B ''john'':184B ''later'':149B ''launch'':106B,141B,157B ''mess'':15A ''metal'':154B ''microtransact'':98B ''morn'':16A ''much'':44B,58B ''one'':166B ''option'':135B ''outro'':195B ''part'':128B ''pc'':39B,53B,78B,105B,148B,169B ''playroom'':13A,95B ''poll'':194B ''predecessor'':49B ''preorder'':120B ''privat'':180B ''ps'':50B,101B ''ps4'':151B,164B ''ps5'':145B,161B ''quiet'':177B ''remak'':127B ''report'':42B,172B ''reveal'':117B ''rog'':112B ''romero'':185B ''say'':82B ''seri'':163B ''shut'':178B ''size'':9A,91B ''slug'':155B ''soni'':81B ''soon'':56B ''spec'':116B ''special'':139B ''switch'':146B,167B ''tactic'':156B ''take'':26B,66B,174B ''take-two'':25B,65B,173B ''theft'':34B,74B ''time'':7A,89B ''tomba'':138B ''two'':27B,67B,175B,190B ''vii'':126B ''vr2'':51B,102B ''x'':114B ''xbox'':162B,165B', false, 'PT59M52S', 'https://i.ytimg.com/vi/ZSBVrFZrOD0/maxresdefault.jpg'),
+	('DqdWIjuBypg', 'nextlander', 'Abby and Vinny Dive into Steam Next Fest 2025!', 'There are so many demo, I mean a lot of demos. We stand no chance.
+
+We Check Out:
+Escape Simulator 2
+Dispatch
+Baby Steps
+BALL x PIT
+The Joker''s Game
+Quantum Witch
+Mina the Hollower
+
+
+
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/DqdWIjuBypg/mqdefault.jpg', '2025-06-10 20:41:04+00', '''/nextlander'':54B ''2'':30B ''2025'':9A ''abbi'':1A ''babi'':32B ''ball'':34B ''chanc'':24B ''check'':26B ''communiti'':51B ''demo'':14B,20B ''dispatch'':31B ''dive'':4A ''escap'':28B ''fest'':8A ''game'':40B ''hollow'':45B ''joker'':38B ''lot'':18B ''mani'':13B ''mean'':16B ''mina'':43B ''next'':7A ''nextland'':46B ''pit'':36B ''quantum'':41B ''simul'':29B ''stand'':22B ''steam'':6A ''step'':33B ''support'':48B ''thank'':55B ''vinni'':3A ''watch'':57B ''witch'':42B ''www.patreon.com'':53B ''www.patreon.com/nextlander'':52B ''x'':35B', false, 'PT1H59M39S', 'https://i.ytimg.com/vi/DqdWIjuBypg/maxresdefault.jpg'),
+	('lGqsDk2mqTM', 'nextlander', 'Friday Fun Stream: It''s a Grab Bag! A GRAB BAAAAAAG!', 'Brad unfortunately has been called to jury duty, but Vinny and Alex are here to check out the ARC Raiders Tech Test, and more!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/lGqsDk2mqTM/mqdefault.jpg', '2025-05-02 21:09:56+00', '''/nextlander'':44B ''alex'':23B ''arc'':30B ''baaaaaag'':11A ''bag'':8A ''brad'':12B ''call'':16B ''check'':27B ''communiti'':41B ''duti'':19B ''friday'':1A ''fun'':2A ''grab'':7A,10A ''juri'':18B ''nextland'':36B ''raider'':31B ''stream'':3A ''support'':38B ''tech'':32B ''test'':33B ''thank'':45B ''unfortun'':13B ''vinni'':21B ''watch'':47B ''www.patreon.com'':43B ''www.patreon.com/nextlander'':42B', false, 'PT2H11M9S', 'https://i.ytimg.com/vi/lGqsDk2mqTM/maxresdefault.jpg'),
+	('qgysHQqqDHg', 'nextlander', 'NINTENDO! SWITCH! 2! TALK! OVER!', 'The Nextlander boys are up BRIGHT AND EARLY to bring you the most trenchant and thoughtful commentary on Nintendo''s new Switch!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/qgysHQqqDHg/mqdefault.jpg', '2025-04-02 16:27:58+00', '''/nextlander'':35B ''2'':3A ''boy'':7B ''bright'':10B ''bring'':14B ''commentari'':21B ''communiti'':32B ''earli'':12B ''new'':25B ''nextland'':6B,27B ''nintendo'':1A,23B ''support'':29B ''switch'':2A,26B ''talk'':4A ''thank'':36B ''thought'':20B ''trenchant'':18B ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT1H39M', 'https://i.ytimg.com/vi/qgysHQqqDHg/maxresdefault.jpg'),
+	('AejrAJjntXM', 'nextlander', 'Patron''s Choice for June 2025: Star Trek: Judgment Rites!', '*Biohazard voice* JUUUUDGEMEEEENT RIIIIIIIIIITES
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/AejrAJjntXM/mqdefault.jpg', '2025-06-27 20:10:27+00', '''/nextlander'':23B ''2025'':6A ''biohazard'':11B ''choic'':3A ''communiti'':20B ''judgment'':9A ''june'':5A ''juuuudgemee'':13B ''nextland'':15B ''patron'':1A ''riiiiiiiiiit'':14B ''rite'':10A ''star'':7A ''support'':17B ''thank'':24B ''trek'':8A ''voic'':12B ''watch'':26B ''www.patreon.com'':22B ''www.patreon.com/nextlander'':21B', false, 'PT2H21M16S', 'https://i.ytimg.com/vi/AejrAJjntXM/maxresdefault.jpg'),
+	('3Sa9f6hkDcw', 'nextlander', 'Let''s Check Out Len''s Island w/ Abby Russell', 'Farming? Dungeon crawling? All in one game? What a concept!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/3Sa9f6hkDcw/mqdefault.jpg', '2025-06-24 19:59:53+00', '''/nextlander'':29B ''abbi'':9A ''check'':3A ''communiti'':26B ''concept'':20B ''crawl'':13B ''dungeon'':12B ''farm'':11B ''game'':17B ''island'':7A ''len'':5A ''let'':1A ''nextland'':21B ''one'':16B ''russel'':10A ''support'':23B ''thank'':30B ''w'':8A ''watch'':32B ''www.patreon.com'':28B ''www.patreon.com/nextlander'':27B', false, 'PT1H55M31S', 'https://i.ytimg.com/vi/3Sa9f6hkDcw/maxresdefault.jpg'),
+	('cgslVzgsYvw', 'nextlander', 'Trying Out That Marathon Alpha', 'It''s time to extract, but like, in a cyber fashion.
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/cgslVzgsYvw/mqdefault.jpg', '2025-04-28 23:08:48+00', '''/nextlander'':25B ''alpha'':5A ''communiti'':22B ''cyber'':15B ''extract'':10B ''fashion'':16B ''like'':12B ''marathon'':4A ''nextland'':17B ''support'':19B ''thank'':26B ''time'':8B ''tri'':1A ''watch'':28B ''www.patreon.com'':24B ''www.patreon.com/nextlander'':23B', false, 'PT2H7M30S', 'https://i.ytimg.com/vi/cgslVzgsYvw/maxresdefault.jpg'),
+	('22bkJ1EnjeY', 'nextlander', 'Patron''s Choice for December 2024: Holiday Drumming Alex!', 'Y''all have spoken, and what you said was that you want to hear Alex drum the holiday hits.
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/22bkJ1EnjeY/mqdefault.jpg', '2024-12-20 21:48:04+00', '''/nextlander'':37B ''2024'':6A ''alex'':9A,24B ''choic'':3A ''communiti'':34B ''decemb'':5A ''drum'':8A,25B ''hear'':23B ''hit'':28B ''holiday'':7A,27B ''nextland'':29B ''patron'':1A ''said'':17B ''spoken'':13B ''support'':31B ''thank'':38B ''want'':21B ''watch'':40B ''www.patreon.com'':36B ''www.patreon.com/nextlander'':35B ''y'':10B', false, 'PT2H38M23S', 'https://i.ytimg.com/vi/22bkJ1EnjeY/maxresdefault.jpg'),
+	('VOft5gfNqBA', 'nextlander', 'Vinny, Alex, and James Are Ready to Finish Silent Hill 2! (Part 07)', 'Is this the final adventures for our Silent Hill 2 team? Maybe? Maybe not... Let''s find out!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/VOft5gfNqBA/mqdefault.jpg', '2024-12-09 23:13:18+00', '''/nextlander'':40B ''07'':13A ''2'':11A,23B ''adventur'':18B ''alex'':2A ''communiti'':37B ''final'':17B ''find'':30B ''finish'':8A ''hill'':10A,22B ''jame'':4A ''let'':28B ''mayb'':25B,26B ''nextland'':32B ''part'':12A ''readi'':6A ''silent'':9A,21B ''support'':34B ''team'':24B ''thank'':41B ''vinni'':1A ''watch'':43B ''www.patreon.com'':39B ''www.patreon.com/nextlander'':38B', false, 'PT1H38M54S', 'https://i.ytimg.com/vi/VOft5gfNqBA/maxresdefault.jpg'),
+	('Jzv8hE_Lz5s', 'nextlander', 'Patron''s Choice for November 2024: Nuclear Nightmare!', 'It''s slightly belated, but it''s time for our Patron''s Choice stream, and we''re trying out the decidedly Thing-like Nuclear Nightmare!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/Jzv8hE_Lz5s/mqdefault.jpg', '2024-12-05 22:22:37+00', '''/nextlander'':43B ''2024'':6A ''belat'':12B ''choic'':3A,21B ''communiti'':40B ''decid'':29B ''like'':32B ''nextland'':35B ''nightmar'':8A,34B ''novemb'':5A ''nuclear'':7A,33B ''patron'':1A,19B ''re'':25B ''slight'':11B ''stream'':22B ''support'':37B ''thank'':44B ''thing'':31B ''thing-lik'':30B ''time'':16B ''tri'':26B ''watch'':46B ''www.patreon.com'':42B ''www.patreon.com/nextlander'':41B', false, 'PT2H25M32S', 'https://i.ytimg.com/vi/Jzv8hE_Lz5s/maxresdefault.jpg'),
+	('pBato9wzRmU', 'nextlander', 'Fading into the Fog with Silent Hill 2! (Part 03)', 'Hey Folks.
+
+Taking a break from all your worries sure would help a lot. Wouldn''t you like to get away?
+
+Let''s go to Silent Hill.
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/pBato9wzRmU/mqdefault.jpg', '2024-11-07 21:29:19+00', '''/nextlander'':46B ''03'':10A ''2'':8A ''away'':31B ''break'':15B ''communiti'':43B ''fade'':1A ''fog'':4A ''folk'':12B ''get'':30B ''go'':34B ''help'':22B ''hey'':11B ''hill'':7A,37B ''let'':32B ''like'':28B ''lot'':24B ''nextland'':38B ''part'':9A ''silent'':6A,36B ''support'':40B ''sure'':20B ''take'':13B ''thank'':47B ''watch'':49B ''worri'':19B ''would'':21B ''wouldn'':25B ''www.patreon.com'':45B ''www.patreon.com/nextlander'':44B', false, 'PT4H8M32S', 'https://i.ytimg.com/vi/pBato9wzRmU/maxresdefault.jpg'),
+	('oOhCPK6lUbs', 'nextlander', 'Fallout 1 Part 12: The End Is Nigh', 'This week, Brad gets power armor, S.P.E.C.I.A.L. implants, and some other nice upgrades before breaching super mutant HQ and... what''s this? Is it the endgame?!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/oOhCPK6lUbs/mqdefault.jpg', '2024-10-25 21:00:39+00', '''/nextlander'':43B ''1'':2A ''12'':4A ''armor'':14B ''brad'':11B ''breach'':23B ''communiti'':40B ''end'':6A ''endgam'':34B ''fallout'':1A ''get'':12B ''hq'':26B ''implant'':16B ''mutant'':25B ''nextland'':35B ''nice'':20B ''nigh'':8A ''part'':3A ''power'':13B ''s.p.e.c.i.a.l'':15B ''super'':24B ''support'':37B ''thank'':44B ''upgrad'':21B ''watch'':46B ''week'':10B ''www.patreon.com'':42B ''www.patreon.com/nextlander'':41B', false, 'PT3H8M34S', 'https://i.ytimg.com/vi/oOhCPK6lUbs/maxresdefault.jpg'),
+	('TFJ17kKmMnA', 'nextlander', 'Grab Bag Friday with The Roottrees, Dynasty Warriors, and a Surprise!', 'Abby Russell joins us to do some detective work, watch Alex bash hordes of soldiers, and see if Brad can conquer an old nemesis!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/TFJ17kKmMnA/mqdefault.jpg', '2025-01-24 21:53:41+00', '''/nextlander'':44B ''abbi'':12B ''alex'':22B ''bag'':2A ''bash'':23B ''brad'':30B ''communiti'':41B ''conquer'':32B ''detect'':19B ''dynasti'':7A ''friday'':3A ''grab'':1A ''hord'':24B ''join'':14B ''nemesi'':35B ''nextland'':36B ''old'':34B ''roottre'':6A ''russel'':13B ''see'':28B ''soldier'':26B ''support'':38B ''surpris'':11A ''thank'':45B ''us'':15B ''warrior'':8A ''watch'':21B,47B ''work'':20B ''www.patreon.com'':43B ''www.patreon.com/nextlander'':42B', false, 'PT2H28M20S', 'https://i.ytimg.com/vi/TFJ17kKmMnA/maxresdefault.jpg'),
+	('Zhsiz9xG7Tg', 'nextlander', 'Brad and Vinny Are Here, Too!', 'Time for more cooperative puzzle-solving with walkie-talkies!?!?!?!?!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/Zhsiz9xG7Tg/mqdefault.jpg', '2025-01-16 21:48:57+00', '''/nextlander'':23B ''brad'':1A ''communiti'':20B ''cooper'':7B ''nextland'':15B ''puzzl'':9B ''puzzle-solv'':8B ''solv'':10B ''support'':17B ''talki'':14B ''thank'':24B ''time'':4B ''vinni'':3A ''walki'':13B ''walkie-talki'':12B ''watch'':26B ''www.patreon.com'':22B ''www.patreon.com/nextlander'':21B', false, 'PT2H5M24S', 'https://i.ytimg.com/vi/Zhsiz9xG7Tg/maxresdefault.jpg'),
+	('gm9x0s0NVnI', 'nextlander', 'One Last 2024 Video Game Afternoon', 'Brad came perilously close to getting that million-point Geometry Wars achievement, and also played some Kill Knight and also Peglin!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/gm9x0s0NVnI/mqdefault.jpg', '2024-12-21 00:36:47+00', '''/nextlander'':37B ''2024'':3A ''achiev'':19B ''afternoon'':6A ''also'':21B,27B ''brad'':7B ''came'':8B ''close'':10B ''communiti'':34B ''game'':5A ''geometri'':17B ''get'':12B ''kill'':24B ''knight'':25B ''last'':2A ''million'':15B ''million-point'':14B ''nextland'':29B ''one'':1A ''peglin'':28B ''peril'':9B ''play'':22B ''point'':16B ''support'':31B ''thank'':38B ''video'':4A ''war'':18B ''watch'':40B ''www.patreon.com'':36B ''www.patreon.com/nextlander'':35B', false, 'PT1H55M37S', 'https://i.ytimg.com/vi/gm9x0s0NVnI/maxresdefault.jpg'),
+	('4VmAlYtHSeM', 'giantbomb', 'Rascal (PS1) | 04 | Blight Club', 'Will Mike Minotti make any progress today on Blight Club? Will he be able to figure out what any of the buttons or crabs do? Tune in to find out! 
+
+#blightclub #giantbomb #badgames #rascal', 'https://i.ytimg.com/vi/4VmAlYtHSeM/mqdefault.jpg', '2025-06-11 20:01:58+00', '''04'':3A ''abl'':19B ''badgam'':38B ''blight'':4A,14B ''blightclub'':36B ''button'':27B ''club'':5A,15B ''crab'':29B ''figur'':21B ''find'':34B ''giantbomb'':37B ''make'':9B ''mike'':7B ''minotti'':8B ''progress'':11B ''ps1'':2A ''rascal'':1A,39B ''today'':12B ''tune'':31B', false, 'PT1H46M26S', 'https://i.ytimg.com/vi/4VmAlYtHSeM/maxresdefault.jpg'),
+	('hNpyE9eVJs8', 'giantbomb', 'Voicemail Dump Truck', 'The dump truck is full of fancy East Coast joggers.
+
+Call into the Dump Truck (707)EXIT-FLU
+
+#vmdt #voicemaildumptruck #giantbomb', 'https://i.ytimg.com/vi/hNpyE9eVJs8/mqdefault.jpg', '2025-06-19 19:57:31+00', '''707'':19B ''call'':14B ''coast'':12B ''dump'':2A,5B,17B ''east'':11B ''exit'':21B ''exit-flu'':20B ''fanci'':10B ''flu'':22B ''full'':8B ''giantbomb'':25B ''jogger'':13B ''truck'':3A,6B,18B ''vmdt'':23B ''voicemail'':1A ''voicemaildumptruck'':24B', false, 'PT1H42M6S', 'https://i.ytimg.com/vi/hNpyE9eVJs8/maxresdefault.jpg'),
+	('IOzNhF2Z0e0', 'giantbomb', 'Game Mess Mornings 06/19/25', 'Jeff Grubb and friends break down today''s top stories in video games. 
+
+#gmm #gamemessmornings #giantbomb', 'https://i.ytimg.com/vi/IOzNhF2Z0e0/mqdefault.jpg', '2025-06-19 16:13:05+00', '''06/19/25'':4A ''break'':9B ''friend'':8B ''game'':1A,17B ''gamemessmorn'':19B ''giantbomb'':20B ''gmm'':18B ''grubb'':6B ''jeff'':5B ''mess'':2A ''morn'':3A ''stori'':14B ''today'':11B ''top'':13B ''video'':16B', false, 'PT58M27S', 'https://i.ytimg.com/vi/IOzNhF2Z0e0/maxresdefault.jpg'),
+	('IYvUFtzbVF8', 'giantbomb', 'Punch-Out!!! (2009) | Giant Bomb Plays', 'Grubb has a hankering to get back in the ring! 
+
+#punchout #giantbomb', 'https://i.ytimg.com/vi/IYvUFtzbVF8/mqdefault.jpg', '2025-06-18 17:09:51+00', '''2009'':4A ''back'':14B ''bomb'':6A ''get'':13B ''giant'':5A ''giantbomb'':19B ''grubb'':8B ''hanker'':11B ''play'':7A ''punch'':2A ''punch-out'':1A ''punchout'':18B ''ring'':17B', false, 'PT54M49S', 'https://i.ytimg.com/vi/IYvUFtzbVF8/maxresdefault.jpg'),
+	('esB-EiT19lk', 'giantbomb', 'MindsEye''s Review Scores Hit Rock Bottom | Game Mess Mornings 06/16/25', 'Jeff Grubb and Jan Ochoa chat about the Donkey Kong Direct coming soon, MindsEye review scores being very low, a whole grip of Xbox related stories, and even more to start your gaming life on a Monday! 
+
+#gmm #gamemessmornings #giantbomb', 'https://i.ytimg.com/vi/esB-EiT19lk/mqdefault.jpg', '2025-06-16 16:05:10+00', '''06/16/25'':11A ''bottom'':7A ''chat'':17B ''come'':23B ''direct'':22B ''donkey'':20B ''even'':39B ''game'':8A,44B ''gamemessmorn'':50B ''giantbomb'':51B ''gmm'':49B ''grip'':33B ''grubb'':13B ''hit'':5A ''jan'':15B ''jeff'':12B ''kong'':21B ''life'':45B ''low'':30B ''mess'':9A ''mindsey'':1A,25B ''monday'':48B ''morn'':10A ''ochoa'':16B ''relat'':36B ''review'':3A,26B ''rock'':6A ''score'':4A,27B ''soon'':24B ''start'':42B ''stori'':37B ''whole'':32B ''xbox'':35B', false, 'PT59M34S', 'https://i.ytimg.com/vi/esB-EiT19lk/maxresdefault.jpg'),
+	('jWJYUy5Vi4s', 'giantbomb', 'A Big Bowl of Sebghetti in MindsEye #mindseye #spaghetti #giantbomb', 'We turn one of our allies into a bowl of human spaghetti in MindsEye.', 'https://i.ytimg.com/vi/jWJYUy5Vi4s/mqdefault.jpg', '2025-06-12 18:24:21+00', '''alli'':16B ''big'':2A ''bowl'':3A,19B ''giantbomb'':10A ''human'':21B ''mindsey'':7A,8A,24B ''one'':13B ''sebghetti'':5A ''spaghetti'':9A,22B ''turn'':12B', false, 'PT43S', 'https://i.ytimg.com/vi/jWJYUy5Vi4s/maxresdefault.jpg'),
+	('7ZF2vOvsWwQ', 'remap', 'Is a Dollar Store a Mailroom?', 'Obviously, it''s extremely normal to pick up your packages at the neighborhood dollar store, right? 
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/7ZF2vOvsWwQ/mqdefault.jpg', '2025-06-24 17:02:18+00', '''audienc'':26B ''consid'':36B ''content'':34B ''continu'':31B ''dollar'':3A,20B ''extrem'':10B ''help'':29B ''mailroom'':6A ''make'':32B ''neighborhood'':19B ''normal'':11B ''obvious'':7B ''packag'':16B ''pick'':13B ''pleas'':35B ''radio'':24B ''remap'':23B ''right'':22B ''store'':4A,21B ''subscrib'':37B ''support'':27B ''us'':30B ''www.remapradio.com'':39B', false, 'PT57S', 'https://i.ytimg.com/vi/7ZF2vOvsWwQ/maxresdefault.jpg'),
+	('b8m3oPsLg4g', 'remap', 'Exploring Arrakis with The Wheel of Geforce Now', 'Rob and Cado check out the new Dune game, and then a spin of the Wheel takes us to a familiar but excellent tactics game.', 'https://i.ytimg.com/vi/b8m3oPsLg4g/mqdefault.jpg', '2025-06-06 04:28:17+00', '''arraki'':2A ''cado'':10B ''check'':11B ''dune'':15B ''excel'':30B ''explor'':1A ''familiar'':28B ''game'':16B,32B ''geforc'':7A ''new'':14B ''rob'':8B ''spin'':20B ''tactic'':31B ''take'':24B ''us'':25B ''wheel'':5A,23B', false, 'PT2H16M41S', 'https://i.ytimg.com/vi/b8m3oPsLg4g/maxresdefault.jpg'),
+	('a-d3Ckw2yso', 'remap', 'Rob Experiences Buyer''s Remorse in Civilization VII', 'Victory is at hand, but at what cost? At what cost?
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/a-d3Ckw2yso/mqdefault.jpg', '2025-04-26 02:17:19+00', '''audienc'':23B ''buyer'':3A ''civil'':7A ''consid'':33B ''content'':31B ''continu'':28B ''cost'':16B,19B ''experi'':2A ''hand'':12B ''help'':26B ''make'':29B ''pleas'':32B ''radio'':21B ''remap'':20B ''remors'':5A ''rob'':1A ''subscrib'':34B ''support'':24B ''us'':27B ''victori'':9B ''vii'':8A ''www.remapradio.com'':36B', false, 'PT2H32M11S', 'https://i.ytimg.com/vi/a-d3Ckw2yso/maxresdefault.jpg'),
+	('-lhs32v9yns', 'giantbomb', 'M.E.G.A.M.A.N. - Pipistrello and the Cursed Yoyo', 'Welcome to Monday Evening Games at Mike''s at Night (M.E.G.A.M.A.N.) where we''re all going to head over to Mike''s place to check out Pipistrello and the Cursed Yoyo! 
+
+#pipistrello #mike #megaman', 'https://i.ytimg.com/vi/-lhs32v9yns/mqdefault.jpg', '2025-06-24 02:45:38+00', '''check'':31B ''curs'':5A,36B ''even'':10B ''game'':11B ''go'':22B ''head'':24B ''m.e.g.a.m.a.n'':1A,17B ''megaman'':40B ''mike'':13B,27B,39B ''monday'':9B ''night'':16B ''pipistrello'':2A,33B,38B ''place'':29B ''re'':20B ''welcom'':7B ''yoyo'':6A,37B', false, 'PT2H30M59S', 'https://i.ytimg.com/vi/-lhs32v9yns/maxresdefault.jpg'),
+	('plQFe_7nbqo', 'giantbomb', 'Game Mess Mornings 06/27/25', 'Jeff Grubb and friends break down today''s top stories in video games. 
+
+Support Giant Bomb by going to:
+giantbomb.com/join
+
+#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/plQFe_7nbqo/mqdefault.jpg', '2025-06-27 16:03:06+00', '''/join'':26B ''06/27/25'':4A ''bomb'':20B ''break'':9B ''friend'':8B ''game'':1A,17B ''gamemessmorn'':28B ''giant'':19B ''giantbomb'':29B ''giantbomb.com'':25B ''giantbomb.com/join'':24B ''gmm'':27B ''go'':22B ''grubb'':6B ''jeff'':5B ''mess'':2A ''morn'':3A ''stori'':14B ''support'':18B ''today'':11B ''top'':13B ''video'':16B ''videogamenew'':30B', false, 'PT55M15S', 'https://i.ytimg.com/vi/plQFe_7nbqo/maxresdefault.jpg'),
+	('HcsnNYtmkMI', 'giantbomb', 'FBC: Firebreak | Unprofessional Fridays 06/20/25', 'We''re gonna run through this office and take all of the batteries! Do you think we can find a flashlight that hurts people?
+
+#upf #fbcfirebreak #unprofessionalfridays #giantbomb', 'https://i.ytimg.com/vi/HcsnNYtmkMI/mqdefault.jpg', '2025-06-20 21:02:18+00', '''06/20/25'':5A ''batteri'':18B ''fbc'':1A ''fbcfirebreak'':31B ''find'':24B ''firebreak'':2A ''flashlight'':26B ''friday'':4A ''giantbomb'':33B ''gonna'':8B ''hurt'':28B ''offic'':12B ''peopl'':29B ''re'':7B ''run'':9B ''take'':14B ''think'':21B ''unprofession'':3A ''unprofessionalfriday'':32B ''upf'':30B', false, 'PT1H50M19S', 'https://i.ytimg.com/vi/HcsnNYtmkMI/maxresdefault.jpg'),
+	('Rq8_sTQDIho', 'giantbomb', 'A Quick Look (LIVE) at the Switch 2', 'Grubb, Dan, and maybe more are going to check out the Switch 2 and all that it has to offer! 
+
+#switch2 #nintendoswitch2', 'https://i.ytimg.com/vi/Rq8_sTQDIho/mqdefault.jpg', '2025-06-12 21:30:04+00', '''2'':8A,21B ''check'':17B ''dan'':10B ''go'':15B ''grubb'':9B ''live'':4A ''look'':3A ''mayb'':12B ''nintendoswitch2'':30B ''offer'':28B ''quick'':2A ''switch'':7A,20B ''switch2'':29B', false, 'PT4H42M', 'https://i.ytimg.com/vi/Rq8_sTQDIho/maxresdefault.jpg'),
+	('sQpMuV_RmKY', 'giantbomb', 'Monday Mornings Myst with Mitch', 'Mike Minotti leads Jan Ochoa and Jeff Grubb through a MYSTerious island full of switches, books, questionable paraphernalia, and more in the remastered version of MYST! 
+
+#MYST', 'https://i.ytimg.com/vi/sQpMuV_RmKY/mqdefault.jpg', '2025-06-23 19:32:25+00', '''book'':21B ''full'':18B ''grubb'':13B ''island'':17B ''jan'':9B ''jeff'':12B ''lead'':8B ''mike'':6B ''minotti'':7B ''mitch'':5A ''monday'':1A ''morn'':2A ''myst'':3A,31B,32B ''mysteri'':16B ''ochoa'':10B ''paraphernalia'':23B ''question'':22B ''remast'':28B ''switch'':20B ''version'':29B', false, 'PT1H33M35S', 'https://i.ytimg.com/vi/sQpMuV_RmKY/maxresdefault.jpg'),
+	('9ITqdDLYXx0', 'remap', 'The Wheel of S.H.O.D.A.N.', 'Naturally, our final spin during this round of the wheel includes one of the great immersive sims.
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/9ITqdDLYXx0/mqdefault.jpg', '2025-06-26 22:32:37+00', '''audienc'':25B ''consid'':35B ''content'':33B ''continu'':30B ''final'':7B ''great'':19B ''help'':28B ''immers'':20B ''includ'':15B ''make'':31B ''natur'':5B ''one'':16B ''pleas'':34B ''radio'':23B ''remap'':22B ''round'':11B ''s.h.o.d.a.n'':4A ''sim'':21B ''spin'':8B ''subscrib'':36B ''support'':26B ''us'':29B ''wheel'':2A,14B ''www.remapradio.com'':38B', false, 'PT2H33M21S', 'https://i.ytimg.com/vi/9ITqdDLYXx0/maxresdefault.jpg'),
+	('bdhF3Powth4', 'giantbomb', 'Ben Starr on the Death Stranding 2 Red Carpet #ds2 #deathstranding2 #kojima #benstarr', 'Dan asks voice actor extrodinaire, Ben Starr, about working on Final Fantasy and what he loves about the French!', 'https://i.ytimg.com/vi/bdhF3Powth4/mqdefault.jpg', '2025-06-11 22:00:21+00', '''2'':7A ''actor'':17B ''ask'':15B ''ben'':1A,19B ''benstarr'':13A ''carpet'':9A ''dan'':14B ''death'':5A ''deathstranding2'':11A ''ds2'':10A ''extrodinair'':18B ''fantasi'':25B ''final'':24B ''french'':32B ''kojima'':12A ''love'':29B ''red'':8A ''starr'':2A,20B ''strand'':6A ''voic'':16B ''work'':22B', false, 'PT54S', 'https://i.ytimg.com/vi/bdhF3Powth4/maxresdefault.jpg'),
+	('PCsaD2dB1Pw', 'giantbomb', 'Big Hops | Unfinished', 'Jeff Grubb and Mike Minotti hop and bop around as a cute little frog!
+
+#unfinished #demo #bighops', 'https://i.ytimg.com/vi/PCsaD2dB1Pw/mqdefault.jpg', '2025-06-03 15:00:42+00', '''around'':12B ''big'':1A ''bighop'':20B ''bop'':11B ''cute'':15B ''demo'':19B ''frog'':17B ''grubb'':5B ''hop'':2A,9B ''jeff'':4B ''littl'':16B ''mike'':7B ''minotti'':8B ''unfinish'':3A,18B', false, 'PT19M18S', 'https://i.ytimg.com/vi/PCsaD2dB1Pw/maxresdefault.jpg'),
+	('a5FqE18adfU', 'giantbomb', 'MindsEye Devs "Working Around the Clock" to Fix Game | Game Mess Mornings 06/11/25', 'Jeff Grubb is joined by Jason Fanelli to chat about Resident Evil Requiem and other games they saw at Capcom over Summer Game Fest, MindsEye''s devs working around the clock to fix the buggy game, Sony is laying off 30% of Bend Studio, the Switch 2 becoming the fastest selling home console of all time, and even more! 
+
+#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/a5FqE18adfU/mqdefault.jpg', '2025-06-11 16:15:41+00', '''06/11/25'':13A ''2'':60B ''30'':54B ''around'':4A,42B ''becom'':61B ''bend'':56B ''buggi'':48B ''capcom'':33B ''chat'':22B ''clock'':6A,44B ''consol'':66B ''dev'':2A,40B ''even'':71B ''evil'':25B ''fanelli'':20B ''fastest'':63B ''fest'':37B ''fix'':8A,46B ''game'':9A,10A,29B,36B,49B ''gamemessmorn'':74B ''giantbomb'':75B ''gmm'':73B ''grubb'':15B ''home'':65B ''jason'':19B ''jeff'':14B ''join'':17B ''lay'':52B ''mess'':11A ''mindsey'':1A,38B ''morn'':12A ''requiem'':26B ''resid'':24B ''saw'':31B ''sell'':64B ''soni'':50B ''studio'':57B ''summer'':35B ''switch'':59B ''time'':69B ''videogamenew'':76B ''work'':3A,41B', false, 'PT1H10M50S', 'https://i.ytimg.com/vi/a5FqE18adfU/maxresdefault.jpg'),
+	('3WIYp-ihy_w', 'giantbomb', 'Roadcraft and Elden Ring: Nightreign | Unprofessional Fridays', 'We get down in the mud and drive to the end of the week! 
+
+#upf #unprofessionalfridays #roadcraft #giantbomb', 'https://i.ytimg.com/vi/3WIYp-ihy_w/mqdefault.jpg', '2025-05-30 21:57:45+00', '''drive'':15B ''elden'':3A ''end'':18B ''friday'':7A ''get'':9B ''giantbomb'':25B ''mud'':13B ''nightreign'':5A ''ring'':4A ''roadcraft'':1A,24B ''unprofession'':6A ''unprofessionalfriday'':23B ''upf'':22B ''week'':21B', false, 'PT2H39M59S', 'https://i.ytimg.com/vi/3WIYp-ihy_w/maxresdefault.jpg'),
+	('d1x97nMy3Ew', 'giantbomb', 'Giant Bomb Talks Over the Xbox Showcase | Presented by Annapurna Interactive', 'Let''s talk over some Xbox!', 'https://i.ytimg.com/vi/d1x97nMy3Ew/mqdefault.jpg', '2025-06-08 18:21:50+00', '''annapurna'':10A ''bomb'':2A ''giant'':1A ''interact'':11A ''let'':12B ''present'':8A ''showcas'':7A ''talk'':3A,14B ''xbox'':6A,17B', false, 'PT1H14M13S', 'https://i.ytimg.com/vi/d1x97nMy3Ew/maxresdefault.jpg'),
+	('M1xo_zVf4v4', 'giantbomb', 'State of Play (06/04/25) | We Talk Over', 'Before we head down to Los Angeles, we''re gonna talk over the State of Play! We got surfing on swords, origami people, Silent Hill F, a peak at the new James Bond game, proof that Pramata exists, a NEW Marvel fighting game, TILES, and even more before SGF season pops off. 
+
+#stateofplay #playstation #giantbomb', 'https://i.ytimg.com/vi/M1xo_zVf4v4/mqdefault.jpg', '2025-06-04 22:15:20+00', '''06/04/25'':4A ''angel'':13B ''bond'':39B ''even'':52B ''exist'':44B ''f'':32B ''fight'':48B ''game'':40B,49B ''giantbomb'':61B ''gonna'':16B ''got'':24B ''head'':9B ''hill'':31B ''jame'':38B ''los'':12B ''marvel'':47B ''new'':37B,46B ''origami'':28B ''peak'':34B ''peopl'':29B ''play'':3A,22B ''playstat'':60B ''pop'':57B ''pramata'':43B ''proof'':41B ''re'':15B ''season'':56B ''sgf'':55B ''silent'':30B ''state'':1A,20B ''stateofplay'':59B ''surf'':25B ''sword'':27B ''talk'':6A,17B ''tile'':50B', false, 'PT1H12M24S', 'https://i.ytimg.com/vi/M1xo_zVf4v4/maxresdefault.jpg'),
+	('rjtBaaXMSQo', 'giantbomb', 'EA Cancels Black Panther Game and Closes Cliffhanger Games | Game Mess Mornings 05/29/25', 'Jeff Grubb is joined by Lex Luddy to chat about EA cancelling their upcoming Black Panther game, Trump''s tariffs getting blocked by courts, Cyberpunk 2 is further away than you thought, another Persona 4 voice actor getting snubbed, a Death Stranding anime in the works, and WHAT IS MINDSEYE?
+
+Check out Rewinder:
+https://www.patreon.com/rewinder
+
+Support Giant Bomb at:
+giantbomb.com/join
+
+#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/rjtBaaXMSQo/mqdefault.jpg', '2025-05-29 16:08:15+00', '''/join'':76B ''/rewinder'':69B ''05/29/25'':13A ''2'':39B ''4'':48B ''actor'':50B ''anim'':56B ''anoth'':46B ''away'':42B ''black'':3A,28B ''block'':35B ''bomb'':72B ''cancel'':2A,25B ''chat'':22B ''check'':64B ''cliffhang'':8A ''close'':7A ''court'':37B ''cyberpunk'':38B ''death'':54B ''ea'':1A,24B ''game'':5A,9A,10A,30B ''gamemessmorn'':78B ''get'':34B,51B ''giant'':71B ''giantbomb'':79B ''giantbomb.com'':75B ''giantbomb.com/join'':74B ''gmm'':77B ''grubb'':15B ''jeff'':14B ''join'':17B ''lex'':19B ''luddi'':20B ''mess'':11A ''mindsey'':63B ''morn'':12A ''panther'':4A,29B ''persona'':47B ''rewind'':66B ''snub'':52B ''strand'':55B ''support'':70B ''tariff'':33B ''thought'':45B ''trump'':31B ''upcom'':27B ''videogamenew'':80B ''voic'':49B ''work'':59B ''www.patreon.com'':68B ''www.patreon.com/rewinder'':67B', false, 'PT1H2M14S', 'https://i.ytimg.com/vi/rjtBaaXMSQo/maxresdefault.jpg'),
+	('1nIy7Te_rO8', 'remap', 'Okay, Maybe Elden Ring: Neightreign Actually Rules', 'Patrick didn''t have a good time trying Elden Ring: Neightreign solo, but when Remap played the game together (and with some strangers), we had a much different experience. Maybe this game is great? 
+
+What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/1nIy7Te_rO8/mqdefault.jpg', '2025-06-09 14:00:03+00', '''/us/podcast/remap-radio/id1690437343'':63B ''actual'':6A ''audienc'':67B ''consid'':77B ''content'':75B ''continu'':72B ''didn'':9B ''differ'':35B ''elden'':3A,16B ''episod'':53B ''experi'':36B ''full'':52B ''game'':25B,39B ''good'':13B ''great'':41B ''help'':70B ''listen'':45B ''make'':73B ''mayb'':2A,37B ''much'':34B ''neightreign'':5A,18B ''okay'':1A ''patrick'':8B ''play'':23B ''pleas'':76B ''podcast'':60B ''podcasts.apple.com'':62B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':61B ''radio'':56B,65B ''re'':44B ''remap'':22B,55B,64B ''ring'':4A,17B ''rule'':7A ''segment'':49B ''solo'':19B ''stranger'':30B ''subscrib'':57B,78B ''support'':68B ''time'':14B ''togeth'':26B ''tri'':15B ''us'':71B ''www.remapradio.com'':80B', false, 'PT37M19S', 'https://i.ytimg.com/vi/1nIy7Te_rO8/maxresdefault.jpg'),
+	('fJS9ujhavgs', 'remap', 'Oh, Buddy, This Video Game Is Soaking Wet', 'We''re clearly having a good time with FBC Firebreak. #shorts
+
+https://www.twitch.tv/remapradio', 'https://i.ytimg.com/vi/fJS9ujhavgs/mqdefault.jpg', '2025-06-23 17:17:02+00', '''/remapradio'':22B ''buddi'':2A ''clear'':11B ''fbc'':17B ''firebreak'':18B ''game'':5A ''good'':14B ''oh'':1A ''re'':10B ''short'':19B ''soak'':7A ''time'':15B ''video'':4A ''wet'':8A ''www.twitch.tv'':21B ''www.twitch.tv/remapradio'':20B', false, 'PT35S', 'https://i.ytimg.com/vi/fJS9ujhavgs/maxresdefault.jpg'),
+	('eGUa-FZUgEk', 'remap', 'Is Baby Steps About to be GOTY?', 'What other video game lets you shake your butt like this? #shorts #videogames
+
+https://www.twitch.tv/remapradio', 'https://i.ytimg.com/vi/eGUa-FZUgEk/mqdefault.jpg', '2025-06-20 15:45:25+00', '''/remapradio'':23B ''babi'':2A ''butt'':16B ''game'':11B ''goti'':7A ''let'':12B ''like'':17B ''shake'':14B ''short'':19B ''step'':3A ''video'':10B ''videogam'':20B ''www.twitch.tv'':22B ''www.twitch.tv/remapradio'':21B', false, 'PT30S', 'https://i.ytimg.com/vi/eGUa-FZUgEk/maxresdefault.jpg'),
+	('Bz0yxYs7vog', 'remap', 'What Summer Game Fest Was Like During the ICE Protests', 'Patrick and Janet were in Los Angeles for Summer Game Fest, which took place just blocks from some of the most intense ICE protests in Los Angeles this weekend.
+
+What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/Bz0yxYs7vog/mqdefault.jpg', '2025-06-16 14:00:31+00', '''/us/podcast/remap-radio/id1690437343'':61B ''angel'':17B,37B ''audienc'':65B ''block'':26B ''consid'':75B ''content'':73B ''continu'':70B ''episod'':51B ''fest'':4A,21B ''full'':50B ''game'':3A,20B ''help'':68B ''ice'':9A,33B ''intens'':32B ''janet'':13B ''like'':6A ''listen'':43B ''los'':16B,36B ''make'':71B ''patrick'':11B ''place'':24B ''pleas'':74B ''podcast'':58B ''podcasts.apple.com'':60B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':59B ''protest'':10A,34B ''radio'':54B,63B ''re'':42B ''remap'':53B,62B ''segment'':47B ''subscrib'':55B,76B ''summer'':2A,19B ''support'':66B ''took'':23B ''us'':69B ''weekend'':39B ''www.remapradio.com'':78B', false, 'PT43M', 'https://i.ytimg.com/vi/Bz0yxYs7vog/maxresdefault.jpg'),
+	('FzFQE6DBF48', 'remap', 'What Video Game Could You Dump 1,000 Hours into?', 'Everyone''s lives are busy, but stay with us for a moment: if you could pick one game to play for 1,000 hours, what video game would it be? This is a segment from Remap Radio, the flagship video game podcast from Remap.
+
+What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/FzFQE6DBF48/mqdefault.jpg', '2025-05-21 14:00:32+00', '''/us/podcast/remap-radio/id1690437343'':75B ''000'':8A,32B ''1'':7A,31B ''audienc'':79B ''busi'':14B ''consid'':89B ''content'':87B ''continu'':84B ''could'':4A,24B ''dump'':6A ''episod'':65B ''everyon'':10B ''flagship'':48B ''full'':64B ''game'':3A,27B,36B,50B ''help'':82B ''hour'':9A,33B ''listen'':57B ''live'':12B ''make'':85B ''moment'':21B ''one'':26B ''pick'':25B ''play'':29B ''pleas'':88B ''podcast'':51B,72B ''podcasts.apple.com'':74B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':73B ''radio'':46B,68B,77B ''re'':56B ''remap'':45B,53B,67B,76B ''segment'':43B,61B ''stay'':16B ''subscrib'':69B,90B ''support'':80B ''us'':18B,83B ''video'':2A,35B,49B ''would'':37B ''www.remapradio.com'':92B', false, 'PT27M50S', 'https://i.ytimg.com/vi/FzFQE6DBF48/maxresdefault.jpg'),
+	('Pfh-5czXBLU', 'remap', 'Patrick vs. Hopshot [Part 5]', 'Do you want to watch a person publicly tilt? Well, we''ve got the video for you.
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/Pfh-5czXBLU/mqdefault.jpg', '2025-05-22 21:34:48+00', '''5'':5A ''audienc'':26B ''consid'':36B ''content'':34B ''continu'':31B ''got'':18B ''help'':29B ''hopshot'':3A ''make'':32B ''part'':4A ''patrick'':1A ''person'':12B ''pleas'':35B ''public'':13B ''radio'':24B ''remap'':23B ''subscrib'':37B ''support'':27B ''tilt'':14B ''us'':30B ''ve'':17B ''video'':20B ''vs'':2A ''want'':8B ''watch'':10B ''well'':15B ''www.remapradio.com'':39B', false, 'PT1H29M6S', 'https://i.ytimg.com/vi/Pfh-5czXBLU/maxresdefault.jpg'),
+	('k4YzqfY60vM', 'remap', 'The Wheel Spins Towards the Backrooms', 'Our first choice was unavailable, so we let the wheel decide our fate. And it made some big choices. #sponsored 
+
+Timestamps:
+00:09:08 — Deep Rock Galactic: Survivor 
+00:42:11 — Postal Redux
+00:58:34 — Backrooms: Escape Together
+02:09:58 — Ravenbound
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/k4YzqfY60vM/mqdefault.jpg', '2025-04-17 23:46:55+00', '''00'':28B,35B,40B ''02'':46B ''08'':30B ''09'':29B,47B ''11'':37B ''34'':42B ''42'':36B ''58'':41B,48B ''audienc'':53B ''backroom'':6A,43B ''big'':24B ''choic'':9B,25B ''consid'':63B ''content'':61B ''continu'':58B ''decid'':17B ''deep'':31B ''escap'':44B ''fate'':19B ''first'':8B ''galact'':33B ''help'':56B ''let'':14B ''made'':22B ''make'':59B ''pleas'':62B ''postal'':38B ''radio'':51B ''ravenbound'':49B ''redux'':39B ''remap'':50B ''rock'':32B ''spin'':3A ''sponsor'':26B ''subscrib'':64B ''support'':54B ''survivor'':34B ''timestamp'':27B ''togeth'':45B ''toward'':4A ''unavail'':11B ''us'':57B ''wheel'':2A,16B ''www.remapradio.com'':66B', false, 'PT2H51M16S', 'https://i.ytimg.com/vi/k4YzqfY60vM/maxresdefault.jpg'),
+	('ik_uXoeUlAA', 'remap', 'What Happened the Day Mass Layoffs Hit Polygon', 'Former Polygon senior reporter Nicole Carpenter joins us to talk about what happened when most of the Polygon staff lost their jobs recently. What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/ik_uXoeUlAA/mqdefault.jpg', '2025-05-28 14:01:08+00', '''/us/podcast/remap-radio/id1690437343'':53B ''audienc'':57B ''carpent'':14B ''consid'':67B ''content'':65B ''continu'':62B ''day'':4A ''episod'':43B ''former'':9B ''full'':42B ''happen'':2A,21B ''help'':60B ''hit'':7A ''job'':30B ''join'':15B ''layoff'':6A ''listen'':35B ''lost'':28B ''make'':63B ''mass'':5A ''nicol'':13B ''pleas'':66B ''podcast'':50B ''podcasts.apple.com'':52B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':51B ''polygon'':8A,10B,26B ''radio'':46B,55B ''re'':34B ''recent'':31B ''remap'':45B,54B ''report'':12B ''segment'':39B ''senior'':11B ''staff'':27B ''subscrib'':47B,68B ''support'':58B ''talk'':18B ''us'':16B,61B ''www.remapradio.com'':70B', false, 'PT53M42S', 'https://i.ytimg.com/vi/ik_uXoeUlAA/maxresdefault.jpg'),
+	('qj_AIXB7J28', 'remap', 'Patrick vs. Hopshot', 'Patrick is ready to conquer the challenge of Hopshot, but will the gay frogs allow it? 
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/qj_AIXB7J28/mqdefault.jpg', '2025-04-22 17:53:38+00', '''allow'':18B ''audienc'':23B ''challeng'':10B ''conquer'':8B ''consid'':33B ''content'':31B ''continu'':28B ''frog'':17B ''gay'':16B ''help'':26B ''hopshot'':3A,12B ''make'':29B ''patrick'':1A,4B ''pleas'':32B ''radio'':21B ''readi'':6B ''remap'':20B ''subscrib'':34B ''support'':24B ''us'':27B ''vs'':2A ''www.remapradio.com'':36B', false, 'PT2H25M11S', 'https://i.ytimg.com/vi/qj_AIXB7J28/maxresdefault.jpg'),
+	('wWevbah9FEY', 'remap', 'The Power of GeForce Now and French RPGs', 'Clair Obscur: Expedition 33 is the hot new game, but question is: can Rob parry a mime?
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/wWevbah9FEY/mqdefault.jpg', '2025-05-01 23:37:37+00', '''33'':12B ''audienc'':29B ''clair'':9B ''consid'':39B ''content'':37B ''continu'':34B ''expedit'':11B ''french'':7A ''game'':17B ''geforc'':4A ''help'':32B ''hot'':15B ''make'':35B ''mime'':25B ''new'':16B ''obscur'':10B ''parri'':23B ''pleas'':38B ''power'':2A ''question'':19B ''radio'':27B ''remap'':26B ''rob'':22B ''rpgs'':8A ''subscrib'':40B ''support'':30B ''us'':33B ''www.remapradio.com'':42B', false, 'PT2H27M43S', 'https://i.ytimg.com/vi/wWevbah9FEY/maxresdefault.jpg'),
+	('ij2mpglwYvw', 'giantbomb', 'A Quick Look at Teenage Mutant Ninja Turtles: Tactical Takedown', 'Jan and Grubb appreciate tiles, tactics, and turtles! 
+
+Support Giant Bomb by going to:
+giantbomb.com/join
+
+#tmnt #quicklook #giantbomb #teenagemutantninjaturtle', 'https://i.ytimg.com/vi/ij2mpglwYvw/mqdefault.jpg', '2025-05-24 13:01:24+00', '''/join'':27B ''appreci'':14B ''bomb'':21B ''giant'':20B ''giantbomb'':30B ''giantbomb.com'':26B ''giantbomb.com/join'':25B ''go'':23B ''grubb'':13B ''jan'':11B ''look'':3A ''mutant'':6A ''ninja'':7A ''quick'':2A ''quicklook'':29B ''support'':19B ''tactic'':9A,16B ''takedown'':10A ''teenag'':5A ''teenagemutantninjaturtl'':31B ''tile'':15B ''tmnt'':28B ''turtl'':8A,18B', false, 'PT23M20S', 'https://i.ytimg.com/vi/ij2mpglwYvw/maxresdefault.jpg'),
+	('YeJWsYdEMeo', 'giantbomb', 'Voicemail Dump Truck158 | The Filipino Thing.mp3', 'The Dump Truck is back and ready to take a big ol'' dump! We talk about being silent partners, hereditary knowledge of doctoring, what the Philippines is, factories, saying names, and even more bruh! LET''S GO!
+
+Support Giant Bomb by going to
+giantbomb.com/join
+
+#vmdt #voicemaildumptruck #giantbomb', 'https://i.ytimg.com/vi/YeJWsYdEMeo/mqdefault.jpg', '2025-05-15 21:25:24+00', '''/join'':52B ''back'':11B ''big'':17B ''bomb'':46B ''bruh'':40B ''doctor'':29B ''dump'':2A,8B,19B ''even'':38B ''factori'':34B ''filipino'':5A ''giant'':45B ''giantbomb'':55B ''giantbomb.com'':51B ''giantbomb.com/join'':50B ''go'':43B,48B ''hereditari'':26B ''knowledg'':27B ''let'':41B ''name'':36B ''ol'':18B ''partner'':25B ''philippin'':32B ''readi'':13B ''say'':35B ''silent'':24B ''support'':44B ''take'':15B ''talk'':21B ''thing.mp3'':6A ''truck'':9B ''truck158'':3A ''vmdt'':53B ''voicemail'':1A ''voicemaildumptruck'':54B', false, 'PT1H11M', 'https://i.ytimg.com/vi/YeJWsYdEMeo/maxresdefault.jpg'),
+	('0BUigORGKi0', 'giantbomb', 'One of the WORST PS1 Games? | Rascal 01 | Blight Club', 'It''s Mike Minotti''s turn for a blight and this one is a 90s delight! Watch as he tries to save his uncle and maybe NATO from the evil clutches of time. 
+
+#blightclub #giantbomb #badgames', 'https://i.ytimg.com/vi/0BUigORGKi0/mqdefault.jpg', '2025-05-14 19:54:18+00', '''01'':8A ''90s'':25B ''badgam'':46B ''blight'':9A,19B ''blightclub'':44B ''club'':10A ''clutch'':41B ''delight'':26B ''evil'':40B ''game'':6A ''giantbomb'':45B ''mayb'':36B ''mike'':13B ''minotti'':14B ''nato'':37B ''one'':1A,22B ''ps1'':5A ''rascal'':7A ''save'':32B ''time'':43B ''tri'':30B ''turn'':16B ''uncl'':34B ''watch'':27B ''worst'':4A', false, 'PT1H44M9S', 'https://i.ytimg.com/vi/0BUigORGKi0/maxresdefault.jpg'),
+	('n4BbfgSeqns', 'giantbomb', 'Nintendo Switch 2 Preorders Begin April 24 in US | GameBreaking News 04/18/25', 'Jeff Grubb and friends breakdown today''s top stories in video games! Today we chat about Nintendo finally opening up Switch 2 Preorders in the US, the Mario Kart World bundle getting discounted, Indiana Jones might be getting a sequel, the new Ryan Gosling Star Wars movie sharing the same name as a PS2 game, a Diablo 4 crossover, and more stories to end your week.
+
+#gamebreakingnews #switch2 #starwars', 'https://i.ytimg.com/vi/n4BbfgSeqns/mqdefault.jpg', '2025-04-18 17:09:40+00', '''04/18/25'':12A ''2'':3A,34B ''24'':7A ''4'':70B ''april'':6A ''begin'':5A ''breakdown'':17B ''bundl'':43B ''chat'':27B ''crossov'':71B ''diablo'':69B ''discount'':45B ''end'':76B ''final'':30B ''friend'':16B ''game'':24B,67B ''gamebreak'':10A ''gamebreakingnew'':79B ''get'':44B,50B ''gosl'':56B ''grubb'':14B ''indiana'':46B ''jeff'':13B ''jone'':47B ''kart'':41B ''mario'':40B ''might'':48B ''movi'':59B ''name'':63B ''new'':54B ''news'':11A ''nintendo'':1A,29B ''open'':31B ''preorder'':4A,35B ''ps2'':66B ''ryan'':55B ''sequel'':52B ''share'':60B ''star'':57B ''starwar'':81B ''stori'':21B,74B ''switch'':2A,33B ''switch2'':80B ''today'':18B,25B ''top'':20B ''us'':9A,38B ''video'':23B ''war'':58B ''week'':78B ''world'':42B', false, 'PT1H4M6S', 'https://i.ytimg.com/vi/n4BbfgSeqns/maxresdefault.jpg'),
+	('B1O6ZOWu5w0', 'giantbomb', 'Voicemail Dump Truck 159 | Faygo FOMO.mp3', 'Everybody welcome back out dear friend BAILEY MEYERS back to the truck! We chat about the nuts and bolts of busting things, inside jokes with animals, and somehow the Gathering of the Juggalos! 
+
+Support Giant Bomb by going to:
+giantbomb.com/join
+
+#vmdt #voicemaildumptruck #giantbomb', 'https://i.ytimg.com/vi/B1O6ZOWu5w0/mqdefault.jpg', '2025-05-22 19:27:13+00', '''/join'':48B ''159'':4A ''anim'':32B ''back'':9B,15B ''bailey'':13B ''bolt'':25B ''bomb'':42B ''bust'':27B ''chat'':20B ''dear'':11B ''dump'':2A ''everybodi'':7B ''faygo'':5A ''fomo.mp3'':6A ''friend'':12B ''gather'':36B ''giant'':41B ''giantbomb'':51B ''giantbomb.com'':47B ''giantbomb.com/join'':46B ''go'':44B ''insid'':29B ''joke'':30B ''juggalo'':39B ''meyer'':14B ''nut'':23B ''somehow'':34B ''support'':40B ''thing'':28B ''truck'':3A,18B ''vmdt'':49B ''voicemail'':1A ''voicemaildumptruck'':50B ''welcom'':8B', false, 'PT1H12M43S', 'https://i.ytimg.com/vi/B1O6ZOWu5w0/maxresdefault.jpg'),
+	('P-BnQ9OIHOg', 'giantbomb', 'PlayStation Stars is Closing Down | Game Mess Mornings 05/22/25', 'Jeff Grubb and Jesse Vitelli lament about the the closing of PlayStation Stars and a State of Play event in May is becoming unlikely, Lies of P is getting difficulty options to become more accessible, Destiny 2 could have been a subscription service, GameChat requires a phone number linked to your Nintendo account, and more! 
+
+#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/P-BnQ9OIHOg/mqdefault.jpg', '2025-05-22 16:10:50+00', '''05/22/25'':9A ''2'':46B ''access'':44B ''account'':62B ''becom'':32B,42B ''close'':4A,19B ''could'':47B ''destini'':45B ''difficulti'':39B ''event'':28B ''game'':6A ''gamechat'':53B ''gamemessmorn'':66B ''get'':38B ''giantbomb'':67B ''gmm'':65B ''grubb'':11B ''jeff'':10B ''jess'':13B ''lament'':15B ''lie'':34B ''link'':58B ''may'':30B ''mess'':7A ''morn'':8A ''nintendo'':61B ''number'':57B ''option'':40B ''p'':36B ''phone'':56B ''play'':27B ''playstat'':1A,21B ''requir'':54B ''servic'':52B ''star'':2A,22B ''state'':25B ''subscript'':51B ''unlik'':33B ''videogamenew'':68B ''vitelli'':14B', false, 'PT57M52S', 'https://i.ytimg.com/vi/P-BnQ9OIHOg/maxresdefault.jpg'),
+	('eq6QJTpgoUU', 'giantbomb', 'Nintendo Apologizing for Not Enough Switch 2s | GameBreaking News 04/23/25', 'Jeff Grubb is joined by Jake Randall today to chat about Nintendo Switch 2 preorders going up tonight in North America, the Oblivion remaster blowing up, sales numbers for March, and more for your Wednesday! 
+
+#gamebreakingnews #videogamenews', 'https://i.ytimg.com/vi/eq6QJTpgoUU/mqdefault.jpg', '2025-04-23 17:04:03+00', '''04/23/25'':10A ''2'':24B ''2s'':7A ''america'':31B ''apolog'':2A ''blow'':35B ''chat'':20B ''enough'':5A ''gamebreak'':8A ''gamebreakingnew'':46B ''go'':26B ''grubb'':12B ''jake'':16B ''jeff'':11B ''join'':14B ''march'':40B ''news'':9A ''nintendo'':1A,22B ''north'':30B ''number'':38B ''oblivion'':33B ''preorder'':25B ''randal'':17B ''remast'':34B ''sale'':37B ''switch'':6A,23B ''today'':18B ''tonight'':28B ''videogamenew'':47B ''wednesday'':45B', false, 'PT59M41S', 'https://i.ytimg.com/vi/eq6QJTpgoUU/maxresdefault.jpg'),
+	('1zcPILkebEs', 'giantbomb', 'The Switch 2 is Pretty Great | Giant Bombcast 895: Raw Dog Mayo', 'This week we dive into why we''re digging the Switch 2 so much and circling back to some gems from the Switch 1 like Splatoon 3 and Paper Mario, Mike talks about slicing and dicing his way through Sekiro, Grubb''s lackluster time in MindsEye, and all of us climbing together in PEAK. We also chat about Microsoft''s new deal with AMD, rumors of a PlayStation 6 on the horizon, a Golden Tee remaster, and even more news to catch up on! 
+
+#giantbomb #bombcast #giantbombcast', 'https://i.ytimg.com/vi/1zcPILkebEs/mqdefault.jpg', '2025-06-17 18:54:04+00', '''1'':36B ''2'':3A,24B ''3'':39B ''6'':81B ''895'':9A ''also'':68B ''amd'':76B ''back'':29B ''bombcast'':8A,98B ''catch'':94B ''chat'':69B ''circl'':28B ''climb'':63B ''deal'':74B ''dice'':48B ''dig'':21B ''dive'':16B ''dog'':11A ''even'':90B ''gem'':32B ''giant'':7A ''giantbomb'':97B ''giantbombcast'':99B ''golden'':86B ''great'':6A ''grubb'':53B ''horizon'':84B ''lacklust'':55B ''like'':37B ''mario'':42B ''mayo'':12A ''microsoft'':71B ''mike'':43B ''mindsey'':58B ''much'':26B ''new'':73B ''news'':92B ''paper'':41B ''peak'':66B ''playstat'':80B ''pretti'':5A ''raw'':10A ''re'':20B ''remast'':88B ''rumor'':77B ''sekiro'':52B ''slice'':46B ''splatoon'':38B ''switch'':2A,23B,35B ''talk'':44B ''tee'':87B ''time'':56B ''togeth'':64B ''us'':62B ''way'':50B ''week'':14B', false, 'PT2H34M40S', 'https://i.ytimg.com/vi/1zcPILkebEs/maxresdefault.jpg'),
+	('8t5L5vzhnWA', 'remap', 'Pre-Ordering a Switch 2 Was a Chaotic Journey', 'Last week, Janet and Patrick decided to pre-order at Switch 2. What followed was crashed websites, attempting to boycott Target, standing in line with crypto bros at GameStop, and more. Plus, we discuss Switch 2''s "game key cards" and what they say about the future of physical preservation of video games.
+
+What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/8t5L5vzhnWA/mqdefault.jpg', '2025-05-02 21:59:04+00', '''/us/podcast/remap-radio/id1690437343'':86B ''2'':6A,23B,47B ''attempt'':29B ''audienc'':90B ''boycott'':31B ''bros'':38B ''card'':51B ''chaotic'':9A ''consid'':100B ''content'':98B ''continu'':95B ''crash'':27B ''crypto'':37B ''decid'':16B ''discuss'':45B ''episod'':76B ''follow'':25B ''full'':75B ''futur'':58B ''game'':49B,64B ''gamestop'':40B ''help'':93B ''janet'':13B ''journey'':10A ''key'':50B ''last'':11B ''line'':35B ''listen'':68B ''make'':96B ''order'':3A,20B ''patrick'':15B ''physic'':60B ''pleas'':99B ''plus'':43B ''podcast'':83B ''podcasts.apple.com'':85B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':84B ''pre'':2A,19B ''pre-ord'':1A,18B ''preserv'':61B ''radio'':79B,88B ''re'':67B ''remap'':78B,87B ''say'':55B ''segment'':72B ''stand'':33B ''subscrib'':80B,101B ''support'':91B ''switch'':5A,22B,46B ''target'':32B ''us'':94B ''video'':63B ''websit'':28B ''week'':12B ''www.remapradio.com'':103B', false, 'PT40M41S', 'https://i.ytimg.com/vi/8t5L5vzhnWA/maxresdefault.jpg'),
+	('QYEKloE8VTg', 'remap', 'Remap in New York (Day Three) – Part 2', 'For years, Chia has been telling us “Hey, we really need to watch the Disney Channel original movie The Luck of the Irish.” It has layers. It has much say about the state of America, diversity, and what exactly “white culture” is. Out of Twilight movies, we caved while in New York. Now, you can listen to our reaction, and wonder if we’re about to embark on an ambitious journey: more Disney Channel movies. Sync this with a copy of The Luck of the Irish and listen along!
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/QYEKloE8VTg/mqdefault.jpg', '2025-04-07 19:25:25+00', '''2'':8A ''along'':97B ''ambiti'':78B ''america'':43B ''audienc'':101B ''cave'':56B ''channel'':24B,82B ''chia'':11B ''consid'':111B ''content'':109B ''continu'':106B ''copi'':88B ''cultur'':49B ''day'':5A ''disney'':23B,81B ''divers'':44B ''embark'':75B ''exact'':47B ''help'':104B ''hey'':16B ''irish'':31B,94B ''journey'':79B ''layer'':34B ''listen'':64B,96B ''luck'':28B,91B ''make'':107B ''movi'':26B,54B,83B ''much'':37B ''need'':19B ''new'':3A,59B ''origin'':25B ''part'':7A ''pleas'':110B ''radio'':99B ''re'':72B ''reaction'':67B ''realli'':18B ''remap'':1A,98B ''say'':38B ''state'':41B ''subscrib'':112B ''support'':102B ''sync'':84B ''tell'':14B ''three'':6A ''twilight'':53B ''us'':15B,105B ''watch'':21B ''white'':48B ''wonder'':69B ''www.remapradio.com'':114B ''year'':10B ''york'':4A,60B', false, 'PT2H6M32S', 'https://i.ytimg.com/vi/QYEKloE8VTg/maxresdefault.jpg'),
+	('ixGonKvGFto', 'remap', 'The Wheel of Monster Hunter', 'What if Rob used the charge blade as a treat? And what if the wheel decided to land on Crusader Kings III?
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/ixGonKvGFto/mqdefault.jpg', '2025-03-14 01:27:30+00', '''audienc'':31B ''blade'':12B ''charg'':11B ''consid'':41B ''content'':39B ''continu'':36B ''crusad'':25B ''decid'':21B ''help'':34B ''hunter'':5A ''iii'':27B ''king'':26B ''land'':23B ''make'':37B ''monster'':4A ''pleas'':40B ''radio'':29B ''remap'':28B ''rob'':8B ''subscrib'':42B ''support'':32B ''treat'':15B ''us'':35B ''use'':9B ''wheel'':2A,20B ''www.remapradio.com'':44B', false, 'PT3H13M46S', 'https://i.ytimg.com/vi/ixGonKvGFto/maxresdefault.jpg'),
+	('P9IgzulGatI', 'remap', 'Volgarr the Viking x Nextlander [Part 8]', 'It''s all come down to this. Who will win: Brad or Patrick? Or...will we ALL lose?
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/P9IgzulGatI/mqdefault.jpg', '2025-03-07 21:53:56+00', '''8'':7A ''audienc'':29B ''brad'':18B ''come'':11B ''consid'':39B ''content'':37B ''continu'':34B ''help'':32B ''lose'':25B ''make'':35B ''nextland'':5A ''part'':6A ''patrick'':20B ''pleas'':38B ''radio'':27B ''remap'':26B ''subscrib'':40B ''support'':30B ''us'':33B ''vike'':3A ''volgarr'':1A ''win'':17B ''www.remapradio.com'':42B ''x'':4A', false, 'PT1H52M31S', 'https://i.ytimg.com/vi/P9IgzulGatI/maxresdefault.jpg'),
+	('9rLj0vsGeyo', 'remap', 'Swords, Sliding Puzzles, and Onimusha', 'Patrick has felt the call of the ninja. But can Cado help him solve a sliding puzzle, or will their journey end here?
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/9rLj0vsGeyo/mqdefault.jpg', '2025-02-18 23:18:34+00', '''audienc'':32B ''cado'':16B ''call'':10B ''consid'':42B ''content'':40B ''continu'':37B ''end'':27B ''felt'':8B ''help'':17B,35B ''journey'':26B ''make'':38B ''ninja'':13B ''onimusha'':5A ''patrick'':6B ''pleas'':41B ''puzzl'':3A,22B ''radio'':30B ''remap'':29B ''slide'':2A,21B ''solv'':19B ''subscrib'':43B ''support'':33B ''sword'':1A ''us'':36B ''www.remapradio.com'':45B', false, 'PT2H52M41S', 'https://i.ytimg.com/vi/9rLj0vsGeyo/maxresdefault.jpg'),
+	('5iAYIsm-irE', 'nextlander', 'Vinny and Abby Have An Adventure (Game)', 'There are so many adventure games we want to play and so little time!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/5iAYIsm-irE/mqdefault.jpg', '2025-05-13 20:35:32+00', '''/nextlander'':30B ''abbi'':3A ''adventur'':6A,12B ''communiti'':27B ''game'':7A,13B ''littl'':20B ''mani'':11B ''nextland'':22B ''play'':17B ''support'':24B ''thank'':31B ''time'':21B ''vinni'':1A ''want'':15B ''watch'':33B ''www.patreon.com'':29B ''www.patreon.com/nextlander'':28B', false, 'PT1H39M30S', 'https://i.ytimg.com/vi/5iAYIsm-irE/maxresdefault.jpg'),
+	('4V43JvjvLHw', 'remap', 'Volgarr the Viking x Nextlander [Part 7]', 'Patrick and Brad have, once again, returned to the prison of their own making. Will either make it out alive?
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/4V43JvjvLHw/mqdefault.jpg', '2025-01-17 21:01:55+00', '''7'':7A ''aliv'':27B ''audienc'':31B ''brad'':10B ''consid'':41B ''content'':39B ''continu'':36B ''either'':23B ''help'':34B ''make'':21B,24B,37B ''nextland'':5A ''part'':6A ''patrick'':8B ''pleas'':40B ''prison'':17B ''radio'':29B ''remap'':28B ''return'':14B ''subscrib'':42B ''support'':32B ''us'':35B ''vike'':3A ''volgarr'':1A ''www.remapradio.com'':44B ''x'':4A', false, 'PT1H47M51S', 'https://i.ytimg.com/vi/4V43JvjvLHw/maxresdefault.jpg'),
+	('BbfudQSAOxw', 'remap', 'Trying to Dress to Impress in Infinity Nikki', 'The world of Infinity Nikki so much weirder than we could have anticipated. 
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/BbfudQSAOxw/mqdefault.jpg', '2024-12-17 22:14:20+00', '''anticip'':21B ''audienc'':25B ''consid'':35B ''content'':33B ''continu'':30B ''could'':19B ''dress'':3A ''help'':28B ''impress'':5A ''infin'':7A,12B ''make'':31B ''much'':15B ''nikki'':8A,13B ''pleas'':34B ''radio'':23B ''remap'':22B ''subscrib'':36B ''support'':26B ''tri'':1A ''us'':29B ''weirder'':16B ''world'':10B ''www.remapradio.com'':38B', false, 'PT2H21M16S', 'https://i.ytimg.com/vi/BbfudQSAOxw/maxresdefault.jpg'),
+	('fRYmLlJtpQ0', 'remap', 'Entering a New Era in Civilization VII', 'Join Cado as they explore the world of Civilization VII, and try to out culture the rest of the world. Hope no one attacks this totally undefended city...
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/fRYmLlJtpQ0/mqdefault.jpg', '2025-02-12 16:27:53+00', '''attack'':31B ''audienc'':39B ''cado'':9B ''citi'':35B ''civil'':6A,16B ''consid'':49B ''content'':47B ''continu'':44B ''cultur'':22B ''enter'':1A ''era'':4A ''explor'':12B ''help'':42B ''hope'':28B ''join'':8B ''make'':45B ''new'':3A ''one'':30B ''pleas'':48B ''radio'':37B ''remap'':36B ''rest'':24B ''subscrib'':50B ''support'':40B ''total'':33B ''tri'':19B ''undefend'':34B ''us'':43B ''vii'':7A,17B ''world'':14B,27B ''www.remapradio.com'':52B', false, 'PT3H4M28S', 'https://i.ytimg.com/vi/fRYmLlJtpQ0/maxresdefault.jpg'),
+	('sUacCE5rXp8', 'remap', 'It''s Raining Money in Motorsports Manager', 'Rob and Cado are back on that grind, getting paid (by their drivers) and making bank (blowing it immediately on new parts).
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/sUacCE5rXp8/mqdefault.jpg', '2025-01-31 16:56:55+00', '''audienc'':33B ''back'':12B ''bank'':23B ''blow'':24B ''cado'':10B ''consid'':43B ''content'':41B ''continu'':38B ''driver'':20B ''get'':16B ''grind'':15B ''help'':36B ''immedi'':26B ''make'':22B,39B ''manag'':7A ''money'':4A ''motorsport'':6A ''new'':28B ''paid'':17B ''part'':29B ''pleas'':42B ''radio'':31B ''rain'':3A ''remap'':30B ''rob'':8B ''subscrib'':44B ''support'':34B ''us'':37B ''www.remapradio.com'':46B', false, 'PT3H15M36S', 'https://i.ytimg.com/vi/sUacCE5rXp8/maxresdefault.jpg'),
+	('6yZWQsznwlw', 'remap', 'Remap Talks Over The Game Awards', 'Hey, uh, this year''s show was actually...pretty good?
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/6yZWQsznwlw/mqdefault.jpg', '2024-12-13 05:35:57+00', '''actual'':14B ''audienc'':20B ''award'':6A ''consid'':30B ''content'':28B ''continu'':25B ''game'':5A ''good'':16B ''help'':23B ''hey'':7B ''make'':26B ''pleas'':29B ''pretti'':15B ''radio'':18B ''remap'':1A,17B ''show'':12B ''subscrib'':31B ''support'':21B ''talk'':2A ''uh'':8B ''us'':24B ''www.remapradio.com'':33B ''year'':10B', false, 'PT3H31M6S', 'https://i.ytimg.com/vi/6yZWQsznwlw/maxresdefault.jpg'),
+	('L2Z85VckOf8', 'nextlander', 'Solving Crimes in Alex Hill: Whispers at White Oak Inn! (Part 01)', 'The Clue Crew reunites to see what kinds of crimes need to be solved!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/L2Z85VckOf8/mqdefault.jpg', '2025-03-25 22:27:30+00', '''/nextlander'':35B ''01'':12A ''alex'':4A ''clue'':14B ''communiti'':32B ''crew'':15B ''crime'':2A,22B ''hill'':5A ''inn'':10A ''kind'':20B ''need'':23B ''nextland'':27B ''oak'':9A ''part'':11A ''reunit'':16B ''see'':18B ''solv'':1A,26B ''support'':29B ''thank'':36B ''watch'':38B ''whisper'':6A ''white'':8A ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT2H5M47S', 'https://i.ytimg.com/vi/L2Z85VckOf8/maxresdefault.jpg'),
+	('SI7eHKCP1us', 'nextlander', 'Brad and Patrick are Back for One Last Volgarr! [Part 08]', 'Will this be the stunning conclusion of the Volgarr saga?! In this non-competitive run who will emerge victorious?!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/SI7eHKCP1us/mqdefault.jpg', '2025-03-07 21:38:02+00', '''/nextlander'':40B ''08'':11A ''back'':5A ''brad'':1A ''communiti'':37B ''competit'':26B ''conclus'':17B ''emerg'':30B ''last'':8A ''nextland'':32B ''non'':25B ''non-competit'':24B ''one'':7A ''part'':10A ''patrick'':3A ''run'':27B ''saga'':21B ''stun'':16B ''support'':34B ''thank'':41B ''victori'':31B ''volgarr'':9A,20B ''watch'':43B ''www.patreon.com'':39B ''www.patreon.com/nextlander'':38B', false, 'PT1H52M6S', 'https://i.ytimg.com/vi/SI7eHKCP1us/maxresdefault.jpg'),
+	('qpQRFd2cC6w', 'nextlander', 'Abby and Vinny are Back for More Rooting Around! (Part 03)', 'The Roottrees may be dead but that doesn''t mean the fun has to stop!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/qpQRFd2cC6w/mqdefault.jpg', '2025-02-11 00:07:48+00', '''/nextlander'':35B ''03'':11A ''abbi'':1A ''around'':9A ''back'':5A ''communiti'':32B ''dead'':16B ''doesn'':19B ''fun'':23B ''may'':14B ''mean'':21B ''nextland'':27B ''part'':10A ''root'':8A ''roottre'':13B ''stop'':26B ''support'':29B ''thank'':36B ''vinni'':3A ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT2H25M51S', 'https://i.ytimg.com/vi/qpQRFd2cC6w/maxresdefault.jpg'),
+	('Bh26oQNRh1g', 'nextlander', 'Abby and Vinny and the Roottrees are Back! (Part 02)', 'Our master detective team is back on the case and ready to find a bunch of cousins!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/Bh26oQNRh1g/mqdefault.jpg', '2025-02-03 23:16:06+00', '''/nextlander'':36B ''02'':10A ''abbi'':1A ''back'':8A,16B ''bunch'':25B ''case'':19B ''communiti'':33B ''cousin'':27B ''detect'':13B ''find'':23B ''master'':12B ''nextland'':28B ''part'':9A ''readi'':21B ''roottre'':6A ''support'':30B ''team'':14B ''thank'':37B ''vinni'':3A ''watch'':39B ''www.patreon.com'':35B ''www.patreon.com/nextlander'':34B', false, 'PT1H48M1S', 'https://i.ytimg.com/vi/Bh26oQNRh1g/maxresdefault.jpg'),
+	('8zM7P4-jK74', 'nextlander', 'NXL and Assassin''s Creed Shadows!', 'Assassin''s Creed Shadows is almost here and with a long history of the series we''ve got some early thoughts on it. 
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/8zM7P4-jK74/mqdefault.jpg', '2025-03-18 19:54:17+00', '''/nextlander'':38B ''almost'':12B ''assassin'':3A,7B ''communiti'':35B ''creed'':5A,9B ''earli'':26B ''got'':24B ''histori'':18B ''long'':17B ''nextland'':30B ''nxl'':1A ''seri'':21B ''shadow'':6A,10B ''support'':32B ''thank'':39B ''thought'':27B ''ve'':23B ''watch'':41B ''www.patreon.com'':37B ''www.patreon.com/nextlander'':36B', false, 'PT2H6M48S', 'https://i.ytimg.com/vi/8zM7P4-jK74/maxresdefault.jpg'),
+	('bmZJ8Chc09E', 'nextlander', 'Monday Void Crew: Void Harder', 'We''ve all got some skill points now and we''re ready to... probably die again.
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/bmZJ8Chc09E/mqdefault.jpg', '2025-02-24 23:09:34+00', '''/nextlander'':30B ''communiti'':27B ''crew'':3A ''die'':20B ''got'':9B ''harder'':5A ''monday'':1A ''nextland'':22B ''point'':12B ''probabl'':19B ''re'':16B ''readi'':17B ''skill'':11B ''support'':24B ''thank'':31B ''ve'':7B ''void'':2A,4A ''watch'':33B ''www.patreon.com'':29B ''www.patreon.com/nextlander'':28B', false, 'PT2H31M55S', 'https://i.ytimg.com/vi/bmZJ8Chc09E/maxresdefault.jpg'),
+	('pyOGB-RTjDo', 'nextlander', 'Patron''s Choice for January 2025: The Truth Is Out There in The X-Files Game! [Part 02]', 'Vinny puts on his best FBI trenchcoat to team up with Mulder and Scully in The X-Files Game! The FMV one, specifically!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/pyOGB-RTjDo/mqdefault.jpg', '2025-01-31 20:55:51+00', '''/nextlander'':52B ''02'':19A ''2025'':6A ''best'':24B ''choic'':3A ''communiti'':49B ''fbi'':25B ''file'':16A,38B ''fmv'':41B ''game'':17A,39B ''januari'':5A ''mulder'':31B ''nextland'':44B ''one'':42B ''part'':18A ''patron'':1A ''put'':21B ''sculli'':33B ''specif'':43B ''support'':46B ''team'':28B ''thank'':53B ''trenchcoat'':26B ''truth'':8A ''vinni'':20B ''watch'':55B ''www.patreon.com'':51B ''www.patreon.com/nextlander'':50B ''x'':15A,37B ''x-file'':14A,36B', false, 'PT2H13M39S', 'https://i.ytimg.com/vi/pyOGB-RTjDo/maxresdefault.jpg'),
+	('xaFtWbU3PYs', 'nextlander', 'Nextlander and Steam Next Fest October 2024!', 'Vinny and Alex have downloaded SO MANY DEMOS. We will get to maybe a quarter of them.
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/xaFtWbU3PYs/mqdefault.jpg', '2024-10-18 19:39:23+00', '''/nextlander'':33B ''2024'':7A ''alex'':10B ''communiti'':30B ''demo'':15B ''download'':12B ''fest'':5A ''get'':18B ''mani'':14B ''mayb'':20B ''next'':4A ''nextland'':1A,25B ''octob'':6A ''quarter'':22B ''steam'':3A ''support'':27B ''thank'':34B ''vinni'':8B ''watch'':36B ''www.patreon.com'':32B ''www.patreon.com/nextlander'':31B', false, 'PT2H13M38S', 'https://i.ytimg.com/vi/xaFtWbU3PYs/maxresdefault.jpg'),
+	('4faLzNNR3lk', 'giantbomb', 'THE MUSTARD ARC', 'Watch as a 40 year old man discovers mustard for the first time in his life! Somehow there is almost 13 minutes of footage left out of the Summer Game Fest travelogue that has been collected HERE for your eyes and ears. 
+
+#mustard', 'https://i.ytimg.com/vi/4faLzNNR3lk/mqdefault.jpg', '2025-06-23 03:14:51+00', '''13'':24B ''40'':7B ''almost'':23B ''arc'':3A ''collect'':39B ''discov'':11B ''ear'':45B ''eye'':43B ''fest'':34B ''first'':15B ''footag'':27B ''game'':33B ''left'':28B ''life'':19B ''man'':10B ''minut'':25B ''mustard'':2A,12B,46B ''old'':9B ''somehow'':20B ''summer'':32B ''time'':16B ''travelogu'':35B ''watch'':4B ''year'':8B', false, 'PT12M53S', 'https://i.ytimg.com/vi/4faLzNNR3lk/maxresdefault.jpg'),
+	('65YlgbgE1qY', 'giantbomb', 'A Quick Look at Summer Game Fest 2025', 'We went to Summer Game Fest in LA and shenanigans ensued! Check out our time together setting up for Giant Bomb @ Nite, heading to Play Days, and all of the other things in between. We played a couple games, made some burgers, interviewed Hideo Kojima, and experienced mustard for the first time. 
+
+Thanks to our friends at Warframe for their support of Giant Bomb at Summer Game Fest! 
+Visit TennoCon 2025! https://www.warframe.com/tennocon
+
+Special thanks to our friends at Annapurna Interactive for sponsoring a segment of this video! Check out Mixtape, coming soon! https://annapurnainteractive.com/en/games/mixtape
+
+#sgf #summergamefest #giantbomb', 'https://i.ytimg.com/vi/65YlgbgE1qY/mqdefault.jpg', '2025-06-14 01:51:05+00', '''/en/games/mixtape'':105B ''/tennocon'':82B ''2025'':8A,79B ''annapurna'':89B ''annapurnainteractive.com'':104B ''annapurnainteractive.com/en/games/mixtape'':103B ''bomb'':29B,72B ''burger'':50B ''check'':20B,98B ''come'':101B ''coupl'':46B ''day'':34B ''ensu'':19B ''experienc'':55B ''fest'':7A,14B,76B ''first'':59B ''friend'':64B,87B ''game'':6A,13B,47B,75B ''giant'':28B,71B ''giantbomb'':108B ''head'':31B ''hideo'':52B ''interact'':90B ''interview'':51B ''kojima'':53B ''la'':16B ''look'':3A ''made'':48B ''mixtap'':100B ''mustard'':56B ''nite'':30B ''play'':33B,44B ''quick'':2A ''segment'':94B ''set'':25B ''sgf'':106B ''shenanigan'':18B ''soon'':102B ''special'':83B ''sponsor'':92B ''summer'':5A,12B,74B ''summergamefest'':107B ''support'':69B ''tennocon'':78B ''thank'':61B,84B ''thing'':40B ''time'':23B,60B ''togeth'':24B ''video'':97B ''visit'':77B ''warfram'':66B ''went'':10B ''www.warframe.com'':81B ''www.warframe.com/tennocon'':80B', false, 'PT49M3S', 'https://i.ytimg.com/vi/65YlgbgE1qY/maxresdefault.jpg'),
+	('HZ0M1LWm_FQ', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 1-6 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
+
+We got Andrea Rene, Niki Grayson, Charles Harte, Guillermo Leoz, Michael Fitch, and Peter Hunt Szyptek on the couch! We chat about existing on the internet and independant media, the current situation happening in Los Angeles, and how do you cover big gaming events anymore? 
+
+Thanks to our friends at Annapurna Interactive for presenting this stream!
+
+#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/HZ0M1LWm_FQ/mqdefault.jpg', '2025-06-11 23:00:17+00', '''-6'':10A ''1'':9A ''andrea'':42B ''angel'':21B,75B ''annapurna'':13A,90B ''anymor'':84B ''around'':30B ''big'':81B ''bomb'':2A ''charl'':46B ''chat'':60B ''couch'':18B,58B ''cover'':80B ''current'':70B ''event'':83B ''exist'':62B ''fitch'':51B ''found'':16B ''friend'':27B,88B ''game'':82B ''get'':25B ''giant'':1A ''giantbomb'':98B ''got'':41B ''grayson'':45B ''guillermo'':48B ''hang'':34B ''happen'':72B ''hart'':47B ''hunt'':54B ''independ'':67B ''industri'':32B ''interact'':14A,91B ''internet'':65B ''leoz'':49B ''los'':20B,74B ''media'':68B ''michael'':50B ''niki'':44B ''nite'':3A,8A ''peter'':53B ''present'':11A,93B ''re'':24B ''rene'':43B ''sgf'':96B ''situat'':71B ''stream'':95B ''summergamefest'':97B ''szyptek'':55B ''thank'':85B ''villa'':7A,39B ''warfram'':6A,38B', false, 'PT44M32S', 'https://i.ytimg.com/vi/HZ0M1LWm_FQ/maxresdefault.jpg'),
+	('PWRZtzf84yM', 'giantbomb', 'Donkey Kong Direct | We Talk Over', 'We''re going BANANAS this early in the morning! Let''s see what Nintendo is going to show off today. 
+
+#nintendodirect #donkeykong #giantbomb', 'https://i.ytimg.com/vi/PWRZtzf84yM/mqdefault.jpg', '2025-06-18 13:34:44+00', '''banana'':9B ''direct'':3A ''donkey'':1A ''donkeykong'':27B ''earli'':11B ''giantbomb'':28B ''go'':8B,21B ''kong'':2A ''let'':15B ''morn'':14B ''nintendo'':19B ''nintendodirect'':26B ''re'':7B ''see'':17B ''show'':23B ''talk'':5A ''today'':25B', false, 'PT28M28S', 'https://i.ytimg.com/vi/PWRZtzf84yM/maxresdefault.jpg'),
+	('QJC3vLrUX_Y', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 1-7 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
+
+We got Russ Frushtick, Brad Shoemaker, Niki Grayson, Abby Russell, and Jeff Bakalar on the couch! We end the evening with talking about the Switch LITE and Doordashing consoles, using games to learn another language, and if Mario Kart World is good. 
+
+Thanks to our friends at Annapurna Interactive for presenting this stream!
+
+Thanks to Young Horses for their support of Giant Bomb @ Nite! Bugsnax VR is out now, go play it!
+Sign up for the Young Horses newsletter here: http://eepurl.com/g5DUzT
+And check out their Steam page! https://store.steampowered.com/developer/younghorses/ 
+
+#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/QJC3vLrUX_Y/mqdefault.jpg', '2025-06-11 23:30:07+00', '''-7'':10A ''/developer/younghorses/'':131B ''/g5duzt'':122B ''1'':9A ''abbi'':48B ''angel'':21B ''annapurna'':13A,87B ''anoth'':73B ''around'':30B ''bakalar'':52B ''bomb'':2A,102B ''brad'':44B ''bugsnax'':104B ''check'':124B ''consol'':68B ''couch'':18B,55B ''doordash'':67B ''eepurl.com'':121B ''eepurl.com/g5duzt'':120B ''end'':57B ''even'':59B ''found'':16B ''friend'':27B,85B ''frushtick'':43B ''game'':70B ''get'':25B ''giant'':1A,101B ''giantbomb'':134B ''go'':109B ''good'':81B ''got'':41B ''grayson'':47B ''hang'':34B ''hors'':96B,117B ''industri'':32B ''interact'':14A,88B ''jeff'':51B ''kart'':78B ''languag'':74B ''learn'':72B ''lite'':65B ''los'':20B ''mario'':77B ''newslett'':118B ''niki'':46B ''nite'':3A,8A,103B ''page'':128B ''play'':110B ''present'':11A,90B ''re'':24B ''russ'':42B ''russel'':49B ''sgf'':132B ''shoemak'':45B ''sign'':112B ''steam'':127B ''store.steampowered.com'':130B ''store.steampowered.com/developer/younghorses/'':129B ''stream'':92B ''summergamefest'':133B ''support'':99B ''switch'':64B ''talk'':61B ''thank'':82B,93B ''use'':69B ''villa'':7A,39B ''vr'':105B ''warfram'':6A,38B ''world'':79B ''young'':95B,116B', false, 'PT44M39S', 'https://i.ytimg.com/vi/QJC3vLrUX_Y/maxresdefault.jpg'),
+	('QSbUCEl7SU8', 'giantbomb', 'REMATCH against MinnMax! | Unprofessional Fridays', 'Bakalar, Dan, and Grubb put on a pair of cleats to take on MinnMax to see who can do best at real life Rocket League! 
+
+#rematch #giantbomb #upf #unprofessionalfridays', 'https://i.ytimg.com/vi/QSbUCEl7SU8/mqdefault.jpg', '2025-06-27 20:33:34+00', '''bakalar'':6B ''best'':25B ''cleat'':15B ''dan'':7B ''friday'':5A ''giantbomb'':32B ''grubb'':9B ''leagu'':30B ''life'':28B ''minnmax'':3A,19B ''pair'':13B ''put'':10B ''real'':27B ''rematch'':1A,31B ''rocket'':29B ''see'':21B ''take'':17B ''unprofession'':4A ''unprofessionalfriday'':34B ''upf'':33B', false, 'PT1H13M38S', 'https://i.ytimg.com/vi/QSbUCEl7SU8/maxresdefault.jpg'),
+	('BoReAT8Nt9s', 'giantbomb', 'A Quick Look at Death Stranding 2', 'Dan Ryckert takes Jeff Grubb on a long hike through the world of Death Stranding 2 and find some time to relax in some hot springs.
+
+#deathstranding2 #ds2 #quicklook #giantbomb', 'https://i.ytimg.com/vi/BoReAT8Nt9s/mqdefault.jpg', '2025-06-26 04:00:12+00', '''2'':7A,23B ''dan'':8B ''death'':5A,21B ''deathstranding2'':34B ''ds2'':35B ''find'':25B ''giantbomb'':37B ''grubb'':12B ''hike'':16B ''hot'':32B ''jeff'':11B ''long'':15B ''look'':3A ''quick'':2A ''quicklook'':36B ''relax'':29B ''ryckert'':9B ''spring'':33B ''strand'':6A,22B ''take'':10B ''time'':27B ''world'':19B', false, 'PT52M20S', 'https://i.ytimg.com/vi/BoReAT8Nt9s/maxresdefault.jpg'),
+	('fzgX_arrhSM', 'giantbomb', 'Very accurate physics in PEAK  #giantbomb #peak', 'We played PEAK and climbing is not the most dangerous thing around! 
+
+Check out the full video:
+https://youtube.com/live/lSOOodKYyyU', 'https://i.ytimg.com/vi/fzgX_arrhSM/mqdefault.jpg', '2025-06-16 22:01:05+00', '''/live/lsooodkyyyu'':27B ''accur'':2A ''around'':19B ''check'':20B ''climb'':12B ''danger'':17B ''full'':23B ''giantbomb'':6A ''peak'':5A,7A,10B ''physic'':3A ''play'':9B ''thing'':18B ''video'':24B ''youtube.com'':26B ''youtube.com/live/lsooodkyyyu'':25B', false, 'PT23S', 'https://i.ytimg.com/vi/fzgX_arrhSM/maxresdefault.jpg'),
+	('1RtxC1wF98Q', 'remap', 'Patrick vs. Hopshot [Part 4]', 'It''s Happening Again. Your favorite bubble gum is coming back in style. Patrick is debuting a new costume. He swears he''ll beat the game this time. But will he?
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/1RtxC1wF98Q/mqdefault.jpg', '2025-05-20 18:51:12+00', '''4'':5A ''audienc'':40B ''back'':16B ''beat'':29B ''bubbl'':12B ''come'':15B ''consid'':50B ''content'':48B ''continu'':45B ''costum'':24B ''debut'':21B ''favorit'':11B ''game'':31B ''gum'':13B ''happen'':8B ''help'':43B ''hopshot'':3A ''ll'':28B ''make'':46B ''new'':23B ''part'':4A ''patrick'':1A,19B ''pleas'':49B ''radio'':38B ''remap'':37B ''style'':18B ''subscrib'':51B ''support'':41B ''swear'':26B ''time'':33B ''us'':44B ''vs'':2A ''www.remapradio.com'':53B', false, 'PT2H41M50S', 'https://i.ytimg.com/vi/1RtxC1wF98Q/maxresdefault.jpg'),
+	('1pfYGGySrhI', 'giantbomb', 'Rascal (PS1) | 05 | Blight Club', 'Will Mike Minotti make any progress today on Blight Club? Will he be able to figure out what any of the buttons or crabs do? Tune in to find out! 
+
+#blightclub #giantbomb #badgames #rascal', 'https://i.ytimg.com/vi/1pfYGGySrhI/mqdefault.jpg', '2025-06-18 20:21:00+00', '''05'':3A ''abl'':19B ''badgam'':38B ''blight'':4A,14B ''blightclub'':36B ''button'':27B ''club'':5A,15B ''crab'':29B ''figur'':21B ''find'':34B ''giantbomb'':37B ''make'':9B ''mike'':7B ''minotti'':8B ''progress'':11B ''ps1'':2A ''rascal'':1A,39B ''today'':12B ''tune'':31B', false, 'PT1H53M28S', 'https://i.ytimg.com/vi/1pfYGGySrhI/maxresdefault.jpg'),
+	('2qSFIMRtrNQ', 'remap', 'Steam Next Fest Lightning Round [Part 2]', 'We''re headed back into Steam Next Fest, with Patrick and Cado playing another bouncy of interesting games. First up, can we manage to take Baby Steps?
+
+Timestamps:
+09:00 Baby Steps
+30:57 Everdeep Aurora
+48:15 Ninja Gaiden: Ragebound
+01:41 Morse
+01:18:10 Ooo
+01:32:00 The Drifter
+01:45:15 Solitaire of Stygian Shadows
+01:59:36 Consume Me
+02:15:52 Unbeatable
+02:31:03 Cast ''n Chill
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/2qSFIMRtrNQ/mqdefault.jpg', '2025-06-17 18:25:13+00', '''00'':37B,58B ''01'':49B,52B,56B,61B,68B ''02'':73B,77B ''03'':79B ''09'':36B ''10'':54B ''15'':45B,63B,74B ''18'':53B ''2'':7A ''30'':40B ''31'':78B ''32'':57B ''36'':70B ''41'':50B ''45'':62B ''48'':44B ''52'':75B ''57'':41B ''59'':69B ''anoth'':21B ''audienc'':86B ''aurora'':43B ''babi'':33B,38B ''back'':11B ''bounci'':22B ''cado'':19B ''cast'':80B ''chill'':82B ''consid'':96B ''consum'':71B ''content'':94B ''continu'':91B ''drifter'':60B ''everdeep'':42B ''fest'':3A,15B ''first'':26B ''gaiden'':47B ''game'':25B ''head'':10B ''help'':89B ''interest'':24B ''lightn'':4A ''make'':92B ''manag'':30B ''mors'':51B ''n'':81B ''next'':2A,14B ''ninja'':46B ''ooo'':55B ''part'':6A ''patrick'':17B ''play'':20B ''pleas'':95B ''radio'':84B ''ragebound'':48B ''re'':9B ''remap'':83B ''round'':5A ''shadow'':67B ''solitair'':64B ''steam'':1A,13B ''step'':34B,39B ''stygian'':66B ''subscrib'':97B ''support'':87B ''take'':32B ''timestamp'':35B ''unbeat'':76B ''us'':90B ''www.remapradio.com'':99B', false, 'PT2H47M56S', 'https://i.ytimg.com/vi/2qSFIMRtrNQ/maxresdefault.jpg'),
+	('GKBG84h7ggk', 'remap', 'Giving AI to Children Seems Like a Terrible Idea', 'Rob and Patrick have a slight mental break while considering the prospects of AI entering the lives of children. This podcast is a segment from HOA, a subscriber-only Remap podcast about the spaces we live in.
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/GKBG84h7ggk/mqdefault.jpg', '2025-05-15 16:53:46+00', '''ai'':2A,23B ''audienc'':51B ''break'':17B ''children'':4A,28B ''consid'':19B,61B ''content'':59B ''continu'':56B ''enter'':24B ''give'':1A ''help'':54B ''hoa'':35B ''idea'':9A ''like'':6A ''live'':26B,46B ''make'':57B ''mental'':16B ''patrick'':12B ''pleas'':60B ''podcast'':30B,41B ''prospect'':21B ''radio'':49B ''remap'':40B,48B ''rob'':10B ''seem'':5A ''segment'':33B ''slight'':15B ''space'':44B ''subscrib'':38B,62B ''subscriber-on'':37B ''support'':52B ''terribl'':8A ''us'':55B ''www.remapradio.com'':64B', false, 'PT18M53S', 'https://i.ytimg.com/vi/GKBG84h7ggk/maxresdefault.jpg'),
+	('-IKsRwmIxsE', 'remap', 'Patrick vs. Hopshot [Part 3]', 'Is this the final journey? Will all this hopping come to an end? Does Patrick have a funny costume? The answers will surprise you!
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/-IKsRwmIxsE/mqdefault.jpg', '2025-05-13 19:56:57+00', '''3'':5A ''answer'':26B ''audienc'':33B ''come'':15B ''consid'':43B ''content'':41B ''continu'':38B ''costum'':24B ''end'':18B ''final'':9B ''funni'':23B ''help'':36B ''hop'':14B ''hopshot'':3A ''journey'':10B ''make'':39B ''part'':4A ''patrick'':1A,20B ''pleas'':42B ''radio'':31B ''remap'':30B ''subscrib'':44B ''support'':34B ''surpris'':28B ''us'':37B ''vs'':2A ''www.remapradio.com'':46B', false, 'PT2H23M52S', 'https://i.ytimg.com/vi/-IKsRwmIxsE/maxresdefault.jpg'),
+	('4vbEX_Q87xM', 'remap', 'Why Do We Call Games "Metroidvanias"?', 'If Metroidvania was a math problem, what percentage is "Metroid" and what percentage is "Castlevania"? An exploration of the ongoing confusion over what video game genres are trying to accomplish. What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/4vbEX_Q87xM/mqdefault.jpg', '2025-06-02 14:00:15+00', '''/us/podcast/remap-radio/id1690437343'':58B ''accomplish'':36B ''audienc'':62B ''call'':4A ''castlevania'':21B ''confus'':27B ''consid'':72B ''content'':70B ''continu'':67B ''episod'':48B ''explor'':23B ''full'':47B ''game'':5A,31B ''genr'':32B ''help'':65B ''listen'':40B ''make'':68B ''math'':11B ''metroid'':16B ''metroidvania'':6A,8B ''ongo'':26B ''percentag'':14B,19B ''pleas'':71B ''podcast'':55B ''podcasts.apple.com'':57B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':56B ''problem'':12B ''radio'':51B,60B ''re'':39B ''remap'':50B,59B ''segment'':44B ''subscrib'':52B,73B ''support'':63B ''tri'':34B ''us'':66B ''video'':30B ''www.remapradio.com'':75B', false, 'PT22M19S', 'https://i.ytimg.com/vi/4vbEX_Q87xM/maxresdefault.jpg'),
+	('yDQtLQXEksI', 'remap', 'Hey, Uh, Where''s My Switch 2?', 'That feeling when a Switch 2 shows up at your door but someone else signs up for it. #shorts
+
+https://www.twitch.tv/remapradio', 'https://i.ytimg.com/vi/yDQtLQXEksI/mqdefault.jpg', '2025-06-19 17:15:22+00', '''/remapradio'':29B ''2'':7A,13B ''door'':18B ''els'':21B ''feel'':9B ''hey'':1A ''short'':26B ''show'':14B ''sign'':22B ''someon'':20B ''switch'':6A,12B ''uh'':2A ''www.twitch.tv'':28B ''www.twitch.tv/remapradio'':27B', false, 'PT42S', NULL),
+	('wHC97IuaYCM', 'remap', 'Do You Have Trouble Finishing Video Games?', 'One of the reasons Cado and Rob have trouble finishing video games is because they want it to happen at the perfect moment. But what if that perfect moment never arrives and you never finish the game?
+
+What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/wHC97IuaYCM/mqdefault.jpg', '2025-06-13 14:01:28+00', '''/us/podcast/remap-radio/id1690437343'':66B ''arriv'':38B ''audienc'':70B ''cado'':12B ''consid'':80B ''content'':78B ''continu'':75B ''episod'':56B ''finish'':5A,17B,42B ''full'':55B ''game'':7A,19B,44B ''happen'':26B ''help'':73B ''listen'':48B ''make'':76B ''moment'':30B,36B ''never'':37B,41B ''one'':8B ''perfect'':29B,35B ''pleas'':79B ''podcast'':63B ''podcasts.apple.com'':65B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':64B ''radio'':59B,68B ''re'':47B ''reason'':11B ''remap'':58B,67B ''rob'':14B ''segment'':52B ''subscrib'':60B,81B ''support'':71B ''troubl'':4A,16B ''us'':74B ''video'':6A,18B ''want'':23B ''www.remapradio.com'':83B', false, 'PT18M57S', 'https://i.ytimg.com/vi/wHC97IuaYCM/maxresdefault.jpg'),
+	('Fa6I3CAz7uE', 'nextlander', 'You''ve Seen the Bloom, Now it''s Time to Rage in Lost Records!', 'The conclusion of Alex Hill will have to wait a week, as Vinny and Alex are about to dive into part 2 of Lost Records.
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/Fa6I3CAz7uE/mqdefault.jpg', '2025-04-22 23:19:26+00', '''/nextlander'':48B ''2'':36B ''alex'':18B,29B ''bloom'':5A ''communiti'':45B ''conclus'':16B ''dive'':33B ''hill'':19B ''lost'':13A,38B ''nextland'':40B ''part'':35B ''rage'':11A ''record'':14A,39B ''seen'':3A ''support'':42B ''thank'':49B ''time'':9A ''ve'':2A ''vinni'':27B ''wait'':23B ''watch'':51B ''week'':25B ''www.patreon.com'':47B ''www.patreon.com/nextlander'':46B', false, 'PT2H45M10S', 'https://i.ytimg.com/vi/Fa6I3CAz7uE/maxresdefault.jpg'),
+	('BkWSiH00qEs', 'giantbomb', 'Giant Bomb @ Nite, LIVE from the Warframe Villa! | Presented by Annapurna Interactive | Nite 2', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
+
+Thanks to our friends at Annapurna Interactive for presenting this stream!
+
+Thanks to Young Horses for their support of Giant Bomb @ Nite! 
+Bugsnax VR is out now, go play it!
+Sign up for the Young Horses newsletter here: http://eepurl.com/g5DUzT
+And check out their Steam page! https://store.steampowered.com/developer/younghorses/
+
+#sgf #summergamefest #giantbomb', 'https://i.ytimg.com/vi/BkWSiH00qEs/mqdefault.jpg', '2025-06-08 05:13:29+00', '''/developer/younghorses/'':89B ''/g5duzt'':80B ''2'':14A ''angel'':21B ''annapurna'':11A,45B ''around'':30B ''bomb'':2A,60B ''bugsnax'':62B ''check'':82B ''couch'':18B ''eepurl.com'':79B ''eepurl.com/g5duzt'':78B ''found'':16B ''friend'':27B,43B ''get'':25B ''giant'':1A,59B ''giantbomb'':92B ''go'':67B ''hang'':34B ''hors'':54B,75B ''industri'':32B ''interact'':12A,46B ''live'':4A ''los'':20B ''newslett'':76B ''nite'':3A,13A,61B ''page'':86B ''play'':68B ''present'':9A,48B ''re'':24B ''sgf'':90B ''sign'':70B ''steam'':85B ''store.steampowered.com'':88B ''store.steampowered.com/developer/younghorses/'':87B ''stream'':50B ''summergamefest'':91B ''support'':57B ''thank'':40B,51B ''villa'':8A,39B ''vr'':63B ''warfram'':7A,38B ''young'':53B,74B', false, 'PT4H6M53S', 'https://i.ytimg.com/vi/BkWSiH00qEs/maxresdefault.jpg'),
+	('LczJ2eC7x6c', 'giantbomb', 'Microsoft is Pausing Development on Xbox Handheld | Game Mess Mornings 05/30/25', 'Jeff Grubb is joined by Jason Fanelli to chat about morale at EA being an all-time low amidst studio closures and more potential layoffs, Microsoft pausing development on the rumored Xbox handheld, Elden Ring: Nightreign exploding on Steam, MultiVersus is shutting down now, and even more news to end the week! 
+
+#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/LczJ2eC7x6c/mqdefault.jpg', '2025-05-30 16:07:08+00', '''05/30/25'':11A ''all-tim'':27B ''amidst'':31B ''chat'':20B ''closur'':33B ''develop'':4A,40B ''ea'':24B ''elden'':46B ''end'':62B ''even'':58B ''explod'':49B ''fanelli'':18B ''game'':8A ''gamemessmorn'':66B ''giantbomb'':67B ''gmm'':65B ''grubb'':13B ''handheld'':7A,45B ''jason'':17B ''jeff'':12B ''join'':15B ''layoff'':37B ''low'':30B ''mess'':9A ''microsoft'':1A,38B ''moral'':22B ''morn'':10A ''multiversus'':52B ''news'':60B ''nightreign'':48B ''paus'':3A,39B ''potenti'':36B ''ring'':47B ''rumor'':43B ''shut'':54B ''steam'':51B ''studio'':32B ''time'':29B ''videogamenew'':68B ''week'':64B ''xbox'':6A,44B', false, 'PT1H10S', 'https://i.ytimg.com/vi/LczJ2eC7x6c/maxresdefault.jpg'),
+	('4vzM5tQljOw', 'remap', 'Remap Dives Back into FBC Firebreak', 'We were so charmed by Remedy''s multiplayer game that we couldn''t help but dive back into the world of Sticky Ricky and friends.
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/4vzM5tQljOw/mqdefault.jpg', '2025-06-26 02:32:59+00', '''audienc'':35B ''back'':3A,23B ''charm'':10B ''consid'':45B ''content'':43B ''continu'':40B ''couldn'':18B ''dive'':2A,22B ''fbc'':5A ''firebreak'':6A ''friend'':31B ''game'':15B ''help'':20B,38B ''make'':41B ''multiplay'':14B ''pleas'':44B ''radio'':33B ''remap'':1A,32B ''remedi'':12B ''ricki'':29B ''sticki'':28B ''subscrib'':46B ''support'':36B ''us'':39B ''world'':26B ''www.remapradio.com'':48B', false, 'PT1H50M21S', 'https://i.ytimg.com/vi/4vzM5tQljOw/maxresdefault.jpg'),
+	('164N0JABnkE', 'remap', 'Riding Summer Game Fest into Steam Next Fest', 'Summer Game Fest might be over, but Steam Next Fest is here, and we''ve got Janet and Chia checking out a ton of cool games.
+
+Timestamps:
+00:07:12 — Windswept
+00:18:49 — Into the Grid
+00:34:01 — ILA: A Frosty Glide
+00:45:21 — Soul Nexus
+00:58:25 — Flick Shot Rogues
+01:12:06 — Ratatan
+01:25:21 — Anura
+01:36:42 — MotionRec
+01:48:41 — Vessels of Decay
+02:00:48 — The Hatchling
+02:13:32 — Tired to Fall
+02:25:29 — Crown Gambit
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/164N0JABnkE/mqdefault.jpg', '2025-06-11 20:36:11+00', '''00'':36B,40B,46B,53B,58B,83B ''01'':48B,64B,68B,72B,76B ''02'':82B,87B,93B ''06'':66B ''07'':37B ''12'':38B,65B ''13'':88B ''18'':41B ''21'':55B,70B ''25'':60B,69B,94B ''29'':95B ''32'':89B ''34'':47B ''36'':73B ''41'':78B ''42'':74B ''45'':54B ''48'':77B,84B ''49'':42B ''58'':59B ''anura'':71B ''audienc'':101B ''check'':28B ''chia'':27B ''consid'':111B ''content'':109B ''continu'':106B ''cool'':33B ''crown'':96B ''decay'':81B ''fall'':92B ''fest'':4A,8A,11B,18B ''flick'':61B ''frosti'':51B ''gambit'':97B ''game'':3A,10B,34B ''glide'':52B ''got'':24B ''grid'':45B ''hatchl'':86B ''help'':104B ''ila'':49B ''janet'':25B ''make'':107B ''might'':12B ''motionrec'':75B ''next'':7A,17B ''nexus'':57B ''pleas'':110B ''radio'':99B ''ratatan'':67B ''remap'':98B ''ride'':1A ''rogu'':63B ''shot'':62B ''soul'':56B ''steam'':6A,16B ''subscrib'':112B ''summer'':2A,9B ''support'':102B ''timestamp'':35B ''tire'':90B ''ton'':31B ''us'':105B ''ve'':23B ''vessel'':79B ''windswept'':39B ''www.remapradio.com'':114B', false, 'PT2H41M34S', 'https://i.ytimg.com/vi/164N0JABnkE/maxresdefault.jpg'),
+	('b-u7xrRFU8Q', 'nextlander', 'It''s Time to Return to Helldivers 2!', 'Will Smith joins us for our Monday Multiplayer Mayhem to revisit Helldivers 2!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/b-u7xrRFU8Q/mqdefault.jpg', '2025-04-14 23:36:17+00', '''/nextlander'':30B ''2'':8A,21B ''communiti'':27B ''helldiv'':7A,20B ''join'':11B ''mayhem'':17B ''monday'':15B ''multiplay'':16B ''nextland'':22B ''return'':5A ''revisit'':19B ''smith'':10B ''support'':24B ''thank'':31B ''time'':3A ''us'':12B ''watch'':33B ''www.patreon.com'':29B ''www.patreon.com/nextlander'':28B', false, 'PT2H25M32S', 'https://i.ytimg.com/vi/b-u7xrRFU8Q/maxresdefault.jpg'),
+	('UAa9dzxBTtk', 'remap', 'Save Point 2024 — Ranking Video Game Console Startups (Part 2)', 'Who knew the best way to raise money for charity was to watch YouTube videos on loop for hours?
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/UAa9dzxBTtk/mqdefault.jpg', '2024-11-19 19:31:27+00', '''2'':10A ''2024'':3A ''audienc'':33B ''best'':14B ''chariti'':20B ''consid'':43B ''consol'':7A ''content'':41B ''continu'':38B ''game'':6A ''help'':36B ''hour'':29B ''knew'':12B ''loop'':27B ''make'':39B ''money'':18B ''part'':9A ''pleas'':42B ''point'':2A ''radio'':31B ''rais'':17B ''rank'':4A ''remap'':30B ''save'':1A ''startup'':8A ''subscrib'':44B ''support'':34B ''us'':37B ''video'':5A,25B ''watch'':23B ''way'':15B ''www.remapradio.com'':46B ''youtub'':24B', false, 'PT2H20M6S', 'https://i.ytimg.com/vi/UAa9dzxBTtk/maxresdefault.jpg'),
+	('ebwzoHh-6MU', 'nextlander', 'The Clue Crew Investigates ''Who is Abby''!', 'Who is Abby? We have Abby Russell here to answer that question, because we can''t think of anyone better to weigh in.
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/ebwzoHh-6MU/mqdefault.jpg', '2025-05-27 21:21:57+00', '''/nextlander'':39B ''abbi'':7A,10B,13B ''answer'':17B ''anyon'':26B ''better'':27B ''clue'':2A ''communiti'':36B ''crew'':3A ''investig'':4A ''nextland'':31B ''question'':19B ''russel'':14B ''support'':33B ''thank'':40B ''think'':24B ''watch'':42B ''weigh'':29B ''www.patreon.com'':38B ''www.patreon.com/nextlander'':37B', false, 'PT2H2M11S', 'https://i.ytimg.com/vi/ebwzoHh-6MU/maxresdefault.jpg'),
+	('CApxQO5YnY4', 'nextlander', 'Another Peek at Peak!', 'Let''s climb a mountain together! Or several of them!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/CApxQO5YnY4/mqdefault.jpg', '2025-06-24 01:19:21+00', '''/nextlander'':23B ''anoth'':1A ''climb'':7B ''communiti'':20B ''let'':5B ''mountain'':9B ''nextland'':15B ''peak'':4A ''peek'':2A ''sever'':12B ''support'':17B ''thank'':24B ''togeth'':10B ''watch'':26B ''www.patreon.com'':22B ''www.patreon.com/nextlander'':21B', false, 'PT3H11M6S', 'https://i.ytimg.com/vi/CApxQO5YnY4/maxresdefault.jpg'),
+	('EkFLq9_VfGA', 'nextlander', 'Friday Fun Stream: The Assassination of Mads Mikkelsen by the Hitmen of Nextlander', 'Let''s do the Hitman dance and see if any of us can take down this elusive target!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/EkFLq9_VfGA/mqdefault.jpg', '2025-06-13 19:55:41+00', '''/nextlander'':40B ''assassin'':5A ''communiti'':37B ''danc'':19B ''elus'':30B ''friday'':1A ''fun'':2A ''hitman'':18B ''hitmen'':11A ''let'':14B ''mad'':7A ''mikkelsen'':8A ''nextland'':13A,32B ''see'':21B ''stream'':3A ''support'':34B ''take'':27B ''target'':31B ''thank'':41B ''us'':25B ''watch'':43B ''www.patreon.com'':39B ''www.patreon.com/nextlander'':38B', false, 'PT2H27S', 'https://i.ytimg.com/vi/EkFLq9_VfGA/maxresdefault.jpg'),
+	('lQOVwW_UKcs', 'nextlander', 'Us and 30 of Our Closest Friends', 'Gonna get a little posse together and play some 33 Immortals!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/lQOVwW_UKcs/mqdefault.jpg', '2025-03-25 00:15:39+00', '''/nextlander'':27B ''30'':3A ''33'':17B ''closest'':6A ''communiti'':24B ''friend'':7A ''get'':9B ''gonna'':8B ''immort'':18B ''littl'':11B ''nextland'':19B ''play'':15B ''poss'':12B ''support'':21B ''thank'':28B ''togeth'':13B ''us'':1A ''watch'':30B ''www.patreon.com'':26B ''www.patreon.com/nextlander'':25B', false, 'PT2H8M32S', 'https://i.ytimg.com/vi/lQOVwW_UKcs/maxresdefault.jpg'),
+	('h7N9K-W4kNA', 'nextlander', 'Let''s (TRY TO) Finish the First Half of Lost Records: Bloom & Rage!', 'Are we gonna finish it?! And by it, we mean the currently released half of Lost Records: Bloom & Rage!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/h7N9K-W4kNA/mqdefault.jpg', '2025-03-04 20:49:10+00', '''/nextlander'':41B ''bloom'':12A,31B ''communiti'':38B ''current'':25B ''finish'':5A,17B ''first'':7A ''gonna'':16B ''half'':8A,27B ''let'':1A ''lost'':10A,29B ''mean'':23B ''nextland'':33B ''rage'':13A,32B ''record'':11A,30B ''releas'':26B ''support'':35B ''thank'':42B ''tri'':3A ''watch'':44B ''www.patreon.com'':40B ''www.patreon.com/nextlander'':39B', false, 'PT2H9M59S', 'https://i.ytimg.com/vi/h7N9K-W4kNA/maxresdefault.jpg'),
+	('HsjyU4mLwnM', 'nextlander', 'DRUUUUUUUGS! Our Journey into Schedule I!', 'We''re going to build a criminal empire! In a video game! Criminal video game empires!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/HsjyU4mLwnM/mqdefault.jpg', '2025-04-07 15:56:17+00', '''/nextlander'':30B ''build'':10B ''communiti'':27B ''crimin'':12B,18B ''druuuuuuug'':1A ''empir'':13B,21B ''game'':17B,20B ''go'':8B ''journey'':3A ''nextland'':22B ''re'':7B ''schedul'':5A ''support'':24B ''thank'':31B ''video'':16B,19B ''watch'':33B ''www.patreon.com'':29B ''www.patreon.com/nextlander'':28B', false, 'PT2H3M11S', 'https://i.ytimg.com/vi/HsjyU4mLwnM/maxresdefault.jpg'),
+	('ssiE-LQJwxA', 'nextlander', 'Solving Crimes in Alex Hill: Whispers at White Oak Inn! (Part 02)', 'Things are heating up and escalating quickly as we continue to investigate this "ghost"!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/ssiE-LQJwxA/mqdefault.jpg', '2025-04-15 19:44:39+00', '''/nextlander'':35B ''02'':12A ''alex'':4A ''communiti'':32B ''continu'':22B ''crime'':2A ''escal'':18B ''ghost'':26B ''heat'':15B ''hill'':5A ''inn'':10A ''investig'':24B ''nextland'':27B ''oak'':9A ''part'':11A ''quick'':19B ''solv'':1A ''support'':29B ''thank'':36B ''thing'':13B ''watch'':38B ''whisper'':6A ''white'':8A ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT2H3M', 'https://i.ytimg.com/vi/ssiE-LQJwxA/maxresdefault.jpg'),
+	('xrjqqpfEXyU', 'nextlander', 'Nextlander''s R.E.P.O. Madness in Under 20 Minutes!', 'Don''t have time to enjoy all the hijinks from our full two hour stream or just want a refresher? We''ve got you covered! 
+
+Edited by Will Crosby
+
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/xrjqqpfEXyU/mqdefault.jpg', '2025-04-08 15:00:58+00', '''/nextlander'':46B ''20'':7A ''communiti'':43B ''cover'':33B ''crosbi'':37B ''edit'':34B ''enjoy'':14B ''full'':20B ''got'':31B ''hijink'':17B ''hour'':22B ''mad'':4A ''minut'':8A ''nextland'':1A,38B ''r.e.p.o'':3A ''refresh'':28B ''stream'':23B ''support'':40B ''thank'':47B ''time'':12B ''two'':21B ''ve'':30B ''want'':26B ''watch'':49B ''www.patreon.com'':45B ''www.patreon.com/nextlander'':44B', false, 'PT17M44S', 'https://i.ytimg.com/vi/xrjqqpfEXyU/maxresdefault.jpg'),
+	('Xtv6Y-Q6AFs', 'nextlander', 'We''re Going to Kill the Devil', 'It''s time for more 33 Immortals, except maybe this week it''ll be 22 Immortals?
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/Xtv6Y-Q6AFs/mqdefault.jpg', '2025-03-31 23:09:20+00', '''/nextlander'':32B ''22'':22B ''33'':13B ''communiti'':29B ''devil'':7A ''except'':15B ''go'':3A ''immort'':14B,23B ''kill'':5A ''ll'':20B ''mayb'':16B ''nextland'':24B ''re'':2A ''support'':26B ''thank'':33B ''time'':10B ''watch'':35B ''week'':18B ''www.patreon.com'':31B ''www.patreon.com/nextlander'':30B', false, 'PT2H13M17S', 'https://i.ytimg.com/vi/Xtv6Y-Q6AFs/maxresdefault.jpg'),
+	('t2gFHdaM6mM', 'nextlander', 'Patron''s Choice for March 2025: R.E.P.O. Men!', 'Alex is about to take off for a couple of weeks, but before he ducks out he''ll be joining the gang and Will Smith to check out R.E.P.O.!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/t2gFHdaM6mM/mqdefault.jpg', '2025-03-28 20:14:23+00', '''/nextlander'':46B ''2025'':6A ''alex'':9B ''check'':35B ''choic'':3A ''communiti'':43B ''coupl'':17B ''duck'':23B ''gang'':30B ''join'':28B ''ll'':26B ''march'':5A ''men'':8A ''nextland'':38B ''patron'':1A ''r.e.p.o'':7A,37B ''smith'':33B ''support'':40B ''take'':13B ''thank'':47B ''watch'':49B ''week'':19B ''www.patreon.com'':45B ''www.patreon.com/nextlander'':44B', false, 'PT1H50M1S', 'https://i.ytimg.com/vi/t2gFHdaM6mM/maxresdefault.jpg'),
+	('Vp6lKfoCUSc', 'nextlander', 'Let''s Get Some Resolution with Lost Records and Roottrees!', 'Abby Russell joins us to finally put a bit of (temporary?) closure on Lost Records: Bloom and Rage and The Roottrees!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/Vp6lKfoCUSc/mqdefault.jpg', '2025-03-12 16:10:41+00', '''/nextlander'':40B ''abbi'':11B ''bit'':19B ''bloom'':26B ''closur'':22B ''communiti'':37B ''final'':16B ''get'':3A ''join'':13B ''let'':1A ''lost'':7A,24B ''nextland'':32B ''put'':17B ''rage'':28B ''record'':8A,25B ''resolut'':5A ''roottre'':10A,31B ''russel'':12B ''support'':34B ''temporari'':21B ''thank'':41B ''us'':14B ''watch'':43B ''www.patreon.com'':39B ''www.patreon.com/nextlander'':38B', false, 'PT1H56M13S', 'https://i.ytimg.com/vi/Vp6lKfoCUSc/maxresdefault.jpg'),
+	('0uu0FOlhM2E', 'nextlander', 'This Stream Is Peak Nextlander!', 'Will Smith joins us to try and climb a mountain! How difficult could that be?
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/0uu0FOlhM2E/mqdefault.jpg', '2025-06-16 23:29:27+00', '''/nextlander'':29B ''climb'':13B ''communiti'':26B ''could'':18B ''difficult'':17B ''join'':8B ''mountain'':15B ''nextland'':5A,21B ''peak'':4A ''smith'':7B ''stream'':2A ''support'':23B ''thank'':30B ''tri'':11B ''us'':9B ''watch'':32B ''www.patreon.com'':28B ''www.patreon.com/nextlander'':27B', false, 'PT2H23M36S', 'https://i.ytimg.com/vi/0uu0FOlhM2E/maxresdefault.jpg'),
+	('O7jh9bKrf84', 'nextlander', 'Vinny and Will Tame a Savage Planet (Again!)', 'Come party with us as we run around like maniacs and cover each other with goo!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/O7jh9bKrf84/mqdefault.jpg', '2025-05-12 23:37:27+00', '''/nextlander'':32B ''around'':15B ''come'':8B ''communiti'':29B ''cover'':19B ''goo'':23B ''like'':16B ''maniac'':17B ''nextland'':24B ''parti'':9B ''planet'':7A ''run'':14B ''savag'':6A ''support'':26B ''tame'':4A ''thank'':33B ''us'':11B ''vinni'':1A ''watch'':35B ''www.patreon.com'':31B ''www.patreon.com/nextlander'':30B', false, 'PT2H22M48S', 'https://i.ytimg.com/vi/O7jh9bKrf84/maxresdefault.jpg'),
+	('EQp7KnfrQMM', 'nextlander', 'Friday Fun Stream: Truckin'' into the Weekend in American Truck Simulator', 'Vinny and Alex are ready to get back behind the wheel and transport you all to a magical world of 16-wheelers and oversized cargo!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/EQp7KnfrQMM/mqdefault.jpg', '2025-05-16 21:11:25+00', '''/nextlander'':45B ''16'':32B ''alex'':14B ''american'':9A ''back'':19B ''behind'':20B ''cargo'':36B ''communiti'':42B ''friday'':1A ''fun'':2A ''get'':18B ''magic'':29B ''nextland'':37B ''overs'':35B ''readi'':16B ''simul'':11A ''stream'':3A ''support'':39B ''thank'':46B ''transport'':24B ''truck'':10A ''truckin'':4A ''vinni'':12B ''watch'':48B ''weekend'':7A ''wheel'':22B ''wheeler'':33B ''world'':30B ''www.patreon.com'':44B ''www.patreon.com/nextlander'':43B', false, 'PT2H48M58S', 'https://i.ytimg.com/vi/EQp7KnfrQMM/maxresdefault.jpg'),
+	('WwXCUmV-Hhw', 'nextlander', 'Let''s Finish Alex Hill!', 'Abby''s back, and it''s time to solve a mystery! Maybe even rewrite history?!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/WwXCUmV-Hhw/mqdefault.jpg', '2025-04-29 21:15:51+00', '''/nextlander'':29B ''abbi'':6B ''alex'':4A ''back'':8B ''communiti'':26B ''even'':18B ''finish'':3A ''hill'':5A ''histori'':20B ''let'':1A ''mayb'':17B ''mysteri'':16B ''nextland'':21B ''rewrit'':19B ''solv'':14B ''support'':23B ''thank'':30B ''time'':12B ''watch'':32B ''www.patreon.com'':28B ''www.patreon.com/nextlander'':27B', false, 'PT2H48S', 'https://i.ytimg.com/vi/WwXCUmV-Hhw/maxresdefault.jpg'),
+	('Qk7UYFBorg0', 'nextlander', 'Friday Fun Stream: It''s Time to Solve the X-Files', 'Is it going to be aliens? Yes. Yes it is going to be aliens.
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/Qk7UYFBorg0/mqdefault.jpg', '2025-03-21 20:05:24+00', '''/nextlander'':35B ''alien'':18B,26B ''communiti'':32B ''file'':12A ''friday'':1A ''fun'':2A ''go'':15B,23B ''nextland'':27B ''solv'':8A ''stream'':3A ''support'':29B ''thank'':36B ''time'':6A ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B ''x'':11A ''x-file'':10A ''yes'':19B,20B', false, 'PT2H21M12S', 'https://i.ytimg.com/vi/Qk7UYFBorg0/maxresdefault.jpg'),
+	('PcAAAVcWyPA', 'nextlander', 'The #1 Fortnite Streamers and Will Smith!', 'Last week checked in with PUBG and this week we''re checking out Fortnite!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/PcAAAVcWyPA/mqdefault.jpg', '2025-03-17 22:23:07+00', '''/nextlander'':30B ''1'':2A ''check'':10B,19B ''communiti'':27B ''fortnit'':3A,21B ''last'':8B ''nextland'':22B ''pubg'':13B ''re'':18B ''smith'':7A ''streamer'':4A ''support'':24B ''thank'':31B ''watch'':33B ''week'':9B,16B ''www.patreon.com'':29B ''www.patreon.com/nextlander'':28B', false, 'PT1H58M29S', 'https://i.ytimg.com/vi/PcAAAVcWyPA/maxresdefault.jpg'),
+	('xYQzSZagFLY', 'nextlander', 'Vinny, Will, and a Savage Planet!', 'With Brad in jury duty limbo, we''re booting up Revenge of the Savage Planet and playing some co-op!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/xYQzSZagFLY/mqdefault.jpg', '2025-05-06 00:39:11+00', '''/nextlander'':36B ''boot'':15B ''brad'':8B ''co'':26B ''co-op'':25B ''communiti'':33B ''duti'':11B ''juri'':10B ''limbo'':12B ''nextland'':28B ''op'':27B ''planet'':6A,21B ''play'':23B ''re'':14B ''reveng'':17B ''savag'':5A,20B ''support'':30B ''thank'':37B ''vinni'':1A ''watch'':39B ''www.patreon.com'':35B ''www.patreon.com/nextlander'':34B', false, 'PT2H28M40S', 'https://i.ytimg.com/vi/xYQzSZagFLY/maxresdefault.jpg'),
+	('7sDpPjWzGeQ', 'giantbomb', 'Sony Has Ideas for the PlayStation 6 | Game Mess Mornings 06/13/25', 'Jeff Grubb and Jesse Norris from XboxEra end the week with a slew of updates from PlayStation like the possibility of a PlayStation 6, more monthly players are finally on the PlayStation 5, pricing adjustments coming to PS Plus, and more news in and around the industry! 
+
+#gmm #gamemessmornings #giantbomb', 'https://i.ytimg.com/vi/7sDpPjWzGeQ/mqdefault.jpg', '2025-06-13 16:11:53+00', '''06/13/25'':11A ''5'':44B ''6'':7A,35B ''adjust'':46B ''around'':56B ''come'':47B ''end'':19B ''final'':40B ''game'':8A ''gamemessmorn'':60B ''giantbomb'':61B ''gmm'':59B ''grubb'':13B ''idea'':3A ''industri'':58B ''jeff'':12B ''jess'':15B ''like'':29B ''mess'':9A ''month'':37B ''morn'':10A ''news'':53B ''norri'':16B ''player'':38B ''playstat'':6A,28B,34B,43B ''plus'':50B ''possibl'':31B ''price'':45B ''ps'':49B ''slew'':24B ''soni'':1A ''updat'':26B ''week'':21B ''xboxera'':18B', false, 'PT1H32S', 'https://i.ytimg.com/vi/7sDpPjWzGeQ/maxresdefault.jpg'),
+	('ivJCbeqUCd8', 'giantbomb', 'System Shock 25th Anniversary Remaster | GB Plays EX', 'System Shock the monkey (Jeff Grubb).
+
+#systemshock2 #giantbomb', 'https://i.ytimg.com/vi/ivJCbeqUCd8/mqdefault.jpg', '2025-06-25 17:46:07+00', '''25th'':3A ''anniversari'':4A ''ex'':8A ''gb'':6A ''giantbomb'':16B ''grubb'':14B ''jeff'':13B ''monkey'':12B ''play'':7A ''remast'':5A ''shock'':2A,10B ''system'':1A,9B ''systemshock2'':15B', false, 'PT38M40S', 'https://i.ytimg.com/vi/ivJCbeqUCd8/maxresdefault.jpg'),
+	('foaNXrT-UPU', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 1-1 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
+
+We got Jesse Vitelli and John Carson on the couch. In this segment we have a World Premiere of our own and celebrate a little too hard. 
+
+Thanks to our friends at Annapurna Interactive for presenting this stream!
+
+Thanks to popagenda for letting us debut their awesome new logo! Check them out here: https://popagenda.co/
+
+#sgf #summergamefest #giantbomb', 'https://i.ytimg.com/vi/foaNXrT-UPU/mqdefault.jpg', '2025-06-11 20:18:53+00', '''-1'':10A ''1'':9A ''angel'':21B ''annapurna'':13A,72B ''around'':30B ''awesom'':86B ''bomb'':2A ''carson'':46B ''celebr'':62B ''check'':89B ''couch'':18B,49B ''debut'':84B ''found'':16B ''friend'':27B,70B ''get'':25B ''giant'':1A ''giantbomb'':96B ''got'':41B ''hang'':34B ''hard'':66B ''industri'':32B ''interact'':14A,73B ''jess'':42B ''john'':45B ''let'':82B ''littl'':64B ''logo'':88B ''los'':20B ''new'':87B ''nite'':3A,8A ''popagenda'':80B ''popagenda.co'':93B ''premier'':57B ''present'':11A,75B ''re'':24B ''segment'':52B ''sgf'':94B ''stream'':77B ''summergamefest'':95B ''thank'':67B,78B ''us'':83B ''villa'':7A,39B ''vitelli'':43B ''warfram'':6A,38B ''world'':56B', false, 'PT18M58S', 'https://i.ytimg.com/vi/foaNXrT-UPU/maxresdefault.jpg'),
+	('5z1MYHh0Ct0', 'nextlander', 'Nextlander Returns to the X-Files FMV! (Part 03)', 'Things are getting serious, not only with action but with the special appearances in the game!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/5z1MYHh0Ct0/mqdefault.jpg', '2025-03-14 19:38:43+00', '''/nextlander'':35B ''03'':10A ''action'':18B ''appear'':23B ''communiti'':32B ''file'':7A ''fmv'':8A ''game'':26B ''get'':13B ''nextland'':1A,27B ''part'':9A ''return'':2A ''serious'':14B ''special'':22B ''support'':29B ''thank'':36B ''thing'':11B ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B ''x'':6A ''x-file'':5A', false, 'PT1H51M45S', 'https://i.ytimg.com/vi/5z1MYHh0Ct0/maxresdefault.jpg'),
+	('8KDahG27Alc', 'nextlander', 'Will and Vinny Take a Final Swing at the Savage Planet!', 'We''ve been enjoying our time with Revenge of the Savage Planet so let''s do one more run!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/8KDahG27Alc/mqdefault.jpg', '2025-05-19 23:35:45+00', '''/nextlander'':39B ''communiti'':36B ''enjoy'':15B ''final'':6A ''let'':25B ''nextland'':31B ''one'':28B ''planet'':11A,23B ''reveng'':19B ''run'':30B ''savag'':10A,22B ''support'':33B ''swing'':7A ''take'':4A ''thank'':40B ''time'':17B ''ve'':13B ''vinni'':3A ''watch'':42B ''www.patreon.com'':38B ''www.patreon.com/nextlander'':37B', false, 'PT2H29M7S', 'https://i.ytimg.com/vi/8KDahG27Alc/maxresdefault.jpg'),
+	('NWieJ8tP8Og', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 1-4 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
+
+We got Rashad Redic, Bryna Dabby Smith, Riana Manuel-Peña, and Danny Peña to chat about the upcoming Wu-Tang: Rise of the Deceiver and all the insane amount of work that has gone into making it. 
+
+
+Thanks to our friends at Annapurna Interactive for presenting this stream!
+
+#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/NWieJ8tP8Og/mqdefault.jpg', '2025-06-11 22:00:32+00', '''-4'':10A ''1'':9A ''amount'':70B ''angel'':21B ''annapurna'':13A,84B ''around'':30B ''bomb'':2A ''bryna'':44B ''chat'':55B ''couch'':18B ''dabbi'':45B ''danni'':52B ''deceiv'':65B ''found'':16B ''friend'':27B,82B ''get'':25B ''giant'':1A ''giantbomb'':92B ''gone'':75B ''got'':41B ''hang'':34B ''industri'':32B ''insan'':69B ''interact'':14A,85B ''los'':20B ''make'':77B ''manuel'':49B ''manuel-peña'':48B ''nite'':3A,8A ''peña'':50B,53B ''present'':11A,87B ''rashad'':42B ''re'':24B ''redic'':43B ''riana'':47B ''rise'':62B ''sgf'':90B ''smith'':46B ''stream'':89B ''summergamefest'':91B ''tang'':61B ''thank'':79B ''upcom'':58B ''villa'':7A,39B ''warfram'':6A,38B ''work'':72B ''wu'':60B ''wu-tang'':59B', false, 'PT21M33S', 'https://i.ytimg.com/vi/NWieJ8tP8Og/maxresdefault.jpg'),
+	('XHR7zdUy2sQ', 'giantbomb', 'Death Stranding 2 Review Round Up | Game Mess Mornings 06/23/25', 'Jeff Grubb and Jason Fanelli go over review scores and how Death Stranding 2 is tracking, indie developers having difficulties with Switch 2 Dev Kits, problems with secondhand Switch 2s, layoffs at MindsEye, and even more to start the week! 
+
+#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/XHR7zdUy2sQ/mqdefault.jpg', '2025-06-23 16:17:38+00', '''06/23/25'':10A ''2'':3A,24B,33B ''2s'':40B ''death'':1A,22B ''dev'':34B ''develop'':28B ''difficulti'':30B ''even'':45B ''fanelli'':15B ''game'':7A ''gamemessmorn'':52B ''giantbomb'':53B ''gmm'':51B ''go'':16B ''grubb'':12B ''indi'':27B ''jason'':14B ''jeff'':11B ''kit'':35B ''layoff'':41B ''mess'':8A ''mindsey'':43B ''morn'':9A ''problem'':36B ''review'':4A,18B ''round'':5A ''score'':19B ''secondhand'':38B ''start'':48B ''strand'':2A,23B ''switch'':32B,39B ''track'':26B ''videogamenew'':54B ''week'':50B', false, 'PT1H4M54S', 'https://i.ytimg.com/vi/XHR7zdUy2sQ/maxresdefault.jpg'),
+	('Ypazwe1UrbE', 'giantbomb', 'Voicemail Dump Truck 161 | Mug Culture.mp3', 'We''re back from LA and we''re all backed up on voicemails! We discuss what can be pretty, the answer on who may actually be the weirdest, rolling Rs, gambling, and more of your voicemails! 
+
+#vmdt #voicemaildumptruck #giantbomb', 'https://i.ytimg.com/vi/Ypazwe1UrbE/mqdefault.jpg', '2025-06-13 20:36:00+00', '''161'':4A ''actual'':31B ''answer'':27B ''back'':9B,16B ''culture.mp3'':6A ''discuss'':21B ''dump'':2A ''gambl'':37B ''giantbomb'':45B ''la'':11B ''may'':30B ''mug'':5A ''pretti'':25B ''re'':8B,14B ''roll'':35B ''rs'':36B ''truck'':3A ''vmdt'':43B ''voicemail'':1A,19B,42B ''voicemaildumptruck'':44B ''weirdest'':34B', false, 'PT1H20M24S', 'https://i.ytimg.com/vi/Ypazwe1UrbE/maxresdefault.jpg'),
+	('E3jC7quwe4Q', 'remap', 'The Latest on Rob (Probably) Buying a House', 'Rob has been thinking about a single house for nearly two years. He appears to be on the brink of making it all happen. Or is he? (He is.)
+
+This podcast is a segment from HOA, a subscriber-only Remap podcast about our relationship with the places we live in. You can listen to the entire episode by becoming a subscriber.
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/E3jC7quwe4Q/mqdefault.jpg', '2025-06-25 14:00:21+00', '''appear'':22B ''audienc'':74B ''becom'':68B ''brink'':27B ''buy'':6A ''consid'':84B ''content'':82B ''continu'':79B ''entir'':65B ''episod'':66B ''happen'':32B ''help'':77B ''hoa'':44B ''hous'':8A,16B ''latest'':2A ''listen'':62B ''live'':58B ''make'':29B,80B ''near'':18B ''place'':56B ''pleas'':83B ''podcast'':39B,50B ''probabl'':5A ''radio'':72B ''relationship'':53B ''remap'':49B,71B ''rob'':4A,9B ''segment'':42B ''singl'':15B ''subscrib'':47B,70B,85B ''subscriber-on'':46B ''support'':75B ''think'':12B ''two'':19B ''us'':78B ''www.remapradio.com'':87B ''year'':20B', false, 'PT21M8S', 'https://i.ytimg.com/vi/E3jC7quwe4Q/maxresdefault.jpg'),
+	('HbjK70AT3sE', 'nextlander', 'We Assemble Our Strongest Animal Adventurers in Sunderfolk!', 'Abby Russell joins us for some hot cooperative action as we check out the Gloomhaven-like Sunderfolk!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/HbjK70AT3sE/mqdefault.jpg', '2025-05-20 20:32:24+00', '''/nextlander'':35B ''abbi'':9B ''action'':17B ''adventur'':6A ''anim'':5A ''assembl'':2A ''check'':20B ''communiti'':32B ''cooper'':16B ''gloomhaven'':24B ''gloomhaven-lik'':23B ''hot'':15B ''join'':11B ''like'':25B ''nextland'':27B ''russel'':10B ''strongest'':4A ''sunderfolk'':8A,26B ''support'':29B ''thank'':36B ''us'':12B ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT1H59M18S', 'https://i.ytimg.com/vi/HbjK70AT3sE/maxresdefault.jpg'),
+	('F_NWGbxYYTc', 'nextlander', 'A Very Special Thursday Grab Bag with The Midnight Walk!', 'While you''re all out there electing Popes and such, we''re over here, GAMING.
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/F_NWGbxYYTc/mqdefault.jpg', '2025-05-08 20:49:51+00', '''/nextlander'':34B ''bag'':6A ''communiti'':31B ''elect'':17B ''game'':25B ''grab'':5A ''midnight'':9A ''nextland'':26B ''pope'':18B ''re'':13B,22B ''special'':3A ''support'':28B ''thank'':35B ''thursday'':4A ''walk'':10A ''watch'':37B ''www.patreon.com'':33B ''www.patreon.com/nextlander'':32B', false, 'PT1H51M11S', 'https://i.ytimg.com/vi/F_NWGbxYYTc/maxresdefault.jpg'),
+	('D24Qxyx-7fM', 'nextlander', 'Will We Discover Who Abby Is or Will We Just Date Everything?', 'We''re going to play some more Who Is Abby, and if we finish that or it sucks too much, we''ve got the demo for Date Everything!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/D24Qxyx-7fM/mqdefault.jpg', '2025-06-03 22:32:03+00', '''/nextlander'':49B ''abbi'':5A,22B ''communiti'':46B ''date'':11A,39B ''demo'':37B ''discov'':3A ''everyth'':12A,40B ''finish'':26B ''go'':15B ''got'':35B ''much'':32B ''nextland'':41B ''play'':17B ''re'':14B ''suck'':30B ''support'':43B ''thank'':50B ''ve'':34B ''watch'':52B ''www.patreon.com'':48B ''www.patreon.com/nextlander'':47B', false, 'PT2H5M15S', 'https://i.ytimg.com/vi/D24Qxyx-7fM/maxresdefault.jpg'),
+	('qXvLJCyEdHA', 'remap', 'Should You Take Your Shoes Off Before Entering a House?', 'Someone walks into your house and doesn''t take their shows off. What do you do next? What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/qXvLJCyEdHA/mqdefault.jpg', '2025-06-06 14:01:19+00', '''/us/podcast/remap-radio/id1690437343'':49B ''audienc'':53B ''consid'':63B ''content'':61B ''continu'':58B ''doesn'':17B ''enter'':8A ''episod'':39B ''full'':38B ''help'':56B ''hous'':10A,15B ''listen'':31B ''make'':59B ''next'':27B ''pleas'':62B ''podcast'':46B ''podcasts.apple.com'':48B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':47B ''radio'':42B,51B ''re'':30B ''remap'':41B,50B ''segment'':35B ''shoe'':5A ''show'':21B ''someon'':11B ''subscrib'':43B,64B ''support'':54B ''take'':3A,19B ''us'':57B ''walk'':12B ''www.remapradio.com'':66B', false, 'PT23M57S', 'https://i.ytimg.com/vi/qXvLJCyEdHA/maxresdefault.jpg'),
+	('npk_UwPTGeY', 'nextlander', 'Brad, Will, and Vinny Return to PUBG!', 'For some of us it''s been years, for others it''s been months or days but for all of us it''s time to see how that Chicken Dinner still tastes.
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/npk_UwPTGeY/mqdefault.jpg', '2025-03-10 22:50:39+00', '''/nextlander'':48B ''brad'':1A ''chicken'':36B ''communiti'':45B ''day'':23B ''dinner'':37B ''month'':21B ''nextland'':40B ''other'':17B ''pubg'':7A ''return'':5A ''see'':33B ''still'':38B ''support'':42B ''tast'':39B ''thank'':49B ''time'':31B ''us'':11B,28B ''vinni'':4A ''watch'':51B ''www.patreon.com'':47B ''www.patreon.com/nextlander'':46B ''year'':15B', false, 'PT2H5M33S', 'https://i.ytimg.com/vi/npk_UwPTGeY/maxresdefault.jpg'),
+	('MqFxzkGTm7M', 'nextlander', 'Void Crew Monday: This Time It''s Serious', 'This is the week we finish a run! Or at least get to a boss...
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/MqFxzkGTm7M/mqdefault.jpg', '2025-03-04 00:18:47+00', '''/nextlander'':32B ''boss'':23B ''communiti'':29B ''crew'':2A ''finish'':14B ''get'':20B ''least'':19B ''monday'':3A ''nextland'':24B ''run'':16B ''serious'':8A ''support'':26B ''thank'':33B ''time'':5A ''void'':1A ''watch'':35B ''week'':12B ''www.patreon.com'':31B ''www.patreon.com/nextlander'':30B', false, 'PT3H4M50S', 'https://i.ytimg.com/vi/MqFxzkGTm7M/maxresdefault.jpg'),
+	('K5eaJB7sLFo', 'remap', 'AI Is Still a Major Threat to Voice Actors', 'The SAG-AFTRA strike appears over, but in the long term, it feels like artificial intelligence is going to have a massive negative impact on the acting profession in video games.
+
+What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/K5eaJB7sLFo/mqdefault.jpg', '2025-06-27 14:00:34+00', '''/us/podcast/remap-radio/id1690437343'':63B ''act'':37B ''actor'':9A ''aftra'':13B ''ai'':1A ''appear'':15B ''artifici'':25B ''audienc'':67B ''consid'':77B ''content'':75B ''continu'':72B ''episod'':53B ''feel'':23B ''full'':52B ''game'':41B ''go'':28B ''help'':70B ''impact'':34B ''intellig'':26B ''like'':24B ''listen'':45B ''long'':20B ''major'':5A ''make'':73B ''massiv'':32B ''negat'':33B ''pleas'':76B ''podcast'':60B ''podcasts.apple.com'':62B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':61B ''profess'':38B ''radio'':56B,65B ''re'':44B ''remap'':55B,64B ''sag'':12B ''sag-aftra'':11B ''segment'':49B ''still'':3A ''strike'':14B ''subscrib'':57B,78B ''support'':68B ''term'':21B ''threat'':6A ''us'':71B ''video'':40B ''voic'':8A ''www.remapradio.com'':80B', false, 'PT28M27S', 'https://i.ytimg.com/vi/K5eaJB7sLFo/maxresdefault.jpg'),
+	('JOTTt0KRWwI', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 2-3 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
+
+We got Kelsey Lewin, Janet Garcia, Jacob Geller, Marcus Stewart, and Alex Van Aken on the couch! We chat about Game Informer''s relaunch, working as a small team in Games Media, and all the stuff we saw at Summer Game Fest. 
+
+Thanks to our friends at Annapurna Interactive for presenting this stream!
+
+#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/JOTTt0KRWwI/mqdefault.jpg', '2025-06-12 18:00:19+00', '''-3'':10A ''2'':9A ''aken'':53B ''alex'':51B ''angel'':21B ''annapurna'':13A,87B ''around'':30B ''bomb'':2A ''chat'':58B ''couch'':18B,56B ''fest'':81B ''found'':16B ''friend'':27B,85B ''game'':60B,70B,80B ''garcia'':45B ''geller'':47B ''get'':25B ''giant'':1A ''giantbomb'':95B ''got'':41B ''hang'':34B ''industri'':32B ''inform'':61B ''interact'':14A,88B ''jacob'':46B ''janet'':44B ''kelsey'':42B ''lewin'':43B ''los'':20B ''marcus'':48B ''media'':71B ''nite'':3A,8A ''present'':11A,90B ''re'':24B ''relaunch'':63B ''saw'':77B ''sgf'':93B ''small'':67B ''stewart'':49B ''stream'':92B ''stuff'':75B ''summer'':79B ''summergamefest'':94B ''team'':68B ''thank'':82B ''van'':52B ''villa'':7A,39B ''warfram'':6A,38B ''work'':64B', false, 'PT38M37S', 'https://i.ytimg.com/vi/JOTTt0KRWwI/maxresdefault.jpg'),
+	('D84rRrHGoOw', 'giantbomb', 'You Can Talk to an AI-Darth Vader in Fortnite | Game Mess Mornings 05/16/25', 'Jeff Grubb is joined by Lex Luddy to talk about her new gaming website Rewinder! We also find the time to talk about how upsetting it is to speak to an AI-Generated voice of James Earl Jones in Fortnite, a whole lot of Switch 2 updates, Diddy Kong, and even more! 
+
+Check out Rewinder:
+https://rewinder.co.uk/
+
+Support Giant Bomb
+giantbomb.com/join
+
+#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/D84rRrHGoOw/mqdefault.jpg', '2025-05-16 16:08:34+00', '''/join'':78B ''05/16/25'':15A ''2'':62B ''ai'':7A,48B ''ai-darth'':6A ''ai-gener'':47B ''also'':32B ''bomb'':75B ''check'':69B ''darth'':8A ''diddi'':64B ''earl'':53B ''even'':67B ''find'':33B ''fortnit'':11A,56B ''game'':12A,28B ''gamemessmorn'':80B ''generat'':49B ''giant'':74B ''giantbomb'':81B ''giantbomb.com'':77B ''giantbomb.com/join'':76B ''gmm'':79B ''grubb'':17B ''jame'':52B ''jeff'':16B ''join'':19B ''jone'':54B ''kong'':65B ''lex'':21B ''lot'':59B ''luddi'':22B ''mess'':13A ''morn'':14A ''new'':27B ''rewind'':30B,71B ''rewinder.co.uk'':72B ''speak'':44B ''support'':73B ''switch'':61B ''talk'':3A,24B,37B ''time'':35B ''updat'':63B ''upset'':40B ''vader'':9A ''videogamenew'':82B ''voic'':50B ''websit'':29B ''whole'':58B', false, 'PT1H1M46S', 'https://i.ytimg.com/vi/D84rRrHGoOw/maxresdefault.jpg'),
+	('c5vabBHE1W4', 'remap', 'Steam Vent Discovers a World of UFOs and Pets', 'Another adventure into Steam''s New Releases once again takes us to some surprising places. Now with timestamps!
+
+10:10 — Death Howl
+32:54 — Bauhaus Bonk
+44:10 — To the Top, Mammoth!
+01:05:46 — Purfect Climb
+01:13:07 — Jumping Kitten
+01:33:05 — Fear the Unknown: Dave Story
+01:59:48 — Spacepunk Survival
+02:10:20 — Fear the Unknown: Dave Story (Part 2)
+02:22:44 — PETS
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/c5vabBHE1W4/mqdefault.jpg', '2025-02-06 22:58:32+00', '''01'':42B,47B,52B,60B ''02'':65B,75B ''05'':43B,54B ''07'':49B ''10'':28B,29B,37B,66B ''13'':48B ''2'':74B ''20'':67B ''22'':76B ''32'':32B ''33'':53B ''44'':36B,77B ''46'':44B ''48'':62B ''54'':33B ''59'':61B ''adventur'':11B ''anoth'':10B ''audienc'':82B ''bauhaus'':34B ''bonk'':35B ''climb'':46B ''consid'':92B ''content'':90B ''continu'':87B ''dave'':58B,71B ''death'':30B ''discov'':3A ''fear'':55B,68B ''help'':85B ''howl'':31B ''jump'':50B ''kitten'':51B ''make'':88B ''mammoth'':41B ''new'':15B ''part'':73B ''pet'':9A,78B ''place'':24B ''pleas'':91B ''purfect'':45B ''radio'':80B ''releas'':16B ''remap'':79B ''spacepunk'':63B ''steam'':1A,13B ''stori'':59B,72B ''subscrib'':93B ''support'':83B ''surpris'':23B ''surviv'':64B ''take'':19B ''timestamp'':27B ''top'':40B ''ufo'':7A ''unknown'':57B,70B ''us'':20B,86B ''vent'':2A ''world'':5A ''www.remapradio.com'':95B', false, 'PT2H39M36S', 'https://i.ytimg.com/vi/c5vabBHE1W4/maxresdefault.jpg'),
+	('MgYgD6ayVmY', 'nextlander', 'Vinny Plays Some Computer Games!', 'There are a few newer games that involve typing into a computer console that seem pretty cool! Let''s have a look.
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/MgYgD6ayVmY/mqdefault.jpg', '2025-04-02 02:24:26+00', '''/nextlander'':36B ''communiti'':33B ''comput'':4A,17B ''consol'':18B ''cool'':22B ''game'':5A,11B ''involv'':13B ''let'':23B ''look'':27B ''newer'':10B ''nextland'':28B ''play'':2A ''pretti'':21B ''seem'':20B ''support'':30B ''thank'':37B ''type'':14B ''vinni'':1A ''watch'':39B ''www.patreon.com'':35B ''www.patreon.com/nextlander'':34B', false, 'PT3H51M13S', 'https://i.ytimg.com/vi/MgYgD6ayVmY/maxresdefault.jpg'),
+	('eKfF4L0pEAw', 'nextlander', 'Nextlander, FBC: Firebreak, And A Lot of Sticky Notes!', 'The gang''s all here and now it''s time to dive into the depths of the Oldest House and put out some supernatural fires!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/eKfF4L0pEAw/mqdefault.jpg', '2025-06-20 20:14:14+00', '''/nextlander'':43B ''communiti'':40B ''depth'':24B ''dive'':21B ''fbc'':2A ''fire'':34B ''firebreak'':3A ''gang'':11B ''hous'':28B ''lot'':6A ''nextland'':1A,35B ''note'':9A ''oldest'':27B ''put'':30B ''sticki'':8A ''supernatur'':33B ''support'':37B ''thank'':44B ''time'':19B ''watch'':46B ''www.patreon.com'':42B ''www.patreon.com/nextlander'':41B', false, 'PT1H59M24S', 'https://i.ytimg.com/vi/eKfF4L0pEAw/maxresdefault.jpg'),
+	('mWmPM300zIs', 'giantbomb', 'Capcom Spotlight | We Talk Over', 'I hope there''s a Viewtiful Joe in here! 
+
+#capcom #giantbomb', 'https://i.ytimg.com/vi/mWmPM300zIs/mqdefault.jpg', '2025-06-26 22:47:42+00', '''capcom'':1A,14B ''giantbomb'':15B ''hope'':6B ''joe'':11B ''spotlight'':2A ''talk'':4A ''viewti'':10B', false, 'PT49M54S', 'https://i.ytimg.com/vi/mWmPM300zIs/maxresdefault.jpg'),
+	('dh5w81RN6V0', 'giantbomb', 'Rascal, but Mike | FINALE | Blight Club', 'Will Mike Minotti make any progress today on Blight Club? Will he be able to figure out what any of the buttons or crabs do? Will he ever stop looking so cool?
+
+#rascal #blightclub', 'https://i.ytimg.com/vi/dh5w81RN6V0/mqdefault.jpg', '2025-06-25 22:00:36+00', '''abl'':20B ''blight'':5A,15B ''blightclub'':40B ''button'':28B ''club'':6A,16B ''cool'':38B ''crab'':30B ''ever'':34B ''figur'':22B ''final'':4A ''look'':36B ''make'':10B ''mike'':3A,8B ''minotti'':9B ''progress'':12B ''rascal'':1A,39B ''stop'':35B ''today'':13B', false, 'PT2H27M3S', 'https://i.ytimg.com/vi/dh5w81RN6V0/maxresdefault.jpg'),
+	('jop6105ad8M', 'giantbomb', 'The Rest of the Trailers from Summer Game Fest | We Talk Over', 'We cover some of the trailers we liked or may have missed from Summer Game Fest weekend. We look at people walking, people talking, and the ROLE OF THE LIFETIME! 
+
+#sgf #summergamefest #giantbomb #trailers', 'https://i.ytimg.com/vi/jop6105ad8M/mqdefault.jpg', '2025-06-16 21:08:26+00', '''cover'':13B ''fest'':9A,27B ''game'':8A,26B ''giantbomb'':44B ''lifetim'':41B ''like'':19B ''look'':30B ''may'':21B ''miss'':23B ''peopl'':32B,34B ''rest'':2A ''role'':38B ''sgf'':42B ''summer'':7A,25B ''summergamefest'':43B ''talk'':11A,35B ''trailer'':5A,17B,45B ''walk'':33B ''weekend'':28B', false, 'PT1H21M57S', 'https://i.ytimg.com/vi/jop6105ad8M/maxresdefault.jpg'),
+	('lSOOodKYyyU', 'giantbomb', 'PEAK | Giant Bomb Plays', 'Dan, Jan, Jeff, and Jeff crashland on an island to eat miscellaneous fruit, help each other up, and climb a mountain in PEAK!
+
+#peak #giantbomb', 'https://i.ytimg.com/vi/lSOOodKYyyU/mqdefault.jpg', '2025-06-16 19:31:36+00', '''bomb'':3A ''climb'':23B ''crashland'':10B ''dan'':5B ''eat'':15B ''fruit'':17B ''giant'':2A ''giantbomb'':29B ''help'':18B ''island'':13B ''jan'':6B ''jeff'':7B,9B ''miscellan'':16B ''mountain'':25B ''peak'':1A,27B,28B ''play'':4A', false, 'PT1H25M24S', 'https://i.ytimg.com/vi/lSOOodKYyyU/maxresdefault.jpg'),
+	('jf24cn1wr9Y', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 2-4 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
+
+We got Johnny Galvatron, Dean Woodward, Cessia Castillo, Kristy Norindr, and Mark Essen on the couch! We chat about switching careers and getting into Indie Game development, the indie game community, and future products! 
+
+Thanks to our friends at Annapurna Interactive for presenting this stream!
+
+Games featured in this segment include:
+
+Mixtape - https://annapurnainteractive.com/en/games/mixtape
+Wheel World - https://annapurnainteractive.com/en/games/wheel-world
+Snap & Grab - https://annapurnainteractive.com/en/games/snap-and-grab
+Lego Voyagers - https://annapurnainteractive.com/en/games/lego-voyagers
+
+Tenno Tub Fishing segment presented by Digital Extremes
+
+
+#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/jf24cn1wr9Y/mqdefault.jpg', '2025-06-12 18:15:08+00', '''-4'':10A ''/en/games/lego-voyagers'':109B ''/en/games/mixtape'':94B ''/en/games/snap-and-grab'':104B ''/en/games/wheel-world'':99B ''2'':9A ''angel'':21B ''annapurna'':13A,79B ''annapurnainteractive.com'':93B,98B,103B,108B ''annapurnainteractive.com/en/games/lego-voyagers'':107B ''annapurnainteractive.com/en/games/mixtape'':92B ''annapurnainteractive.com/en/games/snap-and-grab'':102B ''annapurnainteractive.com/en/games/wheel-world'':97B ''around'':30B ''bomb'':2A ''career'':60B ''castillo'':47B ''cessia'':46B ''chat'':57B ''communiti'':70B ''couch'':18B,55B ''dean'':44B ''develop'':66B ''digit'':116B ''essen'':52B ''extrem'':117B ''featur'':86B ''fish'':112B ''found'':16B ''friend'':27B,77B ''futur'':72B ''galvatron'':43B ''game'':65B,69B,85B ''get'':25B,62B ''giant'':1A ''giantbomb'':120B ''got'':41B ''grab'':101B ''hang'':34B ''includ'':90B ''indi'':64B,68B ''industri'':32B ''interact'':14A,80B ''johnni'':42B ''kristi'':48B ''lego'':105B ''los'':20B ''mark'':51B ''mixtap'':91B ''nite'':3A,8A ''norindr'':49B ''present'':11A,82B,114B ''product'':73B ''re'':24B ''segment'':89B,113B ''sgf'':118B ''snap'':100B ''stream'':84B ''summergamefest'':119B ''switch'':59B ''tenno'':110B ''thank'':74B ''tub'':111B ''villa'':7A,39B ''voyag'':106B ''warfram'':6A,38B ''wheel'':95B ''woodward'':45B ''world'':96B', false, 'PT51M22S', 'https://i.ytimg.com/vi/jf24cn1wr9Y/maxresdefault.jpg'),
+	('ZHrxoA4bGz0', 'nextlander', 'Lost Records, Bloom and Rage, Things of That Nature (The Finale!)', 'We continue to soldier on in Lost Records in the hope of achieving something. Like opening a box, maybe?
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/ZHrxoA4bGz0/mqdefault.jpg', '2025-05-06 22:05:28+00', '''/nextlander'':39B ''achiev'':24B ''bloom'':3A ''box'':29B ''communiti'':36B ''continu'':13B ''final'':11A ''hope'':22B ''like'':26B ''lost'':1A,18B ''mayb'':30B ''natur'':9A ''nextland'':31B ''open'':27B ''rage'':5A ''record'':2A,19B ''soldier'':15B ''someth'':25B ''support'':33B ''thank'':40B ''thing'':6A ''watch'':42B ''www.patreon.com'':38B ''www.patreon.com/nextlander'':37B', false, 'PT2H3M20S', 'https://i.ytimg.com/vi/ZHrxoA4bGz0/maxresdefault.jpg'),
+	('WYmAd2M2mzc', 'nextlander', 'Who Is Abby? The Answer May (Mildly) Shock You!', 'We''re going to check in on Who Is Abby and head towards its big finale!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/WYmAd2M2mzc/mqdefault.jpg', '2025-06-17 21:00:13+00', '''/nextlander'':33B ''abbi'':3A,18B ''answer'':5A ''big'':23B ''check'':13B ''communiti'':30B ''final'':24B ''go'':11B ''head'':20B ''may'':6A ''mild'':7A ''nextland'':25B ''re'':10B ''shock'':8A ''support'':27B ''thank'':34B ''toward'':21B ''watch'':36B ''www.patreon.com'':32B ''www.patreon.com/nextlander'':31B', false, 'PT2H32M16S', 'https://i.ytimg.com/vi/WYmAd2M2mzc/maxresdefault.jpg'),
+	('2YkUDFVlecQ', 'nextlander', 'Friday Fun Stream: The Grab Bag to End All Grab Bags', 'There are SO MANY VIDEO GAMES right now, and we''re going to play several of them! And our good friend Samantha Kalman is here to hang out!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/2YkUDFVlecQ/mqdefault.jpg', '2025-05-23 20:22:35+00', '''/nextlander'':48B ''bag'':6A,11A ''communiti'':45B ''end'':8A ''friday'':1A ''friend'':32B ''fun'':2A ''game'':17B ''go'':23B ''good'':31B ''grab'':5A,10A ''hang'':38B ''kalman'':34B ''mani'':15B ''nextland'':40B ''play'':25B ''re'':22B ''right'':18B ''samantha'':33B ''sever'':26B ''stream'':3A ''support'':42B ''thank'':49B ''video'':16B ''watch'':51B ''www.patreon.com'':47B ''www.patreon.com/nextlander'':46B', false, 'PT2H3M4S', 'https://i.ytimg.com/vi/2YkUDFVlecQ/maxresdefault.jpg'),
+	('yWKRiKQNN2c', 'nextlander', 'Friday Fun Stream: More Schedule I w/ Abby Russell!', 'Time to follow Drugs Bunny down the rabbit hole of low level drug dealing in Schedule I!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/yWKRiKQNN2c/mqdefault.jpg', '2025-04-18 20:23:32+00', '''/nextlander'':35B ''abbi'':8A ''bunni'':14B ''communiti'':32B ''deal'':23B ''drug'':13B,22B ''follow'':12B ''friday'':1A ''fun'':2A ''hole'':18B ''level'':21B ''low'':20B ''nextland'':27B ''rabbit'':17B ''russel'':9A ''schedul'':5A,25B ''stream'':3A ''support'':29B ''thank'':36B ''time'':10B ''w'':7A ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT2H19M37S', 'https://i.ytimg.com/vi/yWKRiKQNN2c/maxresdefault.jpg'),
+	('sHFmvE7W1zU', 'giantbomb', 'Death Stranding 2 is Absolutely Fantastic | Giant Bombcast 896: Current Next Gen', 'Folks it''s time to trek from Mexico to Austrailia as we talk about our time so far with Death Stranding 2, putting out fires in FBC: Firebreak, painting and splatting in Splatoon, the ups and downs of Pipestrello and the Cursed Yoyo, and getting sometime with Rematch. We also chat about the next generation of consoles slowly getting underway, some heat advisory for your Switch 2, Mario Kart World characters, and even more! 
+
+#bombcast #giantbombcast #giantbomb', 'https://i.ytimg.com/vi/sHFmvE7W1zU/mqdefault.jpg', '2025-06-24 19:06:11+00', '''2'':3A,34B,79B ''896'':9A ''absolut'':5A ''advisori'':75B ''also'':62B ''austrailia'':22B ''bombcast'':8A,87B ''charact'':83B ''chat'':63B ''consol'':69B ''current'':10A ''curs'':54B ''death'':1A,32B ''down'':49B ''even'':85B ''fantast'':6A ''far'':30B ''fbc'':39B ''fire'':37B ''firebreak'':40B ''folk'':13B ''gen'':12A ''generat'':67B ''get'':57B,71B ''giant'':7A ''giantbomb'':89B ''giantbombcast'':88B ''heat'':74B ''kart'':81B ''mario'':80B ''mexico'':20B ''next'':11A,66B ''paint'':41B ''pipestrello'':51B ''put'':35B ''rematch'':60B ''slowli'':70B ''sometim'':58B ''splat'':43B ''splatoon'':45B ''strand'':2A,33B ''switch'':78B ''talk'':25B ''time'':16B,28B ''trek'':18B ''underway'':72B ''up'':47B ''world'':82B ''yoyo'':55B', false, 'PT2H44M56S', 'https://i.ytimg.com/vi/sHFmvE7W1zU/maxresdefault.jpg'),
+	('Qx0x0Qx2JNc', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 2-6 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
+
+We got Mike Minotti, Dan Ryckert, HBomberguy, Jeff Bakalar, Jan Ochoa, and Niki Grayson on the couch to end the day! Burgers are slopped, buzzballs are taped, and the day has ended. 
+
+Thanks to our friends at Annapurna Interactive for presenting this stream!
+
+#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/Qx0x0Qx2JNc/mqdefault.jpg', '2025-06-12 19:00:21+00', '''-6'':10A ''2'':9A ''angel'':21B ''annapurna'':13A,77B ''around'':30B ''bakalar'':48B ''bomb'':2A ''burger'':61B ''buzzbal'':64B ''couch'':18B,56B ''dan'':44B ''day'':60B,69B ''end'':58B,71B ''found'':16B ''friend'':27B,75B ''get'':25B ''giant'':1A ''giantbomb'':85B ''got'':41B ''grayson'':53B ''hang'':34B ''hbomberguy'':46B ''industri'':32B ''interact'':14A,78B ''jan'':49B ''jeff'':47B ''los'':20B ''mike'':42B ''minotti'':43B ''niki'':52B ''nite'':3A,8A ''ochoa'':50B ''present'':11A,80B ''re'':24B ''ryckert'':45B ''sgf'':83B ''slop'':63B ''stream'':82B ''summergamefest'':84B ''tape'':66B ''thank'':72B ''villa'':7A,39B ''warfram'':6A,38B', false, 'PT33M7S', 'https://i.ytimg.com/vi/Qx0x0Qx2JNc/maxresdefault.jpg'),
+	('sr-b60xsM4c', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 2-5 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
+
+We got Jeff Gerstmann, Dan Ryckert, Mark MacDonald, Jordan Middler, Greg Miller, and Danny O''Dwyer on the couch! NOTHING BUT HEAVYWEIGHTS AND WILD STUFF HERE! 
+
+Thanks to our friends at Annapurna Interactive for presenting this stream!
+
+#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/sr-b60xsM4c/mqdefault.jpg', '2025-06-12 18:31:17+00', '''-5'':10A ''2'':9A ''angel'':21B ''annapurna'':13A,71B ''around'':30B ''bomb'':2A ''couch'':18B,58B ''dan'':44B ''danni'':53B ''dwyer'':55B ''found'':16B ''friend'':27B,69B ''gerstmann'':43B ''get'':25B ''giant'':1A ''giantbomb'':79B ''got'':41B ''greg'':50B ''hang'':34B ''heavyweight'':61B ''industri'':32B ''interact'':14A,72B ''jeff'':42B ''jordan'':48B ''los'':20B ''macdonald'':47B ''mark'':46B ''middler'':49B ''miller'':51B ''nite'':3A,8A ''noth'':59B ''o'':54B ''present'':11A,74B ''re'':24B ''ryckert'':45B ''sgf'':77B ''stream'':76B ''stuff'':64B ''summergamefest'':78B ''thank'':66B ''villa'':7A,39B ''warfram'':6A,38B ''wild'':63B', false, 'PT1H2M13S', 'https://i.ytimg.com/vi/sr-b60xsM4c/maxresdefault.jpg'),
+	('On3a_5dnPrs', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 1-5 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
+
+We got Alanah Pearce, Wout Van Halderen, Whyatt Bushnell, Mike Salyh, and Billy Shibley on the couch! We talk about exploitation in the industry, a new Escape Academy game, publishing games, and even more! 
+
+Thanks to our friends at Annapurna Interactive for presenting this stream!
+
+#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/On3a_5dnPrs/mqdefault.jpg', '2025-06-11 22:30:05+00', '''-5'':10A ''1'':9A ''academi'':67B ''alanah'':42B ''angel'':21B ''annapurna'':13A,79B ''around'':30B ''billi'':52B ''bomb'':2A ''bushnel'':48B ''couch'':18B,56B ''escap'':66B ''even'':72B ''exploit'':60B ''found'':16B ''friend'':27B,77B ''game'':68B,70B ''get'':25B ''giant'':1A ''giantbomb'':87B ''got'':41B ''halderen'':46B ''hang'':34B ''industri'':32B,63B ''interact'':14A,80B ''los'':20B ''mike'':49B ''new'':65B ''nite'':3A,8A ''pearc'':43B ''present'':11A,82B ''publish'':69B ''re'':24B ''salyh'':50B ''sgf'':85B ''shibley'':53B ''stream'':84B ''summergamefest'':86B ''talk'':58B ''thank'':74B ''van'':45B ''villa'':7A,39B ''warfram'':6A,38B ''whyatt'':47B ''wout'':44B', false, 'PT28M54S', 'https://i.ytimg.com/vi/On3a_5dnPrs/maxresdefault.jpg'),
+	('PEA70endQTM', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 1-3 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
+
+We got Ben Starr, Jen English, and Gavin Verhey on the couch! We talk about the impact that Clair Obscur: Expedition 33 and Magic: The Gathering have had over the past year! 
+
+Thanks to our friends at Annapurna Interactive for presenting this stream!
+
+#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/PEA70endQTM/mqdefault.jpg', '2025-06-11 21:30:10+00', '''-3'':10A ''1'':9A ''33'':61B ''angel'':21B ''annapurna'':13A,77B ''around'':30B ''ben'':42B ''bomb'':2A ''clair'':58B ''couch'':18B,51B ''english'':45B ''expedit'':60B ''found'':16B ''friend'':27B,75B ''gather'':65B ''gavin'':47B ''get'':25B ''giant'':1A ''giantbomb'':85B ''got'':41B ''hang'':34B ''impact'':56B ''industri'':32B ''interact'':14A,78B ''jen'':44B ''los'':20B ''magic'':63B ''nite'':3A,8A ''obscur'':59B ''past'':70B ''present'':11A,80B ''re'':24B ''sgf'':83B ''starr'':43B ''stream'':82B ''summergamefest'':84B ''talk'':53B ''thank'':72B ''verhey'':48B ''villa'':7A,39B ''warfram'':6A,38B ''year'':71B', false, 'PT22M17S', 'https://i.ytimg.com/vi/PEA70endQTM/maxresdefault.jpg'),
+	('RxCk9gVqVmU', 'giantbomb', 'Netflix Backing Away from Games | Game Mess Mornings 06/25/25', 'Jeff Grubb and Jan Ochoa start your Wednesday with news that Netflix is slowly stepping away from their video game initiative, Jurassic World Evolution 3 developers removing AI from the game, Nintendo had a hand in Death Stranding 2, and even more news! 
+
+Support Giant Bomb by going to:
+giantbomb.com/join
+
+#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/RxCk9gVqVmU/mqdefault.jpg', '2025-06-25 16:06:53+00', '''/join'':61B ''06/25/25'':9A ''2'':48B ''3'':34B ''ai'':37B ''away'':3A,25B ''back'':2A ''bomb'':55B ''death'':46B ''develop'':35B ''even'':50B ''evolut'':33B ''game'':5A,6A,29B,40B ''gamemessmorn'':63B ''giant'':54B ''giantbomb'':64B ''giantbomb.com'':60B ''giantbomb.com/join'':59B ''gmm'':62B ''go'':57B ''grubb'':11B ''hand'':44B ''initi'':30B ''jan'':13B ''jeff'':10B ''jurass'':31B ''mess'':7A ''morn'':8A ''netflix'':1A,21B ''news'':19B,52B ''nintendo'':41B ''ochoa'':14B ''remov'':36B ''slowli'':23B ''start'':15B ''step'':24B ''strand'':47B ''support'':53B ''video'':28B ''videogamenew'':65B ''wednesday'':17B ''world'':32B', false, 'PT58M50S', 'https://i.ytimg.com/vi/RxCk9gVqVmU/maxresdefault.jpg'),
+	('mzKLWT5_xwY', 'giantbomb', 'An Ad Claims Metroid Prime 4 is Out Now | Game Mess Mornings 06/20/25', 'Jeff Grubb and Jesse Vitelli end the week with confusion around a London Underground ad claiming Metroid Prime 4 is out, a Donkey Kong Bananza Switch 2 Demo is spotted in the wild, updates on the Death Stranding movie, Crash Team Racing getting a big update, and more! 
+
+#gmm #gamemessmornings #giantbomb', 'https://i.ytimg.com/vi/mzKLWT5_xwY/mqdefault.jpg', '2025-06-20 16:09:54+00', '''06/20/25'':13A ''2'':40B ''4'':6A,32B ''ad'':2A,28B ''around'':24B ''bananza'':38B ''big'':58B ''claim'':3A,29B ''confus'':23B ''crash'':53B ''death'':50B ''demo'':41B ''donkey'':36B ''end'':19B ''game'':10A ''gamemessmorn'':63B ''get'':56B ''giantbomb'':64B ''gmm'':62B ''grubb'':15B ''jeff'':14B ''jess'':17B ''kong'':37B ''london'':26B ''mess'':11A ''metroid'':4A,30B ''morn'':12A ''movi'':52B ''prime'':5A,31B ''race'':55B ''spot'':43B ''strand'':51B ''switch'':39B ''team'':54B ''underground'':27B ''updat'':47B,59B ''vitelli'':18B ''week'':21B ''wild'':46B', false, 'PT1H1M22S', 'https://i.ytimg.com/vi/mzKLWT5_xwY/maxresdefault.jpg'),
+	('xKKb-QVQX-8', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 2-2 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
+
+We got Kate Sanchez, Phil Salvador, Chandana Ekanayake, Jill Grodt, and Jason Schrier on the couch! We chat about Indie Game development and coverage, game preservation, breaking in and being sustainable in the video games media industry. 
+
+Thanks to our friends at Annapurna Interactive for presenting this stream!
+
+#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/xKKb-QVQX-8/mqdefault.jpg', '2025-06-12 17:45:07+00', '''-2'':10A ''2'':9A ''angel'':21B ''annapurna'':13A,82B ''around'':30B ''bomb'':2A ''break'':66B ''chandana'':46B ''chat'':57B ''couch'':18B,55B ''coverag'':63B ''develop'':61B ''ekanayak'':47B ''found'':16B ''friend'':27B,80B ''game'':60B,64B,74B ''get'':25B ''giant'':1A ''giantbomb'':90B ''got'':41B ''grodt'':49B ''hang'':34B ''indi'':59B ''industri'':32B,76B ''interact'':14A,83B ''jason'':51B ''jill'':48B ''kate'':42B ''los'':20B ''media'':75B ''nite'':3A,8A ''phil'':44B ''present'':11A,85B ''preserv'':65B ''re'':24B ''salvador'':45B ''sanchez'':43B ''schrier'':52B ''sgf'':88B ''stream'':87B ''summergamefest'':89B ''sustain'':70B ''thank'':77B ''video'':73B ''villa'':7A,39B ''warfram'':6A,38B', false, 'PT36M39S', 'https://i.ytimg.com/vi/xKKb-QVQX-8/maxresdefault.jpg'),
+	('vOFr8KslOZo', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 2-1 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
+
+We got Jason Fanelli, Celia Bee, Emmet Nahil, Nikky Armstrong, Son M. on the couch! We start the day by talking about Mina the Hollower, starting a farm in a Horror Game, and iputting in WORK over SGF week. 
+
+Thanks to our friends at Annapurna Interactive for presenting this stream!
+
+Check out that hot new popagenda logo! https://popagenda.co/
+
+Stay tuned to the end of this segment and join Dan Ryckert as he tries to cook a hamburger for the first time. That''s right, you''ve read correctly. Shout out to our friends at Outerloop Games, the crew behind the new game, Dosa Divas, for their support on this segment! 
+
+Peep Dosa Divas here: https://outerloopgames.com/
+
+#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/vOFr8KslOZo/mqdefault.jpg', '2025-06-12 17:32:19+00', '''-1'':10A ''2'':9A ''angel'':21B ''annapurna'':13A,84B ''armstrong'':49B ''around'':30B ''bee'':45B ''behind'':138B ''bomb'':2A ''celia'':44B ''check'':90B ''cook'':114B ''correct'':127B ''couch'':18B,54B ''crew'':137B ''dan'':108B ''day'':58B ''diva'':143B,152B ''dosa'':142B,151B ''emmet'':46B ''end'':102B ''fanelli'':43B ''farm'':67B ''first'':119B ''found'':16B ''friend'':27B,82B,132B ''game'':71B,135B,141B ''get'':25B ''giant'':1A ''giantbomb'':157B ''got'':41B ''hamburg'':116B ''hang'':34B ''hollow'':64B ''horror'':70B ''hot'':93B ''industri'':32B ''interact'':14A,85B ''iput'':73B ''jason'':42B ''join'':107B ''logo'':96B ''los'':20B ''m'':51B ''mina'':62B ''nahil'':47B ''new'':94B,140B ''nikki'':48B ''nite'':3A,8A ''outerloop'':134B ''outerloopgames.com'':154B ''peep'':150B ''popagenda'':95B ''popagenda.co'':97B ''present'':11A,87B ''re'':24B ''read'':126B ''right'':123B ''ryckert'':109B ''segment'':105B,149B ''sgf'':77B,155B ''shout'':128B ''son'':50B ''start'':56B,65B ''stay'':98B ''stream'':89B ''summergamefest'':156B ''support'':146B ''talk'':60B ''thank'':79B ''time'':120B ''tri'':112B ''tune'':99B ''ve'':125B ''villa'':7A,39B ''warfram'':6A,38B ''week'':78B ''work'':75B', false, 'PT46M5S', 'https://i.ytimg.com/vi/vOFr8KslOZo/maxresdefault.jpg'),
+	('oi738e8B9_Y', 'nextlander', 'Patron''s Choice for May 2025: Riding the Nightreign', 'It''s time for some multiplayer Elden Ring from the greatest Elden Ring players in the known universe.
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/oi738e8B9_Y/mqdefault.jpg', '2025-06-01 06:14:09+00', '''/nextlander'':36B ''2025'':6A ''choic'':3A ''communiti'':33B ''elden'':16B,21B ''greatest'':20B ''known'':26B ''may'':5A ''multiplay'':15B ''nextland'':28B ''nightreign'':9A ''patron'':1A ''player'':23B ''ride'':7A ''ring'':17B,22B ''support'':30B ''thank'':37B ''time'':12B ''univers'':27B ''watch'':39B ''www.patreon.com'':35B ''www.patreon.com/nextlander'':34B', false, 'PT2H29M31S', 'https://i.ytimg.com/vi/oi738e8B9_Y/maxresdefault.jpg'),
+	('BbehXM0vQjE', 'remap', 'The Media Can''t Review the Switch 2 Until Launch', 'It''s been reported that Nintendo won''t be sending Switch 2 machines in advance to game journalists. What does it mean for Nintendo to dodge reviews, and is the a bigger conversation about the death of expertise? What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/BbehXM0vQjE/mqdefault.jpg', '2025-06-04 14:00:18+00', '''/us/podcast/remap-radio/id1690437343'':70B ''2'':8A,22B ''advanc'':25B ''audienc'':74B ''bigger'':42B ''consid'':84B ''content'':82B ''continu'':79B ''convers'':43B ''death'':46B ''dodg'':36B ''episod'':60B ''expertis'':48B ''full'':59B ''game'':27B ''help'':77B ''journalist'':28B ''launch'':10A ''listen'':52B ''machin'':23B ''make'':80B ''mean'':32B ''media'':2A ''nintendo'':16B,34B ''pleas'':83B ''podcast'':67B ''podcasts.apple.com'':69B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':68B ''radio'':63B,72B ''re'':51B ''remap'':62B,71B ''report'':14B ''review'':5A,37B ''segment'':56B ''send'':20B ''subscrib'':64B,85B ''support'':75B ''switch'':7A,21B ''us'':78B ''won'':17B ''www.remapradio.com'':87B', false, 'PT26M53S', 'https://i.ytimg.com/vi/BbehXM0vQjE/maxresdefault.jpg'),
+	('Q8cPe1YYU6Y', 'remap', 'Giant Bomb Buys Giant Bomb, But What''s Next?', 'The absolutely wild resolution to the unrest at Giant Bomb has Patrick, Rob, Janet, and Chia celebrating Giant Bomb’s newfound independence, contrasting it with their own breakup with Vice, and more. This is a segment from Remap Radio, the flagship video game podcast from Remap.
+
+What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/Q8cPe1YYU6Y/mqdefault.jpg', '2025-05-19 14:00:41+00', '''/us/podcast/remap-radio/id1690437343'':77B ''absolut'':11B ''audienc'':81B ''bomb'':2A,5A,19B,28B ''breakup'':37B ''buy'':3A ''celebr'':26B ''chia'':25B ''consid'':91B ''content'':89B ''continu'':86B ''contrast'':32B ''episod'':67B ''flagship'':50B ''full'':66B ''game'':52B ''giant'':1A,4A,18B,27B ''help'':84B ''independ'':31B ''janet'':23B ''listen'':59B ''make'':87B ''newfound'':30B ''next'':9A ''patrick'':21B ''pleas'':90B ''podcast'':53B,74B ''podcasts.apple.com'':76B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':75B ''radio'':48B,70B,79B ''re'':58B ''remap'':47B,55B,69B,78B ''resolut'':13B ''rob'':22B ''segment'':45B,63B ''subscrib'':71B,92B ''support'':82B ''unrest'':16B ''us'':85B ''vice'':39B ''video'':51B ''wild'':12B ''www.remapradio.com'':94B', false, 'PT49M9S', 'https://i.ytimg.com/vi/Q8cPe1YYU6Y/maxresdefault.jpg'),
+	('jYIUfvalJnI', 'remap', 'Clair Obscur: Expedition 33 Is Already a GOTY Candidate', 'Janet and Patrick have become fully French-pilled by the new JRPG-inspired Clair Obscur: Expedition 33. Can they convert Rob and Cado into joining their revolution against the Paintress?
+
+What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/jYIUfvalJnI/mqdefault.jpg', '2025-05-05 14:01:00+00', '''/us/podcast/remap-radio/id1690437343'':63B ''33'':4A,28B ''alreadi'':6A ''audienc'':67B ''becom'':14B ''cado'':34B ''candid'':9A ''clair'':1A,25B ''consid'':77B ''content'':75B ''continu'':72B ''convert'':31B ''episod'':53B ''expedit'':3A,27B ''french'':17B ''french-pil'':16B ''full'':52B ''fulli'':15B ''goti'':8A ''help'':70B ''inspir'':24B ''janet'':10B ''join'':36B ''jrpg'':23B ''jrpg-inspir'':22B ''listen'':45B ''make'':73B ''new'':21B ''obscur'':2A,26B ''paintress'':41B ''patrick'':12B ''pill'':18B ''pleas'':76B ''podcast'':60B ''podcasts.apple.com'':62B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':61B ''radio'':56B,65B ''re'':44B ''remap'':55B,64B ''revolut'':38B ''rob'':32B ''segment'':49B ''subscrib'':57B,78B ''support'':68B ''us'':71B ''www.remapradio.com'':80B', false, 'PT39M4S', 'https://i.ytimg.com/vi/jYIUfvalJnI/maxresdefault.jpg'),
+	('EL-wEoBYW4k', 'remap', 'It''s a Narrative Video Game Demo Lightning Round', 'Patrick and Cado are back for this year''s LudoNarraCon, checking out a whole bunch of story-focused games!
+
+Timestamps:
+00:04:48 — inKONBINI
+00:20:43 — The Horror at Highrook
+00:38:22 — Psychotic Bathtub
+00:54:28 — Promise Mascot Agency
+01:19:18 — We Harvest Shadows
+01:45:53 — Scrabdackle
+02:05:45 — Usual June
+02:22:13 — Herald
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/EL-wEoBYW4k/mqdefault.jpg', '2025-04-29 19:30:25+00', '''00'':31B,35B,42B,47B ''01'':53B,59B ''02'':63B,68B ''04'':32B ''05'':64B ''13'':70B ''18'':55B ''19'':54B ''20'':36B ''22'':44B,69B ''28'':49B ''38'':43B ''43'':37B ''45'':60B,65B ''48'':33B ''53'':61B ''54'':48B ''agenc'':52B ''audienc'':75B ''back'':14B ''bathtub'':46B ''bunch'':24B ''cado'':12B ''check'':20B ''consid'':85B ''content'':83B ''continu'':80B ''demo'':7A ''focus'':28B ''game'':6A,29B ''harvest'':57B ''help'':78B ''herald'':71B ''highrook'':41B ''horror'':39B ''inkonbini'':34B ''june'':67B ''lightn'':8A ''ludonarracon'':19B ''make'':81B ''mascot'':51B ''narrat'':4A ''patrick'':10B ''pleas'':84B ''promis'':50B ''psychot'':45B ''radio'':73B ''remap'':72B ''round'':9A ''scrabdackl'':62B ''shadow'':58B ''stori'':27B ''story-focus'':26B ''subscrib'':86B ''support'':76B ''timestamp'':30B ''us'':79B ''usual'':66B ''video'':5A ''whole'':23B ''www.remapradio.com'':88B ''year'':17B', false, 'PT2H45M1S', 'https://i.ytimg.com/vi/EL-wEoBYW4k/maxresdefault.jpg'),
+	('Wud5OEvx_fM', 'remap', 'The Wheel Visits the Oldest House', 'We fell for Elden Ring: Nightreign. Can we fall for FBC: Firebreak, too?
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/Wud5OEvx_fM/mqdefault.jpg', '2025-06-20 03:06:21+00', '''audienc'':23B ''consid'':33B ''content'':31B ''continu'':28B ''elden'':10B ''fall'':15B ''fbc'':17B ''fell'':8B ''firebreak'':18B ''help'':26B ''hous'':6A ''make'':29B ''nightreign'':12B ''oldest'':5A ''pleas'':32B ''radio'':21B ''remap'':20B ''ring'':11B ''subscrib'':34B ''support'':24B ''us'':27B ''visit'':3A ''wheel'':2A ''www.remapradio.com'':36B', false, 'PT2H34M26S', 'https://i.ytimg.com/vi/Wud5OEvx_fM/maxresdefault.jpg'),
+	('y9eQsOTo8sE', 'remap', 'The Longest Fall in Video Game History', 'What happens when you spend 13 hours getting ready for one jump, only to screw it up?
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/y9eQsOTo8sE/mqdefault.jpg', '2025-05-28 18:09:39+00', '''13'':13B ''audienc'':28B ''consid'':38B ''content'':36B ''continu'':33B ''fall'':3A ''game'':6A ''get'':15B ''happen'':9B ''help'':31B ''histori'':7A ''hour'':14B ''jump'':19B ''longest'':2A ''make'':34B ''one'':18B ''pleas'':37B ''radio'':26B ''readi'':16B ''remap'':25B ''screw'':22B ''spend'':12B ''subscrib'':39B ''support'':29B ''us'':32B ''video'':5A ''www.remapradio.com'':41B', false, 'PT57S', 'https://i.ytimg.com/vi/y9eQsOTo8sE/maxresdefault.jpg'),
+	('uNL7U4ptOdY', 'remap', 'Now, Cado''s in Control of Civilization VII', 'Rob and Cado''s adventures in Civilization VII continue, but this time, Cado''s back in in the driver''s seat!
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/uNL7U4ptOdY/mqdefault.jpg', '2025-05-16 18:47:52+00', '''adventur'':13B ''audienc'':33B ''back'':23B ''cado'':2A,11B,21B ''civil'':7A,15B ''consid'':43B ''content'':41B ''continu'':17B,38B ''control'':5A ''driver'':27B ''help'':36B ''make'':39B ''pleas'':42B ''radio'':31B ''remap'':30B ''rob'':9B ''seat'':29B ''subscrib'':44B ''support'':34B ''time'':20B ''us'':37B ''vii'':8A,16B ''www.remapradio.com'':46B', false, 'PT2H39M11S', 'https://i.ytimg.com/vi/uNL7U4ptOdY/maxresdefault.jpg'),
+	('YTv-9MqBf0I', 'remap', 'Remap Radio — Live at PAX East!', 'Well, live in the sense that we recorded this in-person with one another from Rob''s hotel room. Rob, Patrick, and Chia have traveled to PAX East, though only two of us actually spent time wandering around the show floor before sitting down to record an in-person version of Remap Radio. But Patrick and Chia played a bunch of very cool games, including Demonschool, Fretless, that grimdark Pac-Man game, Aksun, A Good Night’s Rest, and more. Plus, an exciting brand-new segment: buying or selling.
+
+Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com
+
+Discussed: 
+0:00 Boston Talk
+06:13 Intro
+13:25 Derek Carr Retired
+16:19 What Is PAX East Anymore?
+20:47 Demonschool/A Good Night’s Rest
+28:16 Askun
+31:59 Shadow Labyrinth
+35:48 Missile Command
+38:28 VCTV 9000
+46:39 GunnRunner
+50:23 New segment: Buying or Selling?
+01:18:57 Hank: Drowning on Dry Land
+01:23:58 Love Eternal
+01:25:49 Fretless
+01:35:33 Crimson Desert
+01:40:29 Tariffs and Board Games
+01:48:20 Europa Universalis V
+01:59:42 WRC and Codemasters
+02:05:55 The Question Bucket', 'https://i.ytimg.com/vi/YTv-9MqBf0I/mqdefault.jpg', '2025-05-14 21:02:56+00', '''/us/podcast/remap-radio/id1690437343'':106B ''0'':125B ''00'':126B ''01'':176B,184B,189B,193B,198B,205B,211B ''02'':217B ''05'':218B ''06'':129B ''13'':130B,132B ''16'':137B,152B ''18'':177B ''19'':138B ''20'':144B,207B ''23'':170B,185B ''25'':133B,190B ''28'':151B,163B ''29'':200B ''31'':154B ''33'':195B ''35'':158B,194B ''38'':162B ''39'':167B ''40'':199B ''42'':213B ''46'':166B ''47'':145B ''48'':159B,206B ''49'':191B ''50'':169B ''55'':219B ''57'':178B ''58'':186B ''59'':155B,212B ''9000'':165B ''actual'':41B ''aksun'':82B ''anoth'':21B ''anymor'':143B ''around'':45B ''askun'':153B ''audienc'':110B ''board'':203B ''boston'':127B ''brand'':94B ''brand-new'':93B ''bucket'':222B ''bunch'':68B ''buy'':97B,173B ''carr'':135B ''chia'':30B,65B ''codemast'':216B ''command'':161B ''consid'':120B ''content'':118B ''continu'':115B ''cool'':71B ''crimson'':196B ''demonschool'':74B ''demonschool/a'':146B ''derek'':134B ''desert'':197B ''discuss'':124B ''dri'':182B ''drown'':180B ''east'':6A,35B,142B ''etern'':188B ''europa'':208B ''excit'':92B ''floor'':48B ''fretless'':75B,192B ''game'':72B,81B,204B ''good'':84B,147B ''grimdark'':77B ''gunnrunn'':168B ''hank'':179B ''help'':113B ''hotel'':25B ''in-person'':16B,55B ''includ'':73B ''intro'':131B ''labyrinth'':157B ''land'':183B ''live'':3A,8B ''love'':187B ''make'':116B ''man'':80B ''missil'':160B ''new'':95B,171B ''night'':85B,148B ''one'':20B ''pac'':79B ''pac-man'':78B ''patrick'':28B,63B ''pax'':5A,34B,141B ''person'':18B,57B ''play'':66B ''pleas'':119B ''plus'':90B ''podcast'':103B ''podcasts.apple.com'':105B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':104B ''question'':221B ''radio'':2A,61B,108B ''record'':14B,53B ''remap'':1A,60B,107B ''rest'':87B,150B ''retir'':136B ''rob'':23B,27B ''room'':26B ''segment'':96B,172B ''sell'':99B,175B ''sens'':11B ''shadow'':156B ''show'':47B ''sit'':50B ''spent'':42B ''subscrib'':100B,121B ''support'':111B ''talk'':128B ''tariff'':201B ''though'':36B ''time'':43B ''travel'':32B ''two'':38B ''universali'':209B ''us'':40B,114B ''v'':210B ''vctv'':164B ''version'':58B ''wander'':44B ''well'':7B ''wrc'':214B ''www.remapradio.com'':123B', false, 'PT2H23M37S', 'https://i.ytimg.com/vi/YTv-9MqBf0I/maxresdefault.jpg'),
+	('8q8fDHZRNJY', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 1-2 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
+
+We got Imran Khan, Bailey Meyers, Tyler Gardner, Mike Vayatta, and Adam Cole on the couch! We chat about Table Top games, the state of Games Journalism, Firebreak, and being a wrestler! 
+
+Thanks to our friends at Annapurna Interactive for presenting this stream!
+
+Thanks to Young Horses for their support of Giant Bomb @ Nite! Bugsnax VR is out now, go play it!
+Sign up for the Young Horses newsletter here: 
+http://eepurl.com/g5DUzTAnd check out their Steam page! https://store.steampowered.com/developer/younghorses/ 
+#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/8q8fDHZRNJY/mqdefault.jpg', '2025-06-11 21:00:09+00', '''-2'':10A ''/developer/younghorses/'':120B ''/g5duztand'':112B ''1'':9A ''adam'':51B ''angel'':21B ''annapurna'':13A,77B ''around'':30B ''bailey'':44B ''bomb'':2A,92B ''bugsnax'':94B ''chat'':57B ''check'':113B ''cole'':52B ''couch'':18B,55B ''eepurl.com'':111B ''eepurl.com/g5duztand'':110B ''firebreak'':67B ''found'':16B ''friend'':27B,75B ''game'':61B,65B ''gardner'':47B ''get'':25B ''giant'':1A,91B ''giantbomb'':123B ''go'':99B ''got'':41B ''hang'':34B ''hors'':86B,107B ''imran'':42B ''industri'':32B ''interact'':14A,78B ''journal'':66B ''khan'':43B ''los'':20B ''meyer'':45B ''mike'':48B ''newslett'':108B ''nite'':3A,8A,93B ''page'':117B ''play'':100B ''present'':11A,80B ''re'':24B ''sgf'':121B ''sign'':102B ''state'':63B ''steam'':116B ''store.steampowered.com'':119B ''store.steampowered.com/developer/younghorses/'':118B ''stream'':82B ''summergamefest'':122B ''support'':89B ''tabl'':59B ''thank'':72B,83B ''top'':60B ''tyler'':46B ''vayatta'':49B ''villa'':7A,39B ''vr'':95B ''warfram'':6A,38B ''wrestler'':71B ''young'':85B,106B', false, 'PT25M40S', 'https://i.ytimg.com/vi/8q8fDHZRNJY/maxresdefault.jpg'),
+	('Uoya8Lg8MpM', 'giantbomb', 'Does Clair Obscur: Expedition 33 Have a Leveling Problem? | Giant Bombcast 893: Uncle Baby', 'We got one more podcast before we head down to Los Angeles for Summer Game Fest! This week we talk about Mikey finishing up Clair Obscur, our time running around in Elden Ring: Nightreign, Hell is Us, and a bit of Lushfoil Photography Sim. We also chat about the hottest news like their being Nintendo Switch 2 reviews, IO Interactive showing off multiple games this week, a State of Play popping off tomorrow, and more news and emails! 
+
+#bombcast #giantbombcast #giantbomb', 'https://i.ytimg.com/vi/Uoya8Lg8MpM/mqdefault.jpg', '2025-06-03 18:40:56+00', '''2'':71B ''33'':5A ''893'':12A ''also'':60B ''angel'':26B ''around'':44B ''babi'':14A ''bit'':54B ''bombcast'':11A,93B ''chat'':61B ''clair'':2A,39B ''elden'':46B ''email'':92B ''expedit'':4A ''fest'':30B ''finish'':37B ''game'':29B,78B ''giant'':10A ''giantbomb'':95B ''giantbombcast'':94B ''got'':16B ''head'':22B ''hell'':49B ''hottest'':64B ''interact'':74B ''io'':73B ''level'':8A ''like'':66B ''los'':25B ''lushfoil'':56B ''mikey'':36B ''multipl'':77B ''news'':65B,90B ''nightreign'':48B ''nintendo'':69B ''obscur'':3A,40B ''one'':17B ''photographi'':57B ''play'':84B ''podcast'':19B ''pop'':85B ''problem'':9A ''review'':72B ''ring'':47B ''run'':43B ''show'':75B ''sim'':58B ''state'':82B ''summer'':28B ''switch'':70B ''talk'':34B ''time'':42B ''tomorrow'':87B ''uncl'':13A ''us'':51B ''week'':32B,80B', false, 'PT2H18M41S', 'https://i.ytimg.com/vi/Uoya8Lg8MpM/maxresdefault.jpg'),
+	('HwDGJTBWEZU', 'giantbomb', 'Randy Pitchford''s Comments on Borderlands 4''s Pricing | Game Mess Mornings 05/21/25', 'Jeff Grubb is joined by Jon Martin to chat about how Randy Pitchford feels about a prospective price of the next Borderlands game, the latest Circana reports, Senua''s Saga II headed to PS5, DOOM: The Dark Ages reaching 3 million players, and even more!
+
+Support Giant Bomb by going to:
+giantbomb.com/join
+
+#gmm #gamemessmornings #giantbomb', 'https://i.ytimg.com/vi/HwDGJTBWEZU/mqdefault.jpg', '2025-05-21 16:03:44+00', '''/join'':67B ''05/21/25'':13A ''3'':53B ''4'':7A ''age'':51B ''bomb'':61B ''borderland'':6A,35B ''chat'':22B ''circana'':39B ''comment'':4A ''dark'':50B ''doom'':48B ''even'':57B ''feel'':27B ''game'':10A,36B ''gamemessmorn'':69B ''giant'':60B ''giantbomb'':70B ''giantbomb.com'':66B ''giantbomb.com/join'':65B ''gmm'':68B ''go'':63B ''grubb'':15B ''head'':45B ''ii'':44B ''jeff'':14B ''join'':17B ''jon'':19B ''latest'':38B ''martin'':20B ''mess'':11A ''million'':54B ''morn'':12A ''next'':34B ''pitchford'':2A,26B ''player'':55B ''price'':9A,31B ''prospect'':30B ''ps5'':47B ''randi'':1A,25B ''reach'':52B ''report'':40B ''saga'':43B ''senua'':41B ''support'':59B', false, 'PT58M49S', 'https://i.ytimg.com/vi/HwDGJTBWEZU/maxresdefault.jpg'),
+	('vJq8lHcbbig', 'remap', 'Hands-Off Impressions With Resident Evil 9', 'Janet and Patrick watched a theater presentation that promised Resident Evil 9 would be returning the series to its roots. But didn''t we just do that with Resident Evil 7? And what is there for people who aren''t enthused by games where you''re constantly being chased?
+
+What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/vJq8lHcbbig/mqdefault.jpg', '2025-06-18 14:01:25+00', '''/us/podcast/remap-radio/id1690437343'':79B ''7'':39B ''9'':8A,20B ''aren'':47B ''audienc'':83B ''chase'':57B ''consid'':93B ''constant'':55B ''content'':91B ''continu'':88B ''didn'':30B ''enthus'':49B ''episod'':69B ''evil'':7A,19B,38B ''full'':68B ''game'':51B ''hand'':2A ''hands-off'':1A ''help'':86B ''impress'':4A ''janet'':9B ''listen'':61B ''make'':89B ''patrick'':11B ''peopl'':45B ''pleas'':92B ''podcast'':76B ''podcasts.apple.com'':78B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':77B ''present'':15B ''promis'':17B ''radio'':72B,81B ''re'':54B,60B ''remap'':71B,80B ''resid'':6A,18B,37B ''return'':23B ''root'':28B ''segment'':65B ''seri'':25B ''subscrib'':73B,94B ''support'':84B ''theater'':14B ''us'':87B ''watch'':12B ''would'':21B ''www.remapradio.com'':96B', false, 'PT25M54S', 'https://i.ytimg.com/vi/vJq8lHcbbig/maxresdefault.jpg'),
+	('cm607zMf3qQ', 'remap', 'A New Genre Has Been Invented: Lore and Logic', 'We''re still refining what it means to mash up a puzzle game with a Metroidvania. MetroidBrania? Well, we''ve got a new idea from a listener: lore and logic. What do you think?
+
+What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/cm607zMf3qQ/mqdefault.jpg', '2025-06-18 14:00:54+00', '''/us/podcast/remap-radio/id1690437343'':65B ''audienc'':69B ''consid'':79B ''content'':77B ''continu'':74B ''episod'':55B ''full'':54B ''game'':22B ''genr'':3A ''got'':30B ''help'':72B ''idea'':33B ''invent'':6A ''listen'':36B,47B ''logic'':9A,39B ''lore'':7A,37B ''make'':75B ''mash'':18B ''mean'':16B ''metroidbrania'':26B ''metroidvania'':25B ''new'':2A,32B ''pleas'':78B ''podcast'':62B ''podcasts.apple.com'':64B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':63B ''puzzl'':21B ''radio'':58B,67B ''re'':11B,46B ''refin'':13B ''remap'':57B,66B ''segment'':51B ''still'':12B ''subscrib'':59B,80B ''support'':70B ''think'':43B ''us'':73B ''ve'':29B ''well'':27B ''www.remapradio.com'':82B', false, 'PT10M56S', 'https://i.ytimg.com/vi/cm607zMf3qQ/maxresdefault.jpg'),
+	('WSl1a3RBzME', 'remap', 'Hey Friends, Does Metroid + Puzzles = MetroidBrainia?', 'We continue to walk down a Metroidvania genre discussion rabbit hole by acknowledging we forgot about the "soulsborne" term, but then pivot to a bigger question: is "MetroidBrania" a thing?
+
+What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/WSl1a3RBzME/mqdefault.jpg', '2025-06-11 14:00:49+00', '''/us/podcast/remap-radio/id1690437343'':58B ''acknowledg'':19B ''audienc'':62B ''bigger'':31B ''consid'':72B ''content'':70B ''continu'':8B,67B ''discuss'':15B ''episod'':48B ''forgot'':21B ''friend'':2A ''full'':47B ''genr'':14B ''help'':65B ''hey'':1A ''hole'':17B ''listen'':40B ''make'':68B ''metroid'':4A ''metroidbrainia'':6A ''metroidbrania'':34B ''metroidvania'':13B ''pivot'':28B ''pleas'':71B ''podcast'':55B ''podcasts.apple.com'':57B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':56B ''puzzl'':5A ''question'':32B ''rabbit'':16B ''radio'':51B,60B ''re'':39B ''remap'':50B,59B ''segment'':44B ''soulsborn'':24B ''subscrib'':52B,73B ''support'':63B ''term'':25B ''thing'':36B ''us'':66B ''walk'':10B ''www.remapradio.com'':75B', false, 'PT34M53S', 'https://i.ytimg.com/vi/WSl1a3RBzME/maxresdefault.jpg'),
+	('vEpjiZYVSEs', 'remap', '80 For Brady Is a Shockingly Underrated Movie', 'My Turn returns to the realm of sports movies with 80 for Brady, the based-on-a-true story of a group of elderly women who get into escalating shenanigans when they decide to go to the Super Bowl to watch their favorite player, Tom Brady, play. What at first seems like a run of the mill comedy with an all-star cast ends up touching on some heavy subject matter in a touching and charming way. And then Tom Brady is also there. 
+
+This podcast is a segment from My Turn, a subscriber-only Remap podcast about movies that have tangential relationships to one another.
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/vEpjiZYVSEs/mqdefault.jpg', '2025-05-23 14:01:27+00', '''80'':1A,19B ''all-star'':70B ''also'':93B ''anoth'':117B ''audienc'':121B ''base'':24B ''based-on-a-tru'':23B ''bowl'':48B ''bradi'':3A,21B,55B,91B ''cast'':73B ''charm'':86B ''comedi'':67B ''consid'':131B ''content'':129B ''continu'':126B ''decid'':42B ''elder'':33B ''end'':74B ''escal'':38B ''favorit'':52B ''first'':59B ''get'':36B ''go'':44B ''group'':31B ''heavi'':79B ''help'':124B ''like'':61B ''make'':127B ''matter'':81B ''mill'':66B ''movi'':8A,17B,110B ''one'':116B ''play'':56B ''player'':53B ''pleas'':130B ''podcast'':96B,108B ''radio'':119B ''realm'':14B ''relationship'':114B ''remap'':107B,118B ''return'':11B ''run'':63B ''seem'':60B ''segment'':99B ''shenanigan'':39B ''shock'':6A ''sport'':16B ''star'':72B ''stori'':28B ''subject'':80B ''subscrib'':105B,132B ''subscriber-on'':104B ''super'':47B ''support'':122B ''tangenti'':113B ''tom'':54B,90B ''touch'':76B,84B ''true'':27B ''turn'':10B,102B ''underr'':7A ''us'':125B ''watch'':50B ''way'':87B ''women'':34B ''www.remapradio.com'':134B', false, 'PT19M33S', 'https://i.ytimg.com/vi/vEpjiZYVSEs/maxresdefault.jpg'),
+	('pD4V43tNU5k', 'nextlander', 'Vinny''s Big Not-E3 Roundup Review!', 'A lot has happened and I''m sure there is still a lot we can discover together!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/pD4V43tNU5k/mqdefault.jpg', '2025-06-10 00:42:36+00', '''/nextlander'':34B ''big'':3A ''communiti'':31B ''discov'':24B ''e3'':6A ''happen'':12B ''lot'':10B,21B ''m'':15B ''nextland'':26B ''not-e3'':4A ''review'':8A ''roundup'':7A ''still'':19B ''support'':28B ''sure'':16B ''thank'':35B ''togeth'':25B ''vinni'':1A ''watch'':37B ''www.patreon.com'':33B ''www.patreon.com/nextlander'':32B', false, 'PT3H45M33S', 'https://i.ytimg.com/vi/pD4V43tNU5k/maxresdefault.jpg'),
+	('JFUpy023mgE', 'remap', 'Celebrating Remap''s 2nd Birthday With an All-Day Stream', 'We''ve somehow made it two years into this wild project, so come join Rob, Patrick, and Cado as they play a variety of games to celebrate two years as an independent media company!
+
+Timestamps:
+00:05:14 — POPUCOM
+01:38:27 — Hopshot
+02:45:12 — HAELE 3D - Feet Poses Pro 
+02:56:36 — Baccarat
+03:04:45 — Pokertown: Cheater''s Paradise
+03:21:31 — Lunch Break
+04:04:06 — Elden Ring: Nightreign
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/JFUpy023mgE/mqdefault.jpg', '2025-06-04 02:57:21+00', '''00'':47B ''01'':51B ''02'':55B,63B ''03'':67B,74B ''04'':68B,79B,80B ''05'':48B ''06'':81B ''12'':57B ''14'':49B ''21'':75B ''27'':53B ''2nd'':4A ''31'':76B ''36'':65B ''38'':52B ''3d'':59B ''45'':56B,69B ''56'':64B ''all-day'':8A ''audienc'':88B ''baccarat'':66B ''birthday'':5A ''break'':78B ''cado'':29B ''celebr'':1A,38B ''cheater'':71B ''come'':24B ''compani'':45B ''consid'':98B ''content'':96B ''continu'':93B ''day'':10A ''elden'':82B ''feet'':60B ''game'':36B ''hael'':58B ''help'':91B ''hopshot'':54B ''independ'':43B ''join'':25B ''lunch'':77B ''made'':15B ''make'':94B ''media'':44B ''nightreign'':84B ''paradis'':73B ''patrick'':27B ''play'':32B ''pleas'':97B ''pokertown'':70B ''popucom'':50B ''pose'':61B ''pro'':62B ''project'':22B ''radio'':86B ''remap'':2A,85B ''ring'':83B ''rob'':26B ''somehow'':14B ''stream'':11A ''subscrib'':99B ''support'':89B ''timestamp'':46B ''two'':17B,39B ''us'':92B ''varieti'':34B ''ve'':13B ''wild'':21B ''www.remapradio.com'':101B ''year'':18B,40B', false, 'PT6H51M55S', 'https://i.ytimg.com/vi/JFUpy023mgE/maxresdefault.jpg'),
+	('UZvdQtpJRJ8', 'giantbomb', 'The Hundred Line is a Danganropa X Fire Emblem? | Giant Bombcast 887: Burgertory', 'There''s a new Oblivion game and we recapped the news that came from the Bethesda stream this morning, we chat about how The Hundred Line: Defense Academy is extremely up our alley, some older SNES games, the Lunar Collection, and even more hot news and game talk this week on the Giant Bombcast.
+
+#podcast #giantbomb #giantbombcast', 'https://i.ytimg.com/vi/UZvdQtpJRJ8/mqdefault.jpg', '2025-04-22 18:27:11+00', '''887'':12A ''academi'':41B ''alley'':46B ''bethesda'':29B ''bombcast'':11A,67B ''burgertori'':13A ''came'':26B ''chat'':34B ''collect'':53B ''danganropa'':6A ''defens'':40B ''emblem'':9A ''even'':55B ''extrem'':43B ''fire'':8A ''game'':19B,50B,60B ''giant'':10A,66B ''giantbomb'':69B ''giantbombcast'':70B ''hot'':57B ''hundr'':2A,38B ''line'':3A,39B ''lunar'':52B ''morn'':32B ''new'':17B ''news'':24B,58B ''oblivion'':18B ''older'':48B ''podcast'':68B ''recap'':22B ''snes'':49B ''stream'':30B ''talk'':61B ''week'':63B ''x'':7A', false, 'PT2H6M23S', 'https://i.ytimg.com/vi/UZvdQtpJRJ8/maxresdefault.jpg'),
+	('tva1CsRWxA0', 'remap', 'Steam Vent Returns to Gay Frogs and Jump Scares', 'You turn away for one second and an evil witch gets you out of nowhere, huh?
+
+Timestamps:
+00:03:04 — Hopshop
+00:39:22 — Silverpine Creek
+00:58:20 — A Game About Mowing Your Lawn
+01:18:15 — Level Devil
+01:31:39 — Paper 2: Origami Unfolded
+02:02:36 – The Gallery
+02:20:24 — Tick Hop
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/tva1CsRWxA0/mqdefault.jpg', '2025-03-25 22:23:34+00', '''00'':27B,31B,36B ''01'':45B,50B ''02'':57B,58B,62B ''03'':28B ''04'':29B ''15'':47B ''18'':46B ''2'':54B ''20'':38B,63B ''22'':33B ''24'':64B ''31'':51B ''36'':59B ''39'':32B,52B ''58'':37B ''audienc'':70B ''away'':12B ''consid'':80B ''content'':78B ''continu'':75B ''creek'':35B ''devil'':49B ''evil'':18B ''frog'':6A ''galleri'':61B ''game'':40B ''gay'':5A ''get'':20B ''help'':73B ''hop'':66B ''hopshop'':30B ''huh'':25B ''jump'':8A ''lawn'':44B ''level'':48B ''make'':76B ''mow'':42B ''nowher'':24B ''one'':14B ''origami'':55B ''paper'':53B ''pleas'':79B ''radio'':68B ''remap'':67B ''return'':3A ''scare'':9A ''second'':15B ''silverpin'':34B ''steam'':1A ''subscrib'':81B ''support'':71B ''tick'':65B ''timestamp'':26B ''turn'':11B ''unfold'':56B ''us'':74B ''vent'':2A ''witch'':19B ''www.remapradio.com'':83B', false, 'PT2H41M46S', 'https://i.ytimg.com/vi/tva1CsRWxA0/maxresdefault.jpg'),
+	('rfMntjiyYgk', 'nextlander', 'Mario Kart World and the Switch 2 are Here!', 'Alex got his Switch 2, so let''s boot this thing up and play the game(s) that are currently available!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/rfMntjiyYgk/mqdefault.jpg', '2025-06-06 20:52:29+00', '''/nextlander'':37B ''2'':7A,12B ''alex'':8B ''avail'':28B ''boot'':16B ''communiti'':34B ''current'':27B ''game'':23B ''got'':9B ''kart'':2A ''let'':14B ''mario'':1A ''nextland'':29B ''play'':21B ''support'':31B ''switch'':6A,11B ''thank'':38B ''thing'':18B ''watch'':40B ''world'':3A ''www.patreon.com'':36B ''www.patreon.com/nextlander'':35B', false, 'PT2H27M23S', 'https://i.ytimg.com/vi/rfMntjiyYgk/maxresdefault.jpg'),
+	('w8PmznjJN9s', 'nextlander', 'May the Fort Be Nite You', 'The Star Wars Fortnite season is almost over, and by God, Brad''s got skins to show off!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/w8PmznjJN9s/mqdefault.jpg', '2025-06-02 23:18:50+00', '''/nextlander'':32B ''almost'':12B ''brad'':17B ''communiti'':29B ''fort'':3A ''fortnit'':9B ''god'':16B ''got'':19B ''may'':1A ''nextland'':24B ''nite'':5A ''season'':10B ''show'':22B ''skin'':20B ''star'':7B ''support'':26B ''thank'':33B ''war'':8B ''watch'':35B ''www.patreon.com'':31B ''www.patreon.com/nextlander'':30B', false, 'PT2H19M33S', 'https://i.ytimg.com/vi/w8PmznjJN9s/maxresdefault.jpg'),
+	('P2wR9HADfHo', 'nextlander', 'Patron''s Choice for April 2025: Vinny Tries The Last Express for the First Time!', 'Our patrons voted to see Vinny dig into a classic adventure for the first time!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/P2wR9HADfHo/mqdefault.jpg', '2025-04-25 22:24:52+00', '''/nextlander'':39B ''2025'':6A ''adventur'':26B ''april'':5A ''choic'':3A ''classic'':25B ''communiti'':36B ''dig'':22B ''express'':11A ''first'':14A,29B ''last'':10A ''nextland'':31B ''patron'':1A,17B ''see'':20B ''support'':33B ''thank'':40B ''time'':15A,30B ''tri'':8A ''vinni'':7A,21B ''vote'':18B ''watch'':42B ''www.patreon.com'':38B ''www.patreon.com/nextlander'':37B', false, 'PT2H19M43S', 'https://i.ytimg.com/vi/P2wR9HADfHo/maxresdefault.jpg');
 
 
 --
@@ -64828,352 +64829,352 @@ INSERT INTO "public"."playlist_videos" ("playlist_id", "video_id", "id", "video_
 	(1000249, 'jf5XJ96HtUY', 10415, 1191),
 	(1000249, 'uwrevvpfgyQ', 10416, 1192),
 	(1000249, 'IH4QOcSAqLM', 10417, 1193),
-	(1000354, 'pyOGB-RTjDo', 10418, 1),
-	(1000354, '-7OvdeDgJUo', 10419, 2),
-	(1000354, '5z1MYHh0Ct0', 10420, 3),
-	(1000355, 'qjan6CRSd8Q', 10421, 1),
-	(1000355, 'UftM1dA4JcY', 10422, 2),
-	(1000355, 'pBato9wzRmU', 10423, 3),
-	(1000355, 'cRjMIbJJvAc', 10424, 4),
-	(1000355, '_laXHoQgGcs', 10425, 5),
-	(1000355, '8QJYYuj7AHA', 10426, 6),
-	(1000355, 'VOft5gfNqBA', 10427, 7),
-	(1000355, 'E0Sg-5GyMdA', 10428, 8),
-	(1000356, '1hsGeMGPR7M', 10429, 1),
-	(1000356, 'pgWLLSqYP0s', 10430, 2),
-	(1000356, 'MqLIBQAO6Qk', 10431, 3),
-	(1000356, 'M8I8GE2VdTE', 10432, 4),
-	(1000356, '7tniW9HrHTE', 10433, 5),
-	(1000356, 'S5PP-NJ7X5A', 10434, 6),
-	(1000356, '3nFn-uT5g_k', 10435, 7),
-	(1000356, 'SI7eHKCP1us', 10436, 8),
-	(1000357, 'pX70BWGkpo8', 10437, 1),
-	(1000357, '3QMmGzBWlos', 10438, 2),
-	(1000357, 'RLKATwQ71Bo', 10439, 3),
-	(1000357, 'IRB63wwspDk', 10440, 4),
-	(1000357, 'qnviqCUpIpU', 10441, 5),
-	(1000357, 'pUgLOSZSqVA', 10442, 6),
-	(1000357, '-g4Ze4qMeS4', 10443, 7),
-	(1000357, '83M1WtP0eGc', 10444, 8),
-	(1000357, 'VbeA-R7-BjE', 10445, 9),
-	(1000357, 'ldHDOkIi59I', 10446, 10),
-	(1000357, '4NA0c5b0_nQ', 10447, 11),
-	(1000357, 'oOhCPK6lUbs', 10448, 12),
-	(1000357, 'FFt0-rcnmHI', 10449, 13),
-	(1000358, '-iDJxDweQTs', 10450, 1),
-	(1000358, 'GMLixLYqUBg', 10451, 2),
-	(1000358, 'BonZ6vZ2gQU', 10452, 3),
-	(1000358, 'xrjqqpfEXyU', 10453, 4),
-	(1000359, 'HwSQAQCDxNg', 10454, 1),
-	(1000359, 'gm9x0s0NVnI', 10455, 2),
-	(1000359, 'sd_IAaVWrKk', 10456, 3),
-	(1000359, 'xvI4KLABlGY', 10457, 4),
-	(1000359, 'w7__8jN9zf8', 10458, 5),
-	(1000359, 'nK9LCvyvBKM', 10459, 6),
-	(1000359, 'S6Sb-NkpqmI', 10460, 7),
-	(1000359, 'XkO1QMb74vw', 10461, 8),
-	(1000359, 'lQO-wBPa7IU', 10462, 9),
-	(1000359, 'NNKfcw9lzPc', 10463, 10),
-	(1000359, 'W_aIURreD2c', 10464, 11),
-	(1000360, 'Giakz6_7K3o', 10465, 1),
-	(1000360, 'eJ_ztsHPKpk', 10466, 2),
-	(1000360, 'RuIqjds9gok', 10467, 3),
-	(1000360, 'HTI8ElVl40A', 10468, 4),
-	(1000360, 'AbSp-oYZd6E', 10469, 5),
-	(1000360, 'tOZigZjqaJ4', 10470, 6),
-	(1000360, 'aj_FOBNMorU', 10471, 7),
-	(1000360, 'Rl-Xq9RrCGw', 10472, 8),
-	(1000360, 'SVJfgUCJLWo', 10473, 9),
-	(1000360, 'VHscUiF0R8Y', 10474, 10),
-	(1000360, 'oiB-2Ty5hVM', 10475, 11),
-	(1000360, '3xEk3BKs7Tw', 10476, 12),
-	(1000360, 'ZQbswSagSnU', 10477, 13),
-	(1000360, '5aUucp8arjE', 10478, 14),
-	(1000360, '-P0VM8XYMjQ', 10479, 15),
-	(1000360, 'J7kj-fSiEwQ', 10480, 16),
-	(1000360, '26ZRPYhwWjc', 10481, 17),
-	(1000360, 'P6bG2Lx8djo', 10482, 18),
-	(1000360, 'UKYCvf8ZNV4', 10483, 19),
-	(1000360, 'hI4v8NHUTZs', 10484, 20),
-	(1000360, 'ASvtI0L4a98', 10485, 21),
-	(1000360, 'KrSwAMfVTi4', 10486, 22),
-	(1000360, 'OmFXQNIIlr8', 10487, 23),
-	(1000360, '7-xVy8vaIzA', 10488, 24),
-	(1000360, 'Te3vEbYcpmM', 10489, 25),
-	(1000360, 'jMK88zmwJCA', 10490, 26),
-	(1000360, 'jGcJOkKDOdg', 10491, 27),
-	(1000360, '0vi-cKziluE', 10492, 28),
-	(1000360, 'R8ybLnUh-fU', 10493, 29),
-	(1000360, '7fZRKHcROA8', 10494, 30),
-	(1000360, 'qj448dJ2EFA', 10495, 31),
-	(1000361, '_UcO02Imywo', 10496, 1),
-	(1000361, '4eUo41GPU4k', 10497, 2),
-	(1000361, 'yvMdbcPPdJA', 10498, 3),
-	(1000361, 'iDUR_d_L6Ko', 10499, 4),
-	(1000361, 'Z0oYtMw_IMk', 10500, 5),
-	(1000361, 'zHYV9yoOW0w', 10501, 6),
-	(1000361, 'QuVNi5w6PRo', 10502, 7),
-	(1000361, 'xcIdCC9jO_M', 10503, 8),
-	(1000361, 'J93hqrlVB4I', 10504, 9),
-	(1000362, 'bc7PK7kjeRA', 10505, 1),
-	(1000362, '-Iq8BQids_c', 10506, 2),
-	(1000362, 'IAQVnEk8XdM', 10507, 3),
-	(1000362, 'ABPKVZ8E7Hc', 10508, 4),
-	(1000362, 'WEN0f4naY9M', 10509, 5),
-	(1000362, 'ExhzisDTiFk', 10510, 6),
-	(1000362, 'tFJmLnuIOB8', 10511, 7),
-	(1000362, '7ePeuYU3mv8', 10512, 8),
-	(1000362, '9rXGDmPJ_5M', 10513, 9),
-	(1000362, 'zdNeVik28nM', 10514, 10),
-	(1000362, '6HVo1koWsyE', 10515, 11),
-	(1000362, '5RQlRklbOSQ', 10516, 12),
-	(1000362, 's6RcrF0l3eM', 10517, 13),
-	(1000362, 'xrkAXwz7qvs', 10518, 14),
-	(1000363, 'GA9bh7O9U8M', 10519, 1),
-	(1000363, 'uOFZYbYljGs', 10520, 2),
-	(1000363, 'QAf0KQJSNpY', 10521, 3),
-	(1000363, 'WaeamXTd4PE', 10522, 4),
-	(1000363, 'NeODoYzErVA', 10523, 5),
-	(1000363, '9Sdylp9jWlM', 10524, 6),
-	(1000364, 'SHJqt6H4vD0', 10525, 1),
-	(1000364, 'VVDN9sYiFa4', 10526, 2),
-	(1000364, 'M-VfNEgpnfo', 10527, 3),
-	(1000364, 'snEDSLIFBRc', 10528, 4),
-	(1000364, 'bVEKUyxbSao', 10529, 5),
-	(1000364, '6LmiLtclxqo', 10530, 6),
-	(1000364, 'WmE8e-ieYKc', 10531, 7),
-	(1000364, 'Dhq8S71ud7k', 10532, 8),
-	(1000364, 'AuFDLLlmRJ0', 10533, 9),
-	(1000364, 'I0H0pw4J0lQ', 10534, 10),
-	(1000364, '2WMWv8YUHKY', 10535, 11),
-	(1000364, 'huMuAKGRCh0', 10536, 12),
-	(1000364, 'xKYLqyJ7pVk', 10537, 13),
-	(1000364, 'T14zhc7ZElU', 10538, 14),
-	(1000364, 'AnFX9dB4zPo', 10539, 15),
-	(1000364, 'lBc66blnBT0', 10540, 16),
-	(1000364, 'pZkYF267lgY', 10541, 17),
-	(1000364, 'vT8N3O3ztVk', 10542, 18),
-	(1000364, 'K4H_tb-ZDHI', 10543, 19),
-	(1000364, '69c-VR6gpP8', 10544, 20),
-	(1000364, '6__VfJtcan0', 10545, 21),
-	(1000364, 'lTUiQ4zxUvY', 10546, 22),
-	(1000364, '5Y2RAX_JMOU', 10547, 23),
-	(1000364, 'uN4tLgu2q8Y', 10548, 24),
-	(1000364, 'gqnVx9AzjX0', 10549, 25),
-	(1000364, 'KDTQCEeJYn8', 10550, 26),
-	(1000364, '4hgIO_p7Lj4', 10551, 27),
-	(1000364, 'jV9UoZJIAS8', 10552, 28),
-	(1000364, 'BhUif42tbnA', 10553, 29),
-	(1000364, 'zgiwD0VSYuM', 10554, 30),
-	(1000364, 'iIuDchymM7c', 10555, 31),
-	(1000364, 'eOC4dWIBMxI', 10556, 32),
-	(1000364, 'a6w4FV-DI1M', 10557, 33),
-	(1000364, 'hYLFcUPRQ00', 10558, 34),
-	(1000364, 'z6XO7mz0lr0', 10559, 35),
-	(1000364, 'fmYFYc9WOaw', 10560, 36),
-	(1000364, 'UUsJKH6CZPc', 10561, 37),
-	(1000364, 'ge7T3WNBRII', 10562, 38),
-	(1000364, 's_L-mkOvWKg', 10563, 39),
-	(1000364, '5eUi6njX5kM', 10564, 40),
-	(1000364, 'Oebp6mERSyI', 10565, 41),
-	(1000365, 'pP9AEDxh2H8', 10566, 1),
-	(1000365, 'ADmsAY0AmZA', 10567, 2),
-	(1000365, 'QHcHoI2aCw0', 10568, 3),
-	(1000365, '4IsYc6xeab0', 10569, 4),
-	(1000366, 'xgRrTeHgC30', 10570, 1),
-	(1000366, '3O181J1e-nA', 10571, 2),
-	(1000366, 'czx8bEt2oP8', 10572, 3),
-	(1000366, 'oEEVKefMkUM', 10573, 4),
-	(1000366, 'q-ElFEOjlm8', 10574, 5),
-	(1000366, 'AyNlSQ_7rc0', 10575, 6),
-	(1000366, 'LsQDMe2ItSs', 10576, 7),
-	(1000366, 'HN-XfeHTAnI', 10577, 8),
-	(1000366, 'ItuK31kEvFQ', 10578, 9),
-	(1000366, 'kz2ObOOhnyc', 10579, 10),
-	(1000366, 'bX7vQRQRWk0', 10580, 11),
-	(1000366, 'AXh95Ly_-qs', 10581, 12),
-	(1000366, 'Eep_GXq1gR0', 10582, 13),
-	(1000366, 'BKv-ijkT2nA', 10583, 14),
-	(1000366, '-txksXKm-IU', 10584, 15),
-	(1000366, 'q4vLp6R7Fp8', 10585, 16),
-	(1000366, 'bzTDIm_9Szc', 10586, 17),
-	(1000366, '_nTCA4yZYis', 10587, 18),
-	(1000366, 'nkGTYrNrLN4', 10588, 19),
-	(1000366, 'ielW8h9UJQE', 10589, 20),
-	(1000366, '-oPHNykJd04', 10590, 21),
-	(1000366, '_sdcsdvnME0', 10591, 22),
-	(1000366, 'zvuK32QwJgE', 10592, 23),
-	(1000366, 'KIZpWLLUhEk', 10593, 24),
-	(1000366, 'bUaWOpkbn4Y', 10594, 25),
-	(1000366, 'aXkeB8z0np8', 10595, 26),
-	(1000366, 'V5Mgv9i4KEM', 10596, 27),
-	(1000366, 'LEy6xnVx5h8', 10597, 28),
-	(1000366, 'iqSAxh6OxM0', 10598, 29),
-	(1000366, 'jZOtCoKn8ik', 10599, 30),
-	(1000366, 'V8ct9n6GY0Y', 10600, 31),
-	(1000366, '9OuFY0gk4e4', 10601, 32),
-	(1000366, '18iSqGDG-34', 10602, 33),
-	(1000366, 'PRA46sh60ic', 10603, 34),
-	(1000366, '1Urx8umsRPM', 10604, 35),
-	(1000366, 'T8VybQ5q124', 10605, 36),
-	(1000366, 'Ugff1M-dOHM', 10606, 37),
-	(1000367, '7fL5BytkNTg', 10608, 1),
-	(1000367, 'x6fR0JS5t7I', 10609, 2),
-	(1000367, 'wCxNBJ3AONU', 10610, 3),
-	(1000367, 'LDOr_EcBCCk', 10611, 4),
-	(1000367, 'NLZDMR7pzdU', 10612, 5),
-	(1000367, 'qfbf1DpwBv4', 10613, 6),
-	(1000367, 'yf3G8YrDjDk', 10614, 7),
-	(1000367, 'rOsEL8S3rUI', 10615, 8),
-	(1000368, 'aXkeB8z0np8', 10616, 1),
-	(1000368, 'cunWJvRFwEE', 10617, 2),
-	(1000368, 'ocXVM3_W_5U', 10618, 3),
-	(1000368, 'RsoM3-pKiHs', 10619, 4),
-	(1000368, 'Pr0ZlSZA8Cg', 10620, 5),
-	(1000368, 'KaYgh4d4RVs', 10621, 6),
-	(1000368, 'WY632KcInVY', 10622, 7),
-	(1000369, 'TOVxhZ-NGLA', 10623, 1),
-	(1000369, '7gVCldbCkFY', 10624, 2),
-	(1000369, 'RqEHAmwdQqo', 10625, 3),
-	(1000369, 'q9EhZORLJwY', 10626, 4),
-	(1000370, '6GAcrrNyGbs', 10627, 1),
-	(1000370, 'ZMQchRoKkDI', 10628, 2),
-	(1000370, 'o-lcoHS1X4w', 10629, 3),
-	(1000370, '_mvh55LHLZ4', 10630, 4),
-	(1000370, 'YV9liLeUeY8', 10631, 5),
-	(1000370, 'OlPLWJ2LUFU', 10632, 6),
-	(1000370, 'Qi6NguPc3PM', 10633, 7),
-	(1000370, '-TMHPQp2VpI', 10634, 8),
-	(1000370, 'nWY-vXndWbo', 10635, 9),
-	(1000370, 'tuJ6zCzWqB8', 10636, 10),
-	(1000371, 'O24BnQglOhk', 10637, 1),
-	(1000371, 'jL-PGu2iomY', 10638, 2),
-	(1000371, '6ou9L6RgNdY', 10639, 3),
-	(1000371, 'kH-y4FKaDLg', 10640, 4),
-	(1000371, 'JnZ8tEcjAqs', 10641, 5),
-	(1000371, 'vY5JG2I0OzU', 10642, 6),
-	(1000371, 'qT5eYW6ggXo', 10643, 7),
-	(1000371, 'BwjoZ4UGzqs', 10644, 8),
-	(1000371, 'FuMZEQT01wg', 10645, 9),
-	(1000371, 'QFAvsENIJMU', 10646, 10),
-	(1000371, 'Xj5dUZRpnz8', 10647, 11),
-	(1000371, 'sw-mTBomzKg', 10648, 12),
-	(1000371, 'zUJd6TBLpxc', 10649, 13),
-	(1000371, '_zW3vsR8YL0', 10650, 14),
-	(1000371, 'EGIPVd_VMvA', 10651, 15),
-	(1000372, 'DRHRmaQgNVc', 10652, 1),
-	(1000372, 'aN9Jg4lZRKM', 10653, 2),
-	(1000372, 'GYu3uSkXRjA', 10654, 3),
-	(1000372, 'zgdXD7Imgcg', 10655, 4),
-	(1000372, 'ZXZDXFBLMi0', 10656, 5),
-	(1000372, 'U3n4mOsUkVg', 10657, 6),
-	(1000372, 'BcrfMUiqO4E', 10658, 7),
-	(1000372, 'lBpIugQM264', 10659, 8),
-	(1000372, 'ovw9sZRV4aw', 10660, 9),
-	(1000372, 'FQ_cTh5pSwk', 10661, 10),
-	(1000372, 'eGQFRt5WHCo', 10662, 11),
-	(1000372, '9TqEFCJcBCk', 10663, 12),
-	(1000372, 'r5BgiNCiGs8', 10664, 13),
-	(1000372, 'VUjazu-Uk6o', 10665, 14),
-	(1000372, 'Glc0fy_5nzY', 10666, 15),
-	(1000372, 'hfp7vFLzzJg', 10667, 16),
-	(1000372, 'xtiiFWP8yJk', 10668, 17),
-	(1000372, 'GYq1F5eh0H4', 10669, 18),
-	(1000372, 'P6i-h6VsUVI', 10670, 19),
-	(1000372, 'lDAtsyewCoE', 10671, 20),
-	(1000372, 'nq4GjP6JNUk', 10672, 21),
-	(1000372, 'yGITS4qDEkk', 10673, 22),
-	(1000372, 'vh2t8q1lcJ0', 10674, 23),
-	(1000372, 'zWGBXBZ6yHU', 10675, 24),
-	(1000373, 'IkQRaVOhb3E', 10676, 1),
-	(1000373, 'IZVy9QdR9vc', 10677, 2),
-	(1000373, '3Vi2P_O8SXQ', 10678, 3),
-	(1000373, 'BNRAc64Giq8', 10679, 4),
-	(1000373, 'Hu65JQbBlI0', 10680, 5),
-	(1000374, 'c_d8FIhGTh0', 10681, 1),
-	(1000374, 'GRBEu0ixTck', 10682, 2),
-	(1000374, '9EgB2BNWFCU', 10683, 3),
-	(1000374, 'wHfcCQ04ZIc', 10684, 4),
-	(1000374, 'MukesiVtCSE', 10685, 5),
-	(1000374, 'yNrhVCfQGD8', 10686, 6),
-	(1000375, '5Vib_197Un0', 10687, 1),
-	(1000375, 'pHYnTWqHiiM', 10688, 2),
-	(1000375, 'WhQPNmLGobA', 10689, 3),
-	(1000375, '60PPPX0mnlw', 10690, 4),
-	(1000375, 'r9U2F3gt-vk', 10691, 5),
-	(1000375, 'vi4ROe4RGn0', 10692, 6),
-	(1000376, 'pQHqogxVzJU', 10693, 1),
-	(1000376, '6mjes33PvDI', 10694, 2),
-	(1000376, 'i_2JLHcAmVI', 10695, 3),
-	(1000376, 'hGDwBYUWwGE', 10696, 4),
-	(1000376, 'HLhEBqdG03g', 10697, 5),
-	(1000376, 'kR7T_xAbwvE', 10698, 6),
-	(1000376, '4Kfa_WOklFc', 10699, 7),
-	(1000377, 'b4Yj47vIFuU', 10700, 1),
-	(1000377, 'PFcPpF1WaJw', 10701, 2),
-	(1000377, '2X9PdcdCm54', 10702, 3),
-	(1000377, '73s5_s_TLNA', 10703, 4),
-	(1000377, 'yyEYtZGGgNU', 10704, 5),
-	(1000377, 'Iu4MEqZCCLU', 10705, 6),
-	(1000377, 'itagdsjvjW8', 10706, 7),
-	(1000377, 'SvGvHV1t-dk', 10707, 8),
-	(1000377, '_ojOc1xY-TE', 10708, 9),
-	(1000377, 'gnvcjb9Yy5Y', 10709, 10),
-	(1000377, 'X2U3mCBUCrM', 10710, 11),
-	(1000378, 'wsFUb9PQbuI', 10711, 1),
-	(1000378, 'RrbZjCL0jdk', 10712, 2),
-	(1000378, '0X1CdEisZ-I', 10713, 3),
-	(1000378, '8zRBEYaaxrY', 10714, 4),
-	(1000378, 'zdAvw8ZA_Wc', 10715, 5),
-	(1000378, 'oddDSqaP3JI', 10716, 6),
-	(1000378, 'UmC9xFIc4l0', 10717, 7),
-	(1000378, 'bGLIrb8FFIc', 10718, 8),
-	(1000378, '-diq1IV-s_o', 10719, 9),
-	(1000378, '-QfLTBIANoM', 10720, 10),
-	(1000378, 'ZJ0Y4DX27Jc', 10721, 11),
-	(1000378, 'VQJi3T_M14M', 10722, 12),
-	(1000378, '5621Of6IPZA', 10723, 13),
-	(1000378, '5q4pJb7oxhs', 10724, 14),
-	(1000378, 'ltogFXQhDK4', 10725, 15),
-	(1000378, 'RVQuU2Rr2gw', 10726, 16),
-	(1000378, 'YyV3LSV2Oio', 10727, 17),
-	(1000378, 'WRHkFPDxZh4', 10728, 18),
-	(1000378, 'xlrbVuCYbDQ', 10729, 19),
-	(1000378, 'zwzWLKdvkks', 10730, 20),
-	(1000378, 'iaYPLtkDzCA', 10731, 21),
-	(1000378, 'Mkg2Pl7N9L4', 10732, 22),
-	(1000378, 'RZFvcRY4ssw', 10733, 23),
-	(1000378, 'OAQOe_Lumbo', 10734, 24),
-	(1000378, 'mLQslVJok0k', 10735, 25),
-	(1000378, 'wu80Hv74oLI', 10736, 26),
-	(1000378, 'u6v3k2mYeas', 10737, 27),
-	(1000379, '22FMR5wMz2o', 10739, 1),
-	(1000379, 'B6HL4awSMXE', 10740, 2),
-	(1000379, 'VI9zMQCayGU', 10741, 3),
-	(1000379, 'y35g4URtZ-A', 10742, 4),
-	(1000380, '1Pn0MafWCxA', 10743, 1),
-	(1000380, 'wYm3ZIi0_lA', 10744, 2),
-	(1000380, 'f74SAE7nUCU', 10745, 3),
-	(1000380, 'F1tLL25wDtI', 10746, 4),
-	(1000380, '6Di6RDB4eTw', 10747, 5),
-	(1000380, '7qEgv7AiTts', 10748, 6),
-	(1000380, 'NSdmuK2MkCk', 10749, 7),
-	(1000381, 'YgXg06521Zc', 10750, 1),
-	(1000381, 'ifJ0Pzx0v78', 10751, 2),
-	(1000381, '1FBfEg1qIU0', 10752, 3),
-	(1000381, 'lAdMTl60cAw', 10753, 4),
-	(1000381, '2cW5LAhG5T4', 10754, 5),
-	(1000381, '3hIHC7Eteso', 10755, 6),
-	(1000381, 't5Gr_MhFmnI', 10756, 7),
-	(1000381, 'o41Bi4e8Ldk', 10757, 8),
-	(1000381, 'zv86fSgWQ8I', 10758, 9),
-	(1000381, '7BkOHHb9DNc', 10759, 10),
-	(1000381, 'U50q6-HkB2c', 10760, 11),
-	(1000381, 'LIRb_LewV_8', 10761, 12),
-	(1000381, 'rAHmEFn_X7g', 10762, 13),
-	(1000381, 'KeStrsVf4so', 10763, 14),
-	(1000381, '4FqAKeqlGXI', 10764, 15),
-	(1000381, '4cJD-P1FW7M', 10765, 16);
+	(1000466, 'pyOGB-RTjDo', 11810, 1),
+	(1000466, '-7OvdeDgJUo', 11811, 2),
+	(1000466, '5z1MYHh0Ct0', 11812, 3),
+	(1000467, 'qjan6CRSd8Q', 11813, 1),
+	(1000467, 'UftM1dA4JcY', 11814, 2),
+	(1000467, 'pBato9wzRmU', 11815, 3),
+	(1000467, 'cRjMIbJJvAc', 11816, 4),
+	(1000467, '_laXHoQgGcs', 11817, 5),
+	(1000467, '8QJYYuj7AHA', 11818, 6),
+	(1000467, 'VOft5gfNqBA', 11819, 7),
+	(1000467, 'E0Sg-5GyMdA', 11820, 8),
+	(1000468, '1hsGeMGPR7M', 11821, 1),
+	(1000468, 'pgWLLSqYP0s', 11822, 2),
+	(1000468, 'MqLIBQAO6Qk', 11823, 3),
+	(1000468, 'M8I8GE2VdTE', 11824, 4),
+	(1000468, '7tniW9HrHTE', 11825, 5),
+	(1000468, 'S5PP-NJ7X5A', 11826, 6),
+	(1000468, '3nFn-uT5g_k', 11827, 7),
+	(1000468, 'SI7eHKCP1us', 11828, 8),
+	(1000469, 'pX70BWGkpo8', 11829, 1),
+	(1000469, '3QMmGzBWlos', 11830, 2),
+	(1000469, 'RLKATwQ71Bo', 11831, 3),
+	(1000469, 'IRB63wwspDk', 11832, 4),
+	(1000469, 'qnviqCUpIpU', 11833, 5),
+	(1000469, 'pUgLOSZSqVA', 11834, 6),
+	(1000469, '-g4Ze4qMeS4', 11835, 7),
+	(1000469, '83M1WtP0eGc', 11836, 8),
+	(1000469, 'VbeA-R7-BjE', 11837, 9),
+	(1000469, 'ldHDOkIi59I', 11838, 10),
+	(1000469, '4NA0c5b0_nQ', 11839, 11),
+	(1000469, 'oOhCPK6lUbs', 11840, 12),
+	(1000469, 'FFt0-rcnmHI', 11841, 13),
+	(1000470, '-iDJxDweQTs', 11842, 1),
+	(1000470, 'GMLixLYqUBg', 11843, 2),
+	(1000470, 'BonZ6vZ2gQU', 11844, 3),
+	(1000470, 'xrjqqpfEXyU', 11845, 4),
+	(1000471, 'HwSQAQCDxNg', 11846, 1),
+	(1000471, 'gm9x0s0NVnI', 11847, 2),
+	(1000471, 'sd_IAaVWrKk', 11848, 3),
+	(1000471, 'xvI4KLABlGY', 11849, 4),
+	(1000471, 'w7__8jN9zf8', 11850, 5),
+	(1000471, 'nK9LCvyvBKM', 11851, 6),
+	(1000471, 'S6Sb-NkpqmI', 11852, 7),
+	(1000471, 'XkO1QMb74vw', 11853, 8),
+	(1000471, 'lQO-wBPa7IU', 11854, 9),
+	(1000471, 'NNKfcw9lzPc', 11855, 10),
+	(1000471, 'W_aIURreD2c', 11856, 11),
+	(1000472, 'Giakz6_7K3o', 11857, 1),
+	(1000472, 'eJ_ztsHPKpk', 11858, 2),
+	(1000472, 'RuIqjds9gok', 11859, 3),
+	(1000472, 'HTI8ElVl40A', 11860, 4),
+	(1000472, 'AbSp-oYZd6E', 11861, 5),
+	(1000472, 'tOZigZjqaJ4', 11862, 6),
+	(1000472, 'aj_FOBNMorU', 11863, 7),
+	(1000472, 'Rl-Xq9RrCGw', 11864, 8),
+	(1000472, 'SVJfgUCJLWo', 11865, 9),
+	(1000472, 'VHscUiF0R8Y', 11866, 10),
+	(1000472, 'oiB-2Ty5hVM', 11867, 11),
+	(1000472, '3xEk3BKs7Tw', 11868, 12),
+	(1000472, 'ZQbswSagSnU', 11869, 13),
+	(1000472, '5aUucp8arjE', 11870, 14),
+	(1000472, '-P0VM8XYMjQ', 11871, 15),
+	(1000472, 'J7kj-fSiEwQ', 11872, 16),
+	(1000472, '26ZRPYhwWjc', 11873, 17),
+	(1000472, 'P6bG2Lx8djo', 11874, 18),
+	(1000472, 'UKYCvf8ZNV4', 11875, 19),
+	(1000472, 'hI4v8NHUTZs', 11876, 20),
+	(1000472, 'ASvtI0L4a98', 11877, 21),
+	(1000472, 'KrSwAMfVTi4', 11878, 22),
+	(1000472, 'OmFXQNIIlr8', 11879, 23),
+	(1000472, '7-xVy8vaIzA', 11880, 24),
+	(1000472, 'Te3vEbYcpmM', 11881, 25),
+	(1000472, 'jMK88zmwJCA', 11882, 26),
+	(1000472, 'jGcJOkKDOdg', 11883, 27),
+	(1000472, '0vi-cKziluE', 11884, 28),
+	(1000472, 'R8ybLnUh-fU', 11885, 29),
+	(1000472, '7fZRKHcROA8', 11886, 30),
+	(1000472, 'qj448dJ2EFA', 11887, 31),
+	(1000473, '_UcO02Imywo', 11888, 1),
+	(1000473, '4eUo41GPU4k', 11889, 2),
+	(1000473, 'yvMdbcPPdJA', 11890, 3),
+	(1000473, 'iDUR_d_L6Ko', 11891, 4),
+	(1000473, 'Z0oYtMw_IMk', 11892, 5),
+	(1000473, 'zHYV9yoOW0w', 11893, 6),
+	(1000473, 'QuVNi5w6PRo', 11894, 7),
+	(1000473, 'xcIdCC9jO_M', 11895, 8),
+	(1000473, 'J93hqrlVB4I', 11896, 9),
+	(1000474, 'bc7PK7kjeRA', 11897, 1),
+	(1000474, '-Iq8BQids_c', 11898, 2),
+	(1000474, 'IAQVnEk8XdM', 11899, 3),
+	(1000474, 'ABPKVZ8E7Hc', 11900, 4),
+	(1000474, 'WEN0f4naY9M', 11901, 5),
+	(1000474, 'ExhzisDTiFk', 11902, 6),
+	(1000474, 'tFJmLnuIOB8', 11903, 7),
+	(1000474, '7ePeuYU3mv8', 11904, 8),
+	(1000474, '9rXGDmPJ_5M', 11905, 9),
+	(1000474, 'zdNeVik28nM', 11906, 10),
+	(1000474, '6HVo1koWsyE', 11907, 11),
+	(1000474, '5RQlRklbOSQ', 11908, 12),
+	(1000474, 's6RcrF0l3eM', 11909, 13),
+	(1000474, 'xrkAXwz7qvs', 11910, 14),
+	(1000475, 'GA9bh7O9U8M', 11911, 1),
+	(1000475, 'uOFZYbYljGs', 11912, 2),
+	(1000475, 'QAf0KQJSNpY', 11913, 3),
+	(1000475, 'WaeamXTd4PE', 11914, 4),
+	(1000475, 'NeODoYzErVA', 11915, 5),
+	(1000475, '9Sdylp9jWlM', 11916, 6),
+	(1000476, 'SHJqt6H4vD0', 11917, 1),
+	(1000476, 'VVDN9sYiFa4', 11918, 2),
+	(1000476, 'M-VfNEgpnfo', 11919, 3),
+	(1000476, 'snEDSLIFBRc', 11920, 4),
+	(1000476, 'bVEKUyxbSao', 11921, 5),
+	(1000476, '6LmiLtclxqo', 11922, 6),
+	(1000476, 'WmE8e-ieYKc', 11923, 7),
+	(1000476, 'Dhq8S71ud7k', 11924, 8),
+	(1000476, 'AuFDLLlmRJ0', 11925, 9),
+	(1000476, 'I0H0pw4J0lQ', 11926, 10),
+	(1000476, '2WMWv8YUHKY', 11927, 11),
+	(1000476, 'huMuAKGRCh0', 11928, 12),
+	(1000476, 'xKYLqyJ7pVk', 11929, 13),
+	(1000476, 'T14zhc7ZElU', 11930, 14),
+	(1000476, 'AnFX9dB4zPo', 11931, 15),
+	(1000476, 'lBc66blnBT0', 11932, 16),
+	(1000476, 'pZkYF267lgY', 11933, 17),
+	(1000476, 'vT8N3O3ztVk', 11934, 18),
+	(1000476, 'K4H_tb-ZDHI', 11935, 19),
+	(1000476, '69c-VR6gpP8', 11936, 20),
+	(1000476, '6__VfJtcan0', 11937, 21),
+	(1000476, 'lTUiQ4zxUvY', 11938, 22),
+	(1000476, '5Y2RAX_JMOU', 11939, 23),
+	(1000476, 'uN4tLgu2q8Y', 11940, 24),
+	(1000476, 'gqnVx9AzjX0', 11941, 25),
+	(1000476, 'KDTQCEeJYn8', 11942, 26),
+	(1000476, '4hgIO_p7Lj4', 11943, 27),
+	(1000476, 'jV9UoZJIAS8', 11944, 28),
+	(1000476, 'BhUif42tbnA', 11945, 29),
+	(1000476, 'zgiwD0VSYuM', 11946, 30),
+	(1000476, 'iIuDchymM7c', 11947, 31),
+	(1000476, 'eOC4dWIBMxI', 11948, 32),
+	(1000476, 'a6w4FV-DI1M', 11949, 33),
+	(1000476, 'hYLFcUPRQ00', 11950, 34),
+	(1000476, 'z6XO7mz0lr0', 11951, 35),
+	(1000476, 'fmYFYc9WOaw', 11952, 36),
+	(1000476, 'UUsJKH6CZPc', 11953, 37),
+	(1000476, 'ge7T3WNBRII', 11954, 38),
+	(1000476, 's_L-mkOvWKg', 11955, 39),
+	(1000476, '5eUi6njX5kM', 11956, 40),
+	(1000476, 'Oebp6mERSyI', 11957, 41),
+	(1000477, 'pP9AEDxh2H8', 11958, 1),
+	(1000477, 'ADmsAY0AmZA', 11959, 2),
+	(1000477, 'QHcHoI2aCw0', 11960, 3),
+	(1000477, '4IsYc6xeab0', 11961, 4),
+	(1000478, 'xgRrTeHgC30', 11962, 1),
+	(1000478, '3O181J1e-nA', 11963, 2),
+	(1000478, 'czx8bEt2oP8', 11964, 3),
+	(1000478, 'oEEVKefMkUM', 11965, 4),
+	(1000478, 'q-ElFEOjlm8', 11966, 5),
+	(1000478, 'AyNlSQ_7rc0', 11967, 6),
+	(1000478, 'LsQDMe2ItSs', 11968, 7),
+	(1000478, 'HN-XfeHTAnI', 11969, 8),
+	(1000478, 'ItuK31kEvFQ', 11970, 9),
+	(1000478, 'kz2ObOOhnyc', 11971, 10),
+	(1000478, 'bX7vQRQRWk0', 11972, 11),
+	(1000478, 'AXh95Ly_-qs', 11973, 12),
+	(1000478, 'Eep_GXq1gR0', 11974, 13),
+	(1000478, 'BKv-ijkT2nA', 11975, 14),
+	(1000478, '-txksXKm-IU', 11976, 15),
+	(1000478, 'q4vLp6R7Fp8', 11977, 16),
+	(1000478, 'bzTDIm_9Szc', 11978, 17),
+	(1000478, '_nTCA4yZYis', 11979, 18),
+	(1000478, 'nkGTYrNrLN4', 11980, 19),
+	(1000478, 'ielW8h9UJQE', 11981, 20),
+	(1000478, '-oPHNykJd04', 11982, 21),
+	(1000478, '_sdcsdvnME0', 11983, 22),
+	(1000478, 'zvuK32QwJgE', 11984, 23),
+	(1000478, 'KIZpWLLUhEk', 11985, 24),
+	(1000478, 'bUaWOpkbn4Y', 11986, 25),
+	(1000478, 'aXkeB8z0np8', 11987, 26),
+	(1000478, 'V5Mgv9i4KEM', 11988, 27),
+	(1000478, 'LEy6xnVx5h8', 11989, 28),
+	(1000478, 'iqSAxh6OxM0', 11990, 29),
+	(1000478, 'jZOtCoKn8ik', 11991, 30),
+	(1000478, 'V8ct9n6GY0Y', 11992, 31),
+	(1000478, '9OuFY0gk4e4', 11993, 32),
+	(1000478, '18iSqGDG-34', 11994, 33),
+	(1000478, 'PRA46sh60ic', 11995, 34),
+	(1000478, '1Urx8umsRPM', 11996, 35),
+	(1000478, 'T8VybQ5q124', 11997, 36),
+	(1000478, 'Ugff1M-dOHM', 11998, 37),
+	(1000479, '7fL5BytkNTg', 12000, 1),
+	(1000479, 'x6fR0JS5t7I', 12001, 2),
+	(1000479, 'wCxNBJ3AONU', 12002, 3),
+	(1000479, 'LDOr_EcBCCk', 12003, 4),
+	(1000479, 'NLZDMR7pzdU', 12004, 5),
+	(1000479, 'qfbf1DpwBv4', 12005, 6),
+	(1000479, 'yf3G8YrDjDk', 12006, 7),
+	(1000479, 'rOsEL8S3rUI', 12007, 8),
+	(1000480, 'aXkeB8z0np8', 12008, 1),
+	(1000480, 'cunWJvRFwEE', 12009, 2),
+	(1000480, 'ocXVM3_W_5U', 12010, 3),
+	(1000480, 'RsoM3-pKiHs', 12011, 4),
+	(1000480, 'Pr0ZlSZA8Cg', 12012, 5),
+	(1000480, 'KaYgh4d4RVs', 12013, 6),
+	(1000480, 'WY632KcInVY', 12014, 7),
+	(1000481, 'TOVxhZ-NGLA', 12015, 1),
+	(1000481, '7gVCldbCkFY', 12016, 2),
+	(1000481, 'RqEHAmwdQqo', 12017, 3),
+	(1000481, 'q9EhZORLJwY', 12018, 4),
+	(1000482, '6GAcrrNyGbs', 12019, 1),
+	(1000482, 'ZMQchRoKkDI', 12020, 2),
+	(1000482, 'o-lcoHS1X4w', 12021, 3),
+	(1000482, '_mvh55LHLZ4', 12022, 4),
+	(1000482, 'YV9liLeUeY8', 12023, 5),
+	(1000482, 'OlPLWJ2LUFU', 12024, 6),
+	(1000482, 'Qi6NguPc3PM', 12025, 7),
+	(1000482, '-TMHPQp2VpI', 12026, 8),
+	(1000482, 'nWY-vXndWbo', 12027, 9),
+	(1000482, 'tuJ6zCzWqB8', 12028, 10),
+	(1000483, 'O24BnQglOhk', 12029, 1),
+	(1000483, 'jL-PGu2iomY', 12030, 2),
+	(1000483, '6ou9L6RgNdY', 12031, 3),
+	(1000483, 'kH-y4FKaDLg', 12032, 4),
+	(1000483, 'JnZ8tEcjAqs', 12033, 5),
+	(1000483, 'vY5JG2I0OzU', 12034, 6),
+	(1000483, 'qT5eYW6ggXo', 12035, 7),
+	(1000483, 'BwjoZ4UGzqs', 12036, 8),
+	(1000483, 'FuMZEQT01wg', 12037, 9),
+	(1000483, 'QFAvsENIJMU', 12038, 10),
+	(1000483, 'Xj5dUZRpnz8', 12039, 11),
+	(1000483, 'sw-mTBomzKg', 12040, 12),
+	(1000483, 'zUJd6TBLpxc', 12041, 13),
+	(1000483, '_zW3vsR8YL0', 12042, 14),
+	(1000483, 'EGIPVd_VMvA', 12043, 15),
+	(1000484, 'DRHRmaQgNVc', 12044, 1),
+	(1000484, 'aN9Jg4lZRKM', 12045, 2),
+	(1000484, 'GYu3uSkXRjA', 12046, 3),
+	(1000484, 'zgdXD7Imgcg', 12047, 4),
+	(1000484, 'ZXZDXFBLMi0', 12048, 5),
+	(1000484, 'U3n4mOsUkVg', 12049, 6),
+	(1000484, 'BcrfMUiqO4E', 12050, 7),
+	(1000484, 'lBpIugQM264', 12051, 8),
+	(1000484, 'ovw9sZRV4aw', 12052, 9),
+	(1000484, 'FQ_cTh5pSwk', 12053, 10),
+	(1000484, 'eGQFRt5WHCo', 12054, 11),
+	(1000484, '9TqEFCJcBCk', 12055, 12),
+	(1000484, 'r5BgiNCiGs8', 12056, 13),
+	(1000484, 'VUjazu-Uk6o', 12057, 14),
+	(1000484, 'Glc0fy_5nzY', 12058, 15),
+	(1000484, 'hfp7vFLzzJg', 12059, 16),
+	(1000484, 'xtiiFWP8yJk', 12060, 17),
+	(1000484, 'GYq1F5eh0H4', 12061, 18),
+	(1000484, 'P6i-h6VsUVI', 12062, 19),
+	(1000484, 'lDAtsyewCoE', 12063, 20),
+	(1000484, 'nq4GjP6JNUk', 12064, 21),
+	(1000484, 'yGITS4qDEkk', 12065, 22),
+	(1000484, 'vh2t8q1lcJ0', 12066, 23),
+	(1000484, 'zWGBXBZ6yHU', 12067, 24),
+	(1000485, 'IkQRaVOhb3E', 12068, 1),
+	(1000485, 'IZVy9QdR9vc', 12069, 2),
+	(1000485, '3Vi2P_O8SXQ', 12070, 3),
+	(1000485, 'BNRAc64Giq8', 12071, 4),
+	(1000485, 'Hu65JQbBlI0', 12072, 5),
+	(1000486, 'c_d8FIhGTh0', 12073, 1),
+	(1000486, 'GRBEu0ixTck', 12074, 2),
+	(1000486, '9EgB2BNWFCU', 12075, 3),
+	(1000486, 'wHfcCQ04ZIc', 12076, 4),
+	(1000486, 'MukesiVtCSE', 12077, 5),
+	(1000486, 'yNrhVCfQGD8', 12078, 6),
+	(1000487, '5Vib_197Un0', 12079, 1),
+	(1000487, 'pHYnTWqHiiM', 12080, 2),
+	(1000487, 'WhQPNmLGobA', 12081, 3),
+	(1000487, '60PPPX0mnlw', 12082, 4),
+	(1000487, 'r9U2F3gt-vk', 12083, 5),
+	(1000487, 'vi4ROe4RGn0', 12084, 6),
+	(1000488, 'pQHqogxVzJU', 12085, 1),
+	(1000488, '6mjes33PvDI', 12086, 2),
+	(1000488, 'i_2JLHcAmVI', 12087, 3),
+	(1000488, 'hGDwBYUWwGE', 12088, 4),
+	(1000488, 'HLhEBqdG03g', 12089, 5),
+	(1000488, 'kR7T_xAbwvE', 12090, 6),
+	(1000488, '4Kfa_WOklFc', 12091, 7),
+	(1000489, 'b4Yj47vIFuU', 12092, 1),
+	(1000489, 'PFcPpF1WaJw', 12093, 2),
+	(1000489, '2X9PdcdCm54', 12094, 3),
+	(1000489, '73s5_s_TLNA', 12095, 4),
+	(1000489, 'yyEYtZGGgNU', 12096, 5),
+	(1000489, 'Iu4MEqZCCLU', 12097, 6),
+	(1000489, 'itagdsjvjW8', 12098, 7),
+	(1000489, 'SvGvHV1t-dk', 12099, 8),
+	(1000489, '_ojOc1xY-TE', 12100, 9),
+	(1000489, 'gnvcjb9Yy5Y', 12101, 10),
+	(1000489, 'X2U3mCBUCrM', 12102, 11),
+	(1000490, 'wsFUb9PQbuI', 12103, 1),
+	(1000490, 'RrbZjCL0jdk', 12104, 2),
+	(1000490, '0X1CdEisZ-I', 12105, 3),
+	(1000490, '8zRBEYaaxrY', 12106, 4),
+	(1000490, 'zdAvw8ZA_Wc', 12107, 5),
+	(1000490, 'oddDSqaP3JI', 12108, 6),
+	(1000490, 'UmC9xFIc4l0', 12109, 7),
+	(1000490, 'bGLIrb8FFIc', 12110, 8),
+	(1000490, '-diq1IV-s_o', 12111, 9),
+	(1000490, '-QfLTBIANoM', 12112, 10),
+	(1000490, 'ZJ0Y4DX27Jc', 12113, 11),
+	(1000490, 'VQJi3T_M14M', 12114, 12),
+	(1000490, '5621Of6IPZA', 12115, 13),
+	(1000490, '5q4pJb7oxhs', 12116, 14),
+	(1000490, 'ltogFXQhDK4', 12117, 15),
+	(1000490, 'RVQuU2Rr2gw', 12118, 16),
+	(1000490, 'YyV3LSV2Oio', 12119, 17),
+	(1000490, 'WRHkFPDxZh4', 12120, 18),
+	(1000490, 'xlrbVuCYbDQ', 12121, 19),
+	(1000490, 'zwzWLKdvkks', 12122, 20),
+	(1000490, 'iaYPLtkDzCA', 12123, 21),
+	(1000490, 'Mkg2Pl7N9L4', 12124, 22),
+	(1000490, 'RZFvcRY4ssw', 12125, 23),
+	(1000490, 'OAQOe_Lumbo', 12126, 24),
+	(1000490, 'mLQslVJok0k', 12127, 25),
+	(1000490, 'wu80Hv74oLI', 12128, 26),
+	(1000490, 'u6v3k2mYeas', 12129, 27),
+	(1000491, '22FMR5wMz2o', 12131, 1),
+	(1000491, 'B6HL4awSMXE', 12132, 2),
+	(1000491, 'VI9zMQCayGU', 12133, 3),
+	(1000491, 'y35g4URtZ-A', 12134, 4),
+	(1000492, '1Pn0MafWCxA', 12135, 1),
+	(1000492, 'wYm3ZIi0_lA', 12136, 2),
+	(1000492, 'f74SAE7nUCU', 12137, 3),
+	(1000492, 'F1tLL25wDtI', 12138, 4),
+	(1000492, '6Di6RDB4eTw', 12139, 5),
+	(1000492, '7qEgv7AiTts', 12140, 6),
+	(1000492, 'NSdmuK2MkCk', 12141, 7),
+	(1000493, 'YgXg06521Zc', 12142, 1),
+	(1000493, 'ifJ0Pzx0v78', 12143, 2),
+	(1000493, '1FBfEg1qIU0', 12144, 3),
+	(1000493, 'lAdMTl60cAw', 12145, 4),
+	(1000493, '2cW5LAhG5T4', 12146, 5),
+	(1000493, '3hIHC7Eteso', 12147, 6),
+	(1000493, 't5Gr_MhFmnI', 12148, 7),
+	(1000493, 'o41Bi4e8Ldk', 12149, 8),
+	(1000493, 'zv86fSgWQ8I', 12150, 9),
+	(1000493, '7BkOHHb9DNc', 12151, 10),
+	(1000493, 'U50q6-HkB2c', 12152, 11),
+	(1000493, 'LIRb_LewV_8', 12153, 12),
+	(1000493, 'rAHmEFn_X7g', 12154, 13),
+	(1000493, 'KeStrsVf4so', 12155, 14),
+	(1000493, '4FqAKeqlGXI', 12156, 15),
+	(1000493, '4cJD-P1FW7M', 12157, 16);
 
 
 --
@@ -65181,9 +65182,7 @@ INSERT INTO "public"."playlist_videos" ("playlist_id", "video_id", "id", "video_
 --
 
 INSERT INTO "public"."profiles" ("id", "username", "sources", "content_description", "content_display") VALUES
-	('ff0372ae-ef14-402f-832f-af1fd1e49a11', NULL, '{giantbomb,nextlander,remap}', 'BRIEF', 'CAROUSEL'),
-	('49a5ecb2-8702-4719-a2cd-418fccbb93b2', NULL, '{giantbomb,nextlander,remap}', 'BRIEF', 'CAROUSEL'),
-	('8bf56330-7128-4231-8143-a165272d6790', NULL, '{giantbomb,nextlander,remap}', 'BRIEF', 'CAROUSEL');
+	('49c79727-f5b7-4cd8-b5ca-f005023b1f12', 'nextlander', '{giantbomb,nextlander,remap}', 'BRIEF', 'CAROUSEL');
 
 
 --
@@ -65239,14 +65238,14 @@ SELECT pg_catalog.setval('"auth"."refresh_tokens_id_seq"', 426, true);
 -- Name: playlist_videos_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('"public"."playlist_videos_id_seq"', 10765, true);
+SELECT pg_catalog.setval('"public"."playlist_videos_id_seq"', 12157, true);
 
 
 --
 -- Name: playlists_custom_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('"public"."playlists_custom_seq"', 1000381, true);
+SELECT pg_catalog.setval('"public"."playlists_custom_seq"', 1000493, true);
 
 
 --

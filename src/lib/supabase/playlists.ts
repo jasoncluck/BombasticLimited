@@ -1,9 +1,5 @@
 import { showNotification } from "$lib/stores/notification";
-import type {
-  PostgrestError,
-  Session,
-  SupabaseClient,
-} from "@supabase/supabase-js";
+import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json, Tables } from "./database.types";
 import { invalidate } from "$app/navigation";
 import {
@@ -19,6 +15,8 @@ export const PLAYLIST_VIDEO_LIMIT = 100;
 export type Playlist = Omit<Tables<"playlists">, "search_vector"> & {
   croppedImageUrlData?: Promise<string | undefined>;
 };
+
+export type ProfilePlaylist = Playlist & { profile_username: string };
 
 export type UserPlaylist = Omit<Tables<"user_playlists">, "user_id"> & Playlist;
 
@@ -54,11 +52,11 @@ export async function getPlaylistByShortId({
 }: {
   shortId: string;
   supabase: SupabaseClient<Database>;
-}): Promise<{ playlist: Playlist | null; error: PostgrestError | null }> {
+}) {
   const { data, error } = await supabase
-    .from("playlists")
-    .select("*")
-    .eq("short_id", shortId)
+    .rpc("get_playlist_by_short_id", {
+      p_short_id: shortId,
+    })
     .single();
 
   if (error || data) {
