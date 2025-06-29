@@ -37,29 +37,27 @@
       SOURCES.map((key) => [key, { lastViewedIndex: 0 }]),
     ) as CarouselsState,
   );
-  onMount(() => {
-    const playlistImageUrls = playlistSearchResults.map(async (p) => {
-      const imageUrl = await getCroppedPlaylistImageUrl({
-        imageProperties: p.image_properties,
-        thumbnailMaxResUrl: p.thumbnail_maxres_url,
-        thumbnailUrl: p.thumbnail_url,
-      });
-      return { id: p.id, imageUrl };
-    });
-    Promise.all(playlistImageUrls)
-      .then((results) => {
-        const imagesMap: Record<string, string | undefined> = {};
-        results.forEach(({ id, imageUrl }) => {
-          imagesMap[id] = imageUrl;
-        });
-        playlistImagesLoaded = true;
-        playlistImages = imagesMap;
-      })
-      .catch((error) => {
-        console.error("Error loading playlist images:", error);
-        playlistImagesLoaded = true; // Still mark as loaded so UI can render with fallbacks
-      });
-  });
+
+  let playlistImagesPromise = $derived(
+    playlistSearchResults && playlistSearchResults.length
+      ? Promise.all(
+          playlistSearchResults.map(async (p) => {
+            const imageUrl = await getCroppedPlaylistImageUrl({
+              imageProperties: p.image_properties,
+              thumbnailMaxResUrl: p.thumbnail_maxres_url,
+              thumbnailUrl: p.thumbnail_url,
+            });
+            return { id: p.id, imageUrl };
+          }),
+        ).then((results) => {
+          const imagesMap: Record<string, string | undefined> = {};
+          results.forEach(({ id, imageUrl }) => {
+            imagesMap[id] = imageUrl;
+          });
+          return imagesMap;
+        })
+      : Promise.resolve({}),
+  );
 </script>
 
 <div class="flex flex-col gap-3">
@@ -67,46 +65,50 @@
 
   <div class="flex flex-col gap-8">
     {#if playlistSearchResults.length > 0}
-      <div class="flex flex-col gap-3">
-        <a class="header-link" href={`/search/${searchString}/playlists`}
-          >Playlists</a
-        >
+      <div class="flex flex-col gap-3 mx-4">
+        <a class="header-link" href={`/search/${searchString}/playlists`}>
+          Playlists
+        </a>
 
-        <div class="w-[90%] grid grid-cols-3 gap-2">
-          {#each playlistSearchResults as playlist (playlist.id)}
-            <a
-              class="grid grid-cols-[4rem_1fr] p-3 gap-2 items-center hover:bg-secondary
+        <!-- Await the playlistImagesPromise -->
+        {#await playlistImagesPromise then playlistImages}
+          <div class="w-[90%] grid grid-cols-3 gap-2">
+            {#each playlistSearchResults as playlist (playlist.id)}
+              <a
+                class="grid grid-cols-[4rem_1fr] p-3 gap-2 items-center hover:bg-secondary
       transform ease-out transition-colors duration-150 cursor-pointer rounded"
-              href={`/playlist/${playlist.short_id}`}
-            >
-              {#if playlistImagesLoaded && playlistImages && playlistImages[playlist.id]}
-                <img
-                  src={playlistImages[playlist.id]}
-                  alt={playlist.name}
-                  class="w-full h-full max-w-16 max-h-16 object-cover rounded justify-self-center"
-                />
-              {:else}
-                <div
-                  class="h-12 w-12 flex items-center justify-center justify-self-center"
-                >
-                  <ListVideo class="!h-12 !w-12" />
-                </div>
-              {/if}
+                href={`/playlist/${playlist.short_id}`}
+              >
+                {#if playlistImages && playlistImages[playlist.id]}
+                  <img
+                    src={playlistImages[playlist.id]}
+                    alt={playlist.name}
+                    class="w-full h-full max-w-16 max-h-16 object-cover rounded justify-self-center"
+                  />
+                {:else}
+                  <div
+                    class="h-12 w-12 flex items-center justify-center justify-self-center"
+                  >
+                    <ListVideo class="!h-12 !w-12" />
+                  </div>
+                {/if}
 
-              <div class="min-w-0">
-                <p class="text-sm font-medium truncate text-clip mb-1">
-                  {playlist.name}
-                </p>
-                <p class="text-xs text-muted-foreground line-clamp-3">
-                  {playlist.description}
-                </p>
-              </div>
-            </a>
-          {/each}
-        </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-medium truncate text-clip mb-1">
+                    {playlist.name}
+                  </p>
+                  <p class="text-xs text-muted-foreground line-clamp-3">
+                    {playlist.description}
+                  </p>
+                </div>
+              </a>
+            {/each}
+          </div>
+        {/await}
       </div>
     {/if}
 
+    <!-- The rest of your content remains unchanged -->
     {#each SOURCES as source (source)}
       {#if sourceVideos[source].length > 0}
         <div class="flex flex-col bg-background-lighter gap-3">

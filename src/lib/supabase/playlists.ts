@@ -466,6 +466,75 @@ export async function updatePlaylistImage({
 
   return { updatedPlaylist, error: updateError };
 }
+
+export async function getPlaylistCreatorProfile({
+  playlist,
+  supabase,
+}: {
+  playlist: Playlist;
+  supabase: SupabaseClient<Database>;
+}) {
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select()
+    .eq("id", playlist.created_by)
+    .single();
+
+  if (error) {
+    console.error(
+      "Error occurred when trying to get the playlist creator profile.",
+      error,
+    );
+  }
+
+  return { profile, error };
+}
+
 export function isPlaylistVideo(video: Video): video is Video & PlaylistVideo {
   return !!video && "video_position" in video;
+}
+
+// Helper for checking plain objects
+function isRecord(val: unknown): val is Record<string, unknown> {
+  return typeof val === "object" && val !== null && !Array.isArray(val);
+}
+
+export function isPlaylist(obj: unknown): obj is Playlist {
+  return (
+    isRecord(obj) &&
+    typeof obj.id === "number" &&
+    typeof obj.created_at === "string" &&
+    typeof obj.created_by === "string" &&
+    (typeof obj.description === "string" || obj.description === null) &&
+    "image_properties" in obj && // Accepts any (Json)
+    typeof obj.name === "string" &&
+    typeof obj.short_id === "string" &&
+    (typeof obj.thumbnail_maxres_url === "string" ||
+      obj.thumbnail_maxres_url === null) &&
+    (typeof obj.thumbnail_url === "string" || obj.thumbnail_url === null) &&
+    typeof obj.type === "string" &&
+    typeof obj.updated_at === "string" &&
+    (typeof obj.youtube_id === "string" || obj.youtube_id === null)
+  );
+}
+
+export function isUserPlaylist(obj: unknown): obj is UserPlaylist {
+  return (
+    isRecord(obj) &&
+    typeof obj.id === "number" &&
+    (typeof obj.playlist_position === "number" ||
+      obj.playlist_position === null) &&
+    typeof obj.created_at === "string" &&
+    typeof obj.created_by === "string" &&
+    (typeof obj.description === "string" || obj.description === null) &&
+    "image_properties" in obj && // Accepts any (Json)
+    typeof obj.name === "string" &&
+    typeof obj.short_id === "string" &&
+    (typeof obj.thumbnail_maxres_url === "string" ||
+      obj.thumbnail_maxres_url === null) &&
+    (typeof obj.thumbnail_url === "string" || obj.thumbnail_url === null) &&
+    typeof obj.type === "string" &&
+    typeof obj.updated_at === "string" &&
+    (typeof obj.youtube_id === "string" || obj.youtube_id === null)
+  );
 }

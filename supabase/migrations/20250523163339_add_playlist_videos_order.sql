@@ -2,12 +2,18 @@ DROP POLICY IF EXISTS "Enable delete for authenticated users only" ON public.pla
 DROP POLICY IF EXISTS "Enable insert for authenticated users only" ON public.playlist_videos;
 DROP POLICY IF EXISTS "Enable read access for all users" ON public.playlist_videos;
 
-CREATE POLICY "Allow read access for public playlists" 
+-- Allow read access for public or official playlists
+CREATE POLICY "Allow read access for public or official playlists" 
 ON public.playlist_videos 
 FOR SELECT 
 TO authenticated, anon 
-USING (playlist_id IN (SELECT id FROM public.playlists WHERE type = 'Public'));
+USING (
+  playlist_id IN (
+    SELECT id FROM public.playlists WHERE type IN ('Public', 'Official')
+  )
+);
 
+-- Allow authenticated users to select playlist videos of their own playlists
 CREATE POLICY "Allow authenticated users to select playlist videos of their own playlists"
 ON public.playlist_videos
 FOR SELECT

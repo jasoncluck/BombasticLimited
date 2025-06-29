@@ -4,6 +4,8 @@
   import PlaylistHeader from "./playlist-header.svelte";
   import Content from "$lib/components/content/content.svelte";
   import type { Snapshot } from "@sveltejs/kit";
+  import { getCroppedPlaylistImageUrl } from "$lib/components/playlist/playlist-service";
+  import { onMount } from "svelte";
 
   const { data } = $props();
   const {
@@ -14,13 +16,28 @@
     currentPage,
     videos = [],
     videosCount,
+    playlistCreatorProfile,
     supabase,
     session,
     playlistDuration,
   } = $derived(data);
 
   const contentState = getContentState();
-  let playlistImageUrl = $derived(contentState.playlistImages[playlist.id]);
+
+  const userPlaylistImageUrl = $derived(
+    contentState.playlistImages[playlist.id],
+  );
+  let playlistImageUrlData = $state<Promise<string | undefined>>();
+
+  onMount(() => {
+    if (!userPlaylistImageUrl) {
+      playlistImageUrlData = getCroppedPlaylistImageUrl({
+        imageProperties: playlist.image_properties,
+        thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
+        thumbnailUrl: playlist.thumbnail_url,
+      });
+    }
+  });
 
   let showFloatingBreadcrumbs = $state(false);
 
@@ -41,21 +58,45 @@
 </script>
 
 <div class="flex flex-col grow relative">
-  <ImageCropper.Root src={playlistImageUrl}>
-    <PlaylistHeader
-      breadcrumbs={[{ label: playlist.name }]}
-      bind:showFloatingBreadcrumbs
-      {contentFilter}
-      {currentPage}
-      {form}
-      {playlist}
-      {playlists}
-      {playlistDuration}
-      videosCount={videosCount ?? 0}
-      {supabase}
-      {session}
-    />
-  </ImageCropper.Root>
+  {#if userPlaylistImageUrl}
+    <ImageCropper.Root src={userPlaylistImageUrl}>
+      <PlaylistHeader
+        breadcrumbs={[{ label: playlist.name }]}
+        bind:showFloatingBreadcrumbs
+        {contentFilter}
+        {currentPage}
+        {form}
+        {playlist}
+        playlistImageUrl={userPlaylistImageUrl}
+        {playlistCreatorProfile}
+        {playlists}
+        {playlistDuration}
+        videosCount={videosCount ?? 0}
+        {supabase}
+        {session}
+      />
+    </ImageCropper.Root>
+  {:else}
+    {#await playlistImageUrlData then playlistImageUrl}
+      <ImageCropper.Root src={playlistImageUrl}>
+        <PlaylistHeader
+          breadcrumbs={[{ label: playlist.name }]}
+          bind:showFloatingBreadcrumbs
+          {contentFilter}
+          {currentPage}
+          {form}
+          {playlist}
+          {playlistImageUrl}
+          {playlistCreatorProfile}
+          {playlists}
+          {playlistDuration}
+          videosCount={videosCount ?? 0}
+          {supabase}
+          {session}
+        />
+      </ImageCropper.Root>
+    {/await}
+  {/if}
 
   <Content
     {playlist}

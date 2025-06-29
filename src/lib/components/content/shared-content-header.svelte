@@ -15,6 +15,10 @@
   import { getNumberOfPages } from "./pagination/content-pagination";
   import { DEFAULT_NUM_VIDEOS_PAGINATION } from "$lib/supabase/videos";
   import type { ContentView } from "./content";
+  import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
+  import { handleDeletePlaylist } from "../playlist/playlist-service";
+  import { Ellipsis, Play } from "@lucide/svelte";
+  import { buttonVariants } from "../ui/button";
 
   interface SharedContentHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
@@ -22,6 +26,7 @@
     view: ContentView;
     contentFilter: CombinedContentFilter;
     playlists: Playlist[];
+    open: boolean;
     children: Snippet<[]>;
     playlist?: Playlist;
     videosCount: number;
@@ -33,6 +38,7 @@
   let {
     breadcrumbs,
     children,
+    open = $bindable(),
     view,
     contentFilter,
     playlist,
@@ -81,17 +87,45 @@
     >
       {@render children()}
     </div>
-    <div class="flex justify-between items-center">
-      <div class="flex items-center">
-        {#if playlist}{/if}
-      </div>
-    </div>
 
     <!-- Right side: ContentSelect and ContentFilters on same row -->
-    <hr class="border-1 m-2" />
-    <div class="flex justify-between mt-4">
+    <hr class="border-1 m-4" />
+    <div class="flex justify-between m-4 items-center gap-2">
+      {#if session && playlist}
+        <!-- Action row: move Ellipsis here -->
+        <Play size="30" />
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger
+            class={buttonVariants({
+              variant: "ghost",
+              class: "cursor-pointer ",
+              size: "icon",
+            })}
+          >
+            <Ellipsis size="16" />
+            <span class="sr-only">Playlist Actions</span>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content>
+            <DropdownMenu.Group>
+              <DropdownMenu.Item
+                class="cursor-pointer"
+                onclick={() => (open = true)}
+              >
+                Edit Playlist
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                class="cursor-pointer"
+                onclick={() =>
+                  handleDeletePlaylist({ playlist, supabase, session })}
+              >
+                Delete Playlist
+              </DropdownMenu.Item>
+            </DropdownMenu.Group>
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
+      {/if}
       {#if session}
-        <div class="mr-auto ml-4">
+        <div class="mr-auto">
           <ContentSelect
             {playlist}
             {playlists}
@@ -101,7 +135,7 @@
           />
         </div>
       {/if}
-      <div class="flex items-center gap-4 ml-auto mr-4">
+      <div class="flex items-center gap-4 ml-auto">
         <ContentFilters {contentFilter} {view} />
       </div>
     </div>

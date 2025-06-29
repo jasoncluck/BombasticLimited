@@ -174,7 +174,7 @@
     <DropdownMenu.Trigger
       class="cursor-pointer hover:text-primary flex items-center gap-1"
     >
-      <span class="text-xs">{sortOptionInfo.displayName}</span>
+      <span class="text-sm">{sortOptionInfo.displayName}</span>
       <List size={20} />
     </DropdownMenu.Trigger>
     <DropdownMenu.Content>

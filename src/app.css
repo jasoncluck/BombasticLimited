@@ -105,11 +105,11 @@
 }
 
 .header-primary {
-  @apply xl:text-5xl text-3xl font-semibold transition-colors mb-2;
+  @apply @xl:text-5xl text-3xl font-semibold transition-colors mb-2;
 }
 
 .header-link {
-  @apply xl:text-4xl text-2xl font-semibold transition-colors  hover:underline cursor-pointer mb-2 py-2;
+  @apply @xl:text-4xl text-2xl font-semibold transition-colors  hover:underline cursor-pointer mb-2 py-2;
 }
 
 .header-link-sticky {

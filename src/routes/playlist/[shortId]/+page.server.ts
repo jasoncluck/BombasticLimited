@@ -1,8 +1,9 @@
 import {
+  getPlaylistByShortId,
+  getPlaylistCreatorProfile,
   getPlaylistVideos,
   updatePlaylistImage,
   updatePlaylistInfo,
-  type Playlist,
 } from "$lib/supabase/playlists";
 import { redirect, type Actions, type RequestEvent } from "@sveltejs/kit";
 import type { PageServerLoad } from "../[shortId]/$types";
@@ -29,10 +30,12 @@ export const load: PageServerLoad = async ({
   }
 
   const { playlists, contentFilter } = await parent();
+  console.log(params.shortId);
 
-  const playlist: Playlist | undefined = playlists.find(
-    (pl) => pl.short_id === params.shortId,
-  );
+  const { playlist } = await getPlaylistByShortId({
+    shortId: params.shortId,
+    supabase,
+  });
   if (!playlist) {
     console.error(`Playlist was not found`);
     redirect(302, "/");
@@ -51,6 +54,7 @@ export const load: PageServerLoad = async ({
     contentFilter,
     playlistId: playlist?.id,
   });
+  console.log(videos);
 
   // Calculate total duration for all videos
   let playlistDurationSeconds = 0;
@@ -60,6 +64,12 @@ export const load: PageServerLoad = async ({
 
   const playlistDuration = videoDurationSecondsToTime(playlistDurationSeconds);
 
+  // Get the username of the playlist owner
+  const { profile: playlistCreatorProfile } = await getPlaylistCreatorProfile({
+    playlist,
+    supabase,
+  });
+
   return {
     playlist,
     playlists,
@@ -68,6 +78,7 @@ export const load: PageServerLoad = async ({
     contentFilter,
     currentPage,
     playlistDuration,
+    playlistCreatorProfile,
     form: await superValidate(playlist, zod(playlistSchema)),
   };
 };

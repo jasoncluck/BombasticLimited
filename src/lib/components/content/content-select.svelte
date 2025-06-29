@@ -27,7 +27,7 @@
 
 <div class="flex gap-2 h-[20px] items-center">
   {#if displayLabel}
-    <Label for="isSelectionMode" class="text-xs cursor-pointer">Select</Label>
+    <Label for="isSelectionMode" class="text-sm cursor-pointer">Select</Label>
   {/if}
   <div class="w-[20px]">
     <Checkbox
