@@ -21,7 +21,7 @@
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
   import { fade } from "svelte/transition";
-  import type { Playlist } from "$lib/supabase/playlists";
+  import type { Playlist, UserPlaylist } from "$lib/supabase/playlists";
   import { getContentState } from "$lib/state/content.svelte";
   import ScrollArea from "./ui/scroll-area/scroll-area.svelte";
   import { page } from "$app/state";
@@ -35,7 +35,7 @@
     session,
     supabase,
   }: {
-    playlists: Playlist[];
+    playlists: UserPlaylist[];
     handleLogout: () => void;
     supabase: SupabaseClient<Database>;
     session: Session | null;

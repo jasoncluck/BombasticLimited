@@ -1,4 +1,3 @@
-
 CREATE OR REPLACE FUNCTION insert_playlist_videos(
   p_playlist_id int8,
   p_video_ids text[]
@@ -7,7 +6,6 @@ RETURNS TABLE (
   id int8,
   playlist_id int8,
   video_id text,
-  user_id uuid,
   video_position int2
 ) AS $$
 DECLARE
@@ -24,10 +22,6 @@ BEGIN
     RAISE EXCEPTION 'Video IDs array cannot be empty';
   END IF;
 
-  -- Ensure the playlist is associated with the user's profile
-  INSERT INTO public.user_playlists (playlist_id)
-  VALUES (p_playlist_id)
-  ON CONFLICT DO NOTHING;
 
   -- Start a transaction to ensure consistency
   BEGIN

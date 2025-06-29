@@ -11,7 +11,8 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "generate-types": "supabase gen types typescript --local > src/lib/supabase/database.types.ts",
-    "supabase:seed": "supabase db dump -f supabase/seed.sql --data-only -x playlists playlist_videos",
+    "supabase:seed": "supabase db dump -f supabase/seed.sql --data-only",
+    "supabase:seed:auth": "supabase db dump --schema auth -f supabase/seed-auth.sql --data-only",
     "format": "prettier --write .",
     "lint": "prettier --check . && eslint .",
     "test:unit": "vitest",
@@ -74,6 +75,7 @@
     "vitest": "^3.1.1"
   },
   "dependencies": {
+    "@googleapis/youtube": "^26.0.1",
     "@neodrag/svelte": "^2.3.2",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.8",

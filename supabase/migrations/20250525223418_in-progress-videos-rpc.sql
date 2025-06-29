@@ -1,5 +1,5 @@
 CREATE OR REPLACE FUNCTION public.get_in_progress_videos_with_timestamps()
- RETURNS TABLE(id text, source source, title text, description text, thumbnail_url text, thumbnail_maxres_url text, published_at timestamp with time zone, duration text, video_start_seconds numeric, updated_at timestamp with time zone)
+ RETURNS TABLE(id text, source source, title text, description text, thumbnail_url text, thumbnail_maxres_url text, published_at timestamp with time zone, duration text, video_start_seconds numeric, watched_at timestamp with time zone, updated_at timestamp with time zone)
  LANGUAGE plpgsql
  SET search_path = ''
 AS $function$
@@ -15,6 +15,7 @@ BEGIN
         v.published_at, 
         v.duration, 
         t.video_start_seconds, 
+        t.watched_at,
         t.updated_at
     FROM public.timestamps t
     JOIN public.videos v ON t.video_id = v.id
@@ -45,5 +46,5 @@ BEGIN
     FROM public.playlist_videos pv
     JOIN public.videos v ON pv.video_id = v.id
     LEFT JOIN public.timestamps t ON pv.video_id = t.video_id AND t.user_id = (select auth.uid())
-    WHERE pv.user_id = (select auth.uid()) AND pv.playlist_id = p_playlist_id; 
+    WHERE pv.playlist_id = p_playlist_id;
 END;$function$;

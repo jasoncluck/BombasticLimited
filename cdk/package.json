@@ -31,7 +31,6 @@
     "@aws-sdk/client-secrets-manager": "^3.716.0",
     "@aws-sdk/util-dynamodb": "^3.767.0",
     "@aws-sdk/util-retry": "^3.370.0",
-    "@googleapis/youtube": "^20.0.0",
     "@middy/core": "^6.0.0",
     "@middy/http-cors": "^6.0.0",
     "@middy/http-error-handler": "^6.0.0",

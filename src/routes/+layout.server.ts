@@ -1,6 +1,6 @@
 import type { ContentView } from "$lib/components/content/content";
 import { getFilterOptionFromQueryParams } from "$lib/components/content/content-filter";
-import { getPlaylists } from "$lib/supabase/playlists";
+import { getUserPlaylists } from "$lib/supabase/playlists";
 import type { LayoutServerLoad } from "./$types";
 
 export const load: LayoutServerLoad = async ({
@@ -12,7 +12,7 @@ export const load: LayoutServerLoad = async ({
   depends("supabase:db:playlists");
 
   const { session } = await safeGetSession();
-  const { playlists, count: playlistsCount } = await getPlaylists({
+  const { userPlaylists, count: userPlaylistsCount } = await getUserPlaylists({
     session,
     supabase,
   });
@@ -40,8 +40,8 @@ export const load: LayoutServerLoad = async ({
   return {
     session,
     contentFilter,
-    playlists,
-    playlistsCount,
+    playlists: userPlaylists ?? [],
+    userPlaylistsCount: userPlaylistsCount ?? 0,
     cookies: cookies.getAll(),
     layout,
   };

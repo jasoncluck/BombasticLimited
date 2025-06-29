@@ -38,21 +38,18 @@ export type Database = {
         Row: {
           id: number
           playlist_id: number
-          user_id: string
           video_id: string
           video_position: number | null
         }
         Insert: {
           id?: number
           playlist_id: number
-          user_id: string
           video_id: string
           video_position?: number | null
         }
         Update: {
           id?: number
           playlist_id?: number
-          user_id?: string
           video_id?: string
           video_position?: number | null
         }
@@ -74,13 +71,12 @@ export type Database = {
           id: number
           image_properties: Json | null
           name: string
-          playlist_position: number | null
           search_vector: unknown | null
           short_id: string
           thumbnail_maxres_url: string | null
           thumbnail_url: string | null
           type: Database["public"]["Enums"]["playlist_type"]
-          user_id: string
+          youtube_id: string | null
         }
         Insert: {
           created_at?: string
@@ -89,13 +85,12 @@ export type Database = {
           id?: number
           image_properties?: Json | null
           name: string
-          playlist_position?: number | null
           search_vector?: unknown | null
           short_id?: string
           thumbnail_maxres_url?: string | null
           thumbnail_url?: string | null
           type?: Database["public"]["Enums"]["playlist_type"]
-          user_id: string
+          youtube_id?: string | null
         }
         Update: {
           created_at?: string
@@ -104,13 +99,12 @@ export type Database = {
           id?: number
           image_properties?: Json | null
           name?: string
-          playlist_position?: number | null
           search_vector?: unknown | null
           short_id?: string
           thumbnail_maxres_url?: string | null
           thumbnail_url?: string | null
           type?: Database["public"]["Enums"]["playlist_type"]
-          user_id?: string
+          youtube_id?: string | null
         }
         Relationships: []
       }
@@ -184,21 +178,24 @@ export type Database = {
       }
       user_playlists: {
         Row: {
-          playlist_id: number
+          id: number
+          playlist_position: number | null
           user_id: string
         }
         Insert: {
-          playlist_id: number
+          id: number
+          playlist_position?: number | null
           user_id: string
         }
         Update: {
-          playlist_id?: number
+          id?: number
+          playlist_position?: number | null
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "user_playlists_playlist_id_fkey"
-            columns: ["playlist_id"]
+            foreignKeyName: "user_playlists_id_fkey"
+            columns: ["id"]
             isOneToOne: false
             referencedRelation: "playlists"
             referencedColumns: ["id"]
@@ -285,6 +282,7 @@ export type Database = {
           published_at: string
           duration: string
           video_start_seconds: number
+          watched_at: string
           updated_at: string
         }[]
       }
@@ -305,6 +303,23 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_user_playlists: {
+        Args: { p_user_id: string }
+        Returns: {
+          id: number
+          created_by: string
+          created_at: string
+          name: string
+          short_id: string
+          description: string
+          type: Database["public"]["Enums"]["playlist_type"]
+          thumbnail_url: string
+          thumbnail_maxres_url: string
+          image_properties: Json
+          playlist_position: number
+          youtube_id: string
+        }[]
+      }
       get_videos_with_timestamps: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -317,16 +332,16 @@ export type Database = {
           published_at: string
           duration: string
           video_start_seconds: number
+          watched_at: string
           updated_at: string
         }[]
       }
-      initialize_playlist_positions: {
+      initialize_user_playlist_positions: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
       insert_playlist: {
         Args: {
-          p_user_id: string
           p_created_by: string
           p_name: string
           p_description?: string
@@ -337,8 +352,7 @@ export type Database = {
           p_playlist_position?: number
         }
         Returns: {
-          id: number
-          user_id: string
+          playlist_id: number
           created_by: string
           created_at: string
           name: string
@@ -352,16 +366,11 @@ export type Database = {
         }[]
       }
       insert_playlist_videos: {
-        Args: {
-          p_playlist_id: number
-          p_video_ids: string[]
-          p_user_id: string
-        }
+        Args: { p_playlist_id: number; p_video_ids: string[] }
         Returns: {
           id: number
           playlist_id: number
           video_id: string
-          user_id: string
           video_position: number
         }[]
       }
@@ -405,7 +414,7 @@ export type Database = {
           p_new_position: number
         }
         Returns: {
-          id: number
+          playlist_id: number
           user_id: string
           created_by: string
           created_at: string
@@ -429,7 +438,6 @@ export type Database = {
           id: number
           playlist_id: number
           video_id: string
-          user_id: string
           video_position: number
         }[]
       }

@@ -134,41 +134,6 @@ END;$$;
 ALTER FUNCTION "public"."delete_pending_videos"() OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps"() RETURNS TABLE("id" "text", "source" "public"."source", "title" "text", "description" "text", "thumbnail_url" "text", "published_at" timestamp with time zone, "duration" "text", "video_start_seconds" numeric,"watched_at" timestamp with time zone, "updated_at" timestamp with time zone)
-    LANGUAGE "plpgsql"
-    SET search_path = ''
-    AS $$
-BEGIN
-    RETURN QUERY
-    SELECT 
-        v.id, 
-        v.source, 
-        v.title, 
-        v.description, 
-        v.thumbnail_url, 
-        v.published_at, 
-        v.duration, 
-        CASE 
-            WHEN t.user_id = (select auth.uid()) THEN t.video_start_seconds 
-            ELSE NULL 
-        END AS video_start_seconds, 
-        CASE 
-            WHEN t.user_id = (select auth.uid()) THEN t.watched_at 
-            ELSE NULL 
-        END AS watched_at,
-        CASE 
-            WHEN t.user_id = (select auth.uid()) THEN t.updated_at 
-            ELSE NULL 
-        END AS updated_at
-    FROM public.videos v
-    LEFT JOIN public.timestamps t ON v.id = t.video_id; -- Use LEFT JOIN to include videos without timestamps
-END;$$;
-
-
-ALTER FUNCTION "public"."get_videos_with_timestamps"() OWNER TO "postgres";
-
-
-
 
 CREATE OR REPLACE FUNCTION "public"."set_playlist_search_vector"() RETURNS "trigger"
     LANGUAGE "plpgsql"
@@ -230,7 +195,7 @@ SET default_table_access_method = "heap";
 
 CREATE TABLE IF NOT EXISTS "public"."playlist_videos" (
     "playlist_id" bigint NOT NULL,
-    "video_id" "text" NOT NULL,
+    "video_id" "text" NOT NULL, 
     "id" bigint NOT NULL
 );
 
@@ -262,14 +227,15 @@ ALTER TABLE "public"."playlists_custom_seq" OWNER TO "postgres";
 
 CREATE TABLE IF NOT EXISTS "public"."playlists" (
     "id" bigint DEFAULT "nextval"('"public"."playlists_custom_seq"'::"regclass") NOT NULL,
-    "created_by" uuid REFERENCES auth.users(id) ON DELETE CASCADE DEFAULT NULL,
+    "created_by" uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "name" "text" NOT NULL,
     "short_id" "text" DEFAULT 'NULL'::"text" NOT NULL,
     "search_vector" "tsvector",
     "image_url" "text",
     "youtube_id" text DEFAULT NULL,
-    CONSTRAINT "playlists_name_check" CHECK (("length"("name") < 50))
+    CONSTRAINT "playlists_name_check" CHECK (("length"("name") <= 50)),
+    CONSTRAINT "playlists_youtube_id_unique" UNIQUE ("youtube_id")
 );
 
 
@@ -1215,12 +1181,6 @@ GRANT USAGE ON SCHEMA "public" TO "service_role";
 GRANT ALL ON FUNCTION "public"."delete_pending_videos"() TO "anon";
 GRANT ALL ON FUNCTION "public"."delete_pending_videos"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."delete_pending_videos"() TO "service_role";
-
-
-
-GRANT ALL ON FUNCTION "public"."get_videos_with_timestamps"() TO "anon";
-GRANT ALL ON FUNCTION "public"."get_videos_with_timestamps"() TO "authenticated";
-GRANT ALL ON FUNCTION "public"."get_videos_with_timestamps"() TO "service_role";
 
 
 GRANT ALL ON FUNCTION "public"."set_playlist_search_vector"() TO "anon";

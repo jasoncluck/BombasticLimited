@@ -6,21 +6,19 @@
   import { handleContentNavigation, type ContentDisplayProps } from "./content";
   import DeleteTimestampButton from "./delete-timestamp-button.svelte";
   import type { HTMLAnchorAttributes } from "svelte/elements";
-  import type { Playlist } from "$lib/supabase/playlists";
   import Checkbox from "../ui/checkbox/checkbox.svelte";
   import { getContentState } from "$lib/state/content.svelte";
   import { Check } from "@lucide/svelte";
 
   type ContentCardProps = {
     video: Video;
-    playlist?: Playlist;
   } & Pick<
     ContentDisplayProps,
     | "isContinueVideos"
-    | "playlist"
+    | "userPlaylist"
     | "playlistContentFilter"
     | "videos"
-    | "playlists"
+    | "userPlaylists"
     | "supabase"
     | "session"
   > &
@@ -29,7 +27,7 @@
   const {
     video = $bindable(),
     videos,
-    playlist,
+    userPlaylist,
     isContinueVideos,
     supabase,
     session,
@@ -56,7 +54,7 @@
       }
     : (e) => {
         e.preventDefault();
-        handleContentNavigation({ video, playlist });
+        handleContentNavigation({ video, userPlaylist });
       }}
   {...restProps}
 >

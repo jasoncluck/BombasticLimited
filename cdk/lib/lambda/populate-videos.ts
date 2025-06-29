@@ -1,14 +1,10 @@
-import { youtube } from "@googleapis/youtube";
+import { youtube, youtube_v3 } from "@googleapis/youtube";
 import { createClient } from "@supabase/supabase-js";
 import { CHANNEL_INFO, ChannelSource } from "../channel";
 
 const MAX_RESULTS = 50;
 const DEFAULT_NUM_PAGES = 2;
 
-/**
- * This function will search YouTube for videos and place them in a DynamoDB table
- * repopulate will retrieve every video for the channel instead of the default which only returns a single response
- */
 export const populateVideos = async ({
   source,
   repopulate = false,
@@ -19,13 +15,17 @@ export const populateVideos = async ({
   const supabaseApiKey = process.env.SUPABASE_SERVICE_API_KEY_PROD;
   const supabaseUrl = process.env.PUBLIC_SUPABASE_URL_PROD;
   if (!supabaseApiKey || !supabaseUrl) {
-    throw new Error("Could not find Supabase env.");
+    const errMsg = "Could not find Supabase env.";
+    console.error(JSON.stringify({ stage: "init", error: errMsg }));
+    throw new Error(errMsg);
   }
 
   const supabaseClient = createClient(supabaseUrl, supabaseApiKey);
 
   if (!source) {
-    throw new Error("Request body must contain the source of the content.");
+    const errMsg = "Request body must contain the source of the content.";
+    console.error(JSON.stringify({ stage: "init", error: errMsg }));
+    throw new Error(errMsg);
   }
   const { uploadPlaylistId } = CHANNEL_INFO[source];
 
@@ -39,152 +39,219 @@ export const populateVideos = async ({
     ? Number.MAX_SAFE_INTEGER
     : DEFAULT_NUM_PAGES * MAX_RESULTS;
 
-  // Set pending_delete to true only for videos we'll actually check
-  if (repopulate) {
-    await supabaseClient
-      .from("videos")
-      .update({ pending_delete: true })
-      .eq("source", source);
-  } else {
-    // First, get the IDs of the videos we want to mark as pending_delete
-    const { data: videosToMark, error } = await supabaseClient
-      .from("videos")
-      .select("id")
-      .eq("source", source)
-      .order("published_at", { ascending: false })
-      .limit(videosToCheck / 2);
-
-    if (error) {
-      console.error("Error fetching videos to mark:", error);
-      throw new Error("Failed to fetch videos for marking");
-    }
-
-    // Only mark videos as pending_delete if we found any
-    if (videosToMark && videosToMark.length > 0) {
-      const videoIds = videosToMark.map((video) => video.id);
-
-      const { error: updateError } = await supabaseClient
+  try {
+    if (repopulate) {
+      await supabaseClient
         .from("videos")
         .update({ pending_delete: true })
+        .eq("source", source);
+    } else {
+      const { data: videosToMark, error } = await supabaseClient
+        .from("videos")
+        .select("id")
         .eq("source", source)
-        .in("id", videoIds);
+        .order("published_at", { ascending: false })
+        .limit(videosToCheck / 2);
 
-      if (updateError) {
-        console.error("Error marking videos as pending delete:", updateError);
-        throw new Error("Failed to mark videos as pending delete");
+      if (error) {
+        console.error(
+          JSON.stringify({
+            stage: "mark_pending_delete",
+            source,
+            error,
+          }),
+        );
+        throw new Error("Failed to fetch videos for marking");
+      }
+      if (videosToMark && videosToMark.length > 0) {
+        const videoIds = videosToMark.map((video) => video.id);
+
+        const { error: updateError } = await supabaseClient
+          .from("videos")
+          .update({ pending_delete: true })
+          .eq("source", source)
+          .in("id", videoIds);
+
+        if (updateError) {
+          console.error(
+            JSON.stringify({
+              stage: "mark_pending_delete_update",
+              source,
+              videoIds,
+              error: updateError,
+            }),
+          );
+          throw new Error("Failed to mark videos as pending delete");
+        }
+
+        console.log(
+          JSON.stringify({
+            stage: "mark_pending_delete_update",
+            message: `Marked ${videoIds.length} videos as pending delete for source: ${source}`,
+          }),
+        );
+      }
+    }
+
+    let pageToken: string | null | undefined;
+    do {
+      let items: youtube_v3.Schema$PlaylistItem[] | undefined;
+      try {
+        const { data } = await youtubeClient.playlistItems.list({
+          part: ["id", "snippet", "contentDetails"],
+          playlistId: uploadPlaylistId,
+          maxResults: 50,
+          ...(pageToken && { pageToken }),
+        });
+
+        ({ nextPageToken: pageToken, items } = data);
+
+        if (!items) {
+          throw new Error(
+            `No items found for: ${source}, stopping. PlaylistID: ${uploadPlaylistId}`,
+          );
+        }
+      } catch (e) {
+        console.error(
+          JSON.stringify({
+            stage: "fetch_youtube_playlist_items",
+            source,
+            playlistId: uploadPlaylistId,
+            error: e,
+          }),
+        );
+        throw e;
       }
 
-      console.log(
-        `Marked ${videoIds.length} videos as pending delete for source: ${source}`,
-      );
-    }
-  }
+      // Extract video IDs and fetch additional details including duration
+      const videoIds = items
+        .map((item) => item.contentDetails?.videoId)
+        .filter((id): id is string => !!id);
 
-  let pageToken: string | null | undefined;
-  do {
-    const { data } = await youtubeClient.playlistItems.list({
-      part: ["id", "snippet", "contentDetails"],
-      playlistId: uploadPlaylistId,
-      maxResults: 50,
-      ...(pageToken && { pageToken }),
-    });
+      let videoDetails: { id: string; duration: string }[] = [];
+      if (videoIds.length > 0) {
+        try {
+          const { data: videoData } = await youtubeClient.videos.list({
+            part: ["id", "contentDetails"],
+            id: videoIds,
+          });
+          videoDetails =
+            videoData.items?.map((video) => {
+              if (!video.id || !video.contentDetails?.duration) {
+                throw new Error(
+                  "Unexpected error - could not find duration of a video.",
+                );
+              }
+              return {
+                id: video.id,
+                duration: video.contentDetails.duration,
+              };
+            }) ?? [];
+        } catch (e) {
+          console.error(
+            JSON.stringify({
+              stage: "fetch_youtube_video_details",
+              source,
+              videoIds,
+              error: e,
+            }),
+          );
+          throw e;
+        }
+      }
 
-    const { nextPageToken, items } = data;
+      // Helper to remove "_live" suffix from thumbnail URLs
+      const removeLiveSuffix = (url?: string | null) =>
+        url ? url.replace(/_live(\.\w+)$/, "$1") : url;
 
-    if (!items) {
-      throw new Error(`No items found for: ${source}, stopping.`);
-    }
-
-    // Extract video IDs and fetch additional details including duration
-    const videoIds = items
-      .map((item) => item.contentDetails?.videoId)
-      .filter((id): id is string => !!id);
-
-    let videoDetails: { id: string; duration: string }[] = [];
-    if (videoIds.length > 0) {
-      const { data: videoData } = await youtubeClient.videos.list({
-        part: ["id", "contentDetails"],
-        id: videoIds,
+      const videos = items.map((item) => {
+        const videoDetail = videoDetails.find(
+          (v) => v.id === item.contentDetails?.videoId,
+        );
+        return {
+          id: item.contentDetails?.videoId,
+          source: source,
+          title: item.snippet?.title,
+          description: item.snippet?.description,
+          published_at: item.snippet?.publishedAt,
+          thumbnail_url: removeLiveSuffix(
+            item.snippet?.thumbnails?.medium?.url,
+          ),
+          thumbnail_maxres_url: removeLiveSuffix(
+            item.snippet?.thumbnails?.maxres?.url,
+          ),
+          duration: videoDetail?.duration,
+          pending_delete: false,
+        };
       });
-      videoDetails =
-        videoData.items?.map((video) => {
-          if (!video.id || !video.contentDetails?.duration) {
-            throw new Error(
-              "Unexpected error - could not find duration of a video. ",
-            );
-          }
-          return {
-            id: video.id,
-            duration: video.contentDetails.duration, // ISO 8601 duration format
-          };
-        }) ?? [];
-    }
 
-    // Helper to remove "_live" suffix from thumbnail URLs
-    const removeLiveSuffix = (url?: string | null) =>
-      url ? url.replace(/_live(\.\w+)$/, "$1") : url;
-
-    // Combine the video details with playlist data
-    const videos = items.map((item) => {
-      const videoDetail = videoDetails.find(
-        (v) => v.id === item.contentDetails?.videoId,
-      );
-      return {
-        id: item.contentDetails?.videoId,
-        source: source,
-        title: item.snippet?.title,
-        description: item.snippet?.description,
-        published_at: item.snippet?.publishedAt,
-        thumbnail_url: removeLiveSuffix(item.snippet?.thumbnails?.medium?.url),
-        thumbnail_maxres_url: removeLiveSuffix(
-          item.snippet?.thumbnails?.maxres?.url,
-        ),
-        duration: videoDetail?.duration,
-        pending_delete: false, // Set pending_delete to false for updated videos
-      };
-    });
-
-    try {
       for (const video of videos) {
         const { error } = await supabaseClient
           .from("videos")
           .upsert(video, { onConflict: "id" });
-
         if (error) {
-          console.error("Error upserting video:", error);
+          console.error(
+            JSON.stringify({
+              stage: "upsert_video",
+              source,
+              videoId: video.id,
+              error,
+            }),
+          );
         } else {
-          console.log(`Stored video: ${video.title}`);
+          console.log(
+            JSON.stringify({
+              stage: "upsert_video",
+              message: `Stored video: ${video.title}`,
+              videoId: video.id,
+              source,
+            }),
+          );
         }
       }
-    } catch (e) {
-      console.error(`Unable to save videos to Supabase`, e);
-    }
 
-    if (repopulate || curPage <= DEFAULT_NUM_PAGES) {
-      curPage++;
-      if (!repopulate && curPage > DEFAULT_NUM_PAGES) {
-        break;
+      if (repopulate || curPage <= DEFAULT_NUM_PAGES) {
+        curPage++;
+        if (!repopulate && curPage > DEFAULT_NUM_PAGES) {
+          break;
+        }
       }
-      pageToken = nextPageToken;
+    } while (pageToken);
+
+    // Clean up videos marked as pending_delete
+    const { error: deleteError } = await supabaseClient
+      .from("videos")
+      .delete()
+      .eq("source", source)
+      .eq("pending_delete", true);
+
+    if (deleteError) {
+      console.error(
+        JSON.stringify({
+          stage: "delete_pending_delete",
+          source,
+          error: deleteError,
+        }),
+      );
+      throw new Error("Failed to delete videos marked as pending_delete");
+    } else {
+      console.log(
+        JSON.stringify({
+          stage: "delete_pending_delete",
+          message: `Cleaned up videos marked as pending_delete for source: ${source}`,
+        }),
+      );
     }
-  } while (pageToken);
-
-  // At the end, you should clean up videos that are still marked as pending_delete
-  // This is the final step that actually removes videos that are no longer in the YouTube playlist
-  const { error: deleteError } = await supabaseClient
-    .from("videos")
-    .delete()
-    .eq("source", source)
-    .eq("pending_delete", true);
-
-  if (deleteError) {
+  } catch (e) {
+    // Final catch-all for unhandled errors
     console.error(
-      "Error deleting videos marked as pending_delete:",
-      deleteError,
+      JSON.stringify({
+        stage: "final",
+        source,
+        error: e instanceof Error ? e.message : e,
+        stack: e instanceof Error ? e.stack : undefined,
+      }),
     );
-  } else {
-    console.log(
-      `Cleaned up videos marked as pending_delete for source: ${source}`,
-    );
+    throw e; // Rethrow to signal Lambda failure
   }
 };

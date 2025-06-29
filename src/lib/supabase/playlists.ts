@@ -20,6 +20,8 @@ export type Playlist = Omit<Tables<"playlists">, "search_vector"> & {
   croppedImageUrlData?: Promise<string | undefined>;
 };
 
+export type UserPlaylist = Omit<Tables<"user_playlists">, "user_id"> & Playlist;
+
 export type PlaylistVideo = Tables<"playlist_videos">;
 export const PLAYLIST_TYPES = ["Public", "Private", "Official"] as const;
 export type PlaylistType = (typeof PLAYLIST_TYPES)[number];
@@ -176,8 +178,8 @@ export async function createPlaylist({
   const { data: playlist, error } = await supabase
     .rpc("insert_playlist", {
       p_name: name,
-      p_user_id: session?.user.id,
       p_created_by: session?.user.id,
+      p_type: "Private",
     })
     .single();
 
@@ -196,7 +198,7 @@ export async function createPlaylist({
   return { playlist, error };
 }
 
-export async function getPlaylists({
+export async function getUserPlaylists({
   session,
   supabase,
 }: {
@@ -208,16 +210,14 @@ export async function getPlaylists({
   }
 
   const { data, count, error } = await supabase
-    .from("playlists")
-    .select("*", { count: "exact" })
-    .eq("user_id", session.user.id)
+    .rpc("get_user_playlists", { p_user_id: session.user.id })
     .order("playlist_position", { ascending: false });
 
   if (error) {
     console.error("Error when fetching playlists:", error);
   }
 
-  return { playlists: data ?? [], count, error };
+  return { userPlaylists: data ?? [], count, error };
 }
 
 export async function updatePlaylistPosition({
@@ -295,7 +295,6 @@ export async function addVideosToPlaylist({
   playlistId,
   videoIds,
   supabase,
-  session,
 }: {
   playlistId: number;
   videoIds: string[];
@@ -306,7 +305,6 @@ export async function addVideosToPlaylist({
   const { error } = await supabase.rpc("insert_playlist_videos", {
     p_playlist_id: playlistId,
     p_video_ids: videoIds,
-    p_user_id: session.user.id,
   });
 
   if (error) {

@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({
 }) => {
   depends("supabase:db:videos");
 
-  const { playlists } = await parent();
+  const { userPlaylists } = await parent();
 
   if (url.searchParams.has("error")) {
     redirect(303, "/auth/error");
@@ -49,7 +49,6 @@ export const load: PageServerLoad = async ({
       session,
     });
     sourceVideos[source] = videos;
-    console.log(videos);
   }
 
   const continueWatchingDataFilters: TimestampFilter = {
@@ -72,6 +71,6 @@ export const load: PageServerLoad = async ({
     sourceVideosDataFilters,
     continueWatchingVideos,
     continueWatchingDataFilters,
-    playlists,
+    userPlaylists,
   };
 };

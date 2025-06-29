@@ -5,6 +5,7 @@ import * as nodejs from "aws-cdk-lib/aws-lambda-nodejs";
 import * as events from "aws-cdk-lib/aws-events";
 import * as path from "path";
 import * as targets from "aws-cdk-lib/aws-events-targets";
+import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
 import { RestApi } from "aws-cdk-lib/aws-apigateway";
 import { CHANNEL_SOURCES } from "../channel";
 
@@ -44,6 +45,24 @@ export class VideoStack extends Stack {
       },
     );
 
+    // CloudWatch Alarm for Lambda Errors
+    const errorAlarm = new cloudwatch.Alarm(
+      this,
+      "PopulateVideoLambdaErrorAlarm",
+      {
+        metric: populateVideosLambda.metricErrors({
+          period: Duration.minutes(5),
+        }),
+        threshold: 1,
+        evaluationPeriods: 5,
+        actionsEnabled: false,
+        datapointsToAlarm: 5,
+        alarmDescription:
+          "Alarm if the populate-videos Lambda has any errors in a 5-minute period",
+        treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+      },
+    );
+
     const populatePlaylistsLambda = new nodejs.NodejsFunction(
       this,
       "BombifyPopulatePlaylists",
@@ -53,7 +72,7 @@ export class VideoStack extends Stack {
         entry: path.join(__dirname, "../lambda/populate-playlists.ts"),
         handler: "populatePlaylists",
         runtime: lambda.Runtime.NODEJS_20_X,
-        timeout: Duration.minutes(5),
+        timeout: Duration.minutes(15),
         environment: {
           GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,
           SUPABASE_SERVICE_API_KEY_PROD:

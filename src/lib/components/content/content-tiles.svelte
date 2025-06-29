@@ -12,9 +12,9 @@
   let {
     videos = $bindable(),
     videosCount,
-    playlist,
+    userPlaylist,
     isContinueVideos,
-    playlists,
+    userPlaylists,
     allowVideoReorder = false,
     contentFilter,
     supabase,
@@ -27,7 +27,7 @@
     allowVideoReorder,
     videos,
     videosCount,
-    playlist,
+    userPlaylist: userPlaylist,
     contentFilter,
     supabase,
     onVideosUpdate: (updatedVideos) => {
@@ -82,8 +82,8 @@
       <ContentCard
         video={videos[i]}
         {videos}
-        {playlist}
-        {playlists}
+        {userPlaylist}
+        {userPlaylists}
         {isContinueVideos}
         {supabase}
         {session}

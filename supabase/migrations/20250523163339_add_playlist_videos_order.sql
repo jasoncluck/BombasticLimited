@@ -8,31 +8,65 @@ FOR SELECT
 TO authenticated, anon 
 USING (playlist_id IN (SELECT id FROM public.playlists WHERE type = 'Public'));
 
-CREATE POLICY "Allow authenticated users to select their own playlist videos" 
-ON public.playlist_videos 
-FOR SELECT 
-TO authenticated 
-USING ((SELECT auth.uid()) = user_id);
+CREATE POLICY "Allow authenticated users to select playlist videos of their own playlists"
+ON public.playlist_videos
+FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM public.playlists
+    WHERE playlists.id = playlist_videos.playlist_id
+      AND playlists.created_by = auth.uid()
+  )
+);
 
-CREATE POLICY "Allow authenticated users to insert their own playlist videos" 
-ON public.playlist_videos 
-FOR INSERT 
-TO authenticated 
-WITH CHECK ((SELECT auth.uid()) = user_id);
+CREATE POLICY "Allow authenticated users to insert playlist videos into their own playlists"
+ON public.playlist_videos
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM public.playlists
+    WHERE playlists.id = playlist_videos.playlist_id
+      AND playlists.created_by = auth.uid()
+  )
+);
 
-CREATE POLICY "Allow authenticated users to update their own playlist videos" 
-ON public.playlist_videos 
-FOR UPDATE 
-TO authenticated 
-USING ((SELECT auth.uid()) = user_id) 
-WITH CHECK ((SELECT auth.uid()) = user_id);
+CREATE POLICY "Allow authenticated users to update playlist videos in their own playlists"
+ON public.playlist_videos
+FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM public.playlists
+    WHERE playlists.id = playlist_videos.playlist_id
+      AND playlists.created_by = auth.uid()
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM public.playlists
+    WHERE playlists.id = playlist_videos.playlist_id
+      AND playlists.created_by = auth.uid()
+  )
+);
 
-CREATE POLICY "Allow authenticated users to delete their own playlist videos" 
-ON public.playlist_videos 
-FOR DELETE 
-TO authenticated 
-USING ((SELECT auth.uid()) = user_id);
-
+CREATE POLICY "Allow authenticated users to delete playlist videos from their own playlists"
+ON public.playlist_videos
+FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM public.playlists
+    WHERE playlists.id = playlist_videos.playlist_id
+      AND playlists.created_by = auth.uid()
+  )
+);
 
 ALTER TABLE playlist_videos
 ADD COLUMN "video_position" int2 DEFAULT NULL;
@@ -48,7 +82,6 @@ RETURNS TABLE (
   id int8,
   playlist_id int8,
   video_id text,
-  user_id uuid,
   video_position int2
 ) 
 LANGUAGE plpgsql
@@ -93,7 +126,6 @@ BEGIN
       id := updated_row.id;
       playlist_id := updated_row.playlist_id;
       video_id := updated_row.video_id;
-      user_id := updated_row.user_id;
       video_position := updated_row.video_position;
       
       RETURN NEXT;
@@ -135,7 +167,6 @@ BEGIN
     id := updated_row.id;
     playlist_id := updated_row.playlist_id;
     video_id := updated_row.video_id;
-    user_id := updated_row.user_id;
     video_position := updated_row.video_position;
     
     RETURN NEXT;

@@ -1,6 +1,3 @@
-
-DROP FUNCTION public.get_videos_with_timestamps;
-
 CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps"() RETURNS TABLE("id" "text", "source" "public"."source", "title" "text", "description" "text", "thumbnail_url" "text", "thumbnail_maxres_url" "text", "published_at" timestamp with time zone, "duration" "text", "video_start_seconds" numeric,"watched_at" timestamp with time zone, "updated_at" timestamp with time zone)
     LANGUAGE "plpgsql"
     SET search_path = ''
