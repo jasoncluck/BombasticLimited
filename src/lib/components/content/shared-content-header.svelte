@@ -36,6 +36,7 @@
     children: Snippet<[]>;
     profilePlaylist?: ProfilePlaylist;
     videosCount: number;
+    onPlayVideo: () => void;
     currentPage?: number;
     supabase: SupabaseClient<Database>;
     session: Session | null;
@@ -51,6 +52,7 @@
     playlists,
     showFloatingBreadcrumbs = $bindable(),
     videosCount,
+    onPlayVideo,
     currentPage = $bindable(),
     supabase,
     session,
@@ -102,8 +104,11 @@
     <hr class="border-1 m-4" />
     <div class="flex justify-between m-4 items-center gap-3">
       {#if profilePlaylist}
-        <!-- Action row: move Ellipsis here -->
-        <Play size="24" />
+        <Play
+          size="24"
+          class="ghost-button-minimal"
+          onclick={() => onPlayVideo()}
+        />
         {#if !isPlaylistCreator && !playlists.some((pl) => pl.id === profilePlaylist.id)}
           <PlusCircle
             class="ghost-button-minimal"
@@ -130,48 +135,50 @@
             }}
           />
         {/if}
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger
-            class={buttonVariants({
-              variant: "ghost",
-              class: "ghost-button-minimal",
-              size: "icon",
-            })}
-          >
-            <Ellipsis size="30" />
-            <span class="sr-only">Playlist Actions</span>
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Content>
-            <DropdownMenu.Group>
-              <DropdownMenu.Item
-                class="cursor-pointer"
-                onclick={() => (open = true)}
-              >
-                Edit Playlist
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                class="cursor-pointer"
-                onclick={async () => {
-                  const data = await handleDeletePlaylist({
-                    playlist: profilePlaylist,
-                    supabase,
-                    session,
-                  });
+        {#if isPlaylistCreator}
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger
+              class={buttonVariants({
+                variant: "ghost",
+                class: "ghost-button-minimal",
+                size: "icon",
+              })}
+            >
+              <Ellipsis size="30" />
+              <span class="sr-only">Playlist Actions</span>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content>
+              <DropdownMenu.Group>
+                <DropdownMenu.Item
+                  class="cursor-pointer"
+                  onclick={() => (open = true)}
+                >
+                  Edit Playlist
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  class="cursor-pointer"
+                  onclick={async () => {
+                    const data = await handleDeletePlaylist({
+                      playlist: profilePlaylist,
+                      supabase,
+                      session,
+                    });
 
-                  if (
-                    !data?.error &&
-                    page.url.pathname ===
-                      `/playlist/${profilePlaylist.short_id}`
-                  ) {
-                    goto("/");
-                  }
-                }}
-              >
-                Delete Playlist
-              </DropdownMenu.Item>
-            </DropdownMenu.Group>
-          </DropdownMenu.Content>
-        </DropdownMenu.Root>
+                    if (
+                      !data?.error &&
+                      page.url.pathname ===
+                        `/playlist/${profilePlaylist.short_id}`
+                    ) {
+                      goto("/");
+                    }
+                  }}
+                >
+                  Delete Playlist
+                </DropdownMenu.Item>
+              </DropdownMenu.Group>
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
+        {/if}
       {/if}
       {#if session}
         <div class="mr-auto">

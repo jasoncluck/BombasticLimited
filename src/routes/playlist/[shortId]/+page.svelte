@@ -6,6 +6,9 @@
   import type { Snapshot } from "@sveltejs/kit";
   import { getCroppedPlaylistImageUrl } from "$lib/components/playlist/playlist-service";
   import { onMount } from "svelte";
+  import { goto } from "$app/navigation";
+  import { isVideoWithTimestamp } from "$lib/supabase/videos";
+  import { handleContentNavigation } from "$lib/components/content/content";
 
   const { data } = $props();
   const {
@@ -54,6 +57,16 @@
       }
     },
   };
+
+  function handlePlayVideo() {
+    const nextVideo = videos.find(
+      (v) => !isVideoWithTimestamp(v) || !v.watched_at,
+    );
+
+    if (nextVideo) {
+      handleContentNavigation({ video: nextVideo, playlist: profilePlaylist });
+    }
+  }
 </script>
 
 <div class="flex flex-col grow relative">
@@ -64,6 +77,7 @@
         bind:showFloatingBreadcrumbs
         {contentFilter}
         {currentPage}
+        onPlayVideo={handlePlayVideo}
         {form}
         {profilePlaylist}
         playlistImageUrl={userPlaylistImageUrl}

@@ -22,6 +22,7 @@
     playlists: Playlist[];
     playlistDuration: { hours: number; minutes: number; seconds: number };
     videosCount: number;
+    onPlayVideo: () => void;
     currentPage: number;
     supabase: SupabaseClient<Database>;
     session: Session | null;
@@ -37,6 +38,8 @@
     playlists,
     playlistDuration,
     videosCount,
+    onPlayVideo,
+    currentPage,
     supabase,
     session,
     ...props
@@ -62,6 +65,9 @@
   const showComma = $derived(formattedDuration.length > 0);
 
   function openDialog() {
+    if (!isPlaylistCreator) {
+      return;
+    }
     open = true;
   }
 
@@ -82,6 +88,8 @@
   {contentFilter}
   {profilePlaylist}
   {playlists}
+  {onPlayVideo}
+  bind:currentPage
   {supabase}
   {session}
   {...props}
