@@ -206,7 +206,7 @@ ALTER TABLE "public"."playlists_custom_seq" OWNER TO "postgres";
 
 CREATE TABLE IF NOT EXISTS "public"."playlists" (
     "id" bigint DEFAULT nextval('public.playlists_custom_seq'::regclass) NOT NULL,
-    "created_by" uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    "created_by" uuid NOT NULL REFERENCES auth.users(id),
     "created_at" timestamp with time zone DEFAULT now() NOT NULL,
     "name" text NOT NULL,
     "short_id" text DEFAULT NULL NOT NULL,

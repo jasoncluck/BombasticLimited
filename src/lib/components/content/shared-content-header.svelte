@@ -15,8 +15,12 @@
   import { DEFAULT_NUM_VIDEOS_PAGINATION } from "$lib/supabase/videos";
   import type { ContentView } from "./content";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
-  import { handleDeletePlaylist } from "../playlist/playlist-service";
-  import { Ellipsis, Play, PlusCircle } from "@lucide/svelte";
+  import {
+    handleDeletePlaylist,
+    handleFollowPlaylist,
+    handleUnfollowPlaylist,
+  } from "../playlist/playlist-service";
+  import { Ellipsis, MinusCircle, Play, PlusCircle } from "@lucide/svelte";
   import { buttonVariants } from "../ui/button";
   import { fade } from "svelte/transition";
   import { page } from "$app/state";
@@ -52,6 +56,10 @@
     session,
     ...restProps
   }: SharedContentHeaderProps = $props();
+
+  const isPlaylistCreator = $derived(
+    profilePlaylist?.created_by === session?.user.id,
+  );
 
   const numPages = $derived(
     getNumberOfPages({
@@ -96,14 +104,37 @@
       {#if profilePlaylist}
         <!-- Action row: move Ellipsis here -->
         <Play size="24" />
-        {#if playlists.find((pl) => pl.id !== profilePlaylist.id)}
-          <PlusCircle size="30" />
+        {#if !isPlaylistCreator && !playlists.some((pl) => pl.id === profilePlaylist.id)}
+          <PlusCircle
+            class="ghost-button-minimal"
+            size="30"
+            onclick={() => {
+              handleFollowPlaylist({
+                playlist: profilePlaylist,
+                supabase,
+                session,
+              });
+            }}
+          />
+        {/if}
+        {#if !isPlaylistCreator && playlists.some((pl) => pl.id === profilePlaylist.id)}
+          <MinusCircle
+            class="ghost-button-minimal"
+            size="30"
+            onclick={() => {
+              handleUnfollowPlaylist({
+                playlist: profilePlaylist,
+                supabase,
+                session,
+              });
+            }}
+          />
         {/if}
         <DropdownMenu.Root>
           <DropdownMenu.Trigger
             class={buttonVariants({
               variant: "ghost",
-              class: "ghost-button-simple",
+              class: "ghost-button-minimal",
               size: "icon",
             })}
           >

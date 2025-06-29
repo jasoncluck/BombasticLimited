@@ -6,7 +6,9 @@ import {
   createPlaylist,
   deletePlaylist,
   deleteVideosFromPlaylist,
+  followPlaylist,
   PLAYLIST_VIDEO_LIMIT,
+  unfollowPlaylist,
   updatePlaylistImage,
   updatePlaylistPosition,
   updatePlaylistVideoPosition,
@@ -306,4 +308,66 @@ export async function handleUpdatePlaylistPosition({
     supabase,
     session,
   });
+}
+
+export async function handleFollowPlaylist({
+  playlist,
+  position,
+  supabase,
+  session,
+}: {
+  playlist: Playlist;
+  position?: number;
+  supabase: SupabaseClient<Database>;
+  session: Session | null;
+}) {
+  if (!session) {
+    goto("/auth");
+    return;
+  }
+
+  const { error } = await followPlaylist({
+    playlistId: playlist.id,
+    position,
+    supabase,
+    session,
+  });
+
+  invalidate("supabase:db:playlists");
+
+  if (!error) {
+    showNotification(`Added playlist: ${playlist.name} `, "success");
+  } else {
+    showNotification(`Unable to add playlist: ${error.message}`, "error");
+  }
+}
+
+export async function handleUnfollowPlaylist({
+  playlist,
+  supabase,
+  session,
+}: {
+  playlist: Playlist;
+  position?: number;
+  supabase: SupabaseClient<Database>;
+  session: Session | null;
+}) {
+  if (!session) {
+    goto("/auth");
+    return;
+  }
+
+  const { error } = await unfollowPlaylist({
+    playlistId: playlist.id,
+    supabase,
+    session,
+  });
+
+  invalidate("supabase:db:playlists");
+
+  if (!error) {
+    showNotification(`Removed playlist: ${playlist.name} `, "success");
+  } else {
+    showNotification(`Unable to remove playlist: ${error.message}`, "error");
+  }
 }

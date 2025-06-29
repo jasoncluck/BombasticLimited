@@ -1,4 +1,4 @@
-import { getVideo, isVideoWithTimestamp } from "$lib/supabase/videos";
+import { getVideo } from "$lib/supabase/videos";
 import type { PageServerLoad } from "./$types";
 export const load: PageServerLoad = async ({
   locals: { supabase, session },
@@ -16,8 +16,5 @@ export const load: PageServerLoad = async ({
 
   return {
     video,
-    timestampStartSeconds: isVideoWithTimestamp(video)
-      ? video.video_start_seconds
-      : 0,
   };
 };

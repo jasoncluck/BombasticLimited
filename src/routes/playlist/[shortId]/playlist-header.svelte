@@ -44,6 +44,10 @@
 
   let open = $state(false);
 
+  const isPlaylistCreator = $derived(
+    profilePlaylist.created_by === session?.user.id,
+  );
+
   const formattedDuration = $derived.by(() => {
     const parts = [];
     if (playlistDuration.hours > 0) parts.push(`${playlistDuration.hours} hr`);
@@ -90,7 +94,8 @@
           {#if playlistImageUrl}
             <button
               type="button"
-              class="flex justify-center items-center h-56 w-56 cursor-pointer border-none bg-transparent p-0"
+              class="flex justify-center items-center h-56 w-56 {isPlaylistCreator &&
+                'cursor-pointer'} border-none bg-transparent p-0"
               onclick={openDialog}
             >
               <img
@@ -101,7 +106,8 @@
           {:else}
             <button
               type="button"
-              class="flex justify-center items-center min-h-32 min-w-32 h-56 w-56 cursor-pointer border-none bg-transparent p-0"
+              class="flex justify-center items-center min-h-32 min-w-32 h-56 w-56 {isPlaylistCreator &&
+                'cursor-pointer'}border-none bg-transparent p-0"
               onclick={openDialog}
             >
               <ListVideo size={128} />
@@ -113,7 +119,9 @@
       <div class="flex flex-col relative flex-1">
         <button
           type="button"
-          class="flex flex-col cursor-pointer items-start text-left border-none bg-transparent p-0"
+          class="flex flex-col {isPlaylistCreator && 'cursor-pointer'} 
+          items-start text-left border-none bg-transparent p-0 gap-2"
+          disabled={!isPlaylistCreator}
           onclick={openDialog}
           onkeydown={handleKeydown}
         >
@@ -126,7 +134,7 @@
           <h2 class="header-primary text-wrap break-anywhere font-extrabold">
             {profilePlaylist.name}
           </h2>
-          <p class="text-sm text-muted-foreground mb-2 text-left break-words">
+          <p class="text-sm text-muted-foreground text-left break-words">
             {profilePlaylist.description}
           </p>
         </button>

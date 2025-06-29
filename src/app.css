@@ -136,6 +136,6 @@
   -ms-user-select: none;
 }
 
-.ghost-button-simple {
+.ghost-button-minimal {
   @apply cursor-pointer text-muted-foreground hover:bg-inherit hover:text-foreground data-[state=open]:text-foreground;
 }

@@ -2,51 +2,48 @@
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import { onMount, onDestroy } from "svelte";
   import VideoEmbed from "$lib/components/video/video-embed.svelte";
-  import { saveVideoTimestamp } from "$lib/supabase/timestamps";
+  import {
+    getLatestTimestamp,
+    saveVideoTimestamp,
+  } from "$lib/supabase/timestamps";
   import { beforeNavigate } from "$app/navigation";
   import type { Playlist } from "$lib/supabase/playlists";
-  import { handleAddVideoTimestamp } from "./video-service";
   import type { Video } from "$lib/supabase/videos";
+  import { page } from "$app/state";
 
-  // Amount of seconds to wait before saving a new timestamp if none exists
   const VIDEO_SAVE_SECONDS_START = 15;
-  // Amount of seconds offset from the end of the video to delete a timstamp
   const VIDEO_DELETE_SECONDS_PERCENT = 0.9;
-  // Amount of seconds offset to save a new timestamp if one already exists
   const VIDEO_SAVE_SECONDS_DELTA = 15;
 
   const {
     video,
-    startSeconds,
     supabase,
     session,
     durationSeconds,
   }: {
     video: Video;
-    startSeconds: number | undefined | null;
     supabase: SupabaseClient;
     session: Session | null;
     durationSeconds: number;
     playlist?: Playlist;
   } = $props();
 
+  let startSeconds = $state(0);
+
   let player = $state<any>();
 
   $effect(() => {
-    if (!player || !window) return;
+    if (!player || typeof window === "undefined") return;
 
-    // Wait for the video to load before seeking
     const checkAndSeek = () => {
       try {
         if (player.getPlayerState && player.getPlayerState() !== -1) {
-          // Video is loaded, now seek to the start time
           if (player.seekTo && startSeconds) {
             player.seekTo(startSeconds);
           } else if (player.seekTo) {
             player.seekTo(0);
           }
         } else {
-          // Video not loaded yet, check again in a bit
           setTimeout(checkAndSeek, 100);
         }
       } catch (error) {
@@ -54,7 +51,6 @@
       }
     };
 
-    // Start checking if video is ready
     setTimeout(checkAndSeek, 100);
     if (player.seekTo) {
       if (startSeconds) {
@@ -65,48 +61,7 @@
     }
   });
 
-  onMount(() => {
-    const windowRef: any = window;
-
-    if (typeof windowRef.YT !== "undefined") {
-      player = new windowRef.YT.Player("player", {
-        videoId: video.id,
-        playerVars: {
-          playsinline: 1,
-          fs: 1, // Enable fullscreen button
-          rel: 0, // Only show related videos from current channel
-          modestbranding: true, // Reduce YouTube branding
-        },
-        events: {
-          onReady: onPlayerReady,
-          // onStateChange: onPlayerStateChange,
-        },
-      });
-    }
-
-    window.addEventListener("beforeunload", saveCurrentTime);
-  });
-
-  beforeNavigate(() => {
-    console.log("in before navigat");
-    saveCurrentTime();
-  });
-
-  onDestroy(() => {
-    console.log("in on destroy");
-    saveCurrentTime();
-  });
-
-  // Autoplay
-  function onPlayerReady(event: {
-    target: { seekTo: (startSeconds: number) => void };
-  }) {
-    if (startSeconds) {
-      event.target.seekTo(startSeconds);
-    }
-  }
-
-  // Helper function to save timestamp for a specific video with its duration
+  // Helper function to save timestamp for a specific video with its duration (async for in-app use)
   function saveTimestampForVideo(
     video: Video,
     currentTimeSeconds: number,
@@ -139,23 +94,128 @@
     }
   }
 
-  function saveCurrentTime() {
+  // Save timestamp using sendBeacon for background/unload events
+  function saveTimestampBeacon(
+    video: Video,
+    currentTimeSeconds: number,
+    videoDurationSeconds: number,
+  ) {
+    if (
+      !videoDurationSeconds ||
+      currentTimeSeconds <= VIDEO_SAVE_SECONDS_START
+    ) {
+      return;
+    }
+
+    const watchedPercent = currentTimeSeconds / videoDurationSeconds;
+    const watchedAt =
+      watchedPercent >= VIDEO_DELETE_SECONDS_PERCENT
+        ? new Date().toISOString()
+        : null;
+
+    const payload = {
+      watchedAt,
+      currentTimeSeconds,
+      videoId: video.id,
+      // Add user/session info if needed (e.g. userId: session?.user.id)
+    };
+
+    // Use your real API endpoint here
+    if (typeof navigator !== "undefined" && navigator.sendBeacon) {
+      navigator.sendBeacon("/api/save-timestamp", JSON.stringify(payload));
+    }
+  }
+
+  function saveCurrentTime({ useBeacon = false } = {}) {
     if (player && player.getCurrentTime) {
       try {
         const currentTimeSeconds = player.getCurrentTime() as number;
-
-        // Only save if it's different enough from the start time
         if (
           !startSeconds ||
           Math.abs(currentTimeSeconds - startSeconds) > VIDEO_SAVE_SECONDS_DELTA
         ) {
-          saveTimestampForVideo(video, currentTimeSeconds, durationSeconds);
+          if (useBeacon) {
+            saveTimestampBeacon(video, currentTimeSeconds, durationSeconds);
+          } else {
+            saveTimestampForVideo(video, currentTimeSeconds, durationSeconds);
+          }
         }
       } catch (error) {
         console.error("Error while trying to save current video time.", error);
       }
     }
   }
+
+  function handleBeforeUnload() {
+    saveCurrentTime({ useBeacon: true });
+  }
+
+  function handleVisibilityChange() {
+    if (document.visibilityState === "hidden") {
+      saveCurrentTime({ useBeacon: true });
+    }
+  }
+
+  // YouTube Player Setup
+  function onPlayerReady(event: {
+    target: { seekTo: (startSeconds: number) => void };
+  }) {
+    if (startSeconds) {
+      event.target.seekTo(startSeconds);
+    }
+  }
+
+  onMount(async () => {
+    // Get current search param 't'
+    const searchParamT = page.url.searchParams.get("t");
+    if (searchParamT) {
+      startSeconds = parseInt(searchParamT, 10);
+    } else {
+      // Always fetch from backend if no param
+      const { videoTimestamp } = await getLatestTimestamp({
+        videoId: video.id,
+        session,
+        supabase,
+      });
+      if (videoTimestamp) {
+        startSeconds = videoTimestamp.video_start_seconds ?? 0;
+      } else {
+        startSeconds = 0;
+      }
+    }
+  });
+
+  onMount(() => {
+    if (typeof window !== "undefined") {
+      const windowRef: any = window;
+      if (typeof windowRef.YT !== "undefined") {
+        player = new windowRef.YT.Player("player", {
+          videoId: video.id,
+          playerVars: {
+            playsinline: 1,
+            fs: 1,
+            rel: 0,
+            modestbranding: true,
+          },
+          events: { onReady: onPlayerReady },
+        });
+      }
+      window.addEventListener("beforeunload", handleBeforeUnload);
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+    }
+  });
+
+  beforeNavigate(() => {
+    saveCurrentTime(); // async is ok for in-app navigation
+  });
+
+  onDestroy(() => {
+    if (typeof window !== "undefined") {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      saveCurrentTime();
+    }
+  });
 </script>
 
 <VideoEmbed divId="player" />

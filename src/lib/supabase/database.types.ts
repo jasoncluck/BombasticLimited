@@ -277,6 +277,18 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      follow_playlist: {
+        Args: {
+          p_user_id: string
+          p_playlist_id: number
+          p_playlist_position?: number
+        }
+        Returns: {
+          playlist_id: number
+          user_id: string
+          playlist_position: number
+        }[]
+      }
       generate_unique_username: {
         Args: { base_username: string; exclude_user_id?: string }
         Returns: string
@@ -418,6 +430,7 @@ export type Database = {
           image_properties: Json
           created_at: string
           created_by: string
+          profile_username: string
         }[]
       }
       search_videos: {
@@ -433,6 +446,13 @@ export type Database = {
           duration: string
           video_start_seconds: number
           updated_at: string
+        }[]
+      }
+      unfollow_playlist: {
+        Args: { p_user_id: string; p_playlist_id: number }
+        Returns: {
+          playlist_id: number
+          user_id: string
         }[]
       }
       update_playlist_position: {

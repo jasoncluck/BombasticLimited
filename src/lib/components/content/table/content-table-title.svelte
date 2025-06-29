@@ -4,7 +4,7 @@
   let { video }: { video: Video } = $props();
 </script>
 
-<div class="flex flex-col min-w-[100px] max-w-xs gap-1">
+<div class="flex flex-col min-w-[100px] max-w-sm gap-1">
   <p
     class="text-xs text-muted-foreground transform
                      pointer-events-none"

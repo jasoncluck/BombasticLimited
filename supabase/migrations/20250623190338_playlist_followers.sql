@@ -11,51 +11,42 @@ COMMENT ON COLUMN public.user_playlists."playlist_position" IS 'Ordering of play
 ALTER TABLE public.user_playlists ENABLE ROW LEVEL SECURITY;
 
 -- SELECT policy
-CREATE POLICY "Users can SELECT user_playlists for playlists they created"
+CREATE POLICY "Users can SELECT their own user_playlists"
     ON public.user_playlists
     FOR SELECT
     USING (
-        EXISTS (
-            SELECT 1 FROM public.playlists p
-            WHERE p.id = user_playlists.id
-              AND p.created_by = auth.uid()
-        )
+        user_playlists.user_id = auth.uid()
     );
 
--- INSERT policy
-CREATE POLICY "Users can INSERT user_playlists for playlists they created"
+CREATE POLICY "Users can INSERT user_playlists for playlists they created or are Public/Official"
     ON public.user_playlists
     FOR INSERT
     WITH CHECK (
         EXISTS (
             SELECT 1 FROM public.playlists p
             WHERE p.id = user_playlists.id
-              AND p.created_by = auth.uid()
+              AND (
+                p.created_by = auth.uid()
+                OR p.type = 'Public'
+                OR p.type = 'Official'
+              )
         )
     );
 
 -- UPDATE policy
-CREATE POLICY "Users can UPDATE user_playlists for playlists they created"
+CREATE POLICY "Users can UPDATE their own user_playlists"
     ON public.user_playlists
     FOR UPDATE
     USING (
-        EXISTS (
-            SELECT 1 FROM public.playlists p
-            WHERE p.id = user_playlists.id
-              AND p.created_by = auth.uid()
-        )
+        user_playlists.user_id = auth.uid()
     );
 
 -- DELETE policy
-CREATE POLICY "Users can DELETE user_playlists for playlists they created"
+CREATE POLICY "Users can DELETE their own user_playlists"
     ON public.user_playlists
     FOR DELETE
     USING (
-        EXISTS (
-            SELECT 1 FROM public.playlists p
-            WHERE p.id = user_playlists.id
-              AND p.created_by = auth.uid()
-        )
+        user_playlists.user_id = auth.uid()
     );
 
 -- Updated get_user_playlists function
@@ -199,6 +190,121 @@ BEGIN
   image_properties := inserted_playlist.image_properties;
   playlist_position := actual_position;
 
+  RETURN NEXT;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION follow_playlist(
+  p_user_id uuid,
+  p_playlist_id bigint,
+  p_playlist_position int2 DEFAULT NULL
+)
+RETURNS TABLE (
+  playlist_id bigint,
+  user_id uuid,
+  playlist_position int2
+)
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+DECLARE
+  max_position int2;
+  actual_position int2;
+  already_linked boolean;
+BEGIN
+  -- Check if this playlist is already followed by the user
+  SELECT EXISTS(
+    SELECT 1 FROM public.user_playlists up
+    WHERE up.user_id = p_user_id AND up.id = p_playlist_id
+  ) INTO already_linked;
+
+  IF already_linked THEN
+    RAISE EXCEPTION 'Playlist already added to account';
+  END IF;
+
+  -- Find the maximum position for this user's playlists
+  SELECT COALESCE(MAX(up.playlist_position), 0)
+    INTO max_position
+    FROM public.user_playlists up
+    WHERE up.user_id = p_user_id;
+
+  -- If no position specified, use max_position + 1
+  IF p_playlist_position IS NULL THEN
+    actual_position := LEAST(max_position + 1, 50);
+  ELSE
+    -- Validate position range
+    IF p_playlist_position < 1 OR p_playlist_position > 50 THEN
+      RAISE EXCEPTION 'Position must be between 1 and 50';
+    END IF;
+    actual_position := p_playlist_position;
+  END IF;
+
+  -- Shift existing playlists if inserting at a specific position
+  IF actual_position <= max_position THEN
+    FOR i IN REVERSE actual_position..max_position LOOP
+      UPDATE public.user_playlists up
+        SET playlist_position = i + 1
+        WHERE up.user_id = p_user_id AND up.playlist_position = i;
+    END LOOP;
+  END IF;
+
+  -- Insert into user_playlists with the desired position
+  INSERT INTO public.user_playlists (
+    id,
+    user_id,
+    playlist_position
+  )
+  VALUES (
+    p_playlist_id,
+    p_user_id,
+    actual_position
+  );
+
+  -- Assign return values
+  playlist_id := p_playlist_id;
+  user_id := p_user_id;
+  playlist_position := actual_position;
+
+  RETURN NEXT;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION unfollow_playlist(
+  p_user_id uuid,
+  p_playlist_id bigint
+)
+RETURNS TABLE (
+  playlist_id bigint,
+  user_id uuid
+)
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+DECLARE
+  removed_position int2;
+BEGIN
+  -- Find the playlist position of the playlist to be removed
+  SELECT up.playlist_position
+    INTO removed_position
+    FROM public.user_playlists up
+    WHERE up.user_id = p_user_id AND up.id = p_playlist_id;
+
+  IF removed_position IS NULL THEN
+    RAISE EXCEPTION 'Playlist not found in user''s account';
+  END IF;
+
+  -- Delete the user_playlist row
+  DELETE FROM public.user_playlists up
+    WHERE up.user_id = p_user_id AND up.id = p_playlist_id;
+
+  -- Shift up all playlists that were after the removed position
+  UPDATE public.user_playlists up
+    SET playlist_position = up.playlist_position - 1
+    WHERE up.user_id = p_user_id AND up.playlist_position > removed_position;
+
+  -- Assign return values
+  playlist_id := p_playlist_id;
+  user_id := p_user_id;
   RETURN NEXT;
 END;
 $$;

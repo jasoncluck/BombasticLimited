@@ -21,7 +21,6 @@ export async function saveVideoTimestamp({
   let error: PostgrestError | undefined;
 
   if (session?.user && videoId) {
-    console.log(videoId);
     const { error } = await supabase.from("timestamps").upsert(
       {
         user_id: session?.user.id,
@@ -58,6 +57,32 @@ export async function deleteVideoTimestamp({
     if (error) {
       console.error("Error deleting video current timestamp.", error);
     }
+  }
+  return { error };
+}
+
+export async function getLatestTimestamp({
+  videoId,
+  supabase,
+  session,
+}: {
+  videoId: string;
+  supabase: SupabaseClient<Database>;
+  session: Session | null;
+}) {
+  let error: PostgrestError | undefined;
+
+  if (session?.user && videoId) {
+    const { data: videoTimestamp, error } = await supabase
+      .from("timestamps")
+      .select()
+      .eq("user_id", session.user.id)
+      .eq("video_id", videoId)
+      .single();
+    if (error) {
+      console.error("Error getting latest timestamp:", error);
+    }
+    return { videoTimestamp, error };
   }
   return { error };
 }

@@ -465,27 +465,53 @@ export async function updatePlaylistImage({
   return { updatedPlaylist, error: updateError };
 }
 
-export async function getPlaylistCreatorProfile({
-  playlist,
+export async function followPlaylist({
+  playlistId,
   supabase,
+  session,
+  position,
 }: {
-  playlist: Playlist;
+  playlistId: number;
   supabase: SupabaseClient<Database>;
+  session: Session;
+  position?: number;
 }) {
-  const { data: profile, error } = await supabase
-    .from("profiles")
-    .select()
-    .eq("id", playlist.created_by)
-    .single();
+  const { error } = await supabase
+    .rpc("follow_playlist", {
+      p_playlist_id: playlistId,
+      p_user_id: session.user.id,
+      p_playlist_position: position,
+    })
+    .select();
 
   if (error) {
-    console.error(
-      "Error occurred when trying to get the playlist creator profile.",
-      error,
-    );
+    console.error(error);
   }
 
-  return { profile, error };
+  return { error };
+}
+
+export async function unfollowPlaylist({
+  playlistId,
+  supabase,
+  session,
+}: {
+  playlistId: number;
+  supabase: SupabaseClient<Database>;
+  session: Session;
+}) {
+  const { error } = await supabase
+    .rpc("unfollow_playlist", {
+      p_playlist_id: playlistId,
+      p_user_id: session.user.id,
+    })
+    .select();
+
+  if (error) {
+    console.error(error);
+  }
+
+  return { error };
 }
 
 export function isPlaylistVideo(video: Video): video is Video & PlaylistVideo {

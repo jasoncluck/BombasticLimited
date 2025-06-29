@@ -14,14 +14,12 @@
   const {
     video,
     videoId,
-    startSeconds,
     supabase,
     session,
     baseUrl = "/video",
   }: {
     video: Video;
     videoId: string;
-    startSeconds: number | undefined | null;
     supabase: SupabaseClient;
     session: Session | null;
     baseUrl?: string;
@@ -87,7 +85,6 @@
     {supabase}
     {session}
     {video}
-    {startSeconds}
     durationSeconds={videoDurationToSeconds(video?.duration)}
   />
 
