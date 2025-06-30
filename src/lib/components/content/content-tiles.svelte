@@ -12,9 +12,9 @@
   let {
     videos = $bindable(),
     videosCount,
-    userPlaylist,
+    playlist,
     isContinueVideos,
-    userPlaylists,
+    playlists,
     allowVideoReorder = false,
     contentFilter,
     supabase,
@@ -27,7 +27,7 @@
     allowVideoReorder,
     videos,
     videosCount,
-    userPlaylist: userPlaylist,
+    playlist,
     contentFilter,
     supabase,
     onVideosUpdate: (updatedVideos) => {
@@ -38,7 +38,7 @@
   const getCardClasses = (index: number) => {
     let classes = "relative";
 
-    if (!contentState.isSelectionMode && contentState.draggedIndex === index) {
+    if (contentState.draggedIndex === index) {
       classes += " opacity-60";
     }
 
@@ -82,8 +82,8 @@
       <ContentCard
         video={videos[i]}
         {videos}
-        {userPlaylist}
-        {userPlaylists}
+        {playlist}
+        {playlists}
         {isContinueVideos}
         {supabase}
         {session}

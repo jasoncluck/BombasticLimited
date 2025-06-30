@@ -115,7 +115,7 @@
               <div class="h-56 w-56 relative">
                 <ImageCropper.Preview class="rounded-md h-full w-full" />
                 <DropdownMenu.Root>
-                  <DropdownMenu.Trigger>
+                  <DropdownMenu.Trigger class="outline-none">
                     {#snippet child({ props })}
                       <Button
                         {...props}

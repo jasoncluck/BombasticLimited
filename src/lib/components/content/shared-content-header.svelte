@@ -149,11 +149,11 @@
         {#if isPlaylistCreator}
           <DropdownMenu.Root>
             <DropdownMenu.Trigger
-              class={buttonVariants({
-                variant: "ghost",
-                class: "ghost-button-minimal",
-                size: "icon",
-              })}
+              class="outline-none {buttonVariants({
+                variant: 'ghost',
+                class: 'ghost-button-minimal',
+                size: 'icon',
+              })}"
             >
               <Ellipsis size="30" />
               <span class="sr-only">Playlist Actions</span>

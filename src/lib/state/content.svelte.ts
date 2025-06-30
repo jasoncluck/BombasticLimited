@@ -51,8 +51,6 @@ export interface ContentState {
   hoveredVideo: Video | null;
   // If a playlist or video is being currently dragged
   dragContentType: DragContentType;
-  // selection mode controls what clicking on content does
-  isSelectionMode: boolean;
   isMouseOverContextMenu: boolean;
   isContextMenuOpen: boolean;
   // ID of setTimeout event when hovering over a video
@@ -63,6 +61,10 @@ export interface ContentState {
   // Drag and drop state
   draggedIndex: number | null;
   targetIndex: number | null;
+
+  // Click tracking for double-click detection
+  lastClickTime: number;
+  lastClickedVideo: Video | null;
 
   // Drag and drop method
   createDragDrop: (options: DragDropOptions) => DragDropHandlers;
@@ -78,6 +80,21 @@ export interface ContentState {
     videos: Video[];
   }) => void;
 
+  // Click handling for single/double click
+  handleVideoClick: ({
+    event,
+    video,
+    videos,
+    playlist,
+    onNavigate,
+  }: {
+    event: MouseEvent;
+    video: Video;
+    videos: Video[];
+    playlist?: Playlist;
+    onNavigate?: (video: Video, playlist?: Playlist) => void;
+  }) => void;
+
   // Mouse hover methods
   handleMouseEnter: (options: MouseHoverOptions) => void;
   handleMouseLeave: (isHoveringElement?: boolean) => void;
@@ -88,7 +105,6 @@ export class ContentStateClass implements ContentState {
   selectedVideos = $state<Video[]>([]);
   hoveredVideo = $state<Video | null>(null);
   dragContentType = $state<DragContentType>(null);
-  isSelectionMode = $state(false);
   isMouseOverContextMenu = $state(false);
   isContextMenuOpen = $state(false);
   hoverTimeoutId = $state<ReturnType<typeof setTimeout> | null>(null);
@@ -98,6 +114,10 @@ export class ContentStateClass implements ContentState {
   // Drag and drop state
   draggedIndex = $state<number | null>(null);
   targetIndex = $state<number | null>(null);
+
+  // Click tracking for double-click detection
+  lastClickTime = $state(0);
+  lastClickedVideo = $state<Video | null>(null);
 
   // Mouse hover methods
   handleMouseEnter(options: MouseHoverOptions) {
@@ -144,6 +164,48 @@ export class ContentStateClass implements ContentState {
         this.hoverTimeoutId = null;
       }, 50);
       this.hoverTimeoutId = timeoutId;
+    }
+  }
+
+  // Handle single click (select) vs double click (navigate)
+  handleVideoClick({
+    event,
+    video,
+    videos,
+    playlist,
+    onNavigate,
+  }: {
+    event: MouseEvent;
+    video: Video;
+    videos: Video[];
+    playlist?: Playlist;
+    onNavigate?: (video: Video, playlist?: Playlist) => void;
+  }) {
+    const now = Date.now();
+    const doubleClickDelay = 300; // milliseconds
+
+    // Always handle selection immediately
+    this.handleSelectVideos({ event, video, videos });
+
+    // Check if this is a double-click (only for non-modifier clicks)
+    if (
+      !event.shiftKey &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      this.lastClickedVideo?.id === video.id &&
+      now - this.lastClickTime < doubleClickDelay
+    ) {
+      // This is a double-click - navigate immediately
+      onNavigate?.(video, playlist);
+
+      // Reset double-click tracking
+      this.lastClickTime = 0;
+      this.lastClickedVideo = null;
+    } else {
+      // This is a single click - just update tracking for potential double-click
+      this.lastClickTime = now;
+      this.lastClickedVideo = video;
+      // No navigation timeout - only double-click navigates
     }
   }
 
@@ -271,18 +333,11 @@ export class ContentStateClass implements ContentState {
     videos: Video[];
   }) {
     const isShiftPressed = event.shiftKey;
+    const isCtrlPressed = event.ctrlKey || event.metaKey;
     const videoIndex = this.selectedVideos.findIndex((v) => v.id === video.id);
 
-    if (!isShiftPressed) {
-      // Original behavior when SHIFT is not pressed
-      if (videoIndex === -1) {
-        this.selectedVideos.push(video);
-      } else {
-        this.selectedVideos.splice(videoIndex, 1);
-      }
-    } else {
+    if (isShiftPressed) {
       // SHIFT key is pressed - implement range selection
-      // If no videos are selected yet, just add this one
       if (this.selectedVideos.length === 0) {
         this.selectedVideos.push(video);
       } else {
@@ -306,6 +361,24 @@ export class ContentStateClass implements ContentState {
             this.selectedVideos.push(rangeVideo);
           }
         }
+      }
+    } else if (isCtrlPressed) {
+      // CTRL/CMD key is pressed - toggle individual selection
+      if (videoIndex === -1) {
+        this.selectedVideos.push(video);
+      } else {
+        this.selectedVideos.splice(videoIndex, 1);
+      }
+    } else {
+      // No modifier keys - replace selection with this video
+      if (videoIndex === -1) {
+        this.selectedVideos = [video];
+      } else if (this.selectedVideos.length === 1) {
+        // If only this video is selected, deselect it
+        this.selectedVideos = [];
+      } else {
+        // If multiple videos are selected, select only this one
+        this.selectedVideos = [video];
       }
     }
   }

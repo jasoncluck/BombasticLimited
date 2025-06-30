@@ -44,24 +44,20 @@
     contentState.isContextMenuOpen = open;
   });
 
-  // Close context menu if there's no hovered video and no selected videos in selection mode
+  // Close context menu if there's no hovered video and no selected videos
   $effect(() => {
     if (
       open &&
       !contentState.hoveredVideo &&
-      (!contentState.isSelectionMode ||
-        contentState.selectedVideos.length === 0)
+      contentState.selectedVideos.length === 0
     ) {
       open = false;
     }
   });
 
-  // Determine which videos to operate on: selected videos in selection mode, or hovered video
+  // Determine which videos to operate on: selected videos if any, or hovered video
   const operationVideos = $derived.by(() => {
-    if (
-      contentState.isSelectionMode &&
-      contentState.selectedVideos.length > 0
-    ) {
+    if (contentState.selectedVideos.length > 0) {
       return contentState.selectedVideos;
     }
     return contentState.hoveredVideo ? [contentState.hoveredVideo] : [];
@@ -71,7 +67,7 @@
 </script>
 
 <ContextMenu.Root bind:open>
-  <ContextMenu.Trigger>
+  <ContextMenu.Trigger class="outline-none">
     {@render children()}
   </ContextMenu.Trigger>
 
@@ -85,7 +81,7 @@
       contentState.isMouseOverContextMenu = false;
     }}
   >
-    {#if operationVideos.length === 0 && contentState.isSelectionMode}
+    {#if operationVideos.length === 0}
       <ContextMenu.Item disabled>No videos selected</ContextMenu.Item>
     {:else if operationVideos.length > 0}
       {#if playlist && isPlaylistOwner}
@@ -99,15 +95,15 @@
             });
 
             if (!error) {
-              // If we were operating on selected videos, clear them
-              if (
-                contentState.isSelectionMode &&
-                contentState.selectedVideos.length > 0
-              ) {
+              // Clear selected videos if we were operating on them
+              if (contentState.selectedVideos.length > 0) {
                 contentState.selectedVideos = [];
               }
-              // If we were operating on hovered video, clear it
-              if (!contentState.isSelectionMode) {
+              // Clear hovered video if we were operating on it
+              if (
+                contentState.selectedVideos.length === 0 &&
+                contentState.hoveredVideo
+              ) {
                 contentState.hoveredVideo = null;
               }
             }
@@ -158,7 +154,7 @@
         </ContextMenu.Sub>
       {/if}
 
-      {#if contentState.isSelectionMode && contentState.selectedVideos.length > 0}
+      {#if contentState.selectedVideos.length > 0}
         <ContextMenu.Item
           onclick={() => {
             contentState.selectedVideos = [];
@@ -168,19 +164,15 @@
         </ContextMenu.Item>
       {/if}
 
-      <!-- Disabling in selection mode because it's confusing when some actions are on a specific video and others are for all selected -->
-      {#if playlist && isPlaylistOwner && (contentState.isSelectionMode === false || contentState.selectedVideos.length <= 1) && contentState.hoveredVideo}
-        {@const video =
-          contentState.selectedVideos.length === 1
-            ? contentState.selectedVideos[0]
-            : contentState.hoveredVideo}
+      {@const lastVideo = operationVideos[operationVideos.length - 1]}
+      {#if playlist && isPlaylistOwner && lastVideo}
         <ContextMenu.Item
           onclick={async () =>
             (contentState.playlistImages[playlist.id] =
               await handleUpdatePlaylistImage({
                 playlist,
-                thumbnailUrl: video.thumbnail_url,
-                thumbnailMaxResUrl: video.thumbnail_maxres_url,
+                thumbnailUrl: lastVideo.thumbnail_url,
+                thumbnailMaxResUrl: lastVideo.thumbnail_maxres_url,
                 playlistImages: contentState.playlistImages,
                 supabase,
               }))}
@@ -199,10 +191,7 @@
             });
 
             // Update the appropriate state based on what we were operating on
-            if (
-              contentState.isSelectionMode &&
-              contentState.selectedVideos.length > 0
-            ) {
+            if (contentState.selectedVideos.length > 0) {
               contentState.selectedVideos = updatedVideos;
             } else if (contentState.hoveredVideo) {
               const updatedHoveredVideo = updatedVideos.find(
@@ -231,10 +220,7 @@
             });
 
             // Update the appropriate state based on what we were operating on
-            if (
-              contentState.isSelectionMode &&
-              contentState.selectedVideos.length > 0
-            ) {
+            if (contentState.selectedVideos.length > 0) {
               contentState.selectedVideos = updatedVideos;
             } else if (contentState.hoveredVideo) {
               const updatedHoveredVideo = updatedVideos.find(
@@ -246,7 +232,7 @@
             }
           }}
         >
-          Mark as watched
+          Mark video as watched
         </ContextMenu.Item>
       {/if}
     {/if}

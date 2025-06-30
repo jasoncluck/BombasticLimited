@@ -47,15 +47,10 @@
   class="group transition-transform duration-150 transform
   will-change-transform bg-background-lighter cursor-pointer block mb-6
   hover:z-auto {contentState.manualHover ? 'z-40' : ''}"
-  onclick={contentState.isSelectionMode
-    ? (e) => {
-        e.preventDefault();
-        contentState.handleSelectVideos({ event: e, video, videos });
-      }
-    : (e) => {
-        e.preventDefault();
-        handleContentNavigation({ video, playlist });
-      }}
+  onclick={(e) => {
+    e.preventDefault();
+    contentState.handleSelectVideos({ event: e, video, videos });
+  }}
   {...restProps}
 >
   <div
@@ -67,8 +62,9 @@
   >
     <div class="relative">
       <img
-        class="w-full aspect-[16/9] h-auto {contentState.isSelectionMode &&
-          'opacity-50'}"
+        class="w-full aspect-[16/9] h-auto {contentState.selectedVideos.filter(
+          (v) => v.id === video.id,
+        ) && 'opacity-50'}"
         src={video.thumbnail_url}
         alt={video.title}
       />

@@ -217,7 +217,6 @@
   afterNavigate(({ from, to, delta }) => {
     // Reset scroll state if new page
     if (!delta && from?.url.pathname !== to?.url.pathname) {
-      contentState.isSelectionMode = false;
       if (contentViewportRef) {
         contentViewportRef.scrollTop = 0;
         contentViewportRef.scrollLeft = 0;
@@ -413,7 +412,7 @@
       {#if user}
         <DropdownMenu.Root>
           <DropdownMenu.Trigger
-            class="cursor-pointer {buttonVariants({
+            class="cursor-pointer outline-none {buttonVariants({
               variant: 'outline',
               size: 'icon',
             })}"

@@ -119,7 +119,7 @@
     {videos}
     {videosCount}
     allowVideoReorder={contentFilter.sort.key === "playlistOrder" &&
-      !contentState.isSelectionMode}
+      contentState.selectedVideos.length <= 1}
     {contentFilter}
     {supabase}
     {session}

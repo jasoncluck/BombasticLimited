@@ -63,7 +63,6 @@
   const contentState = getContentState();
 
   onMount(() => {
-    contentState.isSelectionMode = false;
     contentState.selectedVideos = [];
     contentState.hoveredVideo = null;
   });

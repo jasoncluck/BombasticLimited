@@ -51,7 +51,6 @@
     <Checkbox
       id="isSelectionMode"
       class="items-center cursor-pointer"
-      bind:checked={contentState.isSelectionMode}
       onclick={() => {
         if (contentState.selectedVideos.length > 0) {
           contentState.selectedVideos = [];
@@ -59,17 +58,15 @@
       }}
     />
   </div>
-  {#if contentState.isSelectionMode}
-    <div>
-      <ContentActionsDropdown
-        bind:videos={contentState.selectedVideos}
-        isContentSelect={true}
-        {playlist}
-        {playlists}
-        onSelectAll={handleSelectAll}
-        {supabase}
-        {session}
-      />
-    </div>
-  {/if}
+  <div>
+    <ContentActionsDropdown
+      bind:videos={contentState.selectedVideos}
+      isContentSelect={true}
+      {playlist}
+      {playlists}
+      onSelectAll={handleSelectAll}
+      {supabase}
+      {session}
+    />
+  </div>
 </div>

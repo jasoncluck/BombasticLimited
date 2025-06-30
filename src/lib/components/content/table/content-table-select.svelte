@@ -7,12 +7,3 @@
   const contentState = getContentState();
   const { video }: { video: Video } = $props();
 </script>
-
-{#if contentState.isSelectionMode}
-  <Table.Cell class="w-12">
-    <Checkbox
-      id={video.id}
-      checked={contentState.selectedVideos.some((v) => v.id === video.id)}
-    />
-  </Table.Cell>
-{/if}

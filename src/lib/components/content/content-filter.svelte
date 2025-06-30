@@ -169,7 +169,7 @@
 <div class="flex flex-col items-start gap-4">
   <DropdownMenu.Root>
     <DropdownMenu.Trigger
-      class="cursor-pointer hover:text-primary flex items-center gap-1"
+      class="cursor-pointer hover:text-primary flex items-center gap-1 outline-none"
     >
       <span class="text-sm">{sortOptionInfo.displayName}</span>
       <List size={20} />

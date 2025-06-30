@@ -67,11 +67,16 @@
     getCoreRowModel: getCoreRowModel(),
   });
 
-  function getRowClasses(index: number) {
-    let classes = `cursor-pointer ${contentState.isSelectionMode ? "selection-mode" : ""}`;
+  // Memoize selected video IDs for better performance
+  const selectedVideoIds = $derived(
+    new Set(contentState.selectedVideos.map((v) => v.id)),
+  );
 
-    // Add selection highlighting
-    if (contentState.selectedVideos.some((v) => v.id === videos[index].id)) {
+  function getRowClasses(video: Video, index: number) {
+    let classes = "selection-mode";
+
+    // Use Set for O(1) lookup instead of array.some()
+    if (selectedVideoIds.has(video.id)) {
       classes += " bg-muted/50";
     }
 
@@ -96,13 +101,13 @@
   }
 </script>
 
-<Table.Root>
+<Table.Root class="outline-none">
   <Table.Body class="-mx-2">
     {#each table.getRowModel().rows as row, i (row.id)}
       <Table.Row
         data-state={row.getIsSelected() && "selected"}
-        class={getRowClasses(i)}
-        draggable={true}
+        class={getRowClasses(row.original, i)}
+        draggable={allowVideoReorder}
         ondragstart={dragDrop
           ? (e) => dragDrop.handleDragStart(e, i)
           : undefined}
@@ -110,22 +115,18 @@
         ondragleave={dragDrop ? (e) => dragDrop.handleDragLeave(e) : undefined}
         ondrop={dragDrop ? (e) => dragDrop.handleDrop(e, i) : undefined}
         ondragend={dragDrop ? dragDrop.handleDragEnd : undefined}
-        onclick={contentState.isSelectionMode
-          ? (e) => {
-              e.preventDefault();
-              contentState.handleSelectVideos({
-                event: e,
-                video: row.original,
-                videos,
-              });
-            }
-          : (e) => {
-              e.preventDefault();
-              handleContentNavigation({
-                video: row.original,
-                playlist,
-              });
-            }}
+        onclick={(e) => {
+          e.preventDefault();
+          contentState.handleVideoClick({
+            event: e,
+            video: row.original,
+            videos,
+            playlist,
+            onNavigate: (video, playlist) => {
+              handleContentNavigation({ video, playlist });
+            },
+          });
+        }}
         onmouseenter={() =>
           contentState.handleMouseEnter({ video: row.original })}
         onmouseleave={() => contentState.handleMouseLeave()}

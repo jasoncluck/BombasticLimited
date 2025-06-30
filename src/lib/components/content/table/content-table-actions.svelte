@@ -7,7 +7,7 @@
 </script>
 
 <DropdownMenu.Root>
-  <DropdownMenu.Trigger>
+  <DropdownMenu.Trigger class="outline-none">
     {#snippet child({ props })}
       <Button
         {...props}
