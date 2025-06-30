@@ -13,7 +13,10 @@
   import { ScrollArea } from "../ui/scroll-area";
   import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
-  import { handleDeleteVideoTimestamp } from "../video/video-service";
+  import {
+    handleAddVideoTimestamp,
+    handleDeleteVideoTimestamp,
+  } from "../video/video-service";
 
   interface ContentContextMenuProps {
     videos: Video[];
@@ -39,6 +42,10 @@
   const mediaQueryState = getMediaQueryState();
 
   let open = $state(false);
+
+  $effect(() => {
+    contentState.isContextMenuOpen = open;
+  });
 
   $effect(() => {
     if (open && videos.length < 1) {
@@ -133,7 +140,7 @@
     {/if}
 
     {@const lastVideo = videos[videos.length - 1]}
-    {#if playlist && videos.length === 1 && isPlaylistOwner}
+    {#if playlist && isPlaylistOwner}
       <ContextMenu.Item
         onclick={async () =>
           (contentState.playlistImages[playlist.id] =
@@ -146,17 +153,33 @@
             }))}>Set as playlist image</ContextMenu.Item
       >
     {/if}
-    {#if session && videos.length === 1 && isVideoWithTimestamp(lastVideo) && (lastVideo.video_start_seconds || lastVideo?.watched_at)}
+    {#if session && videos.length > 0 && videos.some( (v) => isVideoWithTimestamp(v), )}
       <ContextMenu.Item
         onclick={async () => {
-          handleDeleteVideoTimestamp({
-            videoIds: [lastVideo.id],
+          ({ updatedVideos: videos } = await handleDeleteVideoTimestamp({
+            videos,
             supabase,
             session,
-          });
+          }));
         }}
       >
-        Reset video progress
+        {videos.length === 1 ? "Reset progress" : "Reset progress"}
+      </ContextMenu.Item>
+    {/if}
+    {#if videos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
+      <ContextMenu.Item
+        onclick={async () => {
+          ({ updatedVideos: videos } = await handleAddVideoTimestamp({
+            videoTimestamps: videos.map((v) => ({
+              videoId: v.id,
+              watchedAt: new Date(),
+            })),
+            session,
+            supabase,
+          }));
+        }}
+      >
+        Mark video as watched
       </ContextMenu.Item>
     {/if}
   </ContextMenu.Content>

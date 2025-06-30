@@ -13,6 +13,8 @@ import { pageState } from "./page.svelte";
 
 export type DragContentType = "video" | "playlist" | null;
 
+export type PlaylistImageInfo = Record<string, string | undefined>;
+
 export interface DragDropOptions {
   allowVideoReorder?: boolean;
   videos: Video[];
@@ -49,10 +51,11 @@ export interface ContentState {
   // selection mode controls what clicking on content does
   isSelectionMode: boolean;
   isMouseOverContextMenu: boolean;
+  isContextMenuOpen: boolean;
   // ID of setTimeout event when hovering over a video
   hoverTimeoutId: ReturnType<typeof setTimeout> | null;
   // Storing cropped images in local state to avoid refetching these
-  playlistImages: Record<string, string | undefined>;
+  playlistImages: PlaylistImageInfo;
 
   // Drag and drop state
   draggedIndex: number | null;
@@ -83,6 +86,7 @@ export class ContentStateClass implements ContentState {
   dragContentType = $state<DragContentType>(null);
   isSelectionMode = $state(false);
   isMouseOverContextMenu = $state(false);
+  isContextMenuOpen = $state(false); // Add this line
   hoverTimeoutId = $state<ReturnType<typeof setTimeout> | null>(null);
   playlistImages = $state({});
   manualHover = $state(false);
@@ -109,7 +113,12 @@ export class ContentStateClass implements ContentState {
       }
     }
 
-    if (!this.isSelectionMode && !this.dragContentType) {
+    // Don't update selectedVideos if context menu is open
+    if (
+      !this.isSelectionMode &&
+      !this.dragContentType &&
+      !this.isContextMenuOpen
+    ) {
       // Clear any existing timeout when entering a new element
       if (this.hoverTimeoutId) {
         clearTimeout(this.hoverTimeoutId);
@@ -122,7 +131,8 @@ export class ContentStateClass implements ContentState {
 
   handleMouseLeave(isHoveringElement: boolean = false) {
     this.manualHover = false;
-    if (!this.isSelectionMode) {
+    if (!this.isSelectionMode && !this.isContextMenuOpen) {
+      // Add context menu check here too
       // Store the timeout ID so it can be cleared if needed
       const timeoutId = setTimeout(() => {
         if (
