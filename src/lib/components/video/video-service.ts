@@ -5,15 +5,22 @@
 import { type Video, getInProgressVideos } from "$lib/supabase/videos";
 import { getVideos } from "$lib/supabase/videos";
 import { showNotification } from "$lib/stores/notification.js";
-import type { Session, SupabaseClient } from "@supabase/supabase-js";
+import type {
+  PostgrestError,
+  Session,
+  SupabaseClient,
+} from "@supabase/supabase-js";
 import type { Database } from "$lib/supabase/database.types";
 import type { Source } from "$lib/constants/source";
 import type { TimestampFilter, VideoFilter } from "../content/content-filter";
 import { goto, invalidate } from "$app/navigation";
 import {
-  deleteVideoTimestamp,
-  saveVideoTimestamp,
+  deleteVideoTimestamps,
+  saveVideoTimestamps,
+  type TimestampWithVideoId,
 } from "$lib/supabase/timestamps";
+import type { updated } from "$app/state";
+import { getContentState, type ContentState } from "$lib/state/content.svelte";
 
 export async function fetchMoreInProgressVideos({
   contentFilter,
@@ -93,53 +100,80 @@ export async function fetchMoreSourceVideos({
 }
 
 export async function handleAddVideoTimestamp({
-  video,
-  timestampSeconds,
-  watchedAt,
+  videoTimestamps,
   session,
   supabase,
+  contentState,
 }: {
-  video: Video;
-  timestampSeconds?: number;
-  watchedAt: Date | null;
+  videoTimestamps: TimestampWithVideoId[];
   session: Session | null;
   supabase: SupabaseClient<Database>;
+  contentState?: ContentState;
 }) {
-  const { error } = await saveVideoTimestamp({
-    watchedAt,
-    currentTimeSeconds: timestampSeconds,
-    videoId: video.id,
+  const { error } = await saveVideoTimestamps({
+    videoTimestamps,
     session,
     supabase,
   });
 
   if (error) {
     showNotification("Unable to save timestamp");
+  } else if (contentState) {
+    // After successful save, fetch updated video data for the affected videos
+    const videoIds = videoTimestamps.map((vt) => vt.videoId);
+
+    try {
+      // You'll need to implement this function to fetch updated videos
+      const updatedVideos = await getVideos({
+        videoIds,
+        supabase,
+        session,
+      });
+
+      if (updatedVideos) {
+        // Update contentState.selectedVideos with the updated video data
+        contentState.selectedVideos = contentState.selectedVideos.map(
+          (selectedVideo) => {
+            const updatedVideo = updatedVideos.find(
+              (v) => v.id === selectedVideo.id,
+            );
+            return updatedVideo || selectedVideo;
+          },
+        );
+      }
+    } catch (fetchError) {
+      console.error("Error fetching updated videos:", fetchError);
+    }
   }
+
   invalidate("supabase:db:videos");
+  return { error };
 }
 
 export async function handleDeleteVideoTimestamp({
-  videoId,
+  videos,
   isContinueVideos,
   supabase,
   session,
+  contentState,
 }: {
-  videoId: string;
+  videos: Video[];
   isContinueVideos?: boolean;
   supabase: SupabaseClient<Database>;
   session: Session | null;
-}) {
+  contentState?: ContentState;
+}): Promise<{ error?: PostgrestError }> {
   if (!session) {
     goto("/");
-    return;
+    return {};
   }
 
-  const { error } = await deleteVideoTimestamp({
-    videoId,
+  const { error } = await deleteVideoTimestamps({
+    videoIds: videos.map((v) => v.id),
     supabase,
     session,
   });
+
   if (error) {
     showNotification("Unable to remove video from watchlist.");
   } else {
@@ -148,8 +182,44 @@ export async function handleDeleteVideoTimestamp({
         ? "Removed from Continue Watching"
         : "Video progress reset.",
     );
+
+    if (contentState) {
+      if (isContinueVideos) {
+        // Remove deleted videos from selectedVideos for continue watching
+        const deletedVideoIds = new Set(videos.map((v) => v.id));
+        contentState.selectedVideos = contentState.selectedVideos.filter(
+          (selectedVideo) => !deletedVideoIds.has(selectedVideo.id),
+        );
+      } else {
+        // For timestamp reset, fetch updated video data
+        try {
+          const videoIds = videos.map((v) => v.id);
+          const updatedVideos = await fetchVideosByIds({
+            videoIds,
+            supabase,
+            session,
+          });
+
+          if (updatedVideos) {
+            contentState.selectedVideos = contentState.selectedVideos.map(
+              (selectedVideo) => {
+                const updatedVideo = updatedVideos.find(
+                  (v) => v.id === selectedVideo.id,
+                );
+                return updatedVideo || selectedVideo;
+              },
+            );
+          }
+        } catch (fetchError) {
+          console.error("Error fetching updated videos:", fetchError);
+        }
+      }
+    }
+
     invalidate("supabase:db:videos");
   }
+
+  return { error };
 }
 
 /**

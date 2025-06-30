@@ -12,7 +12,6 @@ export const POST: RequestHandler = async ({
 
   if (session) {
     // Save to Supabase (adapt to your schema/method)
-    console.log(session.user.id);
     const { error } = await supabase.from("timestamps").upsert(
       {
         user_id: session?.user.id,
@@ -22,7 +21,9 @@ export const POST: RequestHandler = async ({
       },
       { onConflict: "user_id,video_id" },
     );
-    console.log(error);
+    if (error) {
+      console.error(error);
+    }
   }
 
   // The response can be empty for sendBeacon

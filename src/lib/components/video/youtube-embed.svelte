@@ -4,7 +4,7 @@
   import VideoEmbed from "$lib/components/video/video-embed.svelte";
   import {
     getLatestTimestamp,
-    saveVideoTimestamp,
+    saveVideoTimestamps,
   } from "$lib/supabase/timestamps";
   import { beforeNavigate } from "$app/navigation";
   import type { Playlist } from "$lib/supabase/playlists";
@@ -12,7 +12,7 @@
   import { page } from "$app/state";
 
   const VIDEO_SAVE_SECONDS_START = 15;
-  const VIDEO_DELETE_SECONDS_PERCENT = 0.9;
+  const VIDEO_DELETE_SECONDS_PERCENT = 0.95;
   const VIDEO_SAVE_SECONDS_DELTA = 15;
 
   const {
@@ -76,18 +76,21 @@
 
     const watchedPercent = currentTimeSeconds / videoDurationSeconds;
     if (watchedPercent >= VIDEO_DELETE_SECONDS_PERCENT) {
-      saveVideoTimestamp({
-        watchedAt: new Date(),
-        currentTimeSeconds,
-        videoId: video.id,
+      saveVideoTimestamps({
+        videoTimestamps: [
+          {
+            videoId: video.id,
+            watchedAt: new Date(),
+          },
+        ],
         session,
         supabase,
       });
     } else {
-      saveVideoTimestamp({
-        watchedAt: null,
-        currentTimeSeconds,
-        videoId: video.id,
+      saveVideoTimestamps({
+        videoTimestamps: [
+          { videoId: video.id, timestampStartSeconds: currentTimeSeconds },
+        ],
         session,
         supabase,
       });

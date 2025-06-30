@@ -189,11 +189,5 @@ export async function getInProgressVideos({
 export function isVideoWithTimestamp(
   video: Video,
 ): video is VideoWithTimestamp {
-  return (
-    !!video &&
-    (("watched_at" in video && !!video.watched_at) ||
-      ("video_start_seconds" in video && !!video.video_start_seconds)) &&
-    "updated_at" in video &&
-    !!video.updated_at
-  );
+  return !!video && "watched_at" in video && "video_start_seconds" in video;
 }

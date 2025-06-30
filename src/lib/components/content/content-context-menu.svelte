@@ -1,7 +1,7 @@
 <script lang="ts">
   import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
   import { getContentState } from "$lib/state/content.svelte";
-  import type { Playlist } from "$lib/supabase/playlists";
+  import { type Playlist } from "$lib/supabase/playlists";
   import type { Database } from "$lib/supabase/database.types";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import {
@@ -45,6 +45,8 @@
       open = false;
     }
   });
+
+  const isPlaylistOwner = $derived(session?.user.id === playlist?.created_by);
 </script>
 
 <ContextMenu.Root bind:open>
@@ -62,7 +64,7 @@
       contentState.isMouseOverContextMenu = false;
     }}
   >
-    {#if playlist}
+    {#if playlist && isPlaylistOwner}
       <ContextMenu.Item
         onclick={async () => {
           const { error } = await handleRemoveVideosFromPlaylist({
@@ -83,7 +85,7 @@
     {@const filteredPlaylists = playlists.filter(
       (pl) => pl.id !== playlist?.id,
     )}
-    {#if filteredPlaylists.length > 0}
+    {#if filteredPlaylists.length > 0 && isPlaylistOwner}
       <ContextMenu.Sub>
         <ContextMenu.SubTrigger
           >Add {videos.length === 1 ? "video" : "videos"} to Playlist</ContextMenu.SubTrigger
@@ -131,7 +133,7 @@
     {/if}
 
     {@const lastVideo = videos[videos.length - 1]}
-    {#if playlist && videos.length === 1}
+    {#if playlist && videos.length === 1 && isPlaylistOwner}
       <ContextMenu.Item
         onclick={async () =>
           (contentState.playlistImages[playlist.id] =
@@ -148,7 +150,7 @@
       <ContextMenu.Item
         onclick={async () => {
           handleDeleteVideoTimestamp({
-            videoId: lastVideo.id,
+            videoIds: [lastVideo.id],
             supabase,
             session,
           });

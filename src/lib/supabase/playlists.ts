@@ -514,6 +514,25 @@ export async function unfollowPlaylist({
   return { error };
 }
 
+export function getIsFollowingPlaylist({
+  playlist,
+  playlists,
+  session,
+}: {
+  playlist?: Playlist;
+  playlists: Playlist[];
+  session: Session | null;
+}) {
+  if (!session || !playlist) {
+    return false;
+  }
+
+  return (
+    playlist.created_by !== session.user.id &&
+    playlists.some((pl) => pl.id === playlist?.id)
+  );
+}
+
 export function isPlaylistVideo(video: Video): video is Video & PlaylistVideo {
   return !!video && "video_position" in video;
 }

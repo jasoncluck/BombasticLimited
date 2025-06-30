@@ -36,6 +36,8 @@
   } = $props();
 
   const contentState = getContentState();
+
+  const isPlaylistOwner = $derived(session?.user.id === playlist?.created_by);
 </script>
 
 <DropdownMenu.Root>
@@ -52,7 +54,7 @@
     <span class="sr-only">Actions for selected items</span>
   </DropdownMenu.Trigger>
   <DropdownMenu.Content class="p-1">
-    {#if playlist}
+    {#if playlist && isPlaylistOwner}
       <DropdownMenu.Item
         onclick={async () => {
           const { error } = await handleRemoveVideosFromPlaylist({
@@ -73,7 +75,7 @@
     {@const filteredPlaylists = playlists.filter(
       (pl) => pl.id !== playlist?.id,
     )}
-    {#if filteredPlaylists.length > 0}
+    {#if filteredPlaylists.length > 0 && isPlaylistOwner}
       <DropdownMenu.Sub>
         <DropdownMenu.SubTrigger
           >Add {videos.length === 1 ? "video" : "videos"}
@@ -119,7 +121,7 @@
     {/if}
 
     {@const firstVideo = videos[0]}
-    {#if playlist && !isContentSelect}
+    {#if playlist && !isContentSelect && isPlaylistOwner}
       <DropdownMenu.Item
         onclick={async () =>
           (contentState.playlistImages[playlist.id] =
@@ -132,25 +134,29 @@
             }))}>Set as playlist image</DropdownMenu.Item
       >
     {/if}
-    {#if session && !isContentSelect && isVideoWithTimestamp(firstVideo)}
+    {#if session && videos.length > 0 && videos.some( (v) => isVideoWithTimestamp(v), )}
       <DropdownMenu.Item
         onclick={async () => {
-          handleDeleteVideoTimestamp({
-            videoId: firstVideo.id,
+          ({ updatedVideos: videos } = await handleDeleteVideoTimestamp({
+            videos,
             supabase,
             session,
-          });
+          }));
         }}
       >
-        Reset video progress
+        {!isContentSelect || videos.length === 1
+          ? "Reset progress"
+          : "Reset progress"}
       </DropdownMenu.Item>
     {/if}
-    {#if (session && !isContentSelect && !isVideoWithTimestamp(firstVideo)) || (isVideoWithTimestamp(firstVideo) && !firstVideo.watched_at)}
+    {#if videos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
       <DropdownMenu.Item
         onclick={async () => {
-          await handleAddVideoTimestamp({
-            watchedAt: new Date(),
-            video: firstVideo,
+          videos = await handleAddVideoTimestamp({
+            videoTimestamps: videos.map((v) => ({
+              videoId: v.id,
+              watchedAt: new Date(),
+            })),
             session,
             supabase,
           });
