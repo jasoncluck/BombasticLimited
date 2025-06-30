@@ -1,40 +1,45 @@
 <script lang="ts">
   import type { BreadcrumbItem } from "../breadcrumb-layout.svelte";
   import type { CombinedContentFilter } from "./content-filter";
-  import type { Playlist } from "$lib/supabase/playlists";
+  import type { Playlist, ProfilePlaylist } from "$lib/supabase/playlists";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
   import SharedContentHeader from "./shared-content-header.svelte";
   import { SOURCE_INFO, type Source } from "$lib/constants/source";
   import type { ContentView } from "./content";
+  import type { Video } from "$lib/supabase/videos";
 
   let {
     breadcrumbs,
     contentFilter,
     currentPage = $bindable(),
-    view = "default",
-    playlist,
+    onPlayVideo,
     playlists,
+    profilePlaylist,
+    session,
     showFloatingBreadcrumbs = $bindable(),
     source,
-    title,
-    videosCount,
     supabase,
-    session,
+    title,
+    videos,
+    videosCount,
+    view = "default",
   }: {
     breadcrumbs: BreadcrumbItem[];
     contentFilter: CombinedContentFilter;
     currentPage: number;
-    view?: ContentView;
     imageUrl?: string | null;
-    playlist?: Playlist;
+    onPlayVideo: () => void;
     playlists: Playlist[];
+    profilePlaylist?: ProfilePlaylist;
+    session: Session | null;
     showFloatingBreadcrumbs: boolean;
     source?: Source;
-    title: string;
-    videosCount: number;
     supabase: SupabaseClient<Database>;
-    session: Session | null;
+    title: string;
+    videos: Video[];
+    videosCount: number;
+    view?: ContentView;
   } = $props();
 </script>
 
@@ -45,7 +50,9 @@
   {view}
   {videosCount}
   {contentFilter}
-  {playlist}
+  {videos}
+  {profilePlaylist}
+  {onPlayVideo}
   {playlists}
   {supabase}
   {session}

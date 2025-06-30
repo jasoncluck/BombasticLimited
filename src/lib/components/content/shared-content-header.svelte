@@ -12,7 +12,10 @@
   import type { CombinedContentFilter } from "./content-filter";
   import ContentPagination from "./pagination/content-pagination.svelte";
   import { getNumberOfPages } from "./pagination/content-pagination";
-  import { DEFAULT_NUM_VIDEOS_PAGINATION } from "$lib/supabase/videos";
+  import {
+    DEFAULT_NUM_VIDEOS_PAGINATION,
+    type Video,
+  } from "$lib/supabase/videos";
   import type { ContentView } from "./content";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import {
@@ -29,34 +32,36 @@
 
   interface SharedContentHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
-    showFloatingBreadcrumbs: boolean;
-    view: ContentView;
-    contentFilter: CombinedContentFilter;
-    playlists: Playlist[];
-    open: boolean;
     children: Snippet<[]>;
-    profilePlaylist?: ProfilePlaylist;
-    videosCount: number;
-    onPlayVideo: () => void;
+    contentFilter: CombinedContentFilter;
     currentPage?: number;
-    supabase: SupabaseClient<Database>;
+    onPlayVideo: () => void;
+    open?: boolean;
+    playlists: Playlist[];
+    profilePlaylist?: ProfilePlaylist;
     session: Session | null;
+    showFloatingBreadcrumbs: boolean;
+    supabase: SupabaseClient<Database>;
+    videos: Video[];
+    videosCount: number;
+    view: ContentView;
   }
 
   let {
     breadcrumbs,
     children,
-    open = $bindable(),
-    view,
     contentFilter,
-    profilePlaylist,
-    playlists,
-    showFloatingBreadcrumbs = $bindable(),
-    videosCount,
-    onPlayVideo,
     currentPage = $bindable(),
-    supabase,
+    onPlayVideo,
+    open = $bindable(),
+    playlists,
+    profilePlaylist,
     session,
+    showFloatingBreadcrumbs = $bindable(),
+    supabase,
+    videos,
+    videosCount,
+    view,
     ...restProps
   }: SharedContentHeaderProps = $props();
 
@@ -78,6 +83,7 @@
     class="sticky w-full top-0 left-0 z-50 bg-background-lighter"
   >
     <FloatingBreadcrumbs
+      {videos}
       {breadcrumbs}
       playlist={profilePlaylist}
       {playlists}
@@ -188,6 +194,7 @@
       {#if session}
         <div class="mr-auto">
           <ContentSelect
+            {videos}
             playlist={profilePlaylist}
             {playlists}
             {supabase}

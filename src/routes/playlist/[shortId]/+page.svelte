@@ -6,7 +6,6 @@
   import type { Snapshot } from "@sveltejs/kit";
   import { getCroppedPlaylistImageUrl } from "$lib/components/playlist/playlist-service";
   import { onMount } from "svelte";
-  import { goto } from "$app/navigation";
   import { isVideoWithTimestamp } from "$lib/supabase/videos";
   import { handleContentNavigation } from "$lib/components/content/content";
 
@@ -89,12 +88,17 @@
         {...playlistHeaderProps}
         playlistImageUrl={userPlaylistImageUrl}
         bind:showFloatingBreadcrumbs
+        {videos}
       />
     </ImageCropper.Root>
   {:else}
     {#await playlistImageUrlData}
       <ImageCropper.Root src={undefined}>
-        <PlaylistHeader {...playlistHeaderProps} bind:showFloatingBreadcrumbs />
+        <PlaylistHeader
+          {...playlistHeaderProps}
+          bind:showFloatingBreadcrumbs
+          {videos}
+        />
       </ImageCropper.Root>
     {:then playlistImageUrl}
       <ImageCropper.Root src={playlistImageUrl}>
@@ -102,6 +106,7 @@
           {...playlistHeaderProps}
           {playlistImageUrl}
           bind:showFloatingBreadcrumbs
+          {videos}
         />
       </ImageCropper.Root>
     {/await}

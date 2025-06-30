@@ -25,6 +25,7 @@
     isContentSelect,
     supabase,
     session,
+    onSelectAll,
   }: {
     videos: Video[];
     playlist: Playlist | undefined;
@@ -33,6 +34,7 @@
     isContentSelect?: boolean;
     supabase: SupabaseClient<Database>;
     session: Session | null;
+    onSelectAll?: () => void;
   } = $props();
 
   const contentState = getContentState();
@@ -54,7 +56,21 @@
     <span class="sr-only">Actions for selected items</span>
   </DropdownMenu.Trigger>
   <DropdownMenu.Content class="p-1">
-    {#if playlist && isPlaylistOwner}
+    {#if isContentSelect}
+      <DropdownMenu.Item
+        onclick={async () => {
+          onSelectAll?.();
+        }}>Select all</DropdownMenu.Item
+      >
+    {/if}
+    {#if isContentSelect}
+      <DropdownMenu.Item
+        onclick={() => {
+          videos = [];
+        }}>Deselect all</DropdownMenu.Item
+      >
+    {/if}
+    {#if playlist && isPlaylistOwner && videos.length > 0}
       <DropdownMenu.Item
         onclick={async () => {
           const { error } = await handleRemoveVideosFromPlaylist({
@@ -73,9 +89,9 @@
     {/if}
 
     {@const filteredPlaylists = playlists.filter(
-      (pl) => pl.id !== playlist?.id,
+      (pl) => pl.id !== playlist?.id && isPlaylistOwner,
     )}
-    {#if filteredPlaylists.length > 0 && isPlaylistOwner}
+    {#if filteredPlaylists.length > 0 && videos.length > 0}
       <DropdownMenu.Sub>
         <DropdownMenu.SubTrigger
           >Add {videos.length === 1 ? "video" : "videos"}
@@ -112,13 +128,6 @@
         </DropdownMenu.SubContent>
       </DropdownMenu.Sub>
     {/if}
-    {#if isContentSelect && videos.length > 0}
-      <DropdownMenu.Item
-        onclick={() => {
-          videos = [];
-        }}>Deselect all</DropdownMenu.Item
-      >
-    {/if}
 
     {@const firstVideo = videos[0]}
     {#if playlist && !isContentSelect && isPlaylistOwner}
@@ -144,9 +153,7 @@
           }));
         }}
       >
-        {!isContentSelect || videos.length === 1
-          ? "Reset progress"
-          : "Reset progress"}
+        Reset Progress
       </DropdownMenu.Item>
     {/if}
     {#if videos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
@@ -162,7 +169,7 @@
           }));
         }}
       >
-        Mark video as watched
+        Mark as watched
       </DropdownMenu.Item>
     {/if}
   </DropdownMenu.Content>

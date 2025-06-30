@@ -9,6 +9,7 @@
   import ContentSelect from "./content/content-select.svelte";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
+  import type { Video } from "$lib/supabase/videos";
 
   function handleChevronClick() {
     pageState.contentScrollPosition = { scrollTop: 0, scrollLeft: 0 };
@@ -16,6 +17,7 @@
 
   interface BreacrumbLayoutProps {
     breadcrumbs: BreadcrumbItem[];
+    videos: Video[];
     playlist?: Playlist;
     playlists: Playlist[];
     supabase: SupabaseClient<Database>;
@@ -23,6 +25,7 @@
   }
   const {
     breadcrumbs,
+    videos,
     playlist,
     playlists,
     supabase,
@@ -36,6 +39,7 @@
   <div class="relative py-2">
     {#if session}
       <ContentSelect
+        {videos}
         {playlist}
         {playlists}
         {supabase}

@@ -11,8 +11,10 @@
   import SharedContentFooter from "$lib/components/content/pagination/shared-content-footer.svelte";
   import {
     DEFAULT_NUM_VIDEOS_PAGINATION,
+    isVideoWithTimestamp,
     type Video,
   } from "$lib/supabase/videos.js";
+  import { handleContentNavigation } from "$lib/components/content/content.js";
 
   const { data } = $props();
   const {
@@ -56,12 +58,24 @@
       videosPerPage: DEFAULT_NUM_VIDEOS_PAGINATION,
     }),
   );
+
+  function handlePlayVideo() {
+    const nextVideo = videos.find(
+      (v) => !isVideoWithTimestamp(v) || !v.watched_at,
+    );
+
+    if (nextVideo) {
+      handleContentNavigation({ video: nextVideo });
+    }
+  }
 </script>
 
 <div class="relative">
   <ContentHeader
     title="Latest Videos"
     {contentFilter}
+    {videos}
+    onPlayVideo={handlePlayVideo}
     videosCount={videosCount ?? 0}
     {currentPage}
     {source}

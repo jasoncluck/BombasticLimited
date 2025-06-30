@@ -45,7 +45,10 @@ export interface MouseHoverOptions {
 }
 
 export interface ContentState {
+  // Videos selected for multi-selection operations
   selectedVideos: Video[];
+  // Single video being hovered or that context menu is operating on
+  hoveredVideo: Video | null;
   // If a playlist or video is being currently dragged
   dragContentType: DragContentType;
   // selection mode controls what clicking on content does
@@ -83,10 +86,11 @@ export interface ContentState {
 
 export class ContentStateClass implements ContentState {
   selectedVideos = $state<Video[]>([]);
+  hoveredVideo = $state<Video | null>(null);
   dragContentType = $state<DragContentType>(null);
   isSelectionMode = $state(false);
   isMouseOverContextMenu = $state(false);
-  isContextMenuOpen = $state(false); // Add this line
+  isContextMenuOpen = $state(false);
   hoverTimeoutId = $state<ReturnType<typeof setTimeout> | null>(null);
   playlistImages = $state({});
   manualHover = $state(false);
@@ -113,26 +117,21 @@ export class ContentStateClass implements ContentState {
       }
     }
 
-    // Don't update selectedVideos if context menu is open
-    if (
-      !this.isSelectionMode &&
-      !this.dragContentType &&
-      !this.isContextMenuOpen
-    ) {
+    // Don't update hoveredVideo if context menu is open or if we're dragging
+    if (!this.dragContentType && !this.isContextMenuOpen) {
       // Clear any existing timeout when entering a new element
       if (this.hoverTimeoutId) {
         clearTimeout(this.hoverTimeoutId);
         this.hoverTimeoutId = null;
       }
 
-      this.selectedVideos = [video];
+      this.hoveredVideo = video;
     }
   }
 
   handleMouseLeave(isHoveringElement: boolean = false) {
     this.manualHover = false;
-    if (!this.isSelectionMode && !this.isContextMenuOpen) {
-      // Add context menu check here too
+    if (!this.isContextMenuOpen) {
       // Store the timeout ID so it can be cleared if needed
       const timeoutId = setTimeout(() => {
         if (
@@ -140,7 +139,7 @@ export class ContentStateClass implements ContentState {
           !isHoveringElement &&
           !this.isMouseOverContextMenu
         ) {
-          this.selectedVideos = [];
+          this.hoveredVideo = null;
         }
         this.hoverTimeoutId = null;
       }, 50);
@@ -237,15 +236,18 @@ export class ContentStateClass implements ContentState {
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData("text/plain", index.toString());
 
-        // If videos aren't already selected a single video is being dragged so set that
-        if (this.selectedVideos.length < 1) {
-          this.selectedVideos = [options.videos[index]];
-        }
+        // If videos aren't already selected, use the hovered video for dragging
+        const videosForDrag =
+          this.selectedVideos.length > 0
+            ? this.selectedVideos
+            : this.hoveredVideo
+              ? [this.hoveredVideo]
+              : [options.videos[index]];
 
         const dragImageText =
-          this.selectedVideos.length === 1
-            ? this.selectedVideos[0].title
-            : `${this.selectedVideos.length} videos`;
+          videosForDrag.length === 1
+            ? videosForDrag[0].title
+            : `${videosForDrag.length} videos`;
         createDragImage(event, dragImageText);
       }
     };

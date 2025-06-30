@@ -34,7 +34,6 @@
         {video}
         baseUrl={`/playlist/${playlist.short_id}`}
         videoId={video.id}
-        {startSeconds}
         {supabase}
         {session}
       />

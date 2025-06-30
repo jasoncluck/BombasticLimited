@@ -11,6 +11,7 @@
   import SharedContentHeader from "$lib/components/content/shared-content-header.svelte";
   import PlaylistEditDialog from "$lib/components/playlist/playlist-edit-dialog.svelte";
   import { isSource, SOURCE_INFO } from "$lib/constants/source";
+  import type { Video } from "$lib/supabase/videos";
 
   interface PlaylistHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
@@ -19,6 +20,7 @@
     form: SuperValidated<Infer<PlaylistSchema>>;
     profilePlaylist: ProfilePlaylist;
     playlistImageUrl?: string;
+    videos: Video[];
     playlists: Playlist[];
     playlistDuration: { hours: number; minutes: number; seconds: number };
     videosCount: number;
@@ -35,6 +37,7 @@
     form,
     profilePlaylist,
     playlistImageUrl,
+    videos,
     playlists,
     playlistDuration,
     videosCount,
@@ -87,6 +90,7 @@
   {videosCount}
   {contentFilter}
   {profilePlaylist}
+  {videos}
   {playlists}
   {onPlayVideo}
   bind:currentPage

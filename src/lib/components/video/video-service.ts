@@ -115,6 +115,8 @@ export async function handleAddVideoTimestamp({
 
   if (error) {
     showNotification("Unable to save timestamp");
+  } else if (videoTimestamps.some((vt) => vt.watchedAt)) {
+    showNotification("Marked as watched");
   }
 
   invalidate("supabase:db:videos");
@@ -149,7 +151,7 @@ export async function handleDeleteVideoTimestamp({
     showNotification(
       isContinueVideos
         ? "Removed from Continue Watching"
-        : "Video progress reset.",
+        : "Video progress reset",
     );
   }
 

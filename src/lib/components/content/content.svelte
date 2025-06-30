@@ -61,23 +61,11 @@
   );
 
   const contentState = getContentState();
-  let contextMenuIsOpen = $state(false);
-
-  $effect(() => {
-    // if (mostRecentVideo?.videoId) {
-    //   console.log("detected change, invalidating");
-    //   invalidate("supabase:db:videos");
-    //   mostRecentVideo.videoId = null;
-    // }
-
-    if (contextMenuIsOpen && contentState.selectedVideos.length < 1) {
-      contextMenuIsOpen = false;
-    }
-  });
 
   onMount(() => {
     contentState.isSelectionMode = false;
     contentState.selectedVideos = [];
+    contentState.hoveredVideo = null;
   });
 </script>
 
@@ -87,13 +75,7 @@
   </div>
 {/if}
 
-<ContentContextMenu
-  bind:videos={contentState.selectedVideos}
-  {playlist}
-  {playlists}
-  {supabase}
-  {session}
->
+<ContentContextMenu {playlist} {playlists} {supabase} {session}>
   <div {...restProps} class="mx-4 flex flex-col gap-5">
     <ContentTable {videos} {columns} {playlist} {supabase} {session} />
     <!-- {#if contentDisplay === "CAROUSEL"} -->
