@@ -85,6 +85,7 @@
     "debounce": "^2.2.0",
     "embla-carousel-class-names": "^8.6.0",
     "embla-carousel-svelte": "^8.6.0",
+    "gsap": "^3.13.0",
     "svelte-radix": "^2.0.1",
     "tailwindcss": "^4.1.1"
   }

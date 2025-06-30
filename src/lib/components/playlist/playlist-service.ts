@@ -336,9 +336,9 @@ export async function handleFollowPlaylist({
   invalidate("supabase:db:playlists");
 
   if (!error) {
-    showNotification(`Added playlist: ${playlist.name} `, "success");
+    showNotification(`Followed playlist: ${playlist.name} `, "success");
   } else {
-    showNotification(`Unable to add playlist: ${error.message}`, "error");
+    showNotification(`Unable to follow playlist: ${error.message}`, "error");
   }
 }
 

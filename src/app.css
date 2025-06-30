@@ -137,5 +137,6 @@
 }
 
 .ghost-button-minimal {
-  @apply cursor-pointer text-muted-foreground hover:bg-inherit hover:text-foreground data-[state=open]:text-foreground;
+  @apply cursor-pointer text-muted-foreground hover:bg-inherit hover:scale-105
+  hover:text-foreground data-[state=open]:text-foreground;
 }

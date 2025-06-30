@@ -15,10 +15,10 @@
   } & Pick<
     ContentDisplayProps,
     | "isContinueVideos"
-    | "userPlaylist"
+    | "playlist"
     | "playlistContentFilter"
     | "videos"
-    | "userPlaylists"
+    | "playlists"
     | "supabase"
     | "session"
   > &
@@ -27,7 +27,7 @@
   const {
     video = $bindable(),
     videos,
-    userPlaylist,
+    playlist,
     isContinueVideos,
     supabase,
     session,
@@ -54,7 +54,7 @@
       }
     : (e) => {
         e.preventDefault();
-        handleContentNavigation({ video, userPlaylist });
+        handleContentNavigation({ video, playlist });
       }}
   {...restProps}
 >

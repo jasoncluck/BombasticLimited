@@ -67,43 +67,41 @@
       handleContentNavigation({ video: nextVideo, playlist: profilePlaylist });
     }
   }
+  const playlistHeaderProps = $derived({
+    breadcrumbs: [{ label: profilePlaylist.name }],
+    contentFilter,
+    currentPage,
+    onPlayVideo: handlePlayVideo,
+    form,
+    profilePlaylist,
+    playlists,
+    playlistDuration,
+    videosCount: videosCount ?? 0,
+    supabase,
+    session,
+  });
 </script>
 
 <div class="flex flex-col grow relative">
   {#if userPlaylistImageUrl}
     <ImageCropper.Root src={userPlaylistImageUrl}>
       <PlaylistHeader
-        breadcrumbs={[{ label: profilePlaylist.name }]}
-        bind:showFloatingBreadcrumbs
-        {contentFilter}
-        {currentPage}
-        onPlayVideo={handlePlayVideo}
-        {form}
-        {profilePlaylist}
+        {...playlistHeaderProps}
         playlistImageUrl={userPlaylistImageUrl}
-        {playlists}
-        {playlistDuration}
-        videosCount={videosCount ?? 0}
-        {supabase}
-        {session}
+        bind:showFloatingBreadcrumbs
       />
     </ImageCropper.Root>
   {:else}
-    {#await playlistImageUrlData then playlistImageUrl}
+    {#await playlistImageUrlData}
+      <ImageCropper.Root src={undefined}>
+        <PlaylistHeader {...playlistHeaderProps} bind:showFloatingBreadcrumbs />
+      </ImageCropper.Root>
+    {:then playlistImageUrl}
       <ImageCropper.Root src={playlistImageUrl}>
         <PlaylistHeader
-          breadcrumbs={[{ label: profilePlaylist.name }]}
-          bind:showFloatingBreadcrumbs
-          {contentFilter}
-          {currentPage}
-          {form}
-          {profilePlaylist}
+          {...playlistHeaderProps}
           {playlistImageUrl}
-          {playlists}
-          {playlistDuration}
-          videosCount={videosCount ?? 0}
-          {supabase}
-          {session}
+          bind:showFloatingBreadcrumbs
         />
       </ImageCropper.Root>
     {/await}

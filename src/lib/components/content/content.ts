@@ -76,7 +76,7 @@ export function handleContentNavigation({
       }
     });
 
-    goto(targetUrl.pathname + targetUrl.searchParams, {
+    goto(targetUrl.pathname + targetUrl.search, {
       invalidate: ["supabase:db:videos"],
     });
   } else {

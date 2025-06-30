@@ -35,8 +35,6 @@ export const load: PageServerLoad = async ({
     playlistId: playlist.id,
   });
 
-  console.log(video);
-
   if (!isPlaylistVideosFilter(contentFilter)) {
     throw new Error(`Invalid content filter`);
   }
