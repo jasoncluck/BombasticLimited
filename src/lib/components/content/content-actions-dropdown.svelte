@@ -152,14 +152,14 @@
     {#if videos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
       <DropdownMenu.Item
         onclick={async () => {
-          videos = await handleAddVideoTimestamp({
+          ({ updatedVideos: videos } = await handleAddVideoTimestamp({
             videoTimestamps: videos.map((v) => ({
               videoId: v.id,
               watchedAt: new Date(),
             })),
             session,
             supabase,
-          });
+          }));
         }}
       >
         Mark video as watched

@@ -1,9 +1,3 @@
-export type TimestampWithVideoId = {
-  videoId: string;
-  timestampStartSeconds?: number;
-  watchedAt?: Date;
-};
-
 import type {
   SupabaseClient,
   Session,
@@ -11,31 +5,41 @@ import type {
 } from "@supabase/supabase-js";
 import type { Database } from "./database.types";
 
+export type TimestampWithVideoId = {
+  videoId: string;
+  timestampStartSeconds?: number;
+  watchedAt?: Date;
+};
+
 export async function saveVideoTimestamps({
   videoTimestamps,
   supabase,
   session,
 }: {
   videoTimestamps: TimestampWithVideoId[];
-  supabase: SupabaseClient<Database>;
+  supabase: SupabaseClient;
   session: Session | null;
 }) {
   let error: PostgrestError | undefined;
 
   if (session && videoTimestamps.length > 0) {
-    // Convert the array to records for upsert
-    const timestampRecords = videoTimestamps.map(
-      ({ videoId, timestampStartSeconds, watchedAt }) => ({
-        user_id: session.user.id,
-        video_id: videoId,
-        video_start_seconds: timestampStartSeconds,
-        watched_at: watchedAt?.toISOString() ?? null,
-      }),
+    const video_ids = videoTimestamps.map((v) => v.videoId);
+
+    // Ensure all arrays contain null instead of undefined, to be Postgres-compatible
+    const video_start_seconds = videoTimestamps.map((v) =>
+      v.timestampStartSeconds !== undefined ? v.timestampStartSeconds : null,
+    );
+    const watched_at = videoTimestamps.map((v) =>
+      v.watchedAt ? v.watchedAt.toISOString() : null,
     );
 
     const { data: videos, error: upsertError } = await supabase
-      .from("timestamps")
-      .upsert(timestampRecords, { onConflict: "user_id,video_id" })
+      .rpc("insert_timestamps", {
+        p_user_id: session.user.id,
+        p_video_ids: video_ids,
+        p_video_start_seconds: video_start_seconds,
+        p_watched_at: watched_at,
+      })
       .select();
 
     if (upsertError) {
@@ -54,17 +58,17 @@ export async function deleteVideoTimestamps({
   session,
 }: {
   videoIds: string[];
-  supabase: SupabaseClient<Database>;
+  supabase: SupabaseClient;
   session: Session | null;
 }) {
   let error: PostgrestError | undefined;
 
   if (session?.user && videoIds.length > 0) {
     const { data: videos, error: deleteError } = await supabase
-      .from("timestamps")
-      .delete()
-      .eq("user_id", session.user.id)
-      .in("video_id", videoIds)
+      .rpc("delete_timestamps", {
+        p_user_id: session.user.id,
+        p_video_ids: videoIds,
+      })
       .select();
 
     if (deleteError) {

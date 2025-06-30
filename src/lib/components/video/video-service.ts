@@ -19,8 +19,6 @@ import {
   saveVideoTimestamps,
   type TimestampWithVideoId,
 } from "$lib/supabase/timestamps";
-import type { updated } from "$app/state";
-import { getContentState, type ContentState } from "$lib/state/content.svelte";
 
 export async function fetchMoreInProgressVideos({
   contentFilter,
@@ -103,14 +101,13 @@ export async function handleAddVideoTimestamp({
   videoTimestamps,
   session,
   supabase,
-  contentState,
 }: {
   videoTimestamps: TimestampWithVideoId[];
   session: Session | null;
-  supabase: SupabaseClient<Database>;
-  contentState?: ContentState;
-}) {
-  const { error } = await saveVideoTimestamps({
+  supabase: SupabaseClient;
+}): Promise<{ updatedVideos: Video[]; error?: PostgrestError }> {
+  // Save and get back updated video data
+  const { videos: updatedVideos, error } = await saveVideoTimestamps({
     videoTimestamps,
     session,
     supabase,
@@ -118,36 +115,10 @@ export async function handleAddVideoTimestamp({
 
   if (error) {
     showNotification("Unable to save timestamp");
-  } else if (contentState) {
-    // After successful save, fetch updated video data for the affected videos
-    const videoIds = videoTimestamps.map((vt) => vt.videoId);
-
-    try {
-      // You'll need to implement this function to fetch updated videos
-      const updatedVideos = await getVideos({
-        videoIds,
-        supabase,
-        session,
-      });
-
-      if (updatedVideos) {
-        // Update contentState.selectedVideos with the updated video data
-        contentState.selectedVideos = contentState.selectedVideos.map(
-          (selectedVideo) => {
-            const updatedVideo = updatedVideos.find(
-              (v) => v.id === selectedVideo.id,
-            );
-            return updatedVideo || selectedVideo;
-          },
-        );
-      }
-    } catch (fetchError) {
-      console.error("Error fetching updated videos:", fetchError);
-    }
   }
 
   invalidate("supabase:db:videos");
-  return { error };
+  return { updatedVideos: updatedVideos ?? [], error };
 }
 
 export async function handleDeleteVideoTimestamp({
@@ -155,20 +126,18 @@ export async function handleDeleteVideoTimestamp({
   isContinueVideos,
   supabase,
   session,
-  contentState,
 }: {
   videos: Video[];
   isContinueVideos?: boolean;
-  supabase: SupabaseClient<Database>;
+  supabase: SupabaseClient;
   session: Session | null;
-  contentState?: ContentState;
-}): Promise<{ error?: PostgrestError }> {
+}): Promise<{ updatedVideos: Video[]; error?: PostgrestError }> {
   if (!session) {
     goto("/");
-    return {};
+    return { updatedVideos: [] };
   }
 
-  const { error } = await deleteVideoTimestamps({
+  const { videos: updatedVideos, error } = await deleteVideoTimestamps({
     videoIds: videos.map((v) => v.id),
     supabase,
     session,
@@ -182,44 +151,10 @@ export async function handleDeleteVideoTimestamp({
         ? "Removed from Continue Watching"
         : "Video progress reset.",
     );
-
-    if (contentState) {
-      if (isContinueVideos) {
-        // Remove deleted videos from selectedVideos for continue watching
-        const deletedVideoIds = new Set(videos.map((v) => v.id));
-        contentState.selectedVideos = contentState.selectedVideos.filter(
-          (selectedVideo) => !deletedVideoIds.has(selectedVideo.id),
-        );
-      } else {
-        // For timestamp reset, fetch updated video data
-        try {
-          const videoIds = videos.map((v) => v.id);
-          const updatedVideos = await fetchVideosByIds({
-            videoIds,
-            supabase,
-            session,
-          });
-
-          if (updatedVideos) {
-            contentState.selectedVideos = contentState.selectedVideos.map(
-              (selectedVideo) => {
-                const updatedVideo = updatedVideos.find(
-                  (v) => v.id === selectedVideo.id,
-                );
-                return updatedVideo || selectedVideo;
-              },
-            );
-          }
-        } catch (fetchError) {
-          console.error("Error fetching updated videos:", fetchError);
-        }
-      }
-    }
-
-    invalidate("supabase:db:videos");
   }
 
-  return { error };
+  invalidate("supabase:db:videos");
+  return { updatedVideos: updatedVideos ?? [], error };
 }
 
 /**

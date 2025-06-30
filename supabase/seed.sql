@@ -40,7 +40,8 @@ INSERT INTO "auth"."audit_log_entries" ("instance_id", "id", "payload", "created
 --
 
 INSERT INTO "auth"."users" ("instance_id", "id", "aud", "role", "email", "encrypted_password", "email_confirmed_at", "invited_at", "confirmation_token", "confirmation_sent_at", "recovery_token", "recovery_sent_at", "email_change_token_new", "email_change", "email_change_sent_at", "last_sign_in_at", "raw_app_meta_data", "raw_user_meta_data", "is_super_admin", "created_at", "updated_at", "phone", "phone_confirmed_at", "phone_change", "phone_change_token", "phone_change_sent_at", "email_change_token_current", "email_change_confirm_status", "banned_until", "reauthentication_token", "reauthentication_sent_at", "is_sso_user", "deleted_at", "is_anonymous") VALUES
-	('00000000-0000-0000-0000-000000000000', '49c79727-f5b7-4cd8-b5ca-f005023b1f12', 'authenticated', 'authenticated', 'nextlander@bombify.net', '$2a$06$fYZxePwCl8p3Ucq10c6M8.Krgp4bhwCruTnp6pbHifIzdARcWwfT2', '2023-05-03 19:41:43.585805+00', NULL, '', NULL, '', '2023-04-22 13:10:03.275387+00', '', '', NULL, '2023-04-22 13:10:31.458239+00', '{"provider": "email", "providers": ["email"]}', '{"username": "nextlander"}', NULL, '2023-05-03 19:41:43.580424+00', '2023-05-03 19:41:43.585948+00', NULL, NULL, '', '', NULL, '', 0, NULL, '', NULL, false, NULL, false);
+	('00000000-0000-0000-0000-000000000000', '49c79727-f5b7-4cd8-b5ca-f005023b1f12', 'authenticated', 'authenticated', 'nextlander@bombify.net', '$2a$06$fYZxePwCl8p3Ucq10c6M8.Krgp4bhwCruTnp6pbHifIzdARcWwfT2', '2023-05-03 19:41:43.585805+00', NULL, '', NULL, '', '2023-04-22 13:10:03.275387+00', '', '', NULL, '2023-04-22 13:10:31.458239+00', '{"provider": "email", "providers": ["email"]}', '{"username": "nextlander"}', NULL, '2023-05-03 19:41:43.580424+00', '2023-05-03 19:41:43.585948+00', NULL, NULL, '', '', NULL, '', 0, NULL, '', NULL, false, NULL, false),
+	('00000000-0000-0000-0000-000000000000', '074cb047-671d-4f40-a04f-1721878f524d', 'authenticated', 'authenticated', 'giantbomb@bombify.net', '$2a$06$OVNTj13.Ud56rsCgMsMS6.ze6bEh/jYz6qrA.XoSy9WgdbNt1gyra', '2023-05-03 19:41:43.585805+00', NULL, '', NULL, '', '2023-04-22 13:10:03.275387+00', '', '', NULL, '2023-04-22 13:10:31.458239+00', '{"provider": "email", "providers": ["email"]}', '{"username": "giantbomb"}', NULL, '2023-05-03 19:41:43.580424+00', '2023-05-03 19:41:43.585948+00', NULL, NULL, '', '', NULL, '', 0, NULL, '', NULL, false, NULL, false);
 
 
 --
@@ -48,7 +49,8 @@ INSERT INTO "auth"."users" ("instance_id", "id", "aud", "role", "email", "encryp
 --
 
 INSERT INTO "auth"."identities" ("provider_id", "user_id", "identity_data", "provider", "last_sign_in_at", "created_at", "updated_at", "id") VALUES
-	('49c79727-f5b7-4cd8-b5ca-f005023b1f12', '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '{"sub": "49c79727-f5b7-4cd8-b5ca-f005023b1f12", "email": "nextlander@bombify.net"}', 'email', '2023-05-03 19:41:43.582456+00', '2023-05-03 19:41:43.582497+00', '2023-05-03 19:41:43.582497+00', 'f97bb453-6504-4eb8-81d0-7f2cbe1f0d03');
+	('49c79727-f5b7-4cd8-b5ca-f005023b1f12', '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '{"sub": "49c79727-f5b7-4cd8-b5ca-f005023b1f12", "email": "nextlander@bombify.net"}', 'email', '2023-05-03 19:41:43.582456+00', '2023-05-03 19:41:43.582497+00', '2023-05-03 19:41:43.582497+00', 'f97bb453-6504-4eb8-81d0-7f2cbe1f0d03'),
+	('074cb047-671d-4f40-a04f-1721878f524d', '074cb047-671d-4f40-a04f-1721878f524d', '{"sub": "074cb047-671d-4f40-a04f-1721878f524d", "email": "giantbomb@bombify.net"}', 'email', '2023-05-03 19:41:43.582456+00', '2023-05-03 19:41:43.582497+00', '2023-05-03 19:41:43.582497+00', '1f7f9434-fc43-41f8-ac4f-51b4c773fc2c');
 
 
 --
@@ -149,7 +151,81 @@ INSERT INTO "public"."playlists" ("id", "created_by", "created_at", "name", "sho
 	(1000490, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:39:59.47332+00', 'Talkin'' Over Things', 'kO3EK', '''talkin'':1 ''thing'':3', 'https://i.ytimg.com/vi/wsFUb9PQbuI/maxresdefault.jpg', 'PL8GKXV8flVOaonOnH-Am9gz-FEfFGb8xz', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/wsFUb9PQbuI/default.jpg'),
 	(1000491, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:40:01.154305+00', 'Sea of Thieves With Abby Russell', 'lM3GV', '''abbi'':5 ''russel'':6 ''sea'':1 ''thiev'':3', 'https://i.ytimg.com/vi/22FMR5wMz2o/maxresdefault.jpg', 'PL8GKXV8flVOaBu2H7w0WriTezkazdidbc', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/22FMR5wMz2o/default.jpg'),
 	(1000492, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:40:01.549116+00', 'Here Decay, Gone Tomorrow!', 'mM3Jn', '''decay'':2 ''gone'':3 ''tomorrow'':4', 'https://i.ytimg.com/vi/1Pn0MafWCxA/maxresdefault.jpg', 'PL8GKXV8flVOaBJpOSaN6YqF4Bd3VFarsk', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/1Pn0MafWCxA/default.jpg'),
-	(1000493, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:40:02.186919+00', 'Full Motion Vinny', 'nN3KP', '''full'':1 ''motion'':2 ''vinni'':3', 'https://i.ytimg.com/vi/YgXg06521Zc/maxresdefault.jpg', 'PL8GKXV8flVOb07EkQ_8ofwcQP0AjuK3HW', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/YgXg06521Zc/default.jpg');
+	(1000493, '49c79727-f5b7-4cd8-b5ca-f005023b1f12', '2025-06-29 17:40:02.186919+00', 'Full Motion Vinny', 'nN3KP', '''full'':1 ''motion'':2 ''vinni'':3', 'https://i.ytimg.com/vi/YgXg06521Zc/maxresdefault.jpg', 'PL8GKXV8flVOb07EkQ_8ofwcQP0AjuK3HW', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/YgXg06521Zc/default.jpg'),
+	(1000494, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:18:59.182081+00', 'Monday Mornings Myst with Mitch', 'o65Lk', '''mitch'':5 ''monday'':1 ''morn'':2 ''myst'':3', 'https://i.ytimg.com/vi/sQpMuV_RmKY/maxresdefault.jpg', 'PLXlhzeWIuTHJ5L9c6jMnwo46J7LBxmU2N', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/sQpMuV_RmKY/default.jpg'),
+	(1000496, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:00.042281+00', 'Demo Derby!', 'qM3Nk', '''demo'':1 ''derbi'':2', 'https://i.ytimg.com/vi/18jU5xvv24g/maxresdefault.jpg', 'PLXlhzeWIuTHI8aM5XFxJvlo_7r2Ns_6tl', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/18jU5xvv24g/default.jpg'),
+	(1000497, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:01.045177+00', 'Get to know Giant Bomb!', 'rM3OW', '''bomb'':5 ''get'':1 ''giant'':4 ''know'':3', 'https://i.ytimg.com/vi/9SRPAsAECrg/maxresdefault.jpg', 'PLXlhzeWIuTHKNYHsNVffHRamEtIT_miik', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/9SRPAsAECrg/default.jpg'),
+	(1000498, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:04.444311+00', 'Steal My Sunshine: The Complete Series', 'v93VM', '''complet'':5 ''seri'':6 ''steal'':1 ''sunshin'':3', 'https://i.ytimg.com/vi/wtNzntuGCho/maxresdefault.jpg', 'PLXlhzeWIuTHISwjRdU79QjKBX66P7YLfS', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/wtNzntuGCho/default.jpg'),
+	(1000499, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:05.733838+00', 'GB Kidz', 'wR3Wz', '''gb'':1 ''kidz'':2', 'https://i.ytimg.com/vi/up5r9eWpjUE/maxresdefault.jpg', 'PLXlhzeWIuTHK14yDl5QggZfa_NLsuGWki', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/up5r9eWpjUE/default.jpg'),
+	(1000500, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:06.154897+00', 'Giant Bomb 2024 Mixtape', 'gQ3zj', '''2024'':3 ''bomb'':2 ''giant'':1 ''mixtap'':4', 'https://i.ytimg.com/vi/9f1M7Wy_bOE/maxresdefault.jpg', 'PLXlhzeWIuTHJI5uambgz2iHlkiRBK4-wG', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/9f1M7Wy_bOE/default.jpg'),
+	(1000501, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:12.207072+00', 'Termdaninator 3: Ryck of the machines', 'jO3D4', '''3'':2 ''machin'':6 ''ryck'':3 ''termdanin'':1', 'https://i.ytimg.com/vi/7fDO0KXBEsw/maxresdefault.jpg', 'PLXlhzeWIuTHJafHQ4ghtQoK3MiVGHcSg4', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/7fDO0KXBEsw/default.jpg'),
+	(1000502, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:12.574473+00', 'Game of the Year 2024', 'kO3Ev', '''2024'':5 ''game'':1 ''year'':4', 'https://i.ytimg.com/vi/wBV1giERm-Y/maxresdefault.jpg', 'PLXlhzeWIuTHLu50Cj6LZ-xysLhdrnaynv', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/wBV1giERm-Y/default.jpg'),
+	(1000503, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:13.006286+00', 'Days Shawn', 'lM3G1', '''day'':1 ''shawn'':2', 'https://i.ytimg.com/vi/F-g2-23LHyw/maxresdefault.jpg', 'PLXlhzeWIuTHL21xZz1nlbNU3yR5FeDB2b', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/F-g2-23LHyw/default.jpg'),
+	(1000505, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:13.674867+00', 'Giant Bomb Travelogues', 'nN3Kp', '''bomb'':2 ''giant'':1 ''travelogu'':3', 'https://i.ytimg.com/vi/4faLzNNR3lk/maxresdefault.jpg', 'PLXlhzeWIuTHL4dzri8YO0MDXcrrRRFkXt', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/4faLzNNR3lk/default.jpg'),
+	(1000506, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:14.234457+00', 'Metal Gear Scanlon: The Complete Series', 'o65LL', '''complet'':5 ''gear'':2 ''metal'':1 ''scanlon'':3 ''seri'':6', 'https://i.ytimg.com/vi/4BKTN_HuAhE/maxresdefault.jpg', 'PLXlhzeWIuTHLfGvMnnWLJK3DRLQwcTpwd', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/4BKTN_HuAhE/default.jpg'),
+	(1000507, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:14.900223+00', 'Giant Bomb at Summer Game Fest 2024', 'pX3My', '''2024'':7 ''bomb'':2 ''fest'':6 ''game'':5 ''giant'':1 ''summer'':4', 'https://i.ytimg.com/vi/90Qlsy90JVU/maxresdefault.jpg', 'PLXlhzeWIuTHLHg6BE3IB5ClmulOD7IsXt', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/90Qlsy90JVU/default.jpg'),
+	(1000508, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:15.368402+00', 'Grubb''s Grab Bag', 'qM3Ny', '''bag'':4 ''grab'':3 ''grubb'':1', 'https://i.ytimg.com/vi/7zgxnsli_IE/maxresdefault.jpg', 'PLXlhzeWIuTHITI7gxkpxf1FQlv1qO5K-o', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/7zgxnsli_IE/default.jpg'),
+	(1000509, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:15.523453+00', 'Arzette', 'rM3OL', '''arzett'':1', 'https://i.ytimg.com/vi/Ik52PjwMaPo/maxresdefault.jpg', 'PLXlhzeWIuTHKKa5mZ14gxsb03JfiI_pyF', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/Ik52PjwMaPo/default.jpg'),
+	(1000511, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:15.762304+00', 'Friday Night Forking | Season 3', 'wR3WX', '''3'':5 ''fork'':3 ''friday'':1 ''night'':2 ''season'':4', 'https://i.ytimg.com/vi/94oPoTHn7yk/maxresdefault.jpg', 'PLXlhzeWIuTHLULu_dlZvBalB5o_H-R5sV', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/94oPoTHn7yk/default.jpg'),
+	(1000512, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:16.109891+00', 'Friday Night Forking | Season 2', 'x73XP', '''2'':5 ''fork'':3 ''friday'':1 ''night'':2 ''season'':4', 'https://i.ytimg.com/vi/qbK3vE61vYE/maxresdefault.jpg', 'PLXlhzeWIuTHIyVA53GO3LjR1HsoWecnVa', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/qbK3vE61vYE/default.jpg'),
+	(1000513, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:16.421238+00', 'Giant Bomb''s Game of the Year 2023', 'yJ3YR', '''2023'':8 ''bomb'':2 ''game'':4 ''giant'':1 ''year'':7', 'https://i.ytimg.com/vi/5hf40FaKJIU/maxresdefault.jpg', 'PLXlhzeWIuTHKNy1yrMfV7OJ5gwU4RHtZD', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/5hf40FaKJIU/default.jpg'),
+	(1000514, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:17.460612+00', 'Mortal Kombat: Armagrubbon', 'zx3Z2', '''armagrubbon'':3 ''kombat'':2 ''mortal'':1', 'https://i.ytimg.com/vi/jhQNHljv0Ds/maxresdefault.jpg', 'PLXlhzeWIuTHJ5SpXvZ2mcW-9tNJRdyp3U', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/jhQNHljv0Ds/default.jpg'),
+	(1000515, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:18.466963+00', 'Ride to Grubb: Jefftribution', 'A9V4j', '''grubb'':3 ''jefftribut'':4 ''ride'':1', 'https://i.ytimg.com/vi/dMSG-2GRZ6U/maxresdefault.jpg', 'PLXlhzeWIuTHJFgiIPTNZS9KKyVefqBIQY', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/dMSG-2GRZ6U/default.jpg'),
+	(1000516, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:18.993447+00', 'Giant Bomb Plays', 'BRW3o', '''bomb'':2 ''giant'':1 ''play'':3', 'https://i.ytimg.com/vi/TiZC0LoAduo/maxresdefault.jpg', 'PLXlhzeWIuTHLlVBiwWBWsapsTbw6ZR0eC', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/TiZC0LoAduo/default.jpg'),
+	(1000517, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:24.310332+00', 'Summer Game Fest 2023', 'DJg3k', '''2023'':4 ''fest'':3 ''game'':2 ''summer'':1', 'https://i.ytimg.com/vi/TwndsDnrMw0/maxresdefault.jpg', 'PLXlhzeWIuTHKBO9r5RmlecHuVRrx9BbEQ', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/TwndsDnrMw0/default.jpg'),
+	(1000518, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:25.095125+00', 'Connectivity Compadres: Four Swords Fiesta', 'E6j3l', '''compadr'':2 ''connect'':1 ''fiesta'':5 ''four'':3 ''sword'':4', 'https://i.ytimg.com/vi/agfN5Yfibvc/maxresdefault.jpg', 'PLXlhzeWIuTHLU7QP-7YSHo79cVFIWNrz_', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/agfN5Yfibvc/default.jpg'),
+	(1000519, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:25.51719+00', 'RoboMitch | Blight Club', 'GQl35', '''blight'':2 ''club'':3 ''robomitch'':1', 'https://i.ytimg.com/vi/-fAJ7AGhdsE/maxresdefault.jpg', 'PLXlhzeWIuTHLb2-kbrhcGx8sMmVcQfmCv', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/-fAJ7AGhdsE/default.jpg'),
+	(1000520, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:26.12851+00', 'Grubber Lang''s Punch-Out!!', 'J7o3y', '''grubber'':1 ''lang'':2 ''punch'':5 ''punch-out'':4', 'https://i.ytimg.com/vi/3Pvol3yMek8/maxresdefault.jpg', 'PLXlhzeWIuTHIke2EAqdj23w9jpYPNr9s9', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/3Pvol3yMek8/default.jpg'),
+	(1000521, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:26.875545+00', 'Friday Night Forking | Season 1', 'K5p38', '''1'':5 ''fork'':3 ''friday'':1 ''night'':2 ''season'':4', 'https://i.ytimg.com/vi/-Op8c0Ml93k/maxresdefault.jpg', 'PLXlhzeWIuTHL7MLMgc5qGdPRqrBFRllPK', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/-Op8c0Ml93k/default.jpg'),
+	(1000522, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:27.213792+00', 'Grubbsy 3D | Blight Club', 'L5q3v', '''3d'':2 ''blight'':3 ''club'':4 ''grubbsi'':1', 'https://i.ytimg.com/vi/P4_rw0a2O38/maxresdefault.jpg', 'PLXlhzeWIuTHKw_3oE7JXH3luK6N1_fRm8', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/P4_rw0a2O38/default.jpg'),
+	(1000523, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:28.034254+00', 'BLIGHT CLUB', 'M5r31', '''blight'':1 ''club'':2', 'https://i.ytimg.com/vi/UeaUPjqmgZI/maxresdefault.jpg', 'PLXlhzeWIuTHIGNBahKzWx9Hy54BXtM8Ef', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/UeaUPjqmgZI/default.jpg'),
+	(1000524, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:34.909916+00', 'Eternal Darkness at the Heart of My Soul', 'N5v38', '''dark'':2 ''etern'':1 ''heart'':5 ''soul'':8', 'https://i.ytimg.com/vi/-2Jl889JRaA/maxresdefault.jpg', 'PLXlhzeWIuTHIX0WXTXfjqOB4uhpEMih8k', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/-2Jl889JRaA/default.jpg'),
+	(1000526, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:36.116235+00', 'Dan Plays Sonic ''06', 'P5x36', '''06'':4 ''dan'':1 ''play'':2 ''sonic'':3', 'https://i.ytimg.com/vi/UeaUPjqmgZI/maxresdefault.jpg', 'PLXlhzeWIuTHJbMLBemCOOWi0IuzU87Nk2', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/UeaUPjqmgZI/default.jpg'),
+	(1000529, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:44.31443+00', 'Game Mess Mornings', 'V0E3o', '''game'':1 ''mess'':2 ''morn'':3', 'https://i.ytimg.com/vi/plQFe_7nbqo/maxresdefault.jpg', 'PLXlhzeWIuTHJAPwKMKH95OaEQdovkOiuF', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/plQFe_7nbqo/default.jpg'),
+	(1000530, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:20:16.254552+00', 'Albummer!', 'WjG3o', '''albumm'':1', 'https://i.ytimg.com/vi/d6moggFNfE8/maxresdefault.jpg', 'PLXlhzeWIuTHJBaU1t2xewI5xNjhWU3kFi', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/d6moggFNfE8/default.jpg'),
+	(1000525, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:35.827554+00', 'Extra Life 2022', 'O5w3E', '''2022'':3 ''extra'':1 ''life'':2', 'https://i.ytimg.com/vi/MiqAm5MQfRk/maxresdefault.jpg', 'PLXlhzeWIuTHKVhaOrO6E-K3yh9t1rcryw', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/MiqAm5MQfRk/default.jpg'),
+	(1000527, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:37.0833+00', 'SlowRunners!', 'Q5y95', '''slowrunn'':1', 'https://i.ytimg.com/vi/4CDPUW4ugDw/maxresdefault.jpg', 'PLXlhzeWIuTHKgMqP6MSNw9L1JJhPUKavx', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/4CDPUW4ugDw/default.jpg'),
+	(1000528, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:19:37.464884+00', 'Unprofessional Fridays', 'R5z3w', '''friday'':2 ''unprofession'':1', 'https://i.ytimg.com/vi/roAjJ8_utlw/maxresdefault.jpg', 'PLXlhzeWIuTHIYg2exv9fER3L7A4UyZ_5L', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/roAjJ8_utlw/default.jpg'),
+	(1000531, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:20:16.805348+00', 'Run 2 The Hills', 'XkJ8V', '''2'':2 ''hill'':4 ''run'':1', 'https://i.ytimg.com/vi/nhrnw353N4w/maxresdefault.jpg', 'PLXlhzeWIuTHKxZl8CZxMcqOB4c8SI0AOc', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/nhrnw353N4w/default.jpg'),
+	(1000532, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:20:17.805432+00', 'Voicemail Dump Truck', 'YlK3Y', '''dump'':2 ''truck'':3 ''voicemail'':1', 'https://i.ytimg.com/vi/3QZD02ecLLo/maxresdefault.jpg', 'PLXlhzeWIuTHLjtyPTm42V-jPS70IYXOjJ', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/3QZD02ecLLo/default.jpg'),
+	(1000533, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:20:28.543642+00', 'Arcade Pit', 'ZmL7g', '''arcad'':1 ''pit'':2', 'https://i.ytimg.com/vi/sltE7dZAiXU/maxresdefault.jpg', 'PLXlhzeWIuTHJGw4anj8RMxjzosKAVI4GY', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/sltE7dZAiXU/default.jpg'),
+	(1000534, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:20:31.052995+00', 'Ranking Of Evil', '1ByJq', '''evil'':3 ''rank'':1', 'https://i.ytimg.com/vi/HK6RBi90F8Y/maxresdefault.jpg', 'PLXlhzeWIuTHKHRxRSMvvbL9QmCpbudjCa', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/HK6RBi90F8Y/default.jpg'),
+	(1000535, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:20:31.386122+00', 'Giant Bomb Animated', '210KA', '''anim'':3 ''bomb'':2 ''giant'':1', 'https://i.ytimg.com/vi/llP24sC9HGM/maxresdefault.jpg', 'PLXlhzeWIuTHILXignredrpIi5Cr7qcDaG', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/llP24sC9HGM/default.jpg'),
+	(1000536, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:20:32.16197+00', 'VoidBurgers Hot Takeouts', '3KALp', '''hot'':2 ''takeout'':3 ''voidburg'':1', 'https://i.ytimg.com/vi/AbpFchnkTOc/maxresdefault.jpg', 'PLXlhzeWIuTHJWpyMxJ8DJqo43CQ0P6AGD', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/AbpFchnkTOc/default.jpg'),
+	(1000537, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:20:32.642804+00', 'Best of Bombcast', '4YBMJ', '''best'':1 ''bombcast'':3', 'https://i.ytimg.com/vi/Gtjao0bYZlY/maxresdefault.jpg', 'PLXlhzeWIuTHK8nhtDisGZiimjaFUyGDTI', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/Gtjao0bYZlY/default.jpg'),
+	(1000538, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:20:32.798843+00', 'The Very Online Show', '51DNX', '''onlin'':3 ''show'':4', 'https://i.ytimg.com/vi/IcLjqo6p86o/maxresdefault.jpg', 'PLXlhzeWIuTHKaiSM5Tv5iZzhlPU0NYtu7', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/IcLjqo6p86o/default.jpg'),
+	(1000539, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:20:34.120244+00', 'Borne To Run', '6zEON', '''born'':1 ''run'':3', 'https://i.ytimg.com/vi/oK0lud3aBRI/maxresdefault.jpg', 'PLXlhzeWIuTHKxB55H5Xx9SaB1tmugfxtJ', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/oK0lud3aBRI/default.jpg'),
+	(1000540, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:20:34.623866+00', 'GrubbSnax', '7WGPB', '''grubbsnax'':1', 'https://i.ytimg.com/vi/l5ozEs8ufVk/maxresdefault.jpg', 'PLXlhzeWIuTHINehAaB09zB3YLN0gx5deR', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/l5ozEs8ufVk/default.jpg'),
+	(1000541, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:20:37.433504+00', 'We Talk Over', '8BJQr', '''talk'':2', 'https://i.ytimg.com/vi/juEC6w1qwpY/maxresdefault.jpg', 'PLXlhzeWIuTHLa9DdDCtZ7NBa-0wNZnlD8', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/juEC6w1qwpY/default.jpg'),
+	(1000542, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:20:42.254232+00', 'Game of the Year 2020', '9LK0z', '''2020'':5 ''game'':1 ''year'':4', 'https://i.ytimg.com/vi/LW_x2u32Yjw/maxresdefault.jpg', 'PLXlhzeWIuTHIQwlHD8N83SuY5htDzJcpp', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/LW_x2u32Yjw/default.jpg'),
+	(1000543, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:20:42.837285+00', 'Giant Bomb 100 Baby Challenge', '0XxGN', '''100'':3 ''babi'':4 ''bomb'':2 ''challeng'':5 ''giant'':1', 'https://i.ytimg.com/vi/YR_IAeMzDNU/maxresdefault.jpg', 'PLXlhzeWIuTHLpcw00_rM5i98mEvxJiByy', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/YR_IAeMzDNU/default.jpg'),
+	(1000544, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:20:43.940257+00', 'Fortnite with St. Vincent! (Eventually)', 'gQ3mj', '''eventu'':5 ''fortnit'':1 ''st'':3 ''vincent'':4', 'https://i.ytimg.com/vi/HcDUH3-LLrA/maxresdefault.jpg', 'PLXlhzeWIuTHJspZXwzrqmURq66OqhiVGU', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/HcDUH3-LLrA/default.jpg'),
+	(1000545, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:20:44.87287+00', 'Podcast Clips', 'jO3p4', '''clip'':2 ''podcast'':1', 'https://i.ytimg.com/vi/vm3lzmx9K8Y/maxresdefault.jpg', 'PLXlhzeWIuTHKX8g1oYTXNi7jFHUDGBYm_', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/vm3lzmx9K8Y/default.jpg'),
+	(1000546, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:20:57.698252+00', 'Giant Beastcast', 'kO3qv', '''beastcast'':2 ''giant'':1', 'https://i.ytimg.com/vi/bYW2xKpA3ts/maxresdefault.jpg', 'PLXlhzeWIuTHLX2LZjYvHHvNoCJPBAmxDa', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/bYW2xKpA3ts/default.jpg'),
+	(1000547, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:21:01.642177+00', 'Game of the Year 2019', 'lM3r1', '''2019'':5 ''game'':1 ''year'':4', 'https://i.ytimg.com/vi/CbhWKNehRIM/maxresdefault.jpg', 'PLXlhzeWIuTHKqz7g9Ae3eaBGqvmaV5Pe5', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/CbhWKNehRIM/default.jpg'),
+	(1000548, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:21:03.168849+00', 'E3 2019', 'mM3v3', '''2019'':2 ''e3'':1', 'https://i.ytimg.com/vi/Utrv4o_34DI/maxresdefault.jpg', 'PLXlhzeWIuTHJ1khKC2jjyj2fxBvjnCeE-', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/Utrv4o_34DI/default.jpg'),
+	(1000549, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:21:05.503068+00', 'Game of the Year 2018', 'nN3wp', '''2018'':5 ''game'':1 ''year'':4', 'https://i.ytimg.com/vi/1OrIRGdjmqM/maxresdefault.jpg', 'PLXlhzeWIuTHJm05rzUax68vUCApFSkoKE', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/1OrIRGdjmqM/default.jpg'),
+	(1000550, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:21:06.582905+00', 'Six Crazy Frights', 'o65xL', '''crazi'':2 ''fright'':3 ''six'':1', 'https://i.ytimg.com/vi/gIuBTkBQ8LU/maxresdefault.jpg', 'PLXlhzeWIuTHJ_GJEf_c6HYVFajOm4XGbv', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/gIuBTkBQ8LU/default.jpg'),
+	(1000551, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:21:08.399779+00', 'Giant Bomb Premium Unlocks', 'pX3yy', '''bomb'':2 ''giant'':1 ''premium'':3 ''unlock'':4', 'https://i.ytimg.com/vi/Q-Wy351cdGs/maxresdefault.jpg', 'PLXlhzeWIuTHKqeP3ULLqNz9LG0AeRTndM', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/Q-Wy351cdGs/default.jpg'),
+	(1000552, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:21:09.882901+00', 'E3 2017', 'qM3zy', '''2017'':2 ''e3'':1', 'https://i.ytimg.com/vi/mWdKIQ_UOTg/maxresdefault.jpg', 'PLXlhzeWIuTHKSsPno1dkbcRgO2BYg-rbv', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/mWdKIQ_UOTg/default.jpg'),
+	(1000553, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:21:11.06252+00', 'Game of the Year 2016', 'rM3AL', '''2016'':5 ''game'':1 ''year'':4', 'https://i.ytimg.com/vi/T6Mv7RYkFa0/maxresdefault.jpg', 'PLXlhzeWIuTHJuwQ3AnRiYNr_UlNayAwnB', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/T6Mv7RYkFa0/default.jpg'),
+	(1000554, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:21:12.164191+00', 'Endurance Run: Shenmue', 'v93Gn', '''endur'':1 ''run'':2 ''shenmu'':3', 'https://i.ytimg.com/vi/hDaTEFiVrz0/maxresdefault.jpg', 'PLXlhzeWIuTHJL13df0q9w50_z3O6f27cI', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/hDaTEFiVrz0/default.jpg'),
+	(1000555, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:21:13.995682+00', 'Giant Bombcast', 'wR3JX', '''bombcast'':2 ''giant'':1', 'https://i.ytimg.com/vi/sHFmvE7W1zU/maxresdefault.jpg', 'PLXlhzeWIuTHLGJRmdyTRtfXxTTZrYHlax', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/sHFmvE7W1zU/default.jpg'),
+	(1000556, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:21:43.158773+00', 'E3 2016', 'x73KP', '''2016'':2 ''e3'':1', 'https://i.ytimg.com/vi/5HjhNA-S9qM/maxresdefault.jpg', 'PLXlhzeWIuTHKwQK9ASli43qiFq5lDmLA3', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/5HjhNA-S9qM/default.jpg'),
+	(1000557, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:21:44.013734+00', 'VRodeo: Virtual Reality Roundups', 'yJ3LR', '''realiti'':3 ''roundup'':4 ''virtual'':2 ''vrodeo'':1', 'https://i.ytimg.com/vi/hTBB5ZgA1lk/maxresdefault.jpg', 'PLXlhzeWIuTHKvqhGFvcN9xUhVOIUbFrhN', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/hTBB5ZgA1lk/default.jpg'),
+	(1000559, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:22:00.114349+00', 'Ranking of Fighters', 'A9V3j', '''fighter'':3 ''rank'':1', 'https://i.ytimg.com/vi/YuuI_xn-Qtw/maxresdefault.jpg', 'PLXlhzeWIuTHIhuIdvgDQM05fVDXYC9yNe', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/YuuI_xn-Qtw/default.jpg'),
+	(1000560, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:22:02.859024+00', 'Endurance Run: Chrono Trigger', 'BRWko', '''chrono'':3 ''endur'':1 ''run'':2 ''trigger'':4', 'https://i.ytimg.com/vi/7MLdehTdNhk/maxresdefault.jpg', 'PLXlhzeWIuTHJESDyswWR7N-w1OvLmf4hF', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/7MLdehTdNhk/default.jpg'),
+	(1000563, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:22:10.256843+00', 'Kerbal: Project B.E.A.S.T', 'GQlp5', '''b.e.a.s.t'':3 ''kerbal'':1 ''project'':2', 'https://i.ytimg.com/vi/fUYKVK4jem0/maxresdefault.jpg', 'PLXlhzeWIuTHJus8Tum4-kRryEfKqcKbUL', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/fUYKVK4jem0/default.jpg'),
+	(1000564, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:22:11.281648+00', 'The Giant Bomb Mailbag', 'J7ovy', '''bomb'':3 ''giant'':2 ''mailbag'':4', 'https://i.ytimg.com/vi/UnVTcst4P3M/maxresdefault.jpg', 'PLXlhzeWIuTHKlQ-djxpwQMmcQsbLTphbu', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/UnVTcst4P3M/default.jpg'),
+	(1000567, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:22:29.522733+00', 'Old Games Show', 'M5ry1', '''game'':2 ''old'':1 ''show'':3', 'https://i.ytimg.com/vi/8HFfErf2bXA/maxresdefault.jpg', 'PLXlhzeWIuTHI5CTC7EOA2WElXSDZvS7Am', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/8HFfErf2bXA/default.jpg'),
+	(1000569, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:22:47.745495+00', 'Quick Looks at New Video Games', 'O5wAE', '''game'':6 ''look'':2 ''new'':4 ''quick'':1 ''video'':5', 'https://i.ytimg.com/vi/fh-tggWfHxs/maxresdefault.jpg', 'PL3C137F169D51B3FC', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/fh-tggWfHxs/default.jpg'),
+	(1000558, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:21:46.462724+00', 'Best of Giant Bomb', 'zx3M2', '''best'':1 ''bomb'':4 ''giant'':3', 'https://i.ytimg.com/vi/g5F0W4G4wf4/maxresdefault.jpg', 'PLXlhzeWIuTHLC2RFmKwmn_qpAZZ8YqXUd', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/g5F0W4G4wf4/default.jpg'),
+	(1000561, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:22:05.652098+00', 'Endurance Run: Deadly Premonition (BR)', 'DJgmk', '''br'':5 ''dead'':3 ''endur'':1 ''premonit'':4 ''run'':2', NULL, 'PLXlhzeWIuTHLfPT-qHRrpjZ3Fk8uwcle7', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/ZfJHts9y3Rk/default.jpg'),
+	(1000562, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:22:08.089775+00', 'Endurance Run: Deadly Premonition (VJ)', 'E6jnl', '''dead'':3 ''endur'':1 ''premonit'':4 ''run'':2 ''vj'':5', NULL, 'PLXlhzeWIuTHJt-Ruyio0tQy4gZ0cEu05g', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/0YtEv7YDAfo/default.jpg'),
+	(1000565, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:22:19.910159+00', 'Game of the Year 2015', 'K5pw8', '''2015'':5 ''game'':1 ''year'':4', 'https://i.ytimg.com/vi/Xpeo6F3B5ww/maxresdefault.jpg', 'PLXlhzeWIuTHJQU1mQa7NsHjVAQdp5_I-7', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/Xpeo6F3B5ww/default.jpg'),
+	(1000566, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:22:20.390813+00', 'Endurance Run: Persona 4', 'L5qxv', '''4'':4 ''endur'':1 ''persona'':3 ''run'':2', NULL, 'PLXlhzeWIuTHJT8A2En1e8Jbb9NpI0qcXJ', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/Y2_Y7CxaZkI/default.jpg'),
+	(1000568, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:22:34.739502+00', 'Unfinished', 'N5vz8', '''unfinish'':1', 'https://i.ytimg.com/vi/PCsaD2dB1Pw/maxresdefault.jpg', 'PLXlhzeWIuTHKP_-pA8625y5Qsq6eEwyIZ', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/PCsaD2dB1Pw/default.jpg'),
+	(1000570, '074cb047-671d-4f40-a04f-1721878f524d', '2025-06-29 19:24:44.680793+00', 'This Ain''t No Game', 'P5xB6', '''ain'':2 ''game'':5', NULL, 'PLE65FEEEF8D554933', NULL, 'Official', NULL, 'https://i.ytimg.com/vi/P0CxD48msDw/default.jpg');
 
 
 --
@@ -19010,6 +19086,14 @@ http://www.giantbomb.com If you like this, maybe you''d like to check out our we
 And our Facebook page! http://on.fb.me/hcyG1R
 And Twitter! http://bit.ly/9SzULe
 And Twitch! http://bit.ly/shzAI2', 'https://i.ytimg.com/vi/5INDSnCW_uQ/mqdefault.jpg', '2009-02-03 19:26:00+00', '''/9szule'':49B ''/bxfrtc'':37B ''/hcyg1r'':44B ''/shzai2'':54B ''1'':6A ''2'':4A ''bit.ly'':36B,48B,53B ''bit.ly/9szule'':47B ''bit.ly/bxfrtc'':35B ''bit.ly/shzai2'':52B ''check'':31B ''creativ'':20B ''d'':28B ''facebook'':40B ''gameplay'':15B ''get'':19B ''killzon'':3A ''like'':24B,29B ''look'':2A ''mayb'':26B ''minut'':13B ''on.fb.me'':43B ''on.fb.me/hcyg1r'':42B ''page'':41B ''pt'':5A ''quick'':1A ''show'':11B ''three'':12B ''twitch'':51B ''twitter'':46B ''websit'':34B ''www.giantbomb.com'':21B', false, 'PT5M46S', NULL),
+	('XkmiJttnXSQ', 'giantbomb', 'We Talk Over Summer Game Fest 2025 | Presented by Annapurna Interactive', 'The crew came together in Los Angeles to watch and talk over the Geoff Keihley''s Summer Game Fest 2025 presentation! LET''S GET READY GAMERS! 
+
+Thanks to Annapurna Interactive for presnting this Talk Over.
+
+#sgf #summergamefest #giantbomb #annapurna', 'https://i.ytimg.com/vi/XkmiJttnXSQ/mqdefault.jpg', '2025-06-06 23:13:28+00', '''2025'':7A,31B ''angel'':18B ''annapurna'':10A,40B,50B ''came'':14B ''crew'':13B ''fest'':6A,30B ''game'':5A,29B ''gamer'':37B ''geoff'':25B ''get'':35B ''giantbomb'':49B ''interact'':11A,41B ''keihley'':26B ''let'':33B ''los'':17B ''present'':8A,32B ''presnt'':43B ''readi'':36B ''sgf'':47B ''summer'':4A,28B ''summergamefest'':48B ''talk'':2A,22B,45B ''thank'':38B ''togeth'':15B ''watch'':20B', false, 'PT2H5M6S', 'https://i.ytimg.com/vi/XkmiJttnXSQ/maxresdefault.jpg'),
+	('Rq-j55tXcXU', 'remap', 'Rob''s Coffee Journey Continues', 'Unsatisfied with one recent coffee related purchase, Rob and Cado sit down to figure out what else is missing from Rob''s personal coffee collection.
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/Rq-j55tXcXU/mqdefault.jpg', '2025-02-05 17:45:57+00', '''audienc'':34B ''cado'':15B ''coffe'':3A,10B,29B ''collect'':30B ''consid'':44B ''content'':42B ''continu'':5A,39B ''els'':22B ''figur'':19B ''help'':37B ''journey'':4A ''make'':40B ''miss'':24B ''one'':8B ''person'':28B ''pleas'':43B ''purchas'':12B ''radio'':32B ''recent'':9B ''relat'':11B ''remap'':31B ''rob'':1A,13B,26B ''sit'':16B ''subscrib'':45B ''support'':35B ''unsatisfi'':6B ''us'':38B ''www.remapradio.com'':47B', false, 'PT1H31M26S', 'https://i.ytimg.com/vi/Rq-j55tXcXU/maxresdefault.jpg'),
 	('x9Upp-LRSRs', 'giantbomb', 'Giant Bomb @ Nite, LIVE from the Warframe Villa! | Presented by Annapurna Interactive | Nite 2', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
 
 Thanks to our friends at Annapurna Interactive for presenting this stream!
@@ -19020,14 +19104,13 @@ Sign up for the Young Horses newsletter here: http://eepurl.com/g5DUzT
 And check out their Steam page! https://store.steampowered.com/developer/younghorses/
 
 #sgf #summergamefest #giantbomb', 'https://i.ytimg.com/vi/x9Upp-LRSRs/mqdefault.jpg', '2025-06-08 05:59:57+00', '''/developer/younghorses/'':89B ''/g5duzt'':80B ''2'':14A ''angel'':21B ''annapurna'':11A,45B ''around'':30B ''bomb'':2A,60B ''bugsnax'':62B ''check'':82B ''couch'':18B ''eepurl.com'':79B ''eepurl.com/g5duzt'':78B ''found'':16B ''friend'':27B,43B ''get'':25B ''giant'':1A,59B ''giantbomb'':92B ''go'':67B ''hang'':34B ''hors'':54B,75B ''industri'':32B ''interact'':12A,46B ''live'':4A ''los'':20B ''newslett'':76B ''nite'':3A,13A,61B ''page'':86B ''play'':68B ''present'':9A,48B ''re'':24B ''sgf'':90B ''sign'':70B ''steam'':85B ''store.steampowered.com'':88B ''store.steampowered.com/developer/younghorses/'':87B ''stream'':50B ''summergamefest'':91B ''support'':57B ''thank'':40B,51B ''villa'':8A,39B ''vr'':63B ''warfram'':7A,38B ''young'':53B,74B', false, 'PT47M35S', 'https://i.ytimg.com/vi/x9Upp-LRSRs/maxresdefault.jpg'),
-	('XkmiJttnXSQ', 'giantbomb', 'We Talk Over Summer Game Fest 2025 | Presented by Annapurna Interactive', 'The crew came together in Los Angeles to watch and talk over the Geoff Keihley''s Summer Game Fest 2025 presentation! LET''S GET READY GAMERS! 
+	('k-wv9pC03JY', 'giantbomb', '2K is Preparing an Announcement for BioShock Franchise? | Game Mess Mornings 05/23/25', 'Jeff Grubb and Kahlief Adams end your week with a bunch of gaming news! We cover reports of something happening with the BioShock IP, Warhammer 40K: Space Marine II getting a new mode and a Master Crafted Edition, fans of ARC Raiders think they''ve uncovered a release date, Elden Ring getting a live-action film, and even more! 
 
-Thanks to Annapurna Interactive for presnting this Talk Over.
+#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/k-wv9pC03JY/mqdefault.jpg', '2025-05-23 16:05:34+00', '''05/23/25'':12A ''2k'':1A ''40k'':38B ''action'':68B ''adam'':17B ''announc'':5A ''arc'':53B ''bioshock'':7A,35B ''bunch'':23B ''cover'':28B ''craft'':49B ''date'':61B ''edit'':50B ''elden'':62B ''end'':18B ''even'':71B ''fan'':51B ''film'':69B ''franchis'':8A ''game'':9A,25B ''gamemessmorn'':74B ''get'':42B,64B ''giantbomb'':75B ''gmm'':73B ''grubb'':14B ''happen'':32B ''ii'':41B ''ip'':36B ''jeff'':13B ''kahlief'':16B ''live'':67B ''live-act'':66B ''marin'':40B ''master'':48B ''mess'':10A ''mode'':45B ''morn'':11A ''new'':44B ''news'':26B ''prepar'':3A ''raider'':54B ''releas'':60B ''report'':29B ''ring'':63B ''someth'':31B ''space'':39B ''think'':55B ''uncov'':58B ''ve'':57B ''videogamenew'':76B ''warhamm'':37B ''week'':20B', false, 'PT1H42S', 'https://i.ytimg.com/vi/k-wv9pC03JY/maxresdefault.jpg'),
+	('JeB10lSTFpY', 'giantbomb', 'Mike Minotti doesn''t know about this', 'he doesn''t know this happened', 'https://i.ytimg.com/vi/JeB10lSTFpY/mqdefault.jpg', '2025-05-21 23:32:09+00', '''doesn'':3A,7B ''happen'':11B ''know'':5A,9B ''mike'':1A ''minotti'':2A', false, 'PT1M24S', 'https://i.ytimg.com/vi/JeB10lSTFpY/maxresdefault.jpg'),
+	('7y7B2zNNcEc', 'giantbomb', 'Rascal (PS1) | 02 | Blight Club', 'Will Mike Minotti make any progress today on Blight Club? Will he be able to figure out what any of the buttons or crabs do? Tune in to find out! 
 
-#sgf #summergamefest #giantbomb #annapurna', 'https://i.ytimg.com/vi/XkmiJttnXSQ/mqdefault.jpg', '2025-06-06 23:13:28+00', '''2025'':7A,31B ''angel'':18B ''annapurna'':10A,40B,50B ''came'':14B ''crew'':13B ''fest'':6A,30B ''game'':5A,29B ''gamer'':37B ''geoff'':25B ''get'':35B ''giantbomb'':49B ''interact'':11A,41B ''keihley'':26B ''let'':33B ''los'':17B ''present'':8A,32B ''presnt'':43B ''readi'':36B ''sgf'':47B ''summer'':4A,28B ''summergamefest'':48B ''talk'':2A,22B,45B ''thank'':38B ''togeth'':15B ''watch'':20B', false, 'PT2H5M6S', 'https://i.ytimg.com/vi/XkmiJttnXSQ/maxresdefault.jpg'),
-	('Rq-j55tXcXU', 'remap', 'Rob''s Coffee Journey Continues', 'Unsatisfied with one recent coffee related purchase, Rob and Cado sit down to figure out what else is missing from Rob''s personal coffee collection.
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/Rq-j55tXcXU/mqdefault.jpg', '2025-02-05 17:45:57+00', '''audienc'':34B ''cado'':15B ''coffe'':3A,10B,29B ''collect'':30B ''consid'':44B ''content'':42B ''continu'':5A,39B ''els'':22B ''figur'':19B ''help'':37B ''journey'':4A ''make'':40B ''miss'':24B ''one'':8B ''person'':28B ''pleas'':43B ''purchas'':12B ''radio'':32B ''recent'':9B ''relat'':11B ''remap'':31B ''rob'':1A,13B,26B ''sit'':16B ''subscrib'':45B ''support'':35B ''unsatisfi'':6B ''us'':38B ''www.remapradio.com'':47B', false, 'PT1H31M26S', 'https://i.ytimg.com/vi/Rq-j55tXcXU/maxresdefault.jpg'),
+#blightclub #giantbomb #badgames #rascal', 'https://i.ytimg.com/vi/7y7B2zNNcEc/mqdefault.jpg', '2025-05-21 20:25:12+00', '''02'':3A ''abl'':19B ''badgam'':38B ''blight'':4A,14B ''blightclub'':36B ''button'':27B ''club'':5A,15B ''crab'':29B ''figur'':21B ''find'':34B ''giantbomb'':37B ''make'':9B ''mike'':7B ''minotti'':8B ''progress'':11B ''ps1'':2A ''rascal'':1A,39B ''today'':12B ''tune'':31B', false, 'PT2H10M53S', 'https://i.ytimg.com/vi/7y7B2zNNcEc/maxresdefault.jpg'),
 	('3d13XdivMRk', 'giantbomb', 'Power Stone 2 and MORE | Unprofessional Fridays', 'It''s time to get unprofessional and fight a bunch of high schoolers! 
 
 #upf #unprofessional #giantbomb', 'https://i.ytimg.com/vi/3d13XdivMRk/mqdefault.jpg', '2025-05-16 20:58:59+00', '''2'':3A ''bunch'':17B ''fight'':15B ''friday'':7A ''get'':12B ''giantbomb'':23B ''high'':19B ''power'':1A ''schooler'':20B ''stone'':2A ''time'':10B ''unprofession'':6A,13B,22B ''upf'':21B', false, 'PT1H36M30S', 'https://i.ytimg.com/vi/3d13XdivMRk/maxresdefault.jpg'),
@@ -19048,18 +19131,6 @@ Timestamps:
 07:05:25 – JR East Train Simulator
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/trxyoNIdPHs/mqdefault.jpg', '2025-04-07 19:13:45+00', '''00'':66B,67B,76B ''01'':70B,74B,78B ''02'':84B,93B,95B,117B ''03'':97B ''04'':101B,107B ''05'':68B,116B,130B ''06'':122B ''07'':102B,129B ''11'':71B,123B ''16'':98B ''20'':108B ''24'':80B ''25'':131B ''27'':118B ''31'':103B ''37'':99B ''38'':86B ''39'':75B ''48'':79B ''52'':85B,124B ''53'':94B ''55'':72B ''58'':109B ''also'':60B ''america'':10B ''audienc'':139B ''back'':104B ''break'':100B,106B ''bunch'':41B ''conductor'':49B ''consid'':149B ''content'':147B ''continu'':144B ''copyright'':91B ''costcodl'':96B ''costum'':50B ''day'':5A ''de'':126B ''delet'':89B ''densha'':125B ''dip'':8B ''dog'':113B ''drive'':55B ''east'':133B ''far'':18B ''favorit'':12B ''food'':24B ''foodguessr'':73B ''game'':14B ''geoguessr'':77B ''give'':38B ''go'':127B ''guessr'':121B ''hellish'':63B ''help'':142B ''hexen'':15B,69B ''hou'':119B ''hour'':21B ''hous'':34B ''jr'':132B ''judg'':22B ''le/house'':120B ''littl'':44B ''made'':53B ''make'':145B ''mani'':20B ''might'':31B ''mysteri'':88B ''new'':3A ''oh'':57B ''one'':6A ''photo'':28B ''pictur'':114B ''pleas'':148B ''present'':45B ''price'':35B ''radio'':137B ''reason'':92B ''remap'':1A,136B ''reveal'':47B ''rob'':39B,54B,110B ''say'':29B ''scran'':81B ''sequenc'':87B ''simul'':135B ''spend'':17B ''stori'':64B,115B ''subscrib'':150B ''support'':140B ''switch'':128B ''timestamp'':65B ''tini'':43B ''told'':61B ''train'':56B,134B ''upset'':112B ''us'':143B ''video'':13B ''www.remapradio.com'':152B ''york'':4A', false, 'PT7H45M51S', 'https://i.ytimg.com/vi/trxyoNIdPHs/maxresdefault.jpg'),
-	('k-wv9pC03JY', 'giantbomb', '2K is Preparing an Announcement for BioShock Franchise? | Game Mess Mornings 05/23/25', 'Jeff Grubb and Kahlief Adams end your week with a bunch of gaming news! We cover reports of something happening with the BioShock IP, Warhammer 40K: Space Marine II getting a new mode and a Master Crafted Edition, fans of ARC Raiders think they''ve uncovered a release date, Elden Ring getting a live-action film, and even more! 
-
-#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/k-wv9pC03JY/mqdefault.jpg', '2025-05-23 16:05:34+00', '''05/23/25'':12A ''2k'':1A ''40k'':38B ''action'':68B ''adam'':17B ''announc'':5A ''arc'':53B ''bioshock'':7A,35B ''bunch'':23B ''cover'':28B ''craft'':49B ''date'':61B ''edit'':50B ''elden'':62B ''end'':18B ''even'':71B ''fan'':51B ''film'':69B ''franchis'':8A ''game'':9A,25B ''gamemessmorn'':74B ''get'':42B,64B ''giantbomb'':75B ''gmm'':73B ''grubb'':14B ''happen'':32B ''ii'':41B ''ip'':36B ''jeff'':13B ''kahlief'':16B ''live'':67B ''live-act'':66B ''marin'':40B ''master'':48B ''mess'':10A ''mode'':45B ''morn'':11A ''new'':44B ''news'':26B ''prepar'':3A ''raider'':54B ''releas'':60B ''report'':29B ''ring'':63B ''someth'':31B ''space'':39B ''think'':55B ''uncov'':58B ''ve'':57B ''videogamenew'':76B ''warhamm'':37B ''week'':20B', false, 'PT1H42S', 'https://i.ytimg.com/vi/k-wv9pC03JY/maxresdefault.jpg'),
-	('JeB10lSTFpY', 'giantbomb', 'Mike Minotti doesn''t know about this', 'he doesn''t know this happened', 'https://i.ytimg.com/vi/JeB10lSTFpY/mqdefault.jpg', '2025-05-21 23:32:09+00', '''doesn'':3A,7B ''happen'':11B ''know'':5A,9B ''mike'':1A ''minotti'':2A', false, 'PT1M24S', 'https://i.ytimg.com/vi/JeB10lSTFpY/maxresdefault.jpg'),
-	('7y7B2zNNcEc', 'giantbomb', 'Rascal (PS1) | 02 | Blight Club', 'Will Mike Minotti make any progress today on Blight Club? Will he be able to figure out what any of the buttons or crabs do? Tune in to find out! 
-
-#blightclub #giantbomb #badgames #rascal', 'https://i.ytimg.com/vi/7y7B2zNNcEc/mqdefault.jpg', '2025-05-21 20:25:12+00', '''02'':3A ''abl'':19B ''badgam'':38B ''blight'':4A,14B ''blightclub'':36B ''button'':27B ''club'':5A,15B ''crab'':29B ''figur'':21B ''find'':34B ''giantbomb'':37B ''make'':9B ''mike'':7B ''minotti'':8B ''progress'':11B ''ps1'':2A ''rascal'':1A,39B ''today'':12B ''tune'':31B', false, 'PT2H10M53S', 'https://i.ytimg.com/vi/7y7B2zNNcEc/maxresdefault.jpg'),
-	('6OzhzYN-cTM', 'remap', 'Our First Switch 2 Hands-On Impressions', 'Much of the Remap crew has spent the last week playing with their shiny new Switch 2. What do we think of Nintendo''s new console?
-
-What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/6OzhzYN-cTM/mqdefault.jpg', '2025-06-23 14:00:19+00', '''/us/podcast/remap-radio/id1690437343'':56B ''2'':4A,25B ''audienc'':60B ''consid'':70B ''consol'':34B ''content'':68B ''continu'':65B ''crew'':13B ''episod'':46B ''first'':2A ''full'':45B ''hand'':6A ''hands-on'':5A ''help'':63B ''impress'':8A ''last'':17B ''listen'':38B ''make'':66B ''much'':9B ''new'':23B,33B ''nintendo'':31B ''play'':19B ''pleas'':69B ''podcast'':53B ''podcasts.apple.com'':55B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':54B ''radio'':49B,58B ''re'':37B ''remap'':12B,48B,57B ''segment'':42B ''shini'':22B ''spent'':15B ''subscrib'':50B,71B ''support'':61B ''switch'':3A,24B ''think'':29B ''us'':64B ''week'':18B ''www.remapradio.com'':73B', false, 'PT47M20S', 'https://i.ytimg.com/vi/6OzhzYN-cTM/maxresdefault.jpg'),
 	('9vNM9_H0qrA', 'giantbomb', 'Forget Roguelikes, Let Make More Pegglelikes like Peglin | Unfinished', 'There is NOTHING more satisfying than a good multi-ball.
 
 
@@ -19079,24 +19150,24 @@ Remap Radio is audience supported, to help us continue making this content pleas
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/k_9_ACzrmW8/mqdefault.jpg', '2024-12-06 16:14:15+00', '''1'':8A ''2024'':3A ''alreadi'':40B ''audienc'':63B ''break'':5A ''came'':11B ''celebr'':28B ''consid'':73B ''content'':71B ''continu'':33B,68B ''dawn'':6A ''help'':66B ''know'':48B ''last'':50B ''make'':69B ''money'':18B ''movi'':37B ''natali'':32B ''new'':14B ''one'':25B,51B ''part'':7A,56B ''pleas'':72B ''point'':2A,21B ''radio'':61B ''rais'':17B ''remap'':10B,60B ''reunion'':30B ''save'':1A,20B ''split'':53B ''subscrib'':74B ''support'':64B ''sure'':57B ''togeth'':12B ''twilight'':4A,36B ''two'':55B ''us'':67B ''ve'':39B ''watch'':34B,41B ''way'':26B ''www.remapradio.com'':76B ''york'':15B', false, 'PT2H41M5S', 'https://i.ytimg.com/vi/k_9_ACzrmW8/maxresdefault.jpg'),
 	('7mmmL5rSNdE', 'giantbomb', 'Tiny Brains: Giant Bomb Quick Look', 'As we all know, it''s not the size of the brain that counts, but how good its Unreal engine implementation is.', 'https://i.ytimg.com/vi/7mmmL5rSNdE/mqdefault.jpg', '2014-01-08 17:03:00+00', '''bomb'':4A ''brain'':2A,18B ''count'':20B ''engin'':26B ''giant'':3A ''good'':23B ''implement'':27B ''know'':10B ''look'':6A ''quick'':5A ''size'':15B ''tini'':1A ''unreal'':25B', false, 'PT25M1S', 'https://i.ytimg.com/vi/7mmmL5rSNdE/maxresdefault.jpg'),
-	('gEvlhYvUDmQ', 'remap', 'Save Point 2024 — Obscure 2', 'We simply had to show the whole gang this extremely weird co-op survival horror game. They "loved" it!
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/gEvlhYvUDmQ/mqdefault.jpg', '2024-11-21 22:40:24+00', '''2'':5A ''2024'':3A ''audienc'':29B ''co'':18B ''co-op'':17B ''consid'':39B ''content'':37B ''continu'':34B ''extrem'':15B ''game'':22B ''gang'':13B ''help'':32B ''horror'':21B ''love'':24B ''make'':35B ''obscur'':4A ''op'':19B ''pleas'':38B ''point'':2A ''radio'':27B ''remap'':26B ''save'':1A ''show'':10B ''simpli'':7B ''subscrib'':40B ''support'':30B ''surviv'':20B ''us'':33B ''weird'':16B ''whole'':12B ''www.remapradio.com'':42B', false, 'PT1H38M8S', 'https://i.ytimg.com/vi/gEvlhYvUDmQ/maxresdefault.jpg'),
-	('FKck_LxVcoE', 'remap', 'Save Point 2024 — Returning to the Bloodborne Board Game', 'Yes, we kept the game in exactly the same place the last time we played this game several years ago. But will we finish another turn before we''re done?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/FKck_LxVcoE/mqdefault.jpg', '2024-11-21 22:39:36+00', '''2024'':3A ''ago'':29B ''anoth'':34B ''audienc'':43B ''bloodborn'':7A ''board'':8A ''consid'':53B ''content'':51B ''continu'':48B ''done'':39B ''exact'':16B ''finish'':33B ''game'':9A,14B,26B ''help'':46B ''kept'':12B ''last'':21B ''make'':49B ''place'':19B ''play'':24B ''pleas'':52B ''point'':2A ''radio'':41B ''re'':38B ''remap'':40B ''return'':4A ''save'':1A ''sever'':27B ''subscrib'':54B ''support'':44B ''time'':22B ''turn'':35B ''us'':47B ''www.remapradio.com'':56B ''year'':28B ''yes'':10B', false, 'PT4H38M47S', 'https://i.ytimg.com/vi/FKck_LxVcoE/maxresdefault.jpg'),
 	('MIz_y3ebR5k', 'nextlander', 'Vinny and Alex Check Out Lost Records: Bloom & Rage!', 'The makers of Life is Strange have a new game about old friends and, of course, lots of drama!
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/MIz_y3ebR5k/mqdefault.jpg', '2025-02-18 21:39:56+00', '''/nextlander'':37B ''alex'':3A ''bloom'':8A ''check'':4A ''communiti'':34B ''cours'':25B ''drama'':28B ''friend'':22B ''game'':19B ''life'':13B ''lost'':6A ''lot'':26B ''maker'':11B ''new'':18B ''nextland'':29B ''old'':21B ''rage'':9A ''record'':7A ''strang'':15B ''support'':31B ''thank'':38B ''vinni'':1A ''watch'':40B ''www.patreon.com'':36B ''www.patreon.com/nextlander'':35B', false, 'PT1H56M53S', 'https://i.ytimg.com/vi/MIz_y3ebR5k/maxresdefault.jpg'),
-	('dbmV0DNFs3M', 'remap', 'The Premiere of Steam Vent', 'There''s so much that arrives on Steam every single day. Come join us and find out what''s actually there!
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/dbmV0DNFs3M/mqdefault.jpg', '2025-01-29 05:09:10+00', '''actual'':25B ''arriv'':11B ''audienc'':30B ''come'':17B ''consid'':40B ''content'':38B ''continu'':35B ''day'':16B ''everi'':14B ''find'':21B ''help'':33B ''join'':18B ''make'':36B ''much'':9B ''pleas'':39B ''premier'':2A ''radio'':28B ''remap'':27B ''singl'':15B ''steam'':4A,13B ''subscrib'':41B ''support'':31B ''us'':19B,34B ''vent'':5A ''www.remapradio.com'':43B', false, 'PT2H14M36S', 'https://i.ytimg.com/vi/dbmV0DNFs3M/maxresdefault.jpg'),
 	('0AUtfTlWx0M', 'remap', 'P.A.T.R.I.C.K. Enters The Zone', 'Patrick needs to do his gaming homework before our GOTY discussions, so he''s finally playing S.T.A.L.K.E.R. 2 for real.
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/0AUtfTlWx0M/mqdefault.jpg', '2025-01-10 00:37:30+00', '''2'':22B ''audienc'':28B ''consid'':38B ''content'':36B ''continu'':33B ''discuss'':15B ''enter'':2A ''final'':19B ''game'':10B ''goti'':14B ''help'':31B ''homework'':11B ''make'':34B ''need'':6B ''p.a.t.r.i.c.k'':1A ''patrick'':5B ''play'':20B ''pleas'':37B ''radio'':26B ''real'':24B ''remap'':25B ''s.t.a.l.k.e.r'':21B ''subscrib'':39B ''support'':29B ''us'':32B ''www.remapradio.com'':41B ''zone'':4A', false, 'PT2H30M46S', 'https://i.ytimg.com/vi/0AUtfTlWx0M/maxresdefault.jpg'),
+	('dbmV0DNFs3M', 'remap', 'The Premiere of Steam Vent', 'There''s so much that arrives on Steam every single day. Come join us and find out what''s actually there!
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/dbmV0DNFs3M/mqdefault.jpg', '2025-01-29 05:09:10+00', '''actual'':25B ''arriv'':11B ''audienc'':30B ''come'':17B ''consid'':40B ''content'':38B ''continu'':35B ''day'':16B ''everi'':14B ''find'':21B ''help'':33B ''join'':18B ''make'':36B ''much'':9B ''pleas'':39B ''premier'':2A ''radio'':28B ''remap'':27B ''singl'':15B ''steam'':4A,13B ''subscrib'':41B ''support'':31B ''us'':19B,34B ''vent'':5A ''www.remapradio.com'':43B', false, 'PT2H14M36S', 'https://i.ytimg.com/vi/dbmV0DNFs3M/maxresdefault.jpg'),
+	('gEvlhYvUDmQ', 'remap', 'Save Point 2024 — Obscure 2', 'We simply had to show the whole gang this extremely weird co-op survival horror game. They "loved" it!
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/gEvlhYvUDmQ/mqdefault.jpg', '2024-11-21 22:40:24+00', '''2'':5A ''2024'':3A ''audienc'':29B ''co'':18B ''co-op'':17B ''consid'':39B ''content'':37B ''continu'':34B ''extrem'':15B ''game'':22B ''gang'':13B ''help'':32B ''horror'':21B ''love'':24B ''make'':35B ''obscur'':4A ''op'':19B ''pleas'':38B ''point'':2A ''radio'':27B ''remap'':26B ''save'':1A ''show'':10B ''simpli'':7B ''subscrib'':40B ''support'':30B ''surviv'':20B ''us'':33B ''weird'':16B ''whole'':12B ''www.remapradio.com'':42B', false, 'PT1H38M8S', 'https://i.ytimg.com/vi/gEvlhYvUDmQ/maxresdefault.jpg'),
+	('FKck_LxVcoE', 'remap', 'Save Point 2024 — Returning to the Bloodborne Board Game', 'Yes, we kept the game in exactly the same place the last time we played this game several years ago. But will we finish another turn before we''re done?
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/FKck_LxVcoE/mqdefault.jpg', '2024-11-21 22:39:36+00', '''2024'':3A ''ago'':29B ''anoth'':34B ''audienc'':43B ''bloodborn'':7A ''board'':8A ''consid'':53B ''content'':51B ''continu'':48B ''done'':39B ''exact'':16B ''finish'':33B ''game'':9A,14B,26B ''help'':46B ''kept'':12B ''last'':21B ''make'':49B ''place'':19B ''play'':24B ''pleas'':52B ''point'':2A ''radio'':41B ''re'':38B ''remap'':40B ''return'':4A ''save'':1A ''sever'':27B ''subscrib'':54B ''support'':44B ''time'':22B ''turn'':35B ''us'':47B ''www.remapradio.com'':56B ''year'':28B ''yes'':10B', false, 'PT4H38M47S', 'https://i.ytimg.com/vi/FKck_LxVcoE/maxresdefault.jpg'),
 	('ZjQv_i12a9U', 'giantbomb', 'Spelunkin'' With Scoops: 01/07/2014', 'Where we''re going, we don''t need roads. We need teleporters.', 'https://i.ytimg.com/vi/ZjQv_i12a9U/mqdefault.jpg', '2014-01-07 23:11:57+00', '''01/07/2014'':4A ''go'':8B ''need'':12B,15B ''re'':7B ''road'':13B ''scoop'':3A ''spelunkin'':1A ''teleport'':16B', false, 'PT55M43S', 'https://i.ytimg.com/vi/ZjQv_i12a9U/maxresdefault.jpg'),
 	('RZFvcRY4ssw', 'nextlander', 'Nextlander and Waypoint E3 2021: Square Enix!', 'What we''re getting from this Square Enix presentation is that we need a hero to use their psychic power of empathy to kill chaos.', 'https://i.ytimg.com/vi/RZFvcRY4ssw/mqdefault.jpg', '2021-06-14 20:00:03+00', '''2021'':5A ''chao'':32B ''e3'':4A ''empathi'':29B ''enix'':7A,15B ''get'':11B ''hero'':22B ''kill'':31B ''need'':20B ''nextland'':1A ''power'':27B ''present'':16B ''psychic'':26B ''re'':10B ''squar'':6A,14B ''use'':24B ''waypoint'':3A', false, 'PT1H12M22S', 'https://i.ytimg.com/vi/RZFvcRY4ssw/maxresdefault.jpg'),
 	('BFm8wcOMVTQ', 'nextlander', 'Brad and Vinny Remain Here Together - Part 02', 'These co-op puzzles are getting kind of devilish. Why are there so many color puzzles?!
@@ -19123,18 +19194,15 @@ Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/M8I8GE2VdTE/mqdefault.jpg', '2024-10-25 21:02:20+00', '''/nextlander'':36B ''04'':9A ''beat'':19B ''best'':16B ''brad'':1A,12B ''communiti'':33B ''finish'':26B ''first'':27B ''ii'':23B ''nextland'':28B ''part'':8A ''patrick'':3A,10B ''stop'':6A ''support'':30B ''thank'':37B ''tri'':14B ''vike'':22B ''volgarr'':7A,20B ''watch'':39B ''www.patreon.com'':35B ''www.patreon.com/nextlander'':34B', false, 'PT2H19M', 'https://i.ytimg.com/vi/M8I8GE2VdTE/maxresdefault.jpg'),
-	('DuXUDtR6H0U', 'remap', 'Patrick vs. Hopshot [Part 6]', 'It''s just The Final Jump, Patrick. How hard could The Final Jump in Hopshot be?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/DuXUDtR6H0U/mqdefault.jpg', '2025-05-27 21:22:04+00', '''6'':5A ''audienc'':25B ''consid'':35B ''content'':33B ''continu'':30B ''could'':15B ''final'':10B,17B ''hard'':14B ''help'':28B ''hopshot'':3A,20B ''jump'':11B,18B ''make'':31B ''part'':4A ''patrick'':1A,12B ''pleas'':34B ''radio'':23B ''remap'':22B ''subscrib'':36B ''support'':26B ''us'':29B ''vs'':2A ''www.remapradio.com'':38B', false, 'PT1H56M26S', 'https://i.ytimg.com/vi/DuXUDtR6H0U/maxresdefault.jpg'),
-	('EvZGKo3IMRI', 'remap', 'Patrick vs. Hopshot [Part 2]', 'It''s just a few jumps. How hard could just a few jumps be? And lo, Patrick did descend into madness and promise to buy a frog suit.
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/EvZGKo3IMRI/mqdefault.jpg', '2025-05-06 21:10:57+00', '''2'':5A ''audienc'':37B ''buy'':30B ''consid'':47B ''content'':45B ''continu'':42B ''could'':14B ''descend'':24B ''frog'':32B ''hard'':13B ''help'':40B ''hopshot'':3A ''jump'':11B,18B ''lo'':21B ''mad'':26B ''make'':43B ''part'':4A ''patrick'':1A,22B ''pleas'':46B ''promis'':28B ''radio'':35B ''remap'':34B ''subscrib'':48B ''suit'':33B ''support'':38B ''us'':41B ''vs'':2A ''www.remapradio.com'':50B', false, 'PT2H49M56S', 'https://i.ytimg.com/vi/EvZGKo3IMRI/maxresdefault.jpg'),
-	('YcKKGvWB3e0', 'giantbomb', 'Mario Kart World: Knockout Tour | Unprofessional Fridays', 'We pop into Mario Kart World and play Knockout Tour with the community (that''s you)!
-
-#mariokartworld #knockouttour #giantbomb #unprofessionalfridays', 'https://i.ytimg.com/vi/YcKKGvWB3e0/mqdefault.jpg', '2025-06-13 18:14:19+00', '''communiti'':20B ''friday'':7A ''giantbomb'':26B ''kart'':2A,12B ''knockout'':4A,16B ''knockouttour'':25B ''mario'':1A,11B ''mariokartworld'':24B ''play'':15B ''pop'':9B ''tour'':5A,17B ''unprofession'':6A ''unprofessionalfriday'':27B ''world'':3A,13B', false, 'PT1H53M47S', 'https://i.ytimg.com/vi/YcKKGvWB3e0/maxresdefault.jpg'),
 	('DqddR_wnF08', 'remap', 'The Wheel of Command & Conquer', 'Look. We''re just going to play a ton of Command & Conquer and games like Command & Conquer, okay?
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/DqddR_wnF08/mqdefault.jpg', '2025-04-25 03:36:22+00', '''audienc'':27B ''command'':4A,16B,21B ''conquer'':5A,17B,22B ''consid'':37B ''content'':35B ''continu'':32B ''game'':19B ''go'':10B ''help'':30B ''like'':20B ''look'':6B ''make'':33B ''okay'':23B ''play'':12B ''pleas'':36B ''radio'':25B ''re'':8B ''remap'':24B ''subscrib'':38B ''support'':28B ''ton'':14B ''us'':31B ''wheel'':2A ''www.remapradio.com'':40B', false, 'PT2H13M36S', 'https://i.ytimg.com/vi/DqddR_wnF08/maxresdefault.jpg'),
+	('YcKKGvWB3e0', 'giantbomb', 'Mario Kart World: Knockout Tour | Unprofessional Fridays', 'We pop into Mario Kart World and play Knockout Tour with the community (that''s you)!
+
+#mariokartworld #knockouttour #giantbomb #unprofessionalfridays', 'https://i.ytimg.com/vi/YcKKGvWB3e0/mqdefault.jpg', '2025-06-13 18:14:19+00', '''communiti'':20B ''friday'':7A ''giantbomb'':26B ''kart'':2A,12B ''knockout'':4A,16B ''knockouttour'':25B ''mario'':1A,11B ''mariokartworld'':24B ''play'':15B ''pop'':9B ''tour'':5A,17B ''unprofession'':6A ''unprofessionalfriday'':27B ''world'':3A,13B', false, 'PT1H53M47S', 'https://i.ytimg.com/vi/YcKKGvWB3e0/maxresdefault.jpg'),
+	('EvZGKo3IMRI', 'remap', 'Patrick vs. Hopshot [Part 2]', 'It''s just a few jumps. How hard could just a few jumps be? And lo, Patrick did descend into madness and promise to buy a frog suit.
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/EvZGKo3IMRI/mqdefault.jpg', '2025-05-06 21:10:57+00', '''2'':5A ''audienc'':37B ''buy'':30B ''consid'':47B ''content'':45B ''continu'':42B ''could'':14B ''descend'':24B ''frog'':32B ''hard'':13B ''help'':40B ''hopshot'':3A ''jump'':11B,18B ''lo'':21B ''mad'':26B ''make'':43B ''part'':4A ''patrick'':1A,22B ''pleas'':46B ''promis'':28B ''radio'':35B ''remap'':34B ''subscrib'':48B ''suit'':33B ''support'':38B ''us'':41B ''vs'':2A ''www.remapradio.com'':50B', false, 'PT2H49M56S', 'https://i.ytimg.com/vi/EvZGKo3IMRI/maxresdefault.jpg'),
 	('Uzw-eTBy4PQ', 'giantbomb', 'Killzone: Shadow Fall: Giant Bomb Quick Look', 'With the release of Killzone on the PS4, things are looking up for this generation. Like, literally.', 'https://i.ytimg.com/vi/Uzw-eTBy4PQ/mqdefault.jpg', '2013-11-13 14:02:19+00', '''bomb'':5A ''fall'':3A ''generat'':22B ''giant'':4A ''killzon'':1A,12B ''like'':23B ''liter'':24B ''look'':7A,18B ''ps4'':15B ''quick'':6A ''releas'':10B ''shadow'':2A ''thing'':16B', false, 'PT45M54S', 'https://i.ytimg.com/vi/Uzw-eTBy4PQ/maxresdefault.jpg'),
 	('VhtGZVZ6ESs', 'remap', 'Exploring the Spooky Haunted PS1 Demo Disc: Flipside Frights', 'Patrick and Cado descent into a world of creepy polygons and old school horror.
 
@@ -19218,16 +19286,6 @@ Remap Radio is audience supported, to help us continue making this content pleas
 	('_yXTrYnIs2c', 'remap', 'Councilman Rob Enters the Arena of Civilization VII', 'Cado might have started this empire, but now, it''s Rob''s turn. What kind of coffee will this empire serve?
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/_yXTrYnIs2c/mqdefault.jpg', '2025-02-20 23:43:37+00', '''arena'':5A ''audienc'':33B ''cado'':9B ''civil'':7A ''coffe'':25B ''consid'':43B ''content'':41B ''continu'':38B ''councilman'':1A ''empir'':14B,28B ''enter'':3A ''help'':36B ''kind'':23B ''make'':39B ''might'':10B ''pleas'':42B ''radio'':31B ''remap'':30B ''rob'':2A,19B ''serv'':29B ''start'':12B ''subscrib'':44B ''support'':34B ''turn'':21B ''us'':37B ''vii'':8A ''www.remapradio.com'':46B', false, 'PT2H56M16S', 'https://i.ytimg.com/vi/_yXTrYnIs2c/maxresdefault.jpg'),
-	('EC3wTMSQYlw', 'giantbomb', 'Giant Bomb @ Nite, LIVE from the Warframe Villa! | Presented by Annapurna Interactive | Nite 1', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
-
-Thanks to our friends at Annapurna Interactive for presenting this stream!
-
-Thanks to Young Horses for their support of Giant Bomb @ Nite! 
-Bugsnax VR is out now, go play it!
-Sign up for the Young Horses newsletter here: http://eepurl.com/g5DUzT
-And check out their Steam page! https://store.steampowered.com/developer/younghorses/
-
-#sgf #summergamefest #giantbomb', 'https://i.ytimg.com/vi/EC3wTMSQYlw/mqdefault.jpg', '2025-06-07 06:09:50+00', '''/developer/younghorses/'':89B ''/g5duzt'':80B ''1'':14A ''angel'':21B ''annapurna'':11A,45B ''around'':30B ''bomb'':2A,60B ''bugsnax'':62B ''check'':82B ''couch'':18B ''eepurl.com'':79B ''eepurl.com/g5duzt'':78B ''found'':16B ''friend'':27B,43B ''get'':25B ''giant'':1A,59B ''giantbomb'':92B ''go'':67B ''hang'':34B ''hors'':54B,75B ''industri'':32B ''interact'':12A,46B ''live'':4A ''los'':20B ''newslett'':76B ''nite'':3A,13A,61B ''page'':86B ''play'':68B ''present'':9A,48B ''re'':24B ''sgf'':90B ''sign'':70B ''steam'':85B ''store.steampowered.com'':88B ''store.steampowered.com/developer/younghorses/'':87B ''stream'':50B ''summergamefest'':91B ''support'':57B ''thank'':40B,51B ''villa'':8A,39B ''vr'':63B ''warfram'':7A,38B ''young'':53B,74B', false, 'PT5H21M3S', 'https://i.ytimg.com/vi/EC3wTMSQYlw/maxresdefault.jpg'),
 	('BLz2HvxBaf0', 'remap', 'Did We Just Watch Polygon and Giant Bomb Die?', 'The day after recording Remap Radio, a bunch of huge news broke, including the presumed deaths of beloved media outlets Polygon and Giant Bomb. They might continue to exist, but in what form? Plus, Xbox announced massive, sweeping, and unprecedented price hikes across hardware and software. Rob and Patrick hopped on to react in real-time and get really upset.
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com
@@ -19245,25 +19303,9 @@ https://nymag.com/intelligencer/article/the-group-chat-is-where-tech-elites-driv
 https://www.theverge.com/news/659430/microsoft-xbox-console-controller-game-price-increases-worldwide
 https://kotaku.com/polygon-sold-vox-media-valnet-layoffs-digital-gaming-1851778655', 'https://i.ytimg.com/vi/BLz2HvxBaf0/mqdefault.jpg', '2025-05-01 19:03:27+00', '''/intelligencer/article/the-group-chat-is-where-tech-elites-drive-one-another-mad.html'':129B ''/news/659430/microsoft-xbox-console-controller-game-price-increases-worldwide'':132B ''/polygon-sold-vox-media-valnet-layoffs-digital-gaming-1851778655'':135B ''/us/podcast/remap-radio/id1690437343'':94B ''0'':96B,99B ''00'':97B ''11'':100B,111B ''17'':119B ''27'':110B ''56'':118B ''across'':52B ''announc'':45B ''audienc'':74B ''belov'':27B ''bomb'':8A,33B,108B,117B ''broke'':21B ''bunch'':17B ''chapter'':95B ''consid'':84B ''content'':82B ''continu'':36B,79B ''day'':11B ''death'':25B ''die'':9A,109B ''drastic'':122B ''exist'':38B ''form'':42B ''get'':68B ''giant'':7A,32B,107B,116B ''happen'':114B ''hardwar'':53B ''help'':77B ''hike'':51B ''hop'':59B ''huge'':19B ''includ'':22B ''intro'':98B ''kotaku.com'':134B ''kotaku.com/polygon-sold-vox-media-valnet-layoffs-digital-gaming-1851778655'':133B ''link'':126B ''make'':80B ''massiv'':46B ''media'':28B ''might'':35B ''news'':20B ''nymag.com'':128B ''nymag.com/intelligencer/article/the-group-chat-is-where-tech-elites-drive-one-another-mad.html'':127B ''outlet'':29B ''patrick'':58B ''pleas'':83B ''plus'':43B ''podcast'':91B ''podcasts.apple.com'':93B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':92B ''polygon'':5A,30B,105B ''presum'':24B ''price'':50B,125B ''radio'':15B,72B ''rais'':123B ''react'':62B ''real'':65B ''real-tim'':64B ''realli'':69B ''record'':13B ''remap'':14B,71B ''rob'':56B ''softwar'':55B ''subscrib'':85B,88B ''support'':75B ''sweep'':47B ''time'':66B ''unpreced'':49B ''upset'':70B ''us'':78B ''watch'':4A,104B ''www.remapradio.com'':87B ''www.theverge.com'':131B ''www.theverge.com/news/659430/microsoft-xbox-console-controller-game-price-increases-worldwide'':130B ''xbox'':44B,120B', false, 'PT1H16M26S', 'https://i.ytimg.com/vi/BLz2HvxBaf0/maxresdefault.jpg'),
 	('8UtJMAM_mRc', 'giantbomb', 'Teach Me FIFA, Danny', 'Drew doesn''t want to be the ugliest player while playing The Beautiful Game so he asks Danny for help.', 'https://i.ytimg.com/vi/8UtJMAM_mRc/mqdefault.jpg', '2014-07-11 21:42:58+00', '''ask'':21B ''beauti'':17B ''danni'':4A,22B ''doesn'':6B ''drew'':5B ''fifa'':3A ''game'':18B ''help'':24B ''play'':15B ''player'':13B ''teach'':1A ''ugliest'':12B ''want'':8B', false, 'PT57M37S', 'https://i.ytimg.com/vi/8UtJMAM_mRc/maxresdefault.jpg'),
-	('0i4pJWB7cFM', 'remap', 'Remap in New York (Day Two)', 'While Patrick was secretly attending a Switch 2 event, Rob and Cado were joined by Ren and Austin for a day of talking over an increasingly broken Nintendo Direct, before playing a board game. Well, the plan was to play two games. They played one.
-
-Timestamps: 
-00:00:06 — Nintendo Direct/Switch 2 Discussion
-02:22:41 — Let''s Talk About Cassette Players
-02:48:31 — Break
-03:49:48 — Board Game Time: Molly House
-08:00:03 — Break
-08:44:20 — Star Wars: Rebellion
-09:22:55 — Patrick Returns!
-09:51:37 — Zany Golf
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/0i4pJWB7cFM/mqdefault.jpg', '2025-04-07 19:19:52+00', '''00'':53B,54B,82B ''02'':60B,69B ''03'':73B,83B ''06'':55B ''08'':81B,85B ''09'':91B,96B ''2'':14B,58B ''20'':87B ''22'':61B,92B ''31'':71B ''37'':98B ''41'':62B ''44'':86B ''48'':70B,75B ''49'':74B ''51'':97B ''55'':93B ''attend'':11B ''audienc'':104B ''austin'':24B ''board'':39B,76B ''break'':72B,84B ''broken'':33B ''cado'':18B ''cassett'':67B ''consid'':114B ''content'':112B ''continu'':109B ''day'':5A,27B ''direct'':35B ''direct/switch'':57B ''discuss'':59B ''event'':15B ''game'':40B,48B,77B ''golf'':100B ''help'':107B ''hous'':80B ''increas'':32B ''join'':20B ''let'':63B ''make'':110B ''molli'':79B ''new'':3A ''nintendo'':34B,56B ''one'':51B ''patrick'':8B,94B ''plan'':43B ''play'':37B,46B,50B ''player'':68B ''pleas'':113B ''radio'':102B ''rebellion'':90B ''remap'':1A,101B ''ren'':22B ''return'':95B ''rob'':16B ''secret'':10B ''star'':88B ''subscrib'':115B ''support'':105B ''switch'':13B ''talk'':29B,65B ''time'':78B ''timestamp'':52B ''two'':6A,47B ''us'':108B ''war'':89B ''well'':41B ''www.remapradio.com'':117B ''york'':4A ''zani'':99B', false, 'PT10H20M36S', 'https://i.ytimg.com/vi/0i4pJWB7cFM/maxresdefault.jpg'),
 	('MV99plMwOnA', 'remap', 'Orb Maxing in Onimusha: Warlords (Part 2)', 'After a harrowing encounter with a sliding block puzzle, Patrick and Cado are back to watch meters fill up and slash demons.
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/MV99plMwOnA/mqdefault.jpg', '2025-03-04 18:34:05+00', '''2'':7A ''audienc'':33B ''back'':21B ''block'':15B ''cado'':19B ''consid'':43B ''content'':41B ''continu'':38B ''demon'':29B ''encount'':11B ''fill'':25B ''harrow'':10B ''help'':36B ''make'':39B ''max'':2A ''meter'':24B ''onimusha'':4A ''orb'':1A ''part'':6A ''patrick'':17B ''pleas'':42B ''puzzl'':16B ''radio'':31B ''remap'':30B ''slash'':28B ''slide'':14B ''subscrib'':44B ''support'':34B ''us'':37B ''warlord'':5A ''watch'':23B ''www.remapradio.com'':46B', false, 'PT2H28M31S', 'https://i.ytimg.com/vi/MV99plMwOnA/maxresdefault.jpg'),
-	('wrUoSYz3E1E', 'remap', 'Will Most Video Games in the Future Be Priced at $80?', 'With Gearbox CEO entertaining the idea that Borderlands 4 could be $80, we wonder whether the will become the norm or exception in the future. What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/wrUoSYz3E1E/mqdefault.jpg', '2025-05-26 14:01:24+00', '''/us/podcast/remap-radio/id1690437343'':58B ''4'':20B ''80'':11A,23B ''audienc'':62B ''becom'':29B ''borderland'':19B ''ceo'':14B ''consid'':72B ''content'':70B ''continu'':67B ''could'':21B ''entertain'':15B ''episod'':48B ''except'':33B ''full'':47B ''futur'':7A,36B ''game'':4A ''gearbox'':13B ''help'':65B ''idea'':17B ''listen'':40B ''make'':68B ''norm'':31B ''pleas'':71B ''podcast'':55B ''podcasts.apple.com'':57B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':56B ''price'':9A ''radio'':51B,60B ''re'':39B ''remap'':50B,59B ''segment'':44B ''subscrib'':52B,73B ''support'':63B ''us'':66B ''video'':3A ''whether'':26B ''wonder'':25B ''www.remapradio.com'':75B', false, 'PT26M31S', 'https://i.ytimg.com/vi/wrUoSYz3E1E/maxresdefault.jpg'),
 	('Nird_cmJV4M', 'giantbomb', 'Game Mess Mornings 06/18/25', 'Jeff Grubb and friends break down today''s top stories in video games. 
 
 #gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/Nird_cmJV4M/mqdefault.jpg', '2025-06-18 16:05:52+00', '''06/18/25'':4A ''break'':9B ''friend'':8B ''game'':1A,17B ''gamemessmorn'':19B ''giantbomb'':20B ''gmm'':18B ''grubb'':6B ''jeff'':5B ''mess'':2A ''morn'':3A ''stori'':14B ''today'':11B ''top'':13B ''video'':16B ''videogamenew'':21B', false, 'PT52M46S', 'https://i.ytimg.com/vi/Nird_cmJV4M/maxresdefault.jpg'),
@@ -19476,32 +19518,28 @@ Remap Radio is audience supported, to help us continue making this content pleas
 	('7J8FAGdmfrs', 'remap', 'It''s Chewsday Innit? | #remapradio on #Twitch', 'A flawless accent from Cado
 
 https://www.twitch.tv/remapradio', 'https://i.ytimg.com/vi/7J8FAGdmfrs/mqdefault.jpg', '2024-10-10 16:16:51+00', '''/remapradio'':15B ''accent'':10B ''cado'':12B ''chewsday'':3A ''flawless'':9B ''innit'':4A ''remapradio'':5A ''twitch'':7A ''www.twitch.tv'':14B ''www.twitch.tv/remapradio'':13B', false, 'PT31S', NULL),
+	('z2MlzmrMKkE', 'remap', 'Remap Watches Summer Game Fest 2025', 'With Patrick traveling, come hang out with Rob and Cado as they watch the latest Keighley trailer showcase.
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/z2MlzmrMKkE/mqdefault.jpg', '2025-06-08 15:31:25+00', '''2025'':6A ''audienc'':28B ''cado'':16B ''come'':10B ''consid'':38B ''content'':36B ''continu'':33B ''fest'':5A ''game'':4A ''hang'':11B ''help'':31B ''keighley'':22B ''latest'':21B ''make'':34B ''patrick'':8B ''pleas'':37B ''radio'':26B ''remap'':1A,25B ''rob'':14B ''showcas'':24B ''subscrib'':39B ''summer'':3A ''support'':29B ''trailer'':23B ''travel'':9B ''us'':32B ''watch'':2A,19B ''www.remapradio.com'':41B', false, 'PT2H25M36S', 'https://i.ytimg.com/vi/z2MlzmrMKkE/maxresdefault.jpg'),
+	('d03tTk07hCI', 'giantbomb', 'FAYGO ARMAGEDDON #juggalos #ninja #faygo', 'We learned more about the Gathering of the Juggalos and Faygo Armageddon. Mike learns about some words...', 'https://i.ytimg.com/vi/d03tTk07hCI/mqdefault.jpg', '2025-05-21 00:47:52+00', '''armageddon'':2A,17B ''faygo'':1A,5A,16B ''gather'':11B ''juggalo'':3A,14B ''learn'':7B,19B ''mike'':18B ''ninja'':4A ''word'':22B', false, 'PT52S', 'https://i.ytimg.com/vi/d03tTk07hCI/maxresdefault.jpg'),
 	('4PD3gdxiFlI', 'giantbomb', 'Rascal (PS1) | 03 | Blight Club', 'This game continues to be bad, but it''s okay because Mike continues to look COOL! Watch as Mike has to redo a level and fight time. 
 
 Support Giant Bomb by going to
 giantbomb.com/join
 
 #ps1 #rascal #giantbomb #blightclub', 'https://i.ytimg.com/vi/4PD3gdxiFlI/mqdefault.jpg', '2025-05-28 20:02:37+00', '''/join'':41B ''03'':3A ''bad'':11B ''blight'':4A ''blightclub'':45B ''bomb'':35B ''club'':5A ''continu'':8B,18B ''cool'':21B ''fight'':31B ''game'':7B ''giant'':34B ''giantbomb'':44B ''giantbomb.com'':40B ''giantbomb.com/join'':39B ''go'':37B ''level'':29B ''look'':20B ''mike'':17B,24B ''okay'':15B ''ps1'':2A,42B ''rascal'':1A,43B ''redo'':27B ''support'':33B ''time'':32B ''watch'':22B', false, 'PT1H17M31S', 'https://i.ytimg.com/vi/4PD3gdxiFlI/maxresdefault.jpg'),
-	('d03tTk07hCI', 'giantbomb', 'FAYGO ARMAGEDDON #juggalos #ninja #faygo', 'We learned more about the Gathering of the Juggalos and Faygo Armageddon. Mike learns about some words...', 'https://i.ytimg.com/vi/d03tTk07hCI/mqdefault.jpg', '2025-05-21 00:47:52+00', '''armageddon'':2A,17B ''faygo'':1A,5A,16B ''gather'':11B ''juggalo'':3A,14B ''learn'':7B,19B ''mike'':18B ''ninja'':4A ''word'':22B', false, 'PT52S', 'https://i.ytimg.com/vi/d03tTk07hCI/maxresdefault.jpg'),
 	('l_cQ7qsJpzQ', 'giantbomb', 'THE MOSQUITO GANG | Unprofessional Fridays', 'Jeff, Jeff, Dan, Mike, and Jan get together and take turns sucking blood from each other and depositing blood into the bank! 
 
 Support Giant Bomb by going to:
 giantbomb.com/join
 
 #upf #unprofessionalfridays #themosquitogang', 'https://i.ytimg.com/vi/l_cQ7qsJpzQ/mqdefault.jpg', '2025-05-23 20:33:34+00', '''/join'':36B ''bank'':27B ''blood'':18B,24B ''bomb'':30B ''dan'':8B ''deposit'':23B ''friday'':5A ''gang'':3A ''get'':12B ''giant'':29B ''giantbomb.com'':35B ''giantbomb.com/join'':34B ''go'':32B ''jan'':11B ''jeff'':6B,7B ''mike'':9B ''mosquito'':2A ''suck'':17B ''support'':28B ''take'':15B ''themosquitogang'':39B ''togeth'':13B ''turn'':16B ''unprofession'':4A ''unprofessionalfriday'':38B ''upf'':37B', false, 'PT1H18M34S', 'https://i.ytimg.com/vi/l_cQ7qsJpzQ/maxresdefault.jpg'),
-	('z2MlzmrMKkE', 'remap', 'Remap Watches Summer Game Fest 2025', 'With Patrick traveling, come hang out with Rob and Cado as they watch the latest Keighley trailer showcase.
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/z2MlzmrMKkE/mqdefault.jpg', '2025-06-08 15:31:25+00', '''2025'':6A ''audienc'':28B ''cado'':16B ''come'':10B ''consid'':38B ''content'':36B ''continu'':33B ''fest'':5A ''game'':4A ''hang'':11B ''help'':31B ''keighley'':22B ''latest'':21B ''make'':34B ''patrick'':8B ''pleas'':37B ''radio'':26B ''remap'':1A,25B ''rob'':14B ''showcas'':24B ''subscrib'':39B ''summer'':3A ''support'':29B ''trailer'':23B ''travel'':9B ''us'':32B ''watch'':2A,19B ''www.remapradio.com'':41B', false, 'PT2H25M36S', 'https://i.ytimg.com/vi/z2MlzmrMKkE/maxresdefault.jpg'),
 	('VF2GOc9cNYo', 'giantbomb', 'PS5 Could Get More Expensive Soon | Game Mess Mornings with EposVox 05/14/25', 'Jeff Grubb is joined by EposVox today to talk about how to talk about how the PS5 is still close to PS4 total sales and the price could go up fairly soon, Best Buy might have Switch 2s in stock for release day, Clair Obscur: Expedition 33 possibly coming out on the Switch 2, and so much more! 
 
 #gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/VF2GOc9cNYo/mqdefault.jpg', '2025-05-14 15:59:12+00', '''05/14/25'':12A ''2'':66B ''2s'':50B ''33'':59B ''best'':45B ''buy'':46B ''clair'':56B ''close'':32B ''come'':61B ''could'':2A,40B ''day'':55B ''eposvox'':11A,18B ''expedit'':58B ''expens'':5A ''fair'':43B ''game'':7A ''gamemessmorn'':72B ''get'':3A ''giantbomb'':73B ''gmm'':71B ''go'':41B ''grubb'':14B ''jeff'':13B ''join'':16B ''mess'':8A ''might'':47B ''morn'':9A ''much'':69B ''obscur'':57B ''possibl'':60B ''price'':39B ''ps4'':34B ''ps5'':1A,29B ''releas'':54B ''sale'':36B ''soon'':6A,44B ''still'':31B ''stock'':52B ''switch'':49B,65B ''talk'':21B,25B ''today'':19B ''total'':35B ''videogamenew'':74B', false, 'PT52M49S', 'https://i.ytimg.com/vi/VF2GOc9cNYo/maxresdefault.jpg'),
 	('Lq3aTApAvb4', 'remap', 'Hamburger Is Over Hole', 'This is a test of the Remap broadcasting system.
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/Lq3aTApAvb4/mqdefault.jpg', '2025-04-02 02:49:03+00', '''audienc'':17B ''broadcast'':12B ''consid'':27B ''content'':25B ''continu'':22B ''hamburg'':1A ''help'':20B ''hole'':4A ''make'':23B ''pleas'':26B ''radio'':15B ''remap'':11B,14B ''subscrib'':28B ''support'':18B ''system'':13B ''test'':8B ''us'':21B ''www.remapradio.com'':30B', false, 'PT26M55S', 'https://i.ytimg.com/vi/Lq3aTApAvb4/maxresdefault.jpg'),
-	('XgWd88UI0w0', 'giantbomb', 'GIANT BOMB IS INDEPENDENT NOW! | Game Mess Mornings 05/12/25', 'Jeff Grubb and Mike Minotti are here to chat about all the hottest video game news! Today we cover that GIANT BOMB HAS GONE INDEPENDENT, some drama with Moon Studios the team behind Ori and the Blind Forest, a review roundup of Doom: The Dark Ages, and a whole lot more! 
-
-Help support Giant Bomb by going to:
-https://www.giantbomb.com/join', 'https://i.ytimg.com/vi/XgWd88UI0w0/mqdefault.jpg', '2025-05-12 16:00:38+00', '''/join'':70B ''05/12/25'':9A ''age'':55B ''behind'':42B ''blind'':46B ''bomb'':2A,31B,64B ''chat'':18B ''cover'':28B ''dark'':54B ''doom'':52B ''drama'':36B ''forest'':47B ''game'':6A,24B ''giant'':1A,30B,63B ''go'':66B ''gone'':33B ''grubb'':11B ''help'':61B ''hottest'':22B ''independ'':4A,34B ''jeff'':10B ''lot'':59B ''mess'':7A ''mike'':13B ''minotti'':14B ''moon'':38B ''morn'':8A ''news'':25B ''ori'':43B ''review'':49B ''roundup'':50B ''studio'':39B ''support'':62B ''team'':41B ''today'':26B ''video'':23B ''whole'':58B ''www.giantbomb.com'':69B ''www.giantbomb.com/join'':68B', false, 'PT53M40S', 'https://i.ytimg.com/vi/XgWd88UI0w0/maxresdefault.jpg'),
 	('4B-mUPid9E0', 'giantbomb', 'Disney Illusion Island is a Mickey-Vania | Quick Look', 'Grubb and Mike bounce around the world as the most powerful and disgruntled wizard in all of Final Fantasy!
 
 #disneyillusionisland #quicklook #giantbomb', 'https://i.ytimg.com/vi/4B-mUPid9E0/mqdefault.jpg', '2023-08-11 20:01:47+00', '''around'':15B ''bounc'':14B ''disgruntl'':23B ''disney'':1A ''disneyillusionisland'':30B ''fantasi'':29B ''final'':28B ''giantbomb'':32B ''grubb'':11B ''illus'':2A ''island'':3A ''look'':10A ''mickey'':7A ''mickey-vania'':6A ''mike'':13B ''power'':21B ''quick'':9A ''quicklook'':31B ''vania'':8A ''wizard'':24B ''world'':17B', false, 'PT25M7S', 'https://i.ytimg.com/vi/4B-mUPid9E0/maxresdefault.jpg'),
@@ -19611,21 +19649,6 @@ CHAPTERS:
 (02:06:12) Resident Evil: Requiem  |  [PC (Microsoft Windows), PlayStation 5, Xbox Series X|S]  |  Feb 27, 2026
 (02:06:12) Wrapping up
 (02:15:13) See ya!', 'https://i.ytimg.com/vi/wsFUb9PQbuI/mqdefault.jpg', '2025-06-07 00:04:36+00', '''/nextlander'':28B ''00'':30B,31B,32B,34B,39B,55B,86B,100B,111B,133B,149B,155B,181B,190B,196B,201B,227B,245B,255B,260B,277B,288B,303B,324B,347B,354B,627B,778B ''007'':609B ''01'':353B,372B,377B,385B,409B,414B,420B,431B,447B,464B,477B,487B,496B,519B,533B,550B,560B,571B,578B,590B,606B,625B,634B,648B,656B,664B,679B,687B,697B,702B,720B,734B,746B,752B,765B ''02'':84B,373B,689B,777B,798B,803B,821B,826B ''03'':466B,799B ''04'':378B ''05'':386B,763B ''06'':407B,796B,804B,822B ''07'':410B,767B ''08'':36B,290B,370B,681B ''09'':415B,722B ''1'':63B ''10'':286B,421B,604B ''11'':432B,448B,580B,636B ''12'':35B,322B,805B,823B ''13'':828B ''14'':113B,374B,465B,478B ''15'':498B,827B ''16'':40B,41B,488B,552B ''17'':198B,416B,433B,535B ''18'':56B,102B,349B,548B,592B ''19'':87B,422B,497B ''2'':91B,179B,224B,614B,739B,761B,781B ''2012'':745B ''2018'':589B ''2025'':6A,85B,99B,180B,226B,276B,287B,323B,346B,371B,408B,430B,446B,476B,518B,532B,549B,605B,633B,647B,678B,719B,764B,797B ''2026'':54B,110B,148B,244B,570B,624B,655B,820B ''2077'':756B ''21'':411B,475B,520B ''22'':183B,517B ''23'':534B ''24'':666B,718B ''25'':157B,551B,744B ''26'':98B,101B,561B,800B ''27'':608B,819B ''28'':112B,445B ''29'':572B,588B,699B ''3'':470B,494B,694B ''30'':57B,275B,521B,658B,748B ''31'':134B,579B,591B ''33'':150B,573B,607B,704B ''34'':326B,355B,387B ''35'':156B ''36'':182B ''38'':191B,626B ''39'':635B,736B ''4'':70B,118B,168B,213B,339B,397B,460B,507B,794B ''40'':449B,649B ''41'':135B,305B ''42'':203B,657B ''43'':197B,202B,489B ''44'':228B,665B ''45'':379B,754B,779B ''46'':246B ''47'':88B,680B ''48'':247B,256B ''49'':262B ''5'':53B,72B,96B,120B,147B,170B,215B,236B,269B,297B,315B,337B,361B,399B,443B,509B,531B,598B,623B,643B,670B,716B,783B,813B ''50'':261B,688B ''51'':698B ''52'':151B,229B,278B,650B ''53'':703B ''54'':192B ''55'':257B,721B ''56'':279B,289B,479B,735B ''57'':304B,562B,747B ''58'':325B,753B ''59'':348B,766B ''6'':60B,692B ''absorb'':17B ''abyss'':154B ''access'':106B,583B,772B ''act'':553B ''android'':82B,317B,441B ''arc'':263B ''atlan'':436B ''atom'':193B ''aug'':369B,516B,587B,743B ''awaken'':281B ''back'':11B ''bad'':22B ''battl'':65B ''beach'':94B ''beast'':502B ''blade'':417B,423B ''blight'':651B ''blood'':555B ''bloom'':413B ''box'':250B ''break'':668B ''breakthrough'':577B ''centuri'':802B ''chapter'':29B,59B ''charact'':695B ''chronicl'':103B ''chrono'':291B ''code'':136B ''cosmic'':205B ''countri'':359B ''crossworld'':116B ''crown'':312B ''crystal'':434B ''cube'':200B ''cyberpunk'':755B ''dead'':452B ''deadpool'':490B ''death'':89B ''deceiv'':729B ''descend'':576B ''destini'':384B ''dice'':382B ''die'':499B ''dive'':751B ''dune'':280B ''earli'':105B,582B,771B ''edit'':758B ''end'':152B ''evil'':807B ''evolut'':469B ''ex'':565B ''fallen'':706B ''feather'':707B ''feb'':818B ''felt'':248B ''fest'':5A,9B ''fighter'':691B ''first'':575B,610B ''flag'':701B ''fortnit'':58B ''fractur'':412B ''galact'':64B ''game'':4A,8B,184B ''good'':20B ''guardian'':539B ''guild'':737B ''heart'':194B ''hero'':425B ''hire'':161B ''hollow'':482B ''ii'':44B,138B,195B ''ill'':659B ''infinitesim'':682B ''inn'':259B ''intro'':33B ''invas'':206B ''io'':66B,313B,437B,458B ''jul'':717B ''jun'':97B,285B,321B,406B,603B,762B,795B ''jurass'':467B ''killer'':258B ''last'':700B ''lego'':375B,628B ''lie'':388B ''light'':308B,500B,611B ''linux'':569B ''mac'':316B,392B ''mafia'':356B ''marvel'':204B ''may'':83B,444B ''mecha'':667B ''mediev'':104B ''memori'':328B ''meta'':492B ''microsoft'':46B,80B,108B,130B,140B,163B,210B,242B,252B,266B,283B,294B,319B,334B,363B,394B,427B,439B,456B,472B,484B,504B,524B,545B,557B,567B,585B,595B,616B,631B,645B,653B,661B,676B,684B,709B,731B,741B,774B,791B,810B ''mina'':480B ''mindsey'':593B ''mini'':61B ''mio'':327B ''mixtap'':522B ''mongil'':749B ''mortal'':42B ''mous'':158B ''neo'':419B ''nextland'':1A ''nicktoon'':380B ''nintendo'':67B,127B,165B,177B,207B,222B,331B,612B,759B ''oct'':274B,474B ''odyssey'':292B ''old'':358B ''one'':74B,126B,172B,217B,345B,401B,462B,511B,785B ''onimusha'':230B ''orbit'':330B ''origin'':454B ''overtur'':391B ''p'':390B ''p.i'':159B ''parti'':629B ''pass'':696B ''pc'':45B,79B,107B,129B,139B,162B,209B,241B,251B,265B,282B,293B,318B,333B,362B,393B,426B,438B,455B,471B,483B,503B,523B,544B,556B,566B,584B,594B,615B,630B,644B,652B,660B,675B,683B,708B,730B,740B,773B,790B,809B ''pilgrim'':564B ''playstat'':52B,69B,71B,95B,117B,119B,146B,167B,169B,212B,214B,235B,268B,296B,314B,336B,338B,360B,396B,398B,442B,459B,506B,508B,530B,597B,622B,642B,669B,715B,782B,793B,812B ''project'':801B ''q4'':225B ''quest'':493B ''race'':115B ''raider'':264B ''re'':14B ''readi'':15B ''requiem'':808B ''resid'':806B ''rise'':726B ''sacr'':542B ''scott'':563B ''scum'':581B ''season'':62B ''see'':829B ''sep'':429B,547B ''seri'':49B,76B,122B,143B,174B,219B,238B,271B,299B,341B,366B,403B,513B,527B,600B,619B,639B,672B,712B,787B,815B ''seven'':451B ''shell'':43B ''show'':37B ''sin'':453B ''sonic'':114B ''soul'':418B,424B ''splitgat'':780B ''star'':750B ''start'':38B ''strand'':90B ''street'':690B ''summer'':3A,7B ''switch'':68B,128B,166B,178B,208B,223B,332B,613B,760B ''sword'':234B ''tang'':725B ''tbd'':132B,254B,302B,463B,486B,495B,559B,663B,686B,733B,776B ''throne'':186B ''toss'':310B ''towa'':536B ''tree'':543B ''ultim'':757B ''unexpect'':25B ''unwel'':770B ''vein'':137B ''voyag'':376B ''vr'':491B ''war'':187B,738B ''wave'':307B ''way'':231B ''westero'':189B ''wildgat'':637B ''window'':47B,81B,109B,131B,141B,164B,211B,243B,253B,267B,284B,295B,320B,335B,364B,395B,428B,440B,457B,473B,485B,505B,525B,546B,558B,568B,586B,596B,617B,632B,646B,654B,662B,677B,685B,710B,732B,742B,775B,792B,811B ''word'':352B ''world'':468B ''wrap'':824B ''wu'':724B ''wu-tang'':723B ''wuchang'':705B ''wuther'':306B ''www.patreon.com'':27B ''www.patreon.com/nextlander'':26B ''x'':50B,77B,123B,144B,175B,220B,239B,272B,300B,342B,367B,404B,514B,528B,601B,620B,640B,673B,713B,788B,816B ''xbox'':48B,73B,75B,121B,125B,142B,171B,173B,216B,218B,237B,270B,298B,340B,344B,365B,400B,402B,461B,510B,512B,526B,599B,618B,638B,671B,711B,784B,786B,814B ''ya'':830B ''year'':693B', false, 'PT2H16M27S', 'https://i.ytimg.com/vi/wsFUb9PQbuI/maxresdefault.jpg'),
-	('FFt0-rcnmHI', 'nextlander', 'Fallout 1 Part 13: THE END', 'Vinny and Brad spend some time getting Brad''s new audio gear sounding right and then finish this darn game!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/FFt0-rcnmHI/mqdefault.jpg', '2024-11-14 23:39:00+00', '''/nextlander'':35B ''1'':2A ''13'':4A ''audio'':17B ''brad'':9B,14B ''communiti'':32B ''darn'':25B ''end'':6A ''fallout'':1A ''finish'':23B ''game'':26B ''gear'':18B ''get'':13B ''new'':16B ''nextland'':27B ''part'':3A ''right'':20B ''sound'':19B ''spend'':10B ''support'':29B ''thank'':36B ''time'':12B ''vinni'':7B ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT5H49M13S', 'https://i.ytimg.com/vi/FFt0-rcnmHI/maxresdefault.jpg'),
-	('qAA7HJR71cE', 'remap', 'Rob the Conqueror Enters Civilization VII', 'Rob and Cado continue their shared save file of Civilization VII, where their peaceful wonder making civ is currently in the middle of two different wars!
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/qAA7HJR71cE/mqdefault.jpg', '2025-03-22 14:26:17+00', '''audienc'':36B ''cado'':9B ''civ'':23B ''civil'':5A,16B ''conqueror'':3A ''consid'':46B ''content'':44B ''continu'':10B,41B ''current'':25B ''differ'':31B ''enter'':4A ''file'':14B ''help'':39B ''make'':22B,42B ''middl'':28B ''peac'':20B ''pleas'':45B ''radio'':34B ''remap'':33B ''rob'':1A,7B ''save'':13B ''share'':12B ''subscrib'':47B ''support'':37B ''two'':30B ''us'':40B ''vii'':6A,17B ''war'':32B ''wonder'':21B ''www.remapradio.com'':49B', false, 'PT2H46M26S', 'https://i.ytimg.com/vi/qAA7HJR71cE/maxresdefault.jpg'),
-	('TaRK2oSkIPI', 'remap', 'Remap Talks Over the Xbox Developer Direct', 'How long will Microsoft make Patrick wait to download Ninja Gaiden?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/TaRK2oSkIPI/mqdefault.jpg', '2025-01-24 15:38:16+00', '''audienc'':22B ''consid'':32B ''content'':30B ''continu'':27B ''develop'':6A ''direct'':7A ''download'':16B ''gaiden'':18B ''help'':25B ''long'':9B ''make'':12B,28B ''microsoft'':11B ''ninja'':17B ''patrick'':13B ''pleas'':31B ''radio'':20B ''remap'':1A,19B ''subscrib'':33B ''support'':23B ''talk'':2A ''us'':26B ''wait'':14B ''www.remapradio.com'':35B ''xbox'':5A', false, 'PT1H14M56S', 'https://i.ytimg.com/vi/TaRK2oSkIPI/maxresdefault.jpg'),
-	('IPjcsGweuOw', 'remap', 'Dresses, Deep Lore, and More Infinity Nikki', 'One stream wasn''t enough for Patrick and Cado. There''s so much more to learn (and wear)!
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/IPjcsGweuOw/mqdefault.jpg', '2025-01-07 22:48:23+00', '''audienc'':29B ''cado'':16B ''consid'':39B ''content'':37B ''continu'':34B ''deep'':2A ''dress'':1A ''enough'':12B ''help'':32B ''infin'':6A ''learn'':23B ''lore'':3A ''make'':35B ''much'':20B ''nikki'':7A ''one'':8B ''patrick'':14B ''pleas'':38B ''radio'':27B ''remap'':26B ''stream'':9B ''subscrib'':40B ''support'':30B ''us'':33B ''wasn'':10B ''wear'':25B ''www.remapradio.com'':42B', false, 'PT2H19M11S', 'https://i.ytimg.com/vi/IPjcsGweuOw/maxresdefault.jpg'),
 	('4uSoRzmEZEQ', 'nextlander', 'Friday Fun Stream Special: Austin Walker Takes Us Through Realis!', 'Our good friend and yours Austin Walker is here to show us his new game, Realis. Join us as we head to space and go moon hopping!
 
 Support Realis here: https://thecalcutec.itch.io/realis
@@ -19652,6 +19675,21 @@ Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/PsjZ6qakyJY/mqdefault.jpg', '2025-01-27 23:20:39+00', '''/nextlander'':31B ''01'':7A ''abbi'':1A,8B ''back'':12B ''communiti'':28B ''famili'':22B ''interest'':21B ''investig'':18B ''nextland'':23B ''part'':6A ''readi'':14B ''roottre'':5A ''support'':25B ''thank'':32B ''vinni'':2A,10B ''watch'':34B ''www.patreon.com'':30B ''www.patreon.com/nextlander'':29B', false, 'PT1H50M', 'https://i.ytimg.com/vi/PsjZ6qakyJY/maxresdefault.jpg'),
+	('FFt0-rcnmHI', 'nextlander', 'Fallout 1 Part 13: THE END', 'Vinny and Brad spend some time getting Brad''s new audio gear sounding right and then finish this darn game!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/FFt0-rcnmHI/mqdefault.jpg', '2024-11-14 23:39:00+00', '''/nextlander'':35B ''1'':2A ''13'':4A ''audio'':17B ''brad'':9B,14B ''communiti'':32B ''darn'':25B ''end'':6A ''fallout'':1A ''finish'':23B ''game'':26B ''gear'':18B ''get'':13B ''new'':16B ''nextland'':27B ''part'':3A ''right'':20B ''sound'':19B ''spend'':10B ''support'':29B ''thank'':36B ''time'':12B ''vinni'':7B ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT5H49M13S', 'https://i.ytimg.com/vi/FFt0-rcnmHI/maxresdefault.jpg'),
+	('qAA7HJR71cE', 'remap', 'Rob the Conqueror Enters Civilization VII', 'Rob and Cado continue their shared save file of Civilization VII, where their peaceful wonder making civ is currently in the middle of two different wars!
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/qAA7HJR71cE/mqdefault.jpg', '2025-03-22 14:26:17+00', '''audienc'':36B ''cado'':9B ''civ'':23B ''civil'':5A,16B ''conqueror'':3A ''consid'':46B ''content'':44B ''continu'':10B,41B ''current'':25B ''differ'':31B ''enter'':4A ''file'':14B ''help'':39B ''make'':22B,42B ''middl'':28B ''peac'':20B ''pleas'':45B ''radio'':34B ''remap'':33B ''rob'':1A,7B ''save'':13B ''share'':12B ''subscrib'':47B ''support'':37B ''two'':30B ''us'':40B ''vii'':6A,17B ''war'':32B ''wonder'':21B ''www.remapradio.com'':49B', false, 'PT2H46M26S', 'https://i.ytimg.com/vi/qAA7HJR71cE/maxresdefault.jpg'),
+	('TaRK2oSkIPI', 'remap', 'Remap Talks Over the Xbox Developer Direct', 'How long will Microsoft make Patrick wait to download Ninja Gaiden?
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/TaRK2oSkIPI/mqdefault.jpg', '2025-01-24 15:38:16+00', '''audienc'':22B ''consid'':32B ''content'':30B ''continu'':27B ''develop'':6A ''direct'':7A ''download'':16B ''gaiden'':18B ''help'':25B ''long'':9B ''make'':12B,28B ''microsoft'':11B ''ninja'':17B ''patrick'':13B ''pleas'':31B ''radio'':20B ''remap'':1A,19B ''subscrib'':33B ''support'':23B ''talk'':2A ''us'':26B ''wait'':14B ''www.remapradio.com'':35B ''xbox'':5A', false, 'PT1H14M56S', 'https://i.ytimg.com/vi/TaRK2oSkIPI/maxresdefault.jpg'),
+	('IPjcsGweuOw', 'remap', 'Dresses, Deep Lore, and More Infinity Nikki', 'One stream wasn''t enough for Patrick and Cado. There''s so much more to learn (and wear)!
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/IPjcsGweuOw/mqdefault.jpg', '2025-01-07 22:48:23+00', '''audienc'':29B ''cado'':16B ''consid'':39B ''content'':37B ''continu'':34B ''deep'':2A ''dress'':1A ''enough'':12B ''help'':32B ''infin'':6A ''learn'':23B ''lore'':3A ''make'':35B ''much'':20B ''nikki'':7A ''one'':8B ''patrick'':14B ''pleas'':38B ''radio'':27B ''remap'':26B ''stream'':9B ''subscrib'':40B ''support'':30B ''us'':33B ''wasn'':10B ''wear'':25B ''www.remapradio.com'':42B', false, 'PT2H19M11S', 'https://i.ytimg.com/vi/IPjcsGweuOw/maxresdefault.jpg'),
 	('S69rZ93RQHQ', 'remap', 'Oh Yes, Helldivers Has Mechs Now', 'Democracy won''t defend itself, but having mechs definitely helps.  
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/S69rZ93RQHQ/mqdefault.jpg', '2024-03-10 16:27:50+00', '''audienc'':19B ''consid'':29B ''content'':27B ''continu'':24B ''defend'':9B ''definit'':14B ''democraci'':6B ''helldiv'':3A ''help'':15B,22B ''make'':25B ''mech'':5A,13B ''oh'':1A ''pleas'':28B ''radio'':17B ''remap'':16B ''subscrib'':30B ''support'':20B ''us'':23B ''won'':7B ''www.remapradio.com'':32B ''yes'':2A', false, 'PT2H39M15S', 'https://i.ytimg.com/vi/S69rZ93RQHQ/maxresdefault.jpg'),
@@ -19663,9 +19701,6 @@ Call into the Dump Truck at (707)EXIT-FLU
 	('GGq0CAfbjWY', 'remap', 'The Wheel Returns to the Sea', 'Ah, yes. The wheel returns, taking us to the sea, questionable MMOs, and, of course, space.
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/GGq0CAfbjWY/mqdefault.jpg', '2024-11-14 23:00:26+00', '''ah'':7B ''audienc'':26B ''consid'':36B ''content'':34B ''continu'':31B ''cours'':21B ''help'':29B ''make'':32B ''mmos'':18B ''pleas'':35B ''question'':17B ''radio'':24B ''remap'':23B ''return'':3A,11B ''sea'':6A,16B ''space'':22B ''subscrib'':37B ''support'':27B ''take'':12B ''us'':13B,30B ''wheel'':2A,10B ''www.remapradio.com'':39B ''yes'':8B', false, 'PT2H10M16S', 'https://i.ytimg.com/vi/GGq0CAfbjWY/maxresdefault.jpg'),
-	('bGa2e7rxX4g', 'remap', 'The Zone Compels Rob to Return', 'S.T.A.L.K.E.R. 2 is here. What else are Rob and Cado to do, except continue into The Zone?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/bGa2e7rxX4g/mqdefault.jpg', '2024-11-22 22:52:48+00', '''2'':8B ''audienc'':27B ''cado'':16B ''compel'':3A ''consid'':37B ''content'':35B ''continu'':20B,32B ''els'':12B ''except'':19B ''help'':30B ''make'':33B ''pleas'':36B ''radio'':25B ''remap'':24B ''return'':6A ''rob'':4A,14B ''s.t.a.l.k.e.r'':7B ''subscrib'':38B ''support'':28B ''us'':31B ''www.remapradio.com'':40B ''zone'':2A,23B', false, 'PT2H22M6S', 'https://i.ytimg.com/vi/bGa2e7rxX4g/maxresdefault.jpg'),
 	('zwF3T4s0ygw', 'remap', 'The Wheel of S.T.A.L.K.E.R.', 'Before we head back into The Zone, who''s ready for a brief stop to anime girl bullet hell?
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/zwF3T4s0ygw/mqdefault.jpg', '2024-11-21 23:18:16+00', '''anim'':20B ''audienc'':27B ''back'':8B ''brief'':17B ''bullet'':22B ''consid'':37B ''content'':35B ''continu'':32B ''girl'':21B ''head'':7B ''hell'':23B ''help'':30B ''make'':33B ''pleas'':36B ''radio'':25B ''readi'':14B ''remap'':24B ''s.t.a.l.k.e.r'':4A ''stop'':18B ''subscrib'':38B ''support'':28B ''us'':31B ''wheel'':2A ''www.remapradio.com'':40B ''zone'':11B', false, 'PT2H40M55S', 'https://i.ytimg.com/vi/zwF3T4s0ygw/maxresdefault.jpg'),
@@ -19681,6 +19716,9 @@ Remap Radio is audience supported, to help us continue making this content pleas
 	('uTs_vnv8zuQ', 'remap', 'The Zone Rules Everything Around Rob', 'What kind of anomalies do you think they serve during Thanksgiving dinner in the zone?
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/uTs_vnv8zuQ/mqdefault.jpg', '2024-12-04 00:02:45+00', '''anomali'':10B ''around'':5A ''audienc'':25B ''consid'':35B ''content'':33B ''continu'':30B ''dinner'':18B ''everyth'':4A ''help'':28B ''kind'':8B ''make'':31B ''pleas'':34B ''radio'':23B ''remap'':22B ''rob'':6A ''rule'':3A ''serv'':15B ''subscrib'':36B ''support'':26B ''thanksgiv'':17B ''think'':13B ''us'':29B ''www.remapradio.com'':38B ''zone'':2A,21B', false, 'PT1H48M46S', 'https://i.ytimg.com/vi/uTs_vnv8zuQ/maxresdefault.jpg'),
+	('bGa2e7rxX4g', 'remap', 'The Zone Compels Rob to Return', 'S.T.A.L.K.E.R. 2 is here. What else are Rob and Cado to do, except continue into The Zone?
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/bGa2e7rxX4g/mqdefault.jpg', '2024-11-22 22:52:48+00', '''2'':8B ''audienc'':27B ''cado'':16B ''compel'':3A ''consid'':37B ''content'':35B ''continu'':20B,32B ''els'':12B ''except'':19B ''help'':30B ''make'':33B ''pleas'':36B ''radio'':25B ''remap'':24B ''return'':6A ''rob'':4A,14B ''s.t.a.l.k.e.r'':7B ''subscrib'':38B ''support'':28B ''us'':31B ''www.remapradio.com'':40B ''zone'':2A,23B', false, 'PT2H22M6S', 'https://i.ytimg.com/vi/bGa2e7rxX4g/maxresdefault.jpg'),
 	('QhQXLUhpYYw', 'remap', 'Steam Next Lightning Round [Halloween Edition]', 'Patrick and Cado are checking out a smattering of demos of Steam Next Fest, including Windblown, Heartworm, and more.
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/QhQXLUhpYYw/mqdefault.jpg', '2024-10-16 18:34:34+00', '''audienc'':29B ''cado'':9B ''check'':11B ''consid'':39B ''content'':37B ''continu'':34B ''demo'':16B ''edit'':6A ''fest'':20B ''halloween'':5A ''heartworm'':23B ''help'':32B ''includ'':21B ''lightn'':3A ''make'':35B ''next'':2A,19B ''patrick'':7B ''pleas'':38B ''radio'':27B ''remap'':26B ''round'':4A ''smatter'':14B ''steam'':1A,18B ''subscrib'':40B ''support'':30B ''us'':33B ''windblown'':22B ''www.remapradio.com'':42B', false, 'PT2H49M31S', 'https://i.ytimg.com/vi/QhQXLUhpYYw/maxresdefault.jpg'),
@@ -20337,13 +20375,13 @@ Remap Radio is audience supported, to help us continue making this content pleas
 	('1vSWg01tb2w', 'remap', 'The Wheel of UFO 50 Spins Again', 'We played a bunch of UFO 50 games last week, but apparently, there are more left. Spin!
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/1vSWg01tb2w/mqdefault.jpg', '2024-10-03 21:34:20+00', '''50'':5A,13B ''appar'':18B ''audienc'':27B ''bunch'':10B ''consid'':37B ''content'':35B ''continu'':32B ''game'':14B ''help'':30B ''last'':15B ''left'':22B ''make'':33B ''play'':8B ''pleas'':36B ''radio'':25B ''remap'':24B ''spin'':6A,23B ''subscrib'':38B ''support'':28B ''ufo'':4A,12B ''us'':31B ''week'':16B ''wheel'':2A ''www.remapradio.com'':40B', false, 'PT2H2M56S', 'https://i.ytimg.com/vi/1vSWg01tb2w/maxresdefault.jpg'),
-	('lrszP6ZvDXs', 'remap', 'The Wheel of Split Fiction', 'Cado and Patrick head to the latest co-op game from the developers of It Takes Two, before they descent into rugby and goblins.', 'https://i.ytimg.com/vi/lrszP6ZvDXs/mqdefault.jpg', '2025-03-07 16:19:30+00', '''cado'':6B ''co'':14B ''co-op'':13B ''descent'':26B ''develop'':19B ''fiction'':5A ''game'':16B ''goblin'':30B ''head'':9B ''latest'':12B ''op'':15B ''patrick'':8B ''rugbi'':28B ''split'':4A ''take'':22B ''two'':23B ''wheel'':2A', false, 'PT2H13M31S', 'https://i.ytimg.com/vi/lrszP6ZvDXs/maxresdefault.jpg'),
 	('Qq8SmMX32Kc', 'remap', 'Save Point 2024 — Ranking Video Game Console Startups (Part 1)', 'A note to the audience: this segment was supposed to last two hours.
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/Qq8SmMX32Kc/mqdefault.jpg', '2024-11-19 19:30:37+00', '''1'':10A ''2024'':3A ''audienc'':15B,27B ''consid'':37B ''consol'':7A ''content'':35B ''continu'':32B ''game'':6A ''help'':30B ''hour'':23B ''last'':21B ''make'':33B ''note'':12B ''part'':9A ''pleas'':36B ''point'':2A ''radio'':25B ''rank'':4A ''remap'':24B ''save'':1A ''segment'':17B ''startup'':8A ''subscrib'':38B ''support'':28B ''suppos'':19B ''two'':22B ''us'':31B ''video'':5A ''www.remapradio.com'':40B', false, 'PT2H9M15S', 'https://i.ytimg.com/vi/Qq8SmMX32Kc/maxresdefault.jpg'),
 	('ISuS0LId9_s', 'remap', 'Happy Holidays to Space Marine 2 [Part 6]', 'Rob, Patrick, and Cado have one last thing to take care off before the holidays: chaos.
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/ISuS0LId9_s/mqdefault.jpg', '2024-12-20 03:59:48+00', '''2'':6A ''6'':8A ''audienc'':28B ''cado'':12B ''care'':19B ''chao'':24B ''consid'':38B ''content'':36B ''continu'':33B ''happi'':1A ''help'':31B ''holiday'':2A,23B ''last'':15B ''make'':34B ''marin'':5A ''one'':14B ''part'':7A ''patrick'':10B ''pleas'':37B ''radio'':26B ''remap'':25B ''rob'':9B ''space'':4A ''subscrib'':39B ''support'':29B ''take'':18B ''thing'':16B ''us'':32B ''www.remapradio.com'':41B', false, 'PT2H49M56S', 'https://i.ytimg.com/vi/ISuS0LId9_s/maxresdefault.jpg'),
+	('lrszP6ZvDXs', 'remap', 'The Wheel of Split Fiction', 'Cado and Patrick head to the latest co-op game from the developers of It Takes Two, before they descent into rugby and goblins.', 'https://i.ytimg.com/vi/lrszP6ZvDXs/mqdefault.jpg', '2025-03-07 16:19:30+00', '''cado'':6B ''co'':14B ''co-op'':13B ''descent'':26B ''develop'':19B ''fiction'':5A ''game'':16B ''goblin'':30B ''head'':9B ''latest'':12B ''op'':15B ''patrick'':8B ''rugbi'':28B ''split'':4A ''take'':22B ''two'':23B ''wheel'':2A', false, 'PT2H13M31S', 'https://i.ytimg.com/vi/lrszP6ZvDXs/maxresdefault.jpg'),
 	('IOYZb2u4D8I', 'remap', 'Save Point 2024 — Day Three (Part 2)', 'Save Point heads towards the finish line with the group watching Twilight: Breaking Dawn — Part 2, before the community plays a handful of games to close out the night.
 
 Timestamps:
@@ -20366,15 +20404,12 @@ Timestamps:
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/1TrZbNxsQPA/mqdefault.jpg', '2024-11-13 02:45:05+00', '''00'':35B,36B,56B ''05'':55B ''07'':59B ''1'':7A ''14'':43B ''19'':68B ''2024'':3A ''29'':42B ''3'':54B,58B ''35'':60B ''4'':66B ''40'':67B ''alyx'':53B ''arkham'':48B ''audienc'':75B ''batman'':47B ''bloodborn'':31B,69B ''board'':32B,70B ''break'':57B ''come'':21B ''communiti'':62B ''consid'':85B ''content'':83B ''continu'':80B ''day'':4A ''enter'':9B,38B ''ever'':20B ''game'':33B,45B,71B ''gear'':65B ''guilti'':64B ''half'':51B ''half-lif'':50B ''help'':78B ''last'':26B ''life'':52B ''ll'':19B ''long'':25B ''make'':81B ''ovrlrd'':46B ''part'':6A ''play'':63B ''pleas'':84B ''plus'':23B ''point'':2A ''radio'':73B ''re'':15B ''remap'':61B,72B ''return'':28B ''rob'':8B,37B ''save'':1A ''shadow'':49B ''subscrib'':86B ''support'':76B ''sure'':17B ''three'':5A ''timestamp'':34B ''us'':79B ''virtual'':11B,40B ''vr'':44B ''world'':12B,41B ''www.remapradio.com'':88B', false, 'PT9H18M20S', 'https://i.ytimg.com/vi/1TrZbNxsQPA/maxresdefault.jpg'),
 	('r9U2F3gt-vk', 'nextlander', 'Alex and Vinny Play Life is Strange: True Colors - Part 05', 'We attend a party, sing a song, find happiness for the first in our life... what could go wrong?!', 'https://i.ytimg.com/vi/r9U2F3gt-vk/mqdefault.jpg', '2021-10-13 15:00:33+00', '''05'':11A ''alex'':1A ''attend'':13B ''color'':9A ''could'':28B ''find'':19B ''first'':23B ''go'':29B ''happi'':20B ''life'':5A,26B ''part'':10A ''parti'':15B ''play'':4A ''sing'':16B ''song'':18B ''strang'':7A ''true'':8A ''vinni'':3A ''wrong'':30B', false, 'PT1H26M22S', 'https://i.ytimg.com/vi/r9U2F3gt-vk/maxresdefault.jpg'),
-	('zE0nNqww4eA', 'remap', 'Rob and Cado''s Quest for Gold in Civilization VII', 'Rob and Cado continue their shared save file of Civilization VII, in which the age of exploration means Rob''s trying to boat-max. 
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/zE0nNqww4eA/mqdefault.jpg', '2025-03-28 16:57:24+00', '''age'':25B ''audienc'':39B ''boat'':34B ''boat-max'':33B ''cado'':3A,13B ''civil'':9A,20B ''consid'':49B ''content'':47B ''continu'':14B,44B ''explor'':27B ''file'':18B ''gold'':7A ''help'':42B ''make'':45B ''max'':35B ''mean'':28B ''pleas'':48B ''quest'':5A ''radio'':37B ''remap'':36B ''rob'':1A,11B,29B ''save'':17B ''share'':16B ''subscrib'':50B ''support'':40B ''tri'':31B ''us'':43B ''vii'':10A,21B ''www.remapradio.com'':52B', false, 'PT3H29M46S', 'https://i.ytimg.com/vi/zE0nNqww4eA/maxresdefault.jpg'),
 	('QNnQYw8N0JA', 'remap', 'Indiana Jones and the Japanese Train of GeForce Now', 'It''s quite a journey on today''s stream, which has us learning how to drive Japanese trains and punch fascists!
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/QNnQYw8N0JA/mqdefault.jpg', '2024-12-11 01:17:52+00', '''audienc'':33B ''consid'':43B ''content'':41B ''continu'':38B ''drive'':24B ''fascist'':29B ''geforc'':8A ''help'':36B ''indiana'':1A ''japanes'':5A,25B ''jone'':2A ''journey'':13B ''learn'':21B ''make'':39B ''pleas'':42B ''punch'':28B ''quit'':11B ''radio'':31B ''remap'':30B ''stream'':17B ''subscrib'':44B ''support'':34B ''today'':15B ''train'':6A,26B ''us'':20B,37B ''www.remapradio.com'':46B', false, 'PT2H46M41S', 'https://i.ytimg.com/vi/QNnQYw8N0JA/maxresdefault.jpg'),
-	('mTNxnOrMWgk', 'remap', 'SAVE POINT 2024 - Twilight Breaking Dawn Part 2 - Raising Aid for Palestine and Lebanon', 'One Twilight movie wasn’t enough for us during Save Point. We had to keep going. And fortunately, Austin was kind enough to join us for the complete madness that is Twilight: Breaking Dawn – Part 2. And no, we could not get enough of this movie’s very weird baby.
+	('zE0nNqww4eA', 'remap', 'Rob and Cado''s Quest for Gold in Civilization VII', 'Rob and Cado continue their shared save file of Civilization VII, in which the age of exploration means Rob''s trying to boat-max. 
 
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/mTNxnOrMWgk/mqdefault.jpg', '2024-12-06 16:14:49+00', '''2'':8A,50B ''2024'':3A ''aid'':10A ''audienc'':68B ''austin'':33B ''babi'':64B ''break'':5A,47B ''complet'':42B ''consid'':78B ''content'':76B ''continu'':73B ''could'':54B ''dawn'':6A,48B ''enough'':20B,36B,57B ''fortun'':32B ''get'':56B ''go'':30B ''help'':71B ''join'':38B ''keep'':29B ''kind'':35B ''lebanon'':14A ''mad'':43B ''make'':74B ''movi'':17B,60B ''one'':15B ''palestin'':12A ''part'':7A,49B ''pleas'':77B ''point'':2A,25B ''radio'':66B ''rais'':9A ''remap'':65B ''save'':1A,24B ''subscrib'':79B ''support'':69B ''twilight'':4A,16B,46B ''us'':22B,39B,72B ''wasn'':18B ''weird'':63B ''www.remapradio.com'':81B', false, 'PT2H20M22S', 'https://i.ytimg.com/vi/mTNxnOrMWgk/maxresdefault.jpg'),
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/zE0nNqww4eA/mqdefault.jpg', '2025-03-28 16:57:24+00', '''age'':25B ''audienc'':39B ''boat'':34B ''boat-max'':33B ''cado'':3A,13B ''civil'':9A,20B ''consid'':49B ''content'':47B ''continu'':14B,44B ''explor'':27B ''file'':18B ''gold'':7A ''help'':42B ''make'':45B ''max'':35B ''mean'':28B ''pleas'':48B ''quest'':5A ''radio'':37B ''remap'':36B ''rob'':1A,11B,29B ''save'':17B ''share'':16B ''subscrib'':50B ''support'':40B ''tri'':31B ''us'':43B ''vii'':10A,21B ''www.remapradio.com'':52B', false, 'PT3H29M46S', 'https://i.ytimg.com/vi/zE0nNqww4eA/maxresdefault.jpg'),
 	('AGo28dPgXK8', 'remap', 'Welcome to the UFO 50 Lightning Round!', 'Patrick, Cado, and Janet are checking out games from this old system no one has heard of before. Better do it in 10 minute chunks!
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/AGo28dPgXK8/mqdefault.jpg', '2024-09-27 22:14:37+00', '''10'':30B ''50'':5A ''audienc'':36B ''better'':26B ''cado'':9B ''check'':13B ''chunk'':32B ''consid'':46B ''content'':44B ''continu'':41B ''game'':15B ''heard'':23B ''help'':39B ''janet'':11B ''lightn'':6A ''make'':42B ''minut'':31B ''old'':18B ''one'':21B ''patrick'':8B ''pleas'':45B ''radio'':34B ''remap'':33B ''round'':7A ''subscrib'':47B ''support'':37B ''system'':19B ''ufo'':4A ''us'':40B ''welcom'':1A ''www.remapradio.com'':49B', false, 'PT2H38M31S', 'https://i.ytimg.com/vi/AGo28dPgXK8/maxresdefault.jpg'),
@@ -20536,20 +20571,32 @@ Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/4IsYc6xeab0/mqdefault.jpg', '2022-09-23 19:00:02+00', '''/nextlander'':34B ''25th'':8A,18B ''anniversari'':9A,19B ''close'':12B ''communiti'':31B ''end'':2A,16B ''journey'':4A ''match'':25B ''met'':23B ''nextland'':1A,26B ''run'':20B ''star'':6A ''support'':28B ''thank'':35B ''trek'':7A ''watch'':37B ''www.patreon.com'':33B ''www.patreon.com/nextlander'':32B', false, 'PT3H56S', 'https://i.ytimg.com/vi/4IsYc6xeab0/maxresdefault.jpg'),
-	('HwSQAQCDxNg', 'nextlander', 'Hollow Knight: Is It Any Good?', 'Brad dips into the backlog to sample an obscure indie game of some sort.
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/HwSQAQCDxNg/mqdefault.jpg', '2025-01-24 23:30:08+00', '''/nextlander'':29B ''backlog'':11B ''brad'':7B ''communiti'':26B ''dip'':8B ''game'':17B ''good'':6A ''hollow'':1A ''indi'':16B ''knight'':2A ''nextland'':21B ''obscur'':15B ''sampl'':13B ''sort'':20B ''support'':23B ''thank'':30B ''watch'':32B ''www.patreon.com'':28B ''www.patreon.com/nextlander'':27B', false, 'PT1H56M12S', 'https://i.ytimg.com/vi/HwSQAQCDxNg/maxresdefault.jpg'),
 	('qMmjUQCEUPo', 'nextlander', 'Brad and Vinny are Still Here, Together!', 'More cooperative puzzle-solving? On a Thursday?? What could go wrong?!
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/qMmjUQCEUPo/mqdefault.jpg', '2025-01-30 23:30:37+00', '''/nextlander'':28B ''brad'':1A ''communiti'':25B ''cooper'':9B ''could'':17B ''go'':18B ''nextland'':20B ''puzzl'':11B ''puzzle-solv'':10B ''solv'':12B ''still'':5A ''support'':22B ''thank'':29B ''thursday'':15B ''togeth'':7A ''vinni'':3A ''watch'':31B ''wrong'':19B ''www.patreon.com'':27B ''www.patreon.com/nextlander'':26B', false, 'PT2H10M', 'https://i.ytimg.com/vi/qMmjUQCEUPo/maxresdefault.jpg'),
+	('HwSQAQCDxNg', 'nextlander', 'Hollow Knight: Is It Any Good?', 'Brad dips into the backlog to sample an obscure indie game of some sort.
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/HwSQAQCDxNg/mqdefault.jpg', '2025-01-24 23:30:08+00', '''/nextlander'':29B ''backlog'':11B ''brad'':7B ''communiti'':26B ''dip'':8B ''game'':17B ''good'':6A ''hollow'':1A ''indi'':16B ''knight'':2A ''nextland'':21B ''obscur'':15B ''sampl'':13B ''sort'':20B ''support'':23B ''thank'':30B ''watch'':32B ''www.patreon.com'':28B ''www.patreon.com/nextlander'':27B', false, 'PT1H56M12S', 'https://i.ytimg.com/vi/HwSQAQCDxNg/maxresdefault.jpg'),
 	('Ugff1M-dOHM', 'nextlander', 'Patron''s Choice for July: Besiege and Dark Side of the Moon', 'For our first Mission Control-voted thank you stream, Vinny returns to Besiege to build death machines of incredible efficiency and effectiveness. And as a little bonus, we finally wrap up the newest entry in the FMV hall of fame, Dark Side of the Moon!', 'https://i.ytimg.com/vi/Ugff1M-dOHM/mqdefault.jpg', '2021-07-31 16:00:20+00', '''besieg'':6A,26B ''bonus'':40B ''build'':28B ''choic'':3A ''control'':18B ''control-vot'':17B ''dark'':8A,54B ''death'':29B ''effect'':35B ''effici'':33B ''entri'':47B ''fame'':53B ''final'':42B ''first'':15B ''fmv'':50B ''hall'':51B ''incred'':32B ''juli'':5A ''littl'':39B ''machin'':30B ''mission'':16B ''moon'':12A,58B ''newest'':46B ''patron'':1A ''return'':24B ''side'':9A,55B ''stream'':22B ''thank'':20B ''vinni'':23B ''vote'':19B ''wrap'':43B', false, 'PT3H12M26S', 'https://i.ytimg.com/vi/Ugff1M-dOHM/maxresdefault.jpg'),
 	('6Di6RDB4eTw', 'nextlander', 'Here Decay, Gone Tomorrow! - Episode 05', 'Nobody said defeating the zombie horde would be easy and there wouldn''t be losses. There was some talk about not using explosives in a small, enclosed area though, that was definitely said somewhere.', 'https://i.ytimg.com/vi/6Di6RDB4eTw/mqdefault.jpg', '2021-08-03 18:00:05+00', '''05'':6A ''area'':34B ''decay'':2A ''defeat'':9B ''definit'':38B ''easi'':15B ''enclos'':33B ''episod'':5A ''explos'':29B ''gone'':3A ''hord'':12B ''loss'':21B ''nobodi'':7B ''said'':8B,39B ''small'':32B ''somewher'':40B ''talk'':25B ''though'':35B ''tomorrow'':4A ''use'':28B ''would'':13B ''wouldn'':18B ''zombi'':11B', false, 'PT2H5M42S', 'https://i.ytimg.com/vi/6Di6RDB4eTw/maxresdefault.jpg'),
+	('E0Sg-5GyMdA', 'nextlander', 'Vinny and Alex Finish Silent Hill 2 and Then Watch All the Endings (Part 08)', 'Welll, this time we actually do get to the end! Find out which ending we "earned" and then join us to check out the rest of them!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/E0Sg-5GyMdA/mqdefault.jpg', '2024-12-12 20:28:16+00', '''/nextlander'':51B ''08'':15A ''2'':7A ''actual'':20B ''alex'':3A ''check'':37B ''communiti'':48B ''earn'':31B ''end'':13A,25B,29B ''find'':26B ''finish'':4A ''get'':22B ''hill'':6A ''join'':34B ''nextland'':43B ''part'':14A ''rest'':40B ''silent'':5A ''support'':45B ''thank'':52B ''time'':18B ''us'':35B ''vinni'':1A ''watch'':10A,54B ''welll'':16B ''www.patreon.com'':50B ''www.patreon.com/nextlander'':49B', false, 'PT1H47M30S', 'https://i.ytimg.com/vi/E0Sg-5GyMdA/maxresdefault.jpg'),
+	('7tniW9HrHTE', 'nextlander', 'Brad and Patrick Can''t Quit That Volgarr! (Part 05)', 'We''re on Volgarr 2 and making slow and steady progress, but the threat of someone breaking feels real.
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/7tniW9HrHTE/mqdefault.jpg', '2024-11-15 22:01:36+00', '''/nextlander'':38B ''05'':10A ''2'':15B ''brad'':1A ''break'':27B ''communiti'':35B ''feel'':28B ''make'':17B ''nextland'':30B ''part'':9A ''patrick'':3A ''progress'':21B ''quit'':6A ''re'':12B ''real'':29B ''slow'':18B ''someon'':26B ''steadi'':20B ''support'':32B ''thank'':39B ''threat'':24B ''volgarr'':8A,14B ''watch'':41B ''www.patreon.com'':37B ''www.patreon.com/nextlander'':36B', false, 'PT2H4M15S', 'https://i.ytimg.com/vi/7tniW9HrHTE/maxresdefault.jpg'),
 	('4fc1btUKrH8', 'nextlander', 'It''s Been a Dragon Age! Let''s Return!', 'Vinny jumps back into The Veilguard to reassess if he will finish it or not. Some mid-game spoilers abound!
 
 Nextlander is supported by its community:
@@ -20574,43 +20621,7 @@ Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/df_AH4IykaA/mqdefault.jpg', '2025-01-07 00:06:47+00', '''/nextlander'':34B ''around'':20B ''back'':13B ''bebop'':19B ''chill'':18B ''come'':7B ''communiti'':31B ''game'':6A,25B ''get'':12B ''join'':8B ''land'':22B ''nextland'':26B ''streamland'':3A ''support'':28B ''thank'':35B ''thing'':15B ''various'':5A ''video'':24B ''vinni'':1A ''watch'':37B ''www.patreon.com'':33B ''www.patreon.com/nextlander'':32B', false, 'PT2H19M36S', 'https://i.ytimg.com/vi/df_AH4IykaA/maxresdefault.jpg'),
-	('E0Sg-5GyMdA', 'nextlander', 'Vinny and Alex Finish Silent Hill 2 and Then Watch All the Endings (Part 08)', 'Welll, this time we actually do get to the end! Find out which ending we "earned" and then join us to check out the rest of them!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/E0Sg-5GyMdA/mqdefault.jpg', '2024-12-12 20:28:16+00', '''/nextlander'':51B ''08'':15A ''2'':7A ''actual'':20B ''alex'':3A ''check'':37B ''communiti'':48B ''earn'':31B ''end'':13A,25B,29B ''find'':26B ''finish'':4A ''get'':22B ''hill'':6A ''join'':34B ''nextland'':43B ''part'':14A ''rest'':40B ''silent'':5A ''support'':45B ''thank'':52B ''time'':18B ''us'':35B ''vinni'':1A ''watch'':10A,54B ''welll'':16B ''www.patreon.com'':50B ''www.patreon.com/nextlander'':49B', false, 'PT1H47M30S', 'https://i.ytimg.com/vi/E0Sg-5GyMdA/maxresdefault.jpg'),
-	('7tniW9HrHTE', 'nextlander', 'Brad and Patrick Can''t Quit That Volgarr! (Part 05)', 'We''re on Volgarr 2 and making slow and steady progress, but the threat of someone breaking feels real.
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/7tniW9HrHTE/mqdefault.jpg', '2024-11-15 22:01:36+00', '''/nextlander'':38B ''05'':10A ''2'':15B ''brad'':1A ''break'':27B ''communiti'':35B ''feel'':28B ''make'':17B ''nextland'':30B ''part'':9A ''patrick'':3A ''progress'':21B ''quit'':6A ''re'':12B ''real'':29B ''slow'':18B ''someon'':26B ''steadi'':20B ''support'':32B ''thank'':39B ''threat'':24B ''volgarr'':8A,14B ''watch'':41B ''www.patreon.com'':37B ''www.patreon.com/nextlander'':36B', false, 'PT2H4M15S', 'https://i.ytimg.com/vi/7tniW9HrHTE/maxresdefault.jpg'),
 	('F1tLL25wDtI', 'nextlander', 'Here Decay, Gone Tomorrow! - Episode 04', 'It''s a big day in our personal State of Decay [2]. We''ve got truck upgrades, base upgrades, and um... available occupancy upgrades?', 'https://i.ytimg.com/vi/F1tLL25wDtI/mqdefault.jpg', '2021-07-27 18:00:09+00', '''04'':6A ''2'':18B ''avail'':28B ''base'':24B ''big'':10B ''day'':11B ''decay'':2A,17B ''episod'':5A ''gone'':3A ''got'':21B ''occup'':29B ''person'':14B ''state'':15B ''tomorrow'':4A ''truck'':22B ''um'':27B ''upgrad'':23B,25B,30B ''ve'':20B', false, 'PT2H19M35S', 'https://i.ytimg.com/vi/F1tLL25wDtI/maxresdefault.jpg'),
-	('3We75HqAO9M', 'nextlander', 'Patron''s Choice for October 2024: Phasmophobia w/ Abby Russell!', 'Happy Halloween, everyone! Let''s hunt some ghosts with virtual reality!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/3We75HqAO9M/mqdefault.jpg', '2024-10-31 23:30:52+00', '''/nextlander'':30B ''2024'':6A ''abbi'':9A ''choic'':3A ''communiti'':27B ''everyon'':13B ''ghost'':18B ''halloween'':12B ''happi'':11B ''hunt'':16B ''let'':14B ''nextland'':22B ''octob'':5A ''patron'':1A ''phasmophobia'':7A ''realiti'':21B ''russel'':10A ''support'':24B ''thank'':31B ''virtual'':20B ''w'':8A ''watch'':33B ''www.patreon.com'':29B ''www.patreon.com/nextlander'':28B', false, 'PT2H17M52S', 'https://i.ytimg.com/vi/3We75HqAO9M/maxresdefault.jpg'),
-	('UftM1dA4JcY', 'nextlander', 'Vinny Returns For Even More Silent Hill 2! (Part 02)', 'We meet a new friend and she really doesn''t like how many windows we''ve been breaking!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/UftM1dA4JcY/mqdefault.jpg', '2024-10-21 22:21:30+00', '''/nextlander'':37B ''02'':10A ''2'':8A ''break'':28B ''communiti'':34B ''doesn'':19B ''even'':4A ''friend'':15B ''hill'':7A ''like'':21B ''mani'':23B ''meet'':12B ''new'':14B ''nextland'':29B ''part'':9A ''realli'':18B ''return'':2A ''silent'':6A ''support'':31B ''thank'':38B ''ve'':26B ''vinni'':1A ''watch'':40B ''window'':24B ''www.patreon.com'':36B ''www.patreon.com/nextlander'':35B', false, 'PT2H5M1S', 'https://i.ytimg.com/vi/UftM1dA4JcY/maxresdefault.jpg'),
-	('qjan6CRSd8Q', 'nextlander', 'Vinny and James Join Forces to Make Sense of Silent Hill 2! (Part 01)', 'It''s been a long time since I''ve been to Silent Hill, but I hear great things! Let''s visit.
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/qjan6CRSd8Q/mqdefault.jpg', '2024-10-17 21:03:31+00', '''/nextlander'':44B ''01'':14A ''2'':12A ''communiti'':41B ''forc'':5A ''great'':31B ''hear'':30B ''hill'':11A,27B ''jame'':3A ''join'':4A ''let'':33B ''long'':19B ''make'':7A ''nextland'':36B ''part'':13A ''sens'':8A ''silent'':10A,26B ''sinc'':21B ''support'':38B ''thank'':45B ''thing'':32B ''time'':20B ''ve'':23B ''vinni'':1A ''visit'':35B ''watch'':47B ''www.patreon.com'':43B ''www.patreon.com/nextlander'':42B', false, 'PT3H37M35S', 'https://i.ytimg.com/vi/qjan6CRSd8Q/maxresdefault.jpg'),
-	('U4f-S4_OTmg', 'nextlander', 'Vinny, Alex, and Larry Explore Metaphor: ReFantazio!', 'We''ve got expectations for what''s going on inside, but will they be met? Will they be exceeded?! Will we even get out of the tutorial?!! Come find out!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/U4f-S4_OTmg/mqdefault.jpg', '2024-10-15 22:22:37+00', '''/nextlander'':46B ''alex'':2A ''come'':35B ''communiti'':43B ''even'':29B ''exceed'':26B ''expect'':11B ''explor'':5A ''find'':36B ''get'':30B ''go'':15B ''got'':10B ''insid'':17B ''larri'':4A ''met'':22B ''metaphor'':6A ''nextland'':38B ''refantazio'':7A ''support'':40B ''thank'':47B ''tutori'':34B ''ve'':9B ''vinni'':1A ''watch'':49B ''www.patreon.com'':45B ''www.patreon.com/nextlander'':44B', false, 'PT2H32M23S', 'https://i.ytimg.com/vi/U4f-S4_OTmg/maxresdefault.jpg'),
 	('NAOSoSr1U98', 'nextlander', 'Stalkin'' Around in S.T.A.L.K.E.R. 2!', 'Will Smith sits in with Vinny and Alex as we attempt to get to the Heart of Chornobyl. What surprises await for our team and for Gloomy? Find out!
 
 Nextlander is supported by its community:
@@ -20635,6 +20646,30 @@ Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/cSe_5CykzxA/mqdefault.jpg', '2024-11-01 20:59:42+00', '''/nextlander'':42B ''age'':4A,15B ''boot'':8B ''communiti'':39B ''dragon'':3A,14B ''explor'':2A ''got'':32B ''instal'':12B ''mani'':26B ''new'':20B ''next'':11B ''nextland'':1A,34B ''old'':23B ''say'':29B ''see'':17B ''support'':36B ''thank'':43B ''time'':27B ''ve'':31B ''veilguard'':6A ''watch'':45B ''www.patreon.com'':41B ''www.patreon.com/nextlander'':40B', false, 'PT2H30M34S', 'https://i.ytimg.com/vi/cSe_5CykzxA/maxresdefault.jpg'),
+	('3We75HqAO9M', 'nextlander', 'Patron''s Choice for October 2024: Phasmophobia w/ Abby Russell!', 'Happy Halloween, everyone! Let''s hunt some ghosts with virtual reality!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/3We75HqAO9M/mqdefault.jpg', '2024-10-31 23:30:52+00', '''/nextlander'':30B ''2024'':6A ''abbi'':9A ''choic'':3A ''communiti'':27B ''everyon'':13B ''ghost'':18B ''halloween'':12B ''happi'':11B ''hunt'':16B ''let'':14B ''nextland'':22B ''octob'':5A ''patron'':1A ''phasmophobia'':7A ''realiti'':21B ''russel'':10A ''support'':24B ''thank'':31B ''virtual'':20B ''w'':8A ''watch'':33B ''www.patreon.com'':29B ''www.patreon.com/nextlander'':28B', false, 'PT2H17M52S', 'https://i.ytimg.com/vi/3We75HqAO9M/maxresdefault.jpg'),
+	('UftM1dA4JcY', 'nextlander', 'Vinny Returns For Even More Silent Hill 2! (Part 02)', 'We meet a new friend and she really doesn''t like how many windows we''ve been breaking!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/UftM1dA4JcY/mqdefault.jpg', '2024-10-21 22:21:30+00', '''/nextlander'':37B ''02'':10A ''2'':8A ''break'':28B ''communiti'':34B ''doesn'':19B ''even'':4A ''friend'':15B ''hill'':7A ''like'':21B ''mani'':23B ''meet'':12B ''new'':14B ''nextland'':29B ''part'':9A ''realli'':18B ''return'':2A ''silent'':6A ''support'':31B ''thank'':38B ''ve'':26B ''vinni'':1A ''watch'':40B ''window'':24B ''www.patreon.com'':36B ''www.patreon.com/nextlander'':35B', false, 'PT2H5M1S', 'https://i.ytimg.com/vi/UftM1dA4JcY/maxresdefault.jpg'),
+	('qjan6CRSd8Q', 'nextlander', 'Vinny and James Join Forces to Make Sense of Silent Hill 2! (Part 01)', 'It''s been a long time since I''ve been to Silent Hill, but I hear great things! Let''s visit.
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/qjan6CRSd8Q/mqdefault.jpg', '2024-10-17 21:03:31+00', '''/nextlander'':44B ''01'':14A ''2'':12A ''communiti'':41B ''forc'':5A ''great'':31B ''hear'':30B ''hill'':11A,27B ''jame'':3A ''join'':4A ''let'':33B ''long'':19B ''make'':7A ''nextland'':36B ''part'':13A ''sens'':8A ''silent'':10A,26B ''sinc'':21B ''support'':38B ''thank'':45B ''thing'':32B ''time'':20B ''ve'':23B ''vinni'':1A ''visit'':35B ''watch'':47B ''www.patreon.com'':43B ''www.patreon.com/nextlander'':42B', false, 'PT3H37M35S', 'https://i.ytimg.com/vi/qjan6CRSd8Q/maxresdefault.jpg'),
+	('U4f-S4_OTmg', 'nextlander', 'Vinny, Alex, and Larry Explore Metaphor: ReFantazio!', 'We''ve got expectations for what''s going on inside, but will they be met? Will they be exceeded?! Will we even get out of the tutorial?!! Come find out!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/U4f-S4_OTmg/mqdefault.jpg', '2024-10-15 22:22:37+00', '''/nextlander'':46B ''alex'':2A ''come'':35B ''communiti'':43B ''even'':29B ''exceed'':26B ''expect'':11B ''explor'':5A ''find'':36B ''get'':30B ''go'':15B ''got'':10B ''insid'':17B ''larri'':4A ''met'':22B ''metaphor'':6A ''nextland'':38B ''refantazio'':7A ''support'':40B ''thank'':47B ''tutori'':34B ''ve'':9B ''vinni'':1A ''watch'':49B ''www.patreon.com'':45B ''www.patreon.com/nextlander'':44B', false, 'PT2H32M23S', 'https://i.ytimg.com/vi/U4f-S4_OTmg/maxresdefault.jpg'),
 	('XPAUJtf9bs8', 'nextlander', 'Watch Abby, Vinny, and Starfield in 20-ish Minutes!', 'We''ve got our recent adventures in Starfield cut down to the purest chaos and fun! Sam will never be the same.
 
 Edited by Will Crosby
@@ -23239,18 +23274,18 @@ Thanks for watching.', 'https://i.ytimg.com/vi/KeStrsVf4so/mqdefault.jpg', '2021
 	('a3htgw26xMg', 'giantbomb', 'Fallout: New Vegas (Part 03) | GB Plays', 'Grubb is joined by Bailey and Niki to continue his quest through New Vegas! 
 
 #fallout #falloutnewvegas #giantbomb', 'https://i.ytimg.com/vi/a3htgw26xMg/mqdefault.jpg', '2024-05-02 20:00:38+00', '''03'':5A ''bailey'':12B ''continu'':16B ''fallout'':1A,22B ''falloutnewvega'':23B ''gb'':6A ''giantbomb'':24B ''grubb'':8B ''join'':10B ''new'':2A,20B ''niki'':14B ''part'':4A ''play'':7A ''quest'':18B ''vega'':3A,21B', false, 'PT2H28M10S', 'https://i.ytimg.com/vi/a3htgw26xMg/maxresdefault.jpg'),
-	('NLK4ImT_iBA', 'nextlander', 'More Lost Records, Now with Abby Russell! [Part 02]', 'Vinny and Alex are joined by our good friend Abby as we continue through Don''t Nod''s latest teen adventure!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/NLK4ImT_iBA/mqdefault.jpg', '2025-02-25 21:13:38+00', '''/nextlander'':39B ''02'':9A ''abbi'':6A,19B ''adventur'':30B ''alex'':12B ''communiti'':36B ''continu'':22B ''friend'':18B ''good'':17B ''join'':14B ''latest'':28B ''lost'':2A ''nextland'':31B ''nod'':26B ''part'':8A ''record'':3A ''russel'':7A ''support'':33B ''teen'':29B ''thank'':40B ''vinni'':10B ''watch'':42B ''www.patreon.com'':38B ''www.patreon.com/nextlander'':37B', false, 'PT1H57M46S', 'https://i.ytimg.com/vi/NLK4ImT_iBA/maxresdefault.jpg'),
 	('pbL6DPRwn0c', 'nextlander', 'Patron''s Choice for February: Dark Souls III, Now with (Modded) Co-Op!', 'A wizard, a fighter, and a rogue walk into a boss... but do they walk out?
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/pbL6DPRwn0c/mqdefault.jpg', '2025-02-28 20:34:31+00', '''/nextlander'':39B ''boss'':25B ''choic'':3A ''co'':13A ''co-op'':12A ''communiti'':36B ''dark'':6A ''februari'':5A ''fighter'':18B ''iii'':8A ''mod'':11A ''nextland'':31B ''op'':14A ''patron'':1A ''rogu'':21B ''soul'':7A ''support'':33B ''thank'':40B ''walk'':22B,29B ''watch'':42B ''wizard'':16B ''www.patreon.com'':38B ''www.patreon.com/nextlander'':37B', false, 'PT1H59M8S', 'https://i.ytimg.com/vi/pbL6DPRwn0c/maxresdefault.jpg'),
+	('NLK4ImT_iBA', 'nextlander', 'More Lost Records, Now with Abby Russell! [Part 02]', 'Vinny and Alex are joined by our good friend Abby as we continue through Don''t Nod''s latest teen adventure!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/NLK4ImT_iBA/mqdefault.jpg', '2025-02-25 21:13:38+00', '''/nextlander'':39B ''02'':9A ''abbi'':6A,19B ''adventur'':30B ''alex'':12B ''communiti'':36B ''continu'':22B ''friend'':18B ''good'':17B ''join'':14B ''latest'':28B ''lost'':2A ''nextland'':31B ''nod'':26B ''part'':8A ''record'':3A ''russel'':7A ''support'':33B ''teen'':29B ''thank'':40B ''vinni'':10B ''watch'':42B ''www.patreon.com'':38B ''www.patreon.com/nextlander'':37B', false, 'PT1H57M46S', 'https://i.ytimg.com/vi/NLK4ImT_iBA/maxresdefault.jpg'),
 	('vTQ4ASrMA_Q', 'nextlander', 'Abby and Vinny Return to Starfield', 'While we''re not quite ready for the DLC I''m also not quite sure Starfield is ready for us to bang on it again! 
 
 Nextlander is supported by its community:
@@ -23269,12 +23304,6 @@ Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/MqLIBQAO6Qk/mqdefault.jpg', '2024-09-20 21:00:04+00', '''/nextlander'':48B ''03'':7A ''2'':17B ''brad'':1A,26B ''communiti'':45B ''continu'':27B ''defeat'':34B ''finish'':4A ''first'':23B ''get'':21B ''make'':13B ''mayb'':38B ''neck'':29B,31B ''nextland'':40B ''part'':6A ''patrick'':3A,24B ''race'':11B,32B ''support'':42B ''thank'':49B ''volgarr'':5A,16B ''watch'':51B ''www.patreon.com'':47B ''www.patreon.com/nextlander'':46B', false, 'PT2H26M49S', 'https://i.ytimg.com/vi/MqLIBQAO6Qk/maxresdefault.jpg'),
-	('_laXHoQgGcs', 'nextlander', 'Just Don''t Put Your Hand In There James! (Part 05)', 'Vinny and James plunge themselves into the dark and murky sludge of Silent Hill 2. 
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/_laXHoQgGcs/mqdefault.jpg', '2024-11-18 23:12:31+00', '''/nextlander'':35B ''05'':11A ''2'':26B ''communiti'':32B ''dark'':19B ''hand'':6A ''hill'':25B ''jame'':9A,14B ''murki'':21B ''nextland'':27B ''part'':10A ''plung'':15B ''put'':4A ''silent'':24B ''sludg'':22B ''support'':29B ''thank'':36B ''vinni'':12B ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT2H41M21S', 'https://i.ytimg.com/vi/_laXHoQgGcs/maxresdefault.jpg'),
 	('6k0fbLJ4XtA', 'nextlander', 'Vinny? Sonic?! Shadow?!?! Maybe... Silent Hill?!!!!?', 'It''s Monday and anything could happen. That''s the magic of Monday! It''s the only magic it has.
 
 Nextlander is supported by its community:
@@ -23305,6 +23334,12 @@ Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/8QJYYuj7AHA/mqdefault.jpg', '2024-12-03 00:48:11+00', '''/nextlander'':45B ''06'':11A ''2'':8A,20B ''adventur'':9A ''alex'':1A ''arm'':33B ''brought'':26B ''communiti'':42B ''friend'':28B ''hill'':7A,19B ''join'':2A ''let'':29B ''make'':14B ''nextland'':37B ''part'':10A ''put'':31B ''silent'':6A,18B ''support'':39B ''thank'':46B ''thing'':35B ''time'':23B ''togeth'':36B ''vinni'':3A,12B ''watch'':48B ''way'':16B ''www.patreon.com'':44B ''www.patreon.com/nextlander'':43B', false, 'PT1H56M52S', 'https://i.ytimg.com/vi/8QJYYuj7AHA/maxresdefault.jpg'),
+	('_laXHoQgGcs', 'nextlander', 'Just Don''t Put Your Hand In There James! (Part 05)', 'Vinny and James plunge themselves into the dark and murky sludge of Silent Hill 2. 
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/_laXHoQgGcs/mqdefault.jpg', '2024-11-18 23:12:31+00', '''/nextlander'':35B ''05'':11A ''2'':26B ''communiti'':32B ''dark'':19B ''hand'':6A ''hill'':25B ''jame'':9A,14B ''murki'':21B ''nextland'':27B ''part'':10A ''plung'':15B ''put'':4A ''silent'':24B ''sludg'':22B ''support'':29B ''thank'':36B ''vinni'':12B ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT2H41M21S', 'https://i.ytimg.com/vi/_laXHoQgGcs/maxresdefault.jpg'),
 	('ldHDOkIi59I', 'nextlander', 'Fallout 1 Part 10: A Two-Person Stream?!', 'Vinny hops in to watch Brad do battle with the fearsome enemy the Mother Deathclaw, and the even more fearsome enemy, Some Guys Standing on a Bridge.
 
 Nextlander is supported by its community:
@@ -23342,18 +23377,18 @@ Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/hYLFcUPRQ00/mqdefault.jpg', '2023-10-06 18:00:19+00', '''/nextlander'':48B ''alex'':8B ''bag'':3A ''beauti'':37B ''brad'':30B ''car'':27B ''chat'':26B ''cocoon'':7A,39B ''communiti'':45B ''forza'':5A,21B ''grab'':2A ''in'':15B ''motorsport'':22B ''new'':20B ''nextland'':1A,40B ''out'':17B ''puzzl'':36B ''show'':31B ''support'':42B ''take'':9B ''thank'':49B ''us'':10B ''watch'':51B ''www.patreon.com'':47B ''www.patreon.com/nextlander'':46B', false, 'PT1H57M25S', 'https://i.ytimg.com/vi/hYLFcUPRQ00/maxresdefault.jpg'),
-	('S5PP-NJ7X5A', 'nextlander', 'Brad, Patrick, and Volgarr''s Year End Party! (Part 06)', 'We''re nearing the end of the year and Brad and Patrick would love to end it on high note regarding Volgarr, but will they?
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/S5PP-NJ7X5A/mqdefault.jpg', '2024-12-13 22:58:23+00', '''/nextlander'':44B ''06'':10A ''brad'':1A,20B ''communiti'':41B ''end'':7A,15B,26B ''high'':29B ''love'':24B ''near'':13B ''nextland'':36B ''note'':30B ''part'':9A ''parti'':8A ''patrick'':2A,22B ''re'':12B ''regard'':31B ''support'':38B ''thank'':45B ''volgarr'':4A,32B ''watch'':47B ''would'':23B ''www.patreon.com'':43B ''www.patreon.com/nextlander'':42B ''year'':6A,18B', false, 'PT2H8M10S', 'https://i.ytimg.com/vi/S5PP-NJ7X5A/maxresdefault.jpg'),
 	('3nFn-uT5g_k', 'nextlander', 'Brad and Patrick are back to Volgarrrrrrr in 2025!! [Part 07]', 'Will they finish today?! Is this the last Volgarr? Let''s find out!
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/3nFn-uT5g_k/mqdefault.jpg', '2025-01-17 20:19:48+00', '''/nextlander'':33B ''07'':11A ''2025'':9A ''back'':5A ''brad'':1A ''communiti'':30B ''find'':23B ''finish'':14B ''last'':19B ''let'':21B ''nextland'':25B ''part'':10A ''patrick'':3A ''support'':27B ''thank'':34B ''today'':15B ''volgarr'':20B ''volgarrrrrrr'':7A ''watch'':36B ''www.patreon.com'':32B ''www.patreon.com/nextlander'':31B', false, 'PT1H47M49S', 'https://i.ytimg.com/vi/3nFn-uT5g_k/maxresdefault.jpg'),
+	('S5PP-NJ7X5A', 'nextlander', 'Brad, Patrick, and Volgarr''s Year End Party! (Part 06)', 'We''re nearing the end of the year and Brad and Patrick would love to end it on high note regarding Volgarr, but will they?
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/S5PP-NJ7X5A/mqdefault.jpg', '2024-12-13 22:58:23+00', '''/nextlander'':44B ''06'':10A ''brad'':1A,20B ''communiti'':41B ''end'':7A,15B,26B ''high'':29B ''love'':24B ''near'':13B ''nextland'':36B ''note'':30B ''part'':9A ''parti'':8A ''patrick'':2A,22B ''re'':12B ''regard'':31B ''support'':38B ''thank'':45B ''volgarr'':4A,32B ''watch'':47B ''would'':23B ''www.patreon.com'':43B ''www.patreon.com/nextlander'':42B ''year'':6A,18B', false, 'PT2H8M10S', 'https://i.ytimg.com/vi/S5PP-NJ7X5A/maxresdefault.jpg'),
 	('sckiW5xVacw', 'nextlander', 'Brad and Vinny Return to Fallout 76', 'Has Fallout 76 gotten better in the last six years? Are we really just chasing the high of that TV show? Can we make it through a stream without falling through the world? Brad and Vinny investigate.
 
 Nextlander is supported by its community:
@@ -58950,12 +58985,6 @@ Jeff Grubb is joined by Jordan Middler to talk about the new Legacy of Kain rema
 2:52:59 What did we learn today?
 
 #japan #evo #evo2024', 'https://i.ytimg.com/vi/UKfPWNssfVE/mqdefault.jpg', '2024-07-23 19:16:47+00', '''0'':66B,70B,77B,84B ''00'':67B,68B ''02'':119B ''04'':105B ''05'':71B ''06'':78B ''1'':91B,95B,96B ''11'':115B ''14'':92B ''2'':104B,108B,112B,113B,117B,125B ''20'':97B ''2024'':27B ''32'':109B ''34'':93B ''35'':114B ''39'':72B ''40'':85B ''43'':79B ''46'':98B ''51'':86B,118B ''52'':126B ''54'':106B ''56'':110B ''59'':127B ''850'':3A ''also'':50B ''biggest'':54B ''bomb'':124B ''bombcast'':2A ''break'':94B,111B ''championship'':38B ''concord'':45B ''crossword'':35B ''dan'':73B ''edit'':40B ''email'':64B,116B ''evo'':26B,90B,134B ''evo2024'':135B ''game'':58B ''gang'':29B ''giant'':1A,123B ''go'':24B ''intro'':69B ''jan'':12B,80B ''japan'':17B,83B,133B ''jean'':65B ''kansa'':76B ''learn'':131B ''live'':43B ''mini'':34B ''nes'':39B ''news'':59B,107B ''nintendo'':36B ''nyt'':33B ''okay'':48B ''play'':103B ''potent'':4A ''re'':6B ''recount'':13B ''shawn'':19B,87B ''simpli'':47B ''stori'':55B ''take'':41B ''talk'':20B,30B,51B ''time'':23B ''today'':132B ''travel'':8B,15B ''ve'':101B ''video'':57B ''week'':10B,121B ''well'':7B ''went'':74B,81B,88B ''world'':37B', false, 'PT2H54M27S', 'https://i.ytimg.com/vi/UKfPWNssfVE/maxresdefault.jpg'),
-	('b0h7xld8uYY', 'nextlander', 'We Return to the [Newly Updated] Void Crew!', 'They got rid of sanctified hull plates and added payloads and we can save our game now!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/b0h7xld8uYY/mqdefault.jpg', '2025-04-22 00:38:11+00', '''/nextlander'':34B ''ad'':17B ''communiti'':31B ''crew'':8A ''game'':24B ''got'':10B ''hull'':14B ''newli'':5A ''nextland'':26B ''payload'':18B ''plate'':15B ''return'':2A ''rid'':11B ''sanctifi'':13B ''save'':22B ''support'':28B ''thank'':35B ''updat'':6A ''void'':7A ''watch'':37B ''www.patreon.com'':33B ''www.patreon.com/nextlander'':32B', false, 'PT2H20M50S', 'https://i.ytimg.com/vi/b0h7xld8uYY/maxresdefault.jpg'),
 	('g7PCthn2Gk8', 'giantbomb', 'Funny Beverage Company.mp3 | Voicemail Dump Truck 123', 'Grubb, Bakalar, Dan, and Mike take the dump truck down a path of ugly cars, pretty denim, and water. ...JUST water. The inorganic compound with the chemical formula H2O. The transparent, tasteless, odorless, and nearly colorless chemical substance. The main constituent of Earth''s hydrosphere and the fluids of all known living organisms. The vital component for all known forms of life, despite not providing food energy or organic micronutrients. The thing where its chemical formula, H2O, indicates that each of its molecules contains one oxygen and two hydrogen atoms, connected by covalent bonds. The substance where hydrogen atoms are attached to the oxygen atom at an angle of 104.45°. You know it on Earth as a solid, a liquid, and a gas, in which it forms precipitation in the form of rain and aerosols in the form of fog. It pops up as clouds, which consist of suspended droplets of water and ice. When finely divided, crystalline ice may precipitate in the form of snow. You might see its gaseous states, steam or water vapor. It''s what covers about 71% of the Earth''s surface, with seas and oceans making up most of the water volume (about 96.5%). Small portions of water occur as groundwater (1.7%), in the glaciers and the ice caps of Antarctica and Greenland (1.7%), and in the air as vapor, clouds (consisting of ice and liquid water suspended in air), and precipitation. Water moves continually through the water cycle of evaporation, transpiration (evapotranspiration), condensation, precipitation, and runoff, usually reaching the sea. It plays an important role in the world economy, since approximately 70% of the fresh water used by humans goes to agriculture. It''s in your house right now; large quantities of water, ice, and steam are used for cooling and heating in industry and homes. Not just constructive, but destructive, it''s an excellent solvent for a wide variety of substances, both mineral and organic; as such, it is widely used in industrial processes and in cooking and washing. Water in its many forms can be a key part of your daily entertainment if you love swimming, pleasure boating, boat racing, surfing, sport fishing, diving, ice skating, snowboarding, or skiing. It''s water. Just. F***ing. Water.
 
 #vmdt #voicemaildumptruck', 'https://i.ytimg.com/vi/g7PCthn2Gk8/mqdefault.jpg', '2024-07-25 22:47:51+00', '''1.7'':215B,227B ''104.45'':117B ''123'':7A ''70'':276B ''71'':189B ''96.5'':207B ''aerosol'':142B ''agricultur'':286B ''air'':231B,243B ''angl'':115B ''antarctica'':224B ''approxim'':275B ''atom'':97B,106B,112B ''attach'':108B ''bakalar'':9B ''beverag'':2A ''boat'':364B,365B ''bond'':101B ''cap'':222B ''car'':22B ''chemic'':34B,44B,82B ''cloud'':152B,234B ''colorless'':43B ''company.mp3'':3A ''compon'':63B ''compound'':31B ''condens'':257B ''connect'':98B ''consist'':154B,235B ''constitu'':48B ''construct'':313B ''contain'':91B ''continu'':248B ''cook'':342B ''cool'':304B ''coval'':100B ''cover'':187B ''crystallin'':165B ''cycl'':252B ''daili'':357B ''dan'':10B ''denim'':24B ''despit'':70B ''destruct'':315B ''dive'':370B ''divid'':164B ''droplet'':157B ''dump'':5A,15B ''earth'':50B,122B,192B ''economi'':273B ''energi'':74B ''entertain'':358B ''evapor'':254B ''evapotranspir'':256B ''excel'':319B ''f'':380B ''fine'':163B ''fish'':369B ''fluid'':55B ''fog'':147B ''food'':73B ''form'':67B,134B,138B,145B,171B,349B ''formula'':35B,83B ''fresh'':279B ''funni'':1A ''gas'':130B ''gaseous'':178B ''glacier'':218B ''goe'':284B ''greenland'':226B ''groundwat'':214B ''grubb'':8B ''h2o'':36B,84B ''heat'':306B ''home'':310B ''hous'':291B ''human'':283B ''hydrogen'':96B,105B ''hydrospher'':52B ''ice'':161B,166B,221B,237B,298B,371B ''import'':268B ''indic'':85B ''industri'':308B,338B ''ing'':381B ''inorgan'':30B ''key'':353B ''know'':119B ''known'':58B,66B ''larg'':294B ''life'':69B ''liquid'':127B,239B ''live'':59B ''love'':361B ''main'':47B ''make'':199B ''mani'':348B ''may'':167B ''micronutri'':77B ''might'':175B ''mike'':12B ''miner'':328B ''molecul'':90B ''move'':247B ''near'':42B ''occur'':212B ''ocean'':198B ''odorless'':40B ''one'':92B ''organ'':60B,76B,330B ''oxygen'':93B,111B ''part'':354B ''path'':19B ''play'':266B ''pleasur'':363B ''pop'':149B ''portion'':209B ''precipit'':135B,168B,245B,258B ''pretti'':23B ''process'':339B ''provid'':72B ''quantiti'':295B ''race'':366B ''rain'':140B ''reach'':262B ''right'':292B ''role'':269B ''runoff'':260B ''sea'':196B,264B ''see'':176B ''sinc'':274B ''skate'':372B ''ski'':375B ''small'':208B ''snow'':173B ''snowboard'':373B ''solid'':125B ''solvent'':320B ''sport'':368B ''state'':179B ''steam'':180B,300B ''substanc'':45B,103B,326B ''surf'':367B ''surfac'':194B ''suspend'':156B,241B ''swim'':362B ''take'':13B ''tasteless'':39B ''thing'':79B ''transpar'':38B ''transpir'':255B ''truck'':6A,16B ''two'':95B ''ugli'':21B ''use'':281B,302B,336B ''usual'':261B ''vapor'':183B,233B ''varieti'':324B ''vital'':62B ''vmdt'':383B ''voicemail'':4A ''voicemaildumptruck'':384B ''volum'':205B ''wash'':344B ''water'':26B,28B,159B,182B,204B,211B,240B,246B,251B,280B,297B,345B,378B,382B ''wide'':323B,335B ''world'':272B', false, 'PT1H32M56S', 'https://i.ytimg.com/vi/g7PCthn2Gk8/maxresdefault.jpg'),
@@ -59092,24 +59121,6 @@ Watch the complete series here! https://www.youtube.com/playlist?list=PLXlhzeWIu
 55:18 Polls & outro
 
 #gmm #gamemessmornings #giantbomb', 'https://i.ytimg.com/vi/ZSBVrFZrOD0/mqdefault.jpg', '2024-06-03 16:09:07+00', '''00'':60B,61B ''03'':63B ''06/03/24'':17A ''08'':137B ''1'':143B ''12'':79B ''17'':171B ''18'':193B ''23'':99B ''25'':153B ''28'':109B ''3'':129B ''30'':80B ''32'':123B ''37'':122B ''38'':100B ''41'':183B ''43'':136B ''45'':152B ''47'':170B ''50'':64B,110B ''51'':182B ''55'':192B ''6'':36B,76B ''7'':108B ''adapt'':54B,103B,191B ''alli'':113B ''announc'':32B,72B ''astro'':1A,11A,40B,83B,93B ''asus'':111B ''august'':107B,142B ''auto'':35B,75B ''autobiographi'':187B ''bigger'':45B ''bot'':2A,41B,84B ''chat'':23B ''combat'':134B ''come'':55B ''decis'':29B,69B ''discuss'':68B ''divis'':181B ''edit'':140B ''emma'':21B ''even'':132B ''fall'':159B ''fantasi'':125B ''featur'':131B ''final'':124B ''four'':6A,88B ''full'':115B ''fyff'':22B ''game'':14A,46B ''gamemessmorn'':197B ''get'':189B ''giantbomb'':198B ''gmm'':196B ''grand'':33B,73B ''grubb'':19B ''intro'':62B ''jeff'':18B ''john'':184B ''later'':149B ''launch'':106B,141B,157B ''mess'':15A ''metal'':154B ''microtransact'':98B ''morn'':16A ''much'':44B,58B ''one'':166B ''option'':135B ''outro'':195B ''part'':128B ''pc'':39B,53B,78B,105B,148B,169B ''playroom'':13A,95B ''poll'':194B ''predecessor'':49B ''preorder'':120B ''privat'':180B ''ps'':50B,101B ''ps4'':151B,164B ''ps5'':145B,161B ''quiet'':177B ''remak'':127B ''report'':42B,172B ''reveal'':117B ''rog'':112B ''romero'':185B ''say'':82B ''seri'':163B ''shut'':178B ''size'':9A,91B ''slug'':155B ''soni'':81B ''soon'':56B ''spec'':116B ''special'':139B ''switch'':146B,167B ''tactic'':156B ''take'':26B,66B,174B ''take-two'':25B,65B,173B ''theft'':34B,74B ''time'':7A,89B ''tomba'':138B ''two'':27B,67B,175B,190B ''vii'':126B ''vr2'':51B,102B ''x'':114B ''xbox'':162B,165B', false, 'PT59M52S', 'https://i.ytimg.com/vi/ZSBVrFZrOD0/maxresdefault.jpg'),
-	('DqdWIjuBypg', 'nextlander', 'Abby and Vinny Dive into Steam Next Fest 2025!', 'There are so many demo, I mean a lot of demos. We stand no chance.
-
-We Check Out:
-Escape Simulator 2
-Dispatch
-Baby Steps
-BALL x PIT
-The Joker''s Game
-Quantum Witch
-Mina the Hollower
-
-
-
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/DqdWIjuBypg/mqdefault.jpg', '2025-06-10 20:41:04+00', '''/nextlander'':54B ''2'':30B ''2025'':9A ''abbi'':1A ''babi'':32B ''ball'':34B ''chanc'':24B ''check'':26B ''communiti'':51B ''demo'':14B,20B ''dispatch'':31B ''dive'':4A ''escap'':28B ''fest'':8A ''game'':40B ''hollow'':45B ''joker'':38B ''lot'':18B ''mani'':13B ''mean'':16B ''mina'':43B ''next'':7A ''nextland'':46B ''pit'':36B ''quantum'':41B ''simul'':29B ''stand'':22B ''steam'':6A ''step'':33B ''support'':48B ''thank'':55B ''vinni'':3A ''watch'':57B ''witch'':42B ''www.patreon.com'':53B ''www.patreon.com/nextlander'':52B ''x'':35B', false, 'PT1H59M39S', 'https://i.ytimg.com/vi/DqdWIjuBypg/maxresdefault.jpg'),
 	('lGqsDk2mqTM', 'nextlander', 'Friday Fun Stream: It''s a Grab Bag! A GRAB BAAAAAAG!', 'Brad unfortunately has been called to jury duty, but Vinny and Alex are here to check out the ARC Raiders Tech Test, and more!
 
 Nextlander is supported by its community:
@@ -59140,6 +59151,24 @@ Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/cgslVzgsYvw/mqdefault.jpg', '2025-04-28 23:08:48+00', '''/nextlander'':25B ''alpha'':5A ''communiti'':22B ''cyber'':15B ''extract'':10B ''fashion'':16B ''like'':12B ''marathon'':4A ''nextland'':17B ''support'':19B ''thank'':26B ''time'':8B ''tri'':1A ''watch'':28B ''www.patreon.com'':24B ''www.patreon.com/nextlander'':23B', false, 'PT2H7M30S', 'https://i.ytimg.com/vi/cgslVzgsYvw/maxresdefault.jpg'),
+	('TFJ17kKmMnA', 'nextlander', 'Grab Bag Friday with The Roottrees, Dynasty Warriors, and a Surprise!', 'Abby Russell joins us to do some detective work, watch Alex bash hordes of soldiers, and see if Brad can conquer an old nemesis!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/TFJ17kKmMnA/mqdefault.jpg', '2025-01-24 21:53:41+00', '''/nextlander'':44B ''abbi'':12B ''alex'':22B ''bag'':2A ''bash'':23B ''brad'':30B ''communiti'':41B ''conquer'':32B ''detect'':19B ''dynasti'':7A ''friday'':3A ''grab'':1A ''hord'':24B ''join'':14B ''nemesi'':35B ''nextland'':36B ''old'':34B ''roottre'':6A ''russel'':13B ''see'':28B ''soldier'':26B ''support'':38B ''surpris'':11A ''thank'':45B ''us'':15B ''warrior'':8A ''watch'':21B,47B ''work'':20B ''www.patreon.com'':43B ''www.patreon.com/nextlander'':42B', false, 'PT2H28M20S', 'https://i.ytimg.com/vi/TFJ17kKmMnA/maxresdefault.jpg'),
+	('Zhsiz9xG7Tg', 'nextlander', 'Brad and Vinny Are Here, Too!', 'Time for more cooperative puzzle-solving with walkie-talkies!?!?!?!?!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/Zhsiz9xG7Tg/mqdefault.jpg', '2025-01-16 21:48:57+00', '''/nextlander'':23B ''brad'':1A ''communiti'':20B ''cooper'':7B ''nextland'':15B ''puzzl'':9B ''puzzle-solv'':8B ''solv'':10B ''support'':17B ''talki'':14B ''thank'':24B ''time'':4B ''vinni'':3A ''walki'':13B ''walkie-talki'':12B ''watch'':26B ''www.patreon.com'':22B ''www.patreon.com/nextlander'':21B', false, 'PT2H5M24S', 'https://i.ytimg.com/vi/Zhsiz9xG7Tg/maxresdefault.jpg'),
+	('gm9x0s0NVnI', 'nextlander', 'One Last 2024 Video Game Afternoon', 'Brad came perilously close to getting that million-point Geometry Wars achievement, and also played some Kill Knight and also Peglin!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/gm9x0s0NVnI/mqdefault.jpg', '2024-12-21 00:36:47+00', '''/nextlander'':37B ''2024'':3A ''achiev'':19B ''afternoon'':6A ''also'':21B,27B ''brad'':7B ''came'':8B ''close'':10B ''communiti'':34B ''game'':5A ''geometri'':17B ''get'':12B ''kill'':24B ''knight'':25B ''last'':2A ''million'':15B ''million-point'':14B ''nextland'':29B ''one'':1A ''peglin'':28B ''peril'':9B ''play'':22B ''point'':16B ''support'':31B ''thank'':38B ''video'':4A ''war'':18B ''watch'':40B ''www.patreon.com'':36B ''www.patreon.com/nextlander'':35B', false, 'PT1H55M37S', 'https://i.ytimg.com/vi/gm9x0s0NVnI/maxresdefault.jpg'),
 	('22bkJ1EnjeY', 'nextlander', 'Patron''s Choice for December 2024: Holiday Drumming Alex!', 'Y''all have spoken, and what you said was that you want to hear Alex drum the holiday hits.
 
 Nextlander is supported by its community:
@@ -59174,24 +59203,6 @@ Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/oOhCPK6lUbs/mqdefault.jpg', '2024-10-25 21:00:39+00', '''/nextlander'':43B ''1'':2A ''12'':4A ''armor'':14B ''brad'':11B ''breach'':23B ''communiti'':40B ''end'':6A ''endgam'':34B ''fallout'':1A ''get'':12B ''hq'':26B ''implant'':16B ''mutant'':25B ''nextland'':35B ''nice'':20B ''nigh'':8A ''part'':3A ''power'':13B ''s.p.e.c.i.a.l'':15B ''super'':24B ''support'':37B ''thank'':44B ''upgrad'':21B ''watch'':46B ''week'':10B ''www.patreon.com'':42B ''www.patreon.com/nextlander'':41B', false, 'PT3H8M34S', 'https://i.ytimg.com/vi/oOhCPK6lUbs/maxresdefault.jpg'),
-	('TFJ17kKmMnA', 'nextlander', 'Grab Bag Friday with The Roottrees, Dynasty Warriors, and a Surprise!', 'Abby Russell joins us to do some detective work, watch Alex bash hordes of soldiers, and see if Brad can conquer an old nemesis!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/TFJ17kKmMnA/mqdefault.jpg', '2025-01-24 21:53:41+00', '''/nextlander'':44B ''abbi'':12B ''alex'':22B ''bag'':2A ''bash'':23B ''brad'':30B ''communiti'':41B ''conquer'':32B ''detect'':19B ''dynasti'':7A ''friday'':3A ''grab'':1A ''hord'':24B ''join'':14B ''nemesi'':35B ''nextland'':36B ''old'':34B ''roottre'':6A ''russel'':13B ''see'':28B ''soldier'':26B ''support'':38B ''surpris'':11A ''thank'':45B ''us'':15B ''warrior'':8A ''watch'':21B,47B ''work'':20B ''www.patreon.com'':43B ''www.patreon.com/nextlander'':42B', false, 'PT2H28M20S', 'https://i.ytimg.com/vi/TFJ17kKmMnA/maxresdefault.jpg'),
-	('Zhsiz9xG7Tg', 'nextlander', 'Brad and Vinny Are Here, Too!', 'Time for more cooperative puzzle-solving with walkie-talkies!?!?!?!?!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/Zhsiz9xG7Tg/mqdefault.jpg', '2025-01-16 21:48:57+00', '''/nextlander'':23B ''brad'':1A ''communiti'':20B ''cooper'':7B ''nextland'':15B ''puzzl'':9B ''puzzle-solv'':8B ''solv'':10B ''support'':17B ''talki'':14B ''thank'':24B ''time'':4B ''vinni'':3A ''walki'':13B ''walkie-talki'':12B ''watch'':26B ''www.patreon.com'':22B ''www.patreon.com/nextlander'':21B', false, 'PT2H5M24S', 'https://i.ytimg.com/vi/Zhsiz9xG7Tg/maxresdefault.jpg'),
-	('gm9x0s0NVnI', 'nextlander', 'One Last 2024 Video Game Afternoon', 'Brad came perilously close to getting that million-point Geometry Wars achievement, and also played some Kill Knight and also Peglin!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/gm9x0s0NVnI/mqdefault.jpg', '2024-12-21 00:36:47+00', '''/nextlander'':37B ''2024'':3A ''achiev'':19B ''afternoon'':6A ''also'':21B,27B ''brad'':7B ''came'':8B ''close'':10B ''communiti'':34B ''game'':5A ''geometri'':17B ''get'':12B ''kill'':24B ''knight'':25B ''last'':2A ''million'':15B ''million-point'':14B ''nextland'':29B ''one'':1A ''peglin'':28B ''peril'':9B ''play'':22B ''point'':16B ''support'':31B ''thank'':38B ''video'':4A ''war'':18B ''watch'':40B ''www.patreon.com'':36B ''www.patreon.com/nextlander'':35B', false, 'PT1H55M37S', 'https://i.ytimg.com/vi/gm9x0s0NVnI/maxresdefault.jpg'),
 	('4VmAlYtHSeM', 'giantbomb', 'Rascal (PS1) | 04 | Blight Club', 'Will Mike Minotti make any progress today on Blight Club? Will he be able to figure out what any of the buttons or crabs do? Tune in to find out! 
 
 #blightclub #giantbomb #badgames #rascal', 'https://i.ytimg.com/vi/4VmAlYtHSeM/mqdefault.jpg', '2025-06-11 20:01:58+00', '''04'':3A ''abl'':19B ''badgam'':38B ''blight'':4A,14B ''blightclub'':36B ''button'':27B ''club'':5A,15B ''crab'':29B ''figur'':21B ''find'':34B ''giantbomb'':37B ''make'':9B ''mike'':7B ''minotti'':8B ''progress'':11B ''ps1'':2A ''rascal'':1A,39B ''today'':12B ''tune'':31B', false, 'PT1H46M26S', 'https://i.ytimg.com/vi/4VmAlYtHSeM/maxresdefault.jpg'),
@@ -59214,12 +59225,12 @@ Call into the Dump Truck (707)EXIT-FLU
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/7ZF2vOvsWwQ/mqdefault.jpg', '2025-06-24 17:02:18+00', '''audienc'':26B ''consid'':36B ''content'':34B ''continu'':31B ''dollar'':3A,20B ''extrem'':10B ''help'':29B ''mailroom'':6A ''make'':32B ''neighborhood'':19B ''normal'':11B ''obvious'':7B ''packag'':16B ''pick'':13B ''pleas'':35B ''radio'':24B ''remap'':23B ''right'':22B ''store'':4A,21B ''subscrib'':37B ''support'':27B ''us'':30B ''www.remapradio.com'':39B', false, 'PT57S', 'https://i.ytimg.com/vi/7ZF2vOvsWwQ/maxresdefault.jpg'),
 	('b8m3oPsLg4g', 'remap', 'Exploring Arrakis with The Wheel of Geforce Now', 'Rob and Cado check out the new Dune game, and then a spin of the Wheel takes us to a familiar but excellent tactics game.', 'https://i.ytimg.com/vi/b8m3oPsLg4g/mqdefault.jpg', '2025-06-06 04:28:17+00', '''arraki'':2A ''cado'':10B ''check'':11B ''dune'':15B ''excel'':30B ''explor'':1A ''familiar'':28B ''game'':16B,32B ''geforc'':7A ''new'':14B ''rob'':8B ''spin'':20B ''tactic'':31B ''take'':24B ''us'':25B ''wheel'':5A,23B', false, 'PT2H16M41S', 'https://i.ytimg.com/vi/b8m3oPsLg4g/maxresdefault.jpg'),
-	('a-d3Ckw2yso', 'remap', 'Rob Experiences Buyer''s Remorse in Civilization VII', 'Victory is at hand, but at what cost? At what cost?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/a-d3Ckw2yso/mqdefault.jpg', '2025-04-26 02:17:19+00', '''audienc'':23B ''buyer'':3A ''civil'':7A ''consid'':33B ''content'':31B ''continu'':28B ''cost'':16B,19B ''experi'':2A ''hand'':12B ''help'':26B ''make'':29B ''pleas'':32B ''radio'':21B ''remap'':20B ''remors'':5A ''rob'':1A ''subscrib'':34B ''support'':24B ''us'':27B ''victori'':9B ''vii'':8A ''www.remapradio.com'':36B', false, 'PT2H32M11S', 'https://i.ytimg.com/vi/a-d3Ckw2yso/maxresdefault.jpg'),
 	('-lhs32v9yns', 'giantbomb', 'M.E.G.A.M.A.N. - Pipistrello and the Cursed Yoyo', 'Welcome to Monday Evening Games at Mike''s at Night (M.E.G.A.M.A.N.) where we''re all going to head over to Mike''s place to check out Pipistrello and the Cursed Yoyo! 
 
 #pipistrello #mike #megaman', 'https://i.ytimg.com/vi/-lhs32v9yns/mqdefault.jpg', '2025-06-24 02:45:38+00', '''check'':31B ''curs'':5A,36B ''even'':10B ''game'':11B ''go'':22B ''head'':24B ''m.e.g.a.m.a.n'':1A,17B ''megaman'':40B ''mike'':13B,27B,39B ''monday'':9B ''night'':16B ''pipistrello'':2A,33B,38B ''place'':29B ''re'':20B ''welcom'':7B ''yoyo'':6A,37B', false, 'PT2H30M59S', 'https://i.ytimg.com/vi/-lhs32v9yns/maxresdefault.jpg'),
+	('a-d3Ckw2yso', 'remap', 'Rob Experiences Buyer''s Remorse in Civilization VII', 'Victory is at hand, but at what cost? At what cost?
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/a-d3Ckw2yso/mqdefault.jpg', '2025-04-26 02:17:19+00', '''audienc'':23B ''buyer'':3A ''civil'':7A ''consid'':33B ''content'':31B ''continu'':28B ''cost'':16B,19B ''experi'':2A ''hand'':12B ''help'':26B ''make'':29B ''pleas'':32B ''radio'':21B ''remap'':20B ''remors'':5A ''rob'':1A ''subscrib'':34B ''support'':24B ''us'':27B ''victori'':9B ''vii'':8A ''www.remapradio.com'':36B', false, 'PT2H32M11S', 'https://i.ytimg.com/vi/a-d3Ckw2yso/maxresdefault.jpg'),
 	('plQFe_7nbqo', 'giantbomb', 'Game Mess Mornings 06/27/25', 'Jeff Grubb and friends break down today''s top stories in video games. 
 
 Support Giant Bomb by going to:
@@ -59282,9 +59293,6 @@ Remap Radio is audience supported, to help us continue making this content pleas
 What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/FzFQE6DBF48/mqdefault.jpg', '2025-05-21 14:00:32+00', '''/us/podcast/remap-radio/id1690437343'':75B ''000'':8A,32B ''1'':7A,31B ''audienc'':79B ''busi'':14B ''consid'':89B ''content'':87B ''continu'':84B ''could'':4A,24B ''dump'':6A ''episod'':65B ''everyon'':10B ''flagship'':48B ''full'':64B ''game'':3A,27B,36B,50B ''help'':82B ''hour'':9A,33B ''listen'':57B ''live'':12B ''make'':85B ''moment'':21B ''one'':26B ''pick'':25B ''play'':29B ''pleas'':88B ''podcast'':51B,72B ''podcasts.apple.com'':74B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':73B ''radio'':46B,68B,77B ''re'':56B ''remap'':45B,53B,67B,76B ''segment'':43B,61B ''stay'':16B ''subscrib'':69B,90B ''support'':80B ''us'':18B,83B ''video'':2A,35B,49B ''would'':37B ''www.remapradio.com'':92B', false, 'PT27M50S', 'https://i.ytimg.com/vi/FzFQE6DBF48/maxresdefault.jpg'),
-	('Pfh-5czXBLU', 'remap', 'Patrick vs. Hopshot [Part 5]', 'Do you want to watch a person publicly tilt? Well, we''ve got the video for you.
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/Pfh-5czXBLU/mqdefault.jpg', '2025-05-22 21:34:48+00', '''5'':5A ''audienc'':26B ''consid'':36B ''content'':34B ''continu'':31B ''got'':18B ''help'':29B ''hopshot'':3A ''make'':32B ''part'':4A ''patrick'':1A ''person'':12B ''pleas'':35B ''public'':13B ''radio'':24B ''remap'':23B ''subscrib'':37B ''support'':27B ''tilt'':14B ''us'':30B ''ve'':17B ''video'':20B ''vs'':2A ''want'':8B ''watch'':10B ''well'':15B ''www.remapradio.com'':39B', false, 'PT1H29M6S', 'https://i.ytimg.com/vi/Pfh-5czXBLU/maxresdefault.jpg'),
 	('k4YzqfY60vM', 'remap', 'The Wheel Spins Towards the Backrooms', 'Our first choice was unavailable, so we let the wheel decide our fate. And it made some big choices. #sponsored 
 
 Timestamps:
@@ -59297,18 +59305,30 @@ Remap Radio is audience supported, to help us continue making this content pleas
 	('ik_uXoeUlAA', 'remap', 'What Happened the Day Mass Layoffs Hit Polygon', 'Former Polygon senior reporter Nicole Carpenter joins us to talk about what happened when most of the Polygon staff lost their jobs recently. What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/ik_uXoeUlAA/mqdefault.jpg', '2025-05-28 14:01:08+00', '''/us/podcast/remap-radio/id1690437343'':53B ''audienc'':57B ''carpent'':14B ''consid'':67B ''content'':65B ''continu'':62B ''day'':4A ''episod'':43B ''former'':9B ''full'':42B ''happen'':2A,21B ''help'':60B ''hit'':7A ''job'':30B ''join'':15B ''layoff'':6A ''listen'':35B ''lost'':28B ''make'':63B ''mass'':5A ''nicol'':13B ''pleas'':66B ''podcast'':50B ''podcasts.apple.com'':52B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':51B ''polygon'':8A,10B,26B ''radio'':46B,55B ''re'':34B ''recent'':31B ''remap'':45B,54B ''report'':12B ''segment'':39B ''senior'':11B ''staff'':27B ''subscrib'':47B,68B ''support'':58B ''talk'':18B ''us'':16B,61B ''www.remapradio.com'':70B', false, 'PT53M42S', 'https://i.ytimg.com/vi/ik_uXoeUlAA/maxresdefault.jpg'),
+	('Pfh-5czXBLU', 'remap', 'Patrick vs. Hopshot [Part 5]', 'Do you want to watch a person publicly tilt? Well, we''ve got the video for you.
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/Pfh-5czXBLU/mqdefault.jpg', '2025-05-22 21:34:48+00', '''5'':5A ''audienc'':26B ''consid'':36B ''content'':34B ''continu'':31B ''got'':18B ''help'':29B ''hopshot'':3A ''make'':32B ''part'':4A ''patrick'':1A ''person'':12B ''pleas'':35B ''public'':13B ''radio'':24B ''remap'':23B ''subscrib'':37B ''support'':27B ''tilt'':14B ''us'':30B ''ve'':17B ''video'':20B ''vs'':2A ''want'':8B ''watch'':10B ''well'':15B ''www.remapradio.com'':39B', false, 'PT1H29M6S', 'https://i.ytimg.com/vi/Pfh-5czXBLU/maxresdefault.jpg'),
 	('qj_AIXB7J28', 'remap', 'Patrick vs. Hopshot', 'Patrick is ready to conquer the challenge of Hopshot, but will the gay frogs allow it? 
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/qj_AIXB7J28/mqdefault.jpg', '2025-04-22 17:53:38+00', '''allow'':18B ''audienc'':23B ''challeng'':10B ''conquer'':8B ''consid'':33B ''content'':31B ''continu'':28B ''frog'':17B ''gay'':16B ''help'':26B ''hopshot'':3A,12B ''make'':29B ''patrick'':1A,4B ''pleas'':32B ''radio'':21B ''readi'':6B ''remap'':20B ''subscrib'':34B ''support'':24B ''us'':27B ''vs'':2A ''www.remapradio.com'':36B', false, 'PT2H25M11S', 'https://i.ytimg.com/vi/qj_AIXB7J28/maxresdefault.jpg'),
-	('wWevbah9FEY', 'remap', 'The Power of GeForce Now and French RPGs', 'Clair Obscur: Expedition 33 is the hot new game, but question is: can Rob parry a mime?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/wWevbah9FEY/mqdefault.jpg', '2025-05-01 23:37:37+00', '''33'':12B ''audienc'':29B ''clair'':9B ''consid'':39B ''content'':37B ''continu'':34B ''expedit'':11B ''french'':7A ''game'':17B ''geforc'':4A ''help'':32B ''hot'':15B ''make'':35B ''mime'':25B ''new'':16B ''obscur'':10B ''parri'':23B ''pleas'':38B ''power'':2A ''question'':19B ''radio'':27B ''remap'':26B ''rob'':22B ''rpgs'':8A ''subscrib'':40B ''support'':30B ''us'':33B ''www.remapradio.com'':42B', false, 'PT2H27M43S', 'https://i.ytimg.com/vi/wWevbah9FEY/maxresdefault.jpg'),
 	('ij2mpglwYvw', 'giantbomb', 'A Quick Look at Teenage Mutant Ninja Turtles: Tactical Takedown', 'Jan and Grubb appreciate tiles, tactics, and turtles! 
 
 Support Giant Bomb by going to:
 giantbomb.com/join
 
 #tmnt #quicklook #giantbomb #teenagemutantninjaturtle', 'https://i.ytimg.com/vi/ij2mpglwYvw/mqdefault.jpg', '2025-05-24 13:01:24+00', '''/join'':27B ''appreci'':14B ''bomb'':21B ''giant'':20B ''giantbomb'':30B ''giantbomb.com'':26B ''giantbomb.com/join'':25B ''go'':23B ''grubb'':13B ''jan'':11B ''look'':3A ''mutant'':6A ''ninja'':7A ''quick'':2A ''quicklook'':29B ''support'':19B ''tactic'':9A,16B ''takedown'':10A ''teenag'':5A ''teenagemutantninjaturtl'':31B ''tile'':15B ''tmnt'':28B ''turtl'':8A,18B', false, 'PT23M20S', 'https://i.ytimg.com/vi/ij2mpglwYvw/maxresdefault.jpg'),
+	('B1O6ZOWu5w0', 'giantbomb', 'Voicemail Dump Truck 159 | Faygo FOMO.mp3', 'Everybody welcome back out dear friend BAILEY MEYERS back to the truck! We chat about the nuts and bolts of busting things, inside jokes with animals, and somehow the Gathering of the Juggalos! 
+
+Support Giant Bomb by going to:
+giantbomb.com/join
+
+#vmdt #voicemaildumptruck #giantbomb', 'https://i.ytimg.com/vi/B1O6ZOWu5w0/mqdefault.jpg', '2025-05-22 19:27:13+00', '''/join'':48B ''159'':4A ''anim'':32B ''back'':9B,15B ''bailey'':13B ''bolt'':25B ''bomb'':42B ''bust'':27B ''chat'':20B ''dear'':11B ''dump'':2A ''everybodi'':7B ''faygo'':5A ''fomo.mp3'':6A ''friend'':12B ''gather'':36B ''giant'':41B ''giantbomb'':51B ''giantbomb.com'':47B ''giantbomb.com/join'':46B ''go'':44B ''insid'':29B ''joke'':30B ''juggalo'':39B ''meyer'':14B ''nut'':23B ''somehow'':34B ''support'':40B ''thing'':28B ''truck'':3A,18B ''vmdt'':49B ''voicemail'':1A ''voicemaildumptruck'':50B ''welcom'':8B', false, 'PT1H12M43S', 'https://i.ytimg.com/vi/B1O6ZOWu5w0/maxresdefault.jpg'),
+	('n4BbfgSeqns', 'giantbomb', 'Nintendo Switch 2 Preorders Begin April 24 in US | GameBreaking News 04/18/25', 'Jeff Grubb and friends breakdown today''s top stories in video games! Today we chat about Nintendo finally opening up Switch 2 Preorders in the US, the Mario Kart World bundle getting discounted, Indiana Jones might be getting a sequel, the new Ryan Gosling Star Wars movie sharing the same name as a PS2 game, a Diablo 4 crossover, and more stories to end your week.
+
+#gamebreakingnews #switch2 #starwars', 'https://i.ytimg.com/vi/n4BbfgSeqns/mqdefault.jpg', '2025-04-18 17:09:40+00', '''04/18/25'':12A ''2'':3A,34B ''24'':7A ''4'':70B ''april'':6A ''begin'':5A ''breakdown'':17B ''bundl'':43B ''chat'':27B ''crossov'':71B ''diablo'':69B ''discount'':45B ''end'':76B ''final'':30B ''friend'':16B ''game'':24B,67B ''gamebreak'':10A ''gamebreakingnew'':79B ''get'':44B,50B ''gosl'':56B ''grubb'':14B ''indiana'':46B ''jeff'':13B ''jone'':47B ''kart'':41B ''mario'':40B ''might'':48B ''movi'':59B ''name'':63B ''new'':54B ''news'':11A ''nintendo'':1A,29B ''open'':31B ''preorder'':4A,35B ''ps2'':66B ''ryan'':55B ''sequel'':52B ''share'':60B ''star'':57B ''starwar'':81B ''stori'':21B,74B ''switch'':2A,33B ''switch2'':80B ''today'':18B,25B ''top'':20B ''us'':9A,38B ''video'':23B ''war'':58B ''week'':78B ''world'':42B', false, 'PT1H4M6S', 'https://i.ytimg.com/vi/n4BbfgSeqns/maxresdefault.jpg'),
+	('P-BnQ9OIHOg', 'giantbomb', 'PlayStation Stars is Closing Down | Game Mess Mornings 05/22/25', 'Jeff Grubb and Jesse Vitelli lament about the the closing of PlayStation Stars and a State of Play event in May is becoming unlikely, Lies of P is getting difficulty options to become more accessible, Destiny 2 could have been a subscription service, GameChat requires a phone number linked to your Nintendo account, and more! 
+
+#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/P-BnQ9OIHOg/mqdefault.jpg', '2025-05-22 16:10:50+00', '''05/22/25'':9A ''2'':46B ''access'':44B ''account'':62B ''becom'':32B,42B ''close'':4A,19B ''could'':47B ''destini'':45B ''difficulti'':39B ''event'':28B ''game'':6A ''gamechat'':53B ''gamemessmorn'':66B ''get'':38B ''giantbomb'':67B ''gmm'':65B ''grubb'':11B ''jeff'':10B ''jess'':13B ''lament'':15B ''lie'':34B ''link'':58B ''may'':30B ''mess'':7A ''morn'':8A ''nintendo'':61B ''number'':57B ''option'':40B ''p'':36B ''phone'':56B ''play'':27B ''playstat'':1A,21B ''requir'':54B ''servic'':52B ''star'':2A,22B ''state'':25B ''subscript'':51B ''unlik'':33B ''videogamenew'':68B ''vitelli'':14B', false, 'PT57M52S', 'https://i.ytimg.com/vi/P-BnQ9OIHOg/maxresdefault.jpg'),
 	('YeJWsYdEMeo', 'giantbomb', 'Voicemail Dump Truck158 | The Filipino Thing.mp3', 'The Dump Truck is back and ready to take a big ol'' dump! We talk about being silent partners, hereditary knowledge of doctoring, what the Philippines is, factories, saying names, and even more bruh! LET''S GO!
 
 Support Giant Bomb by going to
@@ -59318,29 +59338,17 @@ giantbomb.com/join
 	('0BUigORGKi0', 'giantbomb', 'One of the WORST PS1 Games? | Rascal 01 | Blight Club', 'It''s Mike Minotti''s turn for a blight and this one is a 90s delight! Watch as he tries to save his uncle and maybe NATO from the evil clutches of time. 
 
 #blightclub #giantbomb #badgames', 'https://i.ytimg.com/vi/0BUigORGKi0/mqdefault.jpg', '2025-05-14 19:54:18+00', '''01'':8A ''90s'':25B ''badgam'':46B ''blight'':9A,19B ''blightclub'':44B ''club'':10A ''clutch'':41B ''delight'':26B ''evil'':40B ''game'':6A ''giantbomb'':45B ''mayb'':36B ''mike'':13B ''minotti'':14B ''nato'':37B ''one'':1A,22B ''ps1'':5A ''rascal'':7A ''save'':32B ''time'':43B ''tri'':30B ''turn'':16B ''uncl'':34B ''watch'':27B ''worst'':4A', false, 'PT1H44M9S', 'https://i.ytimg.com/vi/0BUigORGKi0/maxresdefault.jpg'),
-	('n4BbfgSeqns', 'giantbomb', 'Nintendo Switch 2 Preorders Begin April 24 in US | GameBreaking News 04/18/25', 'Jeff Grubb and friends breakdown today''s top stories in video games! Today we chat about Nintendo finally opening up Switch 2 Preorders in the US, the Mario Kart World bundle getting discounted, Indiana Jones might be getting a sequel, the new Ryan Gosling Star Wars movie sharing the same name as a PS2 game, a Diablo 4 crossover, and more stories to end your week.
-
-#gamebreakingnews #switch2 #starwars', 'https://i.ytimg.com/vi/n4BbfgSeqns/mqdefault.jpg', '2025-04-18 17:09:40+00', '''04/18/25'':12A ''2'':3A,34B ''24'':7A ''4'':70B ''april'':6A ''begin'':5A ''breakdown'':17B ''bundl'':43B ''chat'':27B ''crossov'':71B ''diablo'':69B ''discount'':45B ''end'':76B ''final'':30B ''friend'':16B ''game'':24B,67B ''gamebreak'':10A ''gamebreakingnew'':79B ''get'':44B,50B ''gosl'':56B ''grubb'':14B ''indiana'':46B ''jeff'':13B ''jone'':47B ''kart'':41B ''mario'':40B ''might'':48B ''movi'':59B ''name'':63B ''new'':54B ''news'':11A ''nintendo'':1A,29B ''open'':31B ''preorder'':4A,35B ''ps2'':66B ''ryan'':55B ''sequel'':52B ''share'':60B ''star'':57B ''starwar'':81B ''stori'':21B,74B ''switch'':2A,33B ''switch2'':80B ''today'':18B,25B ''top'':20B ''us'':9A,38B ''video'':23B ''war'':58B ''week'':78B ''world'':42B', false, 'PT1H4M6S', 'https://i.ytimg.com/vi/n4BbfgSeqns/maxresdefault.jpg'),
-	('B1O6ZOWu5w0', 'giantbomb', 'Voicemail Dump Truck 159 | Faygo FOMO.mp3', 'Everybody welcome back out dear friend BAILEY MEYERS back to the truck! We chat about the nuts and bolts of busting things, inside jokes with animals, and somehow the Gathering of the Juggalos! 
-
-Support Giant Bomb by going to:
-giantbomb.com/join
-
-#vmdt #voicemaildumptruck #giantbomb', 'https://i.ytimg.com/vi/B1O6ZOWu5w0/mqdefault.jpg', '2025-05-22 19:27:13+00', '''/join'':48B ''159'':4A ''anim'':32B ''back'':9B,15B ''bailey'':13B ''bolt'':25B ''bomb'':42B ''bust'':27B ''chat'':20B ''dear'':11B ''dump'':2A ''everybodi'':7B ''faygo'':5A ''fomo.mp3'':6A ''friend'':12B ''gather'':36B ''giant'':41B ''giantbomb'':51B ''giantbomb.com'':47B ''giantbomb.com/join'':46B ''go'':44B ''insid'':29B ''joke'':30B ''juggalo'':39B ''meyer'':14B ''nut'':23B ''somehow'':34B ''support'':40B ''thing'':28B ''truck'':3A,18B ''vmdt'':49B ''voicemail'':1A ''voicemaildumptruck'':50B ''welcom'':8B', false, 'PT1H12M43S', 'https://i.ytimg.com/vi/B1O6ZOWu5w0/maxresdefault.jpg'),
-	('P-BnQ9OIHOg', 'giantbomb', 'PlayStation Stars is Closing Down | Game Mess Mornings 05/22/25', 'Jeff Grubb and Jesse Vitelli lament about the the closing of PlayStation Stars and a State of Play event in May is becoming unlikely, Lies of P is getting difficulty options to become more accessible, Destiny 2 could have been a subscription service, GameChat requires a phone number linked to your Nintendo account, and more! 
-
-#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/P-BnQ9OIHOg/mqdefault.jpg', '2025-05-22 16:10:50+00', '''05/22/25'':9A ''2'':46B ''access'':44B ''account'':62B ''becom'':32B,42B ''close'':4A,19B ''could'':47B ''destini'':45B ''difficulti'':39B ''event'':28B ''game'':6A ''gamechat'':53B ''gamemessmorn'':66B ''get'':38B ''giantbomb'':67B ''gmm'':65B ''grubb'':11B ''jeff'':10B ''jess'':13B ''lament'':15B ''lie'':34B ''link'':58B ''may'':30B ''mess'':7A ''morn'':8A ''nintendo'':61B ''number'':57B ''option'':40B ''p'':36B ''phone'':56B ''play'':27B ''playstat'':1A,21B ''requir'':54B ''servic'':52B ''star'':2A,22B ''state'':25B ''subscript'':51B ''unlik'':33B ''videogamenew'':68B ''vitelli'':14B', false, 'PT57M52S', 'https://i.ytimg.com/vi/P-BnQ9OIHOg/maxresdefault.jpg'),
 	('eq6QJTpgoUU', 'giantbomb', 'Nintendo Apologizing for Not Enough Switch 2s | GameBreaking News 04/23/25', 'Jeff Grubb is joined by Jake Randall today to chat about Nintendo Switch 2 preorders going up tonight in North America, the Oblivion remaster blowing up, sales numbers for March, and more for your Wednesday! 
 
 #gamebreakingnews #videogamenews', 'https://i.ytimg.com/vi/eq6QJTpgoUU/mqdefault.jpg', '2025-04-23 17:04:03+00', '''04/23/25'':10A ''2'':24B ''2s'':7A ''america'':31B ''apolog'':2A ''blow'':35B ''chat'':20B ''enough'':5A ''gamebreak'':8A ''gamebreakingnew'':46B ''go'':26B ''grubb'':12B ''jake'':16B ''jeff'':11B ''join'':14B ''march'':40B ''news'':9A ''nintendo'':1A,22B ''north'':30B ''number'':38B ''oblivion'':33B ''preorder'':25B ''randal'':17B ''remast'':34B ''sale'':37B ''switch'':6A,23B ''today'':18B ''tonight'':28B ''videogamenew'':47B ''wednesday'':45B', false, 'PT59M41S', 'https://i.ytimg.com/vi/eq6QJTpgoUU/maxresdefault.jpg'),
-	('1zcPILkebEs', 'giantbomb', 'The Switch 2 is Pretty Great | Giant Bombcast 895: Raw Dog Mayo', 'This week we dive into why we''re digging the Switch 2 so much and circling back to some gems from the Switch 1 like Splatoon 3 and Paper Mario, Mike talks about slicing and dicing his way through Sekiro, Grubb''s lackluster time in MindsEye, and all of us climbing together in PEAK. We also chat about Microsoft''s new deal with AMD, rumors of a PlayStation 6 on the horizon, a Golden Tee remaster, and even more news to catch up on! 
-
-#giantbomb #bombcast #giantbombcast', 'https://i.ytimg.com/vi/1zcPILkebEs/mqdefault.jpg', '2025-06-17 18:54:04+00', '''1'':36B ''2'':3A,24B ''3'':39B ''6'':81B ''895'':9A ''also'':68B ''amd'':76B ''back'':29B ''bombcast'':8A,98B ''catch'':94B ''chat'':69B ''circl'':28B ''climb'':63B ''deal'':74B ''dice'':48B ''dig'':21B ''dive'':16B ''dog'':11A ''even'':90B ''gem'':32B ''giant'':7A ''giantbomb'':97B ''giantbombcast'':99B ''golden'':86B ''great'':6A ''grubb'':53B ''horizon'':84B ''lacklust'':55B ''like'':37B ''mario'':42B ''mayo'':12A ''microsoft'':71B ''mike'':43B ''mindsey'':58B ''much'':26B ''new'':73B ''news'':92B ''paper'':41B ''peak'':66B ''playstat'':80B ''pretti'':5A ''raw'':10A ''re'':20B ''remast'':88B ''rumor'':77B ''sekiro'':52B ''slice'':46B ''splatoon'':38B ''switch'':2A,23B,35B ''talk'':44B ''tee'':87B ''time'':56B ''togeth'':64B ''us'':62B ''way'':50B ''week'':14B', false, 'PT2H34M40S', 'https://i.ytimg.com/vi/1zcPILkebEs/maxresdefault.jpg'),
 	('8t5L5vzhnWA', 'remap', 'Pre-Ordering a Switch 2 Was a Chaotic Journey', 'Last week, Janet and Patrick decided to pre-order at Switch 2. What followed was crashed websites, attempting to boycott Target, standing in line with crypto bros at GameStop, and more. Plus, we discuss Switch 2''s "game key cards" and what they say about the future of physical preservation of video games.
 
 What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/8t5L5vzhnWA/mqdefault.jpg', '2025-05-02 21:59:04+00', '''/us/podcast/remap-radio/id1690437343'':86B ''2'':6A,23B,47B ''attempt'':29B ''audienc'':90B ''boycott'':31B ''bros'':38B ''card'':51B ''chaotic'':9A ''consid'':100B ''content'':98B ''continu'':95B ''crash'':27B ''crypto'':37B ''decid'':16B ''discuss'':45B ''episod'':76B ''follow'':25B ''full'':75B ''futur'':58B ''game'':49B,64B ''gamestop'':40B ''help'':93B ''janet'':13B ''journey'':10A ''key'':50B ''last'':11B ''line'':35B ''listen'':68B ''make'':96B ''order'':3A,20B ''patrick'':15B ''physic'':60B ''pleas'':99B ''plus'':43B ''podcast'':83B ''podcasts.apple.com'':85B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':84B ''pre'':2A,19B ''pre-ord'':1A,18B ''preserv'':61B ''radio'':79B,88B ''re'':67B ''remap'':78B,87B ''say'':55B ''segment'':72B ''stand'':33B ''subscrib'':80B,101B ''support'':91B ''switch'':5A,22B,46B ''target'':32B ''us'':94B ''video'':63B ''websit'':28B ''week'':12B ''www.remapradio.com'':103B', false, 'PT40M41S', 'https://i.ytimg.com/vi/8t5L5vzhnWA/maxresdefault.jpg'),
+	('1zcPILkebEs', 'giantbomb', 'The Switch 2 is Pretty Great | Giant Bombcast 895: Raw Dog Mayo', 'This week we dive into why we''re digging the Switch 2 so much and circling back to some gems from the Switch 1 like Splatoon 3 and Paper Mario, Mike talks about slicing and dicing his way through Sekiro, Grubb''s lackluster time in MindsEye, and all of us climbing together in PEAK. We also chat about Microsoft''s new deal with AMD, rumors of a PlayStation 6 on the horizon, a Golden Tee remaster, and even more news to catch up on! 
+
+#giantbomb #bombcast #giantbombcast', 'https://i.ytimg.com/vi/1zcPILkebEs/mqdefault.jpg', '2025-06-17 18:54:04+00', '''1'':36B ''2'':3A,24B ''3'':39B ''6'':81B ''895'':9A ''also'':68B ''amd'':76B ''back'':29B ''bombcast'':8A,98B ''catch'':94B ''chat'':69B ''circl'':28B ''climb'':63B ''deal'':74B ''dice'':48B ''dig'':21B ''dive'':16B ''dog'':11A ''even'':90B ''gem'':32B ''giant'':7A ''giantbomb'':97B ''giantbombcast'':99B ''golden'':86B ''great'':6A ''grubb'':53B ''horizon'':84B ''lacklust'':55B ''like'':37B ''mario'':42B ''mayo'':12A ''microsoft'':71B ''mike'':43B ''mindsey'':58B ''much'':26B ''new'':73B ''news'':92B ''paper'':41B ''peak'':66B ''playstat'':80B ''pretti'':5A ''raw'':10A ''re'':20B ''remast'':88B ''rumor'':77B ''sekiro'':52B ''slice'':46B ''splatoon'':38B ''switch'':2A,23B,35B ''talk'':44B ''tee'':87B ''time'':56B ''togeth'':64B ''us'':62B ''way'':50B ''week'':14B', false, 'PT2H34M40S', 'https://i.ytimg.com/vi/1zcPILkebEs/maxresdefault.jpg'),
 	('QYEKloE8VTg', 'remap', 'Remap in New York (Day Three) – Part 2', 'For years, Chia has been telling us “Hey, we really need to watch the Disney Channel original movie The Luck of the Irish.” It has layers. It has much say about the state of America, diversity, and what exactly “white culture” is. Out of Twilight movies, we caved while in New York. Now, you can listen to our reaction, and wonder if we’re about to embark on an ambitious journey: more Disney Channel movies. Sync this with a copy of The Luck of the Irish and listen along!
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/QYEKloE8VTg/mqdefault.jpg', '2025-04-07 19:25:25+00', '''2'':8A ''along'':97B ''ambiti'':78B ''america'':43B ''audienc'':101B ''cave'':56B ''channel'':24B,82B ''chia'':11B ''consid'':111B ''content'':109B ''continu'':106B ''copi'':88B ''cultur'':49B ''day'':5A ''disney'':23B,81B ''divers'':44B ''embark'':75B ''exact'':47B ''help'':104B ''hey'':16B ''irish'':31B,94B ''journey'':79B ''layer'':34B ''listen'':64B,96B ''luck'':28B,91B ''make'':107B ''movi'':26B,54B,83B ''much'':37B ''need'':19B ''new'':3A,59B ''origin'':25B ''part'':7A ''pleas'':110B ''radio'':99B ''re'':72B ''reaction'':67B ''realli'':18B ''remap'':1A,98B ''say'':38B ''state'':41B ''subscrib'':112B ''support'':102B ''sync'':84B ''tell'':14B ''three'':6A ''twilight'':53B ''us'':15B,105B ''watch'':21B ''white'':48B ''wonder'':69B ''www.remapradio.com'':114B ''year'':10B ''york'':4A,60B', false, 'PT2H6M32S', 'https://i.ytimg.com/vi/QYEKloE8VTg/maxresdefault.jpg'),
@@ -59362,12 +59370,12 @@ Thanks for watching.', 'https://i.ytimg.com/vi/5iAYIsm-irE/mqdefault.jpg', '2025
 	('4V43JvjvLHw', 'remap', 'Volgarr the Viking x Nextlander [Part 7]', 'Patrick and Brad have, once again, returned to the prison of their own making. Will either make it out alive?
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/4V43JvjvLHw/mqdefault.jpg', '2025-01-17 21:01:55+00', '''7'':7A ''aliv'':27B ''audienc'':31B ''brad'':10B ''consid'':41B ''content'':39B ''continu'':36B ''either'':23B ''help'':34B ''make'':21B,24B,37B ''nextland'':5A ''part'':6A ''patrick'':8B ''pleas'':40B ''prison'':17B ''radio'':29B ''remap'':28B ''return'':14B ''subscrib'':42B ''support'':32B ''us'':35B ''vike'':3A ''volgarr'':1A ''www.remapradio.com'':44B ''x'':4A', false, 'PT1H47M51S', 'https://i.ytimg.com/vi/4V43JvjvLHw/maxresdefault.jpg'),
-	('BbfudQSAOxw', 'remap', 'Trying to Dress to Impress in Infinity Nikki', 'The world of Infinity Nikki so much weirder than we could have anticipated. 
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/BbfudQSAOxw/mqdefault.jpg', '2024-12-17 22:14:20+00', '''anticip'':21B ''audienc'':25B ''consid'':35B ''content'':33B ''continu'':30B ''could'':19B ''dress'':3A ''help'':28B ''impress'':5A ''infin'':7A,12B ''make'':31B ''much'':15B ''nikki'':8A,13B ''pleas'':34B ''radio'':23B ''remap'':22B ''subscrib'':36B ''support'':26B ''tri'':1A ''us'':29B ''weirder'':16B ''world'':10B ''www.remapradio.com'':38B', false, 'PT2H21M16S', 'https://i.ytimg.com/vi/BbfudQSAOxw/maxresdefault.jpg'),
 	('fRYmLlJtpQ0', 'remap', 'Entering a New Era in Civilization VII', 'Join Cado as they explore the world of Civilization VII, and try to out culture the rest of the world. Hope no one attacks this totally undefended city...
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/fRYmLlJtpQ0/mqdefault.jpg', '2025-02-12 16:27:53+00', '''attack'':31B ''audienc'':39B ''cado'':9B ''citi'':35B ''civil'':6A,16B ''consid'':49B ''content'':47B ''continu'':44B ''cultur'':22B ''enter'':1A ''era'':4A ''explor'':12B ''help'':42B ''hope'':28B ''join'':8B ''make'':45B ''new'':3A ''one'':30B ''pleas'':48B ''radio'':37B ''remap'':36B ''rest'':24B ''subscrib'':50B ''support'':40B ''total'':33B ''tri'':19B ''undefend'':34B ''us'':43B ''vii'':7A,17B ''world'':14B,27B ''www.remapradio.com'':52B', false, 'PT3H4M28S', 'https://i.ytimg.com/vi/fRYmLlJtpQ0/maxresdefault.jpg'),
+	('BbfudQSAOxw', 'remap', 'Trying to Dress to Impress in Infinity Nikki', 'The world of Infinity Nikki so much weirder than we could have anticipated. 
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/BbfudQSAOxw/mqdefault.jpg', '2024-12-17 22:14:20+00', '''anticip'':21B ''audienc'':25B ''consid'':35B ''content'':33B ''continu'':30B ''could'':19B ''dress'':3A ''help'':28B ''impress'':5A ''infin'':7A,12B ''make'':31B ''much'':15B ''nikki'':8A,13B ''pleas'':34B ''radio'':23B ''remap'':22B ''subscrib'':36B ''support'':26B ''tri'':1A ''us'':29B ''weirder'':16B ''world'':10B ''www.remapradio.com'':38B', false, 'PT2H21M16S', 'https://i.ytimg.com/vi/BbfudQSAOxw/maxresdefault.jpg'),
 	('sUacCE5rXp8', 'remap', 'It''s Raining Money in Motorsports Manager', 'Rob and Cado are back on that grind, getting paid (by their drivers) and making bank (blowing it immediately on new parts).
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/sUacCE5rXp8/mqdefault.jpg', '2025-01-31 16:56:55+00', '''audienc'':33B ''back'':12B ''bank'':23B ''blow'':24B ''cado'':10B ''consid'':43B ''content'':41B ''continu'':38B ''driver'':20B ''get'':16B ''grind'':15B ''help'':36B ''immedi'':26B ''make'':22B,39B ''manag'':7A ''money'':4A ''motorsport'':6A ''new'':28B ''paid'':17B ''part'':29B ''pleas'':42B ''radio'':31B ''rain'':3A ''remap'':30B ''rob'':8B ''subscrib'':44B ''support'':34B ''us'':37B ''www.remapradio.com'':46B', false, 'PT3H15M36S', 'https://i.ytimg.com/vi/sUacCE5rXp8/maxresdefault.jpg'),
@@ -59386,18 +59394,12 @@ Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/SI7eHKCP1us/mqdefault.jpg', '2025-03-07 21:38:02+00', '''/nextlander'':40B ''08'':11A ''back'':5A ''brad'':1A ''communiti'':37B ''competit'':26B ''conclus'':17B ''emerg'':30B ''last'':8A ''nextland'':32B ''non'':25B ''non-competit'':24B ''one'':7A ''part'':10A ''patrick'':3A ''run'':27B ''saga'':21B ''stun'':16B ''support'':34B ''thank'':41B ''victori'':31B ''volgarr'':9A,20B ''watch'':43B ''www.patreon.com'':39B ''www.patreon.com/nextlander'':38B', false, 'PT1H52M6S', 'https://i.ytimg.com/vi/SI7eHKCP1us/maxresdefault.jpg'),
-	('qpQRFd2cC6w', 'nextlander', 'Abby and Vinny are Back for More Rooting Around! (Part 03)', 'The Roottrees may be dead but that doesn''t mean the fun has to stop!
+	('pyOGB-RTjDo', 'nextlander', 'Patron''s Choice for January 2025: The Truth Is Out There in The X-Files Game! [Part 02]', 'Vinny puts on his best FBI trenchcoat to team up with Mulder and Scully in The X-Files Game! The FMV one, specifically!
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
-Thanks for watching.', 'https://i.ytimg.com/vi/qpQRFd2cC6w/mqdefault.jpg', '2025-02-11 00:07:48+00', '''/nextlander'':35B ''03'':11A ''abbi'':1A ''around'':9A ''back'':5A ''communiti'':32B ''dead'':16B ''doesn'':19B ''fun'':23B ''may'':14B ''mean'':21B ''nextland'':27B ''part'':10A ''root'':8A ''roottre'':13B ''stop'':26B ''support'':29B ''thank'':36B ''vinni'':3A ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT2H25M51S', 'https://i.ytimg.com/vi/qpQRFd2cC6w/maxresdefault.jpg'),
-	('Bh26oQNRh1g', 'nextlander', 'Abby and Vinny and the Roottrees are Back! (Part 02)', 'Our master detective team is back on the case and ready to find a bunch of cousins!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/Bh26oQNRh1g/mqdefault.jpg', '2025-02-03 23:16:06+00', '''/nextlander'':36B ''02'':10A ''abbi'':1A ''back'':8A,16B ''bunch'':25B ''case'':19B ''communiti'':33B ''cousin'':27B ''detect'':13B ''find'':23B ''master'':12B ''nextland'':28B ''part'':9A ''readi'':21B ''roottre'':6A ''support'':30B ''team'':14B ''thank'':37B ''vinni'':3A ''watch'':39B ''www.patreon.com'':35B ''www.patreon.com/nextlander'':34B', false, 'PT1H48M1S', 'https://i.ytimg.com/vi/Bh26oQNRh1g/maxresdefault.jpg'),
+Thanks for watching.', 'https://i.ytimg.com/vi/pyOGB-RTjDo/mqdefault.jpg', '2025-01-31 20:55:51+00', '''/nextlander'':52B ''02'':19A ''2025'':6A ''best'':24B ''choic'':3A ''communiti'':49B ''fbi'':25B ''file'':16A,38B ''fmv'':41B ''game'':17A,39B ''januari'':5A ''mulder'':31B ''nextland'':44B ''one'':42B ''part'':18A ''patron'':1A ''put'':21B ''sculli'':33B ''specif'':43B ''support'':46B ''team'':28B ''thank'':53B ''trenchcoat'':26B ''truth'':8A ''vinni'':20B ''watch'':55B ''www.patreon.com'':51B ''www.patreon.com/nextlander'':50B ''x'':15A,37B ''x-file'':14A,36B', false, 'PT2H13M39S', 'https://i.ytimg.com/vi/pyOGB-RTjDo/maxresdefault.jpg'),
 	('8zM7P4-jK74', 'nextlander', 'NXL and Assassin''s Creed Shadows!', 'Assassin''s Creed Shadows is almost here and with a long history of the series we''ve got some early thoughts on it. 
 
 Nextlander is supported by its community:
@@ -59410,18 +59412,24 @@ Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/bmZJ8Chc09E/mqdefault.jpg', '2025-02-24 23:09:34+00', '''/nextlander'':30B ''communiti'':27B ''crew'':3A ''die'':20B ''got'':9B ''harder'':5A ''monday'':1A ''nextland'':22B ''point'':12B ''probabl'':19B ''re'':16B ''readi'':17B ''skill'':11B ''support'':24B ''thank'':31B ''ve'':7B ''void'':2A,4A ''watch'':33B ''www.patreon.com'':29B ''www.patreon.com/nextlander'':28B', false, 'PT2H31M55S', 'https://i.ytimg.com/vi/bmZJ8Chc09E/maxresdefault.jpg'),
-	('pyOGB-RTjDo', 'nextlander', 'Patron''s Choice for January 2025: The Truth Is Out There in The X-Files Game! [Part 02]', 'Vinny puts on his best FBI trenchcoat to team up with Mulder and Scully in The X-Files Game! The FMV one, specifically!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/pyOGB-RTjDo/mqdefault.jpg', '2025-01-31 20:55:51+00', '''/nextlander'':52B ''02'':19A ''2025'':6A ''best'':24B ''choic'':3A ''communiti'':49B ''fbi'':25B ''file'':16A,38B ''fmv'':41B ''game'':17A,39B ''januari'':5A ''mulder'':31B ''nextland'':44B ''one'':42B ''part'':18A ''patron'':1A ''put'':21B ''sculli'':33B ''specif'':43B ''support'':46B ''team'':28B ''thank'':53B ''trenchcoat'':26B ''truth'':8A ''vinni'':20B ''watch'':55B ''www.patreon.com'':51B ''www.patreon.com/nextlander'':50B ''x'':15A,37B ''x-file'':14A,36B', false, 'PT2H13M39S', 'https://i.ytimg.com/vi/pyOGB-RTjDo/maxresdefault.jpg'),
 	('xaFtWbU3PYs', 'nextlander', 'Nextlander and Steam Next Fest October 2024!', 'Vinny and Alex have downloaded SO MANY DEMOS. We will get to maybe a quarter of them.
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/xaFtWbU3PYs/mqdefault.jpg', '2024-10-18 19:39:23+00', '''/nextlander'':33B ''2024'':7A ''alex'':10B ''communiti'':30B ''demo'':15B ''download'':12B ''fest'':5A ''get'':18B ''mani'':14B ''mayb'':20B ''next'':4A ''nextland'':1A,25B ''octob'':6A ''quarter'':22B ''steam'':3A ''support'':27B ''thank'':34B ''vinni'':8B ''watch'':36B ''www.patreon.com'':32B ''www.patreon.com/nextlander'':31B', false, 'PT2H13M38S', 'https://i.ytimg.com/vi/xaFtWbU3PYs/maxresdefault.jpg'),
+	('qpQRFd2cC6w', 'nextlander', 'Abby and Vinny are Back for More Rooting Around! (Part 03)', 'The Roottrees may be dead but that doesn''t mean the fun has to stop!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/qpQRFd2cC6w/mqdefault.jpg', '2025-02-11 00:07:48+00', '''/nextlander'':35B ''03'':11A ''abbi'':1A ''around'':9A ''back'':5A ''communiti'':32B ''dead'':16B ''doesn'':19B ''fun'':23B ''may'':14B ''mean'':21B ''nextland'':27B ''part'':10A ''root'':8A ''roottre'':13B ''stop'':26B ''support'':29B ''thank'':36B ''vinni'':3A ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT2H25M51S', 'https://i.ytimg.com/vi/qpQRFd2cC6w/maxresdefault.jpg'),
+	('Bh26oQNRh1g', 'nextlander', 'Abby and Vinny and the Roottrees are Back! (Part 02)', 'Our master detective team is back on the case and ready to find a bunch of cousins!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/Bh26oQNRh1g/mqdefault.jpg', '2025-02-03 23:16:06+00', '''/nextlander'':36B ''02'':10A ''abbi'':1A ''back'':8A,16B ''bunch'':25B ''case'':19B ''communiti'':33B ''cousin'':27B ''detect'':13B ''find'':23B ''master'':12B ''nextland'':28B ''part'':9A ''readi'':21B ''roottre'':6A ''support'':30B ''team'':14B ''thank'':37B ''vinni'':3A ''watch'':39B ''www.patreon.com'':35B ''www.patreon.com/nextlander'':34B', false, 'PT1H48M1S', 'https://i.ytimg.com/vi/Bh26oQNRh1g/maxresdefault.jpg'),
 	('4faLzNNR3lk', 'giantbomb', 'THE MUSTARD ARC', 'Watch as a 40 year old man discovers mustard for the first time in his life! Somehow there is almost 13 minutes of footage left out of the Summer Game Fest travelogue that has been collected HERE for your eyes and ears. 
 
 #mustard', 'https://i.ytimg.com/vi/4faLzNNR3lk/mqdefault.jpg', '2025-06-23 03:14:51+00', '''13'':24B ''40'':7B ''almost'':23B ''arc'':3A ''collect'':39B ''discov'':11B ''ear'':45B ''eye'':43B ''fest'':34B ''first'':15B ''footag'':27B ''game'':33B ''left'':28B ''life'':19B ''man'':10B ''minut'':25B ''mustard'':2A,12B,46B ''old'':9B ''somehow'':20B ''summer'':32B ''time'':16B ''travelogu'':35B ''watch'':4B ''year'':8B', false, 'PT12M53S', 'https://i.ytimg.com/vi/4faLzNNR3lk/maxresdefault.jpg'),
@@ -59443,23 +59451,15 @@ Thanks to our friends at Annapurna Interactive for presenting this stream!
 	('PWRZtzf84yM', 'giantbomb', 'Donkey Kong Direct | We Talk Over', 'We''re going BANANAS this early in the morning! Let''s see what Nintendo is going to show off today. 
 
 #nintendodirect #donkeykong #giantbomb', 'https://i.ytimg.com/vi/PWRZtzf84yM/mqdefault.jpg', '2025-06-18 13:34:44+00', '''banana'':9B ''direct'':3A ''donkey'':1A ''donkeykong'':27B ''earli'':11B ''giantbomb'':28B ''go'':8B,21B ''kong'':2A ''let'':15B ''morn'':14B ''nintendo'':19B ''nintendodirect'':26B ''re'':7B ''see'':17B ''show'':23B ''talk'':5A ''today'':25B', false, 'PT28M28S', 'https://i.ytimg.com/vi/PWRZtzf84yM/maxresdefault.jpg'),
-	('QJC3vLrUX_Y', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 1-7 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
-
-We got Russ Frushtick, Brad Shoemaker, Niki Grayson, Abby Russell, and Jeff Bakalar on the couch! We end the evening with talking about the Switch LITE and Doordashing consoles, using games to learn another language, and if Mario Kart World is good. 
-
-Thanks to our friends at Annapurna Interactive for presenting this stream!
-
-Thanks to Young Horses for their support of Giant Bomb @ Nite! Bugsnax VR is out now, go play it!
-Sign up for the Young Horses newsletter here: http://eepurl.com/g5DUzT
-And check out their Steam page! https://store.steampowered.com/developer/younghorses/ 
-
-#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/QJC3vLrUX_Y/mqdefault.jpg', '2025-06-11 23:30:07+00', '''-7'':10A ''/developer/younghorses/'':131B ''/g5duzt'':122B ''1'':9A ''abbi'':48B ''angel'':21B ''annapurna'':13A,87B ''anoth'':73B ''around'':30B ''bakalar'':52B ''bomb'':2A,102B ''brad'':44B ''bugsnax'':104B ''check'':124B ''consol'':68B ''couch'':18B,55B ''doordash'':67B ''eepurl.com'':121B ''eepurl.com/g5duzt'':120B ''end'':57B ''even'':59B ''found'':16B ''friend'':27B,85B ''frushtick'':43B ''game'':70B ''get'':25B ''giant'':1A,101B ''giantbomb'':134B ''go'':109B ''good'':81B ''got'':41B ''grayson'':47B ''hang'':34B ''hors'':96B,117B ''industri'':32B ''interact'':14A,88B ''jeff'':51B ''kart'':78B ''languag'':74B ''learn'':72B ''lite'':65B ''los'':20B ''mario'':77B ''newslett'':118B ''niki'':46B ''nite'':3A,8A,103B ''page'':128B ''play'':110B ''present'':11A,90B ''re'':24B ''russ'':42B ''russel'':49B ''sgf'':132B ''shoemak'':45B ''sign'':112B ''steam'':127B ''store.steampowered.com'':130B ''store.steampowered.com/developer/younghorses/'':129B ''stream'':92B ''summergamefest'':133B ''support'':99B ''switch'':64B ''talk'':61B ''thank'':82B,93B ''use'':69B ''villa'':7A,39B ''vr'':105B ''warfram'':6A,38B ''world'':79B ''young'':95B,116B', false, 'PT44M39S', 'https://i.ytimg.com/vi/QJC3vLrUX_Y/maxresdefault.jpg'),
 	('QSbUCEl7SU8', 'giantbomb', 'REMATCH against MinnMax! | Unprofessional Fridays', 'Bakalar, Dan, and Grubb put on a pair of cleats to take on MinnMax to see who can do best at real life Rocket League! 
 
 #rematch #giantbomb #upf #unprofessionalfridays', 'https://i.ytimg.com/vi/QSbUCEl7SU8/mqdefault.jpg', '2025-06-27 20:33:34+00', '''bakalar'':6B ''best'':25B ''cleat'':15B ''dan'':7B ''friday'':5A ''giantbomb'':32B ''grubb'':9B ''leagu'':30B ''life'':28B ''minnmax'':3A,19B ''pair'':13B ''put'':10B ''real'':27B ''rematch'':1A,31B ''rocket'':29B ''see'':21B ''take'':17B ''unprofession'':4A ''unprofessionalfriday'':34B ''upf'':33B', false, 'PT1H13M38S', 'https://i.ytimg.com/vi/QSbUCEl7SU8/maxresdefault.jpg'),
 	('BoReAT8Nt9s', 'giantbomb', 'A Quick Look at Death Stranding 2', 'Dan Ryckert takes Jeff Grubb on a long hike through the world of Death Stranding 2 and find some time to relax in some hot springs.
 
 #deathstranding2 #ds2 #quicklook #giantbomb', 'https://i.ytimg.com/vi/BoReAT8Nt9s/mqdefault.jpg', '2025-06-26 04:00:12+00', '''2'':7A,23B ''dan'':8B ''death'':5A,21B ''deathstranding2'':34B ''ds2'':35B ''find'':25B ''giantbomb'':37B ''grubb'':12B ''hike'':16B ''hot'':32B ''jeff'':11B ''long'':15B ''look'':3A ''quick'':2A ''quicklook'':36B ''relax'':29B ''ryckert'':9B ''spring'':33B ''strand'':6A,22B ''take'':10B ''time'':27B ''world'':19B', false, 'PT52M20S', 'https://i.ytimg.com/vi/BoReAT8Nt9s/maxresdefault.jpg'),
+	('1pfYGGySrhI', 'giantbomb', 'Rascal (PS1) | 05 | Blight Club', 'Will Mike Minotti make any progress today on Blight Club? Will he be able to figure out what any of the buttons or crabs do? Tune in to find out! 
+
+#blightclub #giantbomb #badgames #rascal', 'https://i.ytimg.com/vi/1pfYGGySrhI/mqdefault.jpg', '2025-06-18 20:21:00+00', '''05'':3A ''abl'':19B ''badgam'':38B ''blight'':4A,14B ''blightclub'':36B ''button'':27B ''club'':5A,15B ''crab'':29B ''figur'':21B ''find'':34B ''giantbomb'':37B ''make'':9B ''mike'':7B ''minotti'':8B ''progress'':11B ''ps1'':2A ''rascal'':1A,39B ''today'':12B ''tune'':31B', false, 'PT1H53M28S', 'https://i.ytimg.com/vi/1pfYGGySrhI/maxresdefault.jpg'),
 	('fzgX_arrhSM', 'giantbomb', 'Very accurate physics in PEAK  #giantbomb #peak', 'We played PEAK and climbing is not the most dangerous thing around! 
 
 Check out the full video:
@@ -59467,33 +59467,12 @@ https://youtube.com/live/lSOOodKYyyU', 'https://i.ytimg.com/vi/fzgX_arrhSM/mqdef
 	('1RtxC1wF98Q', 'remap', 'Patrick vs. Hopshot [Part 4]', 'It''s Happening Again. Your favorite bubble gum is coming back in style. Patrick is debuting a new costume. He swears he''ll beat the game this time. But will he?
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/1RtxC1wF98Q/mqdefault.jpg', '2025-05-20 18:51:12+00', '''4'':5A ''audienc'':40B ''back'':16B ''beat'':29B ''bubbl'':12B ''come'':15B ''consid'':50B ''content'':48B ''continu'':45B ''costum'':24B ''debut'':21B ''favorit'':11B ''game'':31B ''gum'':13B ''happen'':8B ''help'':43B ''hopshot'':3A ''ll'':28B ''make'':46B ''new'':23B ''part'':4A ''patrick'':1A,19B ''pleas'':49B ''radio'':38B ''remap'':37B ''style'':18B ''subscrib'':51B ''support'':41B ''swear'':26B ''time'':33B ''us'':44B ''vs'':2A ''www.remapradio.com'':53B', false, 'PT2H41M50S', 'https://i.ytimg.com/vi/1RtxC1wF98Q/maxresdefault.jpg'),
-	('1pfYGGySrhI', 'giantbomb', 'Rascal (PS1) | 05 | Blight Club', 'Will Mike Minotti make any progress today on Blight Club? Will he be able to figure out what any of the buttons or crabs do? Tune in to find out! 
-
-#blightclub #giantbomb #badgames #rascal', 'https://i.ytimg.com/vi/1pfYGGySrhI/mqdefault.jpg', '2025-06-18 20:21:00+00', '''05'':3A ''abl'':19B ''badgam'':38B ''blight'':4A,14B ''blightclub'':36B ''button'':27B ''club'':5A,15B ''crab'':29B ''figur'':21B ''find'':34B ''giantbomb'':37B ''make'':9B ''mike'':7B ''minotti'':8B ''progress'':11B ''ps1'':2A ''rascal'':1A,39B ''today'':12B ''tune'':31B', false, 'PT1H53M28S', 'https://i.ytimg.com/vi/1pfYGGySrhI/maxresdefault.jpg'),
-	('2qSFIMRtrNQ', 'remap', 'Steam Next Fest Lightning Round [Part 2]', 'We''re headed back into Steam Next Fest, with Patrick and Cado playing another bouncy of interesting games. First up, can we manage to take Baby Steps?
-
-Timestamps:
-09:00 Baby Steps
-30:57 Everdeep Aurora
-48:15 Ninja Gaiden: Ragebound
-01:41 Morse
-01:18:10 Ooo
-01:32:00 The Drifter
-01:45:15 Solitaire of Stygian Shadows
-01:59:36 Consume Me
-02:15:52 Unbeatable
-02:31:03 Cast ''n Chill
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/2qSFIMRtrNQ/mqdefault.jpg', '2025-06-17 18:25:13+00', '''00'':37B,58B ''01'':49B,52B,56B,61B,68B ''02'':73B,77B ''03'':79B ''09'':36B ''10'':54B ''15'':45B,63B,74B ''18'':53B ''2'':7A ''30'':40B ''31'':78B ''32'':57B ''36'':70B ''41'':50B ''45'':62B ''48'':44B ''52'':75B ''57'':41B ''59'':69B ''anoth'':21B ''audienc'':86B ''aurora'':43B ''babi'':33B,38B ''back'':11B ''bounci'':22B ''cado'':19B ''cast'':80B ''chill'':82B ''consid'':96B ''consum'':71B ''content'':94B ''continu'':91B ''drifter'':60B ''everdeep'':42B ''fest'':3A,15B ''first'':26B ''gaiden'':47B ''game'':25B ''head'':10B ''help'':89B ''interest'':24B ''lightn'':4A ''make'':92B ''manag'':30B ''mors'':51B ''n'':81B ''next'':2A,14B ''ninja'':46B ''ooo'':55B ''part'':6A ''patrick'':17B ''play'':20B ''pleas'':95B ''radio'':84B ''ragebound'':48B ''re'':9B ''remap'':83B ''round'':5A ''shadow'':67B ''solitair'':64B ''steam'':1A,13B ''step'':34B,39B ''stygian'':66B ''subscrib'':97B ''support'':87B ''take'':32B ''timestamp'':35B ''unbeat'':76B ''us'':90B ''www.remapradio.com'':99B', false, 'PT2H47M56S', 'https://i.ytimg.com/vi/2qSFIMRtrNQ/maxresdefault.jpg'),
 	('GKBG84h7ggk', 'remap', 'Giving AI to Children Seems Like a Terrible Idea', 'Rob and Patrick have a slight mental break while considering the prospects of AI entering the lives of children. This podcast is a segment from HOA, a subscriber-only Remap podcast about the spaces we live in.
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/GKBG84h7ggk/mqdefault.jpg', '2025-05-15 16:53:46+00', '''ai'':2A,23B ''audienc'':51B ''break'':17B ''children'':4A,28B ''consid'':19B,61B ''content'':59B ''continu'':56B ''enter'':24B ''give'':1A ''help'':54B ''hoa'':35B ''idea'':9A ''like'':6A ''live'':26B,46B ''make'':57B ''mental'':16B ''patrick'':12B ''pleas'':60B ''podcast'':30B,41B ''prospect'':21B ''radio'':49B ''remap'':40B,48B ''rob'':10B ''seem'':5A ''segment'':33B ''slight'':15B ''space'':44B ''subscrib'':38B,62B ''subscriber-on'':37B ''support'':52B ''terribl'':8A ''us'':55B ''www.remapradio.com'':64B', false, 'PT18M53S', 'https://i.ytimg.com/vi/GKBG84h7ggk/maxresdefault.jpg'),
 	('-IKsRwmIxsE', 'remap', 'Patrick vs. Hopshot [Part 3]', 'Is this the final journey? Will all this hopping come to an end? Does Patrick have a funny costume? The answers will surprise you!
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/-IKsRwmIxsE/mqdefault.jpg', '2025-05-13 19:56:57+00', '''3'':5A ''answer'':26B ''audienc'':33B ''come'':15B ''consid'':43B ''content'':41B ''continu'':38B ''costum'':24B ''end'':18B ''final'':9B ''funni'':23B ''help'':36B ''hop'':14B ''hopshot'':3A ''journey'':10B ''make'':39B ''part'':4A ''patrick'':1A,20B ''pleas'':42B ''radio'':31B ''remap'':30B ''subscrib'':44B ''support'':34B ''surpris'':28B ''us'':37B ''vs'':2A ''www.remapradio.com'':46B', false, 'PT2H23M52S', 'https://i.ytimg.com/vi/-IKsRwmIxsE/maxresdefault.jpg'),
-	('4vbEX_Q87xM', 'remap', 'Why Do We Call Games "Metroidvanias"?', 'If Metroidvania was a math problem, what percentage is "Metroid" and what percentage is "Castlevania"? An exploration of the ongoing confusion over what video game genres are trying to accomplish. What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/4vbEX_Q87xM/mqdefault.jpg', '2025-06-02 14:00:15+00', '''/us/podcast/remap-radio/id1690437343'':58B ''accomplish'':36B ''audienc'':62B ''call'':4A ''castlevania'':21B ''confus'':27B ''consid'':72B ''content'':70B ''continu'':67B ''episod'':48B ''explor'':23B ''full'':47B ''game'':5A,31B ''genr'':32B ''help'':65B ''listen'':40B ''make'':68B ''math'':11B ''metroid'':16B ''metroidvania'':6A,8B ''ongo'':26B ''percentag'':14B,19B ''pleas'':71B ''podcast'':55B ''podcasts.apple.com'':57B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':56B ''problem'':12B ''radio'':51B,60B ''re'':39B ''remap'':50B,59B ''segment'':44B ''subscrib'':52B,73B ''support'':63B ''tri'':34B ''us'':66B ''video'':30B ''www.remapradio.com'':75B', false, 'PT22M19S', 'https://i.ytimg.com/vi/4vbEX_Q87xM/maxresdefault.jpg'),
 	('yDQtLQXEksI', 'remap', 'Hey, Uh, Where''s My Switch 2?', 'That feeling when a Switch 2 shows up at your door but someone else signs up for it. #shorts
 
 https://www.twitch.tv/remapradio', 'https://i.ytimg.com/vi/yDQtLQXEksI/mqdefault.jpg', '2025-06-19 17:15:22+00', '''/remapradio'':29B ''2'':7A,13B ''door'':18B ''els'':21B ''feel'':9B ''hey'':1A ''short'':26B ''show'':14B ''sign'':22B ''someon'':20B ''switch'':6A,12B ''uh'':2A ''www.twitch.tv'':28B ''www.twitch.tv/remapradio'':27B', false, 'PT42S', NULL),
@@ -59508,6 +59487,9 @@ Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/Fa6I3CAz7uE/mqdefault.jpg', '2025-04-22 23:19:26+00', '''/nextlander'':48B ''2'':36B ''alex'':18B,29B ''bloom'':5A ''communiti'':45B ''conclus'':16B ''dive'':33B ''hill'':19B ''lost'':13A,38B ''nextland'':40B ''part'':35B ''rage'':11A ''record'':14A,39B ''seen'':3A ''support'':42B ''thank'':49B ''time'':9A ''ve'':2A ''vinni'':27B ''wait'':23B ''watch'':51B ''week'':25B ''www.patreon.com'':47B ''www.patreon.com/nextlander'':46B', false, 'PT2H45M10S', 'https://i.ytimg.com/vi/Fa6I3CAz7uE/maxresdefault.jpg'),
+	('4vzM5tQljOw', 'remap', 'Remap Dives Back into FBC Firebreak', 'We were so charmed by Remedy''s multiplayer game that we couldn''t help but dive back into the world of Sticky Ricky and friends.
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/4vzM5tQljOw/mqdefault.jpg', '2025-06-26 02:32:59+00', '''audienc'':35B ''back'':3A,23B ''charm'':10B ''consid'':45B ''content'':43B ''continu'':40B ''couldn'':18B ''dive'':2A,22B ''fbc'':5A ''firebreak'':6A ''friend'':31B ''game'':15B ''help'':20B,38B ''make'':41B ''multiplay'':14B ''pleas'':44B ''radio'':33B ''remap'':1A,32B ''remedi'':12B ''ricki'':29B ''sticki'':28B ''subscrib'':46B ''support'':36B ''us'':39B ''world'':26B ''www.remapradio.com'':48B', false, 'PT1H50M21S', 'https://i.ytimg.com/vi/4vzM5tQljOw/maxresdefault.jpg'),
 	('BkWSiH00qEs', 'giantbomb', 'Giant Bomb @ Nite, LIVE from the Warframe Villa! | Presented by Annapurna Interactive | Nite 2', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
 
 Thanks to our friends at Annapurna Interactive for presenting this stream!
@@ -59521,41 +59503,15 @@ And check out their Steam page! https://store.steampowered.com/developer/youngho
 	('LczJ2eC7x6c', 'giantbomb', 'Microsoft is Pausing Development on Xbox Handheld | Game Mess Mornings 05/30/25', 'Jeff Grubb is joined by Jason Fanelli to chat about morale at EA being an all-time low amidst studio closures and more potential layoffs, Microsoft pausing development on the rumored Xbox handheld, Elden Ring: Nightreign exploding on Steam, MultiVersus is shutting down now, and even more news to end the week! 
 
 #gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/LczJ2eC7x6c/mqdefault.jpg', '2025-05-30 16:07:08+00', '''05/30/25'':11A ''all-tim'':27B ''amidst'':31B ''chat'':20B ''closur'':33B ''develop'':4A,40B ''ea'':24B ''elden'':46B ''end'':62B ''even'':58B ''explod'':49B ''fanelli'':18B ''game'':8A ''gamemessmorn'':66B ''giantbomb'':67B ''gmm'':65B ''grubb'':13B ''handheld'':7A,45B ''jason'':17B ''jeff'':12B ''join'':15B ''layoff'':37B ''low'':30B ''mess'':9A ''microsoft'':1A,38B ''moral'':22B ''morn'':10A ''multiversus'':52B ''news'':60B ''nightreign'':48B ''paus'':3A,39B ''potenti'':36B ''ring'':47B ''rumor'':43B ''shut'':54B ''steam'':51B ''studio'':32B ''time'':29B ''videogamenew'':68B ''week'':64B ''xbox'':6A,44B', false, 'PT1H10S', 'https://i.ytimg.com/vi/LczJ2eC7x6c/maxresdefault.jpg'),
-	('4vzM5tQljOw', 'remap', 'Remap Dives Back into FBC Firebreak', 'We were so charmed by Remedy''s multiplayer game that we couldn''t help but dive back into the world of Sticky Ricky and friends.
+	('UAa9dzxBTtk', 'remap', 'Save Point 2024 — Ranking Video Game Console Startups (Part 2)', 'Who knew the best way to raise money for charity was to watch YouTube videos on loop for hours?
 
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/4vzM5tQljOw/mqdefault.jpg', '2025-06-26 02:32:59+00', '''audienc'':35B ''back'':3A,23B ''charm'':10B ''consid'':45B ''content'':43B ''continu'':40B ''couldn'':18B ''dive'':2A,22B ''fbc'':5A ''firebreak'':6A ''friend'':31B ''game'':15B ''help'':20B,38B ''make'':41B ''multiplay'':14B ''pleas'':44B ''radio'':33B ''remap'':1A,32B ''remedi'':12B ''ricki'':29B ''sticki'':28B ''subscrib'':46B ''support'':36B ''us'':39B ''world'':26B ''www.remapradio.com'':48B', false, 'PT1H50M21S', 'https://i.ytimg.com/vi/4vzM5tQljOw/maxresdefault.jpg'),
-	('164N0JABnkE', 'remap', 'Riding Summer Game Fest into Steam Next Fest', 'Summer Game Fest might be over, but Steam Next Fest is here, and we''ve got Janet and Chia checking out a ton of cool games.
-
-Timestamps:
-00:07:12 — Windswept
-00:18:49 — Into the Grid
-00:34:01 — ILA: A Frosty Glide
-00:45:21 — Soul Nexus
-00:58:25 — Flick Shot Rogues
-01:12:06 — Ratatan
-01:25:21 — Anura
-01:36:42 — MotionRec
-01:48:41 — Vessels of Decay
-02:00:48 — The Hatchling
-02:13:32 — Tired to Fall
-02:25:29 — Crown Gambit
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/164N0JABnkE/mqdefault.jpg', '2025-06-11 20:36:11+00', '''00'':36B,40B,46B,53B,58B,83B ''01'':48B,64B,68B,72B,76B ''02'':82B,87B,93B ''06'':66B ''07'':37B ''12'':38B,65B ''13'':88B ''18'':41B ''21'':55B,70B ''25'':60B,69B,94B ''29'':95B ''32'':89B ''34'':47B ''36'':73B ''41'':78B ''42'':74B ''45'':54B ''48'':77B,84B ''49'':42B ''58'':59B ''anura'':71B ''audienc'':101B ''check'':28B ''chia'':27B ''consid'':111B ''content'':109B ''continu'':106B ''cool'':33B ''crown'':96B ''decay'':81B ''fall'':92B ''fest'':4A,8A,11B,18B ''flick'':61B ''frosti'':51B ''gambit'':97B ''game'':3A,10B,34B ''glide'':52B ''got'':24B ''grid'':45B ''hatchl'':86B ''help'':104B ''ila'':49B ''janet'':25B ''make'':107B ''might'':12B ''motionrec'':75B ''next'':7A,17B ''nexus'':57B ''pleas'':110B ''radio'':99B ''ratatan'':67B ''remap'':98B ''ride'':1A ''rogu'':63B ''shot'':62B ''soul'':56B ''steam'':6A,16B ''subscrib'':112B ''summer'':2A,9B ''support'':102B ''timestamp'':35B ''tire'':90B ''ton'':31B ''us'':105B ''ve'':23B ''vessel'':79B ''windswept'':39B ''www.remapradio.com'':114B', false, 'PT2H41M34S', 'https://i.ytimg.com/vi/164N0JABnkE/maxresdefault.jpg'),
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/UAa9dzxBTtk/mqdefault.jpg', '2024-11-19 19:31:27+00', '''2'':10A ''2024'':3A ''audienc'':33B ''best'':14B ''chariti'':20B ''consid'':43B ''consol'':7A ''content'':41B ''continu'':38B ''game'':6A ''help'':36B ''hour'':29B ''knew'':12B ''loop'':27B ''make'':39B ''money'':18B ''part'':9A ''pleas'':42B ''point'':2A ''radio'':31B ''rais'':17B ''rank'':4A ''remap'':30B ''save'':1A ''startup'':8A ''subscrib'':44B ''support'':34B ''us'':37B ''video'':5A,25B ''watch'':23B ''way'':15B ''www.remapradio.com'':46B ''youtub'':24B', false, 'PT2H20M6S', 'https://i.ytimg.com/vi/UAa9dzxBTtk/maxresdefault.jpg'),
 	('b-u7xrRFU8Q', 'nextlander', 'It''s Time to Return to Helldivers 2!', 'Will Smith joins us for our Monday Multiplayer Mayhem to revisit Helldivers 2!
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/b-u7xrRFU8Q/mqdefault.jpg', '2025-04-14 23:36:17+00', '''/nextlander'':30B ''2'':8A,21B ''communiti'':27B ''helldiv'':7A,20B ''join'':11B ''mayhem'':17B ''monday'':15B ''multiplay'':16B ''nextland'':22B ''return'':5A ''revisit'':19B ''smith'':10B ''support'':24B ''thank'':31B ''time'':3A ''us'':12B ''watch'':33B ''www.patreon.com'':29B ''www.patreon.com/nextlander'':28B', false, 'PT2H25M32S', 'https://i.ytimg.com/vi/b-u7xrRFU8Q/maxresdefault.jpg'),
-	('UAa9dzxBTtk', 'remap', 'Save Point 2024 — Ranking Video Game Console Startups (Part 2)', 'Who knew the best way to raise money for charity was to watch YouTube videos on loop for hours?
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/UAa9dzxBTtk/mqdefault.jpg', '2024-11-19 19:31:27+00', '''2'':10A ''2024'':3A ''audienc'':33B ''best'':14B ''chariti'':20B ''consid'':43B ''consol'':7A ''content'':41B ''continu'':38B ''game'':6A ''help'':36B ''hour'':29B ''knew'':12B ''loop'':27B ''make'':39B ''money'':18B ''part'':9A ''pleas'':42B ''point'':2A ''radio'':31B ''rais'':17B ''rank'':4A ''remap'':30B ''save'':1A ''startup'':8A ''subscrib'':44B ''support'':34B ''us'':37B ''video'':5A,25B ''watch'':23B ''way'':15B ''www.remapradio.com'':46B ''youtub'':24B', false, 'PT2H20M6S', 'https://i.ytimg.com/vi/UAa9dzxBTtk/maxresdefault.jpg'),
-	('ebwzoHh-6MU', 'nextlander', 'The Clue Crew Investigates ''Who is Abby''!', 'Who is Abby? We have Abby Russell here to answer that question, because we can''t think of anyone better to weigh in.
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/ebwzoHh-6MU/mqdefault.jpg', '2025-05-27 21:21:57+00', '''/nextlander'':39B ''abbi'':7A,10B,13B ''answer'':17B ''anyon'':26B ''better'':27B ''clue'':2A ''communiti'':36B ''crew'':3A ''investig'':4A ''nextland'':31B ''question'':19B ''russel'':14B ''support'':33B ''thank'':40B ''think'':24B ''watch'':42B ''weigh'':29B ''www.patreon.com'':38B ''www.patreon.com/nextlander'':37B', false, 'PT2H2M11S', 'https://i.ytimg.com/vi/ebwzoHh-6MU/maxresdefault.jpg'),
 	('CApxQO5YnY4', 'nextlander', 'Another Peek at Peak!', 'Let''s climb a mountain together! Or several of them!
 
 Nextlander is supported by its community:
@@ -59568,6 +59524,18 @@ Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/EkFLq9_VfGA/mqdefault.jpg', '2025-06-13 19:55:41+00', '''/nextlander'':40B ''assassin'':5A ''communiti'':37B ''danc'':19B ''elus'':30B ''friday'':1A ''fun'':2A ''hitman'':18B ''hitmen'':11A ''let'':14B ''mad'':7A ''mikkelsen'':8A ''nextland'':13A,32B ''see'':21B ''stream'':3A ''support'':34B ''take'':27B ''target'':31B ''thank'':41B ''us'':25B ''watch'':43B ''www.patreon.com'':39B ''www.patreon.com/nextlander'':38B', false, 'PT2H27S', 'https://i.ytimg.com/vi/EkFLq9_VfGA/maxresdefault.jpg'),
+	('ebwzoHh-6MU', 'nextlander', 'The Clue Crew Investigates ''Who is Abby''!', 'Who is Abby? We have Abby Russell here to answer that question, because we can''t think of anyone better to weigh in.
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/ebwzoHh-6MU/mqdefault.jpg', '2025-05-27 21:21:57+00', '''/nextlander'':39B ''abbi'':7A,10B,13B ''answer'':17B ''anyon'':26B ''better'':27B ''clue'':2A ''communiti'':36B ''crew'':3A ''investig'':4A ''nextland'':31B ''question'':19B ''russel'':14B ''support'':33B ''thank'':40B ''think'':24B ''watch'':42B ''weigh'':29B ''www.patreon.com'':38B ''www.patreon.com/nextlander'':37B', false, 'PT2H2M11S', 'https://i.ytimg.com/vi/ebwzoHh-6MU/maxresdefault.jpg'),
+	('HsjyU4mLwnM', 'nextlander', 'DRUUUUUUUGS! Our Journey into Schedule I!', 'We''re going to build a criminal empire! In a video game! Criminal video game empires!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/HsjyU4mLwnM/mqdefault.jpg', '2025-04-07 15:56:17+00', '''/nextlander'':30B ''build'':10B ''communiti'':27B ''crimin'':12B,18B ''druuuuuuug'':1A ''empir'':13B,21B ''game'':17B,20B ''go'':8B ''journey'':3A ''nextland'':22B ''re'':7B ''schedul'':5A ''support'':24B ''thank'':31B ''video'':16B,19B ''watch'':33B ''www.patreon.com'':29B ''www.patreon.com/nextlander'':28B', false, 'PT2H3M11S', 'https://i.ytimg.com/vi/HsjyU4mLwnM/maxresdefault.jpg'),
 	('lQOVwW_UKcs', 'nextlander', 'Us and 30 of Our Closest Friends', 'Gonna get a little posse together and play some 33 Immortals!
 
 Nextlander is supported by its community:
@@ -59580,12 +59548,6 @@ Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/h7N9K-W4kNA/mqdefault.jpg', '2025-03-04 20:49:10+00', '''/nextlander'':41B ''bloom'':12A,31B ''communiti'':38B ''current'':25B ''finish'':5A,17B ''first'':7A ''gonna'':16B ''half'':8A,27B ''let'':1A ''lost'':10A,29B ''mean'':23B ''nextland'':33B ''rage'':13A,32B ''record'':11A,30B ''releas'':26B ''support'':35B ''thank'':42B ''tri'':3A ''watch'':44B ''www.patreon.com'':40B ''www.patreon.com/nextlander'':39B', false, 'PT2H9M59S', 'https://i.ytimg.com/vi/h7N9K-W4kNA/maxresdefault.jpg'),
-	('HsjyU4mLwnM', 'nextlander', 'DRUUUUUUUGS! Our Journey into Schedule I!', 'We''re going to build a criminal empire! In a video game! Criminal video game empires!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/HsjyU4mLwnM/mqdefault.jpg', '2025-04-07 15:56:17+00', '''/nextlander'':30B ''build'':10B ''communiti'':27B ''crimin'':12B,18B ''druuuuuuug'':1A ''empir'':13B,21B ''game'':17B,20B ''go'':8B ''journey'':3A ''nextland'':22B ''re'':7B ''schedul'':5A ''support'':24B ''thank'':31B ''video'':16B,19B ''watch'':33B ''www.patreon.com'':29B ''www.patreon.com/nextlander'':28B', false, 'PT2H3M11S', 'https://i.ytimg.com/vi/HsjyU4mLwnM/maxresdefault.jpg'),
 	('ssiE-LQJwxA', 'nextlander', 'Solving Crimes in Alex Hill: Whispers at White Oak Inn! (Part 02)', 'Things are heating up and escalating quickly as we continue to investigate this "ghost"!
 
 Nextlander is supported by its community:
@@ -59625,18 +59587,18 @@ Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/0uu0FOlhM2E/mqdefault.jpg', '2025-06-16 23:29:27+00', '''/nextlander'':29B ''climb'':13B ''communiti'':26B ''could'':18B ''difficult'':17B ''join'':8B ''mountain'':15B ''nextland'':5A,21B ''peak'':4A ''smith'':7B ''stream'':2A ''support'':23B ''thank'':30B ''tri'':11B ''us'':9B ''watch'':32B ''www.patreon.com'':28B ''www.patreon.com/nextlander'':27B', false, 'PT2H23M36S', 'https://i.ytimg.com/vi/0uu0FOlhM2E/maxresdefault.jpg'),
-	('O7jh9bKrf84', 'nextlander', 'Vinny and Will Tame a Savage Planet (Again!)', 'Come party with us as we run around like maniacs and cover each other with goo!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/O7jh9bKrf84/mqdefault.jpg', '2025-05-12 23:37:27+00', '''/nextlander'':32B ''around'':15B ''come'':8B ''communiti'':29B ''cover'':19B ''goo'':23B ''like'':16B ''maniac'':17B ''nextland'':24B ''parti'':9B ''planet'':7A ''run'':14B ''savag'':6A ''support'':26B ''tame'':4A ''thank'':33B ''us'':11B ''vinni'':1A ''watch'':35B ''www.patreon.com'':31B ''www.patreon.com/nextlander'':30B', false, 'PT2H22M48S', 'https://i.ytimg.com/vi/O7jh9bKrf84/maxresdefault.jpg'),
 	('EQp7KnfrQMM', 'nextlander', 'Friday Fun Stream: Truckin'' into the Weekend in American Truck Simulator', 'Vinny and Alex are ready to get back behind the wheel and transport you all to a magical world of 16-wheelers and oversized cargo!
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/EQp7KnfrQMM/mqdefault.jpg', '2025-05-16 21:11:25+00', '''/nextlander'':45B ''16'':32B ''alex'':14B ''american'':9A ''back'':19B ''behind'':20B ''cargo'':36B ''communiti'':42B ''friday'':1A ''fun'':2A ''get'':18B ''magic'':29B ''nextland'':37B ''overs'':35B ''readi'':16B ''simul'':11A ''stream'':3A ''support'':39B ''thank'':46B ''transport'':24B ''truck'':10A ''truckin'':4A ''vinni'':12B ''watch'':48B ''weekend'':7A ''wheel'':22B ''wheeler'':33B ''world'':30B ''www.patreon.com'':44B ''www.patreon.com/nextlander'':43B', false, 'PT2H48M58S', 'https://i.ytimg.com/vi/EQp7KnfrQMM/maxresdefault.jpg'),
+	('O7jh9bKrf84', 'nextlander', 'Vinny and Will Tame a Savage Planet (Again!)', 'Come party with us as we run around like maniacs and cover each other with goo!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/O7jh9bKrf84/mqdefault.jpg', '2025-05-12 23:37:27+00', '''/nextlander'':32B ''around'':15B ''come'':8B ''communiti'':29B ''cover'':19B ''goo'':23B ''like'':16B ''maniac'':17B ''nextland'':24B ''parti'':9B ''planet'':7A ''run'':14B ''savag'':6A ''support'':26B ''tame'':4A ''thank'':33B ''us'':11B ''vinni'':1A ''watch'':35B ''www.patreon.com'':31B ''www.patreon.com/nextlander'':30B', false, 'PT2H22M48S', 'https://i.ytimg.com/vi/O7jh9bKrf84/maxresdefault.jpg'),
 	('WwXCUmV-Hhw', 'nextlander', 'Let''s Finish Alex Hill!', 'Abby''s back, and it''s time to solve a mystery! Maybe even rewrite history?!
 
 Nextlander is supported by its community:
@@ -59664,6 +59626,12 @@ Thanks for watching.', 'https://i.ytimg.com/vi/xYQzSZagFLY/mqdefault.jpg', '2025
 	('7sDpPjWzGeQ', 'giantbomb', 'Sony Has Ideas for the PlayStation 6 | Game Mess Mornings 06/13/25', 'Jeff Grubb and Jesse Norris from XboxEra end the week with a slew of updates from PlayStation like the possibility of a PlayStation 6, more monthly players are finally on the PlayStation 5, pricing adjustments coming to PS Plus, and more news in and around the industry! 
 
 #gmm #gamemessmornings #giantbomb', 'https://i.ytimg.com/vi/7sDpPjWzGeQ/mqdefault.jpg', '2025-06-13 16:11:53+00', '''06/13/25'':11A ''5'':44B ''6'':7A,35B ''adjust'':46B ''around'':56B ''come'':47B ''end'':19B ''final'':40B ''game'':8A ''gamemessmorn'':60B ''giantbomb'':61B ''gmm'':59B ''grubb'':13B ''idea'':3A ''industri'':58B ''jeff'':12B ''jess'':15B ''like'':29B ''mess'':9A ''month'':37B ''morn'':10A ''news'':53B ''norri'':16B ''player'':38B ''playstat'':6A,28B,34B,43B ''plus'':50B ''possibl'':31B ''price'':45B ''ps'':49B ''slew'':24B ''soni'':1A ''updat'':26B ''week'':21B ''xboxera'':18B', false, 'PT1H32S', 'https://i.ytimg.com/vi/7sDpPjWzGeQ/maxresdefault.jpg'),
+	('5z1MYHh0Ct0', 'nextlander', 'Nextlander Returns to the X-Files FMV! (Part 03)', 'Things are getting serious, not only with action but with the special appearances in the game!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/5z1MYHh0Ct0/mqdefault.jpg', '2025-03-14 19:38:43+00', '''/nextlander'':35B ''03'':10A ''action'':18B ''appear'':23B ''communiti'':32B ''file'':7A ''fmv'':8A ''game'':26B ''get'':13B ''nextland'':1A,27B ''part'':9A ''return'':2A ''serious'':14B ''special'':22B ''support'':29B ''thank'':36B ''thing'':11B ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B ''x'':6A ''x-file'':5A', false, 'PT1H51M45S', 'https://i.ytimg.com/vi/5z1MYHh0Ct0/maxresdefault.jpg'),
 	('ivJCbeqUCd8', 'giantbomb', 'System Shock 25th Anniversary Remaster | GB Plays EX', 'System Shock the monkey (Jeff Grubb).
 
 #systemshock2 #giantbomb', 'https://i.ytimg.com/vi/ivJCbeqUCd8/mqdefault.jpg', '2025-06-25 17:46:07+00', '''25th'':3A ''anniversari'':4A ''ex'':8A ''gb'':6A ''giantbomb'':16B ''grubb'':14B ''jeff'':13B ''monkey'':12B ''play'':7A ''remast'':5A ''shock'':2A,10B ''system'':1A,9B ''systemshock2'':15B', false, 'PT38M40S', 'https://i.ytimg.com/vi/ivJCbeqUCd8/maxresdefault.jpg'),
@@ -59676,49 +59644,20 @@ Thanks to our friends at Annapurna Interactive for presenting this stream!
 Thanks to popagenda for letting us debut their awesome new logo! Check them out here: https://popagenda.co/
 
 #sgf #summergamefest #giantbomb', 'https://i.ytimg.com/vi/foaNXrT-UPU/mqdefault.jpg', '2025-06-11 20:18:53+00', '''-1'':10A ''1'':9A ''angel'':21B ''annapurna'':13A,72B ''around'':30B ''awesom'':86B ''bomb'':2A ''carson'':46B ''celebr'':62B ''check'':89B ''couch'':18B,49B ''debut'':84B ''found'':16B ''friend'':27B,70B ''get'':25B ''giant'':1A ''giantbomb'':96B ''got'':41B ''hang'':34B ''hard'':66B ''industri'':32B ''interact'':14A,73B ''jess'':42B ''john'':45B ''let'':82B ''littl'':64B ''logo'':88B ''los'':20B ''new'':87B ''nite'':3A,8A ''popagenda'':80B ''popagenda.co'':93B ''premier'':57B ''present'':11A,75B ''re'':24B ''segment'':52B ''sgf'':94B ''stream'':77B ''summergamefest'':95B ''thank'':67B,78B ''us'':83B ''villa'':7A,39B ''vitelli'':43B ''warfram'':6A,38B ''world'':56B', false, 'PT18M58S', 'https://i.ytimg.com/vi/foaNXrT-UPU/maxresdefault.jpg'),
-	('5z1MYHh0Ct0', 'nextlander', 'Nextlander Returns to the X-Files FMV! (Part 03)', 'Things are getting serious, not only with action but with the special appearances in the game!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/5z1MYHh0Ct0/mqdefault.jpg', '2025-03-14 19:38:43+00', '''/nextlander'':35B ''03'':10A ''action'':18B ''appear'':23B ''communiti'':32B ''file'':7A ''fmv'':8A ''game'':26B ''get'':13B ''nextland'':1A,27B ''part'':9A ''return'':2A ''serious'':14B ''special'':22B ''support'':29B ''thank'':36B ''thing'':11B ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B ''x'':6A ''x-file'':5A', false, 'PT1H51M45S', 'https://i.ytimg.com/vi/5z1MYHh0Ct0/maxresdefault.jpg'),
-	('8KDahG27Alc', 'nextlander', 'Will and Vinny Take a Final Swing at the Savage Planet!', 'We''ve been enjoying our time with Revenge of the Savage Planet so let''s do one more run!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/8KDahG27Alc/mqdefault.jpg', '2025-05-19 23:35:45+00', '''/nextlander'':39B ''communiti'':36B ''enjoy'':15B ''final'':6A ''let'':25B ''nextland'':31B ''one'':28B ''planet'':11A,23B ''reveng'':19B ''run'':30B ''savag'':10A,22B ''support'':33B ''swing'':7A ''take'':4A ''thank'':40B ''time'':17B ''ve'':13B ''vinni'':3A ''watch'':42B ''www.patreon.com'':38B ''www.patreon.com/nextlander'':37B', false, 'PT2H29M7S', 'https://i.ytimg.com/vi/8KDahG27Alc/maxresdefault.jpg'),
-	('NWieJ8tP8Og', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 1-4 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
-
-We got Rashad Redic, Bryna Dabby Smith, Riana Manuel-Peña, and Danny Peña to chat about the upcoming Wu-Tang: Rise of the Deceiver and all the insane amount of work that has gone into making it. 
-
-
-Thanks to our friends at Annapurna Interactive for presenting this stream!
-
-#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/NWieJ8tP8Og/mqdefault.jpg', '2025-06-11 22:00:32+00', '''-4'':10A ''1'':9A ''amount'':70B ''angel'':21B ''annapurna'':13A,84B ''around'':30B ''bomb'':2A ''bryna'':44B ''chat'':55B ''couch'':18B ''dabbi'':45B ''danni'':52B ''deceiv'':65B ''found'':16B ''friend'':27B,82B ''get'':25B ''giant'':1A ''giantbomb'':92B ''gone'':75B ''got'':41B ''hang'':34B ''industri'':32B ''insan'':69B ''interact'':14A,85B ''los'':20B ''make'':77B ''manuel'':49B ''manuel-peña'':48B ''nite'':3A,8A ''peña'':50B,53B ''present'':11A,87B ''rashad'':42B ''re'':24B ''redic'':43B ''riana'':47B ''rise'':62B ''sgf'':90B ''smith'':46B ''stream'':89B ''summergamefest'':91B ''tang'':61B ''thank'':79B ''upcom'':58B ''villa'':7A,39B ''warfram'':6A,38B ''work'':72B ''wu'':60B ''wu-tang'':59B', false, 'PT21M33S', 'https://i.ytimg.com/vi/NWieJ8tP8Og/maxresdefault.jpg'),
-	('XHR7zdUy2sQ', 'giantbomb', 'Death Stranding 2 Review Round Up | Game Mess Mornings 06/23/25', 'Jeff Grubb and Jason Fanelli go over review scores and how Death Stranding 2 is tracking, indie developers having difficulties with Switch 2 Dev Kits, problems with secondhand Switch 2s, layoffs at MindsEye, and even more to start the week! 
-
-#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/XHR7zdUy2sQ/mqdefault.jpg', '2025-06-23 16:17:38+00', '''06/23/25'':10A ''2'':3A,24B,33B ''2s'':40B ''death'':1A,22B ''dev'':34B ''develop'':28B ''difficulti'':30B ''even'':45B ''fanelli'':15B ''game'':7A ''gamemessmorn'':52B ''giantbomb'':53B ''gmm'':51B ''go'':16B ''grubb'':12B ''indi'':27B ''jason'':14B ''jeff'':11B ''kit'':35B ''layoff'':41B ''mess'':8A ''mindsey'':43B ''morn'':9A ''problem'':36B ''review'':4A,18B ''round'':5A ''score'':19B ''secondhand'':38B ''start'':48B ''strand'':2A,23B ''switch'':32B,39B ''track'':26B ''videogamenew'':54B ''week'':50B', false, 'PT1H4M54S', 'https://i.ytimg.com/vi/XHR7zdUy2sQ/maxresdefault.jpg'),
 	('Ypazwe1UrbE', 'giantbomb', 'Voicemail Dump Truck 161 | Mug Culture.mp3', 'We''re back from LA and we''re all backed up on voicemails! We discuss what can be pretty, the answer on who may actually be the weirdest, rolling Rs, gambling, and more of your voicemails! 
 
 #vmdt #voicemaildumptruck #giantbomb', 'https://i.ytimg.com/vi/Ypazwe1UrbE/mqdefault.jpg', '2025-06-13 20:36:00+00', '''161'':4A ''actual'':31B ''answer'':27B ''back'':9B,16B ''culture.mp3'':6A ''discuss'':21B ''dump'':2A ''gambl'':37B ''giantbomb'':45B ''la'':11B ''may'':30B ''mug'':5A ''pretti'':25B ''re'':8B,14B ''roll'':35B ''rs'':36B ''truck'':3A ''vmdt'':43B ''voicemail'':1A,19B,42B ''voicemaildumptruck'':44B ''weirdest'':34B', false, 'PT1H20M24S', 'https://i.ytimg.com/vi/Ypazwe1UrbE/maxresdefault.jpg'),
-	('E3jC7quwe4Q', 'remap', 'The Latest on Rob (Probably) Buying a House', 'Rob has been thinking about a single house for nearly two years. He appears to be on the brink of making it all happen. Or is he? (He is.)
-
-This podcast is a segment from HOA, a subscriber-only Remap podcast about our relationship with the places we live in. You can listen to the entire episode by becoming a subscriber.
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/E3jC7quwe4Q/mqdefault.jpg', '2025-06-25 14:00:21+00', '''appear'':22B ''audienc'':74B ''becom'':68B ''brink'':27B ''buy'':6A ''consid'':84B ''content'':82B ''continu'':79B ''entir'':65B ''episod'':66B ''happen'':32B ''help'':77B ''hoa'':44B ''hous'':8A,16B ''latest'':2A ''listen'':62B ''live'':58B ''make'':29B,80B ''near'':18B ''place'':56B ''pleas'':83B ''podcast'':39B,50B ''probabl'':5A ''radio'':72B ''relationship'':53B ''remap'':49B,71B ''rob'':4A,9B ''segment'':42B ''singl'':15B ''subscrib'':47B,70B,85B ''subscriber-on'':46B ''support'':75B ''think'':12B ''two'':19B ''us'':78B ''www.remapradio.com'':87B ''year'':20B', false, 'PT21M8S', 'https://i.ytimg.com/vi/E3jC7quwe4Q/maxresdefault.jpg'),
 	('HbjK70AT3sE', 'nextlander', 'We Assemble Our Strongest Animal Adventurers in Sunderfolk!', 'Abby Russell joins us for some hot cooperative action as we check out the Gloomhaven-like Sunderfolk!
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/HbjK70AT3sE/mqdefault.jpg', '2025-05-20 20:32:24+00', '''/nextlander'':35B ''abbi'':9B ''action'':17B ''adventur'':6A ''anim'':5A ''assembl'':2A ''check'':20B ''communiti'':32B ''cooper'':16B ''gloomhaven'':24B ''gloomhaven-lik'':23B ''hot'':15B ''join'':11B ''like'':25B ''nextland'':27B ''russel'':10B ''strongest'':4A ''sunderfolk'':8A,26B ''support'':29B ''thank'':36B ''us'':12B ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT1H59M18S', 'https://i.ytimg.com/vi/HbjK70AT3sE/maxresdefault.jpg'),
-	('F_NWGbxYYTc', 'nextlander', 'A Very Special Thursday Grab Bag with The Midnight Walk!', 'While you''re all out there electing Popes and such, we''re over here, GAMING.
+	('E3jC7quwe4Q', 'remap', 'The Latest on Rob (Probably) Buying a House', 'Rob has been thinking about a single house for nearly two years. He appears to be on the brink of making it all happen. Or is he? (He is.)
 
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
+This podcast is a segment from HOA, a subscriber-only Remap podcast about our relationship with the places we live in. You can listen to the entire episode by becoming a subscriber.
 
-Thanks for watching.', 'https://i.ytimg.com/vi/F_NWGbxYYTc/mqdefault.jpg', '2025-05-08 20:49:51+00', '''/nextlander'':34B ''bag'':6A ''communiti'':31B ''elect'':17B ''game'':25B ''grab'':5A ''midnight'':9A ''nextland'':26B ''pope'':18B ''re'':13B,22B ''special'':3A ''support'':28B ''thank'':35B ''thursday'':4A ''walk'':10A ''watch'':37B ''www.patreon.com'':33B ''www.patreon.com/nextlander'':32B', false, 'PT1H51M11S', 'https://i.ytimg.com/vi/F_NWGbxYYTc/maxresdefault.jpg'),
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/E3jC7quwe4Q/mqdefault.jpg', '2025-06-25 14:00:21+00', '''appear'':22B ''audienc'':74B ''becom'':68B ''brink'':27B ''buy'':6A ''consid'':84B ''content'':82B ''continu'':79B ''entir'':65B ''episod'':66B ''happen'':32B ''help'':77B ''hoa'':44B ''hous'':8A,16B ''latest'':2A ''listen'':62B ''live'':58B ''make'':29B,80B ''near'':18B ''place'':56B ''pleas'':83B ''podcast'':39B,50B ''probabl'':5A ''radio'':72B ''relationship'':53B ''remap'':49B,71B ''rob'':4A,9B ''segment'':42B ''singl'':15B ''subscrib'':47B,70B,85B ''subscriber-on'':46B ''support'':75B ''think'':12B ''two'':19B ''us'':78B ''www.remapradio.com'':87B ''year'':20B', false, 'PT21M8S', 'https://i.ytimg.com/vi/E3jC7quwe4Q/maxresdefault.jpg'),
 	('D24Qxyx-7fM', 'nextlander', 'Will We Discover Who Abby Is or Will We Just Date Everything?', 'We''re going to play some more Who Is Abby, and if we finish that or it sucks too much, we''ve got the demo for Date Everything!
 
 Nextlander is supported by its community:
@@ -59740,40 +59679,6 @@ Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/MqFxzkGTm7M/mqdefault.jpg', '2025-03-04 00:18:47+00', '''/nextlander'':32B ''boss'':23B ''communiti'':29B ''crew'':2A ''finish'':14B ''get'':20B ''least'':19B ''monday'':3A ''nextland'':24B ''run'':16B ''serious'':8A ''support'':26B ''thank'':33B ''time'':5A ''void'':1A ''watch'':35B ''week'':12B ''www.patreon.com'':31B ''www.patreon.com/nextlander'':30B', false, 'PT3H4M50S', 'https://i.ytimg.com/vi/MqFxzkGTm7M/maxresdefault.jpg'),
-	('K5eaJB7sLFo', 'remap', 'AI Is Still a Major Threat to Voice Actors', 'The SAG-AFTRA strike appears over, but in the long term, it feels like artificial intelligence is going to have a massive negative impact on the acting profession in video games.
-
-What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/K5eaJB7sLFo/mqdefault.jpg', '2025-06-27 14:00:34+00', '''/us/podcast/remap-radio/id1690437343'':63B ''act'':37B ''actor'':9A ''aftra'':13B ''ai'':1A ''appear'':15B ''artifici'':25B ''audienc'':67B ''consid'':77B ''content'':75B ''continu'':72B ''episod'':53B ''feel'':23B ''full'':52B ''game'':41B ''go'':28B ''help'':70B ''impact'':34B ''intellig'':26B ''like'':24B ''listen'':45B ''long'':20B ''major'':5A ''make'':73B ''massiv'':32B ''negat'':33B ''pleas'':76B ''podcast'':60B ''podcasts.apple.com'':62B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':61B ''profess'':38B ''radio'':56B,65B ''re'':44B ''remap'':55B,64B ''sag'':12B ''sag-aftra'':11B ''segment'':49B ''still'':3A ''strike'':14B ''subscrib'':57B,78B ''support'':68B ''term'':21B ''threat'':6A ''us'':71B ''video'':40B ''voic'':8A ''www.remapradio.com'':80B', false, 'PT28M27S', 'https://i.ytimg.com/vi/K5eaJB7sLFo/maxresdefault.jpg'),
-	('JOTTt0KRWwI', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 2-3 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
-
-We got Kelsey Lewin, Janet Garcia, Jacob Geller, Marcus Stewart, and Alex Van Aken on the couch! We chat about Game Informer''s relaunch, working as a small team in Games Media, and all the stuff we saw at Summer Game Fest. 
-
-Thanks to our friends at Annapurna Interactive for presenting this stream!
-
-#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/JOTTt0KRWwI/mqdefault.jpg', '2025-06-12 18:00:19+00', '''-3'':10A ''2'':9A ''aken'':53B ''alex'':51B ''angel'':21B ''annapurna'':13A,87B ''around'':30B ''bomb'':2A ''chat'':58B ''couch'':18B,56B ''fest'':81B ''found'':16B ''friend'':27B,85B ''game'':60B,70B,80B ''garcia'':45B ''geller'':47B ''get'':25B ''giant'':1A ''giantbomb'':95B ''got'':41B ''hang'':34B ''industri'':32B ''inform'':61B ''interact'':14A,88B ''jacob'':46B ''janet'':44B ''kelsey'':42B ''lewin'':43B ''los'':20B ''marcus'':48B ''media'':71B ''nite'':3A,8A ''present'':11A,90B ''re'':24B ''relaunch'':63B ''saw'':77B ''sgf'':93B ''small'':67B ''stewart'':49B ''stream'':92B ''stuff'':75B ''summer'':79B ''summergamefest'':94B ''team'':68B ''thank'':82B ''van'':52B ''villa'':7A,39B ''warfram'':6A,38B ''work'':64B', false, 'PT38M37S', 'https://i.ytimg.com/vi/JOTTt0KRWwI/maxresdefault.jpg'),
-	('D84rRrHGoOw', 'giantbomb', 'You Can Talk to an AI-Darth Vader in Fortnite | Game Mess Mornings 05/16/25', 'Jeff Grubb is joined by Lex Luddy to talk about her new gaming website Rewinder! We also find the time to talk about how upsetting it is to speak to an AI-Generated voice of James Earl Jones in Fortnite, a whole lot of Switch 2 updates, Diddy Kong, and even more! 
-
-Check out Rewinder:
-https://rewinder.co.uk/
-
-Support Giant Bomb
-giantbomb.com/join
-
-#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/D84rRrHGoOw/mqdefault.jpg', '2025-05-16 16:08:34+00', '''/join'':78B ''05/16/25'':15A ''2'':62B ''ai'':7A,48B ''ai-darth'':6A ''ai-gener'':47B ''also'':32B ''bomb'':75B ''check'':69B ''darth'':8A ''diddi'':64B ''earl'':53B ''even'':67B ''find'':33B ''fortnit'':11A,56B ''game'':12A,28B ''gamemessmorn'':80B ''generat'':49B ''giant'':74B ''giantbomb'':81B ''giantbomb.com'':77B ''giantbomb.com/join'':76B ''gmm'':79B ''grubb'':17B ''jame'':52B ''jeff'':16B ''join'':19B ''jone'':54B ''kong'':65B ''lex'':21B ''lot'':59B ''luddi'':22B ''mess'':13A ''morn'':14A ''new'':27B ''rewind'':30B,71B ''rewinder.co.uk'':72B ''speak'':44B ''support'':73B ''switch'':61B ''talk'':3A,24B,37B ''time'':35B ''updat'':63B ''upset'':40B ''vader'':9A ''videogamenew'':82B ''voic'':50B ''websit'':29B ''whole'':58B', false, 'PT1H1M46S', 'https://i.ytimg.com/vi/D84rRrHGoOw/maxresdefault.jpg'),
-	('c5vabBHE1W4', 'remap', 'Steam Vent Discovers a World of UFOs and Pets', 'Another adventure into Steam''s New Releases once again takes us to some surprising places. Now with timestamps!
-
-10:10 — Death Howl
-32:54 — Bauhaus Bonk
-44:10 — To the Top, Mammoth!
-01:05:46 — Purfect Climb
-01:13:07 — Jumping Kitten
-01:33:05 — Fear the Unknown: Dave Story
-01:59:48 — Spacepunk Survival
-02:10:20 — Fear the Unknown: Dave Story (Part 2)
-02:22:44 — PETS
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/c5vabBHE1W4/mqdefault.jpg', '2025-02-06 22:58:32+00', '''01'':42B,47B,52B,60B ''02'':65B,75B ''05'':43B,54B ''07'':49B ''10'':28B,29B,37B,66B ''13'':48B ''2'':74B ''20'':67B ''22'':76B ''32'':32B ''33'':53B ''44'':36B,77B ''46'':44B ''48'':62B ''54'':33B ''59'':61B ''adventur'':11B ''anoth'':10B ''audienc'':82B ''bauhaus'':34B ''bonk'':35B ''climb'':46B ''consid'':92B ''content'':90B ''continu'':87B ''dave'':58B,71B ''death'':30B ''discov'':3A ''fear'':55B,68B ''help'':85B ''howl'':31B ''jump'':50B ''kitten'':51B ''make'':88B ''mammoth'':41B ''new'':15B ''part'':73B ''pet'':9A,78B ''place'':24B ''pleas'':91B ''purfect'':45B ''radio'':80B ''releas'':16B ''remap'':79B ''spacepunk'':63B ''steam'':1A,13B ''stori'':59B,72B ''subscrib'':93B ''support'':83B ''surpris'':23B ''surviv'':64B ''take'':19B ''timestamp'':27B ''top'':40B ''ufo'':7A ''unknown'':57B,70B ''us'':20B,86B ''vent'':2A ''world'':5A ''www.remapradio.com'':95B', false, 'PT2H39M36S', 'https://i.ytimg.com/vi/c5vabBHE1W4/maxresdefault.jpg'),
 	('MgYgD6ayVmY', 'nextlander', 'Vinny Plays Some Computer Games!', 'There are a few newer games that involve typing into a computer console that seem pretty cool! Let''s have a look.
 
 Nextlander is supported by its community:
@@ -59786,18 +59691,85 @@ Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
 Thanks for watching.', 'https://i.ytimg.com/vi/eKfF4L0pEAw/mqdefault.jpg', '2025-06-20 20:14:14+00', '''/nextlander'':43B ''communiti'':40B ''depth'':24B ''dive'':21B ''fbc'':2A ''fire'':34B ''firebreak'':3A ''gang'':11B ''hous'':28B ''lot'':6A ''nextland'':1A,35B ''note'':9A ''oldest'':27B ''put'':30B ''sticki'':8A ''supernatur'':33B ''support'':37B ''thank'':44B ''time'':19B ''watch'':46B ''www.patreon.com'':42B ''www.patreon.com/nextlander'':41B', false, 'PT1H59M24S', 'https://i.ytimg.com/vi/eKfF4L0pEAw/maxresdefault.jpg'),
-	('mWmPM300zIs', 'giantbomb', 'Capcom Spotlight | We Talk Over', 'I hope there''s a Viewtiful Joe in here! 
-
-#capcom #giantbomb', 'https://i.ytimg.com/vi/mWmPM300zIs/mqdefault.jpg', '2025-06-26 22:47:42+00', '''capcom'':1A,14B ''giantbomb'':15B ''hope'':6B ''joe'':11B ''spotlight'':2A ''talk'':4A ''viewti'':10B', false, 'PT49M54S', 'https://i.ytimg.com/vi/mWmPM300zIs/maxresdefault.jpg'),
 	('dh5w81RN6V0', 'giantbomb', 'Rascal, but Mike | FINALE | Blight Club', 'Will Mike Minotti make any progress today on Blight Club? Will he be able to figure out what any of the buttons or crabs do? Will he ever stop looking so cool?
 
 #rascal #blightclub', 'https://i.ytimg.com/vi/dh5w81RN6V0/mqdefault.jpg', '2025-06-25 22:00:36+00', '''abl'':20B ''blight'':5A,15B ''blightclub'':40B ''button'':28B ''club'':6A,16B ''cool'':38B ''crab'':30B ''ever'':34B ''figur'':22B ''final'':4A ''look'':36B ''make'':10B ''mike'':3A,8B ''minotti'':9B ''progress'':12B ''rascal'':1A,39B ''stop'':35B ''today'':13B', false, 'PT2H27M3S', 'https://i.ytimg.com/vi/dh5w81RN6V0/maxresdefault.jpg'),
 	('jop6105ad8M', 'giantbomb', 'The Rest of the Trailers from Summer Game Fest | We Talk Over', 'We cover some of the trailers we liked or may have missed from Summer Game Fest weekend. We look at people walking, people talking, and the ROLE OF THE LIFETIME! 
 
 #sgf #summergamefest #giantbomb #trailers', 'https://i.ytimg.com/vi/jop6105ad8M/mqdefault.jpg', '2025-06-16 21:08:26+00', '''cover'':13B ''fest'':9A,27B ''game'':8A,26B ''giantbomb'':44B ''lifetim'':41B ''like'':19B ''look'':30B ''may'':21B ''miss'':23B ''peopl'':32B,34B ''rest'':2A ''role'':38B ''sgf'':42B ''summer'':7A,25B ''summergamefest'':43B ''talk'':11A,35B ''trailer'':5A,17B,45B ''walk'':33B ''weekend'':28B', false, 'PT1H21M57S', 'https://i.ytimg.com/vi/jop6105ad8M/maxresdefault.jpg'),
-	('lSOOodKYyyU', 'giantbomb', 'PEAK | Giant Bomb Plays', 'Dan, Jan, Jeff, and Jeff crashland on an island to eat miscellaneous fruit, help each other up, and climb a mountain in PEAK!
+	('yWKRiKQNN2c', 'nextlander', 'Friday Fun Stream: More Schedule I w/ Abby Russell!', 'Time to follow Drugs Bunny down the rabbit hole of low level drug dealing in Schedule I!
 
-#peak #giantbomb', 'https://i.ytimg.com/vi/lSOOodKYyyU/mqdefault.jpg', '2025-06-16 19:31:36+00', '''bomb'':3A ''climb'':23B ''crashland'':10B ''dan'':5B ''eat'':15B ''fruit'':17B ''giant'':2A ''giantbomb'':29B ''help'':18B ''island'':13B ''jan'':6B ''jeff'':7B,9B ''miscellan'':16B ''mountain'':25B ''peak'':1A,27B,28B ''play'':4A', false, 'PT1H25M24S', 'https://i.ytimg.com/vi/lSOOodKYyyU/maxresdefault.jpg'),
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/yWKRiKQNN2c/mqdefault.jpg', '2025-04-18 20:23:32+00', '''/nextlander'':35B ''abbi'':8A ''bunni'':14B ''communiti'':32B ''deal'':23B ''drug'':13B,22B ''follow'':12B ''friday'':1A ''fun'':2A ''hole'':18B ''level'':21B ''low'':20B ''nextland'':27B ''rabbit'':17B ''russel'':9A ''schedul'':5A,25B ''stream'':3A ''support'':29B ''thank'':36B ''time'':10B ''w'':7A ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT2H19M37S', 'https://i.ytimg.com/vi/yWKRiKQNN2c/maxresdefault.jpg'),
+	('oi738e8B9_Y', 'nextlander', 'Patron''s Choice for May 2025: Riding the Nightreign', 'It''s time for some multiplayer Elden Ring from the greatest Elden Ring players in the known universe.
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/oi738e8B9_Y/mqdefault.jpg', '2025-06-01 06:14:09+00', '''/nextlander'':36B ''2025'':6A ''choic'':3A ''communiti'':33B ''elden'':16B,21B ''greatest'':20B ''known'':26B ''may'':5A ''multiplay'':15B ''nextland'':28B ''nightreign'':9A ''patron'':1A ''player'':23B ''ride'':7A ''ring'':17B,22B ''support'':30B ''thank'':37B ''time'':12B ''univers'':27B ''watch'':39B ''www.patreon.com'':35B ''www.patreon.com/nextlander'':34B', false, 'PT2H29M31S', 'https://i.ytimg.com/vi/oi738e8B9_Y/maxresdefault.jpg'),
+	('ZHrxoA4bGz0', 'nextlander', 'Lost Records, Bloom and Rage, Things of That Nature (The Finale!)', 'We continue to soldier on in Lost Records in the hope of achieving something. Like opening a box, maybe?
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/ZHrxoA4bGz0/mqdefault.jpg', '2025-05-06 22:05:28+00', '''/nextlander'':39B ''achiev'':24B ''bloom'':3A ''box'':29B ''communiti'':36B ''continu'':13B ''final'':11A ''hope'':22B ''like'':26B ''lost'':1A,18B ''mayb'':30B ''natur'':9A ''nextland'':31B ''open'':27B ''rage'':5A ''record'':2A,19B ''soldier'':15B ''someth'':25B ''support'':33B ''thank'':40B ''thing'':6A ''watch'':42B ''www.patreon.com'':38B ''www.patreon.com/nextlander'':37B', false, 'PT2H3M20S', 'https://i.ytimg.com/vi/ZHrxoA4bGz0/maxresdefault.jpg'),
+	('Wud5OEvx_fM', 'remap', 'The Wheel Visits the Oldest House', 'We fell for Elden Ring: Nightreign. Can we fall for FBC: Firebreak, too?
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/Wud5OEvx_fM/mqdefault.jpg', '2025-06-20 03:06:21+00', '''audienc'':23B ''consid'':33B ''content'':31B ''continu'':28B ''elden'':10B ''fall'':15B ''fbc'':17B ''fell'':8B ''firebreak'':18B ''help'':26B ''hous'':6A ''make'':29B ''nightreign'':12B ''oldest'':5A ''pleas'':32B ''radio'':21B ''remap'':20B ''ring'':11B ''subscrib'':34B ''support'':24B ''us'':27B ''visit'':3A ''wheel'':2A ''www.remapradio.com'':36B', false, 'PT2H34M26S', 'https://i.ytimg.com/vi/Wud5OEvx_fM/maxresdefault.jpg'),
+	('y9eQsOTo8sE', 'remap', 'The Longest Fall in Video Game History', 'What happens when you spend 13 hours getting ready for one jump, only to screw it up?
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/y9eQsOTo8sE/mqdefault.jpg', '2025-05-28 18:09:39+00', '''13'':13B ''audienc'':28B ''consid'':38B ''content'':36B ''continu'':33B ''fall'':3A ''game'':6A ''get'':15B ''happen'':9B ''help'':31B ''histori'':7A ''hour'':14B ''jump'':19B ''longest'':2A ''make'':34B ''one'':18B ''pleas'':37B ''radio'':26B ''readi'':16B ''remap'':25B ''screw'':22B ''spend'':12B ''subscrib'':39B ''support'':29B ''us'':32B ''video'':5A ''www.remapradio.com'':41B', false, 'PT57S', 'https://i.ytimg.com/vi/y9eQsOTo8sE/maxresdefault.jpg'),
+	('uNL7U4ptOdY', 'remap', 'Now, Cado''s in Control of Civilization VII', 'Rob and Cado''s adventures in Civilization VII continue, but this time, Cado''s back in in the driver''s seat!
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/uNL7U4ptOdY/mqdefault.jpg', '2025-05-16 18:47:52+00', '''adventur'':13B ''audienc'':33B ''back'':23B ''cado'':2A,11B,21B ''civil'':7A,15B ''consid'':43B ''content'':41B ''continu'':17B,38B ''control'':5A ''driver'':27B ''help'':36B ''make'':39B ''pleas'':42B ''radio'':31B ''remap'':30B ''rob'':9B ''seat'':29B ''subscrib'':44B ''support'':34B ''time'':20B ''us'':37B ''vii'':8A,16B ''www.remapradio.com'':46B', false, 'PT2H39M11S', 'https://i.ytimg.com/vi/uNL7U4ptOdY/maxresdefault.jpg'),
+	('Uoya8Lg8MpM', 'giantbomb', 'Does Clair Obscur: Expedition 33 Have a Leveling Problem? | Giant Bombcast 893: Uncle Baby', 'We got one more podcast before we head down to Los Angeles for Summer Game Fest! This week we talk about Mikey finishing up Clair Obscur, our time running around in Elden Ring: Nightreign, Hell is Us, and a bit of Lushfoil Photography Sim. We also chat about the hottest news like their being Nintendo Switch 2 reviews, IO Interactive showing off multiple games this week, a State of Play popping off tomorrow, and more news and emails! 
+
+#bombcast #giantbombcast #giantbomb', 'https://i.ytimg.com/vi/Uoya8Lg8MpM/mqdefault.jpg', '2025-06-03 18:40:56+00', '''2'':71B ''33'':5A ''893'':12A ''also'':60B ''angel'':26B ''around'':44B ''babi'':14A ''bit'':54B ''bombcast'':11A,93B ''chat'':61B ''clair'':2A,39B ''elden'':46B ''email'':92B ''expedit'':4A ''fest'':30B ''finish'':37B ''game'':29B,78B ''giant'':10A ''giantbomb'':95B ''giantbombcast'':94B ''got'':16B ''head'':22B ''hell'':49B ''hottest'':64B ''interact'':74B ''io'':73B ''level'':8A ''like'':66B ''los'':25B ''lushfoil'':56B ''mikey'':36B ''multipl'':77B ''news'':65B,90B ''nightreign'':48B ''nintendo'':69B ''obscur'':3A,40B ''one'':17B ''photographi'':57B ''play'':84B ''podcast'':19B ''pop'':85B ''problem'':9A ''review'':72B ''ring'':47B ''run'':43B ''show'':75B ''sim'':58B ''state'':82B ''summer'':28B ''switch'':70B ''talk'':34B ''time'':42B ''tomorrow'':87B ''uncl'':13A ''us'':51B ''week'':32B,80B', false, 'PT2H18M41S', 'https://i.ytimg.com/vi/Uoya8Lg8MpM/maxresdefault.jpg'),
+	('WSl1a3RBzME', 'remap', 'Hey Friends, Does Metroid + Puzzles = MetroidBrainia?', 'We continue to walk down a Metroidvania genre discussion rabbit hole by acknowledging we forgot about the "soulsborne" term, but then pivot to a bigger question: is "MetroidBrania" a thing?
+
+What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/WSl1a3RBzME/mqdefault.jpg', '2025-06-11 14:00:49+00', '''/us/podcast/remap-radio/id1690437343'':58B ''acknowledg'':19B ''audienc'':62B ''bigger'':31B ''consid'':72B ''content'':70B ''continu'':8B,67B ''discuss'':15B ''episod'':48B ''forgot'':21B ''friend'':2A ''full'':47B ''genr'':14B ''help'':65B ''hey'':1A ''hole'':17B ''listen'':40B ''make'':68B ''metroid'':4A ''metroidbrainia'':6A ''metroidbrania'':34B ''metroidvania'':13B ''pivot'':28B ''pleas'':71B ''podcast'':55B ''podcasts.apple.com'':57B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':56B ''puzzl'':5A ''question'':32B ''rabbit'':16B ''radio'':51B,60B ''re'':39B ''remap'':50B,59B ''segment'':44B ''soulsborn'':24B ''subscrib'':52B,73B ''support'':63B ''term'':25B ''thing'':36B ''us'':66B ''walk'':10B ''www.remapradio.com'':75B', false, 'PT34M53S', 'https://i.ytimg.com/vi/WSl1a3RBzME/maxresdefault.jpg'),
+	('vEpjiZYVSEs', 'remap', '80 For Brady Is a Shockingly Underrated Movie', 'My Turn returns to the realm of sports movies with 80 for Brady, the based-on-a-true story of a group of elderly women who get into escalating shenanigans when they decide to go to the Super Bowl to watch their favorite player, Tom Brady, play. What at first seems like a run of the mill comedy with an all-star cast ends up touching on some heavy subject matter in a touching and charming way. And then Tom Brady is also there. 
+
+This podcast is a segment from My Turn, a subscriber-only Remap podcast about movies that have tangential relationships to one another.
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/vEpjiZYVSEs/mqdefault.jpg', '2025-05-23 14:01:27+00', '''80'':1A,19B ''all-star'':70B ''also'':93B ''anoth'':117B ''audienc'':121B ''base'':24B ''based-on-a-tru'':23B ''bowl'':48B ''bradi'':3A,21B,55B,91B ''cast'':73B ''charm'':86B ''comedi'':67B ''consid'':131B ''content'':129B ''continu'':126B ''decid'':42B ''elder'':33B ''end'':74B ''escal'':38B ''favorit'':52B ''first'':59B ''get'':36B ''go'':44B ''group'':31B ''heavi'':79B ''help'':124B ''like'':61B ''make'':127B ''matter'':81B ''mill'':66B ''movi'':8A,17B,110B ''one'':116B ''play'':56B ''player'':53B ''pleas'':130B ''podcast'':96B,108B ''radio'':119B ''realm'':14B ''relationship'':114B ''remap'':107B,118B ''return'':11B ''run'':63B ''seem'':60B ''segment'':99B ''shenanigan'':39B ''shock'':6A ''sport'':16B ''star'':72B ''stori'':28B ''subject'':80B ''subscrib'':105B,132B ''subscriber-on'':104B ''super'':47B ''support'':122B ''tangenti'':113B ''tom'':54B,90B ''touch'':76B,84B ''true'':27B ''turn'':10B,102B ''underr'':7A ''us'':125B ''watch'':50B ''way'':87B ''women'':34B ''www.remapradio.com'':134B', false, 'PT19M33S', 'https://i.ytimg.com/vi/vEpjiZYVSEs/maxresdefault.jpg'),
+	('pD4V43tNU5k', 'nextlander', 'Vinny''s Big Not-E3 Roundup Review!', 'A lot has happened and I''m sure there is still a lot we can discover together!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/pD4V43tNU5k/mqdefault.jpg', '2025-06-10 00:42:36+00', '''/nextlander'':34B ''big'':3A ''communiti'':31B ''discov'':24B ''e3'':6A ''happen'':12B ''lot'':10B,21B ''m'':15B ''nextland'':26B ''not-e3'':4A ''review'':8A ''roundup'':7A ''still'':19B ''support'':28B ''sure'':16B ''thank'':35B ''togeth'':25B ''vinni'':1A ''watch'':37B ''www.patreon.com'':33B ''www.patreon.com/nextlander'':32B', false, 'PT3H45M33S', 'https://i.ytimg.com/vi/pD4V43tNU5k/maxresdefault.jpg'),
+	('tva1CsRWxA0', 'remap', 'Steam Vent Returns to Gay Frogs and Jump Scares', 'You turn away for one second and an evil witch gets you out of nowhere, huh?
+
+Timestamps:
+00:03:04 — Hopshop
+00:39:22 — Silverpine Creek
+00:58:20 — A Game About Mowing Your Lawn
+01:18:15 — Level Devil
+01:31:39 — Paper 2: Origami Unfolded
+02:02:36 – The Gallery
+02:20:24 — Tick Hop
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/tva1CsRWxA0/mqdefault.jpg', '2025-03-25 22:23:34+00', '''00'':27B,31B,36B ''01'':45B,50B ''02'':57B,58B,62B ''03'':28B ''04'':29B ''15'':47B ''18'':46B ''2'':54B ''20'':38B,63B ''22'':33B ''24'':64B ''31'':51B ''36'':59B ''39'':32B,52B ''58'':37B ''audienc'':70B ''away'':12B ''consid'':80B ''content'':78B ''continu'':75B ''creek'':35B ''devil'':49B ''evil'':18B ''frog'':6A ''galleri'':61B ''game'':40B ''gay'':5A ''get'':20B ''help'':73B ''hop'':66B ''hopshop'':30B ''huh'':25B ''jump'':8A ''lawn'':44B ''level'':48B ''make'':76B ''mow'':42B ''nowher'':24B ''one'':14B ''origami'':55B ''paper'':53B ''pleas'':79B ''radio'':68B ''remap'':67B ''return'':3A ''scare'':9A ''second'':15B ''silverpin'':34B ''steam'':1A ''subscrib'':81B ''support'':71B ''tick'':65B ''timestamp'':26B ''turn'':11B ''unfold'':56B ''us'':74B ''vent'':2A ''witch'':19B ''www.remapradio.com'':83B', false, 'PT2H41M46S', 'https://i.ytimg.com/vi/tva1CsRWxA0/maxresdefault.jpg'),
+	('rfMntjiyYgk', 'nextlander', 'Mario Kart World and the Switch 2 are Here!', 'Alex got his Switch 2, so let''s boot this thing up and play the game(s) that are currently available!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/rfMntjiyYgk/mqdefault.jpg', '2025-06-06 20:52:29+00', '''/nextlander'':37B ''2'':7A,12B ''alex'':8B ''avail'':28B ''boot'':16B ''communiti'':34B ''current'':27B ''game'':23B ''got'':9B ''kart'':2A ''let'':14B ''mario'':1A ''nextland'':29B ''play'':21B ''support'':31B ''switch'':6A,11B ''thank'':38B ''thing'':18B ''watch'':40B ''world'':3A ''www.patreon.com'':36B ''www.patreon.com/nextlander'':35B', false, 'PT2H27M23S', 'https://i.ytimg.com/vi/rfMntjiyYgk/maxresdefault.jpg'),
+	('P2wR9HADfHo', 'nextlander', 'Patron''s Choice for April 2025: Vinny Tries The Last Express for the First Time!', 'Our patrons voted to see Vinny dig into a classic adventure for the first time!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/P2wR9HADfHo/mqdefault.jpg', '2025-04-25 22:24:52+00', '''/nextlander'':39B ''2025'':6A ''adventur'':26B ''april'':5A ''choic'':3A ''classic'':25B ''communiti'':36B ''dig'':22B ''express'':11A ''first'':14A,29B ''last'':10A ''nextland'':31B ''patron'':1A,17B ''see'':20B ''support'':33B ''thank'':40B ''time'':15A,30B ''tri'':8A ''vinni'':7A,21B ''vote'':18B ''watch'':42B ''www.patreon.com'':38B ''www.patreon.com/nextlander'':37B', false, 'PT2H19M43S', 'https://i.ytimg.com/vi/P2wR9HADfHo/maxresdefault.jpg'),
+	('mWmPM300zIs', 'giantbomb', 'Capcom Spotlight | We Talk Over', 'I hope there''s a Viewtiful Joe in here! 
+
+#capcom #giantbomb', 'https://i.ytimg.com/vi/mWmPM300zIs/mqdefault.jpg', '2025-06-26 22:47:42+00', '''capcom'':1A,14B ''giantbomb'':15B ''hope'':6B ''joe'':11B ''spotlight'':2A ''talk'':4A ''viewti'':10B', false, 'PT49M54S', 'https://i.ytimg.com/vi/mWmPM300zIs/maxresdefault.jpg'),
 	('jf24cn1wr9Y', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 2-4 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
 
 We got Johnny Galvatron, Dean Woodward, Cessia Castillo, Kristy Norindr, and Mark Essen on the couch! We chat about switching careers and getting into Indie Game development, the indie game community, and future products! 
@@ -59815,54 +59787,17 @@ Tenno Tub Fishing segment presented by Digital Extremes
 
 
 #sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/jf24cn1wr9Y/mqdefault.jpg', '2025-06-12 18:15:08+00', '''-4'':10A ''/en/games/lego-voyagers'':109B ''/en/games/mixtape'':94B ''/en/games/snap-and-grab'':104B ''/en/games/wheel-world'':99B ''2'':9A ''angel'':21B ''annapurna'':13A,79B ''annapurnainteractive.com'':93B,98B,103B,108B ''annapurnainteractive.com/en/games/lego-voyagers'':107B ''annapurnainteractive.com/en/games/mixtape'':92B ''annapurnainteractive.com/en/games/snap-and-grab'':102B ''annapurnainteractive.com/en/games/wheel-world'':97B ''around'':30B ''bomb'':2A ''career'':60B ''castillo'':47B ''cessia'':46B ''chat'':57B ''communiti'':70B ''couch'':18B,55B ''dean'':44B ''develop'':66B ''digit'':116B ''essen'':52B ''extrem'':117B ''featur'':86B ''fish'':112B ''found'':16B ''friend'':27B,77B ''futur'':72B ''galvatron'':43B ''game'':65B,69B,85B ''get'':25B,62B ''giant'':1A ''giantbomb'':120B ''got'':41B ''grab'':101B ''hang'':34B ''includ'':90B ''indi'':64B,68B ''industri'':32B ''interact'':14A,80B ''johnni'':42B ''kristi'':48B ''lego'':105B ''los'':20B ''mark'':51B ''mixtap'':91B ''nite'':3A,8A ''norindr'':49B ''present'':11A,82B,114B ''product'':73B ''re'':24B ''segment'':89B,113B ''sgf'':118B ''snap'':100B ''stream'':84B ''summergamefest'':119B ''switch'':59B ''tenno'':110B ''thank'':74B ''tub'':111B ''villa'':7A,39B ''voyag'':106B ''warfram'':6A,38B ''wheel'':95B ''woodward'':45B ''world'':96B', false, 'PT51M22S', 'https://i.ytimg.com/vi/jf24cn1wr9Y/maxresdefault.jpg'),
-	('ZHrxoA4bGz0', 'nextlander', 'Lost Records, Bloom and Rage, Things of That Nature (The Finale!)', 'We continue to soldier on in Lost Records in the hope of achieving something. Like opening a box, maybe?
+	('QJC3vLrUX_Y', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 1-7 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
 
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/ZHrxoA4bGz0/mqdefault.jpg', '2025-05-06 22:05:28+00', '''/nextlander'':39B ''achiev'':24B ''bloom'':3A ''box'':29B ''communiti'':36B ''continu'':13B ''final'':11A ''hope'':22B ''like'':26B ''lost'':1A,18B ''mayb'':30B ''natur'':9A ''nextland'':31B ''open'':27B ''rage'':5A ''record'':2A,19B ''soldier'':15B ''someth'':25B ''support'':33B ''thank'':40B ''thing'':6A ''watch'':42B ''www.patreon.com'':38B ''www.patreon.com/nextlander'':37B', false, 'PT2H3M20S', 'https://i.ytimg.com/vi/ZHrxoA4bGz0/maxresdefault.jpg'),
-	('WYmAd2M2mzc', 'nextlander', 'Who Is Abby? The Answer May (Mildly) Shock You!', 'We''re going to check in on Who Is Abby and head towards its big finale!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/WYmAd2M2mzc/mqdefault.jpg', '2025-06-17 21:00:13+00', '''/nextlander'':33B ''abbi'':3A,18B ''answer'':5A ''big'':23B ''check'':13B ''communiti'':30B ''final'':24B ''go'':11B ''head'':20B ''may'':6A ''mild'':7A ''nextland'':25B ''re'':10B ''shock'':8A ''support'':27B ''thank'':34B ''toward'':21B ''watch'':36B ''www.patreon.com'':32B ''www.patreon.com/nextlander'':31B', false, 'PT2H32M16S', 'https://i.ytimg.com/vi/WYmAd2M2mzc/maxresdefault.jpg'),
-	('2YkUDFVlecQ', 'nextlander', 'Friday Fun Stream: The Grab Bag to End All Grab Bags', 'There are SO MANY VIDEO GAMES right now, and we''re going to play several of them! And our good friend Samantha Kalman is here to hang out!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/2YkUDFVlecQ/mqdefault.jpg', '2025-05-23 20:22:35+00', '''/nextlander'':48B ''bag'':6A,11A ''communiti'':45B ''end'':8A ''friday'':1A ''friend'':32B ''fun'':2A ''game'':17B ''go'':23B ''good'':31B ''grab'':5A,10A ''hang'':38B ''kalman'':34B ''mani'':15B ''nextland'':40B ''play'':25B ''re'':22B ''right'':18B ''samantha'':33B ''sever'':26B ''stream'':3A ''support'':42B ''thank'':49B ''video'':16B ''watch'':51B ''www.patreon.com'':47B ''www.patreon.com/nextlander'':46B', false, 'PT2H3M4S', 'https://i.ytimg.com/vi/2YkUDFVlecQ/maxresdefault.jpg'),
-	('yWKRiKQNN2c', 'nextlander', 'Friday Fun Stream: More Schedule I w/ Abby Russell!', 'Time to follow Drugs Bunny down the rabbit hole of low level drug dealing in Schedule I!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/yWKRiKQNN2c/mqdefault.jpg', '2025-04-18 20:23:32+00', '''/nextlander'':35B ''abbi'':8A ''bunni'':14B ''communiti'':32B ''deal'':23B ''drug'':13B,22B ''follow'':12B ''friday'':1A ''fun'':2A ''hole'':18B ''level'':21B ''low'':20B ''nextland'':27B ''rabbit'':17B ''russel'':9A ''schedul'':5A,25B ''stream'':3A ''support'':29B ''thank'':36B ''time'':10B ''w'':7A ''watch'':38B ''www.patreon.com'':34B ''www.patreon.com/nextlander'':33B', false, 'PT2H19M37S', 'https://i.ytimg.com/vi/yWKRiKQNN2c/maxresdefault.jpg'),
-	('sHFmvE7W1zU', 'giantbomb', 'Death Stranding 2 is Absolutely Fantastic | Giant Bombcast 896: Current Next Gen', 'Folks it''s time to trek from Mexico to Austrailia as we talk about our time so far with Death Stranding 2, putting out fires in FBC: Firebreak, painting and splatting in Splatoon, the ups and downs of Pipestrello and the Cursed Yoyo, and getting sometime with Rematch. We also chat about the next generation of consoles slowly getting underway, some heat advisory for your Switch 2, Mario Kart World characters, and even more! 
-
-#bombcast #giantbombcast #giantbomb', 'https://i.ytimg.com/vi/sHFmvE7W1zU/mqdefault.jpg', '2025-06-24 19:06:11+00', '''2'':3A,34B,79B ''896'':9A ''absolut'':5A ''advisori'':75B ''also'':62B ''austrailia'':22B ''bombcast'':8A,87B ''charact'':83B ''chat'':63B ''consol'':69B ''current'':10A ''curs'':54B ''death'':1A,32B ''down'':49B ''even'':85B ''fantast'':6A ''far'':30B ''fbc'':39B ''fire'':37B ''firebreak'':40B ''folk'':13B ''gen'':12A ''generat'':67B ''get'':57B,71B ''giant'':7A ''giantbomb'':89B ''giantbombcast'':88B ''heat'':74B ''kart'':81B ''mario'':80B ''mexico'':20B ''next'':11A,66B ''paint'':41B ''pipestrello'':51B ''put'':35B ''rematch'':60B ''slowli'':70B ''sometim'':58B ''splat'':43B ''splatoon'':45B ''strand'':2A,33B ''switch'':78B ''talk'':25B ''time'':16B,28B ''trek'':18B ''underway'':72B ''up'':47B ''world'':82B ''yoyo'':55B', false, 'PT2H44M56S', 'https://i.ytimg.com/vi/sHFmvE7W1zU/maxresdefault.jpg'),
-	('Qx0x0Qx2JNc', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 2-6 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
-
-We got Mike Minotti, Dan Ryckert, HBomberguy, Jeff Bakalar, Jan Ochoa, and Niki Grayson on the couch to end the day! Burgers are slopped, buzzballs are taped, and the day has ended. 
+We got Russ Frushtick, Brad Shoemaker, Niki Grayson, Abby Russell, and Jeff Bakalar on the couch! We end the evening with talking about the Switch LITE and Doordashing consoles, using games to learn another language, and if Mario Kart World is good. 
 
 Thanks to our friends at Annapurna Interactive for presenting this stream!
 
-#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/Qx0x0Qx2JNc/mqdefault.jpg', '2025-06-12 19:00:21+00', '''-6'':10A ''2'':9A ''angel'':21B ''annapurna'':13A,77B ''around'':30B ''bakalar'':48B ''bomb'':2A ''burger'':61B ''buzzbal'':64B ''couch'':18B,56B ''dan'':44B ''day'':60B,69B ''end'':58B,71B ''found'':16B ''friend'':27B,75B ''get'':25B ''giant'':1A ''giantbomb'':85B ''got'':41B ''grayson'':53B ''hang'':34B ''hbomberguy'':46B ''industri'':32B ''interact'':14A,78B ''jan'':49B ''jeff'':47B ''los'':20B ''mike'':42B ''minotti'':43B ''niki'':52B ''nite'':3A,8A ''ochoa'':50B ''present'':11A,80B ''re'':24B ''ryckert'':45B ''sgf'':83B ''slop'':63B ''stream'':82B ''summergamefest'':84B ''tape'':66B ''thank'':72B ''villa'':7A,39B ''warfram'':6A,38B', false, 'PT33M7S', 'https://i.ytimg.com/vi/Qx0x0Qx2JNc/maxresdefault.jpg'),
-	('sr-b60xsM4c', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 2-5 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
+Thanks to Young Horses for their support of Giant Bomb @ Nite! Bugsnax VR is out now, go play it!
+Sign up for the Young Horses newsletter here: http://eepurl.com/g5DUzT
+And check out their Steam page! https://store.steampowered.com/developer/younghorses/ 
 
-We got Jeff Gerstmann, Dan Ryckert, Mark MacDonald, Jordan Middler, Greg Miller, and Danny O''Dwyer on the couch! NOTHING BUT HEAVYWEIGHTS AND WILD STUFF HERE! 
-
-Thanks to our friends at Annapurna Interactive for presenting this stream!
-
-#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/sr-b60xsM4c/mqdefault.jpg', '2025-06-12 18:31:17+00', '''-5'':10A ''2'':9A ''angel'':21B ''annapurna'':13A,71B ''around'':30B ''bomb'':2A ''couch'':18B,58B ''dan'':44B ''danni'':53B ''dwyer'':55B ''found'':16B ''friend'':27B,69B ''gerstmann'':43B ''get'':25B ''giant'':1A ''giantbomb'':79B ''got'':41B ''greg'':50B ''hang'':34B ''heavyweight'':61B ''industri'':32B ''interact'':14A,72B ''jeff'':42B ''jordan'':48B ''los'':20B ''macdonald'':47B ''mark'':46B ''middler'':49B ''miller'':51B ''nite'':3A,8A ''noth'':59B ''o'':54B ''present'':11A,74B ''re'':24B ''ryckert'':45B ''sgf'':77B ''stream'':76B ''stuff'':64B ''summergamefest'':78B ''thank'':66B ''villa'':7A,39B ''warfram'':6A,38B ''wild'':63B', false, 'PT1H2M13S', 'https://i.ytimg.com/vi/sr-b60xsM4c/maxresdefault.jpg'),
-	('On3a_5dnPrs', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 1-5 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
-
-We got Alanah Pearce, Wout Van Halderen, Whyatt Bushnell, Mike Salyh, and Billy Shibley on the couch! We talk about exploitation in the industry, a new Escape Academy game, publishing games, and even more! 
-
-Thanks to our friends at Annapurna Interactive for presenting this stream!
-
-#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/On3a_5dnPrs/mqdefault.jpg', '2025-06-11 22:30:05+00', '''-5'':10A ''1'':9A ''academi'':67B ''alanah'':42B ''angel'':21B ''annapurna'':13A,79B ''around'':30B ''billi'':52B ''bomb'':2A ''bushnel'':48B ''couch'':18B,56B ''escap'':66B ''even'':72B ''exploit'':60B ''found'':16B ''friend'':27B,77B ''game'':68B,70B ''get'':25B ''giant'':1A ''giantbomb'':87B ''got'':41B ''halderen'':46B ''hang'':34B ''industri'':32B,63B ''interact'':14A,80B ''los'':20B ''mike'':49B ''new'':65B ''nite'':3A,8A ''pearc'':43B ''present'':11A,82B ''publish'':69B ''re'':24B ''salyh'':50B ''sgf'':85B ''shibley'':53B ''stream'':84B ''summergamefest'':86B ''talk'':58B ''thank'':74B ''van'':45B ''villa'':7A,39B ''warfram'':6A,38B ''whyatt'':47B ''wout'':44B', false, 'PT28M54S', 'https://i.ytimg.com/vi/On3a_5dnPrs/maxresdefault.jpg'),
+#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/QJC3vLrUX_Y/mqdefault.jpg', '2025-06-11 23:30:07+00', '''-7'':10A ''/developer/younghorses/'':131B ''/g5duzt'':122B ''1'':9A ''abbi'':48B ''angel'':21B ''annapurna'':13A,87B ''anoth'':73B ''around'':30B ''bakalar'':52B ''bomb'':2A,102B ''brad'':44B ''bugsnax'':104B ''check'':124B ''consol'':68B ''couch'':18B,55B ''doordash'':67B ''eepurl.com'':121B ''eepurl.com/g5duzt'':120B ''end'':57B ''even'':59B ''found'':16B ''friend'':27B,85B ''frushtick'':43B ''game'':70B ''get'':25B ''giant'':1A,101B ''giantbomb'':134B ''go'':109B ''good'':81B ''got'':41B ''grayson'':47B ''hang'':34B ''hors'':96B,117B ''industri'':32B ''interact'':14A,88B ''jeff'':51B ''kart'':78B ''languag'':74B ''learn'':72B ''lite'':65B ''los'':20B ''mario'':77B ''newslett'':118B ''niki'':46B ''nite'':3A,8A,103B ''page'':128B ''play'':110B ''present'':11A,90B ''re'':24B ''russ'':42B ''russel'':49B ''sgf'':132B ''shoemak'':45B ''sign'':112B ''steam'':127B ''store.steampowered.com'':130B ''store.steampowered.com/developer/younghorses/'':129B ''stream'':92B ''summergamefest'':133B ''support'':99B ''switch'':64B ''talk'':61B ''thank'':82B,93B ''use'':69B ''villa'':7A,39B ''vr'':105B ''warfram'':6A,38B ''world'':79B ''young'':95B,116B', false, 'PT44M39S', 'https://i.ytimg.com/vi/QJC3vLrUX_Y/maxresdefault.jpg'),
 	('PEA70endQTM', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 1-3 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
 
 We got Ben Starr, Jen English, and Gavin Verhey on the couch! We talk about the impact that Clair Obscur: Expedition 33 and Magic: The Gathering have had over the past year! 
@@ -59870,22 +59805,101 @@ We got Ben Starr, Jen English, and Gavin Verhey on the couch! We talk about the 
 Thanks to our friends at Annapurna Interactive for presenting this stream!
 
 #sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/PEA70endQTM/mqdefault.jpg', '2025-06-11 21:30:10+00', '''-3'':10A ''1'':9A ''33'':61B ''angel'':21B ''annapurna'':13A,77B ''around'':30B ''ben'':42B ''bomb'':2A ''clair'':58B ''couch'':18B,51B ''english'':45B ''expedit'':60B ''found'':16B ''friend'':27B,75B ''gather'':65B ''gavin'':47B ''get'':25B ''giant'':1A ''giantbomb'':85B ''got'':41B ''hang'':34B ''impact'':56B ''industri'':32B ''interact'':14A,78B ''jen'':44B ''los'':20B ''magic'':63B ''nite'':3A,8A ''obscur'':59B ''past'':70B ''present'':11A,80B ''re'':24B ''sgf'':83B ''starr'':43B ''stream'':82B ''summergamefest'':84B ''talk'':53B ''thank'':72B ''verhey'':48B ''villa'':7A,39B ''warfram'':6A,38B ''year'':71B', false, 'PT22M17S', 'https://i.ytimg.com/vi/PEA70endQTM/maxresdefault.jpg'),
-	('RxCk9gVqVmU', 'giantbomb', 'Netflix Backing Away from Games | Game Mess Mornings 06/25/25', 'Jeff Grubb and Jan Ochoa start your Wednesday with news that Netflix is slowly stepping away from their video game initiative, Jurassic World Evolution 3 developers removing AI from the game, Nintendo had a hand in Death Stranding 2, and even more news! 
+	('Qx0x0Qx2JNc', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 2-6 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
 
-Support Giant Bomb by going to:
-giantbomb.com/join
-
-#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/RxCk9gVqVmU/mqdefault.jpg', '2025-06-25 16:06:53+00', '''/join'':61B ''06/25/25'':9A ''2'':48B ''3'':34B ''ai'':37B ''away'':3A,25B ''back'':2A ''bomb'':55B ''death'':46B ''develop'':35B ''even'':50B ''evolut'':33B ''game'':5A,6A,29B,40B ''gamemessmorn'':63B ''giant'':54B ''giantbomb'':64B ''giantbomb.com'':60B ''giantbomb.com/join'':59B ''gmm'':62B ''go'':57B ''grubb'':11B ''hand'':44B ''initi'':30B ''jan'':13B ''jeff'':10B ''jurass'':31B ''mess'':7A ''morn'':8A ''netflix'':1A,21B ''news'':19B,52B ''nintendo'':41B ''ochoa'':14B ''remov'':36B ''slowli'':23B ''start'':15B ''step'':24B ''strand'':47B ''support'':53B ''video'':28B ''videogamenew'':65B ''wednesday'':17B ''world'':32B', false, 'PT58M50S', 'https://i.ytimg.com/vi/RxCk9gVqVmU/maxresdefault.jpg'),
-	('mzKLWT5_xwY', 'giantbomb', 'An Ad Claims Metroid Prime 4 is Out Now | Game Mess Mornings 06/20/25', 'Jeff Grubb and Jesse Vitelli end the week with confusion around a London Underground ad claiming Metroid Prime 4 is out, a Donkey Kong Bananza Switch 2 Demo is spotted in the wild, updates on the Death Stranding movie, Crash Team Racing getting a big update, and more! 
-
-#gmm #gamemessmornings #giantbomb', 'https://i.ytimg.com/vi/mzKLWT5_xwY/mqdefault.jpg', '2025-06-20 16:09:54+00', '''06/20/25'':13A ''2'':40B ''4'':6A,32B ''ad'':2A,28B ''around'':24B ''bananza'':38B ''big'':58B ''claim'':3A,29B ''confus'':23B ''crash'':53B ''death'':50B ''demo'':41B ''donkey'':36B ''end'':19B ''game'':10A ''gamemessmorn'':63B ''get'':56B ''giantbomb'':64B ''gmm'':62B ''grubb'':15B ''jeff'':14B ''jess'':17B ''kong'':37B ''london'':26B ''mess'':11A ''metroid'':4A,30B ''morn'':12A ''movi'':52B ''prime'':5A,31B ''race'':55B ''spot'':43B ''strand'':51B ''switch'':39B ''team'':54B ''underground'':27B ''updat'':47B,59B ''vitelli'':18B ''week'':21B ''wild'':46B', false, 'PT1H1M22S', 'https://i.ytimg.com/vi/mzKLWT5_xwY/maxresdefault.jpg'),
-	('xKKb-QVQX-8', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 2-2 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
-
-We got Kate Sanchez, Phil Salvador, Chandana Ekanayake, Jill Grodt, and Jason Schrier on the couch! We chat about Indie Game development and coverage, game preservation, breaking in and being sustainable in the video games media industry. 
+We got Mike Minotti, Dan Ryckert, HBomberguy, Jeff Bakalar, Jan Ochoa, and Niki Grayson on the couch to end the day! Burgers are slopped, buzzballs are taped, and the day has ended. 
 
 Thanks to our friends at Annapurna Interactive for presenting this stream!
 
-#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/xKKb-QVQX-8/mqdefault.jpg', '2025-06-12 17:45:07+00', '''-2'':10A ''2'':9A ''angel'':21B ''annapurna'':13A,82B ''around'':30B ''bomb'':2A ''break'':66B ''chandana'':46B ''chat'':57B ''couch'':18B,55B ''coverag'':63B ''develop'':61B ''ekanayak'':47B ''found'':16B ''friend'':27B,80B ''game'':60B,64B,74B ''get'':25B ''giant'':1A ''giantbomb'':90B ''got'':41B ''grodt'':49B ''hang'':34B ''indi'':59B ''industri'':32B,76B ''interact'':14A,83B ''jason'':51B ''jill'':48B ''kate'':42B ''los'':20B ''media'':75B ''nite'':3A,8A ''phil'':44B ''present'':11A,85B ''preserv'':65B ''re'':24B ''salvador'':45B ''sanchez'':43B ''schrier'':52B ''sgf'':88B ''stream'':87B ''summergamefest'':89B ''sustain'':70B ''thank'':77B ''video'':73B ''villa'':7A,39B ''warfram'':6A,38B', false, 'PT36M39S', 'https://i.ytimg.com/vi/xKKb-QVQX-8/maxresdefault.jpg'),
+#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/Qx0x0Qx2JNc/mqdefault.jpg', '2025-06-12 19:00:21+00', '''-6'':10A ''2'':9A ''angel'':21B ''annapurna'':13A,77B ''around'':30B ''bakalar'':48B ''bomb'':2A ''burger'':61B ''buzzbal'':64B ''couch'':18B,56B ''dan'':44B ''day'':60B,69B ''end'':58B,71B ''found'':16B ''friend'':27B,75B ''get'':25B ''giant'':1A ''giantbomb'':85B ''got'':41B ''grayson'':53B ''hang'':34B ''hbomberguy'':46B ''industri'':32B ''interact'':14A,78B ''jan'':49B ''jeff'':47B ''los'':20B ''mike'':42B ''minotti'':43B ''niki'':52B ''nite'':3A,8A ''ochoa'':50B ''present'':11A,80B ''re'':24B ''ryckert'':45B ''sgf'':83B ''slop'':63B ''stream'':82B ''summergamefest'':84B ''tape'':66B ''thank'':72B ''villa'':7A,39B ''warfram'':6A,38B', false, 'PT33M7S', 'https://i.ytimg.com/vi/Qx0x0Qx2JNc/maxresdefault.jpg'),
+	('JFUpy023mgE', 'remap', 'Celebrating Remap''s 2nd Birthday With an All-Day Stream', 'We''ve somehow made it two years into this wild project, so come join Rob, Patrick, and Cado as they play a variety of games to celebrate two years as an independent media company!
+
+Timestamps:
+00:05:14 — POPUCOM
+01:38:27 — Hopshot
+02:45:12 — HAELE 3D - Feet Poses Pro 
+02:56:36 — Baccarat
+03:04:45 — Pokertown: Cheater''s Paradise
+03:21:31 — Lunch Break
+04:04:06 — Elden Ring: Nightreign
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/JFUpy023mgE/mqdefault.jpg', '2025-06-04 02:57:21+00', '''00'':47B ''01'':51B ''02'':55B,63B ''03'':67B,74B ''04'':68B,79B,80B ''05'':48B ''06'':81B ''12'':57B ''14'':49B ''21'':75B ''27'':53B ''2nd'':4A ''31'':76B ''36'':65B ''38'':52B ''3d'':59B ''45'':56B,69B ''56'':64B ''all-day'':8A ''audienc'':88B ''baccarat'':66B ''birthday'':5A ''break'':78B ''cado'':29B ''celebr'':1A,38B ''cheater'':71B ''come'':24B ''compani'':45B ''consid'':98B ''content'':96B ''continu'':93B ''day'':10A ''elden'':82B ''feet'':60B ''game'':36B ''hael'':58B ''help'':91B ''hopshot'':54B ''independ'':43B ''join'':25B ''lunch'':77B ''made'':15B ''make'':94B ''media'':44B ''nightreign'':84B ''paradis'':73B ''patrick'':27B ''play'':32B ''pleas'':97B ''pokertown'':70B ''popucom'':50B ''pose'':61B ''pro'':62B ''project'':22B ''radio'':86B ''remap'':2A,85B ''ring'':83B ''rob'':26B ''somehow'':14B ''stream'':11A ''subscrib'':99B ''support'':89B ''timestamp'':46B ''two'':17B,39B ''us'':92B ''varieti'':34B ''ve'':13B ''wild'':21B ''www.remapradio.com'':101B ''year'':18B,40B', false, 'PT6H51M55S', 'https://i.ytimg.com/vi/JFUpy023mgE/maxresdefault.jpg'),
+	('DuXUDtR6H0U', 'remap', 'Patrick vs. Hopshot [Part 6]', 'It''s just The Final Jump, Patrick. How hard could The Final Jump in Hopshot be?
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/DuXUDtR6H0U/mqdefault.jpg', '2025-05-27 21:22:04+00', '''6'':5A ''audienc'':25B ''consid'':35B ''content'':33B ''continu'':30B ''could'':15B ''final'':10B,17B ''hard'':14B ''help'':28B ''hopshot'':3A,20B ''jump'':11B,18B ''make'':31B ''part'':4A ''patrick'':1A,12B ''pleas'':34B ''radio'':23B ''remap'':22B ''subscrib'':36B ''support'':26B ''us'':29B ''vs'':2A ''www.remapradio.com'':38B', false, 'PT1H56M26S', 'https://i.ytimg.com/vi/DuXUDtR6H0U/maxresdefault.jpg'),
+	('jYIUfvalJnI', 'remap', 'Clair Obscur: Expedition 33 Is Already a GOTY Candidate', 'Janet and Patrick have become fully French-pilled by the new JRPG-inspired Clair Obscur: Expedition 33. Can they convert Rob and Cado into joining their revolution against the Paintress?
+
+What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/jYIUfvalJnI/mqdefault.jpg', '2025-05-05 14:01:00+00', '''/us/podcast/remap-radio/id1690437343'':63B ''33'':4A,28B ''alreadi'':6A ''audienc'':67B ''becom'':14B ''cado'':34B ''candid'':9A ''clair'':1A,25B ''consid'':77B ''content'':75B ''continu'':72B ''convert'':31B ''episod'':53B ''expedit'':3A,27B ''french'':17B ''french-pil'':16B ''full'':52B ''fulli'':15B ''goti'':8A ''help'':70B ''inspir'':24B ''janet'':10B ''join'':36B ''jrpg'':23B ''jrpg-inspir'':22B ''listen'':45B ''make'':73B ''new'':21B ''obscur'':2A,26B ''paintress'':41B ''patrick'':12B ''pill'':18B ''pleas'':76B ''podcast'':60B ''podcasts.apple.com'':62B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':61B ''radio'':56B,65B ''re'':44B ''remap'':55B,64B ''revolut'':38B ''rob'':32B ''segment'':49B ''subscrib'':57B,78B ''support'':68B ''us'':71B ''www.remapradio.com'':80B', false, 'PT39M4S', 'https://i.ytimg.com/vi/jYIUfvalJnI/maxresdefault.jpg'),
+	('K5eaJB7sLFo', 'remap', 'AI Is Still a Major Threat to Voice Actors', 'The SAG-AFTRA strike appears over, but in the long term, it feels like artificial intelligence is going to have a massive negative impact on the acting profession in video games.
+
+What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/K5eaJB7sLFo/mqdefault.jpg', '2025-06-27 14:00:34+00', '''/us/podcast/remap-radio/id1690437343'':63B ''act'':37B ''actor'':9A ''aftra'':13B ''ai'':1A ''appear'':15B ''artifici'':25B ''audienc'':67B ''consid'':77B ''content'':75B ''continu'':72B ''episod'':53B ''feel'':23B ''full'':52B ''game'':41B ''go'':28B ''help'':70B ''impact'':34B ''intellig'':26B ''like'':24B ''listen'':45B ''long'':20B ''major'':5A ''make'':73B ''massiv'':32B ''negat'':33B ''pleas'':76B ''podcast'':60B ''podcasts.apple.com'':62B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':61B ''profess'':38B ''radio'':56B,65B ''re'':44B ''remap'':55B,64B ''sag'':12B ''sag-aftra'':11B ''segment'':49B ''still'':3A ''strike'':14B ''subscrib'':57B,78B ''support'':68B ''term'':21B ''threat'':6A ''us'':71B ''video'':40B ''voic'':8A ''www.remapradio.com'':80B', false, 'PT28M27S', 'https://i.ytimg.com/vi/K5eaJB7sLFo/maxresdefault.jpg'),
+	('Q8cPe1YYU6Y', 'remap', 'Giant Bomb Buys Giant Bomb, But What''s Next?', 'The absolutely wild resolution to the unrest at Giant Bomb has Patrick, Rob, Janet, and Chia celebrating Giant Bomb’s newfound independence, contrasting it with their own breakup with Vice, and more. This is a segment from Remap Radio, the flagship video game podcast from Remap.
+
+What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/Q8cPe1YYU6Y/mqdefault.jpg', '2025-05-19 14:00:41+00', '''/us/podcast/remap-radio/id1690437343'':77B ''absolut'':11B ''audienc'':81B ''bomb'':2A,5A,19B,28B ''breakup'':37B ''buy'':3A ''celebr'':26B ''chia'':25B ''consid'':91B ''content'':89B ''continu'':86B ''contrast'':32B ''episod'':67B ''flagship'':50B ''full'':66B ''game'':52B ''giant'':1A,4A,18B,27B ''help'':84B ''independ'':31B ''janet'':23B ''listen'':59B ''make'':87B ''newfound'':30B ''next'':9A ''patrick'':21B ''pleas'':90B ''podcast'':53B,74B ''podcasts.apple.com'':76B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':75B ''radio'':48B,70B,79B ''re'':58B ''remap'':47B,55B,69B,78B ''resolut'':13B ''rob'':22B ''segment'':45B,63B ''subscrib'':71B,92B ''support'':82B ''unrest'':16B ''us'':85B ''vice'':39B ''video'':51B ''wild'':12B ''www.remapradio.com'':94B', false, 'PT49M9S', 'https://i.ytimg.com/vi/Q8cPe1YYU6Y/maxresdefault.jpg'),
+	('0i4pJWB7cFM', 'remap', 'Remap in New York (Day Two)', 'While Patrick was secretly attending a Switch 2 event, Rob and Cado were joined by Ren and Austin for a day of talking over an increasingly broken Nintendo Direct, before playing a board game. Well, the plan was to play two games. They played one.
+
+Timestamps: 
+00:00:06 — Nintendo Direct/Switch 2 Discussion
+02:22:41 — Let''s Talk About Cassette Players
+02:48:31 — Break
+03:49:48 — Board Game Time: Molly House
+08:00:03 — Break
+08:44:20 — Star Wars: Rebellion
+09:22:55 — Patrick Returns!
+09:51:37 — Zany Golf
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/0i4pJWB7cFM/mqdefault.jpg', '2025-04-07 19:19:52+00', '''00'':53B,54B,82B ''02'':60B,69B ''03'':73B,83B ''06'':55B ''08'':81B,85B ''09'':91B,96B ''2'':14B,58B ''20'':87B ''22'':61B,92B ''31'':71B ''37'':98B ''41'':62B ''44'':86B ''48'':70B,75B ''49'':74B ''51'':97B ''55'':93B ''attend'':11B ''audienc'':104B ''austin'':24B ''board'':39B,76B ''break'':72B,84B ''broken'':33B ''cado'':18B ''cassett'':67B ''consid'':114B ''content'':112B ''continu'':109B ''day'':5A,27B ''direct'':35B ''direct/switch'':57B ''discuss'':59B ''event'':15B ''game'':40B,48B,77B ''golf'':100B ''help'':107B ''hous'':80B ''increas'':32B ''join'':20B ''let'':63B ''make'':110B ''molli'':79B ''new'':3A ''nintendo'':34B,56B ''one'':51B ''patrick'':8B,94B ''plan'':43B ''play'':37B,46B,50B ''player'':68B ''pleas'':113B ''radio'':102B ''rebellion'':90B ''remap'':1A,101B ''ren'':22B ''return'':95B ''rob'':16B ''secret'':10B ''star'':88B ''subscrib'':115B ''support'':105B ''switch'':13B ''talk'':29B,65B ''time'':78B ''timestamp'':52B ''two'':6A,47B ''us'':108B ''war'':89B ''well'':41B ''www.remapradio.com'':117B ''york'':4A ''zani'':99B', false, 'PT10H20M36S', 'https://i.ytimg.com/vi/0i4pJWB7cFM/maxresdefault.jpg'),
+	('lSOOodKYyyU', 'giantbomb', 'PEAK | Giant Bomb Plays', 'Dan, Jan, Jeff, and Jeff crashland on an island to eat miscellaneous fruit, help each other up, and climb a mountain in PEAK!
+
+#peak #giantbomb', 'https://i.ytimg.com/vi/lSOOodKYyyU/mqdefault.jpg', '2025-06-16 19:31:36+00', '''bomb'':3A ''climb'':23B ''crashland'':10B ''dan'':5B ''eat'':15B ''fruit'':17B ''giant'':2A ''giantbomb'':29B ''help'':18B ''island'':13B ''jan'':6B ''jeff'':7B,9B ''miscellan'':16B ''mountain'':25B ''peak'':1A,27B,28B ''play'':4A', false, 'PT1H25M24S', 'https://i.ytimg.com/vi/lSOOodKYyyU/maxresdefault.jpg'),
+	('8q8fDHZRNJY', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 1-2 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
+
+We got Imran Khan, Bailey Meyers, Tyler Gardner, Mike Vayatta, and Adam Cole on the couch! We chat about Table Top games, the state of Games Journalism, Firebreak, and being a wrestler! 
+
+Thanks to our friends at Annapurna Interactive for presenting this stream!
+
+Thanks to Young Horses for their support of Giant Bomb @ Nite! Bugsnax VR is out now, go play it!
+Sign up for the Young Horses newsletter here: 
+http://eepurl.com/g5DUzTAnd check out their Steam page! https://store.steampowered.com/developer/younghorses/ 
+#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/8q8fDHZRNJY/mqdefault.jpg', '2025-06-11 21:00:09+00', '''-2'':10A ''/developer/younghorses/'':120B ''/g5duztand'':112B ''1'':9A ''adam'':51B ''angel'':21B ''annapurna'':13A,77B ''around'':30B ''bailey'':44B ''bomb'':2A,92B ''bugsnax'':94B ''chat'':57B ''check'':113B ''cole'':52B ''couch'':18B,55B ''eepurl.com'':111B ''eepurl.com/g5duztand'':110B ''firebreak'':67B ''found'':16B ''friend'':27B,75B ''game'':61B,65B ''gardner'':47B ''get'':25B ''giant'':1A,91B ''giantbomb'':123B ''go'':99B ''got'':41B ''hang'':34B ''hors'':86B,107B ''imran'':42B ''industri'':32B ''interact'':14A,78B ''journal'':66B ''khan'':43B ''los'':20B ''meyer'':45B ''mike'':48B ''newslett'':108B ''nite'':3A,8A,93B ''page'':117B ''play'':100B ''present'':11A,80B ''re'':24B ''sgf'':121B ''sign'':102B ''state'':63B ''steam'':116B ''store.steampowered.com'':119B ''store.steampowered.com/developer/younghorses/'':118B ''stream'':82B ''summergamefest'':122B ''support'':89B ''tabl'':59B ''thank'':72B,83B ''top'':60B ''tyler'':46B ''vayatta'':49B ''villa'':7A,39B ''vr'':95B ''warfram'':6A,38B ''wrestler'':71B ''young'':85B,106B', false, 'PT25M40S', 'https://i.ytimg.com/vi/8q8fDHZRNJY/maxresdefault.jpg'),
+	('NWieJ8tP8Og', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 1-4 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
+
+We got Rashad Redic, Bryna Dabby Smith, Riana Manuel-Peña, and Danny Peña to chat about the upcoming Wu-Tang: Rise of the Deceiver and all the insane amount of work that has gone into making it. 
+
+
+Thanks to our friends at Annapurna Interactive for presenting this stream!
+
+#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/NWieJ8tP8Og/mqdefault.jpg', '2025-06-11 22:00:32+00', '''-4'':10A ''1'':9A ''amount'':70B ''angel'':21B ''annapurna'':13A,84B ''around'':30B ''bomb'':2A ''bryna'':44B ''chat'':55B ''couch'':18B ''dabbi'':45B ''danni'':52B ''deceiv'':65B ''found'':16B ''friend'':27B,82B ''get'':25B ''giant'':1A ''giantbomb'':92B ''gone'':75B ''got'':41B ''hang'':34B ''industri'':32B ''insan'':69B ''interact'':14A,85B ''los'':20B ''make'':77B ''manuel'':49B ''manuel-peña'':48B ''nite'':3A,8A ''peña'':50B,53B ''present'':11A,87B ''rashad'':42B ''re'':24B ''redic'':43B ''riana'':47B ''rise'':62B ''sgf'':90B ''smith'':46B ''stream'':89B ''summergamefest'':91B ''tang'':61B ''thank'':79B ''upcom'':58B ''villa'':7A,39B ''warfram'':6A,38B ''work'':72B ''wu'':60B ''wu-tang'':59B', false, 'PT21M33S', 'https://i.ytimg.com/vi/NWieJ8tP8Og/maxresdefault.jpg'),
+	('cm607zMf3qQ', 'remap', 'A New Genre Has Been Invented: Lore and Logic', 'We''re still refining what it means to mash up a puzzle game with a Metroidvania. MetroidBrania? Well, we''ve got a new idea from a listener: lore and logic. What do you think?
+
+What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/cm607zMf3qQ/mqdefault.jpg', '2025-06-18 14:00:54+00', '''/us/podcast/remap-radio/id1690437343'':65B ''audienc'':69B ''consid'':79B ''content'':77B ''continu'':74B ''episod'':55B ''full'':54B ''game'':22B ''genr'':3A ''got'':30B ''help'':72B ''idea'':33B ''invent'':6A ''listen'':36B,47B ''logic'':9A,39B ''lore'':7A,37B ''make'':75B ''mash'':18B ''mean'':16B ''metroidbrania'':26B ''metroidvania'':25B ''new'':2A,32B ''pleas'':78B ''podcast'':62B ''podcasts.apple.com'':64B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':63B ''puzzl'':21B ''radio'':58B,67B ''re'':11B,46B ''refin'':13B ''remap'':57B,66B ''segment'':51B ''still'':12B ''subscrib'':59B,80B ''support'':70B ''think'':43B ''us'':73B ''ve'':29B ''well'':27B ''www.remapradio.com'':82B', false, 'PT10M56S', 'https://i.ytimg.com/vi/cm607zMf3qQ/maxresdefault.jpg'),
+	('4vbEX_Q87xM', 'remap', 'Why Do We Call Games "Metroidvanias"?', 'If Metroidvania was a math problem, what percentage is "Metroid" and what percentage is "Castlevania"? An exploration of the ongoing confusion over what video game genres are trying to accomplish. What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/4vbEX_Q87xM/mqdefault.jpg', '2025-06-02 14:00:15+00', '''/us/podcast/remap-radio/id1690437343'':58B ''accomplish'':36B ''audienc'':62B ''call'':4A ''castlevania'':21B ''confus'':27B ''consid'':72B ''content'':70B ''continu'':67B ''episod'':48B ''explor'':23B ''full'':47B ''game'':5A,31B ''genr'':32B ''help'':65B ''listen'':40B ''make'':68B ''math'':11B ''metroid'':16B ''metroidvania'':6A,8B ''ongo'':26B ''percentag'':14B,19B ''pleas'':71B ''podcast'':55B ''podcasts.apple.com'':57B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':56B ''problem'':12B ''radio'':51B,60B ''re'':39B ''remap'':50B,59B ''segment'':44B ''subscrib'':52B,73B ''support'':63B ''tri'':34B ''us'':66B ''video'':30B ''www.remapradio.com'':75B', false, 'PT22M19S', 'https://i.ytimg.com/vi/4vbEX_Q87xM/maxresdefault.jpg'),
+	('8KDahG27Alc', 'nextlander', 'Will and Vinny Take a Final Swing at the Savage Planet!', 'We''ve been enjoying our time with Revenge of the Savage Planet so let''s do one more run!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/8KDahG27Alc/mqdefault.jpg', '2025-05-19 23:35:45+00', '''/nextlander'':39B ''communiti'':36B ''enjoy'':15B ''final'':6A ''let'':25B ''nextland'':31B ''one'':28B ''planet'':11A,23B ''reveng'':19B ''run'':30B ''savag'':10A,22B ''support'':33B ''swing'':7A ''take'':4A ''thank'':40B ''time'':17B ''ve'':13B ''vinni'':3A ''watch'':42B ''www.patreon.com'':38B ''www.patreon.com/nextlander'':37B', false, 'PT2H29M7S', 'https://i.ytimg.com/vi/8KDahG27Alc/maxresdefault.jpg'),
+	('EC3wTMSQYlw', 'giantbomb', 'Giant Bomb @ Nite, LIVE from the Warframe Villa! | Presented by Annapurna Interactive | Nite 1', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
+
+Thanks to our friends at Annapurna Interactive for presenting this stream!
+
+Thanks to Young Horses for their support of Giant Bomb @ Nite! 
+Bugsnax VR is out now, go play it!
+Sign up for the Young Horses newsletter here: http://eepurl.com/g5DUzT
+And check out their Steam page! https://store.steampowered.com/developer/younghorses/
+
+#sgf #summergamefest #giantbomb', 'https://i.ytimg.com/vi/EC3wTMSQYlw/mqdefault.jpg', '2025-06-07 06:09:50+00', '''/developer/younghorses/'':89B ''/g5duzt'':80B ''1'':14A ''angel'':21B ''annapurna'':11A,45B ''around'':30B ''bomb'':2A,60B ''bugsnax'':62B ''check'':82B ''couch'':18B ''eepurl.com'':79B ''eepurl.com/g5duzt'':78B ''found'':16B ''friend'':27B,43B ''get'':25B ''giant'':1A,59B ''giantbomb'':92B ''go'':67B ''hang'':34B ''hors'':54B,75B ''industri'':32B ''interact'':12A,46B ''live'':4A ''los'':20B ''newslett'':76B ''nite'':3A,13A,61B ''page'':86B ''play'':68B ''present'':9A,48B ''re'':24B ''sgf'':90B ''sign'':70B ''steam'':85B ''store.steampowered.com'':88B ''store.steampowered.com/developer/younghorses/'':87B ''stream'':50B ''summergamefest'':91B ''support'':57B ''thank'':40B,51B ''villa'':8A,39B ''vr'':63B ''warfram'':7A,38B ''young'':53B,74B', false, 'PT5H21M3S', 'https://i.ytimg.com/vi/EC3wTMSQYlw/maxresdefault.jpg'),
 	('vOFr8KslOZo', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 2-1 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
 
 We got Jason Fanelli, Celia Bee, Emmet Nahil, Nikky Armstrong, Son M. on the couch! We start the day by talking about Mina the Hollower, starting a farm in a Horror Game, and iputting in WORK over SGF week. 
@@ -59899,25 +59913,6 @@ Stay tuned to the end of this segment and join Dan Ryckert as he tries to cook a
 Peep Dosa Divas here: https://outerloopgames.com/
 
 #sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/vOFr8KslOZo/mqdefault.jpg', '2025-06-12 17:32:19+00', '''-1'':10A ''2'':9A ''angel'':21B ''annapurna'':13A,84B ''armstrong'':49B ''around'':30B ''bee'':45B ''behind'':138B ''bomb'':2A ''celia'':44B ''check'':90B ''cook'':114B ''correct'':127B ''couch'':18B,54B ''crew'':137B ''dan'':108B ''day'':58B ''diva'':143B,152B ''dosa'':142B,151B ''emmet'':46B ''end'':102B ''fanelli'':43B ''farm'':67B ''first'':119B ''found'':16B ''friend'':27B,82B,132B ''game'':71B,135B,141B ''get'':25B ''giant'':1A ''giantbomb'':157B ''got'':41B ''hamburg'':116B ''hang'':34B ''hollow'':64B ''horror'':70B ''hot'':93B ''industri'':32B ''interact'':14A,85B ''iput'':73B ''jason'':42B ''join'':107B ''logo'':96B ''los'':20B ''m'':51B ''mina'':62B ''nahil'':47B ''new'':94B,140B ''nikki'':48B ''nite'':3A,8A ''outerloop'':134B ''outerloopgames.com'':154B ''peep'':150B ''popagenda'':95B ''popagenda.co'':97B ''present'':11A,87B ''re'':24B ''read'':126B ''right'':123B ''ryckert'':109B ''segment'':105B,149B ''sgf'':77B,155B ''shout'':128B ''son'':50B ''start'':56B,65B ''stay'':98B ''stream'':89B ''summergamefest'':156B ''support'':146B ''talk'':60B ''thank'':79B ''time'':120B ''tri'':112B ''tune'':99B ''ve'':125B ''villa'':7A,39B ''warfram'':6A,38B ''week'':78B ''work'':75B', false, 'PT46M5S', 'https://i.ytimg.com/vi/vOFr8KslOZo/maxresdefault.jpg'),
-	('oi738e8B9_Y', 'nextlander', 'Patron''s Choice for May 2025: Riding the Nightreign', 'It''s time for some multiplayer Elden Ring from the greatest Elden Ring players in the known universe.
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/oi738e8B9_Y/mqdefault.jpg', '2025-06-01 06:14:09+00', '''/nextlander'':36B ''2025'':6A ''choic'':3A ''communiti'':33B ''elden'':16B,21B ''greatest'':20B ''known'':26B ''may'':5A ''multiplay'':15B ''nextland'':28B ''nightreign'':9A ''patron'':1A ''player'':23B ''ride'':7A ''ring'':17B,22B ''support'':30B ''thank'':37B ''time'':12B ''univers'':27B ''watch'':39B ''www.patreon.com'':35B ''www.patreon.com/nextlander'':34B', false, 'PT2H29M31S', 'https://i.ytimg.com/vi/oi738e8B9_Y/maxresdefault.jpg'),
-	('BbehXM0vQjE', 'remap', 'The Media Can''t Review the Switch 2 Until Launch', 'It''s been reported that Nintendo won''t be sending Switch 2 machines in advance to game journalists. What does it mean for Nintendo to dodge reviews, and is the a bigger conversation about the death of expertise? What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/BbehXM0vQjE/mqdefault.jpg', '2025-06-04 14:00:18+00', '''/us/podcast/remap-radio/id1690437343'':70B ''2'':8A,22B ''advanc'':25B ''audienc'':74B ''bigger'':42B ''consid'':84B ''content'':82B ''continu'':79B ''convers'':43B ''death'':46B ''dodg'':36B ''episod'':60B ''expertis'':48B ''full'':59B ''game'':27B ''help'':77B ''journalist'':28B ''launch'':10A ''listen'':52B ''machin'':23B ''make'':80B ''mean'':32B ''media'':2A ''nintendo'':16B,34B ''pleas'':83B ''podcast'':67B ''podcasts.apple.com'':69B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':68B ''radio'':63B,72B ''re'':51B ''remap'':62B,71B ''report'':14B ''review'':5A,37B ''segment'':56B ''send'':20B ''subscrib'':64B,85B ''support'':75B ''switch'':7A,21B ''us'':78B ''won'':17B ''www.remapradio.com'':87B', false, 'PT26M53S', 'https://i.ytimg.com/vi/BbehXM0vQjE/maxresdefault.jpg'),
-	('Q8cPe1YYU6Y', 'remap', 'Giant Bomb Buys Giant Bomb, But What''s Next?', 'The absolutely wild resolution to the unrest at Giant Bomb has Patrick, Rob, Janet, and Chia celebrating Giant Bomb’s newfound independence, contrasting it with their own breakup with Vice, and more. This is a segment from Remap Radio, the flagship video game podcast from Remap.
-
-What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/Q8cPe1YYU6Y/mqdefault.jpg', '2025-05-19 14:00:41+00', '''/us/podcast/remap-radio/id1690437343'':77B ''absolut'':11B ''audienc'':81B ''bomb'':2A,5A,19B,28B ''breakup'':37B ''buy'':3A ''celebr'':26B ''chia'':25B ''consid'':91B ''content'':89B ''continu'':86B ''contrast'':32B ''episod'':67B ''flagship'':50B ''full'':66B ''game'':52B ''giant'':1A,4A,18B,27B ''help'':84B ''independ'':31B ''janet'':23B ''listen'':59B ''make'':87B ''newfound'':30B ''next'':9A ''patrick'':21B ''pleas'':90B ''podcast'':53B,74B ''podcasts.apple.com'':76B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':75B ''radio'':48B,70B,79B ''re'':58B ''remap'':47B,55B,69B,78B ''resolut'':13B ''rob'':22B ''segment'':45B,63B ''subscrib'':71B,92B ''support'':82B ''unrest'':16B ''us'':85B ''vice'':39B ''video'':51B ''wild'':12B ''www.remapradio.com'':94B', false, 'PT49M9S', 'https://i.ytimg.com/vi/Q8cPe1YYU6Y/maxresdefault.jpg'),
-	('jYIUfvalJnI', 'remap', 'Clair Obscur: Expedition 33 Is Already a GOTY Candidate', 'Janet and Patrick have become fully French-pilled by the new JRPG-inspired Clair Obscur: Expedition 33. Can they convert Rob and Cado into joining their revolution against the Paintress?
-
-What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/jYIUfvalJnI/mqdefault.jpg', '2025-05-05 14:01:00+00', '''/us/podcast/remap-radio/id1690437343'':63B ''33'':4A,28B ''alreadi'':6A ''audienc'':67B ''becom'':14B ''cado'':34B ''candid'':9A ''clair'':1A,25B ''consid'':77B ''content'':75B ''continu'':72B ''convert'':31B ''episod'':53B ''expedit'':3A,27B ''french'':17B ''french-pil'':16B ''full'':52B ''fulli'':15B ''goti'':8A ''help'':70B ''inspir'':24B ''janet'':10B ''join'':36B ''jrpg'':23B ''jrpg-inspir'':22B ''listen'':45B ''make'':73B ''new'':21B ''obscur'':2A,26B ''paintress'':41B ''patrick'':12B ''pill'':18B ''pleas'':76B ''podcast'':60B ''podcasts.apple.com'':62B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':61B ''radio'':56B,65B ''re'':44B ''remap'':55B,64B ''revolut'':38B ''rob'':32B ''segment'':49B ''subscrib'':57B,78B ''support'':68B ''us'':71B ''www.remapradio.com'':80B', false, 'PT39M4S', 'https://i.ytimg.com/vi/jYIUfvalJnI/maxresdefault.jpg'),
 	('EL-wEoBYW4k', 'remap', 'It''s a Narrative Video Game Demo Lightning Round', 'Patrick and Cado are back for this year''s LudoNarraCon, checking out a whole bunch of story-focused games!
 
 Timestamps:
@@ -59931,15 +59926,108 @@ Timestamps:
 02:22:13 — Herald
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/EL-wEoBYW4k/mqdefault.jpg', '2025-04-29 19:30:25+00', '''00'':31B,35B,42B,47B ''01'':53B,59B ''02'':63B,68B ''04'':32B ''05'':64B ''13'':70B ''18'':55B ''19'':54B ''20'':36B ''22'':44B,69B ''28'':49B ''38'':43B ''43'':37B ''45'':60B,65B ''48'':33B ''53'':61B ''54'':48B ''agenc'':52B ''audienc'':75B ''back'':14B ''bathtub'':46B ''bunch'':24B ''cado'':12B ''check'':20B ''consid'':85B ''content'':83B ''continu'':80B ''demo'':7A ''focus'':28B ''game'':6A,29B ''harvest'':57B ''help'':78B ''herald'':71B ''highrook'':41B ''horror'':39B ''inkonbini'':34B ''june'':67B ''lightn'':8A ''ludonarracon'':19B ''make'':81B ''mascot'':51B ''narrat'':4A ''patrick'':10B ''pleas'':84B ''promis'':50B ''psychot'':45B ''radio'':73B ''remap'':72B ''round'':9A ''scrabdackl'':62B ''shadow'':58B ''stori'':27B ''story-focus'':26B ''subscrib'':86B ''support'':76B ''timestamp'':30B ''us'':79B ''usual'':66B ''video'':5A ''whole'':23B ''www.remapradio.com'':88B ''year'':17B', false, 'PT2H45M1S', 'https://i.ytimg.com/vi/EL-wEoBYW4k/maxresdefault.jpg'),
-	('Wud5OEvx_fM', 'remap', 'The Wheel Visits the Oldest House', 'We fell for Elden Ring: Nightreign. Can we fall for FBC: Firebreak, too?
+	('On3a_5dnPrs', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 1-5 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
 
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/Wud5OEvx_fM/mqdefault.jpg', '2025-06-20 03:06:21+00', '''audienc'':23B ''consid'':33B ''content'':31B ''continu'':28B ''elden'':10B ''fall'':15B ''fbc'':17B ''fell'':8B ''firebreak'':18B ''help'':26B ''hous'':6A ''make'':29B ''nightreign'':12B ''oldest'':5A ''pleas'':32B ''radio'':21B ''remap'':20B ''ring'':11B ''subscrib'':34B ''support'':24B ''us'':27B ''visit'':3A ''wheel'':2A ''www.remapradio.com'':36B', false, 'PT2H34M26S', 'https://i.ytimg.com/vi/Wud5OEvx_fM/maxresdefault.jpg'),
-	('y9eQsOTo8sE', 'remap', 'The Longest Fall in Video Game History', 'What happens when you spend 13 hours getting ready for one jump, only to screw it up?
+We got Alanah Pearce, Wout Van Halderen, Whyatt Bushnell, Mike Salyh, and Billy Shibley on the couch! We talk about exploitation in the industry, a new Escape Academy game, publishing games, and even more! 
 
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/y9eQsOTo8sE/mqdefault.jpg', '2025-05-28 18:09:39+00', '''13'':13B ''audienc'':28B ''consid'':38B ''content'':36B ''continu'':33B ''fall'':3A ''game'':6A ''get'':15B ''happen'':9B ''help'':31B ''histori'':7A ''hour'':14B ''jump'':19B ''longest'':2A ''make'':34B ''one'':18B ''pleas'':37B ''radio'':26B ''readi'':16B ''remap'':25B ''screw'':22B ''spend'':12B ''subscrib'':39B ''support'':29B ''us'':32B ''video'':5A ''www.remapradio.com'':41B', false, 'PT57S', 'https://i.ytimg.com/vi/y9eQsOTo8sE/maxresdefault.jpg'),
-	('uNL7U4ptOdY', 'remap', 'Now, Cado''s in Control of Civilization VII', 'Rob and Cado''s adventures in Civilization VII continue, but this time, Cado''s back in in the driver''s seat!
+Thanks to our friends at Annapurna Interactive for presenting this stream!
 
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/uNL7U4ptOdY/mqdefault.jpg', '2025-05-16 18:47:52+00', '''adventur'':13B ''audienc'':33B ''back'':23B ''cado'':2A,11B,21B ''civil'':7A,15B ''consid'':43B ''content'':41B ''continu'':17B,38B ''control'':5A ''driver'':27B ''help'':36B ''make'':39B ''pleas'':42B ''radio'':31B ''remap'':30B ''rob'':9B ''seat'':29B ''subscrib'':44B ''support'':34B ''time'':20B ''us'':37B ''vii'':8A,16B ''www.remapradio.com'':46B', false, 'PT2H39M11S', 'https://i.ytimg.com/vi/uNL7U4ptOdY/maxresdefault.jpg'),
+#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/On3a_5dnPrs/mqdefault.jpg', '2025-06-11 22:30:05+00', '''-5'':10A ''1'':9A ''academi'':67B ''alanah'':42B ''angel'':21B ''annapurna'':13A,79B ''around'':30B ''billi'':52B ''bomb'':2A ''bushnel'':48B ''couch'':18B,56B ''escap'':66B ''even'':72B ''exploit'':60B ''found'':16B ''friend'':27B,77B ''game'':68B,70B ''get'':25B ''giant'':1A ''giantbomb'':87B ''got'':41B ''halderen'':46B ''hang'':34B ''industri'':32B,63B ''interact'':14A,80B ''los'':20B ''mike'':49B ''new'':65B ''nite'':3A,8A ''pearc'':43B ''present'':11A,82B ''publish'':69B ''re'':24B ''salyh'':50B ''sgf'':85B ''shibley'':53B ''stream'':84B ''summergamefest'':86B ''talk'':58B ''thank'':74B ''van'':45B ''villa'':7A,39B ''warfram'':6A,38B ''whyatt'':47B ''wout'':44B', false, 'PT28M54S', 'https://i.ytimg.com/vi/On3a_5dnPrs/maxresdefault.jpg'),
+	('164N0JABnkE', 'remap', 'Riding Summer Game Fest into Steam Next Fest', 'Summer Game Fest might be over, but Steam Next Fest is here, and we''ve got Janet and Chia checking out a ton of cool games.
+
+Timestamps:
+00:07:12 — Windswept
+00:18:49 — Into the Grid
+00:34:01 — ILA: A Frosty Glide
+00:45:21 — Soul Nexus
+00:58:25 — Flick Shot Rogues
+01:12:06 — Ratatan
+01:25:21 — Anura
+01:36:42 — MotionRec
+01:48:41 — Vessels of Decay
+02:00:48 — The Hatchling
+02:13:32 — Tired to Fall
+02:25:29 — Crown Gambit
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/164N0JABnkE/mqdefault.jpg', '2025-06-11 20:36:11+00', '''00'':36B,40B,46B,53B,58B,83B ''01'':48B,64B,68B,72B,76B ''02'':82B,87B,93B ''06'':66B ''07'':37B ''12'':38B,65B ''13'':88B ''18'':41B ''21'':55B,70B ''25'':60B,69B,94B ''29'':95B ''32'':89B ''34'':47B ''36'':73B ''41'':78B ''42'':74B ''45'':54B ''48'':77B,84B ''49'':42B ''58'':59B ''anura'':71B ''audienc'':101B ''check'':28B ''chia'':27B ''consid'':111B ''content'':109B ''continu'':106B ''cool'':33B ''crown'':96B ''decay'':81B ''fall'':92B ''fest'':4A,8A,11B,18B ''flick'':61B ''frosti'':51B ''gambit'':97B ''game'':3A,10B,34B ''glide'':52B ''got'':24B ''grid'':45B ''hatchl'':86B ''help'':104B ''ila'':49B ''janet'':25B ''make'':107B ''might'':12B ''motionrec'':75B ''next'':7A,17B ''nexus'':57B ''pleas'':110B ''radio'':99B ''ratatan'':67B ''remap'':98B ''ride'':1A ''rogu'':63B ''shot'':62B ''soul'':56B ''steam'':6A,16B ''subscrib'':112B ''summer'':2A,9B ''support'':102B ''timestamp'':35B ''tire'':90B ''ton'':31B ''us'':105B ''ve'':23B ''vessel'':79B ''windswept'':39B ''www.remapradio.com'':114B', false, 'PT2H41M34S', 'https://i.ytimg.com/vi/164N0JABnkE/maxresdefault.jpg'),
+	('2qSFIMRtrNQ', 'remap', 'Steam Next Fest Lightning Round [Part 2]', 'We''re headed back into Steam Next Fest, with Patrick and Cado playing another bouncy of interesting games. First up, can we manage to take Baby Steps?
+
+Timestamps:
+09:00 Baby Steps
+30:57 Everdeep Aurora
+48:15 Ninja Gaiden: Ragebound
+01:41 Morse
+01:18:10 Ooo
+01:32:00 The Drifter
+01:45:15 Solitaire of Stygian Shadows
+01:59:36 Consume Me
+02:15:52 Unbeatable
+02:31:03 Cast ''n Chill
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/2qSFIMRtrNQ/mqdefault.jpg', '2025-06-17 18:25:13+00', '''00'':37B,58B ''01'':49B,52B,56B,61B,68B ''02'':73B,77B ''03'':79B ''09'':36B ''10'':54B ''15'':45B,63B,74B ''18'':53B ''2'':7A ''30'':40B ''31'':78B ''32'':57B ''36'':70B ''41'':50B ''45'':62B ''48'':44B ''52'':75B ''57'':41B ''59'':69B ''anoth'':21B ''audienc'':86B ''aurora'':43B ''babi'':33B,38B ''back'':11B ''bounci'':22B ''cado'':19B ''cast'':80B ''chill'':82B ''consid'':96B ''consum'':71B ''content'':94B ''continu'':91B ''drifter'':60B ''everdeep'':42B ''fest'':3A,15B ''first'':26B ''gaiden'':47B ''game'':25B ''head'':10B ''help'':89B ''interest'':24B ''lightn'':4A ''make'':92B ''manag'':30B ''mors'':51B ''n'':81B ''next'':2A,14B ''ninja'':46B ''ooo'':55B ''part'':6A ''patrick'':17B ''play'':20B ''pleas'':95B ''radio'':84B ''ragebound'':48B ''re'':9B ''remap'':83B ''round'':5A ''shadow'':67B ''solitair'':64B ''steam'':1A,13B ''step'':34B,39B ''stygian'':66B ''subscrib'':97B ''support'':87B ''take'':32B ''timestamp'':35B ''unbeat'':76B ''us'':90B ''www.remapradio.com'':99B', false, 'PT2H47M56S', 'https://i.ytimg.com/vi/2qSFIMRtrNQ/maxresdefault.jpg'),
+	('HwDGJTBWEZU', 'giantbomb', 'Randy Pitchford''s Comments on Borderlands 4''s Pricing | Game Mess Mornings 05/21/25', 'Jeff Grubb is joined by Jon Martin to chat about how Randy Pitchford feels about a prospective price of the next Borderlands game, the latest Circana reports, Senua''s Saga II headed to PS5, DOOM: The Dark Ages reaching 3 million players, and even more!
+
+Support Giant Bomb by going to:
+giantbomb.com/join
+
+#gmm #gamemessmornings #giantbomb', 'https://i.ytimg.com/vi/HwDGJTBWEZU/mqdefault.jpg', '2025-05-21 16:03:44+00', '''/join'':67B ''05/21/25'':13A ''3'':53B ''4'':7A ''age'':51B ''bomb'':61B ''borderland'':6A,35B ''chat'':22B ''circana'':39B ''comment'':4A ''dark'':50B ''doom'':48B ''even'':57B ''feel'':27B ''game'':10A,36B ''gamemessmorn'':69B ''giant'':60B ''giantbomb'':70B ''giantbomb.com'':66B ''giantbomb.com/join'':65B ''gmm'':68B ''go'':63B ''grubb'':15B ''head'':45B ''ii'':44B ''jeff'':14B ''join'':17B ''jon'':19B ''latest'':38B ''martin'':20B ''mess'':11A ''million'':54B ''morn'':12A ''next'':34B ''pitchford'':2A,26B ''player'':55B ''price'':9A,31B ''prospect'':30B ''ps5'':47B ''randi'':1A,25B ''reach'':52B ''report'':40B ''saga'':43B ''senua'':41B ''support'':59B', false, 'PT58M49S', 'https://i.ytimg.com/vi/HwDGJTBWEZU/maxresdefault.jpg'),
+	('DqdWIjuBypg', 'nextlander', 'Abby and Vinny Dive into Steam Next Fest 2025!', 'There are so many demo, I mean a lot of demos. We stand no chance.
+
+We Check Out:
+Escape Simulator 2
+Dispatch
+Baby Steps
+BALL x PIT
+The Joker''s Game
+Quantum Witch
+Mina the Hollower
+
+
+
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/DqdWIjuBypg/mqdefault.jpg', '2025-06-10 20:41:04+00', '''/nextlander'':54B ''2'':30B ''2025'':9A ''abbi'':1A ''babi'':32B ''ball'':34B ''chanc'':24B ''check'':26B ''communiti'':51B ''demo'':14B,20B ''dispatch'':31B ''dive'':4A ''escap'':28B ''fest'':8A ''game'':40B ''hollow'':45B ''joker'':38B ''lot'':18B ''mani'':13B ''mean'':16B ''mina'':43B ''next'':7A ''nextland'':46B ''pit'':36B ''quantum'':41B ''simul'':29B ''stand'':22B ''steam'':6A ''step'':33B ''support'':48B ''thank'':55B ''vinni'':3A ''watch'':57B ''witch'':42B ''www.patreon.com'':53B ''www.patreon.com/nextlander'':52B ''x'':35B', false, 'PT1H59M39S', 'https://i.ytimg.com/vi/DqdWIjuBypg/maxresdefault.jpg'),
+	('JOTTt0KRWwI', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 2-3 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
+
+We got Kelsey Lewin, Janet Garcia, Jacob Geller, Marcus Stewart, and Alex Van Aken on the couch! We chat about Game Informer''s relaunch, working as a small team in Games Media, and all the stuff we saw at Summer Game Fest. 
+
+Thanks to our friends at Annapurna Interactive for presenting this stream!
+
+#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/JOTTt0KRWwI/mqdefault.jpg', '2025-06-12 18:00:19+00', '''-3'':10A ''2'':9A ''aken'':53B ''alex'':51B ''angel'':21B ''annapurna'':13A,87B ''around'':30B ''bomb'':2A ''chat'':58B ''couch'':18B,56B ''fest'':81B ''found'':16B ''friend'':27B,85B ''game'':60B,70B,80B ''garcia'':45B ''geller'':47B ''get'':25B ''giant'':1A ''giantbomb'':95B ''got'':41B ''hang'':34B ''industri'':32B ''inform'':61B ''interact'':14A,88B ''jacob'':46B ''janet'':44B ''kelsey'':42B ''lewin'':43B ''los'':20B ''marcus'':48B ''media'':71B ''nite'':3A,8A ''present'':11A,90B ''re'':24B ''relaunch'':63B ''saw'':77B ''sgf'':93B ''small'':67B ''stewart'':49B ''stream'':92B ''stuff'':75B ''summer'':79B ''summergamefest'':94B ''team'':68B ''thank'':82B ''van'':52B ''villa'':7A,39B ''warfram'':6A,38B ''work'':64B', false, 'PT38M37S', 'https://i.ytimg.com/vi/JOTTt0KRWwI/maxresdefault.jpg'),
+	('WYmAd2M2mzc', 'nextlander', 'Who Is Abby? The Answer May (Mildly) Shock You!', 'We''re going to check in on Who Is Abby and head towards its big finale!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/WYmAd2M2mzc/mqdefault.jpg', '2025-06-17 21:00:13+00', '''/nextlander'':33B ''abbi'':3A,18B ''answer'':5A ''big'':23B ''check'':13B ''communiti'':30B ''final'':24B ''go'':11B ''head'':20B ''may'':6A ''mild'':7A ''nextland'':25B ''re'':10B ''shock'':8A ''support'':27B ''thank'':34B ''toward'':21B ''watch'':36B ''www.patreon.com'':32B ''www.patreon.com/nextlander'':31B', false, 'PT2H32M16S', 'https://i.ytimg.com/vi/WYmAd2M2mzc/maxresdefault.jpg'),
+	('w8PmznjJN9s', 'nextlander', 'May the Fort Be Nite You', 'The Star Wars Fortnite season is almost over, and by God, Brad''s got skins to show off!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/w8PmznjJN9s/mqdefault.jpg', '2025-06-02 23:18:50+00', '''/nextlander'':32B ''almost'':12B ''brad'':17B ''communiti'':29B ''fort'':3A ''fortnit'':9B ''god'':16B ''got'':19B ''may'':1A ''nextland'':24B ''nite'':5A ''season'':10B ''show'':22B ''skin'':20B ''star'':7B ''support'':26B ''thank'':33B ''war'':8B ''watch'':35B ''www.patreon.com'':31B ''www.patreon.com/nextlander'':30B', false, 'PT2H19M33S', 'https://i.ytimg.com/vi/w8PmznjJN9s/maxresdefault.jpg'),
+	('RxCk9gVqVmU', 'giantbomb', 'Netflix Backing Away from Games | Game Mess Mornings 06/25/25', 'Jeff Grubb and Jan Ochoa start your Wednesday with news that Netflix is slowly stepping away from their video game initiative, Jurassic World Evolution 3 developers removing AI from the game, Nintendo had a hand in Death Stranding 2, and even more news! 
+
+Support Giant Bomb by going to:
+giantbomb.com/join
+
+#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/RxCk9gVqVmU/mqdefault.jpg', '2025-06-25 16:06:53+00', '''/join'':61B ''06/25/25'':9A ''2'':48B ''3'':34B ''ai'':37B ''away'':3A,25B ''back'':2A ''bomb'':55B ''death'':46B ''develop'':35B ''even'':50B ''evolut'':33B ''game'':5A,6A,29B,40B ''gamemessmorn'':63B ''giant'':54B ''giantbomb'':64B ''giantbomb.com'':60B ''giantbomb.com/join'':59B ''gmm'':62B ''go'':57B ''grubb'':11B ''hand'':44B ''initi'':30B ''jan'':13B ''jeff'':10B ''jurass'':31B ''mess'':7A ''morn'':8A ''netflix'':1A,21B ''news'':19B,52B ''nintendo'':41B ''ochoa'':14B ''remov'':36B ''slowli'':23B ''start'':15B ''step'':24B ''strand'':47B ''support'':53B ''video'':28B ''videogamenew'':65B ''wednesday'':17B ''world'':32B', false, 'PT58M50S', 'https://i.ytimg.com/vi/RxCk9gVqVmU/maxresdefault.jpg'),
+	('6OzhzYN-cTM', 'remap', 'Our First Switch 2 Hands-On Impressions', 'Much of the Remap crew has spent the last week playing with their shiny new Switch 2. What do we think of Nintendo''s new console?
+
+What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/6OzhzYN-cTM/mqdefault.jpg', '2025-06-23 14:00:19+00', '''/us/podcast/remap-radio/id1690437343'':56B ''2'':4A,25B ''audienc'':60B ''consid'':70B ''consol'':34B ''content'':68B ''continu'':65B ''crew'':13B ''episod'':46B ''first'':2A ''full'':45B ''hand'':6A ''hands-on'':5A ''help'':63B ''impress'':8A ''last'':17B ''listen'':38B ''make'':66B ''much'':9B ''new'':23B,33B ''nintendo'':31B ''play'':19B ''pleas'':69B ''podcast'':53B ''podcasts.apple.com'':55B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':54B ''radio'':49B,58B ''re'':37B ''remap'':12B,48B,57B ''segment'':42B ''shini'':22B ''spent'':15B ''subscrib'':50B,71B ''support'':61B ''switch'':3A,24B ''think'':29B ''us'':64B ''week'':18B ''www.remapradio.com'':73B', false, 'PT47M20S', 'https://i.ytimg.com/vi/6OzhzYN-cTM/maxresdefault.jpg'),
+	('D84rRrHGoOw', 'giantbomb', 'You Can Talk to an AI-Darth Vader in Fortnite | Game Mess Mornings 05/16/25', 'Jeff Grubb is joined by Lex Luddy to talk about her new gaming website Rewinder! We also find the time to talk about how upsetting it is to speak to an AI-Generated voice of James Earl Jones in Fortnite, a whole lot of Switch 2 updates, Diddy Kong, and even more! 
+
+Check out Rewinder:
+https://rewinder.co.uk/
+
+Support Giant Bomb
+giantbomb.com/join
+
+#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/D84rRrHGoOw/mqdefault.jpg', '2025-05-16 16:08:34+00', '''/join'':78B ''05/16/25'':15A ''2'':62B ''ai'':7A,48B ''ai-darth'':6A ''ai-gener'':47B ''also'':32B ''bomb'':75B ''check'':69B ''darth'':8A ''diddi'':64B ''earl'':53B ''even'':67B ''find'':33B ''fortnit'':11A,56B ''game'':12A,28B ''gamemessmorn'':80B ''generat'':49B ''giant'':74B ''giantbomb'':81B ''giantbomb.com'':77B ''giantbomb.com/join'':76B ''gmm'':79B ''grubb'':17B ''jame'':52B ''jeff'':16B ''join'':19B ''jone'':54B ''kong'':65B ''lex'':21B ''lot'':59B ''luddi'':22B ''mess'':13A ''morn'':14A ''new'':27B ''rewind'':30B,71B ''rewinder.co.uk'':72B ''speak'':44B ''support'':73B ''switch'':61B ''talk'':3A,24B,37B ''time'':35B ''updat'':63B ''upset'':40B ''vader'':9A ''videogamenew'':82B ''voic'':50B ''websit'':29B ''whole'':58B', false, 'PT1H1M46S', 'https://i.ytimg.com/vi/D84rRrHGoOw/maxresdefault.jpg'),
 	('YTv-9MqBf0I', 'remap', 'Remap Radio — Live at PAX East!', 'Well, live in the sense that we recorded this in-person with one another from Rob''s hotel room. Rob, Patrick, and Chia have traveled to PAX East, though only two of us actually spent time wandering around the show floor before sitting down to record an in-person version of Remap Radio. But Patrick and Chia played a bunch of very cool games, including Demonschool, Fretless, that grimdark Pac-Man game, Aksun, A Good Night’s Rest, and more. Plus, an exciting brand-new segment: buying or selling.
 
 Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
@@ -59966,96 +60054,100 @@ Discussed:
 01:48:20 Europa Universalis V
 01:59:42 WRC and Codemasters
 02:05:55 The Question Bucket', 'https://i.ytimg.com/vi/YTv-9MqBf0I/mqdefault.jpg', '2025-05-14 21:02:56+00', '''/us/podcast/remap-radio/id1690437343'':106B ''0'':125B ''00'':126B ''01'':176B,184B,189B,193B,198B,205B,211B ''02'':217B ''05'':218B ''06'':129B ''13'':130B,132B ''16'':137B,152B ''18'':177B ''19'':138B ''20'':144B,207B ''23'':170B,185B ''25'':133B,190B ''28'':151B,163B ''29'':200B ''31'':154B ''33'':195B ''35'':158B,194B ''38'':162B ''39'':167B ''40'':199B ''42'':213B ''46'':166B ''47'':145B ''48'':159B,206B ''49'':191B ''50'':169B ''55'':219B ''57'':178B ''58'':186B ''59'':155B,212B ''9000'':165B ''actual'':41B ''aksun'':82B ''anoth'':21B ''anymor'':143B ''around'':45B ''askun'':153B ''audienc'':110B ''board'':203B ''boston'':127B ''brand'':94B ''brand-new'':93B ''bucket'':222B ''bunch'':68B ''buy'':97B,173B ''carr'':135B ''chia'':30B,65B ''codemast'':216B ''command'':161B ''consid'':120B ''content'':118B ''continu'':115B ''cool'':71B ''crimson'':196B ''demonschool'':74B ''demonschool/a'':146B ''derek'':134B ''desert'':197B ''discuss'':124B ''dri'':182B ''drown'':180B ''east'':6A,35B,142B ''etern'':188B ''europa'':208B ''excit'':92B ''floor'':48B ''fretless'':75B,192B ''game'':72B,81B,204B ''good'':84B,147B ''grimdark'':77B ''gunnrunn'':168B ''hank'':179B ''help'':113B ''hotel'':25B ''in-person'':16B,55B ''includ'':73B ''intro'':131B ''labyrinth'':157B ''land'':183B ''live'':3A,8B ''love'':187B ''make'':116B ''man'':80B ''missil'':160B ''new'':95B,171B ''night'':85B,148B ''one'':20B ''pac'':79B ''pac-man'':78B ''patrick'':28B,63B ''pax'':5A,34B,141B ''person'':18B,57B ''play'':66B ''pleas'':119B ''plus'':90B ''podcast'':103B ''podcasts.apple.com'':105B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':104B ''question'':221B ''radio'':2A,61B,108B ''record'':14B,53B ''remap'':1A,60B,107B ''rest'':87B,150B ''retir'':136B ''rob'':23B,27B ''room'':26B ''segment'':96B,172B ''sell'':99B,175B ''sens'':11B ''shadow'':156B ''show'':47B ''sit'':50B ''spent'':42B ''subscrib'':100B,121B ''support'':111B ''talk'':128B ''tariff'':201B ''though'':36B ''time'':43B ''travel'':32B ''two'':38B ''universali'':209B ''us'':40B,114B ''v'':210B ''vctv'':164B ''version'':58B ''wander'':44B ''well'':7B ''wrc'':214B ''www.remapradio.com'':123B', false, 'PT2H23M37S', 'https://i.ytimg.com/vi/YTv-9MqBf0I/maxresdefault.jpg'),
-	('8q8fDHZRNJY', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 1-2 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
+	('XgWd88UI0w0', 'giantbomb', 'GIANT BOMB IS INDEPENDENT NOW! | Game Mess Mornings 05/12/25', 'Jeff Grubb and Mike Minotti are here to chat about all the hottest video game news! Today we cover that GIANT BOMB HAS GONE INDEPENDENT, some drama with Moon Studios the team behind Ori and the Blind Forest, a review roundup of Doom: The Dark Ages, and a whole lot more! 
 
-We got Imran Khan, Bailey Meyers, Tyler Gardner, Mike Vayatta, and Adam Cole on the couch! We chat about Table Top games, the state of Games Journalism, Firebreak, and being a wrestler! 
+Help support Giant Bomb by going to:
+https://www.giantbomb.com/join', 'https://i.ytimg.com/vi/XgWd88UI0w0/mqdefault.jpg', '2025-05-12 16:00:38+00', '''/join'':70B ''05/12/25'':9A ''age'':55B ''behind'':42B ''blind'':46B ''bomb'':2A,31B,64B ''chat'':18B ''cover'':28B ''dark'':54B ''doom'':52B ''drama'':36B ''forest'':47B ''game'':6A,24B ''giant'':1A,30B,63B ''go'':66B ''gone'':33B ''grubb'':11B ''help'':61B ''hottest'':22B ''independ'':4A,34B ''jeff'':10B ''lot'':59B ''mess'':7A ''mike'':13B ''minotti'':14B ''moon'':38B ''morn'':8A ''news'':25B ''ori'':43B ''review'':49B ''roundup'':50B ''studio'':39B ''support'':62B ''team'':41B ''today'':26B ''video'':23B ''whole'':58B ''www.giantbomb.com'':69B ''www.giantbomb.com/join'':68B', false, 'PT53M40S', 'https://i.ytimg.com/vi/XgWd88UI0w0/maxresdefault.jpg'),
+	('wyf8JlupuJM', 'giantbomb', 'Expedantion 33 | GB Plays', 'Dan is solving your yearning for content! Watch as Dan visits the mystical fictional world of FRANCE! 
+
+#expedition33 #giantbomb', 'https://i.ytimg.com/vi/wyf8JlupuJM/mqdefault.jpg', '2025-06-30 19:57:26+00', '''33'':2A ''content'':11B ''dan'':5B,14B ''expedant'':1A ''expedition33'':22B ''fiction'':18B ''franc'':21B ''gb'':3A ''giantbomb'':23B ''mystic'':17B ''play'':4A ''solv'':7B ''visit'':15B ''watch'':12B ''world'':19B ''yearn'':9B', false, 'PT2H16M2S', 'https://i.ytimg.com/vi/wyf8JlupuJM/maxresdefault.jpg'),
+	('XHR7zdUy2sQ', 'giantbomb', 'Death Stranding 2 Review Round Up | Game Mess Mornings 06/23/25', 'Jeff Grubb and Jason Fanelli go over review scores and how Death Stranding 2 is tracking, indie developers having difficulties with Switch 2 Dev Kits, problems with secondhand Switch 2s, layoffs at MindsEye, and even more to start the week! 
+
+#gmm #gamemessmornings #giantbomb #videogamenews', 'https://i.ytimg.com/vi/XHR7zdUy2sQ/mqdefault.jpg', '2025-06-23 16:17:38+00', '''06/23/25'':10A ''2'':3A,24B,33B ''2s'':40B ''death'':1A,22B ''dev'':34B ''develop'':28B ''difficulti'':30B ''even'':45B ''fanelli'':15B ''game'':7A ''gamemessmorn'':52B ''giantbomb'':53B ''gmm'':51B ''go'':16B ''grubb'':12B ''indi'':27B ''jason'':14B ''jeff'':11B ''kit'':35B ''layoff'':41B ''mess'':8A ''mindsey'':43B ''morn'':9A ''problem'':36B ''review'':4A,18B ''round'':5A ''score'':19B ''secondhand'':38B ''start'':48B ''strand'':2A,23B ''switch'':32B,39B ''track'':26B ''videogamenew'':54B ''week'':50B', false, 'PT1H4M54S', 'https://i.ytimg.com/vi/XHR7zdUy2sQ/maxresdefault.jpg'),
+	('2YkUDFVlecQ', 'nextlander', 'Friday Fun Stream: The Grab Bag to End All Grab Bags', 'There are SO MANY VIDEO GAMES right now, and we''re going to play several of them! And our good friend Samantha Kalman is here to hang out!
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/2YkUDFVlecQ/mqdefault.jpg', '2025-05-23 20:22:35+00', '''/nextlander'':48B ''bag'':6A,11A ''communiti'':45B ''end'':8A ''friday'':1A ''friend'':32B ''fun'':2A ''game'':17B ''go'':23B ''good'':31B ''grab'':5A,10A ''hang'':38B ''kalman'':34B ''mani'':15B ''nextland'':40B ''play'':25B ''re'':22B ''right'':18B ''samantha'':33B ''sever'':26B ''stream'':3A ''support'':42B ''thank'':49B ''video'':16B ''watch'':51B ''www.patreon.com'':47B ''www.patreon.com/nextlander'':46B', false, 'PT2H3M4S', 'https://i.ytimg.com/vi/2YkUDFVlecQ/maxresdefault.jpg'),
+	('mzKLWT5_xwY', 'giantbomb', 'An Ad Claims Metroid Prime 4 is Out Now | Game Mess Mornings 06/20/25', 'Jeff Grubb and Jesse Vitelli end the week with confusion around a London Underground ad claiming Metroid Prime 4 is out, a Donkey Kong Bananza Switch 2 Demo is spotted in the wild, updates on the Death Stranding movie, Crash Team Racing getting a big update, and more! 
+
+#gmm #gamemessmornings #giantbomb', 'https://i.ytimg.com/vi/mzKLWT5_xwY/mqdefault.jpg', '2025-06-20 16:09:54+00', '''06/20/25'':13A ''2'':40B ''4'':6A,32B ''ad'':2A,28B ''around'':24B ''bananza'':38B ''big'':58B ''claim'':3A,29B ''confus'':23B ''crash'':53B ''death'':50B ''demo'':41B ''donkey'':36B ''end'':19B ''game'':10A ''gamemessmorn'':63B ''get'':56B ''giantbomb'':64B ''gmm'':62B ''grubb'':15B ''jeff'':14B ''jess'':17B ''kong'':37B ''london'':26B ''mess'':11A ''metroid'':4A,30B ''morn'':12A ''movi'':52B ''prime'':5A,31B ''race'':55B ''spot'':43B ''strand'':51B ''switch'':39B ''team'':54B ''underground'':27B ''updat'':47B,59B ''vitelli'':18B ''week'':21B ''wild'':46B', false, 'PT1H1M22S', 'https://i.ytimg.com/vi/mzKLWT5_xwY/maxresdefault.jpg'),
+	('F_NWGbxYYTc', 'nextlander', 'A Very Special Thursday Grab Bag with The Midnight Walk!', 'While you''re all out there electing Popes and such, we''re over here, GAMING.
+
+Nextlander is supported by its community:
+http://www.patreon.com/nextlander
+
+Thanks for watching.', 'https://i.ytimg.com/vi/F_NWGbxYYTc/mqdefault.jpg', '2025-05-08 20:49:51+00', '''/nextlander'':34B ''bag'':6A ''communiti'':31B ''elect'':17B ''game'':25B ''grab'':5A ''midnight'':9A ''nextland'':26B ''pope'':18B ''re'':13B,22B ''special'':3A ''support'':28B ''thank'':35B ''thursday'':4A ''walk'':10A ''watch'':37B ''www.patreon.com'':33B ''www.patreon.com/nextlander'':32B', false, 'PT1H51M11S', 'https://i.ytimg.com/vi/F_NWGbxYYTc/maxresdefault.jpg'),
+	('xKKb-QVQX-8', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 2-2 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
+
+We got Kate Sanchez, Phil Salvador, Chandana Ekanayake, Jill Grodt, and Jason Schrier on the couch! We chat about Indie Game development and coverage, game preservation, breaking in and being sustainable in the video games media industry. 
 
 Thanks to our friends at Annapurna Interactive for presenting this stream!
 
-Thanks to Young Horses for their support of Giant Bomb @ Nite! Bugsnax VR is out now, go play it!
-Sign up for the Young Horses newsletter here: 
-http://eepurl.com/g5DUzTAnd check out their Steam page! https://store.steampowered.com/developer/younghorses/ 
-#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/8q8fDHZRNJY/mqdefault.jpg', '2025-06-11 21:00:09+00', '''-2'':10A ''/developer/younghorses/'':120B ''/g5duztand'':112B ''1'':9A ''adam'':51B ''angel'':21B ''annapurna'':13A,77B ''around'':30B ''bailey'':44B ''bomb'':2A,92B ''bugsnax'':94B ''chat'':57B ''check'':113B ''cole'':52B ''couch'':18B,55B ''eepurl.com'':111B ''eepurl.com/g5duztand'':110B ''firebreak'':67B ''found'':16B ''friend'':27B,75B ''game'':61B,65B ''gardner'':47B ''get'':25B ''giant'':1A,91B ''giantbomb'':123B ''go'':99B ''got'':41B ''hang'':34B ''hors'':86B,107B ''imran'':42B ''industri'':32B ''interact'':14A,78B ''journal'':66B ''khan'':43B ''los'':20B ''meyer'':45B ''mike'':48B ''newslett'':108B ''nite'':3A,8A,93B ''page'':117B ''play'':100B ''present'':11A,80B ''re'':24B ''sgf'':121B ''sign'':102B ''state'':63B ''steam'':116B ''store.steampowered.com'':119B ''store.steampowered.com/developer/younghorses/'':118B ''stream'':82B ''summergamefest'':122B ''support'':89B ''tabl'':59B ''thank'':72B,83B ''top'':60B ''tyler'':46B ''vayatta'':49B ''villa'':7A,39B ''vr'':95B ''warfram'':6A,38B ''wrestler'':71B ''young'':85B,106B', false, 'PT25M40S', 'https://i.ytimg.com/vi/8q8fDHZRNJY/maxresdefault.jpg'),
-	('Uoya8Lg8MpM', 'giantbomb', 'Does Clair Obscur: Expedition 33 Have a Leveling Problem? | Giant Bombcast 893: Uncle Baby', 'We got one more podcast before we head down to Los Angeles for Summer Game Fest! This week we talk about Mikey finishing up Clair Obscur, our time running around in Elden Ring: Nightreign, Hell is Us, and a bit of Lushfoil Photography Sim. We also chat about the hottest news like their being Nintendo Switch 2 reviews, IO Interactive showing off multiple games this week, a State of Play popping off tomorrow, and more news and emails! 
+#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/xKKb-QVQX-8/mqdefault.jpg', '2025-06-12 17:45:07+00', '''-2'':10A ''2'':9A ''angel'':21B ''annapurna'':13A,82B ''around'':30B ''bomb'':2A ''break'':66B ''chandana'':46B ''chat'':57B ''couch'':18B,55B ''coverag'':63B ''develop'':61B ''ekanayak'':47B ''found'':16B ''friend'':27B,80B ''game'':60B,64B,74B ''get'':25B ''giant'':1A ''giantbomb'':90B ''got'':41B ''grodt'':49B ''hang'':34B ''indi'':59B ''industri'':32B,76B ''interact'':14A,83B ''jason'':51B ''jill'':48B ''kate'':42B ''los'':20B ''media'':75B ''nite'':3A,8A ''phil'':44B ''present'':11A,85B ''preserv'':65B ''re'':24B ''salvador'':45B ''sanchez'':43B ''schrier'':52B ''sgf'':88B ''stream'':87B ''summergamefest'':89B ''sustain'':70B ''thank'':77B ''video'':73B ''villa'':7A,39B ''warfram'':6A,38B', false, 'PT36M39S', 'https://i.ytimg.com/vi/xKKb-QVQX-8/maxresdefault.jpg'),
+	('sr-b60xsM4c', 'giantbomb', 'Giant Bomb @ Nite from the Warframe Villa | Nite 2-5 | Presented by Annapurna Interactive', 'We found a couch in Los Angeles and we''re getting our friends from all around the industry to hang out at the Warframe Villa! 
 
-#bombcast #giantbombcast #giantbomb', 'https://i.ytimg.com/vi/Uoya8Lg8MpM/mqdefault.jpg', '2025-06-03 18:40:56+00', '''2'':71B ''33'':5A ''893'':12A ''also'':60B ''angel'':26B ''around'':44B ''babi'':14A ''bit'':54B ''bombcast'':11A,93B ''chat'':61B ''clair'':2A,39B ''elden'':46B ''email'':92B ''expedit'':4A ''fest'':30B ''finish'':37B ''game'':29B,78B ''giant'':10A ''giantbomb'':95B ''giantbombcast'':94B ''got'':16B ''head'':22B ''hell'':49B ''hottest'':64B ''interact'':74B ''io'':73B ''level'':8A ''like'':66B ''los'':25B ''lushfoil'':56B ''mikey'':36B ''multipl'':77B ''news'':65B,90B ''nightreign'':48B ''nintendo'':69B ''obscur'':3A,40B ''one'':17B ''photographi'':57B ''play'':84B ''podcast'':19B ''pop'':85B ''problem'':9A ''review'':72B ''ring'':47B ''run'':43B ''show'':75B ''sim'':58B ''state'':82B ''summer'':28B ''switch'':70B ''talk'':34B ''time'':42B ''tomorrow'':87B ''uncl'':13A ''us'':51B ''week'':32B,80B', false, 'PT2H18M41S', 'https://i.ytimg.com/vi/Uoya8Lg8MpM/maxresdefault.jpg'),
-	('HwDGJTBWEZU', 'giantbomb', 'Randy Pitchford''s Comments on Borderlands 4''s Pricing | Game Mess Mornings 05/21/25', 'Jeff Grubb is joined by Jon Martin to chat about how Randy Pitchford feels about a prospective price of the next Borderlands game, the latest Circana reports, Senua''s Saga II headed to PS5, DOOM: The Dark Ages reaching 3 million players, and even more!
+We got Jeff Gerstmann, Dan Ryckert, Mark MacDonald, Jordan Middler, Greg Miller, and Danny O''Dwyer on the couch! NOTHING BUT HEAVYWEIGHTS AND WILD STUFF HERE! 
 
-Support Giant Bomb by going to:
-giantbomb.com/join
+Thanks to our friends at Annapurna Interactive for presenting this stream!
 
-#gmm #gamemessmornings #giantbomb', 'https://i.ytimg.com/vi/HwDGJTBWEZU/mqdefault.jpg', '2025-05-21 16:03:44+00', '''/join'':67B ''05/21/25'':13A ''3'':53B ''4'':7A ''age'':51B ''bomb'':61B ''borderland'':6A,35B ''chat'':22B ''circana'':39B ''comment'':4A ''dark'':50B ''doom'':48B ''even'':57B ''feel'':27B ''game'':10A,36B ''gamemessmorn'':69B ''giant'':60B ''giantbomb'':70B ''giantbomb.com'':66B ''giantbomb.com/join'':65B ''gmm'':68B ''go'':63B ''grubb'':15B ''head'':45B ''ii'':44B ''jeff'':14B ''join'':17B ''jon'':19B ''latest'':38B ''martin'':20B ''mess'':11A ''million'':54B ''morn'':12A ''next'':34B ''pitchford'':2A,26B ''player'':55B ''price'':9A,31B ''prospect'':30B ''ps5'':47B ''randi'':1A,25B ''reach'':52B ''report'':40B ''saga'':43B ''senua'':41B ''support'':59B', false, 'PT58M49S', 'https://i.ytimg.com/vi/HwDGJTBWEZU/maxresdefault.jpg'),
+#sgf  #summergamefest #giantbomb', 'https://i.ytimg.com/vi/sr-b60xsM4c/mqdefault.jpg', '2025-06-12 18:31:17+00', '''-5'':10A ''2'':9A ''angel'':21B ''annapurna'':13A,71B ''around'':30B ''bomb'':2A ''couch'':18B,58B ''dan'':44B ''danni'':53B ''dwyer'':55B ''found'':16B ''friend'':27B,69B ''gerstmann'':43B ''get'':25B ''giant'':1A ''giantbomb'':79B ''got'':41B ''greg'':50B ''hang'':34B ''heavyweight'':61B ''industri'':32B ''interact'':14A,72B ''jeff'':42B ''jordan'':48B ''los'':20B ''macdonald'':47B ''mark'':46B ''middler'':49B ''miller'':51B ''nite'':3A,8A ''noth'':59B ''o'':54B ''present'':11A,74B ''re'':24B ''ryckert'':45B ''sgf'':77B ''stream'':76B ''stuff'':64B ''summergamefest'':78B ''thank'':66B ''villa'':7A,39B ''warfram'':6A,38B ''wild'':63B', false, 'PT1H2M13S', 'https://i.ytimg.com/vi/sr-b60xsM4c/maxresdefault.jpg'),
+	('UZvdQtpJRJ8', 'giantbomb', 'The Hundred Line is a Danganropa X Fire Emblem? | Giant Bombcast 887: Burgertory', 'There''s a new Oblivion game and we recapped the news that came from the Bethesda stream this morning, we chat about how The Hundred Line: Defense Academy is extremely up our alley, some older SNES games, the Lunar Collection, and even more hot news and game talk this week on the Giant Bombcast.
+
+#podcast #giantbomb #giantbombcast', 'https://i.ytimg.com/vi/UZvdQtpJRJ8/mqdefault.jpg', '2025-04-22 18:27:11+00', '''887'':12A ''academi'':41B ''alley'':46B ''bethesda'':29B ''bombcast'':11A,67B ''burgertori'':13A ''came'':26B ''chat'':34B ''collect'':53B ''danganropa'':6A ''defens'':40B ''emblem'':9A ''even'':55B ''extrem'':43B ''fire'':8A ''game'':19B,50B,60B ''giant'':10A,66B ''giantbomb'':69B ''giantbombcast'':70B ''hot'':57B ''hundr'':2A,38B ''line'':3A,39B ''lunar'':52B ''morn'':32B ''new'':17B ''news'':24B,58B ''oblivion'':18B ''older'':48B ''podcast'':68B ''recap'':22B ''snes'':49B ''stream'':30B ''talk'':61B ''week'':63B ''x'':7A', false, 'PT2H6M23S', 'https://i.ytimg.com/vi/UZvdQtpJRJ8/maxresdefault.jpg'),
+	('wrUoSYz3E1E', 'remap', 'Will Most Video Games in the Future Be Priced at $80?', 'With Gearbox CEO entertaining the idea that Borderlands 4 could be $80, we wonder whether the will become the norm or exception in the future. What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/wrUoSYz3E1E/mqdefault.jpg', '2025-05-26 14:01:24+00', '''/us/podcast/remap-radio/id1690437343'':58B ''4'':20B ''80'':11A,23B ''audienc'':62B ''becom'':29B ''borderland'':19B ''ceo'':14B ''consid'':72B ''content'':70B ''continu'':67B ''could'':21B ''entertain'':15B ''episod'':48B ''except'':33B ''full'':47B ''futur'':7A,36B ''game'':4A ''gearbox'':13B ''help'':65B ''idea'':17B ''listen'':40B ''make'':68B ''norm'':31B ''pleas'':71B ''podcast'':55B ''podcasts.apple.com'':57B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':56B ''price'':9A ''radio'':51B,60B ''re'':39B ''remap'':50B,59B ''segment'':44B ''subscrib'':52B,73B ''support'':63B ''us'':66B ''video'':3A ''whether'':26B ''wonder'':25B ''www.remapradio.com'':75B', false, 'PT26M31S', 'https://i.ytimg.com/vi/wrUoSYz3E1E/maxresdefault.jpg'),
+	('wWevbah9FEY', 'remap', 'The Power of GeForce Now and French RPGs', 'Clair Obscur: Expedition 33 is the hot new game, but question is: can Rob parry a mime?
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/wWevbah9FEY/mqdefault.jpg', '2025-05-01 23:37:37+00', '''33'':12B ''audienc'':29B ''clair'':9B ''consid'':39B ''content'':37B ''continu'':34B ''expedit'':11B ''french'':7A ''game'':17B ''geforc'':4A ''help'':32B ''hot'':15B ''make'':35B ''mime'':25B ''new'':16B ''obscur'':10B ''parri'':23B ''pleas'':38B ''power'':2A ''question'':19B ''radio'':27B ''remap'':26B ''rob'':22B ''rpgs'':8A ''subscrib'':40B ''support'':30B ''us'':33B ''www.remapradio.com'':42B', false, 'PT2H27M43S', 'https://i.ytimg.com/vi/wWevbah9FEY/maxresdefault.jpg'),
 	('vJq8lHcbbig', 'remap', 'Hands-Off Impressions With Resident Evil 9', 'Janet and Patrick watched a theater presentation that promised Resident Evil 9 would be returning the series to its roots. But didn''t we just do that with Resident Evil 7? And what is there for people who aren''t enthused by games where you''re constantly being chased?
 
 What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
 
 Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/vJq8lHcbbig/mqdefault.jpg', '2025-06-18 14:01:25+00', '''/us/podcast/remap-radio/id1690437343'':79B ''7'':39B ''9'':8A,20B ''aren'':47B ''audienc'':83B ''chase'':57B ''consid'':93B ''constant'':55B ''content'':91B ''continu'':88B ''didn'':30B ''enthus'':49B ''episod'':69B ''evil'':7A,19B,38B ''full'':68B ''game'':51B ''hand'':2A ''hands-off'':1A ''help'':86B ''impress'':4A ''janet'':9B ''listen'':61B ''make'':89B ''patrick'':11B ''peopl'':45B ''pleas'':92B ''podcast'':76B ''podcasts.apple.com'':78B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':77B ''present'':15B ''promis'':17B ''radio'':72B,81B ''re'':54B,60B ''remap'':71B,80B ''resid'':6A,18B,37B ''return'':23B ''root'':28B ''segment'':65B ''seri'':25B ''subscrib'':73B,94B ''support'':84B ''theater'':14B ''us'':87B ''watch'':12B ''would'':21B ''www.remapradio.com'':96B', false, 'PT25M54S', 'https://i.ytimg.com/vi/vJq8lHcbbig/maxresdefault.jpg'),
-	('cm607zMf3qQ', 'remap', 'A New Genre Has Been Invented: Lore and Logic', 'We''re still refining what it means to mash up a puzzle game with a Metroidvania. MetroidBrania? Well, we''ve got a new idea from a listener: lore and logic. What do you think?
+	('c5vabBHE1W4', 'remap', 'Steam Vent Discovers a World of UFOs and Pets', 'Another adventure into Steam''s New Releases once again takes us to some surprising places. Now with timestamps!
+
+10:10 — Death Howl
+32:54 — Bauhaus Bonk
+44:10 — To the Top, Mammoth!
+01:05:46 — Purfect Climb
+01:13:07 — Jumping Kitten
+01:33:05 — Fear the Unknown: Dave Story
+01:59:48 — Spacepunk Survival
+02:10:20 — Fear the Unknown: Dave Story (Part 2)
+02:22:44 — PETS
+
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/c5vabBHE1W4/mqdefault.jpg', '2025-02-06 22:58:32+00', '''01'':42B,47B,52B,60B ''02'':65B,75B ''05'':43B,54B ''07'':49B ''10'':28B,29B,37B,66B ''13'':48B ''2'':74B ''20'':67B ''22'':76B ''32'':32B ''33'':53B ''44'':36B,77B ''46'':44B ''48'':62B ''54'':33B ''59'':61B ''adventur'':11B ''anoth'':10B ''audienc'':82B ''bauhaus'':34B ''bonk'':35B ''climb'':46B ''consid'':92B ''content'':90B ''continu'':87B ''dave'':58B,71B ''death'':30B ''discov'':3A ''fear'':55B,68B ''help'':85B ''howl'':31B ''jump'':50B ''kitten'':51B ''make'':88B ''mammoth'':41B ''new'':15B ''part'':73B ''pet'':9A,78B ''place'':24B ''pleas'':91B ''purfect'':45B ''radio'':80B ''releas'':16B ''remap'':79B ''spacepunk'':63B ''steam'':1A,13B ''stori'':59B,72B ''subscrib'':93B ''support'':83B ''surpris'':23B ''surviv'':64B ''take'':19B ''timestamp'':27B ''top'':40B ''ufo'':7A ''unknown'':57B,70B ''us'':20B,86B ''vent'':2A ''world'':5A ''www.remapradio.com'':95B', false, 'PT2H39M36S', 'https://i.ytimg.com/vi/c5vabBHE1W4/maxresdefault.jpg'),
+	('9MCLcZNRTE0', 'remap', 'Does Xbox Have a Vision For the Future?', 'Every few years, it feels like Xbox pivots in another direction. As we wait for word on huge Xbox layoffs, we ponder what "new" and "exciting" direction they might announce a few years from now. It''s all part of the plan, right?
+
+Reminder: In early April, the a pro-Palestinian human rights movement BDS that’s pressuring Israel by promoting boycotts, divestment, and sanctions against the country added Xbox to its boycott list. Learn more here: https://www.bdsmovement.net/news/boycott-microsofts-xbox
 
 What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
 
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/cm607zMf3qQ/mqdefault.jpg', '2025-06-18 14:00:54+00', '''/us/podcast/remap-radio/id1690437343'':65B ''audienc'':69B ''consid'':79B ''content'':77B ''continu'':74B ''episod'':55B ''full'':54B ''game'':22B ''genr'':3A ''got'':30B ''help'':72B ''idea'':33B ''invent'':6A ''listen'':36B,47B ''logic'':9A,39B ''lore'':7A,37B ''make'':75B ''mash'':18B ''mean'':16B ''metroidbrania'':26B ''metroidvania'':25B ''new'':2A,32B ''pleas'':78B ''podcast'':62B ''podcasts.apple.com'':64B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':63B ''puzzl'':21B ''radio'':58B,67B ''re'':11B,46B ''refin'':13B ''remap'':57B,66B ''segment'':51B ''still'':12B ''subscrib'':59B,80B ''support'':70B ''think'':43B ''us'':73B ''ve'':29B ''well'':27B ''www.remapradio.com'':82B', false, 'PT10M56S', 'https://i.ytimg.com/vi/cm607zMf3qQ/maxresdefault.jpg'),
-	('WSl1a3RBzME', 'remap', 'Hey Friends, Does Metroid + Puzzles = MetroidBrainia?', 'We continue to walk down a Metroidvania genre discussion rabbit hole by acknowledging we forgot about the "soulsborne" term, but then pivot to a bigger question: is "MetroidBrania" a thing?
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/9MCLcZNRTE0/mqdefault.jpg', '2025-06-30 14:00:22+00', '''/news/boycott-microsofts-xbox'':89B ''/us/podcast/remap-radio/id1690437343'':111B ''ad'':78B ''announc'':38B ''anoth'':18B ''april'':55B ''audienc'':115B ''bds'':64B ''boycott'':71B,82B ''consid'':125B ''content'':123B ''continu'':120B ''countri'':77B ''direct'':19B,35B ''divest'':72B ''earli'':54B ''episod'':101B ''everi'':9B ''excit'':34B ''feel'':13B ''full'':100B ''futur'':8A ''help'':118B ''huge'':26B ''human'':61B ''israel'':68B ''layoff'':28B ''learn'':84B ''like'':14B ''list'':83B ''listen'':93B ''make'':121B ''might'':37B ''movement'':63B ''new'':32B ''palestinian'':60B ''part'':47B ''pivot'':16B ''plan'':50B ''pleas'':124B ''podcast'':108B ''podcasts.apple.com'':110B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':109B ''ponder'':30B ''pressur'':67B ''pro'':59B ''pro-palestinian'':58B ''promot'':70B ''radio'':104B,113B ''re'':92B ''remap'':103B,112B ''remind'':52B ''right'':51B,62B ''sanction'':74B ''segment'':97B ''subscrib'':105B,126B ''support'':116B ''us'':119B ''vision'':5A ''wait'':22B ''word'':24B ''www.bdsmovement.net'':88B ''www.bdsmovement.net/news/boycott-microsofts-xbox'':87B ''www.remapradio.com'':128B ''xbox'':2A,15B,27B,79B ''year'':11B,41B', false, 'PT38M4S', 'https://i.ytimg.com/vi/9MCLcZNRTE0/maxresdefault.jpg'),
+	('mTNxnOrMWgk', 'remap', 'SAVE POINT 2024 - Twilight Breaking Dawn Part 2 - Raising Aid for Palestine and Lebanon', 'One Twilight movie wasn’t enough for us during Save Point. We had to keep going. And fortunately, Austin was kind enough to join us for the complete madness that is Twilight: Breaking Dawn – Part 2. And no, we could not get enough of this movie’s very weird baby.
 
-What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/WSl1a3RBzME/mqdefault.jpg', '2025-06-11 14:00:49+00', '''/us/podcast/remap-radio/id1690437343'':58B ''acknowledg'':19B ''audienc'':62B ''bigger'':31B ''consid'':72B ''content'':70B ''continu'':8B,67B ''discuss'':15B ''episod'':48B ''forgot'':21B ''friend'':2A ''full'':47B ''genr'':14B ''help'':65B ''hey'':1A ''hole'':17B ''listen'':40B ''make'':68B ''metroid'':4A ''metroidbrainia'':6A ''metroidbrania'':34B ''metroidvania'':13B ''pivot'':28B ''pleas'':71B ''podcast'':55B ''podcasts.apple.com'':57B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':56B ''puzzl'':5A ''question'':32B ''rabbit'':16B ''radio'':51B,60B ''re'':39B ''remap'':50B,59B ''segment'':44B ''soulsborn'':24B ''subscrib'':52B,73B ''support'':63B ''term'':25B ''thing'':36B ''us'':66B ''walk'':10B ''www.remapradio.com'':75B', false, 'PT34M53S', 'https://i.ytimg.com/vi/WSl1a3RBzME/maxresdefault.jpg'),
-	('vEpjiZYVSEs', 'remap', '80 For Brady Is a Shockingly Underrated Movie', 'My Turn returns to the realm of sports movies with 80 for Brady, the based-on-a-true story of a group of elderly women who get into escalating shenanigans when they decide to go to the Super Bowl to watch their favorite player, Tom Brady, play. What at first seems like a run of the mill comedy with an all-star cast ends up touching on some heavy subject matter in a touching and charming way. And then Tom Brady is also there. 
-
-This podcast is a segment from My Turn, a subscriber-only Remap podcast about movies that have tangential relationships to one another.
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/vEpjiZYVSEs/mqdefault.jpg', '2025-05-23 14:01:27+00', '''80'':1A,19B ''all-star'':70B ''also'':93B ''anoth'':117B ''audienc'':121B ''base'':24B ''based-on-a-tru'':23B ''bowl'':48B ''bradi'':3A,21B,55B,91B ''cast'':73B ''charm'':86B ''comedi'':67B ''consid'':131B ''content'':129B ''continu'':126B ''decid'':42B ''elder'':33B ''end'':74B ''escal'':38B ''favorit'':52B ''first'':59B ''get'':36B ''go'':44B ''group'':31B ''heavi'':79B ''help'':124B ''like'':61B ''make'':127B ''matter'':81B ''mill'':66B ''movi'':8A,17B,110B ''one'':116B ''play'':56B ''player'':53B ''pleas'':130B ''podcast'':96B,108B ''radio'':119B ''realm'':14B ''relationship'':114B ''remap'':107B,118B ''return'':11B ''run'':63B ''seem'':60B ''segment'':99B ''shenanigan'':39B ''shock'':6A ''sport'':16B ''star'':72B ''stori'':28B ''subject'':80B ''subscrib'':105B,132B ''subscriber-on'':104B ''super'':47B ''support'':122B ''tangenti'':113B ''tom'':54B,90B ''touch'':76B,84B ''true'':27B ''turn'':10B,102B ''underr'':7A ''us'':125B ''watch'':50B ''way'':87B ''women'':34B ''www.remapradio.com'':134B', false, 'PT19M33S', 'https://i.ytimg.com/vi/vEpjiZYVSEs/maxresdefault.jpg'),
-	('pD4V43tNU5k', 'nextlander', 'Vinny''s Big Not-E3 Roundup Review!', 'A lot has happened and I''m sure there is still a lot we can discover together!
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/mTNxnOrMWgk/mqdefault.jpg', '2024-12-06 16:14:49+00', '''2'':8A,50B ''2024'':3A ''aid'':10A ''audienc'':68B ''austin'':33B ''babi'':64B ''break'':5A,47B ''complet'':42B ''consid'':78B ''content'':76B ''continu'':73B ''could'':54B ''dawn'':6A,48B ''enough'':20B,36B,57B ''fortun'':32B ''get'':56B ''go'':30B ''help'':71B ''join'':38B ''keep'':29B ''kind'':35B ''lebanon'':14A ''mad'':43B ''make'':74B ''movi'':17B,60B ''one'':15B ''palestin'':12A ''part'':7A,49B ''pleas'':77B ''point'':2A,25B ''radio'':66B ''rais'':9A ''remap'':65B ''save'':1A,24B ''subscrib'':79B ''support'':69B ''twilight'':4A,16B,46B ''us'':22B,39B,72B ''wasn'':18B ''weird'':63B ''www.remapradio.com'':81B', false, 'PT2H20M22S', 'https://i.ytimg.com/vi/mTNxnOrMWgk/maxresdefault.jpg'),
+	('b0h7xld8uYY', 'nextlander', 'We Return to the [Newly Updated] Void Crew!', 'They got rid of sanctified hull plates and added payloads and we can save our game now!
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
-Thanks for watching.', 'https://i.ytimg.com/vi/pD4V43tNU5k/mqdefault.jpg', '2025-06-10 00:42:36+00', '''/nextlander'':34B ''big'':3A ''communiti'':31B ''discov'':24B ''e3'':6A ''happen'':12B ''lot'':10B,21B ''m'':15B ''nextland'':26B ''not-e3'':4A ''review'':8A ''roundup'':7A ''still'':19B ''support'':28B ''sure'':16B ''thank'':35B ''togeth'':25B ''vinni'':1A ''watch'':37B ''www.patreon.com'':33B ''www.patreon.com/nextlander'':32B', false, 'PT3H45M33S', 'https://i.ytimg.com/vi/pD4V43tNU5k/maxresdefault.jpg'),
-	('JFUpy023mgE', 'remap', 'Celebrating Remap''s 2nd Birthday With an All-Day Stream', 'We''ve somehow made it two years into this wild project, so come join Rob, Patrick, and Cado as they play a variety of games to celebrate two years as an independent media company!
+Thanks for watching.', 'https://i.ytimg.com/vi/b0h7xld8uYY/mqdefault.jpg', '2025-04-22 00:38:11+00', '''/nextlander'':34B ''ad'':17B ''communiti'':31B ''crew'':8A ''game'':24B ''got'':10B ''hull'':14B ''newli'':5A ''nextland'':26B ''payload'':18B ''plate'':15B ''return'':2A ''rid'':11B ''sanctifi'':13B ''save'':22B ''support'':28B ''thank'':35B ''updat'':6A ''void'':7A ''watch'':37B ''www.patreon.com'':33B ''www.patreon.com/nextlander'':32B', false, 'PT2H20M50S', 'https://i.ytimg.com/vi/b0h7xld8uYY/maxresdefault.jpg'),
+	('sHFmvE7W1zU', 'giantbomb', 'Death Stranding 2 is Absolutely Fantastic | Giant Bombcast 896: Current Next Gen', 'Folks it''s time to trek from Mexico to Austrailia as we talk about our time so far with Death Stranding 2, putting out fires in FBC: Firebreak, painting and splatting in Splatoon, the ups and downs of Pipestrello and the Cursed Yoyo, and getting sometime with Rematch. We also chat about the next generation of consoles slowly getting underway, some heat advisory for your Switch 2, Mario Kart World characters, and even more! 
 
-Timestamps:
-00:05:14 — POPUCOM
-01:38:27 — Hopshot
-02:45:12 — HAELE 3D - Feet Poses Pro 
-02:56:36 — Baccarat
-03:04:45 — Pokertown: Cheater''s Paradise
-03:21:31 — Lunch Break
-04:04:06 — Elden Ring: Nightreign
+#bombcast #giantbombcast #giantbomb', 'https://i.ytimg.com/vi/sHFmvE7W1zU/mqdefault.jpg', '2025-06-24 19:06:11+00', '''2'':3A,34B,79B ''896'':9A ''absolut'':5A ''advisori'':75B ''also'':62B ''austrailia'':22B ''bombcast'':8A,87B ''charact'':83B ''chat'':63B ''consol'':69B ''current'':10A ''curs'':54B ''death'':1A,32B ''down'':49B ''even'':85B ''fantast'':6A ''far'':30B ''fbc'':39B ''fire'':37B ''firebreak'':40B ''folk'':13B ''gen'':12A ''generat'':67B ''get'':57B,71B ''giant'':7A ''giantbomb'':89B ''giantbombcast'':88B ''heat'':74B ''kart'':81B ''mario'':80B ''mexico'':20B ''next'':11A,66B ''paint'':41B ''pipestrello'':51B ''put'':35B ''rematch'':60B ''slowli'':70B ''sometim'':58B ''splat'':43B ''splatoon'':45B ''strand'':2A,33B ''switch'':78B ''talk'':25B ''time'':16B,28B ''trek'':18B ''underway'':72B ''up'':47B ''world'':82B ''yoyo'':55B', false, 'PT2H44M56S', 'https://i.ytimg.com/vi/sHFmvE7W1zU/maxresdefault.jpg'),
+	('BbehXM0vQjE', 'remap', 'The Media Can''t Review the Switch 2 Until Launch', 'It''s been reported that Nintendo won''t be sending Switch 2 machines in advance to game journalists. What does it mean for Nintendo to dodge reviews, and is the a bigger conversation about the death of expertise? What you''re listening to is a segment from a full episode of Remap Radio! Subscribe to the podcast: https://podcasts.apple.com/us/podcast/remap-radio/id1690437343
 
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/JFUpy023mgE/mqdefault.jpg', '2025-06-04 02:57:21+00', '''00'':47B ''01'':51B ''02'':55B,63B ''03'':67B,74B ''04'':68B,79B,80B ''05'':48B ''06'':81B ''12'':57B ''14'':49B ''21'':75B ''27'':53B ''2nd'':4A ''31'':76B ''36'':65B ''38'':52B ''3d'':59B ''45'':56B,69B ''56'':64B ''all-day'':8A ''audienc'':88B ''baccarat'':66B ''birthday'':5A ''break'':78B ''cado'':29B ''celebr'':1A,38B ''cheater'':71B ''come'':24B ''compani'':45B ''consid'':98B ''content'':96B ''continu'':93B ''day'':10A ''elden'':82B ''feet'':60B ''game'':36B ''hael'':58B ''help'':91B ''hopshot'':54B ''independ'':43B ''join'':25B ''lunch'':77B ''made'':15B ''make'':94B ''media'':44B ''nightreign'':84B ''paradis'':73B ''patrick'':27B ''play'':32B ''pleas'':97B ''pokertown'':70B ''popucom'':50B ''pose'':61B ''pro'':62B ''project'':22B ''radio'':86B ''remap'':2A,85B ''ring'':83B ''rob'':26B ''somehow'':14B ''stream'':11A ''subscrib'':99B ''support'':89B ''timestamp'':46B ''two'':17B,39B ''us'':92B ''varieti'':34B ''ve'':13B ''wild'':21B ''www.remapradio.com'':101B ''year'':18B,40B', false, 'PT6H51M55S', 'https://i.ytimg.com/vi/JFUpy023mgE/maxresdefault.jpg'),
-	('UZvdQtpJRJ8', 'giantbomb', 'The Hundred Line is a Danganropa X Fire Emblem? | Giant Bombcast 887: Burgertory', 'There''s a new Oblivion game and we recapped the news that came from the Bethesda stream this morning, we chat about how The Hundred Line: Defense Academy is extremely up our alley, some older SNES games, the Lunar Collection, and even more hot news and game talk this week on the Giant Bombcast.
-
-#podcast #giantbomb #giantbombcast', 'https://i.ytimg.com/vi/UZvdQtpJRJ8/mqdefault.jpg', '2025-04-22 18:27:11+00', '''887'':12A ''academi'':41B ''alley'':46B ''bethesda'':29B ''bombcast'':11A,67B ''burgertori'':13A ''came'':26B ''chat'':34B ''collect'':53B ''danganropa'':6A ''defens'':40B ''emblem'':9A ''even'':55B ''extrem'':43B ''fire'':8A ''game'':19B,50B,60B ''giant'':10A,66B ''giantbomb'':69B ''giantbombcast'':70B ''hot'':57B ''hundr'':2A,38B ''line'':3A,39B ''lunar'':52B ''morn'':32B ''new'':17B ''news'':24B,58B ''oblivion'':18B ''older'':48B ''podcast'':68B ''recap'':22B ''snes'':49B ''stream'':30B ''talk'':61B ''week'':63B ''x'':7A', false, 'PT2H6M23S', 'https://i.ytimg.com/vi/UZvdQtpJRJ8/maxresdefault.jpg'),
-	('tva1CsRWxA0', 'remap', 'Steam Vent Returns to Gay Frogs and Jump Scares', 'You turn away for one second and an evil witch gets you out of nowhere, huh?
-
-Timestamps:
-00:03:04 — Hopshop
-00:39:22 — Silverpine Creek
-00:58:20 — A Game About Mowing Your Lawn
-01:18:15 — Level Devil
-01:31:39 — Paper 2: Origami Unfolded
-02:02:36 – The Gallery
-02:20:24 — Tick Hop
-
-Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/tva1CsRWxA0/mqdefault.jpg', '2025-03-25 22:23:34+00', '''00'':27B,31B,36B ''01'':45B,50B ''02'':57B,58B,62B ''03'':28B ''04'':29B ''15'':47B ''18'':46B ''2'':54B ''20'':38B,63B ''22'':33B ''24'':64B ''31'':51B ''36'':59B ''39'':32B,52B ''58'':37B ''audienc'':70B ''away'':12B ''consid'':80B ''content'':78B ''continu'':75B ''creek'':35B ''devil'':49B ''evil'':18B ''frog'':6A ''galleri'':61B ''game'':40B ''gay'':5A ''get'':20B ''help'':73B ''hop'':66B ''hopshop'':30B ''huh'':25B ''jump'':8A ''lawn'':44B ''level'':48B ''make'':76B ''mow'':42B ''nowher'':24B ''one'':14B ''origami'':55B ''paper'':53B ''pleas'':79B ''radio'':68B ''remap'':67B ''return'':3A ''scare'':9A ''second'':15B ''silverpin'':34B ''steam'':1A ''subscrib'':81B ''support'':71B ''tick'':65B ''timestamp'':26B ''turn'':11B ''unfold'':56B ''us'':74B ''vent'':2A ''witch'':19B ''www.remapradio.com'':83B', false, 'PT2H41M46S', 'https://i.ytimg.com/vi/tva1CsRWxA0/maxresdefault.jpg'),
-	('rfMntjiyYgk', 'nextlander', 'Mario Kart World and the Switch 2 are Here!', 'Alex got his Switch 2, so let''s boot this thing up and play the game(s) that are currently available!
+Remap Radio is audience supported, to help us continue making this content please consider subscribing at https://www.remapradio.com', 'https://i.ytimg.com/vi/BbehXM0vQjE/mqdefault.jpg', '2025-06-04 14:00:18+00', '''/us/podcast/remap-radio/id1690437343'':70B ''2'':8A,22B ''advanc'':25B ''audienc'':74B ''bigger'':42B ''consid'':84B ''content'':82B ''continu'':79B ''convers'':43B ''death'':46B ''dodg'':36B ''episod'':60B ''expertis'':48B ''full'':59B ''game'':27B ''help'':77B ''journalist'':28B ''launch'':10A ''listen'':52B ''machin'':23B ''make'':80B ''mean'':32B ''media'':2A ''nintendo'':16B,34B ''pleas'':83B ''podcast'':67B ''podcasts.apple.com'':69B ''podcasts.apple.com/us/podcast/remap-radio/id1690437343'':68B ''radio'':63B,72B ''re'':51B ''remap'':62B,71B ''report'':14B ''review'':5A,37B ''segment'':56B ''send'':20B ''subscrib'':64B,85B ''support'':75B ''switch'':7A,21B ''us'':78B ''won'':17B ''www.remapradio.com'':87B', false, 'PT26M53S', 'https://i.ytimg.com/vi/BbehXM0vQjE/maxresdefault.jpg'),
+	('maaqXV5GJkA', 'nextlander', 'We''re Getting to the Peak of Peak Today', 'Just put one hand in front of the other, how hard could it be?
 
 Nextlander is supported by its community:
 http://www.patreon.com/nextlander
 
-Thanks for watching.', 'https://i.ytimg.com/vi/rfMntjiyYgk/mqdefault.jpg', '2025-06-06 20:52:29+00', '''/nextlander'':37B ''2'':7A,12B ''alex'':8B ''avail'':28B ''boot'':16B ''communiti'':34B ''current'':27B ''game'':23B ''got'':9B ''kart'':2A ''let'':14B ''mario'':1A ''nextland'':29B ''play'':21B ''support'':31B ''switch'':6A,11B ''thank'':38B ''thing'':18B ''watch'':40B ''world'':3A ''www.patreon.com'':36B ''www.patreon.com/nextlander'':35B', false, 'PT2H27M23S', 'https://i.ytimg.com/vi/rfMntjiyYgk/maxresdefault.jpg'),
-	('w8PmznjJN9s', 'nextlander', 'May the Fort Be Nite You', 'The Star Wars Fortnite season is almost over, and by God, Brad''s got skins to show off!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/w8PmznjJN9s/mqdefault.jpg', '2025-06-02 23:18:50+00', '''/nextlander'':32B ''almost'':12B ''brad'':17B ''communiti'':29B ''fort'':3A ''fortnit'':9B ''god'':16B ''got'':19B ''may'':1A ''nextland'':24B ''nite'':5A ''season'':10B ''show'':22B ''skin'':20B ''star'':7B ''support'':26B ''thank'':33B ''war'':8B ''watch'':35B ''www.patreon.com'':31B ''www.patreon.com/nextlander'':30B', false, 'PT2H19M33S', 'https://i.ytimg.com/vi/w8PmznjJN9s/maxresdefault.jpg'),
-	('P2wR9HADfHo', 'nextlander', 'Patron''s Choice for April 2025: Vinny Tries The Last Express for the First Time!', 'Our patrons voted to see Vinny dig into a classic adventure for the first time!
-
-Nextlander is supported by its community:
-http://www.patreon.com/nextlander
-
-Thanks for watching.', 'https://i.ytimg.com/vi/P2wR9HADfHo/mqdefault.jpg', '2025-04-25 22:24:52+00', '''/nextlander'':39B ''2025'':6A ''adventur'':26B ''april'':5A ''choic'':3A ''classic'':25B ''communiti'':36B ''dig'':22B ''express'':11A ''first'':14A,29B ''last'':10A ''nextland'':31B ''patron'':1A,17B ''see'':20B ''support'':33B ''thank'':40B ''time'':15A,30B ''tri'':8A ''vinni'':7A,21B ''vote'':18B ''watch'':42B ''www.patreon.com'':38B ''www.patreon.com/nextlander'':37B', false, 'PT2H19M43S', 'https://i.ytimg.com/vi/P2wR9HADfHo/maxresdefault.jpg');
+Thanks for watching.', 'https://i.ytimg.com/vi/maaqXV5GJkA/mqdefault.jpg', '2025-06-30 19:35:43+00', '''/nextlander'':32B ''communiti'':29B ''could'':21B ''front'':15B ''get'':3A ''hand'':13B ''hard'':20B ''nextland'':24B ''one'':12B ''peak'':6A,8A ''put'':11B ''re'':2A ''support'':26B ''thank'':33B ''today'':9A ''watch'':35B ''www.patreon.com'':31B ''www.patreon.com/nextlander'':30B', false, 'P0D', 'https://i.ytimg.com/vi/maaqXV5GJkA/maxresdefault.jpg');
 
 
 --
@@ -64829,6 +64921,771 @@ INSERT INTO "public"."playlist_videos" ("playlist_id", "video_id", "id", "video_
 	(1000249, 'jf5XJ96HtUY', 10415, 1191),
 	(1000249, 'uwrevvpfgyQ', 10416, 1192),
 	(1000249, 'IH4QOcSAqLM', 10417, 1193),
+	(1000555, 'KxQU_E3Gdng', 14040, 20),
+	(1000555, '4kA9AL-dv00', 14042, 22),
+	(1000555, 'm6zyKKA1cFk', 14044, 24),
+	(1000555, 'eue6nr1jYDE', 14046, 26),
+	(1000555, 'ZVBY2bVPe5A', 14048, 28),
+	(1000555, '4_MCFec-flQ', 14050, 30),
+	(1000555, 'DdYz7tBtiY8', 14052, 32),
+	(1000555, 'mvgKc7tG3eE', 14054, 34),
+	(1000569, 'irxoI1lBnqg', 17004, 1428),
+	(1000555, 'nCsr-h3AsqM', 14058, 38),
+	(1000555, 'Mo_uU27ZymM', 14060, 40),
+	(1000569, 'ZOrsNXsEIBc', 17006, 1430),
+	(1000555, 'SkHtYFBy0Do', 14064, 44),
+	(1000555, 'To0eIuvQdHA', 14066, 46),
+	(1000555, 'cP8gavcQcjI', 14068, 48),
+	(1000555, 'FNOLoQxxSc8', 14070, 50),
+	(1000555, '-W3BaDM5jBk', 14072, 52),
+	(1000555, 'eVgK4mqCMbw', 14074, 54),
+	(1000555, 'PgMrEK9N_8U', 14076, 56),
+	(1000555, 'YTwp2z86tZY', 14078, 58),
+	(1000555, 'ljRJy15jM_M', 14080, 60),
+	(1000555, '89B4Dfxb-Es', 14082, 62),
+	(1000555, 'oiPZRzf3MxI', 14084, 64),
+	(1000555, '2zEHsfWbtnE', 14086, 66),
+	(1000555, 'RFeu6QMDch0', 14088, 68),
+	(1000555, 'PMz4Kw06gM0', 14090, 70),
+	(1000555, 'egL7PJAJEgc', 14092, 72),
+	(1000555, 'soOej0ky0hg', 14094, 74),
+	(1000555, '3Q32-EUtQLg', 14096, 76),
+	(1000555, '5ZK3eKIJAZk', 14098, 78),
+	(1000555, 'Xe_R_xAVsTk', 14100, 80),
+	(1000555, 'vcvbGRsH3G0', 14102, 82),
+	(1000555, 'JikJutHKhYM', 14104, 84),
+	(1000555, 'vDhNxN5URIw', 14106, 86),
+	(1000555, 'uKzRfKGq6EU', 14041, 21),
+	(1000555, 'R4SyC3okNCU', 14043, 23),
+	(1000555, 'UHj-h2LnQeI', 14045, 25),
+	(1000555, 'g5PISmjPWUo', 14047, 27),
+	(1000555, 'gyv9Oc_IQJc', 14049, 29),
+	(1000555, 'VqPNpmGp5Rk', 14051, 31),
+	(1000555, '1EEhXCoAwuI', 14053, 33),
+	(1000555, 'EoJub9vq9Nk', 14055, 35),
+	(1000555, 'wn1LGG18oEk', 14057, 37),
+	(1000569, '7wzxcZR3SRw', 17005, 1429),
+	(1000555, 'G9eTy1CTR6o', 14061, 41),
+	(1000555, '5hv6IjNr9l0', 14063, 43),
+	(1000555, 'TbTMwzQdv-U', 14065, 45),
+	(1000555, 'dwXsLILms-o', 14067, 47),
+	(1000555, 'uNT0HQyrvvg', 14069, 49),
+	(1000555, '-q9ruYZSuMU', 14071, 51),
+	(1000555, 'FR9popmZBJk', 14073, 53),
+	(1000555, 'DFPLpvf-aRA', 14075, 55),
+	(1000555, 'jCFQY6oHD7E', 14077, 57),
+	(1000555, 'Lo5vESseZdo', 14079, 59),
+	(1000555, 'lJcD0rAsFaM', 14081, 61),
+	(1000555, '-icIMCYzJiM', 14083, 63),
+	(1000555, 'h59VMBxaTVc', 14085, 65),
+	(1000555, 'UKfPWNssfVE', 14087, 67),
+	(1000555, 'gSkItTSccXc', 14089, 69),
+	(1000555, 'Va8jftr4Mbs', 14091, 71),
+	(1000555, '-g8SClLm9t4', 14093, 73),
+	(1000555, '-J8a3cBk1Ug', 14095, 75),
+	(1000555, '1t4fUVFwKdA', 14097, 77),
+	(1000555, 'SibXp8FVPH8', 14099, 79),
+	(1000555, 'Oy7BfY0UUwQ', 14101, 81),
+	(1000555, 'ObN7URdPgL8', 14103, 83),
+	(1000555, 'pb9Ioe2RYug', 14105, 85),
+	(1000555, 'KTu8JaajitM', 14107, 87),
+	(1000555, '6BC7MHsukzQ', 14109, 89),
+	(1000555, 'QBp34bnB_q8', 14111, 91),
+	(1000555, 'AruBZYnPY4M', 14113, 93),
+	(1000555, 'M5nqLLirD8c', 14115, 95),
+	(1000555, 'hPJ-wcD6YwQ', 14117, 97),
+	(1000555, '_iD3tRN12w4', 14119, 99),
+	(1000555, '-e_SKbh9Gjo', 14121, 101),
+	(1000555, 's5M3iGLZ5lQ', 14123, 103),
+	(1000555, 'reDAAhUufdI', 14125, 105),
+	(1000555, '1irSysOYzC8', 14127, 107),
+	(1000569, '2GUGIOefntM', 17007, 1431),
+	(1000555, '7PyknTn68Gc', 14131, 111),
+	(1000555, 'ByX-BuMJnss', 14133, 113),
+	(1000555, '0M8XJ8xPeH4', 14135, 115),
+	(1000555, '7fFlomCdMUE', 14137, 117),
+	(1000555, 'PY4FOSlLo4Y', 14139, 119),
+	(1000555, 'H9a0ew6FZPk', 14141, 121),
+	(1000555, 'S4_sl-_lxzg', 14143, 123),
+	(1000555, 'eHsYQOosLkQ', 14145, 125),
+	(1000555, '084iAwiSCpA', 14147, 127),
+	(1000555, 'POgDMuL_e1E', 14149, 129),
+	(1000555, 'XSaGsdn2N9M', 14151, 131),
+	(1000555, 'v7OEUvCTNiQ', 14153, 133),
+	(1000555, '2LgmPzfZv5U', 14155, 135),
+	(1000555, 'mch8HthnEUE', 14157, 137),
+	(1000555, 'ZiLphFWdoi4', 14159, 139),
+	(1000555, 'm5QncxH4EfU', 14161, 141),
+	(1000555, 'gt2TfPVbqUY', 14163, 143),
+	(1000569, 'GxTfxqoeblI', 17009, 1433),
+	(1000555, 'kOEN2NdRPHc', 14167, 147),
+	(1000555, '2BzmqPH_G2o', 14169, 149),
+	(1000555, 'zfxqCIC0vlg', 14171, 151),
+	(1000555, 'ukW2dhKz1uY', 14173, 153),
+	(1000555, 'D-AVKBG8ADw', 14175, 155),
+	(1000555, 'UO1D7tT2cgQ', 14177, 157),
+	(1000555, 'mc6CMG98wRw', 14179, 159),
+	(1000555, 'VpQoNsufqyc', 14181, 161),
+	(1000555, 'gcemWqwuCB4', 14183, 163),
+	(1000555, 'c1IvxfStRkM', 14185, 165),
+	(1000555, '-qJfiLjg-sM', 14187, 167),
+	(1000555, 'SszD_Q3sbfo', 14189, 169),
+	(1000555, 'Lgq1wVqK_RM', 14191, 171),
+	(1000555, 'lSzMXnpdTOg', 14193, 173),
+	(1000555, 'evWx-IroNlM', 14195, 175),
+	(1000555, 'QQvvTJ6oBNE', 14197, 177),
+	(1000555, '5xpj9KnPBKk', 14199, 179),
+	(1000555, 'sJedyPmZrMg', 14201, 181),
+	(1000555, '_IlcsmBx-SE', 14203, 183),
+	(1000555, 'gVxbRafoFoc', 14205, 185),
+	(1000555, 'qE_fKrjhuwI', 14207, 187),
+	(1000555, 'prWTVoXCHww', 14209, 189),
+	(1000555, 'mIjWdSRgbek', 14211, 191),
+	(1000555, 'qqOwT0WyAbE', 14213, 193),
+	(1000555, 'RGmnzIVlcGw', 14215, 195),
+	(1000555, '5jg5huijaiI', 14217, 197),
+	(1000555, 'MNaGnvH5hnw', 14219, 199),
+	(1000555, 'OhexonDZQv8', 14221, 201),
+	(1000555, 'WdQ6nNqTe14', 14223, 203),
+	(1000555, 'feErgU0uZwg', 14225, 205),
+	(1000555, 'ftCkcE9R67w', 14227, 207),
+	(1000555, 'DGU7OVgKY7Q', 14229, 209),
+	(1000555, 'kPpHttOMnag', 14231, 211),
+	(1000555, 'YKYbS7keZXA', 14233, 213),
+	(1000555, 'sGD2eSEsKWo', 14235, 215),
+	(1000555, 'hEUwFmvJiDM', 14237, 217),
+	(1000555, 'HTheYbtwwp0', 14239, 219),
+	(1000555, 'ufGp0USamP8', 14241, 221),
+	(1000555, 'wZ6gYRcExx4', 14243, 223),
+	(1000555, 'k6jOTh-Y7kU', 14245, 225),
+	(1000555, 'DR-CIxPFiOQ', 14247, 227),
+	(1000555, 'VIgcpbN7xfM', 14249, 229),
+	(1000555, 'D5bsl3Rozgk', 14251, 231),
+	(1000555, '8GzN7q5S3QQ', 14253, 233),
+	(1000555, 'pm8B0idUYK4', 14255, 235),
+	(1000555, 'EviX_TKUEc4', 14257, 237),
+	(1000555, 'DnCvoB8cVzI', 14259, 239),
+	(1000555, 't1Sg438wzns', 14261, 241),
+	(1000555, '7JMvox_l1Tc', 14263, 243),
+	(1000555, 'YYNO7OCN-WI', 14265, 245),
+	(1000555, 'IFqhtIflJNk', 14267, 247),
+	(1000555, 'CNnEUvH_SNY', 14269, 249),
+	(1000555, 'NaemmcMiJ2o', 14271, 251),
+	(1000555, '_19WE3Rpu4o', 14273, 253),
+	(1000555, 'Q7ngR7oF3Ys', 14275, 255),
+	(1000555, 'uV10VHz93C4', 14277, 257),
+	(1000555, 'Dky4v0fYpqg', 14279, 259),
+	(1000555, 'KzWPLsSqWRY', 14108, 88),
+	(1000555, 'NgEsVFW3_hU', 14110, 90),
+	(1000555, 'Gus-Vx9wBtM', 14112, 92),
+	(1000555, 'GQIXY8ApQVU', 14114, 94),
+	(1000555, '321s4ankZGA', 14116, 96),
+	(1000555, 'Mi59FV3SlWA', 14118, 98),
+	(1000555, '6MDsaXx_zww', 14120, 100),
+	(1000555, '3R8twW_fvCk', 14122, 102),
+	(1000555, 'i6plDBbPrUk', 14124, 104),
+	(1000555, 'QieNadd_sJ8', 14126, 106),
+	(1000555, 'blwtIIvOFsw', 14128, 108),
+	(1000555, 'zKNQyoTZaaE', 14130, 110),
+	(1000555, 'A3stEjQwMCg', 14132, 112),
+	(1000555, 's3acLaCi5v8', 14134, 114),
+	(1000555, 'LiP6FM14vxo', 14136, 116),
+	(1000555, 'r4FFOMPyaLo', 14138, 118),
+	(1000555, 'iIg2GsCnzlI', 14140, 120),
+	(1000555, 'T9H2Jy8bnBA', 14142, 122),
+	(1000555, 'u_B7rHfRz7Y', 14144, 124),
+	(1000555, 'PpN8xV8TPFI', 14146, 126),
+	(1000555, '2l1omNmVEhc', 14148, 128),
+	(1000555, 'RJs-MtjeIIo', 14150, 130),
+	(1000555, 'aq-VdtcU9Ak', 14152, 132),
+	(1000555, 'WdQNfuxplwA', 14154, 134),
+	(1000555, 'XMmQ9A0GE-8', 14156, 136),
+	(1000555, 'SQnlASDLud8', 14158, 138),
+	(1000555, '8Amihf26D_4', 14160, 140),
+	(1000555, 'Y9XY9ws8EXk', 14162, 142),
+	(1000555, '4bnUU3Kplng', 14164, 144),
+	(1000555, 'HyIySAn0lkE', 14166, 146),
+	(1000569, 'uhC1G5WjF68', 17008, 1432),
+	(1000569, 'Lrb7hVxlQjA', 17010, 1434),
+	(1000555, 'WyGUiNv1544', 14172, 152),
+	(1000555, 'QBduYimtuXM', 14174, 154),
+	(1000555, 'abdya0s_hck', 14176, 156),
+	(1000555, '6lOjMeGMKlE', 14178, 158),
+	(1000555, 'PDzH_HZkIs4', 14180, 160),
+	(1000555, 'Y9gzjTaG2Mk', 14182, 162),
+	(1000555, 'm3aM6GY3H64', 14184, 164),
+	(1000555, 'O4Qe1x5c_hw', 14186, 166),
+	(1000555, '7KFB0rB05Zo', 14188, 168),
+	(1000555, 'pgGmL0ZGiBU', 14190, 170),
+	(1000555, '1p-xfqw_sZs', 14192, 172),
+	(1000555, '8XX0HX-wUPM', 14194, 174),
+	(1000555, 'j74Ip_hnM7Q', 14196, 176),
+	(1000555, 'RMt9jwsCwYs', 14198, 178),
+	(1000555, 'F06HBNFKAcs', 14200, 180),
+	(1000555, 'Na9KmVyBJgI', 14202, 182),
+	(1000555, 'YqyYi2uNP-k', 14204, 184),
+	(1000555, 'ktbuT2BY150', 14206, 186),
+	(1000555, 'KBfrpjH6_O8', 14208, 188),
+	(1000555, 'N9irBabXshc', 14210, 190),
+	(1000555, 'dWtm8LvfFnY', 14212, 192),
+	(1000555, 'Qly8OAt2kKk', 14214, 194),
+	(1000555, 's-CWPXgMO5I', 14216, 196),
+	(1000555, 'Q8f11p0DbbM', 14218, 198),
+	(1000555, 'h0Uj9fmap1g', 14220, 200),
+	(1000555, '3ler7_ASlMg', 14222, 202),
+	(1000555, 'peVtt5JvYOk', 14224, 204),
+	(1000555, 'oML8rtfZgAs', 14226, 206),
+	(1000555, 'AZ0NTFfSDaQ', 14228, 208),
+	(1000555, 'segwKd_qwm4', 14230, 210),
+	(1000555, 'VEWfKf5852Y', 14232, 212),
+	(1000555, '08tQ-hjB19Q', 14234, 214),
+	(1000555, '3Pjk0piyQ3w', 14236, 216),
+	(1000555, '6TyjVxVlXDE', 14238, 218),
+	(1000555, 'daBXLdpQtxs', 14240, 220),
+	(1000555, '62JC5BW_e6E', 14242, 222),
+	(1000555, '2EYExhFfYow', 14244, 224),
+	(1000555, '7YqH2ARskMQ', 14246, 226),
+	(1000555, 'T1cFiwtIXV4', 14248, 228),
+	(1000555, 'Bb1I59co9qw', 14250, 230),
+	(1000555, 'S6ctFV8ydso', 14252, 232),
+	(1000555, 'WdwfOOmPink', 14254, 234),
+	(1000555, '_fXY0QxAxgk', 14256, 236),
+	(1000555, 'Cp8of3cfb1Q', 14258, 238),
+	(1000555, '0zy_Oaz2u-c', 14260, 240),
+	(1000555, 'cnaEX_HTBns', 14262, 242),
+	(1000555, '8uZb5LQLiTw', 14264, 244),
+	(1000555, 'QJSzSyNg4UA', 14266, 246),
+	(1000555, 'tg2Le1CgRk0', 14268, 248),
+	(1000555, 'Yz2kN3M9Z04', 14270, 250),
+	(1000555, 'TG65wDPVEg8', 14272, 252),
+	(1000555, 'YAxOXeSUX9Q', 14274, 254),
+	(1000555, '2EO9jpkrJW0', 14276, 256),
+	(1000555, 'bC95zmmHF2g', 14278, 258),
+	(1000555, 'aDM-wSOphz0', 14280, 260),
+	(1000555, 'm-ADXwQt26Q', 14282, 262),
+	(1000555, 'ABCaKiTpwys', 14284, 264),
+	(1000555, 'N38zfmrFKbM', 14286, 266),
+	(1000555, 'PbZyr7L2Pf4', 14288, 268),
+	(1000555, 'dl3n2pyFm0U', 14290, 270),
+	(1000555, 'tPy8GgZi6z0', 14292, 272),
+	(1000555, '94f5ufmXL4o', 14294, 274),
+	(1000555, 'Jy6-1fkhp2Q', 14296, 276),
+	(1000555, 'VXnaxfoKaao', 14298, 278),
+	(1000555, 'mKh5gQ1EJZA', 14300, 280),
+	(1000555, 'EAapOiHr8AI', 14302, 282),
+	(1000555, 'SuZVnC8UbGE', 14304, 284),
+	(1000555, 'a11IIGsPvEg', 14306, 286),
+	(1000555, 'Ude2l2nzOUI', 14308, 288),
+	(1000555, 'y0WklD89GOM', 14310, 290),
+	(1000555, 'LJ3eImZsyyA', 14312, 292),
+	(1000555, '2lmjXHAB3zA', 14314, 294),
+	(1000555, 'FMr6SyFksyg', 14316, 296),
+	(1000555, 'YiR1t30QqAY', 14318, 298),
+	(1000555, 'VL85yMLya6I', 14320, 300),
+	(1000555, 'tUhQ9V8cXUY', 14322, 302),
+	(1000555, 'aHsO-IeYwcc', 14324, 304),
+	(1000555, 'C8SkNg_PW_A', 14326, 306),
+	(1000555, 'lo1FyjmSGX4', 14328, 308),
+	(1000555, 'yC374yFLXQo', 14330, 310),
+	(1000555, 'OpY2HjM_2cE', 14332, 312),
+	(1000555, '5wOC56boou4', 14334, 314),
+	(1000555, '3GlnstRimoY', 14336, 316),
+	(1000555, 'fr90PK4zGak', 14338, 318),
+	(1000555, 'TnTtLiLwhHc', 14340, 320),
+	(1000555, 'frz3zD73obg', 14342, 322),
+	(1000555, 'DMIlnp_mJ6w', 14344, 324),
+	(1000555, 'ERKIwkYQLzw', 14346, 326),
+	(1000555, '0gYJJQjdM8k', 14281, 261),
+	(1000555, 'zwrMUnNfMIY', 14283, 263),
+	(1000555, 'YaLQaFW4bqE', 14285, 265),
+	(1000555, 'msy9daqrRiI', 14287, 267),
+	(1000555, 'm_OLLQAWYys', 14289, 269),
+	(1000555, '0pxHMNo54Vg', 14291, 271),
+	(1000555, 'Va8_wWufVqY', 14293, 273),
+	(1000555, '89exXsRPEYA', 14295, 275),
+	(1000555, 'qdHI7kHuWWo', 14297, 277),
+	(1000555, 'N0NNdCdONMM', 14299, 279),
+	(1000555, 'Z9GPYNPaNcc', 14301, 281),
+	(1000555, 'KASREohApBs', 14303, 283),
+	(1000555, 'rw1TVCfBdSc', 14305, 285),
+	(1000555, 'LKJr7H3FYxQ', 14307, 287),
+	(1000555, 'FnLYLpZDXtM', 14309, 289),
+	(1000555, '2vkDDGzW96M', 14311, 291),
+	(1000555, 'fIYaoQ9olg8', 14313, 293),
+	(1000555, 'R1LlwL9uQZ8', 14315, 295),
+	(1000569, 'gOlU1rjz4VY', 17011, 1435),
+	(1000555, 'kToYgY9MiK0', 14319, 299),
+	(1000555, 'Gb_EVX8gPWE', 14321, 301),
+	(1000555, 'RdyQjlDxWME', 14323, 303),
+	(1000555, 'TB6-H7Xghho', 14325, 305),
+	(1000555, '9jXEau_39_k', 14327, 307),
+	(1000555, 'zatdUk6wPzc', 14329, 309),
+	(1000555, 's8pESM6TbfE', 14331, 311),
+	(1000555, '2xlCH5IBGQo', 14333, 313),
+	(1000555, 'F63Itvf7rw8', 14335, 315),
+	(1000555, 't2ygl45rifc', 14337, 317),
+	(1000555, '4Sh_jPSAOzQ', 14339, 319),
+	(1000555, 'YIVFynHYG3U', 14341, 321),
+	(1000555, 'u6JF6it0lnY', 14343, 323),
+	(1000555, '_x4ujKbaAZA', 14345, 325),
+	(1000555, 'MF00TALA6bQ', 14347, 327),
+	(1000555, '0-IbOQX_7JQ', 14349, 329),
+	(1000555, 'lpDnobgkoZo', 14351, 331),
+	(1000555, 'P71IL_WKuXQ', 14353, 333),
+	(1000555, '8OjQut7cp-k', 14355, 335),
+	(1000555, 'PrA3Eo1l1ZU', 14357, 337),
+	(1000555, 'YYkHcGHB1XQ', 14359, 339),
+	(1000555, 'j9eg6ZmLLC0', 14361, 341),
+	(1000555, 'lpxJ7dlNnEE', 14363, 343),
+	(1000555, 'uTqtdgdaxuY', 14365, 345),
+	(1000555, 'MtrPqCs9fGo', 14367, 347),
+	(1000555, '-P5eoIf46JQ', 14369, 349),
+	(1000555, 'vPaLV1CUcoM', 14371, 351),
+	(1000555, 'UXSfhGHQX2k', 14373, 353),
+	(1000555, 'HDUB1Y_1WBQ', 14375, 355),
+	(1000555, 'U2Swzf6HGvo', 14377, 357),
+	(1000555, 'cIscO30yphg', 14379, 359),
+	(1000555, 'e4_BfJrudEE', 14381, 361),
+	(1000555, 'xZTpfJeJ1lw', 14383, 363),
+	(1000555, 'Zt2_pT4c4tg', 14385, 365),
+	(1000555, 'zXga2OaQQns', 14387, 367),
+	(1000555, 'RZZx-haH0eQ', 14389, 369),
+	(1000555, 'DYzDfzEGge0', 14391, 371),
+	(1000555, 'tfDRjOP0Udc', 14393, 373),
+	(1000569, '3VupKz-yPlA', 17013, 1437),
+	(1000555, '26qI_29DOV0', 14397, 377),
+	(1000555, 'CRtxS88GJds', 14399, 379),
+	(1000555, 'yqMHLZdMpaY', 14401, 381),
+	(1000555, '-4BVU369jYE', 14403, 383),
+	(1000555, 'TnweqMK5ynM', 14405, 385),
+	(1000555, '4mSZFjT-oew', 14407, 387),
+	(1000555, 'I4REichgIHg', 14409, 389),
+	(1000555, 'miKP5bYSMVY', 14411, 391),
+	(1000555, 'jci2ApwCptw', 14413, 393),
+	(1000555, '5WhjItPiRrk', 14415, 395),
+	(1000555, 'T4RaJgzHzj4', 14417, 397),
+	(1000555, 'DVRXNs_3pyE', 14419, 399),
+	(1000555, 'PKkG3dWfivc', 14421, 401),
+	(1000555, 't7vj_HrTjrY', 14423, 403),
+	(1000555, 'E9Hh8HU4rdw', 14425, 405),
+	(1000555, 'eSqVqLf43Wk', 14427, 407),
+	(1000555, 'sZCp6LKPAPw', 14429, 409),
+	(1000555, '80tiDr_V3HE', 14431, 411),
+	(1000555, 'wx5crMVDER0', 14433, 413),
+	(1000555, 'D9gkFM-7l7M', 14435, 415),
+	(1000555, '0aH69D-AUKE', 14437, 417),
+	(1000555, '6b9Q-He74iU', 14439, 419),
+	(1000555, 'hRCHOKWs8eg', 14441, 421),
+	(1000555, 'ramCZaNpcDQ', 14443, 423),
+	(1000555, '4K2ct3A2lSk', 14445, 425),
+	(1000555, 'MG15Uv7OZbI', 14447, 427),
+	(1000555, 'fWrEnuZnEzk', 14449, 429),
+	(1000555, 'qvmBqIZxj0g', 14451, 431),
+	(1000555, 'KJ5hxJx80ZA', 14453, 433),
+	(1000555, 'rKa-QKh0afE', 14455, 435),
+	(1000555, '0fBumUyST04', 14457, 437),
+	(1000555, 'Egcm-6fs-fM', 14459, 439),
+	(1000555, 'w4NQpmzkyok', 14461, 441),
+	(1000569, 'S8zJSPiLjVo', 17015, 1439),
+	(1000555, 'egdLXZffnIg', 14465, 445),
+	(1000555, 'rA_dUVOQOMo', 14467, 447),
+	(1000555, '8NyUDa6bwpU', 14469, 449),
+	(1000555, 'W1FDg5Xv5Io', 14471, 451),
+	(1000555, 'o3hj58kfMOA', 14473, 453),
+	(1000555, 'G5QaFLFr3vk', 14475, 455),
+	(1000555, '5DwAmSJ0ccY', 14477, 457),
+	(1000555, 'xdSZTO4xbiM', 14479, 459),
+	(1000555, 'HcUotY5vQRA', 14481, 461),
+	(1000555, 'DBiNFots_r4', 14483, 463),
+	(1000555, 'CDUOHByRjW0', 14485, 465),
+	(1000555, 'n7PenRw4ask', 14487, 467),
+	(1000555, 'W6p6Eu1EdVw', 14489, 469),
+	(1000555, 'lMJo8m_itUI', 14491, 471),
+	(1000555, 'zgZTMs90MPk', 14493, 473),
+	(1000555, 'ArN4SMZGjkk', 14495, 475),
+	(1000555, 'A8ziMqtSpdM', 14497, 477),
+	(1000555, 'YiC3SIjZIzI', 14499, 479),
+	(1000556, 'erQnse1ky4E', 14502, 2),
+	(1000556, 'IWGQwRTaw_Q', 14504, 4),
+	(1000556, 'Q9c3dmAHhNM', 14506, 6),
+	(1000556, 'bsjnjY8sxmo', 14508, 8),
+	(1000556, 'sKKdIyUL0to', 14510, 10),
+	(1000556, '77P-sy6WOWM', 14512, 12),
+	(1000557, 'hTBB5ZgA1lk', 14513, 1),
+	(1000557, 'YBAhnyRzZNo', 14515, 3),
+	(1000557, 'TUO5DAyFxN0', 14517, 5),
+	(1000557, 'wu1q1-CkIVo', 14519, 7),
+	(1000555, 'OJzC4obDdls', 14348, 328),
+	(1000555, 'rOo20VfddVg', 14350, 330),
+	(1000555, '2Tq6NAa-1Mg', 14352, 332),
+	(1000555, 'vCWt-z2f8AQ', 14354, 334),
+	(1000555, 'EDwvtkin3YY', 14356, 336),
+	(1000555, 'x1Dfp4Xx90E', 14358, 338),
+	(1000569, 'vIPsGK8UaUE', 17012, 1436),
+	(1000555, 'i-s7M0APhSY', 14362, 342),
+	(1000555, '16IWynpvp_U', 14364, 344),
+	(1000555, 'VN6gpt6xMJg', 14366, 346),
+	(1000555, 'ly-ElgmcujY', 14368, 348),
+	(1000555, 'PNukS8h0YkE', 14370, 350),
+	(1000555, 'qNIL34xVGe4', 14372, 352),
+	(1000555, 'NDKN_f6nq08', 14374, 354),
+	(1000555, 'rVY6JJObXps', 14376, 356),
+	(1000555, 'zm83b3pesek', 14378, 358),
+	(1000555, '2-VSBb7TWhY', 14380, 360),
+	(1000555, 'ytnL9Ju-hZo', 14382, 362),
+	(1000555, 'WR2o0wFu_6s', 14384, 364),
+	(1000555, 'ErcTiF4twd8', 14386, 366),
+	(1000555, 'o_yQBWBlZRM', 14388, 368),
+	(1000555, 'nH7ceSD6SEs', 14390, 370),
+	(1000555, 'WK291XFKVzg', 14392, 372),
+	(1000555, 'zJp0GnCwGeg', 14394, 374),
+	(1000555, 'sE7X6_p0Q3k', 14396, 376),
+	(1000555, 'qacyn9j4mZY', 14398, 378),
+	(1000555, 'ui0dWD9hOR4', 14400, 380),
+	(1000555, '-Mm0JeXebFQ', 14402, 382),
+	(1000555, 'qo7-FO-_fW8', 14404, 384),
+	(1000555, 'VcrP4Jl-WOE', 14406, 386),
+	(1000569, '5ZlMHEEEUwI', 17014, 1438),
+	(1000555, '2q-uLRqJBwk', 14410, 390),
+	(1000555, 'VWboZc1m6Y8', 14412, 392),
+	(1000555, 'ae7SpgtAJxM', 14414, 394),
+	(1000555, 'QxR148y0F2U', 14416, 396),
+	(1000555, 'TSsDSkO96Ts', 14418, 398),
+	(1000555, 'nbwX-MPY_9k', 14420, 400),
+	(1000555, 'aeCaxoJvYXs', 14422, 402),
+	(1000555, 'PeQOOhqs2dc', 14424, 404),
+	(1000555, 'W7Qrj5M3j9Y', 14426, 406),
+	(1000555, 'W_ugecAMf4w', 14428, 408),
+	(1000555, '0iAWVXiKNOg', 14430, 410),
+	(1000555, 'Va0RO-Eh6Bg', 14432, 412),
+	(1000569, 'av6fj3gHZRI', 17016, 1440),
+	(1000555, 'Q0_uEFb4clA', 14436, 416),
+	(1000555, 'Ujqz4qcqbvA', 14438, 418),
+	(1000555, 'KSG5UJj8jTk', 14440, 420),
+	(1000555, 'AQZVPAsd9NM', 14442, 422),
+	(1000555, '7UkJS3GnQIk', 14444, 424),
+	(1000555, 'xrNXN-m1lQo', 14446, 426),
+	(1000555, 'NIT6rSWXc88', 14448, 428),
+	(1000555, 'y8oHwQ7i0D8', 14450, 430),
+	(1000555, 'S9AXTq0ay9c', 14452, 432),
+	(1000555, 'OREsQozN_ms', 14454, 434),
+	(1000555, 'Wc-oRq0qnaE', 14456, 436),
+	(1000555, 'QbDRDV5eKOY', 14458, 438),
+	(1000555, 'c0ugC1hAJRs', 14460, 440),
+	(1000555, 'lxbHeS4DLcE', 14462, 442),
+	(1000555, 'WzjUL5q-1cY', 14464, 444),
+	(1000555, '6bRfKrmuSd8', 14466, 446),
+	(1000555, 'jVsyojHb0-E', 14468, 448),
+	(1000555, 'lHxY0p8Dhp0', 14470, 450),
+	(1000555, '_QSg149m1z8', 14472, 452),
+	(1000555, 'FPMeL0PgK_Q', 14474, 454),
+	(1000555, 'gSLWyWCDlrE', 14476, 456),
+	(1000555, 'A0m8IoWz24I', 14478, 458),
+	(1000555, 'Yyof0f6hv_Y', 14480, 460),
+	(1000555, 'buq6WFcVww4', 14482, 462),
+	(1000555, 'DEdorB-RI9c', 14484, 464),
+	(1000555, 'w8ctiEc4FMo', 14486, 466),
+	(1000555, 'wOYNujtPnk8', 14488, 468),
+	(1000555, 'T2mQi6yzKek', 14490, 470),
+	(1000555, 'nAzZEjOuDj8', 14492, 472),
+	(1000555, '39l_C6ioYPs', 14494, 474),
+	(1000555, 'W2NlbJiMG_U', 14496, 476),
+	(1000555, 'e6clAGTpSBY', 14498, 478),
+	(1000555, 'Yep2Zasv9fI', 14500, 480),
+	(1000556, '5HjhNA-S9qM', 14501, 1),
+	(1000556, 'pTOOpFKh2X8', 14503, 3),
+	(1000556, '86TWzS2dp6M', 14505, 5),
+	(1000556, 'eLVLA8E57Pc', 14507, 7),
+	(1000556, 'p2pQdz981Uc', 14509, 9),
+	(1000556, 'irio6QMSSWU', 14511, 11),
+	(1000557, 'E85ZbxVQrh0', 14514, 2),
+	(1000557, '81UUmRO8QuA', 14516, 4),
+	(1000557, 'OOet7Bl2U_0', 14518, 6),
+	(1000557, 'TPhTXrkpfWc', 14520, 8),
+	(1000557, 'mWKkCefkjbI', 14522, 10),
+	(1000557, 'sRLJbxudLTs', 14524, 12),
+	(1000557, 'tMsfO4AIW7g', 14526, 14),
+	(1000557, '89Gk5JZzaO0', 14528, 16),
+	(1000557, 'CSvSrkti60U', 14530, 18),
+	(1000557, 'X_zEHzZern8', 14532, 20),
+	(1000557, 'x_mF6m_WJF8', 14534, 22),
+	(1000557, 'bxmsy28V3cM', 14536, 24),
+	(1000557, 'b8SoDtqFCHo', 14538, 26),
+	(1000557, 'OknS2wfHi9E', 14540, 28),
+	(1000557, 'imlbNXF6gpM', 14542, 30),
+	(1000558, 'g5F0W4G4wf4', 14543, 1),
+	(1000558, 'C_bgwKKsv1w', 14545, 3),
+	(1000558, 'W7ve0v0ukKc', 14547, 5),
+	(1000558, '5favvzw-aSI', 14549, 7),
+	(1000558, 'OdWBhfuFASg', 14551, 9),
+	(1000558, 'IbcH95dsdKk', 14553, 11),
+	(1000558, 'BXzHum1HO84', 14555, 13),
+	(1000558, 'eOiZwDWaaXc', 14557, 15),
+	(1000558, '5dGtiPctXkY', 14559, 17),
+	(1000558, 'rlRpCAOI0Zk', 14561, 19),
+	(1000558, 'yA01vzkX5pc', 14563, 21),
+	(1000558, 'Rnf6i3Twdgk', 14565, 23),
+	(1000558, 'N3-cu82XoYc', 14567, 25),
+	(1000558, 'ghiisSngk-c', 14569, 27),
+	(1000558, '5hvgEW65m-o', 14571, 29),
+	(1000558, 'kbgcVKJKkng', 14573, 31),
+	(1000558, '_dYVV65lZ04', 14575, 33),
+	(1000558, 'ARNhAq31yIg', 14577, 35),
+	(1000558, 'GTkKK3aRqj8', 14579, 37),
+	(1000558, 'Z18eaBFFG_Q', 14581, 39),
+	(1000558, 'FtElktDEwM0', 14583, 41),
+	(1000558, 'fhGcAu72aBk', 14585, 43),
+	(1000557, '_JpDn2Lmraw', 14521, 9),
+	(1000557, 'D2rFwOGK8yM', 14523, 11),
+	(1000557, '8f5BLSiyARs', 14525, 13),
+	(1000557, 'uJlI4nhHHoQ', 14527, 15),
+	(1000557, 'XusL_YmIcTY', 14529, 17),
+	(1000557, 'CSED5yQoUmY', 14531, 19),
+	(1000557, '70Ryherc7Is', 14533, 21),
+	(1000557, 'STeglH9T7nA', 14535, 23),
+	(1000557, 'xc_8U5b6Ae0', 14537, 25),
+	(1000557, 'ju_Khu0Rc6Q', 14539, 27),
+	(1000557, '7ODZstD2nLU', 14541, 29),
+	(1000558, '3sI1uRLuR-c', 14544, 2),
+	(1000558, '4ziwNEzQfvg', 14546, 4),
+	(1000558, 'uFRs6pakwDk', 14548, 6),
+	(1000558, 'Jh_g49IUy-E', 14550, 8),
+	(1000558, 'dkUOxMSijrg', 14552, 10),
+	(1000558, 'nTmB2gcHpts', 14554, 12),
+	(1000558, 'ScdA0LWM7qM', 14556, 14),
+	(1000558, 'exfdwPXg8RQ', 14558, 16),
+	(1000558, 'La4xYm6NHiY', 14560, 18),
+	(1000558, 'AwSDPGDnSA4', 14562, 20),
+	(1000558, '3QqvJmAGDzg', 14564, 22),
+	(1000558, '2Jv407cSxS8', 14566, 24),
+	(1000558, 'oTCIBC1snQM', 14568, 26),
+	(1000558, 'NUd4wjDuvwI', 14570, 28),
+	(1000558, 'QhOB3thF9yc', 14572, 30),
+	(1000558, 'SZrvcqkdIP0', 14574, 32),
+	(1000558, 'oU1SnPoslRk', 14576, 34),
+	(1000558, 'H7h2siqUA3o', 14578, 36),
+	(1000558, '0SmG6CKO1m0', 14580, 38),
+	(1000558, 'eGPQxFig-8U', 14582, 40),
+	(1000569, 'YbW6yuSr4vI', 17017, 1441),
+	(1000558, 'XWsZs-tXevM', 14586, 44),
+	(1000558, 'KAaEFXH1rng', 14588, 46),
+	(1000558, 'ScdHoesvyVM', 14590, 48),
+	(1000558, '6cF9rG2cAF0', 14592, 50),
+	(1000558, 'kuTVn2tGvcM', 14594, 52),
+	(1000558, 'a_4CT0NTe5o', 14596, 54),
+	(1000558, 'fIGt4lmO91w', 14598, 56),
+	(1000558, 'xfauzAK3byw', 14600, 58),
+	(1000558, 'PKdGoJNkO9Y', 14602, 60),
+	(1000558, '8gFDSZHP-Cg', 14604, 62),
+	(1000558, 'KS2vkmY4oFE', 14606, 64),
+	(1000558, 'X5Iar4-ZUVc', 14608, 66),
+	(1000558, 'LL-dvNsoX-A', 14610, 68),
+	(1000558, 'vo9sCjYArLw', 14612, 70),
+	(1000558, 'NnuFJ0lkX8Y', 14614, 72),
+	(1000558, '_HzVfUxF4Bg', 14616, 74),
+	(1000558, 'LeabQiO-tHg', 14618, 76),
+	(1000558, 'gdyQRhbNHJw', 14620, 78),
+	(1000558, '-ym9e_kqSlc', 14622, 80),
+	(1000558, '6Efex_ftPzk', 14624, 82),
+	(1000558, '_jItzezZOwk', 14626, 84),
+	(1000558, 'fpmMNQypj38', 14628, 86),
+	(1000558, 'D60VgBhIVHI', 14630, 88),
+	(1000558, 'DDm8F0c21OU', 14632, 90),
+	(1000558, 'DbZaPzUA9Fs', 14634, 92),
+	(1000558, 'bVwib6xDeGo', 14636, 94),
+	(1000558, 'p7cis3MCyL8', 14638, 96),
+	(1000558, 'XwetcYGRF3k', 14640, 98),
+	(1000558, 'Onr93McYeJ4', 14642, 100),
+	(1000558, 'fJMPfZg8jcg', 14644, 102),
+	(1000558, 'gzJHvSWV9LU', 14646, 104),
+	(1000558, 'cxuZIFSbQ9g', 14648, 106),
+	(1000558, 'fwv4lLRr7pc', 14650, 108),
+	(1000558, 'y6asyYI3QcE', 14652, 110),
+	(1000558, 'A9EBhkQK57k', 14654, 112),
+	(1000558, 'nk_RG2iX4gw', 14656, 114),
+	(1000558, 'Es0oUchvHbk', 14658, 116),
+	(1000558, 'yNVAi4UmoSI', 14660, 118),
+	(1000558, 'UOVp5J-irs4', 14662, 120),
+	(1000558, 'ofHaiFIaa9o', 14664, 122),
+	(1000558, 'Zp9hQo7-yHU', 14666, 124),
+	(1000558, 'UUju_e0T8O8', 14668, 126),
+	(1000558, 'hu-MxJvN3_I', 14670, 128),
+	(1000558, 'lV7TwBQlatI', 14672, 130),
+	(1000558, 'vlB6Q-qZNwQ', 14674, 132),
+	(1000558, 'XrDY8lvIPfs', 14676, 134),
+	(1000558, 'u-CLq8-5IpI', 14678, 136),
+	(1000558, 'dbzOdMiqm_8', 14680, 138),
+	(1000558, '-Y6BeQ4BOnY', 14682, 140),
+	(1000558, 'tdGY_espq8I', 14684, 142),
+	(1000558, 'QiDunrR2JlE', 14686, 144),
+	(1000558, 'CxaDJqVgiNo', 14688, 146),
+	(1000558, 'Q9E6f41_wyU', 14690, 148),
+	(1000569, 'e8TbMSJRn_4', 17019, 1443),
+	(1000569, 'IORLeOQQmyU', 17021, 1445),
+	(1000569, '6Nsh-FB1ryU', 17023, 1447),
+	(1000569, 'HtUxxwYl9xA', 17025, 1449),
+	(1000569, 'GCvsepdBTjM', 17027, 1451),
+	(1000569, 'YvxvNIPu2TQ', 17029, 1453),
+	(1000569, 'phFmaS0RSoQ', 17031, 1455),
+	(1000569, 'BdB_bpXjBxk', 17033, 1457),
+	(1000569, 'Y1kl4y7Ts_Q', 17035, 1459),
+	(1000569, 'wDCIg4AMOq4', 17037, 1461),
+	(1000569, 'NkKo9wgctaE', 17039, 1463),
+	(1000569, 'k7xbEzeNjss', 17041, 1465),
+	(1000569, 'D7-hV9ZP8Os', 17043, 1467),
+	(1000569, 'bcypEtFRX1g', 17045, 1469),
+	(1000569, '-XcLz7sUMXk', 17047, 1471),
+	(1000569, '94g4BazOoK0', 17049, 1473),
+	(1000569, '7c1HzoA75n8', 17051, 1475),
+	(1000569, 'MYJBFmWLon8', 17053, 1477),
+	(1000569, 'enYvj30MCHk', 17055, 1479),
+	(1000569, 'MjqjLoigphE', 17057, 1481),
+	(1000569, 'YidkP9Bdjeo', 17059, 1483),
+	(1000569, 'k710SPH3cwY', 17061, 1485),
+	(1000569, 'Uv9LQzH7faM', 17063, 1487),
+	(1000569, 'd9GJ5O8WiH0', 17065, 1489),
+	(1000569, 'NBKbyqqkCCM', 17067, 1491),
+	(1000569, 'wVtdDvhwqpk', 17069, 1493),
+	(1000569, 'scMDo1RU9cU', 17071, 1495),
+	(1000569, '40yNG3QM5ZE', 17073, 1497),
+	(1000569, '5tMfz-CSAJs', 17075, 1499),
+	(1000569, 'IpKl9poUu4s', 17077, 1501),
+	(1000569, '4t6Mw0B3sow', 17079, 1503),
+	(1000569, 'vdtczqrOGio', 17081, 1505),
+	(1000569, 'AqYj_Ytz-3M', 17083, 1507),
+	(1000569, 'p490MUK1Eqo', 17085, 1509),
+	(1000569, 'rigrBwu_Qiw', 17087, 1511),
+	(1000558, '6V7mPlqbuLU', 14587, 45),
+	(1000558, 'eaNiCe7yfc4', 14589, 47),
+	(1000558, 'Cdu5FGqpWWg', 14591, 49),
+	(1000558, 'Lnynk7PKfTg', 14593, 51),
+	(1000558, 'WKCfGWeHSU4', 14595, 53),
+	(1000558, '9B-gvqy2TpU', 14597, 55),
+	(1000558, 'VBC0CksQee4', 14599, 57),
+	(1000558, 'Hf_BTBkfK3c', 14601, 59),
+	(1000558, 'ItnJ1PaoReQ', 14603, 61),
+	(1000558, 'AQgWBHPTsTc', 14605, 63),
+	(1000558, 'zhyniuOAmQs', 14607, 65),
+	(1000558, '2b-YMnY-2mQ', 14609, 67),
+	(1000558, 'z1lIqgiSt4E', 14611, 69),
+	(1000558, 'zflKF_Ecnvc', 14613, 71),
+	(1000558, 'KEFyWkcDr-k', 14615, 73),
+	(1000558, '9d8QbIFqzNw', 14617, 75),
+	(1000558, 'LMAsXCDlxI8', 14619, 77),
+	(1000558, 'pm6npXUfD5I', 14621, 79),
+	(1000558, 'jtgTeivD2Lc', 14623, 81),
+	(1000558, 'mEnrDiULDNQ', 14625, 83),
+	(1000558, 'J50w8oLzETE', 14627, 85),
+	(1000558, 'MWSc_1BFDyg', 14629, 87),
+	(1000558, '554rGtDSAms', 14631, 89),
+	(1000558, '2GdrtNzx5m0', 14633, 91),
+	(1000558, 'UMsiRyznmrU', 14635, 93),
+	(1000558, 'ZvYm__4ij4w', 14637, 95),
+	(1000558, 'fYYT4J6W_Ms', 14639, 97),
+	(1000558, 'Np9urQ_oXX8', 14641, 99),
+	(1000558, 'HzyECXAnYS4', 14643, 101),
+	(1000558, 'aYun3X7__Gw', 14645, 103),
+	(1000558, 'NHYuSl-3PeE', 14647, 105),
+	(1000558, 'yBcJPKM56eM', 14649, 107),
+	(1000558, 'iyVbOkfJN9c', 14651, 109),
+	(1000558, 'gucURG3Aqe0', 14653, 111),
+	(1000558, 'sxnfPQDBuqs', 14655, 113),
+	(1000558, 'mY7beFk8PDk', 14657, 115),
+	(1000558, 'LOMPRy0AmnE', 14659, 117),
+	(1000558, '0uoe_n9IM7Q', 14661, 119),
+	(1000558, 'vmQ7C4nJTss', 14663, 121),
+	(1000558, 'szmj8QkMNp0', 14665, 123),
+	(1000558, '6fsnrpmy3vk', 14667, 125),
+	(1000558, 'v08nfwWTz5E', 14669, 127),
+	(1000558, 'OPgcahN4Q4o', 14671, 129),
+	(1000558, '1KZHZhYKyFg', 14673, 131),
+	(1000558, '79YWCad7iZQ', 14675, 133),
+	(1000558, '6ZjL-EMR4YA', 14677, 135),
+	(1000558, 'hhIZhrEoQ8A', 14679, 137),
+	(1000558, 'XZY8UA1KpjY', 14681, 139),
+	(1000558, 'imJYTE9GCc8', 14683, 141),
+	(1000558, 'a5r-RNb1Cj0', 14685, 143),
+	(1000558, 'oado14UpbJU', 14687, 145),
+	(1000558, 'EpBkS9p4mqA', 14689, 147),
+	(1000569, 'g5uwUOEL6gY', 17018, 1442),
+	(1000569, 'R--kP1bc_UQ', 17020, 1444),
+	(1000569, 'KuOKkAGzyQo', 17022, 1446),
+	(1000569, 'Jxpd8knZGD8', 17024, 1448),
+	(1000569, 'jWMZLH0VhuY', 17026, 1450),
+	(1000569, 'p_SSjK_xX8Y', 17028, 1452),
+	(1000569, '1gjSKxzdawA', 17030, 1454),
+	(1000569, 'oLXDaWRPmKc', 17032, 1456),
+	(1000569, '8mOvdipEaCc', 17034, 1458),
+	(1000569, 'O0ziKzNTds0', 17036, 1460),
+	(1000569, 'XOX59gZ0gq8', 17038, 1462),
+	(1000569, 'VU0F21hpjzI', 17040, 1464),
+	(1000569, 'qvuHFSiJ85M', 17042, 1466),
+	(1000569, 'oUkT7Emb_cg', 17044, 1468),
+	(1000569, '9A19s_iRY60', 17046, 1470),
+	(1000569, 'Qa6ujz0_R_E', 17048, 1472),
+	(1000569, 'eSwAh3pe0kI', 17050, 1474),
+	(1000569, 'GwULm66cbRA', 17052, 1476),
+	(1000569, 'nwrGGhOGL8Y', 17054, 1478),
+	(1000569, 'fokrfcFLR8k', 17056, 1480),
+	(1000569, 'IQOG5lOp9bw', 17058, 1482),
+	(1000569, 'kfQIeNIv9R0', 17060, 1484),
+	(1000569, 'S9CGNQ3jiQo', 17062, 1486),
+	(1000569, 'HvSJpCSxpdE', 17064, 1488),
+	(1000569, 'jANDt75JwVI', 17066, 1490),
+	(1000569, 'yNSGN7IsSBI', 17068, 1492),
+	(1000569, 'Z7i7Nfw-cIo', 17070, 1494),
+	(1000569, 'GwgOSTKtxOo', 17072, 1496),
+	(1000569, 'Hcj1BfB8rg8', 17074, 1498),
+	(1000569, 'SmOyB3h9pmk', 17076, 1500),
+	(1000569, '2GjCtRQo_X0', 17078, 1502),
+	(1000569, 'iGipetvKMvE', 17080, 1504),
+	(1000569, 'c4jatcylSmo', 17082, 1506),
+	(1000569, 'uxmWuFcfKMo', 17084, 1508),
+	(1000569, 'CLCy083W5g8', 17086, 1510),
+	(1000569, 'nOVrMHYjAOU', 17088, 1512),
+	(1000569, 'cdqOPvYibsg', 17090, 1514),
+	(1000569, '5GQ7lisyoxc', 17092, 1516),
+	(1000569, 'J25QPvbugdg', 17094, 1518),
+	(1000569, 'Qs3pAXU2w0o', 17096, 1520),
+	(1000569, 'ABBxwT1teYY', 17098, 1522),
+	(1000569, 'mhJfRY_aqG8', 17100, 1524),
+	(1000569, '-UpfpK-kadQ', 17102, 1526),
+	(1000569, 'EjYsPQ-vW8M', 17104, 1528),
+	(1000559, '6CC29YNfApY', 14780, 2),
+	(1000559, '-bLxUP4CZnw', 14782, 4),
+	(1000559, 'YRbElFzUxkk', 14784, 6),
+	(1000559, 'YuSXEw7SThc', 14786, 8),
+	(1000559, 'LzfrEC_VMx8', 14788, 10),
+	(1000559, 'JtVKq8DhJ54', 14790, 12),
+	(1000559, 'DdUzkkRgztk', 14792, 14),
+	(1000559, 'IkIGHJ6BOvQ', 14794, 16),
+	(1000559, 'ycWYWqTNQyk', 14796, 18),
+	(1000559, 'PNWRJesPqmY', 14798, 20),
+	(1000559, 'za3aBv8ph-k', 14800, 22),
+	(1000559, '-3xJvRsn1mM', 14802, 24),
+	(1000559, 'y8xf9ws5cII', 14804, 26),
+	(1000559, '-3gdxuRzjOc', 14806, 28),
+	(1000559, 'ifzK4TTnzzw', 14808, 30),
+	(1000559, 'g6wuvxxOp80', 14810, 32),
+	(1000559, 'fUh96LOsUGA', 14812, 34),
+	(1000559, 'KM6z_gzlXBE', 14814, 36),
+	(1000559, 'rPufdirXiJ0', 14816, 38),
+	(1000559, 'FP_ErTPKdHw', 14818, 40),
+	(1000559, 'K3KB8_6UFyg', 14820, 42),
+	(1000559, 'vy5h92HBfd8', 14822, 44),
+	(1000559, 'srOn86GcbVY', 14824, 46),
+	(1000560, 'j_D667V9eZ8', 14827, 2),
+	(1000569, 'j7lwjqFd2KU', 17089, 1513),
+	(1000569, 'LbitAkaKI1o', 17091, 1515),
+	(1000569, 'A7KC_hoklxI', 17093, 1517),
+	(1000569, 'Orpr8C-S-Vo', 17095, 1519),
+	(1000569, '_8vqCVar1f0', 17097, 1521),
+	(1000569, 'Dm9W3DG4Bes', 17099, 1523),
+	(1000569, '5ogA15t1Svg', 17101, 1525),
+	(1000569, 'euCaN5RRUm8', 17103, 1527),
+	(1000569, 'wlbSZnURPFs', 17105, 1529),
+	(1000559, 'YuuI_xn-Qtw', 14779, 1),
+	(1000559, '-HlCKryGwlw', 14781, 3),
 	(1000466, 'pyOGB-RTjDo', 11810, 1),
 	(1000466, '-7OvdeDgJUo', 11811, 2),
 	(1000466, '5z1MYHh0Ct0', 11812, 3),
@@ -65018,6 +65875,7 @@ INSERT INTO "public"."playlist_videos" ("playlist_id", "video_id", "id", "video_
 	(1000478, '1Urx8umsRPM', 11996, 35),
 	(1000478, 'T8VybQ5q124', 11997, 36),
 	(1000478, 'Ugff1M-dOHM', 11998, 37),
+	(1000559, 'NwMLkTadtyU', 14783, 5),
 	(1000479, '7fL5BytkNTg', 12000, 1),
 	(1000479, 'x6fR0JS5t7I', 12001, 2),
 	(1000479, 'wCxNBJ3AONU', 12002, 3),
@@ -65148,6 +66006,7 @@ INSERT INTO "public"."playlist_videos" ("playlist_id", "video_id", "id", "video_
 	(1000490, 'mLQslVJok0k', 12127, 25),
 	(1000490, 'wu80Hv74oLI', 12128, 26),
 	(1000490, 'u6v3k2mYeas', 12129, 27),
+	(1000559, 'whGTqn6_ezI', 14785, 7),
 	(1000491, '22FMR5wMz2o', 12131, 1),
 	(1000491, 'B6HL4awSMXE', 12132, 2),
 	(1000491, 'VI9zMQCayGU', 12133, 3),
@@ -65174,7 +66033,4097 @@ INSERT INTO "public"."playlist_videos" ("playlist_id", "video_id", "id", "video_
 	(1000493, 'rAHmEFn_X7g', 12154, 13),
 	(1000493, 'KeStrsVf4so', 12155, 14),
 	(1000493, '4FqAKeqlGXI', 12156, 15),
-	(1000493, '4cJD-P1FW7M', 12157, 16);
+	(1000493, '4cJD-P1FW7M', 12157, 16),
+	(1000494, 'sQpMuV_RmKY', 12158, 1),
+	(1000496, '18jU5xvv24g', 12159, 1),
+	(1000496, '0doKYs_C0-o', 12161, 3),
+	(1000496, 'CCTu3PEMEdc', 12163, 5),
+	(1000496, 'HyDXEumvKX8', 12165, 7),
+	(1000496, 'amvRG_7YYcM', 12167, 9),
+	(1000497, '9SRPAsAECrg', 12168, 1),
+	(1000497, 'vEQOmiFArek', 12170, 3),
+	(1000497, 'sBW0AzCes98', 12172, 5),
+	(1000497, 'EWdxDv681yw', 12174, 7),
+	(1000497, 'wbYYR3y_2_s', 12176, 9),
+	(1000497, 'Div-l9LK1jQ', 12178, 11),
+	(1000497, 'N-FLJ9uo3HM', 12180, 13),
+	(1000497, 'pGoea6MEIOg', 12182, 15),
+	(1000497, 'sJctDYsOcAw', 12184, 17),
+	(1000497, 'KVPD1vs80bg', 12186, 19),
+	(1000497, 'bCKDP6OX3UU', 12188, 21),
+	(1000497, 'QyfZKNnGhnI', 12190, 23),
+	(1000497, 'XpZ8HFUmjnc', 12192, 25),
+	(1000497, 'pbBYHm08TBQ', 12194, 27),
+	(1000497, 'LAP-1kOLsl4', 12196, 29),
+	(1000497, 'xdQiArnSF10', 12198, 31),
+	(1000497, 'FZkpI1ADqL4', 12200, 33),
+	(1000497, 'xLoANuhdd9A', 12202, 35),
+	(1000497, 'gxmbtML-LXw', 12204, 37),
+	(1000497, '3wffh4LcHKM', 12206, 39),
+	(1000497, 'pTem_1v7-dM', 12208, 41),
+	(1000497, 'AaU49zK9V2k', 12210, 43),
+	(1000497, 'Tg1ov9885k4', 12212, 45),
+	(1000497, 'Rll0wDMEr3I', 12214, 47),
+	(1000497, '-9Zygn8ZUCY', 12216, 49),
+	(1000497, '_HqeaqXrVWo', 12218, 51),
+	(1000497, 'gF3OB1g8hE8', 12220, 53),
+	(1000498, 'eQzHEMnx6Es', 12223, 2),
+	(1000498, 'oHN1TYcQRdM', 12225, 4),
+	(1000498, 'osqUSUqSC6Y', 12227, 6),
+	(1000498, '_54VruqR_2g', 12229, 8),
+	(1000498, '0toaZy3Asng', 12231, 10),
+	(1000498, 'yJD8eSR_Qao', 12233, 12),
+	(1000498, 'P_O9Y3FI_3o', 12235, 14),
+	(1000498, 'S2tGC28t4To', 12237, 16),
+	(1000498, '1Xh7VwQOkKM', 12239, 18),
+	(1000499, 'up5r9eWpjUE', 12240, 1),
+	(1000499, 'ZB3a0zeqSR4', 12242, 3),
+	(1000499, 'EU7yZ40qKsI', 12244, 5),
+	(1000559, '0mhtGPR0qBw', 14787, 9),
+	(1000559, 'hGDM9LquEx8', 14789, 11),
+	(1000559, '6hC4Z_OJOlc', 14791, 13),
+	(1000559, 'QaH5JXZ63to', 14793, 15),
+	(1000559, 'ytUTeAwGTG8', 14795, 17),
+	(1000559, 'ZAUR-tDl_yQ', 14797, 19),
+	(1000559, 'hKiATPipP9A', 14799, 21),
+	(1000559, 'Yu2tWhJeaP8', 14801, 23),
+	(1000559, 'j5RChoX2yS8', 14803, 25),
+	(1000559, 'uyy493eYaIE', 14805, 27),
+	(1000559, 'pnonGlKih1o', 14807, 29),
+	(1000559, '1OYhMyegilM', 14809, 31),
+	(1000559, 'uI6rWlxJtHs', 14811, 33),
+	(1000559, 'ILkdql5I5rg', 14813, 35),
+	(1000559, 'VvthzZsF9iI', 14815, 37),
+	(1000559, 'Dc-vJ0f5fBE', 14817, 39),
+	(1000559, 'gxPbDTjetbE', 14819, 41),
+	(1000559, 'ABzISq1r4Uo', 14821, 43),
+	(1000559, 'VvaqTWyVkvo', 14823, 45),
+	(1000559, 'BNGmaM1LcP8', 14825, 47),
+	(1000560, '7MLdehTdNhk', 14826, 1),
+	(1000560, 'O_NuiUZOlOA', 14828, 3),
+	(1000560, 'F3bEYiqh7t4', 14830, 5),
+	(1000560, '0_Z0qNbC-WY', 14832, 7),
+	(1000560, 'jLzMDa2yzfc', 14834, 9),
+	(1000560, 'OYYqehKKkTQ', 14836, 11),
+	(1000560, 'gOWi8BQSuYg', 14838, 13),
+	(1000560, 'pTTvEvjhyX0', 14840, 15),
+	(1000560, 'H1E0X3IimPY', 14842, 17),
+	(1000560, 'mA3QkjfxO3Y', 14844, 19),
+	(1000560, '5ttzYUY3gB4', 14846, 21),
+	(1000560, 'asO3hIwIQNw', 14848, 23),
+	(1000560, '6EnPckIMoho', 14850, 25),
+	(1000560, 'cfS6xE6tDnw', 14852, 27),
+	(1000560, '6hm-SedDjpg', 14854, 29),
+	(1000560, 'GCE4qBYSWjw', 14856, 31),
+	(1000560, 'nOlhLzYTW6I', 14858, 33),
+	(1000560, 'WWQIEKEb-uw', 14860, 35),
+	(1000560, 'QR0eM0ScHpE', 14862, 37),
+	(1000560, 'uiFTnyRfCfg', 14864, 39),
+	(1000560, '0c0nYeZNR_8', 14866, 41),
+	(1000561, 'emU60TCDH9s', 14869, 2),
+	(1000561, '0QDynV7rniE', 14871, 4),
+	(1000561, 'iKInxwTWSz8', 14873, 6),
+	(1000501, '7fDO0KXBEsw', 12332, 1),
+	(1000502, 'RI9zBZgj9ac', 12335, 2),
+	(1000502, 'EWdxDv681yw', 12337, 4),
+	(1000503, 'F-g2-23LHyw', 12338, 1),
+	(1000503, '58h2TOd2SV0', 12340, 3),
+	(1000503, 'y2bG0PW54TA', 12342, 5),
+	(1000505, 'JEo9rB4WmCM', 12344, 2),
+	(1000505, '9xcaucjKGPc', 12346, 4),
+	(1000505, 'Nd3tjOxvTXM', 12348, 6),
+	(1000506, 'mUwp0awYTh8', 12351, 2),
+	(1000506, '9NlVNWCbh2Y', 12353, 4),
+	(1000506, '4BKTN_HuAhE', 12355, 6),
+	(1000506, 'sdohXxEZFn8', 12357, 8),
+	(1000506, 'cAQOskoLfd0', 12359, 10),
+	(1000507, '90Qlsy90JVU', 12360, 1),
+	(1000507, 'tL3mZ25CDR4', 12362, 3),
+	(1000507, 'TizHZYFIoCA', 12364, 5),
+	(1000507, '3Q32-EUtQLg', 12366, 7),
+	(1000508, '7zgxnsli_IE', 12367, 1),
+	(1000509, 'Ik52PjwMaPo', 12368, 1),
+	(1000511, 'MTi_0Li0K9c', 12370, 2),
+	(1000511, 'n6pHlBefYFc', 12372, 4),
+	(1000512, 'qbK3vE61vYE', 12373, 1),
+	(1000512, 'fYwipb78Beg', 12375, 3),
+	(1000513, 'uOeu11JAOW4', 12378, 2),
+	(1000513, 'gxmbtML-LXw', 12380, 4),
+	(1000514, 'fqks4qVeG3U', 12383, 2),
+	(1000514, 'FTo2VvU6_Kk', 12385, 4),
+	(1000561, 'ALT1EoD6mOI', 14875, 8),
+	(1000514, 'ya_m_vpx6ak', 12389, 8),
+	(1000514, '_a6_1jocKw4', 12391, 10),
+	(1000514, 'GAq9JEG4ztE', 12393, 12),
+	(1000496, 'JQf07eP-QoM', 12160, 2),
+	(1000496, 'hs1PnhJj_pw', 12162, 4),
+	(1000496, 'qtKb2kP2qr4', 12164, 6),
+	(1000496, 'u_CB_iNSZg0', 12166, 8),
+	(1000497, 'erKvQeagVAo', 12169, 2),
+	(1000497, 'vh5dQjFy-0E', 12171, 4),
+	(1000497, 't3swNFVvzQY', 12173, 6),
+	(1000497, 'hTBB5ZgA1lk', 12175, 8),
+	(1000497, 'QSxZK-iLx5I', 12177, 10),
+	(1000497, 'rp63HxLv9s0', 12179, 12),
+	(1000497, '9xcaucjKGPc', 12181, 14),
+	(1000497, 'nX-ZQqcorMA', 12183, 16),
+	(1000497, 'ExwGVzPdIKg', 12185, 18),
+	(1000497, 'i_VC_dHHBBs', 12187, 20),
+	(1000497, 'PYlwc0ymqWM', 12189, 22),
+	(1000497, 'bYeZH0RX6oI', 12191, 24),
+	(1000497, 'QNg1FM0tcaI', 12193, 26),
+	(1000497, '6MDsaXx_zww', 12195, 28),
+	(1000497, 'M0OigawP9WM', 12197, 30),
+	(1000497, 'iJQxheux_WM', 12199, 32),
+	(1000497, '_Bq7XmD7Yfc', 12201, 34),
+	(1000497, 'XUrmVL-qfTc', 12203, 36),
+	(1000497, 'mJK9q-U31xg', 12205, 38),
+	(1000497, 'uHogQtbEWfQ', 12207, 40),
+	(1000497, 'otEvegIvnSI', 12209, 42),
+	(1000497, 'x1pGgJRnoDg', 12211, 44),
+	(1000497, 'RRiFPeVh3dQ', 12213, 46),
+	(1000497, 'agfN5Yfibvc', 12215, 48),
+	(1000497, 'zC8IV0GrecU', 12217, 50),
+	(1000497, '4ziwNEzQfvg', 12219, 52),
+	(1000497, 'gsmS_kmUgIM', 12221, 54),
+	(1000498, 'wtNzntuGCho', 12222, 1),
+	(1000498, 'fonz29nYMUo', 12224, 3),
+	(1000498, 'SLgoYGT6JL0', 12226, 5),
+	(1000498, 'pAQgl7zd-zE', 12228, 7),
+	(1000498, 'OZgo7piqfho', 12230, 9),
+	(1000498, 't3PoD7QLfgw', 12232, 11),
+	(1000498, '7ArmqDS-uOs', 12234, 13),
+	(1000498, 'Gw41qBDydY4', 12236, 15),
+	(1000498, '2ReSVqwPaNc', 12238, 17),
+	(1000499, 'H78J43kfU34', 12241, 2),
+	(1000499, 'yv4-Se890xo', 12243, 4),
+	(1000560, 'R5TbjyS9Dhc', 14829, 4),
+	(1000560, 'rZnoZESp5KU', 14831, 6),
+	(1000560, 'Dshgotlm8C8', 14833, 8),
+	(1000560, 'niMz-DqTfzo', 14835, 10),
+	(1000560, 'vc6vBaVFCwY', 14837, 12),
+	(1000560, 'Cm4zD2RyF6A', 14839, 14),
+	(1000560, '3d5DTt1Lipw', 14841, 16),
+	(1000560, '-ec-LNLIHfY', 14843, 18),
+	(1000560, 'pGWkA8-gfIQ', 14845, 20),
+	(1000560, 'Dnh1HB5HiZQ', 14847, 22),
+	(1000560, 'IQLDXmOtOoE', 14849, 24),
+	(1000560, 'Nt3TKHGLVK4', 14851, 26),
+	(1000560, 'G010nB6u_p4', 14853, 28),
+	(1000560, 'TqDdUoy1C7g', 14855, 30),
+	(1000560, '2AIlzLgj8Vc', 14857, 32),
+	(1000560, '0B9Wlw-zgD0', 14859, 34),
+	(1000560, 'iC6gLddfSII', 14861, 36),
+	(1000560, '3o5iNON8jTI', 14863, 38),
+	(1000560, 'wO0u8pKATFk', 14865, 40),
+	(1000560, 'zEbu75wFrvI', 14867, 42),
+	(1000561, 'ZfJHts9y3Rk', 14868, 1),
+	(1000561, 'mRR-pIOFXnc', 14870, 3),
+	(1000561, 'XXwVVhFZFzk', 14872, 5),
+	(1000561, 'Os5fsYWpxrk', 14874, 7),
+	(1000561, 'Bi14UHsZHX4', 14876, 9),
+	(1000561, 'Efhk8NBQISk', 14878, 11),
+	(1000561, 'sRZzaTDzuqQ', 14880, 13),
+	(1000561, 'Op1f-TuGDNU', 14882, 15),
+	(1000561, 'yws-1Wor67s', 14884, 17),
+	(1000561, 'E0ajotFhKSs', 14886, 19),
+	(1000561, 'I0nhrtTYULQ', 14888, 21),
+	(1000561, 'IbWCsIjwNzQ', 14890, 23),
+	(1000561, 'r6efXKBpQiM', 14892, 25),
+	(1000561, '_brezaMzMco', 14894, 27),
+	(1000561, '_WRtl68P0MI', 14896, 29),
+	(1000561, 'wayJaIIPWwg', 14898, 31),
+	(1000561, 'vJsImeSC9_M', 14900, 33),
+	(1000561, 'zveAEvHWJqw', 14902, 35),
+	(1000561, 'SQaSZlz7vjI', 14904, 37),
+	(1000561, 'y5e8fVQm0yI', 14906, 39),
+	(1000561, 'pMGu_4fAoGU', 14908, 41),
+	(1000562, '0YtEv7YDAfo', 14909, 1),
+	(1000562, 'tLVhsjkSp9g', 14911, 3),
+	(1000501, '7nYJMu4P61Y', 12333, 2),
+	(1000502, 'wBV1giERm-Y', 12334, 1),
+	(1000502, 'GQaarLLe83U', 12336, 3),
+	(1000503, 'd4rLtQQW92g', 12339, 2),
+	(1000503, 'c1EI86eEj6c', 12341, 4),
+	(1000505, '4faLzNNR3lk', 12343, 1),
+	(1000505, 'N-FLJ9uo3HM', 12345, 3),
+	(1000505, 'MT8YGNdfzZk', 12347, 5),
+	(1000505, 'Lfz3QZgeQvM', 12349, 7),
+	(1000506, '1KNBYUljIHc', 12350, 1),
+	(1000506, '6AIhpImTIso', 12352, 3),
+	(1000506, 'r9zter_vkqs', 12354, 5),
+	(1000506, 'X-SC99gLLyc', 12356, 7),
+	(1000506, 'u_COql9mKTc', 12358, 9),
+	(1000507, '38F70qw7ODg', 12361, 2),
+	(1000507, 'fMEdlNSf8Ys', 12363, 4),
+	(1000507, 'KVPD1vs80bg', 12365, 6),
+	(1000511, '94oPoTHn7yk', 12369, 1),
+	(1000511, '_EHSj2G0isw', 12371, 3),
+	(1000512, 't7uP7gb-s5U', 12374, 2),
+	(1000512, '1pXeQ_WCd1A', 12376, 4),
+	(1000513, '5hf40FaKJIU', 12377, 1),
+	(1000513, 'GM7JHg8dQsY', 12379, 3),
+	(1000513, 'LiP6FM14vxo', 12381, 5),
+	(1000514, 'jhQNHljv0Ds', 12382, 1),
+	(1000514, 'HgdZyXkYSfw', 12384, 3),
+	(1000514, '1w5ST7K8sWs', 12386, 5),
+	(1000514, 'oLlVSa5e_0Y', 12388, 7),
+	(1000514, 'wpggZj1DKTI', 12390, 9),
+	(1000514, 'VKc7zbHNO9E', 12392, 11),
+	(1000514, 'R_lqaNo7E5w', 12394, 13),
+	(1000515, 'dMSG-2GRZ6U', 12395, 1),
+	(1000515, 'i4Beg_TKJkA', 12397, 3),
+	(1000515, 'B5Gp67tmRcw', 12399, 5),
+	(1000515, 'C7DswrzJkBw', 12401, 7),
+	(1000515, 'ChEgtB9oVgA', 12396, 2),
+	(1000515, 'o-KhVSbKbqs', 12398, 4),
+	(1000515, 'VoT2ya6vbb4', 12400, 6),
+	(1000515, 'S2HaAMozuCc', 12402, 8),
+	(1000516, 'TiZC0LoAduo', 12403, 1),
+	(1000516, 'xaSG_VPO1OM', 12405, 3),
+	(1000516, '3Fuzyh0vmJ4', 12407, 5),
+	(1000516, '5q3qw9ySNLs', 12409, 7),
+	(1000516, 'I1XWG3cUjlc', 12411, 9),
+	(1000516, 'TVJcRNZX1k4', 12413, 11),
+	(1000516, 'x8CZGyQDYFM', 12415, 13),
+	(1000516, 'iS8RbPRdYtM', 12417, 15),
+	(1000516, 'hZzTcWkSH9g', 12419, 17),
+	(1000516, '0-sdVPz46bs', 12421, 19),
+	(1000516, 'ccpzgtyc7BE', 12423, 21),
+	(1000516, 'U7Uq_DhwG-M', 12425, 23),
+	(1000516, 'cvdLB3bYhx0', 12427, 25),
+	(1000516, 'C6cbTSAOFsE', 12429, 27),
+	(1000516, 'MT27Js5SvgQ', 12431, 29),
+	(1000516, 'oLaU4dHQvpk', 12433, 31),
+	(1000516, 'f7gB4cIS2Hw', 12435, 33),
+	(1000516, 'ohFssBNFBPU', 12437, 35),
+	(1000516, 'MyeBEGqg5XM', 12439, 37),
+	(1000516, 'sgiDqlqT2Gc', 12441, 39),
+	(1000516, 'g_1sxz8gf-0', 12443, 41),
+	(1000516, 'WMAyoHx1A3o', 12445, 43),
+	(1000516, '7cuzU1l00fY', 12447, 45),
+	(1000516, 'joT4seCtAN0', 12449, 47),
+	(1000516, 'jTd7KTXEDrM', 12451, 49),
+	(1000516, 'GO_FpBHGm40', 12453, 51),
+	(1000516, 'Div-l9LK1jQ', 12455, 53),
+	(1000516, 'gXlq5gIRG8Y', 12457, 55),
+	(1000516, 'yMVdqrFUtcI', 12459, 57),
+	(1000561, 'sGWZ8WE1gFs', 14877, 10),
+	(1000516, 'sBW0AzCes98', 12463, 61),
+	(1000516, 'LsmGGNtBjJU', 12465, 63),
+	(1000516, 'XF9nUbxSO1U', 12467, 65),
+	(1000516, '6ZDPn-i9NdQ', 12469, 67),
+	(1000516, 'vKevsSccsJE', 12471, 69),
+	(1000516, 'pXE-vvFvVIE', 12473, 71),
+	(1000516, 'QbS1hvGrsno', 12475, 73),
+	(1000516, '1Wvu9mg44_8', 12477, 75),
+	(1000561, 'v0z3_-3Foik', 14879, 12),
+	(1000516, 'lSOOodKYyyU', 12481, 79),
+	(1000516, 'ivJCbeqUCd8', 12483, 81),
+	(1000517, 'TwndsDnrMw0', 12484, 1),
+	(1000517, 'NtlTt4f8Xm0', 12486, 3),
+	(1000517, 'ykXaj1d1jXY', 12488, 5),
+	(1000517, 'HyIySAn0lkE', 12490, 7),
+	(1000518, 'agfN5Yfibvc', 12491, 1),
+	(1000518, 'qcoYds9XCQY', 12493, 3),
+	(1000519, 'KVPh33V5raU', 12496, 2),
+	(1000519, '0CsKH9DnN1Y', 12498, 4),
+	(1000519, 'Dwt2NJq2wH8', 12500, 6),
+	(1000520, '7bL1s4eCRDA', 12503, 2),
+	(1000520, 'JhygwSBzkWY', 12505, 4),
+	(1000520, '_JsOaFFanE8', 12507, 6),
+	(1000520, 'elj6OhdkTC4', 12509, 8),
+	(1000520, 'ttSg0fIWDJE', 12511, 10),
+	(1000520, 'xuvoEiBrxs0', 12513, 12),
+	(1000521, '-Op8c0Ml93k', 12514, 1),
+	(1000521, 'hwQPc_9tU4A', 12516, 3),
+	(1000522, 'a8kL6MbBfGA', 12519, 2),
+	(1000522, 'rmJ0OqbKgQo', 12521, 4),
+	(1000522, 'PBzuS5b6oo4', 12523, 6),
+	(1000522, 'PSerZP_JjhE', 12525, 8),
+	(1000523, 'UeaUPjqmgZI', 12526, 1),
+	(1000523, '3B-bXcX6UlE', 12528, 3),
+	(1000523, 'voIkFAzgoZ8', 12530, 5),
+	(1000523, 'P4_rw0a2O38', 12532, 7),
+	(1000523, '9BUIjF_Gr7U', 12534, 9),
+	(1000523, 'ftwUQ9Twznk', 12536, 11),
+	(1000523, 'JPIDSoqmKSI', 12538, 13),
+	(1000523, 'bBF91aRByrM', 12540, 15),
+	(1000523, 'Coq9g28wco0', 12542, 17),
+	(1000523, '_8X1FeSPDwk', 12544, 19),
+	(1000523, '-fAJ7AGhdsE', 12546, 21),
+	(1000523, '6_SaPPNGvIQ', 12548, 23),
+	(1000523, 'VoJReK2cOKU', 12550, 25),
+	(1000523, 'Dwt2NJq2wH8', 12552, 27),
+	(1000561, 'icFGXptk5ZU', 14881, 14),
+	(1000523, 'c5CXkRe4_Vk', 12556, 31),
+	(1000523, '2n3R6o0_Srg', 12558, 33),
+	(1000523, '-WUxFn3iEvY', 12560, 35),
+	(1000523, 'px2vJiiVNLQ', 12562, 37),
+	(1000523, 'KA5mtV2zzKA', 12564, 39),
+	(1000523, '309pPWQ8a6I', 12566, 41),
+	(1000523, 'pTem_1v7-dM', 12568, 43),
+	(1000523, 'dMSG-2GRZ6U', 12570, 45),
+	(1000523, 'i4Beg_TKJkA', 12572, 47),
+	(1000523, 'B5Gp67tmRcw', 12574, 49),
+	(1000523, 'C7DswrzJkBw', 12576, 51),
+	(1000523, 'FZkpI1ADqL4', 12578, 53),
+	(1000523, 'fvdTLjXD3Qs', 12580, 55),
+	(1000523, 'xdQiArnSF10', 12582, 57),
+	(1000523, 'FXHzTuuQwFk', 12584, 59),
+	(1000523, 'pbBYHm08TBQ', 12586, 61),
+	(1000523, 'ufSBFxVh1xg', 12588, 63),
+	(1000523, 'nszWU_Y0X8k', 12590, 65),
+	(1000523, 'pViCyPZ7pBA', 12592, 67),
+	(1000523, 'h-5kJTztm3M', 12594, 69),
+	(1000523, 't-htRxp_KEo', 12596, 71),
+	(1000523, 'WlS2ZHCt5Oo', 12598, 73),
+	(1000523, 'X2tYB7kfk04', 12600, 75),
+	(1000523, 'dQrt8IhqP6U', 12602, 77),
+	(1000561, 'gV7hwbJgMzs', 14883, 16),
+	(1000523, 'E4iAYu_DWV8', 12606, 81),
+	(1000523, '0t6MMlI8ZXQ', 12608, 83),
+	(1000523, 'XBu4Lljjww8', 12610, 85),
+	(1000523, 'AmNdeSrdNv4', 12612, 87),
+	(1000523, 'ZnuEUXCxC6Y', 12614, 89),
+	(1000523, 'Z-gj3xXTTA4', 12616, 91),
+	(1000523, '7nYJMu4P61Y', 12618, 93),
+	(1000561, 'DXi6ruZ2CPY', 14885, 18),
+	(1000523, 'QiZ_O35wUG0', 12622, 97),
+	(1000523, 'mgv657VN4tI', 12624, 99),
+	(1000523, '4GuOAGABj44', 12626, 101),
+	(1000523, 'erKvQeagVAo', 12628, 103),
+	(1000523, 'YQS3T_vh3GI', 12630, 105),
+	(1000523, '0BUigORGKi0', 12632, 107),
+	(1000516, '-LFMcVzHZLo', 12404, 2),
+	(1000516, 'XUrmVL-qfTc', 12406, 4),
+	(1000516, 'T1k0T75jKJg', 12408, 6),
+	(1000516, 'GrJzjEknvD8', 12410, 8),
+	(1000516, '0GFpekdiooc', 12412, 10),
+	(1000516, '0vMgzwZ1qn0', 12414, 12),
+	(1000516, 'Ik52PjwMaPo', 12416, 14),
+	(1000516, 'ertTdvNB1Ic', 12418, 16),
+	(1000516, 'Q6HHjoteG-E', 12420, 18),
+	(1000516, 'xg8oCfc7_UU', 12422, 20),
+	(1000516, 'ILBPOVWnQMc', 12424, 22),
+	(1000516, 'qSEyL5ESb_c', 12426, 24),
+	(1000516, 'a3htgw26xMg', 12428, 26),
+	(1000561, 'GvVtN5KjLjs', 14887, 20),
+	(1000516, '4Z_zvRqHfPw', 12432, 30),
+	(1000516, 'AfKnQ-dTK1Q', 12434, 32),
+	(1000516, '9AvbZFXqr8U', 12436, 34),
+	(1000516, 'Q9dOib7TkIs', 12438, 36),
+	(1000516, 'xri_a4iVmz8', 12440, 38),
+	(1000516, '8QS6QJXckmU', 12442, 40),
+	(1000516, 'Znwm-bqkC9w', 12444, 42),
+	(1000516, 'yfbWAIKJQy4', 12446, 44),
+	(1000516, 'cposG_o8lkg', 12448, 46),
+	(1000516, '_VsMnCaGUk0', 12450, 48),
+	(1000516, 'Ln15GqrTssc', 12452, 50),
+	(1000516, 'LfBgVPQw3KU', 12454, 52),
+	(1000516, '9377QK74FV8', 12456, 54),
+	(1000516, 'N3hC8QdxzoY', 12458, 56),
+	(1000516, 'C19pFIRp2tI', 12460, 58),
+	(1000516, '7hi7kp-wfX4', 12462, 60),
+	(1000516, '_sv1qel1Hsg', 12464, 62),
+	(1000516, 'er4GRs-bLA8', 12466, 64),
+	(1000516, 'DUI75SJGhBE', 12468, 66),
+	(1000516, 'L60_7GF7H2Q', 12470, 68),
+	(1000516, 'iJXtyGC3xCQ', 12472, 70),
+	(1000516, '06HKx7w8nFg', 12474, 72),
+	(1000516, '0BfAz47WkKI', 12476, 74),
+	(1000516, 'Jhf-TPB0Pl8', 12478, 76),
+	(1000516, 'RIG346jpGP4', 12480, 78),
+	(1000516, 'IYvUFtzbVF8', 12482, 80),
+	(1000517, 'Plj2MwhTTco', 12485, 2),
+	(1000517, 'UUrmWC9jSRY', 12487, 4),
+	(1000517, 'ht_qrfnNpsA', 12489, 6),
+	(1000518, 'xpg_5t3jYzM', 12492, 2),
+	(1000518, 'TAG3kdBijek', 12494, 4),
+	(1000519, '-fAJ7AGhdsE', 12495, 1),
+	(1000519, '6_SaPPNGvIQ', 12497, 3),
+	(1000519, 'VoJReK2cOKU', 12499, 5),
+	(1000519, 'pTem_1v7-dM', 12501, 7),
+	(1000520, '3Pvol3yMek8', 12502, 1),
+	(1000520, 'Bsy7deRrav4', 12504, 3),
+	(1000520, 'TzBvA-vjhLI', 12506, 5),
+	(1000520, 'diqyFJ3fs70', 12508, 7),
+	(1000520, 'gPSTtlpp5hY', 12510, 9),
+	(1000520, 'vGA4vRr8mPE', 12512, 11),
+	(1000521, 'VFryWFs5LbI', 12515, 2),
+	(1000521, 'iqub-2rHPUs', 12517, 4),
+	(1000522, 'P4_rw0a2O38', 12518, 1),
+	(1000522, '9BUIjF_Gr7U', 12520, 3),
+	(1000522, 'ftwUQ9Twznk', 12522, 5),
+	(1000522, 'JPIDSoqmKSI', 12524, 7),
+	(1000523, 'JP9pnIysfpo', 12527, 2),
+	(1000523, 'kf8XceYFZtI', 12529, 4),
+	(1000523, 'tq0tEZCH9t4', 12531, 6),
+	(1000523, 'a8kL6MbBfGA', 12533, 8),
+	(1000523, 'rmJ0OqbKgQo', 12535, 10),
+	(1000523, 'PBzuS5b6oo4', 12537, 12),
+	(1000523, 'PSerZP_JjhE', 12539, 14),
+	(1000523, '7mk7Z672a1c', 12541, 16),
+	(1000523, '9ahyhPJomsA', 12543, 18),
+	(1000523, 'kiwLvCjEYjE', 12545, 20),
+	(1000523, 'KVPh33V5raU', 12547, 22),
+	(1000523, '0CsKH9DnN1Y', 12549, 24),
+	(1000523, 'Z2Q_jnMSi1E', 12551, 26),
+	(1000523, 'ipi2IsybkLM', 12553, 28),
+	(1000523, 'Xs1tl00f2n4', 12555, 30),
+	(1000523, 'O6ks3b2w21Y', 12557, 32),
+	(1000523, 'bnyQyzZ147s', 12559, 34),
+	(1000523, 'jFb6PM0kt8s', 12561, 36),
+	(1000523, 'qreXdpNcbFA', 12563, 38),
+	(1000523, 'pf0sUiXTmoQ', 12565, 40),
+	(1000523, 'xAUHKATjNTc', 12567, 42),
+	(1000523, 'RhHlnAhem9o', 12569, 44),
+	(1000523, 'ChEgtB9oVgA', 12571, 46),
+	(1000523, 'o-KhVSbKbqs', 12573, 48),
+	(1000523, 'VoT2ya6vbb4', 12575, 50),
+	(1000523, 'S2HaAMozuCc', 12577, 52),
+	(1000523, 'AKSUWvqgIrE', 12579, 54),
+	(1000523, 'ywFivQILi6o', 12581, 56),
+	(1000523, '0t9vOhU6P2o', 12583, 58),
+	(1000523, 'Fm50UIe2GPQ', 12585, 60),
+	(1000523, 'aTSwluJp7v4', 12587, 62),
+	(1000523, 'aO0SPCLKOvg', 12589, 64),
+	(1000523, 'NLujFrXdkyg', 12591, 66),
+	(1000523, 'Poz4Y9nk6UI', 12593, 68),
+	(1000523, 'Rs3ogTM-DB8', 12595, 70),
+	(1000523, 'E6ADF75HQ4o', 12597, 72),
+	(1000523, '9jeqti6vNqQ', 12599, 74),
+	(1000523, 'ExwGVzPdIKg', 12601, 76),
+	(1000523, 'SOZyUC4IxMM', 12603, 78),
+	(1000523, 'nX-ZQqcorMA', 12605, 80),
+	(1000523, 'EmCqsmoQ9yI', 12607, 82),
+	(1000523, 'dXtQBqZDlsE', 12609, 84),
+	(1000523, '7KQedU-p2xk', 12611, 86),
+	(1000523, 'HoLemGcKhrs', 12613, 88),
+	(1000561, 'EIRf5nlVTeY', 14889, 22),
+	(1000523, 'VIfmm7vKYwU', 12617, 92),
+	(1000523, '7fDO0KXBEsw', 12619, 94),
+	(1000523, '_AtuSLqAXpA', 12621, 96),
+	(1000523, 'A1jqsDIxudA', 12623, 98),
+	(1000523, '-flfEyWcR74', 12625, 100),
+	(1000523, 'vEQOmiFArek', 12627, 102),
+	(1000523, '6JOhczPmpAs', 12629, 104),
+	(1000523, '1uddParPB2c', 12631, 106),
+	(1000523, '7y7B2zNNcEc', 12633, 108),
+	(1000523, '4VmAlYtHSeM', 12635, 110),
+	(1000561, 'aHohrTR1TfY', 14891, 24),
+	(1000524, '84qUwPpifaY', 12640, 2),
+	(1000524, 'hVcV6bdi9us', 12642, 4),
+	(1000524, 'Rc73po522KI', 12644, 6),
+	(1000523, '4PD3gdxiFlI', 12634, 109),
+	(1000523, '1pfYGGySrhI', 12636, 111),
+	(1000523, 'dh5w81RN6V0', 12638, 113),
+	(1000524, '-2Jl889JRaA', 12639, 1),
+	(1000524, 'dWjzt05V1_Y', 12641, 3),
+	(1000524, 'bzp8LHR8Pv0', 12643, 5),
+	(1000524, 'CNJHBffelF8', 12645, 7),
+	(1000524, '4c5T6jTl1Yo', 12647, 9),
+	(1000524, 'LO2FAuLm0dw', 12649, 11),
+	(1000524, 'NU6-iufqctI', 12651, 13),
+	(1000525, 'EQ_YfLOO6JY', 12654, 2),
+	(1000526, 'UeaUPjqmgZI', 12655, 1),
+	(1000526, '3B-bXcX6UlE', 12657, 3),
+	(1000526, 'voIkFAzgoZ8', 12659, 5),
+	(1000526, 'bBF91aRByrM', 12661, 7),
+	(1000526, 'Coq9g28wco0', 12663, 9),
+	(1000526, '_8X1FeSPDwk', 12665, 11),
+	(1000526, 'qreXdpNcbFA', 12667, 13),
+	(1000527, 'Ijp8hdw9JuM', 12670, 2),
+	(1000528, 'D_NBcldO_rY', 12673, 2),
+	(1000528, 'EqHAwjmJVD4', 12675, 4),
+	(1000528, 'dfgnl1vbQwQ', 12677, 6),
+	(1000528, 'SaBu09lFzcw', 12679, 8),
+	(1000528, 'FkWTpMiBnUg', 12681, 10),
+	(1000528, 'FQRVqOwAqks', 12683, 12),
+	(1000528, 'op9DxpVBbDE', 12685, 14),
+	(1000528, 'h18F18CvSRw', 12687, 16),
+	(1000528, 'lbUSKIgGW58', 12689, 18),
+	(1000528, 'NObaZJ3MygA', 12691, 20),
+	(1000528, 'Orzqn78yVC0', 12693, 22),
+	(1000528, 'wFa4WZ3EyhA', 12695, 24),
+	(1000528, 'l5cxlzdVEj0', 12697, 26),
+	(1000528, '4U8eKLECxRk', 12699, 28),
+	(1000528, 'BPIGXOZEqW4', 12701, 30),
+	(1000528, 'NzGaC95xfwo', 12703, 32),
+	(1000528, '4MFZUy_qZFA', 12705, 34),
+	(1000528, 'r65F7cQeVLA', 12707, 36),
+	(1000528, 'h6WtCMYX618', 12709, 38),
+	(1000528, 'Un4iazcR8ds', 12711, 40),
+	(1000528, 'zRrZ_HKjYx8', 12713, 42),
+	(1000528, 'aAUIdoM79oU', 12715, 44),
+	(1000528, 'VkRLaOBsTPs', 12717, 46),
+	(1000561, 'BvnklNHmlJE', 14893, 26),
+	(1000528, '3aSmv0lcZ-g', 12721, 50),
+	(1000528, 'mJK9q-U31xg', 12723, 52),
+	(1000528, 'pCeWvAJFl0A', 12725, 54),
+	(1000528, '_Bq7XmD7Yfc', 12727, 56),
+	(1000528, 'RNHJ5WjxslQ', 12729, 58),
+	(1000528, 'uvE-XZ2gZA8', 12731, 60),
+	(1000528, 'tliIZGfwoJI', 12733, 62),
+	(1000528, '0i3CjV3Vsqs', 12735, 64),
+	(1000528, 'CHXztAsa-0w', 12737, 66),
+	(1000528, 'KxQG95ZtcDg', 12739, 68),
+	(1000528, 'PYlwc0ymqWM', 12741, 70),
+	(1000528, 'fFvNZZCwKXQ', 12743, 72),
+	(1000528, 'aoBbRVs2i34', 12745, 74),
+	(1000528, 'f_9STcrif1Y', 12747, 76),
+	(1000528, 'mcEwQfCj3WE', 12749, 78),
+	(1000528, 'pvqV9y3q6Zo', 12751, 80),
+	(1000528, 'sI-IESDKhMc', 12753, 82),
+	(1000528, 'kWdvdU_QPkw', 12755, 84),
+	(1000528, 'lBJuhIXH51o', 12757, 86),
+	(1000528, 'cuyFBwlrUTc', 12759, 88),
+	(1000528, '1wTIpOK_dbw', 12761, 90),
+	(1000528, 'tD1TMR_xFaY', 12763, 92),
+	(1000528, 'N6MPngmRtuE', 12765, 94),
+	(1000528, 'hAb5NAeyXH8', 12767, 96),
+	(1000528, 'Jedq2TrmUv4', 12769, 98),
+	(1000528, 'bRrfA7ZGTrM', 12771, 100),
+	(1000528, 'sfl7Z5NThms', 12773, 102),
+	(1000528, 'LgR5snEW9uE', 12775, 104),
+	(1000528, '3d13XdivMRk', 12777, 106),
+	(1000528, '3WIYp-ihy_w', 12779, 108),
+	(1000528, 'QSbUCEl7SU8', 12781, 110),
+	(1000529, 'plQFe_7nbqo', 12782, 1),
+	(1000529, 'RxCk9gVqVmU', 12784, 3),
+	(1000529, 'mzKLWT5_xwY', 12786, 5),
+	(1000529, 'Nird_cmJV4M', 12788, 7),
+	(1000529, '7sDpPjWzGeQ', 12790, 9),
+	(1000529, 'a5FqE18adfU', 12792, 11),
+	(1000529, 'LczJ2eC7x6c', 12794, 13),
+	(1000529, 'DcmxCaoQKx0', 12796, 15),
+	(1000529, 'P-BnQ9OIHOg', 12798, 17),
+	(1000529, 'e-FT-KVzLxI', 12800, 19),
+	(1000529, 'giab5Xg--0w', 12802, 21),
+	(1000529, 'XgWd88UI0w0', 12804, 23),
+	(1000529, 'ERNCwRTrxfI', 12806, 25),
+	(1000529, 'zyXiksYNv3E', 12808, 27),
+	(1000529, '0_ONk_GmF-Q', 12810, 29),
+	(1000529, 'bw4sKehTGb8', 12812, 31),
+	(1000529, 'yFvDgzfC1J4', 12814, 33),
+	(1000529, 'U_En2Hv5xmk', 12816, 35),
+	(1000561, '51uJjg0jkAw', 14895, 28),
+	(1000529, 'GTO2OpmT2N8', 12820, 39),
+	(1000529, 'E_uqzxdbeD4', 12822, 41),
+	(1000561, 'QXGBc3-NqAo', 14897, 30),
+	(1000561, 'BfROpvj2SNA', 14899, 32),
+	(1000529, 'L3a2ffWlaUc', 12828, 47),
+	(1000529, 'Tn3ykH1vJs4', 12830, 49),
+	(1000529, '0Z7Gxb-_RNg', 12832, 51),
+	(1000529, 'LJOWIoiT88c', 12834, 53),
+	(1000529, 'VGSVYTBKFmQ', 12836, 55),
+	(1000529, '1zmhS36Ycqo', 12838, 57),
+	(1000529, 'YfDtiJdFb3k', 12840, 59),
+	(1000529, 'cKupP8SNvzI', 12842, 61),
+	(1000529, 'RYMA_6aziUg', 12844, 63),
+	(1000529, 'k9OggMjX3Q0', 12846, 65),
+	(1000529, 'iNEkQaN1VJA', 12848, 67),
+	(1000529, 'ly8_-rLsB1c', 12850, 69),
+	(1000529, 'mx1tQqsgdRQ', 12852, 71),
+	(1000529, 'nAjBuxohN6Y', 12854, 73),
+	(1000529, 'wyIhRAYeADA', 12856, 75),
+	(1000529, 'e34HBbqw54k', 12858, 77),
+	(1000529, 'PxQf5kSnQtY', 12860, 79),
+	(1000529, 'GOqwQ8KJ18g', 12862, 81),
+	(1000529, '1niSx4XcDeU', 12864, 83),
+	(1000529, 'i1T2fqqWiOc', 12866, 85),
+	(1000529, 'nCbrtWxVhNk', 12868, 87),
+	(1000529, '5TLdnkUSzSY', 12870, 89),
+	(1000529, 'yA9JNOh_FKc', 12872, 91),
+	(1000524, 'lVWKVb7eg-U', 12646, 8),
+	(1000524, 'T441dekKylc', 12648, 10),
+	(1000524, '5mvDdWaCinA', 12650, 12),
+	(1000524, 'yGqrjcesbt8', 12652, 14),
+	(1000525, 'MiqAm5MQfRk', 12653, 1),
+	(1000526, 'JP9pnIysfpo', 12656, 2),
+	(1000526, 'kf8XceYFZtI', 12658, 4),
+	(1000526, 'tq0tEZCH9t4', 12660, 6),
+	(1000526, '7mk7Z672a1c', 12662, 8),
+	(1000526, '9ahyhPJomsA', 12664, 10),
+	(1000526, 'jFb6PM0kt8s', 12666, 12),
+	(1000526, 'pf0sUiXTmoQ', 12668, 14),
+	(1000527, '4CDPUW4ugDw', 12669, 1),
+	(1000527, 'sc0_LRUm8o0', 12671, 3),
+	(1000528, 'roAjJ8_utlw', 12672, 1),
+	(1000528, 'LF40SQkPxKU', 12674, 3),
+	(1000528, 'mOCN7ZTiWoo', 12676, 5),
+	(1000528, '4YS9W-7-duw', 12678, 7),
+	(1000528, '4hsuEWArkPY', 12680, 9),
+	(1000528, 'i47CqDkvNZY', 12682, 11),
+	(1000528, 'cmV3JCQpsKs', 12684, 13),
+	(1000528, '1FLbKhsB3pM', 12686, 15),
+	(1000528, 'T2c-rOMNy4g', 12688, 17),
+	(1000528, 't3ft2NPcfik', 12690, 19),
+	(1000528, 'P77pK8cPntk', 12692, 21),
+	(1000528, 'dW0rOclmByU', 12694, 23),
+	(1000528, '4Gz2Cs-y0To', 12696, 25),
+	(1000528, 'zC8IV0GrecU', 12698, 27),
+	(1000528, 'reY0iJxZajE', 12700, 29),
+	(1000528, 'og8A-2KZIfo', 12702, 31),
+	(1000528, 'AVwDGj4q1Q4', 12704, 33),
+	(1000528, 'tpXNLGTmDkc', 12706, 35),
+	(1000528, 'u7zL-NkBtEw', 12708, 37),
+	(1000528, 'JAVWXNMqFG4', 12710, 39),
+	(1000528, '0KKdWTSid5E', 12712, 41),
+	(1000528, 'rL63m1-aQw4', 12714, 43),
+	(1000528, 'AaU49zK9V2k', 12716, 45),
+	(1000528, 'VwEY7W_boIc', 12718, 47),
+	(1000528, 'uHogQtbEWfQ', 12720, 49),
+	(1000528, '7PjM41zuvJQ', 12722, 51),
+	(1000528, 'q4_o2iWWcEs', 12724, 53),
+	(1000528, '_gzNDnKT164', 12726, 55),
+	(1000528, 'og3kFNJCHlU', 12728, 57),
+	(1000528, 'iJQxheux_WM', 12730, 59),
+	(1000528, 'LAP-1kOLsl4', 12732, 61),
+	(1000528, 'QNg1FM0tcaI', 12734, 63),
+	(1000528, 'wxXQuko2bL0', 12736, 65),
+	(1000528, 'LgJJMjCsxxg', 12738, 67),
+	(1000528, '0QFKwjQZ5P4', 12740, 69),
+	(1000528, 'yvy1hCfv4yI', 12742, 71),
+	(1000528, 'xyqDLZc30I8', 12744, 73),
+	(1000528, 'OLQJP9_6UXs', 12746, 75),
+	(1000561, '8ANLsuOxQh8', 14901, 34),
+	(1000528, 'aM3BiOzt-kA', 12750, 79),
+	(1000528, 'IDUrFKjzrOQ', 12752, 81),
+	(1000528, 'DWPR3N8XOAg', 12754, 83),
+	(1000528, 'ZhZ9CltaK48', 12756, 85),
+	(1000528, 'Hrzu-RIeJO8', 12758, 87),
+	(1000528, '7WCWSxAylEM', 12760, 89),
+	(1000528, 'SWccowfahs4', 12762, 91),
+	(1000528, '08qhpilOuDE', 12764, 93),
+	(1000561, 'o3drrhu5F18', 14903, 36),
+	(1000528, 'fxRe8e5PMK8', 12768, 97),
+	(1000561, '-pyvsP22Q54', 14905, 38),
+	(1000528, '98w724aE54E', 12772, 101),
+	(1000528, 'vh5dQjFy-0E', 12774, 103),
+	(1000528, 'RKnm9dvq8zM', 12776, 105),
+	(1000528, 'l_cQ7qsJpzQ', 12778, 107),
+	(1000528, 'HcsnNYtmkMI', 12780, 109),
+	(1000529, 'Q1iaDJngvKY', 12783, 2),
+	(1000529, 'XHR7zdUy2sQ', 12785, 4),
+	(1000529, 'IOzNhF2Z0e0', 12787, 6),
+	(1000529, 'esB-EiT19lk', 12789, 8),
+	(1000529, '2OTiLmqEQf4', 12791, 10),
+	(1000529, 'NhZUU3xsYTI', 12793, 12),
+	(1000529, 'rjtBaaXMSQo', 12795, 14),
+	(1000529, 'k-wv9pC03JY', 12797, 16),
+	(1000529, 'HwDGJTBWEZU', 12799, 18),
+	(1000529, 'D84rRrHGoOw', 12801, 20),
+	(1000561, 'w6yEYyfQWEM', 14907, 40),
+	(1000529, 'eq6QJTpgoUU', 12805, 24),
+	(1000529, 'n4BbfgSeqns', 12807, 26),
+	(1000529, 'RDPer6tDm88', 12809, 28),
+	(1000529, 'JflLrqPvzQw', 12811, 30),
+	(1000529, 'WGH4bTiKrLE', 12813, 32),
+	(1000529, '3FB71AfOGjQ', 12815, 34),
+	(1000529, 'ZkOAcLQJvnE', 12817, 36),
+	(1000529, 'v0aR8HBvAvs', 12819, 38),
+	(1000529, 'LFHjN5GF8XA', 12821, 40),
+	(1000529, 'lOYbQG32CFI', 12823, 42),
+	(1000562, 'DnmZevosNw8', 14910, 2),
+	(1000529, 'hYhcU6RZbS8', 12827, 46),
+	(1000529, '7Qf8ixkv8tI', 12829, 48),
+	(1000529, 'X9UUcmN3WVg', 12831, 50),
+	(1000529, 'QCfC4qzQVrk', 12833, 52),
+	(1000529, 'GEZZRmjrEY0', 12835, 54),
+	(1000529, 'f5YiEa4xPLM', 12837, 56),
+	(1000529, '0KsTGE1LNX0', 12839, 58),
+	(1000529, '2ioZSV1L9s8', 12841, 60),
+	(1000529, '6MwHLaFuTMU', 12843, 62),
+	(1000529, 'YVR5hI773ms', 12845, 64),
+	(1000529, 'vnwAS5uIlkA', 12847, 66),
+	(1000529, '3LBdYY-BBIE', 12849, 68),
+	(1000529, 'DNnI-2ZsRjw', 12851, 70),
+	(1000529, '2FFznePSOS4', 12853, 72),
+	(1000529, 'LgKU_SsNz6M', 12855, 74),
+	(1000529, 'nbXop4ga-bo', 12857, 76),
+	(1000529, '42gzJl_dObs', 12859, 78),
+	(1000529, 'VPp5FvR5AVo', 12861, 80),
+	(1000529, 'UHaBgTd_VSA', 12863, 82),
+	(1000529, 'hPa3U8BXQpo', 12865, 84),
+	(1000529, 't5GVCI3kEmQ', 12867, 86),
+	(1000529, 'kHHy3qV7IO4', 12869, 88),
+	(1000529, 'qGfQT1qhKnA', 12871, 90),
+	(1000529, '3y7ItdPiVDE', 12873, 92),
+	(1000529, 'brrRdsVKOSY', 12875, 94),
+	(1000529, 'FvwGYQwh3f8', 12877, 96),
+	(1000529, 'OE-O2yB4_xo', 12879, 98),
+	(1000529, 'iZewy3eGM1A', 12881, 100),
+	(1000529, 'e-rTqu2E5V4', 12883, 102),
+	(1000529, 'nctgc4OpSRc', 12874, 93),
+	(1000529, 'w0d-LfSSVAI', 12876, 95),
+	(1000529, 'EEzsNY8wMVU', 12878, 97),
+	(1000529, 'BQ-n-njf7bM', 12880, 99),
+	(1000529, 'QAMwJ56J-ms', 12882, 101),
+	(1000529, '5khkHcySCrY', 12884, 103),
+	(1000529, 'ts76WhnbV-Q', 12886, 105),
+	(1000529, 'jxIWovjBjdA', 12888, 107),
+	(1000529, 'AQaGd53-RFc', 12890, 109),
+	(1000529, 'rfbhr0bsEUE', 12892, 111),
+	(1000529, 'bBvKR6usKn0', 12894, 113),
+	(1000529, 'kbXB7T9cclc', 12896, 115),
+	(1000529, 'l3_zbOiFcxg', 12898, 117),
+	(1000529, 'JFrDpuGx4Cs', 12900, 119),
+	(1000529, 'tgDHAs-1FaU', 12902, 121),
+	(1000529, 'nTYPpRbEupk', 12904, 123),
+	(1000529, '_z_xXofpcuY', 12906, 125),
+	(1000529, '894UeYRIR0A', 12908, 127),
+	(1000529, 'qHI95SlXCzw', 12910, 129),
+	(1000529, 'u2i3CDc5v5A', 12912, 131),
+	(1000529, 'TWfMUyDJGIo', 12914, 133),
+	(1000529, 'qLFFFCarfr0', 12916, 135),
+	(1000529, '63yz_GFMLl4', 12918, 137),
+	(1000529, 'RwV7zXyDF_w', 12920, 139),
+	(1000529, '03h6oot5A00', 12922, 141),
+	(1000529, '-9kwPSVcSPA', 12924, 143),
+	(1000529, '8WIwDbQK4_I', 12926, 145),
+	(1000529, 'd7VhpUERtTk', 12928, 147),
+	(1000529, 'BliYlRkIYAs', 12930, 149),
+	(1000529, 'iBIYj9YwD70', 12932, 151),
+	(1000529, '5uPRR3NzBH4', 12934, 153),
+	(1000529, 'ZSBVrFZrOD0', 12936, 155),
+	(1000529, 'Y7BTX0ZI2wY', 12938, 157),
+	(1000529, 'tafDsC0pnzA', 12940, 159),
+	(1000529, 'tTJEctr30Ag', 12942, 161),
+	(1000529, 'drNth9logpA', 12944, 163),
+	(1000529, 'JSkRcTujKgU', 12946, 165),
+	(1000529, 'OsPsIRaEhs8', 12948, 167),
+	(1000529, 'Kxdv-Mehh6o', 12950, 169),
+	(1000529, 'kBV6FgSTTnc', 12952, 171),
+	(1000529, 'OnlPne7hd8k', 12954, 173),
+	(1000529, '7B80yIHHwWw', 12956, 175),
+	(1000529, 'fiUgCxJA_CQ', 12958, 177),
+	(1000529, 'BBPXf2gMOkk', 12960, 179),
+	(1000529, 'jZlKMmlByms', 12962, 181),
+	(1000529, 'SJXyX20l54o', 12964, 183),
+	(1000529, '18KQTl41zxI', 12966, 185),
+	(1000529, '2tQSeUcknqU', 12968, 187),
+	(1000529, '6CaP_23y1WA', 12970, 189),
+	(1000529, 'zzDxOu2Q7_E', 12972, 191),
+	(1000529, '4oMaFb9nEbo', 12974, 193),
+	(1000529, 'GUDQhey0Abc', 12976, 195),
+	(1000529, 'y_Ln0HzLiSc', 12978, 197),
+	(1000529, '8Kk5jaXA6Pg', 12980, 199),
+	(1000529, 'CixdR9fI2w4', 12982, 201),
+	(1000529, 'ZMiyB_09S-w', 12984, 203),
+	(1000529, 'DxjhH0gMSS4', 12986, 205),
+	(1000529, 'TDjPT1HVjYU', 12988, 207),
+	(1000529, 'buTSJldKYKg', 12990, 209),
+	(1000529, 'Fi5Jh-B-1sA', 12992, 211),
+	(1000529, '_gzmrZ_LLPI', 12994, 213),
+	(1000529, '3VcpWGGicY0', 12996, 215),
+	(1000529, 'jeeCiI4QmDs', 12998, 217),
+	(1000529, 'XHxBJtP3phk', 13000, 219),
+	(1000529, 'lhV80F4bYbU', 13002, 221),
+	(1000529, 'ehStpd_NPIg', 13004, 223),
+	(1000529, '7EumSnY7zww', 13006, 225),
+	(1000529, 'XZV-4aJv9lM', 13008, 227),
+	(1000562, '4BtPP52-Ai8', 14912, 4),
+	(1000529, 'TULtrdA6FKE', 13012, 231),
+	(1000529, 'iqOF88hIFBw', 13014, 233),
+	(1000529, 'wHe_Lz1Z7co', 13016, 235),
+	(1000529, 'soYq0vzxwnA', 13018, 237),
+	(1000529, '-8cCKLI7GVg', 13020, 239),
+	(1000529, 'ZT6MonkG-T4', 13022, 241),
+	(1000529, 'oA0mTc4NovM', 13024, 243),
+	(1000529, 'r8umm9H9Akw', 13026, 245),
+	(1000529, 'zmnLn46Wgsw', 13028, 247),
+	(1000529, 'lZcMOACFMhI', 13030, 249),
+	(1000529, 'DS4MUbk97w0', 13032, 251),
+	(1000529, 'Jo0W46KSkHc', 13034, 253),
+	(1000529, 'NJD1gMHvfu4', 13036, 255),
+	(1000529, 'xcR0o89pQ5Y', 13038, 257),
+	(1000529, 'mTg05Anihj8', 13040, 259),
+	(1000529, 'lRnX7LDdWCA', 13042, 261),
+	(1000529, 'xdvwwPo9cos', 13044, 263),
+	(1000529, 's_7rEkrelD0', 13046, 265),
+	(1000529, 'nM-3p-QF7M0', 13048, 267),
+	(1000529, 'esa1zsEI_eA', 13050, 269),
+	(1000529, 'yG-kk4Wr3tw', 13052, 271),
+	(1000529, 'rEZBgEeSqiU', 13054, 273),
+	(1000529, 'BI-9SYEb8kM', 13056, 275),
+	(1000529, '7vMqZI1HtyI', 13058, 277),
+	(1000529, 'jRnrx_Q5SfM', 13060, 279),
+	(1000529, 'NdVNivY3DBs', 13062, 281),
+	(1000529, 'lWuOLRutnVc', 13064, 283),
+	(1000529, 'iMSZXWmMkBg', 13066, 285),
+	(1000529, '32tFcDBUFQA', 13068, 287),
+	(1000529, 'f6w9W_wxwkg', 13070, 289),
+	(1000529, 'z1Ga2_k5lQQ', 13072, 291),
+	(1000529, 'N7GmrI340fY', 13074, 293),
+	(1000529, 'Zu-mBCikSYE', 13076, 295),
+	(1000529, 'Ugx1mOoDPOc', 13078, 297),
+	(1000529, 'HEbp5J3osks', 13080, 299),
+	(1000529, 'f_BR07C1On8', 13082, 301),
+	(1000529, 'eMhNPUYAGr8', 13084, 303),
+	(1000529, 'ZwJsfMtIlZY', 13086, 305),
+	(1000529, 'Bzm_4WcTA8Q', 13088, 307),
+	(1000529, 'dAjWmuZP47Y', 13090, 309),
+	(1000529, 'mOU2b8y2i9U', 13092, 311),
+	(1000529, '6R3nlt2zpX0', 13094, 313),
+	(1000529, 'vfzu9v-d1xA', 13096, 315),
+	(1000529, 'PJ1Rrv7EkxI', 13098, 317),
+	(1000529, 'OjBwX1cYlvs', 13100, 319),
+	(1000529, 'dXhirgyHTH4', 13102, 321),
+	(1000529, 'VQaNk2Ru4es', 13104, 323),
+	(1000529, 'xzxLQW6S_B0', 13106, 325),
+	(1000529, 'PXdKPAMrYnY', 13108, 327),
+	(1000529, 'Rp9xreLgnZE', 13110, 329),
+	(1000529, 'DC1xWQ0XQ9I', 13112, 331),
+	(1000529, '5JOOGqmyV2Q', 12885, 104),
+	(1000529, 'dg4G0cpIFB0', 12887, 106),
+	(1000529, 'i2Chb9t-xm8', 12889, 108),
+	(1000529, '_KSS0zxxn3w', 12891, 110),
+	(1000529, 'LpDE3Wjar64', 12893, 112),
+	(1000529, 'TGqfSOQTBTg', 12895, 114),
+	(1000529, 'rxT326DXnn8', 12897, 116),
+	(1000529, 'o8TqCntkFPg', 12899, 118),
+	(1000529, 'i4NV2uJD2II', 12901, 120),
+	(1000529, 'DJP_IJ4GOTM', 12903, 122),
+	(1000529, 'GJwivRGD_NU', 12905, 124),
+	(1000529, '1A28GFRtxsQ', 12907, 126),
+	(1000529, 'UzQhhgHet1k', 12909, 128),
+	(1000529, 'h02ddwhq9uA', 12911, 130),
+	(1000529, 'DEGuBqFTQlo', 12913, 132),
+	(1000529, 'obBsQJOqMuk', 12915, 134),
+	(1000529, 'q11Dq7L0r1g', 12917, 136),
+	(1000529, '40gI4zUNcWo', 12919, 138),
+	(1000529, 'yN6FmgWtsM8', 12921, 140),
+	(1000529, 'TYk2zPU5LhE', 12923, 142),
+	(1000529, 'C12_l_m1AO8', 12925, 144),
+	(1000529, 'DStV_Eb3T8o', 12927, 146),
+	(1000529, '-d2318RqEw8', 12929, 148),
+	(1000529, 'Rh8JCu4ivmU', 12931, 150),
+	(1000529, 'cBasuWuAw-4', 12933, 152),
+	(1000529, 'xCUVHbEK9dw', 12935, 154),
+	(1000529, 'hvXwRCChQds', 12937, 156),
+	(1000529, '3yCp1X-0Zuk', 12939, 158),
+	(1000529, 'DWm3iYuyZDI', 12941, 160),
+	(1000529, 'n5tl1LU3mws', 12943, 162),
+	(1000529, 'xmFZCa9ieXU', 12945, 164),
+	(1000529, 'IJF6_hq0AcU', 12947, 166),
+	(1000529, '2aF9VjZzZ6o', 12949, 168),
+	(1000529, 'ab1GEESBvXo', 12951, 170),
+	(1000529, '5FY0KJWKjbo', 12953, 172),
+	(1000529, 'AaO3lpYlmww', 12955, 174),
+	(1000529, '9WOx3pdVSUs', 12957, 176),
+	(1000529, '3l5Bk5phwe8', 12959, 178),
+	(1000529, '6KurjVFvUOc', 12961, 180),
+	(1000529, 'ARVDVGkRAUE', 12963, 182),
+	(1000529, '9n-tCxMxmQA', 12965, 184),
+	(1000529, '461UI7CJIIk', 12967, 186),
+	(1000529, 'y2WD7QmJqmc', 12969, 188),
+	(1000529, '5ftRLZNIovU', 12971, 190),
+	(1000529, '-flOvE_kYVo', 12973, 192),
+	(1000529, 'tRhUUjvjUd0', 12975, 194),
+	(1000529, 'TJUGMDjSPeo', 12977, 196),
+	(1000529, '4H0rGeTyBMY', 12979, 198),
+	(1000529, 'USqaULKpr20', 12981, 200),
+	(1000529, 'v4HrRU3dHd0', 12983, 202),
+	(1000529, 'T9irweE5W6k', 12985, 204),
+	(1000529, 'Sh8IEZ8PkPA', 12987, 206),
+	(1000529, '3WWjCpLn2Wk', 12989, 208),
+	(1000529, 'MpyAwbAi6Ow', 12991, 210),
+	(1000529, 'damibi83EnI', 12993, 212),
+	(1000529, 'm5d0g3RU-Vw', 12995, 214),
+	(1000529, 'X3zYwWF2U9o', 12997, 216),
+	(1000529, 'Y4b69JSVE1Y', 12999, 218),
+	(1000529, '1vbAMSsJdYU', 13001, 220),
+	(1000529, 'vZmMfo5QD_Y', 13003, 222),
+	(1000529, '_EJcYOwvOcQ', 13005, 224),
+	(1000529, 'kn959HE3ttc', 13007, 226),
+	(1000529, 'lV7ALXR9Ai0', 13009, 228),
+	(1000562, 'ePKMfhqpFvU', 14913, 5),
+	(1000529, 'xib-bf-rra4', 13013, 232),
+	(1000529, 'CEcNIlp2xxM', 13015, 234),
+	(1000529, '5P6ZDVwY_Hs', 13017, 236),
+	(1000529, 'AjyuYwanbhs', 13019, 238),
+	(1000529, 'ZsUyzlSNVQI', 13021, 240),
+	(1000529, 'VhE488vg1FM', 13023, 242),
+	(1000529, 'IcHC0grktbk', 13025, 244),
+	(1000529, 'QbJPW0uCHDY', 13027, 246),
+	(1000529, 'xcQbZ1Xwyxs', 13029, 248),
+	(1000529, 'VKmbKSZdaKQ', 13031, 250),
+	(1000529, 'nGn7Ei8x_Vk', 13033, 252),
+	(1000529, 'Hk8JzDOWO7A', 13035, 254),
+	(1000529, 'XsbwvQgvjIs', 13037, 256),
+	(1000529, 'Di9ag9OQnJ4', 13039, 258),
+	(1000529, 'xT822MM65QA', 13041, 260),
+	(1000529, '9bed5iFnn2I', 13043, 262),
+	(1000529, 'e8jTO4PKV2E', 13045, 264),
+	(1000529, 'oSXuNQXvs24', 13047, 266),
+	(1000529, 'J5amKEqc-Ak', 13049, 268),
+	(1000529, 'lFLJcd87sA8', 13051, 270),
+	(1000529, 'ZNZKhWkL7ik', 13053, 272),
+	(1000529, 'MJOrKRWA9NY', 13055, 274),
+	(1000529, '3JL-AMgRslc', 13057, 276),
+	(1000529, 'GPukHfqAz-0', 13059, 278),
+	(1000529, 'GH2fNf_9Yq4', 13061, 280),
+	(1000529, 'TcNiNrLP0lg', 13063, 282),
+	(1000529, '-p_OmY0lUc0', 13065, 284),
+	(1000529, 'xnSvp5NqGEg', 13067, 286),
+	(1000529, 'GVpU8y8OSbA', 13069, 288),
+	(1000529, 'Rwm4TRxsSg8', 13071, 290),
+	(1000529, 'XJBx1vmMpe4', 13073, 292),
+	(1000529, 'ELi21Z6A2H0', 13075, 294),
+	(1000529, '4y-nmK8nfq0', 13077, 296),
+	(1000562, 'rCK8If7nQl0', 14915, 7),
+	(1000529, 'IZAeJB5PdAk', 13081, 300),
+	(1000529, 'tz8bjVJNIR8', 13083, 302),
+	(1000529, '70H0LK6AU2M', 13085, 304),
+	(1000529, 'MuQB_6Mvzl0', 13087, 306),
+	(1000529, 'dA8Ry3heA_4', 13089, 308),
+	(1000529, 'pl8JaqPoIu0', 13091, 310),
+	(1000529, 'Jd0xNsV5Gq8', 13093, 312),
+	(1000529, 'b7hrPrw4Nl8', 13095, 314),
+	(1000529, 'YL8eRl0fGoE', 13097, 316),
+	(1000529, 'yPdDfQkBrdk', 13099, 318),
+	(1000529, 'Od1yYV-I6Zc', 13101, 320),
+	(1000529, 'd1PdDLECAvo', 13103, 322),
+	(1000562, 'yj_ZoAkwk4A', 14917, 9),
+	(1000529, '49zVX-ZllZc', 13107, 326),
+	(1000529, 'zYsG4D_E99E', 13109, 328),
+	(1000529, 'gPozF2wAnDk', 13111, 330),
+	(1000529, 'leHt7xYVvTE', 13113, 332),
+	(1000529, 'PIwOWm8ixrc', 13115, 334),
+	(1000529, 'mUrkZwT2unQ', 13117, 336),
+	(1000529, 'wOasZXgklsU', 13119, 338),
+	(1000529, 'CGkg4KATMvo', 13121, 340),
+	(1000529, 'ib7tV3YAdPw', 13123, 342),
+	(1000529, 'W-N78h9hEdk', 13114, 333),
+	(1000529, 'lnr9ktKdOK4', 13116, 335),
+	(1000529, 'oDHdpwKZFPk', 13118, 337),
+	(1000529, 'ouVjNTIq0Ng', 13120, 339),
+	(1000529, 'C3kyeuaLGfk', 13122, 341),
+	(1000529, '18oKfPMvdqc', 13124, 343),
+	(1000529, 'ZwZso9Xavd0', 13126, 345),
+	(1000529, '97dftViMoO4', 13128, 347),
+	(1000529, 'NDGbYGFKUV8', 13130, 349),
+	(1000529, 'RMX2tXi3Wug', 13132, 351),
+	(1000529, 'ajumBMpWTBU', 13134, 353),
+	(1000529, 'ihkYhpZLzfQ', 13136, 355),
+	(1000529, 'X-rFO1mFuaI', 13138, 357),
+	(1000529, 'jn6HNFAdHDY', 13140, 359),
+	(1000529, 'reLywLtafW8', 13142, 361),
+	(1000529, 'f9y2b5u--sE', 13144, 363),
+	(1000529, '3QEhSLzfXBQ', 13146, 365),
+	(1000529, 'VS9DgEDH4n4', 13148, 367),
+	(1000529, 'F8h65RyZOgA', 13150, 369),
+	(1000529, 'NBZkD3eMFdg', 13152, 371),
+	(1000529, 'zfJFyQZ9hPY', 13154, 373),
+	(1000529, 'b6hmbV8sKGk', 13156, 375),
+	(1000529, 'kAMBpHaecRg', 13158, 377),
+	(1000529, 'QfYZyz9mgCU', 13160, 379),
+	(1000529, 'Jord21dVdFo', 13162, 381),
+	(1000529, 'lVIxc61S_-Y', 13164, 383),
+	(1000529, 'T1FZcU7Dktw', 13166, 385),
+	(1000529, 'H084gBYMnR8', 13168, 387),
+	(1000529, 'b9nAIc6V3RU', 13170, 389),
+	(1000529, 'RqzPhBmKVaA', 13172, 391),
+	(1000529, 'UWWbVQriqp8', 13174, 393),
+	(1000529, 'OMiV-J-2hkU', 13176, 395),
+	(1000529, '8-kKaKteCZg', 13178, 397),
+	(1000529, 'VfDyv03WV-4', 13180, 399),
+	(1000529, '1bcbprv6yWs', 13182, 401),
+	(1000529, 'tqShCTOvcO0', 13184, 403),
+	(1000529, '7HIWj25z9ac', 13186, 405),
+	(1000529, 'sWj7GoXrRHI', 13188, 407),
+	(1000529, 'JgFYnWFc98M', 13190, 409),
+	(1000529, 'r6LbS6YXUO0', 13192, 411),
+	(1000529, 'vWXoUyXzs98', 13194, 413),
+	(1000529, 'WOQGlqWWw4I', 13196, 415),
+	(1000529, 'MYXuCHlyC9U', 13198, 417),
+	(1000529, 'b77L-x0gqfE', 13200, 419),
+	(1000529, 'ublVJhjUdNE', 13202, 421),
+	(1000529, 'LxVDnyODD0k', 13204, 423),
+	(1000529, '9Z9tB-LK_V4', 13206, 425),
+	(1000529, 'NVYIYCgHSVA', 13208, 427),
+	(1000529, 'peRnK_EH8js', 13210, 429),
+	(1000529, '4ZBxmE_xxWI', 13212, 431),
+	(1000529, 'xeuYYFmkBaM', 13214, 433),
+	(1000529, 't_P4qleaD2c', 13216, 435),
+	(1000529, 'NeftU4AErvw', 13218, 437),
+	(1000529, 'qMJYQo-lmZ0', 13220, 439),
+	(1000529, 'T5HvnMriYrU', 13222, 441),
+	(1000529, 'qcZlq5nV3S8', 13224, 443),
+	(1000529, 'qiWLOxZouXI', 13226, 445),
+	(1000529, 'eRD9zOcPOv4', 13228, 447),
+	(1000529, '12O2g9F2FmQ', 13230, 449),
+	(1000529, 'lqp6lQKH_oU', 13232, 451),
+	(1000529, 'tx7KJQZVN2E', 13234, 453),
+	(1000529, 'bRHVgkxi6T4', 13236, 455),
+	(1000562, 'oIdiKZpb7fw', 14914, 6),
+	(1000562, 'YY-fAk3bgRo', 14916, 8),
+	(1000562, 'Jva8KYDtc9w', 14918, 10),
+	(1000530, 'd6moggFNfE8', 13243, 1),
+	(1000530, '3Pa52fpFvxQ', 13245, 3),
+	(1000562, 'cy1ox_EWaPc', 14920, 12),
+	(1000562, 'oi-x6i73v3c', 14922, 14),
+	(1000562, 'tfIQfgPFdFw', 14924, 16),
+	(1000562, 'Jphtkgir2Tk', 14926, 18),
+	(1000562, 'lZCjLy6XR6U', 14928, 20),
+	(1000562, 'uCs8nnZFacg', 14930, 22),
+	(1000562, 'gV-pojRAuJg', 14932, 24),
+	(1000562, 'ac1pBkIc4yI', 14934, 26),
+	(1000562, 'h-NKnhxg23E', 14936, 28),
+	(1000562, 'V98uIVWRSmk', 14938, 30),
+	(1000562, '9uR05LbbwUQ', 14940, 32),
+	(1000562, '_npXMZvdlcc', 14942, 34),
+	(1000562, 'UUIcCuKzqcw', 14944, 36),
+	(1000562, 'h1Zs6EPGE24', 14946, 38),
+	(1000563, 'fUYKVK4jem0', 14947, 1),
+	(1000563, 'WrIn0arxNX4', 14949, 3),
+	(1000563, 'CnxpsV_FMsI', 14951, 5),
+	(1000563, 'dw2sBl5_Pb0', 14953, 7),
+	(1000563, 'JjpsbciyygM', 14955, 9),
+	(1000563, 'GVu8KlyEIbs', 14957, 11),
+	(1000563, 'Ps3RUMwKPe8', 14959, 13),
+	(1000563, '-zN6un7IEx8', 14961, 15),
+	(1000563, 'Wwz-R8vRrWw', 14963, 17),
+	(1000564, 'UnVTcst4P3M', 14964, 1),
+	(1000564, 'c8ZxE7-2ADQ', 14966, 3),
+	(1000564, 'ihladm1P2a0', 14968, 5),
+	(1000564, 'NNFn66K_KTw', 14970, 7),
+	(1000564, 'V6mt3sN_wyc', 14972, 9),
+	(1000564, 'vskDNFLxATI', 14974, 11),
+	(1000564, 'la1qZyBlfD8', 14976, 13),
+	(1000564, 'hyFUkXEUuX8', 14978, 15),
+	(1000564, 'twERAtLH_es', 14980, 17),
+	(1000564, 'HXIwK9RZ9lg', 14982, 19),
+	(1000564, 'ynciPvYprCM', 14984, 21),
+	(1000564, 'PFzDOmEiGRk', 14986, 23),
+	(1000564, 'n39AkYUiMh4', 14988, 25),
+	(1000564, 'IKdEtLYCJ4s', 14990, 27),
+	(1000564, 'y42bjINMJP8', 14992, 29),
+	(1000564, 'QLtzPgOujmE', 14994, 31),
+	(1000564, 'zO060i806q8', 14996, 33),
+	(1000564, 'SaZ4Pg3rm5s', 14998, 35),
+	(1000564, 'DgSX88Kg0Ic', 15000, 37),
+	(1000564, 'OJ9UsM_0pPE', 15002, 39),
+	(1000564, 'EJU-p-z-Oag', 15004, 41),
+	(1000564, '2kpXjAb9qLY', 15006, 43),
+	(1000564, 'Iguyi4Lmpy0', 15008, 45),
+	(1000564, 'ri8hK9Aurwk', 15010, 47),
+	(1000564, 'oJPrbcBidiA', 15012, 49),
+	(1000564, 'uxTJRKjIDeI', 15014, 51),
+	(1000564, 'OhL9lm7JbWE', 15016, 53),
+	(1000564, 'vz9xfIl70kE', 15018, 55),
+	(1000564, 'sUVh_bc8Png', 15020, 57),
+	(1000564, 'JncmLnIqLPY', 15022, 59),
+	(1000529, 'qHLPgry_ATc', 13125, 344),
+	(1000529, '5xV0bEayhpQ', 13127, 346),
+	(1000529, 'dqFiMo5e3yE', 13129, 348),
+	(1000529, '17sr7tZeV5w', 13131, 350),
+	(1000529, 'SR1hD8k1c-E', 13133, 352),
+	(1000529, '_wbqQyItxSk', 13135, 354),
+	(1000529, 'JELN-l9XpEU', 13137, 356),
+	(1000529, 'q6-Rf5YtMms', 13139, 358),
+	(1000529, 'FKOLRBEKq3s', 13141, 360),
+	(1000529, 'GAaDrMC6G3Y', 13143, 362),
+	(1000529, 'LwxOk_QZjH8', 13145, 364),
+	(1000529, 'nwsuHc-3RjA', 13147, 366),
+	(1000529, 'w6qeFdkfCRQ', 13149, 368),
+	(1000529, 'Eam1OIGGD8A', 13151, 370),
+	(1000529, 'FnpuOxW1S98', 13153, 372),
+	(1000529, 'N7162f_eYPU', 13155, 374),
+	(1000529, '2-qqoTCI5zg', 13157, 376),
+	(1000529, 'viaq6JnhwG4', 13159, 378),
+	(1000529, 'Ij562rWZcHc', 13161, 380),
+	(1000529, 'UUe-x2Mv3uM', 13163, 382),
+	(1000529, 'exh5E_9oUbU', 13165, 384),
+	(1000529, 'oVuMT0IQ-w0', 13167, 386),
+	(1000529, 'ZeRGa9KU8CE', 13169, 388),
+	(1000529, 'lsTtOl7NmIU', 13171, 390),
+	(1000529, '3Yc7puvJAGQ', 13173, 392),
+	(1000529, '1Mot6Yim05g', 13175, 394),
+	(1000529, 'TayuySAzEbU', 13177, 396),
+	(1000529, '8XkLtw__yyI', 13179, 398),
+	(1000529, 'DrlrvKja4P8', 13181, 400),
+	(1000529, 'RZtqlimvHUE', 13183, 402),
+	(1000529, 'HbmyY-cUlL4', 13185, 404),
+	(1000529, 'WlhrN7SgFBQ', 13187, 406),
+	(1000529, 'hbk42vWs0jU', 13189, 408),
+	(1000529, '2ixJTAQO79s', 13191, 410),
+	(1000529, 'xUT6ZK-OMVA', 13193, 412),
+	(1000529, 'uadPfjM5vdQ', 13195, 414),
+	(1000529, 'ELeVQ3H2Tjk', 13197, 416),
+	(1000529, 'mFTI6lBmSgQ', 13199, 418),
+	(1000529, '39VzJuv4lCc', 13201, 420),
+	(1000529, 'z1xPDpLR7DA', 13203, 422),
+	(1000529, 'WYFVimmDQmk', 13205, 424),
+	(1000529, 'TXQIGPCU1go', 13207, 426),
+	(1000529, '4W25VtqnGpE', 13209, 428),
+	(1000529, 'XopURRY0A7Q', 13211, 430),
+	(1000529, 'G8SmjuDTXZM', 13213, 432),
+	(1000529, '-BuLsqsj5Ks', 13215, 434),
+	(1000529, 'Ch0HtlZUPuM', 13217, 436),
+	(1000529, '3Az2U0RSKHc', 13219, 438),
+	(1000529, '9MZTA6PE1YU', 13221, 440),
+	(1000529, '3uObRWY0fd4', 13223, 442),
+	(1000529, '8feuHWFg1BU', 13225, 444),
+	(1000529, '5IXtT3bwW04', 13227, 446),
+	(1000529, 'OR0_Aqy9J-A', 13229, 448),
+	(1000529, 'OQFbw8499KA', 13231, 450),
+	(1000529, 'XcomLwAY78U', 13233, 452),
+	(1000529, 'vFpY8ff-1qs', 13235, 454),
+	(1000562, 'fPfON0kufe4', 14919, 11),
+	(1000562, 'aDeyQZrJZF4', 14921, 13),
+	(1000562, '3tHXXB3Ufwo', 14923, 15),
+	(1000530, 'hPGSes8149E', 13244, 2),
+	(1000530, 'HwHmwy4dgvk', 13246, 4),
+	(1000530, 'V_EahGRYy-E', 13247, 5),
+	(1000531, 'nhrnw353N4w', 13248, 1),
+	(1000531, '5fqKHhPnsLc', 13249, 2),
+	(1000531, 'LJfZ8Ulh-9Y', 13250, 3),
+	(1000531, 'yHDLI6etyyo', 13251, 4),
+	(1000531, 'QCJAXObqEF0', 13252, 5),
+	(1000531, 'fT7mbhdJ9js', 13253, 6),
+	(1000531, 'mT1j4RYuG8w', 13254, 7),
+	(1000531, '8GGrzo8tcqU', 13255, 8),
+	(1000531, 'Z3CBal8Ea1w', 13256, 9),
+	(1000531, 'AV41-ushaHA', 13257, 10),
+	(1000532, '3QZD02ecLLo', 13258, 1),
+	(1000532, 'hNpyE9eVJs8', 13259, 2),
+	(1000532, 'Ypazwe1UrbE', 13260, 3),
+	(1000532, 'cdT-JowTvF8', 13261, 4),
+	(1000532, 'B1O6ZOWu5w0', 13262, 5),
+	(1000532, 'YeJWsYdEMeo', 13263, 6),
+	(1000562, '1aFXuoNvjAs', 14925, 17),
+	(1000532, 'D8xbGTDUp1Q', 13265, 8),
+	(1000532, 'dbAt0n44we4', 13266, 9),
+	(1000532, 'MopziacN2ww', 13267, 10),
+	(1000532, '9SRPAsAECrg', 13268, 11),
+	(1000532, '0lpL8b8XQYQ', 13269, 12),
+	(1000532, '9bmDYFiYPtU', 13270, 13),
+	(1000532, '6oB8QRidcIM', 13271, 14),
+	(1000532, 'j1KNmvMyyS4', 13272, 15),
+	(1000532, 'aBNjRY2rRwg', 13273, 16),
+	(1000532, 'Hd8HUVGXhfg', 13274, 17),
+	(1000532, 'pQOICSLALdM', 13275, 18),
+	(1000532, 'rWj8stqnG2M', 13276, 19),
+	(1000532, 'ctq3i-3-Yj4', 13277, 20),
+	(1000532, 'pxLGXY5nSO8', 13278, 21),
+	(1000532, '6rkO4XNJ8Os', 13279, 22),
+	(1000532, 'zeCEWVho0j8', 13280, 23),
+	(1000532, 'uEemO1bGPpQ', 13281, 24),
+	(1000532, '9Yuyb0oxSK4', 13282, 25),
+	(1000532, 'vgAEjgFVR6s', 13283, 26),
+	(1000532, 'cVwmGEpgGkQ', 13284, 27),
+	(1000532, 'G3XYhXkK9Gg', 13285, 28),
+	(1000532, 'J1PmtcE0x9A', 13286, 29),
+	(1000532, 'QSxZK-iLx5I', 13287, 30),
+	(1000532, '2bL0fZcyss0', 13288, 31),
+	(1000532, '28N5hFRuXsc', 13289, 32),
+	(1000532, 'lrvY9euKWbY', 13290, 33),
+	(1000532, 'ZTNEfIhoPkw', 13291, 34),
+	(1000532, 'Iis1gH_b2RE', 13292, 35),
+	(1000532, 'Ou3HRkM4GZg', 13293, 36),
+	(1000532, 'MG7T08k2suo', 13294, 37),
+	(1000532, 'NfiQcST_V7s', 13295, 38),
+	(1000532, 'sJctDYsOcAw', 13296, 39),
+	(1000532, '3l04eFneiEo', 13297, 40),
+	(1000532, 'OPl_GputGug', 13298, 41),
+	(1000532, 'FZpJiVGhP7E', 13299, 42),
+	(1000532, 'g7PCthn2Gk8', 13300, 43),
+	(1000532, 'MRsl3A7ysdE', 13301, 44),
+	(1000532, 'Cw6qPviWPMs', 13302, 45),
+	(1000532, 'oRQB7U69ghA', 13303, 46),
+	(1000532, 'Z-Ry0pdnNAk', 13304, 47),
+	(1000532, 'fIXg7_rHEXc', 13305, 48),
+	(1000532, 'ERqB9pHS6iQ', 13306, 49),
+	(1000532, 'xt23TrstZzk', 13308, 51),
+	(1000532, '3Fx0FHdto-4', 13310, 53),
+	(1000532, 'Vr88qvICsWs', 13312, 55),
+	(1000532, 'TZPMzeoJ7Pg', 13314, 57),
+	(1000532, 'FqWN0obzC_I', 13316, 59),
+	(1000532, 'ADGxJcEJ-54', 13318, 61),
+	(1000532, 'DmKKe7kOX3Q', 13320, 63),
+	(1000532, 'JJaz37W_e0s', 13322, 65),
+	(1000532, 'preYvm4gGiw', 13324, 67),
+	(1000562, 'JzfXPULdL2E', 14927, 19),
+	(1000532, '7lpUece3N1U', 13328, 71),
+	(1000532, 'b3ipXmyaYKs', 13330, 73),
+	(1000532, 'oNpMCd6Oc8A', 13332, 75),
+	(1000532, 'nS1vDEWvzEU', 13334, 77),
+	(1000532, 'qjwbjgcxcN0', 13336, 79),
+	(1000562, '7dDhqzw1a7s', 14929, 21),
+	(1000532, 'Ql_GdZd7pqw', 13340, 83),
+	(1000532, 'l8DwashFrTQ', 13342, 85),
+	(1000532, 'xn_4-rlVu4A', 13346, 89),
+	(1000532, 'uPO32l38yCI', 13352, 95),
+	(1000532, '3jT5ULE3Ik4', 13354, 97),
+	(1000532, 'V9ovrMaiARA', 13356, 99),
+	(1000532, 'n8bip-nSsGU', 13358, 101),
+	(1000532, 'oNLof030MtM', 13360, 103),
+	(1000532, 'YYMtduHiPbE', 13362, 105),
+	(1000532, 'v-mOAN-WQVI', 13364, 107),
+	(1000532, 'SeqMuOOfWA0', 13366, 109),
+	(1000532, '_rKg8wG3Zg4', 13368, 111),
+	(1000532, 'br7_DLEqgtk', 13370, 113),
+	(1000532, 's9Qoj7mcg2A', 13372, 115),
+	(1000532, 'aNq2K54f-hc', 13374, 117),
+	(1000532, '2eyubgDwScc', 13376, 119),
+	(1000532, 'PbsnSvFGqf0', 13378, 121),
+	(1000532, 'dBz0NpVkV8E', 13380, 123),
+	(1000532, 'CkImSlRxGqo', 13382, 125),
+	(1000532, 'eIWi4aBuCZU', 13384, 127),
+	(1000532, 'FADmhOKAj14', 13386, 129),
+	(1000532, 'z_Crby1RTmQ', 13388, 131),
+	(1000532, 'eMlsVaw00oA', 13390, 133),
+	(1000532, 'WE5GSPJEVeE', 13392, 135),
+	(1000532, 'MNcX0L0c9c8', 13394, 137),
+	(1000532, 'MSf35nY1jTg', 13396, 139),
+	(1000532, 'Yve2HK_bE0o', 13398, 141),
+	(1000532, '-bkDb4Nhw2Q', 13400, 143),
+	(1000532, 'Ldc41WMuCJE', 13402, 145),
+	(1000532, 'ujS3og2anZY', 13404, 147),
+	(1000533, 'Zu95bY9xmiQ', 13409, 2),
+	(1000533, 'wDtjEh7OT2M', 13411, 4),
+	(1000533, 'jRpazDFF9J8', 13413, 6),
+	(1000533, 'iuObPenjMnw', 13415, 8),
+	(1000533, 'qbtGZcOUz3A', 13417, 10),
+	(1000533, 'tfQycbXtJMs', 13419, 12),
+	(1000533, 'E6Hn4qcymnk', 13421, 14),
+	(1000533, 'M5cHAN_Znww', 13423, 16),
+	(1000533, '-jGFOQ_zPa8', 13425, 18),
+	(1000533, 'cfTKq0uTopw', 13427, 20),
+	(1000533, 'o6cTMVF3QLg', 13429, 22),
+	(1000533, 'hy1EdZTeIGk', 13431, 24),
+	(1000533, 'K_noEzQp-dI', 13433, 26),
+	(1000533, 'clWdTeJLkWE', 13435, 28),
+	(1000533, 'RFvRgoYPCzo', 13437, 30),
+	(1000533, 'gp3i_EgXK6A', 13439, 32),
+	(1000534, 'HK6RBi90F8Y', 13440, 1),
+	(1000535, 'AXqGB16Q2Gs', 13443, 2),
+	(1000535, '866wN3nNGSY', 13445, 4),
+	(1000535, 'Wh0Sr0pYfKc', 13447, 6),
+	(1000536, 'AbpFchnkTOc', 13448, 1),
+	(1000536, 'H2fkOq4RPvU', 13450, 3),
+	(1000538, '1Q4k19xgjb0', 13454, 2),
+	(1000538, '5iZpn2dd5sc', 13456, 4),
+	(1000538, 'EROREGr9YBQ', 13458, 6),
+	(1000538, 'uC05HffzZYI', 13460, 8),
+	(1000538, 'Q937njMQOCo', 13462, 10),
+	(1000538, '3Dtt6MCdViU', 13464, 12),
+	(1000538, 'TlsdlBYeB_g', 13466, 14),
+	(1000538, 'NUJr8Y5axqY', 13468, 16),
+	(1000539, 'oK0lud3aBRI', 13469, 1),
+	(1000539, '1Iau5iNkNec', 13471, 3),
+	(1000539, 'CauyH9tjqQU', 13473, 5),
+	(1000540, 'CmcakNE-id4', 13482, 9),
+	(1000540, 'yMZSS9xer_c', 13484, 13),
+	(1000540, 'EYepfTBEQsE', 13480, 17),
+	(1000540, 'D5x84BCd1wc', 13492, 19),
+	(1000540, '8dfXuWLUdBA', 13496, 23),
+	(1000540, 'xC-h-on3g-U', 13498, 25),
+	(1000540, 'QbzrbQMKJ8Y', 13478, 26),
+	(1000540, '7KKx09zkhY0', 13476, 28),
+	(1000540, 'l5ozEs8ufVk', 13474, 30),
+	(1000540, 'nS4sxuyQbL0', 13504, 31),
+	(1000540, 'Dq8Ly2s87-Q', 13506, 33),
+	(1000540, 'cFQe2vvkB7E', 13508, 35),
+	(1000540, 'HcLU55OX1dE', 13510, 37),
+	(1000540, 'R66bZE8R3TU', 13512, 39),
+	(1000540, 'wbI1XzaMRu0', 13514, 41),
+	(1000541, 'CDysrB2mVNA', 13517, 3),
+	(1000541, 'Zd6SDQYEDvI', 13519, 5),
+	(1000541, 'Ck_AVbqOlM0', 13521, 7),
+	(1000541, 'TWzBccJUCWk', 13523, 9),
+	(1000541, '38O5LMVB4L4', 13525, 11),
+	(1000541, 'OuAbQxcH7rg', 13531, 17),
+	(1000541, 'juEC6w1qwpY', 13515, 18),
+	(1000541, '4A5wCOMwAd8', 13533, 19),
+	(1000541, 'fx5WJAtkMp4', 13535, 21),
+	(1000541, 'p2LwvucQ94U', 13537, 23),
+	(1000541, 'Fq4DoxRUFCo', 13539, 25),
+	(1000541, 'B3r-oWzL4sQ', 13541, 27),
+	(1000541, 'cZdWTmAMR0w', 13543, 29),
+	(1000541, 'F_5zmZGUOLo', 13545, 31),
+	(1000541, 'TwndsDnrMw0', 13547, 33),
+	(1000541, 'ht_qrfnNpsA', 13549, 35),
+	(1000541, '8AL2nLlqQpQ', 13551, 37),
+	(1000541, '8kvR6m9sQqY', 13553, 39),
+	(1000541, 'sI2zO7D7Zjg', 13555, 41),
+	(1000541, '_qR5PnlBoDw', 13557, 43),
+	(1000541, 'AuHebAXjxnE', 13559, 45),
+	(1000541, 'fTo1Ub42G4Q', 13561, 47),
+	(1000541, '90Qlsy90JVU', 13565, 51),
+	(1000541, 'snXZ_T3G5YM', 13567, 53),
+	(1000532, '8Jj0vKG60Rc', 13307, 50),
+	(1000532, 'BB5VhaLICsM', 13309, 52),
+	(1000532, 'D-ai6U5t0WI', 13311, 54),
+	(1000532, 'wWEsWCHeo7Y', 13313, 56),
+	(1000532, 'bYeZH0RX6oI', 13315, 58),
+	(1000532, 'EIXqZCjgeD0', 13317, 60),
+	(1000532, 'iw1cZy8lWd4', 13319, 62),
+	(1000532, 'I60M3T8AzVg', 13321, 64),
+	(1000532, '7vMO2mPNadE', 13323, 66),
+	(1000532, 'moKd9CLY3fQ', 13325, 68),
+	(1000532, 'oetEs7fGFsg', 13327, 70),
+	(1000532, 'KBSLx-lwRKo', 13329, 72),
+	(1000532, 'QrfiMNj_hTA', 13331, 74),
+	(1000532, 'V7vkLTdwV8E', 13333, 76),
+	(1000532, 'JZpv3a380BQ', 13335, 78),
+	(1000532, '9bxBmgmZWNQ', 13337, 80),
+	(1000532, 'ezrSYoiXBGs', 13339, 82),
+	(1000532, 'KZoskNFTZa0', 13341, 84),
+	(1000532, '-I04yGdEDNc', 13343, 86),
+	(1000532, 'hexd5ELAB9s', 13345, 88),
+	(1000532, 'ROKEJSGqjfI', 13347, 90),
+	(1000532, 'kUy513a-u6k', 13349, 92),
+	(1000532, 'ZK9__Nl6HVg', 13351, 94),
+	(1000532, 'SnDvu5q_Kp8', 13353, 96),
+	(1000532, 'wYezMUtb8fM', 13355, 98),
+	(1000532, 'HTSjFHkZ4S0', 13357, 100),
+	(1000532, '5bnzJwxkcoc', 13359, 102),
+	(1000532, 'ZkWyxusD48I', 13361, 104),
+	(1000532, 'upUCfseEcO8', 13363, 106),
+	(1000532, 'a_opV1rwlS4', 13365, 108),
+	(1000532, 'dUCJcJF5vWc', 13367, 110),
+	(1000532, 'yAkvF7TH-r8', 13369, 112),
+	(1000532, 'PMPe_U1w1lg', 13371, 114),
+	(1000532, 'dI0dI7jSyWY', 13373, 116),
+	(1000532, 'azto8mwBPi0', 13375, 118),
+	(1000532, 'gF3OB1g8hE8', 13377, 120),
+	(1000532, 'cKAWBUBbBZY', 13379, 122),
+	(1000532, '9LoGnV3oTbg', 13381, 124),
+	(1000532, 'DQFP4L7khcA', 13383, 126),
+	(1000532, 'FxDIqNURC6c', 13385, 128),
+	(1000532, 'u_h56mNSWUA', 13387, 130),
+	(1000532, 'CBKaj3AEDSg', 13389, 132),
+	(1000532, 'qPfjpCn3MBg', 13391, 134),
+	(1000532, 'gsmS_kmUgIM', 13393, 136),
+	(1000532, 'X2dXt2DczCo', 13395, 138),
+	(1000532, 'ioe0BovGz5E', 13397, 140),
+	(1000532, '0lBFaH6RdwI', 13399, 142),
+	(1000532, '8l8E77OyoeM', 13401, 144),
+	(1000532, '1PHMEDhVDbo', 13403, 146),
+	(1000562, 'ZmwKP9OOqHI', 14931, 23),
+	(1000562, '_xYw_X6M5xE', 14933, 25),
+	(1000533, 'sltE7dZAiXU', 13408, 1),
+	(1000533, 'tfqlOYAz7eU', 13410, 3),
+	(1000533, 'meF4Rd8n7B8', 13412, 5),
+	(1000533, 'm-zo9m3V5Wc', 13414, 7),
+	(1000533, 'JG6K_1_My-4', 13416, 9),
+	(1000533, 'lC2o-cEjt7M', 13418, 11),
+	(1000533, '3zPj_V_Tj74', 13420, 13),
+	(1000533, 'lzCpO6qdk9Q', 13422, 15),
+	(1000533, 'pi3yf8gIUpQ', 13424, 17),
+	(1000533, 'ezbd5D9IxyQ', 13426, 19),
+	(1000533, 'th-vBGV0tkM', 13428, 21),
+	(1000533, 'wwKTcb30CzQ', 13430, 23),
+	(1000533, 'HZBO9fygiQ4', 13432, 25),
+	(1000533, 'mhkYlUyVHwY', 13434, 27),
+	(1000533, 'yDf_X-n-wgw', 13436, 29),
+	(1000533, 'ITbwNTNWchM', 13438, 31),
+	(1000534, 'vxOh1hlmpHI', 13441, 2),
+	(1000535, 'llP24sC9HGM', 13442, 1),
+	(1000535, '57_ByiApkww', 13444, 3),
+	(1000535, '6XyVvr_w2QE', 13446, 5),
+	(1000536, '3t43BeU2ooM', 13449, 2),
+	(1000536, 'W8cRaFjIn5Q', 13451, 4),
+	(1000537, 'Gtjao0bYZlY', 13452, 1),
+	(1000538, 'IcLjqo6p86o', 13453, 1),
+	(1000538, 'ori1MtJ3mEY', 13455, 3),
+	(1000538, 'syvJX7vBvUA', 13457, 5),
+	(1000538, '-9taY3QgjA4', 13459, 7),
+	(1000538, 'SxRNTbz2vrk', 13461, 9),
+	(1000538, 'BMKsmbiYq88', 13463, 11),
+	(1000538, 'm7h5vmGQUX8', 13465, 13),
+	(1000538, '3hUgGJ8or20', 13467, 15),
+	(1000539, 'd7I3j-1BHpk', 13470, 2),
+	(1000539, 'VIvPIlPeV9s', 13472, 4),
+	(1000540, 'J-FyP1Fdc2Y', 13483, 10),
+	(1000540, 'FmvW6O8Emnc', 13485, 12),
+	(1000540, 'Z7VPQOc2fW8', 13487, 14),
+	(1000540, 'gmXl5iHfR_U', 13481, 15),
+	(1000540, 'bp937sMW9aI', 13489, 16),
+	(1000540, 'FXcqW9nSie4', 13491, 18),
+	(1000540, 'jqclBCUFQdw', 13493, 20),
+	(1000540, 'YpZ1xUhhras', 13479, 21),
+	(1000562, 'UUkM8TKoxkg', 14935, 27),
+	(1000540, 'UJIMW1D8lc8', 13497, 24),
+	(1000540, 'rlGbMxckPos', 13477, 27),
+	(1000540, 't63UEtrpJjU', 13475, 29),
+	(1000540, 'e8yzgnUDUSM', 13505, 32),
+	(1000540, '_5zhUNc0J34', 13507, 34),
+	(1000540, 'V7ojez4ur2g', 13509, 36),
+	(1000540, 'kE8fmT1ysOc', 13511, 38),
+	(1000540, 'WwJicfcFI3s', 13513, 40),
+	(1000541, 'w0Vk4gCJLEI', 13518, 4),
+	(1000541, '6G_WfmD1RIE', 13524, 10),
+	(1000541, '7czGj2DPv-U', 13526, 12),
+	(1000541, 'Az4rJNfEW1Y', 13522, 13),
+	(1000541, '8I9CfQi2Iv8', 13528, 14),
+	(1000541, 'QaxiuvDdnyY', 13520, 15),
+	(1000541, 'XEvXMAmKwzE', 13516, 16),
+	(1000541, '66UF0JAx8Uk', 13534, 20),
+	(1000541, 'M5Zfvw_15q4', 13536, 22),
+	(1000541, 'cRmUMz1NPCs', 13538, 24),
+	(1000541, 'Y6RmdQ5rfIQ', 13540, 26),
+	(1000541, '-NHxQ77ljaI', 13542, 28),
+	(1000541, 'SyYpCaBfJtY', 13544, 30),
+	(1000541, 'wiSUxW8Qqcs', 13546, 32),
+	(1000541, 'UUrmWC9jSRY', 13548, 34),
+	(1000541, 'yVS1wL3UGxU', 13550, 36),
+	(1000541, '-YtC0yEyiqs', 13552, 38),
+	(1000541, 'ot66B23hy_k', 13554, 40),
+	(1000541, 'Y5t3DNdO2is', 13556, 42),
+	(1000541, '3j49zNJav6I', 13558, 44),
+	(1000541, 'dEbl0of0-dc', 13560, 46),
+	(1000562, '4qMReUJ7Sic', 14937, 29),
+	(1000562, 'QMQEdjxnXmo', 14939, 31),
+	(1000541, '38F70qw7ODg', 13566, 52),
+	(1000541, 'hUgrdSvoT3I', 13568, 54),
+	(1000541, 'aQzVuUK1kj0', 13570, 56),
+	(1000541, 'F7mf3R3fnoE', 13572, 58),
+	(1000541, 'jwrZoEEJh9U', 13574, 60),
+	(1000541, '2O4GMlfZqKQ', 13576, 62),
+	(1000541, 'hpzJ4xs8SY8', 13578, 64),
+	(1000541, 'XkmiJttnXSQ', 13580, 66),
+	(1000541, 'jop6105ad8M', 13582, 68),
+	(1000541, 'mWmPM300zIs', 13584, 70),
+	(1000562, 'RmqndCgl_ak', 14941, 33),
+	(1000542, 'pDj6jlknlXk', 13587, 3),
+	(1000562, 'HZcTefPwQRQ', 14943, 35),
+	(1000542, 'rPnIRD3GgwA', 13591, 7),
+	(1000543, 'YR_IAeMzDNU', 13592, 1),
+	(1000543, 'XeuYOGaBblQ', 13594, 3),
+	(1000543, 'Gd4QBkrkAAo', 13596, 5),
+	(1000543, 'h4mprWCOnR8', 13598, 7),
+	(1000544, 'HcDUH3-LLrA', 13599, 1),
+	(1000544, '5fawWHXhhTc', 13601, 3),
+	(1000544, 'mUPn40EPogo', 13603, 5),
+	(1000544, 'kiK9NJWM97U', 13605, 7),
+	(1000544, 'MXa1zZ-77gM', 13607, 9),
+	(1000545, 'oTF2qJXXYwA', 13610, 2),
+	(1000545, 'QzJfiERvz5Q', 13612, 4),
+	(1000545, '2g7UtmFe4N0', 13614, 6),
+	(1000545, '7Rgma_kc0Qc', 13618, 10),
+	(1000545, 'zdoxaB8b3SU', 13620, 12),
+	(1000545, 'V6CHIMlgh3M', 13622, 14),
+	(1000545, '-DUcru2O2Lg', 13624, 16),
+	(1000545, 'UYljMGINtWI', 13626, 18),
+	(1000545, '-MC4pIvFDcE', 13628, 20),
+	(1000545, 'cVO-zCruCok', 13630, 22),
+	(1000545, '2u9FesVZNpM', 13632, 24),
+	(1000545, 'dbED-0WGrO8', 13634, 26),
+	(1000545, 'JbVNgueNEkM', 13636, 28),
+	(1000545, 'MQ5Qsd37sic', 13638, 30),
+	(1000545, 'l312XsV_7S0', 13640, 32),
+	(1000545, 'nn4TFjTJjII', 13642, 34),
+	(1000545, 'yd3qoYX-YSE', 13644, 36),
+	(1000545, '3ipiPWMDrHE', 13646, 38),
+	(1000545, 'ak0R2p3fEZM', 13648, 40),
+	(1000562, 'xCwbpnb1uEs', 14945, 37),
+	(1000545, 'sk2YzTYznPY', 13652, 44),
+	(1000545, '1MZd44y7SbI', 13654, 46),
+	(1000563, '2-8wmeudaCw', 14948, 2),
+	(1000545, 'pFFmKGVoiZg', 13658, 50),
+	(1000563, 'OsGHCcqA23Y', 14950, 4),
+	(1000563, 'D6iWxJpCMeQ', 14952, 6),
+	(1000563, 'BUDNqf3Yiq0', 14954, 8),
+	(1000563, 'jdNA73L5q4M', 14956, 10),
+	(1000563, '60MovjrxPCs', 14958, 12),
+	(1000563, 'rZLpUu4LLow', 14960, 14),
+	(1000563, '4GDGJBSgxEw', 14962, 16),
+	(1000564, '6MuQ01nFfvk', 14965, 2),
+	(1000564, 'ajf1UFnB4l0', 14967, 4),
+	(1000564, 'AbnOzmTi_ck', 14969, 6),
+	(1000564, 'SaMkcNwc_Gs', 14971, 8),
+	(1000564, '0nWF-onqIXI', 14973, 10),
+	(1000564, 'HqiQAl9hu7I', 14975, 12),
+	(1000564, 'KuoxYiwSoX8', 14977, 14),
+	(1000564, 'Jw_uBH6Dyw4', 14979, 16),
+	(1000564, '6P-KESf_sW0', 14981, 18),
+	(1000564, 'mZDarp5G3_Y', 14983, 20),
+	(1000564, 'q7CwuBkihBQ', 14985, 22),
+	(1000564, 'q8aRMhBc38I', 14987, 24),
+	(1000564, '-iza7yhT3I8', 14989, 26),
+	(1000564, 'wbN1wM3nP1s', 14991, 28),
+	(1000564, 'E9kmdg0xADU', 14993, 30),
+	(1000564, 'tVRNPBBUrkA', 14995, 32),
+	(1000564, 'JZeYLM1UqfU', 14997, 34),
+	(1000564, 'IpMfrYRxhBc', 14999, 36),
+	(1000564, 'LYRWfyFpC9I', 15001, 38),
+	(1000564, '4-bqCWsT3g4', 15003, 40),
+	(1000564, 'OPyU-KYFpbw', 15005, 42),
+	(1000564, '2T01YYri-uM', 15007, 44),
+	(1000564, 'ywrxSOGfywQ', 15009, 46),
+	(1000564, 'TSTUMrW3cI8', 15011, 48),
+	(1000564, 'mavo31XEuCo', 15013, 50),
+	(1000564, 'MAKUpTmvf0Q', 15015, 52),
+	(1000564, 'J5FbLx4RWOM', 15017, 54),
+	(1000564, 'SleePZtgcK8', 15019, 56),
+	(1000564, 'd-QwWmMGa6c', 15021, 58),
+	(1000564, 'huDgPCvJci4', 15023, 60),
+	(1000564, 'ErFOW1iNDeI', 15025, 62),
+	(1000564, 'huMAmdvFUuE', 15027, 64),
+	(1000564, 'me-J5p0PXqU', 15029, 66),
+	(1000564, '4GDWX4gjOSM', 15031, 68),
+	(1000564, 'NBV2mD9Aac8', 15033, 70),
+	(1000564, 'Xvr3GVglzkU', 15035, 72),
+	(1000564, 'iySGH-9RhoY', 15037, 74),
+	(1000564, 'L6expjpHh7c', 15039, 76),
+	(1000564, 'alqXo3ZPimY', 15041, 78),
+	(1000564, '4DaojhnXXWo', 15043, 80),
+	(1000564, '6iwIBjvvWRw', 15051, 88),
+	(1000564, 'lVQaVPmLK6M', 15053, 90),
+	(1000564, 'd6tKUlrOaGg', 15055, 92),
+	(1000564, 'B8DLSwVFSz0', 15057, 94),
+	(1000564, 'I56ECCbojaI', 15059, 96),
+	(1000564, 'NRls6mSGftY', 15061, 98),
+	(1000564, '9qF7YKFvcS0', 15063, 100),
+	(1000564, 'Pd9-LzrFsD8', 15065, 102),
+	(1000564, 'Kbq1YjMVX-U', 15067, 104),
+	(1000564, 'r2rSC_Huet8', 15069, 106),
+	(1000564, 'tW9Wo_pPSdI', 15071, 108),
+	(1000564, 'J4tZHYn4rZk', 15073, 110),
+	(1000564, 'vlMB2F3iLV4', 15075, 112),
+	(1000564, '2XGyD6hwIoo', 15077, 114),
+	(1000564, 'DJrzlzrBUdI', 15079, 116),
+	(1000564, 'P29Z6z4R12c', 15081, 118),
+	(1000564, 'P20OSVTzOu8', 15083, 120),
+	(1000564, 'dqW_Gno1oPE', 15085, 122),
+	(1000564, 'uJjSmziMzUk', 15087, 124),
+	(1000564, 'Y1SBDfGbo10', 15089, 126),
+	(1000564, 'Ffth6d4-OdY', 15091, 128),
+	(1000541, 'SBZRZE4sSd4', 13569, 55),
+	(1000541, 'W98Jk4xqHWg', 13571, 57),
+	(1000541, 'BXDaJXnSBvo', 13573, 59),
+	(1000541, 'NIxSVhDLtiU', 13575, 61),
+	(1000541, 'iTOelWlCD3o', 13577, 63),
+	(1000541, 'M1xo_zVf4v4', 13579, 65),
+	(1000541, 'd1x97nMy3Ew', 13581, 67),
+	(1000541, 'PWRZtzf84yM', 13583, 69),
+	(1000542, 'v7vtnLrLmRw', 13586, 2),
+	(1000542, '1PP21_iudGM', 13588, 4),
+	(1000542, 'ms_Aavt_Bzk', 13590, 6),
+	(1000543, 'ddXKWyLw8bE', 13593, 2),
+	(1000543, 'F9RKGtRj1xQ', 13595, 4),
+	(1000543, 'aBdbrMeSWL4', 13597, 6),
+	(1000544, '4Yz8BkxxeVs', 13600, 2),
+	(1000544, 'gKPqxNeA4PY', 13602, 4),
+	(1000544, 'RzbMO4qBDtY', 13604, 6),
+	(1000544, '1Uox-0C49EE', 13606, 8),
+	(1000544, '2QQEwIxf2EQ', 13608, 10),
+	(1000545, 'vm3lzmx9K8Y', 13609, 1),
+	(1000545, 'Nto_KB2biWk', 13611, 3),
+	(1000545, 'IEv8UcTph40', 13613, 5),
+	(1000545, 'MXF0dd3CGeY', 13615, 8),
+	(1000545, 'hDO4aZJjxyc', 13617, 9),
+	(1000545, 'a-e_h-nmbxY', 13619, 11),
+	(1000545, 'Bs8zuMoS03w', 13621, 13),
+	(1000545, '3ufbKkzRDW4', 13623, 15),
+	(1000545, 'sFfyvrUi2QI', 13625, 17),
+	(1000545, 'DmwFL_9ct4Q', 13627, 19),
+	(1000545, 'AB2_nXzW3e8', 13629, 21),
+	(1000545, '8wo7XHs8GFg', 13631, 23),
+	(1000545, 'rpuuY2ejbRo', 13633, 25),
+	(1000545, 'U-SYttQ-mlA', 13635, 27),
+	(1000545, 'gcD7NBNWHng', 13637, 29),
+	(1000545, 'sPEb89EzJKk', 13639, 31),
+	(1000545, 'VVcynrh1jgw', 13641, 33),
+	(1000545, 'gxzToaiwk4E', 13643, 35),
+	(1000545, 'm1Sio4lnF1Q', 13645, 37),
+	(1000545, 'iAClj4iWrSw', 13647, 39),
+	(1000545, 'xRYP13v0KXc', 13649, 41),
+	(1000545, 'Xhga_Nkp57I', 13651, 43),
+	(1000545, '9MRb5VBE2GU', 13653, 45),
+	(1000545, 'N1p5NZ6giUY', 13655, 47),
+	(1000545, 'CCM0KBU_kx0', 13657, 49),
+	(1000564, 'tYz3j3NnUV8', 15024, 61),
+	(1000564, '8lIQdLhEKoU', 15026, 63),
+	(1000564, 'MUvs4mH7Hs0', 15028, 65),
+	(1000564, 'Ib2LuVIunUQ', 15030, 67),
+	(1000564, 'ZuWbcdS4twQ', 15032, 69),
+	(1000564, 'KHMr8A2rrxc', 15034, 71),
+	(1000564, 'HEqdBiP1bsc', 15036, 73),
+	(1000564, 'G7kktGd0BvA', 15038, 75),
+	(1000564, 'niw_KR0cRz0', 15040, 77),
+	(1000564, 'civJhJ5-aPU', 15042, 79),
+	(1000564, 'lnjyvP_tQY0', 15054, 91),
+	(1000564, 'Dd4mO6_Z9ok', 15056, 93),
+	(1000564, 'vPAJvTUhOWw', 15058, 95),
+	(1000564, '8CE4W__OoF8', 15060, 97),
+	(1000564, 'AA_mMzVmpOM', 15062, 99),
+	(1000564, 'Xxr6X6lDhrE', 15064, 101),
+	(1000564, 'd0l9gKzOztA', 15066, 103),
+	(1000564, 'oWdX71gD2LY', 15068, 105),
+	(1000564, 'ORF6f9Q4S9g', 15070, 107),
+	(1000564, 'jkrVMCEuPYQ', 15072, 109),
+	(1000564, '9YP-Xr8Awp0', 15074, 111),
+	(1000564, 'S8ko_D5Zjes', 15076, 113),
+	(1000564, 'cZzfhQuW2eE', 15078, 115),
+	(1000564, '1Y6Gurgz3xY', 15080, 117),
+	(1000564, 'XEFsAVkrgGI', 15082, 119),
+	(1000564, '__RfKalZDgU', 15084, 121),
+	(1000564, '7doMJA79CIE', 15086, 123),
+	(1000564, 'NFUCX8TFWsA', 15088, 125),
+	(1000564, 'UQnVSQXEb10', 15090, 127),
+	(1000564, 'vxxITYOPbEY', 15092, 129),
+	(1000564, 'gXspabWm52Y', 15093, 130),
+	(1000564, 'sCvtOXTVQ2s', 15094, 131),
+	(1000569, '7bl8QoQKKBc', 17106, 1530),
+	(1000569, 'De1u4A1_JGU', 17108, 1532),
+	(1000569, '2mLCP7GwDxo', 17110, 1534),
+	(1000569, '5TK68kuxGsg', 17112, 1536),
+	(1000569, '1gcLUJ1JwlI', 17114, 1538),
+	(1000565, 'Xpeo6F3B5ww', 15100, 1),
+	(1000565, 'Sf9HLtquaYI', 15101, 2),
+	(1000565, '0U7_32Yu4lU', 15102, 3),
+	(1000565, 'gwh5ZWPDa-E', 15103, 4),
+	(1000565, 'GdXpbA89A7g', 15104, 5),
+	(1000566, 'Y2_Y7CxaZkI', 15105, 1),
+	(1000566, 'Sl3Jql6NVNs', 15106, 2),
+	(1000566, '7gctWXDijS8', 15107, 3),
+	(1000566, 'We0El3oDfLE', 15108, 4),
+	(1000566, 'SQoV9QqJ564', 15109, 5),
+	(1000566, 'ktlzc3vUCZQ', 15110, 6),
+	(1000566, 'kxYKqA4q3Gk', 15111, 7),
+	(1000566, 'i0h9_Wn2pWE', 15112, 8),
+	(1000566, 'c2JueRMuG6s', 15113, 9),
+	(1000566, 'VkImASPXDhM', 15114, 10),
+	(1000569, '8J00AoIHqco', 17116, 1540),
+	(1000566, '8uUQasUwgps', 15116, 12),
+	(1000566, 'UPP_t8dytYk', 15117, 13),
+	(1000566, 'Uq-05teMIQY', 15118, 14),
+	(1000566, 'fu-9Wnj4urA', 15119, 15),
+	(1000566, '9BBJabm7hmY', 15120, 16),
+	(1000566, 'hn5wPl_l2SA', 15121, 17),
+	(1000566, 'h7G0JP4qI9M', 15122, 18),
+	(1000566, '0Suoo7Tzkso', 15123, 19),
+	(1000566, '3OZPgzwe1eY', 15124, 20),
+	(1000566, 'iKq8zQQoo9w', 15125, 21),
+	(1000566, 'UohzhVK4wJU', 15126, 22),
+	(1000566, 'wLPxpBqreco', 15127, 23),
+	(1000566, 'PV30M_7z6Zk', 15128, 24),
+	(1000566, 'IatIvoWgUGM', 15129, 25),
+	(1000566, 'MHnVW3YWjXQ', 15130, 26),
+	(1000566, 'NrQldbGcCbs', 15131, 27),
+	(1000566, 'BrxVoXewHD0', 15132, 28),
+	(1000566, 'QA-R_fD3V8Q', 15133, 29),
+	(1000546, 'bYW2xKpA3ts', 13800, 1),
+	(1000546, 'Gb9QCIOKLEc', 13802, 3),
+	(1000546, 'UUBkA5PKE0A', 13804, 5),
+	(1000546, 'jMr6T8fszvc', 13806, 7),
+	(1000566, 'ytbzTxTVSqI', 15134, 30),
+	(1000564, 'Aok7ReXj7Lg', 15044, 81),
+	(1000564, 'Ycmzqz_2IlA', 15046, 83),
+	(1000546, 'dva4L1vDvpE', 13801, 2),
+	(1000546, '3JP_mXGaTxE', 13803, 4),
+	(1000546, '7Jjon09mwDQ', 13805, 6),
+	(1000546, 'Fj4f6ttqups', 13807, 8),
+	(1000546, 'XigooSvTPBU', 13809, 10),
+	(1000546, '5g4MMjVOFjQ', 13811, 12),
+	(1000546, 'tlSK2-wC02k', 13813, 14),
+	(1000546, 'R5FzYPsca2M', 13815, 16),
+	(1000546, 'PigiYJ868AY', 13817, 18),
+	(1000546, 'aXpjCsyI3zI', 13819, 20),
+	(1000546, 'XPv9bRF2upA', 13821, 22),
+	(1000546, 'eoet08kSOIE', 13823, 24),
+	(1000564, 'jPNKvT18Qgg', 15048, 85),
+	(1000546, 'JamaPTFtkqs', 13827, 28),
+	(1000546, 'GAFOZWz1S-o', 13829, 30),
+	(1000546, 'W8Vtig1g_ss', 13831, 32),
+	(1000546, '3IXNtBZCwAI', 13833, 34),
+	(1000546, 't37Y7j-etu8', 13835, 36),
+	(1000546, '9wOrWNapJl0', 13837, 38),
+	(1000546, 'PTMB39qpeRw', 13839, 40),
+	(1000546, '6ceHxAlaMrU', 13841, 42),
+	(1000546, 'Pz8a23JjcsM', 13843, 44),
+	(1000546, 'CtzNlF880Xw', 13845, 46),
+	(1000546, 'aCFykZwXN1Y', 13847, 48),
+	(1000546, 'HXmFwqLZDRk', 13849, 50),
+	(1000546, '-5VnRv15IGY', 13851, 52),
+	(1000546, '16ZwCalExzc', 13853, 54),
+	(1000546, 'Q5zwsBmAy0A', 13855, 56),
+	(1000547, 'IsHpOotO_YU', 13858, 2),
+	(1000547, 'DOR-yziko2E', 13860, 4),
+	(1000547, 'VpQ9ySwVsF0', 13862, 6),
+	(1000547, 'TmAX_I6cN3Y', 13864, 8),
+	(1000547, 'kcAjk0EePcU', 13866, 10),
+	(1000547, 'r4DqcOY9xzg', 13868, 12),
+	(1000547, 'jIuvA-PGSjU', 13870, 14),
+	(1000547, 'noAUmAcBoXo', 13872, 16),
+	(1000547, 'G7PDAjxxMx8', 13874, 18),
+	(1000547, 'aZGO5U9qgWU', 13876, 20),
+	(1000547, 'aSWzSI5o0mY', 13878, 22),
+	(1000548, 'yXNHKlS7114', 13881, 2),
+	(1000548, 'oWOAHCAx15E', 13883, 4),
+	(1000548, '15e7gBrh8hk', 13885, 6),
+	(1000548, '8DMrPS3k30c', 13887, 8),
+	(1000548, 'z3K8GmS3Ig0', 13889, 10),
+	(1000548, 'DYxte2e_KL0', 13891, 12),
+	(1000548, '7w-Ifxmqd5c', 13893, 14),
+	(1000548, 'LARsmwTfszI', 13895, 16),
+	(1000548, 'rPTdnzJWnUc', 13897, 18),
+	(1000548, '1jBuHraGF08', 13899, 20),
+	(1000548, 'zBeBf52y3nQ', 13901, 22),
+	(1000548, 'Y-7s1PqgQEU', 13903, 24),
+	(1000548, '8giq4z5JVXc', 13905, 26),
+	(1000548, 'zR6OkB_pO-Y', 13907, 28),
+	(1000549, '1OrIRGdjmqM', 13908, 1),
+	(1000549, 'WxqTNNI2bi0', 13910, 3),
+	(1000549, 'lArZV7gJ-7A', 13912, 5),
+	(1000549, 'dSwwUQ_BhT4', 13914, 7),
+	(1000549, 'p2CeRs6Z39s', 13916, 9),
+	(1000549, 'weOlrrtDlbs', 13918, 11),
+	(1000550, 'jghYYWJyRCA', 13921, 2),
+	(1000550, 'dqhIMpoipH4', 13923, 4),
+	(1000550, 'x0TyQIO_jwY', 13925, 6),
+	(1000550, '1ZmKDa8wbfI', 13927, 8),
+	(1000550, 'nRXu6NecCTc', 13929, 10),
+	(1000550, 'UyZE4ILIKMU', 13931, 12),
+	(1000550, 'nuJkfPHg6Ic', 13933, 14),
+	(1000550, 'BcIwYl5bCjE', 13935, 16),
+	(1000550, 'oztPh04KtXg', 13937, 18),
+	(1000550, '5ZQYpqMjvpI', 13939, 20),
+	(1000550, 'AwjThPzQ-DI', 13941, 22),
+	(1000550, 'mWuxDd7Hgr8', 13943, 24),
+	(1000551, 'PJjzoy2wQoY', 13946, 2),
+	(1000551, '9kkgmKgqrZg', 13948, 4),
+	(1000551, '8SoYdZ4-uX8', 13950, 6),
+	(1000551, 'J7dKEeQ5iik', 13952, 8),
+	(1000551, 'brjayUcFays', 13954, 10),
+	(1000551, 'kWzqdP7O-oM', 13956, 12),
+	(1000551, 'yIj1EEe7NG0', 13958, 14),
+	(1000551, '56yieVPoBgA', 13960, 16),
+	(1000551, '3zHnO-jJwXU', 13962, 18),
+	(1000551, 'O3Sw0GkJ_Bc', 13964, 20),
+	(1000552, 'mWdKIQ_UOTg', 13965, 1),
+	(1000552, 'aByzqb0kU38', 13967, 3),
+	(1000552, 'Fcy-CZLBEsU', 13969, 5),
+	(1000552, 'CsV_wUnewos', 13971, 7),
+	(1000564, 's58xd7rmrms', 15050, 87),
+	(1000552, '0iF09hXKcyA', 13975, 11),
+	(1000552, 'c7hNESpJ-8c', 13977, 13),
+	(1000552, 'iT7kexu57EE', 13979, 15),
+	(1000553, 'SvX-WDK54Zs', 13982, 2),
+	(1000553, 'ItzWRMvHDB4', 13984, 4),
+	(1000553, 'dBEVfDy2bpU', 13986, 6),
+	(1000553, 'gvrMlFa173A', 13988, 8),
+	(1000553, 'NdDFSHprG8Y', 13990, 10),
+	(1000553, 'VvrgYBXXVQc', 13992, 12),
+	(1000554, 'bUmCCkOdEMA', 13995, 2),
+	(1000554, '2IEy3HToR5s', 13997, 4),
+	(1000554, '2yue4G_MFSQ', 13999, 6),
+	(1000554, '01h6OpLttc4', 14001, 8),
+	(1000554, 'EWW-kLaUqNg', 14003, 10),
+	(1000554, '0aCOEJ3DbBw', 14005, 12),
+	(1000554, 'l7Jmv3OKBM0', 14007, 14),
+	(1000554, 'jTy7wYlBElo', 14009, 16),
+	(1000554, 'Vynv51TKtoI', 14011, 18),
+	(1000554, 'LDLn620wNV0', 14013, 20),
+	(1000554, 'RiNO5y848-A', 14015, 22),
+	(1000554, 'mLMfWN7W96M', 14017, 24),
+	(1000554, 'UimPfrT9yWQ', 14019, 26),
+	(1000555, '1zcPILkebEs', 14022, 2),
+	(1000555, 'Uoya8Lg8MpM', 14024, 4),
+	(1000555, 'K_hqL1TeACM', 14026, 6),
+	(1000555, 'euU2xr_9AY0', 14028, 8),
+	(1000555, 'x74LIB6Roow', 14030, 10),
+	(1000555, 'sFP8N1vZvt8', 14032, 12),
+	(1000555, 'RJ4DaiMH41o', 14034, 14),
+	(1000555, 'PP-sGlPmWkI', 14036, 16),
+	(1000555, '3D-7O65c79k', 14038, 18),
+	(1000564, 'rC2iC92twTs', 15052, 89),
+	(1000546, 'Vkgl4kuakPs', 13808, 9),
+	(1000546, 'BSFbXhbQLjA', 13810, 11),
+	(1000546, 'FLP54oMMvNU', 13812, 13),
+	(1000546, 'E2MXj5eOFxE', 13814, 15),
+	(1000546, 'dkyWuV4nC20', 13816, 17),
+	(1000546, 'ruxozBtjCTM', 13818, 19),
+	(1000546, 'DQqMqC_U2VA', 13820, 21),
+	(1000546, 'IScCSATsK8w', 13822, 23),
+	(1000546, '-wxBZvnV-uw', 13824, 25),
+	(1000546, 'ZJtCzanZ3SE', 13826, 27),
+	(1000546, '0af5oWGpbc0', 13828, 29),
+	(1000546, 'uaYvHqoqRbU', 13830, 31),
+	(1000546, '09vIy9SUO2A', 13832, 33),
+	(1000546, 'E9xjQU_EE_U', 13834, 35),
+	(1000546, 'Xz-UxQvymNc', 13836, 37),
+	(1000546, 'Gg8rYeLlr6U', 13838, 39),
+	(1000546, 'xCOt5VIYhlI', 13840, 41),
+	(1000546, '3o70slKlzQk', 13842, 43),
+	(1000546, '0l0BoMcwl3U', 13844, 45),
+	(1000546, 'Uzxd2uOR0sI', 13846, 47),
+	(1000546, 'BQa2NFVNskE', 13848, 49),
+	(1000546, 'JbwJz9i_HYE', 13850, 51),
+	(1000546, 'VY0Qkfgpq18', 13852, 53),
+	(1000546, 'lcz6kyR6-FI', 13854, 55),
+	(1000546, 'vS9-B2WyTEU', 13856, 57),
+	(1000547, 'CbhWKNehRIM', 13857, 1),
+	(1000547, '_aI9JFiqMSM', 13859, 3),
+	(1000547, 'MbdaHPT93iQ', 13861, 5),
+	(1000547, 'OP7nLWzZ3Wk', 13863, 7),
+	(1000547, 'yItNt9g1b2Y', 13865, 9),
+	(1000547, 'dkVxkKnLec8', 13867, 11),
+	(1000547, 'v19w7TuTdvg', 13869, 13),
+	(1000547, 'stzsGl6uIh8', 13871, 15),
+	(1000547, 'dwxCHdvaV60', 13873, 17),
+	(1000547, 'bwqRV1cpUfM', 13875, 19),
+	(1000547, '4iMl8zLqAAQ', 13877, 21),
+	(1000547, 'qPEiqgRGpKQ', 13879, 23),
+	(1000548, 'Utrv4o_34DI', 13880, 1),
+	(1000548, 'sBDJ8Ed_YEI', 13882, 3),
+	(1000548, 'YnMJMd0lFyA', 13884, 5),
+	(1000548, 's6BqgvA94UU', 13886, 7),
+	(1000548, '-axu1Ct7eJM', 13888, 9),
+	(1000548, 'SUWClBPoHEQ', 13890, 11),
+	(1000548, 'kZYY9ebOKdw', 13892, 13),
+	(1000548, 'w8256pbID9g', 13894, 15),
+	(1000548, '9r2FsXOjwXk', 13896, 17),
+	(1000548, 'MsQCs5g9Fks', 13898, 19),
+	(1000548, 'HzevjbcQh88', 13900, 21),
+	(1000548, 'vLN0C2QjcR4', 13902, 23),
+	(1000548, '6ZcXARX6e70', 13904, 25),
+	(1000548, 'AJJ3rprEFw8', 13906, 27),
+	(1000549, 'jwsNb1UVWLg', 13909, 2),
+	(1000549, '8D4NkS19Nso', 13911, 4),
+	(1000549, 'CJxoeh7G_e4', 13913, 6),
+	(1000564, 'L7K2UlZ615w', 15045, 82),
+	(1000549, 'HeufSaBMr5E', 13917, 10),
+	(1000549, '_WoV1y0nVa4', 13919, 12),
+	(1000550, 'gIuBTkBQ8LU', 13920, 1),
+	(1000550, 'aDZIxjLNwBM', 13922, 3),
+	(1000550, '8Pgw8yJEwWw', 13924, 5),
+	(1000550, 'uBJo8aeAeU8', 13926, 7),
+	(1000550, 'J-v1FjZ4RpU', 13928, 9),
+	(1000550, 'Ld8RLJJJCnM', 13930, 11),
+	(1000550, 'BvnZkzZcE1I', 13932, 13),
+	(1000550, 'mLN0xzKNbLw', 13934, 15),
+	(1000550, 'FN7xdGJNoFw', 13936, 17),
+	(1000550, 'N1hH8JCDYEI', 13938, 19),
+	(1000550, 'o9WaUwAaZk8', 13940, 21),
+	(1000550, 'VM_xa0CpZRo', 13942, 23),
+	(1000550, 'K723nK1ciLQ', 13944, 25),
+	(1000551, 'Q-Wy351cdGs', 13945, 1),
+	(1000551, '-wjnHiQnPKE', 13947, 3),
+	(1000551, 'hScF2V_MaPg', 13949, 5),
+	(1000564, 'eqAkCIxL5Nw', 15047, 84),
+	(1000551, 'utkE9AZUq-E', 13953, 9),
+	(1000551, 'QwynFaHxPPM', 13955, 11),
+	(1000551, '6kZVEdiPMmY', 13957, 13),
+	(1000551, 'xW3cb9SOK7Y', 13959, 15),
+	(1000551, 'DTT02tWoJyY', 13961, 17),
+	(1000551, 'dvDuOzYcgcM', 13963, 19),
+	(1000552, 'drdc7zDQA7c', 13966, 2),
+	(1000552, 'B0tQXiiTOWY', 13968, 4),
+	(1000552, 'QENsRYLjxAc', 13970, 6),
+	(1000552, 'bsvlGqdnqBs', 13972, 8),
+	(1000552, '3ITAeruG5jc', 13974, 10),
+	(1000552, 'GvJ-ezwLiHQ', 13976, 12),
+	(1000552, 'rawi1nSMwXo', 13978, 14),
+	(1000552, 'lBswiou9c68', 13980, 16),
+	(1000553, 'T6Mv7RYkFa0', 13981, 1),
+	(1000553, 'dpp5Pl6iQXQ', 13983, 3),
+	(1000553, 'Y1sAToGcc74', 13985, 5),
+	(1000553, 'O9-ul_kHBEQ', 13987, 7),
+	(1000553, 'ZUkOPrbj0yA', 13989, 9),
+	(1000553, 'QUZFM2Kau2g', 13991, 11),
+	(1000553, 'ttct5U8-2eU', 13993, 13),
+	(1000554, 'hDaTEFiVrz0', 13994, 1),
+	(1000554, '5q2mjhzD4XE', 13996, 3),
+	(1000554, 'Byr6HNdz-Hc', 13998, 5),
+	(1000554, '-pE5oMY05QY', 14000, 7),
+	(1000554, 'n_4uT7fKaBg', 14002, 9),
+	(1000554, 'GIe7jolargQ', 14004, 11),
+	(1000554, 'K1ofrDzSou0', 14006, 13),
+	(1000554, 'lN35QYgFIgk', 14008, 15),
+	(1000554, 'oUexlItMwPM', 14010, 17),
+	(1000554, 'QgzlUgZBqYs', 14012, 19),
+	(1000554, '2ckkmcub5os', 14014, 21),
+	(1000554, 'cvlVxAbOjAg', 14016, 23),
+	(1000554, 'cm9DYa1fScY', 14018, 25),
+	(1000554, 'uRHDOgiZbHE', 14020, 27),
+	(1000555, 'sHFmvE7W1zU', 14021, 1),
+	(1000555, 'qu3b5jr5-lc', 14023, 3),
+	(1000555, 'VbKA1llgGvw', 14025, 5),
+	(1000555, '6MCkeLReeHc', 14027, 7),
+	(1000555, 'UZvdQtpJRJ8', 14029, 9),
+	(1000555, 'khkXwdJ_o8Y', 14031, 11),
+	(1000555, 'vlgiT4Alitw', 14033, 13),
+	(1000555, 'NaNcdSUSWSI', 14035, 15),
+	(1000555, 'IZINe_PpX_c', 14037, 17),
+	(1000555, 'OXsYUbgCe-s', 14039, 19),
+	(1000564, '9qSv4YCW2Bo', 15049, 86),
+	(1000566, 'wQz97SoiHnA', 15135, 31),
+	(1000566, '98I92sUtR-8', 15137, 33),
+	(1000566, 'T5ypt5nIu9I', 15139, 35),
+	(1000566, '_4ECbRdK93E', 15141, 37),
+	(1000566, 'rdcwAvr3b7I', 15143, 39),
+	(1000566, '_nweJAariPk', 15145, 41),
+	(1000566, 'XkgiUCq05kw', 15147, 43),
+	(1000566, 'GurVZXkUmEQ', 15149, 45),
+	(1000566, 'H2k9R7NYWtg', 15151, 47),
+	(1000566, '3d8G8WDjpQc', 15153, 49),
+	(1000566, 'wmzON7uojcU', 15155, 51),
+	(1000566, 'VT3fngPoopM', 15157, 53),
+	(1000566, '1vzyRNQdpZA', 15159, 55),
+	(1000566, 'CCz9zYcCPJ4', 15161, 57),
+	(1000566, 'aMX-qmUPfNI', 15163, 59),
+	(1000566, 't5iE37INc0o', 15165, 61),
+	(1000566, 'GZHN15l3Q-s', 15167, 63),
+	(1000566, '-cifg3AhYco', 15169, 65),
+	(1000566, 'ZB2Vi2UHXLw', 15171, 67),
+	(1000566, 'mI-g09B0GSE', 15173, 69),
+	(1000566, '9Cm-2GvYrCA', 15175, 71),
+	(1000566, 'Bhk9PvrGRsc', 15177, 73),
+	(1000566, 'L3Rfqe5qGHw', 15179, 75),
+	(1000566, 'ccZA4daJZ4Y', 15181, 77),
+	(1000566, 'ee-yK4HemeE', 15183, 79),
+	(1000566, 'woQ__JyGrs4', 15185, 81),
+	(1000566, 'H9unb0po9yI', 15187, 83),
+	(1000566, '400TUXuhKeM', 15189, 85),
+	(1000566, 'OKMKqIOFFMU', 15191, 87),
+	(1000566, '7aozgtoQ-NE', 15193, 89),
+	(1000566, 'Geq_IFSN88Q', 15195, 91),
+	(1000566, 'PF3Oi3R1E4c', 15197, 93),
+	(1000566, 'FLGHnJKnebc', 15199, 95),
+	(1000566, 'nDuST7tLcCg', 15201, 97),
+	(1000566, 'EnrHxZ5VOrw', 15203, 99),
+	(1000566, 'teVTzCXIsSY', 15205, 101),
+	(1000566, 'kNTTz-G0K4w', 15207, 103),
+	(1000566, 'Al-aHKWVwUs', 15209, 105),
+	(1000566, 'de5AgnLSMbU', 15211, 107),
+	(1000566, 'pZi1Um5BIlU', 15213, 109),
+	(1000566, 'z0erCmiUdzM', 15215, 111),
+	(1000566, 'BQ3cBHiQk_U', 15217, 113),
+	(1000566, 'bwEQ4thDNTA', 15219, 115),
+	(1000566, 'tsZ-rHJvSpM', 15221, 117),
+	(1000566, 'EqRTX4TQqxc', 15223, 119),
+	(1000566, 'JmmCLqYmcV8', 15225, 121),
+	(1000566, 'Lebh2LZ4EsQ', 15227, 123),
+	(1000566, 'pDuNyYmQnh4', 15229, 125),
+	(1000566, 'QkmgBigZAIs', 15231, 127),
+	(1000566, '4YTGSXKYQNs', 15233, 129),
+	(1000566, 'Sff-lIkITAU', 15235, 131),
+	(1000566, 'KZvGCS7XOOQ', 15237, 133),
+	(1000566, '3CxDEbJfi7w', 15239, 135),
+	(1000566, 's7VeBg9QcMk', 15241, 137),
+	(1000566, 'mpTV6InJm2s', 15243, 139),
+	(1000566, 'zackJuElX4w', 15245, 141),
+	(1000566, 'wTqqRaAQYvE', 15247, 143),
+	(1000566, '3SDciUf7umA', 15249, 145),
+	(1000566, 'FbEcOyvc0oU', 15251, 147),
+	(1000566, 'pDyxpgFzrIo', 15253, 149),
+	(1000566, 'WQ02SPiiWDk', 15255, 151),
+	(1000566, 'kbvsjxq3FvQ', 15257, 153),
+	(1000566, 'FHsH8HasHPw', 15259, 155),
+	(1000567, 'ApGqc6D6fXA', 15262, 2),
+	(1000567, 'KtPonnOTRlI', 15264, 4),
+	(1000567, 'wsfD_2VuMC8', 15266, 6),
+	(1000567, 'lkzDEJS8EYo', 15268, 8),
+	(1000567, 'PAF5qWY0oaE', 15270, 10),
+	(1000567, 'lNoxHeqIwDw', 15272, 12),
+	(1000567, 'VU0Qbkg7IMo', 15274, 14),
+	(1000567, '7ME94XAW9DI', 15276, 16),
+	(1000567, 'tbcgBqrW4FU', 15278, 18),
+	(1000567, 'uiILhtGGRyg', 15280, 20),
+	(1000567, '27RzHW6V84Y', 15282, 22),
+	(1000567, 'ViYqvjWaCjE', 15284, 24),
+	(1000567, 'irB014__jOc', 15286, 26),
+	(1000567, 'VhxkFHNyU90', 15288, 28),
+	(1000567, 'Tl2RT64PgCU', 15290, 30),
+	(1000567, 'pYVua1CB9sk', 15292, 32),
+	(1000567, '6Z_qiSQz7ok', 15294, 34),
+	(1000567, '57wQo4OuI5E', 15296, 36),
+	(1000567, 'I6MjWdPg7mo', 15298, 38),
+	(1000567, 'vc1rwDEA22o', 15300, 40),
+	(1000567, 'wmn0ne-dqpU', 15302, 42),
+	(1000567, 'Xu-CmYWEVto', 15304, 44),
+	(1000567, 'kRocfCMewpA', 15306, 46),
+	(1000567, 'p-6xs4RcZp0', 15308, 48),
+	(1000567, 'ndupQX6Lfzw', 15310, 50),
+	(1000567, 'bqAfRH5ald4', 15312, 52),
+	(1000567, 'G95iGi_pgwU', 15314, 54),
+	(1000567, '1MwNoNMfUyc', 15316, 56),
+	(1000567, '_ZjyKORDnIU', 15318, 58),
+	(1000567, 'mR-5EgC8TtU', 15320, 60),
+	(1000567, 'G4wnFPU_FCg', 15322, 62),
+	(1000567, 'kkPiv9cRhvE', 15324, 64),
+	(1000567, 'zf-WwXj_Gvc', 15326, 66),
+	(1000567, 'pFrijZXvBss', 15328, 68),
+	(1000567, 'Pzw8tAbx4SU', 15330, 70),
+	(1000567, '-OzKzhCxGmY', 15332, 72),
+	(1000567, 'ZMijymRDfaM', 15334, 74),
+	(1000567, 'v4UoRpLGOJI', 15336, 76),
+	(1000567, '2t5eoB6ua1E', 15338, 78),
+	(1000569, 'yybvdrNdhXM', 17107, 1531),
+	(1000569, '54z5WxZu3ok', 17109, 1533),
+	(1000568, 'PCsaD2dB1Pw', 15343, 1),
+	(1000568, 'hb1h3U1C-_0', 15345, 3),
+	(1000568, 'QO0Sg2he0Dc', 15347, 5),
+	(1000568, 'DPrYOMuUtOA', 15349, 7),
+	(1000568, 'A4oTXqfgWnA', 15351, 9),
+	(1000568, 'AoE9oH-0q1I', 15353, 11),
+	(1000568, 'dbWn55m261U', 15355, 13),
+	(1000568, 'ESzYiOdBHZQ', 15357, 15),
+	(1000568, 'JBVR9EVslMk', 15359, 17),
+	(1000568, '02-C6x_IL8Q', 15361, 19),
+	(1000568, 'CUGC4LDFlF4', 15363, 21),
+	(1000568, 'RFndo0NwDsg', 15365, 23),
+	(1000568, 'q4EscT6vvqY', 15367, 25),
+	(1000568, 'gsPPB6RBRV8', 15369, 27),
+	(1000568, 'KhB-krWbPfY', 15371, 29),
+	(1000568, 'FMJqQndP9I8', 15373, 31),
+	(1000566, 'RqU0cPobfho', 15136, 32),
+	(1000566, '2gPPkir8RkE', 15138, 34),
+	(1000566, 'Ni7KXL9AlH0', 15140, 36),
+	(1000566, 'KH6VetqFMDM', 15142, 38),
+	(1000566, 'PSeRKnBBEh8', 15144, 40),
+	(1000566, 'IVD7qQBamKU', 15146, 42),
+	(1000566, 'Izm5OAkQ7LI', 15148, 44),
+	(1000566, 'LYg09gS-67Q', 15150, 46),
+	(1000566, '90FFra1830w', 15152, 48),
+	(1000566, 'sWm43s79b1I', 15154, 50),
+	(1000566, 'eGMHSvBU_RQ', 15156, 52),
+	(1000566, 'AWR3pRvScFA', 15158, 54),
+	(1000566, '98hKKFe23jg', 15160, 56),
+	(1000566, 'PudI2cT7xhg', 15162, 58),
+	(1000566, 'ClwJg51Yhuw', 15164, 60),
+	(1000566, 'tW1vCe6wX78', 15166, 62),
+	(1000566, '4uKC2dbHAFU', 15168, 64),
+	(1000566, '8rrHCiwe7Lo', 15170, 66),
+	(1000566, 'JsmfgSH1g5M', 15172, 68),
+	(1000566, 'LJer4GMWWmw', 15174, 70),
+	(1000566, '2vuBbw9xBQM', 15176, 72),
+	(1000566, 'g0uDbNpVpIM', 15178, 74),
+	(1000566, 'khyRf1_wrkE', 15180, 76),
+	(1000566, 'tyA4aTlmAXk', 15182, 78),
+	(1000566, 'dINsiZNcK_w', 15184, 80),
+	(1000566, 'UjkTRzSMDkQ', 15186, 82),
+	(1000566, 'qMKB7oNUfpM', 15188, 84),
+	(1000566, 'TBnEWea_CqQ', 15190, 86),
+	(1000566, 'n_Q7Zv0-fmU', 15192, 88),
+	(1000566, 'm0Jf_wzwsMU', 15194, 90),
+	(1000566, 'SueTUPWntn0', 15196, 92),
+	(1000566, 'eh3AZhm2ImY', 15198, 94),
+	(1000566, '5BnjZ9fwqyM', 15200, 96),
+	(1000566, 'jaGyoiJSIUs', 15202, 98),
+	(1000566, 'fGdFtMCHLTA', 15204, 100),
+	(1000566, 'TCGXmyWHbo0', 15206, 102),
+	(1000566, '1bFmT5S8XEU', 15208, 104),
+	(1000566, 'lejGlmLqyVc', 15210, 106),
+	(1000566, 'JAgQhyIkt_0', 15212, 108),
+	(1000566, 'sq-HQBtaRcE', 15214, 110),
+	(1000566, '8YnHFZsn96w', 15216, 112),
+	(1000566, 'TLvTYcVTRnA', 15218, 114),
+	(1000566, '1pyiBCOdVDE', 15220, 116),
+	(1000566, 'oHrQ2ARc9I8', 15222, 118),
+	(1000566, 'ApXOgpE2kH0', 15224, 120),
+	(1000566, '8zWfW2MThpo', 15226, 122),
+	(1000566, '3xXxteuWa54', 15228, 124),
+	(1000566, 'WyAe7ySQigs', 15230, 126),
+	(1000566, 'TXeMF2WoX3E', 15232, 128),
+	(1000566, 'SymAGEtJAGU', 15234, 130),
+	(1000566, '7eGLYSiebxo', 15236, 132),
+	(1000566, 'DDk9IJN_qjU', 15238, 134),
+	(1000566, 'HWmWsE07zUQ', 15240, 136),
+	(1000566, 'owIeK7kFwDg', 15242, 138),
+	(1000566, 'Yic20wXUafo', 15244, 140),
+	(1000566, 'z-G8ZjFAJJE', 15246, 142),
+	(1000566, 'zReFiHQqdb4', 15248, 144),
+	(1000566, 'iUobPOxZoJk', 15250, 146),
+	(1000566, 'kLx2vUxhe1M', 15252, 148),
+	(1000566, '8drHuB7AipE', 15254, 150),
+	(1000566, '1LVnDqIgkrs', 15256, 152),
+	(1000566, 'BAByjJCRKeA', 15258, 154),
+	(1000566, 't-b7H6wbdjU', 15260, 156),
+	(1000567, '8HFfErf2bXA', 15261, 1),
+	(1000567, 'SmYXcqPMbfY', 15263, 3),
+	(1000567, '2m5LpZjiF3I', 15265, 5),
+	(1000567, 'UaL5RVNKtkc', 15267, 7),
+	(1000567, 'LKFrNUK_U20', 15269, 9),
+	(1000567, 'mcxvxVjRJus', 15271, 11),
+	(1000567, 'lABCuPnRpHY', 15273, 13),
+	(1000567, '0scA9B70WKg', 15275, 15),
+	(1000567, 'Ur3hSPxEauc', 15277, 17),
+	(1000567, 'rcT50LDIsik', 15279, 19),
+	(1000567, 'grnuu36mkqE', 15281, 21),
+	(1000567, 'F_0bJjihjaM', 15283, 23),
+	(1000567, 't9d2X0R5we4', 15285, 25),
+	(1000567, '51gazeM5FeQ', 15287, 27),
+	(1000567, 'Db961A1SjgI', 15289, 29),
+	(1000567, 'qwRG_eTZEro', 15291, 31),
+	(1000567, 'c1Xgml9Miyg', 15293, 33),
+	(1000567, 'n6fFj7mC7fg', 15295, 35),
+	(1000567, 'XDgJw6rt6IE', 15297, 37),
+	(1000567, 'VaxsjnRlSQg', 15299, 39),
+	(1000567, '_EDH3DUyH74', 15301, 41),
+	(1000567, 'L84jooBsjO4', 15303, 43),
+	(1000567, 'SQ_L4XPU4cY', 15305, 45),
+	(1000567, 'c_yashCm790', 15307, 47),
+	(1000567, 'HwLkApQ4t14', 15309, 49),
+	(1000567, 'oCDVu9XnufQ', 15311, 51),
+	(1000567, 'uZM2G0ynffA', 15313, 53),
+	(1000567, 'yWyjHjZJE8s', 15315, 55),
+	(1000567, 'paMbV9nrt9k', 15317, 57),
+	(1000567, 'qfKGVHlixf4', 15319, 59),
+	(1000567, '_S5zsS1tlxo', 15321, 61),
+	(1000567, 'vccNqwRr35g', 15323, 63),
+	(1000567, 'N-qu4CiTUE8', 15325, 65),
+	(1000567, 'fixOanKeefk', 15327, 67),
+	(1000567, 'jaDTY6_joTk', 15329, 69),
+	(1000567, 'lgURtiFApWU', 15331, 71),
+	(1000567, '8JZwCYeqw6E', 15333, 73),
+	(1000567, 'CpiKau78Xtw', 15335, 75),
+	(1000567, 'YvWG8MYfnSw', 15337, 77),
+	(1000567, 'zgkTQU1SCz0', 15339, 79),
+	(1000569, 'fv8noBh6apY', 17111, 1535),
+	(1000568, 'rH414rcQGBU', 15344, 2),
+	(1000568, 'tJYNpGOs6iA', 15346, 4),
+	(1000568, 'V7kTq9j_LWI', 15348, 6),
+	(1000568, 'hPAfaqCqVa0', 15350, 8),
+	(1000568, 'kfDEP0OVkWE', 15352, 10),
+	(1000568, 'iWXfbMawggc', 15354, 12),
+	(1000568, 'ZXrOSlY_zhY', 15356, 14),
+	(1000568, 'zQgxvvdUxRY', 15358, 16),
+	(1000568, 'lVcMUXUb2N0', 15360, 18),
+	(1000568, 'x1vvYNOuFgE', 15362, 20),
+	(1000568, 'LSIy0VpMqXQ', 15364, 22),
+	(1000568, '3ZUS4gVWOz8', 15366, 24),
+	(1000568, 'MV6ZW6nih_k', 15368, 26),
+	(1000568, '8sWjmtRY3eU', 15370, 28),
+	(1000568, 'ZTSTvY5E7P8', 15372, 30),
+	(1000568, 'p_F71z7zlFc', 15374, 32),
+	(1000568, 'jMOtOFoSjQk', 15375, 33),
+	(1000568, '4Xrf5kz7Klc', 15377, 36),
+	(1000568, '21nr-a02QBM', 15379, 37),
+	(1000568, 'Oq_BfYog4aE', 15381, 39),
+	(1000568, '9ekpDD5s5uk', 15383, 41),
+	(1000568, 'N1zcVf24POg', 15385, 43),
+	(1000568, '5BqaGwpePCA', 15387, 45),
+	(1000568, 'y3BLjP8MvNI', 15389, 47),
+	(1000568, 'KTf-67v9Xgg', 15391, 49),
+	(1000568, 'N0Ua2JvJoxQ', 15393, 51),
+	(1000568, 'zgvpfKi36m8', 15395, 53),
+	(1000568, 'o_1cUI4cGUE', 15397, 55),
+	(1000568, '2xLR2WO2pEI', 15399, 57),
+	(1000568, '0FMP4Va11PI', 15401, 59),
+	(1000568, 'QqEgRBM-kYA', 15403, 61),
+	(1000568, 'GTnGd6nt4F4', 15405, 63),
+	(1000568, 'II6mOPriixU', 15407, 65),
+	(1000568, 'OvQZHEYGa-s', 15409, 67),
+	(1000568, 'vIKqpxf8bGQ', 15411, 69),
+	(1000568, 'iVsY9OQwIgE', 15413, 71),
+	(1000568, 'IJ5XfCAB348', 15415, 73),
+	(1000568, '9wp6hhFcZsQ', 15417, 75),
+	(1000568, 'zCOnJmTWB0c', 15419, 77),
+	(1000568, 'K3f5zaDGF34', 15421, 79),
+	(1000568, 'sX3EEFJ3sSk', 15423, 81),
+	(1000568, 'gTYa0qPntlg', 15425, 83),
+	(1000568, 'xREEngdEBWM', 15427, 85),
+	(1000568, 'a3LlYokkGtg', 15429, 87),
+	(1000568, 'wevxyJwV3rg', 15431, 89),
+	(1000568, 'g34zNTcQ6k0', 15433, 91),
+	(1000568, 'wJPmNPp_xMc', 15435, 93),
+	(1000568, 'Yz21W_cN2i4', 15437, 95),
+	(1000568, 'lPrnbPMfgyU', 15439, 97),
+	(1000568, 'wCClglaYUis', 15441, 99),
+	(1000568, 'M_R2IG-KDnA', 15443, 101),
+	(1000568, 't5Nt6CRFpBo', 15445, 103),
+	(1000568, 'mZ1g604g7N8', 15447, 105),
+	(1000568, 'Cu_8HcMc0VI', 15449, 107),
+	(1000568, 'QZds36MHrmY', 15451, 109),
+	(1000568, 'bdjP-mTAtDw', 15453, 111),
+	(1000568, '9rjytbx8rrU', 15455, 113),
+	(1000568, '_7uM9a3O5jI', 15457, 115),
+	(1000568, 'nlcDc63wBus', 15459, 117),
+	(1000568, 'Wz_-Virn5Gw', 15461, 119),
+	(1000568, 'nv8e118K26A', 15463, 121),
+	(1000568, 'fRbDLgR5_Ns', 15465, 123),
+	(1000568, 'i4Olcg1fMW8', 15467, 125),
+	(1000568, 'padoIEUi_Y4', 15469, 127),
+	(1000568, 'bFz5l8YQx2g', 15471, 129),
+	(1000568, 'bqCvl4hUGdk', 15473, 131),
+	(1000568, 'Dj7ebYL0Eqs', 15475, 133),
+	(1000568, '7fjjmeBnAwg', 15477, 135),
+	(1000568, 'GPUKoVrMjs0', 15479, 137),
+	(1000568, 'F78qbsf3Lbo', 15481, 139),
+	(1000568, 'JRX0h3bZ_nE', 15483, 141),
+	(1000568, 'WpgeurQaGRE', 15485, 143),
+	(1000568, 'm0ie0OuQwjQ', 15487, 145),
+	(1000568, 'DTqjF6LB1Oo', 15489, 147),
+	(1000568, 'PvpzEcKrUd0', 15491, 149),
+	(1000568, '-ePMiOdGxjU', 15493, 151),
+	(1000568, 'FEW1U6Kpcqs', 15495, 153),
+	(1000568, 'QmyXZK_DJes', 15497, 155),
+	(1000568, 'JCVsmytdiJM', 15499, 157),
+	(1000568, 'K6LUrKShxEc', 15501, 159),
+	(1000568, 'sbfO_ZVbqC0', 15503, 161),
+	(1000568, 'i1ao76E3lLo', 15505, 163),
+	(1000568, '5wWVxrJE1Rs', 15507, 165),
+	(1000568, 'CzkOzRxBmNU', 15509, 167),
+	(1000568, 'i0xoTqwt0KU', 15511, 169),
+	(1000568, 'PsSLXZgnyfY', 15513, 171),
+	(1000568, 'cnUnUC6OuZw', 15515, 173),
+	(1000568, 'ENRGTklxk4c', 15517, 175),
+	(1000568, 'ixUn1yvnN2w', 15519, 177),
+	(1000568, '9GYgwlmaLnI', 15521, 179),
+	(1000568, 'No5fQvbA5AE', 15523, 181),
+	(1000568, 'uVO6XarWIfc', 15525, 183),
+	(1000568, 'j-yQGVX1dMg', 15527, 185),
+	(1000568, 'cDVKg8lQr1U', 15529, 187),
+	(1000568, 'HGhify8QMtQ', 15531, 189),
+	(1000568, 'S10-l8vTn34', 15533, 191),
+	(1000568, 'HQiJIisnMS8', 15535, 193),
+	(1000568, 'oAE_ggsdY18', 15537, 195),
+	(1000568, 'TqgrCiXoW64', 15539, 197),
+	(1000568, 'QuwODKWV80c', 15541, 199),
+	(1000568, '6Aait8W-Ud8', 15543, 201),
+	(1000568, 'bOin9dN2P1o', 15545, 203),
+	(1000568, '5LiJDdPPLLA', 15547, 205),
+	(1000568, 'rkVKGEcC24U', 15549, 207),
+	(1000568, 'mIbEPLBxEAw', 15551, 209),
+	(1000568, 'o8KjTLJTh84', 15553, 211),
+	(1000568, 'iutgq3Poab4', 15555, 213),
+	(1000568, '1n7qjZ6aTcE', 15557, 215),
+	(1000568, 'hJoagtgUw1Q', 15559, 217),
+	(1000568, 'n7BjvOydtxA', 15561, 219),
+	(1000569, 'hbMeg4exR6U', 17113, 1537),
+	(1000569, 'URdvQ2j6BpE', 17115, 1539),
+	(1000569, 'aQW_1i0_LLc', 17117, 1541),
+	(1000569, 'fnHSOrGLoqo', 17119, 1543),
+	(1000569, 'h5X6Bh_yxnk', 17121, 1545),
+	(1000569, 't2xPah553Ew', 17123, 1547),
+	(1000569, 'j4Bi-TZkTlc', 17125, 1549),
+	(1000569, 'Rq8_sTQDIho', 15578, 2),
+	(1000569, 'ij2mpglwYvw', 15580, 4),
+	(1000569, 'P82sJxXkNeA', 15582, 6),
+	(1000569, 'EdSTpVzdums', 15584, 8),
+	(1000569, 'LLxxvqW0TfU', 15586, 10),
+	(1000569, '8SqfWXnhFYk', 15588, 12),
+	(1000569, 'kA21BgwiXuc', 15590, 14),
+	(1000569, '2yt6rGze3zU', 15592, 16),
+	(1000569, '4B-mUPid9E0', 15594, 18),
+	(1000569, '4E79Wmzrw4M', 15596, 20),
+	(1000569, '4mIy2dGvvbQ', 15598, 22),
+	(1000569, 'LWs5_a2pjeg', 15600, 24),
+	(1000569, 'N4ZQQROISPo', 15602, 26),
+	(1000569, 'gLMmVqvMflQ', 15604, 28),
+	(1000569, '9ovM4hi3fqo', 15606, 30),
+	(1000569, 'IRjAA-fdhQM', 15608, 32),
+	(1000569, 'fXlBJ5dEsns', 15610, 34),
+	(1000569, 'txBh_M8xWZ4', 15612, 36),
+	(1000569, '3AZx8nSbNdY', 17127, 1551),
+	(1000568, 'kqyxnEY4G1E', 15376, 34),
+	(1000568, '__u-MIbwc88', 15380, 38),
+	(1000568, 'fA8SoRsg2Lg', 15382, 40),
+	(1000568, 'FTdIjTu86l8', 15384, 42),
+	(1000568, 'qwVU2fJhduY', 15386, 44),
+	(1000568, 'rvjtrOJsmDU', 15388, 46),
+	(1000568, 're7iyimHDiI', 15390, 48),
+	(1000568, 'm_5tPXLG8oE', 15392, 50),
+	(1000568, 'zVjhcwgy8Dg', 15394, 52),
+	(1000568, 'BE2_QY0GXOE', 15396, 54),
+	(1000568, '4ueqMmqe2-c', 15398, 56),
+	(1000568, 'KOK7nwDMURk', 15400, 58),
+	(1000568, 'T3EQ26wGmmg', 15402, 60),
+	(1000568, 'kyeqEtleWJk', 15404, 62),
+	(1000568, 'kz2OYs61klA', 15406, 64),
+	(1000568, 'JrenMrOGczE', 15408, 66),
+	(1000568, 'GACn0HDTekA', 15410, 68),
+	(1000568, 'qSSBag_U4uc', 15412, 70),
+	(1000568, 'k9--KW9G2Cs', 15414, 72),
+	(1000568, '3baBsLLtsLw', 15416, 74),
+	(1000568, '5w2bmFoInd8', 15418, 76),
+	(1000568, 'OKOD_anAalE', 15420, 78),
+	(1000568, '-5u0gdIz5Hw', 15422, 80),
+	(1000568, 'i29fIXvzu9M', 15424, 82),
+	(1000568, 'xJM6irFvwD4', 15426, 84),
+	(1000568, 'uFGU10jv-YE', 15428, 86),
+	(1000568, 'u7eCA-QunR4', 15430, 88),
+	(1000568, 'MfRd5Eqcryk', 15432, 90),
+	(1000568, 'jO19iDFhB1I', 15434, 92),
+	(1000568, 'qDgGMPBABwI', 15436, 94),
+	(1000568, 'S14u6ez6wpQ', 15438, 96),
+	(1000568, 'bO2SUH_fbdM', 15440, 98),
+	(1000568, 'aOS389OR1KU', 15442, 100),
+	(1000568, '-2ohXbAG2Dc', 15444, 102),
+	(1000568, '8gwqVKTJvjc', 15446, 104),
+	(1000568, 'Qvaa5Hvw3f0', 15448, 106),
+	(1000568, 'vjchFJQeLkw', 15450, 108),
+	(1000568, 'iuHvrsrTR7E', 15452, 110),
+	(1000568, 'P-EBZKFVLQk', 15454, 112),
+	(1000568, 'jNvMQb2i7dk', 15456, 114),
+	(1000568, 'HAY-5FdE0z4', 15458, 116),
+	(1000568, 'e7ZIOkUv4Ws', 15460, 118),
+	(1000568, 'odhzSX60PWI', 15462, 120),
+	(1000568, 'SrSIANwRsvI', 15464, 122),
+	(1000568, '7_KqDB71K-k', 15466, 124),
+	(1000568, 'rs1-3RwZjdQ', 15468, 126),
+	(1000568, '-b3c1eNYA24', 15470, 128),
+	(1000568, 'K0hJrOQgF2A', 15472, 130),
+	(1000568, '0khAu6AsGrE', 15474, 132),
+	(1000568, 'e09V-A8zk6U', 15476, 134),
+	(1000568, 'OjQiY6RzL3Y', 15478, 136),
+	(1000568, 'gTnudFtgnZ0', 15480, 138),
+	(1000568, 'LcNACv0S2D4', 15482, 140),
+	(1000568, 'ZByGzP7uGL4', 15484, 142),
+	(1000568, 'chDkJ6nErNI', 15486, 144),
+	(1000568, 'OFGQkdxi804', 15488, 146),
+	(1000568, '6Cv5HUB-gCE', 15490, 148),
+	(1000568, 'tiSnW0-rsYg', 15492, 150),
+	(1000568, 'FqToSHG2zXA', 15494, 152),
+	(1000568, 'l-ZoIIGrWFc', 15496, 154),
+	(1000568, 'XMh4DUWVt0o', 15498, 156),
+	(1000568, '102qJsWXbes', 15500, 158),
+	(1000568, 'HV3y-XnczVc', 15502, 160),
+	(1000568, '6RYoVKd-gPw', 15504, 162),
+	(1000568, 'BDdwoUzNPGg', 15506, 164),
+	(1000568, 'IyRX9pYT48g', 15508, 166),
+	(1000568, 'BYqh1w95eYc', 15510, 168),
+	(1000568, 'J0D8x2UF54Y', 15512, 170),
+	(1000568, 'cB7bEnUka4M', 15514, 172),
+	(1000568, 'Hh7lETo1_XA', 15516, 174),
+	(1000568, '8KNgZDDCt5s', 15518, 176),
+	(1000568, 'UMzC4EEqFWc', 15520, 178),
+	(1000568, '4Ztr76TJd6Q', 15522, 180),
+	(1000568, '4q1s-PPQAeQ', 15524, 182),
+	(1000568, 'd7yzObcXUfI', 15526, 184),
+	(1000568, 'PtYjoc-6ZDw', 15528, 186),
+	(1000568, 'ynWtbvhmXMI', 15530, 188),
+	(1000568, '5ZEgSnH6Fxw', 15532, 190),
+	(1000568, 'jqVbO0hKXTE', 15534, 192),
+	(1000568, 'qow6jH0MoUo', 15536, 194),
+	(1000568, 'DLyJpJR1utw', 15538, 196),
+	(1000568, 'S30fefvwvJw', 15540, 198),
+	(1000568, 'ka0BXNfPZr0', 15542, 200),
+	(1000568, 'fTbu5tsWsOo', 15544, 202),
+	(1000568, 'AYGPEFsYnUw', 15546, 204),
+	(1000568, '6VrrfUOJz7U', 15548, 206),
+	(1000568, 'V1bMaStBlKQ', 15550, 208),
+	(1000568, 'DBAsxCs4Wfk', 15552, 210),
+	(1000568, '5TXybWs0mm0', 15554, 212),
+	(1000568, 'fYheQTK7JmQ', 15556, 214),
+	(1000568, '4RY0opa7hpI', 15558, 216),
+	(1000568, 'Fe-7eay-eR4', 15560, 218),
+	(1000568, 'DnaXQQ9cfCs', 15562, 220),
+	(1000569, '0YN2Kwi_ieo', 17118, 1542),
+	(1000569, 'XsqEsUq3XsQ', 17120, 1544),
+	(1000569, 'a6HG87d1EWU', 17122, 1546),
+	(1000569, 'rWXdNHFcCS4', 17124, 1548),
+	(1000569, 'wJ_lhPHeiwI', 17126, 1550),
+	(1000569, 'JGkSWxTzmS8', 17128, 1552),
+	(1000569, 'agXoBDqZzuE', 17130, 1554),
+	(1000569, 'BoReAT8Nt9s', 15577, 1),
+	(1000569, 'gTpwJ2STQZ8', 15579, 3),
+	(1000569, 'x0VLS_XRfbY', 15581, 5),
+	(1000569, 'pBrZtR-wpOs', 15583, 7),
+	(1000569, 'wdwTsFVbpXs', 15585, 9),
+	(1000569, 'ZQxDD0xiNVQ', 15587, 11),
+	(1000569, 'gWmhzQfDKVA', 15589, 13),
+	(1000569, 'ahkHkIZ8NRc', 15591, 15),
+	(1000569, 'seIVkX7_2cQ', 15593, 17),
+	(1000569, 'LAuj0n-0W54', 15595, 19),
+	(1000569, 'XGEkjd7Le_s', 15597, 21),
+	(1000569, 'N7xdmPxHmCQ', 15599, 23),
+	(1000569, 'Y5rZzJRlmu8', 15601, 25),
+	(1000569, '7Lwa_KmXYaA', 15603, 27),
+	(1000569, 'NKGa993Za8Q', 15605, 29),
+	(1000569, 'inHMeLSWGsY', 15607, 31),
+	(1000569, 'sxmj4Caaj8w', 15609, 33),
+	(1000569, 'O9aNxCTtgLA', 15611, 35),
+	(1000569, '9zdYCpqpqmo', 15613, 37),
+	(1000569, 'nbcAy-d-2P8', 15615, 39),
+	(1000569, '4tEbNSnWORs', 15614, 38),
+	(1000569, 'f8ZacAQblRU', 15616, 40),
+	(1000569, '-4GmAqneXUU', 15618, 42),
+	(1000569, '9x0X8JnwUOg', 15620, 44),
+	(1000569, 'EASo1Chaxb8', 15622, 46),
+	(1000569, 'oqpitYtS7Ys', 15624, 48),
+	(1000569, 'vEKkBXkXgO4', 15626, 50),
+	(1000569, 'Zi2Odr5cJqw', 15628, 52),
+	(1000569, 'RsihDCCAeQ4', 15630, 54),
+	(1000569, '5_DPuJkAtIY', 15632, 56),
+	(1000569, 'UJTzHKDUncE', 15634, 58),
+	(1000569, 'c_u-JktWyk0', 15636, 60),
+	(1000569, 'zCW2UYLc3PM', 15638, 62),
+	(1000569, 'QeJK8pjXj-g', 15640, 64),
+	(1000569, 'wcsysDz0WPg', 15642, 66),
+	(1000569, 'rkS4JoLNYC0', 15644, 68),
+	(1000569, 'NW15ucmz620', 15646, 70),
+	(1000569, 'I43tws1C6nE', 15648, 72),
+	(1000569, 'WUnw6ERhgJE', 15650, 74),
+	(1000569, 'OKIir_wWOgE', 15652, 76),
+	(1000569, 'KSq9djj2kCQ', 15654, 78),
+	(1000569, 'MjRdH-xxvO4', 15656, 80),
+	(1000569, 'jF26GLNotds', 15658, 82),
+	(1000569, '24tIU9m6IcE', 15660, 84),
+	(1000569, 'OA0QbafH0-0', 15662, 86),
+	(1000569, '86OzwWiO-fU', 15664, 88),
+	(1000569, 'bO7-aJp-07Y', 15666, 90),
+	(1000569, 'tHzH-7OiPrs', 15668, 92),
+	(1000569, 'zyNwHD8cMAU', 15670, 94),
+	(1000569, 'HMYCji8C4SA', 15672, 96),
+	(1000569, 'Mfq5Vy2v-bE', 15674, 98),
+	(1000569, 'T91lNfqLDjs', 15676, 100),
+	(1000569, '3CcD6eLRNgE', 15678, 102),
+	(1000569, 'HqqXke1w2-I', 15680, 104),
+	(1000569, 'zsxP3aeQYwI', 15682, 106),
+	(1000569, 'sVBxOVjzD5U', 15684, 108),
+	(1000569, 'rHywR9YDmSE', 15686, 110),
+	(1000569, 'dqxRWnVOMMs', 15688, 112),
+	(1000569, 'Xa7DKf8-frM', 15690, 114),
+	(1000569, '7FDMzBVMKVE', 15692, 116),
+	(1000569, 'jTSYUaoH5s8', 15694, 118),
+	(1000569, '1kk7FGnZvU0', 15696, 120),
+	(1000569, 'wKQv93cpv5g', 15698, 122),
+	(1000569, 'xuAx__WDGJw', 15700, 124),
+	(1000569, 'uTv_fdA9eKI', 15702, 126),
+	(1000569, 'USqyfAYNaKU', 15704, 128),
+	(1000569, 'F64xtXVBQr4', 15706, 130),
+	(1000569, '3MYH4-TnbJ8', 15708, 132),
+	(1000569, 'uKD8jE3WiPs', 15710, 134),
+	(1000569, 'r5bAJRx8rHE', 15712, 136),
+	(1000569, '5UzGwn-oHf0', 15714, 138),
+	(1000569, 'xaH7jCaPIk0', 15716, 140),
+	(1000569, 'uhCdz7NVLok', 15718, 142),
+	(1000569, 'MuxzKzR0WD8', 15720, 144),
+	(1000569, '9T9JHTUtT1E', 15722, 146),
+	(1000569, 'YxGkXzMDLCo', 15724, 148),
+	(1000569, 's9TrCF9m6s8', 15726, 150),
+	(1000569, 'mi1oQxIcq5s', 15728, 152),
+	(1000569, '5hhh0rbgagE', 15730, 154),
+	(1000569, 'nlzk3lBXbGk', 15732, 156),
+	(1000569, 'oDZF9vrULe4', 15734, 158),
+	(1000569, 'cuWt6Md0sNk', 15736, 160),
+	(1000569, '76Z5Ez6hwzE', 15738, 162),
+	(1000569, 'OAS9Prg6UY8', 15740, 164),
+	(1000569, '8_-z8AuoM2o', 15742, 166),
+	(1000569, 'JKuNDse_9FQ', 15744, 168),
+	(1000569, '9u3YSN5cA04', 15746, 170),
+	(1000569, 'nW1nHXwphdM', 15748, 172),
+	(1000569, 'IE48SDpGG_g', 15750, 174),
+	(1000569, 'dGl6zAy5fiI', 15752, 176),
+	(1000569, 'Myht0ZIND3s', 15754, 178),
+	(1000569, 'UoUoHuJu5f0', 15756, 180),
+	(1000569, 'KKy_z9x-T1A', 15758, 182),
+	(1000569, 'IwadXiGgIA4', 15760, 184),
+	(1000569, 'RvP_I1j_6hU', 15762, 186),
+	(1000569, 'gn7qRXIqJPw', 15764, 188),
+	(1000569, 'U9fn1YYeFe4', 15766, 190),
+	(1000569, 'h_bPoLPu_Dw', 15768, 192),
+	(1000569, 'Vkdt_umcXew', 15770, 194),
+	(1000569, 'tDjg7F0i_7I', 15772, 196),
+	(1000569, 'zOThl7QOSHA', 15774, 198),
+	(1000569, 'w8bSztBCwWU', 15776, 200),
+	(1000569, 'jDfSJ-aULWE', 15778, 202),
+	(1000569, 'cBWRk41Oe00', 15780, 204),
+	(1000569, 'mbMgbqjVcjg', 15782, 206),
+	(1000569, '88NNg0_EYO0', 15784, 208),
+	(1000569, 'pjqG4fof0Qg', 15786, 210),
+	(1000569, 'feiJld2n-YU', 15788, 212),
+	(1000569, 'hfvpkCl1BxA', 15790, 214),
+	(1000569, '9ey9Mw0w75A', 15792, 216),
+	(1000569, '6ggCYUcSVSk', 15794, 218),
+	(1000569, 'SUXBY5XFa6I', 15796, 220),
+	(1000569, 'hR1FN_6ITEE', 15798, 222),
+	(1000569, '8tix3zNKz3M', 15800, 224),
+	(1000569, 't4FiZh76X1c', 15802, 226),
+	(1000569, 'nGLE577QdF0', 15804, 228),
+	(1000569, 'afQp5pg_Fdk', 15806, 230),
+	(1000569, 'LLrQ5P8XHX4', 15808, 232),
+	(1000569, 'tGVcmZWr_Po', 15810, 234),
+	(1000569, 'QCeo32FYZzg', 15812, 236),
+	(1000569, 'VablLL0jMGw', 15814, 238),
+	(1000569, 'pKNhorAuNVY', 15816, 240),
+	(1000569, 'PEiBsEs2G_A', 15818, 242),
+	(1000569, 'j-sRpKsrQp8', 15820, 244),
+	(1000569, 'CEeeXbHKywI', 15822, 246),
+	(1000569, 'EVQfvE7RYQc', 15824, 248),
+	(1000569, 'wRNgaiCxVlc', 15826, 250),
+	(1000569, 'fpq_KYV42Rk', 15828, 252),
+	(1000569, 'n4K4xodKALg', 15830, 254),
+	(1000569, 'y0B17HfaMFE', 15832, 256),
+	(1000569, 'ngOBSkkSpeU', 15834, 258),
+	(1000569, '6C1pb_S4scA', 15836, 260),
+	(1000569, 'QvLdAB4T1aA', 15838, 262),
+	(1000569, 'xEeKh1ZpkiI', 15840, 264),
+	(1000569, 'u2nDi-a0mGE', 15842, 266),
+	(1000569, '-bPzxo8uvNs', 15844, 268),
+	(1000569, 'Ezx6LLxNbdc', 15846, 270),
+	(1000569, '7qY4h3hrAXo', 15848, 272),
+	(1000569, 'Zg7BV7VHtrM', 15850, 274),
+	(1000569, '21GgAGx25G4', 15852, 276),
+	(1000569, 'dYW-1EPwY3Q', 15617, 41),
+	(1000569, '9i9Eg5nR5a8', 15619, 43),
+	(1000569, '1f-nPKb0kG0', 15621, 45),
+	(1000569, 'jSel_yFfTqA', 17129, 1553),
+	(1000569, 'G4ql7G-iEFY', 15625, 49),
+	(1000569, 'QcW6EMaOxIk', 15627, 51),
+	(1000569, 'HHlg5NnAnx8', 15629, 53),
+	(1000569, 'mVod96YavPc', 15631, 55),
+	(1000569, 'w-V53_alxVc', 15633, 57),
+	(1000569, 'bbN8OEJK9qQ', 15635, 59),
+	(1000569, 'of2n0hGeKwg', 15637, 61),
+	(1000569, 'zHI9gAo7Ov8', 15639, 63),
+	(1000569, 'tAXw-FBzGPw', 15641, 65),
+	(1000569, 'xZ_vIqYbNhA', 15643, 67),
+	(1000569, 'dTq8fuBnVGU', 15645, 69),
+	(1000569, 'h8tpSRpkDtM', 15647, 71),
+	(1000569, '0o24pM7XliU', 15649, 73),
+	(1000569, 'huzjI6FiRYc', 15651, 75),
+	(1000569, 'VbW3CHg3ld8', 15653, 77),
+	(1000569, '60moR-Trm9I', 15655, 79),
+	(1000569, '1BOvyjhg38o', 15657, 81),
+	(1000569, '0MLLNxl2cFk', 15659, 83),
+	(1000569, 'OYMCLeYAXp8', 15661, 85),
+	(1000569, 'UUGbPvgOvd0', 15663, 87),
+	(1000569, 'bT6jHL4VMCo', 15665, 89),
+	(1000569, '640tX83-Kt0', 15667, 91),
+	(1000569, 'nxPnc0aHhxo', 15669, 93),
+	(1000569, 'w2E_ZCiVt14', 15671, 95),
+	(1000569, 'iax-JlBYS-o', 15673, 97),
+	(1000569, 'spjddRmxAZY', 15675, 99),
+	(1000569, 'C91ukR6e3MU', 15677, 101),
+	(1000569, '0p2MJ7WOJmA', 15679, 103),
+	(1000569, 'ylxMCekq65s', 15681, 105),
+	(1000569, 'XGSHlK3T97w', 15683, 107),
+	(1000569, 'bLzI_0Q-tCE', 15685, 109),
+	(1000569, 'dElDmkNIx3U', 15687, 111),
+	(1000569, 'Igh2MC0r7u4', 15689, 113),
+	(1000569, 'lX9c3W3xfAk', 15691, 115),
+	(1000569, 'cAQl_H0Dn70', 15693, 117),
+	(1000569, 'R9mGnT28UaI', 15695, 119),
+	(1000569, 'xElkzGl-r1o', 15697, 121),
+	(1000569, 'N46WiBpkHW8', 15699, 123),
+	(1000569, 'dXJlAc8-hRY', 15701, 125),
+	(1000569, 'ev9XX1795Z8', 15703, 127),
+	(1000569, 'MCIV2hsINiM', 15705, 129),
+	(1000569, '2YA9ztBIJnE', 15707, 131),
+	(1000569, '4sPf4NKtNJo', 15709, 133),
+	(1000569, '25y7XDZYhw0', 15711, 135),
+	(1000569, 'pgSFV-wFH6s', 15713, 137),
+	(1000569, 'kCKoVXZayn0', 15715, 139),
+	(1000569, 'Bw8F4crxPds', 15717, 141),
+	(1000569, '5LZUeW2ImKQ', 15719, 143),
+	(1000569, 'ykWSlknhGAY', 15721, 145),
+	(1000569, '7nUTK-qraz8', 15723, 147),
+	(1000569, 'BzzK8SuQnYQ', 15725, 149),
+	(1000569, 'SSsVoexaycg', 15727, 151),
+	(1000569, 'Fy_sxSCjH1M', 15729, 153),
+	(1000569, 'hcRk_7H86C8', 15731, 155),
+	(1000569, 'rVqxb0v0P7E', 15733, 157),
+	(1000569, 'dh3bp-t8avs', 15735, 159),
+	(1000569, 'YkwtNAiRnWE', 15737, 161),
+	(1000569, 'S9D25ZZwV1k', 15739, 163),
+	(1000569, 'I85KL7qigB8', 15741, 165),
+	(1000569, 'QRlDEnhJHL0', 15743, 167),
+	(1000569, 'ltHAQ8gamHk', 15745, 169),
+	(1000569, 'A3A6gxekwcU', 15747, 171),
+	(1000569, 'vL0PH3118KE', 15749, 173),
+	(1000569, 'LXkh8fHjYMI', 15751, 175),
+	(1000569, 'K0iRsLj74Ww', 15753, 177),
+	(1000569, 'PepCDfeP3ps', 15755, 179),
+	(1000569, 'Wk-hm8ZOm6E', 15757, 181),
+	(1000569, 'UUYhf3EnuXo', 15759, 183),
+	(1000569, 'cf4IWZccFKY', 15761, 185),
+	(1000569, 'iPbFxjnx6W8', 15763, 187),
+	(1000569, 'BjFD9tJ9f7I', 15765, 189),
+	(1000569, 'JFgk5SgVWow', 15767, 191),
+	(1000569, '-qT1X7PGrdI', 15769, 193),
+	(1000569, '-F-0BztaCbc', 15771, 195),
+	(1000569, 'g0SkKovfDBw', 15773, 197),
+	(1000569, 'Z8g52w8mwCA', 15775, 199),
+	(1000569, 'bFjqet8YNgw', 15777, 201),
+	(1000569, 'khbfmyIxtfI', 15779, 203),
+	(1000569, 'YsbD2WSiJOk', 15781, 205),
+	(1000569, '6ZoaipePclk', 15783, 207),
+	(1000569, 'fxlRHoJ7hD0', 15785, 209),
+	(1000569, 'If8pYLmTXAU', 15787, 211),
+	(1000569, '78MT9tS7vCY', 15789, 213),
+	(1000569, 'AlOCUH6yiWA', 15791, 215),
+	(1000569, 'mL06zhfVCJk', 15793, 217),
+	(1000569, 'lavgioTq84E', 15795, 219),
+	(1000569, 'Bzn5MK5F5W4', 15797, 221),
+	(1000569, 'hXSobI3jExk', 15799, 223),
+	(1000569, 'TWkAmjzj93s', 15801, 225),
+	(1000569, '2IVdWRmeKWs', 15803, 227),
+	(1000569, 'C-IK9Hre77I', 15805, 229),
+	(1000569, 'O4uiUEM8as0', 15807, 231),
+	(1000569, 'S3TRNmG3B48', 15809, 233),
+	(1000569, '04tg0O_BdfY', 15811, 235),
+	(1000569, 'CE-J_HDYNCU', 15813, 237),
+	(1000569, '6UzLBpxr18E', 15815, 239),
+	(1000569, '0WuinjxyE5Y', 15817, 241),
+	(1000569, 'C8pQCORz_g8', 15819, 243),
+	(1000569, '38ZcCRb-dlM', 15821, 245),
+	(1000569, 'aHndTl4by0A', 15823, 247),
+	(1000569, 'dmOKqtwjOIw', 15825, 249),
+	(1000569, 'JznakxFVicc', 15827, 251),
+	(1000569, 'XfvcnVv2pZA', 15829, 253),
+	(1000569, 'FTU0cxNa7Ng', 15831, 255),
+	(1000569, 'wSNB1KPdCUE', 15833, 257),
+	(1000569, '8Vpu5dppy78', 15835, 259),
+	(1000569, 'utmMi4cVG6o', 15837, 261),
+	(1000569, 'arAnIMq3Ako', 15839, 263),
+	(1000569, 'yb2vGFn4Kjk', 15841, 265),
+	(1000569, 'CkwfPrFAN7E', 15843, 267),
+	(1000569, 'AkIrWJSMISU', 15845, 269),
+	(1000569, 'x7elN6jjn20', 15847, 271),
+	(1000569, 'K8ppnOswB4o', 15849, 273),
+	(1000569, 'LA0axOMS8oM', 15851, 275),
+	(1000569, 'nxh469CFScI', 15853, 277),
+	(1000569, 'Qt3qh19ctMA', 15855, 279),
+	(1000569, 'M5xcvKUUaj0', 15854, 278),
+	(1000569, 'Cgm1RqVbwnI', 15856, 280),
+	(1000569, 'oTFnYqiZcLI', 15858, 282),
+	(1000569, 'MrEuJlQUEwU', 15860, 284),
+	(1000569, 'ecn6CB-HTKU', 15862, 286),
+	(1000569, 'ZkQXe5QrwRA', 15864, 288),
+	(1000569, 'ZdutjD5RUe4', 15866, 290),
+	(1000569, 'WtKV-7LTbtk', 15868, 292),
+	(1000569, 'ZA7zcX94njc', 15870, 294),
+	(1000569, '0tN26AXIuao', 15872, 296),
+	(1000569, 'aFLaZ3SkG8Q', 15874, 298),
+	(1000569, 'lVC4dvGevNQ', 15876, 300),
+	(1000569, 'cn0GHAmo6C4', 15878, 302),
+	(1000569, 'GOdQgt2Lxn8', 15880, 304),
+	(1000569, 'vDruYbtbG_c', 15882, 306),
+	(1000569, 'GyT6V4WGOb0', 15884, 308),
+	(1000569, 'r3NPjQ-QqXI', 15886, 310),
+	(1000569, 'FgPgn7CyXZI', 15888, 312),
+	(1000569, 'WvC_E_OQDIk', 15890, 314),
+	(1000569, 'T2SI63XPK30', 15892, 316),
+	(1000569, 'rb3KeQzSa4Y', 15894, 318),
+	(1000569, 'A2tLjRUXrvA', 15896, 320),
+	(1000569, 'myit8LOCrJE', 15898, 322),
+	(1000569, 'SWpnmwzZsRw', 15900, 324),
+	(1000569, 'y5PrFYC-UTQ', 15902, 326),
+	(1000569, 'Jop4zEGd-Kk', 15904, 328),
+	(1000569, 'xLHhRwxwEEw', 15906, 330),
+	(1000569, 'dv0rhnz5UCc', 15908, 332),
+	(1000569, 'jfKwFcPyAr0', 15910, 334),
+	(1000569, 'S-dLREkbMGg', 15912, 336),
+	(1000569, 'HsqCuk2Vfn0', 15914, 338),
+	(1000569, 'd1P3keJ-lZo', 15916, 340),
+	(1000569, 'osasYgbKLJM', 15918, 342),
+	(1000569, '0ltGskEPEjc', 15920, 344),
+	(1000569, 'tmhitep-lWY', 15922, 346),
+	(1000569, '70EqTEm8wJU', 15924, 348),
+	(1000569, 'cso-J3XvMAc', 15926, 350),
+	(1000569, '5B9k0DkdMeA', 15928, 352),
+	(1000569, 'vKT4SX0eh7s', 15930, 354),
+	(1000569, 'ztPbi1wZ-_s', 15932, 356),
+	(1000569, '5rW6qqQ2njg', 15934, 358),
+	(1000569, 'jHicut_fAy8', 15936, 360),
+	(1000569, 'I3yOqqPfLlA', 15938, 362),
+	(1000569, 'yJP3G9kkAjg', 15940, 364),
+	(1000569, '6yGMcblrr2c', 15942, 366),
+	(1000569, '0T2BnEYdeIU', 15944, 368),
+	(1000569, 'H50vIeADN3s', 15946, 370),
+	(1000569, 'NaD_MdQUhps', 15948, 372),
+	(1000569, 'mj4VvN3YlBE', 15950, 374),
+	(1000569, 'K78VAOn9us8', 15952, 376),
+	(1000569, 'sLKTD080DPk', 15954, 378),
+	(1000569, 'VpNOGV9ixBw', 15956, 380),
+	(1000569, 'ZsSR8NWPOvc', 15958, 382),
+	(1000569, 'Vf06dgVEuRE', 15960, 384),
+	(1000569, 'gbd944vi7GQ', 15962, 386),
+	(1000569, 'yPkLtMkBQtU', 15964, 388),
+	(1000569, 'DtSEG73_jDk', 15966, 390),
+	(1000569, '0rgcGM5gARA', 15968, 392),
+	(1000569, 'm4AYt1_1lyk', 15970, 394),
+	(1000569, 'J4B7AIi2RGY', 15972, 396),
+	(1000569, '8fn0K0trFZc', 15974, 398),
+	(1000569, 'fci9nsY_ZFU', 15976, 400),
+	(1000569, 'KWSe2TlO6sA', 15978, 402),
+	(1000569, 't8FjXPpXUF0', 15980, 404),
+	(1000569, 'i4jqrO-Cj80', 15982, 406),
+	(1000569, 'ljfJwzu5P2g', 15984, 408),
+	(1000569, '4t7a58GhLr4', 15986, 410),
+	(1000569, 'CXLLhNs6Gyg', 15988, 412),
+	(1000569, 'FIX-7IKMv3c', 15990, 414),
+	(1000569, 'RuOg0EBXj4Y', 15992, 416),
+	(1000569, 'Qd-ylwo6yOM', 15994, 418),
+	(1000569, 'G6Dv3pXmV70', 15996, 420),
+	(1000569, 'Pcl2vd2vdKc', 17131, 1555),
+	(1000569, 'T_8i6snavYg', 17133, 1557),
+	(1000569, 'xttLgLWdAys', 17135, 1559),
+	(1000569, 'TnF7rbjVaUg', 17137, 1561),
+	(1000569, 'mRDNf8A0eTo', 17139, 1563),
+	(1000569, 'P_-YZ6aABrs', 17141, 1565),
+	(1000569, 'q42n_AwReqA', 17143, 1567),
+	(1000569, 'B6ngDa-ZtuA', 17144, 1568),
+	(1000569, 'JRj5KFtj5UE', 17145, 1569),
+	(1000569, 'K8EWI5Ub7Rs', 17146, 1570),
+	(1000569, 'bpPnlNrhLA0', 17147, 1571),
+	(1000569, 'VW-_TTJmM-Y', 17148, 1572),
+	(1000569, 'z0RYPY1WIco', 17149, 1573),
+	(1000569, '75mBvFrMaUg', 17150, 1574),
+	(1000569, 'y55d5irYbB4', 17151, 1575),
+	(1000569, 'lTCOdgwz1_E', 17152, 1576),
+	(1000569, 'LVxBiROjDMk', 17153, 1577),
+	(1000569, 'JjG7Rddknv8', 17154, 1578),
+	(1000569, 'XZgU_cxpeuA', 17155, 1579),
+	(1000569, 'huVi6rdPE4I', 17156, 1580),
+	(1000569, '-YnjQJk9mq8', 17157, 1581),
+	(1000569, 'hihdbX4Esvs', 17158, 1582),
+	(1000569, 'pfniDDrACtU', 17159, 1583),
+	(1000569, 'H_4hTDenq_8', 17160, 1584),
+	(1000569, 'tejbB1atpoE', 17161, 1585),
+	(1000569, 'N-IC37ODHqE', 17162, 1586),
+	(1000569, 'JRRJFos8gYY', 17163, 1587),
+	(1000569, 'DF_It8ih8co', 17164, 1588),
+	(1000569, 'CtFPvG6_f6g', 17165, 1589),
+	(1000569, 'xHzxt99BBoQ', 17166, 1590),
+	(1000569, 'mqOVjS2f0nA', 17167, 1591),
+	(1000569, 'd3SNTSnSv5Q', 17168, 1592),
+	(1000569, 'qj-I6SnKXfg', 17169, 1593),
+	(1000569, 'tJGD3ZEe-co', 17170, 1594),
+	(1000569, 'HUK11lLF59A', 17171, 1595),
+	(1000569, 'WaNhhj5LRxA', 17172, 1596),
+	(1000569, 'NIkrW6B_Rs8', 17173, 1597),
+	(1000569, 'm44f-tMvDos', 17174, 1598),
+	(1000569, 'Ajn1teREC4s', 17175, 1599),
+	(1000569, 'cL0JJwbOCec', 17176, 1600),
+	(1000569, '4J6-4RreKSk', 17177, 1601),
+	(1000569, 'FSIOXkpEeIU', 17178, 1602),
+	(1000569, 'PFuWk-nI-0s', 17179, 1603),
+	(1000569, 'fIfNTXprWp0', 17180, 1604),
+	(1000569, 'SmPGSU9BolA', 17181, 1605),
+	(1000569, 'aSCd3KfsVlc', 17182, 1606),
+	(1000569, 'HVg3M7jfiPQ', 17183, 1607),
+	(1000569, 'dkbnH5BdrJE', 17184, 1608),
+	(1000569, 'VGTKcwGVgMw', 15857, 281),
+	(1000569, 'qsTzjnQq6i0', 15859, 283),
+	(1000569, 'OuAqRHHJnpE', 15861, 285),
+	(1000569, 'xXu0x_sSsd0', 15863, 287),
+	(1000569, 'gg3Cg9JWVlk', 15865, 289),
+	(1000569, 'Sp_nNBVV5WU', 15867, 291),
+	(1000569, 'nmuElZvfbZY', 15869, 293),
+	(1000569, 'dNMYwttfDl4', 15871, 295),
+	(1000569, 'lX8yZHTxlS4', 15873, 297),
+	(1000569, 'l50oVuNrJKE', 15875, 299),
+	(1000569, '4L4sDGo3jgg', 15877, 301),
+	(1000569, 'Hf6aHLhogLQ', 15879, 303),
+	(1000569, 'oPKQ-LYNVIM', 15881, 305),
+	(1000569, 'CDpQFVfPc9c', 15883, 307),
+	(1000569, 'H4SunzyM_p4', 15885, 309),
+	(1000569, 'uukY3YkUi1E', 15887, 311),
+	(1000569, 'mDLBMMjVHzA', 15889, 313),
+	(1000569, 'BtJYL3SnHDQ', 15891, 315),
+	(1000569, 'oiKAdRYFxQk', 15893, 317),
+	(1000569, '0iWUz0A3HPc', 15895, 319),
+	(1000569, 'O2EeTUnp-CI', 15897, 321),
+	(1000569, 'POYzeTwr0XU', 15899, 323),
+	(1000569, 'ArgImOacUb0', 15901, 325),
+	(1000569, 'Ig_4QWMCPtI', 15903, 327),
+	(1000569, '9xv0OanVBJU', 15905, 329),
+	(1000569, 'h2bQh1-wSx0', 15907, 331),
+	(1000569, 'NAXSZfjc5Zg', 15909, 333),
+	(1000569, 'lzgejaMt7X4', 15911, 335),
+	(1000569, 'MBFpHPFLbCM', 15913, 337),
+	(1000569, 'IqeRTUQpVZI', 15915, 339),
+	(1000569, '3ZwBm--smmY', 15917, 341),
+	(1000569, 'MooBzSrBHhY', 15919, 343),
+	(1000569, 'q6GCskk6ZHY', 15921, 345),
+	(1000569, 'YW70T96It_I', 15923, 347),
+	(1000569, '--nW6aKYgQ8', 15925, 349),
+	(1000569, 'T9vEFPzG9tA', 15927, 351),
+	(1000569, 'ltYRUvBiZ0k', 15929, 353),
+	(1000569, 'cH5iCNOxshU', 15931, 355),
+	(1000569, 'ENdWQXOmPSk', 15933, 357),
+	(1000569, 'MsNnOrjhVLs', 15935, 359),
+	(1000569, 'hfiudOJqxWY', 15937, 361),
+	(1000569, 'yBMQtMoNF6Y', 15939, 363),
+	(1000569, '_GFrZgko5pw', 15941, 365),
+	(1000569, 'Zbb2mEMEHIw', 15943, 367),
+	(1000569, '3f6XyyomgGA', 15945, 369),
+	(1000569, 'BxKY1_7DIWQ', 15947, 371),
+	(1000569, 'pbEDdWec3b0', 15949, 373),
+	(1000569, 'wdeZ3c65cNA', 15951, 375),
+	(1000569, '1-nofC0gq20', 15953, 377),
+	(1000569, '1Skl9uquSg4', 15955, 379),
+	(1000569, '93NzBRwGvYg', 15957, 381),
+	(1000569, '3UpkNcX3K2M', 15959, 383),
+	(1000569, 'G5_ctn9DEsM', 15961, 385),
+	(1000569, 'dP2Jb3ayaco', 15963, 387),
+	(1000569, 'Fh-Na580gmc', 15965, 389),
+	(1000569, '2UfuVNv_geE', 15967, 391),
+	(1000569, 'a_oMsWoRYd8', 15969, 393),
+	(1000569, '7Pt1ZQ0A-JM', 15971, 395),
+	(1000569, 'f20kXUM5lHc', 15973, 397),
+	(1000569, '4FrsTIGYjxQ', 15975, 399),
+	(1000569, 'NLcryHgczGE', 15977, 401),
+	(1000569, '-KFanYONBW4', 15979, 403),
+	(1000569, '9nSTPkXDRzA', 15981, 405),
+	(1000569, 'LPgPEgiZC54', 15983, 407),
+	(1000569, 'oM5dUS9_5dg', 15985, 409),
+	(1000569, 'iX0yvYtQmiU', 15987, 411),
+	(1000569, '-oelrD7pok4', 15989, 413),
+	(1000569, 'IJ6LXTAtFe0', 15991, 415),
+	(1000569, 'SSlHSkT5gaA', 15993, 417),
+	(1000569, 'H57TFnn9TNc', 15995, 419),
+	(1000569, 'UvpUMTo6pyU', 15997, 421),
+	(1000569, 'ufxx1p0HtGY', 15998, 422),
+	(1000569, '8ksqd8I9u4U', 15999, 423),
+	(1000569, 'DCTNn0QvwEg', 16000, 424),
+	(1000569, '3rAZHTmEDgg', 16001, 425),
+	(1000569, 'pEoNHm8kQ_A', 16002, 426),
+	(1000569, 'nNjNpYDAk5U', 16003, 427),
+	(1000569, 'u_7e7y_xna0', 16004, 428),
+	(1000569, 'w457IwS_I70', 16005, 429),
+	(1000569, 'Myyk-m3KJ6Y', 16006, 430),
+	(1000569, 'TeOstAx7eYg', 16007, 431),
+	(1000569, 'W7d4fVUa_9E', 16008, 432),
+	(1000569, 'h75GlqFIxP0', 16009, 433),
+	(1000569, '545vOn-kFwc', 16010, 434),
+	(1000569, 'Wt60eAmsdLE', 16011, 435),
+	(1000569, 'KZf_cczrkOQ', 16012, 436),
+	(1000569, 'i4CyjQVFo58', 16013, 437),
+	(1000569, 'k_9RbJKpgRw', 16014, 438),
+	(1000569, '4J1qpACszIo', 16015, 439),
+	(1000569, 'y3Z7Uod_aAo', 16016, 440),
+	(1000569, 'xoRDjKghHrI', 16017, 441),
+	(1000569, 'OddpuZhDbMU', 16018, 442),
+	(1000569, '4X-bXGqIyfE', 16019, 443),
+	(1000569, 'tYTRY_6eGSU', 16020, 444),
+	(1000569, 'V6krRYJp4us', 16021, 445),
+	(1000569, 'eJw3ET_H61w', 16022, 446),
+	(1000569, 'USIzgQnYuSU', 16023, 447),
+	(1000569, 'ywbblGxDm-M', 16024, 448),
+	(1000569, 'dFoU9bXlQzM', 16025, 449),
+	(1000569, 'SW3F-i3-Blw', 16026, 450),
+	(1000569, '8EQdQ_D2STs', 16027, 451),
+	(1000569, 'oA1om3flDm0', 16028, 452),
+	(1000569, 'q35D0v_sFVQ', 16029, 453),
+	(1000569, 'S1Z10-sS7B4', 16030, 454),
+	(1000569, 'krXxtKMo1fg', 16031, 455),
+	(1000569, 'QQz3WwZ4Kig', 16032, 456),
+	(1000569, 'HaMK8F6nHfQ', 16033, 457),
+	(1000569, 'KbuD8rldP8g', 16034, 458),
+	(1000569, 'mlkNkHVEU_w', 16035, 459),
+	(1000569, 'l3ahKDfITpg', 16036, 460),
+	(1000569, 'jmPZOGIypko', 16037, 461),
+	(1000569, 'V014NHgGlz4', 16038, 462),
+	(1000569, 'oXCeJ7lwlc8', 16039, 463),
+	(1000569, 'A2L2OjEZ84U', 16040, 464),
+	(1000569, 'qxbvfStdkfk', 16041, 465),
+	(1000569, 'QygwxgLymKY', 16042, 466),
+	(1000569, 'PabpuPqwvoE', 16043, 467),
+	(1000569, '66VLdMXUhPw', 16044, 468),
+	(1000569, 'aXsSWFwTLfo', 16045, 469),
+	(1000569, 'Z7Dajkasadk', 16046, 470),
+	(1000569, 'H13sIYFceRA', 16047, 471),
+	(1000569, '-qFXa3Dhkk0', 16049, 473),
+	(1000569, 'UmilIfNL7zo', 16051, 475),
+	(1000569, 'mxofCAnNU1M', 16053, 477),
+	(1000569, 'g-urkZly_YU', 16055, 479),
+	(1000569, 'VOs4tThFozw', 16057, 481),
+	(1000569, '428uGy2KqBg', 16059, 483),
+	(1000569, 'X2suWX2dMKQ', 16061, 485),
+	(1000569, 'Utp8VO60gjQ', 16063, 487),
+	(1000569, 'xMrdxMn7wN0', 16065, 489),
+	(1000569, 'Cg9sC8xK4aE', 16067, 491),
+	(1000569, 'Kywq0DiUX1s', 16069, 493),
+	(1000569, 'mQGIcMQmPyg', 16071, 495),
+	(1000569, 'W25SPGnNSAs', 16073, 497),
+	(1000569, '0LkxoY2uyVU', 16075, 499),
+	(1000569, 'OxW8WNFa8xM', 16077, 501),
+	(1000569, 'N6J_c7FhDnk', 16079, 503),
+	(1000569, '0SnpwilSY7I', 16081, 505),
+	(1000569, 'YPiBleV43Vc', 16083, 507),
+	(1000569, 'dPsQikt2Ky4', 16085, 509),
+	(1000569, '6HcW9Zdq0Ao', 16087, 511),
+	(1000569, 'FQgl5fRfTkc', 16089, 513),
+	(1000569, '3t2J7I3Lu-E', 16091, 515),
+	(1000569, '67sCPvk2MXA', 16093, 517),
+	(1000569, '9caWuwE-5M0', 16095, 519),
+	(1000569, 'naLgLo611XU', 16097, 521),
+	(1000569, 'QRW1gnZ-rjY', 16099, 523),
+	(1000569, 'Q0cHKt5Mq-8', 16101, 525),
+	(1000569, 'lHS1evyA8ek', 16103, 527),
+	(1000569, '-nqK6vri8GI', 16105, 529),
+	(1000569, 'DdhnA08BX7E', 16107, 531),
+	(1000569, 'M8ulrBnoHvQ', 16109, 533),
+	(1000569, '5Y3vkyDVRXA', 16111, 535),
+	(1000569, 'OXGr7wm1Duw', 16113, 537),
+	(1000569, 'xbMqV6s2atg', 16115, 539),
+	(1000569, 'L9fFx4DOjTw', 16117, 541),
+	(1000569, 'RdkbnVqWaWA', 16119, 543),
+	(1000569, 'LzLXqQxFQ54', 16121, 545),
+	(1000569, 'RswlWnZOgk8', 16123, 547),
+	(1000569, 'aMdGKK6BYSg', 16125, 549),
+	(1000569, '-qlmmSoL72s', 16127, 551),
+	(1000569, '-Vp3ucTq30Y', 16129, 553),
+	(1000569, 'AXIZ8ttQ79Y', 16131, 555),
+	(1000569, 'U-x9yJ4K-9k', 16133, 557),
+	(1000569, 'zYQwrwtuxC8', 16135, 559),
+	(1000569, 'I_CH2we3aqc', 16137, 561),
+	(1000569, 'EhSso1Na7pI', 16139, 563),
+	(1000569, 'Ukp0vbrhgIo', 16141, 565),
+	(1000569, 'IjTpVVCPz3M', 16143, 567),
+	(1000569, '2pO-0HTiUDE', 16145, 569),
+	(1000569, 'hVZdL00VFFk', 16147, 571),
+	(1000569, '1QqThKwXWVk', 16149, 573),
+	(1000569, 'l8k6ltGMO1k', 16151, 575),
+	(1000569, 'VLc0TQBEHsE', 16153, 577),
+	(1000569, 'bNM0wUT1O80', 16155, 579),
+	(1000569, '5J7Fh24K0ys', 16157, 581),
+	(1000569, 'RqKi2XLFXzo', 16159, 583),
+	(1000569, 'PZmwSPYXYVg', 16161, 585),
+	(1000569, 'O0isOM1iUnM', 16163, 587),
+	(1000569, 'sHQcfi0eZR4', 16165, 589),
+	(1000569, '4sSFQ7UZcgE', 16167, 591),
+	(1000569, 'k3kJ8B_MXkw', 16169, 593),
+	(1000569, 'epMG88ycafg', 16171, 595),
+	(1000569, 'D7szm7NPmYc', 16173, 597),
+	(1000569, 'gKLwDeWqZ_A', 16175, 599),
+	(1000569, 'PGACqyHrnKs', 16177, 601),
+	(1000569, '4-soIcNPFGA', 16179, 603),
+	(1000569, '6PLjf0SHfww', 16181, 605),
+	(1000569, 'nB05O1jWrqM', 16183, 607),
+	(1000569, 'Rh8OXBHzSjk', 16185, 609),
+	(1000569, 'CnccDhNDWKs', 16187, 611),
+	(1000569, '0dufByJr8OY', 16189, 613),
+	(1000569, '0kp0aRKZpn0', 16191, 615),
+	(1000569, 'VYqDoOs63SU', 16193, 617),
+	(1000569, 'ITh1w186k8g', 16195, 619),
+	(1000569, 'kjuWFrEJfxs', 16197, 621),
+	(1000569, 'rlyWT58Enf8', 16199, 623),
+	(1000569, 'A06XADKs9XM', 16201, 625),
+	(1000569, 'KtMzcZ2M-iU', 16203, 627),
+	(1000569, 'oOE98bNLAm0', 16205, 629),
+	(1000569, 'r_d_3Duamy8', 16207, 631),
+	(1000569, 'EhZ6HUJSKcw', 16209, 633),
+	(1000569, 'AfnV56qtugY', 16211, 635),
+	(1000569, 'dC0enn73t8Y', 16213, 637),
+	(1000569, 'xAD3OXRvoXA', 16215, 639),
+	(1000569, 'OV0keFAoK6A', 16217, 641),
+	(1000569, 'gUeDMflT4r8', 16219, 643),
+	(1000569, 's-NBo_eBGV8', 16221, 645),
+	(1000569, '57mpqEExkgU', 16223, 647),
+	(1000569, 'or4K4tuRnSc', 16225, 649),
+	(1000569, 'S5pFlqUZWZU', 16227, 651),
+	(1000569, 'wuicgnHIuzs', 16229, 653),
+	(1000569, '7l-1_exlEP8', 16231, 655),
+	(1000569, 'yGQuJFqI7Q0', 16233, 657),
+	(1000569, 'dbg6XRq6eQ0', 16235, 659),
+	(1000569, 'EvkzlYNsPYw', 16237, 661),
+	(1000569, 'gD8SHbBc1Hw', 16239, 663),
+	(1000569, '-74bZeeklTY', 16241, 665),
+	(1000569, '1JJq8GQp9ZY', 16243, 667),
+	(1000569, 'nbBpIkp4iP4', 16245, 669),
+	(1000569, 'wIw4cHcGeUg', 16247, 671),
+	(1000569, 'rab1O3rDc10', 16249, 673),
+	(1000569, 'fMlI7qXo-Lg', 16251, 675),
+	(1000569, 'tL__C0iryyw', 16253, 677),
+	(1000569, 'RPOmGnXx8Pc', 16255, 679),
+	(1000569, 'rr1rO_hYiQE', 16257, 681),
+	(1000569, 'GfIMsQjaOI8', 16259, 683),
+	(1000569, 'wOB4WUFzJxs', 16261, 685),
+	(1000569, 'eOqEML0l7gM', 16263, 687),
+	(1000569, 'ezYkS4RF2L4', 16265, 689),
+	(1000569, 'LkKJQZCReqQ', 16267, 691),
+	(1000569, 'wwczcSgv0yk', 16269, 693),
+	(1000569, 'BD--frYAPI0', 16271, 695),
+	(1000569, 'VdUO4Xi5oZ4', 16273, 697),
+	(1000569, 'ENpjR4iIHoM', 16275, 699),
+	(1000569, '9EqgH4RVmbM', 16277, 701),
+	(1000569, 'z2Ho_QhPkdc', 16279, 703),
+	(1000569, '1-7zL_gyH8g', 16281, 705),
+	(1000569, 'fKUFzeev7NM', 16283, 707),
+	(1000569, 'lv_D7FvVgng', 16285, 709),
+	(1000569, 'W13797uoMss', 16048, 472),
+	(1000569, 'ma4cWG09viY', 16050, 474),
+	(1000569, 'hGQG8pyNopw', 16052, 476),
+	(1000569, 'kRQK02zjEjY', 16054, 478),
+	(1000569, 'VfL95GrO6Qc', 16056, 480),
+	(1000569, 'YGApqKxr3Cc', 16058, 482),
+	(1000569, '-ldEkqjM6tw', 16060, 484),
+	(1000569, 'nQ9AFkqL3HU', 16062, 486),
+	(1000569, 'F9CXF4-ctmA', 16064, 488),
+	(1000569, 'd2288KoQWlM', 16066, 490),
+	(1000569, 'qZA5ka4VRSU', 16068, 492),
+	(1000569, '_QQ8iqmSYsg', 16070, 494),
+	(1000569, 'h2LGIgB3gFI', 16072, 496),
+	(1000569, 'pIKIr6FanWw', 16074, 498),
+	(1000569, 'GWUZPPw6vyU', 16076, 500),
+	(1000569, 't3CSx2GGcc8', 16078, 502),
+	(1000569, 'Kr8-hKpXobo', 16080, 504),
+	(1000569, 'C-UuNDwgmB0', 16082, 506),
+	(1000569, 'E01xXy2h4xE', 16084, 508),
+	(1000569, 'eJ7cuy8zmkQ', 16086, 510),
+	(1000569, 'hbZiBs-oMKk', 16088, 512),
+	(1000569, 'BLF1L4s2cK0', 16090, 514),
+	(1000569, 'LwbpS9VNXO0', 16092, 516),
+	(1000569, 's_LsTnwjosU', 16094, 518),
+	(1000569, 'ndludQf-NdA', 16096, 520),
+	(1000569, 'AslVMHo6odk', 16098, 522),
+	(1000569, 'zXvX05aE_kA', 16100, 524),
+	(1000569, 'TTqUGVIqzp8', 16102, 526),
+	(1000569, 'LHCkOIYt6hc', 16104, 528),
+	(1000569, 'V6YSbb-hynU', 16106, 530),
+	(1000569, 'zUuPPF5GBso', 16108, 532),
+	(1000569, 'X3ht5q9vBVQ', 16110, 534),
+	(1000569, 'A2ScZZ-XeYw', 16112, 536),
+	(1000569, 'PAySJPo9LsI', 16114, 538),
+	(1000569, 'ptC_3fdGhnE', 16116, 540),
+	(1000569, 'kMe17ldg-zE', 16118, 542),
+	(1000569, 'MMHLgGIcOm8', 16120, 544),
+	(1000569, 'sGONPCnGths', 16122, 546),
+	(1000569, 'L0BgDib_aZs', 16124, 548),
+	(1000569, 'D6YphETSeT0', 16126, 550),
+	(1000569, 'VR_V3p6kdpQ', 16128, 552),
+	(1000569, '_D0hQU49R5k', 16130, 554),
+	(1000569, 'Rudq0-kma7M', 16132, 556),
+	(1000569, 'pZXGxFn0JHA', 16134, 558),
+	(1000569, 'i7OVQmZ6vi4', 16136, 560),
+	(1000569, '3JevMiU-IQc', 16138, 562),
+	(1000569, 'nj_gT9komOU', 16140, 564),
+	(1000569, '9OEwpUsKr1c', 16142, 566),
+	(1000569, '45iK7LPS-2E', 16144, 568),
+	(1000569, 'AhaH68UNNRg', 16146, 570),
+	(1000569, '9tetF1e0DG4', 16148, 572),
+	(1000569, 'idNspprZDWY', 16150, 574),
+	(1000569, 'xqOLbyTKIm0', 16152, 576),
+	(1000569, 'Ks0Lgow3k48', 16154, 578),
+	(1000569, 'Ha9xfiBJafc', 16156, 580),
+	(1000569, 'Jehm8inraio', 16158, 582),
+	(1000569, 'a62u13zHfOc', 16160, 584),
+	(1000569, 'K629kx1vJoY', 16162, 586),
+	(1000569, 'lhSVitmgZc4', 16164, 588),
+	(1000569, '0HgW4AzR2_I', 16166, 590),
+	(1000569, 'Kxrxm5fbVm0', 16168, 592),
+	(1000569, '5nlKGxziM0k', 16170, 594),
+	(1000569, 'wzZkAP_GBA8', 16172, 596),
+	(1000569, '_6mi_JxwqPQ', 16174, 598),
+	(1000569, 'Cv0m7PqL758', 16176, 600),
+	(1000569, 'EiKiHDu0r8k', 16178, 602),
+	(1000569, 'MOFpjm5VrsM', 16180, 604),
+	(1000569, 'n8Tnh-1KyNw', 16182, 606),
+	(1000569, 'LcuBylyFtI0', 16184, 608),
+	(1000569, 'T4YKqkgenzc', 16186, 610),
+	(1000569, 'NuOgu_y1c7Y', 16188, 612),
+	(1000569, '9xZEcKx-2GI', 16190, 614),
+	(1000569, '8DAp59sHE3g', 16192, 616),
+	(1000569, 'oKQTGgFDHYQ', 16194, 618),
+	(1000569, 'VzJtcEPEI_E', 16196, 620),
+	(1000569, '_h5jsDJ2Dfg', 16198, 622),
+	(1000569, 'Yvw5CW0ai1Q', 16200, 624),
+	(1000569, 'Oq_Ig-AiJLU', 16202, 626),
+	(1000569, 'Pt1wJYmsoRo', 16204, 628),
+	(1000569, '6GjwbiXh9q0', 16206, 630),
+	(1000569, 'jJ7obQ5PbTs', 16208, 632),
+	(1000569, 'zXG7ElqPqhk', 16210, 634),
+	(1000569, 'fhjE7pauTIs', 16212, 636),
+	(1000569, 'M1e9hDeVNKg', 16214, 638),
+	(1000569, 'ZHLhPYr1r0o', 16216, 640),
+	(1000569, 'yWkewwd-pYI', 16218, 642),
+	(1000569, 'XQ1EuDH-uq0', 16220, 644),
+	(1000569, '8WOsFsX63rw', 16222, 646),
+	(1000569, 'yL_B_iYWk08', 16224, 648),
+	(1000569, 'MJPGxwk005U', 16226, 650),
+	(1000569, '_-FjLpoz8Zk', 16228, 652),
+	(1000569, '2g6kFKncQ6s', 16230, 654),
+	(1000569, 'x2VtKbb_HJk', 16232, 656),
+	(1000569, 'i1dEYM470Dg', 16234, 658),
+	(1000569, '5QvPZMWmV-c', 16236, 660),
+	(1000569, 'KpOPG3g3Dek', 16238, 662),
+	(1000569, 'cjzB3LqXUp8', 16240, 664),
+	(1000569, 'zccwkFQQalA', 16242, 666),
+	(1000569, 'fYs1BKJ9wI4', 16244, 668),
+	(1000569, 'eeIPqL9gxsU', 16246, 670),
+	(1000569, 'XWIcvlwNzQs', 16248, 672),
+	(1000569, 'prbo1fYB1Es', 16250, 674),
+	(1000569, 'RZ2jkMEjiLA', 16252, 676),
+	(1000569, 'KMI7XiuBV8E', 16254, 678),
+	(1000569, 'SI1PZot2oKc', 16256, 680),
+	(1000569, 'qx-7lUg4_Yw', 16258, 682),
+	(1000569, 'j4UgeYAZap8', 16260, 684),
+	(1000569, 'jLOVwEN3GTc', 16262, 686),
+	(1000569, 'lu0EgWlTZV4', 16264, 688),
+	(1000569, 'fAB2mGgH1-A', 16266, 690),
+	(1000569, 'lWX7VYsiYik', 16268, 692),
+	(1000569, 'xSUZvdCp018', 16270, 694),
+	(1000569, 'QsluPnd9gds', 16272, 696),
+	(1000569, 'FmRzzglibUQ', 16274, 698),
+	(1000569, 'fgygmQ10iyU', 16276, 700),
+	(1000569, 'qsL26QL40Mo', 16278, 702),
+	(1000569, 'YycouhmNUZk', 16280, 704),
+	(1000569, 'Eb7JLIjeiQg', 16282, 706),
+	(1000569, 'zJy1nw2dVKA', 16284, 708),
+	(1000569, 'YjT58HrXTcM', 16286, 710),
+	(1000569, '8WXxvZ8JaFA', 16287, 711),
+	(1000569, 'ybm0ZoFOYWs', 16289, 713),
+	(1000569, '4m9t43iTwRw', 16291, 715),
+	(1000569, 'ypLZFL0wk7w', 16293, 717),
+	(1000569, '5nC2PPLl3ec', 16295, 719),
+	(1000569, 'cSpw_p78ecI', 16297, 721),
+	(1000569, 'VUaljYfvY6Y', 16299, 723),
+	(1000569, 'YO_c3OZM8b8', 16301, 725),
+	(1000569, 'wPu19R08jT0', 16303, 727),
+	(1000569, 'B-KDGGcJWQo', 16305, 729),
+	(1000569, 'qNmK3Ra-1k0', 16307, 731),
+	(1000569, 'LGgXzhNz-xI', 16309, 733),
+	(1000569, 'HzCeWAAvxGk', 16311, 735),
+	(1000569, 'xO_goeXBVPM', 16313, 737),
+	(1000569, 'D19RV_YLstM', 16315, 739),
+	(1000569, '6_nBI2rGOWg', 16317, 741),
+	(1000569, 'Y3kBkPbsNXM', 16319, 743),
+	(1000569, '1MxH0KZoSQc', 16321, 745),
+	(1000569, 'OOssDMNnjiI', 16323, 747),
+	(1000569, 'RdooCDiZZLc', 16325, 749),
+	(1000569, 'SSYM-OzTAZw', 16327, 751),
+	(1000569, 'OgLcMlireoc', 16329, 753),
+	(1000569, 'TLYtQA6HdJc', 16331, 755),
+	(1000569, 'mziRehnjAfc', 16333, 757),
+	(1000569, 'E2a_MkLTbBQ', 16335, 759),
+	(1000569, '69pH6ynO-E0', 16337, 761),
+	(1000569, 'KU-6kWo2Yjk', 16339, 763),
+	(1000569, 'HZxx0XaPWVo', 16341, 765),
+	(1000569, '6K-AV2YZ3Vg', 16343, 767),
+	(1000569, 'otQih3FN6pI', 16345, 769),
+	(1000569, 'vscz4s_VrcM', 16347, 771),
+	(1000569, 'MBP4aeGyL5w', 16349, 773),
+	(1000569, 'nw5nZYz2tIM', 17132, 1556),
+	(1000569, 'vz6o_TUd3qg', 16353, 777),
+	(1000569, 'cGDtfa1WUkc', 16355, 779),
+	(1000569, 'tjUU-FEINek', 16357, 781),
+	(1000569, 'HmxkJLb_-2w', 16359, 783),
+	(1000569, 'iYZftF7LqMY', 16361, 785),
+	(1000569, 'S4gTElCKtpQ', 16363, 787),
+	(1000569, 'vWANVwFF19U', 16365, 789),
+	(1000569, 'olKbyq7mPZA', 16367, 791),
+	(1000569, 'og-we4E7yIY', 16369, 793),
+	(1000569, 't5fWXv3m1uk', 16371, 795),
+	(1000569, 'rnQextNaEq0', 16373, 797),
+	(1000569, 'FqOSb-t7pkc', 16375, 799),
+	(1000569, 'xyAME3r9wGo', 16377, 801),
+	(1000569, 'ZqjzTtaBhiw', 16379, 803),
+	(1000569, 'MVTR54o-veY', 16381, 805),
+	(1000569, 'lyVmXN0InDw', 16383, 807),
+	(1000569, 'xG6TXzkGbGw', 16385, 809),
+	(1000569, 'jgxHiqBptm8', 16387, 811),
+	(1000569, 'yK_fYmcgNAA', 16389, 813),
+	(1000569, 'u3liRgtK77Y', 16391, 815),
+	(1000569, '32n5SRDl924', 17134, 1558),
+	(1000569, 'txISf43Yoak', 16395, 819),
+	(1000569, '50iydA_Xk-o', 16397, 821),
+	(1000569, '9L0dY56xfFE', 16399, 823),
+	(1000569, 'yg5JuRDHrZs', 16401, 825),
+	(1000569, 'tX5cgfEbF-s', 16403, 827),
+	(1000569, 'DKjfmYcRo0o', 16405, 829),
+	(1000569, 'q21eadq3Mzo', 16407, 831),
+	(1000569, 'eKPn9tJZJCQ', 16409, 833),
+	(1000569, 'aW7ug7GGPJA', 16411, 835),
+	(1000569, 'CmENHh6LvYA', 16413, 837),
+	(1000569, '9qXY3LN7hh8', 16415, 839),
+	(1000569, 'yxeYDcYFZAY', 16417, 841),
+	(1000569, 'WWOsewETmS8', 16419, 843),
+	(1000569, 'u4Q_vW_yD60', 16421, 845),
+	(1000569, '8h2onuOyw1Q', 16423, 847),
+	(1000569, 'dxq1rn86aSk', 16425, 849),
+	(1000569, 'G4ez8Lwlzv8', 16427, 851),
+	(1000569, 'FlUAX-gHKFY', 16429, 853),
+	(1000569, 'hDAlXuSxl9E', 16431, 855),
+	(1000569, 'rYqHwxQZb-Y', 16433, 857),
+	(1000569, 'qVRfmdNq9uI', 16435, 859),
+	(1000569, 'hy8rJhHpfK0', 16437, 861),
+	(1000569, 'X4lcw5fAzJI', 16439, 863),
+	(1000569, 'zRrD9cQ4VaA', 16441, 865),
+	(1000569, '3j-99RmP6GA', 16443, 867),
+	(1000569, 'ZSJLhgxkfQQ', 16445, 869),
+	(1000569, 'ovAvR3uMyDc', 16447, 871),
+	(1000569, 'dWuL9ECF9y4', 16449, 873),
+	(1000569, 'jldTfsx4khM', 16451, 875),
+	(1000569, 'qyt237TWmS0', 16453, 877),
+	(1000569, 'sS1FfXnnrhU', 16455, 879),
+	(1000569, 'LL5fAUp2YxY', 16457, 881),
+	(1000569, 'MpJfTKotZvY', 16459, 883),
+	(1000569, 'wlJvb_nKgoo', 16461, 885),
+	(1000569, '-OcWuCt9zM4', 16463, 887),
+	(1000569, 'wfhDaf7FaSE', 16465, 889),
+	(1000569, 'W8Skc_u7BBs', 16467, 891),
+	(1000569, 'e1onwXe8OVQ', 16469, 893),
+	(1000569, '1zaGUwbm3EI', 16471, 895),
+	(1000569, '1zrG5SX2tYE', 16473, 897),
+	(1000569, 'EpoYMwtvyfw', 16475, 899),
+	(1000569, 'e9m0aGdOTfM', 16477, 901),
+	(1000569, 'B9kTqGrmWuo', 16479, 903),
+	(1000569, 's7XtajO023U', 16481, 905),
+	(1000569, 'FsX5HCTs-wQ', 16483, 907),
+	(1000569, 'Ka_y93K2kW0', 16485, 909),
+	(1000569, 'DPCSunGCMvw', 16487, 911),
+	(1000569, 'BlBSRft7RME', 16489, 913),
+	(1000569, 'DXuI4JHUZZU', 16491, 915),
+	(1000569, 'QuwVal8fz8I', 16493, 917),
+	(1000569, 'Q7eQy5kpghc', 16495, 919),
+	(1000569, 'MSUn9CKYkZ4', 16497, 921),
+	(1000569, 'eKj_8AUZAxU', 16499, 923),
+	(1000569, 'JTL0o72QdR4', 16501, 925),
+	(1000569, 'y6oBVlbQEww', 16503, 927),
+	(1000569, 'lY4ZHKrAqlc', 16505, 929),
+	(1000569, 'RKXb-jgrRjM', 16507, 931),
+	(1000569, 'gDkiOLxdH_o', 16509, 933),
+	(1000569, 'rk0ybBMy3KI', 16511, 935),
+	(1000569, '3CjRDzYjMoo', 16513, 937),
+	(1000569, 'T492dBrfux0', 16515, 939),
+	(1000569, 'UfJj9NvM2S8', 16517, 941),
+	(1000569, 'mpiSQThIrh0', 16519, 943),
+	(1000569, 'Asy5cwIhckI', 16521, 945),
+	(1000569, 'yZ-lgOMdnrs', 16523, 947),
+	(1000569, 'oUoe9rw3kW8', 16525, 949),
+	(1000569, '4QX-_-Fdun4', 16288, 712),
+	(1000569, 'vufV6i2X5eE', 16290, 714),
+	(1000569, 'ef7_0SZwyPE', 16292, 716),
+	(1000569, 'oES5FNCwT8Y', 16294, 718),
+	(1000569, 'u6IkZ3czqow', 16296, 720),
+	(1000569, '09tWtu7QO48', 16298, 722),
+	(1000569, 'UDjZa-xVO-Y', 16300, 724),
+	(1000569, 'Iyzw1-PwYQ0', 16302, 726),
+	(1000569, 'OdXs7TLWW5Y', 16304, 728),
+	(1000569, '83OxpKwiwa8', 16306, 730),
+	(1000569, '_JIk-oIdjZM', 16308, 732),
+	(1000569, 'JVWRr4FRN5o', 16310, 734),
+	(1000569, 'TePiq3xUQMc', 16312, 736),
+	(1000569, 'JlapDVeoano', 16314, 738),
+	(1000569, 'uomKjIIVrzg', 16316, 740),
+	(1000569, 'ihXNG9erOVo', 16318, 742),
+	(1000569, '72Jk8rTr2qE', 16320, 744),
+	(1000569, 'LUXg_q7Id9M', 16322, 746),
+	(1000569, 'SEHkz9j8URU', 16324, 748),
+	(1000569, '8XjOfQjwq2s', 16326, 750),
+	(1000569, 'PK11vCe9yPE', 16328, 752),
+	(1000569, 'i48uSYHKmIQ', 16330, 754),
+	(1000569, 'S9FnWwRynw0', 16332, 756),
+	(1000569, 'YfE306fHOS0', 16334, 758),
+	(1000569, 'jN2YX8PLsWI', 16336, 760),
+	(1000569, 'dQg-kTwUiOI', 16338, 762),
+	(1000569, 'WqCgf0DZwPc', 16340, 764),
+	(1000569, 'ewG_8B6gk2A', 16342, 766),
+	(1000569, 'xxEGdF8rs08', 16344, 768),
+	(1000569, '-VBaHdwFe9A', 16346, 770),
+	(1000569, 'wVml-_YblBM', 16348, 772),
+	(1000569, 'Md-EEQfW-BI', 16350, 774),
+	(1000569, 'oYAoiYOJMmw', 16352, 776),
+	(1000569, 'D8mPdZ0EJRc', 16354, 778),
+	(1000569, 'nJKkGRT3HgQ', 16356, 780),
+	(1000569, 'EFu5-xaSavI', 16358, 782),
+	(1000569, 'bvCb1GkCNXw', 16360, 784),
+	(1000569, 'RbgoWxCzFJQ', 16362, 786),
+	(1000569, 'PyEBw_ex8bc', 16364, 788),
+	(1000569, 'LF2yC8i9rs8', 16366, 790),
+	(1000569, 'eHFsOG_Bk78', 16368, 792),
+	(1000569, 'oH_-CZ3-mBo', 16370, 794),
+	(1000569, 'CgPH1lhbdqw', 16372, 796),
+	(1000569, '7PI2e1amEUc', 16374, 798),
+	(1000569, 'SfAmc3hqGRM', 16376, 800),
+	(1000569, 'iDVOFxF_Lnc', 16378, 802),
+	(1000569, 'JpVu56GcrFE', 16380, 804),
+	(1000569, 'tAGhQHO3RcA', 16382, 806),
+	(1000569, 'HFDHmgjbAw8', 16384, 808),
+	(1000569, 'KYPsEQtSTGY', 16386, 810),
+	(1000569, 'pJTkvAxFTo8', 16388, 812),
+	(1000569, 'FmOp9hcU2v4', 16390, 814),
+	(1000569, 'jxajRhaM38A', 16392, 816),
+	(1000569, 'pvU6Xn9UoU0', 16394, 818),
+	(1000569, 'JUQxhnESBg0', 16396, 820),
+	(1000569, 'UyZj5S2f7Bc', 16398, 822),
+	(1000569, 'nSkbBLuxQMw', 16400, 824),
+	(1000569, '-PPLPEQi6xs', 16402, 826),
+	(1000569, 'u8N0tLZ5w1Q', 16404, 828),
+	(1000569, 'IWNnpWE-jL8', 16406, 830),
+	(1000569, 'n6WelVKtDgQ', 16408, 832),
+	(1000569, 'TAXOp9MIPVg', 16410, 834),
+	(1000569, 'nft_P2iBU-o', 16412, 836),
+	(1000569, 'BVgBQswAwH4', 16414, 838),
+	(1000569, 'dMMFHULgQ00', 16416, 840),
+	(1000569, 'g14kO8sr1dc', 16418, 842),
+	(1000569, 'NYCLn6Ev8_0', 16420, 844),
+	(1000569, 'q3PF8HPi_ZQ', 16422, 846),
+	(1000569, 'MhzFH7hrFqo', 16424, 848),
+	(1000569, '5ydmUTri1xU', 16426, 850),
+	(1000569, '-6E1Uzuigv0', 16428, 852),
+	(1000569, '_daxY_s_wE4', 16430, 854),
+	(1000569, 'z1MWHV4V6d4', 16432, 856),
+	(1000569, 'BCzCDcTxblM', 16434, 858),
+	(1000569, '_VVsa7R-Fsk', 16436, 860),
+	(1000569, 'ThzCrq9vG4o', 16438, 862),
+	(1000569, 'yHym4hYn_Ro', 16440, 864),
+	(1000569, 'vaeT3WSC-fk', 16442, 866),
+	(1000569, 'CvN1jIzfcPE', 16444, 868),
+	(1000569, 'ZRIyHJyxDJ4', 16446, 870),
+	(1000569, 'VWQCTlqZ8QE', 16448, 872),
+	(1000569, 'HAcdGWMpCVI', 16450, 874),
+	(1000569, 'x0KMqm-W0lQ', 16452, 876),
+	(1000569, 'F8qK6oHOf14', 16454, 878),
+	(1000569, '1UTueD6tbVw', 16456, 880),
+	(1000569, 'ed0s12Pl4Is', 16458, 882),
+	(1000569, 'zbVMGIIvJjE', 16460, 884),
+	(1000569, 'EDfDzmeTgFE', 16462, 886),
+	(1000569, 'ScQmqjmktzU', 16464, 888),
+	(1000569, 'vqo3ydqDpRU', 16466, 890),
+	(1000569, '8f5BLSiyARs', 16468, 892),
+	(1000569, 'ca8__CiBrfk', 16470, 894),
+	(1000569, 'mwPEn0XNNOM', 16472, 896),
+	(1000569, 'cOh5J_nfe88', 16474, 898),
+	(1000569, 'jcGqdcBxzHk', 16476, 900),
+	(1000569, 'UOCQdFLwyTU', 16478, 902),
+	(1000569, 'LSy6KL7SMWI', 16480, 904),
+	(1000569, 'F4ws3Fg9HX0', 16482, 906),
+	(1000569, 'R11W2-FWg7Q', 16484, 908),
+	(1000569, 'iJKYKB_DFy4', 16486, 910),
+	(1000569, 'koxGQaCgDhY', 16488, 912),
+	(1000569, '36pdlR8lqwg', 16490, 914),
+	(1000569, 'TWUn9Bbj6EE', 16492, 916),
+	(1000569, 's6PqHnnFjRE', 16494, 918),
+	(1000569, 'Op-De5gca2g', 16496, 920),
+	(1000569, 'wIRXXCjpEGE', 16498, 922),
+	(1000569, 'ZUkDXSWbUmA', 16500, 924),
+	(1000569, 'BTX7j7qw-Po', 16502, 926),
+	(1000569, '5dqBhFI8f7w', 16504, 928),
+	(1000569, 'cSMg9hDiiyY', 16506, 930),
+	(1000569, 'RQuEnr-sP7E', 16508, 932),
+	(1000569, 'w0SHWvIOE7Q', 16510, 934),
+	(1000569, 'kTxfJJYu710', 16512, 936),
+	(1000569, 'cJ4xDBnvgTM', 16514, 938),
+	(1000569, 'e_8fsxKMA9A', 16516, 940),
+	(1000569, 'c-ObS2y5ApQ', 16518, 942),
+	(1000569, 'EgtYrEZlMfE', 16520, 944),
+	(1000569, '0V_sDsBK-5Y', 16522, 946),
+	(1000569, 'fnCTzUz56IE', 16524, 948),
+	(1000569, 'SgHpTrNvZPQ', 16526, 950),
+	(1000569, 'uEO25GkfkFw', 16527, 951),
+	(1000569, 'eHm8DtyesNw', 16529, 953),
+	(1000569, 'd2cY2J48sw4', 16531, 955),
+	(1000569, 'k1tODje_Kiw', 16533, 957),
+	(1000569, 'lfybbMOWelQ', 16535, 959),
+	(1000569, 'NdhuxlTtSX0', 16537, 961),
+	(1000569, 'IHDbjPCljSk', 16539, 963),
+	(1000569, 'yLKxvCLxC1E', 16541, 965),
+	(1000569, 'uF4G2D3PF04', 16543, 967),
+	(1000569, 'SOdJC9k0UZI', 16545, 969),
+	(1000569, '1-2H-ayBdEY', 16547, 971),
+	(1000569, '8gzU7HxWgd4', 16549, 973),
+	(1000569, 'qONMsgxNEOU', 16551, 975),
+	(1000569, 'Fb2KLWJHigo', 17136, 1560),
+	(1000569, 'h-Nnd0MUHfU', 16555, 979),
+	(1000569, 'OCvXuXlrlD0', 16557, 981),
+	(1000569, '83wQaAjovpI', 16559, 983),
+	(1000569, 'egNanCh37YI', 16561, 985),
+	(1000569, 'DHEXCUNV0lM', 16563, 987),
+	(1000569, 'lz3jBeRRWCo', 16565, 989),
+	(1000569, '2KDlXxKhHX0', 16567, 991),
+	(1000569, 'lF8XHcrlGUk', 16569, 993),
+	(1000569, 'DcHeccDjK7w', 16571, 995),
+	(1000569, 'h70B8jDD0yQ', 16573, 997),
+	(1000569, 'TJ8cMtCl1V4', 16575, 999),
+	(1000569, 'qPo0YQJLY3I', 16577, 1001),
+	(1000569, 'sVBfPGYfNOQ', 16579, 1003),
+	(1000569, 'SigpTcfCBcw', 16581, 1005),
+	(1000569, 'MrDUd7VybTM', 16583, 1007),
+	(1000569, 't_Loc34Pp2I', 16585, 1009),
+	(1000569, 'fPsDj4DUcF0', 16587, 1011),
+	(1000569, 'TYoZJ1ZXNGM', 16589, 1013),
+	(1000569, 'OUVOSgFnaJ8', 16591, 1015),
+	(1000569, '78eG7u7eapo', 16593, 1017),
+	(1000569, 'VpVNXPqwKW4', 16595, 1019),
+	(1000569, 'TziwMCzbj6Y', 16597, 1021),
+	(1000569, '64-d3eGE6AM', 16599, 1023),
+	(1000569, 'XpSBexRvAWE', 16601, 1025),
+	(1000569, 'ZpZjvcYIiq0', 16603, 1027),
+	(1000569, 'yMPXirBiwUE', 16605, 1029),
+	(1000569, 'uwL7jQJ2AC8', 16607, 1031),
+	(1000569, 'dNd0369e3lM', 16609, 1033),
+	(1000569, 'KBovokVxQ-g', 16611, 1035),
+	(1000569, '5_h9xv-ldfE', 16613, 1037),
+	(1000569, 'thH8Ky9_RLU', 16615, 1039),
+	(1000569, '6PcsVYnvY84', 16617, 1041),
+	(1000569, 'WNlMOH9dDvg', 16619, 1043),
+	(1000569, '_gKU-qh6UdM', 16621, 1045),
+	(1000569, 'mzhNVHL2-xw', 16623, 1047),
+	(1000569, 'r2Zs2Utsnd4', 16625, 1049),
+	(1000569, 'w8__zYQSrb8', 16627, 1051),
+	(1000569, 'EMg5X9DBNZ0', 16629, 1053),
+	(1000569, 'c103-iiKt4U', 16631, 1055),
+	(1000569, 'ahxSs98aC1s', 16633, 1057),
+	(1000569, 'FoDUGJjBK4c', 16635, 1059),
+	(1000569, 'PBPC2H8zD3o', 16637, 1061),
+	(1000569, 'Wt-Twcj56ow', 16639, 1063),
+	(1000569, '2pTYh-2Y52k', 16641, 1065),
+	(1000569, 'RxKjQD5EOSM', 16643, 1067),
+	(1000569, 'kRMAC5ETwMg', 16645, 1069),
+	(1000569, 'tNCoowcIe0s', 16647, 1071),
+	(1000569, 'JqvfZbjzdtQ', 16649, 1073),
+	(1000569, 'jc-9sL1knyc', 16651, 1075),
+	(1000569, 'AuVSM3p3ptw', 16653, 1077),
+	(1000569, '7uEfVG0rk7o', 16655, 1079),
+	(1000569, 'N3KVsDE66vE', 16657, 1081),
+	(1000569, 'kX6ENqFU6LE', 16659, 1083),
+	(1000569, 'hfyVCpUTj20', 16661, 1085),
+	(1000569, 'TxuAH687KGs', 16663, 1087),
+	(1000569, 'RNYKhZphLlQ', 16665, 1089),
+	(1000569, '879L1EUtblI', 16667, 1091),
+	(1000569, '616wha7nkIQ', 16669, 1093),
+	(1000569, 'LofoncqhnTo', 16671, 1095),
+	(1000569, 'bQqp7Z-GCRI', 16673, 1097),
+	(1000569, 'SPuMiNzUVsI', 16675, 1099),
+	(1000569, '8jm9ItL3shU', 16677, 1101),
+	(1000569, 'djfoYHl5M6k', 16679, 1103),
+	(1000569, 'uwFTI5GbDiU', 16681, 1105),
+	(1000569, 'QareC_AH25U', 16683, 1107),
+	(1000569, 'sTKfhZ60Tsw', 16685, 1109),
+	(1000569, 'UpX6SDpaSdw', 16687, 1111),
+	(1000569, 'PBQz-5roeis', 16689, 1113),
+	(1000569, 'S796JfJb730', 16691, 1115),
+	(1000569, 'Fa90buE7RdU', 16693, 1117),
+	(1000569, 'W1GiMnEjRqA', 16695, 1119),
+	(1000569, 'hzxRXY1FX48', 16697, 1121),
+	(1000569, 'QjMe4rvu5Vk', 16699, 1123),
+	(1000569, 'YSZsywB80VA', 16701, 1125),
+	(1000569, 'AIv15F_EWmo', 16703, 1127),
+	(1000569, '8fqW8mB51u4', 16705, 1129),
+	(1000569, 'KG5GGo4-iuQ', 16707, 1131),
+	(1000569, 'RJfSxCFqKfU', 16709, 1133),
+	(1000569, 'uHlvQcozDAA', 16711, 1135),
+	(1000569, 'juGCjFXB-u8', 16713, 1137),
+	(1000569, 'P4DYneUCj6E', 16715, 1139),
+	(1000569, 'ZCoX6Xmdug4', 16717, 1141),
+	(1000569, '8LmX5TElLns', 16719, 1143),
+	(1000569, 'ePO3-m7VrgU', 16721, 1145),
+	(1000569, 'xVadZvBBJIc', 16723, 1147),
+	(1000569, 'TWvw13l-Waw', 16725, 1149),
+	(1000569, 'Xns7BRK8V9U', 16727, 1151),
+	(1000569, '0yAf3X6CRkw', 16729, 1153),
+	(1000569, 'Ke73vaYqN6Y', 16731, 1155),
+	(1000569, 'O0mjJQ9uExA', 16733, 1157),
+	(1000569, 'Yxyodto2AuA', 16735, 1159),
+	(1000569, 'sn1YHHbv8tk', 16737, 1161),
+	(1000569, 'SK3hglk-0dk', 16739, 1163),
+	(1000569, '1jsaabQryXk', 16741, 1165),
+	(1000569, 'YkQrCEoQW00', 16743, 1167),
+	(1000569, 'm9lC1dN3gOM', 16745, 1169),
+	(1000569, 'BHPZOnWaHjs', 16747, 1171),
+	(1000569, 'qT5h9Bt_SMs', 16749, 1173),
+	(1000569, 'goyYMg7hMXY', 16751, 1175),
+	(1000569, 'VDAVitoJBig', 16753, 1177),
+	(1000569, 'DNxgb-111wk', 16755, 1179),
+	(1000569, 'aNmDOhrc9dQ', 16757, 1181),
+	(1000569, '3mh9VLfwx9c', 16759, 1183),
+	(1000569, 'tVzWLReMvnY', 16761, 1185),
+	(1000569, '0TMqkI8DD5c', 16763, 1187),
+	(1000569, 'x29_EllJayw', 16765, 1189),
+	(1000569, 'bdJ9JzxZVCs', 16528, 952),
+	(1000569, 'CQrp_alUL7g', 16530, 954),
+	(1000569, 'lZ-H74s8YZA', 16532, 956),
+	(1000569, 'W5GUiZUnA1A', 16534, 958),
+	(1000569, 'Z8WXa2mCVm0', 16536, 960),
+	(1000569, '-EsTFE2gIZE', 16538, 962),
+	(1000569, 'QJIvFx_-Aww', 16540, 964),
+	(1000569, 'A6yNka7215U', 16542, 966),
+	(1000569, 'AT6CLZ-MHz4', 16544, 968),
+	(1000569, 'v0MHtnpTECY', 16546, 970),
+	(1000569, 'Fkvx4DerS9M', 16548, 972),
+	(1000569, '6vJYQwYF-Zc', 16550, 974),
+	(1000569, 'sQutS4lc-xo', 16552, 976),
+	(1000569, 'J2anX4aSlN0', 16554, 978),
+	(1000569, 'SD8iw_L5yIY', 16556, 980),
+	(1000569, 'WnvdJQizjJ8', 16558, 982),
+	(1000569, 'oAXilSw06Tg', 16560, 984),
+	(1000569, 'OrhkTeVQQcI', 16562, 986),
+	(1000569, 'OPB8c-4b5EI', 16564, 988),
+	(1000569, 'FmbrEknVZu8', 16566, 990),
+	(1000569, 'm9q73Z7iP10', 16568, 992),
+	(1000569, '1H4gZQvW9X0', 16570, 994),
+	(1000569, '1jA-wI6Qwy8', 16572, 996),
+	(1000569, 'uMdTAi6-qsE', 16574, 998),
+	(1000569, 'sN8_0NALKeU', 16576, 1000),
+	(1000569, 'fdOWrTUIJxU', 16578, 1002),
+	(1000569, 'VpHYP9XGzwo', 16580, 1004),
+	(1000569, 'cIvmbLYr1-w', 16582, 1006),
+	(1000569, 'c3sBY2AvuC4', 16584, 1008),
+	(1000569, 'Zv2NAzTmTic', 16586, 1010),
+	(1000569, '284pDHqQauA', 16588, 1012),
+	(1000569, 'PWDFVAdqTxQ', 16590, 1014),
+	(1000569, '5VAFsksogrs', 16592, 1016),
+	(1000569, 'likCUr953ko', 16594, 1018),
+	(1000569, 'Ut6AD_wjQFQ', 16596, 1020),
+	(1000569, '9JM8YJCD93M', 16598, 1022),
+	(1000569, 'M_LPu9mc9mg', 16600, 1024),
+	(1000569, 'dwVi9uRsSzE', 16602, 1026),
+	(1000569, '2eGUlX5d_CU', 16604, 1028),
+	(1000569, '8he4CJm8DXg', 16606, 1030),
+	(1000569, 'HY0NX7RXLK4', 16608, 1032),
+	(1000569, 'LggEL66BppI', 16610, 1034),
+	(1000569, 'Nvt5oEU4Tvg', 16612, 1036),
+	(1000569, '1ylubbdagjY', 16614, 1038),
+	(1000569, 'HQi9XJKjReI', 16616, 1040),
+	(1000569, 'rxaq6b9N-ng', 16618, 1042),
+	(1000569, '0PMwynHqt1I', 16620, 1044),
+	(1000569, 'KLRADQwC3Sk', 16622, 1046),
+	(1000569, 'GfBNp8evTqM', 16624, 1048),
+	(1000569, 'DBswo2rSVZM', 16626, 1050),
+	(1000569, 'ESY_jyCwU_Q', 16628, 1052),
+	(1000569, 'BBG-khAJyew', 16630, 1054),
+	(1000569, 'KTXb6OeqAaQ', 16632, 1056),
+	(1000569, 's0c40UnRi5A', 16634, 1058),
+	(1000569, 'eRlxk8hX_aA', 16636, 1060),
+	(1000569, 'IbTl2AB9TMQ', 16638, 1062),
+	(1000569, 'iKvq_PCYiwE', 16640, 1064),
+	(1000569, 'ZtQNp1r3D-w', 16642, 1066),
+	(1000569, 'POFsD-kIc80', 16644, 1068),
+	(1000569, 'cLjnbTZDb48', 16646, 1070),
+	(1000569, '3vtERu1HkMY', 16648, 1072),
+	(1000569, 'siYKuGerpRo', 16650, 1074),
+	(1000569, 'bYZa2JtH9HY', 16652, 1076),
+	(1000569, 'lwr8fLMeaNE', 16654, 1078),
+	(1000569, 'FnzoBqQHk-s', 16656, 1080),
+	(1000569, 'fpc59XHezUo', 16658, 1082),
+	(1000569, 'jlCrOdDjzv0', 16660, 1084),
+	(1000569, 'uPfZU3bJj78', 16662, 1086),
+	(1000569, '_3dQa05GocI', 16664, 1088),
+	(1000569, 'C2CQdx18iwM', 16666, 1090),
+	(1000569, 'RPNYg_iFXHA', 16668, 1092),
+	(1000569, '2xgNipluGAU', 16670, 1094),
+	(1000569, 'wcK_E3HrENs', 16672, 1096),
+	(1000569, 'eGC1TQVV4n4', 16674, 1098),
+	(1000569, 'botFWyx6AyU', 16676, 1100),
+	(1000569, 'rU9FWAQCYro', 16678, 1102),
+	(1000569, 'BAW-2Fl5KLE', 16680, 1104),
+	(1000569, 'lyeQwVbCfNc', 16682, 1106),
+	(1000569, 'eQUsPBBXPG4', 16684, 1108),
+	(1000569, 'w8DwmcgqJeM', 16686, 1110),
+	(1000569, 'OkVdz_SP264', 16688, 1112),
+	(1000569, 'tKa5MAIC3Gs', 16690, 1114),
+	(1000569, 'VeMRk0LkT4M', 16692, 1116),
+	(1000569, 'MEf_4RuapZI', 16694, 1118),
+	(1000569, 'PBDlG6jYVDQ', 16696, 1120),
+	(1000569, 'JnQdRQQ4Zv4', 16698, 1122),
+	(1000569, 'y41fo3DRsDI', 16700, 1124),
+	(1000569, 'vcZqPaeX4ro', 16702, 1126),
+	(1000569, '5GH5JU1foac', 16704, 1128),
+	(1000569, 'C1YBktMJHok', 16706, 1130),
+	(1000569, 'blwEzBTSn1I', 16708, 1132),
+	(1000569, 'wuMiSDjJL4o', 16710, 1134),
+	(1000569, 'kpD5Bnbyvjw', 16712, 1136),
+	(1000569, 'P5NFls_oiJc', 16714, 1138),
+	(1000569, '7weQnfOWs4k', 16716, 1140),
+	(1000569, '-bKBKVBcNB0', 16718, 1142),
+	(1000569, '5TZMcqyULYw', 16720, 1144),
+	(1000569, 'H1d3jx6hhe4', 16722, 1146),
+	(1000569, 'vQFpHwBSNOQ', 16724, 1148),
+	(1000569, 'tzU9GQZCk7A', 16726, 1150),
+	(1000569, 'ywk0KGwfhWU', 16728, 1152),
+	(1000569, '0Fd4sU6pwiY', 16730, 1154),
+	(1000569, '_XhXb-7rdTc', 16732, 1156),
+	(1000569, 'UGCfI1kTonQ', 16734, 1158),
+	(1000569, '7rhCMGgl2qg', 16736, 1160),
+	(1000569, 'VLfhMh6MJK4', 16738, 1162),
+	(1000569, 'qH3YGzOCygY', 16740, 1164),
+	(1000569, 'ta0U-MCLf-M', 16742, 1166),
+	(1000569, 'FQm8n1tRB1s', 16744, 1168),
+	(1000569, '6zoVzz3RkZA', 16746, 1170),
+	(1000569, 'OgbzZjGHVoI', 16748, 1172),
+	(1000569, '0cb8CnGMPjA', 16750, 1174),
+	(1000569, 'Lakh9lpoBTM', 16752, 1176),
+	(1000569, 'yirO6MtH6sc', 16754, 1178),
+	(1000569, 'QmyXZK_DJes', 16756, 1180),
+	(1000569, 'EHpdSvZqAQs', 16758, 1182),
+	(1000569, 'nhd8cYMiJBE', 16760, 1184),
+	(1000569, 'oxDh03tqaoE', 16762, 1186),
+	(1000569, 'spN-eze5uk4', 16764, 1188),
+	(1000569, 'fNe3fp3Vfgo', 16766, 1190),
+	(1000569, 'jf5XJ96HtUY', 16767, 1191),
+	(1000569, 'IH4QOcSAqLM', 16769, 1193),
+	(1000569, 'ykRNauGI5kw', 16771, 1195),
+	(1000569, 'LyKfunOJnxs', 16773, 1197),
+	(1000569, 'zJ3O7Rq3n5c', 16775, 1199),
+	(1000569, '9S6rLgbtL7I', 16777, 1201),
+	(1000569, 'SJ5-GD3KzqU', 16779, 1203),
+	(1000569, 'VYDzwTRfKuw', 16781, 1205),
+	(1000569, 'bO5xcPR2ikk', 16783, 1207),
+	(1000569, '-vSRaYPGE44', 16785, 1209),
+	(1000569, 'ygiA8f5gdwE', 16787, 1211),
+	(1000569, 'o32dOlJXBeg', 16789, 1213),
+	(1000569, 'EbeCapPJ8Fg', 16791, 1215),
+	(1000569, '_nh5UjoE8Rw', 16793, 1217),
+	(1000569, 'd8KXyyHwYi8', 16795, 1219),
+	(1000569, 'iUwnzt-YjvM', 16797, 1221),
+	(1000569, 'ay5X-7qxEzI', 16799, 1223),
+	(1000569, 'BRcJyf2G7js', 16801, 1225),
+	(1000569, 'G2zAtY9oNfw', 16803, 1227),
+	(1000569, 'EcX01uSacc8', 16805, 1229),
+	(1000569, 'es-BeacgTO4', 16807, 1231),
+	(1000569, 'dvG142oqLs0', 16809, 1233),
+	(1000569, 'zvQx6YvbETY', 16811, 1235),
+	(1000569, '8Vqb0qEd4Ac', 16813, 1237),
+	(1000569, 'm0Ry_nbyCGk', 16815, 1239),
+	(1000569, '-LcJHeBaL-4', 16817, 1241),
+	(1000569, 'nuZWGnGC0V4', 16819, 1243),
+	(1000569, 'EQ5_cJCK6h0', 16821, 1245),
+	(1000569, 'JAPKZZ_KLMI', 16823, 1247),
+	(1000569, '3VBXfy6gwlo', 16825, 1249),
+	(1000569, 'wc5CLCQ2feM', 16827, 1251),
+	(1000569, 'FTJhkBoXP-c', 16829, 1253),
+	(1000569, 'FsPcCq00sfg', 16831, 1255),
+	(1000569, 'PWOr6PKxyNo', 16833, 1257),
+	(1000569, 'j_tb4xDurrA', 16835, 1259),
+	(1000569, 'rjt-t6kseIo', 16837, 1261),
+	(1000569, 'RmKN_v-ALsw', 16839, 1263),
+	(1000569, 'S8O5DJp_RCk', 16841, 1265),
+	(1000569, 'WbTbFzos78g', 16843, 1267),
+	(1000569, '2E5KRKpWvAQ', 16845, 1269),
+	(1000569, 'bMkQVrSuSIM', 16847, 1271),
+	(1000569, 'hRJEIM2vfu4', 16849, 1273),
+	(1000569, '76MXosVsl9U', 16851, 1275),
+	(1000569, 'AWfg84EecEg', 16853, 1277),
+	(1000569, '7gNIw-7elYM', 16855, 1279),
+	(1000569, 'GFCyCSFHx7w', 16857, 1281),
+	(1000569, 'LiWK9bec-G4', 16859, 1283),
+	(1000569, '7rdeqxeY_G0', 16861, 1285),
+	(1000569, 'ZQ24CMHpd-8', 16863, 1287),
+	(1000569, 'MVH1GOIe5L4', 16865, 1289),
+	(1000569, 'Vbx15oHEgwI', 16867, 1291),
+	(1000569, 'EOsAluSTGOk', 16869, 1293),
+	(1000569, 'hqb03QKLe2w', 16871, 1295),
+	(1000569, '5phty-09Rdk', 16873, 1297),
+	(1000569, 'k6qwXSA4a4g', 16875, 1299),
+	(1000569, 'vuQES7K3iL8', 16877, 1301),
+	(1000569, 'Al4wpwO6NnM', 16879, 1303),
+	(1000569, 'U0A1ZMep3Ms', 16881, 1305),
+	(1000569, 'I7WU5AjtphY', 16883, 1307),
+	(1000569, 'wpS2ABMLPTI', 16885, 1309),
+	(1000569, 'ZET4cPIJnWY', 16887, 1311),
+	(1000569, 'm7lFWgwoi9U', 16889, 1313),
+	(1000569, '-ixFA2KOg64', 16891, 1315),
+	(1000569, 'wxf0zL9FEQs', 16893, 1317),
+	(1000569, 'nZDU3QnPODA', 16895, 1319),
+	(1000569, 'LD945Rfb5_g', 16897, 1321),
+	(1000569, 'nhkGWGwiUjw', 16899, 1323),
+	(1000569, 'ys1a-WsoL4Y', 16901, 1325),
+	(1000569, 'MHZoMHOgwOo', 16903, 1327),
+	(1000569, 'dhwX7nARrr4', 16905, 1329),
+	(1000569, 'EQLGnsfpPPI', 16907, 1331),
+	(1000569, '3EUq1jwl79Y', 16909, 1333),
+	(1000569, '0fDA9MuAM8g', 16911, 1335),
+	(1000569, '5X0t6DvJIDU', 16913, 1337),
+	(1000569, 'YGLLL4QzNew', 16915, 1339),
+	(1000569, '4yUJ5qt7tIA', 16917, 1341),
+	(1000569, 'tjEDGAYA6Fo', 16919, 1343),
+	(1000569, 'aLBZzs_Mt78', 16921, 1345),
+	(1000569, 'YURdgiOjKAQ', 16923, 1347),
+	(1000569, 'qMi1UwrTMac', 16925, 1349),
+	(1000569, 'irFquY89hDI', 16927, 1351),
+	(1000569, 'T9F6nBAWpwo', 16929, 1353),
+	(1000569, 'TL8uKCmKq54', 16931, 1355),
+	(1000569, 'ih9Py3uFKMY', 16933, 1357),
+	(1000569, 'CAldkXphoMs', 16935, 1359),
+	(1000569, '7WNXrajkJJg', 16937, 1361),
+	(1000569, 'fCns3TNinJE', 16939, 1363),
+	(1000569, 'NLsmL_0sznc', 16941, 1365),
+	(1000569, 'xrYpaAMolD0', 16943, 1367),
+	(1000569, '99-GC-489Mc', 16945, 1369),
+	(1000569, '_BrTtJslOFU', 16947, 1371),
+	(1000569, 'BKhO7ZVjtkc', 16949, 1373),
+	(1000569, 'Yhzs4DsAklg', 16951, 1375),
+	(1000569, 'yxg8KCftsIw', 16953, 1377),
+	(1000569, '1fhI6ucyeNc', 16955, 1379),
+	(1000569, '81euN5GTbvU', 16957, 1381),
+	(1000569, 'Wk1SNTjXcB4', 16959, 1383),
+	(1000569, '4RcBNV8vp9o', 16961, 1385),
+	(1000569, 'qJtiM_tNLbU', 16963, 1387),
+	(1000569, 'by-pe_tO9uw', 16965, 1389),
+	(1000569, 'GtK6eW8dqAs', 16967, 1391),
+	(1000569, 's4C1Jk43Dos', 16969, 1393),
+	(1000569, 'JAo3le3diP0', 16971, 1395),
+	(1000569, 'sD246XJw5T8', 16973, 1397),
+	(1000569, 'n78A25MBg8U', 16975, 1399),
+	(1000569, 'Us5YCoLfo9A', 16977, 1401),
+	(1000569, 'lxDhhV0dGn8', 16979, 1403),
+	(1000569, 'UaqVjfR44Cw', 16981, 1405),
+	(1000569, 'ZUj1QN2tIUc', 16983, 1407),
+	(1000569, 'fqJZaTc6hmo', 16985, 1409),
+	(1000569, 'duXevrfUTdk', 16987, 1411),
+	(1000569, '760burvkXiE', 16989, 1413),
+	(1000569, 's_8DTWZsCv4', 16991, 1415),
+	(1000569, 'Q6tPZ6HnBAQ', 16993, 1417),
+	(1000569, 'l9fcF_IwEos', 16995, 1419),
+	(1000569, 'kV11cbl68Co', 16997, 1421),
+	(1000569, 't_RIdH3JxwY', 16999, 1423),
+	(1000569, 'EWU7U37LOKA', 17001, 1425),
+	(1000569, 'FP1m4G3zc-w', 17003, 1427),
+	(1000569, 'imzo8rmBN6w', 17138, 1562),
+	(1000569, 'uwrevvpfgyQ', 16768, 1192),
+	(1000569, '985WEnck5rE', 16770, 1194),
+	(1000569, 'EN3LVZ7tmqw', 16772, 1196),
+	(1000569, '6LCaueTki_Q', 16774, 1198),
+	(1000569, 'yFxNvqY7uAc', 16776, 1200),
+	(1000569, '71hO8vdl3I4', 16778, 1202),
+	(1000569, '16ONNcwoFSw', 16780, 1204),
+	(1000569, '7woXQYEL3ic', 16782, 1206),
+	(1000569, '0_UgATKBKuw', 16784, 1208),
+	(1000569, 'aIFJbIUoAhc', 16786, 1210),
+	(1000569, '8Dx4PAf63lw', 16788, 1212),
+	(1000569, 'YlcxP3ireIc', 16790, 1214),
+	(1000569, '8fdX6xLxmOE', 16792, 1216),
+	(1000569, 'xUsAqDmd_Uo', 16794, 1218),
+	(1000569, 'SfTl5zROy_s', 16796, 1220),
+	(1000569, '06bEkI2jDw0', 16798, 1222),
+	(1000569, 'i0Y3Udr8p0A', 16800, 1224),
+	(1000569, '3ihyJlavW_I', 16802, 1226),
+	(1000569, 'OSWJMhNWDoE', 16804, 1228),
+	(1000569, 'flaIeo34VMQ', 16806, 1230),
+	(1000569, 'yt-nOoLfV2Q', 16808, 1232),
+	(1000569, '4YKcoPGUHa4', 16810, 1234),
+	(1000569, 't1Mh4rLww5A', 16812, 1236),
+	(1000569, 'BWG5G9ulCP4', 16814, 1238),
+	(1000569, 'hR597hskWyA', 16816, 1240),
+	(1000569, 'U3drBuaZvsM', 16818, 1242),
+	(1000569, 'W69B4AE6heY', 16820, 1244),
+	(1000569, 'R7BQqt-jhhw', 16822, 1246),
+	(1000569, 'Ap3xWmp5Sak', 16824, 1248),
+	(1000569, '6jeMXjfXp10', 16826, 1250),
+	(1000569, 'yXgpMPE5NHc', 16828, 1252),
+	(1000569, 'HJmGqtFXQnQ', 16830, 1254),
+	(1000569, '5FA7pD9Cca4', 16832, 1256),
+	(1000569, 'UL9ESImIRSc', 16834, 1258),
+	(1000569, '4iN3eTGZ-c8', 16836, 1260),
+	(1000569, 'NRgXJuKpa64', 16838, 1262),
+	(1000569, 'EiruL7xQe1Q', 16840, 1264),
+	(1000569, 'gSBDZ9Z_Bf4', 16842, 1266),
+	(1000569, 'TdG7WEcagKI', 16844, 1268),
+	(1000569, 'xKbIZshpFQk', 16846, 1270),
+	(1000569, 'vDRqsxpzKaQ', 16848, 1272),
+	(1000569, 'qZWufNaMpZQ', 16850, 1274),
+	(1000569, '3IZzXOdVkFU', 16852, 1276),
+	(1000569, 'tZ3Cq7vPVh8', 16854, 1278),
+	(1000569, 'Tt7HeHSAwWU', 16856, 1280),
+	(1000569, '7NY2b_IlzLk', 16858, 1282),
+	(1000569, 'RdzErQH43qY', 16860, 1284),
+	(1000569, '5-00-mgT6B8', 16862, 1286),
+	(1000569, '1wca3ZLR828', 16864, 1288),
+	(1000569, 'c2wrQ6srPQw', 16866, 1290),
+	(1000569, 'eFemNHdGPLU', 16868, 1292),
+	(1000569, '1LIIBWdoB5A', 16870, 1294),
+	(1000569, 'XCxkbgIhFJQ', 16872, 1296),
+	(1000569, 'tpAd1Kw0Em0', 16874, 1298),
+	(1000569, 'u4J_8r1rtO0', 16876, 1300),
+	(1000569, 'q0urt9Hz8gk', 16878, 1302),
+	(1000569, 'j2YjCzORfxg', 16880, 1304),
+	(1000569, '-mCkx4J2sIA', 16882, 1306),
+	(1000569, '5U2JeEVtV_k', 16884, 1308),
+	(1000569, 'WLFws0LluZs', 16886, 1310),
+	(1000569, 'YUNWL6cCCe4', 16888, 1312),
+	(1000569, 'x6DCSr-Nm2Q', 16890, 1314),
+	(1000569, 'DwvoCv9XeJM', 16892, 1316),
+	(1000569, 'kcmAKg1tmtU', 16894, 1318),
+	(1000569, '6_nlgj67xSo', 16896, 1320),
+	(1000569, 'nCySYIpQG3Y', 16898, 1322),
+	(1000569, '2QV73hikJ4s', 16900, 1324),
+	(1000569, 'UCieWwIX1Ig', 16902, 1326),
+	(1000569, 'boaPJCyfVGs', 16904, 1328),
+	(1000569, 'p_AQ1g3Q1iY', 16906, 1330),
+	(1000569, 'CMQePKzCAe4', 16908, 1332),
+	(1000569, 'ryZC2zy_OKU', 16910, 1334),
+	(1000569, 'HlqhfsZB0IQ', 16912, 1336),
+	(1000569, 'rHmZ10k27LI', 16914, 1338),
+	(1000569, 'mB0m3Nrssvw', 16916, 1340),
+	(1000569, 'WVi4IQ4j1lw', 16918, 1342),
+	(1000569, 'yE6KFlwgR98', 16920, 1344),
+	(1000569, 'ydDEPvAYW_o', 16922, 1346),
+	(1000569, 'OdvXnIwl9Tk', 16924, 1348),
+	(1000569, '6Tvuf4gVmVE', 16926, 1350),
+	(1000569, '4hBcPvA5I1k', 16928, 1352),
+	(1000569, 'xlTR4JE5X34', 16930, 1354),
+	(1000569, 'p6SJdnjmioc', 16932, 1356),
+	(1000569, '0sTZOtl7EFo', 16934, 1358),
+	(1000569, 'G6ukcUAQShM', 16936, 1360),
+	(1000569, 'W8RRyE4FbqM', 16938, 1362),
+	(1000569, 'Epqq5yZisT0', 16940, 1364),
+	(1000569, 'i-LAy8eDJ0E', 16942, 1366),
+	(1000569, '-HxQZfOBY8o', 16944, 1368),
+	(1000569, 'bn81U_Ni2Dk', 16946, 1370),
+	(1000569, 'ZVR_VWb_Zok', 16948, 1372),
+	(1000569, 'kdW3-sSFaI8', 16950, 1374),
+	(1000569, 'EZ8MGdoqTHE', 16952, 1376),
+	(1000569, 'jbObz-LOoy8', 16954, 1378),
+	(1000569, 'y0fmNQhFHLE', 16956, 1380),
+	(1000569, 'ZpC4z-TGp7Q', 16958, 1382),
+	(1000569, '57Hkm_PvdFU', 16960, 1384),
+	(1000569, 'nNrZAiV4AjY', 16962, 1386),
+	(1000569, 'RadqVolGrds', 16964, 1388),
+	(1000569, 'X7BCBNxqft4', 16966, 1390),
+	(1000569, '748vv9Bi0Fk', 16968, 1392),
+	(1000569, '-8KhQ5ViPX8', 16970, 1394),
+	(1000569, 'sxCHYHefszE', 16972, 1396),
+	(1000569, 'kjOO1jS7UOM', 16974, 1398),
+	(1000569, 'S8q2YVkcSRk', 16976, 1400),
+	(1000569, '8GferpF5rSU', 16978, 1402),
+	(1000569, 'iofmgRpWt-g', 16980, 1404),
+	(1000569, 'z13J9dhuIfc', 16982, 1406),
+	(1000569, 'aELCEuLHoPs', 16984, 1408),
+	(1000569, 'gq18NUxptgY', 16986, 1410),
+	(1000569, '3KyZNAJUvcs', 16988, 1412),
+	(1000569, 'hXArEj6vH0o', 16990, 1414),
+	(1000569, 'ovxgA3jz9Ss', 16992, 1416),
+	(1000569, 'YSEkjrSrJRE', 16994, 1418),
+	(1000569, 'HzlHF4xa50c', 16996, 1420),
+	(1000569, 'kA0nGgcwEJM', 16998, 1422),
+	(1000569, 'LYm3_zujwQY', 17000, 1424),
+	(1000569, 'ZmwoPI_OFmw', 17002, 1426),
+	(1000569, '3V4TQS3wbcs', 17140, 1564),
+	(1000569, 'yyzLWbJDGNc', 17142, 1566),
+	(1000569, 'vZOh22784to', 17185, 1609),
+	(1000569, '3JYUPdE7WPI', 17187, 1611),
+	(1000569, 'mM0uqMhzGt4', 17189, 1613),
+	(1000569, '5LKIFMJ2HIA', 17191, 1615),
+	(1000569, 'm-2w-EgF5q0', 17193, 1617),
+	(1000569, 'CnuLu6d-L50', 17195, 1619),
+	(1000569, 'w4CSFVm1FwI', 17197, 1621),
+	(1000569, 'Zwq5s9uohBk', 17199, 1623),
+	(1000569, '9N_kP3UWAqo', 17201, 1625),
+	(1000569, '5Vx3uSD5OFo', 17203, 1627),
+	(1000569, '0R2NBPOddlw', 17205, 1629),
+	(1000569, 'cNcZ7how6e8', 17207, 1631),
+	(1000569, '-T-iNUQ7-G8', 17209, 1633),
+	(1000569, 'IDPfIe9BuxI', 17211, 1635),
+	(1000569, 'EKrsGxP9QyI', 17213, 1637),
+	(1000569, 'IdYglctf2OM', 17215, 1639),
+	(1000569, '74D5AMQz1iM', 17217, 1641),
+	(1000569, 'SvCqyoZDQgA', 17219, 1643),
+	(1000569, 'M1peQ_KCAzE', 17221, 1645),
+	(1000569, 'vSRIrw387hg', 17223, 1647),
+	(1000569, 'WdvLhy-SE9M', 17225, 1649),
+	(1000569, 'Kk6aOULxW-8', 17227, 1651),
+	(1000569, 'da9uwV0DbVg', 17229, 1653),
+	(1000569, 'Nr1kwuNxNV0', 17231, 1655),
+	(1000569, 'VwZOWT9xY0o', 17233, 1657),
+	(1000569, 'MjwKz1MXQgE', 17235, 1659),
+	(1000569, '7wKs3a0S7ls', 17237, 1661),
+	(1000569, 'CfHf4T4K_cY', 17239, 1663),
+	(1000569, 'oP79WdPy9rk', 17241, 1665),
+	(1000569, '5hykVMzHMOQ', 17243, 1667),
+	(1000569, '0Y4mmJ3Swm8', 17245, 1669),
+	(1000569, 'zuge3AFvB4I', 17247, 1671),
+	(1000569, 'QPHcLfDSyCs', 17249, 1673),
+	(1000569, 'qwuNyvfsb88', 17251, 1675),
+	(1000569, 'UCYuUqLlWG4', 17253, 1677),
+	(1000569, 'f-AwCGKUA7Y', 17255, 1679),
+	(1000569, 'Dt0B9Qfe2C4', 17257, 1681),
+	(1000569, '54rEjtpeMOQ', 17259, 1683),
+	(1000569, 'YlG1UHGzc0A', 17261, 1685),
+	(1000569, 'IXwkJ1N1VZI', 17263, 1687),
+	(1000569, 'QX2IP4JlNlw', 17265, 1689),
+	(1000569, 'cgPLUbxaPR0', 17267, 1691),
+	(1000569, 'TMWJ_BMxi2M', 17269, 1693),
+	(1000569, 'J9nkRxq0iAY', 17271, 1695),
+	(1000569, 'lTppiXud97c', 17273, 1697),
+	(1000569, 'Ea9IAPI6DOE', 17275, 1699),
+	(1000569, 'BakUzJwO9X4', 17277, 1701),
+	(1000569, '291s1Q_Gd6E', 17279, 1703),
+	(1000569, 'XMU82GytRTc', 17281, 1705),
+	(1000569, 'lDgXbmnd_vQ', 17283, 1707),
+	(1000569, 'm1gsV45xXDo', 17285, 1709),
+	(1000569, 'EJpkUmzYAHw', 17287, 1711),
+	(1000569, 'Wfes8xKg2e4', 17289, 1713),
+	(1000569, 'HB6Fj1sM5mQ', 17291, 1715),
+	(1000569, '2cin3ChJPD4', 17293, 1717),
+	(1000569, 'gBuOUwNx5kA', 17295, 1719),
+	(1000569, 'ONNro5Y2hNE', 17297, 1721),
+	(1000569, 'WwFUSRS8ofk', 17299, 1723),
+	(1000569, 'GXrL3clTBBI', 17301, 1725),
+	(1000569, 'xShNJgOXRaM', 17303, 1727),
+	(1000569, 'gt4MZpckwFw', 17305, 1729),
+	(1000569, '9FjeiWf986g', 17307, 1731),
+	(1000569, '7oMDZoBQbK0', 17309, 1733),
+	(1000569, 'MYxO-UVage4', 17311, 1735),
+	(1000569, 'JCJ318ZyH1k', 17313, 1737),
+	(1000569, '4cTXfjVhgC4', 17315, 1739),
+	(1000569, '00KKGykiMaE', 17317, 1741),
+	(1000569, 'EKrUTN8exi0', 17319, 1743),
+	(1000569, 'AOKuFQPzcfU', 17321, 1745),
+	(1000569, 'KoZCvGsy8p0', 17323, 1747),
+	(1000569, 'vGlN4svYIlk', 17325, 1749),
+	(1000569, 'b75Q2kFxPAA', 17327, 1751),
+	(1000569, '-c8_0qScxTc', 17329, 1753),
+	(1000569, 'yTFp2nZT7lI', 17331, 1755),
+	(1000569, 'cQbv9Rw8aJI', 17333, 1757),
+	(1000569, 'F_apRGCMOI8', 17335, 1759),
+	(1000569, 'jIeofGPX9AY', 17337, 1761),
+	(1000569, '48Q4LWv7w2s', 17339, 1763),
+	(1000569, 'pUMSYJHZH44', 17341, 1765),
+	(1000569, 'Mx6bY3SfZT8', 17343, 1767),
+	(1000569, '4bPg5j7XVNI', 17345, 1769),
+	(1000569, 'Qy8c3uERV_Y', 17347, 1771),
+	(1000569, 'VtgbJxGveZ8', 17349, 1773),
+	(1000569, '31zwWKn4QU4', 17351, 1775),
+	(1000569, 'RvP5bDiMB6I', 17353, 1777),
+	(1000569, 'tuwQK5sm_Ks', 17355, 1779),
+	(1000569, '8pDgZ2m2Vds', 17357, 1781),
+	(1000569, '8ks8avlwJWw', 17359, 1783),
+	(1000569, '9Vkoz9VMK_I', 17361, 1785),
+	(1000569, 'ZWsCnYwcKmU', 17363, 1787),
+	(1000569, 'Jw2KQBk4OVM', 17365, 1789),
+	(1000569, '_lIjdDZ7fPQ', 17367, 1791),
+	(1000569, 'gKkG2o63zY4', 17369, 1793),
+	(1000569, 'QXaI82xvJ2E', 17371, 1795),
+	(1000569, 'bm24YfVpW_Q', 17373, 1797),
+	(1000569, 'HjjfOlG9Mm4', 17375, 1799),
+	(1000569, 'RdreBDMpUqM', 17377, 1801),
+	(1000569, 'yAwuTBy09Sw', 17379, 1803),
+	(1000569, '-zgNLWJAokw', 17381, 1805),
+	(1000569, 'bobwefske9A', 17383, 1807),
+	(1000569, 'Md1VpDIPBUw', 17385, 1809),
+	(1000569, 'R0DKTZT_egE', 17387, 1811),
+	(1000569, 'BTgkzmx0ZRY', 17389, 1813),
+	(1000569, 'lB0FF8T4Xwc', 17391, 1815),
+	(1000569, '-EecXm8y9Is', 17393, 1817),
+	(1000569, 'zESo0qDHx-E', 17395, 1819),
+	(1000569, 'VJck1gVnne0', 17397, 1821),
+	(1000569, 'H7uXgl88MlU', 17399, 1823),
+	(1000569, 'BElk-DGrQVo', 17401, 1825),
+	(1000569, '5gSdogd0Q3k', 17403, 1827),
+	(1000569, 'dV1xf1V4eb0', 17405, 1829),
+	(1000569, 'lrgbgpgz4Uo', 17407, 1831),
+	(1000569, 'z2L9Uh2wnhM', 17409, 1833),
+	(1000569, '_1mTkkKjcBM', 17411, 1835),
+	(1000569, 'LoQ9F0cs6Tk', 17413, 1837),
+	(1000569, 'FDyCfLCprNs', 17415, 1839),
+	(1000569, 'YSLgc_OkQaM', 17417, 1841),
+	(1000569, 'b1zGF5PcluE', 17186, 1610),
+	(1000569, 'X9NX9SVywlA', 17188, 1612),
+	(1000569, 'l8N5cm8jcg0', 17190, 1614),
+	(1000569, '8hqzWRELK5A', 17192, 1616),
+	(1000569, '0QM8w9f_CCs', 17194, 1618),
+	(1000569, '_BK7jN9711Q', 17196, 1620),
+	(1000569, 'mtLw7HioQvM', 17198, 1622),
+	(1000569, 'x5Aa7oZ4cJU', 17200, 1624),
+	(1000569, 'SpBzLT_nd8Y', 17202, 1626),
+	(1000569, 'wm1M0cU2WgI', 17204, 1628),
+	(1000569, 'GcnC5GZE_e0', 17206, 1630),
+	(1000569, '84qIneDVutE', 17208, 1632),
+	(1000569, 'x_s6iAaCd_o', 17210, 1634),
+	(1000569, 'bzq1f0JGWkg', 17212, 1636),
+	(1000569, 'C48xJLI06Ik', 17214, 1638),
+	(1000569, 'z-n0JUrDWa0', 17216, 1640),
+	(1000569, 'xUHZK5ovSyA', 17218, 1642),
+	(1000569, 'eJ3BDMvYQF0', 17220, 1644),
+	(1000569, 'tnpqyU07Ank', 17222, 1646),
+	(1000569, 'CMPQSC9cFGM', 17224, 1648),
+	(1000569, 'Ot_eECo92cU', 17226, 1650),
+	(1000569, '1aF1UQQDUhQ', 17228, 1652),
+	(1000569, 'CC6nEpaRCHs', 17230, 1654),
+	(1000569, 'mVpHqC2yVQY', 17232, 1656),
+	(1000569, 'jXL6JadBduc', 17234, 1658),
+	(1000569, 't7w4y51SR7A', 17236, 1660),
+	(1000569, 'Gr7BDmpu5n0', 17238, 1662),
+	(1000569, 'DDWw8ni09ug', 17240, 1664),
+	(1000569, '7kz_d-zVjbo', 17242, 1666),
+	(1000569, 'kepkyiaNqjc', 17244, 1668),
+	(1000569, '64uIeSmeqhc', 17246, 1670),
+	(1000569, 'vL30yAkVCrA', 17248, 1672),
+	(1000569, 'bKV_lcmyO9s', 17250, 1674),
+	(1000569, 'xaNpTrZzFoQ', 17252, 1676),
+	(1000569, '5rgx88Zk7C0', 17254, 1678),
+	(1000569, 'qoitdE6GWqw', 17256, 1680),
+	(1000569, 'GCZ99hUXZ2s', 17258, 1682),
+	(1000569, 'balHd_CNVb0', 17260, 1684),
+	(1000569, 'CRDhjiNV_xs', 17262, 1686),
+	(1000569, 'SI2dhM1ErDA', 17264, 1688),
+	(1000569, 'lZZ2-xzTwL0', 17266, 1690),
+	(1000569, 'nRH0LgYS3a8', 17268, 1692),
+	(1000569, 'n6Ts8hfynNo', 17270, 1694),
+	(1000569, 'fN0fcZQKJGc', 17272, 1696),
+	(1000569, 'vEGqOANWCW8', 17274, 1698),
+	(1000569, 'kW9gJCxmuNQ', 17276, 1700),
+	(1000569, 'kai7b4xxRrM', 17278, 1702),
+	(1000569, 'ohH_eMAxf4g', 17280, 1704),
+	(1000569, 'u9vpdiGPTWc', 17282, 1706),
+	(1000569, 'Ei1ZEQsYMBk', 17284, 1708),
+	(1000569, 'W4KEtcXnmDQ', 17286, 1710),
+	(1000569, 'TmnCKui7X_s', 17288, 1712),
+	(1000569, 'toKWrYWyobM', 17290, 1714),
+	(1000569, 'EVkvxrwZSc0', 17292, 1716),
+	(1000569, 'LsxBaBgBf0g', 17294, 1718),
+	(1000569, 'NAU0o6S276E', 17296, 1720),
+	(1000569, 'iKEdnP6jXTU', 17298, 1722),
+	(1000569, 'sElWhvA6jFU', 17300, 1724),
+	(1000569, 'f3cYoEtK_TA', 17302, 1726),
+	(1000569, 'DXpwUbUNPUQ', 17304, 1728),
+	(1000569, '0L3TtYmgXPw', 17306, 1730),
+	(1000569, '3HF9ISMh6z4', 17308, 1732),
+	(1000569, 'xa4gM20pku0', 17310, 1734),
+	(1000569, 'AbE4ughOxZs', 17312, 1736),
+	(1000569, '9zyNeUePG2U', 17314, 1738),
+	(1000569, 'yrIDzsnosIQ', 17316, 1740),
+	(1000569, '-Uj5d7BOyj0', 17318, 1742),
+	(1000569, 'JsYyqDmNSqU', 17320, 1744),
+	(1000569, 'jhiIQliDPqg', 17322, 1746),
+	(1000569, 'LqQicob_Y0Y', 17324, 1748),
+	(1000569, 'YXjKICxJJqw', 17326, 1750),
+	(1000569, 'OQLTe6_jWF0', 17328, 1752),
+	(1000569, 'oQccV-F_pNM', 17330, 1754),
+	(1000569, 'jrKdgnizdLQ', 17332, 1756),
+	(1000569, 'COEo86j9BVs', 17334, 1758),
+	(1000569, 'TMRSrIAKq5s', 17336, 1760),
+	(1000569, 'FhNe6e9kbmA', 17338, 1762),
+	(1000569, 'TBzp61HR4eI', 17340, 1764),
+	(1000569, 'LiCwyUf_AV0', 17342, 1766),
+	(1000569, 'OBWVokfPfP8', 17344, 1768),
+	(1000569, 'O0pmkFHosUk', 17346, 1770),
+	(1000569, 'AKmUkgx5Bk4', 17348, 1772),
+	(1000569, 'jgjhhF7aVs0', 17350, 1774),
+	(1000569, 'ZEjIyrbIwUo', 17352, 1776),
+	(1000569, 'lQFnIQHAAxU', 17354, 1778),
+	(1000569, '4tFcqTfKXeg', 17356, 1780),
+	(1000569, 'uQ852seAisc', 17358, 1782),
+	(1000569, '7RWdZQpoNHs', 17360, 1784),
+	(1000569, 'yoHsygICESQ', 17362, 1786),
+	(1000569, 'pCfImw9YjwQ', 17364, 1788),
+	(1000569, 'iQqORX-uaP4', 17366, 1790),
+	(1000569, 'fbppNlr5u0U', 17368, 1792),
+	(1000569, 'ExosR9dl4Ks', 17370, 1794),
+	(1000569, 'XRf2b8Fh6jw', 17372, 1796),
+	(1000569, 'w1NsK1tNe04', 17374, 1798),
+	(1000569, 'IJ2mjB_q9jE', 17376, 1800),
+	(1000569, 'OyUr5TPq1x0', 17378, 1802),
+	(1000569, 'UDp_6v2dTSk', 17380, 1804),
+	(1000569, '9CyEbofnzlA', 17382, 1806),
+	(1000569, '8gDdwK5iXqg', 17384, 1808),
+	(1000569, 'zj5XG0_p5Fk', 17386, 1810),
+	(1000569, 'hW41bKZvmXk', 17388, 1812),
+	(1000569, 'u6h1NYAr4xU', 17390, 1814),
+	(1000569, '38A9y0MEdQY', 17392, 1816),
+	(1000569, 'Pxv2zC30ZV0', 17394, 1818),
+	(1000569, 'tTtszzgnZeA', 17396, 1820),
+	(1000569, 'Y2S2YiXKJcQ', 17398, 1822),
+	(1000569, 'ojPCpjuzjNU', 17400, 1824),
+	(1000569, 'z8kC9iJgFSU', 17402, 1826),
+	(1000569, 'f-qHeih-qME', 17404, 1828),
+	(1000569, 'JB58u62e0w0', 17406, 1830),
+	(1000569, 'oKQeN0NiSY4', 17408, 1832),
+	(1000569, 'NwwB3NVCtoc', 17410, 1834),
+	(1000569, 'zws2kUg6efM', 17412, 1836),
+	(1000569, 'qcISWt8Sgsw', 17414, 1838),
+	(1000569, 'r3xKVrO0zhU', 17416, 1840),
+	(1000569, '5INDSnCW_uQ', 17418, 1842),
+	(1000570, 'k_PRR21D1kk', 17460, 2),
+	(1000570, '0EH55OHKS1U', 17464, 6),
+	(1000570, 'vWOMBa5UcZA', 17466, 8),
+	(1000570, 'g7PQphl_rOc', 17470, 12),
+	(1000570, 'txfiZmhe31g', 17474, 16),
+	(1000570, 'x4_Hb-F1ZjM', 17476, 18),
+	(1000570, 'A5ZswahE7jg', 17478, 20),
+	(1000570, 'nxflFyNAqps', 17482, 24),
+	(1000570, '_-7h6GEHWAE', 17484, 26),
+	(1000570, 'P0CxD48msDw', 17459, 1),
+	(1000570, '31yr7YRzimU', 17461, 3),
+	(1000570, 'lpZ87xveZbw', 17463, 5),
+	(1000570, '1gUVH4ts1TY', 17465, 7),
+	(1000570, 'yxT4HUqYoFA', 17467, 9),
+	(1000570, 'jjVzdu7KsY0', 17469, 11),
+	(1000570, 'EJVTqQGUVmQ', 17479, 21),
+	(1000570, 't-ncplJG230', 17483, 25);
 
 
 --
@@ -65182,7 +70131,8 @@ INSERT INTO "public"."playlist_videos" ("playlist_id", "video_id", "id", "video_
 --
 
 INSERT INTO "public"."profiles" ("id", "username", "sources", "content_description", "content_display") VALUES
-	('49c79727-f5b7-4cd8-b5ca-f005023b1f12', 'nextlander', '{giantbomb,nextlander,remap}', 'BRIEF', 'CAROUSEL');
+	('49c79727-f5b7-4cd8-b5ca-f005023b1f12', 'nextlander', '{giantbomb,nextlander,remap}', 'BRIEF', 'CAROUSEL'),
+	('074cb047-671d-4f40-a04f-1721878f524d', 'giantbomb', '{giantbomb,nextlander,remap}', 'BRIEF', 'CAROUSEL');
 
 
 --
@@ -65238,14 +70188,14 @@ SELECT pg_catalog.setval('"auth"."refresh_tokens_id_seq"', 426, true);
 -- Name: playlist_videos_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('"public"."playlist_videos_id_seq"', 12157, true);
+SELECT pg_catalog.setval('"public"."playlist_videos_id_seq"', 17484, true);
 
 
 --
 -- Name: playlists_custom_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('"public"."playlists_custom_seq"', 1000493, true);
+SELECT pg_catalog.setval('"public"."playlists_custom_seq"', 1000570, true);
 
 
 --
