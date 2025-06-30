@@ -15,9 +15,6 @@
   import { DEFAULT_NUM_VIDEOS_PAGINATION } from "$lib/supabase/videos";
   import type { ContentView } from "./content";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
-  import gsap from "gsap";
-  import { MorphSVGPlugin } from "gsap/MorphSVGPlugin";
-
   import {
     handleDeletePlaylist,
     handleFollowPlaylist,
@@ -25,11 +22,10 @@
   } from "../playlist/playlist-service";
   import { Ellipsis, MinusCircle, Play, PlusCircle } from "@lucide/svelte";
   import { buttonVariants } from "../ui/button";
+  import { fade } from "svelte/transition";
   import { page } from "$app/state";
   import { goto } from "$app/navigation";
   import Button from "../ui/button/button.svelte";
-  import { onMount } from "svelte";
-  import { fade } from "svelte/transition";
 
   interface SharedContentHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
@@ -64,10 +60,6 @@
     ...restProps
   }: SharedContentHeaderProps = $props();
 
-  onMount(() => {
-    gsap.registerPlugin(MorphSVGPlugin);
-  });
-
   const isPlaylistCreator = $derived(
     profilePlaylist?.created_by === session?.user.id,
   );
@@ -78,81 +70,6 @@
       videosPerPage: DEFAULT_NUM_VIDEOS_PAGINATION,
     }),
   );
-
-  // For morphing Plus <-> Minus
-  let morphIconPath = $state<SVGPathElement>();
-  let isPlus = true;
-  // SVG path data for Plus and Minus (same viewBox, compatible points)
-  // These are illustrative, you may want more elaborate paths for fancy icons.
-  // For lucide/feather icons, you may need to convert to single path for smooth morph.
-  const plusPath = "M8 12h8"; // Plus (+)
-  const minusPath = "M5 12h14"; // Minus (−)
-
-  // Helper: returns true if the current user follows this playlist
-  const isFollowingPlaylist = $derived(
-    playlists.some((pl) => pl.id === profilePlaylist?.id),
-  );
-
-  // Animate morph between plus/minus on click or change
-  function morphToMinus() {
-    if (morphIconPath) {
-      gsap.to(morphIconPath, {
-        duration: 0.4,
-        morphSVG: { shape: minusPath },
-        ease: "power1.inOut",
-      });
-      isPlus = false;
-    }
-  }
-  function morphToPlus() {
-    if (morphIconPath) {
-      gsap.to(morphIconPath, {
-        duration: 0.4,
-        morphSVG: { shape: plusPath },
-        ease: "power1.inOut",
-      });
-      isPlus = true;
-    }
-  }
-
-  // When playlists or profilePlaylist change, trigger morph if needed
-  $effect(() => {
-    if (profilePlaylist) {
-      if (!isPlaylistCreator) {
-        if (isFollowingPlaylist && isPlus) {
-          console.log("morph to minus");
-          morphToMinus();
-        }
-        if (!isFollowingPlaylist && !isPlus) {
-          console.log("morph to plus");
-          morphToPlus();
-        }
-      }
-    }
-  });
-
-  // On mount, set correct icon
-  onMount(() => {
-    if (profilePlaylist && !isPlaylistCreator && isFollowingPlaylist) {
-      morphToMinus();
-    }
-  });
-
-  function handleMorphClick() {
-    if (!isFollowingPlaylist && profilePlaylist) {
-      handleFollowPlaylist({
-        playlist: profilePlaylist,
-        supabase,
-        session,
-      });
-    } else if (profilePlaylist) {
-      handleUnfollowPlaylist({
-        playlist: profilePlaylist,
-        supabase,
-        session,
-      });
-    }
-  }
 </script>
 
 {#if showFloatingBreadcrumbs}
@@ -197,46 +114,39 @@
         >
           <Play class="h-6! w-6! stroke-background fill-background" />
         </Button>
-        {#if !isPlaylistCreator}
-          <!-- GSAP Morph button: morphs between plus and minus -->
-          <button
-            type="button"
-            aria-label={isFollowingPlaylist
-              ? "Unfollow playlist"
-              : "Follow playlist"}
-            class={buttonVariants({
-              variant: "ghost",
-              size: "icon",
-              class: "ghost-button-minimal",
-            })}
-            onclick={handleMorphClick}
-            style="outline:none;"
-          >
-            <svg
-              width="32"
-              height="32"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              fill="none"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path
-                bind:this={morphIconPath}
-                d="M12 5v14M5 12h14"
-                style="transition:stroke 0.2s;"
-              />
-            </svg>
-          </button>
+        {#if !isPlaylistCreator && !playlists.some((pl) => pl.id === profilePlaylist.id)}
+          <PlusCircle
+            class="ghost-button-minimal"
+            size="30"
+            onclick={() => {
+              handleFollowPlaylist({
+                playlist: profilePlaylist,
+                supabase,
+                session,
+              });
+            }}
+          />
+        {/if}
+        {#if !isPlaylistCreator && playlists.some((pl) => pl.id === profilePlaylist.id)}
+          <MinusCircle
+            class="ghost-button-minimal"
+            size="30"
+            onclick={() => {
+              handleUnfollowPlaylist({
+                playlist: profilePlaylist,
+                supabase,
+                session,
+              });
+            }}
+          />
         {/if}
         {#if isPlaylistCreator}
           <DropdownMenu.Root>
             <DropdownMenu.Trigger
               class={buttonVariants({
                 variant: "ghost",
-                size: "icon",
                 class: "ghost-button-minimal",
+                size: "icon",
               })}
             >
               <Ellipsis size="30" />
