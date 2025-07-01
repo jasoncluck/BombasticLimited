@@ -296,13 +296,20 @@ export class ContentStateClass implements ContentState {
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData("text/plain", index.toString());
 
-        // If videos aren't already selected, use the hovered video for dragging
+        // Get the video being dragged
+        const draggedVideo = options.videos[index];
+
+        // Check if the dragged video is in the selected videos
+        const isDraggedVideoSelected = this.selectedVideos.some(
+          (video) => video.id === draggedVideo.id,
+        );
+
+        // If the dragged video is not in selectedVideos, use just the dragged video
+        // Otherwise, use the selected videos
         const videosForDrag =
-          this.selectedVideos.length > 0
+          isDraggedVideoSelected && this.selectedVideos.length > 0
             ? this.selectedVideos
-            : this.hoveredVideo
-              ? [this.hoveredVideo]
-              : [options.videos[index]];
+            : [draggedVideo];
 
         this.selectedVideos = videosForDrag;
 

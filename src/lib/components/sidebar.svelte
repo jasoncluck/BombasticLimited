@@ -365,7 +365,7 @@
           }}
           onconsider={handleDndConsider}
           onfinalize={handleDndFinalize}
-          class="flex flex-col w-full"
+          class="flex flex-col w-full outline-none"
         >
           {#each dndPlaylists as playlist, i (playlist.id)}
             <div animate:flip={{ duration: flipDurationMs }} class="w-full">

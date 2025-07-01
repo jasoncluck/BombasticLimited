@@ -56,21 +56,10 @@
       }
     },
   };
-
-  function handlePlayVideo() {
-    const nextVideo = videos.find(
-      (v) => !isVideoWithTimestamp(v) || !v.watched_at,
-    );
-
-    if (nextVideo) {
-      handleContentNavigation({ video: nextVideo, playlist: profilePlaylist });
-    }
-  }
   const playlistHeaderProps = $derived({
     breadcrumbs: [{ label: profilePlaylist.name }],
     contentFilter,
     currentPage,
-    onPlayVideo: handlePlayVideo,
     form,
     profilePlaylist,
     playlists,

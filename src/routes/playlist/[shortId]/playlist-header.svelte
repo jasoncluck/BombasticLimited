@@ -29,7 +29,6 @@
     playlists: Playlist[];
     playlistDuration: { hours: number; minutes: number; seconds: number };
     videosCount: number;
-    onPlayVideo: () => void;
     currentPage: number;
     supabase: SupabaseClient<Database>;
     session: Session | null;
@@ -46,7 +45,6 @@
     playlists,
     playlistDuration,
     videosCount,
-    onPlayVideo,
     currentPage,
     supabase,
     session,
@@ -97,13 +95,12 @@
   {profilePlaylist}
   {videos}
   {playlists}
-  {onPlayVideo}
   bind:currentPage
   {supabase}
   {session}
   {...props}
 >
-  <div class="flex flex-col gap-4">
+  <div class="flex flex-col gap-4 m-4">
     <!-- Main content row (image + text) -->
     <div class="flex flex-col @md:flex-row gap-6">
       <PlaylistEditDialog {form} playlist={profilePlaylist} bind:open>

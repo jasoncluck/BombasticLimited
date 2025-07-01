@@ -118,9 +118,7 @@
           >
             <ScrollArea
               type="scroll"
-              class="max-w-40  {filteredPlaylists.length <= 6
-                ? 'h-auto'
-                : 'h-56'}"
+              class=" {filteredPlaylists.length <= 6 ? 'h-auto' : 'h-56'}"
             >
               {#if filteredPlaylists.length < 1}
                 <ContextMenu.Item class="p-2"

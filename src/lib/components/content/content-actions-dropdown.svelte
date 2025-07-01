@@ -23,6 +23,7 @@
     playlist,
     playlists,
     isContentSelect,
+    onSelectAll,
     supabase,
     session,
   }: {
@@ -56,7 +57,7 @@
     }}
     class={buttonVariants({
       variant: "ghost",
-      class: `outline-none ghost-button-minimal ${(isContentSelect && contentState.selectedVideos.length > 0) || isHovering ? "opacity-100" : "opacity-0"}`,
+      class: `outline-none ghost-button-minimal ${isContentSelect || isHovering ? "opacity-100" : "opacity-0"}`,
       size: "icon",
     })}
   >
@@ -76,10 +77,17 @@
       contentState.isMouseOverMenu = false;
     }}
   >
+    {#if isContentSelect}
+      <DropdownMenu.Item
+        onclick={async () => {
+          onSelectAll?.();
+        }}>Select all</DropdownMenu.Item
+      >
+    {/if}
     {@const filteredPlaylists = playlists.filter(
       (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id,
     )}
-    {#if filteredPlaylists.length}
+    {#if (!isContentSelect && filteredPlaylists.length > 0) || (isContentSelect && videos.length > 0)}
       <DropdownMenu.Sub>
         <DropdownMenu.SubTrigger onclick={(e) => e.stopPropagation()}
           >Add {videos.length === 1 ? "video" : "videos"}
@@ -91,7 +99,7 @@
         >
           <ScrollArea
             type="scroll"
-            class="max-w-40 {filteredPlaylists.length <= 6 ? 'h-auto' : 'h-56'}"
+            class={filteredPlaylists.length <= 6 ? "h-auto" : "h-56"}
           >
             {#each filteredPlaylists as addPlaylist (addPlaylist.id)}
               {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}

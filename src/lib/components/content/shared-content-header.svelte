@@ -14,9 +14,10 @@
   import { getNumberOfPages } from "./pagination/content-pagination";
   import {
     DEFAULT_NUM_VIDEOS_PAGINATION,
+    isVideoWithTimestamp,
     type Video,
   } from "$lib/supabase/videos";
-  import type { ContentView } from "./content";
+  import { handleContentNavigation, type ContentView } from "./content";
   import {
     handleFollowPlaylist,
     handleUnfollowPlaylist,
@@ -70,6 +71,19 @@
       videosPerPage: DEFAULT_NUM_VIDEOS_PAGINATION,
     }),
   );
+
+  const nextVideoToPlay = $derived(
+    videos.find((v) => !isVideoWithTimestamp(v) || !v.watched_at),
+  );
+
+  function handlePlayVideo() {
+    if (nextVideoToPlay) {
+      handleContentNavigation({
+        video: nextVideoToPlay,
+        playlist: profilePlaylist,
+      });
+    }
+  }
 </script>
 
 {#if showFloatingBreadcrumbs}
@@ -104,9 +118,10 @@
         <Button
           variant="ghost"
           size="icon"
-          class=" p-7 bg-primary rounded-full shadow-xl transition-transform duration-200 hover:scale-105 hover:shadow-2xl
+          disabled={!nextVideoToPlay}
+          class="p-7 bg-primary rounded-full shadow-xl transition-transform duration-200 hover:scale-105 hover:shadow-2xl
           hover:bg-primary hover:brightness-[150%]"
-          onclick={onPlayVideo}
+          onclick={handlePlayVideo}
         >
           <Play class="h-6! w-6! stroke-background fill-background" />
         </Button>
