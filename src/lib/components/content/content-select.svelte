@@ -1,7 +1,4 @@
 <script lang="ts">
-  import Checkbox from "../ui/checkbox/checkbox.svelte";
-  import Label from "../ui/label/label.svelte";
-
   import type { Playlist } from "$lib/supabase/playlists";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
@@ -13,7 +10,6 @@
     videos,
     playlist,
     playlists,
-    displayLabel,
     supabase,
     session,
   }: {
@@ -43,21 +39,7 @@
   }
 </script>
 
-<div class="flex gap-2 h-[20px] items-center">
-  {#if displayLabel}
-    <Label for="isSelectionMode" class="text-sm cursor-pointer">Select</Label>
-  {/if}
-  <div class="w-[20px]">
-    <Checkbox
-      id="isSelectionMode"
-      class="items-center cursor-pointer"
-      onclick={() => {
-        if (contentState.selectedVideos.length > 0) {
-          contentState.selectedVideos = [];
-        }
-      }}
-    />
-  </div>
+<div class="flex gap-2 h-[20px] items-center pointer-events-auto">
   <div>
     <ContentActionsDropdown
       bind:videos={contentState.selectedVideos}

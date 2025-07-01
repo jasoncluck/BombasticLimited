@@ -34,7 +34,7 @@
 </script>
 
 <div
-  class=" w-full py-1 px-4 bg-background-lighter flex items-center relative pointer-events-auto"
+  class=" w-full py-1 px-4 bg-background-lighter flex items-center absolute pointer-events-auto"
 >
   <div class="relative py-2">
     {#if session}
@@ -57,7 +57,11 @@
   </div>
 
   <div class="ml-auto">
-    <Button variant="ghost" class="h-auto w-4" onclick={handleChevronClick}>
+    <Button
+      variant="ghost"
+      class="ghost-button-minimal"
+      onclick={handleChevronClick}
+    >
       <ChevronUp />
     </Button>
   </div>

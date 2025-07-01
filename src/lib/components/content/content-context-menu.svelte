@@ -39,9 +39,8 @@
 
   let open = $state(false);
 
-  // Update content state when context menu open state changes
   $effect(() => {
-    contentState.isContextMenuOpen = open;
+    contentState.isMenuOpen = open;
   });
 
   // Close context menu if there's no hovered video and no selected videos
@@ -94,25 +93,27 @@
     class="max-h-64 overflow-visible outline-none {mediaQueryState.isTouchDevice &&
       'hidden'}"
     onmouseenter={() => {
-      contentState.isMouseOverContextMenu = true;
+      contentState.isMouseOverMenu = true;
     }}
     onmouseleave={() => {
-      contentState.isMouseOverContextMenu = false;
+      contentState.isMouseOverMenu = false;
     }}
   >
     {#if operationVideos.length === 0}
-      <ContextMenu.Item disabled>No videos selected</ContextMenu.Item>
+      <ContextMenu.Item disabled class="p-2"
+        >No videos selected</ContextMenu.Item
+      >
     {:else if operationVideos.length > 0}
       {@const filteredPlaylists = playlists.filter(
-        (pl) => pl.id !== playlist?.id,
+        (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id,
       )}
-      {#if filteredPlaylists.length > 0 && isPlaylistOwner}
+      {#if filteredPlaylists.length > 0}
         <ContextMenu.Sub>
           <ContextMenu.SubTrigger onclick={(e) => e.stopPropagation()}>
             Add {operationVideos.length === 1 ? "video" : "videos"} to Playlist
           </ContextMenu.SubTrigger>
           <ContextMenu.SubContent
-            class="py-1 px-2 z-50 transition-opacity duration-150 overflow-hidden outline-none"
+            class="z-50 transition-opacity duration-150 overflow-hidden outline-none"
             sideOffset={5}
           >
             <ScrollArea
@@ -121,11 +122,14 @@
                 ? 'h-auto'
                 : 'h-56'}"
             >
-              {#if playlists.length < 1}
-                <ContextMenu.Item>No playlists found</ContextMenu.Item>
+              {#if filteredPlaylists.length < 1}
+                <ContextMenu.Item class="p-2"
+                  >No playlists found</ContextMenu.Item
+                >
               {:else}
                 {#each filteredPlaylists as addPlaylist (addPlaylist.id)}
                   <ContextMenu.Item
+                    class="p-2"
                     onclick={() =>
                       handleAddVideosToPlaylist({
                         videos: operationVideos,
@@ -145,6 +149,7 @@
       {/if}
       {#if playlist && isPlaylistOwner}
         <ContextMenu.Item
+          class="p-2"
           onclick={async () => {
             const { error } = await handleRemoveVideosFromPlaylist({
               videos: operationVideos,
@@ -174,6 +179,7 @@
 
       {#if playlist && isPlaylistOwner && operationVideos.length === 1}
         <ContextMenu.Item
+          class="p-2"
           onclick={async () =>
             (contentState.playlistImages[playlist.id] =
               await handleUpdatePlaylistImage({
@@ -190,6 +196,7 @@
 
       {#if session && operationVideos.some((v) => isVideoWithTimestamp(v))}
         <ContextMenu.Item
+          class="p-2"
           onclick={async () => {
             const { updatedVideos } = await handleDeleteVideoTimestamp({
               videos: operationVideos,
@@ -216,6 +223,7 @@
 
       {#if operationVideos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
         <ContextMenu.Item
+          class="p-2"
           onclick={async () => {
             const { updatedVideos } = await handleAddVideoTimestamp({
               videoTimestamps: operationVideos.map((v) => ({

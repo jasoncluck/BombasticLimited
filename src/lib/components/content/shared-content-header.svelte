@@ -17,17 +17,12 @@
     type Video,
   } from "$lib/supabase/videos";
   import type { ContentView } from "./content";
-  import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import {
-    handleDeletePlaylist,
     handleFollowPlaylist,
     handleUnfollowPlaylist,
   } from "../playlist/playlist-service";
-  import { Ellipsis, MinusCircle, Play, PlusCircle } from "@lucide/svelte";
-  import { buttonVariants } from "../ui/button";
+  import { MinusCircle, Play, PlusCircle } from "@lucide/svelte";
   import { fade } from "svelte/transition";
-  import { page } from "$app/state";
-  import { goto } from "$app/navigation";
   import Button from "../ui/button/button.svelte";
 
   interface SharedContentHeaderProps extends HTMLAttributes<HTMLDivElement> {
@@ -99,13 +94,8 @@
   onActive={() => (showFloatingBreadcrumbs = false)}
   onInactive={() => (showFloatingBreadcrumbs = true)}
 >
-  <div class="mb-6">
-    <div
-      class="flex flex-col m-4 md:flex-row md:flex-wrap justify-between gap-y-8 mb-2"
-      {...restProps}
-    >
-      {@render children()}
-    </div>
+  <div class="mb-6" {...restProps}>
+    {@render children()}
 
     <!-- Right side: ContentSelect and ContentFilters on same row -->
     <hr class="border-1 m-4" />
@@ -146,62 +136,16 @@
             }}
           />
         {/if}
-        {#if isPlaylistCreator}
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger
-              class="outline-none {buttonVariants({
-                variant: 'ghost',
-                class: 'ghost-button-minimal',
-                size: 'icon',
-              })}"
-            >
-              <Ellipsis size="30" />
-              <span class="sr-only">Playlist Actions</span>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Content>
-              <DropdownMenu.Group>
-                <DropdownMenu.Item
-                  class="cursor-pointer"
-                  onclick={() => (open = true)}
-                >
-                  Edit Playlist
-                </DropdownMenu.Item>
-                <DropdownMenu.Item
-                  class="cursor-pointer"
-                  onclick={async () => {
-                    const data = await handleDeletePlaylist({
-                      playlist: profilePlaylist,
-                      supabase,
-                      session,
-                    });
-
-                    if (
-                      !data?.error &&
-                      page.url.pathname ===
-                        `/playlist/${profilePlaylist.short_id}`
-                    ) {
-                      goto("/");
-                    }
-                  }}
-                >
-                  Delete Playlist
-                </DropdownMenu.Item>
-              </DropdownMenu.Group>
-            </DropdownMenu.Content>
-          </DropdownMenu.Root>
-        {/if}
       {/if}
       {#if session}
-        <div class="mr-auto">
-          <ContentSelect
-            {videos}
-            playlist={profilePlaylist}
-            {playlists}
-            {supabase}
-            {session}
-            displayLabel={true}
-          />
-        </div>
+        <ContentSelect
+          {videos}
+          playlist={profilePlaylist}
+          {playlists}
+          {supabase}
+          {session}
+          displayLabel={true}
+        />
       {/if}
       <div class="flex items-center gap-4 ml-auto">
         <ContentFilters {contentFilter} {view} />

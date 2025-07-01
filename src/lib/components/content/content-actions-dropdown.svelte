@@ -25,7 +25,6 @@
     isContentSelect,
     supabase,
     session,
-    onSelectAll,
   }: {
     videos: Video[];
     playlist: Playlist | undefined;
@@ -42,29 +41,47 @@
   const isPlaylistOwner = $derived(session?.user.id === playlist?.created_by);
 
   const isHovering = $derived(contentState.hoveredVideo?.id === videos[0]?.id);
+
+  let open = $state(false);
+
+  $effect(() => {
+    contentState.isMenuOpen = open;
+  });
 </script>
 
-<DropdownMenu.Root>
+<DropdownMenu.Root bind:open>
   <DropdownMenu.Trigger
     onclick={(e) => {
       e.stopPropagation();
     }}
     class={buttonVariants({
       variant: "ghost",
-      class: `outline-none ghost-button-minimal ${isHovering ? "opacity-100" : "opacity-0"}`,
+      class: `outline-none ghost-button-minimal ${(isContentSelect && contentState.selectedVideos.length > 0) || isHovering ? "opacity-100" : "opacity-0"}`,
       size: "icon",
     })}
   >
     <Ellipsis />
-    <span class="sr-only">Actions for selected items</span>
+    <span class="sr-only"
+      >{isContentSelect
+        ? "Actions for selected items"
+        : "Actions for video"}</span
+    >
   </DropdownMenu.Trigger>
-  <DropdownMenu.Content class="outline-none">
+  <DropdownMenu.Content
+    class="outline-none"
+    onmouseenter={() => {
+      contentState.isMouseOverMenu = true;
+    }}
+    onmouseleave={() => {
+      contentState.isMouseOverMenu = false;
+    }}
+  >
     {@const filteredPlaylists = playlists.filter(
-      (pl) => pl.id !== playlist?.id && isPlaylistOwner,
+      (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id,
     )}
-    {#if filteredPlaylists.length > 0 && videos.length > 0}
+    {#if filteredPlaylists.length}
       <DropdownMenu.Sub>
-        <DropdownMenu.SubTrigger
+        <DropdownMenu.SubTrigger onclick={(e) => e.stopPropagation()}
           >Add {videos.length === 1 ? "video" : "videos"}
           to Playlist</DropdownMenu.SubTrigger
         >
@@ -76,9 +93,10 @@
             type="scroll"
             class="max-w-40 {filteredPlaylists.length <= 6 ? 'h-auto' : 'h-56'}"
           >
-            {#each playlists as addPlaylist (addPlaylist.id)}
+            {#each filteredPlaylists as addPlaylist (addPlaylist.id)}
               {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
                 <DropdownMenu.Item
+                  class="p-2"
                   onclick={() => {
                     handleAddVideosToPlaylist({
                       videos,
@@ -100,6 +118,7 @@
 
     {#if playlist && isPlaylistOwner && videos.length > 0}
       <DropdownMenu.Item
+        class="p-2"
         onclick={async () => {
           const { error } = await handleRemoveVideosFromPlaylist({
             videos,
@@ -118,6 +137,7 @@
     {@const firstVideo = videos[0]}
     {#if playlist && !isContentSelect && isPlaylistOwner}
       <DropdownMenu.Item
+        class="p-2"
         onclick={async () =>
           (contentState.playlistImages[playlist.id] =
             await handleUpdatePlaylistImage({
@@ -131,6 +151,7 @@
     {/if}
     {#if session && videos.length > 0 && videos.some( (v) => isVideoWithTimestamp(v), )}
       <DropdownMenu.Item
+        class="p-2"
         onclick={async () => {
           ({ updatedVideos: videos } = await handleDeleteVideoTimestamp({
             videos,
@@ -144,6 +165,7 @@
     {/if}
     {#if videos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
       <DropdownMenu.Item
+        class="p-2"
         onclick={async () => {
           ({ updatedVideos: videos } = await handleAddVideoTimestamp({
             videoTimestamps: videos.map((v) => ({

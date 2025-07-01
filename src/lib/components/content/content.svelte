@@ -74,7 +74,7 @@
         // Clear selection when clicking outside
         if (
           contentState.selectedVideos.length > 0 &&
-          !contentState.isMouseOverContextMenu
+          !contentState.isMouseOverMenu
         ) {
           contentState.selectedVideos = [];
         }
@@ -86,12 +86,6 @@
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };
-  });
-
-  $effect(() => {
-    if (contentState.selectedVideos) {
-      console.log($state.snapshot(contentState.selectedVideos));
-    }
   });
 </script>
 
