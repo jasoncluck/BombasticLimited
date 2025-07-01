@@ -80,6 +80,14 @@ export interface ContentState {
     videos: Video[];
   }) => void;
 
+  handleContextMenu: ({
+    event,
+    video,
+  }: {
+    event: MouseEvent;
+    video: Video;
+  }) => void;
+
   // Cleanup event handler
   setupClickOutsideListener: (containerElement: HTMLElement) => void;
 
@@ -429,6 +437,15 @@ export class ContentStateClass implements ContentState {
         // Multiple videos selected - replace selection with just this video
         this.selectedVideos = [video];
       }
+    }
+  }
+
+  handleContextMenu({ event, video }: { event: MouseEvent; video: Video }) {
+    const isVideoSelected = this.selectedVideos.some((v) => v.id === video.id);
+
+    if (!isVideoSelected) {
+      this.selectedVideos = [];
+      this.hoveredVideo = video;
     }
   }
 
