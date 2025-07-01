@@ -18,7 +18,6 @@ export function createContentColumns({
 }: {
   getPlaylist: () => Playlist | undefined;
   getPlaylists: () => Playlist[];
-  isSelected: boolean;
   session: Session | null;
   supabase: SupabaseClient<Database>;
 }): ColumnDef<Video>[] {

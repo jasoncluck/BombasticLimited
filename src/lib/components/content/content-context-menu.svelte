@@ -91,7 +91,7 @@
   </ContextMenu.Trigger>
 
   <ContextMenu.Content
-    class="m-1 max-h-64 overflow-visible {mediaQueryState.isTouchDevice &&
+    class=" m-1 max-h-64 overflow-visible outline-none {mediaQueryState.isTouchDevice &&
       'hidden'}"
     onmouseenter={() => {
       contentState.isMouseOverContextMenu = true;
@@ -103,35 +103,6 @@
     {#if operationVideos.length === 0}
       <ContextMenu.Item disabled>No videos selected</ContextMenu.Item>
     {:else if operationVideos.length > 0}
-      {#if playlist && isPlaylistOwner}
-        <ContextMenu.Item
-          onclick={async () => {
-            const { error } = await handleRemoveVideosFromPlaylist({
-              videos: operationVideos,
-              playlist,
-              playlistImages: contentState.playlistImages,
-              supabase,
-            });
-
-            if (!error) {
-              // Clear selected videos if we were operating on them
-              if (contentState.selectedVideos.length > 0) {
-                contentState.selectedVideos = [];
-              }
-              // Clear hovered video if we were operating on it
-              if (
-                contentState.selectedVideos.length === 0 &&
-                contentState.hoveredVideo
-              ) {
-                contentState.hoveredVideo = null;
-              }
-            }
-          }}
-        >
-          Remove {operationVideos.length === 1 ? "video" : "videos"} from playlist
-        </ContextMenu.Item>
-      {/if}
-
       {@const filteredPlaylists = playlists.filter(
         (pl) => pl.id !== playlist?.id,
       )}
@@ -141,7 +112,7 @@
             Add {operationVideos.length === 1 ? "video" : "videos"} to Playlist
           </ContextMenu.SubTrigger>
           <ContextMenu.SubContent
-            class="py-1 px-2 z-50 transition-opacity duration-150 overflow-hidden"
+            class="py-1 px-2 z-50 transition-opacity duration-150 overflow-hidden outline-none"
             sideOffset={5}
           >
             <ScrollArea
@@ -171,6 +142,34 @@
             </ScrollArea>
           </ContextMenu.SubContent>
         </ContextMenu.Sub>
+      {/if}
+      {#if playlist && isPlaylistOwner}
+        <ContextMenu.Item
+          onclick={async () => {
+            const { error } = await handleRemoveVideosFromPlaylist({
+              videos: operationVideos,
+              playlist,
+              playlistImages: contentState.playlistImages,
+              supabase,
+            });
+
+            if (!error) {
+              // Clear selected videos if we were operating on them
+              if (contentState.selectedVideos.length > 0) {
+                contentState.selectedVideos = [];
+              }
+              // Clear hovered video if we were operating on it
+              if (
+                contentState.selectedVideos.length === 0 &&
+                contentState.hoveredVideo
+              ) {
+                contentState.hoveredVideo = null;
+              }
+            }
+          }}
+        >
+          Remove from this playlist
+        </ContextMenu.Item>
       {/if}
 
       {#if contentState.selectedVideos.length > 0}

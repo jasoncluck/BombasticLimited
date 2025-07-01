@@ -100,8 +100,11 @@
       });
   });
 
-  function getDropzoneClasses() {
-    if (contentState.dragContentType === "video") {
+  function getDropzoneClasses(playlist: Playlist) {
+    if (
+      contentState.dragContentType === "video" &&
+      playlist.created_by === session?.user.id
+    ) {
       return videoDropzoneClasses;
     }
     return [];
@@ -192,24 +195,26 @@
   }
 
   // Video drag and drop handlers
-  function handleVideoDragOver(e: DragEvent) {
+  function handleVideoDragOver(e: DragEvent, index: number) {
     e.preventDefault();
+    const playlist = playlists[index];
     if (contentState.dragContentType === "video") {
       if (e.currentTarget instanceof HTMLElement) {
-        const classes = getDropzoneClasses();
+        const classes = getDropzoneClasses(playlist);
         e.currentTarget.classList.add(...classes);
         e.currentTarget.classList.remove(...endDropzoneClasses);
       }
     }
   }
 
-  function handleVideoDragLeave(e: DragEvent) {
+  function handleVideoDragLeave(e: DragEvent, index: number) {
     const relatedTarget = e.relatedTarget as Node;
     if (
       e.currentTarget instanceof HTMLElement &&
       !e.currentTarget.contains(relatedTarget)
     ) {
-      const classes = getDropzoneClasses();
+      const playlist = playlists[index];
+      const classes = getDropzoneClasses(playlist);
       e.currentTarget.classList.remove(...classes);
       e.currentTarget.classList.add(...endDropzoneClasses);
     }
@@ -219,13 +224,18 @@
     e.preventDefault();
     if (!session || contentState.dragContentType !== "video") return;
 
+    const playlist = playlists[index];
+
+    if (playlist.created_by !== session.user.id) {
+      return;
+    }
+
     if (e.currentTarget instanceof HTMLElement) {
-      const classes = getDropzoneClasses();
+      const classes = getDropzoneClasses(playlist);
       e.currentTarget.classList.remove(...classes);
       e.currentTarget.classList.add(...endDropzoneClasses);
     }
 
-    const playlist = playlists[index];
     handleAddVideosToPlaylist({
       playlist,
       videos: contentState.selectedVideos,
@@ -331,7 +341,7 @@
 
   <!-- Fixed: Border is always present but transparent when not dragging -->
   <div
-    class="border-2 rounded-md mx-1 transition-colors duration-200
+    class="border-2 rounded-md mx-1 transition-colors duration-150
     {playlists.length > 0 && contentState.dragContentType === 'video'
       ? 'border-secondary/80'
       : 'border-transparent'}"
@@ -368,7 +378,7 @@
 
                 <Button
                   variant="ghost"
-                  class="h-[64px] w-full border border-transparent relative cursor-pointer transition-colors duration-200
+                  class="h-[64px] w-full border border-transparent relative cursor-pointer transition-all  duration-200
                   {hoveredIndex === i && !pageState.sidebarScrollState.scrolling
                     ? 'hover:bg-secondary'
                     : 'hover:bg-transparent'}
@@ -377,15 +387,20 @@
                     : 'hover:bg-secondary/50'}  
                   {!isSidebarCollapsed
                     ? 'min-w-[150px] justify-normal'
-                    : 'align-middle'}"
+                    : 'align-middle'}
+
+                  {contentState.dragContentType === 'video' &&
+                    playlist.created_by !== session.user.id &&
+                    'opacity-50'}
+                  "
                   size={!isSidebarCollapsed ? "default" : "icon"}
                   onclick={() => handlePlaylistClick(playlist)}
                   title={playlist.name}
                   value={playlist.name}
                   onmouseenter={() => handleMouseEnter(i)}
                   onmouseleave={() => handleMouseLeave(i)}
-                  ondragover={(e) => handleVideoDragOver(e)}
-                  ondragleave={(e) => handleVideoDragLeave(e)}
+                  ondragover={(e) => handleVideoDragOver(e, i)}
+                  ondragleave={(e) => handleVideoDragLeave(e, i)}
                   ondrop={(e) => handleVideoDrop(e, i)}
                 >
                   <div

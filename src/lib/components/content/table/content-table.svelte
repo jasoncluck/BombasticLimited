@@ -165,10 +165,3 @@
     {/each}
   </Table.Body>
 </Table.Root>
-
-<style>
-  /* Additional CSS to ensure selected state overrides hover */
-  :global(.selection-mode.bg-muted:hover) {
-    background-color: var(--muted) !important;
-  }
-</style>

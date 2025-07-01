@@ -217,15 +217,6 @@ export class ContentStateClass implements ContentState {
     playlist?: Playlist;
     onNavigate?: (video: Video, playlist?: Playlist) => void;
   }) {
-    // Check if the click originated from a play button
-    const target = event.target as HTMLElement;
-    const isPlayButtonClick = target.closest("[data-play-button]");
-
-    if (isPlayButtonClick) {
-      // Play button clicks are handled separately, don't process here
-      return;
-    }
-
     const now = Date.now();
     const doubleClickDelay = 300; // milliseconds
 
@@ -286,6 +277,39 @@ export class ContentStateClass implements ContentState {
       }
     };
 
+    const handleDragStart = (
+      event: DragEvent & { currentTarget: HTMLElement },
+      index: number,
+    ) => {
+      // Set the drag index for visual feedback
+      this.draggedIndex = index;
+
+      // Set drag content type
+      this.dragContentType = "video";
+
+      // Handle drag data transfer and drag image
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", index.toString());
+
+        // If videos aren't already selected, use the hovered video for dragging
+        const videosForDrag =
+          this.selectedVideos.length > 0
+            ? this.selectedVideos
+            : this.hoveredVideo
+              ? [this.hoveredVideo]
+              : [options.videos[index]];
+
+        this.selectedVideos = videosForDrag;
+
+        const dragImageText =
+          videosForDrag.length === 1
+            ? videosForDrag[0].title
+            : `${videosForDrag.length} videos`;
+        createDragImage(event, dragImageText);
+      }
+    };
+
     const handleDrop = (event: DragEvent, index: number) => {
       if (!options.allowVideoReorder || !options.supabase) return;
       if (
@@ -299,6 +323,7 @@ export class ContentStateClass implements ContentState {
         // Reorder the videos array
         const updatedVideos = [...options.videos];
         const [movedItem] = updatedVideos.splice(this.draggedIndex, 1);
+
         updatedVideos.splice(index, 0, movedItem);
 
         // Update the videos through the callback
@@ -326,37 +351,6 @@ export class ContentStateClass implements ContentState {
       }
       this.draggedIndex = null;
       this.targetIndex = null;
-    };
-
-    const handleDragStart = (
-      event: DragEvent & { currentTarget: HTMLElement },
-      index: number,
-    ) => {
-      // Set the drag index for visual feedback
-      this.draggedIndex = index;
-
-      // Set drag content type
-      this.dragContentType = "video";
-
-      // Handle drag data transfer and drag image
-      if (event.dataTransfer) {
-        event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.setData("text/plain", index.toString());
-
-        // If videos aren't already selected, use the hovered video for dragging
-        const videosForDrag =
-          this.selectedVideos.length > 0
-            ? this.selectedVideos
-            : this.hoveredVideo
-              ? [this.hoveredVideo]
-              : [options.videos[index]];
-
-        const dragImageText =
-          videosForDrag.length === 1
-            ? videosForDrag[0].title
-            : `${videosForDrag.length} videos`;
-        createDragImage(event, dragImageText);
-      }
     };
 
     return {

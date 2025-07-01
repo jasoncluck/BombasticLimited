@@ -40,6 +40,8 @@
   const contentState = getContentState();
 
   const isPlaylistOwner = $derived(session?.user.id === playlist?.created_by);
+
+  const isHovering = $derived(contentState.hoveredVideo?.id === videos[0]?.id);
 </script>
 
 <DropdownMenu.Root>
@@ -49,46 +51,14 @@
     }}
     class={buttonVariants({
       variant: "ghost",
-      class: "outline-none",
+      class: `outline-none ghost-button-minimal ${isHovering ? "opacity-100" : "opacity-0"}`,
       size: "icon",
     })}
   >
     <Ellipsis />
     <span class="sr-only">Actions for selected items</span>
   </DropdownMenu.Trigger>
-  <DropdownMenu.Content class="p-1">
-    {#if isContentSelect}
-      <DropdownMenu.Item
-        onclick={async () => {
-          onSelectAll?.();
-        }}>Select all</DropdownMenu.Item
-      >
-    {/if}
-    {#if isContentSelect}
-      <DropdownMenu.Item
-        onclick={() => {
-          videos = [];
-        }}>Deselect all</DropdownMenu.Item
-      >
-    {/if}
-    {#if playlist && isPlaylistOwner && videos.length > 0}
-      <DropdownMenu.Item
-        onclick={async () => {
-          const { error } = await handleRemoveVideosFromPlaylist({
-            videos,
-            playlist,
-            playlistImages: contentState.playlistImages,
-            supabase,
-          });
-
-          if (!error) {
-            videos = [];
-          }
-        }}
-        >Remove {videos.length === 1 ? "video" : "videos"} from playlist</DropdownMenu.Item
-      >
-    {/if}
-
+  <DropdownMenu.Content class="outline-none">
     {@const filteredPlaylists = playlists.filter(
       (pl) => pl.id !== playlist?.id && isPlaylistOwner,
     )}
@@ -99,7 +69,7 @@
           to Playlist</DropdownMenu.SubTrigger
         >
         <DropdownMenu.SubContent
-          class="py-1 px-2 z-50 transition-opacity duration-150 overflow-hidden"
+          class="z-50 transition-opacity duration-150 overflow-hidden"
           sideOffset={5}
         >
           <ScrollArea
@@ -128,6 +98,23 @@
           </ScrollArea>
         </DropdownMenu.SubContent>
       </DropdownMenu.Sub>
+    {/if}
+
+    {#if playlist && isPlaylistOwner && videos.length > 0}
+      <DropdownMenu.Item
+        onclick={async () => {
+          const { error } = await handleRemoveVideosFromPlaylist({
+            videos,
+            playlist,
+            playlistImages: contentState.playlistImages,
+            supabase,
+          });
+
+          if (!error) {
+            videos = [];
+          }
+        }}>Remove from this playlist</DropdownMenu.Item
+      >
     {/if}
 
     {@const firstVideo = videos[0]}
