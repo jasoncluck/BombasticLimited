@@ -108,7 +108,7 @@
       )}
       {#if filteredPlaylists.length > 0 && isPlaylistOwner}
         <ContextMenu.Sub>
-          <ContextMenu.SubTrigger>
+          <ContextMenu.SubTrigger onclick={(e) => e.stopPropagation()}>
             Add {operationVideos.length === 1 ? "video" : "videos"} to Playlist
           </ContextMenu.SubTrigger>
           <ContextMenu.SubContent
@@ -172,25 +172,14 @@
         </ContextMenu.Item>
       {/if}
 
-      {#if contentState.selectedVideos.length > 0}
-        <ContextMenu.Item
-          onclick={() => {
-            contentState.selectedVideos = [];
-          }}
-        >
-          Deselect all
-        </ContextMenu.Item>
-      {/if}
-
-      {@const lastVideo = operationVideos[operationVideos.length - 1]}
-      {#if playlist && isPlaylistOwner && lastVideo}
+      {#if playlist && isPlaylistOwner && operationVideos.length === 1}
         <ContextMenu.Item
           onclick={async () =>
             (contentState.playlistImages[playlist.id] =
               await handleUpdatePlaylistImage({
                 playlist,
-                thumbnailUrl: lastVideo.thumbnail_url,
-                thumbnailMaxResUrl: lastVideo.thumbnail_maxres_url,
+                thumbnailUrl: operationVideos[0].thumbnail_url,
+                thumbnailMaxResUrl: operationVideos[0].thumbnail_maxres_url,
                 playlistImages: contentState.playlistImages,
                 supabase,
               }))}

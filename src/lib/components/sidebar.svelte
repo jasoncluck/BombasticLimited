@@ -226,7 +226,10 @@
 
     const playlist = playlists[index];
 
-    if (playlist.created_by !== session.user.id) {
+    if (
+      contentState.dragContentType === "video" &&
+      playlist.created_by !== session.user.id
+    ) {
       return;
     }
 
@@ -378,7 +381,7 @@
 
                 <Button
                   variant="ghost"
-                  class="h-[64px] w-full border border-transparent relative cursor-pointer transition-all  duration-200
+                  class="h-[64px] w-full border border-transparent relative cursor-pointer transition-all duration-150 outline-none
                   {hoveredIndex === i && !pageState.sidebarScrollState.scrolling
                     ? 'hover:bg-secondary'
                     : 'hover:bg-transparent'}
@@ -388,11 +391,9 @@
                   {!isSidebarCollapsed
                     ? 'min-w-[150px] justify-normal'
                     : 'align-middle'}
-
                   {contentState.dragContentType === 'video' &&
                     playlist.created_by !== session.user.id &&
-                    'opacity-50'}
-                  "
+                    'opacity-50'}"
                   size={!isSidebarCollapsed ? "default" : "icon"}
                   onclick={() => handlePlaylistClick(playlist)}
                   title={playlist.name}

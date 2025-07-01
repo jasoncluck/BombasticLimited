@@ -147,6 +147,12 @@
             });
 
             return false;
+          } else {
+            // Handle right-click context menu behavior
+            contentState.handleContextMenu({
+              event,
+              video: row.original,
+            });
           }
         }}
         onmouseenter={() =>
