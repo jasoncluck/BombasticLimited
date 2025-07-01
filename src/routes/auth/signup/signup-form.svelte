@@ -108,13 +108,12 @@
       <div class="grid grid-cols-2">
         <Button
           onclick={async () => {
-            const { data, error } = await supabase.auth.signInWithOAuth({
+            const { error } = await supabase.auth.signInWithOAuth({
               provider: "discord",
             });
             if (error) {
               console.error(error);
             }
-            console.log(data);
           }}
           variant="outline"
           type="button"

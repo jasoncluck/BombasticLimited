@@ -1,14 +1,14 @@
-import { renderComponent, renderSnippet } from "$lib/components/ui/data-table";
+import { renderComponent } from "$lib/components/ui/data-table";
 import type { Video } from "$lib/supabase/videos";
 import type { ColumnDef } from "@tanstack/table-core";
-import { createRawSnippet } from "svelte";
 import ContentActionsDropdown from "../content-actions-dropdown.svelte";
 import ContentTableTitle from "./content-table-title.svelte";
 import ContentTableImage from "./content-table-image.svelte";
-import ContentTableSelect from "./content-table-select.svelte";
 import type { Database } from "$lib/supabase/database.types";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import type { Playlist } from "$lib/supabase/playlists";
+import ContentTableDescription from "./content-table-description.svelte";
+import ContentTablePlay from "./content-table-play.svelte";
 
 export function createContentColumns({
   getPlaylist,
@@ -18,6 +18,7 @@ export function createContentColumns({
 }: {
   getPlaylist: () => Playlist | undefined;
   getPlaylists: () => Playlist[];
+  isSelected: boolean;
   session: Session | null;
   supabase: SupabaseClient<Database>;
 }): ColumnDef<Video>[] {
@@ -30,7 +31,7 @@ export function createContentColumns({
       cell: ({ row }) => {
         const video = row.original;
 
-        return renderComponent(ContentTableSelect, {
+        return renderComponent(ContentTablePlay, {
           video,
         });
       },
@@ -44,7 +45,6 @@ export function createContentColumns({
           video,
         });
       },
-      size: 120,
       enableSorting: false,
     },
     {
@@ -60,18 +60,11 @@ export function createContentColumns({
     {
       accessorKey: "description",
       cell: ({ row }) => {
-        const videoDescriptionSnippet = createRawSnippet<[string]>(() => {
-          return {
-            render: () =>
-              `
-              <div class="min-w-0 max-w-xs">
-                <p class="@2xl:line-clamp-2 hidden text-sm text-muted-foreground leading-relaxed break-words whitespace-normal"> ${row.getValue("description")} </p>
-              </div>
-              `,
-          };
-        });
+        const video = row.original;
 
-        return renderSnippet(videoDescriptionSnippet);
+        return renderComponent(ContentTableDescription, {
+          video,
+        });
       },
     },
     {

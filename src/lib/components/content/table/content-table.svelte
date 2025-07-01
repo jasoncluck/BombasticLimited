@@ -75,9 +75,14 @@
   function getRowClasses(video: Video, index: number) {
     let classes = "selection-mode";
 
-    // Use Set for O(1) lookup instead of array.some()
-    if (selectedVideoIds.has(video.id)) {
-      classes += " bg-muted/50";
+    const isSelected = selectedVideoIds.has(video.id);
+
+    if (isSelected) {
+      // Selected state - use !important to override hover
+      classes += " !bg-muted";
+    } else {
+      // Not selected - allow hover effects
+      classes += " hover:bg-muted/50";
     }
 
     // Add drag drop classes if enabled
@@ -107,7 +112,7 @@
       <Table.Row
         data-state={row.getIsSelected() && "selected"}
         class={getRowClasses(row.original, i)}
-        draggable={allowVideoReorder}
+        draggable={true}
         ondragstart={dragDrop
           ? (e) => dragDrop.handleDragStart(e, i)
           : undefined}
@@ -127,6 +132,23 @@
             },
           });
         }}
+        oncontextmenu={(event) => {
+          const isCtrlPressed = event.ctrlKey || event.metaKey;
+
+          if (isCtrlPressed) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            // Manually trigger selection since context menu is prevented
+            contentState.handleSelectVideos({
+              event,
+              video: row.original,
+              videos,
+            });
+
+            return false;
+          }
+        }}
         onmouseenter={() =>
           contentState.handleMouseEnter({ video: row.original })}
         onmouseleave={() => contentState.handleMouseLeave()}
@@ -143,3 +165,10 @@
     {/each}
   </Table.Body>
 </Table.Root>
+
+<style>
+  /* Additional CSS to ensure selected state overrides hover */
+  :global(.selection-mode.bg-muted:hover) {
+    background-color: var(--muted) !important;
+  }
+</style>

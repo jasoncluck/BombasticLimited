@@ -67,12 +67,31 @@
 </script>
 
 <ContextMenu.Root bind:open>
-  <ContextMenu.Trigger class="outline-none">
+  <ContextMenu.Trigger
+    class="outline-none"
+    onmousedown={(event) => {
+      const isCtrlPressed = event.ctrlKey || event.metaKey;
+      const isLeftClick = event.button === 0;
+
+      // If Ctrl+LeftClick, prevent context menu from interfering
+      if (isCtrlPressed && isLeftClick) {
+        event.stopPropagation();
+      }
+    }}
+    oncontextmenu={(event) => {
+      const isCtrlPressed = event.ctrlKey || event.metaKey;
+
+      if (isCtrlPressed) {
+        event.preventDefault();
+        return false;
+      }
+    }}
+  >
     {@render children()}
   </ContextMenu.Trigger>
 
   <ContextMenu.Content
-    class="p-1 max-h-64 overflow-visible {mediaQueryState.isTouchDevice &&
+    class="m-1 max-h-64 overflow-visible {mediaQueryState.isTouchDevice &&
       'hidden'}"
     onmouseenter={() => {
       contentState.isMouseOverContextMenu = true;
@@ -127,7 +146,7 @@
           >
             <ScrollArea
               type="scroll"
-              class="max-w-40 p-1 {filteredPlaylists.length <= 6
+              class="max-w-40 m-1 {filteredPlaylists.length <= 6
                 ? 'h-auto'
                 : 'h-56'}"
             >

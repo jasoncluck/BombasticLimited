@@ -47,10 +47,11 @@
     onclick={(e) => {
       e.stopPropagation();
     }}
-    class=" outline-none {buttonVariants({
-      variant: 'ghost',
-      size: 'icon',
-    })}"
+    class={buttonVariants({
+      variant: "ghost",
+      class: "outline-none",
+      size: "icon",
+    })}
   >
     <Ellipsis />
     <span class="sr-only">Actions for selected items</span>

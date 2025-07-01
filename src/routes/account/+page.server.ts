@@ -157,7 +157,6 @@ export const actions: Actions = {
   },
 
   deleteAccount: async ({ cookies, locals: { supabase, session } }) => {
-    console.log("in delete account");
     if (!session) {
       redirect(303, "/login");
     }

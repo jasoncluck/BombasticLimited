@@ -4,7 +4,7 @@ export function createDragImage(event: DragEvent, text: string) {
   const dragElement = document.createElement("div");
   dragElement.textContent = text;
   dragElement.className =
-    "px-2 py-2 w-[250px] text-sm bg-background border rounded shadow-md ";
+    "px-2 py-2 max-w-[250px] text-sm bg-background border rounded shadow-md ";
 
   // Position off-screen initially to avoid flash at 0,0
   dragElement.style.position = "absolute";

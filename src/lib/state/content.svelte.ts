@@ -80,6 +80,9 @@ export interface ContentState {
     videos: Video[];
   }) => void;
 
+  // Cleanup event handler
+  setupClickOutsideListener: (containerElement: HTMLElement) => void;
+
   // Click handling for single/double click
   handleVideoClick: ({
     event,
@@ -91,6 +94,19 @@ export interface ContentState {
     event: MouseEvent;
     video: Video;
     videos: Video[];
+    playlist?: Playlist;
+    onNavigate?: (video: Video, playlist?: Playlist) => void;
+  }) => void;
+
+  // Play button click handler
+  handlePlayButtonClick: ({
+    event,
+    video,
+    playlist,
+    onNavigate,
+  }: {
+    event: MouseEvent;
+    video: Video;
     playlist?: Playlist;
     onNavigate?: (video: Video, playlist?: Playlist) => void;
   }) => void;
@@ -167,6 +183,26 @@ export class ContentStateClass implements ContentState {
     }
   }
 
+  // Handle play button click - immediate navigation
+  handlePlayButtonClick({
+    event,
+    video,
+    playlist,
+    onNavigate,
+  }: {
+    event: MouseEvent;
+    video: Video;
+    playlist?: Playlist;
+    onNavigate?: (video: Video, playlist?: Playlist) => void;
+  }) {
+    // Stop the event from propagating to the row click handler
+    event.stopPropagation();
+    event.preventDefault();
+
+    // Navigate immediately
+    onNavigate?.(video, playlist);
+  }
+
   // Handle single click (select) vs double click (navigate)
   handleVideoClick({
     event,
@@ -181,6 +217,15 @@ export class ContentStateClass implements ContentState {
     playlist?: Playlist;
     onNavigate?: (video: Video, playlist?: Playlist) => void;
   }) {
+    // Check if the click originated from a play button
+    const target = event.target as HTMLElement;
+    const isPlayButtonClick = target.closest("[data-play-button]");
+
+    if (isPlayButtonClick) {
+      // Play button clicks are handled separately, don't process here
+      return;
+    }
+
     const now = Date.now();
     const doubleClickDelay = 300; // milliseconds
 
@@ -337,50 +382,90 @@ export class ContentStateClass implements ContentState {
     const videoIndex = this.selectedVideos.findIndex((v) => v.id === video.id);
 
     if (isShiftPressed) {
-      // SHIFT key is pressed - implement range selection
+      // SHIFT key - range selection
       if (this.selectedVideos.length === 0) {
-        this.selectedVideos.push(video);
+        // No previous selection, just select this video
+        this.selectedVideos = [video];
       } else {
+        // Find the last selected video's position for range selection
         const lastSelectedVideo =
           this.selectedVideos[this.selectedVideos.length - 1];
-
         const lastSelectedIndex = videos.findIndex(
           (v) => v.id === lastSelectedVideo.id,
         );
         const currentIndex = videos.findIndex((v) => v.id === video.id);
 
-        // Determine start and end indices for the range
-        const startIndex = Math.min(lastSelectedIndex, currentIndex);
-        const endIndex = Math.max(lastSelectedIndex, currentIndex);
+        if (lastSelectedIndex !== -1 && currentIndex !== -1) {
+          // Determine the range
+          const startIndex = Math.min(lastSelectedIndex, currentIndex);
+          const endIndex = Math.max(lastSelectedIndex, currentIndex);
 
-        // Select all videos in the range
-        for (let i = startIndex; i <= endIndex; i++) {
-          const rangeVideo = videos[i];
-          // Check if this video is not already in selectedVideos
-          if (!this.selectedVideos.some((v) => v.id === rangeVideo.id)) {
-            this.selectedVideos.push(rangeVideo);
+          // Create range videos
+          const rangeVideos: Video[] = [];
+          for (let i = startIndex; i <= endIndex; i++) {
+            rangeVideos.push(videos[i]);
           }
+
+          // CTRL+SHIFT: Add range to existing selection (union)
+          const existingIds = new Set(this.selectedVideos.map((v) => v.id));
+          const newVideos = rangeVideos.filter((v) => !existingIds.has(v.id));
+          this.selectedVideos = [...this.selectedVideos, ...newVideos];
         }
       }
     } else if (isCtrlPressed) {
-      // CTRL/CMD key is pressed - toggle individual selection
+      // CTRL only - toggle individual selection (non-contiguous multi-select)
       if (videoIndex === -1) {
-        this.selectedVideos.push(video);
+        // Video not selected - add it to selection
+        this.selectedVideos = [...this.selectedVideos, video];
       } else {
-        this.selectedVideos.splice(videoIndex, 1);
+        // Video already selected - remove it from selection
+        this.selectedVideos = this.selectedVideos.filter(
+          (v) => v.id !== video.id,
+        );
       }
     } else {
-      // No modifier keys - replace selection with this video
+      // No modifier keys - standard single selection behavior
       if (videoIndex === -1) {
+        // Video not selected - replace entire selection with just this video
         this.selectedVideos = [video];
       } else if (this.selectedVideos.length === 1) {
-        // If only this video is selected, deselect it
+        // Only this video is selected - deselect it (toggle off)
         this.selectedVideos = [];
       } else {
-        // If multiple videos are selected, select only this one
+        // Multiple videos selected - replace selection with just this video
         this.selectedVideos = [video];
       }
     }
+  }
+
+  setupClickOutsideListener(containerElement: HTMLElement) {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Don't clear selection if:
+      // - Context menu is open
+      // - User is dragging
+      // - Click is on a UI element that shouldn't clear selection (like buttons, menus, etc.)
+      if (
+        this.isContextMenuOpen ||
+        this.dragContentType ||
+        this.isMouseOverContextMenu
+      ) {
+        return;
+      }
+
+      // Check if click is outside the container
+      if (!containerElement.contains(event.target as Node)) {
+        // Only clear if there are selected videos
+        if (this.selectedVideos.length > 0) {
+          this.selectedVideos = [];
+        }
+      }
+    };
+
+    document.addEventListener("click", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
   }
 }
 

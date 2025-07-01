@@ -62,9 +62,27 @@
 
   const contentState = getContentState();
 
+  let contentRef = $state<HTMLDivElement>();
+
   onMount(() => {
     contentState.selectedVideos = [];
     contentState.hoveredVideo = null;
+
+    // Add click outside handler
+    const handleClickOutside = (event: MouseEvent) => {
+      if (contentRef && !contentRef.contains(event.target as Node)) {
+        // Clear selection when clicking outside
+        if (contentState.selectedVideos.length > 0) {
+          contentState.selectedVideos = [];
+        }
+      }
+    };
+
+    document.addEventListener("click", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
   });
 </script>
 
@@ -75,7 +93,7 @@
 {/if}
 
 <ContentContextMenu {playlist} {playlists} {supabase} {session}>
-  <div {...restProps} class="mx-4 flex flex-col gap-5">
+  <div bind:this={contentRef} {...restProps} class="mx-4 flex flex-col gap-5">
     <ContentTable {videos} {columns} {playlist} {supabase} {session} />
     <!-- {#if contentDisplay === "CAROUSEL"} -->
     <!--   <ContentCarousel -->
