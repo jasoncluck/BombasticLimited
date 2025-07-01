@@ -74,9 +74,7 @@
         >
           <ScrollArea
             type="scroll"
-            class="max-w-40 p-1 {filteredPlaylists.length <= 6
-              ? 'h-auto'
-              : 'h-56'}"
+            class="max-w-40 {filteredPlaylists.length <= 6 ? 'h-auto' : 'h-56'}"
           >
             {#each playlists as addPlaylist (addPlaylist.id)}
               {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}

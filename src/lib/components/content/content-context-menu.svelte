@@ -91,7 +91,7 @@
   </ContextMenu.Trigger>
 
   <ContextMenu.Content
-    class=" m-1 max-h-64 overflow-visible outline-none {mediaQueryState.isTouchDevice &&
+    class="max-h-64 overflow-visible outline-none {mediaQueryState.isTouchDevice &&
       'hidden'}"
     onmouseenter={() => {
       contentState.isMouseOverContextMenu = true;
@@ -117,7 +117,7 @@
           >
             <ScrollArea
               type="scroll"
-              class="max-w-40 m-1 {filteredPlaylists.length <= 6
+              class="max-w-40  {filteredPlaylists.length <= 6
                 ? 'h-auto'
                 : 'h-56'}"
             >
