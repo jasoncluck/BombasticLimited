@@ -31,7 +31,6 @@
     children: Snippet<[]>;
     contentFilter: CombinedContentFilter;
     currentPage?: number;
-    onPlayVideo: () => void;
     open?: boolean;
     playlists: Playlist[];
     profilePlaylist?: ProfilePlaylist;
@@ -48,7 +47,6 @@
     children,
     contentFilter,
     currentPage = $bindable(),
-    onPlayVideo,
     open = $bindable(),
     playlists,
     profilePlaylist,

@@ -44,20 +44,22 @@
   const contentState = getContentState();
 
   // Create drag drop functionality if reordering is allowed and we have the required dependencies
-  const dragDrop = session
-    ? contentState.createDragDrop({
-        allowVideoReorder,
-        videos,
-        videosCount,
-        playlist,
-        contentFilter,
-        supabase,
-        onVideosUpdate: (updatedVideos) => {
-          videos = updatedVideos;
-          onDataUpdate?.(videos);
-        },
-      })
-    : null;
+  const dragDrop = $derived(
+    session
+      ? contentState.createDragDrop({
+          allowVideoReorder,
+          videos,
+          videosCount,
+          playlist,
+          contentFilter,
+          supabase,
+          onVideosUpdate: (updatedVideos) => {
+            videos = updatedVideos;
+            onDataUpdate?.(videos);
+          },
+        })
+      : null,
+  );
 
   const table = createSvelteTable({
     get data() {

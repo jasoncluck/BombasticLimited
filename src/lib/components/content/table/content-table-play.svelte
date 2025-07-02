@@ -12,24 +12,28 @@
   const isHovering = $derived(contentState.hoveredVideo?.id === video.id);
 </script>
 
-<Button
-  class="{isHovering
-    ? 'opacity-100'
-    : 'opacity-0'} ghost-button-minimal transition-opacity duration-150"
-  variant="ghost"
-  size="icon"
-  title="Play video"
-  onclick={(e) => {
-    contentState.handlePlayButtonClick({
-      event: e,
-      video,
-      playlist,
-      onNavigate: (video, playlist) => {
-        handleContentNavigation({ video, playlist });
-      },
-    });
-    handleContentNavigation({ video, playlist });
-  }}
->
-  <Play class="cursor-pointer stroke-primary fill-primary brightness-[105%]" />
-</Button>
+<div class="flex justify-center">
+  <Button
+    class="{isHovering
+      ? 'opacity-100'
+      : 'opacity-0'} ghost-button-minimal transition-opacity duration-150"
+    variant="ghost"
+    size="icon"
+    title="Play video"
+    onclick={(e) => {
+      contentState.handlePlayButtonClick({
+        event: e,
+        video,
+        playlist,
+        onNavigate: (video, playlist) => {
+          handleContentNavigation({ video, playlist });
+        },
+      });
+      handleContentNavigation({ video, playlist });
+    }}
+  >
+    <Play
+      class="cursor-pointer stroke-primary fill-primary brightness-[105%]"
+    />
+  </Button>
+</div>

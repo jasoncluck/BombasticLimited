@@ -61,6 +61,17 @@ export const load: PageServerLoad = async ({
 
   const playlistDuration = videoDurationSecondsToTime(playlistDurationSeconds);
 
+  const transformedPlaylist = {
+    ...profilePlaylist,
+    image_properties: profilePlaylist.image_properties
+      ? typeof profilePlaylist.image_properties === "string"
+        ? JSON.parse(profilePlaylist.image_properties)
+        : profilePlaylist.image_properties
+      : null,
+    // Add default values for schema-only fields
+    isDeletingPlaylistImage: false,
+  };
+
   return {
     profilePlaylist,
     playlists,
@@ -69,7 +80,7 @@ export const load: PageServerLoad = async ({
     contentFilter,
     currentPage,
     playlistDuration,
-    form: await superValidate(profilePlaylist, zod(playlistSchema)),
+    form: await superValidate(transformedPlaylist, zod(playlistSchema)),
   };
 };
 
@@ -87,7 +98,9 @@ export const actions: Actions = {
     }
 
     const { name, description, id, isDeletingPlaylistImage, type } = form.data;
-    let { imageProperties } = form.data;
+    let { image_properties } = form.data;
+
+    console.log(image_properties);
 
     if (isDeletingPlaylistImage) {
       await updatePlaylistImage({
@@ -103,19 +116,19 @@ export const actions: Actions = {
     }
 
     if (
-      imageProperties?.x === 0 &&
-      imageProperties?.y === 0 &&
-      imageProperties?.height === 0 &&
-      imageProperties?.width === 0
+      image_properties?.x === 0 &&
+      image_properties?.y === 0 &&
+      image_properties?.height === 0 &&
+      image_properties?.width === 0
     ) {
-      imageProperties = null;
+      image_properties = null;
     }
 
     const { updatedPlaylist } = await updatePlaylistInfo({
       playlistId: id,
       name,
       description,
-      imageProperties,
+      imageProperties: image_properties,
       type,
       supabase,
       session,

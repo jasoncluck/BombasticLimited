@@ -381,7 +381,7 @@
 
                 <Button
                   variant="ghost"
-                  class="h-[64px] w-full border border-transparent relative cursor-pointer transition-all duration-150 outline-none
+                  class="h-[64px] w-full border border-transparent relative cursor-pointer transition-[background-color,opacity]  duration-150 
                   {hoveredIndex === i && !pageState.sidebarScrollState.scrolling
                     ? 'hover:bg-secondary'
                     : 'hover:bg-transparent'}

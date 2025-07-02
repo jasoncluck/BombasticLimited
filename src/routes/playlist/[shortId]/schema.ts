@@ -4,7 +4,8 @@ import { z } from "zod";
 export const playlistSchema = z.object({
   name: z.string().min(2).max(50),
   description: z.string().max(500).nullable(),
-  imageProperties: z
+  // Matching supabase casing for ease of conversion
+  image_properties: z
     .object({
       x: z.number(),
       y: z.number(),

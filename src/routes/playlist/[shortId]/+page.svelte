@@ -5,9 +5,6 @@
   import Content from "$lib/components/content/content.svelte";
   import type { Snapshot } from "@sveltejs/kit";
   import { getCroppedPlaylistImageUrl } from "$lib/components/playlist/playlist-service";
-  import { onMount } from "svelte";
-  import { isVideoWithTimestamp } from "$lib/supabase/videos";
-  import { handleContentNavigation } from "$lib/components/content/content";
 
   const { data } = $props();
   const {
@@ -25,18 +22,37 @@
 
   const contentState = getContentState();
 
-  const userPlaylistImageUrl = $derived(
-    contentState.playlistImages[profilePlaylist.id],
-  );
-  let playlistImageUrlData = $state<Promise<string | undefined>>();
+  let playlistImageUrl = $state<string | undefined>(undefined);
+  let lastImagePropertiesKey = $state<string>("");
 
-  onMount(() => {
-    if (!userPlaylistImageUrl) {
-      playlistImageUrlData = getCroppedPlaylistImageUrl({
-        imageProperties: profilePlaylist.image_properties,
-        thumbnailMaxResUrl: profilePlaylist.thumbnail_maxres_url,
-        thumbnailUrl: profilePlaylist.thumbnail_url,
-      });
+  // Create a derived key for image properties to detect changes
+  const imagePropertiesKey = $derived(
+    JSON.stringify({
+      image_properties: profilePlaylist.image_properties,
+      thumbnail_maxres_url: profilePlaylist.thumbnail_maxres_url,
+      thumbnail_url: profilePlaylist.thumbnail_url,
+    }),
+  );
+
+  // Load image when properties change
+  $effect(() => {
+    if (imagePropertiesKey !== lastImagePropertiesKey) {
+      lastImagePropertiesKey = imagePropertiesKey;
+
+      // Use void to handle the async operation
+      void (async () => {
+        try {
+          const imageUrl = await getCroppedPlaylistImageUrl({
+            imageProperties: profilePlaylist.image_properties,
+            thumbnailMaxResUrl: profilePlaylist.thumbnail_maxres_url,
+            thumbnailUrl: profilePlaylist.thumbnail_url,
+          });
+          playlistImageUrl = imageUrl || undefined;
+        } catch (error) {
+          console.warn("Failed to load playlist image:", error);
+          playlistImageUrl = undefined;
+        }
+      })();
     }
   });
 
@@ -56,6 +72,7 @@
       }
     },
   };
+
   const playlistHeaderProps = $derived({
     breadcrumbs: [{ label: profilePlaylist.name }],
     contentFilter,
@@ -71,35 +88,14 @@
 </script>
 
 <div class="flex flex-col grow relative">
-  {#if userPlaylistImageUrl}
-    <ImageCropper.Root src={userPlaylistImageUrl}>
-      <PlaylistHeader
-        {...playlistHeaderProps}
-        playlistImageUrl={userPlaylistImageUrl}
-        bind:showFloatingBreadcrumbs
-        {videos}
-      />
-    </ImageCropper.Root>
-  {:else}
-    {#await playlistImageUrlData}
-      <ImageCropper.Root src={undefined}>
-        <PlaylistHeader
-          {...playlistHeaderProps}
-          bind:showFloatingBreadcrumbs
-          {videos}
-        />
-      </ImageCropper.Root>
-    {:then playlistImageUrl}
-      <ImageCropper.Root src={playlistImageUrl}>
-        <PlaylistHeader
-          {...playlistHeaderProps}
-          {playlistImageUrl}
-          bind:showFloatingBreadcrumbs
-          {videos}
-        />
-      </ImageCropper.Root>
-    {/await}
-  {/if}
+  <ImageCropper.Root src={playlistImageUrl}>
+    <PlaylistHeader
+      {...playlistHeaderProps}
+      {playlistImageUrl}
+      bind:showFloatingBreadcrumbs
+      {videos}
+    />
+  </ImageCropper.Root>
 
   <Content
     playlist={profilePlaylist}

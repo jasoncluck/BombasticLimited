@@ -91,7 +91,7 @@
     $formData.type = isPublic ? "Public" : "Private";
 
     if (cropState.rootState.pixelCrop) {
-      $formData.imageProperties = cropState.rootState.pixelCrop;
+      $formData.image_properties = cropState.rootState.pixelCrop;
     }
 
     cropperState.rootState.tempUrl =
@@ -241,13 +241,13 @@
                 {/snippet}
               </Form.Control>
             </Form.Field>
-            <Form.Field form={playlistForm} name="imageProperties">
+            <Form.Field form={playlistForm} name="image_properties">
               <Form.Control>
                 {#snippet children({ props })}
                   <Input
                     {...props}
                     hidden
-                    bind:value={$formData.imageProperties}
+                    bind:value={$formData.image_properties}
                   />
                 {/snippet}
               </Form.Control>
