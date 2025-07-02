@@ -84,6 +84,15 @@
         event.preventDefault();
         return false;
       }
+
+      const hoveredVideo = contentState.hoveredVideo;
+      if (
+        hoveredVideo &&
+        !contentState.selectedVideos.some((v) => v.id === hoveredVideo.id)
+      ) {
+        contentState.selectedVideos = [];
+        contentState.selectedVideos.push(hoveredVideo);
+      }
     }}
   >
     {@render children()}
@@ -92,13 +101,6 @@
   <ContextMenu.Content
     class="max-h-64 overflow-visible outline-none {mediaQueryState.isTouchDevice &&
       'hidden'}"
-    onmouseenter={() => {
-      contentState.isMouseOverMenu = true;
-    }}
-    onmouseleave={() => {
-      console.log("leaving");
-      contentState.isMouseOverMenu = false;
-    }}
   >
     {#if operationVideos.length === 0}
       <ContextMenu.Item disabled class="p-2"

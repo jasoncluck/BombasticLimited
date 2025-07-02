@@ -36,7 +36,7 @@
 
   const contentState = getContentState();
   let playlistImagesLoaded = $state(!session);
-  let hoveredIndex = $state<number | null>(null);
+  let hoveredPlaylistIndex = $state<number | null>(null);
 
   // Native drag and drop state
   let draggedIndex = $state<number | null>(null);
@@ -52,13 +52,13 @@
   function handleMouseEnter(index: number) {
     // Only allow hover if not scrolling and not dragging
     if (!pageState.sidebarScrollState.scrolling && draggedIndex === null) {
-      hoveredIndex = index;
+      hoveredPlaylistIndex = index;
     }
   }
 
   function handleMouseLeave(index: number) {
-    if (hoveredIndex === index) {
-      hoveredIndex = null;
+    if (hoveredPlaylistIndex === index) {
+      hoveredPlaylistIndex = null;
     }
   }
 
@@ -122,28 +122,38 @@
     return classes;
   }
 
-  function getButtonClasses(index: number, isSelectedPlaylist: boolean) {
+  function getButtonClasses(
+    index: number,
+    isSelected: boolean,
+    itemType: "source" | "playlist" = "playlist",
+  ) {
     let classes = "sidebar-full-button";
 
-    // Add drag classes
-    classes += ` ${getPlaylistDragClasses(index)}`;
+    // Add drag classes for playlists only
+    if (itemType === "playlist") {
+      classes += ` ${getPlaylistDragClasses(index)}`;
+    }
 
     // Manual hover effect (only when appropriate)
     if (
-      hoveredIndex === index &&
+      hoveredPlaylistIndex === index &&
       !pageState.sidebarScrollState.scrolling &&
       draggedIndex === null
     ) {
-      if (isSelectedPlaylist) {
+      if (isSelected) {
         classes += " !hover:bg-secondary brightness-125";
       } else {
         classes += " hover:bg-secondary/25";
       }
     }
 
-    // Selected playlist styling
-    if (isSelectedPlaylist) {
-      classes += " bg-secondary/65";
+    // Selected styling
+    if (isSelected) {
+      if (itemType === "source") {
+        classes += " bg-secondary";
+      } else {
+        classes += " bg-secondary/65";
+      }
     }
 
     // Sidebar layout classes
@@ -153,12 +163,14 @@
       classes += " align-middle";
     }
 
-    // Video drag styling
+    // Video drag styling (playlists only)
     if (
+      itemType === "playlist" &&
       contentState.dragContentType === "video" &&
-      playlists[index]?.created_by !== session?.user.id
+      (playlists[index]?.created_by !== session?.user.id ||
+        playlists[index].short_id === selectedPlaylistIdParam)
     ) {
-      classes += " opacity-50 border-none";
+      classes += " opacity-50 border-transparent";
     }
 
     return classes;
@@ -173,7 +185,7 @@
       e.dataTransfer.effectAllowed = "move";
     }
 
-    hoveredIndex = null;
+    hoveredPlaylistIndex = null;
     createDragImage(e, playlists[index].name);
   }
 
@@ -203,7 +215,7 @@
   function handleDragEnd() {
     draggedIndex = null;
     targetIndex = null;
-    hoveredIndex = null;
+    hoveredPlaylistIndex = null;
   }
 
   function handleDragLeave(e: DragEvent, index: number) {
@@ -272,15 +284,15 @@
 
 <aside class="h-full overflow-hidden">
   <div class="flex flex-col {!isSidebarCollapsed ? 'mx-2' : 'mx-1'}">
-    {#each SOURCES as source (source)}
+    {#each SOURCES as source, i (source)}
       <Button
         variant="ghost"
-        class="sidebar-full-button
-        {selectedSource === source ? 'bg-secondary' : 'hover:bg-secondary/50'}  
-        {!isSidebarCollapsed ? 'min-w-[150px] justify-normal' : 'align-middle'}"
+        class={getButtonClasses(i, selectedSource === source, "source")}
         size={!isSidebarCollapsed ? "default" : "icon"}
         onclick={() => goto(`/${source}`)}
         title={SOURCE_INFO[source].displayName}
+        onmouseenter={() => handleMouseEnter(i)}
+        onmouseleave={() => handleMouseLeave(i)}
       >
         <div
           class="flex items-center relative {!isSidebarCollapsed
@@ -311,7 +323,7 @@
       </Button>
     {/each}
   </div>
-  <hr class="mx-2" />
+  <hr class="m-2" />
   <div
     class="flex flex-col m-3 {!isSidebarCollapsed
       ? 'items-start mx-6'
@@ -387,7 +399,7 @@
               <Button
                 variant="ghost"
                 draggable={true}
-                class={getButtonClasses(i, isSelectedPlaylist)}
+                class={getButtonClasses(i, isSelectedPlaylist, "playlist")}
                 size={!isSidebarCollapsed ? "default" : "icon"}
                 onclick={() => handlePlaylistClick(playlist)}
                 title={playlist.name}

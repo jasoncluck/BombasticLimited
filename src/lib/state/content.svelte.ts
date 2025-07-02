@@ -51,7 +51,6 @@ export interface ContentState {
   hoveredVideo: Video | null;
   // If a playlist or video is being currently dragged
   dragContentType: DragContentType;
-  isMouseOverMenu: boolean;
   isMenuOpen: boolean;
   // ID of setTimeout event when hovering over a video
   hoverTimeoutId: ReturnType<typeof setTimeout> | null;
@@ -129,7 +128,6 @@ export class ContentStateClass implements ContentState {
   selectedVideos = $state<Video[]>([]);
   hoveredVideo = $state<Video | null>(null);
   dragContentType = $state<DragContentType>(null);
-  isMouseOverMenu = $state(false);
   isMenuOpen = $state(false);
   hoverTimeoutId = $state<ReturnType<typeof setTimeout> | null>(null);
   playlistImages = $state({});
@@ -174,11 +172,7 @@ export class ContentStateClass implements ContentState {
     if (!this.isMenuOpen) {
       // Store the timeout ID so it can be cleared if needed
       const timeoutId = setTimeout(() => {
-        if (
-          !this.dragContentType &&
-          !isHoveringElement &&
-          !this.isMouseOverMenu
-        ) {
+        if (!this.dragContentType && !isHoveringElement) {
           this.hoveredVideo = null;
         }
         this.hoverTimeoutId = null;
@@ -454,11 +448,15 @@ export class ContentStateClass implements ContentState {
 
   setupClickOutsideListener(containerElement: HTMLElement) {
     const handleClickOutside = (event: MouseEvent) => {
+      console.log("in click outside");
+      this.hoverTimeoutId = null;
       // Don't clear selection if:
       // - Context menu is open
       // - User is dragging
       // - Click is on a UI element that shouldn't clear selection (like buttons, menus, etc.)
-      if (this.isMenuOpen || this.dragContentType || this.isMouseOverMenu) {
+      console.log(this.isMenuOpen);
+      console.log(this.dragContentType);
+      if (this.isMenuOpen || this.dragContentType) {
         return;
       }
 

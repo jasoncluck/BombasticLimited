@@ -67,15 +67,7 @@
       </Button>
     {/snippet}
   </DropdownMenu.Trigger>
-  <DropdownMenu.Content
-    align="start"
-    onmouseenter={() => {
-      contentState.isMouseOverMenu = true;
-    }}
-    onmouseleave={() => {
-      contentState.isMouseOverMenu = false;
-    }}
-  >
+  <DropdownMenu.Content align="start">
     {#if isContentSelect}
       <DropdownMenu.Item
         class="p-2"
