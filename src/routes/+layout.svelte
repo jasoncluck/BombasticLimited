@@ -38,10 +38,12 @@
   import SideDrawer from "$lib/components/side-drawer.svelte";
   import { getContentState, setContentState } from "$lib/state/content.svelte";
   import { setMediaQueryState } from "$lib/state/media-query.svelte";
+  import { setPlaylistState } from "$lib/state/playlist.svelte";
 
   const SEARCH_DEBOUNCE_MS = 500;
 
   setContentState();
+  setPlaylistState();
 
   const mediaQuery = setMediaQueryState({
     // breakpoints: ["max-sm"],

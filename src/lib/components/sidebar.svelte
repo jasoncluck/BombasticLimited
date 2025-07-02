@@ -6,18 +6,12 @@
   import { SOURCE_INFO, SOURCES } from "$lib/constants/source";
   import * as Popover from "$lib/components/ui/popover";
   import { activeStreams } from "$lib/state/streaming.svelte";
-  import {
-    getCroppedPlaylistImageUrl,
-    handleAddVideosToPlaylist,
-    handleCreatePlaylist,
-    handleUpdatePlaylistPosition,
-  } from "./playlist/playlist-service";
+  import { handleCreatePlaylist } from "./playlist/playlist-service";
   import { goto } from "$app/navigation";
   import { getContentState } from "$lib/state/content.svelte";
+  import { getPlaylistState } from "$lib/state/playlist.svelte";
   import { page } from "$app/state";
   import PlaylistContextMenu from "./playlist/playlist-context-menu.svelte";
-  import { createDragImage } from "$lib/utils/dragdrop";
-  import { pageState } from "$lib/state/page.svelte";
 
   let {
     playlists = $bindable(),
@@ -35,238 +29,24 @@
   const selectedPlaylistIdParam = $derived(page.params.shortId);
 
   const contentState = getContentState();
-  let playlistImagesLoaded = $state(!session);
-  let hoveredPlaylistIndex = $state<number | null>(null);
+  const playlistState = getPlaylistState();
 
-  // Native drag and drop state
-  let draggedIndex = $state<number | null>(null);
-  let targetIndex = $state<number | null>(null);
-
-  function handleMouseEnter(index: number) {
-    // Only allow hover if not scrolling and not dragging
-    if (!pageState.sidebarScrollState.scrolling && draggedIndex === null) {
-      hoveredPlaylistIndex = index;
-    }
-  }
-
-  function handleMouseLeave(index: number) {
-    if (hoveredPlaylistIndex === index) {
-      hoveredPlaylistIndex = null;
-    }
-  }
-
+  // Load playlist images when playlists or session changes
   $effect(() => {
-    if (!session) {
-      playlistImagesLoaded = true;
-      return;
-    }
-    const playlistImageUrls = playlists.map(async (p) => {
-      const imageUrl = await getCroppedPlaylistImageUrl({
-        imageProperties: p.image_properties,
-        thumbnailMaxResUrl: p.thumbnail_maxres_url,
-        thumbnailUrl: p.thumbnail_url,
-      });
-      return { id: p.id, imageUrl };
-    });
-    // Wait for all promises to resolve before updating the UI
-    Promise.all(playlistImageUrls)
-      .then((results) => {
-        const imagesMap: Record<string, string | undefined> = {};
-        results.forEach(({ id, imageUrl }) => {
-          imagesMap[id] = imageUrl;
-        });
-        contentState.playlistImages = imagesMap;
-        playlistImagesLoaded = true;
-      })
-      .catch((error) => {
-        console.error("Error loading playlist images:", error);
-        playlistImagesLoaded = true; // Still mark as loaded so UI can render with fallbacks
-      });
+    playlistState.loadPlaylistImages(playlists, session);
   });
 
-  function getPlaylistDragClasses(index: number) {
-    let classes = "relative";
-
-    if (draggedIndex === index) {
-      classes += " opacity-60";
-    }
-
-    if (targetIndex === index) {
-      if (draggedIndex === null || draggedIndex < targetIndex) {
-        // Show indicator at the bottom
-        classes +=
-          " after:absolute after:left-0 after:bottom-0 after:w-full after:h-[2px] after:bg-primary after:z-10";
-      } else {
-        // Show indicator at the top
-        classes +=
-          " before:absolute before:left-0 before:-top-0 before:w-full before:h-[2px] before:bg-primary before:z-10";
-      }
-    }
-    return classes;
-  }
-
-  function getButtonClasses(
-    index: number,
-    isSelected: boolean,
-    itemType: "source" | "playlist" = "playlist",
-  ) {
-    let classes = "sidebar-full-button";
-
-    // Add drag classes for playlists only
-    if (itemType === "playlist") {
-      classes += ` ${getPlaylistDragClasses(index)}`;
-    }
-
-    // Manual hover effect (only when appropriate)
-    if (
-      hoveredPlaylistIndex === index &&
-      !pageState.sidebarScrollState.scrolling &&
-      draggedIndex === null
-    ) {
-      if (isSelected) {
-        classes += " !hover:bg-secondary brightness-125";
-      } else {
-        classes += " hover:bg-secondary/25";
-      }
-    }
-
-    // Selected styling
-    if (isSelected) {
-      if (itemType === "source") {
-        classes += " bg-secondary";
-      } else {
-        classes += " bg-secondary/65";
-      }
-    }
-
-    // Sidebar layout classes
-    if (!isSidebarCollapsed) {
-      classes += " min-w-[150px] justify-normal";
-    } else {
-      classes += " align-middle";
-    }
-
-    // Video drag styling (playlists only)
-    if (
-      itemType === "playlist" &&
-      contentState.dragContentType === "video" &&
-      (playlists[index]?.created_by !== session?.user.id ||
-        playlists[index].short_id === selectedPlaylistIdParam)
-    ) {
-      classes += " opacity-50 border-transparent";
-    }
-
-    return classes;
-  }
-
-  // Native drag and drop handlers
-  function handleDragStart(e: DragEvent, index: number) {
-    draggedIndex = index;
-    contentState.dragContentType = "playlist";
-
-    if (e.dataTransfer) {
-      e.dataTransfer.effectAllowed = "move";
-    }
-
-    hoveredPlaylistIndex = null;
-    createDragImage(e, playlists[index].name);
-  }
-
-  function handleDragOver(e: DragEvent, index: number) {
-    e.preventDefault();
-
-    // Handle video drop zones
-    if (contentState.dragContentType === "video") {
-      const playlist = playlists[index];
-      if (e.currentTarget instanceof HTMLElement) {
-        const classes = contentState.getVideoDropzoneClasses(playlist, session);
-        e.currentTarget.classList.add(...classes);
-        e.currentTarget.classList.remove(
-          ...contentState.getEndDropzoneClasses(),
-        );
-      }
-    }
-
-    // Handle playlist reordering
-    if (
-      draggedIndex !== null &&
-      draggedIndex !== index &&
-      targetIndex !== index
-    ) {
-      targetIndex = index;
-    }
-  }
-
-  function handleDragEnd() {
-    draggedIndex = null;
-    targetIndex = null;
-    hoveredPlaylistIndex = null;
-  }
-
-  function handleDragLeave(e: DragEvent, index: number) {
-    const relatedTarget = e.relatedTarget as Node;
-    if (
-      e.currentTarget instanceof HTMLElement &&
-      !e.currentTarget.contains(relatedTarget)
-    ) {
-      // Clear target index for playlist reordering
-      if (contentState.dragContentType === "playlist") {
-        targetIndex = null;
-      }
-
-      // Handle video drop zone styling
-      if (contentState.dragContentType === "video") {
-        const playlist = playlists[index];
-        const classes = contentState.getVideoDropzoneClasses(playlist, session);
-        e.currentTarget.classList.remove(...classes);
-        e.currentTarget.classList.add(...contentState.getEndDropzoneClasses());
-      }
-    }
-  }
-
-  async function handleDrop(e: DragEvent, playlistTargetIndex: number) {
-    if (!session) {
-      return;
-    }
-
-    if (e.currentTarget instanceof HTMLElement) {
-      const classes = contentState.getVideoDropzoneClasses(
-        playlists[playlistTargetIndex],
-        session,
-      );
-      e.currentTarget.classList.remove(...classes);
-      e.currentTarget.classList.add(...contentState.getEndDropzoneClasses());
-    }
-
-    if (contentState.dragContentType === "video") {
-      handleAddVideosToPlaylist({
-        playlist: playlists[playlistTargetIndex],
-        videos: contentState.selectedVideos,
-        playlistImages: contentState.playlistImages,
-        supabase,
-        session,
-      });
-    } else if (contentState.dragContentType === "playlist") {
-      if (draggedIndex === null || draggedIndex < 0) {
-        return;
-      }
-      handleUpdatePlaylistPosition({
-        playlist: playlists[draggedIndex],
-        position: playlists.length - playlistTargetIndex,
-        supabase,
-        session,
-      });
-
-      const updatedPlaylists = [...playlists];
-      const [movedItem] = updatedPlaylists.splice(draggedIndex, 1);
-      updatedPlaylists.splice(playlistTargetIndex, 0, movedItem);
-      playlists = updatedPlaylists;
-    }
-  }
-
-  function handlePlaylistClick(playlist: Playlist) {
-    goto(`/playlist/${encodeURI(playlist.short_id)}`);
-  }
+  // Create drag and drop handlers
+  const dragDropHandlers = $derived(
+    playlistState.createPlaylistDragDrop({
+      playlists,
+      supabase,
+      session,
+      onPlaylistsUpdate: (updatedPlaylists) => {
+        playlists = updatedPlaylists;
+      },
+    }),
+  );
 </script>
 
 <aside class="h-full overflow-hidden">
@@ -274,12 +54,17 @@
     {#each SOURCES as source, i (source)}
       <Button
         variant="ghost"
-        class={getButtonClasses(i, selectedSource === source, "source")}
+        class={playlistState.getButtonClasses({
+          index: i,
+          isSelected: selectedSource === source,
+          itemType: "source",
+          isSidebarCollapsed,
+        })}
         size={!isSidebarCollapsed ? "default" : "icon"}
         onclick={() => goto(`/${source}`)}
         title={SOURCE_INFO[source].displayName}
-        onmouseenter={() => handleMouseEnter(i)}
-        onmouseleave={() => handleMouseLeave(i)}
+        onmouseenter={() => playlistState.handleMouseEnter(i)}
+        onmouseleave={() => playlistState.handleMouseLeave(i)}
       >
         <div
           class="flex items-center relative {!isSidebarCollapsed
@@ -368,7 +153,7 @@
       : 'border-transparent'}"
   >
     <div class="flex flex-col">
-      {#if playlists === null || !playlistImagesLoaded}
+      {#if playlists === null || !playlistState.playlistImagesLoaded}
         <Loader class="animate-spin w-full" />
       {:else if session && playlists.length > 0}
         <div class="flex flex-col">
@@ -386,18 +171,23 @@
               <Button
                 variant="ghost"
                 draggable={true}
-                class={getButtonClasses(i, isSelectedPlaylist, "playlist")}
+                class={playlistState.getButtonClasses({
+                  index: i,
+                  isSelected: isSelectedPlaylist,
+                  itemType: "playlist",
+                  isSidebarCollapsed,
+                })}
                 size={!isSidebarCollapsed ? "default" : "icon"}
-                onclick={() => handlePlaylistClick(playlist)}
+                onclick={() => playlistState.handlePlaylistClick(playlist)}
                 title={playlist.name}
                 value={playlist.name}
-                onmouseenter={() => handleMouseEnter(i)}
-                onmouseleave={() => handleMouseLeave(i)}
-                ondragstart={(e) => handleDragStart(e, i)}
-                ondragover={(e) => handleDragOver(e, i)}
-                ondragleave={(e) => handleDragLeave(e, i)}
-                ondrop={(e) => handleDrop(e, i)}
-                ondragend={handleDragEnd}
+                onmouseenter={() => playlistState.handleMouseEnter(i)}
+                onmouseleave={() => playlistState.handleMouseLeave(i)}
+                ondragstart={(e) => dragDropHandlers.handleDragStart(e, i)}
+                ondragover={(e) => dragDropHandlers.handleDragOver(e, i)}
+                ondragleave={(e) => dragDropHandlers.handleDragLeave(e, i)}
+                ondrop={(e) => dragDropHandlers.handleDrop(e, i)}
+                ondragend={dragDropHandlers.handleDragEnd}
               >
                 <div
                   class="flex items-center grow absolute
