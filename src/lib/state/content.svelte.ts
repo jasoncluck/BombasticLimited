@@ -51,7 +51,8 @@ export interface ContentState {
   hoveredVideo: Video | null;
   // If a playlist or video is being currently dragged
   dragContentType: DragContentType;
-  isMenuOpen: boolean;
+  isContextMenuOpen: boolean;
+  isDropdownMenuOpen: boolean;
   // ID of setTimeout event when hovering over a video
   hoverTimeoutId: ReturnType<typeof setTimeout> | null;
   // Storing cropped images in local state to avoid refetching these
@@ -128,7 +129,8 @@ export class ContentStateClass implements ContentState {
   selectedVideos = $state<Video[]>([]);
   hoveredVideo = $state<Video | null>(null);
   dragContentType = $state<DragContentType>(null);
-  isMenuOpen = $state(false);
+  isContextMenuOpen = $state(false);
+  isDropdownMenuOpen = $state(false);
   hoverTimeoutId = $state<ReturnType<typeof setTimeout> | null>(null);
   playlistImages = $state({});
   manualHover = $state(false);
@@ -169,7 +171,7 @@ export class ContentStateClass implements ContentState {
 
   handleMouseLeave(isHoveringElement: boolean = false) {
     this.manualHover = false;
-    if (!this.isMenuOpen) {
+    if (!this.isContextMenuOpen || !this.isDropdownMenuOpen) {
       // Store the timeout ID so it can be cleared if needed
       const timeoutId = setTimeout(() => {
         if (!this.dragContentType && !isHoveringElement) {
@@ -448,15 +450,16 @@ export class ContentStateClass implements ContentState {
 
   setupClickOutsideListener(containerElement: HTMLElement) {
     const handleClickOutside = (event: MouseEvent) => {
-      console.log("in click outside");
       this.hoverTimeoutId = null;
+
       // Don't clear selection if:
       // - Context menu is open
       // - User is dragging
-      // - Click is on a UI element that shouldn't clear selection (like buttons, menus, etc.)
-      console.log(this.isMenuOpen);
-      console.log(this.dragContentType);
-      if (this.isMenuOpen || this.dragContentType) {
+      if (
+        this.isContextMenuOpen ||
+        this.isDropdownMenuOpen ||
+        this.dragContentType
+      ) {
         return;
       }
 

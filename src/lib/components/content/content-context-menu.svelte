@@ -39,10 +39,6 @@
 
   let open = $state(false);
 
-  $effect(() => {
-    contentState.isMenuOpen = open;
-  });
-
   // Close context menu if there's no hovered video and no selected videos
   $effect(() => {
     if (
@@ -65,7 +61,7 @@
   const isPlaylistOwner = $derived(session?.user.id === playlist?.created_by);
 </script>
 
-<ContextMenu.Root bind:open>
+<ContextMenu.Root bind:open={contentState.isContextMenuOpen}>
   <ContextMenu.Trigger
     class="outline-none"
     onmousedown={(event) => {
@@ -83,6 +79,10 @@
       if (isCtrlPressed) {
         event.preventDefault();
         return false;
+      }
+
+      if (contentState.isDropdownMenuOpen) {
+        contentState.isDropdownMenuOpen = false;
       }
 
       const hoveredVideo = contentState.hoveredVideo;
@@ -116,6 +116,7 @@
             Add {operationVideos.length === 1 ? "video" : "videos"} to Playlist
           </ContextMenu.SubTrigger>
           <ContextMenu.SubContent
+            align="start"
             class="z-50 transition-opacity duration-150 overflow-hidden outline-none"
             sideOffset={5}
           >

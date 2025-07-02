@@ -14,9 +14,7 @@
 
 <div class="flex justify-center items-center">
   <Button
-    class="{isHovering
-      ? 'opacity-100'
-      : 'opacity-0'} ghost-button-minimal transition-opacity duration-150"
+    class="{isHovering ? 'opacity-100' : 'opacity-0'} ghost-button-minimal"
     variant="ghost"
     size="icon"
     title="Play video"

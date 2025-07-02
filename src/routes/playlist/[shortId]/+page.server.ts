@@ -100,8 +100,6 @@ export const actions: Actions = {
     const { name, description, id, isDeletingPlaylistImage, type } = form.data;
     let { image_properties } = form.data;
 
-    console.log(image_properties);
-
     if (isDeletingPlaylistImage) {
       await updatePlaylistImage({
         playlistId: id,

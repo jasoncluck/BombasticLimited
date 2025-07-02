@@ -46,7 +46,22 @@
   let open = $state(false);
 
   $effect(() => {
-    contentState.isMenuOpen = open;
+    contentState.isDropdownMenuOpen = open;
+  });
+
+  $effect(() => {
+    if (!contentState.isDropdownMenuOpen) {
+      open = false;
+    } else {
+      const hoveredVideo = contentState.hoveredVideo;
+      if (
+        hoveredVideo &&
+        !contentState.selectedVideos.some((v) => v.id === hoveredVideo.id)
+      ) {
+        contentState.selectedVideos = [];
+        contentState.selectedVideos.push(hoveredVideo);
+      }
+    }
   });
 </script>
 
@@ -56,6 +71,10 @@
       <Button
         {...props}
         variant="ghost"
+        onclick={(e) => {
+          // Don't allow double click to go through to navigate
+          e.stopPropagation();
+        }}
         class="outline-none ghost-button-minimal {open
           ? 'scale-105'
           : ''} {isContentSelect || isHovering ? 'opacity-100' : 'opacity-0'}"
@@ -86,7 +105,8 @@
           to Playlist</DropdownMenu.SubTrigger
         >
         <DropdownMenu.SubContent
-          class="z-50 transition-opacity duration-150 overflow-hidden"
+          align="start"
+          class="z-50 overflow-hidden"
           sideOffset={5}
         >
           <ScrollArea
