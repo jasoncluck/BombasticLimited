@@ -1,7 +1,7 @@
 <script lang="ts">
   import { videoDurationToSeconds } from "$lib/components/video/video-service.js";
   import YoutubeEmbed from "$lib/components/video/youtube-embed.svelte";
-  import { pageState } from "$lib/state/page.svelte";
+  import { getPageState } from "$lib/state/page.svelte";
   import type { Video } from "$lib/supabase/videos";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
 
@@ -24,6 +24,8 @@
     session: Session | null;
     baseUrl?: string;
   } = $props();
+
+  const pageState = getPageState();
 
   // Process the description to extract timestamp information but don't create HTML
   const processTimestamps = (description: string): ProcessedLine[] => {

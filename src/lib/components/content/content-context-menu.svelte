@@ -19,7 +19,7 @@
   } from "../video/video-service";
 
   interface ContentContextMenuProps {
-    playlist?: Playlist;
+    playlist: Playlist | null;
     playlists: Playlist[];
     children: Snippet<[]>;
     supabase: SupabaseClient<Database>;

@@ -9,7 +9,7 @@ import {
   type CombinedContentFilter,
 } from "$lib/components/content/content-filter";
 import { handleUpdatePlaylistVideoPosition } from "$lib/components/playlist/playlist-service";
-import { pageState } from "./page.svelte";
+import type { PageState } from "./page.svelte";
 
 export type DragContentType = "video" | "playlist" | null;
 
@@ -54,6 +54,9 @@ export interface MouseHoverOptions {
 }
 
 export interface ContentState {
+  // Page state dependency
+  pageState: PageState;
+
   // Videos selected for multi-selection operations
   selectedVideos: Video[];
   // Single video being hovered or that context menu is operating on
@@ -141,6 +144,8 @@ export interface ContentState {
 }
 
 export class ContentStateClass implements ContentState {
+  pageState: PageState;
+
   selectedVideos = $state<Video[]>([]);
   hoveredVideo = $state<Video | null>(null);
   dragContentType = $state<DragContentType>(null);
@@ -159,6 +164,10 @@ export class ContentStateClass implements ContentState {
   // Click tracking for double-click detection
   lastClickTime = $state(0);
   lastClickedVideo = $state<Video | null>(null);
+
+  constructor(pageState: PageState) {
+    this.pageState = pageState;
+  }
 
   // Video drag and drop CSS classes
   getVideoDropzoneClasses(playlist: Playlist, session: any): string[] {
@@ -182,7 +191,7 @@ export class ContentStateClass implements ContentState {
     // For content cards that need to check scrolling state
     if (shouldScrollCheck) {
       if (
-        pageState.contentScrollState.scrolling &&
+        this.pageState.contentScrollState.scrolling &&
         this.dragContentType === null
       ) {
         this.manualHover = true;
@@ -524,8 +533,8 @@ export class ContentStateClass implements ContentState {
 
 const DEFAULT_KEY = "$_content_state";
 
-export function setContentState(key = DEFAULT_KEY) {
-  const contentState = new ContentStateClass();
+export function setContentState(pageState: PageState, key = DEFAULT_KEY) {
+  const contentState = new ContentStateClass(pageState);
   return setContext(key, contentState);
 }
 

@@ -4,16 +4,12 @@
   import BreadcrumbLayout, {
     type BreadcrumbItem,
   } from "$lib/components/breadcrumb-layout.svelte";
-  import { pageState } from "$lib/state/page.svelte";
+  import { getPageState } from "$lib/state/page.svelte";
   import type { Playlist } from "$lib/supabase/playlists";
   import ContentSelect from "./content/content-select.svelte";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
   import type { Video } from "$lib/supabase/videos";
-
-  function handleChevronClick() {
-    pageState.contentScrollPosition = { scrollTop: 0, scrollLeft: 0 };
-  }
 
   interface BreacrumbLayoutProps {
     breadcrumbs: BreadcrumbItem[];
@@ -31,6 +27,12 @@
     supabase,
     session,
   }: BreacrumbLayoutProps = $props();
+
+  const pageState = getPageState();
+
+  function handleChevronClick() {
+    pageState.contentScrollPosition = { scrollTop: 0, scrollLeft: 0 };
+  }
 </script>
 
 <div

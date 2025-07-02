@@ -14,9 +14,9 @@
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
   import { createContentColumns } from "./table/content-table-columns";
   import ContentTable from "./table/content-table.svelte";
-  import ContentContextMenu from "./content-context-menu.svelte";
   import ContentCarousel from "./content-carousel.svelte";
   import ContentTiles from "./content-tiles.svelte";
+  import { getPlaylistState } from "$lib/state/playlist.svelte";
 
   type ContentProps = HTMLAttributes<HTMLDivElement> & {
     videos: Video[] | VideoWithTimestamp[];
@@ -61,6 +61,7 @@
   );
 
   const contentState = getContentState();
+  const playlistState = getPlaylistState();
 
   let contentRef = $state<HTMLDivElement>();
 
@@ -72,6 +73,18 @@
       return contentState.setupClickOutsideListener(contentRef);
     }
   });
+
+  // Set the current playlist context for the global context menu
+  $effect(() => {
+    playlistState.currentPlaylist = playlist ?? null;
+  });
+
+  // Clean up playlist context when component unmounts
+  $effect(() => {
+    return () => {
+      playlistState.currentPlaylist = null;
+    };
+  });
 </script>
 
 {#if videos.length < 1}
@@ -80,34 +93,32 @@
   </div>
 {/if}
 
-<ContentContextMenu {playlist} {playlists} {supabase} {session}>
-  <div bind:this={contentRef} {...restProps} class="mx-4 flex flex-col gap-5">
-    <ContentTable {videos} {columns} {playlist} {supabase} {session} />
-    <!-- {#if contentDisplay === "CAROUSEL"} -->
-    <!--   <ContentCarousel -->
-    <!--     {videos} -->
-    <!--     {videosCount} -->
-    <!--     {playlists} -->
-    <!--     {playlist} -->
-    <!--     {isContinueVideos} -->
-    <!--     bind:carouselState -->
-    <!--     {supabase} -->
-    <!--     {session} -->
-    <!--   /> -->
-    <!-- {:else} -->
-    <!--   <div class="mb-20"> -->
-    <!--     <ContentTiles -->
-    <!--       bind:videos -->
-    <!--       {videosCount} -->
-    <!--       {playlists} -->
-    <!--       {playlist} -->
-    <!--       {isContinueVideos} -->
-    <!--       {allowVideoReorder} -->
-    <!--       {contentFilter} -->
-    <!--       {supabase} -->
-    <!--       {session} -->
-    <!--     /> -->
-    <!--   </div> -->
-    <!-- {/if} -->
-  </div>
-</ContentContextMenu>
+<div bind:this={contentRef} {...restProps} class="mx-4 flex flex-col gap-5">
+  <ContentTable {videos} {columns} {playlist} {supabase} {session} />
+  <!-- {#if contentDisplay === "CAROUSEL"} -->
+  <!--   <ContentCarousel -->
+  <!--     {videos} -->
+  <!--     {videosCount} -->
+  <!--     {playlists} -->
+  <!--     {playlist} -->
+  <!--     {isContinueVideos} -->
+  <!--     bind:carouselState -->
+  <!--     {supabase} -->
+  <!--     {session} -->
+  <!--   /> -->
+  <!-- {:else} -->
+  <!--   <div class="mb-20"> -->
+  <!--     <ContentTiles -->
+  <!--       bind:videos -->
+  <!--       {videosCount} -->
+  <!--       {playlists} -->
+  <!--       {playlist} -->
+  <!--       {isContinueVideos} -->
+  <!--       {allowVideoReorder} -->
+  <!--       {contentFilter} -->
+  <!--       {supabase} -->
+  <!--       {session} -->
+  <!--     /> -->
+  <!--   </div> -->
+  <!-- {/if} -->
+</div>

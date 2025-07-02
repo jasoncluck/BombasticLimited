@@ -8,8 +8,9 @@ import {
   handleAddVideosToPlaylist,
   handleUpdatePlaylistPosition,
 } from "$lib/components/playlist/playlist-service";
-import { pageState } from "./page.svelte";
+import type { PageState } from "./page.svelte";
 import { getContentState } from "./content.svelte";
+import { goto } from "$app/navigation";
 
 export interface PlaylistDragDropOptions {
   playlists: Playlist[];
@@ -37,6 +38,9 @@ export interface PlaylistButtonOptions {
 }
 
 export interface PlaylistState {
+  // Page state dependency
+  pageState: PageState;
+
   // Playlist hover state
   hoveredPlaylistIndex: number | null;
 
@@ -68,18 +72,30 @@ export interface PlaylistState {
 
   // Navigation
   handlePlaylistClick: (playlist: Playlist) => void;
+
+  currentPlaylist: Playlist | null;
 }
 
 export class PlaylistStateClass implements PlaylistState {
+  pageState: PageState;
+
   hoveredPlaylistIndex = $state<number | null>(null);
   draggedIndex = $state<number | null>(null);
   targetIndex = $state<number | null>(null);
   playlistImagesLoaded = $state(false);
+  currentPlaylist = $state<Playlist | null>(null);
+
+  constructor(pageState: PageState) {
+    this.pageState = pageState;
+  }
 
   // Mouse hover methods
   handleMouseEnter(index: number) {
     // Only allow hover if not scrolling and not dragging
-    if (!pageState.sidebarScrollState.scrolling && this.draggedIndex === null) {
+    if (
+      !this.pageState.sidebarScrollState.scrolling &&
+      this.draggedIndex === null
+    ) {
       this.hoveredPlaylistIndex = index;
     }
   }
@@ -167,7 +183,7 @@ export class PlaylistStateClass implements PlaylistState {
     // Manual hover effect (only when appropriate)
     if (
       this.hoveredPlaylistIndex === index &&
-      !pageState.sidebarScrollState.scrolling &&
+      !this.pageState.sidebarScrollState.scrolling &&
       this.draggedIndex === null
     ) {
       if (isSelected) {
@@ -311,7 +327,7 @@ export class PlaylistStateClass implements PlaylistState {
           return;
         }
 
-        handleUpdatePlaylistPosition({
+        await handleUpdatePlaylistPosition({
           playlist: options.playlists[this.draggedIndex],
           position: options.playlists.length - playlistTargetIndex,
           supabase: options.supabase,
@@ -342,17 +358,14 @@ export class PlaylistStateClass implements PlaylistState {
 
   // Navigation
   handlePlaylistClick(playlist: Playlist) {
-    // Dynamic import to avoid circular dependencies
-    import("$app/navigation").then(({ goto }) => {
-      goto(`/playlist/${encodeURI(playlist.short_id)}`);
-    });
+    goto(`/playlist/${encodeURI(playlist.short_id)}`);
   }
 }
 
 const DEFAULT_KEY = "$_playlist_state";
 
-export function setPlaylistState(key = DEFAULT_KEY) {
-  const playlistState = new PlaylistStateClass();
+export function setPlaylistState(pageState: PageState, key = DEFAULT_KEY) {
+  const playlistState = new PlaylistStateClass(pageState);
   return setContext(key, playlistState);
 }
 

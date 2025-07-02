@@ -69,7 +69,6 @@
     getCoreRowModel: getCoreRowModel(),
   });
 
-  // Memoize selected video IDs for better performance
   const selectedVideoIds = $derived(
     new Set(contentState.selectedVideos.map((v) => v.id)),
   );
