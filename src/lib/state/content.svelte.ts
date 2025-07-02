@@ -158,7 +158,7 @@ export class ContentStateClass implements ContentState {
     }
 
     // Don't update hoveredVideo if context menu is open or if we're dragging
-    if (!this.dragContentType && !this.isMenuOpen) {
+    if (!this.dragContentType) {
       // Clear any existing timeout when entering a new element
       if (this.hoverTimeoutId) {
         clearTimeout(this.hoverTimeoutId);
@@ -459,6 +459,16 @@ export class ContentStateClass implements ContentState {
       // - User is dragging
       // - Click is on a UI element that shouldn't clear selection (like buttons, menus, etc.)
       if (this.isMenuOpen || this.dragContentType || this.isMouseOverMenu) {
+        return;
+      }
+
+      // Check if the click is on a dropdown or other UI element that shouldn't clear selection
+      const target = event.target as HTMLElement;
+      if (
+        target.closest("[data-dropdown]") ||
+        target.closest('[role="menu"]') ||
+        target.closest("button")
+      ) {
         return;
       }
 

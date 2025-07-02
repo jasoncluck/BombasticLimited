@@ -69,23 +69,26 @@
     contentState.hoveredVideo = null;
 
     // Add click outside handler
-    const handleClickOutside = (event: MouseEvent) => {
-      if (contentRef && !contentRef.contains(event.target as Node)) {
-        // Clear selection when clicking outside
-        if (
-          contentState.selectedVideos.length > 0 &&
-          !contentState.isMouseOverMenu
-        ) {
-          contentState.selectedVideos = [];
-        }
-      }
-    };
-
-    document.addEventListener("click", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("click", handleClickOutside);
-    };
+    // const handleClickOutside = (event: MouseEvent) => {
+    //   if (contentRef && !contentRef.contains(event.target as Node)) {
+    //     // Clear selection when clicking outside
+    //     if (
+    //       contentState.selectedVideos.length > 0 &&
+    //       !contentState.isMouseOverMenu
+    //     ) {
+    //       contentState.selectedVideos = [];
+    //     }
+    //   }
+    // };
+    //
+    // document.addEventListener("click", handleClickOutside);
+    //
+    // return () => {
+    //   document.removeEventListener("click", handleClickOutside);
+    // };
+    if (contentRef) {
+      return contentState.setupClickOutsideListener(contentRef);
+    }
   });
 </script>
 

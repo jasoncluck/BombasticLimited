@@ -151,14 +151,16 @@
         {/if}
       {/if}
       {#if session}
-        <ContentSelect
-          {videos}
-          playlist={profilePlaylist}
-          {playlists}
-          {supabase}
-          {session}
-          displayLabel={true}
-        />
+        <div class="relative">
+          <ContentSelect
+            {videos}
+            playlist={profilePlaylist}
+            {playlists}
+            {supabase}
+            {session}
+            displayLabel={true}
+          />
+        </div>
       {/if}
       <div class="flex items-center gap-4 ml-auto">
         <ContentFilters {contentFilter} {view} />

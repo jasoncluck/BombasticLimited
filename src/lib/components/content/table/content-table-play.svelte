@@ -12,7 +12,7 @@
   const isHovering = $derived(contentState.hoveredVideo?.id === video.id);
 </script>
 
-<div class="flex justify-center">
+<div class="flex justify-center items-center">
   <Button
     class="{isHovering
       ? 'opacity-100'

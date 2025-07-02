@@ -81,10 +81,10 @@
 
     if (isSelected) {
       // Selected state - use !important to override hover
-      classes += " !bg-muted";
+      classes += " !bg-secondary brightness-125";
     } else {
       // Not selected - allow hover effects
-      classes += " hover:bg-muted/50";
+      classes += " hover:bg-secondary/75";
     }
 
     // Add drag drop classes if enabled
@@ -106,9 +106,20 @@
 
     return classes;
   }
+
+  // Add function to handle mouse leaving the entire table
+  function handleTableMouseLeave() {
+    contentState.hoveredVideo = null;
+    contentState.manualHover = false;
+    // Clear any pending timeout
+    if (contentState.hoverTimeoutId) {
+      clearTimeout(contentState.hoverTimeoutId);
+      contentState.hoverTimeoutId = null;
+    }
+  }
 </script>
 
-<Table.Root class="outline-none">
+<Table.Root class="outline-none" onmouseleave={handleTableMouseLeave}>
   <Table.Body class="-mx-2">
     {#each table.getRowModel().rows as row, i (row.id)}
       <Table.Row
@@ -158,7 +169,10 @@
           }
         }}
         onmouseenter={() =>
-          contentState.handleMouseEnter({ video: row.original })}
+          contentState.handleMouseEnter({
+            video: row.original,
+            shouldScrollCheck: true,
+          })}
         onmouseleave={() => contentState.handleMouseLeave()}
       >
         {#each row.getVisibleCells() as cell (cell.id)}

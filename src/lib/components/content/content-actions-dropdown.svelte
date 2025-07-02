@@ -1,6 +1,5 @@
 <script lang="ts">
   import { Ellipsis } from "@lucide/svelte";
-  import { buttonVariants } from "../ui/button";
   import * as DropdownMenu from "../ui/dropdown-menu";
   import {
     handleRemoveVideosFromPlaylist,
@@ -17,6 +16,8 @@
     handleAddVideoTimestamp,
     handleDeleteVideoTimestamp,
   } from "../video/video-service";
+  import Button from "../ui/button/button.svelte";
+  import ContentTableTitle from "./table/content-table-title.svelte";
 
   let {
     videos = $bindable(),
@@ -51,25 +52,24 @@
 </script>
 
 <DropdownMenu.Root bind:open>
-  <DropdownMenu.Trigger
-    onclick={(e) => {
-      e.stopPropagation();
-    }}
-    class={buttonVariants({
-      variant: "ghost",
-      class: `outline-none ghost-button-minimal ${isContentSelect || isHovering ? "opacity-100" : "opacity-0"}`,
-      size: "icon",
-    })}
-  >
-    <Ellipsis />
-    <span class="sr-only"
-      >{isContentSelect
-        ? "Actions for selected items"
-        : "Actions for video"}</span
-    >
+  <DropdownMenu.Trigger>
+    {#snippet child({ props })}
+      <Button
+        {...props}
+        variant="ghost"
+        class="outline-none ghost-button-minimal {open
+          ? 'scale-105'
+          : ''} {isContentSelect || isHovering ? 'opacity-100' : 'opacity-0'}"
+      >
+        <Ellipsis />
+        <span class="sr-only">
+          {isContentSelect ? "Actions for selected items" : "Actions for video"}
+        </span>
+      </Button>
+    {/snippet}
   </DropdownMenu.Trigger>
   <DropdownMenu.Content
-    class="outline-none"
+    align="start"
     onmouseenter={() => {
       contentState.isMouseOverMenu = true;
     }}
@@ -79,7 +79,8 @@
   >
     {#if isContentSelect}
       <DropdownMenu.Item
-        onclick={async () => {
+        class="p-2"
+        onclick={() => {
           onSelectAll?.();
         }}>Select all</DropdownMenu.Item
       >

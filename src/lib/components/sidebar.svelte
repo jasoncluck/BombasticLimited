@@ -16,10 +16,8 @@
   import { getContentState } from "$lib/state/content.svelte";
   import { page } from "$app/state";
   import PlaylistContextMenu from "./playlist/playlist-context-menu.svelte";
+  import { createDragImage } from "$lib/utils/dragdrop";
   import { pageState } from "$lib/state/page.svelte";
-  import { flip } from "svelte/animate";
-  import { dndzone } from "svelte-dnd-action";
-  import type { DndEvent } from "svelte-dnd-action";
 
   let {
     playlists = $bindable(),
@@ -39,9 +37,10 @@
   const contentState = getContentState();
   let playlistImagesLoaded = $state(!session);
   let hoveredIndex = $state<number | null>(null);
-  let dndPlaylists = $derived<(Playlist & { id: string | number })[]>([]);
 
-  const flipDurationMs = 200;
+  // Native drag and drop state
+  let draggedIndex = $state<number | null>(null);
+  let targetIndex = $state<number | null>(null);
 
   const endDropzoneClasses = ["border-transparent"];
   const videoDropzoneClasses = [
@@ -50,17 +49,9 @@
     "bg-primary/20",
   ];
 
-  // Transform playlists to include proper id for dnd-action
-  $effect(() => {
-    dndPlaylists = playlists.map((playlist, index) => ({
-      ...playlist,
-      id: playlist.id || index,
-    }));
-  });
-
   function handleMouseEnter(index: number) {
     // Only allow hover if not scrolling and not dragging
-    if (!pageState.sidebarScrollState.scrolling) {
+    if (!pageState.sidebarScrollState.scrolling && draggedIndex === null) {
       hoveredIndex = index;
     }
   }
@@ -110,142 +101,169 @@
     return [];
   }
 
-  function handleDndConsider(e: CustomEvent<DndEvent>) {
-    // Update playlists during drag for visual feedback
-    const updatedItems = e.detail.items as typeof dndPlaylists;
-    dndPlaylists = [...updatedItems];
-  }
+  function getPlaylistDragClasses(index: number) {
+    let classes = "relative";
 
-  async function handleDndFinalize(e: CustomEvent<DndEvent>) {
-    if (!session) return;
-
-    const updatedItems = e.detail.items as typeof dndPlaylists;
-
-    // Check if the order actually changed by comparing IDs
-    const originalOrder = playlists.map((p) => p.id);
-    const newOrder = updatedItems.map((item) => item.id);
-
-    const orderChanged = !originalOrder.every(
-      (id, index) => id === newOrder[index],
-    );
-
-    if (!orderChanged) {
-      // No change, just update dndPlaylists to match current playlists
-      dndPlaylists = playlists.map((playlist, index) => ({
-        ...playlist,
-        id: playlist.id || index,
-      }));
-      return;
+    if (draggedIndex === index) {
+      classes += " opacity-60";
     }
 
-    // Find the item that moved the MOST positions (this is the dragged item)
-    let movedPlaylistId: string | number | null = null;
-    let maxPositionChange = 0;
-    let newIndex = -1;
-
-    originalOrder.forEach((id, origIndex) => {
-      const newPos = newOrder.indexOf(id);
-      const positionChange = Math.abs(origIndex - newPos);
-
-      if (positionChange > maxPositionChange) {
-        maxPositionChange = positionChange;
-        movedPlaylistId = id;
-        newIndex = newPos;
+    if (targetIndex === index) {
+      if (draggedIndex === null || draggedIndex < targetIndex) {
+        // Show indicator at the bottom
+        classes +=
+          " after:absolute after:left-0 after:bottom-0 after:w-full after:h-[2px] after:bg-primary after:z-10";
+      } else {
+        // Show indicator at the top
+        classes +=
+          " before:absolute before:left-0 before:-top-0 before:w-full before:h-[2px] before:bg-primary before:z-10";
       }
-    });
+    }
+    return classes;
+  }
 
-    if (movedPlaylistId && maxPositionChange > 0) {
-      const movedPlaylist = playlists.find((p) => p.id === movedPlaylistId);
+  function getButtonClasses(index: number, isSelectedPlaylist: boolean) {
+    let classes =
+      "h-[64px] w-full border border-transparent relative cursor-pointer transition-[background-color,opacity] duration-150";
 
-      if (movedPlaylist) {
-        // Calculate the new position based on the target index
-        // Your system appears to use higher numbers for items at the top
-        const newPosition = playlists.length - newIndex;
+    // Add drag classes
+    classes += ` ${getPlaylistDragClasses(index)}`;
 
-        try {
-          await handleUpdatePlaylistPosition({
-            playlist: movedPlaylist,
-            position: newPosition,
-            supabase,
-            session,
-          });
-        } catch (error) {
-          console.error("Error updating playlist position:", error);
-          // Revert to original order on error
-          dndPlaylists = playlists.map((playlist, index) => ({
-            ...playlist,
-            id: playlist.id || index,
-          }));
-          return;
-        }
+    // Manual hover effect (only when appropriate)
+    if (
+      hoveredIndex === index &&
+      !pageState.sidebarScrollState.scrolling &&
+      draggedIndex === null
+    ) {
+      if (isSelectedPlaylist) {
+        classes += " !hover:bg-secondary brightness-125";
+      } else {
+        classes += " hover:bg-secondary/25";
       }
     }
 
-    // Update the final playlists state to match the new order
-    const reorderedPlaylists = updatedItems.map((item, newIndex) => {
-      const originalPlaylist = playlists.find((p) => p.id === item.id)!;
-      return {
-        ...originalPlaylist,
-        // Update the playlist_position to match the new order
-        playlist_position: playlists.length - newIndex,
-      };
-    });
+    // Selected playlist styling
+    if (isSelectedPlaylist) {
+      classes += " bg-secondary/65";
+    }
 
-    playlists = reorderedPlaylists;
+    // Sidebar layout classes
+    if (!isSidebarCollapsed) {
+      classes += " min-w-[150px] justify-normal";
+    } else {
+      classes += " align-middle";
+    }
+
+    // Video drag styling
+    if (
+      contentState.dragContentType === "video" &&
+      playlists[index]?.created_by !== session?.user.id
+    ) {
+      classes += " opacity-50 border-none";
+    }
+
+    return classes;
   }
 
-  // Video drag and drop handlers
-  function handleVideoDragOver(e: DragEvent, index: number) {
+  // Native drag and drop handlers
+  function handleDragStart(e: DragEvent, index: number) {
+    draggedIndex = index;
+    contentState.dragContentType = "playlist";
+
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = "move";
+    }
+
+    hoveredIndex = null;
+    createDragImage(e, playlists[index].name);
+  }
+
+  function handleDragOver(e: DragEvent, index: number) {
     e.preventDefault();
-    const playlist = playlists[index];
+
+    // Handle video drop zones
     if (contentState.dragContentType === "video") {
+      const playlist = playlists[index];
       if (e.currentTarget instanceof HTMLElement) {
         const classes = getDropzoneClasses(playlist);
         e.currentTarget.classList.add(...classes);
         e.currentTarget.classList.remove(...endDropzoneClasses);
       }
     }
+
+    // Handle playlist reordering
+    if (
+      draggedIndex !== null &&
+      draggedIndex !== index &&
+      targetIndex !== index
+    ) {
+      targetIndex = index;
+    }
   }
 
-  function handleVideoDragLeave(e: DragEvent, index: number) {
+  function handleDragEnd() {
+    draggedIndex = null;
+    targetIndex = null;
+    hoveredIndex = null;
+  }
+
+  function handleDragLeave(e: DragEvent, index: number) {
     const relatedTarget = e.relatedTarget as Node;
     if (
       e.currentTarget instanceof HTMLElement &&
       !e.currentTarget.contains(relatedTarget)
     ) {
-      const playlist = playlists[index];
-      const classes = getDropzoneClasses(playlist);
-      e.currentTarget.classList.remove(...classes);
-      e.currentTarget.classList.add(...endDropzoneClasses);
+      // Clear target index for playlist reordering
+      if (contentState.dragContentType === "playlist") {
+        targetIndex = null;
+      }
+
+      // Handle video drop zone styling
+      if (contentState.dragContentType === "video") {
+        const playlist = playlists[index];
+        const classes = getDropzoneClasses(playlist);
+        e.currentTarget.classList.remove(...classes);
+        e.currentTarget.classList.add(...endDropzoneClasses);
+      }
     }
   }
 
-  function handleVideoDrop(e: DragEvent, index: number) {
-    e.preventDefault();
-    if (!session || contentState.dragContentType !== "video") return;
-
-    const playlist = playlists[index];
-
-    if (
-      contentState.dragContentType === "video" &&
-      playlist.created_by !== session.user.id
-    ) {
+  async function handleDrop(e: DragEvent, playlistTargetIndex: number) {
+    if (!session) {
       return;
     }
 
     if (e.currentTarget instanceof HTMLElement) {
-      const classes = getDropzoneClasses(playlist);
+      const classes = getDropzoneClasses(playlists[playlistTargetIndex]);
       e.currentTarget.classList.remove(...classes);
+
       e.currentTarget.classList.add(...endDropzoneClasses);
     }
 
-    handleAddVideosToPlaylist({
-      playlist,
-      videos: contentState.selectedVideos,
-      playlistImages: contentState.playlistImages,
-      supabase,
-      session,
-    });
+    if (contentState.dragContentType === "video") {
+      handleAddVideosToPlaylist({
+        playlist: playlists[playlistTargetIndex],
+        videos: contentState.selectedVideos,
+        playlistImages: contentState.playlistImages,
+        supabase,
+        session,
+      });
+    } else if (contentState.dragContentType === "playlist") {
+      if (draggedIndex === null || draggedIndex < 0) {
+        return;
+      }
+      handleUpdatePlaylistPosition({
+        playlist: playlists[draggedIndex],
+        position: playlists.length - playlistTargetIndex,
+        supabase,
+        session,
+      });
+
+      const updatedPlaylists = [...playlists];
+      const [movedItem] = updatedPlaylists.splice(draggedIndex, 1);
+      updatedPlaylists.splice(playlistTargetIndex, 0, movedItem);
+      playlists = updatedPlaylists;
+    }
   }
 
   function handlePlaylistClick(playlist: Playlist) {
@@ -352,23 +370,10 @@
     <div class="flex flex-col">
       {#if playlists === null || !playlistImagesLoaded}
         <Loader class="animate-spin w-full" />
-      {:else if session && dndPlaylists.length > 0}
-        <div
-          use:dndzone={{
-            items: dndPlaylists,
-            flipDurationMs,
-            type: "playlist",
-            dropTargetStyle: {
-              outline: "rgba(99, 102, 241, 0.5) solid 2px",
-              backgroundColor: "rgba(99, 102, 241, 0.1)",
-            },
-          }}
-          onconsider={handleDndConsider}
-          onfinalize={handleDndFinalize}
-          class="flex flex-col w-full outline-none"
-        >
-          {#each dndPlaylists as playlist, i (playlist.id)}
-            <div animate:flip={{ duration: flipDurationMs }} class="w-full">
+      {:else if session && playlists.length > 0}
+        <div class="flex flex-col w-full">
+          {#each playlists as playlist, i (playlist.id)}
+            <div class="w-full">
               <PlaylistContextMenu
                 {playlist}
                 {selectedPlaylistIdParam}
@@ -381,28 +386,19 @@
 
                 <Button
                   variant="ghost"
-                  class="h-[64px] w-full border border-transparent relative cursor-pointer transition-[background-color,opacity]  duration-150 
-                  {hoveredIndex === i && !pageState.sidebarScrollState.scrolling
-                    ? 'hover:bg-secondary'
-                    : 'hover:bg-transparent'}
-                  {isSelectedPlaylist
-                    ? 'bg-secondary'
-                    : 'hover:bg-secondary/50'}  
-                  {!isSidebarCollapsed
-                    ? 'min-w-[150px] justify-normal'
-                    : 'align-middle'}
-                  {contentState.dragContentType === 'video' &&
-                    playlist.created_by !== session.user.id &&
-                    'opacity-50'}"
+                  draggable={true}
+                  class={getButtonClasses(i, isSelectedPlaylist)}
                   size={!isSidebarCollapsed ? "default" : "icon"}
                   onclick={() => handlePlaylistClick(playlist)}
                   title={playlist.name}
                   value={playlist.name}
                   onmouseenter={() => handleMouseEnter(i)}
                   onmouseleave={() => handleMouseLeave(i)}
-                  ondragover={(e) => handleVideoDragOver(e, i)}
-                  ondragleave={(e) => handleVideoDragLeave(e, i)}
-                  ondrop={(e) => handleVideoDrop(e, i)}
+                  ondragstart={(e) => handleDragStart(e, i)}
+                  ondragover={(e) => handleDragOver(e, i)}
+                  ondragleave={(e) => handleDragLeave(e, i)}
+                  ondrop={(e) => handleDrop(e, i)}
+                  ondragend={handleDragEnd}
                 >
                   <div
                     class="flex items-center grow absolute

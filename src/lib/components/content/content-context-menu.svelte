@@ -96,6 +96,7 @@
       contentState.isMouseOverMenu = true;
     }}
     onmouseleave={() => {
+      console.log("leaving");
       contentState.isMouseOverMenu = false;
     }}
   >

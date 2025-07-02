@@ -23,7 +23,7 @@ export function createContentColumns({
 }): ColumnDef<Video>[] {
   return [
     {
-      accessorKey: "selected",
+      accessorKey: "play",
       header: () => {
         return;
       },

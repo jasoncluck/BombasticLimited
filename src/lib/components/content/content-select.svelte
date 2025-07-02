@@ -24,18 +24,26 @@
   const contentState = getContentState();
 
   function handleSelectAll() {
-    // Select all videos that aren't already selected
-    const unselectedVideos = videos.filter(
-      (video) =>
-        !contentState.selectedVideos.some(
-          (selected) => selected.id === video.id,
-        ),
+    // Check if all videos are already selected
+    const allSelected = videos.every((video) =>
+      contentState.selectedVideos.some((selected) => selected.id === video.id),
     );
 
-    contentState.selectedVideos = [
-      ...contentState.selectedVideos,
-      ...unselectedVideos,
-    ];
+    if (allSelected) {
+      // If all are selected, deselect all videos from this page
+      contentState.selectedVideos = contentState.selectedVideos.filter(
+        (selected) => !videos.some((video) => video.id === selected.id),
+      );
+    } else {
+      // If not all are selected, select all videos from this page
+      // First remove any currently selected videos from this page to avoid duplicates
+      const otherSelectedVideos = contentState.selectedVideos.filter(
+        (selected) => !videos.some((video) => video.id === selected.id),
+      );
+
+      // Then add all videos from this page
+      contentState.selectedVideos = [...otherSelectedVideos, ...videos];
+    }
   }
 </script>
 
