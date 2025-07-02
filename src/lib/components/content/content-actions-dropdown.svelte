@@ -50,17 +50,8 @@
   });
 
   $effect(() => {
-    if (!contentState.isDropdownMenuOpen) {
+    if (contentState.isContextMenuOpen) {
       open = false;
-    } else {
-      const hoveredVideo = contentState.hoveredVideo;
-      if (
-        hoveredVideo &&
-        !contentState.selectedVideos.some((v) => v.id === hoveredVideo.id)
-      ) {
-        contentState.selectedVideos = [];
-        contentState.selectedVideos.push(hoveredVideo);
-      }
     }
   });
 </script>
@@ -72,6 +63,10 @@
         {...props}
         variant="ghost"
         onclick={(e) => {
+          if (contentState.isDropdownMenuOpen) {
+            contentState.isDropdownMenuOpen = false;
+          }
+          contentState.selectedVideos = [videos[0]];
           // Don't allow double click to go through to navigate
           e.stopPropagation();
         }}

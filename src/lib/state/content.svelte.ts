@@ -15,6 +15,15 @@ export type DragContentType = "video" | "playlist" | null;
 
 export type PlaylistImageInfo = Record<string, string | undefined>;
 
+// Video drag and drop CSS classes
+export const VIDEO_DROPZONE_CLASSES = [
+  "border-solid",
+  "border-primary",
+  "bg-primary/40",
+];
+
+export const END_DROPZONE_CLASSES = ["border-transparent"];
+
 export interface DragDropOptions {
   allowVideoReorder?: boolean;
   videos: Video[];
@@ -51,6 +60,8 @@ export interface ContentState {
   hoveredVideo: Video | null;
   // If a playlist or video is being currently dragged
   dragContentType: DragContentType;
+  isMenuOpen: boolean;
+  isMouseOverMenu: boolean;
   isContextMenuOpen: boolean;
   isDropdownMenuOpen: boolean;
   // ID of setTimeout event when hovering over a video
@@ -65,6 +76,10 @@ export interface ContentState {
   // Click tracking for double-click detection
   lastClickTime: number;
   lastClickedVideo: Video | null;
+
+  // Video drag and drop CSS classes
+  getVideoDropzoneClasses: (playlist: Playlist, session: any) => string[];
+  getEndDropzoneClasses: () => string[];
 
   // Drag and drop method
   createDragDrop: (options: DragDropOptions) => DragDropHandlers;
@@ -129,6 +144,8 @@ export class ContentStateClass implements ContentState {
   selectedVideos = $state<Video[]>([]);
   hoveredVideo = $state<Video | null>(null);
   dragContentType = $state<DragContentType>(null);
+  isMenuOpen = $state(false);
+  isMouseOverMenu = $state(false);
   isContextMenuOpen = $state(false);
   isDropdownMenuOpen = $state(false);
   hoverTimeoutId = $state<ReturnType<typeof setTimeout> | null>(null);
@@ -142,6 +159,21 @@ export class ContentStateClass implements ContentState {
   // Click tracking for double-click detection
   lastClickTime = $state(0);
   lastClickedVideo = $state<Video | null>(null);
+
+  // Video drag and drop CSS classes
+  getVideoDropzoneClasses(playlist: Playlist, session: any): string[] {
+    if (
+      this.dragContentType === "video" &&
+      playlist.created_by === session?.user.id
+    ) {
+      return VIDEO_DROPZONE_CLASSES;
+    }
+    return [];
+  }
+
+  getEndDropzoneClasses(): string[] {
+    return END_DROPZONE_CLASSES;
+  }
 
   // Mouse hover methods
   handleMouseEnter(options: MouseHoverOptions) {
@@ -477,7 +509,7 @@ export class ContentStateClass implements ContentState {
       if (!containerElement.contains(event.target as Node)) {
         // Only clear if there are selected videos
         if (this.selectedVideos.length > 0) {
-          this.selectedVideos = [];
+          this.selectedVideos = this.hoveredVideo ? [this.hoveredVideo] : [];
         }
       }
     };

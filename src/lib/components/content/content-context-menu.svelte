@@ -21,9 +21,9 @@
   interface ContentContextMenuProps {
     playlist?: Playlist;
     playlists: Playlist[];
+    children: Snippet<[]>;
     supabase: SupabaseClient<Database>;
     session: Session | null;
-    children: Snippet<[]>;
   }
 
   let {
@@ -90,8 +90,7 @@
         hoveredVideo &&
         !contentState.selectedVideos.some((v) => v.id === hoveredVideo.id)
       ) {
-        contentState.selectedVideos = [];
-        contentState.selectedVideos.push(hoveredVideo);
+        contentState.selectedVideos = [hoveredVideo];
       }
     }}
   >

@@ -42,13 +42,6 @@
   let draggedIndex = $state<number | null>(null);
   let targetIndex = $state<number | null>(null);
 
-  const endDropzoneClasses = ["border-transparent"];
-  const videoDropzoneClasses = [
-    "border-solid",
-    "border-primary",
-    "bg-primary/20",
-  ];
-
   function handleMouseEnter(index: number) {
     // Only allow hover if not scrolling and not dragging
     if (!pageState.sidebarScrollState.scrolling && draggedIndex === null) {
@@ -90,16 +83,6 @@
         playlistImagesLoaded = true; // Still mark as loaded so UI can render with fallbacks
       });
   });
-
-  function getDropzoneClasses(playlist: Playlist) {
-    if (
-      contentState.dragContentType === "video" &&
-      playlist.created_by === session?.user.id
-    ) {
-      return videoDropzoneClasses;
-    }
-    return [];
-  }
 
   function getPlaylistDragClasses(index: number) {
     let classes = "relative";
@@ -196,9 +179,11 @@
     if (contentState.dragContentType === "video") {
       const playlist = playlists[index];
       if (e.currentTarget instanceof HTMLElement) {
-        const classes = getDropzoneClasses(playlist);
+        const classes = contentState.getVideoDropzoneClasses(playlist, session);
         e.currentTarget.classList.add(...classes);
-        e.currentTarget.classList.remove(...endDropzoneClasses);
+        e.currentTarget.classList.remove(
+          ...contentState.getEndDropzoneClasses(),
+        );
       }
     }
 
@@ -232,9 +217,9 @@
       // Handle video drop zone styling
       if (contentState.dragContentType === "video") {
         const playlist = playlists[index];
-        const classes = getDropzoneClasses(playlist);
+        const classes = contentState.getVideoDropzoneClasses(playlist, session);
         e.currentTarget.classList.remove(...classes);
-        e.currentTarget.classList.add(...endDropzoneClasses);
+        e.currentTarget.classList.add(...contentState.getEndDropzoneClasses());
       }
     }
   }
@@ -245,10 +230,12 @@
     }
 
     if (e.currentTarget instanceof HTMLElement) {
-      const classes = getDropzoneClasses(playlists[playlistTargetIndex]);
+      const classes = contentState.getVideoDropzoneClasses(
+        playlists[playlistTargetIndex],
+        session,
+      );
       e.currentTarget.classList.remove(...classes);
-
-      e.currentTarget.classList.add(...endDropzoneClasses);
+      e.currentTarget.classList.add(...contentState.getEndDropzoneClasses());
     }
 
     if (contentState.dragContentType === "video") {
