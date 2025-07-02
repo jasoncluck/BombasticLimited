@@ -136,6 +136,10 @@
   -ms-user-select: none;
 }
 
+.sidebar-full-button {
+  @apply h-[64px] px-2 py-8 w-full border border-transparent relative cursor-pointer transition-none;
+}
+
 .ghost-button-minimal {
   @apply cursor-pointer text-muted-foreground hover:bg-inherit hover:scale-105
   hover:text-foreground data-[state=open]:text-foreground isolate 

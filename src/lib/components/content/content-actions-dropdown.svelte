@@ -17,7 +17,6 @@
     handleDeleteVideoTimestamp,
   } from "../video/video-service";
   import Button from "../ui/button/button.svelte";
-  import ContentTableTitle from "./table/content-table-title.svelte";
 
   let {
     videos = $bindable(),

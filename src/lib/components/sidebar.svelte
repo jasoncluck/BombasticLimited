@@ -123,8 +123,7 @@
   }
 
   function getButtonClasses(index: number, isSelectedPlaylist: boolean) {
-    let classes =
-      "h-[64px] w-full border border-transparent relative cursor-pointer transition-[background-color,opacity] duration-150";
+    let classes = "sidebar-full-button";
 
     // Add drag classes
     classes += ` ${getPlaylistDragClasses(index)}`;
@@ -272,11 +271,11 @@
 </script>
 
 <aside class="h-full overflow-hidden">
-  <div class="flex flex-col my-3 mx-2">
+  <div class="flex flex-col {!isSidebarCollapsed ? 'mx-2' : 'mx-1'}">
     {#each SOURCES as source (source)}
       <Button
         variant="ghost"
-        class="h-[64px] w-full cursor-pointer  transition-colors duration-100 
+        class="sidebar-full-button
         {selectedSource === source ? 'bg-secondary' : 'hover:bg-secondary/50'}  
         {!isSidebarCollapsed ? 'min-w-[150px] justify-normal' : 'align-middle'}"
         size={!isSidebarCollapsed ? "default" : "icon"}
@@ -314,8 +313,9 @@
   </div>
   <hr class="mx-2" />
   <div
-    class="flex flex-col my-3 min-w-[4px]
-    {!isSidebarCollapsed ? 'items-start ml-6' : 'items-center'}"
+    class="flex flex-col m-3 {!isSidebarCollapsed
+      ? 'items-start mx-6'
+      : 'items-center'}"
   >
     <div class="flex items-center h-[44px]">
       {#if !session?.user.id}
@@ -360,9 +360,10 @@
     </div>
   </div>
 
-  <!-- Fixed: Border is always present but transparent when not dragging -->
   <div
-    class="border-2 rounded-md mx-1 transition-colors duration-150
+    class="border-2 rounded-md transition-colors duration-150 {!isSidebarCollapsed
+      ? 'mx-2'
+      : 'mx-1'}
     {playlists.length > 0 && contentState.dragContentType === 'video'
       ? 'border-secondary/80'
       : 'border-transparent'}"
@@ -371,65 +372,63 @@
       {#if playlists === null || !playlistImagesLoaded}
         <Loader class="animate-spin w-full" />
       {:else if session && playlists.length > 0}
-        <div class="flex flex-col w-full">
+        <div class="flex flex-col">
           {#each playlists as playlist, i (playlist.id)}
-            <div class="w-full">
-              <PlaylistContextMenu
-                {playlist}
-                {selectedPlaylistIdParam}
-                {isSidebarCollapsed}
-                {supabase}
-                {session}
-              >
-                {@const isSelectedPlaylist =
-                  selectedPlaylistIdParam === playlist.short_id}
+            <PlaylistContextMenu
+              {playlist}
+              {selectedPlaylistIdParam}
+              {isSidebarCollapsed}
+              {supabase}
+              {session}
+            >
+              {@const isSelectedPlaylist =
+                selectedPlaylistIdParam === playlist.short_id}
 
-                <Button
-                  variant="ghost"
-                  draggable={true}
-                  class={getButtonClasses(i, isSelectedPlaylist)}
-                  size={!isSidebarCollapsed ? "default" : "icon"}
-                  onclick={() => handlePlaylistClick(playlist)}
-                  title={playlist.name}
-                  value={playlist.name}
-                  onmouseenter={() => handleMouseEnter(i)}
-                  onmouseleave={() => handleMouseLeave(i)}
-                  ondragstart={(e) => handleDragStart(e, i)}
-                  ondragover={(e) => handleDragOver(e, i)}
-                  ondragleave={(e) => handleDragLeave(e, i)}
-                  ondrop={(e) => handleDrop(e, i)}
-                  ondragend={handleDragEnd}
-                >
-                  <div
-                    class="flex items-center grow absolute
+              <Button
+                variant="ghost"
+                draggable={true}
+                class={getButtonClasses(i, isSelectedPlaylist)}
+                size={!isSidebarCollapsed ? "default" : "icon"}
+                onclick={() => handlePlaylistClick(playlist)}
+                title={playlist.name}
+                value={playlist.name}
+                onmouseenter={() => handleMouseEnter(i)}
+                onmouseleave={() => handleMouseLeave(i)}
+                ondragstart={(e) => handleDragStart(e, i)}
+                ondragover={(e) => handleDragOver(e, i)}
+                ondragleave={(e) => handleDragLeave(e, i)}
+                ondrop={(e) => handleDrop(e, i)}
+                ondragend={handleDragEnd}
+              >
+                <div
+                  class="flex items-center grow absolute
                     {!isSidebarCollapsed ? 'grow w-full' : 'item-center'}"
-                  >
-                    {#if contentState.playlistImages[playlist.id]}
-                      <div class="h-12 w-12 flex-shrink-0">
-                        <img
-                          src={contentState.playlistImages[playlist.id]}
-                          class="h-full w-full object-cover cursor-pointer"
-                          alt={`Image for playlist: ${playlist.name}`}
-                        />
-                      </div>
-                    {:else}
-                      <div
-                        class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
-                      >
-                        <ListVideo class="!h-8 !w-8" />
-                      </div>
-                    {/if}
-                    {#if !isSidebarCollapsed}
-                      <span
-                        class="text-sm mr-6 overflow-hidden px-3 text-clip justify-start whitespace-nowrap break-keep"
-                      >
-                        {playlist.name}
-                      </span>
-                    {/if}
-                  </div>
-                </Button>
-              </PlaylistContextMenu>
-            </div>
+                >
+                  {#if contentState.playlistImages[playlist.id]}
+                    <div class="h-12 w-12 flex-shrink-0">
+                      <img
+                        src={contentState.playlistImages[playlist.id]}
+                        class="h-full w-full object-cover cursor-pointer"
+                        alt={`Image for playlist: ${playlist.name}`}
+                      />
+                    </div>
+                  {:else}
+                    <div
+                      class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
+                    >
+                      <ListVideo class="!h-8 !w-8" />
+                    </div>
+                  {/if}
+                  {#if !isSidebarCollapsed}
+                    <span
+                      class="text-sm mr-6 overflow-none px-3 text-clip justify-start whitespace-nowrap break-keep"
+                    >
+                      {playlist.name}
+                    </span>
+                  {/if}
+                </div>
+              </Button>
+            </PlaylistContextMenu>
           {/each}
         </div>
       {/if}

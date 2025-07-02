@@ -75,7 +75,7 @@
   );
 
   function getRowClasses(video: Video, index: number) {
-    let classes = "selection-mode";
+    let classes = "selection-mode transition-none";
 
     const isSelected = selectedVideoIds.has(video.id);
 
