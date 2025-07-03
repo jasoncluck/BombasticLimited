@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { SOURCE_INFO } from "$lib/constants/source.js";
+  import { SOURCE_INFO, SOURCES } from "$lib/constants/source.js";
   import ContentHeader from "$lib/components/content/content-header.svelte";
   import Content from "$lib/components/content/content.svelte";
   import type { Snapshot } from "../$types.js";
@@ -9,7 +9,12 @@
     PAGINATION_QUERY_KEY,
   } from "$lib/components/content/pagination/content-pagination.js";
   import SharedContentFooter from "$lib/components/content/pagination/shared-content-footer.svelte";
-  import { DEFAULT_NUM_VIDEOS_PAGINATION } from "$lib/supabase/videos.js";
+  import {
+    DEFAULT_NUM_VIDEOS_PAGINATION,
+    type Video,
+  } from "$lib/supabase/videos.js";
+  import { getContentState } from "$lib/state/content.svelte.js";
+  import type { SourceWithContinueCarouselState } from "$lib/components/content/content.js";
 
   const { data } = $props();
   const {
@@ -29,18 +34,25 @@
     pageFromQueryParams ? parseInt(pageFromQueryParams) : 1,
   );
 
+  const contentState = getContentState();
+
+  let carouselsState = $state<SourceWithContinueCarouselState>(
+    Object.fromEntries(
+      SOURCES.map((key) => [key, { lastViewedIndex: 0 }]),
+    ) as SourceWithContinueCarouselState,
+  );
+
   export const snapshot: Snapshot<{
-    showFloatingBreadcrumbs: boolean;
+    carouselsState: SourceWithContinueCarouselState;
+    selectedVideos: Video[];
   }> = {
-    capture: () => {
-      return {
-        showFloatingBreadcrumbs,
-      };
-    },
-    restore: (restored) => {
-      if (restored?.showFloatingBreadcrumbs) {
-        showFloatingBreadcrumbs = restored.showFloatingBreadcrumbs;
-      }
+    capture: () => ({
+      carouselsState,
+      selectedVideos: contentState.selectedVideos,
+    }),
+    restore: async (restored) => {
+      carouselsState = restored.carouselsState;
+      contentState.selectedVideos = restored.selectedVideos;
     },
   };
 
@@ -55,6 +67,7 @@
 <div class="relative">
   <ContentHeader
     title="Search Results"
+    {videos}
     {contentFilter}
     videosCount={videosCount ?? 0}
     {currentPage}

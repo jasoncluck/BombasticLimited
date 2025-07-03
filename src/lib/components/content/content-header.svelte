@@ -13,7 +13,6 @@
     breadcrumbs,
     contentFilter,
     currentPage = $bindable(),
-    onPlayVideo,
     playlists,
     profilePlaylist,
     session,
@@ -29,7 +28,6 @@
     contentFilter: CombinedContentFilter;
     currentPage: number;
     imageUrl?: string | null;
-    onPlayVideo: () => void;
     playlists: Playlist[];
     profilePlaylist?: ProfilePlaylist;
     session: Session | null;

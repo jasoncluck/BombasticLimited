@@ -4,6 +4,7 @@
   import PlaylistHeader from "./playlist-header.svelte";
   import Content from "$lib/components/content/content.svelte";
   import type { Snapshot } from "@sveltejs/kit";
+  import type { Video } from "$lib/supabase/videos";
 
   const { data } = $props();
   const {
@@ -26,16 +27,19 @@
 
   export const snapshot: Snapshot<{
     showFloatingBreadcrumbs: boolean;
+    selectedVideos: Video[];
   }> = {
     capture: () => {
       return {
         showFloatingBreadcrumbs,
+        selectedVideos: contentState.selectedVideos,
       };
     },
     restore: (restored) => {
       if (restored?.showFloatingBreadcrumbs) {
         showFloatingBreadcrumbs = restored.showFloatingBreadcrumbs;
       }
+      contentState.selectedVideos = restored.selectedVideos;
     },
   };
 

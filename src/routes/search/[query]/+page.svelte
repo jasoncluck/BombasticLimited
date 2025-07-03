@@ -3,9 +3,11 @@
   import { SOURCE_INFO, SOURCES } from "$lib/constants/source.js";
   import Content from "$lib/components/content/content.svelte";
   import { userPreferences } from "$lib/state/user-preferences.svelte.js";
-  import { type CarouselsState } from "$lib/components/content/content.js";
   import type { Snapshot } from "@sveltejs/kit";
   import { ListVideo } from "@lucide/svelte";
+  import type { Video } from "$lib/supabase/videos.js";
+  import { getContentState } from "$lib/state/content.svelte.js";
+  import type { SourceWithContinueCarouselState } from "$lib/components/content/content.js";
 
   let { data } = $props();
   let {
@@ -18,19 +20,30 @@
     contentFilter,
   } = $derived(data);
 
-  export const snapshot: Snapshot<CarouselsState> = {
-    capture: () => carouselsState,
-    restore: async (restored) => (carouselsState = restored),
+  const contentState = getContentState();
+
+  let carouselsState = $state<SourceWithContinueCarouselState>(
+    Object.fromEntries(
+      SOURCES.map((key) => [key, { lastViewedIndex: 0 }]),
+    ) as SourceWithContinueCarouselState,
+  );
+
+  export const snapshot: Snapshot<{
+    carouselsState: SourceWithContinueCarouselState;
+    selectedVideos: Video[];
+  }> = {
+    capture: () => ({
+      carouselsState,
+      selectedVideos: contentState.selectedVideos,
+    }),
+    restore: async (restored) => {
+      carouselsState = restored.carouselsState;
+      contentState.selectedVideos = restored.selectedVideos;
+    },
   };
 
   const isEmptyResults = $derived(
     !(sourceVideos && Object.values(sourceVideos).some((s) => s.length > 0)),
-  );
-
-  let carouselsState = $state<CarouselsState>(
-    Object.fromEntries(
-      SOURCES.map((key) => [key, { lastViewedIndex: 0 }]),
-    ) as CarouselsState,
   );
 </script>
 
