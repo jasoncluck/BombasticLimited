@@ -69,8 +69,11 @@
     getCoreRowModel: getCoreRowModel(),
   });
 
+  console.log(contentState.selectedVideos);
   const selectedVideoIds = $derived(
-    new Set(contentState.selectedVideos.map((v) => v.id)),
+    contentState.selectedVideos.length > 0
+      ? new Set((contentState.selectedVideos || []).map((v) => v.id))
+      : new Set(),
   );
 
   function getRowClasses(video: Video, index: number) {
@@ -79,7 +82,7 @@
     const isSelected = selectedVideoIds.has(video.id);
 
     if (isSelected) {
-      // Selected state - use !important to override hover
+      // Selected state - using !important to override hover
       classes += " !bg-secondary brightness-125";
     } else {
       // Not selected - allow hover effects

@@ -3,7 +3,6 @@
   import { SOURCE_INFO } from "$lib/constants/source";
   import ContentHeader from "$lib/components/content/content-header.svelte";
   import Content from "$lib/components/content/content.svelte";
-  import type { Snapshot } from "../$types.js";
   import {
     getNumberOfPages,
     PAGINATION_QUERY_KEY,
@@ -15,6 +14,8 @@
     type Video,
   } from "$lib/supabase/videos.js";
   import { handleContentNavigation } from "$lib/components/content/content.js";
+  import type { Snapshot } from "@sveltejs/kit";
+  import { getContentState } from "$lib/state/content.svelte.js";
 
   const { data } = $props();
   const {
@@ -27,8 +28,9 @@
     contentFilter,
   } = $derived(data);
 
+  const contentState = getContentState();
+
   let showFloatingBreadcrumbs = $state(false);
-  let selectedVideos = $derived(videos);
 
   const pageFromQueryParams = page.url.searchParams.get(PAGINATION_QUERY_KEY);
   let currentPage = $state(
@@ -42,14 +44,14 @@
     capture: () => {
       return {
         showFloatingBreadcrumbs,
-        selectedVideos,
+        selectedVideos: contentState.selectedVideos,
       };
     },
     restore: (restored) => {
       if (restored?.showFloatingBreadcrumbs) {
         showFloatingBreadcrumbs = restored.showFloatingBreadcrumbs;
       }
-      selectedVideos = restored.selectedVideos;
+      contentState.selectedVideos = restored.selectedVideos;
     },
   };
   const numPages = $derived(

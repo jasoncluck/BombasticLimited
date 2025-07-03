@@ -176,6 +176,9 @@
                   isSelected: isSelectedPlaylist,
                   itemType: "playlist",
                   isSidebarCollapsed,
+                  playlists,
+                  selectedPlaylistIdParam,
+                  session,
                 })}
                 size={!isSidebarCollapsed ? "default" : "icon"}
                 onclick={() => playlistState.handlePlaylistClick(playlist)}

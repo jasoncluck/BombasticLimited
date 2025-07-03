@@ -66,7 +66,9 @@
           if (contentState.isDropdownMenuOpen) {
             contentState.isDropdownMenuOpen = false;
           }
-          contentState.selectedVideos = [videos[0]];
+          if (videos && videos.length > 0) {
+            contentState.selectedVideos = [videos[0]];
+          }
           // Don't allow double click to go through to navigate
           e.stopPropagation();
         }}
