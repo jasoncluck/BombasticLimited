@@ -15,6 +15,10 @@ export type DragContentType = "video" | "playlist" | null;
 
 export type PlaylistImageInfo = Record<string, string | undefined>;
 
+export interface CarouselState {
+  lastViewedIndex: number;
+}
+
 // Video drag and drop CSS classes
 export const VIDEO_DROPZONE_CLASSES = [
   "border-solid",
@@ -56,6 +60,9 @@ export interface MouseHoverOptions {
 export interface ContentState {
   // Page state dependency
   pageState: PageState;
+
+  // Carousel state for snapshots
+  carouselState: CarouselState;
 
   // Videos selected for multi-selection operations
   selectedVideos: Video[];
@@ -143,7 +150,7 @@ export interface ContentState {
 
 export class ContentStateClass implements ContentState {
   pageState: PageState;
-
+  carouselState = $state<CarouselState>({ lastViewedIndex: 0 });
   selectedVideos = $state<Video[]>([]);
   hoveredVideo = $state<Video | null>(null);
   dragContentType = $state<DragContentType>(null);
@@ -449,19 +456,16 @@ export class ContentStateClass implements ContentState {
             rangeVideos.push(videos[i]);
           }
 
-          // CTRL+SHIFT: Add range to existing selection (union)
           const existingIds = new Set(this.selectedVideos.map((v) => v.id));
           const newVideos = rangeVideos.filter((v) => !existingIds.has(v.id));
           this.selectedVideos = [...this.selectedVideos, ...newVideos];
         }
       }
     } else if (isCtrlPressed) {
-      // CTRL only - toggle individual selection (non-contiguous multi-select)
+      // CTRL only - toggle individual selection
       if (videoIndex === -1) {
-        // Video not selected - add it to selection
         this.selectedVideos = [...this.selectedVideos, video];
       } else {
-        // Video already selected - remove it from selection
         this.selectedVideos = this.selectedVideos.filter(
           (v) => v.id !== video.id,
         );
@@ -469,13 +473,10 @@ export class ContentStateClass implements ContentState {
     } else {
       // No modifier keys - standard single selection behavior
       if (videoIndex === -1) {
-        // Video not selected - replace entire selection with just this video
         this.selectedVideos = [video];
       } else if (this.selectedVideos.length === 1) {
-        // Only this video is selected - deselect it (toggle off)
         this.selectedVideos = [];
       } else {
-        // Multiple videos selected - replace selection with just this video
         this.selectedVideos = [video];
       }
     }
@@ -497,10 +498,14 @@ export class ContentStateClass implements ContentState {
       // Don't clear selection if:
       // - Context menu is open
       // - User is dragging
+      // - User is holding modifier keys (shift, ctrl, cmd)
       if (
         this.isContextMenuOpen ||
         this.isDropdownMenuOpen ||
-        this.dragContentType
+        this.dragContentType ||
+        event.shiftKey ||
+        event.ctrlKey ||
+        event.metaKey
       ) {
         return;
       }
