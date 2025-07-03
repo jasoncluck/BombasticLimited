@@ -29,7 +29,7 @@
     // Only to be used when rendering videos in a playlist view
     playlist?: Playlist;
     allowVideoReorder?: boolean;
-    contentFilter?: CombinedContentFilter;
+    contentFilter: CombinedContentFilter;
     supabase: SupabaseClient<Database>;
     session: Session | null;
   };
@@ -94,7 +94,15 @@
 {/if}
 
 <div bind:this={contentRef} {...restProps} class="mx-4 flex flex-col gap-5">
-  <ContentTable {videos} {columns} {playlist} {supabase} {session} />
+  <ContentTable
+    {videos}
+    {contentFilter}
+    {videosCount}
+    {columns}
+    {playlist}
+    {supabase}
+    {session}
+  />
   <!-- {#if contentDisplay === "CAROUSEL"} -->
   <!--   <ContentCarousel -->
   <!--     {videos} -->

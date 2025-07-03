@@ -17,11 +17,10 @@
     columns: ColumnDef<Video, TValue>[];
     videos: Video[];
     playlist?: Playlist;
-    allowVideoReorder?: boolean;
-    contentFilter?: CombinedContentFilter;
-    supabase?: SupabaseClient<Database>;
-    session?: Session | null;
-    videosCount?: number | null;
+    contentFilter: CombinedContentFilter;
+    supabase: SupabaseClient<Database>;
+    session: Session | null;
+    videosCount: number | null;
     onDataUpdate?: (data: Video[]) => void;
     handleDragStart?: (
       e: DragEvent & { currentTarget: HTMLDivElement },
@@ -33,7 +32,6 @@
     videos = $bindable(),
     columns,
     playlist,
-    allowVideoReorder = false,
     contentFilter,
     videosCount,
     onDataUpdate,
@@ -42,6 +40,12 @@
   }: DataTableProps<TValue> = $props();
 
   const contentState = getContentState();
+
+  const allowVideoReorder = $derived(
+    !!playlist &&
+      playlist.created_by === session?.user.id &&
+      contentFilter.sort.key === "playlistOrder",
+  );
 
   // Create drag drop functionality if reordering is allowed and we have the required dependencies
   const dragDrop = $derived(
@@ -90,19 +94,8 @@
 
     // Add drag drop classes if enabled
     if (dragDrop && allowVideoReorder) {
-      if (contentState.draggedIndex === index) {
-        classes += " opacity-60";
-      }
-      if (contentState.targetIndex === index) {
-        if (
-          !contentState.draggedIndex ||
-          contentState.draggedIndex < contentState.targetIndex
-        ) {
-          classes += " border-b-2 border-primary";
-        } else {
-          classes += " border-t-2 border-primary";
-        }
-      }
+      // Use the new drag classes method instead of the old border approach
+      classes += ` ${contentState.getVideoDragClasses(index)}`;
     }
 
     return classes;

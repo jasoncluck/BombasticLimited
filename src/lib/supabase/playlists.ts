@@ -322,19 +322,19 @@ export async function addVideosToPlaylist({
 }
 
 export async function updatePlaylistVideoPosition({
-  videoId,
+  videoIds,
   playlistId,
   position,
   supabase,
 }: {
   playlistId: number;
-  videoId: string;
+  videoIds: string[];
   position: number;
   supabase: SupabaseClient<Database>;
 }) {
-  const { error } = await supabase.rpc("update_playlist_video_position", {
+  const { error } = await supabase.rpc("update_playlist_videos_positions", {
     p_playlist_id: playlistId,
-    p_video_id: videoId,
+    p_video_ids: videoIds,
     p_new_position: position,
   });
 

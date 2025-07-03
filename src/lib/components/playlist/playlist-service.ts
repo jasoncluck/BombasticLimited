@@ -263,18 +263,18 @@ export async function handleUpdatePlaylistImage({
 export async function handleUpdatePlaylistVideoPosition({
   playlist,
   position,
-  video,
+  videos,
   supabase,
 }: {
   playlist: Playlist;
-  video: Video;
+  videos: Video[];
   position: number;
   supabase: SupabaseClient<Database>;
 }) {
   await updatePlaylistVideoPosition({
     playlistId: playlist.id,
     position,
-    videoId: video.id,
+    videoIds: videos.map((v) => v.id),
     supabase,
   });
 }

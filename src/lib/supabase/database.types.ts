@@ -515,10 +515,10 @@ export type Database = {
           playlist_position: number
         }[]
       }
-      update_playlist_video_position: {
+      update_playlist_videos_positions: {
         Args: {
           p_playlist_id: number
-          p_video_id: string
+          p_video_ids: string[]
           p_new_position: number
         }
         Returns: {
