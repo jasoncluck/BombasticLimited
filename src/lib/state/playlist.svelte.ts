@@ -315,7 +315,7 @@ export class PlaylistStateClass implements PlaylistState {
       }
 
       if (contentState.dragContentType === "video") {
-        await handleAddVideosToPlaylist({
+        handleAddVideosToPlaylist({
           playlist: options.playlists[playlistTargetIndex],
           videos: contentState.selectedVideos,
           playlistImages: contentState.playlistImages,
@@ -327,7 +327,7 @@ export class PlaylistStateClass implements PlaylistState {
           return;
         }
 
-        await handleUpdatePlaylistPosition({
+        handleUpdatePlaylistPosition({
           playlist: options.playlists[this.draggedIndex],
           position: options.playlists.length - playlistTargetIndex,
           supabase: options.supabase,

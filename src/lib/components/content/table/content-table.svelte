@@ -69,7 +69,6 @@
     getCoreRowModel: getCoreRowModel(),
   });
 
-  console.log(contentState.selectedVideos);
   const selectedVideoIds = $derived(
     contentState.selectedVideos.length > 0
       ? new Set((contentState.selectedVideos || []).map((v) => v.id))

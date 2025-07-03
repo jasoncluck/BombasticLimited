@@ -223,7 +223,7 @@
       </a>
 
       <Input
-        oninput={layoutState.handleSearch}
+        oninput={(e) => layoutState.handleSearch(e)}
         placeholder="Search"
         class="sm:w-72"
         value={page.params.query}
