@@ -51,10 +51,19 @@ export const CONTENT_DIPSLAY = {
 export type ContentDescription =
   (typeof CONTENT_DIPSLAY)[keyof typeof CONTENT_DIPSLAY];
 
-export const carouselStateKeys = ["continueWatching", ...SOURCES] as const;
-export type CarouselKeys = (typeof carouselStateKeys)[number];
+// Key/Value mappings for landing page which has multiple Content components
+export const sourceWithContinueStateKeys = [
+  "continueWatching",
+  ...SOURCES,
+] as const;
+export type SourceWithContinueStateKeys =
+  (typeof sourceWithContinueStateKeys)[number];
+
 export type CarouselState = { lastViewedIndex: number };
-export type CarouselsState = Record<CarouselKeys, CarouselState>;
+export type SourceWithContinueCarouselState = Record<
+  SourceWithContinueStateKeys,
+  CarouselState
+>;
 
 export function handleContentNavigation({
   video,

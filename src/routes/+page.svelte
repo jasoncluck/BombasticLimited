@@ -1,20 +1,24 @@
 <script lang="ts">
   import { invalidate } from "$app/navigation";
   import { page } from "$app/state";
-  import {
-    carouselStateKeys,
-    type CarouselsState,
-  } from "$lib/components/content/content.js";
   import Content from "$lib/components/content/content.svelte";
   import { SOURCE_INFO, SOURCES } from "$lib/constants/source";
 
   import { userPreferences } from "$lib/state/user-preferences.svelte.js";
   import { isBrowser } from "@supabase/ssr";
   import type { Snapshot } from "./$types.js";
+  import { getContentState } from "$lib/state/content.svelte.js";
+  import type { Video } from "$lib/supabase/videos.js";
+  import {
+    sourceWithContinueStateKeys,
+    type SourceWithContinueCarouselState,
+  } from "$lib/components/content/content.js";
   let { data } = $props();
 
   let { sourceVideos, continueWatchingVideos, playlists, session, supabase } =
     $derived(data);
+
+  const contentState = getContentState();
 
   // After oauth authn there is a history stack update that doesn't trigger a proper invalidation.
   // This will look for the oauth success code returned and invalidate the playlists which are the only resource effected here
@@ -23,20 +27,32 @@
     invalidate("supabase:db:videos");
   }
 
-  export const snapshot: Snapshot<CarouselsState> = {
-    capture: () => carouselsState,
+  const initialCarouselState: SourceWithContinueCarouselState =
+    {} as SourceWithContinueCarouselState;
 
-    restore: async (restored) => (carouselsState = restored),
+  for (const key of sourceWithContinueStateKeys) {
+    initialCarouselState[key] = { lastViewedIndex: 0 };
+  }
+
+  let carouselsState =
+    $state<SourceWithContinueCarouselState>(initialCarouselState);
+
+  export const snapshot: Snapshot<{
+    carouselsState: SourceWithContinueCarouselState;
+    selectedTableVideos: Video[];
+  }> = {
+    capture: () => ({
+      carouselsState,
+      selectedTableVideos: contentState.selectedVideos,
+    }),
+    restore: async (restored) => {
+      carouselsState = restored.carouselsState;
+      contentState.selectedVideos = restored.selectedTableVideos;
+    },
   };
-
-  let carouselsState = $state<CarouselsState>(
-    Object.fromEntries(
-      carouselStateKeys.map((key) => [key, { lastViewedIndex: 0 }]),
-    ) as CarouselsState,
-  );
 </script>
 
-<div class="flex flex-col relative bg-background-lighter">
+<div class="flex flex-col relative bg-background-lighter mt-4">
   {#if session && continueWatchingVideos.length > 0}
     <div class="flex flex-col mb-8">
       <a href="/continue" class="header-link-sticky"> Continue Watching </a>
