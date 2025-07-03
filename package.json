@@ -36,6 +36,7 @@
     "@twurple/auth": "^7.2.1",
     "@twurple/eventsub-http": "^7.2.1",
     "@twurple/pubsub": "^7.2.1",
+    "@types/sharp": "^0.31.1",
     "@types/youtube": "^0.1.0",
     "autoprefixer": "^10.4.21",
     "bits-ui": "^1.5.2",
@@ -85,6 +86,7 @@
     "debounce": "^2.2.0",
     "embla-carousel-class-names": "^8.6.0",
     "embla-carousel-svelte": "^8.6.0",
+    "sharp": "^0.34.2",
     "svelte-radix": "^2.0.1",
     "tailwindcss": "^4.1.1"
   }

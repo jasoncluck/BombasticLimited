@@ -24,7 +24,7 @@
     contentFilter: PlaylistVideosFilter;
     form: SuperValidated<Infer<PlaylistSchema>>;
     profilePlaylist: ProfilePlaylist;
-    playlistImageUrl?: string;
+    playlistImageUrl: string | null;
     videos: Video[];
     playlists: Playlist[];
     playlistDuration: { hours: number; minutes: number; seconds: number };

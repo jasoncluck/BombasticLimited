@@ -11,6 +11,8 @@ CREATE OR REPLACE FUNCTION "public"."search_playlists"(
     "image_properties" jsonb,
     "created_at" timestamp with time zone,
     "created_by" uuid,
+    "type" playlist_type,
+    "youtube_id" text,
     "profile_username" text
 )
 LANGUAGE "plpgsql"
@@ -46,6 +48,8 @@ BEGIN
         p.image_properties,
         p.created_at,
         p.created_by,
+        p.type,
+        p.youtube_id,
         prof.username AS profile_username
     FROM public.playlists p
     LEFT JOIN public.profiles prof ON p.created_by = prof.id

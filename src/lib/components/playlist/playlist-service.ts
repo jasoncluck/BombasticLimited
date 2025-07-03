@@ -139,13 +139,11 @@ export async function getCroppedPlaylistImageUrl({
 
 export async function handleAddVideosToPlaylist({
   playlist,
-  playlistImages,
   videos,
   supabase,
   session,
 }: {
   playlist: Playlist;
-  playlistImages: PlaylistImages;
   videos: Video[];
   supabase: SupabaseClient<Database>;
   session: Session | null;
@@ -179,7 +177,6 @@ export async function handleAddVideosToPlaylist({
     if (!playlist.thumbnail_maxres_url || !playlist.thumbnail_url) {
       await handleUpdatePlaylistImage({
         playlist,
-        playlistImages,
         thumbnailMaxResUrl: videos[0].thumbnail_maxres_url,
         thumbnailUrl: videos[0].thumbnail_url,
         supabase,
@@ -191,7 +188,6 @@ export async function handleAddVideosToPlaylist({
 export async function handleRemoveVideosFromPlaylist({
   videos,
   playlist,
-  playlistImages,
   supabase,
 }: {
   videos: Video[];
@@ -212,7 +208,6 @@ export async function handleRemoveVideosFromPlaylist({
     ) {
       await handleUpdatePlaylistImage({
         playlist,
-        playlistImages,
         thumbnailMaxResUrl: null,
         thumbnailUrl: null,
         supabase,
@@ -231,20 +226,18 @@ export async function handleRemoveVideosFromPlaylist({
 
 export async function handleUpdatePlaylistImage({
   playlist,
-  playlistImages,
   thumbnailUrl,
   thumbnailMaxResUrl,
   supabase,
 }: {
   playlist: Playlist;
-  playlistImages: PlaylistImages;
   thumbnailUrl: string | null;
   thumbnailMaxResUrl: string | null;
   supabase: SupabaseClient<Database>;
 }) {
   const isResetImage = thumbnailUrl === null && thumbnailMaxResUrl === null;
   if (isResetImage) {
-    playlistImages[playlist.id] = undefined;
+    playlist.processedImageUrl = null;
   }
 
   const { updatedPlaylist, error } = await updatePlaylistImage({

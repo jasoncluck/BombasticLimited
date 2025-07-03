@@ -467,6 +467,8 @@ export type Database = {
           image_properties: Json
           created_at: string
           created_by: string
+          type: Database["public"]["Enums"]["playlist_type"]
+          youtube_id: string
           profile_username: string
         }[]
       }

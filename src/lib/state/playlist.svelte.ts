@@ -4,7 +4,6 @@ import type { Database } from "$lib/supabase/database.types";
 import { getContext, setContext } from "svelte";
 import { createDragImage } from "$lib/utils/dragdrop";
 import {
-  getCroppedPlaylistImageUrl,
   handleAddVideosToPlaylist,
   handleUpdatePlaylistPosition,
 } from "$lib/components/playlist/playlist-service";
@@ -48,18 +47,9 @@ export interface PlaylistState {
   draggedIndex: number | null;
   targetIndex: number | null;
 
-  // Playlist images loaded state
-  playlistImagesLoaded: boolean;
-
   // Mouse hover methods
   handleMouseEnter: (index: number) => void;
   handleMouseLeave: (index: number) => void;
-
-  // Playlist image loading
-  loadPlaylistImages: (
-    playlists: Playlist[],
-    session: Session | null,
-  ) => Promise<void>;
 
   // CSS class helpers
   getPlaylistDragClasses: (index: number) => string;
@@ -82,7 +72,6 @@ export class PlaylistStateClass implements PlaylistState {
   hoveredPlaylistIndex = $state<number | null>(null);
   draggedIndex = $state<number | null>(null);
   targetIndex = $state<number | null>(null);
-  playlistImagesLoaded = $state(false);
   currentPlaylist = $state<Playlist | null>(null);
 
   constructor(pageState: PageState) {
@@ -103,39 +92,6 @@ export class PlaylistStateClass implements PlaylistState {
   handleMouseLeave(index: number) {
     if (this.hoveredPlaylistIndex === index) {
       this.hoveredPlaylistIndex = null;
-    }
-  }
-
-  // Playlist image loading
-  async loadPlaylistImages(playlists: Playlist[], session: Session | null) {
-    const contentState = getContentState();
-
-    if (!session) {
-      this.playlistImagesLoaded = true;
-      return;
-    }
-
-    try {
-      const playlistImageUrls = playlists.map(async (p) => {
-        const imageUrl = await getCroppedPlaylistImageUrl({
-          imageProperties: p.image_properties,
-          thumbnailMaxResUrl: p.thumbnail_maxres_url,
-          thumbnailUrl: p.thumbnail_url,
-        });
-        return { id: p.id, imageUrl };
-      });
-
-      const results = await Promise.all(playlistImageUrls);
-      const imagesMap: Record<string, string | undefined> = {};
-      results.forEach(({ id, imageUrl }) => {
-        imagesMap[id] = imageUrl;
-      });
-
-      contentState.playlistImages = imagesMap;
-      this.playlistImagesLoaded = true;
-    } catch (error) {
-      console.error("Error loading playlist images:", error);
-      this.playlistImagesLoaded = true; // Still mark as loaded so UI can render with fallbacks
     }
   }
 
@@ -318,7 +274,6 @@ export class PlaylistStateClass implements PlaylistState {
         handleAddVideosToPlaylist({
           playlist: options.playlists[playlistTargetIndex],
           videos: contentState.selectedVideos,
-          playlistImages: contentState.playlistImages,
           supabase: options.supabase,
           session: options.session,
         });

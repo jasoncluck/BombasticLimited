@@ -15,6 +15,7 @@ import {
 } from "$lib/components/video/video-service";
 import { isPlaylistVideosFilter } from "$lib/components/content/content-filter";
 import { getPaginationQueryParams } from "$lib/components/content/pagination/content-pagination";
+import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
 
 export const load: PageServerLoad = async ({
   locals: { supabase, session },
@@ -72,8 +73,15 @@ export const load: PageServerLoad = async ({
     isDeletingPlaylistImage: false,
   };
 
+  const playlistImageUrl = await getCroppedPlaylistImageUrlServer({
+    imageProperties: transformedPlaylist.image_properties,
+    thumbnailMaxResUrl: profilePlaylist.thumbnail_maxres_url,
+    thumbnailUrl: profilePlaylist.thumbnail_url,
+  });
+
   return {
     profilePlaylist,
+    playlistImageUrl,
     playlists,
     videos,
     videosCount,

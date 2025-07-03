@@ -1,5 +1,9 @@
 import { showNotification } from "$lib/stores/notification";
-import type { Session, SupabaseClient } from "@supabase/supabase-js";
+import type {
+  PostgrestError,
+  Session,
+  SupabaseClient,
+} from "@supabase/supabase-js";
 import type { Database, Json, Tables } from "./database.types";
 import { invalidate } from "$app/navigation";
 import {
@@ -13,7 +17,7 @@ import type { Source } from "$lib/constants/source";
 export const PLAYLIST_VIDEO_LIMIT = 100;
 
 export type Playlist = Omit<Tables<"playlists">, "search_vector"> & {
-  croppedImageUrlData?: Promise<string | undefined>;
+  processedImageUrl?: string | null;
 };
 
 export type ProfilePlaylist = Playlist & { profile_username: string };
@@ -59,7 +63,7 @@ export async function getPlaylistByShortId({
     })
     .single();
 
-  if (error || data) {
+  if (error || !data) {
     console.error("Error fetching playlist from short ID.", error);
   }
   return { playlist: data, error };
@@ -202,9 +206,13 @@ export async function getUserPlaylists({
 }: {
   session: Session | null;
   supabase: SupabaseClient<Database>;
-}) {
+}): Promise<{
+  userPlaylists: UserPlaylist[];
+  count: number | null;
+  error: PostgrestError | null;
+}> {
   if (!session) {
-    return { playlists: [] };
+    return { userPlaylists: [], count: null, error: null };
   }
 
   const { data, count, error } = await supabase
@@ -273,8 +281,8 @@ export async function searchPlaylists({
   searchString: string;
   limit?: number;
   supabase: SupabaseClient<Database>;
-}) {
-  const { data, error } = await supabase
+}): Promise<{ playlists: ProfilePlaylist[]; error: PostgrestError | null }> {
+  const { data: playlists, error } = await supabase
     .rpc("search_playlists", {
       search_term: searchString,
     })
@@ -286,7 +294,7 @@ export async function searchPlaylists({
       "error",
     );
   }
-  return data ?? [];
+  return { playlists: playlists ?? [], error };
 }
 
 export async function addVideosToPlaylist({

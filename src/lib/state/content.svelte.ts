@@ -69,8 +69,6 @@ export interface ContentState {
   isDropdownMenuOpen: boolean;
   // ID of setTimeout event when hovering over a video
   hoverTimeoutId: ReturnType<typeof setTimeout> | null;
-  // Storing cropped images in local state to avoid refetching these
-  playlistImages: PlaylistImageInfo;
 
   // Drag and drop state
   draggedIndex: number | null;
@@ -154,7 +152,6 @@ export class ContentStateClass implements ContentState {
   isContextMenuOpen = $state(false);
   isDropdownMenuOpen = $state(false);
   hoverTimeoutId = $state<ReturnType<typeof setTimeout> | null>(null);
-  playlistImages = $state({});
   manualHover = $state(false);
 
   // Drag and drop state

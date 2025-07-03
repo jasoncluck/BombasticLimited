@@ -31,11 +31,6 @@
   const contentState = getContentState();
   const playlistState = getPlaylistState();
 
-  // Load playlist images when playlists or session changes
-  $effect(() => {
-    playlistState.loadPlaylistImages(playlists, session);
-  });
-
   // Create drag and drop handlers
   const dragDropHandlers = $derived(
     playlistState.createPlaylistDragDrop({
@@ -153,7 +148,7 @@
       : 'border-transparent'}"
   >
     <div class="flex flex-col">
-      {#if playlists === null || !playlistState.playlistImagesLoaded}
+      {#if playlists === null}
         <Loader class="animate-spin w-full" />
       {:else if session && playlists.length > 0}
         <div class="flex flex-col">
@@ -196,10 +191,10 @@
                   class="flex items-center grow absolute
                     {!isSidebarCollapsed ? 'grow w-full' : 'item-center'}"
                 >
-                  {#if contentState.playlistImages[playlist.id]}
+                  {#if playlist.processedImageUrl}
                     <div class="h-12 w-12 flex-shrink-0">
                       <img
-                        src={contentState.playlistImages[playlist.id]}
+                        src={playlist.processedImageUrl}
                         class="h-full w-full object-cover cursor-pointer"
                         alt={`Image for playlist: ${playlist.name}`}
                       />
