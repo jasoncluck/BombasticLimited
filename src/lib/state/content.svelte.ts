@@ -185,6 +185,10 @@ export class ContentStateClass implements ContentState {
   handleMouseEnter(options: MouseHoverOptions) {
     const { video, shouldScrollCheck = false } = options;
 
+    if (this.isContextMenuOpen) {
+      return;
+    }
+
     // For content cards that need to check scrolling state
     if (shouldScrollCheck) {
       if (

@@ -192,7 +192,6 @@ export async function handleRemoveVideosFromPlaylist({
 }: {
   videos: Video[];
   playlist: Playlist;
-  playlistImages: PlaylistImages;
   supabase: SupabaseClient<Database>;
 }) {
   const { error } = await deleteVideosFromPlaylist({

@@ -76,6 +76,10 @@
     oncontextmenu={(event) => {
       const isCtrlPressed = event.ctrlKey || event.metaKey;
 
+      if (operationVideos.length === 0) {
+        return false;
+      }
+
       if (isCtrlPressed) {
         event.preventDefault();
         return false;
@@ -97,160 +101,154 @@
     {@render children()}
   </ContextMenu.Trigger>
 
-  <ContextMenu.Content
-    class="max-h-64 overflow-visible outline-none {mediaQueryState.isTouchDevice &&
-      'hidden'}"
-  >
-    {#if operationVideos.length === 0}
-      <ContextMenu.Item disabled class="p-2"
-        >No videos selected</ContextMenu.Item
-      >
-    {:else if operationVideos.length > 0}
-      {@const filteredPlaylists = playlists.filter(
-        (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id,
-      )}
-      {#if filteredPlaylists.length > 0}
-        <ContextMenu.Sub>
-          <ContextMenu.SubTrigger onclick={(e) => e.stopPropagation()}>
-            Add {operationVideos.length === 1 ? "video" : "videos"} to Playlist
-          </ContextMenu.SubTrigger>
-          <ContextMenu.SubContent
-            align="start"
-            class="z-50 transition-opacity duration-150 overflow-hidden outline-none"
-            sideOffset={5}
-          >
-            <ScrollArea
-              type="scroll"
-              class=" {filteredPlaylists.length <= 6 ? 'h-auto' : 'h-56'}"
+  {#if operationVideos.length > 0}
+    <ContextMenu.Content
+      class="max-h-64 overflow-visible outline-none {mediaQueryState.isTouchDevice &&
+        'hidden'}"
+    >
+      {#if operationVideos.length > 0}
+        {@const filteredPlaylists = playlists.filter(
+          (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id,
+        )}
+        {#if filteredPlaylists.length > 0}
+          <ContextMenu.Sub>
+            <ContextMenu.SubTrigger onclick={(e) => e.stopPropagation()}>
+              Add {operationVideos.length === 1 ? "video" : "videos"} to Playlist
+            </ContextMenu.SubTrigger>
+            <ContextMenu.SubContent
+              align="start"
+              class="z-50 transition-opacity duration-150 overflow-hidden outline-none"
+              sideOffset={5}
             >
-              {#if filteredPlaylists.length < 1}
-                <ContextMenu.Item class="p-2"
-                  >No playlists found</ContextMenu.Item
-                >
-              {:else}
-                {#each filteredPlaylists as addPlaylist (addPlaylist.id)}
-                  <ContextMenu.Item
-                    class="p-2"
-                    onclick={() =>
-                      handleAddVideosToPlaylist({
-                        videos: operationVideos,
-                        playlist: addPlaylist,
-                        playlistImages: contentState.playlistImages,
-                        supabase,
-                        session,
-                      })}
+              <ScrollArea
+                type="scroll"
+                class=" {filteredPlaylists.length <= 6 ? 'h-auto' : 'h-56'}"
+              >
+                {#if filteredPlaylists.length < 1}
+                  <ContextMenu.Item class="p-2"
+                    >No playlists found</ContextMenu.Item
                   >
-                    {addPlaylist.name}
-                  </ContextMenu.Item>
-                {/each}
-              {/if}
-            </ScrollArea>
-          </ContextMenu.SubContent>
-        </ContextMenu.Sub>
-      {/if}
-      {#if playlist && isPlaylistOwner}
-        <ContextMenu.Item
-          class="p-2"
-          onclick={async () => {
-            const { error } = await handleRemoveVideosFromPlaylist({
-              videos: operationVideos,
-              playlist,
-              playlistImages: contentState.playlistImages,
-              supabase,
-            });
+                {:else}
+                  {#each filteredPlaylists as addPlaylist (addPlaylist.id)}
+                    <ContextMenu.Item
+                      class="p-2"
+                      onclick={() =>
+                        handleAddVideosToPlaylist({
+                          videos: operationVideos,
+                          playlist: addPlaylist,
+                          supabase,
+                          session,
+                        })}
+                    >
+                      {addPlaylist.name}
+                    </ContextMenu.Item>
+                  {/each}
+                {/if}
+              </ScrollArea>
+            </ContextMenu.SubContent>
+          </ContextMenu.Sub>
+        {/if}
+        {#if playlist && isPlaylistOwner}
+          <ContextMenu.Item
+            class="p-2"
+            onclick={async () => {
+              const { error } = await handleRemoveVideosFromPlaylist({
+                videos: operationVideos,
+                playlist,
+                supabase,
+              });
 
-            if (!error) {
-              // Clear selected videos if we were operating on them
-              if (contentState.selectedVideos.length > 0) {
-                contentState.selectedVideos = [];
+              if (!error) {
+                // Clear selected videos if we were operating on them
+                if (contentState.selectedVideos.length > 0) {
+                  contentState.selectedVideos = [];
+                }
+                // Clear hovered video if we were operating on it
+                if (
+                  contentState.selectedVideos.length === 0 &&
+                  contentState.hoveredVideo
+                ) {
+                  contentState.hoveredVideo = null;
+                }
               }
-              // Clear hovered video if we were operating on it
-              if (
-                contentState.selectedVideos.length === 0 &&
-                contentState.hoveredVideo
-              ) {
-                contentState.hoveredVideo = null;
-              }
-            }
-          }}
-        >
-          Remove from this playlist
-        </ContextMenu.Item>
-      {/if}
+            }}
+          >
+            Remove from this playlist
+          </ContextMenu.Item>
+        {/if}
 
-      {#if playlist && isPlaylistOwner && operationVideos.length === 1}
-        <ContextMenu.Item
-          class="p-2"
-          onclick={async () =>
-            (contentState.playlistImages[playlist.id] =
-              await handleUpdatePlaylistImage({
+        {#if playlist && isPlaylistOwner && operationVideos.length === 1}
+          <ContextMenu.Item
+            class="p-2"
+            onclick={() =>
+              handleUpdatePlaylistImage({
                 playlist,
                 thumbnailUrl: operationVideos[0].thumbnail_url,
                 thumbnailMaxResUrl: operationVideos[0].thumbnail_maxres_url,
-                playlistImages: contentState.playlistImages,
                 supabase,
-              }))}
-        >
-          Set as playlist image
-        </ContextMenu.Item>
-      {/if}
+              })}
+          >
+            Set as playlist image
+          </ContextMenu.Item>
+        {/if}
 
-      {#if session && operationVideos.some((v) => isVideoWithTimestamp(v))}
-        <ContextMenu.Item
-          class="p-2"
-          onclick={async () => {
-            const { updatedVideos } = await handleDeleteVideoTimestamp({
-              videos: operationVideos,
-              supabase,
-              session,
-            });
+        {#if session && operationVideos.some((v) => isVideoWithTimestamp(v))}
+          <ContextMenu.Item
+            class="p-2"
+            onclick={async () => {
+              const { updatedVideos } = await handleDeleteVideoTimestamp({
+                videos: operationVideos,
+                supabase,
+                session,
+              });
 
-            // Update the appropriate state based on what we were operating on
-            if (contentState.selectedVideos.length > 0) {
-              contentState.selectedVideos = updatedVideos;
-            } else if (contentState.hoveredVideo) {
-              const updatedHoveredVideo = updatedVideos.find(
-                (v) => v.id === contentState.hoveredVideo?.id,
-              );
-              if (updatedHoveredVideo) {
-                contentState.hoveredVideo = updatedHoveredVideo;
+              // Update the appropriate state based on what we were operating on
+              if (contentState.selectedVideos.length > 0) {
+                contentState.selectedVideos = updatedVideos;
+              } else if (contentState.hoveredVideo) {
+                const updatedHoveredVideo = updatedVideos.find(
+                  (v) => v.id === contentState.hoveredVideo?.id,
+                );
+                if (updatedHoveredVideo) {
+                  contentState.hoveredVideo = updatedHoveredVideo;
+                }
               }
-            }
-          }}
-        >
-          Reset progress
-        </ContextMenu.Item>
-      {/if}
+            }}
+          >
+            Reset progress
+          </ContextMenu.Item>
+        {/if}
 
-      {#if operationVideos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
-        <ContextMenu.Item
-          class="p-2"
-          onclick={async () => {
-            const { updatedVideos } = await handleAddVideoTimestamp({
-              videoTimestamps: operationVideos.map((v) => ({
-                videoId: v.id,
-                watchedAt: new Date(),
-              })),
-              session,
-              supabase,
-            });
+        {#if operationVideos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
+          <ContextMenu.Item
+            class="p-2"
+            onclick={async () => {
+              const { updatedVideos } = await handleAddVideoTimestamp({
+                videoTimestamps: operationVideos.map((v) => ({
+                  videoId: v.id,
+                  watchedAt: new Date(),
+                })),
+                session,
+                supabase,
+              });
 
-            // Update the appropriate state based on what we were operating on
-            if (contentState.selectedVideos.length > 0) {
-              contentState.selectedVideos = updatedVideos;
-            } else if (contentState.hoveredVideo) {
-              const updatedHoveredVideo = updatedVideos.find(
-                (v) => v.id === contentState.hoveredVideo?.id,
-              );
-              if (updatedHoveredVideo) {
-                contentState.hoveredVideo = updatedHoveredVideo;
+              // Update the appropriate state based on what we were operating on
+              if (contentState.selectedVideos.length > 0) {
+                contentState.selectedVideos = updatedVideos;
+              } else if (contentState.hoveredVideo) {
+                const updatedHoveredVideo = updatedVideos.find(
+                  (v) => v.id === contentState.hoveredVideo?.id,
+                );
+                if (updatedHoveredVideo) {
+                  contentState.hoveredVideo = updatedHoveredVideo;
+                }
               }
-            }
-          }}
-        >
-          Mark video as watched
-        </ContextMenu.Item>
+            }}
+          >
+            Mark video as watched
+          </ContextMenu.Item>
+        {/if}
       {/if}
-    {/if}
-  </ContextMenu.Content>
+    </ContextMenu.Content>
+  {/if}
 </ContextMenu.Root>
