@@ -20,7 +20,7 @@ export const load: PageServerLoad = async ({
 }) => {
   depends("supabase:db:videos");
 
-  const { userPlaylists } = await parent();
+  const { playlists } = await parent();
 
   if (url.searchParams.has("error")) {
     redirect(303, "/auth/error");
@@ -32,7 +32,7 @@ export const load: PageServerLoad = async ({
     remap: [],
   };
 
-  const sourceVideosDataFilters: VideoFilter = {
+  const sourceVideosContentFilters: VideoFilter = {
     sort: {
       key: "datePublished",
       order: "descending",
@@ -44,14 +44,14 @@ export const load: PageServerLoad = async ({
     const { videos } = await getVideos({
       source,
       limit: DEFAULT_NUM_VIDEOS_OVERVIEW,
-      contentFilter: sourceVideosDataFilters,
+      contentFilter: sourceVideosContentFilters,
       supabase,
       session,
     });
     sourceVideos[source] = videos;
   }
 
-  const continueWatchingDataFilters: TimestampFilter = {
+  const continueWatchingContentFilters: TimestampFilter = {
     sort: {
       key: "dateTimestamp",
       order: "descending",
@@ -60,7 +60,7 @@ export const load: PageServerLoad = async ({
   };
 
   const { videos: continueWatchingVideos } = await getInProgressVideos({
-    contentFilter: continueWatchingDataFilters,
+    contentFilter: continueWatchingContentFilters,
     limit: DEFAULT_NUM_VIDEOS_OVERVIEW,
     supabase,
     session,
@@ -68,9 +68,9 @@ export const load: PageServerLoad = async ({
 
   return {
     sourceVideos,
-    sourceVideosDataFilters,
+    sourceVideosContentFilters,
     continueWatchingVideos,
-    continueWatchingDataFilters,
-    userPlaylists,
+    continueWatchingContentFilters,
+    playlists,
   };
 };

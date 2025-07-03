@@ -137,7 +137,7 @@
 }
 
 .sidebar-full-button {
-  @apply h-[64px] px-2 py-8 w-full border border-transparent relative cursor-pointer transition-none;
+  @apply h-[64px] px-2 py-8 w-full border border-transparent relative cursor-pointer transition-none overflow-clip;
 }
 
 .ghost-button-minimal {
