@@ -9,6 +9,8 @@ import { invalidate } from "$app/navigation";
 import {
   SORT_OPTIONS_PLAYLIST_VIDEOS,
   type PlaylistVideosFilter,
+  type SortKey,
+  type SortOrder,
 } from "$lib/components/content/content-filter";
 import type { CropArea } from "svelte-easy-crop";
 import { type Video } from "./videos";
@@ -522,23 +524,35 @@ export async function unfollowPlaylist({
   return { error };
 }
 
-export function getIsFollowingPlaylist({
-  playlist,
-  playlists,
+export async function updatePlaylistSort({
+  playlistId,
+  sortedBy,
+  sortOrder,
+  supabase,
   session,
 }: {
-  playlist?: Playlist;
-  playlists: Playlist[];
-  session: Session | null;
+  playlistId: number;
+  sortedBy: SortKey<PlaylistVideo>;
+  sortOrder: SortOrder;
+  supabase: SupabaseClient<Database>;
+  session: Session;
 }) {
-  if (!session || !playlist) {
-    return false;
+  const { data: updatedPlaylist, error } = await supabase
+    .from("playlists")
+    .update({
+      sorted_by: sortedBy,
+      sort_order: sortOrder,
+    })
+    .eq("id", playlistId)
+    .eq("created_by", session.user.id) // Ensure user owns the playlist
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating playlist sort:", error);
   }
 
-  return (
-    playlist.created_by !== session.user.id &&
-    playlists.some((pl) => pl.id === playlist?.id)
-  );
+  return { updatedPlaylist, error };
 }
 
 export function isPlaylistVideo(video: Video): video is Video & PlaylistVideo {

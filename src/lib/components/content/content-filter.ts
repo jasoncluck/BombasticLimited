@@ -181,7 +181,7 @@ export function getFilterOptionFromQueryParams({
 /**
  * Update the current page's query params with the selected filter values
  */
-export function updateFilterQueryParams({
+export function updateFilter({
   url,
   contentFilter,
   view,

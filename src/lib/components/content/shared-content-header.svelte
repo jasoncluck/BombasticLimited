@@ -78,7 +78,7 @@
     if (nextVideoToPlay) {
       handleContentNavigation({
         video: nextVideoToPlay,
-        playlist: profilePlaylist,
+        playlistShortId: profilePlaylist?.short_id,
       });
     }
   }
@@ -163,7 +163,13 @@
         </div>
       {/if}
       <div class="flex items-center gap-4 ml-auto">
-        <ContentFilters {contentFilter} {view} />
+        <ContentFilters
+          {contentFilter}
+          {view}
+          playlist={profilePlaylist}
+          {supabase}
+          {session}
+        />
       </div>
     </div>
     {#if currentPage && numPages > 1}

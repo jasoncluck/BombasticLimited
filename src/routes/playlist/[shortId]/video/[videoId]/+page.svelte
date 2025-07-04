@@ -3,8 +3,15 @@
   import VideoPlayer from "$lib/components/video/video-player.svelte";
 
   const { data } = $props();
-  let { video, videos, playlist, playlists, contentFilter, supabase, session } =
-    $derived(data);
+  let {
+    video,
+    videos,
+    profilePlaylist,
+    playlists,
+    contentFilter,
+    supabase,
+    session,
+  } = $derived(data);
 </script>
 
 <div class="m-4">
@@ -12,8 +19,8 @@
     {#key video.id}
       <VideoPlayer
         {video}
-        baseUrl={`/playlist/${playlist.short_id}`}
-        videoId={video.id}
+        baseUrl={`/playlist/${profilePlaylist.short_id}`}
+        playlist={profilePlaylist}
         {supabase}
         {session}
       />
@@ -22,14 +29,14 @@
 
   {#if videos.length > 0}
     <div class="flex flex-col gap-2">
-      <a class="header-link" href={`/playlist/${playlist.short_id}`}>
-        Next up - {playlist.name}
+      <a class="header-link" href={`/playlist/${profilePlaylist.short_id}`}>
+        Next up - {profilePlaylist.name}
       </a>
       <Content
         {videos}
         contentDisplay="CAROUSEL"
         {contentFilter}
-        {playlist}
+        playlist={profilePlaylist}
         {playlists}
         {supabase}
         {session}

@@ -129,19 +129,6 @@ export interface ContentState {
     onNavigate?: (video: Video, playlist?: Playlist) => void;
   }) => void;
 
-  // Play button click handler
-  handlePlayButtonClick: ({
-    event,
-    video,
-    playlist,
-    onNavigate,
-  }: {
-    event: MouseEvent;
-    video: Video;
-    playlist?: Playlist;
-    onNavigate?: (video: Video, playlist?: Playlist) => void;
-  }) => void;
-
   // Mouse hover methods
   handleMouseEnter: (options: MouseHoverOptions) => void;
   handleMouseLeave: (isHoveringElement?: boolean) => void;
@@ -256,26 +243,6 @@ export class ContentStateClass implements ContentState {
       }
     }
     return classes;
-  }
-
-  // Handle play button click - immediate navigation
-  handlePlayButtonClick({
-    event,
-    video,
-    playlist,
-    onNavigate,
-  }: {
-    event: MouseEvent;
-    video: Video;
-    playlist?: Playlist;
-    onNavigate?: (video: Video, playlist?: Playlist) => void;
-  }) {
-    // Stop the event from propagating to the row click handler
-    event.stopPropagation();
-    event.preventDefault();
-
-    // Navigate immediately
-    onNavigate?.(video, playlist);
   }
 
   // Handle single click (select) vs double click (navigate)

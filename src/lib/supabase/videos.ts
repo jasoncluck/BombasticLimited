@@ -10,7 +10,10 @@ import {
   SORT_OPTIONS_VIDEO,
   SORT_OPTIONS_TIMESTAMPS,
   type ContentFilter,
+  type SortKey,
+  type SortOrder,
 } from "$lib/components/content/content-filter";
+import type { PlaylistVideo } from "./playlists";
 
 export const DEFAULT_NUM_VIDEOS_PAGINATION = 250;
 export const DEFAULT_NUM_VIDEOS_OVERVIEW = 15;
@@ -19,7 +22,12 @@ export type TimestampResponse = Tables<"timestamps">;
 export type VideoTimestamp = Pick<
   TimestampResponse,
   "video_start_seconds" | "updated_at" | "watched_at"
->;
+> & {
+  playlist_name?: string | null;
+  playlist_short_id?: string | null;
+  playlist_sorted_by?: SortKey<PlaylistVideo>;
+  playlist_sort_order?: SortOrder;
+};
 
 export type VideoResponse = Tables<"videos">;
 export type Video = Omit<VideoResponse, "search_vector" | "pending_delete">;

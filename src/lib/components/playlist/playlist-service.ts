@@ -11,14 +11,17 @@ import {
   unfollowPlaylist,
   updatePlaylistImage,
   updatePlaylistPosition,
+  updatePlaylistSort,
   updatePlaylistVideoPosition,
   type Playlist,
   type PlaylistImageProperties,
+  type PlaylistVideo,
 } from "$lib/supabase/playlists";
 import { type Session, type SupabaseClient } from "@supabase/supabase-js";
 import { getCroppedImg } from "../ui/image-cropper/utils";
 import type { CropArea } from "svelte-easy-crop";
 import type { Video } from "$lib/supabase/videos";
+import type { SortKey, SortOrder } from "../content/content-filter";
 
 export type PlaylistImages = Record<string, string | undefined>;
 
@@ -363,4 +366,37 @@ export async function handleUnfollowPlaylist({
   } else {
     showNotification(`Unable to remove playlist: ${error.message}`, "error");
   }
+}
+
+export async function handleUpdatePlaylistSort({
+  playlist,
+  sortedBy,
+  sortOrder,
+  supabase,
+  session,
+}: {
+  playlist: Playlist;
+  sortedBy: SortKey<PlaylistVideo>;
+  sortOrder: SortOrder;
+  supabase: SupabaseClient<Database>;
+  session: Session | null;
+}) {
+  if (!session) {
+    goto("/auth");
+    return;
+  }
+
+  const { updatedPlaylist, error } = await updatePlaylistSort({
+    playlistId: playlist.id,
+    sortedBy,
+    sortOrder,
+    supabase,
+    session,
+  });
+
+  if (error) {
+    showNotification("Unable to update playlist sort settings", "error");
+  }
+
+  return { updatedPlaylist, error };
 }

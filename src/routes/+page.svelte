@@ -15,8 +15,14 @@
   } from "$lib/components/content/content.js";
   let { data } = $props();
 
-  let { sourceVideos, continueWatchingVideos, playlists, session, supabase } =
-    $derived(data);
+  let {
+    sourceVideos,
+    contentFilter,
+    continueWatchingVideos,
+    playlists,
+    session,
+    supabase,
+  } = $derived(data);
 
   const contentState = getContentState();
 
@@ -59,6 +65,7 @@
 
       <Content
         videos={continueWatchingVideos}
+        {contentFilter}
         {playlists}
         isContinueVideos={true}
         contentDisplay={userPreferences.contentDisplay}
@@ -83,6 +90,7 @@
           {SOURCE_INFO[source].displayName}
         </a>
         <Content
+          {contentFilter}
           videos={sourceVideos[source]}
           {playlists}
           contentDisplay={userPreferences.contentDisplay}

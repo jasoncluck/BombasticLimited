@@ -9,6 +9,7 @@ export type TimestampWithVideoId = {
   videoId: string;
   timestampStartSeconds?: number;
   watchedAt?: Date;
+  playlistId?: number;
 };
 
 export async function saveVideoTimestamps({
@@ -25,12 +26,16 @@ export async function saveVideoTimestamps({
   if (session && videoTimestamps.length > 0) {
     const video_ids = videoTimestamps.map((v) => v.videoId);
 
-    // Ensure all arrays contain null instead of undefined, to be Postgres-compatible
     const video_start_seconds = videoTimestamps.map((v) =>
       v.timestampStartSeconds !== undefined ? v.timestampStartSeconds : null,
     );
+
     const watched_at = videoTimestamps.map((v) =>
       v.watchedAt ? v.watchedAt.toISOString() : null,
+    );
+
+    const playlistIds = videoTimestamps.map((v) =>
+      v.playlistId ? v.playlistId : null,
     );
 
     const { data: videos, error: upsertError } = await supabase
@@ -39,6 +44,7 @@ export async function saveVideoTimestamps({
         p_video_ids: video_ids,
         p_video_start_seconds: video_start_seconds,
         p_watched_at: watched_at,
+        p_playlist_ids: playlistIds,
       })
       .select();
 

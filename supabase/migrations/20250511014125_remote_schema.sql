@@ -219,6 +219,7 @@ CREATE TABLE IF NOT EXISTS "public"."playlists" (
 );
 
 
+
 ALTER TABLE "public"."playlists" OWNER TO "postgres";
 
 
@@ -254,9 +255,11 @@ CREATE TABLE IF NOT EXISTS "public"."timestamps" (
     "user_id" uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     "video_id" "text" NOT NULL,
     "video_start_seconds" numeric,
+    "playlist_id" bigint REFERENCES public.playlists("id") ON DELETE CASCADE,
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "watched_at" timestamp with time zone,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
+
 );
 
 

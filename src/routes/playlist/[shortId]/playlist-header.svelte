@@ -153,7 +153,7 @@
           </p>
         </button>
 
-        <div class="flex items-center">
+        <div class="flex items-center flex-wrap">
           {#if profilePlaylist.profile_username}
             {#if isSource(profilePlaylist.profile_username)}
               {@const sourceInfo =
@@ -173,7 +173,7 @@
             {/if}
             <Circle
               size="5"
-              class="stroke-muted-foreground mx-2 fill-muted-foreground justify-center"
+              class="shrink-0 stroke-muted-foreground mx-2 fill-muted-foreground justify-center"
             />
           {/if}
           <p class="text-sm text-muted-foreground">

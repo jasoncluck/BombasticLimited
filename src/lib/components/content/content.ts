@@ -5,6 +5,9 @@ import type { Video } from "$lib/supabase/videos";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import {
   getFilterKeysForView,
+  getSortKeysForView,
+  isSortKey,
+  isSortOrder,
   type PlaylistVideosFilter,
 } from "./content-filter";
 import { page } from "$app/state";
@@ -65,30 +68,46 @@ export type SourceWithContinueCarouselState = Record<
   CarouselState
 >;
 
+// TODO: Finish
 export function handleContentNavigation({
   video,
-  playlist,
+  playlistShortId,
+  playlistSortedBy,
+  playlistSortOrder,
 }: {
   video: Video;
-  playlist?: Playlist;
+  playlistShortId?: string | null;
+  playlistSortedBy?: "title" | "datePublished" | "playlistOrder";
+  playlistSortOrder?: "ascending" | "descending";
 }) {
-  if (playlist) {
-    const targetUrl = new URL(
-      `/playlist/${playlist.short_id}/video/${video.id}`,
-      window.location.origin,
-    );
+  const url = new URL(window.location.href);
+  console.log(playlistSortedBy);
 
-    getFilterKeysForView("playlist").forEach((key) => {
-      const searchParamForKey = page.url.searchParams.get(key);
-      if (searchParamForKey) {
-        targetUrl.searchParams.set(key, searchParamForKey);
-      }
+  const searchParams = url.searchParams;
+
+  // Build the base URL path
+  let targetPath = `/videos/${video.id}`;
+
+  if (playlistShortId) {
+    // Clear existing playlist sorting parameters
+    getSortKeysForView("playlist").forEach((key) => {
+      searchParams.delete(key);
     });
 
-    goto(targetUrl.pathname + targetUrl.search, {
-      invalidate: ["supabase:db:videos"],
-    });
-  } else {
-    goto(`/video/${video.id}`);
+    if (
+      isSortKey(playlistSortedBy, "playlist") &&
+      isSortOrder(playlistSortOrder)
+    ) {
+      searchParams.set(playlistSortedBy, playlistSortOrder);
+    }
+    targetPath = `/playlist/${playlistShortId}/video/${video.id}`;
   }
+
+  // Apply any existing search params to the new URL
+  const newUrl = new URL(targetPath, window.location.origin);
+  newUrl.search = searchParams.toString();
+
+  goto(newUrl.toString(), {
+    invalidate: ["supabase:db:videos"],
+  });
 }

@@ -8,7 +8,7 @@
   } from "$lib/supabase/timestamps";
   import { beforeNavigate } from "$app/navigation";
   import type { Playlist } from "$lib/supabase/playlists";
-  import type { Video } from "$lib/supabase/videos";
+  import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
   import { page } from "$app/state";
 
   const VIDEO_SAVE_SECONDS_START = 15;
@@ -19,6 +19,7 @@
     video,
     supabase,
     session,
+    playlist,
     durationSeconds,
   }: {
     video: Video;
@@ -66,6 +67,7 @@
     video: Video,
     currentTimeSeconds: number,
     videoDurationSeconds: number,
+    playlist?: Playlist,
   ) {
     if (
       !videoDurationSeconds ||
@@ -81,6 +83,7 @@
           {
             videoId: video.id,
             watchedAt: new Date(),
+            playlistId: playlist?.id,
           },
         ],
         session,
@@ -89,7 +92,11 @@
     } else {
       saveVideoTimestamps({
         videoTimestamps: [
-          { videoId: video.id, timestampStartSeconds: currentTimeSeconds },
+          {
+            videoId: video.id,
+            timestampStartSeconds: currentTimeSeconds,
+            playlistId: playlist?.id,
+          },
         ],
         session,
         supabase,
@@ -102,6 +109,7 @@
     video: Video,
     currentTimeSeconds: number,
     videoDurationSeconds: number,
+    playlist?: Playlist,
   ) {
     if (
       !videoDurationSeconds ||
@@ -120,6 +128,7 @@
       watchedAt,
       currentTimeSeconds,
       videoId: video.id,
+      playlistId: playlist?.id,
       // Add user/session info if needed (e.g. userId: session?.user.id)
     };
 
@@ -138,9 +147,19 @@
           Math.abs(currentTimeSeconds - startSeconds) > VIDEO_SAVE_SECONDS_DELTA
         ) {
           if (useBeacon) {
-            saveTimestampBeacon(video, currentTimeSeconds, durationSeconds);
+            saveTimestampBeacon(
+              video,
+              currentTimeSeconds,
+              durationSeconds,
+              playlist,
+            );
           } else {
-            saveTimestampForVideo(video, currentTimeSeconds, durationSeconds);
+            saveTimestampForVideo(
+              video,
+              currentTimeSeconds,
+              durationSeconds,
+              playlist,
+            );
           }
         }
       } catch (error) {
@@ -175,13 +194,15 @@
       startSeconds = parseInt(searchParamT, 10);
     } else {
       // Always fetch from backend if no param
-      const { videoTimestamp } = await getLatestTimestamp({
-        videoId: video.id,
-        session,
-        supabase,
-      });
-      if (videoTimestamp) {
-        startSeconds = videoTimestamp.video_start_seconds ?? 0;
+      if (isVideoWithTimestamp(video)) {
+        const { videoTimestamp } = await getLatestTimestamp({
+          videoId: video.id,
+          session,
+          supabase,
+        });
+        if (videoTimestamp) {
+          startSeconds = videoTimestamp.video_start_seconds ?? 0;
+        }
       } else {
         startSeconds = 0;
       }

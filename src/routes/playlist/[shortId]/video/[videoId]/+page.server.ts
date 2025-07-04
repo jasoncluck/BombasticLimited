@@ -1,8 +1,8 @@
 import { isPlaylistVideosFilter } from "$lib/components/content/content-filter";
 import {
+  getPlaylistByShortId,
   getPlaylistVideo,
   getPlaylistVideos,
-  type Playlist,
 } from "$lib/supabase/playlists";
 import { isVideoWithTimestamp } from "$lib/supabase/videos";
 import { redirect } from "@sveltejs/kit";
@@ -19,10 +19,12 @@ export const load: PageServerLoad = async ({
 
   const { playlists, contentFilter } = await parent();
 
-  const playlist: Playlist | undefined = playlists.find(
-    (pl) => pl.short_id === params.shortId,
-  );
-  if (!playlist) {
+  const { playlist: profilePlaylist } = await getPlaylistByShortId({
+    shortId: params.shortId,
+    supabase,
+  });
+
+  if (!profilePlaylist) {
     console.error(
       "Could not playlist with that ID or invalid session, redirecting to video",
     );
@@ -32,7 +34,7 @@ export const load: PageServerLoad = async ({
   const { video } = await getPlaylistVideo({
     videoId,
     supabase,
-    playlistId: playlist.id,
+    playlistId: profilePlaylist.id,
   });
 
   if (!isPlaylistVideosFilter(contentFilter)) {
@@ -42,7 +44,7 @@ export const load: PageServerLoad = async ({
   // TODO: Adjust limit
   const { videos } = await getPlaylistVideos({
     contentFilter,
-    playlistId: playlist.id,
+    playlistId: profilePlaylist.id,
     currentVideo: video,
     limit: 100,
     supabase,
@@ -55,7 +57,7 @@ export const load: PageServerLoad = async ({
   return {
     video,
     videos,
-    playlist,
+    profilePlaylist,
     playlists,
     contentFilter,
     timestampStartSeconds: isVideoWithTimestamp(video)

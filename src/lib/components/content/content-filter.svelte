@@ -8,7 +8,7 @@
     videoSortKeys,
     timestampSortKeys,
     playlistVideosSortKeys,
-    updateFilterQueryParams,
+    updateFilter,
     type SortKey,
     type SortOrder,
     type CombinedContentFilter,
@@ -16,15 +16,24 @@
   import { page } from "$app/state";
   import type { VideoTimestamp, Video } from "$lib/supabase/videos";
   import { parseDate, type DateValue } from "@internationalized/date";
-  import type { PlaylistVideo } from "$lib/supabase/playlists";
+  import type { Playlist, PlaylistVideo } from "$lib/supabase/playlists";
   import type { ContentView } from "./content";
+  import { handleUpdatePlaylistSort } from "../playlist/playlist-service";
+  import type { Session, SupabaseClient } from "@supabase/supabase-js";
+  import type { Database } from "$lib/supabase/database.types";
 
   let {
     contentFilter,
     view = "default",
+    playlist,
+    supabase,
+    session,
   }: {
     contentFilter: CombinedContentFilter;
     view?: ContentView;
+    playlist?: Playlist;
+    supabase: SupabaseClient<Database>;
+    session: Session | null;
   } = $props();
 
   // Determine sort keys based on the view type
@@ -116,6 +125,16 @@
         startDate: contentFilter.startDate,
         endDate: contentFilter.endDate,
       };
+      // Update playlist sort so it can be retrieved next time until changed again
+      if (playlist) {
+        handleUpdatePlaylistSort({
+          playlist,
+          sortOrder,
+          sortedBy: newContentFilter.sort.key,
+          supabase,
+          session,
+        });
+      }
     } else {
       newContentFilter = {
         type: "video",
@@ -132,7 +151,7 @@
     contentFilter = newContentFilter;
 
     // Redirect to the same page with the updated query params
-    updateFilterQueryParams({
+    updateFilter({
       url: page.url,
       contentFilter,
       startDateValue,

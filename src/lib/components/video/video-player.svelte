@@ -2,6 +2,7 @@
   import { videoDurationToSeconds } from "$lib/components/video/video-service.js";
   import YoutubeEmbed from "$lib/components/video/youtube-embed.svelte";
   import { getPageState } from "$lib/state/page.svelte";
+  import type { Playlist } from "$lib/supabase/playlists";
   import type { Video } from "$lib/supabase/videos";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
 
@@ -13,13 +14,13 @@
 
   const {
     video,
-    videoId,
+    playlist,
     supabase,
     session,
     baseUrl = "/video",
   }: {
     video: Video;
-    videoId: string;
+    playlist?: Playlist;
     supabase: SupabaseClient;
     session: Session | null;
     baseUrl?: string;
@@ -87,6 +88,7 @@
     {supabase}
     {session}
     {video}
+    {playlist}
     durationSeconds={videoDurationToSeconds(video?.duration)}
   />
 
@@ -104,7 +106,7 @@
           <div>
             <a
               class="timestamp-link text-left w-full hover:underline hover:text-primary"
-              href="{baseUrl}/{videoId}?t={line.timestamp}"
+              href="{baseUrl}/{video.id}?t={line.timestamp}"
               onclick={() => {
                 pageState.contentScrollPosition = { scrollTop: 0 };
               }}

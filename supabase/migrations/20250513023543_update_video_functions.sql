@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps"() RETURNS TABLE("id" "text", "source" "public"."source", "title" "text", "description" "text", "thumbnail_url" "text", "thumbnail_maxres_url" "text", "published_at" timestamp with time zone, "duration" "text", "video_start_seconds" numeric,"watched_at" timestamp with time zone, "updated_at" timestamp with time zone)
+CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps"() RETURNS TABLE("id" "text", "source" "public"."source", "title" "text", "description" "text", "thumbnail_url" "text", "thumbnail_maxres_url" "text", "published_at" timestamp with time zone, "duration" "text", "video_start_seconds" numeric,"watched_at" timestamp with time zone, "updated_at" timestamp with time zone, playlist_id bigint)
     LANGUAGE "plpgsql"
     SET search_path = ''
     AS $$
@@ -24,7 +24,11 @@ BEGIN
         CASE 
             WHEN t.user_id = (select auth.uid()) THEN t.updated_at 
             ELSE NULL 
-        END AS updated_at
+        END AS updated_at,
+        CASE 
+            WHEN t.user_id = (select auth.uid()) THEN t.playlist_id 
+            ELSE NULL 
+        END AS playlist_id
     FROM public.videos v
     LEFT JOIN public.timestamps t ON v.id = t.video_id; -- Use LEFT JOIN to include videos without timestamps
 END;$$;

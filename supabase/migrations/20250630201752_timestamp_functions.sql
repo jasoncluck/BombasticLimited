@@ -2,7 +2,8 @@ CREATE OR REPLACE FUNCTION insert_timestamps(
   p_user_id uuid,
   p_video_ids text[],
   p_video_start_seconds numeric[] DEFAULT NULL,
-  p_watched_at timestamp with time zone[] DEFAULT NULL
+  p_watched_at timestamp with time zone[] DEFAULT NULL,
+  p_playlist_ids bigint[] DEFAULT NULL
 )
 RETURNS TABLE (
   id text,
@@ -15,7 +16,8 @@ RETURNS TABLE (
   duration text,
   video_start_seconds numeric,
   watched_at timestamp with time zone,
-  updated_at timestamp with time zone
+  updated_at timestamp with time zone,
+  playlist_id bigint
 ) AS $$
 DECLARE
   idx integer;
@@ -32,20 +34,34 @@ BEGIN
       video_id,
       video_start_seconds,
       watched_at,
-      updated_at
+      updated_at,
+      playlist_id
     )
     VALUES (
       p_user_id,
       p_video_ids[idx],
       p_video_start_seconds[idx],
       p_watched_at[idx],
-      NOW()
+      NOW(),
+      CASE 
+        WHEN p_playlist_ids IS NOT NULL AND idx <= array_length(p_playlist_ids, 1) 
+        THEN p_playlist_ids[idx] 
+        ELSE NULL 
+      END
     )
     ON CONFLICT (user_id, video_id)
     DO UPDATE SET
       video_start_seconds = COALESCE(EXCLUDED.video_start_seconds, public.timestamps.video_start_seconds),
       watched_at = COALESCE(EXCLUDED.watched_at, public.timestamps.watched_at),
-      updated_at = NOW();
+      updated_at = NOW(),
+      playlist_id = COALESCE(
+        CASE 
+          WHEN p_playlist_ids IS NOT NULL AND idx <= array_length(p_playlist_ids, 1) 
+          THEN p_playlist_ids[idx] 
+          ELSE NULL 
+        END, 
+        public.timestamps.playlist_id
+      );
   END LOOP;
 
   -- Return all the updated video/timestamp rows for the affected videos
@@ -70,7 +86,11 @@ BEGIN
     CASE 
       WHEN t.user_id = p_user_id THEN t.updated_at 
       ELSE NULL 
-    END AS updated_at
+    END AS updated_at,
+    CASE 
+      WHEN t.user_id = p_user_id THEN t.playlist_id 
+      ELSE NULL 
+    END AS playlist_id
   FROM public.videos v
   LEFT JOIN public.timestamps t 
     ON v.id = t.video_id AND t.user_id = p_user_id

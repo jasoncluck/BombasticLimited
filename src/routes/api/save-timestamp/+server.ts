@@ -8,7 +8,7 @@ export const POST: RequestHandler = async ({
   const data = await request.json();
 
   // You may want to validate the payload, check auth, etc.
-  const { videoId, currentTimeSeconds, watchedAt } = data;
+  const { videoId, currentTimeSeconds, watchedAt, playlistId } = data;
 
   if (session) {
     // Save to Supabase (adapt to your schema/method)
@@ -18,6 +18,7 @@ export const POST: RequestHandler = async ({
         video_id: videoId,
         video_start_seconds: currentTimeSeconds,
         watched_at: watchedAt?.toISOString() ?? null,
+        playlist_id: playlistId,
       },
       { onConflict: "user_id,video_id" },
     );

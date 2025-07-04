@@ -1,6 +1,6 @@
 <script lang="ts">
   import { getContentState } from "$lib/state/content.svelte";
-  import type { Video } from "$lib/supabase/videos";
+  import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
   import { Play } from "@lucide/svelte";
   import { handleContentNavigation } from "../content";
   import type { Playlist } from "$lib/supabase/playlists";
@@ -10,6 +10,10 @@
   const { video, playlist }: { video: Video; playlist?: Playlist } = $props();
 
   const isHovering = $derived(contentState.hoveredVideo?.id === video.id);
+  if (isVideoWithTimestamp(video)) {
+    console.log(video);
+  }
+  console.log(playlist);
 </script>
 
 <div class="flex justify-center items-center">
@@ -19,15 +23,19 @@
     size="icon"
     title="Play video"
     onclick={(e) => {
-      contentState.handlePlayButtonClick({
-        event: e,
+      e.stopPropagation();
+      e.preventDefault();
+
+      const playlistShortId =
+        playlist?.short_id ??
+        (isVideoWithTimestamp(video) ? video.playlist_short_id : undefined);
+
+      handleContentNavigation({
         video,
-        playlist,
-        onNavigate: (video, playlist) => {
-          handleContentNavigation({ video, playlist });
-        },
+        playlistShortId,
+        playlistSortedBy: playlist?.sorted_by,
+        playlistSortOrder: playlist?.sort_order,
       });
-      handleContentNavigation({ video, playlist });
     }}
   >
     <Play

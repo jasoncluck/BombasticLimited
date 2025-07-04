@@ -80,6 +80,8 @@ export type Database = {
           name: string
           search_vector: unknown | null
           short_id: string
+          sort_order: Database["public"]["Enums"]["playlist_sort_order"]
+          sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
           thumbnail_maxres_url: string | null
           thumbnail_url: string | null
           type: Database["public"]["Enums"]["playlist_type"]
@@ -94,6 +96,8 @@ export type Database = {
           name: string
           search_vector?: unknown | null
           short_id: string
+          sort_order?: Database["public"]["Enums"]["playlist_sort_order"]
+          sorted_by?: Database["public"]["Enums"]["playlist_sorted_by"]
           thumbnail_maxres_url?: string | null
           thumbnail_url?: string | null
           type?: Database["public"]["Enums"]["playlist_type"]
@@ -108,6 +112,8 @@ export type Database = {
           name?: string
           search_vector?: unknown | null
           short_id?: string
+          sort_order?: Database["public"]["Enums"]["playlist_sort_order"]
+          sorted_by?: Database["public"]["Enums"]["playlist_sorted_by"]
           thumbnail_maxres_url?: string | null
           thumbnail_url?: string | null
           type?: Database["public"]["Enums"]["playlist_type"]
@@ -149,6 +155,7 @@ export type Database = {
         Row: {
           created_at: string
           id: number
+          playlist_id: number | null
           updated_at: string
           user_id: string
           video_id: string
@@ -158,6 +165,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: number
+          playlist_id?: number | null
           updated_at?: string
           user_id: string
           video_id: string
@@ -167,6 +175,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: number
+          playlist_id?: number | null
           updated_at?: string
           user_id?: string
           video_id?: string
@@ -174,6 +183,13 @@ export type Database = {
           watched_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "timestamps_playlist_id_fkey"
+            columns: ["playlist_id"]
+            isOneToOne: false
+            referencedRelation: "playlists"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_video_timestamps_video_id_fkey"
             columns: ["video_id"]
@@ -323,6 +339,10 @@ export type Database = {
           video_start_seconds: number
           watched_at: string
           updated_at: string
+          playlist_name: string
+          playlist_short_id: string
+          playlist_sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
+          playlist_sort_order: Database["public"]["Enums"]["playlist_sort_order"]
         }[]
       }
       get_playlist_by_short_id: {
@@ -390,6 +410,7 @@ export type Database = {
           video_start_seconds: number
           watched_at: string
           updated_at: string
+          playlist_id: number
         }[]
       }
       initialize_user_playlist_positions: {
@@ -436,6 +457,7 @@ export type Database = {
           p_video_ids: string[]
           p_video_start_seconds?: number[]
           p_watched_at?: string[]
+          p_playlist_ids?: number[]
         }
         Returns: {
           id: string
@@ -449,6 +471,7 @@ export type Database = {
           video_start_seconds: number
           watched_at: string
           updated_at: string
+          playlist_id: number
         }[]
       }
       is_unique_username: {
@@ -540,6 +563,8 @@ export type Database = {
     Enums: {
       contentdescription: "FULL" | "BRIEF" | "NONE"
       contentdisplay: "TILES" | "CAROUSEL"
+      playlist_sort_order: "ascending" | "descending"
+      playlist_sorted_by: "title" | "datePublished" | "playlistOrder"
       playlist_type: "Official" | "Public" | "Private"
       source: "giantbomb" | "nextlander" | "remap"
     }
@@ -662,6 +687,8 @@ export const Constants = {
     Enums: {
       contentdescription: ["FULL", "BRIEF", "NONE"],
       contentdisplay: ["TILES", "CAROUSEL"],
+      playlist_sort_order: ["ascending", "descending"],
+      playlist_sorted_by: ["title", "datePublished", "playlistOrder"],
       playlist_type: ["Official", "Public", "Private"],
       source: ["giantbomb", "nextlander", "remap"],
     },

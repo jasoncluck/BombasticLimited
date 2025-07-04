@@ -7,7 +7,7 @@
   import * as Table from "$lib/components/ui/table/index.js";
   import { handleContentNavigation } from "../content";
   import type { Playlist } from "$lib/supabase/playlists";
-  import type { Video } from "$lib/supabase/videos";
+  import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
   import { getContentState } from "$lib/state/content.svelte";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
@@ -20,7 +20,7 @@
     contentFilter: CombinedContentFilter;
     supabase: SupabaseClient<Database>;
     session: Session | null;
-    videosCount: number | null;
+    videosCount?: number | null;
     onDataUpdate?: (data: Video[]) => void;
     handleDragStart?: (
       e: DragEvent & { currentTarget: HTMLDivElement },
@@ -135,7 +135,14 @@
             videos,
             playlist,
             onNavigate: (video, playlist) => {
-              handleContentNavigation({ video, playlist });
+              handleContentNavigation({
+                video,
+                playlistShortId: playlist?.short_id
+                  ? playlist.short_id
+                  : isVideoWithTimestamp(video) && video.playlist_short_id
+                    ? video.playlist_short_id
+                    : undefined,
+              });
             },
           });
         }}

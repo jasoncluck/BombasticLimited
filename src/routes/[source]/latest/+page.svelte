@@ -60,16 +60,6 @@
       videosPerPage: DEFAULT_NUM_VIDEOS_PAGINATION,
     }),
   );
-
-  function handlePlayVideo() {
-    const nextVideo = videos.find(
-      (v) => !isVideoWithTimestamp(v) || !v.watched_at,
-    );
-
-    if (nextVideo) {
-      handleContentNavigation({ video: nextVideo });
-    }
-  }
 </script>
 
 <div class="relative">
@@ -77,7 +67,6 @@
     title="Latest Videos"
     {contentFilter}
     {videos}
-    onPlayVideo={handlePlayVideo}
     videosCount={videosCount ?? 0}
     {currentPage}
     {source}
