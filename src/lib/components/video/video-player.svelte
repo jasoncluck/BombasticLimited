@@ -5,6 +5,7 @@
   import type { Playlist } from "$lib/supabase/playlists";
   import type { Video } from "$lib/supabase/videos";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
+  import type { CombinedContentFilter } from "../content/content-filter";
 
   interface ProcessedLine {
     text: string;
@@ -15,12 +16,14 @@
   const {
     video,
     playlist,
+    contentFilter,
     supabase,
     session,
     baseUrl = "/video",
   }: {
     video: Video;
     playlist?: Playlist;
+    contentFilter: CombinedContentFilter;
     supabase: SupabaseClient;
     session: Session | null;
     baseUrl?: string;
@@ -88,6 +91,7 @@
     {supabase}
     {session}
     {video}
+    {contentFilter}
     {playlist}
     durationSeconds={videoDurationToSeconds(video?.duration)}
   />

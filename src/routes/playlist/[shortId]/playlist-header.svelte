@@ -130,7 +130,7 @@
         </div>
       </PlaylistEditDialog>
 
-      <div class="flex flex-col relative flex-1">
+      <div class="flex flex-col relative flex-1 min-w-2xs">
         <button
           type="button"
           class="flex flex-col {isPlaylistCreator && 'cursor-pointer'} 
@@ -144,7 +144,7 @@
               ? "Public Playlist"
               : "Private Playlist"}
           </p>
-          <h2 class="header-primary text-wrap break-anywhere font-extrabold">
+          <h2 class="header-playlist text-wrap break-anywhere font-extrabold">
             {playlist.name}
           </h2>
           <p class="text-sm text-muted-foreground text-left break-words">

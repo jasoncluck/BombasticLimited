@@ -7,7 +7,7 @@
   import * as Table from "$lib/components/ui/table/index.js";
   import { handleContentNavigation } from "../content";
   import type { Playlist } from "$lib/supabase/playlists";
-  import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
+  import { type Video } from "$lib/supabase/videos";
   import { getContentState } from "$lib/state/content.svelte";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
@@ -137,11 +137,7 @@
             onNavigate: (video, playlist) => {
               handleContentNavigation({
                 video,
-                playlistShortId: playlist?.short_id
-                  ? playlist.short_id
-                  : isVideoWithTimestamp(video) && video.playlist_short_id
-                    ? video.playlist_short_id
-                    : undefined,
+                playlist,
               });
             },
           });

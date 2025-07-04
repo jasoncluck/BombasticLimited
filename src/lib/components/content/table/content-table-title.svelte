@@ -1,7 +1,8 @@
 <script lang="ts">
   import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
-  import { ListVideo } from "@lucide/svelte";
+  import { ArrowDown, ArrowUp, Circle, ListVideo } from "@lucide/svelte";
   import { goto } from "$app/navigation";
+  import { getSortDisplayName } from "../content-filter";
 
   let { video }: { video: Video } = $props();
 </script>
@@ -29,10 +30,31 @@
       class="text-s break-words whitespace-normal"
     >
       <div
-        class="flex gap-2 text-xs mt-1 text-secondary-foreground hover:text-primary"
+        class="flex items-center gap-2 mt-1 text-xs text-secondary-foreground hover:text-primary"
       >
         <ListVideo size="16" />
-        {video.playlist_name}
+        <div class="flex gap-2 items-center">
+          <span class="text-s">{video.playlist_name}</span>
+          <div class="flex gap-2 items-center text-xs text-muted-foreground">
+            {#if video.playlist_sorted_by}
+              <Circle
+                size="5"
+                class="shrink-0 stroke-muted-foreground fill-muted-foreground justify-center"
+              />
+              {getSortDisplayName({
+                key: video.playlist_sorted_by,
+                view: "playlist",
+              })}
+              {#if video.playlist_sort_order}
+                {#if video.playlist_sort_order === "ascending"}
+                  <ArrowUp size="14" />
+                {:else}
+                  <ArrowDown size="14" />
+                {/if}
+              {/if}
+            {/if}
+          </div>
+        </div>
       </div>
     </a>
   {/if}

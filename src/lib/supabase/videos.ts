@@ -1,18 +1,18 @@
+import {
+  SORT_OPTIONS_TIMESTAMPS,
+  SORT_OPTIONS_VIDEO,
+  type ContentFilter,
+  type SortKey,
+  type SortOrder,
+} from "$lib/components/content/content-filter";
+import type { Source } from "$lib/constants/source";
+import type { Tables } from "$lib/supabase/database.types";
 import type {
   PostgrestError,
   Session,
   SupabaseClient,
 } from "@supabase/supabase-js";
 import type { Database } from "./database.types";
-import type { Source } from "$lib/constants/source";
-import type { Tables } from "$lib/supabase/database.types";
-import {
-  SORT_OPTIONS_VIDEO,
-  SORT_OPTIONS_TIMESTAMPS,
-  type ContentFilter,
-  type SortKey,
-  type SortOrder,
-} from "$lib/components/content/content-filter";
 import type { PlaylistVideo } from "./playlists";
 
 export const DEFAULT_NUM_VIDEOS_PAGINATION = 250;
@@ -199,8 +199,24 @@ export function isVideoWithTimestamp(
 ): video is VideoWithTimestamp {
   return (
     !!video &&
-    "watched_at" in video &&
-    "video_start_seconds" in video &&
-    (!!video.watched_at || !!video.video_start_seconds)
+    (("watched_at" in video && !!video.watched_at) ||
+      ("video_start_seconds" in video && !!video.video_start_seconds))
+  );
+}
+
+// Timestamp that has playlist info associated with it meaning it was played as part of a playlist
+export function isVideoWithPlaylistTimestamp(
+  video: Video,
+): video is VideoWithTimestamp {
+  return (
+    !!video &&
+    (("watched_at" in video && !!video.watched_at) ||
+      ("video_start_seconds" in video && !!video.video_start_seconds)) &&
+    "playlist_short_id" in video &&
+    !!video.playlist_short_id &&
+    "playlist_sorted_by" in video &&
+    !!video.playlist_sorted_by &&
+    "playlist_sort_order" in video &&
+    !!video.playlist_sort_order
   );
 }

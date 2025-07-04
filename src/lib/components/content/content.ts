@@ -1,7 +1,16 @@
 import { SOURCES } from "$lib/constants/source";
 import type { Database } from "$lib/supabase/database.types";
-import type { Playlist } from "$lib/supabase/playlists";
-import type { Video } from "$lib/supabase/videos";
+import {
+  isUserPlaylist,
+  type Playlist,
+  type PlaylistVideo,
+  type UserPlaylist,
+} from "$lib/supabase/playlists";
+import {
+  isVideoWithPlaylistTimestamp,
+  isVideoWithTimestamp,
+  type Video,
+} from "$lib/supabase/videos";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import {
   getFilterKeysForView,
@@ -9,6 +18,8 @@ import {
   isSortKey,
   isSortOrder,
   type PlaylistVideosFilter,
+  type SortKey,
+  type SortOrder,
 } from "./content-filter";
 import { page } from "$app/state";
 import { goto } from "$app/navigation";
@@ -71,36 +82,43 @@ export type SourceWithContinueCarouselState = Record<
 // TODO: Finish
 export function handleContentNavigation({
   video,
-  playlistShortId,
-  playlistSortedBy,
-  playlistSortOrder,
+  playlist,
 }: {
   video: Video;
-  playlistShortId?: string | null;
-  playlistSortedBy?: "title" | "datePublished" | "playlistOrder";
-  playlistSortOrder?: "ascending" | "descending";
+  playlist?: Playlist;
 }) {
   const url = new URL(window.location.href);
-  console.log(playlistSortedBy);
 
   const searchParams = url.searchParams;
 
   // Build the base URL path
-  let targetPath = `/videos/${video.id}`;
+  let targetPath = `/video/${video.id}`;
 
-  if (playlistShortId) {
+  getSortKeysForView("playlist").forEach((key) => {
+    searchParams.delete(key);
+  });
+
+  // Check to see if the playlist is specified and use those stored sort settings. If those don't exist
+  // (i.e: we're not coming from a playlist), then use the video timestamp if it's available which should only be in the
+  // continue watching views
+  if (playlist && isUserPlaylist(playlist)) {
     // Clear existing playlist sorting parameters
-    getSortKeysForView("playlist").forEach((key) => {
-      searchParams.delete(key);
-    });
 
     if (
-      isSortKey(playlistSortedBy, "playlist") &&
-      isSortOrder(playlistSortOrder)
+      isSortKey(playlist.sorted_by, "playlist") &&
+      isSortOrder(playlist.sort_order)
     ) {
-      searchParams.set(playlistSortedBy, playlistSortOrder);
+      searchParams.set(playlist.sorted_by, playlist.sort_order);
     }
-    targetPath = `/playlist/${playlistShortId}/video/${video.id}`;
+    targetPath = `/playlist/${playlist.short_id}/video/${video.id}`;
+  } else if (isVideoWithPlaylistTimestamp(video)) {
+    if (
+      isSortKey(video.playlist_sorted_by, "playlist") &&
+      isSortOrder(video.playlist_sort_order)
+    ) {
+      searchParams.set(video.playlist_sorted_by, video.playlist_sort_order);
+    }
+    targetPath = `/playlist/${video.playlist_short_id}/video/${video.id}`;
   }
 
   // Apply any existing search params to the new URL

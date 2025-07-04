@@ -1,6 +1,7 @@
 import {
   getPlaylistByShortId,
   getPlaylistVideos,
+  isUserPlaylist,
   updatePlaylistImage,
   updatePlaylistInfo,
   type ProfilePlaylist,
@@ -15,7 +16,10 @@ import {
   videoDurationSecondsToTime,
   videoDurationToSeconds,
 } from "$lib/components/video/video-service";
-import { isPlaylistVideosFilter } from "$lib/components/content/content-filter";
+import {
+  isPlaylistVideosFilter,
+  type PlaylistVideosFilter,
+} from "$lib/components/content/content-filter";
 import { getPaginationQueryParams } from "$lib/components/content/pagination/content-pagination";
 import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
 
@@ -43,7 +47,20 @@ export const load: PageServerLoad = async ({
     ({ playlist } = await getPlaylistByShortId({
       shortId: params.shortId,
       supabase,
+      session,
     }));
+  }
+
+  // If the playlist already has a set filter, use that
+  let playlistVideosSavedContentFilter: PlaylistVideosFilter | undefined;
+  if (isUserPlaylist(playlist) && playlist?.sorted_by && playlist?.sort_order) {
+    playlistVideosSavedContentFilter = {
+      type: "playlist",
+      sort: {
+        key: playlist.sorted_by,
+        order: playlist.sort_order,
+      },
+    };
   }
 
   if (!playlist) {
@@ -61,7 +78,9 @@ export const load: PageServerLoad = async ({
 
   const { videos, count: videosCount } = await getPlaylistVideos({
     supabase,
-    contentFilter,
+    contentFilter: playlistVideosSavedContentFilter
+      ? playlistVideosSavedContentFilter
+      : contentFilter,
     playlistId: playlist.id,
   });
 
@@ -95,7 +114,9 @@ export const load: PageServerLoad = async ({
     playlists,
     videos,
     videosCount,
-    contentFilter,
+    contentFilter: playlistVideosSavedContentFilter
+      ? playlistVideosSavedContentFilter
+      : contentFilter,
     currentPage,
     playlistDuration,
     form: await superValidate(transformedPlaylist, zod(playlistSchema)),

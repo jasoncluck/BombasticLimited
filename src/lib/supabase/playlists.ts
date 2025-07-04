@@ -56,13 +56,16 @@ export interface PlaylistImageProperties {
 export async function getPlaylistByShortId({
   shortId,
   supabase,
+  session,
 }: {
   shortId: string;
   supabase: SupabaseClient<Database>;
+  session: Session | null;
 }) {
   const { data, error } = await supabase
     .rpc("get_playlist_by_short_id", {
       p_short_id: shortId,
+      p_user_id: session?.user.id,
     })
     .single();
 
@@ -127,24 +130,25 @@ export async function getPlaylistVideos({
       contentFilter.sort.order === "ascending",
   });
 
-  if (contentFilter.sort.key !== "playlistOrder" && contentFilter.startDate) {
-    try {
-      // Parse the input date string and explicitly set it to midnight (local time)
-      const startDate = new Date(`${contentFilter.startDate}T00:00:00`);
-      query.gte("published_at", startDate.toISOString());
-    } catch {
-      console.error("Unable to parse start date, ignoring.");
-    }
-  }
-  if (contentFilter.sort.key !== "playlistOrder" && contentFilter.endDate) {
-    try {
-      // Parse the input date string and set it to the end of the day (local time)
-      const endDate = new Date(`${contentFilter.endDate}T23:59:59.999`);
-      query.lte("published_at", endDate.toISOString());
-    } catch {
-      console.error("Unable to parse end date, ignoring.");
-    }
-  }
+  // NOTE: Removing date filters for now
+  // if (contentFilter.sort.key !== "playlistOrder" && contentFilter.startDate) {
+  //   try {
+  //     // Parse the input date string and explicitly set it to midnight (local time)
+  //     const startDate = new Date(`${contentFilter.startDate}T00:00:00`);
+  //     query.gte("published_at", startDate.toISOString());
+  //   } catch {
+  //     console.error("Unable to parse start date, ignoring.");
+  //   }
+  // }
+  // if (contentFilter.sort.key !== "playlistOrder" && contentFilter.endDate) {
+  //   try {
+  //     // Parse the input date string and set it to the end of the day (local time)
+  //     const endDate = new Date(`${contentFilter.endDate}T23:59:59.999`);
+  //     query.lte("published_at", endDate.toISOString());
+  //   } catch {
+  //     console.error("Unable to parse end date, ignoring.");
+  //   }
+  // }
 
   if (currentVideo) {
     const sortColumn =
@@ -585,8 +589,7 @@ export function isPlaylist(obj: unknown): obj is Playlist {
 export function isUserPlaylist(obj: unknown): obj is UserPlaylist {
   return (
     isRecord(obj) &&
-    typeof obj.id === "number" && // user_playlists.id (references playlists.id)
-    (typeof obj.user_id === "string" || obj.user_id === null) &&
+    typeof obj.id === "number" &&
     (typeof obj.playlist_position === "number" ||
       obj.playlist_position === null) &&
     typeof obj.sorted_by === "string" && // playlist_sorted_by enum
@@ -596,10 +599,8 @@ export function isUserPlaylist(obj: unknown): obj is UserPlaylist {
     typeof obj.short_id === "string" &&
     typeof obj.created_at === "string" &&
     typeof obj.created_by === "string" &&
-    typeof obj.updated_at === "string" &&
     (typeof obj.description === "string" || obj.description === null) &&
     "image_properties" in obj && // Accepts any (Json)
-    (typeof obj.image_url === "string" || obj.image_url === null) &&
     (typeof obj.thumbnail_maxres_url === "string" ||
       obj.thumbnail_maxres_url === null) &&
     (typeof obj.thumbnail_url === "string" || obj.thumbnail_url === null) &&

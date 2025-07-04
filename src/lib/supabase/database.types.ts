@@ -150,6 +150,8 @@ export type Database = {
           created_at: string
           id: number
           playlist_id: number | null
+          sort_order: Database["public"]["Enums"]["playlist_sort_order"] | null
+          sorted_by: Database["public"]["Enums"]["playlist_sorted_by"] | null
           updated_at: string
           user_id: string
           video_id: string
@@ -160,6 +162,8 @@ export type Database = {
           created_at?: string
           id?: number
           playlist_id?: number | null
+          sort_order?: Database["public"]["Enums"]["playlist_sort_order"] | null
+          sorted_by?: Database["public"]["Enums"]["playlist_sorted_by"] | null
           updated_at?: string
           user_id: string
           video_id: string
@@ -170,6 +174,8 @@ export type Database = {
           created_at?: string
           id?: number
           playlist_id?: number | null
+          sort_order?: Database["public"]["Enums"]["playlist_sort_order"] | null
+          sorted_by?: Database["public"]["Enums"]["playlist_sorted_by"] | null
           updated_at?: string
           user_id?: string
           video_id?: string
@@ -339,14 +345,14 @@ export type Database = {
           video_start_seconds: number
           watched_at: string
           updated_at: string
-          playlist_name: string
-          playlist_short_id: string
           playlist_sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
           playlist_sort_order: Database["public"]["Enums"]["playlist_sort_order"]
+          playlist_name: string
+          playlist_short_id: string
         }[]
       }
       get_playlist_by_short_id: {
-        Args: { p_short_id: string }
+        Args: { p_short_id: string; p_user_id?: string }
         Returns: {
           id: number
           created_at: string
@@ -360,6 +366,8 @@ export type Database = {
           image_properties: Json
           youtube_id: string
           profile_username: string
+          sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
+          sort_order: Database["public"]["Enums"]["playlist_sort_order"]
         }[]
       }
       get_playlist_videos: {
@@ -377,6 +385,8 @@ export type Database = {
           video_start_seconds: number
           watched_at: string
           updated_at: string
+          playlist_sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
+          playlist_sort_order: Database["public"]["Enums"]["playlist_sort_order"]
         }[]
       }
       get_user_playlists: {
@@ -454,13 +464,15 @@ export type Database = {
           video_position: number
         }[]
       }
-      insert_timestamps: {
+      insert_timestamp: {
         Args: {
           p_user_id: string
-          p_video_ids: string[]
-          p_video_start_seconds?: number[]
-          p_watched_at?: string[]
-          p_playlist_ids?: number[]
+          p_video_id: string
+          p_video_start_seconds?: number
+          p_watched_at?: string
+          p_playlist_id?: number
+          p_sorted_by?: Database["public"]["Enums"]["playlist_sorted_by"]
+          p_sort_order?: Database["public"]["Enums"]["playlist_sort_order"]
         }
         Returns: {
           id: string
@@ -475,6 +487,32 @@ export type Database = {
           watched_at: string
           updated_at: string
           playlist_id: number
+          sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
+          sort_order: Database["public"]["Enums"]["playlist_sort_order"]
+        }[]
+      }
+      insert_timestamps: {
+        Args: {
+          p_user_id: string
+          p_video_ids: string[]
+          p_video_start_seconds?: number[]
+          p_watched_at?: string[]
+        }
+        Returns: {
+          id: string
+          source: Database["public"]["Enums"]["source"]
+          title: string
+          description: string
+          thumbnail_url: string
+          thumbnail_maxres_url: string
+          published_at: string
+          duration: string
+          video_start_seconds: number
+          watched_at: string
+          updated_at: string
+          playlist_id: number
+          sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
+          sort_order: Database["public"]["Enums"]["playlist_sort_order"]
         }[]
       }
       is_unique_username: {

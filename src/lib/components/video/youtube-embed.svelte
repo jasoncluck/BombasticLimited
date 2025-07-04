@@ -4,12 +4,17 @@
   import VideoEmbed from "$lib/components/video/video-embed.svelte";
   import {
     getLatestTimestamp,
-    saveVideoTimestamps,
+    saveVideoTimestamp,
+    type TimestampWithVideoId,
   } from "$lib/supabase/timestamps";
   import { beforeNavigate } from "$app/navigation";
   import type { Playlist } from "$lib/supabase/playlists";
   import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
   import { page } from "$app/state";
+  import {
+    isPlaylistVideosFilter,
+    type CombinedContentFilter,
+  } from "../content/content-filter";
 
   const VIDEO_SAVE_SECONDS_START = 15;
   const VIDEO_DELETE_SECONDS_PERCENT = 0.95;
@@ -21,11 +26,13 @@
     session,
     playlist,
     durationSeconds,
+    contentFilter,
   }: {
     video: Video;
     supabase: SupabaseClient;
     session: Session | null;
     durationSeconds: number;
+    contentFilter?: CombinedContentFilter;
     playlist?: Playlist;
   } = $props();
 
@@ -64,7 +71,6 @@
 
   // Helper function to save timestamp for a specific video with its duration (async for in-app use)
   function saveTimestampForVideo(
-    video: Video,
     currentTimeSeconds: number,
     videoDurationSeconds: number,
     playlist?: Playlist,
@@ -78,26 +84,38 @@
 
     const watchedPercent = currentTimeSeconds / videoDurationSeconds;
     if (watchedPercent >= VIDEO_DELETE_SECONDS_PERCENT) {
-      saveVideoTimestamps({
-        videoTimestamps: [
-          {
-            videoId: video.id,
-            watchedAt: new Date(),
-            playlistId: playlist?.id,
-          },
-        ],
+      saveVideoTimestamp({
+        videoTimestamp: {
+          videoId: video.id,
+          playlistId: playlist?.id,
+          watchedAt: new Date(),
+          sortedBy:
+            contentFilter && isPlaylistVideosFilter(contentFilter)
+              ? contentFilter.sort.key
+              : null,
+          sortOrder:
+            contentFilter && isPlaylistVideosFilter(contentFilter)
+              ? contentFilter.sort.order
+              : null,
+        },
         session,
         supabase,
       });
     } else {
-      saveVideoTimestamps({
-        videoTimestamps: [
-          {
-            videoId: video.id,
-            timestampStartSeconds: currentTimeSeconds,
-            playlistId: playlist?.id,
-          },
-        ],
+      saveVideoTimestamp({
+        videoTimestamp: {
+          videoId: video.id,
+          playlistId: playlist?.id,
+          timestampStartSeconds: currentTimeSeconds,
+          sortedBy:
+            contentFilter && isPlaylistVideosFilter(contentFilter)
+              ? contentFilter.sort.key
+              : null,
+          sortOrder:
+            contentFilter && isPlaylistVideosFilter(contentFilter)
+              ? contentFilter.sort.order
+              : null,
+        },
         session,
         supabase,
       });
@@ -106,9 +124,9 @@
 
   // Save timestamp using sendBeacon for background/unload events
   function saveTimestampBeacon(
-    video: Video,
     currentTimeSeconds: number,
     videoDurationSeconds: number,
+    contentFilter?: CombinedContentFilter,
     playlist?: Playlist,
   ) {
     if (
@@ -120,16 +138,23 @@
 
     const watchedPercent = currentTimeSeconds / videoDurationSeconds;
     const watchedAt =
-      watchedPercent >= VIDEO_DELETE_SECONDS_PERCENT
-        ? new Date().toISOString()
-        : null;
+      watchedPercent >= VIDEO_DELETE_SECONDS_PERCENT ? new Date() : undefined;
 
-    const payload = {
-      watchedAt,
-      currentTimeSeconds,
-      videoId: video.id,
-      playlistId: playlist?.id,
-      // Add user/session info if needed (e.g. userId: session?.user.id)
+    const payload: { videoTimestamp: TimestampWithVideoId } = {
+      videoTimestamp: {
+        watchedAt,
+        timestampStartSeconds: currentTimeSeconds,
+        videoId: video.id,
+        playlistId: playlist?.id,
+        sortedBy:
+          contentFilter && isPlaylistVideosFilter(contentFilter)
+            ? contentFilter.sort.key
+            : null,
+        sortOrder:
+          contentFilter && isPlaylistVideosFilter(contentFilter)
+            ? contentFilter.sort.order
+            : null,
+      },
     };
 
     // Use your real API endpoint here
@@ -148,14 +173,13 @@
         ) {
           if (useBeacon) {
             saveTimestampBeacon(
-              video,
               currentTimeSeconds,
               durationSeconds,
+              contentFilter,
               playlist,
             );
           } else {
             saveTimestampForVideo(
-              video,
               currentTimeSeconds,
               durationSeconds,
               playlist,

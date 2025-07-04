@@ -4,13 +4,54 @@ import type {
   PostgrestError,
 } from "@supabase/supabase-js";
 import type { Database } from "./database.types";
+import type {
+  SortKey,
+  SortOrder,
+} from "$lib/components/content/content-filter";
+import type { PlaylistVideo } from "./playlists";
 
 export type TimestampWithVideoId = {
   videoId: string;
   timestampStartSeconds?: number;
   watchedAt?: Date;
   playlistId?: number;
+  sortedBy: SortKey<PlaylistVideo> | null;
+  sortOrder: SortOrder | null;
 };
+
+export async function saveVideoTimestamp({
+  videoTimestamp,
+  supabase,
+  session,
+}: {
+  videoTimestamp: TimestampWithVideoId;
+  supabase: SupabaseClient;
+  session: Session | null;
+}) {
+  let error: PostgrestError | undefined;
+
+  if (session) {
+    const { data: videos, error: upsertError } = await supabase
+      .rpc("insert_timestamp", {
+        p_user_id: session.user.id,
+        p_video_id: videoTimestamp.videoId,
+        p_video_start_seconds: videoTimestamp.timestampStartSeconds,
+        p_watched_at: videoTimestamp.watchedAt,
+        p_playlist_id: videoTimestamp.playlistId,
+        p_sorted_by: videoTimestamp.sortedBy,
+        p_sort_order: videoTimestamp.sortOrder,
+      })
+      .select();
+
+    if (upsertError) {
+      console.error("Error saving video timestamps.", upsertError);
+      error = upsertError;
+    }
+    return { videos, error };
+  }
+
+  return { videos: [], error };
+}
 
 export async function saveVideoTimestamps({
   videoTimestamps,
@@ -34,17 +75,12 @@ export async function saveVideoTimestamps({
       v.watchedAt ? v.watchedAt.toISOString() : null,
     );
 
-    const playlistIds = videoTimestamps.map((v) =>
-      v.playlistId ? v.playlistId : null,
-    );
-
     const { data: videos, error: upsertError } = await supabase
       .rpc("insert_timestamps", {
         p_user_id: session.user.id,
         p_video_ids: video_ids,
         p_video_start_seconds: video_start_seconds,
         p_watched_at: watched_at,
-        p_playlist_ids: playlistIds,
       })
       .select();
 

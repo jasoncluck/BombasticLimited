@@ -251,7 +251,6 @@ CREATE TABLE IF NOT EXISTS "public"."timestamps" (
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "watched_at" timestamp with time zone,
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL
-
 );
 
 

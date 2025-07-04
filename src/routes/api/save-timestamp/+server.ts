@@ -1,4 +1,5 @@
 // Example Edge Function or API route handler for sendBeacon
+import type { TimestampWithVideoId } from "$lib/supabase/timestamps";
 import type { RequestHandler } from "@sveltejs/kit";
 
 export const POST: RequestHandler = async ({
@@ -8,17 +9,19 @@ export const POST: RequestHandler = async ({
   const data = await request.json();
 
   // You may want to validate the payload, check auth, etc.
-  const { videoId, currentTimeSeconds, watchedAt, playlistId } = data;
+  const { videoTimestamp }: { videoTimestamp: TimestampWithVideoId } = data;
 
   if (session) {
     // Save to Supabase (adapt to your schema/method)
     const { error } = await supabase.from("timestamps").upsert(
       {
-        user_id: session?.user.id,
-        video_id: videoId,
-        video_start_seconds: currentTimeSeconds,
-        watched_at: watchedAt?.toISOString() ?? null,
-        playlist_id: playlistId,
+        user_id: session.user.id,
+        video_id: videoTimestamp.videoId,
+        video_start_seconds: videoTimestamp.timestampStartSeconds,
+        watched_at: videoTimestamp.watchedAt?.toISOString() ?? null,
+        playlist_id: videoTimestamp.playlistId,
+        sorted_by: videoTimestamp.sortedBy,
+        sort_order: videoTimestamp.sortOrder,
       },
       { onConflict: "user_id,video_id" },
     );

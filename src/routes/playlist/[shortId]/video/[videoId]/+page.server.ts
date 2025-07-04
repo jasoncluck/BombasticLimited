@@ -8,7 +8,7 @@ import { isVideoWithTimestamp } from "$lib/supabase/videos";
 import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 export const load: PageServerLoad = async ({
-  locals: { supabase },
+  locals: { supabase, session },
   depends,
   params,
   parent,
@@ -22,6 +22,7 @@ export const load: PageServerLoad = async ({
   const { playlist: profilePlaylist } = await getPlaylistByShortId({
     shortId: params.shortId,
     supabase,
+    session,
   });
 
   if (!profilePlaylist) {

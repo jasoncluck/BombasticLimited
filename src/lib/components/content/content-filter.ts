@@ -283,6 +283,28 @@ export function getFilterKeysForView(view: ContentView) {
   return [...getSortKeysForView(view), ...[START_DATE_KEY, END_DATE_KEY]];
 }
 
+export function getSortDisplayName({
+  key,
+  view,
+}: {
+  key: string;
+  view: ContentView;
+}): string | undefined {
+  switch (view) {
+    case "playlist":
+      return SORT_OPTIONS_PLAYLIST_VIDEOS[
+        key as keyof typeof SORT_OPTIONS_PLAYLIST_VIDEOS
+      ]?.displayName;
+    case "continueWatching":
+      return SORT_OPTIONS_TIMESTAMPS[
+        key as keyof typeof SORT_OPTIONS_TIMESTAMPS
+      ]?.displayName;
+    default:
+      return SORT_OPTIONS_VIDEO[key as keyof typeof SORT_OPTIONS_VIDEO]
+        ?.displayName;
+  }
+}
+
 export function isTimestampFilter(
   filter: CombinedContentFilter,
 ): filter is TimestampFilter {

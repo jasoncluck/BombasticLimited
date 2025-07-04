@@ -19,6 +19,7 @@
     {#key video.id}
       <VideoPlayer
         {video}
+        {contentFilter}
         baseUrl={`/playlist/${profilePlaylist.short_id}`}
         playlist={profilePlaylist}
         {supabase}

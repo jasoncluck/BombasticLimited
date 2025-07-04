@@ -588,7 +588,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE OR REPLACE FUNCTION public.get_playlist_by_short_id(p_short_id text) RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.get_playlist_by_short_id(
+  p_short_id text,
+  p_user_id uuid DEFAULT NULL
+) RETURNS TABLE (
   id bigint,
   created_at timestamp with time zone,
   name text,
@@ -600,7 +603,9 @@ CREATE OR REPLACE FUNCTION public.get_playlist_by_short_id(p_short_id text) RETU
   type playlist_type,
   image_properties jsonb,
   youtube_id text,
-  profile_username text
+  profile_username text,
+  sorted_by playlist_sorted_by,
+  sort_order playlist_sort_order
 )
 LANGUAGE sql
 AS $$
@@ -616,9 +621,14 @@ AS $$
     p.type,
     p.image_properties,
     p.youtube_id,
-    prof.username AS profile_username
+    prof.username AS profile_username,
+    up.sorted_by,
+    up.sort_order
   FROM public.playlists p
   LEFT JOIN public.profiles prof ON p.created_by = prof.id
-  WHERE p.short_id = get_playlist_by_short_id.p_short_id
+  LEFT JOIN public.user_playlists up 
+    ON up.id = p.id 
+   AND (p_user_id IS NULL OR up.user_id = p_user_id)
+  WHERE p.short_id = p_short_id
   LIMIT 1;
 $$;
