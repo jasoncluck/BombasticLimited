@@ -55,6 +55,7 @@
     createContentColumns({
       getPlaylist: () => playlist,
       getPlaylists: () => playlists,
+      getContentFilter: () => contentFilter,
       supabase,
       session,
     }),

@@ -82,7 +82,8 @@
     if (nextVideoToPlay) {
       handleContentNavigation({
         video: nextVideoToPlay,
-        playlistShortId: profilePlaylist?.short_id,
+        contentFilter,
+        playlist: profilePlaylist,
       });
     }
   }

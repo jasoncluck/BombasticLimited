@@ -5,9 +5,18 @@
   import { handleContentNavigation } from "../content";
   import { type Playlist } from "$lib/supabase/playlists";
   import Button from "$lib/components/ui/button/button.svelte";
+  import type { CombinedContentFilter } from "../content-filter";
 
   const contentState = getContentState();
-  const { video, playlist }: { video: Video; playlist?: Playlist } = $props();
+  const {
+    video,
+    playlist,
+    contentFilter,
+  }: {
+    video: Video;
+    playlist?: Playlist;
+    contentFilter?: CombinedContentFilter;
+  } = $props();
 
   const isHovering = $derived(contentState.hoveredVideo?.id === video.id);
 </script>
@@ -25,6 +34,7 @@
       handleContentNavigation({
         video,
         playlist,
+        contentFilter,
       });
     }}
   >

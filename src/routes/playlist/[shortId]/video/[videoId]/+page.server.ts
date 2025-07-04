@@ -42,12 +42,11 @@ export const load: PageServerLoad = async ({
     throw new Error(`Invalid content filter`);
   }
 
-  // TODO: Adjust limit
   const { videos } = await getPlaylistVideos({
     contentFilter,
     playlistId: profilePlaylist.id,
     currentVideo: video,
-    limit: 100,
+    limit: 3,
     supabase,
   });
 

@@ -137,6 +137,7 @@
             onNavigate: (video, playlist) => {
               handleContentNavigation({
                 video,
+                contentFilter,
                 playlist,
               });
             },

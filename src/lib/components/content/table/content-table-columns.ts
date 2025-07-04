@@ -9,15 +9,18 @@ import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import type { Playlist } from "$lib/supabase/playlists";
 import ContentTableDescription from "./content-table-description.svelte";
 import ContentTablePlay from "./content-table-play.svelte";
+import type { CombinedContentFilter } from "../content-filter";
 
 export function createContentColumns({
   getPlaylist,
-  getPlaylists, // Function that returns current playlists
+  getPlaylists,
+  getContentFilter,
   supabase,
   session,
 }: {
   getPlaylist: () => Playlist | undefined;
   getPlaylists: () => Playlist[];
+  getContentFilter: () => CombinedContentFilter;
   session: Session | null;
   supabase: SupabaseClient<Database>;
 }): ColumnDef<Video>[] {
@@ -32,6 +35,8 @@ export function createContentColumns({
 
         return renderComponent(ContentTablePlay, {
           video,
+          playlist: getPlaylist(),
+          contentFilter: getContentFilter(),
         });
       },
     },

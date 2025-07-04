@@ -15,8 +15,11 @@ import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import {
   getFilterKeysForView,
   getSortKeysForView,
+  isPlaylistVideosFilter,
   isSortKey,
   isSortOrder,
+  type CombinedContentFilter,
+  type ContentFilter,
   type PlaylistVideosFilter,
   type SortKey,
   type SortOrder,
@@ -79,12 +82,13 @@ export type SourceWithContinueCarouselState = Record<
   CarouselState
 >;
 
-// TODO: Finish
 export function handleContentNavigation({
   video,
+  contentFilter,
   playlist,
 }: {
   video: Video;
+  contentFilter: CombinedContentFilter;
   playlist?: Playlist;
 }) {
   const url = new URL(window.location.href);
@@ -98,10 +102,15 @@ export function handleContentNavigation({
     searchParams.delete(key);
   });
 
+  // First check to see if a playlist is already in progress with an active filter, if so use that
+  if (playlist && contentFilter && isPlaylistVideosFilter(contentFilter)) {
+    searchParams.set(contentFilter.sort.key, contentFilter.sort.order);
+    targetPath = `/playlist/${playlist.short_id}/video/${video.id}`;
+  }
   // Check to see if the playlist is specified and use those stored sort settings. If those don't exist
   // (i.e: we're not coming from a playlist), then use the video timestamp if it's available which should only be in the
   // continue watching views
-  if (playlist && isUserPlaylist(playlist)) {
+  else if (playlist && isUserPlaylist(playlist)) {
     // Clear existing playlist sorting parameters
 
     if (

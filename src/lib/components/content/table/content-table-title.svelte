@@ -41,17 +41,19 @@
                 size="5"
                 class="shrink-0 stroke-muted-foreground fill-muted-foreground justify-center"
               />
-              {getSortDisplayName({
-                key: video.playlist_sorted_by,
-                view: "playlist",
-              })}
-              {#if video.playlist_sort_order}
-                {#if video.playlist_sort_order === "ascending"}
-                  <ArrowUp size="14" />
-                {:else}
-                  <ArrowDown size="14" />
+              <div class="flex gap-1">
+                {getSortDisplayName({
+                  key: video.playlist_sorted_by,
+                  view: "playlist",
+                })}
+                {#if video.playlist_sort_order}
+                  {#if video.playlist_sort_order === "ascending"}
+                    <ArrowUp size="14" />
+                  {:else}
+                    <ArrowDown size="14" />
+                  {/if}
                 {/if}
-              {/if}
+              </div>
             {/if}
           </div>
         </div>
