@@ -218,19 +218,11 @@ CREATE TABLE IF NOT EXISTS "public"."playlists" (
     CONSTRAINT "playlists_youtube_id_unique" UNIQUE ("youtube_id")
 );
 
-
-
 ALTER TABLE "public"."playlists" OWNER TO "postgres";
-
 
 COMMENT ON COLUMN "public"."playlists"."name" IS 'Playlist name';
 
-
-
 COMMENT ON COLUMN "public"."playlists"."short_id" IS 'Short ID for nicer URLs';
-
-
-
 
 CREATE TABLE IF NOT EXISTS "public"."playlist_videos" (
     "playlist_id" bigint NOT NULL REFERENCES "public"."playlists" ("id") ON DELETE CASCADE,

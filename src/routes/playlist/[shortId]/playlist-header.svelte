@@ -4,7 +4,11 @@
   import type { PlaylistSchema } from "../../../routes/playlist/[shortId]/schema";
   import type { BreadcrumbItem } from "$lib/components/breadcrumb-layout.svelte";
   import type { PlaylistVideosFilter } from "$lib/components/content/content-filter";
-  import type { Playlist, ProfilePlaylist } from "$lib/supabase/playlists";
+  import {
+    type Playlist,
+    type ProfilePlaylist,
+    type UserPlaylist,
+  } from "$lib/supabase/playlists";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
   import type { HTMLAttributes } from "svelte/elements";
@@ -23,8 +27,7 @@
     showFloatingBreadcrumbs: boolean;
     contentFilter: PlaylistVideosFilter;
     form: SuperValidated<Infer<PlaylistSchema>>;
-    profilePlaylist: ProfilePlaylist;
-    playlistImageUrl: string | null;
+    playlist: ProfilePlaylist | UserPlaylist;
     videos: Video[];
     playlists: Playlist[];
     playlistDuration: { hours: number; minutes: number; seconds: number };
@@ -39,8 +42,7 @@
     showFloatingBreadcrumbs = $bindable(),
     contentFilter,
     form,
-    profilePlaylist,
-    playlistImageUrl,
+    playlist,
     videos,
     playlists,
     playlistDuration,
@@ -53,9 +55,7 @@
 
   let open = $state(false);
 
-  const isPlaylistCreator = $derived(
-    profilePlaylist.created_by === session?.user.id,
-  );
+  const isPlaylistCreator = $derived(playlist.created_by === session?.user.id);
 
   const formattedDuration = $derived.by(() => {
     const parts = [];
@@ -92,7 +92,7 @@
   view="playlist"
   {videosCount}
   {contentFilter}
-  {profilePlaylist}
+  {playlist}
   {videos}
   {playlists}
   bind:currentPage
@@ -103,9 +103,9 @@
   <div class="flex flex-col gap-4 m-4">
     <!-- Main content row (image + text) -->
     <div class="flex flex-col @md:flex-row gap-6">
-      <PlaylistEditDialog {form} playlist={profilePlaylist} bind:open>
+      <PlaylistEditDialog {form} {playlist} bind:open>
         <div class="flex justify-center">
-          {#if playlistImageUrl}
+          {#if playlist.processedImageUrl}
             <button
               type="button"
               class="flex justify-center items-center h-56 w-56 {isPlaylistCreator &&
@@ -113,8 +113,8 @@
               onclick={openDialog}
             >
               <img
-                src={playlistImageUrl}
-                alt={`Image for playlist: ${profilePlaylist.name}`}
+                src={playlist.processedImageUrl}
+                alt={`Image for playlist: ${playlist.name}`}
               />
             </button>
           {:else}
@@ -140,24 +140,22 @@
           onkeydown={handleKeydown}
         >
           <p class="text-sm text-muted-foreground tracking-tight">
-            {profilePlaylist.type === "Public" ||
-            profilePlaylist.type === "Official"
+            {playlist.type === "Public" || playlist.type === "Official"
               ? "Public Playlist"
               : "Private Playlist"}
           </p>
           <h2 class="header-primary text-wrap break-anywhere font-extrabold">
-            {profilePlaylist.name}
+            {playlist.name}
           </h2>
           <p class="text-sm text-muted-foreground text-left break-words">
-            {profilePlaylist.description}
+            {playlist.description}
           </p>
         </button>
 
         <div class="flex items-center flex-wrap">
-          {#if profilePlaylist.profile_username}
-            {#if isSource(profilePlaylist.profile_username)}
-              {@const sourceInfo =
-                SOURCE_INFO[profilePlaylist.profile_username]}
+          {#if playlist.profile_username}
+            {#if isSource(playlist.profile_username)}
+              {@const sourceInfo = SOURCE_INFO[playlist.profile_username]}
               <div class="flex items-center gap-2">
                 <img
                   alt={`Official ${sourceInfo.displayName} playlist`}
@@ -169,7 +167,7 @@
                 </p>
               </div>
             {:else}
-              <p class="text-sm">{profilePlaylist.profile_username}</p>
+              <p class="text-sm">{playlist.profile_username}</p>
             {/if}
             <Circle
               size="5"
@@ -207,15 +205,14 @@
                 class="cursor-pointer"
                 onclick={async () => {
                   const data = await handleDeletePlaylist({
-                    playlist: profilePlaylist,
+                    playlist,
                     supabase,
                     session,
                   });
 
                   if (
                     !data?.error &&
-                    page.url.pathname ===
-                      `/playlist/${profilePlaylist.short_id}`
+                    page.url.pathname === `/playlist/${playlist.short_id}`
                   ) {
                     goto("/");
                   }

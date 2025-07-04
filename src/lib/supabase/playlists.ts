@@ -24,7 +24,8 @@ export type Playlist = Omit<Tables<"playlists">, "search_vector"> & {
 
 export type ProfilePlaylist = Playlist & { profile_username: string };
 
-export type UserPlaylist = Omit<Tables<"user_playlists">, "user_id"> & Playlist;
+export type UserPlaylist = Omit<Tables<"user_playlists">, "user_id"> &
+  ProfilePlaylist;
 
 export type PlaylistVideo = Tables<"playlist_videos">;
 export const PLAYLIST_TYPES = ["Public", "Private", "Official"] as const;
@@ -529,7 +530,6 @@ export async function updatePlaylistSort({
   sortedBy,
   sortOrder,
   supabase,
-  session,
 }: {
   playlistId: number;
   sortedBy: SortKey<PlaylistVideo>;
@@ -538,13 +538,12 @@ export async function updatePlaylistSort({
   session: Session;
 }) {
   const { data: updatedPlaylist, error } = await supabase
-    .from("playlists")
+    .from("user_playlists")
     .update({
       sorted_by: sortedBy,
       sort_order: sortOrder,
     })
     .eq("id", playlistId)
-    .eq("created_by", session.user.id) // Ensure user owns the playlist
     .select()
     .single();
 
@@ -586,20 +585,25 @@ export function isPlaylist(obj: unknown): obj is Playlist {
 export function isUserPlaylist(obj: unknown): obj is UserPlaylist {
   return (
     isRecord(obj) &&
-    typeof obj.id === "number" &&
+    typeof obj.id === "number" && // user_playlists.id (references playlists.id)
+    (typeof obj.user_id === "string" || obj.user_id === null) &&
     (typeof obj.playlist_position === "number" ||
       obj.playlist_position === null) &&
-    typeof obj.created_at === "string" &&
-    typeof obj.created_by === "string" &&
-    (typeof obj.description === "string" || obj.description === null) &&
-    "image_properties" in obj && // Accepts any (Json)
+    typeof obj.sorted_by === "string" && // playlist_sorted_by enum
+    typeof obj.sort_order === "string" && // playlist_sort_order enum
+    // Playlist data (joined from playlists table)
     typeof obj.name === "string" &&
     typeof obj.short_id === "string" &&
+    typeof obj.created_at === "string" &&
+    typeof obj.created_by === "string" &&
+    typeof obj.updated_at === "string" &&
+    (typeof obj.description === "string" || obj.description === null) &&
+    "image_properties" in obj && // Accepts any (Json)
+    (typeof obj.image_url === "string" || obj.image_url === null) &&
     (typeof obj.thumbnail_maxres_url === "string" ||
       obj.thumbnail_maxres_url === null) &&
     (typeof obj.thumbnail_url === "string" || obj.thumbnail_url === null) &&
     typeof obj.type === "string" &&
-    typeof obj.updated_at === "string" &&
     (typeof obj.youtube_id === "string" || obj.youtube_id === null)
   );
 }

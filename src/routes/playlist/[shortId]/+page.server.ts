@@ -3,6 +3,8 @@ import {
   getPlaylistVideos,
   updatePlaylistImage,
   updatePlaylistInfo,
+  type ProfilePlaylist,
+  type UserPlaylist,
 } from "$lib/supabase/playlists";
 import { redirect, type Actions, type RequestEvent } from "@sveltejs/kit";
 import type { PageServerLoad } from "../[shortId]/$types";
@@ -31,11 +33,20 @@ export const load: PageServerLoad = async ({
 
   const { playlists, contentFilter } = await parent();
 
-  const { playlist: profilePlaylist } = await getPlaylistByShortId({
-    shortId: params.shortId,
-    supabase,
-  });
-  if (!profilePlaylist) {
+  let playlist: UserPlaylist | ProfilePlaylist | null;
+
+  playlist =
+    playlists.find((playlist) => playlist.short_id === params.shortId) ?? null;
+
+  // If not found in array, fetch from API
+  if (!playlist) {
+    ({ playlist } = await getPlaylistByShortId({
+      shortId: params.shortId,
+      supabase,
+    }));
+  }
+
+  if (!playlist) {
     console.error(`Playlist was not found`);
     redirect(302, "/");
   }
@@ -51,7 +62,7 @@ export const load: PageServerLoad = async ({
   const { videos, count: videosCount } = await getPlaylistVideos({
     supabase,
     contentFilter,
-    playlistId: profilePlaylist.id,
+    playlistId: playlist.id,
   });
 
   // Calculate total duration for all videos
@@ -63,25 +74,24 @@ export const load: PageServerLoad = async ({
   const playlistDuration = videoDurationSecondsToTime(playlistDurationSeconds);
 
   const transformedPlaylist = {
-    ...profilePlaylist,
-    image_properties: profilePlaylist.image_properties
-      ? typeof profilePlaylist.image_properties === "string"
-        ? JSON.parse(profilePlaylist.image_properties)
-        : profilePlaylist.image_properties
+    ...playlist,
+    image_properties: playlist.image_properties
+      ? typeof playlist.image_properties === "string"
+        ? JSON.parse(playlist.image_properties)
+        : playlist.image_properties
       : null,
     // Add default values for schema-only fields
     isDeletingPlaylistImage: false,
   };
 
-  const playlistImageUrl = await getCroppedPlaylistImageUrlServer({
+  playlist.processedImageUrl = await getCroppedPlaylistImageUrlServer({
     imageProperties: transformedPlaylist.image_properties,
-    thumbnailMaxResUrl: profilePlaylist.thumbnail_maxres_url,
-    thumbnailUrl: profilePlaylist.thumbnail_url,
+    thumbnailMaxResUrl: transformedPlaylist.thumbnail_maxres_url,
+    thumbnailUrl: transformedPlaylist.thumbnail_url,
   });
 
   return {
-    profilePlaylist,
-    playlistImageUrl,
+    playlist,
     playlists,
     videos,
     videosCount,

@@ -10,8 +10,7 @@
   const {
     contentFilter,
     form,
-    profilePlaylist,
-    playlistImageUrl,
+    playlist,
     playlists,
     currentPage,
     videos = [],
@@ -44,11 +43,11 @@
   };
 
   const playlistHeaderProps = $derived({
-    breadcrumbs: [{ label: profilePlaylist.name }],
+    breadcrumbs: [{ label: playlist.name }],
     contentFilter,
     currentPage,
     form,
-    profilePlaylist,
+    playlist,
     playlists,
     playlistDuration,
     videosCount: videosCount ?? 0,
@@ -58,17 +57,16 @@
 </script>
 
 <div class="flex flex-col grow relative">
-  <ImageCropper.Root src={playlistImageUrl ?? undefined}>
+  <ImageCropper.Root src={playlist.processedImageUrl ?? undefined}>
     <PlaylistHeader
       {...playlistHeaderProps}
-      {playlistImageUrl}
       bind:showFloatingBreadcrumbs
       {videos}
     />
   </ImageCropper.Root>
 
   <Content
-    playlist={profilePlaylist}
+    {playlist}
     contentDisplay="TILES"
     {playlists}
     {videos}

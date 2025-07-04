@@ -1,8 +1,12 @@
+
+
 -- Updated table definition
 CREATE TABLE public.user_playlists (
     id bigint NOT NULL REFERENCES public.playlists(id) ON DELETE CASCADE,
     user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE DEFAULT NULL,
     playlist_position int2 DEFAULT NULL,
+    "sorted_by" playlist_sorted_by DEFAULT 'playlistOrder' NOT NULL,
+    "sort_order" playlist_sort_order DEFAULT 'ascending' NOT NULL,
     PRIMARY KEY (id, user_id )
 );
 
@@ -49,7 +53,6 @@ CREATE POLICY "Users can DELETE their own user_playlists"
         user_playlists.user_id = auth.uid()
     );
 
--- Updated get_user_playlists function
 CREATE OR REPLACE FUNCTION get_user_playlists(p_user_id uuid)
 RETURNS TABLE (
   id bigint,
@@ -63,7 +66,10 @@ RETURNS TABLE (
   thumbnail_maxres_url text,
   image_properties jsonb,
   playlist_position int2,
-  youtube_id text 
+  sorted_by playlist_sorted_by,
+  sort_order playlist_sort_order,
+  youtube_id text,
+  profile_username text
 )
 LANGUAGE sql
 AS $$
@@ -79,9 +85,13 @@ AS $$
     p.thumbnail_maxres_url,
     p.image_properties,
     up.playlist_position,
-    p.youtube_id
+    up.sorted_by,
+    up.sort_order,
+    p.youtube_id,
+    prof.username AS profile_username
   FROM public.user_playlists up
   JOIN public.playlists p ON up.id = p.id
+  LEFT JOIN public.profiles prof ON p.created_by = prof.id
   WHERE up.user_id = p_user_id
   ORDER BY up.playlist_position ASC;
 $$;
@@ -579,7 +589,6 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE OR REPLACE FUNCTION public.get_playlist_by_short_id(p_short_id text) RETURNS TABLE (
-  -- Playlist columns
   id bigint,
   created_at timestamp with time zone,
   name text,
@@ -591,8 +600,6 @@ CREATE OR REPLACE FUNCTION public.get_playlist_by_short_id(p_short_id text) RETU
   type playlist_type,
   image_properties jsonb,
   youtube_id text,
-
-  -- Profile columns (nullable because of LEFT JOIN)
   profile_username text
 )
 LANGUAGE sql

@@ -4,7 +4,11 @@
   import FloatingBreadcrumbs from "$lib/components/floating-breadcrumbs.svelte";
   import IntersectionObserver from "$lib/components/intersection-observer.svelte";
   import ContentSelect from "$lib/components/content/content-select.svelte";
-  import type { Playlist, ProfilePlaylist } from "$lib/supabase/playlists";
+  import type {
+    Playlist,
+    ProfilePlaylist,
+    UserPlaylist,
+  } from "$lib/supabase/playlists";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
   import type { HTMLAttributes } from "svelte/elements";
@@ -33,7 +37,7 @@
     currentPage?: number;
     open?: boolean;
     playlists: Playlist[];
-    profilePlaylist?: ProfilePlaylist;
+    playlist?: ProfilePlaylist | UserPlaylist;
     session: Session | null;
     showFloatingBreadcrumbs: boolean;
     supabase: SupabaseClient<Database>;
@@ -49,7 +53,7 @@
     currentPage = $bindable(),
     open = $bindable(),
     playlists,
-    profilePlaylist,
+    playlist: profilePlaylist,
     session,
     showFloatingBreadcrumbs = $bindable(),
     supabase,
