@@ -352,7 +352,26 @@ export type Database = {
         }[]
       }
       get_playlist_by_short_id: {
-        Args: { p_short_id: string; p_user_id?: string }
+        Args: { p_short_id: string }
+        Returns: {
+          id: number
+          created_at: string
+          name: string
+          short_id: string
+          created_by: string
+          description: string
+          thumbnail_url: string
+          thumbnail_maxres_url: string
+          type: Database["public"]["Enums"]["playlist_type"]
+          image_properties: Json
+          youtube_id: string
+          profile_username: string
+          sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
+          sort_order: Database["public"]["Enums"]["playlist_sort_order"]
+        }[]
+      }
+      get_playlist_by_youtube_id: {
+        Args: { p_youtube_id: string }
         Returns: {
           id: number
           created_at: string

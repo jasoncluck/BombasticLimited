@@ -10,12 +10,19 @@ import giantbombImage from "$lib/assets/giantbomb.jpg";
 import remapImage from "$lib/assets/remap.jpg";
 import type { Database } from "$lib/supabase/database.types";
 
+
+type HighlightPlaylist = {
+  youtubeId: string;
+  name: string
+}
+
 interface SourceInfo {
   displayName: string;
   urlParam: string;
   image: string;
   twitchId: string;
   youtubeId: string;
+  highlightedPlaylists: HighlightPlaylist[];
   websiteUrl: string;
   supportUrl: string;
 }
@@ -27,6 +34,7 @@ export const SOURCE_INFO: Record<Source, SourceInfo> = {
     image: nextlanderImage,
     twitchId: "689331234",
     youtubeId: "UCO0gHyqLNeIrCAjwlO2BmiA",
+    highlightedPlaylists: [],
     websiteUrl: "https://www.patreon.com/nextlander",
     supportUrl: "https://www.patreon.com/nextlander/",
   },
@@ -36,6 +44,7 @@ export const SOURCE_INFO: Record<Source, SourceInfo> = {
     image: giantbombImage,
     twitchId: "504350",
     youtubeId: "UCmeds0MLhjfkjD_5acPnFlQ",
+    highlightedPlaylists: [{ name: "Giant Bombcast", youtubeId: 'PLXlhzeWIuTHLGJRmdyTRtfXxTTZrYHlax' }],
     websiteUrl: "https://www.giantbomb.com/",
     supportUrl: "https://www.giantbomb.com/upgrade/",
   },
@@ -45,6 +54,7 @@ export const SOURCE_INFO: Record<Source, SourceInfo> = {
     image: remapImage,
     twitchId: "913491352",
     youtubeId: "UCpcSq3A3Z4tUJsHKfn8zpnA",
+    highlightedPlaylists: [{ name: "Remap Radio", youtubeId: 'PLTbM52Fro5psVDi5r1StiTdnLxM9McaSO' }],
     websiteUrl: "https://remapradio.com/",
     supportUrl: "https://remapradio.com/signup/",
   },

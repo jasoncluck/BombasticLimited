@@ -10,8 +10,11 @@
     "sourceMap": true,
     "strict": true,
     "moduleResolution": "bundler",
-    "types": ["youtube"]
-  }
+    "types": [
+      "youtube"
+    ]
+  },
+  "typescript.tsserver.maxTsServerMemory": 8192
   // Path aliases are handled by https://svelte.dev/docs/kit/configuration#alias
   // except $lib which is handled by https://svelte.dev/docs/kit/configuration#files
   //

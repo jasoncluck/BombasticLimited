@@ -13,6 +13,7 @@
   const {
     videos = [],
     playlists,
+    highlightPlaylists,
     session,
     supabase,
     source,
@@ -47,14 +48,12 @@
     </div>
   {/if}
 
-  <div class="flex flex-col bg-background-lighter">
-    <a
-      href={`/${source}/latest`}
-      class="header-link-sticky hover:underline cursor-pointer mb-4"
-    >
-      Latest Videos
-    </a>
-    {#key source}
+  <div class="flex flex-col gap-8">
+    <div class="flex flex-col gap-4">
+      <a href={`/${source}/latest`} class="header-link-sticky">
+        Latest Videos
+      </a>
+      <!-- {#key source} -->
       <Content
         contentDisplay={userPreferences.contentDisplay}
         {videos}
@@ -64,6 +63,21 @@
         {session}
         {supabase}
       />
-    {/key}
+      <!-- {/key} -->
+      {#each highlightPlaylists as hightlightPlaylist (hightlightPlaylist.playlist.name)}
+        <a href={`/${source}/latest`} class="header-link-sticky">
+          {hightlightPlaylist.playlist.name}
+        </a>
+        <Content
+          contentDisplay={userPreferences.contentDisplay}
+          videos={hightlightPlaylist.videos}
+          bind:carouselState
+          {playlists}
+          {contentFilter}
+          {session}
+          {supabase}
+        />
+      {/each}
+    </div>
   </div>
 </div>

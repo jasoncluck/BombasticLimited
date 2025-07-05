@@ -56,21 +56,37 @@ export interface PlaylistImageProperties {
 export async function getPlaylistByShortId({
   shortId,
   supabase,
-  session,
 }: {
   shortId: string;
   supabase: SupabaseClient<Database>;
-  session: Session | null;
 }) {
   const { data, error } = await supabase
     .rpc("get_playlist_by_short_id", {
       p_short_id: shortId,
-      p_user_id: session?.user.id,
     })
     .single();
 
   if (error || !data) {
     console.error("Error fetching playlist from short ID.", error);
+  }
+  return { playlist: data, error };
+}
+
+export async function getPlaylistByYoutubeId({
+  youtubeId,
+  supabase,
+}: {
+  youtubeId: string;
+  supabase: SupabaseClient<Database>;
+}) {
+  const { data, error } = await supabase
+    .rpc("get_playlist_by_youtube_id", {
+      p_youtube_id: youtubeId,
+    })
+    .single();
+
+  if (error || !data) {
+    console.error(`Error fetching playlist from Youtube ID: ${youtubeId}`, error);
   }
   return { playlist: data, error };
 }
@@ -95,6 +111,7 @@ export async function getPlaylistVideo({
 
   return { video, error };
 }
+
 
 export async function getPlaylistVideos({
   playlistId,
@@ -170,6 +187,7 @@ export async function getPlaylistVideos({
 
   return { videos, count, error };
 }
+
 
 export async function createPlaylist({
   name,

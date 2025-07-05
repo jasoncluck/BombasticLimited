@@ -1,8 +1,9 @@
-import { isSource, type Source } from "$lib/constants/source";
-import { DEFAULT_NUM_VIDEOS_OVERVIEW, getVideos } from "$lib/supabase/videos";
+import { isSource, SOURCE_INFO } from "$lib/constants/source";
+import { DEFAULT_NUM_VIDEOS_OVERVIEW, getVideos, type Video } from "$lib/supabase/videos";
 import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "../[source]/$types";
-import { isVideoFilter } from "$lib/components/content/content-filter";
+import { isVideoFilter, type PlaylistVideosFilter } from "$lib/components/content/content-filter";
+import { getPlaylistByYoutubeId, getPlaylistVideos, type Playlist } from "$lib/supabase/playlists";
 
 export const load: PageServerLoad = async ({
   params,
@@ -12,7 +13,9 @@ export const load: PageServerLoad = async ({
 }) => {
   depends("supabase:db:videos");
 
-  if (!isSource(params.source)) {
+  const source = params.source
+
+  if (!isSource(source)) {
     redirect(303, "/");
   }
 
@@ -22,17 +25,31 @@ export const load: PageServerLoad = async ({
     throw new Error("Invalid content filter");
   }
 
+
+
   const { videos } = await getVideos({
-    source: params.source as Source,
+    source,
     session,
     limit: DEFAULT_NUM_VIDEOS_OVERVIEW,
     contentFilter,
     supabase,
   });
 
+  const highlightPlaylists: { playlist: Playlist, videos: Video[] }[] = []
+  const playlistContentFilter: PlaylistVideosFilter = { sort: { key: "playlistOrder", order: "ascending" }, type: "playlist" };
+  for (const highlightPlaylist of SOURCE_INFO[source].highlightedPlaylists) {
+    const { playlist } = await getPlaylistByYoutubeId({ youtubeId: highlightPlaylist.youtubeId, supabase })
+    if (!playlist) {
+      continue;
+    }
+    const { videos } = await getPlaylistVideos({ playlistId: playlist.id, contentFilter: playlistContentFilter, limit: DEFAULT_NUM_VIDEOS_OVERVIEW, supabase });
+    highlightPlaylists.push({ playlist, videos });
+  }
+
   return {
     videos: videos ?? [],
-    source: params.source,
+    highlightPlaylists,
+    source,
     contentFilter,
   };
 };

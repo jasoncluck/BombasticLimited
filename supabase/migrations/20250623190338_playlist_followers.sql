@@ -589,8 +589,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE OR REPLACE FUNCTION public.get_playlist_by_short_id(
-  p_short_id text,
-  p_user_id uuid DEFAULT NULL
+  p_short_id text
 ) RETURNS TABLE (
   id bigint,
   created_at timestamp with time zone,
@@ -628,7 +627,49 @@ AS $$
   LEFT JOIN public.profiles prof ON p.created_by = prof.id
   LEFT JOIN public.user_playlists up 
     ON up.id = p.id 
-   AND (p_user_id IS NULL OR up.user_id = p_user_id)
   WHERE p.short_id = p_short_id
+  LIMIT 1;
+$$;
+
+CREATE OR REPLACE FUNCTION public.get_playlist_by_youtube_id(
+  p_youtube_id text
+) RETURNS TABLE (
+  id bigint,
+  created_at timestamp with time zone,
+  name text,
+  short_id text,
+  created_by uuid,
+  description text,
+  thumbnail_url text,
+  thumbnail_maxres_url text,
+  type playlist_type,
+  image_properties jsonb,
+  youtube_id text,
+  profile_username text,
+  sorted_by playlist_sorted_by,
+  sort_order playlist_sort_order
+)
+LANGUAGE sql
+AS $$
+  SELECT
+    p.id,
+    p.created_at,
+    p.name,
+    p.short_id,
+    p.created_by,
+    p.description,
+    p.thumbnail_url,
+    p.thumbnail_maxres_url,
+    p.type,
+    p.image_properties,
+    p.youtube_id,
+    prof.username AS profile_username,
+    up.sorted_by,
+    up.sort_order
+  FROM public.playlists p
+  LEFT JOIN public.profiles prof ON p.created_by = prof.id
+  LEFT JOIN public.user_playlists up 
+    ON up.id = p.id 
+  WHERE p.youtube_id = p_youtube_id
   LIMIT 1;
 $$;
