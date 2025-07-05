@@ -15,8 +15,8 @@ export type TimestampWithVideoId = {
   timestampStartSeconds?: number;
   watchedAt?: Date;
   playlistId?: number;
-  sortedBy: SortKey<PlaylistVideo> | null;
-  sortOrder: SortOrder | null;
+  sortedBy?: SortKey<PlaylistVideo> | null;
+  sortOrder?: SortOrder | null;
 };
 
 export async function saveVideoTimestamp({

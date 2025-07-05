@@ -6,6 +6,8 @@
   import type { Video } from "$lib/supabase/videos";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { CombinedContentFilter } from "../content/content-filter";
+  import ContentActionsDropdown from "../content/content-actions-dropdown.svelte";
+  import { Circle } from "@lucide/svelte";
 
   interface ProcessedLine {
     text: string;
@@ -16,6 +18,7 @@
   const {
     video,
     playlist,
+    playlists,
     contentFilter,
     supabase,
     session,
@@ -23,6 +26,7 @@
   }: {
     video: Video;
     playlist?: Playlist;
+    playlists: Playlist[];
     contentFilter: CombinedContentFilter;
     supabase: SupabaseClient;
     session: Session | null;
@@ -86,7 +90,7 @@
   };
 </script>
 
-<div class="flex flex-col gap-6">
+<div class="flex flex-col">
   <YoutubeEmbed
     {supabase}
     {session}
@@ -96,15 +100,31 @@
     durationSeconds={videoDurationToSeconds(video?.duration)}
   />
 
-  <div class="flex justify-between">
-    <h2 class="font-semibold pr-4">{video.title}</h2>
-    <span class="text-muted-foreground">
-      {formatPublishedDate(video.published_at)}
-    </span>
+  <div class="flex justify-between mt-6">
+    <div class="flex items-center gap-2">
+      <p class="font-semibold">{video.title}</p>
+
+      <Circle
+        size="5"
+        class="shrink-0 stroke-muted-foreground fill-muted-foreground justify-center"
+      />
+      <span class="text-muted-foreground">
+        {formatPublishedDate(video.published_at)}
+      </span>
+    </div>
+    <div class="ml-auto">
+      <ContentActionsDropdown
+        videos={[video]}
+        {playlists}
+        variant="item"
+        {supabase}
+        {session}
+      />
+    </div>
   </div>
 
   {#if video?.description}
-    <div class="whitespace-pre-line">
+    <div class="whitespace-pre-line mt-4">
       {#each processTimestamps(video.description) as line (line)}
         {#if line.hasTimestamp}
           <div>

@@ -60,7 +60,7 @@
 
 <div class="flex flex-col relative bg-background-lighter mt-4">
   {#if session && continueWatchingVideos.length > 0}
-    <div class="flex flex-col mb-8">
+    <div class="flex flex-col mb-8 gap-4">
       <a href="/continue" class="header-link-sticky"> Continue Watching </a>
 
       <Content

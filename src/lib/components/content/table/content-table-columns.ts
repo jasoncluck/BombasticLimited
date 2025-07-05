@@ -83,6 +83,7 @@ export function createContentColumns({
           videos: [video],
           playlist: getPlaylist(),
           playlists: getPlaylists(),
+          variant: "list-items",
           session,
           supabase,
         });

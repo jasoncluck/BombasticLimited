@@ -67,6 +67,8 @@
     profilePlaylist?.created_by === session?.user.id,
   );
 
+  console.log(contentFilter);
+
   const numPages = $derived(
     getNumberOfPages({
       videosCount,
@@ -135,6 +137,7 @@
             onclick={() => {
               handleFollowPlaylist({
                 playlist: profilePlaylist,
+                contentFilter,
                 supabase,
                 session,
               });

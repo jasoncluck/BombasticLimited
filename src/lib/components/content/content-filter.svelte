@@ -16,7 +16,11 @@
   import { page } from "$app/state";
   import type { VideoTimestamp, Video } from "$lib/supabase/videos";
   import { parseDate, type DateValue } from "@internationalized/date";
-  import type { Playlist, PlaylistVideo } from "$lib/supabase/playlists";
+  import {
+    isUserPlaylist,
+    type Playlist,
+    type PlaylistVideo,
+  } from "$lib/supabase/playlists";
   import type { ContentView } from "./content";
   import { handleUpdatePlaylistSort } from "../playlist/playlist-service";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
@@ -126,7 +130,7 @@
         endDate: contentFilter.endDate,
       };
       // Update playlist sort so it can be retrieved next time until changed again
-      if (playlist) {
+      if (playlist && isUserPlaylist(playlist)) {
         handleUpdatePlaylistSort({
           playlist,
           sortOrder,

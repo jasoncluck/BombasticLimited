@@ -245,7 +245,7 @@
               }
             }}
           >
-            Mark video as watched
+            Set as Watched
           </ContextMenu.Item>
         {/if}
       {/if}

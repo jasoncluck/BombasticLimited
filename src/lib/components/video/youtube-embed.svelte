@@ -15,6 +15,7 @@
     isPlaylistVideosFilter,
     type CombinedContentFilter,
   } from "../content/content-filter";
+  import AspectRatio from "../ui/aspect-ratio/aspect-ratio.svelte";
 
   const VIDEO_SAVE_SECONDS_START = 15;
   const VIDEO_DELETE_SECONDS_PERCENT = 0.95;
@@ -266,4 +267,6 @@
   });
 </script>
 
-<VideoEmbed divId="player" />
+<AspectRatio ratio={16 / 9}>
+  <VideoEmbed divId="player" />
+</AspectRatio>

@@ -51,7 +51,7 @@
   <div>
     <ContentActionsDropdown
       bind:videos={contentState.selectedVideos}
-      isContentSelect={true}
+      variant="header"
       {playlist}
       {playlists}
       onSelectAll={handleSelectAll}

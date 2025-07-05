@@ -14,7 +14,7 @@
 
 <div class="min-w-0 max-w-xs">
   <p
-    class="@2xl:line-clamp-2 hidden text-sm {!isSelected &&
+    class="lg:line-clamp-2 hidden text-sm {!isSelected &&
       'text-muted-foreground'} leading-relaxed break-words whitespace-normal"
   >
     {video.description}

@@ -22,16 +22,16 @@
     videos = $bindable(),
     playlist,
     playlists,
-    isContentSelect,
+    variant,
     onSelectAll,
     supabase,
     session,
   }: {
     videos: Video[];
-    playlist: Playlist | undefined;
+    playlist?: Playlist;
     playlists: Playlist[];
     // For items like deselecting only makes sense when using the content selector
-    isContentSelect?: boolean;
+    variant: "header" | "item" | "list-items";
     supabase: SupabaseClient<Database>;
     session: Session | null;
     onSelectAll?: () => void;
@@ -66,7 +66,7 @@
           if (contentState.isDropdownMenuOpen) {
             contentState.isDropdownMenuOpen = false;
           }
-          if (!isContentSelect && videos && videos.length > 0) {
+          if (variant === "list-items" && videos.length > 0) {
             contentState.selectedVideos = [videos[0]];
           }
           // Don't allow double click to go through to navigate
@@ -74,17 +74,21 @@
         }}
         class="outline-none ghost-button-minimal {open
           ? 'scale-105'
-          : ''} {isContentSelect || isHovering ? 'opacity-100' : 'opacity-0'}"
+          : ''} {variant !== 'list-items' || isHovering
+          ? 'opacity-100'
+          : 'opacity-0'}"
       >
         <Ellipsis />
         <span class="sr-only">
-          {isContentSelect ? "Actions for selected items" : "Actions for video"}
+          {variant === "header"
+            ? "Actions for selected items"
+            : "Actions for video"}
         </span>
       </Button>
     {/snippet}
   </DropdownMenu.Trigger>
   <DropdownMenu.Content align="start">
-    {#if isContentSelect}
+    {#if variant === "header"}
       <DropdownMenu.Item
         class="p-2"
         onclick={() => {
@@ -95,7 +99,7 @@
     {@const filteredPlaylists = playlists.filter(
       (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id,
     )}
-    {#if (!isContentSelect && filteredPlaylists.length > 0) || (isContentSelect && videos.length > 0)}
+    {#if (variant !== "header" && filteredPlaylists.length > 0) || (variant === "header" && videos.length > 0)}
       <DropdownMenu.Sub>
         <DropdownMenu.SubTrigger onclick={(e) => e.stopPropagation()}
           >Add {videos.length === 1 ? "video" : "videos"}
@@ -118,7 +122,6 @@
                     handleAddVideosToPlaylist({
                       videos,
                       playlist: addPlaylist,
-                      playlistImages: contentState.playlistImages,
                       supabase,
                       session,
                     });
@@ -133,14 +136,13 @@
       </DropdownMenu.Sub>
     {/if}
 
-    {#if playlist && isPlaylistOwner && videos.length > 0}
+    {#if playlist && isPlaylistOwner && videos && videos.length > 0}
       <DropdownMenu.Item
         class="p-2"
         onclick={async () => {
           const { error } = await handleRemoveVideosFromPlaylist({
             videos,
             playlist,
-            playlistImages: contentState.playlistImages,
             supabase,
           });
 
@@ -151,22 +153,20 @@
       >
     {/if}
 
-    {@const firstVideo = videos[0]}
-    {#if playlist && !isContentSelect && isPlaylistOwner}
+    {#if contentState.hoveredVideo && playlist && variant === "list-items" && isPlaylistOwner}
+      {@const hoveredVideo = contentState.hoveredVideo}
       <DropdownMenu.Item
         class="p-2"
         onclick={async () =>
-          (contentState.playlistImages[playlist.id] =
-            await handleUpdatePlaylistImage({
-              playlist,
-              thumbnailUrl: firstVideo.thumbnail_url,
-              thumbnailMaxResUrl: firstVideo.thumbnail_maxres_url,
-              playlistImages: contentState.playlistImages,
-              supabase,
-            }))}>Set as playlist image</DropdownMenu.Item
+          await handleUpdatePlaylistImage({
+            playlist,
+            thumbnailUrl: hoveredVideo.thumbnail_url,
+            thumbnailMaxResUrl: hoveredVideo.thumbnail_maxres_url,
+            supabase,
+          })}>Set as playlist image</DropdownMenu.Item
       >
     {/if}
-    {#if session && videos.length > 0 && videos.some( (v) => isVideoWithTimestamp(v), )}
+    {#if session && variant !== "item" && videos.length > 0 && videos.some( (v) => isVideoWithTimestamp(v), )}
       <DropdownMenu.Item
         class="p-2"
         onclick={async () => {
@@ -180,21 +180,23 @@
         Reset Progress
       </DropdownMenu.Item>
     {/if}
-    {#if videos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
+    {#if variant !== "item" && videos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
       <DropdownMenu.Item
         class="p-2"
         onclick={async () => {
-          ({ updatedVideos: videos } = await handleAddVideoTimestamp({
-            videoTimestamps: videos.map((v) => ({
-              videoId: v.id,
-              watchedAt: new Date(),
-            })),
-            session,
-            supabase,
-          }));
+          if (videos) {
+            ({ updatedVideos: videos } = await handleAddVideoTimestamp({
+              videoTimestamps: videos.map((v) => ({
+                videoId: v.id,
+                watchedAt: new Date(),
+              })),
+              session,
+              supabase,
+            }));
+          }
         }}
       >
-        Mark as watched
+        Set as watched
       </DropdownMenu.Item>
     {/if}
   </DropdownMenu.Content>

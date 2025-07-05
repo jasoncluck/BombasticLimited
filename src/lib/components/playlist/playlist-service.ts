@@ -21,7 +21,7 @@ import { type Session, type SupabaseClient } from "@supabase/supabase-js";
 import { getCroppedImg } from "../ui/image-cropper/utils";
 import type { CropArea } from "svelte-easy-crop";
 import type { Video } from "$lib/supabase/videos";
-import type { SortKey, SortOrder } from "../content/content-filter";
+import { isPlaylistVideosFilter, type CombinedContentFilter, type PlaylistVideosFilter, type SortKey, type SortOrder } from "../content/content-filter";
 
 export type PlaylistImages = Record<string, string | undefined>;
 
@@ -309,11 +309,13 @@ export async function handleUpdatePlaylistPosition({
 export async function handleFollowPlaylist({
   playlist,
   position,
+  contentFilter,
   supabase,
   session,
 }: {
   playlist: Playlist;
   position?: number;
+  contentFilter: CombinedContentFilter;
   supabase: SupabaseClient<Database>;
   session: Session | null;
 }) {
@@ -328,6 +330,10 @@ export async function handleFollowPlaylist({
     supabase,
     session,
   });
+
+  if (isPlaylistVideosFilter(contentFilter) && contentFilter.sort.key !== "playlistOrder") {
+    handleUpdatePlaylistSort({ playlist, sortedBy: contentFilter.sort.key, sortOrder: contentFilter.sort.order, supabase, session })
+  }
 
   invalidate("supabase:db:playlists");
 
