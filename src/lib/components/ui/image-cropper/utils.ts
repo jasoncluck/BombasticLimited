@@ -1,5 +1,5 @@
 /*
-	Installed from @ieedan/shadcn-svelte-extras
+  Installed from @ieedan/shadcn-svelte-extras
 */
 
 import type { CropArea } from "svelte-easy-crop";

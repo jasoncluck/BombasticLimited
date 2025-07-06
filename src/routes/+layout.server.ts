@@ -1,5 +1,6 @@
 import type { ContentView } from "$lib/components/content/content";
 import { getFilterOptionFromQueryParams } from "$lib/components/content/content-filter";
+import { parseImageProperties } from "$lib/components/playlist/playlist";
 import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
 import { getUserPlaylists } from "$lib/supabase/playlists";
 import type { LayoutServerLoad } from "./$types";
@@ -20,17 +21,9 @@ export const load: LayoutServerLoad = async ({
 
   if (userPlaylists) {
     for (const userPlaylist of userPlaylists) {
-      const transformedPlaylist = {
-        ...userPlaylist,
-        image_properties: userPlaylist.image_properties
-          ? typeof userPlaylist.image_properties === "string"
-            ? JSON.parse(userPlaylist.image_properties)
-            : userPlaylist.image_properties
-          : null,
-      };
 
       userPlaylist.processedImageUrl = await getCroppedPlaylistImageUrlServer({
-        imageProperties: transformedPlaylist.image_properties,
+        imageProperties: parseImageProperties(userPlaylist.image_properties),
         thumbnailMaxResUrl: userPlaylist.thumbnail_maxres_url,
         thumbnailUrl: userPlaylist.thumbnail_url,
       });

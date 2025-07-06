@@ -36,7 +36,7 @@
   };
 
   // Create a derived promise that includes image processing
-  const processedPlaylistsPromise = $derived(
+  const processedPlaylistsPromise = $derived.by(() =>
     sourcePlaylistsData.then(async ({ playlists: sourcePlaylists }) => {
       // Process images in batches to avoid overwhelming the browser
       const batchSize = 5;

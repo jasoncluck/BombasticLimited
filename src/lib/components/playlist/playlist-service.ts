@@ -1,6 +1,6 @@
 import { goto, invalidate } from "$app/navigation";
 import { showNotification } from "$lib/stores/notification";
-import type { Database, Json } from "$lib/supabase/database.types";
+import type { Database } from "$lib/supabase/database.types";
 import {
   addVideosToPlaylist,
   createPlaylist,
@@ -14,14 +14,13 @@ import {
   updatePlaylistSort,
   updatePlaylistVideoPosition,
   type Playlist,
-  type PlaylistImageProperties,
   type PlaylistVideo,
 } from "$lib/supabase/playlists";
 import { type Session, type SupabaseClient } from "@supabase/supabase-js";
-import { getCroppedImg } from "../ui/image-cropper/utils";
 import type { Video } from "$lib/supabase/videos";
 import { isPlaylistVideosFilter, type CombinedContentFilter, type SortKey, type SortOrder } from "../content/content-filter";
-import type { ImageProperties } from "./playlist";
+import { parseImageProperties, type ImageProperties } from "./playlist";
+import { getCroppedImg } from "../ui/image-cropper/utils";
 
 export type PlaylistImages = Record<string, string | undefined>;
 
@@ -103,42 +102,6 @@ export async function handleDeletePlaylist({
   return { error };
 }
 
-export async function getCroppedPlaylistImageUrl({
-  imageProperties,
-  thumbnailMaxResUrl,
-  thumbnailUrl,
-}: {
-  imageProperties: Json;
-  thumbnailMaxResUrl: string | null;
-  thumbnailUrl: string | null;
-}) {
-  let croppedPlaylistImageUrl: string | undefined;
-  let playlistImageProperties: PlaylistImageProperties | undefined;
-  if (imageProperties) {
-    // JSONB data is already an object, inferred types need overridden
-    playlistImageProperties =
-      imageProperties as unknown as PlaylistImageProperties;
-  }
-
-  const playlistImage = thumbnailMaxResUrl ? thumbnailMaxResUrl : thumbnailUrl;
-
-  const { x, y, width, height } = thumbnailMaxResUrl
-    ? PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS
-    : PLAYLIST_IMAGE_CROP_DEFAULTS;
-
-  if (playlistImage) {
-    croppedPlaylistImageUrl = await getCroppedImg(
-      playlistImage,
-      playlistImageProperties ?? {
-        x,
-        y,
-        width,
-        height,
-      },
-    );
-  }
-  return croppedPlaylistImageUrl;
-}
 
 export async function handleAddVideosToPlaylist({
   playlist,
@@ -256,7 +219,7 @@ export async function handleUpdatePlaylistImage({
     showNotification("Unable update playlist image");
   } else if (updatedPlaylist && !isResetImage) {
     return getCroppedPlaylistImageUrl({
-      imageProperties: playlist.image_properties,
+      imageProperties: parseImageProperties(playlist.image_properties),
       thumbnailMaxResUrl,
       thumbnailUrl,
     });
@@ -406,3 +369,77 @@ export async function handleUpdatePlaylistSort({
 
   return { updatedPlaylist, error };
 }
+
+
+// Functions for getting cropped playlist images in the browser for use when deferring image rendering
+export async function getCroppedPlaylistImageUrl({
+  imageProperties,
+  thumbnailMaxResUrl,
+  thumbnailUrl,
+}: {
+  imageProperties: ImageProperties | null;
+  thumbnailMaxResUrl: string | null;
+  thumbnailUrl?: string | null;
+}): Promise<string | null> {
+  const imageUrl = thumbnailMaxResUrl ?? thumbnailUrl;
+  if (!imageUrl) return null;
+
+  if (!imageProperties) {
+    imageProperties = thumbnailMaxResUrl
+      ? PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS
+      : PLAYLIST_IMAGE_CROP_DEFAULTS;
+  }
+
+  try {
+    // Try OffscreenCanvas first (more efficient)
+    if (typeof OffscreenCanvas !== 'undefined' && typeof createImageBitmap !== 'undefined') {
+      return await processWithOffscreenCanvas(imageUrl, imageProperties);
+    } else {
+      // Fallback to regular Canvas
+      return await getCroppedImg(imageUrl, imageProperties);
+    }
+  } catch (error) {
+    console.error("Browser image processing failed:", error);
+    return null;
+  }
+}
+
+async function processWithOffscreenCanvas(
+  imageUrl: string,
+  imageProperties: ImageProperties
+): Promise<string> {
+  const response = await fetch(imageUrl);
+  if (!response.ok) throw new Error("Failed to fetch image");
+
+  const imageBlob = await response.blob();
+  const imageBitmap = await createImageBitmap(imageBlob);
+
+  const canvas = new OffscreenCanvas(imageProperties.width, imageProperties.height);
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) throw new Error("Failed to get canvas context");
+
+  ctx.drawImage(
+    imageBitmap,
+    imageProperties.x, imageProperties.y, imageProperties.width, imageProperties.height,
+    0, 0, imageProperties.width, imageProperties.height
+  );
+
+  const blob = await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.8 });
+  const arrayBuffer = await blob.arrayBuffer();
+
+  const uint8Array = new Uint8Array(arrayBuffer);
+  let binaryString = '';
+
+  // Process in chunks to avoid call stack overflow
+  const chunkSize = 8192;
+  for (let i = 0; i < uint8Array.length; i += chunkSize) {
+    const chunk = uint8Array.subarray(i, i + chunkSize);
+    binaryString += String.fromCharCode.apply(null, Array.from(chunk));
+  }
+
+  const base64 = btoa(binaryString);
+
+  return `data:image/jpeg;base64,${base64}`;
+}
+
