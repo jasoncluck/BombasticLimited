@@ -19,20 +19,20 @@ import {
 } from "$lib/supabase/playlists";
 import { type Session, type SupabaseClient } from "@supabase/supabase-js";
 import { getCroppedImg } from "../ui/image-cropper/utils";
-import type { CropArea } from "svelte-easy-crop";
 import type { Video } from "$lib/supabase/videos";
-import { isPlaylistVideosFilter, type CombinedContentFilter, type PlaylistVideosFilter, type SortKey, type SortOrder } from "../content/content-filter";
+import { isPlaylistVideosFilter, type CombinedContentFilter, type SortKey, type SortOrder } from "../content/content-filter";
+import type { ImageProperties } from "./playlist";
 
 export type PlaylistImages = Record<string, string | undefined>;
 
-export const PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS: CropArea = {
+export const PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS: ImageProperties = {
   x: 280,
   y: 0,
   height: 720,
   width: 720,
 };
 
-export const PLAYLIST_IMAGE_CROP_DEFAULTS: CropArea = {
+export const PLAYLIST_IMAGE_CROP_DEFAULTS: ImageProperties = {
   x: 70,
   y: 0,
   height: 180,

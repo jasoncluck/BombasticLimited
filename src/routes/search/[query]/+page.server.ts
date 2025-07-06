@@ -1,4 +1,5 @@
 import { isVideoFilter } from "$lib/components/content/content-filter";
+import { parseImageProperties } from "$lib/components/playlist/playlist";
 import { SOURCES } from "$lib/constants/source";
 import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
 import { searchPlaylists } from "$lib/supabase/playlists";
@@ -42,17 +43,9 @@ export const load: PageServerLoad = async ({
   });
 
   for (const profilePlaylist of playlistSearchResults) {
-    const transformedPlaylist = {
-      ...profilePlaylist,
-      image_properties: profilePlaylist.image_properties
-        ? typeof profilePlaylist.image_properties === "string"
-          ? JSON.parse(profilePlaylist.image_properties)
-          : profilePlaylist.image_properties
-        : null,
-    };
 
     profilePlaylist.processedImageUrl = await getCroppedPlaylistImageUrlServer({
-      imageProperties: transformedPlaylist.image_properties,
+      imageProperties: parseImageProperties(profilePlaylist.image_properties),
       thumbnailMaxResUrl: profilePlaylist.thumbnail_maxres_url,
       thumbnailUrl: profilePlaylist.thumbnail_url,
     });

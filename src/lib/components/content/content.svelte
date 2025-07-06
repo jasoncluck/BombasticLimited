@@ -2,20 +2,15 @@
   import type { Database } from "$lib/supabase/database.types";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { CarouselState, ContentDisplay } from "./content";
-  import { afterNavigate, invalidate, onNavigate } from "$app/navigation";
   import { type Video, type VideoWithTimestamp } from "$lib/supabase/videos";
-  import { mostRecentVideo } from "$lib/state/videos.svelte";
   import type { HTMLAttributes } from "svelte/elements";
   import { type Playlist } from "$lib/supabase/playlists";
   import { onMount } from "svelte";
   import { getContentState } from "$lib/state/content.svelte";
   import type { CombinedContentFilter } from "./content-filter";
-  import { createDragImage } from "$lib/utils/dragdrop";
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
   import { createContentColumns } from "./table/content-table-columns";
   import ContentTable from "./table/content-table.svelte";
-  import ContentCarousel from "./content-carousel.svelte";
-  import ContentTiles from "./content-tiles.svelte";
   import { getPlaylistState } from "$lib/state/playlist.svelte";
 
   type ContentProps = HTMLAttributes<HTMLDivElement> & {

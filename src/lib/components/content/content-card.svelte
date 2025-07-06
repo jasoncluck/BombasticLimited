@@ -3,19 +3,17 @@
   import { getVideoSecondsOffset } from "../video/video-service";
   import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
   import { userPreferences } from "$lib/state/user-preferences.svelte";
-  import { handleContentNavigation, type ContentDisplayProps } from "./content";
   import DeleteTimestampButton from "./delete-timestamp-button.svelte";
   import type { HTMLAnchorAttributes } from "svelte/elements";
-  import Checkbox from "../ui/checkbox/checkbox.svelte";
   import { getContentState } from "$lib/state/content.svelte";
   import { Check } from "@lucide/svelte";
+  import type { ContentDisplayProps } from "./content";
 
   type ContentCardProps = {
     video: Video;
   } & Pick<
     ContentDisplayProps,
     | "isContinueVideos"
-    | "playlist"
     | "playlistContentFilter"
     | "videos"
     | "playlists"
@@ -27,7 +25,6 @@
   const {
     video = $bindable(),
     videos,
-    playlist,
     isContinueVideos,
     supabase,
     session,

@@ -8,6 +8,7 @@
   import type { Video } from "$lib/supabase/videos.js";
   import { getContentState } from "$lib/state/content.svelte.js";
   import type { SourceWithContinueCarouselState } from "$lib/components/content/content.js";
+  import PlaylistCard from "$lib/components/playlist/playlist-card.svelte";
 
   let { data } = $props();
   let {
@@ -59,37 +60,7 @@
 
         <div class="w-[90%] grid grid-cols-3 gap-2">
           {#each playlistSearchResults as playlist (playlist.id)}
-            <a
-              class="grid grid-cols-[4rem_1fr] p-3 gap-2 items-center hover:bg-secondary
-      transform ease-out transition-colors duration-150 cursor-pointer rounded"
-              href={`/playlist/${playlist.short_id}`}
-            >
-              {#if playlist.processedImageUrl}
-                <img
-                  src={playlist.processedImageUrl}
-                  alt={playlist.name}
-                  class="w-full h-full max-w-16 max-h-16 object-cover rounded justify-self-center"
-                />
-              {:else}
-                <div
-                  class="h-12 w-12 flex items-center justify-center justify-self-center"
-                >
-                  <ListVideo class="!h-12 !w-12" />
-                </div>
-              {/if}
-
-              <div class="min-w-0">
-                <p class="text-sm font-medium mb-1">
-                  {playlist.name}
-                </p>
-                <p class="text-xs text-muted-foreground line-clamp-3">
-                  {playlist.description}
-                </p>
-                <p class="text-xs text-muted-foreground line-clamp-3">
-                  {playlist.description}
-                </p>
-              </div>
-            </a>
+            <PlaylistCard {playlist} />
           {/each}
         </div>
       </div>

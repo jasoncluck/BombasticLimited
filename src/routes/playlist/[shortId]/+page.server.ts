@@ -20,6 +20,7 @@ import {
 import { getPaginationQueryParams } from "$lib/components/content/pagination/content-pagination";
 import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
 import { DEFAULT_NUM_VIDEOS_PAGINATION } from "$lib/supabase/videos";
+import { parseImageProperties } from "$lib/components/playlist/playlist";
 
 export const load: PageServerLoad = async ({
   locals: { supabase },
@@ -82,23 +83,12 @@ export const load: PageServerLoad = async ({
 
   // Calculate total duration for all videos
   const playlistDuration = await getPlaylistTotalDuration({ playlistId: playlist.id, supabase })
-  console.log(playlistDuration)
 
-  const transformedPlaylist = {
-    ...playlist,
-    image_properties: playlist.image_properties
-      ? typeof playlist.image_properties === "string"
-        ? JSON.parse(playlist.image_properties)
-        : playlist.image_properties
-      : null,
-    // Add default values for schema-only fields
-    isDeletingPlaylistImage: false,
-  };
 
   playlist.processedImageUrl = await getCroppedPlaylistImageUrlServer({
-    imageProperties: transformedPlaylist.image_properties,
-    thumbnailMaxResUrl: transformedPlaylist.thumbnail_maxres_url,
-    thumbnailUrl: transformedPlaylist.thumbnail_url,
+    imageProperties: parseImageProperties(playlist.image_properties),
+    thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
+    thumbnailUrl: playlist.thumbnail_url,
   });
 
   return {
@@ -111,7 +101,7 @@ export const load: PageServerLoad = async ({
       : contentFilter,
     currentPage,
     playlistDuration,
-    form: await superValidate(transformedPlaylist, zod(playlistSchema)),
+    form: await superValidate(playlist, zod(playlistSchema)),
   };
 };
 

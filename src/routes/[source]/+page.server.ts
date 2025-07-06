@@ -3,7 +3,9 @@ import { DEFAULT_NUM_VIDEOS_OVERVIEW, getVideos, type Video } from "$lib/supabas
 import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "../[source]/$types";
 import { isVideoFilter, type PlaylistVideosFilter } from "$lib/components/content/content-filter";
-import { getPlaylistByYoutubeId, getPlaylistsForUsername, getPlaylistVideos, type Playlist } from "$lib/supabase/playlists";
+import { DEFAULT_NUM_PLAYLISTS_OVERVIEW, getPlaylistByYoutubeId, getPlaylistsForUsername, getPlaylistVideos, type Playlist } from "$lib/supabase/playlists";
+import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
+import { parseImageProperties } from "$lib/components/playlist/playlist";
 
 export const load: PageServerLoad = async ({
   params,
@@ -46,12 +48,17 @@ export const load: PageServerLoad = async ({
     highlightPlaylists.push({ playlist, videos });
   }
 
-  const sourcePlaylists = getPlaylistsForUsername({ username: source, supabase });
-  console.log(sourcePlaylists)
+  const sourcePlaylistsData = getPlaylistsForUsername({ username: source, limit: DEFAULT_NUM_PLAYLISTS_OVERVIEW, supabase });
+
+
+  // for (const playlist of sourcePlaylists) {
+  //   playlist.processedImageUrl = await getCroppedPlaylistImageUrlServer({ thumbnailMaxResUrl: playlist.thumbnail_maxres_url, thumbnailUrl: playlist.thumbnail_url, imageProperties: parseImageProperties(playlist.image_properties) })
+  // }
 
   return {
     videos: videos ?? [],
     highlightPlaylists,
+    sourcePlaylistsData,
     source,
     contentFilter,
   };

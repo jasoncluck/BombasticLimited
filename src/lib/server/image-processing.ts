@@ -1,18 +1,18 @@
+import type { ImageProperties } from "$lib/components/playlist/playlist";
 import {
   PLAYLIST_IMAGE_CROP_DEFAULTS,
   PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS,
 } from "$lib/components/playlist/playlist-service";
 import sharp from "sharp";
-import type { CropArea } from "svelte-easy-crop";
 
 export async function getCroppedPlaylistImageUrlServer({
   imageProperties,
   thumbnailMaxResUrl,
   thumbnailUrl,
 }: {
-  imageProperties?: CropArea;
+  imageProperties: ImageProperties | null;
   thumbnailMaxResUrl: string | null;
-  thumbnailUrl: string | null;
+  thumbnailUrl?: string | null;
 }) {
   const imageUrl = thumbnailMaxResUrl || thumbnailUrl;
   if (!imageUrl) return null;

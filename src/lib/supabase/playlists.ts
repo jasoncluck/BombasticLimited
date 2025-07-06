@@ -17,7 +17,7 @@ import { DEFAULT_NUM_VIDEOS_OVERVIEW, type Video } from "./videos";
 import type { Source } from "$lib/constants/source";
 import { videoDurationToSeconds } from "$lib/components/video/video-service";
 
-export const DEFAULT_NUM_PLAYLISTS_OVERVIEW = 10;
+export const DEFAULT_NUM_PLAYLISTS_OVERVIEW = 15;
 export const PLAYLIST_VIDEO_LIMIT = 100;
 
 export type Playlist = Omit<Tables<"playlists">, "search_vector"> & {
@@ -76,26 +76,42 @@ export async function getPlaylistByShortId({
 
 export async function getPlaylistsForUsername({
   username,
+  currentPage = 1,
   limit = DEFAULT_NUM_PLAYLISTS_OVERVIEW,
   supabase,
 }: {
   username: string;
+  currentPage?: number;
   limit?: number;
   supabase: SupabaseClient<Database>;
-}) {
-  const { data, error } = await supabase
+}): Promise<{ playlists: Playlist[], count?: number | null, error: PostgrestError | null }> {
+  const query = supabase
     .rpc("get_user_playlists", {
       p_username: username,
     })
+    .order("name", { ascending: true })
     .limit(limit)
     .select();
 
-  console.log(data);
-
-  if (error || !data) {
-    console.error("Error fetching playlist from short ID.", error);
+  if (limit) {
+    query.limit(limit);
   }
-  return { playlist: data, error };
+
+  if (currentPage && currentPage > 1) {
+    const startIndex = (currentPage - 1) * limit;
+    const endIndex = startIndex + limit - 1;
+    query.range(startIndex, endIndex);
+  }
+
+
+
+  const { data: playlists, count, error } = await query;
+
+  if (error || !playlists) {
+    console.error(`Error fetching playlists for username: ${username}.`, error);
+    return { playlists: [], error }
+  }
+  return { playlists, count, error };
 }
 
 export async function getPlaylistByYoutubeId({
