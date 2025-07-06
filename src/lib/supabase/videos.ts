@@ -72,12 +72,12 @@ export async function getVideos({
 }> {
   const query = searchString
     ? supabase.rpc(
-        "search_videos",
-        {
-          search_term: searchString,
-        },
-        { count: "exact" },
-      )
+      "search_videos",
+      {
+        search_term: searchString,
+      },
+      { count: "exact" },
+    )
     : supabase.rpc("get_videos_with_timestamps", {}, { count: "exact" });
 
   query.limit(limit);
@@ -87,24 +87,25 @@ export async function getVideos({
     ascending: contentFilter.sort.order === "ascending",
   });
 
-  if (contentFilter.startDate) {
-    try {
-      // Parse the input date string and explicitly set it to midnight (local time)
-      const startDate = new Date(`${contentFilter.startDate}T00:00:00`);
-      query.gte("published_at", startDate.toISOString());
-    } catch {
-      console.error("Unable to parse start date, ignoring.");
-    }
-  }
-  if (contentFilter.endDate) {
-    try {
-      // Parse the input date string and set it to the end of the day (local time)
-      const endDate = new Date(`${contentFilter.endDate}T23:59:59.999`);
-      query.lte("published_at", endDate.toISOString());
-    } catch {
-      console.error("Unable to parse end date, ignoring.");
-    }
-  }
+  // NOTE: Date filters removed for now
+  // if (contentFilter.startDate) {
+  //   try {
+  //     // Parse the input date string and explicitly set it to midnight (local time)
+  //     const startDate = new Date(`${contentFilter.startDate}T00:00:00`);
+  //     query.gte("published_at", startDate.toISOString());
+  //   } catch {
+  //     console.error("Unable to parse start date, ignoring.");
+  //   }
+  // }
+  // if (contentFilter.endDate) {
+  //   try {
+  //     // Parse the input date string and set it to the end of the day (local time)
+  //     const endDate = new Date(`${contentFilter.endDate}T23:59:59.999`);
+  //     query.lte("published_at", endDate.toISOString());
+  //   } catch {
+  //     console.error("Unable to parse end date, ignoring.");
+  //   }
+  // }
 
   if (currentPage && currentPage > 1) {
     const startIndex = (currentPage - 1) * limit;

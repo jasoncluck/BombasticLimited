@@ -13,8 +13,9 @@ import {
   type SortOrder,
 } from "$lib/components/content/content-filter";
 import type { CropArea } from "svelte-easy-crop";
-import { type Video } from "./videos";
+import { DEFAULT_NUM_VIDEOS_OVERVIEW, type Video } from "./videos";
 import type { Source } from "$lib/constants/source";
+import { videoDurationToSeconds } from "$lib/components/video/video-service";
 
 export const PLAYLIST_VIDEO_LIMIT = 100;
 
@@ -116,14 +117,17 @@ export async function getPlaylistVideo({
 export async function getPlaylistVideos({
   playlistId,
   contentFilter,
-  limit,
+  currentPage = 1,
   currentVideo,
+  limit = DEFAULT_NUM_VIDEOS_OVERVIEW,
   supabase,
 }: {
   playlistId: number;
   contentFilter: PlaylistVideosFilter;
   limit?: number;
+  currentPage?: number | null;
   currentVideo?: PlaylistVideoWithTimestamp | null;
+  videosCount?: number | null;
   supabase: SupabaseClient<Database>;
 }) {
   const sortOptionInfo = SORT_OPTIONS_PLAYLIST_VIDEOS[contentFilter.sort.key];
@@ -166,6 +170,13 @@ export async function getPlaylistVideos({
   //     console.error("Unable to parse end date, ignoring.");
   //   }
   // }
+
+  if (currentPage && currentPage > 1) {
+    const startIndex = (currentPage - 1) * limit;
+    const endIndex = startIndex + limit - 1;
+    query.range(startIndex, endIndex);
+  }
+
 
   if (currentVideo) {
     const sortColumn =
@@ -574,6 +585,59 @@ export async function updatePlaylistSort({
   }
 
   return { updatedPlaylist, error };
+}
+
+
+export async function getPlaylistTotalDuration({
+  supabase,
+  playlistId,
+}: {
+  supabase: SupabaseClient;
+  playlistId: number;
+}): Promise<{ hours: number; minutes: number; seconds: number }> {
+  // First, get all video IDs in the playlist
+  const { data: playlistVideos, error: playlistError } = await supabase
+    .from('playlist_videos')
+    .select('video_id')
+    .eq('playlist_id', playlistId);
+
+  if (playlistError) {
+    console.error('Error fetching playlist videos:', playlistError);
+    return { hours: 0, minutes: 0, seconds: 0 };
+  }
+
+  if (!playlistVideos || playlistVideos.length === 0) {
+    return { hours: 0, minutes: 0, seconds: 0 };
+  }
+
+  // Extract video IDs
+  const videoIds = playlistVideos.map(pv => pv.video_id);
+
+  // Then, get durations for those videos
+  const { data: videos, error: videosError } = await supabase
+    .from('videos')
+    .select('duration')
+    .in('id', videoIds);
+
+  if (videosError) {
+    console.error('Error fetching video durations:', videosError);
+    return { hours: 0, minutes: 0, seconds: 0 };
+  }
+
+  let totalSeconds = 0;
+  for (const video of videos || []) {
+    if (video.duration) {
+      // Use your existing function to parse PT15M10S format
+      totalSeconds += videoDurationToSeconds(video.duration);
+    }
+  }
+
+  // Convert total seconds to hours, minutes, seconds
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return { hours, minutes, seconds };
 }
 
 export function isPlaylistVideo(video: Video): video is Video & PlaylistVideo {

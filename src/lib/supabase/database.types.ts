@@ -389,6 +389,10 @@ export type Database = {
           sort_order: Database["public"]["Enums"]["playlist_sort_order"]
         }[]
       }
+      get_playlist_total_duration: {
+        Args: { playlist_id_param: number }
+        Returns: number
+      }
       get_playlist_videos: {
         Args: { p_playlist_id: number }
         Returns: {

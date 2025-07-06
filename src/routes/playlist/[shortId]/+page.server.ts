@@ -1,5 +1,6 @@
 import {
   getPlaylistByShortId,
+  getPlaylistTotalDuration,
   getPlaylistVideos,
   isUserPlaylist,
   updatePlaylistImage,
@@ -13,15 +14,12 @@ import { fail, superValidate } from "sveltekit-superforms";
 import { playlistSchema } from "./schema";
 import { zod } from "sveltekit-superforms/adapters";
 import {
-  videoDurationSecondsToTime,
-  videoDurationToSeconds,
-} from "$lib/components/video/video-service";
-import {
   isPlaylistVideosFilter,
   type PlaylistVideosFilter,
 } from "$lib/components/content/content-filter";
 import { getPaginationQueryParams } from "$lib/components/content/pagination/content-pagination";
 import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
+import { DEFAULT_NUM_VIDEOS_PAGINATION } from "$lib/supabase/videos";
 
 export const load: PageServerLoad = async ({
   locals: { supabase },
@@ -74,6 +72,8 @@ export const load: PageServerLoad = async ({
 
   const { videos, count: videosCount } = await getPlaylistVideos({
     supabase,
+    currentPage,
+    limit: DEFAULT_NUM_VIDEOS_PAGINATION,
     contentFilter: playlistVideosSavedContentFilter
       ? playlistVideosSavedContentFilter
       : contentFilter,
@@ -81,12 +81,8 @@ export const load: PageServerLoad = async ({
   });
 
   // Calculate total duration for all videos
-  let playlistDurationSeconds = 0;
-  for (const video of videos) {
-    playlistDurationSeconds += videoDurationToSeconds(video.duration);
-  }
-
-  const playlistDuration = videoDurationSecondsToTime(playlistDurationSeconds);
+  const playlistDuration = await getPlaylistTotalDuration({ playlistId: playlist.id, supabase })
+  console.log(playlistDuration)
 
   const transformedPlaylist = {
     ...playlist,
