@@ -101,13 +101,9 @@
   />
 
   <div class="flex justify-between mt-6">
-    <div class="flex items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2">
       <p class="font-semibold">{video.title}</p>
 
-      <Circle
-        size="5"
-        class="shrink-0 stroke-muted-foreground fill-muted-foreground justify-center"
-      />
       <span class="text-muted-foreground">
         {formatPublishedDate(video.published_at)}
       </span>

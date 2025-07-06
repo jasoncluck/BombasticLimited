@@ -101,7 +101,7 @@
     {@render children()}
   </ContextMenu.Trigger>
 
-  {#if operationVideos.length > 0}
+  {#if operationVideos.length > 0 && session}
     <ContextMenu.Content
       class="max-h-64 overflow-visible outline-none {mediaQueryState.isTouchDevice &&
         'hidden'}"
