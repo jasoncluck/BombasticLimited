@@ -13,15 +13,20 @@
     parseImageProperties,
   } from "$lib/components/playlist/playlist.js";
   import PlaylistTiles from "$lib/components/playlist/playlist-tiles.svelte";
-  import type { Playlist } from "$lib/supabase/playlists.js";
+  import {
+    DEFAULT_NUM_PLAYLISTS_OVERVIEW,
+    getPlaylistsForUsername,
+    type Playlist,
+  } from "$lib/supabase/playlists.js";
   import { getCroppedPlaylistImageUrl } from "$lib/components/playlist/playlist-service.js";
+  import { onMount } from "svelte";
 
   let { data } = $props();
   const {
     videos = [],
     playlists,
     highlightPlaylists,
-    sourcePlaylistsData,
+    followedPlaylists,
     session,
     supabase,
     source,
@@ -29,53 +34,58 @@
   } = $derived(data);
 
   let carouselState = $state<CarouselState>({ lastViewedIndex: 0 });
+  let processedPlaylistsPromise = $state<Promise<Playlist[]>>(
+    Promise.resolve([]),
+  );
+  let sourcePlaylistsData =
+    $state<ReturnType<typeof getPlaylistsForUsername>>();
 
   export const snapshot: Snapshot<CarouselState> = {
     capture: () => carouselState,
     restore: async (restored) => (carouselState = restored),
   };
 
-  // Create a derived promise that includes image processing
-  const processedPlaylistsPromise = $derived.by(() =>
-    sourcePlaylistsData.then(async ({ playlists: sourcePlaylists }) => {
-      // Process images in batches to avoid overwhelming the browser
-      const batchSize = 5;
-      const processedPlaylists = [];
+  onMount(async () => {
+    sourcePlaylistsData = getPlaylistsForUsername({
+      username: source,
+      limit: DEFAULT_NUM_PLAYLISTS_OVERVIEW,
+      supabase,
+    });
+  });
 
-      const processPlaylist = async (playlist: Playlist) => {
-        try {
-          const processedImageUrl = await getCroppedPlaylistImageUrl({
-            thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
-            thumbnailUrl: playlist.thumbnail_url,
-            imageProperties: parseImageProperties(playlist.image_properties),
-          });
+  $effect(() => {
+    sourcePlaylistsData?.then(({ playlists: sourcePlaylists }) => {
+      processedPlaylistsPromise = processPlaylists(sourcePlaylists);
+    });
+  });
 
-          return {
-            ...playlist,
-            processedImageUrl,
-          };
-        } catch (error) {
-          console.error(
-            `Failed to process image for playlist ${playlist.name}:`,
-            error,
-          );
-          return {
-            ...playlist,
-            processedImageUrl: null,
-          };
-        }
-      };
-
-      // Process in batches
-      for (let i = 0; i < sourcePlaylists.length; i += batchSize) {
-        const batch = sourcePlaylists.slice(i, i + batchSize);
-        const batchResults = await Promise.all(batch.map(processPlaylist));
-        processedPlaylists.push(...batchResults);
-      }
-
-      return processedPlaylists;
-    }),
-  );
+  async function processPlaylists(sourcePlaylists: Playlist[]) {
+    const batchSize = 5;
+    const processedPlaylists = [];
+    for (let i = 0; i < sourcePlaylists.length; i += batchSize) {
+      const batch = sourcePlaylists.slice(i, i + batchSize);
+      const batchResults = await Promise.all(
+        batch.map(async (playlist) => {
+          try {
+            const processedImageUrl = await getCroppedPlaylistImageUrl({
+              thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
+              thumbnailUrl: playlist.thumbnail_url,
+              imageProperties: parseImageProperties(playlist.image_properties),
+            });
+            return { ...playlist, processedImageUrl };
+          } catch (error) {
+            console.error(
+              `Failed to process image for playlist ${playlist.name}:`,
+              error,
+            );
+            return { ...playlist, processedImageUrl: null };
+          }
+        }),
+      );
+      processedPlaylists.push(...batchResults);
+    }
+    return processedPlaylists;
+  }
 </script>
 
 <div class="flex flex-col">
@@ -141,7 +151,7 @@
       {/each}
     </div>
     <div class="flex flex-col">
-      <a href={`/playlists/${source}`} class="header-link-sticky">
+      <a href={`/user/${source}/playlists`} class="header-link-sticky">
         Playlists
       </a>
 
@@ -155,7 +165,7 @@
           </div>
         </div>
       {:then processedPlaylists}
-        <PlaylistTiles playlists={processedPlaylists} />
+        <PlaylistTiles playlists={processedPlaylists} {followedPlaylists} />
       {:catch error}
         <div class="flex items-center justify-center p-8">
           <div class="text-center">

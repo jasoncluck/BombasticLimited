@@ -11,6 +11,7 @@ import type { LayoutLoad } from "./$types";
 import { COLLAPSED_SIDEBAR_SIZE } from "$lib/constants/layout";
 import type { UserPlaylist } from "$lib/supabase/playlists";
 import type { CombinedContentFilter } from "$lib/components/content/content-filter";
+import type { Profile } from "$lib/supabase/profiles";
 
 export const load: LayoutLoad = async ({ data, depends, fetch }) => {
   /**
@@ -21,20 +22,20 @@ export const load: LayoutLoad = async ({ data, depends, fetch }) => {
 
   const supabase = isBrowser()
     ? createBrowserClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-        global: {
-          fetch,
-        },
-      })
+      global: {
+        fetch,
+      },
+    })
     : createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-        global: {
-          fetch,
+      global: {
+        fetch,
+      },
+      cookies: {
+        getAll() {
+          return data.cookies;
         },
-        cookies: {
-          getAll() {
-            return data.cookies;
-          },
-        },
-      });
+      },
+    });
 
   /**
    * It's fine to use `getSession` here, because on the client, `getSession` is
@@ -52,11 +53,13 @@ export const load: LayoutLoad = async ({ data, depends, fetch }) => {
   const {
     playlists,
     playlistsCount,
+    userProfile,
     layout,
     contentFilter,
   }: {
     playlists: UserPlaylist[];
     playlistsCount?: number | null;
+    userProfile: Profile | null,
     layout?: string;
     contentFilter: CombinedContentFilter;
   } = data;
@@ -66,6 +69,7 @@ export const load: LayoutLoad = async ({ data, depends, fetch }) => {
     supabase,
     contentFilter,
     user,
+    userProfile,
     playlists,
     playlistsCount,
     layout,

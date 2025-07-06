@@ -1,9 +1,9 @@
 import { isSource, SOURCE_INFO } from "$lib/constants/source";
 import { DEFAULT_NUM_VIDEOS_OVERVIEW, getVideos, type Video } from "$lib/supabase/videos";
 import { redirect } from "@sveltejs/kit";
-import type { PageServerLoad } from "../[source]/$types";
 import { isVideoFilter, type PlaylistVideosFilter } from "$lib/components/content/content-filter";
 import { DEFAULT_NUM_PLAYLISTS_OVERVIEW, getPlaylistByYoutubeId, getPlaylistsForUsername, getPlaylistVideos, type Playlist } from "$lib/supabase/playlists";
+import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({
   params,
@@ -19,7 +19,9 @@ export const load: PageServerLoad = async ({
     redirect(303, "/");
   }
 
-  const { contentFilter } = await parent();
+  const { playlists, contentFilter } = await parent();
+
+  const followedPlaylists = playlists.filter((p) => p.created_by !== session?.user.id)
 
   if (!isVideoFilter(contentFilter)) {
     throw new Error("Invalid content filter");
@@ -50,9 +52,12 @@ export const load: PageServerLoad = async ({
 
   return {
     videos: videos ?? [],
+    playlists,
+    followedPlaylists,
     highlightPlaylists,
     sourcePlaylistsData,
     source,
     contentFilter,
   };
 };
+

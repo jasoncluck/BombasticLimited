@@ -17,10 +17,10 @@ import {
   isPlaylistVideosFilter,
   type PlaylistVideosFilter,
 } from "$lib/components/content/content-filter";
-import { getPaginationQueryParams } from "$lib/components/content/pagination/content-pagination";
 import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
 import { DEFAULT_NUM_VIDEOS_PAGINATION } from "$lib/supabase/videos";
 import { parseImageProperties } from "$lib/components/playlist/playlist";
+import { getPaginationQueryParams } from "$lib/components/pagination/pagination";
 
 export const load: PageServerLoad = async ({
   locals: { supabase },

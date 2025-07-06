@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Circle, Ellipsis, ListVideo } from "@lucide/svelte";
-  import type { Infer, SuperValidated } from "sveltekit-superforms";
+  import type { SuperValidated } from "sveltekit-superforms";
   import type { PlaylistSchema } from "../../../routes/playlist/[shortId]/schema";
   import type { BreadcrumbItem } from "$lib/components/breadcrumb-layout.svelte";
   import type { PlaylistVideosFilter } from "$lib/components/content/content-filter";
@@ -26,7 +26,7 @@
     breadcrumbs: BreadcrumbItem[];
     showFloatingBreadcrumbs: boolean;
     contentFilter: PlaylistVideosFilter;
-    form: SuperValidated<Infer<PlaylistSchema>>;
+    form: SuperValidated<PlaylistSchema>;
     playlist: ProfilePlaylist | UserPlaylist;
     videos: Video[];
     playlists: Playlist[];

@@ -2,7 +2,10 @@
   import type { Playlist } from "$lib/supabase/playlists";
   import PlaylistCard from "./playlist-card.svelte";
 
-  const { playlists }: { playlists: Playlist[] } = $props();
+  const {
+    playlists,
+    followedPlaylists,
+  }: { playlists: Playlist[]; followedPlaylists: Playlist[] } = $props();
 </script>
 
 <div
@@ -16,6 +19,9 @@
   2xl:grid-cols-5"
 >
   {#each playlists as playlist (playlist.id)}
-    <PlaylistCard {playlist} />
+    {@const isFollowedPlaylist = followedPlaylists.some(
+      (p) => p.id === playlist.id,
+    )}
+    <PlaylistCard {playlist} {isFollowedPlaylist} />
   {/each}
 </div>

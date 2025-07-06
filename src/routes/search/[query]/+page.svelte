@@ -4,7 +4,6 @@
   import Content from "$lib/components/content/content.svelte";
   import { userPreferences } from "$lib/state/user-preferences.svelte.js";
   import type { Snapshot } from "@sveltejs/kit";
-  import { ListVideo } from "@lucide/svelte";
   import type { Video } from "$lib/supabase/videos.js";
   import { getContentState } from "$lib/state/content.svelte.js";
   import type { SourceWithContinueCarouselState } from "$lib/components/content/content.js";
@@ -18,6 +17,7 @@
     sourceVideos,
     playlistSearchResults,
     playlists,
+    followedPlaylists,
     contentFilter,
   } = $derived(data);
 
@@ -60,7 +60,10 @@
 
         <div class="w-[90%] grid grid-cols-3 gap-2">
           {#each playlistSearchResults as playlist (playlist.id)}
-            <PlaylistCard {playlist} />
+            {@const isFollowedPlaylist = followedPlaylists.some(
+              (p) => p.id === playlist.id,
+            )}
+            <PlaylistCard {playlist} {isFollowedPlaylist} />
           {/each}
         </div>
       </div>

@@ -231,7 +231,6 @@
         <ContentCard
           {video}
           {videos}
-          {playlist}
           {playlistContentFilter}
           {playlists}
           {isContinueVideos}

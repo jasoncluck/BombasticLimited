@@ -1,5 +1,6 @@
 <script lang="ts">
-  import ContentPagination from "./content-pagination.svelte";
+  import { DEFAULT_NUM_VIDEOS_PAGINATION } from "$lib/supabase/videos";
+  import Pagination from "./pagination.svelte";
 
   let {
     currentPage = $bindable(),
@@ -10,6 +11,10 @@
 
 <div class="mt-6">
   {#if currentPage && numPages > 1}
-    <ContentPagination count={videosCount} bind:currentPage />
+    <Pagination
+      count={videosCount}
+      bind:currentPage
+      perPage={DEFAULT_NUM_VIDEOS_PAGINATION}
+    />
   {/if}
 </div>

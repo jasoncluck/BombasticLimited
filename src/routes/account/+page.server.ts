@@ -5,7 +5,7 @@ import { redirect, setFlash } from "sveltekit-flash-message/server";
 import {
   checkIfUsernameIsUnique,
   getUserProfile,
-} from "$lib/supabase/accounts";
+} from "$lib/supabase/profiles";
 import type { Actions, PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({

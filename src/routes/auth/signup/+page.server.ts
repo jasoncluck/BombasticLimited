@@ -4,7 +4,7 @@ import { superValidate, fail } from "sveltekit-superforms";
 import { zod } from "sveltekit-superforms/adapters";
 import type { PageServerLoad } from "./$types";
 import { signupSchema } from "../schema";
-import { checkIfUsernameIsUnique } from "$lib/supabase/accounts";
+import { checkIfUsernameIsUnique } from "$lib/supabase/profiles";
 
 export const load: PageServerLoad = async ({ locals: { session } }) => {
   const signupForm = await superValidate(zod(signupSchema));

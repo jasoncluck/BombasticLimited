@@ -3,7 +3,7 @@ import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 import { isSource } from "$lib/constants/source";
 import { isVideoFilter } from "$lib/components/content/content-filter";
-import { getPaginationQueryParams } from "$lib/components/content/pagination/content-pagination";
+import { getPaginationQueryParams } from "$lib/components/pagination/pagination";
 
 export const load: PageServerLoad = async ({
   params,

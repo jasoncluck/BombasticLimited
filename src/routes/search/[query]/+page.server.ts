@@ -22,6 +22,8 @@ export const load: PageServerLoad = async ({
     remap: [],
   };
 
+  const followedPlaylists = playlists.filter((p) => p.created_by !== session?.user.id)
+
   if (!isVideoFilter(contentFilter)) {
     throw new Error("Invalid content filter");
   }
@@ -55,6 +57,7 @@ export const load: PageServerLoad = async ({
     sourceVideos: sourceVideos ?? [],
     searchString,
     playlists,
+    followedPlaylists,
     playlistSearchResults,
     contentFilter,
   };

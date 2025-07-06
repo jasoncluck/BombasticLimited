@@ -1,22 +1,23 @@
 <script lang="ts">
   import { page } from "$app/state";
   import * as Pagination from "$lib/components/ui/pagination/index.js";
-  import { DEFAULT_NUM_VIDEOS_PAGINATION } from "$lib/supabase/videos";
-  import { updatePaginationQueryParams } from "./content-pagination";
+  import { updatePaginationQueryParams } from "./pagination";
 
   let {
     count,
     currentPage = $bindable(1),
+    perPage,
   }: {
     count: number;
     currentPage: number;
+    perPage: number;
   } = $props();
 </script>
 
 <div class="flex justify-center w-full px-2">
   <Pagination.Root
     {count}
-    perPage={DEFAULT_NUM_VIDEOS_PAGINATION}
+    {perPage}
     bind:page={currentPage}
     onPageChange={(pageNum) =>
       updatePaginationQueryParams({ url: page.url, pageNum })}

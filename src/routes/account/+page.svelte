@@ -19,7 +19,7 @@
   import {
     checkIfUsernameIsUnique,
     type Profile,
-  } from "$lib/supabase/accounts";
+  } from "$lib/supabase/profiles";
   import type { Database } from "$lib/supabase/database.types";
   import { onMount } from "svelte";
   import { enhance } from "$app/forms";

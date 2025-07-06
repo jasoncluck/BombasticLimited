@@ -82,7 +82,6 @@
       <ContentCard
         video={videos[i]}
         {videos}
-        {playlist}
         {playlists}
         {isContinueVideos}
         {supabase}

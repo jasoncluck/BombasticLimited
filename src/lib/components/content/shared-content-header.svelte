@@ -14,8 +14,8 @@
   import type { HTMLAttributes } from "svelte/elements";
   import type { Snippet } from "svelte";
   import type { CombinedContentFilter } from "./content-filter";
-  import ContentPagination from "./pagination/content-pagination.svelte";
-  import { getNumberOfPages } from "./pagination/content-pagination";
+  import Pagination from "../pagination/pagination.svelte";
+  import { getNumberOfPages } from "../pagination/pagination";
   import {
     DEFAULT_NUM_VIDEOS_PAGINATION,
     isVideoWithTimestamp,
@@ -192,7 +192,11 @@
     </div>
     {#if currentPage && numPages > 1}
       <div class="mt-4">
-        <ContentPagination count={videosCount} bind:currentPage />
+        <Pagination
+          count={videosCount}
+          bind:currentPage
+          perPage={DEFAULT_NUM_VIDEOS_PAGINATION}
+        />
       </div>
     {/if}
   </div>

@@ -2,7 +2,7 @@ import { getInProgressVideos } from "$lib/supabase/videos";
 import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 import { isTimestampFilter } from "$lib/components/content/content-filter";
-import { getPaginationQueryParams } from "$lib/components/content/pagination/content-pagination";
+import { getPaginationQueryParams } from "$lib/components/pagination/pagination";
 
 export const load: PageServerLoad = async ({
   parent,

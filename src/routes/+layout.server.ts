@@ -3,6 +3,7 @@ import { getFilterOptionFromQueryParams } from "$lib/components/content/content-
 import { parseImageProperties } from "$lib/components/playlist/playlist";
 import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
 import { getUserPlaylists } from "$lib/supabase/playlists";
+import { getProfile } from "$lib/supabase/profiles";
 import type { LayoutServerLoad } from "./$types";
 
 export const load: LayoutServerLoad = async ({
@@ -18,6 +19,8 @@ export const load: LayoutServerLoad = async ({
     session,
     supabase,
   });
+
+  const { profile: userProfile } = await getProfile({ supabase, session })
 
   if (userPlaylists) {
     for (const userPlaylist of userPlaylists) {
@@ -55,6 +58,7 @@ export const load: LayoutServerLoad = async ({
     contentFilter,
     playlists: userPlaylists ?? [],
     userPlaylistsCount: userPlaylistsCount ?? 0,
+    userProfile,
     cookies: cookies.getAll(),
     layout,
   };

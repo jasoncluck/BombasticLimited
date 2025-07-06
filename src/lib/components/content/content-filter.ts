@@ -6,7 +6,7 @@ import type {
   PlaylistVideoWithTimestamp,
 } from "$lib/supabase/playlists";
 import type { ContentView } from "./content";
-import { PAGINATION_QUERY_KEY } from "./pagination/content-pagination";
+import { PAGINATION_QUERY_KEY } from "../pagination/pagination";
 
 type SortOption<T extends Video | VideoTimestamp | PlaylistVideo> = {
   key: SortKey<T>;
@@ -23,8 +23,8 @@ export type ContentFilter<T extends Video | VideoTimestamp | PlaylistVideo> = {
 export type VideoFilter = ContentFilter<Video> & {
   type: "video";
 };
-
 export type PlaylistVideosFilter = ContentFilter<PlaylistVideo> & {
+
   type: "playlist";
 };
 
@@ -56,10 +56,10 @@ export const timestampSortKeys = ["dateTimestamp", ...videoSortKeys] as const;
 
 export type SortKey<T extends Video | VideoTimestamp | PlaylistVideo> =
   T extends Video
-    ? (typeof videoSortKeys)[number]
-    : T extends PlaylistVideo
-      ? (typeof playlistVideosSortKeys)[number]
-      : (typeof timestampSortKeys)[number];
+  ? (typeof videoSortKeys)[number]
+  : T extends PlaylistVideo
+  ? (typeof playlistVideosSortKeys)[number]
+  : (typeof timestampSortKeys)[number];
 
 export const sortOrder = ["ascending", "descending"] as const;
 export type SortOrder = (typeof sortOrder)[number];

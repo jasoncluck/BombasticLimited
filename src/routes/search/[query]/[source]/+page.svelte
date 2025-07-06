@@ -5,16 +5,16 @@
   import Content from "$lib/components/content/content.svelte";
   import type { Snapshot } from "../$types.js";
   import {
-    getNumberOfPages,
-    PAGINATION_QUERY_KEY,
-  } from "$lib/components/content/pagination/content-pagination.js";
-  import SharedContentFooter from "$lib/components/content/pagination/shared-content-footer.svelte";
-  import {
     DEFAULT_NUM_VIDEOS_PAGINATION,
     type Video,
   } from "$lib/supabase/videos.js";
   import { getContentState } from "$lib/state/content.svelte.js";
   import type { SourceWithContinueCarouselState } from "$lib/components/content/content.js";
+  import {
+    getNumberOfPages,
+    PAGINATION_QUERY_KEY,
+  } from "$lib/components/pagination/pagination.js";
+  import SharedPaginationFooter from "$lib/components/pagination/shared-pagination-footer.svelte";
 
   const { data } = $props();
   const {
@@ -95,7 +95,7 @@
     {session}
   />
   {#if currentPage && numPages > 1}
-    <SharedContentFooter
+    <SharedPaginationFooter
       bind:currentPage
       {numPages}
       videosCount={videosCount ?? 0}

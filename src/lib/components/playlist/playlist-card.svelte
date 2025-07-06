@@ -1,8 +1,11 @@
 <script lang="ts">
   import type { Playlist } from "$lib/supabase/playlists";
-  import { ListVideo } from "@lucide/svelte";
+  import { Check, ListVideo } from "@lucide/svelte";
 
-  const { playlist }: { playlist: Playlist } = $props();
+  const {
+    playlist,
+    isFollowedPlaylist = false,
+  }: { playlist: Playlist; isFollowedPlaylist: boolean } = $props();
 </script>
 
 <a
@@ -32,5 +35,10 @@
     <p class="text-xs text-muted-foreground line-clamp-3">
       {playlist.description}
     </p>
+    {#if isFollowedPlaylist}
+      <p class="flex items-center gap-1 text-xs text-muted-foreground">
+        <Check size="14" /> Following
+      </p>
+    {/if}
   </div>
 </a>

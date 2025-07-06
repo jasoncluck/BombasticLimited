@@ -1,9 +1,5 @@
 <script lang="ts">
-  import {
-    superForm,
-    type Infer,
-    type SuperValidated,
-  } from "sveltekit-superforms";
+  import { superForm, type SuperValidated } from "sveltekit-superforms";
   import {
     playlistSchema,
     type PlaylistSchema,
@@ -27,6 +23,7 @@
   import { getCroppedPlaylistImageUrl } from "$lib/components/playlist/playlist-service";
   import type { Snippet } from "svelte";
   import ScrollArea from "../ui/scroll-area/scroll-area.svelte";
+  import { parseImageProperties } from "./playlist";
 
   let {
     form,
@@ -34,7 +31,7 @@
     open = $bindable(),
     children,
   }: {
-    form: SuperValidated<Infer<PlaylistSchema>>;
+    form: SuperValidated<PlaylistSchema>;
     playlist: Playlist;
     open: boolean;
     children: Snippet<[]>;
@@ -71,7 +68,7 @@
             updatedPlaylist.thumbnail_maxres_url = null;
           } else {
             await getCroppedPlaylistImageUrl({
-              imageProperties: playlist.image_properties,
+              imageProperties: parseImageProperties(playlist.image_properties),
               thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
               thumbnailUrl: playlist.thumbnail_url,
             });
