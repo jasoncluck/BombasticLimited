@@ -413,7 +413,7 @@ export type Database = {
         }[]
       }
       get_user_playlists: {
-        Args: { p_user_id: string }
+        Args: { p_user_id: string } | { p_username: string }
         Returns: {
           id: number
           created_by: string

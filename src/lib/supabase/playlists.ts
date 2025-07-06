@@ -17,6 +17,7 @@ import { DEFAULT_NUM_VIDEOS_OVERVIEW, type Video } from "./videos";
 import type { Source } from "$lib/constants/source";
 import { videoDurationToSeconds } from "$lib/components/video/video-service";
 
+export const DEFAULT_NUM_PLAYLISTS_OVERVIEW = 10;
 export const PLAYLIST_VIDEO_LIMIT = 100;
 
 export type Playlist = Omit<Tables<"playlists">, "search_vector"> & {
@@ -66,6 +67,30 @@ export async function getPlaylistByShortId({
       p_short_id: shortId,
     })
     .single();
+
+  if (error || !data) {
+    console.error("Error fetching playlist from short ID.", error);
+  }
+  return { playlist: data, error };
+}
+
+export async function getPlaylistsForUsername({
+  username,
+  limit = DEFAULT_NUM_PLAYLISTS_OVERVIEW,
+  supabase,
+}: {
+  username: string;
+  limit?: number;
+  supabase: SupabaseClient<Database>;
+}) {
+  const { data, error } = await supabase
+    .rpc("get_user_playlists", {
+      p_username: username,
+    })
+    .limit(limit)
+    .select();
+
+  console.log(data);
 
   if (error || !data) {
     console.error("Error fetching playlist from short ID.", error);

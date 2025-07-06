@@ -3,7 +3,7 @@ import { DEFAULT_NUM_VIDEOS_OVERVIEW, getVideos, type Video } from "$lib/supabas
 import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "../[source]/$types";
 import { isVideoFilter, type PlaylistVideosFilter } from "$lib/components/content/content-filter";
-import { getPlaylistByYoutubeId, getPlaylistVideos, type Playlist } from "$lib/supabase/playlists";
+import { getPlaylistByYoutubeId, getPlaylistsForUsername, getPlaylistVideos, type Playlist } from "$lib/supabase/playlists";
 
 export const load: PageServerLoad = async ({
   params,
@@ -25,8 +25,6 @@ export const load: PageServerLoad = async ({
     throw new Error("Invalid content filter");
   }
 
-
-
   const { videos } = await getVideos({
     source,
     session,
@@ -47,6 +45,9 @@ export const load: PageServerLoad = async ({
     const { videos } = await getPlaylistVideos({ playlistId: playlist.id, contentFilter: playlistContentFilter, limit: DEFAULT_NUM_VIDEOS_OVERVIEW, supabase });
     highlightPlaylists.push({ playlist, videos });
   }
+
+  const sourcePlaylists = getPlaylistsForUsername({ username: source, supabase });
+  console.log(sourcePlaylists)
 
   return {
     videos: videos ?? [],
