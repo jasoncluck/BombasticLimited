@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({
   url,
   locals: { supabase, session },
 }) => {
-  depends("supabase:db:playlistsForUser")
+  depends("supabase:db:playlistsForProfile")
 
 
   const username = params.username

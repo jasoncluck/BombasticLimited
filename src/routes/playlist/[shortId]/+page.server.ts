@@ -85,11 +85,13 @@ export const load: PageServerLoad = async ({
   const playlistDuration = await getPlaylistTotalDuration({ playlistId: playlist.id, supabase })
 
 
-  playlist.processedImageUrl = await getCroppedPlaylistImageUrlServer({
-    imageProperties: parseImageProperties(playlist.image_properties),
-    thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
-    thumbnailUrl: playlist.thumbnail_url,
-  });
+  if (!playlist.processedImageUrl) {
+    playlist.processedImageUrl = await getCroppedPlaylistImageUrlServer({
+      imageProperties: parseImageProperties(playlist.image_properties),
+      thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
+      thumbnailUrl: playlist.thumbnail_url,
+    });
+  }
 
   return {
     playlist,

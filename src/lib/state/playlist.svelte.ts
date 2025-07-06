@@ -129,7 +129,7 @@ export class PlaylistStateClass implements PlaylistState {
     } = options;
 
     const contentState = getContentState();
-    let classes = "sidebar-full-button";
+    let classes = "sidebar-full-button active:bg-black/70";
 
     // Add drag classes for playlists only
     if (itemType === "playlist") {
