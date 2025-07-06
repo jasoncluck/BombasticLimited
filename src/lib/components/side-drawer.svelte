@@ -22,7 +22,6 @@
   import type { Database } from "$lib/supabase/database.types";
   import { fade } from "svelte/transition";
   import type { Playlist, UserPlaylist } from "$lib/supabase/playlists";
-  import { getContentState } from "$lib/state/content.svelte";
   import ScrollArea from "./ui/scroll-area/scroll-area.svelte";
   import { page } from "$app/state";
   import { flip } from "svelte/animate";
@@ -47,7 +46,6 @@
   let dndPlaylists = $derived<(Playlist & { id: string | number })[]>([]);
 
   const selectedPlaylistIdParam = $derived(page.params.shortId);
-  const contentState = getContentState();
 
   // Transform playlists to include proper id for dnd-action using $effect
   $effect(() => {
@@ -262,10 +260,10 @@
                     title={playlist.name}
                   >
                     <div class="flex items-center overflow-hidden">
-                      {#if contentState.playlistImages[playlist.id]}
+                      {#if playlist.processedImageUrl}
                         <div class="w-12 h-12 flex-shrink-0">
                           <img
-                            src={contentState.playlistImages[playlist.id]}
+                            src={playlist.processedImageUrl}
                             class="h-full w-full cursor-pointer object-cover"
                             alt={`Image for playlist: ${playlist.name}`}
                           />

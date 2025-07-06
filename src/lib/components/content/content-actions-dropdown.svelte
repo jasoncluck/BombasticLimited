@@ -14,7 +14,7 @@
   import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
   import {
     handleAddVideoTimestamp,
-    handleDeleteVideoTimestamp,
+    handleDeleteVideosTimestamp,
   } from "../video/video-service";
   import Button from "../ui/button/button.svelte";
 
@@ -171,7 +171,7 @@
         <DropdownMenu.Item
           class="p-2"
           onclick={async () => {
-            ({ updatedVideos: videos } = await handleDeleteVideoTimestamp({
+            ({ updatedVideos: videos } = await handleDeleteVideosTimestamp({
               videos,
               supabase,
               session,

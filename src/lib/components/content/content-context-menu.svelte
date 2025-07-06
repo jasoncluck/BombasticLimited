@@ -15,7 +15,7 @@
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
   import {
     handleAddVideoTimestamp,
-    handleDeleteVideoTimestamp,
+    handleDeleteVideosTimestamp,
   } from "../video/video-service";
 
   interface ContentContextMenuProps {
@@ -196,7 +196,7 @@
           <ContextMenu.Item
             class="p-2"
             onclick={async () => {
-              const { updatedVideos } = await handleDeleteVideoTimestamp({
+              const { updatedVideos } = await handleDeleteVideosTimestamp({
                 videos: operationVideos,
                 supabase,
                 session,

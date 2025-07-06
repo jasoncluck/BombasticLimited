@@ -24,7 +24,6 @@
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import * as Popover from "$lib/components/ui/popover";
   import Checkbox from "$lib/components/ui/checkbox/checkbox.svelte";
-  import { getContentState } from "$lib/state/content.svelte";
   import { getCroppedPlaylistImageUrl } from "$lib/components/playlist/playlist-service";
   import type { Snippet } from "svelte";
   import ScrollArea from "../ui/scroll-area/scroll-area.svelte";
@@ -40,8 +39,6 @@
     open: boolean;
     children: Snippet<[]>;
   } = $props();
-
-  const contentState = getContentState();
 
   let isSubmitting = $state(false);
   let isPublic = $state(playlist.type === "Public");
@@ -72,14 +69,12 @@
           if (isDeletingPlaylistImage) {
             updatedPlaylist.thumbnail_url = null;
             updatedPlaylist.thumbnail_maxres_url = null;
-            contentState.playlistImages[playlist.id] = undefined;
           } else {
-            contentState.playlistImages[playlist.id] =
-              await getCroppedPlaylistImageUrl({
-                imageProperties: playlist.image_properties,
-                thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
-                thumbnailUrl: playlist.thumbnail_url,
-              });
+            await getCroppedPlaylistImageUrl({
+              imageProperties: playlist.image_properties,
+              thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
+              thumbnailUrl: playlist.thumbnail_url,
+            });
           }
         }
       },

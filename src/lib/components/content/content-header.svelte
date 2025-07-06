@@ -49,7 +49,7 @@
   {videosCount}
   {contentFilter}
   {videos}
-  {profilePlaylist}
+  playlist={profilePlaylist}
   {playlists}
   {supabase}
   {session}

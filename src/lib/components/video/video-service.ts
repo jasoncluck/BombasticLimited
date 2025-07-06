@@ -123,7 +123,7 @@ export async function handleAddVideoTimestamp({
   return { updatedVideos: updatedVideos ?? [], error };
 }
 
-export async function handleDeleteVideoTimestamp({
+export async function handleDeleteVideosTimestamp({
   videos,
   isContinueVideos,
   supabase,

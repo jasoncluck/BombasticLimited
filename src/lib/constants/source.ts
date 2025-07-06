@@ -44,7 +44,7 @@ export const SOURCE_INFO: Record<Source, SourceInfo> = {
     image: giantbombImage,
     twitchId: "504350",
     youtubeId: "UCmeds0MLhjfkjD_5acPnFlQ",
-    highlightedPlaylists: [{ name: "Giant Bombcast", youtubeId: 'PLXlhzeWIuTHLGJRmdyTRtfXxTTZrYHlax' }],
+    highlightedPlaylists: [{ name: "Blight Club", youtubeId: 'PLXlhzeWIuTHIGNBahKzWx9Hy54BXtM8Ef' }, { name: "Voicemail Dump Truck", youtubeId: 'PLXlhzeWIuTHLjtyPTm42V-jPS70IYXOjJ' }],
     websiteUrl: "https://www.giantbomb.com/",
     supportUrl: "https://www.giantbomb.com/upgrade/",
   },

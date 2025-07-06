@@ -3,7 +3,7 @@ import { setFlash } from "sveltekit-flash-message/server";
 import { fail, superValidate } from "sveltekit-superforms";
 import { zod } from "sveltekit-superforms/adapters";
 import { passwordSchema } from "../../schema";
-import type { PageServerLoad } from "../reset/$types";
+import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async () => {
   const form = await superValidate(zod(passwordSchema));

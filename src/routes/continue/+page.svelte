@@ -46,6 +46,7 @@
 <div>
   <ContentHeader
     title="Continue Watching"
+    {videos}
     {contentFilter}
     view="continueWatching"
     videosCount={videosCount ?? 0}

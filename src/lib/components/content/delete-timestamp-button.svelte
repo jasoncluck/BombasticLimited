@@ -3,7 +3,7 @@
   import Button from "../ui/button/button.svelte";
   import type { Video } from "$lib/supabase/videos";
   import type { ContentDisplayProps } from "./content";
-  import { handleDeleteVideoTimestamp } from "../video/video-service";
+  import { handleDeleteVideosTimestamp } from "../video/video-service";
 
   let {
     video = $bindable(),
@@ -27,8 +27,8 @@
                    cursor-pointer will-change-transform group/remove w-full h-fit"
   onclick={(e) => {
     e.preventDefault();
-    handleDeleteVideoTimestamp({
-      videoId: video.id,
+    handleDeleteVideosTimestamp({
+      videos: [video],
       session,
       supabase,
     });

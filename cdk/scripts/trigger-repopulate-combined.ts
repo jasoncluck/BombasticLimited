@@ -6,7 +6,7 @@ import { CHANNEL_SOURCES } from "../lib/channel";
 dotenv.config();
 
 const lambda = new LambdaClient({
-  region: process.env.AWS_REGION || "us-east-1"
+  region: process.env.AWS_REGION || "us-west-2"
 });
 
 const VIDEOS_FUNCTION_NAME = process.env.LAMBDA_FUNCTION_NAME || "BombifyPopulateVideos";
@@ -40,7 +40,7 @@ async function invokeLambdaSync(functionName: string, payload: any): Promise<{ s
     return {
       success: false,
       duration,
-      error: error.message
+      error: (error as Error).message
     };
   }
 }
@@ -63,8 +63,8 @@ async function triggerRepopulateCombined() {
   console.log(`🚀 Starting sequential repopulation (${operations.join(' → ')}) for: ${sources.join(", ")}`);
   console.log(`🔧 Videos Function: ${VIDEOS_FUNCTION_NAME}`);
   console.log(`🔧 Playlists Function: ${PLAYLISTS_FUNCTION_NAME}`);
-  console.log(`🌍 Region: ${process.env.AWS_REGION || "us-east-1"}`);
-  console.log(`⏱️  Estimated total time: ${sources.length * operations.length * 15} minutes`);
+  console.log(`🌍 Region: ${process.env.AWS_REGION || "us-west-2"}`);
+  console.log(`⏱️  Estimated total time: ${sources.length * operations.length * 2} minutes`);
   console.log(`📅 Started at: ${new Date().toISOString()}\n`);
 
   const results = {
@@ -97,8 +97,8 @@ async function triggerRepopulateCombined() {
 
       // Small delay between sources
       if (i < sources.length - 1) {
-        console.log(`⏳ Waiting 30 seconds before next source...\n`);
-        await new Promise(resolve => setTimeout(resolve, 30000));
+        console.log(`⏳ Waiting 10 seconds before next source...\n`);
+        await new Promise(resolve => setTimeout(resolve, 10000));
       }
     }
 
@@ -118,8 +118,8 @@ async function triggerRepopulateCombined() {
     }
 
     if (!videosOnly) {
-      console.log(`\n⏳ Waiting 60 seconds before starting playlists phase...\n`);
-      await new Promise(resolve => setTimeout(resolve, 60000));
+      console.log(`\n⏳ Waiting 10 seconds before starting playlists phase...\n`);
+      await new Promise(resolve => setTimeout(resolve, 10000));
     }
   }
 
@@ -148,8 +148,8 @@ async function triggerRepopulateCombined() {
 
       // Small delay between sources
       if (i < sources.length - 1) {
-        console.log(`⏳ Waiting 30 seconds before next source...\n`);
-        await new Promise(resolve => setTimeout(resolve, 30000));
+        console.log(`⏳ Waiting 10 seconds before next source...\n`);
+        await new Promise(resolve => setTimeout(resolve, 10000));
       }
     }
   }
@@ -191,10 +191,10 @@ async function triggerRepopulateCombined() {
   // CloudWatch links
   console.log(`\n📊 Monitor Logs:`);
   if (!playlistsOnly) {
-    console.log(`   📹 Videos: https://console.aws.amazon.com/cloudwatch/home?region=${process.env.AWS_REGION || "us-east-1"}#logsV2:log-groups/log-group/$252Faws$252Flambda$252F${VIDEOS_FUNCTION_NAME}`);
+    console.log(`   📹 Videos: https://console.aws.amazon.com/cloudwatch/home?region=${process.env.AWS_REGION || "us-west-2"}#logsV2:log-groups/log-group/$252Faws$252Flambda$252F${VIDEOS_FUNCTION_NAME}`);
   }
   if (!videosOnly) {
-    console.log(`   🎵 Playlists: https://console.aws.amazon.com/cloudwatch/home?region=${process.env.AWS_REGION || "us-east-1"}#logsV2:log-groups/log-group/$252Faws$252Flambda$252F${PLAYLISTS_FUNCTION_NAME}`);
+    console.log(`   🎵 Playlists: https://console.aws.amazon.com/cloudwatch/home?region=${process.env.AWS_REGION || "us-west-2"}#logsV2:log-groups/log-group/$252Faws$252Flambda$252F${PLAYLISTS_FUNCTION_NAME}`);
   }
 }
 

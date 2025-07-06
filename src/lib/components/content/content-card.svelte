@@ -68,26 +68,26 @@
         src={video.thumbnail_url}
         alt={video.title}
       />
-      {#if contentState.isSelectionMode}
-        <div class="absolute top-0.5 right-0.5">
-          <Checkbox
-            id={video.id}
-            checked={contentState.selectedVideos.some((v) => v.id === video.id)}
-            class="mt-[2px] mr-[2px]"
-          />
-        </div>
-      {:else if isVideoWithTimestamp(video) && video.video_start_seconds}
-        <div class="absolute top-0.5 right-0.5">
-          <DeleteTimestampButton
-            {isContinueVideos}
-            manualHover={contentState.manualHover}
-            {video}
-            {videos}
-            {supabase}
-            {session}
-          />
-        </div>
-      {/if}
+      <!-- {#if contentState.isSelectionMode} -->
+      <!-- <div class="absolute top-0.5 right-0.5"> -->
+      <!--   <Checkbox -->
+      <!--     id={video.id} -->
+      <!--     checked={contentState.selectedVideos.some((v) => v.id === video.id)} -->
+      <!--     class="mt-[2px] mr-[2px]" -->
+      <!--   /> -->
+      <!-- </div> -->
+      <!-- {:else if isVideoWithTimestamp(video) && video.video_start_seconds} -->
+      <div class="absolute top-0.5 right-0.5">
+        <DeleteTimestampButton
+          {isContinueVideos}
+          manualHover={contentState.manualHover}
+          {video}
+          {videos}
+          {supabase}
+          {session}
+        />
+      </div>
+      <!-- {/if} -->
       {#if isVideoWithTimestamp(video) && !video.watched_at && video.video_start_seconds && video.duration}
         <Progress
           class="absolute -bottom-1 left-0 h-[5%]"

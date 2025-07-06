@@ -8,6 +8,7 @@
   import Button from "$lib/components/ui/button/button.svelte";
   import type { CarouselState } from "$lib/components/content/content.js";
   import type { Snapshot } from "@sveltejs/kit";
+  import { handlePlaylistNavigation } from "$lib/components/playlist/playlist.js";
 
   let { data } = $props();
   const {
@@ -53,7 +54,6 @@
       <a href={`/${source}/latest`} class="header-link-sticky">
         Latest Videos
       </a>
-      <!-- {#key source} -->
       <Content
         contentDisplay={userPreferences.contentDisplay}
         {videos}
@@ -63,10 +63,16 @@
         {session}
         {supabase}
       />
-      <!-- {/key} -->
       {#each highlightPlaylists as highlightPlaylist (highlightPlaylist.playlist.name)}
         <a
           href={`/playlist/${highlightPlaylist.playlist.short_id}`}
+          onclick={(e) => {
+            e.preventDefault();
+            handlePlaylistNavigation({
+              playlist: highlightPlaylist.playlist,
+              contentFilter,
+            });
+          }}
           class="header-link-sticky"
         >
           {highlightPlaylist.playlist.name}

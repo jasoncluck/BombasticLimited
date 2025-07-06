@@ -17,8 +17,8 @@
     videos,
     videosCount,
     isContinueVideos,
-    userPlaylist,
-    userPlaylists,
+    playlist,
+    playlists,
     playlistContentFilter,
     carouselState = $bindable(),
     allowVideoReorder = false,
@@ -34,7 +34,7 @@
     allowVideoReorder,
     videos,
     videosCount,
-    userPlaylist,
+    playlist,
     contentFilter,
     supabase,
     onVideosUpdate: (updatedVideos) => {
@@ -231,9 +231,9 @@
         <ContentCard
           {video}
           {videos}
-          {userPlaylist}
+          {playlist}
           {playlistContentFilter}
-          {userPlaylists}
+          {playlists}
           {isContinueVideos}
           {supabase}
           {session}

@@ -14,8 +14,8 @@
     contentFilter,
   }: {
     video: Video;
+    contentFilter: CombinedContentFilter;
     playlist?: Playlist;
-    contentFilter?: CombinedContentFilter;
   } = $props();
 
   const isHovering = $derived(contentState.hoveredVideo?.id === video.id);
