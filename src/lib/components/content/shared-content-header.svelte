@@ -15,7 +15,10 @@
   import type { Snippet } from "svelte";
   import type { CombinedContentFilter } from "./content-filter";
   import Pagination from "../pagination/pagination.svelte";
-  import { getNumberOfPages } from "../pagination/pagination";
+  import {
+    getNumberOfPages,
+    updatePaginationQueryParams,
+  } from "../pagination/pagination";
   import {
     DEFAULT_NUM_VIDEOS_PAGINATION,
     isVideoWithTimestamp,
@@ -30,6 +33,7 @@
   import { fade } from "svelte/transition";
   import Button from "../ui/button/button.svelte";
   import * as Popover from "$lib/components/ui/popover";
+  import { page } from "$app/state";
 
   interface SharedContentHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
@@ -70,8 +74,8 @@
 
   const numPages = $derived(
     getNumberOfPages({
-      videosCount,
-      videosPerPage: DEFAULT_NUM_VIDEOS_PAGINATION,
+      count: videosCount,
+      perPage: DEFAULT_NUM_VIDEOS_PAGINATION,
     }),
   );
 
@@ -196,6 +200,13 @@
           count={videosCount}
           bind:currentPage
           perPage={DEFAULT_NUM_VIDEOS_PAGINATION}
+          onPageChange={async (pageNum) => {
+            updatePaginationQueryParams({
+              pageNum,
+              url: page.url,
+              invalidate: ["supabase:db:videos"],
+            });
+          }}
         />
       </div>
     {/if}

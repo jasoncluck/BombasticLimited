@@ -37,8 +37,8 @@
   };
   const numPages = $derived(
     getNumberOfPages({
-      videosCount: videosCount ?? 0,
-      videosPerPage: DEFAULT_NUM_VIDEOS_PAGINATION,
+      count: videosCount ?? 0,
+      perPage: DEFAULT_NUM_VIDEOS_PAGINATION,
     }),
   );
 </script>

@@ -67,7 +67,6 @@
     "tailwind-scrollbar": "^4.0.2",
     "tailwind-variants": "^1.0.0",
     "tsx": "^4.19.3",
-    "tw-animate-css": "^1.3.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.33.1",
     "vaul-svelte": "^1.0.0-next.7",
@@ -88,6 +87,7 @@
     "embla-carousel-svelte": "^8.6.0",
     "sharp": "^0.34.2",
     "svelte-radix": "^2.0.1",
-    "tailwindcss": "^4.1.1"
+    "tailwindcss": "^4.1.1",
+    "tw-animate-css": "^1.3.3"
   }
 }

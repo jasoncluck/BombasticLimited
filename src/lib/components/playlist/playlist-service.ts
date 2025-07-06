@@ -119,6 +119,10 @@ export async function handleAddVideosToPlaylist({
     return;
   }
 
+  if (playlist.created_by !== session.user.id) {
+    return;
+  }
+
   const { error } = await addVideosToPlaylist({
     videoIds: videos.map((v) => v.id),
     playlistId: playlist.id,
@@ -370,6 +374,34 @@ export async function handleUpdatePlaylistSort({
   return { updatedPlaylist, error };
 }
 
+// For each playlist create and add the associated playlist image
+export async function processPlaylists(playlists: Playlist[]) {
+  const batchSize = 5;
+  const processedPlaylists = [];
+  for (let i = 0; i < playlists.length; i += batchSize) {
+    const batch = playlists.slice(i, i + batchSize);
+    const batchResults = await Promise.all(
+      batch.map(async (playlist) => {
+        try {
+          const processedImageUrl = await getCroppedPlaylistImageUrl({
+            thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
+            thumbnailUrl: playlist.thumbnail_url,
+            imageProperties: parseImageProperties(playlist.image_properties),
+          });
+          return { ...playlist, processedImageUrl };
+        } catch (error) {
+          console.error(
+            `Failed to process image for playlist ${playlist.name}:`,
+            error,
+          );
+          return { ...playlist, processedImageUrl: null };
+        }
+      }),
+    );
+    processedPlaylists.push(...batchResults);
+  }
+  return processedPlaylists;
+}
 
 // Functions for getting cropped playlist images in the browser for use when deferring image rendering
 export async function getCroppedPlaylistImageUrl({

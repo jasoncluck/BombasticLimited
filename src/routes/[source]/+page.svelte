@@ -18,7 +18,7 @@
     getPlaylistsForUsername,
     type Playlist,
   } from "$lib/supabase/playlists.js";
-  import { getCroppedPlaylistImageUrl } from "$lib/components/playlist/playlist-service.js";
+  import { processPlaylists } from "$lib/components/playlist/playlist-service.js";
   import { onMount } from "svelte";
 
   let { data } = $props();
@@ -58,34 +58,6 @@
       processedPlaylistsPromise = processPlaylists(sourcePlaylists);
     });
   });
-
-  async function processPlaylists(sourcePlaylists: Playlist[]) {
-    const batchSize = 5;
-    const processedPlaylists = [];
-    for (let i = 0; i < sourcePlaylists.length; i += batchSize) {
-      const batch = sourcePlaylists.slice(i, i + batchSize);
-      const batchResults = await Promise.all(
-        batch.map(async (playlist) => {
-          try {
-            const processedImageUrl = await getCroppedPlaylistImageUrl({
-              thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
-              thumbnailUrl: playlist.thumbnail_url,
-              imageProperties: parseImageProperties(playlist.image_properties),
-            });
-            return { ...playlist, processedImageUrl };
-          } catch (error) {
-            console.error(
-              `Failed to process image for playlist ${playlist.name}:`,
-              error,
-            );
-            return { ...playlist, processedImageUrl: null };
-          }
-        }),
-      );
-      processedPlaylists.push(...batchResults);
-    }
-    return processedPlaylists;
-  }
 </script>
 
 <div class="flex flex-col">
@@ -151,7 +123,7 @@
       {/each}
     </div>
     <div class="flex flex-col">
-      <a href={`/user/${source}/playlists`} class="header-link-sticky">
+      <a href={`/profile/${source}/playlists`} class="header-link-sticky">
         Playlists
       </a>
 

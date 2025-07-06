@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { page } from "$app/state";
   import * as Pagination from "$lib/components/ui/pagination/index.js";
-  import { updatePaginationQueryParams } from "./pagination";
 
   let {
     count,
     currentPage = $bindable(1),
     perPage,
+    onPageChange,
   }: {
     count: number;
     currentPage: number;
     perPage: number;
+    onPageChange: (pageNum: number) => void;
   } = $props();
 </script>
 
@@ -19,8 +19,7 @@
     {count}
     {perPage}
     bind:page={currentPage}
-    onPageChange={(pageNum) =>
-      updatePaginationQueryParams({ url: page.url, pageNum })}
+    onPageChange={(pageNum) => onPageChange(pageNum)}
   >
     {#snippet children({ pages })}
       <Pagination.Content class="flex-wrap justify-center gap-1">

@@ -17,7 +17,8 @@ import { DEFAULT_NUM_VIDEOS_OVERVIEW, type Video } from "./videos";
 import type { Source } from "$lib/constants/source";
 import { videoDurationToSeconds } from "$lib/components/video/video-service";
 
-export const DEFAULT_NUM_PLAYLISTS_OVERVIEW = 15;
+export const DEFAULT_NUM_PLAYLISTS_OVERVIEW = 5;
+export const DEFAULT_NUM_PLAYLISTS_PAGINATION = 15;
 export const PLAYLIST_VIDEO_LIMIT = 100;
 
 export type Playlist = Omit<Tables<"playlists">, "search_vector"> & {
@@ -88,7 +89,7 @@ export async function getPlaylistsForUsername({
   const query = supabase
     .rpc("get_user_playlists", {
       p_username: username,
-    })
+    }, { count: 'exact' })
     .order("name", { ascending: true })
     .limit(limit)
     .select();
