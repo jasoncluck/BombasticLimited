@@ -36,7 +36,7 @@ export const load: PageServerLoad = async ({
   });
 
   const highlightPlaylists: { playlist: Playlist, videos: Video[] }[] = []
-  const playlistContentFilter: PlaylistVideosFilter = { sort: { key: "datePublished", order: "descending" }, type: "playlist" };
+  const playlistContentFilter: PlaylistVideosFilter = { sort: { key: "playlistOrder", order: "ascending" }, type: "playlist" };
   for (const highlightPlaylist of SOURCE_INFO[source].highlightedPlaylists) {
     const { playlist } = await getPlaylistByYoutubeId({ youtubeId: highlightPlaylist.youtubeId, supabase })
     if (!playlist) {

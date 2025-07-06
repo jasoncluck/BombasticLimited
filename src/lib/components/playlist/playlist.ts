@@ -1,3 +1,4 @@
+import { goto } from "$app/navigation";
 import { type Playlist, isUserPlaylist } from "$lib/supabase/playlists";
 import { type CombinedContentFilter, getSortKeysForView, isPlaylistVideosFilter, isSortKey, isSortOrder } from "../content/content-filter";
 
@@ -35,5 +36,5 @@ export function handlePlaylistNavigation({
 
   // Navigate to the playlist page with updated search parameters
   const targetUrl = `${targetPath}?${searchParams.toString()}`;
-  window.location.href = targetUrl;
+  goto(targetUrl);
 }

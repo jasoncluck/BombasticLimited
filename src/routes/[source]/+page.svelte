@@ -70,7 +70,10 @@
             e.preventDefault();
             handlePlaylistNavigation({
               playlist: highlightPlaylist.playlist,
-              contentFilter,
+              contentFilter: {
+                sort: { key: "playlistOrder", order: "ascending" },
+                type: "playlist",
+              },
             });
           }}
           class="header-link-sticky"
