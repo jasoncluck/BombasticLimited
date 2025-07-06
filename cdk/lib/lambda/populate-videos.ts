@@ -39,60 +39,10 @@ export const populateVideos = async ({
     ? Number.MAX_SAFE_INTEGER
     : DEFAULT_NUM_PAGES * MAX_RESULTS;
 
+  const youtubeVideoIds = new Set<string>();
+
   try {
-    if (repopulate) {
-      await supabaseClient
-        .from("videos")
-        .update({ pending_delete: true })
-        .eq("source", source);
-    } else {
-      const { data: videosToMark, error } = await supabaseClient
-        .from("videos")
-        .select("id")
-        .eq("source", source)
-        .order("published_at", { ascending: false })
-        .limit(videosToCheck / 2);
-
-      if (error) {
-        console.error(
-          JSON.stringify({
-            stage: "mark_pending_delete",
-            source,
-            error,
-          }),
-        );
-        throw new Error("Failed to fetch videos for marking");
-      }
-      if (videosToMark && videosToMark.length > 0) {
-        const videoIds = videosToMark.map((video) => video.id);
-
-        const { error: updateError } = await supabaseClient
-          .from("videos")
-          .update({ pending_delete: true })
-          .eq("source", source)
-          .in("id", videoIds);
-
-        if (updateError) {
-          console.error(
-            JSON.stringify({
-              stage: "mark_pending_delete_update",
-              source,
-              videoIds,
-              error: updateError,
-            }),
-          );
-          throw new Error("Failed to mark videos as pending delete");
-        }
-
-        console.log(
-          JSON.stringify({
-            stage: "mark_pending_delete_update",
-            message: `Marked ${videoIds.length} videos as pending delete for source: ${source}`,
-          }),
-        );
-      }
-    }
-
+    // Step 1: Fetch ALL videos from YouTube first (no pre-marking of videos for deletion)
     let pageToken: string | null | undefined;
     do {
       let items: youtube_v3.Schema$PlaylistItem[] | undefined;
@@ -127,6 +77,9 @@ export const populateVideos = async ({
       const videoIds = items
         .map((item) => item.contentDetails?.videoId)
         .filter((id): id is string => !!id);
+
+      // Track all video IDs returned by YouTube
+      videoIds.forEach(id => youtubeVideoIds.add(id));
 
       let videoDetails: { id: string; duration: string }[] = [];
       if (videoIds.length > 0) {
@@ -181,33 +134,28 @@ export const populateVideos = async ({
             item.snippet?.thumbnails?.maxres?.url,
           ),
           duration: videoDetail?.duration,
-          pending_delete: false,
+          pending_delete: false, // All YouTube videos are current
         };
       });
 
-      for (const video of videos) {
-        const { error } = await supabaseClient
-          .from("videos")
-          .upsert(video, { onConflict: "id" });
-        if (error) {
-          console.error(
-            JSON.stringify({
-              stage: "upsert_video",
-              source,
-              videoId: video.id,
-              error,
-            }),
-          );
-        } else {
-          console.log(
-            JSON.stringify({
-              stage: "upsert_video",
-              message: `Stored video: ${video.title}`,
-              videoId: video.id,
-              source,
-            }),
-          );
-        }
+      // Batch upsert for better performance
+      const { error } = await supabaseClient
+        .from("videos")
+        .upsert(videos, { onConflict: "id" });
+
+      if (error) {
+        console.error(JSON.stringify({
+          stage: "batch_upsert_videos",
+          source,
+          error,
+        }));
+        throw error;
+      } else {
+        console.log(JSON.stringify({
+          stage: "batch_upsert_videos",
+          message: `Upserted ${videos.length} videos for source: ${source}`,
+          videoIds: videos.map(v => v.id),
+        }));
       }
 
       if (repopulate || curPage <= DEFAULT_NUM_PAGES) {
@@ -218,30 +166,138 @@ export const populateVideos = async ({
       }
     } while (pageToken);
 
-    // Clean up videos marked as pending_delete
-    const { error: deleteError } = await supabaseClient
+    console.log(JSON.stringify({
+      stage: "youtube_fetch_complete",
+      message: `Fetched ${youtubeVideoIds.size} videos from YouTube`,
+      source,
+      syncType: repopulate ? "full_repopulate" : "partial_sync",
+    }));
+
+    // Step 2: Now mark videos for deletion based on what YouTube actually returned
+    let videosToMarkForDeletion: string[] = [];
+
+    if (repopulate) {
+      // Full repopulate: Check ALL videos in DB against YouTube response
+      const { data: allVideos, error } = await supabaseClient
+        .from("videos")
+        .select("id")
+        .eq("source", source);
+
+      if (error) {
+        console.error(JSON.stringify({
+          stage: "fetch_all_videos_for_comparison",
+          source,
+          error,
+        }));
+        throw new Error("Failed to fetch all videos for comparison");
+      }
+
+      // Find videos in DB that are NOT in YouTube response
+      videosToMarkForDeletion = (allVideos || [])
+        .map(v => v.id)
+        .filter(id => !youtubeVideoIds.has(id));
+
+    } else {
+      // Partial sync: Only check recent videos against YouTube response
+      const { data: recentVideos, error } = await supabaseClient
+        .from("videos")
+        .select("id")
+        .eq("source", source)
+        .order("published_at", { ascending: false })
+        .limit(videosToCheck);
+
+      if (error) {
+        console.error(JSON.stringify({
+          stage: "fetch_recent_videos_for_comparison",
+          source,
+          error,
+        }));
+        throw new Error("Failed to fetch recent videos for comparison");
+      }
+
+      // Find recent videos in DB that are NOT in YouTube response
+      videosToMarkForDeletion = (recentVideos || [])
+        .map(v => v.id)
+        .filter(id => !youtubeVideoIds.has(id));
+    }
+
+    // Step 3: Mark videos for deletion only if they're confirmed to not exist in YouTube
+    if (videosToMarkForDeletion.length > 0) {
+      const { error: markError } = await supabaseClient
+        .from("videos")
+        .update({ pending_delete: true })
+        .eq("source", source)
+        .in("id", videosToMarkForDeletion);
+
+      if (markError) {
+        console.error(JSON.stringify({
+          stage: "mark_videos_for_deletion",
+          source,
+          videoIds: videosToMarkForDeletion,
+          error: markError,
+        }));
+        throw new Error("Failed to mark videos for deletion");
+      }
+
+      console.log(JSON.stringify({
+        stage: "mark_videos_for_deletion",
+        message: `Marked ${videosToMarkForDeletion.length} videos for deletion (not found in YouTube response)`,
+        source,
+        videoIds: videosToMarkForDeletion,
+      }));
+    }
+
+    // Step 4: Get details of videos to be deleted and actually delete them
+    const { data: videosToDelete, error: queryError } = await supabaseClient
       .from("videos")
-      .delete()
+      .select("id, title")
       .eq("source", source)
       .eq("pending_delete", true);
 
-    if (deleteError) {
-      console.error(
-        JSON.stringify({
-          stage: "delete_pending_delete",
+    if (queryError) {
+      console.error(JSON.stringify({
+        stage: "query_videos_to_delete",
+        source,
+        error: queryError,
+      }));
+      throw new Error("Failed to query videos marked for deletion");
+    }
+
+    const deletionCandidates = videosToDelete || [];
+
+    // Actually delete the videos
+    if (deletionCandidates.length > 0) {
+      const { error: deleteError } = await supabaseClient
+        .from("videos")
+        .delete()
+        .eq("source", source)
+        .eq("pending_delete", true);
+
+      if (deleteError) {
+        console.error(JSON.stringify({
+          stage: "delete_videos",
           source,
           error: deleteError,
-        }),
-      );
-      throw new Error("Failed to delete videos marked as pending_delete");
+        }));
+        throw new Error("Failed to delete videos marked as pending_delete");
+      }
+
+      console.log(JSON.stringify({
+        stage: "cleanup_complete",
+        message: `Processed ${youtubeVideoIds.size} videos from YouTube, deleted ${deletionCandidates.length} stale videos`,
+        source,
+        syncType: repopulate ? "full_repopulate" : "partial_sync",
+        deletedVideos: deletionCandidates.map(v => ({ id: v.id, title: v.title })),
+      }));
     } else {
-      console.log(
-        JSON.stringify({
-          stage: "delete_pending_delete",
-          message: `Cleaned up videos marked as pending_delete for source: ${source}`,
-        }),
-      );
+      console.log(JSON.stringify({
+        stage: "no_deletions_needed",
+        message: `All videos are current. Processed ${youtubeVideoIds.size} videos from YouTube, no deletions needed.`,
+        source,
+        syncType: repopulate ? "full_repopulate" : "partial_sync",
+      }));
     }
+
   } catch (e) {
     // Final catch-all for unhandled errors
     console.error(

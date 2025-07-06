@@ -24,16 +24,13 @@ import { getPaginationQueryParams } from "$lib/components/content/pagination/con
 import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
 
 export const load: PageServerLoad = async ({
-  locals: { supabase, session },
+  locals: { supabase },
   url,
   parent,
   params,
   depends,
 }) => {
   depends("supabase:db:videos");
-  if (!session) {
-    redirect(302, "/auth");
-  }
 
   const { playlists, contentFilter } = await parent();
 
@@ -47,7 +44,6 @@ export const load: PageServerLoad = async ({
     ({ playlist } = await getPlaylistByShortId({
       shortId: params.shortId,
       supabase,
-      session,
     }));
   }
 

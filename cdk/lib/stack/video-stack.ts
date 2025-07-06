@@ -6,6 +6,8 @@ import * as events from "aws-cdk-lib/aws-events";
 import * as path from "path";
 import * as targets from "aws-cdk-lib/aws-events-targets";
 import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
+import * as stepfunctions from "aws-cdk-lib/aws-stepfunctions";
+import * as sfnTasks from "aws-cdk-lib/aws-stepfunctions-tasks";
 import { RestApi } from "aws-cdk-lib/aws-apigateway";
 import { CHANNEL_SOURCES } from "../channel";
 
@@ -82,17 +84,90 @@ export class VideoStack extends Stack {
       },
     );
 
+    // CloudWatch Alarm for Playlists Lambda Errors
+    const playlistsErrorAlarm = new cloudwatch.Alarm(
+      this,
+      "PopulatePlaylistsLambdaErrorAlarm",
+      {
+        metric: populatePlaylistsLambda.metricErrors({
+          period: Duration.minutes(5),
+        }),
+        threshold: 1,
+        evaluationPeriods: 5,
+        actionsEnabled: false,
+        datapointsToAlarm: 5,
+        alarmDescription:
+          "Alarm if the populate-playlists Lambda has any errors in a 5-minute period",
+        treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+      },
+    );
+
     for (const source of CHANNEL_SOURCES) {
-      // Schedule the lambda to run daily and every 30 minutes
-      const sourceRule = new events.Rule(this, `${source}_Rule`, {
+      // Schedule the videos lambda to run every 30 minutes
+      const videosSourceRule = new events.Rule(this, `${source}_Videos_Rule`, {
         schedule: events.Schedule.expression("cron(0,30 * * * ? *)"),
       });
 
-      sourceRule.addTarget(
+      videosSourceRule.addTarget(
         new targets.LambdaFunction(populateVideosLambda, {
           event: events.RuleTargetInput.fromObject({ source }),
         }),
       );
+
+      // Schedule the playlists lambda to run every hour
+      const playlistsSourceRule = new events.Rule(this, `${source}_Playlists_Rule`, {
+        schedule: events.Schedule.expression("cron(0 * * * ? *)"),
+      });
+
+      playlistsSourceRule.addTarget(
+        new targets.LambdaFunction(populatePlaylistsLambda, {
+          event: events.RuleTargetInput.fromObject({ source }),
+        }),
+      );
     }
+
+    const repopulateStateMachine = new stepfunctions.StateMachine(
+      this,
+      "RepopulateStateMachine",
+      {
+        stateMachineName: "BombifyRepopulateStateMachine",
+        timeout: Duration.hours(2), // Allow up to 2 hours for full repopulation
+        definition: stepfunctions.Chain.start(
+          new stepfunctions.Map(this, "ProcessSources", {
+            itemsPath: "$.sources",
+            maxConcurrency: 1, // Process one source at a time to avoid overwhelming APIs
+          }).iterator(
+            new sfnTasks.LambdaInvoke(this, "RepopulateSource", {
+              lambdaFunction: populateVideosLambda,
+              payload: stepfunctions.TaskInput.fromObject({
+                "source.$": "$",
+                "repopulate": true
+              }),
+              timeout: Duration.minutes(15),
+              retryOnServiceExceptions: false,
+            })
+          )
+        ),
+      }
+    );
+
+    // Create a trigger lambda for the Step Function
+    const triggerRepopulateLambda = new nodejs.NodejsFunction(
+      this,
+      "BombifyTriggerRepopulate",
+      {
+        functionName: "BombifyTriggerRepopulate",
+        description: "Triggers the repopulation Step Function",
+        entry: path.join(__dirname, "../lambda/trigger-repopulate.ts"),
+        handler: "handler",
+        runtime: lambda.Runtime.NODEJS_20_X,
+        timeout: Duration.seconds(30),
+        environment: {
+          STATE_MACHINE_ARN: repopulateStateMachine.stateMachineArn,
+        },
+      }
+    );
+
+    repopulateStateMachine.grantStartExecution(triggerRepopulateLambda);
   }
 }

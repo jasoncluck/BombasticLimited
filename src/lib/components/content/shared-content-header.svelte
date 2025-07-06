@@ -29,6 +29,7 @@
   import { MinusCircle, Play, PlusCircle } from "@lucide/svelte";
   import { fade } from "svelte/transition";
   import Button from "../ui/button/button.svelte";
+  import * as Popover from "$lib/components/ui/popover";
 
   interface SharedContentHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
@@ -66,8 +67,6 @@
   const isPlaylistCreator = $derived(
     profilePlaylist?.created_by === session?.user.id,
   );
-
-  console.log(contentFilter);
 
   const numPages = $derived(
     getNumberOfPages({
@@ -131,18 +130,29 @@
           <Play class="h-6! w-6! stroke-background fill-background" />
         </Button>
         {#if !isPlaylistCreator && !playlists.some((pl) => pl.id === profilePlaylist.id)}
-          <PlusCircle
-            class="ghost-button-minimal"
-            size="30"
-            onclick={() => {
-              handleFollowPlaylist({
-                playlist: profilePlaylist,
-                contentFilter,
-                supabase,
-                session,
-              });
-            }}
-          />
+          {#if !session?.user.id}
+            <Popover.Root>
+              <Popover.Trigger>
+                <PlusCircle class="ghost-button-minimal" size="30" />
+              </Popover.Trigger>
+              <Popover.Content
+                >Create an account or login to follow playlists.</Popover.Content
+              >
+            </Popover.Root>
+          {:else}
+            <PlusCircle
+              class="ghost-button-minimal"
+              size="30"
+              onclick={() => {
+                handleFollowPlaylist({
+                  playlist: profilePlaylist,
+                  contentFilter,
+                  supabase,
+                  session,
+                });
+              }}
+            />
+          {/if}
         {/if}
         {#if !isPlaylistCreator && playlists.some((pl) => pl.id === profilePlaylist.id)}
           <MinusCircle

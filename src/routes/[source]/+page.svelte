@@ -64,13 +64,16 @@
         {supabase}
       />
       <!-- {/key} -->
-      {#each highlightPlaylists as hightlightPlaylist (hightlightPlaylist.playlist.name)}
-        <a href={`/${source}/latest`} class="header-link-sticky">
-          {hightlightPlaylist.playlist.name}
+      {#each highlightPlaylists as highlightPlaylist (highlightPlaylist.playlist.name)}
+        <a
+          href={`/playlist/${highlightPlaylist.playlist.short_id}`}
+          class="header-link-sticky"
+        >
+          {highlightPlaylist.playlist.name}
         </a>
         <Content
           contentDisplay={userPreferences.contentDisplay}
-          videos={hightlightPlaylist.videos}
+          videos={highlightPlaylist.videos}
           bind:carouselState
           {playlists}
           {contentFilter}
