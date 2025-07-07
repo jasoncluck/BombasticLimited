@@ -54,6 +54,7 @@ export interface ContentDisplayProps {
   readonly playlists: Playlist[];
   readonly isContinueVideos?: boolean;
   readonly playlist?: Playlist;
+  readonly contentFilter: CombinedContentFilter;
   readonly playlistContentFilter?: PlaylistVideosFilter;
   readonly supabase: SupabaseClient<Database>;
   readonly session: Session | null;

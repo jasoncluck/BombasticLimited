@@ -27,8 +27,7 @@
   size="icon"
   class="flex flex-row-reverse items-center relative visible
                    cursor-pointer will-change-transform group/remove w-full h-fit"
-  onclick={(e) => {
-    e.preventDefault();
+  onclick={() => {
     handleDeleteVideosTimestamp({
       videos: [video],
       session,

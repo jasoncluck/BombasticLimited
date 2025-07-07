@@ -7,7 +7,7 @@
   import type { HTMLAnchorAttributes } from "svelte/elements";
   import { getContentState } from "$lib/state/content.svelte";
   import { Check } from "@lucide/svelte";
-  import type { ContentDisplayProps } from "./content";
+  import { handleContentNavigation, type ContentDisplayProps } from "./content";
 
   type ContentCardProps = {
     video: Video;
@@ -15,6 +15,7 @@
     ContentDisplayProps,
     | "isContinueVideos"
     | "playlistContentFilter"
+    | "contentFilter"
     | "videos"
     | "playlists"
     | "supabase"
@@ -26,6 +27,7 @@
     video,
     videos,
     isContinueVideos,
+    contentFilter,
     supabase,
     session,
     ...restProps
@@ -41,6 +43,7 @@
   onclick={(e) => {
     e.preventDefault();
     contentState.handleSelectVideos({ event: e, video, videos });
+    handleContentNavigation({ video, contentFilter });
   }}
   {...restProps}
 >
@@ -51,7 +54,7 @@
         src={video.thumbnail_url}
         alt={video.title}
       />
-      {#if isVideoWithTimestamp(video) && video.video_start_seconds}
+      {#if isVideoWithTimestamp(video) && (video.video_start_seconds || video.watched_at)}
         <div class="absolute top-0.5 right-0.5">
           <DeleteTimestampButton
             {isContinueVideos}
@@ -74,7 +77,8 @@
         />
       {:else if "watched_at" in video && video.watched_at}
         <div
-          class="absolute bottom-0 right-0 flex bg-background-lighter w-full gap-1 px-1 items-center justify-center"
+          class="absolute bottom-0 right-0 flex bg-background-lighter
+          w-full gap-1 px-1 items-center justify-center"
         >
           <Check class="text-primary" />
           <p class="text-xs text-primary">Watched</p>
@@ -83,7 +87,9 @@
     </div>
     <p
       class="text-sm p-2 bg-background-lighter transition-colors duration-150 ease-out
-      {contentState.hoveredVideo?.id === video.id ? '@sm:bg-secondary' : ''}"
+      {contentState.hoveredVideo?.id === video.id
+        ? '@sm:bg-background-lighter'
+        : ''}"
     >
       {video.title}
     </p>
@@ -107,7 +113,7 @@
       class=" @sm:opacity-0 text-sm
     @sm:absolute p-2 w-full bg-transparent pointer-events-none
   {contentState.hoveredVideo?.id === video.id
-        ? '@sm:opacity-100 @sm:bg-secondary '
+        ? '@sm:opacity-100 @sm:bg-background-lighter'
         : ''}
     transition-all ease-out duration-150 transform will-change-transform
     z-40 break-anywhere whitespace-pre-line
