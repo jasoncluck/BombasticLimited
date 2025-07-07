@@ -95,7 +95,7 @@
 {/if}
 
 <div bind:this={contentRef} {...restProps} class="mx-4 flex flex-col gap-5">
-  {#if userProfile?.content_display === "CARD"}
+  {#if userProfile?.content_display === "CARD" && mediaQueryState.isSm}
     {#if tilesDisplay === "CAROUSEL"}
       <ContentCarousel
         {videos}

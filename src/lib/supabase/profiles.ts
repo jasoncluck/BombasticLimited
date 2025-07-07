@@ -71,7 +71,6 @@ export async function updateProfileContentDisplay({ contentDisplay, supabase, se
   if (!session) {
     return { profile: null, error: null };
   }
-  console.log(session)
 
   const { data: profile, error } = await supabase
     .from("profiles")

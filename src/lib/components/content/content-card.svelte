@@ -37,9 +37,7 @@
 </script>
 
 <a
-  class="group transition-transform duration-150 transform
-  will-change-transform bg-background-lighter cursor-pointer block mb-6
-  hover:z-auto {contentState.hoveredVideo?.id === video.id ? 'z-40' : ''}"
+  class="group transform will-change-transform cursor-pointer mb-6"
   onclick={(e) => {
     e.preventDefault();
     contentState.handleSelectVideos({ event: e, video, videos });
@@ -85,21 +83,16 @@
         </div>
       {/if}
     </div>
-    <p
-      class="text-sm p-2 bg-background-lighter transition-colors duration-150 ease-out
-      {contentState.hoveredVideo?.id === video.id
-        ? '@sm:bg-background-lighter'
-        : ''}"
-    >
+    <p class="text-sm p-2 transition-colors duration-150 ease-out">
       {video.title}
     </p>
   </div>
 
   <p
-    class="text-xs/4 text-muted-foreground transform px-2 bg-background-lighter
-      @sm:group-hover:bg-transparent @sm:absolute pointer-events-none
+    class="text-xs/4 text-muted-foreground transform px-2
+      @sm:absolute pointer-events-none
       {contentState.hoveredVideo?.id === video.id
-      ? '@sm:bg-secondary @sm:invisible'
+      ? '@sm:bg-secondary @sm:invisible @sm:group-hover:bg-transparent'
       : ''}"
   >
     {new Date(video.published_at).toLocaleDateString("en-US", {
@@ -111,12 +104,12 @@
   {#if userPreferences.contentDescription !== "NONE"}
     <p
       class=" @sm:opacity-0 text-sm
-    @sm:absolute p-2 w-full bg-transparent pointer-events-none
+    @sm:absolute p-2 px-4 w-full pointer-events-none -ml-2
   {contentState.hoveredVideo?.id === video.id
-        ? '@sm:opacity-100 @sm:bg-background-lighter'
+        ? '@sm:opacity-100 @sm:bg-secondary'
         : ''}
-    transition-all ease-out duration-150 transform will-change-transform
-    z-40 break-anywhere whitespace-pre-line
+        transform will-change-transform
+        z-50 break-anywhere whitespace-pre-line
           {userPreferences.contentDescription === 'BRIEF' &&
         'line-clamp-3  py-1'}"
     >

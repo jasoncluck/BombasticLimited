@@ -6,6 +6,7 @@
   import { onDestroy } from "svelte";
   import { getContentState } from "$lib/state/content.svelte";
   import type { CombinedContentFilter } from "./content-filter";
+  import type { Video } from "$lib/supabase/videos";
 
   type ContentCarouselProps = ContentDisplayProps & {
     carouselState?: CarouselState;
@@ -160,25 +161,18 @@
     }
   }
 
-  function getItemClasses(index: number) {
-    let classes =
-      "group @4xl:basis-1/5 @sm:basis-1/3 basis-full duration-300 transform px-3 transition-transform";
+  function getItemClasses(video: Video, index: number) {
+    let classes = `group @4xl:basis-1/5 @sm:basis-1/3 basis-full p-2 ${contentState.hoveredVideo?.id === video.id ? "scale-105" : ""}`;
 
-    // Add drag visual feedback if reordering is enabled
-    if (allowVideoReorder) {
-      if (contentState.draggedIndex === index) {
-        classes += " opacity-60";
-      }
-      if (contentState.targetIndex === index) {
-        if (
-          !contentState.draggedIndex ||
-          contentState.draggedIndex < contentState.targetIndex
-        ) {
-          classes += " border-r-2 border-primary";
-        } else {
-          classes += " border-l-2 border-primary";
-        }
-      }
+    if (contentState.hoveredVideo?.id === video.id) {
+      // Selected state - using !important to override hover
+      classes += " !bg-secondary brightness-125";
+    }
+
+    // Add drag drop classes if enabled
+    if (dragDrop && allowVideoReorder) {
+      // Use the new drag classes method instead of the old border approach
+      classes += ` ${contentState.getVideoDragClasses(index)}`;
     }
 
     return classes;
@@ -191,7 +185,7 @@
     watchDrag: false,
     inViewThreshold: 0.5,
   }}
-  class="hover:z-20 overflow-x-clip"
+  class="z-40 overflow-x-clip"
   setApi={(emblaApi) => {
     api = emblaApi;
   }}
@@ -207,7 +201,7 @@
   <Carousel.Content>
     {#each videos as video, i (video.id)}
       <Carousel.Item
-        class={getItemClasses(i)}
+        class={getItemClasses(video, i)}
         draggable="true"
         ondragstart={(e) => dragDrop.handleDragStart(e, i)}
         ondragover={allowVideoReorder
