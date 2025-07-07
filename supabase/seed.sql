@@ -65684,9 +65684,9 @@ INSERT INTO "public"."playlist_videos" ("playlist_id", "video_id", "id", "video_
 --
 
 INSERT INTO "public"."profiles" ("id", "username", "sources", "content_description", "content_display") VALUES
-	('f54e3d3e-936b-4421-9866-f4f1e25d1e37', 'nextlander', '{giantbomb,nextlander,remap}', 'BRIEF', 'CAROUSEL'),
-	('6af990b9-dd16-45cf-9c97-6df77e4e5555', 'giantbomb', '{giantbomb,nextlander,remap}', 'BRIEF', 'CAROUSEL'),
-	('8f9a4098-383b-499b-88ed-55b3855763a5', 'remap', '{giantbomb,nextlander,remap}', 'BRIEF', 'CAROUSEL');
+	('f54e3d3e-936b-4421-9866-f4f1e25d1e37', 'nextlander', '{giantbomb,nextlander,remap}', 'BRIEF', 'CARD'),
+	('6af990b9-dd16-45cf-9c97-6df77e4e5555', 'giantbomb', '{giantbomb,nextlander,remap}', 'BRIEF', 'CARD'),
+	('8f9a4098-383b-499b-88ed-55b3855763a5', 'remap', '{giantbomb,nextlander,remap}', 'BRIEF', 'CARD');
 
 
 --

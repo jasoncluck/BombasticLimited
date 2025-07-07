@@ -3,28 +3,20 @@ import type { Database } from "$lib/supabase/database.types";
 import {
   isUserPlaylist,
   type Playlist,
-  type PlaylistVideo,
-  type UserPlaylist,
 } from "$lib/supabase/playlists";
 import {
   isVideoWithPlaylistTimestamp,
-  isVideoWithTimestamp,
   type Video,
 } from "$lib/supabase/videos";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import {
-  getFilterKeysForView,
   getSortKeysForView,
   isPlaylistVideosFilter,
   isSortKey,
   isSortOrder,
   type CombinedContentFilter,
-  type ContentFilter,
   type PlaylistVideosFilter,
-  type SortKey,
-  type SortOrder,
 } from "./content-filter";
-import { page } from "$app/state";
 import { goto } from "$app/navigation";
 
 export interface CarouselVideoDragInfo {
@@ -33,8 +25,7 @@ export interface CarouselVideoDragInfo {
 }
 
 export const CONTENT_DISPLAY = {
-  CAROUSEL: "CAROUSEL",
-  TILES: "TILES",
+  CARD: "CARD",
   TABLE: "TABLE",
 } as const;
 

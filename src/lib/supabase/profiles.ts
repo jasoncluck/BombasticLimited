@@ -1,5 +1,6 @@
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Tables } from "./database.types";
+import type { ContentDisplay } from "$lib/components/content/content";
 
 export type Profile = Tables<"profiles">;
 
@@ -40,8 +41,8 @@ export async function getProfile({
   session,
   supabase,
 }: {
-  session: Session | null;
   supabase: SupabaseClient<Database>;
+  session: Session | null;
 }) {
 
   if (!session) {
@@ -51,6 +52,30 @@ export async function getProfile({
   const { data: profile, error } = await supabase
     .from("profiles")
     .select("*")
+    .eq("id", session.user.id)
+    .single();
+
+  if (error) {
+    console.error(error);
+  }
+  return { profile, error };
+}
+
+export async function updateProfileContentDisplay({ contentDisplay, supabase, session }: {
+  contentDisplay: ContentDisplay;
+  supabase: SupabaseClient<Database>;
+  session: Session | null;
+
+}) {
+
+  if (!session) {
+    return { profile: null, error: null };
+  }
+  console.log(session)
+
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .update({ content_display: contentDisplay })
     .eq("id", session.user.id)
     .single();
 

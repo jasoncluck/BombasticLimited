@@ -626,7 +626,7 @@ export type Database = {
     }
     Enums: {
       contentdescription: "FULL" | "BRIEF" | "NONE"
-      contentdisplay: "TILES" | "CAROUSEL"
+      contentdisplay: "TABLE" | "CARD"
       playlist_sort_order: "ascending" | "descending"
       playlist_sorted_by: "title" | "datePublished" | "playlistOrder"
       playlist_type: "Official" | "Public" | "Private"
@@ -750,7 +750,7 @@ export const Constants = {
   public: {
     Enums: {
       contentdescription: ["FULL", "BRIEF", "NONE"],
-      contentdisplay: ["TILES", "CAROUSEL"],
+      contentdisplay: ["TABLE", "CARD"],
       playlist_sort_order: ["ascending", "descending"],
       playlist_sorted_by: ["title", "datePublished", "playlistOrder"],
       playlist_type: ["Official", "Public", "Private"],

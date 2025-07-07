@@ -10,6 +10,7 @@
     type EmailSchema,
     type UsernameSchema,
   } from "../auth/schema";
+  import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import Button, {
     buttonVariants,
   } from "$lib/components/ui/button/button.svelte";
@@ -26,6 +27,13 @@
   import * as Dialog from "$lib/components/ui/dialog/index.js";
 
   import Label from "$lib/components/ui/label/label.svelte";
+  import {
+    ChevronDown,
+    ChevronUp,
+    GalleryHorizontal,
+    Table,
+  } from "@lucide/svelte";
+  import { handleUpdateProfileContentDisplay } from "$lib/components/profile/profile-service";
 
   let {
     data,
@@ -40,6 +48,8 @@
   } = $props();
 
   const { profile, supabase, session } = $derived(data);
+
+  let contentDisplayOpen = $state(false);
 
   const flash = getFlash(page);
 
@@ -122,8 +132,74 @@
 </script>
 
 <div class="flex flex-row justify-center">
-  <div class="flex flex-col gap-4 max-w-[500px]">
-    <h1 class="header-primary">Account settings</h1>
+  <div class="flex flex-col my-4 gap-4 max-w-[500px]">
+    <h1 class="header-primary">Settings</h1>
+    <h2 class="header-secondary">Preferences</h2>
+    <div class="flex flex-wrap @lg:flex-nowrap items-center gap-4 w-full">
+      <Label class="min-w-20">Content Display</Label>
+      <DropdownMenu.Root bind:open={contentDisplayOpen}>
+        <DropdownMenu.Trigger
+          id="user-preferences"
+          class="cursor-pointer outline-none {buttonVariants({
+            variant: 'secondary',
+          })}"
+        >
+          <div class="flex items-center gap-2">
+            {#if profile.content_display === "CARD"}
+              <div class="flex items-center gap-2">
+                <GalleryHorizontal />
+                Card
+              </div>
+            {:else}
+              <div class="flex items-center gap-2">
+                <Table />
+                Table
+              </div>
+            {/if}
+            {#if contentDisplayOpen}
+              <ChevronUp />
+            {:else}
+              <ChevronDown />
+            {/if}
+          </div>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Group>
+            <DropdownMenu.Item
+              class="cursor-pointer"
+              onclick={() => {
+                handleUpdateProfileContentDisplay({
+                  contentDisplay: "CARD",
+                  supabase,
+                  session,
+                });
+              }}
+            >
+              <div class="flex items-center gap-2">
+                <GalleryHorizontal />
+                Card
+              </div>
+            </DropdownMenu.Item>
+            <DropdownMenu.Item
+              class="cursor-pointer"
+              onclick={() => {
+                handleUpdateProfileContentDisplay({
+                  contentDisplay: "TABLE",
+                  supabase,
+                  session,
+                });
+              }}
+            >
+              <div class="flex items-center gap-2">
+                <Table />
+                Table
+              </div>
+            </DropdownMenu.Item>
+          </DropdownMenu.Group>
+        </DropdownMenu.Content>
+      </DropdownMenu.Root>
+    </div>
+    <h2 class="header-secondary mt-4">Account</h2>
     <form use:emailEnhance method="POST" action="?/updateEmail">
       <Form.Field form={emailForm} name="email">
         <div class="flex flex-wrap @lg:flex-nowrap items-center gap-4 w-full">
@@ -261,6 +337,7 @@
         <Alert.Description>{$flash.message}</Alert.Description>
       </Alert.Root>
     {/if}
+
     <Dialog.Root>
       <Dialog.Trigger
         class="@lg:w-[200px] w-full mt-20 {buttonVariants({

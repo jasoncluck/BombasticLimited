@@ -108,6 +108,10 @@
   @apply lg:text-5xl text-4xl font-semibold transition-colors mb-2;
 }
 
+.header-secondary {
+  @apply lg:text-4xl text-3xl font-semibold transition-colors mb-2;
+}
+
 .header-playlist {
   @apply lg:text-7xl text-6xl font-semibold transition-colors mb-2;
 }

@@ -12,6 +12,8 @@
   import { createContentColumns } from "./table/content-table-columns";
   import ContentTable from "./table/content-table.svelte";
   import { getPlaylistState } from "$lib/state/playlist.svelte";
+  import ContentCarousel from "./content-carousel.svelte";
+  import ContentTiles from "./content-tiles.svelte";
 
   type ContentProps = HTMLAttributes<HTMLDivElement> & {
     videos: Video[] | VideoWithTimestamp[];
@@ -99,30 +101,30 @@
     {supabase}
     {session}
   />
-  <!-- {#if contentDisplay === "CAROUSEL"} -->
-  <!--   <ContentCarousel -->
-  <!--     {videos} -->
-  <!--     {videosCount} -->
-  <!--     {playlists} -->
-  <!--     {playlist} -->
-  <!--     {isContinueVideos} -->
-  <!--     bind:carouselState -->
-  <!--     {supabase} -->
-  <!--     {session} -->
-  <!--   /> -->
-  <!-- {:else} -->
-  <!--   <div class="mb-20"> -->
-  <!--     <ContentTiles -->
-  <!--       bind:videos -->
-  <!--       {videosCount} -->
-  <!--       {playlists} -->
-  <!--       {playlist} -->
-  <!--       {isContinueVideos} -->
-  <!--       {allowVideoReorder} -->
-  <!--       {contentFilter} -->
-  <!--       {supabase} -->
-  <!--       {session} -->
-  <!--     /> -->
-  <!--   </div> -->
-  <!-- {/if} -->
+  {#if contentDisplay === "CAROUSEL"}
+    <ContentCarousel
+      {videos}
+      {videosCount}
+      {playlists}
+      {playlist}
+      {isContinueVideos}
+      bind:carouselState
+      {supabase}
+      {session}
+    />
+  {:else}
+    <div class="mb-20">
+      <ContentTiles
+        bind:videos
+        {videosCount}
+        {playlists}
+        {playlist}
+        {isContinueVideos}
+        {allowVideoReorder}
+        {contentFilter}
+        {supabase}
+        {session}
+      />
+    </div>
+  {/if}
 </div>

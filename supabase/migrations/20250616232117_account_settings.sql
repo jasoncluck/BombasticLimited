@@ -1,12 +1,12 @@
 CREATE TYPE ContentDescription AS ENUM ('FULL', 'BRIEF', 'NONE');
-CREATE TYPE ContentDisplay AS ENUM ('TILES', 'CAROUSEL');
+CREATE TYPE ContentDisplay AS ENUM ('TABLE', 'CARD');
 
 CREATE TABLE public.profiles (
   id uuid NOT NULL REFERENCES auth.users ON DELETE CASCADE,
   username text,
   sources Source[] DEFAULT ARRAY['giantbomb', 'nextlander', 'remap']::Source[],
   content_description ContentDescription DEFAULT 'BRIEF',
-  content_display ContentDisplay DEFAULT 'CAROUSEL',
+  content_display ContentDisplay DEFAULT 'CARD',
   PRIMARY KEY (id)
 );
 
@@ -234,3 +234,8 @@ BEGIN
     END IF;
 END;
 $$;
+
+CREATE POLICY "Allow update if user owns profile"
+ON public.profiles
+FOR UPDATE
+USING (auth.uid() = profiles.id);

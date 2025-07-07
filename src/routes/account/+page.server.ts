@@ -9,8 +9,10 @@ import {
 import type { Actions, PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({
+  depends,
   locals: { supabase, session },
 }) => {
+  depends("supabase:db:profiles")
   if (!session) {
     redirect(303, "/auth/login");
   }

@@ -5,7 +5,7 @@
   import { onMount } from "svelte";
   import { toast } from "svelte-sonner";
   import { page } from "$app/state";
-  import { House, UserCircle } from "@lucide/svelte";
+  import { Cog, House, LogOut, UserCircle } from "@lucide/svelte";
   import Input from "$lib/components/ui/input/input.svelte";
   import { Button, buttonVariants } from "$lib/components/ui/button";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
@@ -209,6 +209,9 @@
           handleLogout={() => layoutState.handleLogout(supabase)}
         />
       </div>
+      <!-- <div class="sm:block hidden"> -->
+      <!--   <Menu /> -->
+      <!-- </div> -->
     </div>
 
     <div
@@ -248,13 +251,19 @@
                 class="cursor-pointer"
                 onclick={() => goto("/account")}
               >
-                Account
+                <div class="flex items-center gap-2">
+                  <Cog />
+                </div>
+                Settings
               </DropdownMenu.Item>
               <DropdownMenu.Item
                 class="cursor-pointer"
                 onclick={() => layoutState.handleLogout(supabase)}
               >
-                Log out
+                <div class="flex items-center gap-2">
+                  <LogOut />
+                  Log out
+                </div>
               </DropdownMenu.Item>
             </DropdownMenu.Group>
           </DropdownMenu.Content>
