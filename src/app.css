@@ -117,11 +117,11 @@
 }
 
 .header-link {
-  @apply lg:text-4xl text-3xl font-semibold transition-colors  hover:underline cursor-pointer mb-2 py-2;
+  @apply lg:text-4xl text-3xl font-semibold transition-colors hover:underline cursor-pointer py-2 mx-4;
 }
 
 .header-link-sticky {
-  @apply lg:text-4xl text-3xl font-semibold transition-colors hover:underline cursor-pointer bg-background-lighter sticky top-0 py-2 z-20 mx-4;
+  @apply lg:text-4xl text-3xl font-semibold transition-colors hover:underline cursor-pointer bg-background-lighter sticky ;
 }
 
 /* New elevated effect class */

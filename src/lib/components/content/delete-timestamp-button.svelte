@@ -4,10 +4,10 @@
   import type { Video } from "$lib/supabase/videos";
   import type { ContentDisplayProps } from "./content";
   import { handleDeleteVideosTimestamp } from "../video/video-service";
+  import { getContentState } from "$lib/state/content.svelte";
 
   let {
     video = $bindable(),
-    manualHover,
     isContinueVideos,
     supabase,
     session,
@@ -18,6 +18,8 @@
     video: Video;
     manualHover?: boolean;
   } = $props();
+
+  const contentState = getContentState();
 </script>
 
 <Button
@@ -35,7 +37,7 @@
   }}
 >
   <X
-    class="peer invisible {manualHover &&
+    class="peer invisible {contentState.hoveredVideo?.id === video.id &&
       'visible bg-secondary'} z-40  mr-0.5 mt-0.5"
   />
   <span

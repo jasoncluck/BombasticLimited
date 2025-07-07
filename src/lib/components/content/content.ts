@@ -29,10 +29,19 @@ export const CONTENT_DISPLAY = {
   TABLE: "TABLE",
 } as const;
 
-export type ContentView = "continueWatching" | "playlist" | "default";
 
 export type ContentDisplay =
   (typeof CONTENT_DISPLAY)[keyof typeof CONTENT_DISPLAY];
+
+export const TILES_DISPLAY = {
+  CAROUSEL: "CAROUSEL",
+  TILES: "TILES"
+} as const
+
+export type TilesDisplay =
+  (typeof TILES_DISPLAY)[keyof typeof TILES_DISPLAY];
+
+export type ContentView = "continueWatching" | "playlist" | "default";
 
 export interface ContentDragInfo {
   readonly id: string;

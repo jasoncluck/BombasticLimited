@@ -1,7 +1,11 @@
 <script lang="ts">
   import * as Carousel from "$lib/components/ui/carousel";
   import ContentCard from "./content-card.svelte";
-  import type { CarouselState, ContentDisplayProps } from "./content";
+  import {
+    handleContentNavigation,
+    type CarouselState,
+    type ContentDisplayProps,
+  } from "./content";
   import type { CarouselAPI } from "../ui/carousel/context";
   import { onDestroy } from "svelte";
   import { getContentState } from "$lib/state/content.svelte";
@@ -10,7 +14,7 @@
   type ContentCarouselProps = ContentDisplayProps & {
     carouselState?: CarouselState;
     allowVideoReorder?: boolean;
-    contentFilter?: CombinedContentFilter;
+    contentFilter: CombinedContentFilter;
   };
 
   let {
@@ -222,7 +226,14 @@
         ondragend={allowVideoReorder ? dragDrop.handleDragEnd : undefined}
         onmouseenter={() => contentState.handleMouseEnter({ video })}
         onmouseleave={() => contentState.handleMouseLeave()}
-        onclick={() => {
+        onclick={(e) => {
+          e.preventDefault();
+          handleContentNavigation({
+            video,
+            contentFilter,
+            playlist,
+          });
+
           if (carouselState) {
             carouselState.lastViewedIndex = i;
           }

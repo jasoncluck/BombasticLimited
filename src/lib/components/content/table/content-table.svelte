@@ -104,7 +104,6 @@
   // Add function to handle mouse leaving the entire table
   function handleTableMouseLeave() {
     contentState.hoveredVideo = null;
-    contentState.manualHover = false;
     // Clear any pending timeout
     if (contentState.hoverTimeoutId) {
       clearTimeout(contentState.hoverTimeoutId);

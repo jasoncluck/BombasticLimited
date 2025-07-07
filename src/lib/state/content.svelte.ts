@@ -54,7 +54,6 @@ export interface DragDropHandlers {
 export interface MouseHoverOptions {
   video: Video;
   isHoveringElement?: boolean;
-  shouldScrollCheck?: boolean;
 }
 
 export interface ContentState {
@@ -134,8 +133,6 @@ export interface ContentState {
   handleMouseLeave: (isHoveringElement?: boolean) => void;
 
   getVideoDragClasses: (index: number) => string;
-
-  manualHover: boolean;
 }
 
 export class ContentStateClass implements ContentState {
@@ -149,7 +146,6 @@ export class ContentStateClass implements ContentState {
   isContextMenuOpen = $state(false);
   isDropdownMenuOpen = $state(false);
   hoverTimeoutId = $state<ReturnType<typeof setTimeout> | null>(null);
-  manualHover = $state(false);
 
   // Drag and drop state
   draggedIndex = $state<number | null>(null);
@@ -180,21 +176,12 @@ export class ContentStateClass implements ContentState {
 
   // Mouse hover methods
   handleMouseEnter(options: MouseHoverOptions) {
-    const { video, shouldScrollCheck = false } = options;
+    const { video } = options;
 
     if (this.isContextMenuOpen) {
       return;
     }
 
-    // For content cards that need to check scrolling state
-    if (shouldScrollCheck) {
-      if (
-        this.pageState.contentScrollState.scrolling &&
-        this.dragContentType === null
-      ) {
-        this.manualHover = true;
-      }
-    }
 
     // Don't update hoveredVideo if context menu is open or if we're dragging
     if (!this.dragContentType) {
@@ -209,7 +196,6 @@ export class ContentStateClass implements ContentState {
   }
 
   handleMouseLeave(isHoveringElement: boolean = false) {
-    this.manualHover = false;
     if (!this.isContextMenuOpen || !this.isDropdownMenuOpen) {
       // Store the timeout ID so it can be cleared if needed
       const timeoutId = setTimeout(() => {

@@ -20,6 +20,7 @@
     contentFilter,
     continueWatchingVideos,
     playlists,
+    userProfile,
     session,
     supabase,
   } = $derived(data);
@@ -61,15 +62,23 @@
 <div class="flex flex-col relative bg-background-lighter mt-4">
   {#if session && continueWatchingVideos.length > 0}
     <div class="flex flex-col mb-8 gap-4">
-      <a href="/continue" class="header-link-sticky"> Continue Watching </a>
+      <a
+        href="/continue"
+        class={userProfile?.content_display === "CARD"
+          ? "header-link"
+          : "header-link-sticky"}
+      >
+        Continue Watching
+      </a>
 
       <Content
         videos={continueWatchingVideos}
         {contentFilter}
         {playlists}
         isContinueVideos={true}
-        contentDisplay={userPreferences.contentDisplay}
         bind:carouselState={carouselsState.continueWatching}
+        tilesDisplay="CAROUSEL"
+        {userProfile}
         {supabase}
         {session}
       />
@@ -86,15 +95,21 @@
   <div class="flex flex-col gap-8">
     {#each SOURCES as source (source)}
       <div class="flex flex-col gap-4">
-        <a href={`/${source}/latest`} class="header-link-sticky">
+        <a
+          href={`/${source}/latest`}
+          class={userProfile?.content_display === "CARD"
+            ? "header-link"
+            : "header-link-sticky"}
+        >
           {SOURCE_INFO[source].displayName}
         </a>
         <Content
           {contentFilter}
           videos={sourceVideos[source]}
           {playlists}
-          contentDisplay={userPreferences.contentDisplay}
+          tilesDisplay="CAROUSEL"
           bind:carouselState={carouselsState[source]}
+          {userProfile}
           {supabase}
           {session}
         />

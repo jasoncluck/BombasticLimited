@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Database } from "$lib/supabase/database.types";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
-  import type { CarouselState, ContentDisplay } from "./content";
+  import type { CarouselState, TilesDisplay } from "./content";
   import { type Video, type VideoWithTimestamp } from "$lib/supabase/videos";
   import type { HTMLAttributes } from "svelte/elements";
   import { type Playlist } from "$lib/supabase/playlists";
@@ -14,12 +14,12 @@
   import { getPlaylistState } from "$lib/state/playlist.svelte";
   import ContentCarousel from "./content-carousel.svelte";
   import ContentTiles from "./content-tiles.svelte";
+  import type { Profile } from "$lib/supabase/profiles";
 
   type ContentProps = HTMLAttributes<HTMLDivElement> & {
     videos: Video[] | VideoWithTimestamp[];
     videosCount?: number | null;
     playlists: Playlist[];
-    contentDisplay: ContentDisplay;
     carouselState?: CarouselState;
     isContinueVideos?: boolean;
     updateVideosState?: boolean;
@@ -27,6 +27,8 @@
     playlist?: Playlist;
     allowVideoReorder?: boolean;
     contentFilter: CombinedContentFilter;
+    userProfile: Profile | null;
+    tilesDisplay: TilesDisplay;
     supabase: SupabaseClient<Database>;
     session: Session | null;
   };
@@ -35,7 +37,6 @@
     videos,
     videosCount,
     carouselState = $bindable(),
-    contentDisplay,
     playlist,
     playlists,
     isContinueVideos = false,
@@ -43,6 +44,8 @@
     session,
     allowVideoReorder,
     contentFilter,
+    userProfile,
+    tilesDisplay,
     ...restProps
   }: ContentProps = $props();
 
@@ -92,39 +95,43 @@
 {/if}
 
 <div bind:this={contentRef} {...restProps} class="mx-4 flex flex-col gap-5">
-  <ContentTable
-    {videos}
-    {contentFilter}
-    {videosCount}
-    {columns}
-    {playlist}
-    {supabase}
-    {session}
-  />
-  {#if contentDisplay === "CAROUSEL"}
-    <ContentCarousel
-      {videos}
-      {videosCount}
-      {playlists}
-      {playlist}
-      {isContinueVideos}
-      bind:carouselState
-      {supabase}
-      {session}
-    />
-  {:else}
-    <div class="mb-20">
-      <ContentTiles
-        bind:videos
+  {#if userProfile?.content_display === "CARD"}
+    {#if tilesDisplay === "CAROUSEL"}
+      <ContentCarousel
+        {videos}
         {videosCount}
         {playlists}
         {playlist}
         {isContinueVideos}
-        {allowVideoReorder}
         {contentFilter}
+        bind:carouselState
         {supabase}
         {session}
       />
-    </div>
+    {:else}
+      <div class="mb-20">
+        <ContentTiles
+          {videos}
+          {videosCount}
+          {playlists}
+          {playlist}
+          {isContinueVideos}
+          {allowVideoReorder}
+          {contentFilter}
+          {supabase}
+          {session}
+        />
+      </div>
+    {/if}
+  {:else}
+    <ContentTable
+      {videos}
+      {contentFilter}
+      {videosCount}
+      {columns}
+      {playlist}
+      {supabase}
+      {session}
+    />
   {/if}
 </div>
