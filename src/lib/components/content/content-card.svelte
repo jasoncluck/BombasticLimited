@@ -34,6 +34,13 @@
   }: ContentCardProps = $props();
 
   const contentState = getContentState();
+
+  const selectedVideoIds = $derived(
+    contentState.selectedVideos.length > 0
+      ? new Set((contentState.selectedVideos || []).map((v) => v.id))
+      : new Set(),
+  );
+  const isSelected = $derived(selectedVideoIds.has(video.id));
 </script>
 
 <a
@@ -90,10 +97,8 @@
 
   <p
     class="text-xs/4 text-muted-foreground transform px-2
-      @sm:absolute pointer-events-none
-      {contentState.hoveredVideo?.id === video.id
-      ? '@sm:bg-secondary @sm:invisible @sm:group-hover:bg-transparent'
-      : ''}"
+      @sm:absolute pointer-events-none w-full
+      {isSelected ? '@sm:invisible @sm:bg-transparent' : ''}"
   >
     {new Date(video.published_at).toLocaleDateString("en-US", {
       year: "numeric",
@@ -105,10 +110,8 @@
     <p
       class=" @sm:opacity-0 text-sm
     @sm:absolute p-2 px-4 w-full pointer-events-none -ml-2
-  {contentState.hoveredVideo?.id === video.id
-        ? '@sm:opacity-100 @sm:bg-secondary'
-        : ''}
-        transform will-change-transform
+  {isSelected ? '@sm:opacity-100 @sm:bg-secondary' : ''}
+        transform will-change-transform rounded-md
         z-50 break-anywhere whitespace-pre-line
           {userPreferences.contentDescription === 'BRIEF' &&
         'line-clamp-3  py-1'}"

@@ -30,6 +30,12 @@
 
   const contentState = getContentState();
 
+  const selectedVideoIds = $derived(
+    contentState.selectedVideos.length > 0
+      ? new Set((contentState.selectedVideos || []).map((v) => v.id))
+      : new Set(),
+  );
+
   // Create drag drop functionality
   const dragDrop = contentState.createDragDrop({
     allowVideoReorder,
@@ -162,9 +168,12 @@
   }
 
   function getItemClasses(video: Video, index: number) {
-    let classes = `group @4xl:basis-1/5 @sm:basis-1/3 basis-full p-2 ${contentState.hoveredVideo?.id === video.id ? "scale-105" : ""}`;
+    const isSelected = selectedVideoIds.has(video.id);
 
-    if (contentState.hoveredVideo?.id === video.id) {
+    let classes = `group @4xl:basis-1/5 @sm:basis-1/3 basis-full p-2 rounded-lg
+${isSelected ? "scale-105" : ""}`;
+
+    if (isSelected) {
       // Selected state - using !important to override hover
       classes += " !bg-secondary brightness-125";
     }
@@ -198,7 +207,7 @@
     onclick={handleNextButtonClick}
     class={showNextButton ? "visible cursor-pointer " : "invisible"}
   />
-  <Carousel.Content>
+  <Carousel.Content class="mx-2">
     {#each videos as video, i (video.id)}
       <Carousel.Item
         class={getItemClasses(video, i)}
@@ -214,7 +223,8 @@
           ? (e) => dragDrop.handleDrop(e, i)
           : undefined}
         ondragend={allowVideoReorder ? dragDrop.handleDragEnd : undefined}
-        onmouseenter={() => contentState.handleMouseEnter({ video })}
+        onmouseenter={() =>
+          contentState.handleMouseEnter({ video, setSelectedOnHover: true })}
         onmouseleave={() => contentState.handleMouseLeave()}
         onclick={() => {
           if (carouselState) {

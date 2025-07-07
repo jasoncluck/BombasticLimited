@@ -53,6 +53,7 @@ export interface DragDropHandlers {
 
 export interface MouseHoverOptions {
   video: Video;
+  setSelectedOnHover?: boolean;
   isHoveringElement?: boolean;
 }
 
@@ -175,8 +176,7 @@ export class ContentStateClass implements ContentState {
   }
 
   // Mouse hover methods
-  handleMouseEnter(options: MouseHoverOptions) {
-    const { video } = options;
+  handleMouseEnter({ video, setSelectedOnHover }: MouseHoverOptions) {
 
     if (this.isContextMenuOpen) {
       return;
@@ -192,6 +192,9 @@ export class ContentStateClass implements ContentState {
       }
 
       this.hoveredVideo = video;
+      if (setSelectedOnHover) {
+        this.selectedVideos[0] = video;
+      }
     }
   }
 
