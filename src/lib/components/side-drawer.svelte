@@ -146,7 +146,10 @@
 </script>
 
 <Sheet.Root bind:open={isOpen}>
-  <Sheet.Trigger><Menu class="cursor-pointer" /></Sheet.Trigger>
+  <Sheet.Trigger
+    ><Menu class="cursor-pointer" />
+    <span class="sr-only"> Toggle Menu</span></Sheet.Trigger
+  >
   <Sheet.Content
     side="left"
     class="flex flex-col gap-2 pt-12 w-[300px] overflow-hidden"

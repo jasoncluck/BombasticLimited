@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Circle, Ellipsis, ListVideo } from "@lucide/svelte";
+  import { Circle, Ellipsis, ListVideo, Youtube } from "@lucide/svelte";
   import type { SuperValidated } from "sveltekit-superforms";
   import type { PlaylistSchema } from "../../../routes/playlist/[shortId]/schema";
   import type { BreadcrumbItem } from "$lib/components/breadcrumb-layout.svelte";
@@ -165,6 +165,17 @@
                 <p class="text-sm">
                   {sourceInfo.displayName}
                 </p>
+                <Circle
+                  size="5"
+                  class="shrink-0 stroke-muted-foreground  fill-muted-foreground justify-center"
+                />
+                <a href={sourceInfo.youtubeUrl} class="flex gap-2">
+                  <Youtube
+                    size="20"
+                    class="shrink-0 stroke-muted-foreground justify-center"
+                  />
+                  <p class="text-sm">YouTube</p>
+                </a>
               </div>
             {:else}
               <p class="text-sm">{playlist.profile_username}</p>

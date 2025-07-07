@@ -22,8 +22,9 @@ interface SourceInfo {
   image: string;
   twitchId: string;
   youtubeId: string;
+  youtubeUrl: string;
   highlightedPlaylists: HighlightPlaylist[];
-  websiteUrl: string;
+  websiteUrlDomain?: string;
   supportUrl: string;
 }
 
@@ -34,8 +35,8 @@ export const SOURCE_INFO: Record<Source, SourceInfo> = {
     image: nextlanderImage,
     twitchId: "689331234",
     youtubeId: "UCO0gHyqLNeIrCAjwlO2BmiA",
+    youtubeUrl: "https://www.youtube.com/@Nextlander",
     highlightedPlaylists: [],
-    websiteUrl: "https://www.patreon.com/nextlander",
     supportUrl: "https://www.patreon.com/nextlander/",
   },
   giantbomb: {
@@ -44,8 +45,9 @@ export const SOURCE_INFO: Record<Source, SourceInfo> = {
     image: giantbombImage,
     twitchId: "504350",
     youtubeId: "UCmeds0MLhjfkjD_5acPnFlQ",
+    youtubeUrl: "https://www.youtube.com/giantbomb",
     highlightedPlaylists: [{ name: "Blight Club", youtubeId: 'PLXlhzeWIuTHIGNBahKzWx9Hy54BXtM8Ef' }, { name: "Voicemail Dump Truck", youtubeId: 'PLXlhzeWIuTHLjtyPTm42V-jPS70IYXOjJ' }],
-    websiteUrl: "https://www.giantbomb.com/",
+    websiteUrlDomain: "giantbomb.com",
     supportUrl: "https://www.giantbomb.com/upgrade/",
   },
   remap: {
@@ -54,8 +56,9 @@ export const SOURCE_INFO: Record<Source, SourceInfo> = {
     image: remapImage,
     twitchId: "913491352",
     youtubeId: "UCpcSq3A3Z4tUJsHKfn8zpnA",
+    youtubeUrl: "https://www.youtube.com/@RemapRadio",
     highlightedPlaylists: [{ name: "Remap Radio", youtubeId: 'PLTbM52Fro5psVDi5r1StiTdnLxM9McaSO' }],
-    websiteUrl: "https://remapradio.com/",
+    websiteUrlDomain: "remapradio.com",
     supportUrl: "https://remapradio.com/signup/",
   },
 } as const;

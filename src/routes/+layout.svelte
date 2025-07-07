@@ -5,7 +5,15 @@
   import { onMount } from "svelte";
   import { toast } from "svelte-sonner";
   import { page } from "$app/state";
-  import { Cog, House, LogOut, UserCircle } from "@lucide/svelte";
+  import {
+    Cog,
+    GalleryHorizontal,
+    House,
+    LogOut,
+    Menu,
+    Table,
+    UserCircle,
+  } from "@lucide/svelte";
   import Input from "$lib/components/ui/input/input.svelte";
   import { Button, buttonVariants } from "$lib/components/ui/button";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
@@ -26,6 +34,7 @@
   } from "$lib/state/playlist.svelte";
   import { setPageState, type ScrollPosition } from "$lib/state/page.svelte";
   import { setLayoutState } from "$lib/state/layout.svelte";
+  import { handleUpdateProfileContentDisplay } from "$lib/components/profile/profile-service";
 
   // Initialize all state contexts
   const layoutState = setLayoutState();
@@ -46,8 +55,15 @@
   });
 
   let { data, children } = $props();
-  let { session, supabase, playlists, user, layout, isSidebarCollapsed } =
-    $derived(data);
+  let {
+    userProfile,
+    session,
+    supabase,
+    playlists,
+    user,
+    layout,
+    isSidebarCollapsed,
+  } = $derived(data);
 
   let playlistsState = $derived(playlists);
   const contentState = getContentState();
@@ -209,9 +225,6 @@
           handleLogout={() => layoutState.handleLogout(supabase)}
         />
       </div>
-      <!-- <div class="sm:block hidden"> -->
-      <!--   <Menu /> -->
-      <!-- </div> -->
     </div>
 
     <div
@@ -233,50 +246,108 @@
       />
     </div>
 
-    <div class="items-center ml-auto hidden sm:flex">
-      {#if user}
+    <div class="ml-auto">
+      <div class="flex gap-4 items-center ml-auto hidden sm:flex">
         <DropdownMenu.Root>
           <DropdownMenu.Trigger
+            id="user-preferences"
             class="cursor-pointer outline-none {buttonVariants({
               variant: 'outline',
-              size: 'icon',
             })}"
           >
-            <UserCircle class="h-[1.2rem] w-[1.2rem]" />
-            <span class="sr-only">Profile</span>
+            <div class="flex items-center gap-2">
+              {#if userProfile?.content_display === "CARD"}
+                <div class="flex items-center gap-2">
+                  <GalleryHorizontal />
+                  Card
+                </div>
+              {:else}
+                <div class="flex items-center gap-2">
+                  <Table />
+                  Table
+                </div>
+              {/if}
+            </div>
           </DropdownMenu.Trigger>
           <DropdownMenu.Content>
             <DropdownMenu.Group>
               <DropdownMenu.Item
                 class="cursor-pointer"
-                onclick={() => goto("/account")}
+                onclick={() => {
+                  handleUpdateProfileContentDisplay({
+                    contentDisplay: "CARD",
+                    supabase,
+                    session,
+                  });
+                }}
               >
                 <div class="flex items-center gap-2">
-                  <Cog />
+                  <GalleryHorizontal />
+                  Card
                 </div>
-                Settings
               </DropdownMenu.Item>
               <DropdownMenu.Item
                 class="cursor-pointer"
-                onclick={() => layoutState.handleLogout(supabase)}
+                onclick={() => {
+                  handleUpdateProfileContentDisplay({
+                    contentDisplay: "TABLE",
+                    supabase,
+                    session,
+                  });
+                }}
               >
                 <div class="flex items-center gap-2">
-                  <LogOut />
-                  Log out
+                  <Table />
+                  Table
                 </div>
               </DropdownMenu.Item>
             </DropdownMenu.Group>
           </DropdownMenu.Content>
         </DropdownMenu.Root>
-      {:else}
-        <Button
-          class="cursor-pointer"
-          onclick={() => goto("/auth/login")}
-          variant="outline"
-        >
-          Login
-        </Button>
-      {/if}
+        {#if user}
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger
+              class="cursor-pointer outline-none {buttonVariants({
+                variant: 'outline',
+                size: 'icon',
+              })}"
+            >
+              <UserCircle class="h-[1.2rem] w-[1.2rem]" />
+              <span class="sr-only">Profile</span>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content>
+              <DropdownMenu.Group>
+                <DropdownMenu.Item
+                  class="cursor-pointer"
+                  onclick={() => goto("/account")}
+                >
+                  <div class="flex items-center gap-2">
+                    <Cog />
+                  </div>
+                  Settings
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  class="cursor-pointer"
+                  onclick={() => layoutState.handleLogout(supabase)}
+                >
+                  <div class="flex items-center gap-2">
+                    <LogOut />
+                    Log out
+                  </div>
+                </DropdownMenu.Item>
+              </DropdownMenu.Group>
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
+        {:else}
+          <Button
+            class="cursor-pointer"
+            onclick={() => goto("/auth/login")}
+            variant="outline"
+          >
+            Login
+          </Button>
+        {/if}
+      </div>
     </div>
   </nav>
 

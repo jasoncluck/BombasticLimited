@@ -3,15 +3,11 @@
   import { Radio } from "@lucide/svelte";
   import TwitchEmbed from "$lib/components/video/twitch-embed.svelte";
   import Content from "$lib/components/content/content.svelte";
-  import { userPreferences } from "$lib/state/user-preferences.svelte.js";
   import { SOURCE_INFO } from "$lib/constants/source";
   import Button from "$lib/components/ui/button/button.svelte";
   import type { CarouselState } from "$lib/components/content/content.js";
   import type { Snapshot } from "@sveltejs/kit";
-  import {
-    handlePlaylistNavigation,
-    parseImageProperties,
-  } from "$lib/components/playlist/playlist.js";
+  import { handlePlaylistNavigation } from "$lib/components/playlist/playlist.js";
   import PlaylistTiles from "$lib/components/playlist/playlist-tiles.svelte";
   import {
     DEFAULT_NUM_PLAYLISTS_OVERVIEW,
@@ -27,6 +23,7 @@
     playlists,
     highlightPlaylists,
     followedPlaylists,
+    userProfile,
     session,
     supabase,
     source,
@@ -62,10 +59,24 @@
 
 <div class="flex flex-col">
   <div class="flex justify-between m-4">
-    <h1 class="header-primary">
-      {SOURCE_INFO[source].displayName}
-    </h1>
-    <Button variant="secondary" href={SOURCE_INFO[source].supportUrl}
+    <div class="flex flex-col">
+      <h1 class="header-primary">
+        {SOURCE_INFO[source].displayName}
+      </h1>
+      {#if SOURCE_INFO[source].websiteUrlDomain}
+        <a
+          class="text-sm text-muted-foreground hover:underline ml-1"
+          target="_blank"
+          href={`https://www.${SOURCE_INFO[source].websiteUrlDomain}`}
+        >
+          {SOURCE_INFO[source].websiteUrlDomain}</a
+        >
+      {/if}
+    </div>
+    <Button
+      variant="secondary"
+      href={SOURCE_INFO[source].supportUrl}
+      target="_blank"
       >Support {SOURCE_INFO[source].displayName}
     </Button>
   </div>
@@ -86,9 +97,10 @@
         Latest Videos
       </a>
       <Content
-        contentDisplay={userPreferences.contentDisplay}
         {videos}
         bind:carouselState
+        {userProfile}
+        tilesDisplay="CAROUSEL"
         {playlists}
         {contentFilter}
         {session}
@@ -112,10 +124,11 @@
           {highlightPlaylist.playlist.name}
         </a>
         <Content
-          contentDisplay={userPreferences.contentDisplay}
           videos={highlightPlaylist.videos}
           bind:carouselState
           {playlists}
+          {userProfile}
+          tilesDisplay="CAROUSEL"
           {contentFilter}
           {session}
           {supabase}
