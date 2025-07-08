@@ -8,7 +8,7 @@ import {
   handleUpdatePlaylistPosition,
 } from "$lib/components/playlist/playlist-service";
 import type { PageState } from "./page.svelte";
-import { getContentState, type ContentState } from "./content.svelte";
+import { type ContentState } from "./content.svelte";
 import { goto } from "$app/navigation";
 
 export interface PlaylistDragDropOptions {
@@ -147,7 +147,6 @@ export class PlaylistStateClass implements PlaylistState {
       playlists,
     } = options;
 
-    const contentState = getContentState();
     let classes = "sidebar-full-button active:bg-black/70";
 
     // Add drag classes for playlists only
@@ -187,7 +186,7 @@ export class PlaylistStateClass implements PlaylistState {
     // Video drag styling (playlists only)
     if (
       itemType === "playlist" &&
-      contentState.dragContentType === "video" &&
+      this.contentState.dragContentType === "video" &&
       playlists &&
       (playlists[index]?.created_by !== session?.user.id ||
         playlists[index].short_id === selectedPlaylistIdParam)
@@ -202,11 +201,10 @@ export class PlaylistStateClass implements PlaylistState {
   createPlaylistDragDrop(
     options: PlaylistDragDropOptions,
   ): PlaylistDragDropHandlers {
-    const contentState = getContentState();
 
     const handleDragStart = (event: DragEvent, index: number) => {
       this.draggedIndex = index;
-      contentState.dragContentType = "playlist";
+      this.contentState.dragContentType = "playlist";
 
       if (event.dataTransfer) {
         event.dataTransfer.effectAllowed = "move";
@@ -220,16 +218,16 @@ export class PlaylistStateClass implements PlaylistState {
       event.preventDefault();
 
       // Handle video drop zones
-      if (contentState.dragContentType === "video") {
+      if (this.contentState.dragContentType === "video") {
         const playlist = options.playlists[index];
         if (event.currentTarget instanceof HTMLElement) {
-          const classes = contentState.getVideoDropzoneClasses(
+          const classes = this.contentState.getVideoDropzoneClasses(
             playlist,
             options.session,
           );
           event.currentTarget.classList.add(...classes);
           event.currentTarget.classList.remove(
-            ...contentState.getEndDropzoneClasses(),
+            ...this.contentState.getEndDropzoneClasses(),
           );
         }
       }
@@ -251,20 +249,20 @@ export class PlaylistStateClass implements PlaylistState {
         !event.currentTarget.contains(relatedTarget)
       ) {
         // Clear target index for playlist reordering
-        if (contentState.dragContentType === "playlist") {
+        if (this.contentState.dragContentType === "playlist") {
           this.targetIndex = null;
         }
 
         // Handle video drop zone styling
-        if (contentState.dragContentType === "video") {
+        if (this.contentState.dragContentType === "video") {
           const playlist = options.playlists[index];
-          const classes = contentState.getVideoDropzoneClasses(
+          const classes = this.contentState.getVideoDropzoneClasses(
             playlist,
             options.session,
           );
           event.currentTarget.classList.remove(...classes);
           event.currentTarget.classList.add(
-            ...contentState.getEndDropzoneClasses(),
+            ...this.contentState.getEndDropzoneClasses(),
           );
         }
       }
@@ -279,17 +277,17 @@ export class PlaylistStateClass implements PlaylistState {
       }
 
       if (event.currentTarget instanceof HTMLElement) {
-        const classes = contentState.getVideoDropzoneClasses(
+        const classes = this.contentState.getVideoDropzoneClasses(
           options.playlists[playlistTargetIndex],
           options.session,
         );
         event.currentTarget.classList.remove(...classes);
         event.currentTarget.classList.add(
-          ...contentState.getEndDropzoneClasses(),
+          ...this.contentState.getEndDropzoneClasses(),
         );
       }
 
-      if (contentState.dragContentType === "video") {
+      if (this.contentState.dragContentType === "video") {
         // Get all selected videos from all sections
         const allSelectedVideos = this.getAllSelectedVideos();
 
@@ -304,12 +302,13 @@ export class PlaylistStateClass implements PlaylistState {
             session: options.session,
           });
 
-          // Clear selected videos from all sections after successful drop
+          // Clear selected videos from the active section
+          // (other sections should already be cleared by the content state)
           for (const section of allSelectedVideos) {
-            contentState.selectedVideosBySection[section.sectionId] = [];
+            this.contentState.selectedVideosBySection[section.sectionId] = [];
           }
         }
-      } else if (contentState.dragContentType === "playlist") {
+      } else if (this.contentState.dragContentType === "playlist") {
         if (this.draggedIndex === null || this.draggedIndex < 0) {
           return;
         }
@@ -332,7 +331,7 @@ export class PlaylistStateClass implements PlaylistState {
       this.draggedIndex = null;
       this.targetIndex = null;
       this.hoveredPlaylistIndex = null;
-      contentState.dragContentType = null; // Reset drag content type
+      this.contentState.dragContentType = null; // Reset drag content type
     };
 
     return {

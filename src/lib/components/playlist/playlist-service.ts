@@ -116,11 +116,11 @@ export async function handleAddVideosToPlaylist({
 }) {
   if (!session) {
     goto("/auth");
-    return;
+    return { error: null };
   }
 
   if (playlist.created_by !== session.user.id) {
-    return;
+    return { error: null };
   }
 
   const { error } = await addVideosToPlaylist({
@@ -153,6 +153,8 @@ export async function handleAddVideosToPlaylist({
       });
     }
   }
+
+  return { error }
 }
 
 export async function handleRemoveVideosFromPlaylist({
@@ -222,12 +224,13 @@ export async function handleUpdatePlaylistImage({
     console.error(error);
     showNotification("Unable update playlist image");
   } else if (updatedPlaylist && !isResetImage) {
-    return getCroppedPlaylistImageUrl({
+    getCroppedPlaylistImageUrl({
       imageProperties: parseImageProperties(playlist.image_properties),
       thumbnailMaxResUrl,
       thumbnailUrl,
     });
   }
+  return { error }
 }
 
 export async function handleUpdatePlaylistVideoPosition({

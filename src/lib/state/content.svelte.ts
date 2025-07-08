@@ -177,6 +177,16 @@ export class ContentStateClass implements ContentState {
     return this.openContextMenuSection === sectionId;
   }
 
+  private clearOtherSections(currentSectionId: string) {
+    for (const sectionId in this.selectedVideosBySection) {
+      if (sectionId !== currentSectionId) {
+        this.selectedVideosBySection[sectionId] = [];
+        // Also clear hovered videos from other sections
+        this.hoveredVideosBySection[sectionId] = null;
+      }
+    }
+  }
+
   get isAnyContextMenuOpen(): boolean {
     return this.openContextMenuSection !== null;
   }
@@ -367,6 +377,9 @@ export class ContentStateClass implements ContentState {
       index: number,
       sectionId: string,
     ) => {
+      // Clear selections from all other sections first
+      this.clearOtherSections(sectionId);
+
       // Set the drag index for visual feedback
       this.draggedIndex = index;
 
@@ -544,6 +557,9 @@ export class ContentStateClass implements ContentState {
     videos: Video[];
     sectionId: string,
   }) {
+    // Clear selections from all other sections first
+    this.clearOtherSections(sectionId);
+
     const isShiftPressed = event.shiftKey;
     const isCtrlPressed = event.ctrlKey || event.metaKey;
 
@@ -606,13 +622,16 @@ export class ContentStateClass implements ContentState {
   }
 
   handleContextMenu({ video, sectionId }: { video: Video, sectionId: string }) {
+    // Clear selections from all other sections first
+    this.clearOtherSections(sectionId);
+
     // Close any existing context menu from other sections
     if (this.openContextMenuSection && this.openContextMenuSection !== sectionId) {
       this.openContextMenuSection = null;
     }
 
+    console.log(sectionId)
     this.openContextMenuSection = sectionId;
-
 
     // Use nullish coalescing to get selected videos for this section
     const selectedVideos = this.selectedVideosBySection[sectionId] ?? [];

@@ -67,6 +67,16 @@
   });
 
   const isPlaylistOwner = $derived(session?.user.id === playlist?.created_by);
+
+  // Helper function to clear selections after successful operations
+  function clearSelectionAfterAction() {
+    // Clear selected videos for this section
+    contentState.selectedVideosBySection[sectionId] = [];
+    // Clear hovered video for this section if we were operating on it
+    if (selectedVideos.length === 0 && hoveredVideo) {
+      contentState.hoveredVideosBySection[sectionId] = null;
+    }
+  }
 </script>
 
 <ContextMenu.Root
@@ -150,13 +160,18 @@
                   {#each filteredPlaylists as addPlaylist (addPlaylist.id)}
                     <ContextMenu.Item
                       class="p-2"
-                      onclick={() =>
-                        handleAddVideosToPlaylist({
+                      onclick={async () => {
+                        const { error } = await handleAddVideosToPlaylist({
                           videos: operationVideos,
                           playlist: addPlaylist,
                           supabase,
                           session,
-                        })}
+                        });
+
+                        if (!error) {
+                          clearSelectionAfterAction();
+                        }
+                      }}
                     >
                       {addPlaylist.name}
                     </ContextMenu.Item>
@@ -177,12 +192,7 @@
               });
 
               if (!error) {
-                // Clear selected videos for this section
-                contentState.selectedVideosBySection[sectionId] = [];
-                // Clear hovered video for this section if we were operating on it
-                if (selectedVideos.length === 0 && hoveredVideo) {
-                  contentState.hoveredVideosBySection[sectionId] = null;
-                }
+                clearSelectionAfterAction();
               }
             }}
           >
@@ -193,13 +203,18 @@
         {#if playlist && isPlaylistOwner && operationVideos.length === 1}
           <ContextMenu.Item
             class="p-2"
-            onclick={() =>
-              handleUpdatePlaylistImage({
+            onclick={async () => {
+              const { error } = await handleUpdatePlaylistImage({
                 playlist,
                 thumbnailUrl: operationVideos[0].thumbnail_url,
                 thumbnailMaxResUrl: operationVideos[0].thumbnail_maxres_url,
                 supabase,
-              })}
+              });
+
+              if (!error) {
+                clearSelectionAfterAction();
+              }
+            }}
           >
             Set as playlist image
           </ContextMenu.Item>
@@ -227,6 +242,8 @@
                     updatedHoveredVideo;
                 }
               }
+              // Clear selections after updating
+              clearSelectionAfterAction();
             }}
           >
             Reset progress
@@ -258,6 +275,8 @@
                     updatedHoveredVideo;
                 }
               }
+              // Clear selections after updating
+              clearSelectionAfterAction();
             }}
           >
             Set as Watched
