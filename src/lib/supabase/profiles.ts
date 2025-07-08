@@ -44,7 +44,6 @@ export async function getProfile({
   supabase: SupabaseClient<Database>;
   session: Session | null;
 }) {
-
   if (!session) {
     return { profile: null, error: null };
   }
@@ -61,13 +60,15 @@ export async function getProfile({
   return { profile, error };
 }
 
-export async function updateProfileContentDisplay({ contentDisplay, supabase, session }: {
+export async function updateProfileContentDisplay({
+  contentDisplay,
+  supabase,
+  session,
+}: {
   contentDisplay: ContentDisplay;
   supabase: SupabaseClient<Database>;
   session: Session | null;
-
 }) {
-
   if (!session) {
     return { profile: null, error: null };
   }

@@ -85,11 +85,19 @@ export async function getPlaylistsForUsername({
   currentPage?: number;
   limit?: number;
   supabase: SupabaseClient<Database>;
-}): Promise<{ playlists: Playlist[], count?: number | null, error: PostgrestError | null }> {
+}): Promise<{
+  playlists: Playlist[];
+  count?: number | null;
+  error: PostgrestError | null;
+}> {
   const query = supabase
-    .rpc("get_user_playlists", {
-      p_username: username,
-    }, { count: 'exact' })
+    .rpc(
+      "get_user_playlists",
+      {
+        p_username: username,
+      },
+      { count: "exact" },
+    )
     .order("name", { ascending: true })
     .limit(limit)
     .select();
@@ -104,13 +112,11 @@ export async function getPlaylistsForUsername({
     query.range(startIndex, endIndex);
   }
 
-
-
   const { data: playlists, count, error } = await query;
 
   if (error || !playlists) {
     console.error(`Error fetching playlists for username: ${username}.`, error);
-    return { playlists: [], error }
+    return { playlists: [], error };
   }
   return { playlists, count, error };
 }
@@ -129,7 +135,10 @@ export async function getPlaylistByYoutubeId({
     .single();
 
   if (error || !data) {
-    console.error(`Error fetching playlist from Youtube ID: ${youtubeId}`, error);
+    console.error(
+      `Error fetching playlist from Youtube ID: ${youtubeId}`,
+      error,
+    );
   }
   return { playlist: data, error };
 }
@@ -154,7 +163,6 @@ export async function getPlaylistVideo({
 
   return { video, error };
 }
-
 
 export async function getPlaylistVideos({
   playlistId,
@@ -219,7 +227,6 @@ export async function getPlaylistVideos({
     query.range(startIndex, endIndex);
   }
 
-
   if (currentVideo) {
     const sortColumn =
       SORT_OPTIONS_PLAYLIST_VIDEOS[contentFilter.sort.key].tableColumn;
@@ -240,7 +247,6 @@ export async function getPlaylistVideos({
 
   return { videos, count, error };
 }
-
 
 export async function createPlaylist({
   name,
@@ -629,7 +635,6 @@ export async function updatePlaylistSort({
   return { updatedPlaylist, error };
 }
 
-
 export async function getPlaylistTotalDuration({
   supabase,
   playlistId,
@@ -639,12 +644,12 @@ export async function getPlaylistTotalDuration({
 }): Promise<{ hours: number; minutes: number; seconds: number }> {
   // First, get all video IDs in the playlist
   const { data: playlistVideos, error: playlistError } = await supabase
-    .from('playlist_videos')
-    .select('video_id')
-    .eq('playlist_id', playlistId);
+    .from("playlist_videos")
+    .select("video_id")
+    .eq("playlist_id", playlistId);
 
   if (playlistError) {
-    console.error('Error fetching playlist videos:', playlistError);
+    console.error("Error fetching playlist videos:", playlistError);
     return { hours: 0, minutes: 0, seconds: 0 };
   }
 
@@ -653,16 +658,16 @@ export async function getPlaylistTotalDuration({
   }
 
   // Extract video IDs
-  const videoIds = playlistVideos.map(pv => pv.video_id);
+  const videoIds = playlistVideos.map((pv) => pv.video_id);
 
   // Then, get durations for those videos
   const { data: videos, error: videosError } = await supabase
-    .from('videos')
-    .select('duration')
-    .in('id', videoIds);
+    .from("videos")
+    .select("duration")
+    .in("id", videoIds);
 
   if (videosError) {
-    console.error('Error fetching video durations:', videosError);
+    console.error("Error fetching video durations:", videosError);
     return { hours: 0, minutes: 0, seconds: 0 };
   }
 

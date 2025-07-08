@@ -5,11 +5,11 @@ export const PAGINATION_QUERY_KEY = "page";
 export function updatePaginationQueryParams({
   url,
   pageNum,
-  invalidate
+  invalidate,
 }: {
   url: URL;
   pageNum: number;
-  invalidate: string[]
+  invalidate: string[];
 }) {
   const newUrl = url;
   const searchParams = newUrl.searchParams;
@@ -42,7 +42,7 @@ export function getNumberOfPages({
   count = 0,
   perPage,
 }: {
-  count?: number
+  count?: number;
   perPage: number;
 }) {
   return Math.ceil(count / perPage);

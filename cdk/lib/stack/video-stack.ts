@@ -115,9 +115,13 @@ export class VideoStack extends Stack {
       );
 
       // Schedule the playlists lambda to run every hour
-      const playlistsSourceRule = new events.Rule(this, `${source}_Playlists_Rule`, {
-        schedule: events.Schedule.expression("cron(0 * * * ? *)"),
-      });
+      const playlistsSourceRule = new events.Rule(
+        this,
+        `${source}_Playlists_Rule`,
+        {
+          schedule: events.Schedule.expression("cron(0 * * * ? *)"),
+        },
+      );
 
       playlistsSourceRule.addTarget(
         new targets.LambdaFunction(populatePlaylistsLambda, {
@@ -141,14 +145,14 @@ export class VideoStack extends Stack {
               lambdaFunction: populateVideosLambda,
               payload: stepfunctions.TaskInput.fromObject({
                 "source.$": "$",
-                "repopulate": true
+                repopulate: true,
               }),
               timeout: Duration.minutes(15),
               retryOnServiceExceptions: false,
-            })
-          )
+            }),
+          ),
         ),
-      }
+      },
     );
 
     // Create a trigger lambda for the Step Function
@@ -165,7 +169,7 @@ export class VideoStack extends Stack {
         environment: {
           STATE_MACHINE_ARN: repopulateStateMachine.stateMachineArn,
         },
-      }
+      },
     );
 
     repopulateStateMachine.grantStartExecution(triggerRepopulateLambda);

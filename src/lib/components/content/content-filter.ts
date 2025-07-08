@@ -24,7 +24,6 @@ export type VideoFilter = ContentFilter<Video> & {
   type: "video";
 };
 export type PlaylistVideosFilter = ContentFilter<PlaylistVideo> & {
-
   type: "playlist";
 };
 
@@ -56,10 +55,10 @@ export const timestampSortKeys = ["dateTimestamp", ...videoSortKeys] as const;
 
 export type SortKey<T extends Video | VideoTimestamp | PlaylistVideo> =
   T extends Video
-  ? (typeof videoSortKeys)[number]
-  : T extends PlaylistVideo
-  ? (typeof playlistVideosSortKeys)[number]
-  : (typeof timestampSortKeys)[number];
+    ? (typeof videoSortKeys)[number]
+    : T extends PlaylistVideo
+      ? (typeof playlistVideosSortKeys)[number]
+      : (typeof timestampSortKeys)[number];
 
 export const sortOrder = ["ascending", "descending"] as const;
 export type SortOrder = (typeof sortOrder)[number];

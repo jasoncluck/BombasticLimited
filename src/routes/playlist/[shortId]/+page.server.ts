@@ -82,8 +82,10 @@ export const load: PageServerLoad = async ({
   });
 
   // Calculate total duration for all videos
-  const playlistDuration = await getPlaylistTotalDuration({ playlistId: playlist.id, supabase })
-
+  const playlistDuration = await getPlaylistTotalDuration({
+    playlistId: playlist.id,
+    supabase,
+  });
 
   if (!playlist.processedImageUrl) {
     playlist.processedImageUrl = await getCroppedPlaylistImageUrlServer({

@@ -18,7 +18,12 @@ import {
 } from "$lib/supabase/playlists";
 import { type Session, type SupabaseClient } from "@supabase/supabase-js";
 import type { Video } from "$lib/supabase/videos";
-import { isPlaylistVideosFilter, type CombinedContentFilter, type SortKey, type SortOrder } from "../content/content-filter";
+import {
+  isPlaylistVideosFilter,
+  type CombinedContentFilter,
+  type SortKey,
+  type SortOrder,
+} from "../content/content-filter";
 import { parseImageProperties, type ImageProperties } from "./playlist";
 import { getCroppedImg } from "../ui/image-cropper/utils";
 
@@ -102,7 +107,6 @@ export async function handleDeletePlaylist({
   return { error };
 }
 
-
 export async function handleAddVideosToPlaylist({
   playlist,
   videos,
@@ -154,7 +158,7 @@ export async function handleAddVideosToPlaylist({
     }
   }
 
-  return { error }
+  return { error };
 }
 
 export async function handleRemoveVideosFromPlaylist({
@@ -230,7 +234,7 @@ export async function handleUpdatePlaylistImage({
       thumbnailUrl,
     });
   }
-  return { error }
+  return { error };
 }
 
 export async function handleUpdatePlaylistVideoPosition({
@@ -301,8 +305,17 @@ export async function handleFollowPlaylist({
     session,
   });
 
-  if (isPlaylistVideosFilter(contentFilter) && contentFilter.sort.key !== "playlistOrder") {
-    handleUpdatePlaylistSort({ playlist, sortedBy: contentFilter.sort.key, sortOrder: contentFilter.sort.order, supabase, session })
+  if (
+    isPlaylistVideosFilter(contentFilter) &&
+    contentFilter.sort.key !== "playlistOrder"
+  ) {
+    handleUpdatePlaylistSort({
+      playlist,
+      sortedBy: contentFilter.sort.key,
+      sortOrder: contentFilter.sort.order,
+      supabase,
+      session,
+    });
   }
 
   invalidate("supabase:db:playlists");
@@ -427,7 +440,10 @@ export async function getCroppedPlaylistImageUrl({
 
   try {
     // Try OffscreenCanvas first (more efficient)
-    if (typeof OffscreenCanvas !== 'undefined' && typeof createImageBitmap !== 'undefined') {
+    if (
+      typeof OffscreenCanvas !== "undefined" &&
+      typeof createImageBitmap !== "undefined"
+    ) {
       return await processWithOffscreenCanvas(imageUrl, imageProperties);
     } else {
       // Fallback to regular Canvas
@@ -441,7 +457,7 @@ export async function getCroppedPlaylistImageUrl({
 
 async function processWithOffscreenCanvas(
   imageUrl: string,
-  imageProperties: ImageProperties
+  imageProperties: ImageProperties,
 ): Promise<string> {
   const response = await fetch(imageUrl);
   if (!response.ok) throw new Error("Failed to fetch image");
@@ -449,22 +465,31 @@ async function processWithOffscreenCanvas(
   const imageBlob = await response.blob();
   const imageBitmap = await createImageBitmap(imageBlob);
 
-  const canvas = new OffscreenCanvas(imageProperties.width, imageProperties.height);
-  const ctx = canvas.getContext('2d');
+  const canvas = new OffscreenCanvas(
+    imageProperties.width,
+    imageProperties.height,
+  );
+  const ctx = canvas.getContext("2d");
 
   if (!ctx) throw new Error("Failed to get canvas context");
 
   ctx.drawImage(
     imageBitmap,
-    imageProperties.x, imageProperties.y, imageProperties.width, imageProperties.height,
-    0, 0, imageProperties.width, imageProperties.height
+    imageProperties.x,
+    imageProperties.y,
+    imageProperties.width,
+    imageProperties.height,
+    0,
+    0,
+    imageProperties.width,
+    imageProperties.height,
   );
 
-  const blob = await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.8 });
+  const blob = await canvas.convertToBlob({ type: "image/jpeg", quality: 0.8 });
   const arrayBuffer = await blob.arrayBuffer();
 
   const uint8Array = new Uint8Array(arrayBuffer);
-  let binaryString = '';
+  let binaryString = "";
 
   // Process in chunks to avoid call stack overflow
   const chunkSize = 8192;
@@ -477,4 +502,3 @@ async function processWithOffscreenCanvas(
 
   return `data:image/jpeg;base64,${base64}`;
 }
-

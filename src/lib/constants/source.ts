@@ -10,11 +10,10 @@ import giantbombImage from "$lib/assets/giantbomb.jpg";
 import remapImage from "$lib/assets/remap.jpg";
 import type { Database } from "$lib/supabase/database.types";
 
-
 type HighlightPlaylist = {
   youtubeId: string;
-  name: string
-}
+  name: string;
+};
 
 interface SourceInfo {
   displayName: string;
@@ -46,7 +45,13 @@ export const SOURCE_INFO: Record<Source, SourceInfo> = {
     twitchId: "504350",
     youtubeId: "UCmeds0MLhjfkjD_5acPnFlQ",
     youtubeUrl: "https://www.youtube.com/giantbomb",
-    highlightedPlaylists: [{ name: "Blight Club", youtubeId: 'PLXlhzeWIuTHIGNBahKzWx9Hy54BXtM8Ef' }, { name: "Voicemail Dump Truck", youtubeId: 'PLXlhzeWIuTHLjtyPTm42V-jPS70IYXOjJ' }],
+    highlightedPlaylists: [
+      { name: "Blight Club", youtubeId: "PLXlhzeWIuTHIGNBahKzWx9Hy54BXtM8Ef" },
+      {
+        name: "Voicemail Dump Truck",
+        youtubeId: "PLXlhzeWIuTHLjtyPTm42V-jPS70IYXOjJ",
+      },
+    ],
     websiteUrlDomain: "giantbomb.com",
     supportUrl: "https://www.giantbomb.com/upgrade/",
   },
@@ -57,7 +62,9 @@ export const SOURCE_INFO: Record<Source, SourceInfo> = {
     twitchId: "913491352",
     youtubeId: "UCpcSq3A3Z4tUJsHKfn8zpnA",
     youtubeUrl: "https://www.youtube.com/@RemapRadio",
-    highlightedPlaylists: [{ name: "Remap Radio", youtubeId: 'PLTbM52Fro5psVDi5r1StiTdnLxM9McaSO' }],
+    highlightedPlaylists: [
+      { name: "Remap Radio", youtubeId: "PLTbM52Fro5psVDi5r1StiTdnLxM9McaSO" },
+    ],
     websiteUrlDomain: "remapradio.com",
     supportUrl: "https://remapradio.com/signup/",
   },

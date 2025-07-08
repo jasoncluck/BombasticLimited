@@ -117,7 +117,10 @@ export interface ContentState {
   }) => void;
 
   // Cleanup event handler
-  setupClickOutsideListener: (containerElement: HTMLElement, sectionId: string) => void;
+  setupClickOutsideListener: (
+    containerElement: HTMLElement,
+    sectionId: string,
+  ) => void;
 
   // Click handling for single/double click
   handleVideoClick: ({
@@ -212,9 +215,9 @@ export class ContentStateClass implements ContentState {
 
   // Mouse hover methods
   handleMouseEnter({ video, sectionId }: MouseHoverOptions) {
-    if (this.isContextMenuOpenForSection(sectionId)) {
-      return;
-    }
+    // if (this.isContextMenuOpenForSection(sectionId)) {
+    //   return;
+    // }
 
     // Don't update hoveredVideo if we're dragging
     if (!this.dragContentType) {
@@ -234,17 +237,26 @@ export class ContentStateClass implements ContentState {
     }
   }
 
-  handleMouseLeave({ sectionId, removeSelectedOnHover }: { sectionId: string, removeSelectedOnHover?: boolean }) {
+  handleMouseLeave({
+    sectionId,
+    removeSelectedOnHover,
+  }: {
+    sectionId: string;
+    removeSelectedOnHover?: boolean;
+  }) {
     // If context menu is open for this section, don't clear hover state
-    if (this.isContextMenuOpenForSection(sectionId)) {
-      return;
-    }
+    // if (this.isContextMenuOpenForSection(sectionId)) {
+    //   return;
+    // }
 
     // Only delay clearing hover if dropdown menu is not open
     if (!this.isDropdownMenuOpen) {
       // Store the timeout ID so it can be cleared if needed
       const timeoutId = setTimeout(() => {
-        if (!this.dragContentType && !this.isContextMenuOpenForSection(sectionId)) {
+        if (
+          !this.dragContentType &&
+          !this.isContextMenuOpenForSection(sectionId)
+        ) {
           this.hoveredVideosBySection[sectionId] = null;
           if (removeSelectedOnHover) {
             this.selectedVideosBySection[sectionId] = [];
@@ -297,25 +309,16 @@ export class ContentStateClass implements ContentState {
     onNavigate?: (video: Video, playlist?: Playlist) => void;
     enableDoubleClick?: boolean;
   }) {
-    const wasContextMenuOpen = this.isContextMenuOpenForSection(sectionId);
-
-
     // Check if context menu is open for this section first
     if (this.isContextMenuOpenForSection(sectionId)) {
-      console.log('Context menu WAS open, now clearing it');
       // Close the context menu by clearing the open section
       this.openContextMenuSection = null;
 
       if (this.hoveredVideosBySection[sectionId]) {
-        this.selectedVideosBySection[sectionId] = [this.hoveredVideosBySection[sectionId]]
+        this.selectedVideosBySection[sectionId] = [];
       }
-      // ... rest of cleanup
       return;
     }
-
-    // Your existing console.log will now show false because it was just cleared
-    console.log('After context menu check:', this.isContextMenuOpenForSection(sectionId))
-
 
     // Check if context menu is open for this section first
     if (this.isContextMenuOpenForSection(sectionId)) {
@@ -571,7 +574,9 @@ export class ContentStateClass implements ContentState {
           newPosition = Math.max(
             1,
             Math.min(
-              playlistVideoCount - insertIndex - (sortedVideosToMove.length - 1),
+              playlistVideoCount -
+                insertIndex -
+                (sortedVideosToMove.length - 1),
               playlistVideoCount - sortedVideosToMove.length + 1,
             ),
           );
@@ -628,8 +633,7 @@ export class ContentStateClass implements ContentState {
         selectedVideos = [video];
       } else {
         // Find the last selected video's position for range selection
-        const lastSelectedVideo =
-          selectedVideos[selectedVideos.length - 1];
+        const lastSelectedVideo = selectedVideos[selectedVideos.length - 1];
         const lastSelectedIndex = videos.findIndex(
           (v) => v.id === lastSelectedVideo.id,
         );
@@ -656,9 +660,7 @@ export class ContentStateClass implements ContentState {
       if (videoIndex === -1) {
         selectedVideos = [...selectedVideos, video];
       } else {
-        selectedVideos = selectedVideos.filter(
-          (v) => v.id !== video.id,
-        );
+        selectedVideos = selectedVideos.filter((v) => v.id !== video.id);
       }
     } else {
       // No modifier keys - standard single selection behavior
@@ -675,12 +677,15 @@ export class ContentStateClass implements ContentState {
     this.selectedVideosBySection[sectionId] = selectedVideos;
   }
 
-  handleContextMenu({ video, sectionId }: { video: Video, sectionId: string }) {
+  handleContextMenu({ video, sectionId }: { video: Video; sectionId: string }) {
     // Clear selections from all other sections first
     this.clearOtherSections(sectionId);
 
     // Close any existing context menu from other sections
-    if (this.openContextMenuSection && this.openContextMenuSection !== sectionId) {
+    if (
+      this.openContextMenuSection &&
+      this.openContextMenuSection !== sectionId
+    ) {
       this.openContextMenuSection = null;
     }
 

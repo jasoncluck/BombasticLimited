@@ -22,20 +22,20 @@ export const load: LayoutLoad = async ({ data, depends, fetch }) => {
 
   const supabase = isBrowser()
     ? createBrowserClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-      global: {
-        fetch,
-      },
-    })
-    : createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-      global: {
-        fetch,
-      },
-      cookies: {
-        getAll() {
-          return data.cookies;
+        global: {
+          fetch,
         },
-      },
-    });
+      })
+    : createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+        global: {
+          fetch,
+        },
+        cookies: {
+          getAll() {
+            return data.cookies;
+          },
+        },
+      });
 
   /**
    * It's fine to use `getSession` here, because on the client, `getSession` is
@@ -59,7 +59,7 @@ export const load: LayoutLoad = async ({ data, depends, fetch }) => {
   }: {
     playlists: UserPlaylist[];
     playlistsCount?: number | null;
-    userProfile: Profile | null,
+    userProfile: Profile | null;
     layout?: string;
     contentFilter: CombinedContentFilter;
   } = data;

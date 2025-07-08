@@ -50,18 +50,22 @@ export const populatePlaylists = async ({
     );
 
     if (!userId) {
-      console.error(JSON.stringify({
-        stage: "create_user",
-        source,
-        error: userError,
-      }));
+      console.error(
+        JSON.stringify({
+          stage: "create_user",
+          source,
+          error: userError,
+        }),
+      );
       throw new Error("Failed to create or fetch user for source.");
     } else {
-      console.log(JSON.stringify({
-        stage: "create_user",
-        message: `User for ${email}: ${userId}`,
-        source,
-      }));
+      console.log(
+        JSON.stringify({
+          stage: "create_user",
+          message: `User for ${email}: ${userId}`,
+          source,
+        }),
+      );
     }
 
     const youtubeClient = youtube({
@@ -89,20 +93,24 @@ export const populatePlaylists = async ({
         ({ nextPageToken: pageToken, items } = data);
 
         if (!items || items.length === 0) {
-          console.log(JSON.stringify({
-            stage: "fetch_youtube_playlists",
-            message: `No playlists found for: ${source}`,
-            source,
-          }));
+          console.log(
+            JSON.stringify({
+              stage: "fetch_youtube_playlists",
+              message: `No playlists found for: ${source}`,
+              source,
+            }),
+          );
           break;
         }
       } catch (e) {
-        console.error(JSON.stringify({
-          stage: "fetch_youtube_playlists",
-          source,
-          channelId,
-          error: e,
-        }));
+        console.error(
+          JSON.stringify({
+            stage: "fetch_youtube_playlists",
+            source,
+            channelId,
+            error: e,
+          }),
+        );
         throw e;
       }
 
@@ -112,13 +120,15 @@ export const populatePlaylists = async ({
         // Skip the uploads playlist since it's handled by populateVideos
         if (item.id === uploadPlaylistId) {
           uploadsPlaylistSkipped = true;
-          console.log(JSON.stringify({
-            stage: "skip_uploads_playlist",
-            message: `Skipping uploads playlist ${item.id} as it's handled by populateVideos`,
-            source,
-            playlistId: item.id,
-            playlistName: item.snippet?.title,
-          }));
+          console.log(
+            JSON.stringify({
+              stage: "skip_uploads_playlist",
+              message: `Skipping uploads playlist ${item.id} as it's handled by populateVideos`,
+              source,
+              playlistId: item.id,
+              playlistName: item.snippet?.title,
+            }),
+          );
           continue;
         }
 
@@ -146,13 +156,15 @@ export const populatePlaylists = async ({
             .single();
 
         if (playlistError || !upsertedPlaylist) {
-          console.error(JSON.stringify({
-            stage: "upsert_playlist",
-            source,
-            playlistId: item.id,
-            error: playlistError,
-            playlistObj,
-          }));
+          console.error(
+            JSON.stringify({
+              stage: "upsert_playlist",
+              source,
+              playlistId: item.id,
+              error: playlistError,
+              playlistObj,
+            }),
+          );
           continue;
         }
 
@@ -181,45 +193,56 @@ export const populatePlaylists = async ({
 
             videoPageToken = nextVideoPageToken;
           } catch (e) {
-            console.error(JSON.stringify({
-              stage: "fetch_playlist_videos",
-              source,
-              playlistId: item.id,
-              error: e,
-            }));
+            console.error(
+              JSON.stringify({
+                stage: "fetch_playlist_videos",
+                source,
+                playlistId: item.id,
+                error: e,
+              }),
+            );
             throw e;
           }
         } while (videoPageToken);
 
         if (allVideoIds.length === 0) {
-          console.log(JSON.stringify({
-            stage: "no_videos_in_playlist",
-            message: `No videos found for playlist ${playlistObj.name}. Will clean up any existing playlist_videos.`,
-            source,
-            playlistId: item.id,
-          }));
+          console.log(
+            JSON.stringify({
+              stage: "no_videos_in_playlist",
+              message: `No videos found for playlist ${playlistObj.name}. Will clean up any existing playlist_videos.`,
+              source,
+              playlistId: item.id,
+            }),
+          );
         }
 
         // Get existing playlist_videos for this playlist to identify what to delete
-        const { data: existingPlaylistVideos, error: existingError } = await supabaseClient
-          .from("playlist_videos")
-          .select("video_id")
-          .eq("playlist_id", upsertedPlaylist.id);
+        const { data: existingPlaylistVideos, error: existingError } =
+          await supabaseClient
+            .from("playlist_videos")
+            .select("video_id")
+            .eq("playlist_id", upsertedPlaylist.id);
 
         if (existingError) {
-          console.error(JSON.stringify({
-            stage: "fetch_existing_playlist_videos",
-            source,
-            playlistId: item.id,
-            internalPlaylistId: upsertedPlaylist.id,
-            error: existingError,
-          }));
+          console.error(
+            JSON.stringify({
+              stage: "fetch_existing_playlist_videos",
+              source,
+              playlistId: item.id,
+              internalPlaylistId: upsertedPlaylist.id,
+              error: existingError,
+            }),
+          );
           throw new Error("Failed to fetch existing playlist videos");
         }
 
         // Find videos to remove (exist in DB but not in YouTube)
-        const existingVideoIds = (existingPlaylistVideos || []).map(pv => pv.video_id);
-        const videosToRemove = existingVideoIds.filter(videoId => !allVideoIds.includes(videoId));
+        const existingVideoIds = (existingPlaylistVideos || []).map(
+          (pv) => pv.video_id,
+        );
+        const videosToRemove = existingVideoIds.filter(
+          (videoId) => !allVideoIds.includes(videoId),
+        );
 
         // Remove playlist_videos that are no longer in YouTube
         if (videosToRemove.length > 0) {
@@ -230,22 +253,26 @@ export const populatePlaylists = async ({
             .in("video_id", videosToRemove);
 
           if (deleteError) {
-            console.error(JSON.stringify({
-              stage: "delete_stale_playlist_videos",
-              source,
-              playlistId: item.id,
-              internalPlaylistId: upsertedPlaylist.id,
-              videosToRemove,
-              error: deleteError,
-            }));
+            console.error(
+              JSON.stringify({
+                stage: "delete_stale_playlist_videos",
+                source,
+                playlistId: item.id,
+                internalPlaylistId: upsertedPlaylist.id,
+                videosToRemove,
+                error: deleteError,
+              }),
+            );
           } else {
-            console.log(JSON.stringify({
-              stage: "delete_stale_playlist_videos",
-              message: `Removed ${videosToRemove.length} stale videos from playlist ${playlistObj.name}`,
-              source,
-              playlistId: item.id,
-              removedVideoIds: videosToRemove,
-            }));
+            console.log(
+              JSON.stringify({
+                stage: "delete_stale_playlist_videos",
+                message: `Removed ${videosToRemove.length} stale videos from playlist ${playlistObj.name}`,
+                source,
+                playlistId: item.id,
+                removedVideoIds: videosToRemove,
+              }),
+            );
           }
         }
 
@@ -266,49 +293,57 @@ export const populatePlaylists = async ({
             );
 
           if (insertError) {
-            console.error(JSON.stringify({
-              stage: "upsert_playlist_video",
-              source,
-              playlistId: item.id,
-              videoId,
-              error: insertError,
-            }));
+            console.error(
+              JSON.stringify({
+                stage: "upsert_playlist_video",
+                source,
+                playlistId: item.id,
+                videoId,
+                error: insertError,
+              }),
+            );
           }
           videoPosition++;
         }
 
-        console.log(JSON.stringify({
-          stage: "playlist_processing_complete",
-          message: `Processed playlist ${playlistObj.name}: ${allVideoIds.length} videos total, ${videosToRemove.length} removed`,
-          source,
-          playlistId: item.id,
-          totalVideos: allVideoIds.length,
-          removedVideos: videosToRemove.length,
-        }));
+        console.log(
+          JSON.stringify({
+            stage: "playlist_processing_complete",
+            message: `Processed playlist ${playlistObj.name}: ${allVideoIds.length} videos total, ${videosToRemove.length} removed`,
+            source,
+            playlistId: item.id,
+            totalVideos: allVideoIds.length,
+            removedVideos: videosToRemove.length,
+          }),
+        );
       }
     } while (pageToken);
 
     // Step 2: Handle playlists that no longer exist on YouTube (excluding uploads playlist)
     // Get all playlists for this user that are "Official" type, excluding uploads playlist
-    const { data: existingPlaylists, error: existingPlaylistsError } = await supabaseClient
-      .from("playlists")
-      .select("id, youtube_id, name")
-      .eq("created_by", userId)
-      .eq("type", "Official")
-      .neq("youtube_id", uploadPlaylistId); // Exclude uploads playlist from cleanup
+    const { data: existingPlaylists, error: existingPlaylistsError } =
+      await supabaseClient
+        .from("playlists")
+        .select("id, youtube_id, name")
+        .eq("created_by", userId)
+        .eq("type", "Official")
+        .neq("youtube_id", uploadPlaylistId); // Exclude uploads playlist from cleanup
 
     if (existingPlaylistsError) {
-      console.error(JSON.stringify({
-        stage: "fetch_existing_playlists",
-        source,
-        error: existingPlaylistsError,
-      }));
+      console.error(
+        JSON.stringify({
+          stage: "fetch_existing_playlists",
+          source,
+          error: existingPlaylistsError,
+        }),
+      );
       throw new Error("Failed to fetch existing playlists");
     }
 
     // Find playlists to remove (exist in DB but not in YouTube, excluding uploads playlist)
     const playlistsToRemove = (existingPlaylists || []).filter(
-      playlist => playlist.youtube_id && !youtubePlaylistIds.has(playlist.youtube_id)
+      (playlist) =>
+        playlist.youtube_id && !youtubePlaylistIds.has(playlist.youtube_id),
     );
 
     if (playlistsToRemove.length > 0) {
@@ -320,57 +355,70 @@ export const populatePlaylists = async ({
           .eq("playlist_id", playlist.id);
 
         if (deletePlaylistVideosError) {
-          console.error(JSON.stringify({
-            stage: "delete_playlist_videos_for_removed_playlist",
-            source,
-            playlistId: playlist.id,
-            youtubeId: playlist.youtube_id,
-            error: deletePlaylistVideosError,
-          }));
+          console.error(
+            JSON.stringify({
+              stage: "delete_playlist_videos_for_removed_playlist",
+              source,
+              playlistId: playlist.id,
+              youtubeId: playlist.youtube_id,
+              error: deletePlaylistVideosError,
+            }),
+          );
         }
       }
 
       // Then delete the playlists themselves
-      const playlistIdsToRemove = playlistsToRemove.map(p => p.id);
+      const playlistIdsToRemove = playlistsToRemove.map((p) => p.id);
       const { error: deletePlaylistsError } = await supabaseClient
         .from("playlists")
         .delete()
         .in("id", playlistIdsToRemove);
 
       if (deletePlaylistsError) {
-        console.error(JSON.stringify({
-          stage: "delete_removed_playlists",
-          source,
-          playlistIdsToRemove,
-          error: deletePlaylistsError,
-        }));
+        console.error(
+          JSON.stringify({
+            stage: "delete_removed_playlists",
+            source,
+            playlistIdsToRemove,
+            error: deletePlaylistsError,
+          }),
+        );
       } else {
-        console.log(JSON.stringify({
-          stage: "delete_removed_playlists",
-          message: `Removed ${playlistsToRemove.length} playlists that no longer exist on YouTube`,
-          source,
-          removedPlaylists: playlistsToRemove.map(p => ({ id: p.id, name: p.name, youtube_id: p.youtube_id })),
-        }));
+        console.log(
+          JSON.stringify({
+            stage: "delete_removed_playlists",
+            message: `Removed ${playlistsToRemove.length} playlists that no longer exist on YouTube`,
+            source,
+            removedPlaylists: playlistsToRemove.map((p) => ({
+              id: p.id,
+              name: p.name,
+              youtube_id: p.youtube_id,
+            })),
+          }),
+        );
       }
     }
 
-    console.log(JSON.stringify({
-      stage: "sync_complete",
-      message: `Playlist sync completed for ${source}. Processed ${totalPlaylistsProcessed} YouTube playlists (skipped uploads playlist), removed ${playlistsToRemove.length} stale playlists`,
-      source,
-      youtubePlaylistsProcessed: totalPlaylistsProcessed,
-      playlistsRemoved: playlistsToRemove.length,
-      uploadsPlaylistSkipped,
-    }));
-
+    console.log(
+      JSON.stringify({
+        stage: "sync_complete",
+        message: `Playlist sync completed for ${source}. Processed ${totalPlaylistsProcessed} YouTube playlists (skipped uploads playlist), removed ${playlistsToRemove.length} stale playlists`,
+        source,
+        youtubePlaylistsProcessed: totalPlaylistsProcessed,
+        playlistsRemoved: playlistsToRemove.length,
+        uploadsPlaylistSkipped,
+      }),
+    );
   } catch (e) {
     // Final catch-all for unhandled errors
-    console.error(JSON.stringify({
-      stage: "final",
-      source,
-      error: e instanceof Error ? e.message : e,
-      stack: e instanceof Error ? e.stack : undefined,
-    }));
+    console.error(
+      JSON.stringify({
+        stage: "final",
+        source,
+        error: e instanceof Error ? e.message : e,
+        stack: e instanceof Error ? e.stack : undefined,
+      }),
+    );
     throw e; // Rethrow to signal Lambda failure
   }
 };

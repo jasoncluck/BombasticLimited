@@ -22,7 +22,9 @@ export const load: PageServerLoad = async ({
     remap: [],
   };
 
-  const followedPlaylists = playlists.filter((p) => p.created_by !== session?.user.id)
+  const followedPlaylists = playlists.filter(
+    (p) => p.created_by !== session?.user.id,
+  );
 
   if (!isVideoFilter(contentFilter)) {
     throw new Error("Invalid content filter");
@@ -45,7 +47,6 @@ export const load: PageServerLoad = async ({
   });
 
   for (const profilePlaylist of playlistSearchResults) {
-
     profilePlaylist.processedImageUrl = await getCroppedPlaylistImageUrlServer({
       imageProperties: parseImageProperties(profilePlaylist.image_properties),
       thumbnailMaxResUrl: profilePlaylist.thumbnail_maxres_url,

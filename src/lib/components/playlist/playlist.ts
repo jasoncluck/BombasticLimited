@@ -1,7 +1,13 @@
 import { goto } from "$app/navigation";
 import type { Json } from "$lib/supabase/database.types";
 import { type Playlist, isUserPlaylist } from "$lib/supabase/playlists";
-import { type CombinedContentFilter, getSortKeysForView, isPlaylistVideosFilter, isSortKey, isSortOrder } from "../content/content-filter";
+import {
+  type CombinedContentFilter,
+  getSortKeysForView,
+  isPlaylistVideosFilter,
+  isSortKey,
+  isSortOrder,
+} from "../content/content-filter";
 
 export interface ImageProperties extends Record<string, Json> {
   x: number;
@@ -47,21 +53,20 @@ export function handlePlaylistNavigation({
   goto(targetUrl);
 }
 
-
 export function parseImageProperties(jsonb: Json): ImageProperties | null {
   if (!jsonb) return null;
 
   try {
     // Handle if it's already an object
-    const obj = typeof jsonb === 'string' ? JSON.parse(jsonb) : jsonb;
+    const obj = typeof jsonb === "string" ? JSON.parse(jsonb) : jsonb;
 
     if (
       obj &&
-      typeof obj === 'object' &&
-      typeof obj.x === 'number' &&
-      typeof obj.y === 'number' &&
-      typeof obj.height === 'number' &&
-      typeof obj.width === 'number'
+      typeof obj === "object" &&
+      typeof obj.x === "number" &&
+      typeof obj.y === "number" &&
+      typeof obj.height === "number" &&
+      typeof obj.width === "number"
     ) {
       return obj as ImageProperties;
     }

@@ -81,14 +81,16 @@ export class PlaylistStateClass implements PlaylistState {
 
   constructor(pageState: PageState, contentState: ContentState) {
     this.pageState = pageState;
-    this.contentState = contentState
+    this.contentState = contentState;
   }
 
   // Helper to get all selected videos across sections
   getAllSelectedVideos() {
     const allSelectedVideos: { sectionId: string; videos: any[] }[] = [];
 
-    for (const [sectionId, videos] of Object.entries(this.contentState.selectedVideosBySection)) {
+    for (const [sectionId, videos] of Object.entries(
+      this.contentState.selectedVideosBySection,
+    )) {
       if (videos && videos.length > 0) {
         allSelectedVideos.push({ sectionId, videos });
       }
@@ -201,7 +203,6 @@ export class PlaylistStateClass implements PlaylistState {
   createPlaylistDragDrop(
     options: PlaylistDragDropOptions,
   ): PlaylistDragDropHandlers {
-
     const handleDragStart = (event: DragEvent, index: number) => {
       this.draggedIndex = index;
       this.contentState.dragContentType = "playlist";
@@ -292,7 +293,9 @@ export class PlaylistStateClass implements PlaylistState {
         const allSelectedVideos = this.getAllSelectedVideos();
 
         // Combine all videos into a single array for the playlist operation
-        const allVideos = allSelectedVideos.flatMap(section => section.videos);
+        const allVideos = allSelectedVideos.flatMap(
+          (section) => section.videos,
+        );
 
         if (allVideos.length > 0) {
           await handleAddVideosToPlaylist({
@@ -351,7 +354,11 @@ export class PlaylistStateClass implements PlaylistState {
 
 const DEFAULT_KEY = "$_playlist_state";
 
-export function setPlaylistState(pageState: PageState, contentState: ContentState, key = DEFAULT_KEY) {
+export function setPlaylistState(
+  pageState: PageState,
+  contentState: ContentState,
+  key = DEFAULT_KEY,
+) {
   const playlistState = new PlaylistStateClass(pageState, contentState);
   return setContext(key, playlistState);
 }

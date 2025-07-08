@@ -1,13 +1,7 @@
 import { SOURCES } from "$lib/constants/source";
 import type { Database } from "$lib/supabase/database.types";
-import {
-  isUserPlaylist,
-  type Playlist,
-} from "$lib/supabase/playlists";
-import {
-  isVideoWithPlaylistTimestamp,
-  type Video,
-} from "$lib/supabase/videos";
+import { isUserPlaylist, type Playlist } from "$lib/supabase/playlists";
+import { isVideoWithPlaylistTimestamp, type Video } from "$lib/supabase/videos";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import {
   getSortKeysForView,
@@ -29,17 +23,15 @@ export const CONTENT_DISPLAY = {
   TABLE: "TABLE",
 } as const;
 
-
 export type ContentDisplay =
   (typeof CONTENT_DISPLAY)[keyof typeof CONTENT_DISPLAY];
 
 export const TILES_DISPLAY = {
   CAROUSEL: "CAROUSEL",
-  TILES: "TILES"
-} as const
+  TILES: "TILES",
+} as const;
 
-export type TilesDisplay =
-  (typeof TILES_DISPLAY)[keyof typeof TILES_DISPLAY];
+export type TilesDisplay = (typeof TILES_DISPLAY)[keyof typeof TILES_DISPLAY];
 
 export type ContentView = "continueWatching" | "playlist" | "default";
 

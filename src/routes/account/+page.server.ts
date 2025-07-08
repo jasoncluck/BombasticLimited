@@ -12,7 +12,7 @@ export const load: PageServerLoad = async ({
   depends,
   locals: { supabase, session },
 }) => {
-  depends("supabase:db:profiles")
+  depends("supabase:db:profiles");
   if (!session) {
     redirect(303, "/auth/login");
   }

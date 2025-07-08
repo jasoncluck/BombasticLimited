@@ -62,6 +62,7 @@
   let showNextButton = $state(videos.length > 0);
   let isInitializing = $state(true);
   let userInteracting = $state(false);
+  let slidesInView = $state<number[]>([]);
 
   const selectedVideoIds = $derived(
     selectedVideos.length > 0
@@ -69,16 +70,40 @@
       : new Set(),
   );
 
+  // Track slides in view for reactive updates
+  $effect(() => {
+    if (api) {
+      const updateSlidesInView = () => {
+        if (api) {
+          slidesInView = api.slidesInView();
+        }
+      };
+
+      updateSlidesInView();
+
+      // Listen for changes
+      api.on("slidesInView", updateSlidesInView);
+      api.on("scroll", updateSlidesInView);
+
+      return () => {
+        if (api) {
+          api.off("slidesInView", updateSlidesInView);
+          api.off("scroll", updateSlidesInView);
+        }
+      };
+    }
+  });
+
   function isVideoIndexInView(videoIndex: number): boolean {
     if (!api) return false;
-    const slidesInView = api.slidesInView();
-    return slidesInView.includes(videoIndex);
+    const currentSlidesInView = api.slidesInView();
+    return currentSlidesInView.includes(videoIndex);
   }
 
   function getFirstVisibleVideoIndex(): number {
     if (!api) return 0;
-    const slidesInView = api.slidesInView();
-    return slidesInView.length > 0 ? slidesInView[0] : 0;
+    const currentSlidesInView = api.slidesInView();
+    return currentSlidesInView.length > 0 ? currentSlidesInView[0] : 0;
   }
 
   async function scrollToVideoIndex(targetVideoIndex: number) {
@@ -91,8 +116,8 @@
       return;
     }
 
-    const slidesInView = api.slidesInView();
-    const itemsPerView = slidesInView.length;
+    const currentSlidesInView = api.slidesInView();
+    const itemsPerView = currentSlidesInView.length;
     const targetSnapIndex = Math.floor(targetVideoIndex / itemsPerView);
 
     api.scrollTo(targetSnapIndex);
@@ -106,6 +131,10 @@
     if (api) {
       showPreviousButton = api.canScrollPrev();
       showNextButton = api.canScrollNext();
+      contentState.selectedVideosBySection[sectionId] = [];
+      contentState.hoveredVideosBySection[sectionId] = null;
+      // Update slides in view
+      slidesInView = api.slidesInView();
     }
   }
 
@@ -116,8 +145,8 @@
     const startTime = Date.now();
 
     while (Date.now() - startTime < maxWait) {
-      const slidesInView = api.slidesInView();
-      if (slidesInView.length > 0) {
+      const currentSlidesInView = api.slidesInView();
+      if (currentSlidesInView.length > 0) {
         return true;
       }
       await new Promise((resolve) => setTimeout(resolve, 50));
@@ -182,15 +211,15 @@
   function getItemClasses(video: Video, index: number) {
     const isSelected = selectedVideoIds.has(video.id);
     const isHovered = hoveredVideo?.id === video.id;
-    console.log(hoveredVideo?.title);
+    const isInView = slidesInView.includes(index);
 
     let classes = `group @4xl:basis-1/5 @sm:basis-1/3 basis-full p-2 rounded-md `;
 
-    // Apply the same visual state for both hover and selected
-    if (isSelected || isHovered) {
+    // Only apply hover and selected states to cards that are in view
+    if (isInView && (isSelected || isHovered)) {
       classes += " !bg-secondary brightness-125 hover:bg-secondary";
-    } else {
-      // Add hover effect for non-selected/non-hovered items
+    } else if (isInView) {
+      // Add hover effect for non-selected/non-hovered items that are in view
       classes += "hover:bg-secondary";
     }
 
@@ -209,6 +238,24 @@
     if (contentState.hoverTimeoutId) {
       clearTimeout(contentState.hoverTimeoutId);
       contentState.hoverTimeoutId = null;
+    }
+  }
+
+  // Only allow mouse interactions on visible cards
+  function handleMouseEnter(video: Video, index: number) {
+    if (slidesInView.includes(index)) {
+      contentState.handleMouseEnter({
+        video,
+        sectionId,
+      });
+    }
+  }
+
+  function handleMouseLeave(index: number) {
+    if (slidesInView.includes(index)) {
+      contentState.handleMouseLeave({
+        sectionId,
+      });
     }
   }
 </script>
@@ -249,15 +296,8 @@
           ? (e) => dragDrop.handleDrop(e, i, sectionId)
           : undefined}
         ondragend={allowVideoReorder ? dragDrop.handleDragEnd : undefined}
-        onmouseenter={() =>
-          contentState.handleMouseEnter({
-            video,
-            sectionId,
-          })}
-        onmouseleave={() =>
-          contentState.handleMouseLeave({
-            sectionId,
-          })}
+        onmouseenter={() => handleMouseEnter(video, i)}
+        onmouseleave={() => handleMouseLeave(i)}
         onclick={(e) => {
           e.preventDefault();
 

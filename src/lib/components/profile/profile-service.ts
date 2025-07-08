@@ -8,11 +8,7 @@ export async function handleUpdateProfileContentDisplay(props: {
   contentDisplay: ContentDisplay;
   supabase: SupabaseClient<Database>;
   session: Session | null;
-
 }) {
-
-
-  await updateProfileContentDisplay(props)
-  invalidateAll()
-
+  await updateProfileContentDisplay(props);
+  invalidateAll();
 }

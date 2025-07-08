@@ -111,7 +111,7 @@ class MediaQueryState {
    */
   initialize = (): (() => void) => {
     if (typeof window === "undefined" || this.#initialized) {
-      return () => { };
+      return () => {};
     }
 
     const queriesToWatch = new Map<string, string>();

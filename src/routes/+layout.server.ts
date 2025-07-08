@@ -20,11 +20,10 @@ export const load: LayoutServerLoad = async ({
     supabase,
   });
 
-  const { profile: userProfile } = await getProfile({ supabase, session })
+  const { profile: userProfile } = await getProfile({ supabase, session });
 
   if (userPlaylists) {
     for (const userPlaylist of userPlaylists) {
-
       userPlaylist.processedImageUrl = await getCroppedPlaylistImageUrlServer({
         imageProperties: parseImageProperties(userPlaylist.image_properties),
         thumbnailMaxResUrl: userPlaylist.thumbnail_maxres_url,
