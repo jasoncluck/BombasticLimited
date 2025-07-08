@@ -297,6 +297,26 @@ export class ContentStateClass implements ContentState {
     onNavigate?: (video: Video, playlist?: Playlist) => void;
     enableDoubleClick?: boolean;
   }) {
+    const wasContextMenuOpen = this.isContextMenuOpenForSection(sectionId);
+
+
+    // Check if context menu is open for this section first
+    if (this.isContextMenuOpenForSection(sectionId)) {
+      console.log('Context menu WAS open, now clearing it');
+      // Close the context menu by clearing the open section
+      this.openContextMenuSection = null;
+
+      if (this.hoveredVideosBySection[sectionId]) {
+        this.selectedVideosBySection[sectionId] = [this.hoveredVideosBySection[sectionId]]
+      }
+      // ... rest of cleanup
+      return;
+    }
+
+    // Your existing console.log will now show false because it was just cleared
+    console.log('After context menu check:', this.isContextMenuOpenForSection(sectionId))
+
+
     // Check if context menu is open for this section first
     if (this.isContextMenuOpenForSection(sectionId)) {
       // Close the context menu by clearing the open section

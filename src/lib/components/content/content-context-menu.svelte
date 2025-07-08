@@ -79,16 +79,7 @@
   }
 </script>
 
-<ContextMenu.Root
-  bind:open={isThisSectionMenuOpen}
-  onOpenChange={(open) => {
-    if (open) {
-      contentState.openContextMenuSection = sectionId;
-    } else {
-      contentState.openContextMenuSection = null;
-    }
-  }}
->
+<ContextMenu.Root bind:open={isThisSectionMenuOpen}>
   <ContextMenu.Trigger
     class="outline-none"
     onmousedown={(event) => {

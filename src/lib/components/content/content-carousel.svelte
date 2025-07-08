@@ -182,6 +182,7 @@
   function getItemClasses(video: Video, index: number) {
     const isSelected = selectedVideoIds.has(video.id);
     const isHovered = hoveredVideo?.id === video.id;
+    console.log(hoveredVideo?.title);
 
     let classes = `group @4xl:basis-1/5 @sm:basis-1/3 basis-full p-2 rounded-md `;
 
@@ -284,7 +285,6 @@
         }}
         oncontextmenu={(event) => {
           const isCtrlPressed = event.ctrlKey || event.metaKey;
-          console.log("in on context menu");
 
           if (isCtrlPressed) {
             event.preventDefault();
