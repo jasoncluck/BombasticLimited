@@ -15,21 +15,29 @@ export const load: LayoutServerLoad = async ({
   depends("supabase:db:playlists");
 
   const { session } = await safeGetSession();
-  const { userPlaylists, count: userPlaylistsCount } = await getUserPlaylists({
-    session,
-    supabase,
-  });
 
-  const { profile: userProfile } = await getProfile({ supabase, session });
+  // Run getUserPlaylists and getProfile concurrently
+  const [
+    { userPlaylists, count: userPlaylistsCount },
+    { profile: userProfile },
+  ] = await Promise.all([
+    getUserPlaylists({ session, supabase }),
+    getProfile({ supabase, session }),
+  ]);
 
+  // Process playlist images concurrently if playlists exist
+  let processedPlaylists = userPlaylists;
   if (userPlaylists) {
-    for (const userPlaylist of userPlaylists) {
-      userPlaylist.processedImageUrl = await getCroppedPlaylistImageUrlServer({
+    const playlistImagePromises = userPlaylists.map(async (userPlaylist) => ({
+      ...userPlaylist,
+      processedImageUrl: await getCroppedPlaylistImageUrlServer({
         imageProperties: parseImageProperties(userPlaylist.image_properties),
         thumbnailMaxResUrl: userPlaylist.thumbnail_maxres_url,
         thumbnailUrl: userPlaylist.thumbnail_url,
-      });
-    }
+      }),
+    }));
+
+    processedPlaylists = await Promise.all(playlistImagePromises);
   }
 
   let view: ContentView;
@@ -55,7 +63,7 @@ export const load: LayoutServerLoad = async ({
   return {
     session,
     contentFilter,
-    playlists: userPlaylists ?? [],
+    playlists: processedPlaylists ?? [],
     userPlaylistsCount: userPlaylistsCount ?? 0,
     userProfile,
     cookies: cookies.getAll(),

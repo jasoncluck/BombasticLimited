@@ -217,7 +217,7 @@
     const isHovered = hoveredVideo?.id === video.id;
     const isInView = slidesInView.includes(index);
 
-    let classes = `group @4xl:basis-1/5 @sm:basis-1/3 basis-full p-2 rounded-md `;
+    let classes = `group @4xl:basis-1/5 @sm:basis-1/3 basis-full p-2 rounded-md outline-none`;
 
     // Only apply hover and selected states to cards that are in view
     if (isInView && (isSelected || isHovered)) {
@@ -260,9 +260,13 @@
     }
   }
 
-  function handleMouseDown(video: Video, index: number) {
+  function handleMouseDown(event: MouseEvent, video: Video, index: number) {
     // Only process if the video is currently visible in the carousel
     if (!slidesInView.includes(index)) {
+      return;
+    }
+
+    if (event.shiftKey || event.ctrlKey || event.metaKey) {
       return;
     }
 
@@ -315,10 +319,8 @@
         ondragend={dragDrop.handleDragEnd}
         onmouseenter={() => handleMouseEnter(video, i)}
         onmouseleave={() => handleMouseLeave(i)}
-        onmousedown={() => handleMouseDown(video, i)}
+        onmousedown={(e) => handleMouseDown(e, video, i)}
         onclick={(e) => {
-          e.preventDefault();
-
           // Update carousel state before handling click
           if (carouselState) {
             carouselState.lastViewedIndex = i;

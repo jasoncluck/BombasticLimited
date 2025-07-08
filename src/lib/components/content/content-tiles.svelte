@@ -90,8 +90,12 @@
     });
   }
 
-  function handleMouseDown(video: Video) {
+  function handleMouseDown(event: MouseEvent, video: Video) {
     const isCurrentlySelected = selectedVideoIds.has(video.id);
+
+    if (event.shiftKey || event.ctrlKey || event.metaKey) {
+      return;
+    }
 
     // If clicking on a video that is not currently selected or hovered, clear the states
     if (!isCurrentlySelected) {
@@ -126,7 +130,7 @@
 <div
   role="region"
   bind:this={containerElement}
-  class="flex flex-col @sm:grid @4xl:grid-cols-5 @sm:grid-cols-3 gap-x-2 gap-y-10 relative"
+  class="flex flex-col @sm:grid @4xl:grid-cols-5 @sm:grid-cols-3 gap-x-2 gap-y-12 relative outline-none"
   onmouseleave={handleTilesMouseLeave}
 >
   {#each videos as video, i (video.id)}
@@ -148,7 +152,7 @@
       ondragend={allowVideoReorder ? dragDrop.handleDragEnd : undefined}
       onmouseenter={() => handleMouseEnter(video)}
       onmouseleave={handleMouseLeave}
-      onmousedown={() => handleMouseDown(video)}
+      onmousedown={(e) => handleMouseDown(e, video)}
       onclick={(e) => {
         e.preventDefault();
 

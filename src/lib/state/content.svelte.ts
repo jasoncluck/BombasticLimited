@@ -263,7 +263,6 @@ export class ContentState {
         video,
         videos,
         sectionId,
-        enableDoubleClick,
       });
       if (
         !event.shiftKey &&
@@ -534,20 +533,12 @@ export class ContentState {
     video,
     videos,
     sectionId = DEFAULT_SECTION_ID,
-    enableDoubleClick,
   }: {
     event: MouseEvent | KeyboardEvent;
     video: Video;
     videos: Video[];
     sectionId?: string;
-    enableDoubleClick: boolean;
   }) {
-    // If double click is disabled we don't want to handle multiselect
-    if (!enableDoubleClick) {
-      this.clearOtherSections(sectionId);
-      return;
-    }
-
     const isShiftPressed = event.shiftKey;
     const isCtrlPressed = event.ctrlKey || event.metaKey;
 
