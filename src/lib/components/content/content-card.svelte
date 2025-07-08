@@ -58,7 +58,7 @@
   // 2. Card has context menu open (and is selected)
   // 3. Card is being dragged
   const shouldShowDescription = $derived(
-    isHovered || isContextMenuOpen || isDragActive,
+    isHovered || isSelected || isContextMenuOpen || isDragActive,
   );
 </script>
 

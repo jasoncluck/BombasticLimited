@@ -51,6 +51,18 @@
     contentState.isContextMenuOpenForSection(sectionId),
   );
 
+  // Track previous menu state to detect when it closes
+  let previousMenuState = $state(false);
+
+  // Clear selections when context menu closes
+  $effect(() => {
+    if (previousMenuState && !isThisSectionMenuOpen) {
+      // Context menu just closed, clear selections
+      contentState.selectedVideosBySection[sectionId] = [];
+    }
+    previousMenuState = isThisSectionMenuOpen;
+  });
+
   // Close context menu if there's no hovered video and no selected videos
   $effect(() => {
     if (isThisSectionMenuOpen && !hoveredVideo && selectedVideos.length === 0) {
@@ -72,10 +84,6 @@
   function clearSelectionAfterAction() {
     // Clear selected videos for this section
     contentState.selectedVideosBySection[sectionId] = [];
-    // Clear hovered video for this section if we were operating on it
-    if (selectedVideos.length === 0 && hoveredVideo) {
-      contentState.hoveredVideosBySection[sectionId] = null;
-    }
   }
 </script>
 

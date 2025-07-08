@@ -49,7 +49,7 @@
     playlist,
     contentFilter,
     supabase,
-    setDraggedAsSelected: false, // Don't add dragged videos to selection for carousel
+    clearSelectionOnDrop: true,
     onVideosUpdate: (updatedVideos) => {
       // For carousel, we might need to update the parent component
       // This would require videos to be bindable in the parent
@@ -79,6 +79,7 @@
         }
       };
 
+      // Initial update
       updateSlidesInView();
 
       // Listen for changes
@@ -218,9 +219,6 @@
     // Only apply hover and selected states to cards that are in view
     if (isInView && (isSelected || isHovered)) {
       classes += " !bg-secondary brightness-125 hover:bg-secondary";
-    } else if (isInView) {
-      // Add hover effect for non-selected/non-hovered items that are in view
-      classes += "hover:bg-secondary";
     }
 
     // Add drag drop classes if enabled
@@ -256,6 +254,22 @@
       contentState.handleMouseLeave({
         sectionId,
       });
+    }
+  }
+
+  function handleMouseDown(video: Video, index: number) {
+    // Only process if the video is currently visible in the carousel
+    if (!slidesInView.includes(index)) {
+      return;
+    }
+
+    const isCurrentlySelected = selectedVideoIds.has(video.id);
+
+    // If clicking on a video that is not currently selected or hovered, clear the states
+    if (!isCurrentlySelected) {
+      contentState.selectedVideosBySection[sectionId] = hoveredVideo
+        ? [hoveredVideo]
+        : [];
     }
   }
 </script>
@@ -295,9 +309,10 @@
         ondrop={allowVideoReorder
           ? (e) => dragDrop.handleDrop(e, i, sectionId)
           : undefined}
-        ondragend={allowVideoReorder ? dragDrop.handleDragEnd : undefined}
+        ondragend={dragDrop.handleDragEnd}
         onmouseenter={() => handleMouseEnter(video, i)}
         onmouseleave={() => handleMouseLeave(i)}
+        onmousedown={() => handleMouseDown(video, i)}
         onclick={(e) => {
           e.preventDefault();
 

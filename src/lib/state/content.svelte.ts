@@ -36,7 +36,8 @@ export interface DragDropOptions {
   contentFilter?: CombinedContentFilter;
   supabase?: SupabaseClient<Database>;
   onVideosUpdate?: (videos: Video[]) => void;
-  setDraggedAsSelected?: boolean; // New parameter
+  setDraggedAsSelected?: boolean;
+  clearSelectionOnDrop?: boolean;
 }
 
 export interface DragDropHandlers {
@@ -316,22 +317,14 @@ export class ContentStateClass implements ContentState {
 
       if (this.hoveredVideosBySection[sectionId]) {
         this.selectedVideosBySection[sectionId] = [];
+      } else {
+        this.selectedVideosBySection[sectionId] = [];
+        this.hoveredVideosBySection[sectionId] = null;
+
       }
       return;
     }
 
-    // Check if context menu is open for this section first
-    if (this.isContextMenuOpenForSection(sectionId)) {
-      // Close the context menu by clearing the open section
-      this.openContextMenuSection = null;
-
-      // Also clear selected videos and hovered video to clean up state
-      this.selectedVideosBySection[sectionId] = [];
-      this.hoveredVideosBySection[sectionId] = null;
-
-      // Don't navigate or handle selection - just close the menu
-      return;
-    }
 
     const now = Date.now();
     const doubleClickDelay = 300; // milliseconds
@@ -371,7 +364,6 @@ export class ContentStateClass implements ContentState {
     }
   }
 
-  // Drag and drop methods for reordering
   createDragDrop(options: DragDropOptions): DragDropHandlers {
     const handleDragOver = (event: DragEvent, index: number) => {
       if (!options.allowVideoReorder) return;
@@ -442,28 +434,23 @@ export class ContentStateClass implements ContentState {
 
         let videosForDrag: Video[];
 
-        if (options.setDraggedAsSelected !== false) {
-          // Default behavior - manage selection state
-          // Use nullish coalescing to get selected videos for this section
-          const selectedVideos = this.selectedVideosBySection[sectionId] ?? [];
+        // Default behavior - manage selection state
+        // Use nullish coalescing to get selected videos for this section
+        const selectedVideos = this.selectedVideosBySection[sectionId] ?? [];
 
-          // Check if the dragged video is in the selected videos
-          const isDraggedVideoSelected = selectedVideos.some(
-            (video) => video.id === draggedVideo.id,
-          );
+        // Check if the dragged video is in the selected videos
+        const isDraggedVideoSelected = selectedVideos.some(
+          (video) => video.id === draggedVideo.id,
+        );
 
-          // If the dragged video is not in selectedVideos, use just the dragged video
-          // Otherwise, use the selected videos
-          videosForDrag =
-            isDraggedVideoSelected && selectedVideos.length > 0
-              ? selectedVideos
-              : [draggedVideo];
+        // If the dragged video is not in selectedVideos, use just the dragged video
+        // Otherwise, use the selected videos
+        videosForDrag =
+          isDraggedVideoSelected && selectedVideos.length > 0
+            ? selectedVideos
+            : [draggedVideo];
 
-          this.selectedVideosBySection[sectionId] = videosForDrag;
-        } else {
-          // Don't manage selection state - just use the dragged video for drag image
-          videosForDrag = [draggedVideo];
-        }
+        this.selectedVideosBySection[sectionId] = videosForDrag;
 
         const dragImageText =
           videosForDrag.length === 1
@@ -575,8 +562,8 @@ export class ContentStateClass implements ContentState {
             1,
             Math.min(
               playlistVideoCount -
-                insertIndex -
-                (sortedVideosToMove.length - 1),
+              insertIndex -
+              (sortedVideosToMove.length - 1),
               playlistVideoCount - sortedVideosToMove.length + 1,
             ),
           );
@@ -604,6 +591,7 @@ export class ContentStateClass implements ContentState {
       handleDragStart,
     };
   }
+
 
   handleSelectVideos({
     event,
