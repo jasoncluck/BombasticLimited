@@ -73,7 +73,7 @@
 
   onMount(() => {
     if (contentRef) {
-      return contentState.setupClickOutsideListener(contentRef, sectionId);
+      contentState.setupClickOutsideListener(contentRef, sectionId);
     }
   });
 

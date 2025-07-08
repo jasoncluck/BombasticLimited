@@ -9,17 +9,20 @@
   let {
     video = $bindable(),
     isContinueVideos,
+    sectionId,
     supabase,
     session,
   }: Pick<
     ContentDisplayProps,
-    "isContinueVideos" | "videos" | "supabase" | "session"
+    "isContinueVideos" | "videos" | "sectionId" | "supabase" | "session"
   > & {
     video: Video;
+
     manualHover?: boolean;
   } = $props();
 
   const contentState = getContentState();
+  const hoveredVideo = $derived(contentState.hoveredVideosBySection[sectionId]);
 </script>
 
 <Button
@@ -36,7 +39,7 @@
   }}
 >
   <X
-    class="peer invisible {contentState.hoveredVideo?.id === video.id &&
+    class="peer invisible {hoveredVideo?.id === video.id &&
       'visible bg-secondary'} z-40  mr-0.5 mt-0.5"
   />
   <span

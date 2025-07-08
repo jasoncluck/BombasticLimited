@@ -36,45 +36,15 @@ export interface PlaylistButtonOptions {
   playlists?: Playlist[];
 }
 
-export interface PlaylistState {
+export class PlaylistStateClass {
   // Page state dependency
   pageState: PageState;
   contentState: ContentState;
 
   // Playlist hover state
-  hoveredPlaylistIndex: number | null;
+  hoveredPlaylistIndex = $state<number | null>(null);
 
   // Playlist drag and drop state
-  draggedIndex: number | null;
-  targetIndex: number | null;
-
-  // Mouse hover methods
-  handleMouseEnter: (index: number) => void;
-  handleMouseLeave: (index: number) => void;
-
-  // CSS class helpers
-  getPlaylistDragClasses: (index: number) => string;
-  getButtonClasses: (options: PlaylistButtonOptions) => string;
-
-  // Drag and drop methods
-  createPlaylistDragDrop: (
-    options: PlaylistDragDropOptions,
-  ) => PlaylistDragDropHandlers;
-
-  // Navigation
-  handlePlaylistClick: (playlist: Playlist) => void;
-
-  currentPlaylist: Playlist | null;
-
-  // Helper to get all selected videos across sections
-  getAllSelectedVideos: () => { sectionId: string; videos: any[] }[];
-}
-
-export class PlaylistStateClass implements PlaylistState {
-  pageState: PageState;
-  contentState: ContentState;
-
-  hoveredPlaylistIndex = $state<number | null>(null);
   draggedIndex = $state<number | null>(null);
   targetIndex = $state<number | null>(null);
   currentPlaylist = $state<Playlist | null>(null);
@@ -351,6 +321,9 @@ export class PlaylistStateClass implements PlaylistState {
     goto(`/playlist/${encodeURI(playlist.short_id)}`);
   }
 }
+
+// Export the class type for use elsewhere
+export type PlaylistState = PlaylistStateClass;
 
 const DEFAULT_KEY = "$_playlist_state";
 

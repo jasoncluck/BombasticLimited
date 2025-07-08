@@ -79,6 +79,7 @@
             {isContinueVideos}
             {video}
             {videos}
+            {sectionId}
             {supabase}
             {session}
           />
@@ -111,10 +112,8 @@
 
   <!-- Datetime - hidden when description shows -->
   <p
-    class="text-xs/4 text-muted-foreground transform px-2 pointer-events-none w-full
-      {shouldShowDescription
-      ? '@sm:invisible @sm:bg-transparent @sm:absolute'
-      : 'block'}"
+    class="text-xs/4 text-muted-foreground transform px-2 pointer-events-none w-full @sm:absolute
+      {shouldShowDescription ? '@sm:invisible @sm:bg-transparent ' : 'block'}"
   >
     {new Date(video.published_at).toLocaleDateString("en-US", {
       year: "numeric",

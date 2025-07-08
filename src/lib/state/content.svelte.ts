@@ -60,109 +60,24 @@ export interface MouseHoverOptions {
   isHoveringElement?: boolean;
 }
 
-export interface ContentState {
+export class ContentState {
   // Page state dependency
   pageState: PageState;
 
   // Carousel state for snapshots
-  carouselState: CarouselState;
+  carouselState = $state<CarouselState>({ lastViewedIndex: 0 });
 
   // Selected and hovered video by "section" where section is a carousel, a group of tiles, tables, etc.
-  selectedVideosBySection: Record<string, Video[]>;
-  hoveredVideosBySection: Record<string, Video | null>;
-
-  // If a playlist or video is being currently dragged
-  dragContentType: DragContentType;
-  isMenuOpen: boolean;
-  isMouseOverMenu: boolean;
-  openContextMenuSection: string | null;
-  isDropdownMenuOpen: boolean;
-  // ID of setTimeout event when hovering over a video
-  hoverTimeoutId: ReturnType<typeof setTimeout> | null;
-
-  // Drag and drop state
-  draggedIndex: number | null;
-  targetIndex: number | null;
-  draggedFromSectionId: string | null;
-
-  // Click tracking for double-click detection
-  lastClickTime: number;
-  lastClickedVideo: Video | null;
-
-  // Video drag and drop CSS classes
-  getVideoDropzoneClasses: (playlist: Playlist, session: any) => string[];
-  getEndDropzoneClasses: () => string[];
-
-  // Drag and drop method
-  createDragDrop: (options: DragDropOptions) => DragDropHandlers;
-
-  // Selection
-  handleSelectVideos: ({
-    event,
-    video,
-    videos,
-    sectionId,
-  }: {
-    event: MouseEvent;
-    video: Video;
-    videos: Video[];
-    sectionId: string;
-  }) => void;
-
-  handleContextMenu: ({
-    video,
-    sectionId,
-  }: {
-    video: Video;
-    sectionId: string;
-  }) => void;
-
-  // Cleanup event handler
-  setupClickOutsideListener: (
-    containerElement: HTMLElement,
-    sectionId: string,
-  ) => void;
-
-  // Click handling for single/double click
-  handleVideoClick: ({
-    event,
-    video,
-    videos,
-    sectionId,
-    playlist,
-    onNavigate,
-    enableDoubleClick,
-  }: {
-    event: MouseEvent;
-    video: Video;
-    videos: Video[];
-    sectionId: string;
-    playlist?: Playlist;
-    onNavigate?: (video: Video, playlist?: Playlist) => void;
-    enableDoubleClick?: boolean;
-  }) => void;
-
-  // Mouse hover methods
-  handleMouseEnter: (options: MouseHoverOptions) => void;
-  handleMouseLeave: ({ sectionId }: { sectionId: string }) => void;
-
-  getVideoDragClasses: (index: number) => string;
-
-  // Helper methods for section-specific context menu tracking
-  isContextMenuOpenForSection: (sectionId: string) => boolean;
-  isAnyContextMenuOpen: boolean;
-}
-
-export class ContentStateClass implements ContentState {
-  pageState: PageState;
-  carouselState = $state<CarouselState>({ lastViewedIndex: 0 });
   selectedVideosBySection = $state<Record<string, Video[]>>({});
   hoveredVideosBySection = $state<Record<string, Video | null>>({});
+
+  // If a playlist or video is being currently dragged
   dragContentType = $state<DragContentType>(null);
   isMenuOpen = $state(false);
   isMouseOverMenu = $state(false);
   openContextMenuSection = $state<string | null>(null);
   isDropdownMenuOpen = $state(false);
+  // ID of setTimeout event when hovering over a video
   hoverTimeoutId = $state<ReturnType<typeof setTimeout> | null>(null);
 
   // Drag and drop state
@@ -192,6 +107,14 @@ export class ContentStateClass implements ContentState {
         // Also clear hovered videos from other sections
         this.hoveredVideosBySection[sectionId] = null;
       }
+    }
+  }
+
+  private clearAllSections() {
+    for (const sectionId in this.selectedVideosBySection) {
+      this.selectedVideosBySection[sectionId] = [];
+      // Also clear hovered videos from other sections
+      this.hoveredVideosBySection[sectionId] = null;
     }
   }
 
@@ -230,9 +153,9 @@ export class ContentStateClass implements ContentState {
 
       // If this is a different section and we're starting to hover,
       // clear selections from other sections
-      if (this.hoveredVideosBySection[sectionId] === null) {
-        this.clearOtherSections(sectionId);
-      }
+      // if (this.hoveredVideosBySection[sectionId] === null) {
+      //   this.clearOtherSections(sectionId);
+      // }
 
       this.hoveredVideosBySection[sectionId] = video;
     }
@@ -310,8 +233,9 @@ export class ContentStateClass implements ContentState {
     onNavigate?: (video: Video, playlist?: Playlist) => void;
     enableDoubleClick?: boolean;
   }) {
-    // Check if context menu is open for this section first
-    if (this.isContextMenuOpenForSection(sectionId)) {
+
+    // Check if context menu is open in any sectionId
+    if (this.isAnyContextMenuOpen) {
       // Close the context menu by clearing the open section
       this.openContextMenuSection = null;
 
@@ -331,7 +255,7 @@ export class ContentStateClass implements ContentState {
 
     if (enableDoubleClick) {
       // Double-click behavior (existing logic)
-      this.handleSelectVideos({ event, video, videos, sectionId });
+      this.handleSelectVideos({ event, video, videos, sectionId, enableDoubleClick });
       if (
         !event.shiftKey &&
         !event.ctrlKey &&
@@ -413,7 +337,7 @@ export class ContentStateClass implements ContentState {
       sectionId: string,
     ) => {
       // Clear selections from all other sections first
-      this.clearOtherSections(sectionId);
+      this.clearAllSections();
 
       // Track which section this drag started from
       this.draggedFromSectionId = sectionId;
@@ -598,14 +522,20 @@ export class ContentStateClass implements ContentState {
     video,
     videos,
     sectionId,
+    enableDoubleClick
   }: {
     event: MouseEvent;
     video: Video;
     videos: Video[];
     sectionId: string;
+    enableDoubleClick: boolean;
   }) {
-    // Clear selections from all other sections first
-    this.clearOtherSections(sectionId);
+
+    // If double click is disabled we don't want to handle multiselect
+    if (!enableDoubleClick) {
+      this.clearOtherSections(sectionId);
+      return;
+    }
 
     const isShiftPressed = event.shiftKey;
     const isCtrlPressed = event.ctrlKey || event.metaKey;
@@ -746,7 +676,7 @@ export class ContentStateClass implements ContentState {
 const DEFAULT_KEY = "$_content_state";
 
 export function setContentState(pageState: PageState, key = DEFAULT_KEY) {
-  const contentState = new ContentStateClass(pageState);
+  const contentState = new ContentState(pageState);
   return setContext(key, contentState);
 }
 
