@@ -4,12 +4,15 @@
   import type { Video } from "$lib/supabase/videos";
   import type { ContentDisplayProps } from "./content";
   import { handleDeleteVideosTimestamp } from "../video/video-service";
-  import { getContentState } from "$lib/state/content.svelte";
+  import {
+    DEFAULT_SECTION_ID,
+    getContentState,
+  } from "$lib/state/content.svelte";
 
   let {
     video = $bindable(),
     isContinueVideos,
-    sectionId,
+    sectionId = DEFAULT_SECTION_ID,
     supabase,
     session,
   }: Pick<

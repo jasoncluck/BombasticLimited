@@ -5,7 +5,10 @@
   import { userPreferences } from "$lib/state/user-preferences.svelte";
   import DeleteTimestampButton from "./delete-timestamp-button.svelte";
   import type { HTMLAnchorAttributes } from "svelte/elements";
-  import { getContentState } from "$lib/state/content.svelte";
+  import {
+    DEFAULT_SECTION_ID,
+    getContentState,
+  } from "$lib/state/content.svelte";
   import { Check } from "@lucide/svelte";
   import type { ContentDisplayProps } from "./content";
 
@@ -28,7 +31,7 @@
     video,
     videos,
     isContinueVideos,
-    sectionId,
+    sectionId = DEFAULT_SECTION_ID,
     supabase,
     session,
     ...restProps

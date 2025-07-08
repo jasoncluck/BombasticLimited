@@ -1,12 +1,18 @@
 <script lang="ts">
   import ContentCard from "./content-card.svelte";
-  import type { ContentDisplayProps } from "./content";
+  import { handleContentNavigation, type ContentDisplayProps } from "./content";
   import { type CombinedContentFilter } from "./content-filter";
-  import { getContentState } from "$lib/state/content.svelte";
+  import {
+    getContentState,
+    DEFAULT_SECTION_ID,
+  } from "$lib/state/content.svelte";
+  import type { Video } from "$lib/supabase/videos";
+  import { onMount } from "svelte";
 
   type ContentTilesProps = ContentDisplayProps & {
     allowVideoReorder?: boolean;
     contentFilter?: CombinedContentFilter;
+    sectionId?: string;
   };
 
   let {
@@ -15,13 +21,21 @@
     playlist,
     isContinueVideos,
     playlists,
+    playlistContentFilter,
     allowVideoReorder = false,
     contentFilter,
+    sectionId = DEFAULT_SECTION_ID,
     supabase,
     session,
   }: ContentTilesProps = $props();
 
   const contentState = getContentState();
+
+  const selectedVideos = $derived(
+    contentState.selectedVideosBySection[sectionId] ?? [],
+  );
+
+  const hoveredVideo = $derived(contentState.hoveredVideosBySection[sectionId]);
 
   const dragDrop = contentState.createDragDrop({
     allowVideoReorder,
@@ -30,60 +44,176 @@
     playlist,
     contentFilter,
     supabase,
+    clearSelectionOnDrop: true,
     onVideosUpdate: (updatedVideos) => {
       videos = updatedVideos;
     },
   });
 
-  const getCardClasses = (index: number) => {
-    let classes = "relative";
+  const selectedVideoIds = $derived(
+    selectedVideos.length > 0
+      ? new Set(selectedVideos.map((v) => v.id))
+      : new Set(),
+  );
 
-    if (contentState.draggedIndex === index) {
-      classes += " opacity-60";
+  let containerElement: HTMLElement;
+
+  function getItemClasses(video: Video, index: number) {
+    const isSelected = selectedVideoIds.has(video.id);
+    const isHovered = hoveredVideo?.id === video.id;
+
+    let classes = `group @4xl:basis-1/5 @sm:basis-1/3 basis-full p-2 rounded-md `;
+
+    // Only apply hover and selected states to cards that are in view
+    if (isSelected || isHovered) {
+      classes += " z-40 !bg-secondary brightness-125 hover:bg-secondary";
     }
 
-    if (!allowVideoReorder) return classes;
-
-    if (contentState.targetIndex === index) {
-      if (
-        !contentState.draggedIndex ||
-        contentState.draggedIndex < contentState.targetIndex
-      ) {
-        classes +=
-          " after:absolute after:-right-1 @sm:after:-bottom-1 after:top-0 @sm:after:top-auto after:h-full @sm:after:h-1 after:w-1 @sm:after:w-full after:bg-primary after:z-10";
-      } else {
-        classes +=
-          " before:absolute before:-left-1 @sm:before:-top-1 before:top-0 @sm:before:top-auto before:h-full @sm:before:h-1 before:w-1 @sm:before:w-full before:bg-primary before:z-10";
-      }
+    // Add drag drop classes if enabled
+    if (dragDrop && allowVideoReorder) {
+      classes += ` ${contentState.getVideoDragClasses(index)}`;
     }
+
     return classes;
-  };
+  }
+
+  function handleMouseEnter(video: Video) {
+    contentState.handleMouseEnter({
+      video,
+      sectionId,
+    });
+  }
+
+  function handleMouseLeave() {
+    contentState.handleMouseLeave({
+      sectionId,
+    });
+  }
+
+  function handleMouseDown(video: Video) {
+    const isCurrentlySelected = selectedVideoIds.has(video.id);
+
+    // If clicking on a video that is not currently selected or hovered, clear the states
+    if (!isCurrentlySelected) {
+      contentState.selectedVideosBySection[sectionId] = hoveredVideo
+        ? [hoveredVideo]
+        : [];
+    }
+  }
+
+  // Add function to handle mouse leaving the entire tiles container
+  function handleTilesMouseLeave() {
+    contentState.hoveredVideosBySection[sectionId] = null;
+    // Clear any pending timeout
+    if (contentState.hoverTimeoutId) {
+      clearTimeout(contentState.hoverTimeoutId);
+      contentState.hoverTimeoutId = null;
+    }
+  }
+
+  // Set up click outside listener
+  onMount(() => {
+    if (containerElement) {
+      return contentState.setupClickOutsideListener(
+        containerElement,
+        sectionId,
+      );
+    }
+  });
 </script>
 
 <!-- Switch to single column layout for smaller sizes, grid for larger -->
 <div
-  class="flex flex-col @sm:grid @4xl:grid-cols-5 @sm:grid-cols-3 gap-6 relative"
+  role="region"
+  bind:this={containerElement}
+  class="flex flex-col @sm:grid @4xl:grid-cols-5 @sm:grid-cols-3 gap-x-2 gap-y-10 relative"
+  onmouseleave={handleTilesMouseLeave}
 >
   {#each videos as video, i (video.id)}
     <div
-      role="region"
-      class={`hover:z-40 ${getCardClasses(i)}`}
+      role="button"
+      tabindex="0"
+      class={getItemClasses(video, i)}
       draggable="true"
-      ondragstart={(e) => dragDrop.handleDragStart(e, i)}
+      ondragstart={(e) => dragDrop.handleDragStart(e, i, sectionId)}
       ondragover={allowVideoReorder
         ? (e) => dragDrop.handleDragOver(e, i)
         : undefined}
       ondragleave={allowVideoReorder
         ? (e) => dragDrop.handleDragLeave(e)
         : undefined}
-      ondrop={allowVideoReorder ? (e) => dragDrop.handleDrop(e, i) : undefined}
+      ondrop={allowVideoReorder
+        ? (e) => dragDrop.handleDrop(e, i, sectionId)
+        : undefined}
       ondragend={allowVideoReorder ? dragDrop.handleDragEnd : undefined}
+      onmouseenter={() => handleMouseEnter(video)}
+      onmouseleave={handleMouseLeave}
+      onmousedown={() => handleMouseDown(video)}
+      onclick={(e) => {
+        e.preventDefault();
+
+        // Use the updated handleVideoClick with context menu handling
+        contentState.handleVideoClick({
+          event: e,
+          video,
+          videos,
+          playlist,
+          sectionId,
+          enableDoubleClick: false,
+          onNavigate: (video, playlist) => {
+            handleContentNavigation({
+              video,
+              contentFilter,
+              playlist,
+            });
+          },
+        });
+      }}
+      oncontextmenu={(event) => {
+        const isCtrlPressed = event.ctrlKey || event.metaKey;
+
+        if (isCtrlPressed) {
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        } else {
+          // Handle right-click context menu behavior
+          contentState.handleContextMenu({
+            video,
+            sectionId,
+          });
+        }
+      }}
+      onkeydown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          // Trigger the same logic as onclick
+          contentState.handleVideoClick({
+            event,
+            video,
+            videos,
+            playlist,
+            sectionId,
+            enableDoubleClick: true,
+            onNavigate: (video, playlist) => {
+              handleContentNavigation({
+                video,
+                contentFilter,
+                playlist,
+              });
+            },
+          });
+        }
+      }}
     >
       <ContentCard
         video={videos[i]}
         {videos}
+        {playlistContentFilter}
         {playlists}
+        {contentFilter}
         {isContinueVideos}
+        {sectionId}
         {supabase}
         {session}
       />

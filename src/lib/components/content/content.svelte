@@ -6,7 +6,10 @@
   import type { HTMLAttributes } from "svelte/elements";
   import { type Playlist } from "$lib/supabase/playlists";
   import { onMount } from "svelte";
-  import { getContentState } from "$lib/state/content.svelte";
+  import {
+    DEFAULT_SECTION_ID,
+    getContentState,
+  } from "$lib/state/content.svelte";
   import type { CombinedContentFilter } from "./content-filter";
   import { createContentColumns } from "./table/content-table-columns";
   import ContentTable from "./table/content-table.svelte";
@@ -15,6 +18,7 @@
   import ContentTiles from "./content-tiles.svelte";
   import type { Profile } from "$lib/supabase/profiles";
   import ContentContextMenu from "./content-context-menu.svelte";
+  import { onNavigate } from "$app/navigation";
 
   type ContentProps = HTMLAttributes<HTMLDivElement> & {
     videos: Video[] | VideoWithTimestamp[];
@@ -28,7 +32,7 @@
     allowVideoReorder?: boolean;
     contentFilter: CombinedContentFilter;
     userProfile: Profile | null;
-    sectionId: string;
+    sectionId?: string;
     tilesDisplay: TilesDisplay;
     supabase: SupabaseClient<Database>;
     session: Session | null;
@@ -45,7 +49,7 @@
     session,
     allowVideoReorder,
     contentFilter,
-    sectionId,
+    sectionId = DEFAULT_SECTION_ID,
     userProfile,
     tilesDisplay,
     ...restProps
@@ -74,6 +78,15 @@
   onMount(() => {
     if (contentRef) {
       contentState.setupClickOutsideListener(contentRef, sectionId);
+    }
+  });
+
+  onNavigate(() => {
+    if (contentState.hoveredVideosBySection[sectionId]) {
+      contentState.hoveredVideosBySection[sectionId] = null;
+    }
+    if (contentState.selectedVideosBySection[sectionId]) {
+      contentState.selectedVideosBySection[sectionId] = [];
     }
   });
 

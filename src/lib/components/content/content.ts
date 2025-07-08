@@ -48,7 +48,7 @@ export interface ContentDisplayProps {
   readonly playlist?: Playlist;
   readonly contentFilter: CombinedContentFilter;
   readonly playlistContentFilter?: PlaylistVideosFilter;
-  readonly sectionId: string;
+  readonly sectionId?: string;
   readonly supabase: SupabaseClient<Database>;
   readonly session: Session | null;
 }

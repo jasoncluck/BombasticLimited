@@ -1,6 +1,9 @@
 <script lang="ts">
   import * as ImageCropper from "$lib/components/ui/image-cropper";
-  import { getContentState } from "$lib/state/content.svelte";
+  import {
+    DEFAULT_SECTION_ID,
+    getContentState,
+  } from "$lib/state/content.svelte";
   import PlaylistHeader from "./playlist-header.svelte";
   import Content from "$lib/components/content/content.svelte";
   import type { Snapshot } from "@sveltejs/kit";
@@ -15,6 +18,7 @@
     currentPage,
     videos = [],
     videosCount,
+    userProfile,
     supabase,
     session,
     playlistDuration,
@@ -28,17 +32,16 @@
     showFloatingBreadcrumbs: boolean;
     selectedVideos: Video[];
   }> = {
-    capture: () => {
-      return {
-        showFloatingBreadcrumbs,
-        selectedVideos: contentState.selectedVideos,
-      };
-    },
-    restore: (restored) => {
+    capture: () => ({
+      showFloatingBreadcrumbs,
+      selectedVideos: contentState.selectedVideosBySection[DEFAULT_SECTION_ID],
+    }),
+    restore: async (restored) => {
       if (restored?.showFloatingBreadcrumbs) {
         showFloatingBreadcrumbs = restored.showFloatingBreadcrumbs;
       }
-      contentState.selectedVideos = restored.selectedVideos;
+      contentState.selectedVideosBySection[DEFAULT_SECTION_ID] =
+        restored.selectedVideos;
     },
   };
 
@@ -67,12 +70,12 @@
 
   <Content
     {playlist}
-    contentDisplay="TILES"
+    tilesDisplay="TILES"
+    {userProfile}
     {playlists}
     {videos}
     {videosCount}
-    allowVideoReorder={contentFilter.sort.key === "playlistOrder" &&
-      contentState.selectedVideos.length <= 1}
+    allowVideoReorder={contentFilter.sort.key === "playlistOrder"}
     {contentFilter}
     {supabase}
     {session}

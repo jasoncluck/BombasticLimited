@@ -15,6 +15,9 @@ export type DragContentType = "video" | "playlist" | null;
 
 export type PlaylistImageInfo = Record<string, string | undefined>;
 
+// Default section ID for single-section pages
+export const DEFAULT_SECTION_ID = "defaultSection";
+
 export interface CarouselState {
   lastViewedIndex: number;
 }
@@ -46,17 +49,17 @@ export interface DragDropHandlers {
   handleDragLeave: (
     e: DragEvent & { currentTarget: EventTarget & HTMLElement },
   ) => void;
-  handleDrop: (event: DragEvent, index: number, sectionId: string) => void;
+  handleDrop: (event: DragEvent, index: number, sectionId?: string) => void;
   handleDragStart: (
     event: DragEvent & { currentTarget: HTMLElement },
     index: number,
-    sectionId: string,
+    sectionId?: string,
   ) => void;
 }
 
 export interface MouseHoverOptions {
   video: Video;
-  sectionId: string;
+  sectionId?: string; // Made optional with default
   isHoveringElement?: boolean;
 }
 
@@ -96,7 +99,7 @@ export class ContentState {
   }
 
   // Helper methods for section-specific context menu tracking
-  isContextMenuOpenForSection(sectionId: string): boolean {
+  isContextMenuOpenForSection(sectionId: string = DEFAULT_SECTION_ID): boolean {
     return this.openContextMenuSection === sectionId;
   }
 
@@ -138,7 +141,10 @@ export class ContentState {
   }
 
   // Mouse hover methods
-  handleMouseEnter({ video, sectionId }: MouseHoverOptions) {
+  handleMouseEnter({
+    video,
+    sectionId = DEFAULT_SECTION_ID,
+  }: MouseHoverOptions) {
     // if (this.isContextMenuOpenForSection(sectionId)) {
     //   return;
     // }
@@ -162,10 +168,10 @@ export class ContentState {
   }
 
   handleMouseLeave({
-    sectionId,
+    sectionId = DEFAULT_SECTION_ID,
     removeSelectedOnHover,
   }: {
-    sectionId: string;
+    sectionId?: string;
     removeSelectedOnHover?: boolean;
   }) {
     // If context menu is open for this section, don't clear hover state
@@ -221,19 +227,18 @@ export class ContentState {
     video,
     videos,
     playlist,
-    sectionId,
+    sectionId = DEFAULT_SECTION_ID,
     onNavigate,
     enableDoubleClick = true,
   }: {
-    event: MouseEvent;
+    event: MouseEvent | KeyboardEvent;
     video: Video;
     videos: Video[];
-    sectionId: string;
+    sectionId?: string;
     playlist?: Playlist;
     onNavigate?: (video: Video, playlist?: Playlist) => void;
     enableDoubleClick?: boolean;
   }) {
-
     // Check if context menu is open in any sectionId
     if (this.isAnyContextMenuOpen) {
       // Close the context menu by clearing the open section
@@ -244,18 +249,22 @@ export class ContentState {
       } else {
         this.selectedVideosBySection[sectionId] = [];
         this.hoveredVideosBySection[sectionId] = null;
-
       }
       return;
     }
-
 
     const now = Date.now();
     const doubleClickDelay = 300; // milliseconds
 
     if (enableDoubleClick) {
       // Double-click behavior (existing logic)
-      this.handleSelectVideos({ event, video, videos, sectionId, enableDoubleClick });
+      this.handleSelectVideos({
+        event,
+        video,
+        videos,
+        sectionId,
+        enableDoubleClick,
+      });
       if (
         !event.shiftKey &&
         !event.ctrlKey &&
@@ -334,7 +343,7 @@ export class ContentState {
     const handleDragStart = (
       event: DragEvent & { currentTarget: HTMLElement },
       index: number,
-      sectionId: string,
+      sectionId: string = DEFAULT_SECTION_ID,
     ) => {
       // Clear selections from all other sections first
       this.clearAllSections();
@@ -384,7 +393,11 @@ export class ContentState {
       }
     };
 
-    const handleDrop = (event: DragEvent, index: number, sectionId: string) => {
+    const handleDrop = (
+      event: DragEvent,
+      index: number,
+      sectionId: string = DEFAULT_SECTION_ID,
+    ) => {
       if (!options.allowVideoReorder || !options.supabase) return;
       if (
         !options.playlist ||
@@ -486,8 +499,8 @@ export class ContentState {
             1,
             Math.min(
               playlistVideoCount -
-              insertIndex -
-              (sortedVideosToMove.length - 1),
+                insertIndex -
+                (sortedVideosToMove.length - 1),
               playlistVideoCount - sortedVideosToMove.length + 1,
             ),
           );
@@ -516,21 +529,19 @@ export class ContentState {
     };
   }
 
-
   handleSelectVideos({
     event,
     video,
     videos,
-    sectionId,
-    enableDoubleClick
+    sectionId = DEFAULT_SECTION_ID,
+    enableDoubleClick,
   }: {
-    event: MouseEvent;
+    event: MouseEvent | KeyboardEvent;
     video: Video;
     videos: Video[];
-    sectionId: string;
+    sectionId?: string;
     enableDoubleClick: boolean;
   }) {
-
     // If double click is disabled we don't want to handle multiselect
     if (!enableDoubleClick) {
       this.clearOtherSections(sectionId);
@@ -595,7 +606,13 @@ export class ContentState {
     this.selectedVideosBySection[sectionId] = selectedVideos;
   }
 
-  handleContextMenu({ video, sectionId }: { video: Video; sectionId: string }) {
+  handleContextMenu({
+    video,
+    sectionId = DEFAULT_SECTION_ID,
+  }: {
+    video: Video;
+    sectionId?: string;
+  }) {
     // Clear selections from all other sections first
     this.clearOtherSections(sectionId);
 
@@ -621,7 +638,10 @@ export class ContentState {
     this.hoveredVideosBySection[sectionId] = video;
   }
 
-  setupClickOutsideListener(containerElement: HTMLElement, sectionId: string) {
+  setupClickOutsideListener(
+    containerElement: HTMLElement,
+    sectionId: string = DEFAULT_SECTION_ID,
+  ) {
     const handleClickOutside = (event: MouseEvent) => {
       this.hoverTimeoutId = null;
 

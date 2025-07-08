@@ -2,7 +2,10 @@
   import type { Playlist } from "$lib/supabase/playlists";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
-  import { getContentState } from "$lib/state/content.svelte";
+  import {
+    DEFAULT_SECTION_ID,
+    getContentState,
+  } from "$lib/state/content.svelte";
   import ContentActionsDropdown from "./content-actions-dropdown.svelte";
   import type { Video } from "$lib/supabase/videos";
 
@@ -10,7 +13,7 @@
     videos,
     playlist,
     playlists,
-    sectionId,
+    sectionId = DEFAULT_SECTION_ID,
     supabase,
     session,
   }: {
@@ -18,7 +21,7 @@
     playlist?: Playlist;
     playlists: Playlist[];
     displayLabel: boolean;
-    sectionId: string;
+    sectionId?: string;
     supabase: SupabaseClient<Database>;
     session: Session | null;
   } = $props();

@@ -8,7 +8,10 @@
   } from "./content";
   import type { CarouselAPI } from "../ui/carousel/context";
   import { onDestroy } from "svelte";
-  import { getContentState } from "$lib/state/content.svelte";
+  import {
+    DEFAULT_SECTION_ID,
+    getContentState,
+  } from "$lib/state/content.svelte";
   import type { CombinedContentFilter } from "./content-filter";
   import type { Video } from "$lib/supabase/videos";
 
@@ -21,7 +24,7 @@
   let {
     videos,
     videosCount,
-    sectionId,
+    sectionId = DEFAULT_SECTION_ID,
     isContinueVideos,
     playlist,
     playlists,

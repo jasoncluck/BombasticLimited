@@ -162,6 +162,7 @@
             // Manually trigger selection since context menu is prevented
             contentState.handleSelectVideos({
               event,
+              enableDoubleClick: true,
               video: row.original,
               videos,
               sectionId,
