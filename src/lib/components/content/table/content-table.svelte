@@ -18,6 +18,7 @@
     videos: Video[];
     playlist?: Playlist;
     contentFilter: CombinedContentFilter;
+    sectionId: string;
     supabase: SupabaseClient<Database>;
     session: Session | null;
     videosCount?: number | null;
@@ -32,6 +33,7 @@
     videos = $bindable(),
     columns,
     playlist,
+    sectionId,
     contentFilter,
     videosCount,
     onDataUpdate,
@@ -40,6 +42,10 @@
   }: DataTableProps<TValue> = $props();
 
   const contentState = getContentState();
+
+  const selectedVideos = $derived(
+    contentState.selectedVideosBySection[sectionId] ?? [],
+  );
 
   const allowVideoReorder = $derived(
     !!playlist &&
@@ -74,8 +80,8 @@
   });
 
   const selectedVideoIds = $derived(
-    contentState.selectedVideos.length > 0
-      ? new Set((contentState.selectedVideos || []).map((v) => v.id))
+    selectedVideos.length > 0
+      ? new Set(selectedVideos.map((v) => v.id))
       : new Set(),
   );
 
@@ -103,7 +109,7 @@
 
   // Add function to handle mouse leaving the entire table
   function handleTableMouseLeave() {
-    contentState.hoveredVideo = null;
+    contentState.hoveredVideosBySection[sectionId] = null;
     // Clear any pending timeout
     if (contentState.hoverTimeoutId) {
       clearTimeout(contentState.hoverTimeoutId);
@@ -120,11 +126,13 @@
         class={getRowClasses(row.original, i)}
         draggable={true}
         ondragstart={dragDrop
-          ? (e) => dragDrop.handleDragStart(e, i)
+          ? (e) => dragDrop.handleDragStart(e, i, sectionId)
           : undefined}
         ondragover={dragDrop ? (e) => dragDrop.handleDragOver(e, i) : undefined}
         ondragleave={dragDrop ? (e) => dragDrop.handleDragLeave(e) : undefined}
-        ondrop={dragDrop ? (e) => dragDrop.handleDrop(e, i) : undefined}
+        ondrop={dragDrop
+          ? (e) => dragDrop.handleDrop(e, i, sectionId)
+          : undefined}
         ondragend={dragDrop ? dragDrop.handleDragEnd : undefined}
         onclick={(e) => {
           e.preventDefault();
@@ -133,6 +141,8 @@
             video: row.original,
             videos,
             playlist,
+            sectionId,
+            enableDoubleClick: true,
             onNavigate: (video, playlist) => {
               handleContentNavigation({
                 video,
@@ -154,23 +164,27 @@
               event,
               video: row.original,
               videos,
+              sectionId,
             });
 
             return false;
           } else {
             // Handle right-click context menu behavior
             contentState.handleContextMenu({
-              event,
               video: row.original,
+              sectionId,
             });
           }
         }}
         onmouseenter={() =>
           contentState.handleMouseEnter({
             video: row.original,
-            shouldScrollCheck: true,
+            sectionId,
           })}
-        onmouseleave={() => contentState.handleMouseLeave()}
+        onmouseleave={() =>
+          contentState.handleMouseLeave({
+            sectionId,
+          })}
       >
         {#each row.getVisibleCells() as cell (cell.id)}
           <Table.Cell>

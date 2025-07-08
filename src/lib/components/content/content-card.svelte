@@ -7,7 +7,7 @@
   import type { HTMLAnchorAttributes } from "svelte/elements";
   import { getContentState } from "$lib/state/content.svelte";
   import { Check } from "@lucide/svelte";
-  import { handleContentNavigation, type ContentDisplayProps } from "./content";
+  import type { ContentDisplayProps } from "./content";
 
   type ContentCardProps = {
     video: Video;
@@ -18,6 +18,7 @@
     | "contentFilter"
     | "videos"
     | "playlists"
+    | "sectionId"
     | "supabase"
     | "session"
   > &
@@ -27,7 +28,7 @@
     video,
     videos,
     isContinueVideos,
-    contentFilter,
+    sectionId,
     supabase,
     session,
     ...restProps
@@ -35,21 +36,25 @@
 
   const contentState = getContentState();
 
-  const selectedVideoIds = $derived(
-    contentState.selectedVideos.length > 0
-      ? new Set((contentState.selectedVideos || []).map((v) => v.id))
-      : new Set(),
+  const selectedVideos = $derived(
+    contentState.selectedVideosBySection[sectionId] ?? [],
   );
-  const isSelected = $derived(selectedVideoIds.has(video.id));
+
+  const hoveredVideo = $derived(contentState.hoveredVideosBySection[sectionId]);
+
+  const isHovered = $derived(hoveredVideo?.id === video.id);
+  const isSelected = $derived(selectedVideos.some((v) => v.id === video.id));
+
+  // Show description with proper priority:
+  // 1. Always show for hovered card
+  // 2. Show for selected cards ONLY when nothing is hovered
+  const shouldShowDescription = $derived(
+    isHovered || (isSelected && !hoveredVideo),
+  );
 </script>
 
 <a
   class="group transform will-change-transform cursor-pointer mb-6"
-  onclick={(e) => {
-    e.preventDefault();
-    contentState.handleSelectVideos({ event: e, video, videos });
-    handleContentNavigation({ video, contentFilter });
-  }}
   {...restProps}
 >
   <div role="button" tabindex="0" class="text-left cursor-pointer">
@@ -90,15 +95,17 @@
         </div>
       {/if}
     </div>
-    <p class="text-sm p-2 transition-colors duration-150 ease-out">
+    <p class="text-sm p-2">
       {video.title}
     </p>
   </div>
 
   <p
     class="text-xs/4 text-muted-foreground transform px-2
-      @sm:absolute pointer-events-none w-full
-      {isSelected ? '@sm:invisible @sm:bg-transparent' : ''}"
+      pointer-events-none w-full
+      {shouldShowDescription
+      ? '@sm:invisible @sm:bg-transparent @sm:absolute'
+      : 'block '}"
   >
     {new Date(video.published_at).toLocaleDateString("en-US", {
       year: "numeric",
@@ -110,8 +117,8 @@
     <p
       class=" @sm:opacity-0 text-sm
     @sm:absolute p-2 px-4 w-full pointer-events-none -ml-2
-  {isSelected ? '@sm:opacity-100 @sm:bg-secondary' : ''}
-        transform will-change-transform rounded-md
+  {shouldShowDescription ? '@sm:opacity-100 @sm:bg-secondary' : ''}
+        transform will-change-transform rounded-b-md
         z-50 break-anywhere whitespace-pre-line
           {userPreferences.contentDescription === 'BRIEF' &&
         'line-clamp-3  py-1'}"

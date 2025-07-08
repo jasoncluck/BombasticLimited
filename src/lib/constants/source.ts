@@ -1,4 +1,4 @@
-export const SOURCES: Database["public"]["Enums"]["source"][] = [
+export const SOURCES: Array<Database["public"]["Enums"]["source"]> = [
   "nextlander",
   "giantbomb",
   "remap",

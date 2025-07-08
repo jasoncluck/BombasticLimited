@@ -4,7 +4,6 @@
   import Content from "$lib/components/content/content.svelte";
   import { SOURCE_INFO, SOURCES } from "$lib/constants/source";
 
-  import { userPreferences } from "$lib/state/user-preferences.svelte.js";
   import { isBrowser } from "@supabase/ssr";
   import type { Snapshot } from "./$types.js";
   import { getContentState } from "$lib/state/content.svelte.js";
@@ -12,7 +11,9 @@
   import {
     sourceWithContinueStateKeys,
     type SourceWithContinueCarouselState,
+    type SourceWithContinueStateKeys,
   } from "$lib/components/content/content.js";
+
   let { data } = $props();
 
   let {
@@ -34,10 +35,12 @@
     invalidate("supabase:db:videos");
   }
 
+  let sectionIds = sourceWithContinueStateKeys;
+
   const initialCarouselState: SourceWithContinueCarouselState =
     {} as SourceWithContinueCarouselState;
 
-  for (const key of sourceWithContinueStateKeys) {
+  for (const key of sectionIds) {
     initialCarouselState[key] = { lastViewedIndex: 0 };
   }
 
@@ -46,15 +49,20 @@
 
   export const snapshot: Snapshot<{
     carouselsState: SourceWithContinueCarouselState;
-    selectedTableVideos: Video[];
+    selectedVideos: Record<SourceWithContinueStateKeys, Video[]>;
   }> = {
     capture: () => ({
       carouselsState,
-      selectedTableVideos: contentState.selectedVideos,
+      selectedVideos: Object.fromEntries(
+        sectionIds.map((sid: SourceWithContinueStateKeys) => [
+          sid,
+          contentState.selectedVideosBySection[sid],
+        ]),
+      ) as Record<SourceWithContinueStateKeys, Video[]>,
     }),
     restore: async (restored) => {
       carouselsState = restored.carouselsState;
-      contentState.selectedVideos = restored.selectedTableVideos;
+      contentState.selectedVideosBySection = restored.selectedVideos;
     },
   };
 </script>
@@ -78,6 +86,7 @@
         isContinueVideos={true}
         bind:carouselState={carouselsState.continueWatching}
         tilesDisplay="CAROUSEL"
+        sectionId="continue"
         {userProfile}
         {supabase}
         {session}
@@ -109,6 +118,7 @@
           {playlists}
           tilesDisplay="CAROUSEL"
           bind:carouselState={carouselsState[source]}
+          sectionId={source}
           {userProfile}
           {supabase}
           {session}

@@ -1,7 +1,11 @@
 <script lang="ts">
   import * as Carousel from "$lib/components/ui/carousel";
   import ContentCard from "./content-card.svelte";
-  import { type CarouselState, type ContentDisplayProps } from "./content";
+  import {
+    handleContentNavigation,
+    type CarouselState,
+    type ContentDisplayProps,
+  } from "./content";
   import type { CarouselAPI } from "../ui/carousel/context";
   import { onDestroy } from "svelte";
   import { getContentState } from "$lib/state/content.svelte";
@@ -17,6 +21,7 @@
   let {
     videos,
     videosCount,
+    sectionId,
     isContinueVideos,
     playlist,
     playlists,
@@ -30,11 +35,11 @@
 
   const contentState = getContentState();
 
-  const selectedVideoIds = $derived(
-    contentState.selectedVideos.length > 0
-      ? new Set((contentState.selectedVideos || []).map((v) => v.id))
-      : new Set(),
+  const selectedVideos = $derived(
+    contentState.selectedVideosBySection[sectionId] ?? [],
   );
+
+  const hoveredVideo = $derived(contentState.hoveredVideosBySection[sectionId]);
 
   // Create drag drop functionality
   const dragDrop = contentState.createDragDrop({
@@ -56,6 +61,12 @@
   let showNextButton = $state(videos.length > 0);
   let isInitializing = $state(true);
   let userInteracting = $state(false);
+
+  const selectedVideoIds = $derived(
+    selectedVideos.length > 0
+      ? new Set(selectedVideos.map((v) => v.id))
+      : new Set(),
+  );
 
   function isVideoIndexInView(videoIndex: number): boolean {
     if (!api) return false;
@@ -169,22 +180,34 @@
 
   function getItemClasses(video: Video, index: number) {
     const isSelected = selectedVideoIds.has(video.id);
+    const isHovered = hoveredVideo?.id === video.id;
 
-    let classes = `group @4xl:basis-1/5 @sm:basis-1/3 basis-full p-2 rounded-lg
-${isSelected ? "scale-105" : ""}`;
+    let classes = `group @4xl:basis-1/5 @sm:basis-1/3 basis-full p-2 rounded-md `;
 
-    if (isSelected) {
-      // Selected state - using !important to override hover
-      classes += " !bg-secondary brightness-125";
+    // Apply the same visual state for both hover and selected
+    if (isSelected || isHovered) {
+      classes += " scale-105 !bg-secondary brightness-125";
+    } else {
+      // Add hover effect for non-selected/non-hovered items
+      classes += "hover:bg-secondary";
     }
 
     // Add drag drop classes if enabled
     if (dragDrop && allowVideoReorder) {
-      // Use the new drag classes method instead of the old border approach
       classes += ` ${contentState.getVideoDragClasses(index)}`;
     }
 
     return classes;
+  }
+
+  // Add function to handle mouse leaving the entire carousel
+  function handleCarouselMouseLeave() {
+    contentState.hoveredVideosBySection[sectionId] = null;
+    // Clear any pending timeout
+    if (contentState.hoverTimeoutId) {
+      clearTimeout(contentState.hoverTimeoutId);
+      contentState.hoverTimeoutId = null;
+    }
   }
 </script>
 
@@ -198,6 +221,7 @@ ${isSelected ? "scale-105" : ""}`;
   setApi={(emblaApi) => {
     api = emblaApi;
   }}
+  onmouseleave={handleCarouselMouseLeave}
 >
   <Carousel.Previous
     class={showPreviousButton ? "visible cursor-pointer" : "invisible"}
@@ -212,7 +236,7 @@ ${isSelected ? "scale-105" : ""}`;
       <Carousel.Item
         class={getItemClasses(video, i)}
         draggable="true"
-        ondragstart={(e) => dragDrop.handleDragStart(e, i)}
+        ondragstart={(e) => dragDrop.handleDragStart(e, i, sectionId)}
         ondragover={allowVideoReorder
           ? (e) => dragDrop.handleDragOver(e, i)
           : undefined}
@@ -220,15 +244,57 @@ ${isSelected ? "scale-105" : ""}`;
           ? (e) => dragDrop.handleDragLeave(e)
           : undefined}
         ondrop={allowVideoReorder
-          ? (e) => dragDrop.handleDrop(e, i)
+          ? (e) => dragDrop.handleDrop(e, i, sectionId)
           : undefined}
         ondragend={allowVideoReorder ? dragDrop.handleDragEnd : undefined}
         onmouseenter={() =>
-          contentState.handleMouseEnter({ video, setSelectedOnHover: true })}
-        onmouseleave={() => contentState.handleMouseLeave()}
-        onclick={() => {
+          contentState.handleMouseEnter({
+            video,
+            sectionId,
+          })}
+        onmouseleave={() =>
+          contentState.handleMouseLeave({
+            sectionId,
+          })}
+        onclick={(e) => {
+          e.preventDefault();
+
+          // Update carousel state before handling click
           if (carouselState) {
             carouselState.lastViewedIndex = i;
+          }
+
+          // Use the updated handleVideoClick with context menu handling
+          contentState.handleVideoClick({
+            event: e,
+            video,
+            videos,
+            playlist,
+            sectionId,
+            enableDoubleClick: false,
+            onNavigate: (video, playlist) => {
+              handleContentNavigation({
+                video,
+                contentFilter,
+                playlist,
+              });
+            },
+          });
+        }}
+        oncontextmenu={(event) => {
+          const isCtrlPressed = event.ctrlKey || event.metaKey;
+          console.log("in on context menu");
+
+          if (isCtrlPressed) {
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+          } else {
+            // Handle right-click context menu behavior
+            contentState.handleContextMenu({
+              video,
+              sectionId,
+            });
           }
         }}
       >
@@ -239,6 +305,7 @@ ${isSelected ? "scale-105" : ""}`;
           {playlists}
           {contentFilter}
           {isContinueVideos}
+          {sectionId}
           {supabase}
           {session}
         />

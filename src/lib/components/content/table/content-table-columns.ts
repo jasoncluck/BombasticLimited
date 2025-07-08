@@ -15,12 +15,14 @@ export function createContentColumns({
   getPlaylist,
   getPlaylists,
   getContentFilter,
+  sectionId,
   supabase,
   session,
 }: {
   getPlaylist: () => Playlist | undefined;
   getPlaylists: () => Playlist[];
   getContentFilter: () => CombinedContentFilter;
+  sectionId: string;
   session: Session | null;
   supabase: SupabaseClient<Database>;
 }): ColumnDef<Video>[] {
@@ -68,6 +70,7 @@ export function createContentColumns({
 
         return renderComponent(ContentTableDescription, {
           video,
+          sectionId,
         });
       },
     },

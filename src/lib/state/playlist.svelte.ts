@@ -8,7 +8,7 @@ import {
   handleUpdatePlaylistPosition,
 } from "$lib/components/playlist/playlist-service";
 import type { PageState } from "./page.svelte";
-import { getContentState } from "./content.svelte";
+import { getContentState, type ContentState } from "./content.svelte";
 import { goto } from "$app/navigation";
 
 export interface PlaylistDragDropOptions {
@@ -39,6 +39,7 @@ export interface PlaylistButtonOptions {
 export interface PlaylistState {
   // Page state dependency
   pageState: PageState;
+  contentState: ContentState;
 
   // Playlist hover state
   hoveredPlaylistIndex: number | null;
@@ -64,18 +65,36 @@ export interface PlaylistState {
   handlePlaylistClick: (playlist: Playlist) => void;
 
   currentPlaylist: Playlist | null;
+
+  // Helper to get all selected videos across sections
+  getAllSelectedVideos: () => { sectionId: string; videos: any[] }[];
 }
 
 export class PlaylistStateClass implements PlaylistState {
   pageState: PageState;
+  contentState: ContentState;
 
   hoveredPlaylistIndex = $state<number | null>(null);
   draggedIndex = $state<number | null>(null);
   targetIndex = $state<number | null>(null);
   currentPlaylist = $state<Playlist | null>(null);
 
-  constructor(pageState: PageState) {
+  constructor(pageState: PageState, contentState: ContentState) {
     this.pageState = pageState;
+    this.contentState = contentState
+  }
+
+  // Helper to get all selected videos across sections
+  getAllSelectedVideos() {
+    const allSelectedVideos: { sectionId: string; videos: any[] }[] = [];
+
+    for (const [sectionId, videos] of Object.entries(this.contentState.selectedVideosBySection)) {
+      if (videos && videos.length > 0) {
+        allSelectedVideos.push({ sectionId, videos });
+      }
+    }
+
+    return allSelectedVideos;
   }
 
   // Mouse hover methods
@@ -271,18 +290,31 @@ export class PlaylistStateClass implements PlaylistState {
       }
 
       if (contentState.dragContentType === "video") {
-        handleAddVideosToPlaylist({
-          playlist: options.playlists[playlistTargetIndex],
-          videos: contentState.selectedVideos,
-          supabase: options.supabase,
-          session: options.session,
-        });
+        // Get all selected videos from all sections
+        const allSelectedVideos = this.getAllSelectedVideos();
+
+        // Combine all videos into a single array for the playlist operation
+        const allVideos = allSelectedVideos.flatMap(section => section.videos);
+
+        if (allVideos.length > 0) {
+          await handleAddVideosToPlaylist({
+            playlist: options.playlists[playlistTargetIndex],
+            videos: allVideos,
+            supabase: options.supabase,
+            session: options.session,
+          });
+
+          // Clear selected videos from all sections after successful drop
+          for (const section of allSelectedVideos) {
+            contentState.selectedVideosBySection[section.sectionId] = [];
+          }
+        }
       } else if (contentState.dragContentType === "playlist") {
         if (this.draggedIndex === null || this.draggedIndex < 0) {
           return;
         }
 
-        handleUpdatePlaylistPosition({
+        await handleUpdatePlaylistPosition({
           playlist: options.playlists[this.draggedIndex],
           position: options.playlists.length - playlistTargetIndex,
           supabase: options.supabase,
@@ -300,6 +332,7 @@ export class PlaylistStateClass implements PlaylistState {
       this.draggedIndex = null;
       this.targetIndex = null;
       this.hoveredPlaylistIndex = null;
+      contentState.dragContentType = null; // Reset drag content type
     };
 
     return {
@@ -319,8 +352,8 @@ export class PlaylistStateClass implements PlaylistState {
 
 const DEFAULT_KEY = "$_playlist_state";
 
-export function setPlaylistState(pageState: PageState, key = DEFAULT_KEY) {
-  const playlistState = new PlaylistStateClass(pageState);
+export function setPlaylistState(pageState: PageState, contentState: ContentState, key = DEFAULT_KEY) {
+  const playlistState = new PlaylistStateClass(pageState, contentState);
   return setContext(key, playlistState);
 }
 

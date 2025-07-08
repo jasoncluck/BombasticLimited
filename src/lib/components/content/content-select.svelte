@@ -10,6 +10,7 @@
     videos,
     playlist,
     playlists,
+    sectionId,
     supabase,
     session,
   }: {
@@ -17,32 +18,29 @@
     playlist?: Playlist;
     playlists: Playlist[];
     displayLabel: boolean;
+    sectionId: string;
     supabase: SupabaseClient<Database>;
     session: Session | null;
   } = $props();
 
   const contentState = getContentState();
 
+  let selectedVideos = $derived(
+    contentState.selectedVideosBySection[sectionId] ?? [],
+  );
+
   function handleSelectAll() {
-    // Check if all videos are already selected
+    // Check if all videos are already selected in this section
     const allSelected = videos.every((video) =>
-      contentState.selectedVideos.some((selected) => selected.id === video.id),
+      selectedVideos.some((selected) => selected.id === video.id),
     );
 
     if (allSelected) {
-      // If all are selected, deselect all videos from this page
-      contentState.selectedVideos = contentState.selectedVideos.filter(
-        (selected) => !videos.some((video) => video.id === selected.id),
-      );
+      // If all are selected, deselect all videos from this section
+      contentState.selectedVideosBySection[sectionId] = [];
     } else {
-      // If not all are selected, select all videos from this page
-      // First remove any currently selected videos from this page to avoid duplicates
-      const otherSelectedVideos = contentState.selectedVideos.filter(
-        (selected) => !videos.some((video) => video.id === selected.id),
-      );
-
-      // Then add all videos from this page
-      contentState.selectedVideos = [...otherSelectedVideos, ...videos];
+      // If not all are selected, select all videos from this section
+      contentState.selectedVideosBySection[sectionId] = [...videos];
     }
   }
 </script>
@@ -50,7 +48,7 @@
 <div class="flex gap-2 h-[20px] items-center pointer-events-auto">
   <div>
     <ContentActionsDropdown
-      bind:videos={contentState.selectedVideos}
+      bind:videos={selectedVideos}
       variant="header"
       {playlist}
       {playlists}

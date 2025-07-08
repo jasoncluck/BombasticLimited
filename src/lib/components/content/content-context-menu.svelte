@@ -21,6 +21,7 @@
   interface ContentContextMenuProps {
     playlist: Playlist | null;
     playlists: Playlist[];
+    sectionId: string;
     children: Snippet<[]>;
     supabase: SupabaseClient<Database>;
     session: Session | null;
@@ -29,6 +30,7 @@
   let {
     playlist,
     playlists,
+    sectionId,
     supabase,
     session,
     children,
@@ -37,31 +39,46 @@
   const contentState = getContentState();
   const mediaQueryState = getMediaQueryState();
 
-  let open = $state(false);
+  let selectedVideos = $derived(
+    contentState.selectedVideosBySection[sectionId] ?? [],
+  );
+
+  // Use section-based hovered video
+  let hoveredVideo = $derived(contentState.hoveredVideosBySection[sectionId]);
+
+  // Check if this section's context menu is open
+  let isThisSectionMenuOpen = $derived(
+    contentState.isContextMenuOpenForSection(sectionId),
+  );
 
   // Close context menu if there's no hovered video and no selected videos
   $effect(() => {
-    if (
-      open &&
-      !contentState.hoveredVideo &&
-      contentState.selectedVideos.length === 0
-    ) {
-      open = false;
+    if (isThisSectionMenuOpen && !hoveredVideo && selectedVideos.length === 0) {
+      contentState.openContextMenuSection = null;
     }
   });
 
   // Determine which videos to operate on: selected videos if any, or hovered video
   const operationVideos = $derived.by(() => {
-    if (contentState.selectedVideos.length > 0) {
-      return contentState.selectedVideos;
+    if (selectedVideos.length > 0) {
+      return selectedVideos;
     }
-    return contentState.hoveredVideo ? [contentState.hoveredVideo] : [];
+    return hoveredVideo ? [hoveredVideo] : [];
   });
 
   const isPlaylistOwner = $derived(session?.user.id === playlist?.created_by);
 </script>
 
-<ContextMenu.Root bind:open={contentState.isContextMenuOpen}>
+<ContextMenu.Root
+  bind:open={isThisSectionMenuOpen}
+  onOpenChange={(open) => {
+    if (open) {
+      contentState.openContextMenuSection = sectionId;
+    } else {
+      contentState.openContextMenuSection = null;
+    }
+  }}
+>
   <ContextMenu.Trigger
     class="outline-none"
     onmousedown={(event) => {
@@ -89,13 +106,13 @@
         contentState.isDropdownMenuOpen = false;
       }
 
-      const hoveredVideo = contentState.hoveredVideo;
-      if (
-        hoveredVideo &&
-        !contentState.selectedVideos.some((v) => v.id === hoveredVideo.id)
-      ) {
-        contentState.selectedVideos = [hoveredVideo];
+      // Always call handleContextMenu - it will handle closing other menus and setting selection
+      if (hoveredVideo) {
+        contentState.handleContextMenu({ video: hoveredVideo, sectionId });
       }
+
+      // Don't prevent the context menu from opening
+      return true;
     }}
   >
     {@render children()}
@@ -104,7 +121,8 @@
   {#if operationVideos.length > 0 && session}
     <ContextMenu.Content
       class="max-h-64 overflow-visible outline-none {mediaQueryState.isTouchDevice &&
-        'hidden'}"
+        'hidden'} 
+        transition-opacity duration-75"
     >
       {#if operationVideos.length > 0}
         {@const filteredPlaylists = playlists.filter(
@@ -159,16 +177,11 @@
               });
 
               if (!error) {
-                // Clear selected videos if we were operating on them
-                if (contentState.selectedVideos.length > 0) {
-                  contentState.selectedVideos = [];
-                }
-                // Clear hovered video if we were operating on it
-                if (
-                  contentState.selectedVideos.length === 0 &&
-                  contentState.hoveredVideo
-                ) {
-                  contentState.hoveredVideo = null;
+                // Clear selected videos for this section
+                contentState.selectedVideosBySection[sectionId] = [];
+                // Clear hovered video for this section if we were operating on it
+                if (selectedVideos.length === 0 && hoveredVideo) {
+                  contentState.hoveredVideosBySection[sectionId] = null;
                 }
               }
             }}
@@ -202,15 +215,16 @@
                 session,
               });
 
-              // Update the appropriate state based on what we were operating on
-              if (contentState.selectedVideos.length > 0) {
-                contentState.selectedVideos = updatedVideos;
-              } else if (contentState.hoveredVideo) {
+              // Update the section's state based on what we were operating on
+              if (selectedVideos.length > 0) {
+                contentState.selectedVideosBySection[sectionId] = updatedVideos;
+              } else if (hoveredVideo) {
                 const updatedHoveredVideo = updatedVideos.find(
-                  (v) => v.id === contentState.hoveredVideo?.id,
+                  (v) => v.id === hoveredVideo?.id,
                 );
                 if (updatedHoveredVideo) {
-                  contentState.hoveredVideo = updatedHoveredVideo;
+                  contentState.hoveredVideosBySection[sectionId] =
+                    updatedHoveredVideo;
                 }
               }
             }}
@@ -232,15 +246,16 @@
                 supabase,
               });
 
-              // Update the appropriate state based on what we were operating on
-              if (contentState.selectedVideos.length > 0) {
-                contentState.selectedVideos = updatedVideos;
-              } else if (contentState.hoveredVideo) {
+              // Update the section's state based on what we were operating on
+              if (selectedVideos.length > 0) {
+                contentState.selectedVideosBySection[sectionId] = updatedVideos;
+              } else if (hoveredVideo) {
                 const updatedHoveredVideo = updatedVideos.find(
-                  (v) => v.id === contentState.hoveredVideo?.id,
+                  (v) => v.id === hoveredVideo?.id,
                 );
                 if (updatedHoveredVideo) {
-                  contentState.hoveredVideo = updatedHoveredVideo;
+                  contentState.hoveredVideosBySection[sectionId] =
+                    updatedHoveredVideo;
                 }
               }
             }}

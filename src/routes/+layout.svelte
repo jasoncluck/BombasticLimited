@@ -39,8 +39,8 @@
   // Initialize all state contexts
   const layoutState = setLayoutState();
   const pageState = setPageState();
-  setContentState(pageState);
-  setPlaylistState(pageState);
+  const contentState = setContentState(pageState);
+  const playlistState = setPlaylistState(pageState, contentState);
 
   const mediaQuery = setMediaQueryState({
     // breakpoints: ["max-sm"],
@@ -66,8 +66,6 @@
   } = $derived(data);
 
   let playlistsState = $derived(playlists);
-  const contentState = getContentState();
-  const playlistState = getPlaylistState();
 
   // Get current playlist context for the context menu
   // This will be set by individual content components
@@ -247,7 +245,7 @@
     </div>
 
     <div class="ml-auto">
-      <div class="flex gap-4 items-center ml-auto hidden sm:flex">
+      <div class="flex gap-4 items-center ml-auto sm:flex">
         <DropdownMenu.Root>
           <DropdownMenu.Trigger
             id="user-preferences"
@@ -400,20 +398,14 @@
         class="w-full"
         bind:viewportRef={pageState.viewportRefs.contentViewportRef}
         data-scroll-area="content"
-        ><ContentContextMenu
-          playlist={currentPlaylist}
-          {playlists}
-          {supabase}
-          {session}
-        >
-          <div class="flex flex-col relative justify-center items-center">
-            <div class="@xl:max-w-[1450px] max-w-[1000px] w-full">
-              <div class="flex flex-col mb-20">
-                {@render children()}
-              </div>
+      >
+        <div class="flex flex-col relative justify-center items-center">
+          <div class="@xl:max-w-[1450px] max-w-[1000px] w-full">
+            <div class="flex flex-col mb-20">
+              {@render children()}
             </div>
           </div>
-        </ContentContextMenu>
+        </div>
       </ScrollArea>
     </Resizable.Pane>
   </Resizable.PaneGroup>

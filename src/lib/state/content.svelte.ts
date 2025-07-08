@@ -44,16 +44,17 @@ export interface DragDropHandlers {
   handleDragLeave: (
     e: DragEvent & { currentTarget: EventTarget & HTMLElement },
   ) => void;
-  handleDrop: (event: DragEvent, index: number) => void;
+  handleDrop: (event: DragEvent, index: number, sectionId: string) => void;
   handleDragStart: (
     event: DragEvent & { currentTarget: HTMLElement },
     index: number,
+    sectionId: string,
   ) => void;
 }
 
 export interface MouseHoverOptions {
   video: Video;
-  setSelectedOnHover?: boolean;
+  sectionId: string;
   isHoveringElement?: boolean;
 }
 
@@ -64,15 +65,15 @@ export interface ContentState {
   // Carousel state for snapshots
   carouselState: CarouselState;
 
-  // Videos selected for multi-selection operations
-  selectedVideos: Video[];
-  // Single video being hovered or that context menu is operating on
-  hoveredVideo: Video | null;
+  // Selected and hovered video by "section" where section is a carousel, a group of tiles, tables, etc.
+  selectedVideosBySection: Record<string, Video[]>;
+  hoveredVideosBySection: Record<string, Video | null>;
+
   // If a playlist or video is being currently dragged
   dragContentType: DragContentType;
   isMenuOpen: boolean;
   isMouseOverMenu: boolean;
-  isContextMenuOpen: boolean;
+  openContextMenuSection: string | null;
   isDropdownMenuOpen: boolean;
   // ID of setTimeout event when hovering over a video
   hoverTimeoutId: ReturnType<typeof setTimeout> | null;
@@ -97,54 +98,65 @@ export interface ContentState {
     event,
     video,
     videos,
+    sectionId,
   }: {
     event: MouseEvent;
     video: Video;
     videos: Video[];
+    sectionId: string;
   }) => void;
 
   handleContextMenu: ({
-    event,
     video,
+    sectionId,
   }: {
-    event: MouseEvent;
     video: Video;
+    sectionId: string;
   }) => void;
 
   // Cleanup event handler
-  setupClickOutsideListener: (containerElement: HTMLElement) => void;
+  setupClickOutsideListener: (containerElement: HTMLElement, sectionId: string) => void;
 
   // Click handling for single/double click
   handleVideoClick: ({
     event,
     video,
     videos,
+    sectionId,
     playlist,
     onNavigate,
+    enableDoubleClick,
   }: {
     event: MouseEvent;
     video: Video;
     videos: Video[];
+    sectionId: string;
     playlist?: Playlist;
     onNavigate?: (video: Video, playlist?: Playlist) => void;
+    enableDoubleClick?: boolean,
   }) => void;
 
   // Mouse hover methods
   handleMouseEnter: (options: MouseHoverOptions) => void;
-  handleMouseLeave: (isHoveringElement?: boolean) => void;
+  handleMouseLeave: ({ sectionId }: { sectionId: string }) => void;
 
   getVideoDragClasses: (index: number) => string;
+
+  // Helper methods for section-specific context menu tracking
+  isContextMenuOpenForSection: (sectionId: string) => boolean;
+  isAnyContextMenuOpen: boolean;
+
 }
 
 export class ContentStateClass implements ContentState {
   pageState: PageState;
   carouselState = $state<CarouselState>({ lastViewedIndex: 0 });
-  selectedVideos = $state<Video[]>([]);
-  hoveredVideo = $state<Video | null>(null);
+  selectedVideosBySection = $state<Record<string, Video[]>>({});
+  hoveredVideosBySection = $state<Record<string, Video | null>>({});
   dragContentType = $state<DragContentType>(null);
   isMenuOpen = $state(false);
   isMouseOverMenu = $state(false);
-  isContextMenuOpen = $state(false);
+  openContextMenuSection = $state<string | null>(null);
   isDropdownMenuOpen = $state(false);
   hoverTimeoutId = $state<ReturnType<typeof setTimeout> | null>(null);
 
@@ -159,6 +171,16 @@ export class ContentStateClass implements ContentState {
   constructor(pageState: PageState) {
     this.pageState = pageState;
   }
+
+  // Helper methods for section-specific context menu tracking
+  isContextMenuOpenForSection(sectionId: string): boolean {
+    return this.openContextMenuSection === sectionId;
+  }
+
+  get isAnyContextMenuOpen(): boolean {
+    return this.openContextMenuSection !== null;
+  }
+
 
   // Video drag and drop CSS classes
   getVideoDropzoneClasses(playlist: Playlist, session: any): string[] {
@@ -176,14 +198,12 @@ export class ContentStateClass implements ContentState {
   }
 
   // Mouse hover methods
-  handleMouseEnter({ video, setSelectedOnHover }: MouseHoverOptions) {
-
-    if (this.isContextMenuOpen) {
+  handleMouseEnter({ video, sectionId }: MouseHoverOptions) {
+    if (this.isContextMenuOpenForSection(sectionId)) {
       return;
     }
 
-
-    // Don't update hoveredVideo if context menu is open or if we're dragging
+    // Don't update hoveredVideo if we're dragging
     if (!this.dragContentType) {
       // Clear any existing timeout when entering a new element
       if (this.hoverTimeoutId) {
@@ -191,19 +211,25 @@ export class ContentStateClass implements ContentState {
         this.hoverTimeoutId = null;
       }
 
-      this.hoveredVideo = video;
-      if (setSelectedOnHover) {
-        this.selectedVideos[0] = video;
-      }
+      this.hoveredVideosBySection[sectionId] = video;
     }
   }
 
-  handleMouseLeave(isHoveringElement: boolean = false) {
-    if (!this.isContextMenuOpen || !this.isDropdownMenuOpen) {
+  handleMouseLeave({ sectionId, removeSelectedOnHover }: { sectionId: string, removeSelectedOnHover?: boolean }) {
+    // If context menu is open for this section, don't clear hover state
+    if (this.isContextMenuOpenForSection(sectionId)) {
+      return;
+    }
+
+    // Only delay clearing hover if dropdown menu is not open
+    if (!this.isDropdownMenuOpen) {
       // Store the timeout ID so it can be cleared if needed
       const timeoutId = setTimeout(() => {
-        if (!this.dragContentType && !isHoveringElement) {
-          this.hoveredVideo = null;
+        if (!this.dragContentType && !this.isContextMenuOpenForSection(sectionId)) {
+          this.hoveredVideosBySection[sectionId] = null;
+          if (removeSelectedOnHover) {
+            this.selectedVideosBySection[sectionId] = [];
+          }
         }
         this.hoverTimeoutId = null;
       }, 50);
@@ -240,39 +266,67 @@ export class ContentStateClass implements ContentState {
     video,
     videos,
     playlist,
+    sectionId,
     onNavigate,
+    enableDoubleClick = true,
   }: {
     event: MouseEvent;
     video: Video;
     videos: Video[];
+    sectionId: string;
     playlist?: Playlist;
     onNavigate?: (video: Video, playlist?: Playlist) => void;
+    enableDoubleClick?: boolean; // New optional parameter
   }) {
+    // Check if context menu is open for this section first
+    console.log(this.isContextMenuOpenForSection(sectionId))
+    if (this.isContextMenuOpenForSection(sectionId)) {
+      // Close the context menu by clearing the open section
+      this.openContextMenuSection = null;
+
+      // Also clear selected videos and hovered video to clean up state
+      this.selectedVideosBySection[sectionId] = [];
+      this.hoveredVideosBySection[sectionId] = null;
+
+      // Don't navigate or handle selection - just close the menu
+      return;
+    }
+
     const now = Date.now();
     const doubleClickDelay = 300; // milliseconds
 
-    // Always handle selection immediately
-    this.handleSelectVideos({ event, video, videos });
 
-    // Check if this is a double-click (only for non-modifier clicks)
-    if (
-      !event.shiftKey &&
-      !event.ctrlKey &&
-      !event.metaKey &&
-      this.lastClickedVideo?.id === video.id &&
-      now - this.lastClickTime < doubleClickDelay
-    ) {
-      // This is a double-click - navigate immediately
-      onNavigate?.(video, playlist);
+    if (enableDoubleClick) {
+      console.log("double click")
+      this.handleSelectVideos({ event, video, videos, sectionId });
+      if (
+        !event.shiftKey &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        this.lastClickedVideo?.id === video.id &&
+        now - this.lastClickTime < doubleClickDelay
+      ) {
+        // This is a double-click - navigate immediately
+        onNavigate?.(video, playlist);
 
-      // Reset double-click tracking
+        // Reset double-click tracking
+        this.lastClickTime = 0;
+        this.lastClickedVideo = null;
+      } else {
+        // This is a single click - just update tracking for potential double-click
+        this.lastClickTime = now;
+        this.lastClickedVideo = video;
+        // No navigation timeout - only double-click navigates
+      }
+    } else {
+      // Single-click behavior - navigate immediately (only for non-modifier clicks)
+      if (!event.shiftKey && !event.ctrlKey && !event.metaKey) {
+        onNavigate?.(video, playlist);
+      }
+
+      // Reset double-click tracking since we're not using it
       this.lastClickTime = 0;
       this.lastClickedVideo = null;
-    } else {
-      // This is a single click - just update tracking for potential double-click
-      this.lastClickTime = now;
-      this.lastClickedVideo = video;
-      // No navigation timeout - only double-click navigates
     }
   }
 
@@ -311,6 +365,7 @@ export class ContentStateClass implements ContentState {
     const handleDragStart = (
       event: DragEvent & { currentTarget: HTMLElement },
       index: number,
+      sectionId: string,
     ) => {
       // Set the drag index for visual feedback
       this.draggedIndex = index;
@@ -326,19 +381,22 @@ export class ContentStateClass implements ContentState {
         // Get the video being dragged
         const draggedVideo = options.videos[index];
 
+        // Use nullish coalescing to get selected videos for this section
+        const selectedVideos = this.selectedVideosBySection[sectionId] ?? [];
+
         // Check if the dragged video is in the selected videos
-        const isDraggedVideoSelected = this.selectedVideos.some(
+        const isDraggedVideoSelected = selectedVideos.some(
           (video) => video.id === draggedVideo.id,
         );
 
         // If the dragged video is not in selectedVideos, use just the dragged video
         // Otherwise, use the selected videos
         const videosForDrag =
-          isDraggedVideoSelected && this.selectedVideos.length > 0
-            ? this.selectedVideos
+          isDraggedVideoSelected && selectedVideos.length > 0
+            ? selectedVideos
             : [draggedVideo];
 
-        this.selectedVideos = videosForDrag;
+        this.selectedVideosBySection[sectionId] = videosForDrag;
 
         const dragImageText =
           videosForDrag.length === 1
@@ -348,7 +406,7 @@ export class ContentStateClass implements ContentState {
       }
     };
 
-    const handleDrop = (event: DragEvent, index: number) => {
+    const handleDrop = (event: DragEvent, index: number, sectionId: string) => {
       if (!options.allowVideoReorder || !options.supabase) return;
       if (
         !options.playlist ||
@@ -359,22 +417,25 @@ export class ContentStateClass implements ContentState {
 
       event.preventDefault();
       if (this.draggedIndex !== null && this.draggedIndex !== index) {
+        // Use nullish coalescing to get selected videos for this section
+        const selectedVideos = this.selectedVideosBySection[sectionId] ?? [];
+
         // Check if we have selected videos to move multiple, otherwise move single video
-        const selectedVideos =
-          this.selectedVideos && this.selectedVideos.length > 0
-            ? this.selectedVideos
+        const videosToMove =
+          selectedVideos.length > 0
+            ? selectedVideos
             : [options.videos[this.draggedIndex]];
 
         // IMPORTANT: Sort the selected videos by their current position in the array
         // to maintain the correct order regardless of selection order
-        const videosToMove = selectedVideos.sort((a, b) => {
+        const sortedVideosToMove = videosToMove.sort((a, b) => {
           const indexA = options.videos.findIndex((v) => v.id === a.id);
           const indexB = options.videos.findIndex((v) => v.id === b.id);
           return indexA - indexB;
         });
 
         // Get the video IDs for the database update
-        const videoIds = videosToMove.map((video) => video.id);
+        const videoIds = sortedVideosToMove.map((video) => video.id);
 
         // Determine if we're moving down (to higher index)
         const movingDown = this.draggedIndex < index;
@@ -395,7 +456,7 @@ export class ContentStateClass implements ContentState {
         );
 
         // Calculate the correct insertion index in the remaining array
-        const movedVideosBefore = videosToMove.filter((video) => {
+        const movedVideosBefore = sortedVideosToMove.filter((video) => {
           const originalIndex = options.videos.findIndex(
             (v) => v.id === video.id,
           );
@@ -411,7 +472,7 @@ export class ContentStateClass implements ContentState {
         // Insert the moved videos at the correct position
         const finalVideos = [
           ...remainingVideos.slice(0, insertIndex),
-          ...videosToMove, // Now properly ordered
+          ...sortedVideosToMove, // Now properly ordered
           ...remainingVideos.slice(insertIndex),
         ];
 
@@ -439,21 +500,21 @@ export class ContentStateClass implements ContentState {
             1,
             Math.min(
               insertIndex + 1,
-              playlistVideoCount - videosToMove.length + 1,
+              playlistVideoCount - sortedVideosToMove.length + 1,
             ),
           );
         } else {
           newPosition = Math.max(
             1,
             Math.min(
-              playlistVideoCount - insertIndex - (videosToMove.length - 1),
-              playlistVideoCount - videosToMove.length + 1,
+              playlistVideoCount - insertIndex - (sortedVideosToMove.length - 1),
+              playlistVideoCount - sortedVideosToMove.length + 1,
             ),
           );
         }
 
         handleUpdatePlaylistVideoPosition({
-          videos: videosToMove,
+          videos: sortedVideosToMove,
           position: newPosition,
           playlist: options.playlist,
           supabase: options.supabase,
@@ -476,24 +537,29 @@ export class ContentStateClass implements ContentState {
     event,
     video,
     videos,
+    sectionId,
   }: {
     event: MouseEvent;
     video: Video;
     videos: Video[];
+    sectionId: string,
   }) {
     const isShiftPressed = event.shiftKey;
     const isCtrlPressed = event.ctrlKey || event.metaKey;
-    const videoIndex = this.selectedVideos.findIndex((v) => v.id === video.id);
+
+    // Use nullish coalescing to get selected videos for this section
+    let selectedVideos = this.selectedVideosBySection[sectionId] ?? [];
+    const videoIndex = selectedVideos.findIndex((v) => v.id === video.id);
 
     if (isShiftPressed) {
       // SHIFT key - range selection
-      if (this.selectedVideos.length === 0) {
+      if (selectedVideos.length === 0) {
         // No previous selection, just select this video
-        this.selectedVideos = [video];
+        selectedVideos = [video];
       } else {
         // Find the last selected video's position for range selection
         const lastSelectedVideo =
-          this.selectedVideos[this.selectedVideos.length - 1];
+          selectedVideos[selectedVideos.length - 1];
         const lastSelectedIndex = videos.findIndex(
           (v) => v.id === lastSelectedVideo.id,
         );
@@ -510,51 +576,66 @@ export class ContentStateClass implements ContentState {
             rangeVideos.push(videos[i]);
           }
 
-          const existingIds = new Set(this.selectedVideos.map((v) => v.id));
+          const existingIds = new Set(selectedVideos.map((v) => v.id));
           const newVideos = rangeVideos.filter((v) => !existingIds.has(v.id));
-          this.selectedVideos = [...this.selectedVideos, ...newVideos];
+          selectedVideos = [...selectedVideos, ...newVideos];
         }
       }
     } else if (isCtrlPressed) {
       // CTRL only - toggle individual selection
       if (videoIndex === -1) {
-        this.selectedVideos = [...this.selectedVideos, video];
+        selectedVideos = [...selectedVideos, video];
       } else {
-        this.selectedVideos = this.selectedVideos.filter(
+        selectedVideos = selectedVideos.filter(
           (v) => v.id !== video.id,
         );
       }
     } else {
       // No modifier keys - standard single selection behavior
       if (videoIndex === -1) {
-        this.selectedVideos = [video];
-      } else if (this.selectedVideos.length === 1) {
-        this.selectedVideos = [];
+        selectedVideos = [video];
+      } else if (selectedVideos.length === 1) {
+        selectedVideos = [];
       } else {
-        this.selectedVideos = [video];
+        selectedVideos = [video];
       }
     }
+
+    // Update the selected videos for this section
+    this.selectedVideosBySection[sectionId] = selectedVideos;
   }
 
-  handleContextMenu({ event, video }: { event: MouseEvent; video: Video }) {
-    const isVideoSelected = this.selectedVideos.some((v) => v.id === video.id);
+  handleContextMenu({ video, sectionId }: { video: Video, sectionId: string }) {
+    // Close any existing context menu from other sections
+    if (this.openContextMenuSection && this.openContextMenuSection !== sectionId) {
+      this.openContextMenuSection = null;
+    }
+
+    this.openContextMenuSection = sectionId;
+
+
+    // Use nullish coalescing to get selected videos for this section
+    const selectedVideos = this.selectedVideosBySection[sectionId] ?? [];
+    const isVideoSelected = selectedVideos.some((v) => v.id === video.id);
 
     if (!isVideoSelected) {
-      this.selectedVideos = [];
-      this.hoveredVideo = video;
+      this.selectedVideosBySection[sectionId] = [video];
     }
+
+    // Always update hovered video for this section when context menu is triggered
+    this.hoveredVideosBySection[sectionId] = video;
   }
 
-  setupClickOutsideListener(containerElement: HTMLElement) {
+  setupClickOutsideListener(containerElement: HTMLElement, sectionId: string) {
     const handleClickOutside = (event: MouseEvent) => {
       this.hoverTimeoutId = null;
 
       // Don't clear selection if:
-      // - Context menu is open
+      // - Context menu is open for this section
       // - User is dragging
       // - User is holding modifier keys (shift, ctrl, cmd)
       if (
-        this.isContextMenuOpen ||
+        this.isContextMenuOpenForSection(sectionId) ||
         this.isDropdownMenuOpen ||
         this.dragContentType ||
         event.shiftKey ||
@@ -576,9 +657,15 @@ export class ContentStateClass implements ContentState {
 
       // Check if click is outside the container
       if (!containerElement.contains(event.target as Node)) {
+        // Use nullish coalescing to get selected videos for this section
+        const selectedVideos = this.selectedVideosBySection[sectionId] ?? [];
+        const hoveredVideo = this.hoveredVideosBySection[sectionId];
+
         // Only clear if there are selected videos
-        if (this.selectedVideos.length > 0) {
-          this.selectedVideos = this.hoveredVideo ? [this.hoveredVideo] : [];
+        if (selectedVideos.length > 0) {
+          this.selectedVideosBySection[sectionId] = hoveredVideo
+            ? [hoveredVideo]
+            : [];
         }
       }
     };
