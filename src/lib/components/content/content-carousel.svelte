@@ -49,6 +49,7 @@
     playlist,
     contentFilter,
     supabase,
+    setDraggedAsSelected: false, // Don't add dragged videos to selection for carousel
     onVideosUpdate: (updatedVideos) => {
       // For carousel, we might need to update the parent component
       // This would require videos to be bindable in the parent
@@ -186,7 +187,7 @@
 
     // Apply the same visual state for both hover and selected
     if (isSelected || isHovered) {
-      classes += " scale-105 !bg-secondary brightness-125";
+      classes += " !bg-secondary brightness-125 hover:bg-secondary";
     } else {
       // Add hover effect for non-selected/non-hovered items
       classes += "hover:bg-secondary";

@@ -44,12 +44,21 @@
 
   const isHovered = $derived(hoveredVideo?.id === video.id);
   const isSelected = $derived(selectedVideos.some((v) => v.id === video.id));
+  const isContextMenuOpen = $derived(
+    contentState.isContextMenuOpenForSection(sectionId) && isSelected,
+  );
+  const isDragActive = $derived(
+    contentState.dragContentType === "video" &&
+      contentState.draggedFromSectionId === sectionId &&
+      isHovered,
+  );
 
-  // Show description with proper priority:
-  // 1. Always show for hovered card
-  // 2. Show for selected cards ONLY when nothing is hovered
+  // Show description when:
+  // 1. Card is hovered (regardless of context menu state)
+  // 2. Card has context menu open (and is selected)
+  // 3. Card is being dragged
   const shouldShowDescription = $derived(
-    isHovered || (isSelected && !hoveredVideo),
+    isHovered || isContextMenuOpen || isDragActive,
   );
 </script>
 
@@ -100,12 +109,12 @@
     </p>
   </div>
 
+  <!-- Datetime - hidden when description shows -->
   <p
-    class="text-xs/4 text-muted-foreground transform px-2
-      pointer-events-none w-full
+    class="text-xs/4 text-muted-foreground transform px-2 pointer-events-none w-full
       {shouldShowDescription
       ? '@sm:invisible @sm:bg-transparent @sm:absolute'
-      : 'block '}"
+      : 'block'}"
   >
     {new Date(video.published_at).toLocaleDateString("en-US", {
       year: "numeric",
@@ -113,15 +122,15 @@
       day: "numeric",
     })}
   </p>
+
+  <!-- Description overlay -->
   {#if userPreferences.contentDescription !== "NONE"}
     <p
-      class=" @sm:opacity-0 text-sm
-    @sm:absolute p-2 px-4 w-full pointer-events-none -ml-2
-  {shouldShowDescription ? '@sm:opacity-100 @sm:bg-secondary' : ''}
-        transform will-change-transform rounded-b-md
-        z-50 break-anywhere whitespace-pre-line
-          {userPreferences.contentDescription === 'BRIEF' &&
-        'line-clamp-3  py-1'}"
+      class="@sm:opacity-0 text-sm @sm:absolute p-2 px-4 w-full pointer-events-none -ml-2
+      {shouldShowDescription ? '@sm:opacity-100 @sm:bg-secondary' : ''}
+      transform will-change-transform rounded-b-md
+      z-50 break-anywhere whitespace-pre-line
+      {userPreferences.contentDescription === 'BRIEF' && 'line-clamp-3 py-1'}"
     >
       {video.description}
     </p>
