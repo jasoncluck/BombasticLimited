@@ -40,7 +40,7 @@ export interface DragDropOptions {
   supabase?: SupabaseClient<Database>;
   onVideosUpdate?: (videos: Video[]) => void;
   setDraggedAsSelected?: boolean;
-  clearSelectionOnDrop?: boolean;
+  clearSelection?: boolean;
 }
 
 export interface DragDropHandlers {
@@ -345,7 +345,9 @@ export class ContentState {
       sectionId: string = DEFAULT_SECTION_ID,
     ) => {
       // Clear selections from all other sections first
-      this.clearAllSections();
+      if (options.clearSelection) {
+        this.clearAllSections();
+      }
 
       // Track which section this drag started from
       this.draggedFromSectionId = sectionId;
@@ -439,6 +441,7 @@ export class ContentState {
 
         // Create a new array for the local update
         const updatedVideos = [...options.videos];
+        console.log(options.videos);
 
         // Remove the videos that are being moved
         const remainingVideos = updatedVideos.filter(
