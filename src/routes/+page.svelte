@@ -27,6 +27,7 @@
   } = $derived(data);
 
   const contentState = getContentState();
+  const sources = $derived(userProfile?.sources ?? SOURCES);
 
   // After oauth authn there is a history stack update that doesn't trigger a proper invalidation.
   // This will look for the oauth success code returned and invalidate the playlists which are the only resource effected here
@@ -102,7 +103,7 @@
   </h1>
 
   <div class="flex flex-col gap-8">
-    {#each SOURCES as source (source)}
+    {#each sources as source (source)}
       <div class="flex flex-col gap-4">
         <a
           href={`/${source}/latest`}

@@ -1,6 +1,7 @@
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Tables } from "./database.types";
 import type { ContentDisplay } from "$lib/components/content/content";
+import { invalidate } from "$app/navigation";
 
 export type Profile = Tables<"profiles">;
 
@@ -82,5 +83,31 @@ export async function updateProfileContentDisplay({
   if (error) {
     console.error(error);
   }
+  return { profile, error };
+}
+
+export async function updateProfileSources({
+  sources,
+  supabase,
+  session,
+}: {
+  sources: Database["public"]["Enums"]["source"][];
+  supabase: SupabaseClient<Database>;
+  session: Session | null;
+}) {
+  if (!session) {
+    return { profile: null, error: null };
+  }
+
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .update({ sources })
+    .eq("id", session.user.id)
+    .single();
+
+  if (error) {
+    console.error(error);
+  }
+
   return { profile, error };
 }

@@ -27,15 +27,18 @@
   import { flip } from "svelte/animate";
   import { dndzone } from "svelte-dnd-action";
   import type { DndEvent } from "svelte-dnd-action";
+  import type { Profile } from "$lib/supabase/profiles";
 
   let {
     playlists = $bindable(),
     handleLogout,
+    userProfile,
     session,
     supabase,
   }: {
     playlists: UserPlaylist[];
     handleLogout: () => void;
+    userProfile: Profile | null;
     supabase: SupabaseClient<Database>;
     session: Session | null;
   } = $props();

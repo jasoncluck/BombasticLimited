@@ -28,7 +28,6 @@ export interface LayoutState {
   handleSearch: (e: Event) => void;
 
   // Layout methods
-  handleResize: (isDragging: boolean) => void;
   onLayoutChange: (sizes: number[]) => void;
 
   // Notification setup
@@ -76,10 +75,6 @@ export class LayoutStateClass implements LayoutState {
       this.config.searchDebounceMs,
     );
     this.currentDebouncedSearch();
-  }
-
-  handleResize(isDragging: boolean) {
-    this.isDraggingDivider = isDragging;
   }
 
   onLayoutChange(sizes: number[]) {

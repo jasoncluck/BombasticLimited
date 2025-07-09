@@ -7,20 +7,24 @@
   import * as Popover from "$lib/components/ui/popover";
   import { activeStreams } from "$lib/state/streaming.svelte";
   import { handleCreatePlaylist } from "./playlist/playlist-service";
-  import { goto } from "$app/navigation";
+  import { goto, invalidate } from "$app/navigation";
   import { getContentState } from "$lib/state/content.svelte";
   import { getPlaylistState } from "$lib/state/playlist.svelte";
   import { page } from "$app/state";
   import PlaylistContextMenu from "./playlist/playlist-context-menu.svelte";
+  import { updateProfileSources, type Profile } from "$lib/supabase/profiles";
+  import { showNotification } from "$lib/stores/notification";
 
   let {
     playlists = $bindable(),
     supabase,
     session,
+    userProfile,
     isSidebarCollapsed,
   }: {
     playlists: Playlist[];
     supabase: SupabaseClient;
+    userProfile: Profile | null;
     session: Session | null;
     isSidebarCollapsed: boolean;
   } = $props();
@@ -31,7 +35,14 @@
   const contentState = getContentState();
   const playlistState = getPlaylistState();
 
-  // Create drag and drop handlers
+  // Local state for sources ordering
+  let orderedSources = $state(userProfile?.sources ?? [...SOURCES]);
+
+  // Source drag and drop state
+  let draggedSourceIndex = $state<number | null>(null);
+  let targetSourceIndex = $state<number | null>(null);
+
+  // Create drag and drop handlers for playlists
   const dragDropHandlers = $derived(
     playlistState.createPlaylistDragDrop({
       playlists,
@@ -42,24 +53,123 @@
       },
     }),
   );
+
+  // Source drag and drop handlers
+  function handleSourceDragStart(event: DragEvent, index: number) {
+    draggedSourceIndex = index;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = "move";
+    }
+  }
+
+  function handleSourceDragOver(event: DragEvent, index: number) {
+    event.preventDefault();
+    if (
+      draggedSourceIndex !== null &&
+      draggedSourceIndex !== index &&
+      targetSourceIndex !== index
+    ) {
+      targetSourceIndex = index;
+    }
+  }
+
+  function handleSourceDragLeave(event: DragEvent) {
+    const relatedTarget = event.relatedTarget as Node;
+    if (
+      event.currentTarget instanceof HTMLElement &&
+      !event.currentTarget.contains(relatedTarget)
+    ) {
+      targetSourceIndex = null;
+    }
+  }
+
+  async function handleSourceDrop(event: DragEvent, dropIndex: number) {
+    event.preventDefault();
+
+    if (draggedSourceIndex === null || draggedSourceIndex < 0) {
+      return;
+    }
+
+    // Reorder the sources array
+    const newOrderedSources = [...orderedSources];
+    const [movedSource] = newOrderedSources.splice(draggedSourceIndex, 1);
+    newOrderedSources.splice(dropIndex, 0, movedSource);
+
+    // Only update if the order actually changed
+    if (JSON.stringify(newOrderedSources) !== JSON.stringify(orderedSources)) {
+      orderedSources = newOrderedSources;
+
+      if (session?.user.id) {
+        try {
+          await updateProfileSources({
+            sources: orderedSources,
+            supabase,
+            session,
+          });
+        } catch (error) {
+          console.error("Failed to update source ordering:", error);
+          showNotification("An error occurred, unable to reorder.");
+          // Optionally revert the order on error
+          orderedSources = [...SOURCES];
+        }
+        invalidate("supabase:db:profiles");
+      }
+    }
+  }
+
+  function handleSourceDragEnd() {
+    draggedSourceIndex = null;
+    targetSourceIndex = null;
+  }
+
+  // Helper function to get source drag classes
+  function getSourceDragClasses(index: number): string {
+    let classes = "relative";
+
+    if (draggedSourceIndex === index) {
+      classes += " opacity-60";
+    }
+
+    if (targetSourceIndex === index) {
+      if (
+        draggedSourceIndex === null ||
+        draggedSourceIndex < targetSourceIndex
+      ) {
+        // Show indicator at the bottom
+        classes +=
+          " after:absolute after:left-0 after:bottom-0 after:w-full after:h-[2px] after:bg-primary after:z-10";
+      } else {
+        // Show indicator at the top
+        classes +=
+          " before:absolute before:left-0 before:-top-0 before:w-full before:h-[2px] before:bg-primary before:z-10";
+      }
+    }
+    return classes;
+  }
 </script>
 
 <aside class="h-full overflow-hidden">
   <div class="flex flex-col {!isSidebarCollapsed ? 'mx-2' : 'mx-1'}">
-    {#each SOURCES as source, i (source)}
+    {#each orderedSources as source, i (source)}
       <Button
         variant="ghost"
-        class={playlistState.getButtonClasses({
+        draggable={true}
+        class="{playlistState.getButtonClasses({
           index: i,
           isSelected: selectedSource === source,
-          itemType: "source",
+          itemType: 'source',
           isSidebarCollapsed,
-        })}
+        })} {getSourceDragClasses(i)}"
         size={!isSidebarCollapsed ? "default" : "icon"}
         onclick={() => goto(`/${source}`)}
         title={SOURCE_INFO[source].displayName}
         onmouseenter={() => playlistState.handleMouseEnter(i)}
         onmouseleave={() => playlistState.handleMouseLeave(i)}
+        ondragstart={(e) => handleSourceDragStart(e, i)}
+        ondragover={(e) => handleSourceDragOver(e, i)}
+        ondragleave={(e) => handleSourceDragLeave(e)}
+        ondrop={(e) => handleSourceDrop(e, i)}
+        ondragend={handleSourceDragEnd}
       >
         <div
           class="flex items-center relative {!isSidebarCollapsed

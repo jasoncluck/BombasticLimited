@@ -13,6 +13,7 @@ export const load: LayoutServerLoad = async ({
   depends,
 }) => {
   depends("supabase:db:playlists");
+  depends("supabase:db:profiles");
 
   const { session } = await safeGetSession();
 

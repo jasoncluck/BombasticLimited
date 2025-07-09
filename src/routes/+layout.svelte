@@ -10,7 +10,6 @@
     GalleryHorizontal,
     House,
     LogOut,
-    Menu,
     Table,
     UserCircle,
   } from "@lucide/svelte";
@@ -20,7 +19,6 @@
   import * as Resizable from "$lib/components/ui/resizable";
   import Sidebar from "$lib/components/sidebar.svelte";
   import ScrollArea from "$lib/components/ui/scroll-area/scroll-area.svelte";
-  import ContentContextMenu from "$lib/components/content/content-context-menu.svelte";
   import "../app.css";
 
   import { COLLAPSED_SIDEBAR_SIZE } from "$lib/constants/layout";
@@ -37,7 +35,7 @@
   const layoutState = setLayoutState();
   const pageState = setPageState();
   const contentState = setContentState(pageState);
-  const playlistState = setPlaylistState(pageState, contentState);
+  setPlaylistState(pageState, contentState);
 
   const mediaQuery = setMediaQueryState({
     // breakpoints: ["max-sm"],
@@ -63,10 +61,6 @@
   } = $derived(data);
 
   let playlistsState = $derived(playlists);
-
-  // Get current playlist context for the context menu
-  // This will be set by individual content components
-  const currentPlaylist = $derived(playlistState.currentPlaylist);
 
   if (contentState.dragContentType) {
     contentState.dragContentType = null;
@@ -215,6 +209,7 @@
       <div class="sm:hidden w-full">
         <SideDrawer
           {playlists}
+          {userProfile}
           {supabase}
           {session}
           handleLogout={() => layoutState.handleLogout(supabase)}
@@ -360,7 +355,7 @@
       collapsible={true}
       onCollapse={() => (isSidebarCollapsed = true)}
       onExpand={() => (isSidebarCollapsed = false)}
-      class="@container pane sm:flex hidden flex-col h-full grow {isSidebarCollapsed
+      class="@container pane sm:flex hidden flex-col h-full grow sm:ml-2 {isSidebarCollapsed
         ? 'max-w-[75px] min-w-[75px]'
         : 'min-w-[200px]'}"
     >
@@ -373,21 +368,24 @@
         <Sidebar
           {isSidebarCollapsed}
           bind:playlists={playlistsState}
+          {userProfile}
           {supabase}
           {session}
         />
       </ScrollArea>
     </Resizable.Pane>
     <Resizable.Handle
-      onDraggingChange={layoutState.handleResize}
-      class="bg-background w-2 end-[2px] after:transition after:duration-300 after:ease-out)] 
-        after:h-[calc(100%-16px)] sm:flex hidden
+      onDraggingChange={(isDragging) =>
+        (layoutState.isDraggingDivider = isDragging)}
+      draggable={true}
+      class="bg-background w-1 end-[2px] after:transition after:duration-300 after:ease-out)] 
+        after:h-[calc(100%-16px)] sm:flex sm:ml-1 hidden
         {layoutState.isDraggingDivider
         ? 'after:w-[1px] after:bg-foreground'
         : 'after:w-[1px] hover:after:bg-muted-foreground'}"
     />
     <Resizable.Pane
-      class="@container pane flex min-w-[350px] sm:mr-2"
+      class="@container pane flex min-w-[350px] sm:mr-1"
       defaultSize={layout ? parseFloat(layout[1]) : 79}
     >
       <ScrollArea
