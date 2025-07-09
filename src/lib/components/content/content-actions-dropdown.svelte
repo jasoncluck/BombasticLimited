@@ -54,7 +54,7 @@
   });
 
   $effect(() => {
-    if (contentState.isContextMenuOpenForSection(sectionId)) {
+    if (contentState.isContextMenuOpenForAnySection()) {
       open = false;
     }
   });
@@ -158,15 +158,16 @@
         >
       {/if}
 
-      {#if contentState.hoveredVideosBySection[sectionId] && playlist && variant === "list-items" && isPlaylistOwner}
-        {@const hoveredVideo = contentState.hoveredVideosBySection[sectionId]}
+      {#if contentState.selectedVideosBySection[sectionId] && contentState.selectedVideosBySection[sectionId].length === 1 && playlist && variant === "list-items" && isPlaylistOwner}
+        {@const selectedVideo =
+          contentState.selectedVideosBySection[sectionId][0]}
         <DropdownMenu.Item
           class="p-2"
           onclick={async () =>
             await handleUpdatePlaylistImage({
               playlist,
-              thumbnailUrl: hoveredVideo.thumbnail_url,
-              thumbnailMaxResUrl: hoveredVideo.thumbnail_maxres_url,
+              thumbnailUrl: selectedVideo.thumbnail_url,
+              thumbnailMaxResUrl: selectedVideo.thumbnail_maxres_url,
               supabase,
             })}>Set as playlist image</DropdownMenu.Item
         >

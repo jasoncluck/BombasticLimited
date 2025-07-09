@@ -60,8 +60,6 @@
     supabase,
     clearSelection: true,
     onVideosUpdate: (updatedVideos) => {
-      // For carousel, we might need to update the parent component
-      // This would require videos to be bindable in the parent
       videos = updatedVideos;
     },
   });
@@ -228,7 +226,7 @@
 
     // Add drag drop classes if enabled
     if (dragDrop && allowVideoReorder) {
-      classes += ` ${contentState.getVideoDragClasses(index)}`;
+      classes += ` ${contentState.getVideoDragClasses(index, "CARD")}`;
     }
 
     return classes;

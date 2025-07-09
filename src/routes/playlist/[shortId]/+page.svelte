@@ -40,8 +40,10 @@
       if (restored?.showFloatingBreadcrumbs) {
         showFloatingBreadcrumbs = restored.showFloatingBreadcrumbs;
       }
-      contentState.selectedVideosBySection[DEFAULT_SECTION_ID] =
-        restored.selectedVideos;
+      if (userProfile?.content_display === "TABLE") {
+        contentState.selectedVideosBySection[DEFAULT_SECTION_ID] =
+          restored.selectedVideos;
+      }
     },
   };
 
@@ -62,6 +64,7 @@
 <div class="flex flex-col grow relative">
   <ImageCropper.Root src={playlist.processedImageUrl ?? undefined}>
     <PlaylistHeader
+      {userProfile}
       {...playlistHeaderProps}
       bind:showFloatingBreadcrumbs
       {videos}
@@ -75,7 +78,8 @@
     {playlists}
     {videos}
     {videosCount}
-    allowVideoReorder={contentFilter.sort.key === "playlistOrder"}
+    allowVideoReorder={contentFilter.sort.key === "playlistOrder" &&
+      playlist.created_by === session?.user.id}
     {contentFilter}
     {supabase}
     {session}

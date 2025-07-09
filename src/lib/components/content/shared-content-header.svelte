@@ -34,6 +34,7 @@
   import Button from "../ui/button/button.svelte";
   import * as Popover from "$lib/components/ui/popover";
   import { page } from "$app/state";
+  import type { Profile } from "$lib/supabase/profiles";
 
   interface SharedContentHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
@@ -45,6 +46,7 @@
     playlist?: ProfilePlaylist | UserPlaylist;
     session: Session | null;
     showFloatingBreadcrumbs: boolean;
+    userProfile: Profile | null;
     supabase: SupabaseClient<Database>;
     videos: Video[];
     videosCount: number;
@@ -61,6 +63,7 @@
     playlist: profilePlaylist,
     session,
     showFloatingBreadcrumbs = $bindable(),
+    userProfile,
     supabase,
     videos,
     videosCount,
@@ -173,7 +176,11 @@
         {/if}
       {/if}
       {#if session}
-        <div class="relative">
+        <div
+          class="relative {userProfile?.content_display === 'TABLE'
+            ? ''
+            : 'sm:hidden'}"
+        >
           <ContentSelect
             {videos}
             playlist={profilePlaylist}

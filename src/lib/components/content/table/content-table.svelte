@@ -52,7 +52,6 @@
       : new Set(),
   );
 
-  // Create drag drop functionality if reordering is allowed and we have the required dependencies
   const dragDrop = $derived(
     contentState.createDragDrop({
       allowVideoReorder,
@@ -91,7 +90,7 @@
     // Add drag drop classes if enabled
     if (dragDrop && allowVideoReorder) {
       // Use the new drag classes method instead of the old border approach
-      classes += ` ${contentState.getVideoDragClasses(index)}`;
+      classes += ` ${contentState.getVideoDragClasses(index, "TABLE")}`;
     }
 
     return classes;

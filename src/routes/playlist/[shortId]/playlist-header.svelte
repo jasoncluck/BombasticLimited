@@ -21,6 +21,7 @@
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import { buttonVariants } from "$lib/components/ui/button";
+  import type { Profile } from "$lib/supabase/profiles";
 
   interface PlaylistHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
@@ -32,6 +33,7 @@
     playlists: Playlist[];
     playlistDuration: { hours: number; minutes: number; seconds: number };
     videosCount: number;
+    userProfile: Profile | null;
     currentPage: number;
     supabase: SupabaseClient<Database>;
     session: Session | null;
@@ -48,6 +50,7 @@
     playlistDuration,
     videosCount,
     currentPage,
+    userProfile,
     supabase,
     session,
     ...props
@@ -96,6 +99,7 @@
   {videos}
   {playlists}
   bind:currentPage
+  {userProfile}
   {supabase}
   {session}
   {...props}
@@ -169,7 +173,10 @@
                   size="5"
                   class="shrink-0 stroke-muted-foreground  fill-muted-foreground justify-center"
                 />
-                <a href={sourceInfo.youtubeUrl} class="flex gap-2">
+                <a
+                  href="https://www.youtube.com/playlist?list={playlist.youtube_id}"
+                  class="flex gap-2"
+                >
                   <Youtube
                     size="20"
                     class="shrink-0 stroke-muted-foreground justify-center"

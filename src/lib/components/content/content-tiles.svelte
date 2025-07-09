@@ -37,18 +37,20 @@
 
   const hoveredVideo = $derived(contentState.hoveredVideosBySection[sectionId]);
 
-  const dragDrop = contentState.createDragDrop({
-    allowVideoReorder,
-    videos,
-    videosCount,
-    playlist,
-    contentFilter,
-    supabase,
-    clearSelection: true,
-    onVideosUpdate: (updatedVideos) => {
-      videos = updatedVideos;
-    },
-  });
+  const dragDrop = $derived(
+    contentState.createDragDrop({
+      allowVideoReorder,
+      videos,
+      videosCount,
+      clearSelection: true,
+      playlist,
+      contentFilter,
+      supabase,
+      onVideosUpdate: (updatedVideos) => {
+        videos = updatedVideos;
+      },
+    }),
+  );
 
   const selectedVideoIds = $derived(
     selectedVideos.length > 0
@@ -71,7 +73,7 @@
 
     // Add drag drop classes if enabled
     if (dragDrop && allowVideoReorder) {
-      classes += ` ${contentState.getVideoDragClasses(index)}`;
+      classes += ` ${contentState.getVideoDragClasses(index, "CARD")}`;
     }
 
     return classes;

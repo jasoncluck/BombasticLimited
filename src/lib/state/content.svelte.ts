@@ -10,6 +10,7 @@ import {
 } from "$lib/components/content/content-filter";
 import { handleUpdatePlaylistVideoPosition } from "$lib/components/playlist/playlist-service";
 import type { PageState } from "./page.svelte";
+import type { ContentDisplay } from "$lib/components/content/content";
 
 export type DragContentType = "video" | "playlist" | null;
 
@@ -101,6 +102,18 @@ export class ContentState {
   // Helper methods for section-specific context menu tracking
   isContextMenuOpenForSection(sectionId: string = DEFAULT_SECTION_ID): boolean {
     return this.openContextMenuSection === sectionId;
+  }
+
+  isContextMenuOpenForAnySection(): boolean {
+    for (const sectionId in this.selectedVideosBySection) {
+      if (
+        this.openContextMenuSection &&
+        this.isContextMenuOpenForSection(sectionId)
+      ) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private clearOtherSections(currentSectionId: string) {
@@ -198,7 +211,7 @@ export class ContentState {
     }
   }
 
-  getVideoDragClasses(index: number): string {
+  getVideoDragClasses(index: number, contentDisplay: ContentDisplay): string {
     let classes = "relative";
 
     if (this.draggedIndex === index) {
@@ -208,14 +221,32 @@ export class ContentState {
     if (this.targetIndex === index) {
       classes += " relative";
 
-      if (this.draggedIndex === null || this.draggedIndex < this.targetIndex) {
-        // Show indicator at the bottom
-        classes +=
-          " after:absolute after:left-0 after:bottom-0 after:w-full after:h-[2px] after:bg-primary after:z-10";
+      if (contentDisplay === "TABLE") {
+        if (
+          this.draggedIndex === null ||
+          this.draggedIndex < this.targetIndex
+        ) {
+          // Show indicator at the bottom
+          classes +=
+            " after:absolute after:left-0 after:bottom-0 after:w-full after:h-[2px] after:bg-primary after:z-10";
+        } else {
+          // Show indicator at the top (using after with negative margin)
+          classes +=
+            " after:absolute after:left-0 after:top-0 after:-mt-px after:w-full after:h-[2px] after:bg-primary after:z-10";
+        }
       } else {
-        // Show indicator at the top (using after with negative margin)
-        classes +=
-          " after:absolute after:left-0 after:top-0 after:-mt-px after:w-full after:h-[2px] after:bg-primary after:z-10";
+        if (
+          this.draggedIndex === null ||
+          this.draggedIndex < this.targetIndex
+        ) {
+          // Show indicator at the right (vertical line)
+          classes +=
+            " after:absolute after:right-0 after:top-0 after:w-[2px] after:h-full after:bg-primary after:z-10";
+        } else {
+          // Show indicator at the left (vertical line)
+          classes +=
+            " after:absolute after:left-0 after:top-0 after:w-[2px] after:h-full after:bg-primary after:z-10";
+        }
       }
     }
     return classes;
@@ -319,7 +350,6 @@ export class ContentState {
       // This ensures selections are cleared regardless of where the drag ended
       if (this.draggedFromSectionId && options.clearSelection) {
         this.selectedVideosBySection[this.draggedFromSectionId] = [];
-        this.hoveredVideosBySection[this.draggedFromSectionId] = null;
       }
 
       // Reset drag state

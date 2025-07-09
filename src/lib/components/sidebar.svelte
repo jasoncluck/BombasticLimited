@@ -208,7 +208,7 @@
                   {/if}
                   {#if !isSidebarCollapsed}
                     <span
-                      class="text-sm mr-6 overflow-none px-3 text-clip justify-start whitespace-nowrap break-keep"
+                      class="text-sm mr-6 px-3 text-wrap text-left justify-start max-h-10 overflow-hidden"
                     >
                       {playlist.name}
                     </span>
