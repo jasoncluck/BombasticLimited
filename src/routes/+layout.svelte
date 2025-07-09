@@ -26,12 +26,9 @@
   import { COLLAPSED_SIDEBAR_SIZE } from "$lib/constants/layout";
   import type { Snapshot } from "./$types.js";
   import SideDrawer from "$lib/components/side-drawer.svelte";
-  import { getContentState, setContentState } from "$lib/state/content.svelte";
+  import { setContentState } from "$lib/state/content.svelte";
   import { setMediaQueryState } from "$lib/state/media-query.svelte";
-  import {
-    getPlaylistState,
-    setPlaylistState,
-  } from "$lib/state/playlist.svelte";
+  import { setPlaylistState } from "$lib/state/playlist.svelte";
   import { setPageState, type ScrollPosition } from "$lib/state/page.svelte";
   import { setLayoutState } from "$lib/state/layout.svelte";
   import { handleUpdateProfileContentDisplay } from "$lib/components/profile/profile-service";
@@ -246,63 +243,64 @@
 
     <div class="ml-auto">
       <div class="flex gap-4 items-center ml-auto sm:flex">
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger
-            id="user-preferences"
-            class="cursor-pointer outline-none {buttonVariants({
-              variant: 'outline',
-            })}"
-          >
-            <div class="flex items-center gap-2">
-              {#if userProfile?.content_display === "CARD"}
-                <div class="flex items-center gap-2">
-                  <GalleryHorizontal />
-                  Card
-                </div>
-              {:else}
-                <div class="flex items-center gap-2">
-                  <Table />
-                  Table
-                </div>
-              {/if}
-            </div>
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Content>
-            <DropdownMenu.Group>
-              <DropdownMenu.Item
-                class="cursor-pointer"
-                onclick={() => {
-                  handleUpdateProfileContentDisplay({
-                    contentDisplay: "CARD",
-                    supabase,
-                    session,
-                  });
-                }}
-              >
-                <div class="flex items-center gap-2">
-                  <GalleryHorizontal />
-                  Card
-                </div>
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                class="cursor-pointer"
-                onclick={() => {
-                  handleUpdateProfileContentDisplay({
-                    contentDisplay: "TABLE",
-                    supabase,
-                    session,
-                  });
-                }}
-              >
-                <div class="flex items-center gap-2">
-                  <Table />
-                  Table
-                </div>
-              </DropdownMenu.Item>
-            </DropdownMenu.Group>
-          </DropdownMenu.Content>
-        </DropdownMenu.Root>
         {#if user}
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger
+              id="user-preferences"
+              class={buttonVariants({
+                variant: "outline",
+                class: "sm:block hidden cursor-pointer outline-none",
+              })}
+            >
+              <div class="flex items-center gap-2">
+                {#if userProfile?.content_display === "CARD"}
+                  <div class="flex items-center gap-2">
+                    <GalleryHorizontal />
+                    Card
+                  </div>
+                {:else}
+                  <div class="flex items-center gap-2">
+                    <Table />
+                    Table
+                  </div>
+                {/if}
+              </div>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content>
+              <DropdownMenu.Group>
+                <DropdownMenu.Item
+                  class="cursor-pointer"
+                  onclick={() => {
+                    handleUpdateProfileContentDisplay({
+                      contentDisplay: "CARD",
+                      supabase,
+                      session,
+                    });
+                  }}
+                >
+                  <div class="flex items-center gap-2">
+                    <GalleryHorizontal />
+                    Card
+                  </div>
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  class="cursor-pointer"
+                  onclick={() => {
+                    handleUpdateProfileContentDisplay({
+                      contentDisplay: "TABLE",
+                      supabase,
+                      session,
+                    });
+                  }}
+                >
+                  <div class="flex items-center gap-2">
+                    <Table />
+                    Table
+                  </div>
+                </DropdownMenu.Item>
+              </DropdownMenu.Group>
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
           <DropdownMenu.Root>
             <DropdownMenu.Trigger
               class="cursor-pointer outline-none {buttonVariants({

@@ -5,7 +5,11 @@
   import Content from "$lib/components/content/content.svelte";
   import { SOURCE_INFO } from "$lib/constants/source";
   import Button from "$lib/components/ui/button/button.svelte";
-  import type { CarouselState } from "$lib/state/content.svelte";
+  import {
+    DEFAULT_SECTION_ID,
+    getContentState,
+    type CarouselState,
+  } from "$lib/state/content.svelte";
   import type { Snapshot } from "./$types";
   import { handlePlaylistNavigation } from "$lib/components/playlist/playlist";
   import PlaylistTiles from "$lib/components/playlist/playlist-tiles.svelte";
@@ -16,6 +20,7 @@
   } from "$lib/supabase/playlists";
   import { processPlaylists } from "$lib/components/playlist/playlist-service";
   import { onMount } from "svelte";
+  import type { Video } from "$lib/supabase/videos";
 
   let { data } = $props();
   const {
@@ -30,6 +35,8 @@
     contentFilter,
   } = $derived(data);
 
+  const contentState = getContentState();
+
   let carouselState = $state<CarouselState>({ lastViewedIndex: 0 });
   let processedPlaylistsPromise = $state<Promise<Playlist[]>>(
     Promise.resolve([]),
@@ -37,9 +44,20 @@
   let sourcePlaylistsData =
     $state<ReturnType<typeof getPlaylistsForUsername>>();
 
-  export const snapshot: Snapshot<CarouselState> = {
-    capture: () => carouselState,
-    restore: async (restored) => (carouselState = restored),
+  export const snapshot: Snapshot<{
+    carouselState: CarouselState;
+    selectedVideos: Video[];
+  }> = {
+    capture: () => ({
+      carouselState: carouselState,
+      selectedVideos: contentState.selectedVideosBySection[DEFAULT_SECTION_ID],
+    }),
+    restore: async (restored) => {
+      if (userProfile?.content_display === "TABLE") {
+        contentState.selectedVideosBySection[DEFAULT_SECTION_ID] =
+          restored.selectedVideos;
+      }
+    },
   };
 
   onMount(async () => {
@@ -101,6 +119,7 @@
         bind:carouselState
         {userProfile}
         tilesDisplay="CAROUSEL"
+        sectionId="latestVideos"
         {playlists}
         {contentFilter}
         {session}
@@ -128,6 +147,7 @@
           bind:carouselState
           {playlists}
           {userProfile}
+          sectionId={highlightPlaylist.playlist.short_id}
           tilesDisplay="CAROUSEL"
           {contentFilter}
           {session}

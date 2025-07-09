@@ -1,9 +1,5 @@
 import { isSource, SOURCE_INFO } from "$lib/constants/source";
-import {
-  DEFAULT_NUM_VIDEOS_OVERVIEW,
-  getVideos,
-  type Video,
-} from "$lib/supabase/videos";
+import { DEFAULT_NUM_VIDEOS_OVERVIEW, getVideos } from "$lib/supabase/videos";
 import { redirect } from "@sveltejs/kit";
 import {
   isVideoFilter,
@@ -14,7 +10,6 @@ import {
   getPlaylistByYoutubeId,
   getPlaylistsForUsername,
   getPlaylistVideos,
-  type Playlist,
 } from "$lib/supabase/playlists";
 import type { PageServerLoad } from "./$types";
 
@@ -50,29 +45,40 @@ export const load: PageServerLoad = async ({
     supabase,
   });
 
-  const highlightPlaylists: { playlist: Playlist; videos: Video[] }[] = [];
   const playlistContentFilter: PlaylistVideosFilter = {
     sort: { key: "playlistOrder", order: "ascending" },
     type: "playlist",
   };
-  for (const highlightPlaylist of SOURCE_INFO[source].highlightedPlaylists) {
-    const { playlist } = await getPlaylistByYoutubeId({
-      youtubeId: highlightPlaylist.youtubeId,
-      supabase,
-    });
-    if (!playlist) {
-      continue;
-    }
-    // Override playlist name
-    playlist.name = highlightPlaylist.name;
-    const { videos } = await getPlaylistVideos({
-      playlistId: playlist.id,
-      contentFilter: playlistContentFilter,
-      limit: DEFAULT_NUM_VIDEOS_OVERVIEW,
-      supabase,
-    });
-    highlightPlaylists.push({ playlist, videos });
-  }
+
+  // Create array of promises for all playlist operations
+  const playlistPromises = SOURCE_INFO[source].highlightedPlaylists.map(
+    async (highlightPlaylist) => {
+      const { playlist } = await getPlaylistByYoutubeId({
+        youtubeId: highlightPlaylist.youtubeId,
+        supabase,
+      });
+
+      if (!playlist) {
+        return null; // Return null for playlists that don't exist
+      }
+
+      // Override playlist name
+      playlist.name = highlightPlaylist.name;
+
+      const { videos } = await getPlaylistVideos({
+        playlistId: playlist.id,
+        contentFilter: playlistContentFilter,
+        limit: DEFAULT_NUM_VIDEOS_OVERVIEW,
+        supabase,
+      });
+
+      return { playlist, videos };
+    },
+  );
+
+  const results = await Promise.all(playlistPromises);
+
+  const highlightPlaylists = results.filter((result) => result !== null);
 
   const sourcePlaylistsData = getPlaylistsForUsername({
     username: source,
