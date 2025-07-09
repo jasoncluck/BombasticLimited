@@ -317,7 +317,7 @@ export class ContentState {
 
       // Clear selected videos from the section that was being dragged
       // This ensures selections are cleared regardless of where the drag ended
-      if (this.draggedFromSectionId) {
+      if (this.draggedFromSectionId && options.clearSelection) {
         this.selectedVideosBySection[this.draggedFromSectionId] = [];
         this.hoveredVideosBySection[this.draggedFromSectionId] = null;
       }
@@ -441,7 +441,6 @@ export class ContentState {
 
         // Create a new array for the local update
         const updatedVideos = [...options.videos];
-        console.log(options.videos);
 
         // Remove the videos that are being moved
         const remainingVideos = updatedVideos.filter(
