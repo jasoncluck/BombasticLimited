@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { getContentState } from "$lib/state/content.svelte";
+  import {
+    DEFAULT_SECTION_ID,
+    getContentState,
+  } from "$lib/state/content.svelte";
   import { type Video } from "$lib/supabase/videos";
   import { Play } from "@lucide/svelte";
   import { handleContentNavigation } from "../content";
@@ -12,16 +15,20 @@
     video,
     playlist,
     contentFilter,
+    sectionId = DEFAULT_SECTION_ID,
   }: {
     video: Video;
     contentFilter: CombinedContentFilter;
     playlist?: Playlist;
+    sectionId?: string;
   } = $props();
 
-  const isHovering = $derived(contentState.hoveredVideo?.id === video.id);
+  const isHovering = $derived(
+    contentState.hoveredVideosBySection[sectionId]?.id === video.id,
+  );
 </script>
 
-<div class="flex justify-center items-center">
+<div class="flex justify-center items-center h-[80px]">
   <Button
     class="{isHovering ? 'opacity-100' : 'opacity-0'} ghost-button-minimal"
     variant="ghost"

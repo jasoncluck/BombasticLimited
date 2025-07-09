@@ -13,11 +13,13 @@
   );
 </script>
 
-<div class="min-w-0 max-w-xs">
-  <p
-    class="lg:line-clamp-2 hidden text-sm {!isSelected &&
-      'text-muted-foreground'} leading-relaxed break-words whitespace-normal"
-  >
-    {video.description}
-  </p>
+<div class="flex items-center h-[80px]">
+  <div class="justify-center min-w-0 max-w-xs">
+    <p
+      class="lg:line-clamp-2 hidden text-sm {!isSelected &&
+        'text-muted-foreground'} leading-relaxed break-words whitespace-normal"
+    >
+      {video.description}
+    </p>
+  </div>
 </div>

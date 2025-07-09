@@ -55,6 +55,7 @@
       variant="header"
       {playlist}
       {playlists}
+      {sectionId}
       onSelectAll={handleSelectAll}
       {supabase}
       {session}

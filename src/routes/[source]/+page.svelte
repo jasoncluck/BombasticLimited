@@ -5,16 +5,16 @@
   import Content from "$lib/components/content/content.svelte";
   import { SOURCE_INFO } from "$lib/constants/source";
   import Button from "$lib/components/ui/button/button.svelte";
-  import type { CarouselState } from "$lib/components/content/content.js";
-  import type { Snapshot } from "@sveltejs/kit";
-  import { handlePlaylistNavigation } from "$lib/components/playlist/playlist.js";
+  import type { CarouselState } from "$lib/state/content.svelte";
+  import type { Snapshot } from "./$types";
+  import { handlePlaylistNavigation } from "$lib/components/playlist/playlist";
   import PlaylistTiles from "$lib/components/playlist/playlist-tiles.svelte";
   import {
     DEFAULT_NUM_PLAYLISTS_OVERVIEW,
     getPlaylistsForUsername,
     type Playlist,
-  } from "$lib/supabase/playlists.js";
-  import { processPlaylists } from "$lib/components/playlist/playlist-service.js";
+  } from "$lib/supabase/playlists";
+  import { processPlaylists } from "$lib/components/playlist/playlist-service";
   import { onMount } from "svelte";
 
   let { data } = $props();

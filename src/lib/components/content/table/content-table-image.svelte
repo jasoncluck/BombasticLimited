@@ -11,7 +11,7 @@
   const { video = $bindable() }: ContentCardProps = $props();
 </script>
 
-<div class="relative w-32 h-18 hrink-0 aspect-video">
+<div class="relative w-32 shrink-0 aspect-video flex items-center h-[80px]">
   <img
     class="w-full h-full object-cover"
     src={video.thumbnail_url}
@@ -29,7 +29,7 @@
     />
   {:else if "watched_at" in video && video.watched_at}
     <div
-      class="absolute bottom-0 right-0 flex bg-background-lighter w-full gap-1 px-1 items-center justify-center"
+      class="absolute bottom-0 right-0 flex bg-background w-full gap-1 px-1 items-center justify-center"
     >
       <Check class="text-primary" />
       <p class="text-xs text-primary">Watched</p>

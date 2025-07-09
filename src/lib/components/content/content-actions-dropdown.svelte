@@ -24,6 +24,7 @@
     playlists,
     variant,
     onSelectAll,
+    sectionId,
     supabase,
     session,
   }: {
@@ -32,6 +33,7 @@
     playlists: Playlist[];
     // For items like deselecting only makes sense when using the content selector
     variant: "header" | "item" | "list-items";
+    sectionId: string;
     supabase: SupabaseClient<Database>;
     session: Session | null;
     onSelectAll?: () => void;
@@ -41,7 +43,9 @@
 
   const isPlaylistOwner = $derived(session?.user.id === playlist?.created_by);
 
-  const isHovering = $derived(contentState.hoveredVideo?.id === videos[0]?.id);
+  const isHovering = $derived(
+    contentState.hoveredVideosBySection[sectionId]?.id === videos[0]?.id,
+  );
 
   let open = $state(false);
 
@@ -50,7 +54,7 @@
   });
 
   $effect(() => {
-    if (contentState.isContextMenuOpen) {
+    if (contentState.isContextMenuOpenForSection(sectionId)) {
       open = false;
     }
   });
@@ -68,12 +72,12 @@
               contentState.isDropdownMenuOpen = false;
             }
             if (variant === "list-items" && videos.length > 0) {
-              contentState.selectedVideos = [videos[0]];
+              contentState.selectedVideosBySection[sectionId] = [videos[0]];
             }
             // Don't allow double click to go through to navigate
             e.stopPropagation();
           }}
-          class="outline-none ghost-button-minimal {open
+          class="outline-none ghost-button-minimal  {open
             ? 'scale-105'
             : ''} {variant !== 'list-items' || isHovering
             ? 'opacity-100'
@@ -154,8 +158,8 @@
         >
       {/if}
 
-      {#if contentState.hoveredVideo && playlist && variant === "list-items" && isPlaylistOwner}
-        {@const hoveredVideo = contentState.hoveredVideo}
+      {#if contentState.hoveredVideosBySection[sectionId] && playlist && variant === "list-items" && isPlaylistOwner}
+        {@const hoveredVideo = contentState.hoveredVideosBySection[sectionId]}
         <DropdownMenu.Item
           class="p-2"
           onclick={async () =>

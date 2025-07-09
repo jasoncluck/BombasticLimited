@@ -7,10 +7,11 @@
   let { video }: { video: Video } = $props();
 </script>
 
-<div class="flex flex-col min-w-[100px] max-w-sm gap-1">
+<div
+  class="flex flex-col min-w-[100px] max-w-sm gap-1 h-[80px] justify-center overflow-hidden"
+>
   <p
-    class="text-xs text-muted-foreground transform
-                     pointer-events-none"
+    class="text-xs text-muted-foreground transform pointer-events-none line-clamp-1"
   >
     {new Date(video?.published_at).toLocaleDateString("en-US", {
       year: "numeric",
@@ -18,10 +19,12 @@
       day: "numeric",
     })}
   </p>
-  <p class="text-s break-words whitespace-normal">{video.title}</p>
+  <p class="text-sm break-words whitespace-normal line-clamp-3 leading-5">
+    {video.title}
+  </p>
   {#if isVideoWithTimestamp(video) && video.playlist_name && video.playlist_short_id}
     <div
-      class="flex items-center gap-2 mt-1 text-xs text-secondary-foreground hover:text-primary"
+      class="flex items-center gap-2 mt-1 text-xs text-secondary-foreground hover:text-primary line-clamp-2"
     >
       <ListVideo size="16" class="shrink-0" />
       <a
@@ -31,21 +34,23 @@
           goto(`playlist/${video.playlist_short_id}`);
         }}
         href={`playlist/${video.playlist_short_id}`}
-        class=" whitespace-normal flex gap-2 items-center"
+        class="whitespace-normal flex gap-2 items-center truncate"
       >
-        <span>{video.playlist_name}</span>
+        <span class="truncate">{video.playlist_name}</span>
       </a>
-      <div class="flex items-center text-muted-foreground">
+      <div class="flex items-center text-muted-foreground shrink-0">
         {#if video.playlist_sorted_by}
           <Circle
             size="5"
             class="shrink-0 mr-2 stroke-muted-foreground fill-muted-foreground justify-center"
           />
-          <div class="flex">
-            {getSortDisplayName({
-              key: video.playlist_sorted_by,
-              view: "playlist",
-            })}
+          <div class="flex items-center shrink-0">
+            <span class="text-xs truncate">
+              {getSortDisplayName({
+                key: video.playlist_sorted_by,
+                view: "playlist",
+              })}
+            </span>
             {#if video.playlist_sort_order}
               {#if video.playlist_sort_order === "ascending"}
                 <ArrowUp size="14" class="shrink-0 ml-1" />
