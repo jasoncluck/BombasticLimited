@@ -44,7 +44,7 @@
     playlist,
     contentFilter,
     supabase,
-    clearSelectionOnDrop: true,
+    clearSelection: true,
     onVideosUpdate: (updatedVideos) => {
       videos = updatedVideos;
     },

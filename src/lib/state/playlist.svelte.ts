@@ -274,12 +274,6 @@ export class PlaylistStateClass {
             supabase: options.supabase,
             session: options.session,
           });
-
-          // Clear selected videos from the active section
-          // (other sections should already be cleared by the content state)
-          for (const section of allSelectedVideos) {
-            this.contentState.selectedVideosBySection[section.sectionId] = [];
-          }
         }
       } else if (this.contentState.dragContentType === "playlist") {
         if (this.draggedIndex === null || this.draggedIndex < 0) {

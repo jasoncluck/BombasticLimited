@@ -42,6 +42,12 @@
     contentState.selectedVideosBySection[sectionId] ?? [],
   );
 
+  const selectedVideoIds = $derived(
+    selectedVideos.length > 0
+      ? new Set(selectedVideos.map((v) => v.id))
+      : new Set(),
+  );
+
   const hoveredVideo = $derived(contentState.hoveredVideosBySection[sectionId]);
 
   // Create drag drop functionality
@@ -52,7 +58,7 @@
     playlist,
     contentFilter,
     supabase,
-    clearSelectionOnDrop: true,
+    clearSelection: true,
     onVideosUpdate: (updatedVideos) => {
       // For carousel, we might need to update the parent component
       // This would require videos to be bindable in the parent
@@ -67,12 +73,6 @@
   let userInteracting = $state(false);
   let slidesInView = $state<number[]>([]);
 
-  const selectedVideoIds = $derived(
-    selectedVideos.length > 0
-      ? new Set(selectedVideos.map((v) => v.id))
-      : new Set(),
-  );
-
   // Track slides in view for reactive updates
   $effect(() => {
     if (api) {
@@ -82,7 +82,6 @@
         }
       };
 
-      // Initial update
       updateSlidesInView();
 
       // Listen for changes
@@ -178,9 +177,12 @@
   });
 
   onDestroy(() => {
-    if (api && carouselState && carouselState.lastViewedIndex === undefined) {
-      const firstVisibleVideoIndex = getFirstVisibleVideoIndex();
-      carouselState.lastViewedIndex = firstVisibleVideoIndex;
+    if (api) {
+      if (carouselState && carouselState.lastViewedIndex === undefined) {
+        const firstVisibleVideoIndex = getFirstVisibleVideoIndex();
+        carouselState.lastViewedIndex = firstVisibleVideoIndex;
+      }
+      api.destroy();
     }
   });
 
@@ -307,15 +309,6 @@
         class={getItemClasses(video, i)}
         draggable="true"
         ondragstart={(e) => dragDrop.handleDragStart(e, i, sectionId)}
-        ondragover={allowVideoReorder
-          ? (e) => dragDrop.handleDragOver(e, i)
-          : undefined}
-        ondragleave={allowVideoReorder
-          ? (e) => dragDrop.handleDragLeave(e)
-          : undefined}
-        ondrop={allowVideoReorder
-          ? (e) => dragDrop.handleDrop(e, i, sectionId)
-          : undefined}
         ondragend={dragDrop.handleDragEnd}
         onmouseenter={() => handleMouseEnter(video, i)}
         onmouseleave={() => handleMouseLeave(i)}

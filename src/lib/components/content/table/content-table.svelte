@@ -18,11 +18,11 @@
     videos: Video[];
     playlist?: Playlist;
     contentFilter: CombinedContentFilter;
+    allowVideoReorder?: boolean;
     sectionId: string;
     supabase: SupabaseClient<Database>;
     session: Session | null;
     videosCount?: number | null;
-    onDataUpdate?: (data: Video[]) => void;
     handleDragStart?: (
       e: DragEvent & { currentTarget: HTMLDivElement },
       index: number,
@@ -35,10 +35,9 @@
     playlist,
     sectionId,
     contentFilter,
+    allowVideoReorder = false,
     videosCount,
-    onDataUpdate,
     supabase,
-    session,
   }: DataTableProps<TValue> = $props();
 
   const contentState = getContentState();
@@ -47,29 +46,24 @@
     contentState.selectedVideosBySection[sectionId] ?? [],
   );
 
-  const allowVideoReorder = $derived(
-    !!playlist &&
-      playlist.created_by === session?.user.id &&
-      contentFilter.sort.key === "playlistOrder",
+  const selectedVideoIds = $derived(
+    selectedVideos.length > 0
+      ? new Set(selectedVideos.map((v) => v.id))
+      : new Set(),
   );
 
   // Create drag drop functionality if reordering is allowed and we have the required dependencies
-  const dragDrop = $derived(
-    session
-      ? contentState.createDragDrop({
-          allowVideoReorder,
-          videos,
-          videosCount,
-          playlist,
-          contentFilter,
-          supabase,
-          onVideosUpdate: (updatedVideos) => {
-            videos = updatedVideos;
-            onDataUpdate?.(videos);
-          },
-        })
-      : null,
-  );
+  const dragDrop = contentState.createDragDrop({
+    allowVideoReorder,
+    videos,
+    videosCount,
+    playlist,
+    contentFilter,
+    supabase,
+    onVideosUpdate: (updatedVideos) => {
+      videos = updatedVideos;
+    },
+  });
 
   const table = createSvelteTable({
     get data() {
@@ -78,12 +72,6 @@
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
-
-  const selectedVideoIds = $derived(
-    selectedVideos.length > 0
-      ? new Set(selectedVideos.map((v) => v.id))
-      : new Set(),
-  );
 
   function getRowClasses(video: Video, index: number) {
     let classes = "selection-mode transition-none max-h-[80px] h-[80px]";
@@ -125,17 +113,12 @@
         data-state={row.getIsSelected() && "selected"}
         class={getRowClasses(row.original, i)}
         draggable={true}
-        ondragstart={dragDrop
-          ? (e) => dragDrop.handleDragStart(e, i, sectionId)
-          : undefined}
-        ondragover={dragDrop ? (e) => dragDrop.handleDragOver(e, i) : undefined}
-        ondragleave={dragDrop ? (e) => dragDrop.handleDragLeave(e) : undefined}
-        ondrop={dragDrop
-          ? (e) => dragDrop.handleDrop(e, i, sectionId)
-          : undefined}
-        ondragend={dragDrop ? dragDrop.handleDragEnd : undefined}
+        ondragstart={(e) => dragDrop.handleDragStart(e, i, sectionId)}
+        ondragover={(e) => dragDrop.handleDragOver(e, i)}
+        ondragleave={(e) => dragDrop.handleDragLeave(e)}
+        ondrop={(e) => dragDrop.handleDrop(e, i, sectionId)}
+        ondragend={dragDrop.handleDragEnd}
         onclick={(e) => {
-          e.preventDefault();
           contentState.handleVideoClick({
             event: e,
             video: row.original,
@@ -162,7 +145,6 @@
             // Manually trigger selection since context menu is prevented
             contentState.handleSelectVideos({
               event,
-              enableDoubleClick: true,
               video: row.original,
               videos,
               sectionId,

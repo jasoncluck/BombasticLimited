@@ -168,6 +168,7 @@
           {videos}
           {contentFilter}
           {videosCount}
+          {allowVideoReorder}
           {columns}
           {playlist}
           {sectionId}
