@@ -52,7 +52,7 @@ export const SOURCE_INFO: Record<Source, SourceInfo> = {
     urlParam: "jeffgerstmann",
     image: jeffgerstmannImage,
     twitchId: "504350",
-    youtubeId: "UCmeds0MLhjfkjD_5acPnFlQ",
+    youtubeId: "UCR9R2ARN74dCebn1kv06UhA",
     youtubeUrl: "https://www.youtube.com/@JeffGerstmannShow",
     highlightedPlaylists: [
       {
