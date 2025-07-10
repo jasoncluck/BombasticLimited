@@ -5,6 +5,8 @@
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import ContentActionsDropdown from "../content-actions-dropdown.svelte";
   import { DEFAULT_SECTION_ID } from "$lib/state/content.svelte";
+  import { getMediaQueryState } from "$lib/state/media-query.svelte";
+  import ContentActionsDrawer from "../content-actions-drawer.svelte";
 
   const {
     video,
@@ -21,16 +23,32 @@
     supabase: SupabaseClient<Database>;
     session: Session | null;
   } = $props();
+
+  const mediaQueryState = getMediaQueryState();
 </script>
 
-<div class="flex h-[80px] items-center">
-  <ContentActionsDropdown
-    videos={[video]}
-    {playlist}
-    {playlists}
-    {sectionId}
-    variant="list-items"
-    {supabase}
-    {session}
-  />
-</div>
+{#if mediaQueryState.canHover}
+  <div class="flex h-[80px] items-center">
+    <ContentActionsDropdown
+      videos={[video]}
+      {playlist}
+      {playlists}
+      {sectionId}
+      variant="list-items"
+      {supabase}
+      {session}
+    />
+  </div>
+{:else}
+  <div class="flex h-[80px] items-center">
+    <ContentActionsDrawer
+      videos={[video]}
+      {playlist}
+      {playlists}
+      {sectionId}
+      variant="list-items"
+      {supabase}
+      {session}
+    />
+  </div>
+{/if}

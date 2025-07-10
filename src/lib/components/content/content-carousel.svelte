@@ -217,7 +217,7 @@
     const isHovered = hoveredVideo?.id === video.id;
     const isInView = slidesInView.includes(index);
 
-    let classes = `group @4xl:basis-1/5 @sm:basis-1/3 basis-full p-2 rounded-md outline-none`;
+    let classes = `group @4xl:basis-1/5 @sm:basis-1/3 basis-full p-2 rounded-md outline-none h-64`;
 
     // Only apply hover and selected states to cards that are in view
     if (isInView && (isSelected || isHovered)) {

@@ -12,6 +12,7 @@
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
   import type { CombinedContentFilter } from "../content-filter";
+  import { getMediaQueryState } from "$lib/state/media-query.svelte";
 
   type DataTableProps<TValue> = {
     columns: ColumnDef<Video, TValue>[];
@@ -41,6 +42,7 @@
   }: DataTableProps<TValue> = $props();
 
   const contentState = getContentState();
+  const mediaQueryState = getMediaQueryState();
 
   const selectedVideos = $derived(
     contentState.selectedVideosBySection[sectionId] ?? [],
@@ -59,6 +61,9 @@
       videosCount,
       playlist,
       contentFilter,
+
+      clearSelection: mediaQueryState.canHover ? false : true,
+
       supabase,
       onVideosUpdate: (updatedVideos) => {
         videos = updatedVideos;
@@ -126,7 +131,7 @@
             videos,
             playlist,
             sectionId,
-            enableDoubleClick: true,
+            enableDoubleClick: mediaQueryState.canHover ? true : false,
             onNavigate: (video, playlist) => {
               handleContentNavigation({
                 video,
