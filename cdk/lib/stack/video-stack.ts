@@ -114,12 +114,12 @@ export class VideoStack extends Stack {
         }),
       );
 
-      // Schedule the playlists lambda to run every hour
+      // Schedule the playlists lambda to run every day at noon
       const playlistsSourceRule = new events.Rule(
         this,
         `${source}_Playlists_Rule`,
         {
-          schedule: events.Schedule.expression("cron(0 * * * ? *)"),
+          schedule: events.Schedule.expression("cron(0 12 * * ? *)"),
         },
       );
 

@@ -616,13 +616,7 @@ export class ContentState {
       }
     } else {
       // No modifier keys - standard single selection behavior
-      if (videoIndex === -1) {
-        selectedVideos = [video];
-      } else if (selectedVideos.length === 1) {
-        selectedVideos = [];
-      } else {
-        selectedVideos = [video];
-      }
+      selectedVideos = [video];
     }
 
     // Update the selected videos for this section

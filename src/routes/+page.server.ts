@@ -28,6 +28,7 @@ export const load: PageServerLoad = async ({
 
   const sourceVideos: SourceVideos = {
     giantbomb: [],
+    jeffgerstmann: [],
     nextlander: [],
     remap: [],
   };

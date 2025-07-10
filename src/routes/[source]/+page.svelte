@@ -76,9 +76,9 @@
 </script>
 
 <div class="flex flex-col">
-  <div class="flex justify-between m-4">
+  <div class="flex @2xl:flex-nowrap flex-wrap justify-between m-4 gap-2">
     <div class="flex flex-col">
-      <h1 class="header-primary">
+      <h1 class="header-primary shrink-0">
         {SOURCE_INFO[source].displayName}
       </h1>
       {#if SOURCE_INFO[source].websiteUrlDomain}
@@ -94,8 +94,10 @@
     <Button
       variant="secondary"
       href={SOURCE_INFO[source].supportUrl}
+      class="p-6 text-wrap break-words whitespace-normal leading-tight text-center"
       target="_blank"
-      >Support {SOURCE_INFO[source].displayName}
+    >
+      Support {SOURCE_INFO[source].displayName}
     </Button>
   </div>
   {#if activeStreams.sources.includes(source)}

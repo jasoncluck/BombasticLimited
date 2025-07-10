@@ -1,12 +1,14 @@
 export const SOURCES: Array<Database["public"]["Enums"]["source"]> = [
-  "nextlander",
   "giantbomb",
+  "jeffgerstmann",
+  "nextlander",
   "remap",
 ] as const;
 export type Source = (typeof SOURCES)[number];
 
 import nextlanderImage from "$lib/assets/nextlander.jpg";
 import giantbombImage from "$lib/assets/giantbomb.jpg";
+import jeffgerstmannImage from "$lib/assets/jeffgerstmann.jpg";
 import remapImage from "$lib/assets/remap.jpg";
 import type { Database } from "$lib/supabase/database.types";
 
@@ -28,16 +30,6 @@ interface SourceInfo {
 }
 
 export const SOURCE_INFO: Record<Source, SourceInfo> = {
-  nextlander: {
-    displayName: "Nextlander",
-    urlParam: "nextlander",
-    image: nextlanderImage,
-    twitchId: "689331234",
-    youtubeId: "UCO0gHyqLNeIrCAjwlO2BmiA",
-    youtubeUrl: "https://www.youtube.com/@Nextlander",
-    highlightedPlaylists: [],
-    supportUrl: "https://www.patreon.com/nextlander/",
-  },
   giantbomb: {
     displayName: "Giant Bomb",
     urlParam: "giantbomb",
@@ -54,6 +46,35 @@ export const SOURCE_INFO: Record<Source, SourceInfo> = {
     ],
     websiteUrlDomain: "giantbomb.com",
     supportUrl: "https://www.giantbomb.com/upgrade/",
+  },
+  jeffgerstmann: {
+    displayName: "The Jeff Gerstmann Show",
+    urlParam: "jeffgerstmann",
+    image: jeffgerstmannImage,
+    twitchId: "504350",
+    youtubeId: "UCmeds0MLhjfkjD_5acPnFlQ",
+    youtubeUrl: "https://www.youtube.com/@JeffGerstmannShow",
+    highlightedPlaylists: [
+      {
+        name: "Quick Looks at New Video Games",
+        youtubeId: "PLDKeuvgV0sxZ78sutjkPvhM9sL74WHITb",
+      },
+      {
+        name: "Ranking the NES!",
+        youtubeId: "PLDKeuvgV0sxZ_xs4zUvQcMEV-LTjSf-Ok",
+      },
+    ],
+    supportUrl: "https://www.patreon.com/cw/jeffgerstmann",
+  },
+  nextlander: {
+    displayName: "Nextlander",
+    urlParam: "nextlander",
+    image: nextlanderImage,
+    twitchId: "689331234",
+    youtubeId: "UCO0gHyqLNeIrCAjwlO2BmiA",
+    youtubeUrl: "https://www.youtube.com/@Nextlander",
+    highlightedPlaylists: [],
+    supportUrl: "https://www.patreon.com/nextlander/",
   },
   remap: {
     displayName: "Remap",

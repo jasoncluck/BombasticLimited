@@ -110,6 +110,7 @@ CREATE EXTENSION IF NOT EXISTS "vector" WITH SCHEMA "extensions";
 CREATE TYPE "public"."source" AS ENUM (
     'giantbomb',
     'nextlander',
+    'jeffgerstmann',
     'remap'
 );
 

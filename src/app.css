@@ -121,7 +121,7 @@
 }
 
 .header-link-sticky {
-  @apply lg:text-4xl text-3xl self-start font-semibold transition-colors hover:underline cursor-pointer bg-background-lighter sticky top-0 py-2 z-20 mx-4;
+  @apply lg:text-4xl text-3xl self-start font-semibold transition-colors hover:underline cursor-pointer bg-background-lighter sticky top-0 py-2 z-20 mx-4 w-full;
 }
 
 /* New elevated effect class */

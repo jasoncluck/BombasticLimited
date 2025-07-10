@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "cdk": "cdk",
-    "deploy": "cdk deploy --all",
+    "deploy": "npm run build && cdk deploy --all",
     "repopulate": "tsx scripts/trigger-repopulate-combined.ts",
     "repopulate:source": "tsx scripts/trigger-repopulate-combined.ts",
     "repopulate:videos": "tsx scripts/trigger-repopulate-combined.ts -- --videos-only",

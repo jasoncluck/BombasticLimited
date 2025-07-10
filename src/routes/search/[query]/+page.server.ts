@@ -18,6 +18,7 @@ export const load: PageServerLoad = async ({
   const searchString = params.query;
   const sourceVideos: SourceVideos = {
     giantbomb: [],
+    jeffgerstmann: [],
     nextlander: [],
     remap: [],
   };

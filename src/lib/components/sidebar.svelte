@@ -172,9 +172,8 @@
         ondragend={handleSourceDragEnd}
       >
         <div
-          class="flex items-center relative {!isSidebarCollapsed
-            ? 'items-start grow'
-            : 'item-center'}"
+          class="flex items-center grow absolute
+                    {!isSidebarCollapsed ? 'grow w-full' : 'item-center'}"
         >
           {#if activeStreams.sources.includes(source)}
             <Circle
@@ -184,15 +183,18 @@
             />
           {/if}
           <span class="sr-only">Live now</span>
-          <div class="h-12 w-12">
+
+          <div class="h-12 w-12 shrink-0">
             <img
               src={SOURCE_INFO[source].image}
               alt={SOURCE_INFO[source].displayName}
-              class="h-full w-full"
+              class="h-full w-full object-cover cursor-pointer"
             />
           </div>
           {#if !isSidebarCollapsed}
-            <span class="text-sm font-medium m-3 overflow-ellipsis">
+            <span
+              class="text-sm mr-6 px-3 text-wrap text-left justify-start max-h-10 overflow-hidden"
+            >
               {SOURCE_INFO[source].displayName}
             </span>
           {/if}
@@ -302,7 +304,7 @@
                     {!isSidebarCollapsed ? 'grow w-full' : 'item-center'}"
                 >
                   {#if playlist.processedImageUrl}
-                    <div class="h-12 w-12 flex-shrink-0">
+                    <div class="h-12 w-12 shrink-0">
                       <img
                         src={playlist.processedImageUrl}
                         class="h-full w-full object-cover cursor-pointer"
