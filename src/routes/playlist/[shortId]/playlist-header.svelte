@@ -58,7 +58,7 @@
 
   let open = $state(false);
 
-  const isPlaylistCreator = $derived(playlist.created_by === session?.user.id);
+  const isPlaylistOwner = $derived(playlist.created_by === session?.user.id);
 
   const formattedDuration = $derived.by(() => {
     const parts = [];
@@ -74,7 +74,7 @@
   const showComma = $derived(formattedDuration.length > 0);
 
   function openDialog() {
-    if (!isPlaylistCreator) {
+    if (!isPlaylistOwner) {
       return;
     }
     open = true;
@@ -96,6 +96,7 @@
   {videosCount}
   {contentFilter}
   {playlist}
+  onPlaylistEdit={openDialog}
   {videos}
   {playlists}
   bind:currentPage
@@ -112,7 +113,7 @@
           {#if playlist.processedImageUrl}
             <button
               type="button"
-              class="flex justify-center items-center h-56 w-56 {isPlaylistCreator &&
+              class="flex justify-center items-center h-56 w-56 {isPlaylistOwner &&
                 'cursor-pointer'} border-none bg-transparent p-0"
               onclick={openDialog}
             >
@@ -124,7 +125,7 @@
           {:else}
             <button
               type="button"
-              class="flex justify-center items-center min-h-32 min-w-32 h-56 w-56 {isPlaylistCreator &&
+              class="flex justify-center items-center min-h-32 min-w-32 h-56 w-56 {isPlaylistOwner &&
                 'cursor-pointer'}border-none bg-transparent p-0"
               onclick={openDialog}
             >
@@ -137,9 +138,9 @@
       <div class="flex flex-col relative flex-1 min-w-2xs">
         <button
           type="button"
-          class="flex flex-col {isPlaylistCreator && 'cursor-pointer'} 
+          class="flex flex-col {isPlaylistOwner && 'cursor-pointer'} 
           items-start text-left border-none bg-transparent p-0 gap-2"
-          disabled={!isPlaylistCreator}
+          disabled={!isPlaylistOwner}
           onclick={openDialog}
           onkeydown={handleKeydown}
         >
@@ -199,7 +200,7 @@
         </div>
       </div>
 
-      {#if isPlaylistCreator}
+      {#if isPlaylistOwner}
         <DropdownMenu.Root>
           <DropdownMenu.Trigger
             class="outline-none {buttonVariants({

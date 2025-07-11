@@ -3,22 +3,38 @@
   import type { Playlist } from "$lib/supabase/playlists";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
-  import { type Video } from "$lib/supabase/videos";
+  import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
   import Button, { buttonVariants } from "../ui/button/button.svelte";
   import * as Drawer from "$lib/components/ui/drawer/index.js";
 
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
-  import Label from "../ui/label/label.svelte";
-  import Input from "../ui/input/input.svelte";
   import {
     ChevronRight,
+    CircleCheck,
+    CircleMinus,
+    Edit,
     Ellipsis,
+    ImagePlay,
+    ListChecks,
     ListVideo,
+    MinusCircle,
     PlusCircle,
+    TimerReset,
   } from "@lucide/svelte";
   import ScrollArea from "../ui/scroll-area/scroll-area.svelte";
-  import { handleAddVideosToPlaylist } from "../playlist/playlist-service";
+  import {
+    handleAddVideosToPlaylist,
+    handleDeletePlaylist,
+    handleRemoveVideosFromPlaylist,
+    handleUpdatePlaylistImage,
+  } from "../playlist/playlist-service";
   import { SOURCE_INFO } from "$lib/constants/source";
+  import {
+    handleAddVideoTimestamp,
+    handleDeleteVideosTimestamp,
+  } from "../video/video-service";
+  import { goto } from "$app/navigation";
+  import { page } from "$app/state";
 
   let {
     videos = $bindable(),
@@ -26,6 +42,7 @@
     playlists,
     variant,
     onSelectAll,
+    onPlaylistEdit,
     sectionId,
     supabase,
     session,
@@ -39,6 +56,7 @@
     supabase: SupabaseClient<Database>;
     session: Session | null;
     onSelectAll?: () => void;
+    onPlaylistEdit?: () => void;
   } = $props();
 
   const contentState = getContentState();
@@ -103,12 +121,30 @@
       <hr />
       {#if variant === "header"}
         <Button
-          variant="outline"
-          class="w-full"
+          variant="ghost"
+          class="drawer-button"
           onclick={() => {
             onSelectAll?.();
-          }}>Select All</Button
+            open = false;
+          }}
         >
+          <div class="flex items-center gap-2">
+            <ListChecks class="dropdown-icon" />
+            Select All
+          </div>
+        </Button>
+      {/if}
+      {#if isPlaylistOwner}
+        <Button
+          class="drawer-button"
+          variant="ghost"
+          onclick={() => onPlaylistEdit?.()}
+        >
+          <div class="flex items-center gap-2">
+            <Edit class="drawer-icon" />
+            Edit
+          </div>
+        </Button>
       {/if}
       {@const filteredPlaylists = playlists.filter(
         (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id,
@@ -117,14 +153,14 @@
         <Drawer.NestedRoot bind:open={openPlaylistDrawer}>
           <Drawer.Trigger
             class={buttonVariants({
-              variant: "outline",
+              variant: "ghost",
               class: "drawer-button",
             })}
           >
             <div class="flex justify-between items-center w-full">
               <div class="flex gap-2 items-center">
-                <PlusCircle class="!h-5 !w-5" />
-                Add to Playlist
+                <PlusCircle class="drawer-icon" />
+                Add to playlist
               </div>
               <ChevronRight />
             </div>
@@ -180,6 +216,117 @@
             </ScrollArea>
           </Drawer.Content>
         </Drawer.NestedRoot>
+      {/if}
+
+      {#if playlist && isPlaylistOwner && videos && videos.length > 0}
+        <Button
+          class="drawer-button"
+          variant="ghost"
+          onclick={() => {
+            handleRemoveVideosFromPlaylist({
+              videos,
+              playlist,
+              supabase,
+            });
+
+            open = false;
+          }}
+        >
+          <div class="flex gap-2 items-center">
+            <MinusCircle class="drawer-icon" />
+            Remove from playlist
+          </div>
+        </Button>
+      {/if}
+
+      {#if contentState.selectedVideosBySection[sectionId] && contentState.selectedVideosBySection[sectionId].length === 1 && playlist && variant === "list-items" && isPlaylistOwner}
+        {@const selectedVideo =
+          contentState.selectedVideosBySection[sectionId][0]}
+        <Button
+          class="drawer-button"
+          variant="ghost"
+          onclick={() => {
+            handleUpdatePlaylistImage({
+              playlist,
+              thumbnailUrl: selectedVideo.thumbnail_url,
+              thumbnailMaxResUrl: selectedVideo.thumbnail_maxres_url,
+              supabase,
+            });
+            open = false;
+          }}
+        >
+          <div class="flex gap-2 items-center">
+            <ImagePlay class="drawer-icon" />
+            Set as playlist image
+          </div>
+        </Button>
+      {/if}
+      {#if session && variant !== "item" && videos.length > 0 && videos.some( (v) => isVideoWithTimestamp(v), )}
+        <Button
+          class="drawer-button"
+          variant="ghost"
+          onclick={async () => {
+            ({ updatedVideos: videos } = await handleDeleteVideosTimestamp({
+              videos,
+              supabase,
+              session,
+            }));
+            open = false;
+          }}
+        >
+          <div class="flex gap-2 items-center">
+            <TimerReset class="drawer-icon" />
+            Reset Progress
+          </div>
+        </Button>
+      {/if}
+      {#if variant !== "item" && videos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
+        <Button
+          class="drawer-button"
+          variant="ghost"
+          onclick={async () => {
+            ({ updatedVideos: videos } = await handleAddVideoTimestamp({
+              videoTimestamps: videos.map((v) => ({
+                videoId: v.id,
+                watchedAt: new Date(),
+              })),
+              session,
+              supabase,
+            }));
+            open = false;
+          }}
+        >
+          <div class="flex gap-2 items-center">
+            <CircleCheck class="drawer-icon" />
+            Set as Watched
+          </div>
+        </Button>
+      {/if}
+      {#if playlist && variant === "header"}
+        <Button
+          class="drawer-button"
+          variant="ghost"
+          onclick={async () => {
+            const data = await handleDeletePlaylist({
+              playlist,
+              supabase,
+              session,
+            });
+
+            if (
+              !data?.error &&
+              page.url.pathname === `/playlist/${playlist.short_id}`
+            ) {
+              goto("/");
+            }
+            open = false;
+          }}
+        >
+          <div class="flex items-center gap-2">
+            <CircleMinus class="drawer-icon" />
+            Delete Playlist
+          </div>
+        </Button>
       {/if}
 
       <Drawer.Footer class="pt-2">

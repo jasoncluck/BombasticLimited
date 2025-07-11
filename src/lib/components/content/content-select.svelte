@@ -8,12 +8,15 @@
   } from "$lib/state/content.svelte";
   import ContentActionsDropdown from "./content-actions-dropdown.svelte";
   import type { Video } from "$lib/supabase/videos";
+  import ContentActionsDrawer from "./content-actions-drawer.svelte";
+  import { getMediaQueryState } from "$lib/state/media-query.svelte";
 
   const {
     videos,
     playlist,
     playlists,
     sectionId = DEFAULT_SECTION_ID,
+    onPlaylistEdit,
     supabase,
     session,
   }: {
@@ -22,11 +25,13 @@
     playlists: Playlist[];
     displayLabel: boolean;
     sectionId?: string;
+    onPlaylistEdit: () => void;
     supabase: SupabaseClient<Database>;
     session: Session | null;
   } = $props();
 
   const contentState = getContentState();
+  const mediaQueryState = getMediaQueryState();
 
   let selectedVideos = $derived(
     contentState.selectedVideosBySection[sectionId] ?? [],
@@ -48,17 +53,32 @@
   }
 </script>
 
-<div class="flex gap-2 h-[20px] items-center pointer-events-auto">
-  <div>
+{#if mediaQueryState.canHover}
+  <div class="flex gap-2 h-[20px] items-center pointer-events-auto">
     <ContentActionsDropdown
       bind:videos={selectedVideos}
       variant="header"
       {playlist}
       {playlists}
       {sectionId}
+      {onPlaylistEdit}
       onSelectAll={handleSelectAll}
       {supabase}
       {session}
     />
   </div>
-</div>
+{:else}
+  <div class="flex content-table-row items-center">
+    <ContentActionsDrawer
+      videos={selectedVideos}
+      {playlist}
+      {playlists}
+      {sectionId}
+      {onPlaylistEdit}
+      onSelectAll={handleSelectAll}
+      variant="header"
+      {supabase}
+      {session}
+    />
+  </div>
+{/if}
