@@ -54,7 +54,7 @@
 </script>
 
 {#if mediaQueryState.canHover}
-  <div class="flex gap-2 h-[20px] items-center pointer-events-auto">
+  <div class="flex items-center pointer-events-auto">
     <ContentActionsDropdown
       bind:videos={selectedVideos}
       variant="header"

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Circle, Ellipsis, ListVideo, Youtube } from "@lucide/svelte";
+  import { Circle, ListVideo, Youtube } from "@lucide/svelte";
   import type { SuperValidated } from "sveltekit-superforms";
   import type { PlaylistSchema } from "../../../routes/playlist/[shortId]/schema";
   import type { BreadcrumbItem } from "$lib/components/breadcrumb-layout.svelte";
@@ -16,11 +16,6 @@
   import PlaylistEditDialog from "$lib/components/playlist/playlist-edit-dialog.svelte";
   import { isSource, SOURCE_INFO } from "$lib/constants/source";
   import type { Video } from "$lib/supabase/videos";
-  import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
-  import { handleDeletePlaylist } from "$lib/components/playlist/playlist-service";
-  import { goto } from "$app/navigation";
-  import { page } from "$app/state";
-  import { buttonVariants } from "$lib/components/ui/button";
   import type { Profile } from "$lib/supabase/profiles";
 
   interface PlaylistHeaderProps extends HTMLAttributes<HTMLDivElement> {
@@ -199,50 +194,6 @@
           </p>
         </div>
       </div>
-
-      {#if isPlaylistOwner}
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger
-            class="outline-none {buttonVariants({
-              variant: 'ghost',
-              class: 'ghost-button-minimal',
-              size: 'icon',
-            })}"
-          >
-            <Ellipsis size="30" />
-            <span class="sr-only">Playlist Actions</span>
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Content>
-            <DropdownMenu.Group>
-              <DropdownMenu.Item
-                class="cursor-pointer"
-                onclick={() => (open = true)}
-              >
-                Edit Playlist
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                class="cursor-pointer"
-                onclick={async () => {
-                  const data = await handleDeletePlaylist({
-                    playlist,
-                    supabase,
-                    session,
-                  });
-
-                  if (
-                    !data?.error &&
-                    page.url.pathname === `/playlist/${playlist.short_id}`
-                  ) {
-                    goto("/");
-                  }
-                }}
-              >
-                Delete Playlist
-              </DropdownMenu.Item>
-            </DropdownMenu.Group>
-          </DropdownMenu.Content>
-        </DropdownMenu.Root>
-      {/if}
     </div>
   </div>
 </SharedContentHeader>

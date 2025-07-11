@@ -126,7 +126,7 @@
 
     <!-- Right side: ContentSelect and ContentFilters on same row -->
     <hr class="border-1 m-4" />
-    <div class="flex justify-between m-4 items-center gap-3">
+    <div class="flex justify-between m-4 items-center gap-1">
       {#if profilePlaylist}
         <Button
           variant="ghost"

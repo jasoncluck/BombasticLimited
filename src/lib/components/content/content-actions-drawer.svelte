@@ -70,6 +70,7 @@
 
   let open = $state(false);
   let openPlaylistDrawer = $state(false);
+  let activeSnapPoint = $state(1);
 
   $effect(() => {
     contentState.isDropdownMenuOpen = open;
@@ -83,7 +84,7 @@
 </script>
 
 {#if session}
-  <Drawer.Root bind:open>
+  <Drawer.Root snapPoints={[1]} bind:activeSnapPoint bind:open>
     <Drawer.Trigger
       onclick={(e) => {
         console.log("in click");
@@ -91,11 +92,14 @@
         e.stopPropagation();
         open = true;
       }}
-      class={buttonVariants({ variant: "ghost" })}
+      class={buttonVariants({
+        variant: "ghost",
+        class: "outline-none ghost-button-minimal",
+      })}
     >
       <Ellipsis />
     </Drawer.Trigger>
-    <Drawer.Content class="p-0 max-h-[50%]">
+    <Drawer.Content class="p-0">
       <Drawer.Header class="text-left mx-4">
         {#if videos.length === 1}
           {@const video = videos[0]}
@@ -105,7 +109,7 @@
               alt={video.title}
               class="h-12 aspect-video"
             />
-            <div class="flex flex-col">
+            <div class="flex flex-col gap-1">
               <p class="font-normal text-sm">
                 {video.title}
               </p>
@@ -114,26 +118,31 @@
               </p>
             </div>
           </div>
-        {:else}
-          <Drawer.Title>{videos.length} videos selected</Drawer.Title>
+        {:else if playlist}
+          <div class="flex gap-2 items-center">
+            {#if playlist.processedImageUrl}
+              <div class="w-12 h-12 shrink-0">
+                <img src={playlist.processedImageUrl} alt={playlist.name} />
+              </div>
+            {:else}
+              <div
+                class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
+              >
+                <ListVideo class="!h-8 !w-8" />
+              </div>
+            {/if}
+            <div class="flex flex-col gap-1">
+              <p class="font-normal text-sm">
+                {playlist.name}
+              </p>
+              <p class="text-xs text-muted-foreground tracking-tight">
+                {playlist.type}
+              </p>
+            </div>
+          </div>
         {/if}
       </Drawer.Header>
       <hr />
-      {#if variant === "header"}
-        <Button
-          variant="ghost"
-          class="drawer-button"
-          onclick={() => {
-            onSelectAll?.();
-            open = false;
-          }}
-        >
-          <div class="flex items-center gap-2">
-            <ListChecks class="dropdown-icon" />
-            Select All
-          </div>
-        </Button>
-      {/if}
       {#if isPlaylistOwner}
         <Button
           class="drawer-button"
