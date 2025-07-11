@@ -8,7 +8,7 @@
 </script>
 
 <div
-  class="flex flex-col min-w-[100px] max-w-sm gap-1 h-[80px] justify-center overflow-hidden"
+  class="flex flex-col min-w-[00px] max-w-sm gap-1 content-table-row justify-center overflow-hidden"
 >
   <p
     class="text-xs text-muted-foreground transform pointer-events-none line-clamp-1"

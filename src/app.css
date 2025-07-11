@@ -116,12 +116,16 @@
   @apply lg:text-7xl text-6xl font-semibold transition-colors mb-2;
 }
 
+.content-section {
+  @apply flex flex-col relative mt-0 sm:mt-4;
+}
+
 .header-link {
-  @apply lg:text-4xl text-3xl self-start font-semibold transition-colors hover:underline cursor-pointer py-2 mx-4;
+  @apply lg:text-4xl text-3xl self-start font-semibold transition-colors hover:underline cursor-pointer my-2 mx-2 sm:mx-4;
 }
 
 .header-link-sticky {
-  @apply lg:text-4xl text-3xl self-start font-semibold transition-colors hover:underline cursor-pointer bg-background-lighter sticky top-0 py-2 z-20 mx-4 w-full;
+  @apply lg:text-4xl text-3xl self-start font-semibold transition-colors hover:underline cursor-pointer bg-background-lighter sticky top-0 py-2 z-20 px-4 sm:px-4 w-full truncate;
 }
 
 /* New elevated effect class */
@@ -148,8 +152,19 @@
   @apply h-[64px] px-2 py-8 w-full border border-transparent relative cursor-pointer transition-none overflow-clip;
 }
 
+.content-table-row {
+  @apply h-[80px];
+}
+
 .ghost-button-minimal {
   @apply cursor-pointer text-muted-foreground hover:bg-inherit hover:scale-105
   hover:text-foreground data-[state=open]:text-foreground isolate 
   origin-center transition-[scale,color] duration-150 ease-in-out;
+}
+
+.drawer-button {
+  @apply w-full h-14 tracking-wide justify-start;
+}
+.drawer-playlist-button {
+  @apply w-full h-14 text-xs tracking-wide justify-start flex items-center gap-2;
 }

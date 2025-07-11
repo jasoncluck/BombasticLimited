@@ -80,7 +80,7 @@
   });
 
   function getRowClasses(video: Video, index: number) {
-    let classes = "selection-mode transition-none max-h-[80px] h-[80px]";
+    let classes = "selection-mode transition-none content-table-row";
 
     const isSelected = selectedVideoIds.has(video.id);
 
@@ -176,7 +176,7 @@
           })}
       >
         {#each row.getVisibleCells() as cell (cell.id)}
-          <Table.Cell class="max-h-[120px] overflow-hidden align-top py-3">
+          <Table.Cell class="content-table-row overflow-hidden align-top py-3">
             <FlexRender
               content={cell.column.columnDef.cell}
               context={cell.getContext()}

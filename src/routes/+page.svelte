@@ -68,9 +68,9 @@
   };
 </script>
 
-<div class="flex flex-col relative bg-background-lighter mt-4">
+<div class="content-section">
   {#if session && continueWatchingVideos.length > 0}
-    <div class="flex flex-col mb-8 gap-4">
+    <div class="flex flex-col mb-8 gap-0 sm:gap-4">
       <a
         href="/continue"
         class={userProfile?.content_display === "CARD"
@@ -102,9 +102,9 @@
     Latest Videos
   </h1>
 
-  <div class="flex flex-col gap-8">
+  <div class="flex flex-col gap-4">
     {#each sources as source (source)}
-      <div class="flex flex-col gap-4">
+      <div class="content-section">
         <a
           href={`/${source}/latest`}
           class={userProfile?.content_display === "CARD"

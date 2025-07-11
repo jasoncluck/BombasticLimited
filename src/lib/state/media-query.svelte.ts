@@ -30,7 +30,7 @@ export type MediaQueryStateProps = {
   customQueries?: Record<string, string>;
 };
 
-class MediaQueryState {
+export class MediaQueryState {
   readonly props: MediaQueryStateProps;
   #mediaQueries = new Map<string, MediaQueryList>();
   #matches = $state<Record<string, boolean>>({});

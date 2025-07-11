@@ -17,7 +17,7 @@
     session,
   }: {
     video: Video;
-    playlist: Playlist;
+    playlist?: Playlist;
     playlists: Playlist[];
     sectionId?: string;
     supabase: SupabaseClient<Database>;
@@ -28,7 +28,7 @@
 </script>
 
 {#if mediaQueryState.canHover}
-  <div class="flex h-[80px] items-center">
+  <div class="flex content-table-row items-center">
     <ContentActionsDropdown
       videos={[video]}
       {playlist}
@@ -40,7 +40,7 @@
     />
   </div>
 {:else}
-  <div class="flex h-[80px] items-center">
+  <div class="flex content-table-row items-center">
     <ContentActionsDrawer
       videos={[video]}
       {playlist}

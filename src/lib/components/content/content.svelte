@@ -19,6 +19,7 @@
   import type { Profile } from "$lib/supabase/profiles";
   import ContentContextMenu from "./content-context-menu.svelte";
   import { onNavigate } from "$app/navigation";
+  import { getMediaQueryState } from "$lib/state/media-query.svelte";
 
   type ContentProps = HTMLAttributes<HTMLDivElement> & {
     videos: Video[] | VideoWithTimestamp[];
@@ -55,19 +56,22 @@
     ...restProps
   }: ContentProps = $props();
 
+  const contentState = getContentState();
+  const playlistState = getPlaylistState();
+  const mediaQueryState = getMediaQueryState();
+
   const columns = $derived(
     createContentColumns({
       getPlaylist: () => playlist,
       getPlaylists: () => playlists,
       getContentFilter: () => contentFilter,
+      getCanHover: () => mediaQueryState.canHover,
+      getIsSm: () => mediaQueryState.isSm,
       sectionId,
       supabase,
       session,
     }),
   );
-
-  const contentState = getContentState();
-  const playlistState = getPlaylistState();
 
   // Get current playlist context for the context menu
   // This will be set by individual content components
@@ -115,7 +119,11 @@
   {supabase}
   {session}
 >
-  <div bind:this={contentRef} {...restProps} class="mx-4 flex flex-col gap-5">
+  <div
+    bind:this={contentRef}
+    {...restProps}
+    class="md:mx-4 flex flex-col gap-5"
+  >
     <!-- Table view for small screens (up to sm breakpoint) -->
     <div class="sm:hidden">
       <ContentTable
