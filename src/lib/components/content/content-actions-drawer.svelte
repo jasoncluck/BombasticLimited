@@ -96,7 +96,7 @@
     >
       <Ellipsis />
     </Drawer.Trigger>
-    <Drawer.Content class="p-0 drawer">
+    <Drawer.Content class="p-0 min-h-full drawer">
       <Drawer.Header class="text-left mx-4">
         {#if selectedVideos.length === 1}
           {@const video = selectedVideos[0]}
@@ -171,7 +171,7 @@
               <ChevronRight />
             </div>
           </Drawer.Trigger>
-          <Drawer.Content class="p-2 min-h-full drawer">
+          <Drawer.Content class="p-2 drawer">
             {#each videos as video (video.id)}
               <div class="flex gap-2 items-center">
                 <img
@@ -211,7 +211,7 @@
               <ChevronRight />
             </div>
           </Drawer.Trigger>
-          <Drawer.Content class="p-0 min-h-full drawer">
+          <Drawer.Content class="p-0 drawer">
             <Drawer.Header class="text-left mx-4">
               <Drawer.Title class="text-lg">Select Playlist</Drawer.Title>
             </Drawer.Header>

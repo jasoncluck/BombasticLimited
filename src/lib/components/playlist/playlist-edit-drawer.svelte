@@ -92,12 +92,19 @@
 </script>
 
 <Drawer.Root bind:open>
-  <Drawer.Content class="drawer min-h-full ">
-    <ScrollArea type="scroll">
-      <form method="POST" use:enhance class="overflow-hidden">
-        <Drawer.Header class="mb-4">
-          <Drawer.Title class="text-xl">Edit Playlist</Drawer.Title>
-        </Drawer.Header>
+  <Drawer.Content
+    class="bg-background flex flex-col fixed bottom-0 left-0 right-0 h-[96vh] max-h-[96vh] rounded-t-[10px]"
+  >
+    <!-- Header - Fixed -->
+    <div class="flex-shrink-0 p-4 pb-0">
+      <Drawer.Header class="px-0">
+        <Drawer.Title class="text-xl">Edit Playlist</Drawer.Title>
+      </Drawer.Header>
+    </div>
+
+    <!-- Scrollable Content -->
+    <div class="flex-1 overflow-y-auto px-4 min-h-0">
+      <form method="POST" use:enhance id="playlist-form">
         <div class="flex flex-col sm:flex-row justify-center gap-4 mb-4">
           <div class="relative m-6 flex justify-center">
             {#if (playlist.thumbnail_maxres_url || playlist.thumbnail_url) && !$formData.isDeletingPlaylistImage}
@@ -167,6 +174,7 @@
               <ImageCropper.Cancel />
             </ImageCropper.Controls>
           </ImageCropper.Dialog>
+
           <div class="flex flex-col relative grow gap-2">
             <Form.Field form={playlistForm} name="name">
               <div
@@ -185,13 +193,13 @@
               </div>
               <Form.FieldErrors class="mb-2" />
             </Form.Field>
+
             <Form.Field form={playlistForm} name="description" class="mb-2">
               <div
                 class="md:grid md:grid-cols-4 items-center md:items-start flex flex-wrap gap-2 md:gap-4"
               >
                 <Form.Control>
                   {#snippet children({ props })}
-                    <!-- textarea border + pad = 9px -->
                     <Form.Label for="description" class="text-right mt-[9px]"
                       >Description</Form.Label
                     >
@@ -205,13 +213,13 @@
               </div>
               <Form.FieldErrors />
             </Form.Field>
+
             <Form.Field form={playlistForm} name="type">
               <div
                 class="md:grid md:grid-cols-4 items-center md:items-start flex flex-wrap gap-2 md:gap-4"
               >
                 <Form.Control>
                   {#snippet children({ props })}
-                    <!-- textarea border + pad = 9px -->
                     <Form.Label for="isPublic" class="text-right cursor-pointer"
                       >Public Playlist</Form.Label
                     >
@@ -225,6 +233,7 @@
               </div>
               <Form.FieldErrors />
             </Form.Field>
+
             <Form.Field form={playlistForm} name="id">
               <Form.Control>
                 {#snippet children({ props })}
@@ -232,6 +241,7 @@
                 {/snippet}
               </Form.Control>
             </Form.Field>
+
             <Form.Field form={playlistForm} name="image_properties">
               <Form.Control>
                 {#snippet children({ props })}
@@ -243,6 +253,7 @@
                 {/snippet}
               </Form.Control>
             </Form.Field>
+
             <Form.Field form={playlistForm} name="isDeletingPlaylistImage">
               <Form.Control>
                 {#snippet children({ props })}
@@ -256,26 +267,33 @@
             </Form.Field>
           </div>
         </div>
-        <Drawer.Footer>
-          <Button type="submit" class="drawer-button-footer">
-            {#if isSubmitting}
-              <Loader class="animate-spin" />
-            {:else}
-              Save Changes
-            {/if}
-          </Button>
 
-          <Drawer.Close
-            class={buttonVariants({
-              class: "drawer-button-footer",
-              variant: "outline",
-            })}
-          >
-            Close
-          </Drawer.Close>
-        </Drawer.Footer>
+        <!-- Add some bottom padding to ensure content doesn't get cut off -->
+        <div class="pb-4"></div>
       </form>
-    </ScrollArea>
+    </div>
+
+    <!-- Footer - Fixed -->
+    <div class="flex-shrink-0 p-4 pt-2 border-t bg-background">
+      <div class="flex flex-col gap-2">
+        <Button type="submit" form="playlist-form" class="drawer-button-footer">
+          {#if isSubmitting}
+            <Loader class="animate-spin" />
+          {:else}
+            Save Changes
+          {/if}
+        </Button>
+
+        <Drawer.Close
+          class={buttonVariants({
+            class: "drawer-button-footer",
+            variant: "outline",
+          })}
+        >
+          Close
+        </Drawer.Close>
+      </div>
+    </div>
   </Drawer.Content>
 
   {@render children()}
