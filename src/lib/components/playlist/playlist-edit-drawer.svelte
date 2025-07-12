@@ -93,7 +93,7 @@
 
 <Drawer.Root bind:open>
   <Drawer.Content
-    class="bg-background flex flex-col fixed bottom-0 left-0 right-0 h-[96vh] max-h-[96vh] rounded-t-[10px]"
+    class="bg-background flex flex-col min-h-[100%] rounded-t-[10px]"
   >
     <!-- Header - Fixed -->
     <div class="flex-shrink-0 p-4 pb-0">
