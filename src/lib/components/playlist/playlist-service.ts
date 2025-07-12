@@ -75,6 +75,7 @@ export async function handleCreatePlaylist({
   if (!error && playlist) {
     showNotification(`Created Playlist: ${playlist.name}`);
   }
+  invalidate("supabase:db:playlists");
   return { playlist, error };
 }
 

@@ -108,6 +108,7 @@
       {videos}
       {breadcrumbs}
       playlist={profilePlaylist}
+      {onPlaylistEdit}
       {playlists}
       {supabase}
       {session}

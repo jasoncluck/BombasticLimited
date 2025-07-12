@@ -144,6 +144,7 @@ export async function handleDeleteVideosTimestamp({
     supabase,
     session,
   });
+  invalidate("supabase:db:videos");
 
   if (error) {
     showNotification("Unable to remove video from watchlist.");
@@ -155,7 +156,6 @@ export async function handleDeleteVideosTimestamp({
     );
   }
 
-  invalidate("supabase:db:videos");
   return { updatedVideos: updatedVideos ?? [], error };
 }
 

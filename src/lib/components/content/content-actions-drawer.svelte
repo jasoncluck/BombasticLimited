@@ -41,7 +41,6 @@
     playlist,
     playlists,
     variant,
-    onSelectAll,
     onPlaylistEdit,
     sectionId,
     supabase,
@@ -55,7 +54,6 @@
     sectionId: string;
     supabase: SupabaseClient<Database>;
     session: Session | null;
-    onSelectAll?: () => void;
     onPlaylistEdit?: () => void;
   } = $props();
 
@@ -143,11 +141,14 @@
         {/if}
       </Drawer.Header>
       <hr />
-      {#if isPlaylistOwner}
+      {#if isPlaylistOwner && variant === "header"}
         <Button
           class="drawer-button"
           variant="ghost"
-          onclick={() => onPlaylistEdit?.()}
+          onclick={() => {
+            onPlaylistEdit?.();
+            open = false;
+          }}
         >
           <div class="flex items-center gap-2">
             <Edit class="drawer-icon" />

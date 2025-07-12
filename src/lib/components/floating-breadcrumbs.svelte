@@ -16,6 +16,7 @@
     videos: Video[];
     playlist?: Playlist;
     playlists: Playlist[];
+    onPlaylistEdit: () => void;
     supabase: SupabaseClient<Database>;
     session: Session | null;
   }
@@ -24,6 +25,7 @@
     videos,
     playlist,
     playlists,
+    onPlaylistEdit,
     supabase,
     session,
   }: BreacrumbLayoutProps = $props();
@@ -44,6 +46,7 @@
         {videos}
         {playlist}
         {playlists}
+        {onPlaylistEdit}
         {supabase}
         {session}
         displayLabel={false}

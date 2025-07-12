@@ -17,6 +17,8 @@
   import { isSource, SOURCE_INFO } from "$lib/constants/source";
   import type { Video } from "$lib/supabase/videos";
   import type { Profile } from "$lib/supabase/profiles";
+  import { getMediaQueryState } from "$lib/state/media-query.svelte";
+  import PlaylistEditDrawer from "$lib/components/playlist/playlist-edit-drawer.svelte";
 
   interface PlaylistHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
@@ -51,6 +53,8 @@
     ...props
   }: PlaylistHeaderProps = $props();
 
+  const mediaQueryState = getMediaQueryState();
+
   let open = $state(false);
 
   const isPlaylistOwner = $derived(playlist.created_by === session?.user.id);
@@ -69,6 +73,7 @@
   const showComma = $derived(formattedDuration.length > 0);
 
   function openDialog() {
+    console.log("in dialog");
     if (!isPlaylistOwner) {
       return;
     }
@@ -103,32 +108,61 @@
   <div class="flex flex-col gap-4 m-4">
     <!-- Main content row (image + text) -->
     <div class="flex flex-col @md:flex-row gap-6">
-      <PlaylistEditDialog {form} {playlist} bind:open>
-        <div class="flex justify-center">
-          {#if playlist.processedImageUrl}
-            <button
-              type="button"
-              class="flex justify-center items-center h-56 w-56 {isPlaylistOwner &&
-                'cursor-pointer'} border-none bg-transparent p-0"
-              onclick={openDialog}
-            >
-              <img
-                src={playlist.processedImageUrl}
-                alt={`Image for playlist: ${playlist.name}`}
-              />
-            </button>
-          {:else}
-            <button
-              type="button"
-              class="flex justify-center items-center min-h-32 min-w-32 h-56 w-56 {isPlaylistOwner &&
-                'cursor-pointer'}border-none bg-transparent p-0"
-              onclick={openDialog}
-            >
-              <ListVideo size={128} />
-            </button>
-          {/if}
-        </div>
-      </PlaylistEditDialog>
+      {#if mediaQueryState.isSm}
+        <PlaylistEditDialog {form} {playlist} bind:open>
+          <div class="flex justify-center">
+            {#if playlist.processedImageUrl}
+              <button
+                type="button"
+                class="flex justify-center items-center h-56 w-56 {isPlaylistOwner &&
+                  'cursor-pointer'} border-none bg-transparent p-0"
+                onclick={openDialog}
+              >
+                <img
+                  src={playlist.processedImageUrl}
+                  alt={`Image for playlist: ${playlist.name}`}
+                />
+              </button>
+            {:else}
+              <button
+                type="button"
+                class="flex justify-center items-center min-h-32 min-w-32 h-56 w-56 {isPlaylistOwner &&
+                  'cursor-pointer'}border-none bg-transparent p-0"
+                onclick={openDialog}
+              >
+                <ListVideo size={128} />
+              </button>
+            {/if}
+          </div>
+        </PlaylistEditDialog>
+      {:else}
+        <PlaylistEditDrawer {form} {playlist} bind:open>
+          <div class="flex justify-center">
+            {#if playlist.processedImageUrl}
+              <button
+                type="button"
+                class="flex justify-center items-center h-56 w-56 {isPlaylistOwner &&
+                  'cursor-pointer'} border-none bg-transparent p-0"
+                onclick={openDialog}
+              >
+                <img
+                  src={playlist.processedImageUrl}
+                  alt={`Image for playlist: ${playlist.name}`}
+                />
+              </button>
+            {:else}
+              <button
+                type="button"
+                class="flex justify-center items-center min-h-32 min-w-32 h-56 w-56 {isPlaylistOwner &&
+                  'cursor-pointer'}border-none bg-transparent p-0"
+                onclick={openDialog}
+              >
+                <ListVideo size={128} />
+              </button>
+            {/if}
+          </div>
+        </PlaylistEditDrawer>
+      {/if}
 
       <div class="flex flex-col relative flex-1 min-w-2xs">
         <button
