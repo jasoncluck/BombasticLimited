@@ -17,6 +17,7 @@
     Ellipsis,
     ImagePlay,
     ListVideo,
+    Menu,
     MinusCircle,
     PlusCircle,
     TimerReset,
@@ -82,7 +83,7 @@
 </script>
 
 {#if session}
-  <Drawer.Root snapPoints={[1]} bind:open>
+  <Drawer.Root bind:open>
     <Drawer.Trigger
       onclick={(e) => {
         e.preventDefault();
@@ -96,7 +97,7 @@
     >
       <Ellipsis />
     </Drawer.Trigger>
-    <Drawer.Content class="p-0 min-h-full drawer">
+    <Drawer.Content class="p-0 drawer">
       <Drawer.Header class="text-left mx-4">
         {#if selectedVideos.length === 1}
           {@const video = selectedVideos[0]}
@@ -171,24 +172,50 @@
               <ChevronRight />
             </div>
           </Drawer.Trigger>
-          <Drawer.Content class="p-2 drawer">
-            {#each videos as video (video.id)}
-              <div class="flex gap-2 items-center">
-                <img
-                  src={video.thumbnail_url}
-                  alt={video.title}
-                  class="h-12 aspect-video"
-                />
-                <div class="flex flex-col gap-1">
-                  <p class="font-normal text-sm">
-                    {video.title}
-                  </p>
-                  <p class="text-xs text-muted-foreground tracking-tight">
-                    {SOURCE_INFO[video.source].displayName}
-                  </p>
+          <Drawer.Content
+            class="bg-background flex flex-col min-h-[100%] drawer"
+          >
+            <div class="flex-shrink-0 p-4 pb-0">
+              <Drawer.Header class="px-0">
+                <Drawer.Title class="text-xl">Edit Playlist Videos</Drawer.Title
+                >
+              </Drawer.Header>
+            </div>
+
+            <div class="flex-1 overflow-y-auto px-4 min-h-0">
+              {#each videos as video (video.id)}
+                <div class="flex gap-2 items-center content-table-row">
+                  <img
+                    src={video.thumbnail_url}
+                    alt={video.title}
+                    class="h-[60px] aspect-video"
+                  />
+                  <div class="flex flex-col gap-1">
+                    <p
+                      class="font-normal text-sm break-words line-clamp-2 leading-5"
+                    >
+                      {video.title}
+                    </p>
+                    <p class="text-xs text-muted-foreground tracking-tight">
+                      {SOURCE_INFO[video.source].displayName}
+                    </p>
+                  </div>
+                  <Menu class="shrink-0" />
                 </div>
+              {/each}
+            </div>
+            <div class="flex-shrink-0 p-4 pt-2 border-t bg-background">
+              <div class="flex flex-col gap-2">
+                <Drawer.Close
+                  class={buttonVariants({
+                    class: "drawer-button-footer",
+                    variant: "outline",
+                  })}
+                >
+                  Close
+                </Drawer.Close>
               </div>
-            {/each}
+            </div>
           </Drawer.Content>
         </Drawer.NestedRoot>
       {/if}

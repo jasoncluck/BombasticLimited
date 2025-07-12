@@ -95,14 +95,12 @@
   <Drawer.Content
     class="bg-background flex flex-col min-h-[100%] rounded-t-[10px]"
   >
-    <!-- Header - Fixed -->
     <div class="flex-shrink-0 p-4 pb-0">
       <Drawer.Header class="px-0">
         <Drawer.Title class="text-xl">Edit Playlist</Drawer.Title>
       </Drawer.Header>
     </div>
 
-    <!-- Scrollable Content -->
     <div class="flex-1 overflow-y-auto px-4 min-h-0">
       <form method="POST" use:enhance id="playlist-form">
         <div class="flex flex-col sm:flex-row justify-center gap-4 mb-4">
