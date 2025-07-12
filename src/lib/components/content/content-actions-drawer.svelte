@@ -69,7 +69,8 @@
   let open = $state(false);
   let openPlaylistDrawer = $state(false);
   let reorderVideosDrawer = $state(false);
-  let activeSnapPoint = $state(1);
+  // Use percentage-based snap points
+  let activeSnapPoint = $state("50%");
 
   $effect(() => {
     contentState.isDropdownMenuOpen = open;
@@ -80,13 +81,19 @@
       open = false;
     }
   });
+
+  // Debug logging
+  $effect(() => {
+    console.log("Active snap point:", activeSnapPoint);
+    console.log("Drawer open:", open);
+  });
 </script>
 
 {#if session}
-  <Drawer.Root snapPoints={[1]} bind:activeSnapPoint bind:open>
+  <Drawer.Root snapPoints={["50%", "90%"]} bind:activeSnapPoint bind:open>
     <Drawer.Trigger
       onclick={(e) => {
-        console.log("in click");
+        console.log("Opening drawer");
         e.preventDefault();
         e.stopPropagation();
         open = true;
@@ -98,8 +105,13 @@
     >
       <Ellipsis />
     </Drawer.Trigger>
-    <Drawer.Content class="p-0">
-      <Drawer.Header class="text-left mx-4">
+
+    <Drawer.Content class="p-0 flex flex-col min-h-[400px]">
+      {@const filteredPlaylists = playlists.filter(
+        (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id,
+      )}
+      <!-- Fixed height header -->
+      <Drawer.Header class="text-left mx-4 flex-shrink-0">
         {#if selectedVideos.length === 1}
           {@const video = selectedVideos[0]}
           <div class="flex gap-2 items-center">
@@ -141,249 +153,258 @@
           </div>
         {/if}
       </Drawer.Header>
-      <hr />
-      {#if isPlaylistOwner && variant === "header"}
-        <Button
-          class="drawer-button"
-          variant="ghost"
-          onclick={() => {
-            onPlaylistEdit?.();
-            open = false;
-          }}
-        >
-          <div class="flex items-center gap-2">
-            <Edit class="drawer-icon" />
-            Edit
-          </div>
-        </Button>
-      {/if}
-      {#if isPlaylistOwner && variant === "header"}
-        <Drawer.NestedRoot bind:open={reorderVideosDrawer}>
-          <Drawer.Trigger
-            class={buttonVariants({
-              variant: "ghost",
-              class: "drawer-button",
-            })}
+
+      <hr class="flex-shrink-0" />
+
+      <!-- Scrollable content area -->
+      <div class="flex-1 overflow-y-auto min-h-0">
+        {#if isPlaylistOwner && variant === "header"}
+          <Button
+            class="drawer-button"
+            variant="ghost"
+            onclick={() => {
+              onPlaylistEdit?.();
+              open = false;
+            }}
           >
-            <div class="flex justify-between items-center w-full">
-              <div class="flex items-center gap-2">
-                <ArrowDownUp class="drawer-icon" />
-                Reorder videos
-              </div>
-              <ChevronRight />
+            <div class="flex items-center gap-2">
+              <Edit class="drawer-icon" />
+              Edit
             </div>
-          </Drawer.Trigger>
-          <Drawer.Content class="p-0">
-            {#each videos as video (video.id)}
-              <Button class="drawer-playlist-button" variant="ghost">
-                <div class="flex gap-2 items-center">
-                  <img
-                    src={video.thumbnail_url}
-                    alt={video.title}
-                    class="h-12 aspect-video"
-                  />
-                  <div class="flex flex-col gap-1">
-                    <p class="font-normal text-sm">
-                      {video.title}
-                    </p>
-                    <p class="text-xs text-muted-foreground tracking-tight">
-                      {SOURCE_INFO[video.source].displayName}
-                    </p>
-                  </div>
-                </div>
-              </Button>
-            {/each}
-          </Drawer.Content>
-        </Drawer.NestedRoot>
-      {/if}
-      {@const filteredPlaylists = playlists.filter(
-        (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id,
-      )}
-      {#if (variant !== "header" && filteredPlaylists.length > 0) || (variant === "header" && selectedVideos.length > 0)}
-        <Drawer.NestedRoot bind:open={openPlaylistDrawer}>
-          <Drawer.Trigger
-            class={buttonVariants({
-              variant: "ghost",
-              class: "drawer-button",
-            })}
-          >
-            <div class="flex justify-between items-center w-full">
-              <div class="flex gap-2 items-center">
-                <PlusCircle class="drawer-icon" />
-                Add to playlist
-              </div>
-              <ChevronRight />
-            </div>
-          </Drawer.Trigger>
-          <Drawer.Content class="p-0">
-            <Drawer.Header class="text-left mx-4">
-              <Drawer.Title class="text-lg">Select Playlist</Drawer.Title>
-            </Drawer.Header>
-            <ScrollArea
-              type="scroll"
-              class={filteredPlaylists.length <= 4 ? "h-auto" : "h-96"}
+          </Button>
+        {/if}
+
+        {#if isPlaylistOwner && variant === "header"}
+          <Drawer.NestedRoot bind:open={reorderVideosDrawer}>
+            <Drawer.Trigger
+              class={buttonVariants({
+                variant: "ghost",
+                class: "drawer-button",
+              })}
             >
-              {#each filteredPlaylists as addPlaylist (addPlaylist.id)}
-                {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
-                  <Button
-                    class="drawer-playlist-button"
-                    variant="ghost"
-                    onclick={() => {
-                      handleAddVideosToPlaylist({
-                        videos: selectedVideos,
-                        playlist: addPlaylist,
-                        supabase,
-                        session,
-                      });
-                      openPlaylistDrawer = false;
-                      open = false;
-                    }}
-                  >
-                    {#if addPlaylist.processedImageUrl}
-                      <div class="h-12 w-12 shrink-0">
-                        <img
-                          src={addPlaylist.processedImageUrl}
-                          class="h-full w-full object-cover cursor-pointer"
-                          alt={`Image for playlist: ${addPlaylist.name}`}
-                        />
-                      </div>
-                    {:else}
-                      <div
-                        class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
-                      >
-                        <ListVideo class="!h-8 !w-8" />
-                      </div>
-                    {/if}
-                    <div class="flex flex-col items-start gap-1">
-                      <p>
-                        {addPlaylist.name}
+              <div class="flex justify-between items-center w-full">
+                <div class="flex items-center gap-2">
+                  <ArrowDownUp class="drawer-icon" />
+                  Reorder videos
+                </div>
+                <ChevronRight />
+              </div>
+            </Drawer.Trigger>
+            <Drawer.Content class="p-0">
+              {#each videos as video (video.id)}
+                <Button class="drawer-playlist-button" variant="ghost">
+                  <div class="flex gap-2 items-center">
+                    <img
+                      src={video.thumbnail_url}
+                      alt={video.title}
+                      class="h-12 aspect-video"
+                    />
+                    <div class="flex flex-col gap-1">
+                      <p class="font-normal text-sm">
+                        {video.title}
                       </p>
-                      <p class="text-muted-foreground">{addPlaylist.type}</p>
+                      <p class="text-xs text-muted-foreground tracking-tight">
+                        {SOURCE_INFO[video.source].displayName}
+                      </p>
                     </div>
-                  </Button>
-                {/if}
+                  </div>
+                </Button>
               {/each}
-            </ScrollArea>
-          </Drawer.Content>
-        </Drawer.NestedRoot>
-      {/if}
+            </Drawer.Content>
+          </Drawer.NestedRoot>
+        {/if}
 
-      {#if playlist && isPlaylistOwner && selectedVideos && selectedVideos.length > 0}
-        <Button
-          class="drawer-button"
-          variant="ghost"
-          onclick={() => {
-            handleRemoveVideosFromPlaylist({
-              videos: selectedVideos,
-              playlist,
-              supabase,
-            });
+        {#if (variant !== "header" && filteredPlaylists.length > 0) || (variant === "header" && selectedVideos.length > 0)}
+          <Drawer.NestedRoot bind:open={openPlaylistDrawer}>
+            <Drawer.Trigger
+              class={buttonVariants({
+                variant: "ghost",
+                class: "drawer-button",
+              })}
+            >
+              <div class="flex justify-between items-center w-full">
+                <div class="flex gap-2 items-center">
+                  <PlusCircle class="drawer-icon" />
+                  Add to playlist
+                </div>
+                <ChevronRight />
+              </div>
+            </Drawer.Trigger>
+            <Drawer.Content class="p-0">
+              <Drawer.Header class="text-left mx-4">
+                <Drawer.Title class="text-lg">Select Playlist</Drawer.Title>
+              </Drawer.Header>
+              <ScrollArea
+                type="scroll"
+                class={filteredPlaylists.length <= 4 ? "h-auto" : "h-96"}
+              >
+                {#each filteredPlaylists as addPlaylist (addPlaylist.id)}
+                  {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
+                    <Button
+                      class="drawer-playlist-button"
+                      variant="ghost"
+                      onclick={() => {
+                        handleAddVideosToPlaylist({
+                          videos: selectedVideos,
+                          playlist: addPlaylist,
+                          supabase,
+                          session,
+                        });
+                        openPlaylistDrawer = false;
+                        open = false;
+                      }}
+                    >
+                      {#if addPlaylist.processedImageUrl}
+                        <div class="h-12 w-12 shrink-0">
+                          <img
+                            src={addPlaylist.processedImageUrl}
+                            class="h-full w-full object-cover cursor-pointer"
+                            alt={`Image for playlist: ${addPlaylist.name}`}
+                          />
+                        </div>
+                      {:else}
+                        <div
+                          class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
+                        >
+                          <ListVideo class="!h-8 !w-8" />
+                        </div>
+                      {/if}
+                      <div class="flex flex-col items-start gap-1">
+                        <p>
+                          {addPlaylist.name}
+                        </p>
+                        <p class="text-muted-foreground">{addPlaylist.type}</p>
+                      </div>
+                    </Button>
+                  {/if}
+                {/each}
+              </ScrollArea>
+            </Drawer.Content>
+          </Drawer.NestedRoot>
+        {/if}
 
-            open = false;
-          }}
-        >
-          <div class="flex gap-2 items-center">
-            <MinusCircle class="drawer-icon" />
-            Remove from playlist
-          </div>
-        </Button>
-      {/if}
-
-      {#if selectedVideos && selectedVideos.length === 1 && playlist && variant === "list-items" && isPlaylistOwner}
-        {@const selectedVideo =
-          contentState.selectedVideosBySection[sectionId][0]}
-        <Button
-          class="drawer-button"
-          variant="ghost"
-          onclick={() => {
-            handleUpdatePlaylistImage({
-              playlist,
-              thumbnailUrl: selectedVideo.thumbnail_url,
-              thumbnailMaxResUrl: selectedVideo.thumbnail_maxres_url,
-              supabase,
-            });
-            open = false;
-          }}
-        >
-          <div class="flex gap-2 items-center">
-            <ImagePlay class="drawer-icon" />
-            Set as playlist image
-          </div>
-        </Button>
-      {/if}
-      {#if session && variant !== "item" && selectedVideos.length > 0 && selectedVideos.some( (v) => isVideoWithTimestamp(v), )}
-        <Button
-          class="drawer-button"
-          variant="ghost"
-          onclick={async () => {
-            ({ updatedVideos: selectedVideos } =
-              await handleDeleteVideosTimestamp({
+        {#if playlist && isPlaylistOwner && selectedVideos && selectedVideos.length > 0}
+          <Button
+            class="drawer-button"
+            variant="ghost"
+            onclick={() => {
+              handleRemoveVideosFromPlaylist({
                 videos: selectedVideos,
+                playlist,
+                supabase,
+              });
+
+              open = false;
+            }}
+          >
+            <div class="flex gap-2 items-center">
+              <MinusCircle class="drawer-icon" />
+              Remove from playlist
+            </div>
+          </Button>
+        {/if}
+
+        {#if selectedVideos && selectedVideos.length === 1 && playlist && variant === "list-items" && isPlaylistOwner}
+          {@const selectedVideo =
+            contentState.selectedVideosBySection[sectionId][0]}
+          <Button
+            class="drawer-button"
+            variant="ghost"
+            onclick={() => {
+              handleUpdatePlaylistImage({
+                playlist,
+                thumbnailUrl: selectedVideo.thumbnail_url,
+                thumbnailMaxResUrl: selectedVideo.thumbnail_maxres_url,
+                supabase,
+              });
+              open = false;
+            }}
+          >
+            <div class="flex gap-2 items-center">
+              <ImagePlay class="drawer-icon" />
+              Set as playlist image
+            </div>
+          </Button>
+        {/if}
+
+        {#if session && variant !== "item" && selectedVideos.length > 0 && selectedVideos.some( (v) => isVideoWithTimestamp(v), )}
+          <Button
+            class="drawer-button"
+            variant="ghost"
+            onclick={async () => {
+              ({ updatedVideos: selectedVideos } =
+                await handleDeleteVideosTimestamp({
+                  videos: selectedVideos,
+                  supabase,
+                  session,
+                }));
+              open = false;
+            }}
+          >
+            <div class="flex gap-2 items-center">
+              <TimerReset class="drawer-icon" />
+              Reset Progress
+            </div>
+          </Button>
+        {/if}
+
+        {#if variant !== "item" && selectedVideos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
+          <Button
+            class="drawer-button"
+            variant="ghost"
+            onclick={async () => {
+              ({ updatedVideos: selectedVideos } =
+                await handleAddVideoTimestamp({
+                  videoTimestamps: selectedVideos.map((v) => ({
+                    videoId: v.id,
+                    watchedAt: new Date(),
+                  })),
+                  session,
+                  supabase,
+                }));
+              open = false;
+            }}
+          >
+            <div class="flex gap-2 items-center">
+              <CircleCheck class="drawer-icon" />
+              Set as Watched
+            </div>
+          </Button>
+        {/if}
+
+        {#if playlist && variant === "header"}
+          <Button
+            class="drawer-button"
+            variant="ghost"
+            onclick={async () => {
+              const data = await handleDeletePlaylist({
+                playlist,
                 supabase,
                 session,
-              }));
-            open = false;
-          }}
-        >
-          <div class="flex gap-2 items-center">
-            <TimerReset class="drawer-icon" />
-            Reset Progress
-          </div>
-        </Button>
-      {/if}
-      {#if variant !== "item" && selectedVideos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
-        <Button
-          class="drawer-button"
-          variant="ghost"
-          onclick={async () => {
-            ({ updatedVideos: selectedVideos } = await handleAddVideoTimestamp({
-              videoTimestamps: selectedVideos.map((v) => ({
-                videoId: v.id,
-                watchedAt: new Date(),
-              })),
-              session,
-              supabase,
-            }));
-            open = false;
-          }}
-        >
-          <div class="flex gap-2 items-center">
-            <CircleCheck class="drawer-icon" />
-            Set as Watched
-          </div>
-        </Button>
-      {/if}
-      {#if playlist && variant === "header"}
-        <Button
-          class="drawer-button"
-          variant="ghost"
-          onclick={async () => {
-            const data = await handleDeletePlaylist({
-              playlist,
-              supabase,
-              session,
-            });
+              });
 
-            if (
-              !data?.error &&
-              page.url.pathname === `/playlist/${playlist.short_id}`
-            ) {
-              goto("/");
-            }
-            open = false;
-          }}
-        >
-          <div class="flex items-center gap-2">
-            <CircleMinus class="drawer-icon" />
-            Delete Playlist
-          </div>
-        </Button>
-      {/if}
+              if (
+                !data?.error &&
+                page.url.pathname === `/playlist/${playlist.short_id}`
+              ) {
+                goto("/");
+              }
+              open = false;
+            }}
+          >
+            <div class="flex items-center gap-2">
+              <CircleMinus class="drawer-icon" />
+              Delete Playlist
+            </div>
+          </Button>
+        {/if}
+      </div>
 
-      <Drawer.Footer class="pt-2">
-        <Drawer.Close class={buttonVariants({ variant: "outline" })}
-          >Cancel</Drawer.Close
-        >
+      <!-- Fixed footer -->
+      <Drawer.Footer class="pt-2 flex-shrink-0">
+        <Drawer.Close class={buttonVariants({ variant: "outline" })}>
+          Cancel
+        </Drawer.Close>
       </Drawer.Footer>
     </Drawer.Content>
   </Drawer.Root>
