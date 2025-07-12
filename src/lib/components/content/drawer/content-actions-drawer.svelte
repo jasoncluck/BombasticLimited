@@ -4,10 +4,9 @@
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
   import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
-  import Button, { buttonVariants } from "../ui/button/button.svelte";
+  import Button, { buttonVariants } from "../../ui/button/button.svelte";
   import * as Drawer from "$lib/components/ui/drawer/index.js";
 
-  import { getMediaQueryState } from "$lib/state/media-query.svelte";
   import {
     ArrowDownUp,
     ChevronRight,
@@ -17,30 +16,30 @@
     Ellipsis,
     ImagePlay,
     ListVideo,
-    Menu,
     MinusCircle,
     PlusCircle,
     TimerReset,
   } from "@lucide/svelte";
-  import ScrollArea from "../ui/scroll-area/scroll-area.svelte";
   import {
     handleAddVideosToPlaylist,
     handleDeletePlaylist,
     handleRemoveVideosFromPlaylist,
     handleUpdatePlaylistImage,
-  } from "../playlist/playlist-service";
+    handleUpdatePlaylistVideoPosition,
+  } from "../../playlist/playlist-service";
   import { SOURCE_INFO } from "$lib/constants/source";
   import {
     handleAddVideoTimestamp,
     handleDeleteVideosTimestamp,
-  } from "../video/video-service";
-  import { goto } from "$app/navigation";
+  } from "../../video/video-service";
+  import { goto, invalidate } from "$app/navigation";
   import { page } from "$app/state";
+  import EditListDrawer from "./edit-list-drawer.svelte";
 
   let {
     playlist,
     playlists,
-    videos,
+    videos = $bindable(),
     variant,
     onPlaylistEdit,
     sectionId,
@@ -59,7 +58,6 @@
   } = $props();
 
   const contentState = getContentState();
-  const mediaQueryState = getMediaQueryState();
 
   const isPlaylistOwner = $derived(session?.user.id === playlist?.created_by);
 
@@ -69,11 +67,32 @@
 
   let open = $state(false);
   let openPlaylistDrawer = $state(false);
-  let reorderVideosDrawer = $state(false);
 
   $effect(() => {
     contentState.isDropdownMenuOpen = open;
   });
+
+  async function handleVideoReorder(
+    oldIndex: number,
+    newIndex: number,
+    item: Video | Playlist | { id: string | number },
+  ) {
+    if (!session || !playlist) return;
+
+    const newPosition = newIndex + 1;
+
+    try {
+      await handleUpdatePlaylistVideoPosition({
+        playlist,
+        position: newPosition,
+        videos: [item as Video],
+        supabase,
+      });
+    } catch (error) {
+      console.error("Error updating video position:", error);
+      throw error;
+    }
+  }
 
   $effect(() => {
     if (contentState.isContextMenuOpenForAnySection()) {
@@ -99,8 +118,8 @@
     </Drawer.Trigger>
     <Drawer.Content class="p-0 drawer">
       <Drawer.Header class="text-left mx-4">
-        {#if selectedVideos.length === 1}
-          {@const video = selectedVideos[0]}
+        {#if variant === "list-items" && videos.length === 1}
+          {@const video = videos[0]}
           <div class="flex gap-2 items-center">
             <img
               src={video.thumbnail_url}
@@ -156,14 +175,19 @@
           </div>
         </Button>
       {/if}
-      {#if isPlaylistOwner && variant === "header"}
-        <Drawer.NestedRoot bind:open={reorderVideosDrawer}>
-          <Drawer.Trigger
-            class={buttonVariants({
-              variant: "ghost",
-              class: "drawer-button",
-            })}
-          >
+      {#if isPlaylistOwner && variant === "header" && videos && videos.length > 0}
+        <EditListDrawer
+          bind:items={videos}
+          title="Reorder playlist videos"
+          subtitle="Drag the handle to reorder videos"
+          triggerClass="drawer-button"
+          triggerVariant="ghost"
+          onReorder={handleVideoReorder}
+          onClose={() => {
+            invalidate("supabase:db:playlists");
+          }}
+        >
+          {#snippet trigger()}
             <div class="flex justify-between items-center w-full">
               <div class="flex items-center gap-2">
                 <ArrowDownUp class="drawer-icon" />
@@ -171,59 +195,37 @@
               </div>
               <ChevronRight />
             </div>
-          </Drawer.Trigger>
-          <Drawer.Content
-            class="bg-background flex flex-col min-h-[100%] drawer"
-          >
-            <div class="flex-shrink-0 p-4 pb-0">
-              <Drawer.Header class="px-0">
-                <Drawer.Title class="text-xl">Edit Playlist Videos</Drawer.Title
-                >
-              </Drawer.Header>
-            </div>
+          {/snippet}
 
-            <div class="flex-1 overflow-y-auto px-4 min-h-0">
-              {#each videos as video (video.id)}
-                <div class="flex gap-2 items-center content-table-row">
-                  <img
-                    src={video.thumbnail_url}
-                    alt={video.title}
-                    class="h-[60px] aspect-video"
-                  />
-                  <div class="flex flex-col gap-1">
-                    <p
-                      class="font-normal text-sm break-words line-clamp-2 leading-5"
-                    >
-                      {video.title}
-                    </p>
-                    <p class="text-xs text-muted-foreground tracking-tight">
-                      {SOURCE_INFO[video.source].displayName}
-                    </p>
-                  </div>
-                  <Menu class="shrink-0" />
-                </div>
-              {/each}
+          {#snippet itemRenderer(item)}
+            {@const video = item as Video}
+            <img
+              src={video.thumbnail_url}
+              alt={video.title}
+              class="h-[60px] aspect-video pointer-events-none"
+            />
+            <div class="flex flex-col gap-1 flex-1 min-w-0 pointer-events-none">
+              <p class="font-normal text-sm break-words line-clamp-2 leading-5">
+                {video.title}
+              </p>
+              <p class="text-xs text-muted-foreground tracking-tight">
+                {SOURCE_INFO[video.source].displayName}
+              </p>
             </div>
-            <div class="flex-shrink-0 p-4 pt-2 border-t bg-background">
-              <div class="flex flex-col gap-2">
-                <Drawer.Close
-                  class={buttonVariants({
-                    class: "drawer-button-footer",
-                    variant: "outline",
-                  })}
-                >
-                  Close
-                </Drawer.Close>
-              </div>
+          {/snippet}
+
+          {#snippet emptyState()}
+            <div class="flex items-center justify-center h-32">
+              <p class="text-muted-foreground">No videos to reorder</p>
             </div>
-          </Drawer.Content>
-        </Drawer.NestedRoot>
+          {/snippet}
+        </EditListDrawer>
       {/if}
       {@const filteredPlaylists = playlists.filter(
         (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id,
       )}
-      {#if (variant !== "header" && filteredPlaylists.length > 0) || (variant === "header" && selectedVideos.length > 0)}
-        <Drawer.NestedRoot bind:open={openPlaylistDrawer}>
+      {#if variant === "list-items"}
+        <Drawer.NestedRoot bind:open={openPlaylistDrawer} handleOnly={true}>
           <Drawer.Trigger
             class={buttonVariants({
               variant: "ghost",
@@ -238,63 +240,67 @@
               <ChevronRight />
             </div>
           </Drawer.Trigger>
-          <Drawer.Content class="p-0 drawer">
-            <Drawer.Header class="text-left mx-4">
-              <Drawer.Title class="text-lg">Select Playlist</Drawer.Title>
-            </Drawer.Header>
-            <ScrollArea type="scroll">
-              {#each filteredPlaylists as addPlaylist (addPlaylist.id)}
-                {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
-                  <Button
-                    class="drawer-playlist-button"
-                    variant="ghost"
-                    onclick={() => {
-                      handleAddVideosToPlaylist({
-                        videos: selectedVideos,
-                        playlist: addPlaylist,
-                        supabase,
-                        session,
-                      });
-                      openPlaylistDrawer = false;
-                      open = false;
-                    }}
-                  >
-                    {#if addPlaylist.processedImageUrl}
-                      <div class="h-12 w-12 shrink-0">
-                        <img
-                          src={addPlaylist.processedImageUrl}
-                          class="h-full w-full object-cover cursor-pointer"
-                          alt={`Image for playlist: ${addPlaylist.name}`}
-                        />
-                      </div>
-                    {:else}
-                      <div
-                        class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
-                      >
-                        <ListVideo class="!h-8 !w-8" />
-                      </div>
-                    {/if}
-                    <div class="flex flex-col items-start gap-1">
-                      <p>
-                        {addPlaylist.name}
-                      </p>
-                      <p class="text-muted-foreground">{addPlaylist.type}</p>
+          <Drawer.Content
+            class="bg-background flex flex-col min-h-[100%] drawer"
+          >
+            <div class="flex-shrink-0 p-4 pb-0">
+              <Drawer.Header class="px-0">
+                <Drawer.Title class="text-xl"
+                  >Reorder playlist videos</Drawer.Title
+                >
+              </Drawer.Header>
+            </div>
+            {#each filteredPlaylists as addPlaylist (addPlaylist.id)}
+              {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
+                <Button
+                  class="drawer-playlist-button"
+                  variant="ghost"
+                  onclick={() => {
+                    handleAddVideosToPlaylist({
+                      videos: [videos[0]],
+                      playlist: addPlaylist,
+                      supabase,
+                      session,
+                    });
+                    openPlaylistDrawer = false;
+                    open = false;
+                  }}
+                >
+                  {#if addPlaylist.processedImageUrl}
+                    <div class="h-12 w-12 shrink-0">
+                      <img
+                        src={addPlaylist.processedImageUrl}
+                        class="h-full w-full object-cover cursor-pointer"
+                        alt={`Image for playlist: ${addPlaylist.name}`}
+                      />
                     </div>
-                  </Button>
-                {/if}
-              {/each}
-            </ScrollArea>
+                  {:else}
+                    <div
+                      class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
+                    >
+                      <ListVideo class="!h-8 !w-8" />
+                    </div>
+                  {/if}
+                  <div class="flex flex-col items-start gap-1">
+                    <p>
+                      {addPlaylist.name}
+                    </p>
+                    <p class="text-muted-foreground">{addPlaylist.type}</p>
+                  </div>
+                </Button>
+              {/if}
+            {/each}
           </Drawer.Content>
         </Drawer.NestedRoot>
       {/if}
 
-      {#if playlist && isPlaylistOwner && selectedVideos && selectedVideos.length > 0}
+      {#if playlist && isPlaylistOwner && variant === "list-items" && videos.length === 1}
         <Button
           class="drawer-button"
           variant="ghost"
           onclick={() => {
             handleRemoveVideosFromPlaylist({
-              videos: selectedVideos,
+              videos: [videos[0]],
               playlist,
               supabase,
             });
@@ -309,17 +315,15 @@
         </Button>
       {/if}
 
-      {#if selectedVideos && selectedVideos.length === 1 && playlist && variant === "list-items" && isPlaylistOwner}
-        {@const selectedVideo =
-          contentState.selectedVideosBySection[sectionId][0]}
+      {#if playlist && variant === "list-items" && isPlaylistOwner && videos.length === 1}
         <Button
           class="drawer-button"
           variant="ghost"
           onclick={() => {
             handleUpdatePlaylistImage({
               playlist,
-              thumbnailUrl: selectedVideo.thumbnail_url,
-              thumbnailMaxResUrl: selectedVideo.thumbnail_maxres_url,
+              thumbnailUrl: videos[0].thumbnail_url,
+              thumbnailMaxResUrl: videos[0].thumbnail_maxres_url,
               supabase,
             });
             open = false;
@@ -331,17 +335,16 @@
           </div>
         </Button>
       {/if}
-      {#if session && variant !== "item" && selectedVideos.length > 0 && selectedVideos.some( (v) => isVideoWithTimestamp(v), )}
+      {#if session && variant === "list-items" && videos.length === 1 && isVideoWithTimestamp(videos[0])}
         <Button
           class="drawer-button"
           variant="ghost"
           onclick={async () => {
-            ({ updatedVideos: selectedVideos } =
-              await handleDeleteVideosTimestamp({
-                videos: selectedVideos,
-                supabase,
-                session,
-              }));
+            ({ updatedVideos: videos } = await handleDeleteVideosTimestamp({
+              videos: [videos[0]],
+              supabase,
+              session,
+            }));
             open = false;
           }}
         >
@@ -351,13 +354,13 @@
           </div>
         </Button>
       {/if}
-      {#if variant !== "item" && selectedVideos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
+      {#if (variant === "list-items" && videos.length === 1 && !isVideoWithTimestamp(videos[0])) || (isVideoWithTimestamp(videos[0]) && !videos[0].watched_at)}
         <Button
           class="drawer-button"
           variant="ghost"
           onclick={async () => {
-            ({ updatedVideos: selectedVideos } = await handleAddVideoTimestamp({
-              videoTimestamps: selectedVideos.map((v) => ({
+            ({ updatedVideos: videos } = await handleAddVideoTimestamp({
+              videoTimestamps: videos.map((v) => ({
                 videoId: v.id,
                 watchedAt: new Date(),
               })),

@@ -64,6 +64,7 @@
     createContentColumns({
       getPlaylist: () => playlist,
       getPlaylists: () => playlists,
+      getVideos: () => videos,
       getContentFilter: () => contentFilter,
       getCanHover: () => mediaQueryState.canHover,
       getIsSm: () => mediaQueryState.isSm,

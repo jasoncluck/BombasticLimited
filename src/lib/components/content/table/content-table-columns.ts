@@ -14,6 +14,7 @@ import type { CombinedContentFilter } from "../content-filter";
 export function createContentColumns({
   getPlaylist,
   getPlaylists,
+  getVideos,
   getContentFilter,
   getCanHover,
   getIsSm,
@@ -23,6 +24,7 @@ export function createContentColumns({
 }: {
   getPlaylist: () => Playlist | undefined;
   getPlaylists: () => Playlist[];
+  getVideos: () => Video[];
   getContentFilter: () => CombinedContentFilter;
   getCanHover: () => boolean;
   getIsSm: () => boolean;
@@ -98,7 +100,6 @@ export function createContentColumns({
           playlist: getPlaylist(),
           playlists: getPlaylists(),
           sectionId,
-          variant: "list-items",
           session,
           supabase,
         });

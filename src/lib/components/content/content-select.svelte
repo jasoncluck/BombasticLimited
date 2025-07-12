@@ -8,10 +8,10 @@
   } from "$lib/state/content.svelte";
   import ContentActionsDropdown from "./content-actions-dropdown.svelte";
   import type { Video } from "$lib/supabase/videos";
-  import ContentActionsDrawer from "./content-actions-drawer.svelte";
+  import ContentActionsDrawer from "./drawer/content-actions-drawer.svelte";
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
 
-  const {
+  let {
     videos,
     playlist,
     playlists,
@@ -70,7 +70,7 @@
 {:else}
   <div class="flex content-table-row items-center">
     <ContentActionsDrawer
-      {videos}
+      bind:videos
       {playlist}
       {playlists}
       {sectionId}
