@@ -71,14 +71,7 @@
 <div class="content-section">
   {#if session && continueWatchingVideos.length > 0}
     <div class="flex flex-col mb-8 gap-0 sm:gap-4">
-      <a
-        href="/continue"
-        class={userProfile?.content_display === "CARD"
-          ? "header-link"
-          : "header-link-sticky"}
-      >
-        Continue Watching
-      </a>
+      <a href="/continue" class="header-link-sticky"> Continue Watching </a>
 
       <Content
         videos={continueWatchingVideos}
@@ -105,12 +98,7 @@
   <div class="flex flex-col gap-4">
     {#each sources as source (source)}
       <div class="content-section">
-        <a
-          href={`/${source}/latest`}
-          class={userProfile?.content_display === "CARD"
-            ? "header-link"
-            : "header-link-sticky"}
-        >
+        <a href={`/${source}/latest`} class="header-link-sticky">
           {SOURCE_INFO[source].displayName}
         </a>
         <Content

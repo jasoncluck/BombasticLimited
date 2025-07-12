@@ -56,7 +56,7 @@
 {#if mediaQueryState.canHover}
   <div class="flex items-center pointer-events-auto">
     <ContentActionsDropdown
-      bind:videos={selectedVideos}
+      {videos}
       variant="header"
       {playlist}
       {playlists}
@@ -70,7 +70,7 @@
 {:else}
   <div class="flex content-table-row items-center">
     <ContentActionsDrawer
-      videos={selectedVideos}
+      playlistVideos={videos}
       {playlist}
       {playlists}
       {sectionId}

@@ -9,13 +9,13 @@
 
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
   import {
+    ArrowDownUp,
     ChevronRight,
     CircleCheck,
     CircleMinus,
     Edit,
     Ellipsis,
     ImagePlay,
-    ListChecks,
     ListVideo,
     MinusCircle,
     PlusCircle,
@@ -37,9 +37,9 @@
   import { page } from "$app/state";
 
   let {
-    videos = $bindable(),
     playlist,
     playlists,
+    videos,
     variant,
     onPlaylistEdit,
     sectionId,
@@ -62,12 +62,13 @@
 
   const isPlaylistOwner = $derived(session?.user.id === playlist?.created_by);
 
-  const isHovering = $derived(
-    contentState.hoveredVideosBySection[sectionId]?.id === videos[0]?.id,
+  let selectedVideos = $derived(
+    contentState.selectedVideosBySection[sectionId] ?? [],
   );
 
   let open = $state(false);
   let openPlaylistDrawer = $state(false);
+  let reorderVideosDrawer = $state(false);
   let activeSnapPoint = $state(1);
 
   $effect(() => {
@@ -99,8 +100,8 @@
     </Drawer.Trigger>
     <Drawer.Content class="p-0">
       <Drawer.Header class="text-left mx-4">
-        {#if videos.length === 1}
-          {@const video = videos[0]}
+        {#if selectedVideos.length === 1}
+          {@const video = selectedVideos[0]}
           <div class="flex gap-2 items-center">
             <img
               src={video.thumbnail_url}
@@ -156,10 +157,49 @@
           </div>
         </Button>
       {/if}
+      {#if isPlaylistOwner && variant === "header"}
+        <Drawer.NestedRoot bind:open={reorderVideosDrawer}>
+          <Drawer.Trigger
+            class={buttonVariants({
+              variant: "ghost",
+              class: "drawer-button",
+            })}
+          >
+            <div class="flex justify-between items-center w-full">
+              <div class="flex items-center gap-2">
+                <ArrowDownUp class="drawer-icon" />
+                Reorder videos
+              </div>
+              <ChevronRight />
+            </div>
+          </Drawer.Trigger>
+          <Drawer.Content class="p-0">
+            {#each videos as video (video.id)}
+              <Button class="drawer-playlist-button" variant="ghost">
+                <div class="flex gap-2 items-center">
+                  <img
+                    src={video.thumbnail_url}
+                    alt={video.title}
+                    class="h-12 aspect-video"
+                  />
+                  <div class="flex flex-col gap-1">
+                    <p class="font-normal text-sm">
+                      {video.title}
+                    </p>
+                    <p class="text-xs text-muted-foreground tracking-tight">
+                      {SOURCE_INFO[video.source].displayName}
+                    </p>
+                  </div>
+                </div>
+              </Button>
+            {/each}
+          </Drawer.Content>
+        </Drawer.NestedRoot>
+      {/if}
       {@const filteredPlaylists = playlists.filter(
         (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id,
       )}
-      {#if (variant !== "header" && filteredPlaylists.length > 0) || (variant === "header" && videos.length > 0)}
+      {#if (variant !== "header" && filteredPlaylists.length > 0) || (variant === "header" && selectedVideos.length > 0)}
         <Drawer.NestedRoot bind:open={openPlaylistDrawer}>
           <Drawer.Trigger
             class={buttonVariants({
@@ -175,7 +215,7 @@
               <ChevronRight />
             </div>
           </Drawer.Trigger>
-          <Drawer.Content class="p-0 max-h-[50%]">
+          <Drawer.Content class="p-0">
             <Drawer.Header class="text-left mx-4">
               <Drawer.Title class="text-lg">Select Playlist</Drawer.Title>
             </Drawer.Header>
@@ -190,7 +230,7 @@
                     variant="ghost"
                     onclick={() => {
                       handleAddVideosToPlaylist({
-                        videos,
+                        videos: selectedVideos,
                         playlist: addPlaylist,
                         supabase,
                         session,
@@ -228,13 +268,13 @@
         </Drawer.NestedRoot>
       {/if}
 
-      {#if playlist && isPlaylistOwner && videos && videos.length > 0}
+      {#if playlist && isPlaylistOwner && selectedVideos && selectedVideos.length > 0}
         <Button
           class="drawer-button"
           variant="ghost"
           onclick={() => {
             handleRemoveVideosFromPlaylist({
-              videos,
+              videos: selectedVideos,
               playlist,
               supabase,
             });
@@ -249,7 +289,7 @@
         </Button>
       {/if}
 
-      {#if contentState.selectedVideosBySection[sectionId] && contentState.selectedVideosBySection[sectionId].length === 1 && playlist && variant === "list-items" && isPlaylistOwner}
+      {#if selectedVideos && selectedVideos.length === 1 && playlist && variant === "list-items" && isPlaylistOwner}
         {@const selectedVideo =
           contentState.selectedVideosBySection[sectionId][0]}
         <Button
@@ -271,16 +311,17 @@
           </div>
         </Button>
       {/if}
-      {#if session && variant !== "item" && videos.length > 0 && videos.some( (v) => isVideoWithTimestamp(v), )}
+      {#if session && variant !== "item" && selectedVideos.length > 0 && selectedVideos.some( (v) => isVideoWithTimestamp(v), )}
         <Button
           class="drawer-button"
           variant="ghost"
           onclick={async () => {
-            ({ updatedVideos: videos } = await handleDeleteVideosTimestamp({
-              videos,
-              supabase,
-              session,
-            }));
+            ({ updatedVideos: selectedVideos } =
+              await handleDeleteVideosTimestamp({
+                videos: selectedVideos,
+                supabase,
+                session,
+              }));
             open = false;
           }}
         >
@@ -290,13 +331,13 @@
           </div>
         </Button>
       {/if}
-      {#if variant !== "item" && videos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
+      {#if variant !== "item" && selectedVideos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
         <Button
           class="drawer-button"
           variant="ghost"
           onclick={async () => {
-            ({ updatedVideos: videos } = await handleAddVideoTimestamp({
-              videoTimestamps: videos.map((v) => ({
+            ({ updatedVideos: selectedVideos } = await handleAddVideoTimestamp({
+              videoTimestamps: selectedVideos.map((v) => ({
                 videoId: v.id,
                 watchedAt: new Date(),
               })),

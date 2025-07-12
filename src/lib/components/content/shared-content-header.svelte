@@ -137,7 +137,9 @@
           hover:bg-primary hover:brightness-[150%]"
           onclick={handlePlayVideo}
         >
-          <Play class="h-6! w-6! stroke-background fill-background" />
+          <Play
+            class="h-6! w-6! stroke-background fill-background border-background"
+          />
         </Button>
         {#if !isPlaylistCreator && !playlists.some((pl) => pl.id === profilePlaylist.id)}
           {#if !session?.user.id}

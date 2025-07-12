@@ -10,6 +10,7 @@
 
   const {
     video,
+    videos,
     playlist,
     playlists,
     sectionId = DEFAULT_SECTION_ID,
@@ -17,6 +18,7 @@
     session,
   }: {
     video: Video;
+    videos: Video[];
     playlist?: Playlist;
     playlists: Playlist[];
     sectionId?: string;
@@ -42,7 +44,6 @@
 {:else}
   <div class="flex content-table-row items-center">
     <ContentActionsDrawer
-      videos={[video]}
       {playlist}
       {playlists}
       {sectionId}

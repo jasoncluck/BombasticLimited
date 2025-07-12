@@ -8,7 +8,10 @@
     type Video,
   } from "$lib/supabase/videos.js";
   import type { Snapshot } from "@sveltejs/kit";
-  import { getContentState } from "$lib/state/content.svelte.js";
+  import {
+    DEFAULT_SECTION_ID,
+    getContentState,
+  } from "$lib/state/content.svelte.js";
   import {
     getNumberOfPages,
     PAGINATION_QUERY_KEY,
@@ -21,12 +24,15 @@
     videos,
     videosCount,
     playlists,
+    userProfile,
     session,
     source,
     contentFilter,
   } = $derived(data);
 
   const contentState = getContentState();
+
+  const sectionId = DEFAULT_SECTION_ID;
 
   let showFloatingBreadcrumbs = $state(false);
 
@@ -42,14 +48,14 @@
     capture: () => {
       return {
         showFloatingBreadcrumbs,
-        selectedVideos: contentState.selectedVideos,
+        selectedVideos: contentState.selectedVideosBySection[sectionId],
       };
     },
     restore: (restored) => {
       if (restored?.showFloatingBreadcrumbs) {
         showFloatingBreadcrumbs = restored.showFloatingBreadcrumbs;
       }
-      contentState.selectedVideos = restored.selectedVideos;
+      contentState.selectedVideosBySection[sectionId] = restored.selectedVideos;
     },
   };
   const numPages = $derived(
@@ -85,7 +91,8 @@
   <Content
     {videos}
     {videosCount}
-    contentDisplay="TILES"
+    tilesDisplay="TILES"
+    {userProfile}
     {contentFilter}
     {playlists}
     {supabase}
