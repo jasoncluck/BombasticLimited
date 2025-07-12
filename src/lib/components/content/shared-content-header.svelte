@@ -138,7 +138,7 @@
           onclick={handlePlayVideo}
         >
           <Play
-            class="h-6! w-6! stroke-background fill-background border-background"
+            class="h-6! w-6! stroke-background fill-background outline-none"
           />
         </Button>
         {#if !isPlaylistCreator && !playlists.some((pl) => pl.id === profilePlaylist.id)}

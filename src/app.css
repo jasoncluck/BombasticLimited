@@ -162,9 +162,17 @@
   origin-center transition-[scale,color] duration-150 ease-in-out;
 }
 
+.drawer {
+  @apply rounded-t-lg outline-none;
+}
 .drawer-button {
   @apply w-full h-8 tracking-wide justify-start;
 }
+
+.drawer-button-footer {
+  @apply w-full h-8 tracking-wide justify-center mt-2;
+}
+
 .drawer-playlist-button {
   @apply w-full h-14 text-xs tracking-wide justify-start flex items-center gap-2;
 }

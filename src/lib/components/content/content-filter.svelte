@@ -197,7 +197,7 @@
       <span class="text-sm">{sortOptionInfo.displayName}</span>
       <List size={20} />
     </DropdownMenu.Trigger>
-    <DropdownMenu.Content>
+    <DropdownMenu.Content class="outline-none">
       <DropdownMenu.Group>
         <DropdownMenu.GroupHeading>Sort by</DropdownMenu.GroupHeading>
         {#each sortKeys as sortKey (sortKey)}

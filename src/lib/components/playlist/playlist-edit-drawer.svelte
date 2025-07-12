@@ -7,7 +7,7 @@
   import { Input } from "$lib/components/ui/input";
   import * as Drawer from "$lib/components/ui/drawer";
   import * as Form from "$lib/components/ui/form";
-  import { Button } from "$lib/components/ui/button";
+  import { Button, buttonVariants } from "$lib/components/ui/button";
   import type { Playlist } from "$lib/supabase/playlists";
   import { zodClient } from "sveltekit-superforms/adapters";
   import { EditIcon, ListVideo, Loader } from "@lucide/svelte";
@@ -89,24 +89,22 @@
     cropperState.rootState.tempUrl =
       playlist.thumbnail_maxres_url ?? playlist.thumbnail_url;
   });
-  console.log("in playlist edit drawer");
 </script>
 
 <Drawer.Root bind:open>
-  <Drawer.Content
-    class="min-w-[375px] sm:max-w-[800px] w-[90%] h-[90%] sm:h-auto"
-  >
+  <Drawer.Content class="drawer min-h-full ">
     <ScrollArea type="scroll">
       <form method="POST" use:enhance class="overflow-hidden">
         <Drawer.Header class="mb-4">
-          <Drawer.Title>Edit Playlist</Drawer.Title>
+          <Drawer.Title class="text-xl">Edit Playlist</Drawer.Title>
         </Drawer.Header>
-
         <div class="flex flex-col sm:flex-row justify-center gap-4 mb-4">
           <div class="relative m-6 flex justify-center">
             {#if (playlist.thumbnail_maxres_url || playlist.thumbnail_url) && !$formData.isDeletingPlaylistImage}
               <div class="h-56 w-56 relative">
-                <ImageCropper.Preview class="rounded-md h-full w-full" />
+                <ImageCropper.Preview
+                  class="rounded-md h-full w-full overflow-scroll"
+                />
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger class="outline-none">
                     {#snippet child({ props })}
@@ -199,7 +197,7 @@
                     >
                     <Textarea
                       {...props}
-                      class="col-span-3 max-h-64 md:min-h-40"
+                      class="col-span-3 max-h-40 md:min-h-40"
                       bind:value={$formData.description}
                     />
                   {/snippet}
@@ -259,13 +257,22 @@
           </div>
         </div>
         <Drawer.Footer>
-          <Button type="submit">
+          <Button type="submit" class="drawer-button-footer">
             {#if isSubmitting}
               <Loader class="animate-spin" />
             {:else}
               Save Changes
             {/if}
           </Button>
+
+          <Drawer.Close
+            class={buttonVariants({
+              class: "drawer-button-footer",
+              variant: "outline",
+            })}
+          >
+            Close
+          </Drawer.Close>
         </Drawer.Footer>
       </form>
     </ScrollArea>

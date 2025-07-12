@@ -168,7 +168,7 @@
         <button
           type="button"
           class="flex flex-col {isPlaylistOwner && 'cursor-pointer'} 
-          items-start text-left border-none bg-transparent p-0 gap-2"
+          items-start text-left border-none bg-transparent p-0"
           disabled={!isPlaylistOwner}
           onclick={openDialog}
           onkeydown={handleKeydown}
@@ -181,12 +181,12 @@
           <h2 class="header-playlist text-wrap break-anywhere font-extrabold">
             {playlist.name}
           </h2>
-          <p class="text-sm text-muted-foreground text-left break-words">
+          <p class="text-sm text-muted-foreground text-left break-all sm:mt-1">
             {playlist.description}
           </p>
         </button>
 
-        <div class="flex items-center flex-wrap">
+        <div class="flex items-center flex-wrap mt-2">
           {#if playlist.profile_username}
             {#if isSource(playlist.profile_username)}
               {@const sourceInfo = SOURCE_INFO[playlist.profile_username]}

@@ -69,7 +69,6 @@
   let open = $state(false);
   let openPlaylistDrawer = $state(false);
   let reorderVideosDrawer = $state(false);
-  let activeSnapPoint = $state(0.5);
 
   $effect(() => {
     contentState.isDropdownMenuOpen = open;
@@ -83,7 +82,7 @@
 </script>
 
 {#if session}
-  <Drawer.Root snapPoints={[0.5, 1]} bind:activeSnapPoint bind:open>
+  <Drawer.Root snapPoints={[1]} bind:open>
     <Drawer.Trigger
       onclick={(e) => {
         e.preventDefault();
@@ -97,7 +96,7 @@
     >
       <Ellipsis />
     </Drawer.Trigger>
-    <Drawer.Content class="p-0 min-h-full">
+    <Drawer.Content class="p-0 drawer">
       <Drawer.Header class="text-left mx-4">
         {#if selectedVideos.length === 1}
           {@const video = selectedVideos[0]}
@@ -172,25 +171,23 @@
               <ChevronRight />
             </div>
           </Drawer.Trigger>
-          <Drawer.Content class="p-0 min-h-full">
+          <Drawer.Content class="p-2 min-h-full drawer">
             {#each videos as video (video.id)}
-              <Button class="drawer-playlist-button" variant="ghost">
-                <div class="flex gap-2 items-center">
-                  <img
-                    src={video.thumbnail_url}
-                    alt={video.title}
-                    class="h-12 aspect-video"
-                  />
-                  <div class="flex flex-col gap-1">
-                    <p class="font-normal text-sm">
-                      {video.title}
-                    </p>
-                    <p class="text-xs text-muted-foreground tracking-tight">
-                      {SOURCE_INFO[video.source].displayName}
-                    </p>
-                  </div>
+              <div class="flex gap-2 items-center">
+                <img
+                  src={video.thumbnail_url}
+                  alt={video.title}
+                  class="h-12 aspect-video"
+                />
+                <div class="flex flex-col gap-1">
+                  <p class="font-normal text-sm">
+                    {video.title}
+                  </p>
+                  <p class="text-xs text-muted-foreground tracking-tight">
+                    {SOURCE_INFO[video.source].displayName}
+                  </p>
                 </div>
-              </Button>
+              </div>
             {/each}
           </Drawer.Content>
         </Drawer.NestedRoot>
@@ -214,14 +211,11 @@
               <ChevronRight />
             </div>
           </Drawer.Trigger>
-          <Drawer.Content class="p-0 min-h-full">
+          <Drawer.Content class="p-0 min-h-full drawer">
             <Drawer.Header class="text-left mx-4">
               <Drawer.Title class="text-lg">Select Playlist</Drawer.Title>
             </Drawer.Header>
-            <ScrollArea
-              type="scroll"
-              class={filteredPlaylists.length <= 4 ? "h-auto" : "h-96"}
-            >
+            <ScrollArea type="scroll">
               {#each filteredPlaylists as addPlaylist (addPlaylist.id)}
                 {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
                   <Button
@@ -379,9 +373,12 @@
         </Button>
       {/if}
 
-      <Drawer.Footer class="pt-2">
-        <Drawer.Close class={buttonVariants({ variant: "outline" })}
-          >Cancel</Drawer.Close
+      <Drawer.Footer class="p-2">
+        <Drawer.Close
+          class={buttonVariants({
+            class: "drawer-button-footer",
+            variant: "outline",
+          })}>Close</Drawer.Close
         >
       </Drawer.Footer>
     </Drawer.Content>

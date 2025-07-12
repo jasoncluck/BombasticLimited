@@ -70,7 +70,7 @@
 {:else}
   <div class="flex content-table-row items-center">
     <ContentActionsDrawer
-      playlistVideos={videos}
+      {videos}
       {playlist}
       {playlists}
       {sectionId}
