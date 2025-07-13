@@ -166,11 +166,11 @@
   @apply rounded-t-lg outline-none;
 }
 .drawer-button {
-  @apply w-full h-8 tracking-wide justify-start;
+  @apply w-full h-10 tracking-wide justify-start;
 }
 
 .drawer-button-footer {
-  @apply w-full h-8 tracking-wide justify-center mt-2;
+  @apply w-full h-10 tracking-wide justify-center mt-2;
 }
 
 .drawer-playlist-button {

@@ -30,12 +30,15 @@
   import { setPageState, type ScrollPosition } from "$lib/state/page.svelte";
   import { setLayoutState } from "$lib/state/layout.svelte";
   import { handleUpdateProfileContentDisplay } from "$lib/components/profile/profile-service";
+  import GlobalDrawer from "$lib/components/drawer/global-drawer.svelte";
+  import { setDrawerState } from "$lib/state/drawer.svelte";
 
   // Initialize all state contexts
   const layoutState = setLayoutState();
   const pageState = setPageState();
   const contentState = setContentState(pageState);
   setPlaylistState(pageState, contentState);
+  setDrawerState();
 
   const mediaQuery = setMediaQueryState({
     // breakpoints: ["max-sm"],
@@ -406,3 +409,4 @@
     </Resizable.Pane>
   </Resizable.PaneGroup>
 </div>
+<GlobalDrawer />

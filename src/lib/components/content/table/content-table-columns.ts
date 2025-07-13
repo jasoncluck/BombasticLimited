@@ -14,7 +14,6 @@ import type { CombinedContentFilter } from "../content-filter";
 export function createContentColumns({
   getPlaylist,
   getPlaylists,
-  getVideos,
   getContentFilter,
   getCanHover,
   getIsSm,
@@ -96,7 +95,7 @@ export function createContentColumns({
       cell: ({ row }) => {
         const video = row.original;
         return renderComponent(ContentTableActions, {
-          video,
+          videos: [video],
           playlist: getPlaylist(),
           playlists: getPlaylists(),
           sectionId,

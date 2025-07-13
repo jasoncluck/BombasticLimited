@@ -6,10 +6,9 @@
   import ContentActionsDropdown from "../content-actions-dropdown.svelte";
   import { DEFAULT_SECTION_ID } from "$lib/state/content.svelte";
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
-  import ContentActionsDrawer from "../drawer/content-actions-drawer.svelte";
+  import ContentActionsDrawer from "../content-actions-drawer.svelte";
 
   const {
-    video,
     videos,
     playlist,
     playlists,
@@ -17,7 +16,6 @@
     supabase,
     session,
   }: {
-    video: Video;
     videos: Video[];
     playlist?: Playlist;
     playlists: Playlist[];
@@ -32,7 +30,7 @@
 {#if mediaQueryState.canHover}
   <div class="flex content-table-row items-center">
     <ContentActionsDropdown
-      videos={[video]}
+      videos={[videos[0]]}
       {playlist}
       {playlists}
       {sectionId}
@@ -44,7 +42,7 @@
 {:else}
   <div class="flex content-table-row items-center">
     <ContentActionsDrawer
-      videos={[video]}
+      videos={[videos[0]]}
       {playlist}
       {playlists}
       {sectionId}

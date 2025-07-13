@@ -28,6 +28,7 @@
   import { dndzone } from "svelte-dnd-action";
   import type { DndEvent } from "svelte-dnd-action";
   import type { Profile } from "$lib/supabase/profiles";
+  import Badge from "./ui/badge/badge.svelte";
 
   let {
     playlists = $bindable(),
@@ -207,7 +208,12 @@
             </Button>
           {/each}
 
-          <Sheet.Title class="mx-2 mt-4 mb-2">Playlists</Sheet.Title>
+          <Sheet.Title class="mx-2 mt-4 mb-2">
+            <div class="flex justify-between items-center">
+              Playlists
+              <Badge>Foobar</Badge>
+            </div>
+          </Sheet.Title>
 
           {#if session}
             <Button

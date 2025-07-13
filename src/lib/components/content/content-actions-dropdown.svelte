@@ -32,7 +32,7 @@
   import { goto } from "$app/navigation";
 
   let {
-    videos,
+    videos = $bindable(),
     playlist,
     playlists,
     variant,
