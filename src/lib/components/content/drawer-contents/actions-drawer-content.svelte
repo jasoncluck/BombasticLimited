@@ -35,6 +35,7 @@
   import { goto, invalidate } from "$app/navigation";
   import { page } from "$app/state";
   import EditListDrawer from "./edit-list-drawer.svelte";
+  import FullHeightDrawer from "./full-height-drawer.svelte";
 
   let {
     playlist,
@@ -59,8 +60,6 @@
   } = $props();
 
   const isPlaylistOwner = $derived(session?.user.id === playlist?.created_by);
-
-  let openPlaylistDrawer = $state(false);
 
   async function handleVideoReorder(
     oldIndex: number,
@@ -154,11 +153,8 @@
 
     {#if isPlaylistOwner && variant === "header" && videos && videos.length > 0}
       <EditListDrawer
-        bind:items={videos}
+        items={videos}
         title="Reorder playlist videos"
-        subtitle="Drag the handle to reorder videos"
-        triggerClass="drawer-button"
-        triggerVariant="ghost"
         onReorder={handleVideoReorder}
         onClose={() => {
           invalidate("supabase:db:playlists");
@@ -203,13 +199,15 @@
       {@const filteredPlaylists = playlists.filter(
         (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id,
       )}
-      <Drawer.NestedRoot bind:open={openPlaylistDrawer} handleOnly={true}>
-        <Drawer.Trigger
-          class={buttonVariants({
-            variant: "ghost",
-            class: "drawer-button",
-          })}
-        >
+
+      <FullHeightDrawer
+        title="Add to playlist"
+        handleOnly={true}
+        onClose={() => {
+          invalidate("supabase:db:playlists");
+        }}
+      >
+        {#snippet trigger()}
           <div class="flex justify-between items-center w-full">
             <div class="flex gap-2 items-center">
               <PlusCircle class="drawer-icon" />
@@ -217,75 +215,48 @@
             </div>
             <ChevronRight />
           </div>
-        </Drawer.Trigger>
-        <Drawer.Content class="bg-background flex flex-col min-h-[100%] drawer">
-          <div class="flex-shrink-0 p-4">
-            <Drawer.Header>
-              <Drawer.Title class="text-xl">Add to playlist</Drawer.Title>
-            </Drawer.Header>
-          </div>
-          {#each filteredPlaylists as addPlaylist (addPlaylist.id)}
-            {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
-              <Button
-                class="drawer-playlist-button"
-                variant="ghost"
-                onclick={() => {
-                  handleAddVideosToPlaylist({
-                    videos: [videos[0]],
-                    playlist: addPlaylist,
-                    supabase,
-                    session,
-                  });
-                  openPlaylistDrawer = false;
-                  closeDrawer();
-                }}
-              >
-                {#if addPlaylist.processedImageUrl}
-                  <div class="h-12 w-12 shrink-0">
-                    <img
-                      src={addPlaylist.processedImageUrl}
-                      class="h-full w-full object-cover cursor-pointer"
-                      alt={`Image for playlist: ${addPlaylist.name}`}
-                    />
-                  </div>
-                {:else}
-                  <div
-                    class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
-                  >
-                    <ListVideo class="!h-8 !w-8" />
-                  </div>
-                {/if}
-                <div class="flex flex-col items-start gap-1">
-                  <p>
-                    {addPlaylist.name}
-                  </p>
-                  <p class="text-muted-foreground">{addPlaylist.type}</p>
-                </div>
-              </Button>
-            {/if}
-          {/each}
-        </Drawer.Content>
-      </Drawer.NestedRoot>
-    {/if}
+        {/snippet}
 
-    {#if playlist && isPlaylistOwner && variant === "list-items" && videos.length === 1}
-      <Button
-        class="drawer-button"
-        variant="ghost"
-        onclick={() => {
-          handleRemoveVideosFromPlaylist({
-            videos: [videos[0]],
-            playlist,
-            supabase,
-          });
-          closeDrawer();
-        }}
-      >
-        <div class="flex gap-2 items-center">
-          <MinusCircle class="drawer-icon" />
-          Remove from playlist
-        </div>
-      </Button>
+        {#each filteredPlaylists as addPlaylist (addPlaylist.id)}
+          {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
+            <Button
+              class="drawer-playlist-button"
+              variant="ghost"
+              onclick={() => {
+                handleAddVideosToPlaylist({
+                  videos: [videos[0]],
+                  playlist: addPlaylist,
+                  supabase,
+                  session,
+                });
+                closeDrawer();
+              }}
+            >
+              {#if addPlaylist.processedImageUrl}
+                <div class="h-12 w-12 shrink-0">
+                  <img
+                    src={addPlaylist.processedImageUrl}
+                    class="h-full w-full object-cover cursor-pointer"
+                    alt={`Image for playlist: ${addPlaylist.name}`}
+                  />
+                </div>
+              {:else}
+                <div
+                  class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
+                >
+                  <ListVideo class="!h-8 !w-8" />
+                </div>
+              {/if}
+              <div class="flex flex-col items-start gap-1">
+                <p>
+                  {addPlaylist.name}
+                </p>
+                <p class="text-muted-foreground">{addPlaylist.type}</p>
+              </div>
+            </Button>
+          {/if}
+        {/each}
+      </FullHeightDrawer>
     {/if}
 
     {#if playlist && variant === "list-items" && isPlaylistOwner && videos.length === 1}

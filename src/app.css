@@ -1,8 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
-
 /*
  The default border color has changed to `currentcolor` in Tailwind CSS v4,
  so we've added these compatibility styles to make sure everything still
@@ -166,7 +164,7 @@
   @apply rounded-t-lg outline-none;
 }
 .drawer-button {
-  @apply w-full h-10 tracking-wide justify-start;
+  @apply w-full h-10 tracking-wide justify-start text-base py-6;
 }
 
 .drawer-button-footer {

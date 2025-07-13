@@ -7,7 +7,7 @@
     title,
     subtitle,
     onClose,
-    triggerClass = "",
+    triggerClass = "drawer-button",
     triggerVariant = "ghost",
     handleOnly = true,
     trigger,
