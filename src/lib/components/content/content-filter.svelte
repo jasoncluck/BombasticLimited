@@ -1,5 +1,6 @@
 <script lang="ts">
   import { ArrowDown, ArrowUp, Check, List } from "@lucide/svelte";
+  import * as Drawer from "$lib/components/ui/drawer";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import {
     SORT_OPTIONS_VIDEO,
@@ -25,6 +26,10 @@
   import { handleUpdatePlaylistSort } from "../playlist/playlist-service";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
+  import { getMediaQueryState } from "$lib/state/media-query.svelte";
+  import ContentFilterDrawer from "./drawer-contents/content-filter-drawer.svelte";
+  import { getDrawerState } from "$lib/state/drawer.svelte";
+  import Button from "../ui/button/button.svelte";
 
   let {
     contentFilter,
@@ -39,6 +44,10 @@
     supabase: SupabaseClient<Database>;
     session: Session | null;
   } = $props();
+
+  const mediaQueryState = getMediaQueryState();
+
+  const drawerState = getDrawerState();
 
   // Determine sort keys based on the view type
   const sortKeys = $derived.by(() => {
@@ -164,6 +173,18 @@
     });
   }
 
+  function openContentFilterDrawer() {
+    drawerState.open(ContentFilterDrawer, {
+      sortKeys,
+      view,
+      handleSort,
+      contentFilter,
+      supabase,
+      session,
+      drawerState,
+    });
+  }
+
   // NOTE: Datepickers removed for now
   // function handleStartDateChange(value: DateValue | undefined) {
   //   startDateValue = value;
@@ -189,73 +210,93 @@
   // }
 </script>
 
-<div class="flex flex-col items-start gap-4">
-  <DropdownMenu.Root>
-    <DropdownMenu.Trigger
-      class="cursor-pointer hover:text-primary flex items-center gap-1 outline-none"
-    >
-      <span class="text-sm">{sortOptionInfo.displayName}</span>
-      <List size={20} />
-    </DropdownMenu.Trigger>
-    <DropdownMenu.Content class="outline-none">
-      <DropdownMenu.Group>
-        <DropdownMenu.GroupHeading>Sort by</DropdownMenu.GroupHeading>
-        {#each sortKeys as sortKey (sortKey)}
-          <DropdownMenu.Item
-            class="flex gap-2 @md:justify-between"
-            onclick={() => handleSort(sortKey)}
-          >
-            {#if view === "continueWatching"}
-              {SORT_OPTIONS_TIMESTAMPS[sortKey as SortKey<VideoTimestamp>]
-                .displayName}
-            {:else if view === "playlist"}
-              {SORT_OPTIONS_PLAYLIST_VIDEOS[sortKey as SortKey<PlaylistVideo>]
-                .displayName}
-            {:else}
-              {SORT_OPTIONS_VIDEO[sortKey as SortKey<Video>].displayName}
-            {/if}
+{#if mediaQueryState.canHover}
+  <div class="flex flex-col items-start gap-4">
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger
+        class="cursor-pointer hover:text-primary flex items-center gap-1 outline-none"
+      >
+        <span class="text-sm">{sortOptionInfo.displayName}</span>
+        <List size={20} />
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Content class="outline-none">
+        <DropdownMenu.Group>
+          <DropdownMenu.GroupHeading>Sort by</DropdownMenu.GroupHeading>
+          {#each sortKeys as sortKey (sortKey)}
+            <DropdownMenu.Item
+              class="flex gap-2 @md:justify-between"
+              onclick={() => handleSort(sortKey)}
+            >
+              {#if view === "continueWatching"}
+                {SORT_OPTIONS_TIMESTAMPS[sortKey as SortKey<VideoTimestamp>]
+                  .displayName}
+              {:else if view === "playlist"}
+                {SORT_OPTIONS_PLAYLIST_VIDEOS[sortKey as SortKey<PlaylistVideo>]
+                  .displayName}
+              {:else}
+                {SORT_OPTIONS_VIDEO[sortKey as SortKey<Video>].displayName}
+              {/if}
 
-            {#if contentFilter.sort.key === sortKey && sortKey === "playlistOrder"}
-              <Check
-                class={contentFilter.sort.key === sortKey ? "text-primary" : ""}
-              />
-            {:else if contentFilter.sort.key === sortKey && contentFilter.sort.order === "ascending"}
-              <ArrowUp
-                class={contentFilter.sort.key === sortKey ? "text-primary" : ""}
-              />
-              <span class="sr-only">Ascending</span>
-            {:else if contentFilter.sort.key === sortKey && contentFilter.sort.order === "descending"}
-              <ArrowDown
-                class={contentFilter.sort.key === sortKey ? "text-primary" : ""}
-              />
-              <span class="sr-only">Descending</span>
-            {/if}
-          </DropdownMenu.Item>
-        {/each}
-      </DropdownMenu.Group>
-    </DropdownMenu.Content>
-  </DropdownMenu.Root>
-  <!-- NOTE: Disabling date filters for now, would like to implement a year selection dropdown before release -->
-  <!-- {#if contentFilter.sort.key !== "playlistOrder"} -->
-  <!--   <div class="flex flex-col gap-2"> -->
-  <!--     <DatePicker -->
-  <!--       label="Start Date" -->
-  <!--       bind:value={startDateValue} -->
-  <!--       isOpen={false} -->
-  <!--       {items} -->
-  <!--       dateFormatter={df} -->
-  <!--       onChange={handleStartDateChange} -->
-  <!--       onClear={() => handleStartDateChange(undefined)} -->
-  <!--     /> -->
-  <!--     <DatePicker -->
-  <!--       label="End Date" -->
-  <!--       bind:value={endDateValue} -->
-  <!--       isOpen={false} -->
-  <!--       {items} -->
-  <!--       dateFormatter={df} -->
-  <!--       onChange={handleEndDateChange} -->
-  <!--       onClear={() => handleEndDateChange(undefined)} -->
-  <!--     /> -->
-  <!--   </div> -->
-  <!-- {/if} -->
-</div>
+              {#if contentFilter.sort.key === sortKey && sortKey === "playlistOrder"}
+                <Check
+                  class={contentFilter.sort.key === sortKey
+                    ? "text-primary"
+                    : ""}
+                />
+              {:else if contentFilter.sort.key === sortKey && contentFilter.sort.order === "ascending"}
+                <ArrowUp
+                  class={contentFilter.sort.key === sortKey
+                    ? "text-primary"
+                    : ""}
+                />
+                <span class="sr-only">Ascending</span>
+              {:else if contentFilter.sort.key === sortKey && contentFilter.sort.order === "descending"}
+                <ArrowDown
+                  class={contentFilter.sort.key === sortKey
+                    ? "text-primary"
+                    : ""}
+                />
+                <span class="sr-only">Descending</span>
+              {/if}
+            </DropdownMenu.Item>
+          {/each}
+        </DropdownMenu.Group>
+      </DropdownMenu.Content>
+    </DropdownMenu.Root>
+    <!-- NOTE: Disabling date filters for now, would like to implement a year selection dropdown before release -->
+    <!-- {#if contentFilter.sort.key !== "playlistOrder"} -->
+    <!--   <div class="flex flex-col gap-2"> -->
+    <!--     <DatePicker -->
+    <!--       label="Start Date" -->
+    <!--       bind:value={startDateValue} -->
+    <!--       isOpen={false} -->
+    <!--       {items} -->
+    <!--       dateFormatter={df} -->
+    <!--       onChange={handleStartDateChange} -->
+    <!--       onClear={() => handleStartDateChange(undefined)} -->
+    <!--     /> -->
+    <!--     <DatePicker -->
+    <!--       label="End Date" -->
+    <!--       bind:value={endDateValue} -->
+    <!--       isOpen={false} -->
+    <!--       {items} -->
+    <!--       dateFormatter={df} -->
+    <!--       onChange={handleEndDateChange} -->
+    <!--       onClear={() => handleEndDateChange(undefined)} -->
+    <!--     /> -->
+    <!--   </div> -->
+    <!-- {/if} -->
+  </div>
+{:else}
+  <Button
+    class="cursor-pointer hover:text-primary flex items-center gap-2 outline-none"
+    variant="ghost"
+    onclick={(e) => {
+      e.preventDefault();
+      openContentFilterDrawer();
+    }}
+  >
+    <span class="text-sm">{sortOptionInfo.displayName}</span>
+    <List size={20} />
+  </Button>
+{/if}

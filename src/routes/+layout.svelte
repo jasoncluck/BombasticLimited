@@ -30,7 +30,7 @@
   import { setPageState, type ScrollPosition } from "$lib/state/page.svelte";
   import { setLayoutState } from "$lib/state/layout.svelte";
   import { handleUpdateProfileContentDisplay } from "$lib/components/profile/profile-service";
-  import GlobalDrawer from "$lib/components/drawer/global-drawer.svelte";
+  import GlobalDrawer from "$lib/components/global-drawer.svelte";
   import { setDrawerState } from "$lib/state/drawer.svelte";
 
   // Initialize all state contexts

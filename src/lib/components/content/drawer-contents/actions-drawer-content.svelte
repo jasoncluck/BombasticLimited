@@ -16,14 +16,12 @@
     Edit,
     ImagePlay,
     ListVideo,
-    MinusCircle,
     PlusCircle,
     TimerReset,
   } from "@lucide/svelte";
   import {
     handleAddVideosToPlaylist,
     handleDeletePlaylist,
-    handleRemoveVideosFromPlaylist,
     handleUpdatePlaylistImage,
     handleUpdatePlaylistVideoPosition,
   } from "../../playlist/playlist-service";
@@ -88,9 +86,8 @@
   }
 </script>
 
-<div class="drawer-content">
-  <!-- Header Section -->
-  <div class="text-left mx-4 py-4">
+<Drawer.Content class="outline-none">
+  <Drawer.Header class="text-left mx-4">
     {#if variant === "list-items" && videos.length === 1}
       {@const video = videos[0]}
       <div class="flex gap-2 items-center">
@@ -129,12 +126,12 @@
         </div>
       </div>
     {/if}
-  </div>
+  </Drawer.Header>
 
   <hr />
 
   <!-- Action Buttons -->
-  <div class="flex flex-col mt-2">
+  <div class="flex flex-col">
     {#if isPlaylistOwner && variant === "header"}
       <Button
         class="drawer-button"
@@ -363,4 +360,4 @@
       Close
     </button>
   </div>
-</div>
+</Drawer.Content>

@@ -20,7 +20,7 @@
     items,
     title = "Reorder items",
     subtitle = "Drag the handle to reorder items",
-    triggerClass = "",
+    triggerClass = "drawer-button",
     triggerVariant = "ghost",
     onClose,
     trigger,
