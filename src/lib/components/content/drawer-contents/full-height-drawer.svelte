@@ -7,17 +7,19 @@
     title,
     subtitle,
     onClose,
-    triggerClass = "drawer-button",
-    triggerVariant = "ghost",
     handleOnly = true,
+    nested = false,
     trigger,
+    open = $bindable(false),
     header,
     children,
     footer,
   }: {
     title: string;
     subtitle?: string;
+    nested?: boolean;
     onClose?: () => void;
+    open: boolean;
     triggerClass?: string;
     triggerVariant?:
       | "default"
@@ -32,22 +34,14 @@
     children: Snippet;
     footer?: Snippet;
   } = $props();
-
-  let open = $state(false);
 </script>
 
-<Drawer.NestedRoot bind:open {onClose} {handleOnly}>
-  <Drawer.Trigger
-    class={buttonVariants({
-      variant: triggerVariant,
-      class: triggerClass,
-    })}
-  >
+<Drawer.Root bind:open {onClose} {handleOnly} {nested}>
+  <Drawer.Trigger class="outline-none">
     {@render trigger()}
   </Drawer.Trigger>
 
   <Drawer.Content class="bg-background flex flex-col min-h-[100%] drawer">
-    <!-- Header Section -->
     <div class="flex-shrink-0 p-4 pb-0">
       <Drawer.Header class="px-0">
         <Drawer.Title class="text-xl">{title}</Drawer.Title>
@@ -60,12 +54,10 @@
       </Drawer.Header>
     </div>
 
-    <!-- Body Section - Scrollable -->
     <div class="flex-1 overflow-y-auto p-1 min-h-0">
       {@render children()}
     </div>
 
-    <!-- Footer Section -->
     <div class="flex-shrink-0 p-4 pt-2 border-t bg-background">
       <div class="flex flex-col gap-2">
         {#if footer}
@@ -83,4 +75,4 @@
       </div>
     </div>
   </Drawer.Content>
-</Drawer.NestedRoot>
+</Drawer.Root>

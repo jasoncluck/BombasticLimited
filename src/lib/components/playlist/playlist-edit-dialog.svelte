@@ -29,12 +29,12 @@
     form,
     playlist,
     open = $bindable(),
-    children,
+    trigger,
   }: {
     form: SuperValidated<PlaylistSchema>;
     playlist: Playlist;
+    trigger: Snippet;
     open: boolean;
-    children: Snippet<[]>;
   } = $props();
 
   let isSubmitting = $state(false);
@@ -92,6 +92,9 @@
 </script>
 
 <Dialog.Root bind:open>
+  <Dialog.Trigger class="outline-none">
+    {@render trigger()}
+  </Dialog.Trigger>
   <Dialog.Content
     class="min-w-[375px] sm:max-w-[800px] w-[90%] h-[90%] sm:h-auto"
   >
@@ -269,6 +272,4 @@
       </form>
     </ScrollArea>
   </Dialog.Content>
-
-  {@render children()}
 </Dialog.Root>
