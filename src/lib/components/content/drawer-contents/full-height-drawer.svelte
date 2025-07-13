@@ -6,11 +6,9 @@
   let {
     title,
     subtitle,
-    onClose,
     handleOnly = true,
     nested = false,
     trigger,
-    open = $bindable(false),
     header,
     children,
     footer,
@@ -19,7 +17,6 @@
     subtitle?: string;
     nested?: boolean;
     onClose?: () => void;
-    open: boolean;
     triggerClass?: string;
     triggerVariant?:
       | "default"
@@ -29,17 +26,19 @@
       | "ghost"
       | "link";
     handleOnly?: boolean;
-    trigger: Snippet;
+    trigger?: Snippet;
     header?: Snippet;
     children: Snippet;
     footer?: Snippet;
   } = $props();
 </script>
 
-<Drawer.Root bind:open {onClose} {handleOnly} {nested}>
-  <Drawer.Trigger class="outline-none">
-    {@render trigger()}
-  </Drawer.Trigger>
+<Drawer.Root {handleOnly} {nested}>
+  {#if trigger}
+    <Drawer.Trigger class="outline-none">
+      {@render trigger()}
+    </Drawer.Trigger>
+  {/if}
 
   <Drawer.Content class="bg-background flex flex-col min-h-[100%] drawer">
     <div class="flex-shrink-0 p-4 pb-0">

@@ -34,17 +34,20 @@
   const drawerState = getDrawerState();
 
   function openContentActions() {
-    drawerState.open(ActionsDrawerContent, {
-      playlist,
-      playlists,
-      videos,
-      variant,
-      onPlaylistEdit,
-      sectionId,
-      supabase,
-      session,
-      contentState,
-      drawerState,
+    drawerState.open({
+      component: ActionsDrawerContent,
+      props: {
+        playlist,
+        playlists,
+        videos,
+        variant,
+        onPlaylistEdit,
+        sectionId,
+        supabase,
+        session,
+        contentState,
+        drawerState,
+      },
     });
   }
 </script>

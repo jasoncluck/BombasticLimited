@@ -164,7 +164,7 @@
   @apply rounded-t-lg outline-none;
 }
 .drawer-button {
-  @apply w-full h-8 tracking-wide justify-start text-base py-6;
+  @apply w-full h-8 tracking-wide justify-start text-sm py-5;
 }
 
 .drawer-button-footer {

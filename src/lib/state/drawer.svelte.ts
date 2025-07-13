@@ -1,77 +1,112 @@
 import type { Component } from "svelte";
 import { getContext, setContext } from "svelte";
 
-export interface DrawerContent {
-  component: Component<any>; // Changed from Component to Component<any>
-  props: Record<string, any>;
+export interface DrawerContent<
+  T extends Record<string, unknown> = Record<string, unknown>,
+> {
+  component: Component<T>;
+  props: T;
   title?: string;
+  subtitle?: string;
 }
 
 export interface DrawerOptions {
   closeOnBackdropClick?: boolean;
   closeOnEscape?: boolean;
-  showOverlay: boolean;
+  showOverlay?: boolean;
+  fullHeight?: boolean;
+  nested?: boolean;
+  handleOnly?: boolean;
+  showCloseButton?: boolean;
+  closeButtonText?: string;
+  closeButtonVariant?:
+    | "default"
+    | "destructive"
+    | "outline"
+    | "secondary"
+    | "ghost"
+    | "link";
+  formId?: string;
+  submitButtonText?: string;
+  submitButtonVariant?:
+    | "default"
+    | "destructive"
+    | "outline"
+    | "secondary"
+    | "ghost"
+    | "link";
+  showSubmitButton?: boolean;
+  isSubmitting?: boolean;
+}
+
+export interface OpenDrawerOptions<
+  T extends Record<string, unknown> = Record<string, unknown>,
+> {
+  component: Component<T>;
+  props: T;
+  title?: string;
+  subtitle?: string;
+  options?: DrawerOptions;
 }
 
 export class DrawerStateClass {
-  // Drawer state
-  isOpen = $state<boolean>(false);
+  // Add the missing state properties
+  isOpen = $state(false);
   content = $state<DrawerContent | null>(null);
+
   options = $state<DrawerOptions>({
     closeOnBackdropClick: true,
     closeOnEscape: true,
     showOverlay: true,
+    fullHeight: false,
+    nested: false,
+    handleOnly: true,
+    showCloseButton: true,
+    closeButtonText: "Close",
+    closeButtonVariant: "outline",
+    // Form defaults
+    submitButtonText: "Save Changes",
+    submitButtonVariant: "default",
+    showSubmitButton: false,
+    isSubmitting: false,
   });
 
-  // Animation state
-  isAnimating = $state<boolean>(false);
-
   constructor() {
-    // Set up keyboard listener for escape key
     if (typeof window !== "undefined") {
       this.setupKeyboardListeners();
     }
   }
 
-  // Open drawer with content - Updated to accept any component type
-  open<T extends Record<string, any>>(
-    component: Component<T>,
-    props: T,
-    title?: string,
-    options?: Partial<DrawerOptions>,
-  ) {
+  updateFormState(isSubmitting: boolean) {
+    this.options.isSubmitting = isSubmitting;
+  }
+
+  // Type-safe open method
+  open<T extends Record<string, unknown>>({
+    component,
+    props,
+    title,
+    subtitle,
+    options,
+  }: OpenDrawerOptions<T>) {
     this.content = {
-      component: component as Component<any>,
-      props,
+      component: component as Component<Record<string, unknown>>,
+      props: props as Record<string, unknown>,
       title,
+      subtitle,
     };
 
     if (options) {
       this.options = { ...this.options, ...options };
     }
 
-    this.isAnimating = true;
     this.isOpen = true;
-
-    // Clear animation state after animation completes
-    setTimeout(() => {
-      this.isAnimating = false;
-    }, 300);
   }
 
   // Close drawer
   close() {
     if (!this.isOpen) return;
-
-    this.isAnimating = true;
     this.isOpen = false;
-
-    // Clear content after animation completes
-    setTimeout(() => {
-      this.content = null;
-      this.isAnimating = false;
-      this.resetOptions();
-    }, 300);
   }
 
   // Toggle drawer state
@@ -81,21 +116,34 @@ export class DrawerStateClass {
     }
   }
 
+  // Handle when the drawer is actually closed
+  onClosed() {
+    this.content = null;
+    this.resetOptions();
+  }
+
   // Reset options to defaults
   private resetOptions() {
     this.options = {
       closeOnBackdropClick: true,
       closeOnEscape: true,
       showOverlay: true,
+      fullHeight: false,
+      nested: false,
+      handleOnly: true,
+      showCloseButton: true,
+      closeButtonText: "Close",
+      closeButtonVariant: "outline",
+      submitButtonText: "Save Changes",
+      submitButtonVariant: "default",
+      showSubmitButton: false,
+      isSubmitting: false,
     };
   }
 
   // Handle backdrop click
   handleBackdropClick(event: MouseEvent) {
-    if (
-      this.options.closeOnBackdropClick &&
-      event.target === event.currentTarget
-    ) {
+    if (event.target === event.currentTarget) {
       this.close();
     }
   }
@@ -110,52 +158,21 @@ export class DrawerStateClass {
 
     document.addEventListener("keydown", handleKeydown);
 
-    // Cleanup function (you might want to call this when the component is destroyed)
     return () => {
       document.removeEventListener("keydown", handleKeydown);
     };
   }
 
-  // CSS class helpers
-  getDrawerClasses(): string {
-    let classes =
-      "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background";
-
-    if (this.isAnimating) {
-      classes += " transition-transform duration-300 ease-in-out";
-    }
-
-    if (!this.isOpen) {
-      classes += " translate-y-full";
-    }
-
-    return classes;
-  }
-
-  getOverlayClasses(): string {
-    let classes = "fixed inset-0 z-40 bg-black/80";
-
-    if (this.isAnimating) {
-      classes += " transition-opacity duration-300 ease-in-out";
-    }
-
-    if (!this.isOpen) {
-      classes += " opacity-0 pointer-events-none";
-    }
-
-    return classes;
-  }
-
-  // Content helpers
+  // Content helpers with proper typing
   get hasContent(): boolean {
     return this.content !== null;
   }
 
-  get currentComponent(): Component<any> | null {
+  get currentComponent(): Component<Record<string, unknown>> | null {
     return this.content?.component || null;
   }
 
-  get currentProps(): Record<string, any> {
+  get currentProps(): Record<string, unknown> {
     return this.content?.props || {};
   }
 
@@ -163,9 +180,13 @@ export class DrawerStateClass {
     return this.content?.title;
   }
 
+  get currentSubtitle(): string | undefined {
+    return this.content?.subtitle;
+  }
+
   // State helpers
   get shouldRender(): boolean {
-    return this.isOpen || this.isAnimating;
+    return this.hasContent;
   }
 
   get shouldShowOverlay(): boolean {
@@ -173,7 +194,6 @@ export class DrawerStateClass {
   }
 }
 
-// Export the class type for use elsewhere
 export type DrawerState = DrawerStateClass;
 
 const DEFAULT_KEY = "$_drawer_state";
@@ -187,7 +207,6 @@ export function getDrawerState(key = DEFAULT_KEY) {
   return getContext<DrawerState>(key);
 }
 
-// Convenience function for components that just need to open drawers
 export function useDrawer(key = DEFAULT_KEY) {
   const drawerState = getDrawerState(key);
 

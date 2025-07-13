@@ -3,10 +3,10 @@
   import type { DndEvent } from "svelte-dnd-action";
   import { flip } from "svelte/animate";
   import { Menu } from "@lucide/svelte";
-  import FullHeightDrawer from "./full-height-drawer.svelte";
+  import { getDrawerState } from "$lib/state/drawer.svelte";
   import type { Video } from "$lib/supabase/videos";
   import type { Playlist } from "$lib/supabase/playlists";
-  import type { Snippet } from "svelte";
+  import { SOURCE_INFO } from "$lib/constants/source";
 
   // Base interface that all reorderable items must implement
   interface ReorderableBase {
@@ -18,43 +18,23 @@
 
   let {
     items,
-    title = "Reorder items",
-    subtitle = "Drag the handle to reorder items",
-    triggerClass = "drawer-button",
-    triggerVariant = "ghost",
     onClose,
-    trigger,
     onReorder,
-    itemRenderer,
-    emptyState,
   }: {
     items: ReorderableItem[];
-    title?: string;
-    subtitle?: string;
-    triggerClass?: string;
-    triggerVariant?:
-      | "default"
-      | "destructive"
-      | "outline"
-      | "secondary"
-      | "ghost"
-      | "link";
     onClose?: () => void;
     onReorder?: (
       oldIndex: number,
       newIndex: number,
       item: ReorderableItem,
     ) => Promise<void> | void;
-    trigger: Snippet;
-    itemRenderer: Snippet<[ReorderableItem, number]>;
-    emptyState?: Snippet;
   } = $props();
 
-  // Reference the snippet to satisfy TypeScript/ESLint
-  const triggerSnippet = trigger;
+  const drawerState = getDrawerState();
 
   // Store the original order when drag starts
   let originalOrder: (string | number)[] = [];
+  let isReordering = $state(false);
 
   // DnD state
   const flipDurationMs = 300;
@@ -121,6 +101,7 @@
       const movedItem = items.find((item) => item.id === movedItemId);
 
       if (movedItem && onReorder) {
+        isReordering = true;
         try {
           await onReorder(oldIndex, newIndex, movedItem);
         } catch {
@@ -130,6 +111,8 @@
           );
           items = originalItems;
           return;
+        } finally {
+          isReordering = false;
         }
       }
     }
@@ -137,20 +120,66 @@
     // Update the final items state to match the new order
     items = updatedItems;
   }
+
+  function handleClose() {
+    onClose?.();
+    drawerState.close();
+  }
+
+  // Add a custom footer with Done button
+  $effect(() => {
+    const footer = document.getElementById("drawer-footer");
+    if (footer) {
+      // Clear existing custom buttons
+      const existingButtons = footer.querySelectorAll(
+        "[data-edit-list-button]",
+      );
+      existingButtons.forEach((btn) => btn.remove());
+
+      // Add Done button before Close button
+      const doneButton = document.createElement("button");
+      doneButton.setAttribute("data-edit-list-button", "true");
+      doneButton.type = "button";
+      doneButton.className =
+        "drawer-button-footer bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md text-sm font-medium";
+      doneButton.textContent = "Done";
+      doneButton.onclick = handleClose;
+
+      const closeButton = footer.querySelector(
+        'button[type="button"]:not([data-edit-list-button])',
+      );
+      if (closeButton) {
+        footer.insertBefore(doneButton, closeButton);
+        // Hide the default close button since we have our own
+        (closeButton as HTMLElement).style.display = "none";
+      } else {
+        footer.appendChild(doneButton);
+      }
+    }
+
+    // Cleanup function
+    return () => {
+      const footer = document.getElementById("drawer-footer");
+      if (footer) {
+        const customButtons = footer.querySelectorAll(
+          "[data-edit-list-button]",
+        );
+        customButtons.forEach((btn) => btn.remove());
+
+        // Show the default close button again
+        const closeButton = footer.querySelector(
+          'button[type="button"]:not([data-edit-list-button])',
+        );
+        if (closeButton) {
+          (closeButton as HTMLElement).style.display = "";
+        }
+      }
+    };
+  });
 </script>
 
-<FullHeightDrawer
-  {title}
-  {subtitle}
-  {onClose}
-  {triggerClass}
-  {triggerVariant}
-  handleOnly={true}
->
-  {#snippet trigger()}
-    {@render triggerSnippet()}
-  {/snippet}
-
+<!-- Main content area for the reorder drawer -->
+<div class="flex-1 overflow-y-auto px-4 min-h-0">
   {#if dndItems.length > 0}
     <div
       use:dragHandleZone={{
@@ -164,28 +193,68 @@
       }}
       onconsider={handleDndConsider}
       onfinalize={handleDndFinalize}
+      class="space-y-2 py-2"
     >
       {#each dndItems as item, index (item.id)}
+        {@const video = item as Video}
         <div
           animate:flip={{ duration: flipDurationMs }}
-          class="flex gap-2 items-center content-table-row select-none transition-colors duration-200 hover:bg-secondary/50 p-2 rounded cursor-grab active:cursor-grabbing"
+          class="flex gap-3 items-center content-table-row select-none transition-colors duration-200 hover:bg-secondary/50 p-3 rounded-lg border bg-background cursor-grab active:cursor-grabbing {isReordering
+            ? 'opacity-50'
+            : ''}"
         >
-          {@render itemRenderer(item, index)}
+          <!-- Video thumbnail -->
+          <div class="flex-shrink-0">
+            <img
+              src={video.thumbnail_url}
+              alt={video.title}
+              class="h-16 aspect-video rounded object-cover pointer-events-none"
+            />
+          </div>
+
+          <!-- Video info -->
+          <div class="flex flex-col gap-1 flex-1 min-w-0 pointer-events-none">
+            <h3 class="font-medium text-sm break-words line-clamp-2 leading-5">
+              {video.title}
+            </h3>
+            <p class="text-xs text-muted-foreground">
+              {SOURCE_INFO[video.source]?.displayName || video.source}
+            </p>
+            <p class="text-xs text-muted-foreground">
+              Position: {index + 1}
+            </p>
+          </div>
+
+          <!-- Drag handle -->
           <div
             use:dragHandle
             aria-label={`drag-handle for item ${item.id}`}
-            class="flex items-center justify-center w-6 h-6 cursor-grab hover:bg-secondary rounded shrink-0"
+            class="flex items-center justify-center w-8 h-8 cursor-grab hover:bg-secondary rounded shrink-0 touch-manipulation"
           >
-            <Menu class="w-4 h-4 text-muted-foreground" />
+            <Menu class="w-5 h-5 text-muted-foreground" />
           </div>
         </div>
       {/each}
     </div>
-  {:else if emptyState}
-    {@render emptyState()}
+
+    {#if isReordering}
+      <div
+        class="fixed inset-0 bg-black/20 flex items-center justify-center z-50"
+      >
+        <div class="bg-background p-4 rounded-lg shadow-lg">
+          <p class="text-sm">Updating order...</p>
+        </div>
+      </div>
+    {/if}
   {:else}
-    <div class="flex items-center justify-center h-32">
-      <p class="text-muted-foreground">No items to reorder</p>
+    <div class="flex flex-col items-center justify-center h-64 text-center">
+      <div class="text-muted-foreground mb-2">
+        <Menu class="h-12 w-12 mx-auto mb-4 opacity-50" />
+      </div>
+      <h3 class="text-lg font-medium mb-2">No videos to reorder</h3>
+      <p class="text-sm text-muted-foreground max-w-sm">
+        Add some videos to this playlist to start reordering them.
+      </p>
     </div>
   {/if}
-</FullHeightDrawer>
+</div>

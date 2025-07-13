@@ -5,7 +5,7 @@
   import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
   import type { ContentState } from "$lib/state/content.svelte";
   import type { DrawerState } from "$lib/state/drawer.svelte";
-  import Button, { buttonVariants } from "../../ui/button/button.svelte";
+  import Button from "../../ui/button/button.svelte";
   import * as Drawer from "$lib/components/ui/drawer/index.js";
 
   import {
@@ -84,6 +84,25 @@
   function closeDrawer() {
     drawerState.close();
   }
+
+  // New function to open the edit list drawer
+  function openEditListDrawer() {
+    drawerState.open({
+      component: EditListDrawer,
+      props: {
+        items: videos,
+        onReorder: handleVideoReorder,
+        onClose: () => {
+          invalidate("supabase:db:playlists");
+        },
+      },
+      title: "Reorder playlist videos",
+      options: {
+        fullHeight: true,
+        nested: true,
+      },
+    });
+  }
 </script>
 
 <Drawer.Content class="outline-none">
@@ -149,47 +168,20 @@
     {/if}
 
     {#if isPlaylistOwner && variant === "header" && videos && videos.length > 0}
-      <EditListDrawer
-        items={videos}
-        title="Reorder playlist videos"
-        onReorder={handleVideoReorder}
-        onClose={() => {
-          invalidate("supabase:db:playlists");
-        }}
+      <!-- Updated to use drawerState instead of FullHeightDrawer component -->
+      <Button
+        class="drawer-button"
+        variant="ghost"
+        onclick={openEditListDrawer}
       >
-        {#snippet trigger()}
-          <div class="flex justify-between items-center w-full">
-            <div class="flex items-center gap-2">
-              <ArrowDownUp class="drawer-icon" />
-              Reorder videos
-            </div>
-            <ChevronRight />
+        <div class="flex justify-between items-center w-full">
+          <div class="flex items-center gap-2">
+            <ArrowDownUp class="drawer-icon" />
+            Reorder videos
           </div>
-        {/snippet}
-
-        {#snippet itemRenderer(item)}
-          {@const video = item as Video}
-          <img
-            src={video.thumbnail_url}
-            alt={video.title}
-            class="h-[60px] aspect-video pointer-events-none"
-          />
-          <div class="flex flex-col gap-1 flex-1 min-w-0 pointer-events-none">
-            <p class="font-normal text-sm break-words line-clamp-2 leading-5">
-              {video.title}
-            </p>
-            <p class="text-xs text-muted-foreground tracking-tight">
-              {SOURCE_INFO[video.source].displayName}
-            </p>
-          </div>
-        {/snippet}
-
-        {#snippet emptyState()}
-          <div class="flex items-center justify-center h-32">
-            <p class="text-muted-foreground">No videos to reorder</p>
-          </div>
-        {/snippet}
-      </EditListDrawer>
+          <ChevronRight />
+        </div>
+      </Button>
     {/if}
 
     {#if variant === "list-items"}
@@ -200,6 +192,7 @@
       <FullHeightDrawer
         title="Add to playlist"
         handleOnly={true}
+        nested={true}
         onClose={() => {
           invalidate("supabase:db:playlists");
         }}
@@ -256,6 +249,7 @@
       </FullHeightDrawer>
     {/if}
 
+    <!-- Rest of your existing action buttons remain the same -->
     {#if playlist && variant === "list-items" && isPlaylistOwner && videos.length === 1}
       <Button
         class="drawer-button"
@@ -350,14 +344,12 @@
 
   <!-- Footer -->
   <div class="p-2 mt-auto">
-    <button
+    <Button
+      class="drawer-button-footer"
+      variant="outline"
       onclick={closeDrawer}
-      class={buttonVariants({
-        class: "drawer-button-footer w-full",
-        variant: "outline",
-      })}
     >
       Close
-    </button>
+    </Button>
   </div>
 </Drawer.Content>
