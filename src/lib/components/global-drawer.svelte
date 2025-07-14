@@ -7,7 +7,8 @@
   const drawerState = getDrawerState();
 
   function handleOpenChange(open: boolean) {
-    if (!open && drawerState.isOpen) {
+    if (!open) {
+      // When vaul-svelte closes the drawer (animation completes), clean up our state
       drawerState.onClosed();
     }
   }
@@ -75,6 +76,7 @@
             <!-- Close button -->
             {#if drawerState.options.showCloseButton}
               <Drawer.Close
+                onclick={() => drawerState.close()}
                 class={buttonVariants({
                   class: "drawer-button-footer",
                   variant: drawerState.options.closeButtonVariant,
@@ -131,6 +133,7 @@
             <!-- Close button -->
             {#if drawerState.options.showCloseButton}
               <Drawer.Close
+                onclick={() => drawerState.close()}
                 class={buttonVariants({
                   class: "drawer-button-footer",
                   variant: drawerState.options.closeButtonVariant,

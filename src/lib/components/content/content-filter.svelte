@@ -174,14 +174,17 @@
   }
 
   function openContentFilterDrawer() {
-    drawerState.open(ContentFilterDrawer, {
-      sortKeys,
-      view,
-      handleSort,
-      contentFilter,
-      supabase,
-      session,
-      drawerState,
+    drawerState.open({
+      component: ContentFilterDrawer,
+      props: {
+        sortKeys,
+        view,
+        handleSort,
+        contentFilter,
+        supabase,
+        session,
+        drawerState,
+      },
     });
   }
 
