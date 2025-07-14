@@ -27,9 +27,7 @@
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
-  import ContentFilterDrawer from "./drawer-contents/content-filter-drawer.svelte";
-  import { getDrawerState } from "$lib/state/drawer.svelte";
-  import Button from "../ui/button/button.svelte";
+  import Button, { buttonVariants } from "../ui/button/button.svelte";
 
   let {
     contentFilter,
@@ -46,8 +44,7 @@
   } = $props();
 
   const mediaQueryState = getMediaQueryState();
-
-  const drawerState = getDrawerState();
+  let contentFilterDrawerOpen = $state(false);
 
   // Determine sort keys based on the view type
   const sortKeys = $derived.by(() => {
@@ -173,21 +170,6 @@
     });
   }
 
-  function openContentFilterDrawer() {
-    drawerState.open({
-      component: ContentFilterDrawer,
-      props: {
-        sortKeys,
-        view,
-        handleSort,
-        contentFilter,
-        supabase,
-        session,
-        drawerState,
-      },
-    });
-  }
-
   // NOTE: Datepickers removed for now
   // function handleStartDateChange(value: DateValue | undefined) {
   //   startDateValue = value;
@@ -291,15 +273,67 @@
     <!-- {/if} -->
   </div>
 {:else}
-  <Button
-    class="cursor-pointer hover:text-primary flex items-center gap-2 outline-none"
-    variant="ghost"
-    onclick={(e) => {
-      e.preventDefault();
-      openContentFilterDrawer();
-    }}
-  >
-    <span class="text-sm">{sortOptionInfo.displayName}</span>
-    <List size={20} />
-  </Button>
+  <Drawer.Root bind:open={contentFilterDrawerOpen}>
+    <Drawer.Trigger
+      class={buttonVariants({
+        variant: "ghost",
+        class:
+          "cursor-pointer hover:text-primary flex items-center gap-2 outline-none",
+      })}
+    >
+      <span class="text-sm">{sortOptionInfo.displayName}</span>
+      <List size={20} />
+    </Drawer.Trigger>
+    <Drawer.Content class="outline-none">
+      <div class="flex flex-col">
+        <Drawer.Header class="text-left m-2">Sort by</Drawer.Header>
+        {#each sortKeys as sortKey (sortKey)}
+          <Button
+            class="drawer-button"
+            variant="ghost"
+            onclick={() => {
+              handleSort(sortKey);
+              contentFilterDrawerOpen = false;
+            }}
+          >
+            {#if view === "continueWatching"}
+              {SORT_OPTIONS_TIMESTAMPS[sortKey as SortKey<VideoTimestamp>]
+                .displayName}
+            {:else if view === "playlist"}
+              {SORT_OPTIONS_PLAYLIST_VIDEOS[sortKey as SortKey<PlaylistVideo>]
+                .displayName}
+            {:else}
+              {SORT_OPTIONS_VIDEO[sortKey as SortKey<Video>].displayName}
+            {/if}
+
+            {#if contentFilter.sort.key === sortKey && sortKey === "playlistOrder"}
+              <Check
+                class={contentFilter.sort.key === sortKey ? "text-primary" : ""}
+              />
+            {:else if contentFilter.sort.key === sortKey && contentFilter.sort.order === "ascending"}
+              <ArrowUp
+                class={contentFilter.sort.key === sortKey ? "text-primary" : ""}
+              />
+              <span class="sr-only">Ascending</span>
+            {:else if contentFilter.sort.key === sortKey && contentFilter.sort.order === "descending"}
+              <ArrowDown
+                class={contentFilter.sort.key === sortKey ? "text-primary" : ""}
+              />
+              <span class="sr-only">Descending</span>
+            {/if}
+          </Button>
+        {/each}
+        <div class="p-2 mt-auto">
+          <Drawer.Close
+            class={buttonVariants({
+              class: "drawer-button-footer",
+              variant: "outline",
+            })}
+          >
+            Close
+          </Drawer.Close>
+        </div>
+      </div>
+    </Drawer.Content>
+  </Drawer.Root>
 {/if}

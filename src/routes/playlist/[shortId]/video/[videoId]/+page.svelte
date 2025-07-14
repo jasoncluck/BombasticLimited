@@ -11,6 +11,7 @@
     contentFilter,
     supabase,
     session,
+    userProfile,
   } = $derived(data);
 </script>
 
@@ -35,11 +36,12 @@
         Next up - {profilePlaylist.name}
       </a>
       <Content
+        tilesDisplay="CAROUSEL"
         {videos}
-        contentDisplay="CAROUSEL"
         {contentFilter}
         playlist={profilePlaylist}
         {playlists}
+        {userProfile}
         {supabase}
         {session}
       />

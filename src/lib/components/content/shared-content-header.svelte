@@ -46,7 +46,6 @@
     playlist?: ProfilePlaylist | UserPlaylist;
     session: Session | null;
     showFloatingBreadcrumbs: boolean;
-    onPlaylistEdit: () => void;
     userProfile: Profile | null;
     supabase: SupabaseClient<Database>;
     videos: Video[];
@@ -64,7 +63,6 @@
     playlist: profilePlaylist,
     session,
     showFloatingBreadcrumbs = $bindable(),
-    onPlaylistEdit,
     userProfile,
     supabase,
     videos,
@@ -108,7 +106,6 @@
       {videos}
       {breadcrumbs}
       playlist={profilePlaylist}
-      {onPlaylistEdit}
       {playlists}
       {supabase}
       {session}
@@ -188,7 +185,6 @@
           <ContentSelect
             {videos}
             playlist={profilePlaylist}
-            {onPlaylistEdit}
             {playlists}
             {supabase}
             {session}

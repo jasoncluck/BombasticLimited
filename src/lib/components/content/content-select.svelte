@@ -17,7 +17,6 @@
     playlist,
     playlists,
     sectionId = DEFAULT_SECTION_ID,
-    onPlaylistEdit,
     supabase,
     session,
   }: {
@@ -26,7 +25,6 @@
     playlists: Playlist[];
     displayLabel: boolean;
     sectionId?: string;
-    onPlaylistEdit: () => void;
     supabase: SupabaseClient<Database>;
     session: Session | null;
   } = $props();
@@ -62,7 +60,6 @@
       {playlist}
       {playlists}
       {sectionId}
-      {onPlaylistEdit}
       onSelectAll={handleSelectAll}
       {supabase}
       {session}

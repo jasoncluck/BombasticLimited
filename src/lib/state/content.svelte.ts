@@ -703,14 +703,6 @@ export class ContentState {
       // Also set as hovered for consistency
       this.hoveredVideosBySection[sectionId] = video;
     }
-
-    console.log("HandleDrawer called:", {
-      video: video?.title,
-      sectionId,
-      variant,
-      selectedAfterSet: this.selectedVideosBySection[sectionId],
-      hoveredAfterSet: this.hoveredVideosBySection[sectionId],
-    });
   }
 
   // Helper method to get drawer variant for a section
@@ -749,11 +741,7 @@ export class ContentState {
         target.closest("[data-dropdown]") ||
         target.closest('[role="menu"]') ||
         target.closest("button") ||
-        target.closest("[data-vaul-drawer]") || // Drawer overlay
-        target.closest("[data-vaul-drawer-wrapper]") || // Drawer wrapper
-        target.closest("[role='dialog']") || // Dialog/drawer content
-        target.closest(".drawer-content") || // Custom drawer classes
-        target.closest(".drawer-overlay") // Custom overlay classes
+        target.closest("[role='dialog']") // Dialog/drawer content
       ) {
         return;
       }

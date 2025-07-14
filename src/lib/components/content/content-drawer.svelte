@@ -24,13 +24,15 @@
     CircleMinus,
     Edit,
     ImagePlay,
-    ListChecks,
     ListVideo,
+    MinusCircle,
+    PlusCircle,
     TimerReset,
   } from "@lucide/svelte";
   import { SOURCE_INFO } from "$lib/constants/source";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
+  import { getPlaylistState } from "$lib/state/playlist.svelte";
 
   interface ContentDrawerProps {
     playlist: Playlist | null;
@@ -39,7 +41,6 @@
     children: Snippet<[]>;
     supabase: SupabaseClient<Database>;
     session: Session | null;
-    onPlaylistEdit?: () => void;
     onSelectAll?: () => void;
   }
 
@@ -50,11 +51,10 @@
     supabase,
     session,
     children,
-    onPlaylistEdit,
-    onSelectAll,
   }: ContentDrawerProps = $props();
 
   const contentState = getContentState();
+  const playlistState = getPlaylistState();
   const mediaQueryState = getMediaQueryState();
 
   const variant = $derived(contentState.drawerVariant);
@@ -63,15 +63,12 @@
     contentState.selectedVideosBySection[sectionId] ?? [],
   );
 
-  // Use section-based hovered video
   let hoveredVideo = $derived(contentState.hoveredVideosBySection[sectionId]);
 
-  // Check if this section's drawer is open
   let isThisSectionMenuOpen = $derived(
     contentState.isDrawerOpenForSection(sectionId),
   );
 
-  // State for nested drawer
   let nestedDrawerOpen = $state(false);
 
   const filteredPlaylists = $derived(
@@ -80,8 +77,6 @@
     ),
   );
 
-  // Determine which videos to operate on based on variant
-  // Prioritize selected videos, then fall back to hovered video
   const operationVideos = $derived.by(() => {
     if (selectedVideos.length > 0) {
       return selectedVideos;
@@ -91,46 +86,12 @@
 
   const isPlaylistOwner = $derived(session?.user.id === playlist?.created_by);
 
-  // Function to handle drawer close - called by the drawer component when it closes
-  function handleDrawerClose() {
-    console.log("handleDrawerClose called - drawer is closing naturally");
-
-    // Clear all drawer-related state
-    contentState.openDrawerSection = null;
-    contentState.drawerVariant = null;
-    contentState.selectedVideosBySection[sectionId] = [];
-    contentState.hoveredVideosBySection[sectionId] = null;
-  }
-
-  // Helper function to clear selections after successful operations
   function clearSelectionAfterAction() {
-    console.log("clearSelectionAfterAction called - programmatic close");
-
-    // Clear all state immediately for programmatic closes
     contentState.openDrawerSection = null;
     contentState.drawerVariant = null;
     contentState.selectedVideosBySection[sectionId] = [];
     contentState.hoveredVideosBySection[sectionId] = null;
   }
-
-  $effect(() => {
-    console.log("=== Drawer State Debug ===");
-    console.log(
-      "Hovered video:",
-      $state.snapshot(contentState.hoveredVideosBySection[sectionId]),
-    );
-    console.log(
-      "Selected videos:",
-      $state.snapshot(contentState.selectedVideosBySection[sectionId]),
-    );
-    console.log("Drawer open:", contentState.isDrawerOpenForSection(sectionId));
-    console.log("Open drawer section:", contentState.openDrawerSection);
-    console.log("Section ID:", sectionId);
-    console.log("Variant:", variant);
-    console.log("Operation videos count:", operationVideos.length);
-    console.log("isThisSectionMenuOpen:", isThisSectionMenuOpen);
-    console.log("========================");
-  });
 </script>
 
 <!-- Only show drawer on touch devices, hide on desktop -->
@@ -139,7 +100,6 @@
     bind:open={isThisSectionMenuOpen}
     onAnimationEnd={(open) => {
       if (!open) {
-        console.log("in anim end");
         clearSelectionAfterAction();
       }
     }}
@@ -195,29 +155,13 @@
 
         <!-- Action Buttons -->
         <div class="flex flex-col">
-          <!-- Select All for header variant -->
-          {#if variant === "header"}
-            <Button
-              class="drawer-button"
-              variant="ghost"
-              onclick={() => {
-                onSelectAll?.();
-              }}
-            >
-              <div class="flex items-center gap-2">
-                <ListChecks class="drawer-icon" />
-                Select All
-              </div>
-            </Button>
-          {/if}
-
           <!-- Edit button for header variant -->
-          {#if variant === "header" && isPlaylistOwner && onPlaylistEdit}
+          {#if variant === "header" && isPlaylistOwner && playlistState.openEditPlaylist === false}
             <Button
               class="drawer-button"
               variant="ghost"
               onclick={() => {
-                onPlaylistEdit?.();
+                playlistState.openEditPlaylist = true;
                 clearSelectionAfterAction();
               }}
             >
@@ -237,8 +181,9 @@
               <Drawer.Trigger>
                 <Button class="drawer-button" variant="ghost">
                   <div class="flex gap-2 items-center w-full justify-between">
+                    <PlusCircle class="dropdown-icon" />
                     Add to playlist
-                    <ChevronRight />
+                    <ChevronRight class="ml-auto" />
                   </div>
                 </Button>
               </Drawer.Trigger>
@@ -301,7 +246,10 @@
                 }
               }}
             >
-              Remove from playlist
+              <div class="flex gap-2 items-center">
+                <MinusCircle class="dropdown-icon" />
+                Remove from playlist
+              </div>
             </Button>
           {/if}
 
@@ -430,11 +378,6 @@
               </div>
             </Button>
           {/if}
-
-          <!-- Debug button (remove this after testing) -->
-          <Button variant="ghost" onclick={clearSelectionAfterAction}>
-            Close Drawer (Test)
-          </Button>
         </div>
 
         <!-- Footer -->
@@ -446,7 +389,6 @@
             })}
             >Close
           </Drawer.Close>
-          <Button class="drawer-button-footer" variant="outline">Close</Button>
         </div>
       </Drawer.Content>
     {/if}

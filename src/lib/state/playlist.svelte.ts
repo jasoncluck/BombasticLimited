@@ -41,6 +41,8 @@ export class PlaylistStateClass {
   pageState: PageState;
   contentState: ContentState;
 
+  openEditPlaylist = $state(false);
+
   // Playlist hover state
   hoveredPlaylistIndex = $state<number | null>(null);
 

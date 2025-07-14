@@ -31,6 +31,7 @@
   import { page } from "$app/state";
   import { goto } from "$app/navigation";
   import type { ContentSelectVariant } from "./content";
+  import { getPlaylistState } from "$lib/state/playlist.svelte";
 
   let {
     videos = $bindable(),
@@ -38,7 +39,6 @@
     playlists,
     variant,
     onSelectAll,
-    onPlaylistEdit,
     sectionId,
     supabase,
     session,
@@ -52,10 +52,10 @@
     supabase: SupabaseClient<Database>;
     session: Session | null;
     onSelectAll?: () => void;
-    onPlaylistEdit?: () => void;
   } = $props();
 
   const contentState = getContentState();
+  const playlistState = getPlaylistState();
 
   const isPlaylistOwner = $derived(session?.user.id === playlist?.created_by);
 
@@ -126,7 +126,7 @@
       {#if isPlaylistOwner && variant === "header"}
         <DropdownMenu.Item
           class="cursor-pointer"
-          onclick={() => onPlaylistEdit?.()}
+          onclick={() => (playlistState.openEditPlaylist = true)}
         >
           <div class="flex items-center gap-2">
             <Edit class="dropdown-icon" />
