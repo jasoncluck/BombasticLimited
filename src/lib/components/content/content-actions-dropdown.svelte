@@ -30,6 +30,7 @@
   import Button from "../ui/button/button.svelte";
   import { page } from "$app/state";
   import { goto } from "$app/navigation";
+  import type { ContentSelectVariant } from "./content";
 
   let {
     videos = $bindable(),
@@ -46,7 +47,7 @@
     playlist?: Playlist;
     playlists: Playlist[];
     // For items like deselecting only makes sense when using the content selector
-    variant: "header" | "item" | "list-items";
+    variant: ContentSelectVariant;
     sectionId: string;
     supabase: SupabaseClient<Database>;
     session: Session | null;

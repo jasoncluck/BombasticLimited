@@ -10,7 +10,10 @@ import {
 } from "$lib/components/content/content-filter";
 import { handleUpdatePlaylistVideoPosition } from "$lib/components/playlist/playlist-service";
 import type { PageState } from "./page.svelte";
-import type { ContentDisplay } from "$lib/components/content/content";
+import type {
+  ContentDisplay,
+  ContentSelectVariant,
+} from "$lib/components/content/content";
 
 export type DragContentType = "video" | "playlist" | null;
 
@@ -80,6 +83,10 @@ export class ContentState {
   isMenuOpen = $state(false);
   isMouseOverMenu = $state(false);
   openContextMenuSection = $state<string | null>(null);
+  openDrawerSection = $state<string | null>(null);
+
+  drawerVariant = $state<ContentSelectVariant | null>(null);
+
   isDropdownMenuOpen = $state(false);
   // ID of setTimeout event when hovering over a video
   hoverTimeoutId = $state<ReturnType<typeof setTimeout> | null>(null);
@@ -110,6 +117,19 @@ export class ContentState {
         this.openContextMenuSection &&
         this.isContextMenuOpenForSection(sectionId)
       ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  isDrawerOpenForSection(sectionId: string = DEFAULT_SECTION_ID): boolean {
+    return this.openDrawerSection === sectionId;
+  }
+
+  isDrawerOpenForAnySection(): boolean {
+    for (const sectionId in this.selectedVideosBySection) {
+      if (this.openDrawerSection && this.isDrawerOpenForSection(sectionId)) {
         return true;
       }
     }
@@ -655,6 +675,51 @@ export class ContentState {
     this.hoveredVideosBySection[sectionId] = video;
   }
 
+  handleDrawer({
+    video,
+    sectionId = DEFAULT_SECTION_ID,
+    variant,
+  }: {
+    video?: Video;
+    sectionId?: string;
+    variant: ContentSelectVariant;
+  }) {
+    // Clear selections from all other sections first
+    this.clearOtherSections(sectionId);
+
+    // Close any existing drawer from other sections
+    if (this.openDrawerSection && this.openDrawerSection !== sectionId) {
+      this.openDrawerSection = null;
+    }
+
+    this.openDrawerSection = sectionId;
+    this.drawerVariant = variant;
+
+    if (video) {
+      // For drawer operations, we should always set the video as selected
+      // This ensures it persists even if hover state gets cleared
+      this.selectedVideosBySection[sectionId] = [video];
+
+      // Also set as hovered for consistency
+      this.hoveredVideosBySection[sectionId] = video;
+    }
+
+    console.log("HandleDrawer called:", {
+      video: video?.title,
+      sectionId,
+      variant,
+      selectedAfterSet: this.selectedVideosBySection[sectionId],
+      hoveredAfterSet: this.hoveredVideosBySection[sectionId],
+    });
+  }
+
+  // Helper method to get drawer variant for a section
+  getDrawerVariant(
+    sectionId: string = DEFAULT_SECTION_ID,
+  ): ContentSelectVariant | null {
+    return this.isDrawerOpenForSection(sectionId) ? this.drawerVariant : null;
+  }
+
   setupClickOutsideListener(
     containerElement: HTMLElement,
     sectionId: string = DEFAULT_SECTION_ID,
@@ -668,6 +733,7 @@ export class ContentState {
       // - User is holding modifier keys (shift, ctrl, cmd)
       if (
         this.isContextMenuOpenForSection(sectionId) ||
+        this.isDrawerOpenForSection(sectionId) ||
         this.isDropdownMenuOpen ||
         this.dragContentType ||
         event.shiftKey ||
@@ -677,12 +743,17 @@ export class ContentState {
         return;
       }
 
-      // Check if the click is on a dropdown or other UI element that shouldn't clear selection
+      // Check if the click is on a dropdown, drawer, or other UI element that shouldn't clear selection
       const target = event.target as HTMLElement;
       if (
         target.closest("[data-dropdown]") ||
         target.closest('[role="menu"]') ||
-        target.closest("button")
+        target.closest("button") ||
+        target.closest("[data-vaul-drawer]") || // Drawer overlay
+        target.closest("[data-vaul-drawer-wrapper]") || // Drawer wrapper
+        target.closest("[role='dialog']") || // Dialog/drawer content
+        target.closest(".drawer-content") || // Custom drawer classes
+        target.closest(".drawer-overlay") // Custom overlay classes
       ) {
         return;
       }
@@ -702,10 +773,13 @@ export class ContentState {
       }
     };
 
-    document.addEventListener("click", handleClickOutside);
+    // Use capture phase to ensure our listener runs first
+    document.addEventListener("click", handleClickOutside, { capture: true });
 
     return () => {
-      document.removeEventListener("click", handleClickOutside);
+      document.removeEventListener("click", handleClickOutside, {
+        capture: true,
+      });
     };
   }
 }

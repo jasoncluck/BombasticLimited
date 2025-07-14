@@ -35,6 +35,8 @@ export type TilesDisplay = (typeof TILES_DISPLAY)[keyof typeof TILES_DISPLAY];
 
 export type ContentView = "continueWatching" | "playlist" | "default";
 
+export type ContentSelectVariant = "header" | "item" | "list-items";
+
 export interface ContentDragInfo {
   readonly id: string;
   readonly thumbnailUrl: string;

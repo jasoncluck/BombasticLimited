@@ -24,11 +24,9 @@
   });
 
   function handleOpenChange(open: boolean) {
-
     if (!open) {
       // When vaul-svelte closes the drawer (animation completes), clean up our state
       drawerState.onClosed();
-
     }
   }
 
@@ -97,17 +95,15 @@
             {/if}
 
             {#if drawerState.options.showCloseButton}
-
               <Drawer.Close
                 onclick={() => drawerState.close()}
-
                 class={buttonVariants({
                   class: "drawer-button-footer",
                   variant: drawerState.options.closeButtonVariant,
                 })}
               >
                 {drawerState.options.closeButtonText}
-              </button>
+              </Drawer.Close>
             {/if}
           </div>
         </div>
@@ -153,17 +149,15 @@
             {/if}
 
             {#if drawerState.options.showCloseButton}
-
               <Drawer.Close
                 onclick={() => drawerState.close()}
-
                 class={buttonVariants({
                   class: "drawer-button-footer",
                   variant: drawerState.options.closeButtonVariant,
                 })}
               >
                 {drawerState.options.closeButtonText}
-              </button>
+              </Drawer.Close>
             {/if}
           </div>
         </div>

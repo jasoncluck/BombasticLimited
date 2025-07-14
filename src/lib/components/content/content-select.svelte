@@ -9,7 +9,8 @@
   import ContentActionsDropdown from "./content-actions-dropdown.svelte";
   import type { Video } from "$lib/supabase/videos";
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
-  import ContentActionsDrawer from "./content-actions-drawer.svelte";
+  import Button from "../ui/button/button.svelte";
+  import { Ellipsis } from "@lucide/svelte";
 
   let {
     videos,
@@ -69,15 +70,21 @@
   </div>
 {:else}
   <div class="flex content-table-row items-center">
-    <ContentActionsDrawer
-      {videos}
-      {playlist}
-      {playlists}
-      {sectionId}
-      {onPlaylistEdit}
-      variant="header"
-      {supabase}
-      {session}
-    />
+    {#if session}
+      <Button
+        variant="ghost"
+        class="outline-none ghost-button-minimal"
+        onclick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          contentState.handleDrawer({
+            sectionId,
+            variant: "header",
+          });
+        }}
+      >
+        <Ellipsis />
+      </Button>
+    {/if}
   </div>
 {/if}

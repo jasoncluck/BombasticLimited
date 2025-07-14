@@ -4,9 +4,13 @@
   import type { Video } from "$lib/supabase/videos";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import ContentActionsDropdown from "../content-actions-dropdown.svelte";
-  import { DEFAULT_SECTION_ID } from "$lib/state/content.svelte";
+  import {
+    DEFAULT_SECTION_ID,
+    getContentState,
+  } from "$lib/state/content.svelte";
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
-  import ContentActionsDrawer from "../content-actions-drawer.svelte";
+  import Button from "$lib/components/ui/button/button.svelte";
+  import { Ellipsis } from "@lucide/svelte";
 
   const {
     videos,
@@ -24,6 +28,7 @@
     session: Session | null;
   } = $props();
 
+  const contentState = getContentState();
   const mediaQueryState = getMediaQueryState();
 </script>
 
@@ -41,14 +46,22 @@
   </div>
 {:else}
   <div class="flex content-table-row items-center">
-    <ContentActionsDrawer
-      videos={[videos[0]]}
-      {playlist}
-      {playlists}
-      {sectionId}
-      variant="list-items"
-      {supabase}
-      {session}
-    />
+    {#if session}
+      <Button
+        variant="ghost"
+        class="outline-none ghost-button-minimal"
+        onclick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          contentState.handleDrawer({
+            video: videos[0],
+            sectionId,
+            variant: "list-items",
+          });
+        }}
+      >
+        <Ellipsis />
+      </Button>
+    {/if}
   </div>
 {/if}

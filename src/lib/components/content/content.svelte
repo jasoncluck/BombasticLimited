@@ -18,6 +18,7 @@
   import ContentTiles from "./content-tiles.svelte";
   import type { Profile } from "$lib/supabase/profiles";
   import ContentContextMenu from "./content-context-menu.svelte";
+  import ContentDrawer from "./content-drawer.svelte";
   import { onNavigate } from "$app/navigation";
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
 
@@ -120,69 +121,77 @@
   {supabase}
   {session}
 >
-  <div
-    bind:this={contentRef}
-    {...restProps}
-    class="md:mx-4 flex flex-col gap-5"
+  <ContentDrawer
+    playlist={currentPlaylist}
+    {playlists}
+    {sectionId}
+    {supabase}
+    {session}
   >
-    <!-- Table view for small screens (up to sm breakpoint) -->
-    <div class="sm:hidden">
-      <ContentTable
-        {videos}
-        {contentFilter}
-        {videosCount}
-        {columns}
-        {playlist}
-        {sectionId}
-        {supabase}
-        {session}
-      />
-    </div>
-
-    <!-- User preference for larger screens (sm and above) -->
-    <div class="hidden sm:block">
-      {#if userProfile?.content_display === "TABLE"}
+    <div
+      bind:this={contentRef}
+      {...restProps}
+      class="md:mx-4 flex flex-col gap-5"
+    >
+      <!-- Table view for small screens (up to sm breakpoint) -->
+      <div class="sm:hidden">
         <ContentTable
           {videos}
           {contentFilter}
           {videosCount}
-          {allowVideoReorder}
           {columns}
           {playlist}
           {sectionId}
           {supabase}
           {session}
         />
-      {:else if tilesDisplay === "CAROUSEL"}
-        <ContentCarousel
-          {videos}
-          {videosCount}
-          {playlists}
-          {playlist}
-          {isContinueVideos}
-          {contentFilter}
-          bind:carouselState
-          {sectionId}
-          {supabase}
-          {session}
-          {allowVideoReorder}
-        />
-      {:else}
-        <div class="mb-20">
-          <ContentTiles
+      </div>
+
+      <!-- User preference for larger screens (sm and above) -->
+      <div class="hidden sm:block">
+        {#if userProfile?.content_display === "TABLE"}
+          <ContentTable
+            {videos}
+            {contentFilter}
+            {videosCount}
+            {allowVideoReorder}
+            {columns}
+            {playlist}
+            {sectionId}
+            {supabase}
+            {session}
+          />
+        {:else if tilesDisplay === "CAROUSEL"}
+          <ContentCarousel
             {videos}
             {videosCount}
             {playlists}
             {playlist}
             {isContinueVideos}
-            {allowVideoReorder}
             {contentFilter}
+            bind:carouselState
             {sectionId}
             {supabase}
             {session}
+            {allowVideoReorder}
           />
-        </div>
-      {/if}
-    </div>
-  </div>
+        {:else}
+          <div class="mb-20">
+            <ContentTiles
+              {videos}
+              {videosCount}
+              {playlists}
+              {playlist}
+              {isContinueVideos}
+              {allowVideoReorder}
+              {contentFilter}
+              {sectionId}
+              {supabase}
+              {session}
+            />
+          </div>
+        {/if}
+      </div>
+    </div></ContentDrawer
+  >
 </ContentContextMenu>
