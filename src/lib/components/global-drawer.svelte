@@ -24,15 +24,11 @@
   });
 
   function handleOpenChange(open: boolean) {
-    if (!open && internalOpen) {
-      // Animation is complete, now we can safely close
-      internalOpen = false;
-      isClosing = false;
 
-      // Only call close if we still have drawers (avoid double-closing)
-      if (drawerState.isOpen) {
-        drawerState.close();
-      }
+    if (!open) {
+      // When vaul-svelte closes the drawer (animation completes), clean up our state
+      drawerState.onClosed();
+
     }
   }
 
@@ -101,9 +97,10 @@
             {/if}
 
             {#if drawerState.options.showCloseButton}
-              <button
-                type="button"
-                onclick={handleCloseClick}
+
+              <Drawer.Close
+                onclick={() => drawerState.close()}
+
                 class={buttonVariants({
                   class: "drawer-button-footer",
                   variant: drawerState.options.closeButtonVariant,
@@ -156,9 +153,10 @@
             {/if}
 
             {#if drawerState.options.showCloseButton}
-              <button
-                type="button"
-                onclick={handleCloseClick}
+
+              <Drawer.Close
+                onclick={() => drawerState.close()}
+
                 class={buttonVariants({
                   class: "drawer-button-footer",
                   variant: drawerState.options.closeButtonVariant,
