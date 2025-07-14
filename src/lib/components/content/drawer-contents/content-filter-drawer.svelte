@@ -34,7 +34,7 @@
   } = $props();
 
   function closeDrawer() {
-    drawerState.close();
+    drawerState.close;
   }
 </script>
 

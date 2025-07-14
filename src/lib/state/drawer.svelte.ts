@@ -49,25 +49,25 @@ export interface OpenDrawerOptions<
 }
 
 export class DrawerStateClass {
-  // Add the missing state properties
-  isOpen = $state(false);
-  content = $state<DrawerContent | null>(null);
+  // Stack-based state for nested drawers
+  drawers = $state<DrawerContent[]>([]);
+  optionsStack = $state<DrawerOptions[]>([]);
 
-  options = $state<DrawerOptions>({
-    closeOnEscape: true,
-    showOverlay: true,
-    fullHeight: false,
-    nested: false,
-    handleOnly: true,
-    showCloseButton: true,
-    closeButtonText: "Close",
-    closeButtonVariant: "outline",
-    // Form defaults
-    submitButtonText: "Save Changes",
-    submitButtonVariant: "default",
-    showSubmitButton: false,
-    isSubmitting: false,
-  });
+  // Computed properties for current drawer
+  get isOpen() {
+    return this.drawers.length > 0;
+  }
+
+  get content() {
+    return this.drawers[this.drawers.length - 1] || null;
+  }
+
+  get options() {
+    return (
+      this.optionsStack[this.optionsStack.length - 1] ||
+      this.getDefaultOptions()
+    );
+  }
 
   constructor() {
     if (typeof window !== "undefined") {
@@ -76,10 +76,13 @@ export class DrawerStateClass {
   }
 
   updateFormState(isSubmitting: boolean) {
-    this.options.isSubmitting = isSubmitting;
+    if (this.optionsStack.length > 0) {
+      this.optionsStack[this.optionsStack.length - 1].isSubmitting =
+        isSubmitting;
+    }
   }
 
-  // Type-safe open method
+  // Type-safe open method for nested drawers
   open<T extends Record<string, unknown>>({
     component,
     props,
@@ -87,42 +90,71 @@ export class DrawerStateClass {
     subtitle,
     options,
   }: OpenDrawerOptions<T>) {
-    this.content = {
+    const newContent = {
       component: component as Component<Record<string, unknown>>,
       props: props as Record<string, unknown>,
       title,
       subtitle,
     };
 
-    if (options) {
-      this.options = { ...this.options, ...options };
-    }
+    const newOptions = {
+      ...this.getDefaultOptions(),
+      ...options,
+      nested: this.drawers.length > 0, // Auto-detect nested state
+    };
 
-    this.isOpen = true;
+    this.drawers.push(newContent);
+    this.optionsStack.push(newOptions);
   }
 
-  // Close drawer
+  // Close the topmost drawer
   close() {
-    if (!this.isOpen) return;
-    this.isOpen = false;
+    if (this.drawers.length === 0) return;
+
+    // Create new arrays to ensure reactivity
+    this.drawers = this.drawers.slice(0, -1);
+    this.optionsStack = this.optionsStack.slice(0, -1);
+
+    if (this.drawers.length === 0) {
+      this.onClosed();
+    }
   }
 
-  // Toggle drawer state
+  // Close all drawers
+  closeAll() {
+    this.drawers = [];
+    this.optionsStack = [];
+    this.onClosed();
+  }
+
+  // Close to a specific level (0-based index)
+  closeTo(level: number) {
+    if (level < 0 || level >= this.drawers.length) return;
+
+    this.drawers = this.drawers.slice(0, level + 1);
+    this.optionsStack = this.optionsStack.slice(0, level + 1);
+
+    if (this.drawers.length === 0) {
+      this.onClosed();
+    }
+  }
+
+  // Toggle drawer state (only affects topmost drawer)
   toggle() {
     if (this.isOpen) {
       this.close();
     }
   }
 
-  // Handle when the drawer is actually closed
+  // Handle when all drawers are closed
   onClosed() {
-    this.content = null;
-    this.resetOptions();
+    this.drawers = [];
+    this.optionsStack = [];
   }
 
-  // Reset options to defaults
-  private resetOptions() {
-    this.options = {
+  // Get default options
+  private getDefaultOptions(): DrawerOptions {
+    return {
       closeOnEscape: true,
       showOverlay: true,
       fullHeight: false,
@@ -138,9 +170,9 @@ export class DrawerStateClass {
     };
   }
 
-  // Handle backdrop click
+  // Handle backdrop click (only closes if not nested or if configured to do so)
   handleBackdropClick(event: MouseEvent) {
-    if (event.target === event.currentTarget) {
+    if (event.target === event.currentTarget && this.options.showOverlay) {
       this.close();
     }
   }
@@ -148,8 +180,8 @@ export class DrawerStateClass {
   // Setup keyboard event listeners
   private setupKeyboardListeners() {
     const handleKeydown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && this.isOpen) {
-        this.close();
+      if (event.key === "Escape" && this.isOpen && this.options.closeOnEscape) {
+        this.close(); // Close only the topmost drawer
       }
     };
 
@@ -158,6 +190,21 @@ export class DrawerStateClass {
     return () => {
       document.removeEventListener("keydown", handleKeydown);
     };
+  }
+
+  // Nested drawer helpers
+  get nestingLevel(): number {
+    return this.drawers.length;
+  }
+
+  get isNested(): boolean {
+    return this.drawers.length > 1;
+  }
+
+  get parentDrawer(): DrawerContent | null {
+    return this.drawers.length > 1
+      ? this.drawers[this.drawers.length - 2]
+      : null;
   }
 
   // Content helpers with proper typing
@@ -187,9 +234,23 @@ export class DrawerStateClass {
   }
 
   get shouldShowOverlay(): boolean {
+    // For nested drawers, only show overlay for the first drawer unless explicitly configured
+    if (this.isNested && !this.options.nested) {
+      return false;
+    }
     return this.options.showOverlay
       ? this.options.showOverlay && this.shouldRender
       : this.shouldRender;
+  }
+
+  // Get all drawer contents (useful for debugging or complex UI)
+  get allDrawers(): DrawerContent[] {
+    return [...this.drawers];
+  }
+
+  // Get all options stack (useful for debugging)
+  get allOptions(): DrawerOptions[] {
+    return [...this.optionsStack];
   }
 }
 
@@ -212,7 +273,13 @@ export function useDrawer(key = DEFAULT_KEY) {
   return {
     open: drawerState.open.bind(drawerState),
     close: drawerState.close.bind(drawerState),
+    closeAll: drawerState.closeAll.bind(drawerState),
+    closeTo: drawerState.closeTo.bind(drawerState),
     toggle: drawerState.toggle.bind(drawerState),
     isOpen: drawerState.isOpen,
+    isNested: drawerState.isNested,
+    nestingLevel: drawerState.nestingLevel,
+    parentDrawer: drawerState.parentDrawer,
+    allDrawers: drawerState.allDrawers,
   };
 }

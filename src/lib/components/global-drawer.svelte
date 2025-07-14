@@ -6,11 +6,35 @@
 
   const drawerState = getDrawerState();
 
+  // Create a local state that syncs with drawer state but allows for animation delays
+  let internalOpen = $state(false);
+  let isClosing = $state(false);
+
+  // Sync internal state with drawer state
+  $effect(() => {
+    if (drawerState.isOpen && !internalOpen) {
+      // Opening - immediate
+      internalOpen = true;
+      isClosing = false;
+    } else if (!drawerState.isOpen && internalOpen && !isClosing) {
+      // Closing - let animation complete first
+      isClosing = true;
+      // Don't immediately set internalOpen to false - let handleOpenChange do it
+    }
+  });
+
   function handleOpenChange(open: boolean) {
+
     if (!open) {
       // When vaul-svelte closes the drawer (animation completes), clean up our state
       drawerState.onClosed();
+
     }
+  }
+
+  function handleCloseClick() {
+    // Start the closing process
+    drawerState.close();
   }
 
   $effect(() => {
@@ -22,11 +46,12 @@
 
 {#if drawerState.shouldRender}
   <Drawer.Root
-    bind:open={drawerState.isOpen}
+    open={internalOpen}
     onOpenChange={handleOpenChange}
     handleOnly={drawerState.options.handleOnly}
     nested={drawerState.options.nested}
   >
+    <!-- Rest of your component stays the same, just replace Drawer.Close with buttons -->
     {#if drawerState.options.fullHeight}
       <!-- Full height drawer layout -->
       <Drawer.Content class="bg-background flex flex-col min-h-[100%] drawer">
@@ -52,10 +77,8 @@
           {/if}
         </div>
 
-        <!-- Always render footer for full height -->
         <div class="flex-shrink-0 p-4 pt-2 border-t bg-background">
           <div class="flex flex-col gap-2">
-            <!-- Submit button (if form is present) -->
             {#if drawerState.options.showSubmitButton && drawerState.options.formId}
               <button
                 type="submit"
@@ -73,23 +96,24 @@
               </button>
             {/if}
 
-            <!-- Close button -->
             {#if drawerState.options.showCloseButton}
+
               <Drawer.Close
                 onclick={() => drawerState.close()}
+
                 class={buttonVariants({
                   class: "drawer-button-footer",
                   variant: drawerState.options.closeButtonVariant,
                 })}
               >
                 {drawerState.options.closeButtonText}
-              </Drawer.Close>
+              </button>
             {/if}
           </div>
         </div>
       </Drawer.Content>
     {:else}
-      <!-- Standard drawer layout -->
+      <!-- Standard drawer layout with same button fixes -->
       <Drawer.Content class="p-0">
         {#if drawerState.currentTitle}
           <Drawer.Header>
@@ -109,10 +133,8 @@
           {/if}
         </div>
 
-        <!-- Footer for standard layout -->
         <div class="p-4 pt-2 border-t bg-background">
           <div class="flex flex-col gap-2">
-            <!-- Submit button (if form is present) -->
             {#if drawerState.options.showSubmitButton && drawerState.options.formId}
               <button
                 type="submit"
@@ -130,17 +152,18 @@
               </button>
             {/if}
 
-            <!-- Close button -->
             {#if drawerState.options.showCloseButton}
+
               <Drawer.Close
                 onclick={() => drawerState.close()}
+
                 class={buttonVariants({
                   class: "drawer-button-footer",
                   variant: drawerState.options.closeButtonVariant,
                 })}
               >
                 {drawerState.options.closeButtonText}
-              </Drawer.Close>
+              </button>
             {/if}
           </div>
         </div>
