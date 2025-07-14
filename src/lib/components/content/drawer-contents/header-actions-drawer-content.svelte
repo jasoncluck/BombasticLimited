@@ -97,7 +97,7 @@
       title: "Reorder playlist videos",
       options: {
         fullHeight: true,
-        nested: false,
+        nested: true,
       },
     });
   }
