@@ -122,18 +122,17 @@
   onActive={() => (showFloatingBreadcrumbs = false)}
   onInactive={() => (showFloatingBreadcrumbs = true)}
 >
-  <div class="mb-6" {...restProps}>
+  <div class="mb-2" {...restProps}>
     {@render children()}
 
-    <!-- Right side: ContentSelect and ContentFilters on same row -->
-    <hr class="border-1 m-4" />
-    <div class="flex justify-between m-4 items-center gap-1">
+    <div class="flex justify-between mx-4 items-center gap-1">
       {#if profilePlaylist}
         <Button
           variant="ghost"
           size="icon"
           disabled={!nextVideoToPlay}
-          class="p-7 bg-primary rounded-full shadow-xl transition-transform duration-200 hover:scale-105 hover:shadow-2xl
+          class="p-7 bg-primary rounded-full shadow-xl transition-transform 
+          duration-200 hover:scale-105 hover:shadow-2xl
           hover:bg-primary hover:brightness-[150%]"
           onclick={handlePlayVideo}
         >

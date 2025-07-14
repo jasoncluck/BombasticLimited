@@ -11,6 +11,12 @@
       drawerState.onClosed();
     }
   }
+
+  $effect(() => {
+    if (drawerState.options) {
+      console.log(drawerState.options);
+    }
+  });
 </script>
 
 {#if drawerState.shouldRender}
@@ -40,11 +46,8 @@
 
         <div class="flex-1 overflow-y-auto p-1 min-h-0">
           {#if drawerState.hasContent && drawerState.currentComponent}
-            <svelte:component
-              this={drawerState.currentComponent}
-              {...drawerState.currentProps}
-              {drawerState}
-            />
+            {@const Component = drawerState.currentComponent}
+            <Component {...drawerState.currentProps} {drawerState} />
           {/if}
         </div>
 
@@ -99,11 +102,8 @@
 
         <div class="drawer-content-wrapper">
           {#if drawerState.hasContent && drawerState.currentComponent}
-            <svelte:component
-              this={drawerState.currentComponent}
-              {...drawerState.currentProps}
-              {drawerState}
-            />
+            {@const Component = drawerState.currentComponent}
+            <Component {...drawerState.currentProps} {drawerState} />
           {/if}
         </div>
 

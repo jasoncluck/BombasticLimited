@@ -16,11 +16,9 @@
     Edit,
     ImagePlay,
     ListVideo,
-    PlusCircle,
     TimerReset,
   } from "@lucide/svelte";
   import {
-    handleAddVideosToPlaylist,
     handleDeletePlaylist,
     handleUpdatePlaylistImage,
     handleUpdatePlaylistVideoPosition,
@@ -33,7 +31,7 @@
   import { goto, invalidate } from "$app/navigation";
   import { page } from "$app/state";
   import EditListDrawer from "./edit-list-drawer.svelte";
-  import FullHeightDrawer from "./full-height-drawer.svelte";
+  import PlaylistAddVideoDrawerContent from "./playlist-add-video-drawer-content.svelte";
 
   let {
     playlist,
@@ -99,7 +97,7 @@
       title: "Reorder playlist videos",
       options: {
         fullHeight: true,
-        nested: true,
+        nested: false,
       },
     });
   }
@@ -185,68 +183,23 @@
     {/if}
 
     {#if variant === "list-items"}
-      {@const filteredPlaylists = playlists.filter(
-        (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id,
-      )}
-
-      <FullHeightDrawer
-        title="Add to playlist"
-        handleOnly={true}
-        nested={true}
-        onClose={() => {
-          invalidate("supabase:db:playlists");
+      <Button
+        class="drawer-button"
+        variant="ghost"
+        onclick={() => {
+          drawerState.open({
+            component: PlaylistAddVideoDrawerContent,
+            props: { videos, playlist, playlists, supabase, session },
+            title: "Add to playlist",
+            options: { fullHeight: true, nested: true, handleOnly: true },
+          });
         }}
       >
-        {#snippet trigger()}
-          <div class="flex justify-between items-center w-full">
-            <div class="flex gap-2 items-center">
-              <PlusCircle class="drawer-icon" />
-              Add to playlist
-            </div>
-            <ChevronRight />
-          </div>
-        {/snippet}
-
-        {#each filteredPlaylists as addPlaylist (addPlaylist.id)}
-          {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
-            <Button
-              class="drawer-playlist-button"
-              variant="ghost"
-              onclick={() => {
-                handleAddVideosToPlaylist({
-                  videos: [videos[0]],
-                  playlist: addPlaylist,
-                  supabase,
-                  session,
-                });
-                closeDrawer();
-              }}
-            >
-              {#if addPlaylist.processedImageUrl}
-                <div class="h-12 w-12 shrink-0">
-                  <img
-                    src={addPlaylist.processedImageUrl}
-                    class="h-full w-full object-cover cursor-pointer"
-                    alt={`Image for playlist: ${addPlaylist.name}`}
-                  />
-                </div>
-              {:else}
-                <div
-                  class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
-                >
-                  <ListVideo class="!h-8 !w-8" />
-                </div>
-              {/if}
-              <div class="flex flex-col items-start gap-1">
-                <p>
-                  {addPlaylist.name}
-                </p>
-                <p class="text-muted-foreground">{addPlaylist.type}</p>
-              </div>
-            </Button>
-          {/if}
-        {/each}
-      </FullHeightDrawer>
+        <div class="flex gap-2 items-center w-full justify-between">
+          Add to Playlist
+          <ChevronRight />
+        </div>
+      </Button>
     {/if}
 
     <!-- Rest of your existing action buttons remain the same -->
@@ -336,7 +289,7 @@
       >
         <div class="flex items-center gap-2">
           <CircleMinus class="drawer-icon" />
-          Delete Playlist
+          Delete playlist
         </div>
       </Button>
     {/if}

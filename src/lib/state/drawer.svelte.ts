@@ -11,7 +11,6 @@ export interface DrawerContent<
 }
 
 export interface DrawerOptions {
-  closeOnBackdropClick?: boolean;
   closeOnEscape?: boolean;
   showOverlay?: boolean;
   fullHeight?: boolean;
@@ -55,7 +54,6 @@ export class DrawerStateClass {
   content = $state<DrawerContent | null>(null);
 
   options = $state<DrawerOptions>({
-    closeOnBackdropClick: true,
     closeOnEscape: true,
     showOverlay: true,
     fullHeight: false,
@@ -125,7 +123,6 @@ export class DrawerStateClass {
   // Reset options to defaults
   private resetOptions() {
     this.options = {
-      closeOnBackdropClick: true,
       closeOnEscape: true,
       showOverlay: true,
       fullHeight: false,
@@ -151,7 +148,7 @@ export class DrawerStateClass {
   // Setup keyboard event listeners
   private setupKeyboardListeners() {
     const handleKeydown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && this.isOpen && this.options.closeOnEscape) {
+      if (event.key === "Escape" && this.isOpen) {
         this.close();
       }
     };
@@ -190,7 +187,9 @@ export class DrawerStateClass {
   }
 
   get shouldShowOverlay(): boolean {
-    return this.options.showOverlay && this.shouldRender;
+    return this.options.showOverlay
+      ? this.options.showOverlay && this.shouldRender
+      : this.shouldRender;
   }
 }
 

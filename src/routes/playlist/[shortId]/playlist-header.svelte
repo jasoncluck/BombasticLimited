@@ -81,8 +81,7 @@
       title: "Edit Playlist",
       options: {
         fullHeight: true,
-        closeOnBackdropClick: false,
-        formId: "playlist-form", // Links to the form
+        formId: "playlist-form",
         showSubmitButton: true,
         submitButtonText: "Save Changes",
         submitButtonVariant: "default",

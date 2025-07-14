@@ -18,11 +18,9 @@
 
   let {
     items,
-    onClose,
     onReorder,
   }: {
     items: ReorderableItem[];
-    onClose?: () => void;
     onReorder?: (
       oldIndex: number,
       newIndex: number,
@@ -122,7 +120,6 @@
   }
 
   function handleClose() {
-    onClose?.();
     drawerState.close();
   }
 

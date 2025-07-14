@@ -7,7 +7,7 @@
   import { type Video } from "$lib/supabase/videos";
   import Button from "../ui/button/button.svelte";
   import { Ellipsis } from "@lucide/svelte";
-  import ActionsDrawerContent from "./drawer-contents/actions-drawer-content.svelte";
+  import HeaderActionsDrawerContent from "./drawer-contents/header-actions-drawer-content.svelte";
 
   let {
     playlist,
@@ -35,7 +35,7 @@
 
   function openContentActions() {
     drawerState.open({
-      component: ActionsDrawerContent,
+      component: HeaderActionsDrawerContent,
       props: {
         playlist,
         playlists,
