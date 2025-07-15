@@ -164,7 +164,7 @@
   }
 
   .drawer-button {
-    @apply flex w-full h-8 tracking-wide justify-start text-sm py-5 gap-2 items-center;
+    @apply flex w-full h-8 tracking-wide justify-start text-sm py-4 gap-2 items-center;
   }
 
   .drawer-button-footer {

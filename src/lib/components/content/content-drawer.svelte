@@ -35,12 +35,13 @@
   import { goto, invalidate } from "$app/navigation";
   import { page } from "$app/state";
   import { getPlaylistState } from "$lib/state/playlist.svelte";
-  import { Footer } from "../ui/alert-dialog";
   import FullHeightDrawer from "./drawer/full-height-drawer.svelte";
   import EditListDrawer from "./drawer/edit-list-drawer.svelte";
+  import type { CombinedContentFilter } from "./content-filter";
 
   interface ContentDrawerProps {
     videos?: Video[];
+    contentFilter: CombinedContentFilter;
     playlist: Playlist | null;
     playlists: Playlist[];
     sectionId: string;
@@ -54,6 +55,7 @@
     videos,
     playlist,
     playlists,
+    contentFilter,
     sectionId,
     supabase,
     session,
@@ -197,7 +199,7 @@
           </Button>
         {/if}
         <!-- Reorder content -->
-        {#if isPlaylistOwner && variant === "header" && videos && videos.length > 0}
+        {#if contentFilter.sort.key === "playlistOrder" && isPlaylistOwner && variant === "header" && videos && videos.length > 0}
           <!-- Updated to use drawerState instead of FullHeightDrawer component -->
           <EditListDrawer
             items={videos}

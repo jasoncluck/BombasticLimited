@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
+  import { goto, invalidate } from "$app/navigation";
   import { SOURCES, SOURCE_INFO } from "$lib/constants/source";
   import { activeStreams } from "$lib/state/streaming.svelte";
   import {
     Circle,
+    Edit,
     House,
     ListVideo,
     LogIn,
@@ -29,6 +30,7 @@
   import type { DndEvent } from "svelte-dnd-action";
   import type { Profile } from "$lib/supabase/profiles";
   import Badge from "./ui/badge/badge.svelte";
+  import EditListDrawer from "./content/drawer/edit-list-drawer.svelte";
 
   let {
     playlists = $bindable(),
@@ -147,6 +149,26 @@
     goto(`/playlist/${encodeURI(playlist.short_id)}`);
     isOpen = false;
   }
+
+  async function handlePlaylistReorder(
+    oldIndex: number,
+    newIndex: number,
+    item: Playlist | { id: string | number },
+  ) {
+    const newPosition = playlists.length - newIndex;
+
+    try {
+      await handleUpdatePlaylistPosition({
+        position: newPosition,
+        playlist: item as Playlist,
+        session,
+        supabase,
+      });
+    } catch (error) {
+      console.error("Error updating video position:", error);
+      throw error;
+    }
+  }
 </script>
 
 <Sheet.Root bind:open={isOpen}>
@@ -208,11 +230,55 @@
             </Button>
           {/each}
 
-          <Sheet.Title class="mx-2 mt-4 mb-2">
-            <div class="flex justify-between items-center">
-              Playlists
-              <Badge>Foobar</Badge>
-            </div>
+          <Sheet.Title class="mx-2 mt-4 mb-2 flex flex-col gap-4">
+            Playlists
+
+            <EditListDrawer
+              items={playlists}
+              title="Reorder playlist videos"
+              onReorder={handlePlaylistReorder}
+              onClose={() => {
+                invalidate("supabase:db:playlists");
+              }}
+            >
+              {#snippet trigger()}
+                <Badge class="flex items-center gap-2 bg-secondary">
+                  <Edit />
+                  Reorder</Badge
+                >
+              {/snippet}
+
+              {#snippet itemRenderer(item)}
+                {@const playlist = item as Playlist}
+                <div class="w-full flex items-center gap-2 m-1">
+                  {#if playlist.processedImageUrl}
+                    <div
+                      class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
+                    >
+                      <img
+                        src={playlist.processedImageUrl}
+                        class="h-full w-full object-cover cursor-pointer"
+                        alt={`Image for playlist: ${playlist.name}`}
+                      />
+                    </div>
+                  {:else}
+                    <div
+                      class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
+                    >
+                      <ListVideo class="!h-8 !w-8" />
+                    </div>
+                  {/if}
+                  <div class="flex flex-col items-start">
+                    <p>
+                      {playlist.name}
+                    </p>
+                    <p class="text-muted-foreground">
+                      {playlist.type}
+                    </p>
+                  </div>
+                </div>
+              {/snippet}
+            </EditListDrawer>
           </Sheet.Title>
 
           {#if session}

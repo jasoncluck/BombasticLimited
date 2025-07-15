@@ -122,7 +122,7 @@
   <div class="mb-2" {...restProps}>
     {@render children()}
 
-    <div class="flex justify-between mx-4 items-center gap-1">
+    <div class="flex justify-between m-4 items-center gap-1">
       {#if profilePlaylist}
         <Button
           variant="ghost"

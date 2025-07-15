@@ -125,6 +125,7 @@
     {videos}
     playlist={currentPlaylist}
     {playlists}
+    {contentFilter}
     {sectionId}
     {supabase}
     {session}
