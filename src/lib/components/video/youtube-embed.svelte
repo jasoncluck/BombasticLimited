@@ -34,7 +34,7 @@
     session: Session | null;
     durationSeconds: number;
     contentFilter?: CombinedContentFilter;
-    playlist?: Playlist;
+    playlist: Playlist | null;
   } = $props();
 
   let startSeconds = $state(0);
@@ -74,7 +74,7 @@
   function saveTimestampForVideo(
     currentTimeSeconds: number,
     videoDurationSeconds: number,
-    playlist?: Playlist,
+    playlist: Playlist | null,
   ) {
     if (
       !videoDurationSeconds ||
@@ -127,8 +127,8 @@
   function saveTimestampBeacon(
     currentTimeSeconds: number,
     videoDurationSeconds: number,
+    playlist: Playlist | null,
     contentFilter?: CombinedContentFilter,
-    playlist?: Playlist,
   ) {
     if (
       !videoDurationSeconds ||
@@ -176,8 +176,8 @@
             saveTimestampBeacon(
               currentTimeSeconds,
               durationSeconds,
-              contentFilter,
               playlist,
+              contentFilter,
             );
           } else {
             saveTimestampForVideo(

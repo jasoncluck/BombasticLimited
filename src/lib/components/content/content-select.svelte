@@ -67,21 +67,19 @@
   </div>
 {:else}
   <div class="flex content-table-row items-center">
-    {#if session}
-      <Button
-        variant="ghost"
-        class="outline-none ghost-button-minimal"
-        onclick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          contentState.handleDrawer({
-            sectionId,
-            variant: "header",
-          });
-        }}
-      >
-        <Ellipsis />
-      </Button>
-    {/if}
+    <Button
+      variant="ghost"
+      class="outline-none ghost-button-minimal"
+      onclick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        contentState.handleDrawer({
+          sectionId,
+          variant: "header",
+        });
+      }}
+    >
+      <Ellipsis />
+    </Button>
   </div>
 {/if}

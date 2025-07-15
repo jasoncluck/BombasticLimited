@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { getContentState } from "$lib/state/content.svelte";
+  import {
+    DEFAULT_SECTION_ID,
+    getContentState,
+  } from "$lib/state/content.svelte";
   import * as Drawer from "$lib/components/ui/drawer";
   import { type Playlist } from "$lib/supabase/playlists";
   import type { Database } from "$lib/supabase/database.types";
@@ -44,7 +47,7 @@
     contentFilter: CombinedContentFilter;
     playlist: Playlist | null;
     playlists: Playlist[];
-    sectionId: string;
+    sectionId?: string;
     children: Snippet<[]>;
     supabase: SupabaseClient<Database>;
     session: Session | null;
@@ -56,7 +59,7 @@
     playlist,
     playlists,
     contentFilter,
-    sectionId,
+    sectionId = DEFAULT_SECTION_ID,
     supabase,
     session,
     children,

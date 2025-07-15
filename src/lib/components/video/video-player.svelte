@@ -7,6 +7,11 @@
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { CombinedContentFilter } from "../content/content-filter";
   import ContentActionsDropdown from "../content/content-actions-dropdown.svelte";
+  import { Ellipsis } from "@lucide/svelte";
+  import Button from "../ui/button/button.svelte";
+  import { getContentState } from "$lib/state/content.svelte";
+  import { getMediaQueryState } from "$lib/state/media-query.svelte";
+  import ContentDrawer from "../content/content-drawer.svelte";
 
   interface ProcessedLine {
     text: string;
@@ -24,13 +29,16 @@
     baseUrl = "/video",
   }: {
     video: Video;
-    playlist?: Playlist;
+    playlist: Playlist | null;
     playlists: Playlist[];
     contentFilter: CombinedContentFilter;
     supabase: SupabaseClient;
     session: Session | null;
     baseUrl?: string;
   } = $props();
+
+  const contentState = getContentState();
+  const mediaQueryState = getMediaQueryState();
 
   const pageState = getPageState();
 
@@ -89,54 +97,73 @@
   };
 </script>
 
-<div class="flex flex-col">
-  <YoutubeEmbed
-    {supabase}
-    {session}
-    {video}
-    {contentFilter}
-    {playlist}
-    durationSeconds={videoDurationToSeconds(video?.duration)}
-  />
+<ContentDrawer {playlist} {playlists} {contentFilter} {supabase} {session}>
+  <div class="flex flex-col">
+    <YoutubeEmbed
+      {supabase}
+      {session}
+      {video}
+      {contentFilter}
+      {playlist}
+      durationSeconds={videoDurationToSeconds(video?.duration)}
+    />
 
-  <div class="flex justify-between mt-6">
-    <div class="flex flex-wrap items-center gap-2">
-      <p class="font-semibold">{video.title}</p>
+    <div class="flex justify-between mt-6">
+      <div class="flex flex-wrap items-center gap-2">
+        <p class="font-semibold">{video.title}</p>
 
-      <span class="text-muted-foreground">
-        {formatPublishedDate(video.published_at)}
-      </span>
-    </div>
-    <div class="ml-auto">
-      <ContentActionsDropdown
-        videos={[video]}
-        {playlists}
-        variant="item"
-        {supabase}
-        {session}
-      />
-    </div>
-  </div>
-
-  {#if video?.description}
-    <div class="whitespace-pre-line mt-4">
-      {#each processTimestamps(video.description) as line (line)}
-        {#if line.hasTimestamp}
-          <div>
-            <a
-              class="timestamp-link text-left w-full hover:underline hover:text-primary"
-              href="{baseUrl}/{video.id}?t={line.timestamp}"
-              onclick={() => {
-                pageState.contentScrollPosition = { scrollTop: 0 };
-              }}
-            >
-              {line.text}
-            </a>
-          </div>
+        <span class="text-muted-foreground">
+          {formatPublishedDate(video.published_at)}
+        </span>
+      </div>
+      <div class="ml-auto">
+        {#if mediaQueryState.canHover}
+          <ContentActionsDropdown
+            videos={[video]}
+            {playlists}
+            variant="item"
+            {supabase}
+            {session}
+          />
         {:else}
-          <p>{line.text}</p>
+          <Button
+            variant="ghost"
+            class="outline-none ghost-button-minimal"
+            onclick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              contentState.handleDrawer({
+                video,
+                variant: "item",
+              });
+            }}
+          >
+            <Ellipsis />
+          </Button>
         {/if}
-      {/each}
+      </div>
     </div>
-  {/if}
-</div>
+
+    {#if video?.description}
+      <div class="whitespace-pre-line mt-4">
+        {#each processTimestamps(video.description) as line (line)}
+          {#if line.hasTimestamp}
+            <div>
+              <a
+                class="timestamp-link text-left w-full hover:underline hover:text-primary"
+                href="{baseUrl}/{video.id}?t={line.timestamp}"
+                onclick={() => {
+                  pageState.contentScrollPosition = { scrollTop: 0 };
+                }}
+              >
+                {line.text}
+              </a>
+            </div>
+          {:else}
+            <p>{line.text}</p>
+          {/if}
+        {/each}
+      </div>
+    {/if}
+  </div>
+</ContentDrawer>
