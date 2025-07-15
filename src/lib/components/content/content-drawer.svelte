@@ -9,9 +9,10 @@
     handleRemoveVideosFromPlaylist,
     handleUpdatePlaylistImage,
     handleDeletePlaylist,
+    handleUpdatePlaylistVideoPosition,
   } from "../playlist/playlist-service";
   import type { Snippet } from "svelte";
-  import { isVideoWithTimestamp } from "$lib/supabase/videos";
+  import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
   import {
     handleAddVideoTimestamp,
@@ -19,6 +20,7 @@
   } from "../video/video-service";
   import Button, { buttonVariants } from "../ui/button/button.svelte";
   import {
+    ArrowDownUp,
     ChevronRight,
     CircleCheck,
     CircleMinus,
@@ -30,11 +32,15 @@
     TimerReset,
   } from "@lucide/svelte";
   import { SOURCE_INFO } from "$lib/constants/source";
-  import { goto } from "$app/navigation";
+  import { goto, invalidate } from "$app/navigation";
   import { page } from "$app/state";
   import { getPlaylistState } from "$lib/state/playlist.svelte";
+  import { Footer } from "../ui/alert-dialog";
+  import FullHeightDrawer from "./drawer/full-height-drawer.svelte";
+  import EditListDrawer from "./drawer/edit-list-drawer.svelte";
 
   interface ContentDrawerProps {
+    videos?: Video[];
     playlist: Playlist | null;
     playlists: Playlist[];
     sectionId: string;
@@ -45,6 +51,7 @@
   }
 
   let {
+    videos,
     playlist,
     playlists,
     sectionId,
@@ -69,7 +76,7 @@
     contentState.isDrawerOpenForSection(sectionId),
   );
 
-  let nestedDrawerOpen = $state(false);
+  let addToPlaylistDrawerOpen = $state(false);
 
   const filteredPlaylists = $derived(
     playlists.filter(
@@ -91,6 +98,28 @@
     contentState.drawerVariant = null;
     contentState.selectedVideosBySection[sectionId] = [];
     contentState.hoveredVideosBySection[sectionId] = null;
+  }
+
+  async function handleVideoReorder(
+    oldIndex: number,
+    newIndex: number,
+    item: Video | Playlist | { id: string | number },
+  ) {
+    if (!session || !playlist) return;
+
+    const newPosition = newIndex + 1;
+
+    try {
+      await handleUpdatePlaylistVideoPosition({
+        playlist,
+        position: newPosition,
+        videos: [item as Video],
+        supabase,
+      });
+    } catch (error) {
+      console.error("Error updating video position:", error);
+      throw error;
+    }
   }
 </script>
 
@@ -153,235 +182,269 @@
 
         <hr />
 
-        <!-- Action Buttons -->
-        <div class="flex flex-col">
-          <!-- Edit button for header variant -->
-          {#if variant === "header" && isPlaylistOwner && playlistState.openEditPlaylist === false}
-            <Button
-              class="drawer-button"
-              variant="ghost"
-              onclick={() => {
-                playlistState.openEditPlaylist = true;
-                clearSelectionAfterAction();
-              }}
-            >
-              <div class="flex items-center gap-2">
-                <Edit class="drawer-icon" />
-                Edit
-              </div>
-            </Button>
-          {/if}
+        <!-- Edit button for header variant -->
+        {#if variant === "header" && isPlaylistOwner && playlistState.openEditPlaylist === false}
+          <Button
+            class="drawer-button"
+            variant="ghost"
+            onclick={() => {
+              playlistState.openEditPlaylist = true;
+              clearSelectionAfterAction();
+            }}
+          >
+            <Edit class="drawer-icon" />
+            Edit
+          </Button>
+        {/if}
+        <!-- Reorder content -->
+        {#if isPlaylistOwner && variant === "header" && videos && videos.length > 0}
+          <!-- Updated to use drawerState instead of FullHeightDrawer component -->
+          <EditListDrawer
+            items={videos}
+            title="Reorder playlist videos"
+            onReorder={handleVideoReorder}
+            onClose={() => {
+              invalidate("supabase:db:playlists");
+            }}
+          >
+            {#snippet trigger()}
+              <Button class="drawer-button" variant="ghost">
+                <div class="flex items-center gap-2">
+                  <ArrowDownUp class="drawer-icon" />
+                  Reorder videos
+                </div>
+                <ChevronRight />
+              </Button>
+            {/snippet}
 
-          <!-- Add to Playlist -->
-          {#if (variant !== "header" && filteredPlaylists.length > 0) || (variant === "header" && operationVideos.length > 0)}
-            <Drawer.Root
-              bind:open={nestedDrawerOpen}
-              onClose={() => (nestedDrawerOpen = false)}
-            >
-              <Drawer.Trigger>
-                <Button class="drawer-button" variant="ghost">
-                  <div class="flex gap-2 items-center w-full justify-between">
-                    <PlusCircle class="dropdown-icon" />
-                    Add to playlist
-                    <ChevronRight class="ml-auto" />
+            {#snippet itemRenderer(item)}
+              {@const video = item as Video}
+              <img
+                src={video.thumbnail_url}
+                alt={video.title}
+                class="h-[60px] aspect-video pointer-events-none"
+              />
+              <div
+                class="flex flex-col gap-1 flex-1 min-w-0 pointer-events-none"
+              >
+                <p
+                  class="font-normal text-sm break-words line-clamp-2 leading-5"
+                >
+                  {video.title}
+                </p>
+                <p class="text-xs text-muted-foreground tracking-tight">
+                  {SOURCE_INFO[video.source].displayName}
+                </p>
+              </div>
+            {/snippet}
+
+            {#snippet emptyState()}
+              <div class="flex items-center justify-center h-32">
+                <p class="text-muted-foreground">No videos to reorder</p>
+              </div>
+            {/snippet}
+          </EditListDrawer>
+        {/if}
+
+        <!-- Add to Playlist -->
+        {#if (variant !== "header" && filteredPlaylists.length > 0) || (variant === "header" && operationVideos.length > 0)}
+          <FullHeightDrawer
+            title="Select Playlist"
+            nested={true}
+            bind:open={addToPlaylistDrawerOpen}
+            onClose={() => (addToPlaylistDrawerOpen = false)}
+          >
+            {#snippet trigger()}
+              <Button class="drawer-button" variant="ghost">
+                <PlusCircle class="drawer-icon" />
+                Add to playlist
+                <ChevronRight class="ml-auto" />
+              </Button>
+            {/snippet}
+            {#each filteredPlaylists as addPlaylist (addPlaylist.id)}
+              {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
+                <Button
+                  class="drawer-playlist-button"
+                  variant="ghost"
+                  onclick={() => {
+                    handleAddVideosToPlaylist({
+                      videos: operationVideos,
+                      playlist: addPlaylist,
+                      supabase,
+                      session,
+                    });
+                    addToPlaylistDrawerOpen = false;
+                  }}
+                >
+                  {#if addPlaylist.processedImageUrl}
+                    <div
+                      class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
+                    >
+                      <img
+                        src={addPlaylist.processedImageUrl}
+                        class="h-full w-full object-cover cursor-pointer"
+                        alt={`Image for playlist: ${addPlaylist.name}`}
+                      />
+                    </div>
+                  {:else}
+                    <div
+                      class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
+                    >
+                      <ListVideo class="!h-8 !w-8" />
+                    </div>
+                  {/if}
+                  <div class="flex flex-col items-start gap-1">
+                    <p>
+                      {addPlaylist.name}
+                    </p>
+                    <p class="text-muted-foreground">
+                      {addPlaylist.type}
+                    </p>
                   </div>
                 </Button>
-              </Drawer.Trigger>
-              <Drawer.Content class="outline-none">
-                <Drawer.Header class="text-left mx-4">
-                  <div class="text-center mb-4">
-                    <h3 class="text-lg font-semibold">Select Playlist</h3>
-                  </div>
-                </Drawer.Header>
-                <div class="flex flex-col space-y-2 px-4">
-                  {#each filteredPlaylists as addPlaylist (addPlaylist.id)}
-                    <Button
-                      variant="ghost"
-                      class="drawer-button justify-start"
-                      onclick={async () => {
-                        const { error } = await handleAddVideosToPlaylist({
-                          videos: operationVideos,
-                          playlist: addPlaylist,
-                          supabase,
-                          session,
-                        });
+              {/if}
+            {/each}
+          </FullHeightDrawer>
+        {/if}
 
-                        if (!error) {
-                          nestedDrawerOpen = false;
-                          clearSelectionAfterAction();
-                        }
-                      }}
-                    >
-                      {addPlaylist.name}
-                    </Button>
-                  {/each}
-                </div>
-                <div class="p-2 mt-auto">
-                  <Button
-                    class="drawer-button-footer"
-                    variant="outline"
-                    onclick={() => (nestedDrawerOpen = false)}
-                  >
-                    Close
-                  </Button>
-                </div>
-              </Drawer.Content>
-            </Drawer.Root>
-          {/if}
+        <!-- Remove from playlist -->
+        {#if playlist && isPlaylistOwner && operationVideos.length > 0}
+          <Button
+            class="drawer-button justify-start"
+            variant="ghost"
+            onclick={async () => {
+              const { error } = await handleRemoveVideosFromPlaylist({
+                videos: operationVideos,
+                playlist,
+                supabase,
+              });
 
-          <!-- Remove from playlist -->
-          {#if playlist && isPlaylistOwner && operationVideos.length > 0}
-            <Button
-              class="drawer-button"
-              variant="ghost"
-              onclick={async () => {
-                const { error } = await handleRemoveVideosFromPlaylist({
-                  videos: operationVideos,
-                  playlist,
-                  supabase,
-                });
-
-                if (!error) {
-                  clearSelectionAfterAction();
-                }
-              }}
-            >
-              <div class="flex gap-2 items-center">
-                <MinusCircle class="dropdown-icon" />
-                Remove from playlist
-              </div>
-            </Button>
-          {/if}
-
-          <!-- Set as playlist image -->
-          {#if playlist && variant === "list-items" && isPlaylistOwner && operationVideos.length === 1}
-            <Button
-              class="drawer-button"
-              variant="ghost"
-              onclick={async () => {
-                const { error } = await handleUpdatePlaylistImage({
-                  playlist,
-                  thumbnailUrl: operationVideos[0].thumbnail_url,
-                  thumbnailMaxResUrl: operationVideos[0].thumbnail_maxres_url,
-                  supabase,
-                });
-
-                if (!error) {
-                  clearSelectionAfterAction();
-                }
-              }}
-            >
-              <div class="flex gap-2 items-center">
-                <ImagePlay class="drawer-icon" />
-                Set as playlist image
-              </div>
-            </Button>
-          {/if}
-
-          <!-- Reset Progress -->
-          {#if session && variant !== "item" && operationVideos.length > 0 && operationVideos.some( (v) => isVideoWithTimestamp(v), )}
-            <Button
-              class="drawer-button"
-              variant="ghost"
-              onclick={async () => {
-                const { updatedVideos } = await handleDeleteVideosTimestamp({
-                  videos: operationVideos,
-                  supabase,
-                  session,
-                });
-
-                // Update the section's state based on what we were operating on
-                if (selectedVideos.length > 0) {
-                  contentState.selectedVideosBySection[sectionId] =
-                    updatedVideos;
-                } else if (hoveredVideo) {
-                  const updatedHoveredVideo = updatedVideos.find(
-                    (v) => v.id === hoveredVideo?.id,
-                  );
-                  if (updatedHoveredVideo) {
-                    contentState.hoveredVideosBySection[sectionId] =
-                      updatedHoveredVideo;
-                  }
-                }
+              if (!error) {
                 clearSelectionAfterAction();
-              }}
-            >
-              <div class="flex gap-2 items-center">
-                <TimerReset class="drawer-icon" />
-                Reset Progress
-              </div>
-            </Button>
-          {/if}
+              }
+            }}
+          >
+            <MinusCircle class="drawer-icon" />
+            Remove from playlist
+          </Button>
+        {/if}
 
-          <!-- Set as Watched -->
-          {#if variant !== "item" && operationVideos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
-            <Button
-              class="drawer-button"
-              variant="ghost"
-              onclick={async () => {
-                const { updatedVideos } = await handleAddVideoTimestamp({
-                  videoTimestamps: operationVideos.map((v) => ({
-                    videoId: v.id,
-                    watchedAt: new Date(),
-                  })),
-                  session,
-                  supabase,
-                });
+        <!-- Set as playlist image -->
+        {#if playlist && variant === "list-items" && isPlaylistOwner && operationVideos.length === 1}
+          <Button
+            class="drawer-button justify-start"
+            variant="ghost"
+            onclick={async () => {
+              const { error } = await handleUpdatePlaylistImage({
+                playlist,
+                thumbnailUrl: operationVideos[0].thumbnail_url,
+                thumbnailMaxResUrl: operationVideos[0].thumbnail_maxres_url,
+                supabase,
+              });
 
-                // Update the section's state based on what we were operating on
-                if (selectedVideos.length > 0) {
-                  contentState.selectedVideosBySection[sectionId] =
-                    updatedVideos;
-                } else if (hoveredVideo) {
-                  const updatedHoveredVideo = updatedVideos.find(
-                    (v) => v.id === hoveredVideo?.id,
-                  );
-                  if (updatedHoveredVideo) {
-                    contentState.hoveredVideosBySection[sectionId] =
-                      updatedHoveredVideo;
-                  }
-                }
+              if (!error) {
                 clearSelectionAfterAction();
-              }}
-            >
-              <div class="flex gap-2 items-center">
-                <CircleCheck class="drawer-icon" />
-                Set as watched
-              </div>
-            </Button>
-          {/if}
+              }
+            }}
+          >
+            <ImagePlay class="drawer-icon" />
+            Set as playlist image
+          </Button>
+        {/if}
 
-          <!-- Delete Playlist for header variant -->
-          {#if playlist && variant === "header"}
-            <Button
-              class="drawer-button"
-              variant="ghost"
-              onclick={async () => {
-                const data = await handleDeletePlaylist({
-                  playlist,
-                  supabase,
-                  session,
-                });
+        <!-- Reset Progress -->
+        {#if session && variant !== "item" && operationVideos.length > 0 && operationVideos.some( (v) => isVideoWithTimestamp(v), )}
+          <Button
+            class="drawer-button justify-start"
+            variant="ghost"
+            onclick={async () => {
+              const { updatedVideos } = await handleDeleteVideosTimestamp({
+                videos: operationVideos,
+                supabase,
+                session,
+              });
 
-                if (
-                  !data?.error &&
-                  page.url.pathname === `/playlist/${playlist.short_id}`
-                ) {
-                  goto("/");
+              // Update the section's state based on what we were operating on
+              if (selectedVideos.length > 0) {
+                contentState.selectedVideosBySection[sectionId] = updatedVideos;
+              } else if (hoveredVideo) {
+                const updatedHoveredVideo = updatedVideos.find(
+                  (v) => v.id === hoveredVideo?.id,
+                );
+                if (updatedHoveredVideo) {
+                  contentState.hoveredVideosBySection[sectionId] =
+                    updatedHoveredVideo;
                 }
-                clearSelectionAfterAction();
-              }}
-            >
-              <div class="flex items-center gap-2">
-                <CircleMinus class="drawer-icon" />
-                Delete Playlist
-              </div>
-            </Button>
-          {/if}
-        </div>
+              }
+              clearSelectionAfterAction();
+            }}
+          >
+            <TimerReset class="drawer-icon" />
+            Reset Progress
+          </Button>
+        {/if}
 
-        <!-- Footer -->
-        <div class="p-2 mt-auto">
+        <!-- Set as Watched -->
+        {#if variant !== "item" && operationVideos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
+          <Button
+            class="drawer-button justify-start"
+            variant="ghost"
+            onclick={async () => {
+              const { updatedVideos } = await handleAddVideoTimestamp({
+                videoTimestamps: operationVideos.map((v) => ({
+                  videoId: v.id,
+                  watchedAt: new Date(),
+                })),
+                session,
+                supabase,
+              });
+
+              // Update the section's state based on what we were operating on
+              if (selectedVideos.length > 0) {
+                contentState.selectedVideosBySection[sectionId] = updatedVideos;
+              } else if (hoveredVideo) {
+                const updatedHoveredVideo = updatedVideos.find(
+                  (v) => v.id === hoveredVideo?.id,
+                );
+                if (updatedHoveredVideo) {
+                  contentState.hoveredVideosBySection[sectionId] =
+                    updatedHoveredVideo;
+                }
+              }
+              clearSelectionAfterAction();
+            }}
+          >
+            <CircleCheck class="drawer-icon" />
+            Set as watched
+          </Button>
+        {/if}
+
+        <!-- Delete Playlist for header variant -->
+        {#if playlist && variant === "header"}
+          <Button
+            class="drawer-button"
+            variant="ghost"
+            onclick={async () => {
+              const data = await handleDeletePlaylist({
+                playlist,
+                supabase,
+                session,
+              });
+
+              if (
+                !data?.error &&
+                page.url.pathname === `/playlist/${playlist.short_id}`
+              ) {
+                goto("/");
+              }
+              clearSelectionAfterAction();
+            }}
+          >
+            <CircleMinus class="drawer-icon" />
+            Delete Playlist
+          </Button>
+        {/if}
+        <Drawer.Footer class="drawer-footer">
           <Drawer.Close
             class={buttonVariants({
               class: "drawer-button-footer",
@@ -389,7 +452,7 @@
             })}
             >Close
           </Drawer.Close>
-        </div>
+        </Drawer.Footer>
       </Drawer.Content>
     {/if}
   </Drawer.Root>

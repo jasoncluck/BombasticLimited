@@ -17,7 +17,10 @@
     handleUpdatePlaylistImage,
     handleDeletePlaylist,
   } from "../playlist/playlist-service";
-  import { getContentState } from "$lib/state/content.svelte";
+  import {
+    DEFAULT_SECTION_ID,
+    getContentState,
+  } from "$lib/state/content.svelte";
   import type { Playlist } from "$lib/supabase/playlists";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
@@ -39,7 +42,7 @@
     playlists,
     variant,
     onSelectAll,
-    sectionId,
+    sectionId = DEFAULT_SECTION_ID,
     supabase,
     session,
   }: {
@@ -48,7 +51,7 @@
     playlists: Playlist[];
     // For items like deselecting only makes sense when using the content selector
     variant: ContentSelectVariant;
-    sectionId: string;
+    sectionId?: string;
     supabase: SupabaseClient<Database>;
     session: Session | null;
     onSelectAll?: () => void;

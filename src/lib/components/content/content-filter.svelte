@@ -285,17 +285,17 @@
       <List size={20} />
     </Drawer.Trigger>
     <Drawer.Content class="outline-none">
-      <div class="flex flex-col">
-        <Drawer.Header class="text-left m-2">Sort by</Drawer.Header>
-        {#each sortKeys as sortKey (sortKey)}
-          <Button
-            class="drawer-button"
-            variant="ghost"
-            onclick={() => {
-              handleSort(sortKey);
-              contentFilterDrawerOpen = false;
-            }}
-          >
+      <Drawer.Header class="text-left m-2">Sort by</Drawer.Header>
+      {#each sortKeys as sortKey (sortKey)}
+        <Button
+          class="drawer-button flex justify-between items-center"
+          variant="ghost"
+          onclick={() => {
+            handleSort(sortKey);
+            contentFilterDrawerOpen = false;
+          }}
+        >
+          <span>
             {#if view === "continueWatching"}
               {SORT_OPTIONS_TIMESTAMPS[sortKey as SortKey<VideoTimestamp>]
                 .displayName}
@@ -305,34 +305,31 @@
             {:else}
               {SORT_OPTIONS_VIDEO[sortKey as SortKey<Video>].displayName}
             {/if}
+          </span>
 
+          <!-- Always reserve space for an icon, but only show when active -->
+          <div class="w-4 h-4 flex items-center justify-center flex-shrink-0">
             {#if contentFilter.sort.key === sortKey && sortKey === "playlistOrder"}
-              <Check
-                class={contentFilter.sort.key === sortKey ? "text-primary" : ""}
-              />
+              <Check size={16} class="text-primary" />
             {:else if contentFilter.sort.key === sortKey && contentFilter.sort.order === "ascending"}
-              <ArrowUp
-                class={contentFilter.sort.key === sortKey ? "text-primary" : ""}
-              />
-              <span class="sr-only">Ascending</span>
+              <ArrowUp size={16} class="text-primary" />
             {:else if contentFilter.sort.key === sortKey && contentFilter.sort.order === "descending"}
-              <ArrowDown
-                class={contentFilter.sort.key === sortKey ? "text-primary" : ""}
-              />
-              <span class="sr-only">Descending</span>
+              <ArrowDown size={16} class="text-primary" />
             {/if}
-          </Button>
-        {/each}
-        <div class="p-2 mt-auto">
+            <!-- Empty div when no icon - this maintains consistent spacing -->
+          </div>
+        </Button>
+      {/each}
+      <div class="p-2 mt-auto">
+        <Drawer.Footer class="drawer-footer">
           <Drawer.Close
             class={buttonVariants({
               class: "drawer-button-footer",
               variant: "outline",
             })}
-          >
-            Close
+            >Close
           </Drawer.Close>
-        </div>
+        </Drawer.Footer>
       </div>
     </Drawer.Content>
   </Drawer.Root>

@@ -94,91 +94,92 @@
     @apply bg-background text-foreground;
   }
 }
-.break-anywhere {
-  overflow-wrap: anywhere;
-}
-
 @utility bg-background-lighter {
   background-color: hsl(var(--background-lighter));
 }
 
-.header-primary {
-  @apply lg:text-5xl md:text-4xl text-3xl font-semibold transition-colors mb-2;
-}
+@layer component {
+  .break-anywhere {
+    overflow-wrap: anywhere;
+  }
 
-.header-secondary {
-  @apply lg:text-4xl text-3xl font-semibold transition-colors mb-2;
-}
+  .header-primary {
+    @apply lg:text-5xl md:text-4xl text-3xl font-semibold transition-colors mb-2;
+  }
 
-.header-playlist {
-  @apply lg:text-7xl md:text-6xl text-4xl font-semibold transition-colors mb-2;
-}
+  .header-secondary {
+    @apply lg:text-4xl text-3xl font-semibold transition-colors mb-2;
+  }
 
-.content-section {
-  @apply flex flex-col relative mt-0 sm:mt-4;
-}
+  .header-playlist {
+    @apply lg:text-7xl md:text-6xl text-4xl font-semibold transition-colors mb-2;
+  }
 
-.header-link {
-  @apply lg:text-4xl md:text-3xl text-2xl self-start font-semibold transition-colors hover:underline cursor-pointer my-2 mx-2 sm:mx-4;
-}
+  .content-section {
+    @apply flex flex-col relative mt-0 sm:mt-4;
+  }
 
-.header-link-sticky {
-  @apply lg:text-4xl md:text-3xl text-2xl self-start font-semibold transition-colors hover:underline cursor-pointer bg-background-lighter sticky top-0 py-2 z-20 px-4 sm:px-4 w-full truncate;
-}
+  .header-link {
+    @apply lg:text-4xl md:text-3xl text-2xl self-start font-semibold transition-colors hover:underline cursor-pointer my-2 mx-2 sm:mx-4;
+  }
 
-/* New elevated effect class */
-.pane {
-  @apply bg-background-lighter shadow-md rounded-lg;
-}
+  .header-link-sticky {
+    @apply lg:text-4xl md:text-3xl text-2xl self-start font-semibold transition-colors hover:underline cursor-pointer bg-background-lighter sticky top-0 py-2 z-20 px-4 sm:px-4 w-full truncate;
+  }
 
-.sidebar-icon-button {
-  @apply align-middle p-[10px] h-[50px] w-[50px];
-}
+  /* New elevated effect class */
+  .pane {
+    @apply bg-background-lighter shadow-md rounded-lg;
+  }
 
-.sidebar-icon-image {
-  @apply h-full w-full bg-no-repeat bg-cover bg-center rounded-full;
-}
+  .sidebar-icon-button {
+    @apply align-middle p-[10px] h-[50px] w-[50px];
+  }
 
-.selection-mode {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
+  .sidebar-icon-image {
+    @apply h-full w-full bg-no-repeat bg-cover bg-center rounded-full;
+  }
 
-.sidebar-full-button {
-  @apply h-[64px] px-2 py-8 w-full border border-transparent relative cursor-pointer transition-none overflow-clip;
-}
+  .selection-mode {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
 
-.content-table-row {
-  @apply h-[80px];
-}
+  .sidebar-full-button {
+    @apply h-[64px] px-2 py-8 w-full border border-transparent relative cursor-pointer transition-none overflow-clip;
+  }
 
-.ghost-button-minimal {
-  @apply cursor-pointer text-muted-foreground hover:bg-inherit hover:scale-105
-  hover:text-foreground data-[state=open]:text-foreground isolate 
-  origin-center transition-[scale,color] duration-150 ease-in-out;
-}
+  .content-table-row {
+    @apply h-[80px];
+  }
 
-.drawer {
-  @apply rounded-t-lg outline-none;
-}
-.drawer-button {
-  @apply w-full h-8 tracking-wide justify-start text-sm py-5;
-}
+  .ghost-button-minimal {
+    @apply cursor-pointer text-muted-foreground hover:bg-inherit hover:scale-105 hover:text-foreground data-[state=open]:text-foreground isolate origin-center transition-[scale,color] duration-150 ease-in-out;
+  }
 
-.drawer-button-footer {
-  @apply w-full h-8 tracking-wide justify-center mt-2;
-}
+  .drawer {
+    @apply rounded-t-lg outline-none;
+  }
 
-.drawer-playlist-button {
-  @apply w-full h-14 text-xs tracking-wide justify-start flex items-center gap-2;
-}
+  .drawer-button {
+    @apply flex w-full h-8 tracking-wide justify-start text-sm py-5 gap-2 items-center;
+  }
 
-.drawer-icon {
-  @apply !h-5 !w-5 align-middle;
-}
+  .drawer-button-footer {
+    @apply flex w-full h-8 tracking-wide justify-center mt-2;
+  }
 
-.dropdown-icon {
-  @apply !h-4 !w-4 align-middle;
+  .drawer-playlist-button {
+    @apply w-full h-16 text-xs tracking-wide justify-start flex items-center gap-4;
+  }
+
+  .drawer-icon {
+    @apply !h-5 !w-5 align-middle;
+  }
+
+  .dropdown-icon {
+    @apply !h-4 !w-4 align-middle;
+  }
 }

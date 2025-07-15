@@ -7,7 +7,6 @@
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { CombinedContentFilter } from "../content/content-filter";
   import ContentActionsDropdown from "../content/content-actions-dropdown.svelte";
-  import { Circle } from "@lucide/svelte";
 
   interface ProcessedLine {
     text: string;

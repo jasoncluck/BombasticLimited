@@ -62,7 +62,7 @@ export async function getPlaylistByShortId({
 }: {
   shortId: string;
   supabase: SupabaseClient<Database>;
-}) {
+}): Promise<{ playlist: Playlist | null; error: PostgrestError | null }> {
   const { data, error } = await supabase
     .rpc("get_playlist_by_short_id", {
       p_short_id: shortId,

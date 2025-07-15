@@ -7,6 +7,8 @@ import {
 import { isVideoWithTimestamp } from "$lib/supabase/videos";
 import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
+import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
+import { parseImageProperties } from "$lib/components/playlist/playlist";
 export const load: PageServerLoad = async ({
   locals: { supabase },
   depends,
@@ -51,6 +53,14 @@ export const load: PageServerLoad = async ({
 
   if (!video) {
     throw new Error("Could not find video specified.");
+  }
+
+  if (!profilePlaylist.processedImageUrl) {
+    profilePlaylist.processedImageUrl = await getCroppedPlaylistImageUrlServer({
+      imageProperties: parseImageProperties(profilePlaylist.image_properties),
+      thumbnailMaxResUrl: profilePlaylist.thumbnail_maxres_url,
+      thumbnailUrl: profilePlaylist.thumbnail_url,
+    });
   }
 
   return {

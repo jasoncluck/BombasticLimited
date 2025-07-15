@@ -8,6 +8,7 @@
   import { SOURCE_INFO, type Source } from "$lib/constants/source";
   import type { ContentView } from "./content";
   import type { Video } from "$lib/supabase/videos";
+  import type { Profile } from "$lib/supabase/profiles";
 
   let {
     breadcrumbs,
@@ -22,6 +23,7 @@
     title,
     videos,
     videosCount,
+    userProfile,
     view = "default",
   }: {
     breadcrumbs: BreadcrumbItem[];
@@ -37,6 +39,7 @@
     title: string;
     videos: Video[];
     videosCount: number;
+    userProfile: Profile;
     view?: ContentView;
   } = $props();
 </script>
@@ -51,6 +54,7 @@
   {videos}
   playlist={profilePlaylist}
   {playlists}
+  {userProfile}
   {supabase}
   {session}
 >

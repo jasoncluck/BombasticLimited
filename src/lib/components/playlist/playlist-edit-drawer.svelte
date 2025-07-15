@@ -272,7 +272,7 @@
   </div>
 
   {#snippet footer()}
-    <div class="flex flex-col gap-2">
+    <Drawer.Footer class="drawer-footer flex gap-2">
       <Button type="submit" form="playlist-form" class="drawer-button-footer">
         {#if isSubmitting}
           <Loader class="animate-spin" />
@@ -286,9 +286,8 @@
           class: "drawer-button-footer",
           variant: "outline",
         })}
-      >
-        Close
+        >Close
       </Drawer.Close>
-    </div>
+    </Drawer.Footer>
   {/snippet}
 </FullHeightDrawer>

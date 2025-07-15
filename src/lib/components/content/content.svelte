@@ -122,17 +122,14 @@
   {session}
 >
   <ContentDrawer
+    {videos}
     playlist={currentPlaylist}
     {playlists}
     {sectionId}
     {supabase}
     {session}
   >
-    <div
-      bind:this={contentRef}
-      {...restProps}
-      class="md:mx-4 flex flex-col gap-5"
-    >
+    <div bind:this={contentRef} {...restProps} class="flex flex-col gap-5">
       <!-- Table view for small screens (up to sm breakpoint) -->
       <div class="sm:hidden">
         <ContentTable
