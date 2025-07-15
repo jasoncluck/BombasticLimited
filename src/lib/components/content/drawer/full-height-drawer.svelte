@@ -63,14 +63,16 @@
         {#if footer}
           {@render footer()}
         {:else}
-          <Drawer.Close
-            class={buttonVariants({
-              class: "drawer-button-footer",
-              variant: "outline",
-            })}
-          >
-            Close
-          </Drawer.Close>
+          <Drawer.Footer class="drawer-footer">
+            <Drawer.Close
+              class={buttonVariants({
+                class: "drawer-button-footer",
+                variant: "outline",
+              })}
+            >
+              Close
+            </Drawer.Close>
+          </Drawer.Footer>
         {/if}
       </div>
     </div>

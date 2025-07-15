@@ -65,11 +65,11 @@
       {session}
     />
   </div>
-{:else}
-  <div class="flex content-table-row items-center">
+{:else if playlist && playlist.created_by === session?.user.id}
+  <div class="flex items-center">
     <Button
       variant="ghost"
-      class="outline-none ghost-button-minimal"
+      class="ghost-button-minimal"
       onclick={(e) => {
         e.preventDefault();
         e.stopPropagation();

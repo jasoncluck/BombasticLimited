@@ -16,6 +16,7 @@
   import Input from "$lib/components/ui/input/input.svelte";
   import { Button, buttonVariants } from "$lib/components/ui/button";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
+  import * as Drawer from "$lib/components/ui/drawer/index.js";
   import * as Resizable from "$lib/components/ui/resizable";
   import Sidebar from "$lib/components/sidebar.svelte";
   import ScrollArea from "$lib/components/ui/scroll-area/scroll-area.svelte";
@@ -38,11 +39,10 @@
   setPlaylistState(pageState, contentState);
 
   const mediaQuery = setMediaQueryState({
-    // breakpoints: ["max-sm"],
-    // customQueries: {
-    //   hover: "(hover: hover)",
-    //   "reduced-motion": "(prefers-reduced-motion: reduce)",
-    // },
+    breakpoints: ["sm", "max-sm"],
+    customQueries: {
+      hover: "(hover: hover)",
+    },
   });
 
   onMount(() => {
@@ -59,6 +59,8 @@
     layout,
     isSidebarCollapsed,
   } = $derived(data);
+
+  let openAccountDrawer = $state(false);
 
   let playlistsState = $derived(playlists);
 
@@ -296,39 +298,88 @@
               </DropdownMenu.Group>
             </DropdownMenu.Content>
           </DropdownMenu.Root>
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger
-              class="cursor-pointer outline-none {buttonVariants({
-                variant: 'outline',
-                size: 'icon',
-              })}"
-            >
-              <UserCircle class="h-[1.2rem] w-[1.2rem]" />
-              <span class="sr-only">Profile</span>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Content>
-              <DropdownMenu.Group>
-                <DropdownMenu.Item
-                  class="cursor-pointer"
-                  onclick={() => goto("/account")}
+          {#if mediaQuery.canHover}
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger
+                class="cursor-pointer outline-none {buttonVariants({
+                  variant: 'outline',
+                  size: 'icon',
+                })}"
+              >
+                <UserCircle class="h-[1.2rem] w-[1.2rem]" />
+                <span class="sr-only">Profile</span>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Content>
+                <DropdownMenu.Group>
+                  <DropdownMenu.Item
+                    class="cursor-pointer"
+                    onclick={() => goto("/account")}
+                  >
+                    <div class="flex items-center gap-2">
+                      <Cog />
+                    </div>
+                    Settings
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    class="cursor-pointer"
+                    onclick={() => layoutState.handleLogout(supabase)}
+                  >
+                    <div class="flex items-center gap-2">
+                      <LogOut />
+                      Log out
+                    </div>
+                  </DropdownMenu.Item>
+                </DropdownMenu.Group>
+              </DropdownMenu.Content>
+            </DropdownMenu.Root>
+          {:else}
+            <Drawer.Root bind:open={openAccountDrawer}>
+              <Drawer.Trigger
+                class={buttonVariants({
+                  variant: "outline",
+                  size: "icon",
+                  class: "cursor-pointer",
+                })}
+              >
+                <UserCircle class="h-[1.2rem] w-[1.2rem]" />
+                <span class="sr-only">Profile</span>
+              </Drawer.Trigger>
+              <Drawer.Content>
+                <Button
+                  variant="ghost"
+                  class="drawer-button"
+                  onclick={() => {
+                    goto("/account");
+                    openAccountDrawer = false;
+                  }}
                 >
-                  <div class="flex items-center gap-2">
-                    <Cog />
-                  </div>
+                  <Cog />
                   Settings
-                </DropdownMenu.Item>
-                <DropdownMenu.Item
-                  class="cursor-pointer"
-                  onclick={() => layoutState.handleLogout(supabase)}
+                </Button>
+                <Button
+                  variant="ghost"
+                  class="drawer-button"
+                  onclick={() => {
+                    layoutState.handleLogout(supabase);
+                    openAccountDrawer = false;
+                  }}
                 >
-                  <div class="flex items-center gap-2">
-                    <LogOut />
-                    Log out
-                  </div>
-                </DropdownMenu.Item>
-              </DropdownMenu.Group>
-            </DropdownMenu.Content>
-          </DropdownMenu.Root>
+                  <LogOut />
+                  Log out
+                </Button>
+                <Drawer.Footer>
+                  <Drawer.Close
+                    class={buttonVariants({
+                      class: "drawer-button-footer",
+                      variant: "outline",
+                    })}
+                  >
+                    Close
+                  </Drawer.Close>
+                </Drawer.Footer>
+              </Drawer.Content>
+            </Drawer.Root>
+          {/if}
         {:else}
           <Button
             class="cursor-pointer"

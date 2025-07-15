@@ -36,9 +36,9 @@
 </script>
 
 <div
-  class=" w-full py-1 px-4 bg-background-lighter flex items-center absolute pointer-events-auto"
+  class=" w-full py-1 px-4 bg-background-lighter flex grow items-center absolute pointer-events-auto justify-between"
 >
-  <div class="relative py-2">
+  <div class="relative">
     {#if session}
       <ContentSelect
         {videos}
@@ -52,9 +52,7 @@
   </div>
 
   <!-- Absolutely positioned center breadcrumbs -->
-  <div
-    class="absolute left-1/2 transform -translate-x-1/2 max-w-[50%] overflow-hidden"
-  >
+  <div class="overflow-hidden items-center ml-auto">
     <BreadcrumbLayout {breadcrumbs} />
   </div>
 
