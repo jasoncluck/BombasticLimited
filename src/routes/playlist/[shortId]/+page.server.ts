@@ -5,6 +5,7 @@ import {
   isUserPlaylist,
   updatePlaylistImage,
   updatePlaylistInfo,
+  type Playlist,
   type ProfilePlaylist,
   type UserPlaylist,
 } from "$lib/supabase/playlists";
@@ -21,6 +22,8 @@ import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
 import { DEFAULT_NUM_VIDEOS_PAGINATION } from "$lib/supabase/videos";
 import { parseImageProperties } from "$lib/components/playlist/playlist";
 import { getPaginationQueryParams } from "$lib/components/pagination/pagination";
+import { Filter } from "bad-words";
+import { redirect, setFlash } from "sveltekit-flash-message/server";
 
 export const load: PageServerLoad = async ({
   locals: { supabase },
@@ -33,7 +36,7 @@ export const load: PageServerLoad = async ({
 
   const { playlists, contentFilter } = await parent();
 
-  let playlist: UserPlaylist | ProfilePlaylist | null;
+  let playlist: Playlist | UserPlaylist | ProfilePlaylist | null;
 
   playlist =
     playlists.find((playlist) => playlist.short_id === params.shortId) ?? null;
@@ -110,7 +113,11 @@ export const load: PageServerLoad = async ({
 };
 
 export const actions: Actions = {
-  default: async ({ request, locals: { supabase, session } }: RequestEvent) => {
+  default: async ({
+    request,
+    locals: { supabase, session },
+    cookies,
+  }: RequestEvent) => {
     if (!session) {
       redirect(302, "/auth");
     }
@@ -123,6 +130,33 @@ export const actions: Actions = {
     }
 
     const { name, description, id, isDeletingPlaylistImage, type } = form.data;
+
+    const filter = new Filter();
+
+    if (name && filter.isProfane(name)) {
+      setFlash(
+        {
+          type: "error",
+          message:
+            "Offensisve langage detected in playlist name, unable to create playlist.",
+        },
+        cookies,
+      );
+      return fail(400, { form });
+    }
+
+    if (description && filter.isProfane(description)) {
+      setFlash(
+        {
+          type: "error",
+          message:
+            "Offensisve langage detected in playlist description, unable to create playlist.",
+        },
+        cookies,
+      );
+      return fail(400, { form });
+    }
+
     let { image_properties } = form.data;
 
     if (isDeletingPlaylistImage) {

@@ -5,6 +5,7 @@
     type PlaylistSchema,
   } from "../../../routes/playlist/[shortId]/schema";
   import { Input } from "$lib/components/ui/input";
+  import * as Alert from "$lib/components/ui/alert/index.js";
   import * as Dialog from "$lib/components/ui/dialog";
   import * as Form from "$lib/components/ui/form";
   import { Button } from "$lib/components/ui/button";
@@ -24,6 +25,8 @@
   import type { Snippet } from "svelte";
   import ScrollArea from "../ui/scroll-area/scroll-area.svelte";
   import { parseImageProperties } from "./playlist";
+  import { getFlash, updateFlash } from "sveltekit-flash-message";
+  import { page } from "$app/state";
 
   let {
     form,
@@ -37,6 +40,7 @@
     open: boolean;
   } = $props();
 
+  const flash = getFlash(page);
   let isSubmitting = $state(false);
   let isPublic = $state(playlist.type === "Public");
 
@@ -56,6 +60,7 @@
         }
       },
       async onUpdated(event) {
+        updateFlash(page);
         if (event.form.valid) {
           const { isDeletingPlaylistImage, ...data } = event.form.data;
           open = false;
@@ -260,6 +265,12 @@
             </Form.Field>
           </div>
         </div>
+        {#if $flash?.message && $flash?.type === "error"}
+          <Alert.Root class="mb-4">
+            <Alert.Title>Error when creating playlist</Alert.Title>
+            <Alert.Description>{$flash.message}</Alert.Description>
+          </Alert.Root>
+        {/if}
         <Dialog.Footer>
           <Button type="submit">
             {#if isSubmitting}

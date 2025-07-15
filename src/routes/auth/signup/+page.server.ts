@@ -5,6 +5,7 @@ import { zod } from "sveltekit-superforms/adapters";
 import type { PageServerLoad } from "./$types";
 import { signupSchema } from "../schema";
 import { checkIfUsernameIsUnique } from "$lib/supabase/profiles";
+import { Filter } from "bad-words";
 
 export const load: PageServerLoad = async ({ locals: { session } }) => {
   const signupForm = await superValidate(zod(signupSchema));
@@ -21,6 +22,20 @@ export const actions: Actions = {
   signup: async ({ request, cookies, locals: { supabase } }) => {
     const form = await superValidate(request, zod(signupSchema));
     const { email, username, password } = form.data;
+
+    const filter = new Filter();
+
+    if (filter.isProfane(username)) {
+      setFlash(
+        {
+          type: "error",
+          message:
+            "Offensisve langage detected in username, choose another name.",
+        },
+        cookies,
+      );
+      return fail(400, { form });
+    }
 
     const isUnique = await checkIfUsernameIsUnique({ username, supabase });
 

@@ -7,6 +7,7 @@ import {
   getUserProfile,
 } from "$lib/supabase/profiles";
 import type { Actions, PageServerLoad } from "./$types";
+import { Filter } from "bad-words";
 
 export const load: PageServerLoad = async ({
   depends,
@@ -92,6 +93,21 @@ export const actions: Actions = {
     const { username } = form.data;
 
     const isUnique = await checkIfUsernameIsUnique({ username, supabase });
+
+    const filter = new Filter();
+
+    if (filter.isProfane(username)) {
+      setFlash(
+        {
+          type: "error",
+          message:
+            "Offensisve langage detected in username, choose another name.",
+          field: "username",
+        },
+        cookies,
+      );
+      return fail(400, { form });
+    }
 
     if (!isUnique) {
       setFlash(
