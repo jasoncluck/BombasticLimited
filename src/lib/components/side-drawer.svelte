@@ -1,6 +1,6 @@
 <script lang="ts">
   import { goto, invalidate } from "$app/navigation";
-  import { SOURCES, SOURCE_INFO } from "$lib/constants/source";
+  import { SOURCES, SOURCE_INFO, type Source } from "$lib/constants/source";
   import { activeStreams } from "$lib/state/streaming.svelte";
   import {
     Circle,
@@ -28,9 +28,10 @@
   import { flip } from "svelte/animate";
   import { dndzone } from "svelte-dnd-action";
   import type { DndEvent } from "svelte-dnd-action";
-  import type { Profile } from "$lib/supabase/profiles";
+  import { updateProfileSources, type Profile } from "$lib/supabase/profiles";
   import Badge from "./ui/badge/badge.svelte";
   import EditListDrawer from "./content/drawer/edit-list-drawer.svelte";
+  import EditSourceDrawer from "./content/drawer/edit-source-drawer.svelte";
 
   let {
     playlists = $bindable(),
@@ -169,6 +170,34 @@
       throw error;
     }
   }
+
+  // Update the handleSourceReorder function in your navigation drawer:
+  async function handleSourceReorder(sources: Source[]) {
+    if (!session || !userProfile) return;
+
+    // Optimistically update the local state immediately
+    const previousSources = userProfile.sources;
+    userProfile = {
+      ...userProfile,
+      sources: sources,
+    };
+
+    try {
+      await updateProfileSources({
+        sources,
+        session,
+        supabase,
+      });
+    } catch (error) {
+      console.error("Error updating source positions:", error);
+      // Revert on error
+      userProfile = {
+        ...userProfile,
+        sources: previousSources,
+      };
+      throw error;
+    }
+  }
 </script>
 
 <Sheet.Root bind:open={isOpen}>
@@ -199,7 +228,52 @@
             </span>
           </Button>
 
-          {#each SOURCES as source (source)}
+          <Sheet.Title class="mx-2 mt-4 mb-2 flex flex-col gap-4">
+            Channels
+
+            {#if userProfile}
+              <EditSourceDrawer
+                sources={userProfile.sources ?? []}
+                title="Reorder sources"
+                subtitle="Drag the handle to reorder sources"
+                onReorder={handleSourceReorder}
+                onClose={() => {
+                  invalidate("supabase:db:profiles");
+                }}
+              >
+                {#snippet trigger()}
+                  <Badge
+                    class="flex items-center gap-2 bg-secondary cursor-pointer"
+                  >
+                    <Edit />
+                    Reorder
+                  </Badge>
+                {/snippet}
+
+                {#snippet itemRenderer(source, index)}
+                  {@const sourceInfo = SOURCE_INFO[source]}
+                  <div class="w-full flex items-center gap-2 m-1">
+                    <div
+                      class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
+                    >
+                      <img
+                        src={sourceInfo.image}
+                        class="h-full w-full object-cover cursor-pointer"
+                        alt={`Image for channel: ${sourceInfo.displayName}`}
+                      />
+                    </div>
+                    <div class="flex flex-col items-start">
+                      <p>
+                        {sourceInfo.displayName}
+                      </p>
+                    </div>
+                  </div>
+                {/snippet}
+              </EditSourceDrawer>
+            {/if}
+          </Sheet.Title>
+
+          {#each userProfile?.sources ?? SOURCES as source (source)}
             <Button
               variant="ghost"
               class="cursor-pointer w-full flex justify-start h-[64px] relative"
