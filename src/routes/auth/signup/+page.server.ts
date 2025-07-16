@@ -18,12 +18,17 @@ export const load: PageServerLoad = async ({ locals: { session } }) => {
     signupForm,
   };
 };
+
 export const actions: Actions = {
   signup: async ({ request, cookies, locals: { supabase } }) => {
     const form = await superValidate(request, zod(signupSchema));
     const { email, username, password } = form.data;
 
-    const filter = new Filter();
+    // Run profanity check and username uniqueness check in parallel
+    const [filter, isUnique] = await Promise.all([
+      Promise.resolve(new Filter()),
+      checkIfUsernameIsUnique({ username, supabase }),
+    ]);
 
     if (filter.isProfane(username)) {
       setFlash(
@@ -36,8 +41,6 @@ export const actions: Actions = {
       );
       return fail(400, { form });
     }
-
-    const isUnique = await checkIfUsernameIsUnique({ username, supabase });
 
     if (!isUnique) {
       setFlash(

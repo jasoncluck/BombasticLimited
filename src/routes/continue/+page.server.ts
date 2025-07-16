@@ -15,15 +15,20 @@ export const load: PageServerLoad = async ({
   if (!session) {
     redirect(303, "/");
   }
-  const { contentFilter, playlists } = await parent();
+
+  // Run parent() and pagination parsing in parallel (though pagination is synchronous)
+  const [{ contentFilter, playlists }, currentPage] = await Promise.all([
+    parent(),
+    Promise.resolve(
+      getPaginationQueryParams({
+        searchParams: url.searchParams,
+      }),
+    ),
+  ]);
 
   if (!isTimestampFilter(contentFilter)) {
     throw new Error("Invalid content filter");
   }
-
-  const currentPage = getPaginationQueryParams({
-    searchParams: url.searchParams,
-  });
 
   const { videos, count: videosCount } = await getInProgressVideos({
     currentPage,

@@ -121,32 +121,43 @@ export class PlaylistStateClass {
       playlists,
     } = options;
 
-    let classes = "sidebar-full-button active:bg-black/70";
+    let classes = "sidebar-full-button transition-all duration-200 ease-in-out";
 
     // Add drag classes for playlists only
     if (itemType === "playlist") {
       classes += ` ${this.getPlaylistDragClasses(index)}`;
     }
 
-    // Manual hover effect (only when appropriate)
+    // Base hover and active states that apply to the whole button
+    if (this.draggedIndex === null) {
+      // Only add hover/active if not dragging
+      classes += " hover:bg-secondary/50 hover:brightness-110";
+      classes += " active:bg-secondary/70 active:scale-95 active:brightness-90";
+    }
+
+    // Enhanced hover effect when manually tracking hover state
     if (
       this.hoveredPlaylistIndex === index &&
       !this.pageState.sidebarScrollState.scrolling &&
       this.draggedIndex === null
     ) {
       if (isSelected) {
-        classes += " !hover:bg-secondary brightness-125";
+        classes += " brightness-125";
       } else {
-        classes += " hover:bg-secondary/25";
+        classes += " bg-secondary/25";
       }
     }
 
     // Selected styling
     if (isSelected) {
       if (itemType === "source") {
-        classes += " bg-secondary";
+        classes += " bg-secondary text-secondary-foreground";
       } else {
-        classes += " bg-secondary/65";
+        classes += " bg-secondary/65 text-secondary-foreground";
+      }
+      // Override hover for selected items
+      if (this.draggedIndex === null) {
+        classes += " hover:bg-secondary hover:brightness-125";
       }
     }
 

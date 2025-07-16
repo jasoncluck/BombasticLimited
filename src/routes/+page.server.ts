@@ -26,13 +26,6 @@ export const load: PageServerLoad = async ({
     redirect(303, "/auth/error");
   }
 
-  const sourceVideos: SourceVideos = {
-    giantbomb: [],
-    jeffgerstmann: [],
-    nextlander: [],
-    remap: [],
-  };
-
   const sourceVideosContentFilters: VideoFilter = {
     sort: {
       key: "datePublished",
@@ -40,17 +33,6 @@ export const load: PageServerLoad = async ({
     },
     type: "video",
   };
-
-  for (const source of SOURCES) {
-    const { videos } = await getVideos({
-      source,
-      limit: DEFAULT_NUM_VIDEOS_OVERVIEW,
-      contentFilter: sourceVideosContentFilters,
-      supabase,
-      session,
-    });
-    sourceVideos[source] = videos;
-  }
 
   const continueWatchingContentFilters: TimestampFilter = {
     sort: {
@@ -60,11 +42,40 @@ export const load: PageServerLoad = async ({
     type: "timestamp",
   };
 
-  const { videos: continueWatchingVideos } = await getInProgressVideos({
-    contentFilter: continueWatchingContentFilters,
-    limit: DEFAULT_NUM_VIDEOS_OVERVIEW,
-    supabase,
-    session,
+  // Run all video fetching operations in parallel
+  const [sourceVideosResults, continueWatchingVideos] = await Promise.all([
+    // Fetch all source videos in parallel
+    Promise.all(
+      SOURCES.map(async (source) => {
+        const { videos } = await getVideos({
+          source,
+          limit: DEFAULT_NUM_VIDEOS_OVERVIEW,
+          contentFilter: sourceVideosContentFilters,
+          supabase,
+          session,
+        });
+        return { source, videos };
+      }),
+    ),
+    // Fetch continue watching videos in parallel with source videos
+    getInProgressVideos({
+      contentFilter: continueWatchingContentFilters,
+      limit: DEFAULT_NUM_VIDEOS_OVERVIEW,
+      supabase,
+      session,
+    }).then((result) => result.videos),
+  ]);
+
+  // Reconstruct the sourceVideos object from the parallel results
+  const sourceVideos: SourceVideos = {
+    giantbomb: [],
+    jeffgerstmann: [],
+    nextlander: [],
+    remap: [],
+  };
+
+  sourceVideosResults.forEach(({ source, videos }) => {
+    sourceVideos[source] = videos;
   });
 
   return {

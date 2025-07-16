@@ -70,32 +70,53 @@ export const load: PageServerLoad = async ({
     throw new Error(`Invalid content filter`);
   }
 
+  // Process pagination params synchronously
   const currentPage = getPaginationQueryParams({
     searchParams: url.searchParams,
   });
 
-  const { videos, count: videosCount } = await getPlaylistVideos({
-    supabase,
-    currentPage,
-    limit: DEFAULT_NUM_VIDEOS_PAGINATION,
-    contentFilter: playlistVideosSavedContentFilter
-      ? playlistVideosSavedContentFilter
-      : contentFilter,
-    playlistId: playlist.id,
-  });
+  const finalContentFilter = playlistVideosSavedContentFilter
+    ? playlistVideosSavedContentFilter
+    : contentFilter;
 
-  // Calculate total duration for all videos
-  const playlistDuration = await getPlaylistTotalDuration({
-    playlistId: playlist.id,
-    supabase,
-  });
+  // Run all major operations in parallel
+  const [
+    { videos, count: videosCount },
+    playlistDuration,
+    processedImageUrl,
+    form,
+  ] = await Promise.all([
+    // Get playlist videos
+    getPlaylistVideos({
+      supabase,
+      currentPage,
+      limit: DEFAULT_NUM_VIDEOS_PAGINATION,
+      contentFilter: finalContentFilter,
+      playlistId: playlist.id,
+    }),
 
+    // Get playlist total duration
+    getPlaylistTotalDuration({
+      playlistId: playlist.id,
+      supabase,
+    }),
+
+    // Process playlist image if needed
+    playlist.processedImageUrl
+      ? Promise.resolve(playlist.processedImageUrl)
+      : getCroppedPlaylistImageUrlServer({
+          imageProperties: parseImageProperties(playlist.image_properties),
+          thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
+          thumbnailUrl: playlist.thumbnail_url,
+        }),
+
+    // Validate form
+    superValidate(playlist, zod(playlistSchema)),
+  ]);
+
+  // Update playlist with processed image URL if it was generated
   if (!playlist.processedImageUrl) {
-    playlist.processedImageUrl = await getCroppedPlaylistImageUrlServer({
-      imageProperties: parseImageProperties(playlist.image_properties),
-      thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
-      thumbnailUrl: playlist.thumbnail_url,
-    });
+    playlist.processedImageUrl = processedImageUrl;
   }
 
   return {
@@ -103,12 +124,10 @@ export const load: PageServerLoad = async ({
     playlists,
     videos,
     videosCount,
-    contentFilter: playlistVideosSavedContentFilter
-      ? playlistVideosSavedContentFilter
-      : contentFilter,
+    contentFilter: finalContentFilter,
     currentPage,
     playlistDuration,
-    form: await superValidate(playlist, zod(playlistSchema)),
+    form,
   };
 };
 
@@ -131,9 +150,18 @@ export const actions: Actions = {
 
     const { name, description, id, isDeletingPlaylistImage, type } = form.data;
 
-    const filter = new Filter();
+    // Run profanity checks in parallel
+    const [filter, nameIsProfane, descriptionIsProfane] = await Promise.all([
+      Promise.resolve(new Filter()),
+      name
+        ? Promise.resolve(new Filter().isProfane(name))
+        : Promise.resolve(false),
+      description
+        ? Promise.resolve(new Filter().isProfane(description))
+        : Promise.resolve(false),
+    ]);
 
-    if (name && filter.isProfane(name)) {
+    if (nameIsProfane) {
       setFlash(
         {
           type: "error",
@@ -145,7 +173,7 @@ export const actions: Actions = {
       return fail(400, { form });
     }
 
-    if (description && filter.isProfane(description)) {
+    if (descriptionIsProfane) {
       setFlash(
         {
           type: "error",
@@ -159,6 +187,7 @@ export const actions: Actions = {
 
     let { image_properties } = form.data;
 
+    // Handle image deletion if needed
     if (isDeletingPlaylistImage) {
       await updatePlaylistImage({
         playlistId: id,

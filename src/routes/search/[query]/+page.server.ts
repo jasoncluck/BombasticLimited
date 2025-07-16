@@ -16,13 +16,8 @@ export const load: PageServerLoad = async ({
 
   const { contentFilter, playlists } = await parent();
   const searchString = params.query;
-  const sourceVideos: SourceVideos = {
-    giantbomb: [],
-    jeffgerstmann: [],
-    nextlander: [],
-    remap: [],
-  };
 
+  // Process followed playlists synchronously (no async operation)
   const followedPlaylists = playlists.filter(
     (p) => p.created_by !== session?.user.id,
   );
@@ -31,36 +26,59 @@ export const load: PageServerLoad = async ({
     throw new Error("Invalid content filter");
   }
 
-  for (const source of SOURCES) {
-    const { videos } = await getVideos({
-      source,
-      contentFilter,
-      searchString,
-      supabase,
-      session,
-    });
-    sourceVideos[source] = videos;
-  }
+  // Run all searches in parallel: video searches for all sources + playlist search
+  const [sourceVideosResults, { playlists: playlistSearchResults }] =
+    await Promise.all([
+      // Get videos from all sources in parallel
+      Promise.all(
+        SOURCES.map(async (source) => {
+          const { videos } = await getVideos({
+            source,
+            contentFilter,
+            searchString,
+            supabase,
+            session,
+          });
+          return { source, videos };
+        }),
+      ),
+      // Search playlists in parallel with video searches
+      searchPlaylists({
+        searchString,
+        supabase,
+      }),
+    ]);
 
-  const { playlists: playlistSearchResults } = await searchPlaylists({
-    searchString,
-    supabase,
+  // Reconstruct the sourceVideos object from parallel results
+  const sourceVideos: SourceVideos = {
+    giantbomb: [],
+    jeffgerstmann: [],
+    nextlander: [],
+    remap: [],
+  };
+
+  sourceVideosResults.forEach(({ source, videos }) => {
+    sourceVideos[source] = videos;
   });
 
-  for (const profilePlaylist of playlistSearchResults) {
-    profilePlaylist.processedImageUrl = await getCroppedPlaylistImageUrlServer({
-      imageProperties: parseImageProperties(profilePlaylist.image_properties),
-      thumbnailMaxResUrl: profilePlaylist.thumbnail_maxres_url,
-      thumbnailUrl: profilePlaylist.thumbnail_url,
-    });
-  }
+  // Process playlist images in parallel
+  const processedPlaylistSearchResults = await Promise.all(
+    playlistSearchResults.map(async (profilePlaylist) => ({
+      ...profilePlaylist,
+      processedImageUrl: await getCroppedPlaylistImageUrlServer({
+        imageProperties: parseImageProperties(profilePlaylist.image_properties),
+        thumbnailMaxResUrl: profilePlaylist.thumbnail_maxres_url,
+        thumbnailUrl: profilePlaylist.thumbnail_url,
+      }),
+    })),
+  );
 
   return {
     sourceVideos: sourceVideos ?? [],
     searchString,
     playlists,
     followedPlaylists,
-    playlistSearchResults,
+    playlistSearchResults: processedPlaylistSearchResults,
     contentFilter,
   };
 };

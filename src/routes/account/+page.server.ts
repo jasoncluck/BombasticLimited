@@ -18,30 +18,34 @@ export const load: PageServerLoad = async ({
     redirect(303, "/auth/login");
   }
 
-  const { profile } = await getUserProfile({
-    supabase,
-    userId: session.user.id,
-  });
+  // Run profile fetch and form validations in parallel
+  const [{ profile }, emailForm, passwordForm] = await Promise.all([
+    getUserProfile({
+      supabase,
+      userId: session.user.id,
+    }),
+    superValidate({ email: session.user.email }, zod(emailSchema), {
+      errors: true,
+    }),
+    superValidate(zod(passwordSchema), {
+      errors: false,
+    }),
+  ]);
+
+  // Username form depends on profile data, so it runs after the parallel operations
+  const usernameForm = await superValidate(
+    { username: profile?.username ?? "" },
+    zod(usernameSchema),
+    {
+      errors: false,
+    },
+  );
 
   return {
     profile,
-    emailForm: await superValidate(
-      { email: session.user.email },
-      zod(emailSchema),
-      {
-        errors: true,
-      },
-    ),
-    usernameForm: await superValidate(
-      { username: profile?.username ?? "" },
-      zod(usernameSchema),
-      {
-        errors: false,
-      },
-    ),
-    passwordForm: await superValidate(zod(passwordSchema), {
-      errors: false,
-    }),
+    emailForm,
+    usernameForm,
+    passwordForm,
   };
 };
 
@@ -92,9 +96,11 @@ export const actions: Actions = {
     const form = await superValidate(request, zod(usernameSchema));
     const { username } = form.data;
 
-    const isUnique = await checkIfUsernameIsUnique({ username, supabase });
-
-    const filter = new Filter();
+    // Run username uniqueness check and profanity filter in parallel
+    const [isUnique, filter] = await Promise.all([
+      checkIfUsernameIsUnique({ username, supabase }),
+      Promise.resolve(new Filter()), // Wrap in Promise.resolve for consistency
+    ]);
 
     if (filter.isProfane(username)) {
       setFlash(

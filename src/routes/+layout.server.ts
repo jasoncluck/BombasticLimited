@@ -15,7 +15,31 @@ export const load: LayoutServerLoad = async ({
   depends("supabase:db:playlists");
   depends("supabase:db:profiles");
 
-  const { session } = await safeGetSession();
+  // Start session fetch and process synchronous operations in parallel
+  const sessionPromise = safeGetSession();
+
+  // Process synchronous operations while session is being fetched
+  let view: ContentView;
+  if (url.pathname === "/continue") {
+    view = "continueWatching";
+  } else if (/^\/playlist\//.test(url.pathname)) {
+    view = "playlist";
+  } else {
+    view = "default";
+  }
+
+  const contentFilter = getFilterOptionFromQueryParams({
+    searchParams: url.searchParams,
+    view,
+  });
+
+  let layout = cookies.get("PaneForge:layout");
+  if (layout) {
+    layout = JSON.parse(layout);
+  }
+
+  // Wait for session and then run dependent operations
+  const { session } = await sessionPromise;
 
   // Run getUserPlaylists and getProfile concurrently
   const [
@@ -39,26 +63,6 @@ export const load: LayoutServerLoad = async ({
     }));
 
     processedPlaylists = await Promise.all(playlistImagePromises);
-  }
-
-  let view: ContentView;
-
-  if (url.pathname === "/continue") {
-    view = "continueWatching";
-  } else if (/^\/playlist\//.test(url.pathname)) {
-    view = "playlist";
-  } else {
-    view = "default";
-  }
-
-  const contentFilter = getFilterOptionFromQueryParams({
-    searchParams: url.searchParams,
-    view,
-  });
-
-  let layout = cookies.get("PaneForge:layout");
-  if (layout) {
-    layout = JSON.parse(layout);
   }
 
   return {

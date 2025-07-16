@@ -24,19 +24,39 @@ export async function getCroppedPlaylistImageUrlServer({
   }
 
   try {
-    const response = await fetch(imageUrl);
-    if (!response.ok) throw new Error("Failed to fetch image");
+    // Fetch image with optimized settings
+    const response = await fetch(imageUrl, {
+      // Add timeout and headers for better performance
+      signal: AbortSignal.timeout(10000), // 10 second timeout
+      headers: {
+        Accept: "image/*",
+        "User-Agent": "Playlist-Service/1.0",
+      },
+    });
 
+    if (!response.ok)
+      throw new Error(`Failed to fetch image: ${response.status}`);
+
+    // Use response.arrayBuffer() directly without intermediate conversion
     const imageBuffer = await response.arrayBuffer();
 
-    const processedImageBuffer = await sharp(Buffer.from(imageBuffer))
+    // Optimize Sharp processing with pipeline approach
+    const processedImageBuffer = await sharp(imageBuffer, {
+      // Sharp optimization options
+      failOnError: false,
+      density: 72, // Optimize for web display
+    })
       .extract({
-        left: imageProperties.x,
-        top: imageProperties.y,
-        width: imageProperties.width,
-        height: imageProperties.height,
+        left: Math.max(0, imageProperties.x),
+        top: Math.max(0, imageProperties.y),
+        width: Math.max(1, imageProperties.width),
+        height: Math.max(1, imageProperties.height),
       })
-      .jpeg({ quality: 80 })
+      .jpeg({
+        quality: 80,
+        progressive: true, // Better for web loading
+        mozjpeg: true, // Use better compression if available
+      })
       .toBuffer();
 
     // Convert to base64 data URL
@@ -46,4 +66,18 @@ export async function getCroppedPlaylistImageUrlServer({
     console.error("Server image processing failed:", error);
     return null;
   }
+}
+
+// Optional: Batch processing function for multiple images
+export async function getCroppedPlaylistImageUrlsBatch(
+  requests: Array<{
+    imageProperties: ImageProperties | null;
+    thumbnailMaxResUrl: string | null;
+    thumbnailUrl?: string | null;
+  }>,
+) {
+  // Process all images in parallel
+  return Promise.all(
+    requests.map((request) => getCroppedPlaylistImageUrlServer(request)),
+  );
 }

@@ -29,6 +29,7 @@ export const load: PageServerLoad = async ({
 
   const { playlists, contentFilter } = await parent();
 
+  // Process followed playlists synchronously (no async operation)
   const followedPlaylists = playlists.filter(
     (p) => p.created_by !== session?.user.id,
   );
@@ -37,54 +38,63 @@ export const load: PageServerLoad = async ({
     throw new Error("Invalid content filter");
   }
 
-  const { videos } = await getVideos({
-    source,
-    session,
-    limit: DEFAULT_NUM_VIDEOS_OVERVIEW,
-    contentFilter,
-    supabase,
-  });
-
   const playlistContentFilter: PlaylistVideosFilter = {
     sort: { key: "playlistOrder", order: "ascending" },
     type: "playlist",
   };
 
-  // Create array of promises for all playlist operations
-  const playlistPromises = SOURCE_INFO[source].highlightedPlaylists.map(
-    async (highlightPlaylist) => {
-      const { playlist } = await getPlaylistByYoutubeId({
-        youtubeId: highlightPlaylist.youtubeId,
-        supabase,
-      });
-
-      if (!playlist) {
-        return null; // Return null for playlists that don't exist
-      }
-
-      // Override playlist name
-      playlist.name = highlightPlaylist.name;
-
-      const { videos } = await getPlaylistVideos({
-        playlistId: playlist.id,
-        contentFilter: playlistContentFilter,
+  // Run all major operations in parallel
+  const [videos, highlightPlaylistsResults, sourcePlaylistsData] =
+    await Promise.all([
+      // Get videos for the source
+      getVideos({
+        source,
+        session,
         limit: DEFAULT_NUM_VIDEOS_OVERVIEW,
+        contentFilter,
         supabase,
-      });
+      }).then((result) => result.videos),
 
-      return { playlist, videos };
-    },
+      // Get all highlighted playlists in parallel
+      Promise.all(
+        SOURCE_INFO[source].highlightedPlaylists.map(
+          async (highlightPlaylist) => {
+            const { playlist } = await getPlaylistByYoutubeId({
+              youtubeId: highlightPlaylist.youtubeId,
+              supabase,
+            });
+
+            if (!playlist) {
+              return null; // Return null for playlists that don't exist
+            }
+
+            // Override playlist name
+            playlist.name = highlightPlaylist.name;
+
+            const { videos } = await getPlaylistVideos({
+              playlistId: playlist.id,
+              contentFilter: playlistContentFilter,
+              limit: DEFAULT_NUM_VIDEOS_OVERVIEW,
+              supabase,
+            });
+
+            return { playlist, videos };
+          },
+        ),
+      ),
+
+      // Get source playlists data
+      getPlaylistsForUsername({
+        username: source,
+        limit: DEFAULT_NUM_PLAYLISTS_OVERVIEW,
+        supabase,
+      }),
+    ]);
+
+  // Filter out null results from highlight playlists
+  const highlightPlaylists = highlightPlaylistsResults.filter(
+    (result) => result !== null,
   );
-
-  const results = await Promise.all(playlistPromises);
-
-  const highlightPlaylists = results.filter((result) => result !== null);
-
-  const sourcePlaylistsData = getPlaylistsForUsername({
-    username: source,
-    limit: DEFAULT_NUM_PLAYLISTS_OVERVIEW,
-    supabase,
-  });
 
   return {
     videos: videos ?? [],
