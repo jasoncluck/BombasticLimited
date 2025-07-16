@@ -30,7 +30,7 @@ export type MediaQueryStateProps = {
   customQueries?: Record<string, string>;
 };
 
-export class MediaQueryState {
+class MediaQueryState {
   readonly props: MediaQueryStateProps;
   #mediaQueries = new Map<string, MediaQueryList>();
   #matches = $state<Record<string, boolean>>({});
@@ -38,6 +38,22 @@ export class MediaQueryState {
 
   constructor(props: MediaQueryStateProps = {}) {
     this.props = props;
+
+    // Set SSR-safe defaults (assume desktop-first)
+    this.#matches = {
+      sm: true,
+      md: true,
+      lg: false,
+      xl: false,
+      "2xl": false,
+      "max-sm": false,
+      "max-md": false,
+      "max-lg": true,
+      "max-xl": true,
+      "max-2xl": true,
+      hover: true,
+      "no-hover": false,
+    };
   }
 
   get isSm() {

@@ -38,12 +38,7 @@
   const contentState = setContentState(pageState);
   setPlaylistState(pageState, contentState);
 
-  const mediaQuery = setMediaQueryState({
-    breakpoints: ["sm", "max-sm"],
-    customQueries: {
-      hover: "(hover: hover)",
-    },
-  });
+  const mediaQuery = setMediaQueryState();
 
   onMount(() => {
     return mediaQuery.initialize();

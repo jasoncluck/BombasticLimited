@@ -224,7 +224,7 @@
             {/if}
           </div>
 
-          <div class="flex flex-col relative flex-1 min-w-2xs mt-4">
+          <div class="flex flex-col relative flex-1 min-w-2xs mt-8">
             <div
               class="flex flex-col {isPlaylistOwner && 'cursor-pointer'} 
           items-start text-left border-none bg-transparent p-0"
