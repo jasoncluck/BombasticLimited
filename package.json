@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
+    "build": "npm run format:src && npm run check && vite build",
     "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -14,6 +14,7 @@
     "supabase:seed": "supabase db dump -f supabase/seed.sql --data-only",
     "supabase:seed:auth": "supabase db dump --schema auth -f supabase/seed-auth.sql --data-only",
     "format": "prettier --write .",
+    "format:src": "prettier --write src/",
     "lint": "prettier --check . && eslint .",
     "test:unit": "vitest",
     "test": "npm run test:unit -- --run"

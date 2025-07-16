@@ -9,7 +9,7 @@ import {
   type ProfilePlaylist,
   type UserPlaylist,
 } from "$lib/supabase/playlists";
-import { redirect, type Actions, type RequestEvent } from "@sveltejs/kit";
+import { type Actions, type RequestEvent } from "@sveltejs/kit";
 import type { PageServerLoad } from "../[shortId]/$types";
 import { fail, superValidate } from "sveltekit-superforms";
 import { playlistSchema } from "./schema";
