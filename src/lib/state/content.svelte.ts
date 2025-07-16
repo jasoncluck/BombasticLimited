@@ -88,6 +88,8 @@ export class ContentState {
   drawerVariant = $state<ContentSelectVariant | null>(null);
 
   isDropdownMenuOpen = $state(false);
+  openDropdownId = $state<string | null>(null);
+
   // ID of setTimeout event when hovering over a video
   hoverTimeoutId = $state<ReturnType<typeof setTimeout> | null>(null);
 
@@ -643,6 +645,11 @@ export class ContentState {
     this.selectedVideosBySection[sectionId] = selectedVideos;
   }
 
+  closeAllDropdowns() {
+    this.isDropdownMenuOpen = false;
+    this.openDropdownId = null;
+  }
+
   handleContextMenu({
     video,
     sectionId = DEFAULT_SECTION_ID,
@@ -660,6 +667,9 @@ export class ContentState {
     ) {
       this.openContextMenuSection = null;
     }
+
+    // Close any open dropdowns when context menu is opened
+    this.closeAllDropdowns();
 
     this.openContextMenuSection = sectionId;
 

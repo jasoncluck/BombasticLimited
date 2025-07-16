@@ -177,6 +177,8 @@
       }}
       oncontextmenu={(event) => {
         const isCtrlPressed = event.ctrlKey || event.metaKey;
+        console.log(contentState.isDropdownMenuOpen);
+        console.log("in context menu");
 
         if (isCtrlPressed) {
           event.preventDefault();

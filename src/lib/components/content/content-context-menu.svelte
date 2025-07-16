@@ -111,6 +111,7 @@
         return false;
       }
 
+      // Close any open dropdowns when context menu is opened
       if (contentState.isDropdownMenuOpen) {
         contentState.isDropdownMenuOpen = false;
       }

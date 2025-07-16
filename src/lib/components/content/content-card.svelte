@@ -3,7 +3,6 @@
   import { getVideoSecondsOffset } from "../video/video-service";
   import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
   import { userPreferences } from "$lib/state/user-preferences.svelte";
-  import DeleteTimestampButton from "./delete-timestamp-button.svelte";
   import type { HTMLAnchorAttributes } from "svelte/elements";
   import {
     DEFAULT_SECTION_ID,
@@ -11,6 +10,7 @@
   } from "$lib/state/content.svelte";
   import { Check } from "@lucide/svelte";
   import type { ContentDisplayProps } from "./content";
+  import ContentActionsDropdown from "./content-actions-dropdown.svelte";
 
   type ContentCardProps = {
     video: Video;
@@ -29,9 +29,8 @@
 
   const {
     video,
-    videos,
-    isContinueVideos,
     sectionId = DEFAULT_SECTION_ID,
+    playlists,
     supabase,
     session,
     ...restProps
@@ -76,18 +75,16 @@
         src={video.thumbnail_url}
         alt={video.title}
       />
-      {#if isVideoWithTimestamp(video) && (video.video_start_seconds || video.watched_at)}
-        <div class="absolute top-0.5 right-0.5">
-          <DeleteTimestampButton
-            {isContinueVideos}
-            {video}
-            {videos}
-            {sectionId}
-            {supabase}
-            {session}
-          />
-        </div>
-      {/if}
+      <div class="absolute top-0.5 right-0.5">
+        <ContentActionsDropdown
+          {playlists}
+          videos={[video]}
+          variant="list-items"
+          {sectionId}
+          {supabase}
+          {session}
+        />
+      </div>
       {#if isVideoWithTimestamp(video) && !video.watched_at && video.video_start_seconds && video.duration}
         <Progress
           class="absolute -bottom-1 left-0 h-[2%]"

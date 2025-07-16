@@ -68,28 +68,52 @@
 
   let open = $state(false);
 
-  $effect(() => {
-    contentState.isDropdownMenuOpen = open;
-  });
+  // Generate a unique ID for this dropdown instance
+  const dropdownId = `dropdown-${sectionId}-${videos[0]?.id || variant}`;
 
+  // Close dropdown when context menu opens
   $effect(() => {
     if (contentState.isContextMenuOpenForAnySection()) {
+      open = false;
+    }
+  });
+
+  // Close this dropdown if another dropdown opens OR if all dropdowns should be closed
+  $effect(() => {
+    if (
+      open &&
+      (!contentState.isDropdownMenuOpen ||
+        (contentState.openDropdownId &&
+          contentState.openDropdownId !== dropdownId))
+    ) {
       open = false;
     }
   });
 </script>
 
 {#if session}
-  <DropdownMenu.Root bind:open>
+  <DropdownMenu.Root
+    bind:open
+    onOpenChange={(isOpen) => {
+      if (isOpen) {
+        // When opening, set this as the active dropdown
+        contentState.openDropdownId = dropdownId;
+        contentState.isDropdownMenuOpen = true;
+      } else {
+        // When closing, clear the active dropdown if it was this one
+        if (contentState.openDropdownId === dropdownId) {
+          contentState.openDropdownId = null;
+          contentState.isDropdownMenuOpen = false;
+        }
+      }
+    }}
+  >
     <DropdownMenu.Trigger>
       {#snippet child({ props })}
         <Button
           {...props}
           variant="ghost"
           onclick={(e) => {
-            if (contentState.isDropdownMenuOpen) {
-              contentState.isDropdownMenuOpen = false;
-            }
             if (variant === "list-items" && videos.length > 0) {
               contentState.selectedVideosBySection[sectionId] = [videos[0]];
             }
