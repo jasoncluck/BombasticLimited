@@ -282,17 +282,30 @@ export class PlaylistStateClass {
           return;
         }
 
-        await handleUpdatePlaylistPosition({
-          playlist: options.playlists[this.draggedIndex],
-          position: options.playlists.length - playlistTargetIndex,
-          supabase: options.supabase,
-          session: options.session,
-        });
+        // Store original state for potential rollback
+        const originalPlaylists = [...options.playlists];
 
+        // Update local state immediately for responsive UI
         const updatedPlaylists = [...options.playlists];
         const [movedItem] = updatedPlaylists.splice(this.draggedIndex, 1);
         updatedPlaylists.splice(playlistTargetIndex, 0, movedItem);
         options.onPlaylistsUpdate?.(updatedPlaylists);
+
+        // Then update database
+        try {
+          await handleUpdatePlaylistPosition({
+            playlist: options.playlists[this.draggedIndex],
+            position: options.playlists.length - playlistTargetIndex,
+            supabase: options.supabase,
+            session: options.session,
+          });
+        } catch (error) {
+          console.error("Failed to update playlist position:", error);
+          // Revert local state on error
+          options.onPlaylistsUpdate?.(originalPlaylists);
+          // Optionally show error notification
+          // showNotification("Failed to reorder playlist");
+        }
       }
     };
 
