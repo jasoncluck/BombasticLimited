@@ -15,7 +15,7 @@ import type {
 import type { Database } from "./database.types";
 import type { PlaylistVideo } from "./playlists";
 
-export const DEFAULT_NUM_VIDEOS_PAGINATION = 250;
+export const DEFAULT_NUM_VIDEOS_PAGINATION = 100;
 export const DEFAULT_NUM_VIDEOS_OVERVIEW = 15;
 export type TimestampResponse = Tables<"timestamps">;
 

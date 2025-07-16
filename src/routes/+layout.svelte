@@ -31,12 +31,14 @@
   import { setPageState, type ScrollPosition } from "$lib/state/page.svelte";
   import { setLayoutState } from "$lib/state/layout.svelte";
   import { handleUpdateProfileContentDisplay } from "$lib/components/profile/profile-service";
+  import { setSourceState } from "$lib/state/source.svelte";
 
   // Initialize all state contexts
   const layoutState = setLayoutState();
   const pageState = setPageState();
   const contentState = setContentState(pageState);
   setPlaylistState(pageState, contentState);
+  setSourceState(pageState);
 
   const mediaQuery = setMediaQueryState();
 

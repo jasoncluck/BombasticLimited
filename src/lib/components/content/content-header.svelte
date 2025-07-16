@@ -39,7 +39,7 @@
     title: string;
     videos: Video[];
     videosCount: number;
-    userProfile: Profile;
+    userProfile: Profile | null;
     view?: ContentView;
   } = $props();
 </script>

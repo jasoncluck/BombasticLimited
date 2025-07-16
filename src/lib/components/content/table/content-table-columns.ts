@@ -33,25 +33,25 @@ export function createContentColumns({
 }): ColumnDef<Video>[] {
   return [
     // Only show play column if canHover is true
-    ...(getCanHover()
-      ? [
-          {
-            accessorKey: "play",
-            header: () => {
-              return;
-            },
-            cell: ({ row }: { row: Row<Video> }) => {
-              const video = row.original;
-              return renderComponent(ContentTablePlay, {
-                video,
-                playlist: getPlaylist(),
-                contentFilter: getContentFilter(),
-                sectionId,
-              });
-            },
-          },
-        ]
-      : []),
+    // ...(getCanHover()
+    //   ? [
+    //       {
+    //         accessorKey: "play",
+    //         header: () => {
+    //           return;
+    //         },
+    //         cell: ({ row }: { row: Row<Video> }) => {
+    //           const video = row.original;
+    //           return renderComponent(ContentTablePlay, {
+    //             video,
+    //             playlist: getPlaylist(),
+    //             contentFilter: getContentFilter(),
+    //             sectionId,
+    //           });
+    //         },
+    //       },
+    //     ]
+    //   : []),
 
     {
       accessorKey: "thumbnail_maxres_url",

@@ -11,8 +11,15 @@
   import type { Snapshot } from "../$types.js";
 
   const { data } = $props();
-  const { supabase, videos, videosCount, session, contentFilter, playlists } =
-    $derived(data);
+  const {
+    supabase,
+    videos,
+    videosCount,
+    session,
+    contentFilter,
+    playlists,
+    userProfile,
+  } = $derived(data);
 
   let showFloatingBreadcrumbs = $state(false);
 
@@ -49,6 +56,7 @@
     {videos}
     {contentFilter}
     view="continueWatching"
+    {userProfile}
     videosCount={videosCount ?? 0}
     {currentPage}
     bind:showFloatingBreadcrumbs
@@ -72,7 +80,8 @@
   <Content
     {videos}
     {playlists}
-    contentDisplay="TILES"
+    {userProfile}
+    tilesDisplay="TILES"
     isContinueVideos={true}
     {contentFilter}
     {supabase}

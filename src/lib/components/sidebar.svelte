@@ -14,6 +14,7 @@
   import PlaylistContextMenu from "./playlist/playlist-context-menu.svelte";
   import { updateProfileSources, type Profile } from "$lib/supabase/profiles";
   import { showNotification } from "$lib/stores/notification";
+  import { getSourceState } from "$lib/state/source.svelte";
 
   let {
     playlists = $bindable(),
@@ -34,6 +35,7 @@
 
   const contentState = getContentState();
   const playlistState = getPlaylistState();
+  const sourceState = getSourceState();
 
   // Local state for sources ordering
   let orderedSources = $state(userProfile?.sources ?? [...SOURCES]);
@@ -154,17 +156,16 @@
       <Button
         variant="ghost"
         draggable={true}
-        class="{playlistState.getButtonClasses({
+        class="{sourceState.getButtonClasses({
           index: i,
           isSelected: selectedSource === source,
-          itemType: 'source',
           isSidebarCollapsed,
         })} {getSourceDragClasses(i)}"
         size={!isSidebarCollapsed ? "default" : "icon"}
         onclick={() => goto(`/${source}`)}
         title={SOURCE_INFO[source].displayName}
-        onmouseenter={() => playlistState.handleMouseEnter(i)}
-        onmouseleave={() => playlistState.handleMouseLeave(i)}
+        onmouseenter={() => sourceState.handleMouseEnter(i)}
+        onmouseleave={() => sourceState.handleMouseLeave(i)}
         ondragstart={(e) => handleSourceDragStart(e, i)}
         ondragover={(e) => handleSourceDragOver(e, i)}
         ondragleave={(e) => handleSourceDragLeave(e)}
