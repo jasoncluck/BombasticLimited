@@ -18,6 +18,7 @@
     handleDeleteVideosTimestamp,
   } from "../video/video-service";
   import { Portal } from "bits-ui";
+  import { page } from "$app/state";
 
   interface ContentContextMenuProps {
     playlist: Playlist | null;
@@ -42,6 +43,10 @@
 
   const contentState = getContentState();
   const mediaQueryState = getMediaQueryState();
+
+  const hideSetAsPlaylistImage = $derived(
+    /\/playlist\/[^/]+\/video\/[^/]+/.test(page.url.pathname),
+  );
 
   let selectedVideos = $derived(
     contentState.selectedVideosBySection[sectionId] ?? [],
@@ -214,7 +219,7 @@
           </ContextMenu.Item>
         {/if}
 
-        {#if playlist && isPlaylistOwner && operationVideos.length === 1}
+        {#if playlist && isPlaylistOwner && operationVideos.length === 1 && !hideSetAsPlaylistImage}
           <ContextMenu.Item
             class="p-2"
             onclick={async () => {

@@ -62,6 +62,12 @@
   const contentState = getContentState();
   const playlistState = getPlaylistState();
 
+  // small hack to hide this when listing items on a player page, doesn't make sense to set the image here
+  const hideSetAsPlaylistImage = $derived(
+    variant === "list-items" &&
+      /\/playlist\/[^/]+\/video\/[^/]+/.test(page.url.pathname),
+  );
+
   const isPlaylistOwner = $derived(session?.user.id === playlist?.created_by);
 
   // Get selected and hovered videos for this section
@@ -300,7 +306,7 @@
           </DropdownMenu.Item>
         {/if}
 
-        {#if playlist && frozenOperationVideos.length === 1 && variant === "list-items" && isPlaylistOwner}
+        {#if playlist && frozenOperationVideos.length === 1 && variant === "list-items" && isPlaylistOwner && !hideSetAsPlaylistImage}
           <DropdownMenu.Item
             class="p-2"
             onclick={async () => {
