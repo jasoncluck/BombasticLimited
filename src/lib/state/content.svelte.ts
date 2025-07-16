@@ -137,6 +137,23 @@ export class ContentState {
     }
     return false;
   }
+  resetState() {
+    // Reset selections
+    this.selectedVideosBySection = {};
+
+    // Reset hover states
+    this.hoveredVideosBySection = {};
+
+    // Reset dropdown states
+    this.isDropdownMenuOpen = false;
+    this.openDropdownId = null;
+
+    // Reset context menu states
+    this.openContextMenuSection = null;
+
+    // Reset any other state that should be cleared when switching views
+    this.dragContentType = null;
+  }
 
   private clearOtherSections(currentSectionId: string) {
     for (const sectionId in this.selectedVideosBySection) {
@@ -678,11 +695,12 @@ export class ContentState {
     const isVideoSelected = selectedVideos.some((v) => v.id === video.id);
 
     if (!isVideoSelected) {
+      // If the video isn't already selected, make it the only selected video
       this.selectedVideosBySection[sectionId] = [video];
     }
 
-    // Always update hovered video for this section when context menu is triggered
-    this.hoveredVideosBySection[sectionId] = video;
+    // Remove the hovered video setting since we're using selected state
+    // this.hoveredVideosBySection[sectionId] = video;
   }
 
   handleDrawer({
@@ -729,36 +747,57 @@ export class ContentState {
     const handleClickOutside = (event: MouseEvent) => {
       this.hoverTimeoutId = null;
 
-      // Don't clear selection if:
-      // - Context menu is open for this section
-      // - User is dragging
-      // - User is holding modifier keys (shift, ctrl, cmd)
-      if (
-        this.isContextMenuOpenForSection(sectionId) ||
-        this.isDrawerOpenForSection(sectionId) ||
-        this.isDropdownMenuOpen ||
-        this.dragContentType ||
-        event.shiftKey ||
-        event.ctrlKey ||
-        event.metaKey
-      ) {
-        return;
-      }
-
-      // Check if the click is on a dropdown, drawer, or other UI element that shouldn't clear selection
-      const target = event.target as HTMLElement;
-      if (
-        target.closest("[data-dropdown]") ||
-        target.closest('[role="menu"]') ||
-        target.closest("button") ||
-        target.closest("[role='dialog']") // Dialog/drawer content
-      ) {
-        return;
-      }
-
       // Check if click is outside the container
       if (!containerElement.contains(event.target as Node)) {
-        // Use nullish coalescing to get selected videos for this section
+        // Check if the click is on a context menu or dropdown menu
+        const target = event.target as HTMLElement;
+        const isClickingOnContextMenu =
+          target.closest('[role="menu"]') ||
+          target.closest("[data-radix-popper-content-wrapper]");
+        const isClickingOnDropdown =
+          target.closest("[data-dropdown]") ||
+          target.closest('[role="listbox"]') ||
+          target.closest('[role="combobox"]');
+
+        // If clicking on context menu items, don't clear anything
+        if (isClickingOnContextMenu) {
+          return;
+        }
+
+        // If context menu is open and we're clicking elsewhere (like dropdown),
+        // close the context menu but preserve selection temporarily
+        if (this.isContextMenuOpenForSection(sectionId)) {
+          this.openContextMenuSection = null;
+          // Don't clear selection immediately - let the dropdown action complete
+          // The selection will be cleared by other mechanisms or timeout
+          return;
+        }
+
+        // If drawer is open for this section, close it
+        if (this.isDrawerOpenForSection(sectionId)) {
+          this.openDrawerSection = null;
+          this.selectedVideosBySection[sectionId] = [];
+          this.hoveredVideosBySection[sectionId] = null;
+          return;
+        }
+
+        // Don't clear selection if:
+        // - User is dragging
+        // - User is holding modifier keys (shift, ctrl, cmd)
+        // - Dropdown menu is open
+        // - Clicking on dropdown elements
+        if (
+          this.isDropdownMenuOpen ||
+          this.dragContentType ||
+          event.shiftKey ||
+          event.ctrlKey ||
+          event.metaKey ||
+          isClickingOnDropdown
+        ) {
+          return;
+        }
+
+        // Normal click outside behavior - clear selection
         const selectedVideos = this.selectedVideosBySection[sectionId] ?? [];
         const hoveredVideo = this.hoveredVideosBySection[sectionId];
 

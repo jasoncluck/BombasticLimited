@@ -17,6 +17,7 @@
     handleAddVideoTimestamp,
     handleDeleteVideosTimestamp,
   } from "../video/video-service";
+  import { Portal } from "bits-ui";
 
   interface ContentContextMenuProps {
     playlist: Playlist | null;
@@ -25,6 +26,8 @@
     children: Snippet<[]>;
     supabase: SupabaseClient<Database>;
     session: Session | null;
+    // Add option to control whether selections should be preserved
+    preserveSelectionAfterAction?: boolean;
   }
 
   let {
@@ -34,6 +37,7 @@
     supabase,
     session,
     children,
+    preserveSelectionAfterAction = true, // Default to preserving selections
   }: ContentContextMenuProps = $props();
 
   const contentState = getContentState();
@@ -54,9 +58,13 @@
   // Track previous menu state to detect when it closes
   let previousMenuState = $state(false);
 
-  // Clear selections when context menu closes
+  // Only clear selections when context menu closes if preserveSelectionAfterAction is false
   $effect(() => {
-    if (previousMenuState && !isThisSectionMenuOpen) {
+    if (
+      previousMenuState &&
+      !isThisSectionMenuOpen &&
+      !preserveSelectionAfterAction
+    ) {
       // Context menu just closed, clear selections
       contentState.selectedVideosBySection[sectionId] = [];
     }
@@ -80,10 +88,13 @@
 
   const isPlaylistOwner = $derived(session?.user.id === playlist?.created_by);
 
-  // Helper function to clear selections after successful operations
-  function clearSelectionAfterAction() {
-    // Clear selected videos for this section
-    contentState.selectedVideosBySection[sectionId] = [];
+  // Helper function to conditionally clear selections after successful operations
+  function handleSelectionAfterAction() {
+    if (!preserveSelectionAfterAction) {
+      // Clear selected videos for this section
+      contentState.selectedVideosBySection[sectionId] = [];
+    }
+    // If preserveSelectionAfterAction is true, keep the selections
   }
 </script>
 
@@ -143,42 +154,45 @@
             <ContextMenu.SubTrigger onclick={(e) => e.stopPropagation()}>
               Add {operationVideos.length === 1 ? "video" : "videos"} to Playlist
             </ContextMenu.SubTrigger>
-            <ContextMenu.SubContent
-              align="start"
-              class="z-50 transition-opacity duration-150 overflow-hidden outline-none"
-              sideOffset={5}
-            >
-              <ScrollArea
-                type="scroll"
-                class=" {filteredPlaylists.length <= 6 ? 'h-auto' : 'h-56'}"
+            <Portal>
+              <ContextMenu.SubContent
+                align="start"
+                class="z-50 transition-opacity duration-150 overflow-hidden outline-none"
+                avoidCollisions={true}
+                sideOffset={5}
               >
-                {#if filteredPlaylists.length < 1}
-                  <ContextMenu.Item class="p-2"
-                    >No playlists found</ContextMenu.Item
-                  >
-                {:else}
-                  {#each filteredPlaylists as addPlaylist (addPlaylist.id)}
-                    <ContextMenu.Item
-                      class="p-2"
-                      onclick={async () => {
-                        const { error } = await handleAddVideosToPlaylist({
-                          videos: operationVideos,
-                          playlist: addPlaylist,
-                          supabase,
-                          session,
-                        });
-
-                        if (!error) {
-                          clearSelectionAfterAction();
-                        }
-                      }}
+                <ScrollArea
+                  type="scroll"
+                  class=" {filteredPlaylists.length <= 6 ? 'h-auto' : 'h-56'}"
+                >
+                  {#if filteredPlaylists.length < 1}
+                    <ContextMenu.Item class="p-2"
+                      >No playlists found</ContextMenu.Item
                     >
-                      {addPlaylist.name}
-                    </ContextMenu.Item>
-                  {/each}
-                {/if}
-              </ScrollArea>
-            </ContextMenu.SubContent>
+                  {:else}
+                    {#each filteredPlaylists as addPlaylist (addPlaylist.id)}
+                      <ContextMenu.Item
+                        class="p-2"
+                        onclick={async () => {
+                          const { error } = await handleAddVideosToPlaylist({
+                            videos: operationVideos,
+                            playlist: addPlaylist,
+                            supabase,
+                            session,
+                          });
+
+                          if (!error) {
+                            handleSelectionAfterAction();
+                          }
+                        }}
+                      >
+                        {addPlaylist.name}
+                      </ContextMenu.Item>
+                    {/each}
+                  {/if}
+                </ScrollArea>
+              </ContextMenu.SubContent>
+            </Portal>
           </ContextMenu.Sub>
         {/if}
         {#if playlist && isPlaylistOwner}
@@ -192,7 +206,7 @@
               });
 
               if (!error) {
-                clearSelectionAfterAction();
+                handleSelectionAfterAction();
               }
             }}
           >
@@ -212,7 +226,7 @@
               });
 
               if (!error) {
-                clearSelectionAfterAction();
+                handleSelectionAfterAction();
               }
             }}
           >
@@ -242,8 +256,10 @@
                     updatedHoveredVideo;
                 }
               }
-              // Clear selections after updating
-              clearSelectionAfterAction();
+              // Handle selection based on preference
+              if (!preserveSelectionAfterAction) {
+                handleSelectionAfterAction();
+              }
             }}
           >
             Reset progress
@@ -275,8 +291,10 @@
                     updatedHoveredVideo;
                 }
               }
-              // Clear selections after updating
-              clearSelectionAfterAction();
+              // Handle selection based on preference
+              if (!preserveSelectionAfterAction) {
+                handleSelectionAfterAction();
+              }
             }}
           >
             Set as Watched

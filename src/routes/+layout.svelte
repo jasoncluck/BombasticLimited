@@ -265,11 +265,14 @@
                 <DropdownMenu.Item
                   class="cursor-pointer"
                   onclick={() => {
-                    handleUpdateProfileContentDisplay({
-                      contentDisplay: "CARD",
-                      supabase,
-                      session,
-                    });
+                    if (userProfile?.content_display !== "CARD") {
+                      contentState.resetState();
+                      handleUpdateProfileContentDisplay({
+                        contentDisplay: "CARD",
+                        supabase,
+                        session,
+                      });
+                    }
                   }}
                 >
                   <div class="flex items-center gap-2">
@@ -280,11 +283,15 @@
                 <DropdownMenu.Item
                   class="cursor-pointer"
                   onclick={() => {
-                    handleUpdateProfileContentDisplay({
-                      contentDisplay: "TABLE",
-                      supabase,
-                      session,
-                    });
+                    if (userProfile?.content_display !== "TABLE") {
+                      contentState.resetState();
+
+                      handleUpdateProfileContentDisplay({
+                        contentDisplay: "TABLE",
+                        supabase,
+                        session,
+                      });
+                    }
                   }}
                 >
                   <div class="flex items-center gap-2">

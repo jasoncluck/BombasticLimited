@@ -1,17 +1,5 @@
 <script lang="ts">
   import {
-    CircleCheck,
-    CircleMinus,
-    Edit,
-    Ellipsis,
-    ImagePlay,
-    ListChecks,
-    MinusCircle,
-    PlusCircle,
-    TimerReset,
-  } from "@lucide/svelte";
-  import * as DropdownMenu from "../ui/dropdown-menu";
-  import {
     handleRemoveVideosFromPlaylist,
     handleAddVideosToPlaylist,
     handleUpdatePlaylistImage,
@@ -35,6 +23,19 @@
   import { goto } from "$app/navigation";
   import type { ContentSelectVariant } from "./content";
   import { getPlaylistState } from "$lib/state/playlist.svelte";
+  import { Portal } from "bits-ui";
+  import * as DropdownMenu from "../ui/dropdown-menu";
+  import {
+    Ellipsis,
+    ListChecks,
+    Edit,
+    PlusCircle,
+    MinusCircle,
+    ImagePlay,
+    TimerReset,
+    CircleCheck,
+    CircleMinus,
+  } from "@lucide/svelte";
 
   let {
     videos = $bindable(),
@@ -45,16 +46,17 @@
     sectionId = DEFAULT_SECTION_ID,
     supabase,
     session,
+    preserveSelectionAfterAction = true,
   }: {
     videos: Video[];
     playlist?: Playlist;
     playlists: Playlist[];
-    // For items like deselecting only makes sense when using the content selector
     variant: ContentSelectVariant;
     sectionId?: string;
     supabase: SupabaseClient<Database>;
     session: Session | null;
     onSelectAll?: () => void;
+    preserveSelectionAfterAction?: boolean;
   } = $props();
 
   const contentState = getContentState();
@@ -62,14 +64,60 @@
 
   const isPlaylistOwner = $derived(session?.user.id === playlist?.created_by);
 
+  // Get selected and hovered videos for this section
+  let selectedVideos = $derived(
+    contentState.selectedVideosBySection[sectionId] ?? [],
+  );
+
+  let hoveredVideo = $derived(contentState.hoveredVideosBySection[sectionId]);
+
   const isHovering = $derived(
     contentState.hoveredVideosBySection[sectionId]?.id === videos[0]?.id,
   );
 
   let open = $state(false);
+  let subMenuOpen = $state(false);
+
+  // Capture the operation videos when dropdown opens and keep them fixed
+  let frozenOperationVideos = $state<Video[]>([]);
 
   // Generate a unique ID for this dropdown instance
-  const dropdownId = `dropdown-${sectionId}-${videos[0]?.id || variant}`;
+  const dropdownId = `dropdown-${sectionId}-${videos[0]?.id}-${variant}`;
+
+  // Keep the button visible when dropdown OR sub-menu is open
+  const shouldShowButton = $derived(
+    variant !== "list-items" || isHovering || open || subMenuOpen,
+  );
+
+  // Helper function to conditionally clear selections after successful operations
+  function handleSelectionAfterAction() {
+    if (!preserveSelectionAfterAction) {
+      contentState.selectedVideosBySection[sectionId] = [];
+    }
+  }
+
+  // Function to determine operation videos when dropdown opens
+  function determineOperationVideos(): Video[] {
+    // For list-items variant, always operate on the specific video for this row
+    if (variant === "list-items") {
+      if (videos.length > 0) {
+        return [videos[0]];
+      }
+      return [];
+    }
+
+    // For header variant, use selected videos or fall back to all videos
+    if (variant === "header") {
+      if (selectedVideos.length > 0) {
+        return selectedVideos;
+      }
+      // For header, if nothing is selected, don't operate on anything
+      return [];
+    }
+
+    // Default fallback (shouldn't reach here with current variants)
+    return [];
+  }
 
   // Close dropdown when context menu opens
   $effect(() => {
@@ -78,13 +126,19 @@
     }
   });
 
-  // Close this dropdown if another dropdown opens OR if all dropdowns should be closed
+  // Close this dropdown when global dropdown state is false
+  $effect(() => {
+    if (!contentState.isDropdownMenuOpen && open) {
+      open = false;
+    }
+  });
+
+  // Close other dropdowns when this one opens
   $effect(() => {
     if (
       open &&
-      (!contentState.isDropdownMenuOpen ||
-        (contentState.openDropdownId &&
-          contentState.openDropdownId !== dropdownId))
+      contentState.openDropdownId &&
+      contentState.openDropdownId !== dropdownId
     ) {
       open = false;
     }
@@ -96,15 +150,19 @@
     bind:open
     onOpenChange={(isOpen) => {
       if (isOpen) {
-        // When opening, set this as the active dropdown
+        // Freeze the operation videos when dropdown opens
+        frozenOperationVideos = determineOperationVideos();
         contentState.openDropdownId = dropdownId;
         contentState.isDropdownMenuOpen = true;
       } else {
-        // When closing, clear the active dropdown if it was this one
         if (contentState.openDropdownId === dropdownId) {
           contentState.openDropdownId = null;
           contentState.isDropdownMenuOpen = false;
         }
+        // Reset sub-menu state when main dropdown closes
+        subMenuOpen = false;
+        // Clear frozen videos when dropdown closes
+        frozenOperationVideos = [];
       }
     }}
   >
@@ -117,14 +175,11 @@
             if (variant === "list-items" && videos.length > 0) {
               contentState.selectedVideosBySection[sectionId] = [videos[0]];
             }
-            // Don't allow double click to go through to navigate
             e.stopPropagation();
           }}
-          class="outline-none ghost-button-minimal  {open
+          class="outline-none ghost-button-minimal {open
             ? 'scale-105'
-            : ''} {variant !== 'list-items' || isHovering
-            ? 'opacity-100'
-            : 'opacity-0'}"
+            : ''} {shouldShowButton ? 'opacity-100' : 'opacity-0'}"
         >
           <Ellipsis />
           <span class="sr-only">
@@ -135,7 +190,8 @@
         </Button>
       {/snippet}
     </DropdownMenu.Trigger>
-    <DropdownMenu.Content align="start">
+
+    <DropdownMenu.Content align="start" class="stable-dropdown">
       {#if variant === "header"}
         <DropdownMenu.Item
           class="p-2"
@@ -162,127 +218,197 @@
         </DropdownMenu.Item>
       {/if}
 
-      {@const filteredPlaylists = playlists.filter(
-        (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id,
-      )}
-      {#if (variant !== "header" && filteredPlaylists.length > 0) || (variant === "header" && videos.length > 0)}
-        <DropdownMenu.Sub>
-          <DropdownMenu.SubTrigger onclick={(e) => e.stopPropagation()}>
-            <div class="flex gap-2 items-center">
-              <PlusCircle class="dropdown-icon" />
-              Add to playlist
-            </div>
-          </DropdownMenu.SubTrigger>
-          <DropdownMenu.SubContent
-            align="start"
-            class="z-50 overflow-hidden"
-            sideOffset={5}
-          >
-            <ScrollArea
-              type="scroll"
-              class={filteredPlaylists.length <= 6 ? "h-auto" : "h-56"}
+      {#if frozenOperationVideos.length > 0}
+        {@const filteredPlaylists = playlists.filter(
+          (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id,
+        )}
+        {#if filteredPlaylists.length > 0}
+          <DropdownMenu.Sub bind:open={subMenuOpen}>
+            <DropdownMenu.SubTrigger
+              onclick={(e) => e.stopPropagation()}
+              class="stable-trigger"
             >
-              {#each filteredPlaylists as addPlaylist (addPlaylist.id)}
-                {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
-                  <DropdownMenu.Item
-                    class="p-2"
-                    onclick={() => {
-                      handleAddVideosToPlaylist({
-                        videos,
-                        playlist: addPlaylist,
-                        supabase,
-                        session,
-                      });
-                    }}
-                  >
-                    {addPlaylist.name}
-                  </DropdownMenu.Item>
-                {/if}
-              {/each}
-            </ScrollArea>
-          </DropdownMenu.SubContent>
-        </DropdownMenu.Sub>
-      {/if}
+              <div class="flex gap-2 items-center">
+                <PlusCircle class="dropdown-icon" />
+                Add {frozenOperationVideos.length === 1
+                  ? "video"
+                  : `${frozenOperationVideos.length} videos`} to Playlist
+              </div>
+            </DropdownMenu.SubTrigger>
+            <Portal>
+              <DropdownMenu.SubContent
+                side="right"
+                align="start"
+                class="z-50 overflow-hidden stable-submenu"
+                sideOffset={-4}
+                alignOffset={0}
+                avoidCollisions={true}
+                collisionPadding={0}
+              >
+                <ScrollArea
+                  type="scroll"
+                  class={filteredPlaylists.length <= 6 ? "h-auto" : "h-56"}
+                >
+                  {#each filteredPlaylists as addPlaylist (addPlaylist.id)}
+                    {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
+                      <DropdownMenu.Item
+                        class="p-2"
+                        onclick={() => {
+                          handleAddVideosToPlaylist({
+                            videos: frozenOperationVideos,
+                            playlist: addPlaylist,
+                            supabase,
+                            session,
+                          });
+                          handleSelectionAfterAction();
+                        }}
+                      >
+                        {addPlaylist.name}
+                      </DropdownMenu.Item>
+                    {/if}
+                  {/each}
+                </ScrollArea>
+              </DropdownMenu.SubContent>
+            </Portal>
+          </DropdownMenu.Sub>
+        {/if}
 
-      {#if playlist && isPlaylistOwner && videos && videos.length > 0}
-        <DropdownMenu.Item
-          class="p-2"
-          onclick={async () => {
-            const { error } = await handleRemoveVideosFromPlaylist({
-              videos,
-              playlist,
-              supabase,
-            });
+        {#if playlist && isPlaylistOwner}
+          <DropdownMenu.Item
+            class="p-2"
+            onclick={async () => {
+              const { error } = await handleRemoveVideosFromPlaylist({
+                videos: frozenOperationVideos,
+                playlist,
+                supabase,
+              });
 
-            if (!error) {
-              videos = [];
-            }
-          }}
-        >
-          <div class="flex gap-2 items-center">
-            <MinusCircle class="dropdown-icon" />
-            Remove from playlist
-          </div>
-        </DropdownMenu.Item>
-      {/if}
+              if (!error) {
+                // Remove only the operation videos from the list
+                const operationVideoIds = new Set(
+                  frozenOperationVideos.map((v) => v.id),
+                );
+                videos = videos.filter((v) => !operationVideoIds.has(v.id));
+                handleSelectionAfterAction();
+              }
+            }}
+          >
+            <div class="flex gap-2 items-center">
+              <MinusCircle class="dropdown-icon" />
+              Remove from this playlist
+            </div>
+          </DropdownMenu.Item>
+        {/if}
 
-      {#if contentState.selectedVideosBySection[sectionId] && contentState.selectedVideosBySection[sectionId].length === 1 && playlist && variant === "list-items" && isPlaylistOwner}
-        {@const selectedVideo =
-          contentState.selectedVideosBySection[sectionId][0]}
-        <DropdownMenu.Item
-          class="p-2"
-          onclick={async () =>
-            await handleUpdatePlaylistImage({
-              playlist,
-              thumbnailUrl: selectedVideo.thumbnail_url,
-              thumbnailMaxResUrl: selectedVideo.thumbnail_maxres_url,
-              supabase,
-            })}
-        >
-          <div class="flex gap-2 items-center">
-            <ImagePlay class="dropdown-icon" />
-            Set as playlist image
-          </div>
-        </DropdownMenu.Item>
-      {/if}
-      {#if session && variant !== "item" && videos.length > 0 && videos.some( (v) => isVideoWithTimestamp(v), )}
-        <DropdownMenu.Item
-          class="p-2"
-          onclick={async () => {
-            ({ updatedVideos: videos } = await handleDeleteVideosTimestamp({
-              videos,
-              supabase,
-              session,
-            }));
-          }}
-        >
-          <div class="flex items-center gap-2">
-            <TimerReset class="dropdown-icon" />
-            Reset Progress
-          </div>
-        </DropdownMenu.Item>
-      {/if}
-      {#if variant !== "item" && videos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
-        <DropdownMenu.Item
-          class="p-2"
-          onclick={async () => {
-            if (videos) {
-              ({ updatedVideos: videos } = await handleAddVideoTimestamp({
-                videoTimestamps: videos.map((v) => ({
+        {#if playlist && frozenOperationVideos.length === 1 && variant === "list-items" && isPlaylistOwner}
+          <DropdownMenu.Item
+            class="p-2"
+            onclick={async () => {
+              await handleUpdatePlaylistImage({
+                playlist,
+                thumbnailUrl: frozenOperationVideos[0].thumbnail_url,
+                thumbnailMaxResUrl:
+                  frozenOperationVideos[0].thumbnail_maxres_url,
+                supabase,
+              });
+              handleSelectionAfterAction();
+            }}
+          >
+            <div class="flex gap-2 items-center">
+              <ImagePlay class="dropdown-icon" />
+              Set as playlist image
+            </div>
+          </DropdownMenu.Item>
+        {/if}
+
+        {#if session && frozenOperationVideos.some( (v) => isVideoWithTimestamp(v), )}
+          <DropdownMenu.Item
+            class="p-2"
+            onclick={async () => {
+              const { updatedVideos } = await handleDeleteVideosTimestamp({
+                videos: frozenOperationVideos,
+                supabase,
+                session,
+              });
+
+              // Update the videos array with the updated videos
+              const updatedVideoIds = new Set(updatedVideos.map((v) => v.id));
+              videos = videos.map((v) =>
+                updatedVideoIds.has(v.id)
+                  ? updatedVideos.find((uv) => uv.id === v.id)!
+                  : v,
+              );
+
+              // Update the section's state based on what we were operating on
+              if (selectedVideos.length > 0) {
+                contentState.selectedVideosBySection[sectionId] = updatedVideos;
+              } else if (hoveredVideo) {
+                const updatedHoveredVideo = updatedVideos.find(
+                  (v) => v.id === hoveredVideo?.id,
+                );
+                if (updatedHoveredVideo) {
+                  contentState.hoveredVideosBySection[sectionId] =
+                    updatedHoveredVideo;
+                }
+              }
+
+              if (!preserveSelectionAfterAction) {
+                handleSelectionAfterAction();
+              }
+            }}
+          >
+            <div class="flex items-center gap-2">
+              <TimerReset class="dropdown-icon" />
+              Reset progress
+            </div>
+          </DropdownMenu.Item>
+        {/if}
+
+        {#if frozenOperationVideos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
+          <DropdownMenu.Item
+            class="p-2"
+            onclick={async () => {
+              const { updatedVideos } = await handleAddVideoTimestamp({
+                videoTimestamps: frozenOperationVideos.map((v) => ({
                   videoId: v.id,
                   watchedAt: new Date(),
                 })),
                 session,
                 supabase,
-              }));
-            }
-          }}
-        >
-          <div class="flex items-center gap-2">
-            <CircleCheck class="dropdown-icon" />
-            Set as watched
-          </div>
-        </DropdownMenu.Item>
+              });
+
+              // Update the videos array with the updated videos
+              const updatedVideoIds = new Set(updatedVideos.map((v) => v.id));
+              videos = videos.map((v) =>
+                updatedVideoIds.has(v.id)
+                  ? updatedVideos.find((uv) => uv.id === v.id)!
+                  : v,
+              );
+
+              // Update the section's state based on what we were operating on
+              if (selectedVideos.length > 0) {
+                contentState.selectedVideosBySection[sectionId] = updatedVideos;
+              } else if (hoveredVideo) {
+                const updatedHoveredVideo = updatedVideos.find(
+                  (v) => v.id === hoveredVideo?.id,
+                );
+                if (updatedHoveredVideo) {
+                  contentState.hoveredVideosBySection[sectionId] =
+                    updatedHoveredVideo;
+                }
+              }
+
+              if (!preserveSelectionAfterAction) {
+                handleSelectionAfterAction();
+              }
+            }}
+          >
+            <div class="flex items-center gap-2">
+              <CircleCheck class="dropdown-icon" />
+              Set as Watched
+            </div>
+          </DropdownMenu.Item>
+        {/if}
       {/if}
 
       {#if playlist && variant === "header"}

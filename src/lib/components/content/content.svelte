@@ -116,6 +116,8 @@
 {/if}
 <ContentContextMenu
   playlist={currentPlaylist}
+  preserveSelectionAfterAction={userProfile?.content_display === "TABLE" ||
+    (!mediaQueryState.isSm && !mediaQueryState.canHover)}
   {sectionId}
   {playlists}
   {supabase}

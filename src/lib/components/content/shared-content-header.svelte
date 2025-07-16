@@ -129,12 +129,12 @@
           size="icon"
           disabled={!nextVideoToPlay}
           class="p-7 bg-primary rounded-full shadow-xl transition-transform 
-          duration-200 hover:scale-105 hover:shadow-2xl
-          hover:bg-primary hover:brightness-[150%]"
+            duration-200 hover:scale-105 hover:shadow-2xl
+            hover:!bg-primary hover:brightness-[150%]"
           onclick={handlePlayVideo}
         >
           <Play
-            class="h-6! w-6! stroke-background-lighter fill-background-lighter appearance-none "
+            class="h-6! w-6! stroke-background-lighter fill-background-lighter "
           />
         </Button>
         {#if !isPlaylistCreator && !playlists.some((pl) => pl.id === profilePlaylist.id)}
