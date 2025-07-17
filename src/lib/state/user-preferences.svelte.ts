@@ -9,6 +9,6 @@ interface UserPreferences {
 }
 
 export let userPreferences = $state<UserPreferences>({
-  contentDisplay: "CAROUSEL",
+  contentDisplay: "TILES",
   contentDescription: "BRIEF",
 });

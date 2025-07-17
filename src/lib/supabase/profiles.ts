@@ -1,7 +1,6 @@
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Tables } from "./database.types";
 import type { ContentDisplay } from "$lib/components/content/content";
-import { invalidate } from "$app/navigation";
 
 export type Profile = Tables<"profiles">;
 

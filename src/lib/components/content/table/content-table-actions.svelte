@@ -3,7 +3,7 @@
   import type { Playlist } from "$lib/supabase/playlists";
   import type { Video } from "$lib/supabase/videos";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
-  import ContentActionsDropdown from "../content-actions-dropdown.svelte";
+  import ContentActionsDropdown from "../content-dropdown.svelte";
   import {
     DEFAULT_SECTION_ID,
     getContentState,

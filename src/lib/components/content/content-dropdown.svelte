@@ -97,7 +97,7 @@
 
   // Helper function to conditionally clear selections after successful operations
   function handleSelectionAfterAction() {
-    if (!preserveSelectionAfterAction) {
+    if (!preserveSelectionAfterAction || variant === "list-items") {
       contentState.selectedVideosBySection[sectionId] = [];
     }
   }
@@ -259,14 +259,17 @@
                     {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
                       <DropdownMenu.Item
                         class="p-2"
-                        onclick={() => {
-                          handleAddVideosToPlaylist({
+                        onclick={async () => {
+                          const { error } = await handleAddVideosToPlaylist({
                             videos: frozenOperationVideos,
                             playlist: addPlaylist,
                             supabase,
                             session,
                           });
-                          handleSelectionAfterAction();
+
+                          if (!error) {
+                            handleSelectionAfterAction();
+                          }
                         }}
                       >
                         {addPlaylist.name}
@@ -310,14 +313,17 @@
           <DropdownMenu.Item
             class="p-2"
             onclick={async () => {
-              await handleUpdatePlaylistImage({
+              const { error } = await handleUpdatePlaylistImage({
                 playlist,
                 thumbnailUrl: frozenOperationVideos[0].thumbnail_url,
                 thumbnailMaxResUrl:
                   frozenOperationVideos[0].thumbnail_maxres_url,
                 supabase,
               });
-              handleSelectionAfterAction();
+
+              if (!error) {
+                handleSelectionAfterAction();
+              }
             }}
           >
             <div class="flex gap-2 items-center">
@@ -326,17 +332,19 @@
             </div>
           </DropdownMenu.Item>
         {/if}
+      {/if}
 
-        {#if session && frozenOperationVideos.some( (v) => isVideoWithTimestamp(v), )}
-          <DropdownMenu.Item
-            class="p-2"
-            onclick={async () => {
-              const { updatedVideos } = await handleDeleteVideosTimestamp({
-                videos: frozenOperationVideos,
-                supabase,
-                session,
-              });
+      {#if session && frozenOperationVideos.some( (v) => isVideoWithTimestamp(v), )}
+        <DropdownMenu.Item
+          class="p-2"
+          onclick={async () => {
+            const { updatedVideos, error } = await handleDeleteVideosTimestamp({
+              videos: frozenOperationVideos,
+              supabase,
+              session,
+            });
 
+            if (!error) {
               // Update the videos array with the updated videos
               const updatedVideoIds = new Set(updatedVideos.map((v) => v.id));
               videos = videos.map((v) =>
@@ -358,31 +366,31 @@
                 }
               }
 
-              if (!preserveSelectionAfterAction) {
-                handleSelectionAfterAction();
-              }
-            }}
-          >
-            <div class="flex items-center gap-2">
-              <TimerReset class="dropdown-icon" />
-              Reset progress
-            </div>
-          </DropdownMenu.Item>
-        {/if}
+              handleSelectionAfterAction();
+            }
+          }}
+        >
+          <div class="flex items-center gap-2">
+            <TimerReset class="dropdown-icon" />
+            Reset progress
+          </div>
+        </DropdownMenu.Item>
+      {/if}
 
-        {#if frozenOperationVideos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
-          <DropdownMenu.Item
-            class="p-2"
-            onclick={async () => {
-              const { updatedVideos } = await handleAddVideoTimestamp({
-                videoTimestamps: frozenOperationVideos.map((v) => ({
-                  videoId: v.id,
-                  watchedAt: new Date(),
-                })),
-                session,
-                supabase,
-              });
+      {#if frozenOperationVideos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
+        <DropdownMenu.Item
+          class="p-2"
+          onclick={async () => {
+            const { updatedVideos, error } = await handleAddVideoTimestamp({
+              videoTimestamps: frozenOperationVideos.map((v) => ({
+                videoId: v.id,
+                watchedAt: new Date(),
+              })),
+              session,
+              supabase,
+            });
 
+            if (!error) {
               // Update the videos array with the updated videos
               const updatedVideoIds = new Set(updatedVideos.map((v) => v.id));
               videos = videos.map((v) =>
@@ -404,17 +412,15 @@
                 }
               }
 
-              if (!preserveSelectionAfterAction) {
-                handleSelectionAfterAction();
-              }
-            }}
-          >
-            <div class="flex items-center gap-2">
-              <CircleCheck class="dropdown-icon" />
-              Set as Watched
-            </div>
-          </DropdownMenu.Item>
-        {/if}
+              handleSelectionAfterAction();
+            }
+          }}
+        >
+          <div class="flex items-center gap-2">
+            <CircleCheck class="dropdown-icon" />
+            Set as Watched
+          </div>
+        </DropdownMenu.Item>
       {/if}
 
       {#if playlist && variant === "header"}

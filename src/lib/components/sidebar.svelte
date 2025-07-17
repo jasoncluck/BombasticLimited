@@ -58,6 +58,13 @@
 
   // Source drag and drop handlers
   function handleSourceDragStart(event: DragEvent, index: number) {
+    // Prevent any drag behavior if session is null
+    if (!session) {
+      event.preventDefault();
+      event.stopPropagation();
+      return false;
+    }
+
     draggedSourceIndex = index;
     if (event.dataTransfer) {
       event.dataTransfer.effectAllowed = "move";
@@ -65,6 +72,13 @@
   }
 
   function handleSourceDragOver(event: DragEvent, index: number) {
+    // Don't allow drag over if session is null
+    if (!session) {
+      event.preventDefault();
+      event.stopPropagation();
+      return false;
+    }
+
     event.preventDefault();
     if (
       draggedSourceIndex !== null &&
@@ -76,6 +90,11 @@
   }
 
   function handleSourceDragLeave(event: DragEvent) {
+    // Don't handle drag leave if session is null
+    if (!session) {
+      return false;
+    }
+
     const relatedTarget = event.relatedTarget as Node;
     if (
       event.currentTarget instanceof HTMLElement &&
@@ -86,6 +105,13 @@
   }
 
   async function handleSourceDrop(event: DragEvent, dropIndex: number) {
+    // Don't allow drop if session is null
+    if (!session) {
+      event.preventDefault();
+      event.stopPropagation();
+      return false;
+    }
+
     event.preventDefault();
 
     if (draggedSourceIndex === null || draggedSourceIndex < 0) {
@@ -120,6 +146,11 @@
   }
 
   function handleSourceDragEnd() {
+    // Only reset state if session exists
+    if (!session) {
+      return false;
+    }
+
     draggedSourceIndex = null;
     targetSourceIndex = null;
   }
@@ -127,6 +158,9 @@
   // Helper function to get source drag classes
   function getSourceDragClasses(index: number): string {
     let classes = "relative";
+    if (!session) {
+      return classes;
+    }
 
     if (draggedSourceIndex === index) {
       classes += " opacity-60";
@@ -155,7 +189,7 @@
     {#each orderedSources as source, i (source)}
       <Button
         variant="ghost"
-        draggable={true}
+        draggable={!!session}
         class="{sourceState.getButtonClasses({
           index: i,
           isSelected: selectedSource === source,

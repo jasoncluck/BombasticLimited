@@ -1,12 +1,12 @@
 CREATE TYPE ContentDescription AS ENUM ('FULL', 'BRIEF', 'NONE');
-CREATE TYPE ContentDisplay AS ENUM ('TABLE', 'CARD');
+CREATE TYPE ContentDisplay AS ENUM ('TABLE', 'TILES');
 
 CREATE TABLE public.profiles (
   id uuid NOT NULL REFERENCES auth.users ON DELETE CASCADE,
   username text,
   sources Source[] DEFAULT ARRAY['giantbomb', 'jeffgerstmann', 'nextlander', 'remap']::Source[],
   content_description ContentDescription DEFAULT 'BRIEF',
-  content_display ContentDisplay DEFAULT 'CARD',
+  content_display ContentDisplay DEFAULT 'TILES',
   PRIMARY KEY (id)
 );
 

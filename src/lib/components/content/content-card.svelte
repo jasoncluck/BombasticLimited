@@ -10,7 +10,7 @@
   } from "$lib/state/content.svelte";
   import { Check } from "@lucide/svelte";
   import type { ContentDisplayProps } from "./content";
-  import ContentActionsDropdown from "./content-actions-dropdown.svelte";
+  import ContentActionsDropdown from "./content-dropdown.svelte";
 
   type ContentCardProps = {
     video: Video;
