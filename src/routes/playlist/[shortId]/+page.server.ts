@@ -150,14 +150,12 @@ export const actions: Actions = {
 
     const { name, description, id, isDeletingPlaylistImage, type } = form.data;
 
+    const filter = new Filter();
     // Run profanity checks in parallel
-    const [filter, nameIsProfane, descriptionIsProfane] = await Promise.all([
-      Promise.resolve(new Filter()),
-      name
-        ? Promise.resolve(new Filter().isProfane(name))
-        : Promise.resolve(false),
+    const [nameIsProfane, descriptionIsProfane] = await Promise.all([
+      name ? Promise.resolve(filter.isProfane(name)) : Promise.resolve(false),
       description
-        ? Promise.resolve(new Filter().isProfane(description))
+        ? Promise.resolve(filter.isProfane(description))
         : Promise.resolve(false),
     ]);
 
@@ -166,7 +164,7 @@ export const actions: Actions = {
         {
           type: "error",
           message:
-            "Offensisve langage detected in playlist name, unable to create playlist.",
+            "Offensisve langage detected in playlist name, unable to update playlist.",
         },
         cookies,
       );
@@ -178,7 +176,7 @@ export const actions: Actions = {
         {
           type: "error",
           message:
-            "Offensisve langage detected in playlist description, unable to create playlist.",
+            "Offensisve langage detected in playlist description, unable to update playlist.",
         },
         cookies,
       );

@@ -27,13 +27,6 @@
   import * as Dialog from "$lib/components/ui/dialog/index.js";
 
   import Label from "$lib/components/ui/label/label.svelte";
-  import {
-    ChevronDown,
-    ChevronUp,
-    GalleryHorizontal,
-    Table,
-  } from "@lucide/svelte";
-  import { handleUpdateProfileContentDisplay } from "$lib/components/profile/profile-service";
 
   let {
     data,
@@ -48,8 +41,6 @@
   } = $props();
 
   const { profile, supabase, session } = $derived(data);
-
-  let contentDisplayOpen = $state(false);
 
   const flash = getFlash(page);
 

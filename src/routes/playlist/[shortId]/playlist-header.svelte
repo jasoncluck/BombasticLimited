@@ -67,7 +67,6 @@
         return;
       }
       open = true;
-      playlistState.openEditPlaylist = false;
     }
   });
 

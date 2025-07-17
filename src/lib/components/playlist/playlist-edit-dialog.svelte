@@ -53,6 +53,7 @@
       dataType: "json",
       onSubmit() {
         isSubmitting = true;
+        $flash = undefined;
       },
       onResult(event) {
         if (event.result.type !== "success") {
@@ -119,8 +120,8 @@
                     {#snippet child({ props })}
                       <Button
                         {...props}
-                        class="absolute -bottom-3 -right-3 rounded-full"
-                        variant="outline"
+                        class="absolute -bottom-3 -right-3 rounded-full hover:brightness-125 hover:bg-secondary"
+                        variant="secondary"
                         size="icon"
                       >
                         <EditIcon class="size-4" />
@@ -267,7 +268,7 @@
         </div>
         {#if $flash?.message && $flash?.type === "error"}
           <Alert.Root class="mb-4">
-            <Alert.Title>Error when creating playlist</Alert.Title>
+            <Alert.Title>Error when updating playlist</Alert.Title>
             <Alert.Description>{$flash.message}</Alert.Description>
           </Alert.Root>
         {/if}
