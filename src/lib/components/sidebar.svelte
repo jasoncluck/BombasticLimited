@@ -12,7 +12,10 @@
   import { getPlaylistState } from "$lib/state/playlist.svelte";
   import { page } from "$app/state";
   import PlaylistContextMenu from "./playlist/playlist-context-menu.svelte";
-  import { updateProfileSources, type Profile } from "$lib/supabase/profiles";
+  import {
+    updateProfileSources,
+    type UserProfile,
+  } from "$lib/supabase/user-profiles";
   import { showNotification } from "$lib/stores/notification";
   import { getSourceState } from "$lib/state/source.svelte";
 
@@ -25,7 +28,7 @@
   }: {
     playlists: Playlist[];
     supabase: SupabaseClient;
-    userProfile: Profile | null;
+    userProfile: UserProfile | null;
     session: Session | null;
     isSidebarCollapsed: boolean;
   } = $props();

@@ -19,8 +19,8 @@
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import {
     checkIfUsernameIsUnique,
-    type Profile,
-  } from "$lib/supabase/profiles";
+    type UserProfile,
+  } from "$lib/supabase/user-profiles";
   import type { Database } from "$lib/supabase/database.types";
   import { onMount } from "svelte";
   import { enhance } from "$app/forms";
@@ -39,7 +39,7 @@
     data,
   }: {
     data: {
-      profile: Profile;
+      profile: UserProfile;
       emailForm: SuperValidated<Infer<EmailSchema>>;
       usernameForm: SuperValidated<Infer<UsernameSchema>>;
       supabase: SupabaseClient<Database>;

@@ -238,7 +238,7 @@
                 <PlusCircle class="dropdown-icon" />
                 Add {frozenOperationVideos.length === 1
                   ? "video"
-                  : `${frozenOperationVideos.length} videos`} to Playlist
+                  : `${frozenOperationVideos.length} videos`} to playlist
               </div>
             </DropdownMenu.SubTrigger>
             <Portal>
@@ -304,7 +304,10 @@
           >
             <div class="flex gap-2 items-center">
               <MinusCircle class="dropdown-icon" />
-              Remove from this playlist
+
+              Remove {frozenOperationVideos.length === 1
+                ? "video"
+                : `${frozenOperationVideos.length} videos`} from playlist
             </div>
           </DropdownMenu.Item>
         {/if}

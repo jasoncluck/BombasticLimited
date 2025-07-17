@@ -13,7 +13,7 @@ import {
 } from "./content-filter";
 import { goto } from "$app/navigation";
 import type { MediaQueryState } from "$lib/state/media-query.svelte";
-import type { Profile } from "$lib/supabase/profiles";
+import type { UserProfile } from "$lib/supabase/user-profiles";
 
 export interface CarouselVideoDragInfo {
   readonly videoId: string;
@@ -138,8 +138,8 @@ export function handleContentNavigation({
 }
 
 export function getContentView(
-  mediaQueryState: MediaQueryState,
-  userProfile: Profile | null,
+  mediaQueryState?: MediaQueryState,
+  userProfile?: UserProfile | null,
 ): ContentDisplay {
   if (!mediaQueryState?.isSm || userProfile?.content_display === "TABLE") {
     return "TABLE";

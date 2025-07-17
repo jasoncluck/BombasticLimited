@@ -2,7 +2,7 @@ import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Tables } from "./database.types";
 import type { ContentDisplay } from "$lib/components/content/content";
 
-export type Profile = Tables<"profiles">;
+export type UserProfile = Tables<"profiles">;
 
 export async function checkIfUsernameIsUnique({
   username,

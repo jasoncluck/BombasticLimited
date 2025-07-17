@@ -11,7 +11,7 @@ import type { LayoutLoad } from "./$types";
 import { COLLAPSED_SIDEBAR_SIZE } from "$lib/constants/layout";
 import type { UserPlaylist } from "$lib/supabase/playlists";
 import type { CombinedContentFilter } from "$lib/components/content/content-filter";
-import type { Profile } from "$lib/supabase/profiles";
+import type { UserProfile } from "$lib/supabase/user-profiles";
 
 export const load: LayoutLoad = async ({ data, depends, fetch }) => {
   /**
@@ -59,7 +59,7 @@ export const load: LayoutLoad = async ({ data, depends, fetch }) => {
   }: {
     playlists: UserPlaylist[];
     playlistsCount?: number | null;
-    userProfile: Profile | null;
+    userProfile: UserProfile | null;
     layout?: string;
     contentFilter: CombinedContentFilter;
   } = data;

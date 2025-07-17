@@ -4,7 +4,7 @@ import { superValidate, fail } from "sveltekit-superforms";
 import { zod } from "sveltekit-superforms/adapters";
 import type { PageServerLoad } from "./$types";
 import { signupSchema } from "../schema";
-import { checkIfUsernameIsUnique } from "$lib/supabase/profiles";
+import { checkIfUsernameIsUnique } from "$lib/supabase/user-profiles";
 import { Filter } from "bad-words";
 
 export const load: PageServerLoad = async ({ locals: { session } }) => {

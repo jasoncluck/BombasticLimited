@@ -3,7 +3,7 @@ import { getFilterOptionFromQueryParams } from "$lib/components/content/content-
 import { parseImageProperties } from "$lib/components/playlist/playlist";
 import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
 import { getUserPlaylists } from "$lib/supabase/playlists";
-import { getProfile } from "$lib/supabase/profiles";
+import { getProfile } from "$lib/supabase/user-profiles";
 import type { LayoutServerLoad } from "./$types";
 
 export const load: LayoutServerLoad = async ({

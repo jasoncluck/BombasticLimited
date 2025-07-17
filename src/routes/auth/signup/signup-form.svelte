@@ -12,7 +12,7 @@
   import { getFlash, updateFlash } from "sveltekit-flash-message";
   import { signupSchema, type SignupSchema } from "../schema";
   import { goto } from "$app/navigation";
-  import { checkIfUsernameIsUnique } from "$lib/supabase/profiles";
+  import { checkIfUsernameIsUnique } from "$lib/supabase/user-profiles";
   import type { SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
 

@@ -34,7 +34,7 @@
   import Button from "../ui/button/button.svelte";
   import * as Popover from "$lib/components/ui/popover";
   import { page } from "$app/state";
-  import type { Profile } from "$lib/supabase/profiles";
+  import type { UserProfile } from "$lib/supabase/profiles";
 
   interface SharedContentHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
@@ -46,7 +46,7 @@
     playlist?: ProfilePlaylist | UserPlaylist;
     session: Session | null;
     showFloatingBreadcrumbs: boolean;
-    userProfile: Profile | null;
+    userProfile: UserProfile | null;
     supabase: SupabaseClient<Database>;
     videos: Video[];
     videosCount: number;

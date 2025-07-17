@@ -1,309 +1,346 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { Session } from "@supabase/supabase-js";
-import type { SupabaseClient, User } from "@supabase/supabase-js";
-import type { Video, VideoWithTimestamp } from "$lib/supabase/videos";
-import type { Database } from "$lib/supabase/database.types";
-import type { Playlist } from "$lib/supabase/playlists";
-import type { Source } from "$lib/constants/source";
-import type { PageServerLoad } from "./$types";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  createMockLoadEvent,
+  type BaseParentData,
+  createVideoFilter,
+} from "../tests/mocks/sveltekit";
+import { mockSession } from "../tests/mocks/auth";
+import { mockVideo, mockVideoWithTimestamp } from "../tests/mocks/videos";
+import { setupTest } from "../tests/utils/test-setup";
 
-// Mock the external dependencies BEFORE importing the module under test
+// Mock the external dependencies BEFORE any imports
+const mockGetVideos = vi.fn();
+const mockGetInProgressVideos = vi.fn();
+const mockRedirect = vi.fn();
+
+// Set up default successful implementations immediately
+mockGetVideos.mockResolvedValue({
+  videos: [mockVideo],
+  count: 1,
+  error: null,
+});
+
+mockGetInProgressVideos.mockResolvedValue({
+  videos: [mockVideoWithTimestamp],
+  count: 1,
+  error: null,
+});
+
+mockRedirect.mockImplementation((status, location) => {
+  const error = new Error(`Redirect to ${location}`);
+  error.name = "Redirect";
+  throw error;
+});
+
+// Hoist all mocks to the top level
 vi.mock("$lib/supabase/videos", () => ({
-  getVideos: vi.fn(),
-  getInProgressVideos: vi.fn(),
+  getVideos: mockGetVideos,
+  getInProgressVideos: mockGetInProgressVideos,
   DEFAULT_NUM_VIDEOS_OVERVIEW: 30,
 }));
 
-vi.mock("@sveltejs/kit", async () => {
-  const actual = await vi.importActual("@sveltejs/kit");
-  return {
-    ...actual,
-    redirect: vi.fn(),
-  };
-});
+vi.mock("@sveltejs/kit", () => ({
+  redirect: mockRedirect,
+}));
 
-// Now import the module under test AFTER the mocks are set up
-const { load } = await import("./+page.server");
+vi.mock("$lib/constants/source", () => ({
+  SOURCES: ["giantbomb", "jeffgerstmann", "nextlander", "remap"],
+}));
 
-// Create proper mock types that match the Locals interface
-const mockUser: User = {
-  id: "test-user-id",
-  app_metadata: {},
-  user_metadata: {},
-  aud: "authenticated",
-  created_at: "2023-01-01T00:00:00Z",
-};
-
-const mockSession: Session = {
-  user: mockUser,
-  access_token: "test-access-token",
-  refresh_token: "test-refresh-token",
-  expires_in: 3600,
-  token_type: "bearer",
-  expires_at: Date.now() / 1000 + 3600,
-};
-
-const mockSupabaseClient = {
-  from: vi.fn(),
-  auth: {
-    getUser: vi.fn(),
-  },
-  rpc: vi.fn(),
-  supabaseUrl: "https://test.supabase.co",
-  supabaseKey: "test-key",
-  realtime: {},
-  realtimeUrl: "wss://test.supabase.co",
-  restUrl: "https://test.supabase.co/rest/v1",
-  storageUrl: "https://test.supabase.co/storage/v1",
-  schema: "public",
-  headers: {},
-  fetch: fetch,
-  shouldThrowOnError: false,
-  apikey: "test-key",
-  storage: {},
-  functions: {},
-  channel: vi.fn(),
-  getChannels: vi.fn(),
-  removeChannel: vi.fn(),
-  removeAllChannels: vi.fn(),
-  postgrest: {},
-  rest: {},
-} as unknown as SupabaseClient<Database>;
-
-const mockVideo: Video = {
-  id: "test-video-1",
-  title: "Test Video",
-  description: "Test Description",
-  thumbnail_url: "https://example.com/thumb.jpg",
-  thumbnail_maxres_url: "https://example.com/maxres.jpg",
-  duration: "3600",
-  source: "giantbomb" as Source,
-  published_at: "2023-01-01T00:00:00Z",
-};
-
-const mockVideoWithTimestamp: VideoWithTimestamp = {
-  ...mockVideo,
-  video_start_seconds: 100,
-  updated_at: "2023-01-01T00:00:00Z",
-  watched_at: "2023-01-01T00:00:00Z", // Added missing property
-};
-
-const mockPlaylist: Playlist = {
-  id: 1,
-  name: "Test Playlist",
-  description: "Test Description",
-  created_by: "test-user-id",
-  created_at: "2023-01-01T00:00:00Z",
-  short_id: "abc123",
-  type: "Private",
-  youtube_id: null,
-  thumbnail_url: null,
-  thumbnail_maxres_url: null,
-  image_properties: null,
-};
-
-// Helper function to create a properly typed load event
-function createMockLoadEvent(
-  overrides: {
-    session?: Session | null;
-    url?: URL;
-  } = {},
-): Parameters<PageServerLoad>[0] {
-  const session = overrides.session ?? mockSession;
-  const user = session?.user ?? null;
-
-  const mockParentData = {
-    session,
-    contentFilter: {
-      sort: { key: "datePublished", order: "descending" },
-      type: "video",
-    },
-    playlists: [mockPlaylist],
-    playlistsCount: 1,
-    userProfile: null,
-    cookies: [],
-    layout: "default",
-  };
-
-  // Create locals that match the App.Locals interface
-  const locals: App.Locals = {
-    supabase: mockSupabaseClient,
-    session,
-    user,
-    safeGetSession: vi.fn().mockResolvedValue({ session, user }),
-  };
-
-  return {
-    cookies: {
-      get: vi.fn(),
-      set: vi.fn(),
-      delete: vi.fn(),
-      serialize: vi.fn(),
-      getAll: vi.fn(),
-    },
-    locals,
-    params: {},
-    request: new Request("http://localhost:3000"),
-    route: { id: "/" as const }, // Fixed route ID type
-    url: overrides.url ?? new URL("http://localhost:3000"),
-    parent: vi.fn().mockResolvedValue(mockParentData),
-    depends: vi.fn(),
-    untrack: vi.fn(),
-    fetch: vi.fn().mockResolvedValue(new Response()),
-    getClientAddress: vi.fn().mockReturnValue("127.0.0.1"),
-    isDataRequest: false,
-    isSubRequest: false,
-    platform: undefined,
-    setHeaders: vi.fn(),
-  };
-}
+// Import the module AFTER mocks are set up
+const loadModule = () => import("./+page.server");
 
 describe("+page.server.ts load function", () => {
-  beforeEach(async () => {
-    vi.clearAllMocks();
+  setupTest();
 
-    // Reset all mocks to their default successful state
-    const { getVideos, getInProgressVideos } = await import(
-      "$lib/supabase/videos"
-    );
-
-    vi.mocked(getVideos).mockResolvedValue({
+  beforeEach(() => {
+    // Reset to default successful implementation instead of clearing
+    mockGetVideos.mockResolvedValue({
       videos: [mockVideo],
       count: 1,
       error: null,
     });
 
-    vi.mocked(getInProgressVideos).mockResolvedValue({
+    mockGetInProgressVideos.mockResolvedValue({
       videos: [mockVideoWithTimestamp],
       count: 1,
       error: null,
     });
+
+    mockRedirect.mockImplementation((status, location) => {
+      const error = new Error(`Redirect to ${location}`);
+      error.name = "Redirect";
+      throw error;
+    });
+  });
+
+  afterEach(() => {
+    vi.clearAllTimers();
+    // Don't restore all mocks here as it might break the hoisted mocks
   });
 
   it("loads data successfully with authenticated user", async () => {
-    const mockEvent = createMockLoadEvent({
+    const { load } = await loadModule();
+
+    const parentData: BaseParentData = {
       session: mockSession,
-      url: new URL("http://localhost:3000"),
-    });
-
-    const result = await load(mockEvent);
-
-    expect(result).toBeDefined();
-    expect(result).not.toBeUndefined();
-
-    // Type assertion to let TypeScript know this is the expected return type
-    const typedResult = result as Awaited<ReturnType<PageServerLoad>>;
-
-    if (typedResult) {
-      expect(typedResult.sourceVideos).toBeDefined();
-      expect(typedResult.continueWatchingVideos).toBeDefined();
-      expect(typedResult.sourceVideosContentFilters).toBeDefined();
-      expect(typedResult.continueWatchingContentFilters).toBeDefined();
-      expect(typedResult.playlists).toBeDefined();
-
-      // Check that all sources are included
-      expect(typedResult.sourceVideos).toHaveProperty("giantbomb");
-      expect(typedResult.sourceVideos).toHaveProperty("nextlander");
-      expect(typedResult.sourceVideos).toHaveProperty("remap");
-    }
-  });
-
-  it("loads data successfully without authenticated user", async () => {
-    const mockEvent = createMockLoadEvent({
-      session: null,
-    });
-
-    // Override parent data for unauthenticated user
-    mockEvent.parent = vi.fn().mockResolvedValue({
-      session: null,
-      contentFilter: {
-        sort: { key: "datePublished", order: "descending" },
-        type: "video",
-      },
+      contentFilter: createVideoFilter(),
       playlists: [],
-      playlistsCount: 0,
+      userPlaylistsCount: 0,
       userProfile: null,
       cookies: [],
       layout: "default",
+    };
+
+    const mockEvent = createMockLoadEvent({
+      session: mockSession,
+      url: new URL("http://localhost:3000"),
+      parentData,
+      routeId: "/",
     });
 
     const result = await load(mockEvent);
 
     expect(result).toBeDefined();
-    expect(result).not.toBeUndefined();
+    expect(mockGetVideos).toHaveBeenCalledTimes(4); // Should be called for each source
+    expect(mockGetInProgressVideos).toHaveBeenCalledTimes(1);
 
-    if (result) {
-      expect(result.sourceVideos).toBeDefined();
-      expect(result.continueWatchingVideos).toBeDefined();
-    }
+    expect(result.sourceVideos).toBeDefined();
+    expect(result.continueWatchingVideos).toBeDefined();
+    expect(result.sourceVideosContentFilters).toBeDefined();
+    expect(result.continueWatchingContentFilters).toBeDefined();
+    expect(result.playlists).toBeDefined();
+
+    // Check that all sources have videos
+    expect(result.sourceVideos.giantbomb).toEqual([mockVideo]);
+    expect(result.sourceVideos.jeffgerstmann).toEqual([mockVideo]);
+    expect(result.sourceVideos.nextlander).toEqual([mockVideo]);
+    expect(result.sourceVideos.remap).toEqual([mockVideo]);
+  });
+
+  it("loads data successfully without authenticated user", async () => {
+    const { load } = await loadModule();
+
+    const parentData: BaseParentData = {
+      session: null,
+      contentFilter: createVideoFilter(),
+      playlists: [],
+      userPlaylistsCount: 0,
+      userProfile: null,
+      cookies: [],
+      layout: "default",
+    };
+
+    const mockEvent = createMockLoadEvent({
+      session: null,
+      parentData,
+      routeId: "/",
+    });
+
+    const result = await load(mockEvent);
+
+    expect(result).toBeDefined();
+    expect(mockGetVideos).toHaveBeenCalledTimes(4);
+    expect(mockGetInProgressVideos).toHaveBeenCalledTimes(1);
+
+    expect(result.sourceVideos).toBeDefined();
+    expect(result.continueWatchingVideos).toBeDefined();
   });
 
   it("handles parallel video fetching correctly", async () => {
-    const { getVideos } = await import("$lib/supabase/videos");
+    const { load } = await loadModule();
 
-    // Mock different videos for different sources
-    const giantbombVideo: Video = {
+    // Mock specific videos for different sources
+    const giantbombVideo = {
       ...mockVideo,
-      source: "giantbomb",
+      source: "giantbomb" as const,
       id: "gb-1",
     };
-    const nextlanderVideo: Video = {
+    const nextlanderVideo = {
       ...mockVideo,
-      source: "nextlander",
+      source: "nextlander" as const,
       id: "nl-1",
     };
-    const remapVideo: Video = { ...mockVideo, source: "remap", id: "remap-1" };
+    const remapVideo = {
+      ...mockVideo,
+      source: "remap" as const,
+      id: "remap-1",
+    };
+    const jeffgerstmannVideo = {
+      ...mockVideo,
+      source: "jeffgerstmann" as const,
+      id: "jg-1",
+    };
 
-    // Mock getVideos to return different videos based on source
-    vi.mocked(getVideos).mockImplementation(async ({ source }) => {
+    // Override the default mock with specific implementation
+    mockGetVideos.mockImplementation(({ source }) => {
       switch (source) {
         case "giantbomb":
-          return { videos: [giantbombVideo], count: 1, error: null };
+          return Promise.resolve({
+            videos: [giantbombVideo],
+            count: 1,
+            error: null,
+          });
         case "nextlander":
-          return { videos: [nextlanderVideo], count: 1, error: null };
+          return Promise.resolve({
+            videos: [nextlanderVideo],
+            count: 1,
+            error: null,
+          });
         case "remap":
-          return { videos: [remapVideo], count: 1, error: null };
+          return Promise.resolve({
+            videos: [remapVideo],
+            count: 1,
+            error: null,
+          });
+        case "jeffgerstmann":
+          return Promise.resolve({
+            videos: [jeffgerstmannVideo],
+            count: 1,
+            error: null,
+          });
         default:
-          return { videos: [], count: 0, error: null };
+          return Promise.resolve({ videos: [], count: 0, error: null });
       }
     });
 
-    const mockEvent = createMockLoadEvent();
+    const parentData: BaseParentData = {
+      session: mockSession,
+      contentFilter: createVideoFilter(),
+      playlists: [],
+      userPlaylistsCount: 0,
+      userProfile: null,
+      cookies: [],
+      layout: "default",
+    };
+
+    const mockEvent = createMockLoadEvent({
+      parentData,
+      routeId: "/",
+    });
+
     const result = await load(mockEvent);
 
     expect(result).toBeDefined();
-    expect(result).not.toBeUndefined();
+    expect(result.sourceVideos).toBeDefined();
 
-    if (result) {
-      expect(result.sourceVideos.giantbomb).toEqual([giantbombVideo]);
-      expect(result.sourceVideos.nextlander).toEqual([nextlanderVideo]);
-      expect(result.sourceVideos.remap).toEqual([remapVideo]);
-    }
+    // Check that we have the correct videos for each source
+    expect(result.sourceVideos.giantbomb).toEqual([giantbombVideo]);
+    expect(result.sourceVideos.nextlander).toEqual([nextlanderVideo]);
+    expect(result.sourceVideos.remap).toEqual([remapVideo]);
+    expect(result.sourceVideos.jeffgerstmann).toEqual([jeffgerstmannVideo]);
   });
 
   it("handles video fetching errors gracefully", async () => {
-    const { getVideos } = await import("$lib/supabase/videos");
+    const { load } = await loadModule();
 
-    // Override the default mock for this specific test
-    vi.mocked(getVideos).mockRejectedValue(new Error("Database error"));
+    // Override the default mock to throw an error
+    mockGetVideos.mockImplementation(() => {
+      return Promise.reject(new Error("Database error"));
+    });
 
-    const mockEvent = createMockLoadEvent();
+    const parentData: BaseParentData = {
+      session: mockSession,
+      contentFilter: createVideoFilter(),
+      playlists: [],
+      userPlaylistsCount: 0,
+      userProfile: null,
+      cookies: [],
+      layout: "default",
+    };
 
-    // The test should expect the error to be thrown
+    const mockEvent = createMockLoadEvent({
+      parentData,
+      routeId: "/",
+    });
+
     await expect(load(mockEvent)).rejects.toThrow("Database error");
   });
 
   it("handles continue watching errors gracefully", async () => {
-    const { getInProgressVideos } = await import("$lib/supabase/videos");
+    const { load } = await loadModule();
 
-    // getInProgressVideos fails
-    vi.mocked(getInProgressVideos).mockRejectedValue(
-      new Error("Continue watching error"),
-    );
+    // Override the default mock to throw an error
+    mockGetInProgressVideos.mockImplementation(() => {
+      return Promise.reject(new Error("Continue watching error"));
+    });
 
-    const mockEvent = createMockLoadEvent();
+    const parentData: BaseParentData = {
+      session: mockSession,
+      contentFilter: createVideoFilter(),
+      playlists: [],
+      userPlaylistsCount: 0,
+      userProfile: null,
+      cookies: [],
+      layout: "default",
+    };
 
-    // The test should expect the error to be thrown
+    const mockEvent = createMockLoadEvent({
+      parentData,
+      routeId: "/",
+    });
+
     await expect(load(mockEvent)).rejects.toThrow("Continue watching error");
+  });
+
+  it("redirects when error parameter is present in URL", async () => {
+    const { load } = await loadModule();
+
+    const parentData: BaseParentData = {
+      session: mockSession,
+      contentFilter: createVideoFilter(),
+      playlists: [],
+      userPlaylistsCount: 0,
+      userProfile: null,
+      cookies: [],
+      layout: "default",
+    };
+
+    const mockEvent = createMockLoadEvent({
+      parentData,
+      routeId: "/",
+      url: new URL("http://localhost:3000?error=true"),
+    });
+
+    await expect(load(mockEvent)).rejects.toThrow("Redirect to /auth/error");
+    expect(mockRedirect).toHaveBeenCalledWith(303, "/auth/error");
+  });
+
+  it("properly structures the return data", async () => {
+    const { load } = await loadModule();
+
+    const parentData: BaseParentData = {
+      session: mockSession,
+      contentFilter: createVideoFilter(),
+      playlists: [],
+      userPlaylistsCount: 0,
+      userProfile: null,
+      cookies: [],
+      layout: "default",
+    };
+
+    const mockEvent = createMockLoadEvent({
+      parentData,
+      routeId: "/",
+    });
+
+    const result = await load(mockEvent);
+
+    // Check the structure matches what your page expects
+    expect(result).toHaveProperty("sourceVideos");
+    expect(result).toHaveProperty("sourceVideosContentFilters");
+    expect(result).toHaveProperty("continueWatchingVideos");
+    expect(result).toHaveProperty("continueWatchingContentFilters");
+    expect(result).toHaveProperty("playlists");
+
+    // Check that sourceVideos has the expected sources
+    expect(result.sourceVideos).toHaveProperty("giantbomb");
+    expect(result.sourceVideos).toHaveProperty("jeffgerstmann");
+    expect(result.sourceVideos).toHaveProperty("nextlander");
+    expect(result.sourceVideos).toHaveProperty("remap");
+
+    // Check that filters have the correct structure
+    expect(result.sourceVideosContentFilters.type).toBe("video");
+    expect(result.continueWatchingContentFilters.type).toBe("timestamp");
   });
 });

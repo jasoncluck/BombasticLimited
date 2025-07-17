@@ -26,7 +26,10 @@
   import ScrollArea from "./ui/scroll-area/scroll-area.svelte";
   import { page } from "$app/state";
   import { flip } from "svelte/animate";
-  import { updateProfileSources, type Profile } from "$lib/supabase/profiles";
+  import {
+    updateProfileSources,
+    type UserProfile,
+  } from "$lib/supabase/user-profiles";
   import Badge from "./ui/badge/badge.svelte";
   import EditListDrawer from "./content/drawer/edit-list-drawer.svelte";
   import EditSourceDrawer from "./content/drawer/edit-source-drawer.svelte";
@@ -40,7 +43,7 @@
   }: {
     playlists: UserPlaylist[];
     handleLogout: () => void;
-    userProfile: Profile | null;
+    userProfile: UserProfile | null;
     supabase: SupabaseClient<Database>;
     session: Session | null;
   } = $props();

@@ -5,7 +5,7 @@ import { redirect, setFlash } from "sveltekit-flash-message/server";
 import {
   checkIfUsernameIsUnique,
   getUserProfile,
-} from "$lib/supabase/profiles";
+} from "$lib/supabase/user-profiles";
 import type { Actions, PageServerLoad } from "./$types";
 import { Filter } from "bad-words";
 

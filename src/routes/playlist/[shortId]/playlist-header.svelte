@@ -16,7 +16,7 @@
   import PlaylistEditDialog from "$lib/components/playlist/playlist-edit-dialog.svelte";
   import { isSource, SOURCE_INFO } from "$lib/constants/source";
   import type { Video } from "$lib/supabase/videos";
-  import type { Profile } from "$lib/supabase/profiles";
+  import type { UserProfile } from "$lib/supabase/user-profiles";
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
   import PlaylistEditDrawer from "$lib/components/playlist/playlist-edit-drawer.svelte";
   import { getPlaylistState } from "$lib/state/playlist.svelte";
@@ -31,7 +31,7 @@
     playlists: Playlist[];
     playlistDuration: { hours: number; minutes: number; seconds: number };
     videosCount: number;
-    userProfile: Profile | null;
+    userProfile: UserProfile | null;
     currentPage: number;
     supabase: SupabaseClient<Database>;
     session: Session | null;

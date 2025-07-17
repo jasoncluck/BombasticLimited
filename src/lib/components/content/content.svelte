@@ -16,7 +16,7 @@
   import { getPlaylistState } from "$lib/state/playlist.svelte";
   import ContentCarousel from "./content-carousel.svelte";
   import ContentTiles from "./content-tiles.svelte";
-  import type { Profile } from "$lib/supabase/profiles";
+  import type { UserProfile } from "$lib/supabase/profiles";
   import ContentContextMenu from "./content-context-menu.svelte";
   import ContentDrawer from "./content-drawer.svelte";
   import { onNavigate } from "$app/navigation";
@@ -33,7 +33,7 @@
     playlist?: Playlist;
     allowVideoReorder?: boolean;
     contentFilter: CombinedContentFilter;
-    userProfile: Profile | null;
+    userProfile: UserProfile | null;
     sectionId?: string;
     tilesDisplay: TilesDisplay;
     supabase: SupabaseClient<Database>;
