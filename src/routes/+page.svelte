@@ -9,10 +9,12 @@
   import { getContentState } from "$lib/state/content.svelte.js";
   import type { Video } from "$lib/supabase/videos.js";
   import {
+    getContentView,
     sourceWithContinueStateKeys,
     type SourceWithContinueCarouselState,
     type SourceWithContinueStateKeys,
   } from "$lib/components/content/content.js";
+  import { getMediaQueryState } from "$lib/state/media-query.svelte.js";
 
   let { data } = $props();
 
@@ -27,6 +29,7 @@
   } = $derived(data);
 
   const contentState = getContentState();
+  const mediaQueryState = getMediaQueryState();
   const sources = $derived(userProfile?.sources ?? SOURCES);
 
   // After oauth authn there is a history stack update that doesn't trigger a proper invalidation.
@@ -70,8 +73,15 @@
 
 <div class="content-section">
   {#if session && continueWatchingVideos.length > 0}
-    <div class="flex flex-col mb-8 gap-0 sm:gap-4">
-      <a href="/continue" class="header-link-sticky"> Continue Watching </a>
+    <div class="flex flex-col gap-0">
+      <a
+        href="/continue"
+        class={getContentView(mediaQueryState, userProfile) === "TABLE"
+          ? "header-link-sticky"
+          : "header-link"}
+      >
+        Continue Watching
+      </a>
 
       <Content
         videos={continueWatchingVideos}
@@ -98,7 +108,12 @@
   <div class="flex flex-col gap-4">
     {#each sources as source (source)}
       <div class="content-section">
-        <a href={`/${source}/latest`} class="header-link-sticky">
+        <a
+          href={`/${source}/latest`}
+          class={getContentView(mediaQueryState, userProfile) === "TABLE"
+            ? "header-link-sticky"
+            : "header-link"}
+        >
           {SOURCE_INFO[source].displayName}
         </a>
         <Content

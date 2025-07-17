@@ -6,7 +6,7 @@
   import type { Video } from "$lib/supabase/videos";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { CombinedContentFilter } from "../content/content-filter";
-  import ContentActionsDropdown from "../content/content-actions-dropdown.svelte";
+  import ContentActionsDropdown from "../content/content-dropdown.svelte";
   import { Ellipsis } from "@lucide/svelte";
   import Button from "../ui/button/button.svelte";
   import { getContentState } from "$lib/state/content.svelte";

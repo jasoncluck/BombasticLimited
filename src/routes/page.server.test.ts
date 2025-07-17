@@ -232,10 +232,10 @@ describe("+page.server.ts load function", () => {
     expect(result).toBeDefined();
     expect(result).not.toBeUndefined();
 
-    const typedResult = result as Awaited<ReturnType<PageServerLoad>>;
-
-    expect(typedResult.sourceVideos).toBeDefined();
-    expect(typedResult.continueWatchingVideos).toBeDefined();
+    if (result) {
+      expect(result.sourceVideos).toBeDefined();
+      expect(result.continueWatchingVideos).toBeDefined();
+    }
   });
 
   it("handles parallel video fetching correctly", async () => {
@@ -274,11 +274,11 @@ describe("+page.server.ts load function", () => {
     expect(result).toBeDefined();
     expect(result).not.toBeUndefined();
 
-    const typedResult = result as Awaited<ReturnType<PageServerLoad>>;
-
-    expect(typedResult.sourceVideos.giantbomb).toEqual([giantbombVideo]);
-    expect(typedResult.sourceVideos.nextlander).toEqual([nextlanderVideo]);
-    expect(typedResult.sourceVideos.remap).toEqual([remapVideo]);
+    if (result) {
+      expect(result.sourceVideos.giantbomb).toEqual([giantbombVideo]);
+      expect(result.sourceVideos.nextlander).toEqual([nextlanderVideo]);
+      expect(result.sourceVideos.remap).toEqual([remapVideo]);
+    }
   });
 
   it("handles video fetching errors gracefully", async () => {

@@ -12,6 +12,8 @@ import {
   type PlaylistVideosFilter,
 } from "./content-filter";
 import { goto } from "$app/navigation";
+import type { MediaQueryState } from "$lib/state/media-query.svelte";
+import type { Profile } from "$lib/supabase/profiles";
 
 export interface CarouselVideoDragInfo {
   readonly videoId: string;
@@ -19,7 +21,7 @@ export interface CarouselVideoDragInfo {
 }
 
 export const CONTENT_DISPLAY = {
-  CARD: "CARD",
+  CARD: "TILES",
   TABLE: "TABLE",
 } as const;
 
@@ -133,4 +135,13 @@ export function handleContentNavigation({
   goto(newUrl.toString(), {
     invalidate: ["supabase:db:videos"],
   });
+}
+
+export function getContentView(
+  mediaQueryState: MediaQueryState,
+  userProfile: Profile | null,
+): ContentDisplay {
+  if (!mediaQueryState?.isSm || userProfile?.content_display === "TABLE") {
+    return "TABLE";
+  } else return "TILES";
 }
