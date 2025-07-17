@@ -217,52 +217,54 @@
           <Sheet.Title class="mx-2 mt-4 mb-2 flex flex-col gap-4">
             Playlists
 
-            <EditListDrawer
-              items={playlists}
-              title="Reorder playlist videos"
-              onReorder={handlePlaylistReorder}
-              onClose={() => {
-                invalidate("supabase:db:playlists");
-              }}
-            >
-              {#snippet trigger()}
-                <Badge class="flex items-center gap-2 bg-secondary">
-                  <Edit />
-                  Reorder</Badge
-                >
-              {/snippet}
+            {#if session && playlists.length > 1}
+              <EditListDrawer
+                items={playlists}
+                title="Reorder playlist videos"
+                onReorder={handlePlaylistReorder}
+                onClose={() => {
+                  invalidate("supabase:db:playlists");
+                }}
+              >
+                {#snippet trigger()}
+                  <Badge class="flex items-center gap-2 bg-secondary">
+                    <Edit />
+                    Reorder</Badge
+                  >
+                {/snippet}
 
-              {#snippet itemRenderer(item)}
-                {@const playlist = item as Playlist}
-                <div class="w-full flex items-center gap-2 m-1">
-                  {#if playlist.processedImageUrl}
-                    <div
-                      class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
-                    >
-                      <img
-                        src={playlist.processedImageUrl}
-                        class="h-full w-full object-cover cursor-pointer"
-                        alt={`Image for playlist: ${playlist.name}`}
-                      />
+                {#snippet itemRenderer(item)}
+                  {@const playlist = item as Playlist}
+                  <div class="w-full flex items-center gap-2 m-1">
+                    {#if playlist.processedImageUrl}
+                      <div
+                        class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
+                      >
+                        <img
+                          src={playlist.processedImageUrl}
+                          class="h-full w-full object-cover cursor-pointer"
+                          alt={`Image for playlist: ${playlist.name}`}
+                        />
+                      </div>
+                    {:else}
+                      <div
+                        class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
+                      >
+                        <ListVideo class="!h-8 !w-8" />
+                      </div>
+                    {/if}
+                    <div class="flex flex-col items-start">
+                      <p>
+                        {playlist.name}
+                      </p>
+                      <p class="text-muted-foreground">
+                        {playlist.type}
+                      </p>
                     </div>
-                  {:else}
-                    <div
-                      class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
-                    >
-                      <ListVideo class="!h-8 !w-8" />
-                    </div>
-                  {/if}
-                  <div class="flex flex-col items-start">
-                    <p>
-                      {playlist.name}
-                    </p>
-                    <p class="text-muted-foreground">
-                      {playlist.type}
-                    </p>
                   </div>
-                </div>
-              {/snippet}
-            </EditListDrawer>
+                {/snippet}
+              </EditListDrawer>
+            {/if}
           </Sheet.Title>
 
           {#if session}
@@ -335,7 +337,6 @@
             {/each}
           {/if}
 
-          <Sheet.Title class="mx-2 mt-4 mb-2">Account</Sheet.Title>
           {#if session}
             <Button
               variant="ghost"
