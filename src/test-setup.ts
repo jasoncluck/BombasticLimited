@@ -79,14 +79,23 @@ vi.mock("$lib/state/content.svelte.js", () => ({
 
 vi.mock("$lib/components/content/content.js", () => ({
   getContentView: vi.fn(() => "tiles"),
-  sourceWithContinueStateKeys: ["giantbomb", "jeffgerstmann", "nextlander", "remap", "continueWatching"],
+  sourceWithContinueStateKeys: [
+    "giantbomb",
+    "jeffgerstmann",
+    "nextlander",
+    "remap",
+    "continueWatching",
+  ],
 }));
 
 vi.mock("$lib/constants/source", () => ({
   SOURCES: ["giantbomb", "jeffgerstmann", "nextlander", "remap"],
   SOURCE_INFO: {
     giantbomb: { displayName: "Giant Bomb", url: "https://giantbomb.com" },
-    jeffgerstmann: { displayName: "Jeff Gerstmann", url: "https://jeffgerstmann.com" },
+    jeffgerstmann: {
+      displayName: "Jeff Gerstmann",
+      url: "https://jeffgerstmann.com",
+    },
     nextlander: { displayName: "Nextlander", url: "https://nextlander.com" },
     remap: { displayName: "Remap", url: "https://remap.fm" },
   },

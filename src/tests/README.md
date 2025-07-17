@@ -2,7 +2,9 @@
 
 ## Overview
 
-This document describes the mock architecture and testing patterns used in the bombify project. The mocks have been organized to be reusable, maintainable, and provide consistent test isolation.
+This document describes the mock architecture and testing patterns used in the
+bombify project. The mocks have been organized to be reusable, maintainable, and
+provide consistent test isolation.
 
 ## Mock Organization
 
@@ -17,7 +19,8 @@ This document describes the mock architecture and testing patterns used in the b
   - `page-data.ts` - Page data structure mocks
   - `media-query.ts` - Media query state mocks
   - `user-profiles.ts` - User profile mocks
-  - `common.ts` - Common mock utilities (currently not used due to hoisting issues)
+  - `common.ts` - Common mock utilities (currently not used due to hoisting
+    issues)
 
 ### Test Utilities
 
@@ -32,7 +35,8 @@ This document describes the mock architecture and testing patterns used in the b
 
 ### 1. Global Mocks (in test-setup.ts)
 
-Global mocks are defined in `test-setup.ts` and apply to all tests. These include:
+Global mocks are defined in `test-setup.ts` and apply to all tests. These
+include:
 
 - Browser APIs (ResizeObserver, IntersectionObserver, etc.)
 - SvelteKit modules ($app/navigation, $app/state, etc.)
@@ -48,7 +52,8 @@ vi.mock("$app/navigation", () => ({
 
 ### 2. Test-Specific Mocks (hoisted)
 
-For test files that need specific mock behavior, use `vi.hoisted()` to ensure proper scoping:
+For test files that need specific mock behavior, use `vi.hoisted()` to ensure
+proper scoping:
 
 ```typescript
 // At the top of your test file
@@ -185,8 +190,10 @@ it("handles browser state", () => {
 
 ### Common Issues
 
-1. **Hoisting Problems**: Use `vi.hoisted()` for mocks that need access to variables
-2. **Mock Conflicts**: Ensure global mocks don't conflict with test-specific ones
+1. **Hoisting Problems**: Use `vi.hoisted()` for mocks that need access to
+   variables
+2. **Mock Conflicts**: Ensure global mocks don't conflict with test-specific
+   ones
 3. **State Pollution**: Always reset state in `beforeEach` hooks
 4. **Async Issues**: Properly await async operations in tests
 

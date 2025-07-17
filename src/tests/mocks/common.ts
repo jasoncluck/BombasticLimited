@@ -23,7 +23,7 @@ export const mockSvelteKitModules = () => {
       data: {},
       state: {},
       form: null,
-    }
+    },
   };
 
   // Mock $app/navigation
@@ -172,13 +172,15 @@ export const mockVideoQueryModules = () => {
 // Mock implementations for SvelteKit server functions
 export const mockSvelteKitServerModules = () => {
   const mocks = vi.hoisted(() => ({
-    mockRedirect: vi.fn().mockImplementation((status: number, location: string) => {
-      const error = new Error(`Redirect to ${location}`) as any;
-      error.name = "Redirect";
-      error.status = status;
-      error.location = location;
-      throw error;
-    }),
+    mockRedirect: vi
+      .fn()
+      .mockImplementation((status: number, location: string) => {
+        const error = new Error(`Redirect to ${location}`) as any;
+        error.name = "Redirect";
+        error.status = status;
+        error.location = location;
+        throw error;
+      }),
   }));
 
   vi.mock("@sveltejs/kit", () => ({
@@ -197,7 +199,10 @@ export const mockConstantsModules = () => {
     SOURCES: ["giantbomb", "jeffgerstmann", "nextlander", "remap"],
     SOURCE_INFO: {
       giantbomb: { displayName: "Giant Bomb", url: "https://giantbomb.com" },
-      jeffgerstmann: { displayName: "Jeff Gerstmann", url: "https://jeffgerstmann.com" },
+      jeffgerstmann: {
+        displayName: "Jeff Gerstmann",
+        url: "https://jeffgerstmann.com",
+      },
       nextlander: { displayName: "Nextlander", url: "https://nextlander.com" },
       remap: { displayName: "Remap", url: "https://remap.fm" },
     },
@@ -215,7 +220,13 @@ export const mockComponentModules = () => {
 
   vi.mock("$lib/components/content/content.js", () => ({
     getContentView: vi.fn(() => "tiles"),
-    sourceWithContinueStateKeys: ["giantbomb", "jeffgerstmann", "nextlander", "remap", "continueWatching"],
+    sourceWithContinueStateKeys: [
+      "giantbomb",
+      "jeffgerstmann",
+      "nextlander",
+      "remap",
+      "continueWatching",
+    ],
   }));
 };
 
