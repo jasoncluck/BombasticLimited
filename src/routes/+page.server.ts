@@ -26,8 +26,6 @@ export const load: PageServerLoad = async ({
     redirect(303, "/auth/error");
   }
 
-  console.log(SOURCES);
-
   const sourceVideosContentFilters: VideoFilter = {
     sort: {
       key: "datePublished",
