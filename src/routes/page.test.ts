@@ -1,16 +1,16 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/svelte";
 import Page from "./+page.svelte";
-import { page } from "$app/state";
-import { invalidate } from "$app/navigation";
 import { SOURCES, SOURCE_INFO } from "$lib/constants/source";
-import { mockAppMocks } from "../tests/mocks/sveltekit";
 import { mockPageData, createMockPageData } from "../tests/mocks/page-data";
 import { mockVideoWithTimestamp } from "../tests/mocks/videos";
 import { setupTest } from "../tests/utils/test-setup";
+import { pageState } from "../test-setup";
 
-// Setup all app mocks
-mockAppMocks();
+// Import mocked modules
+const { page } = await import("$app/state");
+const { invalidate } = await import("$app/navigation");
+const { isBrowser } = await import("@supabase/ssr");
 
 describe("Page Component", () => {
   setupTest();
@@ -75,12 +75,11 @@ describe("Page Component", () => {
     });
   });
 
-  it("invalidates data when oauth code is present in URL", async () => {
-    const { isBrowser } = await import("@supabase/ssr");
+  it("invalidates data when oauth code is present in URL", () => {
     vi.mocked(isBrowser).mockReturnValue(true);
 
-    // Mock page.url with code parameter
-    vi.mocked(page).url = new URL("http://localhost:3000?code=oauth_code");
+    // Set up page URL with oauth code
+    pageState.url = new URL("http://localhost:3000?code=oauth_code");
 
     render(Page, { data: mockPageData });
 
@@ -88,12 +87,11 @@ describe("Page Component", () => {
     expect(invalidate).toHaveBeenCalledWith("supabase:db:videos");
   });
 
-  it("does not invalidate when no oauth code is present", async () => {
-    const { isBrowser } = await import("@supabase/ssr");
+  it("does not invalidate when no oauth code is present", () => {
     vi.mocked(isBrowser).mockReturnValue(true);
 
-    // Mock page.url without code parameter
-    vi.mocked(page).url = new URL("http://localhost:3000");
+    // Set up page URL without oauth code
+    pageState.url = new URL("http://localhost:3000");
 
     render(Page, { data: mockPageData });
 

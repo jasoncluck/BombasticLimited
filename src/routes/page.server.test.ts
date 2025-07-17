@@ -8,31 +8,17 @@ import { mockSession } from "../tests/mocks/auth";
 import { mockVideo, mockVideoWithTimestamp } from "../tests/mocks/videos";
 import { setupTest } from "../tests/utils/test-setup";
 
-// Mock the external dependencies BEFORE any imports
-const mockGetVideos = vi.fn();
-const mockGetInProgressVideos = vi.fn();
-const mockRedirect = vi.fn();
+// Hoist the mocks to the top level to avoid scope issues
+const { mockGetVideos, mockGetInProgressVideos } = vi.hoisted(() => ({
+  mockGetVideos: vi.fn(),
+  mockGetInProgressVideos: vi.fn(),
+}));
 
-// Set up default successful implementations immediately
-mockGetVideos.mockResolvedValue({
-  videos: [mockVideo],
-  count: 1,
-  error: null,
-});
+const { mockRedirect } = vi.hoisted(() => ({
+  mockRedirect: vi.fn(),
+}));
 
-mockGetInProgressVideos.mockResolvedValue({
-  videos: [mockVideoWithTimestamp],
-  count: 1,
-  error: null,
-});
-
-mockRedirect.mockImplementation((status, location) => {
-  const error = new Error(`Redirect to ${location}`);
-  error.name = "Redirect";
-  throw error;
-});
-
-// Hoist all mocks to the top level
+// Mock the dependencies at the top level
 vi.mock("$lib/supabase/videos", () => ({
   getVideos: mockGetVideos,
   getInProgressVideos: mockGetInProgressVideos,
@@ -47,14 +33,14 @@ vi.mock("$lib/constants/source", () => ({
   SOURCES: ["giantbomb", "jeffgerstmann", "nextlander", "remap"],
 }));
 
-// Import the module AFTER mocks are set up
+// Import the module under test AFTER mocks are set up
 const loadModule = () => import("./+page.server");
 
 describe("+page.server.ts load function", () => {
   setupTest();
 
   beforeEach(() => {
-    // Reset to default successful implementation instead of clearing
+    // Reset to default successful implementation
     mockGetVideos.mockResolvedValue({
       videos: [mockVideo],
       count: 1,
@@ -68,15 +54,16 @@ describe("+page.server.ts load function", () => {
     });
 
     mockRedirect.mockImplementation((status, location) => {
-      const error = new Error(`Redirect to ${location}`);
+      const error = new Error(`Redirect to ${location}`) as any;
       error.name = "Redirect";
+      error.status = status;
+      error.location = location;
       throw error;
     });
   });
 
   afterEach(() => {
     vi.clearAllTimers();
-    // Don't restore all mocks here as it might break the hoisted mocks
   });
 
   it("loads data successfully with authenticated user", async () => {
