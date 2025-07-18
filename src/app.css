@@ -116,7 +116,7 @@
   }
 
   .header-link {
-    @apply inline-block lg:text-4xl  text-3xl self-start font-semibold transition-colors hover:underline cursor-pointer my-2 truncate;
+    @apply block lg:text-4xl  text-3xl self-start font-semibold transition-colors hover:underline cursor-pointer my-2 truncate;
   }
 
   .header-link-sticky {

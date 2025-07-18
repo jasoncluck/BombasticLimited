@@ -142,7 +142,7 @@ export const populatePlaylists = async ({
           created_by: userId,
           thumbnail_url: item.snippet?.thumbnails?.default?.url ?? null,
           thumbnail_maxres_url: item.snippet?.thumbnails?.maxres?.url ?? null,
-          type: "Official",
+          type: "Public",
         };
 
         // Upsert playlist and get the row (to get the internal playlist id)
@@ -326,7 +326,7 @@ export const populatePlaylists = async ({
         .from("playlists")
         .select("id, youtube_id, name")
         .eq("created_by", userId)
-        .eq("type", "Official")
+        .eq("type", "Public")
         .neq("youtube_id", uploadPlaylistId); // Exclude uploads playlist from cleanup
 
     if (existingPlaylistsError) {

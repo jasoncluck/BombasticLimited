@@ -8,7 +8,6 @@
     DEFAULT_SECTION_ID,
     getContentState,
   } from "$lib/state/content.svelte";
-  import { getMediaQueryState } from "$lib/state/media-query.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
   import { Ellipsis } from "@lucide/svelte";
 
@@ -29,11 +28,11 @@
   } = $props();
 
   const contentState = getContentState();
-  const mediaQueryState = getMediaQueryState();
 </script>
 
-{#if mediaQueryState.canHover}
-  <div class="flex content-table-row items-center">
+<div class="flex content-table-row items-center actions-column">
+  <!-- Hover-capable devices content -->
+  <div class="hover-actions">
     <ContentActionsDropdown
       videos={[videos[0]]}
       {playlist}
@@ -44,8 +43,9 @@
       {session}
     />
   </div>
-{:else}
-  <div class="flex content-table-row items-center">
+
+  <!-- Non-hover devices content -->
+  <div class="touch-actions">
     {#if session}
       <Button
         variant="ghost"
@@ -64,4 +64,4 @@
       </Button>
     {/if}
   </div>
-{/if}
+</div>

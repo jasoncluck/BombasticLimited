@@ -22,7 +22,7 @@ CREATE POLICY "Users can SELECT their own user_playlists"
         user_playlists.user_id = auth.uid()
     );
 
-CREATE POLICY "Users can INSERT user_playlists for playlists they created or are Public/Official"
+CREATE POLICY "Users can INSERT user_playlists for playlists they created or are Public"
     ON public.user_playlists
     FOR INSERT
     WITH CHECK (
@@ -32,7 +32,6 @@ CREATE POLICY "Users can INSERT user_playlists for playlists they created or are
               AND (
                 p.created_by = auth.uid()
                 OR p.type = 'Public'
-                OR p.type = 'Official'
               )
         )
     );

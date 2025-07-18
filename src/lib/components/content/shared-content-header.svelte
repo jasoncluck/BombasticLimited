@@ -14,11 +14,7 @@
   import type { HTMLAttributes } from "svelte/elements";
   import type { Snippet } from "svelte";
   import type { CombinedContentFilter } from "./content-filter";
-  import Pagination from "../pagination/pagination.svelte";
-  import {
-    getNumberOfPages,
-    updatePaginationQueryParams,
-  } from "../pagination/pagination";
+  import { getNumberOfPages } from "../pagination/pagination";
   import {
     DEFAULT_NUM_VIDEOS_PAGINATION,
     isVideoWithTimestamp,
@@ -31,9 +27,8 @@
   } from "../playlist/playlist-service";
   import { MinusCircle, Play, PlusCircle } from "@lucide/svelte";
   import { fade } from "svelte/transition";
-  import Button, { buttonVariants } from "../ui/button/button.svelte";
+  import Button from "../ui/button/button.svelte";
   import * as Popover from "$lib/components/ui/popover";
-  import { page } from "$app/state";
   import type { UserProfile } from "$lib/supabase/user-profiles";
 
   interface SharedContentHeaderProps extends HTMLAttributes<HTMLDivElement> {
@@ -122,7 +117,7 @@
   <div class="mb-2" {...restProps}>
     {@render children()}
 
-    <div class="flex items-center m-4 gap-0">
+    <div class="flex items-center mx-4 sm:my-4 gap-0">
       {#if profilePlaylist}
         <!-- Play Button -->
         <Button

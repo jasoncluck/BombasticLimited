@@ -195,10 +195,6 @@ export const actions: Actions = {
       });
     }
 
-    if (type === "Official") {
-      throw new Error("Unable to create Official playlists.");
-    }
-
     if (
       image_properties?.x === 0 &&
       image_properties?.y === 0 &&

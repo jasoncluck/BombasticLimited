@@ -1,5 +1,4 @@
 CREATE TYPE "public"."playlist_type" AS ENUM (
-    'Official',
     'Public',
     'Private'
 );

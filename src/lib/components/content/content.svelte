@@ -67,8 +67,6 @@
       getPlaylists: () => playlists,
       getVideos: () => videos,
       getContentFilter: () => contentFilter,
-      getCanHover: () => mediaQueryState.canHover,
-      getIsSm: () => mediaQueryState.isSm,
       sectionId,
       supabase,
       session,

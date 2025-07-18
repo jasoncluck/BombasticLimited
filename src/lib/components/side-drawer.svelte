@@ -158,15 +158,13 @@
                   </Badge>
                 {/snippet}
 
-                {#snippet itemRenderer(source, index)}
+                {#snippet itemRenderer(source)}
                   {@const sourceInfo = SOURCE_INFO[source]}
                   <div class="w-full flex items-center gap-2 m-1">
-                    <div
-                      class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
-                    >
+                    <div class="h-12 w-12 flex-none">
                       <img
                         src={sourceInfo.image}
-                        class="h-full w-full object-cover cursor-pointer"
+                        class="h-12 w-12 object-cover cursor-pointer"
                         alt={`Image for channel: ${sourceInfo.displayName}`}
                       />
                     </div>
@@ -200,11 +198,11 @@
                   />
                   <span class="sr-only">Live now</span>
                 {/if}
-                <div class="w-12 h-12">
+                <div class="w-12 h-12 flex-none">
                   <img
                     src={SOURCE_INFO[source].image}
                     alt={SOURCE_INFO[source].displayName}
-                    class="h-full w-full cursor-pointer"
+                    class="h-12 w-12 object-cover cursor-pointer"
                   />
                 </div>
                 <span class="text-sm font-medium m-3 overflow-ellipsis">
@@ -237,18 +235,16 @@
                   {@const playlist = item as Playlist}
                   <div class="w-full flex items-center gap-2 m-1">
                     {#if playlist.processedImageUrl}
-                      <div
-                        class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
-                      >
+                      <div class="h-12 w-12 flex-none">
                         <img
                           src={playlist.processedImageUrl}
-                          class="h-full w-full object-cover cursor-pointer"
+                          class="h-12 w-12 object-cover cursor-pointer"
                           alt={`Image for playlist: ${playlist.name}`}
                         />
                       </div>
                     {:else}
                       <div
-                        class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
+                        class="h-12 w-12 flex items-center justify-center flex-none"
                       >
                         <ListVideo class="!h-8 !w-8" />
                       </div>
@@ -311,16 +307,16 @@
                 >
                   <div class="flex items-center overflow-hidden">
                     {#if playlist.processedImageUrl}
-                      <div class="w-12 h-12 flex-shrink-0">
+                      <div class="w-12 h-12 flex-none">
                         <img
                           src={playlist.processedImageUrl}
-                          class="h-full w-full cursor-pointer object-cover"
+                          class="h-12 w-12 object-cover cursor-pointer"
                           alt={`Image for playlist: ${playlist.name}`}
                         />
                       </div>
                     {:else}
                       <div
-                        class="h-12 w-12 flex items-center justify-center flex-shrink-0"
+                        class="h-12 w-12 flex items-center justify-center flex-none"
                       >
                         <ListVideo class="!h-8 !w-8" />
                       </div>

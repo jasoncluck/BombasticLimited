@@ -59,6 +59,8 @@
 
   let openAccountDrawer = $state(false);
 
+  let searchQuery = $state(page.params.query);
+
   let playlistsState = $derived(playlists);
 
   if (contentState.dragContentType) {
@@ -84,20 +86,24 @@
   // Default snapshot for every page - restores scroll position when navigating through history
   export const snapshot: Snapshot<{
     content: ScrollPosition;
+    searchQuery: string;
   }> = {
     capture: () => {
       return {
         content: pageState.createViewportSnapshot(
           pageState.viewportRefs.contentViewportRef,
         ),
+        searchQuery,
       };
     },
-    restore: (positions) => {
-      pageState.contentScrollPosition = positions.content;
+    restore: (restored) => {
+      pageState.contentScrollPosition = restored.content;
       pageState.restoreViewportScroll(
         pageState.viewportRefs.contentViewportRef,
-        positions.content,
+        restored.content,
       );
+
+      searchQuery = restored.searchQuery;
     },
   };
 
@@ -136,6 +142,13 @@
     );
     if (pageState.sidebarScrollPosition) {
       pageState.sidebarScrollPosition = null;
+    }
+  });
+
+  $effect(() => {
+    if (!page.url.pathname.startsWith("/search/")) {
+      console.log("in effect");
+      searchQuery = "";
     }
   });
 
@@ -194,7 +207,7 @@
   });
 </script>
 
-<Toaster position="bottom-center" />
+<Toaster position={mediaQuery.canHover ? "top-right" : "top-center"} />
 
 <svelte:head>
   <script src="https://www.youtube.com/iframe_api"></script>
@@ -231,7 +244,7 @@
         oninput={(e) => layoutState.handleSearch(e)}
         placeholder="Search"
         class="sm:w-72"
-        value={page.params.query}
+        bind:value={searchQuery}
       />
     </div>
 
@@ -450,7 +463,9 @@
         bind:viewportRef={pageState.viewportRefs.contentViewportRef}
         data-scroll-area="content"
       >
-        <div class="flex flex-col relative justify-center items-center sm:m-4">
+        <div
+          class="flex flex-col relative justify-center items-center m-2 sm:m-4"
+        >
           <div class="@xl:max-w-[1450px] max-w-[1000px] w-full">
             <div class="flex flex-col mb-20">
               {@render children()}

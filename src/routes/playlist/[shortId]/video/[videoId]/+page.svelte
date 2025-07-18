@@ -17,7 +17,7 @@
   } = $derived(data);
 </script>
 
-<div class="m-4">
+<div>
   <div class="mb-10">
     {#key video.id}
       <VideoPlayer
@@ -38,16 +38,16 @@
         {#if "processedImageUrl" in profilePlaylist && profilePlaylist.processedImageUrl}
           <img
             src={(profilePlaylist as Playlist).processedImageUrl}
-            class="h-20 w-20"
+            class="h-20 w-20 flex-shrink-0"
             alt={`Image for playlist: ${profilePlaylist.name}`}
           />
         {:else}
-          <ListVideo class="!h-20 !w-20" />
+          <ListVideo class="!h-20 !w-20 flex-shrink-0" />
         {/if}
-        <div class="flex flex-col">
+        <div class="flex flex-col min-w-0 flex-1 overflow-hidden">
           <p class="text-sm text-muted-foreground tracking-tight">Next up</p>
           <a
-            class="header-link !m-0 !mb-2"
+            class="lg:text-4xl text-3xl self-start font-semibold hover:underline cursor-pointer"
             href={`/playlist/${profilePlaylist.short_id}`}
           >
             {profilePlaylist.name}

@@ -31,7 +31,7 @@ export type UserPlaylist = Omit<Tables<"user_playlists">, "user_id"> &
   ProfilePlaylist;
 
 export type PlaylistVideo = Tables<"playlist_videos">;
-export const PLAYLIST_TYPES = ["Public", "Private", "Official"] as const;
+export const PLAYLIST_TYPES = ["Public", "Private"] as const;
 export type PlaylistType = (typeof PLAYLIST_TYPES)[number];
 
 // Flattened rpc return

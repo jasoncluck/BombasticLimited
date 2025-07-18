@@ -9,49 +9,48 @@
   import { type Playlist } from "$lib/supabase/playlists";
   import Button from "$lib/components/ui/button/button.svelte";
   import type { CombinedContentFilter } from "../content-filter";
-  import { getMediaQueryState } from "$lib/state/media-query.svelte";
 
   const {
     video,
     playlist,
     contentFilter,
     sectionId = DEFAULT_SECTION_ID,
+    className = "",
   }: {
     video: Video;
     contentFilter: CombinedContentFilter;
     playlist?: Playlist;
     sectionId?: string;
+    className?: string;
   } = $props();
 
   const contentState = getContentState();
-  const mediaQueryState = getMediaQueryState();
 
   const isHovering = $derived(
     contentState.hoveredVideosBySection[sectionId]?.id === video.id,
   );
 </script>
 
-{#if mediaQueryState.canHover}
-  <div class="flex justify-center items-center h-[80px]">
-    <Button
-      class="{isHovering ? 'opacity-100' : 'opacity-0'} ghost-button-minimal"
-      variant="ghost"
-      size="icon"
-      title="Play video"
-      onclick={(e) => {
-        e.stopPropagation();
-        e.preventDefault();
+<!-- Always render but use CSS classes for responsive behavior -->
+<div class="flex justify-center items-center h-[80px] {className}">
+  <Button
+    class="{isHovering ? 'opacity-100' : 'opacity-0'} ghost-button-minimal"
+    variant="ghost"
+    size="icon"
+    title="Play video"
+    onclick={(e) => {
+      e.stopPropagation();
+      e.preventDefault();
 
-        handleContentNavigation({
-          video,
-          playlist,
-          contentFilter,
-        });
-      }}
-    >
-      <Play
-        class="cursor-pointer stroke-primary fill-primary brightness-[105%]"
-      />
-    </Button>
-  </div>
-{/if}
+      handleContentNavigation({
+        video,
+        playlist,
+        contentFilter,
+      });
+    }}
+  >
+    <Play
+      class="cursor-pointer stroke-primary fill-primary brightness-[105%]"
+    />
+  </Button>
+</div>

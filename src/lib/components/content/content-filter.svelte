@@ -275,11 +275,7 @@
 {:else}
   <Drawer.Root bind:open={contentFilterDrawerOpen}>
     <Drawer.Trigger
-      class={buttonVariants({
-        variant: "ghost",
-        class:
-          "cursor-pointer hover:text-primary flex items-center gap-2 outline-none",
-      })}
+      class="cursor-pointer hover:text-primary flex items-center gap-1 outline-none"
     >
       <span class="text-sm">{sortOptionInfo.displayName}</span>
       <List size={20} />

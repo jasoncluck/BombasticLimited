@@ -39,7 +39,7 @@ export const load: PageServerLoad = async ({
   }
 
   const playlistContentFilter: PlaylistVideosFilter = {
-    sort: { key: "playlistOrder", order: "ascending" },
+    sort: { key: "datePublished", order: "descending" },
     type: "playlist",
   };
 

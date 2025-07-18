@@ -27,17 +27,22 @@
   import { parseImageProperties } from "./playlist";
   import { getFlash, updateFlash } from "sveltekit-flash-message";
   import { page } from "$app/state";
+  import type { Session } from "@supabase/supabase-js";
 
   let {
     form,
+    formId,
     playlist,
     open = $bindable(),
     trigger,
+    session,
   }: {
     form: SuperValidated<PlaylistSchema>;
+    formId?: string;
     playlist: Playlist;
     trigger: Snippet;
     open: boolean;
+    session: Session | null;
   } = $props();
 
   const flash = getFlash(page);
@@ -47,9 +52,12 @@
   const cropperState = useImageCropperCropper();
   const cropState = useImageCropperCrop();
 
+  const isPlaylistOwner = $derived(playlist.created_by === session?.user.id);
+
   const playlistForm = $derived(
     superForm(form, {
       validators: zodClient(playlistSchema),
+      id: formId ?? "playlist-dialog-form",
       dataType: "json",
       onSubmit() {
         isSubmitting = true;
@@ -98,9 +106,15 @@
 </script>
 
 <Dialog.Root bind:open>
-  <Dialog.Trigger class="outline-none">
-    {@render trigger()}
-  </Dialog.Trigger>
+  {#if isPlaylistOwner}
+    <Dialog.Trigger class="outline-none">
+      {@render trigger()}
+    </Dialog.Trigger>
+  {:else}
+    <div class="outline-none">
+      {@render trigger()}
+    </div>
+  {/if}
   <Dialog.Content
     class="min-w-[375px] sm:max-w-[800px] w-[90%] h-[90%] sm:h-auto"
   >

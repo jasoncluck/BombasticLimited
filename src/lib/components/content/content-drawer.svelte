@@ -71,6 +71,12 @@
 
   const variant = $derived(contentState.drawerVariant);
 
+  // hide set playlist image if on the video screen
+  const hideSetAsPlaylistImage = $derived(
+    variant === "list-items" &&
+      /\/playlist\/[^/]+\/video\/[^/]+/.test(page.url.pathname),
+  );
+
   let selectedVideos = $derived(
     contentState.selectedVideosBySection[sectionId] ?? [],
   );
@@ -254,7 +260,6 @@
         <!-- Add to Playlist -->
         {#if (variant !== "header" && filteredPlaylists.length > 0) || (variant === "header" && operationVideos.length > 0)}
           <FullHeightDrawer
-            bind:this={addToPlaylistDrawerRef}
             title="Select Playlist"
             nested={true}
             bind:open={addToPlaylistDrawerOpen}
@@ -272,14 +277,16 @@
                   class="drawer-playlist-button"
                   variant="ghost"
                   onclick={async () => {
-                    await handleAddVideosToPlaylist({
+                    const { error } = await handleAddVideosToPlaylist({
                       videos: operationVideos,
                       playlist: addPlaylist,
                       supabase,
                       session,
                     });
-                    // Use the helper function to close with animation
-                    closeNestedDrawerWithAnimation();
+
+                    if (!error) {
+                      addToPlaylistDrawerOpen = false;
+                    }
                   }}
                 >
                   {#if addPlaylist.processedImageUrl}
@@ -336,7 +343,7 @@
         {/if}
 
         <!-- Set as playlist image -->
-        {#if playlist && variant === "list-items" && isPlaylistOwner && operationVideos.length === 1}
+        {#if playlist && variant === "list-items" && isPlaylistOwner && operationVideos.length === 1 && !hideSetAsPlaylistImage}
           <Button
             class="drawer-button justify-start"
             variant="ghost"

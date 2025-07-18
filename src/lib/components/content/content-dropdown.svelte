@@ -187,7 +187,7 @@
             ? 'scale-105'
             : ''} {shouldShowButton ? 'opacity-100' : 'opacity-0'}"
         >
-          <Ellipsis class={variant === "header" ? "!h-6 !w-6" : ""} />
+          <Ellipsis />
           <span class="sr-only">
             {variant === "header"
               ? "Actions for selected items"

@@ -97,73 +97,71 @@
   };
 </script>
 
-<ContentDrawer {playlist} {playlists} {contentFilter} {supabase} {session}>
-  <div class="flex flex-col">
-    <YoutubeEmbed
-      {supabase}
-      {session}
-      {video}
-      {contentFilter}
-      {playlist}
-      durationSeconds={videoDurationToSeconds(video?.duration)}
-    />
+<div class="flex flex-col">
+  <YoutubeEmbed
+    {supabase}
+    {session}
+    {video}
+    {contentFilter}
+    {playlist}
+    durationSeconds={videoDurationToSeconds(video?.duration)}
+  />
 
-    <div class="flex justify-between mt-6">
-      <div class="flex flex-wrap items-center gap-2">
-        <p class="font-semibold">{video.title}</p>
+  <div class="flex justify-between mt-6">
+    <div class="flex flex-wrap items-center gap-2">
+      <p class="font-semibold">{video.title}</p>
 
-        <span class="text-muted-foreground">
-          {formatPublishedDate(video.published_at)}
-        </span>
-      </div>
-      <div class="ml-auto">
-        {#if mediaQueryState.canHover}
-          <ContentDropdown
-            videos={[video]}
-            {playlists}
-            variant="item"
-            {supabase}
-            {session}
-          />
-        {:else}
-          <Button
-            variant="ghost"
-            class="outline-none ghost-button-minimal"
-            onclick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              contentState.handleDrawer({
-                video,
-                variant: "item",
-              });
-            }}
-          >
-            <Ellipsis />
-          </Button>
-        {/if}
-      </div>
+      <span class="text-muted-foreground">
+        {formatPublishedDate(video.published_at)}
+      </span>
     </div>
-
-    {#if video?.description}
-      <div class="whitespace-pre-line mt-4">
-        {#each processTimestamps(video.description) as line (line)}
-          {#if line.hasTimestamp}
-            <div>
-              <a
-                class="timestamp-link text-left w-full hover:underline hover:text-primary"
-                href="{baseUrl}/{video.id}?t={line.timestamp}"
-                onclick={() => {
-                  pageState.contentScrollPosition = { scrollTop: 0 };
-                }}
-              >
-                {line.text}
-              </a>
-            </div>
-          {:else}
-            <p>{line.text}</p>
-          {/if}
-        {/each}
-      </div>
-    {/if}
+    <div class="ml-auto">
+      {#if mediaQueryState.canHover}
+        <ContentDropdown
+          videos={[video]}
+          {playlists}
+          variant="item"
+          {supabase}
+          {session}
+        />
+      {:else}
+        <Button
+          variant="ghost"
+          class="outline-none ghost-button-minimal"
+          onclick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            contentState.handleDrawer({
+              video,
+              variant: "item",
+            });
+          }}
+        >
+          <Ellipsis />
+        </Button>
+      {/if}
+    </div>
   </div>
-</ContentDrawer>
+
+  {#if video?.description}
+    <div class="whitespace-pre-line mt-4">
+      {#each processTimestamps(video.description) as line (line)}
+        {#if line.hasTimestamp}
+          <div>
+            <a
+              class="timestamp-link text-left w-full hover:underline hover:text-primary"
+              href="{baseUrl}/{video.id}?t={line.timestamp}"
+              onclick={() => {
+                pageState.contentScrollPosition = { scrollTop: 0 };
+              }}
+            >
+              {line.text}
+            </a>
+          </div>
+        {:else}
+          <p>{line.text}</p>
+        {/if}
+      {/each}
+    </div>
+  {/if}
+</div>

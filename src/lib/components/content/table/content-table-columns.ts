@@ -15,8 +15,6 @@ export function createContentColumns({
   getPlaylist,
   getPlaylists,
   getContentFilter,
-  getCanHover,
-  getIsSm,
   sectionId,
   supabase,
   session,
@@ -25,34 +23,26 @@ export function createContentColumns({
   getPlaylists: () => Playlist[];
   getVideos: () => Video[];
   getContentFilter: () => CombinedContentFilter;
-  getCanHover: () => boolean;
-  getIsSm: () => boolean;
   sectionId: string;
   session: Session | null;
   supabase: SupabaseClient<Database>;
 }): ColumnDef<Video>[] {
   return [
-    // Only show play column if canHover is true
-    ...(getCanHover()
-      ? [
-          {
-            accessorKey: "play",
-            header: () => {
-              return;
-            },
-            cell: ({ row }: { row: Row<Video> }) => {
-              const video = row.original;
-              return renderComponent(ContentTablePlay, {
-                video,
-                playlist: getPlaylist(),
-                contentFilter: getContentFilter(),
-                sectionId,
-              });
-            },
-          },
-        ]
-      : []),
-
+    {
+      accessorKey: "play",
+      header: () => {
+        return;
+      },
+      cell: ({ row }: { row: Row<Video> }) => {
+        const video = row.original;
+        return renderComponent(ContentTablePlay, {
+          video,
+          playlist: getPlaylist(),
+          contentFilter: getContentFilter(),
+          sectionId,
+        });
+      },
+    },
     {
       accessorKey: "thumbnail_maxres_url",
       cell: ({ row }) => {
@@ -72,21 +62,17 @@ export function createContentColumns({
         });
       },
     },
-    // Only show description column if isSm is true (sm and up)
-    ...(getIsSm()
-      ? [
-          {
-            accessorKey: "description",
-            cell: ({ row }: { row: Row<Video> }) => {
-              const video = row.original;
-              return renderComponent(ContentTableDescription, {
-                video,
-                sectionId,
-              });
-            },
-          },
-        ]
-      : []),
+    {
+      accessorKey: "description",
+      cell: ({ row }: { row: Row<Video> }) => {
+        const video = row.original;
+        return renderComponent(ContentTableDescription, {
+          video,
+          sectionId,
+          className: "description-column", // Add CSS class for styling
+        });
+      },
+    },
     {
       accessorKey: "id",
       header: () => {
