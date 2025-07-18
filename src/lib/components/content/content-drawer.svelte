@@ -82,6 +82,7 @@
   );
 
   let addToPlaylistDrawerOpen = $state(false);
+  let addToPlaylistDrawerRef: any = $state(null);
 
   const filteredPlaylists = $derived(
     playlists.filter(
@@ -126,6 +127,25 @@
       throw error;
     }
   }
+
+  // Function to close the nested drawer with animation
+  function closeNestedDrawerWithAnimation() {
+    if (
+      addToPlaylistDrawerRef &&
+      typeof addToPlaylistDrawerRef.closeWithAnimation === "function"
+    ) {
+      addToPlaylistDrawerRef.closeWithAnimation();
+    } else {
+      // Fallback - try to find and click the close button
+      const closeButton = document.querySelector("[data-drawer-close]");
+      if (closeButton) {
+        (closeButton as HTMLElement).click();
+      } else {
+        // Last resort - direct state change
+        addToPlaylistDrawerOpen = false;
+      }
+    }
+  }
 </script>
 
 <!-- Only show drawer on touch devices, hide on desktop -->
@@ -141,7 +161,7 @@
     {@render children()}
 
     {#if (operationVideos.length > 0 || (variant === "header" && playlist)) && session}
-      <Drawer.Content class="outline-none">
+      <Drawer.Content class="outline-none" data-drawer-content>
         <Drawer.Header class="text-left mx-4">
           {#if variant === "list-items" && operationVideos.length === 1}
             {@const video = operationVideos[0]}
@@ -254,13 +274,17 @@
         <!-- Add to Playlist -->
         {#if (variant !== "header" && filteredPlaylists.length > 0) || (variant === "header" && operationVideos.length > 0)}
           <FullHeightDrawer
+            bind:this={addToPlaylistDrawerRef}
             title="Select Playlist"
             nested={true}
             bind:open={addToPlaylistDrawerOpen}
-            onClose={() => (addToPlaylistDrawerOpen = false)}
+            onClose={() => {
+              // Let the drawer handle the state change
+              console.log("Nested drawer closed via onClose");
+            }}
           >
             {#snippet trigger()}
-              <Button class="drawer-button" variant="ghost">
+              <Button class="drawer-button" variant="ghost" data-drawer-trigger>
                 <PlusCircle class="drawer-icon" />
                 Add to playlist
                 <ChevronRight class="ml-auto" />
@@ -271,14 +295,15 @@
                 <Button
                   class="drawer-playlist-button"
                   variant="ghost"
-                  onclick={() => {
-                    handleAddVideosToPlaylist({
+                  onclick={async () => {
+                    await handleAddVideosToPlaylist({
                       videos: operationVideos,
                       playlist: addPlaylist,
                       supabase,
                       session,
                     });
-                    addToPlaylistDrawerOpen = false;
+                    // Use the helper function to close with animation
+                    closeNestedDrawerWithAnimation();
                   }}
                 >
                   {#if addPlaylist.processedImageUrl}
@@ -455,7 +480,9 @@
               class: "drawer-button-footer",
               variant: "outline",
             })}
-            >Close
+            data-drawer-close
+          >
+            Close
           </Drawer.Close>
         </Drawer.Footer>
       </Drawer.Content>

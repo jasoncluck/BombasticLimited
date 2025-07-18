@@ -745,6 +745,7 @@ export class ContentState {
     sectionId: string = DEFAULT_SECTION_ID,
   ) {
     const handleClickOutside = (event: MouseEvent) => {
+      console.log("click outside");
       this.hoverTimeoutId = null;
 
       // Check if click is outside the container
@@ -761,6 +762,11 @@ export class ContentState {
 
         // If clicking on context menu items, don't clear anything
         if (isClickingOnContextMenu) {
+          return;
+        }
+
+        // If clicking on drawer elements, don't clear anything
+        if (this.isDrawerOpenForAnySection()) {
           return;
         }
 

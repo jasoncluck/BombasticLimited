@@ -16,7 +16,7 @@
   import { getPlaylistState } from "$lib/state/playlist.svelte";
   import ContentCarousel from "./content-carousel.svelte";
   import ContentTiles from "./content-tiles.svelte";
-  import type { UserProfile } from "$lib/supabase/profiles";
+  import type { UserProfile } from "$lib/supabase/user-profiles";
   import ContentContextMenu from "./content-context-menu.svelte";
   import ContentDrawer from "./content-drawer.svelte";
   import { onNavigate } from "$app/navigation";
