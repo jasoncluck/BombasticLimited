@@ -232,22 +232,20 @@ export class ContentState {
     // }
 
     // Only delay clearing hover if dropdown menu is not open
-    if (!this.isDropdownMenuOpen) {
-      // Store the timeout ID so it can be cleared if needed
-      const timeoutId = setTimeout(() => {
-        if (
-          !this.dragContentType &&
-          !this.isContextMenuOpenForSection(sectionId)
-        ) {
-          this.hoveredVideosBySection[sectionId] = null;
-          if (removeSelectedOnHover) {
-            this.selectedVideosBySection[sectionId] = [];
-          }
+    // Store the timeout ID so it can be cleared if needed
+    const timeoutId = setTimeout(() => {
+      if (
+        !this.dragContentType &&
+        !this.isContextMenuOpenForSection(sectionId)
+      ) {
+        this.hoveredVideosBySection[sectionId] = null;
+        if (removeSelectedOnHover) {
+          this.selectedVideosBySection[sectionId] = [];
         }
-        this.hoverTimeoutId = null;
-      }, 50);
-      this.hoverTimeoutId = timeoutId;
-    }
+      }
+      this.hoverTimeoutId = null;
+    }, 50);
+    this.hoverTimeoutId = timeoutId;
   }
 
   getVideoDragClasses(index: number, contentDisplay: ContentDisplay): string {
@@ -750,6 +748,19 @@ export class ContentState {
       // Check if click is outside the container
       if (!containerElement.contains(event.target as Node)) {
         // Check if the click is on a context menu or dropdown menu
+        const target = event.target as HTMLElement;
+        const isClickingOnContextMenu =
+          target.closest('[role="menu"]') ||
+          target.closest("[data-radix-popper-content-wrapper]");
+        const isClickingOnDropdown =
+          target.closest("[data-dropdown]") ||
+          target.closest('[role="listbox"]') ||
+          target.closest('[role="combobox"]');
+
+        // If clicking on context menu items, don't clear anything
+        if (isClickingOnContextMenu) {
+          return;
+        }
 
         // If clicking on drawer elements, don't clear anything
         if (this.isDrawerOpenForAnySection()) {
@@ -775,7 +786,8 @@ export class ContentState {
           this.dragContentType ||
           event.shiftKey ||
           event.ctrlKey ||
-          event.metaKey
+          event.metaKey ||
+          isClickingOnDropdown
         ) {
           return;
         }
