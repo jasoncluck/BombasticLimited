@@ -53,7 +53,7 @@
         updatePaginationQueryParams({
           pageNum,
           url: page.url,
-          invalidate: ["supabase:db:playlistsForProfile"],
+          invalidate: ["supabase:db:playlists"],
         });
       }}
     />
