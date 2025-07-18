@@ -73,7 +73,7 @@ export const load: PageServerLoad = async ({
     contentFilter,
     playlistId: profilePlaylist.id,
     currentVideo: video,
-    limit: 3,
+    limit: 5,
     supabase,
   });
 

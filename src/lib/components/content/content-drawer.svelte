@@ -82,7 +82,6 @@
   );
 
   let addToPlaylistDrawerOpen = $state(false);
-  let addToPlaylistDrawerRef: any = $state(null);
 
   const filteredPlaylists = $derived(
     playlists.filter(
@@ -125,25 +124,6 @@
     } catch (error) {
       console.error("Error updating video position:", error);
       throw error;
-    }
-  }
-
-  // Function to close the nested drawer with animation
-  function closeNestedDrawerWithAnimation() {
-    if (
-      addToPlaylistDrawerRef &&
-      typeof addToPlaylistDrawerRef.closeWithAnimation === "function"
-    ) {
-      addToPlaylistDrawerRef.closeWithAnimation();
-    } else {
-      // Fallback - try to find and click the close button
-      const closeButton = document.querySelector("[data-drawer-close]");
-      if (closeButton) {
-        (closeButton as HTMLElement).click();
-      } else {
-        // Last resort - direct state change
-        addToPlaylistDrawerOpen = false;
-      }
     }
   }
 </script>
@@ -278,10 +258,6 @@
             title="Select Playlist"
             nested={true}
             bind:open={addToPlaylistDrawerOpen}
-            onClose={() => {
-              // Let the drawer handle the state change
-              console.log("Nested drawer closed via onClose");
-            }}
           >
             {#snippet trigger()}
               <Button class="drawer-button" variant="ghost" data-drawer-trigger>

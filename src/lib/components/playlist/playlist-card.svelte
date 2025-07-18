@@ -10,7 +10,7 @@
 
 <a
   class="grid grid-cols-[4rem_1fr] p-3 gap-2 items-center hover:bg-secondary
-      transform ease-out transition-colors duration-150 cursor-pointer rounded"
+      transform cursor-pointer rounded"
   href={`/playlist/${playlist.short_id}`}
 >
   {#if playlist.processedImageUrl}

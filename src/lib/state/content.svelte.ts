@@ -745,25 +745,11 @@ export class ContentState {
     sectionId: string = DEFAULT_SECTION_ID,
   ) {
     const handleClickOutside = (event: MouseEvent) => {
-      console.log("click outside");
       this.hoverTimeoutId = null;
 
       // Check if click is outside the container
       if (!containerElement.contains(event.target as Node)) {
         // Check if the click is on a context menu or dropdown menu
-        const target = event.target as HTMLElement;
-        const isClickingOnContextMenu =
-          target.closest('[role="menu"]') ||
-          target.closest("[data-radix-popper-content-wrapper]");
-        const isClickingOnDropdown =
-          target.closest("[data-dropdown]") ||
-          target.closest('[role="listbox"]') ||
-          target.closest('[role="combobox"]');
-
-        // If clicking on context menu items, don't clear anything
-        if (isClickingOnContextMenu) {
-          return;
-        }
 
         // If clicking on drawer elements, don't clear anything
         if (this.isDrawerOpenForAnySection()) {
@@ -772,18 +758,10 @@ export class ContentState {
 
         // If context menu is open and we're clicking elsewhere (like dropdown),
         // close the context menu but preserve selection temporarily
-        if (this.isContextMenuOpenForSection(sectionId)) {
+        if (this.isContextMenuOpenForAnySection()) {
           this.openContextMenuSection = null;
           // Don't clear selection immediately - let the dropdown action complete
           // The selection will be cleared by other mechanisms or timeout
-          return;
-        }
-
-        // If drawer is open for this section, close it
-        if (this.isDrawerOpenForSection(sectionId)) {
-          this.openDrawerSection = null;
-          this.selectedVideosBySection[sectionId] = [];
-          this.hoveredVideosBySection[sectionId] = null;
           return;
         }
 
@@ -797,8 +775,7 @@ export class ContentState {
           this.dragContentType ||
           event.shiftKey ||
           event.ctrlKey ||
-          event.metaKey ||
-          isClickingOnDropdown
+          event.metaKey
         ) {
           return;
         }

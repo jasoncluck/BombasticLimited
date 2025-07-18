@@ -247,7 +247,7 @@
               })}
             >
               <div class="flex items-center gap-2">
-                {#if userProfile?.content_display === "CARD"}
+                {#if userProfile?.content_display === "TILES"}
                   <div class="flex items-center gap-2">
                     <GalleryHorizontal />
                     Card
@@ -265,10 +265,10 @@
                 <DropdownMenu.Item
                   class="cursor-pointer"
                   onclick={() => {
-                    if (userProfile?.content_display !== "CARD") {
+                    if (userProfile?.content_display !== "TILES") {
                       contentState.resetState();
                       handleUpdateProfileContentDisplay({
-                        contentDisplay: "CARD",
+                        contentDisplay: "TILES",
                         supabase,
                         session,
                       });
@@ -450,7 +450,7 @@
         bind:viewportRef={pageState.viewportRefs.contentViewportRef}
         data-scroll-area="content"
       >
-        <div class="flex flex-col relative justify-center items-center">
+        <div class="flex flex-col relative justify-center items-center sm:m-4">
           <div class="@xl:max-w-[1450px] max-w-[1000px] w-full">
             <div class="flex flex-col mb-20">
               {@render children()}

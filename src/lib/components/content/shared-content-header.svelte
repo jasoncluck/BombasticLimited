@@ -31,10 +31,10 @@
   } from "../playlist/playlist-service";
   import { MinusCircle, Play, PlusCircle } from "@lucide/svelte";
   import { fade } from "svelte/transition";
-  import Button from "../ui/button/button.svelte";
+  import Button, { buttonVariants } from "../ui/button/button.svelte";
   import * as Popover from "$lib/components/ui/popover";
   import { page } from "$app/state";
-  import type { UserProfile } from "$lib/supabase/profiles";
+  import type { UserProfile } from "$lib/supabase/user-profiles";
 
   interface SharedContentHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
@@ -122,35 +122,38 @@
   <div class="mb-2" {...restProps}>
     {@render children()}
 
-    <div class="flex justify-between m-4 items-center gap-1">
+    <div class="flex items-center m-4 gap-0">
       {#if profilePlaylist}
+        <!-- Play Button -->
         <Button
           variant="ghost"
           size="icon"
           disabled={!nextVideoToPlay}
-          class="p-7 bg-primary rounded-full shadow-xl transition-transform 
-            duration-200 hover:scale-105 hover:shadow-2xl
-            hover:!bg-primary hover:brightness-[150%]"
+          class="mr-2 p-7 bg-primary rounded-full shadow-xl transition-transform 
+        duration-200 hover:scale-105 hover:shadow-2xl
+        hover:!bg-primary hover:brightness-[150%]"
           onclick={handlePlayVideo}
         >
           <Play
             class="h-6! w-6! stroke-background-lighter fill-background-lighter "
           />
         </Button>
+
+        <!-- Plus/Minus Button -->
         {#if !isPlaylistCreator && !playlists.some((pl) => pl.id === profilePlaylist.id)}
           {#if !session?.user.id}
             <Popover.Root>
               <Popover.Trigger>
                 <PlusCircle class="ghost-button-minimal" size="30" />
               </Popover.Trigger>
-              <Popover.Content
-                >Create an account or login to follow playlists.</Popover.Content
-              >
+              <Popover.Content>
+                Create an account or login to follow playlists.
+              </Popover.Content>
             </Popover.Root>
           {:else}
-            <PlusCircle
-              class="ghost-button-minimal"
-              size="30"
+            <Button
+              variant="ghost"
+              class="ghost-button-minimal !px-3 !py-2"
               onclick={() => {
                 handleFollowPlaylist({
                   playlist: profilePlaylist,
@@ -159,13 +162,15 @@
                   session,
                 });
               }}
-            />
+            >
+              <PlusCircle class="!h-6 !w-6" />
+            </Button>
           {/if}
         {/if}
         {#if !isPlaylistCreator && playlists.some((pl) => pl.id === profilePlaylist.id)}
-          <MinusCircle
-            class="ghost-button-minimal"
-            size="30"
+          <Button
+            variant="ghost"
+            class="ghost-button-minimal !px-3 !py-2"
             onclick={() => {
               handleUnfollowPlaylist({
                 playlist: profilePlaylist,
@@ -173,25 +178,31 @@
                 session,
               });
             }}
-          />
+          >
+            <MinusCircle class="!h-6 !w-6" />
+          </Button>
+        {/if}
+
+        <!-- ContentSelect Button -->
+        {#if session}
+          <div
+            class="relative {userProfile?.content_display === 'TABLE'
+              ? ''
+              : 'sm:hidden'}"
+          >
+            <ContentSelect
+              {videos}
+              playlist={profilePlaylist}
+              {playlists}
+              {supabase}
+              {session}
+              displayLabel={true}
+            />
+          </div>
         {/if}
       {/if}
-      {#if session}
-        <div
-          class="relative {userProfile?.content_display === 'TABLE'
-            ? ''
-            : 'sm:hidden'}"
-        >
-          <ContentSelect
-            {videos}
-            playlist={profilePlaylist}
-            {playlists}
-            {supabase}
-            {session}
-            displayLabel={true}
-          />
-        </div>
-      {/if}
+
+      <!-- Content Filters (pushed to the right) -->
       <div class="flex items-center gap-4 ml-auto">
         <ContentFilters
           {contentFilter}
@@ -202,21 +213,5 @@
         />
       </div>
     </div>
-    {#if currentPage && numPages > 1}
-      <div class="mt-4">
-        <Pagination
-          count={videosCount}
-          bind:currentPage
-          perPage={DEFAULT_NUM_VIDEOS_PAGINATION}
-          onPageChange={async (pageNum) => {
-            updatePaginationQueryParams({
-              pageNum,
-              url: page.url,
-              invalidate: ["supabase:db:videos"],
-            });
-          }}
-        />
-      </div>
-    {/if}
   </div>
 </IntersectionObserver>

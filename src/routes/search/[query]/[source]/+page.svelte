@@ -8,7 +8,10 @@
     DEFAULT_NUM_VIDEOS_PAGINATION,
     type Video,
   } from "$lib/supabase/videos.js";
-  import { getContentState } from "$lib/state/content.svelte.js";
+  import {
+    DEFAULT_SECTION_ID,
+    getContentState,
+  } from "$lib/state/content.svelte.js";
   import type { SourceWithContinueCarouselState } from "$lib/components/content/content.js";
   import {
     getNumberOfPages,
@@ -23,11 +26,13 @@
     source,
     supabase,
     session,
+    userProfile,
     contentFilter,
     playlists,
   } = $derived(data);
 
   let showFloatingBreadcrumbs = $state(false);
+  const sectionId = DEFAULT_SECTION_ID;
 
   const pageFromQueryParams = page.url.searchParams.get(PAGINATION_QUERY_KEY);
   let currentPage = $state(
@@ -48,11 +53,11 @@
   }> = {
     capture: () => ({
       carouselsState,
-      selectedVideos: contentState.selectedVideos,
+      selectedVideos: contentState.selectedVideosBySection[sectionId],
     }),
     restore: async (restored) => {
       carouselsState = restored.carouselsState;
-      contentState.selectedVideos = restored.selectedVideos;
+      contentState.selectedVideosBySection[sectionId] = restored.selectedVideos;
     },
   };
 
@@ -69,6 +74,7 @@
     title="Search Results"
     {videos}
     {contentFilter}
+    {userProfile}
     videosCount={videosCount ?? 0}
     {currentPage}
     {source}
@@ -88,8 +94,9 @@
   />
   <Content
     {videos}
-    contentDisplay="TILES"
+    tilesDisplay="TILES"
     {contentFilter}
+    {userProfile}
     {playlists}
     {supabase}
     {session}

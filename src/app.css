@@ -104,7 +104,7 @@
   }
 
   .header-primary {
-    @apply lg:text-5xl md:text-4xl text-3xl font-semibold transition-colors mb-2;
+    @apply lg:text-5xl text-4xl font-semibold transition-colors mb-4 mx-0;
   }
 
   .header-secondary {
@@ -115,16 +115,12 @@
     @apply lg:text-7xl md:text-6xl text-4xl font-semibold transition-colors mb-2;
   }
 
-  .content-section {
-    @apply flex flex-col relative mt-0 sm:mt-4;
-  }
-
   .header-link {
-    @apply lg:text-4xl md:text-3xl text-2xl self-start font-semibold transition-colors hover:underline cursor-pointer mb-4 mx-2 sm:mx-4 truncate;
+    @apply inline-block lg:text-4xl  text-3xl self-start font-semibold transition-colors hover:underline cursor-pointer my-2 truncate;
   }
 
   .header-link-sticky {
-    @apply lg:text-4xl md:text-3xl text-2xl self-start font-semibold transition-colors hover:underline cursor-pointer bg-background-lighter sticky top-0 py-2 z-20 px-4  w-full truncate;
+    @apply inline-block lg:text-4xl text-3xl self-start font-semibold transition-colors hover:underline cursor-pointer bg-background-lighter sticky top-0 py-2 z-20 px-4  w-full truncate;
   }
 
   /* New elevated effect class */

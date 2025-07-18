@@ -55,7 +55,7 @@
         </div>
       </div>
       <Content
-        tilesDisplay="CAROUSEL"
+        tilesDisplay="TILES"
         {videos}
         {contentFilter}
         playlist={profilePlaylist}

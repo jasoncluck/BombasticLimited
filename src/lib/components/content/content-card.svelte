@@ -8,9 +8,11 @@
     DEFAULT_SECTION_ID,
     getContentState,
   } from "$lib/state/content.svelte";
-  import { Check } from "@lucide/svelte";
+  import { ArrowDown, ArrowUp, Check, Circle, ListVideo } from "@lucide/svelte";
   import type { ContentDisplayProps } from "./content";
   import ContentActionsDropdown from "./content-dropdown.svelte";
+  import { goto } from "$app/navigation";
+  import { getSortDisplayName } from "./content-filter";
 
   type ContentCardProps = {
     video: Video;
@@ -33,7 +35,6 @@
     playlists,
     supabase,
     session,
-    ...restProps
   }: ContentCardProps = $props();
 
   const contentState = getContentState();
@@ -64,10 +65,7 @@
   );
 </script>
 
-<a
-  class="group transform will-change-transform cursor-pointer mb-6"
-  {...restProps}
->
+<div class="group transform will-change-transform cursor-pointer mb-6 w-full">
   <div role="button" tabindex="0" class="text-left cursor-pointer">
     <div class="relative">
       <img
@@ -105,33 +103,77 @@
         </div>
       {/if}
     </div>
+
     <p class="text-sm p-2">
       {video.title}
     </p>
-  </div>
 
-  <!-- Datetime - hidden when description shows -->
-  <p
-    class="text-xs/4 text-muted-foreground transform px-2 pointer-events-none w-full @sm:absolute
-      {shouldShowDescription ? '@sm:invisible @sm:bg-transparent ' : 'block'}"
-  >
-    {new Date(video.published_at).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    })}
-  </p>
+    {#if isVideoWithTimestamp(video) && video.playlist_name && video.playlist_short_id}
+      <div
+        class="flex items-center gap-2 mt-1 mb-3 px-2 text-xs text-secondary-foreground hover:text-primary line-clamp-2 z-10"
+      >
+        <ListVideo size="16" class="shrink-0 self-start" />
+        <div class="flex flex-col gap-2 justify-center w-full">
+          <a
+            onclick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              goto(`playlist/${video.playlist_short_id}`);
+            }}
+            href={`playlist/${video.playlist_short_id}`}
+            class="whitespace-normal flex gap-2 items-center truncate"
+          >
+            <span class="truncate">{video.playlist_name}</span>
+          </a>
+          <div class="flex items-center text-muted-foreground shrink-0">
+            {#if video.playlist_sorted_by}
+              <div class="flex items-center shrink-0">
+                <span class="text-xs truncate">
+                  {getSortDisplayName({
+                    key: video.playlist_sorted_by,
+                    view: "playlist",
+                  })}
+                </span>
+                {#if video.playlist_sort_order}
+                  {#if video.playlist_sort_order === "ascending"}
+                    <ArrowUp size="14" class="shrink-0 ml-1" />
+                    <span class="sr-only">Sorted Ascending</span>
+                  {:else}
+                    <ArrowDown size="14" class="shrink-0 ml-1" />
+                    <span class="sr-only">Sorted Descending</span>
+                  {/if}
+                {/if}
+              </div>
+            {/if}
+          </div>
+        </div>
+      </div>
+    {/if}
 
-  <!-- Description overlay -->
-  {#if userPreferences.contentDescription !== "NONE"}
     <p
-      class="@sm:opacity-0 text-sm @sm:absolute p-2 px-4 w-full pointer-events-none -ml-2
-      {shouldShowDescription ? '@sm:opacity-100 @sm:bg-secondary' : ''}
-      transform will-change-transform rounded-b-md
-      z-50 break-anywhere whitespace-pre-line
-      {userPreferences.contentDescription === 'BRIEF' && 'line-clamp-3 py-1'}"
+      class="text-xs/4 text-muted-foreground transform px-2 pointer-events-none w-full @sm:absolute
+      {shouldShowDescription ? '@sm:invisible @sm:bg-transparent ' : 'block'}"
     >
-      {video.description}
+      {new Date(video.published_at).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })}
     </p>
-  {/if}
-</a>
+
+    <!-- Description overlay -->
+    {#if userPreferences.contentDescription !== "NONE"}
+      <p
+        class="@sm:opacity-0 text-sm @sm:absolute pointer-events-none
+    {shouldShowDescription ? '@sm:opacity-100 @sm:bg-secondary' : ''}
+    transform will-change-transform rounded-b-md
+    z-50 break-anywhere whitespace-pre-line px-4
+    {userPreferences.contentDescription === 'BRIEF' &&
+          'line-clamp-4 overflow-clip pb-1'}"
+        style="left: -0.5rem; right: -0.5rem; width: auto;"
+      >
+        {video.description}
+      </p>
+    {/if}
+  </div>
+</div>

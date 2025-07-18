@@ -360,17 +360,35 @@ export async function deletePlaylist({
 export async function searchPlaylists({
   searchString,
   limit = 15,
+  currentPage = 1,
   supabase,
 }: {
   searchString: string;
   limit?: number;
+  currentPage?: number;
   supabase: SupabaseClient<Database>;
-}): Promise<{ playlists: ProfilePlaylist[]; error: PostgrestError | null }> {
-  const { data: playlists, error } = await supabase
-    .rpc("search_playlists", {
-      search_term: searchString,
-    })
+}): Promise<{
+  playlists: ProfilePlaylist[];
+  error: PostgrestError | null;
+  count?: number | null;
+}> {
+  const query = supabase
+    .rpc(
+      "search_playlists",
+      {
+        search_term: searchString,
+      },
+      { count: "exact" },
+    )
     .limit(limit);
+
+  const { data: playlists, error, count } = await query;
+
+  if (currentPage && currentPage > 1) {
+    const startIndex = (currentPage - 1) * limit;
+    const endIndex = startIndex + limit - 1;
+    query.range(startIndex, endIndex);
+  }
 
   if (error) {
     showNotification(
@@ -378,7 +396,7 @@ export async function searchPlaylists({
       "error",
     );
   }
-  return { playlists: playlists ?? [], error };
+  return { playlists: playlists ?? [], error, count };
 }
 
 export async function addVideosToPlaylist({

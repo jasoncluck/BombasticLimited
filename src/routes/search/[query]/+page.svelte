@@ -2,12 +2,17 @@
   import { page } from "$app/state";
   import { SOURCE_INFO, SOURCES } from "$lib/constants/source.js";
   import Content from "$lib/components/content/content.svelte";
-  import { userPreferences } from "$lib/state/user-preferences.svelte.js";
   import type { Snapshot } from "@sveltejs/kit";
   import type { Video } from "$lib/supabase/videos.js";
   import { getContentState } from "$lib/state/content.svelte.js";
-  import type { SourceWithContinueCarouselState } from "$lib/components/content/content.js";
-  import PlaylistCard from "$lib/components/playlist/playlist-card.svelte";
+  import {
+    getContentView,
+    sourceWithContinueStateKeys,
+    type SourceWithContinueCarouselState,
+    type SourceWithContinueStateKeys,
+  } from "$lib/components/content/content.js";
+  import PlaylistTiles from "$lib/components/playlist/playlist-tiles.svelte";
+  import { getMediaQueryState } from "$lib/state/media-query.svelte.js";
 
   let { data } = $props();
   let {
@@ -19,27 +24,40 @@
     playlists,
     followedPlaylists,
     contentFilter,
+    userProfile,
   } = $derived(data);
 
   const contentState = getContentState();
+  const mediaQueryState = getMediaQueryState();
 
-  let carouselsState = $state<SourceWithContinueCarouselState>(
-    Object.fromEntries(
-      SOURCES.map((key) => [key, { lastViewedIndex: 0 }]),
-    ) as SourceWithContinueCarouselState,
-  );
+  let sectionIds = sourceWithContinueStateKeys;
+
+  const initialCarouselState: SourceWithContinueCarouselState =
+    {} as SourceWithContinueCarouselState;
+
+  for (const key of sectionIds) {
+    initialCarouselState[key] = { lastViewedIndex: 0 };
+  }
+
+  let carouselsState =
+    $state<SourceWithContinueCarouselState>(initialCarouselState);
 
   export const snapshot: Snapshot<{
     carouselsState: SourceWithContinueCarouselState;
-    selectedVideos: Video[];
+    selectedVideos: Record<SourceWithContinueStateKeys, Video[]>;
   }> = {
     capture: () => ({
       carouselsState,
-      selectedVideos: contentState.selectedVideos,
+      selectedVideos: Object.fromEntries(
+        sectionIds.map((sid: SourceWithContinueStateKeys) => [
+          sid,
+          contentState.selectedVideosBySection[sid],
+        ]),
+      ) as Record<SourceWithContinueStateKeys, Video[]>,
     }),
     restore: async (restored) => {
       carouselsState = restored.carouselsState;
-      contentState.selectedVideos = restored.selectedVideos;
+      contentState.selectedVideosBySection = restored.selectedVideos;
     },
   };
 
@@ -49,23 +67,16 @@
 </script>
 
 <div class="flex flex-col gap-3">
-  <h1 class="header-primary m-4">Results</h1>
+  <h1 class="header-primary">Results</h1>
 
   <div class="flex flex-col gap-8">
     {#if playlistSearchResults.length > 0}
-      <div class="flex flex-col gap-3 mx-4">
+      <div class="flex flex-col gap-3">
         <a class="header-link" href={`/search/${searchString}/playlists`}>
           Playlists
         </a>
 
-        <div class="w-[90%] grid grid-cols-3 gap-2">
-          {#each playlistSearchResults as playlist (playlist.id)}
-            {@const isFollowedPlaylist = followedPlaylists.some(
-              (p) => p.id === playlist.id,
-            )}
-            <PlaylistCard {playlist} {isFollowedPlaylist} />
-          {/each}
-        </div>
+        <PlaylistTiles playlists={playlistSearchResults} {followedPlaylists} />
       </div>
     {/if}
 
@@ -73,11 +84,17 @@
     {#each SOURCES as source (source)}
       {#if sourceVideos[source].length > 0}
         <div class="flex flex-col bg-background-lighter gap-3">
-          <a href={`${page.url}/${source}`} class="header-link-sticky">
+          <a
+            href={`${page.url}/${source}`}
+            class={getContentView(mediaQueryState, userProfile) === "TABLE"
+              ? "header-link-sticky"
+              : "header-link"}
+          >
             {SOURCE_INFO[source].displayName}
           </a>
           <Content
-            contentDisplay={userPreferences.contentDisplay}
+            tilesDisplay="CAROUSEL"
+            {userProfile}
             videos={sourceVideos[source]}
             bind:carouselState={carouselsState[source]}
             {playlists}

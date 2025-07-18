@@ -105,7 +105,7 @@
   // Function to determine operation videos when dropdown opens
   function determineOperationVideos(): Video[] {
     // For list-items variant, always operate on the specific video for this row
-    if (variant === "list-items") {
+    if (variant === "list-items" || variant === "item") {
       if (videos.length > 0) {
         return [videos[0]];
       }
@@ -187,7 +187,7 @@
             ? 'scale-105'
             : ''} {shouldShowButton ? 'opacity-100' : 'opacity-0'}"
         >
-          <Ellipsis />
+          <Ellipsis class={variant === "header" ? "!h-6 !w-6" : ""} />
           <span class="sr-only">
             {variant === "header"
               ? "Actions for selected items"
@@ -337,7 +337,7 @@
         {/if}
       {/if}
 
-      {#if session && frozenOperationVideos.some( (v) => isVideoWithTimestamp(v), )}
+      {#if session && variant !== "item" && frozenOperationVideos.some( (v) => isVideoWithTimestamp(v), )}
         <DropdownMenu.Item
           class="p-2"
           onclick={async () => {
@@ -380,7 +380,7 @@
         </DropdownMenu.Item>
       {/if}
 
-      {#if frozenOperationVideos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
+      {#if variant !== "item" && frozenOperationVideos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
         <DropdownMenu.Item
           class="p-2"
           onclick={async () => {

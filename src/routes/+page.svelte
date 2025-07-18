@@ -71,9 +71,9 @@
   };
 </script>
 
-<div class="content-section">
+<div>
   {#if session && continueWatchingVideos.length > 0}
-    <div class="flex flex-col gap-0">
+    <div class="flex flex-col mb-8">
       <a
         href="/continue"
         class={getContentView(mediaQueryState, userProfile) === "TABLE"
@@ -97,15 +97,9 @@
       />
     </div>
   {/if}
-  <h1
-    class="header-primary mx-4 {continueWatchingVideos.length > 0
-      ? 'mt-2'
-      : 'mt-4'}"
-  >
-    Latest Videos
-  </h1>
+  <h1 class="header-primary">Latest Videos</h1>
 
-  <div class="flex flex-col gap-4">
+  <div class="flex flex-col gap-4 mb-8">
     {#each sources as source (source)}
       <div class="content-section">
         <a
