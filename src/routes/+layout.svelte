@@ -207,7 +207,7 @@
   });
 </script>
 
-<Toaster position={mediaQuery.canHover ? "top-right" : "top-center"} />
+<Toaster position="top-right" />
 
 <svelte:head>
   <script src="https://www.youtube.com/iframe_api"></script>

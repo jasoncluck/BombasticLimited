@@ -3,7 +3,7 @@
   import type { Playlist } from "$lib/supabase/playlists";
   import type { Video } from "$lib/supabase/videos";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
-  import ContentActionsDropdown from "../content-dropdown.svelte";
+  import ContentDropdown from "../content-dropdown.svelte";
   import {
     DEFAULT_SECTION_ID,
     getContentState,
@@ -33,7 +33,7 @@
 <div class="flex content-table-row items-center actions-column">
   <!-- Hover-capable devices content -->
   <div class="hover-actions">
-    <ContentActionsDropdown
+    <ContentDropdown
       videos={[videos[0]]}
       {playlist}
       {playlists}

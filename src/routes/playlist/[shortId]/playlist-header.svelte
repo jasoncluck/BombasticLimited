@@ -100,9 +100,8 @@
   {session}
   {...props}
 >
-  <div class="flex flex-col m-4">
-    <!-- Add a min-height to prevent jumping -->
-    <div style="min-height: 320px;" class="playlist-header-content">
+  <div class="flex flex-col m-4 mb-8">
+    <div class="playlist-header-content">
       <!-- Desktop/Hover layout -->
       <div class="hover-layout">
         <div class="flex flex-col md:flex-row gap-4">

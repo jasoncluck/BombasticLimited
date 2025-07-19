@@ -267,13 +267,17 @@
             <Button
               variant="ghost"
               class="cursor-pointer w-full flex justify-start h-[64px]"
-              onclick={() => {
-                handleCreatePlaylist({
+              onclick={async () => {
+                const { playlist } = await handleCreatePlaylist({
                   playlists,
                   session,
                   supabase,
                 });
-                isOpen = false;
+
+                if (playlist) {
+                  goto(`/playlist/${encodeURI(playlist.short_id)}`);
+                  isOpen = false;
+                }
               }}
             >
               <div class="flex items-center w-12 h-12">

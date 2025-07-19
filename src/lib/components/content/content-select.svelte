@@ -6,7 +6,7 @@
     DEFAULT_SECTION_ID,
     getContentState,
   } from "$lib/state/content.svelte";
-  import ContentActionsDropdown from "./content-dropdown.svelte";
+  import ContentDropdown from "./content-dropdown.svelte";
   import type { Video } from "$lib/supabase/videos";
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
   import Button from "../ui/button/button.svelte";
@@ -54,7 +54,7 @@
 
 {#if mediaQueryState.canHover}
   <div class="flex items-center pointer-events-auto">
-    <ContentActionsDropdown
+    <ContentDropdown
       {videos}
       variant="header"
       {playlist}

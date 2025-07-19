@@ -21,7 +21,7 @@
   import Button from "../ui/button/button.svelte";
   import { page } from "$app/state";
   import { goto } from "$app/navigation";
-  import type { ContentSelectVariant } from "./content";
+  import { type ContentSelectVariant } from "./content";
   import { getPlaylistState } from "$lib/state/playlist.svelte";
   import { Portal } from "bits-ui";
   import * as DropdownMenu from "../ui/dropdown-menu";
@@ -36,6 +36,7 @@
     CircleCheck,
     CircleMinus,
   } from "@lucide/svelte";
+  import type { UserProfile } from "$lib/supabase/user-profiles";
 
   let {
     videos = $bindable(),
@@ -44,6 +45,7 @@
     variant,
     onSelectAll,
     sectionId = DEFAULT_SECTION_ID,
+    userProfile,
     supabase,
     session,
     preserveSelectionAfterAction = true,
@@ -53,6 +55,7 @@
     playlists: Playlist[];
     variant: ContentSelectVariant;
     sectionId?: string;
+    userProfile?: UserProfile;
     supabase: SupabaseClient<Database>;
     session: Session | null;
     onSelectAll?: () => void;
@@ -62,7 +65,7 @@
   const contentState = getContentState();
   const playlistState = getPlaylistState();
 
-  // small hack to hide this when listing items on a player page, doesn't make sense to set the image here
+  // hide set playlist image if on the video screen
   const hideSetAsPlaylistImage = $derived(
     variant === "list-items" &&
       /\/playlist\/[^/]+\/video\/[^/]+/.test(page.url.pathname),
@@ -90,18 +93,6 @@
   // Generate a unique ID for this dropdown instance
   const dropdownId = `dropdown-${sectionId}-${videos[0]?.id}-${variant}`;
 
-  // Keep the button visible when dropdown OR sub-menu is open
-  const shouldShowButton = $derived(
-    variant !== "list-items" || isHovering || open || subMenuOpen,
-  );
-
-  // Helper function to conditionally clear selections after successful operations
-  function handleSelectionAfterAction() {
-    if (!preserveSelectionAfterAction || variant === "list-items") {
-      contentState.selectedVideosBySection[sectionId] = [];
-    }
-  }
-
   // Function to determine operation videos when dropdown opens
   function determineOperationVideos(): Video[] {
     // For list-items variant, always operate on the specific video for this row
@@ -123,6 +114,82 @@
 
     // Default fallback (shouldn't reach here with current variants)
     return [];
+  }
+
+  // Calculate if any actions are available
+  const hasAvailableActions = $derived.by(() => {
+    // For this calculation, we need to use the current operation videos
+    const currentOperationVideos = determineOperationVideos();
+
+    const filteredPlaylists = playlists.filter(
+      (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id,
+    );
+
+    // Check for select all action
+    const hasSelectAll =
+      variant === "header" && userProfile?.content_display === "TABLE";
+
+    // Check for edit playlist action
+    const hasEditPlaylist = isPlaylistOwner && variant === "header";
+
+    // Check for add to playlist action
+    const hasAddToPlaylist =
+      currentOperationVideos.length > 0 && filteredPlaylists.length > 0;
+
+    // Check for remove from playlist action
+    const hasRemoveFromPlaylist =
+      playlist && isPlaylistOwner && currentOperationVideos.length > 0;
+
+    // Check for set as playlist image action
+    const hasSetPlaylistImage =
+      playlist &&
+      currentOperationVideos.length === 1 &&
+      variant === "list-items" &&
+      isPlaylistOwner &&
+      !hideSetAsPlaylistImage;
+
+    // Check for reset progress action
+    const hasResetProgress =
+      session &&
+      variant !== "item" &&
+      currentOperationVideos.some((v) => isVideoWithTimestamp(v));
+
+    // Check for set as watched action
+    const hasSetWatched =
+      variant !== "item" &&
+      currentOperationVideos.some(
+        (v) =>
+          !isVideoWithTimestamp(v) ||
+          (isVideoWithTimestamp(v) && !v.watched_at),
+      );
+
+    // Check for delete playlist action
+    const hasDeletePlaylist =
+      playlist && isPlaylistOwner && variant === "header";
+
+    return (
+      hasSelectAll ||
+      hasEditPlaylist ||
+      hasAddToPlaylist ||
+      hasRemoveFromPlaylist ||
+      hasSetPlaylistImage ||
+      hasResetProgress ||
+      hasSetWatched ||
+      hasDeletePlaylist
+    );
+  });
+
+  // Keep the button visible when dropdown OR sub-menu is open, but also check if actions are available
+  const shouldShowButton = $derived(
+    hasAvailableActions &&
+      (variant !== "list-items" || isHovering || open || subMenuOpen),
+  );
+
+  // Helper function to conditionally clear selections after successful operations
+  function handleSelectionAfterAction() {
+    if (!preserveSelectionAfterAction || variant === "list-items") {
+      contentState.selectedVideosBySection[sectionId] = [];
+    }
   }
 
   // Close dropdown when context menu opens
@@ -151,7 +218,7 @@
   });
 </script>
 
-{#if session}
+{#if session && hasAvailableActions}
   <DropdownMenu.Root
     bind:open
     onOpenChange={(isOpen) => {
@@ -198,7 +265,7 @@
     </DropdownMenu.Trigger>
 
     <DropdownMenu.Content align="start" class="stable-dropdown">
-      {#if variant === "header"}
+      {#if variant === "header" && userProfile?.content_display === "TABLE"}
         <DropdownMenu.Item
           class="p-2"
           onclick={() => {
@@ -426,7 +493,7 @@
         </DropdownMenu.Item>
       {/if}
 
-      {#if playlist && variant === "header"}
+      {#if playlist && isPlaylistOwner && variant === "header"}
         <DropdownMenu.Item
           class="cursor-pointer"
           onclick={async () => {

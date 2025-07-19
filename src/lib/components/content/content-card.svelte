@@ -8,9 +8,9 @@
     DEFAULT_SECTION_ID,
     getContentState,
   } from "$lib/state/content.svelte";
-  import { ArrowDown, ArrowUp, Check, Circle, ListVideo } from "@lucide/svelte";
+  import { ArrowDown, ArrowUp, Check, ListVideo } from "@lucide/svelte";
   import type { ContentDisplayProps } from "./content";
-  import ContentActionsDropdown from "./content-dropdown.svelte";
+  import ContentDropdown from "./content-dropdown.svelte";
   import { goto } from "$app/navigation";
   import { getSortDisplayName } from "./content-filter";
 
@@ -74,7 +74,7 @@
         alt={video.title}
       />
       <div class="absolute top-0.5 right-0.5">
-        <ContentActionsDropdown
+        <ContentDropdown
           {playlists}
           videos={[video]}
           variant="list-items"

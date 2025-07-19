@@ -187,10 +187,10 @@
                   </Popover.Trigger>
                   <Popover.Content align="start"
                     ><p class="text-sm">
-                      Selecting and editing a playlist image can only be done
-                      after selecting a video thumbnail to use as the image.
-                      This can be set by right-clicking on a video in a
-                      playlist.
+                      Playlist images can only be set to thumbnails of videos
+                      added to the playlist. Use the video's menu to set an
+                      image. Once complete, the image can be cropped using this
+                      button.
                     </p>
                   </Popover.Content>
                 </Popover.Root>

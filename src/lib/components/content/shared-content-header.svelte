@@ -117,7 +117,7 @@
   <div class="mb-2" {...restProps}>
     {@render children()}
 
-    <div class="flex items-center mx-4 sm:my-4 gap-0">
+    <div class="flex items-center mx-2 sm:my-4 gap-0">
       {#if profilePlaylist}
         <!-- Play Button -->
         <Button
@@ -180,11 +180,7 @@
 
         <!-- ContentSelect Button -->
         {#if session}
-          <div
-            class="relative {userProfile?.content_display === 'TABLE'
-              ? ''
-              : 'sm:hidden'}"
-          >
+          <div class="relative">
             <ContentSelect
               {videos}
               playlist={profilePlaylist}
