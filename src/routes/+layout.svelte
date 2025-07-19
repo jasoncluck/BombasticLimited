@@ -37,6 +37,7 @@
   import { setLayoutState } from "$lib/state/layout.svelte";
   import { handleUpdateProfileContentDisplay } from "$lib/components/profile/profile-service";
   import { setSourceState } from "$lib/state/source.svelte";
+  import Loader from "$lib/components/loader.svelte";
 
   // Initialize all state contexts
   const layoutState = setLayoutState();
@@ -46,6 +47,8 @@
   setSourceState(pageState);
 
   const mediaQuery = setMediaQueryState();
+
+  const shouldShowLoading = $derived(!mediaQuery.initialized);
 
   onMount(() => {
     return mediaQuery.initialize();
@@ -479,7 +482,15 @@
         >
           <div class="@xl:max-w-[1450px] max-w-[1000px] w-full">
             <div class="flex flex-col mb-20">
-              {@render children()}
+              {#if shouldShowLoading}
+                <div
+                  class="w-full h-[calc(100dvh-60px)] flex items-center justify-center"
+                >
+                  <Loader size="lg" message="Loading..." />
+                </div>
+              {:else}
+                {@render children()}
+              {/if}
             </div>
           </div>
         </div>

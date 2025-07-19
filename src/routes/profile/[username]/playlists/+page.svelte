@@ -10,6 +10,7 @@
   import PlaylistTiles from "$lib/components/playlist/playlist-tiles.svelte";
   import { isSource, SOURCE_INFO } from "$lib/constants/source";
   import { DEFAULT_NUM_PLAYLISTS_PAGINATION } from "$lib/supabase/playlists.js";
+  import Loader from "$lib/components/loader.svelte";
 
   const { data } = $props();
   let { playlistsForUsername, followedPlaylists, playlistsCount } =
@@ -68,14 +69,7 @@
   {/if}
 
   {#await processedPlaylistsPromise}
-    <div class="flex items-center justify-center p-8">
-      <div class="text-center">
-        <div
-          class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"
-        ></div>
-        <p class="text-sm text-muted-foreground">Loading playlists...</p>
-      </div>
-    </div>
+    <Loader message="Loading playlists..." />
   {:then processedPlaylists}
     <PlaylistTiles playlists={processedPlaylists} {followedPlaylists} />
   {:catch error}

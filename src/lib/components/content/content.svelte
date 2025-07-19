@@ -2,7 +2,11 @@
   import type { Database } from "$lib/supabase/database.types";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import { type CarouselState, type TilesDisplay } from "./content";
-  import { type Video, type VideoWithTimestamp } from "$lib/supabase/videos";
+  import {
+    DEFAULT_NUM_VIDEOS_PAGINATION,
+    type Video,
+    type VideoWithTimestamp,
+  } from "$lib/supabase/videos";
   import type { HTMLAttributes } from "svelte/elements";
   import { type Playlist } from "$lib/supabase/playlists";
   import { onMount } from "svelte";
@@ -21,6 +25,14 @@
   import ContentDrawer from "./content-drawer.svelte";
   import { onNavigate } from "$app/navigation";
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
+  import { page } from "$app/state";
+  import {
+    getNumberOfPages,
+    PAGINATION_QUERY_KEY,
+    updatePaginationQueryParams,
+  } from "../pagination/pagination";
+  import Pagination from "../pagination/pagination.svelte";
+  import { getPageState } from "$lib/state/page.svelte";
 
   type ContentProps = HTMLAttributes<HTMLDivElement> & {
     videos: Video[] | VideoWithTimestamp[];
@@ -57,9 +69,15 @@
     ...restProps
   }: ContentProps = $props();
 
+  const pageState = getPageState();
   const contentState = getContentState();
   const playlistState = getPlaylistState();
   const mediaQueryState = getMediaQueryState();
+
+  const pageFromQueryParams = page.url.searchParams.get(PAGINATION_QUERY_KEY);
+  let currentPage = $state(
+    pageFromQueryParams ? parseInt(pageFromQueryParams) : 1,
+  );
 
   const columns = $derived(
     createContentColumns({
@@ -70,6 +88,13 @@
       sectionId,
       supabase,
       session,
+    }),
+  );
+
+  const numPages = $derived(
+    getNumberOfPages({
+      count: videosCount ?? 0,
+      perPage: DEFAULT_NUM_VIDEOS_PAGINATION,
     }),
   );
 
@@ -110,6 +135,23 @@
 {#if videos.length < 1}
   <div {...restProps} class="flex items-center justify-center h-[180px]">
     <p>{playlist ? "Playlist is empty" : "No results found"}</p>
+  </div>
+{/if}
+
+{#if currentPage && numPages > 1}
+  <div class="mb-4">
+    <Pagination
+      count={videosCount ?? 0}
+      bind:currentPage
+      perPage={DEFAULT_NUM_VIDEOS_PAGINATION}
+      onPageChange={(pageNum) => {
+        updatePaginationQueryParams({
+          pageNum,
+          url: page.url,
+          invalidate: ["supabase:db:videos"],
+        });
+      }}
+    />
   </div>
 {/if}
 <ContentContextMenu
@@ -193,3 +235,20 @@
     </div></ContentDrawer
   >
 </ContentContextMenu>
+
+{#if currentPage && numPages > 1}
+  <Pagination
+    count={videosCount ?? 0}
+    bind:currentPage
+    perPage={DEFAULT_NUM_VIDEOS_PAGINATION}
+    onPageChange={(pageNum) => {
+      updatePaginationQueryParams({
+        pageNum,
+        url: page.url,
+        invalidate: ["supabase:db:videos"],
+      });
+
+      pageState.contentScrollPosition = { scrollTop: 0, scrollLeft: 0 };
+    }}
+  />
+{/if}

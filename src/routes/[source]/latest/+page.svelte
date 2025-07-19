@@ -59,12 +59,6 @@
       contentState.selectedVideosBySection[sectionId] = restored.selectedVideos;
     },
   };
-  const numPages = $derived(
-    getNumberOfPages({
-      count: videosCount ?? 0,
-      perPage: DEFAULT_NUM_VIDEOS_PAGINATION,
-    }),
-  );
 </script>
 
 <div class="relative">
@@ -100,18 +94,4 @@
     {supabase}
     {session}
   />
-  {#if currentPage && numPages > 1}
-    <Pagination
-      count={videosCount ?? 0}
-      bind:currentPage
-      perPage={DEFAULT_NUM_VIDEOS_PAGINATION}
-      onPageChange={(pageNum) => {
-        updatePaginationQueryParams({
-          pageNum,
-          url: page.url,
-          invalidate: ["supabase:db:videos"],
-        });
-      }}
-    />
-  {/if}
 </div>

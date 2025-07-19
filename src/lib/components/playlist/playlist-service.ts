@@ -238,7 +238,6 @@ export async function handleUpdatePlaylistImage({
   invalidate("supabase:db:playlists");
 
   if (error) {
-    console.error(error);
     showNotification("Unable update playlist image");
   } else if (updatedPlaylist && !isResetImage) {
     getCroppedPlaylistImageUrl({

@@ -32,8 +32,6 @@ export async function saveVideoTimestamp({
 }) {
   let error: PostgrestError | undefined;
 
-  const contentState = getContentState();
-
   if (session) {
     const { data: videos, error: upsertError } = await supabase
       .rpc("insert_timestamp", {
@@ -51,7 +49,6 @@ export async function saveVideoTimestamp({
       console.error("Error saving video timestamps.", upsertError);
       error = upsertError;
     }
-    contentState.videoTimestampUpdated = true;
     return { videos, error };
   }
 

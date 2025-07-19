@@ -58,7 +58,6 @@
     playlist: profilePlaylist,
     session,
     showFloatingBreadcrumbs = $bindable(),
-    userProfile,
     supabase,
     videos,
     videosCount,
@@ -68,13 +67,6 @@
 
   const isPlaylistCreator = $derived(
     profilePlaylist?.created_by === session?.user.id,
-  );
-
-  const numPages = $derived(
-    getNumberOfPages({
-      count: videosCount,
-      perPage: DEFAULT_NUM_VIDEOS_PAGINATION,
-    }),
   );
 
   const nextVideoToPlay = $derived(
@@ -117,7 +109,7 @@
   <div class="mb-2" {...restProps}>
     {@render children()}
 
-    <div class="flex items-center mx-2 sm:my-4 gap-0">
+    <div class="flex items-center mx-1 sm:my-4 gap-0">
       {#if profilePlaylist}
         <!-- Play Button -->
         <Button
@@ -143,7 +135,7 @@
                   variant="ghost"
                   class="ghost-button-minimal !px-3 !py-2"
                 >
-                  <PlusCircle class="!h-6 !w-6" />
+                  <PlusCircle class="!h-8 !w-8" />
                 </Button>
               </Popover.Trigger>
               <Popover.Content>
@@ -163,7 +155,7 @@
                 });
               }}
             >
-              <PlusCircle class="!h-6 !w-6" />
+              <PlusCircle class="!h-8 !w-8" />
             </Button>
           {/if}
         {/if}
@@ -179,7 +171,7 @@
               });
             }}
           >
-            <MinusCircle class="!h-6 !w-6" />
+            <MinusCircle class="!h-8 !w-8" />
           </Button>
         {/if}
 

@@ -206,6 +206,20 @@
     }
   }
 
+  /* Hide description column by default - targets the 4th column */
+  :global(.content-table tbody tr td:nth-child(4)),
+  :global(.content-table thead tr th:nth-child(4)) {
+    display: none;
+  }
+
+  /* Show description column on hover-capable devices */
+  @media (hover: hover) {
+    :global(.content-table tbody tr td:nth-child(4)),
+    :global(.content-table thead tr th:nth-child(4)) {
+      display: table-cell;
+    }
+  }
+
   /* Hide description column on small screens */
   @media (max-width: 640px) {
     :global(.content-table .description-column) {

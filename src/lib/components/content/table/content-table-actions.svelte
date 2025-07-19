@@ -28,11 +28,14 @@
   } = $props();
 
   const contentState = getContentState();
+  console.log(videos);
 </script>
 
-<div class="flex content-table-row items-center actions-column">
+<div
+  class="flex content-table-row items-center justify-end actions-column relative"
+>
   <!-- Hover-capable devices content -->
-  <div class="hover-actions">
+  <div class="hover-actions relative">
     <ContentDropdown
       videos={[videos[0]]}
       {playlist}

@@ -71,12 +71,12 @@ export const sourceWithContinueStateKeys = [
   "continueWatching",
   ...SOURCES,
 ] as const;
-export type SourceWithContinueStateKeys =
-  (typeof sourceWithContinueStateKeys)[number];
+
+export type SourceWithStateKeys = string[number];
 
 export type CarouselState = { lastViewedIndex: number };
-export type SourceWithContinueCarouselState = Record<
-  SourceWithContinueStateKeys,
+export type SourceWithCarouselState = Record<
+  SourceWithStateKeys,
   CarouselState
 >;
 

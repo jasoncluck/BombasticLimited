@@ -69,7 +69,7 @@ export function createContentColumns({
         return renderComponent(ContentTableDescription, {
           video,
           sectionId,
-          className: "description-column", // Add CSS class for styling
+          className: "description-column",
         });
       },
     },

@@ -58,7 +58,7 @@
   {supabase}
   {session}
 >
-  <div class="flex gap-6 m-4">
+  <div class="flex gap-6">
     <div class="flex flex-col relative">
       <div
         class="flex flex-col items-start text-left border-none bg-transparent p-0"

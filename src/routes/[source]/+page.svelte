@@ -6,7 +6,6 @@
   import { SOURCE_INFO } from "$lib/constants/source";
   import Button from "$lib/components/ui/button/button.svelte";
   import {
-    DEFAULT_SECTION_ID,
     getContentState,
     type CarouselState,
   } from "$lib/state/content.svelte";
@@ -21,6 +20,12 @@
   import { processPlaylists } from "$lib/components/playlist/playlist-service";
   import { onMount } from "svelte";
   import type { Video } from "$lib/supabase/videos";
+  import {
+    getContentView,
+    type SourceWithCarouselState,
+    type SourceWithStateKeys,
+  } from "$lib/components/content/content";
+  import { getMediaQueryState } from "$lib/state/media-query.svelte";
 
   let { data } = $props();
   const {
@@ -36,29 +41,41 @@
   } = $derived(data);
 
   const contentState = getContentState();
+  const mediaQueryState = getMediaQueryState();
 
-  let carouselState = $state<CarouselState>({ lastViewedIndex: 0 });
+  const highlightPlaylistShortIds = $derived(
+    highlightPlaylists.map((hp) => hp.playlist.short_id),
+  );
+
+  // Initialize carousel state before the effect
+  let carouselsState = $state<SourceWithCarouselState>({});
+  let sectionIds = $state<string[]>([]);
+
+  export const snapshot: Snapshot<{
+    carouselsState: SourceWithCarouselState;
+    selectedVideos: Record<SourceWithStateKeys, Video[]>;
+  }> = {
+    capture: () => ({
+      carouselsState,
+      selectedVideos: Object.fromEntries(
+        sectionIds.map((sid: SourceWithStateKeys) => [
+          sid,
+          contentState.selectedVideosBySection[sid],
+        ]),
+      ) as Record<SourceWithStateKeys, Video[]>,
+    }),
+    restore: async (restored) => {
+      carouselsState = restored.carouselsState;
+      contentState.selectedVideosBySection = restored.selectedVideos;
+    },
+  };
+
   let processedPlaylistsPromise = $state<Promise<Playlist[]>>(
     Promise.resolve([]),
   );
+
   let sourcePlaylistsData =
     $state<ReturnType<typeof getPlaylistsForUsername>>();
-
-  export const snapshot: Snapshot<{
-    carouselState: CarouselState;
-    selectedVideos: Video[];
-  }> = {
-    capture: () => ({
-      carouselState: carouselState,
-      selectedVideos: contentState.selectedVideosBySection[DEFAULT_SECTION_ID],
-    }),
-    restore: async (restored) => {
-      if (userProfile?.content_display === "TABLE") {
-        contentState.selectedVideosBySection[DEFAULT_SECTION_ID] =
-          restored.selectedVideos;
-      }
-    },
-  };
 
   onMount(async () => {
     sourcePlaylistsData = getPlaylistsForUsername({
@@ -69,6 +86,22 @@
   });
 
   $effect(() => {
+    const newSectionIds = ["latestVideos", ...highlightPlaylistShortIds];
+    console.log(newSectionIds);
+
+    // Only update if sectionIds actually changed to prevent infinite loops
+    if (JSON.stringify(newSectionIds) !== JSON.stringify(sectionIds)) {
+      sectionIds = newSectionIds;
+
+      const newCarouselState: SourceWithCarouselState = {};
+      for (const key of sectionIds) {
+        newCarouselState[key] = { lastViewedIndex: 0 };
+      }
+      carouselsState = newCarouselState;
+    }
+  });
+
+  $effect(() => {
     sourcePlaylistsData?.then(({ playlists: sourcePlaylists }) => {
       processedPlaylistsPromise = processPlaylists(sourcePlaylists);
     });
@@ -76,7 +109,7 @@
 </script>
 
 <div class="flex flex-col">
-  <div class="flex @2xl:flex-nowrap flex-wrap justify-between m-4 gap-2">
+  <div class="flex @2xl:flex-nowrap flex-wrap justify-between gap-2">
     <div class="flex flex-col">
       <h1 class="header-primary shrink-0">
         {SOURCE_INFO[source].displayName}
@@ -113,12 +146,17 @@
 
   <div class="flex flex-col gap-8">
     <div class="flex flex-col gap-4">
-      <a href={`/${source}/latest`} class="header-link-sticky">
+      <a
+        href={`/${source}/latest`}
+        class={getContentView(mediaQueryState, userProfile) === "TABLE"
+          ? "header-link-sticky"
+          : "header-link"}
+      >
         Latest Videos
       </a>
       <Content
         {videos}
-        bind:carouselState
+        bind:carouselState={carouselsState["latestVideos"]}
         {userProfile}
         tilesDisplay="CAROUSEL"
         sectionId="latestVideos"
@@ -130,6 +168,9 @@
       {#each highlightPlaylists as highlightPlaylist (highlightPlaylist.playlist.name)}
         <a
           href={`/playlist/${highlightPlaylist.playlist.short_id}`}
+          class={getContentView(mediaQueryState, userProfile) === "TABLE"
+            ? "header-link-sticky"
+            : "header-link"}
           onclick={(e) => {
             e.preventDefault();
             handlePlaylistNavigation({
@@ -140,13 +181,14 @@
               },
             });
           }}
-          class="header-link-sticky"
         >
           {highlightPlaylist.playlist.name}
         </a>
         <Content
           videos={highlightPlaylist.videos}
-          bind:carouselState
+          bind:carouselState={
+            carouselsState[highlightPlaylist.playlist.short_id]
+          }
           {playlists}
           {userProfile}
           sectionId={highlightPlaylist.playlist.short_id}
@@ -158,7 +200,12 @@
       {/each}
     </div>
     <div class="flex flex-col">
-      <a href={`/profile/${source}/playlists`} class="header-link-sticky">
+      <a
+        href={`/profile/${source}/playlists`}
+        class={getContentView(mediaQueryState, userProfile) === "TABLE"
+          ? "header-link-sticky"
+          : "header-link"}
+      >
         Playlists
       </a>
 

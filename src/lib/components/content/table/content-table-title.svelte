@@ -8,7 +8,7 @@
 </script>
 
 <div
-  class="flex flex-col min-w-[00px] max-w-sm gap-1 content-table-row justify-center overflow-hidden"
+  class="flex flex-col w-[170px] sm:w-auto sm:min-w-[170px] sm:max-w-sm gap-1 content-table-row justify-center overflow-hidden"
 >
   <p
     class="text-xs text-muted-foreground transform pointer-events-none line-clamp-1"
@@ -24,7 +24,7 @@
   </p>
   {#if isVideoWithTimestamp(video) && video.playlist_name && video.playlist_short_id}
     <div
-      class="flex items-center gap-2 mt-1 text-xs text-secondary-foreground hover:text-primary line-clamp-2"
+      class="flex items-center gap-2 mt-1 text-xs text-secondary-foreground hover:text-primary"
     >
       <ListVideo size="16" class="shrink-0" />
       <a
