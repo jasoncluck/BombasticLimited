@@ -78,7 +78,8 @@ BEGIN
     ON v.id = t.video_id AND t.user_id = p_user_id
   WHERE v.id = p_video_id;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql
+SET search_path = '';
 
 CREATE OR REPLACE FUNCTION insert_timestamps(
   p_user_id uuid,
@@ -166,7 +167,8 @@ BEGIN
   WHERE v.id = ANY(p_video_ids);
 
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql
+SET search_path = '';
 
 
 CREATE OR REPLACE FUNCTION delete_timestamps(
@@ -210,4 +212,5 @@ BEGIN
   WHERE v.id = ANY(p_video_ids);
 
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = '';

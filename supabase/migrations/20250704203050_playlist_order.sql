@@ -21,7 +21,8 @@ BEGIN
   
   RETURN total_seconds;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql
+SET search_path = '';
 
 CREATE OR REPLACE FUNCTION public.get_user_playlists(
   p_username text
@@ -41,6 +42,7 @@ CREATE OR REPLACE FUNCTION public.get_user_playlists(
   sorted_by playlist_sorted_by,
   sort_order playlist_sort_order
 )
+SET search_path = ''
 LANGUAGE sql
 AS $$
   SELECT

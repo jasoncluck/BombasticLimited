@@ -305,8 +305,6 @@ ALTER TABLE ONLY "public"."playlist_videos"
 
 
 
-ALTER TABLE ONLY "public"."playlist_videos"
-    ADD CONSTRAINT "playlist_videos_pkey" PRIMARY KEY ("id");
 
 
 ALTER TABLE ONLY "public"."playlists"
@@ -332,10 +330,6 @@ ALTER TABLE ONLY "public"."timestamps"
 ALTER TABLE ONLY "public"."videos"
     ADD CONSTRAINT "videos_id_key" UNIQUE ("id");
 
-
-
-ALTER TABLE ONLY "public"."videos"
-    ADD CONSTRAINT "videos_pkey" PRIMARY KEY ("id");
 
 
 
@@ -388,23 +382,9 @@ CREATE POLICY "Enable delete for users based on user_id" ON "public"."timestamps
 
 
 
-CREATE POLICY "Enable insert for authenticated users only" ON "public"."playlist_videos" FOR INSERT TO "authenticated" WITH CHECK (true);
-
-
 
 CREATE POLICY "Enable insert for users based on created_by" ON "public"."playlists" FOR INSERT TO "authenticated" WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "created_by"));
 
-
-
-CREATE POLICY "Enable read access for all users" ON "public"."playlist_videos" FOR SELECT USING (true);
-
-
-
-CREATE POLICY "Enable read access for all users" ON "public"."playlists" FOR SELECT USING (true);
-
-
-
-CREATE POLICY "Enable read access for all users" ON "public"."videos" FOR SELECT USING (true);
 
 
 

@@ -14,12 +14,11 @@ COMMENT ON COLUMN public.user_playlists."playlist_position" IS 'Ordering of play
 
 ALTER TABLE public.user_playlists ENABLE ROW LEVEL SECURITY;
 
--- SELECT policy
 CREATE POLICY "Users can SELECT their own user_playlists"
     ON public.user_playlists
     FOR SELECT
     USING (
-        user_playlists.user_id = auth.uid()
+        user_playlists.user_id = (select auth.uid())
     );
 
 CREATE POLICY "Users can INSERT user_playlists for playlists they created or are Public"
@@ -30,26 +29,24 @@ CREATE POLICY "Users can INSERT user_playlists for playlists they created or are
             SELECT 1 FROM public.playlists p
             WHERE p.id = user_playlists.id
               AND (
-                p.created_by = auth.uid()
+                p.created_by = (select auth.uid())
                 OR p.type = 'Public'
               )
         )
     );
 
--- UPDATE policy
 CREATE POLICY "Users can UPDATE their own user_playlists"
     ON public.user_playlists
     FOR UPDATE
     USING (
-        user_playlists.user_id = auth.uid()
+        user_playlists.user_id = (select auth.uid())
     );
 
--- DELETE policy
 CREATE POLICY "Users can DELETE their own user_playlists"
     ON public.user_playlists
     FOR DELETE
     USING (
-        user_playlists.user_id = auth.uid()
+        user_playlists.user_id = (select auth.uid())
     );
 
 CREATE OR REPLACE FUNCTION get_user_playlists(p_user_id uuid)
@@ -70,6 +67,7 @@ RETURNS TABLE (
   youtube_id text,
   profile_username text
 )
+SET search_path = ''
 LANGUAGE sql
 AS $$
   SELECT
@@ -609,7 +607,8 @@ BEGIN
 
   RETURN user_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = '';
 
 CREATE OR REPLACE FUNCTION public.get_playlist_by_short_id(
   p_short_id text
@@ -629,6 +628,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_by_short_id(
   sorted_by playlist_sorted_by,
   sort_order playlist_sort_order
 )
+SET search_path = ''
 LANGUAGE sql
 AS $$
   SELECT
@@ -672,6 +672,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_by_youtube_id(
   sorted_by playlist_sorted_by,
   sort_order playlist_sort_order
 )
+SET search_path = ''
 LANGUAGE sql
 AS $$
   SELECT

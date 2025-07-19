@@ -22,7 +22,7 @@ USING (true);
 CREATE OR REPLACE FUNCTION is_unique_username(p_username text)
 RETURNS boolean 
 LANGUAGE plpgsql
-SET search_path = public
+SET search_path = ''
 AS $$
 DECLARE
     username_exists boolean;
@@ -41,13 +41,6 @@ $$;
 
 -- Grant execute permission to authenticated users
 GRANT EXECUTE ON FUNCTION is_unique_username(text) TO authenticated;
-
--- RLS policy to allow reading usernames for uniqueness check
-CREATE POLICY "Allow reading usernames for uniqueness check"
-ON public.profiles
-FOR SELECT
-TO authenticated
-USING (true);
 
 -- Helper function to generate a unique username from full_name
 CREATE OR REPLACE FUNCTION generate_unique_username(base_username text, exclude_user_id uuid DEFAULT NULL)
@@ -190,52 +183,20 @@ BEGIN
 END;
 $$;
 
--- Replace existing trigger
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-DROP TRIGGER IF EXISTS on_auth_user_changes ON auth.users;
-
-CREATE TRIGGER on_auth_user_changes
-  AFTER INSERT OR UPDATE ON auth.users
-  FOR EACH ROW EXECUTE PROCEDURE public.handle_user_changes();
-
--- Add SELECT policy to allow users to read their own user record
-DROP POLICY IF EXISTS "Allow users to read their own account" ON auth.users;
 CREATE POLICY "Allow users to read their own account" 
 ON auth.users 
 FOR SELECT 
 TO authenticated 
-USING (id = auth.uid());
+USING (id = (select auth.uid()));
 
--- Keep the existing DELETE policy
-DROP POLICY IF EXISTS "Allow users to delete their own account" ON auth.users;
 CREATE POLICY "Allow users to delete their own account" 
 ON auth.users 
 FOR DELETE 
 TO authenticated 
-USING (id = auth.uid());
-
-CREATE OR REPLACE FUNCTION delete_user()
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-    user_id uuid := (SELECT auth.uid());
-    deleted_count integer;
-BEGIN
-    -- Attempt to delete the user and check if any rows were affected
-    DELETE FROM auth.users 
-    WHERE id = user_id;
-    
-    GET DIAGNOSTICS deleted_count = ROW_COUNT;
-    
-    IF deleted_count = 0 THEN
-        RAISE EXCEPTION 'User not found or could not be deleted';
-    END IF;
-END;
-$$;
+USING (id = (select auth.uid()));
 
 CREATE POLICY "Allow update if user owns profile"
 ON public.profiles
 FOR UPDATE
-USING (auth.uid() = profiles.id);
+TO authenticated
+USING ((select auth.uid()) = profiles.id);

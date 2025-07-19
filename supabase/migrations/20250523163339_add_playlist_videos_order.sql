@@ -1,8 +1,3 @@
-DROP POLICY IF EXISTS "Enable delete for authenticated users only" ON public.playlist_videos;
-DROP POLICY IF EXISTS "Enable insert for authenticated users only" ON public.playlist_videos;
-DROP POLICY IF EXISTS "Enable read access for all users" ON public.playlist_videos;
-
--- Allow read access for public or official playlists
 CREATE POLICY "Allow read access for public playlists" 
 ON public.playlist_videos 
 FOR SELECT 
@@ -10,20 +5,6 @@ TO authenticated, anon
 USING (
   playlist_id IN (
     SELECT id FROM public.playlists WHERE type IN ('Public' )
-  )
-);
-
--- Allow authenticated users to select playlist videos of their own playlists
-CREATE POLICY "Allow authenticated users to select playlist videos of their own playlists"
-ON public.playlist_videos
-FOR SELECT
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1
-    FROM public.playlists
-    WHERE playlists.id = playlist_videos.playlist_id
-      AND playlists.created_by = auth.uid()
   )
 );
 
@@ -36,7 +17,7 @@ WITH CHECK (
     SELECT 1
     FROM public.playlists
     WHERE playlists.id = playlist_videos.playlist_id
-      AND playlists.created_by = auth.uid()
+      AND playlists.created_by = (select auth.uid())
   )
 );
 
@@ -49,7 +30,7 @@ USING (
     SELECT 1
     FROM public.playlists
     WHERE playlists.id = playlist_videos.playlist_id
-      AND playlists.created_by = auth.uid()
+      AND playlists.created_by = (select auth.uid())
   )
 )
 WITH CHECK (
@@ -57,7 +38,7 @@ WITH CHECK (
     SELECT 1
     FROM public.playlists
     WHERE playlists.id = playlist_videos.playlist_id
-      AND playlists.created_by = auth.uid()
+      AND playlists.created_by = (select auth.uid())
   )
 );
 
@@ -70,7 +51,7 @@ USING (
     SELECT 1
     FROM public.playlists
     WHERE playlists.id = playlist_videos.playlist_id
-      AND playlists.created_by = auth.uid()
+      AND playlists.created_by = (select auth.uid())
   )
 );
 
