@@ -5,8 +5,9 @@
   import {
     getNumberOfPages,
     PAGINATION_QUERY_KEY,
+    updatePaginationQueryParams,
   } from "$lib/components/pagination/pagination.js";
-  import SharedPaginationFooter from "$lib/components/pagination/shared-pagination-footer.svelte";
+  import Pagination from "$lib/components/pagination/pagination.svelte";
   import { DEFAULT_NUM_VIDEOS_PAGINATION } from "$lib/supabase/videos.js";
   import type { Snapshot } from "../$types.js";
 
@@ -88,10 +89,17 @@
     {session}
   />
   {#if currentPage && numPages > 1}
-    <SharedPaginationFooter
+    <Pagination
+      count={videosCount ?? 0}
       bind:currentPage
-      {numPages}
-      videosCount={videosCount ?? 0}
+      perPage={DEFAULT_NUM_VIDEOS_PAGINATION}
+      onPageChange={(pageNum) => {
+        updatePaginationQueryParams({
+          pageNum,
+          url: page.url,
+          invalidate: ["supabase:db:videos"],
+        });
+      }}
     />
   {/if}
 </div>

@@ -19,7 +19,6 @@
   import type { UserProfile } from "$lib/supabase/user-profiles";
   import PlaylistEditDrawer from "$lib/components/playlist/playlist-edit-drawer.svelte";
   import { getPlaylistState } from "$lib/state/playlist.svelte";
-  import { browser } from "$app/environment";
 
   interface PlaylistHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
@@ -59,7 +58,7 @@
   let open = $state(false);
   let drawerOpen = $state(false);
 
-  const isPlaylistOwner = $derived(playlist.created_by === session?.user.id);
+  const isPlaylistOwner = $derived(playlist?.created_by === session?.user.id);
 
   $effect(() => {
     if (playlistState.openEditPlaylist) {

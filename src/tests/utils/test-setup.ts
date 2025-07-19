@@ -14,7 +14,7 @@ export const setupTest = () => {
 };
 
 // Enhanced setup with vitest-mock-extended reset
-export const setupTestWithMockExtended = (mocksToReset: any[] = []) => {
+export const setupTestWithMockExtended = (mocksToReset: unknown[] = []) => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset all vitest-mock-extended mocks

@@ -8,7 +8,7 @@
   import { SOURCE_INFO, type Source } from "$lib/constants/source";
   import type { ContentView } from "./content";
   import type { Video } from "$lib/supabase/videos";
-  import type { UserProfile } from "$lib/supabase/profiles";
+  import type { UserProfile } from "$lib/supabase/user-profiles";
 
   let {
     breadcrumbs,

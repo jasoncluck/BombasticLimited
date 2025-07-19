@@ -73,7 +73,7 @@
 
     // Add drag drop classes if enabled
     if (dragDrop && allowVideoReorder) {
-      classes += ` ${contentState.getVideoDragClasses(index, "CARD")}`;
+      classes += ` ${contentState.getVideoDragClasses(index, "TILES")}`;
     }
 
     return classes;

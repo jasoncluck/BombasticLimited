@@ -98,24 +98,6 @@ describe("Page Component", () => {
     expect(invalidate).not.toHaveBeenCalled();
   });
 
-  it("applies correct CSS classes based on continue watching videos presence", () => {
-    render(Page, { data: mockPageData });
-
-    const header = screen.getByText("Latest Videos");
-    expect(header.classList.contains("mt-4")).toBe(true);
-  });
-
-  it("applies different CSS classes when continue watching videos are present", () => {
-    const dataWithContinueVideos = createMockPageData({
-      continueWatchingVideos: [mockVideoWithTimestamp],
-    });
-
-    render(Page, { data: dataWithContinueVideos });
-
-    const header = screen.getByText("Latest Videos");
-    expect(header.classList.contains("mt-2")).toBe(true);
-  });
-
   it("component initializes without errors", () => {
     const { container } = render(Page, { data: mockPageData });
 

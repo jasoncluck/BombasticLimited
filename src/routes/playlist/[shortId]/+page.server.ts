@@ -5,7 +5,7 @@ import {
   isUserPlaylist,
   updatePlaylistImage,
   updatePlaylistInfo,
-  type Playlist,
+  type PlaylistVideo,
   type ProfilePlaylist,
   type UserPlaylist,
 } from "$lib/supabase/playlists";
@@ -17,6 +17,8 @@ import { zod } from "sveltekit-superforms/adapters";
 import {
   isPlaylistVideosFilter,
   type PlaylistVideosFilter,
+  type SortKey,
+  type SortOrder,
 } from "$lib/components/content/content-filter";
 import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
 import { DEFAULT_NUM_VIDEOS_PAGINATION } from "$lib/supabase/videos";
@@ -36,7 +38,7 @@ export const load: PageServerLoad = async ({
 
   const { playlists, contentFilter } = await parent();
 
-  let playlist: Playlist | UserPlaylist | ProfilePlaylist | null;
+  let playlist: UserPlaylist | ProfilePlaylist | null;
 
   playlist =
     playlists.find((playlist) => playlist.short_id === params.shortId) ?? null;
@@ -55,8 +57,8 @@ export const load: PageServerLoad = async ({
     playlistVideosSavedContentFilter = {
       type: "playlist",
       sort: {
-        key: playlist.sorted_by,
-        order: playlist.sort_order,
+        key: playlist.sorted_by as SortKey<PlaylistVideo>,
+        order: playlist.sort_order as SortOrder,
       },
     };
   }

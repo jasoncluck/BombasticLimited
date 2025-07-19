@@ -212,15 +212,3 @@ afterEach(() => {
 
 // Export the page state for tests that need to modify it
 export { pageState };
-
-// Extend expect with jest-dom matchers
-declare module "vitest" {
-  interface Assertion<T = unknown> {
-    toBeInTheDocument(): T;
-    toHaveClass(className: string): T;
-  }
-  interface AsymmetricMatchersContaining {
-    toBeInTheDocument(): unknown;
-    toHaveClass(className: string): unknown;
-  }
-}

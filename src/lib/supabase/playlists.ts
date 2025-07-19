@@ -25,10 +25,17 @@ export type Playlist = Omit<Tables<"playlists">, "search_vector"> & {
   processedImageUrl?: string | null;
 };
 
-export type ProfilePlaylist = Playlist & { profile_username: string };
+export type ProfilePlaylist = Playlist & {
+  profile_username: string;
+} & Playlist;
 
-export type UserPlaylist = Omit<Tables<"user_playlists">, "user_id"> &
-  ProfilePlaylist;
+export type UserPlaylist = ProfilePlaylist & {
+  // User playlist specific fields from user_playlists table
+  playlist_position: number | null;
+  sorted_by: string;
+  created_by: string;
+  sort_order: string;
+};
 
 export type PlaylistVideo = Tables<"playlist_videos">;
 export const PLAYLIST_TYPES = ["Public", "Private"] as const;
@@ -62,7 +69,10 @@ export async function getPlaylistByShortId({
 }: {
   shortId: string;
   supabase: SupabaseClient<Database>;
-}): Promise<{ playlist: Playlist | null; error: PostgrestError | null }> {
+}): Promise<{
+  playlist: ProfilePlaylist | null;
+  error: PostgrestError | null;
+}> {
   const { data, error } = await supabase
     .rpc("get_playlist_by_short_id", {
       p_short_id: shortId,

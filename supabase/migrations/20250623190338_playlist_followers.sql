@@ -125,8 +125,20 @@ AS $$
 DECLARE
   max_position int2;
   actual_position int2;
+  playlist_count int2;
   inserted_playlist public.playlists%ROWTYPE;
 BEGIN
+  -- Check if user already has 25 or more playlists
+  SELECT COUNT(*)
+    INTO playlist_count
+    FROM public.user_playlists up
+    WHERE up.user_id = p_created_by;
+
+  IF playlist_count >= 25 THEN
+    RAISE EXCEPTION 'PLAYLIST_LIMIT_EXCEEDED: User cannot have more than 25 playlists'
+      USING ERRCODE = 'P0001';
+  END IF;
+
   -- Find the maximum position for this user's playlists
   SELECT COALESCE(MAX(up.playlist_position), 0)
     INTO max_position
@@ -220,7 +232,19 @@ DECLARE
   max_position int2;
   actual_position int2;
   already_linked boolean;
+  playlist_count int2;
 BEGIN
+  -- Check if user already has 25 or more playlists
+  SELECT COUNT(*)
+    INTO playlist_count
+    FROM public.user_playlists up
+    WHERE up.user_id = p_user_id;
+
+  IF playlist_count >= 25 THEN
+    RAISE EXCEPTION 'PLAYLIST_LIMIT_EXCEEDED: User cannot have more than 25 playlists'
+      USING ERRCODE = 'P0001';
+  END IF;
+
   -- Check if this playlist is already followed by the user
   SELECT EXISTS(
     SELECT 1 FROM public.user_playlists up

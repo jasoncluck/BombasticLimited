@@ -416,7 +416,7 @@
     onLayoutChange={layoutState.onLayoutChange}
   >
     <Resizable.Pane
-      defaultSize={layout ? parseFloat(layout[0]) : 15}
+      defaultSize={layout ? parseFloat(layout[0]) : 20}
       minSize={12}
       maxSize={50}
       collapsedSize={COLLAPSED_SIDEBAR_SIZE}

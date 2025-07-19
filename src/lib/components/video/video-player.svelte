@@ -11,7 +11,6 @@
   import Button from "../ui/button/button.svelte";
   import { getContentState } from "$lib/state/content.svelte";
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
-  import ContentDrawer from "../content/content-drawer.svelte";
 
   interface ProcessedLine {
     text: string;
@@ -29,7 +28,7 @@
     baseUrl = "/video",
   }: {
     video: Video;
-    playlist: Playlist | null;
+    playlist?: Playlist | null;
     playlists: Playlist[];
     contentFilter: CombinedContentFilter;
     supabase: SupabaseClient;
