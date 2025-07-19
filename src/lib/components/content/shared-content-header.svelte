@@ -139,7 +139,12 @@
           {#if !session?.user.id}
             <Popover.Root>
               <Popover.Trigger>
-                <PlusCircle class="ghost-button-minimal" size="30" />
+                <Button
+                  variant="ghost"
+                  class="ghost-button-minimal !px-3 !py-2"
+                >
+                  <PlusCircle class="!h-6 !w-6" />
+                </Button>
               </Popover.Trigger>
               <Popover.Content>
                 Create an account or login to follow playlists.

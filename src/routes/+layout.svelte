@@ -1,5 +1,10 @@
 <script lang="ts">
-  import { afterNavigate, beforeNavigate, goto } from "$app/navigation";
+  import {
+    afterNavigate,
+    beforeNavigate,
+    goto,
+    invalidate,
+  } from "$app/navigation";
   import { Toaster } from "$lib/components/ui/sonner/index.js";
   import { notificationStore } from "$lib/stores/notification.js";
   import { onMount } from "svelte";
@@ -122,6 +127,13 @@
         pageState.viewportRefs.contentViewportRef.scrollTop = 0;
         pageState.viewportRefs.contentViewportRef.scrollLeft = 0;
       }
+    }
+  });
+
+  $effect(() => {
+    if (contentState.videoTimestampUpdated) {
+      invalidate("supabase:db:videos");
+      contentState.videoTimestampUpdated = null;
     }
   });
 

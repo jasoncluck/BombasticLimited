@@ -49,6 +49,10 @@ CREATE POLICY "Users can DELETE their own user_playlists"
         user_playlists.user_id = (select auth.uid())
     );
 
+CREATE TRIGGER on_auth_user_changes
+  AFTER INSERT OR UPDATE ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_user_changes();
+
 CREATE OR REPLACE FUNCTION get_user_playlists(p_user_id uuid)
 RETURNS TABLE (
   id bigint,

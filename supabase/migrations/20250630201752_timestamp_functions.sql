@@ -7,11 +7,7 @@ CREATE OR REPLACE FUNCTION insert_timestamp(
   p_watched_at timestamp with time zone DEFAULT NULL,
   p_playlist_id bigint DEFAULT NULL,
   p_sorted_by playlist_sorted_by DEFAULT NULL,
-  p_sort_order playlist_sort_order DEFAULT NULL,
-  p_update_video_start boolean DEFAULT true,
-  p_update_watched_at boolean DEFAULT true,
-  p_update_playlist boolean DEFAULT true,
-  p_update_sorting boolean DEFAULT true
+  p_sort_order playlist_sort_order DEFAULT NULL
 )
 RETURNS TABLE (
   id text,
@@ -33,7 +29,8 @@ DECLARE
   current_record public.timestamps%ROWTYPE;
 BEGIN
   -- Get current values if record exists
-  SELECT * INTO current_record 
+  SELECT *
+  INTO current_record 
   FROM public.timestamps 
   WHERE user_id = p_user_id AND video_id = p_video_id;
 
@@ -50,36 +47,21 @@ BEGIN
   VALUES (
     p_user_id,
     p_video_id,
-    CASE WHEN p_update_video_start THEN p_video_start_seconds ELSE NULL END,
-    CASE WHEN p_update_watched_at THEN p_watched_at ELSE NULL END,
+    p_video_start_seconds,
+    p_watched_at,
     NOW(),
-    CASE WHEN p_update_playlist THEN p_playlist_id ELSE NULL END,
-    CASE WHEN p_update_sorting THEN p_sorted_by ELSE NULL END,
-    CASE WHEN p_update_sorting THEN p_sort_order ELSE NULL END
+    p_playlist_id,
+    p_sorted_by,
+    p_sort_order
   )
   ON CONFLICT (user_id, video_id)
   DO UPDATE SET
-    video_start_seconds = CASE 
-      WHEN p_update_video_start THEN EXCLUDED.video_start_seconds 
-      ELSE public.timestamps.video_start_seconds 
-    END,
-    watched_at = CASE 
-      WHEN p_update_watched_at THEN EXCLUDED.watched_at 
-      ELSE public.timestamps.watched_at 
-    END,
+    video_start_seconds = EXCLUDED.video_start_seconds,
+    watched_at = EXCLUDED.watched_at,
     updated_at = NOW(),
-    playlist_id = CASE 
-      WHEN p_update_playlist THEN EXCLUDED.playlist_id 
-      ELSE public.timestamps.playlist_id 
-    END,
-    sorted_by = CASE 
-      WHEN p_update_sorting THEN EXCLUDED.sorted_by 
-      ELSE public.timestamps.sorted_by 
-    END,
-    sort_order = CASE 
-      WHEN p_update_sorting THEN EXCLUDED.sort_order 
-      ELSE public.timestamps.sort_order 
-    END;
+    playlist_id = EXCLUDED.playlist_id,
+    sorted_by = EXCLUDED.sorted_by,
+    sort_order = EXCLUDED.sort_order;
 
   RETURN QUERY
   SELECT 

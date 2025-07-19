@@ -19,6 +19,7 @@ import {
   saveVideoTimestamps,
   type TimestampWithVideoId,
 } from "$lib/supabase/timestamps";
+import type { ContentState } from "$lib/state/content.svelte";
 
 export async function fetchMoreInProgressVideos({
   contentFilter,
@@ -99,10 +100,12 @@ export async function fetchMoreSourceVideos({
 
 export async function handleAddVideoTimestamp({
   videoTimestamps,
+  contentState,
   session,
   supabase,
 }: {
   videoTimestamps: TimestampWithVideoId[];
+  contentState: ContentState;
   session: Session | null;
   supabase: SupabaseClient;
 }): Promise<{ updatedVideos: Video[]; error?: PostgrestError }> {
@@ -116,10 +119,9 @@ export async function handleAddVideoTimestamp({
   if (error) {
     showNotification("Unable to save timestamp");
   } else if (videoTimestamps.some((vt) => vt.watchedAt)) {
-    showNotification("Marked as watched");
+    showNotification("Set as watched");
   }
-
-  invalidate("supabase:db:videos");
+  contentState.videoTimestampUpdated = true;
   return { updatedVideos: updatedVideos ?? [], error };
 }
 

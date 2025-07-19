@@ -1,10 +1,18 @@
-CREATE POLICY "Allow read access for public playlists" 
-ON public.playlist_videos 
-FOR SELECT 
-TO authenticated, anon 
+CREATE POLICY "Allow read access for public playlists and owned playlists"
+ON public.playlist_videos
+FOR SELECT
+TO authenticated, anon
 USING (
   playlist_id IN (
-    SELECT id FROM public.playlists WHERE type IN ('Public' )
+    SELECT id FROM public.playlists 
+    WHERE type IN ('Public')
+  )
+  OR (
+    auth.uid() IS NOT NULL
+    AND playlist_id IN (
+      SELECT id FROM public.playlists 
+      WHERE created_by = auth.uid()
+    )
   )
 );
 

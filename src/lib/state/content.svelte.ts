@@ -74,6 +74,8 @@ export class ContentState {
   // Carousel state for snapshots
   carouselState = $state<CarouselState>({ lastViewedIndex: 0 });
 
+  videoTimestampUpdated = $state<boolean | null>(null);
+
   // Selected and hovered video by "section" where section is a carousel, a group of tiles, tables, etc.
   selectedVideosBySection = $state<Record<string, Video[]>>({});
   hoveredVideosBySection = $state<Record<string, Video | null>>({});

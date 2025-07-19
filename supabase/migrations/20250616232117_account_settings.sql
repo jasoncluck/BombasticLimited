@@ -203,6 +203,7 @@ USING ((select auth.uid()) = profiles.id);
 
 CREATE OR REPLACE FUNCTION delete_user()
 RETURNS void
+SET search_path = ''
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$

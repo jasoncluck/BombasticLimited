@@ -496,10 +496,6 @@ export type Database = {
           p_playlist_id?: number
           p_sorted_by?: Database["public"]["Enums"]["playlist_sorted_by"]
           p_sort_order?: Database["public"]["Enums"]["playlist_sort_order"]
-          p_update_video_start?: boolean
-          p_update_watched_at?: boolean
-          p_update_playlist?: boolean
-          p_update_sorting?: boolean
         }
         Returns: {
           id: string

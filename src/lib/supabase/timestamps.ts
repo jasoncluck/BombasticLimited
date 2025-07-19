@@ -9,6 +9,8 @@ import type {
   SortOrder,
 } from "$lib/components/content/content-filter";
 import type { PlaylistVideo } from "./playlists";
+import { invalidate } from "$app/navigation";
+import { getContentState } from "$lib/state/content.svelte";
 
 export type TimestampWithVideoId = {
   videoId: string;
@@ -30,6 +32,8 @@ export async function saveVideoTimestamp({
 }) {
   let error: PostgrestError | undefined;
 
+  const contentState = getContentState();
+
   if (session) {
     const { data: videos, error: upsertError } = await supabase
       .rpc("insert_timestamp", {
@@ -47,6 +51,7 @@ export async function saveVideoTimestamp({
       console.error("Error saving video timestamps.", upsertError);
       error = upsertError;
     }
+    contentState.videoTimestampUpdated = true;
     return { videos, error };
   }
 
