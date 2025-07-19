@@ -282,12 +282,13 @@ export async function createPlaylist({
   if (error) {
     console.error("Error creating playlist:", error);
 
-    showNotification("Error creating playlist", "error");
-    if (error.code === "23505") {
+    if (error.code === "P0001") {
       showNotification(
-        "Error when creating playlist, playlist with that title already exists.",
+        "Unable to create playlist, a maximum of 25 playlists can be created or followed.",
         "error",
       );
+    } else {
+      showNotification("Error creating playlist", "error");
     }
   }
 

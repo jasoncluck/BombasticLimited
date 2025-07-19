@@ -213,6 +213,7 @@ BEGIN
 END;
 $$;
 
+
 CREATE OR REPLACE FUNCTION follow_playlist(
   p_user_id uuid,
   p_playlist_id bigint,

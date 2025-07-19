@@ -382,9 +382,17 @@ CREATE POLICY "Enable delete for users based on user_id" ON "public"."timestamps
 
 
 
+CREATE POLICY "Enable insert for authenticated users only" ON "public"."playlist_videos" FOR INSERT TO "authenticated" WITH CHECK (true);
+
+
 
 CREATE POLICY "Enable insert for users based on created_by" ON "public"."playlists" FOR INSERT TO "authenticated" WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "created_by"));
 
+
+CREATE POLICY "Enable read access for all users" ON "public"."playlists" FOR SELECT USING (true);
+
+
+CREATE POLICY "Enable read access for all users" ON "public"."videos" FOR SELECT USING (true);
 
 
 
