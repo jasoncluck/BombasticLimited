@@ -200,3 +200,24 @@ ON public.profiles
 FOR UPDATE
 TO authenticated
 USING ((select auth.uid()) = profiles.id);
+
+CREATE OR REPLACE FUNCTION delete_user()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    user_id uuid := (SELECT auth.uid());
+    deleted_count integer;
+BEGIN
+    -- Attempt to delete the user and check if any rows were affected
+    DELETE FROM auth.users 
+    WHERE id = user_id;
+    
+    GET DIAGNOSTICS deleted_count = ROW_COUNT;
+    
+    IF deleted_count = 0 THEN
+        RAISE EXCEPTION 'User not found or could not be deleted';
+    END IF;
+END;
+$$;

@@ -311,6 +311,10 @@ export type Database = {
           updated_at: string
         }[]
       }
+      delete_user: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       follow_playlist: {
         Args: {
           p_user_id: string
