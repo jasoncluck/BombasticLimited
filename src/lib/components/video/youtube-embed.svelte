@@ -108,6 +108,7 @@
           videoId: video.id,
           playlistId: playlist?.id,
           timestampStartSeconds: currentTimeSeconds,
+          watchedAt: null,
           sortedBy:
             contentFilter && isPlaylistVideosFilter(contentFilter)
               ? contentFilter.sort.key
@@ -139,7 +140,7 @@
 
     const watchedPercent = currentTimeSeconds / videoDurationSeconds;
     const watchedAt =
-      watchedPercent >= VIDEO_DELETE_SECONDS_PERCENT ? new Date() : undefined;
+      watchedPercent >= VIDEO_DELETE_SECONDS_PERCENT ? new Date() : null;
 
     const payload: { videoTimestamp: TimestampWithVideoId } = {
       videoTimestamp: {

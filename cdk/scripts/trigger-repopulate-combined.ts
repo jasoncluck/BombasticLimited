@@ -24,7 +24,7 @@ async function invokeLambdaSync(
     const command = new InvokeCommand({
       FunctionName: functionName,
       Payload: JSON.stringify(payload),
-      InvocationType: "RequestResponse", // Synchronous invocation - wait for completion
+      InvocationType: "RequestResponse",
     });
 
     const response = await lambda.send(command);
@@ -50,10 +50,27 @@ async function invokeLambdaSync(
 }
 
 async function triggerRepopulateCombined() {
-  const specificSource = process.argv[2];
+  // Filter out arguments that start with '--' and the '--' separator
+  const args = process.argv
+    .slice(2)
+    .filter((arg) => !arg.startsWith("--") && arg !== "--");
+  const specificSource = args[0]; // First non-flag argument
+
   const videosOnly = process.argv.includes("--videos-only");
   const playlistsOnly = process.argv.includes("--playlists-only");
-  const sources = specificSource ? [specificSource] : CHANNEL_SOURCES;
+
+  // Validate specificSource if provided
+  let sources;
+  if (specificSource) {
+    if (!CHANNEL_SOURCES.includes(specificSource as any)) {
+      console.error(`❌ Invalid source: ${specificSource}`);
+      console.error(`   Valid sources are: ${CHANNEL_SOURCES.join(", ")}`);
+      process.exit(1);
+    }
+    sources = [specificSource];
+  } else {
+    sources = CHANNEL_SOURCES;
+  }
 
   if (videosOnly && playlistsOnly) {
     console.error(

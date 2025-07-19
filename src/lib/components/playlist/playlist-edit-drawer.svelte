@@ -90,7 +90,6 @@
   // Reset isSubmitting when drawer opens
   $effect(() => {
     if (open) {
-      console.log("Drawer opened - resetting isSubmitting to false");
       isSubmitting = false;
     }
   });

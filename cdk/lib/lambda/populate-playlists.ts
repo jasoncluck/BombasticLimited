@@ -26,6 +26,12 @@ export const populatePlaylists = async ({
     throw new Error(errMsg);
   }
 
+  if (!CHANNEL_INFO[source]) {
+    throw new Error(
+      `Invalid source: ${source}. Valid sources are: ${Object.keys(CHANNEL_INFO).join(", ")}`,
+    );
+  }
+
   const { id: channelId, uploadPlaylistId } = CHANNEL_INFO[source];
   if (!channelId) {
     const errMsg = `channelId not found for source: ${source}`;

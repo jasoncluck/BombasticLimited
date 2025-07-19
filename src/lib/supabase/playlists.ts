@@ -17,6 +17,7 @@ import { DEFAULT_NUM_VIDEOS_OVERVIEW, type Video } from "./videos";
 import type { Source } from "$lib/constants/source";
 import { videoDurationToSeconds } from "$lib/components/video/video-service";
 
+export const USER_PLAYLIST_LIMIT = 25;
 export const DEFAULT_NUM_PLAYLISTS_OVERVIEW = 5;
 export const DEFAULT_NUM_PLAYLISTS_PAGINATION = 15;
 export const PLAYLIST_VIDEO_LIMIT = 100;
@@ -281,15 +282,6 @@ export async function createPlaylist({
 
   if (error) {
     console.error("Error creating playlist:", error);
-
-    if (error.code === "P0001") {
-      showNotification(
-        "Unable to create playlist, a maximum of 25 playlists can be created or followed.",
-        "error",
-      );
-    } else {
-      showNotification("Error creating playlist", "error");
-    }
   }
 
   return { playlist, error };

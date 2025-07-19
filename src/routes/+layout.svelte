@@ -147,7 +147,6 @@
 
   $effect(() => {
     if (!page.url.pathname.startsWith("/search/")) {
-      console.log("in effect");
       searchQuery = "";
     }
   });

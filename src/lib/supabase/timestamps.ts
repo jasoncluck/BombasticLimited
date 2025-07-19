@@ -13,7 +13,7 @@ import type { PlaylistVideo } from "./playlists";
 export type TimestampWithVideoId = {
   videoId: string;
   timestampStartSeconds?: number;
-  watchedAt?: Date;
+  watchedAt: Date | null;
   playlistId?: number;
   sortedBy?: SortKey<PlaylistVideo> | null;
   sortOrder?: SortOrder | null;

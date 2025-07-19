@@ -13,6 +13,7 @@ import {
   updatePlaylistPosition,
   updatePlaylistSort,
   updatePlaylistVideoPosition,
+  USER_PLAYLIST_LIMIT,
   type Playlist,
   type PlaylistVideo,
 } from "$lib/supabase/playlists";
@@ -71,10 +72,21 @@ export async function handleCreatePlaylist({
     supabase,
   });
 
+  if (error) {
+    if (error.code === "P0001") {
+      showNotification(
+        `Unable to create playlist, a maximum of ${USER_PLAYLIST_LIMIT} playlists can be created or followed.`,
+        "error",
+      );
+    } else {
+      showNotification("Error creating playlist", "error");
+    }
+  }
   // Trigger populates short ID
   if (!error && playlist) {
     showNotification(`Created Playlist: ${playlist.name}`);
   }
+
   invalidate("supabase:db:playlists");
   return { playlist, error };
 }
@@ -327,10 +339,19 @@ export async function handleFollowPlaylist({
 
   invalidate("supabase:db:playlists");
 
-  if (!error) {
-    showNotification(`Followed playlist: ${playlist.name} `, "success");
+  if (error) {
+    if (error?.code === "P0001") {
+      showNotification(
+        `Unable to follow playlist, a maximum of ${USER_PLAYLIST_LIMIT} playlists can be followed or created.`,
+        "error",
+      );
+    } else {
+      showNotification("Error creating playlist", "error");
+    }
   } else {
-    showNotification(`Unable to follow playlist: ${error.message}`, "error");
+    if (!error) {
+      showNotification(`Followed playlist: ${playlist.name} `, "success");
+    }
   }
 }
 
