@@ -2,10 +2,14 @@
   interface LoaderProps {
     message?: string;
     size?: "sm" | "md" | "lg";
-    class?: string;
+    visible?: boolean;
   }
 
-  let { message = "Loading...", size = "md" }: LoaderProps = $props();
+  let {
+    message = "Loading...",
+    size = "md",
+    visible = true,
+  }: LoaderProps = $props();
 
   const sizeClasses = {
     sm: "h-6 w-6",
@@ -14,7 +18,11 @@
   };
 </script>
 
-<div class="flex items-center justify-center p-8">
+<div
+  class="flex items-center justify-center p-4 {visible
+    ? 'visible'
+    : 'invisible'}"
+>
   <div class="text-center">
     <div
       class="animate-spin rounded-full border-b-2 border-primary mx-auto mb-2 {sizeClasses[

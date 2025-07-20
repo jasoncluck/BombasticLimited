@@ -132,14 +132,112 @@
   });
 </script>
 
-{#if videos.length < 1}
-  <div {...restProps} class="flex items-center justify-center h-[180px]">
-    <p>{playlist ? "Playlist is empty" : "No results found"}</p>
-  </div>
-{/if}
+<div class="mt-2">
+  {#if videos.length < 1}
+    <div {...restProps} class="flex items-center justify-center h-[180px]">
+      <p>{playlist ? "Playlist is empty" : "No results found"}</p>
+    </div>
+  {/if}
 
-{#if currentPage && numPages > 1}
-  <div class="mb-4">
+  {#if currentPage && numPages > 1}
+    <div class="mb-4">
+      <Pagination
+        count={videosCount ?? 0}
+        bind:currentPage
+        perPage={DEFAULT_NUM_VIDEOS_PAGINATION}
+        onPageChange={(pageNum) => {
+          updatePaginationQueryParams({
+            pageNum,
+            url: page.url,
+            invalidate: ["supabase:db:videos"],
+          });
+        }}
+      />
+    </div>
+  {/if}
+  <ContentContextMenu
+    playlist={currentPlaylist}
+    preserveSelectionAfterAction={userProfile?.content_display === "TABLE" ||
+      (!mediaQueryState.isSm && !mediaQueryState.canHover)}
+    {sectionId}
+    {playlists}
+    {supabase}
+    {session}
+  >
+    <ContentDrawer
+      {videos}
+      playlist={currentPlaylist}
+      {playlists}
+      {contentFilter}
+      {sectionId}
+      {supabase}
+      {session}
+    >
+      <div bind:this={contentRef} {...restProps} class="flex flex-col gap-5">
+        <!-- Table view for small screens (up to sm breakpoint) -->
+        <div class="sm:hidden">
+          <ContentTable
+            {videos}
+            {contentFilter}
+            {videosCount}
+            {columns}
+            {playlist}
+            {sectionId}
+            {supabase}
+            {session}
+          />
+        </div>
+
+        <!-- User preference for larger screens (sm and above) -->
+        <div class="hidden sm:block">
+          {#if userProfile?.content_display === "TABLE"}
+            <ContentTable
+              {videos}
+              {contentFilter}
+              {videosCount}
+              {allowVideoReorder}
+              {columns}
+              {playlist}
+              {sectionId}
+              {supabase}
+              {session}
+            />
+          {:else if tilesDisplay === "CAROUSEL"}
+            <ContentCarousel
+              {videos}
+              {videosCount}
+              {playlists}
+              {playlist}
+              {isContinueVideos}
+              {contentFilter}
+              bind:carouselState
+              {sectionId}
+              {supabase}
+              {session}
+              {allowVideoReorder}
+            />
+          {:else}
+            <div class="mb-20">
+              <ContentTiles
+                {videos}
+                {videosCount}
+                {playlists}
+                {playlist}
+                {isContinueVideos}
+                {allowVideoReorder}
+                {contentFilter}
+                {sectionId}
+                {supabase}
+                {session}
+              />
+            </div>
+          {/if}
+        </div>
+      </div></ContentDrawer
+    >
+  </ContentContextMenu>
+
+  {#if currentPage && numPages > 1}
     <Pagination
       count={videosCount ?? 0}
       bind:currentPage
@@ -150,105 +248,9 @@
           url: page.url,
           invalidate: ["supabase:db:videos"],
         });
+
+        pageState.contentScrollPosition = { scrollTop: 0, scrollLeft: 0 };
       }}
     />
-  </div>
-{/if}
-<ContentContextMenu
-  playlist={currentPlaylist}
-  preserveSelectionAfterAction={userProfile?.content_display === "TABLE" ||
-    (!mediaQueryState.isSm && !mediaQueryState.canHover)}
-  {sectionId}
-  {playlists}
-  {supabase}
-  {session}
->
-  <ContentDrawer
-    {videos}
-    playlist={currentPlaylist}
-    {playlists}
-    {contentFilter}
-    {sectionId}
-    {supabase}
-    {session}
-  >
-    <div bind:this={contentRef} {...restProps} class="flex flex-col gap-5">
-      <!-- Table view for small screens (up to sm breakpoint) -->
-      <div class="sm:hidden">
-        <ContentTable
-          {videos}
-          {contentFilter}
-          {videosCount}
-          {columns}
-          {playlist}
-          {sectionId}
-          {supabase}
-          {session}
-        />
-      </div>
-
-      <!-- User preference for larger screens (sm and above) -->
-      <div class="hidden sm:block">
-        {#if userProfile?.content_display === "TABLE"}
-          <ContentTable
-            {videos}
-            {contentFilter}
-            {videosCount}
-            {allowVideoReorder}
-            {columns}
-            {playlist}
-            {sectionId}
-            {supabase}
-            {session}
-          />
-        {:else if tilesDisplay === "CAROUSEL"}
-          <ContentCarousel
-            {videos}
-            {videosCount}
-            {playlists}
-            {playlist}
-            {isContinueVideos}
-            {contentFilter}
-            bind:carouselState
-            {sectionId}
-            {supabase}
-            {session}
-            {allowVideoReorder}
-          />
-        {:else}
-          <div class="mb-20">
-            <ContentTiles
-              {videos}
-              {videosCount}
-              {playlists}
-              {playlist}
-              {isContinueVideos}
-              {allowVideoReorder}
-              {contentFilter}
-              {sectionId}
-              {supabase}
-              {session}
-            />
-          </div>
-        {/if}
-      </div>
-    </div></ContentDrawer
-  >
-</ContentContextMenu>
-
-{#if currentPage && numPages > 1}
-  <Pagination
-    count={videosCount ?? 0}
-    bind:currentPage
-    perPage={DEFAULT_NUM_VIDEOS_PAGINATION}
-    onPageChange={(pageNum) => {
-      updatePaginationQueryParams({
-        pageNum,
-        url: page.url,
-        invalidate: ["supabase:db:videos"],
-      });
-
-      pageState.contentScrollPosition = { scrollTop: 0, scrollLeft: 0 };
-    }}
-  />
-{/if}
+  {/if}
+</div>

@@ -119,7 +119,7 @@
   }
 
   .header-link {
-    @apply block lg:text-4xl  text-3xl self-start font-semibold transition-colors hover:underline cursor-pointer truncate mb-3;
+    @apply block lg:text-4xl  text-3xl self-start font-semibold transition-colors hover:underline cursor-pointer truncate mb-2;
   }
 
   .header-link-sticky {

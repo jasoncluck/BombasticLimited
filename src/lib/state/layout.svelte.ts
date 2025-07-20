@@ -38,13 +38,15 @@ export interface LayoutState {
 }
 
 export class LayoutStateClass implements LayoutState {
+  private lastSearchValue: string = "";
+
   isDraggingDivider = $state(false);
-  isSearching = $state(false); // NEW
+  isSearching = $state(false);
   currentDebouncedSearch = $state<ReturnType<typeof debounce> | null>(null);
   searchAbortController = $state<AbortController | null>(null); // NEW
 
   config = $state<LayoutConfig>({
-    searchDebounceMs: 500,
+    searchDebounceMs: 300,
   });
 
   async handleLogout(supabase: SupabaseClient) {
@@ -56,9 +58,14 @@ export class LayoutStateClass implements LayoutState {
     window.location.reload();
   }
 
-  async searchRedirect(e: Event) {
+  async searchRedirect(e: Event, expectedValue?: string): Promise<Event> {
     const input = e.target as HTMLInputElement;
     const searchValue = input.value.trim();
+
+    // If an expected value was passed and current value doesn't match, abort
+    if (expectedValue !== undefined && searchValue !== expectedValue) {
+      return e; // Return the event instead of undefined
+    }
 
     // Cancel any pending search request
     if (this.searchAbortController) {
@@ -70,19 +77,19 @@ export class LayoutStateClass implements LayoutState {
 
     try {
       if (searchValue === "") {
+        // Only navigate to "/" if completely empty
         await goto(`/`, { keepFocus: true, replaceState: true });
-      } else {
+      } else if (searchValue.length >= 2) {
+        // Only navigate to search if 2+ characters
         // Create new abort controller for this search
         this.searchAbortController = new AbortController();
-
-        // Use replaceState instead of pushState for rapid searches to avoid history pollution
-        const shouldReplace = window.location.pathname.startsWith("/search/");
 
         await goto(`/search/${encodeURIComponent(searchValue)}`, {
           keepFocus: true,
           replaceState: true,
         });
       }
+      // For single characters (length === 1), do nothing - stay on current page
     } catch (error) {
       // Don't log abort errors - they're expected
       if ((error as Error)?.name !== "AbortError") {
@@ -93,11 +100,12 @@ export class LayoutStateClass implements LayoutState {
       this.searchAbortController = null;
     }
 
-    return e;
+    return e; // Always return the event to match the base class signature
   }
 
   handleSearch(e: Event) {
     const input = e.target as HTMLInputElement;
+    const searchValue = input.value.trim();
 
     // Cancel current debounced search if it exists
     if (this.currentDebouncedSearch?.isPending) {
@@ -110,15 +118,21 @@ export class LayoutStateClass implements LayoutState {
       this.searchAbortController = null;
     }
 
-    // Don't search for very short queries
-    if (input.value.trim().length > 0 && input.value.trim().length < 2) {
+    // If we're starting from empty and hit the minimum threshold, search immediately
+    // This makes the first search more responsive
+    if (searchValue.length === 2 && !this.lastSearchValue) {
+      this.lastSearchValue = searchValue;
+      this.searchRedirect(e, searchValue);
       return;
     }
 
-    this.currentDebouncedSearch = debounce(
-      () => this.searchRedirect(e),
-      this.config.searchDebounceMs,
-    );
+    // For all cases, use debounced search (including empty and single character)
+    // Capture the search value at the time of creating the debounced function
+    const capturedSearchValue = searchValue;
+    this.currentDebouncedSearch = debounce(() => {
+      this.lastSearchValue = capturedSearchValue;
+      this.searchRedirect(e, capturedSearchValue);
+    }, this.config.searchDebounceMs);
     this.currentDebouncedSearch();
   }
 

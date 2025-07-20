@@ -14,6 +14,7 @@
     Cog,
     GalleryHorizontal,
     House,
+    LoaderIcon,
     LogOut,
     Table,
     UserCircle,
@@ -120,6 +121,14 @@
   });
 
   afterNavigate(({ from, to, delta }) => {
+    if (
+      to &&
+      !to.url.pathname.startsWith("/search/") &&
+      to.url.pathname !== "/"
+    ) {
+      searchQuery = "";
+    }
+
     // Reset scroll state if new page
     if (!delta && from?.url.pathname !== to?.url.pathname) {
       if (pageState.viewportRefs.contentViewportRef) {
@@ -153,12 +162,6 @@
     );
     if (pageState.sidebarScrollPosition) {
       pageState.sidebarScrollPosition = null;
-    }
-  });
-
-  $effect(() => {
-    if (!page.url.pathname.startsWith("/search/")) {
-      searchQuery = "";
     }
   });
 
@@ -242,11 +245,11 @@
     </div>
 
     <div
-      class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-4"
+      class="absolute left-1/2 top-1/2 -translate-x-[calc(50%-28px)] -translate-y-1/2 flex items-center"
     >
       <a
         href="/"
-        class="hidden sm:block text-sm font-medium transition-colors hover:text-primary"
+        class="hidden sm:block text-sm font-medium transition-colors hover:text-primary mr-4"
       >
         <House />
         <span class="sr-only">Home</span>
@@ -258,6 +261,7 @@
         class="sm:w-72"
         bind:value={searchQuery}
       />
+      <Loader message="" size="sm" visible={layoutState.isSearching} />
     </div>
 
     <div class="ml-auto">

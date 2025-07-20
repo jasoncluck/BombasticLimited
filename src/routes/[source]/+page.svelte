@@ -84,7 +84,6 @@
 
   $effect(() => {
     const newSectionIds = ["latestVideos", ...highlightPlaylistShortIds];
-    console.log(newSectionIds);
 
     // Only update if sectionIds actually changed to prevent infinite loops
     if (JSON.stringify(newSectionIds) !== JSON.stringify(sectionIds)) {
