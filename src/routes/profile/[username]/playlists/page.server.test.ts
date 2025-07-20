@@ -9,8 +9,8 @@ import { mockPlaylist } from "../../../../tests/mocks/playlists";
 import { setupTest } from "../../../../tests/utils/test-setup";
 
 // Hoist the mocks
-const { mockGetPublicPlaylists } = vi.hoisted(() => ({
-  mockGetPublicPlaylists: vi.fn(),
+const { mockGetPlaylistsForUsername } = vi.hoisted(() => ({
+  mockGetPlaylistsForUsername: vi.fn(),
 }));
 
 const { mockIsVideoFilter, mockGetPaginationQueryParams } = vi.hoisted(() => ({
@@ -20,7 +20,7 @@ const { mockIsVideoFilter, mockGetPaginationQueryParams } = vi.hoisted(() => ({
 
 // Mock the dependencies
 vi.mock("$lib/supabase/playlists", () => ({
-  getPublicPlaylists: mockGetPublicPlaylists,
+  getPlaylistsForUsername: mockGetPlaylistsForUsername,
   DEFAULT_NUM_PLAYLISTS_PAGINATION: 50,
 }));
 
@@ -34,11 +34,11 @@ vi.mock("$lib/components/pagination/pagination", () => ({
 
 const loadModule = () => import("./+page.server");
 
-describe("search/[query]/playlists/+page.server.ts load function", () => {
+describe("profile/[username]/playlists/+page.server.ts load function", () => {
   setupTest();
 
   beforeEach(() => {
-    mockGetPublicPlaylists.mockResolvedValue({
+    mockGetPlaylistsForUsername.mockResolvedValue({
       playlists: [mockPlaylist],
       count: 1,
     });
@@ -46,7 +46,7 @@ describe("search/[query]/playlists/+page.server.ts load function", () => {
     mockGetPaginationQueryParams.mockReturnValue(1);
   });
 
-  it("loads playlist search results successfully", async () => {
+  it("loads user playlists successfully", async () => {
     const { load } = await loadModule();
 
     const parentData: BaseParentData = {
@@ -62,14 +62,21 @@ describe("search/[query]/playlists/+page.server.ts load function", () => {
     const mockEvent = createMockLoadEvent({
       session: mockSession,
       parentData,
-      params: { query: "mario" },
-      routeId: "/search/[query]/playlists",
+      params: { username: "testuser" },
+      routeId: "/profile/[username]/playlists",
     });
 
     const result = await load(mockEvent);
 
     expect(result).toBeDefined();
-    expect(result.publicPlaylists).toEqual([mockPlaylist]);
-    expect(result.searchString).toBe("mario");
+    expect(result.playlistsForUsername).toEqual([mockPlaylist]);
+    expect(result.playlistsCount).toBe(1);
+
+    expect(mockGetPlaylistsForUsername).toHaveBeenCalledWith({
+      username: "testuser",
+      currentPage: 1,
+      limit: 50,
+      supabase: expect.any(Object),
+    });
   });
 });

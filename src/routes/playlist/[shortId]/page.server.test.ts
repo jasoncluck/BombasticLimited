@@ -97,9 +97,7 @@ describe("playlist/[shortId]/+page.server.ts load function", () => {
       count: 1,
     });
 
-    mockGetPlaylistTotalDuration.mockResolvedValue({
-      totalDuration: 3600,
-    });
+    mockGetPlaylistTotalDuration.mockResolvedValue(3600);
 
     mockIsUserPlaylist.mockReturnValue(true);
     mockSuperValidate.mockResolvedValue({
@@ -139,7 +137,7 @@ describe("playlist/[shortId]/+page.server.ts load function", () => {
     expect(result.playlist).toBeDefined();
     expect(result.videos).toEqual([mockVideo]);
     expect(result.videosCount).toBe(1);
-    expect(result.totalDuration).toBe(3600);
+    expect(result.playlistDuration).toBe(3600);
 
     expect(mockGetPlaylistByShortId).toHaveBeenCalledWith({
       shortId: "test-123",
