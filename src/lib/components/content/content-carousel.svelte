@@ -221,7 +221,7 @@
 
     // Only apply hover and selected states to cards that are in view
     if (isInView && (isSelected || isHovered)) {
-      classes += " !bg-secondary brightness-125 hover:bg-secondary";
+      classes += " !bg-secondary brightness-110 hover:bg-secondary";
     }
 
     // Add drag drop classes if enabled
@@ -294,12 +294,16 @@
   onmouseleave={handleCarouselMouseLeave}
 >
   <Carousel.Previous
-    class={showPreviousButton ? "visible cursor-pointer" : "invisible"}
+    class={showPreviousButton
+      ? "visible cursor-pointer hover:brightness-110 !bg-secondary hover:scale-105"
+      : "invisible"}
     onclick={handlePreviousButtonClick}
   />
   <Carousel.Next
     onclick={handleNextButtonClick}
-    class={showNextButton ? "visible cursor-pointer " : "invisible"}
+    class={showNextButton
+      ? "visible cursor-pointer hover:brightness-110 !bg-secondary hover:scale-105"
+      : "invisible"}
   />
   <Carousel.Content class="m4-2">
     {#each videos as video, i (video.id)}

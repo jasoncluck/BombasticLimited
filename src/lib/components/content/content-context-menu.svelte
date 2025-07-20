@@ -19,6 +19,13 @@
   } from "../video/video-service";
   import { Portal } from "bits-ui";
   import { page } from "$app/state";
+  import {
+    CircleCheck,
+    ImagePlay,
+    MinusCircle,
+    PlusCircle,
+    TimerReset,
+  } from "@lucide/svelte";
 
   interface ContentContextMenuProps {
     playlist: Playlist | null;
@@ -157,6 +164,7 @@
         {#if filteredPlaylists.length > 0}
           <ContextMenu.Sub>
             <ContextMenu.SubTrigger onclick={(e) => e.stopPropagation()}>
+              <PlusCircle class="dropdown-icon" />
               Add {operationVideos.length === 1 ? "video" : "videos"} to Playlist
             </ContextMenu.SubTrigger>
             <Portal>
@@ -215,7 +223,8 @@
               }
             }}
           >
-            Remove from this playlist
+            <MinusCircle class="dropdown-icon" />
+            Remove from playlist
           </ContextMenu.Item>
         {/if}
 
@@ -235,6 +244,7 @@
               }
             }}
           >
+            <ImagePlay class="dropdown-icon" />
             Set as playlist image
           </ContextMenu.Item>
         {/if}
@@ -267,6 +277,7 @@
               }
             }}
           >
+            <TimerReset class="dropdown-icon" />
             Reset progress
           </ContextMenu.Item>
         {/if}
@@ -303,6 +314,7 @@
               }
             }}
           >
+            <CircleCheck class="dropdown-icon" />
             Set as Watched
           </ContextMenu.Item>
         {/if}

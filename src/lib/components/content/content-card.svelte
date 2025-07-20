@@ -80,6 +80,7 @@
           class="w-full aspect-[16/9] h-auto"
           src={video.thumbnail_url}
           alt={video.title}
+          loading="lazy"
         />
         <div class="absolute top-0.5 right-0.5">
           <ContentDropdown

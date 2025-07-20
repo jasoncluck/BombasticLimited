@@ -142,7 +142,7 @@ export class PlaylistStateClass {
       this.draggedIndex === null
     ) {
       if (isSelected) {
-        classes += " brightness-125";
+        classes += " brightness-110";
       } else {
         classes += " bg-secondary/25";
       }
@@ -157,7 +157,7 @@ export class PlaylistStateClass {
       }
       // Override hover for selected items
       if (this.draggedIndex === null) {
-        classes += " hover:bg-secondary hover:brightness-125";
+        classes += " hover:bg-secondary hover:brightness-110";
       }
     }
 

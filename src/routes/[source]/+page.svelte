@@ -5,10 +5,7 @@
   import Content from "$lib/components/content/content.svelte";
   import { SOURCE_INFO } from "$lib/constants/source";
   import Button from "$lib/components/ui/button/button.svelte";
-  import {
-    getContentState,
-    type CarouselState,
-  } from "$lib/state/content.svelte";
+  import { getContentState } from "$lib/state/content.svelte";
   import type { Snapshot } from "./$types";
   import { handlePlaylistNavigation } from "$lib/components/playlist/playlist";
   import PlaylistTiles from "$lib/components/playlist/playlist-tiles.svelte";

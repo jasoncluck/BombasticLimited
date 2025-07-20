@@ -134,7 +134,7 @@
                     {#snippet child({ props })}
                       <Button
                         {...props}
-                        class="absolute -bottom-3 -right-3 rounded-full hover:brightness-125 hover:bg-secondary"
+                        class="absolute -bottom-3 -right-3 rounded-full hover:brightness-110 hover:bg-secondary"
                         variant="secondary"
                         size="icon"
                       >

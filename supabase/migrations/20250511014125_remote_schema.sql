@@ -37,7 +37,6 @@ COMMENT ON SCHEMA "public" IS 'standard public schema';
 
 
 
-CREATE EXTENSION IF NOT EXISTS "fuzzystrmatch" WITH SCHEMA "extensions";
 
 
 
@@ -168,10 +167,10 @@ CREATE OR REPLACE FUNCTION "public"."set_video_search_vector"() RETURNS "trigger
     AS $$BEGIN
   NEW.search_vector := 
       setweight(to_tsvector('english', NEW.title), 'A') || 
-      setweight(to_tsvector('english', NEW.description), 'B');
+      setweight(to_tsvector('english', NEW.title), 'A') ||  -- Double weight for title
+      setweight(to_tsvector('english', coalesce(NEW.description, '')), 'C');  -- Lower weight for description
   RETURN NEW;
 END;$$;
-
 
 ALTER FUNCTION "public"."set_video_search_vector"() OWNER TO "postgres";
 
@@ -379,11 +378,6 @@ CREATE POLICY "Authenticated users can update their own video timestamps" ON "pu
 
 
 CREATE POLICY "Enable delete for users based on user_id" ON "public"."timestamps" FOR DELETE USING ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
-
-
-
-CREATE POLICY "Enable insert for authenticated users only" ON "public"."playlist_videos" FOR INSERT TO "authenticated" WITH CHECK (true);
-
 
 
 CREATE POLICY "Enable insert for users based on created_by" ON "public"."playlists" FOR INSERT TO "authenticated" WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "created_by"));

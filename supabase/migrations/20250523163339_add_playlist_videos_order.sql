@@ -8,10 +8,10 @@ USING (
     WHERE type IN ('Public')
   )
   OR (
-    auth.uid() IS NOT NULL
+    (SELECT auth.uid()) IS NOT NULL
     AND playlist_id IN (
       SELECT id FROM public.playlists 
-      WHERE created_by = auth.uid()
+      WHERE created_by = (SELECT auth.uid())
     )
   )
 );

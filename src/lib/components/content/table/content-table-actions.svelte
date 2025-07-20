@@ -28,7 +28,6 @@
   } = $props();
 
   const contentState = getContentState();
-  console.log(videos);
 </script>
 
 <div

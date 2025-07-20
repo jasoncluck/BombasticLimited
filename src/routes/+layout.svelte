@@ -50,10 +50,6 @@
 
   const shouldShowLoading = $derived(!mediaQuery.initialized);
 
-  onMount(() => {
-    return mediaQuery.initialize();
-  });
-
   let { data, children } = $props();
   let {
     userProfile,
@@ -167,6 +163,7 @@
   });
 
   onMount(() => {
+    mediaQuery.initialize();
     // Set up event listeners for drag operations
     window.addEventListener("dragover", handleDragOver);
     window.addEventListener("dragend", handleDragEnd);
@@ -217,6 +214,7 @@
       if (streamingUnsubscribe) {
         streamingUnsubscribe();
       }
+      layoutState.cleanup();
     };
   });
 </script>

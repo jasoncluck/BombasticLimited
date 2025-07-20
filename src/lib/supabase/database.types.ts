@@ -543,7 +543,7 @@ export type Database = {
         Returns: boolean
       }
       search_playlists: {
-        Args: { search_term: string; playlist_limit?: number }
+        Args: { search_term: string }
         Returns: {
           id: number
           short_id: string
@@ -557,6 +557,7 @@ export type Database = {
           type: Database["public"]["Enums"]["playlist_type"]
           youtube_id: string
           profile_username: string
+          search_rank: number
         }[]
       }
       search_videos: {
@@ -572,6 +573,7 @@ export type Database = {
           duration: string
           video_start_seconds: number
           updated_at: string
+          search_rank: number
         }[]
       }
       unfollow_playlist: {

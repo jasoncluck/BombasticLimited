@@ -1,5 +1,5 @@
 import { isSource, type Source } from "$lib/constants/source";
-import { getVideos } from "$lib/supabase/videos";
+import { DEFAULT_NUM_VIDEOS_PAGINATION, getVideos } from "$lib/supabase/videos";
 import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 import { isVideoFilter } from "$lib/components/content/content-filter";
@@ -32,6 +32,7 @@ export const load: PageServerLoad = async ({
 
   const { videos, count: videosCount } = await getVideos({
     source,
+    limit: DEFAULT_NUM_VIDEOS_PAGINATION,
     searchString,
     currentPage,
     contentFilter,

@@ -86,7 +86,7 @@
 
     if (isSelected) {
       // Selected state - using !important to override hover
-      classes += " !bg-secondary brightness-125";
+      classes += " !bg-secondary brightness-110";
     } else {
       // Not selected - allow hover effects
       classes += " hover:bg-secondary/75";

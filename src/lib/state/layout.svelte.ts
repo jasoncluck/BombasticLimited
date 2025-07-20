@@ -15,9 +15,11 @@ export interface LayoutConfig {
 export interface LayoutState {
   // UI State
   isDraggingDivider: boolean;
+  isSearching: boolean; // NEW: Track search state
 
   // Search state
   currentDebouncedSearch: ReturnType<typeof debounce> | null;
+  searchAbortController: AbortController | null; // NEW: For canceling requests
 
   // Configuration
   config: LayoutConfig;
@@ -37,10 +39,12 @@ export interface LayoutState {
 
 export class LayoutStateClass implements LayoutState {
   isDraggingDivider = $state(false);
+  isSearching = $state(false); // NEW
   currentDebouncedSearch = $state<ReturnType<typeof debounce> | null>(null);
+  searchAbortController = $state<AbortController | null>(null); // NEW
 
   config = $state<LayoutConfig>({
-    searchDebounceMs: 500,
+    searchDebounceMs: 300,
   });
 
   async handleLogout(supabase: SupabaseClient) {
@@ -54,20 +58,62 @@ export class LayoutStateClass implements LayoutState {
 
   async searchRedirect(e: Event) {
     const input = e.target as HTMLInputElement;
+    const searchValue = input.value.trim();
+    console.log("in search redirect");
 
-    if (input.value === "") {
-      goto(`/`, { keepFocus: true });
-    } else {
-      goto(`/search/${encodeURIComponent(input.value)}`, {
-        keepFocus: true,
-      });
+    // Cancel any pending search request
+    if (this.searchAbortController) {
+      this.searchAbortController.abort();
+      this.searchAbortController = null;
     }
+
+    this.isSearching = true;
+
+    try {
+      if (searchValue === "") {
+        await goto(`/`, { keepFocus: true });
+      } else {
+        // Create new abort controller for this search
+        this.searchAbortController = new AbortController();
+
+        // Use replaceState instead of pushState for rapid searches to avoid history pollution
+        const shouldReplace = window.location.pathname.startsWith("/search/");
+
+        await goto(`/search/${encodeURIComponent(searchValue)}`, {
+          keepFocus: true,
+          replaceState: shouldReplace, // Replace if already on search page
+        });
+      }
+    } catch (error) {
+      // Don't log abort errors - they're expected
+      if ((error as Error)?.name !== "AbortError") {
+        console.error("Search navigation error:", error);
+      }
+    } finally {
+      this.isSearching = false;
+      this.searchAbortController = null;
+    }
+
     return e;
   }
 
   handleSearch(e: Event) {
+    const input = e.target as HTMLInputElement;
+
+    // Cancel current debounced search if it exists
     if (this.currentDebouncedSearch?.isPending) {
       this.currentDebouncedSearch.clear();
+    }
+
+    // Cancel any ongoing search request
+    if (this.searchAbortController) {
+      this.searchAbortController.abort();
+      this.searchAbortController = null;
+    }
+
+    // Don't search for very short queries
+    if (input.value.trim().length > 0 && input.value.trim().length < 2) {
+      return;
     }
 
     this.currentDebouncedSearch = debounce(
@@ -82,13 +128,8 @@ export class LayoutStateClass implements LayoutState {
   }
 
   setupNotifications(supabase: SupabaseClient) {
-    // Set up auth state change listener
     const { data } = supabase.auth.onAuthStateChange((_, newSession) => {
-      // Get current session from somewhere (you'll need to pass this in)
-      // For now, we'll assume it's available globally or passed in
-      // if (newSession?.expires_at !== session?.expires_at) {
       invalidate("supabase:auth");
-      // }
     });
 
     return () => {
@@ -101,7 +142,6 @@ export class LayoutStateClass implements LayoutState {
       "streamingSubscriptions",
     );
 
-    // Flag for not displaying messages on initial page mount
     let initialMount = true;
 
     const unsubscribe = streamingSources.subscribe((latestStreamingSources) => {
@@ -141,6 +181,17 @@ export class LayoutStateClass implements LayoutState {
     });
 
     return unsubscribe;
+  }
+
+  // NEW: Cleanup method
+  cleanup() {
+    if (this.currentDebouncedSearch?.isPending) {
+      this.currentDebouncedSearch.clear();
+    }
+    if (this.searchAbortController) {
+      this.searchAbortController.abort();
+      this.searchAbortController = null;
+    }
   }
 }
 

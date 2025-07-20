@@ -8,8 +8,8 @@
   import {
     getContentView,
     sourceWithContinueStateKeys,
-    type SourceWithContinueCarouselState,
-    type SourceWithContinueStateKeys,
+    type SourceWithCarouselState,
+    type SourceWithStateKeys,
   } from "$lib/components/content/content.js";
   import PlaylistTiles from "$lib/components/playlist/playlist-tiles.svelte";
   import { getMediaQueryState } from "$lib/state/media-query.svelte.js";
@@ -32,28 +32,27 @@
 
   let sectionIds = sourceWithContinueStateKeys;
 
-  const initialCarouselState: SourceWithContinueCarouselState =
-    {} as SourceWithContinueCarouselState;
+  const initialCarouselState: SourceWithCarouselState =
+    {} as SourceWithCarouselState;
 
   for (const key of sectionIds) {
     initialCarouselState[key] = { lastViewedIndex: 0 };
   }
 
-  let carouselsState =
-    $state<SourceWithContinueCarouselState>(initialCarouselState);
+  let carouselsState = $state<SourceWithCarouselState>(initialCarouselState);
 
   export const snapshot: Snapshot<{
-    carouselsState: SourceWithContinueCarouselState;
-    selectedVideos: Record<SourceWithContinueStateKeys, Video[]>;
+    carouselsState: SourceWithCarouselState;
+    selectedVideos: Record<SourceWithStateKeys, Video[]>;
   }> = {
     capture: () => ({
       carouselsState,
       selectedVideos: Object.fromEntries(
-        sectionIds.map((sid: SourceWithContinueStateKeys) => [
+        sectionIds.map((sid: SourceWithStateKeys) => [
           sid,
           contentState.selectedVideosBySection[sid],
         ]),
-      ) as Record<SourceWithContinueStateKeys, Video[]>,
+      ) as Record<SourceWithStateKeys, Video[]>,
     }),
     restore: async (restored) => {
       carouselsState = restored.carouselsState;

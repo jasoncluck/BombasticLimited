@@ -48,7 +48,7 @@ export class SourceStateClass {
       !this.pageState.sidebarScrollState.scrolling
     ) {
       if (isSelected) {
-        classes += " brightness-125";
+        classes += " brightness-110";
       } else {
         classes += " bg-secondary/25";
       }
@@ -58,7 +58,7 @@ export class SourceStateClass {
     if (isSelected) {
       classes += " bg-secondary text-secondary-foreground";
       // Override hover for selected items
-      classes += " hover:bg-secondary hover:brightness-125";
+      classes += " hover:bg-secondary hover:brightness-110";
     }
 
     // Sidebar layout classes

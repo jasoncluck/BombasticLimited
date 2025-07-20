@@ -154,7 +154,7 @@
                       : "Private Playlist"}
                   </p>
                   <h2
-                    class="header-playlist text-wrap break-anywhere font-extrabold"
+                    class="header-playlist text-wrap break-anywhere font-extrabold tracking-tight"
                   >
                     {playlist.name}
                   </h2>
