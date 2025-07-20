@@ -20,23 +20,27 @@ COMMENT ON COLUMN public.user_playlists."playlist_position" IS 'Ordering of play
 
 ALTER TABLE public.user_playlists ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can SELECT their own user_playlists"
+CREATE POLICY "Users can SELECT their own user_playlists and public playlists"
     ON public.user_playlists
     FOR SELECT
     USING (
         user_playlists.user_id = (select auth.uid())
+        OR EXISTS (
+            SELECT 1 FROM public.playlists p
+            WHERE p.id = user_playlists.id
+              AND p.type = 'Public'
+        )
     );
 
 CREATE POLICY "Users can INSERT user_playlists for playlists they created or are Public"
     ON public.user_playlists
     FOR INSERT
     WITH CHECK (
-        EXISTS (
+        user_playlists.user_id = (select auth.uid())
+        OR EXISTS (
             SELECT 1 FROM public.playlists p
             WHERE p.id = user_playlists.id
-              AND (
-                p.created_by = (select auth.uid())
-              )
+              AND p.type = 'Public'
         )
     );
 

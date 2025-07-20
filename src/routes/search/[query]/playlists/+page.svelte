@@ -28,7 +28,7 @@
   const processedPlaylistsPromise = $derived(processPlaylists(playlistResults));
 </script>
 
-<div class="flex flex-col gap-6">
+<div class="flex gap-6 mx-2">
   <div class="flex flex-col relative">
     <div
       class="flex flex-col items-start text-left border-none bg-transparent p-0"
@@ -36,46 +36,46 @@
       <p class="text-sm text-muted-foreground tracking-tight"></p>
 
       <p class="text-sm text-muted-foreground tracking-tight">Playlists</p>
-      <h2 class="header-primary text-left">Search Results</h2>
+      <h2 class="header-primary-no-margin text-left">Search Results</h2>
     </div>
 
-    <p class="text-sm text-muted-foreground tracking-tight">
+    <p class="text-sm text-muted-foreground tracking-tight mt-1">
       {playlistsCount}
-      {playlistsCount === 1 ? "playlist" : "playlists"}
+      {playlistsCount === 1 ? "video" : "videos"}
     </p>
   </div>
-  {#if playlistsCount && numPages > 1}
-    <Pagination
-      count={playlistsCount}
-      bind:currentPage
-      perPage={DEFAULT_NUM_PLAYLISTS_PAGINATION}
-      onPageChange={(pageNum) => {
-        updatePaginationQueryParams({
-          pageNum,
-          url: page.url,
-          invalidate: ["supabase:db:playlists"],
-        });
-      }}
-    />
-  {/if}
-
-  {#await processedPlaylistsPromise}
-    <div class="flex items-center justify-center p-8">
-      <div class="text-center">
-        <div
-          class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"
-        ></div>
-        <p class="text-sm text-muted-foreground">Loading playlists...</p>
-      </div>
-    </div>
-  {:then processedPlaylists}
-    <PlaylistTiles playlists={processedPlaylists} {followedPlaylists} />
-  {:catch error}
-    <div class="flex items-center justify-center p-8">
-      <div class="text-center">
-        <p class="text-sm text-destructive mb-2">Failed to load playlists</p>
-        <p class="text-xs text-muted-foreground">{error.message}</p>
-      </div>
-    </div>
-  {/await}
 </div>
+{#if playlistsCount && numPages > 1}
+  <Pagination
+    count={playlistsCount}
+    bind:currentPage
+    perPage={DEFAULT_NUM_PLAYLISTS_PAGINATION}
+    onPageChange={(pageNum) => {
+      updatePaginationQueryParams({
+        pageNum,
+        url: page.url,
+        invalidate: ["supabase:db:playlists"],
+      });
+    }}
+  />
+{/if}
+
+{#await processedPlaylistsPromise}
+  <div class="flex items-center justify-center p-8">
+    <div class="text-center">
+      <div
+        class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"
+      ></div>
+      <p class="text-sm text-muted-foreground">Loading playlists...</p>
+    </div>
+  </div>
+{:then processedPlaylists}
+  <PlaylistTiles playlists={processedPlaylists} {followedPlaylists} />
+{:catch error}
+  <div class="flex items-center justify-center p-8">
+    <div class="text-center">
+      <p class="text-sm text-destructive mb-2">Failed to load playlists</p>
+      <p class="text-xs text-muted-foreground">{error.message}</p>
+    </div>
+  </div>
+{/await}
