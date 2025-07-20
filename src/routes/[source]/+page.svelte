@@ -106,7 +106,9 @@
 </script>
 
 <div class="flex flex-col">
-  <div class="flex @2xl:flex-nowrap flex-wrap justify-between gap-4 mx-2">
+  <div
+    class="flex @2xl:flex-nowrap flex-wrap justify-between gap-4 mx-2 sm:mx-0"
+  >
     <div class="flex flex-col">
       <h1 class="header-primary shrink-0 !m-0">
         {SOURCE_INFO[source].displayName}
