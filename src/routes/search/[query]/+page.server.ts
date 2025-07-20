@@ -3,7 +3,11 @@ import { parseImageProperties } from "$lib/components/playlist/playlist";
 import { SOURCES } from "$lib/constants/source";
 import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
 import { searchPlaylists } from "$lib/supabase/playlists";
-import { getVideos, type SourceVideos } from "$lib/supabase/videos";
+import {
+  getVideos,
+  type SourceVideos,
+  type SourceVideosCount,
+} from "$lib/supabase/videos";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({
@@ -27,27 +31,29 @@ export const load: PageServerLoad = async ({
   }
 
   // Run all searches in parallel: video searches for all sources + playlist search
-  const [sourceVideosResults, { playlists: playlistSearchResults }] =
-    await Promise.all([
-      // Get videos from all sources in parallel
-      Promise.all(
-        SOURCES.map(async (source) => {
-          const { videos } = await getVideos({
-            source,
-            contentFilter,
-            searchString,
-            supabase,
-            session,
-          });
-          return { source, videos };
-        }),
-      ),
-      // Search playlists in parallel with video searches
-      searchPlaylists({
-        searchString,
-        supabase,
+  const [
+    sourceVideosResults,
+    { playlists: playlistSearchResults, count: playlistsCount },
+  ] = await Promise.all([
+    // Get videos from all sources in parallel
+    Promise.all(
+      SOURCES.map(async (source) => {
+        const { videos, count } = await getVideos({
+          source,
+          contentFilter,
+          searchString,
+          supabase,
+          session,
+        });
+        return { source, videos, count };
       }),
-    ]);
+    ),
+    // Search playlists in parallel with video searches
+    searchPlaylists({
+      searchString,
+      supabase,
+    }),
+  ]);
 
   // Reconstruct the sourceVideos object from parallel results
   const sourceVideos: SourceVideos = {
@@ -57,8 +63,16 @@ export const load: PageServerLoad = async ({
     remap: [],
   };
 
-  sourceVideosResults.forEach(({ source, videos }) => {
+  const sourceVideosCount: SourceVideosCount = {
+    giantbomb: null,
+    jeffgerstmann: null,
+    nextlander: null,
+    remap: null,
+  };
+
+  sourceVideosResults.forEach(({ source, videos, count }) => {
     sourceVideos[source] = videos;
+    sourceVideosCount[source] = count;
   });
 
   // Process playlist images in parallel
@@ -75,8 +89,10 @@ export const load: PageServerLoad = async ({
 
   return {
     sourceVideos: sourceVideos ?? [],
+    sourceVideosCount,
     searchString,
     playlists,
+    playlistsCount,
     followedPlaylists,
     playlistSearchResults: processedPlaylistSearchResults,
     contentFilter,

@@ -20,8 +20,10 @@
     session,
     searchString,
     sourceVideos,
+    sourceVideosCount,
     playlistSearchResults,
     playlists,
+    playlistsCount,
     followedPlaylists,
     contentFilter,
     userProfile,
@@ -70,10 +72,19 @@
 
   <div class="flex flex-col gap-8">
     {#if playlistSearchResults.length > 0}
-      <div class="flex flex-col gap-3">
-        <a class="header-link" href={`/search/${searchString}/playlists`}>
+      <div class="flex flex-col">
+        <a
+          class={getContentView(mediaQueryState, userProfile) === "TABLE"
+            ? "header-link-sticky"
+            : "header-link mb-1"}
+          href={`/search/${searchString}/playlists`}
+        >
           Playlists
         </a>
+        <p class="text-sm text-muted-foreground tracking-tight ml-2 mb-2">
+          {playlistsCount}
+          {playlistsCount === 1 ? "playlist" : "playlists"}
+        </p>
 
         <PlaylistTiles playlists={playlistSearchResults} {followedPlaylists} />
       </div>
@@ -82,15 +93,19 @@
     <!-- The rest of your content remains unchanged -->
     {#each SOURCES as source (source)}
       {#if sourceVideos[source].length > 0}
-        <div class="flex flex-col bg-background-lighter gap-3">
+        <div class="flex flex-col bg-background-lighter">
           <a
             href={`${page.url}/${source}`}
             class={getContentView(mediaQueryState, userProfile) === "TABLE"
               ? "header-link-sticky"
-              : "header-link"}
+              : "header-link mb-1"}
           >
             {SOURCE_INFO[source].displayName}
           </a>
+          <p class="text-sm text-muted-foreground tracking-tight ml-2 mb-2">
+            {sourceVideosCount[source]}
+            {sourceVideosCount[source] === 1 ? "video" : "videos"}
+          </p>
           <Content
             tilesDisplay="CAROUSEL"
             {userProfile}

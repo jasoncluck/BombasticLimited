@@ -34,6 +34,7 @@ export type Video = Omit<VideoResponse, "search_vector" | "pending_delete">;
 export type VideoWithTimestamp = Video & VideoTimestamp;
 
 export type SourceVideos = Record<Source, Video[]>;
+export type SourceVideosCount = Record<Source, number | null>;
 
 interface VideoQueryCommonProps {
   supabase: SupabaseClient<Database>;

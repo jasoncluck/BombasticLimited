@@ -106,9 +106,9 @@
 </script>
 
 <div class="flex flex-col">
-  <div class="flex @2xl:flex-nowrap flex-wrap justify-between gap-2">
+  <div class="flex @2xl:flex-nowrap flex-wrap justify-between gap-4 mx-2">
     <div class="flex flex-col">
-      <h1 class="header-primary shrink-0">
+      <h1 class="header-primary shrink-0 !m-0">
         {SOURCE_INFO[source].displayName}
       </h1>
       {#if SOURCE_INFO[source].websiteUrlDomain}
@@ -142,7 +142,7 @@
   {/if}
 
   <div class="flex flex-col gap-8">
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col">
       <a
         href={`/${source}/latest`}
         class={getContentView(mediaQueryState, userProfile) === "TABLE"

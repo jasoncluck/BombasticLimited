@@ -58,7 +58,7 @@
   {supabase}
   {session}
 >
-  <div class="flex gap-6">
+  <div class="flex gap-6 mx-2">
     <div class="flex flex-col relative">
       <div
         class="flex flex-col items-start text-left border-none bg-transparent p-0"
@@ -69,7 +69,7 @@
           <p class="text-sm text-muted-foreground tracking-tight">
             {title}
           </p>
-          <h2 class="header-primary text-left">
+          <h2 class="header-primary-no-margin text-left">
             {SOURCE_INFO[source].displayName}
           </h2>
         {:else}
@@ -79,7 +79,7 @@
         {/if}
       </div>
 
-      <p class="text-sm text-muted-foreground tracking-tight">
+      <p class="text-sm text-muted-foreground tracking-tight mt-1">
         {videosCount}
         {videosCount === 1 ? "video" : "videos"}
       </p>

@@ -12,7 +12,7 @@
     DEFAULT_SECTION_ID,
     getContentState,
   } from "$lib/state/content.svelte.js";
-  import type { SourceWithContinueCarouselState } from "$lib/components/content/content.js";
+  import type { SourceWithCarouselState } from "$lib/components/content/content.js";
   import {
     getNumberOfPages,
     PAGINATION_QUERY_KEY,
@@ -42,14 +42,14 @@
 
   const contentState = getContentState();
 
-  let carouselsState = $state<SourceWithContinueCarouselState>(
+  let carouselsState = $state<SourceWithCarouselState>(
     Object.fromEntries(
       SOURCES.map((key) => [key, { lastViewedIndex: 0 }]),
-    ) as SourceWithContinueCarouselState,
+    ) as SourceWithCarouselState,
   );
 
   export const snapshot: Snapshot<{
-    carouselsState: SourceWithContinueCarouselState;
+    carouselsState: SourceWithCarouselState;
     selectedVideos: Video[];
   }> = {
     capture: () => ({

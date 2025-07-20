@@ -104,7 +104,10 @@
   }
 
   .header-primary {
-    @apply lg:text-5xl text-4xl font-semibold transition-colors mb-4 mx-0;
+    @apply lg:text-5xl text-4xl font-semibold transition-colors mx-2;
+  }
+  .header-primary-no-margin {
+    @apply lg:text-5xl text-4xl font-semibold transition-colors m-0;
   }
 
   .header-secondary {
@@ -116,11 +119,11 @@
   }
 
   .header-link {
-    @apply block lg:text-4xl  text-3xl self-start font-semibold transition-colors hover:underline cursor-pointer my-2 truncate;
+    @apply block lg:text-4xl  text-3xl self-start font-semibold transition-colors hover:underline cursor-pointer truncate;
   }
 
   .header-link-sticky {
-    @apply inline-block lg:text-4xl text-3xl self-start font-semibold transition-colors hover:underline cursor-pointer bg-background-lighter sticky top-0 py-2 z-20 pl-2  w-full;
+    @apply inline-block lg:text-4xl text-3xl self-start font-semibold transition-colors hover:underline cursor-pointer bg-background-lighter sticky top-0 py-2 z-30 px-2 w-full;
   }
 
   /* New elevated effect class */

@@ -216,6 +216,7 @@
             onReorder={handleVideoReorder}
             onClose={() => {
               invalidate("supabase:db:playlists");
+              contentState.openDrawerSection = null;
             }}
           >
             {#snippet trigger()}
@@ -224,7 +225,7 @@
                   <ArrowDownUp class="drawer-icon" />
                   Reorder videos
                 </div>
-                <ChevronRight />
+                <ChevronRight class="ml-auto" />
               </Button>
             {/snippet}
 
@@ -286,6 +287,7 @@
 
                     if (!error) {
                       addToPlaylistDrawerOpen = false;
+                      contentState.openDrawerSection = null;
                     }
                   }}
                 >
