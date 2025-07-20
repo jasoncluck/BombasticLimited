@@ -378,10 +378,11 @@ export async function handleUnfollowPlaylist({
   invalidate("supabase:db:playlists");
 
   if (!error) {
-    showNotification(`Removed playlist: ${playlist.name} `, "success");
+    showNotification(`Unfollowed playlist: ${playlist.name} `, "success");
   } else {
-    showNotification(`Unable to remove playlist: ${error.message}`, "error");
+    showNotification(`Unable to unfollow playlist: ${error.message}`, "error");
   }
+  return { error };
 }
 
 export async function handleUpdatePlaylistSort({

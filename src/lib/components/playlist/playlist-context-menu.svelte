@@ -7,7 +7,10 @@
   import type { Playlist } from "$lib/supabase/playlists";
   import type { Database } from "$lib/supabase/database.types";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
-  import { handleDeletePlaylist } from "../playlist/playlist-service";
+  import {
+    handleDeletePlaylist,
+    handleUnfollowPlaylist,
+  } from "../playlist/playlist-service";
   import type { Snippet } from "svelte";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
@@ -45,19 +48,37 @@
   <ContextMenu.Content class="p-1">
     <ContextMenu.Item
       onclick={async () => {
-        const data = await handleDeletePlaylist({
-          playlist,
-          supabase,
-          session,
-        });
+        if (playlist.created_by !== session?.user.id) {
+          const data = await handleUnfollowPlaylist({
+            playlist,
+            supabase,
+            session,
+          });
 
-        if (
-          !data?.error &&
-          page.url.pathname === `/playlist/${playlist.short_id}`
-        ) {
-          goto("/");
+          if (
+            !data?.error &&
+            page.url.pathname === `/playlist/${playlist.short_id}`
+          ) {
+            goto("/");
+          }
+        } else {
+          const data = await handleDeletePlaylist({
+            playlist,
+            supabase,
+            session,
+          });
+
+          if (
+            !data?.error &&
+            page.url.pathname === `/playlist/${playlist.short_id}`
+          ) {
+            goto("/");
+          }
         }
-      }}>Delete Playlist</ContextMenu.Item
+      }}
+      >{playlist.created_by === session?.user.id
+        ? "Delete playlist"
+        : "Unfollow playlist"}</ContextMenu.Item
     >
   </ContextMenu.Content>
   <ContextMenu.Trigger class="h-full">

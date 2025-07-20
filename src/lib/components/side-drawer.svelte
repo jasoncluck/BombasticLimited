@@ -115,7 +115,7 @@
   >
   <Sheet.Content
     side="left"
-    class="flex flex-col gap-2 pt-12 w-[300px] overflow-hidden"
+    class="flex flex-col gap-2 pt-12 w-[300px] overflow-auto"
   >
     <ScrollArea class="pr-2">
       {#if isOpen}

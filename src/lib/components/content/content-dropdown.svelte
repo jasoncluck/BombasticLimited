@@ -489,7 +489,7 @@
         >
           <div class="flex items-center gap-2">
             <CircleCheck class="dropdown-icon" />
-            Set as Watched
+            Set as watched
           </div>
         </DropdownMenu.Item>
       {/if}
@@ -514,7 +514,7 @@
         >
           <div class="flex items-center gap-2">
             <CircleMinus class="dropdown-icon" />
-            Delete Playlist
+            Delete playlist
           </div>
         </DropdownMenu.Item>
       {/if}

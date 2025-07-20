@@ -165,7 +165,9 @@
           <ContextMenu.Sub>
             <ContextMenu.SubTrigger onclick={(e) => e.stopPropagation()}>
               <PlusCircle class="dropdown-icon" />
-              Add {operationVideos.length === 1 ? "video" : "videos"} to Playlist
+              Add {operationVideos.length === 1
+                ? "video"
+                : `${operationVideos.length} videos`} to playlist
             </ContextMenu.SubTrigger>
             <Portal>
               <ContextMenu.SubContent
@@ -224,7 +226,9 @@
             }}
           >
             <MinusCircle class="dropdown-icon" />
-            Remove from playlist
+            Remove {operationVideos.length === 1
+              ? "video"
+              : `${operationVideos.length} videos`} from playlist
           </ContextMenu.Item>
         {/if}
 
@@ -315,7 +319,7 @@
             }}
           >
             <CircleCheck class="dropdown-icon" />
-            Set as Watched
+            Set as watched
           </ContextMenu.Item>
         {/if}
       {/if}

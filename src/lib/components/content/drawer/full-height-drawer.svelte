@@ -1,6 +1,7 @@
 <script lang="ts">
   import { buttonVariants } from "$lib/components/ui/button";
   import * as Drawer from "$lib/components/ui/drawer/index.js";
+  import ScrollArea from "$lib/components/ui/scroll-area/scroll-area.svelte";
   import { type Snippet } from "svelte";
 
   let {
@@ -54,7 +55,7 @@
       </Drawer.Header>
     </div>
 
-    <div class="flex-1 overflow-y-auto p-1 min-h-0">
+    <div class="overflow-auto min-h-0">
       {@render children()}
     </div>
 

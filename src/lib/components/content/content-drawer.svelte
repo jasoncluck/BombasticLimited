@@ -18,7 +18,7 @@
   import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
   import {
-    handleAddVideoTimestamp,
+    handleAddVideoTimestamps,
     handleDeleteVideosTimestamp,
   } from "../video/video-service";
   import Button, { buttonVariants } from "../ui/button/button.svelte";
@@ -268,7 +268,7 @@
             {#snippet trigger()}
               <Button class="drawer-button" variant="ghost" data-drawer-trigger>
                 <PlusCircle class="drawer-icon" />
-                Add to playlist
+                Add video to playlist
                 <ChevronRight class="ml-auto" />
               </Button>
             {/snippet}
@@ -405,7 +405,7 @@
             class="drawer-button justify-start"
             variant="ghost"
             onclick={async () => {
-              const { updatedVideos } = await handleAddVideoTimestamp({
+              const { updatedVideos } = await handleAddVideoTimestamps({
                 videoTimestamps: operationVideos.map((v) => ({
                   videoId: v.id,
                   watchedAt: new Date(),
@@ -457,7 +457,7 @@
             }}
           >
             <CircleMinus class="drawer-icon" />
-            Delete Playlist
+            Delete playlist
           </Button>
         {/if}
         <Drawer.Footer class="drawer-footer">
