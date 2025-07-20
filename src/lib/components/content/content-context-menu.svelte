@@ -14,7 +14,7 @@
   import { isVideoWithTimestamp } from "$lib/supabase/videos";
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
   import {
-    handleAddVideoTimestamp,
+    handleAddVideoTimestamps,
     handleDeleteVideosTimestamp,
   } from "../video/video-service";
   import { Portal } from "bits-ui";
@@ -286,7 +286,7 @@
           <ContextMenu.Item
             class="p-2"
             onclick={async () => {
-              const { updatedVideos } = await handleAddVideoTimestamp({
+              const { updatedVideos } = await handleAddVideoTimestamps({
                 videoTimestamps: operationVideos.map((v) => ({
                   videoId: v.id,
                   watchedAt: new Date(),

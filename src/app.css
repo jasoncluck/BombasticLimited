@@ -104,7 +104,7 @@
   }
 
   .header-primary {
-    @apply lg:text-4xl text-3xl font-semibold transition-colors mx-2 sm:m-0 sm:mb-4;
+    @apply lg:text-4xl text-3xl font-semibold transition-colors mx-2 sm:m-0 mb-4 sm:mb-2;
   }
   .header-primary-no-margin {
     @apply lg:text-4xl text-3xl font-semibold transition-colors m-0;

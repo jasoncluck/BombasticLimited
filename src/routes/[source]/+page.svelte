@@ -106,7 +106,7 @@
 
 <div class="flex flex-col">
   <div
-    class="flex @2xl:flex-nowrap flex-wrap justify-between gap-2 mx-2 sm:mx-0"
+    class="flex @2xl:flex-nowrap flex-wrap justify-between items-center gap-2 mx-2 sm:mx-0"
   >
     <div class="flex flex-col mb-4">
       <h1 class="header-primary-no-margin shrink-0">

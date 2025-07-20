@@ -52,6 +52,7 @@ export const load: PageServerLoad = async ({
     searchPlaylists({
       searchString,
       supabase,
+      session,
     }),
   ]);
 

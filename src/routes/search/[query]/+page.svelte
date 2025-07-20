@@ -67,7 +67,7 @@
   );
 </script>
 
-<div class="flex flex-col gap-3">
+<div class="flex flex-col">
   <h1 class="header-primary">Results</h1>
 
   <div class="flex flex-col gap-8">
@@ -105,7 +105,7 @@
             {SOURCE_INFO[source].displayName}
           </a>
           <p
-            class="text-sm text-muted-foreground tracking-tight ml-2 sm:ml-0 mb-2"
+            class="text-sm text-muted-foreground tracking-tight ml-2 sm:ml-0 mb-2 -mt-1"
           >
             {sourceVideosCount[source]}
             {sourceVideosCount[source] === 1 ? "video" : "videos"}

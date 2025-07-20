@@ -13,6 +13,7 @@
   import { goto } from "$app/navigation";
   import type { SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
+  import DiscordIcon from "$lib/assets/icons/DiscordIcon.svelte";
 
   let {
     data,
@@ -56,7 +57,7 @@
 
   <form method="POST" action="?/login" use:enhance>
     <Card.Content class="grid gap-4">
-      <div class="grid grid-cols-2 gap-6">
+      <div class="flex">
         <Button
           onclick={async () => {
             await supabase.auth.signInWithOAuth({
@@ -65,8 +66,11 @@
           }}
           variant="outline"
           type="button"
-          class="cursor-pointer w-full">Discord</Button
+          class="cursor-pointer w-full"
         >
+          <DiscordIcon size={20} class="text-[#5865F2]" />
+          Discord
+        </Button>
       </div>
 
       <div class="relative">

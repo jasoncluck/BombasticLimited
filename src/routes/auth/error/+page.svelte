@@ -3,7 +3,7 @@
   import * as Alert from "$lib/components/ui/alert/index.js";
 
   const params = page.url.searchParams;
-  const error = params.get("error");
+  const error = params.get("error") ?? params.get("error_description");
 </script>
 
 <div class="flex items-center justify-center w-full">

@@ -365,11 +365,13 @@ export async function searchPlaylists({
   limit = 15,
   currentPage = 1,
   supabase,
+  session,
 }: {
   searchString: string;
   limit?: number;
   currentPage?: number;
   supabase: SupabaseClient<Database>;
+  session: Session | null;
 }): Promise<{
   playlists: ProfilePlaylist[];
   error: PostgrestError | null;
@@ -380,6 +382,7 @@ export async function searchPlaylists({
       "search_playlists",
       {
         search_term: searchString,
+        current_user_id: session?.user.id,
       },
       { count: "exact" },
     )

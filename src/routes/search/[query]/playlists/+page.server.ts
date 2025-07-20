@@ -1,4 +1,3 @@
-import { page } from "$app/state";
 import { getPaginationQueryParams } from "$lib/components/pagination/pagination";
 import {
   DEFAULT_NUM_PLAYLISTS_PAGINATION,
@@ -33,6 +32,7 @@ export const load: PageServerLoad = async ({
       limit: DEFAULT_NUM_PLAYLISTS_PAGINATION,
       currentPage,
       supabase,
+      session,
     });
   return {
     playlistResults,

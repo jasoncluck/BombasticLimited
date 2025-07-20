@@ -4,21 +4,13 @@
   import ContentHeader from "$lib/components/content/content-header.svelte";
   import Content from "$lib/components/content/content.svelte";
   import type { Snapshot } from "../$types.js";
-  import {
-    DEFAULT_NUM_VIDEOS_PAGINATION,
-    type Video,
-  } from "$lib/supabase/videos.js";
+  import { type Video } from "$lib/supabase/videos.js";
   import {
     DEFAULT_SECTION_ID,
     getContentState,
   } from "$lib/state/content.svelte.js";
   import type { SourceWithCarouselState } from "$lib/components/content/content.js";
-  import {
-    getNumberOfPages,
-    PAGINATION_QUERY_KEY,
-    updatePaginationQueryParams,
-  } from "$lib/components/pagination/pagination.js";
-  import Pagination from "$lib/components/pagination/pagination.svelte";
+  import { PAGINATION_QUERY_KEY } from "$lib/components/pagination/pagination.js";
 
   const { data } = $props();
   const {
@@ -61,13 +53,6 @@
       contentState.selectedVideosBySection[sectionId] = restored.selectedVideos;
     },
   };
-
-  const numPages = $derived(
-    getNumberOfPages({
-      count: videosCount ?? 0,
-      perPage: DEFAULT_NUM_VIDEOS_PAGINATION,
-    }),
-  );
 </script>
 
 <div class="relative">
@@ -95,6 +80,7 @@
   />
   <Content
     {videos}
+    {videosCount}
     tilesDisplay="TILES"
     {contentFilter}
     {userProfile}
@@ -102,18 +88,4 @@
     {supabase}
     {session}
   />
-  {#if currentPage && numPages > 1}
-    <Pagination
-      count={videosCount ?? 0}
-      bind:currentPage
-      perPage={DEFAULT_NUM_VIDEOS_PAGINATION}
-      onPageChange={(pageNum) => {
-        updatePaginationQueryParams({
-          pageNum,
-          url: page.url,
-          invalidate: ["supabase:db:videos"],
-        });
-      }}
-    />
-  {/if}
 </div>

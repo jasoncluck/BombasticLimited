@@ -543,7 +543,7 @@ export type Database = {
         Returns: boolean
       }
       search_playlists: {
-        Args: { search_term: string }
+        Args: { search_term: string; current_user_id?: string }
         Returns: {
           id: number
           short_id: string

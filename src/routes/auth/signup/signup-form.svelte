@@ -15,6 +15,7 @@
   import { checkIfUsernameIsUnique } from "$lib/supabase/user-profiles";
   import type { SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
+  import DiscordIcon from "$lib/assets/icons/DiscordIcon.svelte";
 
   let {
     data,
@@ -105,7 +106,7 @@
 
   <form method="POST" action="?/signup" use:enhance>
     <Card.Content class="grid gap-4 mb-4">
-      <div class="grid grid-cols-2">
+      <div class="flex">
         <Button
           onclick={async () => {
             const { error } = await supabase.auth.signInWithOAuth({
@@ -117,8 +118,11 @@
           }}
           variant="outline"
           type="button"
-          class="cursor-pointer w-full">Discord</Button
+          class="cursor-pointer w-full flex items-center justify-center gap-2"
         >
+          <DiscordIcon size={20} class="text-[#5865F2]" />
+          Discord
+        </Button>
       </div>
 
       <div class="relative">

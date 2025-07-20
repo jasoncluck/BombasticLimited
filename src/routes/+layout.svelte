@@ -14,7 +14,6 @@
     Cog,
     GalleryHorizontal,
     House,
-    LoaderIcon,
     LogOut,
     Table,
     UserCircle,
@@ -129,19 +128,16 @@
       searchQuery = "";
     }
 
+    if (from?.url.pathname.includes("/video")) {
+      invalidate("supabase:db:videos");
+    }
+
     // Reset scroll state if new page
     if (!delta && from?.url.pathname !== to?.url.pathname) {
       if (pageState.viewportRefs.contentViewportRef) {
         pageState.viewportRefs.contentViewportRef.scrollTop = 0;
         pageState.viewportRefs.contentViewportRef.scrollLeft = 0;
       }
-    }
-  });
-
-  $effect(() => {
-    if (contentState.videoTimestampUpdated) {
-      invalidate("supabase:db:videos");
-      contentState.videoTimestampUpdated = null;
     }
   });
 
@@ -249,6 +245,11 @@
     >
       <a
         href="/"
+        onclick={(e) => {
+          e.preventDefault();
+          searchQuery = "";
+          goto("/");
+        }}
         class="hidden sm:block text-sm font-medium transition-colors hover:text-primary mr-4"
       >
         <House />

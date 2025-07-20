@@ -35,8 +35,7 @@
   // After oauth authn there is a history stack update that doesn't trigger a proper invalidation.
   // This will look for the oauth success code returned and invalidate the playlists which are the only resource effected here
   if (isBrowser() && page.url.searchParams.get("code")) {
-    invalidate("supabase:db:playlists");
-    invalidate("supabase:db:videos");
+    window.location.reload();
   }
 
   let sectionIds = sourceWithContinueStateKeys;

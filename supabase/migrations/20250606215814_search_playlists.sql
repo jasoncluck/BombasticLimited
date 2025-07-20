@@ -1,5 +1,6 @@
 CREATE OR REPLACE FUNCTION "public"."search_playlists"(
-    "search_term" "text"
+    "search_term" "text",
+    "current_user_id" uuid DEFAULT NULL
 ) RETURNS TABLE(
     "id" bigint, 
     "short_id" text,
@@ -161,8 +162,12 @@ BEGIN
     FROM public.playlists p
     LEFT JOIN public.profiles prof ON p.created_by = prof.id
     WHERE 
+        -- Only return public playlists
+        p.type = 'Public'
+        -- Exclude playlists created by the current user
+        AND (current_user_id IS NULL OR p.created_by != current_user_id)
         -- MUCH more selective matching conditions
-        (
+        AND (
             -- Exact phrase matches (always good)
             lower(p.name) LIKE '%' || clean_term || '%'
             OR lower(p.description) LIKE '%' || clean_term || '%'
@@ -209,7 +214,7 @@ BEGIN
 
 EXCEPTION
     WHEN OTHERS THEN
-        -- Simple fallback
+        -- Simple fallback with same restrictions
         RETURN QUERY
         SELECT 
             p.id, p.short_id, p.name, p.description, p.thumbnail_url, p.thumbnail_maxres_url,
@@ -218,8 +223,14 @@ EXCEPTION
             CAST(100.0 AS real) AS search_rank
         FROM public.playlists p
         LEFT JOIN public.profiles prof ON p.created_by = prof.id
-        WHERE lower(p.name) LIKE '%' || lower(search_term) || '%'
-           OR lower(p.description) LIKE '%' || lower(search_term) || '%'
+        WHERE 
+            -- Only return public playlists
+            p.type = 'Public'
+            -- Exclude playlists created by the current user
+            AND (current_user_id IS NULL OR p.created_by != current_user_id)
+            -- Simple search conditions
+            AND (lower(p.name) LIKE '%' || lower(search_term) || '%'
+                OR lower(p.description) LIKE '%' || lower(search_term) || '%')
         ORDER BY 
             CASE WHEN lower(p.name) LIKE '%' || lower(search_term) || '%' THEN 1 ELSE 2 END,
             p.created_at DESC;

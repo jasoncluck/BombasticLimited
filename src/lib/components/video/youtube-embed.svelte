@@ -4,7 +4,6 @@
   import VideoEmbed from "$lib/components/video/video-embed.svelte";
   import {
     getLatestTimestamp,
-    saveVideoTimestamp,
     type TimestampWithVideoId,
   } from "$lib/supabase/timestamps";
   import { beforeNavigate } from "$app/navigation";
@@ -16,6 +15,7 @@
     type CombinedContentFilter,
   } from "../content/content-filter";
   import AspectRatio from "../ui/aspect-ratio/aspect-ratio.svelte";
+  import { handleAddVideoTimestamp } from "./video-service";
 
   const VIDEO_SAVE_SECONDS_START = 15;
   const VIDEO_DELETE_SECONDS_PERCENT = 0.95;
@@ -71,7 +71,7 @@
   });
 
   // Helper function to save timestamp for a specific video with its duration (async for in-app use)
-  function saveTimestampForVideo(
+  async function saveTimestampForVideo(
     currentTimeSeconds: number,
     videoDurationSeconds: number,
     playlist?: Playlist | null,
@@ -85,7 +85,7 @@
 
     const watchedPercent = currentTimeSeconds / videoDurationSeconds;
     if (watchedPercent >= VIDEO_DELETE_SECONDS_PERCENT) {
-      saveVideoTimestamp({
+      await handleAddVideoTimestamp({
         videoTimestamp: {
           videoId: video.id,
           playlistId: playlist?.id,
@@ -103,7 +103,7 @@
         supabase,
       });
     } else {
-      saveVideoTimestamp({
+      await handleAddVideoTimestamp({
         videoTimestamp: {
           videoId: video.id,
           playlistId: playlist?.id,

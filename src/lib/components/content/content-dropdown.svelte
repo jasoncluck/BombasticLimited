@@ -15,7 +15,7 @@
   import ScrollArea from "../ui/scroll-area/scroll-area.svelte";
   import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
   import {
-    handleAddVideoTimestamp,
+    handleAddVideoTimestamps,
     handleDeleteVideosTimestamp,
   } from "../video/video-service";
   import Button from "../ui/button/button.svelte";
@@ -451,7 +451,7 @@
         <DropdownMenu.Item
           class="p-2"
           onclick={async () => {
-            const { updatedVideos, error } = await handleAddVideoTimestamp({
+            const { updatedVideos, error } = await handleAddVideoTimestamps({
               videoTimestamps: frozenOperationVideos.map((v) => ({
                 videoId: v.id,
                 watchedAt: new Date(),

@@ -1,6 +1,12 @@
+CREATE POLICY "Enable read access for public playlists and own playlists" 
+    ON "public"."playlists" 
+    FOR SELECT 
+    USING (
+        type = 'Public'
+        OR 
+        created_by = auth.uid()
+    );
 
-
--- Updated table definition
 CREATE TABLE public.user_playlists (
     id bigint NOT NULL REFERENCES public.playlists(id) ON DELETE CASCADE,
     user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE DEFAULT NULL,
@@ -30,7 +36,6 @@ CREATE POLICY "Users can INSERT user_playlists for playlists they created or are
             WHERE p.id = user_playlists.id
               AND (
                 p.created_by = (select auth.uid())
-                OR p.type = 'Public'
               )
         )
     );

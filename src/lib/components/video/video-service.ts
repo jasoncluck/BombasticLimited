@@ -16,6 +16,7 @@ import type { TimestampFilter, VideoFilter } from "../content/content-filter";
 import { goto, invalidate } from "$app/navigation";
 import {
   deleteVideoTimestamps,
+  saveVideoTimestamp,
   saveVideoTimestamps,
   type TimestampWithVideoId,
 } from "$lib/supabase/timestamps";
@@ -99,8 +100,26 @@ export async function fetchMoreSourceVideos({
 }
 
 export async function handleAddVideoTimestamp({
+  videoTimestamp,
+  session,
+  supabase,
+}: {
+  videoTimestamp: TimestampWithVideoId;
+  session: Session | null;
+  supabase: SupabaseClient;
+}): Promise<{ updatedVideos: Video[]; error?: PostgrestError }> {
+  // Save and get back updated video data
+  const { videos: updatedVideos, error } = await saveVideoTimestamp({
+    videoTimestamp,
+    session,
+    supabase,
+  });
+
+  return { updatedVideos: updatedVideos ?? [], error };
+}
+
+export async function handleAddVideoTimestamps({
   videoTimestamps,
-  contentState,
   session,
   supabase,
 }: {
@@ -115,13 +134,13 @@ export async function handleAddVideoTimestamp({
     session,
     supabase,
   });
+  invalidate("supabase:db:videos");
 
   if (error) {
     showNotification("Unable to save timestamp");
   } else if (videoTimestamps.some((vt) => vt.watchedAt)) {
     showNotification("Set as watched");
   }
-  contentState.videoTimestampUpdated = true;
   return { updatedVideos: updatedVideos ?? [], error };
 }
 
