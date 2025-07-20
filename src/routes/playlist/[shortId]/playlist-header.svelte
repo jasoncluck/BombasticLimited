@@ -161,7 +161,7 @@
 
                   {#if playlist.description && playlist.description.length > 1}
                     <p
-                      class="text-sm text-muted-foreground text-left break-all"
+                      class="text-sm text-muted-foreground text-left break-all mb-2"
                     >
                       {playlist.description}
                     </p>
@@ -171,7 +171,7 @@
             </PlaylistEditDialog>
 
             <!-- Username, video count and duration - kept in original position for hover -->
-            <div class="flex items-start flex-wrap mt-2 gap-2">
+            <div class="flex items-start flex-wrap mt-0 gap-2">
               {#if playlist.profile_username}
                 {#if isSource(playlist.profile_username)}
                   {@const sourceInfo = SOURCE_INFO[playlist.profile_username]}
