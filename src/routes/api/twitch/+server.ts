@@ -14,24 +14,27 @@ function delay(milliseconds: number) {
 }
 
 const streamingSources = new Set<string>();
-const subscriptions: ReturnType<typeof eventSubListener.onStreamOnline>[] = [];
+let subscriptions: any[] = [];
 
-SOURCES.map((source) => {
-  subscriptions.push(
-    eventSubListener.onStreamOnline(SOURCE_INFO[source].twitchId, () => {
-      console.log(`${source} has started streaming on Twitch.`);
-      streamingSources.add(source);
-    }),
-  );
+// Only set up subscriptions if eventSubListener is available
+if (eventSubListener) {
+  SOURCES.map((source) => {
+    subscriptions.push(
+      eventSubListener!.onStreamOnline(SOURCE_INFO[source].twitchId, () => {
+        console.log(`${source} has started streaming on Twitch.`);
+        streamingSources.add(source);
+      }),
+    );
 
-  subscriptions.push(
-    eventSubListener.onStreamOffline(SOURCE_INFO[source].twitchId, () => {
-      console.log(`${source} has ended the Twitch stream.`);
+    subscriptions.push(
+      eventSubListener!.onStreamOffline(SOURCE_INFO[source].twitchId, () => {
+        console.log(`${source} has ended the Twitch stream.`);
 
-      streamingSources.delete(source);
-    }),
-  );
-});
+        streamingSources.delete(source);
+      }),
+    );
+  });
+}
 export async function POST() {
   return produce(
     async function start({ emit }) {

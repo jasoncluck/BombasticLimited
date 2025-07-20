@@ -12,22 +12,39 @@ import { NgrokAdapter } from "@twurple/eventsub-ngrok";
 const clientId = TWITCH_CLIENT_ID;
 const clientSecret = TWITCH_CLIENT_SECRET;
 
-const authProvider = new AppTokenAuthProvider(clientId, clientSecret);
+// Only initialize Twitch client if we have real credentials and not during build
+const shouldInitialize =
+  clientId !== "placeholder_client_id" &&
+  clientSecret !== "placeholder_client_secret" &&
+  typeof window === "undefined" && // Server-side only
+  process.env.NODE_ENV !== "test";
 
-const apiClient = new ApiClient({ authProvider });
+let authProvider: AppTokenAuthProvider | undefined;
+let apiClient: ApiClient | undefined;
+let eventSubListener: EventSubHttpListener | undefined;
 
-const adapter = new NgrokAdapter({
-  ngrokConfig: { authtoken: NGROK_AUTH_TOKEN },
-});
+if (shouldInitialize) {
+  authProvider = new AppTokenAuthProvider(clientId, clientSecret);
+  apiClient = new ApiClient({ authProvider });
 
-const secret = randomUUID();
+  const adapter = new NgrokAdapter({
+    ngrokConfig: { authtoken: NGROK_AUTH_TOKEN },
+  });
 
-await apiClient.eventSub.deleteAllSubscriptions();
+  const secret = randomUUID();
 
-export const eventSubListener = new EventSubHttpListener({
-  apiClient,
-  adapter,
-  secret,
-});
+  // Only delete subscriptions and start listener if we have a real client
+  if (apiClient) {
+    await apiClient.eventSub.deleteAllSubscriptions();
 
-eventSubListener.start();
+    eventSubListener = new EventSubHttpListener({
+      apiClient,
+      adapter,
+      secret,
+    });
+
+    eventSubListener.start();
+  }
+}
+
+export { eventSubListener };
