@@ -75,16 +75,25 @@ describe("Page Component", () => {
     });
   });
 
-  it("invalidates data when oauth code is present in URL", () => {
+  it("reloads page when oauth code is present in URL", () => {
     vi.mocked(isBrowser).mockReturnValue(true);
+
+    // Mock window.location.reload
+    const mockReload = vi.fn();
+    Object.defineProperty(window, "location", {
+      value: {
+        reload: mockReload,
+      },
+      writable: true,
+    });
 
     // Set up page URL with oauth code
     pageState.url = new URL("http://localhost:3000?code=oauth_code");
 
     render(Page, { data: mockPageData });
 
-    expect(invalidate).toHaveBeenCalledWith("supabase:db:playlists");
-    expect(invalidate).toHaveBeenCalledWith("supabase:db:videos");
+    expect(mockReload).toHaveBeenCalledTimes(1);
+    expect(invalidate).not.toHaveBeenCalled();
   });
 
   it("does not invalidate when no oauth code is present", () => {
