@@ -44,7 +44,7 @@ export class LayoutStateClass implements LayoutState {
   searchAbortController = $state<AbortController | null>(null); // NEW
 
   config = $state<LayoutConfig>({
-    searchDebounceMs: 300,
+    searchDebounceMs: 500,
   });
 
   async handleLogout(supabase: SupabaseClient) {
@@ -59,7 +59,6 @@ export class LayoutStateClass implements LayoutState {
   async searchRedirect(e: Event) {
     const input = e.target as HTMLInputElement;
     const searchValue = input.value.trim();
-    console.log("in search redirect");
 
     // Cancel any pending search request
     if (this.searchAbortController) {
@@ -71,7 +70,7 @@ export class LayoutStateClass implements LayoutState {
 
     try {
       if (searchValue === "") {
-        await goto(`/`, { keepFocus: true });
+        await goto(`/`, { keepFocus: true, replaceState: true });
       } else {
         // Create new abort controller for this search
         this.searchAbortController = new AbortController();
@@ -81,7 +80,7 @@ export class LayoutStateClass implements LayoutState {
 
         await goto(`/search/${encodeURIComponent(searchValue)}`, {
           keepFocus: true,
-          replaceState: shouldReplace, // Replace if already on search page
+          replaceState: true,
         });
       }
     } catch (error) {
