@@ -140,7 +140,7 @@
   {/if}
 
   {#if currentPage && numPages > 1}
-    <div class="mb-4">
+    <div class="mb-4 mt-4 sm:mt-2">
       <Pagination
         count={videosCount ?? 0}
         bind:currentPage

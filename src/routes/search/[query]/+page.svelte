@@ -81,7 +81,9 @@
         >
           Playlists
         </a>
-        <p class="text-sm text-muted-foreground tracking-tight ml-2 mb-2">
+        <p
+          class="text-sm text-muted-foreground tracking-tight ml-2 sm:ml-0 mb-2"
+        >
           {playlistsCount}
           {playlistsCount === 1 ? "playlist" : "playlists"}
         </p>
@@ -102,7 +104,9 @@
           >
             {SOURCE_INFO[source].displayName}
           </a>
-          <p class="text-sm text-muted-foreground tracking-tight ml-2 mb-2">
+          <p
+            class="text-sm text-muted-foreground tracking-tight ml-2 sm:ml-0 mb-2"
+          >
             {sourceVideosCount[source]}
             {sourceVideosCount[source] === 1 ? "video" : "videos"}
           </p>

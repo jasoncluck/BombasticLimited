@@ -258,7 +258,7 @@
       <Input
         oninput={(e) => layoutState.handleSearch(e)}
         placeholder="Search"
-        class="sm:w-72"
+        class="sm:w-72 w-48"
         bind:value={searchQuery}
       />
       <Loader message="" size="sm" visible={layoutState.isSearching} />
