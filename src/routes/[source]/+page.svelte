@@ -107,15 +107,15 @@
 
 <div class="flex flex-col">
   <div
-    class="flex @2xl:flex-nowrap flex-wrap justify-between gap-4 mx-2 sm:mx-0"
+    class="flex @2xl:flex-nowrap flex-wrap justify-between gap-2 mx-2 sm:mx-0"
   >
-    <div class="flex flex-col">
-      <h1 class="header-primary shrink-0 !m-0">
+    <div class="flex flex-col mb-4">
+      <h1 class="header-primary-no-margin shrink-0">
         {SOURCE_INFO[source].displayName}
       </h1>
       {#if SOURCE_INFO[source].websiteUrlDomain}
         <a
-          class="text-sm text-muted-foreground hover:underline ml-1"
+          class="text-sm text-muted-foreground hover:underline ml-1 mt-1"
           target="_blank"
           href={`https://www.${SOURCE_INFO[source].websiteUrlDomain}`}
         >
@@ -126,7 +126,7 @@
     <Button
       variant="secondary"
       href={SOURCE_INFO[source].supportUrl}
-      class="p-6 text-wrap break-words whitespace-normal leading-tight text-center"
+      class="p-6 text-wrap break-words whitespace-normal leading-tight text-center mb-4"
       target="_blank"
     >
       Support {SOURCE_INFO[source].displayName}
