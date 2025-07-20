@@ -87,3 +87,57 @@ You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an
 > [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+
+## Testing
+
+This project includes comprehensive testing with both unit tests and end-to-end tests.
+
+### Unit Tests
+
+Run unit tests with Vitest:
+
+```bash
+npm run test          # Run tests in watch mode
+npm run test:run      # Run tests once
+npm run test:coverage # Run tests with coverage report
+npm run test:ui       # Run tests with UI
+```
+
+### End-to-End Tests
+
+Run E2E tests with Playwright (includes mobile browser support):
+
+```bash
+npm run test:e2e           # Run all E2E tests
+npm run test:e2e:mobile    # Run mobile-only tests
+npm run test:e2e:desktop   # Run desktop-only tests
+npm run test:e2e:ui        # Run tests with interactive UI
+npm run test:e2e:debug     # Run tests in debug mode
+npm run test:e2e:report    # View test reports
+```
+
+#### First-time Setup
+
+Install Playwright browsers:
+
+```bash
+npx playwright install
+```
+
+#### Test Coverage
+
+E2E tests cover:
+- **Cross-browser compatibility** (Chrome, Firefox, Safari)
+- **Mobile device emulation** (iPhone, Android devices)
+- **Responsive design testing**
+- **Touch interactions** (tap, swipe, pinch zoom)
+- **User interaction flows**
+- **Accessibility features**
+
+For detailed testing documentation, see [tests/e2e/README.md](tests/e2e/README.md).
+
+### Run All Tests
+
+```bash
+npm run test:all  # Run both unit and E2E tests
+```
