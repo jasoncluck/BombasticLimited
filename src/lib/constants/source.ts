@@ -73,7 +73,16 @@ export const SOURCE_INFO: Record<Source, SourceInfo> = {
     twitchId: "689331234",
     youtubeId: "UCO0gHyqLNeIrCAjwlO2BmiA",
     youtubeUrl: "https://www.youtube.com/@Nextlander",
-    highlightedPlaylists: [],
+    highlightedPlaylists: [
+      {
+        name: "NXL Highlights",
+        youtubeId: "PL8GKXV8flVOZkcetVtA7l9Z0SVIIIvUQ_",
+      },
+      {
+        name: "Talkin' Over Things",
+        youtubeId: "PL8GKXV8flVOaonOnH-Am9gz-FEfFGb8xz",
+      },
+    ],
     supportUrl: "https://www.patreon.com/nextlander/",
   },
   remap: {
@@ -84,6 +93,10 @@ export const SOURCE_INFO: Record<Source, SourceInfo> = {
     youtubeId: "UCpcSq3A3Z4tUJsHKfn8zpnA",
     youtubeUrl: "https://www.youtube.com/@RemapRadio",
     highlightedPlaylists: [
+      {
+        name: "Wheel of GeForce Now",
+        youtubeId: "PLTbM52Fro5psQ2WIdV9M7YgfWMrnv8wLu",
+      },
       { name: "Remap Radio", youtubeId: "PLTbM52Fro5psVDi5r1StiTdnLxM9McaSO" },
     ],
     websiteUrlDomain: "remapradio.com",
