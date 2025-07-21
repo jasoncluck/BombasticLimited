@@ -8,6 +8,13 @@
     "build": "tsc",
     "cdk": "cdk",
     "deploy": "npm run build && cdk deploy --all",
+    "backup": "tsx scripts/trigger-backup.ts",
+    "backup:dry-run": "tsx scripts/trigger-backup.ts -- --dry-run",
+    "backup:validate": "tsx scripts/validate-backup.ts",
+    "restore": "tsx scripts/trigger-restore.ts",
+    "restore:dry-run": "tsx scripts/trigger-restore.ts -- --dry-run",
+    "restore:validate": "tsx scripts/trigger-restore.ts -- --validate-only",
+    "disaster-recovery": "tsx scripts/disaster-recovery.ts",
     "repopulate": "tsx scripts/trigger-repopulate-combined.ts",
     "repopulate:source": "tsx scripts/trigger-repopulate-combined.ts",
     "repopulate:videos": "tsx scripts/trigger-repopulate-combined.ts -- --videos-only",
@@ -22,6 +29,7 @@
     "@types/aws-lambda": "^8.10.147",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.16.0",
+    "@types/pg": "^8.11.6",
     "aws-cdk": "2.173.1",
     "constructs": "^10.4.2",
     "dotenv": "^17.0.1",
@@ -35,6 +43,7 @@
     "@aws-sdk/client-dynamodb": "^3.716.0",
     "@aws-sdk/client-lambda": "^3.840.0",
     "@aws-sdk/client-opensearch": "^3.758.0",
+    "@aws-sdk/client-s3": "^3.848.0",
     "@aws-sdk/client-secrets-manager": "^3.716.0",
     "@aws-sdk/util-dynamodb": "^3.767.0",
     "@aws-sdk/util-retry": "^3.370.0",
@@ -44,6 +53,7 @@
     "@opensearch-project/opensearch": "^3.4.0",
     "@supabase/supabase-js": "^2.49.1",
     "aws-cdk-lib": "2.173.1",
-    "aws-lambda": "^1.0.7"
+    "aws-lambda": "^1.0.7",
+    "pg": "^8.12.0"
   }
 }
