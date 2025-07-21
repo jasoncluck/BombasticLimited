@@ -32,6 +32,7 @@ export default defineConfig({
       reportsDirectory: "./coverage",
       include: ["src/**/*.ts", "src/**/*.svelte.ts", "src/**/*.svelte"],
       exclude: [
+        "supabase/",
         "src/lib/components/ui/**",
         "src/lib/supabase/database.types.ts",
         "**/*.d.ts",

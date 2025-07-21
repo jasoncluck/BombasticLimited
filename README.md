@@ -85,6 +85,41 @@ npm run build
 
 You can preview the production build with `npm run preview`.
 
+## Testing
+
+### Unit and Component Tests
+```bash
+npm run test          # Run tests in watch mode
+npm run test:run      # Run tests once
+npm run test:coverage # Run with coverage report
+```
+
+### End-to-End Tests
+```bash
+npm run test:e2e      # Run Playwright e2e tests
+npm run test:e2e:ui   # Run with UI
+```
+
+### SQL Database Tests
+```bash
+npm run test:sql               # Run all SQL tests
+npm run test:sql:syntax        # Syntax validation only
+npm run test:sql:migration     # Migration tests
+npm run test:sql:functional    # Functional tests
+npm run test:sql:integration   # Integration tests
+npm run test:sql:runner        # Run with custom script
+```
+
+For detailed SQL testing documentation, see [docs/SQL_TESTING.md](docs/SQL_TESTING.md).
+
+**Note:** SQL tests require a running Supabase instance. Start with `supabase start` before running database-dependent tests.
+
+```bash
+npm run build
+```
+
+You can preview the production build with `npm run preview`.
+
 > To deploy your app, you may need to install an
 > [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
 
