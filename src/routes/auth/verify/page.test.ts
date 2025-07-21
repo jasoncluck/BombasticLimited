@@ -40,7 +40,9 @@ describe("auth/verify/+page.ts load function", () => {
   it("returns email when multiple parameters are present", async () => {
     const { load } = await loadModule();
 
-    const url = new URL("http://localhost:3000?email=user@test.com&other=value");
+    const url = new URL(
+      "http://localhost:3000?email=user@test.com&other=value",
+    );
     const mockEvent = { url };
 
     const result = load(mockEvent);
@@ -53,7 +55,9 @@ describe("auth/verify/+page.ts load function", () => {
   it("handles encoded email addresses correctly", async () => {
     const { load } = await loadModule();
 
-    const url = new URL("http://localhost:3000?email=user%2Btest%40example.com");
+    const url = new URL(
+      "http://localhost:3000?email=user%2Btest%40example.com",
+    );
     const mockEvent = { url };
 
     const result = load(mockEvent);

@@ -41,7 +41,7 @@ describe("auth/verify/+page.server.ts load function", () => {
   it("loads successfully when user is not authenticated", async () => {
     // Clear previous calls
     mockRedirect.mockClear();
-    
+
     // Import fresh module for this test
     vi.resetModules();
     const { load } = await import("./+page.server");

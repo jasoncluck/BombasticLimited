@@ -20,10 +20,11 @@ const { mockIsVideoFilter, mockGetPaginationQueryParams } = vi.hoisted(() => ({
   mockGetPaginationQueryParams: vi.fn(),
 }));
 
-const { mockGetCroppedPlaylistImageUrlServer, mockParseImageProperties } = vi.hoisted(() => ({
-  mockGetCroppedPlaylistImageUrlServer: vi.fn(),
-  mockParseImageProperties: vi.fn(),
-}));
+const { mockGetCroppedPlaylistImageUrlServer, mockParseImageProperties } =
+  vi.hoisted(() => ({
+    mockGetCroppedPlaylistImageUrlServer: vi.fn(),
+    mockParseImageProperties: vi.fn(),
+  }));
 
 // Mock the dependencies
 vi.mock("$lib/supabase/videos", () => ({
@@ -71,7 +72,9 @@ describe("search/[query]/+page.server.ts load function", () => {
     });
     mockIsVideoFilter.mockReturnValue(true);
     mockGetPaginationQueryParams.mockReturnValue(1);
-    mockGetCroppedPlaylistImageUrlServer.mockResolvedValue("http://localhost/image.jpg");
+    mockGetCroppedPlaylistImageUrlServer.mockResolvedValue(
+      "http://localhost/image.jpg",
+    );
     mockParseImageProperties.mockReturnValue(null);
   });
 

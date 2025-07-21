@@ -14,7 +14,11 @@ const { mockGetVideos } = vi.hoisted(() => ({
   mockGetVideos: vi.fn(),
 }));
 
-const { mockGetPlaylistByYoutubeId, mockGetPlaylistVideos, mockGetPlaylistsForUsername } = vi.hoisted(() => ({
+const {
+  mockGetPlaylistByYoutubeId,
+  mockGetPlaylistVideos,
+  mockGetPlaylistsForUsername,
+} = vi.hoisted(() => ({
   mockGetPlaylistByYoutubeId: vi.fn(),
   mockGetPlaylistVideos: vi.fn(),
   mockGetPlaylistsForUsername: vi.fn(),
@@ -212,7 +216,11 @@ describe("[source]/+page.server.ts load function", () => {
     const { load } = await loadModule();
 
     const userPlaylist = { ...mockPlaylist, created_by: "user-1" };
-    const followedPlaylist = { ...mockPlaylist, id: 2, created_by: "other-user" };
+    const followedPlaylist = {
+      ...mockPlaylist,
+      id: 2,
+      created_by: "other-user",
+    };
 
     const parentData: BaseParentData = {
       session: mockSession,

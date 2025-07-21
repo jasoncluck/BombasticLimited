@@ -10,7 +10,7 @@ import { mockPlaylist } from "../../../tests/mocks/playlists";
 import { setupTest } from "../../../tests/utils/test-setup";
 
 // Hoist the mocks to the top level to avoid scope issues
-const { 
+const {
   mockGetPlaylistByShortId,
   mockGetPlaylistVideos,
   mockGetPlaylistTotalDuration,
@@ -19,7 +19,7 @@ const {
   mockIsPlaylistVideosFilter,
   mockGetCroppedPlaylistImageUrlServer,
   mockParseImageProperties,
-  mockGetPaginationQueryParams
+  mockGetPaginationQueryParams,
 } = vi.hoisted(() => ({
   mockGetPlaylistByShortId: vi.fn(),
   mockGetPlaylistVideos: vi.fn(),
@@ -106,7 +106,9 @@ describe("playlist/[shortId]/+page.server.ts load function", () => {
       errors: {},
     });
     mockIsPlaylistVideosFilter.mockReturnValue(true);
-    mockGetCroppedPlaylistImageUrlServer.mockResolvedValue("http://localhost/image.jpg");
+    mockGetCroppedPlaylistImageUrlServer.mockResolvedValue(
+      "http://localhost/image.jpg",
+    );
     mockParseImageProperties.mockReturnValue(null);
     mockGetPaginationQueryParams.mockReturnValue(1);
   });

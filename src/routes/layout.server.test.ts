@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createMockLoadEvent, type BaseParentData } from "../tests/mocks/sveltekit";
+import {
+  createMockLoadEvent,
+  type BaseParentData,
+} from "../tests/mocks/sveltekit";
 import { mockSession } from "../tests/mocks/auth";
 import { mockPlaylist } from "../tests/mocks/playlists";
 import { mockUserProfile } from "../tests/mocks/user-profiles";
@@ -66,7 +69,9 @@ describe("+layout.server.ts load function", () => {
       type: "video",
     });
 
-    mockGetCroppedPlaylistImageUrlServer.mockResolvedValue("http://localhost/processed-image.jpg");
+    mockGetCroppedPlaylistImageUrlServer.mockResolvedValue(
+      "http://localhost/processed-image.jpg",
+    );
     mockParseImageProperties.mockReturnValue(null);
   });
 
@@ -124,9 +129,9 @@ describe("+layout.server.ts load function", () => {
     });
 
     // Override safeGetSession to return null session
-    mockEvent.locals.safeGetSession = vi.fn().mockResolvedValue({ 
-      session: null, 
-      user: null 
+    mockEvent.locals.safeGetSession = vi.fn().mockResolvedValue({
+      session: null,
+      user: null,
     });
 
     mockEvent.cookies.get = vi.fn().mockReturnValue(undefined);
@@ -231,8 +236,12 @@ describe("+layout.server.ts load function", () => {
 
     const result = await load(mockEvent);
 
-    expect(result.playlists[0].processedImageUrl).toBe("http://localhost/processed-image.jpg");
-    expect(mockParseImageProperties).toHaveBeenCalledWith('{"crop": {"x": 10, "y": 20}}');
+    expect(result.playlists[0].processedImageUrl).toBe(
+      "http://localhost/processed-image.jpg",
+    );
+    expect(mockParseImageProperties).toHaveBeenCalledWith(
+      '{"crop": {"x": 10, "y": 20}}',
+    );
     expect(mockGetCroppedPlaylistImageUrlServer).toHaveBeenCalledWith({
       imageProperties: mockImageProperties,
       thumbnailMaxResUrl: "http://example.com/thumb-max.jpg",
