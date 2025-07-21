@@ -1,6 +1,7 @@
 <script lang="ts">
   import VideoEmbed from "$lib/components/video/video-embed.svelte";
   import { onMount } from "svelte";
+  import AspectRatio from "../ui/aspect-ratio/aspect-ratio.svelte";
 
   const { channel } = $props();
 
@@ -56,4 +57,6 @@
   });
 </script>
 
-<VideoEmbed divId="twitch-embed" />
+<AspectRatio ratio={16 / 9}>
+  <VideoEmbed divId="twitch-embed" />
+</AspectRatio>

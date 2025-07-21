@@ -39,9 +39,9 @@ export async function POST() {
   return produce(
     async function start({ emit }) {
       // NOTE: Uncomment this to log out test CLI commands for Twitch webhooks
-      // subscriptions.map(async (subscription) => {
-      //   console.log(await subscription.getCliTestCommand());
-      // });
+      subscriptions.map(async (subscription) => {
+        console.log(await subscription.getCliTestCommand());
+      });
 
       while (true) {
         const { error } = emit(
