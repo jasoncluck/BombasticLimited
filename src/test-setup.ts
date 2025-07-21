@@ -127,8 +127,14 @@ vi.mock("$lib/constants/source", () => ({
       youtubeId: "UCmeds0MLhjfkjD_5acPnFlQ",
       youtubeUrl: "https://www.youtube.com/giantbomb",
       highlightedPlaylists: [
-        { name: "Blight Club", youtubeId: "PLXlhzeWIuTHIGNBahKzWx9Hy54BXtM8Ef" },
-        { name: "Voicemail Dump Truck", youtubeId: "PLXlhzeWIuTHLjtyPTm42V-jPS70IYXOjJ" },
+        {
+          name: "Blight Club",
+          youtubeId: "PLXlhzeWIuTHIGNBahKzWx9Hy54BXtM8Ef",
+        },
+        {
+          name: "Voicemail Dump Truck",
+          youtubeId: "PLXlhzeWIuTHLjtyPTm42V-jPS70IYXOjJ",
+        },
       ],
       websiteUrlDomain: "giantbomb.com",
       supportUrl: "https://www.giantbomb.com/upgrade/",
@@ -141,8 +147,14 @@ vi.mock("$lib/constants/source", () => ({
       youtubeId: "UCR9R2ARN74dCebn1kv06UhA",
       youtubeUrl: "https://www.youtube.com/@JeffGerstmannShow",
       highlightedPlaylists: [
-        { name: "Quick Looks at New Video Games", youtubeId: "PLDKeuvgV0sxZ78sutjkPvhM9sL74WHITb" },
-        { name: "Ranking the NES!", youtubeId: "PLDKeuvgV0sxZ_xs4zUvQcMEV-LTjSf-Ok" },
+        {
+          name: "Quick Looks at New Video Games",
+          youtubeId: "PLDKeuvgV0sxZ78sutjkPvhM9sL74WHITb",
+        },
+        {
+          name: "Ranking the NES!",
+          youtubeId: "PLDKeuvgV0sxZ_xs4zUvQcMEV-LTjSf-Ok",
+        },
       ],
       supportUrl: "https://www.patreon.com/cw/jeffgerstmann",
     },
@@ -154,8 +166,14 @@ vi.mock("$lib/constants/source", () => ({
       youtubeId: "UCO0gHyqLNeIrCAjwlO2BmiA",
       youtubeUrl: "https://www.youtube.com/@Nextlander",
       highlightedPlaylists: [
-        { name: "NXL Highlights", youtubeId: "PL8GKXV8flVOZkcetVtA7l9Z0SVIIIvUQ_" },
-        { name: "Talkin' Over Things", youtubeId: "PL8GKXV8flVOaonOnH-Am9gz-FEfFGb8xz" },
+        {
+          name: "NXL Highlights",
+          youtubeId: "PL8GKXV8flVOZkcetVtA7l9Z0SVIIIvUQ_",
+        },
+        {
+          name: "Talkin' Over Things",
+          youtubeId: "PL8GKXV8flVOaonOnH-Am9gz-FEfFGb8xz",
+        },
       ],
       supportUrl: "https://www.patreon.com/nextlander/",
     },
@@ -167,18 +185,29 @@ vi.mock("$lib/constants/source", () => ({
       youtubeId: "UCpcSq3A3Z4tUJsHKfn8zpnA",
       youtubeUrl: "https://www.youtube.com/@RemapRadio",
       highlightedPlaylists: [
-        { name: "Wheel of GeForce Now", youtubeId: "PLTbM52Fro5psQ2WIdV9M7YgfWMrnv8wLu" },
-        { name: "Remap Radio", youtubeId: "PLTbM52Fro5psVDi5r1StiTdnLxM9McaSO" },
+        {
+          name: "Wheel of GeForce Now",
+          youtubeId: "PLTbM52Fro5psQ2WIdV9M7YgfWMrnv8wLu",
+        },
+        {
+          name: "Remap Radio",
+          youtubeId: "PLTbM52Fro5psVDi5r1StiTdnLxM9McaSO",
+        },
       ],
       websiteUrlDomain: "remapradio.com",
       supportUrl: "https://remapradio.com/signup/",
     },
   },
   isSourceArray: vi.fn((value) => {
-    return Array.isArray(value) && value.every((item) => typeof item === "string");
+    return (
+      Array.isArray(value) && value.every((item) => typeof item === "string")
+    );
   }),
   isSource: vi.fn((value) => {
-    return typeof value === "string" && ["giantbomb", "jeffgerstmann", "nextlander", "remap"].includes(value);
+    return (
+      typeof value === "string" &&
+      ["giantbomb", "jeffgerstmann", "nextlander", "remap"].includes(value)
+    );
   }),
 }));
 

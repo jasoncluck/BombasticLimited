@@ -45,30 +45,38 @@ describe("Search Playlists Page Component", () => {
   };
 
   it("renders the search playlists page without errors", () => {
-    const { container } = render(SearchPlaylistsPage, { props: { data: mockData } });
+    const { container } = render(SearchPlaylistsPage, {
+      props: { data: mockData },
+    });
     expect(container).toBeDefined();
   });
 
   it("displays the search results header", () => {
     render(SearchPlaylistsPage, { props: { data: mockData } });
-    
+
     expect(screen.getByText("Search Results")).toBeDefined();
     expect(screen.getByText("Playlists")).toBeDefined();
   });
 
   it("has correct page structure", () => {
-    const { container } = render(SearchPlaylistsPage, { props: { data: mockData } });
-    
+    const { container } = render(SearchPlaylistsPage, {
+      props: { data: mockData },
+    });
+
     const mainContainer = container.querySelector(".flex.gap-6.mx-2");
     expect(mainContainer).toBeDefined();
   });
 
   it("displays header content with correct styling", () => {
-    const { container } = render(SearchPlaylistsPage, { props: { data: mockData } });
-    
-    const headerContainer = container.querySelector(".flex.flex-col.items-start");
+    const { container } = render(SearchPlaylistsPage, {
+      props: { data: mockData },
+    });
+
+    const headerContainer = container.querySelector(
+      ".flex.flex-col.items-start",
+    );
     expect(headerContainer).toBeDefined();
-    
+
     const heading = container.querySelector(".header-primary-no-margin");
     expect(heading).toBeDefined();
     expect(heading?.textContent).toBe("Search Results");
@@ -81,7 +89,9 @@ describe("Search Playlists Page Component", () => {
       followedPlaylists: [],
     };
 
-    const { container } = render(SearchPlaylistsPage, { props: { data: emptyData } });
+    const { container } = render(SearchPlaylistsPage, {
+      props: { data: emptyData },
+    });
     expect(container).toBeDefined();
     expect(screen.getByText("Search Results")).toBeDefined();
   });
@@ -92,24 +102,30 @@ describe("Search Playlists Page Component", () => {
       playlistsCount: null,
     };
 
-    const { container } = render(SearchPlaylistsPage, { props: { data: dataWithNullCount } });
+    const { container } = render(SearchPlaylistsPage, {
+      props: { data: dataWithNullCount },
+    });
     expect(container).toBeDefined();
   });
 
   it("displays muted text elements", () => {
-    const { container } = render(SearchPlaylistsPage, { props: { data: mockData } });
-    
+    const { container } = render(SearchPlaylistsPage, {
+      props: { data: mockData },
+    });
+
     const mutedTexts = container.querySelectorAll(".text-muted-foreground");
     expect(mutedTexts.length).toBeGreaterThan(0);
-    
+
     // Check that all muted text elements have the basic styling
-    mutedTexts.forEach(element => {
+    mutedTexts.forEach((element) => {
       expect(element).toHaveClass("text-sm", "text-muted-foreground");
     });
   });
 
   it("component initializes without errors", () => {
-    const { container } = render(SearchPlaylistsPage, { props: { data: mockData } });
+    const { container } = render(SearchPlaylistsPage, {
+      props: { data: mockData },
+    });
     expect(container).toBeDefined();
   });
 });

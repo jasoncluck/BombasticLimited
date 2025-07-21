@@ -435,4 +435,3 @@ describe("SQL Integration Tests", () => {
     return result.rows.map((row) => row.table_name);
   }
 });
-

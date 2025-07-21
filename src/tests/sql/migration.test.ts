@@ -289,4 +289,3 @@ describe("SQL Migration Tests", () => {
     }
   }
 });
-

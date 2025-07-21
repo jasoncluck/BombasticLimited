@@ -17,9 +17,7 @@ vi.mock("$lib/components/playlist/playlist", () => ({
 
 // Mock playlist queries
 vi.mock("$lib/supabase/playlists", () => ({
-  getPlaylistsForUsername: vi.fn(() => 
-    Promise.resolve({ playlists: [] })
-  ),
+  getPlaylistsForUsername: vi.fn(() => Promise.resolve({ playlists: [] })),
   DEFAULT_NUM_PLAYLISTS_OVERVIEW: 5,
 }));
 
@@ -63,7 +61,7 @@ describe("Source Page Component", () => {
         source: "giantbomb",
       },
       {
-        id: "video2", 
+        id: "video2",
         title: "Test Video 2",
         description: "Test Description 2",
         publishedAt: "2023-01-02",
@@ -123,23 +121,23 @@ describe("Source Page Component", () => {
 
   it("displays support button with correct link", () => {
     render(Page, { props: { data: mockData } });
-    
+
     const supportButton = screen.getByText("Support Giant Bomb");
     expect(supportButton).toBeDefined();
-    expect(supportButton.closest('a')).toHaveProperty('target', '_blank');
+    expect(supportButton.closest("a")).toHaveProperty("target", "_blank");
   });
 
   it("displays website link when websiteUrlDomain exists", () => {
     render(Page, { props: { data: mockData } });
-    
+
     const websiteLink = screen.getByText("giantbomb.com");
     expect(websiteLink).toBeDefined();
-    expect(websiteLink.closest('a')).toHaveProperty('target', '_blank');
+    expect(websiteLink.closest("a")).toHaveProperty("target", "_blank");
   });
 
   it("displays highlight playlists", () => {
     render(Page, { props: { data: mockData } });
-    
+
     expect(screen.getByText("Test Playlist")).toBeDefined();
   });
 
@@ -150,16 +148,20 @@ describe("Source Page Component", () => {
 
   it("creates correct links for Latest Videos", () => {
     render(Page, { props: { data: mockData } });
-    
-    const latestVideosLink = screen.getByRole('link', { name: 'Latest Videos' });
-    expect(latestVideosLink.getAttribute('href')).toBe('/giantbomb/latest');
+
+    const latestVideosLink = screen.getByRole("link", {
+      name: "Latest Videos",
+    });
+    expect(latestVideosLink.getAttribute("href")).toBe("/giantbomb/latest");
   });
 
   it("creates correct links for Playlists", () => {
     render(Page, { props: { data: mockData } });
-    
-    const playlistsLink = screen.getByRole('link', { name: 'Playlists' });
-    expect(playlistsLink.getAttribute('href')).toBe('/profile/giantbomb/playlists');
+
+    const playlistsLink = screen.getByRole("link", { name: "Playlists" });
+    expect(playlistsLink.getAttribute("href")).toBe(
+      "/profile/giantbomb/playlists",
+    );
   });
 
   it("handles different sources correctly", () => {
@@ -169,11 +171,13 @@ describe("Source Page Component", () => {
     };
 
     render(Page, { props: { data: jeffData } });
-    
+
     expect(screen.getByText("The Jeff Gerstmann Show")).toBeDefined();
-    
-    const latestVideosLink = screen.getByRole('link', { name: 'Latest Videos' });
-    expect(latestVideosLink.getAttribute('href')).toBe('/jeffgerstmann/latest');
+
+    const latestVideosLink = screen.getByRole("link", {
+      name: "Latest Videos",
+    });
+    expect(latestVideosLink.getAttribute("href")).toBe("/jeffgerstmann/latest");
   });
 
   it("handles sources without website domain", () => {
@@ -183,14 +187,14 @@ describe("Source Page Component", () => {
     };
 
     render(Page, { props: { data: jeffData } });
-    
+
     // Should not display website link for sources without websiteUrlDomain
     expect(screen.queryByText("jeffgerstmann.com")).toBeNull();
   });
 
   it("does not show live section when source is not streaming", () => {
     render(Page, { props: { data: mockData } });
-    
+
     expect(screen.queryByText("Live")).toBeNull();
   });
 
@@ -201,7 +205,7 @@ describe("Source Page Component", () => {
     };
 
     render(Page, { props: { data: dataWithoutHighlights } });
-    
+
     // Should still render the page without highlight playlist sections
     expect(screen.getByText("Giant Bomb")).toBeDefined();
     expect(screen.getByText("Latest Videos")).toBeDefined();

@@ -41,14 +41,14 @@ describe("Video Page Component", () => {
 
   it("has correct page structure with margin", () => {
     const { container } = render(VideoPage, { props: { data: mockData } });
-    
+
     const pageContainer = container.querySelector(".m-4");
     expect(pageContainer).toBeDefined();
   });
 
   it("renders VideoPlayer with correct props", () => {
     const { container } = render(VideoPage, { props: { data: mockData } });
-    
+
     // Since we mocked the component, we just check that the page structure exists
     expect(container.querySelector(".m-4")).toBeDefined();
   });
@@ -64,7 +64,9 @@ describe("Video Page Component", () => {
       session: null,
     };
 
-    const { container } = render(VideoPage, { props: { data: dataWithoutSession } });
+    const { container } = render(VideoPage, {
+      props: { data: dataWithoutSession },
+    });
     expect(container).toBeDefined();
   });
 
@@ -74,7 +76,9 @@ describe("Video Page Component", () => {
       playlists: [],
     };
 
-    const { container } = render(VideoPage, { props: { data: dataWithEmptyPlaylists } });
+    const { container } = render(VideoPage, {
+      props: { data: dataWithEmptyPlaylists },
+    });
     expect(container).toBeDefined();
   });
 

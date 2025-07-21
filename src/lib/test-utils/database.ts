@@ -1,6 +1,6 @@
-import { Client } from 'pg';
-import { readFile } from 'fs/promises';
-import { join } from 'path';
+import { Client } from "pg";
+import { readFile } from "fs/promises";
+import { join } from "path";
 
 export interface DatabaseTestConfig {
   host: string;
@@ -14,11 +14,11 @@ export interface DatabaseTestConfig {
  * Default test database configuration for Supabase local development
  */
 export const DEFAULT_TEST_CONFIG: DatabaseTestConfig = {
-  host: 'localhost',
+  host: "localhost",
   port: 54322, // Supabase local DB port from config.toml
-  database: 'postgres',
-  user: 'postgres',
-  password: 'postgres',
+  database: "postgres",
+  user: "postgres",
+  password: "postgres",
 };
 
 /**
@@ -41,7 +41,10 @@ export class DatabaseTestUtils {
         await this.client.connect();
         this.connected = true;
       } catch (error) {
-        if (error.message && error.message.includes('has already been connected')) {
+        if (
+          error.message &&
+          error.message.includes("has already been connected")
+        ) {
           // Client is already connected
           this.connected = true;
         } else {
@@ -60,7 +63,7 @@ export class DatabaseTestUtils {
         await this.client.end();
       } catch (error) {
         // Ignore errors when disconnecting
-        console.warn('Error disconnecting database:', error);
+        console.warn("Error disconnecting database:", error);
       }
       this.connected = false;
     }
@@ -86,13 +89,14 @@ export class DatabaseTestUtils {
       return this.client.query(sql, params);
     } catch (error) {
       // If connection is broken, try to reconnect once
-      if (error.message && (
-        error.message.includes('has already been connected') ||
-        error.message.includes('Client has already been connected') ||
-        error.message.includes('Connection terminated') ||
-        error.message.includes('server closed the connection')
-      )) {
-        console.warn('Database connection broken, reconnecting...');
+      if (
+        error.message &&
+        (error.message.includes("has already been connected") ||
+          error.message.includes("Client has already been connected") ||
+          error.message.includes("Connection terminated") ||
+          error.message.includes("server closed the connection"))
+      ) {
+        console.warn("Database connection broken, reconnecting...");
         await this.disconnect();
         this.client = new Client(this.config);
         await this.connect();
@@ -106,20 +110,20 @@ export class DatabaseTestUtils {
    * Execute a SQL file
    */
   async executeFile(filePath: string): Promise<void> {
-    const sql = await readFile(filePath, 'utf-8');
+    const sql = await readFile(filePath, "utf-8");
     await this.query(sql);
   }
 
   /**
    * Check if a table exists in the database
    */
-  async tableExists(tableName: string, schema = 'public'): Promise<boolean> {
+  async tableExists(tableName: string, schema = "public"): Promise<boolean> {
     const result = await this.query(
       `SELECT EXISTS (
         SELECT FROM information_schema.tables 
         WHERE table_schema = $1 AND table_name = $2
       )`,
-      [schema, tableName]
+      [schema, tableName],
     );
     return result.rows[0].exists;
   }
@@ -127,13 +131,16 @@ export class DatabaseTestUtils {
   /**
    * Check if a function exists in the database
    */
-  async functionExists(functionName: string, schema = 'public'): Promise<boolean> {
+  async functionExists(
+    functionName: string,
+    schema = "public",
+  ): Promise<boolean> {
     const result = await this.query(
       `SELECT EXISTS (
         SELECT FROM information_schema.routines 
         WHERE routine_schema = $1 AND routine_name = $2
       )`,
-      [schema, functionName]
+      [schema, functionName],
     );
     return result.rows[0].exists;
   }
@@ -147,7 +154,7 @@ export class DatabaseTestUtils {
         SELECT FROM pg_extension 
         WHERE extname = $1
       )`,
-      [extensionName]
+      [extensionName],
     );
     return result.rows[0].exists;
   }
@@ -155,15 +162,17 @@ export class DatabaseTestUtils {
   /**
    * Get the count of rows in a table
    */
-  async getRowCount(tableName: string, schema = 'public'): Promise<number> {
-    const result = await this.query(`SELECT COUNT(*) FROM "${schema}"."${tableName}"`);
+  async getRowCount(tableName: string, schema = "public"): Promise<number> {
+    const result = await this.query(
+      `SELECT COUNT(*) FROM "${schema}"."${tableName}"`,
+    );
     return parseInt(result.rows[0].count);
   }
 
   /**
    * Clear all data from a table
    */
-  async clearTable(tableName: string, schema = 'public'): Promise<void> {
+  async clearTable(tableName: string, schema = "public"): Promise<void> {
     await this.query(`TRUNCATE TABLE "${schema}"."${tableName}" CASCADE`);
   }
 
@@ -179,23 +188,26 @@ export class DatabaseTestUtils {
 
       // Check our permissions first
       const canManageSchemas = await this.checkSchemaPermissions();
-      
+
       if (canManageSchemas) {
         // We can manage schemas, proceed with full reset
         await this.performFullSchemaReset();
       } else {
         // Limited permissions, just clean up tables and data
-        console.log('Limited schema permissions, performing table-level cleanup');
+        console.log(
+          "Limited schema permissions, performing table-level cleanup",
+        );
         await this.clearKnownTables();
         // Ensure auth schema exists if we can create it
         await this.ensureAuthSchema();
       }
-      
+
       // Set search path to ensure migrations work properly
-      await this.query("SELECT pg_catalog.set_config('search_path', 'public', false)");
-      
+      await this.query(
+        "SELECT pg_catalog.set_config('search_path', 'public', false)",
+      );
     } catch (error) {
-      console.warn('Database reset failed, attempting minimal cleanup:', error);
+      console.warn("Database reset failed, attempting minimal cleanup:", error);
       // Final fallback: just clear what we can
       await this.clearKnownTables();
     }
@@ -216,7 +228,7 @@ export class DatabaseTestUtils {
         FROM pg_user 
         WHERE usename = current_user
       `);
-      
+
       if (result.rows.length > 0) {
         const user = result.rows[0];
         return user.usesuper || user.usecreatedb;
@@ -239,16 +251,16 @@ export class DatabaseTestUtils {
 
     if (schemaResult.rows.length === 0) {
       // Public schema doesn't exist, create it
-      await this.query('CREATE SCHEMA public');
-      await this.query('GRANT USAGE ON SCHEMA public TO current_user');
-      await this.query('GRANT CREATE ON SCHEMA public TO current_user');
+      await this.query("CREATE SCHEMA public");
+      await this.query("GRANT USAGE ON SCHEMA public TO current_user");
+      await this.query("GRANT CREATE ON SCHEMA public TO current_user");
       await this.query("COMMENT ON SCHEMA public IS 'standard public schema'");
     } else {
       // Public schema exists, clean it up by dropping and recreating
-      await this.query('DROP SCHEMA public CASCADE');
-      await this.query('CREATE SCHEMA public');
-      await this.query('GRANT USAGE ON SCHEMA public TO current_user');
-      await this.query('GRANT CREATE ON SCHEMA public TO current_user');
+      await this.query("DROP SCHEMA public CASCADE");
+      await this.query("CREATE SCHEMA public");
+      await this.query("GRANT USAGE ON SCHEMA public TO current_user");
+      await this.query("GRANT CREATE ON SCHEMA public TO current_user");
       await this.query("COMMENT ON SCHEMA public IS 'standard public schema'");
     }
 
@@ -269,12 +281,15 @@ export class DatabaseTestUtils {
 
       if (authExists.rows.length === 0) {
         // Auth schema doesn't exist, try to create it
-        await this.query('CREATE SCHEMA IF NOT EXISTS auth');
-        await this.query('GRANT USAGE ON SCHEMA auth TO current_user');
-        await this.query('GRANT CREATE ON SCHEMA auth TO current_user');
+        await this.query("CREATE SCHEMA IF NOT EXISTS auth");
+        await this.query("GRANT USAGE ON SCHEMA auth TO current_user");
+        await this.query("GRANT CREATE ON SCHEMA auth TO current_user");
       }
     } catch (error) {
-      console.warn('Could not manage auth schema (this may be expected in some setups):', error);
+      console.warn(
+        "Could not manage auth schema (this may be expected in some setups):",
+        error,
+      );
     }
   }
 
@@ -290,12 +305,18 @@ export class DatabaseTestUtils {
    * Clear known tables as a fallback cleanup method
    */
   private async clearKnownTables(): Promise<void> {
-    const tables = ['user_video_timestamps', 'playlist_videos', 'playlists', 'videos', 'user_profiles'];
-    
+    const tables = [
+      "user_video_timestamps",
+      "playlist_videos",
+      "playlists",
+      "videos",
+      "user_profiles",
+    ];
+
     // Disable foreign key checks temporarily
     try {
-      await this.query('SET session_replication_role = replica');
-      
+      await this.query("SET session_replication_role = replica");
+
       for (const table of tables) {
         try {
           if (await this.tableExists(table)) {
@@ -305,21 +326,22 @@ export class DatabaseTestUtils {
           console.warn(`Failed to drop table ${table}:`, error);
         }
       }
-      
+
       // Drop types and other objects
       try {
-        await this.query('DROP TYPE IF EXISTS source CASCADE');
-        await this.query('DROP TYPE IF EXISTS playlist_type CASCADE');
-        await this.query('DROP SEQUENCE IF EXISTS playlists_custom_seq CASCADE');
+        await this.query("DROP TYPE IF EXISTS source CASCADE");
+        await this.query("DROP TYPE IF EXISTS playlist_type CASCADE");
+        await this.query(
+          "DROP SEQUENCE IF EXISTS playlists_custom_seq CASCADE",
+        );
       } catch (error) {
-        console.warn('Failed to drop some database objects:', error);
+        console.warn("Failed to drop some database objects:", error);
       }
-      
     } finally {
       try {
-        await this.query('SET session_replication_role = DEFAULT');
+        await this.query("SET session_replication_role = DEFAULT");
       } catch (error) {
-        console.warn('Failed to reset session replication role:', error);
+        console.warn("Failed to reset session replication role:", error);
       }
     }
   }
@@ -327,11 +349,13 @@ export class DatabaseTestUtils {
   /**
    * Create a test user in the auth.users table if it doesn't exist
    */
-  async createTestUser(userId: string = '00000000-0000-0000-0000-000000000000'): Promise<void> {
+  async createTestUser(
+    userId: string = "00000000-0000-0000-0000-000000000000",
+  ): Promise<void> {
     try {
       // Try to ensure auth schema exists
       await this.ensureAuthSchema();
-      
+
       // Create a minimal users table in auth schema if it doesn't exist
       await this.query(`
         CREATE TABLE IF NOT EXISTS auth.users (
@@ -340,15 +364,21 @@ export class DatabaseTestUtils {
           created_at timestamp with time zone DEFAULT now()
         )
       `);
-      
+
       // Insert test user if not exists
-      await this.query(`
+      await this.query(
+        `
         INSERT INTO auth.users (id, email, created_at)
         VALUES ($1, 'test@example.com', now())
         ON CONFLICT (id) DO NOTHING
-      `, [userId]);
+      `,
+        [userId],
+      );
     } catch (error) {
-      console.warn('Failed to create test user (this may be expected if auth schema is managed externally):', error);
+      console.warn(
+        "Failed to create test user (this may be expected if auth schema is managed externally):",
+        error,
+      );
     }
   }
 
@@ -357,38 +387,41 @@ export class DatabaseTestUtils {
    */
   async cleanupAuthSchema(): Promise<void> {
     try {
-      await this.query('DROP SCHEMA IF EXISTS auth CASCADE');
+      await this.query("DROP SCHEMA IF EXISTS auth CASCADE");
     } catch (error) {
-      console.warn('Failed to cleanup auth schema:', error);
+      console.warn("Failed to cleanup auth schema:", error);
     }
   }
 
   /**
    * Apply a list of migrations in order with better error handling
    */
-  async applyMigrations(migrationFiles: Array<{ name: string; path: string }>): Promise<Array<{ name: string; success: boolean; error?: string }>> {
-    const results: Array<{ name: string; success: boolean; error?: string }> = [];
-    
+  async applyMigrations(
+    migrationFiles: Array<{ name: string; path: string }>,
+  ): Promise<Array<{ name: string; success: boolean; error?: string }>> {
+    const results: Array<{ name: string; success: boolean; error?: string }> =
+      [];
+
     // Ensure we have a clean state for migrations
     await this.prepareDatabaseForMigrations();
-    
+
     for (const migration of migrationFiles) {
       try {
-        const content = await readFile(migration.path, 'utf-8');
+        const content = await readFile(migration.path, "utf-8");
         await this.query(content);
         results.push({ name: migration.name, success: true });
         console.log(`✅ Migration ${migration.name} applied successfully`);
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         console.warn(`❌ Migration ${migration.name} failed:`, errorMsg);
-        results.push({ 
-          name: migration.name, 
-          success: false, 
-          error: errorMsg 
+        results.push({
+          name: migration.name,
+          success: false,
+          error: errorMsg,
         });
       }
     }
-    
+
     return results;
   }
 
@@ -398,35 +431,42 @@ export class DatabaseTestUtils {
   private async prepareDatabaseForMigrations(): Promise<void> {
     try {
       // Ensure public schema exists
-      await this.query('CREATE SCHEMA IF NOT EXISTS public');
-      
+      await this.query("CREATE SCHEMA IF NOT EXISTS public");
+
       // Set search path
-      await this.query("SELECT pg_catalog.set_config('search_path', 'public', false)");
-      
+      await this.query(
+        "SELECT pg_catalog.set_config('search_path', 'public', false)",
+      );
+
       // Log current state
       const tableCount = await this.getTableCount();
-      console.log(`Database prepared for migrations. Current table count: ${tableCount}`);
+      console.log(
+        `Database prepared for migrations. Current table count: ${tableCount}`,
+      );
     } catch (error) {
-      console.warn('Failed to prepare database for migrations:', error);
+      console.warn("Failed to prepare database for migrations:", error);
     }
   }
 
   /**
    * Verify that essential tables exist after migrations
    */
-  async verifyEssentialTables(): Promise<{ success: boolean; missingTables: string[] }> {
-    const essentialTables = ['videos', 'playlists', 'user_profiles'];
+  async verifyEssentialTables(): Promise<{
+    success: boolean;
+    missingTables: string[];
+  }> {
+    const essentialTables = ["videos", "playlists", "user_profiles"];
     const missingTables: string[] = [];
-    
+
     for (const table of essentialTables) {
-      if (!await this.tableExists(table)) {
+      if (!(await this.tableExists(table))) {
         missingTables.push(table);
       }
     }
-    
+
     return {
       success: missingTables.length === 0,
-      missingTables
+      missingTables,
     };
   }
 
@@ -465,15 +505,17 @@ export class DatabaseTestUtils {
   /**
    * Check if a specific SQL syntax is valid by trying to parse it
    */
-  async validateSyntax(sql: string): Promise<{ valid: boolean; error?: string }> {
+  async validateSyntax(
+    sql: string,
+  ): Promise<{ valid: boolean; error?: string }> {
     try {
       // Use EXPLAIN to validate syntax without executing
       await this.query(`EXPLAIN ${sql}`);
       return { valid: true };
     } catch (error) {
-      return { 
-        valid: false, 
-        error: error instanceof Error ? error.message : String(error) 
+      return {
+        valid: false,
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   }

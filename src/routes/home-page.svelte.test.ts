@@ -66,11 +66,11 @@ describe("Home Page Component", () => {
 
   it("renders source sections for user's sources", () => {
     render(Page, { props: { data: mockData } });
-    
+
     // Should render sections for the user's sources
     expect(screen.getByText("Giant Bomb")).toBeDefined();
     expect(screen.getByText("The Jeff Gerstmann Show")).toBeDefined();
-    
+
     // Should not render sections for sources not in user profile
     expect(screen.queryByText("Nextlander")).toBeNull();
     expect(screen.queryByText("Remap")).toBeNull();
@@ -86,7 +86,7 @@ describe("Home Page Component", () => {
     };
 
     render(Page, { props: { data: dataWithNullSources } });
-    
+
     // Should render all default sources
     expect(screen.getByText("Giant Bomb")).toBeDefined();
     expect(screen.getByText("The Jeff Gerstmann Show")).toBeDefined();
@@ -101,7 +101,7 @@ describe("Home Page Component", () => {
     };
 
     render(Page, { props: { data: dataWithoutProfile } });
-    
+
     // Should render all default sources when no profile
     expect(screen.getByText("Giant Bomb")).toBeDefined();
     expect(screen.getByText("The Jeff Gerstmann Show")).toBeDefined();
@@ -111,12 +111,14 @@ describe("Home Page Component", () => {
 
   it("creates proper links to source pages", () => {
     render(Page, { props: { data: mockData } });
-    
-    const giantBombLink = screen.getByRole('link', { name: 'Giant Bomb' });
-    const jeffLink = screen.getByRole('link', { name: 'The Jeff Gerstmann Show' });
-    
-    expect(giantBombLink.getAttribute('href')).toBe('/giantbomb/latest');
-    expect(jeffLink.getAttribute('href')).toBe('/jeffgerstmann/latest');
+
+    const giantBombLink = screen.getByRole("link", { name: "Giant Bomb" });
+    const jeffLink = screen.getByRole("link", {
+      name: "The Jeff Gerstmann Show",
+    });
+
+    expect(giantBombLink.getAttribute("href")).toBe("/giantbomb/latest");
+    expect(jeffLink.getAttribute("href")).toBe("/jeffgerstmann/latest");
   });
 
   it("creates continue watching link when continue videos exist", () => {
@@ -134,8 +136,10 @@ describe("Home Page Component", () => {
     };
 
     render(Page, { props: { data: dataWithContinueVideos } });
-    
-    const continueLink = screen.getByRole('link', { name: 'Continue Watching' });
-    expect(continueLink.getAttribute('href')).toBe('/continue');
+
+    const continueLink = screen.getByRole("link", {
+      name: "Continue Watching",
+    });
+    expect(continueLink.getAttribute("href")).toBe("/continue");
   });
 });
