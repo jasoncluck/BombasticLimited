@@ -23,6 +23,48 @@ Object.defineProperty(global, "cancelAnimationFrame", {
   writable: true,
 });
 
+// Mock setInterval and clearInterval for page state tests
+Object.defineProperty(global, "setInterval", {
+  value: vi.fn((cb, delay) => setTimeout(cb, delay)),
+  writable: true,
+});
+
+Object.defineProperty(global, "clearInterval", {
+  value: vi.fn(),
+  writable: true,
+});
+
+// Ensure window has these methods too
+Object.defineProperty(globalThis, "setInterval", {
+  value: global.setInterval,
+  writable: true,
+});
+
+Object.defineProperty(globalThis, "clearInterval", {
+  value: global.clearInterval,
+  writable: true,
+});
+
+// Ensure window object has timer methods
+if (typeof window !== "undefined") {
+  Object.defineProperty(window, "setInterval", {
+    value: global.setInterval,
+    writable: true,
+  });
+
+  Object.defineProperty(window, "clearInterval", {
+    value: global.clearInterval,
+    writable: true,
+  });
+} else {
+  // Create window object if it doesn't exist
+  global.window = {
+    ...global.window,
+    setInterval: global.setInterval,
+    clearInterval: global.clearInterval,
+  };
+}
+
 // Mock ResizeObserver
 global.ResizeObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
@@ -45,21 +87,7 @@ global.structuredClone =
 global.fetch = vi.fn();
 
 // Mock common modules that are used across tests
-vi.mock("$lib/state/media-query.svelte.js", () => ({
-  getMediaQueryState: vi.fn(() => ({
-    isSm: true,
-    isMd: false,
-    isLg: false,
-    isXl: false,
-    canHover: true,
-    isTouchDevice: false,
-    initialized: true,
-    matches: vi.fn(() => false),
-    allMatches: { sm: true, md: false, lg: false, xl: false },
-  })),
-  setMediaQueryState: vi.fn(),
-  MediaQueryState: vi.fn(),
-}));
+// The media-query module is tested directly, so no mock needed
 
 vi.mock("$lib/state/content.svelte.js", () => ({
   getContentState: vi.fn(() => ({
@@ -91,14 +119,67 @@ vi.mock("$lib/components/content/content.js", () => ({
 vi.mock("$lib/constants/source", () => ({
   SOURCES: ["giantbomb", "jeffgerstmann", "nextlander", "remap"],
   SOURCE_INFO: {
-    giantbomb: { displayName: "Giant Bomb", url: "https://giantbomb.com" },
-    jeffgerstmann: {
-      displayName: "Jeff Gerstmann",
-      url: "https://jeffgerstmann.com",
+    giantbomb: {
+      displayName: "Giant Bomb",
+      urlParam: "giantbomb",
+      image: "giantbomb.jpg",
+      twitchId: "504350",
+      youtubeId: "UCmeds0MLhjfkjD_5acPnFlQ",
+      youtubeUrl: "https://www.youtube.com/giantbomb",
+      highlightedPlaylists: [
+        { name: "Blight Club", youtubeId: "PLXlhzeWIuTHIGNBahKzWx9Hy54BXtM8Ef" },
+        { name: "Voicemail Dump Truck", youtubeId: "PLXlhzeWIuTHLjtyPTm42V-jPS70IYXOjJ" },
+      ],
+      websiteUrlDomain: "giantbomb.com",
+      supportUrl: "https://www.giantbomb.com/upgrade/",
     },
-    nextlander: { displayName: "Nextlander", url: "https://nextlander.com" },
-    remap: { displayName: "Remap", url: "https://remap.fm" },
+    jeffgerstmann: {
+      displayName: "The Jeff Gerstmann Show",
+      urlParam: "jeffgerstmann",
+      image: "jeffgerstmann.jpg",
+      twitchId: "504350",
+      youtubeId: "UCR9R2ARN74dCebn1kv06UhA",
+      youtubeUrl: "https://www.youtube.com/@JeffGerstmannShow",
+      highlightedPlaylists: [
+        { name: "Quick Looks at New Video Games", youtubeId: "PLDKeuvgV0sxZ78sutjkPvhM9sL74WHITb" },
+        { name: "Ranking the NES!", youtubeId: "PLDKeuvgV0sxZ_xs4zUvQcMEV-LTjSf-Ok" },
+      ],
+      supportUrl: "https://www.patreon.com/cw/jeffgerstmann",
+    },
+    nextlander: {
+      displayName: "Nextlander",
+      urlParam: "nextlander",
+      image: "nextlander.jpg",
+      twitchId: "689331234",
+      youtubeId: "UCO0gHyqLNeIrCAjwlO2BmiA",
+      youtubeUrl: "https://www.youtube.com/@Nextlander",
+      highlightedPlaylists: [
+        { name: "NXL Highlights", youtubeId: "PL8GKXV8flVOZkcetVtA7l9Z0SVIIIvUQ_" },
+        { name: "Talkin' Over Things", youtubeId: "PL8GKXV8flVOaonOnH-Am9gz-FEfFGb8xz" },
+      ],
+      supportUrl: "https://www.patreon.com/nextlander/",
+    },
+    remap: {
+      displayName: "Remap",
+      urlParam: "remap",
+      image: "remap.jpg",
+      twitchId: "913491352",
+      youtubeId: "UCpcSq3A3Z4tUJsHKfn8zpnA",
+      youtubeUrl: "https://www.youtube.com/@RemapRadio",
+      highlightedPlaylists: [
+        { name: "Wheel of GeForce Now", youtubeId: "PLTbM52Fro5psQ2WIdV9M7YgfWMrnv8wLu" },
+        { name: "Remap Radio", youtubeId: "PLTbM52Fro5psVDi5r1StiTdnLxM9McaSO" },
+      ],
+      websiteUrlDomain: "remapradio.com",
+      supportUrl: "https://remapradio.com/signup/",
+    },
   },
+  isSourceArray: vi.fn((value) => {
+    return Array.isArray(value) && value.every((item) => typeof item === "string");
+  }),
+  isSource: vi.fn((value) => {
+    return typeof value === "string" && ["giantbomb", "jeffgerstmann", "nextlander", "remap"].includes(value);
+  }),
 }));
 
 vi.mock("$app/navigation", () => ({
