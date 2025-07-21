@@ -4,18 +4,18 @@ test.describe('Cross-Browser Compatibility', () => {
   const testCases = [
     {
       name: 'Basic functionality',
-      test: async (page: any) => {
+      test: async (page: any, testUtils: any) => {
         await page.goto('/');
-        await page.waitForLoadState('networkidle');
+        await testUtils.waitForContent({ text: 'Latest Videos' });
         await expect(page.getByText('Latest Videos')).toBeVisible();
       }
     },
     {
       name: 'Page loading performance',
-      test: async (page: any) => {
+      test: async (page: any, testUtils: any) => {
         const startTime = Date.now();
         await page.goto('/');
-        await page.waitForLoadState('networkidle');
+        await testUtils.waitForContent({ text: 'Latest Videos' });
         const loadTime = Date.now() - startTime;
         
         // Page should load within reasonable time (10 seconds max)
@@ -24,9 +24,9 @@ test.describe('Cross-Browser Compatibility', () => {
     },
     {
       name: 'Interactive elements',
-      test: async (page: any) => {
+      test: async (page: any, testUtils: any) => {
         await page.goto('/');
-        await page.waitForLoadState('networkidle');
+        await testUtils.waitForContent({ text: 'Latest Videos' });
         
         // Check if buttons are clickable
         const buttons = page.locator('button:visible');
@@ -40,9 +40,9 @@ test.describe('Cross-Browser Compatibility', () => {
     },
     {
       name: 'CSS rendering',
-      test: async (page: any) => {
+      test: async (page: any, testUtils: any) => {
         await page.goto('/');
-        await page.waitForLoadState('networkidle');
+        await testUtils.waitForContent({ text: 'Latest Videos' });
         
         // Check if main content has proper styling
         const mainContent = page.locator('main, [role="main"], body > div');
@@ -63,17 +63,17 @@ test.describe('Cross-Browser Compatibility', () => {
 
   for (const testCase of testCases) {
     test.describe(testCase.name, () => {
-      test('works in Chromium', async ({ page }) => {
-        await testCase.test(page);
+      test('works in Chromium', async ({ page, testUtils }) => {
+        await testCase.test(page, testUtils);
       });
     });
   }
 });
 
 test.describe('Browser-Specific Features', () => {
-  test('should handle JavaScript features consistently', async ({ page, browserName }) => {
+  test('should handle JavaScript features consistently', async ({ page, browserName, testUtils }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await testUtils.waitForContent({ text: 'Latest Videos' });
     
     // Test modern JavaScript features
     const jsSupport = await page.evaluate(() => {
@@ -98,9 +98,9 @@ test.describe('Browser-Specific Features', () => {
     expect(jsSupport.sessionStorage).toBe(true);
   });
 
-  test('should handle CSS Grid and Flexbox', async ({ page }) => {
+  test('should handle CSS Grid and Flexbox', async ({ page, testUtils }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await testUtils.waitForContent({ text: 'Latest Videos' });
     
     const cssSupport = await page.evaluate(() => {
       const testEl = document.createElement('div');
@@ -130,9 +130,9 @@ test.describe('Browser-Specific Features', () => {
     expect(cssSupport.grid).toBe(true);
   });
 
-  test('should handle media queries correctly', async ({ page }) => {
+  test('should handle media queries correctly', async ({ page, testUtils }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await testUtils.waitForContent({ text: 'Latest Videos' });
     
     // Test media query support
     const mediaQuerySupport = await page.evaluate(() => {

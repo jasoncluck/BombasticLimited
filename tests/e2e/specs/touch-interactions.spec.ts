@@ -27,7 +27,7 @@ test.describe('Mobile Touch Interactions', () => {
 
   test('should support swipe gestures on carousels', async ({ page, testUtils }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await testUtils.waitForContent({ text: 'Latest Videos' });
     
     // Look for carousel elements
     const carousels = page.locator('[data-testid*="carousel"], .carousel, [class*="carousel"]');
@@ -53,9 +53,9 @@ test.describe('Mobile Touch Interactions', () => {
     }
   });
 
-  test('should support pinch zoom gestures', async ({ page }) => {
+  test('should support pinch zoom gestures', async ({ page, testUtils }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await testUtils.waitForContent({ text: 'Latest Videos' });
     
     // Simulate pinch zoom
     const viewport = page.viewportSize();
@@ -85,7 +85,7 @@ test.describe('Mobile Touch Interactions', () => {
 
   test('should handle long press interactions', async ({ page, testUtils }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await testUtils.waitForContent({ text: 'Latest Videos' });
     
     const videoCards = page.locator('[data-testid="video-card"]');
     const count = await videoCards.count();
@@ -112,9 +112,9 @@ test.describe('Mobile Touch Interactions', () => {
     }
   });
 
-  test('should prevent accidental touches during scrolling', async ({ page }) => {
+  test('should prevent accidental touches during scrolling', async ({ page, testUtils }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await testUtils.waitForContent({ text: 'Latest Videos' });
     
     // Scroll down quickly
     await page.touchscreen.tap(200, 300);
@@ -129,9 +129,9 @@ test.describe('Mobile Touch Interactions', () => {
     await expect(page.getByText('Latest Videos')).toBeVisible();
   });
 
-  test('should support orientation change', async ({ page }) => {
+  test('should support orientation change', async ({ page, testUtils }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await testUtils.waitForContent({ text: 'Latest Videos' });
     
     // Portrait mode (default)
     await page.setViewportSize({ width: 375, height: 667 });

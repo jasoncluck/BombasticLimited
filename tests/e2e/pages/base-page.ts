@@ -13,7 +13,15 @@ export class BasePage {
   }
 
   async waitForLoad(): Promise<void> {
-    await this.page.waitForLoadState('networkidle');
+    // Option 3: Wait for specific content instead of network idle
+    // Default to waiting for common page elements that indicate the page is ready
+    await this.testUtils.waitForPageReady([
+      { text: 'Latest Videos' }, // Home page indicator
+      { text: 'Continue Watching' }, // Home page indicator
+      'main', // Main content area
+      '[data-testid="content"]', // Content area if available
+      'header', // Header element
+    ]);
   }
 
   async getTitle(): Promise<string> {

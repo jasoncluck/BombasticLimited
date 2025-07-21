@@ -1,7 +1,7 @@
 import { test, expect } from '../fixtures/base-fixtures';
 
 test.describe('User Interaction Flows', () => {
-  test('should handle basic user navigation flow', async ({ homePage, page }) => {
+  test('should handle basic user navigation flow', async ({ homePage, page, testUtils }) => {
     await homePage.goto('/');
     await homePage.expectPageToLoad();
     
@@ -17,14 +17,19 @@ test.describe('User Interaction Flows', () => {
           const href = await link.getAttribute('href');
           if (href && !href.startsWith('http') && !href.includes('mailto')) {
             await link.click();
-            await page.waitForLoadState('networkidle');
+            await testUtils.waitForPageReady([
+              { text: 'Latest Videos' },
+              'main',
+              'h1',
+              '[data-testid="content"]'
+            ]);
             
             // Should navigate successfully
             expect(page.url()).toContain(href);
             
             // Go back to home
             await page.goto('/');
-            await page.waitForLoadState('networkidle');
+            await testUtils.waitForContent({ text: 'Latest Videos' });
           }
         }
       }
@@ -55,9 +60,9 @@ test.describe('User Interaction Flows', () => {
     }
   });
 
-  test('should handle search functionality if available', async ({ page }) => {
+  test('should handle search functionality if available', async ({ page, testUtils }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await testUtils.waitForContent({ text: 'Latest Videos' });
     
     // Look for search input
     const searchInput = page.locator('input[type="search"], [placeholder*="search" i], [aria-label*="search" i]').first();
@@ -65,7 +70,12 @@ test.describe('User Interaction Flows', () => {
     if (await searchInput.isVisible()) {
       await searchInput.fill('test video');
       await searchInput.press('Enter');
-      await page.waitForLoadState('networkidle');
+      await testUtils.waitForPageReady([
+        { text: 'Search Results' },
+        { text: 'No results' },
+        { text: 'Latest Videos' },
+        'main'
+      ]);
       
       // Should show search results or navigate to search page
       const hasResults = await page.locator('[data-testid*="search"], [class*="search"]').isVisible();
@@ -73,9 +83,9 @@ test.describe('User Interaction Flows', () => {
     }
   });
 
-  test('should handle user preferences and settings', async ({ page }) => {
+  test('should handle user preferences and settings', async ({ page, testUtils }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await testUtils.waitForContent({ text: 'Latest Videos' });
     
     // Look for settings or profile buttons
     const settingsButton = page.locator('[aria-label*="settings" i], [data-testid*="settings"], [class*="settings"]').first();
@@ -98,9 +108,9 @@ test.describe('User Interaction Flows', () => {
     }
   });
 
-  test('should handle playlist interactions if available', async ({ page }) => {
+  test('should handle playlist interactions if available', async ({ page, testUtils }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await testUtils.waitForContent({ text: 'Latest Videos' });
     
     // Look for playlist elements
     const playlistElements = page.locator('[data-testid*="playlist"], [class*="playlist"]');
@@ -143,9 +153,9 @@ test.describe('User Interaction Flows', () => {
     }
   });
 
-  test('should handle source filtering if available', async ({ page }) => {
+  test('should handle source filtering if available', async ({ page, testUtils }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await testUtils.waitForContent({ text: 'Latest Videos' });
     
     // Look for source filter buttons
     const sourceButtons = page.locator('[data-testid*="source"], button:has-text("Giant Bomb"), button:has-text("Jeff Gerstmann")');
@@ -175,7 +185,7 @@ test.describe('User Interaction Flows', () => {
     // Test with mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await testUtils.waitForContent({ text: 'Latest Videos' });
     
     // Look for mobile menu button (hamburger menu)
     const mobileMenuButton = page.locator('[aria-label*="menu" i], [data-testid*="menu"], .hamburger, [class*="menu-toggle"]').first();

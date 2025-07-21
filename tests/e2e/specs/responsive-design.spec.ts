@@ -23,7 +23,7 @@ test.describe('Responsive Design Testing', () => {
 
     test('should have touch-friendly button sizes', async ({ page, testUtils }) => {
       await page.goto('/');
-      await page.waitForLoadState('networkidle');
+      await testUtils.waitForContent({ text: 'Latest Videos' });
       
       // Check if interactive elements meet minimum touch target size (44px recommended)
       const buttons = page.locator('button, a, [role="button"]');
@@ -67,9 +67,9 @@ test.describe('Responsive Design Testing', () => {
       await homePage.takeScreenshot('desktop-home-layout');
     });
 
-    test('should support hover interactions', async ({ page }) => {
+    test('should support hover interactions', async ({ page, testUtils }) => {
       await page.goto('/');
-      await page.waitForLoadState('networkidle');
+      await testUtils.waitForContent({ text: 'Latest Videos' });
       
       // Find hoverable elements and test hover states
       const videoCards = page.locator('[data-testid="video-card"]');
@@ -100,10 +100,10 @@ test.describe('Responsive Design Testing', () => {
     ];
 
     for (const viewport of viewports) {
-      test(`should show consistent content on ${viewport.name}`, async ({ page }) => {
+      test(`should show consistent content on ${viewport.name}`, async ({ page, testUtils }) => {
         await page.setViewportSize({ width: viewport.width, height: viewport.height });
         await page.goto('/');
-        await page.waitForLoadState('networkidle');
+        await testUtils.waitForContent({ text: 'Latest Videos' });
         
         // Essential content should be visible on all viewports
         await expect(page.getByText('Latest Videos')).toBeVisible();
