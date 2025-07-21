@@ -299,6 +299,22 @@ export type Database = {
           message: string
         }[]
       }
+      delete_timestamps: {
+        Args: { p_user_id: string; p_video_ids: string[] }
+        Returns: {
+          id: string
+          source: Database["public"]["Enums"]["source"]
+          title: string
+          description: string
+          thumbnail_url: string
+          thumbnail_maxres_url: string
+          published_at: string
+          duration: string
+          video_start_seconds: number
+          watched_at: string
+          updated_at: string
+        }[]
+      }
       delete_user: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -492,6 +508,57 @@ export type Database = {
           playlist_id: number
           video_id: string
           video_position: number
+        }[]
+      }
+      insert_timestamp: {
+        Args: {
+          p_user_id: string
+          p_video_id: string
+          p_video_start_seconds?: number
+          p_watched_at?: string
+          p_playlist_id?: number
+          p_sorted_by?: Database["public"]["Enums"]["playlist_sorted_by"]
+          p_sort_order?: Database["public"]["Enums"]["playlist_sort_order"]
+        }
+        Returns: {
+          id: string
+          source: Database["public"]["Enums"]["source"]
+          title: string
+          description: string
+          thumbnail_url: string
+          thumbnail_maxres_url: string
+          published_at: string
+          duration: string
+          video_start_seconds: number
+          watched_at: string
+          updated_at: string
+          playlist_id: number
+          sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
+          sort_order: Database["public"]["Enums"]["playlist_sort_order"]
+        }[]
+      }
+      insert_timestamps: {
+        Args: {
+          p_user_id: string
+          p_video_ids: string[]
+          p_video_start_seconds?: number[]
+          p_watched_at?: string[]
+        }
+        Returns: {
+          id: string
+          source: Database["public"]["Enums"]["source"]
+          title: string
+          description: string
+          thumbnail_url: string
+          thumbnail_maxres_url: string
+          published_at: string
+          duration: string
+          video_start_seconds: number
+          watched_at: string
+          updated_at: string
+          playlist_id: number
+          sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
+          sort_order: Database["public"]["Enums"]["playlist_sort_order"]
         }[]
       }
       is_unique_username: {

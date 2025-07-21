@@ -22,8 +22,7 @@ BEGIN
         WHERE LOWER(username) = LOWER(p_username)
     ) INTO username_exists;
 
-    -- Return true if username is unique (does not exist)
-    RETURN NOT username_exists;
+    -- Return true if username is unique (does not exist) RETURN NOT username_exists;
 END;
 $$;
 GRANT EXECUTE ON FUNCTION "public"."is_unique_username"(text) TO authenticated;
