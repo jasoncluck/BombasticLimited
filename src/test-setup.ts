@@ -91,14 +91,67 @@ vi.mock("$lib/components/content/content.js", () => ({
 vi.mock("$lib/constants/source", () => ({
   SOURCES: ["giantbomb", "jeffgerstmann", "nextlander", "remap"],
   SOURCE_INFO: {
-    giantbomb: { displayName: "Giant Bomb", url: "https://giantbomb.com" },
-    jeffgerstmann: {
-      displayName: "Jeff Gerstmann",
-      url: "https://jeffgerstmann.com",
+    giantbomb: {
+      displayName: "Giant Bomb",
+      urlParam: "giantbomb",
+      image: "giantbomb.jpg",
+      twitchId: "504350",
+      youtubeId: "UCmeds0MLhjfkjD_5acPnFlQ",
+      youtubeUrl: "https://www.youtube.com/giantbomb",
+      highlightedPlaylists: [
+        { name: "Blight Club", youtubeId: "PLXlhzeWIuTHIGNBahKzWx9Hy54BXtM8Ef" },
+        { name: "Voicemail Dump Truck", youtubeId: "PLXlhzeWIuTHLjtyPTm42V-jPS70IYXOjJ" },
+      ],
+      websiteUrlDomain: "giantbomb.com",
+      supportUrl: "https://www.giantbomb.com/upgrade/",
     },
-    nextlander: { displayName: "Nextlander", url: "https://nextlander.com" },
-    remap: { displayName: "Remap", url: "https://remap.fm" },
+    jeffgerstmann: {
+      displayName: "The Jeff Gerstmann Show",
+      urlParam: "jeffgerstmann",
+      image: "jeffgerstmann.jpg",
+      twitchId: "504350",
+      youtubeId: "UCR9R2ARN74dCebn1kv06UhA",
+      youtubeUrl: "https://www.youtube.com/@JeffGerstmannShow",
+      highlightedPlaylists: [
+        { name: "Quick Looks at New Video Games", youtubeId: "PLDKeuvgV0sxZ78sutjkPvhM9sL74WHITb" },
+        { name: "Ranking the NES!", youtubeId: "PLDKeuvgV0sxZ_xs4zUvQcMEV-LTjSf-Ok" },
+      ],
+      supportUrl: "https://www.patreon.com/cw/jeffgerstmann",
+    },
+    nextlander: {
+      displayName: "Nextlander",
+      urlParam: "nextlander",
+      image: "nextlander.jpg",
+      twitchId: "689331234",
+      youtubeId: "UCO0gHyqLNeIrCAjwlO2BmiA",
+      youtubeUrl: "https://www.youtube.com/@Nextlander",
+      highlightedPlaylists: [
+        { name: "NXL Highlights", youtubeId: "PL8GKXV8flVOZkcetVtA7l9Z0SVIIIvUQ_" },
+        { name: "Talkin' Over Things", youtubeId: "PL8GKXV8flVOaonOnH-Am9gz-FEfFGb8xz" },
+      ],
+      supportUrl: "https://www.patreon.com/nextlander/",
+    },
+    remap: {
+      displayName: "Remap",
+      urlParam: "remap",
+      image: "remap.jpg",
+      twitchId: "913491352",
+      youtubeId: "UCpcSq3A3Z4tUJsHKfn8zpnA",
+      youtubeUrl: "https://www.youtube.com/@RemapRadio",
+      highlightedPlaylists: [
+        { name: "Wheel of GeForce Now", youtubeId: "PLTbM52Fro5psQ2WIdV9M7YgfWMrnv8wLu" },
+        { name: "Remap Radio", youtubeId: "PLTbM52Fro5psVDi5r1StiTdnLxM9McaSO" },
+      ],
+      websiteUrlDomain: "remapradio.com",
+      supportUrl: "https://remapradio.com/signup/",
+    },
   },
+  isSourceArray: vi.fn((value) => {
+    return Array.isArray(value) && value.every((item) => typeof item === "string");
+  }),
+  isSource: vi.fn((value) => {
+    return typeof value === "string" && ["giantbomb", "jeffgerstmann", "nextlander", "remap"].includes(value);
+  }),
 }));
 
 vi.mock("$app/navigation", () => ({
