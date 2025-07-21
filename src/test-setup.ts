@@ -45,21 +45,7 @@ global.structuredClone =
 global.fetch = vi.fn();
 
 // Mock common modules that are used across tests
-vi.mock("$lib/state/media-query.svelte.js", () => ({
-  getMediaQueryState: vi.fn(() => ({
-    isSm: true,
-    isMd: false,
-    isLg: false,
-    isXl: false,
-    canHover: true,
-    isTouchDevice: false,
-    initialized: true,
-    matches: vi.fn(() => false),
-    allMatches: { sm: true, md: false, lg: false, xl: false },
-  })),
-  setMediaQueryState: vi.fn(),
-  MediaQueryState: vi.fn(),
-}));
+// The media-query module is tested directly, so no mock needed
 
 vi.mock("$lib/state/content.svelte.js", () => ({
   getContentState: vi.fn(() => ({
