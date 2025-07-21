@@ -12,7 +12,7 @@ test.describe('Basic Navigation and Loading', () => {
     await homePage.expectLatestVideosSection();
   });
 
-  test('should load without console errors', async ({ page }) => {
+  test('should load without console errors', async ({ page, testUtils }) => {
     const consoleErrors: string[] = [];
     
     page.on('console', (msg) => {
@@ -22,7 +22,7 @@ test.describe('Basic Navigation and Loading', () => {
     });
 
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await testUtils.waitForContent({ text: 'Latest Videos' });
     
     // Filter out known acceptable errors (like missing favicon, etc.)
     const criticalErrors = consoleErrors.filter(error => 
@@ -46,7 +46,7 @@ test.describe('Basic Navigation and Loading', () => {
     await expect(charsetMeta).toHaveAttribute('charset', 'utf-8');
   });
 
-  test('should handle network errors gracefully', async ({ page }) => {
+  test('should handle network errors gracefully', async ({ page, testUtils }) => {
     // Simulate offline condition
     await page.context().setOffline(true);
     
@@ -59,7 +59,7 @@ test.describe('Basic Navigation and Loading', () => {
     // Go back online
     await page.context().setOffline(false);
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await testUtils.waitForContent({ text: 'Latest Videos' });
     
     // Page should load normally now
     await expect(page.getByText('Latest Videos')).toBeVisible();

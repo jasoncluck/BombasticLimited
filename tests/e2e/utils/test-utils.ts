@@ -165,4 +165,51 @@ export class TestUtils {
       return false;
     }
   }
+
+  /**
+   * Wait for specific content to appear (Option 3 approach)
+   * This is more reliable than waiting for network idle
+   */
+  async waitForContent(
+    contentSelector: string | Locator | { text: string },
+    options: {
+      timeout?: number;
+      state?: 'visible' | 'attached' | 'detached' | 'hidden';
+    } = {}
+  ): Promise<void> {
+    const { timeout = 10000, state = 'visible' } = options;
+    
+    if (typeof contentSelector === 'string') {
+      // CSS selector
+      await this.page.waitForSelector(contentSelector, { 
+        state,
+        timeout 
+      });
+    } else if ('text' in contentSelector) {
+      // Text content
+      const locator = this.page.getByText(contentSelector.text);
+      await expect(locator).toBeVisible({ timeout });
+    } else {
+      // Locator object
+      await expect(contentSelector).toBeVisible({ timeout });
+    }
+  }
+
+  /**
+   * Wait for page to be ready by checking for specific content indicators
+   * This replaces the generic waitForLoadState approach
+   */
+  async waitForPageReady(
+    contentIndicators: (string | Locator | { text: string })[],
+    options: { timeout?: number } = {}
+  ): Promise<void> {
+    const { timeout = 10000 } = options;
+    
+    // Wait for any of the content indicators to appear
+    await Promise.race(
+      contentIndicators.map(indicator => 
+        this.waitForContent(indicator, { timeout })
+      )
+    );
+  }
 }
