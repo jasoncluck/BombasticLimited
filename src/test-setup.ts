@@ -45,6 +45,26 @@ Object.defineProperty(globalThis, "clearInterval", {
   writable: true,
 });
 
+// Ensure window object has timer methods
+if (typeof window !== "undefined") {
+  Object.defineProperty(window, "setInterval", {
+    value: global.setInterval,
+    writable: true,
+  });
+
+  Object.defineProperty(window, "clearInterval", {
+    value: global.clearInterval,
+    writable: true,
+  });
+} else {
+  // Create window object if it doesn't exist
+  global.window = {
+    ...global.window,
+    setInterval: global.setInterval,
+    clearInterval: global.clearInterval,
+  };
+}
+
 // Mock ResizeObserver
 global.ResizeObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
