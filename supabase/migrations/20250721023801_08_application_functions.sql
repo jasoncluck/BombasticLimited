@@ -1680,12 +1680,3 @@ BEGIN
 END;
 $$;
 
--- Grant execute permissions to authenticated users
--- GRANT EXECUTE ON FUNCTION "public"."get_videos_with_timestamps"() TO authenticated;
--- GRANT EXECUTE ON FUNCTION "public"."get_in_progress_videos_with_timestamps"() TO authenticated;
--- GRANT EXECUTE ON FUNCTION "public"."get_playlist_total_duration"(INTEGER) TO authenticated;
--- GRANT EXECUTE ON FUNCTION "public"."delete_user"() TO authenticated;
--- GRANT EXECUTE ON FUNCTION "public"."insert_playlist_videos"(int8, text[]) TO authenticated;
--- GRANT EXECUTE ON FUNCTION "public"."update_playlist_videos_positions"(int8, text[], int2) TO authenticated;
--- GRANT EXECUTE ON FUNCTION "public"."get_user_playlists"(uuid) TO authenticated;
--- GRANT EXECUTE ON FUNCTION "public"."search_playlists"(text, uuid) TO authenticated;

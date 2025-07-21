@@ -18,8 +18,28 @@ vi.mock("svelte", () => ({
 describe("PageStateClass", () => {
   let pageState: PageStateClass;
   let mockViewportRef: HTMLElement;
+  let setIntervalSpy: ReturnType<typeof vi.fn>;
+  let clearIntervalSpy: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
+    // Clear all mocks and timers before each test
+    vi.clearAllMocks();
+    vi.clearAllTimers();
+
+    // Create fresh mock functions for each test
+    setIntervalSpy = vi.fn((fn, delay) => {
+      const id = Date.now() + Math.floor(Math.random() * 1000);
+      // Execute the function immediately for testing
+      fn();
+      return id;
+    });
+    clearIntervalSpy = vi.fn();
+
+    // Mock global functions
+    vi.stubGlobal("setInterval", setIntervalSpy);
+    vi.stubGlobal("clearInterval", clearIntervalSpy);
+
+    // Create a fresh instance for each test
     pageState = new PageStateClass();
 
     // Create a mock viewport element
@@ -36,23 +56,16 @@ describe("PageStateClass", () => {
       })),
       contains: vi.fn(() => true),
     } as any;
-
-    // Mock window.setInterval and clearInterval
-    vi.stubGlobal(
-      "setInterval",
-      vi.fn((fn, delay) => {
-        const id = Math.random();
-        // Execute the function immediately for testing
-        fn();
-        return id;
-      }),
-    );
-    vi.stubGlobal("clearInterval", vi.fn());
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
-    pageState.cleanup();
+    // Clean up after each test
+    if (pageState && typeof pageState.cleanup === "function") {
+      pageState.cleanup();
+    }
+    vi.clearAllMocks();
+    vi.clearAllTimers();
+    vi.unstubAllGlobals();
   });
 
   describe("initial state", () => {
@@ -110,7 +123,7 @@ describe("PageStateClass", () => {
 
       expect(mockScrollState.scrolling).toBe(true);
       expect(mockScrollState.interval).toBeDefined();
-      expect(setInterval).toHaveBeenCalledWith(expect.any(Function), 16);
+      expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 16);
     });
 
     it("should start auto-scroll with direction down", () => {
@@ -119,6 +132,7 @@ describe("PageStateClass", () => {
 
       expect(mockScrollState.scrolling).toBe(true);
       expect(mockScrollState.interval).toBeDefined();
+      expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 16);
     });
 
     it("should not start auto-scroll without viewport ref", () => {
@@ -127,6 +141,7 @@ describe("PageStateClass", () => {
 
       expect(mockScrollState.scrolling).toBe(false);
       expect(mockScrollState.interval).toBeNull();
+      expect(setIntervalSpy).not.toHaveBeenCalled();
     });
 
     it("should not start auto-scroll without direction", () => {
@@ -134,25 +149,29 @@ describe("PageStateClass", () => {
 
       expect(mockScrollState.scrolling).toBe(false);
       expect(mockScrollState.interval).toBeNull();
+      expect(setIntervalSpy).not.toHaveBeenCalled();
     });
 
     it("should clear existing interval before starting new one", () => {
-      mockScrollState.interval = 123;
+      const existingIntervalId = 123;
+      mockScrollState.interval = existingIntervalId;
       mockScrollState.direction = "up";
 
       pageState.startAutoScroll(mockViewportRef, mockScrollState);
 
-      expect(clearInterval).toHaveBeenCalledWith(123);
+      expect(clearIntervalSpy).toHaveBeenCalledWith(existingIntervalId);
+      expect(setIntervalSpy).toHaveBeenCalled();
     });
 
     it("should stop auto-scroll", () => {
+      const intervalId = 123;
       mockScrollState.scrolling = true;
       mockScrollState.direction = "up";
-      mockScrollState.interval = 123;
+      mockScrollState.interval = intervalId;
 
       pageState.stopAutoScroll(mockScrollState);
 
-      expect(clearInterval).toHaveBeenCalledWith(123);
+      expect(clearIntervalSpy).toHaveBeenCalledWith(intervalId);
       expect(mockScrollState.interval).toBeNull();
       expect(mockScrollState.direction).toBeNull();
       expect(mockScrollState.scrolling).toBe(false);
@@ -160,22 +179,20 @@ describe("PageStateClass", () => {
 
     it("should handle stop auto-scroll with no interval", () => {
       pageState.stopAutoScroll(mockScrollState);
-      expect(clearInterval).not.toHaveBeenCalled();
+      expect(clearIntervalSpy).not.toHaveBeenCalled();
     });
   });
 
   describe("viewport drag over handling", () => {
-    let mockEvent: DragEvent;
-
-    beforeEach(() => {
-      mockEvent = {
-        clientY: 150,
+    // Helper function to create mock drag events
+    const createMockDragEvent = (clientY: number): DragEvent =>
+      ({
+        clientY,
         preventDefault: vi.fn(),
-      } as any;
-    });
+      }) as any;
 
     it("should start scrolling up when in top scroll zone", () => {
-      mockEvent.clientY = 120; // Within top scroll zone (100 + 50)
+      const mockEvent = createMockDragEvent(120); // Within top scroll zone (100 + 50)
       const mockScrollState: ScrollState = {
         scrolling: false,
         direction: null,
@@ -192,7 +209,7 @@ describe("PageStateClass", () => {
     });
 
     it("should start scrolling down when in bottom scroll zone", () => {
-      mockEvent.clientY = 380; // Within bottom scroll zone (400 - 50)
+      const mockEvent = createMockDragEvent(380); // Within bottom scroll zone (400 - 50)
       const mockScrollState: ScrollState = {
         scrolling: false,
         direction: null,
@@ -209,12 +226,13 @@ describe("PageStateClass", () => {
     });
 
     it("should stop scrolling when not in scroll zone", () => {
+      const intervalId = 123;
       const mockScrollState: ScrollState = {
         scrolling: true,
         direction: "up",
-        interval: 123,
+        interval: intervalId,
       };
-      mockEvent.clientY = 250; // In middle, outside scroll zones
+      const mockEvent = createMockDragEvent(250); // In middle, outside scroll zones
 
       pageState.handleViewportDragOver(
         mockEvent,
@@ -222,7 +240,7 @@ describe("PageStateClass", () => {
         mockScrollState,
       );
 
-      expect(clearInterval).toHaveBeenCalledWith(123);
+      expect(clearIntervalSpy).toHaveBeenCalledWith(intervalId);
     });
   });
 
@@ -251,23 +269,29 @@ describe("PageStateClass", () => {
     });
 
     it("should handle drag end by stopping all scrolling", () => {
-      pageState.sidebarScrollState.interval = 123;
-      pageState.contentScrollState.interval = 456;
+      const sidebarIntervalId = 123;
+      const contentIntervalId = 456;
+
+      pageState.sidebarScrollState.interval = sidebarIntervalId;
+      pageState.contentScrollState.interval = contentIntervalId;
 
       pageState.handleDragEnd();
 
-      expect(clearInterval).toHaveBeenCalledWith(123);
-      expect(clearInterval).toHaveBeenCalledWith(456);
+      expect(clearIntervalSpy).toHaveBeenCalledWith(sidebarIntervalId);
+      expect(clearIntervalSpy).toHaveBeenCalledWith(contentIntervalId);
     });
 
     it("should handle drop by stopping all scrolling", () => {
-      pageState.sidebarScrollState.interval = 123;
-      pageState.contentScrollState.interval = 456;
+      const sidebarIntervalId = 123;
+      const contentIntervalId = 456;
+
+      pageState.sidebarScrollState.interval = sidebarIntervalId;
+      pageState.contentScrollState.interval = contentIntervalId;
 
       pageState.handleDrop();
 
-      expect(clearInterval).toHaveBeenCalledWith(123);
-      expect(clearInterval).toHaveBeenCalledWith(456);
+      expect(clearIntervalSpy).toHaveBeenCalledWith(sidebarIntervalId);
+      expect(clearIntervalSpy).toHaveBeenCalledWith(contentIntervalId);
     });
   });
 
@@ -319,18 +343,62 @@ describe("PageStateClass", () => {
 
   describe("cleanup", () => {
     it("should clear all intervals on cleanup", () => {
-      pageState.sidebarScrollState.interval = 123;
-      pageState.contentScrollState.interval = 456;
+      const sidebarIntervalId = 123;
+      const contentIntervalId = 456;
+
+      // Manually set the interval IDs to known values for testing
+      pageState.sidebarScrollState.interval = sidebarIntervalId;
+      pageState.contentScrollState.interval = contentIntervalId;
 
       pageState.cleanup();
 
-      expect(clearInterval).toHaveBeenCalledWith(123);
-      expect(clearInterval).toHaveBeenCalledWith(456);
+      expect(clearIntervalSpy).toHaveBeenCalledWith(sidebarIntervalId);
+      expect(clearIntervalSpy).toHaveBeenCalledWith(contentIntervalId);
     });
 
     it("should handle cleanup with no intervals", () => {
-      // Should not throw
+      // Should not throw and should not call clearInterval
       pageState.cleanup();
+      expect(clearIntervalSpy).not.toHaveBeenCalled();
+    });
+
+    it("should clear intervals set by startAutoScroll", () => {
+      // Use the actual scroll state objects from pageState
+      pageState.sidebarScrollState.direction = "up";
+      pageState.contentScrollState.direction = "down";
+
+      // Start auto-scroll using the pageState's own scroll state objects
+      pageState.startAutoScroll(mockViewportRef, pageState.sidebarScrollState);
+      pageState.startAutoScroll(mockViewportRef, pageState.contentScrollState);
+
+      // Get the actual interval IDs that were set
+      const sidebarIntervalId = pageState.sidebarScrollState.interval;
+      const contentIntervalId = pageState.contentScrollState.interval;
+
+      // Verify intervals were actually set
+      expect(sidebarIntervalId).toBeDefined();
+      expect(sidebarIntervalId).not.toBeNull();
+      expect(contentIntervalId).toBeDefined();
+      expect(contentIntervalId).not.toBeNull();
+
+      // Clear the mock call history to isolate cleanup test
+      clearIntervalSpy.mockClear();
+
+      pageState.cleanup();
+
+      expect(clearIntervalSpy).toHaveBeenCalledWith(sidebarIntervalId);
+      expect(clearIntervalSpy).toHaveBeenCalledWith(contentIntervalId);
+    });
+
+    it("should only clear intervals that exist", () => {
+      const intervalId = 789;
+      // Set only one interval
+      pageState.sidebarScrollState.interval = intervalId;
+
+      pageState.cleanup();
+
+      expect(clearIntervalSpy).toHaveBeenCalledTimes(1);
+      expect(clearIntervalSpy).toHaveBeenCalledWith(intervalId);
     });
   });
 });
