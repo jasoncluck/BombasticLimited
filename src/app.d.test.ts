@@ -20,16 +20,16 @@ describe("app.d.ts type definitions", () => {
     it("safeGetSession returns correct type structure", async () => {
       const mockLocals: App.Locals = {
         supabase: {} as SupabaseClient<Database>,
-        safeGetSession: async () => ({ 
-          session: {} as Session, 
-          user: {} as User 
+        safeGetSession: async () => ({
+          session: {} as Session,
+          user: {} as User,
         }),
         session: {} as Session,
         user: {} as User,
       };
 
       const result = await mockLocals.safeGetSession();
-      
+
       expect(result).toHaveProperty("session");
       expect(result).toHaveProperty("user");
     });
@@ -76,7 +76,9 @@ describe("app.d.ts type definitions", () => {
 
       expect(mockPageDataWithFlash.flash).toBeDefined();
       expect(mockPageDataWithFlash.flash!.type).toBe("success");
-      expect(mockPageDataWithFlash.flash!.message).toBe("Operation completed successfully");
+      expect(mockPageDataWithFlash.flash!.message).toBe(
+        "Operation completed successfully",
+      );
     });
 
     it("supports all flash message types", () => {
@@ -141,8 +143,9 @@ describe("app.d.ts type definitions", () => {
   describe("Type compatibility with Supabase types", () => {
     it("Locals.supabase is compatible with SupabaseClient<Database>", () => {
       // This test validates type compatibility at compile time
-      const supabaseClient: SupabaseClient<Database> = {} as SupabaseClient<Database>;
-      
+      const supabaseClient: SupabaseClient<Database> =
+        {} as SupabaseClient<Database>;
+
       const locals: App.Locals = {
         supabase: supabaseClient,
         safeGetSession: async () => ({ session: null, user: null }),
@@ -156,7 +159,7 @@ describe("app.d.ts type definitions", () => {
     it("PageData.session is compatible with Supabase Session", () => {
       // This test validates type compatibility at compile time
       const session: Session = {} as Session;
-      
+
       const pageData: App.PageData = {
         session: session,
       };
@@ -167,7 +170,7 @@ describe("app.d.ts type definitions", () => {
     it("Locals session and user are compatible with Supabase types", () => {
       const session: Session = {} as Session;
       const user: User = {} as User;
-      
+
       const locals: App.Locals = {
         supabase: {} as SupabaseClient<Database>,
         safeGetSession: async () => ({ session, user }),
@@ -184,7 +187,7 @@ describe("app.d.ts type definitions", () => {
     it("App namespace is available globally", () => {
       // This test validates that the global App namespace is properly declared
       expect(typeof App).toBe("undefined"); // App is a namespace, not a runtime value
-      
+
       // But we can use the types at compile time
       const locals: App.Locals = {
         supabase: {} as SupabaseClient<Database>,

@@ -99,7 +99,7 @@ describe("hooks.server.ts", () => {
             getAll: expect.any(Function),
             setAll: expect.any(Function),
           }),
-        })
+        }),
       );
     });
 
@@ -115,26 +115,34 @@ describe("hooks.server.ts", () => {
     });
 
     it("handles password reset code exchange", async () => {
-      mockEvent.url = new URL("https://example.com/auth/password/update?code=test-code");
+      mockEvent.url = new URL(
+        "https://example.com/auth/password/update?code=test-code",
+      );
 
       await handle({
         event: mockEvent as RequestEvent,
         resolve: mockResolve,
       });
 
-      expect(mockSupabaseClient.auth.exchangeCodeForSession).toHaveBeenCalledWith("test-code");
+      expect(
+        mockSupabaseClient.auth.exchangeCodeForSession,
+      ).toHaveBeenCalledWith("test-code");
     });
 
     it("handles password reset code exchange error", async () => {
-      mockEvent.url = new URL("https://example.com/auth/password/update?code=test-code");
-      mockSupabaseClient.auth.exchangeCodeForSession.mockRejectedValue(new Error("Exchange failed"));
+      mockEvent.url = new URL(
+        "https://example.com/auth/password/update?code=test-code",
+      );
+      mockSupabaseClient.auth.exchangeCodeForSession.mockRejectedValue(
+        new Error("Exchange failed"),
+      );
 
       // Should not throw - error is caught and logged
       await expect(
         handle({
           event: mockEvent as RequestEvent,
           resolve: mockResolve,
-        })
+        }),
       ).resolves.toBeDefined();
     });
 
@@ -146,7 +154,9 @@ describe("hooks.server.ts", () => {
         resolve: mockResolve,
       });
 
-      expect(mockSupabaseClient.auth.exchangeCodeForSession).not.toHaveBeenCalled();
+      expect(
+        mockSupabaseClient.auth.exchangeCodeForSession,
+      ).not.toHaveBeenCalled();
     });
 
     it("does not exchange code when no code parameter", async () => {
@@ -157,7 +167,9 @@ describe("hooks.server.ts", () => {
         resolve: mockResolve,
       });
 
-      expect(mockSupabaseClient.auth.exchangeCodeForSession).not.toHaveBeenCalled();
+      expect(
+        mockSupabaseClient.auth.exchangeCodeForSession,
+      ).not.toHaveBeenCalled();
     });
 
     it("filters response headers correctly", async () => {
@@ -170,13 +182,15 @@ describe("hooks.server.ts", () => {
         mockEvent,
         expect.objectContaining({
           filterSerializedResponseHeaders: expect.any(Function),
-        })
+        }),
       );
 
       const { filterSerializedResponseHeaders } = mockResolve.mock.calls[0][1];
-      
+
       expect(filterSerializedResponseHeaders("content-range")).toBe(true);
-      expect(filterSerializedResponseHeaders("x-supabase-api-version")).toBe(true);
+      expect(filterSerializedResponseHeaders("x-supabase-api-version")).toBe(
+        true,
+      );
       expect(filterSerializedResponseHeaders("other-header")).toBe(false);
     });
   });
@@ -201,7 +215,10 @@ describe("hooks.server.ts", () => {
     });
 
     it("returns session and user when valid session exists", async () => {
-      const mockSession = { access_token: "test-token", user: { id: "user-id" } };
+      const mockSession = {
+        access_token: "test-token",
+        user: { id: "user-id" },
+      };
       const mockUser = { id: "user-id", email: "test@example.com" };
 
       mockSupabaseClient.auth.getSession.mockResolvedValue({
@@ -284,7 +301,7 @@ describe("hooks.server.ts", () => {
         handle({
           event: mockEvent as RequestEvent,
           resolve: mockResolve,
-        })
+        }),
       ).rejects.toThrow("Redirect 303 to /auth/login");
 
       expect(redirect).toHaveBeenCalledWith(303, "/auth/login");
@@ -330,7 +347,7 @@ describe("hooks.server.ts", () => {
     it("calls getAll on cookies for client creation", async () => {
       // Reset mock to ensure it's properly tracked
       vi.clearAllMocks();
-      
+
       await handle({
         event: mockEvent as RequestEvent,
         resolve: mockResolve,
@@ -339,13 +356,13 @@ describe("hooks.server.ts", () => {
       // The createServerClient is called with a config that has getAll function
       const { createServerClient } = await import("@supabase/ssr");
       expect(createServerClient).toHaveBeenCalled();
-      
+
       // Verify the config has the expected structure and call getAll to improve function coverage
       const callArgs = vi.mocked(createServerClient).mock.calls[0];
       expect(callArgs[2]).toHaveProperty("cookies");
       expect(callArgs[2].cookies).toHaveProperty("getAll");
       expect(typeof callArgs[2].cookies.getAll).toBe("function");
-      
+
       // Call the getAll function to boost function coverage
       const getAllFn = callArgs[2].cookies.getAll;
       const result = getAllFn();
@@ -372,7 +389,7 @@ describe("hooks.server.ts", () => {
       expect(mockEvent.cookies!.set).toHaveBeenCalledWith(
         "test-cookie",
         "test-value",
-        { path: "/" }
+        { path: "/" },
       );
     });
   });

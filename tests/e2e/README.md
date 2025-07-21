@@ -1,6 +1,7 @@
 # E2E Testing with Playwright
 
-This project uses Playwright for comprehensive end-to-end testing with mobile browser support.
+This project uses Playwright for comprehensive end-to-end testing with mobile
+browser support.
 
 ## Getting Started
 
@@ -15,36 +16,43 @@ npx playwright install
 ### Running Tests
 
 #### All Tests
+
 ```bash
 npm run test:e2e
 ```
 
 #### Interactive Mode
+
 ```bash
 npm run test:e2e:ui
 ```
 
 #### Debug Mode
+
 ```bash
 npm run test:e2e:debug
 ```
 
 #### Headed Mode (See browser)
+
 ```bash
 npm run test:e2e:headed
 ```
 
 #### Mobile-Only Tests
+
 ```bash
 npm run test:e2e:mobile
 ```
 
 #### Desktop-Only Tests
+
 ```bash
 npm run test:e2e:desktop
 ```
 
 #### Run Unit and E2E Tests
+
 ```bash
 npm run test:all
 ```
@@ -71,12 +79,14 @@ tests/e2e/
 ### Test Categories
 
 #### 1. Basic Navigation (`basic-navigation.spec.ts`)
+
 - Page loading and rendering
 - Console error detection
 - Meta tag validation
 - Network error handling
 
 #### 2. Responsive Design (`responsive-design.spec.ts`)
+
 - Mobile layout testing (375px width)
 - Tablet layout testing (768px width)
 - Desktop layout testing (1920px width)
@@ -84,6 +94,7 @@ tests/e2e/
 - Touch-friendly interface validation
 
 #### 3. Touch Interactions (`touch-interactions.spec.ts`)
+
 - Touch tap gestures
 - Swipe gestures
 - Pinch zoom
@@ -91,12 +102,14 @@ tests/e2e/
 - Orientation change handling
 
 #### 4. Cross-Browser Compatibility (`cross-browser.spec.ts`)
+
 - JavaScript feature support
 - CSS Grid and Flexbox support
 - Media query handling
 - Viewport responsiveness
 
 #### 5. User Interaction Flows (`user-flows.spec.ts`)
+
 - Navigation flows
 - Video card interactions
 - Search functionality
@@ -106,11 +119,13 @@ tests/e2e/
 ## Browser Support
 
 ### Desktop Browsers
+
 - **Chromium** (Chrome/Edge)
 - **Firefox**
 - **WebKit** (Safari)
 
 ### Mobile Devices
+
 - **iPhone 12** (iOS Safari)
 - **iPhone 13** (iOS Safari)
 - **Pixel 5** (Android Chrome)
@@ -124,10 +139,10 @@ tests/e2e/
 Use the Page Object Model pattern for maintainable tests:
 
 ```typescript
-import { test, expect } from '../fixtures/base-fixtures';
+import { test, expect } from "../fixtures/base-fixtures";
 
-test('example test', async ({ homePage }) => {
-  await homePage.goto('/');
+test("example test", async ({ homePage }) => {
+  await homePage.goto("/");
   await homePage.expectPageToLoad();
   // Your test logic here
 });
@@ -136,12 +151,12 @@ test('example test', async ({ homePage }) => {
 ### Mobile-Specific Testing
 
 ```typescript
-test('mobile touch interaction', async ({ testUtils, page }) => {
+test("mobile touch interaction", async ({ testUtils, page }) => {
   await page.setViewportSize({ width: 375, height: 667 });
-  
+
   if (await testUtils.isMobileViewport()) {
     await testUtils.touchTap('[data-testid="button"]');
-    await testUtils.touchSwipe('[data-testid="carousel"]', 'left');
+    await testUtils.touchSwipe('[data-testid="carousel"]', "left");
   }
 });
 ```
@@ -149,11 +164,11 @@ test('mobile touch interaction', async ({ testUtils, page }) => {
 ### Responsive Testing Patterns
 
 ```typescript
-test('responsive element', async ({ testUtils, page }) => {
+test("responsive element", async ({ testUtils, page }) => {
   await testUtils.checkResponsiveElement('[data-testid="nav"]', {
     mobile: { visible: false },
     tablet: { visible: true },
-    desktop: { visible: true, class: 'desktop-nav' }
+    desktop: { visible: true, class: "desktop-nav" },
   });
 });
 ```
@@ -162,7 +177,8 @@ test('responsive element', async ({ testUtils, page }) => {
 
 ### Environment Variables
 
-Tests run against `http://localhost:4173` by default. Configure in `playwright.config.ts`:
+Tests run against `http://localhost:4173` by default. Configure in
+`playwright.config.ts`:
 
 ```typescript
 use: {
@@ -273,22 +289,26 @@ CMD ["npm", "run", "test:e2e"]
 ### Common Issues
 
 #### Browser Installation Failed
+
 ```bash
 # Try installing browsers manually
 npx playwright install chromium
 ```
 
 #### Tests Timeout
+
 - Check if the application is running on the correct port
 - Increase timeout values in `playwright.config.ts`
 - Verify network connectivity
 
 #### Flaky Tests
+
 - Add proper wait conditions
 - Use `page.waitForSelector()` instead of `page.waitForTimeout()`
 - Check for race conditions in the application
 
 #### Mobile Tests Failing
+
 - Verify viewport settings
 - Check touch event simulation
 - Ensure mobile-specific selectors exist

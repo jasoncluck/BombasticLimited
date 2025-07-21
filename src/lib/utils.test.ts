@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { cn, type WithoutChild, type WithoutChildren, type WithoutChildrenOrChild, type WithElementRef } from "./utils";
+import {
+  cn,
+  type WithoutChild,
+  type WithoutChildren,
+  type WithoutChildrenOrChild,
+  type WithElementRef,
+} from "./utils";
 
 describe("utils.ts", () => {
   describe("cn function", () => {
@@ -42,9 +48,11 @@ describe("utils.ts", () => {
           "bg-blue-500": false,
         },
         ["text-white", "rounded"],
-        "hover:bg-red-600"
+        "hover:bg-red-600",
       );
-      expect(result).toBe("px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600");
+      expect(result).toBe(
+        "px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600",
+      );
     });
   });
 
@@ -57,14 +65,14 @@ describe("utils.ts", () => {
       }
 
       type TestWithoutChild = WithoutChild<TestWithChild>;
-      
+
       // This test validates the type at compile time
       const test: TestWithoutChild = {
         name: "test",
         other: 1,
         // child: "should not be allowed" // This would cause a TypeScript error
       };
-      
+
       expect(test.name).toBe("test");
       expect(test.other).toBe(1);
     });
@@ -77,14 +85,14 @@ describe("utils.ts", () => {
       }
 
       type TestWithoutChildren = WithoutChildren<TestWithChildren>;
-      
+
       // This test validates the type at compile time
       const test: TestWithoutChildren = {
         name: "test",
         other: 1,
         // children: ["should", "not", "be", "allowed"] // This would cause a TypeScript error
       };
-      
+
       expect(test.name).toBe("test");
       expect(test.other).toBe(1);
     });
@@ -98,7 +106,7 @@ describe("utils.ts", () => {
       }
 
       type TestWithoutBoth = WithoutChildrenOrChild<TestWithBoth>;
-      
+
       // This test validates the type at compile time
       const test: TestWithoutBoth = {
         name: "test",
@@ -106,7 +114,7 @@ describe("utils.ts", () => {
         // child: "should not be allowed" // This would cause a TypeScript error
         // children: ["should", "not", "be", "allowed"] // This would cause a TypeScript error
       };
-      
+
       expect(test.name).toBe("test");
       expect(test.other).toBe(1);
     });
@@ -118,14 +126,14 @@ describe("utils.ts", () => {
       }
 
       type TestWithRef = WithElementRef<TestComponent, HTMLDivElement>;
-      
+
       // This test validates the type at compile time
       const test: TestWithRef = {
         name: "test",
         value: 1,
         ref: null, // Should allow HTMLDivElement | null
       };
-      
+
       expect(test.name).toBe("test");
       expect(test.value).toBe(1);
       expect(test.ref).toBeNull();
@@ -137,13 +145,13 @@ describe("utils.ts", () => {
       }
 
       type TestWithRef = WithElementRef<TestComponent>;
-      
+
       // This test validates the type at compile time - should default to HTMLElement
       const test: TestWithRef = {
         name: "test",
         ref: null,
       };
-      
+
       expect(test.name).toBe("test");
       expect(test.ref).toBeNull();
     });

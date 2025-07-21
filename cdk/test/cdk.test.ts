@@ -18,9 +18,9 @@ describe("CDK Test Suite", () => {
     const cdkConcepts = {
       stacks: "logical grouping of resources",
       constructs: "building blocks of CDK",
-      apps: "root of construct tree"
+      apps: "root of construct tree",
     };
-    
+
     expect(cdkConcepts).toHaveProperty("stacks");
     expect(cdkConcepts).toHaveProperty("constructs");
     expect(cdkConcepts).toHaveProperty("apps");

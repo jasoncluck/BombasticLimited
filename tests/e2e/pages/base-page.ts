@@ -1,5 +1,5 @@
-import { type Page, type Locator, expect } from '@playwright/test';
-import { TestUtils } from '../utils/test-utils';
+import { type Page, type Locator, expect } from "@playwright/test";
+import { TestUtils } from "../utils/test-utils";
 
 export class BasePage {
   protected testUtils: TestUtils;
@@ -8,7 +8,7 @@ export class BasePage {
     this.testUtils = new TestUtils(page);
   }
 
-  async goto(path: string = '/'): Promise<void> {
+  async goto(path: string = "/"): Promise<void> {
     await this.page.goto(path);
   }
 
@@ -16,11 +16,11 @@ export class BasePage {
     // Option 3: Wait for specific content instead of network idle
     // Default to waiting for common page elements that indicate the page is ready
     await this.testUtils.waitForPageReady([
-      { text: 'Latest Videos' }, // Home page indicator
-      { text: 'Continue Watching' }, // Home page indicator
-      'main', // Main content area
+      { text: "Latest Videos" }, // Home page indicator
+      { text: "Continue Watching" }, // Home page indicator
+      "main", // Main content area
       '[data-testid="content"]', // Content area if available
-      'header', // Header element
+      "header", // Header element
     ]);
   }
 

@@ -4,7 +4,11 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   plugins: [sveltekit()],
   test: {
-    include: ["src/**/*.{test,spec}.{js,ts}", "src/**/*.{test,spec}.svelte.ts", "cdk/**/*.{test,spec}.{js,ts}"],
+    include: [
+      "src/**/*.{test,spec}.{js,ts}",
+      "src/**/*.{test,spec}.svelte.ts",
+      "cdk/**/*.{test,spec}.{js,ts}",
+    ],
     environment: "jsdom",
     setupFiles: ["./src/test-setup.ts"],
     globals: true,
@@ -23,12 +27,13 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json", "html", "lcov"],
       reportsDirectory: "./coverage",
+      include: ["src/**/*.ts", "src/**/*.svelte.ts", "src/**/*.svelte"],
       exclude: [
         "src/lib/components/ui/**",
         "src/lib/supabase/database.types.ts",
         "**/*.d.ts",
         "**/node_modules/**",
-        "**/dist/**", 
+        "**/dist/**",
         "**/.svelte-kit/**",
         "**/build/**",
         "**/*.config.*",
@@ -46,35 +51,35 @@ export default defineConfig({
         "cdk/lib/stack/**",
         "cdk/bin/cdk.ts",
         "cdk/scripts/trigger-repopulate-combined.ts",
-        "cdk/lib/lambda/client.ts"
+        "cdk/lib/lambda/client.ts",
       ],
       thresholds: {
         global: {
           branches: 67,
           functions: 35,
           lines: 10,
-          statements: 10
+          statements: 10,
         },
         // Higher thresholds for critical business logic
         "src/lib/utils.ts": {
           branches: 100,
           functions: 100,
           lines: 100,
-          statements: 100
+          statements: 100,
         },
         "src/hooks.server.ts": {
           branches: 100,
           functions: 100,
           lines: 100,
-          statements: 100
+          statements: 100,
         },
         "cdk/lib/channel.ts": {
           branches: 100,
           functions: 100,
           lines: 100,
-          statements: 100
-        }
-      }
+          statements: 100,
+        },
+      },
     },
   },
   define: {

@@ -6,11 +6,12 @@ import { mockPlaylist } from "../tests/mocks/playlists";
 import { mockUserProfile } from "../tests/mocks/page-data";
 
 // Mock dependencies at the top level using vi.hoisted
-const { mockCreateBrowserClient, mockCreateServerClient, mockIsBrowser } = vi.hoisted(() => ({
-  mockCreateBrowserClient: vi.fn(),
-  mockCreateServerClient: vi.fn(),
-  mockIsBrowser: vi.fn(),
-}));
+const { mockCreateBrowserClient, mockCreateServerClient, mockIsBrowser } =
+  vi.hoisted(() => ({
+    mockCreateBrowserClient: vi.fn(),
+    mockCreateServerClient: vi.fn(),
+    mockIsBrowser: vi.fn(),
+  }));
 
 vi.mock("@supabase/ssr", () => ({
   createBrowserClient: mockCreateBrowserClient,
@@ -34,9 +35,7 @@ describe("layout load function", () => {
   const mockDepends = vi.fn();
 
   const mockLayoutData = {
-    cookies: [
-      { name: "test-cookie", value: "test-value" }
-    ],
+    cookies: [{ name: "test-cookie", value: "test-value" }],
     playlists: [mockPlaylist],
     playlistsCount: 1,
     userProfile: mockUserProfile,
@@ -86,7 +85,7 @@ describe("layout load function", () => {
         global: {
           fetch: mockFetch,
         },
-      }
+      },
     );
     expect(mockCreateServerClient).not.toHaveBeenCalled();
   });
@@ -113,7 +112,7 @@ describe("layout load function", () => {
         cookies: {
           getAll: expect.any(Function),
         },
-      }
+      },
     );
     expect(mockCreateBrowserClient).not.toHaveBeenCalled();
   });

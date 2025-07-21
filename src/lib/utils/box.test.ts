@@ -6,11 +6,11 @@ describe("box.ts", () => {
   describe("Box type", () => {
     it("accepts ReadableBox types", () => {
       // This test validates the type at compile time
-      const readableBox: ReadableBox<string> = { 
+      const readableBox: ReadableBox<string> = {
         current: "test",
         subscribe: () => () => {},
       };
-      
+
       const box: Box<string> = readableBox;
       expect(box.current).toBe("test");
     });
@@ -23,7 +23,7 @@ describe("box.ts", () => {
         set: () => {},
         update: () => {},
       };
-      
+
       const box: Box<string> = writableBox;
       expect(box.current).toBe("test");
     });
@@ -69,7 +69,7 @@ describe("box.ts", () => {
 
       // This test validates the type at compile time
       const boxedValues: WritableBoxedValues<EmptyData> = {};
-      
+
       expect(Object.keys(boxedValues)).toHaveLength(0);
     });
 

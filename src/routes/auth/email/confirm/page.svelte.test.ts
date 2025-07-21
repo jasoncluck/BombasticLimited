@@ -9,7 +9,9 @@ describe("Auth Email Confirm Page Component", () => {
 
   it("renders success message when message parameter is present", () => {
     // Set up page URL with success message
-    pageState.url = new URL("http://localhost:3000/auth/email/confirm?message=Email+confirmed+successfully");
+    pageState.url = new URL(
+      "http://localhost:3000/auth/email/confirm?message=Email+confirmed+successfully",
+    );
 
     const { container } = render(Page);
 
@@ -21,18 +23,26 @@ describe("Auth Email Confirm Page Component", () => {
 
   it("renders email updated message when code parameter is present", () => {
     // Set up page URL with code parameter
-    pageState.url = new URL("http://localhost:3000/auth/email/confirm?code=some_confirmation_code");
+    pageState.url = new URL(
+      "http://localhost:3000/auth/email/confirm?code=some_confirmation_code",
+    );
 
     const { container } = render(Page);
 
     expect(screen.getByText("Email Updated")).toBeDefined();
-    expect(screen.getByText("The email address for your account has been updated successfully.")).toBeDefined();
+    expect(
+      screen.getByText(
+        "The email address for your account has been updated successfully.",
+      ),
+    ).toBeDefined();
     expect(container.innerHTML).toContain("Email Updated");
   });
 
   it("renders error message when error parameter is present", () => {
     // Set up page URL with error parameters
-    pageState.url = new URL("http://localhost:3000/auth/email/confirm?error=invalid_token&error_description=The+confirmation+token+is+invalid");
+    pageState.url = new URL(
+      "http://localhost:3000/auth/email/confirm?error=invalid_token&error_description=The+confirmation+token+is+invalid",
+    );
 
     const { container } = render(Page);
 
@@ -59,7 +69,9 @@ describe("Auth Email Confirm Page Component", () => {
 
   it("prioritizes success message over other parameters", () => {
     // Set up page URL with multiple parameters
-    pageState.url = new URL("http://localhost:3000/auth/email/confirm?message=Success&code=some_code&error=some_error");
+    pageState.url = new URL(
+      "http://localhost:3000/auth/email/confirm?message=Success&code=some_code&error=some_error",
+    );
 
     const { container } = render(Page);
 
@@ -70,7 +82,9 @@ describe("Auth Email Confirm Page Component", () => {
 
   it("prioritizes code over error when both present", () => {
     // Set up page URL with code and error parameters
-    pageState.url = new URL("http://localhost:3000/auth/email/confirm?code=some_code&error=some_error&error_description=Some+error");
+    pageState.url = new URL(
+      "http://localhost:3000/auth/email/confirm?code=some_code&error=some_error&error_description=Some+error",
+    );
 
     const { container } = render(Page);
 

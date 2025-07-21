@@ -1,49 +1,49 @@
-import { test, expect } from '../fixtures/base-fixtures';
+import { test, expect } from "../fixtures/base-fixtures";
 
-test.describe('Cross-Browser Compatibility', () => {
+test.describe("Cross-Browser Compatibility", () => {
   const testCases = [
     {
-      name: 'Basic functionality',
+      name: "Basic functionality",
       test: async (page: any, testUtils: any) => {
-        await page.goto('/');
-        await testUtils.waitForContent({ text: 'Latest Videos' });
-        await expect(page.getByText('Latest Videos')).toBeVisible();
-      }
+        await page.goto("/");
+        await testUtils.waitForContent({ text: "Latest Videos" });
+        await expect(page.getByText("Latest Videos")).toBeVisible();
+      },
     },
     {
-      name: 'Page loading performance',
+      name: "Page loading performance",
       test: async (page: any, testUtils: any) => {
         const startTime = Date.now();
-        await page.goto('/');
-        await testUtils.waitForContent({ text: 'Latest Videos' });
+        await page.goto("/");
+        await testUtils.waitForContent({ text: "Latest Videos" });
         const loadTime = Date.now() - startTime;
-        
+
         // Page should load within reasonable time (10 seconds max)
         expect(loadTime).toBeLessThan(10000);
-      }
+      },
     },
     {
-      name: 'Interactive elements',
+      name: "Interactive elements",
       test: async (page: any, testUtils: any) => {
-        await page.goto('/');
-        await testUtils.waitForContent({ text: 'Latest Videos' });
-        
+        await page.goto("/");
+        await testUtils.waitForContent({ text: "Latest Videos" });
+
         // Check if buttons are clickable
-        const buttons = page.locator('button:visible');
+        const buttons = page.locator("button:visible");
         const count = await buttons.count();
-        
+
         if (count > 0) {
           const firstButton = buttons.first();
           await expect(firstButton).toBeEnabled();
         }
-      }
+      },
     },
     {
-      name: 'CSS rendering',
+      name: "CSS rendering",
       test: async (page: any, testUtils: any) => {
-        await page.goto('/');
-        await testUtils.waitForContent({ text: 'Latest Videos' });
-        
+        await page.goto("/");
+        await testUtils.waitForContent({ text: "Latest Videos" });
+
         // Check if main content has proper styling
         const mainContent = page.locator('main, [role="main"], body > div');
         if (await mainContent.first().isVisible()) {
@@ -51,44 +51,48 @@ test.describe('Cross-Browser Compatibility', () => {
             const computed = window.getComputedStyle(el);
             return {
               display: computed.display,
-              position: computed.position
+              position: computed.position,
             };
           });
-          
-          expect(styles.display).not.toBe('none');
+
+          expect(styles.display).not.toBe("none");
         }
-      }
-    }
+      },
+    },
   ];
 
   for (const testCase of testCases) {
     test.describe(testCase.name, () => {
-      test('works in Chromium', async ({ page, testUtils }) => {
+      test("works in Chromium", async ({ page, testUtils }) => {
         await testCase.test(page, testUtils);
       });
     });
   }
 });
 
-test.describe('Browser-Specific Features', () => {
-  test('should handle JavaScript features consistently', async ({ page, browserName, testUtils }) => {
-    await page.goto('/');
-    await testUtils.waitForContent({ text: 'Latest Videos' });
-    
+test.describe("Browser-Specific Features", () => {
+  test("should handle JavaScript features consistently", async ({
+    page,
+    browserName,
+    testUtils,
+  }) => {
+    await page.goto("/");
+    await testUtils.waitForContent({ text: "Latest Videos" });
+
     // Test modern JavaScript features
     const jsSupport = await page.evaluate(() => {
       const tests = {
-        es6Classes: typeof class {} === 'function',
-        arrowFunctions: typeof (() => {}) === 'function',
-        promises: typeof Promise !== 'undefined',
-        fetch: typeof fetch !== 'undefined',
-        localStorage: typeof localStorage !== 'undefined',
-        sessionStorage: typeof sessionStorage !== 'undefined'
+        es6Classes: typeof class {} === "function",
+        arrowFunctions: typeof (() => {}) === "function",
+        promises: typeof Promise !== "undefined",
+        fetch: typeof fetch !== "undefined",
+        localStorage: typeof localStorage !== "undefined",
+        sessionStorage: typeof sessionStorage !== "undefined",
       };
-      
+
       return tests;
     });
-    
+
     // All modern browsers should support these features
     expect(jsSupport.es6Classes).toBe(true);
     expect(jsSupport.arrowFunctions).toBe(true);
@@ -98,77 +102,77 @@ test.describe('Browser-Specific Features', () => {
     expect(jsSupport.sessionStorage).toBe(true);
   });
 
-  test('should handle CSS Grid and Flexbox', async ({ page, testUtils }) => {
-    await page.goto('/');
-    await testUtils.waitForContent({ text: 'Latest Videos' });
-    
+  test("should handle CSS Grid and Flexbox", async ({ page, testUtils }) => {
+    await page.goto("/");
+    await testUtils.waitForContent({ text: "Latest Videos" });
+
     const cssSupport = await page.evaluate(() => {
-      const testEl = document.createElement('div');
+      const testEl = document.createElement("div");
       document.body.appendChild(testEl);
-      
+
       const tests = {
         flexbox: false,
-        grid: false
+        grid: false,
       };
-      
+
       try {
-        testEl.style.display = 'flex';
-        tests.flexbox = window.getComputedStyle(testEl).display === 'flex';
-        
-        testEl.style.display = 'grid';
-        tests.grid = window.getComputedStyle(testEl).display === 'grid';
+        testEl.style.display = "flex";
+        tests.flexbox = window.getComputedStyle(testEl).display === "flex";
+
+        testEl.style.display = "grid";
+        tests.grid = window.getComputedStyle(testEl).display === "grid";
       } catch (e) {
         // Browser doesn't support these properties
       }
-      
+
       document.body.removeChild(testEl);
       return tests;
     });
-    
+
     // Modern browsers should support both
     expect(cssSupport.flexbox).toBe(true);
     expect(cssSupport.grid).toBe(true);
   });
 
-  test('should handle media queries correctly', async ({ page, testUtils }) => {
-    await page.goto('/');
-    await testUtils.waitForContent({ text: 'Latest Videos' });
-    
+  test("should handle media queries correctly", async ({ page, testUtils }) => {
+    await page.goto("/");
+    await testUtils.waitForContent({ text: "Latest Videos" });
+
     // Test media query support
     const mediaQuerySupport = await page.evaluate(() => {
       return {
-        matchMedia: typeof window.matchMedia !== 'undefined',
-        supportsTouch: 'ontouchstart' in window || navigator.maxTouchPoints > 0
+        matchMedia: typeof window.matchMedia !== "undefined",
+        supportsTouch: "ontouchstart" in window || navigator.maxTouchPoints > 0,
       };
     });
-    
+
     expect(mediaQuerySupport.matchMedia).toBe(true);
   });
 
-  test('should handle viewport changes consistently', async ({ page }) => {
-    await page.goto('/');
-    
+  test("should handle viewport changes consistently", async ({ page }) => {
+    await page.goto("/");
+
     const viewports = [
-      { width: 320, height: 568 },  // iPhone 5
+      { width: 320, height: 568 }, // iPhone 5
       { width: 768, height: 1024 }, // iPad
-      { width: 1200, height: 800 }  // Desktop
+      { width: 1200, height: 800 }, // Desktop
     ];
-    
+
     for (const viewport of viewports) {
       await page.setViewportSize(viewport);
       await page.waitForTimeout(300); // Wait for responsive adjustments
-      
+
       // Page should remain functional at all viewport sizes
-      await expect(page.getByText('Latest Videos')).toBeVisible();
-      
+      await expect(page.getByText("Latest Videos")).toBeVisible();
+
       // Check if responsive elements adapt
-      const body = page.locator('body');
+      const body = page.locator("body");
       const styles = await body.evaluate((el) => {
         return window.getComputedStyle(el).overflow;
       });
-      
+
       // Body should not have horizontal overflow
-      expect(styles).not.toContain('scroll');
+      expect(styles).not.toContain("scroll");
     }
   });
 });

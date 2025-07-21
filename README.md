@@ -90,7 +90,8 @@ You can preview the production build with `npm run preview`.
 
 ## Testing
 
-This project includes comprehensive testing with both unit tests and end-to-end tests.
+This project includes comprehensive testing with both unit tests and end-to-end
+tests.
 
 ### Unit Tests
 
@@ -127,6 +128,7 @@ npx playwright install
 #### Test Coverage
 
 E2E tests cover:
+
 - **Cross-browser compatibility** (Chrome, Firefox, Safari)
 - **Mobile device emulation** (iPhone, Android devices)
 - **Responsive design testing**
@@ -134,7 +136,8 @@ E2E tests cover:
 - **User interaction flows**
 - **Accessibility features**
 
-For detailed testing documentation, see [tests/e2e/README.md](tests/e2e/README.md).
+For detailed testing documentation, see
+[tests/e2e/README.md](tests/e2e/README.md).
 
 ### Run All Tests
 

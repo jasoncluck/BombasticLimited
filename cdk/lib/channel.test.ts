@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { 
-  CHANNEL_SOURCES, 
-  CHANNEL_INFO, 
-  type ChannelSource, 
-  type SourceInfo 
+import {
+  CHANNEL_SOURCES,
+  CHANNEL_INFO,
+  type ChannelSource,
+  type SourceInfo,
 } from "./channel";
 
 describe("cdk/lib/channel.ts", () => {
@@ -11,9 +11,9 @@ describe("cdk/lib/channel.ts", () => {
     it("exports the correct channel sources", () => {
       expect(CHANNEL_SOURCES).toEqual([
         "giantbomb",
-        "jeffgerstmann", 
+        "jeffgerstmann",
         "nextlander",
-        "remap"
+        "remap",
       ]);
     });
 
@@ -22,7 +22,7 @@ describe("cdk/lib/channel.ts", () => {
     });
 
     it("all sources are strings", () => {
-      CHANNEL_SOURCES.forEach(source => {
+      CHANNEL_SOURCES.forEach((source) => {
         expect(typeof source).toBe("string");
         expect(source.length).toBeGreaterThan(0);
       });
@@ -51,13 +51,13 @@ describe("cdk/lib/channel.ts", () => {
 
   describe("CHANNEL_INFO", () => {
     it("has entries for all channel sources", () => {
-      CHANNEL_SOURCES.forEach(source => {
+      CHANNEL_SOURCES.forEach((source) => {
         expect(CHANNEL_INFO).toHaveProperty(source);
       });
     });
 
     it("has the correct structure for each channel", () => {
-      Object.values(CHANNEL_INFO).forEach(channelInfo => {
+      Object.values(CHANNEL_INFO).forEach((channelInfo) => {
         expect(channelInfo).toHaveProperty("id");
         expect(channelInfo).toHaveProperty("uploadPlaylistId");
         expect(typeof channelInfo.id).toBe("string");
@@ -68,21 +68,21 @@ describe("cdk/lib/channel.ts", () => {
     });
 
     it("has valid YouTube channel IDs", () => {
-      Object.values(CHANNEL_INFO).forEach(channelInfo => {
+      Object.values(CHANNEL_INFO).forEach((channelInfo) => {
         // YouTube channel IDs are typically 24 characters long and start with 'UC'
         expect(channelInfo.id).toMatch(/^UC[a-zA-Z0-9_-]{22}$/);
       });
     });
 
     it("has valid YouTube upload playlist IDs", () => {
-      Object.values(CHANNEL_INFO).forEach(channelInfo => {
+      Object.values(CHANNEL_INFO).forEach((channelInfo) => {
         // YouTube upload playlist IDs are typically 24 characters long and start with 'UU'
         expect(channelInfo.uploadPlaylistId).toMatch(/^UU[a-zA-Z0-9_-]{22}$/);
       });
     });
 
     it("upload playlist ID is derived from channel ID", () => {
-      Object.values(CHANNEL_INFO).forEach(channelInfo => {
+      Object.values(CHANNEL_INFO).forEach((channelInfo) => {
         // Upload playlist ID should be the channel ID with 'UC' replaced by 'UU'
         const expectedPlaylistId = channelInfo.id.replace(/^UC/, "UU");
         expect(channelInfo.uploadPlaylistId).toBe(expectedPlaylistId);
@@ -124,7 +124,7 @@ describe("cdk/lib/channel.ts", () => {
     it("matches the keys of CHANNEL_INFO", () => {
       // This test validates the type at compile time
       const sources: SourceInfo[] = Object.keys(CHANNEL_INFO) as SourceInfo[];
-      
+
       expect(sources).toContain("giantbomb");
       expect(sources).toContain("jeffgerstmann");
       expect(sources).toContain("nextlander");
@@ -136,14 +136,14 @@ describe("cdk/lib/channel.ts", () => {
   describe("type relationships", () => {
     it("ChannelSource and SourceInfo are compatible", () => {
       // This test validates type compatibility at compile time
-      CHANNEL_SOURCES.forEach(source => {
+      CHANNEL_SOURCES.forEach((source) => {
         const sourceInfo: SourceInfo = source;
         expect(CHANNEL_INFO[sourceInfo]).toBeDefined();
       });
     });
 
     it("all CHANNEL_SOURCES exist in CHANNEL_INFO", () => {
-      CHANNEL_SOURCES.forEach(source => {
+      CHANNEL_SOURCES.forEach((source) => {
         expect(CHANNEL_INFO[source]).toBeDefined();
         expect(CHANNEL_INFO[source].id).toBeDefined();
         expect(CHANNEL_INFO[source].uploadPlaylistId).toBeDefined();
@@ -151,7 +151,7 @@ describe("cdk/lib/channel.ts", () => {
     });
 
     it("all CHANNEL_INFO keys exist in CHANNEL_SOURCES", () => {
-      Object.keys(CHANNEL_INFO).forEach(key => {
+      Object.keys(CHANNEL_INFO).forEach((key) => {
         expect(CHANNEL_SOURCES).toContain(key as ChannelSource);
       });
     });
@@ -166,7 +166,7 @@ describe("cdk/lib/channel.ts", () => {
 
     it("CHANNEL_INFO structure is consistent", () => {
       const originalChannelInfo = { ...CHANNEL_INFO };
-      
+
       // Verify we can't accidentally modify the structure in tests
       expect(CHANNEL_INFO).toEqual(originalChannelInfo);
     });

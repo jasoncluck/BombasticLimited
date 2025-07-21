@@ -9,7 +9,9 @@ describe("Auth Error Page Component", () => {
 
   it("renders error page with error from URL parameter", () => {
     // Set up page URL with error parameter
-    pageState.url = new URL("http://localhost:3000/auth/error?error=invalid_request");
+    pageState.url = new URL(
+      "http://localhost:3000/auth/error?error=invalid_request",
+    );
 
     const { container } = render(Page);
 
@@ -21,13 +23,19 @@ describe("Auth Error Page Component", () => {
 
   it("renders error page with error_description parameter", () => {
     // Set up page URL with error_description parameter
-    pageState.url = new URL("http://localhost:3000/auth/error?error_description=The+request+is+missing+a+required+parameter");
+    pageState.url = new URL(
+      "http://localhost:3000/auth/error?error_description=The+request+is+missing+a+required+parameter",
+    );
 
     const { container } = render(Page);
 
     expect(screen.getByText("Unable to login")).toBeDefined();
-    expect(screen.getByText("The request is missing a required parameter")).toBeDefined();
-    expect(container.innerHTML).toContain("The request is missing a required parameter");
+    expect(
+      screen.getByText("The request is missing a required parameter"),
+    ).toBeDefined();
+    expect(container.innerHTML).toContain(
+      "The request is missing a required parameter",
+    );
   });
 
   it("renders error page with no error parameter", () => {
@@ -43,7 +51,9 @@ describe("Auth Error Page Component", () => {
 
   it("prioritizes error parameter over error_description when both present", () => {
     // Set up page URL with both parameters
-    pageState.url = new URL("http://localhost:3000/auth/error?error=access_denied&error_description=User+cancelled");
+    pageState.url = new URL(
+      "http://localhost:3000/auth/error?error=access_denied&error_description=User+cancelled",
+    );
 
     const { container } = render(Page);
 

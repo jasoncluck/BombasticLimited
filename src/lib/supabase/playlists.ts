@@ -103,7 +103,7 @@ export async function getPlaylistsForUsername({
 }> {
   const query = supabase
     .rpc(
-      "get_user_playlists",
+      "get_playlists_for_username",
       {
         p_username: username,
       },

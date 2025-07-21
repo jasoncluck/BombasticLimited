@@ -2,9 +2,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock the environment variables and external dependencies
 vi.mock("$env/static/private", () => ({
-	TWITCH_CLIENT_ID: "test_client_id",
-	TWITCH_CLIENT_SECRET: "test_client_secret",
-	NGROK_AUTH_TOKEN: "test_ngrok_token",
+  TWITCH_CLIENT_ID: "test_client_id",
+  TWITCH_CLIENT_SECRET: "test_client_secret",
+  NGROK_AUTH_TOKEN: "test_ngrok_token",
 }));
 
 vi.mock("@twurple/auth", () => ({
@@ -186,3 +186,4 @@ describe("twitch client initialization", () => {
 		});
 	});
 });
+
