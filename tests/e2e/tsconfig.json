@@ -1,10 +1,26 @@
 {
-  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "moduleResolution": "node",
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "types": ["@playwright/test"]
+    "types": ["@playwright/test"],
+    "baseUrl": ".",
+    "paths": {
+      "*": ["*", "*.ts", "*.tsx"]
+    }
   },
   "include": [
     "./**/*"
