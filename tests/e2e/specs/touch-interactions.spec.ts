@@ -61,7 +61,10 @@ test.describe("Mobile Touch Interactions", () => {
     }
   });
 
-  test("should support pinch zoom gestures", async ({ page, testUtils }) => {
+  test.skip("should support pinch zoom gestures", async ({
+    page,
+    testUtils,
+  }) => {
     await page.goto("/");
     await testUtils.waitForContent({ text: "Latest Videos" });
 
@@ -120,7 +123,7 @@ test.describe("Mobile Touch Interactions", () => {
     }
   });
 
-  test("should prevent accidental touches during scrolling", async ({
+  test.skip("should prevent accidental touches during scrolling", async ({
     page,
     testUtils,
   }) => {

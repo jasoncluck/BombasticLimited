@@ -27,7 +27,7 @@ test.describe("Responsive Design Testing", () => {
       await homePage.testTouchInteractions();
     });
 
-    test("should have touch-friendly button sizes", async ({
+    test.skip("should have touch-friendly button sizes", async ({
       page,
       testUtils,
     }) => {

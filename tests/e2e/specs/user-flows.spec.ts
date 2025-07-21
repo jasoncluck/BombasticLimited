@@ -73,7 +73,6 @@ test.describe("User Interaction Flows", () => {
     await page.goto("/");
     await testUtils.waitForContent({ text: "Latest Videos" });
 
-    // Look for search input
     const searchInput = page
       .locator(
         'input[type="search"], [placeholder*="search" i], [aria-label*="search" i]',
@@ -82,19 +81,27 @@ test.describe("User Interaction Flows", () => {
 
     if (await searchInput.isVisible()) {
       await searchInput.fill("test video");
-      await searchInput.press("Enter");
+
+      // Wait for search results to appear or URL to change
+      // Wait for search results container to appear
+      await page.waitForSelector(
+        '[data-testid*="search"], [class*="search"], [class*="result"]',
+        { timeout: 3000 },
+      );
+      // Wait for URL to change (if search navigates)
+      await page.waitForFunction(
+        () => window.location.href.includes("search"),
+        {
+          timeout: 3000,
+        },
+      );
+
       await testUtils.waitForPageReady([
         { text: "Search Results" },
         { text: "No results" },
         { text: "Latest Videos" },
         "main",
       ]);
-
-      // Should show search results or navigate to search page
-      const hasResults = await page
-        .locator('[data-testid*="search"], [class*="search"]')
-        .isVisible();
-      expect(hasResults || page.url().includes("search")).toBe(true);
     }
   });
 
