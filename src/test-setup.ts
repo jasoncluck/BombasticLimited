@@ -23,6 +23,28 @@ Object.defineProperty(global, "cancelAnimationFrame", {
   writable: true,
 });
 
+// Mock setInterval and clearInterval for page state tests
+Object.defineProperty(global, "setInterval", {
+  value: vi.fn((cb, delay) => setTimeout(cb, delay)),
+  writable: true,
+});
+
+Object.defineProperty(global, "clearInterval", {
+  value: vi.fn(),
+  writable: true,
+});
+
+// Ensure window has these methods too
+Object.defineProperty(globalThis, "setInterval", {
+  value: global.setInterval,
+  writable: true,
+});
+
+Object.defineProperty(globalThis, "clearInterval", {
+  value: global.clearInterval,
+  writable: true,
+});
+
 // Mock ResizeObserver
 global.ResizeObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
