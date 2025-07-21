@@ -99,7 +99,9 @@ describe("video/[id]/+page.server.ts load function", () => {
       routeId: "/video/[id]",
     });
 
-    await expect(load(mockEvent)).rejects.toThrow("Could not find video specified.");
+    await expect(load(mockEvent)).rejects.toThrow(
+      "Could not find video specified.",
+    );
 
     expect(mockGetVideo).toHaveBeenCalledWith({
       supabase: expect.any(Object),
