@@ -84,6 +84,8 @@
       getPlaylist: () => playlist,
       getPlaylists: () => playlists,
       getVideos: () => videos,
+      getCanHover: () => mediaQueryState.canHover,
+      getIsSm: () => mediaQueryState.isSm,
       getContentFilter: () => contentFilter,
       sectionId,
       supabase,

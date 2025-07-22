@@ -5,7 +5,10 @@ import {
   TWITCH_CLIENT_SECRET,
   NGROK_AUTH_TOKEN,
 } from "$env/static/private";
-import { EventSubHttpListener } from "@twurple/eventsub-http";
+import {
+  DirectConnectionAdapter,
+  EventSubHttpListener,
+} from "@twurple/eventsub-http";
 import { randomUUID } from "crypto";
 import { NgrokAdapter } from "@twurple/eventsub-ngrok";
 
@@ -27,23 +30,26 @@ if (shouldInitialize) {
   authProvider = new AppTokenAuthProvider(clientId, clientSecret);
   apiClient = new ApiClient({ authProvider });
 
-  const adapter = new NgrokAdapter({
-    ngrokConfig: { authtoken: NGROK_AUTH_TOKEN },
-  });
-
-  const secret = randomUUID();
-
-  // Only delete subscriptions and start listener if we have a real client
-  if (apiClient) {
-    await apiClient.eventSub.deleteAllSubscriptions();
-
-    eventSubListener = new EventSubHttpListener({
-      apiClient,
-      adapter,
-      secret,
+  let adapter: NgrokAdapter | DirectConnectionAdapter;
+  if (import.meta.env.DEV) {
+    adapter = new NgrokAdapter({
+      ngrokConfig: { authtoken: NGROK_AUTH_TOKEN },
     });
 
-    eventSubListener.start();
+    const secret = randomUUID();
+
+    // Only delete subscriptions and start listener if we have a real client
+    if (apiClient) {
+      await apiClient.eventSub.deleteAllSubscriptions();
+
+      eventSubListener = new EventSubHttpListener({
+        apiClient,
+        adapter,
+        secret,
+      });
+
+      eventSubListener.start();
+    }
   }
 }
 
