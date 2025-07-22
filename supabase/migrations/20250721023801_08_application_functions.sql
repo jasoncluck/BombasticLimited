@@ -6,8 +6,8 @@
 -- 1. USER MANAGEMENT FUNCTIONS
 -- ============================================================================
 
--- Function to check if username is unique
-CREATE OR REPLACE FUNCTION "public"."is_unique_username"("p_username" text)
+-- RPC function to check if username is unique
+CREATE OR REPLACE FUNCTION is_unique_username(p_username text)
 RETURNS boolean 
 LANGUAGE plpgsql
 SET search_path = ''
@@ -22,7 +22,8 @@ BEGIN
         WHERE LOWER(username) = LOWER(p_username)
     ) INTO username_exists;
 
-    -- Return true if username is unique (does not exist) RETURN NOT username_exists;
+    -- Return true if username is unique (does not exist)
+    RETURN NOT username_exists;
 END;
 $$;
 GRANT EXECUTE ON FUNCTION "public"."is_unique_username"(text) TO authenticated;
