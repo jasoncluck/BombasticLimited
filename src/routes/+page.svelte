@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { invalidate } from "$app/navigation";
+  import { goto, invalidate } from "$app/navigation";
   import { page } from "$app/state";
   import Content from "$lib/components/content/content.svelte";
   import { SOURCE_INFO, SOURCES } from "$lib/constants/source";
@@ -35,7 +35,9 @@
   // After oauth authn there is a history stack update that doesn't trigger a proper invalidation.
   // This will look for the oauth success code returned and invalidate the playlists which are the only resource effected here
   if (isBrowser() && page.url.searchParams.get("code")) {
-    window.location.reload();
+    const url = new URL(page.url);
+    url.searchParams.delete("code");
+    goto(url.pathname + url.search, { replaceState: true });
   }
 
   let sectionIds = sourceWithContinueStateKeys;
