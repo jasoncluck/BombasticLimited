@@ -180,7 +180,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."search_videos"(
     "search_term" "text"
 ) 
@@ -198,56 +197,25 @@ RETURNS TABLE(
     "search_rank" real
 )
 LANGUAGE "plpgsql"
-SET search_path = ''
+STABLE
 AS $$
 DECLARE
     clean_term text;
     words text[];
-    significant_words text[];
-    word text;
-    safe_query text;
-    phrase_query text;
-    is_likely_person_name boolean := false;
+    current_user_id uuid;
 BEGIN
-    -- Basic cleanup
-    search_term := regexp_replace(search_term, '\s+', ' ', 'g');
-    search_term := trim(search_term);
-    clean_term := lower(search_term);
-
-    IF search_term = '' OR length(search_term) < 1 THEN
+    -- Get current user once
+    current_user_id := auth.uid();
+    
+    -- Early exit for empty search
+    IF search_term IS NULL OR trim(search_term) = '' OR length(trim(search_term)) < 1 THEN
         RETURN;
     END IF;
 
-    -- Split into words and filter stop words
+    -- Basic cleanup
+    clean_term := lower(trim(regexp_replace(search_term, '\s+', ' ', 'g')));
     words := string_to_array(clean_term, ' ');
-    significant_words := ARRAY[]::text[];
-    safe_query := '';
     
-    -- Detect if this looks like a person name (2+ words, each 3+ chars, proper case in original)
-    IF array_length(words, 1) >= 2 THEN
-        is_likely_person_name := (
-            SELECT bool_and(length(w) >= 3 AND w ~ '^[a-z]+$')
-            FROM unnest(words) AS w
-        ) AND search_term ~ '^[A-Z][a-z]+ [A-Z][a-z]+';
-    END IF;
-    
-    FOREACH word IN ARRAY words
-    LOOP
-        IF word ~ '^[a-zA-Z0-9]+$' AND length(word) > 0 THEN
-            -- Skip common stop words
-            IF word NOT IN ('is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them') THEN
-                significant_words := array_append(significant_words, word);
-                
-                IF safe_query != '' THEN
-                    safe_query := safe_query || ' & ';
-                END IF;
-                safe_query := safe_query || word || ':*';
-            END IF;
-        END IF;
-    END LOOP;
-
-    phrase_query := quote_literal(search_term);
-
     RETURN QUERY
     SELECT 
         v.id, 
@@ -257,159 +225,81 @@ BEGIN
         v.thumbnail_url, 
         v.thumbnail_maxres_url,
         v.published_at, 
-        v.duration, 
+        v.duration,
         CASE 
-            WHEN t.user_id = (select auth.uid()) THEN t.video_start_seconds 
+            WHEN t.user_id = current_user_id THEN t.video_start_seconds 
             ELSE NULL 
-        END AS video_start_seconds, 
+        END AS video_start_seconds,
         CASE 
-            WHEN t.user_id = (select auth.uid()) THEN t.updated_at 
+            WHEN t.user_id = current_user_id THEN t.updated_at 
             ELSE NULL 
         END AS updated_at,
-        CAST(
-            -- Exact phrase in title (highest)
-            CASE WHEN lower(v.title) LIKE '%' || clean_term || '%' THEN 1000.0
-            -- Exact phrase with full-text search
-            WHEN v.search_vector IS NOT NULL AND v.search_vector @@ phraseto_tsquery('english', phrase_query) THEN 
-                900.0 + ts_rank_cd(v.search_vector, phraseto_tsquery('english', phrase_query)) * 100.0
-            -- All significant words exact match in title
-            WHEN array_length(significant_words, 1) > 1 AND (
+        CASE 
+            -- Exact phrase in title (highest priority)
+            WHEN lower(v.title) LIKE '%' || clean_term || '%' THEN 1000.0
+            -- Title starts with search term
+            WHEN lower(v.title) LIKE clean_term || '%' THEN 950.0
+            -- All words present in title
+            WHEN array_length(words, 1) > 1 AND (
                 SELECT COUNT(*) 
-                FROM unnest(significant_words) AS sw 
-                WHERE lower(v.title) LIKE '%' || sw || '%'
-            ) = array_length(significant_words, 1) THEN 800.0
-            -- Multi-word fuzzy matching in title (STRICTER for person names)
-            WHEN array_length(significant_words, 1) > 1 AND (
+                FROM unnest(words) AS word 
+                WHERE lower(v.title) LIKE '%' || word || '%'
+            ) = array_length(words, 1) THEN 900.0
+            -- Full-text phrase match
+            WHEN v.search_vector @@ phraseto_tsquery('english', search_term) THEN 
+                850.0 + ts_rank_cd(v.search_vector, phraseto_tsquery('english', search_term)) * 100.0
+            -- Full-text word match
+            WHEN v.search_vector @@ plainto_tsquery('english', search_term) THEN 
+                800.0 + ts_rank_cd(v.search_vector, plainto_tsquery('english', search_term)) * 100.0
+            -- Word boundary matches in title
+            WHEN lower(v.title) ~ ('\y' || clean_term || '\y') THEN 750.0
+            -- Partial word matches (50% or more words present)
+            WHEN array_length(words, 1) > 1 AND (
                 SELECT COUNT(*) 
-                FROM unnest(significant_words) AS sw 
-                WHERE EXISTS (
-                    SELECT 1 FROM unnest(string_to_array(lower(v.title), ' ')) AS title_word
-                    WHERE title_word = sw 
-                       -- Much stricter fuzzy matching for likely person names
-                       OR (length(sw) >= 3 AND NOT is_likely_person_name AND extensions.levenshtein(title_word, sw) <= 1 AND length(title_word) >= 3)
-                       OR (length(sw) >= 3 AND title_word LIKE sw || '%')
-                )
-            ) = array_length(significant_words, 1) THEN 750.0
-            -- All significant words with full-text search
-            WHEN safe_query != '' AND v.search_vector IS NOT NULL AND v.search_vector @@ to_tsquery('english', safe_query) THEN 
-                700.0 + ts_rank_cd(v.search_vector, to_tsquery('english', safe_query)) * 100.0
-            -- High similarity in title (improved fuzzy matching) - STRICTER for person names
-            WHEN extensions.similarity(lower(v.title), clean_term) > CASE WHEN is_likely_person_name THEN 0.7 ELSE 0.5 END THEN 
-                600.0 + extensions.similarity(lower(v.title), clean_term) * 100.0
-            -- Exact phrase in description (lower priority for person names)
-            WHEN lower(v.description) LIKE '%' || clean_term || '%' THEN 
-                CASE WHEN is_likely_person_name THEN 300.0 ELSE 500.0 END
-            -- Single word fuzzy matching in title (STRICTER)
-            WHEN array_length(significant_words, 1) = 1 AND length(significant_words[1]) >= 3 AND EXISTS (
-                SELECT 1 FROM unnest(string_to_array(lower(v.title), ' ')) AS title_word
-                WHERE extensions.levenshtein(title_word, significant_words[1]) <= 1  -- Reduced from 2 to 1
-                AND length(title_word) >= 3
-                AND (length(title_word) - length(significant_words[1])) BETWEEN -1 AND 1  -- Reduced from -2,2 to -1,1
-            ) THEN 450.0
-            -- Moderate similarity in title (MUCH STRICTER for person names)
-            WHEN extensions.similarity(lower(v.title), clean_term) > CASE WHEN is_likely_person_name THEN 0.6 ELSE 0.3 END THEN 
-                400.0 + extensions.similarity(lower(v.title), clean_term) * 100.0
-            -- Single significant word in title (exact match, 3+ chars)
-            WHEN array_length(significant_words, 1) = 1 AND length(significant_words[1]) >= 3 AND lower(v.title) LIKE '%' || significant_words[1] || '%' THEN 350.0
-            -- Multi-word fuzzy matching in description (MUCH STRICTER for person names)
-            WHEN array_length(significant_words, 1) > 1 AND NOT is_likely_person_name AND (
-                SELECT COUNT(*) 
-                FROM unnest(significant_words) AS sw 
-                WHERE EXISTS (
-                    SELECT 1 FROM unnest(string_to_array(lower(v.description), ' ')) AS desc_word
-                    WHERE desc_word = sw 
-                       OR (length(sw) >= 4 AND extensions.levenshtein(desc_word, sw) <= 1 AND length(desc_word) >= 4)  -- Reduced from 2 to 1
-                )
-            ) = array_length(significant_words, 1) THEN 250.0  -- Reduced score
-            -- Single word fuzzy matching in description (STRICTER)
-            WHEN array_length(significant_words, 1) = 1 AND length(significant_words[1]) >= 4 AND NOT is_likely_person_name AND EXISTS (
-                SELECT 1 FROM unnest(string_to_array(lower(v.description), ' ')) AS desc_word
-                WHERE extensions.levenshtein(desc_word, significant_words[1]) <= 1  -- Reduced from 2 to 1
-                AND length(desc_word) >= 4
-                AND (length(desc_word) - length(significant_words[1])) BETWEEN -1 AND 1  -- Reduced from -2,2 to -1,1
-            ) THEN 200.0  -- Reduced score
-            -- Moderate similarity in description (STRICTER for person names)
-            WHEN extensions.similarity(lower(v.description), clean_term) > CASE WHEN is_likely_person_name THEN 0.6 ELSE 0.4 END THEN 
-                150.0 + extensions.similarity(lower(v.description), clean_term) * 50.0  -- Reduced score
-            -- Partial word matching (prefix matching) - DISABLED for person names
-            WHEN NOT is_likely_person_name AND array_length(significant_words, 1) = 1 AND length(significant_words[1]) >= 4 AND EXISTS (
-                SELECT 1 FROM unnest(string_to_array(lower(v.title), ' ')) AS title_word
-                WHERE title_word LIKE significant_words[1] || '%' AND length(title_word) >= length(significant_words[1]) + 2  -- Require at least 2 more chars
-            ) THEN 100.0
-            -- Multiple words in title (partial exact matches) - STRICTER
-            WHEN array_length(significant_words, 1) > 1 AND (
-                SELECT COUNT(*) 
-                FROM unnest(significant_words) AS sw 
-                WHERE lower(v.title) LIKE '%' || sw || '%'
-            ) >= CASE WHEN is_likely_person_name THEN array_length(significant_words, 1) ELSE 2 END THEN 50.0  -- Require ALL words for person names
-            ELSE 0.0 END
-        AS real) AS search_rank
+                FROM unnest(words) AS word 
+                WHERE lower(v.title) LIKE '%' || word || '%'
+            ) >= (array_length(words, 1) / 2) THEN 700.0
+            -- Exact phrase in description
+            WHEN lower(v.description) LIKE '%' || clean_term || '%' THEN 500.0
+            -- Single word exact match in title
+            WHEN array_length(words, 1) = 1 AND lower(v.title) LIKE '%' || words[1] || '%' THEN 450.0
+            -- Description starts with search term
+            WHEN lower(v.description) LIKE clean_term || '%' THEN 350.0
+            -- Single word in description
+            WHEN array_length(words, 1) = 1 AND lower(v.description) LIKE '%' || words[1] || '%' THEN 300.0
+            ELSE 0.0 
+        END::real AS search_rank
     FROM public.videos v
-    LEFT JOIN public.timestamps t ON v.id = t.video_id
+    LEFT JOIN public.timestamps t ON v.id = t.video_id AND t.user_id = current_user_id
     WHERE 
-        -- MUCH more selective matching conditions
-        (
-            -- Exact phrase matches (always good)
+        v.pending_delete = false
+        AND (
+            -- Efficient index-backed searches
             lower(v.title) LIKE '%' || clean_term || '%'
             OR lower(v.description) LIKE '%' || clean_term || '%'
-            -- Similarity matches (MUCH STRICTER for person names)
-            OR extensions.similarity(lower(v.title), clean_term) > CASE WHEN is_likely_person_name THEN 0.6 ELSE 0.3 END
-            OR extensions.similarity(lower(v.description), clean_term) > CASE WHEN is_likely_person_name THEN 0.6 ELSE 0.4 END
-            -- Full-text search matches
-            OR (v.search_vector IS NOT NULL AND v.search_vector @@ phraseto_tsquery('english', phrase_query))
-            OR (safe_query != '' AND v.search_vector IS NOT NULL AND v.search_vector @@ to_tsquery('english', safe_query))
-            -- Multiple significant words exact match in title
-            OR (array_length(significant_words, 1) > 1 AND (
-                SELECT COUNT(*) 
-                FROM unnest(significant_words) AS sw 
-                WHERE lower(v.title) LIKE '%' || sw || '%'
-            ) >= CASE WHEN is_likely_person_name THEN array_length(significant_words, 1) ELSE array_length(significant_words, 1) END)
-            -- Multi-word fuzzy matching (MUCH STRICTER for person names)
-            OR (array_length(significant_words, 1) > 1 AND (
-                SELECT COUNT(*) 
-                FROM unnest(significant_words) AS sw 
-                WHERE EXISTS (
-                    SELECT 1 FROM unnest(string_to_array(lower(v.title), ' ')) AS title_word
-                    WHERE title_word = sw 
-                       -- Only exact matches for person names, very limited fuzzy for others
-                       OR (length(sw) >= 3 AND NOT is_likely_person_name AND extensions.levenshtein(title_word, sw) <= 1 AND length(title_word) >= 3)
-                       OR (length(sw) >= 4 AND title_word LIKE sw || '%')
-                )
-            ) >= CASE WHEN is_likely_person_name THEN array_length(significant_words, 1) ELSE array_length(significant_words, 1) END)
-            -- Single word matching (STRICTER)
-            OR (array_length(significant_words, 1) = 1 AND length(significant_words[1]) >= 3 AND lower(v.title) LIKE '%' || significant_words[1] || '%')
-            -- Single word fuzzy matching (MUCH STRICTER)
-            OR (array_length(significant_words, 1) = 1 AND length(significant_words[1]) >= 3 AND NOT is_likely_person_name AND EXISTS (
-                SELECT 1 FROM unnest(string_to_array(lower(v.title), ' ')) AS title_word
-                WHERE extensions.levenshtein(title_word, significant_words[1]) <= 1  -- Reduced from 2
-                AND length(title_word) >= 3
-                AND (length(title_word) - length(significant_words[1])) BETWEEN -1 AND 1  -- Reduced range
-            ))
-            -- Prefix matching (DISABLED for person names, STRICTER for others)
-            OR (NOT is_likely_person_name AND array_length(significant_words, 1) = 1 AND length(significant_words[1]) >= 4 AND EXISTS (
-                SELECT 1 FROM unnest(string_to_array(lower(v.title), ' ')) AS title_word
-                WHERE title_word LIKE significant_words[1] || '%' AND length(title_word) >= length(significant_words[1]) + 2
+            OR v.search_vector @@ phraseto_tsquery('english', search_term)
+            OR v.search_vector @@ plainto_tsquery('english', search_term)
+            -- Individual word matches
+            OR (array_length(words, 1) = 1 AND (
+                lower(v.title) LIKE '%' || words[1] || '%'
+                OR lower(v.description) LIKE '%' || words[1] || '%'
             ))
         )
-    ORDER BY search_rank DESC, v.published_at DESC;
-
-EXCEPTION
-    WHEN OTHERS THEN
-        -- Simple fallback
-        RETURN QUERY
-        SELECT 
-            v.id, v.source, v.title, v.description, v.thumbnail_url, v.thumbnail_maxres_url,
-            v.published_at, v.duration,
-            CASE WHEN t.user_id = (select auth.uid()) THEN t.video_start_seconds ELSE NULL END,
-            CASE WHEN t.user_id = (select auth.uid()) THEN t.updated_at ELSE NULL END,
-            CAST(100.0 AS real) AS search_rank
-        FROM public.videos v
-        LEFT JOIN public.timestamps t ON v.id = t.video_id
-        WHERE lower(v.title) LIKE '%' || lower(search_term) || '%'
-           OR lower(v.description) LIKE '%' || lower(search_term) || '%'
-        ORDER BY 
-            CASE WHEN lower(v.title) LIKE '%' || lower(search_term) || '%' THEN 1 ELSE 2 END,
-            v.published_at DESC;
+    ORDER BY 
+        CASE 
+            WHEN lower(v.title) LIKE '%' || clean_term || '%' THEN 1000.0
+            WHEN lower(v.title) LIKE clean_term || '%' THEN 950.0
+            WHEN array_length(words, 1) > 1 AND (
+                SELECT COUNT(*) FROM unnest(words) AS word 
+                WHERE lower(v.title) LIKE '%' || word || '%'
+            ) = array_length(words, 1) THEN 900.0
+            WHEN v.search_vector @@ phraseto_tsquery('english', search_term) THEN 850.0
+            WHEN v.search_vector @@ plainto_tsquery('english', search_term) THEN 800.0
+            WHEN lower(v.title) ~ ('\y' || clean_term || '\y') THEN 750.0
+            WHEN lower(v.description) LIKE '%' || clean_term || '%' THEN 500.0
+            ELSE 0.0 
+        END DESC, 
+        v.published_at DESC;
 END;
 $$;
 
@@ -1558,7 +1448,8 @@ $$;
 CREATE OR REPLACE FUNCTION "public"."search_playlists"(
     "search_term" "text",
     "current_user_id" uuid DEFAULT NULL
-) RETURNS TABLE(
+) 
+RETURNS TABLE(
     "id" bigint, 
     "short_id" text,
     "name" text, 
@@ -1574,56 +1465,22 @@ CREATE OR REPLACE FUNCTION "public"."search_playlists"(
     "search_rank" real
 )
 LANGUAGE "plpgsql"
+STABLE
 SET search_path = ''
 AS $$
 DECLARE
     clean_term text;
     words text[];
-    significant_words text[];
-    word text;
-    safe_query text;
-    phrase_query text;
-    is_likely_person_name boolean := false;
 BEGIN
-    -- Basic cleanup
-    search_term := regexp_replace(search_term, '\s+', ' ', 'g');
-    search_term := trim(search_term);
-    clean_term := lower(search_term);
-
-    IF search_term = '' OR length(search_term) < 1 THEN
+    -- Early exit for empty search
+    IF search_term IS NULL OR trim(search_term) = '' OR length(trim(search_term)) < 1 THEN
         RETURN;
     END IF;
 
-    -- Split into words and filter stop words
+    -- Basic cleanup
+    clean_term := lower(trim(regexp_replace(search_term, '\s+', ' ', 'g')));
     words := string_to_array(clean_term, ' ');
-    significant_words := ARRAY[]::text[];
-    safe_query := '';
     
-    -- Detect if this looks like a person name (2+ words, each 3+ chars, proper case in original)
-    IF array_length(words, 1) >= 2 THEN
-        is_likely_person_name := (
-            SELECT bool_and(length(w) >= 3 AND w ~ '^[a-z]+$')
-            FROM unnest(words) AS w
-        ) AND search_term ~ '^[A-Z][a-z]+ [A-Z][a-z]+';
-    END IF;
-    
-    FOREACH word IN ARRAY words
-    LOOP
-        IF word ~ '^[a-zA-Z0-9]+$' AND length(word) > 0 THEN
-            -- Skip common stop words
-            IF word NOT IN ('is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them') THEN
-                significant_words := array_append(significant_words, word);
-                
-                IF safe_query != '' THEN
-                    safe_query := safe_query || ' & ';
-                END IF;
-                safe_query := safe_query || word || ':*';
-            END IF;
-        END IF;
-    END LOOP;
-
-    phrase_query := quote_literal(search_term);
-
     RETURN QUERY
     SELECT 
         p.id, 
@@ -1638,29 +1495,43 @@ BEGIN
         p.type,
         p.youtube_id,
         prof.username AS profile_username,
-        CAST(
-            -- Exact phrase in name (highest)
-            CASE WHEN lower(p.name) LIKE '%' || clean_term || '%' THEN 1000.0
-            -- Exact phrase with full-text search
-            WHEN p.search_vector IS NOT NULL AND p.search_vector @@ phraseto_tsquery('english', phrase_query) THEN 
-                900.0 + ts_rank_cd(p.search_vector, phraseto_tsquery('english', phrase_query)) * 100.0
-            -- All significant words exact match in name
-            WHEN array_length(significant_words, 1) > 1 AND (
+        CASE 
+            -- Exact phrase in name (highest priority)
+            WHEN lower(p.name) LIKE '%' || clean_term || '%' THEN 1000.0
+            -- Name starts with search term
+            WHEN lower(p.name) LIKE clean_term || '%' THEN 950.0
+            -- All words present in name
+            WHEN array_length(words, 1) > 1 AND (
                 SELECT COUNT(*) 
-                FROM unnest(significant_words) AS sw 
-                WHERE lower(p.name) LIKE '%' || sw || '%'
-            ) = array_length(significant_words, 1) THEN 800.0
-            -- High similarity in name
-            WHEN similarity(lower(p.name), clean_term) > 0.5 THEN 
-                600.0 + similarity(lower(p.name), clean_term) * 100.0
+                FROM unnest(words) AS word 
+                WHERE lower(p.name) LIKE '%' || word || '%'
+            ) = array_length(words, 1) THEN 900.0
+            -- Full-text phrase match
+            WHEN p.search_vector IS NOT NULL AND p.search_vector @@ phraseto_tsquery('english', search_term) THEN 
+                850.0 + ts_rank_cd(p.search_vector, phraseto_tsquery('english', search_term)) * 100.0
+            -- Full-text word match
+            WHEN p.search_vector IS NOT NULL AND p.search_vector @@ plainto_tsquery('english', search_term) THEN 
+                800.0 + ts_rank_cd(p.search_vector, plainto_tsquery('english', search_term)) * 100.0
+            -- Word boundary matches in name
+            WHEN lower(p.name) ~ ('\y' || clean_term || '\y') THEN 750.0
+            -- Partial word matches (50% or more words present in name)
+            WHEN array_length(words, 1) > 1 AND (
+                SELECT COUNT(*) 
+                FROM unnest(words) AS word 
+                WHERE lower(p.name) LIKE '%' || word || '%'
+            ) >= (array_length(words, 1) / 2) THEN 700.0
             -- Exact phrase in description
-            WHEN lower(p.description) LIKE '%' || clean_term || '%' THEN 500.0
-            -- All significant words with full-text search
-            WHEN safe_query != '' AND p.search_vector IS NOT NULL AND p.search_vector @@ to_tsquery('english', safe_query) THEN 
-                400.0 + ts_rank_cd(p.search_vector, to_tsquery('english', safe_query)) * 100.0
-            ELSE 0.0
-            END AS real
-        ) AS search_rank
+            WHEN p.description IS NOT NULL AND lower(p.description) LIKE '%' || clean_term || '%' THEN 500.0
+            -- Single word exact match in name
+            WHEN array_length(words, 1) = 1 AND lower(p.name) LIKE '%' || words[1] || '%' THEN 450.0
+            -- Description starts with search term
+            WHEN p.description IS NOT NULL AND lower(p.description) LIKE clean_term || '%' THEN 350.0
+            -- Single word in description
+            WHEN array_length(words, 1) = 1 AND p.description IS NOT NULL AND lower(p.description) LIKE '%' || words[1] || '%' THEN 300.0
+            -- Creator username matches
+            WHEN prof.username IS NOT NULL AND lower(prof.username) LIKE '%' || clean_term || '%' THEN 250.0
+            ELSE 0.0 
+        END::real AS search_rank
     FROM public.playlists p
     LEFT JOIN public.profiles prof ON p.created_by = prof.id
     WHERE (
@@ -1669,15 +1540,55 @@ BEGIN
         OR (current_user_id IS NOT NULL AND p.created_by = current_user_id)
     )
     AND (
-        -- Search criteria
+        -- Efficient index-backed searches
         lower(p.name) LIKE '%' || clean_term || '%'
-        OR lower(p.description) LIKE '%' || clean_term || '%'
-        OR (p.search_vector IS NOT NULL AND p.search_vector @@ phraseto_tsquery('english', phrase_query))
-        OR (safe_query != '' AND p.search_vector IS NOT NULL AND p.search_vector @@ to_tsquery('english', safe_query))
-        OR similarity(lower(p.name), clean_term) > 0.3
+        OR (p.description IS NOT NULL AND lower(p.description) LIKE '%' || clean_term || '%')
+        OR (p.search_vector IS NOT NULL AND p.search_vector @@ phraseto_tsquery('english', search_term))
+        OR (p.search_vector IS NOT NULL AND p.search_vector @@ plainto_tsquery('english', search_term))
+        OR (prof.username IS NOT NULL AND lower(prof.username) LIKE '%' || clean_term || '%')
+        -- Individual word matches
+        OR (array_length(words, 1) = 1 AND (
+            lower(p.name) LIKE '%' || words[1] || '%'
+            OR (p.description IS NOT NULL AND lower(p.description) LIKE '%' || words[1] || '%')
+        ))
     )
-    ORDER BY search_rank DESC, p.created_at DESC
-    LIMIT 50;
+    ORDER BY 
+        CASE 
+            WHEN lower(p.name) LIKE '%' || clean_term || '%' THEN 1000.0
+            WHEN lower(p.name) LIKE clean_term || '%' THEN 950.0
+            WHEN array_length(words, 1) > 1 AND (
+                SELECT COUNT(*) FROM unnest(words) AS word 
+                WHERE lower(p.name) LIKE '%' || word || '%'
+            ) = array_length(words, 1) THEN 900.0
+            WHEN p.search_vector IS NOT NULL AND p.search_vector @@ phraseto_tsquery('english', search_term) THEN 850.0
+            WHEN p.search_vector IS NOT NULL AND p.search_vector @@ plainto_tsquery('english', search_term) THEN 800.0
+            WHEN lower(p.name) ~ ('\y' || clean_term || '\y') THEN 750.0
+            WHEN p.description IS NOT NULL AND lower(p.description) LIKE '%' || clean_term || '%' THEN 500.0
+            WHEN prof.username IS NOT NULL AND lower(prof.username) LIKE '%' || clean_term || '%' THEN 250.0
+            ELSE 0.0 
+        END DESC, 
+        p.created_at DESC;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        -- Simple fallback
+        RETURN QUERY
+        SELECT 
+            p.id, p.short_id, p.name, p.description, p.thumbnail_url, p.thumbnail_maxres_url,
+            p.image_properties, p.created_at, p.created_by, p.type, p.youtube_id,
+            prof.username AS profile_username,
+            CAST(100.0 AS real) AS search_rank
+        FROM public.playlists p
+        LEFT JOIN public.profiles prof ON p.created_by = prof.id
+        WHERE (
+            p.type = 'Public' 
+            OR (current_user_id IS NOT NULL AND p.created_by = current_user_id)
+        )
+        AND (
+            lower(p.name) LIKE '%' || clean_term || '%'
+            OR (p.description IS NOT NULL AND lower(p.description) LIKE '%' || clean_term || '%')
+        )
+        ORDER BY p.created_at DESC;
 END;
 $$;
 
