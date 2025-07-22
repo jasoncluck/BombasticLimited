@@ -1,7 +1,7 @@
 import type { ContentView } from "$lib/components/content/content";
 import { getFilterOptionFromQueryParams } from "$lib/components/content/content-filter";
 import { parseImageProperties } from "$lib/components/playlist/playlist";
-import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
+import { getCroppedPlaylistImageUrlServer } from "$lib/server/vercel-image-processor";
 import { getUserPlaylists } from "$lib/supabase/playlists";
 import { getProfile } from "$lib/supabase/user-profiles";
 import type { LayoutServerLoad } from "./$types";

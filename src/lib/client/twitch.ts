@@ -26,31 +26,31 @@ let authProvider: AppTokenAuthProvider | undefined;
 let apiClient: ApiClient | undefined;
 let eventSubListener: EventSubHttpListener | undefined;
 
-if (shouldInitialize) {
-  authProvider = new AppTokenAuthProvider(clientId, clientSecret);
-  apiClient = new ApiClient({ authProvider });
+// if (shouldInitialize) {
+//   authProvider = new AppTokenAuthProvider(clientId, clientSecret);
+//   apiClient = new ApiClient({ authProvider });
 
-  let adapter: NgrokAdapter | DirectConnectionAdapter;
-  if (import.meta.env.DEV) {
-    adapter = new NgrokAdapter({
-      ngrokConfig: { authtoken: NGROK_AUTH_TOKEN },
-    });
-
-    const secret = randomUUID();
-
-    // Only delete subscriptions and start listener if we have a real client
-    if (apiClient) {
-      await apiClient.eventSub.deleteAllSubscriptions();
-
-      eventSubListener = new EventSubHttpListener({
-        apiClient,
-        adapter,
-        secret,
-      });
-
-      eventSubListener.start();
-    }
-  }
-}
+// let adapter: NgrokAdapter | DirectConnectionAdapter;
+// if (import.meta.env.DEV) {
+//   adapter = new NgrokAdapter({
+//     ngrokConfig: { authtoken: NGROK_AUTH_TOKEN },
+//   });
+//
+//   const secret = randomUUID();
+//
+//   // Only delete subscriptions and start listener if we have a real client
+//   if (apiClient) {
+//     await apiClient.eventSub.deleteAllSubscriptions();
+//
+//     eventSubListener = new EventSubHttpListener({
+//       apiClient,
+//       adapter,
+//       secret,
+//     });
+//
+//     eventSubListener.start();
+//   }
+// }
+// }
 
 export { eventSubListener };

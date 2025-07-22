@@ -1,7 +1,7 @@
 import { isVideoFilter } from "$lib/components/content/content-filter";
 import { parseImageProperties } from "$lib/components/playlist/playlist";
 import { SOURCES } from "$lib/constants/source";
-import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
+import { getCroppedPlaylistImageUrlServer } from "$lib/server/vercel-image-processor";
 import { searchPlaylists } from "$lib/supabase/playlists";
 import {
   getVideos,

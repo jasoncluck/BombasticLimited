@@ -20,12 +20,12 @@ import {
   type SortKey,
   type SortOrder,
 } from "$lib/components/content/content-filter";
-import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
 import { DEFAULT_NUM_VIDEOS_PAGINATION } from "$lib/supabase/videos";
 import { parseImageProperties } from "$lib/components/playlist/playlist";
 import { getPaginationQueryParams } from "$lib/components/pagination/pagination";
 import { Filter } from "bad-words";
 import { redirect, setFlash } from "sveltekit-flash-message/server";
+import { getCroppedPlaylistImageUrlServer } from "$lib/server/vercel-image-processor";
 
 export const load: PageServerLoad = async ({
   locals: { supabase },

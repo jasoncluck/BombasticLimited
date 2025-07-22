@@ -7,8 +7,8 @@ import {
 import { isVideoWithTimestamp } from "$lib/supabase/videos";
 import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
-import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
 import { parseImageProperties } from "$lib/components/playlist/playlist";
+import { getCroppedPlaylistImageUrlServer } from "$lib/server/vercel-image-processor";
 
 export const load: PageServerLoad = async ({
   locals: { supabase },
