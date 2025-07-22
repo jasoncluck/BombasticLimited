@@ -13,15 +13,9 @@ export class BasePage {
   }
 
   async waitForLoad(): Promise<void> {
-    // Option 3: Wait for specific content instead of network idle
-    // Default to waiting for common page elements that indicate the page is ready
-    await this.testUtils.waitForPageReady([
-      { text: "Latest Videos" }, // Home page indicator
-      { text: "Continue Watching" }, // Home page indicator
-      "main", // Main content area
-      '[data-testid="content"]', // Content area if available
-      "header", // Header element
-    ]);
+    // Simplified page loading - wait for essential elements
+    await expect(this.page.locator("body")).toBeVisible({ timeout: 10000 });
+    await expect(this.page.locator('[data-testid="main-navigation"]')).toBeVisible({ timeout: 10000 });
   }
 
   async getTitle(): Promise<string> {

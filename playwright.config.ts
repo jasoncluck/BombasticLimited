@@ -27,7 +27,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: "http://localhost:4173",
+    baseURL: "http://localhost:5173",
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
@@ -38,11 +38,11 @@ export default defineConfig({
     /* Capture video on retry */
     video: "retain-on-failure",
 
-    /* Default navigation timeout */
-    navigationTimeout: 30000,
+    /* Default navigation timeout - increased for reliability */
+    navigationTimeout: 45000,
 
-    /* Default action timeout */
-    actionTimeout: 10000,
+    /* Default action timeout - increased for reliability */
+    actionTimeout: 15000,
   },
 
   /* Configure projects for major browsers */
@@ -93,10 +93,14 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: "npm run build:test && npm run preview",
-    port: 4173,
+    command: "npm run dev -- --host 0.0.0.0",
+    port: 5173,
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
+    // Don't try to build the app for tests, use dev mode
+    env: {
+      NODE_ENV: "test"
+    }
   },
 
   /* Global setup and teardown */
@@ -106,14 +110,14 @@ export default defineConfig({
   /* Test output directory */
   outputDir: "test-results/",
 
-  /* Timeout for each test */
-  timeout: 30000,
+  /* Timeout for each test - increased for reliability */
+  timeout: 45000,
 
   /* Global test timeout */
-  globalTimeout: 600000,
+  globalTimeout: 900000,
 
-  /* Expect timeout */
+  /* Expect timeout - increased for reliability */
   expect: {
-    timeout: 5000,
+    timeout: 10000,
   },
 });

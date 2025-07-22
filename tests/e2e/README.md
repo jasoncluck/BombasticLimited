@@ -271,7 +271,7 @@ CMD ["npm", "run", "test:e2e"]
 
 ### Performance Guidelines
 
-1. **Use `page.waitForLoadState('networkidle')`** for dynamic content
+1. **Wait for specific elements** instead of network states for reliability
 2. **Minimize unnecessary waits** with specific selectors
 3. **Run tests in parallel** where possible
 4. **Use fixtures** to reduce test setup overhead

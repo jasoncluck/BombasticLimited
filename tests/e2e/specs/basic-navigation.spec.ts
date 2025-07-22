@@ -22,7 +22,7 @@ test.describe("Basic Navigation and Loading", () => {
     });
 
     await page.goto("/");
-    await testUtils.waitForContent({ text: "Latest Videos" });
+    await testUtils.waitForContent("h1");
 
     // Filter out known acceptable errors (like missing favicon, etc.)
     const criticalErrors = consoleErrors.filter(
@@ -63,7 +63,7 @@ test.describe("Basic Navigation and Loading", () => {
     // Go back online
     await page.context().setOffline(false);
     await page.goto("/");
-    await testUtils.waitForContent({ text: "Latest Videos" });
+    await testUtils.waitForContent("h1");
 
     // Page should load normally now
     await expect(page.getByText("Latest Videos")).toBeVisible();

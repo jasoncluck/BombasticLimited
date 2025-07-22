@@ -227,7 +227,7 @@
 
 <!-- Global Content Context Menu -->
 <div class="flex flex-col h-full">
-  <nav class="flex items-center p-1 m-2 relative">
+  <nav class="flex items-center p-1 m-2 relative" data-testid="main-navigation">
     <div class="flex items-center">
       <div class="sm:hidden w-full">
         <SideDrawer
@@ -245,6 +245,7 @@
     >
       <a
         href="/"
+        data-testid="home-link"
         onclick={(e) => {
           e.preventDefault();
           searchQuery = "";
@@ -257,6 +258,8 @@
       </a>
 
       <Input
+        type="search"
+        data-testid="search-input"
         oninput={(e) => layoutState.handleSearch(e)}
         placeholder="Search"
         class="sm:w-72 w-36"
@@ -270,6 +273,7 @@
         {#if user}
           <DropdownMenu.Root>
             <DropdownMenu.Trigger
+              data-testid="user-preferences"
               id="user-preferences"
               class={buttonVariants({
                 variant: "outline",
@@ -335,6 +339,7 @@
           {#if mediaQuery.canHover}
             <DropdownMenu.Root>
               <DropdownMenu.Trigger
+                data-testid="user-menu-trigger"
                 class="cursor-pointer outline-none {buttonVariants({
                   variant: 'outline',
                   size: 'icon',
@@ -356,6 +361,7 @@
                   </DropdownMenu.Item>
                   <DropdownMenu.Item
                     class="cursor-pointer"
+                    data-testid="logout-button"
                     onclick={() => layoutState.handleLogout(supabase)}
                   >
                     <div class="flex items-center gap-2">
@@ -417,6 +423,7 @@
         {:else}
           <Button
             class="cursor-pointer"
+            data-testid="login-button"
             onclick={() => goto("/auth/login")}
             variant="outline"
           >

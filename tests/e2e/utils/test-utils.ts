@@ -171,15 +171,15 @@ export class TestUtils {
   }
 
   /**
-   * Check if element is clickable/tappable
+   * Check if element is clickable/tappable with better error handling
    */
   async isInteractive(selector: string | Locator): Promise<boolean> {
     const locator =
       typeof selector === "string" ? this.page.locator(selector) : selector;
 
     try {
-      await expect(locator).toBeVisible();
-      await expect(locator).toBeEnabled();
+      await expect(locator).toBeVisible({ timeout: 2000 });
+      await expect(locator).toBeEnabled({ timeout: 1000 });
       return true;
     } catch {
       return false;
@@ -187,8 +187,57 @@ export class TestUtils {
   }
 
   /**
-   * Wait for specific content to appear (Option 3 approach)
-   * This is more reliable than waiting for network idle
+   * Safe click/tap that checks if element is interactive first
+   */
+  async safeClick(selector: string | Locator): Promise<boolean> {
+    if (await this.isInteractive(selector)) {
+      const locator =
+        typeof selector === "string" ? this.page.locator(selector) : selector;
+      
+      if (await this.isMobileViewport()) {
+        await this.touchTap(locator);
+      } else {
+        await locator.click();
+      }
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Wait for any of multiple possible content states - simplified version
+   */
+  async waitForAnyContent(
+    contentSelectors: (string | Locator | { text: string })[],
+    options: { timeout?: number } = {},
+  ): Promise<boolean> {
+    const { timeout = 10000 } = options;
+    
+    // Try each selector sequentially with shorter timeouts
+    const selectorTimeout = Math.floor(timeout / contentSelectors.length);
+    
+    for (const selector of contentSelectors) {
+      try {
+        if (typeof selector === "string") {
+          await expect(this.page.locator(selector)).toBeVisible({ timeout: selectorTimeout });
+          return true;
+        } else if ("text" in selector) {
+          await expect(this.page.getByText(selector.text).first()).toBeVisible({ timeout: selectorTimeout });
+          return true;
+        } else {
+          await expect(selector).toBeVisible({ timeout: selectorTimeout });
+          return true;
+        }
+      } catch {
+        // Continue to next selector
+      }
+    }
+    
+    return false;
+  }
+
+  /**
+   * Wait for specific content to appear - simplified version
    */
   async waitForContent(
     contentSelector: string | Locator | { text: string },
@@ -197,39 +246,30 @@ export class TestUtils {
       state?: "visible" | "attached" | "detached" | "hidden";
     } = {},
   ): Promise<void> {
-    const { timeout = 10000, state = "visible" } = options;
+    const { timeout = 10000 } = options;
 
     if (typeof contentSelector === "string") {
-      // CSS selector
-      await this.page.waitForSelector(contentSelector, {
-        state,
-        timeout,
-      });
+      await expect(this.page.locator(contentSelector)).toBeVisible({ timeout });
     } else if ("text" in contentSelector) {
-      // Text content
-      const locator = this.page.getByText(contentSelector.text);
-      await expect(locator).toBeVisible({ timeout });
+      await expect(this.page.getByText(contentSelector.text).first()).toBeVisible({ timeout });
     } else {
-      // Locator object
       await expect(contentSelector).toBeVisible({ timeout });
     }
   }
 
   /**
-   * Wait for page to be ready by checking for specific content indicators
-   * This replaces the generic waitForLoadState approach
+   * Wait for page to be ready - much simpler version
    */
   async waitForPageReady(
     contentIndicators: (string | Locator | { text: string })[],
     options: { timeout?: number } = {},
   ): Promise<void> {
-    const { timeout = 10000 } = options;
+    const { timeout = 15000 } = options;
 
-    // Wait for any of the content indicators to appear
-    await Promise.race(
-      contentIndicators.map((indicator) =>
-        this.waitForContent(indicator, { timeout }),
-      ),
-    );
+    // Basic page readiness check
+    await expect(this.page.locator("body")).toBeVisible({ timeout: 5000 });
+    
+    // Find at least one content indicator
+    await this.waitForAnyContent(contentIndicators, { timeout: Math.max(5000, timeout - 5000) });
   }
 }

@@ -71,12 +71,13 @@
 
 <div>
   {#if session && continueWatchingVideos.length > 0}
-    <div class="flex flex-col mb-8">
+    <div class="flex flex-col mb-8" data-testid="continue-watching-section">
       <a
         href="/continue"
         class={getContentView(mediaQueryState, userProfile) === "TABLE"
           ? "header-link-sticky"
           : "header-link"}
+        data-testid="continue-watching-link"
       >
         Continue Watching
       </a>
@@ -99,12 +100,18 @@
 
   <div class="flex flex-col gap-4 mb-8">
     {#each sources as source (source)}
-      <div class="content-section">
+      <div
+        class="content-section"
+        data-testid="source-section"
+        data-source={source}
+      >
         <a
           href={`/${source}/latest`}
           class={getContentView(mediaQueryState, userProfile) === "TABLE"
             ? "header-link-sticky"
             : "header-link"}
+          data-testid="source-link"
+          data-source={source}
         >
           {SOURCE_INFO[source].displayName}
         </a>

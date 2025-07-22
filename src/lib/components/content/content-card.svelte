@@ -73,7 +73,10 @@
 {#if isLoading || !video}
   <ContentCardSkeleton />
 {:else}
-  <div class="group transform will-change-transform cursor-pointer mb-6 w-full">
+  <div
+    class="group transform will-change-transform cursor-pointer mb-6 w-full"
+    data-testid="video-card"
+  >
     <div role="button" tabindex="0" class="text-left cursor-pointer">
       <div class="relative">
         <img

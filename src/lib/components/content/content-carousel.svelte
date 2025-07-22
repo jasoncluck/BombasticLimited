@@ -288,6 +288,7 @@
     inViewThreshold: 0.5,
   }}
   class="z-40 overflow-x-clip"
+  data-testid="video-carousel"
   setApi={(emblaApi) => {
     api = emblaApi;
   }}

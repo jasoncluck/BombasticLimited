@@ -67,7 +67,7 @@
   );
 </script>
 
-<div class="flex flex-col">
+<div class="flex flex-col" data-testid="search-results">
   <h1 class="header-primary">Results</h1>
 
   <div class="flex flex-col gap-8">
@@ -124,7 +124,7 @@
       {/if}
     {/each}
     {#if isEmptyResults}
-      <div class="w-full flex justify-center">
+      <div class="w-full flex justify-center" data-testid="no-results">
         <h1 class="text-xl">No results found</h1>
       </div>
     {/if}
