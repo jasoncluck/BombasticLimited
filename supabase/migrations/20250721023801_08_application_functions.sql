@@ -7,7 +7,7 @@
 -- ============================================================================
 
 -- RPC function to check if username is unique
-CREATE OR REPLACE FUNCTION is_unique_username(p_username text)
+CREATE OR REPLACE FUNCTION public.is_unique_username(p_username text)
 RETURNS boolean 
 LANGUAGE plpgsql
 SET search_path = ''
