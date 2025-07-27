@@ -181,7 +181,9 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION "public"."search_videos"(
-    "search_term" "text"
+    "search_term" "text",
+    "limit_count" integer DEFAULT 500,
+    "offset_count" integer DEFAULT 0
 ) 
 RETURNS TABLE(
     "id" "text", 
@@ -202,103 +204,86 @@ AS $$
 DECLARE
     clean_term text;
     words text[];
+    word_count int;
     current_user_id uuid;
+    phrase_query tsquery;
+    plain_query tsquery;
 BEGIN
-    -- Get current user once
     current_user_id := auth.uid();
     
-    -- Early exit for empty search
     IF search_term IS NULL OR trim(search_term) = '' OR length(trim(search_term)) < 1 THEN
         RETURN;
     END IF;
 
-    -- Basic cleanup
     clean_term := lower(trim(regexp_replace(search_term, '\s+', ' ', 'g')));
     words := string_to_array(clean_term, ' ');
+    word_count := array_length(words, 1);
+    
+    phrase_query := phraseto_tsquery('english', search_term);
+    plain_query := plainto_tsquery('english', search_term);
     
     RETURN QUERY
-    SELECT 
-        v.id, 
-        v.source, 
-        v.title, 
-        v.description, 
-        v.thumbnail_url, 
-        v.thumbnail_maxres_url,
-        v.published_at, 
-        v.duration,
-        CASE 
-            WHEN t.user_id = current_user_id THEN t.video_start_seconds 
-            ELSE NULL 
-        END AS video_start_seconds,
-        CASE 
-            WHEN t.user_id = current_user_id THEN t.updated_at 
-            ELSE NULL 
-        END AS updated_at,
-        CASE 
-            -- Exact phrase in title (highest priority)
-            WHEN lower(v.title) LIKE '%' || clean_term || '%' THEN 1000.0
-            -- Title starts with search term
-            WHEN lower(v.title) LIKE clean_term || '%' THEN 950.0
-            -- All words present in title
-            WHEN array_length(words, 1) > 1 AND (
-                SELECT COUNT(*) 
-                FROM unnest(words) AS word 
-                WHERE lower(v.title) LIKE '%' || word || '%'
-            ) = array_length(words, 1) THEN 900.0
-            -- Full-text phrase match
-            WHEN v.search_vector @@ phraseto_tsquery('english', search_term) THEN 
-                850.0 + ts_rank_cd(v.search_vector, phraseto_tsquery('english', search_term)) * 100.0
-            -- Full-text word match
-            WHEN v.search_vector @@ plainto_tsquery('english', search_term) THEN 
-                800.0 + ts_rank_cd(v.search_vector, plainto_tsquery('english', search_term)) * 100.0
-            -- Word boundary matches in title
-            WHEN lower(v.title) ~ ('\y' || clean_term || '\y') THEN 750.0
-            -- Partial word matches (50% or more words present)
-            WHEN array_length(words, 1) > 1 AND (
-                SELECT COUNT(*) 
-                FROM unnest(words) AS word 
-                WHERE lower(v.title) LIKE '%' || word || '%'
-            ) >= (array_length(words, 1) / 2) THEN 700.0
-            -- Exact phrase in description
-            WHEN lower(v.description) LIKE '%' || clean_term || '%' THEN 500.0
-            -- Single word exact match in title
-            WHEN array_length(words, 1) = 1 AND lower(v.title) LIKE '%' || words[1] || '%' THEN 450.0
-            -- Description starts with search term
-            WHEN lower(v.description) LIKE clean_term || '%' THEN 350.0
-            -- Single word in description
-            WHEN array_length(words, 1) = 1 AND lower(v.description) LIKE '%' || words[1] || '%' THEN 300.0
-            ELSE 0.0 
-        END::real AS search_rank
-    FROM public.videos v
-    LEFT JOIN public.timestamps t ON v.id = t.video_id AND t.user_id = current_user_id
-    WHERE 
-        (
-            -- Exact phrase matches (always good)
+    WITH ranked_videos AS (
+        SELECT 
+            v.id, 
+            v.source, 
+            v.title, 
+            v.description, 
+            v.thumbnail_url, 
+            v.thumbnail_maxres_url,
+            v.published_at, 
+            v.duration,
+            -- Fixed: Cast ALL calculations to real explicitly
+            (CASE 
+                WHEN lower(v.title) LIKE '%' || clean_term || '%' THEN 1000.0
+                WHEN lower(v.title) LIKE clean_term || '%' THEN 950.0
+                WHEN v.search_vector @@ phrase_query THEN 
+                    850.0 + (ts_rank_cd(v.search_vector, phrase_query) * 100.0)::real
+                WHEN v.search_vector @@ plain_query THEN 
+                    800.0 + (ts_rank_cd(v.search_vector, plain_query) * 100.0)::real
+                WHEN lower(v.title) ~ ('\y' || clean_term || '\y') THEN 750.0
+                WHEN word_count > 1 AND (
+                    SELECT COUNT(*) 
+                    FROM unnest(words) AS word 
+                    WHERE lower(v.title) LIKE '%' || word || '%'
+                ) >= word_count THEN 700.0
+                WHEN lower(v.description) LIKE '%' || clean_term || '%' THEN 500.0
+                WHEN word_count = 1 AND lower(v.title) LIKE '%' || words[1] || '%' THEN 450.0
+                WHEN lower(v.description) LIKE clean_term || '%' THEN 350.0
+                WHEN word_count = 1 AND lower(v.description) LIKE '%' || words[1] || '%' THEN 300.0
+                ELSE 0.0 
+            END)::real AS search_rank
+        FROM public.videos v
+        WHERE 
             lower(v.title) LIKE '%' || clean_term || '%'
             OR lower(v.description) LIKE '%' || clean_term || '%'
-            OR v.search_vector @@ phraseto_tsquery('english', search_term)
-            OR v.search_vector @@ plainto_tsquery('english', search_term)
-            -- Individual word matches
-            OR (array_length(words, 1) = 1 AND (
+            OR v.search_vector @@ phrase_query
+            OR v.search_vector @@ plain_query
+            OR (word_count = 1 AND (
                 lower(v.title) LIKE '%' || words[1] || '%'
                 OR lower(v.description) LIKE '%' || words[1] || '%'
             ))
-        )
+    )
+    SELECT 
+        rv.id, 
+        rv.source, 
+        rv.title, 
+        rv.description, 
+        rv.thumbnail_url, 
+        rv.thumbnail_maxres_url,
+        rv.published_at, 
+        rv.duration,
+        t.video_start_seconds,
+        t.updated_at,
+        rv.search_rank
+    FROM ranked_videos rv
+    LEFT JOIN public.timestamps t ON rv.id = t.video_id AND t.user_id = current_user_id
+    WHERE rv.search_rank > 0
     ORDER BY 
-        CASE 
-            WHEN lower(v.title) LIKE '%' || clean_term || '%' THEN 1000.0
-            WHEN lower(v.title) LIKE clean_term || '%' THEN 950.0
-            WHEN array_length(words, 1) > 1 AND (
-                SELECT COUNT(*) FROM unnest(words) AS word 
-                WHERE lower(v.title) LIKE '%' || word || '%'
-            ) = array_length(words, 1) THEN 900.0
-            WHEN v.search_vector @@ phraseto_tsquery('english', search_term) THEN 850.0
-            WHEN v.search_vector @@ plainto_tsquery('english', search_term) THEN 800.0
-            WHEN lower(v.title) ~ ('\y' || clean_term || '\y') THEN 750.0
-            WHEN lower(v.description) LIKE '%' || clean_term || '%' THEN 500.0
-            ELSE 0.0 
-        END DESC, 
-        v.published_at DESC;
+        rv.search_rank DESC,
+        rv.published_at DESC
+    LIMIT limit_count 
+    OFFSET offset_count;
 END;
 $$;
 

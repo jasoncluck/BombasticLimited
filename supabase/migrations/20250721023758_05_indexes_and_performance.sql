@@ -10,6 +10,10 @@
 CREATE INDEX IF NOT EXISTS idx_videos_search_vector_gin 
 ON public.videos USING gin(search_vector);
 
+CREATE INDEX IF NOT EXISTS idx_videos_source_published 
+ON public.videos (source, published_at DESC) 
+WHERE pending_delete = false;
+
 -- Trigram indexes for similarity searches (with extensions schema)
 CREATE INDEX IF NOT EXISTS idx_videos_title_trgm 
 ON public.videos USING gin(lower(title) extensions.gin_trgm_ops);

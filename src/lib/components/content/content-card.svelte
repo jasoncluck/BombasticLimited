@@ -74,7 +74,7 @@
   <ContentCardSkeleton />
 {:else}
   <div
-    class="group transform will-change-transform cursor-pointer mb-6 w-full"
+    class="group transform will-change-transform cursor-pointer w-full h-52"
     data-testid="video-card"
   >
     <div role="button" tabindex="0" class="text-left cursor-pointer">

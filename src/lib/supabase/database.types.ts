@@ -642,7 +642,11 @@ export type Database = {
         }[]
       }
       search_videos: {
-        Args: { search_term: string }
+        Args: {
+          search_term: string
+          limit_count?: number
+          offset_count?: number
+        }
         Returns: {
           id: string
           source: Database["public"]["Enums"]["source"]

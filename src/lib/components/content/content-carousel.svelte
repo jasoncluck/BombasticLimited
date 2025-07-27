@@ -306,7 +306,7 @@
       ? "visible cursor-pointer hover:brightness-110 !bg-secondary hover:scale-105"
       : "invisible"}
   />
-  <Carousel.Content class="m4-2">
+  <Carousel.Content>
     {#each videos as video, i (video.id)}
       <Carousel.Item
         class={getItemClasses(video, i)}

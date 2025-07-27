@@ -46,7 +46,7 @@ export class LayoutStateClass implements LayoutState {
   searchAbortController = $state<AbortController | null>(null); // NEW
 
   config = $state<LayoutConfig>({
-    searchDebounceMs: 300,
+    searchDebounceMs: 400,
   });
 
   async handleLogout(supabase: SupabaseClient) {
