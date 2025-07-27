@@ -67,6 +67,9 @@
       if (!isPlaylistOwner) {
         return;
       }
+      if (mediaQueryState.canHover) {
+        open = true;
+      }
       drawerOpen = true;
     }
   });

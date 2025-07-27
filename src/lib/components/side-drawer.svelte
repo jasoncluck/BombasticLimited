@@ -269,7 +269,6 @@
               class="cursor-pointer w-full flex justify-start h-[64px]"
               onclick={async () => {
                 const { playlist } = await handleCreatePlaylist({
-                  playlists,
                   session,
                   supabase,
                 });

@@ -1,13 +1,9 @@
 import {
-  getPlaylistByShortId,
-  getPlaylistTotalDuration,
-  getPlaylistVideos,
+  getPlaylistData,
   isUserPlaylist,
   updatePlaylistImage,
   updatePlaylistInfo,
   type PlaylistVideo,
-  type ProfilePlaylist,
-  type UserPlaylist,
 } from "$lib/supabase/playlists";
 import { type Actions, type RequestEvent } from "@sveltejs/kit";
 import type { PageServerLoad } from "../[shortId]/$types";
@@ -16,7 +12,6 @@ import { playlistSchema } from "./schema";
 import { zod } from "sveltekit-superforms/adapters";
 import {
   isPlaylistVideosFilter,
-  type PlaylistVideosFilter,
   type SortKey,
   type SortOrder,
 } from "$lib/components/content/content-filter";
@@ -25,10 +20,10 @@ import { parseImageProperties } from "$lib/components/playlist/playlist";
 import { getPaginationQueryParams } from "$lib/components/pagination/pagination";
 import { Filter } from "bad-words";
 import { redirect, setFlash } from "sveltekit-flash-message/server";
-import { getCroppedPlaylistImageUrlServer } from "$lib/server/vercel-image-processor";
+import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
 
 export const load: PageServerLoad = async ({
-  locals: { supabase },
+  locals: { supabase, session },
   url,
   parent,
   params,
@@ -38,36 +33,6 @@ export const load: PageServerLoad = async ({
 
   const { playlists, contentFilter } = await parent();
 
-  let playlist: UserPlaylist | ProfilePlaylist | null;
-
-  playlist =
-    playlists.find((playlist) => playlist.short_id === params.shortId) ?? null;
-
-  // If not found in array, fetch from API
-  if (!playlist) {
-    ({ playlist } = await getPlaylistByShortId({
-      shortId: params.shortId,
-      supabase,
-    }));
-  }
-
-  // If the playlist already has a set filter, use that
-  let playlistVideosSavedContentFilter: PlaylistVideosFilter | undefined;
-  if (isUserPlaylist(playlist) && playlist?.sorted_by && playlist?.sort_order) {
-    playlistVideosSavedContentFilter = {
-      type: "playlist",
-      sort: {
-        key: playlist.sorted_by as SortKey<PlaylistVideo>,
-        order: playlist.sort_order as SortOrder,
-      },
-    };
-  }
-
-  if (!playlist) {
-    console.error(`Playlist was not found`);
-    redirect(302, "/");
-  }
-
   if (!isPlaylistVideosFilter(contentFilter)) {
     throw new Error(`Invalid content filter`);
   }
@@ -76,34 +41,36 @@ export const load: PageServerLoad = async ({
   const currentPage = getPaginationQueryParams({
     searchParams: url.searchParams,
   });
+  console.log(params.shortId);
 
-  const finalContentFilter = playlistVideosSavedContentFilter
-    ? playlistVideosSavedContentFilter
-    : contentFilter;
+  // Check if user has explicitly changed the sort from the URL
+  const hasExplicitSortInUrl =
+    url.searchParams.has("sort") || url.searchParams.has("order");
 
-  // Run all major operations in parallel
+  // Always fetch fresh data using the single getPlaylistData call
   const [
-    { videos, count: videosCount },
-    playlistDuration,
-    processedImageUrl,
-    form,
+    { playlist, videos, videosCount, playlistDuration },
+    // We'll create the form after we get the playlist data
   ] = await Promise.all([
-    // Get playlist videos
-    getPlaylistVideos({
-      supabase,
+    // Get everything in single call
+    // Only override saved sort if user explicitly changed it via URL
+    getPlaylistData({
+      shortId: params.shortId,
+      contentFilter,
       currentPage,
       limit: DEFAULT_NUM_VIDEOS_PAGINATION,
-      contentFilter: finalContentFilter,
-      playlistId: playlist.id,
-    }),
-
-    // Get playlist total duration
-    getPlaylistTotalDuration({
-      playlistId: playlist.id,
       supabase,
+      session,
     }),
+  ]);
 
-    // Process playlist image if needed
+  if (!playlist) {
+    console.error(`Playlist was not found`);
+    redirect(302, "/");
+  }
+
+  // Now process image and create form with the fresh playlist data
+  const [processedImageUrl, form] = await Promise.all([
     playlist.processedImageUrl
       ? Promise.resolve(playlist.processedImageUrl)
       : getCroppedPlaylistImageUrlServer({
@@ -111,8 +78,6 @@ export const load: PageServerLoad = async ({
           thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
           thumbnailUrl: playlist.thumbnail_url,
         }),
-
-    // Validate form
     superValidate(playlist, zod(playlistSchema)),
   ]);
 
@@ -121,12 +86,27 @@ export const load: PageServerLoad = async ({
     playlist.processedImageUrl = processedImageUrl;
   }
 
+  // Determine the effective content filter (what was actually used for sorting)
+  const effectiveContentFilter =
+    isUserPlaylist(playlist) &&
+    playlist.sorted_by &&
+    playlist.sort_order &&
+    !hasExplicitSortInUrl
+      ? {
+          type: "playlist" as const,
+          sort: {
+            key: playlist.sorted_by as SortKey<PlaylistVideo>,
+            order: playlist.sort_order as SortOrder,
+          },
+        }
+      : contentFilter;
+
   return {
     playlist,
-    playlists,
+    playlists, // Still return the cached playlists for other uses
     videos,
     videosCount,
-    contentFilter: finalContentFilter,
+    contentFilter: effectiveContentFilter,
     currentPage,
     playlistDuration,
     form,

@@ -25,6 +25,7 @@
   import * as Resizable from "$lib/components/ui/resizable";
   import Sidebar from "$lib/components/sidebar.svelte";
   import ScrollArea from "$lib/components/ui/scroll-area/scroll-area.svelte";
+  import { injectSpeedInsights } from "@vercel/speed-insights/sveltekit";
   import "../app.css";
 
   import { COLLAPSED_SIDEBAR_SIZE } from "$lib/constants/layout";
@@ -38,6 +39,8 @@
   import { handleUpdateProfileContentDisplay } from "$lib/components/profile/profile-service";
   import { setSourceState } from "$lib/state/source.svelte";
   import Loader from "$lib/components/loader.svelte";
+
+  injectSpeedInsights();
 
   // Initialize all state contexts
   const layoutState = setLayoutState();

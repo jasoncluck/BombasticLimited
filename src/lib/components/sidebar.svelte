@@ -270,7 +270,6 @@
           size="icon"
           onclick={async () => {
             const { playlist } = await handleCreatePlaylist({
-              playlists,
               session,
               supabase,
             });

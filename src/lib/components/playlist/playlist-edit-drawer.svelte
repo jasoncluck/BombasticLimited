@@ -27,6 +27,7 @@
   import { parseImageProperties } from "./playlist";
   import type { Session } from "@supabase/supabase-js";
   import { page } from "$app/state";
+  import { getPlaylistState } from "$lib/state/playlist.svelte";
 
   let {
     form,
@@ -44,6 +45,7 @@
     session: Session | null;
   } = $props();
 
+  const playlistState = getPlaylistState();
   let isSubmitting = $state(false);
   let isPublic = $state(playlist.type === "Public");
   const flash = getFlash(page);
@@ -106,7 +108,16 @@
   });
 </script>
 
-<Drawer.Root bind:open handleOnly={true} nested={false}>
+<Drawer.Root
+  bind:open
+  handleOnly={true}
+  nested={false}
+  onClose={() => {
+    if (open === false) {
+      playlistState.openEditPlaylist = false;
+    }
+  }}
+>
   {#if !isPlaylistOwner}
     <div class="outline-none">
       {@render triggerSnippet()}

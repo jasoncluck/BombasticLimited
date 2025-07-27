@@ -1,14 +1,10 @@
 import { isPlaylistVideosFilter } from "$lib/components/content/content-filter";
-import {
-  getPlaylistByShortId,
-  getPlaylistVideo,
-  getPlaylistVideos,
-} from "$lib/supabase/playlists";
+import { getPlaylistVideoContext } from "$lib/supabase/playlists";
 import { isVideoWithTimestamp } from "$lib/supabase/videos";
 import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 import { parseImageProperties } from "$lib/components/playlist/playlist";
-import { getCroppedPlaylistImageUrlServer } from "$lib/server/vercel-image-processor";
+import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
 
 export const load: PageServerLoad = async ({
   locals: { supabase },
@@ -20,71 +16,82 @@ export const load: PageServerLoad = async ({
 
   const videoId = params.videoId;
 
-  // Run parent() and getPlaylistByShortId in parallel
-  const [{ playlists, contentFilter }, { playlist: profilePlaylist }] =
-    await Promise.all([
-      parent(),
-      getPlaylistByShortId({
-        shortId: params.shortId,
-        supabase,
-      }),
-    ]);
+  // Get authenticated user securely
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-  if (!profilePlaylist) {
-    console.error(
-      "Could not playlist with that ID or invalid session, redirecting to video",
-    );
-    redirect(303, `/video/${params.videoId}`);
+  if (userError) {
+    console.error("Error getting user:", userError);
   }
+
+  // Run parent() first to get contentFilter
+  const { playlists, contentFilter } = await parent();
 
   if (!isPlaylistVideosFilter(contentFilter)) {
     throw new Error(`Invalid content filter`);
   }
 
-  // Run getPlaylistVideo and image processing in parallel
-  const [{ video }, processedImageUrl] = await Promise.all([
-    getPlaylistVideo({
-      videoId,
-      supabase,
-      playlistId: profilePlaylist.id,
-    }),
-    profilePlaylist.processedImageUrl
-      ? Promise.resolve(profilePlaylist.processedImageUrl)
-      : getCroppedPlaylistImageUrlServer({
-          imageProperties: parseImageProperties(
-            profilePlaylist.image_properties,
-          ),
-          thumbnailMaxResUrl: profilePlaylist.thumbnail_maxres_url,
-          thumbnailUrl: profilePlaylist.thumbnail_url,
-        }),
-  ]);
+  // Get playlist video context - sorting will be applied in the TypeScript function
+  const videoContextResult = await getPlaylistVideoContext({
+    shortId: params.shortId,
+    videoId,
+    contentFilter, // This will be used for sorting in the query
+    supabase,
+    userId: user?.id,
+    contextLimit: 5,
+  });
 
-  if (!video) {
-    throw new Error("Could not find video specified.");
+  const {
+    playlist: profilePlaylist,
+    currentVideo,
+    nextVideos,
+    totalVideosCount,
+    currentVideoIndex,
+    nextVideo,
+  } = videoContextResult;
+
+  if (!profilePlaylist) {
+    console.error("Could not find playlist with that ID, redirecting to video");
+    redirect(303, `/video/${params.videoId}`);
   }
+
+  if (!currentVideo) {
+    console.error("Could not find video in playlist, redirecting to video");
+    redirect(303, `/video/${params.videoId}`);
+  }
+
+  // Process playlist image if needed
+  const processedImageUrl = profilePlaylist.processedImageUrl
+    ? profilePlaylist.processedImageUrl
+    : await getCroppedPlaylistImageUrlServer({
+        imageProperties: parseImageProperties(profilePlaylist.image_properties),
+        thumbnailMaxResUrl: profilePlaylist.thumbnail_maxres_url,
+        thumbnailUrl: profilePlaylist.thumbnail_url,
+      });
 
   // Update playlist with processed image URL if it was generated
   if (!profilePlaylist.processedImageUrl) {
     profilePlaylist.processedImageUrl = processedImageUrl;
   }
 
-  // Get related videos (depends on video being fetched first)
-  const { videos } = await getPlaylistVideos({
-    contentFilter,
-    playlistId: profilePlaylist.id,
-    currentVideo: video,
-    limit: 5,
-    supabase,
-  });
-
   return {
-    video,
-    videos,
+    video: currentVideo,
+    videos: nextVideos,
     profilePlaylist,
     playlists,
     contentFilter,
-    timestampStartSeconds: isVideoWithTimestamp(video)
-      ? video.video_start_seconds
+    timestampStartSeconds: isVideoWithTimestamp(currentVideo)
+      ? currentVideo.video_start_seconds
       : 0,
+    // Navigation data
+    currentVideoIndex,
+    totalVideos: totalVideosCount,
+    nextVideo,
+    // Additional context for UI
+    isLastVideo: currentVideoIndex === totalVideosCount - 1,
+    playlistPosition: currentVideo.video_position,
+    hasMoreVideos: nextVideos.length > 0,
   };
 };

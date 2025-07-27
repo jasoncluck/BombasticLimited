@@ -1,7 +1,7 @@
 import { isVideoFilter } from "$lib/components/content/content-filter";
 import { parseImageProperties } from "$lib/components/playlist/playlist";
 import { SOURCES } from "$lib/constants/source";
-import { getCroppedPlaylistImageUrlServer } from "$lib/server/vercel-image-processor";
+import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
 import { searchPlaylists } from "$lib/supabase/playlists";
 import {
   getVideos,
@@ -51,46 +51,59 @@ export const load: PageServerLoad = async ({
     // Search playlists in parallel with video searches
     searchPlaylists({
       searchString,
+      limit: 6,
       supabase,
       session,
     }),
   ]);
 
-  // Reconstruct the sourceVideos object from parallel results
-  const sourceVideos: SourceVideos = {
-    giantbomb: [],
-    jeffgerstmann: [],
-    nextlander: [],
-    remap: [],
-  };
+  // Process everything in parallel now
+  const [processedSourceVideos, processedPlaylistSearchResults] =
+    await Promise.all([
+      // Process source videos (this is fast, just object reconstruction)
+      Promise.resolve(
+        (() => {
+          const sourceVideos: SourceVideos = {
+            giantbomb: [],
+            jeffgerstmann: [],
+            nextlander: [],
+            remap: [],
+          };
 
-  const sourceVideosCount: SourceVideosCount = {
-    giantbomb: null,
-    jeffgerstmann: null,
-    nextlander: null,
-    remap: null,
-  };
+          const sourceVideosCount: SourceVideosCount = {
+            giantbomb: null,
+            jeffgerstmann: null,
+            nextlander: null,
+            remap: null,
+          };
 
-  sourceVideosResults.forEach(({ source, videos, count }) => {
-    sourceVideos[source] = videos;
-    sourceVideosCount[source] = count;
-  });
+          sourceVideosResults.forEach(({ source, videos, count }) => {
+            sourceVideos[source] = videos;
+            sourceVideosCount[source] = count;
+          });
 
-  // Process playlist images in parallel
-  const processedPlaylistSearchResults = await Promise.all(
-    playlistSearchResults.map(async (profilePlaylist) => ({
-      ...profilePlaylist,
-      processedImageUrl: await getCroppedPlaylistImageUrlServer({
-        imageProperties: parseImageProperties(profilePlaylist.image_properties),
-        thumbnailMaxResUrl: profilePlaylist.thumbnail_maxres_url,
-        thumbnailUrl: profilePlaylist.thumbnail_url,
-      }),
-    })),
-  );
+          return { sourceVideos, sourceVideosCount };
+        })(),
+      ),
+
+      // Process playlist images in parallel (FIXED: all images processed simultaneously)
+      Promise.all(
+        playlistSearchResults.map(async (profilePlaylist) => ({
+          ...profilePlaylist,
+          processedImageUrl: await getCroppedPlaylistImageUrlServer({
+            imageProperties: parseImageProperties(
+              profilePlaylist.image_properties,
+            ),
+            thumbnailMaxResUrl: profilePlaylist.thumbnail_maxres_url,
+            thumbnailUrl: profilePlaylist.thumbnail_url,
+          }),
+        })),
+      ),
+    ]);
 
   return {
-    sourceVideos: sourceVideos ?? [],
-    sourceVideosCount,
+    sourceVideos: processedSourceVideos.sourceVideos ?? [],
+    sourceVideosCount: processedSourceVideos.sourceVideosCount,
     searchString,
     playlists,
     playlistsCount,

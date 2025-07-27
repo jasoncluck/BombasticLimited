@@ -28,6 +28,7 @@
   import { getFlash, updateFlash } from "sveltekit-flash-message";
   import { page } from "$app/state";
   import type { Session } from "@supabase/supabase-js";
+  import { getPlaylistState } from "$lib/state/playlist.svelte";
 
   let {
     form,
@@ -45,6 +46,7 @@
     session: Session | null;
   } = $props();
 
+  const playlistState = getPlaylistState();
   const flash = getFlash(page);
   let isSubmitting = $state(false);
   let isPublic = $state(playlist.type === "Public");
@@ -105,7 +107,14 @@
   });
 </script>
 
-<Dialog.Root bind:open>
+<Dialog.Root
+  bind:open
+  onOpenChange={(open) => {
+    if (open === false) {
+      playlistState.openEditPlaylist = false;
+    }
+  }}
+>
   {#if isPlaylistOwner}
     <Dialog.Trigger class="outline-none">
       {@render trigger()}

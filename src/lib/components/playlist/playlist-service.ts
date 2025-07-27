@@ -45,11 +45,10 @@ export const PLAYLIST_IMAGE_CROP_DEFAULTS: ImageProperties = {
 };
 
 export async function handleCreatePlaylist({
-  playlists,
   session,
   supabase,
 }: {
-  playlists: Playlist[] | null;
+  // Removed playlists parameter since we don't need it anymore
   session: Session | null;
   supabase: SupabaseClient<Database>;
 }) {
@@ -57,19 +56,12 @@ export async function handleCreatePlaylist({
     goto("/login");
     throw new Error("Attempted to create a playlist without a valid session.");
   }
-  const baseName = "New Playlist";
-  let playlistName = baseName;
-  let i = 2;
 
-  while (playlists?.find((playlist) => playlist.name === playlistName)) {
-    playlistName = `${baseName} #${i}`;
-    i++;
-  }
-
+  // No need to generate name here - the database will handle it
   const { playlist, error } = await createPlaylist({
-    name: playlistName,
     session,
     supabase,
+    // No name parameter - let the database generate it
   });
 
   if (error) {
@@ -82,6 +74,7 @@ export async function handleCreatePlaylist({
       showNotification("Error creating playlist", "error");
     }
   }
+
   // Trigger populates short ID
   if (!error && playlist) {
     showNotification(`Created Playlist: ${playlist.name}`);
