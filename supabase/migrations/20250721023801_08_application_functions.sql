@@ -182,7 +182,6 @@ $$;
 
 CREATE OR REPLACE FUNCTION "public"."search_videos"(
     "search_term" "text",
-    "limit_count" integer DEFAULT 500,
     "offset_count" integer DEFAULT 0
 ) 
 RETURNS TABLE(
@@ -282,7 +281,6 @@ BEGIN
     ORDER BY 
         rv.search_rank DESC,
         rv.published_at DESC
-    LIMIT limit_count 
     OFFSET offset_count;
 END;
 $$;
