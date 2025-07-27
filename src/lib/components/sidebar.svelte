@@ -36,6 +36,10 @@
   const selectedSource = $derived(page.params.source);
   const selectedPlaylistIdParam = $derived(page.params.shortId);
 
+  // Add local state for immediate selection feedback
+  let localSelectedSource = $state<string | null>(null);
+  let localSelectedPlaylist = $state<string | null>(null);
+
   const contentState = getContentState();
   const playlistState = getPlaylistState();
   const sourceState = getSourceState();
@@ -46,6 +50,47 @@
   // Source drag and drop state
   let draggedSourceIndex = $state<number | null>(null);
   let targetSourceIndex = $state<number | null>(null);
+
+  // Helper function to determine if a source is selected
+  function isSourceSelected(source: string): boolean {
+    return (
+      localSelectedSource === source ||
+      (localSelectedSource === null && selectedSource === source)
+    );
+  }
+
+  // Helper function to determine if a playlist is selected
+  function isPlaylistSelected(playlistShortId: string): boolean {
+    return (
+      localSelectedPlaylist === playlistShortId ||
+      (localSelectedPlaylist === null &&
+        selectedPlaylistIdParam === playlistShortId)
+    );
+  }
+
+  // Handle source click with immediate feedback
+  async function handleSourceClick(source: string) {
+    localSelectedSource = source;
+    localSelectedPlaylist = null; // Clear playlist selection
+    try {
+      await goto(`/${source}`);
+    } finally {
+      // Reset local state after navigation (whether successful or not)
+      localSelectedSource = null;
+    }
+  }
+
+  // Handle playlist click with immediate feedback
+  async function handlePlaylistClickWithFeedback(playlist: Playlist) {
+    localSelectedPlaylist = playlist.short_id;
+    localSelectedSource = null; // Clear source selection
+    try {
+      await playlistState.handlePlaylistClick(playlist);
+    } finally {
+      // Reset local state after navigation
+      localSelectedPlaylist = null;
+    }
+  }
 
   // Create drag and drop handlers for playlists
   const dragDropHandlers = $derived(
@@ -195,11 +240,11 @@
         draggable={!!session}
         class="{sourceState.getButtonClasses({
           index: i,
-          isSelected: selectedSource === source,
+          isSelected: isSourceSelected(source),
           isSidebarCollapsed,
         })} {getSourceDragClasses(i)}"
         size={!isSidebarCollapsed ? "default" : "icon"}
-        onclick={() => goto(`/${source}`)}
+        onclick={() => handleSourceClick(source)}
         title={SOURCE_INFO[source].displayName}
         onmouseenter={() => sourceState.handleMouseEnter(i)}
         onmouseleave={() => sourceState.handleMouseLeave(i)}
@@ -309,8 +354,9 @@
               {supabase}
               {session}
             >
-              {@const isSelectedPlaylist =
-                selectedPlaylistIdParam === playlist.short_id}
+              {@const isSelectedPlaylist = isPlaylistSelected(
+                playlist.short_id,
+              )}
 
               <Button
                 variant="ghost"
@@ -325,7 +371,7 @@
                   session,
                 })}
                 size={!isSidebarCollapsed ? "default" : "icon"}
-                onclick={() => playlistState.handlePlaylistClick(playlist)}
+                onclick={() => handlePlaylistClickWithFeedback(playlist)}
                 title={playlist.name}
                 value={playlist.name}
                 onmouseenter={() => playlistState.handleMouseEnter(i)}
