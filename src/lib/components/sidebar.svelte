@@ -354,16 +354,12 @@
               {supabase}
               {session}
             >
-              {@const isSelectedPlaylist = isPlaylistSelected(
-                playlist.short_id,
-              )}
-
               <Button
                 variant="ghost"
                 draggable={true}
                 class={playlistState.getButtonClasses({
                   index: i,
-                  isSelected: isSelectedPlaylist,
+                  isSelected: isPlaylistSelected(playlist.short_id),
                   itemType: "playlist",
                   isSidebarCollapsed,
                   playlists,
