@@ -625,7 +625,12 @@ export type Database = {
         Returns: boolean
       }
       search_playlists: {
-        Args: { search_term: string; current_user_id?: string }
+        Args: {
+          search_term: string
+          current_user_id?: string
+          limit_count?: number
+          offset_count?: number
+        }
         Returns: {
           id: number
           short_id: string
@@ -639,14 +644,11 @@ export type Database = {
           type: Database["public"]["Enums"]["playlist_type"]
           youtube_id: string
           profile_username: string
+          search_rank: number
         }[]
       }
       search_videos: {
-        Args: {
-          search_term: string
-          limit_count?: number
-          offset_count?: number
-        }
+        Args: { search_term: string; offset_count?: number }
         Returns: {
           id: string
           source: Database["public"]["Enums"]["source"]

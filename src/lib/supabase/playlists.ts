@@ -658,6 +658,7 @@ export async function searchPlaylists({
   error: PostgrestError | null;
   count?: number | null;
 }> {
+  console.log(searchString);
   const query = supabase
     .rpc(
       "search_playlists",
@@ -677,10 +678,12 @@ export async function searchPlaylists({
     query.range(startIndex, endIndex);
   }
 
+  console.log(playlists);
+
   if (error) {
-    showNotification(
+    console.error(
       "Encountered an error when searching playlists and was unable to complete the request.",
-      "error",
+      error,
     );
   }
   return { playlists: playlists ?? [], error, count };

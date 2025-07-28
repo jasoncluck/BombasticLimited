@@ -57,6 +57,8 @@ export const load: PageServerLoad = async ({
     }),
   ]);
 
+  console.log(playlistSearchResults);
+
   // Process everything in parallel now
   const [processedSourceVideos, processedPlaylistSearchResults] =
     await Promise.all([

@@ -1852,7 +1852,9 @@ $$;
 
 CREATE OR REPLACE FUNCTION "public"."search_playlists"(
     "search_term" "text",
-    "current_user_id" uuid DEFAULT NULL
+    "current_user_id" uuid DEFAULT NULL,
+    "limit_count" integer DEFAULT 50,
+    "offset_count" integer DEFAULT 0
 ) 
 RETURNS TABLE(
     "id" bigint, 
@@ -1866,24 +1868,43 @@ RETURNS TABLE(
     "created_by" uuid,
     "type" public.playlist_type,
     "youtube_id" text,
-    "profile_username" text
+    "profile_username" text,
+    "search_rank" real
 )
 LANGUAGE "plpgsql"
 STABLE
-SET search_path = ''
 AS $$
 DECLARE
     clean_term text;
     words text[];
+    word_count int;
+    phrase_query tsquery;
+    plain_query tsquery;
 BEGIN
+    -- Get current user if not provided
+    IF current_user_id IS NULL THEN
+        current_user_id := auth.uid();
+    END IF;
+    
     -- Early exit for empty search
     IF search_term IS NULL OR trim(search_term) = '' OR length(trim(search_term)) < 1 THEN
         RETURN;
     END IF;
 
-    -- Basic cleanup
+    -- Pre-compute all values
     clean_term := lower(trim(regexp_replace(search_term, '\s+', ' ', 'g')));
     words := string_to_array(clean_term, ' ');
+    word_count := array_length(words, 1);
+    
+    -- Pre-compile tsqueries (handle potential errors)
+    BEGIN
+        phrase_query := phraseto_tsquery('english', search_term);
+        plain_query := plainto_tsquery('english', search_term);
+    EXCEPTION 
+        WHEN OTHERS THEN
+            phrase_query := NULL;
+            plain_query := NULL;
+    END;
     
     RETURN QUERY
     SELECT 
@@ -1899,73 +1920,53 @@ BEGIN
         p.type,
         p.youtube_id,
         prof.username AS profile_username,
-        CASE 
-            -- Exact phrase in name (highest priority)
-            WHEN lower(p.name) LIKE '%' || clean_term || '%' THEN 1000.0
-            -- Name starts with search term
-            WHEN lower(p.name) LIKE clean_term || '%' THEN 950.0
-            -- All words present in name
-            WHEN array_length(words, 1) > 1 AND (
+        -- Simplified ranking to avoid type issues
+        (CASE 
+            WHEN lower(p.name) LIKE '%' || clean_term || '%' THEN 1000
+            WHEN lower(p.name) LIKE clean_term || '%' THEN 950
+            WHEN word_count > 1 AND (
                 SELECT COUNT(*) 
-                FROM unnest(significant_words) AS sw 
-                WHERE lower(p.name) LIKE '%' || sw || '%'
-            ) = array_length(significant_words, 1) THEN 800.0
-            -- High similarity in name (FIXED: added extensions. prefix)
-            WHEN extensions.similarity(lower(p.name), clean_term) > 0.5 THEN 
-                600.0 + extensions.similarity(lower(p.name), clean_term) * 100.0
-            -- Exact phrase in description
-            WHEN p.description IS NOT NULL AND lower(p.description) LIKE '%' || clean_term || '%' THEN 500.0
-            -- Single word exact match in name
-            WHEN array_length(words, 1) = 1 AND lower(p.name) LIKE '%' || words[1] || '%' THEN 450.0
-            -- Description starts with search term
-            WHEN p.description IS NOT NULL AND lower(p.description) LIKE clean_term || '%' THEN 350.0
-            -- Single word in description
-            WHEN array_length(words, 1) = 1 AND p.description IS NOT NULL AND lower(p.description) LIKE '%' || words[1] || '%' THEN 300.0
-            -- Creator username matches
-            WHEN prof.username IS NOT NULL AND lower(prof.username) LIKE '%' || clean_term || '%' THEN 250.0
-            ELSE 0.0 
-        END::real AS search_rank
+                FROM unnest(words) AS word 
+                WHERE lower(p.name) LIKE '%' || word || '%'
+            ) = word_count THEN 900
+            WHEN phrase_query IS NOT NULL AND p.search_vector @@ phrase_query THEN 850
+            WHEN plain_query IS NOT NULL AND p.search_vector @@ plain_query THEN 800
+            WHEN p.description IS NOT NULL AND lower(p.description) LIKE '%' || clean_term || '%' THEN 500
+            WHEN word_count = 1 AND lower(p.name) LIKE '%' || words[1] || '%' THEN 450
+            WHEN p.description IS NOT NULL AND lower(p.description) LIKE clean_term || '%' THEN 350
+            WHEN word_count = 1 AND p.description IS NOT NULL AND lower(p.description) LIKE '%' || words[1] || '%' THEN 300
+            WHEN prof.username IS NOT NULL AND lower(prof.username) LIKE '%' || clean_term || '%' THEN 250
+            ELSE 0 
+        END)::real AS search_rank
     FROM public.playlists p
     LEFT JOIN public.profiles prof ON p.created_by = prof.id
-    WHERE (
-        -- Accessible playlists (public or owned by current user)
-        p.type = 'Public' 
-        OR (current_user_id IS NOT NULL AND p.created_by = current_user_id)
-    )
-    AND (
-        -- Search criteria (FIXED: added extensions. prefix)
-        lower(p.name) LIKE '%' || clean_term || '%'
-        OR lower(p.description) LIKE '%' || clean_term || '%'
-        OR (p.search_vector IS NOT NULL AND p.search_vector @@ phraseto_tsquery('english', phrase_query))
-        OR (safe_query != '' AND p.search_vector IS NOT NULL AND p.search_vector @@ to_tsquery('english', safe_query))
-        OR extensions.similarity(lower(p.name), clean_term) > 0.3
-    )
-    ORDER BY search_rank DESC, p.created_at DESC
-    LIMIT 50;
-
-EXCEPTION
-    WHEN OTHERS THEN
-        -- Simple fallback (ADDED: exception handling like search_videos)
-        RETURN QUERY
-        SELECT 
-            p.id, p.short_id, p.name, p.description, p.thumbnail_url, p.thumbnail_maxres_url,
-            p.image_properties, p.created_at, p.created_by, p.type, p.youtube_id,
-            prof.username AS profile_username,
-            CAST(100.0 AS real) AS search_rank
-        FROM public.playlists p
-        LEFT JOIN public.profiles prof ON p.created_by = prof.id
-        WHERE (
-            p.type = 'Public' 
-            OR (current_user_id IS NOT NULL AND p.created_by = current_user_id)
-        )
+    WHERE 
+        -- Access control
+        (p.type = 'Public' OR (current_user_id IS NOT NULL AND p.created_by = current_user_id))
         AND (
-            lower(p.name) LIKE '%' || lower(search_term) || '%'
-            OR lower(p.description) LIKE '%' || lower(search_term) || '%'
+            -- Search criteria
+            lower(p.name) LIKE '%' || clean_term || '%'
+            OR (p.description IS NOT NULL AND lower(p.description) LIKE '%' || clean_term || '%')
+            OR (phrase_query IS NOT NULL AND p.search_vector @@ phrase_query)
+            OR (plain_query IS NOT NULL AND p.search_vector @@ plain_query)
+            OR (word_count = 1 AND (
+                lower(p.name) LIKE '%' || words[1] || '%'
+                OR (p.description IS NOT NULL AND lower(p.description) LIKE '%' || words[1] || '%')
+            ))
+            OR (prof.username IS NOT NULL AND lower(prof.username) LIKE '%' || clean_term || '%')
         )
-        ORDER BY 
-            CASE WHEN lower(p.name) LIKE '%' || lower(search_term) || '%' THEN 1 ELSE 2 END,
-            p.created_at DESC
-        LIMIT 50;
+    ORDER BY 
+        (CASE 
+            WHEN lower(p.name) LIKE '%' || clean_term || '%' THEN 1000
+            WHEN lower(p.name) LIKE clean_term || '%' THEN 950
+            WHEN phrase_query IS NOT NULL AND p.search_vector @@ phrase_query THEN 850
+            WHEN plain_query IS NOT NULL AND p.search_vector @@ plain_query THEN 800
+            WHEN p.description IS NOT NULL AND lower(p.description) LIKE '%' || clean_term || '%' THEN 500
+            ELSE 0 
+        END) DESC,
+        p.created_at DESC
+    LIMIT limit_count 
+    OFFSET offset_count;
 END;
 $$;
 
