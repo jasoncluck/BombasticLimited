@@ -4,7 +4,8 @@
   import { SOURCE_INFO, SOURCES } from "$lib/constants/source";
   import * as Popover from "$lib/components/ui/popover";
   import { activeStreams } from "$lib/state/streaming.svelte";
-  import { goto, invalidate } from "$app/navigation";
+  import { goto, invalidate, preloadData } from "$app/navigation";
+  import { navigating } from "$app/state";
   import { getContentState } from "$lib/state/content.svelte";
   import { getPlaylistState } from "$lib/state/playlist.svelte";
   import { page } from "$app/state";
@@ -16,6 +17,7 @@
   import PlaylistContextMenu from "../playlist/playlist-context-menu.svelte";
   import { handleCreatePlaylist } from "../playlist/playlist-service";
   import type { Playlist } from "$lib/supabase/playlists";
+  import { SvelteMap } from "svelte/reactivity";
 
   let {
     supabase,
@@ -59,18 +61,29 @@
   // Effective selection state (local takes precedence)
   const effectiveSelection = $derived(localSelection ?? urlSelection);
 
-  // Helper functions to check selection state
-  const isSourceSelected = $derived(
-    (source: string) =>
-      effectiveSelection?.type === "source" &&
-      effectiveSelection.value === source,
-  );
+  // Memoized selection maps for better performance
+  const sourceSelectionMap = $derived(() => {
+    const map = new SvelteMap<string, boolean>();
+    if (effectiveSelection?.type === "source") {
+      map.set(effectiveSelection.value, true);
+    }
+    return map;
+  });
 
-  const isPlaylistSelected = $derived(
-    (playlistShortId: string) =>
-      effectiveSelection?.type === "playlist" &&
-      effectiveSelection.value === playlistShortId,
-  );
+  const playlistSelectionMap = $derived(() => {
+    const map = new SvelteMap<string, boolean>();
+    if (effectiveSelection?.type === "playlist") {
+      map.set(effectiveSelection.value, true);
+    }
+    return map;
+  });
+
+  // Optimized helper functions to check selection state
+  const isSourceSelected = (source: string) =>
+    sourceSelectionMap().get(source) ?? false;
+
+  const isPlaylistSelected = (playlistShortId: string) =>
+    playlistSelectionMap().get(playlistShortId) ?? false;
 
   // Reset local state when URL params change (navigation completed)
   $effect(() => {
@@ -110,16 +123,56 @@
     }),
   );
 
-  // Enhanced source click handler with immediate UI update
+  // Enhanced source click handler with immediate UI update and performance monitoring
   function handleSourceClick(source: string) {
+    // Performance monitoring (optional - remove in production if not needed)
+    performance.mark("source-click-start");
+
+    // Update UI state immediately for instant feedback
     localSelection = { type: "source", value: source };
-    goto(`/${source}`);
+
+    // Defer navigation to prevent blocking UI updates
+    requestAnimationFrame(() => {
+      goto(`/${source}`);
+      performance.mark("source-navigation-started");
+      performance.measure(
+        "source-ui-update",
+        "source-click-start",
+        "source-navigation-started",
+      );
+    });
   }
 
-  // Enhanced playlist click handler with immediate UI update
+  // Enhanced playlist click handler with immediate UI update and deferred navigation
   function handlePlaylistClick(playlist: Playlist) {
+    // Performance monitoring (optional - remove in production if not needed)
+    performance.mark("playlist-click-start");
+
+    // Update UI state immediately for instant feedback
     localSelection = { type: "playlist", value: playlist.short_id };
-    playlistState.handlePlaylistClick(playlist);
+
+    // Defer the heavy navigation operation to prevent blocking UI updates
+    requestAnimationFrame(() => {
+      goto(`/playlist/${encodeURI(playlist.short_id)}`, {
+        // Optional navigation optimizations
+        noScroll: false, // Set to true if you don't want to scroll to top
+        keepFocus: false, // Set to true to keep focus on current element
+      });
+      performance.mark("playlist-navigation-started");
+      performance.measure(
+        "playlist-ui-update",
+        "playlist-click-start",
+        "playlist-navigation-started",
+      );
+    });
+  }
+
+  // Preload playlist route on hover for better perceived performance
+  function handlePlaylistHover(playlist: Playlist, index: number) {
+    playlistState.handleMouseEnter(index);
+
+    // Preload the route data for faster navigation
+    preloadData(`/playlist/${encodeURI(playlist.short_id)}`);
   }
 
   // Source drag and drop handlers
@@ -255,14 +308,17 @@
 <aside class="h-full overflow-hidden">
   <div class="flex flex-col {!isSidebarCollapsed ? 'mx-2' : 'mx-1'}">
     {#each orderedSources as source, i (source)}
+      {@const isSelected = isSourceSelected(source)}
+      {@const buttonClasses = sourceState.getButtonClasses({
+        index: i,
+        isSelected,
+        isSidebarCollapsed,
+      })}
+
       <Button
         variant="ghost"
         draggable={!!session}
-        class="{sourceState.getButtonClasses({
-          index: i,
-          isSelected: isSourceSelected(source),
-          isSidebarCollapsed,
-        })} {getSourceDragClasses(i)}"
+        class="{buttonClasses} {getSourceDragClasses(i)}"
         size={!isSidebarCollapsed ? "default" : "icon"}
         onclick={() => handleSourceClick(source)}
         title={SOURCE_INFO[source].displayName}
@@ -360,6 +416,20 @@
       {:else if session && sidebarState.playlists.length > 0}
         <div class="flex flex-col">
           {#each sidebarState.playlists as playlist, i (playlist.id)}
+            {@const isSelected = isPlaylistSelected(playlist.short_id)}
+            {@const buttonClasses = playlistState.getButtonClasses({
+              index: i,
+              isSelected,
+              itemType: "playlist",
+              isSidebarCollapsed,
+              playlists: sidebarState.playlists,
+              selectedPlaylistIdParam:
+                effectiveSelection?.type === "playlist"
+                  ? effectiveSelection.value
+                  : undefined,
+              session,
+            })}
+
             <PlaylistContextMenu
               {playlist}
               {selectedPlaylistIdParam}
@@ -370,23 +440,12 @@
               <Button
                 variant="ghost"
                 draggable={true}
-                class={playlistState.getButtonClasses({
-                  index: i,
-                  isSelected: isPlaylistSelected(playlist.short_id),
-                  itemType: "playlist",
-                  isSidebarCollapsed,
-                  playlists: sidebarState.playlists,
-                  selectedPlaylistIdParam:
-                    effectiveSelection?.type === "playlist"
-                      ? effectiveSelection.value
-                      : undefined,
-                  session,
-                })}
+                class={buttonClasses}
                 size={!isSidebarCollapsed ? "default" : "icon"}
                 onclick={() => handlePlaylistClick(playlist)}
                 title={playlist.name}
                 value={playlist.name}
-                onmouseenter={() => playlistState.handleMouseEnter(i)}
+                onmouseenter={() => handlePlaylistHover(playlist, i)}
                 onmouseleave={() => playlistState.handleMouseLeave(i)}
                 ondragstart={(e) => dragDropHandlers.handleDragStart(e, i)}
                 ondragover={(e) => dragDropHandlers.handleDragOver(e, i)}
@@ -421,6 +480,15 @@
                     </span>
                   {/if}
                 </div>
+
+                <!-- Optional: Show loading state during navigation -->
+                {#if navigating?.to?.url.pathname.includes(playlist.short_id)}
+                  <div
+                    class="absolute inset-0 bg-black/10 flex items-center justify-center rounded"
+                  >
+                    <Loader class="w-4 h-4 animate-spin text-primary" />
+                  </div>
+                {/if}
               </Button>
             </PlaylistContextMenu>
           {/each}

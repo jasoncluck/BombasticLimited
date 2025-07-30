@@ -343,11 +343,6 @@ export class PlaylistStateClass {
       handleDragEnd,
     };
   }
-
-  // Navigation
-  handlePlaylistClick(playlist: Playlist) {
-    goto(`/playlist/${encodeURI(playlist.short_id)}`);
-  }
 }
 
 // Export the class type for use elsewhere
