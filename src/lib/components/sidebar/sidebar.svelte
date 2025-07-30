@@ -122,61 +122,44 @@
     }),
   );
 
-  // Enhanced source click handler with immediate UI update and performance monitoring
+  // Ultra-minimal source click handler - defer ALL work
   function handleSourceClick(source: string) {
-    // Performance monitoring (optional - remove in production if not needed)
-    performance.mark("source-click-start");
-
-    // Update UI state immediately for instant feedback
-    localSelection = { type: "source", value: source };
-
-    // Defer navigation to prevent blocking UI updates
-    requestAnimationFrame(() => {
+    // Only do the absolute minimum - schedule everything else
+    setTimeout(() => {
+      localSelection = { type: "source", value: source };
       goto(`/${source}`);
-      performance.mark("source-navigation-started");
-      performance.measure(
-        "source-ui-update",
-        "source-click-start",
-        "source-navigation-started",
-      );
-    });
+    }, 0);
   }
 
-  // Enhanced playlist click handler with immediate UI update and deferred navigation
+  // Ultra-minimal playlist click handler - defer ALL work including state updates
   function handlePlaylistClick(playlist: Playlist) {
-    // Performance monitoring (optional - remove in production if not needed)
-    performance.mark("playlist-click-start");
+    // Defer absolutely everything to prevent blocking
+    setTimeout(() => {
+      // Update selection state
+      localSelection = { type: "playlist", value: playlist.short_id };
 
-    // Update UI state immediately for instant feedback
-    localSelection = { type: "playlist", value: playlist.short_id };
-
-    // Defer the heavy navigation operation to prevent blocking UI updates
-    requestAnimationFrame(() => {
+      // Navigate
       goto(`/playlist/${encodeURI(playlist.short_id)}`, {
-        // Optional navigation optimizations
-        noScroll: false, // Set to true if you don't want to scroll to top
-        keepFocus: false, // Set to true to keep focus on current element
+        noScroll: false,
+        keepFocus: false,
       });
-      performance.mark("playlist-navigation-started");
-      performance.measure(
-        "playlist-ui-update",
-        "playlist-click-start",
-        "playlist-navigation-started",
-      );
+    }, 0);
+  }
+
+  // Optimized hover handler - use idle callback if available
+  function handlePlaylistHover(playlist: Playlist, index: number) {
+    // Use requestIdleCallback if available, otherwise requestAnimationFrame
+    const scheduleWork =
+      (globalThis as any).requestIdleCallback || requestAnimationFrame;
+
+    scheduleWork(() => {
+      playlistState.handleMouseEnter(index);
+      preloadData(`/playlist/${encodeURI(playlist.short_id)}`);
     });
   }
 
-  // Preload playlist route on hover for better perceived performance
-  function handlePlaylistHover(playlist: Playlist, index: number) {
-    playlistState.handleMouseEnter(index);
-
-    // Preload the route data for faster navigation
-    preloadData(`/playlist/${encodeURI(playlist.short_id)}`);
-  }
-
-  // Source drag and drop handlers
+  // Source drag and drop handlers remain the same but could be optimized too
   function handleSourceDragStart(event: DragEvent, index: number) {
-    // Prevent any drag behavior if session is null
     if (!session) {
       event.preventDefault();
       event.stopPropagation();
@@ -190,7 +173,6 @@
   }
 
   function handleSourceDragOver(event: DragEvent, index: number) {
-    // Don't allow drag over if session is null
     if (!session) {
       event.preventDefault();
       event.stopPropagation();
@@ -208,7 +190,6 @@
   }
 
   function handleSourceDragLeave(event: DragEvent) {
-    // Don't handle drag leave if session is null
     if (!session) {
       return false;
     }
@@ -223,7 +204,6 @@
   }
 
   async function handleSourceDrop(event: DragEvent, dropIndex: number) {
-    // Don't allow drop if session is null
     if (!session) {
       event.preventDefault();
       event.stopPropagation();
@@ -236,37 +216,37 @@
       return;
     }
 
-    // Reorder the sources array
-    const newOrderedSources = [...orderedSources];
-    const [movedSource] = newOrderedSources.splice(draggedSourceIndex, 1);
-    newOrderedSources.splice(dropIndex, 0, movedSource);
+    // Defer the heavy work
+    setTimeout(async () => {
+      const newOrderedSources = [...orderedSources];
+      const [movedSource] = newOrderedSources.splice(draggedSourceIndex!, 1);
+      newOrderedSources.splice(dropIndex, 0, movedSource);
 
-    // Only update if the order actually changed
-    if (JSON.stringify(newOrderedSources) !== JSON.stringify(orderedSources)) {
-      orderedSources = newOrderedSources;
+      if (
+        JSON.stringify(newOrderedSources) !== JSON.stringify(orderedSources)
+      ) {
+        orderedSources = newOrderedSources;
 
-      if (session?.user.id) {
-        try {
-          await updateProfileSources({
-            sources: orderedSources,
-            supabase,
-            session,
-          });
-          // Refresh sidebar to get updated profile
-          await refreshSidebar?.();
-        } catch (error) {
-          console.error("Failed to update source ordering:", error);
-          showNotification("An error occurred, unable to reorder.");
-          // Optionally revert the order on error
-          orderedSources = [...SOURCES];
+        if (session?.user.id) {
+          try {
+            await updateProfileSources({
+              sources: orderedSources,
+              supabase,
+              session,
+            });
+            await refreshSidebar?.();
+          } catch (error) {
+            console.error("Failed to update source ordering:", error);
+            showNotification("An error occurred, unable to reorder.");
+            orderedSources = [...SOURCES];
+          }
+          invalidate("supabase:db:profiles");
         }
-        invalidate("supabase:db:profiles");
       }
-    }
+    }, 0);
   }
 
   function handleSourceDragEnd() {
-    // Only reset state if session exists
     if (!session) {
       return false;
     }
@@ -321,8 +301,17 @@
         size={!isSidebarCollapsed ? "default" : "icon"}
         onclick={() => handleSourceClick(source)}
         title={SOURCE_INFO[source].displayName}
-        onmouseenter={() => sourceState.handleMouseEnter(i)}
-        onmouseleave={() => sourceState.handleMouseLeave(i)}
+        onmouseenter={() => {
+          // Defer non-critical hover work
+          const scheduleWork =
+            (globalThis as any).requestIdleCallback || requestAnimationFrame;
+          scheduleWork(() => sourceState.handleMouseEnter(i));
+        }}
+        onmouseleave={() => {
+          const scheduleWork =
+            (globalThis as any).requestIdleCallback || requestAnimationFrame;
+          scheduleWork(() => sourceState.handleMouseLeave(i));
+        }}
         ondragstart={(e) => handleSourceDragStart(e, i)}
         ondragover={(e) => handleSourceDragOver(e, i)}
         ondragleave={(e) => handleSourceDragLeave(e)}
@@ -388,8 +377,12 @@
           title="Create Playlist"
           class="my-1 rounded-full cursor-pointer"
           size="icon"
-          onclick={() =>
-            handleCreatePlaylist({ sidebarState, supabase, session })}
+          onclick={() => {
+            // Defer playlist creation work
+            setTimeout(() => {
+              handleCreatePlaylist({ sidebarState, supabase, session });
+            }, 0);
+          }}
         >
           <Plus />
         </Button>
@@ -445,7 +438,12 @@
                 title={playlist.name}
                 value={playlist.name}
                 onmouseenter={() => handlePlaylistHover(playlist, i)}
-                onmouseleave={() => playlistState.handleMouseLeave(i)}
+                onmouseleave={() => {
+                  const scheduleWork =
+                    (globalThis as any).requestIdleCallback ||
+                    requestAnimationFrame;
+                  scheduleWork(() => playlistState.handleMouseLeave(i));
+                }}
                 ondragstart={(e) => dragDropHandlers.handleDragStart(e, i)}
                 ondragover={(e) => dragDropHandlers.handleDragOver(e, i)}
                 ondragleave={(e) => dragDropHandlers.handleDragLeave(e, i)}
