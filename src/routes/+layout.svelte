@@ -182,10 +182,10 @@
     window.addEventListener("drop", handleDrop);
 
     // Set up streaming notifications
-    let streamingUnsubscribe: (() => void) | null = null;
-    layoutState.setupStreamingNotifications().then((unsubscribe) => {
-      streamingUnsubscribe = unsubscribe;
-    });
+    // let streamingUnsubscribe: (() => void) | null = null;
+    // layoutState.setupStreamingNotifications().then((unsubscribe) => {
+    //   streamingUnsubscribe = unsubscribe;
+    // });
 
     // Set up regular notifications
     const notificationStoreUnsubscribe = notificationStore.subscribe(
@@ -223,9 +223,9 @@
       // Clean up subscriptions
       authUnsubscribe();
       notificationStoreUnsubscribe();
-      if (streamingUnsubscribe) {
-        streamingUnsubscribe();
-      }
+      // if (streamingUnsubscribe) {
+      //   streamingUnsubscribe();
+      // }
       layoutState.cleanup();
 
       // Clean up state initializations
