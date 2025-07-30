@@ -80,6 +80,9 @@
     // Don't show loading if we're staying on the same path
     if (fromPath === toPath) return false;
 
+    // Don't show loading when navigating to search routes
+    if (toPath.startsWith("/search/")) return false;
+
     // Show loading for programmatic navigation and link clicks
     return navigating.type === "goto" || navigating.type === "link";
   });
