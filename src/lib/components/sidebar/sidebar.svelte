@@ -15,6 +15,7 @@
   import Button, { buttonVariants } from "../ui/button/button.svelte";
   import PlaylistContextMenu from "../playlist/playlist-context-menu.svelte";
   import { handleCreatePlaylist } from "../playlist/playlist-service";
+  import type { Playlist } from "$lib/supabase/playlists";
 
   let {
     supabase,
@@ -37,6 +38,29 @@
   const sidebarState = getSidebarState();
   const { userProfile } = $derived(sidebarState);
 
+  // Local state for immediate UI updates
+  let localSelectedSource = $state<string | null>(null);
+  let localSelectedPlaylistId = $state<string | null>(null);
+
+  // Compute the effective selected states (local state takes precedence)
+  const effectiveSelectedSource = $derived(
+    localSelectedSource ?? selectedSource,
+  );
+  const effectiveSelectedPlaylistId = $derived(
+    localSelectedPlaylistId ?? selectedPlaylistIdParam,
+  );
+
+  // Reset local state when URL params change (navigation completed)
+  $effect(() => {
+    // If the URL params have caught up to our local state, clear the local state
+    if (localSelectedSource === selectedSource) {
+      localSelectedSource = null;
+    }
+    if (localSelectedPlaylistId === selectedPlaylistIdParam) {
+      localSelectedPlaylistId = null;
+    }
+  });
+
   // Local state for sources ordering
   let orderedSources = $derived(userProfile?.sources ?? [...SOURCES]);
 
@@ -55,6 +79,20 @@
       },
     }),
   );
+
+  // Enhanced source click handler with immediate UI update
+  function handleSourceClick(source: string) {
+    localSelectedSource = source;
+    localSelectedPlaylistId = null; // Clear playlist selection when selecting a source
+    goto(`/${source}`);
+  }
+
+  // Enhanced playlist click handler with immediate UI update
+  function handlePlaylistClick(playlist: Playlist) {
+    localSelectedPlaylistId = playlist.short_id;
+    localSelectedSource = null; // Clear source selection when selecting a playlist
+    playlistState.handlePlaylistClick(playlist);
+  }
 
   // Source drag and drop handlers
   function handleSourceDragStart(event: DragEvent, index: number) {
@@ -194,11 +232,11 @@
         draggable={!!session}
         class="{sourceState.getButtonClasses({
           index: i,
-          isSelected: selectedSource === source,
+          isSelected: effectiveSelectedSource === source,
           isSidebarCollapsed,
         })} {getSourceDragClasses(i)}"
         size={!isSidebarCollapsed ? "default" : "icon"}
-        onclick={() => goto(`/${source}`)}
+        onclick={() => handleSourceClick(source)}
         title={SOURCE_INFO[source].displayName}
         onmouseenter={() => sourceState.handleMouseEnter(i)}
         onmouseleave={() => sourceState.handleMouseLeave(i)}
@@ -302,7 +340,7 @@
               {session}
             >
               {@const isSelectedPlaylist =
-                selectedPlaylistIdParam === playlist.short_id}
+                effectiveSelectedPlaylistId === playlist.short_id}
 
               <Button
                 variant="ghost"
@@ -313,11 +351,11 @@
                   itemType: "playlist",
                   isSidebarCollapsed,
                   playlists: sidebarState.playlists,
-                  selectedPlaylistIdParam,
+                  selectedPlaylistIdParam: effectiveSelectedPlaylistId,
                   session,
                 })}
                 size={!isSidebarCollapsed ? "default" : "icon"}
-                onclick={() => playlistState.handlePlaylistClick(playlist)}
+                onclick={() => handlePlaylistClick(playlist)}
                 title={playlist.name}
                 value={playlist.name}
                 onmouseenter={() => playlistState.handleMouseEnter(i)}
