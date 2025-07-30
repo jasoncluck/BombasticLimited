@@ -38,26 +38,56 @@
   const sidebarState = getSidebarState();
   const { userProfile } = $derived(sidebarState);
 
-  // Local state for immediate UI updates
-  let localSelectedSource = $state<string | null>(null);
-  let localSelectedPlaylistId = $state<string | null>(null);
+  // Single selection state for both sources and playlists
+  type SelectionState = {
+    type: "source" | "playlist";
+    value: string;
+  } | null;
 
-  // Compute the effective selected states (local state takes precedence)
-  const effectiveSelectedSource = $derived(
-    localSelectedSource ?? selectedSource,
+  let localSelection = $state<SelectionState>(null);
+
+  // Compute current selection from URL params
+  const urlSelection = $derived.by<SelectionState>(() => {
+    if (selectedPlaylistIdParam) {
+      return { type: "playlist", value: selectedPlaylistIdParam };
+    } else if (selectedSource) {
+      return { type: "source", value: selectedSource };
+    }
+    return null;
+  });
+
+  // Effective selection state (local takes precedence)
+  const effectiveSelection = $derived(localSelection ?? urlSelection);
+
+  // Helper functions to check selection state
+  const isSourceSelected = $derived(
+    (source: string) =>
+      effectiveSelection?.type === "source" &&
+      effectiveSelection.value === source,
   );
-  const effectiveSelectedPlaylistId = $derived(
-    localSelectedPlaylistId ?? selectedPlaylistIdParam,
+
+  const isPlaylistSelected = $derived(
+    (playlistShortId: string) =>
+      effectiveSelection?.type === "playlist" &&
+      effectiveSelection.value === playlistShortId,
   );
 
   // Reset local state when URL params change (navigation completed)
   $effect(() => {
-    // If the URL params have caught up to our local state, clear the local state
-    if (localSelectedSource === selectedSource) {
-      localSelectedSource = null;
-    }
-    if (localSelectedPlaylistId === selectedPlaylistIdParam) {
-      localSelectedPlaylistId = null;
+    // If the URL selection has caught up to our local selection, clear the local state
+    if (localSelection && urlSelection) {
+      if (
+        localSelection.type === urlSelection.type &&
+        localSelection.value === urlSelection.value
+      ) {
+        localSelection = null;
+      }
+    } else if (!urlSelection && localSelection) {
+      // If we have local selection but no URL selection, keep local state
+      // This handles cases where navigation might be in progress
+    } else if (urlSelection && !localSelection) {
+      // URL changed without local selection (e.g., back/forward navigation)
+      // No action needed, urlSelection will be used
     }
   });
 
@@ -82,15 +112,13 @@
 
   // Enhanced source click handler with immediate UI update
   function handleSourceClick(source: string) {
-    localSelectedSource = source;
-    localSelectedPlaylistId = null; // Clear playlist selection when selecting a source
+    localSelection = { type: "source", value: source };
     goto(`/${source}`);
   }
 
   // Enhanced playlist click handler with immediate UI update
   function handlePlaylistClick(playlist: Playlist) {
-    localSelectedPlaylistId = playlist.short_id;
-    localSelectedSource = null; // Clear source selection when selecting a playlist
+    localSelection = { type: "playlist", value: playlist.short_id };
     playlistState.handlePlaylistClick(playlist);
   }
 
@@ -232,7 +260,7 @@
         draggable={!!session}
         class="{sourceState.getButtonClasses({
           index: i,
-          isSelected: effectiveSelectedSource === source,
+          isSelected: isSourceSelected(source),
           isSidebarCollapsed,
         })} {getSourceDragClasses(i)}"
         size={!isSidebarCollapsed ? "default" : "icon"}
@@ -339,19 +367,19 @@
               {supabase}
               {session}
             >
-              {@const isSelectedPlaylist =
-                effectiveSelectedPlaylistId === playlist.short_id}
-
               <Button
                 variant="ghost"
                 draggable={true}
                 class={playlistState.getButtonClasses({
                   index: i,
-                  isSelected: isSelectedPlaylist,
+                  isSelected: isPlaylistSelected(playlist.short_id),
                   itemType: "playlist",
                   isSidebarCollapsed,
                   playlists: sidebarState.playlists,
-                  selectedPlaylistIdParam: effectiveSelectedPlaylistId,
+                  selectedPlaylistIdParam:
+                    effectiveSelection?.type === "playlist"
+                      ? effectiveSelection.value
+                      : undefined,
                   session,
                 })}
                 size={!isSidebarCollapsed ? "default" : "icon"}
