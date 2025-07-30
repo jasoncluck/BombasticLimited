@@ -5,6 +5,7 @@
     goto,
     invalidate,
   } from "$app/navigation";
+  import { navigating } from "$app/state";
   import { Toaster } from "$lib/components/ui/sonner/index.js";
   import { notificationStore } from "$lib/stores/notification.js";
   import { onMount } from "svelte";
@@ -60,6 +61,20 @@
   const shouldShowLoading = $derived(
     !mediaQuery.initialized || !sidebarState.initialized,
   );
+
+  // Navigation loading state - shows blank page during route changes
+  const isNavigatingToContent = $derived.by(() => {
+    if (!navigating) return false;
+
+    const from = navigating.from?.url.pathname;
+    const to = navigating.to?.url.pathname;
+
+    // Show loading for meaningful route changes (not same page or initial load)
+    if (!from || from === to) return false;
+
+    // Show loading for programmatic navigation and link clicks
+    return navigating.type === "goto" || navigating.type === "link";
+  });
 
   let user = $derived(session?.user);
 
@@ -510,7 +525,14 @@
           >
             <div class="@xl:max-w-[1450px] max-w-[1000px] w-full">
               <div class="flex flex-col mb-20">
-                {@render children()}
+                {#if isNavigatingToContent}
+                  <div
+                    class="w-full h-[calc(100vh-200px)] flex flex-col items-center justify-center"
+                  ></div>
+                {:else}
+                  <!-- Actual page content -->
+                  {@render children()}
+                {/if}
               </div>
             </div>
           </div>
