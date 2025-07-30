@@ -5,7 +5,6 @@
   import * as Popover from "$lib/components/ui/popover";
   import { activeStreams } from "$lib/state/streaming.svelte";
   import { goto, invalidate, preloadData } from "$app/navigation";
-  import { navigating } from "$app/state";
   import { getContentState } from "$lib/state/content.svelte";
   import { getPlaylistState } from "$lib/state/playlist.svelte";
   import { page } from "$app/state";
@@ -480,15 +479,6 @@
                     </span>
                   {/if}
                 </div>
-
-                <!-- Optional: Show loading state during navigation -->
-                {#if navigating?.to?.url.pathname.includes(playlist.short_id)}
-                  <div
-                    class="absolute inset-0 bg-black/10 flex items-center justify-center rounded"
-                  >
-                    <Loader class="w-4 h-4 animate-spin text-primary" />
-                  </div>
-                {/if}
               </Button>
             </PlaylistContextMenu>
           {/each}
