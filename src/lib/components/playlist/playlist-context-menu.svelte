@@ -18,7 +18,7 @@
 
   interface ContentContextMenuProps {
     playlist: Playlist;
-    selectedPlaylistIdParam: string;
+    selectedPlaylistIdParam?: string;
     isSidebarCollapsed: boolean;
     sectionId?: string;
     supabase: SupabaseClient<Database>;
