@@ -84,7 +84,7 @@ export async function getPlaylistData({
   session: Session | null;
 }): Promise<{
   playlist: UserPlaylist | ProfilePlaylist | null;
-  videos: PlaylistVideoWithTimestamp[];
+  videos: PlaylistVideoWithTimestamp[] | Video[];
   videosCount: number;
   playlistDuration: { hours: number; minutes: number; seconds: number };
   error: PostgrestError | null;

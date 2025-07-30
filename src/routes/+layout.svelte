@@ -63,14 +63,22 @@
   );
 
   // Navigation loading state - shows blank page during route changes
+  // Updated to ignore query parameter changes
   const isNavigatingToContent = $derived.by(() => {
     if (!navigating) return false;
 
-    const from = navigating.from?.url.pathname;
-    const to = navigating.to?.url.pathname;
+    const from = navigating.from?.url;
+    const to = navigating.to?.url;
 
     // Show loading for meaningful route changes (not same page or initial load)
-    if (!from || from === to) return false;
+    if (!from || !to) return false;
+
+    // Compare pathname only (ignore query parameters and hash)
+    const fromPath = from.pathname;
+    const toPath = to.pathname;
+
+    // Don't show loading if we're staying on the same path
+    if (fromPath === toPath) return false;
 
     // Show loading for programmatic navigation and link clicks
     return navigating.type === "goto" || navigating.type === "link";
@@ -108,7 +116,7 @@
   // Default snapshot for every page - restores scroll position when navigating through history
   export const snapshot: Snapshot<{
     content: ScrollPosition;
-    searchQuery: string;
+    searchQuery?: string;
   }> = {
     capture: () => {
       return {

@@ -4,7 +4,7 @@
   import { SOURCE_INFO, SOURCES } from "$lib/constants/source";
   import * as Popover from "$lib/components/ui/popover";
   import { activeStreams } from "$lib/state/streaming.svelte";
-  import { goto, invalidate, preloadData } from "$app/navigation";
+  import { goto, invalidate } from "$app/navigation";
   import { getContentState } from "$lib/state/content.svelte";
   import { getPlaylistState } from "$lib/state/playlist.svelte";
   import { page } from "$app/state";
@@ -12,11 +12,9 @@
   import { showNotification } from "$lib/stores/notification";
   import { getSourceState } from "$lib/state/source.svelte";
   import { getSidebarState } from "$lib/state/sidebar.svelte";
+  import { handleCreatePlaylist } from "../playlist/playlist-service";
   import Button, { buttonVariants } from "../ui/button/button.svelte";
   import PlaylistContextMenu from "../playlist/playlist-context-menu.svelte";
-  import { handleCreatePlaylist } from "../playlist/playlist-service";
-  import type { Playlist } from "$lib/supabase/playlists";
-  import { SvelteMap } from "svelte/reactivity";
 
   let {
     supabase,
@@ -39,70 +37,6 @@
   const sidebarState = getSidebarState();
   const { userProfile } = $derived(sidebarState);
 
-  // Single selection state for both sources and playlists
-  type SelectionState = {
-    type: "source" | "playlist";
-    value: string;
-  } | null;
-
-  let localSelection = $state<SelectionState>(null);
-
-  // Compute current selection from URL params
-  const urlSelection = $derived.by<SelectionState>(() => {
-    if (selectedPlaylistIdParam) {
-      return { type: "playlist", value: selectedPlaylistIdParam };
-    } else if (selectedSource) {
-      return { type: "source", value: selectedSource };
-    }
-    return null;
-  });
-
-  // Effective selection state (local takes precedence)
-  const effectiveSelection = $derived(localSelection ?? urlSelection);
-
-  // Memoized selection maps for better performance
-  const sourceSelectionMap = $derived(() => {
-    const map = new SvelteMap<string, boolean>();
-    if (effectiveSelection?.type === "source") {
-      map.set(effectiveSelection.value, true);
-    }
-    return map;
-  });
-
-  const playlistSelectionMap = $derived(() => {
-    const map = new SvelteMap<string, boolean>();
-    if (effectiveSelection?.type === "playlist") {
-      map.set(effectiveSelection.value, true);
-    }
-    return map;
-  });
-
-  // Optimized helper functions to check selection state
-  const isSourceSelected = (source: string) =>
-    sourceSelectionMap().get(source) ?? false;
-
-  const isPlaylistSelected = (playlistShortId: string) =>
-    playlistSelectionMap().get(playlistShortId) ?? false;
-
-  // Reset local state when URL params change (navigation completed)
-  $effect(() => {
-    // If the URL selection has caught up to our local selection, clear the local state
-    if (localSelection && urlSelection) {
-      if (
-        localSelection.type === urlSelection.type &&
-        localSelection.value === urlSelection.value
-      ) {
-        localSelection = null;
-      }
-    } else if (!urlSelection && localSelection) {
-      // If we have local selection but no URL selection, keep local state
-      // This handles cases where navigation might be in progress
-    } else if (urlSelection && !localSelection) {
-      // URL changed without local selection (e.g., back/forward navigation)
-      // No action needed, urlSelection will be used
-    }
-  });
-
   // Local state for sources ordering
   let orderedSources = $derived(userProfile?.sources ?? [...SOURCES]);
 
@@ -122,44 +56,9 @@
     }),
   );
 
-  // Ultra-minimal source click handler - defer ALL work
-  function handleSourceClick(source: string) {
-    // Only do the absolute minimum - schedule everything else
-    setTimeout(() => {
-      localSelection = { type: "source", value: source };
-      goto(`/${source}`);
-    }, 0);
-  }
-
-  // Ultra-minimal playlist click handler - defer ALL work including state updates
-  function handlePlaylistClick(playlist: Playlist) {
-    // Defer absolutely everything to prevent blocking
-    setTimeout(() => {
-      // Update selection state
-      localSelection = { type: "playlist", value: playlist.short_id };
-
-      // Navigate
-      goto(`/playlist/${encodeURI(playlist.short_id)}`, {
-        noScroll: false,
-        keepFocus: false,
-      });
-    }, 0);
-  }
-
-  // Optimized hover handler - use idle callback if available
-  function handlePlaylistHover(playlist: Playlist, index: number) {
-    // Use requestIdleCallback if available, otherwise requestAnimationFrame
-    const scheduleWork =
-      (globalThis as any).requestIdleCallback || requestAnimationFrame;
-
-    scheduleWork(() => {
-      playlistState.handleMouseEnter(index);
-      preloadData(`/playlist/${encodeURI(playlist.short_id)}`);
-    });
-  }
-
-  // Source drag and drop handlers remain the same but could be optimized too
+  // Source drag and drop handlers
   function handleSourceDragStart(event: DragEvent, index: number) {
+    // Prevent any drag behavior if session is null
     if (!session) {
       event.preventDefault();
       event.stopPropagation();
@@ -173,6 +72,7 @@
   }
 
   function handleSourceDragOver(event: DragEvent, index: number) {
+    // Don't allow drag over if session is null
     if (!session) {
       event.preventDefault();
       event.stopPropagation();
@@ -190,6 +90,7 @@
   }
 
   function handleSourceDragLeave(event: DragEvent) {
+    // Don't handle drag leave if session is null
     if (!session) {
       return false;
     }
@@ -204,6 +105,7 @@
   }
 
   async function handleSourceDrop(event: DragEvent, dropIndex: number) {
+    // Don't allow drop if session is null
     if (!session) {
       event.preventDefault();
       event.stopPropagation();
@@ -216,37 +118,37 @@
       return;
     }
 
-    // Defer the heavy work
-    setTimeout(async () => {
-      const newOrderedSources = [...orderedSources];
-      const [movedSource] = newOrderedSources.splice(draggedSourceIndex!, 1);
-      newOrderedSources.splice(dropIndex, 0, movedSource);
+    // Reorder the sources array
+    const newOrderedSources = [...orderedSources];
+    const [movedSource] = newOrderedSources.splice(draggedSourceIndex, 1);
+    newOrderedSources.splice(dropIndex, 0, movedSource);
 
-      if (
-        JSON.stringify(newOrderedSources) !== JSON.stringify(orderedSources)
-      ) {
-        orderedSources = newOrderedSources;
+    // Only update if the order actually changed
+    if (JSON.stringify(newOrderedSources) !== JSON.stringify(orderedSources)) {
+      orderedSources = newOrderedSources;
 
-        if (session?.user.id) {
-          try {
-            await updateProfileSources({
-              sources: orderedSources,
-              supabase,
-              session,
-            });
-            await refreshSidebar?.();
-          } catch (error) {
-            console.error("Failed to update source ordering:", error);
-            showNotification("An error occurred, unable to reorder.");
-            orderedSources = [...SOURCES];
-          }
-          invalidate("supabase:db:profiles");
+      if (session?.user.id) {
+        try {
+          await updateProfileSources({
+            sources: orderedSources,
+            supabase,
+            session,
+          });
+          // Refresh sidebar to get updated profile
+          await refreshSidebar?.();
+        } catch (error) {
+          console.error("Failed to update source ordering:", error);
+          showNotification("An error occurred, unable to reorder.");
+          // Optionally revert the order on error
+          orderedSources = [...SOURCES];
         }
+        invalidate("supabase:db:profiles");
       }
-    }, 0);
+    }
   }
 
   function handleSourceDragEnd() {
+    // Only reset state if session exists
     if (!session) {
       return false;
     }
@@ -287,31 +189,19 @@
 <aside class="h-full overflow-hidden">
   <div class="flex flex-col {!isSidebarCollapsed ? 'mx-2' : 'mx-1'}">
     {#each orderedSources as source, i (source)}
-      {@const isSelected = isSourceSelected(source)}
-      {@const buttonClasses = sourceState.getButtonClasses({
-        index: i,
-        isSelected,
-        isSidebarCollapsed,
-      })}
-
       <Button
         variant="ghost"
         draggable={!!session}
-        class="{buttonClasses} {getSourceDragClasses(i)}"
+        class="{sourceState.getButtonClasses({
+          index: i,
+          isSelected: selectedSource === source,
+          isSidebarCollapsed,
+        })} {getSourceDragClasses(i)}"
         size={!isSidebarCollapsed ? "default" : "icon"}
-        onclick={() => handleSourceClick(source)}
+        onclick={() => goto(`/${source}`)}
         title={SOURCE_INFO[source].displayName}
-        onmouseenter={() => {
-          // Defer non-critical hover work
-          const scheduleWork =
-            (globalThis as any).requestIdleCallback || requestAnimationFrame;
-          scheduleWork(() => sourceState.handleMouseEnter(i));
-        }}
-        onmouseleave={() => {
-          const scheduleWork =
-            (globalThis as any).requestIdleCallback || requestAnimationFrame;
-          scheduleWork(() => sourceState.handleMouseLeave(i));
-        }}
+        onmouseenter={() => sourceState.handleMouseEnter(i)}
+        onmouseleave={() => sourceState.handleMouseLeave(i)}
         ondragstart={(e) => handleSourceDragStart(e, i)}
         ondragover={(e) => handleSourceDragOver(e, i)}
         ondragleave={(e) => handleSourceDragLeave(e)}
@@ -377,12 +267,8 @@
           title="Create Playlist"
           class="my-1 rounded-full cursor-pointer"
           size="icon"
-          onclick={() => {
-            // Defer playlist creation work
-            setTimeout(() => {
-              handleCreatePlaylist({ sidebarState, supabase, session });
-            }, 0);
-          }}
+          onclick={() =>
+            handleCreatePlaylist({ sidebarState, supabase, session })}
         >
           <Plus />
         </Button>
@@ -408,20 +294,6 @@
       {:else if session && sidebarState.playlists.length > 0}
         <div class="flex flex-col">
           {#each sidebarState.playlists as playlist, i (playlist.id)}
-            {@const isSelected = isPlaylistSelected(playlist.short_id)}
-            {@const buttonClasses = playlistState.getButtonClasses({
-              index: i,
-              isSelected,
-              itemType: "playlist",
-              isSidebarCollapsed,
-              playlists: sidebarState.playlists,
-              selectedPlaylistIdParam:
-                effectiveSelection?.type === "playlist"
-                  ? effectiveSelection.value
-                  : undefined,
-              session,
-            })}
-
             <PlaylistContextMenu
               {playlist}
               {selectedPlaylistIdParam}
@@ -429,21 +301,27 @@
               {supabase}
               {session}
             >
+              {@const isSelectedPlaylist =
+                selectedPlaylistIdParam === playlist.short_id}
+
               <Button
                 variant="ghost"
                 draggable={true}
-                class={buttonClasses}
+                class={playlistState.getButtonClasses({
+                  index: i,
+                  isSelected: isSelectedPlaylist,
+                  itemType: "playlist",
+                  isSidebarCollapsed,
+                  playlists: sidebarState.playlists,
+                  selectedPlaylistIdParam,
+                  session,
+                })}
                 size={!isSidebarCollapsed ? "default" : "icon"}
-                onclick={() => handlePlaylistClick(playlist)}
+                onclick={() => playlistState.handlePlaylistClick(playlist)}
                 title={playlist.name}
                 value={playlist.name}
-                onmouseenter={() => handlePlaylistHover(playlist, i)}
-                onmouseleave={() => {
-                  const scheduleWork =
-                    (globalThis as any).requestIdleCallback ||
-                    requestAnimationFrame;
-                  scheduleWork(() => playlistState.handleMouseLeave(i));
-                }}
+                onmouseenter={() => playlistState.handleMouseEnter(i)}
+                onmouseleave={() => playlistState.handleMouseLeave(i)}
                 ondragstart={(e) => dragDropHandlers.handleDragStart(e, i)}
                 ondragover={(e) => dragDropHandlers.handleDragOver(e, i)}
                 ondragleave={(e) => dragDropHandlers.handleDragLeave(e, i)}

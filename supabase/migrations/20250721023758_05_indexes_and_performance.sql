@@ -1,4 +1,4 @@
--- Migration: 05_indexes_and_performance.sql
+-- Migration: 05_indexes_and_performance.sql (UPDATED)
 -- Purpose: Create performance indexes and fix primary keys
 -- This migration optimizes query performance and fixes primary key issues
 
@@ -25,6 +25,9 @@ ON public.videos USING gin(lower(description) extensions.gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_videos_title_lower 
 ON public.videos (lower(title));
 
+CREATE INDEX IF NOT EXISTS idx_videos_title 
+ON public.videos (title);
+
 CREATE INDEX IF NOT EXISTS idx_videos_published_at_desc 
 ON public.videos (published_at DESC);
 
@@ -32,6 +35,47 @@ ON public.videos (published_at DESC);
 CREATE INDEX IF NOT EXISTS idx_videos_pending_delete_published 
 ON public.videos (pending_delete, published_at DESC) 
 WHERE pending_delete = false;
+
+-- Duration index for sorting
+CREATE INDEX IF NOT EXISTS idx_videos_duration 
+ON public.videos(duration);
+
+-- ============================================================================
+-- PLAYLIST PERFORMANCE INDEXES (CRITICAL ADDITIONS)
+-- ============================================================================
+
+-- Most critical: Composite index for playlist_videos queries
+CREATE INDEX IF NOT EXISTS idx_playlist_videos_playlist_position 
+ON public.playlist_videos (playlist_id, video_position);
+
+-- Essential: Playlist lookup indexes
+CREATE INDEX IF NOT EXISTS idx_playlists_short_id 
+ON public.playlists (short_id);
+
+CREATE INDEX IF NOT EXISTS idx_playlists_youtube_id 
+ON public.playlists (youtube_id);
+
+-- Playlist videos individual column indexes
+CREATE INDEX IF NOT EXISTS idx_playlist_videos_playlist_id 
+ON public.playlist_videos (playlist_id);
+
+CREATE INDEX IF NOT EXISTS idx_playlist_videos_video_id 
+ON public.playlist_videos (video_id);
+
+-- User playlists join optimization
+CREATE INDEX IF NOT EXISTS idx_user_playlists_playlist_user 
+ON public.user_playlists (id, user_id);
+
+-- ============================================================================
+-- SORTING PERFORMANCE INDEXES
+-- ============================================================================
+
+-- Composite indexes for secondary sorting by title
+CREATE INDEX IF NOT EXISTS idx_videos_published_title 
+ON public.videos (published_at DESC, title);
+
+CREATE INDEX IF NOT EXISTS idx_videos_duration_title 
+ON public.videos (duration, title);
 
 -- ============================================================================
 -- FOREIGN KEY AND JOIN INDEXES
@@ -68,7 +112,3 @@ ON public.playlists (type, created_at DESC);
 -- For profiles join in playlist functions
 CREATE INDEX IF NOT EXISTS idx_profiles_username 
 ON public.profiles (username);
-
--- For playlist videos operations
-CREATE INDEX IF NOT EXISTS idx_playlist_videos_video_id 
-ON public.playlist_videos (video_id);
