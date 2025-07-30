@@ -1,4 +1,3 @@
-import { showNotification } from "$lib/stores/notification";
 import type {
   PostgrestError,
   Session,
@@ -658,7 +657,6 @@ export async function searchPlaylists({
   error: PostgrestError | null;
   count?: number | null;
 }> {
-  console.log(searchString);
   const query = supabase
     .rpc(
       "search_playlists",
@@ -677,8 +675,6 @@ export async function searchPlaylists({
     const endIndex = startIndex + limit - 1;
     query.range(startIndex, endIndex);
   }
-
-  console.log(playlists);
 
   if (error) {
     console.error(
@@ -732,7 +728,6 @@ export async function updatePlaylistVideoPosition({
 
   if (error) {
     console.error(error);
-    invalidate("supabase:db:playlists");
   }
 
   return { error };

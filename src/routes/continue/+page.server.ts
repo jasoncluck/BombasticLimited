@@ -17,7 +17,7 @@ export const load: PageServerLoad = async ({
   }
 
   // Run parent() and pagination parsing in parallel (though pagination is synchronous)
-  const [{ contentFilter, playlists }, currentPage] = await Promise.all([
+  const [{ contentFilter }, currentPage] = await Promise.all([
     parent(),
     Promise.resolve(
       getPaginationQueryParams({
@@ -41,6 +41,5 @@ export const load: PageServerLoad = async ({
     videos: videos ?? [],
     contentFilter,
     videosCount,
-    playlists,
   };
 };

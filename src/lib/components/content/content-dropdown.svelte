@@ -37,11 +37,11 @@
     CircleMinus,
   } from "@lucide/svelte";
   import type { UserProfile } from "$lib/supabase/user-profiles";
+  import { getSidebarState } from "$lib/state/sidebar.svelte";
 
   let {
     videos = $bindable(),
     playlist,
-    playlists,
     variant,
     onSelectAll,
     sectionId = DEFAULT_SECTION_ID,
@@ -52,7 +52,6 @@
   }: {
     videos: Video[];
     playlist?: Playlist;
-    playlists: Playlist[];
     variant: ContentSelectVariant;
     sectionId?: string;
     userProfile?: UserProfile;
@@ -64,6 +63,8 @@
 
   const contentState = getContentState();
   const playlistState = getPlaylistState();
+  const sidebarState = getSidebarState();
+  const { playlists } = $derived(sidebarState);
 
   // hide set playlist image if on the video screen
   const hideSetAsPlaylistImage = $derived(
@@ -330,6 +331,7 @@
                           const { error } = await handleAddVideosToPlaylist({
                             videos: frozenOperationVideos,
                             playlist: addPlaylist,
+                            sidebarState,
                             supabase,
                             session,
                           });
@@ -355,6 +357,7 @@
             onclick={async () => {
               const { error } = await handleRemoveVideosFromPlaylist({
                 videos: frozenOperationVideos,
+                sidebarState,
                 playlist,
                 supabase,
               });
@@ -385,6 +388,7 @@
             onclick={async () => {
               const { error } = await handleUpdatePlaylistImage({
                 playlist,
+                sidebarState,
                 thumbnailUrl: frozenOperationVideos[0].thumbnail_url,
                 thumbnailMaxResUrl:
                   frozenOperationVideos[0].thumbnail_maxres_url,
@@ -500,6 +504,7 @@
           onclick={async () => {
             const data = await handleDeletePlaylist({
               playlist,
+              sidebarState,
               supabase,
               session,
             });

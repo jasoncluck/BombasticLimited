@@ -32,20 +32,7 @@ export const load: PageServerLoad = async ({
     redirect(303, "/");
   }
 
-  const { playlists, contentFilter } = await parent();
-
-  // Get authenticated user securely
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-  if (userError) {
-    console.error("Error getting user:", userError);
-  }
-
-  // Process followed playlists synchronously
-  const followedPlaylists = playlists.filter((p) => p.created_by !== user?.id);
+  const { contentFilter } = await parent();
 
   if (!isVideoFilter(contentFilter)) {
     throw new Error("Invalid content filter");
@@ -106,8 +93,6 @@ export const load: PageServerLoad = async ({
 
   return {
     videos: videos ?? [],
-    playlists,
-    followedPlaylists,
     highlightPlaylists,
     sourcePlaylistsData,
     source,

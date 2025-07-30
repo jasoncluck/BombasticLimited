@@ -28,6 +28,7 @@
   import type { Session } from "@supabase/supabase-js";
   import { page } from "$app/state";
   import { getPlaylistState } from "$lib/state/playlist.svelte";
+  import { getSidebarState } from "$lib/state/sidebar.svelte";
 
   let {
     form,
@@ -56,6 +57,7 @@
   const cropState = useImageCropperCrop();
 
   const isPlaylistOwner = $derived(playlist.created_by === session?.user.id);
+  const sidebarState = getSidebarState();
 
   const playlistForm = superForm(form, {
     validators: zodClient(playlistSchema),
@@ -84,6 +86,7 @@
             thumbnailUrl: playlist.thumbnail_url,
           });
         }
+        sidebarState.refreshData();
       }
     },
   });

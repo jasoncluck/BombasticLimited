@@ -1,105 +1,57 @@
 <script lang="ts">
   import { Circle, ListVideo, Loader, Plus } from "@lucide/svelte";
-  import Button, { buttonVariants } from "./ui/button/button.svelte";
   import { type SupabaseClient, type Session } from "@supabase/supabase-js";
-  import { type Playlist } from "$lib/supabase/playlists";
   import { SOURCE_INFO, SOURCES } from "$lib/constants/source";
   import * as Popover from "$lib/components/ui/popover";
   import { activeStreams } from "$lib/state/streaming.svelte";
-  import { handleCreatePlaylist } from "./playlist/playlist-service";
   import { goto, invalidate } from "$app/navigation";
   import { getContentState } from "$lib/state/content.svelte";
   import { getPlaylistState } from "$lib/state/playlist.svelte";
   import { page } from "$app/state";
-  import PlaylistContextMenu from "./playlist/playlist-context-menu.svelte";
-  import {
-    updateProfileSources,
-    type UserProfile,
-  } from "$lib/supabase/user-profiles";
+  import { updateProfileSources } from "$lib/supabase/user-profiles";
   import { showNotification } from "$lib/stores/notification";
   import { getSourceState } from "$lib/state/source.svelte";
+  import { getSidebarState } from "$lib/state/sidebar.svelte";
+  import Button, { buttonVariants } from "../ui/button/button.svelte";
+  import PlaylistContextMenu from "../playlist/playlist-context-menu.svelte";
+  import { handleCreatePlaylist } from "../playlist/playlist-service";
 
   let {
-    playlists = $bindable(),
     supabase,
     session,
-    userProfile,
     isSidebarCollapsed,
+    refreshSidebar,
   }: {
-    playlists: Playlist[];
     supabase: SupabaseClient;
-    userProfile: UserProfile | null;
     session: Session | null;
     isSidebarCollapsed: boolean;
+    refreshSidebar?: () => Promise<void>;
   } = $props();
 
   const selectedSource = $derived(page.params.source);
   const selectedPlaylistIdParam = $derived(page.params.shortId);
 
-  // Add local state for immediate selection feedback
-  let localSelectedSource = $state<string | null>(null);
-  let localSelectedPlaylist = $state<string | null>(null);
-
   const contentState = getContentState();
   const playlistState = getPlaylistState();
   const sourceState = getSourceState();
+  const sidebarState = getSidebarState();
+  const { userProfile } = $derived(sidebarState);
 
   // Local state for sources ordering
-  let orderedSources = $state(userProfile?.sources ?? [...SOURCES]);
+  let orderedSources = $derived(userProfile?.sources ?? [...SOURCES]);
 
   // Source drag and drop state
   let draggedSourceIndex = $state<number | null>(null);
   let targetSourceIndex = $state<number | null>(null);
 
-  // Helper function to determine if a source is selected
-  function isSourceSelected(source: string): boolean {
-    return (
-      localSelectedSource === source ||
-      (localSelectedSource === null && selectedSource === source)
-    );
-  }
-
-  // Helper function to determine if a playlist is selected
-  function isPlaylistSelected(playlistShortId: string): boolean {
-    return (
-      localSelectedPlaylist === playlistShortId ||
-      (localSelectedPlaylist === null &&
-        selectedPlaylistIdParam === playlistShortId)
-    );
-  }
-
-  // Handle source click with immediate feedback
-  async function handleSourceClick(source: string) {
-    localSelectedSource = source;
-    localSelectedPlaylist = null; // Clear playlist selection
-    try {
-      await goto(`/${source}`);
-    } finally {
-      // Reset local state after navigation (whether successful or not)
-      localSelectedSource = null;
-    }
-  }
-
-  // Handle playlist click with immediate feedback
-  async function handlePlaylistClickWithFeedback(playlist: Playlist) {
-    localSelectedPlaylist = playlist.short_id;
-    localSelectedSource = null; // Clear source selection
-    try {
-      await playlistState.handlePlaylistClick(playlist);
-    } finally {
-      // Reset local state after navigation
-      localSelectedPlaylist = null;
-    }
-  }
-
   // Create drag and drop handlers for playlists
   const dragDropHandlers = $derived(
     playlistState.createPlaylistDragDrop({
-      playlists,
+      playlists: sidebarState.playlists ?? [],
       supabase,
       session,
       onPlaylistsUpdate: (updatedPlaylists) => {
-        playlists = updatedPlaylists;
+        sidebarState.playlists = updatedPlaylists;
       },
     }),
   );
@@ -182,6 +134,8 @@
             supabase,
             session,
           });
+          // Refresh sidebar to get updated profile
+          await refreshSidebar?.();
         } catch (error) {
           console.error("Failed to update source ordering:", error);
           showNotification("An error occurred, unable to reorder.");
@@ -240,11 +194,11 @@
         draggable={!!session}
         class="{sourceState.getButtonClasses({
           index: i,
-          isSelected: isSourceSelected(source),
+          isSelected: selectedSource === source,
           isSidebarCollapsed,
         })} {getSourceDragClasses(i)}"
         size={!isSidebarCollapsed ? "default" : "icon"}
-        onclick={() => handleSourceClick(source)}
+        onclick={() => goto(`/${source}`)}
         title={SOURCE_INFO[source].displayName}
         onmouseenter={() => sourceState.handleMouseEnter(i)}
         onmouseleave={() => sourceState.handleMouseLeave(i)}
@@ -313,16 +267,8 @@
           title="Create Playlist"
           class="my-1 rounded-full cursor-pointer"
           size="icon"
-          onclick={async () => {
-            const { playlist } = await handleCreatePlaylist({
-              session,
-              supabase,
-            });
-
-            if (playlist) {
-              goto(`/playlist/${encodeURI(playlist.short_id)}`);
-            }
-          }}
+          onclick={() =>
+            handleCreatePlaylist({ sidebarState, supabase, session })}
         >
           <Plus />
         </Button>
@@ -337,16 +283,17 @@
     class="border-2 rounded-md transition-colors duration-150 {!isSidebarCollapsed
       ? 'mx-2'
       : 'mx-1'}
-    {playlists.length > 0 && contentState.dragContentType === 'video'
+    {sidebarState.playlists.length > 0 &&
+    contentState.dragContentType === 'video'
       ? 'border-secondary/80'
       : 'border-transparent'}"
   >
     <div class="flex flex-col">
-      {#if playlists === null}
+      {#if sidebarState.playlists === null}
         <Loader class="animate-spin w-full" />
-      {:else if session && playlists.length > 0}
+      {:else if session && sidebarState.playlists.length > 0}
         <div class="flex flex-col">
-          {#each playlists as playlist, i (playlist.id)}
+          {#each sidebarState.playlists as playlist, i (playlist.id)}
             <PlaylistContextMenu
               {playlist}
               {selectedPlaylistIdParam}
@@ -354,20 +301,23 @@
               {supabase}
               {session}
             >
+              {@const isSelectedPlaylist =
+                selectedPlaylistIdParam === playlist.short_id}
+
               <Button
                 variant="ghost"
                 draggable={true}
                 class={playlistState.getButtonClasses({
                   index: i,
-                  isSelected: isPlaylistSelected(playlist.short_id),
+                  isSelected: isSelectedPlaylist,
                   itemType: "playlist",
                   isSidebarCollapsed,
-                  playlists,
+                  playlists: sidebarState.playlists,
                   selectedPlaylistIdParam,
                   session,
                 })}
                 size={!isSidebarCollapsed ? "default" : "icon"}
-                onclick={() => handlePlaylistClickWithFeedback(playlist)}
+                onclick={() => playlistState.handlePlaylistClick(playlist)}
                 title={playlist.name}
                 value={playlist.name}
                 onmouseenter={() => playlistState.handleMouseEnter(i)}

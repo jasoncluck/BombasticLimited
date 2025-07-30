@@ -33,11 +33,11 @@
   } from "../pagination/pagination";
   import Pagination from "../pagination/pagination.svelte";
   import { getPageState } from "$lib/state/page.svelte";
+  import { getSidebarState } from "$lib/state/sidebar.svelte";
 
   type ContentProps = HTMLAttributes<HTMLDivElement> & {
     videos: Video[] | VideoWithTimestamp[];
     videosCount?: number | null;
-    playlists: Playlist[];
     carouselState?: CarouselState;
     isContinueVideos?: boolean;
     updateVideosState?: boolean;
@@ -57,7 +57,6 @@
     videosCount,
     carouselState = $bindable(),
     playlist,
-    playlists,
     isContinueVideos = false,
     supabase,
     session,
@@ -73,6 +72,8 @@
   const contentState = getContentState();
   const playlistState = getPlaylistState();
   const mediaQueryState = getMediaQueryState();
+  const sidebarState = getSidebarState();
+  const { playlists } = $derived(sidebarState);
 
   const pageFromQueryParams = page.url.searchParams.get(PAGINATION_QUERY_KEY);
   let currentPage = $state(

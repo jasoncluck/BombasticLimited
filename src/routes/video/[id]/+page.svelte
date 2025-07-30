@@ -2,9 +2,9 @@
   import VideoPlayer from "$lib/components/video/video-player.svelte";
 
   const { data } = $props();
-  let { video, contentFilter, playlists, supabase, session } = $derived(data);
+  let { video, contentFilter, supabase, session } = $derived(data);
 </script>
 
 <div class="m-4">
-  <VideoPlayer {video} {playlists} {contentFilter} {supabase} {session} />
+  <VideoPlayer {video} {contentFilter} {supabase} {session} />
 </div>

@@ -7,20 +7,13 @@ import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({
   params,
-  parent,
   depends,
   url,
-  locals: { supabase, session },
+  locals: { supabase },
 }) => {
   depends("supabase:db:playlistsForProfile");
 
   const username = params.username;
-
-  const { playlists } = await parent();
-
-  const followedPlaylists = playlists.filter(
-    (p) => p.created_by !== session?.user.id,
-  );
 
   const currentPage = getPaginationQueryParams({
     searchParams: url.searchParams,
@@ -36,9 +29,7 @@ export const load: PageServerLoad = async ({
 
   return {
     playlistsForUsername,
-    playlists,
     playlistsCount,
     currentPage,
-    followedPlaylists,
   };
 };

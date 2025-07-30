@@ -13,8 +13,7 @@
   import Loader from "$lib/components/loader.svelte";
 
   const { data } = $props();
-  let { playlistsForUsername, followedPlaylists, playlistsCount } =
-    $derived(data);
+  let { playlistsForUsername, playlistsCount, session } = $derived(data);
 
   const username = page.params.username;
 
@@ -71,7 +70,7 @@
   {#await processedPlaylistsPromise}
     <Loader message="Loading playlists..." />
   {:then processedPlaylists}
-    <PlaylistTiles playlists={processedPlaylists} {followedPlaylists} />
+    <PlaylistTiles playlists={processedPlaylists} {session} />
   {:catch error}
     <div class="flex items-center justify-center p-8">
       <div class="text-center">

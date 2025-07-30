@@ -14,7 +14,7 @@ export const load: PageServerLoad = async ({
 }) => {
   depends("supabase:db:videos");
 
-  const { contentFilter, playlists } = await parent();
+  const { contentFilter } = await parent();
   const source = params.source as Source;
 
   if (!params.source || !isSource(params.source)) {
@@ -46,7 +46,6 @@ export const load: PageServerLoad = async ({
     currentPage,
     contentFilter,
     source,
-    playlists,
     searchString,
   };
 };

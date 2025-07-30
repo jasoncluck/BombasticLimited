@@ -10,6 +10,7 @@ import {
 import type { PageState } from "./page.svelte";
 import { type ContentState } from "./content.svelte";
 import { goto } from "$app/navigation";
+import type { SidebarState } from "./sidebar.svelte";
 
 export interface PlaylistDragDropOptions {
   playlists: Playlist[];
@@ -40,6 +41,7 @@ export class PlaylistStateClass {
   // Page state dependency
   pageState: PageState;
   contentState: ContentState;
+  sidebarState: SidebarState;
 
   openEditPlaylist = $state(false);
 
@@ -51,9 +53,14 @@ export class PlaylistStateClass {
   targetIndex = $state<number | null>(null);
   currentPlaylist = $state<Playlist | null>(null);
 
-  constructor(pageState: PageState, contentState: ContentState) {
+  constructor(
+    pageState: PageState,
+    contentState: ContentState,
+    sidebarState: SidebarState,
+  ) {
     this.pageState = pageState;
     this.contentState = contentState;
+    this.sidebarState = sidebarState;
   }
 
   // Helper to get all selected videos across sections
@@ -284,6 +291,7 @@ export class PlaylistStateClass {
           await handleAddVideosToPlaylist({
             playlist: options.playlists[playlistTargetIndex],
             videos: allVideos,
+            sidebarState: this.sidebarState,
             supabase: options.supabase,
             session: options.session,
           });
@@ -350,9 +358,14 @@ const DEFAULT_KEY = "$_playlist_state";
 export function setPlaylistState(
   pageState: PageState,
   contentState: ContentState,
+  sidebarState: SidebarState,
   key = DEFAULT_KEY,
 ) {
-  const playlistState = new PlaylistStateClass(pageState, contentState);
+  const playlistState = new PlaylistStateClass(
+    pageState,
+    contentState,
+    sidebarState,
+  );
   return setContext(key, playlistState);
 }
 

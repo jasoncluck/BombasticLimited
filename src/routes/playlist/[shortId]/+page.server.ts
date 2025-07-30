@@ -31,7 +31,7 @@ export const load: PageServerLoad = async ({
 }) => {
   depends("supabase:db:videos");
 
-  const { playlists, contentFilter } = await parent();
+  const { contentFilter } = await parent();
 
   if (!isPlaylistVideosFilter(contentFilter)) {
     throw new Error(`Invalid content filter`);
@@ -41,28 +41,21 @@ export const load: PageServerLoad = async ({
   const currentPage = getPaginationQueryParams({
     searchParams: url.searchParams,
   });
-  console.log(params.shortId);
 
   // Check if user has explicitly changed the sort from the URL
   const hasExplicitSortInUrl =
     url.searchParams.has("sort") || url.searchParams.has("order");
 
   // Always fetch fresh data using the single getPlaylistData call
-  const [
-    { playlist, videos, videosCount, playlistDuration },
-    // We'll create the form after we get the playlist data
-  ] = await Promise.all([
-    // Get everything in single call
-    // Only override saved sort if user explicitly changed it via URL
-    getPlaylistData({
+  const { playlist, videos, videosCount, playlistDuration } =
+    await getPlaylistData({
       shortId: params.shortId,
       contentFilter,
       currentPage,
       limit: DEFAULT_NUM_VIDEOS_PAGINATION,
       supabase,
       session,
-    }),
-  ]);
+    });
 
   if (!playlist) {
     console.error(`Playlist was not found`);
@@ -103,7 +96,6 @@ export const load: PageServerLoad = async ({
 
   return {
     playlist,
-    playlists, // Still return the cached playlists for other uses
     videos,
     videosCount,
     contentFilter: effectiveContentFilter,

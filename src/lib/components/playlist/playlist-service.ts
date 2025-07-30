@@ -27,6 +27,7 @@ import {
 } from "../content/content-filter";
 import { parseImageProperties, type ImageProperties } from "./playlist";
 import { getCroppedImg } from "../ui/image-cropper/utils";
+import type { SidebarState } from "$lib/state/sidebar.svelte";
 
 export type PlaylistImages = Record<string, string | undefined>;
 
@@ -45,10 +46,11 @@ export const PLAYLIST_IMAGE_CROP_DEFAULTS: ImageProperties = {
 };
 
 export async function handleCreatePlaylist({
+  sidebarState,
   session,
   supabase,
 }: {
-  // Removed playlists parameter since we don't need it anymore
+  sidebarState: SidebarState;
   session: Session | null;
   supabase: SupabaseClient<Database>;
 }) {
@@ -80,16 +82,19 @@ export async function handleCreatePlaylist({
     showNotification(`Created Playlist: ${playlist.name}`);
   }
 
-  invalidate("supabase:db:playlists");
+  await sidebarState.refreshData();
+
   return { playlist, error };
 }
 
 export async function handleDeletePlaylist({
   session,
   playlist,
+  sidebarState,
   supabase,
 }: {
   playlist: Playlist;
+  sidebarState: SidebarState;
   session: Session | null;
   supabase: SupabaseClient<Database>;
 }) {
@@ -109,18 +114,20 @@ export async function handleDeletePlaylist({
   } else {
     showNotification(`Deleted ${playlist.name}.`, "success");
   }
-  invalidate("supabase:db:playlists");
+  await sidebarState.refreshData();
   return { error };
 }
 
 export async function handleAddVideosToPlaylist({
   playlist,
   videos,
+  sidebarState,
   supabase,
   session,
 }: {
   playlist: Playlist;
   videos: Video[];
+  sidebarState: SidebarState;
   supabase: SupabaseClient<Database>;
   session: Session | null;
 }) {
@@ -158,21 +165,26 @@ export async function handleAddVideosToPlaylist({
       await handleUpdatePlaylistImage({
         playlist,
         thumbnailMaxResUrl: videos[0].thumbnail_maxres_url,
+        sidebarState,
         thumbnailUrl: videos[0].thumbnail_url,
         supabase,
       });
     }
   }
 
+  await sidebarState.refreshData();
+  await invalidate("supabase:db:videos");
   return { error };
 }
 
 export async function handleRemoveVideosFromPlaylist({
   videos,
+  sidebarState,
   playlist,
   supabase,
 }: {
   videos: Video[];
+  sidebarState: SidebarState;
   playlist: Playlist;
   supabase: SupabaseClient<Database>;
 }) {
@@ -189,10 +201,13 @@ export async function handleRemoveVideosFromPlaylist({
     ) {
       await handleUpdatePlaylistImage({
         playlist,
+        sidebarState,
         thumbnailMaxResUrl: null,
         thumbnailUrl: null,
         supabase,
       });
+
+      sidebarState.refreshData();
     }
   }
 
@@ -201,18 +216,20 @@ export async function handleRemoveVideosFromPlaylist({
   } else {
     showNotification(`Removed video from ${playlist.name}.`);
   }
-  invalidate("supabase:db:playlists");
+  invalidate("supabase:db:videos");
   return { error };
 }
 
 export async function handleUpdatePlaylistImage({
   playlist,
   thumbnailUrl,
+  sidebarState,
   thumbnailMaxResUrl,
   supabase,
 }: {
   playlist: Playlist;
   thumbnailUrl: string | null;
+  sidebarState: SidebarState;
   thumbnailMaxResUrl: string | null;
   supabase: SupabaseClient<Database>;
 }) {
@@ -228,17 +245,18 @@ export async function handleUpdatePlaylistImage({
     supabase,
   });
 
-  invalidate("supabase:db:playlists");
-
   if (error) {
     showNotification("Unable update playlist image");
   } else if (updatedPlaylist && !isResetImage) {
-    getCroppedPlaylistImageUrl({
+    await getCroppedPlaylistImageUrl({
       imageProperties: parseImageProperties(playlist.image_properties),
       thumbnailMaxResUrl,
       thumbnailUrl,
     });
   }
+
+  await invalidate("supabase:db:videos");
+  await sidebarState.refreshData();
   return { error };
 }
 
@@ -289,16 +307,19 @@ export async function handleUpdatePlaylistPosition({
     supabase,
     session,
   });
+  invalidate("supabase:db:videos");
 }
 
 export async function handleFollowPlaylist({
   playlist,
   position,
+  sidebarState,
   contentFilter,
   supabase,
   session,
 }: {
   playlist: Playlist;
+  sidebarState: SidebarState;
   position?: number;
   contentFilter: CombinedContentFilter;
   supabase: SupabaseClient<Database>;
@@ -329,7 +350,7 @@ export async function handleFollowPlaylist({
     });
   }
 
-  invalidate("supabase:db:playlists");
+  sidebarState.refreshData();
 
   if (error) {
     if (error?.code === "P0001") {
@@ -349,10 +370,12 @@ export async function handleFollowPlaylist({
 
 export async function handleUnfollowPlaylist({
   playlist,
+  sidebarState,
   supabase,
   session,
 }: {
   playlist: Playlist;
+  sidebarState: SidebarState;
   position?: number;
   supabase: SupabaseClient<Database>;
   session: Session | null;
@@ -368,7 +391,7 @@ export async function handleUnfollowPlaylist({
     session,
   });
 
-  invalidate("supabase:db:playlists");
+  sidebarState.refreshData();
 
   if (!error) {
     showNotification(`Unfollowed playlist: ${playlist.name} `, "success");

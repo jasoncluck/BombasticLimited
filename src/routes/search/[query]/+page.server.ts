@@ -18,19 +18,14 @@ export const load: PageServerLoad = async ({
 }) => {
   depends("supabase:db:videos");
 
-  const { contentFilter, playlists } = await parent();
+  const { contentFilter } = await parent();
   const searchString = params.query;
-
-  // Process followed playlists synchronously (no async operation)
-  const followedPlaylists = playlists.filter(
-    (p) => p.created_by !== session?.user.id,
-  );
 
   if (!isVideoFilter(contentFilter)) {
     throw new Error("Invalid content filter");
   }
 
-  // Run all searches in parallel: video searches for all sources + playlist search
+  // Run video searches and playlist search in parallel
   const [
     sourceVideosResults,
     { playlists: playlistSearchResults, count: playlistsCount },
@@ -57,12 +52,10 @@ export const load: PageServerLoad = async ({
     }),
   ]);
 
-  console.log(playlistSearchResults);
-
-  // Process everything in parallel now
+  // Process everything in parallel
   const [processedSourceVideos, processedPlaylistSearchResults] =
     await Promise.all([
-      // Process source videos (this is fast, just object reconstruction)
+      // Process source videos
       Promise.resolve(
         (() => {
           const sourceVideos: SourceVideos = {
@@ -88,7 +81,7 @@ export const load: PageServerLoad = async ({
         })(),
       ),
 
-      // Process playlist images in parallel (FIXED: all images processed simultaneously)
+      // Process playlist images in parallel
       Promise.all(
         playlistSearchResults.map(async (profilePlaylist) => ({
           ...profilePlaylist,
@@ -107,9 +100,7 @@ export const load: PageServerLoad = async ({
     sourceVideos: processedSourceVideos.sourceVideos ?? [],
     sourceVideosCount: processedSourceVideos.sourceVideosCount,
     searchString,
-    playlists,
     playlistsCount,
-    followedPlaylists,
     playlistSearchResults: processedPlaylistSearchResults,
     contentFilter,
   };

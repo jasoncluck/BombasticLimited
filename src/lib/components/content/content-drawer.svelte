@@ -41,6 +41,7 @@
   import FullHeightDrawer from "./drawer/full-height-drawer.svelte";
   import EditListDrawer from "./drawer/edit-list-drawer.svelte";
   import type { CombinedContentFilter } from "./content-filter";
+  import { getSidebarState } from "$lib/state/sidebar.svelte";
 
   interface ContentDrawerProps {
     videos?: Video[];
@@ -68,6 +69,7 @@
   const contentState = getContentState();
   const playlistState = getPlaylistState();
   const mediaQueryState = getMediaQueryState();
+  const sidebarState = getSidebarState();
 
   const variant = $derived(contentState.drawerVariant);
 
@@ -281,6 +283,7 @@
                     const { error } = await handleAddVideosToPlaylist({
                       videos: operationVideos,
                       playlist: addPlaylist,
+                      sidebarState,
                       supabase,
                       session,
                     });
@@ -330,6 +333,7 @@
             onclick={async () => {
               const { error } = await handleRemoveVideosFromPlaylist({
                 videos: operationVideos,
+                sidebarState,
                 playlist,
                 supabase,
               });
@@ -352,6 +356,7 @@
             onclick={async () => {
               const { error } = await handleUpdatePlaylistImage({
                 playlist,
+                sidebarState,
                 thumbnailUrl: operationVideos[0].thumbnail_url,
                 thumbnailMaxResUrl: operationVideos[0].thumbnail_maxres_url,
                 supabase,
@@ -443,6 +448,7 @@
             onclick={async () => {
               const data = await handleDeletePlaylist({
                 playlist,
+                sidebarState,
                 supabase,
                 session,
               });

@@ -27,7 +27,7 @@ export const load: PageServerLoad = async ({
   }
 
   // Run parent() first to get contentFilter
-  const { playlists, contentFilter } = await parent();
+  const { contentFilter } = await parent();
 
   if (!isPlaylistVideosFilter(contentFilter)) {
     throw new Error(`Invalid content filter`);
@@ -80,7 +80,6 @@ export const load: PageServerLoad = async ({
     video: currentVideo,
     videos: nextVideos,
     profilePlaylist,
-    playlists,
     contentFilter,
     timestampStartSeconds: isVideoWithTimestamp(currentVideo)
       ? currentVideo.video_start_seconds

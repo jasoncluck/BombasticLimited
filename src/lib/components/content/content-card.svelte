@@ -35,7 +35,6 @@
     video,
     isLoading = false,
     sectionId = DEFAULT_SECTION_ID,
-    playlists,
     supabase,
     session,
   }: ContentCardProps = $props();
@@ -87,7 +86,6 @@
         />
         <div class="absolute top-0.5 right-0.5">
           <ContentDropdown
-            {playlists}
             videos={[video]}
             variant="list-items"
             {sectionId}

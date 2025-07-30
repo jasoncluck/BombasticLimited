@@ -21,7 +21,6 @@
   const {
     video,
     playlist,
-    playlists,
     contentFilter,
     supabase,
     session,
@@ -29,7 +28,6 @@
   }: {
     video: Video;
     playlist?: Playlist | null;
-    playlists: Playlist[];
     contentFilter: CombinedContentFilter;
     supabase: SupabaseClient;
     session: Session | null;
@@ -116,13 +114,7 @@
     </div>
     <div class="ml-auto">
       {#if mediaQueryState.canHover}
-        <ContentDropdown
-          videos={[video]}
-          {playlists}
-          variant="item"
-          {supabase}
-          {session}
-        />
+        <ContentDropdown videos={[video]} variant="item" {supabase} {session} />
       {:else}
         <Button
           variant="ghost"

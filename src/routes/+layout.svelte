@@ -23,7 +23,6 @@
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import * as Drawer from "$lib/components/ui/drawer/index.js";
   import * as Resizable from "$lib/components/ui/resizable";
-  import Sidebar from "$lib/components/sidebar.svelte";
   import ScrollArea from "$lib/components/ui/scroll-area/scroll-area.svelte";
   import { injectSpeedInsights } from "@vercel/speed-insights/sveltekit";
   import "../app.css";
@@ -39,36 +38,37 @@
   import { handleUpdateProfileContentDisplay } from "$lib/components/profile/profile-service";
   import { setSourceState } from "$lib/state/source.svelte";
   import Loader from "$lib/components/loader.svelte";
+  import Sidebar from "$lib/components/sidebar/sidebar.svelte";
+  import { setSidebarState } from "$lib/state/sidebar.svelte";
 
   injectSpeedInsights();
 
-  // Initialize all state contexts
   const layoutState = setLayoutState();
   const pageState = setPageState();
   const contentState = setContentState(pageState);
-  setPlaylistState(pageState, contentState);
-  setSourceState(pageState);
-
   const mediaQuery = setMediaQueryState();
 
-  const shouldShowLoading = $derived(!mediaQuery.initialized);
-
   let { data, children } = $props();
-  let {
-    userProfile,
-    session,
-    supabase,
-    playlists,
-    user,
-    layout,
-    isSidebarCollapsed,
-  } = $derived(data);
+  let { session, supabase, layout, isSidebarCollapsed, userProfile } =
+    $derived(data);
 
-  let openAccountDrawer = $state(false);
+  let sidebarState = setSidebarState();
+  // Initialize all state contexts
+  setPlaylistState(pageState, contentState, sidebarState);
+  setSourceState(pageState);
 
+  const shouldShowLoading = $derived(
+    !mediaQuery.initialized || !sidebarState.initialized,
+  );
+
+  let user = $derived(session?.user);
+
+  let openAccountDrawer = $derived(sidebarState.openAccountDrawer);
   let searchQuery = $state(page.params.query);
 
-  let playlistsState = $derived(playlists);
+  async function refreshSidebar() {
+    await sidebarState.refreshData();
+  }
 
   if (contentState.dragContentType) {
     contentState.dragContentType = null;
@@ -165,7 +165,17 @@
   });
 
   onMount(() => {
-    mediaQuery.initialize();
+    let mediaQueryCleanup: (() => void) | undefined;
+    let sidebarCleanup: (() => void) | undefined;
+
+    // Initialize media query (synchronous)
+    mediaQueryCleanup = mediaQuery.initialize();
+
+    // Initialize sidebar (asynchronous)
+    sidebarState.initialize().then((cleanup) => {
+      sidebarCleanup = cleanup;
+    });
+
     // Set up event listeners for drag operations
     window.addEventListener("dragover", handleDragOver);
     window.addEventListener("dragend", handleDragEnd);
@@ -217,6 +227,14 @@
         streamingUnsubscribe();
       }
       layoutState.cleanup();
+
+      // Clean up state initializations
+      if (mediaQueryCleanup) {
+        mediaQueryCleanup();
+      }
+      if (sidebarCleanup) {
+        sidebarCleanup();
+      }
     };
   });
 </script>
@@ -234,8 +252,6 @@
     <div class="flex items-center">
       <div class="sm:hidden w-full">
         <SideDrawer
-          {playlists}
-          {userProfile}
           {supabase}
           {session}
           handleLogout={() => layoutState.handleLogout(supabase)}
@@ -437,77 +453,69 @@
     </div>
   </nav>
 
-  <Resizable.PaneGroup
-    direction="horizontal"
-    class="h-full rounded-lg flex overflow-hidden"
-    onLayoutChange={layoutState.onLayoutChange}
-  >
-    <Resizable.Pane
-      defaultSize={layout ? parseFloat(layout[0]) : 20}
-      minSize={12}
-      maxSize={50}
-      collapsedSize={COLLAPSED_SIDEBAR_SIZE}
-      collapsible={true}
-      onCollapse={() => (isSidebarCollapsed = true)}
-      onExpand={() => (isSidebarCollapsed = false)}
-      class="@container pane sm:flex hidden flex-col h-full grow sm:ml-2 {isSidebarCollapsed
-        ? 'max-w-[75px] min-w-[75px]'
-        : 'min-w-[200px]'}"
+  {#if shouldShowLoading}
+    <div class="w-full h-[calc(100dvh-60px)] flex items-center justify-center">
+      <Loader size="lg" message="Loading..." />
+    </div>
+  {:else}
+    <Resizable.PaneGroup
+      direction="horizontal"
+      class="h-full rounded-lg flex overflow-hidden"
+      onLayoutChange={layoutState.onLayoutChange}
     >
-      <ScrollArea
-        type="scroll"
-        class="h-full grow"
-        bind:viewportRef={pageState.viewportRefs.sidebarViewportRef}
-        data-scroll-area="sidebar"
+      <Resizable.Pane
+        defaultSize={layout ? parseFloat(layout[0]) : 20}
+        minSize={12}
+        maxSize={50}
+        collapsedSize={COLLAPSED_SIDEBAR_SIZE}
+        collapsible={true}
+        onCollapse={() => (isSidebarCollapsed = true)}
+        onExpand={() => (isSidebarCollapsed = false)}
+        class="@container pane sm:flex hidden flex-col h-full grow sm:ml-2 {isSidebarCollapsed
+          ? 'max-w-[75px] min-w-[75px]'
+          : 'min-w-[200px]'}"
       >
-        <Sidebar
-          {isSidebarCollapsed}
-          bind:playlists={playlistsState}
-          {userProfile}
-          {supabase}
-          {session}
-        />
-      </ScrollArea>
-    </Resizable.Pane>
-    <Resizable.Handle
-      onDraggingChange={(isDragging) =>
-        (layoutState.isDraggingDivider = isDragging)}
-      draggable={true}
-      class="bg-background w-1 end-[2px] after:transition after:duration-300 after:ease-out)] 
+        <ScrollArea
+          type="scroll"
+          class="h-full grow"
+          bind:viewportRef={pageState.viewportRefs.sidebarViewportRef}
+          data-scroll-area="sidebar"
+        >
+          <Sidebar {isSidebarCollapsed} {supabase} {session} {refreshSidebar} />
+        </ScrollArea>
+      </Resizable.Pane>
+      <Resizable.Handle
+        onDraggingChange={(isDragging) =>
+          (layoutState.isDraggingDivider = isDragging)}
+        draggable={true}
+        class="bg-background w-1 end-[2px] after:transition after:duration-300 after:ease-out)] 
         after:h-[calc(100%-16px)] sm:flex sm:ml-1 hidden
         {layoutState.isDraggingDivider
-        ? 'after:w-[1px] after:bg-foreground'
-        : 'after:w-[1px] hover:after:bg-muted-foreground'}"
-    />
-    <Resizable.Pane
-      class="@container pane flex min-w-[350px] sm:mr-1"
-      defaultSize={layout ? parseFloat(layout[1]) : 79}
-    >
-      <ScrollArea
-        type="scroll"
-        orientation="vertical"
-        class="w-full"
-        bind:viewportRef={pageState.viewportRefs.contentViewportRef}
-        data-scroll-area="content"
+          ? 'after:w-[1px] after:bg-foreground'
+          : 'after:w-[1px] hover:after:bg-muted-foreground'}"
+      />
+      <Resizable.Pane
+        class="@container pane flex min-w-[350px] sm:mr-1"
+        defaultSize={layout ? parseFloat(layout[1]) : 79}
       >
-        <div
-          class="flex flex-col relative justify-center items-center m-2 sm:m-4"
+        <ScrollArea
+          type="scroll"
+          orientation="vertical"
+          class="w-full"
+          bind:viewportRef={pageState.viewportRefs.contentViewportRef}
+          data-scroll-area="content"
         >
-          <div class="@xl:max-w-[1450px] max-w-[1000px] w-full">
-            <div class="flex flex-col mb-20">
-              {#if shouldShowLoading}
-                <div
-                  class="w-full h-[calc(100dvh-60px)] flex items-center justify-center"
-                >
-                  <Loader size="lg" message="Loading..." />
-                </div>
-              {:else}
+          <div
+            class="flex flex-col relative justify-center items-center m-2 sm:m-4"
+          >
+            <div class="@xl:max-w-[1450px] max-w-[1000px] w-full">
+              <div class="flex flex-col mb-20">
                 {@render children()}
-              {/if}
+              </div>
             </div>
           </div>
-        </div>
-      </ScrollArea>
-    </Resizable.Pane>
-  </Resizable.PaneGroup>
+        </ScrollArea>
+      </Resizable.Pane>
+    </Resizable.PaneGroup>
+  {/if}
 </div>

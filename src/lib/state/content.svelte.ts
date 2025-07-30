@@ -476,45 +476,28 @@ export class ContentState {
 
       event.preventDefault();
       if (this.draggedIndex !== null && this.draggedIndex !== index) {
-        // Use nullish coalescing to get selected videos for this section
         const selectedVideos = this.selectedVideosBySection[sectionId] ?? [];
-
-        // Check if we have selected videos to move multiple, otherwise move single video
         const videosToMove =
           selectedVideos.length > 0
             ? selectedVideos
             : [options.videos[this.draggedIndex]];
 
-        // IMPORTANT: Sort the selected videos by their current position in the array
-        // to maintain the correct order regardless of selection order
         const sortedVideosToMove = videosToMove.sort((a, b) => {
           const indexA = options.videos.findIndex((v) => v.id === a.id);
           const indexB = options.videos.findIndex((v) => v.id === b.id);
           return indexA - indexB;
         });
 
-        // Get the video IDs for the database update
         const videoIds = sortedVideosToMove.map((video) => video.id);
-
-        // Determine if we're moving down (to higher index)
         const movingDown = this.draggedIndex < index;
 
-        // When moving down, we want to insert AFTER the target index
-        // When moving up, we want to insert BEFORE the target index
-        let targetIndex = index;
-        if (movingDown) {
-          targetIndex = index + 1;
-        }
-
-        // Create a new array for the local update
+        // Create the final array
         const updatedVideos = [...options.videos];
-
-        // Remove the videos that are being moved
         const remainingVideos = updatedVideos.filter(
           (video) => !videoIds.includes(video.id),
         );
 
-        // Calculate the correct insertion index in the remaining array
+        const targetIndex = movingDown ? index + 1 : index;
         const movedVideosBefore = sortedVideosToMove.filter((video) => {
           const originalIndex = options.videos.findIndex(
             (v) => v.id === video.id,
@@ -522,56 +505,43 @@ export class ContentState {
           return originalIndex < targetIndex;
         }).length;
 
-        // Adjust the insertion index
         const insertIndex = Math.max(
           0,
           Math.min(targetIndex - movedVideosBefore, remainingVideos.length),
         );
 
-        // Insert the moved videos at the correct position
         const finalVideos = [
           ...remainingVideos.slice(0, insertIndex),
-          ...sortedVideosToMove, // Now properly ordered
+          ...sortedVideosToMove,
           ...remainingVideos.slice(insertIndex),
         ];
 
-        // Update the videos through the callback
+        // Update local state
         options.onVideosUpdate?.(finalVideos);
+
+        // Calculate database position based on where the video ended up in the final array
+        const firstMovedVideoNewIndex = finalVideos.findIndex(
+          (v) => v.id === sortedVideosToMove[0].id,
+        );
+
+        let newPosition: number;
+        if (options.contentFilter.sort.order === "ascending") {
+          // Position 1, 2, 3, 4... (1-based)
+          newPosition = firstMovedVideoNewIndex + 1;
+        } else {
+          // Position from the end (1-based from bottom)
+          newPosition = finalVideos.length - firstMovedVideoNewIndex;
+        }
+
+        console.log(`🔄 Moving from index ${this.draggedIndex} to ${index}`);
+        console.log(
+          `📍 Video ended up at array index: ${firstMovedVideoNewIndex}`,
+        );
+        console.log(`🔢 Database position: ${newPosition}`);
+        console.log(`📊 Sort order: ${options.contentFilter.sort.order}`);
 
         if (!isPlaylistVideosFilter(options.contentFilter)) {
           throw new Error("Invalid content filter, expected playlist filter");
-        }
-
-        if (!options.videosCount) {
-          throw new Error(
-            "Could not find total video count, unable to reorder videos.",
-          );
-        }
-
-        // Use the actual playlist video count, not the total videos count
-        const playlistVideoCount = options.videos.length;
-
-        // Calculate the new position for the database (1-based)
-        // Ensure the position is within valid range
-        let newPosition: number;
-        if (options.contentFilter.sort.order === "ascending") {
-          newPosition = Math.max(
-            1,
-            Math.min(
-              insertIndex + 1,
-              playlistVideoCount - sortedVideosToMove.length + 1,
-            ),
-          );
-        } else {
-          newPosition = Math.max(
-            1,
-            Math.min(
-              playlistVideoCount -
-                insertIndex -
-                (sortedVideosToMove.length - 1),
-              playlistVideoCount - sortedVideosToMove.length + 1,
-            ),
-          );
         }
 
         handleUpdatePlaylistVideoPosition({
@@ -582,8 +552,6 @@ export class ContentState {
         });
       }
 
-      // Note: Don't reset draggedFromSectionId here, let handleDragEnd handle it
-      // since handleDragEnd always runs after handleDrop
       this.draggedIndex = null;
       this.targetIndex = null;
     };

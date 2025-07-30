@@ -22,31 +22,28 @@
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
   import { fade } from "svelte/transition";
-  import type { Playlist, UserPlaylist } from "$lib/supabase/playlists";
+  import type { Playlist } from "$lib/supabase/playlists";
   import ScrollArea from "./ui/scroll-area/scroll-area.svelte";
   import { page } from "$app/state";
   import { flip } from "svelte/animate";
-  import {
-    updateProfileSources,
-    type UserProfile,
-  } from "$lib/supabase/user-profiles";
+  import { updateProfileSources } from "$lib/supabase/user-profiles";
   import Badge from "./ui/badge/badge.svelte";
   import EditListDrawer from "./content/drawer/edit-list-drawer.svelte";
   import EditSourceDrawer from "./content/drawer/edit-source-drawer.svelte";
+  import { getSidebarState } from "$lib/state/sidebar.svelte";
 
   let {
-    playlists = $bindable(),
     handleLogout,
-    userProfile,
     session,
     supabase,
   }: {
-    playlists: UserPlaylist[];
     handleLogout: () => void;
-    userProfile: UserProfile | null;
     supabase: SupabaseClient<Database>;
     session: Session | null;
   } = $props();
+
+  const sidebarState = getSidebarState();
+  let { playlists, userProfile } = $derived(sidebarState);
 
   const flipDurationMs = 300;
 
@@ -269,6 +266,7 @@
               class="cursor-pointer w-full flex justify-start h-[64px]"
               onclick={async () => {
                 const { playlist } = await handleCreatePlaylist({
+                  sidebarState,
                   session,
                   supabase,
                 });

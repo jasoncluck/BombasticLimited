@@ -27,9 +27,7 @@
   let { data } = $props();
   const {
     videos = [],
-    playlists,
     highlightPlaylists,
-    followedPlaylists,
     userProfile,
     session,
     supabase,
@@ -158,7 +156,6 @@
         {userProfile}
         tilesDisplay="CAROUSEL"
         sectionId="latestVideos"
-        {playlists}
         {contentFilter}
         {session}
         {supabase}
@@ -187,7 +184,6 @@
           bind:carouselState={
             carouselsState[highlightPlaylist.playlist.short_id]
           }
-          {playlists}
           {userProfile}
           sectionId={highlightPlaylist.playlist.short_id}
           tilesDisplay="CAROUSEL"
@@ -217,7 +213,7 @@
           </div>
         </div>
       {:then processedPlaylists}
-        <PlaylistTiles playlists={processedPlaylists} {followedPlaylists} />
+        <PlaylistTiles playlists={processedPlaylists} {session} />
       {:catch error}
         <div class="flex items-center justify-center p-8">
           <div class="text-center">

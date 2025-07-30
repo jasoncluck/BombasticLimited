@@ -15,14 +15,12 @@
   let {
     videos,
     playlist,
-    playlists,
     sectionId = DEFAULT_SECTION_ID,
     supabase,
     session,
   }: {
     videos: Video[];
     playlist?: Playlist;
-    playlists: Playlist[];
     displayLabel: boolean;
     sectionId?: string;
     supabase: SupabaseClient<Database>;
@@ -58,7 +56,6 @@
       {videos}
       variant="header"
       {playlist}
-      {playlists}
       {sectionId}
       onSelectAll={handleSelectAll}
       {supabase}

@@ -21,7 +21,6 @@
     session,
     userProfile,
     contentFilter,
-    playlists,
   } = $derived(data);
 
   let showFloatingBreadcrumbs = $state(false);
@@ -74,7 +73,6 @@
         label: SOURCE_INFO[source].displayName,
       },
     ]}
-    {playlists}
     {supabase}
     {session}
   />
@@ -84,7 +82,6 @@
     tilesDisplay="TILES"
     {contentFilter}
     {userProfile}
-    {playlists}
     {supabase}
     {session}
   />

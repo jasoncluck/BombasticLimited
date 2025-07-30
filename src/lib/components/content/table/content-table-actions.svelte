@@ -15,14 +15,12 @@
   const {
     videos,
     playlist,
-    playlists,
     sectionId = DEFAULT_SECTION_ID,
     supabase,
     session,
   }: {
     videos: Video[];
     playlist?: Playlist;
-    playlists: Playlist[];
     sectionId?: string;
     supabase: SupabaseClient<Database>;
     session: Session | null;
@@ -40,7 +38,6 @@
       <ContentDropdown
         videos={[videos[0]]}
         {playlist}
-        {playlists}
         {sectionId}
         variant="list-items"
         {supabase}

@@ -14,6 +14,7 @@
   import type { Snippet } from "svelte";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
+  import { getSidebarState } from "$lib/state/sidebar.svelte";
 
   interface ContentContextMenuProps {
     playlist: Playlist;
@@ -34,6 +35,7 @@
   }: ContentContextMenuProps = $props();
 
   const contentState = getContentState();
+  const sidebarState = getSidebarState();
 
   let open = $state(false);
 
@@ -51,6 +53,7 @@
         if (playlist.created_by !== session?.user.id) {
           const data = await handleUnfollowPlaylist({
             playlist,
+            sidebarState,
             supabase,
             session,
           });
@@ -64,6 +67,7 @@
         } else {
           const data = await handleDeletePlaylist({
             playlist,
+            sidebarState,
             supabase,
             session,
           });

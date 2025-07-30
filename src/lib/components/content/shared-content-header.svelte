@@ -4,22 +4,13 @@
   import FloatingBreadcrumbs from "$lib/components/floating-breadcrumbs.svelte";
   import IntersectionObserver from "$lib/components/intersection-observer.svelte";
   import ContentSelect from "$lib/components/content/content-select.svelte";
-  import type {
-    Playlist,
-    ProfilePlaylist,
-    UserPlaylist,
-  } from "$lib/supabase/playlists";
+  import type { ProfilePlaylist, UserPlaylist } from "$lib/supabase/playlists";
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
   import type { HTMLAttributes } from "svelte/elements";
   import type { Snippet } from "svelte";
   import type { CombinedContentFilter } from "./content-filter";
-  import { getNumberOfPages } from "../pagination/pagination";
-  import {
-    DEFAULT_NUM_VIDEOS_PAGINATION,
-    isVideoWithTimestamp,
-    type Video,
-  } from "$lib/supabase/videos";
+  import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
   import { handleContentNavigation, type ContentView } from "./content";
   import {
     handleFollowPlaylist,
@@ -30,6 +21,7 @@
   import Button from "../ui/button/button.svelte";
   import * as Popover from "$lib/components/ui/popover";
   import type { UserProfile } from "$lib/supabase/user-profiles";
+  import { getSidebarState } from "$lib/state/sidebar.svelte";
 
   interface SharedContentHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
@@ -37,7 +29,6 @@
     contentFilter: CombinedContentFilter;
     currentPage?: number;
     open?: boolean;
-    playlists: Playlist[];
     playlist?: ProfilePlaylist | UserPlaylist;
     session: Session | null;
     showFloatingBreadcrumbs: boolean;
@@ -54,7 +45,6 @@
     contentFilter,
     currentPage = $bindable(),
     open = $bindable(),
-    playlists,
     playlist: profilePlaylist,
     session,
     showFloatingBreadcrumbs = $bindable(),
@@ -64,6 +54,9 @@
     view,
     ...restProps
   }: SharedContentHeaderProps = $props();
+
+  const sidebarState = getSidebarState();
+  const { playlists } = $derived(sidebarState);
 
   const isPlaylistCreator = $derived(
     profilePlaylist?.created_by === session?.user.id,
@@ -93,7 +86,6 @@
       {videos}
       {breadcrumbs}
       playlist={profilePlaylist}
-      {playlists}
       {supabase}
       {session}
     />
@@ -149,6 +141,7 @@
               onclick={() => {
                 handleFollowPlaylist({
                   playlist: profilePlaylist,
+                  sidebarState,
                   contentFilter,
                   supabase,
                   session,
@@ -166,6 +159,7 @@
             onclick={() => {
               handleUnfollowPlaylist({
                 playlist: profilePlaylist,
+                sidebarState,
                 supabase,
                 session,
               });
@@ -181,7 +175,6 @@
             <ContentSelect
               {videos}
               playlist={profilePlaylist}
-              {playlists}
               {supabase}
               {session}
               displayLabel={true}

@@ -19,7 +19,7 @@ export const load: PageServerLoad = async ({
     redirect(303, "/");
   }
 
-  const { contentFilter, playlists } = await parent();
+  const { contentFilter } = await parent();
 
   if (!isVideoFilter(contentFilter)) {
     throw new Error("Invalid content filter");
@@ -43,6 +43,5 @@ export const load: PageServerLoad = async ({
     videosCount,
     contentFilter,
     source,
-    playlists,
   };
 };

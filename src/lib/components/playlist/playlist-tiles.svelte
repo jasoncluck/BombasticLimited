@@ -1,11 +1,15 @@
 <script lang="ts">
+  import { getSidebarState } from "$lib/state/sidebar.svelte";
   import type { Playlist } from "$lib/supabase/playlists";
+  import type { Session } from "@supabase/supabase-js";
   import PlaylistCard from "./playlist-card.svelte";
 
   const {
     playlists,
-    followedPlaylists,
-  }: { playlists: Playlist[]; followedPlaylists: Playlist[] } = $props();
+    session,
+  }: { playlists: Playlist[]; session: Session | null } = $props();
+
+  const sidebarState = getSidebarState();
 </script>
 
 <div
@@ -16,9 +20,9 @@
   @2xl:grid-cols-3 @2xl:gap-3"
 >
   {#each playlists as playlist (playlist.id)}
-    {@const isFollowedPlaylist = followedPlaylists.some(
-      (p) => p.id === playlist.id,
-    )}
+    {@const isFollowedPlaylist = sidebarState
+      .getFollowedPlaylists(session)
+      .some((p) => p.id === playlist.id)}
     <PlaylistCard {playlist} {isFollowedPlaylist} />
   {/each}
 </div>

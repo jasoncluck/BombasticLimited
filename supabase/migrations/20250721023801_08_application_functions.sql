@@ -1692,12 +1692,11 @@ AS $$
 DECLARE
   video_count int;
   max_position int2;
-  temp_position_start int2;
-  video_record RECORD;
+  min_current_pos int2;
+  max_current_pos int2;
   i int;
-  current_positions int2[];
-  pos_counter int2;
-  final_pos int2;
+  temp_video_id text;
+  current_pos int2;
 BEGIN
     -- Validate input
     IF p_video_ids IS NULL OR array_length(p_video_ids, 1) = 0 THEN
@@ -1705,6 +1704,28 @@ BEGIN
     END IF;
     
     video_count := array_length(p_video_ids, 1);
+    
+    -- Get the current positions of videos being moved
+    min_current_pos := 32767; -- max int2
+    max_current_pos := 0;
+    
+    FOR i IN 1..video_count LOOP
+      SELECT pv.video_position INTO current_pos
+      FROM public.playlist_videos pv
+      WHERE pv.playlist_id = p_playlist_id 
+        AND pv.video_id = p_video_ids[i];
+        
+      IF NOT FOUND THEN
+        RAISE EXCEPTION 'Video % not found in playlist %', p_video_ids[i], p_playlist_id;
+      END IF;
+      
+      IF current_pos < min_current_pos THEN
+        min_current_pos := current_pos;
+      END IF;
+      IF current_pos > max_current_pos THEN
+        max_current_pos := current_pos;
+      END IF;
+    END LOOP;
     
     -- Get max position in playlist
     SELECT COALESCE(MAX(pv.video_position), 0) INTO max_position
@@ -1716,34 +1737,72 @@ BEGIN
       RAISE EXCEPTION 'New position % is out of range (1-%)', p_new_position, max_position;
     END IF;
     
-    -- Move videos to temporary positions to avoid constraint conflicts
-    temp_position_start := max_position + 1000;
+    -- Debug logging - Fixed RAISE statements
+    RAISE NOTICE 'Moving % videos from positions % to % (min: %, max: %, total videos: %)', 
+      video_count, min_current_pos, p_new_position, min_current_pos, max_current_pos, max_position;
     
+    -- Early exit if no actual movement needed
+    IF min_current_pos = p_new_position THEN
+      RAISE NOTICE 'No movement needed, videos already at target position';
+      RETURN QUERY
+      SELECT pv.id, pv.playlist_id, pv.video_id, pv.video_position
+      FROM public.playlist_videos pv
+      WHERE pv.playlist_id = p_playlist_id 
+        AND pv.video_id = ANY(p_video_ids)
+      ORDER BY pv.video_position;
+      RETURN;
+    END IF;
+    
+    -- Step 1: Move videos being repositioned to temporary negative positions
     FOR i IN 1..video_count LOOP
+      temp_video_id := p_video_ids[i];
       UPDATE public.playlist_videos 
-      SET video_position = temp_position_start + i
+      SET video_position = (-1000 - i)::int2
       WHERE playlist_id = p_playlist_id 
-        AND video_id = p_video_ids[i];
+        AND video_id = temp_video_id;
+      RAISE NOTICE 'Moved video % to temporary position %', temp_video_id, (-1000 - i);
     END LOOP;
     
-    -- Shift existing videos to make room
-    UPDATE public.playlist_videos 
-    SET video_position = video_position + video_count
-    WHERE playlist_id = p_playlist_id 
-      AND video_position >= p_new_position
-      AND video_position < temp_position_start;
-    
-    -- Move videos to their final positions
-    pos_counter := p_new_position;
-    FOR i IN 1..video_count LOOP
-      final_pos := pos_counter;
+    -- Step 2: Shift other videos based on movement direction
+    IF p_new_position > max_current_pos THEN
+      -- Moving DOWN (to higher positions): shift videos between old max and new position UP
+      RAISE NOTICE 'Moving DOWN: shifting videos between % and % up by %', 
+        max_current_pos + 1, p_new_position + video_count - 1, video_count;
       
       UPDATE public.playlist_videos 
-      SET video_position = final_pos
+      SET video_position = (video_position - video_count)::int2
       WHERE playlist_id = p_playlist_id 
-        AND video_id = p_video_ids[i];
+        AND video_position > max_current_pos
+        AND video_position <= p_new_position + video_count - 1
+        AND video_position > 0; -- Don't affect temp positions
         
-      pos_counter := pos_counter + 1;
+    ELSIF p_new_position < min_current_pos THEN
+      -- Moving UP (to lower positions): shift videos between new and old min position DOWN
+      RAISE NOTICE 'Moving UP: shifting videos between % and % down by %', 
+        p_new_position, min_current_pos - 1, video_count;
+      
+      UPDATE public.playlist_videos 
+      SET video_position = (video_position + video_count)::int2
+      WHERE playlist_id = p_playlist_id 
+        AND video_position >= p_new_position
+        AND video_position < min_current_pos
+        AND video_position > 0; -- Don't affect temp positions
+    ELSE
+      -- Moving WITHIN the current range: this is more complex
+      RAISE NOTICE 'Moving WITHIN range: from % to %', min_current_pos, p_new_position;
+    END IF;
+    
+    -- Step 3: Place videos at their final positions
+    FOR i IN 1..video_count LOOP
+      temp_video_id := p_video_ids[i];
+      current_pos := (p_new_position + i - 1)::int2;
+      
+      UPDATE public.playlist_videos 
+      SET video_position = current_pos
+      WHERE playlist_id = p_playlist_id 
+        AND video_id = temp_video_id;
+        
+      RAISE NOTICE 'Placed video % at final position %', temp_video_id, current_pos;
     END LOOP;
     
     -- Return the updated rows

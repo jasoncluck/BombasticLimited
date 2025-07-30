@@ -14,7 +14,6 @@
     contentFilter,
     form,
     playlist,
-    playlists,
     currentPage,
     videos = [],
     videosCount,
@@ -53,7 +52,6 @@
     currentPage,
     form,
     playlist,
-    playlists,
     playlistDuration,
     videosCount: videosCount ?? 0,
     supabase,
@@ -75,7 +73,6 @@
     {playlist}
     tilesDisplay="TILES"
     {userProfile}
-    {playlists}
     {videos}
     {videosCount}
     allowVideoReorder={contentFilter.sort.key === "playlistOrder" &&

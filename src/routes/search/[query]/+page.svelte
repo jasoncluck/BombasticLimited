@@ -22,9 +22,7 @@
     sourceVideos,
     sourceVideosCount,
     playlistSearchResults,
-    playlists,
     playlistsCount,
-    followedPlaylists,
     contentFilter,
     userProfile,
   } = $derived(data);
@@ -88,7 +86,7 @@
           {playlistsCount === 1 ? "playlist" : "playlists"}
         </p>
 
-        <PlaylistTiles playlists={playlistSearchResults} {followedPlaylists} />
+        <PlaylistTiles playlists={playlistSearchResults} {session} />
       </div>
     {/if}
 
@@ -115,7 +113,6 @@
             {userProfile}
             videos={sourceVideos[source]}
             bind:carouselState={carouselsState[source]}
-            {playlists}
             {contentFilter}
             {session}
             {supabase}

@@ -5,7 +5,6 @@
   import type { BreadcrumbItem } from "$lib/components/breadcrumb-layout.svelte";
   import type { PlaylistVideosFilter } from "$lib/components/content/content-filter";
   import {
-    type Playlist,
     type ProfilePlaylist,
     type UserPlaylist,
   } from "$lib/supabase/playlists";
@@ -28,7 +27,6 @@
     form: SuperValidated<PlaylistSchema>;
     playlist: ProfilePlaylist | UserPlaylist;
     videos: Video[];
-    playlists: Playlist[];
     playlistDuration: { hours: number; minutes: number; seconds: number };
     videosCount: number;
     userProfile: UserProfile | null;
@@ -44,7 +42,6 @@
     form,
     playlist,
     videos,
-    playlists,
     playlistDuration,
     videosCount,
     currentPage,
@@ -97,7 +94,6 @@
   {contentFilter}
   {playlist}
   {videos}
-  {playlists}
   bind:currentPage
   {userProfile}
   {supabase}

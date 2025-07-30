@@ -9,7 +9,6 @@
     video,
     videos,
     profilePlaylist,
-    playlists,
     contentFilter,
     supabase,
     session,
@@ -23,7 +22,6 @@
       <VideoPlayer
         {video}
         {contentFilter}
-        {playlists}
         baseUrl={`/playlist/${profilePlaylist.short_id}`}
         playlist={profilePlaylist}
         {supabase}
@@ -59,7 +57,6 @@
         {videos}
         {contentFilter}
         playlist={profilePlaylist}
-        {playlists}
         {userProfile}
         {supabase}
         {session}

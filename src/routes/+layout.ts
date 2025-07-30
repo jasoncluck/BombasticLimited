@@ -9,7 +9,6 @@ import {
 } from "$env/static/public";
 import type { LayoutLoad } from "./$types";
 import { COLLAPSED_SIDEBAR_SIZE } from "$lib/constants/layout";
-import type { UserPlaylist } from "$lib/supabase/playlists";
 import type { CombinedContentFilter } from "$lib/components/content/content-filter";
 import type { UserProfile } from "$lib/supabase/user-profiles";
 
@@ -51,13 +50,11 @@ export const load: LayoutLoad = async ({ data, depends, fetch }) => {
   } = await supabase.auth.getUser();
 
   const {
-    playlists,
     playlistsCount,
     userProfile,
     layout,
     contentFilter,
   }: {
-    playlists: UserPlaylist[];
     playlistsCount?: number | null;
     userProfile: UserProfile | null;
     layout?: string;
@@ -68,9 +65,8 @@ export const load: LayoutLoad = async ({ data, depends, fetch }) => {
     session,
     supabase,
     contentFilter,
-    user,
     userProfile,
-    playlists,
+    user,
     playlistsCount,
     layout,
     isSidebarCollapsed:

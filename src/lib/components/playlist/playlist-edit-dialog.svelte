@@ -29,6 +29,7 @@
   import { page } from "$app/state";
   import type { Session } from "@supabase/supabase-js";
   import { getPlaylistState } from "$lib/state/playlist.svelte";
+  import { getSidebarState } from "$lib/state/sidebar.svelte";
 
   let {
     form,
@@ -47,6 +48,7 @@
   } = $props();
 
   const playlistState = getPlaylistState();
+  const sidebarState = getSidebarState();
   const flash = getFlash(page);
   let isSubmitting = $state(false);
   let isPublic = $state(playlist.type === "Public");
@@ -89,6 +91,7 @@
               thumbnailUrl: playlist.thumbnail_url,
             });
           }
+          sidebarState.refreshData();
         }
       },
     }),

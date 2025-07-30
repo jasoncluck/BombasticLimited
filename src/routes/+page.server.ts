@@ -13,14 +13,11 @@ import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({
-  parent,
   locals: { supabase, session },
   url,
   depends,
 }) => {
   depends("supabase:db:videos");
-
-  const { playlists } = await parent();
 
   if (url.searchParams.has("error")) {
     redirect(303, "/auth/error");
@@ -83,6 +80,5 @@ export const load: PageServerLoad = async ({
     sourceVideosContentFilters,
     continueWatchingVideos,
     continueWatchingContentFilters,
-    playlists,
   };
 };

@@ -15,7 +15,6 @@
     breadcrumbs: BreadcrumbItem[];
     videos: Video[];
     playlist?: Playlist;
-    playlists: Playlist[];
     supabase: SupabaseClient<Database>;
     session: Session | null;
   }
@@ -23,7 +22,6 @@
     breadcrumbs,
     videos,
     playlist,
-    playlists,
     supabase,
     session,
   }: BreacrumbLayoutProps = $props();
@@ -43,7 +41,6 @@
       <ContentSelect
         {videos}
         {playlist}
-        {playlists}
         {supabase}
         {session}
         displayLabel={false}

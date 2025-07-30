@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { goto, invalidate } from "$app/navigation";
+  import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import Content from "$lib/components/content/content.svelte";
   import { SOURCE_INFO, SOURCES } from "$lib/constants/source";
@@ -22,7 +22,6 @@
     sourceVideos,
     contentFilter,
     continueWatchingVideos,
-    playlists,
     userProfile,
     session,
     supabase,
@@ -87,7 +86,6 @@
       <Content
         videos={continueWatchingVideos}
         {contentFilter}
-        {playlists}
         isContinueVideos={true}
         bind:carouselState={carouselsState.continueWatching}
         tilesDisplay="CAROUSEL"
@@ -120,7 +118,6 @@
         <Content
           videos={sourceVideos[source]}
           {contentFilter}
-          {playlists}
           bind:carouselState={carouselsState[source]}
           tilesDisplay="CAROUSEL"
           sectionId={source}

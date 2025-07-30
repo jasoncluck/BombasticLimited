@@ -3,28 +3,19 @@
   import { SOURCE_INFO } from "$lib/constants/source";
   import ContentHeader from "$lib/components/content/content-header.svelte";
   import Content from "$lib/components/content/content.svelte";
-  import {
-    DEFAULT_NUM_VIDEOS_PAGINATION,
-    type Video,
-  } from "$lib/supabase/videos.js";
+  import { type Video } from "$lib/supabase/videos.js";
   import type { Snapshot } from "@sveltejs/kit";
   import {
     DEFAULT_SECTION_ID,
     getContentState,
   } from "$lib/state/content.svelte.js";
-  import {
-    getNumberOfPages,
-    PAGINATION_QUERY_KEY,
-    updatePaginationQueryParams,
-  } from "$lib/components/pagination/pagination.js";
-  import Pagination from "$lib/components/pagination/pagination.svelte";
+  import { PAGINATION_QUERY_KEY } from "$lib/components/pagination/pagination.js";
 
   const { data } = $props();
   const {
     supabase,
     videos,
     videosCount,
-    playlists,
     userProfile,
     session,
     source,
@@ -80,7 +71,6 @@
         label: "Latest",
       },
     ]}
-    {playlists}
     {supabase}
     {session}
   />
@@ -90,7 +80,6 @@
     tilesDisplay="TILES"
     {userProfile}
     {contentFilter}
-    {playlists}
     {supabase}
     {session}
   />
