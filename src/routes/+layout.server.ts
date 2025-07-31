@@ -7,6 +7,7 @@ export const load: LayoutServerLoad = async ({
   locals: { safeGetSession, supabase },
   cookies,
   url,
+  isDataRequest,
   setHeaders,
   depends,
 }) => {
@@ -35,27 +36,31 @@ export const load: LayoutServerLoad = async ({
   }
 
   const { session } = await sessionPromise;
-  // const cacheMaxAge = 300; // 5 minutes
-  //
-  // // Create a cache key that includes relevant factors
-  // const cacheKey = [
-  //   "videos",
-  //   session ? session.user.id : "anonymous",
-  //   Math.floor(Date.now() / (cacheMaxAge * 1000)), // Changes every cache period
-  // ].join("-");
-  //
-  // setHeaders({
-  //   // Public cache for anonymous users, private for authenticated
-  //   "cache-control": session
-  //     ? `private, max-age=${cacheMaxAge}`
-  //     : `public, max-age=${cacheMaxAge}, s-maxage=${cacheMaxAge}`,
-  //   vary: "Accept-Encoding, Authorization",
-  //   etag: `"${cacheKey}"`,
-  //   // Add last-modified header
-  //   "last-modified": new Date(
-  //     Math.floor(Date.now() / (cacheMaxAge * 1000)) * cacheMaxAge * 1000,
-  //   ).toUTCString(),
-  // });
+  const cacheMaxAge = 300; // 5 minutes
+
+  // Create a cache key that includes relevant factors
+  const cacheKey = [
+    "videos",
+    session ? session.user.id : "anonymous",
+    Math.floor(Date.now() / (cacheMaxAge * 1000)), // Changes every cache period
+  ].join("-");
+
+  console.log("before");
+  if (!isDataRequest) {
+    console.log("setting cache");
+    setHeaders({
+      // Public cache for anonymous users, private for authenticated
+      "cache-control": session
+        ? `private, max-age=${cacheMaxAge}`
+        : `public, max-age=${cacheMaxAge}, s-maxage=${cacheMaxAge}`,
+      vary: "Accept-Encoding, Authorization",
+      etag: `"${cacheKey}"`,
+      // Add last-modified header
+      "last-modified": new Date(
+        Math.floor(Date.now() / (cacheMaxAge * 1000)) * cacheMaxAge * 1000,
+      ).toUTCString(),
+    });
+  }
 
   const { profile: userProfile } = await getProfile({
     session,
