@@ -37,8 +37,34 @@
   const sidebarState = getSidebarState();
   const { userProfile } = $derived(sidebarState);
 
-  // Local state for sources ordering
-  let orderedSources = $derived(userProfile?.sources ?? [...SOURCES]);
+  // Single selection state - can be either a source or playlist
+  type Selection =
+    | { type: "source"; value: string }
+    | { type: "playlist"; value: string }
+    | null;
+
+  let currentSelection = $state<Selection>(null);
+
+  // Initialize and sync selection with URL params
+  $effect(() => {
+    if (selectedPlaylistIdParam) {
+      currentSelection = { type: "playlist", value: selectedPlaylistIdParam };
+    } else if (selectedSource) {
+      currentSelection = { type: "source", value: selectedSource };
+    } else {
+      currentSelection = null;
+    }
+  });
+
+  // Local state for sources ordering with optimistic updates
+  let orderedSources = $state(userProfile?.sources ?? [...SOURCES]);
+
+  // Sync with user profile when it loads
+  $effect(() => {
+    if (userProfile?.sources) {
+      orderedSources = [...userProfile.sources];
+    }
+  });
 
   // Source drag and drop state
   let draggedSourceIndex = $state<number | null>(null);
@@ -56,9 +82,50 @@
     }),
   );
 
-  // Source drag and drop handlers
+  // Enhanced source selection with immediate feedback
+  async function handleSourceClick(source: string) {
+    // Update selection immediately - this deselects any playlist
+    currentSelection = { type: "source", value: source };
+
+    // Navigate in background
+    try {
+      await goto(`/${source}`);
+    } catch (error) {
+      // If navigation fails, revert to URL-based selection
+      if (selectedPlaylistIdParam) {
+        currentSelection = { type: "playlist", value: selectedPlaylistIdParam };
+      } else if (selectedSource) {
+        currentSelection = { type: "source", value: selectedSource };
+      } else {
+        currentSelection = null;
+      }
+      console.error("Failed to navigate to source:", error);
+    }
+  }
+
+  // Enhanced playlist selection with immediate feedback
+  async function handlePlaylistClick(playlist: any) {
+    // Update selection immediately - this deselects any source
+    currentSelection = { type: "playlist", value: playlist.short_id };
+
+    // Handle the actual navigation/state update in background
+    try {
+      await playlistState.handlePlaylistClick(playlist);
+    } catch (error) {
+      // If action fails, revert to URL-based selection
+      if (selectedPlaylistIdParam) {
+        currentSelection = { type: "playlist", value: selectedPlaylistIdParam };
+      } else if (selectedSource) {
+        currentSelection = { type: "source", value: selectedSource };
+      } else {
+        currentSelection = null;
+      }
+      console.error("Failed to handle playlist click:", error);
+    }
+  }
+
+  // Source drag and drop handlers with optimistic updates
   function handleSourceDragStart(event: DragEvent, index: number) {
-    // Prevent any drag behavior if session is null
     if (!session) {
       event.preventDefault();
       event.stopPropagation();
@@ -72,7 +139,6 @@
   }
 
   function handleSourceDragOver(event: DragEvent, index: number) {
-    // Don't allow drag over if session is null
     if (!session) {
       event.preventDefault();
       event.stopPropagation();
@@ -90,7 +156,6 @@
   }
 
   function handleSourceDragLeave(event: DragEvent) {
-    // Don't handle drag leave if session is null
     if (!session) {
       return false;
     }
@@ -105,7 +170,6 @@
   }
 
   async function handleSourceDrop(event: DragEvent, dropIndex: number) {
-    // Don't allow drop if session is null
     if (!session) {
       event.preventDefault();
       event.stopPropagation();
@@ -118,7 +182,10 @@
       return;
     }
 
-    // Reorder the sources array
+    // Store original order for potential rollback
+    const originalOrder = [...orderedSources];
+
+    // Update UI immediately (optimistic update)
     const newOrderedSources = [...orderedSources];
     const [movedSource] = newOrderedSources.splice(draggedSourceIndex, 1);
     newOrderedSources.splice(dropIndex, 0, movedSource);
@@ -129,26 +196,28 @@
 
       if (session?.user.id) {
         try {
+          // Update server in background
           await updateProfileSources({
             sources: orderedSources,
             supabase,
             session,
           });
+
           // Refresh sidebar to get updated profile
           await refreshSidebar?.();
+          invalidate("supabase:db:profiles");
         } catch (error) {
           console.error("Failed to update source ordering:", error);
           showNotification("An error occurred, unable to reorder.");
-          // Optionally revert the order on error
-          orderedSources = [...SOURCES];
+
+          // Rollback on error
+          orderedSources = originalOrder;
         }
-        invalidate("supabase:db:profiles");
       }
     }
   }
 
   function handleSourceDragEnd() {
-    // Only reset state if session exists
     if (!session) {
       return false;
     }
@@ -173,16 +242,29 @@
         draggedSourceIndex === null ||
         draggedSourceIndex < targetSourceIndex
       ) {
-        // Show indicator at the bottom
         classes +=
           " after:absolute after:left-0 after:bottom-0 after:w-full after:h-[2px] after:bg-primary after:z-10";
       } else {
-        // Show indicator at the top
         classes +=
           " before:absolute before:left-0 before:-top-0 before:w-full before:h-[2px] before:bg-primary before:z-10";
       }
     }
     return classes;
+  }
+
+  // Helper function to check if source is selected
+  function isSourceSelected(source: string): boolean {
+    return (
+      currentSelection?.type === "source" && currentSelection.value === source
+    );
+  }
+
+  // Helper function to check if playlist is selected
+  function isPlaylistSelected(playlist: any): boolean {
+    return (
+      currentSelection?.type === "playlist" &&
+      currentSelection.value === playlist.short_id
+    );
   }
 </script>
 
@@ -194,11 +276,11 @@
         draggable={!!session}
         class="{sourceState.getButtonClasses({
           index: i,
-          isSelected: selectedSource === source,
+          isSelected: isSourceSelected(source),
           isSidebarCollapsed,
         })} {getSourceDragClasses(i)}"
         size={!isSidebarCollapsed ? "default" : "icon"}
-        onclick={() => goto(`/${source}`)}
+        onclick={() => handleSourceClick(source)}
         title={SOURCE_INFO[source].displayName}
         onmouseenter={() => sourceState.handleMouseEnter(i)}
         onmouseleave={() => sourceState.handleMouseLeave(i)}
@@ -301,23 +383,23 @@
               {supabase}
               {session}
             >
-              {@const isSelectedPlaylist =
-                selectedPlaylistIdParam === playlist.short_id}
-
               <Button
                 variant="ghost"
                 draggable={true}
                 class={playlistState.getButtonClasses({
                   index: i,
-                  isSelected: isSelectedPlaylist,
+                  isSelected: isPlaylistSelected(playlist),
                   itemType: "playlist",
                   isSidebarCollapsed,
                   playlists: sidebarState.playlists,
-                  selectedPlaylistIdParam,
+                  selectedPlaylistIdParam:
+                    currentSelection?.type === "playlist"
+                      ? currentSelection.value
+                      : null,
                   session,
                 })}
                 size={!isSidebarCollapsed ? "default" : "icon"}
-                onclick={() => playlistState.handlePlaylistClick(playlist)}
+                onclick={() => handlePlaylistClick(playlist)}
                 title={playlist.name}
                 value={playlist.name}
                 onmouseenter={() => playlistState.handleMouseEnter(i)}

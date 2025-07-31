@@ -45,9 +45,7 @@ export const load: LayoutServerLoad = async ({
     Math.floor(Date.now() / (cacheMaxAge * 1000)), // Changes every cache period
   ].join("-");
 
-  console.log("before");
   if (!isDataRequest) {
-    console.log("setting cache");
     setHeaders({
       // Public cache for anonymous users, private for authenticated
       "cache-control": session
