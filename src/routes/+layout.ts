@@ -65,19 +65,26 @@ export const load = async ({
     contentFilter: CombinedContentFilter;
   } = data;
 
-  // Parse layout safely
   let parsedLayout: number[] | null = null;
   if (layout) {
     try {
-      const parsed = JSON.parse(layout);
-      if (
-        Array.isArray(parsed) &&
-        parsed.every((item) => typeof item === "number" && !isNaN(item))
-      ) {
-        parsedLayout = parsed;
+      if (Array.isArray(layout)) {
+        // Already parsed array
+        if (layout.every((item) => typeof item === "number" && !isNaN(item))) {
+          parsedLayout = layout;
+        }
+      } else if (typeof layout === "string") {
+        // String that needs parsing
+        const parsed = JSON.parse(layout);
+        if (
+          Array.isArray(parsed) &&
+          parsed.every((item) => typeof item === "number" && !isNaN(item))
+        ) {
+          parsedLayout = parsed;
+        }
       }
     } catch (error) {
-      console.warn("Failed to parse layout from cookie:", layout, error);
+      console.warn("Failed to parse layout:", layout, error);
     }
   }
 
