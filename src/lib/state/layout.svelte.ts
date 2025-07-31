@@ -137,7 +137,17 @@ export class LayoutStateClass implements LayoutState {
   }
 
   onLayoutChange(sizes: number[]) {
-    document.cookie = `PaneForge:layout=${JSON.stringify(sizes)}; path=/; domain=${page.url.hostname}`;
+    // Filter out any undefined/null/NaN values and ensure we have valid numbers
+    const validSizes =
+      sizes?.filter(
+        (size) => typeof size === "number" && !isNaN(size) && isFinite(size),
+      ) || [];
+
+    // Only save if we have valid sizes
+    if (validSizes.length > 0) {
+      const hostname = page?.url?.hostname || "localhost";
+      document.cookie = `PaneForge:layout=${JSON.stringify(validSizes)}; path=/; domain=${hostname}`;
+    }
   }
 
   setupNotifications(supabase: SupabaseClient) {
