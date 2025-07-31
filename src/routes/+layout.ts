@@ -12,7 +12,11 @@ import { COLLAPSED_SIDEBAR_SIZE } from "$lib/constants/layout";
 import type { CombinedContentFilter } from "$lib/components/content/content-filter";
 import type { UserProfile } from "$lib/supabase/user-profiles";
 
-export const load: LayoutLoad = async ({ data, depends, fetch }) => {
+export const load = async ({
+  data,
+  depends,
+  fetch,
+}: Parameters<LayoutLoad>[0]) => {
   /**
    * Declare a dependency so the layout can be invalidated, for example, on
    * session refresh.
@@ -61,6 +65,22 @@ export const load: LayoutLoad = async ({ data, depends, fetch }) => {
     contentFilter: CombinedContentFilter;
   } = data;
 
+  // Parse layout safely
+  let parsedLayout: number[] | null = null;
+  if (layout) {
+    try {
+      const parsed = JSON.parse(layout);
+      if (
+        Array.isArray(parsed) &&
+        parsed.every((item) => typeof item === "number" && !isNaN(item))
+      ) {
+        parsedLayout = parsed;
+      }
+    } catch (error) {
+      console.warn("Failed to parse layout from cookie:", layout, error);
+    }
+  }
+
   return {
     session,
     supabase,
@@ -70,7 +90,7 @@ export const load: LayoutLoad = async ({ data, depends, fetch }) => {
     playlistsCount,
     layout,
     isSidebarCollapsed:
-      layout && Math.trunc(parseFloat(layout[0])) === COLLAPSED_SIDEBAR_SIZE
+      parsedLayout && Math.trunc(parsedLayout[0]) === COLLAPSED_SIDEBAR_SIZE
         ? true
         : false,
   };
