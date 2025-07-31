@@ -6,6 +6,9 @@ import viteCompression from "vite-plugin-compression";
 
 export default defineConfig({
   plugins: [sveltekit(), tailwindcss(), enhancedImages(), viteCompression()],
+  build: {
+    minify: false, // Set to false to disable minification
+  },
   test: {
     setupFiles: [],
     env: {
