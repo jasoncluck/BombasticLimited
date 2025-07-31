@@ -15,6 +15,7 @@
   import { handleCreatePlaylist } from "../playlist/playlist-service";
   import Button, { buttonVariants } from "../ui/button/button.svelte";
   import PlaylistContextMenu from "../playlist/playlist-context-menu.svelte";
+  import type { Playlist } from "$lib/supabase/playlists";
 
   let {
     supabase,
@@ -57,7 +58,7 @@
   });
 
   // Local state for sources ordering with optimistic updates
-  let orderedSources = $state(userProfile?.sources ?? [...SOURCES]);
+  let orderedSources = $derived(userProfile?.sources ?? [...SOURCES]);
 
   // Sync with user profile when it loads
   $effect(() => {
@@ -104,13 +105,13 @@
   }
 
   // Enhanced playlist selection with immediate feedback
-  async function handlePlaylistClick(playlist: any) {
+  async function handlePlaylistClick(playlist: Playlist) {
     // Update selection immediately - this deselects any source
     currentSelection = { type: "playlist", value: playlist.short_id };
 
     // Handle the actual navigation/state update in background
     try {
-      await playlistState.handlePlaylistClick(playlist);
+      playlistState.handlePlaylistClick(playlist);
     } catch (error) {
       // If action fails, revert to URL-based selection
       if (selectedPlaylistIdParam) {
@@ -260,7 +261,7 @@
   }
 
   // Helper function to check if playlist is selected
-  function isPlaylistSelected(playlist: any): boolean {
+  function isPlaylistSelected(playlist: Playlist): boolean {
     return (
       currentSelection?.type === "playlist" &&
       currentSelection.value === playlist.short_id
@@ -395,7 +396,7 @@
                   selectedPlaylistIdParam:
                     currentSelection?.type === "playlist"
                       ? currentSelection.value
-                      : null,
+                      : undefined,
                   session,
                 })}
                 size={!isSidebarCollapsed ? "default" : "icon"}

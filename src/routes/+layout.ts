@@ -9,7 +9,10 @@ import {
 } from "$env/static/public";
 import type { LayoutLoad } from "./$types";
 import { COLLAPSED_SIDEBAR_SIZE } from "$lib/constants/layout";
-import type { CombinedContentFilter } from "$lib/components/content/content-filter";
+import type {
+  CombinedContentFilter,
+  VideoFilter,
+} from "$lib/components/content/content-filter";
 import type { UserProfile } from "$lib/supabase/user-profiles";
 
 export const load = async ({
@@ -62,11 +65,13 @@ export const load = async ({
     return {
       session,
       supabase,
-      contentFilter: null as CombinedContentFilter | null,
-      userProfile: null as UserProfile | null,
-      user,
       playlistsCount: null as number | null,
-      layout: null as number[] | null,
+      contentFilter: {
+        sort: { key: "datePublished", order: "descending" },
+        type: "video",
+      } as VideoFilter,
+      user,
+      userProfile: null as UserProfile | null,
       isSidebarCollapsed: false,
       // Cache-related data from server
       etag: data.etag || null,
