@@ -65,26 +65,30 @@ export const load = async ({
     contentFilter: CombinedContentFilter;
   } = data;
 
+  // Handle layout safely
   let parsedLayout: number[] | null = null;
   if (layout) {
     try {
+      // If it's already an array, use it directly
       if (Array.isArray(layout)) {
-        // Already parsed array
-        if (layout.every((item) => typeof item === "number" && !isNaN(item))) {
-          parsedLayout = layout;
-        }
-      } else if (typeof layout === "string") {
-        // String that needs parsing
+        parsedLayout = layout.every(
+          (item) => typeof item === "number" && !isNaN(item),
+        )
+          ? layout
+          : null;
+      }
+      // If it's a string, try to parse it
+      else if (typeof layout === "string") {
         const parsed = JSON.parse(layout);
-        if (
+        parsedLayout =
           Array.isArray(parsed) &&
           parsed.every((item) => typeof item === "number" && !isNaN(item))
-        ) {
-          parsedLayout = parsed;
-        }
+            ? parsed
+            : null;
       }
     } catch (error) {
-      console.warn("Failed to parse layout:", layout, error);
+      console.warn("Failed to process layout:", layout, error);
+      parsedLayout = null;
     }
   }
 
@@ -95,7 +99,7 @@ export const load = async ({
     userProfile,
     user,
     playlistsCount,
-    layout,
+    layout: parsedLayout,
     isSidebarCollapsed:
       parsedLayout && Math.trunc(parsedLayout[0]) === COLLAPSED_SIDEBAR_SIZE
         ? true
