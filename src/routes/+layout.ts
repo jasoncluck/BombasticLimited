@@ -35,7 +35,11 @@ export const load = async ({
         },
         cookies: {
           getAll() {
-            return data.cookies;
+            return data.cookies || [];
+          },
+          setAll() {
+            // Server-side cookie setting is handled by the server load function
+            // This is a no-op for the client load function
           },
         },
       });
@@ -53,16 +57,42 @@ export const load = async ({
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Handle the case where server returns minimal cached data
+  if (data.cached) {
+    return {
+      session,
+      supabase,
+      contentFilter: null as CombinedContentFilter | null,
+      userProfile: null as UserProfile | null,
+      user,
+      playlistsCount: null as number | null,
+      layout: null as number[] | null,
+      isSidebarCollapsed: false,
+      // Cache-related data from server
+      etag: data.etag || null,
+      lastModified: data.lastModified || null,
+      cached: true,
+      cacheUserId: data.cacheUserId || null,
+    };
+  }
+
+  // Destructure the full data when not cached with proper types
   const {
-    playlistsCount,
-    userProfile,
-    layout,
+    playlistsCount = null,
+    userProfile = null,
+    layout = null,
     contentFilter,
+    etag = null,
+    lastModified = null,
+    cacheUserId = null,
   }: {
     playlistsCount?: number | null;
-    userProfile: UserProfile | null;
-    layout?: string;
-    contentFilter: CombinedContentFilter;
+    userProfile?: UserProfile | null;
+    layout?: string | number[] | null;
+    contentFilter?: CombinedContentFilter;
+    etag?: string | null;
+    lastModified?: string | null;
+    cacheUserId?: string | null;
   } = data;
 
   // Handle layout safely
@@ -95,7 +125,7 @@ export const load = async ({
   return {
     session,
     supabase,
-    contentFilter,
+    contentFilter: contentFilter || null,
     userProfile,
     user,
     playlistsCount,
@@ -104,5 +134,10 @@ export const load = async ({
       parsedLayout && Math.trunc(parsedLayout[0]) === COLLAPSED_SIDEBAR_SIZE
         ? true
         : false,
+    // Cache-related data from server
+    etag,
+    lastModified,
+    cached: false,
+    cacheUserId,
   };
 };

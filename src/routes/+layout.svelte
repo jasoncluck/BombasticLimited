@@ -6,6 +6,7 @@
     invalidate,
   } from "$app/navigation";
   import { navigating } from "$app/state";
+  import { browser } from "$app/environment";
   import { Toaster } from "$lib/components/ui/sonner/index.js";
   import { notificationStore } from "$lib/stores/notification.js";
   import { onMount } from "svelte";
@@ -36,6 +37,7 @@
   import { setPlaylistState } from "$lib/state/playlist.svelte";
   import { setPageState, type ScrollPosition } from "$lib/state/page.svelte";
   import { setLayoutState } from "$lib/state/layout.svelte";
+  import { setNavigationCacheState } from "$lib/state/navigation-cache.svelte";
   import { handleUpdateProfileContentDisplay } from "$lib/components/profile/profile-service";
   import { setSourceState } from "$lib/state/source.svelte";
   import Loader from "$lib/components/loader.svelte";
@@ -48,10 +50,20 @@
   const pageState = setPageState();
   const contentState = setContentState(pageState);
   const mediaQuery = setMediaQueryState();
+  const navigationCache = setNavigationCacheState();
 
   let { data, children } = $props();
-  let { session, supabase, layout, isSidebarCollapsed, userProfile } =
-    $derived(data);
+  let {
+    session,
+    supabase,
+    layout,
+    isSidebarCollapsed,
+    userProfile,
+    etag,
+    lastModified,
+    cached,
+    cacheUserId,
+  } = $derived(data);
 
   let sidebarState = setSidebarState();
   // Initialize all state contexts
@@ -62,28 +74,24 @@
     !mediaQuery.initialized || !sidebarState.initialized,
   );
 
-  // Navigation loading state - shows blank page during route changes
-  // Updated to ignore query parameter changes
+  // Navigation loading state - enhanced with secure ETag cache awareness
   const isNavigatingToContent = $derived.by(() => {
     if (!navigating) return false;
 
     const from = navigating.from?.url;
     const to = navigating.to?.url;
+    const user = session?.user;
 
-    // Show loading for meaningful route changes (not same page or initial load)
-    if (!from || !to) return false;
+    // Use secure ETag cache to determine if we should show loading
+    if (browser && navigationCache.initialized && user?.id) {
+      const shouldShow = navigationCache.shouldShowLoading(
+        from?.href,
+        to?.href,
+        user.id,
+      );
+      if (!shouldShow) return false;
+    }
 
-    // Compare pathname only (ignore query parameters and hash)
-    const fromPath = from.pathname;
-    const toPath = to.pathname;
-
-    // Don't show loading if we're staying on the same path
-    if (fromPath === toPath) return false;
-
-    // Don't show loading when navigating to search routes
-    if (toPath.startsWith("/search/")) return false;
-
-    // Show loading for programmatic navigation and link clicks
     return navigating.type === "goto" || navigating.type === "link";
   });
 
@@ -161,6 +169,31 @@
       invalidate("supabase:db:videos");
     }
 
+    // Store ETag information with security validation
+    if (
+      browser &&
+      to &&
+      etag &&
+      lastModified &&
+      !cached &&
+      user?.id &&
+      cacheUserId
+    ) {
+      // Only store if user context is valid
+      if (user.id === cacheUserId) {
+        navigationCache.setCacheEntry(
+          to.url.href,
+          etag,
+          lastModified,
+          user.id,
+          cacheUserId,
+        );
+      } else {
+        console.warn("User context mismatch, clearing cache");
+        navigationCache.clearUserCache();
+      }
+    }
+
     // Reset scroll state if new page
     if (!delta && from?.url.pathname !== to?.url.pathname) {
       if (pageState.viewportRefs.contentViewportRef) {
@@ -193,6 +226,32 @@
   onMount(() => {
     let mediaQueryCleanup: (() => void) | undefined;
     let sidebarCleanup: (() => void) | undefined;
+
+    // Initialize navigation cache
+    navigationCache.initialize();
+
+    // Clear cache when user changes for security
+    if (
+      browser &&
+      user?.id &&
+      navigationCache.currentUserId &&
+      navigationCache.currentUserId !== user.id
+    ) {
+      navigationCache.clearUserCache();
+    }
+
+    // Store initial page ETag if available and user context is valid
+    if (browser && etag && lastModified && !cached && user?.id && cacheUserId) {
+      if (user.id === cacheUserId) {
+        navigationCache.setCacheEntry(
+          window.location.href,
+          etag,
+          lastModified,
+          user.id,
+          cacheUserId,
+        );
+      }
+    }
 
     // Initialize media query (synchronous)
     mediaQueryCleanup = mediaQuery.initialize();
@@ -253,6 +312,9 @@
       //   streamingUnsubscribe();
       // }
       layoutState.cleanup();
+
+      // Clean up navigation cache
+      navigationCache.cleanup();
 
       // Clean up state initializations
       if (mediaQueryCleanup) {
