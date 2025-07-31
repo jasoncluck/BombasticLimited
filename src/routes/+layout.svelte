@@ -490,7 +490,7 @@
       onLayoutChange={layoutState.onLayoutChange}
     >
       <Resizable.Pane
-        defaultSize={layout ? parseFloat(layout[0]) : 20}
+        defaultSize={layout && layout[0] != null ? parseFloat(layout[0]) : 20}
         minSize={12}
         maxSize={50}
         collapsedSize={COLLAPSED_SIDEBAR_SIZE}
@@ -522,7 +522,7 @@
       />
       <Resizable.Pane
         class="@container pane flex min-w-[350px] sm:mr-1"
-        defaultSize={layout ? parseFloat(layout[1]) : 79}
+        defaultSize={layout && layout[1] != null ? parseFloat(layout[1]) : 79}
       >
         <ScrollArea
           type="scroll"
