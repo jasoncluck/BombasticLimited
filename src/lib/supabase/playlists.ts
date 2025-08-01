@@ -634,6 +634,8 @@ export async function deletePlaylist({
     p_user_id: session.user.id,
   });
 
+  console.log(error);
+
   if (error) {
     console.error("Error when deleting playlists:", error);
   }

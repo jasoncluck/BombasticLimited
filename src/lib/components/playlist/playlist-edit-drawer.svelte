@@ -202,9 +202,9 @@
                   <Popover.Content align="start"
                     ><p class="text-sm">
                       Playlist images can only be set to thumbnails of videos
-                      added to the playlist. Use the video's menu to set an
-                      image. Once complete, the image can be cropped using this
-                      button.
+                      added to the playlist. Select a video to set it's
+                      thumbnail as the playlist image. Once complete, the image
+                      can be cropped using this button.
                     </p>
                   </Popover.Content>
                 </Popover.Root>

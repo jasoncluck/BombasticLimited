@@ -42,7 +42,7 @@ export class NavigationCacheStateClass implements NavigationCacheState {
 
   private cleanupInterval: ReturnType<typeof setTimeout> | null = null;
   private readonly CACHE_DURATION = 300000; // 5 minutes
-  private readonly STORAGE_KEY = "navigation-cache-etags-v2"; // Version bump for security
+  private readonly STORAGE_KEY = "navigation-cache-etags-v1";
 
   initialize(): void {
     if (this.initialized || !browser) return;

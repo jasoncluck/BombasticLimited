@@ -14,7 +14,7 @@
     Settings,
   } from "@lucide/svelte";
   import * as Sheet from "$lib/components/ui/sheet/index.js";
-  import { Button } from "$lib/components/ui/button";
+  import { Button, buttonVariants } from "$lib/components/ui/button";
   import {
     handleCreatePlaylist,
     handleUpdatePlaylistPosition,
@@ -107,6 +107,10 @@
 
 <Sheet.Root bind:open={isOpen}>
   <Sheet.Trigger
+    class={buttonVariants({
+      variant: "ghost",
+      class: "cursor-pointer outline-none",
+    })}
     ><Menu class="cursor-pointer" />
     <span class="sr-only"> Toggle Menu</span></Sheet.Trigger
   >
@@ -218,7 +222,7 @@
                 title="Reorder playlist videos"
                 onReorder={handlePlaylistReorder}
                 onClose={() => {
-                  invalidate("supabase:db:playlists");
+                  sidebarState.refreshData();
                 }}
               >
                 {#snippet trigger()}

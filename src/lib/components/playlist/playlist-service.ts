@@ -82,7 +82,7 @@ export async function handleCreatePlaylist({
     showNotification(`Created Playlist: ${playlist.name}`);
   }
 
-  await sidebarState.refreshData();
+  sidebarState.refreshData();
 
   return { playlist, error };
 }
@@ -114,7 +114,7 @@ export async function handleDeletePlaylist({
   } else {
     showNotification(`Deleted ${playlist.name}.`, "success");
   }
-  await sidebarState.refreshData();
+  sidebarState.refreshData();
   return { error };
 }
 
@@ -160,16 +160,6 @@ export async function handleAddVideosToPlaylist({
     showNotification(
       `Added ${videos.length > 1 ? "videos" : "video"} to ${playlist.name}`,
     );
-
-    if (!playlist.thumbnail_maxres_url || !playlist.thumbnail_url) {
-      await handleUpdatePlaylistImage({
-        playlist,
-        thumbnailMaxResUrl: videos[0].thumbnail_maxres_url,
-        sidebarState,
-        thumbnailUrl: videos[0].thumbnail_url,
-        supabase,
-      });
-    }
   }
 
   await sidebarState.refreshData();

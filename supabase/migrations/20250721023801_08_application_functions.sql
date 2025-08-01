@@ -825,6 +825,15 @@ DECLARE
   counter int := 2;
   name_exists boolean;
 BEGIN
+  -- Lock all operations for this user to prevent concurrent playlist modifications
+  PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || p_created_by::text));
+  
+  -- Also lock all existing user playlists with FOR UPDATE to prevent concurrent position changes
+  PERFORM 1
+  FROM public.user_playlists up
+  WHERE up.user_id = p_created_by
+  FOR UPDATE;
+
   -- Check if user already has 25 or more playlists
   SELECT COUNT(*)
     INTO playlist_count
@@ -891,11 +900,10 @@ BEGIN
 
   -- Shift existing playlists if inserting at a specific position
   IF actual_position <= max_position THEN
-    FOR i IN REVERSE actual_position..max_position LOOP
-      UPDATE public.user_playlists up
-        SET playlist_position = i + 1
-        WHERE up.user_id = p_created_by AND up.playlist_position = i;
-    END LOOP;
+    UPDATE public.user_playlists up
+      SET playlist_position = playlist_position + 1
+      WHERE up.user_id = p_created_by 
+        AND up.playlist_position >= actual_position;
   END IF;
 
   -- Insert the new playlist with the generated/provided name
@@ -968,6 +976,15 @@ DECLARE
   already_linked boolean;
   playlist_count int2;
 BEGIN
+  -- Lock all operations for this user to prevent concurrent playlist modifications
+  PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || p_user_id::text));
+  
+  -- Also lock all existing user playlists with FOR UPDATE to prevent concurrent position changes
+  PERFORM 1
+  FROM public.user_playlists up
+  WHERE up.user_id = p_user_id
+  FOR UPDATE;
+
   -- Check if user already has 25 or more playlists
   SELECT COUNT(*)
     INTO playlist_count
@@ -1008,11 +1025,10 @@ BEGIN
 
   -- Shift existing playlists if inserting at a specific position
   IF actual_position <= max_position THEN
-    FOR i IN REVERSE actual_position..max_position LOOP
-      UPDATE public.user_playlists up
-        SET playlist_position = i + 1
-        WHERE up.user_id = p_user_id AND up.playlist_position = i;
-    END LOOP;
+    UPDATE public.user_playlists up
+      SET playlist_position = playlist_position + 1
+      WHERE up.user_id = p_user_id 
+        AND up.playlist_position >= actual_position;
   END IF;
 
   -- Insert into user_playlists with the desired position
@@ -1050,6 +1066,15 @@ AS $$
 DECLARE
   removed_position int2;
 BEGIN
+  -- Lock all operations for this user to prevent concurrent playlist modifications
+  PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || p_user_id::text));
+  
+  -- Also lock all existing user playlists with FOR UPDATE to prevent concurrent position changes
+  PERFORM 1
+  FROM public.user_playlists up
+  WHERE up.user_id = p_user_id
+  FOR UPDATE;
+
   -- Find the playlist position of the playlist to be removed
   SELECT up.playlist_position
     INTO removed_position
@@ -1104,6 +1129,15 @@ DECLARE
   max_position int2;
   updated_playlist public.playlists%ROWTYPE;
 BEGIN
+  -- Lock all operations for this user to prevent concurrent playlist modifications
+  PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || p_user_id::text));
+  
+  -- Also lock all existing user playlists with FOR UPDATE to prevent concurrent position changes
+  PERFORM 1
+  FROM public.user_playlists up
+  WHERE up.user_id = p_user_id
+  FOR UPDATE;
+
   -- Find the current position of the playlist for this user
   SELECT up.playlist_position
     INTO current_position
@@ -1215,6 +1249,15 @@ DECLARE
   deleted_position int2;
   max_position int2;
 BEGIN
+  -- Lock all operations for this user to prevent concurrent playlist modifications
+  PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || p_user_id::text));
+  
+  -- Also lock all existing user playlists with FOR UPDATE to prevent concurrent position changes
+  PERFORM 1
+  FROM public.user_playlists up
+  WHERE up.user_id = p_user_id
+  FOR UPDATE;
+  
   -- Find the position of the playlist to be deleted
   SELECT up.playlist_position
     INTO deleted_position
@@ -1222,8 +1265,8 @@ BEGIN
     WHERE up.user_id = p_user_id AND up.id = p_playlist_id;
 
   -- If not found, raise exception
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'Playlist mapping not found for this user';
+  IF deleted_position IS NULL THEN
+    RAISE EXCEPTION 'Playlist mapping not found for user_id: % and playlist_id: %', p_user_id, p_playlist_id;
   END IF;
 
   -- Delete the user's mapping to the playlist
@@ -1404,37 +1447,42 @@ CREATE OR REPLACE FUNCTION public.get_playlist_by_youtube_id(
   type public.playlist_type,
   image_properties jsonb,
   youtube_id text,
+
   profile_username text,
   sorted_by public.playlist_sorted_by,
   sort_order public.playlist_sort_order
 )
 SET search_path = ''
 LANGUAGE sql
+
 AS $$
   SELECT
     p.id,
     p.created_at,
     p.name,
     p.short_id,
+
     p.created_by,
     p.description,
     p.thumbnail_url,
     p.thumbnail_maxres_url,
     p.type,
     p.image_properties,
+
     p.youtube_id,
     prof.username AS profile_username,
     up.sorted_by,
     up.sort_order
   FROM public.playlists p
   LEFT JOIN public.profiles prof ON p.created_by = prof.id
+
   LEFT JOIN public.user_playlists up 
     ON up.id = p.id 
   WHERE p.youtube_id = p_youtube_id
   LIMIT 1;
 $$;
 
--- Function to insert playlist videos with position management
+
 CREATE OR REPLACE FUNCTION "public"."insert_playlist_videos"(
   "p_playlist_id" int8,
   "p_video_ids" text[]
@@ -1452,6 +1500,11 @@ DECLARE
   v_id text;
   array_length int;
   existing_video_positions jsonb;
+  first_video_id text;
+  playlist_has_image boolean := false;
+  video_thumbnail_url text;
+  video_thumbnail_maxres_url text;
+  new_videos_added boolean := false;
 BEGIN
   -- Check if video array is empty
   array_length := array_length(p_video_ids, 1);
@@ -1459,53 +1512,92 @@ BEGIN
     RAISE EXCEPTION 'Video IDs array cannot be empty';
   END IF;
 
-  -- Start a transaction to ensure consistency
-  BEGIN
-    -- Find the maximum position for this playlist
-    SELECT COALESCE(MAX(pv.video_position), 0)
-    INTO max_position
-    FROM public.playlist_videos pv
-    WHERE pv.playlist_id = p_playlist_id;
-    
-    -- Get existing videos with their positions as a JSONB map for quick lookup
-    SELECT jsonb_object_agg(pv.video_id, pv.video_position)
-    INTO existing_video_positions
-    FROM public.playlist_videos pv
-    WHERE pv.playlist_id = p_playlist_id
-    AND pv.video_id = ANY(p_video_ids);
-    
-    -- If no existing videos were found, initialize an empty JSONB object
-    IF existing_video_positions IS NULL THEN
-      existing_video_positions := '{}'::jsonb;
+  -- Lock the playlist to prevent concurrent modifications
+  PERFORM 1 FROM public.playlists pl WHERE pl.id = p_playlist_id FOR UPDATE;
+  
+  -- Check if playlist exists
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Playlist with ID % does not exist', p_playlist_id;
+  END IF;
+  
+  -- Check if playlist already has thumbnail images
+  SELECT (pl.thumbnail_url IS NOT NULL AND TRIM(pl.thumbnail_url) != '') OR 
+         (pl.thumbnail_maxres_url IS NOT NULL AND TRIM(pl.thumbnail_maxres_url) != '')
+  INTO playlist_has_image
+  FROM public.playlists pl
+  WHERE pl.id = p_playlist_id;
+  
+  -- Find the maximum position for this playlist
+  SELECT COALESCE(MAX(pv.video_position), 0)
+  INTO max_position
+  FROM public.playlist_videos pv
+  WHERE pv.playlist_id = p_playlist_id;
+  
+  -- Get existing videos with their positions as a JSONB map for quick lookup
+  SELECT jsonb_object_agg(pv.video_id, pv.video_position)
+  INTO existing_video_positions
+  FROM public.playlist_videos pv
+  WHERE pv.playlist_id = p_playlist_id
+  AND pv.video_id = ANY(p_video_ids);
+  
+  -- If no existing videos were found, initialize an empty JSONB object
+  IF existing_video_positions IS NULL THEN
+    existing_video_positions := '{}'::jsonb;
+  END IF;
+  
+  current_position := max_position;
+  first_video_id := p_video_ids[1];
+  
+  -- Insert new videos only (skip existing ones)
+  FOREACH v_id IN ARRAY p_video_ids
+  LOOP
+    -- Check if this video is already in the playlist
+    IF NOT (existing_video_positions ? v_id) THEN
+      current_position := current_position + 1;
+      new_videos_added := true;
+      
+      INSERT INTO public.playlist_videos (playlist_id, video_id, video_position)
+      VALUES (p_playlist_id, v_id, current_position)
+      RETURNING * INTO inserted_row;
+      
+      RETURN QUERY SELECT inserted_row.id, inserted_row.playlist_id, inserted_row.video_id, inserted_row.video_position;
+    ELSE
+      -- Return existing video info for consistency
+      RETURN QUERY 
+      SELECT pv.id, pv.playlist_id, pv.video_id, pv.video_position
+      FROM public.playlist_videos pv
+      WHERE pv.playlist_id = p_playlist_id AND pv.video_id = v_id;
     END IF;
+  END LOOP;
+  
+  -- Update playlist image if conditions are met
+  IF NOT playlist_has_image AND new_videos_added AND first_video_id IS NOT NULL THEN
+    -- Get the first video's thumbnail information from videos table
+    SELECT v.thumbnail_url, v.thumbnail_maxres_url
+    INTO video_thumbnail_url, video_thumbnail_maxres_url
+    FROM public.videos v
+    WHERE v.id = first_video_id;
     
-    current_position := max_position;
-    
-    -- Insert new videos only (skip existing ones)
-    FOREACH v_id IN ARRAY p_video_ids
-    LOOP
-      -- Check if this video is already in the playlist
-      IF NOT (existing_video_positions ? v_id) THEN
-        current_position := current_position + 1;
-        
-        INSERT INTO public.playlist_videos (playlist_id, video_id, video_position)
-        VALUES (p_playlist_id, v_id, current_position)
-        RETURNING * INTO inserted_row;
-        
-        RETURN QUERY SELECT inserted_row.id, inserted_row.playlist_id, inserted_row.video_id, inserted_row.video_position;
-      ELSE
-        -- Return existing video info for consistency
-        RETURN QUERY 
-        SELECT pv.id, pv.playlist_id, pv.video_id, pv.video_position
-        FROM public.playlist_videos pv
-        WHERE pv.playlist_id = p_playlist_id AND pv.video_id = v_id;
-      END IF;
-    END LOOP;
-    
-  EXCEPTION
-    WHEN OTHERS THEN
-      RAISE EXCEPTION 'Error inserting playlist videos: %', SQLERRM;
-  END;
+    -- Update playlist with the first video's thumbnail if we found valid thumbnails
+    IF (video_thumbnail_url IS NOT NULL AND TRIM(video_thumbnail_url) != '') OR 
+       (video_thumbnail_maxres_url IS NOT NULL AND TRIM(video_thumbnail_maxres_url) != '') THEN
+      
+      UPDATE public.playlists pl
+      SET 
+        thumbnail_url = CASE 
+          WHEN video_thumbnail_url IS NOT NULL AND TRIM(video_thumbnail_url) != '' 
+          THEN video_thumbnail_url 
+          ELSE pl.thumbnail_url 
+        END,
+        thumbnail_maxres_url = CASE 
+          WHEN video_thumbnail_maxres_url IS NOT NULL AND TRIM(video_thumbnail_maxres_url) != '' 
+          THEN video_thumbnail_maxres_url 
+          ELSE pl.thumbnail_maxres_url 
+        END
+      WHERE pl.id = p_playlist_id;
+    END IF;
+  END IF;
+  
 END;
 $$ LANGUAGE plpgsql
 SET search_path = '';

@@ -372,7 +372,7 @@
         data-testid="search-input"
         oninput={(e) => layoutState.handleSearch(e)}
         placeholder="Search"
-        class="sm:w-72 w-36"
+        class="sm:w-72 w-52"
         bind:value={searchQuery}
       />
       <Loader message="" size="sm" visible={layoutState.isSearching} />
