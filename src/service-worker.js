@@ -58,7 +58,7 @@ function getCacheExpiry(url, request) {
   }
 
   // API routes
-  if (pathname.includes("/supabase/")) {
+  if (pathname.startsWith("/api/") || pathname.includes("/supabase/")) {
     return CACHE_EXPIRY.API_RESPONSES;
   }
 
