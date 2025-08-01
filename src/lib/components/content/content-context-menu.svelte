@@ -300,7 +300,6 @@
                   videoId: v.id,
                   watchedAt: new Date(),
                 })),
-                contentState,
                 session,
                 supabase,
               });

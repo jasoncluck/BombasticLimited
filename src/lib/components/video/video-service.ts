@@ -124,7 +124,6 @@ export async function handleAddVideoTimestamps({
   supabase,
 }: {
   videoTimestamps: TimestampWithVideoId[];
-  contentState: ContentState;
   session: Session | null;
   supabase: SupabaseClient;
 }): Promise<{ updatedVideos: Video[]; error?: PostgrestError }> {
@@ -135,13 +134,6 @@ export async function handleAddVideoTimestamps({
     supabase,
   });
   invalidate("supabase:db:videos");
-
-  if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
-    navigator.serviceWorker.controller.postMessage({
-      type: "INVALIDATE_API_CACHE",
-      patterns: ["/api/sidebar", "/supabase/"], // Invalidate related API caches
-    });
-  }
 
   if (error) {
     showNotification("Unable to save timestamp");

@@ -225,14 +225,19 @@
     }
   });
 
-  onMount(() => {
-    invalidateAll();
+  // State setup
+  onMount(async () => {
+    await invalidateAll();
     mediaQuery.initialize();
     let mediaQueryCleanup: (() => void) | undefined;
     let sidebarCleanup: (() => void) | undefined;
-
-    // Initialize navigation cache
     navigationCache.initialize();
+
+    mediaQueryCleanup = mediaQuery.initialize();
+
+    sidebarState.initialize().then((cleanup) => {
+      sidebarCleanup = cleanup;
+    });
 
     // Clear cache when user changes for security
     if (
@@ -257,14 +262,17 @@
       }
     }
 
-    // Initialize media query (synchronous)
-    mediaQueryCleanup = mediaQuery.initialize();
+    if (mediaQueryCleanup) {
+      mediaQueryCleanup();
+    }
+    if (sidebarCleanup) {
+      sidebarCleanup();
+    }
 
-    // Initialize sidebar (asynchronous)
-    sidebarState.initialize().then((cleanup) => {
-      sidebarCleanup = cleanup;
-    });
+    navigationCache.cleanup();
+  });
 
+  onMount(() => {
     // Set up event listeners for drag operations
     window.addEventListener("dragover", handleDragOver);
     window.addEventListener("dragend", handleDragEnd);
@@ -316,17 +324,6 @@
       //   streamingUnsubscribe();
       // }
       layoutState.cleanup();
-
-      // Clean up navigation cache
-      navigationCache.cleanup();
-
-      // Clean up state initializations
-      if (mediaQueryCleanup) {
-        mediaQueryCleanup();
-      }
-      if (sidebarCleanup) {
-        sidebarCleanup();
-      }
     };
   });
 </script>

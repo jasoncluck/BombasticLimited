@@ -11,6 +11,29 @@ const CACHE_EXPIRY = {
   IMAGES: 24 * 60 * 60 * 1000, // 24 hours for images
 };
 
+// ✅ Add function to check if request should be handled by service worker
+function shouldHandleRequest(request) {
+  const url = new URL(request.url);
+
+  // Don't handle non-GET requests
+  if (request.method !== "GET") return false;
+
+  // ✅ Don't handle Vercel internal endpoints
+  if (url.pathname.startsWith("/.well-known/vercel/")) return false;
+  if (url.pathname.startsWith("/_vercel/")) return false;
+
+  // Don't handle other well-known endpoints that might be used by hosting providers
+  if (url.pathname.startsWith("/.well-known/")) return false;
+
+  // Don't handle chrome extension requests
+  if (url.protocol === "chrome-extension:") return false;
+
+  // Don't handle different origins (unless it's your CDN)
+  if (url.origin !== self.location.origin) return false;
+
+  return true;
+}
+
 // Helper function to create cache entry with expiry
 function createCacheEntry(response, expiry) {
   const now = Date.now();
@@ -120,7 +143,10 @@ self.addEventListener("activate", (event) => {
 
 // Fetch event - implement caching strategies with expiration
 self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") return;
+  // ✅ Early return for requests we shouldn't handle
+  if (!shouldHandleRequest(event.request)) {
+    return; // Let the browser handle these requests normally
+  }
 
   async function respond() {
     const url = new URL(event.request.url);
