@@ -6,7 +6,7 @@
     invalidate,
   } from "$app/navigation";
   import { navigating } from "$app/state";
-  import { browser } from "$app/environment";
+  import { browser, dev } from "$app/environment";
   import { Toaster } from "$lib/components/ui/sonner/index.js";
   import { notificationStore } from "$lib/stores/notification.js";
   import { onMount } from "svelte";
@@ -221,6 +221,11 @@
     if (pageState.sidebarScrollPosition) {
       pageState.sidebarScrollPosition = null;
     }
+  });
+  onMount(() => {
+    mediaQuery.initialize();
+
+    // Register service worker
   });
 
   onMount(() => {
