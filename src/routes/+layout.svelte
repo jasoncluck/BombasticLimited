@@ -4,6 +4,7 @@
     beforeNavigate,
     goto,
     invalidate,
+    invalidateAll,
   } from "$app/navigation";
   import { navigating } from "$app/state";
   import { browser } from "$app/environment";
@@ -223,13 +224,10 @@
       pageState.sidebarScrollPosition = null;
     }
   });
+
   onMount(() => {
+    invalidateAll();
     mediaQuery.initialize();
-
-    // Register service worker
-  });
-
-  onMount(() => {
     let mediaQueryCleanup: (() => void) | undefined;
     let sidebarCleanup: (() => void) | undefined;
 
