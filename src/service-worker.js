@@ -1,4 +1,5 @@
 import { build, files, version } from "$service-worker";
+import { PUBLIC_SUPABASE_URL as SUPABASE_URL } from "$env/static/public";
 
 const CACHE = `bombastic-cache-${version}`;
 const ASSETS = [...build, ...files];
@@ -35,6 +36,19 @@ function shouldHandleRequest(request) {
 
   // Don't handle chrome extension requests
   if (url.protocol === "chrome-extension:") return false;
+
+  // ✅ Allow Supabase requests using injected environment variable
+  if (SUPABASE_URL) {
+    try {
+      const supabaseOrigin = new URL(SUPABASE_URL).origin;
+      if (url.origin === supabaseOrigin) return true;
+    } catch (error) {
+      console.warn("Invalid SUPABASE_URL:", SUPABASE_URL, error);
+    }
+  }
+
+  // Fallback: Allow any supabase.co requests
+  if (url.hostname.includes("supabase.co")) return true;
 
   // Don't handle different origins (unless it's your CDN)
   if (url.origin !== self.location.origin) return false;
@@ -88,8 +102,22 @@ function getCacheExpiry(url, request) {
     return CACHE_EXPIRY.IMAGES;
   }
 
-  // API routes
-  if (pathname.includes("/supabase/")) {
+  // ✅ Supabase API routes (including auth endpoints) using injected env variable
+  let isSupabaseRequest = false;
+  if (SUPABASE_URL) {
+    try {
+      const supabaseOrigin = new URL(SUPABASE_URL).origin;
+      isSupabaseRequest = url.origin === supabaseOrigin;
+    } catch (error) {
+      // Ignore error and fall through to hostname check
+    }
+  }
+
+  if (
+    pathname.includes("/supabase/") ||
+    isSupabaseRequest ||
+    url.hostname.includes("supabase.co")
+  ) {
     return CACHE_EXPIRY.API_RESPONSES;
   }
 
@@ -173,6 +201,20 @@ self.addEventListener("fetch", (event) => {
     const cache = await caches.open(CACHE);
     const cached = await cache.match(event.request);
 
+    // Safe Supabase origin check
+    let supabaseOrigin = null;
+    if (SUPABASE_URL) {
+      try {
+        supabaseOrigin = new URL(SUPABASE_URL).origin;
+      } catch (error) {
+        console.warn(
+          "Invalid SUPABASE_URL in fetch handler:",
+          SUPABASE_URL,
+          error,
+        );
+      }
+    }
+
     // Check if cached response exists and is not expired
     const validCache = cached && !isCacheExpired(cached);
 
@@ -197,8 +239,12 @@ self.addEventListener("fetch", (event) => {
       }
     }
 
-    // For API routes - stale-while-revalidate with expiry
-    if (url.pathname.includes("/supabase/")) {
+    // ✅ For Supabase API routes (including auth endpoints) - stale-while-revalidate with expiry
+    const isSupabaseRequest =
+      (supabaseOrigin && url.origin === supabaseOrigin) ||
+      url.hostname.includes("supabase.co");
+
+    if (url.pathname.includes("/supabase/") || isSupabaseRequest) {
       if (validCache) {
         // Serve cached version immediately, update in background
         event.waitUntil(
@@ -258,7 +304,8 @@ self.addEventListener("fetch", (event) => {
 
       if (
         url.pathname.includes("/supabase/") ||
-        url.pathname.includes("/api/sidebar")
+        url.pathname.includes("/api/sidebar") ||
+        isSupabaseRequest
       ) {
         // Skip caching for dynamic data that changes frequently
         return fetch(event.request);
