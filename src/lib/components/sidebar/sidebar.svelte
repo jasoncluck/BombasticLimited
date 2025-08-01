@@ -244,6 +244,7 @@
       <Button
         variant="ghost"
         draggable={!!session}
+        data-sveltekit-preload-data
         class="{sourceState.getButtonClasses({
           index: i,
           isSelected: isSourceSelected(source),
