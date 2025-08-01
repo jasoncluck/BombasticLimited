@@ -67,7 +67,6 @@
       await handleUpdatePlaylistPosition({
         position: newPosition,
         playlist: item as Playlist,
-        sidebarState,
         session,
         supabase,
       });

@@ -500,6 +500,7 @@ export async function getPlaylistVideoContext({
     duration: row.video_duration,
     video_start_seconds: row.video_start_seconds,
     updated_at: row.video_updated_at,
+    watched_at: row.video_watched_at,
   }));
 
   // Find current video and next videos

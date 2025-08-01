@@ -9,7 +9,6 @@ import {
 } from "$lib/components/playlist/playlist-service";
 import type { PageState } from "./page.svelte";
 import { type ContentState } from "./content.svelte";
-import { goto } from "$app/navigation";
 import type { SidebarState } from "./sidebar.svelte";
 
 export interface PlaylistDragDropOptions {
@@ -314,7 +313,6 @@ export class PlaylistStateClass {
         handleUpdatePlaylistPosition({
           playlist: options.playlists[this.draggedIndex],
           position: options.playlists.length - playlistTargetIndex,
-          sidebarState: this.sidebarState,
           supabase: options.supabase,
           session: options.session,
         });
