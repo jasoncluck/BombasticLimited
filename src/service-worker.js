@@ -58,7 +58,7 @@ function getCacheExpiry(url, request) {
   }
 
   // API routes
-  if (pathname.startsWith("/api/") || pathname.includes("/supabase/")) {
+  if (pathname.includes("/supabase/")) {
     return CACHE_EXPIRY.API_RESPONSES;
   }
 
@@ -152,10 +152,7 @@ self.addEventListener("fetch", (event) => {
     }
 
     // For API routes - stale-while-revalidate with expiry
-    if (
-      url.pathname.startsWith("/api/") ||
-      url.pathname.includes("/supabase/")
-    ) {
+    if (url.pathname.includes("/supabase/")) {
       if (validCache) {
         // Serve cached version immediately, update in background
         event.waitUntil(
@@ -211,6 +208,14 @@ self.addEventListener("fetch", (event) => {
       // Network failed, check for valid or expired cache
       if (validCache) {
         return cached;
+      }
+
+      if (
+        url.pathname.includes("/supabase/") ||
+        url.pathname.includes("/api/sidebar")
+      ) {
+        // Skip caching for dynamic data that changes frequently
+        return fetch(event.request);
       }
 
       // Return expired cache for navigation requests if available

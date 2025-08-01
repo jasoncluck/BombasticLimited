@@ -6,10 +6,10 @@
     invalidate,
   } from "$app/navigation";
   import { navigating } from "$app/state";
-  import { browser, dev } from "$app/environment";
+  import { browser } from "$app/environment";
   import { Toaster } from "$lib/components/ui/sonner/index.js";
   import { notificationStore } from "$lib/stores/notification.js";
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import { toast } from "svelte-sonner";
   import { page } from "$app/state";
   import {
@@ -156,7 +156,16 @@
     }
   });
 
-  afterNavigate(({ from, to, delta }) => {
+  afterNavigate(async ({ from, to, delta }) => {
+    // Reset scroll state if new page
+    if (!delta && from?.url.pathname !== to?.url.pathname) {
+      if (pageState.viewportRefs.contentViewportRef) {
+        pageState.viewportRefs.contentViewportRef.scrollTop = 0;
+        pageState.viewportRefs.contentViewportRef.scrollLeft = 0;
+      }
+    }
+
+    await tick();
     if (
       to &&
       !to.url.pathname.startsWith("/search/") &&
@@ -191,14 +200,6 @@
       } else {
         console.warn("User context mismatch, clearing cache");
         navigationCache.clearUserCache();
-      }
-    }
-
-    // Reset scroll state if new page
-    if (!delta && from?.url.pathname !== to?.url.pathname) {
-      if (pageState.viewportRefs.contentViewportRef) {
-        pageState.viewportRefs.contentViewportRef.scrollTop = 0;
-        pageState.viewportRefs.contentViewportRef.scrollLeft = 0;
       }
     }
   });

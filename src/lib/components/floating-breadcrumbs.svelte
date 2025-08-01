@@ -34,7 +34,7 @@
 </script>
 
 <div
-  class="w-full py-1 px-4 bg-background-lighter flex grow items-center absolute pointer-events-auto justify-between"
+  class="w-full py-1 sm:px-4 bg-background-lighter flex grow items-center absolute pointer-events-auto justify-between"
 >
   <div class="relative">
     {#if session}

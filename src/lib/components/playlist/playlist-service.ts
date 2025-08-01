@@ -307,7 +307,6 @@ export async function handleUpdatePlaylistPosition({
     supabase,
     session,
   });
-  invalidate("supabase:db:videos");
 }
 
 export async function handleFollowPlaylist({

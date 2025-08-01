@@ -29,7 +29,7 @@ export const load: PageServerLoad = async ({
   params,
   depends,
 }) => {
-  depends("supabase:db:videos");
+  depends("supabase:db:videos", "supabase:db:playlists");
 
   const { contentFilter } = await parent();
 

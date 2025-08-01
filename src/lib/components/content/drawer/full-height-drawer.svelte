@@ -1,7 +1,6 @@
 <script lang="ts">
   import { buttonVariants } from "$lib/components/ui/button";
   import * as Drawer from "$lib/components/ui/drawer/index.js";
-  import ScrollArea from "$lib/components/ui/scroll-area/scroll-area.svelte";
   import { type Snippet } from "svelte";
 
   let {

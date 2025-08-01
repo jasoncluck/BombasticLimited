@@ -521,7 +521,7 @@ BEGIN
     v.thumbnail_maxres_url,
     v.published_at,
     v.duration,
-    t.video_start_seconds,
+    COALESCE(t.video_start_seconds, 0) AS video_start_seconds,
     t.watched_at,
     t.updated_at,
     

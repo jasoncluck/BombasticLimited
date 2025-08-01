@@ -311,20 +311,13 @@ export class PlaylistStateClass {
         options.onPlaylistsUpdate?.(updatedPlaylists);
 
         // Then update database
-        try {
-          await handleUpdatePlaylistPosition({
-            playlist: options.playlists[this.draggedIndex],
-            position: options.playlists.length - playlistTargetIndex,
-            supabase: options.supabase,
-            session: options.session,
-          });
-        } catch (error) {
-          console.error("Failed to update playlist position:", error);
-          // Revert local state on error
-          options.onPlaylistsUpdate?.(originalPlaylists);
-          // Optionally show error notification
-          // showNotification("Failed to reorder playlist");
-        }
+        handleUpdatePlaylistPosition({
+          playlist: options.playlists[this.draggedIndex],
+          position: options.playlists.length - playlistTargetIndex,
+          sidebarState: this.sidebarState,
+          supabase: options.supabase,
+          session: options.session,
+        });
       }
     };
 
@@ -342,11 +335,6 @@ export class PlaylistStateClass {
       handleDrop,
       handleDragEnd,
     };
-  }
-
-  // Navigation
-  handlePlaylistClick(playlist: Playlist) {
-    goto(`/playlist/${encodeURI(playlist.short_id)}`);
   }
 }
 

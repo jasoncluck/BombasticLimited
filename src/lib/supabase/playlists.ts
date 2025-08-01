@@ -57,6 +57,7 @@ export type PlaylistVideoWithTimestamp = {
   duration: string;
   video_start_seconds: number | null;
   updated_at: string | null;
+  watched_at: string | null;
 };
 
 export interface PlaylistImageProperties {
@@ -168,6 +169,7 @@ export async function getPlaylistData({
       duration: row.video_duration,
       video_start_seconds: row.video_start_seconds,
       updated_at: row.video_updated_at,
+      watched_at: row.video_watched_at,
     }));
 
   // Convert total seconds to hours, minutes, seconds

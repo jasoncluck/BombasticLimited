@@ -30,6 +30,7 @@
   import type { Session } from "@supabase/supabase-js";
   import { getPlaylistState } from "$lib/state/playlist.svelte";
   import { getSidebarState } from "$lib/state/sidebar.svelte";
+  import { invalidate } from "$app/navigation";
 
   let {
     form,
@@ -92,6 +93,7 @@
             });
           }
           sidebarState.refreshData();
+          invalidate("supabase:db:playlists");
         }
       },
     }),

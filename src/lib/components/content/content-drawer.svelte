@@ -202,6 +202,7 @@
             variant="ghost"
             onclick={() => {
               playlistState.openEditPlaylist = true;
+              contentState.openDrawerSection = null;
               clearSelectionAfterAction();
             }}
           >
@@ -217,7 +218,7 @@
             title="Reorder playlist videos"
             onReorder={handleVideoReorder}
             onClose={() => {
-              invalidate("supabase:db:playlists");
+              invalidate("supabase:db:videos");
               contentState.openDrawerSection = null;
             }}
           >
@@ -279,8 +280,8 @@
                 <Button
                   class="drawer-playlist-button"
                   variant="ghost"
-                  onclick={async () => {
-                    const { error } = await handleAddVideosToPlaylist({
+                  onclick={() => {
+                    handleAddVideosToPlaylist({
                       videos: operationVideos,
                       playlist: addPlaylist,
                       sidebarState,
@@ -288,10 +289,8 @@
                       session,
                     });
 
-                    if (!error) {
-                      addToPlaylistDrawerOpen = false;
-                      contentState.openDrawerSection = null;
-                    }
+                    addToPlaylistDrawerOpen = false;
+                    contentState.openDrawerSection = null;
                   }}
                 >
                   {#if addPlaylist.processedImageUrl}
@@ -330,17 +329,15 @@
           <Button
             class="drawer-button justify-start"
             variant="ghost"
-            onclick={async () => {
-              const { error } = await handleRemoveVideosFromPlaylist({
+            onclick={() => {
+              handleRemoveVideosFromPlaylist({
                 videos: operationVideos,
                 sidebarState,
                 playlist,
                 supabase,
               });
 
-              if (!error) {
-                clearSelectionAfterAction();
-              }
+              contentState.openDrawerSection = null;
             }}
           >
             <MinusCircle class="drawer-icon" />
@@ -353,8 +350,8 @@
           <Button
             class="drawer-button justify-start"
             variant="ghost"
-            onclick={async () => {
-              const { error } = await handleUpdatePlaylistImage({
+            onclick={() => {
+              handleUpdatePlaylistImage({
                 playlist,
                 sidebarState,
                 thumbnailUrl: operationVideos[0].thumbnail_url,
@@ -362,9 +359,7 @@
                 supabase,
               });
 
-              if (!error) {
-                clearSelectionAfterAction();
-              }
+              contentState.openDrawerSection = null;
             }}
           >
             <ImagePlay class="drawer-icon" />
@@ -396,7 +391,7 @@
                     updatedHoveredVideo;
                 }
               }
-              clearSelectionAfterAction();
+              contentState.openDrawerSection = null;
             }}
           >
             <TimerReset class="drawer-icon" />
@@ -432,7 +427,7 @@
                     updatedHoveredVideo;
                 }
               }
-              clearSelectionAfterAction();
+              contentState.openDrawerSection = null;
             }}
           >
             <CircleCheck class="drawer-icon" />

@@ -136,10 +136,15 @@ export async function handleAddVideoTimestamps({
   });
   invalidate("supabase:db:videos");
 
+  if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      type: "INVALIDATE_API_CACHE",
+      patterns: ["/api/sidebar", "/supabase/"], // Invalidate related API caches
+    });
+  }
+
   if (error) {
     showNotification("Unable to save timestamp");
-  } else if (videoTimestamps.some((vt) => vt.watchedAt)) {
-    showNotification("Set as watched");
   }
   return { updatedVideos: updatedVideos ?? [], error };
 }

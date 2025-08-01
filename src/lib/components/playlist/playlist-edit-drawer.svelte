@@ -29,6 +29,7 @@
   import { page } from "$app/state";
   import { getPlaylistState } from "$lib/state/playlist.svelte";
   import { getSidebarState } from "$lib/state/sidebar.svelte";
+  import { invalidate } from "$app/navigation";
 
   let {
     form,
@@ -322,8 +323,8 @@
         </div>
       </div>
 
-      <!-- Sticky Footer - now inside the form -->
-      <div class="flex-shrink-0 p-4 pt-2 border-t bg-background">
+      <!-- Non-sticky Footer - now flows naturally with the content -->
+      <div class="p-4 pt-2">
         <div class="flex flex-col gap-2">
           <Drawer.Footer class="drawer-footer flex gap-2">
             <Button type="submit" class="drawer-button-footer">

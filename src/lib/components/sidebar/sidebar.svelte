@@ -44,17 +44,13 @@
     | { type: "playlist"; value: string }
     | null;
 
-  let currentSelection = $state<Selection>(null);
-
-  // Initialize and sync selection with URL params
-  $effect(() => {
+  let currentSelection = $derived.by<Selection>(() => {
     if (selectedPlaylistIdParam) {
-      currentSelection = { type: "playlist", value: selectedPlaylistIdParam };
+      return { type: "playlist", value: selectedPlaylistIdParam };
     } else if (selectedSource) {
-      currentSelection = { type: "source", value: selectedSource };
-    } else {
-      currentSelection = null;
+      return { type: "source", value: selectedSource };
     }
+    return null;
   });
 
   // Local state for sources ordering with optimistic updates
@@ -95,21 +91,7 @@
   function handlePlaylistClick(playlist: Playlist) {
     // Update selection immediately - this deselects any source
     currentSelection = { type: "playlist", value: playlist.short_id };
-
-    // Handle the actual navigation/state update in background
-    try {
-      playlistState.handlePlaylistClick(playlist);
-    } catch (error) {
-      // If action fails, revert to URL-based selection
-      if (selectedPlaylistIdParam) {
-        currentSelection = { type: "playlist", value: selectedPlaylistIdParam };
-      } else if (selectedSource) {
-        currentSelection = { type: "source", value: selectedSource };
-      } else {
-        currentSelection = null;
-      }
-      console.error("Failed to handle playlist click:", error);
-    }
+    goto(`/playlist/${encodeURI(playlist.short_id)}`);
   }
 
   // Source drag and drop handlers with optimistic updates
@@ -387,7 +369,9 @@
                   session,
                 })}
                 size={!isSidebarCollapsed ? "default" : "icon"}
-                onclick={() => handlePlaylistClick(playlist)}
+                onclick={() => {
+                  handlePlaylistClick(playlist);
+                }}
                 title={playlist.name}
                 value={playlist.name}
                 onmouseenter={() => playlistState.handleMouseEnter(i)}
