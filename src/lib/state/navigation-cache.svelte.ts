@@ -233,7 +233,6 @@ export class NavigationCacheStateClass implements NavigationCacheState {
 
     // Check service worker cache first (faster check)
     if (this.serviceWorkerCachedPages.has(pathname)) {
-      console.log("SW HAS resource");
       return true;
     }
 
