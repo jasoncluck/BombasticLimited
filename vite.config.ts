@@ -6,9 +6,6 @@ import viteCompression from "vite-plugin-compression";
 
 export default defineConfig({
   plugins: [sveltekit(), tailwindcss(), enhancedImages(), viteCompression()],
-  build: {
-    minify: false, // Set to false to disable minification
-  },
   test: {
     setupFiles: [],
     env: {
@@ -21,8 +18,10 @@ export default defineConfig({
     // Make Svelte think we're in a browser environment
     "import.meta.env.SSR": false,
   },
-  // Resolve Svelte to client version for tests
-  resolve: {
-    conditions: ["browser"],
-  },
+  // Tell Vitest to use the `browser` entry points in `package.json` files, even though it's running in Node
+  resolve: process.env.VITEST
+    ? {
+        conditions: ["browser"],
+      }
+    : undefined,
 });

@@ -84,28 +84,15 @@
   );
 
   // Enhanced source selection with immediate feedback
-  async function handleSourceClick(source: string) {
+  function handleSourceClick(source: string) {
     // Update selection immediately - this deselects any playlist
     currentSelection = { type: "source", value: source };
 
-    // Navigate in background
-    try {
-      await goto(`/${source}`);
-    } catch (error) {
-      // If navigation fails, revert to URL-based selection
-      if (selectedPlaylistIdParam) {
-        currentSelection = { type: "playlist", value: selectedPlaylistIdParam };
-      } else if (selectedSource) {
-        currentSelection = { type: "source", value: selectedSource };
-      } else {
-        currentSelection = null;
-      }
-      console.error("Failed to navigate to source:", error);
-    }
+    goto(`/${source}`);
   }
 
   // Enhanced playlist selection with immediate feedback
-  async function handlePlaylistClick(playlist: Playlist) {
+  function handlePlaylistClick(playlist: Playlist) {
     // Update selection immediately - this deselects any source
     currentSelection = { type: "playlist", value: playlist.short_id };
 
