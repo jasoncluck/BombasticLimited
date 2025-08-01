@@ -79,20 +79,6 @@
   const isNavigatingToContent = $derived.by(() => {
     if (!navigating) return false;
 
-    const from = navigating.from?.url;
-    const to = navigating.to?.url;
-    const user = session?.user;
-
-    // Use synchronous shouldShowLoading method
-    if (browser && navigationCache.initialized) {
-      const shouldShow = navigationCache.shouldShowLoading(
-        from?.href,
-        to?.href,
-        user?.id ?? null,
-      );
-      if (!shouldShow) return false;
-    }
-
     return navigating.type === "goto" || navigating.type === "link";
   });
 
