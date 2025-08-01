@@ -9,13 +9,6 @@
   import type { Snapshot } from "./$types";
   import { handlePlaylistNavigation } from "$lib/components/playlist/playlist";
   import PlaylistTiles from "$lib/components/playlist/playlist-tiles.svelte";
-  import {
-    DEFAULT_NUM_PLAYLISTS_OVERVIEW,
-    getPlaylistsForUsername,
-    type Playlist,
-  } from "$lib/supabase/playlists";
-  import { processPlaylists } from "$lib/components/playlist/playlist-service";
-  import { onMount } from "svelte";
   import type { Video } from "$lib/supabase/videos";
   import {
     getContentView,
@@ -28,6 +21,7 @@
   const {
     videos = [],
     highlightPlaylists,
+    sourcePlaylistsData,
     userProfile,
     session,
     supabase,
@@ -37,6 +31,8 @@
 
   const contentState = getContentState();
   const mediaQueryState = getMediaQueryState();
+
+  const { playlists: sourcePlaylists } = $derived(sourcePlaylistsData);
 
   const highlightPlaylistShortIds = $derived(
     highlightPlaylists.map((hp) => hp.playlist.short_id),
@@ -65,21 +61,6 @@
     },
   };
 
-  let processedPlaylistsPromise = $state<Promise<Playlist[]>>(
-    Promise.resolve([]),
-  );
-
-  let sourcePlaylistsData =
-    $state<ReturnType<typeof getPlaylistsForUsername>>();
-
-  onMount(async () => {
-    sourcePlaylistsData = getPlaylistsForUsername({
-      username: source,
-      limit: DEFAULT_NUM_PLAYLISTS_OVERVIEW,
-      supabase,
-    });
-  });
-
   $effect(() => {
     const newSectionIds = ["latestVideos", ...highlightPlaylistShortIds];
 
@@ -93,12 +74,6 @@
       }
       carouselsState = newCarouselState;
     }
-  });
-
-  $effect(() => {
-    sourcePlaylistsData?.then(({ playlists: sourcePlaylists }) => {
-      processedPlaylistsPromise = processPlaylists(sourcePlaylists);
-    });
   });
 </script>
 
@@ -203,27 +178,7 @@
         Playlists
       </a>
 
-      {#await processedPlaylistsPromise}
-        <div class="flex items-center justify-center p-8">
-          <div class="text-center">
-            <div
-              class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"
-            ></div>
-            <p class="text-sm text-muted-foreground">Loading playlists...</p>
-          </div>
-        </div>
-      {:then processedPlaylists}
-        <PlaylistTiles playlists={processedPlaylists} {session} />
-      {:catch error}
-        <div class="flex items-center justify-center p-8">
-          <div class="text-center">
-            <p class="text-sm text-destructive mb-2">
-              Failed to load playlists
-            </p>
-            <p class="text-xs text-muted-foreground">{error.message}</p>
-          </div>
-        </div>
-      {/await}
+      <PlaylistTiles playlists={sourcePlaylists} {session} />
     </div>
   </div>
 </div>

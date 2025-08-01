@@ -75,7 +75,7 @@
     !mediaQuery.initialized || !sidebarState.initialized,
   );
 
-  // Navigation loading state - enhanced with secure ETag cache awareness
+  // Navigation loading state - enhanced with secure ETag cache awareness for both authenticated and non-authenticated users
   const isNavigatingToContent = $derived.by(() => {
     if (!navigating) return false;
 
@@ -83,12 +83,12 @@
     const to = navigating.to?.url;
     const user = session?.user;
 
-    // Use secure ETag cache to determine if we should show loading
-    if (browser && navigationCache.initialized && user?.id) {
+    // Use synchronous shouldShowLoading method
+    if (browser && navigationCache.initialized) {
       const shouldShow = navigationCache.shouldShowLoading(
         from?.href,
         to?.href,
-        user.id,
+        user?.id ?? null,
       );
       if (!shouldShow) return false;
     }
@@ -179,24 +179,20 @@
       invalidate("supabase:db:videos");
     }
 
-    // Store ETag information with security validation
-    if (
-      browser &&
-      to &&
-      etag &&
-      lastModified &&
-      !cached &&
-      user?.id &&
-      cacheUserId
-    ) {
-      // Only store if user context is valid
-      if (user.id === cacheUserId) {
+    // Store ETag information with security validation for both authenticated and non-authenticated users
+    if (browser && to && etag && lastModified && !cached) {
+      const currentUserId = user?.id ?? null;
+      const currentCacheUserId = cacheUserId ?? null;
+
+      // For authenticated users: validate user context matches
+      // For non-authenticated users: both should be null
+      if (currentUserId === currentCacheUserId) {
         navigationCache.setCacheEntry(
           to.url.href,
           etag,
           lastModified,
-          user.id,
-          cacheUserId,
+          currentUserId,
+          currentCacheUserId,
         );
       } else {
         console.warn("User context mismatch, clearing cache");
@@ -236,38 +232,31 @@
       await invalidateAll();
 
       // Initialize all state
-      navigationCache.initialize();
+      await navigationCache.initialize();
       mediaQueryCleanup = mediaQuery.initialize();
 
       // Await the sidebar initialization to get the cleanup function
       sidebarCleanup = await sidebarState.initialize();
 
-      // Clear cache when user changes for security
-      if (
-        browser &&
-        user?.id &&
-        navigationCache.currentUserId &&
-        navigationCache.currentUserId !== user.id
-      ) {
+      const currentUserId = user?.id ?? null;
+
+      // Clear cache when user changes for security (handles both auth state changes)
+      if (browser && navigationCache.currentUserId !== currentUserId) {
         navigationCache.clearUserCache();
       }
 
       // Store initial page ETag if available and user context is valid
-      if (
-        browser &&
-        etag &&
-        lastModified &&
-        !cached &&
-        user?.id &&
-        cacheUserId
-      ) {
-        if (user.id === cacheUserId) {
+      if (browser && etag && lastModified && !cached) {
+        const currentCacheUserId = cacheUserId ?? null;
+
+        // Validate user context for both authenticated and non-authenticated users
+        if (currentUserId === currentCacheUserId) {
           navigationCache.setCacheEntry(
             window.location.href,
             etag,
             lastModified,
-            user.id,
-            cacheUserId,
+            currentUserId,
+            currentCacheUserId,
           );
         }
       }
@@ -330,6 +319,7 @@
   });
 </script>
 
+<!-- Rest of the template remains the same -->
 <Toaster position="top-right" />
 
 <svelte:head>

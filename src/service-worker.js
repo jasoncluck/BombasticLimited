@@ -5,11 +5,19 @@ const ASSETS = [...build, ...files];
 
 // Cache expiration times (in milliseconds)
 const CACHE_EXPIRY = {
-  STATIC_ASSETS: 7 * 24 * 60 * 60 * 1000, // 7 days for static assets
+  STATIC_ASSETS: 24 * 60 * 60 * 1000, // 24 hours for static assets
   API_RESPONSES: 5 * 60 * 1000, // 5 minutes for API responses
-  PAGES: 30 * 60 * 1000, // 30 minutes for pages
+  PAGES: 5 * 60 * 1000, // 5 minutes for pages
   IMAGES: 24 * 60 * 60 * 1000, // 24 hours for images
 };
+
+const PRECACHE_PAGES = [
+  "/",
+  "/giantbomb",
+  "/nextlander",
+  "/remap",
+  "/jeffgerstmann",
+];
 
 // ✅ Add function to check if request should be handled by service worker
 function shouldHandleRequest(request) {
@@ -89,13 +97,12 @@ function getCacheExpiry(url, request) {
   return CACHE_EXPIRY.PAGES;
 }
 
-// Install event - cache static assets
 self.addEventListener("install", (event) => {
   async function addFilesToCache() {
     const cache = await caches.open(CACHE);
 
-    // Cache static assets with expiry
-    const cachePromises = ASSETS.map(async (asset) => {
+    // Cache static assets with expiry (your existing code)
+    const assetPromises = ASSETS.map(async (asset) => {
       try {
         const response = await fetch(asset);
         if (response.ok) {
@@ -108,9 +115,22 @@ self.addEventListener("install", (event) => {
       }
     });
 
-    await Promise.allSettled(cachePromises);
-  }
+    // Precache common pages
+    const pagePromises = PRECACHE_PAGES.map(async (page) => {
+      try {
+        const response = await fetch(page);
+        if (response.ok) {
+          const expiry = CACHE_EXPIRY.PAGES;
+          const cachedResponse = createCacheEntry(response.clone(), expiry);
+          await cache.put(page, cachedResponse);
+        }
+      } catch (error) {
+        console.warn(`Failed to precache page: ${page}`, error);
+      }
+    });
 
+    await Promise.allSettled([...assetPromises, ...pagePromises]);
+  }
   event.waitUntil(addFilesToCache());
 });
 

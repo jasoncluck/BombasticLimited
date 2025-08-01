@@ -11,6 +11,8 @@ import {
   getPlaylistsForUsername,
 } from "$lib/supabase/playlists";
 import type { PageServerLoad } from "./$types";
+import { parseImageProperties } from "$lib/components/playlist/playlist";
+import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
 
 // export const config = {
 //   isr: {
@@ -78,7 +80,7 @@ export const load: PageServerLoad = async ({
         ),
       ),
 
-      // Get source playlists data (keep existing function or enhance as needed)
+      // Get source playlists data
       getPlaylistsForUsername({
         username: source,
         limit: DEFAULT_NUM_PLAYLISTS_OVERVIEW,
@@ -91,10 +93,31 @@ export const load: PageServerLoad = async ({
     (result) => result !== null,
   );
 
+  // Process playlists with images in parallel
+  const [processedVideos, processedSourcePlaylists] = await Promise.all([
+    // Process videos (just pass through for now)
+    Promise.resolve(videos ?? []),
+
+    // Process playlist images in parallel (only for source playlists)
+    Promise.all(
+      (sourcePlaylistsData.playlists || []).map(async (playlist) => ({
+        ...playlist,
+        processedImageUrl: await getCroppedPlaylistImageUrlServer({
+          imageProperties: parseImageProperties(playlist.image_properties),
+          thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
+          thumbnailUrl: playlist.thumbnail_url,
+        }),
+      })),
+    ),
+  ]);
+
   return {
-    videos: videos ?? [],
-    highlightPlaylists,
-    sourcePlaylistsData,
+    videos: processedVideos,
+    highlightPlaylists, // ✅ Added back without processing
+    sourcePlaylistsData: {
+      ...sourcePlaylistsData,
+      playlists: processedSourcePlaylists,
+    },
     source,
     contentFilter,
   };
