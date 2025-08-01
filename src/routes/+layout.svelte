@@ -225,89 +225,85 @@
     }
   });
 
-  // State setup
-  onMount(async () => {
-    await invalidateAll();
-    mediaQuery.initialize();
+  onMount(() => {
     let mediaQueryCleanup: (() => void) | undefined;
     let sidebarCleanup: (() => void) | undefined;
-    navigationCache.initialize();
+    let notificationStoreUnsubscribe: (() => void) | undefined;
+    let authUnsubscribe: (() => void) | undefined;
 
-    mediaQueryCleanup = mediaQuery.initialize();
+    // Handle async initialization separately
+    async function initialize() {
+      await invalidateAll();
 
-    sidebarState.initialize().then((cleanup) => {
-      sidebarCleanup = cleanup;
-    });
+      // Initialize all state
+      navigationCache.initialize();
+      mediaQueryCleanup = mediaQuery.initialize();
 
-    // Clear cache when user changes for security
-    if (
-      browser &&
-      user?.id &&
-      navigationCache.currentUserId &&
-      navigationCache.currentUserId !== user.id
-    ) {
-      navigationCache.clearUserCache();
-    }
+      // Await the sidebar initialization to get the cleanup function
+      sidebarCleanup = await sidebarState.initialize();
 
-    // Store initial page ETag if available and user context is valid
-    if (browser && etag && lastModified && !cached && user?.id && cacheUserId) {
-      if (user.id === cacheUserId) {
-        navigationCache.setCacheEntry(
-          window.location.href,
-          etag,
-          lastModified,
-          user.id,
-          cacheUserId,
-        );
+      // Clear cache when user changes for security
+      if (
+        browser &&
+        user?.id &&
+        navigationCache.currentUserId &&
+        navigationCache.currentUserId !== user.id
+      ) {
+        navigationCache.clearUserCache();
+      }
+
+      // Store initial page ETag if available and user context is valid
+      if (
+        browser &&
+        etag &&
+        lastModified &&
+        !cached &&
+        user?.id &&
+        cacheUserId
+      ) {
+        if (user.id === cacheUserId) {
+          navigationCache.setCacheEntry(
+            window.location.href,
+            etag,
+            lastModified,
+            user.id,
+            cacheUserId,
+          );
+        }
       }
     }
 
-    if (mediaQueryCleanup) {
-      mediaQueryCleanup();
-    }
-    if (sidebarCleanup) {
-      sidebarCleanup();
-    }
+    // Start async initialization
+    initialize();
 
-    navigationCache.cleanup();
-  });
-
-  onMount(() => {
     // Set up event listeners for drag operations
     window.addEventListener("dragover", handleDragOver);
     window.addEventListener("dragend", handleDragEnd);
     window.addEventListener("drop", handleDrop);
 
-    // Set up streaming notifications
-    // let streamingUnsubscribe: (() => void) | null = null;
-    // layoutState.setupStreamingNotifications().then((unsubscribe) => {
-    //   streamingUnsubscribe = unsubscribe;
-    // });
-
     // Set up regular notifications
-    const notificationStoreUnsubscribe = notificationStore.subscribe(
-      (value) => {
-        if (value) {
-          switch (value.type) {
-            case "success":
-              toast.success(value.message);
-              break;
-            case "warning":
-              toast.warning(value.message);
-              break;
-            case "error":
-              toast.error(value.message);
-              break;
-            default:
-              toast(value.message);
-          }
+    notificationStoreUnsubscribe = notificationStore.subscribe((value) => {
+      if (value) {
+        switch (value.type) {
+          case "success":
+            toast.success(value.message);
+            break;
+          case "warning":
+            toast.warning(value.message);
+            break;
+          case "error":
+            toast.error(value.message);
+            break;
+          default:
+            toast(value.message);
         }
-      },
-    );
+      }
+    });
 
     // Set up auth notifications
-    const authUnsubscribe = layoutState.setupNotifications(supabase);
+    authUnsubscribe = layoutState.setupNotifications(supabase);
 
+    // Return synchronous cleanup function
     return () => {
       // Clean up event listeners
       window.removeEventListener("dragover", handleDragOver);
@@ -318,12 +314,18 @@
       pageState.cleanup();
 
       // Clean up subscriptions
-      authUnsubscribe();
-      notificationStoreUnsubscribe();
-      // if (streamingUnsubscribe) {
-      //   streamingUnsubscribe();
-      // }
+      if (authUnsubscribe) authUnsubscribe();
+      if (notificationStoreUnsubscribe) notificationStoreUnsubscribe();
       layoutState.cleanup();
+
+      // Clean up state initializations
+      if (mediaQueryCleanup) {
+        mediaQueryCleanup();
+      }
+      if (sidebarCleanup) {
+        sidebarCleanup();
+      }
+      navigationCache.cleanup();
     };
   });
 </script>
