@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { browser } from "$app/environment";
   import { Toaster } from "$lib/components/ui/sonner/index.js";
   import { injectSpeedInsights } from "@vercel/speed-insights/sveltekit";
   import Loader from "$lib/components/loader.svelte";
@@ -53,9 +54,27 @@
   let openAccountDrawer = $derived(sidebarState.openAccountDrawer);
   let searchQuery = $state("");
 
-  const shouldShowLoading = $derived(
-    !mediaQuery.initialized || !sidebarState.initialized,
-  );
+  // Progressive loading states
+  let isHydrated = $state(false);
+
+  // More granular loading states
+  const loadingStates = $derived.by(() => {
+    return {
+      mediaQuery: mediaQuery.initialized,
+      sidebar: sidebarState.initialized,
+      sidebarData: sidebarState.isDataLoaded,
+      // Show UI as soon as we have basic functionality
+      canShowBasicUI: isHydrated && mediaQuery.initialized,
+      // Show full UI when everything is ready (but don't wait for sidebar data)
+      canShowFullUI:
+        isHydrated && mediaQuery.initialized && sidebarState.initialized,
+      // Show sidebar placeholder while data loads
+      showSidebarPlaceholder:
+        sidebarState.initialized &&
+        !sidebarState.isDataLoaded &&
+        !sidebarState.hasError,
+    };
+  });
 
   // Use custom hooks
   const preloading = usePreloading(navigationCache);
@@ -129,8 +148,31 @@
     navigation.setupNavigationHooks(userProfile, session);
   });
 
+  // Progressive initialization
   onMount(() => {
-    layoutEffects.initializeLayout();
+    // Mark as hydrated immediately
+    isHydrated = true;
+
+    // Initialize media queries immediately (fast)
+    const mediaCleanup = mediaQuery.initialize();
+
+    // Initialize sidebar non-blocking (fast UI, loads data in background)
+    const sidebarCleanup = sidebarState.initializeNonBlocking();
+
+    // Initialize layout effects
+    const layoutCleanup = layoutEffects.initializeLayout();
+
+    return () => {
+      if (mediaCleanup && typeof mediaCleanup === "function") {
+        mediaCleanup();
+      }
+      if (sidebarCleanup && typeof sidebarCleanup === "function") {
+        sidebarCleanup();
+      }
+      if (layoutCleanup && typeof layoutCleanup === "function") {
+        layoutCleanup();
+      }
+    };
   });
 </script>
 
@@ -142,27 +184,37 @@
 </svelte:head>
 
 <div class="flex flex-col h-full">
-  <!-- Main Navigation Bar -->
+  <!-- Main Navigation Bar - Show immediately with fallbacks -->
   <MainNavigation
     {userProfile}
     {session}
     {supabase}
     {layoutState}
     {contentState}
-    canHover={mediaQuery.canHover}
+    canHover={loadingStates.mediaQuery ? mediaQuery.canHover : true}
     bind:searchQuery
     bind:openAccountDrawer
     onLinkHover={preloading.handleLinkHover}
   />
 
-  <!-- Main Content Area -->
-  {#if shouldShowLoading}
-    <!-- Initial Loading State -->
+  <!-- Main Content Area with Progressive Loading -->
+  {#if !isHydrated}
+    <!-- SSR/Initial Load State -->
     <div class="w-full h-[calc(100dvh-60px)] flex items-center justify-center">
-      <Loader size="lg" message="Loading..." />
+      <Loader size="lg" message="Initializing..." />
+    </div>
+  {:else if !loadingStates.canShowBasicUI}
+    <!-- Basic hydration but waiting for media queries -->
+    <div class="w-full h-[calc(100dvh-60px)] flex items-center justify-center">
+      <Loader size="lg" message="Setting up interface..." />
+    </div>
+  {:else if !loadingStates.canShowFullUI}
+    <!-- Show minimal UI while sidebar initializes -->
+    <div class="w-full h-[calc(100dvh-60px)] flex items-center justify-center">
+      <Loader size="md" message="Almost ready..." />
     </div>
   {:else}
-    <!-- Main Layout with Sidebar and Content -->
+    <!-- Full UI - sidebar may still be loading data -->
     <ResizableLayout
       {layout}
       bind:isSidebarCollapsed
@@ -172,6 +224,9 @@
       {pageState}
       {layoutState}
       {isNavigatingToContent}
+      showSidebarPlaceholder={loadingStates.showSidebarPlaceholder}
+      sidebarHasError={sidebarState.hasError}
+      sidebarError={sidebarState.error}
     >
       {@render children()}
     </ResizableLayout>

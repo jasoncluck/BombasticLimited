@@ -74,6 +74,30 @@ export class SidebarStateClass {
     };
   };
 
+  /**
+   * Non-blocking initialization for faster UI loading.
+   * Marks as initialized immediately and loads data in background.
+   */
+  initializeNonBlocking = (): (() => void) => {
+    if (this.#initialized) {
+      return () => {};
+    }
+
+    // Mark as initialized immediately for UI purposes
+    this.#initialized = true;
+    this.loading = false; // Allow UI to render
+
+    // Load data in background
+    if (browser) {
+      this.loadDataInBackground();
+    }
+
+    // Return cleanup function
+    return () => {
+      this.cleanup();
+    };
+  };
+
   // Data loading methods
   async loadData(): Promise<void> {
     if (!browser) return;
@@ -97,116 +121,29 @@ export class SidebarStateClass {
     }
   }
 
+  async loadDataInBackground(): Promise<void> {
+    if (!browser) return;
+
+    // Don't show loading state for background loads
+    this.error = null;
+
+    try {
+      const response = await fetch("/api/sidebar");
+      if (response.ok) {
+        this.data = await response.json();
+      } else {
+        this.error = `Failed to load sidebar data: ${response.statusText}`;
+        console.error(this.error);
+      }
+    } catch (error) {
+      this.error = "Failed to load sidebar";
+      console.error("Failed to load sidebar:", error);
+    }
+  }
+
   async refreshData(): Promise<void> {
     await this.loadData();
   }
-
-  // Playlist management
-  // updatePlaylists(newPlaylists: Playlist[]): void {
-  //   if (this.data) {
-  //     this.data = {
-  //       ...this.data,
-  //       playlists: newPlaylists,
-  //     };
-  //   }
-  // }
-  //
-  // addPlaylist(playlist: Playlist): void {
-  //   if (this.data) {
-  //     this.data = {
-  //       ...this.data,
-  //       playlists: [playlist, ...this.data.playlists],
-  //       userPlaylistsCount: this.data.userPlaylistsCount + 1,
-  //     };
-  //   }
-  // }
-  //
-  // removePlaylist(playlistId: number): void {
-  //   if (this.data) {
-  //     this.data = {
-  //       ...this.data,
-  //       playlists: this.data.playlists.filter((p) => p.id !== playlistId),
-  //       userPlaylistsCount: Math.max(0, this.data.userPlaylistsCount - 1),
-  //     };
-  //   }
-  // }
-  //
-  // updatePlaylist(updatedPlaylist: Playlist): void {
-  //   if (this.data) {
-  //     this.data = {
-  //       ...this.data,
-  //       playlists: this.data.playlists.map((p) =>
-  //         p.id === updatedPlaylist.id ? updatedPlaylist : p,
-  //       ),
-  //     };
-  //   }
-  // }
-  //
-  // updateUserProfile(updates: Partial<UserProfile>): void {
-  //   if (this.data?.userProfile) {
-  //     this.data = {
-  //       ...this.data,
-  //       userProfile: {
-  //         ...this.data.userProfile,
-  //         ...updates,
-  //       },
-  //     };
-  //   }
-  // }
-  //
-  // updateSourceOrder(newOrder: Source[]): void {
-  //   this.orderedSources = [...newOrder];
-  //   this.updateUserProfile({ sources: newOrder });
-  // }
-  //
-  // handleSourceDragLeave(event: DragEvent): void {
-  //   const relatedTarget = event.relatedTarget as Node;
-  //   if (
-  //     event.currentTarget instanceof HTMLElement &&
-  //     !event.currentTarget.contains(relatedTarget)
-  //   ) {
-  //     this.targetSourceIndex = null;
-  //   }
-  // }
-  //
-  // handleSourceDrop(event: DragEvent, targetIndex: number): void {
-  //   event.preventDefault();
-  //
-  //   if (
-  //     this.draggedSourceIndex === null ||
-  //     this.draggedSourceIndex === targetIndex
-  //   ) {
-  //     return;
-  //   }
-  //
-  //   const newOrder = [...this.orderedSources];
-  //   const [movedSource] = newOrder.splice(this.draggedSourceIndex, 1);
-  //   newOrder.splice(targetIndex, 0, movedSource);
-  //
-  //   this.updateSourceOrder(newOrder);
-  // }
-  //
-  // handleSourceDragEnd(): void {
-  //   this.draggedSourceIndex = null;
-  //   this.targetSourceIndex = null;
-  // }
-  //
-  // // UI state management
-  // toggleCollapsed(): void {
-  //   this.collapsed = !this.collapsed;
-  // }
-  //
-  // setCollapsed(collapsed: boolean): void {
-  //   this.collapsed = collapsed;
-  // }
-  //
-  // toggleAccountDrawer(): void {
-  //   this.openAccountDrawer = !this.openAccountDrawer;
-  // }
-  //
-  // closeAccountDrawer(): void {
-  //   this.openAccountDrawer = false;
-  // }
 
   // Data validation helpers
   get isDataLoaded(): boolean {
@@ -219,6 +156,10 @@ export class SidebarStateClass {
 
   get hasError(): boolean {
     return this.error !== null;
+  }
+
+  get showPlaceholder(): boolean {
+    return this.#initialized && !this.isDataLoaded && !this.hasError;
   }
 
   // Cleanup method

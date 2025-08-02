@@ -81,13 +81,13 @@ export class LayoutStateClass implements LayoutState {
     try {
       if (searchValue === "") {
         // Only navigate to "/" if completely empty
-        await goto(`/`, { keepFocus: true, replaceState: true });
+        goto(`/`, { keepFocus: true, replaceState: true });
       } else if (searchValue.length >= 2) {
         // Only navigate to search if 2+ characters
         // Create new abort controller for this search
         this.searchAbortController = new AbortController();
 
-        await goto(`/search/${encodeURIComponent(searchValue)}`, {
+        goto(`/search/${encodeURIComponent(searchValue)}`, {
           keepFocus: true,
           replaceState: true,
         });

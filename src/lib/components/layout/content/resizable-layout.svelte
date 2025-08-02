@@ -2,6 +2,7 @@
   import * as Resizable from "$lib/components/ui/resizable";
   import ScrollArea from "$lib/components/ui/scroll-area/scroll-area.svelte";
   import Sidebar from "$lib/components/sidebar/sidebar.svelte";
+  import { Skeleton } from "$lib/components/ui/skeleton";
   import { COLLAPSED_SIDEBAR_SIZE } from "$lib/constants/layout";
   import LoadingOverlay from "./loading-overlay.svelte";
   import type { PageState } from "$lib/state/page.svelte.js";
@@ -9,6 +10,7 @@
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
   import type { Snippet } from "svelte";
+  import { ListVideo } from "@lucide/svelte";
 
   let {
     layout,
@@ -19,6 +21,7 @@
     pageState,
     layoutState,
     isNavigatingToContent,
+    showSidebarPlaceholder = false,
     children,
   }: {
     layout?: number[] | null;
@@ -29,6 +32,7 @@
     pageState: PageState;
     layoutState: LayoutState;
     isNavigatingToContent: boolean;
+    showSidebarPlaceholder?: boolean;
     children: Snippet;
   } = $props();
 </script>
@@ -57,7 +61,108 @@
       bind:viewportRef={pageState.viewportRefs.sidebarViewportRef}
       data-scroll-area="sidebar"
     >
-      <Sidebar {isSidebarCollapsed} {supabase} {session} {refreshSidebar} />
+      {#if showSidebarPlaceholder}
+        <!-- Sidebar Skeleton that mimics the actual sidebar structure -->
+        <aside class="h-full overflow-hidden">
+          <!-- Sources Section Skeleton -->
+          <div class="flex flex-col {!isSidebarCollapsed ? 'mx-2' : 'mx-1'}">
+            {#each Array(6)}
+              <div
+                class="flex items-center p-2 {!isSidebarCollapsed
+                  ? 'h-14'
+                  : 'h-14 justify-center'}"
+              >
+                {#if !isSidebarCollapsed}
+                  <!-- Full width source item skeleton -->
+                  <div class="flex items-center w-full space-x-3">
+                    <Skeleton class="h-12 w-12 rounded" />
+                    <Skeleton class="h-4 flex-1" />
+                  </div>
+                {:else}
+                  <!-- Collapsed source item skeleton -->
+                  <Skeleton class="h-12 w-12 rounded" />
+                {/if}
+              </div>
+            {/each}
+          </div>
+
+          <!-- Divider -->
+          <div class="mx-2 my-2">
+            <Skeleton class="h-px w-full" />
+          </div>
+
+          <!-- Playlists Header Section Skeleton -->
+          <div
+            class="flex flex-col m-3 {!isSidebarCollapsed
+              ? 'items-start mx-6'
+              : 'items-center'}"
+          >
+            <div class="flex items-center h-[44px] w-full">
+              {#if !isSidebarCollapsed}
+                <!-- Full header with plus button and title -->
+                <div class="flex items-center space-x-4">
+                  <Skeleton class="h-10 w-10 rounded-full" />
+                  <Skeleton class="h-6 w-20" />
+                </div>
+              {:else}
+                <!-- Collapsed header with just plus button -->
+                <Skeleton class="h-10 w-10 rounded-full" />
+              {/if}
+            </div>
+          </div>
+
+          <!-- Playlists Container Skeleton -->
+          <div
+            class="border-2 border-transparent rounded-md {!isSidebarCollapsed
+              ? 'mx-2'
+              : 'mx-1'}"
+          >
+            <div class="flex flex-col">
+              {#each Array(4), i}
+                <div
+                  class="flex items-center p-2 {!isSidebarCollapsed
+                    ? 'h-14'
+                    : 'h-14 justify-center'}"
+                >
+                  {#if !isSidebarCollapsed}
+                    <!-- Full width playlist item skeleton -->
+                    <div class="flex items-center w-full space-x-3">
+                      <div
+                        class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
+                      >
+                        <!-- Simulate either image or ListVideo icon -->
+                        {#if i % 2 === 0}
+                          <Skeleton class="h-12 w-12 rounded" />
+                        {:else}
+                          <div
+                            class="h-12 w-12 flex items-center justify-center bg-muted rounded animate-pulse"
+                          >
+                            <ListVideo class="h-8 w-8 text-muted-foreground" />
+                          </div>
+                        {/if}
+                      </div>
+                      <Skeleton class="h-4 flex-1" />
+                    </div>
+                  {:else}
+                    <!-- Collapsed playlist item skeleton -->
+                    {#if i % 2 === 0}
+                      <Skeleton class="h-12 w-12 rounded" />
+                    {:else}
+                      <div
+                        class="h-12 w-12 flex items-center justify-center bg-muted rounded animate-pulse"
+                      >
+                        <ListVideo class="h-8 w-8 text-muted-foreground" />
+                      </div>
+                    {/if}
+                  {/if}
+                </div>
+              {/each}
+            </div>
+          </div>
+        </aside>
+      {:else}
+        <Sidebar {isSidebarCollapsed} {supabase} {session} {refreshSidebar} />
+      {/if}
     </ScrollArea>
   </Resizable.Pane>
 
