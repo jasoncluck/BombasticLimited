@@ -79,6 +79,27 @@ export const load: LayoutServerLoad = async ({
   // Check client cache headers
   const clientEtag = request.headers.get("if-none-match");
 
+  // 🚀 FIXED: Smart resource hints based on actual page needs
+  const getResourceHints = () => {
+    const hints: string[] = [];
+
+    // Only add prefetch hints for pages that actually benefit from them
+    if (url.pathname === "/") {
+      // Home page: prefetch likely next destinations
+      hints.push(
+        "</giantbomb>; rel=prefetch; as=document",
+        "</nextlander>; rel=prefetch; as=document",
+      );
+
+      // Only preload critical scripts that we know will be used
+      if (session?.user) {
+        hints.push("</continue>; rel=prefetch; as=document");
+      }
+    }
+
+    return hints.join(", ");
+  };
+
   // Enhanced cache headers for better performance
   if (!isDataRequest) {
     try {
@@ -88,20 +109,24 @@ export const load: LayoutServerLoad = async ({
           ? `public, max-age=${cacheMaxAge}, s-maxage=${cacheMaxAge * 2}, immutable`
           : `public, max-age=${cacheMaxAge}, s-maxage=${cacheMaxAge * 2}`;
 
-      setHeaders({
+      const resourceHints = getResourceHints();
+
+      const headers: Record<string, string> = {
         etag: etag,
         "last-modified": lastModified.toUTCString(),
         vary: "Authorization, Cookie",
         "cache-control": cacheControl,
-        // Add performance hints
         "x-cache-strategy": isStaticRoute ? "aggressive" : "standard",
-        // Add prefetch hints for common routes
-        ...(url.pathname === "/"
-          ? {
-              link: "</giantbomb>; rel=prefetch, </nextlander>; rel=prefetch, </continue>; rel=prefetch",
-            }
-          : {}),
-      });
+        // Add performance hints
+        "service-worker-allowed": "/",
+      };
+
+      // Only add link header if we have hints
+      if (resourceHints) {
+        headers.link = resourceHints;
+      }
+
+      setHeaders(headers);
     } catch {
       console.log("Cache headers already set, continuing...");
     }

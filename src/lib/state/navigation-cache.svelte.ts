@@ -11,6 +11,15 @@ export interface CacheEntry {
   isAnonymous: boolean; // Flag to distinguish anonymous users
 }
 
+// 🚀 NEW: Memory cache interface
+export interface MemoryCacheEntry<T = any> {
+  data: T;
+  timestamp: number;
+  ttl: number;
+  userId: string | null;
+  size: number; // Track memory usage
+}
+
 export interface NavigationCacheState {
   initialized: boolean;
   cacheEntries: Map<string, CacheEntry>;
@@ -36,6 +45,141 @@ export interface NavigationCacheState {
   clearUserCache: (userId?: string | null) => void;
   clearExpiredEntries: () => void;
   cleanup: () => void;
+
+  setMemoryCache: <T>(key: string, data: T, ttl?: number) => void;
+  getMemoryCache: <T>(key: string) => T | null;
+  clearMemoryCache: (pattern?: string) => void;
+  getMemoryCacheStats: () => { entries: number; size: number };
+}
+
+class MemoryCache {
+  private cache = new Map<string, MemoryCacheEntry>();
+  private maxSize = 50 * 1024 * 1024; // 50MB limit
+  private currentSize = 0;
+
+  set<T>(
+    key: string,
+    data: T,
+    ttl = 300000,
+    userId: string | null = null,
+  ): void {
+    // Calculate approximate size
+    const size = this.calculateSize(data);
+
+    // Remove existing entry if it exists
+    if (this.cache.has(key)) {
+      this.currentSize -= this.cache.get(key)!.size;
+    }
+
+    // Check if we need to free up space
+    while (this.currentSize + size > this.maxSize && this.cache.size > 0) {
+      this.evictOldest();
+    }
+
+    const entry: MemoryCacheEntry<T> = {
+      data,
+      timestamp: Date.now(),
+      ttl,
+      userId,
+      size,
+    };
+
+    this.cache.set(key, entry);
+    this.currentSize += size;
+  }
+
+  get<T>(key: string, userId: string | null = null): T | null {
+    const entry = this.cache.get(key);
+    if (!entry) return null;
+
+    // Check if expired
+    if (Date.now() - entry.timestamp > entry.ttl) {
+      this.delete(key);
+      return null;
+    }
+
+    // Check user context for security
+    if (entry.userId !== userId) {
+      console.warn("Memory cache user context mismatch");
+      this.delete(key);
+      return null;
+    }
+
+    return entry.data as T;
+  }
+
+  delete(key: string): boolean {
+    const entry = this.cache.get(key);
+    if (entry) {
+      this.currentSize -= entry.size;
+      return this.cache.delete(key);
+    }
+    return false;
+  }
+
+  clear(pattern?: string): void {
+    if (pattern) {
+      const regex = new RegExp(pattern);
+      for (const [key] of this.cache) {
+        if (regex.test(key)) {
+          this.delete(key);
+        }
+      }
+    } else {
+      this.cache.clear();
+      this.currentSize = 0;
+    }
+  }
+
+  clearForUser(userId: string | null): void {
+    for (const [key, entry] of this.cache) {
+      if (entry.userId === userId) {
+        this.delete(key);
+      }
+    }
+  }
+
+  private evictOldest(): void {
+    let oldestKey: string | null = null;
+    let oldestTime = Date.now();
+
+    for (const [key, entry] of this.cache) {
+      if (entry.timestamp < oldestTime) {
+        oldestTime = entry.timestamp;
+        oldestKey = key;
+      }
+    }
+
+    if (oldestKey) {
+      this.delete(oldestKey);
+    }
+  }
+
+  private calculateSize(data: any): number {
+    try {
+      // Rough approximation of memory usage
+      const jsonStr = JSON.stringify(data);
+      return jsonStr.length * 2; // Approximate UTF-16 encoding
+    } catch {
+      return 1024; // Default 1KB for non-serializable data
+    }
+  }
+
+  getStats(): { entries: number; size: number } {
+    return {
+      entries: this.cache.size,
+      size: this.currentSize,
+    };
+  }
+
+  cleanup(): void {
+    const now = Date.now();
+    for (const [key, entry] of this.cache) {
+      if (now - entry.timestamp > entry.ttl) {
+        this.delete(key);
+      }
+    }
+  }
 }
 
 export class NavigationCacheStateClass implements NavigationCacheState {
@@ -44,6 +188,10 @@ export class NavigationCacheStateClass implements NavigationCacheState {
   currentUserId = $state<string | null>(null);
   anonymousId = $state<string | null>(null);
   serviceWorkerCachedPages = $state(new Set<string>()); // ✅ NEW: Track SW cached pages
+
+  // 🚀 NEW: Memory cache instance
+  private memoryCache = new MemoryCache();
+  private prefetchQueue = new Set<string>();
 
   private cleanupInterval: ReturnType<typeof setTimeout> | null = null;
   private readonly CACHE_DURATION = 300000; // 5 minutes
@@ -75,6 +223,8 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     this.cleanupInterval = setInterval(() => {
       this.clearExpiredEntries();
       this.saveToStorage();
+      // 🚀 NEW: Clean memory cache
+      this.memoryCache.cleanup();
       // ✅ NEW: Periodically update SW cache status
       this.updateServiceWorkerCacheStatus();
     }, 60000);
@@ -239,6 +389,12 @@ export class NavigationCacheStateClass implements NavigationCacheState {
       return true;
     }
 
+    // 🚀 NEW: Check memory cache
+    const memoryCacheKey = `page:${pathname}`;
+    if (this.memoryCache.get(memoryCacheKey, userId)) {
+      return true;
+    }
+
     // Check ETag cache
     const entry = this.getCacheEntry(url, userId);
     return entry !== null;
@@ -258,13 +414,14 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     if (fromPath === toPath) return false;
     if (toPath.startsWith("/search/")) return false;
 
-    // Check if likely cached (including service worker cache)
+    // Check if likely cached (including service worker cache and memory cache)
     return !this.isLikelyCached(toUrl, userId ?? null);
   }
 
   clearUserCache(userId?: string | null): void {
     if (userId === undefined) {
       this.cacheEntries.clear();
+      this.memoryCache.clear(); // 🚀 NEW: Clear memory cache
       return;
     }
 
@@ -276,6 +433,10 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     }
 
     keysToDelete.forEach((key) => this.cacheEntries.delete(key));
+
+    // 🚀 NEW: Clear memory cache for user
+    this.memoryCache.clearForUser(userId);
+
     this.saveToStorage();
   }
 
@@ -292,6 +453,69 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     }
 
     expiredKeys.forEach((key) => this.cacheEntries.delete(key));
+  }
+
+  // 🚀 NEW: Memory cache methods
+  setMemoryCache<T>(key: string, data: T, ttl = 300000): void {
+    if (!this.initialized || !browser) return;
+    this.memoryCache.set(key, data, ttl, this.currentUserId);
+  }
+
+  getMemoryCache<T>(key: string): T | null {
+    if (!this.initialized || !browser) return null;
+    return this.memoryCache.get<T>(key, this.currentUserId);
+  }
+
+  clearMemoryCache(pattern?: string): void {
+    this.memoryCache.clear(pattern);
+  }
+
+  getMemoryCacheStats(): { entries: number; size: number } {
+    return this.memoryCache.getStats();
+  }
+
+  // 🚀 NEW: Predictive prefetching
+  predictivelyCache(url: string): void {
+    if (this.prefetchQueue.has(url)) return;
+    this.prefetchQueue.add(url);
+
+    // Use requestIdleCallback for non-blocking prefetch
+    if ("requestIdleCallback" in window) {
+      requestIdleCallback(() => this.performPrefetch(url));
+    } else {
+      setTimeout(() => this.performPrefetch(url), 100);
+    }
+  }
+
+  private async performPrefetch(url: string): Promise<void> {
+    try {
+      // Use low-priority fetch
+      const response = await fetch(url, {
+        priority: "low" as any,
+        credentials: "same-origin",
+      });
+
+      if (response.ok) {
+        // Cache the response data in memory
+        const contentType = response.headers.get("content-type") || "";
+
+        if (contentType.includes("application/json")) {
+          const data = await response.json();
+          const cacheKey = `prefetch:${url}`;
+          this.setMemoryCache(cacheKey, data, 600000); // 10 minutes
+        } else if (contentType.includes("text/html")) {
+          const html = await response.text();
+          const cacheKey = `prefetch:${url}`;
+          this.setMemoryCache(cacheKey, html, 300000); // 5 minutes
+        }
+
+        console.log(`Prefetched and cached: ${url}`);
+      }
+    } catch (error) {
+      console.warn(`Prefetch failed for ${url}:`, error);
+    } finally {
+      this.prefetchQueue.delete(url);
+    }
   }
 
   private saveToStorage(): void {
@@ -352,6 +576,7 @@ export class NavigationCacheStateClass implements NavigationCacheState {
 
     this.saveToStorage();
     this.cacheEntries.clear();
+    this.memoryCache.clear(); // 🚀 NEW: Clear memory cache
     this.initialized = false;
     this.currentUserId = null;
     this.anonymousId = null;
