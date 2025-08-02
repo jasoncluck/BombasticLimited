@@ -593,8 +593,27 @@
           >
             <div class="@xl:max-w-[1450px] max-w-[1000px] w-full">
               <div class="flex flex-col mb-20">
-                <!-- Actual page content -->
-                {@render children()}
+                <!-- Always render both loading and content -->
+                <div
+                  class="flex flex-col relative justify-center items-center m-2 sm:m-4"
+                >
+                  <!-- Loading overlay - show/hide with CSS -->
+                  <div
+                    class="absolute inset-0 z-50 bg-background-lighter flex items-center justify-center transition-opacity duration-150"
+                    class:opacity-100={isNavigatingToContent}
+                    class:opacity-0={!isNavigatingToContent}
+                    class:pointer-events-none={!isNavigatingToContent}
+                  >
+                    <!-- <Loader size="lg" message="Loading..." /> -->
+                  </div>
+
+                  <!-- Content - always in DOM -->
+                  <div class="@xl:max-w-[1450px] max-w-[1000px] w-full">
+                    <div class="flex flex-col mb-20">
+                      {@render children()}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
