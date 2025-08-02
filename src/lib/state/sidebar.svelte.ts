@@ -18,6 +18,7 @@ export class SidebarStateClass {
   loading = $state(true);
   error = $state<string | null>(null);
   #initialized = $state(false);
+  #hasLoadedOnce = $state(false); // Track if we've loaded data at least once
 
   // Derived values for easier access
   playlists = $derived(this.data?.playlists ?? []);
@@ -109,6 +110,7 @@ export class SidebarStateClass {
       const response = await fetch("/api/sidebar");
       if (response.ok) {
         this.data = await response.json();
+        this.#hasLoadedOnce = true; // Mark that we've successfully loaded data
       } else {
         this.error = `Failed to load sidebar data: ${response.statusText}`;
         console.error(this.error);
@@ -131,6 +133,7 @@ export class SidebarStateClass {
       const response = await fetch("/api/sidebar");
       if (response.ok) {
         this.data = await response.json();
+        this.#hasLoadedOnce = true; // Mark that we've successfully loaded data
       } else {
         this.error = `Failed to load sidebar data: ${response.statusText}`;
         console.error(this.error);
@@ -159,7 +162,8 @@ export class SidebarStateClass {
   }
 
   get showPlaceholder(): boolean {
-    return this.#initialized && !this.isDataLoaded && !this.hasError;
+    // Only show placeholder on initial load (initialized but never loaded data successfully)
+    return this.#initialized && !this.#hasLoadedOnce && !this.hasError;
   }
 
   // Cleanup method
@@ -172,6 +176,7 @@ export class SidebarStateClass {
     this.openAccountDrawer = false;
     this.orderedSources = [];
     this.#initialized = false;
+    this.#hasLoadedOnce = false;
   }
 }
 

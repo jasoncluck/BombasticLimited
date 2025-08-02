@@ -11,6 +11,7 @@
   import type { Database } from "$lib/supabase/database.types";
   import type { Snippet } from "svelte";
   import { ListVideo } from "@lucide/svelte";
+  import { getSidebarState } from "$lib/state/sidebar.svelte";
 
   let {
     layout,
@@ -21,7 +22,6 @@
     pageState,
     layoutState,
     isNavigatingToContent,
-    showSidebarPlaceholder = false,
     children,
   }: {
     layout?: number[] | null;
@@ -32,9 +32,10 @@
     pageState: PageState;
     layoutState: LayoutState;
     isNavigatingToContent: boolean;
-    showSidebarPlaceholder?: boolean;
     children: Snippet;
   } = $props();
+
+  const sidebarState = getSidebarState();
 </script>
 
 <Resizable.PaneGroup
@@ -61,7 +62,7 @@
       bind:viewportRef={pageState.viewportRefs.sidebarViewportRef}
       data-scroll-area="sidebar"
     >
-      {#if showSidebarPlaceholder}
+      {#if sidebarState.showPlaceholder}
         <!-- Sidebar Skeleton that mimics the actual sidebar structure -->
         <aside class="h-full overflow-hidden">
           <!-- Sources Section Skeleton -->
@@ -131,7 +132,7 @@
                         class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
                       >
                         <!-- Simulate either image or ListVideo icon -->
-                        {#if i % 2 === 0}
+                        {#if i % 2 === 1}
                           <Skeleton class="h-12 w-12 rounded" />
                         {:else}
                           <div
