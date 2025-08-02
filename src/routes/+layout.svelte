@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { browser } from "$app/environment";
   import { Toaster } from "$lib/components/ui/sonner/index.js";
   import { injectSpeedInsights } from "@vercel/speed-insights/sveltekit";
   import Loader from "$lib/components/loader.svelte";
@@ -148,20 +147,31 @@
     navigation.setupNavigationHooks(userProfile, session);
   });
 
-  // Progressive initialization
+  // Progressive initialization with proper async handling
   onMount(() => {
     // Mark as hydrated immediately
     isHydrated = true;
 
-    // Initialize media queries immediately (fast)
+    // Initialize media queries immediately (fast, synchronous)
     const mediaCleanup = mediaQuery.initialize();
 
     // Initialize sidebar non-blocking (fast UI, loads data in background)
     const sidebarCleanup = sidebarState.initializeNonBlocking();
 
-    // Initialize layout effects
-    const layoutCleanup = layoutEffects.initializeLayout();
+    // Initialize layout effects asynchronously
+    let layoutCleanup: (() => void) | undefined;
 
+    // Handle the promise properly
+    layoutEffects
+      .initializeLayout()
+      .then((cleanup) => {
+        layoutCleanup = cleanup;
+      })
+      .catch((error) => {
+        console.error("Failed to initialize layout effects:", error);
+      });
+
+    // Return cleanup function
     return () => {
       if (mediaCleanup && typeof mediaCleanup === "function") {
         mediaCleanup();
@@ -225,8 +235,6 @@
       {layoutState}
       {isNavigatingToContent}
       showSidebarPlaceholder={loadingStates.showSidebarPlaceholder}
-      sidebarHasError={sidebarState.hasError}
-      sidebarError={sidebarState.error}
     >
       {@render children()}
     </ResizableLayout>
