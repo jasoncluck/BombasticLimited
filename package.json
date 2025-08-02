@@ -98,6 +98,7 @@
     "bad-words": "^4.0.0",
     "debounce": "^2.2.0",
     "embla-carousel-svelte": "^8.6.0",
+    "jose": "^6.0.12",
     "sharp": "^0.34.3",
     "svelte-radix": "^2.0.1",
     "tailwindcss": "^4.1.11",
