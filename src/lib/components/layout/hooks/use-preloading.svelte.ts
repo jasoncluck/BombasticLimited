@@ -1,8 +1,9 @@
 import { browser } from "$app/environment";
 import type { NavigationCacheState } from "$lib/state/navigation-cache/types.js";
+import type { Session } from "@supabase/supabase-js";
 
 export function usePreloading(navigationCache: NavigationCacheState) {
-  // Main navigation routes for preloading
+  // Main navigation routes for UI reference
   const mainRoutes = [
     { href: "/", label: "Home" },
     { href: "/giantbomb", label: "Giant Bomb" },
@@ -11,67 +12,78 @@ export function usePreloading(navigationCache: NavigationCacheState) {
     { href: "/jeffgerstmann", label: "Jeff Gerstmann" },
   ];
 
-  // Preloading handlers
+  // Preloading handlers - now focused on interactive and dynamic content
   function handleLinkHover(url: string) {
-    // Preload on hover with high priority
-    if (navigationCache.initialized) {
-      navigationCache.onUserInteraction(url);
+    if (!navigationCache.initialized) return;
+
+    // Only preload on hover for routes that aren't already cached by service worker
+    const pathname = new URL(url, window.location.origin).pathname;
+
+    // Skip preloading for main routes since service worker handles them
+    const mainRoutePaths = [
+      "/",
+      "/giantbomb",
+      "/nextlander",
+      "/remap",
+      "/jeffgerstmann",
+      "/continue",
+    ];
+    if (mainRoutePaths.includes(pathname)) {
+      return; // Service worker has this covered
     }
+
+    // Preload dynamic routes and other pages
+    navigationCache.onUserInteraction(url);
   }
 
   function handleRoutePreload(currentPath: string, user: any) {
     if (!navigationCache.initialized) return;
 
-    // Intelligent preloading based on current route
-    if (currentPath === "/") {
-      // Home page: preload main navigation routes
+    // Focus on preloading dynamic content and paginated routes
+    // Service worker handles the main routes, so we focus on variations
+    if (currentPath === "/giantbomb") {
+      // Preload paginated versions that service worker doesn't cache
       navigationCache.preloadRoutes(
-        ["/giantbomb", "/nextlander", "/remap", "/jeffgerstmann"],
-        2,
-      );
-
-      // If user is authenticated, preload continue page
-      if (user) {
-        navigationCache.preloadRoute("/continue", 1);
-      }
-    } else if (currentPath === "/giantbomb") {
-      navigationCache.preloadRoutes(
-        ["/giantbomb?page=1", "/nextlander", user ? "/continue" : "/"],
-        3,
+        ["/giantbomb?page=2", "/giantbomb/latest"],
+        4,
       );
     } else if (currentPath === "/nextlander") {
       navigationCache.preloadRoutes(
-        ["/nextlander?page=1", "/giantbomb", user ? "/continue" : "/"],
-        3,
+        ["/nextlander?page=2", "/nextlander/latest"],
+        4,
       );
     } else if (currentPath === "/remap") {
-      navigationCache.preloadRoutes(
-        ["/remap?page=1", "/giantbomb", user ? "/continue" : "/"],
-        3,
-      );
+      navigationCache.preloadRoutes(["/remap?page=2", "/remap/latest"], 4);
     } else if (currentPath === "/jeffgerstmann") {
       navigationCache.preloadRoutes(
-        ["/jeffgerstmann?page=1", "/giantbomb", user ? "/continue" : "/"],
-        3,
+        ["/jeffgerstmann?page=2", "/jeffgerstmann/latest"],
+        4,
       );
-    } else if (currentPath === "/continue" && user) {
-      // Continue page: preload main routes
-      navigationCache.preloadRoutes(["/giantbomb", "/nextlander"], 3);
+    }
+
+    // Preload search functionality if user is likely to search
+    if (["/", "/giantbomb", "/nextlander", "/remap"].includes(currentPath)) {
+      // Pre-warm search endpoint (low priority)
+      setTimeout(() => {
+        navigationCache.preloadRoute("/search", 5);
+      }, 3000);
     }
   }
 
-  function startInitialPreloading(user: any) {
-    if (browser) {
-      setTimeout(() => {
-        handleRoutePreload(window.location.pathname, user);
-      }, 1000);
-    }
+  function startInitialPreloading(session: Session | null) {
+    if (!browser) return;
+
+    // Much lighter initial preloading since service worker handles main routes
+    setTimeout(() => {
+      handleRoutePreload(window.location.pathname, session);
+    }, 2000); // Longer delay since main routes are already cached
   }
 
   function startPostNavigationPreloading(pathname: string, user: any) {
+    // Lighter post-navigation preloading
     setTimeout(() => {
       handleRoutePreload(pathname, user);
-    }, 500); // Small delay to let page settle
+    }, 1000); // Longer delay
   }
 
   return {

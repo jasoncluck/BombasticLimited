@@ -19,7 +19,6 @@
     canHover,
     searchQuery = $bindable(),
     openAccountDrawer = $bindable(),
-    onLinkHover,
   }: {
     userProfile: UserProfile | null;
     session: Session | null;
@@ -29,7 +28,6 @@
     canHover: boolean;
     searchQuery: string;
     openAccountDrawer: boolean;
-    onLinkHover: (url: string) => void;
   } = $props();
 </script>
 
@@ -53,7 +51,6 @@
     <a
       href="/"
       data-testid="home-link"
-      onmouseenter={() => onLinkHover("/")}
       onclick={(e) => {
         e.preventDefault();
         searchQuery = "";
@@ -80,7 +77,6 @@
         {contentState}
         {canHover}
         bind:openAccountDrawer
-        {onLinkHover}
       />
     </div>
   </div>

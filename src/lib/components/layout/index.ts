@@ -6,5 +6,4 @@ export { default as LoadingOverlay } from "./content/loading-overlay.svelte";
 
 // Re-export hooks
 export { useNavigation } from "./hooks/use-navigation.svelte.js";
-export { usePreloading } from "./hooks/use-preloading.svelte.js";
 export { useLayoutEffects } from "./hooks/use-layout-effects.svelte.js";

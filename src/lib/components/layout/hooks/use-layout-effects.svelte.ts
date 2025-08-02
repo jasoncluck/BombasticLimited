@@ -8,6 +8,8 @@ import type { MediaQueryState } from "$lib/state/media-query.svelte.js";
 import type { SidebarState } from "$lib/state/sidebar.svelte.js";
 import type { LayoutState } from "$lib/state/layout.svelte.js";
 import type { PageState } from "$lib/state/page.svelte.js";
+import type { Session, SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "$lib/supabase/database.types";
 
 export function useLayoutEffects(
   pageState: PageState,
@@ -16,13 +18,13 @@ export function useLayoutEffects(
   mediaQuery: MediaQueryState,
   sidebarState: SidebarState,
   layoutState: LayoutState,
-  supabase: any,
-  user: any,
+  supabase: SupabaseClient<Database>,
+  session: Session | null,
   etag: string | null,
   lastModified: string | null,
   cached: boolean,
   cacheUserId: string | null,
-  startInitialPreloading: (user: any) => void,
+  startInitialPreloading: (session: Session | null) => void,
 ) {
   // Drag and drop handlers
   function handleDragOver(e: DragEvent) {
@@ -88,7 +90,7 @@ export function useLayoutEffects(
       mediaQueryCleanup = mediaQuery.initialize();
       sidebarCleanup = await sidebarState.initialize();
 
-      const currentUserId = user?.id ?? null;
+      const currentUserId = session?.user.id ?? null;
 
       // Clear cache when user changes for security
       if (browser && navigationCache.currentUserId !== currentUserId) {
@@ -111,7 +113,7 @@ export function useLayoutEffects(
       }
 
       // Start initial intelligent preloading
-      startInitialPreloading(user);
+      startInitialPreloading(session);
     }
 
     await initialize();

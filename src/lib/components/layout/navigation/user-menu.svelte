@@ -25,7 +25,6 @@
     contentState,
     canHover,
     openAccountDrawer = $bindable(),
-    onLinkHover,
   }: {
     userProfile: UserProfile | null;
     session: Session | null;
@@ -34,7 +33,6 @@
     contentState: ContentState;
     canHover: boolean;
     openAccountDrawer: boolean;
-    onLinkHover: (url: string) => void;
   } = $props();
 </script>
 
@@ -123,7 +121,6 @@
         <DropdownMenu.Group>
           <DropdownMenu.Item
             class="cursor-pointer"
-            onmouseenter={() => onLinkHover("/account")}
             onclick={() => goto("/account")}
           >
             <div class="flex items-center gap-2">
@@ -198,7 +195,6 @@
   <Button
     class="cursor-pointer"
     data-testid="login-button"
-    onmouseenter={() => onLinkHover("/auth/login")}
     onclick={() => goto("/auth/login")}
     variant="outline"
   >

@@ -81,7 +81,7 @@ export class LayoutStateClass implements LayoutState {
     try {
       if (searchValue === "") {
         // Only navigate to "/" if completely empty
-        goto(`/`, { keepFocus: true, replaceState: true });
+        goto(`/`, { keepFocus: true });
       } else if (searchValue.length >= 2) {
         // Only navigate to search if 2+ characters
         // Create new abort controller for this search
@@ -89,7 +89,6 @@ export class LayoutStateClass implements LayoutState {
 
         goto(`/search/${encodeURIComponent(searchValue)}`, {
           keepFocus: true,
-          replaceState: true,
         });
       }
       // For single characters (length === 1), do nothing - stay on current page

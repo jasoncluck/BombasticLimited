@@ -93,7 +93,7 @@
       sidebarState,
       layoutState,
       supabase,
-      user,
+      session,
       etag,
       lastModified,
       cached,
@@ -166,6 +166,9 @@
         console.error("Failed to initialize layout effects:", error);
       });
 
+    // Setup navigation cache background refresh scheduler
+    setupNavigationCacheScheduler();
+
     // Return cleanup function
     return () => {
       if (mediaCleanup && typeof mediaCleanup === "function") {
@@ -178,6 +181,80 @@
         layoutCleanup();
       }
     };
+  });
+
+  // Setup background refresh scheduler for navigation cache
+  function setupNavigationCacheScheduler() {
+    // Set up the base refreshable routes
+    const baseRoutes = [
+      "/",
+      "/giantbomb",
+      "/nextlander",
+      "/remap",
+      "/jeffgerstmann",
+    ];
+
+    // Add /continue if user is logged in
+    const allRoutes = user ? [...baseRoutes, "/continue"] : baseRoutes;
+
+    // Configure the routes for background refresh
+    navigationCache.setRefreshableRoutes(allRoutes);
+
+    // Set up visibility change handler for better UX
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // User returned to tab, update auth status and potentially refresh
+        navigationCache.updateAuthStatus();
+
+        // If user was away for more than 5 minutes, trigger immediate refresh
+        const lastActivity = localStorage.getItem("last-activity");
+        if (
+          lastActivity &&
+          Date.now() - parseInt(lastActivity) > 5 * 60 * 1000
+        ) {
+          navigationCache.triggerBackgroundRefresh();
+        }
+      }
+      localStorage.setItem("last-activity", Date.now().toString());
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // Set initial activity time
+    localStorage.setItem("last-activity", Date.now().toString());
+
+    // Add debug helpers in development
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).cacheDebug = {
+        refresh: () => navigationCache.triggerBackgroundRefresh(),
+        updateAuth: () => navigationCache.updateAuthStatus(),
+        addRoute: (route: string) => navigationCache.addRefreshableRoute(route),
+        removeRoute: (route: string) =>
+          navigationCache.removeRefreshableRoute(route),
+        stats: () => navigationCache.getPreloadStats(),
+        getRoutes: () =>
+          navigationCache.getRefreshableRoutes?.() || "Method not available",
+      };
+      console.log("🔧 Cache debug tools available at window.cacheDebug");
+    }
+  }
+
+  // Watch for auth changes and update cache routes accordingly
+  $effect(() => {
+    if (navigationCache && navigationCache.initialized) {
+      const baseRoutes = [
+        "/",
+        "/giantbomb",
+        "/nextlander",
+        "/remap",
+        "/jeffgerstmann",
+      ];
+
+      const allRoutes = user ? [...baseRoutes, "/continue"] : baseRoutes;
+      navigationCache.setRefreshableRoutes(allRoutes);
+      navigationCache.updateAuthStatus();
+    }
   });
 </script>
 
@@ -199,7 +276,6 @@
     canHover={loadingStates.mediaQuery ? mediaQuery.canHover : true}
     bind:searchQuery
     bind:openAccountDrawer
-    onLinkHover={preloading.handleLinkHover}
   />
 
   <!-- Main Content Area with Progressive Loading -->
