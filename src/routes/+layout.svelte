@@ -67,11 +67,6 @@
       // Show full UI when everything is ready (but don't wait for sidebar data)
       canShowFullUI:
         isHydrated && mediaQuery.initialized && sidebarState.initialized,
-      // Show sidebar placeholder while data loads
-      showSidebarPlaceholder:
-        sidebarState.initialized &&
-        !sidebarState.isDataLoaded &&
-        !sidebarState.hasError,
     };
   });
 
@@ -234,7 +229,6 @@
       {pageState}
       {layoutState}
       {isNavigatingToContent}
-      showSidebarPlaceholder={loadingStates.showSidebarPlaceholder}
     >
       {@render children()}
     </ResizableLayout>
