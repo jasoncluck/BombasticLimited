@@ -57,6 +57,9 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     "/nextlander",
     "/remap",
     "/jeffgerstmann",
+    "/giantbomb?page=1",
+    "/nextlander?page=1",
+    "/remap?page=1",
   ];
 
   async initialize(): Promise<void> {

@@ -12,7 +12,7 @@ import jeffgerstmannImage from "$lib/assets/jeffgerstmann.jpg";
 import remapImage from "$lib/assets/remap.jpg";
 import type { Database } from "$lib/supabase/database.types";
 
-type HighlightPlaylist = {
+export type HighlightPlaylist = {
   youtubeId: string;
   name: string;
 };

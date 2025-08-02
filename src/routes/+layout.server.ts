@@ -50,7 +50,7 @@ export const load: LayoutServerLoad = async ({
     "/jeffgerstmann",
   ].includes(url.pathname);
   const baseMaxAge = isStaticRoute ? 600 : 300; // 10 minutes for static routes, 5 for dynamic
-  const cacheMaxAge = session ? baseMaxAge : baseMaxAge * 2; // Longer cache for anonymous users
+  const cacheMaxAge = baseMaxAge;
 
   // Create a secure cache key with proper user isolation
   const userId = session?.user?.id || "anonymous";

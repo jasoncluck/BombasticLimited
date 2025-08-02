@@ -4,411 +4,302 @@ import { PUBLIC_SUPABASE_URL as SUPABASE_URL } from "$env/static/public";
 const CACHE = `bombastic-cache-${version}`;
 const ASSETS = [...build, ...files];
 
-// Cache expiration times (in milliseconds) - optimized for instant loads
-const CACHE_EXPIRY = {
-  STATIC_ASSETS: 24 * 60 * 60 * 1000, // 24 hours for static assets
-  API_RESPONSES: 2 * 60 * 1000, // 2 minutes for API responses (reduced for freshness)
-  PAGES: 10 * 60 * 1000, // 10 minutes for pages (increased for better caching)
-  IMAGES: 7 * 24 * 60 * 60 * 1000, // 7 days for images (increased)
-  USER_DATA: 1 * 60 * 1000, // 1 minute for user-specific data
+// Cache times in minutes for readability
+const CACHE_MINS = {
+  STATIC: 1440, // 24 hours
+  API: 2,
+  PLAYLIST: 10,
+  PAGE: 10,
+  IMAGE: 10080, // 7 days
+  USER: 1,
 };
 
-// Enhanced precaching - includes more common routes
 const PRECACHE_PAGES = [
   "/",
   "/giantbomb",
   "/nextlander",
   "/remap",
   "/jeffgerstmann",
-  "/continue", // Added continue page
-];
-
-// Additional pages to prefetch in background
-const PREFETCH_PAGES = [
   "/giantbomb?page=1",
   "/nextlander?page=1",
   "/remap?page=1",
 ];
 
-// ✅ Add function to check if request should be handled by service worker
-function shouldHandleRequest(request) {
-  const url = new URL(request.url);
+// User-specific pages that require authentication
+const USER_ONLY_PAGES = ["/continue"];
 
-  // Don't handle non-GET requests
-  if (request.method !== "GET") return false;
+// OAuth callback parameters that should never be handled by service worker
+const OAUTH_PARAMS = [
+  "code",
+  "state",
+  "error",
+  "access_token",
+  "token_type",
+  "expires_in",
+];
 
-  // ✅ Don't handle Vercel internal endpoints
-  if (url.pathname.startsWith("/.well-known/vercel/")) return false;
-  if (url.pathname.startsWith("/_vercel/")) return false;
+// Check if this is an OAuth callback URL
+const isOAuthCallback = (url) => {
+  return OAUTH_PARAMS.some((param) => url.searchParams.has(param));
+};
 
-  // Don't handle other well-known endpoints that might be used by hosting providers
-  if (url.pathname.startsWith("/.well-known/")) return false;
+// Compact request filtering
+const shouldHandleRequest = (req) => {
+  if (req.method !== "GET") return false;
+  const url = new URL(req.url);
+  const { pathname, origin, protocol } = url;
 
-  // Don't handle chrome extension requests
-  if (url.protocol === "chrome-extension:") return false;
+  // Never handle OAuth callbacks
+  if (isOAuthCallback(url)) return false;
 
-  // ✅ Allow Supabase requests using injected environment variable
-  if (SUPABASE_URL) {
-    try {
-      const supabaseOrigin = new URL(SUPABASE_URL).origin;
-      if (url.origin === supabaseOrigin) return true;
-    } catch (error) {
-      console.warn("Invalid SUPABASE_URL:", SUPABASE_URL, error);
+  if (pathname.startsWith("/.well-known/") || protocol === "chrome-extension:")
+    return false;
+  if (SUPABASE_URL && origin === new URL(SUPABASE_URL).origin) return true;
+  return origin === self.location.origin;
+};
+
+// Check if user appears to be logged in (basic heuristic)
+const isUserLoggedIn = (request) => {
+  const cookies = request.headers.get("cookie") || "";
+  // Look for session indicators - adjust these based on your auth setup
+  return (
+    cookies.includes("supabase") ||
+    cookies.includes("session") ||
+    cookies.includes("auth")
+  );
+};
+
+// Check if page requires authentication
+const requiresAuth = (pathname) => {
+  return USER_ONLY_PAGES.some(
+    (page) => pathname === page || pathname.startsWith(page + "/"),
+  );
+};
+
+// Unified cache utilities
+const cacheUtils = {
+  create: (res, mins) => {
+    const headers = new Headers(res.headers);
+    const now = Date.now();
+    headers.set("sw-cache-timestamp", now);
+    headers.set("sw-cache-expiry", mins * 60000);
+    return new Response(res.body, {
+      status: res.status,
+      statusText: res.statusText,
+      headers,
+    });
+  },
+
+  isExpired: (res) => {
+    const timestamp = res.headers.get("sw-cache-timestamp");
+    const expiry = res.headers.get("sw-cache-expiry");
+    return (
+      !timestamp ||
+      !expiry ||
+      Date.now() - parseInt(timestamp) > parseInt(expiry)
+    );
+  },
+
+  getExpiry: (url) => {
+    const { pathname } = url;
+    if (
+      ASSETS.includes(pathname) ||
+      /\.(js|css|woff2?|ttf|eot)$/.test(pathname)
+    )
+      return CACHE_MINS.STATIC;
+    if (/\.(jpg|jpeg|png|gif|svg|webp|ico)$/.test(pathname))
+      return CACHE_MINS.IMAGE;
+    if (pathname.includes("get_playlists_for_username"))
+      return CACHE_MINS.PLAYLIST;
+    if (
+      pathname.includes("/supabase/") ||
+      pathname.includes("/profile") ||
+      pathname.includes("/user")
+    ) {
+      return pathname.includes("/profile") || pathname.includes("/user")
+        ? CACHE_MINS.USER
+        : CACHE_MINS.API;
     }
-  }
+    // User-specific pages get shorter cache time
+    if (requiresAuth(pathname)) return CACHE_MINS.USER;
+    return CACHE_MINS.PAGE;
+  },
+};
 
-  // Fallback: Allow any supabase.co requests
-  if (url.hostname.includes("supabase.co")) return true;
-
-  // Don't handle different origins (unless it's your CDN)
-  if (url.origin !== self.location.origin) return false;
-
-  return true;
-}
-
-// Helper function to create cache entry with expiry
-function createCacheEntry(response, expiry) {
-  const now = Date.now();
-  const headers = new Headers(response.headers);
-  headers.set("sw-cache-timestamp", now.toString());
-  headers.set("sw-cache-expiry", expiry.toString());
-
-  // Clone the response to avoid body lock issues
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  });
-}
-
-// Helper function to check if cache entry is expired
-function isCacheExpired(response) {
-  const timestamp = response.headers.get("sw-cache-timestamp");
-  const expiry = response.headers.get("sw-cache-expiry");
-
-  if (!timestamp || !expiry) return true;
-
-  const now = Date.now();
-  const cacheTime = parseInt(timestamp);
-  const expiryTime = parseInt(expiry);
-
-  return now - cacheTime > expiryTime;
-}
-
-// Helper function to determine cache expiry based on request type
-function getCacheExpiry(url, request) {
-  const pathname = url.pathname;
-
-  // Static assets (JS, CSS, fonts)
-  if (
-    ASSETS.includes(pathname) ||
-    pathname.match(/\.(js|css|woff2?|ttf|eot)$/)
-  ) {
-    return CACHE_EXPIRY.STATIC_ASSETS;
-  }
-
-  // Images
-  if (pathname.match(/\.(jpg|jpeg|png|gif|svg|webp|ico)$/)) {
-    return CACHE_EXPIRY.IMAGES;
-  }
-
-  // ✅ Supabase API routes (including auth endpoints) using injected env variable
-  let isSupabaseRequest = false;
-  if (SUPABASE_URL) {
-    try {
-      const supabaseOrigin = new URL(SUPABASE_URL).origin;
-      isSupabaseRequest = url.origin === supabaseOrigin;
-    } catch (error) {
-      // Ignore error and fall through to hostname check
-    }
-  }
-
-  if (
-    pathname.includes("/supabase/") ||
-    isSupabaseRequest ||
-    url.hostname.includes("supabase.co")
-  ) {
-    return CACHE_EXPIRY.API_RESPONSES;
-  }
-
-  // User-specific data
-  if (pathname.includes("/profile") || pathname.includes("/user")) {
-    return CACHE_EXPIRY.USER_DATA;
-  }
-
-  // Page content
-  return CACHE_EXPIRY.PAGES;
-}
-
-// Helper function for background cache updates
-async function updateCacheInBackground(request, cache, url) {
+// Compact caching function with better error handling
+const cacheResource = async (req, cache, url) => {
   try {
-    const response = await fetch(request);
-    if (response.ok) {
-      const expiry = getCacheExpiry(url, request);
-      const cachedResponse = createCacheEntry(response.clone(), expiry);
-      await cache.put(request, cachedResponse);
+    const res = await fetch(req);
+    if (res.ok) {
+      await cache.put(
+        req,
+        cacheUtils.create(res.clone(), cacheUtils.getExpiry(url)),
+      );
     }
-  } catch (error) {
-    // Ignore network errors in background updates
+    return res;
+  } catch (e) {
+    return null;
   }
-}
+};
 
-self.addEventListener("install", (event) => {
-  async function addFilesToCache() {
-    const cache = await caches.open(CACHE);
-
-    // Cache static assets with expiry
-    const assetPromises = ASSETS.map(async (asset) => {
-      try {
-        const response = await fetch(asset);
-        if (response.ok) {
-          const expiry = getCacheExpiry(new URL(asset, self.location), null);
-          const cachedResponse = createCacheEntry(response.clone(), expiry);
-          await cache.put(asset, cachedResponse);
-        }
-      } catch (error) {
-        console.warn(`Failed to cache asset: ${asset}`, error);
-      }
-    });
-
-    // Precache common pages
-    const pagePromises = PRECACHE_PAGES.map(async (page) => {
-      try {
-        const response = await fetch(page);
-        if (response.ok) {
-          const expiry = CACHE_EXPIRY.PAGES;
-          const cachedResponse = createCacheEntry(response.clone(), expiry);
-          await cache.put(page, cachedResponse);
-        }
-      } catch (error) {
-        console.warn(`Failed to precache page: ${page}`, error);
-      }
-    });
-
-    // Background prefetch of additional pages
-    const prefetchPromises = PREFETCH_PAGES.map(async (page) => {
-      try {
-        const response = await fetch(page);
-        if (response.ok) {
-          const expiry = CACHE_EXPIRY.PAGES;
-          const cachedResponse = createCacheEntry(response.clone(), expiry);
-          await cache.put(page, cachedResponse);
-        }
-      } catch (error) {
-        console.warn(`Failed to prefetch page: ${page}`, error);
-      }
-    });
-
-    await Promise.allSettled([...assetPromises, ...pagePromises]);
-
-    // Prefetch in background without blocking install
-    setTimeout(() => {
-      Promise.allSettled(prefetchPromises);
-    }, 1000);
-  }
-  event.waitUntil(addFilesToCache());
+// Install event
+self.addEventListener("install", (e) => {
+  e.waitUntil(
+    caches.open(CACHE).then(async (cache) => {
+      const promises = [
+        ...ASSETS.map((asset) =>
+          cacheResource(
+            new Request(asset),
+            cache,
+            new URL(asset, self.location),
+          ),
+        ),
+        // Only precache public pages, not user-specific ones
+        ...PRECACHE_PAGES.map((page) =>
+          cacheResource(new Request(page), cache, new URL(page, self.location)),
+        ),
+      ];
+      await Promise.allSettled(promises);
+    }),
+  );
 });
 
-// Activate event - clean up old caches and expired entries
-self.addEventListener("activate", (event) => {
-  async function cleanup() {
-    // Delete old cache versions
-    for (const key of await caches.keys()) {
-      if (key !== CACHE) {
-        await caches.delete(key);
-      }
-    }
-
-    // Clean up expired entries in current cache
-    const cache = await caches.open(CACHE);
-    const requests = await cache.keys();
-
-    const cleanupPromises = requests.map(async (request) => {
-      const response = await cache.match(request);
-      if (response && isCacheExpired(response)) {
-        await cache.delete(request);
-      }
-    });
-
-    await Promise.allSettled(cleanupPromises);
-  }
-
-  event.waitUntil(cleanup());
+// Activate event
+self.addEventListener("activate", (e) => {
+  e.waitUntil(
+    Promise.all([
+      // Clean old caches
+      caches
+        .keys()
+        .then((keys) =>
+          Promise.all(
+            keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)),
+          ),
+        ),
+      // Clean expired entries
+      caches.open(CACHE).then((cache) =>
+        cache.keys().then((reqs) =>
+          Promise.allSettled(
+            reqs.map(async (req) => {
+              const res = await cache.match(req);
+              if (res && cacheUtils.isExpired(res)) await cache.delete(req);
+            }),
+          ),
+        ),
+      ),
+    ]),
+  );
 });
 
-// Fetch event - implement cache-first strategy for navigation
-self.addEventListener("fetch", (event) => {
-  // ✅ Early return for requests we shouldn't handle
-  if (!shouldHandleRequest(event.request)) {
+// Fetch event
+self.addEventListener("fetch", (e) => {
+  // Early return for requests we shouldn't handle (including OAuth callbacks)
+  if (!shouldHandleRequest(e.request)) {
     return; // Let the browser handle these requests normally
   }
 
-  async function respond() {
-    const url = new URL(event.request.url);
-    const cache = await caches.open(CACHE);
-    const cached = await cache.match(event.request);
+  e.respondWith(
+    caches.open(CACHE).then(async (cache) => {
+      const url = new URL(e.request.url);
+      const cached = await cache.match(e.request);
+      const validCache = cached && !cacheUtils.isExpired(cached);
+      const userLoggedIn = isUserLoggedIn(e.request);
+      const pageRequiresAuth = requiresAuth(url.pathname);
 
-    // Safe Supabase origin check
-    let supabaseOrigin = null;
-    if (SUPABASE_URL) {
-      try {
-        supabaseOrigin = new URL(SUPABASE_URL).origin;
-      } catch (error) {
-        console.warn(
-          "Invalid SUPABASE_URL in fetch handler:",
-          SUPABASE_URL,
-          error,
+      // For user-specific pages, only serve from cache if user is logged in
+      if (pageRequiresAuth && !userLoggedIn) {
+        const networkResponse = await cacheResource(e.request, cache, url);
+        return (
+          networkResponse ||
+          new Response("Authentication Required", { status: 401 })
         );
       }
-    }
 
-    // Check if cached response exists and is not expired
-    const validCache = cached && !isCacheExpired(cached);
-
-    // For static assets - cache first with expiry check
-    if (ASSETS.includes(url.pathname)) {
-      if (validCache) {
-        return cached;
-      }
-
-      try {
-        const response = await fetch(event.request);
-        if (response.ok) {
-          const expiry = getCacheExpiry(url, event.request);
-          const cachedResponse = createCacheEntry(response.clone(), expiry);
-          await cache.put(event.request, cachedResponse);
-          return response;
-        }
-        return response;
-      } catch (error) {
-        // Return expired cache if network fails
-        return cached || new Response("Network Error", { status: 503 });
-      }
-    }
-
-    // ✅ For Supabase API routes (including auth endpoints) - stale-while-revalidate with expiry
-    const isSupabaseRequest =
-      (supabaseOrigin && url.origin === supabaseOrigin) ||
-      url.hostname.includes("supabase.co");
-
-    if (url.pathname.includes("/supabase/") || isSupabaseRequest) {
-      if (validCache) {
-        // Serve cached version immediately, update in background
-        event.waitUntil(updateCacheInBackground(event.request, cache, url));
-        return cached;
-      }
-
-      // No valid cache, fetch from network
-      try {
-        const response = await fetch(event.request);
-        if (response.ok) {
-          const expiry = getCacheExpiry(url, event.request);
-          const cachedResponse = createCacheEntry(response.clone(), expiry);
-          await cache.put(event.request, cachedResponse);
-        }
-        return response;
-      } catch (error) {
-        // Return expired cache or offline response
+      // Static assets: cache-first
+      if (ASSETS.includes(url.pathname)) {
+        if (validCache) return cached;
+        const networkResponse = await cacheResource(e.request, cache, url);
         return (
+          networkResponse ||
           cached ||
-          new Response(JSON.stringify({ error: "Offline" }), {
+          new Response("Network Error", { status: 503 })
+        );
+      }
+
+      // API/Navigation: stale-while-revalidate
+      const isSupabase =
+        url.pathname.includes("/supabase/") ||
+        (SUPABASE_URL && url.origin === new URL(SUPABASE_URL).origin);
+      const isPlaylist = url.pathname.includes("get_playlists_for_username");
+
+      if (isSupabase || e.request.mode === "navigate") {
+        if (validCache && (!pageRequiresAuth || userLoggedIn)) {
+          // Background update logic
+          if (
+            !isPlaylist ||
+            Date.now() - parseInt(cached.headers.get("sw-cache-timestamp")) >
+              120000
+          ) {
+            cacheResource(e.request, cache, url);
+          }
+          return cached;
+        }
+
+        const networkResponse = await cacheResource(e.request, cache, url);
+        if (networkResponse) return networkResponse;
+
+        // Fallback logic
+        if (cached && (!pageRequiresAuth || userLoggedIn)) return cached;
+
+        if (isSupabase) {
+          return new Response('{"error":"Offline"}', {
             status: 503,
             headers: { "Content-Type": "application/json" },
-          })
-        );
-      }
-    }
-
-    // 🚀 CACHE-FIRST STRATEGY FOR NAVIGATION - This is the key change for instant loads
-    if (event.request.mode === "navigate") {
-      // Navigation requests - prioritize cache for instant navigation
-      if (validCache) {
-        // Serve cached version immediately for instant navigation
-        event.waitUntil(updateCacheInBackground(event.request, cache, url));
-        return cached;
-      }
-
-      // No valid cache, fetch from network
-      try {
-        const response = await fetch(event.request);
-        if (response.ok) {
-          const expiry = getCacheExpiry(url, event.request);
-          const cachedResponse = createCacheEntry(response.clone(), expiry);
-          await cache.put(event.request, cachedResponse);
+          });
         }
-        return response;
-      } catch (error) {
-        // Return expired cache if available
-        if (cached) return cached;
 
-        // Last resort: try to serve root page from cache
-        const rootPage = await cache.match("/");
-        if (rootPage) return rootPage;
-
-        return new Response("Offline", { status: 503 });
+        // For navigation, try to serve a public page from cache
+        const fallbackPage = await cache.match("/");
+        return fallbackPage || new Response("Offline", { status: 503 });
       }
-    } else {
-      // Non-navigation requests (data, assets) - keep network first for data freshness
-      try {
-        const response = await fetch(event.request);
-        if (response.ok) {
-          const expiry = getCacheExpiry(url, event.request);
-          const cachedResponse = createCacheEntry(response.clone(), expiry);
-          await cache.put(event.request, cachedResponse);
-        }
-        return response;
-      } catch (error) {
-        return validCache ? cached : new Response("Offline", { status: 503 });
-      }
-    }
-  }
 
-  event.respondWith(respond());
+      // Other requests: network-first
+      const networkResponse = await cacheResource(e.request, cache, url);
+      return (
+        networkResponse ||
+        (validCache ? cached : new Response("Offline", { status: 503 }))
+      );
+    }),
+  );
 });
 
-// Handle messages from the main thread
-self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "INVALIDATE_CACHE") {
-    event.waitUntil(caches.delete(CACHE));
-  }
-
-  if (event.data && event.data.type === "SKIP_WAITING") {
-    self.skipWaiting();
-  }
-
-  if (event.data && event.data.type === "CLEANUP_EXPIRED") {
-    event.waitUntil(cleanupExpiredEntries());
+// Message handling
+self.addEventListener("message", (e) => {
+  const { type } = e.data || {};
+  if (type === "INVALIDATE_CACHE") e.waitUntil(caches.delete(CACHE));
+  if (type === "SKIP_WAITING") self.skipWaiting();
+  if (type === "CLEANUP_EXPIRED" || type === "INVALIDATE_PLAYLIST_CACHE") {
+    e.waitUntil(
+      caches.open(CACHE).then((cache) =>
+        cache.keys().then((reqs) =>
+          Promise.allSettled(
+            reqs.map(async (req) => {
+              const shouldDelete =
+                type === "CLEANUP_EXPIRED"
+                  ? cacheUtils.isExpired(await cache.match(req))
+                  : new URL(req.url).pathname.includes("playlist");
+              if (shouldDelete) await cache.delete(req);
+            }),
+          ),
+        ),
+      ),
+    );
   }
 });
 
-// Function to clean up expired entries
-async function cleanupExpiredEntries() {
-  try {
-    const cache = await caches.open(CACHE);
-    const requests = await cache.keys();
-
-    const cleanupPromises = requests.map(async (request) => {
-      try {
-        const response = await cache.match(request);
-        if (response && isCacheExpired(response)) {
-          await cache.delete(request);
-        }
-      } catch (error) {
-        console.warn("Error during cache cleanup:", error);
-      }
-    });
-
-    await Promise.allSettled(cleanupPromises);
-  } catch (error) {
-    console.warn("Error during cache cleanup:", error);
-  }
-}
-
-// Set up periodic cleanup (every hour)
-setInterval(
-  () => {
-    cleanupExpiredEntries();
-  },
-  60 * 60 * 1000,
-);
+// Periodic cleanup
+setInterval(() => {
+  self.dispatchEvent(
+    new MessageEvent("message", { data: { type: "CLEANUP_EXPIRED" } }),
+  );
+}, 3600000); // 1 hour
