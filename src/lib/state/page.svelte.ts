@@ -60,6 +60,9 @@ export interface PageState {
   // Viewport reference setters
   setSidebarViewportRef: (ref: HTMLElement | null) => void;
   setContentViewportRef: (ref: HTMLElement | null) => void;
+
+  // Cleanup method
+  cleanup: () => void;
 }
 
 export class PageStateClass implements PageState {

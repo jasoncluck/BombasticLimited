@@ -49,13 +49,11 @@ export class RoutePreloader {
   ): Promise<void> {
     // Check if already preloaded
     if (this.isRoutePreloaded(url)) {
-      console.log(`🎯 Route ${url} already preloaded, skipping`);
       return;
     }
 
     // Check if already in queue
     if (this.preloadQueue.has(url) || this.activePreloads.has(url)) {
-      console.log(`⏳ Route ${url} already queued/processing`);
       return;
     }
 
@@ -72,15 +70,11 @@ export class RoutePreloader {
     this.preloadQueue.set(url, job);
     this.preloadStats.pending++;
 
-    console.log(`🚀 Queuing preload for ${url} (priority: ${priority})`);
-
     return this.processPreloadQueue();
   }
 
   async preloadRoutes(urls: string[], priority = 5): Promise<void> {
     const userId = this.getCurrentUserId();
-
-    console.log(`📦 Batch preloading ${urls.length} routes:`, urls);
 
     for (const url of urls) {
       await this.preloadRoute(url, priority, userId);
@@ -122,7 +116,6 @@ export class RoutePreloader {
 
   private async processPreloadJob(job: PreloadJob): Promise<void> {
     this.activePreloads.add(job.url);
-    console.log(`⚡ Processing preload for ${job.url}`);
 
     try {
       // Use SvelteKit's preloadData instead of raw fetch
@@ -131,19 +124,13 @@ export class RoutePreloader {
       if (result) {
         this.markRouteAsPreloaded(job.url);
         this.completePreloadJob(job.url, true);
-        console.log(`✅ Successfully preloaded ${job.url}`);
       } else {
         throw new Error("preloadData returned null");
       }
-    } catch (error) {
-      console.warn(`❌ Preload failed for ${job.url}:`, error);
-
+    } catch {
       if (job.retries < 2) {
         job.retries++;
         job.timestamp = Date.now();
-        console.log(
-          `🔄 Retrying preload for ${job.url} (attempt ${job.retries + 1})`,
-        );
         setTimeout(() => {
           if (this.preloadQueue.has(job.url)) {
             this.processPreloadJob(job);

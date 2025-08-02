@@ -38,7 +38,6 @@ export class NavigationCacheStateClass implements NavigationCacheState {
   async initialize(): Promise<void> {
     if (this.initialized || !browser) return;
 
-    console.log("🚀 Initializing navigation cache with preloading...");
     this.initialized = true;
     this.initializeAnonymousId();
     this.loadFromStorage();
@@ -67,9 +66,6 @@ export class NavigationCacheStateClass implements NavigationCacheState {
 
   onUserInteraction(targetUrl: string): void {
     if (!this.initialized || !browser) return;
-    console.log(
-      `👆 User interaction detected for ${targetUrl}, high-priority preload`,
-    );
     this.preloadRoute(targetUrl, 1);
   }
 
@@ -151,21 +147,18 @@ export class NavigationCacheStateClass implements NavigationCacheState {
 
     // First check if route was preloaded by SvelteKit
     if (this.preloadedRoutes.has(pathname)) {
-      console.log(`🎯 Route ${pathname} is preloaded by SvelteKit`);
       return true;
     }
 
     // Check memory cache
     const memoryCacheKey = `page:${pathname}`;
     if (this.memoryCache.get(memoryCacheKey, userId)) {
-      console.log(`💾 Route ${pathname} found in memory cache`);
       return true;
     }
 
     // Check ETag cache
     const entry = this.getCacheEntry(url, userId);
     if (entry) {
-      console.log(`🏷️ Route ${pathname} found in ETag cache`);
       return true;
     }
 
@@ -187,9 +180,6 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     if (toPath.startsWith("/search/")) return false;
 
     const isCached = this.isLikelyCached(toUrl, userId ?? null);
-    console.log(
-      `🤔 Should show loading for ${toPath}? ${!isCached} (cached: ${isCached})`,
-    );
     return !isCached;
   }
 
@@ -271,9 +261,6 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     const pathname = extractPathname(url);
     this.preloadedRoutes.add(pathname);
     this.savePreloadedRoutes();
-    console.log(
-      `✨ Marked ${pathname} as preloaded. Total preloaded: ${this.preloadedRoutes.size}`,
-    );
   }
 
   private isRoutePreloaded(url: string): boolean {
@@ -295,10 +282,6 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     );
 
     if (suggestions.length > 0) {
-      console.log(
-        `🎯 Starting intelligent preloading for ${currentPath}:`,
-        suggestions,
-      );
       setTimeout(() => {
         this.preloader.preloadRoutes(suggestions, 3);
       }, 2000);
@@ -355,9 +338,6 @@ export class NavigationCacheStateClass implements NavigationCacheState {
       // Only keep routes that are still fresh (for now, keep all)
       const validRoutes = stored.filter(() => true);
       this.preloadedRoutes = new Set(validRoutes);
-      console.log(
-        `📋 Loaded ${this.preloadedRoutes.size} preloaded routes from storage`,
-      );
     }
   }
 }

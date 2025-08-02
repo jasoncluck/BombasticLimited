@@ -35,6 +35,9 @@ export interface LayoutState {
   // Notification setup
   setupNotifications: (supabase: SupabaseClient) => () => void;
   setupStreamingNotifications: () => void;
+
+  // Cleanup method
+  cleanup: () => void;
 }
 
 export class LayoutStateClass implements LayoutState {
@@ -137,7 +140,7 @@ export class LayoutStateClass implements LayoutState {
   }
 
   onLayoutChange(sizes: number[]) {
-    document.cookie = `PaneForge:layout=${JSON.stringify(sizes)}; path=/; domain=${sizes}`;
+    document.cookie = `PaneForge:layout=${JSON.stringify(sizes)}; path=/; domain=${page.url.hostname}`;
   }
 
   setupNotifications(supabase: SupabaseClient) {
@@ -196,7 +199,6 @@ export class LayoutStateClass implements LayoutState {
     return unsubscribe;
   }
 
-  // NEW: Cleanup method
   cleanup() {
     if (this.currentDebouncedSearch?.isPending) {
       this.currentDebouncedSearch.clear();

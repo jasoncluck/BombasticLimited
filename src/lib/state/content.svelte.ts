@@ -533,13 +533,6 @@ export class ContentState {
           newPosition = finalVideos.length - firstMovedVideoNewIndex;
         }
 
-        console.log(`🔄 Moving from index ${this.draggedIndex} to ${index}`);
-        console.log(
-          `📍 Video ended up at array index: ${firstMovedVideoNewIndex}`,
-        );
-        console.log(`🔢 Database position: ${newPosition}`);
-        console.log(`📊 Sort order: ${options.contentFilter.sort.order}`);
-
         if (!isPlaylistVideosFilter(options.contentFilter)) {
           throw new Error("Invalid content filter, expected playlist filter");
         }
