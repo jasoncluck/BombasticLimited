@@ -195,8 +195,6 @@
           currentCacheUserId,
         );
       } else {
-        console.log(currentCacheUserId);
-        console.log(currentUserId);
         console.warn("User context mismatch, clearing cache");
         navigationCache.clearUserCache();
       }
@@ -599,7 +597,7 @@
                 >
                   <!-- Loading overlay - show/hide with CSS -->
                   <div
-                    class="absolute inset-0 z-50 bg-background-lighter flex items-center justify-center transition-opacity duration-150"
+                    class="absolute inset-0 z-50 bg-background-lighter flex items-center justify-center transition-opacity duration-50"
                     class:opacity-100={isNavigatingToContent}
                     class:opacity-0={!isNavigatingToContent}
                     class:pointer-events-none={!isNavigatingToContent}

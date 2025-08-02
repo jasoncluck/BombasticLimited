@@ -16,7 +16,7 @@ export interface NavigationCacheState {
   cacheEntries: Map<string, CacheEntry>;
   currentUserId: string | null;
   anonymousId: string | null; // Track anonymous session
-  serviceWorkerCachedPages: Set<string>; // ✅ NEW: Track SW cached pages
+  serviceWorkerCachedPages: Set<string>;
 
   initialize: () => void;
   setCacheEntry: (

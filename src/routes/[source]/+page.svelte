@@ -49,20 +49,16 @@
     carouselsState: SourceWithCarouselState;
     selectedVideos: Record<SourceWithStateKeys, Video[]>;
   }> = {
-    capture: () => {
-      console.log(carouselsState);
-      return {
-        carouselsState,
-        selectedVideos: Object.fromEntries(
-          sectionIds.map((sid: SourceWithStateKeys) => [
-            sid,
-            contentState.selectedVideosBySection[sid],
-          ]),
-        ) as Record<SourceWithStateKeys, Video[]>,
-      };
-    },
+    capture: () => ({
+      carouselsState,
+      selectedVideos: Object.fromEntries(
+        sectionIds.map((sid: SourceWithStateKeys) => [
+          sid,
+          contentState.selectedVideosBySection[sid],
+        ]),
+      ) as Record<SourceWithStateKeys, Video[]>,
+    }),
     restore: async (restored) => {
-      console.log(restored.carouselsState);
       carouselsState = restored.carouselsState;
       contentState.selectedVideosBySection = restored.selectedVideos;
     },

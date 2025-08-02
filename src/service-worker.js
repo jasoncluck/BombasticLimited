@@ -25,6 +25,22 @@ const PRECACHE_PAGES = [
   "/remap?page=1",
 ];
 
+const ENHANCED_PRECACHE = [
+  // Current pages
+  ...PRECACHE_PAGES,
+
+  // Critical API endpoints
+  "/supabase/rest/v1/videos?select=*&limit=20",
+  "/supabase/rest/v1/playlists?select=*",
+
+  // User-specific endpoints (if logged in)
+  "/continue",
+  "/profile",
+
+  // Critical CSS/JS chunks
+  ...build.filter((asset) => asset.includes("app") || asset.includes("vendor")),
+];
+
 // User-specific pages that require authentication
 const USER_ONLY_PAGES = ["/continue"];
 
@@ -145,22 +161,28 @@ const cacheResource = async (req, cache, url) => {
 // Install event
 self.addEventListener("install", (e) => {
   e.waitUntil(
-    caches.open(CACHE).then(async (cache) => {
-      const promises = [
-        ...ASSETS.map((asset) =>
-          cacheResource(
-            new Request(asset),
-            cache,
-            new URL(asset, self.location),
-          ),
-        ),
-        // Only precache public pages, not user-specific ones
-        ...PRECACHE_PAGES.map((page) =>
-          cacheResource(new Request(page), cache, new URL(page, self.location)),
-        ),
-      ];
-      await Promise.allSettled(promises);
-    }),
+    Promise.all([
+      // Precache in chunks to avoid overwhelming the network
+      caches.open(CACHE).then((cache) => {
+        const chunks = chunkArray(ENHANCED_PRECACHE, 5);
+        return chunks.reduce(
+          (promise, chunk) =>
+            promise.then(() =>
+              Promise.allSettled(
+                chunk.map((url) =>
+                  cacheResource(
+                    new Request(url),
+                    cache,
+                    new URL(url, self.location),
+                  ),
+                ),
+              ),
+            ),
+          Promise.resolve(),
+        );
+      }),
+      self.skipWaiting(),
+    ]),
   );
 });
 
@@ -303,3 +325,13 @@ setInterval(() => {
     new MessageEvent("message", { data: { type: "CLEANUP_EXPIRED" } }),
   );
 }, 3600000); // 1 hour
+
+function chunkArray(arr, chunkSize) {
+  const chunked = [];
+  let index = 0;
+  while (index < arr.length) {
+    chunked.push(arr.slice(index, index + chunkSize));
+    index += chunkSize;
+  }
+  return chunked;
+}
