@@ -53,7 +53,7 @@ export const load: LayoutServerLoad = async ({
   const cacheMaxAge = baseMaxAge;
 
   // Create a secure cache key with proper user isolation
-  const userId = session?.user?.id || "anonymous";
+  const userId = session?.user?.id || "null";
   const timeSlot = Math.floor(Date.now() / (cacheMaxAge * 1000));
 
   // Use crypto hash to prevent ETag prediction and ensure uniqueness
