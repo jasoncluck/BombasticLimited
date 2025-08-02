@@ -38,12 +38,12 @@
   import { setPlaylistState } from "$lib/state/playlist.svelte";
   import { setPageState, type ScrollPosition } from "$lib/state/page.svelte";
   import { setLayoutState } from "$lib/state/layout.svelte";
-  import { setNavigationCacheState } from "$lib/state/navigation-cache.svelte";
   import { handleUpdateProfileContentDisplay } from "$lib/components/profile/profile-service";
   import { setSourceState } from "$lib/state/source.svelte";
   import Loader from "$lib/components/loader.svelte";
   import Sidebar from "$lib/components/sidebar/sidebar.svelte";
   import { setSidebarState } from "$lib/state/sidebar.svelte";
+  import { setNavigationCacheState } from "$lib/state/navigation-cache";
 
   injectSpeedInsights();
 
@@ -67,7 +67,6 @@
   } = $derived(data);
 
   let sidebarState = setSidebarState();
-  // Initialize all state contexts
   setPlaylistState(pageState, contentState, sidebarState);
   setSourceState(pageState);
 
@@ -75,7 +74,7 @@
     !mediaQuery.initialized || !sidebarState.initialized,
   );
 
-  // Navigation loading state - enhanced with secure ETag cache awareness for both authenticated and non-authenticated users
+  // Enhanced navigation loading state with preload awareness
   const isNavigatingToContent = $derived.by(() => {
     if (!navigating) return false;
 
@@ -83,7 +82,7 @@
     const to = navigating.to?.url;
     const user = session?.user;
 
-    // Use synchronous shouldShowLoading method
+    // Quick check with optimized navigation cache
     if (browser && navigationCache.initialized) {
       const shouldShow = navigationCache.shouldShowLoading(
         from?.href,
@@ -97,11 +96,19 @@
   });
 
   let user = $derived(session?.user);
-
   let openAccountDrawer = $derived(sidebarState.openAccountDrawer);
   let searchQuery = $state(page.params.query);
 
-  // Default snapshot for every page - restores scroll position when navigating through history
+  // Main navigation routes for preloading
+  const mainRoutes = [
+    { href: "/", label: "Home", icon: House },
+    { href: "/giantbomb", label: "Giant Bomb" },
+    { href: "/nextlander", label: "Nextlander" },
+    { href: "/remap", label: "Remap" },
+    { href: "/jeffgerstmann", label: "Jeff Gerstmann" },
+  ];
+
+  // Snapshot for scroll position restoration
   export const snapshot: Snapshot<{
     content: ScrollPosition;
     searchQuery?: string;
@@ -120,7 +127,6 @@
         pageState.viewportRefs.contentViewportRef,
         restored.content,
       );
-
       searchQuery = restored.searchQuery;
     },
   };
@@ -133,12 +139,11 @@
     contentState.dragContentType = null;
   }
 
-  // Handle dragover for auto-scrolling
+  // Drag and drop handlers
   function handleDragOver(e: DragEvent) {
     pageState.handleDragOver(e, contentState.dragContentType);
   }
 
-  // Handle drag end - clean up all scrolling
   function handleDragEnd() {
     contentState.dragContentType = null;
     pageState.handleDragEnd();
@@ -149,11 +154,61 @@
     pageState.handleDrop();
   }
 
+  // Preloading handlers
+  function handleLinkHover(url: string) {
+    // Preload on hover with high priority
+    if (navigationCache.initialized) {
+      navigationCache.onUserInteraction(url);
+    }
+  }
+
+  function handleRoutePreload(currentPath: string) {
+    if (!navigationCache.initialized) return;
+
+    // Intelligent preloading based on current route
+    if (currentPath === "/") {
+      // Home page: preload main navigation routes
+      navigationCache.preloadRoutes(
+        ["/giantbomb", "/nextlander", "/remap", "/jeffgerstmann"],
+        2,
+      );
+
+      // If user is authenticated, preload continue page
+      if (user) {
+        navigationCache.preloadRoute("/continue", 1);
+      }
+    } else if (currentPath === "/giantbomb") {
+      navigationCache.preloadRoutes(
+        ["/giantbomb?page=1", "/nextlander", user ? "/continue" : "/"],
+        3,
+      );
+    } else if (currentPath === "/nextlander") {
+      navigationCache.preloadRoutes(
+        ["/nextlander?page=1", "/giantbomb", user ? "/continue" : "/"],
+        3,
+      );
+    } else if (currentPath === "/remap") {
+      navigationCache.preloadRoutes(
+        ["/remap?page=1", "/giantbomb", user ? "/continue" : "/"],
+        3,
+      );
+    } else if (currentPath === "/jeffgerstmann") {
+      navigationCache.preloadRoutes(
+        ["/jeffgerstmann?page=1", "/giantbomb", user ? "/continue" : "/"],
+        3,
+      );
+    } else if (currentPath === "/continue" && user) {
+      // Continue page: preload main routes
+      navigationCache.preloadRoutes(["/giantbomb", "/nextlander"], 3);
+    }
+    // Add more intelligent preloading patterns as needed
+  }
+
+  // Optimized page data caching
   function cachePageData() {
     if (!browser || !navigationCache.initialized) return;
 
     const currentPath = window.location.pathname;
-
     const pageDataKey = `page:${currentPath}`;
 
     // Only cache if not already cached
@@ -166,8 +221,15 @@
         pathname: currentPath,
       };
 
-      const ttl =
-        currentPath === "/" || currentPath === "/continue" ? 180000 : 300000; // 3-5 minutes
+      // Adjust TTL based on route type
+      let ttl = 180000; // Default 3 minutes
+      if (currentPath === "/")
+        ttl = 120000; // Home: 2 minutes
+      else if (currentPath === "/continue")
+        ttl = 60000; // Continue: 1 minute (more dynamic)
+      else if (mainRoutes.some((route) => route.href === currentPath))
+        ttl = 300000; // Main routes: 5 minutes
+
       navigationCache.setMemoryCache(pageDataKey, pageData, ttl);
     }
   }
@@ -190,6 +252,8 @@
     }
 
     await tick();
+
+    // Clear search query when navigating away from search
     if (
       to &&
       !to.url.pathname.startsWith("/search/") &&
@@ -198,17 +262,17 @@
       searchQuery = "";
     }
 
+    // Invalidate video cache when leaving video pages
     if (from?.url.pathname.includes("/video")) {
       invalidate("supabase:db:videos");
     }
 
-    // Store ETag information with security validation for both authenticated and non-authenticated users
+    // Store ETag information with security validation
     if (browser && to && etag && lastModified && !cached) {
       const currentUserId = user?.id ?? null;
       const currentCacheUserId = cacheUserId ?? null;
 
-      // For authenticated users: validate user context matches
-      // For non-authenticated users: both should be null
+      // Validate user context for both authenticated and non-authenticated users
       if (currentUserId === currentCacheUserId) {
         navigationCache.setCacheEntry(
           to.url.href,
@@ -218,8 +282,6 @@
           currentCacheUserId,
         );
       } else {
-        console.log(currentCacheUserId);
-        console.log(currentUserId);
         console.warn("User context mismatch, clearing cache");
         navigationCache.clearUserCache();
       }
@@ -227,8 +289,16 @@
 
     // Cache page data after navigation
     cachePageData();
+
+    // Trigger intelligent preloading after navigation settles
+    if (to) {
+      setTimeout(() => {
+        handleRoutePreload(to.url.pathname);
+      }, 500); // Small delay to let page settle
+    }
   });
 
+  // Scroll position restoration
   $effect(() => {
     // Restore content viewport scroll
     pageState.restoreViewportScroll(
@@ -249,35 +319,45 @@
     }
   });
 
+  // Debug preload stats (remove in production)
+  $effect(() => {
+    if (browser && navigationCache.initialized) {
+      const stats = navigationCache.getPreloadStats();
+      if (stats.completed > 0 || stats.failed > 0) {
+        console.log("📊 Preload stats:", {
+          ...stats,
+          cacheHitRate:
+            (stats.completed / (stats.completed + stats.failed)) * 100,
+        });
+      }
+    }
+  });
+
   onMount(() => {
     let mediaQueryCleanup: (() => void) | undefined;
     let sidebarCleanup: (() => void) | undefined;
     let notificationStoreUnsubscribe: (() => void) | undefined;
     let authUnsubscribe: (() => void) | undefined;
 
-    // Handle async initialization separately
     async function initialize() {
       await invalidateAll();
 
-      // Initialize all state
+      // Initialize navigation cache first for best performance
       navigationCache.initialize();
       mediaQueryCleanup = mediaQuery.initialize();
-
-      // Await the sidebar initialization to get the cleanup function
       sidebarCleanup = await sidebarState.initialize();
 
       const currentUserId = user?.id ?? null;
 
-      // Clear cache when user changes for security (handles both auth state changes)
+      // Clear cache when user changes for security
       if (browser && navigationCache.currentUserId !== currentUserId) {
         navigationCache.clearUserCache();
       }
 
-      // Store initial page ETag if available and user context is valid
+      // Store initial page ETag if available
       if (browser && etag && lastModified && !cached) {
         const currentCacheUserId = cacheUserId ?? null;
 
-        // Validate user context for both authenticated and non-authenticated users
         if (currentUserId === currentCacheUserId) {
           navigationCache.setCacheEntry(
             window.location.href,
@@ -288,17 +368,23 @@
           );
         }
       }
+
+      // Start initial intelligent preloading
+      if (browser) {
+        setTimeout(() => {
+          handleRoutePreload(window.location.pathname);
+        }, 1000);
+      }
     }
 
-    // Start async initialization
     initialize();
 
-    // Set up event listeners for drag operations
+    // Event listeners for drag operations
     window.addEventListener("dragover", handleDragOver);
     window.addEventListener("dragend", handleDragEnd);
     window.addEventListener("drop", handleDrop);
 
-    // Set up regular notifications
+    // Notification subscriptions
     notificationStoreUnsubscribe = notificationStore.subscribe((value) => {
       if (value) {
         switch (value.type) {
@@ -317,37 +403,30 @@
       }
     });
 
-    // Set up auth notifications
     authUnsubscribe = layoutState.setupNotifications(supabase);
 
-    // Return synchronous cleanup function
     return () => {
-      // Clean up event listeners
+      // Cleanup event listeners
       window.removeEventListener("dragover", handleDragOver);
       window.removeEventListener("dragend", handleDragEnd);
       window.removeEventListener("drop", handleDrop);
 
-      // Clean up page state intervals
+      // Cleanup state
       pageState.cleanup();
 
-      // Clean up subscriptions
+      // Cleanup subscriptions
       if (authUnsubscribe) authUnsubscribe();
       if (notificationStoreUnsubscribe) notificationStoreUnsubscribe();
       layoutState.cleanup();
 
-      // Clean up state initializations
-      if (mediaQueryCleanup) {
-        mediaQueryCleanup();
-      }
-      if (sidebarCleanup) {
-        sidebarCleanup();
-      }
+      // Cleanup state initializations
+      if (mediaQueryCleanup) mediaQueryCleanup();
+      if (sidebarCleanup) sidebarCleanup();
       navigationCache.cleanup();
     };
   });
 </script>
 
-<!-- Rest of template remains exactly the same -->
 <Toaster position="top-right" />
 
 <svelte:head>
@@ -355,9 +434,10 @@
   <script src="https://embed.twitch.tv/embed/v1.js"></script>
 </svelte:head>
 
-<!-- Global Content Context Menu -->
 <div class="flex flex-col h-full">
+  <!-- Main Navigation Bar -->
   <nav class="flex items-center p-1 m-2 relative" data-testid="main-navigation">
+    <!-- Mobile Menu -->
     <div class="flex items-center">
       <div class="sm:hidden w-full">
         <SideDrawer
@@ -368,12 +448,15 @@
       </div>
     </div>
 
+    <!-- Center Section: Home Button + Search -->
     <div
       class="absolute left-1/2 top-1/2 -translate-x-[calc(50%-28px)] -translate-y-1/2 flex items-center"
     >
+      <!-- Home Button (Desktop Only) -->
       <a
         href="/"
         data-testid="home-link"
+        onmouseenter={() => handleLinkHover("/")}
         onclick={(e) => {
           e.preventDefault();
           searchQuery = "";
@@ -385,6 +468,7 @@
         <span class="sr-only">Home</span>
       </a>
 
+      <!-- Search Input -->
       <Input
         type="search"
         data-testid="search-input"
@@ -396,9 +480,11 @@
       <Loader message="" size="sm" visible={layoutState.isSearching} />
     </div>
 
+    <!-- Right Section: User Controls -->
     <div class="ml-auto">
       <div class="flex gap-4 items-center ml-auto sm:flex">
         {#if user}
+          <!-- Content Display Preference (Desktop) -->
           <DropdownMenu.Root>
             <DropdownMenu.Trigger
               data-testid="user-preferences"
@@ -447,7 +533,6 @@
                   onclick={() => {
                     if (userProfile?.content_display !== "TABLE") {
                       contentState.resetState();
-
                       handleUpdateProfileContentDisplay({
                         contentDisplay: "TABLE",
                         supabase,
@@ -464,7 +549,10 @@
               </DropdownMenu.Group>
             </DropdownMenu.Content>
           </DropdownMenu.Root>
+
+          <!-- User Menu -->
           {#if mediaQuery.canHover}
+            <!-- Desktop User Menu -->
             <DropdownMenu.Root>
               <DropdownMenu.Trigger
                 data-testid="user-menu-trigger"
@@ -480,12 +568,13 @@
                 <DropdownMenu.Group>
                   <DropdownMenu.Item
                     class="cursor-pointer"
+                    onmouseenter={() => handleLinkHover("/account")}
                     onclick={() => goto("/account")}
                   >
                     <div class="flex items-center gap-2">
                       <Cog />
+                      Settings
                     </div>
-                    Settings
                   </DropdownMenu.Item>
                   <DropdownMenu.Item
                     class="cursor-pointer"
@@ -501,6 +590,7 @@
               </DropdownMenu.Content>
             </DropdownMenu.Root>
           {:else}
+            <!-- Mobile User Menu -->
             <Drawer.Root bind:open={openAccountDrawer}>
               <Drawer.Trigger
                 class={buttonVariants({
@@ -549,9 +639,11 @@
             </Drawer.Root>
           {/if}
         {:else}
+          <!-- Login Button (Not Authenticated) -->
           <Button
             class="cursor-pointer"
             data-testid="login-button"
+            onmouseenter={() => handleLinkHover("/auth/login")}
             onclick={() => goto("/auth/login")}
             variant="outline"
           >
@@ -562,16 +654,20 @@
     </div>
   </nav>
 
+  <!-- Main Content Area -->
   {#if shouldShowLoading}
+    <!-- Initial Loading State -->
     <div class="w-full h-[calc(100dvh-60px)] flex items-center justify-center">
       <Loader size="lg" message="Loading..." />
     </div>
   {:else}
+    <!-- Main Layout with Sidebar and Content -->
     <Resizable.PaneGroup
       direction="horizontal"
       class="h-full rounded-lg flex overflow-hidden"
       onLayoutChange={layoutState.onLayoutChange}
     >
+      <!-- Sidebar Pane (Desktop Only) -->
       <Resizable.Pane
         defaultSize={layout?.[0] ?? 15}
         minSize={12}
@@ -593,6 +689,8 @@
           <Sidebar {isSidebarCollapsed} {supabase} {session} {refreshSidebar} />
         </ScrollArea>
       </Resizable.Pane>
+
+      <!-- Resizable Handle -->
       <Resizable.Handle
         onDraggingChange={(isDragging) =>
           (layoutState.isDraggingDivider = isDragging)}
@@ -603,6 +701,8 @@
           ? 'after:w-[1px] after:bg-foreground'
           : 'after:w-[1px] hover:after:bg-muted-foreground'}"
       />
+
+      <!-- Main Content Pane -->
       <Resizable.Pane
         class="@container pane flex min-w-[350px] sm:mr-1"
         defaultSize={layout?.[1] ?? 85}
@@ -619,21 +719,25 @@
           >
             <div class="@xl:max-w-[1450px] max-w-[1000px] w-full">
               <div class="flex flex-col mb-20">
-                <!-- Always render both loading and content -->
                 <div
                   class="flex flex-col relative justify-center items-center m-2 sm:m-4"
                 >
-                  <!-- Loading overlay - show/hide with CSS -->
+                  <!-- Navigation Loading Overlay -->
                   <div
-                    class="absolute inset-0 z-[10000] bg-background-lighter flex items-center justify-center transition-opacity duration-50"
+                    class="absolute inset-0 z-[10000] bg-background/90 backdrop-blur-sm flex items-center justify-center transition-all duration-300"
                     class:opacity-100={isNavigatingToContent}
                     class:opacity-0={!isNavigatingToContent}
                     class:pointer-events-none={!isNavigatingToContent}
+                    class:scale-100={isNavigatingToContent}
+                    class:scale-95={!isNavigatingToContent}
                   >
-                    <!-- <Loader size="lg" message="Loading..." /> -->
+                    <div class="flex flex-col items-center space-y-2">
+                      <Loader size="lg" message="" />
+                      <p class="text-sm text-muted-foreground">Loading...</p>
+                    </div>
                   </div>
 
-                  <!-- Content - always in DOM -->
+                  <!-- Page Content -->
                   <div class="@xl:max-w-[1450px] max-w-[1000px] w-full">
                     <div class="flex flex-col mb-20">
                       {@render children()}

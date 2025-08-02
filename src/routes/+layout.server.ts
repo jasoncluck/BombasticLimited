@@ -42,29 +42,32 @@ export const load: LayoutServerLoad = async ({
 
   const { session } = await sessionPromise;
 
-  // Enhanced cache settings for better performance
+  // Optimized cache settings - more aggressive for static routes
   const isStaticRoute = [
     "/giantbomb",
     "/nextlander",
     "/remap",
     "/jeffgerstmann",
   ].includes(url.pathname);
-  const baseMaxAge = isStaticRoute ? 600 : 300; // 10 minutes for static routes, 5 for dynamic
+
+  // Longer cache times for better performance
+  const baseMaxAge = isStaticRoute ? 900 : 600; // 15 minutes static, 10 minutes dynamic
   const cacheMaxAge = baseMaxAge;
 
-  // Create a secure cache key with proper user isolation
+  // Simplified cache key generation
   const userId = session?.user?.id || null;
   const timeSlot = Math.floor(Date.now() / (cacheMaxAge * 1000));
 
-  // Use crypto hash to prevent ETag prediction and ensure uniqueness
   const cacheComponents = [
-    "bombastic-cache-v2", // Updated version prefix
+    "bombastic-cache-v3", // Updated version
     url.pathname,
-    userId,
+    userId || "anonymous",
     timeSlot.toString(),
     view,
-    JSON.stringify(contentFilter),
-    // Add static route indicator for better caching
+    // Simplified filter serialization
+    Object.keys(contentFilter).length > 0
+      ? JSON.stringify(contentFilter)
+      : "none",
     isStaticRoute ? "static" : "dynamic",
   ];
 
@@ -76,37 +79,32 @@ export const load: LayoutServerLoad = async ({
   const etag = `"${cacheHash}"`;
   const lastModified = new Date(timeSlot * cacheMaxAge * 1000);
 
-  // Check client cache headers
   const clientEtag = request.headers.get("if-none-match");
 
-  // 🚀 FIXED: Smart resource hints based on actual page needs
+  // Simplified resource hints - only for home page
   const getResourceHints = () => {
-    const hints: string[] = [];
-
-    // Only add prefetch hints for pages that actually benefit from them
     if (url.pathname === "/") {
-      // Home page: prefetch likely next destinations
-      hints.push(
+      const hints = [
         "</giantbomb>; rel=prefetch; as=document",
         "</nextlander>; rel=prefetch; as=document",
-      );
+      ];
 
-      // Only preload critical scripts that we know will be used
       if (session?.user) {
         hints.push("</continue>; rel=prefetch; as=document");
       }
-    }
 
-    return hints.join(", ");
+      return hints.join(", ");
+    }
+    return "";
   };
 
-  // Enhanced cache headers for better performance
+  // Optimized cache headers
   if (!isDataRequest) {
     try {
       const cacheControl = session
         ? `private, max-age=${cacheMaxAge}, must-revalidate`
         : isStaticRoute
-          ? `public, max-age=${cacheMaxAge}, s-maxage=${cacheMaxAge * 2}, immutable`
+          ? `public, max-age=${cacheMaxAge}, s-maxage=${cacheMaxAge * 3}, immutable`
           : `public, max-age=${cacheMaxAge}, s-maxage=${cacheMaxAge * 2}`;
 
       const resourceHints = getResourceHints();
@@ -117,22 +115,21 @@ export const load: LayoutServerLoad = async ({
         vary: "Authorization, Cookie",
         "cache-control": cacheControl,
         "x-cache-strategy": isStaticRoute ? "aggressive" : "standard",
-        // Add performance hints
         "service-worker-allowed": "/",
+        // Add performance hints
+        "x-robots-tag": "noindex, nofollow", // Prevent search engine caching conflicts
       };
 
-      // Only add link header if we have hints
       if (resourceHints) {
         headers.link = resourceHints;
       }
 
       setHeaders(headers);
     } catch {
-      console.log("Cache headers already set, continuing...");
+      // Headers already set
     }
   }
 
-  // Check for cache hit
   const isCacheHit = clientEtag === etag;
 
   const { profile: userProfile } = await getProfile({
@@ -146,12 +143,10 @@ export const load: LayoutServerLoad = async ({
     cookies: cookies.getAll(),
     userProfile,
     layout,
-    // Enhanced cache metadata
     etag,
     lastModified: lastModified.toISOString(),
     cached: isCacheHit,
     cacheUserId: userId,
-    // Add performance indicators
     isStaticRoute,
     cacheStrategy: isStaticRoute ? "aggressive" : "standard",
   };
