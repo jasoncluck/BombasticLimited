@@ -114,7 +114,13 @@
     </div>
     <div class="ml-auto">
       {#if mediaQueryState.canHover}
-        <ContentDropdown videos={[video]} variant="item" {supabase} {session} />
+        <ContentDropdown
+          videos={[video]}
+          variant="item"
+          {contentFilter}
+          {supabase}
+          {session}
+        />
       {:else}
         <Button
           variant="ghost"

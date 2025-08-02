@@ -175,6 +175,7 @@
             <ContentSelect
               {videos}
               playlist={profilePlaylist}
+              {contentFilter}
               {supabase}
               {session}
               displayLabel={true}

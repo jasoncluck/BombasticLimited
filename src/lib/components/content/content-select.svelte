@@ -11,17 +11,20 @@
   import { getMediaQueryState } from "$lib/state/media-query.svelte";
   import Button from "../ui/button/button.svelte";
   import { Ellipsis } from "@lucide/svelte";
+  import type { CombinedContentFilter } from "./content-filter";
 
   let {
     videos,
     playlist,
     sectionId = DEFAULT_SECTION_ID,
+    contentFilter,
     supabase,
     session,
   }: {
     videos: Video[];
     playlist?: Playlist;
     displayLabel: boolean;
+    contentFilter?: CombinedContentFilter;
     sectionId?: string;
     supabase: SupabaseClient<Database>;
     session: Session | null;
@@ -57,6 +60,7 @@
       variant="header"
       {playlist}
       {sectionId}
+      {contentFilter}
       onSelectAll={handleSelectAll}
       {supabase}
       {session}

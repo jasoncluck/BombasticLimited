@@ -11,7 +11,6 @@ export interface CacheEntry {
   isAnonymous: boolean; // Flag to distinguish anonymous users
 }
 
-// 🚀 NEW: Memory cache interface
 export interface MemoryCacheEntry<T = any> {
   data: T;
   timestamp: number;
@@ -382,14 +381,14 @@ export class NavigationCacheStateClass implements NavigationCacheState {
   isLikelyCached(url: string, userId: string | null): boolean {
     const pathname = this.extractPathname(url);
 
-    // Check service worker cache first (faster check)
-    if (this.serviceWorkerCachedPages.has(pathname)) {
+    // Memory cache first
+    const memoryCacheKey = `page:${pathname}`;
+    if (this.memoryCache.get(memoryCacheKey, userId)) {
       return true;
     }
 
-    // 🚀 NEW: Check memory cache
-    const memoryCacheKey = `page:${pathname}`;
-    if (this.memoryCache.get(memoryCacheKey, userId)) {
+    // Check service worker cache next
+    if (this.serviceWorkerCachedPages.has(pathname)) {
       return true;
     }
 
@@ -453,7 +452,6 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     expiredKeys.forEach((key) => this.cacheEntries.delete(key));
   }
 
-  // 🚀 NEW: Memory cache methods
   setMemoryCache<T>(key: string, data: T, ttl = 300000): void {
     if (!this.initialized || !browser) return;
     this.memoryCache.set(key, data, ttl, this.currentUserId);

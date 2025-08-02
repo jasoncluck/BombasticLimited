@@ -10,10 +10,12 @@
   import type { Session, SupabaseClient } from "@supabase/supabase-js";
   import type { Database } from "$lib/supabase/database.types";
   import type { Video } from "$lib/supabase/videos";
+  import type { CombinedContentFilter } from "./content/content-filter";
 
   interface BreacrumbLayoutProps {
     breadcrumbs: BreadcrumbItem[];
     videos: Video[];
+    contentFilter?: CombinedContentFilter;
     playlist?: Playlist;
     supabase: SupabaseClient<Database>;
     session: Session | null;
@@ -21,6 +23,7 @@
   const {
     breadcrumbs,
     videos,
+    contentFilter,
     playlist,
     supabase,
     session,
@@ -41,6 +44,7 @@
       <ContentSelect
         {videos}
         {playlist}
+        {contentFilter}
         {supabase}
         {session}
         displayLabel={false}

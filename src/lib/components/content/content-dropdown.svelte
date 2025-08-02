@@ -4,6 +4,8 @@
     handleAddVideosToPlaylist,
     handleUpdatePlaylistImage,
     handleDeletePlaylist,
+    handleUnfollowPlaylist,
+    handleFollowPlaylist,
   } from "../playlist/playlist-service";
   import {
     DEFAULT_SECTION_ID,
@@ -35,9 +37,11 @@
     TimerReset,
     CircleCheck,
     CircleMinus,
+    CirclePlus,
   } from "@lucide/svelte";
   import type { UserProfile } from "$lib/supabase/user-profiles";
   import { getSidebarState } from "$lib/state/sidebar.svelte";
+  import type { CombinedContentFilter } from "./content-filter";
 
   let {
     videos = $bindable(),
@@ -45,6 +49,7 @@
     variant,
     onSelectAll,
     sectionId = DEFAULT_SECTION_ID,
+    contentFilter,
     userProfile,
     supabase,
     session,
@@ -54,6 +59,7 @@
     playlist?: Playlist;
     variant: ContentSelectVariant;
     sectionId?: string;
+    contentFilter?: CombinedContentFilter;
     userProfile?: UserProfile;
     supabase: SupabaseClient<Database>;
     session: Session | null;
@@ -73,6 +79,12 @@
   );
 
   const isPlaylistOwner = $derived(session?.user.id === playlist?.created_by);
+
+  const isFollowingPlaylist = $derived(
+    sidebarState
+      .getFollowedPlaylists(session)
+      .some((fp) => fp.id === playlist?.id) && variant === "header",
+  );
 
   // Get selected and hovered videos for this section
   let selectedVideos = $derived(
@@ -165,8 +177,7 @@
       );
 
     // Check for delete playlist action
-    const hasDeletePlaylist =
-      playlist && isPlaylistOwner && variant === "header";
+    const hasDeletePlaylist = playlist && variant === "header";
 
     return (
       hasSelectAll ||
@@ -181,13 +192,12 @@
   });
 
   // Keep the button visible when dropdown OR sub-menu is open, but also check if actions are available
-  // NOTE: Slight hack here to always hide when not a user created playlist, this avoids some state transition hiccup when drag and dropping.
-  // Can be removed if these playlists get consistent action options
-  const shouldShowButton = $derived(
-    playlist?.created_by === session?.user.id &&
+  const shouldShowButton = $derived.by(() => {
+    return (
       hasAvailableActions &&
-      (variant !== "list-items" || isHovering || open || subMenuOpen),
-  );
+      (variant !== "list-items" || isHovering || open || subMenuOpen)
+    );
+  });
 
   // Helper function to conditionally clear selections after successful operations
   function handleSelectionAfterAction() {
@@ -500,28 +510,74 @@
         </DropdownMenu.Item>
       {/if}
 
-      {#if playlist && isPlaylistOwner && variant === "header"}
+      {#if playlist && variant === "header" && !isFollowingPlaylist}
         <DropdownMenu.Item
           class="cursor-pointer"
           onclick={async () => {
-            const data = await handleDeletePlaylist({
-              playlist,
-              sidebarState,
-              supabase,
-              session,
-            });
+            if (playlist.created_by !== session?.user.id) {
+              handleFollowPlaylist({
+                playlist,
+                sidebarState,
+                contentFilter,
+                supabase,
+                session,
+              });
+            } else {
+              const data = await handleDeletePlaylist({
+                playlist,
+                sidebarState,
+                supabase,
+                session,
+              });
 
-            if (
-              !data?.error &&
-              page.url.pathname === `/playlist/${playlist.short_id}`
-            ) {
-              goto("/");
+              if (
+                !data?.error &&
+                page.url.pathname === `/playlist/${playlist.short_id}`
+              ) {
+                goto("/");
+              }
+            }
+          }}
+        >
+          <div class="flex items-center gap-2">
+            <CirclePlus class="dropdown-icon" />
+            Follow playlist
+          </div>
+        </DropdownMenu.Item>
+      {/if}
+      {#if playlist && variant === "header" && isFollowingPlaylist}
+        <DropdownMenu.Item
+          class="cursor-pointer"
+          onclick={async () => {
+            if (playlist.created_by !== session?.user.id) {
+              handleUnfollowPlaylist({
+                playlist,
+                sidebarState,
+                supabase,
+                session,
+              });
+            } else {
+              const data = await handleDeletePlaylist({
+                playlist,
+                sidebarState,
+                supabase,
+                session,
+              });
+
+              if (
+                !data?.error &&
+                page.url.pathname === `/playlist/${playlist.short_id}`
+              ) {
+                goto("/");
+              }
             }
           }}
         >
           <div class="flex items-center gap-2">
             <CircleMinus class="dropdown-icon" />
-            Delete playlist
+            {playlist.created_by === session?.user.id
+              ? "Delete playlist"
+              : "Unfollow playlist"}
           </div>
         </DropdownMenu.Item>
       {/if}

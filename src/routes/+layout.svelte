@@ -101,6 +101,30 @@
   let openAccountDrawer = $derived(sidebarState.openAccountDrawer);
   let searchQuery = $state(page.params.query);
 
+  // Default snapshot for every page - restores scroll position when navigating through history
+  export const snapshot: Snapshot<{
+    content: ScrollPosition;
+    searchQuery?: string;
+  }> = {
+    capture: () => {
+      return {
+        content: pageState.createViewportSnapshot(
+          pageState.viewportRefs.contentViewportRef,
+        ),
+        searchQuery,
+      };
+    },
+    restore: (restored) => {
+      pageState.contentScrollPosition = restored.content;
+      pageState.restoreViewportScroll(
+        pageState.viewportRefs.contentViewportRef,
+        restored.content,
+      );
+
+      searchQuery = restored.searchQuery;
+    },
+  };
+
   async function refreshSidebar() {
     await sidebarState.refreshData();
   }
@@ -128,7 +152,6 @@
   function cachePageData() {
     if (!browser || !navigationCache.initialized) return;
 
-    // Only cache data for pages that benefit from it
     const currentPath = window.location.pathname;
 
     const pageDataKey = `page:${currentPath}`;
@@ -148,30 +171,6 @@
       navigationCache.setMemoryCache(pageDataKey, pageData, ttl);
     }
   }
-
-  // Default snapshot for every page - restores scroll position when navigating through history
-  export const snapshot: Snapshot<{
-    content: ScrollPosition;
-    searchQuery?: string;
-  }> = {
-    capture: () => {
-      return {
-        content: pageState.createViewportSnapshot(
-          pageState.viewportRefs.contentViewportRef,
-        ),
-        searchQuery,
-      };
-    },
-    restore: (restored) => {
-      pageState.contentScrollPosition = restored.content;
-      pageState.restoreViewportScroll(
-        pageState.viewportRefs.contentViewportRef,
-        restored.content,
-      );
-
-      searchQuery = restored.searchQuery;
-    },
-  };
 
   beforeNavigate(({ from }) => {
     if (from) {

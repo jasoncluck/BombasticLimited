@@ -310,12 +310,17 @@ export async function handleFollowPlaylist({
   playlist: Playlist;
   sidebarState: SidebarState;
   position?: number;
-  contentFilter: CombinedContentFilter;
+  contentFilter?: CombinedContentFilter;
   supabase: SupabaseClient<Database>;
   session: Session | null;
 }) {
   if (!session) {
     goto("/auth");
+    return;
+  }
+
+  if (!contentFilter) {
+    console.error("Unable to follow playlist, missing content filter.");
     return;
   }
 
@@ -326,18 +331,18 @@ export async function handleFollowPlaylist({
     session,
   });
 
-  if (
-    isPlaylistVideosFilter(contentFilter) &&
-    contentFilter.sort.key !== "playlistOrder"
-  ) {
-    handleUpdatePlaylistSort({
-      playlist,
-      sortedBy: contentFilter.sort.key,
-      sortOrder: contentFilter.sort.order,
-      supabase,
-      session,
-    });
-  }
+  // if (
+  //   isPlaylistVideosFilter(contentFilter) &&
+  //   contentFilter.sort.key !== "playlistOrder"
+  // ) {
+  //   handleUpdatePlaylistSort({
+  //     playlist,
+  //     sortedBy: contentFilter.sort.key,
+  //     sortOrder: contentFilter.sort.order,
+  //     supabase,
+  //     session,
+  //   });
+  // }
 
   sidebarState.refreshData();
 
