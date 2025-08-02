@@ -125,91 +125,11 @@
     pageState.handleDrop();
   }
 
-  // 🚀 ENHANCED: More intelligent prefetch setup
-  function setupIntelligentPrefetch() {
-    let hoverTimeout: ReturnType<typeof setTimeout>;
-    const prefetchedUrls = new Set<string>();
-
-    // 🚀 FIXED: Only prefetch when we have a strong user intent signal
-    document.addEventListener("mouseover", (e) => {
-      const link = (e.target as Element).closest(
-        "a[href]",
-      ) as HTMLAnchorElement;
-      if (!link || !link.href.startsWith(window.location.origin)) return;
-      if (prefetchedUrls.has(link.href)) return; // Avoid duplicate prefetches
-
-      // 🚀 INCREASED: Longer hover time to ensure real intent
-      hoverTimeout = setTimeout(() => {
-        // Only prefetch if the link is still being hovered
-        if (link.matches(":hover")) {
-          navigationCache.predictivelyCache(link.href);
-          prefetchedUrls.add(link.href);
-        }
-      }, 300); // Increased from 100ms to 300ms
-    });
-
-    document.addEventListener("mouseout", (e) => {
-      const link = (e.target as Element).closest("a[href]");
-      if (link && hoverTimeout) {
-        clearTimeout(hoverTimeout);
-      }
-    });
-
-    // 🚀 ENHANCED: Smarter idle prefetching with conditions
-    if ("requestIdleCallback" in window) {
-      requestIdleCallback(
-        (deadline) => {
-          // Only prefetch during idle time if we have sufficient time
-          if (deadline.timeRemaining() > 50) {
-            const currentPath = window.location.pathname;
-
-            // Define smart prefetch priorities based on current page
-            const getSmartPrefetchTargets = () => {
-              if (currentPath === "/") {
-                return user
-                  ? ["/continue", "/giantbomb"]
-                  : ["/giantbomb", "/nextlander"];
-              } else if (currentPath === "/giantbomb") {
-                return ["/nextlander", "/remap"];
-              } else if (currentPath === "/nextlander") {
-                return ["/giantbomb", "/remap"];
-              } else if (currentPath === "/remap") {
-                return ["/giantbomb", "/nextlander"];
-              } else if (user && currentPath.startsWith("/playlist/")) {
-                return ["/continue"];
-              }
-              return [];
-            };
-
-            const targets = getSmartPrefetchTargets();
-
-            // 🚀 RATE LIMITED: Only prefetch one page per idle callback
-            if (targets.length > 0 && !prefetchedUrls.has(targets[0])) {
-              navigationCache.predictivelyCache(targets[0]);
-              prefetchedUrls.add(targets[0]);
-            }
-          }
-        },
-        { timeout: 2000 },
-      ); // Give up after 2 seconds
-    }
-  }
-
-  // 🚀 OPTIMIZED: More selective page data caching
   function cachePageData() {
     if (!browser || !navigationCache.initialized) return;
 
     // Only cache data for pages that benefit from it
     const currentPath = window.location.pathname;
-    const shouldCachePageData =
-      currentPath === "/" ||
-      currentPath.startsWith("/playlist/") ||
-      currentPath === "/continue" ||
-      ["/giantbomb", "/nextlander", "/remap", "/jeffgerstmann"].includes(
-        currentPath,
-      );
-
-    if (!shouldCachePageData) return;
 
     const pageDataKey = `page:${currentPath}`;
 
@@ -223,7 +143,6 @@
         pathname: currentPath,
       };
 
-      // 🚀 OPTIMIZED: Shorter TTL for dynamic content
       const ttl =
         currentPath === "/" || currentPath === "/continue" ? 180000 : 300000; // 3-5 minutes
       navigationCache.setMemoryCache(pageDataKey, pageData, ttl);
@@ -370,12 +289,6 @@
           );
         }
       }
-
-      // 🚀 DELAYED: Set up prefetching after initial load is complete
-      setTimeout(() => {
-        setupIntelligentPrefetch();
-        cachePageData();
-      }, 1000); // Wait 1 second after mount
     }
 
     // Start async initialization
