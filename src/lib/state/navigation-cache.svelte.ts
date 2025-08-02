@@ -189,9 +189,7 @@ export class NavigationCacheStateClass implements NavigationCacheState {
   anonymousId = $state<string | null>(null);
   serviceWorkerCachedPages = $state(new Set<string>()); // ✅ NEW: Track SW cached pages
 
-  // 🚀 NEW: Memory cache instance
   private memoryCache = new MemoryCache();
-  private prefetchQueue = new Set<string>();
 
   private cleanupInterval: ReturnType<typeof setTimeout> | null = null;
   private readonly CACHE_DURATION = 300000; // 5 minutes
@@ -472,50 +470,6 @@ export class NavigationCacheStateClass implements NavigationCacheState {
 
   getMemoryCacheStats(): { entries: number; size: number } {
     return this.memoryCache.getStats();
-  }
-
-  // 🚀 NEW: Predictive prefetching
-  predictivelyCache(url: string): void {
-    if (this.prefetchQueue.has(url)) return;
-    this.prefetchQueue.add(url);
-
-    // Use requestIdleCallback for non-blocking prefetch
-    if ("requestIdleCallback" in window) {
-      requestIdleCallback(() => this.performPrefetch(url));
-    } else {
-      setTimeout(() => this.performPrefetch(url), 100);
-    }
-  }
-
-  private async performPrefetch(url: string): Promise<void> {
-    try {
-      // Use low-priority fetch
-      const response = await fetch(url, {
-        priority: "low" as any,
-        credentials: "same-origin",
-      });
-
-      if (response.ok) {
-        // Cache the response data in memory
-        const contentType = response.headers.get("content-type") || "";
-
-        if (contentType.includes("application/json")) {
-          const data = await response.json();
-          const cacheKey = `prefetch:${url}`;
-          this.setMemoryCache(cacheKey, data, 600000); // 10 minutes
-        } else if (contentType.includes("text/html")) {
-          const html = await response.text();
-          const cacheKey = `prefetch:${url}`;
-          this.setMemoryCache(cacheKey, html, 300000); // 5 minutes
-        }
-
-        console.log(`Prefetched and cached: ${url}`);
-      }
-    } catch (error) {
-      console.warn(`Prefetch failed for ${url}:`, error);
-    } finally {
-      this.prefetchQueue.delete(url);
-    }
   }
 
   private saveToStorage(): void {

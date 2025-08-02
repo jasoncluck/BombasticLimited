@@ -713,7 +713,7 @@
                 >
                   <!-- Loading overlay - show/hide with CSS -->
                   <div
-                    class="absolute inset-0 z-50 bg-background-lighter flex items-center justify-center transition-opacity duration-50"
+                    class="absolute inset-0 z-[10000] bg-background-lighter flex items-center justify-center transition-opacity duration-50"
                     class:opacity-100={isNavigatingToContent}
                     class:opacity-0={!isNavigatingToContent}
                     class:pointer-events-none={!isNavigatingToContent}

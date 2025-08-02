@@ -177,7 +177,7 @@
           class="@sm:opacity-0 text-sm @sm:absolute pointer-events-none
       {shouldShowDescription ? '@sm:opacity-100 @sm:bg-secondary' : ''}
       transform will-change-transform rounded-b-md
-      z-50 break-anywhere whitespace-pre-line px-4
+      z-40 break-anywhere whitespace-pre-line px-4
       {userPreferences.contentDescription === 'BRIEF' &&
             'line-clamp-4 overflow-clip pb-1'}"
           style="left: -0.5rem; right: -0.5rem; width: auto;"
