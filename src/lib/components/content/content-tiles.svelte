@@ -151,7 +151,7 @@
       ondrop={allowVideoReorder
         ? (e) => dragDrop.handleDrop(e, i, sectionId)
         : undefined}
-      ondragend={allowVideoReorder ? dragDrop.handleDragEnd : undefined}
+      ondragend={dragDrop.handleDragEnd}
       onmouseenter={() => handleMouseEnter(video)}
       onmouseleave={handleMouseLeave}
       onmousedown={(e) => handleMouseDown(e, video)}

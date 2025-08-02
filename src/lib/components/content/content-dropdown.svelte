@@ -181,8 +181,11 @@
   });
 
   // Keep the button visible when dropdown OR sub-menu is open, but also check if actions are available
+  // NOTE: Slight hack here to always hide when not a user created playlist, this avoids some state transition hiccup when drag and dropping.
+  // Can be removed if these playlists get consistent action options
   const shouldShowButton = $derived(
-    hasAvailableActions &&
+    playlist?.created_by === session?.user.id &&
+      hasAvailableActions &&
       (variant !== "list-items" || isHovering || open || subMenuOpen),
   );
 
