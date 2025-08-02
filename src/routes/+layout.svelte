@@ -172,7 +172,8 @@
       {pageState}
       {layoutState}
       {isNavigatingToContent}
-      {children}
-    />
+    >
+      {@render children()}
+    </ResizableLayout>
   {/if}
 </div>
