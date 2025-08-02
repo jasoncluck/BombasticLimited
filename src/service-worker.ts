@@ -223,7 +223,7 @@ class ServiceWorkerNavigationCache {
     route: string,
     dataCache: Cache,
   ): Promise<void> {
-    // Construct the data URL for this route
+    // Construct the data URL for this route (without query parameters)
     const dataUrl = `${route}/__data.json`;
 
     try {
@@ -330,6 +330,21 @@ class ServiceWorkerNavigationCache {
   getRefreshableRoutes(): string[] {
     return Array.from(this.refreshableRoutes);
   }
+
+  // New method to check if a data request should be cached
+  shouldCacheDataRequest(url: URL): boolean {
+    // Extract the route path from the __data.json URL
+    const routePath = url.pathname.replace("/__data.json", "") || "/";
+
+    // Only cache data for routes we're actively refreshing
+    return this.refreshableRoutes.has(routePath);
+  }
+
+  // New method to check if this is a SvelteKit invalidation request
+  isInvalidationRequest(url: URL): boolean {
+    // SvelteKit invalidation requests have the x-sveltekit-invalidated parameter
+    return url.searchParams.has("x-sveltekit-invalidated");
+  }
 }
 
 // Compact static asset caching only
@@ -353,6 +368,20 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
 
 // Handle SvelteKit data requests with stale-while-revalidate
 const handleDataRequest = async (request: Request): Promise<Response> => {
+  const url = new URL(request.url);
+
+  // Check if this is an invalidation request or if we should cache this route
+  if (
+    navigationCache.isInvalidationRequest(url) ||
+    !navigationCache.shouldCacheDataRequest(url)
+  ) {
+    console.log(
+      `SW: Bypassing cache for ${request.url} (invalidation or non-cached route)`,
+    );
+    // Let SvelteKit handle invalidation requests and non-cached routes normally
+    return fetch(request);
+  }
+
   const dataCache = await caches.open(DATA_CACHE);
   const cachedResponse = await dataCache.match(request);
 
@@ -486,9 +515,9 @@ sw.addEventListener("fetch", (event) => {
   // Update auth status from request headers for all requests
   navigationCache.updateAuthStatusFromRequest(event.request);
 
-  // Handle SvelteKit data requests (__data.json)
+  // Handle SvelteKit data requests (__data.json) with selective caching
   if (url.pathname.endsWith("/__data.json")) {
-    console.log(`SW: Intercepting data request: ${url.pathname}`);
+    console.log(`SW: Processing data request: ${url.pathname}`);
     event.respondWith(handleDataRequest(event.request));
     return;
   }
