@@ -2,7 +2,6 @@
 export { default as LayoutMain } from "./layout-main.svelte";
 
 // Re-export individual components if needed
-export { default as MainNavigation } from "./navigation/main-navigation.svelte";
 export { default as SearchInput } from "./navigation/search-input.svelte";
 export { default as UserMenu } from "./navigation/user-menu.svelte";
 export { default as ResizableLayout } from "./content/resizable-layout.svelte";

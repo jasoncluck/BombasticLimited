@@ -21,7 +21,7 @@
     isNavigatingToContent,
     children,
   }: {
-    layout: number[] | undefined;
+    layout?: number[] | null;
     isSidebarCollapsed: boolean;
     supabase: SupabaseClient<Database>;
     session: Session | null;
