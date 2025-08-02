@@ -4,20 +4,30 @@ import { PUBLIC_SUPABASE_URL as SUPABASE_URL } from "$env/static/public";
 const CACHE = `bombastic-cache-${version}`;
 const ASSETS = [...build, ...files];
 
-// Cache expiration times (in milliseconds)
+// Cache expiration times (in milliseconds) - optimized for instant loads
 const CACHE_EXPIRY = {
   STATIC_ASSETS: 24 * 60 * 60 * 1000, // 24 hours for static assets
-  API_RESPONSES: 5 * 60 * 1000, // 5 minutes for API responses
-  PAGES: 5 * 60 * 1000, // 5 minutes for pages
-  IMAGES: 24 * 60 * 60 * 1000, // 24 hours for images
+  API_RESPONSES: 2 * 60 * 1000, // 2 minutes for API responses (reduced for freshness)
+  PAGES: 10 * 60 * 1000, // 10 minutes for pages (increased for better caching)
+  IMAGES: 7 * 24 * 60 * 60 * 1000, // 7 days for images (increased)
+  USER_DATA: 1 * 60 * 1000, // 1 minute for user-specific data
 };
 
+// Enhanced precaching - includes more common routes
 const PRECACHE_PAGES = [
   "/",
   "/giantbomb",
   "/nextlander",
   "/remap",
   "/jeffgerstmann",
+  "/continue", // Added continue page
+];
+
+// Additional pages to prefetch in background
+const PREFETCH_PAGES = [
+  "/giantbomb?page=1",
+  "/nextlander?page=1",
+  "/remap?page=1",
 ];
 
 // ✅ Add function to check if request should be handled by service worker
@@ -121,15 +131,34 @@ function getCacheExpiry(url, request) {
     return CACHE_EXPIRY.API_RESPONSES;
   }
 
+  // User-specific data
+  if (pathname.includes("/profile") || pathname.includes("/user")) {
+    return CACHE_EXPIRY.USER_DATA;
+  }
+
   // Page content
   return CACHE_EXPIRY.PAGES;
+}
+
+// Helper function for background cache updates
+async function updateCacheInBackground(request, cache, url) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const expiry = getCacheExpiry(url, request);
+      const cachedResponse = createCacheEntry(response.clone(), expiry);
+      await cache.put(request, cachedResponse);
+    }
+  } catch (error) {
+    // Ignore network errors in background updates
+  }
 }
 
 self.addEventListener("install", (event) => {
   async function addFilesToCache() {
     const cache = await caches.open(CACHE);
 
-    // Cache static assets with expiry (your existing code)
+    // Cache static assets with expiry
     const assetPromises = ASSETS.map(async (asset) => {
       try {
         const response = await fetch(asset);
@@ -157,7 +186,26 @@ self.addEventListener("install", (event) => {
       }
     });
 
+    // Background prefetch of additional pages
+    const prefetchPromises = PREFETCH_PAGES.map(async (page) => {
+      try {
+        const response = await fetch(page);
+        if (response.ok) {
+          const expiry = CACHE_EXPIRY.PAGES;
+          const cachedResponse = createCacheEntry(response.clone(), expiry);
+          await cache.put(page, cachedResponse);
+        }
+      } catch (error) {
+        console.warn(`Failed to prefetch page: ${page}`, error);
+      }
+    });
+
     await Promise.allSettled([...assetPromises, ...pagePromises]);
+
+    // Prefetch in background without blocking install
+    setTimeout(() => {
+      Promise.allSettled(prefetchPromises);
+    }, 1000);
   }
   event.waitUntil(addFilesToCache());
 });
@@ -189,7 +237,7 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(cleanup());
 });
 
-// Fetch event - implement caching strategies with expiration
+// Fetch event - implement cache-first strategy for navigation
 self.addEventListener("fetch", (event) => {
   // ✅ Early return for requests we shouldn't handle
   if (!shouldHandleRequest(event.request)) {
@@ -230,7 +278,7 @@ self.addEventListener("fetch", (event) => {
           const expiry = getCacheExpiry(url, event.request);
           const cachedResponse = createCacheEntry(response.clone(), expiry);
           await cache.put(event.request, cachedResponse);
-          return response; // Return the original response
+          return response;
         }
         return response;
       } catch (error) {
@@ -247,22 +295,7 @@ self.addEventListener("fetch", (event) => {
     if (url.pathname.includes("/supabase/") || isSupabaseRequest) {
       if (validCache) {
         // Serve cached version immediately, update in background
-        event.waitUntil(
-          fetch(event.request)
-            .then(async (response) => {
-              if (response.ok) {
-                const expiry = getCacheExpiry(url, event.request);
-                const cachedResponse = createCacheEntry(
-                  response.clone(),
-                  expiry,
-                );
-                await cache.put(event.request, cachedResponse);
-              }
-            })
-            .catch(() => {
-              // Ignore network errors for background updates
-            }),
-        );
+        event.waitUntil(updateCacheInBackground(event.request, cache, url));
         return cached;
       }
 
@@ -274,7 +307,7 @@ self.addEventListener("fetch", (event) => {
           const cachedResponse = createCacheEntry(response.clone(), expiry);
           await cache.put(event.request, cachedResponse);
         }
-        return response; // Return the original response
+        return response;
       } catch (error) {
         // Return expired cache or offline response
         return (
@@ -287,42 +320,47 @@ self.addEventListener("fetch", (event) => {
       }
     }
 
-    // For page routes - network first with cache fallback and expiry
-    try {
-      const response = await fetch(event.request);
-      if (response.ok) {
-        const expiry = getCacheExpiry(url, event.request);
-        const cachedResponse = createCacheEntry(response.clone(), expiry);
-        await cache.put(event.request, cachedResponse);
-      }
-      return response; // Return the original response
-    } catch (error) {
-      // Network failed, check for valid or expired cache
+    // 🚀 CACHE-FIRST STRATEGY FOR NAVIGATION - This is the key change for instant loads
+    if (event.request.mode === "navigate") {
+      // Navigation requests - prioritize cache for instant navigation
       if (validCache) {
+        // Serve cached version immediately for instant navigation
+        event.waitUntil(updateCacheInBackground(event.request, cache, url));
         return cached;
       }
 
-      if (
-        url.pathname.includes("/supabase/") ||
-        url.pathname.includes("/api/sidebar") ||
-        isSupabaseRequest
-      ) {
-        // Skip caching for dynamic data that changes frequently
-        return fetch(event.request);
-      }
+      // No valid cache, fetch from network
+      try {
+        const response = await fetch(event.request);
+        if (response.ok) {
+          const expiry = getCacheExpiry(url, event.request);
+          const cachedResponse = createCacheEntry(response.clone(), expiry);
+          await cache.put(event.request, cachedResponse);
+        }
+        return response;
+      } catch (error) {
+        // Return expired cache if available
+        if (cached) return cached;
 
-      // Return expired cache for navigation requests if available
-      if (event.request.mode === "navigate" && cached) {
-        return cached;
-      }
-
-      // Last resort: try to serve root page from cache
-      if (event.request.mode === "navigate") {
+        // Last resort: try to serve root page from cache
         const rootPage = await cache.match("/");
         if (rootPage) return rootPage;
-      }
 
-      return new Response("Offline", { status: 503 });
+        return new Response("Offline", { status: 503 });
+      }
+    } else {
+      // Non-navigation requests (data, assets) - keep network first for data freshness
+      try {
+        const response = await fetch(event.request);
+        if (response.ok) {
+          const expiry = getCacheExpiry(url, event.request);
+          const cachedResponse = createCacheEntry(response.clone(), expiry);
+          await cache.put(event.request, cachedResponse);
+        }
+        return response;
+      } catch (error) {
+        return validCache ? cached : new Response("Offline", { status: 503 });
+      }
     }
   }
 

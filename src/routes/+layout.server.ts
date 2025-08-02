@@ -41,7 +41,16 @@ export const load: LayoutServerLoad = async ({
   }
 
   const { session } = await sessionPromise;
-  const cacheMaxAge = 300; // 5 minutes
+
+  // Enhanced cache settings for better performance
+  const isStaticRoute = [
+    "/giantbomb",
+    "/nextlander",
+    "/remap",
+    "/jeffgerstmann",
+  ].includes(url.pathname);
+  const baseMaxAge = isStaticRoute ? 600 : 300; // 10 minutes for static routes, 5 for dynamic
+  const cacheMaxAge = session ? baseMaxAge : baseMaxAge * 2; // Longer cache for anonymous users
 
   // Create a secure cache key with proper user isolation
   const userId = session?.user?.id || "anonymous";
@@ -49,19 +58,20 @@ export const load: LayoutServerLoad = async ({
 
   // Use crypto hash to prevent ETag prediction and ensure uniqueness
   const cacheComponents = [
-    "bombastic-cache-v1", // Version prefix
+    "bombastic-cache-v2", // Updated version prefix
     url.pathname,
     userId,
     timeSlot.toString(),
-    // Add any other factors that affect the response
     view,
     JSON.stringify(contentFilter),
+    // Add static route indicator for better caching
+    isStaticRoute ? "static" : "dynamic",
   ];
 
   const cacheHash = createHash("sha256")
     .update(cacheComponents.join("|"))
     .digest("hex")
-    .substring(0, 16); // Use first 16 chars for shorter ETag
+    .substring(0, 16);
 
   const etag = `"${cacheHash}"`;
   const lastModified = new Date(timeSlot * cacheMaxAge * 1000);
@@ -69,25 +79,35 @@ export const load: LayoutServerLoad = async ({
   // Check client cache headers
   const clientEtag = request.headers.get("if-none-match");
 
-  // Set secure cache headers
+  // Enhanced cache headers for better performance
   if (!isDataRequest) {
     try {
+      const cacheControl = session
+        ? `private, max-age=${cacheMaxAge}, must-revalidate`
+        : isStaticRoute
+          ? `public, max-age=${cacheMaxAge}, s-maxage=${cacheMaxAge * 2}, immutable`
+          : `public, max-age=${cacheMaxAge}, s-maxage=${cacheMaxAge * 2}`;
+
       setHeaders({
-        // Always use private cache for user-specific data
         etag: etag,
         "last-modified": lastModified.toUTCString(),
         vary: "Authorization, Cookie",
-        // Add security headers
-        "cache-control": session
-          ? `private, max-age=${cacheMaxAge}, must-revalidate`
-          : `public, max-age=${cacheMaxAge}, s-maxage=${cacheMaxAge}`,
+        "cache-control": cacheControl,
+        // Add performance hints
+        "x-cache-strategy": isStaticRoute ? "aggressive" : "standard",
+        // Add prefetch hints for common routes
+        ...(url.pathname === "/"
+          ? {
+              link: "</giantbomb>; rel=prefetch, </nextlander>; rel=prefetch, </continue>; rel=prefetch",
+            }
+          : {}),
       });
     } catch {
       console.log("Cache headers already set, continuing...");
     }
   }
 
-  // Check for cache hit (but still return full data for security)
+  // Check for cache hit
   const isCacheHit = clientEtag === etag;
 
   const { profile: userProfile } = await getProfile({
@@ -101,11 +121,13 @@ export const load: LayoutServerLoad = async ({
     cookies: cookies.getAll(),
     userProfile,
     layout,
-    // Secure cache metadata
+    // Enhanced cache metadata
     etag,
     lastModified: lastModified.toISOString(),
     cached: isCacheHit,
-    // Add user context for client-side validation
     cacheUserId: userId,
+    // Add performance indicators
+    isStaticRoute,
+    cacheStrategy: isStaticRoute ? "aggressive" : "standard",
   };
 };
