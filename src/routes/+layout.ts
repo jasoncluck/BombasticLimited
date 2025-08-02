@@ -56,10 +56,6 @@ export const load = async ({
     data: { session },
   } = await supabase.auth.getSession();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   // Handle the case where server returns minimal cached data
   if (data.cached) {
     return {
@@ -70,7 +66,6 @@ export const load = async ({
         sort: { key: "datePublished", order: "descending" },
         type: "video",
       } as VideoFilter,
-      user,
       userProfile: null as UserProfile | null,
       isSidebarCollapsed: false,
       // Cache-related data from server
@@ -132,7 +127,6 @@ export const load = async ({
     supabase,
     contentFilter: contentFilter || null,
     userProfile,
-    user,
     playlistsCount,
     layout: parsedLayout,
     isSidebarCollapsed:
