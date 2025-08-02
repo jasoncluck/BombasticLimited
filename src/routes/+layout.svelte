@@ -195,6 +195,8 @@
           currentCacheUserId,
         );
       } else {
+        console.log(currentCacheUserId);
+        console.log(currentUserId);
         console.warn("User context mismatch, clearing cache");
         navigationCache.clearUserCache();
       }
@@ -591,14 +593,8 @@
           >
             <div class="@xl:max-w-[1450px] max-w-[1000px] w-full">
               <div class="flex flex-col mb-20">
-                {#if isNavigatingToContent}
-                  <div
-                    class="w-full h-[calc(100vh-200px)] flex flex-col items-center justify-center"
-                  ></div>
-                {:else}
-                  <!-- Actual page content -->
-                  {@render children()}
-                {/if}
+                <!-- Actual page content -->
+                {@render children()}
               </div>
             </div>
           </div>
