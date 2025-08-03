@@ -20,7 +20,6 @@ import {
   saveVideoTimestamps,
   type TimestampWithVideoId,
 } from "$lib/supabase/timestamps";
-import type { ContentState } from "$lib/state/content.svelte";
 
 export async function fetchMoreInProgressVideos({
   contentFilter,
