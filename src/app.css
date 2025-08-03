@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 /*
  The default border color has changed to `currentcolor` in Tailwind CSS v4,
@@ -104,39 +104,39 @@
   }
 
   .header-primary {
-    @apply lg:text-4xl text-3xl font-semibold transition-colors mx-2 sm:m-0 mb-4 sm:mb-2;
+    @apply mx-2 mb-4 text-3xl font-semibold transition-colors sm:m-0 sm:mb-2 lg:text-4xl;
   }
   .header-primary-no-margin {
-    @apply lg:text-4xl text-3xl font-semibold transition-colors m-0;
+    @apply m-0 text-3xl font-semibold transition-colors lg:text-4xl;
   }
 
   .header-secondary {
-    @apply lg:text-3xl text-2xl font-semibold transition-colors mb-2;
+    @apply mb-2 text-2xl font-semibold transition-colors lg:text-3xl;
   }
 
   .header-playlist {
-    @apply lg:text-7xl md:text-6xl text-4xl font-semibold transition-colors mb-2;
+    @apply mb-2 text-4xl font-semibold transition-colors md:text-6xl lg:text-7xl;
   }
 
   .header-link {
-    @apply block lg:text-3xl text-2xl self-start font-semibold transition-colors hover:underline cursor-pointer truncate my-2;
+    @apply my-2 block cursor-pointer self-start truncate text-2xl font-semibold transition-colors hover:underline lg:text-3xl;
   }
 
   .header-link-sticky {
-    @apply inline-block lg:text-3xl text-2xl self-start font-semibold transition-colors hover:underline cursor-pointer bg-background-lighter sticky top-0 py-2 z-30 w-full;
+    @apply bg-background-lighter sticky top-0 z-30 inline-block w-full cursor-pointer self-start py-2 text-2xl font-semibold transition-colors hover:underline lg:text-3xl;
   }
 
   /* New elevated effect class */
   .pane {
-    @apply bg-background-lighter shadow-md rounded-lg;
+    @apply bg-background-lighter rounded-lg shadow-md;
   }
 
   .sidebar-icon-button {
-    @apply align-middle p-[10px] h-[50px] w-[50px];
+    @apply h-[50px] w-[50px] p-[10px] align-middle;
   }
 
   .sidebar-icon-image {
-    @apply h-full w-full bg-no-repeat bg-cover bg-center rounded-full;
+    @apply h-full w-full rounded-full bg-cover bg-center bg-no-repeat;
   }
 
   .selection-mode {
@@ -147,7 +147,7 @@
   }
 
   .sidebar-full-button {
-    @apply h-[64px] px-2 py-8 w-full border border-transparent relative cursor-pointer transition-none overflow-clip;
+    @apply relative h-[64px] w-full cursor-pointer overflow-clip border border-transparent px-2 py-8 transition-none;
   }
 
   .content-table-row {
@@ -155,7 +155,7 @@
   }
 
   .ghost-button-minimal {
-    @apply cursor-pointer text-muted-foreground hover:bg-inherit hover:scale-105 hover:text-foreground data-[state=open]:text-foreground isolate origin-center transition-[scale,color] duration-150 ease-in-out;
+    @apply text-muted-foreground hover:text-foreground data-[state=open]:text-foreground isolate origin-center cursor-pointer transition-[scale,color] duration-150 ease-in-out hover:scale-105 hover:bg-inherit;
   }
 
   .drawer {
@@ -163,15 +163,15 @@
   }
 
   .drawer-button {
-    @apply flex w-full h-8 tracking-wide justify-start text-sm py-4 gap-2 items-center;
+    @apply flex h-8 w-full items-center justify-start gap-2 py-4 text-sm tracking-wide;
   }
 
   .drawer-button-footer {
-    @apply flex w-full h-8 tracking-wide justify-center mt-2;
+    @apply mt-2 flex h-8 w-full justify-center tracking-wide;
   }
 
   .drawer-playlist-button {
-    @apply w-full h-16 text-xs tracking-wide justify-start flex items-center gap-4;
+    @apply flex h-16 w-full items-center justify-start gap-4 text-xs tracking-wide;
   }
 
   .drawer-icon {

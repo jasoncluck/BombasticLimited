@@ -1,25 +1,24 @@
 -- Create a single function that handles selective updates properly
-CREATE OR REPLACE FUNCTION public.insert_timestamp(
+CREATE OR REPLACE FUNCTION public.insert_timestamp (
   p_user_id uuid,
   p_video_id text,
   p_video_start_seconds numeric DEFAULT NULL,
-  p_watched_at timestamp with time zone DEFAULT NULL,
+  p_watched_at TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   p_playlist_id bigint DEFAULT NULL,
   p_sorted_by public.playlist_sorted_by DEFAULT NULL,
   p_sort_order public.playlist_sort_order DEFAULT NULL
-)
-RETURNS TABLE (
+) RETURNS TABLE (
   id text,
   source public.source,
   title text,
   description text,
   thumbnail_url text,
   thumbnail_maxres_url text,
-  published_at timestamp with time zone,
+  published_at TIMESTAMP WITH TIME ZONE,
   duration text,
   video_start_seconds numeric,
-  watched_at timestamp with time zone,
-  updated_at timestamp with time zone,
+  watched_at TIMESTAMP WITH TIME ZONE,
+  updated_at TIMESTAMP WITH TIME ZONE,
   playlist_id bigint,
   sorted_by public.playlist_sorted_by,
   sort_order public.playlist_sort_order
@@ -84,26 +83,26 @@ BEGIN
   WHERE v.id = p_video_id;
 END;
 $$ LANGUAGE plpgsql
-SET search_path = '';
+SET
+  search_path = '';
 
-CREATE OR REPLACE FUNCTION public.insert_timestamps(
+CREATE OR REPLACE FUNCTION public.insert_timestamps (
   p_user_id uuid,
-  p_video_ids text[],
-  p_video_start_seconds numeric[] DEFAULT NULL,
-  p_watched_at timestamp with time zone[] DEFAULT NULL
-)
-RETURNS TABLE (
+  p_video_ids TEXT[],
+  p_video_start_seconds NUMERIC[] DEFAULT NULL,
+  p_watched_at TIMESTAMP WITH TIME ZONE [] DEFAULT NULL
+) RETURNS TABLE (
   id text,
   source public.source,
   title text,
   description text,
   thumbnail_url text,
   thumbnail_maxres_url text,
-  published_at timestamp with time zone,
+  published_at TIMESTAMP WITH TIME ZONE,
   duration text,
   video_start_seconds numeric,
-  watched_at timestamp with time zone,
-  updated_at timestamp with time zone,
+  watched_at TIMESTAMP WITH TIME ZONE,
+  updated_at TIMESTAMP WITH TIME ZONE,
   playlist_id bigint,
   sorted_by public.playlist_sorted_by,
   sort_order public.playlist_sort_order
@@ -185,25 +184,21 @@ BEGIN
 
 END;
 $$ LANGUAGE plpgsql
-SET search_path = '';
+SET
+  search_path = '';
 
-
-CREATE OR REPLACE FUNCTION public.delete_timestamps(
-  p_user_id uuid,
-  p_video_ids text[]
-)
-RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.delete_timestamps (p_user_id uuid, p_video_ids TEXT[]) RETURNS TABLE (
   id text,
   source public.source,
   title text,
   description text,
   thumbnail_url text,
   thumbnail_maxres_url text,
-  published_at timestamp with time zone,
+  published_at TIMESTAMP WITH TIME ZONE,
   duration text,
   video_start_seconds numeric,
-  watched_at timestamp with time zone,
-  updated_at timestamp with time zone
+  watched_at TIMESTAMP WITH TIME ZONE,
+  updated_at TIMESTAMP WITH TIME ZONE
 ) AS $$
 BEGIN
   -- Delete timestamps for this user and the specified videos
@@ -230,4 +225,5 @@ BEGIN
 
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER
-SET search_path = '';
+SET
+  search_path = '';

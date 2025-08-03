@@ -1,47 +1,47 @@
 <script lang="ts">
-  import { page } from "$app/state";
+  import { page } from '$app/state';
   import {
     getNumberOfPages,
     PAGINATION_QUERY_KEY,
     updatePaginationQueryParams,
-  } from "$lib/components/pagination/pagination.js";
-  import Pagination from "$lib/components/pagination/pagination.svelte";
-  import { processPlaylists } from "$lib/components/playlist/playlist-service.js";
-  import PlaylistTiles from "$lib/components/playlist/playlist-tiles.svelte";
-  import { DEFAULT_NUM_PLAYLISTS_PAGINATION } from "$lib/supabase/playlists.js";
+  } from '$lib/components/pagination/pagination.js';
+  import Pagination from '$lib/components/pagination/pagination.svelte';
+  import { processPlaylists } from '$lib/components/playlist/playlist-service.js';
+  import PlaylistTiles from '$lib/components/playlist/playlist-tiles.svelte';
+  import { DEFAULT_NUM_PLAYLISTS_PAGINATION } from '$lib/supabase/playlists.js';
 
   const { data } = $props();
   let { playlistResults, playlistsCount, session } = $derived(data);
 
   const pageFromQueryParams = page.url.searchParams.get(PAGINATION_QUERY_KEY);
   let currentPage = $state(
-    pageFromQueryParams ? parseInt(pageFromQueryParams) : 1,
+    pageFromQueryParams ? parseInt(pageFromQueryParams) : 1
   );
 
   const numPages = $derived(
     getNumberOfPages({
       count: playlistsCount ?? 0,
       perPage: DEFAULT_NUM_PLAYLISTS_PAGINATION,
-    }),
+    })
   );
 
   const processedPlaylistsPromise = $derived(processPlaylists(playlistResults));
 </script>
 
-<div class="flex gap-6 mx-2">
-  <div class="flex flex-col relative">
+<div class="mx-2 flex gap-6">
+  <div class="relative flex flex-col">
     <div
-      class="flex flex-col items-start text-left border-none bg-transparent p-0"
+      class="flex flex-col items-start border-none bg-transparent p-0 text-left"
     >
-      <p class="text-sm text-muted-foreground tracking-tight"></p>
+      <p class="text-muted-foreground text-sm tracking-tight"></p>
 
-      <p class="text-sm text-muted-foreground tracking-tight">Playlists</p>
+      <p class="text-muted-foreground text-sm tracking-tight">Playlists</p>
       <h2 class="header-primary-no-margin text-left">Search Results</h2>
     </div>
 
-    <p class="text-sm text-muted-foreground tracking-tight mt-1">
+    <p class="text-muted-foreground mt-1 text-sm tracking-tight">
       {playlistsCount}
-      {playlistsCount === 1 ? "video" : "videos"}
+      {playlistsCount === 1 ? 'video' : 'videos'}
     </p>
   </div>
 </div>
@@ -54,7 +54,7 @@
       updatePaginationQueryParams({
         pageNum,
         url: page.url,
-        invalidate: ["supabase:db:playlists"],
+        invalidate: ['supabase:db:playlists'],
       });
     }}
   />
@@ -64,9 +64,9 @@
   <div class="flex items-center justify-center p-8">
     <div class="text-center">
       <div
-        class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"
+        class="border-primary mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-b-2"
       ></div>
-      <p class="text-sm text-muted-foreground">Loading playlists...</p>
+      <p class="text-muted-foreground text-sm">Loading playlists...</p>
     </div>
   </div>
 {:then processedPlaylists}
@@ -74,8 +74,8 @@
 {:catch error}
   <div class="flex items-center justify-center p-8">
     <div class="text-center">
-      <p class="text-sm text-destructive mb-2">Failed to load playlists</p>
-      <p class="text-xs text-muted-foreground">{error.message}</p>
+      <p class="text-destructive mb-2 text-sm">Failed to load playlists</p>
+      <p class="text-muted-foreground text-xs">{error.message}</p>
     </div>
   </div>
 {/await}

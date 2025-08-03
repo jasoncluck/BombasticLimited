@@ -6,11 +6,11 @@
     CellContext,
     ColumnDefTemplate,
     HeaderContext,
-  } from "@tanstack/table-core";
+  } from '@tanstack/table-core';
   import {
     RenderComponentConfig,
     RenderSnippetConfig,
-  } from "./render-helpers.js";
+  } from './render-helpers.js';
   type Props = {
     /** The cell or header field of the current cell's column definition. */
     content?: TContext extends HeaderContext<TData, TValue>
@@ -25,7 +25,7 @@
   let { content, context }: Props = $props();
 </script>
 
-{#if typeof content === "string"}
+{#if typeof content === 'string'}
   {content}
 {:else if content instanceof Function}
   <!-- It's unlikely that a CellContext will be passed to a Header -->

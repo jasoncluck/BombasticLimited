@@ -1,13 +1,13 @@
-import { writable } from "svelte/store";
+import { writable } from 'svelte/store';
 
 export const notificationStore = writable<{
   message: string;
-  type?: "success" | "error" | "warning";
+  type?: 'success' | 'error' | 'warning';
 } | null>(null);
 
 export function showNotification(
   message: string,
-  type?: "success" | "error" | "warning",
+  type?: 'success' | 'error' | 'warning'
 ) {
   notificationStore.set({ message, type });
 }

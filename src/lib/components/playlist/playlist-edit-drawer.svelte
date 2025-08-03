@@ -1,32 +1,32 @@
 <script lang="ts">
-  import { superForm, type SuperValidated } from "sveltekit-superforms";
+  import { superForm, type SuperValidated } from 'sveltekit-superforms';
   import {
     playlistSchema,
     type PlaylistSchema,
-  } from "../../../routes/playlist/[shortId]/schema";
-  import * as Alert from "$lib/components/ui/alert/index.js";
-  import { Input } from "$lib/components/ui/input";
-  import * as Drawer from "$lib/components/ui/drawer";
-  import * as Form from "$lib/components/ui/form";
-  import { Button, buttonVariants } from "$lib/components/ui/button";
-  import type { Playlist } from "$lib/supabase/playlists";
-  import { zodClient } from "sveltekit-superforms/adapters";
-  import { EditIcon, ListVideo, Loader } from "@lucide/svelte";
-  import Textarea from "$lib/components/ui/textarea/textarea.svelte";
-  import * as ImageCropper from "$lib/components/ui/image-cropper";
+  } from '../../../routes/playlist/[shortId]/schema';
+  import * as Alert from '$lib/components/ui/alert/index.js';
+  import { Input } from '$lib/components/ui/input';
+  import * as Drawer from '$lib/components/ui/drawer';
+  import * as Form from '$lib/components/ui/form';
+  import { Button, buttonVariants } from '$lib/components/ui/button';
+  import type { Playlist } from '$lib/supabase/playlists';
+  import { zodClient } from 'sveltekit-superforms/adapters';
+  import { EditIcon, ListVideo, Loader } from '@lucide/svelte';
+  import Textarea from '$lib/components/ui/textarea/textarea.svelte';
+  import * as ImageCropper from '$lib/components/ui/image-cropper';
   import {
     useImageCropperCrop,
     useImageCropperCropper,
-  } from "$lib/components/ui/image-cropper/image-cropper.svelte.js";
-  import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
-  import * as Popover from "$lib/components/ui/popover";
-  import { getFlash, updateFlash } from "sveltekit-flash-message";
-  import Checkbox from "$lib/components/ui/checkbox/checkbox.svelte";
-  import type { Snippet } from "svelte";
-  import type { Session } from "@supabase/supabase-js";
-  import { page } from "$app/state";
-  import { getPlaylistState } from "$lib/state/playlist.svelte";
-  import { getSidebarState } from "$lib/state/sidebar.svelte";
+  } from '$lib/components/ui/image-cropper/image-cropper.svelte.js';
+  import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+  import * as Popover from '$lib/components/ui/popover';
+  import { getFlash, updateFlash } from 'sveltekit-flash-message';
+  import Checkbox from '$lib/components/ui/checkbox/checkbox.svelte';
+  import type { Snippet } from 'svelte';
+  import type { Session } from '@supabase/supabase-js';
+  import { page } from '$app/state';
+  import { getPlaylistState } from '$lib/state/playlist.svelte';
+  import { getSidebarState } from '$lib/state/sidebar.svelte';
 
   let {
     form,
@@ -46,7 +46,7 @@
 
   const playlistState = getPlaylistState();
   let isSubmitting = $state(false);
-  let isPublic = $state(playlist.type === "Public");
+  let isPublic = $state(playlist.type === 'Public');
   const flash = getFlash(page);
 
   const triggerSnippet = trigger;
@@ -59,8 +59,8 @@
 
   const playlistForm = superForm(form, {
     validators: zodClient(playlistSchema),
-    id: formId ?? "playlist-drawer-form",
-    dataType: "json",
+    id: formId ?? 'playlist-drawer-form',
+    dataType: 'json',
     onSubmit() {
       $flash = undefined;
       isSubmitting = true;
@@ -98,7 +98,7 @@
   });
 
   $effect(() => {
-    $formData.type = isPublic ? "Public" : "Private";
+    $formData.type = isPublic ? 'Public' : 'Private';
 
     if (cropState.rootState.pixelCrop) {
       $formData.image_properties = cropState.rootState.pixelCrop;
@@ -129,7 +129,7 @@
     </Drawer.Trigger>
   {/if}
 
-  <Drawer.Content class="bg-background flex flex-col min-h-[100%] drawer">
+  <Drawer.Content class="bg-background drawer flex min-h-[100%] flex-col">
     <div class="flex-shrink-0 p-4 pb-0">
       <Drawer.Header class="px-0">
         <Drawer.Title class="text-xl">Edit Playlist</Drawer.Title>
@@ -141,23 +141,23 @@
       method="POST"
       use:enhance
       id="playlist-drawer-form"
-      class="flex flex-col flex-1 min-h-0"
+      class="flex min-h-0 flex-1 flex-col"
     >
-      <div class="flex-1 overflow-y-auto p-1 min-h-0">
+      <div class="min-h-0 flex-1 overflow-y-auto p-1">
         <div class="px-4 pb-4">
-          <div class="flex flex-col sm:flex-row justify-center gap-4 mb-4">
+          <div class="mb-4 flex flex-col justify-center gap-4 sm:flex-row">
             <div class="relative m-6 flex justify-center">
               {#if (playlist.thumbnail_maxres_url || playlist.thumbnail_url) && !$formData.isDeletingPlaylistImage}
-                <div class="h-56 w-56 relative">
+                <div class="relative h-56 w-56">
                   <ImageCropper.Preview
-                    class="rounded-md h-full w-full overflow-scroll"
+                    class="h-full w-full overflow-scroll rounded-md"
                   />
                   <DropdownMenu.Root>
                     <DropdownMenu.Trigger class="outline-none">
                       {#snippet child({ props })}
                         <Button
                           {...props}
-                          class="absolute -bottom-3 -right-3 rounded-full hover:brightness-110 !bg-secondary"
+                          class="!bg-secondary absolute -right-3 -bottom-3 rounded-full hover:brightness-110"
                           variant="outline"
                           size="icon"
                         >
@@ -180,7 +180,7 @@
                   </DropdownMenu.Root>
                 </div>
               {:else}
-                <div class="flex justify-center items-center h-56 w-56">
+                <div class="flex h-56 w-56 items-center justify-center">
                   <ListVideo size={128} />
                 </div>
                 <Popover.Root>
@@ -188,7 +188,7 @@
                     {#snippet child({ props })}
                       <Button
                         {...props}
-                        class="absolute -bottom-3 -right-3 rounded-full"
+                        class="absolute -right-3 -bottom-3 rounded-full"
                         variant="outline"
                         size="icon"
                       >
@@ -216,10 +216,10 @@
               </ImageCropper.Controls>
             </ImageCropper.Dialog>
 
-            <div class="flex flex-col relative grow gap-2">
+            <div class="relative flex grow flex-col gap-2">
               <Form.Field form={playlistForm} name="name">
                 <div
-                  class="md:grid md:grid-cols-4 items-center flex flex-wrap gap-2 md:gap-4"
+                  class="flex flex-wrap items-center gap-2 md:grid md:grid-cols-4 md:gap-4"
                 >
                   <Form.Control>
                     {#snippet children({ props })}
@@ -238,11 +238,11 @@
 
               <Form.Field form={playlistForm} name="description" class="mb-2">
                 <div
-                  class="md:grid md:grid-cols-4 items-center md:items-start flex flex-wrap gap-2 md:gap-4"
+                  class="flex flex-wrap items-center gap-2 md:grid md:grid-cols-4 md:items-start md:gap-4"
                 >
                   <Form.Control>
                     {#snippet children({ props })}
-                      <Form.Label for="description" class="text-right mt-[9px]"
+                      <Form.Label for="description" class="mt-[9px] text-right"
                         >Description</Form.Label
                       >
                       <Textarea
@@ -258,13 +258,13 @@
 
               <Form.Field form={playlistForm} name="type">
                 <div
-                  class="md:grid md:grid-cols-4 items-center md:items-start flex flex-wrap gap-2 md:gap-4"
+                  class="flex flex-wrap items-center gap-2 md:grid md:grid-cols-4 md:items-start md:gap-4"
                 >
                   <Form.Control>
                     {#snippet children({ props })}
                       <Form.Label
                         for="isPublic"
-                        class="text-right cursor-pointer"
+                        class="cursor-pointer text-right"
                         >Public Playlist</Form.Label
                       >
                       <Checkbox
@@ -309,7 +309,7 @@
                   {/snippet}
                 </Form.Control>
               </Form.Field>
-              {#if $flash?.message && $flash?.type === "error"}
+              {#if $flash?.message && $flash?.type === 'error'}
                 <Alert.Root class="mb-4">
                   <Alert.Title>Error when updating playlist</Alert.Title>
                   <Alert.Description>{$flash.message}</Alert.Description>
@@ -338,8 +338,8 @@
                 open = false;
               }}
               class={buttonVariants({
-                class: "drawer-button-footer",
-                variant: "outline",
+                class: 'drawer-button-footer',
+                variant: 'outline',
               })}
               >Close
             </Drawer.Close>

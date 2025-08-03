@@ -1,33 +1,33 @@
 <script lang="ts">
-  import Progress from "../ui/progress/progress.svelte";
-  import { getVideoSecondsOffset } from "../video/video-service";
-  import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
-  import { userPreferences } from "$lib/state/user-preferences.svelte";
-  import type { HTMLAnchorAttributes } from "svelte/elements";
+  import Progress from '../ui/progress/progress.svelte';
+  import { getVideoSecondsOffset } from '../video/video-service';
+  import { isVideoWithTimestamp, type Video } from '$lib/supabase/videos';
+  import { userPreferences } from '$lib/state/user-preferences.svelte';
+  import type { HTMLAnchorAttributes } from 'svelte/elements';
   import {
     DEFAULT_SECTION_ID,
     getContentState,
-  } from "$lib/state/content.svelte";
-  import { ArrowDown, ArrowUp, Check, ListVideo } from "@lucide/svelte";
-  import type { ContentDisplayProps } from "./content";
-  import ContentDropdown from "./content-dropdown.svelte";
-  import { goto } from "$app/navigation";
-  import { getSortDisplayName } from "./content-filter";
-  import ContentCardSkeleton from "./content-card-skeleton.svelte";
+  } from '$lib/state/content.svelte';
+  import { ArrowDown, ArrowUp, Check, ListVideo } from '@lucide/svelte';
+  import type { ContentDisplayProps } from './content';
+  import ContentDropdown from './content-dropdown.svelte';
+  import { goto } from '$app/navigation';
+  import { getSortDisplayName } from './content-filter';
+  import ContentCardSkeleton from './content-card-skeleton.svelte';
 
   type ContentCardProps = {
     video?: Video;
     isLoading?: boolean;
   } & Pick<
     ContentDisplayProps,
-    | "isContinueVideos"
-    | "playlistContentFilter"
-    | "contentFilter"
-    | "videos"
-    | "playlists"
-    | "sectionId"
-    | "supabase"
-    | "session"
+    | 'isContinueVideos'
+    | 'playlistContentFilter'
+    | 'contentFilter'
+    | 'videos'
+    | 'playlists'
+    | 'sectionId'
+    | 'supabase'
+    | 'session'
   > &
     HTMLAnchorAttributes;
 
@@ -42,22 +42,22 @@
   const contentState = getContentState();
 
   const selectedVideos = $derived(
-    contentState.selectedVideosBySection[sectionId] ?? [],
+    contentState.selectedVideosBySection[sectionId] ?? []
   );
 
   const hoveredVideo = $derived(contentState.hoveredVideosBySection[sectionId]);
 
   const isHovered = $derived(video && hoveredVideo?.id === video.id);
   const isSelected = $derived(
-    video && selectedVideos.some((v) => v.id === video.id),
+    video && selectedVideos.some((v) => v.id === video.id)
   );
   const isContextMenuOpen = $derived(
-    contentState.isContextMenuOpenForSection(sectionId) && isSelected,
+    contentState.isContextMenuOpenForSection(sectionId) && isSelected
   );
   const isDragActive = $derived(
-    contentState.dragContentType === "video" &&
+    contentState.dragContentType === 'video' &&
       contentState.draggedFromSectionId === sectionId &&
-      isHovered,
+      isHovered
   );
 
   // Show description when:
@@ -65,7 +65,7 @@
   // 2. Card has context menu open (and is selected)
   // 3. Card is being dragged
   const shouldShowDescription = $derived(
-    isHovered || isSelected || isContextMenuOpen || isDragActive,
+    isHovered || isSelected || isContextMenuOpen || isDragActive
   );
 </script>
 
@@ -73,13 +73,13 @@
   <ContentCardSkeleton />
 {:else}
   <div
-    class="group transform will-change-transform cursor-pointer w-full h-64"
+    class="group h-64 w-full transform cursor-pointer will-change-transform"
     data-testid="video-card"
   >
-    <div role="button" tabindex="0" class="text-left cursor-pointer">
+    <div role="button" tabindex="0" class="cursor-pointer text-left">
       <div class="relative">
         <img
-          class="w-full aspect-[16/9] h-auto"
+          class="aspect-[16/9] h-auto w-full"
           src={video.thumbnail_url}
           alt={video.title}
           loading="lazy"
@@ -100,30 +100,30 @@
               getVideoSecondsOffset({
                 duration: video.duration,
                 timestampSeconds: video.video_start_seconds,
-              }),
+              })
             )}
           />
-        {:else if "watched_at" in video && video.watched_at}
+        {:else if 'watched_at' in video && video.watched_at}
           <div
-            class="absolute bottom-0 right-0 flex bg-background-lighter
-            w-full gap-1 px-1 items-center justify-center"
+            class="bg-background-lighter absolute right-0 bottom-0 flex
+            w-full items-center justify-center gap-1 px-1"
           >
             <Check class="text-primary" />
-            <p class="text-xs text-primary">Watched</p>
+            <p class="text-primary text-xs">Watched</p>
           </div>
         {/if}
       </div>
 
-      <p class="text-sm p-2">
+      <p class="p-2 text-sm">
         {video.title}
       </p>
 
       {#if isVideoWithTimestamp(video) && video.playlist_name && video.playlist_short_id}
         <div
-          class="flex items-center gap-2 mt-1 mb-3 px-2 text-xs text-secondary-foreground hover:text-primary line-clamp-2 z-10"
+          class="text-secondary-foreground hover:text-primary z-10 mt-1 mb-3 line-clamp-2 flex items-center gap-2 px-2 text-xs"
         >
           <ListVideo size="16" class="shrink-0 self-start" />
-          <div class="flex flex-col gap-2 justify-center w-full">
+          <div class="flex w-full flex-col justify-center gap-2">
             <a
               onclick={(e) => {
                 e.stopPropagation();
@@ -131,25 +131,25 @@
                 goto(`playlist/${video.playlist_short_id}`);
               }}
               href={`playlist/${video.playlist_short_id}`}
-              class="whitespace-normal flex gap-2 items-center truncate"
+              class="flex items-center gap-2 truncate whitespace-normal"
             >
               <span class="truncate">{video.playlist_name}</span>
             </a>
-            <div class="flex items-center text-muted-foreground shrink-0">
+            <div class="text-muted-foreground flex shrink-0 items-center">
               {#if video.playlist_sorted_by}
-                <div class="flex items-center shrink-0">
-                  <span class="text-xs truncate">
+                <div class="flex shrink-0 items-center">
+                  <span class="truncate text-xs">
                     {getSortDisplayName({
                       key: video.playlist_sorted_by,
-                      view: "playlist",
+                      view: 'playlist',
                     })}
                   </span>
                   {#if video.playlist_sort_order}
-                    {#if video.playlist_sort_order === "ascending"}
-                      <ArrowUp size="14" class="shrink-0 ml-1" />
+                    {#if video.playlist_sort_order === 'ascending'}
+                      <ArrowUp size="14" class="ml-1 shrink-0" />
                       <span class="sr-only">Sorted Ascending</span>
                     {:else}
-                      <ArrowDown size="14" class="shrink-0 ml-1" />
+                      <ArrowDown size="14" class="ml-1 shrink-0" />
                       <span class="sr-only">Sorted Descending</span>
                     {/if}
                   {/if}
@@ -161,23 +161,23 @@
       {/if}
 
       <p
-        class="text-xs/4 text-muted-foreground transform px-2 pointer-events-none w-full @sm:absolute
+        class="text-muted-foreground pointer-events-none w-full transform px-2 text-xs/4 @sm:absolute
         {shouldShowDescription ? '@sm:invisible @sm:bg-transparent ' : 'block'}"
       >
-        {new Date(video.published_at).toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
+        {new Date(video.published_at).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
         })}
       </p>
 
       <!-- Description overlay -->
-      {#if userPreferences.contentDescription !== "NONE"}
+      {#if userPreferences.contentDescription !== 'NONE'}
         <p
-          class="@sm:opacity-0 text-sm @sm:absolute pointer-events-none
-      {shouldShowDescription ? '@sm:opacity-100 @sm:bg-secondary' : ''}
-      transform will-change-transform rounded-b-md
-      z-40 break-anywhere whitespace-pre-line px-4
+          class="pointer-events-none text-sm @sm:absolute @sm:opacity-0
+      {shouldShowDescription ? '@sm:bg-secondary @sm:opacity-100' : ''}
+      break-anywhere z-40 transform
+      rounded-b-md px-4 whitespace-pre-line will-change-transform
       {userPreferences.contentDescription === 'BRIEF' &&
             'line-clamp-4 overflow-clip pb-1'}"
           style="left: -0.5rem; right: -0.5rem; width: auto;"

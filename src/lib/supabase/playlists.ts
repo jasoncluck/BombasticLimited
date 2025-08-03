@@ -2,29 +2,29 @@ import type {
   PostgrestError,
   Session,
   SupabaseClient,
-} from "@supabase/supabase-js";
-import type { Database, Json, Tables } from "./database.types";
-import { invalidate } from "$app/navigation";
+} from '@supabase/supabase-js';
+import type { Database, Json, Tables } from './database.types';
+import { invalidate } from '$app/navigation';
 import {
   type PlaylistVideosFilter,
   type SortKey,
   type SortOrder,
-} from "$lib/components/content/content-filter";
-import type { CropArea } from "svelte-easy-crop";
+} from '$lib/components/content/content-filter';
+import type { CropArea } from 'svelte-easy-crop';
 import {
   DEFAULT_NUM_VIDEOS_OVERVIEW,
   DEFAULT_NUM_VIDEOS_PAGINATION,
   type Video,
-} from "./videos";
-import type { Source } from "$lib/constants/source";
-import { videoDurationToSeconds } from "$lib/components/video/video-service";
+} from './videos';
+import type { Source } from '$lib/constants/source';
+import { videoDurationToSeconds } from '$lib/components/video/video-service';
 
 export const USER_PLAYLIST_LIMIT = 25;
 export const DEFAULT_NUM_PLAYLISTS_OVERVIEW = 5;
 export const DEFAULT_NUM_PLAYLISTS_PAGINATION = 15;
 export const PLAYLIST_VIDEO_LIMIT = 100;
 
-export type Playlist = Omit<Tables<"playlists">, "search_vector"> & {
+export type Playlist = Omit<Tables<'playlists'>, 'search_vector'> & {
   processedImageUrl?: string | null;
 };
 
@@ -40,8 +40,8 @@ export type UserPlaylist = ProfilePlaylist & {
   sort_order: string;
 };
 
-export type PlaylistVideo = Tables<"playlist_videos">;
-export const PLAYLIST_TYPES = ["Public", "Private"] as const;
+export type PlaylistVideo = Tables<'playlist_videos'>;
+export const PLAYLIST_TYPES = ['Public', 'Private'] as const;
 export type PlaylistType = (typeof PLAYLIST_TYPES)[number];
 
 // Flattened rpc return
@@ -92,14 +92,14 @@ export async function getPlaylistData({
 }> {
   // Validate input
   if ((!shortId && !youtubeId) || (shortId && youtubeId)) {
-    throw new Error("Exactly one of shortId or youtubeId must be provided");
+    throw new Error('Exactly one of shortId or youtubeId must be provided');
   }
 
   // Only pass sort parameters if we want to override saved sort preferences
   const sortKey = contentFilter ? contentFilter.sort.key : undefined;
   const sortOrder = contentFilter ? contentFilter.sort.order : undefined;
 
-  const { data, error } = await supabase.rpc("get_playlist_data", {
+  const { data, error } = await supabase.rpc('get_playlist_data', {
     p_short_id: shortId,
     p_youtube_id: youtubeId,
     p_user_id: session?.user.id,
@@ -110,7 +110,7 @@ export async function getPlaylistData({
   });
 
   if (error) {
-    console.error("Error fetching playlist data:", error);
+    console.error('Error fetching playlist data:', error);
     return {
       playlist: null,
       videos: [],
@@ -335,13 +335,13 @@ export async function getPlaylistsForUsername({
 }> {
   const query = supabase
     .rpc(
-      "get_playlists_for_username",
+      'get_playlists_for_username',
       {
         p_username: username,
       },
-      { count: "exact" },
+      { count: 'exact' }
     )
-    .order("name", { ascending: true })
+    .order('name', { ascending: true })
     .limit(limit)
     .select();
 
@@ -372,7 +372,7 @@ export async function getPlaylistByYoutubeId({
   supabase: SupabaseClient<Database>;
 }) {
   const { data, error } = await supabase
-    .rpc("get_playlist_by_youtube_id", {
+    .rpc('get_playlist_by_youtube_id', {
       p_youtube_id: youtubeId,
     })
     .single();
@@ -380,7 +380,7 @@ export async function getPlaylistByYoutubeId({
   if (error || !data) {
     console.error(
       `Error fetching playlist from Youtube ID: ${youtubeId}`,
-      error,
+      error
     );
   }
   return { playlist: data, error };
@@ -410,7 +410,7 @@ export async function getPlaylistVideoContext({
   error: PostgrestError | null;
 }> {
   // Call the simplified RPC function
-  let query = supabase.rpc("get_playlist_video_context", {
+  let query = supabase.rpc('get_playlist_video_context', {
     p_short_id: shortId,
     p_video_id: videoId,
     p_user_id: userId,
@@ -419,7 +419,7 @@ export async function getPlaylistVideoContext({
 
   // Apply sorting based on contentFilter
   const sortField = getSortField(contentFilter.sort.key);
-  const ascending = contentFilter.sort.order === "ascending";
+  const ascending = contentFilter.sort.order === 'ascending';
 
   if (sortField) {
     query = query.order(sortField, { ascending });
@@ -428,7 +428,7 @@ export async function getPlaylistVideoContext({
   const { data, error } = await query;
 
   if (error) {
-    console.error("Error fetching playlist video context:", error);
+    console.error('Error fetching playlist video context:', error);
     return {
       playlist: null,
       currentVideo: null,
@@ -527,18 +527,18 @@ export async function getPlaylistVideoContext({
 // Helper function to map contentFilter sort keys to database column names
 function getSortField(sortKey: string): string | null {
   switch (sortKey) {
-    case "video_position":
-    case "playlistOrder":
-      return "video_position";
-    case "published_at":
-    case "datePublished":
-      return "video_published_at";
-    case "title":
-      return "video_title";
-    case "duration":
-      return "video_duration";
+    case 'video_position':
+    case 'playlistOrder':
+      return 'video_position';
+    case 'published_at':
+    case 'datePublished':
+      return 'video_published_at';
+    case 'title':
+      return 'video_title';
+    case 'duration':
+      return 'video_duration';
     default:
-      return "video_position"; // Default fallback
+      return 'video_position'; // Default fallback
   }
 }
 
@@ -552,19 +552,19 @@ export async function createPlaylist({
   supabase: SupabaseClient<Database>;
 }) {
   if (!session) {
-    throw new Error("Unable to create playlist, invalid session");
+    throw new Error('Unable to create playlist, invalid session');
   }
 
   const { data: playlist, error } = await supabase
-    .rpc("insert_playlist", {
+    .rpc('insert_playlist', {
       p_created_by: session?.user.id,
       p_name: name,
-      p_type: "Private",
+      p_type: 'Private',
     })
     .single();
 
   if (error) {
-    console.error("Error creating playlist:", error);
+    console.error('Error creating playlist:', error);
   }
 
   return { playlist, error };
@@ -586,11 +586,11 @@ export async function getUserPlaylists({
   }
 
   const { data, count, error } = await supabase
-    .rpc("get_user_playlists", { p_user_id: session.user.id })
-    .order("playlist_position", { ascending: false });
+    .rpc('get_user_playlists', { p_user_id: session.user.id })
+    .order('playlist_position', { ascending: false });
 
   if (error) {
-    console.error("Error when fetching playlists:", error);
+    console.error('Error when fetching playlists:', error);
   }
 
   return { userPlaylists: data ?? [], count, error };
@@ -607,7 +607,7 @@ export async function updatePlaylistPosition({
   supabase: SupabaseClient<Database>;
   session: Session;
 }) {
-  const { error } = await supabase.rpc("update_playlist_position", {
+  const { error } = await supabase.rpc('update_playlist_position', {
     p_playlist_id: playlistId,
     p_user_id: session.user.id,
     p_new_position: position,
@@ -629,7 +629,7 @@ export async function deletePlaylist({
   session: Session;
   supabase: SupabaseClient<Database>;
 }) {
-  const { error } = await supabase.rpc("delete_playlist", {
+  const { error } = await supabase.rpc('delete_playlist', {
     p_playlist_id: playlistId,
     p_user_id: session.user.id,
   });
@@ -637,10 +637,10 @@ export async function deletePlaylist({
   console.log(error);
 
   if (error) {
-    console.error("Error when deleting playlists:", error);
+    console.error('Error when deleting playlists:', error);
   }
 
-  invalidate("supabase:db:playlists");
+  invalidate('supabase:db:playlists');
 
   return { error };
 }
@@ -664,12 +664,12 @@ export async function searchPlaylists({
 }> {
   const query = supabase
     .rpc(
-      "search_playlists",
+      'search_playlists',
       {
         search_term: searchString,
         current_user_id: session?.user.id,
       },
-      { count: "exact" },
+      { count: 'exact' }
     )
     .limit(limit);
 
@@ -683,8 +683,8 @@ export async function searchPlaylists({
 
   if (error) {
     console.error(
-      "Encountered an error when searching playlists and was unable to complete the request.",
-      error,
+      'Encountered an error when searching playlists and was unable to complete the request.',
+      error
     );
   }
   return { playlists: playlists ?? [], error, count };
@@ -701,14 +701,14 @@ export async function addVideosToPlaylist({
   supabase: SupabaseClient<Database>;
   session: Session;
 }) {
-  const { error } = await supabase.rpc("insert_playlist_videos", {
+  const { error } = await supabase.rpc('insert_playlist_videos', {
     p_playlist_id: playlistId,
     p_video_ids: videoIds,
   });
 
   if (error) {
     console.error(error);
-    invalidate("supabase:db:playlists");
+    invalidate('supabase:db:playlists');
   }
 
   return { error };
@@ -725,7 +725,7 @@ export async function updatePlaylistVideoPosition({
   position: number;
   supabase: SupabaseClient<Database>;
 }) {
-  const { error } = await supabase.rpc("update_playlist_videos_positions", {
+  const { error } = await supabase.rpc('update_playlist_videos_positions', {
     p_playlist_id: playlistId,
     p_video_ids: videoIds,
     p_new_position: position,
@@ -748,7 +748,7 @@ export async function deleteVideosFromPlaylist({
   supabase: SupabaseClient<Database>;
 }) {
   const { error } = await supabase
-    .rpc("delete_playlist_videos", {
+    .rpc('delete_playlist_videos', {
       p_playlist_id: playlistId,
       p_video_ids: videoIds,
     })
@@ -756,7 +756,7 @@ export async function deleteVideosFromPlaylist({
 
   if (error) {
     console.error(error);
-    invalidate("supabase:db:playlists");
+    invalidate('supabase:db:playlists');
   }
 
   return { error };
@@ -779,14 +779,14 @@ export async function updatePlaylistInfo({
   supabase: SupabaseClient<Database>;
 }) {
   const { data: updatedPlaylist, error } = await supabase
-    .from("playlists")
+    .from('playlists')
     .update({
       name: name.trim(),
       description: description?.trim(),
       image_properties: imageProperties as Json,
       type,
     })
-    .eq("id", playlistId)
+    .eq('id', playlistId)
     .select()
     .single();
 
@@ -811,36 +811,36 @@ export async function updatePlaylistImage({
   const isResetImage = thumbnailUrl === null && thumbnailMaxResUrl === null;
   if (isResetImage) {
     const { error } = await supabase
-      .from("playlists")
+      .from('playlists')
       .update({
         thumbnail_url: null,
         thumbnail_maxres_url: null,
         image_properties: null,
       })
-      .eq("id", playlistId)
+      .eq('id', playlistId)
       .select();
 
     return { error };
   }
 
   const { data: isValid, error: validationError } = await supabase.rpc(
-    "validate_playlist_thumbnail_urls",
+    'validate_playlist_thumbnail_urls',
     {
       p_playlist_id: playlistId,
       p_thumbnail_maxres_url: thumbnailMaxResUrl ?? undefined,
       p_thumbnail_url: thumbnailUrl ?? undefined,
-    },
+    }
   );
 
   if (validationError) {
-    console.error("Error validating URLs:", validationError);
+    console.error('Error validating URLs:', validationError);
     return { error: validationError };
   }
 
   if (!isValid) {
     const error = {
-      message: "Invalid image URLs. URLs must be from videos in this playlist.",
-      code: "invalid_image_urls",
+      message: 'Invalid image URLs. URLs must be from videos in this playlist.',
+      code: 'invalid_image_urls',
     };
 
     console.error(error);
@@ -848,18 +848,18 @@ export async function updatePlaylistImage({
   }
 
   const { data: updatedPlaylist, error: updateError } = await supabase
-    .from("playlists")
+    .from('playlists')
     .update({
       thumbnail_url: thumbnailUrl,
       thumbnail_maxres_url: thumbnailMaxResUrl,
       image_properties: null,
     })
-    .eq("id", playlistId)
+    .eq('id', playlistId)
     .select()
     .single();
 
   if (updateError) {
-    console.error("Error updating playlist:", updateError);
+    console.error('Error updating playlist:', updateError);
   }
 
   return { updatedPlaylist, error: updateError };
@@ -877,7 +877,7 @@ export async function followPlaylist({
   position?: number;
 }) {
   const { error } = await supabase
-    .rpc("follow_playlist", {
+    .rpc('follow_playlist', {
       p_playlist_id: playlistId,
       p_user_id: session.user.id,
       p_playlist_position: position,
@@ -901,7 +901,7 @@ export async function unfollowPlaylist({
   session: Session;
 }) {
   const { error } = await supabase
-    .rpc("unfollow_playlist", {
+    .rpc('unfollow_playlist', {
       p_playlist_id: playlistId,
       p_user_id: session.user.id,
     })
@@ -927,17 +927,17 @@ export async function updatePlaylistSort({
   session: Session;
 }) {
   const { data: updatedPlaylist, error } = await supabase
-    .from("user_playlists")
+    .from('user_playlists')
     .update({
       sorted_by: sortedBy,
       sort_order: sortOrder,
     })
-    .eq("id", playlistId)
+    .eq('id', playlistId)
     .select()
     .single();
 
   if (error) {
-    console.error("Error updating playlist sort:", error);
+    console.error('Error updating playlist sort:', error);
   }
 
   return { updatedPlaylist, error };
@@ -952,12 +952,12 @@ export async function getPlaylistTotalDuration({
 }): Promise<{ hours: number; minutes: number; seconds: number }> {
   // First, get all video IDs in the playlist
   const { data: playlistVideos, error: playlistError } = await supabase
-    .from("playlist_videos")
-    .select("video_id")
-    .eq("playlist_id", playlistId);
+    .from('playlist_videos')
+    .select('video_id')
+    .eq('playlist_id', playlistId);
 
   if (playlistError) {
-    console.error("Error fetching playlist videos:", playlistError);
+    console.error('Error fetching playlist videos:', playlistError);
     return { hours: 0, minutes: 0, seconds: 0 };
   }
 
@@ -970,12 +970,12 @@ export async function getPlaylistTotalDuration({
 
   // Then, get durations for those videos
   const { data: videos, error: videosError } = await supabase
-    .from("videos")
-    .select("duration")
-    .in("id", videoIds);
+    .from('videos')
+    .select('duration')
+    .in('id', videoIds);
 
   if (videosError) {
-    console.error("Error fetching video durations:", videosError);
+    console.error('Error fetching video durations:', videosError);
     return { hours: 0, minutes: 0, seconds: 0 };
   }
 
@@ -996,52 +996,52 @@ export async function getPlaylistTotalDuration({
 }
 
 export function isPlaylistVideo(video: Video): video is Video & PlaylistVideo {
-  return !!video && "video_position" in video;
+  return !!video && 'video_position' in video;
 }
 
 // Helper for checking plain objects
 function isRecord(val: unknown): val is Record<string, unknown> {
-  return typeof val === "object" && val !== null && !Array.isArray(val);
+  return typeof val === 'object' && val !== null && !Array.isArray(val);
 }
 
 export function isPlaylist(obj: unknown): obj is Playlist {
   return (
     isRecord(obj) &&
-    typeof obj.id === "number" &&
-    typeof obj.created_at === "string" &&
-    typeof obj.created_by === "string" &&
-    (typeof obj.description === "string" || obj.description === null) &&
-    "image_properties" in obj && // Accepts any (Json)
-    typeof obj.name === "string" &&
-    typeof obj.short_id === "string" &&
-    (typeof obj.thumbnail_maxres_url === "string" ||
+    typeof obj.id === 'number' &&
+    typeof obj.created_at === 'string' &&
+    typeof obj.created_by === 'string' &&
+    (typeof obj.description === 'string' || obj.description === null) &&
+    'image_properties' in obj && // Accepts any (Json)
+    typeof obj.name === 'string' &&
+    typeof obj.short_id === 'string' &&
+    (typeof obj.thumbnail_maxres_url === 'string' ||
       obj.thumbnail_maxres_url === null) &&
-    (typeof obj.thumbnail_url === "string" || obj.thumbnail_url === null) &&
-    typeof obj.type === "string" &&
-    typeof obj.updated_at === "string" &&
-    (typeof obj.youtube_id === "string" || obj.youtube_id === null)
+    (typeof obj.thumbnail_url === 'string' || obj.thumbnail_url === null) &&
+    typeof obj.type === 'string' &&
+    typeof obj.updated_at === 'string' &&
+    (typeof obj.youtube_id === 'string' || obj.youtube_id === null)
   );
 }
 
 export function isUserPlaylist(obj: unknown): obj is UserPlaylist {
   return (
     isRecord(obj) &&
-    typeof obj.id === "number" &&
-    (typeof obj.playlist_position === "number" ||
+    typeof obj.id === 'number' &&
+    (typeof obj.playlist_position === 'number' ||
       obj.playlist_position === null) &&
-    typeof obj.sorted_by === "string" && // playlist_sorted_by enum
-    typeof obj.sort_order === "string" && // playlist_sort_order enum
+    typeof obj.sorted_by === 'string' && // playlist_sorted_by enum
+    typeof obj.sort_order === 'string' && // playlist_sort_order enum
     // Playlist data (joined from playlists table)
-    typeof obj.name === "string" &&
-    typeof obj.short_id === "string" &&
-    typeof obj.created_at === "string" &&
-    typeof obj.created_by === "string" &&
-    (typeof obj.description === "string" || obj.description === null) &&
-    "image_properties" in obj && // Accepts any (Json)
-    (typeof obj.thumbnail_maxres_url === "string" ||
+    typeof obj.name === 'string' &&
+    typeof obj.short_id === 'string' &&
+    typeof obj.created_at === 'string' &&
+    typeof obj.created_by === 'string' &&
+    (typeof obj.description === 'string' || obj.description === null) &&
+    'image_properties' in obj && // Accepts any (Json)
+    (typeof obj.thumbnail_maxres_url === 'string' ||
       obj.thumbnail_maxres_url === null) &&
-    (typeof obj.thumbnail_url === "string" || obj.thumbnail_url === null) &&
-    typeof obj.type === "string" &&
-    (typeof obj.youtube_id === "string" || obj.youtube_id === null)
+    (typeof obj.thumbnail_url === 'string' || obj.thumbnail_url === null) &&
+    typeof obj.type === 'string' &&
+    (typeof obj.youtube_id === 'string' || obj.youtube_id === null)
   );
 }

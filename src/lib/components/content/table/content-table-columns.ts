@@ -1,15 +1,15 @@
-import { renderComponent } from "$lib/components/ui/data-table";
-import type { Video } from "$lib/supabase/videos";
-import type { ColumnDef, Row } from "@tanstack/table-core";
-import ContentTableTitle from "./content-table-title.svelte";
-import ContentTableActions from "./content-table-actions.svelte";
-import ContentTableImage from "./content-table-image.svelte";
-import type { Database } from "$lib/supabase/database.types";
-import type { Session, SupabaseClient } from "@supabase/supabase-js";
-import type { Playlist } from "$lib/supabase/playlists";
-import ContentTableDescription from "./content-table-description.svelte";
-import ContentTablePlay from "./content-table-play.svelte";
-import type { CombinedContentFilter } from "../content-filter";
+import { renderComponent } from '$lib/components/ui/data-table';
+import type { Video } from '$lib/supabase/videos';
+import type { ColumnDef, Row } from '@tanstack/table-core';
+import ContentTableTitle from './content-table-title.svelte';
+import ContentTableActions from './content-table-actions.svelte';
+import ContentTableImage from './content-table-image.svelte';
+import type { Database } from '$lib/supabase/database.types';
+import type { Session, SupabaseClient } from '@supabase/supabase-js';
+import type { Playlist } from '$lib/supabase/playlists';
+import ContentTableDescription from './content-table-description.svelte';
+import ContentTablePlay from './content-table-play.svelte';
+import type { CombinedContentFilter } from '../content-filter';
 
 export function createContentColumns({
   getPlaylist,
@@ -35,7 +35,7 @@ export function createContentColumns({
     ...(getCanHover()
       ? [
           {
-            accessorKey: "play",
+            accessorKey: 'play',
             header: () => {
               return;
             },
@@ -52,7 +52,7 @@ export function createContentColumns({
         ]
       : []),
     {
-      accessorKey: "thumbnail_maxres_url",
+      accessorKey: 'thumbnail_maxres_url',
       cell: ({ row }) => {
         const video = row.original;
         return renderComponent(ContentTableImage, {
@@ -62,7 +62,7 @@ export function createContentColumns({
       enableSorting: false,
     },
     {
-      accessorKey: "title",
+      accessorKey: 'title',
       cell: ({ row }) => {
         const video = row.original;
         return renderComponent(ContentTableTitle, {
@@ -73,7 +73,7 @@ export function createContentColumns({
     ...(getIsSm()
       ? [
           {
-            accessorKey: "description",
+            accessorKey: 'description',
             cell: ({ row }: { row: Row<Video> }) => {
               const video = row.original;
               return renderComponent(ContentTableDescription, {
@@ -85,7 +85,7 @@ export function createContentColumns({
         ]
       : []),
     {
-      accessorKey: "id",
+      accessorKey: 'id',
       header: () => {
         return;
       },

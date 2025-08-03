@@ -1,26 +1,26 @@
-import type { Video } from "$lib/supabase/videos";
-import type { Playlist } from "$lib/supabase/playlists";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "$lib/supabase/database.types";
-import { getContext, setContext } from "svelte";
-import { createDragImage } from "$lib/utils/dragdrop";
+import type { Video } from '$lib/supabase/videos';
+import type { Playlist } from '$lib/supabase/playlists';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '$lib/supabase/database.types';
+import { getContext, setContext } from 'svelte';
+import { createDragImage } from '$lib/utils/dragdrop';
 import {
   isPlaylistVideosFilter,
   type CombinedContentFilter,
-} from "$lib/components/content/content-filter";
-import { handleUpdatePlaylistVideoPosition } from "$lib/components/playlist/playlist-service";
-import type { PageState } from "./page.svelte";
+} from '$lib/components/content/content-filter';
+import { handleUpdatePlaylistVideoPosition } from '$lib/components/playlist/playlist-service';
+import type { PageState } from './page.svelte';
 import type {
   ContentDisplay,
   ContentSelectVariant,
-} from "$lib/components/content/content";
+} from '$lib/components/content/content';
 
-export type DragContentType = "video" | "playlist" | null;
+export type DragContentType = 'video' | 'playlist' | null;
 
 export type PlaylistImageInfo = Record<string, string | undefined>;
 
 // Default section ID for single-section pages
-export const DEFAULT_SECTION_ID = "defaultSection";
+export const DEFAULT_SECTION_ID = 'defaultSection';
 
 export interface CarouselState {
   lastViewedIndex: number;
@@ -28,12 +28,12 @@ export interface CarouselState {
 
 // Video drag and drop CSS classes
 export const VIDEO_DROPZONE_CLASSES = [
-  "border-solid",
-  "border-primary",
-  "bg-primary/40",
+  'border-solid',
+  'border-primary',
+  'bg-primary/40',
 ];
 
-export const END_DROPZONE_CLASSES = ["border-transparent"];
+export const END_DROPZONE_CLASSES = ['border-transparent'];
 
 export interface DragDropOptions {
   allowVideoReorder?: boolean;
@@ -51,13 +51,13 @@ export interface DragDropHandlers {
   handleDragOver: (event: DragEvent, index: number) => void;
   handleDragEnd: () => void;
   handleDragLeave: (
-    e: DragEvent & { currentTarget: EventTarget & HTMLElement },
+    e: DragEvent & { currentTarget: EventTarget & HTMLElement }
   ) => void;
   handleDrop: (event: DragEvent, index: number, sectionId?: string) => void;
   handleDragStart: (
     event: DragEvent & { currentTarget: HTMLElement },
     index: number,
-    sectionId?: string,
+    sectionId?: string
   ) => void;
 }
 
@@ -180,7 +180,7 @@ export class ContentState {
   // Video drag and drop CSS classes
   getVideoDropzoneClasses(playlist: Playlist, session: any): string[] {
     if (
-      this.dragContentType === "video" &&
+      this.dragContentType === 'video' &&
       playlist.created_by === session?.user.id
     ) {
       return VIDEO_DROPZONE_CLASSES;
@@ -249,27 +249,27 @@ export class ContentState {
   }
 
   getVideoDragClasses(index: number, contentDisplay: ContentDisplay): string {
-    let classes = "relative";
+    let classes = 'relative';
 
     if (this.draggedIndex === index) {
-      classes += " ";
+      classes += ' ';
     }
 
     if (this.targetIndex === index) {
-      classes += " relative";
+      classes += ' relative';
 
-      if (contentDisplay === "TABLE") {
+      if (contentDisplay === 'TABLE') {
         if (
           this.draggedIndex === null ||
           this.draggedIndex < this.targetIndex
         ) {
           // Show indicator at the bottom
           classes +=
-            " after:absolute after:left-0 after:bottom-0 after:w-full after:h-[2px] after:bg-primary after:z-10";
+            ' after:absolute after:left-0 after:bottom-0 after:w-full after:h-[2px] after:bg-primary after:z-10';
         } else {
           // Show indicator at the top (using after with negative margin)
           classes +=
-            " after:absolute after:left-0 after:top-0 after:-mt-px after:w-full after:h-[2px] after:bg-primary after:z-10";
+            ' after:absolute after:left-0 after:top-0 after:-mt-px after:w-full after:h-[2px] after:bg-primary after:z-10';
         }
       } else {
         if (
@@ -278,11 +278,11 @@ export class ContentState {
         ) {
           // Show indicator at the right (vertical line)
           classes +=
-            " after:absolute after:right-0 after:top-0 after:w-[2px] after:h-full after:bg-primary after:z-10";
+            ' after:absolute after:right-0 after:top-0 after:w-[2px] after:h-full after:bg-primary after:z-10';
         } else {
           // Show indicator at the left (vertical line)
           classes +=
-            " after:absolute after:left-0 after:top-0 after:w-[2px] after:h-full after:bg-primary after:z-10";
+            ' after:absolute after:left-0 after:top-0 after:w-[2px] after:h-full after:bg-primary after:z-10';
         }
       }
     }
@@ -395,7 +395,7 @@ export class ContentState {
     };
 
     const handleDragLeave = (
-      e: DragEvent & { currentTarget: EventTarget & HTMLElement },
+      e: DragEvent & { currentTarget: EventTarget & HTMLElement }
     ) => {
       if (!options.allowVideoReorder) return;
       // Only set targetIndex to null if we're actually leaving the container
@@ -409,7 +409,7 @@ export class ContentState {
     const handleDragStart = (
       event: DragEvent & { currentTarget: HTMLElement },
       index: number,
-      sectionId: string = DEFAULT_SECTION_ID,
+      sectionId: string = DEFAULT_SECTION_ID
     ) => {
       // Clear selections from all other sections first
       if (options.clearSelection) {
@@ -423,12 +423,12 @@ export class ContentState {
       this.draggedIndex = index;
 
       // Set drag content type
-      this.dragContentType = "video";
+      this.dragContentType = 'video';
 
       // Handle drag data transfer and drag image
       if (event.dataTransfer) {
-        event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.setData("text/plain", index.toString());
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', index.toString());
 
         // Get the video being dragged
         const draggedVideo = options.videos[index];
@@ -441,7 +441,7 @@ export class ContentState {
 
         // Check if the dragged video is in the selected videos
         const isDraggedVideoSelected = selectedVideos.some(
-          (video) => video.id === draggedVideo.id,
+          (video) => video.id === draggedVideo.id
         );
 
         // If the dragged video is not in selectedVideos, use just the dragged video
@@ -464,12 +464,12 @@ export class ContentState {
     const handleDrop = (
       event: DragEvent,
       index: number,
-      sectionId: string = DEFAULT_SECTION_ID,
+      sectionId: string = DEFAULT_SECTION_ID
     ) => {
       if (!options.allowVideoReorder || !options.supabase) return;
       if (
         !options.playlist ||
-        options.contentFilter?.sort.key !== "playlistOrder"
+        options.contentFilter?.sort.key !== 'playlistOrder'
       ) {
         return;
       }
@@ -494,20 +494,20 @@ export class ContentState {
         // Create the final array
         const updatedVideos = [...options.videos];
         const remainingVideos = updatedVideos.filter(
-          (video) => !videoIds.includes(video.id),
+          (video) => !videoIds.includes(video.id)
         );
 
         const targetIndex = movingDown ? index + 1 : index;
         const movedVideosBefore = sortedVideosToMove.filter((video) => {
           const originalIndex = options.videos.findIndex(
-            (v) => v.id === video.id,
+            (v) => v.id === video.id
           );
           return originalIndex < targetIndex;
         }).length;
 
         const insertIndex = Math.max(
           0,
-          Math.min(targetIndex - movedVideosBefore, remainingVideos.length),
+          Math.min(targetIndex - movedVideosBefore, remainingVideos.length)
         );
 
         const finalVideos = [
@@ -521,11 +521,11 @@ export class ContentState {
 
         // Calculate database position based on where the video ended up in the final array
         const firstMovedVideoNewIndex = finalVideos.findIndex(
-          (v) => v.id === sortedVideosToMove[0].id,
+          (v) => v.id === sortedVideosToMove[0].id
         );
 
         let newPosition: number;
-        if (options.contentFilter.sort.order === "ascending") {
+        if (options.contentFilter.sort.order === 'ascending') {
           // Position 1, 2, 3, 4... (1-based)
           newPosition = firstMovedVideoNewIndex + 1;
         } else {
@@ -534,7 +534,7 @@ export class ContentState {
         }
 
         if (!isPlaylistVideosFilter(options.contentFilter)) {
-          throw new Error("Invalid content filter, expected playlist filter");
+          throw new Error('Invalid content filter, expected playlist filter');
         }
 
         handleUpdatePlaylistVideoPosition({
@@ -585,7 +585,7 @@ export class ContentState {
         // Find the last selected video's position for range selection
         const lastSelectedVideo = selectedVideos[selectedVideos.length - 1];
         const lastSelectedIndex = videos.findIndex(
-          (v) => v.id === lastSelectedVideo.id,
+          (v) => v.id === lastSelectedVideo.id
         );
         const currentIndex = videos.findIndex((v) => v.id === video.id);
 
@@ -694,14 +694,14 @@ export class ContentState {
 
   // Helper method to get drawer variant for a section
   getDrawerVariant(
-    sectionId: string = DEFAULT_SECTION_ID,
+    sectionId: string = DEFAULT_SECTION_ID
   ): ContentSelectVariant | null {
     return this.isDrawerOpenForSection(sectionId) ? this.drawerVariant : null;
   }
 
   setupClickOutsideListener(
     containerElement: HTMLElement,
-    sectionId: string = DEFAULT_SECTION_ID,
+    sectionId: string = DEFAULT_SECTION_ID
   ) {
     const handleClickOutside = (event: MouseEvent) => {
       this.hoverTimeoutId = null;
@@ -712,9 +712,9 @@ export class ContentState {
         const target = event.target as HTMLElement;
         const isClickingOnContextMenu =
           target.closest('[role="menu"]') ||
-          target.closest("[data-radix-popper-content-wrapper]");
+          target.closest('[data-radix-popper-content-wrapper]');
         const isClickingOnDropdown =
-          target.closest("[data-dropdown]") ||
+          target.closest('[data-dropdown]') ||
           target.closest('[role="listbox"]') ||
           target.closest('[role="combobox"]');
 
@@ -767,17 +767,17 @@ export class ContentState {
     };
 
     // Use capture phase to ensure our listener runs first
-    document.addEventListener("click", handleClickOutside, { capture: true });
+    document.addEventListener('click', handleClickOutside, { capture: true });
 
     return () => {
-      document.removeEventListener("click", handleClickOutside, {
+      document.removeEventListener('click', handleClickOutside, {
         capture: true,
       });
     };
   }
 }
 
-const DEFAULT_KEY = "$_content_state";
+const DEFAULT_KEY = '$_content_state';
 
 export function setContentState(pageState: PageState, key = DEFAULT_KEY) {
   const contentState = new ContentState(pageState);

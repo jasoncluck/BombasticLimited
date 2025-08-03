@@ -1,15 +1,15 @@
-import { browser } from "$app/environment";
-import { invalidateAll } from "$app/navigation";
-import { notificationStore } from "$lib/stores/notification.js";
-import { toast } from "svelte-sonner";
-import type { ContentState } from "$lib/state/content.svelte.js";
-import type { NavigationCacheState } from "$lib/state/navigation-cache/navigation-cache.svelte.js";
-import type { MediaQueryState } from "$lib/state/media-query.svelte.js";
-import type { SidebarState } from "$lib/state/sidebar.svelte.js";
-import type { LayoutState } from "$lib/state/layout.svelte.js";
-import type { PageState } from "$lib/state/page.svelte.js";
-import type { Session, SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "$lib/supabase/database.types";
+import { browser } from '$app/environment';
+import { invalidateAll } from '$app/navigation';
+import { notificationStore } from '$lib/stores/notification.js';
+import { toast } from 'svelte-sonner';
+import type { ContentState } from '$lib/state/content.svelte.js';
+import type { NavigationCacheState } from '$lib/state/navigation-cache/navigation-cache.svelte.js';
+import type { MediaQueryState } from '$lib/state/media-query.svelte.js';
+import type { SidebarState } from '$lib/state/sidebar.svelte.js';
+import type { LayoutState } from '$lib/state/layout.svelte.js';
+import type { PageState } from '$lib/state/page.svelte.js';
+import type { Session, SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '$lib/supabase/database.types';
 
 export function useLayoutEffects(
   pageState: PageState,
@@ -24,7 +24,7 @@ export function useLayoutEffects(
   lastModified: string | null,
   cached: boolean,
   cacheUserId: string | null,
-  startInitialPreloading: (session: Session | null) => void,
+  startInitialPreloading: (session: Session | null) => void
 ) {
   // Drag and drop handlers
   function handleDragOver(e: DragEvent) {
@@ -46,7 +46,7 @@ export function useLayoutEffects(
     if (browser && navigationCache.initialized) {
       const stats = navigationCache.getPreloadStats();
       if (stats.completed > 0 || stats.failed > 0) {
-        console.log("📊 Preload stats:", {
+        console.log('📊 Preload stats:', {
           ...stats,
           cacheHitRate:
             (stats.completed / (stats.completed + stats.failed)) * 100,
@@ -60,7 +60,7 @@ export function useLayoutEffects(
     // Restore content viewport scroll
     pageState.restoreViewportScroll(
       pageState.viewportRefs.contentViewportRef,
-      pageState.contentScrollPosition,
+      pageState.contentScrollPosition
     );
     if (pageState.contentScrollPosition) {
       pageState.contentScrollPosition = null;
@@ -69,7 +69,7 @@ export function useLayoutEffects(
     // Restore sidebar viewport scroll
     pageState.restoreViewportScroll(
       pageState.viewportRefs.sidebarViewportRef,
-      pageState.sidebarScrollPosition,
+      pageState.sidebarScrollPosition
     );
     if (pageState.sidebarScrollPosition) {
       pageState.sidebarScrollPosition = null;
@@ -107,7 +107,7 @@ export function useLayoutEffects(
             etag,
             lastModified,
             currentUserId,
-            currentCacheUserId,
+            currentCacheUserId
           );
         }
       }
@@ -119,21 +119,21 @@ export function useLayoutEffects(
     await initialize();
 
     // Event listeners for drag operations
-    window.addEventListener("dragover", handleDragOver);
-    window.addEventListener("dragend", handleDragEnd);
-    window.addEventListener("drop", handleDrop);
+    window.addEventListener('dragover', handleDragOver);
+    window.addEventListener('dragend', handleDragEnd);
+    window.addEventListener('drop', handleDrop);
 
     // Notification subscriptions
     notificationStoreUnsubscribe = notificationStore.subscribe((value) => {
       if (value) {
         switch (value.type) {
-          case "success":
+          case 'success':
             toast.success(value.message);
             break;
-          case "warning":
+          case 'warning':
             toast.warning(value.message);
             break;
-          case "error":
+          case 'error':
             toast.error(value.message);
             break;
           default:
@@ -146,9 +146,9 @@ export function useLayoutEffects(
 
     return () => {
       // Cleanup event listeners
-      window.removeEventListener("dragover", handleDragOver);
-      window.removeEventListener("dragend", handleDragEnd);
-      window.removeEventListener("drop", handleDrop);
+      window.removeEventListener('dragover', handleDragOver);
+      window.removeEventListener('dragend', handleDragEnd);
+      window.removeEventListener('drop', handleDrop);
 
       // Cleanup state - now with proper TypeScript support
       pageState.cleanup();

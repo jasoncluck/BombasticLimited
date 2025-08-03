@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { page } from "$app/state";
-  import { SOURCE_INFO, SOURCES } from "$lib/constants/source.js";
-  import Content from "$lib/components/content/content.svelte";
-  import type { Snapshot } from "@sveltejs/kit";
-  import type { Video } from "$lib/supabase/videos.js";
-  import { getContentState } from "$lib/state/content.svelte.js";
+  import { page } from '$app/state';
+  import { SOURCE_INFO, SOURCES } from '$lib/constants/source.js';
+  import Content from '$lib/components/content/content.svelte';
+  import type { Snapshot } from '@sveltejs/kit';
+  import type { Video } from '$lib/supabase/videos.js';
+  import { getContentState } from '$lib/state/content.svelte.js';
   import {
     getContentView,
     sourceWithContinueStateKeys,
     type SourceWithCarouselState,
     type SourceWithStateKeys,
-  } from "$lib/components/content/content.js";
-  import PlaylistTiles from "$lib/components/playlist/playlist-tiles.svelte";
-  import { getMediaQueryState } from "$lib/state/media-query.svelte.js";
+  } from '$lib/components/content/content.js';
+  import PlaylistTiles from '$lib/components/playlist/playlist-tiles.svelte';
+  import { getMediaQueryState } from '$lib/state/media-query.svelte.js';
 
   let { data } = $props();
   let {
@@ -51,7 +51,7 @@
         sectionIds.map((sid: SourceWithStateKeys) => [
           sid,
           contentState.selectedVideosBySection[sid],
-        ]),
+        ])
       ) as Record<SourceWithStateKeys, Video[]>,
     }),
     restore: async (restored) => {
@@ -61,7 +61,7 @@
   };
 
   const isEmptyResults = $derived(
-    !(sourceVideos && Object.values(sourceVideos).some((s) => s.length > 0)),
+    !(sourceVideos && Object.values(sourceVideos).some((s) => s.length > 0))
   );
 </script>
 
@@ -72,18 +72,18 @@
     {#if playlistSearchResults.length > 0}
       <div class="flex flex-col">
         <a
-          class={getContentView(mediaQueryState, userProfile) === "TABLE"
-            ? "header-link-sticky"
-            : "header-link mb-1"}
+          class={getContentView(mediaQueryState, userProfile) === 'TABLE'
+            ? 'header-link-sticky'
+            : 'header-link mb-1'}
           href={`/search/${searchString}/playlists`}
         >
           Playlists
         </a>
         <p
-          class="text-sm text-muted-foreground tracking-tight ml-2 sm:ml-0 mb-2 -mt-1"
+          class="text-muted-foreground -mt-1 mb-2 ml-2 text-sm tracking-tight sm:ml-0"
         >
           {playlistsCount}
-          {playlistsCount === 1 ? "playlist" : "playlists"}
+          {playlistsCount === 1 ? 'playlist' : 'playlists'}
         </p>
 
         <PlaylistTiles playlists={playlistSearchResults} {session} />
@@ -93,20 +93,20 @@
     <!-- The rest of your content remains unchanged -->
     {#each SOURCES as source (source)}
       {#if sourceVideos[source].length > 0}
-        <div class="flex flex-col bg-background-lighter">
+        <div class="bg-background-lighter flex flex-col">
           <a
             href={`${page.url}/${source}`}
-            class={getContentView(mediaQueryState, userProfile) === "TABLE"
-              ? "header-link-sticky"
-              : "header-link mb-1"}
+            class={getContentView(mediaQueryState, userProfile) === 'TABLE'
+              ? 'header-link-sticky'
+              : 'header-link mb-1'}
           >
             {SOURCE_INFO[source].displayName}
           </a>
           <p
-            class="text-sm text-muted-foreground tracking-tight ml-2 sm:ml-0 mb-2 -mt-1"
+            class="text-muted-foreground -mt-1 mb-2 ml-2 text-sm tracking-tight sm:ml-0"
           >
             {sourceVideosCount[source]}
-            {sourceVideosCount[source] === 1 ? "video" : "videos"}
+            {sourceVideosCount[source] === 1 ? 'video' : 'videos'}
           </p>
           <Content
             tilesDisplay="CAROUSEL"
@@ -121,7 +121,7 @@
       {/if}
     {/each}
     {#if isEmptyResults}
-      <div class="w-full flex justify-center" data-testid="no-results">
+      <div class="flex w-full justify-center" data-testid="no-results">
         <h1 class="text-xl">No results found</h1>
       </div>
     {/if}

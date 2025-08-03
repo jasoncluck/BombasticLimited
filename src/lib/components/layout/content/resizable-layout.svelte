@@ -1,17 +1,17 @@
 <script lang="ts">
-  import * as Resizable from "$lib/components/ui/resizable";
-  import ScrollArea from "$lib/components/ui/scroll-area/scroll-area.svelte";
-  import Sidebar from "$lib/components/sidebar/sidebar.svelte";
-  import { Skeleton } from "$lib/components/ui/skeleton";
-  import { COLLAPSED_SIDEBAR_SIZE } from "$lib/constants/layout";
-  import LoadingOverlay from "./loading-overlay.svelte";
-  import type { PageState } from "$lib/state/page.svelte.js";
-  import type { LayoutState } from "$lib/state/layout.svelte.js";
-  import type { Session, SupabaseClient } from "@supabase/supabase-js";
-  import type { Database } from "$lib/supabase/database.types";
-  import type { Snippet } from "svelte";
-  import { ListVideo } from "@lucide/svelte";
-  import { getSidebarState } from "$lib/state/sidebar.svelte";
+  import * as Resizable from '$lib/components/ui/resizable';
+  import ScrollArea from '$lib/components/ui/scroll-area/scroll-area.svelte';
+  import Sidebar from '$lib/components/sidebar/sidebar.svelte';
+  import { Skeleton } from '$lib/components/ui/skeleton';
+  import { COLLAPSED_SIDEBAR_SIZE } from '$lib/constants/layout';
+  import LoadingOverlay from './loading-overlay.svelte';
+  import type { PageState } from '$lib/state/page.svelte.js';
+  import type { LayoutState } from '$lib/state/layout.svelte.js';
+  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { Database } from '$lib/supabase/database.types';
+  import type { Snippet } from 'svelte';
+  import { ListVideo } from '@lucide/svelte';
+  import { getSidebarState } from '$lib/state/sidebar.svelte';
 
   let {
     layout,
@@ -40,7 +40,7 @@
 
 <Resizable.PaneGroup
   direction="horizontal"
-  class="h-full rounded-lg flex overflow-hidden"
+  class="flex h-full overflow-hidden rounded-lg"
   onLayoutChange={layoutState.onLayoutChange}
 >
   <!-- Sidebar Pane (Desktop Only) -->
@@ -52,7 +52,7 @@
     collapsible={true}
     onCollapse={() => (isSidebarCollapsed = true)}
     onExpand={() => (isSidebarCollapsed = false)}
-    class="@container pane sm:flex hidden flex-col h-full grow sm:ml-2 {isSidebarCollapsed
+    class="pane @container hidden h-full grow flex-col sm:ml-2 sm:flex {isSidebarCollapsed
       ? 'max-w-[75px] min-w-[75px]'
       : 'min-w-[200px]'}"
   >
@@ -73,20 +73,20 @@
               {#each Array(4)}
                 <div
                   class="flex items-center {!isSidebarCollapsed
-                    ? 'px-2 py-1 h-[56px]'
-                    : 'px-1 py-1 h-[56px] justify-center'}"
+                    ? 'h-[56px] px-2 py-1'
+                    : 'h-[56px] justify-center px-1 py-1'}"
                 >
                   {#if !isSidebarCollapsed}
                     <!-- Full width source item skeleton with exact spacing -->
-                    <div class="flex items-center w-full space-x-3">
-                      <Skeleton class="h-12 w-12 rounded flex-shrink-0" />
-                      <div class="flex-1 min-w-0">
+                    <div class="flex w-full items-center space-x-3">
+                      <Skeleton class="h-12 w-12 flex-shrink-0 rounded" />
+                      <div class="min-w-0 flex-1">
                         <Skeleton class="h-4 w-full" />
                       </div>
                     </div>
                   {:else}
                     <!-- Collapsed source item skeleton -->
-                    <Skeleton class="h-12 w-12 rounded flex-shrink-0" />
+                    <Skeleton class="h-12 w-12 flex-shrink-0 rounded" />
                   {/if}
                 </div>
               {/each}
@@ -103,23 +103,23 @@
                 ? 'mx-6 my-3'
                 : 'mx-1 my-3 items-center'}"
             >
-              <div class="flex items-center h-[44px] w-full">
+              <div class="flex h-[44px] w-full items-center">
                 {#if !isSidebarCollapsed}
                   <!-- Full header with exact spacing -->
-                  <div class="flex items-center space-x-4 w-full">
-                    <Skeleton class="h-10 w-10 rounded-full flex-shrink-0" />
+                  <div class="flex w-full items-center space-x-4">
+                    <Skeleton class="h-10 w-10 flex-shrink-0 rounded-full" />
                     <Skeleton class="h-6 w-20 flex-shrink-0" />
                   </div>
                 {:else}
                   <!-- Collapsed header -->
-                  <Skeleton class="h-10 w-10 rounded-full flex-shrink-0" />
+                  <Skeleton class="h-10 w-10 flex-shrink-0 rounded-full" />
                 {/if}
               </div>
             </div>
 
             <!-- Playlists Container Skeleton with exact border and spacing -->
             <div
-              class="border-2 border-transparent rounded-md {!isSidebarCollapsed
+              class="rounded-md border-2 border-transparent {!isSidebarCollapsed
                 ? 'mx-2'
                 : 'mx-1'}"
             >
@@ -128,45 +128,45 @@
                 {#each Array(6), i}
                   <div
                     class="flex items-center {!isSidebarCollapsed
-                      ? 'px-2 py-1 h-[56px]'
-                      : 'px-1 py-1 h-[56px] justify-center'}"
+                      ? 'h-[56px] px-2 py-1'
+                      : 'h-[56px] justify-center px-1 py-1'}"
                   >
                     {#if !isSidebarCollapsed}
                       <!-- Full width playlist item skeleton -->
-                      <div class="flex items-center w-full space-x-3">
+                      <div class="flex w-full items-center space-x-3">
                         <div
-                          class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
+                          class="flex h-12 w-12 flex-shrink-0 items-center justify-center"
                         >
                           <!-- Simulate either image or ListVideo icon with exact dimensions -->
                           {#if i % 2 === 1}
                             <Skeleton class="h-12 w-12 rounded" />
                           {:else}
                             <div
-                              class="h-12 w-12 flex items-center justify-center bg-muted rounded"
+                              class="bg-muted flex h-12 w-12 items-center justify-center rounded"
                             >
                               <ListVideo
-                                class="h-8 w-8 text-muted-foreground opacity-50"
+                                class="text-muted-foreground h-8 w-8 opacity-50"
                               />
                             </div>
                           {/if}
                         </div>
-                        <div class="flex-1 min-w-0">
+                        <div class="min-w-0 flex-1">
                           <Skeleton class="h-4 w-full" />
                         </div>
                       </div>
                     {:else}
                       <!-- Collapsed playlist item skeleton -->
                       <div
-                        class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
+                        class="flex h-12 w-12 flex-shrink-0 items-center justify-center"
                       >
                         {#if i % 2 === 0}
                           <Skeleton class="h-12 w-12 rounded" />
                         {:else}
                           <div
-                            class="h-12 w-12 flex items-center justify-center bg-muted rounded"
+                            class="bg-muted flex h-12 w-12 items-center justify-center rounded"
                           >
                             <ListVideo
-                              class="h-8 w-8 text-muted-foreground opacity-50"
+                              class="text-muted-foreground h-8 w-8 opacity-50"
                             />
                           </div>
                         {/if}
@@ -189,16 +189,16 @@
     onDraggingChange={(isDragging) =>
       (layoutState.isDraggingDivider = isDragging)}
     draggable={true}
-    class="bg-background w-1 end-[2px] after:transition after:duration-300 after:ease-out 
-    after:h-[calc(100%-16px)] sm:flex sm:ml-1 hidden
+    class="bg-background end-[2px] hidden w-1 after:h-[calc(100%-16px)] after:transition 
+    after:duration-300 after:ease-out sm:ml-1 sm:flex
     {layoutState.isDraggingDivider
-      ? 'after:w-[1px] after:bg-foreground'
-      : 'after:w-[1px] hover:after:bg-muted-foreground'}"
+      ? 'after:bg-foreground after:w-[1px]'
+      : 'hover:after:bg-muted-foreground after:w-[1px]'}"
   />
 
   <!-- Main Content Pane -->
   <Resizable.Pane
-    class="@container pane flex min-w-[350px] sm:mr-1"
+    class="pane @container flex min-w-[350px] sm:mr-1"
     defaultSize={layout?.[1] ?? 85}
   >
     <ScrollArea
@@ -209,10 +209,10 @@
       data-scroll-area="content"
     >
       <!-- Simplified content wrapper to reduce nesting -->
-      <div class="w-full min-h-full">
-        <div class="flex justify-center items-start m-2 sm:m-4">
-          <div class="@xl:max-w-[1450px] max-w-[1000px] w-full">
-            <div class="flex flex-col mb-20 relative">
+      <div class="min-h-full w-full">
+        <div class="m-2 flex items-start justify-center sm:m-4">
+          <div class="w-full max-w-[1000px] @xl:max-w-[1450px]">
+            <div class="relative mb-20 flex flex-col">
               <LoadingOverlay {isNavigatingToContent} />
               {@render children()}
             </div>

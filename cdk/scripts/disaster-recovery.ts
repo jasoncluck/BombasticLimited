@@ -1,23 +1,34 @@
-import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
-import { S3Client, ListObjectsV2Command, GetObjectCommand } from "@aws-sdk/client-s3";
-import * as dotenv from "dotenv";
+import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
+import {
+  S3Client,
+  ListObjectsV2Command,
+  GetObjectCommand,
+} from '@aws-sdk/client-s3';
+import * as dotenv from 'dotenv';
 
 dotenv.config();
 
 const lambdaClient = new LambdaClient({
-  region: process.env.AWS_REGION || "us-west-2",
+  region: process.env.AWS_REGION || 'us-west-2',
 });
 
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION || "us-west-2",
+  region: process.env.AWS_REGION || 'us-west-2',
 });
 
-const BACKUP_FUNCTION_NAME = process.env.BACKUP_LAMBDA_FUNCTION_NAME || "BombifyDatabaseBackup-prod";
-const RESTORE_FUNCTION_NAME = process.env.RESTORE_LAMBDA_FUNCTION_NAME || "BombifyDatabaseRestore-prod";
-const BACKUP_BUCKET_NAME = process.env.BACKUP_BUCKET_NAME || "bombify-database-backups-prod";
+const BACKUP_FUNCTION_NAME =
+  process.env.BACKUP_LAMBDA_FUNCTION_NAME || 'BombifyDatabaseBackup-prod';
+const RESTORE_FUNCTION_NAME =
+  process.env.RESTORE_LAMBDA_FUNCTION_NAME || 'BombifyDatabaseRestore-prod';
+const BACKUP_BUCKET_NAME =
+  process.env.BACKUP_BUCKET_NAME || 'bombify-database-backups-prod';
 
 interface DisasterRecoveryOptions {
-  scenario: "point-in-time" | "latest" | "validate-and-restore" | "full-recovery";
+  scenario:
+    | 'point-in-time'
+    | 'latest'
+    | 'validate-and-restore'
+    | 'full-recovery';
   timestamp?: string;
   tables?: string[];
   validateFirst?: boolean;
@@ -37,77 +48,93 @@ interface DisasterRecoveryResult {
 }
 
 class DisasterRecoveryManager {
-  
-  async executeRecovery(options: DisasterRecoveryOptions): Promise<DisasterRecoveryResult> {
-    console.log("🚨 Starting Disaster Recovery Process");
-    console.log("=" .repeat(60));
+  async executeRecovery(
+    options: DisasterRecoveryOptions
+  ): Promise<DisasterRecoveryResult> {
+    console.log('🚨 Starting Disaster Recovery Process');
+    console.log('='.repeat(60));
     console.log(`Scenario: ${options.scenario}`);
     console.log(`Dry Run: ${options.dryRun || false}`);
-    
+
     const operations: any = {};
-    
+
     try {
       // Step 1: Create a pre-recovery backup if requested
       if (options.createBackupFirst) {
-        console.log("\n📦 Step 1: Creating pre-recovery backup...");
+        console.log('\n📦 Step 1: Creating pre-recovery backup...');
         operations.preBackup = await this.triggerBackup({
-          backupType: "full",
+          backupType: 'full',
           dryRun: options.dryRun,
         });
-        
+
         if (!operations.preBackup.success) {
-          throw new Error(`Pre-recovery backup failed: ${operations.preBackup.error}`);
+          throw new Error(
+            `Pre-recovery backup failed: ${operations.preBackup.error}`
+          );
         }
-        
-        console.log(`✅ Pre-recovery backup completed: ${operations.preBackup.backupKey}`);
+
+        console.log(
+          `✅ Pre-recovery backup completed: ${operations.preBackup.backupKey}`
+        );
       }
 
       // Step 2: Find and validate the target backup
-      console.log("\n🔍 Step 2: Locating target backup...");
+      console.log('\n🔍 Step 2: Locating target backup...');
       const targetBackup = await this.findTargetBackup(options);
       console.log(`Found backup: ${targetBackup.key}`);
       console.log(`Backup date: ${targetBackup.timestamp}`);
 
       // Step 3: Validate backup integrity
       if (options.validateFirst !== false) {
-        console.log("\n✅ Step 3: Validating backup integrity...");
-        operations.validation = await this.validateBackup(targetBackup.key, options.tables);
-        
+        console.log('\n✅ Step 3: Validating backup integrity...');
+        operations.validation = await this.validateBackup(
+          targetBackup.key,
+          options.tables
+        );
+
         if (!operations.validation.success) {
-          throw new Error(`Backup validation failed: ${operations.validation.error}`);
+          throw new Error(
+            `Backup validation failed: ${operations.validation.error}`
+          );
         }
-        
-        const invalidTables = Object.entries(operations.validation.validationResults || {})
+
+        const invalidTables = Object.entries(
+          operations.validation.validationResults || {}
+        )
           .filter(([_, isValid]) => !isValid)
           .map(([table, _]) => table);
-          
+
         if (invalidTables.length > 0) {
-          throw new Error(`Invalid tables found in backup: ${invalidTables.join(", ")}`);
+          throw new Error(
+            `Invalid tables found in backup: ${invalidTables.join(', ')}`
+          );
         }
-        
-        console.log("✅ Backup validation passed");
+
+        console.log('✅ Backup validation passed');
       }
 
       // Step 4: Execute restore
-      console.log("\n🔄 Step 4: Executing restore operation...");
+      console.log('\n🔄 Step 4: Executing restore operation...');
       operations.restore = await this.triggerRestore({
         backupKey: targetBackup.key,
         tables: options.tables,
         dryRun: options.dryRun,
       });
-      
+
       if (!operations.restore.success) {
-        throw new Error(`Restore operation failed: ${operations.restore.error}`);
+        throw new Error(
+          `Restore operation failed: ${operations.restore.error}`
+        );
       }
 
-      console.log("✅ Restore operation completed successfully");
+      console.log('✅ Restore operation completed successfully');
 
       // Generate summary
       const summary = this.generateSummary(options, operations, targetBackup);
-      
-      console.log("\n" + "=" .repeat(60));
-      console.log("🎉 DISASTER RECOVERY COMPLETED SUCCESSFULLY");
-      console.log("=" .repeat(60));
+
+      console.log('\n' + '='.repeat(60));
+      console.log('🎉 DISASTER RECOVERY COMPLETED SUCCESSFULLY');
+      console.log('='.repeat(60));
       console.log(summary);
 
       return {
@@ -115,12 +142,12 @@ class DisasterRecoveryManager {
         operations,
         summary,
       };
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("\n💥 DISASTER RECOVERY FAILED");
-      console.error("Error:", errorMessage);
-      
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      console.error('\n💥 DISASTER RECOVERY FAILED');
+      console.error('Error:', errorMessage);
+
       return {
         success: false,
         operations,
@@ -131,27 +158,28 @@ class DisasterRecoveryManager {
   }
 
   private async findTargetBackup(options: DisasterRecoveryOptions) {
-    const environment = process.env.ENVIRONMENT || "prod";
-    
+    const environment = process.env.ENVIRONMENT || 'prod';
+
     if (options.timestamp) {
       // Find backup by timestamp
       const date = new Date(options.timestamp).toISOString().split('T')[0];
       const prefix = `backups/${environment}/${date}/`;
-      
+
       const listCommand = new ListObjectsV2Command({
         Bucket: BACKUP_BUCKET_NAME,
         Prefix: prefix,
       });
-      
+
       const result = await s3Client.send(listCommand);
-      const backups = result.Contents?.filter(obj => 
-        obj.Key?.includes(options.timestamp!.replace(/[:.]/g, '-'))
-      ) || [];
-      
+      const backups =
+        result.Contents?.filter((obj) =>
+          obj.Key?.includes(options.timestamp!.replace(/[:.]/g, '-'))
+        ) || [];
+
       if (backups.length === 0) {
         throw new Error(`No backup found for timestamp: ${options.timestamp}`);
       }
-      
+
       const backup = backups[0];
       return {
         key: backup.Key!,
@@ -163,16 +191,18 @@ class DisasterRecoveryManager {
         Bucket: BACKUP_BUCKET_NAME,
         Prefix: `backups/${environment}/`,
       });
-      
+
       const result = await s3Client.send(listCommand);
-      const backups = result.Contents?.sort((a, b) => 
-        (b.LastModified?.getTime() || 0) - (a.LastModified?.getTime() || 0)
-      ) || [];
-      
+      const backups =
+        result.Contents?.sort(
+          (a, b) =>
+            (b.LastModified?.getTime() || 0) - (a.LastModified?.getTime() || 0)
+        ) || [];
+
       if (backups.length === 0) {
-        throw new Error("No backups found");
+        throw new Error('No backups found');
       }
-      
+
       const backup = backups[0];
       return {
         key: backup.Key!,
@@ -215,7 +245,11 @@ class DisasterRecoveryManager {
     return JSON.parse(Buffer.from(response.Payload!).toString());
   }
 
-  private generateSummary(options: DisasterRecoveryOptions, operations: any, targetBackup: any): string {
+  private generateSummary(
+    options: DisasterRecoveryOptions,
+    operations: any,
+    targetBackup: any
+  ): string {
     const lines = [
       `Disaster Recovery Summary:`,
       ``,
@@ -230,22 +264,31 @@ class DisasterRecoveryManager {
     }
 
     if (operations.validation) {
-      const validTables = Object.keys(operations.validation.validationResults || {}).length;
+      const validTables = Object.keys(
+        operations.validation.validationResults || {}
+      ).length;
       lines.push(`Validation: ${validTables} tables validated successfully`);
     }
 
     if (operations.restore) {
-      const totalRecords = Object.values(operations.restore.recordsRestored || {})
-        .reduce((sum: number, count: any) => sum + (count as number), 0);
-      const tableCount = Object.keys(operations.restore.recordsRestored || {}).length;
-      
-      lines.push(`Restore: ${totalRecords} records restored across ${tableCount} tables`);
-      
+      const totalRecords = Object.values(
+        operations.restore.recordsRestored || {}
+      ).reduce((sum: number, count: any) => sum + (count as number), 0);
+      const tableCount = Object.keys(
+        operations.restore.recordsRestored || {}
+      ).length;
+
+      lines.push(
+        `Restore: ${totalRecords} records restored across ${tableCount} tables`
+      );
+
       if (operations.restore.recordsRestored) {
         lines.push(``, `Records Restored by Table:`);
-        Object.entries(operations.restore.recordsRestored).forEach(([table, count]) => {
-          lines.push(`  ${table}: ${count} records`);
-        });
+        Object.entries(operations.restore.recordsRestored).forEach(
+          ([table, count]) => {
+            lines.push(`  ${table}: ${count} records`);
+          }
+        );
       }
     }
 
@@ -257,23 +300,23 @@ class DisasterRecoveryManager {
 
 // CLI interface
 async function main() {
-  const scenario = process.argv.includes("--scenario") 
-    ? process.argv[process.argv.indexOf("--scenario") + 1] as any
-    : "latest";
+  const scenario = process.argv.includes('--scenario')
+    ? (process.argv[process.argv.indexOf('--scenario') + 1] as any)
+    : 'latest';
 
-  const timestamp = process.argv.includes("--timestamp") 
-    ? process.argv[process.argv.indexOf("--timestamp") + 1] 
+  const timestamp = process.argv.includes('--timestamp')
+    ? process.argv[process.argv.indexOf('--timestamp') + 1]
     : undefined;
 
-  const tables = process.argv.includes("--tables") 
-    ? process.argv[process.argv.indexOf("--tables") + 1]?.split(",") 
+  const tables = process.argv.includes('--tables')
+    ? process.argv[process.argv.indexOf('--tables') + 1]?.split(',')
     : undefined;
 
-  const validateFirst = !process.argv.includes("--no-validate");
-  const createBackupFirst = process.argv.includes("--backup-first");
-  const dryRun = process.argv.includes("--dry-run");
+  const validateFirst = !process.argv.includes('--no-validate');
+  const createBackupFirst = process.argv.includes('--backup-first');
+  const dryRun = process.argv.includes('--dry-run');
 
-  if (process.argv.includes("--help") || process.argv.includes("-h")) {
+  if (process.argv.includes('--help') || process.argv.includes('-h')) {
     console.log(`
 🚨 Disaster Recovery Automation Tool
 
@@ -312,7 +355,7 @@ Environment Variables:
   }
 
   const manager = new DisasterRecoveryManager();
-  
+
   const result = await manager.executeRecovery({
     scenario,
     timestamp,
@@ -323,11 +366,11 @@ Environment Variables:
   });
 
   if (!result.success) {
-    console.error("\n💥 Disaster recovery failed!");
+    console.error('\n💥 Disaster recovery failed!');
     process.exit(1);
   }
 
-  console.log("\n🎉 Disaster recovery completed successfully!");
+  console.log('\n🎉 Disaster recovery completed successfully!');
 }
 
 // Export for use as a module
@@ -336,7 +379,7 @@ export { DisasterRecoveryManager };
 // Run if called directly
 if (require.main === module) {
   main().catch((error) => {
-    console.error("💥 Error:", error);
+    console.error('💥 Error:', error);
     process.exit(1);
   });
 }

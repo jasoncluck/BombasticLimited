@@ -1,9 +1,9 @@
-import { isSource, type Source } from "$lib/constants/source";
-import { DEFAULT_NUM_VIDEOS_PAGINATION, getVideos } from "$lib/supabase/videos";
-import { redirect } from "@sveltejs/kit";
-import type { PageServerLoad } from "./$types";
-import { isVideoFilter } from "$lib/components/content/content-filter";
-import { getPaginationQueryParams } from "$lib/components/pagination/pagination";
+import { isSource, type Source } from '$lib/constants/source';
+import { DEFAULT_NUM_VIDEOS_PAGINATION, getVideos } from '$lib/supabase/videos';
+import { redirect } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
+import { isVideoFilter } from '$lib/components/content/content-filter';
+import { getPaginationQueryParams } from '$lib/components/pagination/pagination';
 
 export const load: PageServerLoad = async ({
   params,
@@ -12,18 +12,18 @@ export const load: PageServerLoad = async ({
   locals: { supabase, session },
   depends,
 }) => {
-  depends("supabase:db:videos");
+  depends('supabase:db:videos');
 
   const { contentFilter } = await parent();
   const source = params.source as Source;
 
   if (!params.source || !isSource(params.source)) {
-    redirect(303, "/");
+    redirect(303, '/');
   }
   const searchString = params.query;
 
   if (!isVideoFilter(contentFilter)) {
-    throw new Error("Invalid content filter");
+    throw new Error('Invalid content filter');
   }
 
   const currentPage = getPaginationQueryParams({

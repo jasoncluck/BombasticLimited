@@ -1,21 +1,21 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
-  import { Button, buttonVariants } from "$lib/components/ui/button";
-  import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
-  import * as Drawer from "$lib/components/ui/drawer/index.js";
+  import { goto } from '$app/navigation';
+  import { Button, buttonVariants } from '$lib/components/ui/button';
+  import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
+  import * as Drawer from '$lib/components/ui/drawer/index.js';
   import {
     Cog,
     GalleryHorizontal,
     LogOut,
     Table,
     UserCircle,
-  } from "@lucide/svelte";
-  import { handleUpdateProfileContentDisplay } from "$lib/components/profile/profile-service";
-  import type { LayoutState } from "$lib/state/layout.svelte.js";
-  import type { ContentState } from "$lib/state/content.svelte.js";
-  import type { Session, SupabaseClient } from "@supabase/supabase-js";
-  import type { Database } from "$lib/supabase/database.types";
-  import type { UserProfile } from "$lib/supabase/user-profiles";
+  } from '@lucide/svelte';
+  import { handleUpdateProfileContentDisplay } from '$lib/components/profile/profile-service';
+  import type { LayoutState } from '$lib/state/layout.svelte.js';
+  import type { ContentState } from '$lib/state/content.svelte.js';
+  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { Database } from '$lib/supabase/database.types';
+  import type { UserProfile } from '$lib/supabase/user-profiles';
 
   let {
     userProfile,
@@ -43,12 +43,12 @@
       data-testid="user-preferences"
       id="user-preferences"
       class={buttonVariants({
-        variant: "outline",
-        class: "sm:block hidden cursor-pointer outline-none",
+        variant: 'outline',
+        class: 'hidden cursor-pointer outline-none sm:block',
       })}
     >
       <div class="flex items-center gap-2">
-        {#if userProfile?.content_display === "TILES"}
+        {#if userProfile?.content_display === 'TILES'}
           <div class="flex items-center gap-2">
             <GalleryHorizontal />
             Card
@@ -66,10 +66,10 @@
         <DropdownMenu.Item
           class="cursor-pointer"
           onclick={() => {
-            if (userProfile?.content_display !== "TILES") {
+            if (userProfile?.content_display !== 'TILES') {
               contentState.resetState();
               handleUpdateProfileContentDisplay({
-                contentDisplay: "TILES",
+                contentDisplay: 'TILES',
                 supabase,
                 session,
               });
@@ -84,10 +84,10 @@
         <DropdownMenu.Item
           class="cursor-pointer"
           onclick={() => {
-            if (userProfile?.content_display !== "TABLE") {
+            if (userProfile?.content_display !== 'TABLE') {
               contentState.resetState();
               handleUpdateProfileContentDisplay({
-                contentDisplay: "TABLE",
+                contentDisplay: 'TABLE',
                 supabase,
                 session,
               });
@@ -121,7 +121,7 @@
         <DropdownMenu.Group>
           <DropdownMenu.Item
             class="cursor-pointer"
-            onclick={() => goto("/account")}
+            onclick={() => goto('/account')}
           >
             <div class="flex items-center gap-2">
               <Cog />
@@ -146,9 +146,9 @@
     <Drawer.Root bind:open={openAccountDrawer}>
       <Drawer.Trigger
         class={buttonVariants({
-          variant: "outline",
-          size: "icon",
-          class: "cursor-pointer",
+          variant: 'outline',
+          size: 'icon',
+          class: 'cursor-pointer',
         })}
       >
         <UserCircle class="h-[1.2rem] w-[1.2rem]" />
@@ -159,7 +159,7 @@
           variant="ghost"
           class="drawer-button"
           onclick={() => {
-            goto("/account");
+            goto('/account');
             openAccountDrawer = false;
           }}
         >
@@ -180,8 +180,8 @@
         <Drawer.Footer>
           <Drawer.Close
             class={buttonVariants({
-              class: "drawer-button-footer",
-              variant: "outline",
+              class: 'drawer-button-footer',
+              variant: 'outline',
             })}
           >
             Close
@@ -195,7 +195,7 @@
   <Button
     class="cursor-pointer"
     data-testid="login-button"
-    onclick={() => goto("/auth/login")}
+    onclick={() => goto('/auth/login')}
     variant="outline"
   >
     Login

@@ -2,18 +2,18 @@ import {
   createBrowserClient,
   createServerClient,
   isBrowser,
-} from "@supabase/ssr";
+} from '@supabase/ssr';
 import {
   PUBLIC_SUPABASE_ANON_KEY,
   PUBLIC_SUPABASE_URL,
-} from "$env/static/public";
-import type { LayoutLoad } from "./$types";
-import { COLLAPSED_SIDEBAR_SIZE } from "$lib/constants/layout";
+} from '$env/static/public';
+import type { LayoutLoad } from './$types';
+import { COLLAPSED_SIDEBAR_SIZE } from '$lib/constants/layout';
 import type {
   CombinedContentFilter,
   VideoFilter,
-} from "$lib/components/content/content-filter";
-import type { UserProfile } from "$lib/supabase/user-profiles";
+} from '$lib/components/content/content-filter';
+import type { UserProfile } from '$lib/supabase/user-profiles';
 
 export const load = async ({
   data,
@@ -24,7 +24,7 @@ export const load = async ({
    * Declare a dependency so the layout can be invalidated, for example, on
    * session refresh.
    */
-  depends("supabase:auth");
+  depends('supabase:auth');
 
   const supabase = isBrowser()
     ? createBrowserClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
@@ -63,8 +63,8 @@ export const load = async ({
       supabase,
       playlistsCount: null as number | null,
       contentFilter: {
-        sort: { key: "datePublished", order: "descending" },
-        type: "video",
+        sort: { key: 'datePublished', order: 'descending' },
+        type: 'video',
       } as VideoFilter,
       userProfile: null as UserProfile | null,
       isSidebarCollapsed: false,
@@ -102,22 +102,22 @@ export const load = async ({
       // If it's already an array, use it directly
       if (Array.isArray(layout)) {
         parsedLayout = layout.every(
-          (item) => typeof item === "number" && !isNaN(item),
+          (item) => typeof item === 'number' && !isNaN(item)
         )
           ? layout
           : null;
       }
       // If it's a string, try to parse it
-      else if (typeof layout === "string") {
+      else if (typeof layout === 'string') {
         const parsed = JSON.parse(layout);
         parsedLayout =
           Array.isArray(parsed) &&
-          parsed.every((item) => typeof item === "number" && !isNaN(item))
+          parsed.every((item) => typeof item === 'number' && !isNaN(item))
             ? parsed
             : null;
       }
     } catch (error) {
-      console.warn("Failed to process layout:", layout, error);
+      console.warn('Failed to process layout:', layout, error);
       parsedLayout = null;
     }
   }

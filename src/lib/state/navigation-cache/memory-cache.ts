@@ -27,7 +27,7 @@ export class OptimizedMemoryCache {
     data: T,
     ttl = 300000,
     userId: string | null = null,
-    preloaded = false,
+    preloaded = false
   ): void {
     const size = this.calculateSize(data);
 
@@ -62,13 +62,13 @@ export class OptimizedMemoryCache {
     userId?: string | null;
     preloaded?: boolean;
   }): void {
-    if (message.type === "CACHE_SET" && message.data) {
+    if (message.type === 'CACHE_SET' && message.data) {
       this.internalSet(
         message.key,
         message.data,
         message.ttl,
         message.userId,
-        message.preloaded || false,
+        message.preloaded || false
       );
     }
   }

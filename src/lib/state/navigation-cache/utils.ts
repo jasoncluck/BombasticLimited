@@ -1,4 +1,4 @@
-import { browser } from "$app/environment";
+import { browser } from '$app/environment';
 
 export function extractPathname(url: string): string {
   try {
@@ -11,7 +11,7 @@ export function extractPathname(url: string): string {
 export function generateCacheKey(
   url: string,
   userId: string | null,
-  anonymousId: string | null,
+  anonymousId: string | null
 ): string {
   const pathname = extractPathname(url);
   const effectiveUserId = getEffectiveUserId(userId, anonymousId);
@@ -20,9 +20,9 @@ export function generateCacheKey(
 
 export function getEffectiveUserId(
   userId: string | null,
-  anonymousId: string | null,
+  anonymousId: string | null
 ): string {
-  return userId || anonymousId || "anonymous";
+  return userId || anonymousId || 'anonymous';
 }
 
 export function initializeAnonymousId(storageKey: string): string | null {

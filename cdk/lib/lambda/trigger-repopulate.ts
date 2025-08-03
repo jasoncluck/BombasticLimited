@@ -1,5 +1,5 @@
-import { SFNClient, StartExecutionCommand } from "@aws-sdk/client-sfn";
-import { CHANNEL_SOURCES, ChannelSource } from "../channel";
+import { SFNClient, StartExecutionCommand } from '@aws-sdk/client-sfn';
+import { CHANNEL_SOURCES, ChannelSource } from '../channel';
 
 const sfn = new SFNClient({});
 
@@ -28,13 +28,13 @@ export async function handler(event: {
     return {
       statusCode: 200,
       body: JSON.stringify({
-        message: "Repopulation started",
+        message: 'Repopulation started',
         executionArn: result.executionArn,
         sources: sourcesToProcess,
       }),
     };
   } catch (error) {
-    console.error("Error starting repopulation:", error);
+    console.error('Error starting repopulation:', error);
     throw error;
   }
 }

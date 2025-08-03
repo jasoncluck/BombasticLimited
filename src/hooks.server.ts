@@ -1,11 +1,11 @@
-import { createServerClient } from "@supabase/ssr";
-import { type Handle, redirect } from "@sveltejs/kit";
-import { sequence } from "@sveltejs/kit/hooks";
+import { createServerClient } from '@supabase/ssr';
+import { type Handle, redirect } from '@sveltejs/kit';
+import { sequence } from '@sveltejs/kit/hooks';
 
 import {
   PUBLIC_SUPABASE_URL,
   PUBLIC_SUPABASE_ANON_KEY,
-} from "$env/static/public";
+} from '$env/static/public';
 
 const supabase: Handle = async ({ event, resolve }) => {
   /**
@@ -19,7 +19,7 @@ const supabase: Handle = async ({ event, resolve }) => {
     {
       auth: {
         detectSessionInUrl: true,
-        flowType: "pkce",
+        flowType: 'pkce',
       },
       cookies: {
         getAll: () => event.cookies.getAll(),
@@ -30,23 +30,23 @@ const supabase: Handle = async ({ event, resolve }) => {
          */
         setAll: (cookiesToSet) => {
           cookiesToSet.forEach(({ name, value, options }) => {
-            event.cookies.set(name, value, { ...options, path: "/" });
+            event.cookies.set(name, value, { ...options, path: '/' });
           });
         },
       },
-    },
+    }
   );
-  const code = event.url.searchParams.get("code");
-  if (code && event.url.pathname === "/auth/password/update") {
+  const code = event.url.searchParams.get('code');
+  if (code && event.url.pathname === '/auth/password/update') {
     try {
       const { data, error } =
         await event.locals.supabase.auth.exchangeCodeForSession(code);
       if (!error && data.session) {
         // Session established, the user can now update their password
-        console.log("Password reset session established");
+        console.log('Password reset session established');
       }
     } catch (err) {
-      console.error("Error exchanging code for session:", err);
+      console.error('Error exchanging code for session:', err);
     }
   }
 
@@ -78,7 +78,7 @@ const supabase: Handle = async ({ event, resolve }) => {
        * Supabase libraries use the `content-range` and `x-supabase-api-version`
        * headers, so we need to tell SvelteKit to pass it through.
        */
-      return name === "content-range" || name === "x-supabase-api-version";
+      return name === 'content-range' || name === 'x-supabase-api-version';
     },
   });
 };
@@ -87,8 +87,8 @@ const authGuard: Handle = async ({ event, resolve }) => {
   const { session } = await event.locals.safeGetSession();
   event.locals.session = session;
 
-  if (!event.locals.session && event.url.pathname.startsWith("/account")) {
-    redirect(303, "/auth/login");
+  if (!event.locals.session && event.url.pathname.startsWith('/account')) {
+    redirect(303, '/auth/login');
   }
 
   return resolve(event);

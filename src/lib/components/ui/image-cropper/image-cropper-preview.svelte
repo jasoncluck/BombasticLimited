@@ -3,10 +3,10 @@
 -->
 
 <script lang="ts">
-  import * as Avatar from "$lib/components/ui/avatar";
-  import type { ImageCropperPreviewProps } from "./types";
-  import { useImageCropperPreview } from "./image-cropper.svelte.js";
-  import { cn } from "$lib/utils/utils";
+  import * as Avatar from '$lib/components/ui/avatar';
+  import type { ImageCropperPreviewProps } from './types';
+  import { useImageCropperPreview } from './image-cropper.svelte.js';
+  import { cn } from '$lib/utils/utils';
 
   let { child, class: className }: ImageCropperPreviewProps = $props();
 
@@ -18,8 +18,8 @@
 {:else}
   <Avatar.Root
     class={cn(
-      "ring-accent ring-offset-background size-20 ring-2 ring-offset-2",
-      className,
+      'ring-accent ring-offset-background size-20 ring-2 ring-offset-2',
+      className
     )}
   >
     <Avatar.Image src={previewState.rootState.src} />

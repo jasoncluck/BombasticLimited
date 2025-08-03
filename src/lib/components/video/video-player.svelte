@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { videoDurationToSeconds } from "$lib/components/video/video-service.js";
-  import YoutubeEmbed from "$lib/components/video/youtube-embed.svelte";
-  import { getPageState } from "$lib/state/page.svelte";
-  import type { Playlist } from "$lib/supabase/playlists";
-  import type { Video } from "$lib/supabase/videos";
-  import type { Session, SupabaseClient } from "@supabase/supabase-js";
-  import type { CombinedContentFilter } from "../content/content-filter";
-  import ContentDropdown from "../content/content-dropdown.svelte";
-  import { Ellipsis } from "@lucide/svelte";
-  import Button from "../ui/button/button.svelte";
-  import { getContentState } from "$lib/state/content.svelte";
-  import { getMediaQueryState } from "$lib/state/media-query.svelte";
+  import { videoDurationToSeconds } from '$lib/components/video/video-service.js';
+  import YoutubeEmbed from '$lib/components/video/youtube-embed.svelte';
+  import { getPageState } from '$lib/state/page.svelte';
+  import type { Playlist } from '$lib/supabase/playlists';
+  import type { Video } from '$lib/supabase/videos';
+  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { CombinedContentFilter } from '../content/content-filter';
+  import ContentDropdown from '../content/content-dropdown.svelte';
+  import { Ellipsis } from '@lucide/svelte';
+  import Button from '../ui/button/button.svelte';
+  import { getContentState } from '$lib/state/content.svelte';
+  import { getMediaQueryState } from '$lib/state/media-query.svelte';
 
   interface ProcessedLine {
     text: string;
@@ -24,7 +24,7 @@
     contentFilter,
     supabase,
     session,
-    baseUrl = "/video",
+    baseUrl = '/video',
   }: {
     video: Video;
     playlist?: Playlist | null;
@@ -46,7 +46,7 @@
     // Regular expression to match timestamps (e.g., hh:mm:ss, mm:ss, h:mm:ss)
     const timestampRegex = /\b(\d{1,2}):(\d{2})(?::(\d{2}))?\b/g;
 
-    const lines = description.split("\n");
+    const lines = description.split('\n');
     const processedLines: ProcessedLine[] = [];
 
     for (const line of lines) {
@@ -86,10 +86,10 @@
   };
 
   const formatPublishedDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     });
   };
 </script>
@@ -104,7 +104,7 @@
     durationSeconds={videoDurationToSeconds(video?.duration)}
   />
 
-  <div class="flex justify-between mt-6">
+  <div class="mt-6 flex justify-between">
     <div class="flex flex-wrap items-center gap-2">
       <p class="font-semibold">{video.title}</p>
 
@@ -124,13 +124,13 @@
       {:else}
         <Button
           variant="ghost"
-          class="outline-none ghost-button-minimal"
+          class="ghost-button-minimal outline-none"
           onclick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             contentState.handleDrawer({
               video,
-              variant: "item",
+              variant: 'item',
             });
           }}
         >
@@ -141,12 +141,12 @@
   </div>
 
   {#if video?.description}
-    <div class="whitespace-pre-line mt-4">
+    <div class="mt-4 whitespace-pre-line">
       {#each processTimestamps(video.description) as line (line)}
         {#if line.hasTimestamp}
           <div>
             <a
-              class="timestamp-link text-left w-full hover:underline hover:text-primary"
+              class="timestamp-link hover:text-primary w-full text-left hover:underline"
               href="{baseUrl}/{video.id}?t={line.timestamp}"
               onclick={() => {
                 pageState.contentScrollPosition = { scrollTop: 0 };

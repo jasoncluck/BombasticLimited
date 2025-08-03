@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { dragHandleZone, dragHandle } from "svelte-dnd-action";
-  import type { DndEvent } from "svelte-dnd-action";
-  import { flip } from "svelte/animate";
-  import { Menu } from "@lucide/svelte";
-  import FullHeightDrawer from "./full-height-drawer.svelte";
-  import type { Video } from "$lib/supabase/videos";
-  import type { Playlist } from "$lib/supabase/playlists";
-  import type { Snippet } from "svelte";
+  import { dragHandleZone, dragHandle } from 'svelte-dnd-action';
+  import type { DndEvent } from 'svelte-dnd-action';
+  import { flip } from 'svelte/animate';
+  import { Menu } from '@lucide/svelte';
+  import FullHeightDrawer from './full-height-drawer.svelte';
+  import type { Video } from '$lib/supabase/videos';
+  import type { Playlist } from '$lib/supabase/playlists';
+  import type { Snippet } from 'svelte';
 
   // Base interface that all reorderable items must implement
   interface ReorderableBase {
@@ -18,10 +18,10 @@
 
   let {
     items,
-    title = "Reorder items",
-    subtitle = "Drag the handle to reorder items",
-    triggerClass = "",
-    triggerVariant = "ghost",
+    title = 'Reorder items',
+    subtitle = 'Drag the handle to reorder items',
+    triggerClass = '',
+    triggerVariant = 'ghost',
     onClose,
     trigger,
     onReorder,
@@ -33,17 +33,17 @@
     subtitle?: string;
     triggerClass?: string;
     triggerVariant?:
-      | "default"
-      | "destructive"
-      | "outline"
-      | "secondary"
-      | "ghost"
-      | "link";
+      | 'default'
+      | 'destructive'
+      | 'outline'
+      | 'secondary'
+      | 'ghost'
+      | 'link';
     onClose?: () => void;
     onReorder?: (
       oldIndex: number,
       newIndex: number,
-      item: ReorderableItem,
+      item: ReorderableItem
     ) => Promise<void> | void;
     trigger: Snippet;
     itemRenderer: Snippet<[ReorderableItem, number]>;
@@ -63,7 +63,7 @@
     items?.map((item) => ({
       ...item,
       id: item.id, // Ensure each item has a unique id
-    })) || [],
+    })) || []
   );
 
   function handleDndConsider(e: CustomEvent<DndEvent>) {
@@ -84,7 +84,7 @@
     const newOrder = updatedItems.map((item) => item.id);
 
     const orderChanged = !originalOrder.every(
-      (id, index) => id === newOrder[index],
+      (id, index) => id === newOrder[index]
     );
 
     // Reset original order for next drag operation
@@ -94,7 +94,7 @@
     if (!orderChanged) {
       // Revert to original order
       const originalItems = storedOriginalOrder.map(
-        (id) => items.find((item) => item.id === id)!,
+        (id) => items.find((item) => item.id === id)!
       );
       items = originalItems;
       return;
@@ -127,7 +127,7 @@
         } catch {
           // Revert to original order on error
           const originalItems = storedOriginalOrder.map(
-            (id) => items.find((item) => item.id === id)!,
+            (id) => items.find((item) => item.id === id)!
           );
           items = originalItems;
           return;
@@ -158,10 +158,10 @@
       use:dragHandleZone={{
         items: dndItems,
         flipDurationMs,
-        type: "reorderable-item",
+        type: 'reorderable-item',
         dropTargetStyle: {
-          outline: "rgba(99, 102, 241, 0.5) solid 2px",
-          backgroundColor: "rgba(99, 102, 241, 0.1)",
+          outline: 'rgba(99, 102, 241, 0.5) solid 2px',
+          backgroundColor: 'rgba(99, 102, 241, 0.1)',
         },
       }}
       onconsider={handleDndConsider}
@@ -170,15 +170,15 @@
       {#each dndItems as item, index (item.id)}
         <div
           animate:flip={{ duration: flipDurationMs }}
-          class="flex gap-2 items-center content-table-row select-none transition-colors duration-200 hover:bg-secondary/50 p-2 rounded cursor-grab active:cursor-grabbing"
+          class="content-table-row hover:bg-secondary/50 flex cursor-grab items-center gap-2 rounded p-2 transition-colors duration-200 select-none active:cursor-grabbing"
         >
           {@render itemRenderer(item, index)}
           <div
             use:dragHandle
             aria-label={`drag-handle for item ${item.id}`}
-            class="flex items-center justify-center w-6 h-6 cursor-grab hover:bg-secondary rounded shrink-0"
+            class="hover:bg-secondary flex h-6 w-6 shrink-0 cursor-grab items-center justify-center rounded"
           >
-            <Menu class="w-4 h-4 text-muted-foreground" />
+            <Menu class="text-muted-foreground h-4 w-4" />
           </div>
         </div>
       {/each}
@@ -186,7 +186,7 @@
   {:else if emptyState}
     {@render emptyState()}
   {:else}
-    <div class="flex items-center justify-center h-32">
+    <div class="flex h-32 items-center justify-center">
       <p class="text-muted-foreground">No items to reorder</p>
     </div>
   {/if}

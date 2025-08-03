@@ -1,7 +1,7 @@
-import { browser } from "$app/environment";
-import type { NavigationCacheState } from "$lib/state/navigation-cache/navigation-cache.svelte.js";
-import type { Session } from "@supabase/supabase-js";
-import { MAIN_ROUTES, MAIN_ROUTE_CONFIG } from "$lib/constants/routes.js";
+import { browser } from '$app/environment';
+import type { NavigationCacheState } from '$lib/state/navigation-cache/navigation-cache.svelte.js';
+import type { Session } from '@supabase/supabase-js';
+import { MAIN_ROUTES, MAIN_ROUTE_CONFIG } from '$lib/constants/routes.js';
 
 export function usePreloading(navigationCache: NavigationCacheState) {
   // Main navigation routes for UI reference
@@ -13,12 +13,12 @@ export function usePreloading(navigationCache: NavigationCacheState) {
 
     // Only preload paginated versions that service worker doesn't cache
     const paginatedRoutes: Record<string, string[]> = {
-      [MAIN_ROUTES.GIANTBOMB]: ["/giantbomb?page=2", "/giantbomb/latest"],
-      [MAIN_ROUTES.NEXTLANDER]: ["/nextlander?page=2", "/nextlander/latest"],
-      [MAIN_ROUTES.REMAP]: ["/remap?page=2", "/remap/latest"],
+      [MAIN_ROUTES.GIANTBOMB]: ['/giantbomb?page=2', '/giantbomb/latest'],
+      [MAIN_ROUTES.NEXTLANDER]: ['/nextlander?page=2', '/nextlander/latest'],
+      [MAIN_ROUTES.REMAP]: ['/remap?page=2', '/remap/latest'],
       [MAIN_ROUTES.JEFFGERSTMANN]: [
-        "/jeffgerstmann?page=2",
-        "/jeffgerstmann/latest",
+        '/jeffgerstmann?page=2',
+        '/jeffgerstmann/latest',
       ],
     };
 

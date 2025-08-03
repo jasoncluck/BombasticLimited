@@ -1,19 +1,19 @@
 <script lang="ts">
-  import { CalendarIcon } from "@lucide/svelte";
-  import { Calendar } from "$lib/components/ui/calendar/index.js";
-  import * as Popover from "$lib/components/ui/popover/index.js";
-  import * as Select from "$lib/components/ui/select/index.js";
-  import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
-  import { cn } from "$lib/utils.js";
+  import { CalendarIcon } from '@lucide/svelte';
+  import { Calendar } from '$lib/components/ui/calendar/index.js';
+  import * as Popover from '$lib/components/ui/popover/index.js';
+  import * as Select from '$lib/components/ui/select/index.js';
+  import { Button, buttonVariants } from '$lib/components/ui/button/index.js';
+  import { cn } from '$lib/utils.js';
   import {
     DateFormatter,
     today,
     getLocalTimeZone,
     type DateValue,
-  } from "@internationalized/date";
+  } from '@internationalized/date';
 
   let {
-    label = "Date",
+    label = 'Date',
     value = $bindable(),
     isOpen,
     items = [],
@@ -31,7 +31,7 @@
   } = $props();
 
   let valueString = $derived(
-    value ? dateFormatter.format(value.toDate(getLocalTimeZone())) : "",
+    value ? dateFormatter.format(value.toDate(getLocalTimeZone())) : ''
   );
 
   function handleDatePresetChange(v: string) {
@@ -50,10 +50,10 @@
   <Popover.Trigger
     class={cn(
       buttonVariants({
-        variant: "outline",
-        class: "max-w-[240px] justify-start text-left font-normal text-xs",
+        variant: 'outline',
+        class: 'max-w-[240px] justify-start text-left text-xs font-normal',
       }),
-      !value && "text-muted-foreground",
+      !value && 'text-muted-foreground'
     )}
   >
     <CalendarIcon />

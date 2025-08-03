@@ -1,6 +1,6 @@
-import type { HighlightPlaylist } from "$lib/constants/source";
-import type { Playlist } from "$lib/supabase/playlists";
-import type { Video } from "$lib/supabase/videos";
+import type { HighlightPlaylist } from '$lib/constants/source';
+import type { Playlist } from '$lib/supabase/playlists';
+import type { Video } from '$lib/supabase/videos';
 
 interface CachedPlaylistData {
   playlist: Playlist;
@@ -19,18 +19,18 @@ class PlaylistCache {
 
   private getCacheKey(
     source: string,
-    highlightedPlaylists: HighlightPlaylist[],
+    highlightedPlaylists: HighlightPlaylist[]
   ): string {
     const playlistIds = highlightedPlaylists
       .map((p) => p.youtubeId)
       .sort()
-      .join(",");
+      .join(',');
     return `highlighted-playlists-${source}-${playlistIds}`;
   }
 
   get(
     source: string,
-    highlightedPlaylists: HighlightPlaylist[],
+    highlightedPlaylists: HighlightPlaylist[]
   ): CachedPlaylistData[] | null {
     const key = this.getCacheKey(source, highlightedPlaylists);
     const entry = this.cache.get(key);
@@ -49,7 +49,7 @@ class PlaylistCache {
   set(
     source: string,
     highlightedPlaylists: HighlightPlaylist[],
-    data: CachedPlaylistData[],
+    data: CachedPlaylistData[]
   ): void {
     const key = this.getCacheKey(source, highlightedPlaylists);
     const entry: CacheEntry = {
@@ -79,11 +79,11 @@ class PlaylistCache {
 export const playlistCache = new PlaylistCache();
 
 // Clean up expired entries every 10 minutes
-if (typeof window !== "undefined") {
+if (typeof window !== 'undefined') {
   setInterval(
     () => {
       playlistCache.cleanup();
     },
-    10 * 60 * 1000,
+    10 * 60 * 1000
   );
 }

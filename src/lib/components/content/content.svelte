@@ -1,39 +1,39 @@
 <script lang="ts">
-  import type { Database } from "$lib/supabase/database.types";
-  import type { Session, SupabaseClient } from "@supabase/supabase-js";
-  import { type CarouselState, type TilesDisplay } from "./content";
+  import type { Database } from '$lib/supabase/database.types';
+  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import { type CarouselState, type TilesDisplay } from './content';
   import {
     DEFAULT_NUM_VIDEOS_PAGINATION,
     type Video,
     type VideoWithTimestamp,
-  } from "$lib/supabase/videos";
-  import type { HTMLAttributes } from "svelte/elements";
-  import { type Playlist } from "$lib/supabase/playlists";
-  import { onMount } from "svelte";
+  } from '$lib/supabase/videos';
+  import type { HTMLAttributes } from 'svelte/elements';
+  import { type Playlist } from '$lib/supabase/playlists';
+  import { onMount } from 'svelte';
   import {
     DEFAULT_SECTION_ID,
     getContentState,
-  } from "$lib/state/content.svelte";
-  import type { CombinedContentFilter } from "./content-filter";
-  import { createContentColumns } from "./table/content-table-columns";
-  import ContentTable from "./table/content-table.svelte";
-  import { getPlaylistState } from "$lib/state/playlist.svelte";
-  import ContentCarousel from "./content-carousel.svelte";
-  import ContentTiles from "./content-tiles.svelte";
-  import type { UserProfile } from "$lib/supabase/user-profiles";
-  import ContentContextMenu from "./content-context-menu.svelte";
-  import ContentDrawer from "./content-drawer.svelte";
-  import { onNavigate } from "$app/navigation";
-  import { getMediaQueryState } from "$lib/state/media-query.svelte";
-  import { page } from "$app/state";
+  } from '$lib/state/content.svelte';
+  import type { CombinedContentFilter } from './content-filter';
+  import { createContentColumns } from './table/content-table-columns';
+  import ContentTable from './table/content-table.svelte';
+  import { getPlaylistState } from '$lib/state/playlist.svelte';
+  import ContentCarousel from './content-carousel.svelte';
+  import ContentTiles from './content-tiles.svelte';
+  import type { UserProfile } from '$lib/supabase/user-profiles';
+  import ContentContextMenu from './content-context-menu.svelte';
+  import ContentDrawer from './content-drawer.svelte';
+  import { onNavigate } from '$app/navigation';
+  import { getMediaQueryState } from '$lib/state/media-query.svelte';
+  import { page } from '$app/state';
   import {
     getNumberOfPages,
     PAGINATION_QUERY_KEY,
     updatePaginationQueryParams,
-  } from "../pagination/pagination";
-  import Pagination from "../pagination/pagination.svelte";
-  import { getPageState } from "$lib/state/page.svelte";
-  import { getSidebarState } from "$lib/state/sidebar.svelte";
+  } from '../pagination/pagination';
+  import Pagination from '../pagination/pagination.svelte';
+  import { getPageState } from '$lib/state/page.svelte';
+  import { getSidebarState } from '$lib/state/sidebar.svelte';
 
   type ContentProps = HTMLAttributes<HTMLDivElement> & {
     videos: Video[] | VideoWithTimestamp[];
@@ -77,7 +77,7 @@
 
   const pageFromQueryParams = page.url.searchParams.get(PAGINATION_QUERY_KEY);
   let currentPage = $state(
-    pageFromQueryParams ? parseInt(pageFromQueryParams) : 1,
+    pageFromQueryParams ? parseInt(pageFromQueryParams) : 1
   );
 
   const columns = $derived(
@@ -91,14 +91,14 @@
       sectionId,
       supabase,
       session,
-    }),
+    })
   );
 
   const numPages = $derived(
     getNumberOfPages({
       count: videosCount ?? 0,
       perPage: DEFAULT_NUM_VIDEOS_PAGINATION,
-    }),
+    })
   );
 
   // Get current playlist context for the context menu
@@ -137,13 +137,13 @@
 
 <div class="mt-2">
   {#if videos.length < 1}
-    <div {...restProps} class="flex items-center justify-center h-[180px]">
-      <p>{playlist ? "Playlist is empty" : "No results found"}</p>
+    <div {...restProps} class="flex h-[180px] items-center justify-center">
+      <p>{playlist ? 'Playlist is empty' : 'No results found'}</p>
     </div>
   {/if}
 
   {#if currentPage && numPages > 1}
-    <div class="mb-4 mt-4 sm:mt-2">
+    <div class="mt-4 mb-4 sm:mt-2">
       <Pagination
         count={videosCount ?? 0}
         bind:currentPage
@@ -152,7 +152,7 @@
           updatePaginationQueryParams({
             pageNum,
             url: page.url,
-            invalidate: ["supabase:db:videos"],
+            invalidate: ['supabase:db:videos'],
           });
         }}
       />
@@ -160,7 +160,7 @@
   {/if}
   <ContentContextMenu
     playlist={currentPlaylist}
-    preserveSelectionAfterAction={userProfile?.content_display === "TABLE" ||
+    preserveSelectionAfterAction={userProfile?.content_display === 'TABLE' ||
       (!mediaQueryState.isSm && !mediaQueryState.canHover)}
     {sectionId}
     {playlists}
@@ -193,7 +193,7 @@
 
         <!-- User preference for larger screens (sm and above) -->
         <div class="hidden sm:block">
-          {#if userProfile?.content_display === "TABLE"}
+          {#if userProfile?.content_display === 'TABLE'}
             <ContentTable
               {videos}
               {contentFilter}
@@ -205,7 +205,7 @@
               {supabase}
               {session}
             />
-          {:else if tilesDisplay === "CAROUSEL"}
+          {:else if tilesDisplay === 'CAROUSEL'}
             <ContentCarousel
               {videos}
               {videosCount}
@@ -249,7 +249,7 @@
         updatePaginationQueryParams({
           pageNum,
           url: page.url,
-          invalidate: ["supabase:db:videos"],
+          invalidate: ['supabase:db:videos'],
         });
 
         pageState.contentScrollPosition = { scrollTop: 0, scrollLeft: 0 };

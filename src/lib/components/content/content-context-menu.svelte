@@ -1,32 +1,32 @@
 <script lang="ts">
-  import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
-  import { getContentState } from "$lib/state/content.svelte";
-  import { type Playlist } from "$lib/supabase/playlists";
-  import type { Database } from "$lib/supabase/database.types";
-  import type { Session, SupabaseClient } from "@supabase/supabase-js";
+  import * as ContextMenu from '$lib/components/ui/context-menu/index.js';
+  import { getContentState } from '$lib/state/content.svelte';
+  import { type Playlist } from '$lib/supabase/playlists';
+  import type { Database } from '$lib/supabase/database.types';
+  import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import {
     handleAddVideosToPlaylist,
     handleRemoveVideosFromPlaylist,
     handleUpdatePlaylistImage,
-  } from "../playlist/playlist-service";
-  import type { Snippet } from "svelte";
-  import { ScrollArea } from "../ui/scroll-area";
-  import { isVideoWithTimestamp } from "$lib/supabase/videos";
-  import { getMediaQueryState } from "$lib/state/media-query.svelte";
+  } from '../playlist/playlist-service';
+  import type { Snippet } from 'svelte';
+  import { ScrollArea } from '../ui/scroll-area';
+  import { isVideoWithTimestamp } from '$lib/supabase/videos';
+  import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import {
     handleAddVideoTimestamps,
     handleDeleteVideosTimestamp,
-  } from "../video/video-service";
-  import { Portal } from "bits-ui";
-  import { page } from "$app/state";
+  } from '../video/video-service';
+  import { Portal } from 'bits-ui';
+  import { page } from '$app/state';
   import {
     CircleCheck,
     ImagePlay,
     MinusCircle,
     PlusCircle,
     TimerReset,
-  } from "@lucide/svelte";
-  import { getSidebarState } from "$lib/state/sidebar.svelte";
+  } from '@lucide/svelte';
+  import { getSidebarState } from '$lib/state/sidebar.svelte';
 
   interface ContentContextMenuProps {
     playlist: Playlist | null;
@@ -54,11 +54,11 @@
   const sidebarState = getSidebarState();
 
   const hideSetAsPlaylistImage = $derived(
-    /\/playlist\/[^/]+\/video\/[^/]+/.test(page.url.pathname),
+    /\/playlist\/[^/]+\/video\/[^/]+/.test(page.url.pathname)
   );
 
   let selectedVideos = $derived(
-    contentState.selectedVideosBySection[sectionId] ?? [],
+    contentState.selectedVideosBySection[sectionId] ?? []
   );
 
   // Use section-based hovered video
@@ -66,7 +66,7 @@
 
   // Check if this section's context menu is open
   let isThisSectionMenuOpen = $derived(
-    contentState.isContextMenuOpenForSection(sectionId),
+    contentState.isContextMenuOpenForSection(sectionId)
   );
 
   // Track previous menu state to detect when it closes
@@ -161,20 +161,20 @@
     >
       {#if operationVideos.length > 0}
         {@const filteredPlaylists = playlists.filter(
-          (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id,
+          (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id
         )}
         {#if filteredPlaylists.length > 0}
           <ContextMenu.Sub>
             <ContextMenu.SubTrigger onclick={(e) => e.stopPropagation()}>
               <PlusCircle class="dropdown-icon" />
               Add {operationVideos.length === 1
-                ? "video"
+                ? 'video'
                 : `${operationVideos.length} videos`} to playlist
             </ContextMenu.SubTrigger>
             <Portal>
               <ContextMenu.SubContent
                 align="start"
-                class="z-50 transition-opacity duration-150 overflow-hidden outline-none"
+                class="z-50 overflow-hidden transition-opacity duration-150 outline-none"
                 avoidCollisions={true}
                 sideOffset={5}
               >
@@ -231,7 +231,7 @@
           >
             <MinusCircle class="dropdown-icon" />
             Remove {operationVideos.length === 1
-              ? "video"
+              ? 'video'
               : `${operationVideos.length} videos`} from playlist
           </ContextMenu.Item>
         {/if}
@@ -273,7 +273,7 @@
                 contentState.selectedVideosBySection[sectionId] = updatedVideos;
               } else if (hoveredVideo) {
                 const updatedHoveredVideo = updatedVideos.find(
-                  (v) => v.id === hoveredVideo?.id,
+                  (v) => v.id === hoveredVideo?.id
                 );
                 if (updatedHoveredVideo) {
                   contentState.hoveredVideosBySection[sectionId] =
@@ -309,7 +309,7 @@
                 contentState.selectedVideosBySection[sectionId] = updatedVideos;
               } else if (hoveredVideo) {
                 const updatedHoveredVideo = updatedVideos.find(
-                  (v) => v.id === hoveredVideo?.id,
+                  (v) => v.id === hoveredVideo?.id
                 );
                 if (updatedHoveredVideo) {
                   contentState.hoveredVideosBySection[sectionId] =

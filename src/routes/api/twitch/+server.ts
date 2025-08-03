@@ -1,7 +1,7 @@
-import {} from "@twurple/eventsub-http";
-import { eventSubListener } from "$lib/client/twitch.js";
-import { SOURCE_INFO, SOURCES } from "$lib/constants/source.js";
-import { produce } from "sveltekit-sse";
+import {} from '@twurple/eventsub-http';
+import { eventSubListener } from '$lib/client/twitch.js';
+import { SOURCE_INFO, SOURCES } from '$lib/constants/source.js';
+import { produce } from 'sveltekit-sse';
 
 /**
  * @param {number} milliseconds
@@ -23,7 +23,7 @@ if (eventSubListener) {
       eventSubListener!.onStreamOnline(SOURCE_INFO[source].twitchId, () => {
         console.log(`${source} has started streaming on Twitch.`);
         streamingSources.add(source);
-      }),
+      })
     );
 
     subscriptions.push(
@@ -31,7 +31,7 @@ if (eventSubListener) {
         console.log(`${source} has ended the Twitch stream.`);
 
         streamingSources.delete(source);
-      }),
+      })
     );
   });
 }
@@ -45,8 +45,8 @@ export async function POST() {
 
       while (true) {
         const { error } = emit(
-          "streamingSubscriptions",
-          JSON.stringify(Array.from(streamingSources.values())),
+          'streamingSubscriptions',
+          JSON.stringify(Array.from(streamingSources.values()))
         );
         if (error) {
           // console.error(error);
@@ -57,8 +57,8 @@ export async function POST() {
     },
     {
       stop() {
-        console.log("Calling stop function");
+        console.log('Calling stop function');
       },
-    },
+    }
   );
 }

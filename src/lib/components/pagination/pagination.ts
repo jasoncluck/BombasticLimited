@@ -1,6 +1,6 @@
-import { goto } from "$app/navigation";
+import { goto } from '$app/navigation';
 
-export const PAGINATION_QUERY_KEY = "page";
+export const PAGINATION_QUERY_KEY = 'page';
 
 export function updatePaginationQueryParams({
   url,

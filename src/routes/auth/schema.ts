@@ -1,15 +1,15 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const emailSchema = z.object({
-  email: z.string().email().max(50).default(""),
+  email: z.string().email().max(50).default(''),
 });
 
 export const usernameSchema = z.object({
-  username: z.string().min(2).max(32).default(""),
+  username: z.string().min(2).max(32).default(''),
 });
 
 export const passwordSchema = z.object({
-  password: z.string().min(8).max(256).default(""),
+  password: z.string().min(8).max(256).default(''),
 });
 
 export const loginSchema = emailSchema.merge(passwordSchema);

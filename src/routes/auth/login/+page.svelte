@@ -1,15 +1,15 @@
 <script lang="ts">
-  import type { SuperValidated } from "sveltekit-superforms";
-  import type { Infer } from "sveltekit-superforms/adapters";
-  import type { Writable } from "svelte/store";
-  import type { LoginSchema } from "../schema";
-  import LoginForm from "./login-form.svelte";
-  import type { SupabaseClient } from "@supabase/supabase-js";
-  import type { Database } from "$lib/supabase/database.types";
+  import type { SuperValidated } from 'sveltekit-superforms';
+  import type { Infer } from 'sveltekit-superforms/adapters';
+  import type { Writable } from 'svelte/store';
+  import type { LoginSchema } from '../schema';
+  import LoginForm from './login-form.svelte';
+  import type { SupabaseClient } from '@supabase/supabase-js';
+  import type { Database } from '$lib/supabase/database.types';
 
   export type AuthFlash = Writable<{
     message: string | null;
-    type: "error" | "success" | null;
+    type: 'error' | 'success' | null;
   }>;
 
   let {

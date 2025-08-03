@@ -1,9 +1,9 @@
-import { playlistOptimisticUpdates } from "$lib/state/optimistic-updates.svelte.js";
+import { playlistOptimisticUpdates } from '$lib/state/optimistic-updates.svelte.js';
 
 export function useOptimisticForm<T>(
   entityId: string,
   originalData: T,
-  getOptimisticData: (formData: unknown) => T,
+  getOptimisticData: (formData: unknown) => T
 ) {
   const updateId = `${entityId}`;
 
@@ -12,16 +12,16 @@ export function useOptimisticForm<T>(
 
     playlistOptimisticUpdates.apply(updateId, optimisticData, () => {
       // Revert function would need to be handled by the component
-      console.log("Reverting optimistic update");
+      console.log('Reverting optimistic update');
     });
   }
 
   function handleResult(
     result: any,
     originalEntity: T,
-    updateEntity: (data: T) => void,
+    updateEntity: (data: T) => void
   ) {
-    if (result.type === "success" && result.data?.success) {
+    if (result.type === 'success' && result.data?.success) {
       playlistOptimisticUpdates.commit(updateId);
 
       if (result.data.updatedPlaylist) {
@@ -33,7 +33,7 @@ export function useOptimisticForm<T>(
   }
 
   const optimisticData = $derived(
-    playlistOptimisticUpdates.get(updateId) || originalData,
+    playlistOptimisticUpdates.get(updateId) || originalData
   );
 
   const isPending = $derived(playlistOptimisticUpdates.isPending(updateId));

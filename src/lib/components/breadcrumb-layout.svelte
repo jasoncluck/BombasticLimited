@@ -1,5 +1,5 @@
 <script lang="ts">
-  import * as Breadcrumb from "$lib/components/ui/breadcrumb";
+  import * as Breadcrumb from '$lib/components/ui/breadcrumb';
 
   export type BreadcrumbItem = {
     label: string;
@@ -19,13 +19,13 @@
         {#if breadcrumb.href}
           <Breadcrumb.Link
             href={breadcrumb.href}
-            class="text-xs overflow-hidden text-ellipsis whitespace-nowrap block max-w-full"
+            class="block max-w-full overflow-hidden text-xs text-ellipsis whitespace-nowrap"
           >
             {breadcrumb.label}
           </Breadcrumb.Link>
         {:else}
           <Breadcrumb.Page
-            class="text-xs overflow-hidden text-ellipsis whitespace-nowrap block max-w-full"
+            class="block max-w-full overflow-hidden text-xs text-ellipsis whitespace-nowrap"
           >
             {breadcrumb.label}
           </Breadcrumb.Page>

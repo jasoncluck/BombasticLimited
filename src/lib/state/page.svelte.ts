@@ -1,5 +1,5 @@
-import { getContext, setContext } from "svelte";
-import type { DragContentType } from "./content.svelte";
+import { getContext, setContext } from 'svelte';
+import type { DragContentType } from './content.svelte';
 
 export interface ScrollPosition {
   scrollTop?: number;
@@ -8,7 +8,7 @@ export interface ScrollPosition {
 
 export interface ScrollState {
   scrolling: boolean;
-  direction: "up" | "down" | null;
+  direction: 'up' | 'down' | null;
   interval: number | null;
 }
 
@@ -38,13 +38,13 @@ export interface PageState {
   // Auto-scroll methods
   startAutoScroll: (
     viewportRef: HTMLElement | null,
-    scrollState: ScrollState,
+    scrollState: ScrollState
   ) => void;
   stopAutoScroll: (scrollState: ScrollState) => void;
   handleViewportDragOver: (
     e: DragEvent,
     viewportRef: HTMLElement,
-    scrollState: ScrollState,
+    scrollState: ScrollState
   ) => void;
   handleDragOver: (e: DragEvent, dragContentType: DragContentType) => void;
   handleDragEnd: () => void;
@@ -54,7 +54,7 @@ export interface PageState {
   createViewportSnapshot: (viewportRef: HTMLElement | null) => ScrollPosition;
   restoreViewportScroll: (
     viewportRef: HTMLElement | null,
-    position: ScrollPosition | null,
+    position: ScrollPosition | null
   ) => void;
 
   // Viewport reference setters
@@ -109,12 +109,12 @@ export class PageStateClass implements PageState {
       scrollState.scrolling = true;
       scrollState.interval = window.setInterval(() => {
         if (viewportRef && scrollState.direction) {
-          if (scrollState.direction === "up") {
+          if (scrollState.direction === 'up') {
             viewportRef.scrollTop = Math.max(
               0,
-              viewportRef.scrollTop - this.autoScrollConfig.scrollSpeed,
+              viewportRef.scrollTop - this.autoScrollConfig.scrollSpeed
             );
-          } else if (scrollState.direction === "down") {
+          } else if (scrollState.direction === 'down') {
             viewportRef.scrollTop += this.autoScrollConfig.scrollSpeed;
           }
 
@@ -144,7 +144,7 @@ export class PageStateClass implements PageState {
   handleViewportDragOver(
     e: DragEvent,
     viewportRef: HTMLElement,
-    scrollState: ScrollState,
+    scrollState: ScrollState
   ) {
     // Get the bounding rect of the scroll container
     const rect = viewportRef.getBoundingClientRect();
@@ -152,15 +152,15 @@ export class PageStateClass implements PageState {
 
     // Check if mouse is in top scroll zone
     if (mouseY - rect.top < this.autoScrollConfig.scrollZoneSize) {
-      if (scrollState.direction !== "up") {
-        scrollState.direction = "up";
+      if (scrollState.direction !== 'up') {
+        scrollState.direction = 'up';
         this.startAutoScroll(viewportRef, scrollState);
       }
     }
     // Check if mouse is in bottom scroll zone
     else if (rect.bottom - mouseY < this.autoScrollConfig.scrollZoneSize) {
-      if (scrollState.direction !== "down") {
-        scrollState.direction = "down";
+      if (scrollState.direction !== 'down') {
+        scrollState.direction = 'down';
         this.startAutoScroll(viewportRef, scrollState);
       }
     }
@@ -183,7 +183,7 @@ export class PageStateClass implements PageState {
       this.handleViewportDragOver(
         e,
         this.viewportRefs.sidebarViewportRef,
-        this.sidebarScrollState,
+        this.sidebarScrollState
       );
     }
 
@@ -194,7 +194,7 @@ export class PageStateClass implements PageState {
       this.handleViewportDragOver(
         e,
         this.viewportRefs.contentViewportRef,
-        this.contentScrollState,
+        this.contentScrollState
       );
     }
   }
@@ -221,7 +221,7 @@ export class PageStateClass implements PageState {
   // Utility function for restoring position or setting defaults for a viewport
   restoreViewportScroll(
     viewportRef: HTMLElement | null,
-    position: ScrollPosition | null,
+    position: ScrollPosition | null
   ) {
     if (viewportRef && position) {
       viewportRef.scrollTop = position.scrollTop ?? 0;
@@ -240,7 +240,7 @@ export class PageStateClass implements PageState {
   }
 }
 
-const DEFAULT_KEY = "$_page_state";
+const DEFAULT_KEY = '$_page_state';
 
 export function setPageState(key = DEFAULT_KEY) {
   const pageState = new PageStateClass();
@@ -253,7 +253,7 @@ export function getPageState(key = DEFAULT_KEY) {
 
 // Legacy exports for backward compatibility (can be removed once all references are updated)
 export function createViewportSnapshot(
-  viewportRef: HTMLElement | null,
+  viewportRef: HTMLElement | null
 ): ScrollPosition {
   return {
     scrollTop: viewportRef?.scrollTop ?? 0,
@@ -263,7 +263,7 @@ export function createViewportSnapshot(
 
 export function restoreViewportScroll(
   viewportRef: HTMLElement | null,
-  position: ScrollPosition | null,
+  position: ScrollPosition | null
 ) {
   if (viewportRef && position) {
     viewportRef.scrollTop = position.scrollTop ?? 0;

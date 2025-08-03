@@ -1,21 +1,21 @@
 <script lang="ts">
-  import * as Card from "$lib/components/ui/card";
-  import { Button } from "$lib/components/ui/button";
-  import { Input } from "$lib/components/ui/input";
-  import { Loader } from "@lucide/svelte";
-  import { superForm, type SuperValidated } from "sveltekit-superforms";
-  import { zodClient, type Infer } from "sveltekit-superforms/adapters";
-  import * as Form from "$lib/components/ui/form";
-  import * as Alert from "$lib/components/ui/alert/index.js";
-  import { onMount } from "svelte";
-  import { page } from "$app/state";
-  import { getFlash, updateFlash } from "sveltekit-flash-message";
-  import { signupSchema, type SignupSchema } from "../schema";
-  import { goto } from "$app/navigation";
-  import { checkIfUsernameIsUnique } from "$lib/supabase/user-profiles";
-  import type { SupabaseClient } from "@supabase/supabase-js";
-  import type { Database } from "$lib/supabase/database.types";
-  import DiscordIcon from "$lib/assets/icons/DiscordIcon.svelte";
+  import * as Card from '$lib/components/ui/card';
+  import { Button } from '$lib/components/ui/button';
+  import { Input } from '$lib/components/ui/input';
+  import { Loader } from '@lucide/svelte';
+  import { superForm, type SuperValidated } from 'sveltekit-superforms';
+  import { zodClient, type Infer } from 'sveltekit-superforms/adapters';
+  import * as Form from '$lib/components/ui/form';
+  import * as Alert from '$lib/components/ui/alert/index.js';
+  import { onMount } from 'svelte';
+  import { page } from '$app/state';
+  import { getFlash, updateFlash } from 'sveltekit-flash-message';
+  import { signupSchema, type SignupSchema } from '../schema';
+  import { goto } from '$app/navigation';
+  import { checkIfUsernameIsUnique } from '$lib/supabase/user-profiles';
+  import type { SupabaseClient } from '@supabase/supabase-js';
+  import type { Database } from '$lib/supabase/database.types';
+  import DiscordIcon from '$lib/assets/icons/DiscordIcon.svelte';
 
   let {
     data,
@@ -32,7 +32,7 @@
 
   const signupForm = superForm(data.form, {
     validators: zodClient(signupSchema),
-    validationMethod: "onsubmit",
+    validationMethod: 'onsubmit',
     onUpdated() {
       updateFlash(page);
     },
@@ -67,7 +67,7 @@
           });
 
           if (currentUsername === $formData.username) {
-            if (typeof result === "boolean") {
+            if (typeof result === 'boolean') {
               isUsernameUnique = result;
             } else {
               isUsernameUnique = false;
@@ -96,7 +96,7 @@
   });
 </script>
 
-<Card.Root class="p-6 w-full max-w-md mx-auto">
+<Card.Root class="mx-auto w-full max-w-md p-6">
   <Card.Header class="space-y-1">
     <Card.Title class="text-2xl">Create an account</Card.Title>
     <Card.Description>
@@ -105,12 +105,12 @@
   </Card.Header>
 
   <form method="POST" action="?/signup" use:enhance>
-    <Card.Content class="grid gap-4 mb-4">
+    <Card.Content class="mb-4 grid gap-4">
       <div class="flex">
         <Button
           onclick={async () => {
             const { error } = await supabase.auth.signInWithOAuth({
-              provider: "discord",
+              provider: 'discord',
             });
             if (error) {
               console.error(error);
@@ -118,7 +118,7 @@
           }}
           variant="outline"
           type="button"
-          class="cursor-pointer w-full flex items-center justify-center gap-2"
+          class="flex w-full cursor-pointer items-center justify-center gap-2"
         >
           <DiscordIcon size={20} class="text-[#5865F2]" />
           Discord
@@ -202,7 +202,7 @@
       {#if $flash?.message && $flash?.type}
         <Alert.Root>
           <Alert.Title
-            >{$flash.type === "error" ? "Error" : "Success"}</Alert.Title
+            >{$flash.type === 'error' ? 'Error' : 'Success'}</Alert.Title
           >
           <Alert.Description>{$flash.message}</Alert.Description>
         </Alert.Root>
@@ -211,12 +211,12 @@
 
     <Card.Footer class="grid gap-4">
       <Button
-        class="cursor-pointer w-full"
+        class="w-full cursor-pointer"
         type="submit"
         disabled={isSubmitting}
       >
         {#if isSubmitting}
-          <Loader class="animate-spin mr-2" />
+          <Loader class="mr-2 animate-spin" />
         {/if}
         Create account
       </Button>
@@ -227,7 +227,7 @@
         class="w-full"
         disabled={isSubmitting}
         onclick={() => {
-          goto("/auth/login");
+          goto('/auth/login');
         }}
       >
         Already have an account? Login

@@ -1,7 +1,7 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL || "http://127.0.0.1:54321";
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+const supabaseUrl = process.env.SUPABASE_URL || 'http://127.0.0.1:54321';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 export const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
 
@@ -18,7 +18,7 @@ export async function cleanupTestData(testId: string) {
 // Helper to create test data quickly
 export async function createTestUser(testId: string) {
   const email = `test-${testId}-${Date.now()}@example.com`;
-  const password = "testpassword123";
+  const password = 'testpassword123';
 
   // Create user logic here
   return { email, password };

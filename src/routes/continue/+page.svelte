@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { page } from "$app/state";
-  import ContentHeader from "$lib/components/content/content-header.svelte";
-  import Content from "$lib/components/content/content.svelte";
+  import { page } from '$app/state';
+  import ContentHeader from '$lib/components/content/content-header.svelte';
+  import Content from '$lib/components/content/content.svelte';
   import {
     getNumberOfPages,
     PAGINATION_QUERY_KEY,
     updatePaginationQueryParams,
-  } from "$lib/components/pagination/pagination.js";
-  import Pagination from "$lib/components/pagination/pagination.svelte";
-  import { DEFAULT_NUM_VIDEOS_PAGINATION } from "$lib/supabase/videos.js";
-  import type { Snapshot } from "../$types.js";
+  } from '$lib/components/pagination/pagination.js';
+  import Pagination from '$lib/components/pagination/pagination.svelte';
+  import { DEFAULT_NUM_VIDEOS_PAGINATION } from '$lib/supabase/videos.js';
+  import type { Snapshot } from '../$types.js';
 
   const { data } = $props();
   const { supabase, videos, videosCount, session, contentFilter, userProfile } =
@@ -19,7 +19,7 @@
 
   const pageFromQueryParams = page.url.searchParams.get(PAGINATION_QUERY_KEY);
   let currentPage = $state(
-    pageFromQueryParams ? parseInt(pageFromQueryParams) : 1,
+    pageFromQueryParams ? parseInt(pageFromQueryParams) : 1
   );
 
   export const snapshot: Snapshot<{
@@ -40,7 +40,7 @@
     getNumberOfPages({
       count: videosCount ?? 0,
       perPage: DEFAULT_NUM_VIDEOS_PAGINATION,
-    }),
+    })
   );
 </script>
 
@@ -56,7 +56,7 @@
     bind:showFloatingBreadcrumbs
     breadcrumbs={[
       {
-        label: "Continue Watching",
+        label: 'Continue Watching',
       },
       ...(currentPage > 1
         ? [
@@ -88,7 +88,7 @@
         updatePaginationQueryParams({
           pageNum,
           url: page.url,
-          invalidate: ["supabase:db:videos"],
+          invalidate: ['supabase:db:videos'],
         });
       }}
     />

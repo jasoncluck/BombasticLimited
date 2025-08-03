@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { ArrowDown, ArrowUp, Check, List } from "@lucide/svelte";
-  import * as Drawer from "$lib/components/ui/drawer";
-  import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+  import { ArrowDown, ArrowUp, Check, List } from '@lucide/svelte';
+  import * as Drawer from '$lib/components/ui/drawer';
+  import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
   import {
     SORT_OPTIONS_VIDEO,
     SORT_OPTIONS_TIMESTAMPS,
@@ -13,25 +13,25 @@
     type SortKey,
     type SortOrder,
     type CombinedContentFilter,
-  } from "./content-filter";
-  import { page } from "$app/state";
-  import type { VideoTimestamp, Video } from "$lib/supabase/videos";
-  import { parseDate, type DateValue } from "@internationalized/date";
+  } from './content-filter';
+  import { page } from '$app/state';
+  import type { VideoTimestamp, Video } from '$lib/supabase/videos';
+  import { parseDate, type DateValue } from '@internationalized/date';
   import {
     isUserPlaylist,
     type Playlist,
     type PlaylistVideo,
-  } from "$lib/supabase/playlists";
-  import type { ContentView } from "./content";
-  import { handleUpdatePlaylistSort } from "../playlist/playlist-service";
-  import type { Session, SupabaseClient } from "@supabase/supabase-js";
-  import type { Database } from "$lib/supabase/database.types";
-  import { getMediaQueryState } from "$lib/state/media-query.svelte";
-  import Button, { buttonVariants } from "../ui/button/button.svelte";
+  } from '$lib/supabase/playlists';
+  import type { ContentView } from './content';
+  import { handleUpdatePlaylistSort } from '../playlist/playlist-service';
+  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { Database } from '$lib/supabase/database.types';
+  import { getMediaQueryState } from '$lib/state/media-query.svelte';
+  import Button, { buttonVariants } from '../ui/button/button.svelte';
 
   let {
     contentFilter,
-    view = "default",
+    view = 'default',
     playlist,
     supabase,
     session,
@@ -49,9 +49,9 @@
   // Determine sort keys based on the view type
   const sortKeys = $derived.by(() => {
     switch (view) {
-      case "continueWatching":
+      case 'continueWatching':
         return timestampSortKeys;
-      case "playlist":
+      case 'playlist':
         return playlistVideosSortKeys;
       default:
         return videoSortKeys;
@@ -61,11 +61,11 @@
   // Get sort option info based on the filter type
   const sortOptionInfo = $derived.by(() => {
     switch (contentFilter.type) {
-      case "timestamp":
+      case 'timestamp':
         return SORT_OPTIONS_TIMESTAMPS[contentFilter.sort.key];
-      case "playlist":
+      case 'playlist':
         return SORT_OPTIONS_PLAYLIST_VIDEOS[contentFilter.sort.key];
-      case "video":
+      case 'video':
       default:
         return SORT_OPTIONS_VIDEO[contentFilter.sort.key];
     }
@@ -77,10 +77,10 @@
   // });
 
   let startDateValue = $state<DateValue | undefined>(
-    contentFilter.startDate ? parseDate(contentFilter.startDate) : undefined,
+    contentFilter.startDate ? parseDate(contentFilter.startDate) : undefined
   );
   let endDateValue = $state<DateValue | undefined>(
-    contentFilter.endDate ? parseDate(contentFilter.endDate) : undefined,
+    contentFilter.endDate ? parseDate(contentFilter.endDate) : undefined
   );
 
   // NOTE: Datepickers removed for now
@@ -100,20 +100,20 @@
   // ];
 
   function handleSort(sortKey: string) {
-    let sortOrder: SortOrder = "ascending";
+    let sortOrder: SortOrder = 'ascending';
 
     // If already sorting by this key, toggle the order
     if (contentFilter.sort.key === sortKey) {
       sortOrder =
-        contentFilter.sort.order === "ascending" ? "descending" : "ascending";
+        contentFilter.sort.order === 'ascending' ? 'descending' : 'ascending';
     }
 
     // Create the appropriate filter type based on the current view and selected sort key
     let newContentFilter: CombinedContentFilter;
 
-    if (view === "continueWatching") {
+    if (view === 'continueWatching') {
       newContentFilter = {
-        type: "timestamp",
+        type: 'timestamp',
         sort: {
           key: sortKey as SortKey<VideoTimestamp>,
           order: sortOrder,
@@ -121,15 +121,15 @@
         startDate: contentFilter.startDate,
         endDate: contentFilter.endDate,
       };
-    } else if (view === "playlist") {
+    } else if (view === 'playlist') {
       newContentFilter = {
-        type: "playlist",
+        type: 'playlist',
         sort: {
           key: sortKey as SortKey<PlaylistVideo>,
           // Only ascending allowed for custom playlist ordering
           order:
-            (sortKey as SortKey<PlaylistVideo>) === "playlistOrder"
-              ? "ascending"
+            (sortKey as SortKey<PlaylistVideo>) === 'playlistOrder'
+              ? 'ascending'
               : sortOrder,
         },
         startDate: contentFilter.startDate,
@@ -147,7 +147,7 @@
       }
     } else {
       newContentFilter = {
-        type: "video",
+        type: 'video',
         sort: {
           key: sortKey as SortKey<Video>,
           order: sortOrder,
@@ -199,7 +199,7 @@
   <div class="flex flex-col items-start gap-4">
     <DropdownMenu.Root>
       <DropdownMenu.Trigger
-        class="cursor-pointer hover:text-primary flex items-center gap-1 outline-none"
+        class="hover:text-primary flex cursor-pointer items-center gap-1 outline-none"
       >
         <span class="text-sm">{sortOptionInfo.displayName}</span>
         <List size={20} />
@@ -212,34 +212,34 @@
               class="flex gap-2 @md:justify-between"
               onclick={() => handleSort(sortKey)}
             >
-              {#if view === "continueWatching"}
+              {#if view === 'continueWatching'}
                 {SORT_OPTIONS_TIMESTAMPS[sortKey as SortKey<VideoTimestamp>]
                   .displayName}
-              {:else if view === "playlist"}
+              {:else if view === 'playlist'}
                 {SORT_OPTIONS_PLAYLIST_VIDEOS[sortKey as SortKey<PlaylistVideo>]
                   .displayName}
               {:else}
                 {SORT_OPTIONS_VIDEO[sortKey as SortKey<Video>].displayName}
               {/if}
 
-              {#if contentFilter.sort.key === sortKey && sortKey === "playlistOrder"}
+              {#if contentFilter.sort.key === sortKey && sortKey === 'playlistOrder'}
                 <Check
                   class={contentFilter.sort.key === sortKey
-                    ? "text-primary"
-                    : ""}
+                    ? 'text-primary'
+                    : ''}
                 />
-              {:else if contentFilter.sort.key === sortKey && contentFilter.sort.order === "ascending"}
+              {:else if contentFilter.sort.key === sortKey && contentFilter.sort.order === 'ascending'}
                 <ArrowUp
                   class={contentFilter.sort.key === sortKey
-                    ? "text-primary"
-                    : ""}
+                    ? 'text-primary'
+                    : ''}
                 />
                 <span class="sr-only">Ascending</span>
-              {:else if contentFilter.sort.key === sortKey && contentFilter.sort.order === "descending"}
+              {:else if contentFilter.sort.key === sortKey && contentFilter.sort.order === 'descending'}
                 <ArrowDown
                   class={contentFilter.sort.key === sortKey
-                    ? "text-primary"
-                    : ""}
+                    ? 'text-primary'
+                    : ''}
                 />
                 <span class="sr-only">Descending</span>
               {/if}
@@ -275,16 +275,16 @@
 {:else}
   <Drawer.Root bind:open={contentFilterDrawerOpen}>
     <Drawer.Trigger
-      class="cursor-pointer hover:text-primary flex items-center gap-1 outline-none"
+      class="hover:text-primary flex cursor-pointer items-center gap-1 outline-none"
     >
       <span class="text-sm">{sortOptionInfo.displayName}</span>
       <List size={20} />
     </Drawer.Trigger>
     <Drawer.Content class="outline-none">
-      <Drawer.Header class="text-left m-2">Sort by</Drawer.Header>
+      <Drawer.Header class="m-2 text-left">Sort by</Drawer.Header>
       {#each sortKeys as sortKey (sortKey)}
         <Button
-          class="drawer-button flex justify-between items-center"
+          class="drawer-button flex items-center justify-between"
           variant="ghost"
           onclick={() => {
             handleSort(sortKey);
@@ -292,10 +292,10 @@
           }}
         >
           <span>
-            {#if view === "continueWatching"}
+            {#if view === 'continueWatching'}
               {SORT_OPTIONS_TIMESTAMPS[sortKey as SortKey<VideoTimestamp>]
                 .displayName}
-            {:else if view === "playlist"}
+            {:else if view === 'playlist'}
               {SORT_OPTIONS_PLAYLIST_VIDEOS[sortKey as SortKey<PlaylistVideo>]
                 .displayName}
             {:else}
@@ -304,24 +304,24 @@
           </span>
 
           <!-- Always reserve space for an icon, but only show when active -->
-          <div class="w-4 h-4 flex items-center justify-center flex-shrink-0">
-            {#if contentFilter.sort.key === sortKey && sortKey === "playlistOrder"}
+          <div class="flex h-4 w-4 flex-shrink-0 items-center justify-center">
+            {#if contentFilter.sort.key === sortKey && sortKey === 'playlistOrder'}
               <Check size={16} class="text-primary" />
-            {:else if contentFilter.sort.key === sortKey && contentFilter.sort.order === "ascending"}
+            {:else if contentFilter.sort.key === sortKey && contentFilter.sort.order === 'ascending'}
               <ArrowUp size={16} class="text-primary" />
-            {:else if contentFilter.sort.key === sortKey && contentFilter.sort.order === "descending"}
+            {:else if contentFilter.sort.key === sortKey && contentFilter.sort.order === 'descending'}
               <ArrowDown size={16} class="text-primary" />
             {/if}
             <!-- Empty div when no icon - this maintains consistent spacing -->
           </div>
         </Button>
       {/each}
-      <div class="p-2 mt-auto">
+      <div class="mt-auto p-2">
         <Drawer.Footer class="drawer-footer">
           <Drawer.Close
             class={buttonVariants({
-              class: "drawer-button-footer",
-              variant: "outline",
+              class: 'drawer-button-footer',
+              variant: 'outline',
             })}
             >Close
           </Drawer.Close>

@@ -3,15 +3,15 @@
 -->
 
 <script lang="ts">
-  import Cropper, { type CropperProps } from "svelte-easy-crop";
-  import { useImageCropperCropper } from "./image-cropper.svelte.js";
+  import Cropper, { type CropperProps } from 'svelte-easy-crop';
+  import { useImageCropperCropper } from './image-cropper.svelte.js';
 
   let {
-    cropShape = "round",
+    cropShape = 'round',
     aspect = 1,
     showGrid = false,
     ...rest
-  }: Omit<Partial<CropperProps>, "oncropcomplete" | "image"> = $props();
+  }: Omit<Partial<CropperProps>, 'oncropcomplete' | 'image'> = $props();
 
   const cropperState = useImageCropperCropper();
 </script>

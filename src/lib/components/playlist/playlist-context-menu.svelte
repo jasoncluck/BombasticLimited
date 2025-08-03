@@ -1,20 +1,20 @@
 <script lang="ts">
-  import * as ContextMenu from "$lib/components/ui/context-menu/index.js";
+  import * as ContextMenu from '$lib/components/ui/context-menu/index.js';
   import {
     DEFAULT_SECTION_ID,
     getContentState,
-  } from "$lib/state/content.svelte";
-  import type { Playlist } from "$lib/supabase/playlists";
-  import type { Database } from "$lib/supabase/database.types";
-  import type { Session, SupabaseClient } from "@supabase/supabase-js";
+  } from '$lib/state/content.svelte';
+  import type { Playlist } from '$lib/supabase/playlists';
+  import type { Database } from '$lib/supabase/database.types';
+  import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import {
     handleDeletePlaylist,
     handleUnfollowPlaylist,
-  } from "../playlist/playlist-service";
-  import type { Snippet } from "svelte";
-  import { goto } from "$app/navigation";
-  import { page } from "$app/state";
-  import { getSidebarState } from "$lib/state/sidebar.svelte";
+  } from '../playlist/playlist-service';
+  import type { Snippet } from 'svelte';
+  import { goto } from '$app/navigation';
+  import { page } from '$app/state';
+  import { getSidebarState } from '$lib/state/sidebar.svelte';
 
   interface ContentContextMenuProps {
     playlist: Playlist;
@@ -62,7 +62,7 @@
             !data?.error &&
             page.url.pathname === `/playlist/${playlist.short_id}`
           ) {
-            goto("/");
+            goto('/');
           }
         } else {
           const data = await handleDeletePlaylist({
@@ -76,13 +76,13 @@
             !data?.error &&
             page.url.pathname === `/playlist/${playlist.short_id}`
           ) {
-            goto("/");
+            goto('/');
           }
         }
       }}
       >{playlist.created_by === session?.user.id
-        ? "Delete playlist"
-        : "Unfollow playlist"}</ContextMenu.Item
+        ? 'Delete playlist'
+        : 'Unfollow playlist'}</ContextMenu.Item
     >
   </ContextMenu.Content>
   <ContextMenu.Trigger class="h-full">

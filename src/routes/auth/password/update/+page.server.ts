@@ -1,9 +1,9 @@
-import { type Actions } from "@sveltejs/kit";
-import { setFlash } from "sveltekit-flash-message/server";
-import { fail, superValidate } from "sveltekit-superforms";
-import { zod } from "sveltekit-superforms/adapters";
-import { passwordSchema } from "../../schema";
-import type { PageServerLoad } from "./$types";
+import { type Actions } from '@sveltejs/kit';
+import { setFlash } from 'sveltekit-flash-message/server';
+import { fail, superValidate } from 'sveltekit-superforms';
+import { zod } from 'sveltekit-superforms/adapters';
+import { passwordSchema } from '../../schema';
+import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
   const form = await superValidate(zod(passwordSchema));
@@ -30,19 +30,19 @@ export const actions: Actions = {
     });
     if (error) {
       setFlash(
-        { type: "error", message: error.message, field: "password" },
-        cookies,
+        { type: 'error', message: error.message, field: 'password' },
+        cookies
       );
       console.error(error);
       return fail(400, { form });
     } else {
       setFlash(
         {
-          type: "success",
+          type: 'success',
           message: `Password updated successfully`,
-          field: "password",
+          field: 'password',
         },
-        cookies,
+        cookies
       );
       return {
         form,

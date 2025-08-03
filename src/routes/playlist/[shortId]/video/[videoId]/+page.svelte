@@ -1,8 +1,8 @@
 <script lang="ts">
-  import Content from "$lib/components/content/content.svelte";
-  import VideoPlayer from "$lib/components/video/video-player.svelte";
-  import type { Playlist } from "$lib/supabase/playlists";
-  import { ListVideo } from "@lucide/svelte";
+  import Content from '$lib/components/content/content.svelte';
+  import VideoPlayer from '$lib/components/video/video-player.svelte';
+  import type { Playlist } from '$lib/supabase/playlists';
+  import { ListVideo } from '@lucide/svelte';
 
   const { data } = $props();
   let {
@@ -32,8 +32,8 @@
 
   {#if videos.length > 0}
     <div class="flex flex-col">
-      <div class="flex gap-4 items-center mb-4">
-        {#if "processedImageUrl" in profilePlaylist && profilePlaylist.processedImageUrl}
+      <div class="mb-4 flex items-center gap-4">
+        {#if 'processedImageUrl' in profilePlaylist && profilePlaylist.processedImageUrl}
           <img
             src={(profilePlaylist as Playlist).processedImageUrl}
             class="h-20 w-20 flex-shrink-0"
@@ -42,10 +42,10 @@
         {:else}
           <ListVideo class="!h-20 !w-20 flex-shrink-0" />
         {/if}
-        <div class="flex flex-col min-w-0 flex-1 overflow-hidden">
-          <p class="text-sm text-muted-foreground tracking-tight">Next up</p>
+        <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
+          <p class="text-muted-foreground text-sm tracking-tight">Next up</p>
           <a
-            class="lg:text-4xl text-3xl self-start font-semibold hover:underline cursor-pointer"
+            class="cursor-pointer self-start text-3xl font-semibold hover:underline lg:text-4xl"
             href={`/playlist/${profilePlaylist.short_id}`}
           >
             {profilePlaylist.name}

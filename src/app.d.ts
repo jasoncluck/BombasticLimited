@@ -1,5 +1,5 @@
-import type { Session, SupabaseClient, User } from "@supabase/supabase-js";
-import type { Database } from "$lib/supabase/database.types"; // import generated types
+import type { Session, SupabaseClient, User } from '@supabase/supabase-js';
+import type { Database } from '$lib/supabase/database.types'; // import generated types
 
 declare global {
   namespace App {
@@ -15,9 +15,9 @@ declare global {
     interface PageData {
       session: Session | null;
       flash?: {
-        type: "success" | "error";
+        type: 'success' | 'error';
         message: string;
-        field?: "email" | "username" | "password" | "delete";
+        field?: 'email' | 'username' | 'password' | 'delete';
       };
     }
     // interface PageState {}

@@ -2,24 +2,24 @@
  * Video service contains some clientside "helper" functions that
  * do not interact directly with the supabase API directly.
  */
-import { type Video, getInProgressVideos } from "$lib/supabase/videos";
-import { getVideos } from "$lib/supabase/videos";
-import { showNotification } from "$lib/stores/notification.js";
+import { type Video, getInProgressVideos } from '$lib/supabase/videos';
+import { getVideos } from '$lib/supabase/videos';
+import { showNotification } from '$lib/stores/notification.js';
 import type {
   PostgrestError,
   Session,
   SupabaseClient,
-} from "@supabase/supabase-js";
-import type { Database } from "$lib/supabase/database.types";
-import type { Source } from "$lib/constants/source";
-import type { TimestampFilter, VideoFilter } from "../content/content-filter";
-import { goto, invalidate } from "$app/navigation";
+} from '@supabase/supabase-js';
+import type { Database } from '$lib/supabase/database.types';
+import type { Source } from '$lib/constants/source';
+import type { TimestampFilter, VideoFilter } from '../content/content-filter';
+import { goto, invalidate } from '$app/navigation';
 import {
   deleteVideoTimestamps,
   saveVideoTimestamp,
   saveVideoTimestamps,
   type TimestampWithVideoId,
-} from "$lib/supabase/timestamps";
+} from '$lib/supabase/timestamps';
 
 export async function fetchMoreInProgressVideos({
   contentFilter,
@@ -45,7 +45,7 @@ export async function fetchMoreInProgressVideos({
   if (error) {
     showNotification(
       `Unable to retrieve next set of videos: ${error.message}`,
-      "error",
+      'error'
     );
     return [];
   }
@@ -86,7 +86,7 @@ export async function fetchMoreSourceVideos({
   if (error) {
     showNotification(
       `Unable to retrieve next set of videos for ${source}: ${error.message}`,
-      "error",
+      'error'
     );
     return [];
   }
@@ -132,10 +132,10 @@ export async function handleAddVideoTimestamps({
     session,
     supabase,
   });
-  invalidate("supabase:db:videos");
+  invalidate('supabase:db:videos');
 
   if (error) {
-    showNotification("Unable to save timestamp");
+    showNotification('Unable to save timestamp');
   }
   return { updatedVideos: updatedVideos ?? [], error };
 }
@@ -152,7 +152,7 @@ export async function handleDeleteVideosTimestamp({
   session: Session | null;
 }): Promise<{ updatedVideos: Video[]; error?: PostgrestError }> {
   if (!session) {
-    goto("/");
+    goto('/');
     return { updatedVideos: [] };
   }
 
@@ -161,15 +161,15 @@ export async function handleDeleteVideosTimestamp({
     supabase,
     session,
   });
-  invalidate("supabase:db:videos");
+  invalidate('supabase:db:videos');
 
   if (error) {
-    showNotification("Unable to remove video from watchlist.");
+    showNotification('Unable to remove video from watchlist.');
   } else {
     showNotification(
       isContinueVideos
-        ? "Removed from Continue Watching"
-        : "Video progress reset",
+        ? 'Removed from Continue Watching'
+        : 'Video progress reset'
     );
   }
 
@@ -182,19 +182,19 @@ export async function handleDeleteVideosTimestamp({
  */
 export function getVideoDuration(duration: string | null) {
   if (!duration) {
-    throw new Error("Invalid duration, unable to get duration of video");
+    throw new Error('Invalid duration, unable to get duration of video');
   }
   const regex =
     /P(?:\d+Y)?(?:\d+M)?(?:\d+W)?(?:\d+D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/;
 
   const matches = duration.match(regex);
   if (!matches) {
-    throw new Error("Invalid ISO 8601 duration format");
+    throw new Error('Invalid ISO 8601 duration format');
   }
 
-  const hours = parseInt(matches[1] || "0", 10);
-  const minutes = parseInt(matches[2] || "0", 10);
-  const seconds = parseInt(matches[3] || "0", 10);
+  const hours = parseInt(matches[1] || '0', 10);
+  const minutes = parseInt(matches[2] || '0', 10);
+  const seconds = parseInt(matches[3] || '0', 10);
 
   return { hours, minutes, seconds };
 }
@@ -229,6 +229,6 @@ export function getVideoSecondsOffset({
     return 0;
   }
   return Math.floor(
-    (timestampSeconds / videoDurationToSeconds(duration)) * 100,
+    (timestampSeconds / videoDurationToSeconds(duration)) * 100
   );
 }

@@ -1,7 +1,7 @@
 import type {
   ContentDescription,
   ContentDisplay,
-} from "$lib/components/content/content";
+} from '$lib/components/content/content';
 
 interface UserPreferences {
   contentDisplay: ContentDisplay;
@@ -9,6 +9,6 @@ interface UserPreferences {
 }
 
 export let userPreferences = $state<UserPreferences>({
-  contentDisplay: "TILES",
-  contentDescription: "BRIEF",
+  contentDisplay: 'TILES',
+  contentDescription: 'BRIEF',
 });

@@ -1,10 +1,10 @@
 <script lang="ts">
-  import type { SuperValidated } from "sveltekit-superforms";
-  import type { Infer } from "sveltekit-superforms/adapters";
-  import type { SignupSchema } from "../schema";
-  import SignupForm from "./signup-form.svelte";
-  import type { SupabaseClient } from "@supabase/supabase-js";
-  import type { Database } from "$lib/supabase/database.types";
+  import type { SuperValidated } from 'sveltekit-superforms';
+  import type { Infer } from 'sveltekit-superforms/adapters';
+  import type { SignupSchema } from '../schema';
+  import SignupForm from './signup-form.svelte';
+  import type { SupabaseClient } from '@supabase/supabase-js';
+  import type { Database } from '$lib/supabase/database.types';
 
   let {
     data,

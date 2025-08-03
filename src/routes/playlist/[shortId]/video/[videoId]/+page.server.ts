@@ -1,9 +1,9 @@
-import { isPlaylistVideosFilter } from "$lib/components/content/content-filter";
-import { getPlaylistVideoContext } from "$lib/supabase/playlists";
-import { isVideoWithTimestamp } from "$lib/supabase/videos";
-import { redirect } from "@sveltejs/kit";
-import type { PageServerLoad } from "./$types";
-import { parseImageProperties } from "$lib/components/playlist/playlist";
+import { isPlaylistVideosFilter } from '$lib/components/content/content-filter';
+import { getPlaylistVideoContext } from '$lib/supabase/playlists';
+import { isVideoWithTimestamp } from '$lib/supabase/videos';
+import { redirect } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
+import { parseImageProperties } from '$lib/components/playlist/playlist';
 
 export const load: PageServerLoad = async ({
   locals: { supabase },
@@ -11,7 +11,7 @@ export const load: PageServerLoad = async ({
   params,
   parent,
 }) => {
-  depends("supabase:db:videos");
+  depends('supabase:db:videos');
 
   const videoId = params.videoId;
 
@@ -22,7 +22,7 @@ export const load: PageServerLoad = async ({
   } = await supabase.auth.getUser();
 
   if (userError) {
-    console.error("Error getting user:", userError);
+    console.error('Error getting user:', userError);
   }
 
   // Run parent() first to get contentFilter
@@ -52,12 +52,12 @@ export const load: PageServerLoad = async ({
   } = videoContextResult;
 
   if (!profilePlaylist) {
-    console.error("Could not find playlist with that ID, redirecting to video");
+    console.error('Could not find playlist with that ID, redirecting to video');
     redirect(303, `/video/${params.videoId}`);
   }
 
   if (!currentVideo) {
-    console.error("Could not find video in playlist, redirecting to video");
+    console.error('Could not find video in playlist, redirecting to video');
     redirect(303, `/video/${params.videoId}`);
   }
 

@@ -4,21 +4,21 @@ import {
   updatePlaylistImage,
   updatePlaylistInfo,
   type PlaylistVideo,
-} from "$lib/supabase/playlists";
-import { type Actions, type RequestEvent } from "@sveltejs/kit";
-import type { PageServerLoad } from "../[shortId]/$types";
-import { fail, superValidate } from "sveltekit-superforms";
-import { playlistSchema } from "./schema";
-import { zod } from "sveltekit-superforms/adapters";
+} from '$lib/supabase/playlists';
+import { type Actions, type RequestEvent } from '@sveltejs/kit';
+import type { PageServerLoad } from '../[shortId]/$types';
+import { fail, superValidate } from 'sveltekit-superforms';
+import { playlistSchema } from './schema';
+import { zod } from 'sveltekit-superforms/adapters';
 import {
   isPlaylistVideosFilter,
   type SortKey,
   type SortOrder,
-} from "$lib/components/content/content-filter";
-import { DEFAULT_NUM_VIDEOS_PAGINATION } from "$lib/supabase/videos";
-import { getPaginationQueryParams } from "$lib/components/pagination/pagination";
-import { Filter } from "bad-words";
-import { redirect, setFlash } from "sveltekit-flash-message/server";
+} from '$lib/components/content/content-filter';
+import { DEFAULT_NUM_VIDEOS_PAGINATION } from '$lib/supabase/videos';
+import { getPaginationQueryParams } from '$lib/components/pagination/pagination';
+import { Filter } from 'bad-words';
+import { redirect, setFlash } from 'sveltekit-flash-message/server';
 
 export const load: PageServerLoad = async ({
   locals: { supabase, session },
@@ -29,7 +29,7 @@ export const load: PageServerLoad = async ({
 }) => {
   // Remove automatic dependencies - we'll handle updates optimistically
   // Only keep video dependencies since those might come from other sources
-  depends("supabase:db:videos", "supabase:db:playlists");
+  depends('supabase:db:videos', 'supabase:db:playlists');
 
   const { contentFilter } = await parent();
 
@@ -43,7 +43,7 @@ export const load: PageServerLoad = async ({
   });
 
   const hasExplicitSortInUrl =
-    url.searchParams.has("sort") || url.searchParams.has("order");
+    url.searchParams.has('sort') || url.searchParams.has('order');
 
   const { playlist, videos, videosCount, playlistDuration } =
     await getPlaylistData({
@@ -57,7 +57,7 @@ export const load: PageServerLoad = async ({
 
   if (!playlist) {
     console.error(`Playlist was not found`);
-    redirect(302, "/");
+    redirect(302, '/');
   }
 
   const [form] = await Promise.all([
@@ -81,7 +81,7 @@ export const load: PageServerLoad = async ({
     playlist.sort_order &&
     !hasExplicitSortInUrl
       ? {
-          type: "playlist" as const,
+          type: 'playlist' as const,
           sort: {
             key: playlist.sorted_by as SortKey<PlaylistVideo>,
             order: playlist.sort_order as SortOrder,
@@ -107,7 +107,7 @@ export const actions: Actions = {
     cookies,
   }: RequestEvent) => {
     if (!session) {
-      redirect(302, "/auth");
+      redirect(302, '/auth');
     }
 
     const form = await superValidate(request, zod(playlistSchema));
@@ -130,11 +130,11 @@ export const actions: Actions = {
     if (nameIsProfane) {
       setFlash(
         {
-          type: "error",
+          type: 'error',
           message:
-            "Offensive language detected in playlist name, unable to update playlist.",
+            'Offensive language detected in playlist name, unable to update playlist.',
         },
-        cookies,
+        cookies
       );
       return fail(400, { form });
     }
@@ -142,11 +142,11 @@ export const actions: Actions = {
     if (descriptionIsProfane) {
       setFlash(
         {
-          type: "error",
+          type: 'error',
           message:
-            "Offensive language detected in playlist description, unable to update playlist.",
+            'Offensive language detected in playlist description, unable to update playlist.',
         },
-        cookies,
+        cookies
       );
       return fail(400, { form });
     }

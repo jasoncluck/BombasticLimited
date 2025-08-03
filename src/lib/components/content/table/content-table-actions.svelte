@@ -1,16 +1,16 @@
 <script lang="ts">
-  import type { Database } from "$lib/supabase/database.types";
-  import type { Playlist } from "$lib/supabase/playlists";
-  import type { Video } from "$lib/supabase/videos";
-  import type { Session, SupabaseClient } from "@supabase/supabase-js";
-  import ContentDropdown from "../content-dropdown.svelte";
+  import type { Database } from '$lib/supabase/database.types';
+  import type { Playlist } from '$lib/supabase/playlists';
+  import type { Video } from '$lib/supabase/videos';
+  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import ContentDropdown from '../content-dropdown.svelte';
   import {
     DEFAULT_SECTION_ID,
     getContentState,
-  } from "$lib/state/content.svelte";
-  import Button from "$lib/components/ui/button/button.svelte";
-  import { Ellipsis } from "@lucide/svelte";
-  import { getMediaQueryState } from "$lib/state/media-query.svelte";
+  } from '$lib/state/content.svelte';
+  import Button from '$lib/components/ui/button/button.svelte';
+  import { Ellipsis } from '@lucide/svelte';
+  import { getMediaQueryState } from '$lib/state/media-query.svelte';
 
   const {
     videos,
@@ -31,7 +31,7 @@
 </script>
 
 <div
-  class="flex content-table-row items-center justify-end actions-column relative"
+  class="content-table-row actions-column relative flex items-center justify-end"
 >
   {#if mediaQueryState.canHover}
     <div class="hover-actions relative">
@@ -49,14 +49,14 @@
       {#if session}
         <Button
           variant="ghost"
-          class="outline-none ghost-button-minimal"
+          class="ghost-button-minimal outline-none"
           onclick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             contentState.handleDrawer({
               video: videos[0],
               sectionId,
-              variant: "list-items",
+              variant: 'list-items',
             });
           }}
         >

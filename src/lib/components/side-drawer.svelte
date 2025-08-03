@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { goto, invalidate } from "$app/navigation";
-  import { SOURCES, SOURCE_INFO, type Source } from "$lib/constants/source";
-  import { activeStreams } from "$lib/state/streaming.svelte";
+  import { goto, invalidate } from '$app/navigation';
+  import { SOURCES, SOURCE_INFO, type Source } from '$lib/constants/source';
+  import { activeStreams } from '$lib/state/streaming.svelte';
   import {
     Circle,
     Edit,
@@ -12,25 +12,25 @@
     Menu,
     Plus,
     Settings,
-  } from "@lucide/svelte";
-  import * as Sheet from "$lib/components/ui/sheet/index.js";
-  import { Button, buttonVariants } from "$lib/components/ui/button";
+  } from '@lucide/svelte';
+  import * as Sheet from '$lib/components/ui/sheet/index.js';
+  import { Button, buttonVariants } from '$lib/components/ui/button';
   import {
     handleCreatePlaylist,
     handleUpdatePlaylistPosition,
-  } from "./playlist/playlist-service";
-  import type { Session, SupabaseClient } from "@supabase/supabase-js";
-  import type { Database } from "$lib/supabase/database.types";
-  import { fade } from "svelte/transition";
-  import type { Playlist } from "$lib/supabase/playlists";
-  import ScrollArea from "./ui/scroll-area/scroll-area.svelte";
-  import { page } from "$app/state";
-  import { flip } from "svelte/animate";
-  import { updateProfileSources } from "$lib/supabase/user-profiles";
-  import Badge from "./ui/badge/badge.svelte";
-  import EditListDrawer from "./content/drawer/edit-list-drawer.svelte";
-  import EditSourceDrawer from "./content/drawer/edit-source-drawer.svelte";
-  import { getSidebarState } from "$lib/state/sidebar.svelte";
+  } from './playlist/playlist-service';
+  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { Database } from '$lib/supabase/database.types';
+  import { fade } from 'svelte/transition';
+  import type { Playlist } from '$lib/supabase/playlists';
+  import ScrollArea from './ui/scroll-area/scroll-area.svelte';
+  import { page } from '$app/state';
+  import { flip } from 'svelte/animate';
+  import { updateProfileSources } from '$lib/supabase/user-profiles';
+  import Badge from './ui/badge/badge.svelte';
+  import EditListDrawer from './content/drawer/edit-list-drawer.svelte';
+  import EditSourceDrawer from './content/drawer/edit-source-drawer.svelte';
+  import { getSidebarState } from '$lib/state/sidebar.svelte';
 
   let {
     handleLogout,
@@ -59,7 +59,7 @@
   async function handlePlaylistReorder(
     oldIndex: number,
     newIndex: number,
-    item: Playlist | { id: string | number },
+    item: Playlist | { id: string | number }
   ) {
     const newPosition = playlists.length - newIndex;
 
@@ -71,7 +71,7 @@
         supabase,
       });
     } catch (error) {
-      console.error("Error updating video position:", error);
+      console.error('Error updating video position:', error);
       throw error;
     }
   }
@@ -94,7 +94,7 @@
         supabase,
       });
     } catch (error) {
-      console.error("Error updating source positions:", error);
+      console.error('Error updating source positions:', error);
       // Revert on error
       userProfile = {
         ...userProfile,
@@ -108,31 +108,31 @@
 <Sheet.Root bind:open={isOpen}>
   <Sheet.Trigger
     class={buttonVariants({
-      variant: "ghost",
-      class: "cursor-pointer outline-none",
+      variant: 'ghost',
+      class: 'cursor-pointer outline-none',
     })}
     ><Menu class="cursor-pointer" />
     <span class="sr-only"> Toggle Menu</span></Sheet.Trigger
   >
   <Sheet.Content
     side="left"
-    class="flex flex-col gap-2 pt-12 w-[300px] overflow-auto"
+    class="flex w-[300px] flex-col gap-2 overflow-auto pt-12"
   >
     <ScrollArea class="pr-2">
       {#if isOpen}
         <div transition:fade class="px-2">
           <Button
             variant="ghost"
-            class="cursor-pointer w-full flex justify-start h-[64px]"
+            class="flex h-[64px] w-full cursor-pointer justify-start"
             onclick={() => {
               goto(`/`);
               isOpen = false;
             }}
           >
-            <div class="flex items-center w-12 h-12">
-              <House class="!w-8 !h-8 mx-2 " />
+            <div class="flex h-12 w-12 items-center">
+              <House class="mx-2 !h-8 !w-8 " />
             </div>
-            <span class="text-sm font-medium m-3 overflow-ellipsis">
+            <span class="m-3 text-sm font-medium overflow-ellipsis">
               Home
             </span>
           </Button>
@@ -147,12 +147,12 @@
                 subtitle="Drag the handle to reorder sources"
                 onReorder={handleSourceReorder}
                 onClose={() => {
-                  invalidate("supabase:db:profiles");
+                  invalidate('supabase:db:profiles');
                 }}
               >
                 {#snippet trigger()}
                   <Badge
-                    class="flex items-center gap-2 bg-secondary cursor-pointer"
+                    class="bg-secondary flex cursor-pointer items-center gap-2"
                   >
                     <Edit />
                     Reorder
@@ -161,11 +161,11 @@
 
                 {#snippet itemRenderer(source)}
                   {@const sourceInfo = SOURCE_INFO[source]}
-                  <div class="w-full flex items-center gap-2 m-1">
+                  <div class="m-1 flex w-full items-center gap-2">
                     <div class="h-12 w-12 flex-none">
                       <img
                         src={sourceInfo.image}
-                        class="h-12 w-12 object-cover cursor-pointer"
+                        class="h-12 w-12 cursor-pointer object-cover"
                         alt={`Image for channel: ${sourceInfo.displayName}`}
                       />
                     </div>
@@ -184,7 +184,7 @@
             <div animate:flip={{ duration: flipDurationMs }}>
               <Button
                 variant="ghost"
-                class="cursor-pointer w-full flex justify-start h-[64px] relative"
+                class="relative flex h-[64px] w-full cursor-pointer justify-start"
                 onclick={() => {
                   goto(`/${source}`);
                   isOpen = false;
@@ -193,20 +193,20 @@
               >
                 {#if activeStreams.sources.includes(source)}
                   <Circle
-                    class="absolute left-2 bottom-2"
+                    class="absolute bottom-2 left-2"
                     fill="#eb0400"
                     strokeWidth={0}
                   />
                   <span class="sr-only">Live now</span>
                 {/if}
-                <div class="w-12 h-12 flex-none">
+                <div class="h-12 w-12 flex-none">
                   <img
                     src={SOURCE_INFO[source].image}
                     alt={SOURCE_INFO[source].displayName}
-                    class="h-12 w-12 object-cover cursor-pointer"
+                    class="h-12 w-12 cursor-pointer object-cover"
                   />
                 </div>
-                <span class="text-sm font-medium m-3 overflow-ellipsis">
+                <span class="m-3 text-sm font-medium overflow-ellipsis">
                   {SOURCE_INFO[source].displayName}
                 </span>
               </Button>
@@ -226,7 +226,7 @@
                 }}
               >
                 {#snippet trigger()}
-                  <Badge class="flex items-center gap-2 bg-secondary">
+                  <Badge class="bg-secondary flex items-center gap-2">
                     <Edit />
                     Reorder</Badge
                   >
@@ -234,18 +234,18 @@
 
                 {#snippet itemRenderer(item)}
                   {@const playlist = item as Playlist}
-                  <div class="w-full flex items-center gap-2 m-1">
+                  <div class="m-1 flex w-full items-center gap-2">
                     {#if playlist.processedImageUrl}
                       <div class="h-12 w-12 flex-none">
                         <img
                           src={playlist.processedImageUrl}
-                          class="h-12 w-12 object-cover cursor-pointer"
+                          class="h-12 w-12 cursor-pointer object-cover"
                           alt={`Image for playlist: ${playlist.name}`}
                         />
                       </div>
                     {:else}
                       <div
-                        class="h-12 w-12 flex items-center justify-center flex-none"
+                        class="flex h-12 w-12 flex-none items-center justify-center"
                       >
                         <ListVideo class="!h-8 !w-8" />
                       </div>
@@ -267,7 +267,7 @@
           {#if session}
             <Button
               variant="ghost"
-              class="cursor-pointer w-full flex justify-start h-[64px]"
+              class="flex h-[64px] w-full cursor-pointer justify-start"
               onclick={async () => {
                 const { playlist } = await handleCreatePlaylist({
                   sidebarState,
@@ -281,16 +281,16 @@
                 }
               }}
             >
-              <div class="flex items-center w-12 h-12">
-                <Plus class="flex !w-8 !h-8 mx-2" />
+              <div class="flex h-12 w-12 items-center">
+                <Plus class="mx-2 flex !h-8 !w-8" />
               </div>
-              <span class="text-sm font-medium m-3 overflow-ellipsis">
+              <span class="m-3 text-sm font-medium overflow-ellipsis">
                 Add Playlist
               </span>
             </Button>
           {:else}
             <Sheet.Description>
-              <p class="text-sm font-medium m-3 overflow-ellipsis">
+              <p class="m-3 text-sm font-medium overflow-ellipsis">
                 Create an account or login to use Playlists
               </p>
             </Sheet.Description>
@@ -304,7 +304,7 @@
               <div animate:flip={{ duration: flipDurationMs }} class="w-full">
                 <Button
                   variant="ghost"
-                  class="cursor-pointer relative w-full flex justify-start h-[64px] select-none transition-colors duration-200 hover:bg-secondary {isSelectedPlaylist
+                  class="hover:bg-secondary relative flex h-[64px] w-full cursor-pointer justify-start transition-colors duration-200 select-none {isSelectedPlaylist
                     ? 'bg-secondary'
                     : ''}"
                   onclick={() => handlePlaylistClick(playlist)}
@@ -312,23 +312,23 @@
                 >
                   <div class="flex items-center overflow-hidden">
                     {#if playlist.processedImageUrl}
-                      <div class="w-12 h-12 flex-none">
+                      <div class="h-12 w-12 flex-none">
                         <img
                           src={playlist.processedImageUrl}
-                          class="h-12 w-12 object-cover cursor-pointer"
+                          class="h-12 w-12 cursor-pointer object-cover"
                           alt={`Image for playlist: ${playlist.name}`}
                         />
                       </div>
                     {:else}
                       <div
-                        class="h-12 w-12 flex items-center justify-center flex-none"
+                        class="flex h-12 w-12 flex-none items-center justify-center"
                       >
                         <ListVideo class="!h-8 !w-8" />
                       </div>
                     {/if}
 
                     <span
-                      class="text-sm pl-3 mr-4 overflow-hidden text-clip whitespace-nowrap flex-1 min-w-0 [word-break:keep-all]"
+                      class="mr-4 min-w-0 flex-1 overflow-hidden pl-3 text-sm [word-break:keep-all] text-clip whitespace-nowrap"
                     >
                       {playlist.name}
                     </span>
@@ -341,47 +341,47 @@
           {#if session}
             <Button
               variant="ghost"
-              class="cursor-pointer w-full flex justify-start h-[64px]"
+              class="flex h-[64px] w-full cursor-pointer justify-start"
               onclick={() => {
                 goto(`/account`);
                 isOpen = false;
               }}
             >
-              <div class="flex items-center w-12 h-12">
-                <Settings class="flex !w-8 !h-8 mx-2" />
+              <div class="flex h-12 w-12 items-center">
+                <Settings class="mx-2 flex !h-8 !w-8" />
               </div>
-              <span class="text-sm font-medium m-3 overflow-ellipsis">
+              <span class="m-3 text-sm font-medium overflow-ellipsis">
                 Settings
               </span>
             </Button>
             <Button
               variant="ghost"
-              class="cursor-pointer w-full flex justify-start h-[64px]"
+              class="flex h-[64px] w-full cursor-pointer justify-start"
               onclick={() => {
                 handleLogout();
                 isOpen = false;
               }}
             >
-              <div class="flex items-center w-12 h-12">
-                <LogOut class="flex !w-8 !h-8 mx-2" />
+              <div class="flex h-12 w-12 items-center">
+                <LogOut class="mx-2 flex !h-8 !w-8" />
               </div>
-              <span class="text-sm font-medium m-3 overflow-ellipsis">
+              <span class="m-3 text-sm font-medium overflow-ellipsis">
                 Logout
               </span>
             </Button>
           {:else}
             <Button
               variant="ghost"
-              class="cursor-pointer w-full flex justify-start h-[64px]"
+              class="flex h-[64px] w-full cursor-pointer justify-start"
               onclick={() => {
-                goto("/auth/login");
+                goto('/auth/login');
                 isOpen = false;
               }}
             >
-              <div class="flex items-center w-12 h-12">
-                <LogIn class="flex !w-8 !h-8 mx-2" />
+              <div class="flex h-12 w-12 items-center">
+                <LogIn class="mx-2 flex !h-8 !w-8" />
               </div>
-              <span class="text-sm font-medium m-3 overflow-ellipsis">
+              <span class="m-3 text-sm font-medium overflow-ellipsis">
                 Login
               </span>
             </Button>

@@ -1,19 +1,19 @@
 <script lang="ts">
-  import * as Carousel from "$lib/components/ui/carousel";
-  import ContentCard from "./content-card.svelte";
+  import * as Carousel from '$lib/components/ui/carousel';
+  import ContentCard from './content-card.svelte';
   import {
     handleContentNavigation,
     type CarouselState,
     type ContentDisplayProps,
-  } from "./content";
-  import type { CarouselAPI } from "../ui/carousel/context";
-  import { onDestroy } from "svelte";
+  } from './content';
+  import type { CarouselAPI } from '../ui/carousel/context';
+  import { onDestroy } from 'svelte';
   import {
     DEFAULT_SECTION_ID,
     getContentState,
-  } from "$lib/state/content.svelte";
-  import type { CombinedContentFilter } from "./content-filter";
-  import type { Video } from "$lib/supabase/videos";
+  } from '$lib/state/content.svelte';
+  import type { CombinedContentFilter } from './content-filter';
+  import type { Video } from '$lib/supabase/videos';
 
   type ContentCarouselProps = ContentDisplayProps & {
     carouselState?: CarouselState;
@@ -39,13 +39,13 @@
   const contentState = getContentState();
 
   const selectedVideos = $derived(
-    contentState.selectedVideosBySection[sectionId] ?? [],
+    contentState.selectedVideosBySection[sectionId] ?? []
   );
 
   const selectedVideoIds = $derived(
     selectedVideos.length > 0
       ? new Set(selectedVideos.map((v) => v.id))
-      : new Set(),
+      : new Set()
   );
 
   const hoveredVideo = $derived(contentState.hoveredVideosBySection[sectionId]);
@@ -83,13 +83,13 @@
       updateSlidesInView();
 
       // Listen for changes
-      api.on("slidesInView", updateSlidesInView);
-      api.on("scroll", updateSlidesInView);
+      api.on('slidesInView', updateSlidesInView);
+      api.on('scroll', updateSlidesInView);
 
       return () => {
         if (api) {
-          api.off("slidesInView", updateSlidesInView);
-          api.off("scroll", updateSlidesInView);
+          api.off('slidesInView', updateSlidesInView);
+          api.off('scroll', updateSlidesInView);
         }
       };
     }
@@ -141,7 +141,7 @@
 
   async function waitForCarouselReady(
     api: CarouselAPI,
-    maxWait = 2000,
+    maxWait = 2000
   ): Promise<boolean> {
     const startTime = Date.now();
 
@@ -221,12 +221,12 @@
 
     // Only apply hover and selected states to cards that are in view
     if (isInView && (isSelected || isHovered)) {
-      classes += " !bg-secondary brightness-110 hover:bg-secondary";
+      classes += ' !bg-secondary brightness-110 hover:bg-secondary';
     }
 
     // Add drag drop classes if enabled
     if (dragDrop && allowVideoReorder) {
-      classes += ` ${contentState.getVideoDragClasses(index, "TILES")}`;
+      classes += ` ${contentState.getVideoDragClasses(index, 'TILES')}`;
     }
 
     return classes;
@@ -283,7 +283,7 @@
 
 <Carousel.Root
   opts={{
-    slidesToScroll: "auto",
+    slidesToScroll: 'auto',
     watchDrag: false,
     inViewThreshold: 0.5,
   }}
@@ -296,15 +296,15 @@
 >
   <Carousel.Previous
     class={showPreviousButton
-      ? "visible cursor-pointer hover:brightness-110 !bg-secondary hover:scale-105"
-      : "invisible"}
+      ? '!bg-secondary visible cursor-pointer hover:scale-105 hover:brightness-110'
+      : 'invisible'}
     onclick={handlePreviousButtonClick}
   />
   <Carousel.Next
     onclick={handleNextButtonClick}
     class={showNextButton
-      ? "visible cursor-pointer hover:brightness-110 !bg-secondary hover:scale-105"
-      : "invisible"}
+      ? '!bg-secondary visible cursor-pointer hover:scale-105 hover:brightness-110'
+      : 'invisible'}
   />
   <Carousel.Content>
     {#each videos as video, i (video.id)}

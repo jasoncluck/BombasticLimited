@@ -1,4 +1,4 @@
-import { vi, beforeEach } from "vitest";
+import { vi, beforeEach } from 'vitest';
 
 // Mock localStorage
 const localStorageMock = {
@@ -17,7 +17,7 @@ const mockServiceWorkerGlobalScope = {
     matchAll: vi.fn(() => Promise.resolve([] as Array<{ postMessage: any }>)),
     claim: vi.fn(() => Promise.resolve()),
   },
-  location: { origin: "http://localhost:5173" },
+  location: { origin: 'http://localhost:5173' },
   addEventListener: vi.fn(),
 };
 
@@ -30,28 +30,28 @@ const mockCaches = {
 
 // Set up global mocks
 beforeEach(() => {
-  Object.defineProperty(global, "localStorage", {
+  Object.defineProperty(global, 'localStorage', {
     value: localStorageMock,
     writable: true,
   });
 
-  Object.defineProperty(global, "self", {
+  Object.defineProperty(global, 'self', {
     value: mockServiceWorkerGlobalScope,
     writable: true,
   });
 
-  Object.defineProperty(global, "caches", {
+  Object.defineProperty(global, 'caches', {
     value: mockCaches,
     writable: true,
   });
 
-  Object.defineProperty(global, "fetch", {
+  Object.defineProperty(global, 'fetch', {
     value: vi.fn(),
     writable: true,
   });
 
   // Mock browser environment
-  Object.defineProperty(global, "navigator", {
+  Object.defineProperty(global, 'navigator', {
     value: {
       serviceWorker: {
         ready: Promise.resolve({
@@ -68,7 +68,7 @@ beforeEach(() => {
     writable: true,
   });
 
-  Object.defineProperty(global, "MessageChannel", {
+  Object.defineProperty(global, 'MessageChannel', {
     value: class MockMessageChannel {
       port1 = {
         onmessage: null as ((event: MessageEvent) => void) | null,
@@ -82,9 +82,9 @@ beforeEach(() => {
     writable: true,
   });
 
-  Object.defineProperty(global, "document", {
+  Object.defineProperty(global, 'document', {
     value: {
-      cookie: "",
+      cookie: '',
     },
     writable: true,
   });

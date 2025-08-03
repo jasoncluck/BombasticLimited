@@ -1,13 +1,13 @@
 <script lang="ts">
-  import ContentCard from "./content-card.svelte";
-  import { handleContentNavigation, type ContentDisplayProps } from "./content";
-  import { type CombinedContentFilter } from "./content-filter";
+  import ContentCard from './content-card.svelte';
+  import { handleContentNavigation, type ContentDisplayProps } from './content';
+  import { type CombinedContentFilter } from './content-filter';
   import {
     getContentState,
     DEFAULT_SECTION_ID,
-  } from "$lib/state/content.svelte";
-  import type { Video } from "$lib/supabase/videos";
-  import { onMount } from "svelte";
+  } from '$lib/state/content.svelte';
+  import type { Video } from '$lib/supabase/videos';
+  import { onMount } from 'svelte';
 
   type ContentTilesProps = ContentDisplayProps & {
     allowVideoReorder?: boolean;
@@ -32,7 +32,7 @@
   const contentState = getContentState();
 
   const selectedVideos = $derived(
-    contentState.selectedVideosBySection[sectionId] ?? [],
+    contentState.selectedVideosBySection[sectionId] ?? []
   );
 
   const hoveredVideo = $derived(contentState.hoveredVideosBySection[sectionId]);
@@ -49,13 +49,13 @@
       onVideosUpdate: (updatedVideos) => {
         videos = updatedVideos;
       },
-    }),
+    })
   );
 
   const selectedVideoIds = $derived(
     selectedVideos.length > 0
       ? new Set(selectedVideos.map((v) => v.id))
-      : new Set(),
+      : new Set()
   );
 
   let containerElement: HTMLElement;
@@ -68,12 +68,12 @@
 
     // Only apply hover and selected states to cards that are in view
     if (isSelected || isHovered) {
-      classes += " z-40 !bg-secondary brightness-110 hover:bg-secondary";
+      classes += ' z-40 !bg-secondary brightness-110 hover:bg-secondary';
     }
 
     // Add drag drop classes if enabled
     if (dragDrop && allowVideoReorder) {
-      classes += ` ${contentState.getVideoDragClasses(index, "TILES")}`;
+      classes += ` ${contentState.getVideoDragClasses(index, 'TILES')}`;
     }
 
     return classes;
@@ -122,7 +122,7 @@
     if (containerElement) {
       return contentState.setupClickOutsideListener(
         containerElement,
-        sectionId,
+        sectionId
       );
     }
   });
@@ -132,7 +132,7 @@
 <div
   role="region"
   bind:this={containerElement}
-  class="flex flex-col @sm:grid @4xl:grid-cols-5 @sm:grid-cols-3 gap-x-2 gap-y-12 relative outline-none"
+  class="relative flex flex-col gap-x-2 gap-y-12 outline-none @sm:grid @sm:grid-cols-3 @4xl:grid-cols-5"
   onmouseleave={handleTilesMouseLeave}
 >
   {#each videos as video, i (video.id)}
@@ -191,7 +191,7 @@
         }
       }}
       onkeydown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
+        if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
           // Trigger the same logic as onclick
           contentState.handleVideoClick({

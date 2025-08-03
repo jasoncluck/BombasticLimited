@@ -1,42 +1,42 @@
 import type {
   TimestampFilter,
   VideoFilter,
-} from "$lib/components/content/content-filter";
-import { SOURCES } from "$lib/constants/source";
+} from '$lib/components/content/content-filter';
+import { SOURCES } from '$lib/constants/source';
 import {
   DEFAULT_NUM_VIDEOS_OVERVIEW,
   getInProgressVideos,
   getVideos,
   type SourceVideos,
-} from "$lib/supabase/videos";
-import { redirect } from "@sveltejs/kit";
-import type { PageServerLoad } from "./$types";
+} from '$lib/supabase/videos';
+import { redirect } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
   locals: { supabase, session },
   url,
   depends,
 }) => {
-  depends("supabase:db:videos");
+  depends('supabase:db:videos');
 
-  if (url.searchParams.has("error")) {
-    redirect(303, "/auth/error");
+  if (url.searchParams.has('error')) {
+    redirect(303, '/auth/error');
   }
 
   const sourceVideosContentFilters: VideoFilter = {
     sort: {
-      key: "datePublished",
-      order: "descending",
+      key: 'datePublished',
+      order: 'descending',
     },
-    type: "video",
+    type: 'video',
   };
 
   const continueWatchingContentFilters: TimestampFilter = {
     sort: {
-      key: "dateTimestamp",
-      order: "descending",
+      key: 'dateTimestamp',
+      order: 'descending',
     },
-    type: "timestamp",
+    type: 'timestamp',
   };
 
   // Run all video fetching operations in parallel
@@ -52,7 +52,7 @@ export const load: PageServerLoad = async ({
           session,
         });
         return { source, videos };
-      }),
+      })
     ),
     // Fetch continue watching videos in parallel with source videos
     getInProgressVideos({

@@ -1,20 +1,20 @@
-import { browser } from "$app/environment";
-import { getContext, setContext } from "svelte";
+import { browser } from '$app/environment';
+import { getContext, setContext } from 'svelte';
 
 const breakpoints = {
-  sm: "(min-width: 640px)",
-  md: "(min-width: 768px)",
-  lg: "(min-width: 1024px)",
-  xl: "(min-width: 1280px)",
-  "2xl": "(min-width: 1536px)",
+  sm: '(min-width: 640px)',
+  md: '(min-width: 768px)',
+  lg: '(min-width: 1024px)',
+  xl: '(min-width: 1280px)',
+  '2xl': '(min-width: 1536px)',
   // Max-width variants
-  "max-sm": "(max-width: 639px)",
-  "max-md": "(max-width: 767px)",
-  "max-lg": "(max-width: 1023px)",
-  "max-xl": "(max-width: 1279px)",
-  "max-2xl": "(max-width: 1535px)",
-  hover: "(hover: hover)",
-  "no-hover": "(hover: none)",
+  'max-sm': '(max-width: 639px)',
+  'max-md': '(max-width: 767px)',
+  'max-lg': '(max-width: 1023px)',
+  'max-xl': '(max-width: 1279px)',
+  'max-2xl': '(max-width: 1535px)',
+  hover: '(hover: hover)',
+  'no-hover': '(hover: none)',
 } as const;
 
 export type Breakpoint = keyof typeof breakpoints;
@@ -53,61 +53,61 @@ export class MediaQueryStateClass implements MediaQueryState {
       md: true,
       lg: false,
       xl: false,
-      "2xl": false,
-      "max-sm": false,
-      "max-md": false,
-      "max-lg": true,
-      "max-xl": true,
-      "max-2xl": true,
+      '2xl': false,
+      'max-sm': false,
+      'max-md': false,
+      'max-lg': true,
+      'max-xl': true,
+      'max-2xl': true,
       hover: true,
-      "no-hover": false,
+      'no-hover': false,
     };
   }
 
   get isSm() {
-    return this.#matches["sm"] ?? false;
+    return this.#matches['sm'] ?? false;
   }
   get isMd() {
-    return this.#matches["md"] ?? false;
+    return this.#matches['md'] ?? false;
   }
   get isLg() {
-    return this.#matches["lg"] ?? false;
+    return this.#matches['lg'] ?? false;
   }
   get isXl() {
-    return this.#matches["xl"] ?? false;
+    return this.#matches['xl'] ?? false;
   }
   get is2xl() {
-    return this.#matches["2xl"] ?? false;
+    return this.#matches['2xl'] ?? false;
   }
 
   get isMaxSm() {
-    return this.#matches["max-sm"] ?? false;
+    return this.#matches['max-sm'] ?? false;
   }
   get isMaxMd() {
-    return this.#matches["max-md"] ?? false;
+    return this.#matches['max-md'] ?? false;
   }
   get isMaxLg() {
-    return this.#matches["max-lg"] ?? false;
+    return this.#matches['max-lg'] ?? false;
   }
   get isMaxXl() {
-    return this.#matches["max-xl"] ?? false;
+    return this.#matches['max-xl'] ?? false;
   }
   get isMaxXl2() {
-    return this.#matches["max-2xl"] ?? false;
+    return this.#matches['max-2xl'] ?? false;
   }
 
   /**
    * Check if the device supports hover interactions (like desktop with mouse)
    */
   get canHover() {
-    return this.#matches["hover"] ?? true; // Default to true for better initial experience
+    return this.#matches['hover'] ?? true; // Default to true for better initial experience
   }
 
   /**
    * Check if the device does not support hover interactions (like touch devices)
    */
   get cannotHover() {
-    return this.#matches["no-hover"] ?? false;
+    return this.#matches['no-hover'] ?? false;
   }
 
   get supportsHover() {
@@ -168,7 +168,7 @@ export class MediaQueryStateClass implements MediaQueryState {
         this.#matches[key] = mediaQueryList.matches;
       };
 
-      mediaQueryList.addEventListener("change", handleChange);
+      mediaQueryList.addEventListener('change', handleChange);
     }
 
     // Update all matches immediately
@@ -180,14 +180,14 @@ export class MediaQueryStateClass implements MediaQueryState {
         const handleChange = () => {
           this.#matches[key] = mediaQueryList.matches;
         };
-        mediaQueryList.removeEventListener("change", handleChange);
+        mediaQueryList.removeEventListener('change', handleChange);
       }
       this.#mediaQueries.clear();
     };
   }
 }
 
-const DEFAULT_KEY = "$_media_query_state";
+const DEFAULT_KEY = '$_media_query_state';
 
 export function setMediaQueryState(key = DEFAULT_KEY) {
   const mediaQueryState = new MediaQueryStateClass();

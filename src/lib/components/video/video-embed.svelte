@@ -5,5 +5,5 @@
 <div
   id={divId}
   data-testid={`${divId}-test`}
-  class="absolute top-0 left-0 w-full h-full"
+  class="absolute top-0 left-0 h-full w-full"
 ></div>

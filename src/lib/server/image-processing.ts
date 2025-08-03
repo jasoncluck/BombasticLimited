@@ -1,4 +1,4 @@
-import type { ImageProperties } from "$lib/components/playlist/playlist";
+import type { ImageProperties } from '$lib/components/playlist/playlist';
 
 // export async function getCroppedPlaylistImageUrlServer({
 //   imageProperties,

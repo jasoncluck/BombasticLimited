@@ -1,12 +1,12 @@
-import { getContext, setContext } from "svelte";
-import { goto, invalidate } from "$app/navigation";
-import { showNotification } from "$lib/stores/notification.js";
-import debounce from "debounce";
-import { page } from "$app/state";
-import { isSourceArray, SOURCE_INFO } from "$lib/constants/source";
-import { activeStreams } from "$lib/state/streaming.svelte";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { source } from "sveltekit-sse";
+import { getContext, setContext } from 'svelte';
+import { goto, invalidate } from '$app/navigation';
+import { showNotification } from '$lib/stores/notification.js';
+import debounce from 'debounce';
+import { page } from '$app/state';
+import { isSourceArray, SOURCE_INFO } from '$lib/constants/source';
+import { activeStreams } from '$lib/state/streaming.svelte';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { source } from 'sveltekit-sse';
 
 export interface LayoutConfig {
   searchDebounceMs: number;
@@ -41,7 +41,7 @@ export interface LayoutState {
 }
 
 export class LayoutStateClass implements LayoutState {
-  private lastSearchValue: string = "";
+  private lastSearchValue: string = '';
 
   isDraggingDivider = $state(false);
   isSearching = $state(false);
@@ -54,9 +54,9 @@ export class LayoutStateClass implements LayoutState {
 
   async handleLogout(supabase: SupabaseClient) {
     const { error } = await supabase.auth.signOut();
-    showNotification("Logged out.", "success");
+    showNotification('Logged out.', 'success');
     if (error) {
-      console.error("Error signing out:", error);
+      console.error('Error signing out:', error);
     }
     window.location.reload();
   }
@@ -79,7 +79,7 @@ export class LayoutStateClass implements LayoutState {
     this.isSearching = true;
 
     try {
-      if (searchValue === "") {
+      if (searchValue === '') {
         // Only navigate to "/" if completely empty
         goto(`/`, { keepFocus: true });
       } else if (searchValue.length >= 2) {
@@ -94,8 +94,8 @@ export class LayoutStateClass implements LayoutState {
       // For single characters (length === 1), do nothing - stay on current page
     } catch (error) {
       // Don't log abort errors - they're expected
-      if ((error as Error)?.name !== "AbortError") {
-        console.error("Search navigation error:", error);
+      if ((error as Error)?.name !== 'AbortError') {
+        console.error('Search navigation error:', error);
       }
     } finally {
       this.isSearching = false;
@@ -144,7 +144,7 @@ export class LayoutStateClass implements LayoutState {
 
   setupNotifications(supabase: SupabaseClient) {
     const { data } = supabase.auth.onAuthStateChange((_, newSession) => {
-      invalidate("supabase:auth");
+      invalidate('supabase:auth');
     });
 
     return () => {
@@ -153,8 +153,8 @@ export class LayoutStateClass implements LayoutState {
   }
 
   async setupStreamingNotifications() {
-    const streamingSources = source("/api/twitch").select(
-      "streamingSubscriptions",
+    const streamingSources = source('/api/twitch').select(
+      'streamingSubscriptions'
     );
 
     let initialMount = true;
@@ -170,22 +170,22 @@ export class LayoutStateClass implements LayoutState {
 
       if (isSourceArray(latestStreamingSourcesParsed)) {
         const removedSources = activeStreams.sources.filter(
-          (source) => !latestStreamingSourcesParsed.includes(source),
+          (source) => !latestStreamingSourcesParsed.includes(source)
         );
         const addedSources = latestStreamingSourcesParsed.filter(
-          (source) => !activeStreams.sources.includes(source),
+          (source) => !activeStreams.sources.includes(source)
         );
 
         if (!initialMount) {
           removedSources.forEach((removedSource) => {
             showNotification(
-              `${SOURCE_INFO[removedSource].displayName} has ended their stream.`,
+              `${SOURCE_INFO[removedSource].displayName} has ended their stream.`
             );
           });
 
           addedSources.forEach((addedSource) => {
             showNotification(
-              `${SOURCE_INFO[addedSource].displayName} has started streaming.`,
+              `${SOURCE_INFO[addedSource].displayName} has started streaming.`
             );
           });
         }
@@ -209,7 +209,7 @@ export class LayoutStateClass implements LayoutState {
   }
 }
 
-const DEFAULT_KEY = "$_layout_state";
+const DEFAULT_KEY = '$_layout_state';
 
 export function setLayoutState(key = DEFAULT_KEY) {
   const layoutState = new LayoutStateClass();

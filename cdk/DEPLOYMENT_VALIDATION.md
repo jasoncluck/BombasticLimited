@@ -3,6 +3,7 @@
 ## Infrastructure Components Created
 
 ### ✅ S3 Bucket Configuration
+
 - Bucket name: `bombify-database-backups-{environment}`
 - Encryption: SSE-S3 managed encryption
 - Versioning: Enabled for backup file history
@@ -15,12 +16,14 @@
 - Retention: 90 days (staging) / 7 years (production)
 
 ### ✅ IAM Role and Policies
+
 - Role: `bombify-database-backup-role-{environment}`
 - Least privilege access to S3 bucket operations
 - CloudWatch logs permissions
 - Lambda execution permissions
 
 ### ✅ Lambda Function
+
 - Function: `BombifyDatabaseBackup-{environment}`
 - Runtime: Node.js 20.x
 - Timeout: 15 minutes
@@ -29,12 +32,14 @@
 - Supports table selection and backup types
 
 ### ✅ CloudWatch Monitoring
+
 - Error alarms for backup failures
 - Dashboard: `BombifyBackups-{environment}`
 - Log retention: 1 month
 - Metrics for invocations, errors, and duration
 
 ### ✅ Automated Scheduling
+
 - Daily backups at 2 AM UTC via EventBridge
 - Configurable for different schedules
 
@@ -116,6 +121,7 @@ The backup infrastructure will create the following AWS resources:
 ## Next Steps for Production Deployment
 
 1. Set required environment variables:
+
    ```bash
    export SUPABASE_SERVICE_API_KEY_PROD=your_key
    export PUBLIC_SUPABASE_URL_PROD=your_url
@@ -123,11 +129,13 @@ The backup infrastructure will create the following AWS resources:
    ```
 
 2. Deploy infrastructure:
+
    ```bash
    npm run deploy
    ```
 
 3. Test backup functionality:
+
    ```bash
    npm run backup:dry-run
    npm run backup
@@ -138,6 +146,7 @@ The backup infrastructure will create the following AWS resources:
 ## Disaster Recovery
 
 The backup infrastructure supports:
+
 - Point-in-time recovery from any backup
 - Cross-region replication (configurable)
 - Multiple backup formats and versions

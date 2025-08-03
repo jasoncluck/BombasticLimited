@@ -4,8 +4,8 @@
 /// <reference lib="webworker" />
 /// <reference lib="DOM.Iterable" />
 
-import { build, files, version } from "$service-worker";
-import { MAIN_ROUTE_PATHS } from "$lib/constants/routes";
+import { build, files, version } from '$service-worker';
+import { MAIN_ROUTE_PATHS } from '$lib/constants/routes';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
@@ -19,18 +19,18 @@ const STATIC_EXTENSIONS =
 
 // Helper function to get current timestamp for logging
 const getTimestamp = (): string => {
-  return new Date().toISOString().replace("T", " ").substring(0, 19);
+  return new Date().toISOString().replace('T', ' ').substring(0, 19);
 };
 
 // Helper function to check if URL should be handled by service worker
 const shouldHandleRequest = (url: URL): boolean => {
   // Don't handle OAuth callback URLs
-  if (url.searchParams.has("code") && url.pathname === "/") {
+  if (url.searchParams.has('code') && url.pathname === '/') {
     return false;
   }
 
   // Don't handle auth-related URLs that need server processing
-  if (url.pathname.startsWith("/auth/")) {
+  if (url.pathname.startsWith('/auth/')) {
     return false;
   }
 
@@ -41,7 +41,7 @@ const shouldHandleRequest = (url: URL): boolean => {
 const shouldCacheResponse = (response: Response): boolean => {
   return (
     response.ok &&
-    (response.headers.has("etag") || response.headers.has("last-modified"))
+    (response.headers.has('etag') || response.headers.has('last-modified'))
   );
 };
 // Handle navigation requests and populate memory cache
@@ -59,7 +59,7 @@ const handleNavigationRequest = async (request: Request): Promise<Response> => {
       cache.put(request, responseToCache);
 
       // Extract data and send to memory cache for __data.json requests
-      if (url.pathname.endsWith("/__data.json")) {
+      if (url.pathname.endsWith('/__data.json')) {
         networkResponse
           .clone()
           .json()
@@ -68,8 +68,8 @@ const handleNavigationRequest = async (request: Request): Promise<Response> => {
             sw.clients.matchAll().then((clients) => {
               clients.forEach((client) => {
                 client.postMessage({
-                  type: "CACHE_SET",
-                  key: `page:${url.pathname.replace("/__data.json", "")}`,
+                  type: 'CACHE_SET',
+                  key: `page:${url.pathname.replace('/__data.json', '')}`,
                   data: data,
                   ttl: 300000, // 5 minutes
                   timestamp: Date.now(),
@@ -88,12 +88,12 @@ const handleNavigationRequest = async (request: Request): Promise<Response> => {
   } catch (error) {
     // Only serve from cache if network completely fails
     console.log(
-      `SW [${getTimestamp()}]: Network failed for ${url.pathname}, trying cache`,
+      `SW [${getTimestamp()}]: Network failed for ${url.pathname}, trying cache`
     );
     const cached = await cache.match(request);
     if (cached) {
       console.log(
-        `SW [${getTimestamp()}]: Serving cached content for ${url.pathname}`,
+        `SW [${getTimestamp()}]: Serving cached content for ${url.pathname}`
       );
       return cached;
     }
@@ -108,7 +108,7 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
 
   if (cached) {
     // Serve from cache and optionally refresh in background for long-lived assets
-    const cacheDate = cached.headers.get("date");
+    const cacheDate = cached.headers.get('date');
     if (cacheDate) {
       const age = Date.now() - new Date(cacheDate).getTime();
       // Refresh assets older than 1 day in background
@@ -149,9 +149,9 @@ const preloadCriticalResources = async (): Promise<void> => {
   // Preload critical assets that aren't already cached
   const criticalAssets = build.filter(
     (asset) =>
-      asset.includes("app") ||
-      asset.includes("vendor") ||
-      asset.endsWith(".css"),
+      asset.includes('app') ||
+      asset.includes('vendor') ||
+      asset.endsWith('.css')
   );
 
   const assetPromises = criticalAssets.map(async (asset) => {
@@ -163,14 +163,14 @@ const preloadCriticalResources = async (): Promise<void> => {
           await staticCache.put(asset, response);
           console.log(
             `SW [${getTimestamp()}]: ✅ Critical asset cached:`,
-            asset,
+            asset
           );
         }
       } catch (error) {
         console.warn(
           `SW [${getTimestamp()}]: ❌ Critical asset error:`,
           asset,
-          error,
+          error
         );
       }
     }
@@ -186,7 +186,7 @@ const preloadCriticalResources = async (): Promise<void> => {
       const htmlRequest = new Request(route, {
         headers: {
           Accept:
-            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         },
       });
       const dataRequest = new Request(`${route}/__data.json`);
@@ -199,7 +199,7 @@ const preloadCriticalResources = async (): Promise<void> => {
       let routeSuccessfullyPreloaded = false;
 
       // Cache HTML response if successful
-      if (htmlResponse.status === "fulfilled" && htmlResponse.value.ok) {
+      if (htmlResponse.status === 'fulfilled' && htmlResponse.value.ok) {
         const htmlToCache = htmlResponse.value.clone();
         await dataCache.put(htmlRequest, htmlToCache);
         console.log(`SW [${getTimestamp()}]: ✅ Route cached: ${route}`);
@@ -207,11 +207,11 @@ const preloadCriticalResources = async (): Promise<void> => {
       }
 
       // Cache data response if successful
-      if (dataResponse.status === "fulfilled" && dataResponse.value.ok) {
+      if (dataResponse.status === 'fulfilled' && dataResponse.value.ok) {
         const dataToCache = dataResponse.value.clone();
         await dataCache.put(dataRequest, dataToCache);
         console.log(
-          `SW [${getTimestamp()}]: ✅ Route data cached: ${route}/__data.json`,
+          `SW [${getTimestamp()}]: ✅ Route data cached: ${route}/__data.json`
         );
 
         // Extract data and try to send to clients (may not be available during install)
@@ -222,7 +222,7 @@ const preloadCriticalResources = async (): Promise<void> => {
             clients.forEach((client) => {
               // Send cache data
               client.postMessage({
-                type: "CACHE_SET",
+                type: 'CACHE_SET',
                 key: `page:${route}`,
                 data: data,
                 ttl: 300000, // 5 minutes
@@ -232,7 +232,7 @@ const preloadCriticalResources = async (): Promise<void> => {
 
               // Mark route as preloaded
               client.postMessage({
-                type: "ROUTE_PRELOADED",
+                type: 'ROUTE_PRELOADED',
                 route: route,
                 timestamp: Date.now(),
               });
@@ -253,7 +253,7 @@ const preloadCriticalResources = async (): Promise<void> => {
       console.warn(
         `SW [${getTimestamp()}]: ❌ Route preload error:`,
         route,
-        error,
+        error
       );
     }
   });
@@ -272,7 +272,7 @@ const preloadCriticalResources = async (): Promise<void> => {
     sw.clients.matchAll().then((clients) => {
       clients.forEach((client) => {
         client.postMessage({
-          type: "STORE_PRELOADED_ROUTES",
+          type: 'STORE_PRELOADED_ROUTES',
           data: preloadedData,
         });
       });
@@ -280,12 +280,12 @@ const preloadCriticalResources = async (): Promise<void> => {
 
     console.log(
       `SW [${getTimestamp()}]: ✅ Stored ${preloadedRoutes.length} preloaded routes:`,
-      preloadedRoutes,
+      preloadedRoutes
     );
   } catch (error) {
     console.warn(
       `SW [${getTimestamp()}]: Failed to store preloaded routes:`,
-      error,
+      error
     );
   }
 
@@ -297,9 +297,9 @@ const cleanupOldCaches = async (): Promise<void> => {
   const cacheNames = await caches.keys();
   const oldCaches = cacheNames.filter(
     (name) =>
-      name.startsWith("bombastic-") &&
+      name.startsWith('bombastic-') &&
       name !== STATIC_CACHE &&
-      name !== DATA_CACHE,
+      name !== DATA_CACHE
   );
 
   await Promise.all(oldCaches.map((name) => caches.delete(name)));
@@ -310,27 +310,27 @@ const cleanupOldCaches = async (): Promise<void> => {
 };
 
 // Install event - preload critical assets
-sw.addEventListener("install", (event) => {
+sw.addEventListener('install', (event) => {
   console.log(`SW [${getTimestamp()}]: Installing version ${version}`);
 
   event.waitUntil(Promise.all([preloadCriticalResources(), sw.skipWaiting()]));
 });
 
 // Activate event - clean up and take control
-sw.addEventListener("activate", (event) => {
+sw.addEventListener('activate', (event) => {
   console.log(`SW [${getTimestamp()}]: Activating version ${version}`);
 
   event.waitUntil(Promise.all([cleanupOldCaches(), sw.clients.claim()]));
 });
 
 // Fetch event - handle both static assets and navigation with unified caching
-sw.addEventListener("fetch", (event) => {
+sw.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
   // Only handle GET requests from same origin and exclude OAuth callbacks
   if (
-    request.method !== "GET" ||
+    request.method !== 'GET' ||
     url.origin !== sw.location.origin ||
     !shouldHandleRequest(url)
   ) {
@@ -348,9 +348,9 @@ sw.addEventListener("fetch", (event) => {
 
   // Handle navigation requests and data requests with ETag validation
   if (
-    request.mode === "navigate" ||
-    url.pathname.endsWith("/__data.json") ||
-    request.headers.get("accept")?.includes("text/html")
+    request.mode === 'navigate' ||
+    url.pathname.endsWith('/__data.json') ||
+    request.headers.get('accept')?.includes('text/html')
   ) {
     event.respondWith(handleNavigationRequest(request));
     return;
@@ -360,17 +360,17 @@ sw.addEventListener("fetch", (event) => {
 });
 
 // Simplified message handling
-sw.addEventListener("message", (event) => {
+sw.addEventListener('message', (event) => {
   const { type } = event.data || {};
 
   switch (type) {
-    case "SKIP_WAITING": {
+    case 'SKIP_WAITING': {
       console.log(`SW [${getTimestamp()}]: Received SKIP_WAITING message`);
       sw.skipWaiting();
       break;
     }
 
-    case "CLEAR_CACHE": {
+    case 'CLEAR_CACHE': {
       console.log(`SW [${getTimestamp()}]: Received CLEAR_CACHE message`);
       event.waitUntil(
         Promise.all([
@@ -378,16 +378,16 @@ sw.addEventListener("message", (event) => {
           caches.delete(DATA_CACHE),
         ]).then(() => {
           console.log(
-            `SW [${getTimestamp()}]: All caches cleared successfully`,
+            `SW [${getTimestamp()}]: All caches cleared successfully`
           );
-        }),
+        })
       );
       break;
     }
 
-    case "REQUEST_PRELOADED_ROUTES": {
+    case 'REQUEST_PRELOADED_ROUTES': {
       console.log(
-        `SW [${getTimestamp()}]: Client requesting preloaded routes list`,
+        `SW [${getTimestamp()}]: Client requesting preloaded routes list`
       );
       // Send current preloaded routes by checking what's in cache
       event.waitUntil(
@@ -405,17 +405,17 @@ sw.addEventListener("message", (event) => {
             }
 
             event.ports[0]?.postMessage({
-              type: "PRELOADED_ROUTES_RESPONSE",
+              type: 'PRELOADED_ROUTES_RESPONSE',
               routes: preloadedRoutes,
               timestamp: Date.now(),
             });
           } catch (error) {
             console.warn(
               `SW [${getTimestamp()}]: Error checking preloaded routes:`,
-              error,
+              error
             );
           }
-        })(),
+        })()
       );
       // Send current preloaded routes by checking what's in cache
       event.waitUntil(
@@ -433,17 +433,17 @@ sw.addEventListener("message", (event) => {
             }
 
             event.ports[0]?.postMessage({
-              type: "PRELOADED_ROUTES_RESPONSE",
+              type: 'PRELOADED_ROUTES_RESPONSE',
               routes: preloadedRoutes,
               timestamp: Date.now(),
             });
           } catch (error) {
             console.warn(
               `SW [${getTimestamp()}]: Error checking preloaded routes:`,
-              error,
+              error
             );
           }
-        })(),
+        })()
       );
       break;
     }
@@ -456,6 +456,6 @@ sw.addEventListener("message", (event) => {
 });
 
 // Handle errors gracefully
-sw.addEventListener("error", (event) => {
+sw.addEventListener('error', (event) => {
   console.error(`SW [${getTimestamp()}]: Service worker error:`, event.error);
 });

@@ -1,5 +1,5 @@
-import { getContext, setContext } from "svelte";
-import type { PageState } from "./page.svelte";
+import { getContext, setContext } from 'svelte';
+import type { PageState } from './page.svelte';
 
 export interface SourceButtonOptions {
   index: number;
@@ -36,11 +36,11 @@ export class SourceStateClass {
   getButtonClasses(options: SourceButtonOptions): string {
     const { index, isSelected, isSidebarCollapsed } = options;
 
-    let classes = "sidebar-full-button transition-all duration-200 ease-in-out";
+    let classes = 'sidebar-full-button transition-all duration-200 ease-in-out';
 
     // Base hover and active states that apply to the whole button
-    classes += " hover:bg-secondary/50 hover:brightness-110";
-    classes += " active:bg-secondary/70 active:scale-95 active:brightness-90";
+    classes += ' hover:bg-secondary/50 hover:brightness-110';
+    classes += ' active:bg-secondary/70 active:scale-95 active:brightness-90';
 
     // Enhanced hover effect when manually tracking hover state
     if (
@@ -48,24 +48,24 @@ export class SourceStateClass {
       !this.pageState.sidebarScrollState.scrolling
     ) {
       if (isSelected) {
-        classes += " brightness-110";
+        classes += ' brightness-110';
       } else {
-        classes += " bg-secondary/25";
+        classes += ' bg-secondary/25';
       }
     }
 
     // Selected styling
     if (isSelected) {
-      classes += " bg-secondary text-secondary-foreground";
+      classes += ' bg-secondary text-secondary-foreground';
       // Override hover for selected items
-      classes += " hover:bg-secondary hover:brightness-110";
+      classes += ' hover:bg-secondary hover:brightness-110';
     }
 
     // Sidebar layout classes
     if (!isSidebarCollapsed) {
-      classes += " min-w-[150px] justify-normal";
+      classes += ' min-w-[150px] justify-normal';
     } else {
-      classes += " align-middle";
+      classes += ' align-middle';
     }
 
     return classes;
@@ -75,7 +75,7 @@ export class SourceStateClass {
 // Export the class type for use elsewhere
 export type SourceState = SourceStateClass;
 
-const DEFAULT_KEY = "$_source_state";
+const DEFAULT_KEY = '$_source_state';
 
 export function setSourceState(pageState: PageState, key = DEFAULT_KEY) {
   const sourceState = new SourceStateClass(pageState);

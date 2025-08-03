@@ -1,6 +1,6 @@
-import { youtube, youtube_v3 } from "@googleapis/youtube";
-import { createClient } from "@supabase/supabase-js";
-import { CHANNEL_INFO, ChannelSource } from "../channel";
+import { youtube, youtube_v3 } from '@googleapis/youtube';
+import { createClient } from '@supabase/supabase-js';
+import { CHANNEL_INFO, ChannelSource } from '../channel';
 
 const MAX_RESULTS = 50;
 const DEFAULT_NUM_PAGES = 2;
@@ -15,22 +15,22 @@ export const populateVideos = async ({
   const supabaseApiKey = process.env.SUPABASE_SERVICE_API_KEY_PROD;
   const supabaseUrl = process.env.PUBLIC_SUPABASE_URL_PROD;
   if (!supabaseApiKey || !supabaseUrl) {
-    const errMsg = "Could not find Supabase env.";
-    console.error(JSON.stringify({ stage: "init", error: errMsg }));
+    const errMsg = 'Could not find Supabase env.';
+    console.error(JSON.stringify({ stage: 'init', error: errMsg }));
     throw new Error(errMsg);
   }
 
   const supabaseClient = createClient(supabaseUrl, supabaseApiKey);
 
   if (!source) {
-    const errMsg = "Request body must contain the source of the content.";
-    console.error(JSON.stringify({ stage: "init", error: errMsg }));
+    const errMsg = 'Request body must contain the source of the content.';
+    console.error(JSON.stringify({ stage: 'init', error: errMsg }));
     throw new Error(errMsg);
   }
   const { uploadPlaylistId } = CHANNEL_INFO[source];
 
   const youtubeClient = youtube({
-    version: "v3",
+    version: 'v3',
     auth: process.env.GOOGLE_API_KEY,
   });
 
@@ -48,7 +48,7 @@ export const populateVideos = async ({
       let items: youtube_v3.Schema$PlaylistItem[] | undefined;
       try {
         const { data } = await youtubeClient.playlistItems.list({
-          part: ["id", "snippet", "contentDetails"],
+          part: ['id', 'snippet', 'contentDetails'],
           playlistId: uploadPlaylistId,
           maxResults: 50,
           ...(pageToken && { pageToken }),
@@ -58,17 +58,17 @@ export const populateVideos = async ({
 
         if (!items) {
           throw new Error(
-            `No items found for: ${source}, stopping. PlaylistID: ${uploadPlaylistId}`,
+            `No items found for: ${source}, stopping. PlaylistID: ${uploadPlaylistId}`
           );
         }
       } catch (e) {
         console.error(
           JSON.stringify({
-            stage: "fetch_youtube_playlist_items",
+            stage: 'fetch_youtube_playlist_items',
             source,
             playlistId: uploadPlaylistId,
             error: e,
-          }),
+          })
         );
         throw e;
       }
@@ -85,14 +85,14 @@ export const populateVideos = async ({
       if (videoIds.length > 0) {
         try {
           const { data: videoData } = await youtubeClient.videos.list({
-            part: ["id", "contentDetails"],
+            part: ['id', 'contentDetails'],
             id: videoIds,
           });
           videoDetails =
             videoData.items?.map((video) => {
               if (!video.id || !video.contentDetails?.duration) {
                 throw new Error(
-                  "Unexpected error - could not find duration of a video.",
+                  'Unexpected error - could not find duration of a video.'
                 );
               }
               return {
@@ -103,11 +103,11 @@ export const populateVideos = async ({
         } catch (e) {
           console.error(
             JSON.stringify({
-              stage: "fetch_youtube_video_details",
+              stage: 'fetch_youtube_video_details',
               source,
               videoIds,
               error: e,
-            }),
+            })
           );
           throw e;
         }
@@ -115,11 +115,11 @@ export const populateVideos = async ({
 
       // Helper to remove "_live" suffix from thumbnail URLs
       const removeLiveSuffix = (url?: string | null) =>
-        url ? url.replace(/_live(\.\w+)$/, "$1") : url;
+        url ? url.replace(/_live(\.\w+)$/, '$1') : url;
 
       const videos = items.map((item) => {
         const videoDetail = videoDetails.find(
-          (v) => v.id === item.contentDetails?.videoId,
+          (v) => v.id === item.contentDetails?.videoId
         );
         return {
           id: item.contentDetails?.videoId,
@@ -128,10 +128,10 @@ export const populateVideos = async ({
           description: item.snippet?.description,
           published_at: item.snippet?.publishedAt,
           thumbnail_url: removeLiveSuffix(
-            item.snippet?.thumbnails?.medium?.url,
+            item.snippet?.thumbnails?.medium?.url
           ),
           thumbnail_maxres_url: removeLiveSuffix(
-            item.snippet?.thumbnails?.maxres?.url,
+            item.snippet?.thumbnails?.maxres?.url
           ),
           duration: videoDetail?.duration,
           pending_delete: false, // All YouTube videos are current
@@ -140,25 +140,25 @@ export const populateVideos = async ({
 
       // Batch upsert for better performance
       const { error } = await supabaseClient
-        .from("videos")
-        .upsert(videos, { onConflict: "id" });
+        .from('videos')
+        .upsert(videos, { onConflict: 'id' });
 
       if (error) {
         console.error(
           JSON.stringify({
-            stage: "batch_upsert_videos",
+            stage: 'batch_upsert_videos',
             source,
             error,
-          }),
+          })
         );
         throw error;
       } else {
         console.log(
           JSON.stringify({
-            stage: "batch_upsert_videos",
+            stage: 'batch_upsert_videos',
             message: `Upserted ${videos.length} videos for source: ${source}`,
             videoIds: videos.map((v) => v.id),
-          }),
+          })
         );
       }
 
@@ -172,11 +172,11 @@ export const populateVideos = async ({
 
     console.log(
       JSON.stringify({
-        stage: "youtube_fetch_complete",
+        stage: 'youtube_fetch_complete',
         message: `Fetched ${youtubeVideoIds.size} videos from YouTube`,
         source,
-        syncType: repopulate ? "full_repopulate" : "partial_sync",
-      }),
+        syncType: repopulate ? 'full_repopulate' : 'partial_sync',
+      })
     );
 
     // Step 2: Now mark videos for deletion based on what YouTube actually returned
@@ -185,19 +185,19 @@ export const populateVideos = async ({
     if (repopulate) {
       // Full repopulate: Check ALL videos in DB against YouTube response
       const { data: allVideos, error } = await supabaseClient
-        .from("videos")
-        .select("id")
-        .eq("source", source);
+        .from('videos')
+        .select('id')
+        .eq('source', source);
 
       if (error) {
         console.error(
           JSON.stringify({
-            stage: "fetch_all_videos_for_comparison",
+            stage: 'fetch_all_videos_for_comparison',
             source,
             error,
-          }),
+          })
         );
-        throw new Error("Failed to fetch all videos for comparison");
+        throw new Error('Failed to fetch all videos for comparison');
       }
 
       // Find videos in DB that are NOT in YouTube response
@@ -207,21 +207,21 @@ export const populateVideos = async ({
     } else {
       // Partial sync: Only check recent videos against YouTube response
       const { data: recentVideos, error } = await supabaseClient
-        .from("videos")
-        .select("id")
-        .eq("source", source)
-        .order("published_at", { ascending: false })
+        .from('videos')
+        .select('id')
+        .eq('source', source)
+        .order('published_at', { ascending: false })
         .limit(videosToCheck);
 
       if (error) {
         console.error(
           JSON.stringify({
-            stage: "fetch_recent_videos_for_comparison",
+            stage: 'fetch_recent_videos_for_comparison',
             source,
             error,
-          }),
+          })
         );
-        throw new Error("Failed to fetch recent videos for comparison");
+        throw new Error('Failed to fetch recent videos for comparison');
       }
 
       // Find recent videos in DB that are NOT in YouTube response
@@ -233,49 +233,49 @@ export const populateVideos = async ({
     // Step 3: Mark videos for deletion only if they're confirmed to not exist in YouTube
     if (videosToMarkForDeletion.length > 0) {
       const { error: markError } = await supabaseClient
-        .from("videos")
+        .from('videos')
         .update({ pending_delete: true })
-        .eq("source", source)
-        .in("id", videosToMarkForDeletion);
+        .eq('source', source)
+        .in('id', videosToMarkForDeletion);
 
       if (markError) {
         console.error(
           JSON.stringify({
-            stage: "mark_videos_for_deletion",
+            stage: 'mark_videos_for_deletion',
             source,
             videoIds: videosToMarkForDeletion,
             error: markError,
-          }),
+          })
         );
-        throw new Error("Failed to mark videos for deletion");
+        throw new Error('Failed to mark videos for deletion');
       }
 
       console.log(
         JSON.stringify({
-          stage: "mark_videos_for_deletion",
+          stage: 'mark_videos_for_deletion',
           message: `Marked ${videosToMarkForDeletion.length} videos for deletion (not found in YouTube response)`,
           source,
           videoIds: videosToMarkForDeletion,
-        }),
+        })
       );
     }
 
     // Step 4: Get details of videos to be deleted and actually delete them
     const { data: videosToDelete, error: queryError } = await supabaseClient
-      .from("videos")
-      .select("id, title")
-      .eq("source", source)
-      .eq("pending_delete", true);
+      .from('videos')
+      .select('id, title')
+      .eq('source', source)
+      .eq('pending_delete', true);
 
     if (queryError) {
       console.error(
         JSON.stringify({
-          stage: "query_videos_to_delete",
+          stage: 'query_videos_to_delete',
           source,
           error: queryError,
-        }),
+        })
       );
-      throw new Error("Failed to query videos marked for deletion");
+      throw new Error('Failed to query videos marked for deletion');
     }
 
     const deletionCandidates = videosToDelete || [];
@@ -283,53 +283,53 @@ export const populateVideos = async ({
     // Actually delete the videos
     if (deletionCandidates.length > 0) {
       const { error: deleteError } = await supabaseClient
-        .from("videos")
+        .from('videos')
         .delete()
-        .eq("source", source)
-        .eq("pending_delete", true);
+        .eq('source', source)
+        .eq('pending_delete', true);
 
       if (deleteError) {
         console.error(
           JSON.stringify({
-            stage: "delete_videos",
+            stage: 'delete_videos',
             source,
             error: deleteError,
-          }),
+          })
         );
-        throw new Error("Failed to delete videos marked as pending_delete");
+        throw new Error('Failed to delete videos marked as pending_delete');
       }
 
       console.log(
         JSON.stringify({
-          stage: "cleanup_complete",
+          stage: 'cleanup_complete',
           message: `Processed ${youtubeVideoIds.size} videos from YouTube, deleted ${deletionCandidates.length} stale videos`,
           source,
-          syncType: repopulate ? "full_repopulate" : "partial_sync",
+          syncType: repopulate ? 'full_repopulate' : 'partial_sync',
           deletedVideos: deletionCandidates.map((v) => ({
             id: v.id,
             title: v.title,
           })),
-        }),
+        })
       );
     } else {
       console.log(
         JSON.stringify({
-          stage: "no_deletions_needed",
+          stage: 'no_deletions_needed',
           message: `All videos are current. Processed ${youtubeVideoIds.size} videos from YouTube, no deletions needed.`,
           source,
-          syncType: repopulate ? "full_repopulate" : "partial_sync",
-        }),
+          syncType: repopulate ? 'full_repopulate' : 'partial_sync',
+        })
       );
     }
   } catch (e) {
     // Final catch-all for unhandled errors
     console.error(
       JSON.stringify({
-        stage: "final",
+        stage: 'final',
         source,
         error: e instanceof Error ? e.message : e,
         stack: e instanceof Error ? e.stack : undefined,
-      }),
+      })
     );
     throw e; // Rethrow to signal Lambda failure
   }

@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { page } from "$app/state";
+  import { page } from '$app/state';
 
-  import * as Alert from "$lib/components/ui/alert/index.js";
+  import * as Alert from '$lib/components/ui/alert/index.js';
   const params = page.url.searchParams;
-  const successMessage = params.get("message");
-  const code = params.get("code");
-  const error = params.get("error");
-  const errorDescription = params.get("error_description");
+  const successMessage = params.get('message');
+  const code = params.get('code');
+  const error = params.get('error');
+  const errorDescription = params.get('error_description');
 </script>
 
-<div class="flex items-center justify-center w-full">
+<div class="flex w-full items-center justify-center">
   <div class="w-[800px]">
     {#if successMessage}
       <Alert.Root>

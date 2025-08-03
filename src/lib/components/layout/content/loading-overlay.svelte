@@ -8,7 +8,7 @@
 
 <!-- Navigation Loading Overlay -->
 <div
-  class="absolute inset-0 z-[10000] bg-background-lighter flex items-center justify-center"
+  class="bg-background-lighter absolute inset-0 z-[10000] flex items-center justify-center"
   class:opacity-100={isNavigatingToContent}
   class:opacity-0={!isNavigatingToContent}
   class:pointer-events-none={!isNavigatingToContent}

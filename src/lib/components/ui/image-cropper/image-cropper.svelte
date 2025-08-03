@@ -3,15 +3,15 @@
 -->
 
 <script lang="ts">
-  import { box } from "svelte-toolbelt";
-  import { useImageCropperRoot } from "./image-cropper.svelte.js";
-  import type { ImageCropperRootProps } from "./types";
-  import { onDestroy } from "svelte";
-  import { useId } from "bits-ui";
+  import { box } from 'svelte-toolbelt';
+  import { useImageCropperRoot } from './image-cropper.svelte.js';
+  import type { ImageCropperRootProps } from './types';
+  import { onDestroy } from 'svelte';
+  import { useId } from 'bits-ui';
 
   let {
     id = useId(),
-    src = $bindable(""),
+    src = $bindable(''),
     onCropped = () => {},
     children,
     ...rest
@@ -21,7 +21,7 @@
     id: box.with(() => id),
     src: box.with(
       () => src,
-      (v) => (src = v),
+      (v) => (src = v)
     ),
     onCropped,
   });
@@ -37,7 +37,7 @@
     if (!file) return;
     rootState.onUpload(file);
     // reset so that we can reupload the same file
-    (e.target! as HTMLInputElement).value = "";
+    (e.target! as HTMLInputElement).value = '';
   }}
   type="file"
   {id}

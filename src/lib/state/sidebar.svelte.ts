@@ -1,10 +1,10 @@
-import type { Playlist } from "$lib/supabase/playlists";
-import type { UserProfile } from "$lib/supabase/user-profiles";
-import type { SupabaseClient, Session } from "@supabase/supabase-js";
-import type { Database } from "$lib/supabase/database.types";
-import { getContext, setContext } from "svelte";
-import { browser } from "$app/environment";
-import type { Source } from "$lib/constants/source";
+import type { Playlist } from '$lib/supabase/playlists';
+import type { UserProfile } from '$lib/supabase/user-profiles';
+import type { SupabaseClient, Session } from '@supabase/supabase-js';
+import type { Database } from '$lib/supabase/database.types';
+import { getContext, setContext } from 'svelte';
+import { browser } from '$app/environment';
+import type { Source } from '$lib/constants/source';
 
 export interface SidebarData {
   playlists: Playlist[];
@@ -107,7 +107,7 @@ export class SidebarStateClass {
     this.error = null;
 
     try {
-      const response = await fetch("/api/sidebar");
+      const response = await fetch('/api/sidebar');
       if (response.ok) {
         this.data = await response.json();
         this.#hasLoadedOnce = true; // Mark that we've successfully loaded data
@@ -116,8 +116,8 @@ export class SidebarStateClass {
         console.error(this.error);
       }
     } catch (error) {
-      this.error = "Failed to load sidebar";
-      console.error("Failed to load sidebar:", error);
+      this.error = 'Failed to load sidebar';
+      console.error('Failed to load sidebar:', error);
     } finally {
       this.loading = false;
     }
@@ -130,7 +130,7 @@ export class SidebarStateClass {
     this.error = null;
 
     try {
-      const response = await fetch("/api/sidebar");
+      const response = await fetch('/api/sidebar');
       if (response.ok) {
         this.data = await response.json();
         this.#hasLoadedOnce = true; // Mark that we've successfully loaded data
@@ -139,8 +139,8 @@ export class SidebarStateClass {
         console.error(this.error);
       }
     } catch (error) {
-      this.error = "Failed to load sidebar";
-      console.error("Failed to load sidebar:", error);
+      this.error = 'Failed to load sidebar';
+      console.error('Failed to load sidebar:', error);
     }
   }
 
@@ -173,7 +173,7 @@ export class SidebarStateClass {
 
   updatePlaylistOptimistically(
     playlistId: number,
-    updates: Partial<Playlist>,
+    updates: Partial<Playlist>
   ): void {
     const index = this.playlists.findIndex((p) => p.id === playlistId);
     if (index >= 0) {
@@ -219,7 +219,7 @@ export class SidebarStateClass {
 // Export the class type for use elsewhere
 export type SidebarState = SidebarStateClass;
 
-const DEFAULT_KEY = "$_sidebar_state";
+const DEFAULT_KEY = '$_sidebar_state';
 
 export function setSidebarState(key = DEFAULT_KEY) {
   const sidebarState = new SidebarStateClass();
