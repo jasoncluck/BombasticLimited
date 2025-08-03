@@ -5,7 +5,6 @@
 [Supabase](https://supabase.io) is an open source Firebase alternative. We're
 building the features of Firebase using enterprise-grade open source tools.
 
-
 This repository contains all the functionality for Supabase CLI.
 
 - [x] Running Supabase locally
@@ -34,12 +33,9 @@ npm i supabase@beta --save-dev
 When installing with yarn 4, you need to disable experimental fetch with the
 following nodejs config.
 
-
-
 ```
 NODE_OPTIONS=--no-experimental-fetch yarn add supabase
 ```
-
 
 > **Note** For Bun versions below v1.0.17, you must add `supabase` as a
 > [trusted dependency](https://bun.sh/guides/install/trusted) before running
@@ -47,7 +43,6 @@ NODE_OPTIONS=--no-experimental-fetch yarn add supabase
 
 <details>
   <summary><b>macOS</b></summary>
-
 
 Available via [Homebrew](https://brew.sh). To install:
 
@@ -198,7 +193,6 @@ However, due to dependencies on other service images, we cannot guarantee that
 schema migrations, seed.sql, and generated types will always work for the same
 CLI major version. If you need such guarantees, we encourage you to pin a
 specific version of CLI in package.json.
-
 
 ## Developing
 
