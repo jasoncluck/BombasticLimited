@@ -1,5 +1,5 @@
 import { browser } from "$app/environment";
-import type { NavigationCacheState } from "$lib/state/navigation-cache/types.js";
+import type { NavigationCacheState } from "$lib/state/navigation-cache/navigation-cache.svelte";
 import type { Session } from "@supabase/supabase-js";
 
 export function usePreloading(navigationCache: NavigationCacheState) {

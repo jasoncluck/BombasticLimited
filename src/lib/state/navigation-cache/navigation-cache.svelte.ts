@@ -1,5 +1,5 @@
 import { browser } from "$app/environment";
-import type { CacheEntry, NavigationCacheState } from "./types.js";
+import { getContext, setContext } from "svelte";
 import { OptimizedMemoryCache } from "./memory-cache.js";
 import { RoutePreloader } from "./route-preloader.js";
 import {
@@ -10,6 +10,63 @@ import {
   saveToLocalStorage,
   loadFromLocalStorage,
 } from "./utils.js";
+
+// Types moved from types.ts
+export interface CacheEntry {
+  etag: string;
+  lastModified: string;
+  url: string;
+  timestamp: number;
+  userId: string | null;
+  cacheUserId: string | null;
+  isAnonymous: boolean;
+}
+
+export interface NavigationCacheState {
+  initialized: boolean;
+  cacheEntries: Map<string, CacheEntry>;
+  currentUserId: string | null;
+  anonymousId: string | null;
+  preloadedRoutes: Set<string>;
+
+  initialize: () => Promise<void>;
+  setCacheEntry: (
+    url: string,
+    etag: string,
+    lastModified: string,
+    userId: string | null,
+    cacheUserId: string | null,
+  ) => void;
+  getCacheEntry: (url: string, userId: string | null) => CacheEntry | null;
+  isLikelyCached: (url: string, userId: string | null) => boolean;
+  shouldShowLoading: (
+    fromUrl?: string,
+    toUrl?: string,
+    userId?: string | null,
+  ) => boolean;
+  clearUserCache: (userId?: string | null) => void;
+  clearExpiredEntries: () => void;
+  cleanup: () => void;
+
+  setMemoryCache: <T extends object>(
+    key: string,
+    data: T,
+    ttl?: number,
+  ) => void;
+  getMemoryCache: <T extends object>(key: string) => T | null;
+  clearMemoryCache: (pattern?: string) => void;
+  getMemoryCacheStats: () => { entries: number; size: number };
+
+  preloadRoute: (url: string, priority?: number) => Promise<void>;
+  preloadRoutes: (urls: string[], priority?: number) => Promise<void>;
+  getPreloadStats: () => {
+    pending: number;
+    completed: number;
+    failed: number;
+    preloadedRoutes: number;
+  };
+  onUserInteraction: (targetUrl: string) => void;
+}
 
 export class NavigationCacheStateClass implements NavigationCacheState {
   initialized = $state(false);
@@ -39,6 +96,7 @@ export class NavigationCacheStateClass implements NavigationCacheState {
   private readonly PRELOADED_ROUTES_KEY = "navigation-cache-preloaded-routes";
 
   private lastSentAuthStatus: boolean | null = null;
+  private reloadCleanupFn: (() => void) | null = null;
 
   constructor() {
     this.preloader = new RoutePreloader(
@@ -59,6 +117,12 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     // Initialize service worker integration
     await this.initializeServiceWorker();
 
+    // Send initial refreshable routes to service worker
+    this.setRefreshableRoutes(Array.from(this.refreshableRoutes));
+
+    // Set up reload detection
+    this.reloadCleanupFn = this.clearCacheOnReload();
+
     // Start intelligent preloading
     this.startIntelligentPreloading();
 
@@ -67,6 +131,41 @@ export class NavigationCacheStateClass implements NavigationCacheState {
       this.saveToStorage();
       this.memoryCache.cleanup();
     }, 60000);
+  }
+
+  // Method to clear cache on hard reload
+  private clearCacheOnReload(): () => void {
+    if (!browser) return () => {};
+
+    // Listen for beforeunload to detect reloads
+    const handleBeforeUnload = () => {
+      // Mark this as a potential reload
+      sessionStorage.setItem("nav-cache-reload-pending", Date.now().toString());
+    };
+
+    // Listen for page load to check if it was a reload
+    const handleLoad = () => {
+      const reloadPending = sessionStorage.getItem("nav-cache-reload-pending");
+      if (reloadPending) {
+        const timeDiff = Date.now() - parseInt(reloadPending, 10);
+        if (timeDiff < 5000) {
+          // 5 seconds window
+          console.log("Page reload detected, clearing stale cache");
+          this.clearServiceWorkerCaches();
+          this.clearMemoryCache();
+        }
+        sessionStorage.removeItem("nav-cache-reload-pending");
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("load", handleLoad);
+
+    // Return cleanup function
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("load", handleLoad);
+    };
   }
 
   // Service Worker Integration
@@ -148,15 +247,30 @@ export class NavigationCacheStateClass implements NavigationCacheState {
         );
         // Optionally trigger UI updates based on auth status change
         break;
+      case "SW_UPDATED":
+        console.log(`Service worker updated to version: ${data?.version}`);
+        // Show update notification or reload
+        if (confirm("New version available! Reload to update?")) {
+          window.location.reload();
+        }
+        break;
     }
   }
 
+  // Enhanced service worker communication
   private sendToServiceWorker(
     type: string,
     data: Record<string, unknown>,
   ): void {
     if (this.serviceWorkerReady && navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({ type, data });
+    } else if (this.serviceWorkerReady) {
+      // Wait for controller to be available
+      navigator.serviceWorker.ready.then((registration) => {
+        if (registration.active) {
+          registration.active.postMessage({ type, data });
+        }
+      });
     }
   }
 
@@ -168,7 +282,7 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     return sortedA.every((val, index) => val === sortedB[index]);
   }
 
-  // Call this method when auth status changes (e.g., login/logout)
+  // Enhanced auth status update with better timing
   updateAuthStatus(): void {
     const isAuthenticated = this.checkAuthStatus();
 
@@ -177,10 +291,22 @@ export class NavigationCacheStateClass implements NavigationCacheState {
       console.log(
         `Auth status changed from ${this.lastSentAuthStatus} to ${isAuthenticated}, sending to SW`,
       );
+
+      // Clear relevant caches when auth status changes
+      if (this.lastSentAuthStatus !== null) {
+        this.clearUserCache(this.currentUserId);
+        this.clearServiceWorkerCaches();
+      }
+
       this.sendToServiceWorker("UPDATE_AUTH_STATUS", {
         isAuthenticated,
       });
       this.lastSentAuthStatus = isAuthenticated;
+
+      // Trigger refresh after auth change
+      setTimeout(() => {
+        this.triggerIntelligentRefresh();
+      }, 100);
     } else {
       console.log(
         `Auth status unchanged (${isAuthenticated}), skipping SW update`,
@@ -220,7 +346,15 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     this.sendToServiceWorker("REMOVE_REFRESHABLE_ROUTE", { route });
   }
 
+  // Enhanced background refresh
   triggerBackgroundRefresh(): void {
+    this.sendToServiceWorker("TRIGGER_REFRESH", {});
+  }
+
+  // Enhanced intelligent refresh that uses both systems
+  triggerIntelligentRefresh(): void {
+    // Trigger both navigation cache preloader and service worker refresh
+    this.preloader.preloadRoutes(Array.from(this.refreshableRoutes), 2);
     this.sendToServiceWorker("TRIGGER_REFRESH", {});
   }
 
@@ -228,34 +362,67 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     return Array.from(this.refreshableRoutes);
   }
 
-  // ... rest of your methods remain the same ...
+  // Preload route through service worker
+  async preloadRouteInServiceWorker(pathname: string): Promise<void> {
+    this.sendToServiceWorker("PRELOAD_ROUTE", { pathname });
+  }
 
+  // Preload multiple routes through service worker
+  async preloadRoutesInServiceWorker(routes: string[]): Promise<void> {
+    this.sendToServiceWorker("PRELOAD_ROUTES", { routes });
+  }
+
+  // Clear service worker caches
+  clearServiceWorkerCaches(): void {
+    this.sendToServiceWorker("CLEAR_DATA_CACHE", {});
+  }
+
+  // Enhanced method that combines service worker cache check with existing logic
   private async checkServiceWorkerCache(url: string): Promise<boolean> {
     if (!browser || !("caches" in window)) return false;
 
     try {
-      // Try to get the cache name that matches your service worker
+      // Check all bombastic caches
       const cacheNames = await caches.keys();
-      const navigationCacheName = cacheNames.find((name) =>
-        name.includes("bombastic-navigation"),
+      const relevantCaches = cacheNames.filter((name) =>
+        name.includes("bombastic-"),
       );
 
-      if (!navigationCacheName) return false;
+      for (const cacheName of relevantCaches) {
+        const cache = await caches.open(cacheName);
 
-      const cache = await caches.open(navigationCacheName);
-      const response = await cache.match(url);
+        // For navigation cache, check with auth context
+        if (cacheName.includes("navigation")) {
+          const isAuth = this.checkAuthStatus();
+          const authKey = isAuth ? "auth" : "anon";
+          const authAwareUrl = `${url}?_auth=${authKey}`;
+          const response = await cache.match(authAwareUrl);
 
-      if (!response) return false;
-
-      // Check if the cached response is still fresh
-      const cacheTimestamp = response.headers.get("sw-cache-timestamp");
-      if (cacheTimestamp) {
-        const age = Date.now() - parseInt(cacheTimestamp, 10);
-        const STALE_THRESHOLD = 60000; // 1 minute - match service worker threshold
-        return age < STALE_THRESHOLD;
+          if (response) {
+            const cacheTimestamp = response.headers.get("sw-cache-timestamp");
+            if (cacheTimestamp) {
+              const age = Date.now() - parseInt(cacheTimestamp, 10);
+              const STALE_THRESHOLD = 60000; // 1 minute
+              return age < STALE_THRESHOLD;
+            }
+            return true;
+          }
+        } else {
+          // Regular cache check for data and static assets
+          const response = await cache.match(url);
+          if (response) {
+            const cacheTimestamp = response.headers.get("sw-cache-timestamp");
+            if (cacheTimestamp) {
+              const age = Date.now() - parseInt(cacheTimestamp, 10);
+              const STALE_THRESHOLD = 300000; // 5 minutes for data
+              return age < STALE_THRESHOLD;
+            }
+            return true;
+          }
+        }
       }
 
-      return true; // If no timestamp, assume it's valid
+      return false;
     } catch (error) {
       console.warn("Failed to check service worker cache:", error);
       return false;
@@ -295,15 +462,35 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     return false;
   }
 
-  // Preloading methods
+  // Enhanced route preloading that uses both systems
   async preloadRoute(url: string, priority = 5): Promise<void> {
     if (!this.initialized || !browser) return;
-    return this.preloader.preloadRoute(url, priority);
+
+    const pathname = extractPathname(url);
+
+    // Use navigation cache preloader for SvelteKit preloading
+    await this.preloader.preloadRoute(url, priority);
+
+    // Also preload in service worker for refreshable routes
+    if (this.refreshableRoutes.has(pathname)) {
+      this.preloadRouteInServiceWorker(pathname);
+    }
   }
 
   async preloadRoutes(urls: string[], priority = 5): Promise<void> {
     if (!this.initialized || !browser) return;
-    return this.preloader.preloadRoutes(urls, priority);
+
+    // Use navigation cache preloader for SvelteKit preloading
+    await this.preloader.preloadRoutes(urls, priority);
+
+    // Also preload refreshable routes in service worker
+    const refreshableUrls = urls
+      .map((url) => extractPathname(url))
+      .filter((pathname) => this.refreshableRoutes.has(pathname));
+
+    if (refreshableUrls.length > 0) {
+      this.preloadRoutesInServiceWorker(refreshableUrls);
+    }
   }
 
   onUserInteraction(targetUrl: string): void {
@@ -316,6 +503,8 @@ export class NavigationCacheStateClass implements NavigationCacheState {
       ...this.preloader.getStats(),
       preloadedRoutes: this.preloadedRoutes.size,
       memoryCache: this.memoryCache.getPreloadedStats(),
+      refreshableRoutes: this.refreshableRoutes.size,
+      serviceWorkerReady: this.serviceWorkerReady,
     };
   }
 
@@ -504,6 +693,12 @@ export class NavigationCacheStateClass implements NavigationCacheState {
       this.cleanupInterval = null;
     }
 
+    // Clean up reload detection
+    if (this.reloadCleanupFn) {
+      this.reloadCleanupFn();
+      this.reloadCleanupFn = null;
+    }
+
     this.saveToStorage();
     this.savePreloadedRoutes();
     this.cacheEntries.clear();
@@ -546,6 +741,16 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     if (suggestions.length > 0) {
       setTimeout(() => {
         this.preloader.preloadRoutes(suggestions, 3);
+
+        // Also preload refreshable routes in service worker
+        const refreshableSuggestions = suggestions.filter((url) =>
+          this.refreshableRoutes.has(extractPathname(url)),
+        );
+        if (refreshableSuggestions.length > 0) {
+          this.preloadRoutesInServiceWorker(
+            refreshableSuggestions.map((url) => extractPathname(url)),
+          );
+        }
       }, 2000);
     }
   }
@@ -602,4 +807,18 @@ export class NavigationCacheStateClass implements NavigationCacheState {
       this.preloadedRoutes = new Set(validRoutes);
     }
   }
+}
+
+// Export the class type for use elsewhere
+export type NavigateCacheState = NavigationCacheStateClass;
+
+const DEFAULT_KEY = "$_navigation_cache_state";
+
+export function setNavigationCacheState(key = DEFAULT_KEY) {
+  const navigationCacheState = new NavigationCacheStateClass();
+  return setContext(key, navigationCacheState);
+}
+
+export function getPlaylistState(key = DEFAULT_KEY) {
+  return getContext<NavigationCacheState>(key);
 }

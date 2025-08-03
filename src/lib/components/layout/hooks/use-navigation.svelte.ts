@@ -2,8 +2,8 @@ import { beforeNavigate, afterNavigate, invalidate } from "$app/navigation";
 import { navigating } from "$app/state";
 import { browser } from "$app/environment";
 import { tick } from "svelte";
-import type { NavigationCacheState } from "$lib/state/navigation-cache/types.js";
 import type { PageState } from "$lib/state/page.svelte.js";
+import type { NavigationCacheState } from "$lib/state/navigation-cache/navigation-cache.svelte";
 
 export function useNavigation(
   navigationCache: NavigationCacheState,

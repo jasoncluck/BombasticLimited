@@ -29,7 +29,7 @@ export const load: PageServerLoad = async ({
 }) => {
   // Remove automatic dependencies - we'll handle updates optimistically
   // Only keep video dependencies since those might come from other sources
-  depends("supabase:db:videos");
+  depends("supabase:db:videos", "supabase:db:playlists");
 
   const { contentFilter } = await parent();
 

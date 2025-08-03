@@ -19,9 +19,9 @@
   import { setLayoutState } from "$lib/state/layout.svelte";
   import { setSourceState } from "$lib/state/source.svelte";
   import { setSidebarState } from "$lib/state/sidebar.svelte";
-  import { setNavigationCacheState } from "$lib/state/navigation-cache";
 
   import "../app.css";
+  import { setNavigationCacheState } from "$lib/state/navigation-cache/navigation-cache.svelte.js";
 
   injectSpeedInsights();
 

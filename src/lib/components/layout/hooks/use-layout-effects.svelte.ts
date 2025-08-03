@@ -3,13 +3,13 @@ import { invalidateAll } from "$app/navigation";
 import { notificationStore } from "$lib/stores/notification.js";
 import { toast } from "svelte-sonner";
 import type { ContentState } from "$lib/state/content.svelte.js";
-import type { NavigationCacheState } from "$lib/state/navigation-cache/types.js";
 import type { MediaQueryState } from "$lib/state/media-query.svelte.js";
 import type { SidebarState } from "$lib/state/sidebar.svelte.js";
 import type { LayoutState } from "$lib/state/layout.svelte.js";
 import type { PageState } from "$lib/state/page.svelte.js";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "$lib/supabase/database.types";
+import type { NavigationCacheState } from "$lib/state/navigation-cache/navigation-cache.svelte";
 
 export function useLayoutEffects(
   pageState: PageState,

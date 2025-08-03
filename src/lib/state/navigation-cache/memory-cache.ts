@@ -1,5 +1,16 @@
-import type { MemoryCacheEntry, CacheStats } from "./types.js";
+export interface MemoryCacheEntry<T = object> {
+  data: T;
+  timestamp: number;
+  ttl: number;
+  userId: string | null;
+  size: number;
+  preloaded?: boolean;
+}
 
+export interface CacheStats {
+  entries: number;
+  size: number;
+}
 export class OptimizedMemoryCache {
   private cache = new Map<string, MemoryCacheEntry>();
   private maxSize = 25 * 1024 * 1024; // 25MB

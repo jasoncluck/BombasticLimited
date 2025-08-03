@@ -1,5 +1,20 @@
 import { preloadData } from "$app/navigation";
-import type { PreloadJob, PreloadStats } from "./types.js";
+export interface PreloadJob {
+  url: string;
+  priority: number;
+  userId: string | null;
+  timestamp: number;
+  retries: number;
+  completed: boolean;
+}
+
+export interface PreloadStats {
+  pending: number;
+  completed: number;
+  failed: number;
+  queueSize: number;
+  activePreloads: number;
+}
 
 export class RoutePreloader {
   private preloadQueue = new Map<string, PreloadJob>();
