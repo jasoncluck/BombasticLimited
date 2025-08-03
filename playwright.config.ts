@@ -19,6 +19,8 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+    // Additional browsers for comprehensive local testing
+    // CI workflows use only chromium for faster execution
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
