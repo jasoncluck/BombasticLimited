@@ -144,6 +144,42 @@ export class SidebarStateClass {
     }
   }
 
+  addOptimisticPlaylist(playlist: Playlist): void {
+    this.playlists = [...this.playlists, playlist];
+  }
+
+  removeOptimisticPlaylist(playlistId: number): void {
+    this.playlists = this.playlists.filter((p) => p.id !== playlistId);
+  }
+
+  removePlaylistOptimistically(playlistId: number): Playlist | null {
+    const playlist = this.playlists.find((p) => p.id === playlistId);
+    if (playlist) {
+      this.playlists = this.playlists.filter((p) => p.id !== playlistId);
+    }
+    return playlist || null;
+  }
+
+  restorePlaylist(playlist: Playlist): void {
+    this.playlists = [...this.playlists, playlist];
+  }
+
+  commitOptimisticPlaylist(tempId: number, realPlaylist: Playlist): void {
+    const index = this.playlists.findIndex((p) => p.id === tempId);
+    if (index >= 0) {
+      this.playlists[index] = realPlaylist;
+    }
+  }
+
+  updatePlaylistOptimistically(
+    playlistId: number,
+    updates: Partial<Playlist>,
+  ): void {
+    const index = this.playlists.findIndex((p) => p.id === playlistId);
+    if (index >= 0) {
+      this.playlists[index] = { ...this.playlists[index], ...updates };
+    }
+  }
   async refreshData(): Promise<void> {
     await this.loadData();
   }

@@ -22,14 +22,11 @@
   import * as Popover from "$lib/components/ui/popover";
   import { getFlash, updateFlash } from "sveltekit-flash-message";
   import Checkbox from "$lib/components/ui/checkbox/checkbox.svelte";
-  import { getCroppedPlaylistImageUrl } from "$lib/components/playlist/playlist-service";
   import type { Snippet } from "svelte";
-  import { parseImageProperties } from "./playlist";
   import type { Session } from "@supabase/supabase-js";
   import { page } from "$app/state";
   import { getPlaylistState } from "$lib/state/playlist.svelte";
   import { getSidebarState } from "$lib/state/sidebar.svelte";
-  import { invalidate } from "$app/navigation";
 
   let {
     form,
@@ -81,11 +78,11 @@
           updatedPlaylist.thumbnail_url = null;
           updatedPlaylist.thumbnail_maxres_url = null;
         } else {
-          await getCroppedPlaylistImageUrl({
-            imageProperties: parseImageProperties(playlist.image_properties),
-            thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
-            thumbnailUrl: playlist.thumbnail_url,
-          });
+          // await getCroppedPlaylistImageUrl({
+          //   imageProperties: parseImageProperties(playlist.image_properties),
+          //   thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
+          //   thumbnailUrl: playlist.thumbnail_url,
+          // });
         }
         sidebarState.refreshData();
       }

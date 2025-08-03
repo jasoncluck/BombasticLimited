@@ -4,7 +4,6 @@ import { isVideoWithTimestamp } from "$lib/supabase/videos";
 import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 import { parseImageProperties } from "$lib/components/playlist/playlist";
-import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
 
 export const load: PageServerLoad = async ({
   locals: { supabase },
@@ -63,18 +62,18 @@ export const load: PageServerLoad = async ({
   }
 
   // Process playlist image if needed
-  const processedImageUrl = profilePlaylist.processedImageUrl
-    ? profilePlaylist.processedImageUrl
-    : await getCroppedPlaylistImageUrlServer({
-        imageProperties: parseImageProperties(profilePlaylist.image_properties),
-        thumbnailMaxResUrl: profilePlaylist.thumbnail_maxres_url,
-        thumbnailUrl: profilePlaylist.thumbnail_url,
-      });
+  // const processedImageUrl = profilePlaylist.processedImageUrl
+  //   ? profilePlaylist.processedImageUrl
+  // : await getCroppedPlaylistImageUrlServer({
+  //     imageProperties: parseImageProperties(profilePlaylist.image_properties),
+  //     thumbnailMaxResUrl: profilePlaylist.thumbnail_maxres_url,
+  //     thumbnailUrl: profilePlaylist.thumbnail_url,
+  //   });
 
   // Update playlist with processed image URL if it was generated
-  if (!profilePlaylist.processedImageUrl) {
-    profilePlaylist.processedImageUrl = processedImageUrl;
-  }
+  // if (!profilePlaylist.processedImageUrl) {
+  //   profilePlaylist.processedImageUrl = processedImageUrl;
+  // }
 
   return {
     video: currentVideo,

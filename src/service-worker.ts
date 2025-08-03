@@ -340,10 +340,41 @@ class ServiceWorkerNavigationCache {
     return this.refreshableRoutes.has(routePath);
   }
 
-  // New method to check if this is a SvelteKit invalidation request
-  isInvalidationRequest(url: URL): boolean {
-    // SvelteKit invalidation requests have the x-sveltekit-invalidated parameter
-    return url.searchParams.has("x-sveltekit-invalidated");
+  // Enhanced method to detect different types of invalidation requests
+  getInvalidationType(url: URL): "route-change" | "manual" | "none" {
+    // Check if this is an invalidation request
+    if (!url.searchParams.has("x-sveltekit-invalidated")) {
+      return "none";
+    }
+
+    const invalidatedParam = url.searchParams.get("x-sveltekit-invalidated");
+
+    // Route change invalidations typically have specific patterns
+    // SvelteKit uses numbers for route changes, and specific strings for manual invalidations
+    if (invalidatedParam && /^\d+$/.test(invalidatedParam)) {
+      // Numeric invalidation IDs are typically route changes
+      return "route-change";
+    }
+
+    // Check for specific manual invalidation patterns
+    // These are typically triggered by invalidate() calls in your code
+    const manualPatterns = [
+      "supabase:db:", // Your database invalidations
+      "user:", // User-specific invalidations
+      "playlist:", // Playlist invalidations
+      "video:", // Video invalidations
+      "manual", // Explicit manual invalidations
+    ];
+
+    if (
+      invalidatedParam &&
+      manualPatterns.some((pattern) => invalidatedParam.includes(pattern))
+    ) {
+      return "manual";
+    }
+
+    // Default to route-change for unknown patterns to be safe
+    return "route-change";
   }
 }
 
@@ -366,20 +397,91 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
   }
 };
 
-// Handle SvelteKit data requests with stale-while-revalidate
+// Handle SvelteKit data requests with selective caching
 const handleDataRequest = async (request: Request): Promise<Response> => {
   const url = new URL(request.url);
 
-  // Check if this is an invalidation request or if we should cache this route
-  if (
-    navigationCache.isInvalidationRequest(url) ||
-    !navigationCache.shouldCacheDataRequest(url)
-  ) {
-    console.log(
-      `SW: Bypassing cache for ${request.url} (invalidation or non-cached route)`,
-    );
-    // Let SvelteKit handle invalidation requests and non-cached routes normally
+  // Check what type of invalidation this is
+  const invalidationType = navigationCache.getInvalidationType(url);
+
+  // Always bypass cache for manual invalidations (user-triggered updates)
+  if (invalidationType === "manual") {
+    console.log(`SW: Bypassing cache for manual invalidation: ${request.url}`);
     return fetch(request);
+  }
+
+  // Check if we should cache this route
+  if (!navigationCache.shouldCacheDataRequest(url)) {
+    console.log(`SW: Bypassing cache for non-cached route: ${request.url}`);
+    return fetch(request);
+  }
+
+  // For route-change invalidations on cached routes, serve from cache if available
+  if (invalidationType === "route-change") {
+    console.log(
+      `SW: Route change invalidation detected for cached route: ${request.url}`,
+    );
+
+    const dataCache = await caches.open(DATA_CACHE);
+    // Create a clean URL without the invalidation parameter for cache lookup
+    const cleanUrl = new URL(url);
+    cleanUrl.searchParams.delete("x-sveltekit-invalidated");
+    const cleanRequest = new Request(cleanUrl.toString(), {
+      method: request.method,
+      headers: request.headers,
+    });
+
+    const cachedResponse = await dataCache.match(cleanRequest);
+
+    if (cachedResponse) {
+      const dataTimestamp = cachedResponse.headers.get("sw-data-timestamp");
+      if (dataTimestamp) {
+        const age = Date.now() - parseInt(dataTimestamp, 10);
+        // For route changes, use a longer threshold since we're avoiding network calls
+        const ROUTE_CHANGE_THRESHOLD = 60000; // 1 minute
+
+        if (age < ROUTE_CHANGE_THRESHOLD) {
+          console.log(
+            `SW: Serving cached data for route change: ${request.url}`,
+          );
+          return cachedResponse;
+        }
+      }
+
+      // Data is stale, but serve it anyway for route changes to avoid network call
+      console.log(
+        `SW: Serving stale data for route change (avoiding network): ${request.url}`,
+      );
+
+      // Optionally update in background without blocking the response
+      setTimeout(() => {
+        fetch(cleanRequest)
+          .then(async (response) => {
+            if (response.ok) {
+              const responseWithTimestamp = new Response(response.body, {
+                status: response.status,
+                statusText: response.statusText,
+                headers: {
+                  ...Object.fromEntries(response.headers.entries()),
+                  "sw-data-timestamp": Date.now().toString(),
+                },
+              });
+
+              await dataCache.put(cleanRequest, responseWithTimestamp);
+
+              navigationCache.notifyMainThread("DATA_CACHE_UPDATED", {
+                url: cleanRequest.url,
+                timestamp: Date.now(),
+              });
+            }
+          })
+          .catch((error) => {
+            console.warn("SW: Background update failed:", error);
+          });
+      }, 100);
+
+      return cachedResponse;
+    }
   }
 
   const dataCache = await caches.open(DATA_CACHE);

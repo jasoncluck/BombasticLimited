@@ -21,10 +21,8 @@
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import * as Popover from "$lib/components/ui/popover";
   import Checkbox from "$lib/components/ui/checkbox/checkbox.svelte";
-  import { getCroppedPlaylistImageUrl } from "$lib/components/playlist/playlist-service";
   import type { Snippet } from "svelte";
   import ScrollArea from "../ui/scroll-area/scroll-area.svelte";
-  import { parseImageProperties } from "./playlist";
   import { getFlash, updateFlash } from "sveltekit-flash-message";
   import { page } from "$app/state";
   import type { Session } from "@supabase/supabase-js";
@@ -86,11 +84,11 @@
             updatedPlaylist.thumbnail_url = null;
             updatedPlaylist.thumbnail_maxres_url = null;
           } else {
-            await getCroppedPlaylistImageUrl({
-              imageProperties: parseImageProperties(playlist.image_properties),
-              thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
-              thumbnailUrl: playlist.thumbnail_url,
-            });
+            // await getCroppedPlaylistImageUrl({
+            //   imageProperties: parseImageProperties(playlist.image_properties),
+            //   thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
+            //   thumbnailUrl: playlist.thumbnail_url,
+            // });
           }
           sidebarState.refreshData();
           invalidate("supabase:db:playlists");

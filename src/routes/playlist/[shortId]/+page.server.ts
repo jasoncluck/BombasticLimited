@@ -16,11 +16,9 @@ import {
   type SortOrder,
 } from "$lib/components/content/content-filter";
 import { DEFAULT_NUM_VIDEOS_PAGINATION } from "$lib/supabase/videos";
-import { parseImageProperties } from "$lib/components/playlist/playlist";
 import { getPaginationQueryParams } from "$lib/components/pagination/pagination";
 import { Filter } from "bad-words";
 import { redirect, setFlash } from "sveltekit-flash-message/server";
-import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
 
 export const load: PageServerLoad = async ({
   locals: { supabase, session },
@@ -29,7 +27,9 @@ export const load: PageServerLoad = async ({
   params,
   depends,
 }) => {
-  depends("supabase:db:videos", "supabase:db:playlists");
+  // Remove automatic dependencies - we'll handle updates optimistically
+  // Only keep video dependencies since those might come from other sources
+  depends("supabase:db:videos");
 
   const { contentFilter } = await parent();
 
@@ -37,16 +37,14 @@ export const load: PageServerLoad = async ({
     throw new Error(`Invalid content filter`);
   }
 
-  // Process pagination params synchronously
+  // ... rest of the load function stays the same
   const currentPage = getPaginationQueryParams({
     searchParams: url.searchParams,
   });
 
-  // Check if user has explicitly changed the sort from the URL
   const hasExplicitSortInUrl =
     url.searchParams.has("sort") || url.searchParams.has("order");
 
-  // Always fetch fresh data using the single getPlaylistData call
   const { playlist, videos, videosCount, playlistDuration } =
     await getPlaylistData({
       shortId: params.shortId,
@@ -62,24 +60,21 @@ export const load: PageServerLoad = async ({
     redirect(302, "/");
   }
 
-  // Now process image and create form with the fresh playlist data
-  const [processedImageUrl, form] = await Promise.all([
-    playlist.processedImageUrl
-      ? Promise.resolve(playlist.processedImageUrl)
-      : getCroppedPlaylistImageUrlServer({
-          imageProperties: parseImageProperties(playlist.image_properties),
-          thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
-          thumbnailUrl: playlist.thumbnail_url,
-        }),
+  const [form] = await Promise.all([
+    // playlist.processedImageUrl
+    //   ? Promise.resolve(playlist.processedImageUrl)
+    //   : getCroppedPlaylistImageUrlServer({
+    //       imageProperties: parseImageProperties(playlist.image_properties),
+    //       thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
+    //       thumbnailUrl: playlist.thumbnail_url,
+    //     }),
     superValidate(playlist, zod(playlistSchema)),
   ]);
 
-  // Update playlist with processed image URL if it was generated
-  if (!playlist.processedImageUrl) {
-    playlist.processedImageUrl = processedImageUrl;
-  }
+  // if (!playlist.processedImageUrl) {
+  //   playlist.processedImageUrl = processedImageUrl;
+  // }
 
-  // Determine the effective content filter (what was actually used for sorting)
   const effectiveContentFilter =
     isUserPlaylist(playlist) &&
     playlist.sorted_by &&
@@ -125,7 +120,6 @@ export const actions: Actions = {
     const { name, description, id, isDeletingPlaylistImage, type } = form.data;
 
     const filter = new Filter();
-    // Run profanity checks in parallel
     const [nameIsProfane, descriptionIsProfane] = await Promise.all([
       name ? Promise.resolve(filter.isProfane(name)) : Promise.resolve(false),
       description
@@ -138,7 +132,7 @@ export const actions: Actions = {
         {
           type: "error",
           message:
-            "Offensisve langage detected in playlist name, unable to update playlist.",
+            "Offensive language detected in playlist name, unable to update playlist.",
         },
         cookies,
       );
@@ -150,7 +144,7 @@ export const actions: Actions = {
         {
           type: "error",
           message:
-            "Offensisve langage detected in playlist description, unable to update playlist.",
+            "Offensive language detected in playlist description, unable to update playlist.",
         },
         cookies,
       );
@@ -159,7 +153,6 @@ export const actions: Actions = {
 
     let { image_properties } = form.data;
 
-    // Handle image deletion if needed
     if (isDeletingPlaylistImage) {
       await updatePlaylistImage({
         playlistId: id,
@@ -188,9 +181,11 @@ export const actions: Actions = {
       session,
     });
 
+    // Return the updated playlist data for optimistic updates
     return {
       updatedPlaylist,
       form,
+      success: true,
     };
   },
 };

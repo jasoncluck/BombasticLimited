@@ -22,6 +22,7 @@
   import { setNavigationCacheState } from "$lib/state/navigation-cache";
 
   import "../app.css";
+  import { invalidateAll } from "$app/navigation";
 
   injectSpeedInsights();
 

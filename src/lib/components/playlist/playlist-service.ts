@@ -331,18 +331,18 @@ export async function handleFollowPlaylist({
     session,
   });
 
-  // if (
-  //   isPlaylistVideosFilter(contentFilter) &&
-  //   contentFilter.sort.key !== "playlistOrder"
-  // ) {
-  //   handleUpdatePlaylistSort({
-  //     playlist,
-  //     sortedBy: contentFilter.sort.key,
-  //     sortOrder: contentFilter.sort.order,
-  //     supabase,
-  //     session,
-  //   });
-  // }
+  if (
+    isPlaylistVideosFilter(contentFilter) &&
+    contentFilter.sort.key !== "playlistOrder"
+  ) {
+    handleUpdatePlaylistSort({
+      playlist,
+      sortedBy: contentFilter.sort.key,
+      sortOrder: contentFilter.sort.order,
+      supabase,
+      session,
+    });
+  }
 
   sidebarState.refreshData();
 

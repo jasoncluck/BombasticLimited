@@ -2,7 +2,7 @@ import type { ContentView } from "$lib/components/content/content";
 import { getFilterOptionFromQueryParams } from "$lib/components/content/content-filter";
 import { getProfile } from "$lib/supabase/user-profiles";
 import type { LayoutServerLoad } from "./$types";
-import { createHash } from "crypto";
+import CryptoJS from "crypto-js";
 
 export const load: LayoutServerLoad = async ({
   locals: { safeGetSession, supabase },
@@ -71,9 +71,8 @@ export const load: LayoutServerLoad = async ({
     isStaticRoute ? "static" : "dynamic",
   ];
 
-  const cacheHash = createHash("sha256")
-    .update(cacheComponents.join("|"))
-    .digest("hex")
+  const cacheHash = CryptoJS.SHA256(cacheComponents.join("|"))
+    .toString()
     .substring(0, 16);
 
   const etag = `"${cacheHash}"`;

@@ -2,8 +2,6 @@ import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { getUserPlaylists } from "$lib/supabase/playlists";
 import { getProfile } from "$lib/supabase/user-profiles";
-import { parseImageProperties } from "$lib/components/playlist/playlist";
-import { getCroppedPlaylistImageUrlServer } from "$lib/server/image-processing";
 
 export const GET: RequestHandler = async ({ locals }) => {
   const { session, supabase } = locals;
@@ -26,11 +24,11 @@ export const GET: RequestHandler = async ({ locals }) => {
   if (userPlaylists) {
     const playlistImagePromises = userPlaylists.map(async (userPlaylist) => ({
       ...userPlaylist,
-      processedImageUrl: await getCroppedPlaylistImageUrlServer({
-        imageProperties: parseImageProperties(userPlaylist.image_properties),
-        thumbnailMaxResUrl: userPlaylist.thumbnail_maxres_url,
-        thumbnailUrl: userPlaylist.thumbnail_url,
-      }),
+      // processedImageUrl: await getCroppedPlaylistImageUrlServer({
+      //   imageProperties: parseImageProperties(userPlaylist.image_properties),
+      //   thumbnailMaxResUrl: userPlaylist.thumbnail_maxres_url,
+      //   thumbnailUrl: userPlaylist.thumbnail_url,
+      // }),
     }));
 
     processedPlaylists = await Promise.all(playlistImagePromises);
