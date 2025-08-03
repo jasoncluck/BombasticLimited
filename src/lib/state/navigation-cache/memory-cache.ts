@@ -11,12 +11,18 @@ export interface CacheStats {
   entries: number;
   size: number;
 }
+
+export interface CacheStats {
+  entries: number;
+  size: number;
+}
 export class OptimizedMemoryCache {
   private cache = new Map<string, MemoryCacheEntry>();
   private maxSize = 25 * 1024 * 1024; // 25MB
   private currentSize = 0;
 
-  set<T extends object>(
+  // Private method - only service worker can populate cache via message passing
+  private internalSet<T extends object>(
     key: string,
     data: T,
     ttl = 300000,
@@ -44,6 +50,27 @@ export class OptimizedMemoryCache {
 
     this.cache.set(key, entry);
     this.currentSize += size;
+  }
+
+  // Public method for service worker message handling
+  handleServiceWorkerMessage(message: {
+    type: string;
+    key: string;
+    data?: object;
+    ttl?: number;
+    timestamp?: number;
+    userId?: string | null;
+    preloaded?: boolean;
+  }): void {
+    if (message.type === "CACHE_SET" && message.data) {
+      this.internalSet(
+        message.key,
+        message.data,
+        message.ttl,
+        message.userId,
+        message.preloaded || false,
+      );
+    }
   }
 
   get<T>(key: string, userId: string | null = null): T | null {

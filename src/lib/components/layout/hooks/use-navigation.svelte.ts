@@ -2,8 +2,8 @@ import { beforeNavigate, afterNavigate, invalidate } from "$app/navigation";
 import { navigating } from "$app/state";
 import { browser } from "$app/environment";
 import { tick } from "svelte";
+import type { NavigationCacheState } from "$lib/state/navigation-cache/navigation-cache.svelte.js";
 import type { PageState } from "$lib/state/page.svelte.js";
-import type { NavigationCacheState } from "$lib/state/navigation-cache/navigation-cache.svelte";
 
 export function useNavigation(
   navigationCache: NavigationCacheState,
@@ -15,40 +15,6 @@ export function useNavigation(
   cacheUserId: string | null,
   user: any,
 ) {
-  // Optimized page data caching
-  function cachePageData(userProfile: any, session: any) {
-    if (!browser || !navigationCache.initialized) return;
-
-    const currentPath = window.location.pathname;
-    const pageDataKey = `page:${currentPath}`;
-
-    // Only cache if not already cached
-    if (!navigationCache.getMemoryCache(pageDataKey)) {
-      const pageData = {
-        url: window.location.href,
-        timestamp: Date.now(),
-        userProfile,
-        session: session ? { user: { id: session.user?.id } } : null,
-        pathname: currentPath,
-      };
-
-      // Adjust TTL based on route type
-      let ttl = 180000; // Default 3 minutes
-      if (currentPath === "/")
-        ttl = 120000; // Home: 2 minutes
-      else if (currentPath === "/continue")
-        ttl = 60000; // Continue: 1 minute (more dynamic)
-      else if (
-        ["/giantbomb", "/nextlander", "/remap", "/jeffgerstmann"].includes(
-          currentPath,
-        )
-      )
-        ttl = 300000; // Main routes: 5 minutes
-
-      navigationCache.setMemoryCache(pageDataKey, pageData, ttl);
-    }
-  }
-
   function setupNavigationHooks(userProfile: any, session: any) {
     beforeNavigate(({ from }) => {
       if (from) {
@@ -102,9 +68,6 @@ export function useNavigation(
           navigationCache.clearUserCache();
         }
       }
-
-      // Cache page data after navigation
-      cachePageData(userProfile, session);
     });
   }
 
@@ -130,7 +93,6 @@ export function useNavigation(
 
   return {
     getIsNavigatingToContent,
-    cachePageData,
     setupNavigationHooks,
   };
 }

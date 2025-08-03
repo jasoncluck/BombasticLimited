@@ -21,7 +21,7 @@
   import { setSidebarState } from "$lib/state/sidebar.svelte";
 
   import "../app.css";
-  import { setNavigationCacheState } from "$lib/state/navigation-cache/navigation-cache.svelte.js";
+  import { setNavigationCacheState } from "$lib/state/navigation-cache/index.js";
 
   injectSpeedInsights();
 
@@ -143,7 +143,7 @@
     navigation.setupNavigationHooks(userProfile, session);
   });
 
-  // Single effect to handle auth state changes and route updates
+  // Single effect to handle auth state changes
   $effect(() => {
     if (navigationCache && navigationCache.initialized) {
       const isCurrentlyAuthenticated = !!user;
@@ -155,33 +155,13 @@
       );
       console.log("Layout effect - lastUserState:", lastUserState);
 
-      // Only update routes if auth state actually changed
+      // Only update auth status if state actually changed
       if (lastUserState !== isCurrentlyAuthenticated) {
         console.log(
           `Layout: Auth state changed from ${lastUserState} to ${isCurrentlyAuthenticated}`,
         );
 
-        const baseRoutes = [
-          "/",
-          "/giantbomb",
-          "/nextlander",
-          "/remap",
-          "/jeffgerstmann",
-        ];
-
-        // Only add /continue if user is authenticated AND has the auth cookie
-        const allRoutes = isCurrentlyAuthenticated
-          ? [...baseRoutes, "/continue"]
-          : baseRoutes;
-
-        console.log(
-          `Layout: Setting routes for ${isCurrentlyAuthenticated ? "authenticated" : "unauthenticated"} user:`,
-          allRoutes,
-        );
-
-        navigationCache.setRefreshableRoutes(allRoutes);
         navigationCache.updateAuthStatus();
-
         lastUserState = isCurrentlyAuthenticated;
       } else {
         console.log("Layout: Auth state unchanged, skipping update");
@@ -218,12 +198,7 @@
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).cacheDebug = {
         updateAuth: () => navigationCache.updateAuthStatus(),
-        addRoute: (route: string) => navigationCache.addRefreshableRoute(route),
-        removeRoute: (route: string) =>
-          navigationCache.removeRefreshableRoute(route),
         stats: () => navigationCache.getPreloadStats(),
-        getRoutes: () =>
-          navigationCache.getRefreshableRoutes?.() || "Method not available",
         clearCache: () => {
           if (
             "serviceWorker" in navigator &&

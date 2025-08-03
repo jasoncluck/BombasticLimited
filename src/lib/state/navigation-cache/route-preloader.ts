@@ -1,4 +1,6 @@
 import { preloadData } from "$app/navigation";
+import { MAIN_ROUTES } from "$lib/constants/routes.js";
+
 export interface PreloadJob {
   url: string;
   priority: number;
@@ -31,25 +33,22 @@ export class RoutePreloader {
   getPreloadSuggestions(currentPath: string, userId: string | null): string[] {
     const suggestions: string[] = [];
 
-    if (currentPath === "/") {
-      suggestions.push("/giantbomb", "/nextlander", "/remap", "/jeffgerstmann");
-      if (userId) {
-        suggestions.push("/continue");
-      }
-    } else if (currentPath === "/giantbomb") {
-      suggestions.push("/giantbomb?page=1", "/nextlander");
-      if (userId) suggestions.push("/continue");
-    } else if (currentPath === "/nextlander") {
-      suggestions.push("/nextlander?page=1", "/giantbomb");
-      if (userId) suggestions.push("/continue");
-    } else if (currentPath === "/remap") {
-      suggestions.push("/remap?page=1", "/giantbomb");
-      if (userId) suggestions.push("/continue");
-    } else if (currentPath === "/jeffgerstmann") {
-      suggestions.push("/jeffgerstmann?page=1", "/giantbomb");
-      if (userId) suggestions.push("/continue");
-    } else if (currentPath === "/continue" && userId) {
-      suggestions.push("/giantbomb", "/nextlander");
+    // Focus on paginated content and continue watching since main routes are handled by SW
+    if (currentPath === MAIN_ROUTES.GIANTBOMB) {
+      suggestions.push("/giantbomb?page=2");
+      if (userId) suggestions.push(MAIN_ROUTES.CONTINUE);
+    } else if (currentPath === MAIN_ROUTES.NEXTLANDER) {
+      suggestions.push("/nextlander?page=2");
+      if (userId) suggestions.push(MAIN_ROUTES.CONTINUE);
+    } else if (currentPath === MAIN_ROUTES.REMAP) {
+      suggestions.push("/remap?page=2");
+      if (userId) suggestions.push(MAIN_ROUTES.CONTINUE);
+    } else if (currentPath === MAIN_ROUTES.JEFFGERSTMANN) {
+      suggestions.push("/jeffgerstmann?page=2");
+      if (userId) suggestions.push(MAIN_ROUTES.CONTINUE);
+    } else if (currentPath === MAIN_ROUTES.HOME && userId) {
+      // Only preload continue watching from home page for authenticated users
+      suggestions.push(MAIN_ROUTES.CONTINUE);
     }
 
     return suggestions.filter(

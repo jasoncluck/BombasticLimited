@@ -3,6 +3,7 @@
   import { page } from "$app/state";
   import Content from "$lib/components/content/content.svelte";
   import { SOURCE_INFO, SOURCES } from "$lib/constants/source";
+  import { MAIN_ROUTES } from "$lib/constants/routes.js";
 
   import { isBrowser } from "@supabase/ssr";
   import type { Snapshot } from "./$types.js";
@@ -74,7 +75,7 @@
   {#if session && continueWatchingVideos.length > 0}
     <div class="flex flex-col mb-8" data-testid="continue-watching-section">
       <a
-        href="/continue"
+        href={MAIN_ROUTES.CONTINUE}
         class={getContentView(mediaQueryState, userProfile) === "TABLE"
           ? "header-link-sticky"
           : "header-link"}

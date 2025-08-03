@@ -1,8 +1,8 @@
 import type { ContentView } from "$lib/components/content/content";
 import { getFilterOptionFromQueryParams } from "$lib/components/content/content-filter";
 import { getProfile } from "$lib/supabase/user-profiles";
+import { MAIN_ROUTES } from "$lib/constants/routes.js";
 import type { LayoutServerLoad } from "./$types";
-import CryptoJS from "crypto-js";
 
 export const load: LayoutServerLoad = async ({
   locals: { safeGetSession, supabase },
@@ -18,7 +18,7 @@ export const load: LayoutServerLoad = async ({
   const sessionPromise = safeGetSession();
 
   let view: ContentView;
-  if (url.pathname === "/continue") {
+  if (url.pathname === MAIN_ROUTES.CONTINUE) {
     view = "continueWatching";
   } else if (/^\/playlist\//.test(url.pathname)) {
     view = "playlist";
@@ -42,88 +42,30 @@ export const load: LayoutServerLoad = async ({
 
   const { session } = await sessionPromise;
 
-  // Optimized cache settings - more aggressive for static routes
-  const isStaticRoute = [
-    "/giantbomb",
-    "/nextlander",
-    "/remap",
-    "/jeffgerstmann",
-  ].includes(url.pathname);
-
-  // Longer cache times for better performance
-  const baseMaxAge = isStaticRoute ? 900 : 600; // 15 minutes static, 10 minutes dynamic
-  const cacheMaxAge = baseMaxAge;
-
-  // Simplified cache key generation
+  // Simplified cache strategy - single cache validation approach
   const userId = session?.user?.id || null;
-  const timeSlot = Math.floor(Date.now() / (cacheMaxAge * 1000));
+  const timeSlot = Math.floor(Date.now() / 600000); // 10 minute slots
 
-  const cacheComponents = [
-    "bombastic-cache-v3", // Updated version
-    url.pathname,
-    userId || "anonymous",
-    timeSlot.toString(),
-    view,
-    // Simplified filter serialization
-    Object.keys(contentFilter).length > 0
-      ? JSON.stringify(contentFilter)
-      : "none",
-    isStaticRoute ? "static" : "dynamic",
-  ];
-
-  const cacheHash = CryptoJS.SHA256(cacheComponents.join("|"))
-    .toString()
-    .substring(0, 16);
-
-  const etag = `"${cacheHash}"`;
-  const lastModified = new Date(timeSlot * cacheMaxAge * 1000);
+  // Simple cache key based on path and time
+  const cacheKey = `${url.pathname}-${userId || "anon"}-${timeSlot}`;
+  const etag = `"${cacheKey}"`;
+  const lastModified = new Date(timeSlot * 600000);
 
   const clientEtag = request.headers.get("if-none-match");
 
-  // Simplified resource hints - only for home page
-  const getResourceHints = () => {
-    if (url.pathname === "/") {
-      const hints = [
-        "</giantbomb>; rel=prefetch; as=document",
-        "</nextlander>; rel=prefetch; as=document",
-      ];
-
-      if (session?.user) {
-        hints.push("</continue>; rel=prefetch; as=document");
-      }
-
-      return hints.join(", ");
-    }
-    return "";
-  };
-
-  // Optimized cache headers
+  // Basic cache headers only
   if (!isDataRequest) {
     try {
       const cacheControl = session
-        ? `private, max-age=${cacheMaxAge}, must-revalidate`
-        : isStaticRoute
-          ? `public, max-age=${cacheMaxAge}, s-maxage=${cacheMaxAge * 3}, immutable`
-          : `public, max-age=${cacheMaxAge}, s-maxage=${cacheMaxAge * 2}`;
+        ? "private, max-age=300, must-revalidate"
+        : "public, max-age=600, s-maxage=1200";
 
-      const resourceHints = getResourceHints();
-
-      const headers: Record<string, string> = {
+      setHeaders({
         etag: etag,
         "last-modified": lastModified.toUTCString(),
-        vary: "Authorization, Cookie",
         "cache-control": cacheControl,
-        "x-cache-strategy": isStaticRoute ? "aggressive" : "standard",
-        "service-worker-allowed": "/",
-        // Add performance hints
-        "x-robots-tag": "noindex, nofollow", // Prevent search engine caching conflicts
-      };
-
-      if (resourceHints) {
-        headers.link = resourceHints;
-      }
-
-      setHeaders(headers);
+        vary: "Authorization, Cookie",
+      });
     } catch {
       // Headers already set
     }
@@ -146,7 +88,5 @@ export const load: LayoutServerLoad = async ({
     lastModified: lastModified.toISOString(),
     cached: isCacheHit,
     cacheUserId: userId,
-    isStaticRoute,
-    cacheStrategy: isStaticRoute ? "aggressive" : "standard",
   };
 };

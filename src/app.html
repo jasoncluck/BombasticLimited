@@ -14,21 +14,8 @@
     <div style="display: contents">%sveltekit.body%</div>
   </body>
   <script>
-    // In your app.html or main layout
-    // Optional: Preload routes on hover/focus for even faster navigation
+    // Listen for service worker cache updates
     if ("serviceWorker" in navigator) {
-      // Preload routes when user hovers over links
-      document.addEventListener("mouseover", (event) => {
-        const link = event.target.closest("a[href]");
-        if (link && link.href.startsWith(window.location.origin)) {
-          navigator.serviceWorker.controller?.postMessage({
-            type: "PRELOAD_ROUTE",
-            data: { url: link.href },
-          });
-        }
-      });
-
-      // Listen for cache updates
       navigator.serviceWorker.addEventListener("message", (event) => {
         if (event.data?.type === "CACHE_CLEARED") {
           console.log("Cache cleared successfully");
