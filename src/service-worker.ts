@@ -22,32 +22,13 @@ const EXCLUDED_ROUTE_PATTERNS = [
   /^\/account($|\/)/, // /account or /account/anything
 ];
 
-// Track auth status based on actual cookie presence
+// Track auth status - now relies primarily on client messages, not request headers
 let isUserAuthenticated = false;
+let authStatusSetByClient = false; // Track if client has set auth status
 
 // Helper function to get current timestamp for logging
 const getTimestamp = (): string => {
   return new Date().toISOString().replace("T", " ").substring(0, 19);
-};
-
-// Helper function to check auth status from cookie header
-const checkAuthFromCookieHeader = (cookieHeader: string | null): boolean => {
-  if (!cookieHeader) return false;
-
-  const cookies = cookieHeader.split(";").map((cookie) => cookie.trim());
-  const authCookie = cookies.find((cookie) =>
-    cookie.startsWith("sb-127-auth-token"),
-  );
-
-  if (!authCookie) return false;
-
-  const cookieValue = authCookie.split("=")[1];
-  return (
-    !!cookieValue &&
-    cookieValue !== "null" &&
-    cookieValue !== "undefined" &&
-    cookieValue.trim() !== ""
-  );
 };
 
 // Check if a route should be cached
@@ -74,6 +55,38 @@ const isRouteCacheable = (pathname: string): boolean => {
 
   // All other routes are cacheable
   return true;
+};
+
+// Check if this is a page reload (hard refresh)
+const isPageReload = (request: Request): boolean => {
+  // Check for reload indicators
+  const cacheControl = request.headers.get("cache-control");
+  const pragma = request.headers.get("pragma");
+
+  // Hard reload indicators
+  if (cacheControl?.includes("no-cache") || pragma === "no-cache") {
+    return true;
+  }
+
+  // Check if this is a top-level navigation (not from link click)
+  const referer = request.headers.get("referer");
+  const url = new URL(request.url);
+
+  // If no referer or referer is different origin, it's likely a reload/direct navigation
+  if (!referer || new URL(referer).origin !== url.origin) {
+    return true;
+  }
+
+  return false;
+};
+
+// Check if cached response is stale and should be refreshed
+const isCacheStale = (response: Response, maxAge: number = 120000): boolean => {
+  const cacheTimestamp = response.headers.get("sw-cache-timestamp");
+  if (!cacheTimestamp) return true; // No timestamp = stale
+
+  const age = Date.now() - parseInt(cacheTimestamp, 10);
+  return age > maxAge;
 };
 
 // Simple and efficient static asset caching
@@ -117,18 +130,11 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
 // Smart navigation caching for HTML pages
 const handleNavigation = async (request: Request): Promise<Response> => {
   const url = new URL(request.url);
+  const isReload = isPageReload(request);
 
-  // Check auth status from request headers for this specific request
-  const cookieHeader = request.headers.get("cookie");
-  const isRequestAuthenticated = checkAuthFromCookieHeader(cookieHeader);
-
-  // Update global auth status if it changed
-  if (isRequestAuthenticated !== isUserAuthenticated) {
-    isUserAuthenticated = isRequestAuthenticated;
-    console.log(
-      `SW [${getTimestamp()}]: Auth status updated to: ${isUserAuthenticated}`,
-    );
-  }
+  console.log(
+    `SW [${getTimestamp()}]: Handling navigation to ${url.pathname} (auth: ${isUserAuthenticated}, reload: ${isReload})`,
+  );
 
   // Check if this route should be cached
   const shouldCache = isRouteCacheable(url.pathname);
@@ -143,14 +149,18 @@ const handleNavigation = async (request: Request): Promise<Response> => {
   const cache = await caches.open(NAVIGATION_CACHE);
   const cached = await cache.match(request);
 
-  // For navigation, always try network first for fresh content
-  try {
-    const response = await fetch(request);
-    if (response.ok) {
-      // Clone the response for caching BEFORE creating the modified response
-      const responseForCache = response.clone();
+  // Strategy depends on whether this is a reload or regular navigation
+  if (isReload) {
+    // Page reload: Always fetch fresh, NO fallback to cache
+    console.log(
+      `SW [${getTimestamp()}]: Page reload detected - fetching fresh (no cache fallback): ${url.pathname}`,
+    );
 
-      // Create response with timestamp for cache
+    const response = await fetch(request);
+
+    if (response.ok) {
+      // Cache the fresh response
+      const responseForCache = response.clone();
       const responseWithTimestamp = new Response(responseForCache.body, {
         status: responseForCache.status,
         statusText: responseForCache.statusText,
@@ -160,34 +170,95 @@ const handleNavigation = async (request: Request): Promise<Response> => {
         },
       });
 
-      // Cache the response with timestamp
       cache.put(request, responseWithTimestamp);
       console.log(
-        `SW [${getTimestamp()}]: Cached navigation response for: ${url.pathname}`,
+        `SW [${getTimestamp()}]: Cached fresh response from reload: ${url.pathname}`,
       );
+    }
 
-      // Return the original response (not the modified one)
-      return response;
-    }
-    // If network fails but we have cache, use it
-    if (cached) {
-      console.log(
-        `SW [${getTimestamp()}]: Network failed, serving from cache:`,
-        url.pathname,
-      );
-      return cached;
-    }
+    // Return response regardless of status - let the app handle errors
     return response;
-  } catch (error) {
-    // Network error - serve from cache if available
+  } else {
+    // Regular navigation: Cache-first with freshness checks
     if (cached) {
-      console.log(
-        `SW [${getTimestamp()}]: Network error, serving from cache:`,
-        url.pathname,
-      );
-      return cached;
+      const isStale = isCacheStale(cached, 120000); // 2 minutes for regular navigation
+
+      if (!isStale) {
+        // Fresh cache, serve immediately
+        console.log(
+          `SW [${getTimestamp()}]: Serving fresh cache for: ${url.pathname}`,
+        );
+
+        // Background refresh for dynamic routes
+        const dynamicRoutes = ["/", "/continue"];
+        if (dynamicRoutes.includes(url.pathname)) {
+          fetch(request)
+            .then((response) => {
+              if (response.ok) {
+                const responseForCache = response.clone();
+                const responseWithTimestamp = new Response(
+                  responseForCache.body,
+                  {
+                    status: responseForCache.status,
+                    statusText: responseForCache.statusText,
+                    headers: {
+                      ...Object.fromEntries(responseForCache.headers.entries()),
+                      "sw-cache-timestamp": Date.now().toString(),
+                    },
+                  },
+                );
+                cache.put(request, responseWithTimestamp);
+                console.log(
+                  `SW [${getTimestamp()}]: Background refreshed: ${url.pathname}`,
+                );
+              }
+            })
+            .catch(() => {
+              /* Ignore background refresh errors */
+            });
+        }
+
+        return cached;
+      } else {
+        console.log(
+          `SW [${getTimestamp()}]: Cache is stale, fetching fresh: ${url.pathname}`,
+        );
+      }
     }
-    throw error;
+
+    // No cache or stale cache - fetch fresh
+    try {
+      const response = await fetch(request);
+
+      if (response.ok) {
+        // Cache the fresh response
+        const responseForCache = response.clone();
+        const responseWithTimestamp = new Response(responseForCache.body, {
+          status: responseForCache.status,
+          statusText: responseForCache.statusText,
+          headers: {
+            ...Object.fromEntries(responseForCache.headers.entries()),
+            "sw-cache-timestamp": Date.now().toString(),
+          },
+        });
+
+        cache.put(request, responseWithTimestamp);
+        console.log(
+          `SW [${getTimestamp()}]: Cached fresh response: ${url.pathname}`,
+        );
+      }
+
+      return response;
+    } catch (error) {
+      // Network failed - serve stale cache if available (only for regular navigation)
+      if (cached) {
+        console.log(
+          `SW [${getTimestamp()}]: Network error, serving stale cache: ${url.pathname}`,
+        );
+        return cached;
+      }
+      throw error;
+    }
   }
 };
 
@@ -307,23 +378,6 @@ sw.addEventListener("fetch", (event) => {
   // Only handle GET requests from same origin
   if (request.method !== "GET" || url.origin !== sw.location.origin) {
     return;
-  }
-
-  // Check and update auth status from request headers
-  const cookieHeader = request.headers.get("cookie");
-  const currentAuthStatus = checkAuthFromCookieHeader(cookieHeader);
-
-  if (currentAuthStatus !== isUserAuthenticated) {
-    isUserAuthenticated = currentAuthStatus;
-    console.log(
-      `SW [${getTimestamp()}]: Auth status changed to: ${isUserAuthenticated}`,
-    );
-
-    // Notify main thread of auth status change
-    notifyMainThread("AUTH_STATUS_CHANGED", {
-      isAuthenticated: isUserAuthenticated,
-      timestamp: Date.now(),
-    });
   }
 
   // Skip service worker for __data.json requests - let SvelteKit handle them naturally
@@ -478,9 +532,10 @@ sw.addEventListener("message", (event) => {
       if (typeof data?.isAuthenticated === "boolean") {
         const previousAuthStatus = isUserAuthenticated;
         const newAuthStatus = data.isAuthenticated;
+        authStatusSetByClient = true; // Mark that client has set auth status
 
         console.log(
-          `SW [${getTimestamp()}]: Received AUTH_STATUS update: ${newAuthStatus} (was: ${previousAuthStatus})`,
+          `SW [${getTimestamp()}]: Received AUTH_STATUS update: ${newAuthStatus} (was: ${previousAuthStatus}) [client-set: ${authStatusSetByClient}]`,
         );
 
         // Only update and notify if status actually changed
@@ -494,6 +549,7 @@ sw.addEventListener("message", (event) => {
             isAuthenticated: isUserAuthenticated,
             timestamp: Date.now(),
             previousStatus: previousAuthStatus,
+            source: "client",
           });
         } else {
           console.log(
@@ -506,7 +562,139 @@ sw.addEventListener("message", (event) => {
       break;
     }
 
-    // ... (keep all other cases the same) ...
+    // Add a force refresh command for debugging stale data
+    case "FORCE_REFRESH_CACHE": {
+      console.log(
+        `SW [${getTimestamp()}]: Received FORCE_REFRESH_CACHE - clearing navigation cache`,
+      );
+      event.waitUntil(
+        caches.delete(NAVIGATION_CACHE).then(() => {
+          console.log(
+            `SW [${getTimestamp()}]: Navigation cache cleared for fresh data`,
+          );
+          notifyMainThread("NAVIGATION_CACHE_CLEARED", {
+            timestamp: Date.now(),
+          });
+        }),
+      );
+      break;
+    }
+
+    // These route management messages are now less relevant since we cache everything
+    // except excluded patterns, but we'll keep them for backward compatibility
+    case "SET_REFRESHABLE_ROUTES": {
+      console.log(
+        `SW [${getTimestamp()}]: Received SET_REFRESHABLE_ROUTES (note: now caching all routes except /auth and /account):`,
+        data?.routes,
+      );
+      break;
+    }
+
+    case "ADD_REFRESHABLE_ROUTE": {
+      console.log(
+        `SW [${getTimestamp()}]: Received ADD_REFRESHABLE_ROUTE (note: now caching all routes except /auth and /account): ${data?.route}`,
+      );
+      break;
+    }
+
+    case "REMOVE_REFRESHABLE_ROUTE": {
+      console.log(
+        `SW [${getTimestamp()}]: Received REMOVE_REFRESHABLE_ROUTE (note: now caching all routes except /auth and /account): ${data?.route}`,
+      );
+      break;
+    }
+
+    case "TRIGGER_REFRESH": {
+      console.log(
+        `SW [${getTimestamp()}]: Received TRIGGER_REFRESH - refreshing common routes`,
+      );
+
+      // Since we now cache all routes, let's refresh some common ones
+      const commonRoutes = [
+        "/",
+        "/giantbomb",
+        "/nextlander",
+        "/remap",
+        "/jeffgerstmann",
+      ];
+
+      if (isUserAuthenticated) {
+        commonRoutes.push("/continue");
+      }
+
+      event.waitUntil(
+        (async () => {
+          const cache = await caches.open(NAVIGATION_CACHE);
+
+          console.log(
+            `SW [${getTimestamp()}]: Starting background refresh for common routes:`,
+            commonRoutes,
+          );
+
+          const refreshPromises = commonRoutes.map(async (route) => {
+            try {
+              console.log(
+                `SW [${getTimestamp()}]: 🔄 Refreshing route: ${route}`,
+              );
+              const startTime = performance.now();
+
+              const response = await fetch(route, {
+                headers: { "Cache-Control": "no-cache" },
+              });
+
+              const fetchTime = performance.now() - startTime;
+
+              if (response.ok) {
+                // Clone the response for caching
+                const responseForCache = response.clone();
+                const responseWithTimestamp = new Response(
+                  responseForCache.body,
+                  {
+                    status: responseForCache.status,
+                    statusText: responseForCache.statusText,
+                    headers: {
+                      ...Object.fromEntries(responseForCache.headers.entries()),
+                      "sw-cache-timestamp": Date.now().toString(),
+                    },
+                  },
+                );
+                await cache.put(route, responseWithTimestamp);
+
+                console.log(
+                  `SW [${getTimestamp()}]: ✅ Refreshed route ${route} (${fetchTime.toFixed(2)}ms)`,
+                );
+
+                // Notify about cache update
+                await notifyMainThread("CACHE_UPDATED", {
+                  url: route,
+                  timestamp: Date.now(),
+                  fetchTime: fetchTime,
+                });
+              } else {
+                console.warn(
+                  `SW [${getTimestamp()}]: ❌ Failed to refresh route ${route} (${response.status})`,
+                );
+              }
+            } catch (error) {
+              console.error(
+                `SW [${getTimestamp()}]: ❌ Error refreshing route ${route}:`,
+                error,
+              );
+            }
+          });
+
+          await Promise.allSettled(refreshPromises);
+          console.log(`SW [${getTimestamp()}]: Background refresh complete`);
+        })(),
+      );
+      break;
+    }
+
+    default: {
+      // Don't log unknown message types as errors since they're expected from the navigation cache
+      console.log(`SW [${getTimestamp()}]: Received message type: ${type}`);
+      break;
+    }
   }
 });
 
