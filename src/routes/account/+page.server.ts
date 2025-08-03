@@ -1,21 +1,21 @@
-import { zod } from "sveltekit-superforms/adapters";
-import { fail, superValidate } from "sveltekit-superforms";
-import { emailSchema, passwordSchema, usernameSchema } from "../auth/schema";
-import { redirect, setFlash } from "sveltekit-flash-message/server";
+import { zod } from 'sveltekit-superforms/adapters';
+import { fail, superValidate } from 'sveltekit-superforms';
+import { emailSchema, passwordSchema, usernameSchema } from '../auth/schema';
+import { redirect, setFlash } from 'sveltekit-flash-message/server';
 import {
   checkIfUsernameIsUnique,
   getUserProfile,
-} from "$lib/supabase/user-profiles";
-import type { Actions, PageServerLoad } from "./$types";
-import { Filter } from "bad-words";
+} from '$lib/supabase/user-profiles';
+import type { Actions, PageServerLoad } from './$types';
+import { Filter } from 'bad-words';
 
 export const load: PageServerLoad = async ({
   depends,
   locals: { supabase, session },
 }) => {
-  depends("supabase:db:profiles");
+  depends('supabase:db:profiles');
   if (!session) {
-    redirect(303, "/auth/login");
+    redirect(303, '/auth/login');
   }
 
   // Run profile fetch and form validations in parallel
@@ -34,11 +34,11 @@ export const load: PageServerLoad = async ({
 
   // Username form depends on profile data, so it runs after the parallel operations
   const usernameForm = await superValidate(
-    { username: profile?.username ?? "" },
+    { username: profile?.username ?? '' },
     zod(usernameSchema),
     {
       errors: false,
-    },
+    }
   );
 
   return {
@@ -58,20 +58,20 @@ export const actions: Actions = {
       {
         email: email,
       },
-      { emailRedirectTo: `${url.origin}/auth/email/confirm` },
+      { emailRedirectTo: `${url.origin}/auth/email/confirm` }
     );
 
     if (error) {
       setFlash(
-        { type: "error", message: error.message, field: "email" },
-        cookies,
+        { type: 'error', message: error.message, field: 'email' },
+        cookies
       );
 
       // Update this message to differentiate a bit more from 'username'
-      if (error.code === "user_already_exists") {
+      if (error.code === 'user_already_exists') {
         setFlash(
-          { type: "error", message: "Email address already registered." },
-          cookies,
+          { type: 'error', message: 'Email address already registered.' },
+          cookies
         );
       }
 
@@ -80,11 +80,11 @@ export const actions: Actions = {
     } else {
       setFlash(
         {
-          type: "success",
+          type: 'success',
           message: `Emails with confirmation links have sent to both the new email: ${data.user.new_email} and the current email ${data.user.email}. The email will be updated once both links have been confirmed. `,
-          field: "email",
+          field: 'email',
         },
-        cookies,
+        cookies
       );
       return {
         form,
@@ -105,12 +105,12 @@ export const actions: Actions = {
     if (filter.isProfane(username)) {
       setFlash(
         {
-          type: "error",
+          type: 'error',
           message:
-            "Offensisve langage detected in username, choose another name.",
-          field: "username",
+            'Offensisve langage detected in username, choose another name.',
+          field: 'username',
         },
-        cookies,
+        cookies
       );
       return fail(400, { form });
     }
@@ -118,11 +118,11 @@ export const actions: Actions = {
     if (!isUnique) {
       setFlash(
         {
-          type: "error",
-          message: "Username already exists and must be unique.",
-          field: "username",
+          type: 'error',
+          message: 'Username already exists and must be unique.',
+          field: 'username',
         },
-        cookies,
+        cookies
       );
       return fail(400, { form });
     }
@@ -133,19 +133,19 @@ export const actions: Actions = {
 
     if (error) {
       setFlash(
-        { type: "error", message: error.message, field: "username" },
-        cookies,
+        { type: 'error', message: error.message, field: 'username' },
+        cookies
       );
       console.error(error);
       return fail(400, { form });
     } else {
       setFlash(
         {
-          type: "success",
+          type: 'success',
           message: `Updated username to ${username}`,
-          field: "username",
+          field: 'username',
         },
-        cookies,
+        cookies
       );
       return {
         form,
@@ -160,41 +160,41 @@ export const actions: Actions = {
 
     const { error } = await supabase.auth.resetPasswordForEmail(
       session.user.email,
-      { redirectTo: `/auth/password/update` },
+      { redirectTo: `/auth/password/update` }
     );
     if (error) {
       setFlash(
-        { type: "error", message: error.message, field: "password" },
-        cookies,
+        { type: 'error', message: error.message, field: 'password' },
+        cookies
       );
       return fail(400);
     } else {
       setFlash(
         {
-          type: "success",
+          type: 'success',
           message: `Password reset email sent to ${session.user.email}.`,
-          field: "password",
+          field: 'password',
         },
-        cookies,
+        cookies
       );
     }
   },
 
   deleteAccount: async ({ cookies, locals: { supabase, session } }) => {
     if (!session) {
-      redirect(303, "/login");
+      redirect(303, '/login');
     }
 
-    const { error } = await supabase.rpc("delete_user");
+    const { error } = await supabase.rpc('delete_user');
 
     if (error) {
       setFlash(
-        { type: "error", message: error.message, field: "delete" },
-        cookies,
+        { type: 'error', message: error.message, field: 'delete' },
+        cookies
       );
       return fail(400);
     } else {
-      redirect(303, "/");
+      redirect(303, '/');
     }
   },
 };

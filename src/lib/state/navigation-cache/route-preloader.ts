@@ -1,5 +1,5 @@
-import { preloadData } from "$app/navigation";
-import { MAIN_ROUTES } from "$lib/constants/routes.js";
+import { preloadData } from '$app/navigation';
+import { MAIN_ROUTES } from '$lib/constants/routes.js';
 
 export interface PreloadJob {
   url: string;
@@ -27,7 +27,7 @@ export class RoutePreloader {
   constructor(
     private getCurrentUserId: () => string | null,
     private markRouteAsPreloaded: (url: string) => void,
-    private isRoutePreloaded: (url: string) => boolean,
+    private isRoutePreloaded: (url: string) => boolean
   ) {}
 
   getPreloadSuggestions(currentPath: string, userId: string | null): string[] {
@@ -35,16 +35,16 @@ export class RoutePreloader {
 
     // Focus on paginated content and continue watching since main routes are handled by SW
     if (currentPath === MAIN_ROUTES.GIANTBOMB) {
-      suggestions.push("/giantbomb?page=2");
+      suggestions.push('/giantbomb?page=2');
       if (userId) suggestions.push(MAIN_ROUTES.CONTINUE);
     } else if (currentPath === MAIN_ROUTES.NEXTLANDER) {
-      suggestions.push("/nextlander?page=2");
+      suggestions.push('/nextlander?page=2');
       if (userId) suggestions.push(MAIN_ROUTES.CONTINUE);
     } else if (currentPath === MAIN_ROUTES.REMAP) {
-      suggestions.push("/remap?page=2");
+      suggestions.push('/remap?page=2');
       if (userId) suggestions.push(MAIN_ROUTES.CONTINUE);
     } else if (currentPath === MAIN_ROUTES.JEFFGERSTMANN) {
-      suggestions.push("/jeffgerstmann?page=2");
+      suggestions.push('/jeffgerstmann?page=2');
       if (userId) suggestions.push(MAIN_ROUTES.CONTINUE);
     } else if (currentPath === MAIN_ROUTES.HOME && userId) {
       // Only preload continue watching from home page for authenticated users
@@ -52,14 +52,14 @@ export class RoutePreloader {
     }
 
     return suggestions.filter(
-      (url) => url !== currentPath && !this.isRoutePreloaded(url),
+      (url) => url !== currentPath && !this.isRoutePreloaded(url)
     );
   }
 
   async preloadRoute(
     url: string,
     priority = 5,
-    userId: string | null = null,
+    userId: string | null = null
   ): Promise<void> {
     // Check if already preloaded
     if (this.isRoutePreloaded(url)) {
@@ -120,7 +120,7 @@ export class RoutePreloader {
 
     const jobsToProcess = sortedJobs.slice(
       0,
-      this.maxConcurrentPreloads - this.activePreloads.size,
+      this.maxConcurrentPreloads - this.activePreloads.size
     );
 
     for (const job of jobsToProcess) {
@@ -139,7 +139,7 @@ export class RoutePreloader {
         this.markRouteAsPreloaded(job.url);
         this.completePreloadJob(job.url, true);
       } else {
-        throw new Error("preloadData returned null");
+        throw new Error('preloadData returned null');
       }
     } catch {
       if (job.retries < 2) {

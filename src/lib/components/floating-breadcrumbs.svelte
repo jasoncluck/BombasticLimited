@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { ChevronUp } from "@lucide/svelte";
-  import Button from "$lib/components/ui/button/button.svelte";
+  import { ChevronUp } from '@lucide/svelte';
+  import Button from '$lib/components/ui/button/button.svelte';
   import BreadcrumbLayout, {
     type BreadcrumbItem,
-  } from "$lib/components/breadcrumb-layout.svelte";
-  import { getPageState } from "$lib/state/page.svelte";
-  import type { Playlist } from "$lib/supabase/playlists";
-  import ContentSelect from "./content/content-select.svelte";
-  import type { Session, SupabaseClient } from "@supabase/supabase-js";
-  import type { Database } from "$lib/supabase/database.types";
-  import type { Video } from "$lib/supabase/videos";
-  import type { CombinedContentFilter } from "./content/content-filter";
+  } from '$lib/components/breadcrumb-layout.svelte';
+  import { getPageState } from '$lib/state/page.svelte';
+  import type { Playlist } from '$lib/supabase/playlists';
+  import ContentSelect from './content/content-select.svelte';
+  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { Database } from '$lib/supabase/database.types';
+  import type { Video } from '$lib/supabase/videos';
+  import type { CombinedContentFilter } from './content/content-filter';
 
   interface BreacrumbLayoutProps {
     breadcrumbs: BreadcrumbItem[];
@@ -37,7 +37,7 @@
 </script>
 
 <div
-  class="w-full py-1 sm:px-4 bg-background-lighter flex grow items-center absolute pointer-events-auto justify-between"
+  class="bg-background-lighter pointer-events-auto absolute flex w-full grow items-center justify-between py-1 sm:px-4"
 >
   <div class="relative">
     {#if session}
@@ -53,7 +53,7 @@
   </div>
 
   <!-- Absolutely positioned center breadcrumbs -->
-  <div class="overflow-hidden items-center ml-auto">
+  <div class="ml-auto items-center overflow-hidden">
     <BreadcrumbLayout {breadcrumbs} />
   </div>
 

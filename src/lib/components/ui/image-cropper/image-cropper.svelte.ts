@@ -2,10 +2,10 @@
 	Installed from @ieedan/shadcn-svelte-extras
 */
 
-import type { ReadableBoxedValues, WritableBoxedValues } from "$lib/utils/box";
-import { Context } from "runed";
-import type { CropArea, DispatchEvents } from "svelte-easy-crop";
-import { getCroppedImg } from "./utils";
+import type { ReadableBoxedValues, WritableBoxedValues } from '$lib/utils/box';
+import { Context } from 'runed';
+import type { CropArea, DispatchEvents } from 'svelte-easy-crop';
+import { getCroppedImg } from './utils';
 
 export type ImageCropperRootProps = WritableBoxedValues<{
   src: string;
@@ -87,7 +87,7 @@ class ImageCropperCropperState {
     this.onCropComplete = this.onCropComplete.bind(this);
   }
 
-  onCropComplete(e: DispatchEvents["cropcomplete"]) {
+  onCropComplete(e: DispatchEvents['cropcomplete']) {
     this.rootState.pixelCrop = e.pixels;
   }
 }
@@ -113,7 +113,7 @@ class ImageCropperCancelState {
 }
 
 const ImageCropperRootContext = new Context<ImageCropperRootState>(
-  "ImageCropper.Root",
+  'ImageCropper.Root'
 );
 
 export const useImageCropperRoot = (props: ImageCropperRootProps) => {

@@ -1,7 +1,7 @@
-import { browser } from "$app/environment";
-import { OptimizedMemoryCache } from "./memory-cache.js";
-import { RoutePreloader } from "./route-preloader.js";
-import { extractPathname, initializeAnonymousId } from "./utils.js";
+import { browser } from '$app/environment';
+import { OptimizedMemoryCache } from './memory-cache.js';
+import { RoutePreloader } from './route-preloader.js';
+import { extractPathname, initializeAnonymousId } from './utils.js';
 
 export interface CacheEntry {
   etag: string;
@@ -26,14 +26,14 @@ export interface NavigationCacheState {
     etag: string,
     lastModified: string,
     userId: string | null,
-    cacheUserId: string | null,
+    cacheUserId: string | null
   ) => void;
   getCacheEntry: (url: string, userId: string | null) => CacheEntry | null;
   isLikelyCached: (url: string, userId: string | null) => boolean;
   shouldShowLoading: (
     fromUrl?: string,
     toUrl?: string,
-    userId?: string | null,
+    userId?: string | null
   ) => boolean;
   clearUserCache: (userId?: string | null) => void;
   cleanup: () => void;
@@ -74,13 +74,13 @@ export class NavigationCacheStateClass implements NavigationCacheState {
   private lastAuthStatus: boolean | null = null;
 
   private readonly CACHE_DURATION = 300000; // 5 minutes
-  private readonly ANONYMOUS_ID_KEY = "navigation-cache-anonymous-id";
+  private readonly ANONYMOUS_ID_KEY = 'navigation-cache-anonymous-id';
 
   constructor() {
     this.preloader = new RoutePreloader(
       () => this.currentUserId,
       (url: string) => this.markRouteAsPreloaded(url),
-      (url: string) => this.isRoutePreloaded(url),
+      (url: string) => this.isRoutePreloaded(url)
     );
   }
 
@@ -103,21 +103,21 @@ export class NavigationCacheStateClass implements NavigationCacheState {
 
   // Service Worker Integration - simplified
   private async initializeServiceWorker(): Promise<void> {
-    if ("serviceWorker" in navigator) {
+    if ('serviceWorker' in navigator) {
       try {
         await navigator.serviceWorker.ready;
         this.serviceWorkerReady = true;
 
         // Set up message listener for SW communication
         navigator.serviceWorker.addEventListener(
-          "message",
-          this.handleServiceWorkerMessage.bind(this),
+          'message',
+          this.handleServiceWorkerMessage.bind(this)
         );
 
         // Request current preloaded routes from service worker
         await this.requestPreloadedRoutesFromServiceWorker();
       } catch (error) {
-        console.warn("Service worker registration failed:", error);
+        console.warn('Service worker registration failed:', error);
       }
     }
   }
@@ -135,10 +135,10 @@ export class NavigationCacheStateClass implements NavigationCacheState {
         messageChannel.port1.onmessage = (event) => {
           const { type, routes } = event.data || {};
 
-          if (type === "PRELOADED_ROUTES_RESPONSE" && Array.isArray(routes)) {
+          if (type === 'PRELOADED_ROUTES_RESPONSE' && Array.isArray(routes)) {
             console.log(
               `Navigation Cache: Received ${routes.length} preloaded routes from SW:`,
-              routes,
+              routes
             );
 
             // Mark all routes as preloaded
@@ -153,8 +153,8 @@ export class NavigationCacheStateClass implements NavigationCacheState {
         // Send request with port for response
         if (navigator.serviceWorker.controller) {
           navigator.serviceWorker.controller.postMessage(
-            { type: "REQUEST_PRELOADED_ROUTES" },
-            [messageChannel.port2],
+            { type: 'REQUEST_PRELOADED_ROUTES' },
+            [messageChannel.port2]
           );
         }
 
@@ -163,8 +163,8 @@ export class NavigationCacheStateClass implements NavigationCacheState {
       });
     } catch (error) {
       console.warn(
-        "Failed to request preloaded routes from service worker:",
-        error,
+        'Failed to request preloaded routes from service worker:',
+        error
       );
     }
   }
@@ -173,16 +173,16 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     const { type, data } = event.data || {};
 
     switch (type) {
-      case "CACHE_UPDATED":
+      case 'CACHE_UPDATED':
         console.log(
-          `Route ${data?.url} was refreshed in background at ${data?.timestamp}`,
+          `Route ${data?.url} was refreshed in background at ${data?.timestamp}`
         );
         break;
-      case "CACHE_SET":
+      case 'CACHE_SET':
         // Let memory cache handle service worker messages
         this.memoryCache.handleServiceWorkerMessage(event.data);
         break;
-      case "ROUTE_PRELOADED":
+      case 'ROUTE_PRELOADED':
         // Mark route as preloaded by the service worker
         if (event.data.route) {
           if (import.meta.env.DEV) {
@@ -191,11 +191,11 @@ export class NavigationCacheStateClass implements NavigationCacheState {
           this.markRouteAsPreloaded(event.data.route);
         }
         break;
-      case "STORE_PRELOADED_ROUTES":
+      case 'STORE_PRELOADED_ROUTES':
         // Handle preloaded routes data from service worker
         if (event.data.data?.routes) {
           console.log(
-            `Navigation Cache: Storing ${event.data.data.routes.length} preloaded routes from SW`,
+            `Navigation Cache: Storing ${event.data.data.routes.length} preloaded routes from SW`
           );
           event.data.data.routes.forEach((route: string) => {
             this.markRouteAsPreloaded(route);
@@ -211,7 +211,7 @@ export class NavigationCacheStateClass implements NavigationCacheState {
 
     if (this.lastAuthStatus !== isAuthenticated) {
       console.log(
-        `Auth status changed from ${this.lastAuthStatus} to ${isAuthenticated}`,
+        `Auth status changed from ${this.lastAuthStatus} to ${isAuthenticated}`
       );
       this.lastAuthStatus = isAuthenticated;
     }
@@ -222,22 +222,22 @@ export class NavigationCacheStateClass implements NavigationCacheState {
 
     try {
       const authCookie = document.cookie
-        .split(";")
-        .find((cookie) => cookie.trim().startsWith("sb-127-auth-token"));
+        .split(';')
+        .find((cookie) => cookie.trim().startsWith('sb-127-auth-token'));
 
       if (!authCookie) return false;
 
-      const cookieValue = authCookie.split("=")[1];
+      const cookieValue = authCookie.split('=')[1];
       return !!(
         cookieValue &&
-        cookieValue !== "null" &&
-        cookieValue !== "undefined" &&
-        cookieValue.trim() !== "" &&
-        cookieValue !== "%7B%7D" &&
-        cookieValue !== "{}"
+        cookieValue !== 'null' &&
+        cookieValue !== 'undefined' &&
+        cookieValue.trim() !== '' &&
+        cookieValue !== '%7B%7D' &&
+        cookieValue !== '{}'
       );
     } catch (error) {
-      console.warn("Failed to check auth status:", error);
+      console.warn('Failed to check auth status:', error);
       return false;
     }
   }
@@ -272,11 +272,11 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     etag: string,
     lastModified: string,
     userId: string | null,
-    cacheUserId: string | null,
+    cacheUserId: string | null
   ): void {
     if (!this.initialized || userId !== cacheUserId) return;
 
-    const key = `${extractPathname(url)}|${userId || "anon"}`;
+    const key = `${extractPathname(url)}|${userId || 'anon'}`;
     const entry: CacheEntry = {
       etag,
       lastModified,
@@ -294,7 +294,7 @@ export class NavigationCacheStateClass implements NavigationCacheState {
   getCacheEntry(url: string, userId: string | null): CacheEntry | null {
     if (!this.initialized) return null;
 
-    const key = `${extractPathname(url)}|${userId || "anon"}`;
+    const key = `${extractPathname(url)}|${userId || 'anon'}`;
     const entry = this.cacheEntries.get(key);
 
     if (!entry || entry.userId !== userId) {
@@ -338,7 +338,7 @@ export class NavigationCacheStateClass implements NavigationCacheState {
       if (this.serviceWorkerReady) {
         if (import.meta.env.DEV) {
           console.log(
-            `Assuming main route ${pathname} is cached by service worker`,
+            `Assuming main route ${pathname} is cached by service worker`
           );
         }
         return true;
@@ -348,7 +348,7 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     // Debug logging (temporary)
     if (import.meta.env.DEV) {
       console.log(
-        `Cache miss: ${pathname} (preloaded routes: ${Array.from(this.preloadedRoutes).join(", ")}, memory entries: ${this.memoryCache.getStats().entries})`,
+        `Cache miss: ${pathname} (preloaded routes: ${Array.from(this.preloadedRoutes).join(', ')}, memory entries: ${this.memoryCache.getStats().entries})`
       );
     }
 
@@ -358,12 +358,12 @@ export class NavigationCacheStateClass implements NavigationCacheState {
   private isMainRoute(pathname: string): boolean {
     // Import routes dynamically to avoid circular dependency
     const mainRoutes = [
-      "/",
-      "/giantbomb",
-      "/nextlander",
-      "/remap",
-      "/jeffgerstmann",
-      "/continue",
+      '/',
+      '/giantbomb',
+      '/nextlander',
+      '/remap',
+      '/jeffgerstmann',
+      '/continue',
     ];
     return mainRoutes.includes(pathname);
   }
@@ -371,7 +371,7 @@ export class NavigationCacheStateClass implements NavigationCacheState {
   shouldShowLoading(
     fromUrl?: string,
     toUrl?: string,
-    userId?: string | null,
+    userId?: string | null
   ): boolean {
     if (!this.initialized || !fromUrl || !toUrl) return true;
 
@@ -379,7 +379,7 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     const toPath = extractPathname(toUrl);
 
     if (fromPath === toPath) return false;
-    if (toPath.startsWith("/search/")) return false;
+    if (toPath.startsWith('/search/')) return false;
 
     return !this.isLikelyCached(toUrl, userId ?? null);
   }
@@ -443,7 +443,7 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     // Debug logging (temporary)
     if (import.meta.env.DEV) {
       console.log(
-        `Route marked as preloaded: ${pathname} (total: ${this.preloadedRoutes.size})`,
+        `Route marked as preloaded: ${pathname} (total: ${this.preloadedRoutes.size})`
       );
     }
   }
@@ -463,7 +463,7 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     const currentPath = window.location.pathname;
     const suggestions = this.preloader.getPreloadSuggestions(
       currentPath,
-      this.currentUserId,
+      this.currentUserId
     );
 
     if (suggestions.length > 0) {

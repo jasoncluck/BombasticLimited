@@ -1,6 +1,6 @@
-import { goto, invalidate } from "$app/navigation";
-import { showNotification } from "$lib/stores/notification";
-import type { Database } from "$lib/supabase/database.types";
+import { goto, invalidate } from '$app/navigation';
+import { showNotification } from '$lib/stores/notification';
+import type { Database } from '$lib/supabase/database.types';
 import {
   addVideosToPlaylist,
   createPlaylist,
@@ -16,18 +16,18 @@ import {
   USER_PLAYLIST_LIMIT,
   type Playlist,
   type PlaylistVideo,
-} from "$lib/supabase/playlists";
-import { type Session, type SupabaseClient } from "@supabase/supabase-js";
-import type { Video } from "$lib/supabase/videos";
+} from '$lib/supabase/playlists';
+import { type Session, type SupabaseClient } from '@supabase/supabase-js';
+import type { Video } from '$lib/supabase/videos';
 import {
   isPlaylistVideosFilter,
   type CombinedContentFilter,
   type SortKey,
   type SortOrder,
-} from "../content/content-filter";
-import { parseImageProperties, type ImageProperties } from "./playlist";
-import { getCroppedImg } from "../ui/image-cropper/utils";
-import type { SidebarState } from "$lib/state/sidebar.svelte";
+} from '../content/content-filter';
+import { parseImageProperties, type ImageProperties } from './playlist';
+import { getCroppedImg } from '../ui/image-cropper/utils';
+import type { SidebarState } from '$lib/state/sidebar.svelte';
 
 export type PlaylistImages = Record<string, string | undefined>;
 
@@ -55,8 +55,8 @@ export async function handleCreatePlaylist({
   supabase: SupabaseClient<Database>;
 }) {
   if (!session) {
-    goto("/login");
-    throw new Error("Attempted to create a playlist without a valid session.");
+    goto('/login');
+    throw new Error('Attempted to create a playlist without a valid session.');
   }
 
   // No need to generate name here - the database will handle it
@@ -67,13 +67,13 @@ export async function handleCreatePlaylist({
   });
 
   if (error) {
-    if (error.code === "P0001") {
+    if (error.code === 'P0001') {
       showNotification(
         `Unable to create playlist, a maximum of ${USER_PLAYLIST_LIMIT} playlists can be created or followed.`,
-        "error",
+        'error'
       );
     } else {
-      showNotification("Error creating playlist", "error");
+      showNotification('Error creating playlist', 'error');
     }
   }
 
@@ -99,7 +99,7 @@ export async function handleDeletePlaylist({
   supabase: SupabaseClient<Database>;
 }) {
   if (!session?.user.id) {
-    goto("/login");
+    goto('/login');
     return;
   }
 
@@ -110,9 +110,9 @@ export async function handleDeletePlaylist({
   });
 
   if (error) {
-    showNotification(`Unable to delete playlist: ${playlist.name}.`, "error");
+    showNotification(`Unable to delete playlist: ${playlist.name}.`, 'error');
   } else {
-    showNotification(`Deleted ${playlist.name}.`, "success");
+    showNotification(`Deleted ${playlist.name}.`, 'success');
   }
   sidebarState.refreshData();
   return { error };
@@ -132,7 +132,7 @@ export async function handleAddVideosToPlaylist({
   session: Session | null;
 }) {
   if (!session) {
-    goto("/auth");
+    goto('/auth');
     return { error: null };
   }
 
@@ -148,22 +148,22 @@ export async function handleAddVideosToPlaylist({
   });
 
   if (error) {
-    if (error.code === "P0001") {
+    if (error.code === 'P0001') {
       showNotification(
-        `${videos.length === 1 ? "Video" : "Videos"} could not be added. Playlists can not contain more than ${PLAYLIST_VIDEO_LIMIT} videos.`,
+        `${videos.length === 1 ? 'Video' : 'Videos'} could not be added. Playlists can not contain more than ${PLAYLIST_VIDEO_LIMIT} videos.`
       );
     } else {
-      showNotification("Unable to add video to playlist.");
+      showNotification('Unable to add video to playlist.');
     }
     console.error(error);
   } else {
     showNotification(
-      `Added ${videos.length > 1 ? "videos" : "video"} to ${playlist.name}`,
+      `Added ${videos.length > 1 ? 'videos' : 'video'} to ${playlist.name}`
     );
   }
 
   await sidebarState.refreshData();
-  await invalidate("supabase:db:videos");
+  await invalidate('supabase:db:videos');
   return { error };
 }
 
@@ -202,11 +202,11 @@ export async function handleRemoveVideosFromPlaylist({
   }
 
   if (error) {
-    showNotification("Unable to remove video from playlist.");
+    showNotification('Unable to remove video from playlist.');
   } else {
     showNotification(`Removed video from ${playlist.name}.`);
   }
-  invalidate("supabase:db:videos");
+  invalidate('supabase:db:videos');
   return { error };
 }
 
@@ -236,7 +236,7 @@ export async function handleUpdatePlaylistImage({
   });
 
   if (error) {
-    showNotification("Unable update playlist image");
+    showNotification('Unable update playlist image');
   } else if (updatedPlaylist && !isResetImage) {
     await getCroppedPlaylistImageUrl({
       imageProperties: parseImageProperties(playlist.image_properties),
@@ -245,7 +245,7 @@ export async function handleUpdatePlaylistImage({
     });
   }
 
-  await invalidate("supabase:db:videos");
+  await invalidate('supabase:db:videos');
   await sidebarState.refreshData();
   return { error };
 }
@@ -287,7 +287,7 @@ export async function handleUpdatePlaylistPosition({
   session: Session | null;
 }) {
   if (!session) {
-    goto("/auth");
+    goto('/auth');
     return;
   }
 
@@ -315,12 +315,12 @@ export async function handleFollowPlaylist({
   session: Session | null;
 }) {
   if (!session) {
-    goto("/auth");
+    goto('/auth');
     return;
   }
 
   if (!contentFilter) {
-    console.error("Unable to follow playlist, missing content filter.");
+    console.error('Unable to follow playlist, missing content filter.');
     return;
   }
 
@@ -333,7 +333,7 @@ export async function handleFollowPlaylist({
 
   if (
     isPlaylistVideosFilter(contentFilter) &&
-    contentFilter.sort.key !== "playlistOrder"
+    contentFilter.sort.key !== 'playlistOrder'
   ) {
     handleUpdatePlaylistSort({
       playlist,
@@ -347,17 +347,17 @@ export async function handleFollowPlaylist({
   sidebarState.refreshData();
 
   if (error) {
-    if (error?.code === "P0001") {
+    if (error?.code === 'P0001') {
       showNotification(
         `Unable to follow playlist, a maximum of ${USER_PLAYLIST_LIMIT} playlists can be followed or created.`,
-        "error",
+        'error'
       );
     } else {
-      showNotification("Error creating playlist", "error");
+      showNotification('Error creating playlist', 'error');
     }
   } else {
     if (!error) {
-      showNotification(`Followed playlist: ${playlist.name} `, "success");
+      showNotification(`Followed playlist: ${playlist.name} `, 'success');
     }
   }
 }
@@ -375,7 +375,7 @@ export async function handleUnfollowPlaylist({
   session: Session | null;
 }) {
   if (!session) {
-    goto("/auth");
+    goto('/auth');
     return;
   }
 
@@ -388,9 +388,9 @@ export async function handleUnfollowPlaylist({
   sidebarState.refreshData();
 
   if (!error) {
-    showNotification(`Unfollowed playlist: ${playlist.name} `, "success");
+    showNotification(`Unfollowed playlist: ${playlist.name} `, 'success');
   } else {
-    showNotification(`Unable to unfollow playlist: ${error.message}`, "error");
+    showNotification(`Unable to unfollow playlist: ${error.message}`, 'error');
   }
   return { error };
 }
@@ -409,7 +409,7 @@ export async function handleUpdatePlaylistSort({
   session: Session | null;
 }) {
   if (!session) {
-    goto("/auth");
+    goto('/auth');
     return;
   }
 
@@ -422,7 +422,7 @@ export async function handleUpdatePlaylistSort({
   });
 
   if (error) {
-    showNotification("Unable to update playlist sort settings", "error");
+    showNotification('Unable to update playlist sort settings', 'error');
   }
 
   return { updatedPlaylist, error };
@@ -446,11 +446,11 @@ export async function processPlaylists(playlists: Playlist[]) {
         } catch (error) {
           console.error(
             `Failed to process image for playlist ${playlist.name}:`,
-            error,
+            error
           );
           return { ...playlist, processedImageUrl: null };
         }
-      }),
+      })
     );
     processedPlaylists.push(...batchResults);
   }
@@ -479,8 +479,8 @@ export async function getCroppedPlaylistImageUrl({
   try {
     // Try OffscreenCanvas first (more efficient)
     if (
-      typeof OffscreenCanvas !== "undefined" &&
-      typeof createImageBitmap !== "undefined"
+      typeof OffscreenCanvas !== 'undefined' &&
+      typeof createImageBitmap !== 'undefined'
     ) {
       return await processWithOffscreenCanvas(imageUrl, imageProperties);
     } else {
@@ -488,28 +488,28 @@ export async function getCroppedPlaylistImageUrl({
       return await getCroppedImg(imageUrl, imageProperties);
     }
   } catch (error) {
-    console.error("Browser image processing failed:", error);
+    console.error('Browser image processing failed:', error);
     return null;
   }
 }
 
 async function processWithOffscreenCanvas(
   imageUrl: string,
-  imageProperties: ImageProperties,
+  imageProperties: ImageProperties
 ): Promise<string> {
   const response = await fetch(imageUrl);
-  if (!response.ok) throw new Error("Failed to fetch image");
+  if (!response.ok) throw new Error('Failed to fetch image');
 
   const imageBlob = await response.blob();
   const imageBitmap = await createImageBitmap(imageBlob);
 
   const canvas = new OffscreenCanvas(
     imageProperties.width,
-    imageProperties.height,
+    imageProperties.height
   );
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext('2d');
 
-  if (!ctx) throw new Error("Failed to get canvas context");
+  if (!ctx) throw new Error('Failed to get canvas context');
 
   ctx.drawImage(
     imageBitmap,
@@ -520,14 +520,14 @@ async function processWithOffscreenCanvas(
     0,
     0,
     imageProperties.width,
-    imageProperties.height,
+    imageProperties.height
   );
 
-  const blob = await canvas.convertToBlob({ type: "image/jpeg", quality: 0.8 });
+  const blob = await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.8 });
   const arrayBuffer = await blob.arrayBuffer();
 
   const uint8Array = new Uint8Array(arrayBuffer);
-  let binaryString = "";
+  let binaryString = '';
 
   // Process in chunks to avoid call stack overflow
   const chunkSize = 8192;

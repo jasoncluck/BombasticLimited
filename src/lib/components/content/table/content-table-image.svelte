@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
-  import Progress from "$lib/components/ui/progress/progress.svelte";
-  import { getVideoSecondsOffset } from "$lib/components/video/video-service";
-  import { Check } from "@lucide/svelte";
+  import { isVideoWithTimestamp, type Video } from '$lib/supabase/videos';
+  import Progress from '$lib/components/ui/progress/progress.svelte';
+  import { getVideoSecondsOffset } from '$lib/components/video/video-service';
+  import { Check } from '@lucide/svelte';
 
   type ContentCardProps = {
     video: Video;
@@ -11,9 +11,9 @@
   const { video = $bindable() }: ContentCardProps = $props();
 </script>
 
-<div class="relative w-32 shrink-0 aspect-video flex items-center h-[80px]">
+<div class="relative flex aspect-video h-[80px] w-32 shrink-0 items-center">
   <img
-    class="w-full h-full object-cover"
+    class="h-full w-full object-cover"
     src={video.thumbnail_url}
     alt={video.title}
   />
@@ -24,15 +24,15 @@
         getVideoSecondsOffset({
           duration: video.duration,
           timestampSeconds: video.video_start_seconds,
-        }),
+        })
       )}
     />
-  {:else if "watched_at" in video && video.watched_at}
+  {:else if 'watched_at' in video && video.watched_at}
     <div
-      class="absolute bottom-0 right-0 flex bg-background w-full gap-1 px-1 items-center justify-center"
+      class="bg-background absolute right-0 bottom-0 flex w-full items-center justify-center gap-1 px-1"
     >
       <Check class="text-primary" />
-      <p class="text-xs text-primary">Watched</p>
+      <p class="text-primary text-xs">Watched</p>
     </div>
   {/if}
 </div>

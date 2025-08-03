@@ -1,5 +1,5 @@
 <script lang="ts">
-  import * as Pagination from "$lib/components/ui/pagination/index.js";
+  import * as Pagination from '$lib/components/ui/pagination/index.js';
 
   let {
     count,
@@ -14,7 +14,7 @@
   } = $props();
 </script>
 
-<div class="flex justify-center w-full px-2">
+<div class="flex w-full justify-center px-2">
   <Pagination.Root
     {count}
     {perPage}
@@ -27,7 +27,7 @@
           <Pagination.PrevButton class="cursor-pointer" />
         </Pagination.Item>
         {#each pages as page (page.key)}
-          {#if page.type === "ellipsis"}
+          {#if page.type === 'ellipsis'}
             <Pagination.Item>
               <Pagination.Ellipsis />
             </Pagination.Item>

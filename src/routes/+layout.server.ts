@@ -1,8 +1,8 @@
-import type { ContentView } from "$lib/components/content/content";
-import { getFilterOptionFromQueryParams } from "$lib/components/content/content-filter";
-import { getProfile } from "$lib/supabase/user-profiles";
-import { MAIN_ROUTES } from "$lib/constants/routes.js";
-import type { LayoutServerLoad } from "./$types";
+import type { ContentView } from '$lib/components/content/content';
+import { getFilterOptionFromQueryParams } from '$lib/components/content/content-filter';
+import { getProfile } from '$lib/supabase/user-profiles';
+import { MAIN_ROUTES } from '$lib/constants/routes.js';
+import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({
   locals: { safeGetSession, supabase },
@@ -13,17 +13,17 @@ export const load: LayoutServerLoad = async ({
   depends,
   request,
 }) => {
-  depends("supabase:db:profiles");
+  depends('supabase:db:profiles');
 
   const sessionPromise = safeGetSession();
 
   let view: ContentView;
   if (url.pathname === MAIN_ROUTES.CONTINUE) {
-    view = "continueWatching";
+    view = 'continueWatching';
   } else if (/^\/playlist\//.test(url.pathname)) {
-    view = "playlist";
+    view = 'playlist';
   } else {
-    view = "default";
+    view = 'default';
   }
 
   const contentFilter = getFilterOptionFromQueryParams({
@@ -31,7 +31,7 @@ export const load: LayoutServerLoad = async ({
     view,
   });
 
-  let layout = cookies.get("PaneForge:layout");
+  let layout = cookies.get('PaneForge:layout');
   if (layout) {
     try {
       layout = JSON.parse(layout);
@@ -47,24 +47,24 @@ export const load: LayoutServerLoad = async ({
   const timeSlot = Math.floor(Date.now() / 600000); // 10 minute slots
 
   // Simple cache key based on path and time
-  const cacheKey = `${url.pathname}-${userId || "anon"}-${timeSlot}`;
+  const cacheKey = `${url.pathname}-${userId || 'anon'}-${timeSlot}`;
   const etag = `"${cacheKey}"`;
   const lastModified = new Date(timeSlot * 600000);
 
-  const clientEtag = request.headers.get("if-none-match");
+  const clientEtag = request.headers.get('if-none-match');
 
   // Basic cache headers only
   if (!isDataRequest) {
     try {
       const cacheControl = session
-        ? "private, max-age=300, must-revalidate"
-        : "public, max-age=600, s-maxage=1200";
+        ? 'private, max-age=300, must-revalidate'
+        : 'public, max-age=600, s-maxage=1200';
 
       setHeaders({
         etag: etag,
-        "last-modified": lastModified.toUTCString(),
-        "cache-control": cacheControl,
-        vary: "Authorization, Cookie",
+        'last-modified': lastModified.toUTCString(),
+        'cache-control': cacheControl,
+        vary: 'Authorization, Cookie',
       });
     } catch {
       // Headers already set

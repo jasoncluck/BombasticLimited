@@ -1,5 +1,5 @@
-import adapter from "@sveltejs/adapter-vercel";
-import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
+import adapter from '@sveltejs/adapter-vercel';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -14,13 +14,13 @@ const config = {
     adapter: adapter({
       csp: {
         directives: {
-          "script-src": [
-            "self",
-            "unsafe-inline",
-            "ws://localhost:5173/",
-            "https://www.youtube.com",
-            "https://embed.twitch.tv/",
-            "https://hguqxixjgwazwsuvhkmo.supabase.co",
+          'script-src': [
+            'self',
+            'unsafe-inline',
+            'ws://localhost:5173/',
+            'https://www.youtube.com',
+            'https://embed.twitch.tv/',
+            'https://hguqxixjgwazwsuvhkmo.supabase.co',
           ],
         },
       },

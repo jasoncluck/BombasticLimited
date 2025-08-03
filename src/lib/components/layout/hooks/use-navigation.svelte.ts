@@ -1,9 +1,9 @@
-import { beforeNavigate, afterNavigate, invalidate } from "$app/navigation";
-import { navigating } from "$app/state";
-import { browser } from "$app/environment";
-import { tick } from "svelte";
-import type { NavigationCacheState } from "$lib/state/navigation-cache/navigation-cache.svelte.js";
-import type { PageState } from "$lib/state/page.svelte.js";
+import { beforeNavigate, afterNavigate, invalidate } from '$app/navigation';
+import { navigating } from '$app/state';
+import { browser } from '$app/environment';
+import { tick } from 'svelte';
+import type { NavigationCacheState } from '$lib/state/navigation-cache/navigation-cache.svelte.js';
+import type { PageState } from '$lib/state/page.svelte.js';
 
 export function useNavigation(
   navigationCache: NavigationCacheState,
@@ -13,13 +13,13 @@ export function useNavigation(
   lastModified: string | null,
   cached: boolean,
   cacheUserId: string | null,
-  user: any,
+  user: any
 ) {
   function setupNavigationHooks(userProfile: any, session: any) {
     beforeNavigate(({ from }) => {
       if (from) {
         pageState.contentScrollPosition = pageState.createViewportSnapshot(
-          pageState.viewportRefs.contentViewportRef,
+          pageState.viewportRefs.contentViewportRef
         );
       }
     });
@@ -38,15 +38,15 @@ export function useNavigation(
       // Clear search query when navigating away from search
       if (
         to &&
-        !to.url.pathname.startsWith("/search/") &&
-        to.url.pathname !== "/"
+        !to.url.pathname.startsWith('/search/') &&
+        to.url.pathname !== '/'
       ) {
-        searchQuery.value = "";
+        searchQuery.value = '';
       }
 
       // Invalidate video cache when leaving video pages
-      if (from?.url.pathname.includes("/video")) {
-        invalidate("supabase:db:videos");
+      if (from?.url.pathname.includes('/video')) {
+        invalidate('supabase:db:videos');
       }
 
       // Store ETag information with security validation
@@ -61,10 +61,10 @@ export function useNavigation(
             etag,
             lastModified,
             currentUserId,
-            currentCacheUserId,
+            currentCacheUserId
           );
         } else {
-          console.warn("User context mismatch, clearing cache");
+          console.warn('User context mismatch, clearing cache');
           navigationCache.clearUserCache();
         }
       }
@@ -83,12 +83,12 @@ export function useNavigation(
       const shouldShow = navigationCache.shouldShowLoading(
         from?.href,
         to?.href,
-        user?.id ?? null,
+        user?.id ?? null
       );
       if (!shouldShow) return false;
     }
 
-    return navigating.type === "goto" || navigating.type === "link";
+    return navigating.type === 'goto' || navigating.type === 'link';
   }
 
   return {

@@ -4,24 +4,24 @@ import {
   type ContentFilter,
   type SortKey,
   type SortOrder,
-} from "$lib/components/content/content-filter";
-import type { Source } from "$lib/constants/source";
-import type { Tables } from "$lib/supabase/database.types";
+} from '$lib/components/content/content-filter';
+import type { Source } from '$lib/constants/source';
+import type { Tables } from '$lib/supabase/database.types';
 import type {
   PostgrestError,
   Session,
   SupabaseClient,
-} from "@supabase/supabase-js";
-import type { Database } from "./database.types";
-import type { PlaylistVideo } from "./playlists";
+} from '@supabase/supabase-js';
+import type { Database } from './database.types';
+import type { PlaylistVideo } from './playlists';
 
 export const DEFAULT_NUM_VIDEOS_PAGINATION = 100;
 export const DEFAULT_NUM_VIDEOS_OVERVIEW = 15;
-export type TimestampResponse = Tables<"timestamps">;
+export type TimestampResponse = Tables<'timestamps'>;
 
 export type VideoTimestamp = Pick<
   TimestampResponse,
-  "video_start_seconds" | "updated_at" | "watched_at"
+  'video_start_seconds' | 'updated_at' | 'watched_at'
 > & {
   playlist_name?: string | null;
   playlist_short_id?: string | null;
@@ -29,8 +29,8 @@ export type VideoTimestamp = Pick<
   playlist_sort_order?: SortOrder;
 };
 
-export type VideoResponse = Tables<"videos">;
-export type Video = Omit<VideoResponse, "search_vector" | "pending_delete">;
+export type VideoResponse = Tables<'videos'>;
+export type Video = Omit<VideoResponse, 'search_vector' | 'pending_delete'>;
 export type VideoWithTimestamp = Video & VideoTimestamp;
 
 export type SourceVideos = Record<Source, Video[]>;
@@ -73,19 +73,19 @@ export async function getVideos({
 }> {
   const query = searchString
     ? supabase.rpc(
-        "search_videos",
+        'search_videos',
         {
           search_term: searchString,
         },
-        { count: "exact" },
+        { count: 'exact' }
       )
-    : supabase.rpc("get_videos_with_timestamps", {}, { count: "exact" });
+    : supabase.rpc('get_videos_with_timestamps', {}, { count: 'exact' });
 
   query.limit(limit);
 
   const sortOptionInfo = SORT_OPTIONS_VIDEO[contentFilter.sort.key];
   query.order(sortOptionInfo.tableColumn, {
-    ascending: contentFilter.sort.order === "ascending",
+    ascending: contentFilter.sort.order === 'ascending',
   });
 
   // NOTE: Date filters removed for now
@@ -115,13 +115,13 @@ export async function getVideos({
   }
 
   if (source) {
-    query.eq("source", source);
+    query.eq('source', source);
   }
 
   const { data: videos, count, error } = await query;
 
   if (error) {
-    console.error("Error fetching videos:", error);
+    console.error('Error fetching videos:', error);
   }
 
   return { videos: videos ?? [], count, error };
@@ -132,12 +132,12 @@ export async function getVideos({
  */
 export async function getVideo({ videoId, supabase }: VideoQuerySingleProps) {
   const { data: video, error } = await supabase
-    .rpc("get_videos_with_timestamps")
-    .eq("id", videoId)
+    .rpc('get_videos_with_timestamps')
+    .eq('id', videoId)
     .single();
 
   if (error) {
-    console.error("Error fetching video:", error);
+    console.error('Error fetching video:', error);
   }
 
   return { video, error };
@@ -164,30 +164,30 @@ export async function getInProgressVideos({
   const sortOptionInfo = SORT_OPTIONS_TIMESTAMPS[contentFilter.sort.key];
 
   const query = supabase
-    .rpc("get_in_progress_videos_with_timestamps", {}, { count: "exact" })
+    .rpc('get_in_progress_videos_with_timestamps', {}, { count: 'exact' })
     .limit(limit);
 
   // Sorting by playlist order
   query.order(sortOptionInfo.tableColumn, {
-    ascending: contentFilter.sort.order === "ascending",
+    ascending: contentFilter.sort.order === 'ascending',
   });
 
   if (contentFilter.startDate) {
     try {
       // Parse the input date string and explicitly set it to midnight (local time)
       const startDate = new Date(`${contentFilter.startDate}T00:00:00`);
-      query.gte("published_at", startDate.toISOString());
+      query.gte('published_at', startDate.toISOString());
     } catch {
-      console.error("Unable to parse start date, ignoring.");
+      console.error('Unable to parse start date, ignoring.');
     }
   }
   if (contentFilter.endDate) {
     try {
       // Parse the input date string and set it to the end of the day (local time)
       const endDate = new Date(`${contentFilter.endDate}T23:59:59.999`);
-      query.lte("published_at", endDate.toISOString());
+      query.lte('published_at', endDate.toISOString());
     } catch {
-      console.error("Unable to parse end date, ignoring.");
+      console.error('Unable to parse end date, ignoring.');
     }
   }
 
@@ -197,28 +197,28 @@ export async function getInProgressVideos({
 }
 
 export function isVideoWithTimestamp(
-  video: Video,
+  video: Video
 ): video is VideoWithTimestamp {
   return (
     !!video &&
-    (("watched_at" in video && !!video.watched_at) ||
-      ("video_start_seconds" in video && !!video.video_start_seconds))
+    (('watched_at' in video && !!video.watched_at) ||
+      ('video_start_seconds' in video && !!video.video_start_seconds))
   );
 }
 
 // Timestamp that has playlist info associated with it meaning it was played as part of a playlist
 export function isVideoWithPlaylistTimestamp(
-  video: Video,
+  video: Video
 ): video is VideoWithTimestamp {
   return (
     !!video &&
-    (("watched_at" in video && !!video.watched_at) ||
-      ("video_start_seconds" in video && !!video.video_start_seconds)) &&
-    "playlist_short_id" in video &&
+    (('watched_at' in video && !!video.watched_at) ||
+      ('video_start_seconds' in video && !!video.video_start_seconds)) &&
+    'playlist_short_id' in video &&
     !!video.playlist_short_id &&
-    "playlist_sorted_by" in video &&
+    'playlist_sorted_by' in video &&
     !!video.playlist_sorted_by &&
-    "playlist_sort_order" in video &&
+    'playlist_sort_order' in video &&
     !!video.playlist_sort_order
   );
 }

@@ -1,9 +1,9 @@
-import { getPaginationQueryParams } from "$lib/components/pagination/pagination";
+import { getPaginationQueryParams } from '$lib/components/pagination/pagination';
 import {
   DEFAULT_NUM_PLAYLISTS_PAGINATION,
   getPlaylistsForUsername,
-} from "$lib/supabase/playlists";
-import type { PageServerLoad } from "./$types";
+} from '$lib/supabase/playlists';
+import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
   params,
@@ -11,7 +11,7 @@ export const load: PageServerLoad = async ({
   url,
   locals: { supabase },
 }) => {
-  depends("supabase:db:playlistsForProfile");
+  depends('supabase:db:playlistsForProfile');
 
   const username = params.username;
 

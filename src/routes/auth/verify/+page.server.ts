@@ -1,12 +1,12 @@
-import { redirect } from "@sveltejs/kit";
-import type { PageServerLoad } from "./$types";
+import { redirect } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
   depends,
   locals: { session },
 }) => {
-  depends("supabase:auth");
+  depends('supabase:auth');
   if (session) {
-    redirect(303, "/");
+    redirect(303, '/');
   }
 };

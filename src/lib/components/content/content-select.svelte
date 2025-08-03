@@ -1,17 +1,17 @@
 <script lang="ts">
-  import type { Playlist } from "$lib/supabase/playlists";
-  import type { Session, SupabaseClient } from "@supabase/supabase-js";
-  import type { Database } from "$lib/supabase/database.types";
+  import type { Playlist } from '$lib/supabase/playlists';
+  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { Database } from '$lib/supabase/database.types';
   import {
     DEFAULT_SECTION_ID,
     getContentState,
-  } from "$lib/state/content.svelte";
-  import ContentDropdown from "./content-dropdown.svelte";
-  import type { Video } from "$lib/supabase/videos";
-  import { getMediaQueryState } from "$lib/state/media-query.svelte";
-  import Button from "../ui/button/button.svelte";
-  import { Ellipsis } from "@lucide/svelte";
-  import type { CombinedContentFilter } from "./content-filter";
+  } from '$lib/state/content.svelte';
+  import ContentDropdown from './content-dropdown.svelte';
+  import type { Video } from '$lib/supabase/videos';
+  import { getMediaQueryState } from '$lib/state/media-query.svelte';
+  import Button from '../ui/button/button.svelte';
+  import { Ellipsis } from '@lucide/svelte';
+  import type { CombinedContentFilter } from './content-filter';
 
   let {
     videos,
@@ -34,13 +34,13 @@
   const mediaQueryState = getMediaQueryState();
 
   let selectedVideos = $derived(
-    contentState.selectedVideosBySection[sectionId] ?? [],
+    contentState.selectedVideosBySection[sectionId] ?? []
   );
 
   function handleSelectAll() {
     // Check if all videos are already selected in this section
     const allSelected = videos.every((video) =>
-      selectedVideos.some((selected) => selected.id === video.id),
+      selectedVideos.some((selected) => selected.id === video.id)
     );
 
     if (allSelected) {
@@ -54,7 +54,7 @@
 </script>
 
 {#if mediaQueryState.canHover}
-  <div class="flex items-center pointer-events-auto">
+  <div class="pointer-events-auto flex items-center">
     <ContentDropdown
       {videos}
       variant="header"
@@ -76,7 +76,7 @@
         e.stopPropagation();
         contentState.handleDrawer({
           sectionId,
-          variant: "header",
+          variant: 'header',
         });
       }}
     >

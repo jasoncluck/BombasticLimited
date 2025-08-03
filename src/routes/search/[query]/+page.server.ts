@@ -1,12 +1,12 @@
-import { isVideoFilter } from "$lib/components/content/content-filter";
-import { SOURCES } from "$lib/constants/source";
-import { searchPlaylists } from "$lib/supabase/playlists";
+import { isVideoFilter } from '$lib/components/content/content-filter';
+import { SOURCES } from '$lib/constants/source';
+import { searchPlaylists } from '$lib/supabase/playlists';
 import {
   getVideos,
   type SourceVideos,
   type SourceVideosCount,
-} from "$lib/supabase/videos";
-import type { PageServerLoad } from "./$types";
+} from '$lib/supabase/videos';
+import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
   params,
@@ -14,13 +14,13 @@ export const load: PageServerLoad = async ({
   locals: { supabase, session },
   depends,
 }) => {
-  depends("supabase:db:videos");
+  depends('supabase:db:videos');
 
   const { contentFilter } = await parent();
   const searchString = params.query;
 
   if (!isVideoFilter(contentFilter)) {
-    throw new Error("Invalid content filter");
+    throw new Error('Invalid content filter');
   }
 
   // Run video searches and playlist search in parallel
@@ -39,7 +39,7 @@ export const load: PageServerLoad = async ({
           session,
         });
         return { source, videos, count };
-      }),
+      })
     ),
     // Search playlists in parallel with video searches
     searchPlaylists({
@@ -76,7 +76,7 @@ export const load: PageServerLoad = async ({
           });
 
           return { sourceVideos, sourceVideosCount };
-        })(),
+        })()
       ),
 
       // Process playlist images in parallel
@@ -90,7 +90,7 @@ export const load: PageServerLoad = async ({
           //   thumbnailMaxResUrl: profilePlaylist.thumbnail_maxres_url,
           //   thumbnailUrl: profilePlaylist.thumbnail_url,
           // }),
-        })),
+        }))
       ),
     ]);
 

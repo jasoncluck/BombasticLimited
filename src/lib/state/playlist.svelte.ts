@@ -1,15 +1,15 @@
-import type { Playlist } from "$lib/supabase/playlists";
-import type { SupabaseClient, Session } from "@supabase/supabase-js";
-import type { Database } from "$lib/supabase/database.types";
-import { getContext, setContext } from "svelte";
-import { createDragImage } from "$lib/utils/dragdrop";
+import type { Playlist } from '$lib/supabase/playlists';
+import type { SupabaseClient, Session } from '@supabase/supabase-js';
+import type { Database } from '$lib/supabase/database.types';
+import { getContext, setContext } from 'svelte';
+import { createDragImage } from '$lib/utils/dragdrop';
 import {
   handleAddVideosToPlaylist,
   handleUpdatePlaylistPosition,
-} from "$lib/components/playlist/playlist-service";
-import type { PageState } from "./page.svelte";
-import { type ContentState } from "./content.svelte";
-import type { SidebarState } from "./sidebar.svelte";
+} from '$lib/components/playlist/playlist-service';
+import type { PageState } from './page.svelte';
+import { type ContentState } from './content.svelte';
+import type { SidebarState } from './sidebar.svelte';
 
 export interface PlaylistDragDropOptions {
   playlists: Playlist[];
@@ -29,7 +29,7 @@ export interface PlaylistDragDropHandlers {
 export interface PlaylistButtonOptions {
   index: number;
   isSelected: boolean;
-  itemType: "source" | "playlist";
+  itemType: 'source' | 'playlist';
   isSidebarCollapsed: boolean;
   selectedPlaylistIdParam?: string;
   session?: Session | null;
@@ -55,7 +55,7 @@ export class PlaylistStateClass {
   constructor(
     pageState: PageState,
     contentState: ContentState,
-    sidebarState: SidebarState,
+    sidebarState: SidebarState
   ) {
     this.pageState = pageState;
     this.contentState = contentState;
@@ -67,7 +67,7 @@ export class PlaylistStateClass {
     const allSelectedVideos: { sectionId: string; videos: any[] }[] = [];
 
     for (const [sectionId, videos] of Object.entries(
-      this.contentState.selectedVideosBySection,
+      this.contentState.selectedVideosBySection
     )) {
       if (videos && videos.length > 0) {
         allSelectedVideos.push({ sectionId, videos });
@@ -96,21 +96,21 @@ export class PlaylistStateClass {
 
   // CSS class helpers
   getPlaylistDragClasses(index: number): string {
-    let classes = "relative";
+    let classes = 'relative';
 
     if (this.draggedIndex === index) {
-      classes += " opacity-60";
+      classes += ' opacity-60';
     }
 
     if (this.targetIndex === index) {
       if (this.draggedIndex === null || this.draggedIndex < this.targetIndex) {
         // Show indicator at the bottom
         classes +=
-          " after:absolute after:left-0 after:bottom-0 after:w-full after:h-[2px] after:bg-primary after:z-10";
+          ' after:absolute after:left-0 after:bottom-0 after:w-full after:h-[2px] after:bg-primary after:z-10';
       } else {
         // Show indicator at the top
         classes +=
-          " before:absolute before:left-0 before:-top-0 before:w-full before:h-[2px] before:bg-primary before:z-10";
+          ' before:absolute before:left-0 before:-top-0 before:w-full before:h-[2px] before:bg-primary before:z-10';
       }
     }
     return classes;
@@ -127,18 +127,18 @@ export class PlaylistStateClass {
       playlists,
     } = options;
 
-    let classes = "sidebar-full-button transition-all duration-200 ease-in-out";
+    let classes = 'sidebar-full-button transition-all duration-200 ease-in-out';
 
     // Add drag classes for playlists only
-    if (itemType === "playlist") {
+    if (itemType === 'playlist') {
       classes += ` ${this.getPlaylistDragClasses(index)}`;
     }
 
     // Base hover and active states that apply to the whole button
     if (this.draggedIndex === null) {
       // Only add hover/active if not dragging
-      classes += " hover:bg-secondary/50 hover:brightness-110";
-      classes += " active:bg-secondary/70 active:scale-95 active:brightness-90";
+      classes += ' hover:bg-secondary/50 hover:brightness-110';
+      classes += ' active:bg-secondary/70 active:scale-95 active:brightness-90';
     }
 
     // Enhanced hover effect when manually tracking hover state
@@ -148,41 +148,41 @@ export class PlaylistStateClass {
       this.draggedIndex === null
     ) {
       if (isSelected) {
-        classes += " brightness-110";
+        classes += ' brightness-110';
       } else {
-        classes += " bg-secondary/25";
+        classes += ' bg-secondary/25';
       }
     }
 
     // Selected styling
     if (isSelected) {
-      if (itemType === "source") {
-        classes += " bg-secondary text-secondary-foreground";
+      if (itemType === 'source') {
+        classes += ' bg-secondary text-secondary-foreground';
       } else {
-        classes += " bg-secondary/65 text-secondary-foreground";
+        classes += ' bg-secondary/65 text-secondary-foreground';
       }
       // Override hover for selected items
       if (this.draggedIndex === null) {
-        classes += " hover:bg-secondary hover:brightness-110";
+        classes += ' hover:bg-secondary hover:brightness-110';
       }
     }
 
     // Sidebar layout classes
     if (!isSidebarCollapsed) {
-      classes += " min-w-[150px] justify-normal";
+      classes += ' min-w-[150px] justify-normal';
     } else {
-      classes += " align-middle";
+      classes += ' align-middle';
     }
 
     // Video drag styling (playlists only)
     if (
-      itemType === "playlist" &&
-      this.contentState.dragContentType === "video" &&
+      itemType === 'playlist' &&
+      this.contentState.dragContentType === 'video' &&
       playlists &&
       (playlists[index]?.created_by !== session?.user.id ||
         playlists[index].short_id === selectedPlaylistIdParam)
     ) {
-      classes += " opacity-50 border-transparent";
+      classes += ' opacity-50 border-transparent';
     }
 
     return classes;
@@ -190,14 +190,14 @@ export class PlaylistStateClass {
 
   // Drag and drop methods
   createPlaylistDragDrop(
-    options: PlaylistDragDropOptions,
+    options: PlaylistDragDropOptions
   ): PlaylistDragDropHandlers {
     const handleDragStart = (event: DragEvent, index: number) => {
       this.draggedIndex = index;
-      this.contentState.dragContentType = "playlist";
+      this.contentState.dragContentType = 'playlist';
 
       if (event.dataTransfer) {
-        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.effectAllowed = 'move';
       }
 
       this.hoveredPlaylistIndex = null;
@@ -208,16 +208,16 @@ export class PlaylistStateClass {
       event.preventDefault();
 
       // Handle video drop zones
-      if (this.contentState.dragContentType === "video") {
+      if (this.contentState.dragContentType === 'video') {
         const playlist = options.playlists[index];
         if (event.currentTarget instanceof HTMLElement) {
           const classes = this.contentState.getVideoDropzoneClasses(
             playlist,
-            options.session,
+            options.session
           );
           event.currentTarget.classList.add(...classes);
           event.currentTarget.classList.remove(
-            ...this.contentState.getEndDropzoneClasses(),
+            ...this.contentState.getEndDropzoneClasses()
           );
         }
       }
@@ -239,20 +239,20 @@ export class PlaylistStateClass {
         !event.currentTarget.contains(relatedTarget)
       ) {
         // Clear target index for playlist reordering
-        if (this.contentState.dragContentType === "playlist") {
+        if (this.contentState.dragContentType === 'playlist') {
           this.targetIndex = null;
         }
 
         // Handle video drop zone styling
-        if (this.contentState.dragContentType === "video") {
+        if (this.contentState.dragContentType === 'video') {
           const playlist = options.playlists[index];
           const classes = this.contentState.getVideoDropzoneClasses(
             playlist,
-            options.session,
+            options.session
           );
           event.currentTarget.classList.remove(...classes);
           event.currentTarget.classList.add(
-            ...this.contentState.getEndDropzoneClasses(),
+            ...this.contentState.getEndDropzoneClasses()
           );
         }
       }
@@ -260,7 +260,7 @@ export class PlaylistStateClass {
 
     const handleDrop = async (
       event: DragEvent,
-      playlistTargetIndex: number,
+      playlistTargetIndex: number
     ) => {
       if (!options.session) {
         return;
@@ -269,21 +269,21 @@ export class PlaylistStateClass {
       if (event.currentTarget instanceof HTMLElement) {
         const classes = this.contentState.getVideoDropzoneClasses(
           options.playlists[playlistTargetIndex],
-          options.session,
+          options.session
         );
         event.currentTarget.classList.remove(...classes);
         event.currentTarget.classList.add(
-          ...this.contentState.getEndDropzoneClasses(),
+          ...this.contentState.getEndDropzoneClasses()
         );
       }
 
-      if (this.contentState.dragContentType === "video") {
+      if (this.contentState.dragContentType === 'video') {
         // Get all selected videos from all sections
         const allSelectedVideos = this.getAllSelectedVideos();
 
         // Combine all videos into a single array for the playlist operation
         const allVideos = allSelectedVideos.flatMap(
-          (section) => section.videos,
+          (section) => section.videos
         );
 
         if (allVideos.length > 0) {
@@ -295,7 +295,7 @@ export class PlaylistStateClass {
             session: options.session,
           });
         }
-      } else if (this.contentState.dragContentType === "playlist") {
+      } else if (this.contentState.dragContentType === 'playlist') {
         if (this.draggedIndex === null || this.draggedIndex < 0) {
           return;
         }
@@ -339,18 +339,18 @@ export class PlaylistStateClass {
 // Export the class type for use elsewhere
 export type PlaylistState = PlaylistStateClass;
 
-const DEFAULT_KEY = "$_playlist_state";
+const DEFAULT_KEY = '$_playlist_state';
 
 export function setPlaylistState(
   pageState: PageState,
   contentState: ContentState,
   sidebarState: SidebarState,
-  key = DEFAULT_KEY,
+  key = DEFAULT_KEY
 ) {
   const playlistState = new PlaylistStateClass(
     pageState,
     contentState,
-    sidebarState,
+    sidebarState
   );
   return setContext(key, playlistState);
 }

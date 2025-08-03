@@ -2,13 +2,13 @@ import {
   S3Client,
   GetObjectCommand,
   ListObjectsV2Command,
-} from "@aws-sdk/client-s3";
-import { createClient } from "@supabase/supabase-js";
-import { Database } from "../../../src/lib/supabase/database.types";
-import { Client } from "pg";
+} from '@aws-sdk/client-s3';
+import { createClient } from '@supabase/supabase-js';
+import { Database } from '../../../src/lib/supabase/database.types';
+import { Client } from 'pg';
 
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION || "us-west-2",
+  region: process.env.AWS_REGION || 'us-west-2',
 });
 
 export interface RestoreEvent {
@@ -30,24 +30,24 @@ export interface RestoreResult {
 }
 
 export const handler = async (
-  event: RestoreEvent = {},
+  event: RestoreEvent = {}
 ): Promise<RestoreResult> => {
   const bucketName = process.env.BACKUP_BUCKET_NAME;
-  const environment = process.env.ENVIRONMENT || "prod";
+  const environment = process.env.ENVIRONMENT || 'prod';
   const supabaseUrl = process.env.PUBLIC_SUPABASE_URL_PROD;
   const supabaseKey = process.env.SUPABASE_SERVICE_API_KEY_PROD;
   let supabaseDbUrl = process.env.SUPABASE_DB_URL_PROD;
 
   if (!bucketName) {
-    throw new Error("BACKUP_BUCKET_NAME environment variable is not set");
+    throw new Error('BACKUP_BUCKET_NAME environment variable is not set');
   }
 
   if (!supabaseUrl || !supabaseKey) {
-    throw new Error("Supabase configuration is not available");
+    throw new Error('Supabase configuration is not available');
   }
 
   if (!supabaseDbUrl) {
-    throw new Error("SUPABASE_DB_URL_PROD environment variable is not set");
+    throw new Error('SUPABASE_DB_URL_PROD environment variable is not set');
   }
 
   // Fix connection string
@@ -57,7 +57,7 @@ export const handler = async (
     const encodedPassword = encodeURIComponent(password);
     supabaseDbUrl = `postgresql://${username}:${encodedPassword}@${hostAndDb}`;
   }
-  supabaseDbUrl = supabaseDbUrl.trim().replace(/[\r\n]/g, "");
+  supabaseDbUrl = supabaseDbUrl.trim().replace(/[\r\n]/g, '');
 
   console.log(`Starting database restore from bucket: ${bucketName}`);
 
@@ -74,7 +74,7 @@ export const handler = async (
     // Find backup if not specified
     if (!backupKey) {
       const prefix = event.timestamp
-        ? `backups/${environment}/${new Date(event.timestamp).toISOString().split("T")[0]}/`
+        ? `backups/${environment}/${new Date(event.timestamp).toISOString().split('T')[0]}/`
         : `backups/${environment}/`;
 
       const listCommand = new ListObjectsV2Command({
@@ -85,7 +85,7 @@ export const handler = async (
       const listResult = await s3Client.send(listCommand);
       const backups = listResult.Contents?.sort(
         (a, b) =>
-          (b.LastModified?.getTime() || 0) - (a.LastModified?.getTime() || 0),
+          (b.LastModified?.getTime() || 0) - (a.LastModified?.getTime() || 0)
       );
 
       if (!backups || backups.length === 0) {
@@ -110,19 +110,19 @@ export const handler = async (
     const { metadata, data } = backup;
     console.log(`Backup metadata:`, metadata);
 
-    console.log("=== BACKUP CONTENT DEBUG ===");
-    console.log("Available data keys:", Object.keys(data));
+    console.log('=== BACKUP CONTENT DEBUG ===');
+    console.log('Available data keys:', Object.keys(data));
     Object.entries(data).forEach(([tableName, tableData]) => {
       if (Array.isArray(tableData)) {
         console.log(`${tableName}: ${tableData.length} records`);
       }
     });
-    console.log("=== END BACKUP DEBUG ===");
+    console.log('=== END BACKUP DEBUG ===');
 
     // Build a list of public schema tables that exist in the backup
     const availableTables = Object.keys(data)
-      .filter((key) => Array.isArray(data[key]) && key.startsWith("public."))
-      .map((key) => key.replace("public.", ""));
+      .filter((key) => Array.isArray(data[key]) && key.startsWith('public.'))
+      .map((key) => key.replace('public.', ''));
 
     // Filter tables to restore based on event or use all available tables
     const tablesToRestore = event.tables || metadata.tables || availableTables;
@@ -130,7 +130,7 @@ export const handler = async (
     const validationResults: Record<string, boolean> = {};
 
     if (event.validateOnly) {
-      console.log("Validation mode: checking backup integrity...");
+      console.log('Validation mode: checking backup integrity...');
 
       for (const table of tablesToRestore) {
         const publicTableKey = `public.${table}`;
@@ -138,7 +138,7 @@ export const handler = async (
 
         if (!tableData) {
           console.warn(
-            `Table ${table} not found in backup (looked for: ${publicTableKey})`,
+            `Table ${table} not found in backup (looked for: ${publicTableKey})`
           );
           validationResults[table] = false;
           continue;
@@ -146,11 +146,11 @@ export const handler = async (
 
         const isValid =
           Array.isArray(tableData) &&
-          (tableData.length === 0 || typeof tableData[0] === "object");
+          (tableData.length === 0 || typeof tableData[0] === 'object');
 
         validationResults[table] = isValid;
         console.log(
-          `Table ${table}: ${isValid ? "VALID" : "INVALID"} (${tableData.length} records)`,
+          `Table ${table}: ${isValid ? 'VALID' : 'INVALID'} (${tableData.length} records)`
         );
       }
 
@@ -165,7 +165,7 @@ export const handler = async (
     }
 
     if (event.dryRun) {
-      console.log("Dry run mode - analyzing restore without making changes");
+      console.log('Dry run mode - analyzing restore without making changes');
 
       for (const table of tablesToRestore) {
         const publicTableKey = `public.${table}`;
@@ -174,7 +174,7 @@ export const handler = async (
         if (tableData && Array.isArray(tableData)) {
           recordsRestored[table] = tableData.length;
           console.log(
-            `Would restore ${tableData.length} records to table: ${table}`,
+            `Would restore ${tableData.length} records to table: ${table}`
           );
         } else {
           recordsRestored[table] = 0;
@@ -192,19 +192,19 @@ export const handler = async (
     }
 
     // Actual restore process
-    console.log("Starting actual restore process...");
+    console.log('Starting actual restore process...');
 
     // Connect to PostgreSQL for creating placeholder users
     await pgClient.connect();
-    console.log("Connected to PostgreSQL for restore operations");
+    console.log('Connected to PostgreSQL for restore operations');
 
     // Step 1: Create placeholder users for foreign key constraints
-    console.log("🔐 Creating placeholder users for foreign key constraints...");
+    console.log('🔐 Creating placeholder users for foreign key constraints...');
 
     const allUserIds = new Set<string>();
 
     // Collect all user IDs from tables that reference auth.users
-    const tablesWithUserRefs = ["playlists", "profiles", "user_playlists"];
+    const tablesWithUserRefs = ['playlists', 'profiles', 'user_playlists'];
 
     for (const table of tablesWithUserRefs) {
       const publicTableKey = `public.${table}`;
@@ -215,13 +215,13 @@ export const handler = async (
           // Different tables might have different column names for user references
           if (record.created_by) allUserIds.add(record.created_by);
           if (record.user_id) allUserIds.add(record.user_id);
-          if (record.id && table === "profiles") allUserIds.add(record.id); // profiles.id often matches auth.users.id
+          if (record.id && table === 'profiles') allUserIds.add(record.id); // profiles.id often matches auth.users.id
         });
       }
     }
 
     console.log(
-      `Found ${allUserIds.size} unique user IDs that need placeholder users`,
+      `Found ${allUserIds.size} unique user IDs that need placeholder users`
     );
 
     // Create minimal placeholder users
@@ -233,7 +233,7 @@ export const handler = async (
           VALUES ($1, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', $2, '', NOW(), NOW(), NOW(), '{"provider":"email","providers":["email"]}', '{}', false, '', '', '', '') 
           ON CONFLICT (id) DO NOTHING
         `,
-          [userId, `placeholder-${userId.substring(0, 8)}@restore.placeholder`],
+          [userId, `placeholder-${userId.substring(0, 8)}@restore.placeholder`]
         );
       } catch (error) {
         console.warn(`Could not create placeholder user ${userId}:`, error);
@@ -244,7 +244,7 @@ export const handler = async (
     console.log(`✅ Created placeholder users for ${allUserIds.size} user IDs`);
 
     // Step 2: Restore public schema tables
-    console.log("📊 Restoring public schema data...");
+    console.log('📊 Restoring public schema data...');
 
     for (const table of tablesToRestore) {
       const publicTableKey = `public.${table}`;
@@ -274,24 +274,24 @@ export const handler = async (
 
           const { error } = await supabase
             .from(table as any)
-            .upsert(batch, { onConflict: "id" }); // Use upsert to handle conflicts
+            .upsert(batch, { onConflict: 'id' }); // Use upsert to handle conflicts
 
           if (error) {
             console.error(`Error restoring batch for table ${table}:`, error);
             throw new Error(
-              `Failed to restore table ${table}: ${error.message}`,
+              `Failed to restore table ${table}: ${error.message}`
             );
           }
 
           insertedCount += batch.length;
           console.log(
-            `Restored ${insertedCount}/${tableData.length} records for ${table}`,
+            `Restored ${insertedCount}/${tableData.length} records for ${table}`
           );
         }
 
         recordsRestored[table] = insertedCount;
         console.log(
-          `✅ Successfully restored ${insertedCount} records to ${table}`,
+          `✅ Successfully restored ${insertedCount} records to ${table}`
         );
       } catch (error) {
         console.error(`Error restoring table ${table}:`, error);
@@ -300,7 +300,7 @@ export const handler = async (
     }
 
     await pgClient.end();
-    console.log("Disconnected from PostgreSQL");
+    console.log('Disconnected from PostgreSQL');
 
     console.log(`🎉 Successfully restored data from backup: ${backupKey}`);
     console.log(`Records restored:`, recordsRestored);
@@ -313,11 +313,11 @@ export const handler = async (
       recordsRestored,
     };
   } catch (error) {
-    console.error("Restore failed:", error);
+    console.error('Restore failed:', error);
 
     return {
       success: false,
-      backupKey: event.backupKey || "unknown",
+      backupKey: event.backupKey || 'unknown',
       timestamp: new Date().toISOString(),
       tables: event.tables || [],
       recordsRestored: {},
@@ -325,4 +325,3 @@ export const handler = async (
     };
   }
 };
-

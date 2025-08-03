@@ -3,8 +3,8 @@
 -->
 
 <script lang="ts">
-  import { cn } from "$lib/utils/utils";
-  import type { HTMLAttributes } from "svelte/elements";
+  import { cn } from '$lib/utils/utils';
+  import type { HTMLAttributes } from 'svelte/elements';
 
   let {
     class: className,
@@ -15,7 +15,7 @@
 
 <div
   {...rest}
-  class={cn("flex w-full place-items-center justify-center gap-2", className)}
+  class={cn('flex w-full place-items-center justify-center gap-2', className)}
 >
   {@render children?.()}
 </div>

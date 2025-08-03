@@ -1,24 +1,24 @@
 <script lang="ts">
-  import { Circle, ListVideo, Youtube } from "@lucide/svelte";
-  import type { SuperValidated } from "sveltekit-superforms";
-  import type { PlaylistSchema } from "../../../routes/playlist/[shortId]/schema";
-  import type { BreadcrumbItem } from "$lib/components/breadcrumb-layout.svelte";
-  import type { PlaylistVideosFilter } from "$lib/components/content/content-filter";
+  import { Circle, ListVideo, Youtube } from '@lucide/svelte';
+  import type { SuperValidated } from 'sveltekit-superforms';
+  import type { PlaylistSchema } from '../../../routes/playlist/[shortId]/schema';
+  import type { BreadcrumbItem } from '$lib/components/breadcrumb-layout.svelte';
+  import type { PlaylistVideosFilter } from '$lib/components/content/content-filter';
   import {
     type ProfilePlaylist,
     type UserPlaylist,
-  } from "$lib/supabase/playlists";
-  import type { Session, SupabaseClient } from "@supabase/supabase-js";
-  import type { Database } from "$lib/supabase/database.types";
-  import type { HTMLAttributes } from "svelte/elements";
-  import SharedContentHeader from "$lib/components/content/shared-content-header.svelte";
-  import PlaylistEditDialog from "$lib/components/playlist/playlist-edit-dialog.svelte";
-  import { isSource, SOURCE_INFO } from "$lib/constants/source";
-  import type { Video } from "$lib/supabase/videos";
-  import type { UserProfile } from "$lib/supabase/user-profiles";
-  import PlaylistEditDrawer from "$lib/components/playlist/playlist-edit-drawer.svelte";
-  import { getPlaylistState } from "$lib/state/playlist.svelte";
-  import { getMediaQueryState } from "$lib/state/media-query.svelte";
+  } from '$lib/supabase/playlists';
+  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { Database } from '$lib/supabase/database.types';
+  import type { HTMLAttributes } from 'svelte/elements';
+  import SharedContentHeader from '$lib/components/content/shared-content-header.svelte';
+  import PlaylistEditDialog from '$lib/components/playlist/playlist-edit-dialog.svelte';
+  import { isSource, SOURCE_INFO } from '$lib/constants/source';
+  import type { Video } from '$lib/supabase/videos';
+  import type { UserProfile } from '$lib/supabase/user-profiles';
+  import PlaylistEditDrawer from '$lib/components/playlist/playlist-edit-drawer.svelte';
+  import { getPlaylistState } from '$lib/state/playlist.svelte';
+  import { getMediaQueryState } from '$lib/state/media-query.svelte';
 
   interface PlaylistHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
@@ -76,11 +76,11 @@
     if (playlistDuration.hours > 0) parts.push(`${playlistDuration.hours} hr`);
     if (playlistDuration.minutes > 0)
       parts.push(`${playlistDuration.minutes} min`);
-    return parts.join(", ");
+    return parts.join(', ');
   });
 
   const videosLabel = $derived(
-    `${videosCount} ${videosCount === 1 ? "video" : "videos"}`,
+    `${videosCount} ${videosCount === 1 ? 'video' : 'videos'}`
   );
   const showComma = $derived(formattedDuration.length > 0);
 </script>
@@ -100,12 +100,12 @@
   {session}
   {...props}
 >
-  <div class="flex flex-col m-4 mb-8">
+  <div class="m-4 mb-8 flex flex-col">
     <div class="playlist-header-content">
       <!-- Desktop/Hover layout -->
       {#if mediaQueryState.canHover}
         <div class="hover-layout">
-          <div class="flex flex-col md:flex-row gap-4">
+          <div class="flex flex-col gap-4 md:flex-row">
             <div class="flex justify-center">
               <PlaylistEditDialog
                 {form}
@@ -117,7 +117,7 @@
                 {#snippet trigger()}
                   {#if playlist.processedImageUrl}
                     <div
-                      class="flex justify-center items-center h-56 w-56 {isPlaylistOwner &&
+                      class="flex h-56 w-56 items-center justify-center {isPlaylistOwner &&
                         'cursor-pointer'} border-none bg-transparent p-0"
                     >
                       <img
@@ -127,7 +127,7 @@
                     </div>
                   {:else}
                     <div
-                      class="flex justify-center items-center min-h-32 min-w-32 h-56 w-56 {isPlaylistOwner &&
+                      class="flex h-56 min-h-32 w-56 min-w-32 items-center justify-center {isPlaylistOwner &&
                         'cursor-pointer'}border-none bg-transparent p-0"
                     >
                       <ListVideo size={128} />
@@ -137,7 +137,7 @@
               </PlaylistEditDialog>
             </div>
 
-            <div class="flex flex-col relative flex-1 min-w-2xs mt-4">
+            <div class="relative mt-4 flex min-w-2xs flex-1 flex-col">
               <PlaylistEditDialog
                 {form}
                 {playlist}
@@ -148,22 +148,22 @@
                 {#snippet trigger()}
                   <div
                     class="flex flex-col {isPlaylistOwner && 'cursor-pointer'} 
-            items-start text-left border-none bg-transparent p-0"
+            items-start border-none bg-transparent p-0 text-left"
                   >
-                    <p class="text-sm text-muted-foreground tracking-tight">
-                      {playlist.type === "Public"
-                        ? "Public Playlist"
-                        : "Private Playlist"}
+                    <p class="text-muted-foreground text-sm tracking-tight">
+                      {playlist.type === 'Public'
+                        ? 'Public Playlist'
+                        : 'Private Playlist'}
                     </p>
                     <h2
-                      class="header-playlist text-wrap break-anywhere font-extrabold tracking-tight"
+                      class="header-playlist break-anywhere font-extrabold tracking-tight text-wrap"
                     >
                       {playlist.name}
                     </h2>
 
                     {#if playlist.description && playlist.description.length > 1}
                       <p
-                        class="text-sm text-muted-foreground text-left break-all mb-2"
+                        class="text-muted-foreground mb-2 text-left text-sm break-all"
                       >
                         {playlist.description}
                       </p>
@@ -173,7 +173,7 @@
               </PlaylistEditDialog>
 
               <!-- Username, video count and duration - kept in original position for hover -->
-              <div class="flex items-start flex-wrap mt-0 gap-2">
+              <div class="mt-0 flex flex-wrap items-start gap-2">
                 {#if playlist.profile_username}
                   {#if isSource(playlist.profile_username)}
                     {@const sourceInfo = SOURCE_INFO[playlist.profile_username]}
@@ -188,7 +188,7 @@
                       </p>
                       <Circle
                         size="5"
-                        class="shrink-0 stroke-muted-foreground fill-muted-foreground justify-center self-center"
+                        class="stroke-muted-foreground fill-muted-foreground shrink-0 justify-center self-center"
                       />
                       <a
                         href="https://www.youtube.com/playlist?list={playlist.youtube_id}"
@@ -196,7 +196,7 @@
                       >
                         <Youtube
                           size="20"
-                          class="shrink-0 stroke-muted-foreground justify-center"
+                          class="stroke-muted-foreground shrink-0 justify-center"
                         />
                         <p class="text-sm">YouTube</p>
                       </a>
@@ -206,11 +206,11 @@
                   {/if}
                   <Circle
                     size="5"
-                    class="shrink-0 stroke-muted-foreground fill-muted-foreground self-center"
+                    class="stroke-muted-foreground fill-muted-foreground shrink-0 self-center"
                   />
                 {/if}
-                <p class="text-sm text-muted-foreground">
-                  {videosLabel}{showComma ? ", " : ""}
+                <p class="text-muted-foreground text-sm">
+                  {videosLabel}{showComma ? ', ' : ''}
                   {formattedDuration}
                 </p>
               </div>
@@ -233,7 +233,7 @@
                 {#snippet trigger()}
                   {#if playlist.processedImageUrl}
                     <div
-                      class="flex justify-center items-center h-56 w-56 {isPlaylistOwner &&
+                      class="flex h-56 w-56 items-center justify-center {isPlaylistOwner &&
                         'cursor-pointer'} border-none bg-transparent p-0"
                     >
                       <img
@@ -243,7 +243,7 @@
                     </div>
                   {:else}
                     <div
-                      class="flex justify-center items-center min-h-32 min-w-32 h-56 w-56 {isPlaylistOwner &&
+                      class="flex h-56 min-h-32 w-56 min-w-32 items-center justify-center {isPlaylistOwner &&
                         'cursor-pointer'}border-none bg-transparent p-0"
                     >
                       <ListVideo size={128} />
@@ -253,7 +253,7 @@
               </PlaylistEditDrawer>
             </div>
 
-            <div class="flex flex-col relative flex-1 min-w-2xs">
+            <div class="relative flex min-w-2xs flex-1 flex-col">
               <PlaylistEditDrawer
                 {form}
                 {playlist}
@@ -264,21 +264,21 @@
                 {#snippet trigger()}
                   <div
                     class="flex flex-col {isPlaylistOwner && 'cursor-pointer'} 
-            items-start text-left border-none bg-transparent p-0"
+            items-start border-none bg-transparent p-0 text-left"
                   >
-                    <p class="text-sm text-muted-foreground tracking-tight">
-                      {playlist.type === "Public"
-                        ? "Public Playlist"
-                        : "Private Playlist"}
+                    <p class="text-muted-foreground text-sm tracking-tight">
+                      {playlist.type === 'Public'
+                        ? 'Public Playlist'
+                        : 'Private Playlist'}
                     </p>
                     <h2
-                      class="header-playlist text-wrap break-anywhere font-extrabold"
+                      class="header-playlist break-anywhere font-extrabold text-wrap"
                     >
                       {playlist.name}
                     </h2>
                     {#if playlist.description && playlist.description.length > 1}
                       <p
-                        class="text-sm text-muted-foreground text-left break-all"
+                        class="text-muted-foreground text-left text-sm break-all"
                       >
                         {playlist.description}
                       </p>
@@ -288,7 +288,7 @@
               </PlaylistEditDrawer>
 
               <!-- Username, video count and duration for mobile -->
-              <div class="flex items-start flex-wrap mt-2 gap-2">
+              <div class="mt-2 flex flex-wrap items-start gap-2">
                 {#if playlist.profile_username}
                   {#if isSource(playlist.profile_username)}
                     {@const sourceInfo = SOURCE_INFO[playlist.profile_username]}
@@ -303,7 +303,7 @@
                       </p>
                       <Circle
                         size="5"
-                        class="shrink-0 stroke-muted-foreground fill-muted-foreground justify-center self-center"
+                        class="stroke-muted-foreground fill-muted-foreground shrink-0 justify-center self-center"
                       />
                       <a
                         href="https://www.youtube.com/playlist?list={playlist.youtube_id}"
@@ -311,7 +311,7 @@
                       >
                         <Youtube
                           size="20"
-                          class="shrink-0 stroke-muted-foreground justify-center"
+                          class="stroke-muted-foreground shrink-0 justify-center"
                         />
                         <p class="text-sm">YouTube</p>
                       </a>
@@ -321,11 +321,11 @@
                   {/if}
                   <Circle
                     size="5"
-                    class="shrink-0 stroke-muted-foreground fill-muted-foreground self-center"
+                    class="stroke-muted-foreground fill-muted-foreground shrink-0 self-center"
                   />
                 {/if}
-                <p class="text-sm text-muted-foreground">
-                  {videosLabel}{showComma ? ", " : ""}
+                <p class="text-muted-foreground text-sm">
+                  {videosLabel}{showComma ? ', ' : ''}
                   {formattedDuration}
                 </p>
               </div>

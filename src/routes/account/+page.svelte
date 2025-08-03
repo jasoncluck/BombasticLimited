@@ -1,32 +1,32 @@
 <script lang="ts">
-  import * as Form from "$lib/components/ui/form";
-  import Input from "$lib/components/ui/input/input.svelte";
-  import { superForm, type SuperValidated } from "sveltekit-superforms";
-  import { zodClient, type Infer } from "sveltekit-superforms/adapters";
-  import * as Alert from "$lib/components/ui/alert/index.js";
+  import * as Form from '$lib/components/ui/form';
+  import Input from '$lib/components/ui/input/input.svelte';
+  import { superForm, type SuperValidated } from 'sveltekit-superforms';
+  import { zodClient, type Infer } from 'sveltekit-superforms/adapters';
+  import * as Alert from '$lib/components/ui/alert/index.js';
   import {
     emailSchema,
     usernameSchema,
     type EmailSchema,
     type UsernameSchema,
-  } from "../auth/schema";
-  import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
+  } from '../auth/schema';
+  import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
   import Button, {
     buttonVariants,
-  } from "$lib/components/ui/button/button.svelte";
-  import { getFlash, updateFlash } from "sveltekit-flash-message";
-  import { page } from "$app/state";
-  import type { Session, SupabaseClient } from "@supabase/supabase-js";
+  } from '$lib/components/ui/button/button.svelte';
+  import { getFlash, updateFlash } from 'sveltekit-flash-message';
+  import { page } from '$app/state';
+  import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import {
     checkIfUsernameIsUnique,
     type UserProfile,
-  } from "$lib/supabase/user-profiles";
-  import type { Database } from "$lib/supabase/database.types";
-  import { onMount } from "svelte";
-  import { enhance } from "$app/forms";
-  import * as Dialog from "$lib/components/ui/dialog/index.js";
+  } from '$lib/supabase/user-profiles';
+  import type { Database } from '$lib/supabase/database.types';
+  import { onMount } from 'svelte';
+  import { enhance } from '$app/forms';
+  import * as Dialog from '$lib/components/ui/dialog/index.js';
 
-  import Label from "$lib/components/ui/label/label.svelte";
+  import Label from '$lib/components/ui/label/label.svelte';
 
   let {
     data,
@@ -93,7 +93,7 @@
           });
 
           if (currentUsername === $usernameFormData.username) {
-            if (typeof result === "boolean") {
+            if (typeof result === 'boolean') {
               isUsernameUnique = result;
             } else {
               isUsernameUnique = false;
@@ -122,24 +122,24 @@
   });
 </script>
 
-<div class="flex flex-row justify-center m-4">
-  <div class="flex flex-col gap-4 max-w-[500px]">
+<div class="m-4 flex flex-row justify-center">
+  <div class="flex max-w-[500px] flex-col gap-4">
     <h1 class="header-primary">Account Settings</h1>
     <form use:emailEnhance method="POST" action="?/updateEmail">
       <Form.Field form={emailForm} name="email">
-        <div class="flex flex-wrap @lg:flex-nowrap items-center gap-4 w-full">
+        <div class="flex w-full flex-wrap items-center gap-4 @lg:flex-nowrap">
           <Form.Control>
             {#snippet children({ props })}
               <Form.Label class="min-w-20">Email</Form.Label>
               <Input
                 {...props}
-                class="flex-1 min-w-[300px]"
+                class="min-w-[300px] flex-1"
                 bind:value={$emailFormData.email}
               />
               <Button
                 type="submit"
                 variant="secondary"
-                class="cursor-pointer @lg:max-w-24 w-full"
+                class="w-full cursor-pointer @lg:max-w-24"
                 disabled={$emailFormData.email === session.user.email}
               >
                 Update
@@ -150,33 +150,33 @@
         <Form.FieldErrors class="mb-2" />
       </Form.Field>
     </form>
-    {#if $flash?.field === "email" && $flash?.message && $flash?.type}
+    {#if $flash?.field === 'email' && $flash?.message && $flash?.type}
       <Alert.Root>
         <Alert.Title
-          >{$flash.type === "error"
-            ? "Error"
-            : "Email verification required"}</Alert.Title
+          >{$flash.type === 'error'
+            ? 'Error'
+            : 'Email verification required'}</Alert.Title
         >
         <Alert.Description>{$flash.message}</Alert.Description>
       </Alert.Root>
     {/if}
     <form use:usernameEnhance method="POST" action="?/updateUsername">
       <Form.Field form={usernameForm} name="username">
-        <div class="flex flex-wrap @lg:flex-nowrap items-center gap-4 w-full">
+        <div class="flex w-full flex-wrap items-center gap-4 @lg:flex-nowrap">
           <Form.Control>
             {#snippet children({ props })}
               <Form.Label class="min-w-20">Username</Form.Label>
               <Input
                 {...props}
-                class="flex-1 min-w-[300px] lowercase"
+                class="min-w-[300px] flex-1 lowercase"
                 bind:value={$usernameFormData.username}
               />
               <!-- Button and status messages for smaller viewports -->
-              <div class="flex flex-col-reverse w-full @lg:hidden">
+              <div class="flex w-full flex-col-reverse @lg:hidden">
                 <Button
                   type="submit"
                   variant="secondary"
-                  class="cursor-pointer mt-3 w-full"
+                  class="mt-3 w-full cursor-pointer"
                   disabled={$usernameFormData.username === profile.username ||
                     isCheckingUsername ||
                     isUsernameUnique === false}
@@ -200,7 +200,7 @@
               <Button
                 type="submit"
                 variant="secondary"
-                class="cursor-pointer max-w-24 w-full hidden @lg:block"
+                class="hidden w-full max-w-24 cursor-pointer @lg:block"
                 disabled={$usernameFormData.username === profile.username ||
                   isCheckingUsername ||
                   isUsernameUnique === false}
@@ -212,7 +212,7 @@
           <Form.FieldErrors />
         </div>
         <!-- Status messages below the main row for larger viewports -->
-        <div class="hidden @lg:block mt-2">
+        <div class="mt-2 hidden @lg:block">
           {#if currentUsername && currentUsername.length >= 2}
             {#if isCheckingUsername}
               <p class="text-xs text-gray-400">Checking availability...</p>
@@ -223,12 +223,12 @@
             {/if}
           {/if}
         </div>
-        {#if $flash?.field === "username" && $flash?.message && $flash?.type}
+        {#if $flash?.field === 'username' && $flash?.message && $flash?.type}
           <Alert.Root>
             <Alert.Title
-              >{$flash.type === "error"
-                ? "Error"
-                : "Updated username"}</Alert.Title
+              >{$flash.type === 'error'
+                ? 'Error'
+                : 'Updated username'}</Alert.Title
             >
             <Alert.Description>{$flash.message}</Alert.Description>
           </Alert.Root>
@@ -244,20 +244,20 @@
       method="POST"
       action="?/resetPassword"
     >
-      <div class="flex flex-wrap @lg:flex-nowrap items-center gap-4 w-full">
+      <div class="flex w-full flex-wrap items-center gap-4 @lg:flex-nowrap">
         <Label for="password" class="min-w-20">Password</Label>
         <Button
           id="password"
           variant="secondary"
-          class="cursor-pointer @lg:w-auto w-full"
+          class="w-full cursor-pointer @lg:w-auto"
           type="submit">Reset Password</Button
         >
       </div>
     </form>
-    {#if $flash?.field === "password" && $flash?.message && $flash?.type}
+    {#if $flash?.field === 'password' && $flash?.message && $flash?.type}
       <Alert.Root>
         <Alert.Title
-          >{$flash.type === "error" ? "Error" : "Reset password"}</Alert.Title
+          >{$flash.type === 'error' ? 'Error' : 'Reset password'}</Alert.Title
         >
         <Alert.Description>{$flash.message}</Alert.Description>
       </Alert.Root>
@@ -265,7 +265,7 @@
 
     <Dialog.Root>
       <Dialog.Trigger
-        class="@lg:w-[200px] w-full mt-20 {buttonVariants({
+        class="mt-20 w-full @lg:w-[200px] {buttonVariants({
           variant: 'destructive',
         })}">Delete Account</Dialog.Trigger
       >
@@ -295,7 +295,7 @@
             ></Dialog.Footer
           >
         </form>
-        {#if $flash?.field === "delete" && $flash?.message && $flash?.type}
+        {#if $flash?.field === 'delete' && $flash?.message && $flash?.type}
           <Alert.Root>
             <Alert.Title>Unable to delete account</Alert.Title>
             <Alert.Description>{$flash.message}</Alert.Description>

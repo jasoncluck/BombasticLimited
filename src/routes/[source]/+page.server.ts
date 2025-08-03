@@ -1,16 +1,16 @@
-import { isSource, SOURCE_INFO } from "$lib/constants/source";
-import { DEFAULT_NUM_VIDEOS_OVERVIEW, getVideos } from "$lib/supabase/videos";
-import { redirect } from "@sveltejs/kit";
+import { isSource, SOURCE_INFO } from '$lib/constants/source';
+import { DEFAULT_NUM_VIDEOS_OVERVIEW, getVideos } from '$lib/supabase/videos';
+import { redirect } from '@sveltejs/kit';
 import {
   isVideoFilter,
   type PlaylistVideosFilter,
-} from "$lib/components/content/content-filter";
+} from '$lib/components/content/content-filter';
 import {
   DEFAULT_NUM_PLAYLISTS_OVERVIEW,
   getPlaylistDataByYoutubeId,
   getPlaylistsForUsername,
-} from "$lib/supabase/playlists";
-import type { PageServerLoad } from "./$types";
+} from '$lib/supabase/playlists';
+import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
   params,
@@ -18,23 +18,23 @@ export const load: PageServerLoad = async ({
   depends,
   locals: { supabase, session },
 }) => {
-  depends("supabase:db:videos");
+  depends('supabase:db:videos');
 
   const source = params.source;
 
   if (!isSource(source)) {
-    redirect(303, "/");
+    redirect(303, '/');
   }
 
   const { contentFilter } = await parent();
 
   if (!isVideoFilter(contentFilter)) {
-    throw new Error("Invalid content filter");
+    throw new Error('Invalid content filter');
   }
 
   const playlistContentFilter: PlaylistVideosFilter = {
-    sort: { key: "datePublished", order: "descending" },
-    type: "playlist",
+    sort: { key: 'datePublished', order: 'descending' },
+    type: 'playlist',
   };
 
   // Run all major operations in parallel
@@ -68,8 +68,8 @@ export const load: PageServerLoad = async ({
             playlist.name = highlightPlaylist.name;
 
             return { playlist, videos };
-          },
-        ),
+          }
+        )
       ),
 
       // Get source playlists data (keep existing function or enhance as needed)
@@ -82,7 +82,7 @@ export const load: PageServerLoad = async ({
 
   // Filter out null results from highlight playlists
   const highlightPlaylists = highlightPlaylistsResults.filter(
-    (result) => result !== null,
+    (result) => result !== null
   );
 
   return {

@@ -1,8 +1,8 @@
-import type { Session, SupabaseClient } from "@supabase/supabase-js";
-import type { Database, Tables } from "./database.types";
-import type { ContentDisplay } from "$lib/components/content/content";
+import type { Session, SupabaseClient } from '@supabase/supabase-js';
+import type { Database, Tables } from './database.types';
+import type { ContentDisplay } from '$lib/components/content/content';
 
-export type UserProfile = Tables<"profiles">;
+export type UserProfile = Tables<'profiles'>;
 
 export async function checkIfUsernameIsUnique({
   username,
@@ -11,7 +11,7 @@ export async function checkIfUsernameIsUnique({
   username: string;
   supabase: SupabaseClient<Database>;
 }) {
-  const { data: isUnique } = await supabase.rpc("is_unique_username", {
+  const { data: isUnique } = await supabase.rpc('is_unique_username', {
     p_username: username,
   });
 
@@ -26,9 +26,9 @@ export async function getUserProfile({
   supabase: SupabaseClient<Database>;
 }) {
   const { data: profile, error } = await supabase
-    .from("profiles")
+    .from('profiles')
     .select()
-    .eq("id", userId)
+    .eq('id', userId)
     .single();
 
   if (error) {
@@ -49,9 +49,9 @@ export async function getProfile({
   }
 
   const { data: profile, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", session.user.id)
+    .from('profiles')
+    .select('*')
+    .eq('id', session.user.id)
     .single();
 
   if (error) {
@@ -74,9 +74,9 @@ export async function updateProfileContentDisplay({
   }
 
   const { data: profile, error } = await supabase
-    .from("profiles")
+    .from('profiles')
     .update({ content_display: contentDisplay })
-    .eq("id", session.user.id)
+    .eq('id', session.user.id)
     .single();
 
   if (error) {
@@ -90,7 +90,7 @@ export async function updateProfileSources({
   supabase,
   session,
 }: {
-  sources: Database["public"]["Enums"]["source"][];
+  sources: Database['public']['Enums']['source'][];
   supabase: SupabaseClient<Database>;
   session: Session | null;
 }) {
@@ -99,9 +99,9 @@ export async function updateProfileSources({
   }
 
   const { data: profile, error } = await supabase
-    .from("profiles")
+    .from('profiles')
     .update({ sources })
-    .eq("id", session.user.id)
+    .eq('id', session.user.id)
     .single();
 
   if (error) {

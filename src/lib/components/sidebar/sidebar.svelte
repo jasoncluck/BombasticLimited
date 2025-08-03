@@ -1,21 +1,21 @@
 <script lang="ts">
-  import { Circle, ListVideo, Loader, Plus } from "@lucide/svelte";
-  import { type SupabaseClient, type Session } from "@supabase/supabase-js";
-  import { SOURCE_INFO, SOURCES } from "$lib/constants/source";
-  import * as Popover from "$lib/components/ui/popover";
-  import { activeStreams } from "$lib/state/streaming.svelte";
-  import { goto, invalidate } from "$app/navigation";
-  import { getContentState } from "$lib/state/content.svelte";
-  import { getPlaylistState } from "$lib/state/playlist.svelte";
-  import { page } from "$app/state";
-  import { updateProfileSources } from "$lib/supabase/user-profiles";
-  import { showNotification } from "$lib/stores/notification";
-  import { getSourceState } from "$lib/state/source.svelte";
-  import { getSidebarState } from "$lib/state/sidebar.svelte";
-  import { handleCreatePlaylist } from "../playlist/playlist-service";
-  import Button, { buttonVariants } from "../ui/button/button.svelte";
-  import PlaylistContextMenu from "../playlist/playlist-context-menu.svelte";
-  import type { Playlist } from "$lib/supabase/playlists";
+  import { Circle, ListVideo, Loader, Plus } from '@lucide/svelte';
+  import { type SupabaseClient, type Session } from '@supabase/supabase-js';
+  import { SOURCE_INFO, SOURCES } from '$lib/constants/source';
+  import * as Popover from '$lib/components/ui/popover';
+  import { activeStreams } from '$lib/state/streaming.svelte';
+  import { goto, invalidate } from '$app/navigation';
+  import { getContentState } from '$lib/state/content.svelte';
+  import { getPlaylistState } from '$lib/state/playlist.svelte';
+  import { page } from '$app/state';
+  import { updateProfileSources } from '$lib/supabase/user-profiles';
+  import { showNotification } from '$lib/stores/notification';
+  import { getSourceState } from '$lib/state/source.svelte';
+  import { getSidebarState } from '$lib/state/sidebar.svelte';
+  import { handleCreatePlaylist } from '../playlist/playlist-service';
+  import Button, { buttonVariants } from '../ui/button/button.svelte';
+  import PlaylistContextMenu from '../playlist/playlist-context-menu.svelte';
+  import type { Playlist } from '$lib/supabase/playlists';
 
   let {
     supabase,
@@ -40,15 +40,15 @@
 
   // Single selection state - can be either a source or playlist
   type Selection =
-    | { type: "source"; value: string }
-    | { type: "playlist"; value: string }
+    | { type: 'source'; value: string }
+    | { type: 'playlist'; value: string }
     | null;
 
   let currentSelection = $derived.by<Selection>(() => {
     if (selectedPlaylistIdParam) {
-      return { type: "playlist", value: selectedPlaylistIdParam };
+      return { type: 'playlist', value: selectedPlaylistIdParam };
     } else if (selectedSource) {
-      return { type: "source", value: selectedSource };
+      return { type: 'source', value: selectedSource };
     }
     return null;
   });
@@ -76,13 +76,13 @@
       onPlaylistsUpdate: (updatedPlaylists) => {
         sidebarState.playlists = updatedPlaylists;
       },
-    }),
+    })
   );
 
   // Enhanced source selection with immediate feedback
   function handleSourceClick(source: string) {
     // Update selection immediately - this deselects any playlist
-    currentSelection = { type: "source", value: source };
+    currentSelection = { type: 'source', value: source };
 
     goto(`/${source}`);
   }
@@ -90,7 +90,7 @@
   // Enhanced playlist selection with immediate feedback
   function handlePlaylistClick(playlist: Playlist) {
     // Update selection immediately - this deselects any source
-    currentSelection = { type: "playlist", value: playlist.short_id };
+    currentSelection = { type: 'playlist', value: playlist.short_id };
     goto(`/playlist/${encodeURI(playlist.short_id)}`);
   }
 
@@ -104,7 +104,7 @@
 
     draggedSourceIndex = index;
     if (event.dataTransfer) {
-      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.effectAllowed = 'move';
     }
   }
 
@@ -175,10 +175,10 @@
 
           // Refresh sidebar to get updated profile
           await refreshSidebar?.();
-          invalidate("supabase:db:profiles");
+          invalidate('supabase:db:profiles');
         } catch (error) {
-          console.error("Failed to update source ordering:", error);
-          showNotification("An error occurred, unable to reorder.");
+          console.error('Failed to update source ordering:', error);
+          showNotification('An error occurred, unable to reorder.');
 
           // Rollback on error
           orderedSources = originalOrder;
@@ -198,13 +198,13 @@
 
   // Helper function to get source drag classes
   function getSourceDragClasses(index: number): string {
-    let classes = "relative";
+    let classes = 'relative';
     if (!session) {
       return classes;
     }
 
     if (draggedSourceIndex === index) {
-      classes += " opacity-60";
+      classes += ' opacity-60';
     }
 
     if (targetSourceIndex === index) {
@@ -213,10 +213,10 @@
         draggedSourceIndex < targetSourceIndex
       ) {
         classes +=
-          " after:absolute after:left-0 after:bottom-0 after:w-full after:h-[2px] after:bg-primary after:z-10";
+          ' after:absolute after:left-0 after:bottom-0 after:w-full after:h-[2px] after:bg-primary after:z-10';
       } else {
         classes +=
-          " before:absolute before:left-0 before:-top-0 before:w-full before:h-[2px] before:bg-primary before:z-10";
+          ' before:absolute before:left-0 before:-top-0 before:w-full before:h-[2px] before:bg-primary before:z-10';
       }
     }
     return classes;
@@ -225,14 +225,14 @@
   // Helper function to check if source is selected
   function isSourceSelected(source: string): boolean {
     return (
-      currentSelection?.type === "source" && currentSelection.value === source
+      currentSelection?.type === 'source' && currentSelection.value === source
     );
   }
 
   // Helper function to check if playlist is selected
   function isPlaylistSelected(playlist: Playlist): boolean {
     return (
-      currentSelection?.type === "playlist" &&
+      currentSelection?.type === 'playlist' &&
       currentSelection.value === playlist.short_id
     );
   }
@@ -249,7 +249,7 @@
           isSelected: isSourceSelected(source),
           isSidebarCollapsed,
         })} {getSourceDragClasses(i)}"
-        size={!isSidebarCollapsed ? "default" : "icon"}
+        size={!isSidebarCollapsed ? 'default' : 'icon'}
         onclick={() => handleSourceClick(source)}
         title={SOURCE_INFO[source].displayName}
         onmouseenter={() => sourceState.handleMouseEnter(i)}
@@ -261,12 +261,12 @@
         ondragend={handleSourceDragEnd}
       >
         <div
-          class="flex items-center grow absolute
-                    {!isSidebarCollapsed ? 'grow w-full' : 'item-center'}"
+          class="absolute flex grow items-center
+                    {!isSidebarCollapsed ? 'w-full grow' : 'item-center'}"
         >
           {#if activeStreams.sources.includes(source)}
             <Circle
-              class="absolute left-0 bottom-0"
+              class="absolute bottom-0 left-0"
               fill="#eb0400"
               strokeWidth={0}
             />
@@ -277,12 +277,12 @@
             <img
               src={SOURCE_INFO[source].image}
               alt={SOURCE_INFO[source].displayName}
-              class="h-full w-full object-cover cursor-pointer"
+              class="h-full w-full cursor-pointer object-cover"
             />
           </div>
           {#if !isSidebarCollapsed}
             <span
-              class="text-sm mr-6 px-3 text-wrap text-left justify-start max-h-10 overflow-hidden"
+              class="mr-6 max-h-10 justify-start overflow-hidden px-3 text-left text-sm text-wrap"
             >
               {SOURCE_INFO[source].displayName}
             </span>
@@ -293,18 +293,18 @@
   </div>
   <hr class="m-2" />
   <div
-    class="flex flex-col m-3 {!isSidebarCollapsed
-      ? 'items-start mx-6'
+    class="m-3 flex flex-col {!isSidebarCollapsed
+      ? 'mx-6 items-start'
       : 'items-center'}"
   >
-    <div class="flex items-center h-[44px]">
+    <div class="flex h-[44px] items-center">
       {#if !session?.user.id}
         <Popover.Root>
           <Popover.Trigger
             class={buttonVariants({
-              variant: "secondary",
-              size: "icon",
-              class: "my-1 rounded-full cursor-pointer",
+              variant: 'secondary',
+              size: 'icon',
+              class: 'my-1 cursor-pointer rounded-full',
             })}
           >
             <Plus />
@@ -317,7 +317,7 @@
         <Button
           variant="secondary"
           title="Create Playlist"
-          class="my-1 rounded-full cursor-pointer"
+          class="my-1 cursor-pointer rounded-full"
           size="icon"
           onclick={() =>
             handleCreatePlaylist({ sidebarState, supabase, session })}
@@ -332,7 +332,7 @@
   </div>
 
   <div
-    class="border-2 rounded-md transition-colors duration-150 {!isSidebarCollapsed
+    class="rounded-md border-2 transition-colors duration-150 {!isSidebarCollapsed
       ? 'mx-2'
       : 'mx-1'}
     {sidebarState.playlists.length > 0 &&
@@ -342,7 +342,7 @@
   >
     <div class="flex flex-col">
       {#if sidebarState.playlists === null}
-        <Loader class="animate-spin w-full" />
+        <Loader class="w-full animate-spin" />
       {:else if session && sidebarState.playlists.length > 0}
         <div class="flex flex-col">
           {#each sidebarState.playlists as playlist, i (playlist.id)}
@@ -359,16 +359,16 @@
                 class={playlistState.getButtonClasses({
                   index: i,
                   isSelected: isPlaylistSelected(playlist),
-                  itemType: "playlist",
+                  itemType: 'playlist',
                   isSidebarCollapsed,
                   playlists: sidebarState.playlists,
                   selectedPlaylistIdParam:
-                    currentSelection?.type === "playlist"
+                    currentSelection?.type === 'playlist'
                       ? currentSelection.value
                       : undefined,
                   session,
                 })}
-                size={!isSidebarCollapsed ? "default" : "icon"}
+                size={!isSidebarCollapsed ? 'default' : 'icon'}
                 onclick={() => {
                   handlePlaylistClick(playlist);
                 }}
@@ -383,27 +383,27 @@
                 ondragend={dragDropHandlers.handleDragEnd}
               >
                 <div
-                  class="flex items-center grow absolute
-                    {!isSidebarCollapsed ? 'grow w-full' : 'item-center'}"
+                  class="absolute flex grow items-center
+                    {!isSidebarCollapsed ? 'w-full grow' : 'item-center'}"
                 >
                   {#if playlist.processedImageUrl}
                     <div class="h-12 w-12 shrink-0">
                       <img
                         src={playlist.processedImageUrl}
-                        class="h-full w-full object-cover cursor-pointer"
+                        class="h-full w-full cursor-pointer object-cover"
                         alt={`Image for playlist: ${playlist.name}`}
                       />
                     </div>
                   {:else}
                     <div
-                      class="h-12 w-12 flex-shrink-0 flex items-center justify-center"
+                      class="flex h-12 w-12 flex-shrink-0 items-center justify-center"
                     >
                       <ListVideo class="!h-8 !w-8" />
                     </div>
                   {/if}
                   {#if !isSidebarCollapsed}
                     <span
-                      class="text-sm mr-6 px-3 text-wrap text-left justify-start max-h-10 overflow-hidden"
+                      class="mr-6 max-h-10 justify-start overflow-hidden px-3 text-left text-sm text-wrap"
                     >
                       {playlist.name}
                     </span>

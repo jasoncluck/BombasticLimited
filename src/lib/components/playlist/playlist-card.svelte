@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { Playlist } from "$lib/supabase/playlists";
-  import { Check, ListVideo } from "@lucide/svelte";
+  import type { Playlist } from '$lib/supabase/playlists';
+  import { Check, ListVideo } from '@lucide/svelte';
 
   const {
     playlist,
@@ -9,34 +9,34 @@
 </script>
 
 <a
-  class="grid grid-cols-[4rem_1fr] p-3 gap-2 items-center hover:bg-secondary
-      transform cursor-pointer rounded"
+  class="hover:bg-secondary grid transform cursor-pointer grid-cols-[4rem_1fr] items-center
+      gap-2 rounded p-3"
   href={`/playlist/${playlist.short_id}`}
 >
   {#if playlist.processedImageUrl}
     <img
       src={playlist.processedImageUrl}
       alt={playlist.name}
-      class="w-full h-full max-w-16 max-h-16 object-cover rounded justify-self-center"
+      class="h-full max-h-16 w-full max-w-16 justify-self-center rounded object-cover"
     />
   {:else}
-    <div class="h-12 w-12 flex items-center justify-center justify-self-center">
+    <div class="flex h-12 w-12 items-center justify-center justify-self-center">
       <ListVideo class="!h-12 !w-12" />
     </div>
   {/if}
 
   <div class="min-w-0">
-    <p class="text-sm font-medium mb-1">
+    <p class="mb-1 text-sm font-medium">
       {playlist.name}
     </p>
-    <p class="text-xs text-muted-foreground line-clamp-3">
+    <p class="text-muted-foreground line-clamp-3 text-xs">
       {playlist.description}
     </p>
-    <p class="text-xs text-muted-foreground line-clamp-3">
+    <p class="text-muted-foreground line-clamp-3 text-xs">
       {playlist.description}
     </p>
     {#if isFollowedPlaylist}
-      <p class="flex items-center gap-1 text-xs text-muted-foreground">
+      <p class="text-muted-foreground flex items-center gap-1 text-xs">
         <Check size="14" /> Following
       </p>
     {/if}

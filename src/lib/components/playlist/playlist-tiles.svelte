@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { getSidebarState } from "$lib/state/sidebar.svelte";
-  import type { Playlist } from "$lib/supabase/playlists";
-  import type { Session } from "@supabase/supabase-js";
-  import PlaylistCard from "./playlist-card.svelte";
+  import { getSidebarState } from '$lib/state/sidebar.svelte';
+  import type { Playlist } from '$lib/supabase/playlists';
+  import type { Session } from '@supabase/supabase-js';
+  import PlaylistCard from './playlist-card.svelte';
 
   const {
     playlists,
@@ -13,8 +13,8 @@
 </script>
 
 <div
-  class="grid gap-2 my-2
-  grid-cols-1
+  class="my-2 grid grid-cols-1
+  gap-2
   @lg:grid-cols-2
   @xl:grid-cols-2 @xl:gap-3
   @2xl:grid-cols-3 @2xl:gap-3"

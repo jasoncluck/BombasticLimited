@@ -1,30 +1,30 @@
 <script lang="ts">
-  import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
-  import { ArrowDown, ArrowUp, Circle, ListVideo } from "@lucide/svelte";
-  import { goto } from "$app/navigation";
-  import { getSortDisplayName } from "../content-filter";
+  import { isVideoWithTimestamp, type Video } from '$lib/supabase/videos';
+  import { ArrowDown, ArrowUp, Circle, ListVideo } from '@lucide/svelte';
+  import { goto } from '$app/navigation';
+  import { getSortDisplayName } from '../content-filter';
 
   let { video }: { video: Video } = $props();
 </script>
 
 <div
-  class="flex flex-col w-[170px] sm:w-auto sm:min-w-[170px] sm:max-w-sm gap-1 content-table-row justify-center overflow-hidden"
+  class="content-table-row flex w-[170px] flex-col justify-center gap-1 overflow-hidden sm:w-auto sm:max-w-sm sm:min-w-[170px]"
 >
   <p
-    class="text-xs text-muted-foreground transform pointer-events-none line-clamp-1"
+    class="text-muted-foreground pointer-events-none line-clamp-1 transform text-xs"
   >
-    {new Date(video?.published_at).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+    {new Date(video?.published_at).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     })}
   </p>
-  <p class="text-sm break-words whitespace-normal line-clamp-3 leading-5">
+  <p class="line-clamp-3 text-sm leading-5 break-words whitespace-normal">
     {video.title}
   </p>
   {#if isVideoWithTimestamp(video) && video.playlist_name && video.playlist_short_id}
     <div
-      class="flex items-center gap-2 mt-1 text-xs text-secondary-foreground hover:text-primary"
+      class="text-secondary-foreground hover:text-primary mt-1 flex items-center gap-2 text-xs"
     >
       <ListVideo size="16" class="shrink-0" />
       <a
@@ -34,29 +34,29 @@
           goto(`playlist/${video.playlist_short_id}`);
         }}
         href={`playlist/${video.playlist_short_id}`}
-        class="whitespace-normal flex gap-2 items-center truncate"
+        class="flex items-center gap-2 truncate whitespace-normal"
       >
         <span class="truncate">{video.playlist_name}</span>
       </a>
-      <div class="flex items-center text-muted-foreground shrink-0">
+      <div class="text-muted-foreground flex shrink-0 items-center">
         {#if video.playlist_sorted_by}
           <Circle
             size="5"
-            class="shrink-0 mr-2 stroke-muted-foreground fill-muted-foreground justify-center"
+            class="stroke-muted-foreground fill-muted-foreground mr-2 shrink-0 justify-center"
           />
-          <div class="flex items-center shrink-0">
-            <span class="text-xs truncate">
+          <div class="flex shrink-0 items-center">
+            <span class="truncate text-xs">
               {getSortDisplayName({
                 key: video.playlist_sorted_by,
-                view: "playlist",
+                view: 'playlist',
               })}
             </span>
             {#if video.playlist_sort_order}
-              {#if video.playlist_sort_order === "ascending"}
-                <ArrowUp size="14" class="shrink-0 ml-1" />
+              {#if video.playlist_sort_order === 'ascending'}
+                <ArrowUp size="14" class="ml-1 shrink-0" />
                 <span class="sr-only">Sorted Ascending</span>
               {:else}
-                <ArrowDown size="14" class="shrink-0 ml-1" />
+                <ArrowDown size="14" class="ml-1 shrink-0" />
                 <span class="sr-only">Sorted Descending</span>
               {/if}
             {/if}

@@ -1,6 +1,7 @@
 # Database Backup Infrastructure
 
-This directory contains AWS CDK infrastructure for automated database backups to S3.
+This directory contains AWS CDK infrastructure for automated database backups to
+S3.
 
 ## Overview
 
@@ -8,7 +9,7 @@ The backup infrastructure includes:
 
 - **S3 Bucket**: Secure storage for database backups with lifecycle policies
 - **IAM Role**: Least-privilege permissions for backup operations
-- **Lambda Function**: Automated backup execution 
+- **Lambda Function**: Automated backup execution
 - **CloudWatch Monitoring**: Alarms, logs, and dashboards for backup monitoring
 - **Scheduled Backups**: Daily automated backups via EventBridge
 
@@ -42,7 +43,7 @@ Backups are automatically transitioned through storage classes:
 
 - **0-30 days**: Standard storage
 - **30-90 days**: Infrequent Access
-- **90-365 days**: Glacier 
+- **90-365 days**: Glacier
 - **365+ days**: Deep Archive
 
 ### Retention Policies
@@ -72,7 +73,8 @@ The backup system also includes a complete backup of the auth schema:
 
 ### Tables Excluded from Backup
 
-- **`videos`** - Video metadata (excluded as it can be regenerated from external data sources)
+- **`videos`** - Video metadata (excluded as it can be regenerated from external
+  data sources)
 
 ### Custom Table Selection
 
@@ -168,6 +170,7 @@ BACKUP_LAMBDA_FUNCTION_NAME=...    # Override function name
 ### CloudWatch Dashboard
 
 View backup metrics at:
+
 ```
 https://console.aws.amazon.com/cloudwatch/home?region={region}#dashboards:name=BombifyBackups-{environment}
 ```
@@ -175,6 +178,7 @@ https://console.aws.amazon.com/cloudwatch/home?region={region}#dashboards:name=B
 ### Lambda Logs
 
 View backup logs at:
+
 ```
 https://console.aws.amazon.com/cloudwatch/home?region={region}#logsV2:log-groups/log-group/$252Faws$252Flambda$252FBombifyDatabaseBackup-{environment}
 ```
@@ -213,12 +217,13 @@ Backups are stored as JSON files with the following structure:
 
 ## Disaster Recovery
 
-The infrastructure supports comprehensive disaster recovery with automated tools:
+The infrastructure supports comprehensive disaster recovery with automated
+tools:
 
 ### Automated Recovery Scenarios
 
 1. **Latest Backup Recovery** - Restore from the most recent backup
-2. **Point-in-Time Recovery** - Restore from a specific timestamp  
+2. **Point-in-Time Recovery** - Restore from a specific timestamp
 3. **Validated Recovery** - Validate backup integrity before restoring
 4. **Full Recovery** - Complete DR process with pre-recovery backup
 
@@ -236,16 +241,19 @@ The infrastructure supports comprehensive disaster recovery with automated tools
 For manual recovery scenarios:
 
 1. **Identify Target Backup**
+
    ```bash
    aws s3 ls s3://your-backup-bucket/backups/prod/ --recursive
    ```
 
 2. **Validate Backup**
+
    ```bash
    npm run restore:validate -- --backup-key <backup-key>
    ```
 
 3. **Test Restore Process**
+
    ```bash
    npm run restore:dry-run -- --backup-key <backup-key>
    ```
@@ -257,7 +265,8 @@ For manual recovery scenarios:
 
 ### API Integration
 
-The disaster recovery system can be integrated into monitoring and alerting systems:
+The disaster recovery system can be integrated into monitoring and alerting
+systems:
 
 ```typescript
 import { DisasterRecoveryManager } from './scripts/disaster-recovery';
@@ -266,7 +275,7 @@ const manager = new DisasterRecoveryManager();
 const result = await manager.executeRecovery({
   scenario: 'latest',
   validateFirst: true,
-  dryRun: false
+  dryRun: false,
 });
 ```
 
@@ -276,14 +285,14 @@ For critical environments, consider enabling S3 cross-region replication:
 
 ```typescript
 // Add to BackupStack
-const replicationBucket = new s3.Bucket(this, "BackupReplicationBucket", {
+const replicationBucket = new s3.Bucket(this, 'BackupReplicationBucket', {
   bucketName: `${bucketName}-replica`,
-  region: "us-east-1", // Different region
+  region: 'us-east-1', // Different region
 });
 
 this.backupBucket.addCrossRegionReplication({
   destinationBucket: replicationBucket,
-  prefix: "backups/",
+  prefix: 'backups/',
 });
 ```
 
@@ -299,6 +308,7 @@ this.backupBucket.addCrossRegionReplication({
 ### Debug Mode
 
 Enable debug logging by setting environment variable:
+
 ```bash
 DEBUG=true npm run backup
 ```

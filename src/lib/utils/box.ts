@@ -2,7 +2,7 @@
 	Installed from @ieedan/shadcn-svelte-extras
 */
 
-import type { ReadableBox, WritableBox } from "svelte-toolbelt";
+import type { ReadableBox, WritableBox } from 'svelte-toolbelt';
 
 export type Box<T> = ReadableBox<T> | WritableBox<T>;
 

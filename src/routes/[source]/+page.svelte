@@ -1,27 +1,27 @@
 <script lang="ts">
-  import { activeStreams } from "$lib/state/streaming.svelte";
-  import { Radio } from "@lucide/svelte";
-  import TwitchEmbed from "$lib/components/video/twitch-embed.svelte";
-  import Content from "$lib/components/content/content.svelte";
-  import { SOURCE_INFO } from "$lib/constants/source";
-  import Button from "$lib/components/ui/button/button.svelte";
-  import { getContentState } from "$lib/state/content.svelte";
-  import type { Snapshot } from "./$types";
-  import { handlePlaylistNavigation } from "$lib/components/playlist/playlist";
-  import PlaylistTiles from "$lib/components/playlist/playlist-tiles.svelte";
+  import { activeStreams } from '$lib/state/streaming.svelte';
+  import { Radio } from '@lucide/svelte';
+  import TwitchEmbed from '$lib/components/video/twitch-embed.svelte';
+  import Content from '$lib/components/content/content.svelte';
+  import { SOURCE_INFO } from '$lib/constants/source';
+  import Button from '$lib/components/ui/button/button.svelte';
+  import { getContentState } from '$lib/state/content.svelte';
+  import type { Snapshot } from './$types';
+  import { handlePlaylistNavigation } from '$lib/components/playlist/playlist';
+  import PlaylistTiles from '$lib/components/playlist/playlist-tiles.svelte';
   import {
     DEFAULT_NUM_PLAYLISTS_OVERVIEW,
     getPlaylistsForUsername,
     type Playlist,
-  } from "$lib/supabase/playlists";
-  import { processPlaylists } from "$lib/components/playlist/playlist-service";
-  import type { Video } from "$lib/supabase/videos";
+  } from '$lib/supabase/playlists';
+  import { processPlaylists } from '$lib/components/playlist/playlist-service';
+  import type { Video } from '$lib/supabase/videos';
   import {
     getContentView,
     type SourceWithCarouselState,
     type SourceWithStateKeys,
-  } from "$lib/components/content/content";
-  import { getMediaQueryState } from "$lib/state/media-query.svelte";
+  } from '$lib/components/content/content';
+  import { getMediaQueryState } from '$lib/state/media-query.svelte';
 
   let { data } = $props();
   const {
@@ -38,7 +38,7 @@
   const mediaQueryState = getMediaQueryState();
 
   const highlightPlaylistShortIds = $derived(
-    highlightPlaylists.map((hp) => hp.playlist.short_id),
+    highlightPlaylists.map((hp) => hp.playlist.short_id)
   );
 
   // Initialize carousel state before the effect
@@ -55,7 +55,7 @@
         sectionIds.map((sid: SourceWithStateKeys) => [
           sid,
           contentState.selectedVideosBySection[sid],
-        ]),
+        ])
       ) as Record<SourceWithStateKeys, Video[]>,
     }),
     restore: async (restored) => {
@@ -65,7 +65,7 @@
   };
 
   let processedPlaylistsPromise = $state<Promise<Playlist[]>>(
-    Promise.resolve([]),
+    Promise.resolve([])
   );
 
   const sourcePlaylistsData = $derived.by(() => {
@@ -78,7 +78,7 @@
   });
 
   $effect(() => {
-    const newSectionIds = ["latestVideos", ...highlightPlaylistShortIds];
+    const newSectionIds = ['latestVideos', ...highlightPlaylistShortIds];
 
     // Only update if sectionIds actually changed to prevent infinite loops
     if (JSON.stringify(newSectionIds) !== JSON.stringify(sectionIds)) {
@@ -105,15 +105,15 @@
 <!-- Rest of your template remains the same -->
 <div class="flex flex-col">
   <div
-    class="flex @2xl:flex-nowrap flex-wrap justify-between items-center gap-2 mx-2 sm:mx-0"
+    class="mx-2 flex flex-wrap items-center justify-between gap-2 sm:mx-0 @2xl:flex-nowrap"
   >
-    <div class="flex flex-col mb-4">
+    <div class="mb-4 flex flex-col">
       <h1 class="header-primary-no-margin shrink-0">
         {SOURCE_INFO[source].displayName}
       </h1>
       {#if SOURCE_INFO[source].websiteUrlDomain}
         <a
-          class="text-sm text-muted-foreground hover:underline ml-1 mt-1"
+          class="text-muted-foreground mt-1 ml-1 text-sm hover:underline"
           target="_blank"
           href={`https://www.${SOURCE_INFO[source].websiteUrlDomain}`}
         >
@@ -124,14 +124,14 @@
     <Button
       variant="secondary"
       href={SOURCE_INFO[source].supportUrl}
-      class="p-6 text-wrap break-words whitespace-normal leading-tight text-center mb-4"
+      class="mb-4 p-6 text-center leading-tight text-wrap break-words whitespace-normal"
       target="_blank"
     >
       Support {SOURCE_INFO[source].displayName}
     </Button>
   </div>
   {#if activeStreams.sources.includes(source)}
-    <div class="flex flex-col items-start w-full mb-8">
+    <div class="mb-8 flex w-full flex-col items-start">
       <h2 class="header-link">
         <div class="flex items-center">
           <Radio class="mr-2" /> Live
@@ -145,15 +145,15 @@
     <div class="flex flex-col">
       <a
         href={`/${source}/latest`}
-        class={getContentView(mediaQueryState, userProfile) === "TABLE"
-          ? "header-link-sticky"
-          : "header-link"}
+        class={getContentView(mediaQueryState, userProfile) === 'TABLE'
+          ? 'header-link-sticky'
+          : 'header-link'}
       >
         Latest Videos
       </a>
       <Content
         {videos}
-        bind:carouselState={carouselsState["latestVideos"]}
+        bind:carouselState={carouselsState['latestVideos']}
         {userProfile}
         tilesDisplay="CAROUSEL"
         sectionId="latestVideos"
@@ -164,16 +164,16 @@
       {#each highlightPlaylists as highlightPlaylist (highlightPlaylist.playlist.name)}
         <a
           href={`/playlist/${highlightPlaylist.playlist.short_id}`}
-          class={getContentView(mediaQueryState, userProfile) === "TABLE"
-            ? "header-link-sticky"
-            : "header-link"}
+          class={getContentView(mediaQueryState, userProfile) === 'TABLE'
+            ? 'header-link-sticky'
+            : 'header-link'}
           onclick={(e) => {
             e.preventDefault();
             handlePlaylistNavigation({
               playlist: highlightPlaylist.playlist,
               contentFilter: {
-                sort: { key: "playlistOrder", order: "ascending" },
-                type: "playlist",
+                sort: { key: 'playlistOrder', order: 'ascending' },
+                type: 'playlist',
               },
             });
           }}
@@ -197,9 +197,9 @@
     <div class="flex flex-col">
       <a
         href={`/profile/${source}/playlists`}
-        class={getContentView(mediaQueryState, userProfile) === "TABLE"
-          ? "header-link-sticky"
-          : "header-link"}
+        class={getContentView(mediaQueryState, userProfile) === 'TABLE'
+          ? 'header-link-sticky'
+          : 'header-link'}
       >
         Playlists
       </a>
@@ -208,9 +208,9 @@
         <div class="flex items-center justify-center p-8">
           <div class="text-center">
             <div
-              class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"
+              class="border-primary mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-b-2"
             ></div>
-            <p class="text-sm text-muted-foreground">Loading playlists...</p>
+            <p class="text-muted-foreground text-sm">Loading playlists...</p>
           </div>
         </div>
       {:then processedPlaylists}
@@ -218,10 +218,10 @@
       {:catch error}
         <div class="flex items-center justify-center p-8">
           <div class="text-center">
-            <p class="text-sm text-destructive mb-2">
+            <p class="text-destructive mb-2 text-sm">
               Failed to load playlists
             </p>
-            <p class="text-xs text-muted-foreground">{error.message}</p>
+            <p class="text-muted-foreground text-xs">{error.message}</p>
           </div>
         </div>
       {/await}

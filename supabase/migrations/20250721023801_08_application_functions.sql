@@ -1,17 +1,13 @@
 -- Migration: 08_application_functions.sql
 -- Purpose: Create user-facing RPC functions and business logic
 -- This migration includes all application-level functions for the API
-
 -- ============================================================================
 -- 1. USER MANAGEMENT FUNCTIONS
 -- ============================================================================
-
 -- RPC function to check if username is unique
-CREATE OR REPLACE FUNCTION public.is_unique_username(p_username text)
-RETURNS boolean 
-LANGUAGE plpgsql
-SET search_path = ''
-AS $$
+CREATE OR REPLACE FUNCTION public.is_unique_username (p_username text) RETURNS boolean LANGUAGE plpgsql
+SET
+  search_path = '' AS $$
 DECLARE
     username_exists boolean;
 BEGIN
@@ -26,14 +22,17 @@ BEGIN
     RETURN NOT username_exists;
 END;
 $$;
-GRANT EXECUTE ON FUNCTION "public"."is_unique_username"(text) TO authenticated;
+
+GRANT
+EXECUTE ON FUNCTION "public"."is_unique_username" (text) TO authenticated;
 
 -- Function to generate a unique username from base_username
-CREATE OR REPLACE FUNCTION "public"."generate_unique_username"("base_username" text, "exclude_user_id" uuid DEFAULT NULL)
-RETURNS text
-LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = ''
-AS $$
+CREATE OR REPLACE FUNCTION "public"."generate_unique_username" (
+  "base_username" text,
+  "exclude_user_id" uuid DEFAULT NULL
+) RETURNS text LANGUAGE plpgsql SECURITY DEFINER
+SET
+  search_path = '' AS $$
 DECLARE
     clean_username text;
     candidate_username text;
@@ -74,11 +73,9 @@ END;
 $$;
 
 -- Function to handle user changes (creates profile on user creation)
-CREATE OR REPLACE FUNCTION "public"."handle_user_changes"()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = ''
-AS $$
+CREATE OR REPLACE FUNCTION "public"."handle_user_changes" () RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
+SET
+  search_path = '' AS $$
 DECLARE
     generated_username text;
 BEGIN
@@ -105,16 +102,15 @@ $$;
 
 -- Trigger to handle user profile creation
 CREATE TRIGGER "on_auth_user_changes"
-  AFTER INSERT OR UPDATE ON "auth"."users"
-  FOR EACH ROW EXECUTE PROCEDURE "public"."handle_user_changes"();
+AFTER INSERT
+OR
+UPDATE ON "auth"."users" FOR EACH ROW
+EXECUTE PROCEDURE "public"."handle_user_changes" ();
 
 -- User deletion function
-CREATE OR REPLACE FUNCTION "public"."delete_user"()
-RETURNS void
-SET search_path = ''
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
+CREATE OR REPLACE FUNCTION "public"."delete_user" () RETURNS void
+SET
+  search_path = '' LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE
     user_id uuid := (SELECT auth.uid());
     deleted_count integer;
@@ -134,26 +130,23 @@ $$;
 -- ============================================================================
 -- 2. VIDEO AND PLAYLIST QUERY FUNCTIONS  
 -- ============================================================================
-
 -- Function to get videos with user timestamps
-CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps"() 
-RETURNS TABLE(
-    "id" "text", 
-    "source" "public"."source", 
-    "title" "text", 
-    "description" "text", 
-    "thumbnail_url" "text", 
-    "thumbnail_maxres_url" "text", 
-    "published_at" timestamp with time zone, 
-    "duration" "text", 
-    "video_start_seconds" numeric,
-    "watched_at" timestamp with time zone, 
-    "updated_at" timestamp with time zone, 
-    playlist_id bigint
-)
-LANGUAGE "plpgsql"
-SET search_path = ''
-AS $$
+CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps" () RETURNS TABLE (
+  "id" "text",
+  "source" "public"."source",
+  "title" "text",
+  "description" "text",
+  "thumbnail_url" "text",
+  "thumbnail_maxres_url" "text",
+  "published_at" TIMESTAMP WITH TIME ZONE,
+  "duration" "text",
+  "video_start_seconds" numeric,
+  "watched_at" TIMESTAMP WITH TIME ZONE,
+  "updated_at" TIMESTAMP WITH TIME ZONE,
+  playlist_id bigint
+) LANGUAGE "plpgsql"
+SET
+  search_path = '' AS $$
 BEGIN
     RETURN QUERY
     SELECT 
@@ -180,26 +173,22 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION "public"."search_videos"(
-    "search_term" "text",
-    "offset_count" integer DEFAULT 0
-) 
-RETURNS TABLE(
-    "id" "text", 
-    "source" "public"."source", 
-    "title" "text", 
-    "description" "text", 
-    "thumbnail_url" "text", 
-    "thumbnail_maxres_url" "text", 
-    "published_at" timestamp with time zone, 
-    "duration" "text", 
-    "video_start_seconds" numeric, 
-    "updated_at" timestamp with time zone,
-    "search_rank" real
-)
-LANGUAGE "plpgsql"
-STABLE
-AS $$
+CREATE OR REPLACE FUNCTION "public"."search_videos" (
+  "search_term" "text",
+  "offset_count" integer DEFAULT 0
+) RETURNS TABLE (
+  "id" "text",
+  "source" "public"."source",
+  "title" "text",
+  "description" "text",
+  "thumbnail_url" "text",
+  "thumbnail_maxres_url" "text",
+  "published_at" TIMESTAMP WITH TIME ZONE,
+  "duration" "text",
+  "video_start_seconds" numeric,
+  "updated_at" TIMESTAMP WITH TIME ZONE,
+  "search_rank" real
+) LANGUAGE "plpgsql" STABLE AS $$
 DECLARE
     clean_term text;
     words text[];
@@ -285,27 +274,25 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION "public"."get_in_progress_videos_with_timestamps"()
-RETURNS TABLE(
-    id text, 
-    source public.source, 
-    title text, 
-    description text, 
-    thumbnail_url text, 
-    thumbnail_maxres_url text, 
-    published_at timestamp with time zone, 
-    duration text, 
-    video_start_seconds numeric, 
-    watched_at timestamp with time zone, 
-    updated_at timestamp with time zone,
-    playlist_sorted_by public.playlist_sorted_by,
-    playlist_sort_order public.playlist_sort_order,
-    playlist_name text,
-    playlist_short_id text
-)
-LANGUAGE plpgsql
-SET search_path = ''
-AS $$
+CREATE OR REPLACE FUNCTION "public"."get_in_progress_videos_with_timestamps" () RETURNS TABLE (
+  id text,
+  source public.source,
+  title text,
+  description text,
+  thumbnail_url text,
+  thumbnail_maxres_url text,
+  published_at TIMESTAMP WITH TIME ZONE,
+  duration text,
+  video_start_seconds numeric,
+  watched_at TIMESTAMP WITH TIME ZONE,
+  updated_at TIMESTAMP WITH TIME ZONE,
+  playlist_sorted_by public.playlist_sorted_by,
+  playlist_sort_order public.playlist_sort_order,
+  playlist_name text,
+  playlist_short_id text
+) LANGUAGE plpgsql
+SET
+  search_path = '' AS $$
 BEGIN
     RETURN QUERY
     SELECT 
@@ -334,7 +321,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.get_playlist_data(
+CREATE OR REPLACE FUNCTION public.get_playlist_data (
   p_short_id text DEFAULT NULL,
   p_youtube_id text DEFAULT NULL,
   p_user_id uuid DEFAULT NULL,
@@ -345,7 +332,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data(
 ) RETURNS TABLE (
   -- Playlist data
   playlist_id bigint,
-  playlist_created_at timestamp with time zone,
+  playlist_created_at TIMESTAMP WITH TIME ZONE,
   playlist_name text,
   playlist_short_id text,
   playlist_created_by uuid,
@@ -358,7 +345,6 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data(
   profile_username text,
   playlist_sorted_by public.playlist_sorted_by,
   playlist_sort_order public.playlist_sort_order,
-  
   -- Video data (will be null for the duration-only row)
   video_id text,
   video_position int2,
@@ -367,20 +353,18 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data(
   video_description text,
   video_thumbnail_url text,
   video_thumbnail_maxres_url text,
-  video_published_at timestamp with time zone,
+  video_published_at TIMESTAMP WITH TIME ZONE,
   video_duration text,
   video_start_seconds numeric,
-  video_watched_at timestamp with time zone,
-  video_updated_at timestamp with time zone,
-  
+  video_watched_at TIMESTAMP WITH TIME ZONE,
+  video_updated_at TIMESTAMP WITH TIME ZONE,
   -- Pagination and totals
   total_videos_count bigint,
   total_duration_seconds integer,
   is_duration_row boolean
 )
-SET search_path = ''
-LANGUAGE plpgsql
-AS $$
+SET
+  search_path = '' LANGUAGE plpgsql AS $$
 DECLARE
   playlist_record RECORD;
   video_count bigint;
@@ -585,7 +569,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.get_playlist_video_context(
+CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
   p_short_id text,
   p_video_id text,
   p_user_id uuid DEFAULT NULL,
@@ -593,7 +577,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_video_context(
 ) RETURNS TABLE (
   -- Playlist metadata (first row only)
   playlist_id bigint,
-  playlist_created_at timestamp with time zone,
+  playlist_created_at TIMESTAMP WITH TIME ZONE,
   playlist_name text,
   playlist_short_id text,
   playlist_created_by uuid,
@@ -606,7 +590,6 @@ CREATE OR REPLACE FUNCTION public.get_playlist_video_context(
   profile_username text,
   playlist_sorted_by public.playlist_sorted_by,
   playlist_sort_order public.playlist_sort_order,
-  
   -- Video data
   video_id text,
   video_position int2,
@@ -615,21 +598,19 @@ CREATE OR REPLACE FUNCTION public.get_playlist_video_context(
   video_description text,
   video_thumbnail_url text,
   video_thumbnail_maxres_url text,
-  video_published_at timestamp with time zone,
+  video_published_at TIMESTAMP WITH TIME ZONE,
   video_duration text,
   video_start_seconds numeric,
-  video_watched_at timestamp with time zone,
-  video_updated_at timestamp with time zone,
-  
+  video_watched_at TIMESTAMP WITH TIME ZONE,
+  video_updated_at TIMESTAMP WITH TIME ZONE,
   -- Context metadata
   total_videos_count bigint,
   current_video_index integer,
   is_current_video boolean,
   is_metadata_row boolean
 )
-SET search_path = ''
-LANGUAGE plpgsql
-AS $$
+SET
+  search_path = '' LANGUAGE plpgsql AS $$
 DECLARE
   playlist_record RECORD;
   video_count bigint;
@@ -786,10 +767,8 @@ $$;
 -- ============================================================================
 -- 3. PLAYLIST MANAGEMENT FUNCTIONS
 -- ============================================================================
-
-
 -- Function to insert a new playlist and create a user_playlists mapping with position management
-CREATE OR REPLACE FUNCTION public.insert_playlist(
+CREATE OR REPLACE FUNCTION public.insert_playlist (
   p_created_by uuid,
   p_name text DEFAULT NULL,
   p_description text DEFAULT NULL,
@@ -798,8 +777,7 @@ CREATE OR REPLACE FUNCTION public.insert_playlist(
   p_thumbnail_maxres_url text DEFAULT NULL,
   p_image_properties jsonb DEFAULT NULL,
   p_playlist_position int2 DEFAULT NULL
-)
-RETURNS TABLE (
+) RETURNS TABLE (
   playlist_id bigint,
   created_by uuid,
   created_at timestamptz,
@@ -811,10 +789,9 @@ RETURNS TABLE (
   thumbnail_maxres_url text,
   image_properties jsonb,
   playlist_position int2
-) 
-LANGUAGE plpgsql
-SET search_path = ''
-AS $$
+) LANGUAGE plpgsql
+SET
+  search_path = '' AS $$
 DECLARE
   max_position int2;
   actual_position int2;
@@ -956,20 +933,17 @@ BEGIN
 END;
 $$;
 
-
-CREATE OR REPLACE FUNCTION public.follow_playlist(
+CREATE OR REPLACE FUNCTION public.follow_playlist (
   p_user_id uuid,
   p_playlist_id bigint,
   p_playlist_position int2 DEFAULT NULL
-)
-RETURNS TABLE (
+) RETURNS TABLE (
   playlist_id bigint,
   user_id uuid,
   playlist_position int2
-)
-LANGUAGE plpgsql
-SET search_path = ''
-AS $$
+) LANGUAGE plpgsql
+SET
+  search_path = '' AS $$
 DECLARE
   max_position int2;
   actual_position int2;
@@ -1052,17 +1026,9 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.unfollow_playlist(
-  p_user_id uuid,
-  p_playlist_id bigint
-)
-RETURNS TABLE (
-  playlist_id bigint,
-  user_id uuid
-)
-LANGUAGE plpgsql
-SET search_path = ''
-AS $$
+CREATE OR REPLACE FUNCTION public.unfollow_playlist (p_user_id uuid, p_playlist_id bigint) RETURNS TABLE (playlist_id bigint, user_id uuid) LANGUAGE plpgsql
+SET
+  search_path = '' AS $$
 DECLARE
   removed_position int2;
 BEGIN
@@ -1102,12 +1068,11 @@ END;
 $$;
 
 -- Function to update the position of a playlist for a user in user_playlists
-CREATE OR REPLACE FUNCTION public.update_playlist_position(
+CREATE OR REPLACE FUNCTION public.update_playlist_position (
   p_user_id uuid,
   p_playlist_id bigint,
   p_new_position int2
-)
-RETURNS TABLE (
+) RETURNS TABLE (
   playlist_id bigint,
   user_id uuid,
   created_by uuid,
@@ -1120,10 +1085,9 @@ RETURNS TABLE (
   thumbnail_maxres_url text,
   image_properties jsonb,
   playlist_position int2
-)
-LANGUAGE plpgsql
-SET search_path TO ''
-AS $$
+) LANGUAGE plpgsql
+SET
+  search_path TO '' AS $$
 DECLARE
   current_position int2;
   max_position int2;
@@ -1237,14 +1201,9 @@ END;
 $$;
 
 -- Delete a playlist for a user (from user_playlists), and reorder remaining positions for that user
-CREATE OR REPLACE FUNCTION public.delete_playlist(
-  p_user_id uuid,
-  p_playlist_id bigint
-)
-RETURNS BOOLEAN 
-LANGUAGE plpgsql
-SET search_path TO ''
-AS $$
+CREATE OR REPLACE FUNCTION public.delete_playlist (p_user_id uuid, p_playlist_id bigint) RETURNS BOOLEAN LANGUAGE plpgsql
+SET
+  search_path TO '' AS $$
 DECLARE
   deleted_position int2;
   max_position int2;
@@ -1296,11 +1255,9 @@ END;
 $$;
 
 -- Initialize playlist positions in user_playlists for all users
-CREATE OR REPLACE FUNCTION public.initialize_user_playlist_positions()
-RETURNS VOID
-LANGUAGE plpgsql
-SET search_path = ''
-AS $$
+CREATE OR REPLACE FUNCTION public.initialize_user_playlist_positions () RETURNS VOID LANGUAGE plpgsql
+SET
+  search_path = '' AS $$
 DECLARE
   r RECORD;
   current_user_id uuid := NULL;
@@ -1328,11 +1285,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.create_user(
-    email text,
-    password text,
-    username text
-) RETURNS uuid AS $$
+CREATE OR REPLACE FUNCTION public.create_user (email text, password text, username text) RETURNS uuid AS $$
 DECLARE
   user_id uuid;
   encrypted_pw text;
@@ -1387,13 +1340,12 @@ BEGIN
   RETURN user_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER
-SET search_path = '';
+SET
+  search_path = '';
 
-CREATE OR REPLACE FUNCTION public.get_playlist_by_short_id(
-  p_short_id text
-) RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.get_playlist_by_short_id (p_short_id text) RETURNS TABLE (
   id bigint,
-  created_at timestamp with time zone,
+  created_at TIMESTAMP WITH TIME ZONE,
   name text,
   short_id text,
   created_by uuid,
@@ -1407,9 +1359,8 @@ CREATE OR REPLACE FUNCTION public.get_playlist_by_short_id(
   sorted_by public.playlist_sorted_by,
   sort_order public.playlist_sort_order
 )
-SET search_path = ''
-LANGUAGE sql
-AS $$
+SET
+  search_path = '' LANGUAGE sql AS $$
   SELECT
     p.id,
     p.created_at,
@@ -1433,11 +1384,9 @@ AS $$
   LIMIT 1;
 $$;
 
-CREATE OR REPLACE FUNCTION public.get_playlist_by_youtube_id(
-  p_youtube_id text
-) RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.get_playlist_by_youtube_id (p_youtube_id text) RETURNS TABLE (
   id bigint,
-  created_at timestamp with time zone,
+  created_at TIMESTAMP WITH TIME ZONE,
   name text,
   short_id text,
   created_by uuid,
@@ -1447,15 +1396,12 @@ CREATE OR REPLACE FUNCTION public.get_playlist_by_youtube_id(
   type public.playlist_type,
   image_properties jsonb,
   youtube_id text,
-
   profile_username text,
   sorted_by public.playlist_sorted_by,
   sort_order public.playlist_sort_order
 )
-SET search_path = ''
-LANGUAGE sql
-
-AS $$
+SET
+  search_path = '' LANGUAGE sql AS $$
   SELECT
     p.id,
     p.created_at,
@@ -1482,12 +1428,7 @@ AS $$
   LIMIT 1;
 $$;
 
-
-CREATE OR REPLACE FUNCTION "public"."insert_playlist_videos"(
-  "p_playlist_id" int8,
-  "p_video_ids" text[]
-)
-RETURNS TABLE (
+CREATE OR REPLACE FUNCTION "public"."insert_playlist_videos" ("p_playlist_id" int8, "p_video_ids" TEXT[]) RETURNS TABLE (
   id int8,
   playlist_id int8,
   video_id text,
@@ -1600,17 +1541,10 @@ BEGIN
   
 END;
 $$ LANGUAGE plpgsql
-SET search_path = '';
+SET
+  search_path = '';
 
-CREATE OR REPLACE FUNCTION public.delete_playlist_videos(
-  p_playlist_id int8,
-  p_video_ids text[]  
-)
-RETURNS TABLE (
-  video_id text,
-  success boolean,
-  message text
-) AS $$
+CREATE OR REPLACE FUNCTION public.delete_playlist_videos (p_playlist_id int8, p_video_ids TEXT[]) RETURNS TABLE (video_id text, success boolean, message text) AS $$
 DECLARE
   v_id text;
   video_positions jsonb;
@@ -1722,9 +1656,10 @@ BEGIN
   RETURN;
 END;
 $$ LANGUAGE plpgsql
-SET search_path = '';
+SET
+  search_path = '';
 
-CREATE OR REPLACE FUNCTION public.validate_playlist_thumbnail_urls(
+CREATE OR REPLACE FUNCTION public.validate_playlist_thumbnail_urls (
   p_playlist_id INT8,
   p_thumbnail_url TEXT DEFAULT NULL,
   p_thumbnail_maxres_url TEXT DEFAULT NULL
@@ -1764,23 +1699,22 @@ BEGIN
   RETURN thumbnail_valid AND maxres_valid;
 END;
 $$ LANGUAGE plpgsql
-SET search_path = '';
+SET
+  search_path = '';
 
 -- Function to update playlist video positions
-CREATE OR REPLACE FUNCTION "public"."update_playlist_videos_positions"(
+CREATE OR REPLACE FUNCTION "public"."update_playlist_videos_positions" (
   "p_playlist_id" int8,
-  "p_video_ids" text[],
+  "p_video_ids" TEXT[],
   "p_new_position" int2
-)
-RETURNS TABLE (
+) RETURNS TABLE (
   result_id int8,
   result_playlist_id int8,
   result_video_id text,
   result_video_position int2
-) 
-LANGUAGE plpgsql
-SET search_path = ''
-AS $$
+) LANGUAGE plpgsql
+SET
+  search_path = '' AS $$
 DECLARE
   video_count int;
   max_position int2;
@@ -1908,8 +1842,7 @@ END;
 $$;
 
 -- Function to get logged in user's playlists
-CREATE OR REPLACE FUNCTION public.get_user_playlists(p_user_id uuid)
-RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.get_user_playlists (p_user_id uuid) RETURNS TABLE (
   id bigint,
   created_by uuid,
   created_at timestamptz,
@@ -1926,9 +1859,8 @@ RETURNS TABLE (
   youtube_id text,
   profile_username text
 )
-SET search_path = ''
-LANGUAGE sql
-AS $$
+SET
+  search_path = '' LANGUAGE sql AS $$
   SELECT
     p.id,
     p.created_by,
@@ -1953,11 +1885,9 @@ AS $$
 $$;
 
 -- Function get playlists for a specific username 
-CREATE OR REPLACE FUNCTION public.get_playlists_for_username(
-  p_username text
-) RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.get_playlists_for_username (p_username text) RETURNS TABLE (
   id bigint,
-  created_at timestamp with time zone,
+  created_at TIMESTAMP WITH TIME ZONE,
   name text,
   short_id text,
   created_by uuid,
@@ -1971,9 +1901,8 @@ CREATE OR REPLACE FUNCTION public.get_playlists_for_username(
   sorted_by public.playlist_sorted_by,
   sort_order public.playlist_sort_order
 )
-SET search_path = ''
-LANGUAGE sql
-AS $$
+SET
+  search_path = '' LANGUAGE sql AS $$
   SELECT
     p.id,
     p.created_at,
@@ -2000,31 +1929,26 @@ $$;
 -- ============================================================================
 -- 4. SEARCH FUNCTIONS
 -- ============================================================================
-
-CREATE OR REPLACE FUNCTION "public"."search_playlists"(
-    "search_term" "text",
-    "current_user_id" uuid DEFAULT NULL,
-    "limit_count" integer DEFAULT 50,
-    "offset_count" integer DEFAULT 0
-) 
-RETURNS TABLE(
-    "id" bigint, 
-    "short_id" text,
-    "name" text, 
-    "description" text,
-    "thumbnail_url" text,
-    "thumbnail_maxres_url" text,
-    "image_properties" jsonb,
-    "created_at" timestamp with time zone,
-    "created_by" uuid,
-    "type" public.playlist_type,
-    "youtube_id" text,
-    "profile_username" text,
-    "search_rank" real
-)
-LANGUAGE "plpgsql"
-STABLE
-AS $$
+CREATE OR REPLACE FUNCTION "public"."search_playlists" (
+  "search_term" "text",
+  "current_user_id" uuid DEFAULT NULL,
+  "limit_count" integer DEFAULT 50,
+  "offset_count" integer DEFAULT 0
+) RETURNS TABLE (
+  "id" bigint,
+  "short_id" text,
+  "name" text,
+  "description" text,
+  "thumbnail_url" text,
+  "thumbnail_maxres_url" text,
+  "image_properties" jsonb,
+  "created_at" TIMESTAMP WITH TIME ZONE,
+  "created_by" uuid,
+  "type" public.playlist_type,
+  "youtube_id" text,
+  "profile_username" text,
+  "search_rank" real
+) LANGUAGE "plpgsql" STABLE AS $$
 DECLARE
     clean_term text;
     words text[];
@@ -2120,4 +2044,3 @@ BEGIN
     OFFSET offset_count;
 END;
 $$;
-

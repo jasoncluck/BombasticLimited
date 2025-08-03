@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { dragHandleZone, dragHandle } from "svelte-dnd-action";
-  import type { DndEvent } from "svelte-dnd-action";
-  import { flip } from "svelte/animate";
-  import { Menu } from "@lucide/svelte";
-  import FullHeightDrawer from "./full-height-drawer.svelte";
-  import type { Snippet } from "svelte";
-  import type { Source } from "$lib/constants/source";
+  import { dragHandleZone, dragHandle } from 'svelte-dnd-action';
+  import type { DndEvent } from 'svelte-dnd-action';
+  import { flip } from 'svelte/animate';
+  import { Menu } from '@lucide/svelte';
+  import FullHeightDrawer from './full-height-drawer.svelte';
+  import type { Snippet } from 'svelte';
+  import type { Source } from '$lib/constants/source';
 
   // Create a proper item interface with required id property for svelte-dnd-action
   interface SourceItem {
@@ -15,10 +15,10 @@
 
   let {
     sources,
-    title = "Reorder sources",
-    subtitle = "Drag the handle to reorder sources",
-    triggerClass = "",
-    triggerVariant = "ghost",
+    title = 'Reorder sources',
+    subtitle = 'Drag the handle to reorder sources',
+    triggerClass = '',
+    triggerVariant = 'ghost',
     onClose,
     trigger,
     onReorder,
@@ -30,12 +30,12 @@
     subtitle?: string;
     triggerClass?: string;
     triggerVariant?:
-      | "default"
-      | "destructive"
-      | "outline"
-      | "secondary"
-      | "ghost"
-      | "link";
+      | 'default'
+      | 'destructive'
+      | 'outline'
+      | 'secondary'
+      | 'ghost'
+      | 'link';
     onClose?: () => void;
     onReorder?: (sources: Source[]) => Promise<void> | void;
     trigger: Snippet;
@@ -93,7 +93,7 @@
     const newOrder = updatedItems.map((item) => item.source);
 
     const orderChanged = !originalOrder.every(
-      (source, index) => source === newOrder[index],
+      (source, index) => source === newOrder[index]
     );
 
     // Reset drag state
@@ -121,7 +121,7 @@
         await onReorder(newOrder);
         // onReorder success - pendingOrder will be cleared when parent updates sources
       } catch (error) {
-        console.error("Error updating source order:", error);
+        console.error('Error updating source order:', error);
         // Revert to original order on error
         pendingOrder = null;
         dndItems = storedOriginalOrder.map((source) => ({
@@ -154,10 +154,10 @@
       use:dragHandleZone={{
         items: dndItems,
         flipDurationMs,
-        type: "reorderable-source",
+        type: 'reorderable-source',
         dropTargetStyle: {
-          outline: "rgba(99, 102, 241, 0.5) solid 2px",
-          backgroundColor: "rgba(99, 102, 241, 0.1)",
+          outline: 'rgba(99, 102, 241, 0.5) solid 2px',
+          backgroundColor: 'rgba(99, 102, 241, 0.1)',
         },
         morphDisabled: false,
         dropAnimationDisabled: false,
@@ -169,18 +169,18 @@
       {#each dndItems as item, index (item.id)}
         <div
           animate:flip={{ duration: flipDurationMs }}
-          class="flex gap-2 items-center content-table-row select-none transition-colors duration-200 hover:bg-secondary/50 p-2 rounded cursor-grab active:cursor-grabbing"
+          class="content-table-row hover:bg-secondary/50 flex cursor-grab items-center gap-2 rounded p-2 transition-colors duration-200 select-none active:cursor-grabbing"
           data-item-id={item.id}
         >
-          <div class="flex-1 min-w-0">
+          <div class="min-w-0 flex-1">
             {@render itemRenderer(item.source, index)}
           </div>
           <div
             use:dragHandle
             aria-label={`drag-handle for item ${item.source}`}
-            class="flex items-center justify-center w-6 h-6 cursor-grab hover:bg-secondary rounded shrink-0"
+            class="hover:bg-secondary flex h-6 w-6 shrink-0 cursor-grab items-center justify-center rounded"
           >
-            <Menu class="w-4 h-4 text-muted-foreground" />
+            <Menu class="text-muted-foreground h-4 w-4" />
           </div>
         </div>
       {/each}
@@ -188,7 +188,7 @@
   {:else if emptyState}
     {@render emptyState()}
   {:else}
-    <div class="flex items-center justify-center h-32">
+    <div class="flex h-32 items-center justify-center">
       <p class="text-muted-foreground">No sources to reorder</p>
     </div>
   {/if}

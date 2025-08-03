@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type Snippet } from "svelte";
+  import { type Snippet } from 'svelte';
 
   interface Props {
     onActive: () => void;
@@ -24,7 +24,7 @@
   let isIntersecting = false;
   let activeInterval: ReturnType<typeof setInterval> | null = null;
 
-  const hasIntersectionObserver = typeof IntersectionObserver !== "undefined";
+  const hasIntersectionObserver = typeof IntersectionObserver !== 'undefined';
 
   function createObserver() {
     if (!hasIntersectionObserver || disableObserver) return;
@@ -55,7 +55,7 @@
           }
         });
       },
-      { rootMargin: "0px", threshold },
+      { rootMargin: '0px', threshold }
     );
 
     observer.observe(root);

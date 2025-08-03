@@ -3,8 +3,8 @@
 -->
 
 <script lang="ts">
-  import { type WithChildren } from "bits-ui";
-  import { useImageCropperTrigger } from "./image-cropper.svelte.js";
+  import { type WithChildren } from 'bits-ui';
+  import { useImageCropperTrigger } from './image-cropper.svelte.js';
 
   let { children }: WithChildren = $props();
 

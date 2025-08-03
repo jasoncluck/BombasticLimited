@@ -2,15 +2,15 @@ import type {
   SupabaseClient,
   Session,
   PostgrestError,
-} from "@supabase/supabase-js";
-import type { Database } from "./database.types";
+} from '@supabase/supabase-js';
+import type { Database } from './database.types';
 import type {
   SortKey,
   SortOrder,
-} from "$lib/components/content/content-filter";
-import type { PlaylistVideo } from "./playlists";
-import { invalidate } from "$app/navigation";
-import { getContentState } from "$lib/state/content.svelte";
+} from '$lib/components/content/content-filter';
+import type { PlaylistVideo } from './playlists';
+import { invalidate } from '$app/navigation';
+import { getContentState } from '$lib/state/content.svelte';
 
 export type TimestampWithVideoId = {
   videoId: string;
@@ -34,7 +34,7 @@ export async function saveVideoTimestamp({
 
   if (session) {
     const { data: videos, error: upsertError } = await supabase
-      .rpc("insert_timestamp", {
+      .rpc('insert_timestamp', {
         p_user_id: session.user.id,
         p_video_id: videoTimestamp.videoId,
         p_video_start_seconds: videoTimestamp.timestampStartSeconds,
@@ -46,7 +46,7 @@ export async function saveVideoTimestamp({
       .select();
 
     if (upsertError) {
-      console.error("Error saving video timestamps.", upsertError);
+      console.error('Error saving video timestamps.', upsertError);
       error = upsertError;
     }
     return { videos, error };
@@ -70,15 +70,15 @@ export async function saveVideoTimestamps({
     const video_ids = videoTimestamps.map((v) => v.videoId);
 
     const video_start_seconds = videoTimestamps.map((v) =>
-      v.timestampStartSeconds !== undefined ? v.timestampStartSeconds : null,
+      v.timestampStartSeconds !== undefined ? v.timestampStartSeconds : null
     );
 
     const watched_at = videoTimestamps.map((v) =>
-      v.watchedAt ? v.watchedAt.toISOString() : null,
+      v.watchedAt ? v.watchedAt.toISOString() : null
     );
 
     const { data: videos, error: upsertError } = await supabase
-      .rpc("insert_timestamps", {
+      .rpc('insert_timestamps', {
         p_user_id: session.user.id,
         p_video_ids: video_ids,
         p_video_start_seconds: video_start_seconds,
@@ -87,7 +87,7 @@ export async function saveVideoTimestamps({
       .select();
 
     if (upsertError) {
-      console.error("Error saving video timestamps.", upsertError);
+      console.error('Error saving video timestamps.', upsertError);
       error = upsertError;
     }
     return { videos, error };
@@ -109,14 +109,14 @@ export async function deleteVideoTimestamps({
 
   if (session?.user && videoIds.length > 0) {
     const { data: videos, error: deleteError } = await supabase
-      .rpc("delete_timestamps", {
+      .rpc('delete_timestamps', {
         p_user_id: session.user.id,
         p_video_ids: videoIds,
       })
       .select();
 
     if (deleteError) {
-      console.error("Error deleting video timestamps.", deleteError);
+      console.error('Error deleting video timestamps.', deleteError);
       error = deleteError;
     }
     return { videos, error };
@@ -138,13 +138,13 @@ export async function getLatestTimestamp({
 
   if (session?.user && videoId) {
     const { data: videoTimestamp, error } = await supabase
-      .from("timestamps")
+      .from('timestamps')
       .select()
-      .eq("user_id", session.user.id)
-      .eq("video_id", videoId)
+      .eq('user_id', session.user.id)
+      .eq('video_id', videoId)
       .single();
     if (error) {
-      console.error("Error getting latest timestamp:", error);
+      console.error('Error getting latest timestamp:', error);
     }
     return { videoTimestamp, error };
   }

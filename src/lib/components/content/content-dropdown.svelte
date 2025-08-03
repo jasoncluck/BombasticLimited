@@ -6,27 +6,27 @@
     handleDeletePlaylist,
     handleUnfollowPlaylist,
     handleFollowPlaylist,
-  } from "../playlist/playlist-service";
+  } from '../playlist/playlist-service';
   import {
     DEFAULT_SECTION_ID,
     getContentState,
-  } from "$lib/state/content.svelte";
-  import type { Playlist } from "$lib/supabase/playlists";
-  import type { Session, SupabaseClient } from "@supabase/supabase-js";
-  import type { Database } from "$lib/supabase/database.types";
-  import ScrollArea from "../ui/scroll-area/scroll-area.svelte";
-  import { isVideoWithTimestamp, type Video } from "$lib/supabase/videos";
+  } from '$lib/state/content.svelte';
+  import type { Playlist } from '$lib/supabase/playlists';
+  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { Database } from '$lib/supabase/database.types';
+  import ScrollArea from '../ui/scroll-area/scroll-area.svelte';
+  import { isVideoWithTimestamp, type Video } from '$lib/supabase/videos';
   import {
     handleAddVideoTimestamps,
     handleDeleteVideosTimestamp,
-  } from "../video/video-service";
-  import Button from "../ui/button/button.svelte";
-  import { page } from "$app/state";
-  import { goto } from "$app/navigation";
-  import { type ContentSelectVariant } from "./content";
-  import { getPlaylistState } from "$lib/state/playlist.svelte";
-  import { Portal } from "bits-ui";
-  import * as DropdownMenu from "../ui/dropdown-menu";
+  } from '../video/video-service';
+  import Button from '../ui/button/button.svelte';
+  import { page } from '$app/state';
+  import { goto } from '$app/navigation';
+  import { type ContentSelectVariant } from './content';
+  import { getPlaylistState } from '$lib/state/playlist.svelte';
+  import { Portal } from 'bits-ui';
+  import * as DropdownMenu from '../ui/dropdown-menu';
   import {
     Ellipsis,
     ListChecks,
@@ -38,10 +38,10 @@
     CircleCheck,
     CircleMinus,
     CirclePlus,
-  } from "@lucide/svelte";
-  import type { UserProfile } from "$lib/supabase/user-profiles";
-  import { getSidebarState } from "$lib/state/sidebar.svelte";
-  import type { CombinedContentFilter } from "./content-filter";
+  } from '@lucide/svelte';
+  import type { UserProfile } from '$lib/supabase/user-profiles';
+  import { getSidebarState } from '$lib/state/sidebar.svelte';
+  import type { CombinedContentFilter } from './content-filter';
 
   let {
     videos = $bindable(),
@@ -74,8 +74,8 @@
 
   // hide set playlist image if on the video screen
   const hideSetAsPlaylistImage = $derived(
-    variant === "list-items" &&
-      /\/playlist\/[^/]+\/video\/[^/]+/.test(page.url.pathname),
+    variant === 'list-items' &&
+      /\/playlist\/[^/]+\/video\/[^/]+/.test(page.url.pathname)
   );
 
   const isPlaylistOwner = $derived(session?.user.id === playlist?.created_by);
@@ -83,18 +83,18 @@
   const isFollowingPlaylist = $derived(
     sidebarState
       .getFollowedPlaylists(session)
-      .some((fp) => fp.id === playlist?.id) && variant === "header",
+      .some((fp) => fp.id === playlist?.id) && variant === 'header'
   );
 
   // Get selected and hovered videos for this section
   let selectedVideos = $derived(
-    contentState.selectedVideosBySection[sectionId] ?? [],
+    contentState.selectedVideosBySection[sectionId] ?? []
   );
 
   let hoveredVideo = $derived(contentState.hoveredVideosBySection[sectionId]);
 
   const isHovering = $derived(
-    contentState.hoveredVideosBySection[sectionId]?.id === videos[0]?.id,
+    contentState.hoveredVideosBySection[sectionId]?.id === videos[0]?.id
   );
 
   let open = $state(false);
@@ -109,7 +109,7 @@
   // Function to determine operation videos when dropdown opens
   function determineOperationVideos(): Video[] {
     // For list-items variant, always operate on the specific video for this row
-    if (variant === "list-items" || variant === "item") {
+    if (variant === 'list-items' || variant === 'item') {
       if (videos.length > 0) {
         return [videos[0]];
       }
@@ -117,7 +117,7 @@
     }
 
     // For header variant, use selected videos or fall back to all videos
-    if (variant === "header") {
+    if (variant === 'header') {
       if (selectedVideos.length > 0) {
         return selectedVideos;
       }
@@ -135,15 +135,15 @@
     const currentOperationVideos = determineOperationVideos();
 
     const filteredPlaylists = playlists.filter(
-      (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id,
+      (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id
     );
 
     // Check for select all action
     const hasSelectAll =
-      variant === "header" && userProfile?.content_display === "TABLE";
+      variant === 'header' && userProfile?.content_display === 'TABLE';
 
     // Check for edit playlist action
-    const hasEditPlaylist = isPlaylistOwner && variant === "header";
+    const hasEditPlaylist = isPlaylistOwner && variant === 'header';
 
     // Check for add to playlist action
     const hasAddToPlaylist =
@@ -157,27 +157,26 @@
     const hasSetPlaylistImage =
       playlist &&
       currentOperationVideos.length === 1 &&
-      variant === "list-items" &&
+      variant === 'list-items' &&
       isPlaylistOwner &&
       !hideSetAsPlaylistImage;
 
     // Check for reset progress action
     const hasResetProgress =
       session &&
-      variant !== "item" &&
+      variant !== 'item' &&
       currentOperationVideos.some((v) => isVideoWithTimestamp(v));
 
     // Check for set as watched action
     const hasSetWatched =
-      variant !== "item" &&
+      variant !== 'item' &&
       currentOperationVideos.some(
         (v) =>
-          !isVideoWithTimestamp(v) ||
-          (isVideoWithTimestamp(v) && !v.watched_at),
+          !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at)
       );
 
     // Check for delete playlist action
-    const hasDeletePlaylist = playlist && variant === "header";
+    const hasDeletePlaylist = playlist && variant === 'header';
 
     return (
       hasSelectAll ||
@@ -195,13 +194,13 @@
   const shouldShowButton = $derived.by(() => {
     return (
       hasAvailableActions &&
-      (variant !== "list-items" || isHovering || open || subMenuOpen)
+      (variant !== 'list-items' || isHovering || open || subMenuOpen)
     );
   });
 
   // Helper function to conditionally clear selections after successful operations
   function handleSelectionAfterAction() {
-    if (!preserveSelectionAfterAction || variant === "list-items") {
+    if (!preserveSelectionAfterAction || variant === 'list-items') {
       contentState.selectedVideosBySection[sectionId] = [];
     }
   }
@@ -259,27 +258,27 @@
           {...props}
           variant="ghost"
           onclick={(e) => {
-            if (variant === "list-items" && videos.length > 0) {
+            if (variant === 'list-items' && videos.length > 0) {
               contentState.selectedVideosBySection[sectionId] = [videos[0]];
             }
             e.stopPropagation();
           }}
-          class="outline-none ghost-button-minimal {open
+          class="ghost-button-minimal outline-none {open
             ? 'scale-105'
             : ''} {shouldShowButton ? 'opacity-100' : 'opacity-0'}"
         >
           <Ellipsis />
           <span class="sr-only">
-            {variant === "header"
-              ? "Actions for selected items"
-              : "Actions for video"}
+            {variant === 'header'
+              ? 'Actions for selected items'
+              : 'Actions for video'}
           </span>
         </Button>
       {/snippet}
     </DropdownMenu.Trigger>
 
     <DropdownMenu.Content align="end" class="stable-dropdown">
-      {#if variant === "header" && userProfile?.content_display === "TABLE"}
+      {#if variant === 'header' && userProfile?.content_display === 'TABLE'}
         <DropdownMenu.Item
           class="p-2"
           onclick={() => {
@@ -293,7 +292,7 @@
         </DropdownMenu.Item>
       {/if}
 
-      {#if isPlaylistOwner && variant === "header"}
+      {#if isPlaylistOwner && variant === 'header'}
         <DropdownMenu.Item
           class="cursor-pointer"
           onclick={() => (playlistState.openEditPlaylist = true)}
@@ -307,7 +306,7 @@
 
       {#if frozenOperationVideos.length > 0}
         {@const filteredPlaylists = playlists.filter(
-          (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id,
+          (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id
         )}
         {#if filteredPlaylists.length > 0}
           <DropdownMenu.Sub bind:open={subMenuOpen}>
@@ -315,10 +314,10 @@
               onclick={(e) => e.stopPropagation()}
               class="stable-trigger"
             >
-              <div class="flex gap-2 items-center">
+              <div class="flex items-center gap-2">
                 <PlusCircle class="dropdown-icon" />
                 Add {frozenOperationVideos.length === 1
-                  ? "video"
+                  ? 'video'
                   : `${frozenOperationVideos.length} videos`} to playlist
               </div>
             </DropdownMenu.SubTrigger>
@@ -326,7 +325,7 @@
               <DropdownMenu.SubContent
                 side="right"
                 align="start"
-                class="z-50 overflow-hidden stable-submenu"
+                class="stable-submenu z-50 overflow-hidden"
                 sideOffset={-4}
                 alignOffset={0}
                 avoidCollisions={true}
@@ -334,7 +333,7 @@
               >
                 <ScrollArea
                   type="scroll"
-                  class={filteredPlaylists.length <= 6 ? "h-auto" : "h-56"}
+                  class={filteredPlaylists.length <= 6 ? 'h-auto' : 'h-56'}
                 >
                   {#each filteredPlaylists as addPlaylist (addPlaylist.id)}
                     {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
@@ -378,24 +377,24 @@
               if (!error) {
                 // Remove only the operation videos from the list
                 const operationVideoIds = new Set(
-                  frozenOperationVideos.map((v) => v.id),
+                  frozenOperationVideos.map((v) => v.id)
                 );
                 videos = videos.filter((v) => !operationVideoIds.has(v.id));
                 handleSelectionAfterAction();
               }
             }}
           >
-            <div class="flex gap-2 items-center">
+            <div class="flex items-center gap-2">
               <MinusCircle class="dropdown-icon" />
 
               Remove {frozenOperationVideos.length === 1
-                ? "video"
+                ? 'video'
                 : `${frozenOperationVideos.length} videos`} from playlist
             </div>
           </DropdownMenu.Item>
         {/if}
 
-        {#if playlist && frozenOperationVideos.length === 1 && variant === "list-items" && isPlaylistOwner && !hideSetAsPlaylistImage}
+        {#if playlist && frozenOperationVideos.length === 1 && variant === 'list-items' && isPlaylistOwner && !hideSetAsPlaylistImage}
           <DropdownMenu.Item
             class="p-2"
             onclick={async () => {
@@ -413,7 +412,7 @@
               }
             }}
           >
-            <div class="flex gap-2 items-center">
+            <div class="flex items-center gap-2">
               <ImagePlay class="dropdown-icon" />
               Set as playlist image
             </div>
@@ -421,7 +420,7 @@
         {/if}
       {/if}
 
-      {#if session && variant !== "item" && frozenOperationVideos.some( (v) => isVideoWithTimestamp(v), )}
+      {#if session && variant !== 'item' && frozenOperationVideos.some( (v) => isVideoWithTimestamp(v) )}
         <DropdownMenu.Item
           class="p-2"
           onclick={async () => {
@@ -437,7 +436,7 @@
               videos = videos.map((v) =>
                 updatedVideoIds.has(v.id)
                   ? updatedVideos.find((uv) => uv.id === v.id)!
-                  : v,
+                  : v
               );
 
               // Update the section's state based on what we were operating on
@@ -445,7 +444,7 @@
                 contentState.selectedVideosBySection[sectionId] = updatedVideos;
               } else if (hoveredVideo) {
                 const updatedHoveredVideo = updatedVideos.find(
-                  (v) => v.id === hoveredVideo?.id,
+                  (v) => v.id === hoveredVideo?.id
                 );
                 if (updatedHoveredVideo) {
                   contentState.hoveredVideosBySection[sectionId] =
@@ -464,7 +463,7 @@
         </DropdownMenu.Item>
       {/if}
 
-      {#if variant !== "item" && frozenOperationVideos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
+      {#if variant !== 'item' && frozenOperationVideos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
         <DropdownMenu.Item
           class="p-2"
           onclick={async () => {
@@ -483,7 +482,7 @@
               videos = videos.map((v) =>
                 updatedVideoIds.has(v.id)
                   ? updatedVideos.find((uv) => uv.id === v.id)!
-                  : v,
+                  : v
               );
 
               // Update the section's state based on what we were operating on
@@ -491,7 +490,7 @@
                 contentState.selectedVideosBySection[sectionId] = updatedVideos;
               } else if (hoveredVideo) {
                 const updatedHoveredVideo = updatedVideos.find(
-                  (v) => v.id === hoveredVideo?.id,
+                  (v) => v.id === hoveredVideo?.id
                 );
                 if (updatedHoveredVideo) {
                   contentState.hoveredVideosBySection[sectionId] =
@@ -510,7 +509,7 @@
         </DropdownMenu.Item>
       {/if}
 
-      {#if playlist && variant === "header" && !isFollowingPlaylist}
+      {#if playlist && variant === 'header' && !isFollowingPlaylist}
         <DropdownMenu.Item
           class="cursor-pointer"
           onclick={async () => {
@@ -534,7 +533,7 @@
                 !data?.error &&
                 page.url.pathname === `/playlist/${playlist.short_id}`
               ) {
-                goto("/");
+                goto('/');
               }
             }
           }}
@@ -545,7 +544,7 @@
           </div>
         </DropdownMenu.Item>
       {/if}
-      {#if playlist && variant === "header" && isFollowingPlaylist}
+      {#if playlist && variant === 'header' && isFollowingPlaylist}
         <DropdownMenu.Item
           class="cursor-pointer"
           onclick={async () => {
@@ -568,7 +567,7 @@
                 !data?.error &&
                 page.url.pathname === `/playlist/${playlist.short_id}`
               ) {
-                goto("/");
+                goto('/');
               }
             }
           }}
@@ -576,8 +575,8 @@
           <div class="flex items-center gap-2">
             <CircleMinus class="dropdown-icon" />
             {playlist.created_by === session?.user.id
-              ? "Delete playlist"
-              : "Unfollow playlist"}
+              ? 'Delete playlist'
+              : 'Unfollow playlist'}
           </div>
         </DropdownMenu.Item>
       {/if}

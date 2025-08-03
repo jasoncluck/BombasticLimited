@@ -1,5 +1,5 @@
-import { PLAYLIST_TYPES } from "$lib/supabase/playlists";
-import { z } from "zod";
+import { PLAYLIST_TYPES } from '$lib/supabase/playlists';
+import { z } from 'zod';
 
 // Define the expected structure of your image properties
 const imagePropertiesSchema = z.object({
@@ -19,21 +19,21 @@ const jsonbImagePropertiesSchema = z
     }
 
     // If it's already parsed (object), validate it
-    if (typeof val === "object") {
+    if (typeof val === 'object') {
       const result = imagePropertiesSchema.safeParse(val);
       if (result.success) {
         return result.data;
       } else {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Invalid image properties object structure",
+          message: 'Invalid image properties object structure',
         });
         return z.NEVER;
       }
     }
 
     // If it's a string, parse then validate
-    if (typeof val === "string") {
+    if (typeof val === 'string') {
       try {
         const parsed = JSON.parse(val);
         const result = imagePropertiesSchema.safeParse(parsed);
@@ -42,14 +42,14 @@ const jsonbImagePropertiesSchema = z
         } else {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: "Invalid image properties format after parsing",
+            message: 'Invalid image properties format after parsing',
           });
           return z.NEVER;
         }
       } catch {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Invalid JSON string in image_properties",
+          message: 'Invalid JSON string in image_properties',
         });
         return z.NEVER;
       }
@@ -58,7 +58,7 @@ const jsonbImagePropertiesSchema = z
     // Any other type is invalid
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "image_properties must be null, object, or JSON string",
+      message: 'image_properties must be null, object, or JSON string',
     });
     return z.NEVER;
   });
@@ -68,7 +68,7 @@ export const playlistSchema = z.object({
   description: z.string().max(500).nullable(),
   image_properties: jsonbImagePropertiesSchema,
   id: z.number(),
-  type: z.enum(PLAYLIST_TYPES).default("Private"),
+  type: z.enum(PLAYLIST_TYPES).default('Private'),
   isDeletingPlaylistImage: z.boolean().default(false),
 });
 

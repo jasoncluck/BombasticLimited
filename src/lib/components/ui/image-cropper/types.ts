@@ -6,9 +6,9 @@ import type {
   AvatarRootProps,
   DialogContentProps,
   WithChildren,
-} from "bits-ui";
-import type { Snippet } from "svelte";
-import type { HTMLInputAttributes } from "svelte/elements";
+} from 'bits-ui';
+import type { Snippet } from 'svelte';
+import type { HTMLInputAttributes } from 'svelte/elements';
 
 export type ImageCropperRootProps = HTMLInputAttributes &
   WithChildren<{
@@ -19,6 +19,6 @@ export type ImageCropperRootProps = HTMLInputAttributes &
 
 export type ImageCropperDialogProps = DialogContentProps;
 
-export type ImageCropperPreviewProps = Omit<AvatarRootProps, "child"> & {
+export type ImageCropperPreviewProps = Omit<AvatarRootProps, 'child'> & {
   child?: Snippet<[{ src: string }]>;
 };

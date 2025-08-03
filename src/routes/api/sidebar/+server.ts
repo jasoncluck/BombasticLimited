@@ -1,7 +1,7 @@
-import { json } from "@sveltejs/kit";
-import type { RequestHandler } from "./$types";
-import { getUserPlaylists } from "$lib/supabase/playlists";
-import { getProfile } from "$lib/supabase/user-profiles";
+import { json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
+import { getUserPlaylists } from '$lib/supabase/playlists';
+import { getProfile } from '$lib/supabase/user-profiles';
 
 export const GET: RequestHandler = async ({ locals }) => {
   const { session, supabase } = locals;
