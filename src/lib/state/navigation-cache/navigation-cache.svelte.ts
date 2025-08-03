@@ -30,10 +30,15 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     "/jeffgerstmann",
   ]);
 
+  // Track the last set of routes sent to service worker to avoid redundant updates
+  private lastSentRoutes: string[] = [];
+
   private readonly CACHE_DURATION = 300000; // 5 minutes
   private readonly STORAGE_KEY = "navigation-cache-etags-v1";
   private readonly ANONYMOUS_ID_KEY = "navigation-cache-anonymous-id";
   private readonly PRELOADED_ROUTES_KEY = "navigation-cache-preloaded-routes";
+
+  private lastSentAuthStatus: boolean | null = null;
 
   constructor() {
     this.preloader = new RoutePreloader(
@@ -101,17 +106,26 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     try {
       const authCookie = document.cookie
         .split(";")
-        .find((cookie) => cookie.trim().startsWith("sb-127-auth-token="));
+        .find((cookie) => cookie.trim().startsWith("sb-127-auth-token"));
 
-      if (!authCookie) return false;
+      if (!authCookie) {
+        console.log("Auth check: No sb-127-auth-token cookie found");
+        return false;
+      }
 
       const cookieValue = authCookie.split("=")[1];
-      return (
+      const isValid =
         !!cookieValue &&
         cookieValue !== "null" &&
         cookieValue !== "undefined" &&
-        cookieValue.trim() !== ""
+        cookieValue.trim() !== "" &&
+        cookieValue !== "%7B%7D" && // Empty object encoded
+        cookieValue !== "{}"; // Empty object
+
+      console.log(
+        `Auth status check: ${isValid ? "authenticated" : "not authenticated"} (cookie value length: ${cookieValue?.length || 0})`,
       );
+      return isValid;
     } catch (error) {
       console.warn("Failed to check auth status:", error);
       return false;
@@ -146,26 +160,63 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     }
   }
 
+  // Helper function to compare arrays
+  private arraysEqual(a: string[], b: string[]): boolean {
+    if (a.length !== b.length) return false;
+    const sortedA = [...a].sort();
+    const sortedB = [...b].sort();
+    return sortedA.every((val, index) => val === sortedB[index]);
+  }
+
   // Call this method when auth status changes (e.g., login/logout)
   updateAuthStatus(): void {
     const isAuthenticated = this.checkAuthStatus();
-    this.sendToServiceWorker("UPDATE_AUTH_STATUS", {
-      isAuthenticated,
-    });
+
+    // Only send update if status actually changed
+    if (this.lastSentAuthStatus !== isAuthenticated) {
+      console.log(
+        `Auth status changed from ${this.lastSentAuthStatus} to ${isAuthenticated}, sending to SW`,
+      );
+      this.sendToServiceWorker("UPDATE_AUTH_STATUS", {
+        isAuthenticated,
+      });
+      this.lastSentAuthStatus = isAuthenticated;
+    } else {
+      console.log(
+        `Auth status unchanged (${isAuthenticated}), skipping SW update`,
+      );
+    }
   }
 
   setRefreshableRoutes(routes: string[]): void {
+    // Only update if routes have actually changed
+    if (this.arraysEqual(routes, this.lastSentRoutes)) {
+      return;
+    }
+
     this.refreshableRoutes = new Set(routes);
+    this.lastSentRoutes = [...routes];
     this.sendToServiceWorker("SET_REFRESHABLE_ROUTES", { routes });
+    console.log("SW: Routes updated to:", routes);
   }
 
   addRefreshableRoute(route: string): void {
+    if (this.refreshableRoutes.has(route)) {
+      return; // Route already exists
+    }
+
     this.refreshableRoutes.add(route);
+    this.lastSentRoutes = Array.from(this.refreshableRoutes);
     this.sendToServiceWorker("ADD_REFRESHABLE_ROUTE", { route });
   }
 
   removeRefreshableRoute(route: string): void {
+    if (!this.refreshableRoutes.has(route)) {
+      return; // Route doesn't exist
+    }
+
     this.refreshableRoutes.delete(route);
+    this.lastSentRoutes = Array.from(this.refreshableRoutes);
     this.sendToServiceWorker("REMOVE_REFRESHABLE_ROUTE", { route });
   }
 
@@ -176,6 +227,8 @@ export class NavigationCacheStateClass implements NavigationCacheState {
   getRefreshableRoutes(): string[] {
     return Array.from(this.refreshableRoutes);
   }
+
+  // ... rest of your methods remain the same ...
 
   private async checkServiceWorkerCache(url: string): Promise<boolean> {
     if (!browser || !("caches" in window)) return false;
@@ -357,7 +410,6 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     // For refreshable routes that might be in service worker cache,
     // assume they're likely cached to reduce loading states
     if (this.refreshableRoutes.has(pathname)) {
-      console.log(`Route ${pathname} is refreshable, assuming cached`);
       return true;
     }
 
@@ -380,7 +432,6 @@ export class NavigationCacheStateClass implements NavigationCacheState {
 
     // If this route is being refreshed by service worker, assume it's cached
     if (this.refreshableRoutes.has(toPath)) {
-      console.log(`Route ${toPath} is refreshable, skipping loading state`);
       return false;
     }
 
@@ -463,6 +514,8 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     this.currentUserId = null;
     this.anonymousId = null;
     this.serviceWorkerReady = false;
+    this.lastSentRoutes = [];
+    this.lastSentAuthStatus = null;
   }
 
   // Private methods

@@ -22,7 +22,6 @@
   import { setNavigationCacheState } from "$lib/state/navigation-cache";
 
   import "../app.css";
-  import { invalidateAll } from "$app/navigation";
 
   injectSpeedInsights();
 
@@ -52,8 +51,9 @@
 
   let user = $derived(session?.user);
   let openAccountDrawer = $derived(sidebarState.openAccountDrawer);
-  let searchQuery = $state("");
 
+  let lastUserState: boolean | null = null;
+  let searchQuery = $state("");
   // Progressive loading states
   let isHydrated = $state(false);
 
@@ -143,6 +143,52 @@
     navigation.setupNavigationHooks(userProfile, session);
   });
 
+  // Single effect to handle auth state changes and route updates
+  $effect(() => {
+    if (navigationCache && navigationCache.initialized) {
+      const isCurrentlyAuthenticated = !!user;
+
+      console.log("Layout effect - user object:", user ? "present" : "null");
+      console.log(
+        "Layout effect - isCurrentlyAuthenticated:",
+        isCurrentlyAuthenticated,
+      );
+      console.log("Layout effect - lastUserState:", lastUserState);
+
+      // Only update routes if auth state actually changed
+      if (lastUserState !== isCurrentlyAuthenticated) {
+        console.log(
+          `Layout: Auth state changed from ${lastUserState} to ${isCurrentlyAuthenticated}`,
+        );
+
+        const baseRoutes = [
+          "/",
+          "/giantbomb",
+          "/nextlander",
+          "/remap",
+          "/jeffgerstmann",
+        ];
+
+        // Only add /continue if user is authenticated AND has the auth cookie
+        const allRoutes = isCurrentlyAuthenticated
+          ? [...baseRoutes, "/continue"]
+          : baseRoutes;
+
+        console.log(
+          `Layout: Setting routes for ${isCurrentlyAuthenticated ? "authenticated" : "unauthenticated"} user:`,
+          allRoutes,
+        );
+
+        navigationCache.setRefreshableRoutes(allRoutes);
+        navigationCache.updateAuthStatus();
+
+        lastUserState = isCurrentlyAuthenticated;
+      } else {
+        console.log("Layout: Auth state unchanged, skipping update");
+      }
+    }
+  });
+
   // Progressive initialization with proper async handling
   onMount(() => {
     // Mark as hydrated immediately
@@ -167,8 +213,30 @@
         console.error("Failed to initialize layout effects:", error);
       });
 
-    // Setup navigation cache background refresh scheduler
-    setupNavigationCacheScheduler();
+    // Add simple debug helpers in development (optional)
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).cacheDebug = {
+        updateAuth: () => navigationCache.updateAuthStatus(),
+        addRoute: (route: string) => navigationCache.addRefreshableRoute(route),
+        removeRoute: (route: string) =>
+          navigationCache.removeRefreshableRoute(route),
+        stats: () => navigationCache.getPreloadStats(),
+        getRoutes: () =>
+          navigationCache.getRefreshableRoutes?.() || "Method not available",
+        clearCache: () => {
+          if (
+            "serviceWorker" in navigator &&
+            navigator.serviceWorker.controller
+          ) {
+            navigator.serviceWorker.controller.postMessage({
+              type: "CLEAR_CACHE",
+            });
+          }
+        },
+      };
+      console.log("🔧 Cache debug tools available at window.cacheDebug");
+    }
 
     // Return cleanup function
     return () => {
@@ -182,80 +250,6 @@
         layoutCleanup();
       }
     };
-  });
-
-  // Setup background refresh scheduler for navigation cache
-  function setupNavigationCacheScheduler() {
-    // Set up the base refreshable routes
-    const baseRoutes = [
-      "/",
-      "/giantbomb",
-      "/nextlander",
-      "/remap",
-      "/jeffgerstmann",
-    ];
-
-    // Add /continue if user is logged in
-    const allRoutes = user ? [...baseRoutes, "/continue"] : baseRoutes;
-
-    // Configure the routes for background refresh
-    navigationCache.setRefreshableRoutes(allRoutes);
-
-    // Set up visibility change handler for better UX
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        // User returned to tab, update auth status and potentially refresh
-        navigationCache.updateAuthStatus();
-
-        // If user was away for more than 5 minutes, trigger immediate refresh
-        const lastActivity = localStorage.getItem("last-activity");
-        if (
-          lastActivity &&
-          Date.now() - parseInt(lastActivity) > 5 * 60 * 1000
-        ) {
-          navigationCache.triggerBackgroundRefresh();
-        }
-      }
-      localStorage.setItem("last-activity", Date.now().toString());
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    // Set initial activity time
-    localStorage.setItem("last-activity", Date.now().toString());
-
-    // Add debug helpers in development
-    if (import.meta.env.DEV) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).cacheDebug = {
-        refresh: () => navigationCache.triggerBackgroundRefresh(),
-        updateAuth: () => navigationCache.updateAuthStatus(),
-        addRoute: (route: string) => navigationCache.addRefreshableRoute(route),
-        removeRoute: (route: string) =>
-          navigationCache.removeRefreshableRoute(route),
-        stats: () => navigationCache.getPreloadStats(),
-        getRoutes: () =>
-          navigationCache.getRefreshableRoutes?.() || "Method not available",
-      };
-      console.log("🔧 Cache debug tools available at window.cacheDebug");
-    }
-  }
-
-  // Watch for auth changes and update cache routes accordingly
-  $effect(() => {
-    if (navigationCache && navigationCache.initialized) {
-      const baseRoutes = [
-        "/",
-        "/giantbomb",
-        "/nextlander",
-        "/remap",
-        "/jeffgerstmann",
-      ];
-
-      const allRoutes = user ? [...baseRoutes, "/continue"] : baseRoutes;
-      navigationCache.setRefreshableRoutes(allRoutes);
-      navigationCache.updateAuthStatus();
-    }
   });
 </script>
 
