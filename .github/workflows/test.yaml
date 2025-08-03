@@ -12,3 +12,5 @@ jobs:
       - run: npm ci
       - run: npm run test:ci
       - run: npm run build:test
+        env:
+          PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
