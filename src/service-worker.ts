@@ -2,8 +2,7 @@
 /// <reference no-default-lib="true"/>
 /// <reference lib="esnext" />
 /// <reference lib="webworker" />
-/// <reference lib="DOM.Iterable" />
-//
+
 import { build, files, version } from "$service-worker";
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
@@ -149,11 +148,13 @@ class ServiceWorkerNavigationCache {
 
   private async refreshStaleRoutes(): Promise<void> {
     const navigationCache = await caches.open(NAVIGATION_CACHE);
+    const dataCache = await caches.open(DATA_CACHE);
 
     for (const route of this.refreshableRoutes) {
       try {
         // Refresh both page and data
         await this.refreshRoute(route, navigationCache);
+        await this.refreshDataForRoute(route, dataCache);
 
         await new Promise((resolve) => setTimeout(resolve, 200));
       } catch (error) {
@@ -214,6 +215,72 @@ class ServiceWorkerNavigationCache {
         url,
         timestamp: Date.now(),
       });
+    }
+  }
+
+  // New method to refresh data endpoints
+  private async refreshDataForRoute(
+    route: string,
+    dataCache: Cache,
+  ): Promise<void> {
+    // Construct the data URL for this route (without query parameters)
+    const dataUrl = `${route}/__data.json`;
+
+    try {
+      const cachedDataResponse = await dataCache.match(dataUrl);
+
+      const headers: Record<string, string> = {
+        "Cache-Control": "no-cache",
+        Pragma: "no-cache",
+      };
+
+      if (cachedDataResponse) {
+        const etag = cachedDataResponse.headers.get("etag");
+        const lastModified = cachedDataResponse.headers.get("last-modified");
+
+        if (etag) headers["If-None-Match"] = etag;
+        if (lastModified) headers["If-Modified-Since"] = lastModified;
+      }
+
+      const response = await fetch(dataUrl, {
+        method: "GET",
+        headers,
+      });
+
+      if (response.status === 304) {
+        if (cachedDataResponse) {
+          const updatedResponse = new Response(cachedDataResponse.body, {
+            status: cachedDataResponse.status,
+            statusText: cachedDataResponse.statusText,
+            headers: {
+              ...Object.fromEntries(cachedDataResponse.headers.entries()),
+              "sw-data-timestamp": Date.now().toString(),
+            },
+          });
+          await dataCache.put(dataUrl, updatedResponse);
+        }
+        return;
+      }
+
+      if (response.ok) {
+        const responseWithTimestamp = new Response(response.body, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: {
+            ...Object.fromEntries(response.headers.entries()),
+            "sw-data-timestamp": Date.now().toString(),
+          },
+        });
+
+        await dataCache.put(dataUrl, responseWithTimestamp);
+
+        await this.notifyMainThread("DATA_CACHE_UPDATED", {
+          url: dataUrl,
+          timestamp: Date.now(),
+        });
+      }
+    } catch (error) {
+      console.warn(`SW: Failed to refresh data for route ${route}:`, error);
     }
   }
 
@@ -330,6 +397,168 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
   }
 };
 
+// Handle SvelteKit data requests with selective caching
+const handleDataRequest = async (request: Request): Promise<Response> => {
+  const url = new URL(request.url);
+
+  // Check what type of invalidation this is
+  const invalidationType = navigationCache.getInvalidationType(url);
+
+  // Always bypass cache for manual invalidations (user-triggered updates)
+  if (invalidationType === "manual") {
+    console.log(`SW: Bypassing cache for manual invalidation: ${request.url}`);
+    return fetch(request);
+  }
+
+  // Check if we should cache this route
+  if (!navigationCache.shouldCacheDataRequest(url)) {
+    console.log(`SW: Bypassing cache for non-cached route: ${request.url}`);
+    return fetch(request);
+  }
+
+  // For route-change invalidations on cached routes, serve from cache if available
+  if (invalidationType === "route-change") {
+    console.log(
+      `SW: Route change invalidation detected for cached route: ${request.url}`,
+    );
+
+    const dataCache = await caches.open(DATA_CACHE);
+    // Create a clean URL without the invalidation parameter for cache lookup
+    const cleanUrl = new URL(url);
+    cleanUrl.searchParams.delete("x-sveltekit-invalidated");
+    const cleanRequest = new Request(cleanUrl.toString(), {
+      method: request.method,
+      headers: request.headers,
+    });
+
+    const cachedResponse = await dataCache.match(cleanRequest);
+
+    if (cachedResponse) {
+      const dataTimestamp = cachedResponse.headers.get("sw-data-timestamp");
+      if (dataTimestamp) {
+        const age = Date.now() - parseInt(dataTimestamp, 10);
+        // For route changes, use a longer threshold since we're avoiding network calls
+        const ROUTE_CHANGE_THRESHOLD = 60000; // 1 minute
+
+        if (age < ROUTE_CHANGE_THRESHOLD) {
+          console.log(
+            `SW: Serving cached data for route change: ${request.url}`,
+          );
+          return cachedResponse;
+        }
+      }
+
+      // Data is stale, but serve it anyway for route changes to avoid network call
+      console.log(
+        `SW: Serving stale data for route change (avoiding network): ${request.url}`,
+      );
+
+      // Optionally update in background without blocking the response
+      setTimeout(() => {
+        fetch(cleanRequest)
+          .then(async (response) => {
+            if (response.ok) {
+              const responseWithTimestamp = new Response(response.body, {
+                status: response.status,
+                statusText: response.statusText,
+                headers: {
+                  ...Object.fromEntries(response.headers.entries()),
+                  "sw-data-timestamp": Date.now().toString(),
+                },
+              });
+
+              await dataCache.put(cleanRequest, responseWithTimestamp);
+
+              navigationCache.notifyMainThread("DATA_CACHE_UPDATED", {
+                url: cleanRequest.url,
+                timestamp: Date.now(),
+              });
+            }
+          })
+          .catch((error) => {
+            console.warn("SW: Background update failed:", error);
+          });
+      }, 100);
+
+      return cachedResponse;
+    }
+  }
+
+  const dataCache = await caches.open(DATA_CACHE);
+  const cachedResponse = await dataCache.match(request);
+
+  // Check if cached data is fresh enough
+  if (cachedResponse) {
+    const dataTimestamp = cachedResponse.headers.get("sw-data-timestamp");
+    if (dataTimestamp) {
+      const age = Date.now() - parseInt(dataTimestamp, 10);
+      if (age < navigationCache.getDataStaleThreshold()) {
+        console.log(`SW: Serving fresh cached data for ${request.url}`);
+        return cachedResponse;
+      }
+    }
+  }
+
+  // If we have cached data but it's stale, serve it immediately and update in background
+  if (cachedResponse) {
+    console.log(
+      `SW: Serving stale data for ${request.url}, updating in background`,
+    );
+
+    // Update in background (don't await)
+    fetch(request)
+      .then(async (response) => {
+        if (response.ok) {
+          const responseWithTimestamp = new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: {
+              ...Object.fromEntries(response.headers.entries()),
+              "sw-data-timestamp": Date.now().toString(),
+            },
+          });
+
+          await dataCache.put(request, responseWithTimestamp);
+
+          // Notify main thread of data update
+          navigationCache.notifyMainThread("DATA_CACHE_UPDATED", {
+            url: request.url,
+            timestamp: Date.now(),
+          });
+        }
+      })
+      .catch((error) => {
+        console.warn("SW: Background data update failed:", error);
+      });
+
+    return cachedResponse;
+  }
+
+  // No cached data, fetch fresh
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const responseWithTimestamp = new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: {
+          ...Object.fromEntries(response.headers.entries()),
+          "sw-data-timestamp": Date.now().toString(),
+        },
+      });
+
+      // Cache the response
+      dataCache.put(request, responseWithTimestamp.clone());
+
+      return responseWithTimestamp;
+    }
+    return response;
+  } catch (error) {
+    console.warn("SW: Data fetch failed:", error);
+    throw error;
+  }
+};
+
 // Initialize navigation cache manager
 const navigationCache = new ServiceWorkerNavigationCache();
 
@@ -387,6 +616,13 @@ sw.addEventListener("fetch", (event) => {
 
   // Update auth status from request headers for all requests
   navigationCache.updateAuthStatusFromRequest(event.request);
+
+  // Handle SvelteKit data requests (__data.json) with selective caching
+  if (url.pathname.endsWith("/__data.json")) {
+    console.log(`SW: Processing data request: ${url.pathname}`);
+    event.respondWith(handleDataRequest(event.request));
+    return;
+  }
 
   // Handle static assets
   if (
