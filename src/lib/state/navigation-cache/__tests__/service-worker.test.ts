@@ -59,7 +59,6 @@ describe('Service Worker Cache', () => {
     put: Mock;
     delete: Mock;
   };
-  let fetchMock: Mock;
 
   beforeEach(async () => {
     mockCache = {
@@ -69,7 +68,6 @@ describe('Service Worker Cache', () => {
     };
 
     mockCaches.open.mockResolvedValue(mockCache);
-    fetchMock = fetch as Mock;
 
     vi.clearAllMocks();
   });
