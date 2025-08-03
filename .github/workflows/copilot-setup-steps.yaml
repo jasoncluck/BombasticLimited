@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - .github/workflows/copilot-setup-steps.yml
+      - .github/workflows/copilot-setup-steps.yaml
 
 jobs:
   copilot-setup-steps:
@@ -25,8 +25,13 @@ jobs:
 
       - name: Install Supabase CLI
         run: |
+          # Remove any existing supabase binary to prevent tar conflicts
+          rm -f supabase
+          # Download and extract Supabase CLI
           curl -fsSL https://github.com/supabase/cli/releases/download/v1.200.3/supabase_linux_amd64.tar.gz | tar -xz
+          # Move to system PATH and make executable
           sudo mv supabase /usr/local/bin/
+          sudo chmod +x /usr/local/bin/supabase
 
       - name: Start Supabase (with Docker)
         run: |
