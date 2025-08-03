@@ -37,12 +37,6 @@ const shouldHandleRequest = (url: URL): boolean => {
   return true;
 };
 
-// Simple cache key generation - unified with server
-const generateCacheKey = (url: URL): string => {
-  const timeSlot = Math.floor(Date.now() / 600000); // 10 minute slots
-  return `${url.pathname}-${timeSlot}`;
-};
-
 // Check if request should be cached based on ETag/Last-Modified
 const shouldCacheResponse = (response: Response): boolean => {
   return (
@@ -224,7 +218,6 @@ const preloadCriticalResources = async (): Promise<void> => {
         try {
           const data = await dataResponse.value.json();
           const clients = await sw.clients.matchAll();
-
           if (clients.length > 0) {
             clients.forEach((client) => {
               // Send cache data
@@ -245,7 +238,7 @@ const preloadCriticalResources = async (): Promise<void> => {
               });
             });
           }
-        } catch (jsonError) {
+        } catch {
           // Ignore JSON parsing errors
         }
 
@@ -395,6 +388,34 @@ sw.addEventListener("message", (event) => {
     case "REQUEST_PRELOADED_ROUTES": {
       console.log(
         `SW [${getTimestamp()}]: Client requesting preloaded routes list`,
+      );
+      // Send current preloaded routes by checking what's in cache
+      event.waitUntil(
+        (async () => {
+          try {
+            const dataCache = await caches.open(DATA_CACHE);
+            const preloadedRoutes: string[] = [];
+
+            // Check which main routes are cached
+            for (const route of MAIN_ROUTE_PATHS) {
+              const cached = await dataCache.match(route);
+              if (cached) {
+                preloadedRoutes.push(route);
+              }
+            }
+
+            event.ports[0]?.postMessage({
+              type: "PRELOADED_ROUTES_RESPONSE",
+              routes: preloadedRoutes,
+              timestamp: Date.now(),
+            });
+          } catch (error) {
+            console.warn(
+              `SW [${getTimestamp()}]: Error checking preloaded routes:`,
+              error,
+            );
+          }
+        })(),
       );
       // Send current preloaded routes by checking what's in cache
       event.waitUntil(

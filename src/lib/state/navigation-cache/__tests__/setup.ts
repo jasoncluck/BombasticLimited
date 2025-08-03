@@ -14,7 +14,7 @@ const localStorageMock = {
 const mockServiceWorkerGlobalScope = {
   skipWaiting: vi.fn(() => Promise.resolve()),
   clients: {
-    matchAll: vi.fn(() => Promise.resolve([])),
+    matchAll: vi.fn(() => Promise.resolve([] as Array<{ postMessage: any }>)),
     claim: vi.fn(() => Promise.resolve()),
   },
   location: { origin: "http://localhost:5173" },
@@ -24,7 +24,7 @@ const mockServiceWorkerGlobalScope = {
 // Mock caches API
 const mockCaches = {
   open: vi.fn(),
-  keys: vi.fn(() => Promise.resolve([])),
+  keys: vi.fn(() => Promise.resolve([] as string[])),
   delete: vi.fn(() => Promise.resolve(true)),
 };
 
@@ -47,6 +47,45 @@ beforeEach(() => {
 
   Object.defineProperty(global, "fetch", {
     value: vi.fn(),
+    writable: true,
+  });
+
+  // Mock browser environment
+  Object.defineProperty(global, "navigator", {
+    value: {
+      serviceWorker: {
+        ready: Promise.resolve({
+          active: {
+            postMessage: vi.fn(),
+          },
+        }),
+        controller: {
+          postMessage: vi.fn(),
+        },
+        addEventListener: vi.fn(),
+      },
+    },
+    writable: true,
+  });
+
+  Object.defineProperty(global, "MessageChannel", {
+    value: class MockMessageChannel {
+      port1 = {
+        onmessage: null as ((event: MessageEvent) => void) | null,
+        postMessage: vi.fn(),
+      };
+      port2 = {
+        onmessage: null as ((event: MessageEvent) => void) | null,
+        postMessage: vi.fn(),
+      };
+    },
+    writable: true,
+  });
+
+  Object.defineProperty(global, "document", {
+    value: {
+      cookie: "",
+    },
     writable: true,
   });
 

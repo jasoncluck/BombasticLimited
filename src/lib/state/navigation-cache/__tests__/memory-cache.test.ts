@@ -253,7 +253,11 @@ describe("OptimizedMemoryCache", () => {
         ttl: 1, // 1ms
         userId: "user123",
       });
+<<<<<<< HEAD
 
+=======
+      
+>>>>>>> copilot/fix-fdde5248-cc87-44ce-9c35-746cacb995b9
       // Add valid entry
       cache.handleServiceWorkerMessage({
         type: "CACHE_SET",
@@ -266,11 +270,17 @@ describe("OptimizedMemoryCache", () => {
       return new Promise((resolve) => {
         setTimeout(() => {
           cache.cleanup();
+<<<<<<< HEAD
 
           expect(cache.get("page:/expired", "user123")).toBeNull();
           expect(cache.get("page:/valid", "user123")).toEqual({
             test: "valid",
           });
+=======
+          
+          expect(cache.get("page:/expired", "user123")).toBeNull();
+          expect(cache.get("page:/valid", "user123")).toEqual({ test: "valid" });
+>>>>>>> copilot/fix-fdde5248-cc87-44ce-9c35-746cacb995b9
           resolve(undefined);
         }, 10);
       });
@@ -339,9 +349,17 @@ describe("OptimizedMemoryCache", () => {
       // (Note: This test depends on eviction policy implementation)
       const preloadedExists = cache.get("page:/preloaded", "user123") !== null;
       const regularExists = cache.get("page:/regular", "user123") !== null;
+<<<<<<< HEAD
 
+=======
+      
+>>>>>>> copilot/fix-fdde5248-cc87-44ce-9c35-746cacb995b9
       // At least one should exist, and if only one exists, it should be preloaded
       expect(preloadedExists || regularExists).toBe(true);
     });
   });
+<<<<<<< HEAD
 });
+=======
+});
+>>>>>>> copilot/fix-fdde5248-cc87-44ce-9c35-746cacb995b9
