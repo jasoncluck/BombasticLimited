@@ -2,6 +2,7 @@
 /// <reference no-default-lib="true"/>
 /// <reference lib="esnext" />
 /// <reference lib="webworker" />
+/// <reference lib="DOM.Iterable" />
 
 import { build, files, version } from "$service-worker";
 
@@ -31,6 +32,10 @@ class ServiceWorkerNavigationCache {
   private readonly STALE_THRESHOLD = 60000; // 1 minute
   private readonly AUTH_COOKIE_NAME = "sb-127-auth-token";
   private readonly DATA_STALE_THRESHOLD = 30000; // 30 seconds for data
+
+  // Track recent navigation events to help distinguish page transitions
+  private recentNavigations = new Map<string, number>();
+  private readonly NAVIGATION_WINDOW = 2000; // 2 seconds window for navigation detection
 
   async initialize(): Promise<void> {
     // Initialize routes based on auth status
@@ -134,6 +139,12 @@ class ServiceWorkerNavigationCache {
       case "TRIGGER_REFRESH":
         this.updateRefreshableRoutes();
         await this.refreshStaleRoutes();
+        break;
+      case "PAGE_NAVIGATION":
+        // Track page navigation events from the main thread
+        if (data?.route) {
+          this.trackNavigation(data.route);
+        }
         break;
     }
   }
@@ -331,17 +342,88 @@ class ServiceWorkerNavigationCache {
     return Array.from(this.refreshableRoutes);
   }
 
+  // Track navigation events to help with context detection
+  trackNavigation(route: string): void {
+    this.recentNavigations.set(route, Date.now());
+
+    // Clean up old navigation records
+    const cutoff = Date.now() - this.NAVIGATION_WINDOW;
+    for (const [key, timestamp] of this.recentNavigations.entries()) {
+      if (timestamp < cutoff) {
+        this.recentNavigations.delete(key);
+      }
+    }
+  }
+
+  // Check if a route was recently navigated to
+  private wasRecentlyNavigated(route: string): boolean {
+    const navigationTime = this.recentNavigations.get(route);
+    if (!navigationTime) return false;
+
+    const age = Date.now() - navigationTime;
+    return age < this.NAVIGATION_WINDOW;
+  }
+
   // New method to check if a data request should be cached
-  shouldCacheDataRequest(url: URL): boolean {
+  shouldCacheDataRequest(url: URL, request: Request): boolean {
     // Extract the route path from the __data.json URL
     const routePath = url.pathname.replace("/__data.json", "") || "/";
 
     // Only cache data for routes we're actively refreshing
-    return this.refreshableRoutes.has(routePath);
+    if (!this.refreshableRoutes.has(routePath)) {
+      return false;
+    }
+
+    // Check if this is part of a page transition
+    return this.isPageTransition(url, request);
+  }
+
+  // Enhanced method to detect if this is a page transition vs same-page action
+  private isPageTransition(url: URL, request: Request): boolean {
+    const referrer = request.referrer;
+    const routePath = url.pathname.replace("/__data.json", "") || "/";
+
+    // If no referrer, likely a direct navigation or page refresh
+    if (!referrer || referrer === "") {
+      return true;
+    }
+
+    try {
+      const referrerUrl = new URL(referrer);
+      const referrerPath = referrerUrl.pathname;
+
+      // If the referrer is from a different route, this is likely a page transition
+      if (referrerPath !== routePath) {
+        console.log(
+          `SW: Page transition detected - referrer: ${referrerPath}, target: ${routePath}`,
+        );
+        return true;
+      }
+
+      // Check if this route was recently navigated to
+      if (this.wasRecentlyNavigated(routePath)) {
+        console.log(`SW: Recent navigation detected for route: ${routePath}`);
+        return true;
+      }
+
+      // Same referrer path suggests same-page action
+      console.log(`SW: Same-page action detected for route: ${routePath}`);
+      return false;
+    } catch (error) {
+      // If we can't parse the referrer, assume it's a page transition to be safe
+      console.warn(
+        "SW: Error parsing referrer, assuming page transition:",
+        error,
+      );
+      return true;
+    }
   }
 
   // Enhanced method to detect different types of invalidation requests
-  getInvalidationType(url: URL): "route-change" | "manual" | "none" {
+  getInvalidationType(
+    url: URL,
+    request: Request,
+  ): "page-transition" | "same-page" | "manual" | "none" {
     // Check if this is an invalidation request
     if (!url.searchParams.has("x-sveltekit-invalidated")) {
       return "none";
@@ -349,15 +431,7 @@ class ServiceWorkerNavigationCache {
 
     const invalidatedParam = url.searchParams.get("x-sveltekit-invalidated");
 
-    // Route change invalidations typically have specific patterns
-    // SvelteKit uses numbers for route changes, and specific strings for manual invalidations
-    if (invalidatedParam && /^\d+$/.test(invalidatedParam)) {
-      // Numeric invalidation IDs are typically route changes
-      return "route-change";
-    }
-
-    // Check for specific manual invalidation patterns
-    // These are typically triggered by invalidate() calls in your code
+    // Check for specific manual invalidation patterns first
     const manualPatterns = [
       "supabase:db:", // Your database invalidations
       "user:", // User-specific invalidations
@@ -373,8 +447,12 @@ class ServiceWorkerNavigationCache {
       return "manual";
     }
 
-    // Default to route-change for unknown patterns to be safe
-    return "route-change";
+    // Use page transition detection to determine context
+    if (this.isPageTransition(url, request)) {
+      return "page-transition";
+    } else {
+      return "same-page";
+    }
   }
 }
 
@@ -397,29 +475,33 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
   }
 };
 
-// Handle SvelteKit data requests with selective caching
+// Handle SvelteKit data requests with selective caching based on navigation context
 const handleDataRequest = async (request: Request): Promise<Response> => {
   const url = new URL(request.url);
 
-  // Check what type of invalidation this is
-  const invalidationType = navigationCache.getInvalidationType(url);
+  // Check what type of invalidation this is with enhanced context detection
+  const invalidationType = navigationCache.getInvalidationType(url, request);
 
-  // Always bypass cache for manual invalidations (user-triggered updates)
-  if (invalidationType === "manual") {
-    console.log(`SW: Bypassing cache for manual invalidation: ${request.url}`);
-    return fetch(request);
-  }
-
-  // Check if we should cache this route
-  if (!navigationCache.shouldCacheDataRequest(url)) {
-    console.log(`SW: Bypassing cache for non-cached route: ${request.url}`);
-    return fetch(request);
-  }
-
-  // For route-change invalidations on cached routes, serve from cache if available
-  if (invalidationType === "route-change") {
+  // Always bypass cache for manual invalidations and same-page actions
+  if (invalidationType === "manual" || invalidationType === "same-page") {
     console.log(
-      `SW: Route change invalidation detected for cached route: ${request.url}`,
+      `SW: Bypassing cache for ${invalidationType} invalidation: ${request.url}`,
+    );
+    return fetch(request);
+  }
+
+  // Check if we should cache this route (only for page transitions)
+  if (!navigationCache.shouldCacheDataRequest(url, request)) {
+    console.log(
+      `SW: Bypassing cache for non-cached route or non-transition: ${request.url}`,
+    );
+    return fetch(request);
+  }
+
+  // For page-transition invalidations on cached routes, serve from cache if available
+  if (invalidationType === "page-transition") {
+    console.log(
+      `SW: Page transition invalidation detected for cached route: ${request.url}`,
     );
 
     const dataCache = await caches.open(DATA_CACHE);
@@ -437,23 +519,23 @@ const handleDataRequest = async (request: Request): Promise<Response> => {
       const dataTimestamp = cachedResponse.headers.get("sw-data-timestamp");
       if (dataTimestamp) {
         const age = Date.now() - parseInt(dataTimestamp, 10);
-        // For route changes, use a longer threshold since we're avoiding network calls
-        const ROUTE_CHANGE_THRESHOLD = 60000; // 1 minute
+        // For page transitions, use a longer threshold since we're optimizing for speed
+        const PAGE_TRANSITION_THRESHOLD = 120000; // 2 minutes
 
-        if (age < ROUTE_CHANGE_THRESHOLD) {
+        if (age < PAGE_TRANSITION_THRESHOLD) {
           console.log(
-            `SW: Serving cached data for route change: ${request.url}`,
+            `SW: Serving cached data for page transition: ${request.url}`,
           );
           return cachedResponse;
         }
       }
 
-      // Data is stale, but serve it anyway for route changes to avoid network call
+      // Data is somewhat stale, but serve it anyway for page transitions to optimize speed
       console.log(
-        `SW: Serving stale data for route change (avoiding network): ${request.url}`,
+        `SW: Serving stale data for page transition (optimizing speed): ${request.url}`,
       );
 
-      // Optionally update in background without blocking the response
+      // Update in background without blocking the response
       setTimeout(() => {
         fetch(cleanRequest)
           .then(async (response) => {
@@ -484,6 +566,7 @@ const handleDataRequest = async (request: Request): Promise<Response> => {
     }
   }
 
+  // Fallback to regular caching logic for other cases
   const dataCache = await caches.open(DATA_CACHE);
   const cachedResponse = await dataCache.match(request);
 
@@ -617,7 +700,7 @@ sw.addEventListener("fetch", (event) => {
   // Update auth status from request headers for all requests
   navigationCache.updateAuthStatusFromRequest(event.request);
 
-  // Handle SvelteKit data requests (__data.json) with selective caching
+  // Handle SvelteKit data requests (__data.json) with enhanced context-aware caching
   if (url.pathname.endsWith("/__data.json")) {
     console.log(`SW: Processing data request: ${url.pathname}`);
     event.respondWith(handleDataRequest(event.request));
@@ -633,8 +716,11 @@ sw.addEventListener("fetch", (event) => {
     return;
   }
 
-  // For navigation requests, check if we have fresh cached data
+  // For navigation requests, track the navigation and check if we have fresh cached data
   if (event.request.mode === "navigate") {
+    // Track this navigation event
+    navigationCache.trackNavigation(url.pathname);
+
     event.respondWith(
       (async () => {
         const cache = await caches.open(NAVIGATION_CACHE);
