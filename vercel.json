@@ -1,0 +1,12 @@
+{
+  "buildCommand": "npm run build:vercel",
+  "devCommand": "npm run dev",
+  "installCommand": "npm ci",
+  "framework": "sveltekit",
+  "regions": ["pdx2", "iad1"],
+  "functions": {
+    "src/routes/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  }
+}

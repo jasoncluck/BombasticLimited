@@ -1,0 +1,54 @@
+name: "Copilot Setup Steps"
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Supabase CLI
+        run: |
+          curl -fsSL https://github.com/supabase/cli/releases/download/v1.200.3/supabase_linux_amd64.tar.gz | tar -xz
+          sudo mv supabase /usr/local/bin/
+
+      - name: Start Supabase (with Docker)
+        run: |
+          supabase start
+          # Wait for services to be ready
+          sleep 10
+
+      - name: Set up environment variables
+        run: |
+          echo "DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres" >> $GITHUB_ENV
+          echo "SUPABASE_URL=http://127.0.0.1:54321" >> $GITHUB_ENV
+          echo "SUPABASE_ANON_KEY=$(supabase status | grep 'anon key' | awk '{print $3}')" >> $GITHUB_ENV
+          echo "SUPABASE_SERVICE_ROLE_KEY=$(supabase status | grep 'service_role key' | awk '{print $3}')" >> $GITHUB_ENV
+          echo "NODE_ENV=test" >> $GITHUB_ENV
+
+      - name: Generate types
+        run: npm run generate-types
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps
+
+      - name: Verify database setup
+        run: |
+          echo "Supabase Status:"
+          supabase status

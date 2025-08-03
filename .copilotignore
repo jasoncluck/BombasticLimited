@@ -1,0 +1,8 @@
+node_modules/
+.svelte-kit/
+build/
+dist/
+*.log
+cdk/node_modules/
+static/
+ssl/
