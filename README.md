@@ -1,186 +1,205 @@
-# sv
+# Supabase CLI (v1)
 
-Everything you need to build a Svelte project, powered by
-[`sv`](https://github.com/sveltejs/cli).
+[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main)
 
-## API Key Set up
+[Supabase](https://supabase.io) is an open source Firebase alternative. We're
+building the features of Firebase using enterprise-grade open source tools.
 
-### Application
+This repository contains all the functionality for Supabase CLI.
 
-The following variables are needed to setup a working developer environment. To
-get these you will need:
+- [x] Running Supabase locally
+- [x] Managing database migrations
+- [x] Creating and deploying Supabase Functions
+- [x] Generating types directly from your database schema
+- [x] Making authenticated HTTP requests to
+      [Management API](https://supabase.com/docs/reference/api/introduction)
 
-- A [Supabase]("https://supabase.com/") account with a separate project created
-  for this application. This will provide the public URL and anon key.
-- A Twitch developer account which can be created on <https://dev.twitch.tv/>.
-- An [ngrok](https://ngrok.com/) account for testing Twitch webhooks locally
-  without setting up local HTTPS certs.
+## Getting started
 
-```env
-PUBLIC_SUPABASE_URL="<YOUR_SUPABASE_URL"
-PUBLIC_SUPABASE_ANON_KEY="<YOUR_SUPABASE_ANON_KEY"
-TWITCH_CLIENT_ID="<YOUR_TWITCH_CLIENT_ID"
-TWITCH_CLIENT_SECRET="<YOUR_TWITCH_CLIENT_SECRET>"
-NGROK_AUTH_TOKEN="<YOUR_NGROK_AUTH_TOKEN>"
+### Install the CLI
 
-
-```
-
-### Compute Infrastructure
-
-AWS is used (with CDK) to populate the Supabase tables with the video
-information from YouTube. This functionality is split out into a separate npm
-package under the cdk/ folder. This is not currently set up as a monorepo and
-requires a separate set of env vars. In addition to the below keys an AWS
-account is needed and the CLI tools for
-[AWS]("https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html")
-and [CDK]("https://docs.aws.amazon.com/cdk/v2/guide/getting-started.html"). I'd
-suggest creating an AWS IAM Identity Center instance in your account then
-creating a user with appropriate permissions. This simplifies the credential
-refresh process with the AWS CLI to be: `aws sso login`.
-
-NOTE: This should be fixed before going live.
-
-```
-GOOGLE_API_KEY="<YOUR_GOOGLE_API_KEY"
-
-SUPABASE_URL="<YOUR_SUPABASE_API_URL>"
-SUPABASE_SERVICE_API_KEY="<YOUR_PRIVATE_SUPABASE_KEY>"
-
-```
-
-##
-
-## Creating a project
-
-If you're seeing this, you've probably already done this step. Congrats!
+Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
 
 ```bash
-# create a new project in the current directory
-npx sv create
-
-# create a new project in my-app
-npx sv create my-app
+npm i supabase --save-dev
 ```
+
+To install the beta release channel:
+
+```bash
+npm i supabase@beta --save-dev
+```
+
+When installing with yarn 4, you need to disable experimental fetch with the
+following nodejs config.
+
+```
+NODE_OPTIONS=--no-experimental-fetch yarn add supabase
+```
+
+> **Note** For Bun versions below v1.0.17, you must add `supabase` as a
+> [trusted dependency](https://bun.sh/guides/install/trusted) before running
+> `bun add -D supabase`.
+
+<details>
+  <summary><b>macOS</b></summary>
+
+Available via [Homebrew](https://brew.sh). To install:
+
+```sh
+brew install supabase/tap/supabase
+```
+
+To install the beta release channel:
+
+```sh
+brew install supabase/tap/supabase-beta
+brew link --overwrite supabase-beta
+```
+
+To upgrade:
+
+```sh
+brew upgrade supabase
+```
+
+</details>
+
+<details>
+  <summary><b>Windows</b></summary>
+
+Available via [Scoop](https://scoop.sh). To install:
+
+```powershell
+scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+scoop install supabase
+```
+
+To upgrade:
+
+```powershell
+scoop update supabase
+```
+
+</details>
+
+<details>
+  <summary><b>Linux</b></summary>
+
+Available via [Homebrew](https://brew.sh) and Linux packages.
+
+#### via Homebrew
+
+To install:
+
+```sh
+brew install supabase/tap/supabase
+```
+
+To upgrade:
+
+```sh
+brew upgrade supabase
+```
+
+#### via Linux packages
+
+Linux packages are provided in
+[Releases](https://github.com/supabase/cli/releases). To install, download the
+`.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and
+run the respective commands.
+
+```sh
+sudo apk add --allow-untrusted <...>.apk
+```
+
+```sh
+sudo dpkg -i <...>.deb
+```
+
+```sh
+sudo rpm -i <...>.rpm
+```
+
+```sh
+sudo pacman -U <...>.pkg.tar.zst
+```
+
+</details>
+
+<details>
+  <summary><b>Other Platforms</b></summary>
+
+You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install)
+without the help of package managers.
+
+```sh
+go install github.com/supabase/cli@latest
+```
+
+Add a symlink to the binary in `$PATH` for easier access:
+
+```sh
+ln -s "$(go env GOPATH)/cli" /usr/bin/supabase
+```
+
+This works on other non-standard Linux distros.
+
+</details>
+
+<details>
+  <summary><b>Community Maintained Packages</b></summary>
+
+Available via [pkgx](https://pkgx.sh/). Package script
+[here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
+To install in your working directory:
+
+```bash
+pkgx install supabase
+```
+
+Available via [Nixpkgs](https://nixos.org/). Package script
+[here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
+
+</details>
+
+### Run the CLI
+
+```bash
+supabase bootstrap
+```
+
+Or using npx:
+
+```bash
+npx supabase bootstrap
+```
+
+The bootstrap command will guide you through the process of setting up a
+Supabase project using one of the
+[starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json)
+templates.
+
+## Docs
+
+Command & config reference can be found
+[here](https://supabase.com/docs/reference/cli/about).
+
+## Breaking changes
+
+We follow semantic versioning for changes that directly impact CLI commands,
+flags, and configurations.
+
+However, due to dependencies on other service images, we cannot guarantee that
+schema migrations, seed.sql, and generated types will always work for the same
+CLI major version. If you need such guarantees, we encourage you to pin a
+specific version of CLI in package.json.
 
 ## Developing
 
-Once you've created a project and installed dependencies with `npm install` (or
-`pnpm install` or `yarn`), start a development server:
+To run from source:
 
-```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-## Testing
-
-### Unit and Component Tests
-
-```bash
-npm run test          # Run tests in watch mode
-npm run test:run      # Run tests once
-npm run test:coverage # Run with coverage report
-```
-
-### End-to-End Tests
-
-```bash
-npm run test:e2e      # Run Playwright e2e tests
-npm run test:e2e:ui   # Run with UI
-```
-
-### SQL Database Tests
-
-```bash
-npm run test:sql               # Run all SQL tests
-npm run test:sql:syntax        # Syntax validation only
-npm run test:sql:migration     # Migration tests
-npm run test:sql:functional    # Functional tests
-npm run test:sql:integration   # Integration tests
-npm run test:sql:runner        # Run with custom script
-```
-
-For detailed SQL testing documentation, see
-[docs/SQL_TESTING.md](docs/SQL_TESTING.md).
-
-**Note:** SQL tests require a running Supabase instance. Start with
-`supabase start` before running database-dependent tests.
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an
-> [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
-
-## Testing
-
-This project includes comprehensive testing with both unit tests and end-to-end
-tests.
-
-### Unit Tests
-
-Run unit tests with Vitest:
-
-```bash
-npm run test          # Run tests in watch mode
-npm run test:run      # Run tests once
-npm run test:coverage # Run tests with coverage report
-npm run test:ui       # Run tests with UI
-```
-
-### End-to-End Tests
-
-Run E2E tests with Playwright (includes mobile browser support):
-
-```bash
-npm run test:e2e           # Run all E2E tests
-npm run test:e2e:mobile    # Run mobile-only tests
-npm run test:e2e:desktop   # Run desktop-only tests
-npm run test:e2e:ui        # Run tests with interactive UI
-npm run test:e2e:debug     # Run tests in debug mode
-npm run test:e2e:report    # View test reports
-```
-
-#### First-time Setup
-
-Install Playwright browsers:
-
-```bash
-npx playwright install
-```
-
-#### Test Coverage
-
-E2E tests cover:
-
-- **Cross-browser compatibility** (Chrome, Firefox, Safari)
-- **Mobile device emulation** (iPhone, Android devices)
-- **Responsive design testing**
-- **Touch interactions** (tap, swipe, pinch zoom)
-- **User interaction flows**
-- **Accessibility features**
-
-For detailed testing documentation, see
-[tests/e2e/README.md](tests/e2e/README.md).
-
-### Run All Tests
-
-```bash
-npm run test:all  # Run both unit and E2E tests
+```sh
+# Go >= 1.22
+go run . help
 ```
