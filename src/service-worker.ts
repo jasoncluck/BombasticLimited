@@ -10,14 +10,13 @@ const sw = self as unknown as ServiceWorkerGlobalScope;
 
 const STATIC_CACHE = `bombastic-static-${version}`;
 const NAVIGATION_CACHE = `bombastic-navigation-${version}`;
-const DATA_CACHE = `bombastic-data-${version}`;
 const STATIC_ASSETS = [...build, ...files];
 
 // Only cache truly static assets - let navigation cache handle dynamic content
 const STATIC_EXTENSIONS =
   /\.(js|css|woff2?|ttf|eot|jpg|jpeg|png|gif|svg|webp|ico)$/;
 
-// Navigation Cache Manager for background refresh
+// Navigation Cache Manager for background refresh (populate cache but don't serve from it)
 class ServiceWorkerNavigationCache {
   private baseRefreshableRoutes = new Set<string>([
     "/",
@@ -29,9 +28,7 @@ class ServiceWorkerNavigationCache {
   private refreshableRoutes = new Set<string>();
   private refreshInterval = 120000; // 2 minutes
   private refreshTimer: ReturnType<typeof setTimeout> | null = null;
-  private readonly STALE_THRESHOLD = 60000; // 1 minute
   private readonly AUTH_COOKIE_NAME = "sb-127-auth-token";
-  private readonly DATA_STALE_THRESHOLD = 30000; // 30 seconds for data
 
   async initialize(): Promise<void> {
     // Initialize routes based on auth status
@@ -152,7 +149,7 @@ class ServiceWorkerNavigationCache {
 
     for (const route of this.refreshableRoutes) {
       try {
-        // Refresh both page and data
+        // Refresh route to populate cache
         await this.refreshRoute(route, navigationCache);
 
         await new Promise((resolve) => setTimeout(resolve, 200));
@@ -208,6 +205,7 @@ class ServiceWorkerNavigationCache {
         },
       });
 
+      // Store in cache for background refresh purposes only
       await cache.put(url, responseWithTimestamp);
 
       await this.notifyMainThread("CACHE_UPDATED", {
@@ -252,62 +250,8 @@ class ServiceWorkerNavigationCache {
     }
   }
 
-  getStaleThreshold(): number {
-    return this.STALE_THRESHOLD;
-  }
-
-  getDataStaleThreshold(): number {
-    return this.DATA_STALE_THRESHOLD;
-  }
-
   getRefreshableRoutes(): string[] {
     return Array.from(this.refreshableRoutes);
-  }
-
-  // New method to check if a data request should be cached
-  shouldCacheDataRequest(url: URL): boolean {
-    // Extract the route path from the __data.json URL
-    const routePath = url.pathname.replace("/__data.json", "") || "/";
-
-    // Only cache data for routes we're actively refreshing
-    return this.refreshableRoutes.has(routePath);
-  }
-
-  // Enhanced method to detect different types of invalidation requests
-  getInvalidationType(url: URL): "route-change" | "manual" | "none" {
-    // Check if this is an invalidation request
-    if (!url.searchParams.has("x-sveltekit-invalidated")) {
-      return "none";
-    }
-
-    const invalidatedParam = url.searchParams.get("x-sveltekit-invalidated");
-
-    // Route change invalidations typically have specific patterns
-    // SvelteKit uses numbers for route changes, and specific strings for manual invalidations
-    if (invalidatedParam && /^\d+$/.test(invalidatedParam)) {
-      // Numeric invalidation IDs are typically route changes
-      return "route-change";
-    }
-
-    // Check for specific manual invalidation patterns
-    // These are typically triggered by invalidate() calls in your code
-    const manualPatterns = [
-      "supabase:db:", // Your database invalidations
-      "user:", // User-specific invalidations
-      "playlist:", // Playlist invalidations
-      "video:", // Video invalidations
-      "manual", // Explicit manual invalidations
-    ];
-
-    if (
-      invalidatedParam &&
-      manualPatterns.some((pattern) => invalidatedParam.includes(pattern))
-    ) {
-      return "manual";
-    }
-
-    // Default to route-change for unknown patterns to be safe
-    return "route-change";
   }
 }
 
@@ -328,6 +272,13 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
     console.warn("Static cache error:", error);
     return fetch(request);
   }
+};
+
+// Helper function to check if request is for a static asset
+const isStaticAsset = (url: URL): boolean => {
+  return (
+    STATIC_ASSETS.includes(url.pathname) || STATIC_EXTENSIONS.test(url.pathname)
+  );
 };
 
 // Initialize navigation cache manager
@@ -365,8 +316,7 @@ sw.addEventListener("activate", (event) => {
                 (key) =>
                   key.startsWith("bombastic-") &&
                   key !== STATIC_CACHE &&
-                  key !== NAVIGATION_CACHE &&
-                  key !== DATA_CACHE,
+                  key !== NAVIGATION_CACHE,
               )
               .map((key) => caches.delete(key)),
           ),
@@ -376,7 +326,7 @@ sw.addEventListener("activate", (event) => {
   );
 });
 
-// Fetch event - handle static assets, navigation cache, and data requests
+// Fetch event - ONLY serve static assets from cache, everything else goes to network
 sw.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
@@ -388,62 +338,19 @@ sw.addEventListener("fetch", (event) => {
   // Update auth status from request headers for all requests
   navigationCache.updateAuthStatusFromRequest(event.request);
 
-  // Handle static assets
-  if (
-    STATIC_ASSETS.includes(url.pathname) ||
-    STATIC_EXTENSIONS.test(url.pathname)
-  ) {
+  // ONLY serve static assets from cache
+  if (isStaticAsset(url)) {
     event.respondWith(cacheStaticAsset(event.request));
     return;
   }
 
-  // For navigation requests, check if we have fresh cached data
-  if (event.request.mode === "navigate") {
-    event.respondWith(
-      (async () => {
-        const cache = await caches.open(NAVIGATION_CACHE);
-        const cachedResponse = await cache.match(event.request);
-
-        if (cachedResponse) {
-          const cacheTimestamp =
-            cachedResponse.headers.get("sw-cache-timestamp");
-          if (cacheTimestamp) {
-            const age = Date.now() - parseInt(cacheTimestamp, 10);
-            if (age < navigationCache.getStaleThreshold()) {
-              return cachedResponse;
-            }
-          }
-        }
-
-        try {
-          const response = await fetch(event.request);
-          if (response.ok) {
-            const responseWithTimestamp = new Response(response.body, {
-              status: response.status,
-              statusText: response.statusText,
-              headers: {
-                ...Object.fromEntries(response.headers.entries()),
-                "sw-cache-timestamp": Date.now().toString(),
-              },
-            });
-
-            cache.put(event.request, responseWithTimestamp.clone());
-
-            return responseWithTimestamp;
-          }
-          return response;
-        } catch (error) {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-          throw error;
-        }
-      })(),
-    );
-  }
+  // For ALL other requests (navigation, XHR, data, API calls) - ALWAYS fetch fresh
+  // This ensures no stale data is ever served, but the background refresh
+  // will still populate the cache for faster subsequent requests
+  event.respondWith(fetch(event.request));
 });
 
-// Enhanced message handling
+// Message handling for cache management and navigation cache
 sw.addEventListener("message", (event) => {
   const { type } = event.data || {};
 
@@ -453,8 +360,6 @@ sw.addEventListener("message", (event) => {
     event.waitUntil(caches.delete(STATIC_CACHE));
   } else if (type === "INVALIDATE_NAVIGATION_CACHE") {
     event.waitUntil(caches.delete(NAVIGATION_CACHE));
-  } else if (type === "INVALIDATE_DATA_CACHE") {
-    event.waitUntil(caches.delete(DATA_CACHE));
   } else {
     event.waitUntil(navigationCache.handleMessage({ data: event.data }));
   }
