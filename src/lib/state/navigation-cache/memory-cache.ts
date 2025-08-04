@@ -19,7 +19,7 @@ export interface CacheStats {
 }
 export class OptimizedMemoryCache {
   private cache = new Map<string, MemoryCacheEntry>();
-  private maxSize = 25 * 1024 * 1024; // 25MB
+  private maxSize = 50 * 1024 * 1024; // 50MB
   private currentSize = 0;
 
   // Private method - only service worker can populate cache via message passing

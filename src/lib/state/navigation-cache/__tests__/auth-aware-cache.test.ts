@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { NavigationCacheStateClass } from '../navigation-cache.svelte.ts';
-import { OptimizedMemoryCache } from '../memory-cache.ts';
+import { NavigationCacheStateClass } from '../navigation-cache.svelte';
+import { OptimizedMemoryCache } from '../memory-cache';
 
 // Mock browser environment
 Object.defineProperty(global, 'window', {

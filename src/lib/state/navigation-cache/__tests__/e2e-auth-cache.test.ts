@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { NavigationCacheStateClass } from '../navigation-cache.svelte.ts';
+import { NavigationCacheStateClass } from '../navigation-cache.svelte';
 
 // Mock browser environment properly for testing
 vi.mock('$app/environment', () => ({
