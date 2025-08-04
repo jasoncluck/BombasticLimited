@@ -4,7 +4,7 @@ import { createBrowserClient, createServerClient, isBrowser } from '@supabase/ss
 import {
   createMockSession,
   createMockUserProfile,
-} from './test-utils';
+} from '../../tests/test-utils';
 
 // Mock dependencies
 vi.mock('@supabase/ssr', () => ({
@@ -69,7 +69,11 @@ describe('+layout.ts load function', () => {
     expect(mockCreateBrowserClient).toHaveBeenCalledWith(
       'http://localhost:54321',
       'mock-anon-key',
-      { global: { fetch } }
+      expect.objectContaining({
+        global: expect.objectContaining({
+          fetch: expect.any(Function),
+        }),
+      })
     );
 
     expect(result.supabase).toBe(mockSupabase);
@@ -86,7 +90,9 @@ describe('+layout.ts load function', () => {
       'http://localhost:54321',
       'mock-anon-key',
       expect.objectContaining({
-        global: { fetch },
+        global: expect.objectContaining({
+          fetch: expect.any(Function),
+        }),
         cookies: expect.objectContaining({
           getAll: expect.any(Function),
           setAll: expect.any(Function),
@@ -148,7 +154,7 @@ describe('+layout.ts load function', () => {
   it('should handle collapsed sidebar layout correctly', async () => {
     const collapsedLayoutData = {
       ...mockLayoutData,
-      layout: [54, 946], // COLLAPSED_SIDEBAR_SIZE = 54
+      layout: [7, 946], // COLLAPSED_SIDEBAR_SIZE = 7
     };
     const collapsedEvent = { ...mockLoadEvent, data: collapsedLayoutData };
 

@@ -6,7 +6,7 @@ import {
   createMockSession,
   createMockUserProfile,
   createMockProfileResponse,
-} from './test-utils';
+} from '../../tests/test-utils';
 
 // Mock dependencies
 vi.mock('$lib/supabase/user-profiles', () => ({
@@ -158,7 +158,8 @@ describe('+layout.server.ts load function', () => {
   });
 
   it('should handle cache hit detection', async () => {
-    const etag = '"test-cache-key"';
+    const timeSlot = Math.floor(Date.now() / 600000);
+    const etag = `"/-user-1-${timeSlot}"`;
     const requestWithEtag = {
       ...mockLayoutEvent,
       request: {
@@ -176,12 +177,15 @@ describe('+layout.server.ts load function', () => {
   it('should handle errors gracefully', async () => {
     mockGetProfile.mockRejectedValue(new Error('Profile fetch failed'));
 
-    await expect(load(mockLayoutEvent)).resolves.toBeDefined();
+    await expect(load(mockLayoutEvent)).rejects.toThrow('Profile fetch failed');
   });
 
   it('should work without session (anonymous user)', async () => {
     mockSafeGetSession.mockResolvedValue({ session: null });
-    mockGetProfile.mockResolvedValue(createMockProfileResponse(null));
+    mockGetProfile.mockResolvedValue({
+      profile: null,
+      error: null,
+    });
 
     const result = await load(mockLayoutEvent) as any;
 

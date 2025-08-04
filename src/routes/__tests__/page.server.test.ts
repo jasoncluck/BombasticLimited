@@ -11,7 +11,7 @@ import {
   createMockVideoResponse,
   createMockContinueWatchingResponse,
   createMockErrorResponse,
-} from './test-utils';
+} from '../../tests/test-utils';
 
 // Mock dependencies
 vi.mock('@sveltejs/kit', () => ({
@@ -84,6 +84,7 @@ describe('+page.server.ts load function', () => {
           type: 'video',
         },
         supabase: mockSupabase,
+        session: mockSession,
       });
     });
 
@@ -122,14 +123,14 @@ describe('+page.server.ts load function', () => {
     });
   });
 
-  it('should handle error parameters and redirect', () => {
+  it('should handle error parameters and redirect', async () => {
     const urlWithError = new URL('http://localhost:5173?error=access_denied');
     const loadEventWithError = {
       ...mockLoadEvent,
       url: urlWithError,
     };
 
-    expect(() => load(loadEventWithError)).rejects.toThrow('Redirect');
+    await expect(load(loadEventWithError)).rejects.toThrow('Redirect');
     expect(mockRedirect).toHaveBeenCalledWith(303, '/auth/error');
   });
 

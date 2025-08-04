@@ -6,7 +6,7 @@ import {
   createMockUserProfile,
   createMockSourceVideos,
   createMockContinueVideos,
-} from './test-utils';
+} from '../../tests/test-utils';
 
 // Mock all dependencies
 vi.mock('$app/navigation', () => ({

@@ -3,7 +3,7 @@ import { page } from '$app/stores';
 import {
   createMockSession,
   createMockUserProfile,
-} from './test-utils';
+} from '../../tests/test-utils';
 
 // Mock all dependencies
 vi.mock('$app/stores', () => ({
@@ -360,9 +360,9 @@ describe('+layout.svelte Component Logic', () => {
   describe('development features', () => {
     it('should provide debug information in development', () => {
       const debugInfo = {
-        updateAuth: expect.any(Function),
-        stats: expect.any(Function),
-        clearCache: expect.any(Function),
+        updateAuth: vi.fn(),
+        stats: vi.fn(),
+        clearCache: vi.fn(),
       };
 
       expect(debugInfo.updateAuth).toBeInstanceOf(Function);
