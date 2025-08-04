@@ -20,6 +20,12 @@ jobs:
         with:
           version: latest
 
+      - name: Verify Supabase CLI installation
+        run: |
+          echo "PATH: $PATH"
+          which supabase || echo "Supabase CLI not found in PATH"
+          supabase --version
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
