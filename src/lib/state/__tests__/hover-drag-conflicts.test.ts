@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { SourceStateClass } from '../source.svelte.ts';
-import { PlaylistStateClass } from '../playlist.svelte.ts';
-import { ContentState } from '../content.svelte.ts';
+import { SourceStateClass } from '../source.svelte';
+import { PlaylistStateClass } from '../playlist.svelte';
+import { ContentState } from '../content.svelte';
 
 // Mock PageState
 const mockPageState = {
