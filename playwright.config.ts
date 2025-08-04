@@ -2,22 +2,30 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/e2e',
+  testMatch: '**/*.test.ts',
   fullyParallel: false, // Important: Don't run tests in parallel with shared DB
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: 1, // Single worker to avoid DB conflicts
+  workers: process.env.CI ? 1 : 3, // More workers locally, single in CI to avoid DB conflicts
   reporter: 'html',
 
   use: {
     baseURL: 'http://localhost:5173', // Your dev server port
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    // Add test IDs for better element selection
+    testIdAttribute: 'data-testid',
   },
 
   projects: [
     {
+      name: 'setup',
+      testMatch: /.*\.setup\.ts/,
+    },
+    {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      dependencies: ['setup'],
     },
     // Additional browsers for comprehensive local testing
     // CI workflows use only chromium for faster execution

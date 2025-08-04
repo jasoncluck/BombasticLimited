@@ -194,7 +194,15 @@ export const actions: Actions = {
       );
       return fail(400);
     } else {
-      redirect(303, '/');
+      // Sign out the user since their account has been deleted
+      await supabase.auth.signOut();
+
+      // Clear any auth cookies
+      cookies.delete('sb-access-token', { path: '/' });
+      cookies.delete('sb-refresh-token', { path: '/' });
+
+      // Invalidate auth state
+      redirect(303, '/?logout=true');
     }
   },
 };

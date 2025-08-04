@@ -22,6 +22,7 @@
 
   import '../app.css';
   import { setNavigationCacheState } from '$lib/state/navigation-cache/index.js';
+  import { page } from '$app/stores';
 
   injectSpeedInsights();
 
@@ -166,6 +167,22 @@
       } else {
         console.log('Layout: Auth state unchanged, skipping update');
       }
+    }
+  });
+
+  // Handle logout parameter (for account deletion)
+  $effect(() => {
+    if (
+      typeof window !== 'undefined' &&
+      $page.url.searchParams.get('logout') === 'true'
+    ) {
+      // Clear the URL parameter
+      const url = new URL(window.location.href);
+      url.searchParams.delete('logout');
+      window.history.replaceState({}, '', url.toString());
+
+      // Force a full page reload to clear any cached auth state
+      window.location.reload();
     }
   });
 

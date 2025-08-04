@@ -163,7 +163,7 @@
                   {@const sourceInfo = SOURCE_INFO[source]}
                   <div class="m-1 flex w-full items-center gap-2">
                     <div class="h-12 w-12 flex-none">
-                      <img
+                      <enhanced:img
                         src={sourceInfo.image}
                         class="h-12 w-12 cursor-pointer object-cover"
                         alt={`Image for channel: ${sourceInfo.displayName}`}
@@ -200,7 +200,7 @@
                   <span class="sr-only">Live now</span>
                 {/if}
                 <div class="h-12 w-12 flex-none">
-                  <img
+                  <enhanced:img
                     src={SOURCE_INFO[source].image}
                     alt={SOURCE_INFO[source].displayName}
                     class="h-12 w-12 cursor-pointer object-cover"
