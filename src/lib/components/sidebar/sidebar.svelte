@@ -274,7 +274,7 @@
           <span class="sr-only">Live now</span>
 
           <div class="h-12 w-12 shrink-0">
-            <img
+            <enhanced:img
               src={SOURCE_INFO[source].image}
               alt={SOURCE_INFO[source].displayName}
               class="h-full w-full cursor-pointer object-cover"
