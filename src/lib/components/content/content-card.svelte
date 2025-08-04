@@ -88,8 +88,10 @@
         }
       };
 
-      // Use a small delay to ensure the layout is fully rendered
-      setTimeout(checkMousePosition, 50);
+      // Use a longer delay to ensure all initialization and navigation callbacks have completed
+      // The content.svelte onNavigate callback runs during page load and clears hover state,
+      // so we need to run after that completes
+      setTimeout(checkMousePosition, 200);
     }
   });
 </script>
