@@ -73,7 +73,7 @@ export class NavigationCacheStateClass implements NavigationCacheState {
   // Track UI state for navigation loading indicators
   private lastAuthStatus: boolean | null = null;
 
-  private readonly CACHE_DURATION = 300000; // 5 minutes
+  private readonly CACHE_DURATION = 120000; // 2 minutes
   private readonly ANONYMOUS_ID_KEY = 'navigation-cache-anonymous-id';
 
   constructor() {
@@ -101,7 +101,7 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     }, 60000);
   }
 
-  // Service Worker Integration - simplified
+  // Service Worker Integration - enhanced with auth state communication
   private async initializeServiceWorker(): Promise<void> {
     if ('serviceWorker' in navigator) {
       try {
@@ -112,6 +112,12 @@ export class NavigationCacheStateClass implements NavigationCacheState {
         navigator.serviceWorker.addEventListener(
           'message',
           this.handleServiceWorkerMessage.bind(this)
+        );
+
+        // Set up auth state request handler
+        navigator.serviceWorker.addEventListener(
+          'message',
+          this.handleAuthStateRequest.bind(this)
         );
 
         // Request current preloaded routes from service worker
@@ -169,6 +175,23 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     }
   }
 
+  private handleAuthStateRequest(event: MessageEvent): void {
+    const { type } = event.data || {};
+
+    if (type === 'REQUEST_AUTH_STATE') {
+      // Respond with current auth state
+      const isAuthenticated = this.checkAuthStatus();
+
+      if (event.ports && event.ports[0]) {
+        event.ports[0].postMessage({
+          type: 'AUTH_STATE_RESPONSE',
+          isAuthenticated: isAuthenticated,
+          timestamp: Date.now(),
+        });
+      }
+    }
+  }
+
   private handleServiceWorkerMessage(event: MessageEvent): void {
     const { type, data } = event.data || {};
 
@@ -205,15 +228,77 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     }
   }
 
-  // Simplified auth status tracking
+  // Enhanced auth status tracking with service worker coordination
   updateAuthStatus(): void {
     const isAuthenticated = this.checkAuthStatus();
 
     if (this.lastAuthStatus !== isAuthenticated) {
+      const oldAuthState =
+        this.lastAuthStatus === true
+          ? 'auth'
+          : this.lastAuthStatus === false
+            ? 'anon'
+            : null;
+      const newAuthState = isAuthenticated ? 'auth' : 'anon';
+
       console.log(
         `Auth status changed from ${this.lastAuthStatus} to ${isAuthenticated}`
       );
+
       this.lastAuthStatus = isAuthenticated;
+
+      // Clear user-specific cache data when auth state changes
+      this.handleAuthStateChange(oldAuthState, newAuthState);
+
+      // Notify service worker of auth state change
+      this.notifyServiceWorkerOfAuthChange(oldAuthState, newAuthState);
+    }
+  }
+
+  private handleAuthStateChange(
+    oldAuthState: string | null,
+    newAuthState: string
+  ): void {
+    // Clear memory cache entries that might be auth-specific
+    this.memoryCache.clear('page:');
+
+    // Clear cache entries for the old auth state
+    const keysToDelete: string[] = [];
+    for (const [key] of this.cacheEntries.entries()) {
+      keysToDelete.push(key);
+    }
+    keysToDelete.forEach((key) => this.cacheEntries.delete(key));
+
+    // Clear preloaded routes since they might be auth-specific
+    this.preloadedRoutes.clear();
+
+    console.log(
+      `Navigation Cache: Cleared cache data for auth state change: ${oldAuthState} -> ${newAuthState}`
+    );
+  }
+
+  private notifyServiceWorkerOfAuthChange(
+    oldAuthState: string | null,
+    newAuthState: string
+  ): void {
+    if (this.serviceWorkerReady && navigator.serviceWorker.controller) {
+      try {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'AUTH_STATE_CHANGED',
+          oldAuthState: oldAuthState,
+          newAuthState: newAuthState,
+          timestamp: Date.now(),
+        });
+
+        console.log(
+          `Notified service worker of auth state change: ${oldAuthState} -> ${newAuthState}`
+        );
+      } catch (error) {
+        console.warn(
+          'Failed to notify service worker of auth state change:',
+          error
+        );
+      }
     }
   }
 
@@ -318,9 +403,14 @@ export class NavigationCacheStateClass implements NavigationCacheState {
       return true;
     }
 
-    // Check memory cache for page data
+    // Check memory cache for page data with auth state
     const memoryCacheKey = `page:${pathname}`;
-    const memoryResult = this.memoryCache.get(memoryCacheKey, userId);
+    const currentAuthState = userId ? 'auth' : 'anon';
+    const memoryResult = this.memoryCache.get(
+      memoryCacheKey,
+      userId,
+      currentAuthState
+    );
     if (memoryResult) {
       return true;
     }
@@ -387,7 +477,8 @@ export class NavigationCacheStateClass implements NavigationCacheState {
   // Memory cache methods - read-only from app perspective
   getMemoryCache<T extends object>(key: string): T | null {
     if (!this.initialized || !browser) return null;
-    return this.memoryCache.get<T>(key, this.currentUserId);
+    const currentAuthState = this.checkAuthStatus() ? 'auth' : 'anon';
+    return this.memoryCache.get<T>(key, this.currentUserId, currentAuthState);
   }
 
   clearMemoryCache(pattern?: string): void {
@@ -433,6 +524,13 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     this.anonymousId = null;
     this.serviceWorkerReady = false;
     this.lastAuthStatus = null;
+  }
+
+  // Test helper methods - only used in tests
+  testMarkRouteAsPreloaded(url: string): void {
+    if (import.meta.env.NODE_ENV === 'test' || import.meta.env.DEV) {
+      this.markRouteAsPreloaded(url);
+    }
   }
 
   // Private methods

@@ -260,7 +260,7 @@ describe('NavigationCacheStateClass', () => {
         type: 'CACHE_SET',
         key: 'page:/test',
         data: { title: 'Test' },
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user123',
       });
 
@@ -333,7 +333,7 @@ describe('NavigationCacheStateClass', () => {
         type: 'CACHE_SET',
         key: 'test-key',
         data: { test: 'data' },
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user123',
       });
 

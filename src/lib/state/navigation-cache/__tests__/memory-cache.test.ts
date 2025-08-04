@@ -16,7 +16,7 @@ describe('OptimizedMemoryCache', () => {
         type: 'CACHE_SET',
         key: 'page:/test',
         data: testData,
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user123',
         preloaded: true,
       };
@@ -44,7 +44,7 @@ describe('OptimizedMemoryCache', () => {
       const message = {
         type: 'CACHE_SET',
         key: 'page:/test',
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user123',
       };
 
@@ -62,7 +62,7 @@ describe('OptimizedMemoryCache', () => {
         type: 'CACHE_SET',
         key: 'page:/test',
         data: testData,
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user123',
         preloaded: false,
       });
@@ -110,7 +110,7 @@ describe('OptimizedMemoryCache', () => {
         type: 'CACHE_SET',
         key: 'page:/test',
         data: { test: 'data' },
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user123',
       });
 
@@ -133,14 +133,14 @@ describe('OptimizedMemoryCache', () => {
         type: 'CACHE_SET',
         key: 'page:/test1',
         data: { test: 'data1' },
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user123',
       });
       cache.handleServiceWorkerMessage({
         type: 'CACHE_SET',
         key: 'page:/test2',
         data: { test: 'data2' },
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user123',
       });
     });
@@ -167,14 +167,14 @@ describe('OptimizedMemoryCache', () => {
         type: 'CACHE_SET',
         key: 'page:/test1',
         data: { test: 'data1' },
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user123',
       });
       cache.handleServiceWorkerMessage({
         type: 'CACHE_SET',
         key: 'page:/test2',
         data: { test: 'data2' },
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user456',
       });
     });
@@ -191,7 +191,7 @@ describe('OptimizedMemoryCache', () => {
         type: 'CACHE_SET',
         key: 'page:/anon',
         data: { test: 'anon' },
-        ttl: 300000,
+        ttl: 120000,
         userId: null,
       });
 
@@ -208,7 +208,7 @@ describe('OptimizedMemoryCache', () => {
         type: 'CACHE_SET',
         key: 'page:/preloaded',
         data: { test: 'preloaded' },
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user123',
         preloaded: true,
       });
@@ -216,7 +216,7 @@ describe('OptimizedMemoryCache', () => {
         type: 'CACHE_SET',
         key: 'page:/normal',
         data: { test: 'normal' },
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user123',
         preloaded: false,
       });
@@ -233,7 +233,7 @@ describe('OptimizedMemoryCache', () => {
         type: 'CACHE_SET',
         key: 'page:/test',
         data: { test: 'data' },
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user123',
       });
 
@@ -258,7 +258,7 @@ describe('OptimizedMemoryCache', () => {
         type: 'CACHE_SET',
         key: 'page:/valid',
         data: { test: 'valid' },
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user123',
       });
 
@@ -287,7 +287,7 @@ describe('OptimizedMemoryCache', () => {
           type: 'CACHE_SET',
           key: `page:/large${i}`,
           data: largeData,
-          ttl: 300000,
+          ttl: 120000,
           userId: 'user123',
         });
       }
@@ -306,7 +306,7 @@ describe('OptimizedMemoryCache', () => {
         type: 'CACHE_SET',
         key: 'page:/preloaded',
         data: testData,
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user123',
         preloaded: true,
       });
@@ -316,7 +316,7 @@ describe('OptimizedMemoryCache', () => {
         type: 'CACHE_SET',
         key: 'page:/regular',
         data: testData,
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user123',
         preloaded: false,
       });
@@ -328,7 +328,7 @@ describe('OptimizedMemoryCache', () => {
           type: 'CACHE_SET',
           key: `page:/filler${i}`,
           data: largeData,
-          ttl: 300000,
+          ttl: 120000,
           userId: 'user123',
           preloaded: false,
         });

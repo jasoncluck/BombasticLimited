@@ -129,7 +129,7 @@ describe('Cache Integration Tests', () => {
           type: 'CACHE_SET',
           key: 'page:/giantbomb',
           data: pageData,
-          ttl: 300000,
+          ttl: 120000,
           userId: 'user123',
           preloaded: true,
         },
@@ -244,7 +244,7 @@ describe('Cache Integration Tests', () => {
         type: 'CACHE_SET',
         key: 'page:/test',
         data: { test: 'data' },
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user123',
       });
 
@@ -297,7 +297,7 @@ describe('Cache Integration Tests', () => {
         type: 'CACHE_SET',
         key: 'page:/test',
         data: { user: 'user1' },
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user1',
       });
 
@@ -397,7 +397,7 @@ describe('Cache Integration Tests', () => {
           type: 'CACHE_SET',
           key: `page:/test${i}`,
           data: { data: 'x'.repeat(1000) }, // 1KB each
-          ttl: 300000,
+          ttl: 120000,
           userId: 'user123',
         });
       }

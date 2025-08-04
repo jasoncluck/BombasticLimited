@@ -35,16 +35,16 @@ export class RoutePreloader {
 
     // Focus on paginated content and continue watching since main routes are handled by SW
     if (currentPath === MAIN_ROUTES.GIANTBOMB) {
-      suggestions.push('/giantbomb?page=2');
+      suggestions.push('/giantbomb/latest');
       if (userId) suggestions.push(MAIN_ROUTES.CONTINUE);
     } else if (currentPath === MAIN_ROUTES.NEXTLANDER) {
-      suggestions.push('/nextlander?page=2');
+      suggestions.push('/nextlander/latest');
       if (userId) suggestions.push(MAIN_ROUTES.CONTINUE);
     } else if (currentPath === MAIN_ROUTES.REMAP) {
-      suggestions.push('/remap?page=2');
+      suggestions.push('/remap/latest');
       if (userId) suggestions.push(MAIN_ROUTES.CONTINUE);
     } else if (currentPath === MAIN_ROUTES.JEFFGERSTMANN) {
-      suggestions.push('/jeffgerstmann?page=2');
+      suggestions.push('/jeffgerstmann/latest');
       if (userId) suggestions.push(MAIN_ROUTES.CONTINUE);
     } else if (currentPath === MAIN_ROUTES.HOME && userId) {
       // Only preload continue watching from home page for authenticated users

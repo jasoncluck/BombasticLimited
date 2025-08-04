@@ -5,6 +5,7 @@ export interface MemoryCacheEntry<T = object> {
   userId: string | null;
   size: number;
   preloaded?: boolean;
+  authState?: 'auth' | 'anon';
 }
 
 export interface CacheStats {
@@ -18,16 +19,17 @@ export interface CacheStats {
 }
 export class OptimizedMemoryCache {
   private cache = new Map<string, MemoryCacheEntry>();
-  private maxSize = 25 * 1024 * 1024; // 25MB
+  private maxSize = 50 * 1024 * 1024; // 50MB
   private currentSize = 0;
 
   // Private method - only service worker can populate cache via message passing
   private internalSet<T extends object>(
     key: string,
     data: T,
-    ttl = 300000,
+    ttl = 120000,
     userId: string | null = null,
-    preloaded = false
+    preloaded = false,
+    authState: 'auth' | 'anon' = 'anon'
   ): void {
     const size = this.calculateSize(data);
 
@@ -46,6 +48,7 @@ export class OptimizedMemoryCache {
       userId,
       size,
       preloaded,
+      authState,
     };
 
     this.cache.set(key, entry);
@@ -61,6 +64,7 @@ export class OptimizedMemoryCache {
     timestamp?: number;
     userId?: string | null;
     preloaded?: boolean;
+    authState?: 'auth' | 'anon';
   }): void {
     if (message.type === 'CACHE_SET' && message.data) {
       this.internalSet(
@@ -68,16 +72,27 @@ export class OptimizedMemoryCache {
         message.data,
         message.ttl,
         message.userId,
-        message.preloaded || false
+        message.preloaded || false,
+        message.authState || 'anon'
       );
     }
   }
 
-  get<T>(key: string, userId: string | null = null): T | null {
+  get<T>(
+    key: string,
+    userId: string | null = null,
+    currentAuthState: 'auth' | 'anon' = 'anon'
+  ): T | null {
     const entry = this.cache.get(key);
     if (!entry) return null;
 
     if (Date.now() - entry.timestamp > entry.ttl) {
+      this.delete(key);
+      return null;
+    }
+
+    // Check auth state compatibility - auth-specific content shouldn't be served to anon users
+    if (entry.authState === 'auth' && currentAuthState === 'anon') {
       this.delete(key);
       return null;
     }

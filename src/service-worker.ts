@@ -10,19 +10,72 @@ import { MAIN_ROUTE_PATHS } from '$lib/constants/routes';
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
 const STATIC_CACHE = `bombastic-static-${version}`;
-const DATA_CACHE = `bombastic-data-${version}`;
+const DATA_CACHE_AUTH = `bombastic-data-auth-${version}`;
+const DATA_CACHE_ANON = `bombastic-data-anon-${version}`;
 const STATIC_ASSETS = [...build, ...files];
 
 // Static assets that should be cached aggressively
 const STATIC_EXTENSIONS =
   /\.(js|css|woff2?|ttf|eot|jpg|jpeg|png|gif|svg|webp|ico|avif)$/;
 
+// Background refresh configuration
+const BACKGROUND_REFRESH_INTERVAL = 2 * 60 * 1000; // 2 minutes
+const MAX_BACKGROUND_REFRESH_AGE = 30 * 60 * 1000; // 30 minutes - stop refreshing after this
+let backgroundRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+const trackedRoutes = new Set<string>(MAIN_ROUTE_PATHS);
+
 // Helper function to get current timestamp for logging
 const getTimestamp = (): string => {
   return new Date().toISOString().replace('T', ' ').substring(0, 19);
 };
 
-// Helper function to check if URL should be handled by service worker
+// Helper function to detect auth state from request or stored state
+const getAuthState = async (): Promise<'auth' | 'anon'> => {
+  try {
+    // Try to get auth state from clients
+    const clients = await sw.clients.matchAll();
+    for (const client of clients) {
+      // Request auth state from client
+      const authStatePromise = new Promise<'auth' | 'anon'>((resolve) => {
+        const messageChannel = new MessageChannel();
+        messageChannel.port1.onmessage = (event) => {
+          const { type, isAuthenticated } = event.data || {};
+          if (type === 'AUTH_STATE_RESPONSE') {
+            resolve(isAuthenticated ? 'auth' : 'anon');
+          } else {
+            resolve('anon'); // Default to anonymous
+          }
+        };
+
+        client.postMessage({ type: 'REQUEST_AUTH_STATE' }, [
+          messageChannel.port2,
+        ]);
+
+        // Timeout after 100ms
+        setTimeout(() => resolve('anon'), 100);
+      });
+
+      const authState = await authStatePromise;
+      return authState;
+    }
+  } catch (error) {
+    console.warn(`SW [${getTimestamp()}]: Error detecting auth state:`, error);
+  }
+
+  return 'anon'; // Default to anonymous when unsure
+};
+
+// Helper function to get appropriate data cache based on auth state
+const getDataCache = async (): Promise<Cache> => {
+  const authState = await getAuthState();
+  const cacheName = authState === 'auth' ? DATA_CACHE_AUTH : DATA_CACHE_ANON;
+  return caches.open(cacheName);
+};
+
+// Helper function to get cache key with auth state
+const getCacheKey = (url: string, authState: 'auth' | 'anon'): string => {
+  return `${url}?auth=${authState}`;
+};
 const shouldHandleRequest = (url: URL): boolean => {
   // Don't handle OAuth callback URLs
   if (url.searchParams.has('code') && url.pathname === '/') {
@@ -44,19 +97,194 @@ const shouldCacheResponse = (response: Response): boolean => {
     (response.headers.has('etag') || response.headers.has('last-modified'))
   );
 };
-// Handle navigation requests and populate memory cache
+
+// Background refresh functionality
+const startBackgroundRefresh = (): void => {
+  if (backgroundRefreshTimer) {
+    clearInterval(backgroundRefreshTimer);
+  }
+
+  backgroundRefreshTimer = setInterval(async () => {
+    await performBackgroundRefresh();
+  }, BACKGROUND_REFRESH_INTERVAL);
+
+  console.log(
+    `SW [${getTimestamp()}]: Background refresh started (every ${BACKGROUND_REFRESH_INTERVAL / 1000}s)`
+  );
+};
+
+const stopBackgroundRefresh = (): void => {
+  if (backgroundRefreshTimer) {
+    clearInterval(backgroundRefreshTimer);
+    backgroundRefreshTimer = null;
+    console.log(`SW [${getTimestamp()}]: Background refresh stopped`);
+  }
+};
+
+const performBackgroundRefresh = async (): Promise<void> => {
+  try {
+    const authState = await getAuthState();
+    const dataCache = await getDataCache();
+    const now = Date.now();
+
+    console.log(
+      `SW [${getTimestamp()}]: Starting background refresh cycle (auth: ${authState})`
+    );
+
+    // Check if any clients are active
+    const clients = await sw.clients.matchAll();
+    if (clients.length === 0) {
+      console.log(
+        `SW [${getTimestamp()}]: No active clients, skipping background refresh`
+      );
+      return;
+    }
+
+    let refreshedCount = 0;
+    const refreshPromises = Array.from(trackedRoutes).map(async (route) => {
+      try {
+        const cacheKey = getCacheKey(route, authState);
+
+        // Check if route is still cached
+        const cachedResponse = await dataCache.match(cacheKey);
+        if (!cachedResponse) {
+          return; // Not cached, skip
+        }
+
+        // Check cache age
+        const cacheDate = cachedResponse.headers.get('date');
+        if (cacheDate) {
+          const age = now - new Date(cacheDate).getTime();
+          if (age > MAX_BACKGROUND_REFRESH_AGE) {
+            console.log(
+              `SW [${getTimestamp()}]: Route ${route} too old, removing from tracking`
+            );
+            trackedRoutes.delete(route);
+            return;
+          }
+        }
+
+        // Fetch fresh content
+        const freshResponse = await fetch(route, {
+          headers: {
+            Accept:
+              'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          },
+        });
+
+        if (!freshResponse.ok) {
+          console.warn(
+            `SW [${getTimestamp()}]: Background refresh failed for ${route}: ${freshResponse.status}`
+          );
+          return;
+        }
+
+        // Check if content actually changed using ETag
+        const cachedEtag = cachedResponse.headers.get('etag');
+        const freshEtag = freshResponse.headers.get('etag');
+
+        if (cachedEtag && freshEtag && cachedEtag === freshEtag) {
+          // Content hasn't changed, but update the cache timestamp
+          console.log(
+            `SW [${getTimestamp()}]: No changes for ${route} (ETag match)`
+          );
+          return;
+        }
+
+        // Cache the fresh response with auth-aware key
+        await dataCache.put(cacheKey, freshResponse.clone());
+        refreshedCount++;
+
+        // Also refresh the data endpoint
+        const dataResponse = await fetch(`${route}/__data.json`);
+        if (dataResponse.ok) {
+          const dataCacheKey = getCacheKey(`${route}/__data.json`, authState);
+          await dataCache.put(dataCacheKey, dataResponse.clone());
+
+          // Update memory cache in clients with auth state
+          try {
+            const data = await dataResponse.json();
+            clients.forEach((client) => {
+              client.postMessage({
+                type: 'CACHE_SET',
+                key: `page:${route}`,
+                data: data,
+                ttl: 300000, // 5 minutes
+                timestamp: Date.now(),
+                preloaded: true,
+                authState: authState,
+              });
+
+              // Notify clients that cache was updated
+              client.postMessage({
+                type: 'CACHE_UPDATED',
+                data: {
+                  url: route,
+                  timestamp: Date.now(),
+                  source: 'background_refresh',
+                  authState: authState,
+                },
+              });
+            });
+          } catch {
+            // Ignore JSON parsing errors
+          }
+        }
+
+        console.log(
+          `SW [${getTimestamp()}]: ✅ Background refreshed: ${route} (auth: ${authState})`
+        );
+      } catch (error) {
+        console.warn(
+          `SW [${getTimestamp()}]: Background refresh error for ${route}:`,
+          error
+        );
+      }
+    });
+
+    await Promise.allSettled(refreshPromises);
+
+    if (refreshedCount > 0) {
+      console.log(
+        `SW [${getTimestamp()}]: Background refresh complete - updated ${refreshedCount} routes (auth: ${authState})`
+      );
+    }
+  } catch (error) {
+    console.error(
+      `SW [${getTimestamp()}]: Background refresh cycle failed:`,
+      error
+    );
+  }
+};
+
+// Add route to background refresh tracking
+const addRouteToTracking = (route: string): void => {
+  trackedRoutes.add(route);
+  console.log(
+    `SW [${getTimestamp()}]: Added ${route} to background refresh tracking`
+  );
+};
+
+// Handle navigation requests with auth-aware caching
 const handleNavigationRequest = async (request: Request): Promise<Response> => {
   const url = new URL(request.url);
-  const cache = await caches.open(DATA_CACHE);
+  const authState = await getAuthState();
+  const cache = await getDataCache();
 
   try {
     // For navigation requests, always try network first for freshest content
     const networkResponse = await fetch(request);
 
     if (shouldCacheResponse(networkResponse)) {
-      // Cache the fresh response
+      // Cache the fresh response with auth-aware key
       const responseToCache = networkResponse.clone();
-      cache.put(request, responseToCache);
+      const cacheKey = getCacheKey(request.url, authState);
+      cache.put(cacheKey, responseToCache);
+
+      // Add route to background refresh tracking if it's a main route
+      if (MAIN_ROUTE_PATHS.includes(url.pathname) || url.pathname === '/') {
+        addRouteToTracking(url.pathname);
+      }
 
       // Extract data and send to memory cache for __data.json requests
       if (url.pathname.endsWith('/__data.json')) {
@@ -64,16 +292,17 @@ const handleNavigationRequest = async (request: Request): Promise<Response> => {
           .clone()
           .json()
           .then((data) => {
-            // Send page data to memory cache via postMessage
+            // Send page data to memory cache via postMessage with auth state
             sw.clients.matchAll().then((clients) => {
               clients.forEach((client) => {
                 client.postMessage({
                   type: 'CACHE_SET',
                   key: `page:${url.pathname.replace('/__data.json', '')}`,
                   data: data,
-                  ttl: 300000, // 5 minutes
+                  ttl: 120000, // 2 minutes
                   timestamp: Date.now(),
                   preloaded: false, // This is from user navigation, not preloading
+                  authState: authState,
                 });
               });
             });
@@ -88,12 +317,27 @@ const handleNavigationRequest = async (request: Request): Promise<Response> => {
   } catch (error) {
     // Only serve from cache if network completely fails
     console.log(
-      `SW [${getTimestamp()}]: Network failed for ${url.pathname}, trying cache`
+      `SW [${getTimestamp()}]: Network failed for ${url.pathname}, trying cache (auth: ${authState})`
     );
-    const cached = await cache.match(request);
+
+    // Try auth-specific cache first
+    const cacheKey = getCacheKey(request.url, authState);
+    let cached = await cache.match(cacheKey);
+
+    // If not found and we're authenticated, try anonymous cache as fallback
+    if (!cached && authState === 'auth') {
+      const anonCacheKey = getCacheKey(request.url, 'anon');
+      cached = await cache.match(anonCacheKey);
+      if (cached) {
+        console.log(
+          `SW [${getTimestamp()}]: Serving anonymous cached content for authenticated user: ${url.pathname}`
+        );
+      }
+    }
+
     if (cached) {
       console.log(
-        `SW [${getTimestamp()}]: Serving cached content for ${url.pathname}`
+        `SW [${getTimestamp()}]: Serving cached content for ${url.pathname} (auth: ${authState})`
       );
       return cached;
     }
@@ -139,12 +383,15 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
   }
 };
 
-// Preload critical resources for faster perceived performance
+// Preload critical resources with auth-aware caching
 const preloadCriticalResources = async (): Promise<void> => {
   const staticCache = await caches.open(STATIC_CACHE);
-  const dataCache = await caches.open(DATA_CACHE);
+  const authState = await getAuthState();
+  const dataCache = await getDataCache();
 
-  console.log(`SW [${getTimestamp()}]: Starting critical resource preload...`);
+  console.log(
+    `SW [${getTimestamp()}]: Starting critical resource preload... (auth: ${authState})`
+  );
 
   // Preload critical assets that aren't already cached
   const criticalAssets = build.filter(
@@ -179,10 +426,10 @@ const preloadCriticalResources = async (): Promise<void> => {
   // Track successfully preloaded routes for localStorage storage
   const preloadedRoutes: string[] = [];
 
-  // Preload main navigation routes for instant loading
+  // Preload main navigation routes with auth-aware caching
   const routePromises = MAIN_ROUTE_PATHS.map(async (route) => {
     try {
-      // Cache both the HTML page and its data
+      // Cache both the HTML page and its data with auth-aware keys
       const htmlRequest = new Request(route, {
         headers: {
           Accept:
@@ -198,20 +445,27 @@ const preloadCriticalResources = async (): Promise<void> => {
 
       let routeSuccessfullyPreloaded = false;
 
-      // Cache HTML response if successful
+      // Cache HTML response if successful with auth-aware key
       if (htmlResponse.status === 'fulfilled' && htmlResponse.value.ok) {
         const htmlToCache = htmlResponse.value.clone();
-        await dataCache.put(htmlRequest, htmlToCache);
-        console.log(`SW [${getTimestamp()}]: ✅ Route cached: ${route}`);
+        const htmlCacheKey = getCacheKey(route, authState);
+        await dataCache.put(htmlCacheKey, htmlToCache);
+        console.log(
+          `SW [${getTimestamp()}]: ✅ Route cached: ${route} (auth: ${authState})`
+        );
         routeSuccessfullyPreloaded = true;
+
+        // Add to background refresh tracking
+        addRouteToTracking(route);
       }
 
-      // Cache data response if successful
+      // Cache data response if successful with auth-aware key
       if (dataResponse.status === 'fulfilled' && dataResponse.value.ok) {
         const dataToCache = dataResponse.value.clone();
-        await dataCache.put(dataRequest, dataToCache);
+        const dataCacheKey = getCacheKey(`${route}/__data.json`, authState);
+        await dataCache.put(dataCacheKey, dataToCache);
         console.log(
-          `SW [${getTimestamp()}]: ✅ Route data cached: ${route}/__data.json`
+          `SW [${getTimestamp()}]: ✅ Route data cached: ${route}/__data.json (auth: ${authState})`
         );
 
         // Extract data and try to send to clients (may not be available during install)
@@ -220,14 +474,15 @@ const preloadCriticalResources = async (): Promise<void> => {
           const clients = await sw.clients.matchAll();
           if (clients.length > 0) {
             clients.forEach((client) => {
-              // Send cache data
+              // Send cache data with auth state
               client.postMessage({
                 type: 'CACHE_SET',
                 key: `page:${route}`,
                 data: data,
-                ttl: 300000, // 5 minutes
+                ttl: 120000, // 2 minutes
                 timestamp: Date.now(),
                 preloaded: true,
+                authState: authState,
               });
 
               // Mark route as preloaded
@@ -235,6 +490,7 @@ const preloadCriticalResources = async (): Promise<void> => {
                 type: 'ROUTE_PRELOADED',
                 route: route,
                 timestamp: Date.now(),
+                authState: authState,
               });
             });
           }
@@ -266,6 +522,7 @@ const preloadCriticalResources = async (): Promise<void> => {
       routes: preloadedRoutes,
       timestamp: Date.now(),
       version: version,
+      authState: authState,
     };
 
     // Use indexedDB or localStorage to store the preloaded routes list
@@ -279,7 +536,7 @@ const preloadCriticalResources = async (): Promise<void> => {
     });
 
     console.log(
-      `SW [${getTimestamp()}]: ✅ Stored ${preloadedRoutes.length} preloaded routes:`,
+      `SW [${getTimestamp()}]: ✅ Stored ${preloadedRoutes.length} preloaded routes (auth: ${authState}):`,
       preloadedRoutes
     );
   } catch (error) {
@@ -289,17 +546,20 @@ const preloadCriticalResources = async (): Promise<void> => {
     );
   }
 
-  console.log(`SW [${getTimestamp()}]: Critical resource preload complete`);
+  console.log(
+    `SW [${getTimestamp()}]: Critical resource preload complete (auth: ${authState})`
+  );
 };
 
-// Clean up old caches efficiently
+// Clean up old caches efficiently including auth-specific caches
 const cleanupOldCaches = async (): Promise<void> => {
   const cacheNames = await caches.keys();
   const oldCaches = cacheNames.filter(
     (name) =>
       name.startsWith('bombastic-') &&
       name !== STATIC_CACHE &&
-      name !== DATA_CACHE
+      name !== DATA_CACHE_AUTH &&
+      name !== DATA_CACHE_ANON
   );
 
   await Promise.all(oldCaches.map((name) => caches.delete(name)));
@@ -320,7 +580,12 @@ sw.addEventListener('install', (event) => {
 sw.addEventListener('activate', (event) => {
   console.log(`SW [${getTimestamp()}]: Activating version ${version}`);
 
-  event.waitUntil(Promise.all([cleanupOldCaches(), sw.clients.claim()]));
+  event.waitUntil(
+    Promise.all([cleanupOldCaches(), sw.clients.claim()]).then(() => {
+      // Start background refresh after activation
+      startBackgroundRefresh();
+    })
+  );
 });
 
 // Fetch event - handle both static assets and navigation with unified caching
@@ -359,7 +624,7 @@ sw.addEventListener('fetch', (event) => {
   // Let everything else go to network
 });
 
-// Simplified message handling
+// Enhanced message handling
 sw.addEventListener('message', (event) => {
   const { type } = event.data || {};
 
@@ -375,13 +640,63 @@ sw.addEventListener('message', (event) => {
       event.waitUntil(
         Promise.all([
           caches.delete(STATIC_CACHE),
-          caches.delete(DATA_CACHE),
+          caches.delete(DATA_CACHE_AUTH),
+          caches.delete(DATA_CACHE_ANON),
         ]).then(() => {
           console.log(
             `SW [${getTimestamp()}]: All caches cleared successfully`
           );
+          // Stop background refresh when cache is cleared
+          stopBackgroundRefresh();
+          trackedRoutes.clear();
         })
       );
+      break;
+    }
+
+    case 'CLEAR_AUTH_CACHE': {
+      const { authState } = event.data || {};
+      const cacheToDelete =
+        authState === 'auth' ? DATA_CACHE_AUTH : DATA_CACHE_ANON;
+      console.log(`SW [${getTimestamp()}]: Clearing ${authState} cache`);
+
+      event.waitUntil(
+        caches.delete(cacheToDelete).then(() => {
+          console.log(
+            `SW [${getTimestamp()}]: ${authState} cache cleared successfully`
+          );
+        })
+      );
+      break;
+    }
+
+    case 'AUTH_STATE_CHANGED': {
+      const { newAuthState, oldAuthState } = event.data || {};
+      console.log(
+        `SW [${getTimestamp()}]: Auth state changed from ${oldAuthState} to ${newAuthState}`
+      );
+
+      // Clear tracked routes to force re-evaluation with new auth state
+      trackedRoutes.clear();
+
+      // Optionally preload critical resources for new auth state
+      event.waitUntil(preloadCriticalResources());
+      break;
+    }
+
+    case 'START_BACKGROUND_REFRESH': {
+      console.log(
+        `SW [${getTimestamp()}]: Starting background refresh on client request`
+      );
+      startBackgroundRefresh();
+      break;
+    }
+
+    case 'STOP_BACKGROUND_REFRESH': {
+      console.log(
+        `SW [${getTimestamp()}]: Stopping background refresh on client request`
+      );
+      stopBackgroundRefresh();
       break;
     }
 
@@ -389,16 +704,18 @@ sw.addEventListener('message', (event) => {
       console.log(
         `SW [${getTimestamp()}]: Client requesting preloaded routes list`
       );
-      // Send current preloaded routes by checking what's in cache
+      // Send current preloaded routes by checking what's in cache for current auth state
       event.waitUntil(
         (async () => {
           try {
-            const dataCache = await caches.open(DATA_CACHE);
+            const authState = await getAuthState();
+            const dataCache = await getDataCache();
             const preloadedRoutes: string[] = [];
 
-            // Check which main routes are cached
+            // Check which main routes are cached for current auth state
             for (const route of MAIN_ROUTE_PATHS) {
-              const cached = await dataCache.match(route);
+              const cacheKey = getCacheKey(route, authState);
+              const cached = await dataCache.match(cacheKey);
               if (cached) {
                 preloadedRoutes.push(route);
               }
@@ -408,6 +725,7 @@ sw.addEventListener('message', (event) => {
               type: 'PRELOADED_ROUTES_RESPONSE',
               routes: preloadedRoutes,
               timestamp: Date.now(),
+              authState: authState,
             });
           } catch (error) {
             console.warn(
@@ -417,6 +735,12 @@ sw.addEventListener('message', (event) => {
           }
         })()
       );
+      break;
+    }
+
+    case 'REQUEST_AUTH_STATE': {
+      // This is handled by getAuthState() function which sends to clients
+      // No action needed here as we're responding via ports
       break;
     }
 
@@ -430,4 +754,14 @@ sw.addEventListener('message', (event) => {
 // Handle errors gracefully
 sw.addEventListener('error', (event) => {
   console.error(`SW [${getTimestamp()}]: Service worker error:`, event.error);
+});
+
+// Clean up on page unload/visibility change
+sw.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    // Optionally reduce refresh frequency when page is hidden
+    console.log(
+      `SW [${getTimestamp()}]: Page hidden, continuing background refresh`
+    );
+  }
 });

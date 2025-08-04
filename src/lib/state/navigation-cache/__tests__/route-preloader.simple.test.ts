@@ -31,13 +31,13 @@ describe('RoutePreloader', () => {
   });
 
   describe('getPreloadSuggestions', () => {
-    it('should suggest next page for Giant Bomb route', () => {
+    it('should suggest latest content for Giant Bomb route', () => {
       const suggestions = preloader.getPreloadSuggestions(
         '/giantbomb',
         'user123'
       );
 
-      expect(suggestions).toContain('/giantbomb?page=2');
+      expect(suggestions).toContain('/giantbomb/latest');
     });
 
     it('should suggest continue watching for authenticated users on Giant Bomb', () => {
@@ -49,28 +49,28 @@ describe('RoutePreloader', () => {
       expect(suggestions).toContain('/continue');
     });
 
-    it('should suggest next page for Nextlander route', () => {
+    it('should suggest latest content for Nextlander route', () => {
       const suggestions = preloader.getPreloadSuggestions(
         '/nextlander',
         'user123'
       );
 
-      expect(suggestions).toContain('/nextlander?page=2');
+      expect(suggestions).toContain('/nextlander/latest');
     });
 
-    it('should suggest next page for Remap route', () => {
+    it('should suggest latest content for Remap route', () => {
       const suggestions = preloader.getPreloadSuggestions('/remap', 'user123');
 
-      expect(suggestions).toContain('/remap?page=2');
+      expect(suggestions).toContain('/remap/latest');
     });
 
-    it('should suggest next page for Jeff Gerstmann route', () => {
+    it('should suggest latest content for Jeff Gerstmann route', () => {
       const suggestions = preloader.getPreloadSuggestions(
         '/jeffgerstmann',
         'user123'
       );
 
-      expect(suggestions).toContain('/jeffgerstmann?page=2');
+      expect(suggestions).toContain('/jeffgerstmann/latest');
     });
 
     it('should suggest continue watching from home for authenticated users', () => {

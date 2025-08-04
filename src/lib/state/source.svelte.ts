@@ -38,27 +38,30 @@ export class SourceStateClass {
 
     let classes = 'sidebar-full-button transition-all duration-200 ease-in-out';
 
-    // Base hover and active states that apply to the whole button
-    classes += ' hover:bg-secondary/50 hover:brightness-110';
+    // Active state (keep non-hover active state)
     classes += ' active:bg-secondary/70 active:scale-95 active:brightness-90';
 
     // Enhanced hover effect when manually tracking hover state
-    if (
+    const isHovered =
       this.hoveredSourceIndex === index &&
-      !this.pageState.sidebarScrollState.scrolling
-    ) {
+      !this.pageState.sidebarScrollState.scrolling;
+
+    // Apply hover styling only through JavaScript state, not CSS hover
+    if (isHovered) {
       if (isSelected) {
         classes += ' brightness-110';
       } else {
-        classes += ' bg-secondary/25';
+        classes += ' bg-secondary/50 brightness-110';
       }
     }
 
     // Selected styling
     if (isSelected) {
       classes += ' bg-secondary text-secondary-foreground';
-      // Override hover for selected items
-      classes += ' hover:bg-secondary hover:brightness-110';
+      // Apply hover effect for selected items only via JavaScript state
+      if (isHovered) {
+        classes += ' brightness-110';
+      }
     }
 
     // Sidebar layout classes
