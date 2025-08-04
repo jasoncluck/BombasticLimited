@@ -13,9 +13,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          repository: jasoncluck/bombify
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
