@@ -181,4 +181,10 @@
   .dropdown-icon {
     @apply !h-4 !w-4 align-middle;
   }
+
+  /* Disable CSS hover pseudo-classes for playlist buttons during drag operations */
+  .dragging aside .rounded-md button:hover {
+    background-color: inherit !important;
+    color: inherit !important;
+  }
 }
