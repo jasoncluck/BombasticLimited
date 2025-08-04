@@ -14,6 +14,7 @@
   import { goto } from '$app/navigation';
   import { getSortDisplayName } from './content-filter';
   import ContentCardSkeleton from './content-card-skeleton.svelte';
+  import { onMount } from 'svelte';
 
   type ContentCardProps = {
     video?: Video;
@@ -41,6 +42,8 @@
 
   const contentState = getContentState();
 
+  let cardElement: HTMLElement;
+
   const selectedVideos = $derived(
     contentState.selectedVideosBySection[sectionId] ?? []
   );
@@ -67,12 +70,35 @@
   const shouldShowDescription = $derived(
     isHovered || isSelected || isContextMenuOpen || isDragActive
   );
+
+  // Check if mouse is already over the card when component mounts
+  onMount(() => {
+    if (video && cardElement) {
+      // Check if the mouse cursor is currently positioned over this card element
+      const checkMousePosition = () => {
+        // Use CSS :hover pseudo-class to check if element is currently hovered
+        const isCurrentlyHovered = cardElement.matches(':hover');
+        
+        if (isCurrentlyHovered) {
+          // Initialize hover state by calling the existing handleMouseEnter
+          contentState.handleMouseEnter({
+            video,
+            sectionId,
+          });
+        }
+      };
+
+      // Use a small delay to ensure the layout is fully rendered
+      setTimeout(checkMousePosition, 50);
+    }
+  });
 </script>
 
 {#if isLoading || !video}
   <ContentCardSkeleton />
 {:else}
   <div
+    bind:this={cardElement}
     class="group h-64 w-full transform cursor-pointer will-change-transform"
     data-testid="video-card"
   >
