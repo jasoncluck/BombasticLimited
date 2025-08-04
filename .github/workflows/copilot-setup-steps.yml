@@ -8,7 +8,7 @@ on:
     branches: [main]
 
 jobs:
-  setup-development-environment:
+  copilot-setup-steps:
     runs-on: ubuntu-latest
 
     steps:
