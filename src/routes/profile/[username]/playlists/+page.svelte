@@ -6,14 +6,12 @@
     updatePaginationQueryParams,
   } from '$lib/components/pagination/pagination.js';
   import Pagination from '$lib/components/pagination/pagination.svelte';
-  import { processPlaylists } from '$lib/components/playlist/playlist-service.js';
   import PlaylistTiles from '$lib/components/playlist/playlist-tiles.svelte';
   import { isSource, SOURCE_INFO } from '$lib/constants/source';
   import { DEFAULT_NUM_PLAYLISTS_PAGINATION } from '$lib/supabase/playlists.js';
-  import Loader from '$lib/components/loader.svelte';
 
   const { data } = $props();
-  let { playlistsForUsername, playlistsCount, session } = $derived(data);
+  let { processedPlaylists, playlistsCount, session } = $derived(data);
 
   const username = page.params.username;
 
@@ -27,10 +25,6 @@
       count: playlistsCount ?? 0,
       perPage: DEFAULT_NUM_PLAYLISTS_PAGINATION,
     })
-  );
-
-  const processedPlaylistsPromise = $derived(
-    processPlaylists(playlistsForUsername)
   );
 </script>
 
@@ -67,16 +61,5 @@
     />
   {/if}
 
-  {#await processedPlaylistsPromise}
-    <Loader message="Loading playlists..." />
-  {:then processedPlaylists}
-    <PlaylistTiles playlists={processedPlaylists} {session} />
-  {:catch error}
-    <div class="flex items-center justify-center p-8">
-      <div class="text-center">
-        <p class="text-destructive mb-2 text-sm">Failed to load playlists</p>
-        <p class="text-muted-foreground text-xs">{error.message}</p>
-      </div>
-    </div>
-  {/await}
+  <PlaylistTiles playlists={processedPlaylists} {session} />
 </div>

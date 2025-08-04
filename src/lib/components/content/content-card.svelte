@@ -42,7 +42,7 @@
 
   const contentState = getContentState();
 
-  let cardElement: HTMLElement;
+  let cardElement = $state<HTMLElement>();
 
   const selectedVideos = $derived(
     contentState.selectedVideosBySection[sectionId] ?? []
@@ -82,7 +82,7 @@
       // Check if the mouse cursor is currently positioned over this card element
       const checkMousePosition = () => {
         // Use CSS :hover pseudo-class to check if element is currently hovered
-        const isCurrentlyHovered = cardElement.matches(':hover');
+        const isCurrentlyHovered = cardElement?.matches(':hover');
 
         if (isCurrentlyHovered) {
           // Check if hover state was cleared (indicating a race condition occurred)

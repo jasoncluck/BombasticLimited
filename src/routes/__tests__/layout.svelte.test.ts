@@ -160,7 +160,8 @@ describe('+layout.svelte Component Logic', () => {
         sidebar: sidebarInitialized,
         sidebarData: sidebarDataLoaded,
         canShowBasicUI: isHydrated && mediaQueryInitialized,
-        canShowFullUI: isHydrated && mediaQueryInitialized && sidebarInitialized,
+        canShowFullUI:
+          isHydrated && mediaQueryInitialized && sidebarInitialized,
       };
 
       expect(loadingStates.canShowBasicUI).toBe(true);
@@ -180,7 +181,8 @@ describe('+layout.svelte Component Logic', () => {
       const mediaQueryInitialized = true;
       const sidebarInitialized = false;
 
-      const canShowFullUI = isHydrated && mediaQueryInitialized && sidebarInitialized;
+      const canShowFullUI =
+        isHydrated && mediaQueryInitialized && sidebarInitialized;
       expect(canShowFullUI).toBe(false);
     });
   });
@@ -189,7 +191,7 @@ describe('+layout.svelte Component Logic', () => {
     it('should detect authenticated state correctly', () => {
       const user = mockData.session.user;
       const isCurrentlyAuthenticated = !!user;
-      
+
       expect(isCurrentlyAuthenticated).toBe(true);
     });
 
@@ -198,23 +200,23 @@ describe('+layout.svelte Component Logic', () => {
         ...mockData,
         session: null as any,
       };
-      
+
       const user = dataWithoutSession.session?.user;
       const isCurrentlyAuthenticated = !!user;
-      
+
       expect(isCurrentlyAuthenticated).toBe(false);
     });
 
     it('should track authentication state changes', () => {
       let lastUserState: boolean | null = null;
       const currentAuthState = !!mockData.session?.user;
-      
+
       // Simulate state change detection
       const hasStateChanged = lastUserState !== currentAuthState;
       expect(hasStateChanged).toBe(true);
-      
+
       lastUserState = currentAuthState;
-      
+
       // No change on second check
       const hasStateChangedAgain = lastUserState !== currentAuthState;
       expect(hasStateChangedAgain).toBe(false);
@@ -255,22 +257,24 @@ describe('+layout.svelte Component Logic', () => {
   describe('URL parameter handling', () => {
     it('should detect logout parameter', () => {
       const mockUrlWithLogout = new URL('http://localhost:5173?logout=true');
-      const hasLogoutParam = mockUrlWithLogout.searchParams.get('logout') === 'true';
-      
+      const hasLogoutParam =
+        mockUrlWithLogout.searchParams.get('logout') === 'true';
+
       expect(hasLogoutParam).toBe(true);
     });
 
     it('should not detect logout parameter when absent', () => {
       const mockUrlWithoutLogout = new URL('http://localhost:5173');
-      const hasLogoutParam = mockUrlWithoutLogout.searchParams.get('logout') === 'true';
-      
+      const hasLogoutParam =
+        mockUrlWithoutLogout.searchParams.get('logout') === 'true';
+
       expect(hasLogoutParam).toBe(false);
     });
 
     it('should handle URL parameter cleanup', () => {
       const url = new URL('http://localhost:5173?logout=true&other=param');
       url.searchParams.delete('logout');
-      
+
       expect(url.searchParams.has('logout')).toBe(false);
       expect(url.searchParams.has('other')).toBe(true);
     });
@@ -321,7 +325,7 @@ describe('+layout.svelte Component Logic', () => {
     it('should handle layout dimensions', () => {
       const [leftPaneWidth, rightPaneWidth] = mockData.layout;
       const totalWidth = leftPaneWidth + rightPaneWidth;
-      
+
       expect(totalWidth).toBe(1000);
       expect(leftPaneWidth).toBe(250);
       expect(rightPaneWidth).toBe(750);

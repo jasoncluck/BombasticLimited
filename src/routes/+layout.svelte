@@ -26,6 +26,18 @@
 
   injectSpeedInsights();
 
+  // Dev-only mode fix for hot reloading
+  if (import.meta.hot) {
+    import.meta.hot.on('vite:beforeUpdate', () => {
+      // Clear service worker caches on hot reload
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.controller?.postMessage({
+          type: 'CLEAR_ALL_CACHES',
+        });
+      }
+    });
+  }
+
   let { data, children } = $props();
   let {
     session,

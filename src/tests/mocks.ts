@@ -1,7 +1,12 @@
 import { vi } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { UserProfile } from '$lib/supabase/user-profiles';
-import { createMockSession, createMockUserProfile, createMockVideoResponse, createMockContinueWatchingResponse } from './test-utils';
+import {
+  createMockSession,
+  createMockUserProfile,
+  createMockVideoResponse,
+  createMockContinueWatchingResponse,
+} from './test-utils';
 
 /**
  * Create a mocked Supabase client with common methods
@@ -89,9 +94,13 @@ export function createMockStores() {
 export function createMockRouteFunctions() {
   return {
     mockGetVideos: vi.fn().mockResolvedValue(createMockVideoResponse()),
-    mockGetInProgressVideos: vi.fn().mockResolvedValue(createMockContinueWatchingResponse()),
+    mockGetInProgressVideos: vi
+      .fn()
+      .mockResolvedValue(createMockContinueWatchingResponse()),
     mockDepends: vi.fn(),
-    mockGetProfile: vi.fn().mockResolvedValue({ profile: createMockUserProfile(), error: null }),
+    mockGetProfile: vi
+      .fn()
+      .mockResolvedValue({ profile: createMockUserProfile(), error: null }),
   };
 }
 

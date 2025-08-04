@@ -18,7 +18,9 @@ vi.mock('$lib/components/content/content-filter', () => ({
 }));
 
 const mockGetProfile = vi.mocked(getProfile);
-const mockGetFilterOptionFromQueryParams = vi.mocked(getFilterOptionFromQueryParams);
+const mockGetFilterOptionFromQueryParams = vi.mocked(
+  getFilterOptionFromQueryParams
+);
 
 describe('+layout.server.ts load function', () => {
   const mockSupabase = {} as any;
@@ -49,7 +51,9 @@ describe('+layout.server.ts load function', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSafeGetSession.mockResolvedValue({ session: mockSession });
-    mockGetProfile.mockResolvedValue(createMockProfileResponse(mockUserProfile));
+    mockGetProfile.mockResolvedValue(
+      createMockProfileResponse(mockUserProfile)
+    );
     mockGetFilterOptionFromQueryParams.mockReturnValue({
       sort: { key: 'datePublished', order: 'descending' },
       type: 'video',
@@ -57,7 +61,7 @@ describe('+layout.server.ts load function', () => {
   });
 
   it('should fetch session and user profile', async () => {
-    const result = await load(mockLayoutEvent) as any;
+    const result = (await load(mockLayoutEvent)) as any;
 
     expect(mockSafeGetSession).toHaveBeenCalled();
     expect(mockGetProfile).toHaveBeenCalledWith({
@@ -73,9 +77,9 @@ describe('+layout.server.ts load function', () => {
     // Test continue watching view
     const continueUrl = new URL('http://localhost:5173/continue');
     const continueEvent = { ...mockLayoutEvent, url: continueUrl };
-    
+
     await load(continueEvent);
-    
+
     expect(mockGetFilterOptionFromQueryParams).toHaveBeenCalledWith({
       searchParams: continueUrl.searchParams,
       view: 'continueWatching',
@@ -84,9 +88,9 @@ describe('+layout.server.ts load function', () => {
     // Test playlist view
     const playlistUrl = new URL('http://localhost:5173/playlist/123');
     const playlistEvent = { ...mockLayoutEvent, url: playlistUrl };
-    
+
     await load(playlistEvent);
-    
+
     expect(mockGetFilterOptionFromQueryParams).toHaveBeenCalledWith({
       searchParams: playlistUrl.searchParams,
       view: 'playlist',
@@ -95,9 +99,9 @@ describe('+layout.server.ts load function', () => {
     // Test default view
     const defaultUrl = new URL('http://localhost:5173/');
     const defaultEvent = { ...mockLayoutEvent, url: defaultUrl };
-    
+
     await load(defaultEvent);
-    
+
     expect(mockGetFilterOptionFromQueryParams).toHaveBeenCalledWith({
       searchParams: defaultUrl.searchParams,
       view: 'default',
@@ -108,16 +112,18 @@ describe('+layout.server.ts load function', () => {
     const mockLayout = [250, 750];
     mockLayoutEvent.cookies.get.mockReturnValue(JSON.stringify(mockLayout));
 
-    const result = await load(mockLayoutEvent) as any;
+    const result = (await load(mockLayoutEvent)) as any;
 
-    expect(mockLayoutEvent.cookies.get).toHaveBeenCalledWith('PaneForge:layout');
+    expect(mockLayoutEvent.cookies.get).toHaveBeenCalledWith(
+      'PaneForge:layout'
+    );
     expect(result.layout).toEqual(mockLayout);
   });
 
   it('should handle invalid layout cookie gracefully', async () => {
     mockLayoutEvent.cookies.get.mockReturnValue('invalid-json');
 
-    const result = await load(mockLayoutEvent) as any;
+    const result = (await load(mockLayoutEvent)) as any;
 
     expect(result.layout).toBeUndefined();
   });
@@ -169,7 +175,7 @@ describe('+layout.server.ts load function', () => {
       },
     };
 
-    const result = await load(requestWithEtag) as any;
+    const result = (await load(requestWithEtag)) as any;
 
     expect(result.cached).toBe(true);
   });
@@ -187,7 +193,7 @@ describe('+layout.server.ts load function', () => {
       error: null,
     });
 
-    const result = await load(mockLayoutEvent) as any;
+    const result = (await load(mockLayoutEvent)) as any;
 
     expect(result.session).toBeNull();
     expect(result.userProfile).toBeNull();
@@ -208,7 +214,7 @@ describe('+layout.server.ts load function', () => {
   });
 
   it('should generate cache key based on path and user', async () => {
-    const result = await load(mockLayoutEvent) as any;
+    const result = (await load(mockLayoutEvent)) as any;
 
     expect(result.etag).toBeDefined();
     expect(result.lastModified).toBeDefined();

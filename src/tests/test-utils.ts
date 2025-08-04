@@ -72,7 +72,9 @@ export function createMockSession(overrides: Partial<Session> = {}): Session {
 /**
  * Mock UserProfile data factory
  */
-export function createMockUserProfile(overrides: Partial<UserProfile> = {}): UserProfile {
+export function createMockUserProfile(
+  overrides: Partial<UserProfile> = {}
+): UserProfile {
   return {
     id: 'user-1',
     username: 'testuser',
@@ -86,7 +88,10 @@ export function createMockUserProfile(overrides: Partial<UserProfile> = {}): Use
 /**
  * Mock successful video response
  */
-export function createMockVideoResponse(videos: Video[] = [], count: number | null = null) {
+export function createMockVideoResponse(
+  videos: Video[] = [],
+  count: number | null = null
+) {
   return {
     videos,
     count: count ?? videos.length,
@@ -129,10 +134,22 @@ export function createMockErrorResponse(message: string = 'Test error') {
  */
 export function createMockSourceVideos() {
   return {
-    giantbomb: [createMockVideo({ id: 'gb1', title: 'GB Video 1', source: 'giantbomb' })],
-    jeffgerstmann: [createMockVideo({ id: 'jg1', title: 'JG Video 1', source: 'jeffgerstmann' })],
-    nextlander: [createMockVideo({ id: 'nl1', title: 'NL Video 1', source: 'nextlander' })],
-    remap: [createMockVideo({ id: 'rm1', title: 'Remap Video 1', source: 'remap' })],
+    giantbomb: [
+      createMockVideo({ id: 'gb1', title: 'GB Video 1', source: 'giantbomb' }),
+    ],
+    jeffgerstmann: [
+      createMockVideo({
+        id: 'jg1',
+        title: 'JG Video 1',
+        source: 'jeffgerstmann',
+      }),
+    ],
+    nextlander: [
+      createMockVideo({ id: 'nl1', title: 'NL Video 1', source: 'nextlander' }),
+    ],
+    remap: [
+      createMockVideo({ id: 'rm1', title: 'Remap Video 1', source: 'remap' }),
+    ],
   };
 }
 
@@ -141,8 +158,8 @@ export function createMockSourceVideos() {
  */
 export function createMockContinueVideos() {
   return [
-    createMockVideoWithTimestamp({ 
-      id: 'cv1', 
+    createMockVideoWithTimestamp({
+      id: 'cv1',
       title: 'Continue Video 1',
       video_start_seconds: 300,
     }),

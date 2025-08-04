@@ -13,14 +13,4 @@
   >
     <div style="display: contents">%sveltekit.body%</div>
   </body>
-  <script>
-    // Listen for service worker cache updates
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('message', (event) => {
-        if (event.data?.type === 'CACHE_CLEARED') {
-          console.log('Cache cleared successfully');
-        }
-      });
-    }
-  </script>
 </html>
