@@ -134,23 +134,23 @@ export class PlaylistStateClass {
       classes += ` ${this.getPlaylistDragClasses(index)}`;
     }
 
-    // Base hover and active states that apply to the whole button
+    // Active state (only when not dragging)
     if (this.draggedIndex === null) {
-      // Only add hover/active if not dragging
-      classes += ' hover:bg-secondary/50 hover:brightness-110';
       classes += ' active:bg-secondary/70 active:scale-95 active:brightness-90';
     }
 
     // Enhanced hover effect when manually tracking hover state
-    if (
+    const isHovered = 
       this.hoveredPlaylistIndex === index &&
       !this.pageState.sidebarScrollState.scrolling &&
-      this.draggedIndex === null
-    ) {
+      this.draggedIndex === null;
+
+    // Apply hover styling only through JavaScript state, not CSS hover
+    if (isHovered) {
       if (isSelected) {
         classes += ' brightness-110';
       } else {
-        classes += ' bg-secondary/25';
+        classes += ' bg-secondary/50 brightness-110';
       }
     }
 
@@ -161,9 +161,9 @@ export class PlaylistStateClass {
       } else {
         classes += ' bg-secondary/65 text-secondary-foreground';
       }
-      // Override hover for selected items
-      if (this.draggedIndex === null) {
-        classes += ' hover:bg-secondary hover:brightness-110';
+      // Apply hover effect for selected items only via JavaScript state
+      if (isHovered) {
+        classes += ' brightness-110';
       }
     }
 
@@ -200,7 +200,10 @@ export class PlaylistStateClass {
         event.dataTransfer.effectAllowed = 'move';
       }
 
+      // Clear hover states to prevent CSS conflicts during drag
       this.hoveredPlaylistIndex = null;
+      this.contentState.clearHoverStatesDuringDrag();
+      
       createDragImage(event, options.playlists[index].name);
     };
 

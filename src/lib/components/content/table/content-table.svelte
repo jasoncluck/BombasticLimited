@@ -83,13 +83,16 @@
     let classes = 'selection-mode transition-none content-table-row';
 
     const isSelected = selectedVideoIds.has(video.id);
+    const hoveredVideo = contentState.hoveredVideosBySection[sectionId];
+    const isHovered = hoveredVideo?.id === video.id;
+    const isDragging = contentState.dragContentType === 'video';
 
     if (isSelected) {
       // Selected state - using !important to override hover
       classes += ' !bg-secondary brightness-110';
-    } else {
-      // Not selected - allow hover effects
-      classes += ' hover:bg-secondary/75';
+    } else if (isHovered && !isDragging) {
+      // Hovered state - only apply when not dragging and not selected
+      classes += ' bg-secondary/75';
     }
 
     // Add drag drop classes if enabled
