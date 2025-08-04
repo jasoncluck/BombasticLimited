@@ -1,23 +1,42 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ContentState } from '../../../state/content.svelte';
+import type { PageState } from '../../../state/page.svelte';
 import type { Video } from '$lib/supabase/videos';
 
 describe('ContentCard Robust Mount Hover Detection Logic', () => {
-  let mockPageState: {
-    sidebarScrollState: {
-      scrolling: boolean;
-    };
-  };
+  let mockPageState: Partial<PageState>;
   let contentState: ContentState;
 
   beforeEach(() => {
     mockPageState = {
+      contentScrollPosition: null,
+      sidebarScrollPosition: null,
+      contentScrollState: {
+        scrolling: false,
+        direction: null,
+        interval: null,
+      },
       sidebarScrollState: {
         scrolling: false,
+        direction: null,
+        interval: null,
       },
+      autoScrollConfig: {
+        scrollSpeed: 10,
+        scrollZoneSize: 50,
+      },
+      viewportRefs: {
+        sidebarViewportRef: null,
+        contentViewportRef: null,
+      },
+      startAutoScroll: vi.fn(),
+      stopAutoScroll: vi.fn(),
+      handleViewportDragOver: vi.fn(),
+      handleDragOver: vi.fn(),
+      handleDragEnd: vi.fn(),
     };
 
-    contentState = new ContentState(mockPageState);
+    contentState = new ContentState(mockPageState as PageState);
 
     // Mock DOM APIs
     Object.defineProperty(global, 'document', {

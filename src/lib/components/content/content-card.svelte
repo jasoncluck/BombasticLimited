@@ -42,7 +42,7 @@
 
   const contentState = getContentState();
 
-  let cardElement: HTMLElement;
+  let cardElement = $state<HTMLElement>();
 
   const selectedVideos = $derived(
     contentState.selectedVideosBySection[sectionId] ?? []

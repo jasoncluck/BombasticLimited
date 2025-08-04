@@ -46,7 +46,7 @@ describe('Authentication-Aware Caching', () => {
     vi.clearAllMocks();
     // Clear the service worker controller postMessage mock
     if (navigator.serviceWorker.controller?.postMessage) {
-      (navigator.serviceWorker.controller.postMessage as any).mockClear();
+      (navigator.serviceWorker.controller!.postMessage as any).mockClear();
     }
 
     // Reset browser mocks
@@ -81,7 +81,7 @@ describe('Authentication-Aware Caching', () => {
       navigationCache.updateAuthStatus();
 
       // Should trigger auth state change logging
-      expect(navigator.serviceWorker.controller.postMessage).toHaveBeenCalledWith({
+      expect(navigator.serviceWorker.controller!.postMessage).toHaveBeenCalledWith({
         type: 'AUTH_STATE_CHANGED',
         oldAuthState: null,
         newAuthState: 'auth',
@@ -95,7 +95,7 @@ describe('Authentication-Aware Caching', () => {
       navigationCache['checkAuthStatus'] = navigationCache['testCheckAuthStatus'];
       navigationCache.updateAuthStatus();
 
-      expect(navigator.serviceWorker.controller.postMessage).toHaveBeenCalledWith({
+      expect(navigator.serviceWorker.controller!.postMessage).toHaveBeenCalledWith({
         type: 'AUTH_STATE_CHANGED',
         oldAuthState: null,
         newAuthState: 'anon',
@@ -111,14 +111,14 @@ describe('Authentication-Aware Caching', () => {
       document.cookie = '';
       navigationCache.updateAuthStatus();
 
-      (navigator.serviceWorker.controller.postMessage as any).mockClear();
+      (navigator.serviceWorker.controller!.postMessage as any).mockClear();
 
       // Transition to authenticated
       document.cookie =
         'sb-127-auth-token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9';
       navigationCache.updateAuthStatus();
 
-      expect(navigator.serviceWorker.controller.postMessage).toHaveBeenCalledWith({
+      expect(navigator.serviceWorker.controller!.postMessage).toHaveBeenCalledWith({
         type: 'AUTH_STATE_CHANGED',
         oldAuthState: 'anon',
         newAuthState: 'auth',
@@ -242,7 +242,7 @@ describe('Authentication-Aware Caching', () => {
         'sb-127-auth-token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9';
       navigationCache.updateAuthStatus();
 
-      expect(navigator.serviceWorker.controller.postMessage).toHaveBeenCalledWith({
+      expect(navigator.serviceWorker.controller!.postMessage).toHaveBeenCalledWith({
         type: 'AUTH_STATE_CHANGED',
         oldAuthState: null,
         newAuthState: 'auth',
@@ -357,6 +357,14 @@ describe('Authentication-Aware Caching', () => {
   });
 
   describe('Loading State Optimization', () => {
+    beforeEach(() => {
+      // Ensure navigation cache is initialized and restore state for loading tests
+      if (!navigationCache.initialized) {
+        navigationCache.initialized = true;
+      }
+      navigationCache['serviceWorkerReady'] = true;
+    });
+    
     it('should not show loading for properly cached routes based on auth state', () => {
       // Mark route as preloaded
       navigationCache.testMarkRouteAsPreloaded('/giantbomb');
