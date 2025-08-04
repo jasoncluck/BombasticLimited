@@ -5,11 +5,12 @@ export const SOURCES: Array<Database['public']['Enums']['source']> = [
   'remap',
 ] as const;
 export type Source = (typeof SOURCES)[number];
+import type { Picture } from 'vite-imagetools';
 
-import nextlanderImage from '$lib/assets/nextlander.jpg';
-import giantbombImage from '$lib/assets/giantbomb.jpg';
-import jeffgerstmannImage from '$lib/assets/jeffgerstmann.jpg';
-import remapImage from '$lib/assets/remap.jpg';
+import nextlanderImage from '$lib/assets/nextlander.jpg?enhanced';
+import giantbombImage from '$lib/assets/giantbomb.jpg?enhanced';
+import jeffgerstmannImage from '$lib/assets/jeffgerstmann.jpg?enhanced';
+import remapImage from '$lib/assets/remap.jpg?enhanced';
 import type { Database } from '$lib/supabase/database.types';
 
 export type HighlightPlaylist = {
@@ -20,7 +21,7 @@ export type HighlightPlaylist = {
 interface SourceInfo {
   displayName: string;
   urlParam: string;
-  image: string;
+  image: Picture;
   twitchId: string;
   youtubeId: string;
   youtubeUrl: string;

@@ -29,6 +29,8 @@
   import { getPlaylistState } from '$lib/state/playlist.svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { invalidate } from '$app/navigation';
+  import { getCroppedPlaylistImageUrl } from './playlist-service';
+  import { parseImageProperties } from './playlist';
 
   let {
     form,
@@ -84,11 +86,11 @@
             updatedPlaylist.thumbnail_url = null;
             updatedPlaylist.thumbnail_maxres_url = null;
           } else {
-            // await getCroppedPlaylistImageUrl({
-            //   imageProperties: parseImageProperties(playlist.image_properties),
-            //   thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
-            //   thumbnailUrl: playlist.thumbnail_url,
-            // });
+            await getCroppedPlaylistImageUrl({
+              imageProperties: parseImageProperties(playlist.image_properties),
+              thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
+              thumbnailUrl: playlist.thumbnail_url,
+            });
           }
           sidebarState.refreshData();
           invalidate('supabase:db:playlists');

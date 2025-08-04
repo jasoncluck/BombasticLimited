@@ -19,6 +19,8 @@ import { DEFAULT_NUM_VIDEOS_PAGINATION } from '$lib/supabase/videos';
 import { getPaginationQueryParams } from '$lib/components/pagination/pagination';
 import { Filter } from 'bad-words';
 import { redirect, setFlash } from 'sveltekit-flash-message/server';
+import { parseImageProperties } from '$lib/components/playlist/playlist';
+import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
 
 export const load: PageServerLoad = async ({
   locals: { supabase, session },
@@ -60,20 +62,20 @@ export const load: PageServerLoad = async ({
     redirect(302, '/');
   }
 
-  const [form] = await Promise.all([
-    // playlist.processedImageUrl
-    //   ? Promise.resolve(playlist.processedImageUrl)
-    //   : getCroppedPlaylistImageUrlServer({
-    //       imageProperties: parseImageProperties(playlist.image_properties),
-    //       thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
-    //       thumbnailUrl: playlist.thumbnail_url,
-    //     }),
+  const [processedImageUrl, form] = await Promise.all([
+    playlist.processedImageUrl
+      ? Promise.resolve(playlist.processedImageUrl)
+      : getCroppedPlaylistImageUrlServer({
+          imageProperties: parseImageProperties(playlist.image_properties),
+          thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
+          thumbnailUrl: playlist.thumbnail_url,
+        }),
     superValidate(playlist, zod(playlistSchema)),
   ]);
 
-  // if (!playlist.processedImageUrl) {
-  //   playlist.processedImageUrl = processedImageUrl;
-  // }
+  if (!playlist.processedImageUrl) {
+    playlist.processedImageUrl = processedImageUrl;
+  }
 
   const effectiveContentFilter =
     isUserPlaylist(playlist) &&
