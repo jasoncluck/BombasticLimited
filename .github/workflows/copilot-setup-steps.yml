@@ -1,116 +1,38 @@
-name: Copilot Development Setup
+name: 'Copilot Setup Steps'
 
+# Automatically run the setup steps when they are changed to allow for easy validation, and
+# allow manual testing through the repository's "Actions" tab
 on:
   workflow_dispatch:
   push:
-    branches: [main, staging]
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
   pull_request:
-    branches: [main]
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
 
 jobs:
+  # The job MUST be called `copilot-setup-steps` or it will not be picked up by Copilot.
   copilot-setup-steps:
+    runs-on: ubuntu-latest
+
     # Set the permissions to the lowest permissions possible needed for your steps.
     # Copilot will be given its own token for its operations.
     permissions:
       # If you want to clone the repository as part of your setup steps, for example to install dependencies, you'll need the `contents: read` permission. If you don't clone the repository in your setup steps, Copilot will do this for you automatically after the steps complete.
       contents: read
-    runs-on: ubuntu-latest
 
+    # You can define any steps you want, and they will run before the agent starts.
+    # If you do not check out your code, Copilot will do this for you.
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
-      - name: Verify Supabase CLI installation
-        run: |
-          echo "PATH: $PATH"
-          which supabase || echo "Supabase CLI not found in PATH"
-          supabase --version
-
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: Install JavaScript dependencies
         run: npm ci
-
-      - name: Start Supabase local development server
-        run: |
-          # Initialize Supabase if not already done
-          if [ ! -f "supabase/config.toml" ]; then
-            supabase init
-          fi
-
-          # Start local Supabase services (PostgreSQL, Auth, etc.)
-          supabase start
-
-          # Wait for services to be ready
-          sleep 10
-
-          # Show status of running services
-          supabase status
-
-      - name: Ensure MCP Configuration exists
-        run: |
-          # Create .vscode directory if it doesn't exist
-          mkdir -p .vscode
-
-          # Check if MCP config already exists
-          if [ ! -f ".vscode/mcp.json" ]; then
-            echo "Creating MCP configuration file..."
-            cat > .vscode/mcp.json << 'EOF'
-          {
-            "mcpServers": {
-              "playwright": {
-                "command": "npx",
-                "args": ["-y", "@executeautomation/playwright-mcp-server"],
-                "type": "local",
-                "tools": []
-              }
-            }
-          }
-          EOF
-            echo "✅ MCP configuration created at .vscode/mcp.json"
-          else
-            echo "✅ MCP configuration already exists"
-          fi
-
-      - name: Install Playwright browsers (for local testing)
-        run: |
-          npx playwright install
-          npx playwright install-deps
-
-      - name: Run basic health checks
-        run: |
-          # Check if Supabase is running
-          curl -f http://localhost:54321/health || echo "Supabase health check failed"
-
-          # Check if database is accessible
-          supabase db ping || echo "Database ping failed"
-
-      - name: Display setup information
-        run: |
-          echo "🚀 Development environment setup complete!"
-          echo ""
-          echo "📊 Supabase Services:"
-          supabase status
-          echo ""
-          echo "🎭 Playwright MCP Server: Configured (will auto-install via npx)"
-          echo "📝 MCP Configuration: Available at .vscode/mcp.json"
-          echo ""
-          echo "🔧 Next steps for local development:"
-          echo "1. Restart VS Code to load MCP configuration"
-          echo "2. Enable GitHub Copilot Agent mode"
-          echo "3. Use '@playwright' in Copilot chat for browser automation"
-          echo "4. Supabase local services are running on:"
-          echo "   - API: http://localhost:54321"
-          echo "   - DB: postgresql://postgres:postgres@localhost:54322/postgres"
-          echo "   - Studio: http://localhost:54323"
-          echo ""
-          echo "🛑 To stop Supabase services later: supabase stop"
