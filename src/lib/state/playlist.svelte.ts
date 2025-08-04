@@ -327,6 +327,9 @@ export class PlaylistStateClass {
       this.targetIndex = null;
       this.hoveredPlaylistIndex = null;
       this.contentState.dragContentType = null; // Reset drag content type
+      
+      // Re-enable hover states after drag operation completes
+      this.contentState.enableHoverStatesAfterDrag();
     };
 
     return {

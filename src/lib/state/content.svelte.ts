@@ -204,6 +204,19 @@ export class ContentState {
       clearTimeout(this.hoverTimeoutId);
       this.hoverTimeoutId = null;
     }
+
+    // Add global dragging class to disable all CSS hover effects
+    if (typeof document !== 'undefined' && document.body) {
+      document.body.classList.add('dragging');
+    }
+  }
+
+  // Helper method to restore hover states after drag operations
+  enableHoverStatesAfterDrag() {
+    // Remove global dragging class to re-enable CSS hover effects
+    if (typeof document !== 'undefined' && document.body) {
+      document.body.classList.remove('dragging');
+    }
   }
 
   // Mouse hover methods
@@ -406,6 +419,9 @@ export class ContentState {
       // Reset drag state
       this.dragContentType = null;
       this.draggedFromSectionId = null;
+
+      // Re-enable hover states after drag operation completes
+      this.enableHoverStatesAfterDrag();
     };
 
     const handleDragLeave = (
