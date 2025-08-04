@@ -38,7 +38,7 @@ describe('Cache System Integration', () => {
         type: 'CACHE_SET',
         key: 'test-key',
         data: testData,
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user123',
         preloaded: true,
       };
@@ -58,7 +58,7 @@ describe('Cache System Integration', () => {
         type: 'CACHE_SET',
         key: 'user123-data-key',
         data: userData,
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user123',
         preloaded: false,
       });
@@ -67,7 +67,7 @@ describe('Cache System Integration', () => {
         type: 'CACHE_SET',
         key: 'admin456-data-key',
         data: adminData,
-        ttl: 300000,
+        ttl: 120000,
         userId: 'admin456',
         preloaded: false,
       });
@@ -157,7 +157,7 @@ describe('Cache System Integration', () => {
         type: 'CACHE_SET',
         key: 'user1-shared-key',
         data: { data: 'user1' },
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user1',
         preloaded: false,
       });
@@ -166,7 +166,7 @@ describe('Cache System Integration', () => {
         type: 'CACHE_SET',
         key: 'user2-shared-key',
         data: { data: 'user2' },
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user2',
         preloaded: false,
       });
@@ -189,7 +189,7 @@ describe('Cache System Integration', () => {
         type: 'CACHE_SET',
         key: 'test-key',
         data: { test: 'data' },
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user123',
         preloaded: false,
       });
@@ -211,7 +211,7 @@ describe('Cache System Integration', () => {
               type: 'CACHE_SET',
               key: `concurrent-${i}`,
               data: { value: i },
-              ttl: 300000,
+              ttl: 120000,
               userId: 'user123',
               preloaded: false,
             });
@@ -236,7 +236,7 @@ describe('Cache System Integration', () => {
           type: 'CACHE_SET',
           key: `${userId}-user-data`,
           data: { userId },
-          ttl: 300000,
+          ttl: 120000,
           userId: userId,
           preloaded: false,
         });
@@ -264,7 +264,7 @@ describe('Cache System Integration', () => {
         type: 'CACHE_SET',
         key: 'cleanup-test',
         data: { test: 'data' },
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user123',
         preloaded: false,
       });

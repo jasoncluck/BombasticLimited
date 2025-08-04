@@ -22,7 +22,7 @@ describe('Cache System - Core Tests', () => {
         type: 'CACHE_SET',
         key: 'page:/test',
         data: testData,
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user123',
         preloaded: true,
       });
@@ -38,7 +38,7 @@ describe('Cache System - Core Tests', () => {
         type: 'CACHE_SET',
         key: 'page:/test',
         data: testData,
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user1',
       });
 
@@ -70,7 +70,7 @@ describe('Cache System - Core Tests', () => {
         type: 'CACHE_SET',
         key: 'page:/test',
         data: { test: 'data' },
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user123',
         preloaded: true,
       });
@@ -203,7 +203,7 @@ describe('Cache System - Core Tests', () => {
         type: 'CACHE_SET',
         key: 'page:/profile-user1',
         data: { userId: 'user1', name: 'User One' },
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user1',
       });
 
@@ -212,7 +212,7 @@ describe('Cache System - Core Tests', () => {
         type: 'CACHE_SET',
         key: 'page:/profile-user2',
         data: { userId: 'user2', name: 'User Two' },
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user2',
       });
 
@@ -234,7 +234,7 @@ describe('Cache System - Core Tests', () => {
         type: 'CACHE_SET',
         key: 'page:/public-anon',
         data: { type: 'anonymous' },
-        ttl: 300000,
+        ttl: 120000,
         userId: null,
       });
 
@@ -243,7 +243,7 @@ describe('Cache System - Core Tests', () => {
         type: 'CACHE_SET',
         key: 'page:/public-auth',
         data: { type: 'authenticated' },
-        ttl: 300000,
+        ttl: 120000,
         userId: 'user123',
       });
 
@@ -266,7 +266,7 @@ describe('Cache System - Core Tests', () => {
           type: 'CACHE_SET',
           key: `page:/large${i}`,
           data: { data: 'x'.repeat(10000) }, // 10KB each
-          ttl: 300000,
+          ttl: 120000,
           userId: 'user123',
         });
       }
