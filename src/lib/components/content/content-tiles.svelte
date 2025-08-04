@@ -68,7 +68,7 @@
 
     // Only apply hover and selected states to cards that are in view
     if (isSelected || isHovered) {
-      classes += ' z-40 !bg-secondary brightness-110 hover:bg-secondary';
+      classes += ' z-40 !bg-secondary brightness-110';
     }
 
     // Add drag drop classes if enabled
