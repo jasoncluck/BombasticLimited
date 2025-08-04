@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import type { Video, VideoWithTimestamp } from '$lib/supabase/videos';
 import type { Session } from '@supabase/supabase-js';
 import type { UserProfile } from '$lib/supabase/user-profiles';
@@ -173,5 +174,49 @@ export function createMockProfileResponse(profile: UserProfile | null = null) {
   return {
     profile: profile || createMockUserProfile(),
     error: null as any,
+  };
+}
+
+/**
+ * Mock Playlist data factory
+ */
+export function createMockPlaylist(overrides: Partial<any> = {}) {
+  return {
+    id: 'playlist-1',
+    short_id: 'abc123',
+    name: 'Test Playlist',
+    youtube_id: 'youtube123',
+    thumbnail_url: 'https://example.com/thumb.jpg',
+    thumbnail_maxres_url: 'https://example.com/maxres.jpg',
+    image_properties: '{"x": 0, "y": 0, "width": 100, "height": 100}',
+    created_at: '2023-01-01T00:00:00Z',
+    updated_at: '2023-01-01T00:00:00Z',
+    ...overrides,
+  };
+}
+
+/**
+ * Mock Supabase client for testing
+ */
+export function createMockSupabaseClient() {
+  return {
+    auth: {
+      updateUser: vi.fn(),
+      resetPasswordForEmail: vi.fn(),
+      signOut: vi.fn(),
+    },
+    rpc: vi.fn(),
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          single: vi.fn(),
+        })),
+        limit: vi.fn(),
+        order: vi.fn(),
+      })),
+      insert: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    })),
   };
 }
