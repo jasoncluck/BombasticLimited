@@ -185,9 +185,9 @@ test.describe('Account Management', () => {
 
     // Create a test user
     const testUser = await testDataManager.createTestIntegrationUser();
-    
+
     // Wait for user to be fully created and synced
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Login as the user
     const loginSuccess = await loginUser(
@@ -230,9 +230,9 @@ test.describe('Account Management', () => {
 
     // Create a test user
     const testUser = await testDataManager.createTestIntegrationUser();
-    
+
     // Wait for user to be fully created and synced
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Login as the user
     const loginSuccess = await loginUser(
@@ -272,9 +272,9 @@ test.describe('Account Management', () => {
 
     // Create a test user
     const testUser = await testDataManager.createTestIntegrationUser();
-    
+
     // Wait for user to be fully created and synced
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Login as the user
     const loginSuccess = await loginUser(
