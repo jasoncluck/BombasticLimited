@@ -3,6 +3,8 @@ import {
   DEFAULT_NUM_PLAYLISTS_PAGINATION,
   getPlaylistsForUsername,
 } from '$lib/supabase/playlists';
+import { parseImageProperties } from '$lib/components/playlist/playlist';
+import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
@@ -57,8 +59,20 @@ export const load: PageServerLoad = async ({
       supabase,
     });
 
+  // Process playlists server-side (similar to [source] route)
+  const processedPlaylists = await Promise.all(
+    playlistsForUsername.map(async (playlist) => ({
+      ...playlist,
+      processedImageUrl: await getCroppedPlaylistImageUrlServer({
+        imageProperties: parseImageProperties(playlist.image_properties),
+        thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
+        thumbnailUrl: playlist.thumbnail_url,
+      }),
+    }))
+  );
+
   return {
-    playlistsForUsername,
+    processedPlaylists, // Return processed playlists instead of raw data
     playlistsCount,
     currentPage,
   };

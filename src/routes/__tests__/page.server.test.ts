@@ -58,8 +58,10 @@ describe('+page.server.ts load function', () => {
 
   it('should fetch videos from all sources and continue watching videos', async () => {
     // Setup mocks for each source
-    mockGetVideos.mockImplementation(async ({ source }) => 
-      createMockVideoResponse(mockSourceVideos[source as keyof typeof mockSourceVideos] || [])
+    mockGetVideos.mockImplementation(async ({ source }) =>
+      createMockVideoResponse(
+        mockSourceVideos[source as keyof typeof mockSourceVideos] || []
+      )
     );
 
     mockGetInProgressVideos.mockResolvedValue(
@@ -144,9 +146,11 @@ describe('+page.server.ts load function', () => {
     };
 
     mockGetVideos.mockResolvedValue(createMockVideoResponse([]));
-    mockGetInProgressVideos.mockResolvedValue(createMockContinueWatchingResponse([]));
+    mockGetInProgressVideos.mockResolvedValue(
+      createMockContinueWatchingResponse([])
+    );
 
-    const result = await load(anonymousLoadEvent) as any;
+    const result = (await load(anonymousLoadEvent)) as any;
 
     expect(mockGetInProgressVideos).toHaveBeenCalledWith({
       limit: 10,
@@ -172,9 +176,11 @@ describe('+page.server.ts load function', () => {
 
   it('should handle empty video responses gracefully', async () => {
     mockGetVideos.mockResolvedValue(createMockVideoResponse([]));
-    mockGetInProgressVideos.mockResolvedValue(createMockContinueWatchingResponse([]));
+    mockGetInProgressVideos.mockResolvedValue(
+      createMockContinueWatchingResponse([])
+    );
 
-    const result = await load(mockLoadEvent) as any;
+    const result = (await load(mockLoadEvent)) as any;
 
     expect(result.sourceVideos).toEqual({
       giantbomb: [],
@@ -187,9 +193,11 @@ describe('+page.server.ts load function', () => {
 
   it('should handle database errors', async () => {
     mockGetVideos.mockResolvedValue(createMockErrorResponse('Database error'));
-    mockGetInProgressVideos.mockResolvedValue(createMockContinueWatchingResponse([]));
+    mockGetInProgressVideos.mockResolvedValue(
+      createMockContinueWatchingResponse([])
+    );
 
-    const result = await load(mockLoadEvent) as any;
+    const result = (await load(mockLoadEvent)) as any;
 
     // Should still return structure even with errors
     expect(result.sourceVideos).toEqual({
@@ -203,7 +211,9 @@ describe('+page.server.ts load function', () => {
 
   it('should use correct content filters', async () => {
     mockGetVideos.mockResolvedValue(createMockVideoResponse([]));
-    mockGetInProgressVideos.mockResolvedValue(createMockContinueWatchingResponse([]));
+    mockGetInProgressVideos.mockResolvedValue(
+      createMockContinueWatchingResponse([])
+    );
 
     await load(mockLoadEvent);
 
@@ -245,9 +255,11 @@ describe('+page.server.ts load function', () => {
     // Both functions should be called around the same time (concurrent)
     expect(getVideosCallTime).not.toBeNull();
     expect(getInProgressCallTime).not.toBeNull();
-    
+
     if (getVideosCallTime && getInProgressCallTime) {
-      const timeDifference = Math.abs(getVideosCallTime - getInProgressCallTime);
+      const timeDifference = Math.abs(
+        getVideosCallTime - getInProgressCallTime
+      );
       // Should be called within 5ms of each other (concurrent)
       expect(timeDifference).toBeLessThan(5);
     }

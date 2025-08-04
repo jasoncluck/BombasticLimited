@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { load } from '../+layout';
-import { createBrowserClient, createServerClient, isBrowser } from '@supabase/ssr';
+import {
+  createBrowserClient,
+  createServerClient,
+  isBrowser,
+} from '@supabase/ssr';
 import {
   createMockSession,
   createMockUserProfile,
@@ -233,7 +237,10 @@ describe('+layout.ts load function', () => {
       ...mockLayoutData,
       layout: 'not-valid-json',
     };
-    const invalidStringEvent = { ...mockLoadEvent, data: invalidStringLayoutData };
+    const invalidStringEvent = {
+      ...mockLoadEvent,
+      data: invalidStringLayoutData,
+    };
 
     mockIsBrowser.mockReturnValue(true);
     mockCreateBrowserClient.mockReturnValue(mockSupabase);
@@ -272,7 +279,7 @@ describe('+layout.ts load function', () => {
 
   it('should handle server-side cookie operations', async () => {
     mockIsBrowser.mockReturnValue(false);
-    
+
     const serverClient = {
       ...mockSupabase,
       auth: {
@@ -281,7 +288,7 @@ describe('+layout.ts load function', () => {
         }),
       },
     };
-    
+
     mockCreateServerClient.mockReturnValue(serverClient);
 
     await load(mockLoadEvent);
