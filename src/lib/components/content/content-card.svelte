@@ -74,24 +74,47 @@
   // Check if mouse is already over the card when component mounts
   onMount(() => {
     if (video && cardElement) {
+      let checkCount = 0;
+      const maxChecks = 5;
+      const initialDelay = 200;
+      const recheckInterval = 100;
+
       // Check if the mouse cursor is currently positioned over this card element
       const checkMousePosition = () => {
         // Use CSS :hover pseudo-class to check if element is currently hovered
         const isCurrentlyHovered = cardElement.matches(':hover');
-        
+
         if (isCurrentlyHovered) {
-          // Initialize hover state by calling the existing handleMouseEnter
-          contentState.handleMouseEnter({
-            video,
-            sectionId,
-          });
+          // Check if hover state was cleared (indicating a race condition occurred)
+          const currentHoveredVideo =
+            contentState.hoveredVideosBySection[sectionId];
+          const isHoverStateCleared =
+            !currentHoveredVideo || currentHoveredVideo.id !== video.id;
+
+          if (isHoverStateCleared) {
+            // Re-initialize hover state by calling the existing handleMouseEnter
+            contentState.handleMouseEnter({
+              video,
+              sectionId,
+            });
+          }
         }
       };
 
-      // Use a longer delay to ensure all initialization and navigation callbacks have completed
-      // The content.svelte onNavigate callback runs during page load and clears hover state,
-      // so we need to run after that completes
-      setTimeout(checkMousePosition, 200);
+      // Robust hover detection with multiple attempts
+      const performHoverDetection = () => {
+        checkMousePosition();
+        checkCount++;
+
+        // Continue checking periodically for a short time to handle race conditions
+        if (checkCount < maxChecks) {
+          setTimeout(performHoverDetection, recheckInterval);
+        }
+      };
+
+      // Start with an initial delay to ensure most initialization callbacks have completed
+      // Then perform periodic re-checks to handle any race conditions
+      setTimeout(performHoverDetection, initialDelay);
     }
   });
 </script>

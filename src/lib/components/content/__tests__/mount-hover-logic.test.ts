@@ -1,8 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ContentState } from '../../../state/content.svelte';
+import type { Video } from '$lib/supabase/videos';
 
-describe('ContentCard Mount Hover Detection Logic', () => {
-  let mockPageState: any;
+describe('ContentCard Robust Mount Hover Detection Logic', () => {
+  let mockPageState: {
+    sidebarScrollState: {
+      scrolling: boolean;
+    };
+  };
   let contentState: ContentState;
 
   beforeEach(() => {
@@ -13,15 +18,15 @@ describe('ContentCard Mount Hover Detection Logic', () => {
     };
 
     contentState = new ContentState(mockPageState);
-    
+
     // Mock DOM APIs
     Object.defineProperty(global, 'document', {
       value: {
-        elementFromPoint: vi.fn()
+        elementFromPoint: vi.fn(),
       },
       writable: true,
     });
-    
+
     // Mock setTimeout
     vi.useFakeTimers();
   });
@@ -32,23 +37,30 @@ describe('ContentCard Mount Hover Detection Logic', () => {
   });
 
   it('should initialize hover state when element is hovered on mount', () => {
-    const mockVideo = { id: 'video1', title: 'Test Video' } as any;
+    const mockVideo = { id: 'video1', title: 'Test Video' } as Video;
     const sectionId = 'test-section';
-    
+
     // Mock element that matches :hover
     const mockElement = {
-      matches: vi.fn().mockReturnValue(true) // Element is hovered
+      matches: vi.fn().mockReturnValue(true), // Element is hovered
     };
 
-    // Simulate the mount logic from content-card.svelte
+    // Simulate the robust mount logic from content-card.svelte
     const checkMousePosition = () => {
       const isCurrentlyHovered = mockElement.matches(':hover');
-      
+
       if (isCurrentlyHovered) {
-        contentState.handleMouseEnter({
-          video: mockVideo,
-          sectionId,
-        });
+        const currentHoveredVideo =
+          contentState.hoveredVideosBySection[sectionId];
+        const isHoverStateCleared =
+          !currentHoveredVideo || currentHoveredVideo.id !== mockVideo.id;
+
+        if (isHoverStateCleared) {
+          contentState.handleMouseEnter({
+            video: mockVideo,
+            sectionId,
+          });
+        }
       }
     };
 
@@ -60,24 +72,75 @@ describe('ContentCard Mount Hover Detection Logic', () => {
     expect(mockElement.matches).toHaveBeenCalledWith(':hover');
   });
 
-  it('should not initialize hover state when element is not hovered on mount', () => {
-    const mockVideo = { id: 'video1', title: 'Test Video' } as any;
+  it('should re-initialize hover state when it gets cleared due to race condition', () => {
+    const mockVideo = { id: 'video1', title: 'Test Video' } as Video;
     const sectionId = 'test-section';
-    
-    // Mock element that doesn't match :hover
+
+    // Mock element that matches :hover
     const mockElement = {
-      matches: vi.fn().mockReturnValue(false) // Element is not hovered
+      matches: vi.fn().mockReturnValue(true), // Element is hovered
     };
 
-    // Simulate the mount logic from content-card.svelte
+    // Initially set hover state
+    contentState.handleMouseEnter({ video: mockVideo, sectionId });
+    expect(contentState.hoveredVideosBySection[sectionId]).toEqual(mockVideo);
+
+    // Simulate race condition - something clears the hover state
+    contentState.hoveredVideosBySection[sectionId] = null;
+    expect(contentState.hoveredVideosBySection[sectionId]).toBeNull();
+
+    // Simulate the robust mount logic that should detect and fix this
     const checkMousePosition = () => {
       const isCurrentlyHovered = mockElement.matches(':hover');
-      
+
       if (isCurrentlyHovered) {
-        contentState.handleMouseEnter({
-          video: mockVideo,
-          sectionId,
-        });
+        const currentHoveredVideo =
+          contentState.hoveredVideosBySection[sectionId];
+        const isHoverStateCleared =
+          !currentHoveredVideo || currentHoveredVideo.id !== mockVideo.id;
+
+        if (isHoverStateCleared) {
+          contentState.handleMouseEnter({
+            video: mockVideo,
+            sectionId,
+          });
+        }
+      }
+    };
+
+    // Execute the check - should restore hover state
+    checkMousePosition();
+
+    // Should have restored hover state
+    expect(contentState.hoveredVideosBySection[sectionId]).toEqual(mockVideo);
+    expect(mockElement.matches).toHaveBeenCalledWith(':hover');
+  });
+
+  it('should not initialize hover state when element is not hovered on mount', () => {
+    const mockVideo = { id: 'video1', title: 'Test Video' } as Video;
+    const sectionId = 'test-section';
+
+    // Mock element that doesn't match :hover
+    const mockElement = {
+      matches: vi.fn().mockReturnValue(false), // Element is not hovered
+    };
+
+    // Simulate the robust mount logic from content-card.svelte
+    const checkMousePosition = () => {
+      const isCurrentlyHovered = mockElement.matches(':hover');
+
+      if (isCurrentlyHovered) {
+        const currentHoveredVideo =
+          contentState.hoveredVideosBySection[sectionId];
+        const isHoverStateCleared =
+          !currentHoveredVideo || currentHoveredVideo.id !== mockVideo.id;
+
+        if (isHoverStateCleared) {
+          contentState.handleMouseEnter({
+            video: mockVideo,
+            sectionId,
+          });
+        }
       }
     };
 
@@ -90,9 +153,9 @@ describe('ContentCard Mount Hover Detection Logic', () => {
   });
 
   it('should work with existing handleMouseEnter functionality', () => {
-    const mockVideo = { id: 'video1', title: 'Test Video' } as any;
+    const mockVideo = { id: 'video1', title: 'Test Video' } as Video;
     const sectionId = 'test-section';
-    
+
     // Test that the regular mouseenter handler still works
     contentState.handleMouseEnter({
       video: mockVideo,

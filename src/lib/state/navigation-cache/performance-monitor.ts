@@ -81,7 +81,7 @@ export class CachePerformanceMonitor {
   generateReport(): string {
     const hitRatio = (this.getCacheHitRatio() * 100).toFixed(1);
     const memoryMB = (this.metrics.memoryUsage / (1024 * 1024)).toFixed(2);
-    
+
     return `
 Cache Performance Report:
 ========================

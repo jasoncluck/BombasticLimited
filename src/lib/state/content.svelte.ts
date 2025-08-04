@@ -198,7 +198,7 @@ export class ContentState {
     for (const sectionId in this.hoveredVideosBySection) {
       this.hoveredVideosBySection[sectionId] = null;
     }
-    
+
     // Clear any pending hover timeout
     if (this.hoverTimeoutId) {
       clearTimeout(this.hoverTimeoutId);
@@ -443,7 +443,7 @@ export class ContentState {
     ) => {
       // Clear hover states to prevent CSS conflicts during drag
       this.clearHoverStatesDuringDrag();
-      
+
       // Clear selections from all other sections first
       if (options.clearSelection) {
         this.clearAllSections();

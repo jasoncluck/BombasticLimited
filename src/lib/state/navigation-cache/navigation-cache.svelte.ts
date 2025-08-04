@@ -177,11 +177,11 @@ export class NavigationCacheStateClass implements NavigationCacheState {
 
   private handleAuthStateRequest(event: MessageEvent): void {
     const { type } = event.data || {};
-    
+
     if (type === 'REQUEST_AUTH_STATE') {
       // Respond with current auth state
       const isAuthenticated = this.checkAuthStatus();
-      
+
       if (event.ports && event.ports[0]) {
         event.ports[0].postMessage({
           type: 'AUTH_STATE_RESPONSE',
@@ -233,41 +233,54 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     const isAuthenticated = this.checkAuthStatus();
 
     if (this.lastAuthStatus !== isAuthenticated) {
-      const oldAuthState = this.lastAuthStatus === true ? 'auth' : this.lastAuthStatus === false ? 'anon' : null;
+      const oldAuthState =
+        this.lastAuthStatus === true
+          ? 'auth'
+          : this.lastAuthStatus === false
+            ? 'anon'
+            : null;
       const newAuthState = isAuthenticated ? 'auth' : 'anon';
-      
+
       console.log(
         `Auth status changed from ${this.lastAuthStatus} to ${isAuthenticated}`
       );
-      
+
       this.lastAuthStatus = isAuthenticated;
 
       // Clear user-specific cache data when auth state changes
       this.handleAuthStateChange(oldAuthState, newAuthState);
-      
+
       // Notify service worker of auth state change
       this.notifyServiceWorkerOfAuthChange(oldAuthState, newAuthState);
     }
   }
 
-  private handleAuthStateChange(oldAuthState: string | null, newAuthState: string): void {
+  private handleAuthStateChange(
+    oldAuthState: string | null,
+    newAuthState: string
+  ): void {
     // Clear memory cache entries that might be auth-specific
     this.memoryCache.clear('page:');
-    
+
     // Clear cache entries for the old auth state
     const keysToDelete: string[] = [];
     for (const [key] of this.cacheEntries.entries()) {
       keysToDelete.push(key);
     }
     keysToDelete.forEach((key) => this.cacheEntries.delete(key));
-    
+
     // Clear preloaded routes since they might be auth-specific
     this.preloadedRoutes.clear();
-    
-    console.log(`Navigation Cache: Cleared cache data for auth state change: ${oldAuthState} -> ${newAuthState}`);
+
+    console.log(
+      `Navigation Cache: Cleared cache data for auth state change: ${oldAuthState} -> ${newAuthState}`
+    );
   }
 
-  private notifyServiceWorkerOfAuthChange(oldAuthState: string | null, newAuthState: string): void {
+  private notifyServiceWorkerOfAuthChange(
+    oldAuthState: string | null,
+    newAuthState: string
+  ): void {
     if (this.serviceWorkerReady && navigator.serviceWorker.controller) {
       try {
         navigator.serviceWorker.controller.postMessage({
@@ -276,10 +289,15 @@ export class NavigationCacheStateClass implements NavigationCacheState {
           newAuthState: newAuthState,
           timestamp: Date.now(),
         });
-        
-        console.log(`Notified service worker of auth state change: ${oldAuthState} -> ${newAuthState}`);
+
+        console.log(
+          `Notified service worker of auth state change: ${oldAuthState} -> ${newAuthState}`
+        );
       } catch (error) {
-        console.warn('Failed to notify service worker of auth state change:', error);
+        console.warn(
+          'Failed to notify service worker of auth state change:',
+          error
+        );
       }
     }
   }
@@ -388,7 +406,11 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     // Check memory cache for page data with auth state
     const memoryCacheKey = `page:${pathname}`;
     const currentAuthState = userId ? 'auth' : 'anon';
-    const memoryResult = this.memoryCache.get(memoryCacheKey, userId, currentAuthState);
+    const memoryResult = this.memoryCache.get(
+      memoryCacheKey,
+      userId,
+      currentAuthState
+    );
     if (memoryResult) {
       return true;
     }

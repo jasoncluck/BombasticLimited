@@ -42,7 +42,7 @@ export class SourceStateClass {
     classes += ' active:bg-secondary/70 active:scale-95 active:brightness-90';
 
     // Enhanced hover effect when manually tracking hover state
-    const isHovered = 
+    const isHovered =
       this.hoveredSourceIndex === index &&
       !this.pageState.sidebarScrollState.scrolling;
 

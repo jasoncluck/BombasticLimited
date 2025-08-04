@@ -105,12 +105,12 @@
     draggedSourceIndex = index;
     // Clear hover states to prevent CSS conflicts during drag
     sourceState.hoveredSourceIndex = null;
-    
+
     // Add global dragging class to disable all CSS hover effects
     if (typeof document !== 'undefined' && document.body) {
       document.body.classList.add('dragging');
     }
-    
+
     if (event.dataTransfer) {
       event.dataTransfer.effectAllowed = 'move';
     }
@@ -202,7 +202,7 @@
 
     draggedSourceIndex = null;
     targetSourceIndex = null;
-    
+
     // Remove global dragging class to re-enable CSS hover effects
     if (typeof document !== 'undefined' && document.body) {
       document.body.classList.remove('dragging');

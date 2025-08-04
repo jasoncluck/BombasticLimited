@@ -24,7 +24,7 @@
   </p>
   {#if isVideoWithTimestamp(video) && video.playlist_name && video.playlist_short_id}
     <div
-      class="text-secondary-foreground mt-1 flex items-center gap-2 text-xs transition-colors hover:text-primary"
+      class="text-secondary-foreground hover:text-primary mt-1 flex items-center gap-2 text-xs transition-colors"
     >
       <ListVideo size="16" class="shrink-0" />
       <a
