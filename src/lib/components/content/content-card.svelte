@@ -14,6 +14,7 @@
   import { goto } from '$app/navigation';
   import { getSortDisplayName } from './content-filter';
   import ContentCardSkeleton from './content-card-skeleton.svelte';
+  import { onMount } from 'svelte';
 
   type ContentCardProps = {
     video?: Video;
@@ -41,6 +42,8 @@
 
   const contentState = getContentState();
 
+  let cardElement: HTMLElement;
+
   const selectedVideos = $derived(
     contentState.selectedVideosBySection[sectionId] ?? []
   );
@@ -67,12 +70,60 @@
   const shouldShowDescription = $derived(
     isHovered || isSelected || isContextMenuOpen || isDragActive
   );
+
+  // Check if mouse is already over the card when component mounts
+  onMount(() => {
+    if (video && cardElement) {
+      let checkCount = 0;
+      const maxChecks = 5;
+      const initialDelay = 200;
+      const recheckInterval = 100;
+
+      // Check if the mouse cursor is currently positioned over this card element
+      const checkMousePosition = () => {
+        // Use CSS :hover pseudo-class to check if element is currently hovered
+        const isCurrentlyHovered = cardElement.matches(':hover');
+
+        if (isCurrentlyHovered) {
+          // Check if hover state was cleared (indicating a race condition occurred)
+          const currentHoveredVideo =
+            contentState.hoveredVideosBySection[sectionId];
+          const isHoverStateCleared =
+            !currentHoveredVideo || currentHoveredVideo.id !== video.id;
+
+          if (isHoverStateCleared) {
+            // Re-initialize hover state by calling the existing handleMouseEnter
+            contentState.handleMouseEnter({
+              video,
+              sectionId,
+            });
+          }
+        }
+      };
+
+      // Robust hover detection with multiple attempts
+      const performHoverDetection = () => {
+        checkMousePosition();
+        checkCount++;
+
+        // Continue checking periodically for a short time to handle race conditions
+        if (checkCount < maxChecks) {
+          setTimeout(performHoverDetection, recheckInterval);
+        }
+      };
+
+      // Start with an initial delay to ensure most initialization callbacks have completed
+      // Then perform periodic re-checks to handle any race conditions
+      setTimeout(performHoverDetection, initialDelay);
+    }
+  });
 </script>
 
 {#if isLoading || !video}
   <ContentCardSkeleton />
 {:else}
   <div
+    bind:this={cardElement}
     class="group h-64 w-full transform cursor-pointer will-change-transform"
     data-testid="video-card"
   >

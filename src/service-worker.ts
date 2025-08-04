@@ -46,23 +46,22 @@ const getAuthState = async (): Promise<'auth' | 'anon'> => {
             resolve('anon'); // Default to anonymous
           }
         };
-        
-        client.postMessage(
-          { type: 'REQUEST_AUTH_STATE' },
-          [messageChannel.port2]
-        );
-        
+
+        client.postMessage({ type: 'REQUEST_AUTH_STATE' }, [
+          messageChannel.port2,
+        ]);
+
         // Timeout after 100ms
         setTimeout(() => resolve('anon'), 100);
       });
-      
+
       const authState = await authStatePromise;
       return authState;
     }
   } catch (error) {
     console.warn(`SW [${getTimestamp()}]: Error detecting auth state:`, error);
   }
-  
+
   return 'anon'; // Default to anonymous when unsure
 };
 
@@ -128,7 +127,9 @@ const performBackgroundRefresh = async (): Promise<void> => {
     const dataCache = await getDataCache();
     const now = Date.now();
 
-    console.log(`SW [${getTimestamp()}]: Starting background refresh cycle (auth: ${authState})`);
+    console.log(
+      `SW [${getTimestamp()}]: Starting background refresh cycle (auth: ${authState})`
+    );
 
     // Check if any clients are active
     const clients = await sw.clients.matchAll();
@@ -143,7 +144,7 @@ const performBackgroundRefresh = async (): Promise<void> => {
     const refreshPromises = Array.from(trackedRoutes).map(async (route) => {
       try {
         const cacheKey = getCacheKey(route, authState);
-        
+
         // Check if route is still cached
         const cachedResponse = await dataCache.match(cacheKey);
         if (!cachedResponse) {
@@ -318,11 +319,11 @@ const handleNavigationRequest = async (request: Request): Promise<Response> => {
     console.log(
       `SW [${getTimestamp()}]: Network failed for ${url.pathname}, trying cache (auth: ${authState})`
     );
-    
+
     // Try auth-specific cache first
     const cacheKey = getCacheKey(request.url, authState);
     let cached = await cache.match(cacheKey);
-    
+
     // If not found and we're authenticated, try anonymous cache as fallback
     if (!cached && authState === 'auth') {
       const anonCacheKey = getCacheKey(request.url, 'anon');
@@ -333,7 +334,7 @@ const handleNavigationRequest = async (request: Request): Promise<Response> => {
         );
       }
     }
-    
+
     if (cached) {
       console.log(
         `SW [${getTimestamp()}]: Serving cached content for ${url.pathname} (auth: ${authState})`
@@ -388,7 +389,9 @@ const preloadCriticalResources = async (): Promise<void> => {
   const authState = await getAuthState();
   const dataCache = await getDataCache();
 
-  console.log(`SW [${getTimestamp()}]: Starting critical resource preload... (auth: ${authState})`);
+  console.log(
+    `SW [${getTimestamp()}]: Starting critical resource preload... (auth: ${authState})`
+  );
 
   // Preload critical assets that aren't already cached
   const criticalAssets = build.filter(
@@ -447,7 +450,9 @@ const preloadCriticalResources = async (): Promise<void> => {
         const htmlToCache = htmlResponse.value.clone();
         const htmlCacheKey = getCacheKey(route, authState);
         await dataCache.put(htmlCacheKey, htmlToCache);
-        console.log(`SW [${getTimestamp()}]: ✅ Route cached: ${route} (auth: ${authState})`);
+        console.log(
+          `SW [${getTimestamp()}]: ✅ Route cached: ${route} (auth: ${authState})`
+        );
         routeSuccessfullyPreloaded = true;
 
         // Add to background refresh tracking
@@ -541,7 +546,9 @@ const preloadCriticalResources = async (): Promise<void> => {
     );
   }
 
-  console.log(`SW [${getTimestamp()}]: Critical resource preload complete (auth: ${authState})`);
+  console.log(
+    `SW [${getTimestamp()}]: Critical resource preload complete (auth: ${authState})`
+  );
 };
 
 // Clean up old caches efficiently including auth-specific caches
@@ -649,9 +656,10 @@ sw.addEventListener('message', (event) => {
 
     case 'CLEAR_AUTH_CACHE': {
       const { authState } = event.data || {};
-      const cacheToDelete = authState === 'auth' ? DATA_CACHE_AUTH : DATA_CACHE_ANON;
+      const cacheToDelete =
+        authState === 'auth' ? DATA_CACHE_AUTH : DATA_CACHE_ANON;
       console.log(`SW [${getTimestamp()}]: Clearing ${authState} cache`);
-      
+
       event.waitUntil(
         caches.delete(cacheToDelete).then(() => {
           console.log(
@@ -667,10 +675,10 @@ sw.addEventListener('message', (event) => {
       console.log(
         `SW [${getTimestamp()}]: Auth state changed from ${oldAuthState} to ${newAuthState}`
       );
-      
+
       // Clear tracked routes to force re-evaluation with new auth state
       trackedRoutes.clear();
-      
+
       // Optionally preload critical resources for new auth state
       event.waitUntil(preloadCriticalResources());
       break;

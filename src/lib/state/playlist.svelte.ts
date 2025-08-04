@@ -140,7 +140,7 @@ export class PlaylistStateClass {
     }
 
     // Enhanced hover effect when manually tracking hover state
-    const isHovered = 
+    const isHovered =
       this.hoveredPlaylistIndex === index &&
       !this.pageState.sidebarScrollState.scrolling &&
       this.draggedIndex === null;
@@ -203,12 +203,12 @@ export class PlaylistStateClass {
       // Clear hover states to prevent conflicts during drag
       this.hoveredPlaylistIndex = null;
       this.contentState.clearHoverStatesDuringDrag();
-      
+
       // Add global dragging class for state coordination
       if (typeof document !== 'undefined' && document.body) {
         document.body.classList.add('dragging');
       }
-      
+
       createDragImage(event, options.playlists[index].name);
     };
 
@@ -332,12 +332,12 @@ export class PlaylistStateClass {
       this.targetIndex = null;
       this.hoveredPlaylistIndex = null;
       this.contentState.dragContentType = null; // Reset drag content type
-      
+
       // Remove global dragging class
       if (typeof document !== 'undefined' && document.body) {
         document.body.classList.remove('dragging');
       }
-      
+
       // Re-enable hover states after drag operation completes
       this.contentState.enableHoverStatesAfterDrag();
     };

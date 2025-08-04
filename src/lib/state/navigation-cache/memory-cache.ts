@@ -78,7 +78,11 @@ export class OptimizedMemoryCache {
     }
   }
 
-  get<T>(key: string, userId: string | null = null, currentAuthState: 'auth' | 'anon' = 'anon'): T | null {
+  get<T>(
+    key: string,
+    userId: string | null = null,
+    currentAuthState: 'auth' | 'anon' = 'anon'
+  ): T | null {
     const entry = this.cache.get(key);
     if (!entry) return null;
 

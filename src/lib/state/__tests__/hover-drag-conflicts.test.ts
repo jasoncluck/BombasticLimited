@@ -41,7 +41,7 @@ describe('Hover-Drag Conflict Prevention', () => {
 
     it('should apply hover styles via JavaScript state when hovered', () => {
       sourceState.hoveredSourceIndex = 0;
-      
+
       const classes = sourceState.getButtonClasses({
         index: 0,
         isSelected: false,
@@ -55,7 +55,7 @@ describe('Hover-Drag Conflict Prevention', () => {
 
     it('should not apply hover styles when not hovered', () => {
       sourceState.hoveredSourceIndex = null;
-      
+
       const classes = sourceState.getButtonClasses({
         index: 0,
         isSelected: false,
@@ -69,7 +69,7 @@ describe('Hover-Drag Conflict Prevention', () => {
     it('should not apply hover styles when scrolling', () => {
       sourceState.hoveredSourceIndex = 0;
       mockPageState.sidebarScrollState.scrolling = true;
-      
+
       const classes = sourceState.getButtonClasses({
         index: 0,
         isSelected: false,
@@ -78,7 +78,7 @@ describe('Hover-Drag Conflict Prevention', () => {
 
       // Should not contain hover styles when scrolling
       expect(classes).not.toContain('bg-secondary/50');
-      
+
       // Reset scrolling state for other tests
       mockPageState.sidebarScrollState.scrolling = false;
     });
@@ -112,7 +112,7 @@ describe('Hover-Drag Conflict Prevention', () => {
       playlistState.hoveredPlaylistIndex = 0;
       playlistState.draggedIndex = null; // Ensure not dragging
       mockPageState.sidebarScrollState.scrolling = false; // Ensure not scrolling
-      
+
       const classes = playlistState.getButtonClasses({
         index: 0,
         isSelected: false,
@@ -128,7 +128,7 @@ describe('Hover-Drag Conflict Prevention', () => {
     it('should not apply hover styles when dragging', () => {
       playlistState.hoveredPlaylistIndex = 0;
       playlistState.draggedIndex = 1; // Simulate dragging
-      
+
       const classes = playlistState.getButtonClasses({
         index: 0,
         isSelected: false,
@@ -151,7 +151,7 @@ describe('Hover-Drag Conflict Prevention', () => {
     it('should clear hover states when drag starts', () => {
       const sectionId = 'test-section';
       const mockVideo = { id: 'video1', title: 'Test Video' } as any;
-      
+
       // Set up initial hover state
       contentState.hoveredVideosBySection[sectionId] = mockVideo;
       contentState.hoverTimeoutId = setTimeout(() => {}, 1000);
@@ -167,7 +167,7 @@ describe('Hover-Drag Conflict Prevention', () => {
     it('should not update hover state when dragging', () => {
       const sectionId = 'test-section';
       const mockVideo = { id: 'video1', title: 'Test Video' } as any;
-      
+
       // Set drag state
       contentState.dragContentType = 'video';
 
