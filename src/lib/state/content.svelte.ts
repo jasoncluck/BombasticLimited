@@ -192,6 +192,33 @@ export class ContentState {
     return END_DROPZONE_CLASSES;
   }
 
+  // Helper method to clear hover states during drag operations
+  clearHoverStatesDuringDrag() {
+    // Clear all hover states when drag starts to prevent CSS conflicts
+    for (const sectionId in this.hoveredVideosBySection) {
+      this.hoveredVideosBySection[sectionId] = null;
+    }
+    
+    // Clear any pending hover timeout
+    if (this.hoverTimeoutId) {
+      clearTimeout(this.hoverTimeoutId);
+      this.hoverTimeoutId = null;
+    }
+
+    // Add global dragging class to disable all CSS hover effects
+    if (typeof document !== 'undefined' && document.body) {
+      document.body.classList.add('dragging');
+    }
+  }
+
+  // Helper method to restore hover states after drag operations
+  enableHoverStatesAfterDrag() {
+    // Remove global dragging class to re-enable CSS hover effects
+    if (typeof document !== 'undefined' && document.body) {
+      document.body.classList.remove('dragging');
+    }
+  }
+
   // Mouse hover methods
   handleMouseEnter({
     video,
@@ -392,6 +419,9 @@ export class ContentState {
       // Reset drag state
       this.dragContentType = null;
       this.draggedFromSectionId = null;
+
+      // Re-enable hover states after drag operation completes
+      this.enableHoverStatesAfterDrag();
     };
 
     const handleDragLeave = (
@@ -411,6 +441,9 @@ export class ContentState {
       index: number,
       sectionId: string = DEFAULT_SECTION_ID
     ) => {
+      // Clear hover states to prevent CSS conflicts during drag
+      this.clearHoverStatesDuringDrag();
+      
       // Clear selections from all other sections first
       if (options.clearSelection) {
         this.clearAllSections();
