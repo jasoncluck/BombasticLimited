@@ -73,7 +73,7 @@ export class NavigationCacheStateClass implements NavigationCacheState {
   // Track UI state for navigation loading indicators
   private lastAuthStatus: boolean | null = null;
 
-  private readonly CACHE_DURATION = 300000; // 5 minutes
+  private readonly CACHE_DURATION = 120000; // 2 minutes
   private readonly ANONYMOUS_ID_KEY = 'navigation-cache-anonymous-id';
 
   constructor() {

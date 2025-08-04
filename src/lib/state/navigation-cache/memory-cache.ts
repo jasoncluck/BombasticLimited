@@ -26,7 +26,7 @@ export class OptimizedMemoryCache {
   private internalSet<T extends object>(
     key: string,
     data: T,
-    ttl = 300000,
+    ttl = 120000,
     userId: string | null = null,
     preloaded = false,
     authState: 'auth' | 'anon' = 'anon'

@@ -19,7 +19,7 @@ const STATIC_EXTENSIONS =
   /\.(js|css|woff2?|ttf|eot|jpg|jpeg|png|gif|svg|webp|ico|avif)$/;
 
 // Background refresh configuration
-const BACKGROUND_REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const BACKGROUND_REFRESH_INTERVAL = 2 * 60 * 1000; // 2 minutes
 const MAX_BACKGROUND_REFRESH_AGE = 30 * 60 * 1000; // 30 minutes - stop refreshing after this
 let backgroundRefreshTimer: ReturnType<typeof setTimeout> | null = null;
 const trackedRoutes = new Set<string>(MAIN_ROUTE_PATHS);
@@ -298,7 +298,7 @@ const handleNavigationRequest = async (request: Request): Promise<Response> => {
                   type: 'CACHE_SET',
                   key: `page:${url.pathname.replace('/__data.json', '')}`,
                   data: data,
-                  ttl: 300000, // 5 minutes
+                  ttl: 120000, // 2 minutes
                   timestamp: Date.now(),
                   preloaded: false, // This is from user navigation, not preloading
                   authState: authState,
@@ -474,7 +474,7 @@ const preloadCriticalResources = async (): Promise<void> => {
                 type: 'CACHE_SET',
                 key: `page:${route}`,
                 data: data,
-                ttl: 300000, // 5 minutes
+                ttl: 120000, // 2 minutes
                 timestamp: Date.now(),
                 preloaded: true,
                 authState: authState,

@@ -15,7 +15,7 @@ interface CacheEntry {
 
 class PlaylistCache {
   private cache = new Map<string, CacheEntry>();
-  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  private readonly CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
 
   private getCacheKey(
     source: string,
