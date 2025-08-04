@@ -181,31 +181,4 @@
   .dropdown-icon {
     @apply !h-4 !w-4 align-middle;
   }
-
-  /* Disable all hover effects during drag operations */
-  .dragging *:hover {
-    /* Reset all hover effects when body has dragging class */
-    background-color: inherit !important;
-    color: inherit !important;
-    opacity: inherit !important;
-    transform: inherit !important;
-    brightness: inherit !important;
-  }
-
-  /* Disable CSS hover pseudo-classes globally during drag */
-  .dragging *:hover::before,
-  .dragging *:hover::after {
-    background-color: transparent !important;
-    border-color: transparent !important;
-  }
-
-  /* JavaScript-managed hover class for controlled hover states */
-  .hover-js:hover {
-    @apply text-primary;
-  }
-
-  /* Disable the custom hover-js class during drag operations */
-  .dragging .hover-js:hover {
-    color: inherit !important;
-  }
 }
