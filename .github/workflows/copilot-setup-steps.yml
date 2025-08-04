@@ -3,7 +3,7 @@ name: Copilot Development Setup
 on:
   workflow_dispatch:
   push:
-    branches: [main, develop]
+    branches: [main, staging]
   pull_request:
     branches: [main]
 
