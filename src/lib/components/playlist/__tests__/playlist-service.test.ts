@@ -7,7 +7,9 @@ vi.mock('../../ui/image-cropper/utils', () => ({
   getCroppedImg: vi.fn(),
 }));
 
-const mockGetCroppedImg = vi.mocked(await import('../../ui/image-cropper/utils')).getCroppedImg;
+const mockGetCroppedImg = vi.mocked(
+  await import('../../ui/image-cropper/utils')
+).getCroppedImg;
 
 // Mock globals
 const mockCreateImageBitmap = vi.fn();
@@ -20,25 +22,25 @@ const mockDrawImage = vi.fn();
 class MockOffscreenCanvas {
   width: number;
   height: number;
-  
+
   constructor(width: number, height: number) {
     this.width = width;
     this.height = height;
   }
-  
+
   getContext() {
     return {
       drawImage: mockDrawImage,
     };
   }
-  
+
   convertToBlob = mockConvertToBlob;
 }
 
 describe('getCroppedPlaylistImageUrl', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Setup global mocks
     global.fetch = mockFetch;
     global.createImageBitmap = mockCreateImageBitmap;
@@ -64,17 +66,17 @@ describe('getCroppedPlaylistImageUrl', () => {
 
     mockCreateImageBitmap.mockResolvedValue(mockImageBitmap);
     mockGetContext.mockReturnValue({ drawImage: mockDrawImage });
-    
+
     // Mock ArrayBuffer and base64 conversion
     const mockArrayBuffer = new ArrayBuffer(8);
     const mockUint8Array = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]);
     mockWebpBlob.arrayBuffer = vi.fn().mockResolvedValue(mockArrayBuffer);
     Object.defineProperty(mockArrayBuffer, 'length', { value: 8 });
-    
+
     // Mock the Uint8Array constructor to return our mock
     const originalUint8Array = global.Uint8Array;
     global.Uint8Array = vi.fn().mockReturnValue(mockUint8Array) as any;
-    
+
     mockConvertToBlob.mockResolvedValue(mockWebpBlob);
 
     const result = await getCroppedPlaylistImageUrl({
@@ -88,11 +90,20 @@ describe('getCroppedPlaylistImageUrl', () => {
 
     // Verify OffscreenCanvas processing
     expect(mockCreateImageBitmap).toHaveBeenCalledWith(mockImageBlob);
-    expect(mockConvertToBlob).toHaveBeenCalledWith({ type: 'image/webp', quality: 0.8 });
+    expect(mockConvertToBlob).toHaveBeenCalledWith({
+      type: 'image/webp',
+      quality: 0.8,
+    });
     expect(mockDrawImage).toHaveBeenCalledWith(
       mockImageBitmap,
-      10, 20, 100, 150,  // source coordinates
-      0, 0, 100, 150     // destination coordinates
+      10,
+      20,
+      100,
+      150, // source coordinates
+      0,
+      0,
+      100,
+      150 // destination coordinates
     );
 
     // Verify result format (basic check since base64 encoding is complex to mock)
