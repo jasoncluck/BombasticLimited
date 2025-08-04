@@ -108,7 +108,7 @@ describe('Cache System - Core Tests', () => {
         'user123'
       );
 
-      expect(suggestions).toContain('/giantbomb?page=2');
+      expect(suggestions).toContain('/giantbomb/latest');
       expect(suggestions).toContain('/continue');
     });
 

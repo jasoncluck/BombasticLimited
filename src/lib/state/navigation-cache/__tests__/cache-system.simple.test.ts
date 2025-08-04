@@ -122,8 +122,8 @@ describe('Cache System Integration', () => {
 
       expect(suggestions).toBeInstanceOf(Array);
       expect(suggestions.length).toBeGreaterThan(0);
-      // Check for actual suggestions returned - it suggests pagination and continue page
-      expect(suggestions).toContain('/giantbomb?page=2');
+      // Check for actual suggestions returned - it suggests latest content and continue page
+      expect(suggestions).toContain('/giantbomb/latest');
     });
 
     it('should prioritize routes for authenticated users', () => {
