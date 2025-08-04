@@ -463,12 +463,16 @@ export class NavigationCacheStateClass implements NavigationCacheState {
     toUrl?: string,
     userId?: string | null
   ): boolean {
-    if (!this.initialized || !fromUrl || !toUrl) return true;
+    if (!this.initialized) return true;
+    if (!fromUrl || !toUrl) return true;
 
     const fromPath = extractPathname(fromUrl);
     const toPath = extractPathname(toUrl);
 
+    // Same route navigation should never show loading
     if (fromPath === toPath) return false;
+    
+    // Search routes don't show loading
     if (toPath.startsWith('/search/')) return false;
 
     return !this.isLikelyCached(toUrl, userId ?? null);
@@ -530,6 +534,30 @@ export class NavigationCacheStateClass implements NavigationCacheState {
   testMarkRouteAsPreloaded(url: string): void {
     if (import.meta.env.NODE_ENV === 'test' || import.meta.env.DEV) {
       this.markRouteAsPreloaded(url);
+    }
+  }
+
+  // Test-specific auth status check that bypasses browser flag
+  testCheckAuthStatus(): boolean {
+    try {
+      const authCookie = document.cookie
+        .split(';')
+        .find((cookie) => cookie.trim().startsWith('sb-127-auth-token'));
+
+      if (!authCookie) return false;
+
+      const cookieValue = authCookie.split('=')[1];
+      return !!(
+        cookieValue &&
+        cookieValue !== 'null' &&
+        cookieValue !== 'undefined' &&
+        cookieValue.trim() !== '' &&
+        cookieValue !== '%7B%7D' &&
+        cookieValue !== '{}'
+      );
+    } catch (error) {
+      console.warn('Failed to check auth status:', error);
+      return false;
     }
   }
 
