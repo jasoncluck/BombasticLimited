@@ -9,14 +9,16 @@ on:
 
 jobs:
   copilot-setup-steps:
+    # Set the permissions to the lowest permissions possible needed for your steps.
+    # Copilot will be given its own token for its operations.
+    permissions:
+      # If you want to clone the repository as part of your setup steps, for example to install dependencies, you'll need the `contents: read` permission. If you don't clone the repository in your setup steps, Copilot will do this for you automatically after the steps complete.
+      contents: read
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-      - uses: actions/checkout@v4
-        with:
-          repository: jasoncluck/bombify
-          token: ${{ secrets.GITHUB_TOKEN }}
+        uses: actions/checkout@v4
 
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
