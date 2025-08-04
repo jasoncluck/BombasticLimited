@@ -192,6 +192,20 @@ export class ContentState {
     return END_DROPZONE_CLASSES;
   }
 
+  // Helper method to clear hover states during drag operations
+  clearHoverStatesDuringDrag() {
+    // Clear all hover states when drag starts to prevent CSS conflicts
+    for (const sectionId in this.hoveredVideosBySection) {
+      this.hoveredVideosBySection[sectionId] = null;
+    }
+    
+    // Clear any pending hover timeout
+    if (this.hoverTimeoutId) {
+      clearTimeout(this.hoverTimeoutId);
+      this.hoverTimeoutId = null;
+    }
+  }
+
   // Mouse hover methods
   handleMouseEnter({
     video,
@@ -411,6 +425,9 @@ export class ContentState {
       index: number,
       sectionId: string = DEFAULT_SECTION_ID
     ) => {
+      // Clear hover states to prevent CSS conflicts during drag
+      this.clearHoverStatesDuringDrag();
+      
       // Clear selections from all other sections first
       if (options.clearSelection) {
         this.clearAllSections();

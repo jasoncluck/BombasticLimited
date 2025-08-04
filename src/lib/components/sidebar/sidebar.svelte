@@ -103,6 +103,9 @@
     }
 
     draggedSourceIndex = index;
+    // Clear hover states to prevent CSS conflicts during drag
+    sourceState.hoveredSourceIndex = null;
+    
     if (event.dataTransfer) {
       event.dataTransfer.effectAllowed = 'move';
     }
