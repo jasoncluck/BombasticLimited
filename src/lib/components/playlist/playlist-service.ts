@@ -523,7 +523,7 @@ async function processWithOffscreenCanvas(
     imageProperties.height
   );
 
-  const blob = await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.8 });
+  const blob = await canvas.convertToBlob({ type: 'image/webp', quality: 0.8 });
   const arrayBuffer = await blob.arrayBuffer();
 
   const uint8Array = new Uint8Array(arrayBuffer);
@@ -538,5 +538,5 @@ async function processWithOffscreenCanvas(
 
   const base64 = btoa(binaryString);
 
-  return `data:image/jpeg;base64,${base64}`;
+  return `data:image/webp;base64,${base64}`;
 }
