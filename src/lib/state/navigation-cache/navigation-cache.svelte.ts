@@ -471,7 +471,7 @@ export class NavigationCacheStateClass implements NavigationCacheState {
 
     // Same route navigation should never show loading
     if (fromPath === toPath) return false;
-    
+
     // Search routes don't show loading
     if (toPath.startsWith('/search/')) return false;
 
