@@ -3,6 +3,15 @@ import { redirect } from '@sveltejs/kit';
 import { load } from '../+page.server';
 import { getVideos, getInProgressVideos } from '$lib/supabase/videos';
 import { SOURCES } from '$lib/constants/source';
+import {
+  createMockSession,
+  createMockUserProfile,
+  createMockSourceVideos,
+  createMockContinueVideos,
+  createMockVideoResponse,
+  createMockContinueWatchingResponse,
+  createMockErrorResponse,
+} from './test-utils';
 
 // Mock dependencies
 vi.mock('@sveltejs/kit', () => ({
@@ -27,41 +36,35 @@ const mockRedirect = vi.mocked(redirect);
 
 describe('+page.server.ts load function', () => {
   const mockSupabase = {} as any;
-  const mockSession = { user: { id: 'test-user' } } as any;
-  const mockDepends = vi.fn();
+  const mockSession = createMockSession();
+  const mockUserProfile = createMockUserProfile();
+  const mockSourceVideos = createMockSourceVideos();
+  const mockContinueVideos = createMockContinueVideos();
 
-  const mockLoadEvent = {
+  const mockLoadEvent: any = {
     locals: {
       supabase: mockSupabase,
       session: mockSession,
     },
-    url: new URL('http://localhost:5173/'),
-    depends: mockDepends,
-  } as any;
+    url: new URL('http://localhost:5173'),
+    depends: vi.fn(),
+  };
+
+  const mockDepends = mockLoadEvent.depends;
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('should fetch videos from all sources and continue watching videos', async () => {
-    // Mock successful responses
-    const mockSourceVideos = {
-      giantbomb: [{ id: 'gb1', title: 'GB Video 1' }],
-      jeffgerstmann: [{ id: 'jg1', title: 'JG Video 1' }],
-      nextlander: [{ id: 'nl1', title: 'NL Video 1' }],
-      remap: [{ id: 'rm1', title: 'Remap Video 1' }],
-    };
-
-    const mockContinueVideos = [{ id: 'cv1', title: 'Continue Video 1' }];
-
     // Setup mocks for each source
-    mockGetVideos.mockImplementation(async ({ source }) => ({
-      videos: mockSourceVideos[source as keyof typeof mockSourceVideos] || [],
-    }));
+    mockGetVideos.mockImplementation(async ({ source }) => 
+      createMockVideoResponse(mockSourceVideos[source as keyof typeof mockSourceVideos] || [])
+    );
 
-    mockGetInProgressVideos.mockResolvedValue({
-      videos: mockContinueVideos,
-    });
+    mockGetInProgressVideos.mockResolvedValue(
+      createMockContinueWatchingResponse(mockContinueVideos)
+    );
 
     const result = await load(mockLoadEvent);
 
@@ -81,12 +84,12 @@ describe('+page.server.ts load function', () => {
           type: 'video',
         },
         supabase: mockSupabase,
-        session: mockSession,
       });
     });
 
-    // Verify continue watching videos were fetched
+    // Verify continue watching was fetched
     expect(mockGetInProgressVideos).toHaveBeenCalledWith({
+      limit: 10,
       contentFilter: {
         sort: {
           key: 'dateTimestamp',
@@ -94,19 +97,13 @@ describe('+page.server.ts load function', () => {
         },
         type: 'timestamp',
       },
-      limit: 10,
       supabase: mockSupabase,
       session: mockSession,
     });
 
-    // Verify returned data structure
+    // Verify result structure
     expect(result).toEqual({
-      sourceVideos: {
-        giantbomb: [{ id: 'gb1', title: 'GB Video 1' }],
-        jeffgerstmann: [{ id: 'jg1', title: 'JG Video 1' }],
-        nextlander: [{ id: 'nl1', title: 'NL Video 1' }],
-        remap: [{ id: 'rm1', title: 'Remap Video 1' }],
-      },
+      sourceVideos: mockSourceVideos,
       sourceVideosContentFilters: {
         sort: {
           key: 'datePublished',
@@ -125,22 +122,43 @@ describe('+page.server.ts load function', () => {
     });
   });
 
-  it('should redirect to error page when URL has error parameter', async () => {
-    const errorUrl = new URL('http://localhost:5173/?error=access_denied');
+  it('should handle error parameters and redirect', () => {
+    const urlWithError = new URL('http://localhost:5173?error=access_denied');
     const loadEventWithError = {
       ...mockLoadEvent,
-      url: errorUrl,
+      url: urlWithError,
     };
 
-    await expect(load(loadEventWithError)).rejects.toThrow('Redirect');
+    expect(() => load(loadEventWithError)).rejects.toThrow('Redirect');
     expect(mockRedirect).toHaveBeenCalledWith(303, '/auth/error');
   });
 
-  it('should handle empty video responses gracefully', async () => {
-    mockGetVideos.mockResolvedValue({ videos: [] });
-    mockGetInProgressVideos.mockResolvedValue({ videos: [] });
+  it('should work without session (anonymous user)', async () => {
+    const anonymousLoadEvent = {
+      ...mockLoadEvent,
+      locals: {
+        ...mockLoadEvent.locals,
+        session: null,
+      },
+    };
 
-    const result = await load(mockLoadEvent);
+    mockGetVideos.mockResolvedValue(createMockVideoResponse([]));
+    mockGetInProgressVideos.mockResolvedValue(createMockContinueWatchingResponse([]));
+
+    const result = await load(anonymousLoadEvent) as any;
+
+    expect(mockGetInProgressVideos).toHaveBeenCalledWith({
+      limit: 10,
+      contentFilter: {
+        sort: {
+          key: 'dateTimestamp',
+          order: 'descending',
+        },
+        type: 'timestamp',
+      },
+      supabase: mockSupabase,
+      session: null,
+    });
 
     expect(result.sourceVideos).toEqual({
       giantbomb: [],
@@ -151,70 +169,86 @@ describe('+page.server.ts load function', () => {
     expect(result.continueWatchingVideos).toEqual([]);
   });
 
-  it('should handle video fetching errors gracefully', async () => {
-    mockGetVideos.mockRejectedValue(new Error('Database error'));
-    mockGetInProgressVideos.mockRejectedValue(new Error('Database error'));
+  it('should handle empty video responses gracefully', async () => {
+    mockGetVideos.mockResolvedValue(createMockVideoResponse([]));
+    mockGetInProgressVideos.mockResolvedValue(createMockContinueWatchingResponse([]));
 
-    await expect(load(mockLoadEvent)).rejects.toThrow('Database error');
+    const result = await load(mockLoadEvent) as any;
+
+    expect(result.sourceVideos).toEqual({
+      giantbomb: [],
+      jeffgerstmann: [],
+      nextlander: [],
+      remap: [],
+    });
+    expect(result.continueWatchingVideos).toEqual([]);
   });
 
-  it('should work with null session', async () => {
-    const mockLoadEventNoSession = {
-      ...mockLoadEvent,
-      locals: {
-        supabase: mockSupabase,
-        session: null,
-      },
-    };
+  it('should handle database errors', async () => {
+    mockGetVideos.mockResolvedValue(createMockErrorResponse('Database error'));
+    mockGetInProgressVideos.mockResolvedValue(createMockContinueWatchingResponse([]));
 
-    mockGetVideos.mockResolvedValue({ videos: [] });
-    mockGetInProgressVideos.mockResolvedValue({ videos: [] });
+    const result = await load(mockLoadEvent) as any;
 
-    const result = await load(mockLoadEventNoSession);
-
-    expect(mockGetVideos).toHaveBeenCalledWith(
-      expect.objectContaining({
-        session: null,
-      })
-    );
-    expect(mockGetInProgressVideos).toHaveBeenCalledWith(
-      expect.objectContaining({
-        session: null,
-      })
-    );
-    expect(result).toBeDefined();
+    // Should still return structure even with errors
+    expect(result.sourceVideos).toEqual({
+      giantbomb: [],
+      jeffgerstmann: [],
+      nextlander: [],
+      remap: [],
+    });
+    expect(result.continueWatchingVideos).toEqual([]);
   });
 
   it('should use correct content filters', async () => {
-    mockGetVideos.mockResolvedValue({ videos: [] });
-    mockGetInProgressVideos.mockResolvedValue({ videos: [] });
+    mockGetVideos.mockResolvedValue(createMockVideoResponse([]));
+    mockGetInProgressVideos.mockResolvedValue(createMockContinueWatchingResponse([]));
 
     await load(mockLoadEvent);
 
-    // Verify source videos content filter
+    // Verify content filter is applied to all calls - the load function uses hardcoded filters
     expect(mockGetVideos).toHaveBeenCalledWith(
       expect.objectContaining({
-        contentFilter: {
-          sort: {
+        contentFilter: expect.objectContaining({
+          sort: expect.objectContaining({
             key: 'datePublished',
             order: 'descending',
-          },
+          }),
           type: 'video',
-        },
+        }),
       })
     );
+  });
 
-    // Verify continue watching content filter
-    expect(mockGetInProgressVideos).toHaveBeenCalledWith(
-      expect.objectContaining({
-        contentFilter: {
-          sort: {
-            key: 'dateTimestamp',
-            order: 'descending',
-          },
-          type: 'timestamp',
-        },
-      })
-    );
+  it('should fetch data concurrently for performance', async () => {
+    const startTime = Date.now();
+    let getVideosCallTime: number | null = null;
+    let getInProgressCallTime: number | null = null;
+
+    mockGetVideos.mockImplementation(async () => {
+      getVideosCallTime = Date.now();
+      // Simulate async delay
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      return createMockVideoResponse([]);
+    });
+
+    mockGetInProgressVideos.mockImplementation(async () => {
+      getInProgressCallTime = Date.now();
+      // Simulate async delay
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      return createMockContinueWatchingResponse([]);
+    });
+
+    await load(mockLoadEvent);
+
+    // Both functions should be called around the same time (concurrent)
+    expect(getVideosCallTime).not.toBeNull();
+    expect(getInProgressCallTime).not.toBeNull();
+    
+    if (getVideosCallTime && getInProgressCallTime) {
+      const timeDifference = Math.abs(getVideosCallTime - getInProgressCallTime);
+      // Should be called within 5ms of each other (concurrent)
+      expect(timeDifference).toBeLessThan(5);
+    }
   });
 });

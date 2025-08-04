@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
+import {
+  createMockSession,
+  createMockUserProfile,
+  createMockSourceVideos,
+  createMockContinueVideos,
+} from './test-utils';
 
 // Mock all dependencies
 vi.mock('$app/navigation', () => ({
@@ -68,31 +74,14 @@ const mockGoto = vi.mocked(goto);
 
 describe('+page.svelte Component Logic', () => {
   const mockData = {
-    sourceVideos: {
-      giantbomb: [
-        { id: 'gb1', title: 'Giant Bomb Video 1', thumbnailUrl: 'gb1.jpg' },
-      ],
-      jeffgerstmann: [
-        { id: 'jg1', title: 'Jeff Gerstmann Video 1', thumbnailUrl: 'jg1.jpg' },
-      ],
-      nextlander: [
-        { id: 'nl1', title: 'Nextlander Video 1', thumbnailUrl: 'nl1.jpg' },
-      ],
-      remap: [
-        { id: 'rm1', title: 'Remap Radio Video 1', thumbnailUrl: 'rm1.jpg' },
-      ],
-    },
+    sourceVideos: createMockSourceVideos(),
     contentFilter: {
       sort: { key: 'datePublished', order: 'descending' },
       type: 'video',
     },
-    continueWatchingVideos: [
-      { id: 'cw1', title: 'Continue Watching Video 1', thumbnailUrl: 'cw1.jpg' },
-    ],
-    userProfile: {
-      sources: ['giantbomb', 'jeffgerstmann', 'nextlander', 'remap'],
-    },
-    session: { user: { id: 'test-user' } },
+    continueWatchingVideos: createMockContinueVideos(),
+    userProfile: createMockUserProfile(),
+    session: createMockSession(),
     supabase: {},
   };
 
@@ -135,14 +124,14 @@ describe('+page.svelte Component Logic', () => {
       const videoSample = mockData.sourceVideos.giantbomb[0];
       expect(videoSample).toHaveProperty('id');
       expect(videoSample).toHaveProperty('title');
-      expect(videoSample).toHaveProperty('thumbnailUrl');
+      expect(videoSample).toHaveProperty('thumbnail_url');
     });
 
     it('should validate continue watching video structure', () => {
       const continueVideoSample = mockData.continueWatchingVideos[0];
       expect(continueVideoSample).toHaveProperty('id');
       expect(continueVideoSample).toHaveProperty('title');
-      expect(continueVideoSample).toHaveProperty('thumbnailUrl');
+      expect(continueVideoSample).toHaveProperty('thumbnail_url');
     });
   });
 
@@ -175,13 +164,14 @@ describe('+page.svelte Component Logic', () => {
     });
 
     it('should handle user profile without sources', () => {
-      const profileWithoutSources = {};
+      const profileWithoutSources = { id: 'user-1', username: 'testuser' } as any;
       const dataWithEmptyProfile = {
         ...mockData,
         userProfile: profileWithoutSources,
       };
 
-      expect(dataWithEmptyProfile.userProfile.sources).toBeUndefined();
+      expect(dataWithEmptyProfile.userProfile).toBeDefined();
+      expect((dataWithEmptyProfile.userProfile as any).sources).toBeUndefined();
     });
   });
 
@@ -350,7 +340,7 @@ describe('+page.svelte Component Logic', () => {
       mockData.continueWatchingVideos.forEach(video => {
         expect(video).toHaveProperty('id');
         expect(video).toHaveProperty('title');
-        expect(video).toHaveProperty('thumbnailUrl');
+        expect(video).toHaveProperty('thumbnail_url');
       });
     });
   });
