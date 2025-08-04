@@ -17,6 +17,12 @@ const STATIC_ASSETS = [...build, ...files];
 const STATIC_EXTENSIONS =
   /\.(js|css|woff2?|ttf|eot|jpg|jpeg|png|gif|svg|webp|ico|avif)$/;
 
+// Background refresh configuration
+const BACKGROUND_REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const MAX_BACKGROUND_REFRESH_AGE = 30 * 60 * 1000; // 30 minutes - stop refreshing after this
+let backgroundRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+const trackedRoutes = new Set<string>(MAIN_ROUTE_PATHS);
+
 // Helper function to get current timestamp for logging
 const getTimestamp = (): string => {
   return new Date().toISOString().replace('T', ' ').substring(0, 19);
@@ -44,6 +50,166 @@ const shouldCacheResponse = (response: Response): boolean => {
     (response.headers.has('etag') || response.headers.has('last-modified'))
   );
 };
+
+// Background refresh functionality
+const startBackgroundRefresh = (): void => {
+  if (backgroundRefreshTimer) {
+    clearInterval(backgroundRefreshTimer);
+  }
+
+  backgroundRefreshTimer = setInterval(async () => {
+    await performBackgroundRefresh();
+  }, BACKGROUND_REFRESH_INTERVAL);
+
+  console.log(
+    `SW [${getTimestamp()}]: Background refresh started (every ${BACKGROUND_REFRESH_INTERVAL / 1000}s)`
+  );
+};
+
+const stopBackgroundRefresh = (): void => {
+  if (backgroundRefreshTimer) {
+    clearInterval(backgroundRefreshTimer);
+    backgroundRefreshTimer = null;
+    console.log(`SW [${getTimestamp()}]: Background refresh stopped`);
+  }
+};
+
+const performBackgroundRefresh = async (): Promise<void> => {
+  try {
+    const dataCache = await caches.open(DATA_CACHE);
+    const now = Date.now();
+
+    console.log(`SW [${getTimestamp()}]: Starting background refresh cycle`);
+
+    // Check if any clients are active
+    const clients = await sw.clients.matchAll();
+    if (clients.length === 0) {
+      console.log(
+        `SW [${getTimestamp()}]: No active clients, skipping background refresh`
+      );
+      return;
+    }
+
+    let refreshedCount = 0;
+    const refreshPromises = Array.from(trackedRoutes).map(async (route) => {
+      try {
+        // Check if route is still cached
+        const cachedResponse = await dataCache.match(route);
+        if (!cachedResponse) {
+          return; // Not cached, skip
+        }
+
+        // Check cache age
+        const cacheDate = cachedResponse.headers.get('date');
+        if (cacheDate) {
+          const age = now - new Date(cacheDate).getTime();
+          if (age > MAX_BACKGROUND_REFRESH_AGE) {
+            console.log(
+              `SW [${getTimestamp()}]: Route ${route} too old, removing from tracking`
+            );
+            trackedRoutes.delete(route);
+            return;
+          }
+        }
+
+        // Fetch fresh content
+        const freshResponse = await fetch(route, {
+          headers: {
+            Accept:
+              'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          },
+        });
+
+        if (!freshResponse.ok) {
+          console.warn(
+            `SW [${getTimestamp()}]: Background refresh failed for ${route}: ${freshResponse.status}`
+          );
+          return;
+        }
+
+        // Check if content actually changed using ETag
+        const cachedEtag = cachedResponse.headers.get('etag');
+        const freshEtag = freshResponse.headers.get('etag');
+
+        if (cachedEtag && freshEtag && cachedEtag === freshEtag) {
+          // Content hasn't changed, but update the cache timestamp
+          console.log(
+            `SW [${getTimestamp()}]: No changes for ${route} (ETag match)`
+          );
+          return;
+        }
+
+        // Cache the fresh response
+        await dataCache.put(route, freshResponse.clone());
+        refreshedCount++;
+
+        // Also refresh the data endpoint
+        const dataResponse = await fetch(`${route}/__data.json`);
+        if (dataResponse.ok) {
+          await dataCache.put(`${route}/__data.json`, dataResponse.clone());
+
+          // Update memory cache in clients
+          try {
+            const data = await dataResponse.json();
+            clients.forEach((client) => {
+              client.postMessage({
+                type: 'CACHE_SET',
+                key: `page:${route}`,
+                data: data,
+                ttl: 300000, // 5 minutes
+                timestamp: Date.now(),
+                preloaded: true,
+              });
+
+              // Notify clients that cache was updated
+              client.postMessage({
+                type: 'CACHE_UPDATED',
+                data: {
+                  url: route,
+                  timestamp: Date.now(),
+                  source: 'background_refresh',
+                },
+              });
+            });
+          } catch {
+            // Ignore JSON parsing errors
+          }
+        }
+
+        console.log(
+          `SW [${getTimestamp()}]: ✅ Background refreshed: ${route}`
+        );
+      } catch (error) {
+        console.warn(
+          `SW [${getTimestamp()}]: Background refresh error for ${route}:`,
+          error
+        );
+      }
+    });
+
+    await Promise.allSettled(refreshPromises);
+
+    if (refreshedCount > 0) {
+      console.log(
+        `SW [${getTimestamp()}]: Background refresh complete - updated ${refreshedCount} routes`
+      );
+    }
+  } catch (error) {
+    console.error(
+      `SW [${getTimestamp()}]: Background refresh cycle failed:`,
+      error
+    );
+  }
+};
+
+// Add route to background refresh tracking
+const addRouteToTracking = (route: string): void => {
+  trackedRoutes.add(route);
+  console.log(
+    `SW [${getTimestamp()}]: Added ${route} to background refresh tracking`
+  );
+};
+
 // Handle navigation requests and populate memory cache
 const handleNavigationRequest = async (request: Request): Promise<Response> => {
   const url = new URL(request.url);
@@ -57,6 +223,11 @@ const handleNavigationRequest = async (request: Request): Promise<Response> => {
       // Cache the fresh response
       const responseToCache = networkResponse.clone();
       cache.put(request, responseToCache);
+
+      // Add route to background refresh tracking if it's a main route
+      if (MAIN_ROUTE_PATHS.includes(url.pathname) || url.pathname === '/') {
+        addRouteToTracking(url.pathname);
+      }
 
       // Extract data and send to memory cache for __data.json requests
       if (url.pathname.endsWith('/__data.json')) {
@@ -204,6 +375,9 @@ const preloadCriticalResources = async (): Promise<void> => {
         await dataCache.put(htmlRequest, htmlToCache);
         console.log(`SW [${getTimestamp()}]: ✅ Route cached: ${route}`);
         routeSuccessfullyPreloaded = true;
+
+        // Add to background refresh tracking
+        addRouteToTracking(route);
       }
 
       // Cache data response if successful
@@ -320,7 +494,12 @@ sw.addEventListener('install', (event) => {
 sw.addEventListener('activate', (event) => {
   console.log(`SW [${getTimestamp()}]: Activating version ${version}`);
 
-  event.waitUntil(Promise.all([cleanupOldCaches(), sw.clients.claim()]));
+  event.waitUntil(
+    Promise.all([cleanupOldCaches(), sw.clients.claim()]).then(() => {
+      // Start background refresh after activation
+      startBackgroundRefresh();
+    })
+  );
 });
 
 // Fetch event - handle both static assets and navigation with unified caching
@@ -359,7 +538,7 @@ sw.addEventListener('fetch', (event) => {
   // Let everything else go to network
 });
 
-// Simplified message handling
+// Enhanced message handling
 sw.addEventListener('message', (event) => {
   const { type } = event.data || {};
 
@@ -380,8 +559,27 @@ sw.addEventListener('message', (event) => {
           console.log(
             `SW [${getTimestamp()}]: All caches cleared successfully`
           );
+          // Stop background refresh when cache is cleared
+          stopBackgroundRefresh();
+          trackedRoutes.clear();
         })
       );
+      break;
+    }
+
+    case 'START_BACKGROUND_REFRESH': {
+      console.log(
+        `SW [${getTimestamp()}]: Starting background refresh on client request`
+      );
+      startBackgroundRefresh();
+      break;
+    }
+
+    case 'STOP_BACKGROUND_REFRESH': {
+      console.log(
+        `SW [${getTimestamp()}]: Stopping background refresh on client request`
+      );
+      stopBackgroundRefresh();
       break;
     }
 
@@ -430,4 +628,14 @@ sw.addEventListener('message', (event) => {
 // Handle errors gracefully
 sw.addEventListener('error', (event) => {
   console.error(`SW [${getTimestamp()}]: Service worker error:`, event.error);
+});
+
+// Clean up on page unload/visibility change
+sw.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    // Optionally reduce refresh frequency when page is hidden
+    console.log(
+      `SW [${getTimestamp()}]: Page hidden, continuing background refresh`
+    );
+  }
 });
