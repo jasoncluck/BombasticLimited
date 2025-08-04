@@ -181,7 +181,7 @@
                       <img
                         alt={`${sourceInfo.displayName} playlist`}
                         class="h-6 w-6"
-                        src={sourceInfo.image}
+                        src={sourceInfo.image.img.src}
                       />
                       <p class="text-sm">
                         {sourceInfo.displayName}
@@ -296,7 +296,7 @@
                       <img
                         alt={`${sourceInfo.displayName} playlist`}
                         class="h-6 w-6"
-                        src={sourceInfo.image}
+                        src={sourceInfo.image.img.src}
                       />
                       <p class="text-sm">
                         {sourceInfo.displayName}

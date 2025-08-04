@@ -1,5 +1,5 @@
 {
-  "name": "bombify",
+  "name": "bombastic",
   "private": true,
   "version": "0.0.1",
   "type": "module",
@@ -46,6 +46,7 @@
     "@eslint/js": "^9.31.0",
     "@internationalized/date": "^3.8.2",
     "@lucide/svelte": "^0.515.0",
+    "@playwright/mcp": "^0.0.32",
     "@playwright/test": "^1.54.2",
     "@sveltejs/adapter-auto": "^6.0.1",
     "@sveltejs/adapter-netlify": "^5.0.2",

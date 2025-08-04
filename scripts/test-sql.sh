@@ -3,7 +3,7 @@
 # SQL Test Runner
 # This script runs SQL tests with appropriate configuration
 
-echo "🔍 Running SQL Tests for Bombify"
+echo "🔍 Running SQL Tests for Bombastic"
 echo "================================="
 
 # Check if Supabase is available

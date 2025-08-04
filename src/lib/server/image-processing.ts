@@ -52,16 +52,15 @@ export async function getCroppedPlaylistImageUrlServer({
         width: Math.max(1, imageProperties.width),
         height: Math.max(1, imageProperties.height),
       })
-      .jpeg({
+      .webp({
         quality: 80,
-        progressive: true, // Better for web loading
-        mozjpeg: true, // Use better compression if available
+        effort: 4, // Good balance between compression and processing time
       })
       .toBuffer();
 
     // Convert to base64 data URL
     const base64 = processedImageBuffer.toString('base64');
-    return `data:image/jpeg;base64,${base64}`;
+    return `data:image/webp;base64,${base64}`;
   } catch (error) {
     console.error('Server image processing failed:', error);
     return null;

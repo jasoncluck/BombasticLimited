@@ -1,9 +1,9 @@
 # SQL Testing Framework
 
 This document describes the comprehensive SQL testing framework implemented for
-the Bombify project. The framework provides automated testing for all SQL files
-in the supabase directory, ensuring database migrations, functions, and schema
-changes are properly validated.
+the Bombastic project. The framework provides automated testing for all SQL
+files in the supabase directory, ensuring database migrations, functions, and
+schema changes are properly validated.
 
 ## Overview
 

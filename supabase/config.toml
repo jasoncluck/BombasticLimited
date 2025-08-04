@@ -176,12 +176,12 @@ otp_expiry = 86400
 
 # Custom email template
 [auth.email.template.confirmation]
-subject = "Finish creating your Bombify account"
+subject = "Finish creating your Bombastic account"
 content_path = "./supabase/templates/create-account.html"
 
 # Custom recovery template
 [auth.email.template.recovery]
-subject = "Reset your Bombify password"
+subject = "Reset your Bombastic password"
 content_path = "./supabase/templates/reset-password.html"
 
 [auth.sms]

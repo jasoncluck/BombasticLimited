@@ -40,7 +40,7 @@ export const populatePlaylists = async ({
   }
 
   try {
-    const email = `${source}@bombify.net`;
+    const email = `${source}@bombastic.ltd`;
     // Securely generate a random password (never used for login)
     const password = randomBytes(32).toString('base64url');
     const username = source;

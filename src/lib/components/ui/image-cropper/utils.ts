@@ -93,6 +93,6 @@ export const getCroppedImg = async (
   return new Promise((resolve) => {
     canvas.toBlob((file) => {
       resolve(URL.createObjectURL(file!));
-    }, 'image/png');
+    }, 'image/webp', 0.8);
   });
 };

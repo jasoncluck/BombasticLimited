@@ -1,51 +1,19 @@
-import { execSync } from 'child_process';
-import { type FullConfig } from '@playwright/test';
 import { resetDatabase, shouldResetDatabase } from './utils/db-utils';
 
-async function globalSetup(config: FullConfig) {
-  try {
-    // Check if Supabase is already running
-    const status = execSync('supabase status', { encoding: 'utf-8' });
-    console.log('✅ Supabase is already running');
+async function globalSetup() {
+  console.log('🧪 Setting up test environment...');
 
-    // Extract the anon key from status output
-    const anonKeyMatch = status.match(/anon key: (.+)/);
-    const serviceRoleKeyMatch = status.match(/service_role key: (.+)/);
+  // Set default environment variables for tests (assumes Supabase is already running)
+  process.env.SUPABASE_URL =
+    process.env.SUPABASE_URL || 'http://127.0.0.1:54321';
+  process.env.SUPABASE_ANON_KEY =
+    process.env.SUPABASE_ANON_KEY ||
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
+  process.env.SUPABASE_SERVICE_ROLE_KEY =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU';
 
-    if (anonKeyMatch) {
-      process.env.SUPABASE_ANON_KEY = anonKeyMatch[1];
-    }
-    if (serviceRoleKeyMatch) {
-      process.env.SUPABASE_SERVICE_ROLE_KEY = serviceRoleKeyMatch[1];
-    }
-  } catch (error) {
-    console.log('🚀 Starting Supabase...');
-    execSync('supabase start', { stdio: 'inherit' });
-
-    // Wait for services to be fully ready and get keys
-    await new Promise((resolve) => setTimeout(resolve, 10000));
-
-    const status = execSync('supabase status', { encoding: 'utf-8' });
-    const anonKeyMatch = status.match(/anon key: (.+)/);
-    const serviceRoleKeyMatch = status.match(/service_role key: (.+)/);
-
-    if (anonKeyMatch) {
-      process.env.SUPABASE_ANON_KEY = anonKeyMatch[1];
-    }
-    if (serviceRoleKeyMatch) {
-      process.env.SUPABASE_SERVICE_ROLE_KEY = serviceRoleKeyMatch[1];
-    }
-
-    console.log('✅ Supabase started successfully');
-  }
-
-  // Generate fresh types
-  try {
-    execSync('npm run generate-types', { stdio: 'inherit' });
-    console.log('✅ Database types generated');
-  } catch (error) {
-    console.warn('⚠️ Could not generate types, continuing...');
-  }
+  console.log('✅ Environment variables set');
 
   // Reset database once at the beginning if needed
   if (shouldResetDatabase()) {
@@ -56,6 +24,8 @@ async function globalSetup(config: FullConfig) {
       '🔧 Using existing database state (set RESET_DB=true to reset)'
     );
   }
+
+  console.log('✅ Global setup complete');
 }
 
 export default globalSetup;
