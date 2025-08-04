@@ -63,7 +63,13 @@ vi.mock('$lib/constants/routes', () => ({
 
 vi.mock('$lib/components/content/content', () => ({
   getContentView: () => 'CAROUSEL',
-  sourceWithContinueStateKeys: ['giantbomb', 'jeffgerstmann', 'nextlander', 'remap', 'continueWatching'],
+  sourceWithContinueStateKeys: [
+    'giantbomb',
+    'jeffgerstmann',
+    'nextlander',
+    'remap',
+    'continueWatching',
+  ],
 }));
 
 vi.mock('@supabase/ssr', () => ({
@@ -140,7 +146,7 @@ describe('+page.svelte Component Logic', () => {
       const customProfile = {
         sources: ['giantbomb', 'nextlander'],
       };
-      
+
       const dataWithCustomProfile = {
         ...mockData,
         userProfile: customProfile,
@@ -160,11 +166,19 @@ describe('+page.svelte Component Logic', () => {
       // When userProfile is null, component should fall back to SOURCES
       expect(dataWithNullProfile.userProfile).toBeNull();
       // We can test that the fallback behavior works by checking our mock
-      expect(['giantbomb', 'jeffgerstmann', 'nextlander', 'remap']).toHaveLength(4);
+      expect([
+        'giantbomb',
+        'jeffgerstmann',
+        'nextlander',
+        'remap',
+      ]).toHaveLength(4);
     });
 
     it('should handle user profile without sources', () => {
-      const profileWithoutSources = { id: 'user-1', username: 'testuser' } as any;
+      const profileWithoutSources = {
+        id: 'user-1',
+        username: 'testuser',
+      } as any;
       const dataWithEmptyProfile = {
         ...mockData,
         userProfile: profileWithoutSources,
@@ -177,7 +191,8 @@ describe('+page.svelte Component Logic', () => {
 
   describe('continue watching visibility logic', () => {
     it('should show continue watching when session exists and has videos', () => {
-      const shouldShowContinue = mockData.session && mockData.continueWatchingVideos.length > 0;
+      const shouldShowContinue =
+        mockData.session && mockData.continueWatchingVideos.length > 0;
       expect(shouldShowContinue).toBe(true);
     });
 
@@ -186,8 +201,10 @@ describe('+page.svelte Component Logic', () => {
         ...mockData,
         session: null,
       };
-      
-      const shouldShowContinue = dataWithoutSession.session && dataWithoutSession.continueWatchingVideos.length > 0;
+
+      const shouldShowContinue =
+        dataWithoutSession.session &&
+        dataWithoutSession.continueWatchingVideos.length > 0;
       expect(shouldShowContinue).toBeFalsy();
     });
 
@@ -196,8 +213,10 @@ describe('+page.svelte Component Logic', () => {
         ...mockData,
         continueWatchingVideos: [],
       };
-      
-      const shouldShowContinue = dataWithoutVideos.session && dataWithoutVideos.continueWatchingVideos.length > 0;
+
+      const shouldShowContinue =
+        dataWithoutVideos.session &&
+        dataWithoutVideos.continueWatchingVideos.length > 0;
       expect(shouldShowContinue).toBe(false);
     });
 
@@ -207,8 +226,10 @@ describe('+page.svelte Component Logic', () => {
         session: null,
         continueWatchingVideos: [],
       };
-      
-      const shouldShowContinue = dataWithNeither.session && dataWithNeither.continueWatchingVideos.length > 0;
+
+      const shouldShowContinue =
+        dataWithNeither.session &&
+        dataWithNeither.continueWatchingVideos.length > 0;
       expect(shouldShowContinue).toBeFalsy();
     });
   });
@@ -227,9 +248,11 @@ describe('+page.svelte Component Logic', () => {
     });
 
     it('should construct clean URL without code parameter', () => {
-      const urlWithCode = new URL('http://localhost:5173/?code=oauth_code&other=param');
+      const urlWithCode = new URL(
+        'http://localhost:5173/?code=oauth_code&other=param'
+      );
       urlWithCode.searchParams.delete('code');
-      
+
       expect(urlWithCode.searchParams.get('code')).toBeNull();
       expect(urlWithCode.searchParams.get('other')).toBe('param');
       expect(urlWithCode.pathname + urlWithCode.search).toBe('/?other=param');
@@ -238,7 +261,13 @@ describe('+page.svelte Component Logic', () => {
 
   describe('carousel state initialization', () => {
     it('should initialize carousel state for all sections', () => {
-      const sourceWithContinueStateKeys = ['giantbomb', 'jeffgerstmann', 'nextlander', 'remap', 'continueWatching'];
+      const sourceWithContinueStateKeys = [
+        'giantbomb',
+        'jeffgerstmann',
+        'nextlander',
+        'remap',
+        'continueWatching',
+      ];
       const initialCarouselState: any = {};
 
       for (const key of sourceWithContinueStateKeys) {
@@ -307,7 +336,7 @@ describe('+page.svelte Component Logic', () => {
       // Validate structure for restoration
       expect(restoredData.carouselsState).toBeDefined();
       expect(restoredData.selectedVideos).toBeDefined();
-      
+
       // Validate carousel state structure
       Object.entries(restoredData.carouselsState).forEach(([key, state]) => {
         expect(state).toHaveProperty('lastViewedIndex');
@@ -321,7 +350,7 @@ describe('+page.svelte Component Logic', () => {
       // Test that our mocks are working as expected
       expect(mockGoto).toBeDefined();
       expect(typeof mockGoto).toBe('function');
-      
+
       // Test that the component data structure is compatible with mocks
       expect(mockData.sourceVideos).toHaveProperty('giantbomb');
       expect(mockData.sourceVideos).toHaveProperty('jeffgerstmann');
@@ -331,13 +360,18 @@ describe('+page.svelte Component Logic', () => {
 
     it('should validate mock structure consistency', () => {
       // Ensure our mock data structure matches what the component expects
-      const expectedSources = ['giantbomb', 'jeffgerstmann', 'nextlander', 'remap'];
+      const expectedSources = [
+        'giantbomb',
+        'jeffgerstmann',
+        'nextlander',
+        'remap',
+      ];
       const actualSources = Object.keys(mockData.sourceVideos);
-      
+
       expect(actualSources).toEqual(expectedSources);
-      
+
       // Validate that continue watching videos have the right structure
-      mockData.continueWatchingVideos.forEach(video => {
+      mockData.continueWatchingVideos.forEach((video) => {
         expect(video).toHaveProperty('id');
         expect(video).toHaveProperty('title');
         expect(video).toHaveProperty('thumbnail_url');
