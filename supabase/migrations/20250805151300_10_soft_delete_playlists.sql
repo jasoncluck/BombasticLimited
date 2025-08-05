@@ -7,7 +7,7 @@ ALTER TABLE "public"."playlists"
 ADD COLUMN "deleted_at" TIMESTAMP WITH TIME ZONE DEFAULT NULL;
 
 -- Create index on deleted_at for performance
-CREATE INDEX CONCURRENTLY IF NOT EXISTS "playlists_deleted_at_idx" 
+CREATE INDEX IF NOT EXISTS "playlists_deleted_at_idx" 
 ON "public"."playlists" ("deleted_at") 
 WHERE "deleted_at" IS NOT NULL;
 

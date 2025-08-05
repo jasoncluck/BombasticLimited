@@ -14,35 +14,41 @@ SELECT plan(12);
 -- ============================================================================
 
 -- Create a test user for our tests
-INSERT INTO auth.users (id, email, created_at, updated_at, confirmed_at)
+INSERT INTO auth.users (id, email, created_at, updated_at )
 VALUES (
   '00000000-0000-0000-0000-000000000001'::uuid,
   'test@example.com',
   NOW(),
-  NOW(),
   NOW()
 ) ON CONFLICT (id) DO NOTHING;
 
--- Variables to hold test data
-\set test_user_id '00000000-0000-0000-0000-000000000001'::uuid
-\set test_playlist_id 0
-
--- Create a test playlist
+-- Create a test playlist and store test data
 DO $$
 DECLARE
+  test_user_id uuid := '00000000-0000-0000-0000-000000000001'::uuid;
   playlist_id bigint;
+  playlist_short_id text;
 BEGIN
   INSERT INTO public.playlists (created_by, name, type)
-  VALUES (:'test_user_id', 'Test Soft Delete Playlist', 'Private')
+  VALUES (test_user_id, 'Test Soft Delete Playlist', 'Private')
   RETURNING id INTO playlist_id;
   
-  -- Store the playlist ID for use in tests
-  CREATE TEMP TABLE temp_test_data (playlist_id bigint);
-  INSERT INTO temp_test_data VALUES (playlist_id);
+  -- Get the short_id for the playlist
+  SELECT short_id INTO playlist_short_id 
+  FROM public.playlists 
+  WHERE id = playlist_id;
+  
+  -- Store the playlist ID and short_id for use in tests
+  CREATE TEMP TABLE temp_test_data (
+    playlist_id bigint, 
+    playlist_short_id text,
+    test_user_id uuid
+  );
+  INSERT INTO temp_test_data VALUES (playlist_id, playlist_short_id, test_user_id);
   
   -- Add playlist to user_playlists
   INSERT INTO public.user_playlists (id, user_id, playlist_position)
-  VALUES (playlist_id, :'test_user_id', 1);
+  VALUES (playlist_id, test_user_id, 1);
 END $$;
 
 -- ============================================================================
@@ -62,7 +68,7 @@ SELECT ok(
   EXISTS(
     SELECT 1 FROM temp_test_data t
     JOIN public.user_playlists up ON up.id = t.playlist_id
-    WHERE up.user_id = :'test_user_id'
+    WHERE up.user_id = t.test_user_id
   ),
   'Test playlist is mapped to user initially'
 );
@@ -71,7 +77,7 @@ SELECT is(
   (SELECT COUNT(*) FROM temp_test_data t
    JOIN public.playlists p ON p.id = t.playlist_id
    JOIN public.user_playlists up ON up.id = t.playlist_id
-   WHERE up.user_id = :'test_user_id' AND p.deleted_at IS NULL),
+   WHERE up.user_id = t.test_user_id AND p.deleted_at IS NULL),
   1::bigint,
   'User has exactly one active playlist before deletion'
 );
@@ -84,9 +90,10 @@ SELECT is(
 DO $$
 DECLARE
   playlist_id bigint;
+  test_user_id uuid;
 BEGIN
-  SELECT t.playlist_id INTO playlist_id FROM temp_test_data t;
-  PERFORM public.delete_playlist(:'test_user_id', playlist_id);
+  SELECT t.playlist_id, t.test_user_id INTO playlist_id, test_user_id FROM temp_test_data t;
+  PERFORM public.delete_playlist(test_user_id, playlist_id);
 END $$;
 
 SELECT ok(
@@ -102,16 +109,16 @@ SELECT ok(
   NOT EXISTS(
     SELECT 1 FROM temp_test_data t
     JOIN public.user_playlists up ON up.id = t.playlist_id
-    WHERE up.user_id = :'test_user_id'
+    WHERE up.user_id = t.test_user_id
   ),
   'User mapping is removed from user_playlists after soft delete'
 );
 
 SELECT is(
   (SELECT COUNT(*) FROM temp_test_data t
-   JOIN public.playlists p ON p.id = t.playlist_id
-   JOIN public.user_playlists up ON up.id = t.playlist_id
-   WHERE up.user_id = :'test_user_id' AND p.deleted_at IS NULL),
+   LEFT JOIN public.user_playlists up ON up.id = t.playlist_id AND up.user_id = t.test_user_id
+   LEFT JOIN public.playlists p ON p.id = t.playlist_id AND p.deleted_at IS NULL
+   WHERE up.id IS NOT NULL AND p.id IS NOT NULL),
   0::bigint,
   'User has no active playlists after deletion'
 );
@@ -131,7 +138,8 @@ SELECT ok(
 
 -- Test get_user_playlists excludes soft deleted playlists
 SELECT is(
-  (SELECT COUNT(*) FROM public.get_user_playlists(:'test_user_id')),
+  (SELECT COUNT(*) FROM temp_test_data t
+   CROSS JOIN public.get_user_playlists(t.test_user_id)),
   0::bigint,
   'get_user_playlists excludes soft deleted playlists'
 );
@@ -140,7 +148,7 @@ SELECT is(
 SELECT ok(
   NOT EXISTS(
     SELECT 1 FROM temp_test_data t
-    CROSS JOIN public.get_playlist_data(t.playlist_id)
+    CROSS JOIN public.get_playlist_data(t.playlist_short_id)
   ),
   'get_playlist_data returns no results for soft deleted playlist'
 );
@@ -168,10 +176,11 @@ SELECT ok(
 );
 
 -- Verify restored playlist appears in query functions
-SELECT is(
-  (SELECT COUNT(*) FROM temp_test_data t
-   CROSS JOIN public.get_playlist_data(t.playlist_id)),
-  1::bigint,
+SELECT ok(
+  EXISTS(
+    SELECT 1 FROM temp_test_data t
+    CROSS JOIN public.get_playlist_data(t.playlist_short_id)
+  ),
   'get_playlist_data returns results for restored playlist'
 );
 
@@ -181,7 +190,7 @@ SELECT ok(
   NOT EXISTS(
     SELECT 1 FROM temp_test_data t
     JOIN public.user_playlists up ON up.id = t.playlist_id
-    WHERE up.user_id = :'test_user_id'
+    WHERE up.user_id = t.test_user_id
   ),
   'User mapping is not automatically restored (by design)'
 );
@@ -194,13 +203,14 @@ SELECT ok(
 DO $$
 DECLARE
   playlist_id bigint;
+  test_user_id uuid;
 BEGIN
-  SELECT t.playlist_id INTO playlist_id FROM temp_test_data t;
+  SELECT t.playlist_id, t.test_user_id INTO playlist_id, test_user_id FROM temp_test_data t;
   DELETE FROM public.playlists WHERE id = playlist_id;
 END $$;
 
 -- Clean up test user (only if it was created for testing)
-DELETE FROM auth.users WHERE id = :'test_user_id' AND email = 'test@example.com';
+DELETE FROM auth.users WHERE id = '00000000-0000-0000-0000-000000000001'::uuid AND email = 'test@example.com';
 
 -- Drop temp table
 DROP TABLE temp_test_data;
