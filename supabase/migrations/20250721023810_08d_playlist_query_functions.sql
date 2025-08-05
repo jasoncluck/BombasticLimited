@@ -62,7 +62,7 @@ BEGIN
     RAISE EXCEPTION 'Exactly one of p_short_id or p_youtube_id must be provided';
   END IF;
   
-  -- Get the playlist data by either short_id or youtube_id
+  -- Get the playlist data by either short_id or youtube_id, excluding soft-deleted playlists
   SELECT
     p.id,
     p.created_at,
@@ -82,8 +82,9 @@ BEGIN
   FROM public.playlists p
   LEFT JOIN public.profiles prof ON p.created_by = prof.id
   LEFT JOIN public.user_playlists up ON up.id = p.id AND up.user_id = p_user_id
-  WHERE (p_short_id IS NOT NULL AND p.short_id = p_short_id)
-     OR (p_youtube_id IS NOT NULL AND p.youtube_id = p_youtube_id);
+  WHERE ((p_short_id IS NOT NULL AND p.short_id = p_short_id)
+     OR (p_youtube_id IS NOT NULL AND p.youtube_id = p_youtube_id))
+    AND p.deleted_at IS NULL;  -- Filter out soft-deleted playlists
   
   -- If playlist not found, return empty
   IF playlist_record.id IS NULL THEN
@@ -252,7 +253,6 @@ BEGIN
 END;
 $$;
 
--- Function to get playlist video context (current video + surrounding videos)
 CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
   p_short_id text,
   p_video_id text,
@@ -300,7 +300,7 @@ DECLARE
   video_count bigint;
   current_video_pos integer;
 BEGIN
-  -- Get the playlist data
+  -- Get the playlist data, excluding soft-deleted playlists
   SELECT
     p.id,
     p.created_at,
@@ -320,7 +320,8 @@ BEGIN
   FROM public.playlists p
   LEFT JOIN public.profiles prof ON p.created_by = prof.id
   LEFT JOIN public.user_playlists up ON up.id = p.id AND up.user_id = p_user_id
-  WHERE p.short_id = p_short_id;
+  WHERE p.short_id = p_short_id
+    AND p.deleted_at IS NULL;  -- Filter out soft-deleted playlists
   
   -- If playlist not found, return empty
   IF playlist_record.id IS NULL THEN
@@ -487,6 +488,7 @@ SET
   LEFT JOIN public.user_playlists up 
     ON up.id = p.id 
   WHERE p.short_id = p_short_id
+    AND p.deleted_at IS NULL  -- Filter out soft-deleted playlists
   LIMIT 1;
 $$;
 
@@ -514,26 +516,25 @@ SET
     p.created_at,
     p.name,
     p.short_id,
-
     p.created_by,
     p.description,
     p.thumbnail_url,
     p.thumbnail_maxres_url,
     p.type,
     p.image_properties,
-
     p.youtube_id,
     prof.username AS profile_username,
     up.sorted_by,
     up.sort_order
   FROM public.playlists p
   LEFT JOIN public.profiles prof ON p.created_by = prof.id
-
   LEFT JOIN public.user_playlists up 
     ON up.id = p.id 
   WHERE p.youtube_id = p_youtube_id
+    AND p.deleted_at IS NULL  -- Filter out soft-deleted playlists
   LIMIT 1;
 $$;
+
 
 -- Function to get user playlists
 CREATE OR REPLACE FUNCTION public.get_user_playlists (p_user_id uuid) RETURNS TABLE (
@@ -551,7 +552,8 @@ CREATE OR REPLACE FUNCTION public.get_user_playlists (p_user_id uuid) RETURNS TA
   sorted_by public.playlist_sorted_by,
   sort_order public.playlist_sort_order,
   youtube_id text,
-  profile_username text
+  profile_username text,
+  deleted_at TIMESTAMP WITH TIME ZONE
 )
 SET
   search_path = '' LANGUAGE sql AS $$
@@ -570,11 +572,13 @@ SET
     up.sorted_by,
     up.sort_order,
     p.youtube_id,
-    prof.username AS profile_username
+    prof.username AS profile_username,
+    p.deleted_at
   FROM public.user_playlists up
   JOIN public.playlists p ON up.id = p.id
   LEFT JOIN public.profiles prof ON p.created_by = prof.id
   WHERE up.user_id = p_user_id
+    AND p.deleted_at IS NULL  -- Filter out soft-deleted playlists
   ORDER BY up.playlist_position ASC;
 $$;
 
@@ -593,7 +597,8 @@ CREATE OR REPLACE FUNCTION public.get_playlists_for_username (p_username text) R
   youtube_id text,
   profile_username text,
   sorted_by public.playlist_sorted_by,
-  sort_order public.playlist_sort_order
+  sort_order public.playlist_sort_order,
+  deleted_at TIMESTAMP WITH TIME ZONE
 )
 SET
   search_path = '' LANGUAGE sql AS $$
@@ -611,12 +616,14 @@ SET
     p.youtube_id,
     prof.username AS profile_username,
     up.sorted_by,
-    up.sort_order
+    up.sort_order,
+    p.deleted_at
   FROM public.playlists p
   JOIN public.profiles prof ON p.created_by = prof.id
   LEFT JOIN public.user_playlists up 
     ON up.id = p.id 
   WHERE prof.username = p_username
+    AND p.deleted_at IS NULL  -- Filter out soft-deleted playlists
   ORDER BY p.created_at DESC;
 $$;
 
@@ -639,7 +646,8 @@ CREATE OR REPLACE FUNCTION "public"."search_playlists" (
   "type" public.playlist_type,
   "youtube_id" text,
   "profile_username" text,
-  "search_rank" real
+  "search_rank" real,
+  "deleted_at" TIMESTAMP WITH TIME ZONE
 ) LANGUAGE "plpgsql" STABLE AS $$
 DECLARE
     clean_term text;
@@ -704,23 +712,28 @@ BEGIN
             WHEN word_count = 1 AND p.description IS NOT NULL AND lower(p.description) LIKE '%' || words[1] || '%' THEN 300
             WHEN prof.username IS NOT NULL AND lower(prof.username) LIKE '%' || clean_term || '%' THEN 250
             ELSE 0 
-        END)::real AS search_rank
+        END)::real AS search_rank,
+        p.deleted_at
     FROM public.playlists p
     LEFT JOIN public.profiles prof ON p.created_by = prof.id
     WHERE 
-        -- Access control
-        (p.type = 'Public' OR (current_user_id IS NOT NULL AND p.created_by = current_user_id))
+        -- Filter out soft-deleted playlists
+        p.deleted_at IS NULL
         AND (
-            -- Search criteria
-            lower(p.name) LIKE '%' || clean_term || '%'
-            OR (p.description IS NOT NULL AND lower(p.description) LIKE '%' || clean_term || '%')
-            OR (phrase_query IS NOT NULL AND p.search_vector @@ phrase_query)
-            OR (plain_query IS NOT NULL AND p.search_vector @@ plain_query)
-            OR (word_count = 1 AND (
-                lower(p.name) LIKE '%' || words[1] || '%'
-                OR (p.description IS NOT NULL AND lower(p.description) LIKE '%' || words[1] || '%')
-            ))
-            OR (prof.username IS NOT NULL AND lower(prof.username) LIKE '%' || clean_term || '%')
+            -- Access control
+            (p.type = 'Public' OR (current_user_id IS NOT NULL AND p.created_by = current_user_id))
+            AND (
+                -- Search criteria
+                lower(p.name) LIKE '%' || clean_term || '%'
+                OR (p.description IS NOT NULL AND lower(p.description) LIKE '%' || clean_term || '%')
+                OR (phrase_query IS NOT NULL AND p.search_vector @@ phrase_query)
+                OR (plain_query IS NOT NULL AND p.search_vector @@ plain_query)
+                OR (word_count = 1 AND (
+                    lower(p.name) LIKE '%' || words[1] || '%'
+                    OR (p.description IS NOT NULL AND lower(p.description) LIKE '%' || words[1] || '%')
+                ))
+                OR (prof.username IS NOT NULL AND lower(prof.username) LIKE '%' || clean_term || '%')
+            )
         )
     ORDER BY 
         (CASE 

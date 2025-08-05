@@ -445,6 +445,7 @@ SET
 DECLARE
   deleted_position int2;
   max_position int2;
+  playlist_owner uuid;
 BEGIN
   -- Lock all operations for this user to prevent concurrent playlist modifications
   PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || p_user_id::text));
@@ -455,10 +456,11 @@ BEGIN
   WHERE up.user_id = p_user_id
   FOR UPDATE;
   
-  -- Find the position of the playlist to be deleted
-  SELECT up.playlist_position
-    INTO deleted_position
+  -- Find the position of the playlist to be deleted and check ownership
+  SELECT up.playlist_position, p.created_by
+    INTO deleted_position, playlist_owner
     FROM public.user_playlists up
+    JOIN public.playlists p ON up.id = p.id
     WHERE up.user_id = p_user_id AND up.id = p_playlist_id;
 
   -- If not found, raise exception
@@ -466,31 +468,77 @@ BEGIN
     RAISE EXCEPTION 'Playlist mapping not found for user_id: % and playlist_id: %', p_user_id, p_playlist_id;
   END IF;
 
-  -- Delete the user's mapping to the playlist
-  DELETE FROM public.user_playlists up
-    WHERE up.user_id = p_user_id AND up.id = p_playlist_id;
+  -- Check if user is the owner of the playlist
+  IF playlist_owner = p_user_id THEN
+    -- User owns the playlist: soft delete it and remove all user mappings
+    UPDATE public.playlists
+      SET deleted_at = NOW()
+      WHERE id = p_playlist_id AND deleted_at IS NULL;
+    
+    -- Remove all user mappings for this playlist since it's soft deleted
+    DELETE FROM public.user_playlists
+      WHERE id = p_playlist_id;
+    
+    -- For owners, we don't need to reorder positions since all users lose access
+  ELSE
+    -- User is just a follower: only remove their mapping (unfollow)
+    DELETE FROM public.user_playlists up
+      WHERE up.user_id = p_user_id AND up.id = p_playlist_id;
+    
+    -- Find the new maximum position for this user after deletion
+    SELECT COALESCE(MAX(up.playlist_position), 0)
+      INTO max_position
+      FROM public.user_playlists up
+      WHERE up.user_id = p_user_id;
 
-  -- Find the new maximum position for this user after deletion
-  SELECT COALESCE(MAX(up.playlist_position), 0)
-    INTO max_position
-    FROM public.user_playlists up
-    WHERE up.user_id = p_user_id;
-
-  -- If there are playlists with higher positions, decrement their positions to fill the gap
-  IF deleted_position <= max_position THEN
-    UPDATE public.user_playlists up
-      SET playlist_position = up.playlist_position - 1
-      WHERE up.user_id = p_user_id
-        AND up.playlist_position > deleted_position;
+    -- If there are playlists with higher positions, decrement their positions to fill the gap
+    IF deleted_position <= max_position THEN
+      UPDATE public.user_playlists up
+        SET playlist_position = up.playlist_position - 1
+        WHERE up.user_id = p_user_id
+          AND up.playlist_position > deleted_position;
+    END IF;
   END IF;
 
   RETURN TRUE;
 EXCEPTION
   WHEN OTHERS THEN
-    RAISE INFO 'Error in delete_user_playlist: %', SQLERRM;
+    RAISE INFO 'Error in delete_playlist: %', SQLERRM;
     RETURN FALSE;
 END;
 $$;
+
+
+-- Add administrative restore function for soft-deleted playlists
+CREATE OR REPLACE FUNCTION public.restore_playlist (p_playlist_id bigint) RETURNS BOOLEAN LANGUAGE plpgsql
+SET
+  search_path TO '' AS $$
+DECLARE
+  playlist_exists boolean;
+BEGIN
+  -- Check if playlist exists and is soft deleted
+  SELECT EXISTS (
+    SELECT 1 FROM public.playlists
+    WHERE id = p_playlist_id AND deleted_at IS NOT NULL
+  ) INTO playlist_exists;
+
+  IF NOT playlist_exists THEN
+    RAISE EXCEPTION 'Playlist not found or not deleted for playlist_id: %', p_playlist_id;
+  END IF;
+
+  -- Restore the playlist by setting deleted_at to NULL
+  UPDATE public.playlists
+    SET deleted_at = NULL
+    WHERE id = p_playlist_id;
+
+  RETURN TRUE;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE INFO 'Error in restore_playlist: %', SQLERRM;
+    RETURN FALSE;
+END;
+$$;
+
 
 -- Initialize playlist positions in user_playlists for all users
 CREATE OR REPLACE FUNCTION public.initialize_user_playlist_positions () RETURNS VOID LANGUAGE plpgsql

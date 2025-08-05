@@ -22,7 +22,7 @@ test.describe('Homepage', () => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    
+
     // Home link should be hidden on mobile (hidden sm:block classes)
     const homeLink = page.getByRole('link', { name: /home/i });
     await expect(homeLink).toBeHidden();
@@ -32,11 +32,11 @@ test.describe('Homepage', () => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    
+
     // Toggle menu button should be visible on mobile
     const toggleButton = page.getByRole('button', { name: /toggle menu/i });
     await expect(toggleButton).toBeVisible();
-    
+
     // The navigation should be present
     const navigation = page.getByRole('navigation');
     await expect(navigation).toBeVisible();
@@ -46,10 +46,18 @@ test.describe('Homepage', () => {
     await page.goto('/');
 
     // Check for all four live channels using more specific selectors
-    await expect(page.getByRole('button', { name: /Live now Giant Bomb/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Live now The Jeff Gerstmann Show/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Live now Nextlander/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Live now Remap/ })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /Live now Giant Bomb/ })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /Live now The Jeff Gerstmann Show/ })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /Live now Nextlander/ })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /Live now Remap/ })
+    ).toBeVisible();
 
     // Verify channel buttons are clickable
     const giantBombButton = page.getByRole('button', {
@@ -93,21 +101,23 @@ test.describe('Homepage', () => {
     await expect(videoCards.first()).toBeVisible();
   });
 
-  test('search functionality should navigate to search page', async ({ page }) => {
+  test('search functionality should navigate to search page', async ({
+    page,
+  }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    
+
     // Get the search input
     const searchInput = page.getByRole('searchbox', { name: /search/i });
     await expect(searchInput).toBeVisible();
-    
+
     // Type search query
     await searchInput.fill('test search');
     await searchInput.press('Enter');
-    
+
     // Should navigate to search page
     await expect(page).toHaveURL(/\/search\/test%20search/);
-    
+
     // Should show search results
     const resultsHeading = page.getByRole('heading', { name: /results/i });
     await expect(resultsHeading).toBeVisible();
@@ -117,12 +127,12 @@ test.describe('Homepage', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    // Wait for video carousels to load (unauthenticated users see carousel format)
-    await page.waitForSelector('[role="group"]', { timeout: 30000 });
+    // Wait for video carousels to load and ensure we have buttons
+    await page.waitForSelector('[role="group"] button', { timeout: 30000 });
 
-    // Find the first video card button (videos are in group carousel format for unauthenticated users)
+    // Find the first clickable video button - be more specific to ensure it's found
     const videoButton = page.locator('[role="group"] button').first();
-    await expect(videoButton).toBeVisible();
+    await expect(videoButton).toBeVisible({ timeout: 15000 });
 
     // Click on first video button
     await videoButton.click();
@@ -201,10 +211,11 @@ test.describe('Homepage', () => {
 
       // Core elements should be visible at all sizes
       // Home link is hidden on mobile, so check conditionally
-      if (viewport.width >= 640) { // sm breakpoint
+      if (viewport.width >= 640) {
+        // sm breakpoint
         await expect(page.getByTestId('home-link')).toBeVisible();
       }
-      
+
       await expect(page.getByRole('searchbox')).toBeVisible();
       await expect(
         page.getByRole('heading', { name: 'Latest Videos' })

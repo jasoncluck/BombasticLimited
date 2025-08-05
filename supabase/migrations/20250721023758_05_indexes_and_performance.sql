@@ -79,6 +79,12 @@ CREATE INDEX IF NOT EXISTS idx_playlists_name_trgm ON public.playlists USING gin
 -- Playlist filtering and sorting
 CREATE INDEX IF NOT EXISTS idx_playlists_type_created ON public.playlists (type, created_at DESC);
 
+CREATE INDEX IF NOT EXISTS "playlists_deleted_at_idx" ON "public"."playlists" ("deleted_at")
+WHERE
+  "deleted_at" IS NOT NULL;
+
+
+
 -- ============================================================================
 -- ADDITIONAL PERFORMANCE INDEXES
 -- ============================================================================
