@@ -5,9 +5,8 @@
   "framework": "sveltekit",
   "regions": ["pdx1", "iad1"],
   "git": {
-    "deploymentEnabled": true
-  },
-  "ignored": {
-    "buildCommand": "bash scripts/should-deploy.sh"
+    "deploymentEnabled": {
+      "copilot*": false
+    }
   }
 }
