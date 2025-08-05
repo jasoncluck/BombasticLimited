@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { redirect, fail } from '@sveltejs/kit';
-import { superValidate } from 'sveltekit-superforms';
+import { superValidate, fail } from 'sveltekit-superforms';
 import { setFlash } from 'sveltekit-flash-message/server';
 import { load, actions } from '../+page.server';
 import { getUserProfile, checkIfUsernameIsUnique } from '$lib/supabase/user-profiles';
@@ -11,12 +10,7 @@ import {
 } from '../../../tests/test-utils';
 
 // Mock dependencies
-vi.mock('@sveltejs/kit', () => ({
-  redirect: vi.fn(() => {
-    throw new Error('Redirect');
-  }),
-  fail: vi.fn((status, data) => ({ status, ...data })),
-}));
+vi.mock('@sveltejs/kit', () => ({}));
 
 vi.mock('sveltekit-superforms', () => ({
   superValidate: vi.fn(),
@@ -34,7 +28,12 @@ vi.mock('sveltekit-flash-message/server', () => ({
   setFlash: vi.fn(),
 }));
 
-const mockFlashRedirect = vi.mocked(redirect as any);
+// Import the mocked redirect from sveltekit-flash-message/server
+import { redirect as flashRedirect } from 'sveltekit-flash-message/server';
+const mockFlashRedirect = vi.mocked(flashRedirect);
+
+// Import the mockIsProfane function to control it in tests
+import { mockIsProfane, mockFilterConstructor } from 'bad-words';
 
 vi.mock('$lib/supabase/user-profiles', () => ({
   getUserProfile: vi.fn(),
@@ -47,13 +46,19 @@ vi.mock('../auth/schema', () => ({
   usernameSchema: {},
 }));
 
-vi.mock('bad-words', () => ({
-  Filter: vi.fn().mockImplementation(() => ({
-    isProfane: vi.fn(() => false),
-  })),
-}));
+vi.mock('bad-words', () => {
+  const mockIsProfane = vi.fn(() => false);
+  const mockFilterConstructor = vi.fn().mockImplementation(() => ({
+    isProfane: mockIsProfane,
+  }));
+  return {
+    Filter: mockFilterConstructor,
+    mockIsProfane, // Export the mock so we can control it in tests
+    mockFilterConstructor, // Export constructor mock for timing tests
+  };
+});
 
-const mockRedirect = vi.mocked(redirect);
+const mockRedirect = mockFlashRedirect;
 const mockFail = vi.mocked(fail);
 const mockSuperValidate = vi.mocked(superValidate);
 const mockSetFlash = vi.mocked(setFlash);
@@ -78,6 +83,8 @@ describe('account/+page.server.ts', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset the profanity mock to return false by default
+    vi.mocked(mockIsProfane).mockReturnValue(false);
   });
 
   describe('load function', () => {
@@ -313,13 +320,8 @@ describe('account/+page.server.ts', () => {
     });
 
     it('should reject profane username', async () => {
-      // Create a mock filter that says the username is profane
-      vi.doMock('bad-words', () => ({
-        Filter: vi.fn().mockImplementation(() => ({
-          isProfane: vi.fn(() => true),
-        })),
-      }));
-      
+      // Configure the mock to return true (profane) for this test
+      vi.mocked(mockIsProfane).mockReturnValueOnce(true);
       mockCheckIfUsernameIsUnique.mockResolvedValue(true);
 
       const result = await actions.updateUsername(mockActionEvent);
@@ -383,14 +385,12 @@ describe('account/+page.server.ts', () => {
       });
 
       // Mock the Filter constructor to capture timing
-      vi.doMock('bad-words', () => ({
-        Filter: vi.fn().mockImplementation(() => {
-          profanityCheckTime = Date.now();
-          return {
-            isProfane: () => false,
-          };
-        }),
-      }));
+      vi.mocked(mockFilterConstructor).mockImplementation(() => {
+        profanityCheckTime = Date.now();
+        return {
+          isProfane: () => false,
+        };
+      });
 
       mockSupabase.auth.updateUser.mockResolvedValue({
         data: { user: {} },

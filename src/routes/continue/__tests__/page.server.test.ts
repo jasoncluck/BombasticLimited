@@ -31,6 +31,12 @@ vi.mock('$lib/components/pagination/pagination', () => ({
 const mockGetInProgressVideos = vi.mocked(getInProgressVideos);
 const mockRedirect = vi.mocked(redirect);
 
+// Import the mocked functions so we can control them
+import { isTimestampFilter } from '$lib/components/content/content-filter';
+import { getPaginationQueryParams } from '$lib/components/pagination/pagination';
+const mockIsTimestampFilter = vi.mocked(isTimestampFilter);
+const mockGetPaginationQueryParams = vi.mocked(getPaginationQueryParams);
+
 describe('continue/+page.server.ts load function', () => {
   const mockSupabase = {} as any;
   const mockSession = createMockSession();
@@ -62,6 +68,10 @@ describe('continue/+page.server.ts load function', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset the mocks to their default behavior
+    mockIsTimestampFilter.mockReturnValue(true);
+    mockGetPaginationQueryParams.mockReturnValue(1);
+    
     mockLoadEvent.parent.mockResolvedValue({
       contentFilter: {
         sort: { key: 'dateTimestamp', order: 'descending' },
@@ -184,6 +194,8 @@ describe('continue/+page.server.ts load function', () => {
 
     it('should handle missing content filter from parent', async () => {
       mockLoadEvent.parent.mockResolvedValue({});
+      // Override the mock to return false for missing contentFilter
+      mockIsTimestampFilter.mockReturnValue(false);
 
       await expect(load(mockLoadEvent)).rejects.toThrow('Invalid content filter');
     });

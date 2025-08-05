@@ -9,6 +9,7 @@ import {
   createMockUserProfile,
   createMockVideo,
   createMockVideoResponse,
+  createMockPlaylist,
 } from '../../../tests/test-utils';
 
 // Mock dependencies
@@ -74,6 +75,10 @@ const mockGetPlaylistsForUsername = vi.mocked(getPlaylistsForUsername);
 const mockGetCroppedPlaylistImageUrlServer = vi.mocked(getCroppedPlaylistImageUrlServer);
 const mockRedirect = vi.mocked(redirect);
 
+// Import the mocked functions so we can control them
+import { isVideoFilter } from '$lib/components/content/content-filter';
+const mockIsVideoFilter = vi.mocked(isVideoFilter);
+
 describe('[source]/+page.server.ts load function', () => {
   const mockSupabase = {} as any;
   const mockSession = createMockSession();
@@ -84,7 +89,7 @@ describe('[source]/+page.server.ts load function', () => {
     createMockVideo({ id: 'v2', title: 'Video 2', source: 'giantbomb' }),
   ];
 
-  const mockPlaylist = {
+  const mockPlaylist = createMockPlaylist({
     id: 'p1',
     short_id: 'abc123',
     name: 'Test Playlist',
@@ -92,17 +97,24 @@ describe('[source]/+page.server.ts load function', () => {
     thumbnail_url: 'https://example.com/thumb.jpg',
     thumbnail_maxres_url: 'https://example.com/maxres.jpg',
     image_properties: '{"x": 0, "y": 0, "width": 100, "height": 100}',
-  };
+    type: 'Public' as const,
+    created_by: mockSession.user.id,
+    description: 'Test playlist description',
+  });
 
   const mockSourcePlaylists = [
-    {
+    createMockPlaylist({
       id: 'sp1',
       short_id: 'def456',
       name: 'Source Playlist 1',
       thumbnail_url: 'https://example.com/thumb1.jpg',
       thumbnail_maxres_url: 'https://example.com/maxres1.jpg',
       image_properties: '{"x": 0, "y": 0, "width": 100, "height": 100}',
-    },
+      type: 'Public' as const,
+      created_by: mockSession.user.id,
+      description: 'Source playlist description',
+      youtube_id: 'source_playlist_1',
+    }),
   ];
 
   const mockLoadEvent: any = {
@@ -122,6 +134,9 @@ describe('[source]/+page.server.ts load function', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset the mock to its default behavior
+    mockIsVideoFilter.mockReturnValue(true);
+    
     mockLoadEvent.parent.mockResolvedValue({
       contentFilter: {
         sort: { key: 'datePublished', order: 'descending' },
@@ -320,7 +335,7 @@ describe('[source]/+page.server.ts load function', () => {
 
       const result = await load(mockLoadEvent);
 
-      expect(result.highlightPlaylists[0].playlist.name).toBe('Featured Playlist 1');
+      expect(result.highlightPlaylists[0].playlist.name).toBe('Featured Playlist 2');
     });
   });
 
@@ -420,9 +435,17 @@ describe('[source]/+page.server.ts load function', () => {
       });
 
       mockGetVideos.mockResolvedValue(createMockVideoResponse([]));
+      mockGetPlaylistDataByYoutubeId.mockResolvedValue({
+        playlist: null,
+        videos: [],
+        videosCount: 0,
+        playlistDuration: { hours: 0, minutes: 0, seconds: 0 },
+        error: null,
+      });
       mockGetPlaylistsForUsername.mockResolvedValue({
         playlists: [],
         count: 0,
+        error: null,
       });
 
       // Should not throw despite setHeaders error
@@ -486,7 +509,7 @@ describe('[source]/+page.server.ts load function', () => {
         videos: mockVideos,
         highlightPlaylists: [
           {
-            playlist: { ...mockPlaylist, name: 'Featured Playlist 1' },
+            playlist: { ...mockPlaylist, name: 'Featured Playlist 2' },
             videos: [mockVideos[0]],
           },
           {
@@ -510,9 +533,17 @@ describe('[source]/+page.server.ts load function', () => {
 
     it('should handle empty results gracefully', async () => {
       mockGetVideos.mockResolvedValue(createMockVideoResponse([]));
+      mockGetPlaylistDataByYoutubeId.mockResolvedValue({
+        playlist: null,
+        videos: [],
+        videosCount: 0,
+        playlistDuration: { hours: 0, minutes: 0, seconds: 0 },
+        error: null,
+      });
       mockGetPlaylistsForUsername.mockResolvedValue({
         playlists: [],
         count: 0,
+        error: null,
       });
 
       const result = await load(mockLoadEvent);
