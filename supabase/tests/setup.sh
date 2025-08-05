@@ -49,6 +49,10 @@ if [ "$PGTAP_AVAILABLE" = true ]; then
         echo "Running pgTAP-based SQL tests..."
         pg_prove -h localhost -p 54322 -U postgres -d postgres supabase/tests/test_soft_delete_functions.sql
         
+        # Run migration function tests
+        echo "Running migration function tests..."
+        ./supabase/tests/run_migration_tests.sh
+        
     else
         echo "⚠️  pgTAP extension not available in this PostgreSQL installation"
         echo "   Falling back to simple test runner..."
@@ -60,6 +64,10 @@ if [ "$PGTAP_AVAILABLE" = false ]; then
     # Run simple tests
     echo "Running simple SQL tests..."
     PGPASSWORD=postgres psql -h localhost -p 54322 -U postgres -d postgres -f supabase/tests/test_soft_delete_simple.sql
+    
+    # Run migration function tests with simple runner
+    echo "Running migration function tests..."
+    ./supabase/tests/run_migration_tests.sh
 fi
 
 echo "============================================================================"

@@ -159,6 +159,42 @@ Test complex business rules and workflows:
 5. **Setup and Teardown**: Create and clean up test data properly
 6. **Performance**: Consider testing query performance for critical functions
 
+## Test Files
+
+### Current Test Suite
+
+The following test files are available:
+
+1. **test_soft_delete_functions.sql** - Tests soft delete functionality for playlists
+2. **test_user_functions.sql** - Tests user profile and lifecycle functions (migrations 08a, 08b)
+3. **test_video_functions.sql** - Tests video query functions (migration 08c)
+4. **test_playlist_query_functions.sql** - Tests playlist data retrieval functions (migration 08d)
+5. **test_playlist_management_functions.sql** - Tests playlist creation and management functions (migration 08e)
+6. **test_triggers_and_cleanup.sql** - Tests database triggers and cleanup functions (migrations 07a-07e)
+
+### Running Migration Function Tests
+
+To run all tests for the reorganized migration functions:
+
+```bash
+# Run all migration function tests
+./supabase/tests/run_migration_tests.sh
+
+# Or run individual test files
+PGPASSWORD=postgres psql -h localhost -p 54322 -U postgres -d postgres -f supabase/tests/test_user_functions.sql
+```
+
+### Test Coverage
+
+The migration function tests cover:
+
+- **User Management**: Username validation, generation, profile creation, user lifecycle
+- **Video Operations**: Video queries, search functionality, timestamp management
+- **Playlist Queries**: Data retrieval, search, context functions
+- **Playlist Management**: Creation, following, position management, video operations
+- **Database Triggers**: Automatic short_id generation, search vector updates, timestamp triggers
+- **Data Integrity**: Cleanup functions, referential integrity, business logic validation
+
 ## Example Test File
 
 See `test_soft_delete_functions.sql` for a complete example testing the soft delete functionality.
