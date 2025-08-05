@@ -135,6 +135,8 @@
           src={getVideoThumbnailUrl(video)}
           alt={video.title}
           loading="lazy"
+          decoding="async"
+          fetchpriority="auto"
         />
         <div class="absolute top-0.5 right-0.5">
           <ContentDropdown

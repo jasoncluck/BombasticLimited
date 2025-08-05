@@ -159,6 +159,9 @@
                 src={getVideoThumbnailUrl(video)}
                 alt={video.title}
                 class="aspect-video h-12"
+                loading="lazy"
+                decoding="async"
+                fetchpriority="auto"
               />
               <div class="flex flex-col gap-1">
                 <p class="text-sm font-normal">
@@ -239,6 +242,9 @@
                 src={getVideoThumbnailUrl(video)}
                 alt={video.title}
                 class="pointer-events-none aspect-video h-[60px]"
+                loading="lazy"
+                decoding="async"
+                fetchpriority="auto"
               />
               <div
                 class="pointer-events-none flex min-w-0 flex-1 flex-col gap-1"

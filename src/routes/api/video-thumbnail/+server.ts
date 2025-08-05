@@ -48,6 +48,8 @@ export const GET: RequestHandler = async ({ url, request }) => {
           'Content-Type': 'image/webp',
           'Cache-Control': 'public, max-age=31536000, immutable', // 1 year cache
           'Content-Length': imageBuffer.length.toString(),
+          'Vary': 'Accept-Encoding',
+          'ETag': `"${Buffer.from(thumbnailUrl).toString('base64').slice(0, 16)}"`, // Simple ETag based on URL
         },
       });
     }

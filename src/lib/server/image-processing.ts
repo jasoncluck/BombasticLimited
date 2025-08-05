@@ -76,9 +76,9 @@ export async function getVideoThumbnailWebpUrlServer({
   if (!thumbnailUrl) return null;
 
   try {
-    // Fetch image with optimized settings
+    // Fetch image with optimized settings for speed
     const response = await fetch(thumbnailUrl, {
-      signal: AbortSignal.timeout(10000), // 10 second timeout
+      signal: AbortSignal.timeout(8000), // Reduced timeout for faster processing
       headers: {
         Accept: 'image/*',
         'User-Agent': 'Video-Service/1.0',
@@ -94,10 +94,14 @@ export async function getVideoThumbnailWebpUrlServer({
     const processedImageBuffer = await sharp(imageBuffer, {
       failOnError: false,
       density: 72, // Optimize for web display
+      pages: 1, // Only process first frame for faster processing
     })
       .webp({
-        quality: 80,
-        effort: 4, // Good balance between compression and processing time
+        quality: 90, // Increased quality for better visual appearance
+        effort: 2, // Reduced effort for faster processing
+        lossless: false,
+        nearLossless: false,
+        smartSubsample: true, // Better compression with minimal quality loss
       })
       .toBuffer();
 

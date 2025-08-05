@@ -216,13 +216,17 @@ describe('getVideoThumbnailWebpUrlServer', () => {
     expect(mockSharp).toHaveBeenCalledWith(mockImageBuffer, {
       failOnError: false,
       density: 72,
+      pages: 1,
     });
 
     expect(mockExtract).not.toHaveBeenCalled(); // No cropping for video thumbnails
 
     expect(mockWebp).toHaveBeenCalledWith({
-      quality: 80,
-      effort: 4,
+      quality: 90,
+      effort: 2,
+      lossless: false,
+      nearLossless: false,
+      smartSubsample: true,
     });
 
     // Verify result format
