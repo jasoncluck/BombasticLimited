@@ -41,7 +41,9 @@ const mockRedirect = vi.mocked(redirect);
 const mockGetPlaylistVideoContext = vi.mocked(getPlaylistVideoContext);
 const mockIsVideoWithTimestamp = vi.mocked(isVideoWithTimestamp);
 const mockParseImageProperties = vi.mocked(parseImageProperties);
-const mockGetCroppedPlaylistImageUrlServer = vi.mocked(getCroppedPlaylistImageUrlServer);
+const mockGetCroppedPlaylistImageUrlServer = vi.mocked(
+  getCroppedPlaylistImageUrlServer
+);
 
 describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
   const mockSupabase = {} as any;
@@ -53,9 +55,9 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
     locals: {
       supabase: mockSupabase,
     },
-    params: { 
+    params: {
       shortId: 'abc123',
-      videoId: 'video-1'
+      videoId: 'video-1',
     },
     depends: vi.fn(),
     parent: vi.fn(),
@@ -69,9 +71,16 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
         sort: { key: 'playlistOrder', order: 'ascending' },
       },
     });
-    mockParseImageProperties.mockReturnValue({ x: 0, y: 0, width: 100, height: 100 });
-    mockGetCroppedPlaylistImageUrlServer.mockResolvedValue('processed-image-url');
-    
+    mockParseImageProperties.mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
+    });
+    mockGetCroppedPlaylistImageUrlServer.mockResolvedValue(
+      'processed-image-url'
+    );
+
     // Mock supabase auth.getUser()
     mockSupabase.auth = {
       getUser: vi.fn().mockResolvedValue({
@@ -113,7 +122,10 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
       expect(result).toEqual({
         video: mockVideo,
         videos: mockNextVideos,
-        profilePlaylist: { ...mockPlaylist, processedImageUrl: 'processed-image-url' },
+        profilePlaylist: {
+          ...mockPlaylist,
+          processedImageUrl: 'processed-image-url',
+        },
         contentFilter: {
           type: 'playlist',
           sort: { key: 'playlistOrder', order: 'ascending' },
@@ -138,7 +150,9 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
         nextVideo: null,
       };
 
-      mockGetPlaylistVideoContext.mockResolvedValue(mockVideoContextWithoutPlaylist);
+      mockGetPlaylistVideoContext.mockResolvedValue(
+        mockVideoContextWithoutPlaylist
+      );
 
       await expect(load(mockLoadEvent)).rejects.toThrow('Redirect');
       expect(mockRedirect).toHaveBeenCalledWith(303, '/video/video-1');
@@ -154,7 +168,9 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
         nextVideo: null,
       };
 
-      mockGetPlaylistVideoContext.mockResolvedValue(mockVideoContextWithoutVideo);
+      mockGetPlaylistVideoContext.mockResolvedValue(
+        mockVideoContextWithoutVideo
+      );
 
       await expect(load(mockLoadEvent)).rejects.toThrow('Redirect');
       expect(mockRedirect).toHaveBeenCalledWith(303, '/video/video-1');
@@ -180,7 +196,10 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
     });
 
     it('should use existing processed image URL when available', async () => {
-      const playlistWithImage = { ...mockPlaylist, processedImageUrl: 'existing-image-url' };
+      const playlistWithImage = {
+        ...mockPlaylist,
+        processedImageUrl: 'existing-image-url',
+      };
       const mockVideoContext = {
         playlist: playlistWithImage,
         currentVideo: mockVideo,
@@ -196,7 +215,9 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
       const result = await load(mockLoadEvent);
 
       expect(mockGetCroppedPlaylistImageUrlServer).not.toHaveBeenCalled();
-      expect(result.profilePlaylist.processedImageUrl).toBe('existing-image-url');
+      expect(result.profilePlaylist.processedImageUrl).toBe(
+        'existing-image-url'
+      );
     });
 
     it('should handle auth error gracefully', async () => {
@@ -268,16 +289,16 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
 
       mockGetPlaylistVideoContext.mockResolvedValue(mockVideoContext);
       mockIsVideoWithTimestamp.mockReturnValue(false);
-      
+
       mockLoadEvent.parent.mockResolvedValue({
         contentFilter: { type: 'invalid' },
       });
 
-      // Since the actual function checks isPlaylistVideosFilter, 
+      // Since the actual function checks isPlaylistVideosFilter,
       // and our mock returns true, this won't actually throw
       // We'll just verify the function can handle different filter types
       const result = await load(mockLoadEvent);
-      
+
       expect(result.contentFilter).toEqual({ type: 'invalid' });
     });
 
@@ -325,7 +346,7 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
     it('should process image properties when processedImageUrl is not available', async () => {
       const playlistWithoutProcessedImage = { ...mockPlaylist };
       delete playlistWithoutProcessedImage.processedImageUrl;
-      
+
       const mockVideoContext = {
         playlist: playlistWithoutProcessedImage,
         currentVideo: mockVideo,
@@ -340,7 +361,9 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
 
       await load(mockLoadEvent);
 
-      expect(mockParseImageProperties).toHaveBeenCalledWith(mockPlaylist.image_properties);
+      expect(mockParseImageProperties).toHaveBeenCalledWith(
+        mockPlaylist.image_properties
+      );
       expect(mockGetCroppedPlaylistImageUrlServer).toHaveBeenCalledWith({
         imageProperties: { x: 0, y: 0, width: 100, height: 100 },
         thumbnailMaxResUrl: mockPlaylist.thumbnail_maxres_url,
@@ -349,3 +372,4 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
     });
   });
 });
+
