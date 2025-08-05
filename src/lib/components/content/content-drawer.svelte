@@ -42,6 +42,12 @@
   import EditListDrawer from './drawer/edit-list-drawer.svelte';
   import type { CombinedContentFilter } from './content-filter';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
+  import {
+    processVideoThumbnail,
+    getVideoThumbnailUrl,
+    type VideoWithProcessedThumbnail,
+  } from '../video/video-thumbnail-service';
+  import { onMount } from 'svelte';
 
   interface ContentDrawerProps {
     videos?: Video[];
@@ -104,6 +110,27 @@
     return hoveredVideo ? [hoveredVideo] : [];
   });
 
+  // Processed thumbnails for operation videos
+  let processedThumbnails = $state<Map<string, VideoWithProcessedThumbnail>>(new Map());
+
+  // Process thumbnails when operation videos change
+  $effect(() => {
+    if (operationVideos.length > 0) {
+      operationVideos.forEach(async (video) => {
+        if (video.thumbnail_url && !processedThumbnails.has(video.id)) {
+          try {
+            const processed = await processVideoThumbnail(video);
+            processedThumbnails.set(video.id, processed);
+            // Trigger reactivity
+            processedThumbnails = new Map(processedThumbnails);
+          } catch (error) {
+            console.error('Failed to process thumbnail for', video.id, error);
+          }
+        }
+      });
+    }
+  });
+
   const isPlaylistOwner = $derived(session?.user.id === playlist?.created_by);
 
   function clearSelectionAfterAction() {
@@ -153,9 +180,12 @@
         <Drawer.Header class="mx-4 text-left">
           {#if variant === 'list-items' && operationVideos.length === 1}
             {@const video = operationVideos[0]}
+            {@const processedVideo = processedThumbnails.get(video.id)}
             <div class="flex items-center gap-2">
               <img
-                src={video.thumbnail_url}
+                src={processedVideo
+                  ? getVideoThumbnailUrl(processedVideo)
+                  : video.thumbnail_url}
                 alt={video.title}
                 class="aspect-video h-12"
               />
@@ -234,8 +264,11 @@
 
             {#snippet itemRenderer(item)}
               {@const video = item as Video}
+              {@const processedVideo = processedThumbnails.get(video.id)}
               <img
-                src={video.thumbnail_url}
+                src={processedVideo
+                  ? getVideoThumbnailUrl(processedVideo)
+                  : video.thumbnail_url}
                 alt={video.title}
                 class="pointer-events-none aspect-video h-[60px]"
               />
