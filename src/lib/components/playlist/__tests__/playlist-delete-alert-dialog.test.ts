@@ -1,16 +1,35 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createMockSession, createMockPlaylist } from '../../../../tests/test-utils';
+import {
+  createMockSession,
+  createMockPlaylist,
+} from '../../../../tests/test-utils';
 
 // Mock all dependencies
 vi.mock('$lib/components/ui/alert-dialog/index.js', () => ({
-  Root: class MockRoot { constructor() {} },
-  Content: class MockContent { constructor() {} },
-  Header: class MockHeader { constructor() {} },
-  Title: class MockTitle { constructor() {} },
-  Description: class MockDescription { constructor() {} },
-  Footer: class MockFooter { constructor() {} },
-  Cancel: class MockCancel { constructor() {} },
-  Action: class MockAction { constructor() {} },
+  Root: class MockRoot {
+    constructor() {}
+  },
+  Content: class MockContent {
+    constructor() {}
+  },
+  Header: class MockHeader {
+    constructor() {}
+  },
+  Title: class MockTitle {
+    constructor() {}
+  },
+  Description: class MockDescription {
+    constructor() {}
+  },
+  Footer: class MockFooter {
+    constructor() {}
+  },
+  Cancel: class MockCancel {
+    constructor() {}
+  },
+  Action: class MockAction {
+    constructor() {}
+  },
 }));
 
 vi.mock('../playlist-service', () => ({
@@ -30,16 +49,14 @@ vi.mock('$app/state', () => ({
 }));
 
 const mockHandleDeletePlaylist = vi.mocked(
-  await import('../playlist-service').then(m => m.handleDeletePlaylist)
+  await import('../playlist-service').then((m) => m.handleDeletePlaylist)
 );
-const mockGoto = vi.mocked(
-  await import('$app/navigation').then(m => m.goto)
-);
+const mockGoto = vi.mocked(await import('$app/navigation').then((m) => m.goto));
 
 describe('PlaylistDeleteAlertDialog Component Logic', () => {
-  const mockPublicPlaylist = createMockPlaylist({ 
+  const mockPublicPlaylist = createMockPlaylist({
     type: 'Public',
-    created_by: 'user-1' 
+    created_by: 'user-1',
   });
   const mockSession = createMockSession();
   const mockSidebarState = {
@@ -105,7 +122,10 @@ describe('PlaylistDeleteAlertDialog Component Logic', () => {
         }
 
         // Simulate navigation if on playlist page
-        if (!result?.error && '/playlist/abc123' === `/playlist/${mockProps.playlist.short_id}`) {
+        if (
+          !result?.error &&
+          '/playlist/abc123' === `/playlist/${mockProps.playlist.short_id}`
+        ) {
           mockGoto('/');
         }
       };
@@ -156,7 +176,7 @@ describe('PlaylistDeleteAlertDialog Component Logic', () => {
 
     it('should not navigate when not on playlist page', async () => {
       mockHandleDeletePlaylist.mockResolvedValue({ error: null });
-      
+
       // Mock different current page
       vi.doMock('$app/state', () => ({
         page: {
@@ -177,7 +197,10 @@ describe('PlaylistDeleteAlertDialog Component Logic', () => {
 
         // Check current page path
         const currentPath = '/different-page';
-        if (!result?.error && currentPath === `/playlist/${mockProps.playlist.short_id}`) {
+        if (
+          !result?.error &&
+          currentPath === `/playlist/${mockProps.playlist.short_id}`
+        ) {
           mockGoto('/');
         }
       };
@@ -230,7 +253,7 @@ describe('PlaylistDeleteAlertDialog Component Logic', () => {
     it('should display correct warning message for public playlist', () => {
       const expectedTitle = 'Delete Public Playlist';
       const expectedPlaylistName = mockProps.playlist.name;
-      
+
       expect(expectedTitle).toBe('Delete Public Playlist');
       expect(expectedPlaylistName).toBe('Test Playlist');
     });
@@ -238,18 +261,19 @@ describe('PlaylistDeleteAlertDialog Component Logic', () => {
     it('should list consequences of deletion', () => {
       const consequences = [
         'Permanently remove this playlist',
-        'Remove it from all followers\' profiles',
+        "Remove it from all followers' profiles",
         'This action cannot be undone',
       ];
 
-      consequences.forEach(consequence => {
+      consequences.forEach((consequence) => {
         expect(consequence).toBeDefined();
         expect(typeof consequence).toBe('string');
       });
     });
 
     it('should have destructive styling for delete button', () => {
-      const expectedClasses = 'bg-destructive text-destructive-foreground hover:bg-destructive/90';
+      const expectedClasses =
+        'bg-destructive text-destructive-foreground hover:bg-destructive/90';
       expect(expectedClasses).toContain('bg-destructive');
       expect(expectedClasses).toContain('text-destructive-foreground');
     });
@@ -270,7 +294,8 @@ describe('PlaylistDeleteAlertDialog Component Logic', () => {
     });
 
     it('should validate user ownership', () => {
-      const userOwnsPlaylist = mockProps.session?.user?.id === mockProps.playlist.created_by;
+      const userOwnsPlaylist =
+        mockProps.session?.user?.id === mockProps.playlist.created_by;
       expect(userOwnsPlaylist).toBe(true);
     });
   });
@@ -278,11 +303,11 @@ describe('PlaylistDeleteAlertDialog Component Logic', () => {
   describe('state management', () => {
     it('should handle open state binding', () => {
       let dialogOpen = false;
-      
+
       // Simulate opening dialog
       dialogOpen = true;
       expect(dialogOpen).toBe(true);
-      
+
       // Simulate closing dialog
       dialogOpen = false;
       expect(dialogOpen).toBe(false);
@@ -290,11 +315,11 @@ describe('PlaylistDeleteAlertDialog Component Logic', () => {
 
     it('should call onOpenChange when state changes', () => {
       const mockOnOpenChange = vi.fn();
-      
+
       // Simulate state change
       mockOnOpenChange(true);
       expect(mockOnOpenChange).toHaveBeenCalledWith(true);
-      
+
       mockOnOpenChange(false);
       expect(mockOnOpenChange).toHaveBeenCalledWith(false);
     });

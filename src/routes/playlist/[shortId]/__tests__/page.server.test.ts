@@ -3,12 +3,20 @@ import { redirect } from '@sveltejs/kit';
 import { fail, superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { load, actions } from '../+page.server';
-import { getPlaylistData, isUserPlaylist, updatePlaylistInfo, updatePlaylistImage } from '$lib/supabase/playlists';
+import {
+  getPlaylistData,
+  isUserPlaylist,
+  updatePlaylistInfo,
+  updatePlaylistImage,
+} from '$lib/supabase/playlists';
 import { playlistSchema } from '../schema';
 import { getPaginationQueryParams } from '$lib/components/pagination/pagination';
 import { parseImageProperties } from '$lib/components/playlist/playlist';
 import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
-import { redirect as flashRedirect, setFlash } from 'sveltekit-flash-message/server';
+import {
+  redirect as flashRedirect,
+  setFlash,
+} from 'sveltekit-flash-message/server';
 import {
   createMockSession,
   createMockPlaylist,
@@ -75,7 +83,9 @@ const mockUpdatePlaylistInfo = vi.mocked(updatePlaylistInfo);
 const mockUpdatePlaylistImage = vi.mocked(updatePlaylistImage);
 const mockGetPaginationQueryParams = vi.mocked(getPaginationQueryParams);
 const mockParseImageProperties = vi.mocked(parseImageProperties);
-const mockGetCroppedPlaylistImageUrlServer = vi.mocked(getCroppedPlaylistImageUrlServer);
+const mockGetCroppedPlaylistImageUrlServer = vi.mocked(
+  getCroppedPlaylistImageUrlServer
+);
 const mockSetFlash = vi.mocked(setFlash);
 
 describe('playlist/[shortId]/+page.server.ts', () => {
@@ -84,7 +94,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
   const mockPlaylist = createMockPlaylist();
   const mockVideos = [];
   const mockPlaylistDuration = { hours: 1, minutes: 30, seconds: 0 };
-  
+
   const mockLoadEvent: any = {
     locals: {
       supabase: mockSupabase,
@@ -116,8 +126,15 @@ describe('playlist/[shortId]/+page.server.ts', () => {
       },
     });
     mockGetPaginationQueryParams.mockReturnValue(1);
-    mockParseImageProperties.mockReturnValue({ x: 0, y: 0, width: 100, height: 100 });
-    mockGetCroppedPlaylistImageUrlServer.mockResolvedValue('processed-image-url');
+    mockParseImageProperties.mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
+    });
+    mockGetCroppedPlaylistImageUrlServer.mockResolvedValue(
+      'processed-image-url'
+    );
     mockZod.mockReturnValue({} as any);
   });
 
@@ -136,7 +153,10 @@ describe('playlist/[shortId]/+page.server.ts', () => {
 
       const result = await load(mockLoadEvent);
 
-      expect(mockLoadEvent.depends).toHaveBeenCalledWith('supabase:db:videos', 'supabase:db:playlists');
+      expect(mockLoadEvent.depends).toHaveBeenCalledWith(
+        'supabase:db:videos',
+        'supabase:db:playlists'
+      );
       expect(mockGetPlaylistData).toHaveBeenCalledWith({
         shortId: 'abc123',
         contentFilter: {
@@ -177,9 +197,12 @@ describe('playlist/[shortId]/+page.server.ts', () => {
     });
 
     it('should use existing processed image URL when available', async () => {
-      const playlistWithImage = { ...mockPlaylist, processedImageUrl: 'existing-image-url' };
+      const playlistWithImage = {
+        ...mockPlaylist,
+        processedImageUrl: 'existing-image-url',
+      };
       const mockFormData = { valid: true, data: playlistWithImage };
-      
+
       mockGetPlaylistData.mockResolvedValue({
         playlist: playlistWithImage,
         videos: mockVideos,
@@ -196,13 +219,13 @@ describe('playlist/[shortId]/+page.server.ts', () => {
     });
 
     it('should handle user playlist sort preferences', async () => {
-      const userPlaylist = { 
-        ...mockPlaylist, 
-        sorted_by: 'datePublished', 
-        sort_order: 'descending' 
+      const userPlaylist = {
+        ...mockPlaylist,
+        sorted_by: 'datePublished',
+        sort_order: 'descending',
       };
       const mockFormData = { valid: true, data: userPlaylist };
-      
+
       mockGetPlaylistData.mockResolvedValue({
         playlist: userPlaylist,
         videos: mockVideos,
@@ -225,13 +248,13 @@ describe('playlist/[shortId]/+page.server.ts', () => {
     });
 
     it('should override user playlist sort when explicit sort in URL', async () => {
-      const userPlaylist = { 
-        ...mockPlaylist, 
-        sorted_by: 'datePublished', 
-        sort_order: 'descending' 
+      const userPlaylist = {
+        ...mockPlaylist,
+        sorted_by: 'datePublished',
+        sort_order: 'descending',
       };
       const mockFormData = { valid: true, data: userPlaylist };
-      
+
       mockGetPlaylistData.mockResolvedValue({
         playlist: userPlaylist,
         videos: mockVideos,
@@ -243,7 +266,9 @@ describe('playlist/[shortId]/+page.server.ts', () => {
       mockIsUserPlaylist.mockReturnValue(true);
 
       // Explicit sort in URL
-      mockLoadEvent.url = new URL('http://localhost:5173/playlist/abc123?sort=title&order=ascending');
+      mockLoadEvent.url = new URL(
+        'http://localhost:5173/playlist/abc123?sort=title&order=ascending'
+      );
 
       const result = await load(mockLoadEvent);
 
@@ -258,7 +283,9 @@ describe('playlist/[shortId]/+page.server.ts', () => {
         contentFilter: { type: 'invalid' },
       });
 
-      await expect(load(mockLoadEvent)).rejects.toThrow('Invalid content filter');
+      await expect(load(mockLoadEvent)).rejects.toThrow(
+        'Invalid content filter'
+      );
     });
   });
 
@@ -273,7 +300,9 @@ describe('playlist/[shortId]/+page.server.ts', () => {
         locals: { ...mockActionEvent.locals, session: null },
       };
 
-      await expect(actions.default(unauthenticatedEvent)).rejects.toThrow('Flash Redirect');
+      await expect(actions.default(unauthenticatedEvent)).rejects.toThrow(
+        'Flash Redirect'
+      );
     });
 
     it('should return fail when form validation fails', async () => {
@@ -337,7 +366,9 @@ describe('playlist/[shortId]/+page.server.ts', () => {
       };
 
       mockSuperValidate.mockResolvedValue(validFormData);
-      mockUpdatePlaylistInfo.mockResolvedValue({ updatedPlaylist: mockPlaylist });
+      mockUpdatePlaylistInfo.mockResolvedValue({
+        updatedPlaylist: mockPlaylist,
+      });
 
       await actions.default(mockActionEvent);
 
@@ -363,7 +394,9 @@ describe('playlist/[shortId]/+page.server.ts', () => {
       };
 
       mockSuperValidate.mockResolvedValue(validFormData);
-      mockUpdatePlaylistInfo.mockResolvedValue({ updatedPlaylist: mockPlaylist });
+      mockUpdatePlaylistInfo.mockResolvedValue({
+        updatedPlaylist: mockPlaylist,
+      });
 
       await actions.default(mockActionEvent);
 

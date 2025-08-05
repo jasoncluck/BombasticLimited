@@ -62,8 +62,9 @@
     <AlertDialog.Header>
       <AlertDialog.Title>Delete Public Playlist</AlertDialog.Title>
       <AlertDialog.Description>
-        You are about to delete the public playlist "{playlist.name}". This action will:
-        <ul class="mt-2 list-disc pl-5 space-y-1">
+        You are about to delete the public playlist "{playlist.name}". This
+        action will:
+        <ul class="mt-2 list-disc space-y-1 pl-5">
           <li>Permanently remove this playlist</li>
           <li>Remove it from all followers' profiles</li>
           <li>This action cannot be undone</li>
@@ -72,7 +73,7 @@
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel onclick={cancelDelete}>Cancel</AlertDialog.Cancel>
-      <AlertDialog.Action 
+      <AlertDialog.Action
         onclick={confirmDelete}
         class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
       >

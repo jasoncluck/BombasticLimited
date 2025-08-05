@@ -275,7 +275,9 @@ describe('playlist schema validation', () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.issues[0].path).toEqual(['image_properties']);
-        expect(result.error.issues[0].message).toContain('Invalid image properties');
+        expect(result.error.issues[0].message).toContain(
+          'Invalid image properties'
+        );
       }
     });
   });

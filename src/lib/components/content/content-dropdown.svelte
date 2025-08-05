@@ -175,8 +175,8 @@
           !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at)
       );
 
-    // Check for delete playlist action
-    const hasDeletePlaylist = playlist && variant === 'header';
+    // Check for playlist actions (delete/follow/unfollow)
+    const hasPlaylistActions = playlist && variant === 'header';
 
     return (
       hasSelectAll ||
@@ -186,7 +186,7 @@
       hasSetPlaylistImage ||
       hasResetProgress ||
       hasSetWatched ||
-      hasDeletePlaylist
+      hasPlaylistActions
     );
   });
 
@@ -509,11 +509,37 @@
         </DropdownMenu.Item>
       {/if}
 
-      {#if playlist && variant === 'header' && !isFollowingPlaylist}
-        <DropdownMenu.Item
-          class="cursor-pointer"
-          onclick={async () => {
-            if (playlist.created_by !== session?.user.id) {
+      {#if playlist && variant === 'header'}
+        {#if playlist.created_by === session?.user.id}
+          <!-- User owns the playlist - show delete option -->
+          <DropdownMenu.Item
+            class="cursor-pointer"
+            onclick={async () => {
+              const data = await handleDeletePlaylist({
+                playlist,
+                sidebarState,
+                supabase,
+                session,
+              });
+
+              if (
+                !data?.error &&
+                page.url.pathname === `/playlist/${playlist.short_id}`
+              ) {
+                goto('/');
+              }
+            }}
+          >
+            <div class="flex items-center gap-2">
+              <CircleMinus class="dropdown-icon" />
+              Delete playlist
+            </div>
+          </DropdownMenu.Item>
+        {:else if !isFollowingPlaylist}
+          <!-- User doesn't own and isn't following - show follow option -->
+          <DropdownMenu.Item
+            class="cursor-pointer"
+            onclick={async () => {
               handleFollowPlaylist({
                 playlist,
                 sidebarState,
@@ -521,64 +547,32 @@
                 supabase,
                 session,
               });
-            } else {
-              const data = await handleDeletePlaylist({
-                playlist,
-                sidebarState,
-                supabase,
-                session,
-              });
-
-              if (
-                !data?.error &&
-                page.url.pathname === `/playlist/${playlist.short_id}`
-              ) {
-                goto('/');
-              }
-            }
-          }}
-        >
-          <div class="flex items-center gap-2">
-            <CirclePlus class="dropdown-icon" />
-            Follow playlist
-          </div>
-        </DropdownMenu.Item>
-      {/if}
-      {#if playlist && variant === 'header' && isFollowingPlaylist}
-        <DropdownMenu.Item
-          class="cursor-pointer"
-          onclick={async () => {
-            if (playlist.created_by !== session?.user.id) {
+            }}
+          >
+            <div class="flex items-center gap-2">
+              <CirclePlus class="dropdown-icon" />
+              Follow playlist
+            </div>
+          </DropdownMenu.Item>
+        {:else}
+          <!-- User doesn't own but is following - show unfollow option -->
+          <DropdownMenu.Item
+            class="cursor-pointer"
+            onclick={async () => {
               handleUnfollowPlaylist({
                 playlist,
                 sidebarState,
                 supabase,
                 session,
               });
-            } else {
-              const data = await handleDeletePlaylist({
-                playlist,
-                sidebarState,
-                supabase,
-                session,
-              });
-
-              if (
-                !data?.error &&
-                page.url.pathname === `/playlist/${playlist.short_id}`
-              ) {
-                goto('/');
-              }
-            }
-          }}
-        >
-          <div class="flex items-center gap-2">
-            <CircleMinus class="dropdown-icon" />
-            {playlist.created_by === session?.user.id
-              ? 'Delete playlist'
-              : 'Unfollow playlist'}
-          </div>
-        </DropdownMenu.Item>
+            }}
+          >
+            <div class="flex items-center gap-2">
+              <CircleMinus class="dropdown-icon" />
+              Unfollow playlist
+            </div>
+          </DropdownMenu.Item>
+        {/if}
       {/if}
     </DropdownMenu.Content>
   </DropdownMenu.Root>

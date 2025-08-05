@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createMockSession, createMockUserProfile, createMockPlaylist, createMockVideo } from '../../../../../../tests/test-utils';
+import {
+  createMockSession,
+  createMockUserProfile,
+  createMockPlaylist,
+  createMockVideo,
+} from '../../../../../../tests/test-utils';
 
 // Mock all dependencies
 vi.mock('$lib/components/content/content.svelte', () => ({
@@ -22,7 +27,9 @@ vi.mock('@lucide/svelte', () => ({
 
 describe('playlist/[shortId]/video/[videoId]/+page.svelte Component Logic', () => {
   const mockVideo = createMockVideo();
-  const mockNextVideos = [createMockVideo({ id: 'video-2', title: 'Next Video' })];
+  const mockNextVideos = [
+    createMockVideo({ id: 'video-2', title: 'Next Video' }),
+  ];
   const mockPlaylist = createMockPlaylist({ created_by: 'user-1' });
   const mockSession = createMockSession();
   const mockUserProfile = createMockUserProfile();
@@ -104,7 +111,9 @@ describe('playlist/[shortId]/video/[videoId]/+page.svelte Component Logic', () =
 
       expect(expectedVideoPlayerProps.video).toEqual(mockData.video);
       expect(expectedVideoPlayerProps.baseUrl).toBe('/playlist/abc123');
-      expect(expectedVideoPlayerProps.playlist).toEqual(mockData.profilePlaylist);
+      expect(expectedVideoPlayerProps.playlist).toEqual(
+        mockData.profilePlaylist
+      );
     });
 
     it('should use video.id as key for keyed block', () => {
@@ -145,12 +154,14 @@ describe('playlist/[shortId]/video/[videoId]/+page.svelte Component Logic', () =
         processedImageUrl: 'https://example.com/processed.jpg',
       };
 
-      const hasProcessedImage = 
-        'processedImageUrl' in playlistWithImage && 
+      const hasProcessedImage =
+        'processedImageUrl' in playlistWithImage &&
         !!playlistWithImage.processedImageUrl;
 
       expect(hasProcessedImage).toBe(true);
-      expect(playlistWithImage.processedImageUrl).toBe('https://example.com/processed.jpg');
+      expect(playlistWithImage.processedImageUrl).toBe(
+        'https://example.com/processed.jpg'
+      );
     });
 
     it('should show ListVideo icon when no processed image', () => {
@@ -159,8 +170,8 @@ describe('playlist/[shortId]/video/[videoId]/+page.svelte Component Logic', () =
         processedImageUrl: null,
       };
 
-      const hasProcessedImage = 
-        'processedImageUrl' in playlistWithoutImage && 
+      const hasProcessedImage =
+        'processedImageUrl' in playlistWithoutImage &&
         !!playlistWithoutImage.processedImageUrl;
 
       expect(hasProcessedImage).toBe(false);
@@ -227,7 +238,9 @@ describe('playlist/[shortId]/video/[videoId]/+page.svelte Component Logic', () =
 
       expect(lastVideoData.isLastVideo).toBe(true);
       expect(lastVideoData.nextVideo).toBeNull();
-      expect(lastVideoData.currentVideoIndex).toBe(lastVideoData.totalVideos - 1);
+      expect(lastVideoData.currentVideoIndex).toBe(
+        lastVideoData.totalVideos - 1
+      );
     });
 
     it('should handle first video scenario', () => {
@@ -277,7 +290,7 @@ describe('playlist/[shortId]/video/[videoId]/+page.svelte Component Logic', () =
     });
 
     it('should determine user ownership of playlist', () => {
-      const userOwnsPlaylist = 
+      const userOwnsPlaylist =
         mockData.session?.user?.id === mockData.profilePlaylist.created_by;
       expect(userOwnsPlaylist).toBe(true);
     });
@@ -287,7 +300,7 @@ describe('playlist/[shortId]/video/[videoId]/+page.svelte Component Logic', () =
     it('should handle playlist image dimensions', () => {
       // The component uses h-20 w-20 classes for playlist image
       const expectedDimensions = { height: '5rem', width: '5rem' }; // h-20 w-20
-      
+
       // This is more of a design test, ensuring the expected classes exist
       expect(mockData.profilePlaylist).toBeDefined();
     });
@@ -316,7 +329,7 @@ describe('playlist/[shortId]/video/[videoId]/+page.svelte Component Logic', () =
       expect(mockData.video.id).toBe('video-1');
       expect(mockData.profilePlaylist.short_id).toBe('abc123');
       expect(mockData.videos[0]?.id).toBe('video-2');
-      
+
       // Validate derived values
       expect(mockData.currentVideoIndex).toBeGreaterThanOrEqual(0);
       expect(mockData.totalVideos).toBeGreaterThan(0);

@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createMockSession, createMockUserProfile, createMockPlaylist } from '../../../../tests/test-utils';
+import {
+  createMockSession,
+  createMockUserProfile,
+  createMockPlaylist,
+} from '../../../../tests/test-utils';
 
 // Mock all dependencies
 vi.mock('$lib/state/content.svelte', () => ({
@@ -99,10 +103,10 @@ describe('playlist/[shortId]/+page.svelte Component Logic', () => {
   describe('playlist header props derivation', () => {
     it('should derive correct breadcrumbs from playlist', () => {
       const expectedBreadcrumbs = [{ label: mockData.playlist.name }];
-      
+
       // Simulate the derived property logic
       const breadcrumbs = [{ label: mockData.playlist.name }];
-      
+
       expect(breadcrumbs).toEqual(expectedBreadcrumbs);
       expect(breadcrumbs[0].label).toBe('Test Playlist');
     });
@@ -286,7 +290,8 @@ describe('playlist/[shortId]/+page.svelte Component Logic', () => {
     });
 
     it('should determine if user owns playlist', () => {
-      const userOwnsPlaylist = mockData.session?.user?.id === mockData.playlist.created_by;
+      const userOwnsPlaylist =
+        mockData.session?.user?.id === mockData.playlist.created_by;
       expect(userOwnsPlaylist).toBe(true);
     });
 
@@ -296,7 +301,8 @@ describe('playlist/[shortId]/+page.svelte Component Logic', () => {
         created_by: 'other-user-id',
       };
 
-      const userOwnsPlaylist = mockData.session?.user?.id === playlistOwnedByOther.created_by;
+      const userOwnsPlaylist =
+        mockData.session?.user?.id === playlistOwnedByOther.created_by;
       expect(userOwnsPlaylist).toBe(false);
     });
   });
@@ -328,11 +334,11 @@ describe('playlist/[shortId]/+page.svelte Component Logic', () => {
       expect(mockData.playlist.short_id).toBe('abc123');
       expect(mockData.playlist.name).toBe('Test Playlist');
       expect(mockData.playlist.type).toMatch(/^(Public|Private)$/);
-      
+
       // Validate pagination data
       expect(typeof mockData.currentPage).toBe('number');
       expect(mockData.currentPage).toBeGreaterThan(0);
-      
+
       // Validate count data
       expect(typeof mockData.videosCount).toBe('number');
       expect(mockData.videosCount).toBeGreaterThanOrEqual(0);
