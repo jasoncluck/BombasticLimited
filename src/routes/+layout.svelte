@@ -23,6 +23,8 @@
   import '../app.css';
   import { setNavigationCacheState } from '$lib/state/navigation-cache/index.js';
   import { page } from '$app/stores';
+  import { replaceState } from '$app/navigation';
+  import { tabVisibility } from '$lib/utils/tab-visibility.js';
 
   injectSpeedInsights();
 
@@ -188,10 +190,10 @@
       typeof window !== 'undefined' &&
       $page.url.searchParams.get('logout') === 'true'
     ) {
-      // Clear the URL parameter
+      // Clear the URL parameter using SvelteKit's replaceState
       const url = new URL(window.location.href);
       url.searchParams.delete('logout');
-      window.history.replaceState({}, '', url.toString());
+      replaceState(url.toString(), {});
 
       // Force a full page reload to clear any cached auth state
       window.location.reload();
@@ -242,7 +244,49 @@
       console.log('🔧 Cache debug tools available at window.cacheDebug');
     }
 
-    // Return cleanup function
+    // Setup service worker message handling for tab visibility
+    if ('serviceWorker' in navigator) {
+      const handleServiceWorkerMessage = (event: MessageEvent) => {
+        const { type } = event.data || {};
+        
+        if (type === 'REQUEST_TAB_VISIBILITY') {
+          // Respond with current tab visibility state
+          event.ports[0]?.postMessage({
+            type: 'TAB_VISIBILITY_RESPONSE',
+            isVisible: tabVisibility.isVisible,
+          });
+        } else if (type === 'REQUEST_AUTH_STATE') {
+          // Respond with current auth state
+          event.ports[0]?.postMessage({
+            type: 'AUTH_STATE_RESPONSE',
+            isAuthenticated: !!user,
+          });
+        }
+      };
+
+      navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+      
+      // Cleanup service worker listener
+      const cleanupServiceWorker = () => {
+        navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
+      };
+      
+      // Add to cleanup list
+      return () => {
+        if (mediaCleanup && typeof mediaCleanup === 'function') {
+          mediaCleanup();
+        }
+        if (sidebarCleanup && typeof sidebarCleanup === 'function') {
+          sidebarCleanup();
+        }
+        if (layoutCleanup && typeof layoutCleanup === 'function') {
+          layoutCleanup();
+        }
+        cleanupServiceWorker();
+      };
+    }
+
+    // Return cleanup function for non-service worker case
     return () => {
       if (mediaCleanup && typeof mediaCleanup === 'function') {
         mediaCleanup();
