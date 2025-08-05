@@ -37,14 +37,14 @@ export const DEFAULT_MAXRES_THUMBNAIL_CONFIG: VercelImageConfig = {
 
 /**
  * Get the best available thumbnail URL for a video
- * Prefers thumbnail_maxres_url when available, falls back to thumbnail_url
+ * Prefers thumbnail_url for better performance, falls back to thumbnail_maxres_url
  */
 export function getBestThumbnailUrl(video: Video): string | null {
-  if (video.thumbnail_maxres_url) {
-    return video.thumbnail_maxres_url;
-  }
   if (video.thumbnail_url && video.thumbnail_url.trim() !== '') {
     return video.thumbnail_url;
+  }
+  if (video.thumbnail_maxres_url) {
+    return video.thumbnail_maxres_url;
   }
   return null;
 }
@@ -77,10 +77,10 @@ export function getVercelOptimizedVideoThumbnailUrl(
   config: VercelImageConfig = DEFAULT_VIDEO_THUMBNAIL_CONFIG
 ): string {
   const params = new URLSearchParams();
-  
+
   // Add the source URL
   params.set('url', thumbnailUrl);
-  
+
   // Add optimization parameters
   if (config.width) {
     params.set('w', config.width.toString());
@@ -99,15 +99,15 @@ export function getVercelOptimizedVideoThumbnailUrl(
 }
 
 /**
- * Get optimized video thumbnail URL with automatic size selection
- * Uses maxres when available, standard resolution otherwise
+ * Get optimized video thumbnail URL with standard resolution
+ * Always uses standard resolution configuration for optimal performance
  */
 export function getOptimizedVideoThumbnailUrl(
   video: Video,
   customConfig?: VercelImageConfig
 ): string | null {
   const thumbnailUrl = getBestThumbnailUrl(video);
-  
+
   if (!thumbnailUrl) {
     return null;
   }
@@ -118,9 +118,8 @@ export function getOptimizedVideoThumbnailUrl(
     return `/api/video-thumbnail?type=image&url=${encodeURIComponent(thumbnailUrl)}`;
   }
 
-  // Choose config based on whether we have maxres URL
-  const config = customConfig || 
-    (video.thumbnail_maxres_url ? DEFAULT_MAXRES_THUMBNAIL_CONFIG : DEFAULT_VIDEO_THUMBNAIL_CONFIG);
+  // Always use standard config for optimal performance and cost efficiency
+  const config = customConfig || DEFAULT_VIDEO_THUMBNAIL_CONFIG;
 
   return getVercelOptimizedVideoThumbnailUrl(thumbnailUrl, config);
 }
@@ -135,7 +134,7 @@ export function getResponsiveVideoThumbnailUrls(video: Video): {
   large: string | null;
 } {
   const thumbnailUrl = getBestThumbnailUrl(video);
-  
+
   if (!thumbnailUrl) {
     return {
       default: null,
@@ -157,10 +156,28 @@ export function getResponsiveVideoThumbnailUrls(video: Video): {
   }
 
   return {
-    default: getVercelOptimizedVideoThumbnailUrl(thumbnailUrl, DEFAULT_VIDEO_THUMBNAIL_CONFIG),
-    small: getVercelOptimizedVideoThumbnailUrl(thumbnailUrl, { width: 320, height: 180, quality: 85, format: 'auto' }),
-    medium: getVercelOptimizedVideoThumbnailUrl(thumbnailUrl, { width: 640, height: 360, quality: 90, format: 'auto' }),
-    large: getVercelOptimizedVideoThumbnailUrl(thumbnailUrl, { width: 1280, height: 720, quality: 90, format: 'auto' }),
+    default: getVercelOptimizedVideoThumbnailUrl(
+      thumbnailUrl,
+      DEFAULT_VIDEO_THUMBNAIL_CONFIG
+    ),
+    small: getVercelOptimizedVideoThumbnailUrl(thumbnailUrl, {
+      width: 320,
+      height: 180,
+      quality: 85,
+      format: 'auto',
+    }),
+    medium: getVercelOptimizedVideoThumbnailUrl(thumbnailUrl, {
+      width: 640,
+      height: 360,
+      quality: 90,
+      format: 'auto',
+    }),
+    large: getVercelOptimizedVideoThumbnailUrl(thumbnailUrl, {
+      width: 1280,
+      height: 720,
+      quality: 90,
+      format: 'auto',
+    }),
   };
 }
 
@@ -186,7 +203,10 @@ export function extractOriginalUrlFromVercel(vercelUrl: string): string | null {
 /**
  * Get cache key for video thumbnail (useful for client-side caching)
  */
-export function getVideoThumbnailCacheKey(video: Video, config?: VercelImageConfig): string {
+export function getVideoThumbnailCacheKey(
+  video: Video,
+  config?: VercelImageConfig
+): string {
   const thumbnailUrl = getBestThumbnailUrl(video);
   const configKey = config ? JSON.stringify(config) : 'default';
   return `video-thumb:${video.id}:${thumbnailUrl}:${configKey}`;

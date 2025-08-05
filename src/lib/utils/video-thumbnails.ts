@@ -5,19 +5,22 @@
  */
 
 import type { Video } from '$lib/supabase/videos';
-import { 
+import {
   getOptimizedVideoThumbnailUrl,
   getBestThumbnailUrl,
   isVercelOptimizedUrl,
   extractOriginalUrlFromVercel,
-  type VercelImageConfig
+  type VercelImageConfig,
 } from './vercel-video-images';
 
 /**
  * Get the optimal thumbnail URL for a video
  * Uses Vercel Image Optimization when possible, falls back to server processing
  */
-export function getVideoThumbnailUrl(video: Video, config?: VercelImageConfig): string {
+export function getVideoThumbnailUrl(
+  video: Video,
+  config?: VercelImageConfig
+): string {
   const optimizedUrl = getOptimizedVideoThumbnailUrl(video, config);
   return optimizedUrl || '';
 }
@@ -66,7 +69,7 @@ export function extractOriginalUrl(optimizedUrl: string): string | null {
   if (isVercelOptimizedUrl(optimizedUrl)) {
     return extractOriginalUrlFromVercel(optimizedUrl);
   }
-  
+
   // Handle server-side API format
   try {
     const urlObj = new URL(optimizedUrl, 'http://localhost');
@@ -87,10 +90,15 @@ export function hasMaxResThumbnail(video: Video): boolean {
  * Get thumbnail URL with specific dimensions
  */
 export function getVideoThumbnailUrlWithSize(
-  video: Video, 
-  width: number, 
+  video: Video,
+  width: number,
   height: number,
   quality = 90
 ): string {
-  return getVideoThumbnailUrl(video, { width, height, quality, format: 'auto' });
+  return getVideoThumbnailUrl(video, {
+    width,
+    height,
+    quality,
+    format: 'auto',
+  });
 }
