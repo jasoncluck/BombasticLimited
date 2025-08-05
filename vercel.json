@@ -5,6 +5,7 @@
   "framework": "sveltekit",
   "regions": ["pdx1", "iad1"],
   "images": {
+    "sizes": [120, 240, 320, 480, 640, 720, 1280, 1920],
     "domains": [
       "i.ytimg.com",
       "img.youtube.com",
