@@ -25,6 +25,8 @@
   import { onMount } from 'svelte';
   import { enhance } from '$app/forms';
   import * as Dialog from '$lib/components/ui/dialog/index.js';
+  import * as Avatar from '$lib/components/ui/avatar';
+  import DiscordIcon from '$lib/assets/icons/DiscordIcon.svelte';
 
   import Label from '$lib/components/ui/label/label.svelte';
 
@@ -33,6 +35,7 @@
   }: {
     data: {
       profile: UserProfile;
+      discordIdentity: any;
       emailForm: SuperValidated<Infer<EmailSchema>>;
       usernameForm: SuperValidated<Infer<UsernameSchema>>;
       supabase: SupabaseClient<Database>;
@@ -40,7 +43,7 @@
     };
   } = $props();
 
-  const { profile, supabase, session } = $derived(data);
+  const { profile, discordIdentity, supabase, session } = $derived(data);
 
   const flash = getFlash(page);
 
@@ -262,6 +265,93 @@
         <Alert.Description>{$flash.message}</Alert.Description>
       </Alert.Root>
     {/if}
+
+    <!-- Discord Account Linking Section -->
+    <div class="mt-8 border-t pt-8">
+      <h2 class="text-lg font-semibold mb-4">Discord Account</h2>
+      
+      {#if discordIdentity}
+        <!-- Discord Account Linked -->
+        <div class="flex w-full flex-wrap items-center gap-4 @lg:flex-nowrap">
+          <Label class="min-w-20">Discord</Label>
+          <div class="flex min-w-[300px] flex-1 items-center gap-3 rounded-md border border-input bg-background px-3 py-2">
+            {#if profile.avatar_url}
+              <Avatar.Root class="h-8 w-8">
+                <Avatar.Image src={profile.avatar_url} alt="Discord avatar" />
+                <Avatar.Fallback>
+                  <DiscordIcon size={16} class="text-[#5865F2]" />
+                </Avatar.Fallback>
+              </Avatar.Root>
+            {:else}
+              <DiscordIcon size={20} class="text-[#5865F2]" />
+            {/if}
+            <div class="flex-1">
+              <p class="text-sm font-medium">
+                {discordIdentity.identity_data?.global_name || 
+                 discordIdentity.identity_data?.username || 
+                 'Discord User'}
+              </p>
+              <p class="text-xs text-muted-foreground">
+                Account linked
+              </p>
+            </div>
+          </div>
+          <form 
+            use:enhance={() => {
+              return async () => {
+                await updateFlash(page);
+              };
+            }}
+            method="POST" 
+            action="?/unlinkDiscord"
+          >
+            <Button
+              type="submit"
+              variant="destructive"
+              class="w-full cursor-pointer @lg:w-auto"
+            >
+              Unlink
+            </Button>
+          </form>
+        </div>
+      {:else}
+        <!-- Discord Account Not Linked -->
+        <div class="flex w-full flex-wrap items-center gap-4 @lg:flex-nowrap">
+          <Label class="min-w-20">Discord</Label>
+          <div class="flex min-w-[300px] flex-1 items-center gap-3 rounded-md border border-input bg-background px-3 py-2 text-muted-foreground">
+            <DiscordIcon size={20} class="text-[#5865F2]" />
+            <span class="text-sm">No Discord account linked</span>
+          </div>
+          <form 
+            use:enhance={() => {
+              return async () => {
+                await updateFlash(page);
+              };
+            }}
+            method="POST" 
+            action="?/linkDiscord"
+          >
+            <Button
+              type="submit"
+              variant="secondary"
+              class="w-full cursor-pointer @lg:w-auto"
+            >
+              <DiscordIcon size={16} class="mr-2 text-[#5865F2]" />
+              Link Discord
+            </Button>
+          </form>
+        </div>
+      {/if}
+      
+      {#if $flash?.field === 'discord' && $flash?.message && $flash?.type}
+        <Alert.Root class="mt-4">
+          <Alert.Title
+            >{$flash.type === 'error' ? 'Error' : 'Success'}</Alert.Title
+          >
+          <Alert.Description>{$flash.message}</Alert.Description>
+        </Alert.Root>
+      {/if}
+    </div>
 
     <Dialog.Root>
       <Dialog.Trigger

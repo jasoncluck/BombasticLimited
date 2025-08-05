@@ -5,6 +5,9 @@ import { redirect, setFlash } from 'sveltekit-flash-message/server';
 import {
   checkIfUsernameIsUnique,
   getUserProfile,
+  getUserDiscordIdentity,
+  linkDiscordIdentity,
+  unlinkDiscordIdentity,
 } from '$lib/supabase/user-profiles';
 import type { Actions, PageServerLoad } from './$types';
 import { Filter } from 'bad-words';
@@ -12,15 +15,20 @@ import { Filter } from 'bad-words';
 export const load: PageServerLoad = async ({
   depends,
   locals: { supabase, session },
+  url,
 }) => {
   depends('supabase:db:profiles');
   if (!session) {
     redirect(303, '/auth/login');
   }
 
-  // Run profile fetch and form validations in parallel
-  const [{ profile }, emailForm, passwordForm] = await Promise.all([
+  // Run profile fetch, Discord identity fetch, and form validations in parallel
+  const [{ profile }, { identity: discordIdentity }, emailForm, passwordForm] = await Promise.all([
     getUserProfile({
+      supabase,
+      userId: session.user.id,
+    }),
+    getUserDiscordIdentity({
       supabase,
       userId: session.user.id,
     }),
@@ -43,6 +51,7 @@ export const load: PageServerLoad = async ({
 
   return {
     profile,
+    discordIdentity,
     emailForm,
     usernameForm,
     passwordForm,
@@ -178,6 +187,68 @@ export const actions: Actions = {
         cookies
       );
     }
+  },
+
+  linkDiscord: async ({ url, cookies, locals: { supabase, session } }) => {
+    if (!session) {
+      redirect(303, '/auth/login');
+    }
+
+    const { data, error } = await linkDiscordIdentity({
+      supabase,
+      redirectTo: `${url.origin}/account`,
+    });
+
+    if (error) {
+      setFlash(
+        { type: 'error', message: error.message, field: 'discord' },
+        cookies
+      );
+      return fail(400);
+    }
+
+    // Redirect to Discord OAuth flow
+    if (data?.url) {
+      redirect(303, data.url);
+    }
+
+    setFlash(
+      {
+        type: 'error',
+        message: 'Failed to initiate Discord linking',
+        field: 'discord',
+      },
+      cookies
+    );
+    return fail(400);
+  },
+
+  unlinkDiscord: async ({ cookies, locals: { supabase, session } }) => {
+    if (!session) {
+      redirect(303, '/auth/login');
+    }
+
+    const { error } = await unlinkDiscordIdentity({
+      userId: session.user.id,
+      supabase,
+    });
+
+    if (error) {
+      setFlash(
+        { type: 'error', message: error.message || 'Failed to unlink Discord account', field: 'discord' },
+        cookies
+      );
+      return fail(400);
+    }
+
+    setFlash(
+      {
+        type: 'success',
+        message: 'Discord account unlinked successfully',
+        field: 'discord',
+      },
+      cookies
+    );
   },
 
   deleteAccount: async ({ cookies, locals: { supabase, session } }) => {

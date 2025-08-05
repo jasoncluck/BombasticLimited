@@ -79,6 +79,7 @@ export function createMockUserProfile(
   return {
     id: 'user-1',
     username: 'testuser',
+    avatar_url: null,
     sources: ['giantbomb', 'jeffgerstmann', 'nextlander', 'remap'],
     content_display: 'TILES',
     content_description: 'FULL',

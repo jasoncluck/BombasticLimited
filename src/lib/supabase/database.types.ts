@@ -120,6 +120,7 @@ export type Database = {
       };
       profiles: {
         Row: {
+          avatar_url: string | null;
           content_description:
             | Database['public']['Enums']['content_description']
             | null;
@@ -131,6 +132,7 @@ export type Database = {
           username: string | null;
         };
         Insert: {
+          avatar_url?: string | null;
           content_description?:
             | Database['public']['Enums']['content_description']
             | null;
@@ -142,6 +144,7 @@ export type Database = {
           username?: string | null;
         };
         Update: {
+          avatar_url?: string | null;
           content_description?:
             | Database['public']['Enums']['content_description']
             | null;

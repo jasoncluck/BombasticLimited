@@ -60,6 +60,51 @@ export async function getProfile({
   return { profile, error };
 }
 
+export async function getUserDiscordIdentity({
+  userId,
+  supabase,
+}: {
+  userId: string;
+  supabase: SupabaseClient<Database>;
+}) {
+  // For the initial implementation, we'll return null and implement this after the migration
+  // This will be properly implemented once the database functions are deployed
+  return { identity: null, error: null };
+}
+
+export async function linkDiscordIdentity({
+  supabase,
+  redirectTo,
+}: {
+  supabase: SupabaseClient<Database>;
+  redirectTo: string;
+}) {
+  const { data, error } = await supabase.auth.linkIdentity({
+    provider: 'discord',
+    options: {
+      redirectTo,
+    },
+  });
+
+  return { data, error };
+}
+
+export async function unlinkDiscordIdentity({
+  userId,
+  supabase,
+}: {
+  userId: string;
+  supabase: SupabaseClient<Database>;
+}) {
+  try {
+    // For the initial implementation, return an error indicating this needs to be implemented
+    // after the database migration is applied
+    return { error: new Error('Discord unlinking will be available after account is linked') };
+  } catch (err) {
+    return { error: err as Error };
+  }
+}
+
 export async function updateProfileContentDisplay({
   contentDisplay,
   supabase,
