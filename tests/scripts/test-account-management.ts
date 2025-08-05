@@ -1,7 +1,6 @@
 #!/usr/bin/env tsx
 import { createClient } from '@supabase/supabase-js';
 import { test } from '@playwright/test';
-import 'dotenv/config';
 
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
