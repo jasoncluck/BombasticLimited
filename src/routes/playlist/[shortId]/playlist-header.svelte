@@ -19,6 +19,7 @@
   import PlaylistEditDrawer from '$lib/components/playlist/playlist-edit-drawer.svelte';
   import { getPlaylistState } from '$lib/state/playlist.svelte';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
+  import * as Avatar from '$lib/components/ui/avatar';
 
   interface PlaylistHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
@@ -30,6 +31,7 @@
     playlistDuration: { hours: number; minutes: number; seconds: number };
     videosCount: number;
     userProfile: UserProfile | null;
+    creatorProfile: UserProfile | null;
     currentPage: number;
     supabase: SupabaseClient<Database>;
     session: Session | null;
@@ -46,6 +48,7 @@
     videosCount,
     currentPage,
     userProfile,
+    creatorProfile,
     supabase,
     session,
     ...props
@@ -202,7 +205,17 @@
                       </a>
                     </div>
                   {:else}
-                    <p class="text-sm">{playlist.profile_username}</p>
+                    <div class="flex items-center gap-2">
+                      {#if creatorProfile?.avatar_url}
+                        <Avatar.Root class="h-6 w-6">
+                          <Avatar.Image src={creatorProfile.avatar_url} alt="{playlist.profile_username} avatar" />
+                          <Avatar.Fallback class="text-xs">
+                            {playlist.profile_username?.slice(0, 2).toUpperCase()}
+                          </Avatar.Fallback>
+                        </Avatar.Root>
+                      {/if}
+                      <p class="text-sm">{playlist.profile_username}</p>
+                    </div>
                   {/if}
                   <Circle
                     size="5"
@@ -317,7 +330,17 @@
                       </a>
                     </div>
                   {:else}
-                    <p class="text-sm">{playlist.profile_username}</p>
+                    <div class="flex items-center gap-2">
+                      {#if creatorProfile?.avatar_url}
+                        <Avatar.Root class="h-6 w-6">
+                          <Avatar.Image src={creatorProfile.avatar_url} alt="{playlist.profile_username} avatar" />
+                          <Avatar.Fallback class="text-xs">
+                            {playlist.profile_username?.slice(0, 2).toUpperCase()}
+                          </Avatar.Fallback>
+                        </Avatar.Root>
+                      {/if}
+                      <p class="text-sm">{playlist.profile_username}</p>
+                    </div>
                   {/if}
                   <Circle
                     size="5"

@@ -21,6 +21,7 @@ import { Filter } from 'bad-words';
 import { redirect, setFlash } from 'sveltekit-flash-message/server';
 import { parseImageProperties } from '$lib/components/playlist/playlist';
 import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
+import { getUserProfile } from '$lib/supabase/user-profiles';
 
 export const load: PageServerLoad = async ({
   locals: { supabase, session },
@@ -62,7 +63,7 @@ export const load: PageServerLoad = async ({
     redirect(302, '/');
   }
 
-  const [processedImageUrl, form] = await Promise.all([
+  const [processedImageUrl, form, creatorProfile] = await Promise.all([
     playlist.processedImageUrl
       ? Promise.resolve(playlist.processedImageUrl)
       : getCroppedPlaylistImageUrlServer({
@@ -71,6 +72,10 @@ export const load: PageServerLoad = async ({
           thumbnailUrl: playlist.thumbnail_url,
         }),
     superValidate(playlist, zod(playlistSchema)),
+    // Load creator profile for public playlists not owned by current user
+    playlist.type === 'Public' && playlist.created_by !== session?.user.id
+      ? getUserProfile({ userId: playlist.created_by, supabase }).then(result => result.profile)
+      : Promise.resolve(null),
   ]);
 
   if (!playlist.processedImageUrl) {
@@ -99,6 +104,7 @@ export const load: PageServerLoad = async ({
     currentPage,
     playlistDuration,
     form,
+    creatorProfile,
   };
 };
 
