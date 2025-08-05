@@ -40,6 +40,7 @@ vi.mock('bad-words', () => {
   }));
   return {
     default: mockFilterConstructor,
+    Filter: mockFilterConstructor,
     mockIsProfane,
     mockFilterConstructor,
   };
