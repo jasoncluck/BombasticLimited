@@ -35,7 +35,7 @@ describe('playlist/[shortId]/+page.svelte Component Logic', () => {
   const mockPlaylist = createMockPlaylist({ created_by: 'user-1' });
   const mockSession = createMockSession();
   const mockUserProfile = createMockUserProfile();
-  const mockVideos = [];
+  const mockVideos: any[] = [];
   const mockPlaylistDuration = { hours: 1, minutes: 30, seconds: 0 };
 
   const mockData = {
@@ -135,7 +135,7 @@ describe('playlist/[shortId]/+page.svelte Component Logic', () => {
   describe('snapshot functionality', () => {
     it('should capture showFloatingBreadcrumbs state', () => {
       const showFloatingBreadcrumbs = false;
-      const selectedVideos = [];
+      const selectedVideos: any[] = [];
 
       const capturedData = {
         showFloatingBreadcrumbs,
@@ -175,7 +175,7 @@ describe('playlist/[shortId]/+page.svelte Component Logic', () => {
       };
 
       // Simulate conditional restore logic
-      let selectedVideos = [];
+      let selectedVideos: any[] = [];
       if (userProfileWithTableView?.content_display === 'TABLE') {
         selectedVideos = restoredData.selectedVideos || [];
       }
@@ -195,7 +195,7 @@ describe('playlist/[shortId]/+page.svelte Component Logic', () => {
       };
 
       // Simulate conditional restore logic
-      let selectedVideos = [];
+      let selectedVideos: any[] = [];
       if (userProfileWithCarouselView?.content_display === 'TABLE') {
         selectedVideos = restoredData.selectedVideos || [];
       }

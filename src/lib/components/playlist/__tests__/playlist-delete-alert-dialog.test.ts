@@ -143,7 +143,13 @@ describe('PlaylistDeleteAlertDialog Component Logic', () => {
     });
 
     it('should handle delete error gracefully', async () => {
-      const deleteError = { message: 'Delete failed' };
+      const deleteError = { 
+        message: 'Delete failed',
+        details: 'Server error details',
+        hint: 'Check server logs',
+        code: '500',
+        name: 'PostgrestError'
+      };
       mockHandleDeletePlaylist.mockResolvedValue({ error: deleteError });
 
       // Simulate the confirmDelete function logic
@@ -232,7 +238,7 @@ describe('PlaylistDeleteAlertDialog Component Logic', () => {
     it('should handle cancel without onOpenChange callback', () => {
       const propsWithoutCallback = {
         ...mockProps,
-        onOpenChange: undefined,
+        onOpenChange: undefined as ((open: boolean) => void) | undefined,
       };
 
       // Simulate the cancelDelete function logic

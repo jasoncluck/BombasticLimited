@@ -20,6 +20,7 @@ import {
 import {
   createMockSession,
   createMockPlaylist,
+  createMockSuperValidated,
 } from '../../../../tests/test-utils';
 
 // Mock dependencies
@@ -92,7 +93,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
   const mockSupabase = {} as any;
   const mockSession = createMockSession();
   const mockPlaylist = createMockPlaylist();
-  const mockVideos = [];
+  const mockVideos: any[] = [];
   const mockPlaylistDuration = { hours: 1, minutes: 30, seconds: 0 };
 
   const mockLoadEvent: any = {
@@ -140,7 +141,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
 
   describe('load function', () => {
     it('should load playlist data successfully', async () => {
-      const mockFormData = { valid: true, data: mockPlaylist };
+      const mockFormData = createMockSuperValidated(mockPlaylist);
       mockGetPlaylistData.mockResolvedValue({
         playlist: mockPlaylist,
         videos: mockVideos,
@@ -201,7 +202,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
         ...mockPlaylist,
         processedImageUrl: 'existing-image-url',
       };
-      const mockFormData = { valid: true, data: playlistWithImage };
+      const mockFormData = createMockSuperValidated(playlistWithImage);
 
       mockGetPlaylistData.mockResolvedValue({
         playlist: playlistWithImage,
@@ -215,7 +216,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
       const result = await load(mockLoadEvent);
 
       expect(mockGetCroppedPlaylistImageUrlServer).not.toHaveBeenCalled();
-      expect(result.playlist.processedImageUrl).toBe('existing-image-url');
+      expect((result as any).playlist.processedImageUrl).toBe('existing-image-url');
     });
 
     it('should handle user playlist sort preferences', async () => {
@@ -224,7 +225,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
         sorted_by: 'datePublished',
         sort_order: 'descending',
       };
-      const mockFormData = { valid: true, data: userPlaylist };
+      const mockFormData = createMockSuperValidated(userPlaylist);
 
       mockGetPlaylistData.mockResolvedValue({
         playlist: userPlaylist,
@@ -241,7 +242,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
 
       const result = await load(mockLoadEvent);
 
-      expect(result.contentFilter).toEqual({
+      expect((result as any).contentFilter).toEqual({
         type: 'playlist',
         sort: { key: 'datePublished', order: 'descending' },
       });
@@ -253,7 +254,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
         sorted_by: 'datePublished',
         sort_order: 'descending',
       };
-      const mockFormData = { valid: true, data: userPlaylist };
+      const mockFormData = createMockSuperValidated(userPlaylist);
 
       mockGetPlaylistData.mockResolvedValue({
         playlist: userPlaylist,
@@ -272,7 +273,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
 
       const result = await load(mockLoadEvent);
 
-      expect(result.contentFilter).toEqual({
+      expect((result as any).contentFilter).toEqual({
         type: 'playlist',
         sort: { key: 'playlistOrder', order: 'ascending' },
       });
@@ -306,7 +307,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
     });
 
     it('should return fail when form validation fails', async () => {
-      const invalidForm = { valid: false, data: {} };
+      const invalidForm = createMockSuperValidated({}, false);
       mockSuperValidate.mockResolvedValue(invalidForm);
       mockFail.mockReturnValue({ form: invalidForm } as any);
 
@@ -317,21 +318,26 @@ describe('playlist/[shortId]/+page.server.ts', () => {
     });
 
     it('should successfully update playlist info', async () => {
-      const validFormData = {
-        valid: true,
-        data: {
-          name: 'Updated Playlist',
-          description: 'Updated description',
-          id: 1,
-          type: 'Public',
-          isDeletingPlaylistImage: false,
-          image_properties: { x: 10, y: 10, width: 200, height: 200 },
-        },
+      const formData = {
+        name: 'Updated Playlist',
+        description: 'Updated description',
+        id: 1,
+        type: 'Public',
+        isDeletingPlaylistImage: false,
+        image_properties: { x: 10, y: 10, width: 200, height: 200 },
       };
-      const updatedPlaylist = { ...mockPlaylist, name: 'Updated Playlist' };
+      const validFormData = createMockSuperValidated(formData);
+      const updatedPlaylist = { 
+        ...mockPlaylist, 
+        name: 'Updated Playlist',
+        search_vector: null 
+      };
 
       mockSuperValidate.mockResolvedValue(validFormData);
-      mockUpdatePlaylistInfo.mockResolvedValue({ updatedPlaylist });
+      mockUpdatePlaylistInfo.mockResolvedValue({ 
+        updatedPlaylist: updatedPlaylist as any,
+        error: null 
+      });
 
       const result = await actions.default(mockActionEvent);
 
@@ -353,21 +359,20 @@ describe('playlist/[shortId]/+page.server.ts', () => {
     });
 
     it('should handle deleting playlist image', async () => {
-      const validFormData = {
-        valid: true,
-        data: {
-          name: 'Test Playlist',
-          description: null,
-          id: 1,
-          type: 'Private',
-          isDeletingPlaylistImage: true,
-          image_properties: null,
-        },
+      const formData = {
+        name: 'Test Playlist',
+        description: null,
+        id: 1,
+        type: 'Private',
+        isDeletingPlaylistImage: true,
+        image_properties: null,
       };
+      const validFormData = createMockSuperValidated(formData);
 
       mockSuperValidate.mockResolvedValue(validFormData);
       mockUpdatePlaylistInfo.mockResolvedValue({
-        updatedPlaylist: mockPlaylist,
+        updatedPlaylist: { ...mockPlaylist, search_vector: null },
+        error: null,
       });
 
       await actions.default(mockActionEvent);
@@ -381,21 +386,20 @@ describe('playlist/[shortId]/+page.server.ts', () => {
     });
 
     it('should handle zero image properties correctly', async () => {
-      const validFormData = {
-        valid: true,
-        data: {
-          name: 'Test Playlist',
-          description: null,
-          id: 1,
-          type: 'Private',
-          isDeletingPlaylistImage: false,
-          image_properties: { x: 0, y: 0, width: 0, height: 0 },
-        },
+      const formData = {
+        name: 'Test Playlist',
+        description: null,
+        id: 1,
+        type: 'Private',
+        isDeletingPlaylistImage: false,
+        image_properties: { x: 0, y: 0, width: 0, height: 0 },
       };
+      const validFormData = createMockSuperValidated(formData);
 
       mockSuperValidate.mockResolvedValue(validFormData);
       mockUpdatePlaylistInfo.mockResolvedValue({
-        updatedPlaylist: mockPlaylist,
+        updatedPlaylist: { ...mockPlaylist, search_vector: null },
+        error: null,
       });
 
       await actions.default(mockActionEvent);

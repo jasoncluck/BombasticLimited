@@ -49,7 +49,16 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
   const mockSupabase = {} as any;
   const mockPlaylist = createMockPlaylist();
   const mockVideo = createMockVideo();
-  const mockNextVideos = [];
+  const mockPlaylistVideo = {
+    ...mockVideo,
+    video_position: 1,
+    video_start_seconds: null,
+    updated_at: null,
+    watched_at: null,
+    thumbnail_maxres_url: mockVideo.thumbnail_maxres_url || 'https://example.com/thumb_maxres.jpg',
+    duration: mockVideo.duration || '00:30:00',
+  } as const;
+  const mockNextVideos: any[] = [];
 
   const mockLoadEvent: any = {
     locals: {
@@ -94,11 +103,12 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
     it('should load video context successfully', async () => {
       const mockVideoContext = {
         playlist: mockPlaylist,
-        currentVideo: mockVideo,
+        currentVideo: mockPlaylistVideo,
         nextVideos: mockNextVideos,
         totalVideosCount: 5,
         currentVideoIndex: 2,
-        nextVideo: mockVideo,
+        nextVideo: mockPlaylistVideo,
+        error: null,
       };
 
       mockGetPlaylistVideoContext.mockResolvedValue(mockVideoContext);
@@ -133,9 +143,9 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
         timestampStartSeconds: 0,
         currentVideoIndex: 2,
         totalVideos: 5,
-        nextVideo: mockVideo,
+        nextVideo: mockPlaylistVideo,
         isLastVideo: false,
-        playlistPosition: mockVideo.video_position,
+        playlistPosition: mockPlaylistVideo.video_position,
         hasMoreVideos: false,
       });
     });
@@ -143,11 +153,12 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
     it('should redirect when playlist is not found', async () => {
       const mockVideoContextWithoutPlaylist = {
         playlist: null,
-        currentVideo: mockVideo,
+        currentVideo: mockPlaylistVideo,
         nextVideos: mockNextVideos,
         totalVideosCount: 0,
         currentVideoIndex: 0,
         nextVideo: null,
+        error: null,
       };
 
       mockGetPlaylistVideoContext.mockResolvedValue(
@@ -166,6 +177,7 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
         totalVideosCount: 0,
         currentVideoIndex: 0,
         nextVideo: null,
+        error: null,
       };
 
       mockGetPlaylistVideoContext.mockResolvedValue(
@@ -177,7 +189,10 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
     });
 
     it('should handle video with timestamp', async () => {
-      const videoWithTimestamp = { ...mockVideo, video_start_seconds: 300 };
+      const videoWithTimestamp = { 
+        ...mockPlaylistVideo, 
+        video_start_seconds: 300 
+      };
       const mockVideoContext = {
         playlist: mockPlaylist,
         currentVideo: videoWithTimestamp,
@@ -185,6 +200,7 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
         totalVideosCount: 1,
         currentVideoIndex: 0,
         nextVideo: null,
+        error: null,
       };
 
       mockGetPlaylistVideoContext.mockResolvedValue(mockVideoContext);
@@ -192,7 +208,7 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
 
       const result = await load(mockLoadEvent);
 
-      expect(result.timestampStartSeconds).toBe(300);
+      expect((result as any).timestampStartSeconds).toBe(300);
     });
 
     it('should use existing processed image URL when available', async () => {
@@ -202,11 +218,12 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
       };
       const mockVideoContext = {
         playlist: playlistWithImage,
-        currentVideo: mockVideo,
+        currentVideo: mockPlaylistVideo,
         nextVideos: mockNextVideos,
         totalVideosCount: 1,
         currentVideoIndex: 0,
         nextVideo: null,
+        error: null,
       };
 
       mockGetPlaylistVideoContext.mockResolvedValue(mockVideoContext);
@@ -215,7 +232,7 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
       const result = await load(mockLoadEvent);
 
       expect(mockGetCroppedPlaylistImageUrlServer).not.toHaveBeenCalled();
-      expect(result.profilePlaylist.processedImageUrl).toBe(
+      expect((result as any).profilePlaylist.processedImageUrl).toBe(
         'existing-image-url'
       );
     });
@@ -228,11 +245,12 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
 
       const mockVideoContext = {
         playlist: mockPlaylist,
-        currentVideo: mockVideo,
+        currentVideo: mockPlaylistVideo,
         nextVideos: mockNextVideos,
         totalVideosCount: 1,
         currentVideoIndex: 0,
         nextVideo: null,
+        error: null,
       };
 
       mockGetPlaylistVideoContext.mockResolvedValue(mockVideoContext);
@@ -251,17 +269,18 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
         contextLimit: 5,
       });
 
-      expect(result.video).toEqual(mockVideo);
+      expect((result as any).video).toEqual(mockPlaylistVideo);
     });
 
     it('should calculate navigation properties correctly', async () => {
       const mockVideoContext = {
         playlist: mockPlaylist,
-        currentVideo: mockVideo,
-        nextVideos: [mockVideo],
+        currentVideo: mockPlaylistVideo,
+        nextVideos: [mockPlaylistVideo],
         totalVideosCount: 10,
         currentVideoIndex: 9, // Last video
         nextVideo: null,
+        error: null,
       };
 
       mockGetPlaylistVideoContext.mockResolvedValue(mockVideoContext);
@@ -269,10 +288,10 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
 
       const result = await load(mockLoadEvent);
 
-      expect(result.isLastVideo).toBe(true);
-      expect(result.hasMoreVideos).toBe(true); // nextVideos has items
-      expect(result.currentVideoIndex).toBe(9);
-      expect(result.totalVideos).toBe(10);
+      expect((result as any).isLastVideo).toBe(true);
+      expect((result as any).hasMoreVideos).toBe(true); // nextVideos has items
+      expect((result as any).currentVideoIndex).toBe(9);
+      expect((result as any).totalVideos).toBe(10);
     });
 
     it('should handle invalid content filter', async () => {
@@ -280,11 +299,12 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
       // but we'll test the case where the filter would be invalid
       const mockVideoContext = {
         playlist: mockPlaylist,
-        currentVideo: mockVideo,
+        currentVideo: mockPlaylistVideo,
         nextVideos: mockNextVideos,
         totalVideosCount: 1,
         currentVideoIndex: 0,
         nextVideo: null,
+        error: null,
       };
 
       mockGetPlaylistVideoContext.mockResolvedValue(mockVideoContext);
@@ -299,11 +319,11 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
       // We'll just verify the function can handle different filter types
       const result = await load(mockLoadEvent);
 
-      expect(result.contentFilter).toEqual({ type: 'invalid' });
+      expect((result as any).contentFilter).toEqual({ type: 'invalid' });
     });
 
     it('should handle missing video position gracefully', async () => {
-      const videoWithoutPosition = { ...mockVideo };
+      const videoWithoutPosition = { ...mockPlaylistVideo };
       delete (videoWithoutPosition as any).video_position;
 
       const mockVideoContext = {
@@ -313,6 +333,7 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
         totalVideosCount: 1,
         currentVideoIndex: 0,
         nextVideo: null,
+        error: null,
       };
 
       mockGetPlaylistVideoContext.mockResolvedValue(mockVideoContext);
@@ -320,17 +341,18 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
 
       const result = await load(mockLoadEvent);
 
-      expect(result.playlistPosition).toBeUndefined();
+      expect((result as any).playlistPosition).toBeUndefined();
     });
 
     it('should handle empty next videos array', async () => {
       const mockVideoContext = {
         playlist: mockPlaylist,
-        currentVideo: mockVideo,
+        currentVideo: mockPlaylistVideo,
         nextVideos: [],
         totalVideosCount: 1,
         currentVideoIndex: 0,
         nextVideo: null,
+        error: null,
       };
 
       mockGetPlaylistVideoContext.mockResolvedValue(mockVideoContext);
@@ -338,22 +360,23 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
 
       const result = await load(mockLoadEvent);
 
-      expect(result.videos).toEqual([]);
-      expect(result.hasMoreVideos).toBe(false);
-      expect(result.nextVideo).toBeNull();
+      expect((result as any).videos).toEqual([]);
+      expect((result as any).hasMoreVideos).toBe(false);
+      expect((result as any).nextVideo).toBeNull();
     });
 
     it('should process image properties when processedImageUrl is not available', async () => {
       const playlistWithoutProcessedImage = { ...mockPlaylist };
-      delete playlistWithoutProcessedImage.processedImageUrl;
+      delete (playlistWithoutProcessedImage as any).processedImageUrl;
 
       const mockVideoContext = {
         playlist: playlistWithoutProcessedImage,
-        currentVideo: mockVideo,
+        currentVideo: mockPlaylistVideo,
         nextVideos: mockNextVideos,
         totalVideosCount: 1,
         currentVideoIndex: 0,
         nextVideo: null,
+        error: null,
       };
 
       mockGetPlaylistVideoContext.mockResolvedValue(mockVideoContext);
