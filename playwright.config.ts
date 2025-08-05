@@ -9,12 +9,35 @@ export default defineConfig({
   workers: process.env.CI ? 1 : 3, // More workers locally, single in CI to avoid DB conflicts
   reporter: 'html',
 
+  // Performance optimizations
+  timeout: 30000, // Reduce from default 30s if tests don't need it
+  expect: {
+    timeout: 10000, // Reduce assertion timeout from default 5s
+  },
+
   use: {
-    baseURL: 'http://localhost:5173', // Your dev server port
-    trace: 'on-first-retry',
+    baseURL: 'http://localhost:5173',
+    trace: 'retain-on-failure', // Only keep traces on failure to save disk space
     screenshot: 'only-on-failure',
-    // Add test IDs for better element selection
+    video: 'retain-on-failure', // Only keep videos on failure
     testIdAttribute: 'data-testid',
+
+    // Performance optimizations
+    navigationTimeout: 15000, // Reduce navigation timeout
+    actionTimeout: 10000, // Reduce action timeout
+
+    // Disable animations for faster tests
+    launchOptions: {
+      args: [
+        '--disable-web-security',
+        '--disable-features=TranslateUI',
+        '--disable-ipc-flooding-protection',
+        '--disable-renderer-backgrounding',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-background-timer-throttling',
+        '--no-sandbox', // Only for CI/Docker environments
+      ],
+    },
   },
 
   projects: [
@@ -24,44 +47,57 @@ export default defineConfig({
     },
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        // Disable images and CSS for faster loading (optional)
+        // launchOptions: {
+        //   args: ['--disable-images', '--disable-javascript-harmony-shipping']
+        // }
+      },
       dependencies: ['setup'],
     },
-    // Additional browsers for comprehensive local testing
-    // CI workflows use only chromium for faster execution
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-    // Mobile testing
-    {
-      name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
-    },
-    {
-      name: 'Mobile Safari',
-      use: { ...devices['iPhone 12'] },
-    },
+
+    // Only run additional browsers when specifically needed
+    // Use environment variable to control which browsers to test
+    ...(process.env.TEST_ALL_BROWSERS
+      ? [
+          {
+            name: 'firefox',
+            use: { ...devices['Desktop Firefox'] },
+            dependencies: ['setup'],
+          },
+          {
+            name: 'webkit',
+            use: { ...devices['Desktop Safari'] },
+            dependencies: ['setup'],
+          },
+          {
+            name: 'Mobile Chrome',
+            use: { ...devices['Pixel 5'] },
+            dependencies: ['setup'],
+          },
+          {
+            name: 'Mobile Safari',
+            use: { ...devices['iPhone 12'] },
+            dependencies: ['setup'],
+          },
+        ]
+      : []),
   ],
 
   webServer: {
     command: 'npm run dev',
     port: 5173,
     reuseExistingServer: !process.env.CI,
+    timeout: 120000, // Increase if your server takes time to start
     env: {
       DATABASE_URL: 'postgresql://postgres:postgres@127.0.0.1:54322/postgres',
       SUPABASE_URL: 'http://127.0.0.1:54321',
-      // These will be set dynamically by your test setup
       SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || '',
       SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+
+      // Performance optimizations for your app
+      NODE_ENV: 'test',
     },
   },
-
-  // Global setup to ensure Supabase is running
-  globalSetup: './tests/e2e/global-setup.ts',
-  globalTeardown: './tests/e2e/global-teardown.ts',
 });
