@@ -2,7 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { superValidate, fail } from 'sveltekit-superforms';
 import { setFlash } from 'sveltekit-flash-message/server';
 import { load, actions } from '../+page.server';
-import { getUserProfile, checkIfUsernameIsUnique } from '$lib/supabase/user-profiles';
+import {
+  getUserProfile,
+  checkIfUsernameIsUnique,
+} from '$lib/supabase/user-profiles';
 import {
   createMockSession,
   createMockUserProfile,
@@ -38,7 +41,7 @@ vi.mock('bad-words', () => {
   const mockFilterConstructor = vi.fn(() => ({
     isProfane: mockIsProfane,
   }));
-  
+
   // Export module with mock functions that can be accessed
   const mockModule = {
     default: mockFilterConstructor,
@@ -46,13 +49,13 @@ vi.mock('bad-words', () => {
     mockIsProfane,
     mockFilterConstructor,
   };
-  
+
   // Store references globally for test access
   (globalThis as any).badWordsMocks = {
     mockIsProfane,
     mockFilterConstructor,
   };
-  
+
   return mockModule;
 });
 
@@ -66,8 +69,14 @@ vi.mock('../auth/schema', () => ({
   passwordSchema: {},
   usernameSchema: {},
 }));
+const mockRequest = {
+  method: 'POST',
+  formData: vi
+    .fn()
+    .mockResolvedValue(new Map([['email', 'newemail@example.com']])),
+  // Add other properties your code might need
+} as any;
 
-const mockRedirect = mockFlashRedirect;
 const mockFail = vi.mocked(fail);
 const mockSuperValidate = vi.mocked(superValidate);
 const mockSetFlash = vi.mocked(setFlash);
@@ -107,15 +116,23 @@ describe('account/+page.server.ts', () => {
     };
 
     it('should load data for authenticated user', async () => {
-      mockGetUserProfile.mockResolvedValue(createMockProfileResponse(mockUserProfile));
+      mockGetUserProfile.mockResolvedValue(
+        createMockProfileResponse(mockUserProfile)
+      );
       mockSuperValidate
-        .mockResolvedValueOnce(createMockSuperValidated({ email: mockSession.user.email }))
+        .mockResolvedValueOnce(
+          createMockSuperValidated({ email: mockSession.user.email })
+        )
         .mockResolvedValueOnce(createMockSuperValidated({}))
-        .mockResolvedValueOnce(createMockSuperValidated({ username: mockUserProfile.username }));
+        .mockResolvedValueOnce(
+          createMockSuperValidated({ username: mockUserProfile.username })
+        );
 
       const result = await load(mockLoadEvent);
 
-      expect(mockLoadEvent.depends).toHaveBeenCalledWith('supabase:db:profiles');
+      expect(mockLoadEvent.depends).toHaveBeenCalledWith(
+        'supabase:db:profiles'
+      );
       expect(mockGetUserProfile).toHaveBeenCalledWith({
         supabase: mockSupabase,
         userId: mockSession.user.id,
@@ -143,13 +160,13 @@ describe('account/+page.server.ts', () => {
 
       mockGetUserProfile.mockImplementation(async () => {
         getUserProfileTime = Date.now();
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
         return createMockProfileResponse(mockUserProfile);
       });
 
       mockSuperValidate.mockImplementation(async (...args) => {
         if (!superValidateTime) superValidateTime = Date.now();
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise((resolve) => setTimeout(resolve, 5));
         return createMockSuperValidated({});
       });
 
@@ -165,11 +182,17 @@ describe('account/+page.server.ts', () => {
     });
 
     it('should initialize forms with correct data', async () => {
-      mockGetUserProfile.mockResolvedValue(createMockProfileResponse(mockUserProfile));
+      mockGetUserProfile.mockResolvedValue(
+        createMockProfileResponse(mockUserProfile)
+      );
       mockSuperValidate
-        .mockResolvedValueOnce(createMockSuperValidated({ email: 'test@example.com' }))
+        .mockResolvedValueOnce(
+          createMockSuperValidated({ email: 'test@example.com' })
+        )
         .mockResolvedValueOnce(createMockSuperValidated({}))
-        .mockResolvedValueOnce(createMockSuperValidated({ username: 'testuser' }));
+        .mockResolvedValueOnce(
+          createMockSuperValidated({ username: 'testuser' })
+        );
 
       const result = await load(mockLoadEvent);
 
@@ -188,7 +211,9 @@ describe('account/+page.server.ts', () => {
     it('should handle missing profile gracefully', async () => {
       mockGetUserProfile.mockResolvedValue({ profile: null, error: null });
       mockSuperValidate
-        .mockResolvedValueOnce(createMockSuperValidated({ email: 'test@example.com' }))
+        .mockResolvedValueOnce(
+          createMockSuperValidated({ email: 'test@example.com' })
+        )
         .mockResolvedValueOnce(createMockSuperValidated({}))
         .mockResolvedValueOnce(createMockSuperValidated({ username: '' }));
 
@@ -204,11 +229,6 @@ describe('account/+page.server.ts', () => {
   });
 
   describe('updateEmail action', () => {
-    const mockRequest = new Request('http://localhost', {
-      method: 'POST',
-      body: new URLSearchParams({ email: 'newemail@example.com' }),
-    });
-
     const mockActionEvent: any = {
       url: new URL('http://localhost:5173'),
       request: mockRequest,
@@ -224,16 +244,16 @@ describe('account/+page.server.ts', () => {
 
     it('should update email successfully', async () => {
       mockSupabase.auth.updateUser.mockResolvedValue({
-        data: { 
-          user: { 
+        data: {
+          user: {
             email: 'test@example.com',
-            new_email: 'newemail@example.com' 
-          } 
+            new_email: 'newemail@example.com',
+          },
         },
         error: null,
       });
 
-      const result = await actions.updateEmail(mockActionEvent);
+      await actions.updateEmail(mockActionEvent);
 
       expect(mockSupabase.auth.updateUser).toHaveBeenCalledWith(
         { email: 'newemail@example.com' },
@@ -286,11 +306,6 @@ describe('account/+page.server.ts', () => {
   });
 
   describe('updateUsername action', () => {
-    const mockRequest = new Request('http://localhost', {
-      method: 'POST',
-      body: new URLSearchParams({ username: 'newusername' }),
-    });
-
     const mockActionEvent: any = {
       request: mockRequest,
       cookies: mockCookies,
@@ -340,7 +355,8 @@ describe('account/+page.server.ts', () => {
       expect(mockSetFlash).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'error',
-          message: 'Offensisve langage detected in username, choose another name.',
+          message:
+            'Offensisve langage detected in username, choose another name.',
           field: 'username',
         }),
         mockCookies
@@ -391,7 +407,7 @@ describe('account/+page.server.ts', () => {
 
       mockCheckIfUsernameIsUnique.mockImplementation(async () => {
         uniquenessCheckTime = Date.now();
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
         return true;
       });
 
@@ -415,7 +431,9 @@ describe('account/+page.server.ts', () => {
       expect(profanityCheckTime).not.toBeNull();
 
       if (uniquenessCheckTime && profanityCheckTime) {
-        const timeDifference = Math.abs(uniquenessCheckTime - profanityCheckTime);
+        const timeDifference = Math.abs(
+          uniquenessCheckTime - profanityCheckTime
+        );
         expect(timeDifference).toBeLessThan(20);
       }
     });
@@ -479,7 +497,9 @@ describe('account/+page.server.ts', () => {
         locals: { ...mockActionEvent.locals, session: sessionWithoutEmail },
       };
 
-      await expect(actions.resetPassword(actionEventWithoutEmail)).rejects.toThrow(
+      await expect(
+        actions.resetPassword(actionEventWithoutEmail)
+      ).rejects.toThrow(
         `Could not find email for account: ${sessionWithoutEmail.user.id}`
       );
     });
@@ -490,9 +510,9 @@ describe('account/+page.server.ts', () => {
         locals: { ...mockActionEvent.locals, session: null },
       };
 
-      await expect(actions.resetPassword(actionEventWithoutSession)).rejects.toThrow(
-        'Could not find email for account: undefined'
-      );
+      await expect(
+        actions.resetPassword(actionEventWithoutSession)
+      ).rejects.toThrow('Could not find email for account: undefined');
     });
   });
 
@@ -511,12 +531,18 @@ describe('account/+page.server.ts', () => {
         error: null,
       });
 
-      await expect(actions.deleteAccount(mockActionEvent)).rejects.toThrow('Redirect');
+      await expect(actions.deleteAccount(mockActionEvent)).rejects.toThrow(
+        'Redirect'
+      );
 
       expect(mockSupabase.rpc).toHaveBeenCalledWith('delete_user');
       expect(mockSupabase.auth.signOut).toHaveBeenCalled();
-      expect(mockCookies.delete).toHaveBeenCalledWith('sb-access-token', { path: '/' });
-      expect(mockCookies.delete).toHaveBeenCalledWith('sb-refresh-token', { path: '/' });
+      expect(mockCookies.delete).toHaveBeenCalledWith('sb-access-token', {
+        path: '/',
+      });
+      expect(mockCookies.delete).toHaveBeenCalledWith('sb-refresh-token', {
+        path: '/',
+      });
     });
 
     it('should handle delete account error', async () => {
@@ -544,7 +570,9 @@ describe('account/+page.server.ts', () => {
         locals: { ...mockActionEvent.locals, session: null },
       };
 
-      await expect(actions.deleteAccount(actionEventWithoutSession)).rejects.toThrow('Redirect');
+      await expect(
+        actions.deleteAccount(actionEventWithoutSession)
+      ).rejects.toThrow('Redirect');
       expect(mockFlashRedirect).toHaveBeenCalledWith(303, '/login');
     });
 
@@ -552,10 +580,16 @@ describe('account/+page.server.ts', () => {
       mockSupabase.rpc.mockResolvedValue({ data: null, error: null });
       mockSupabase.auth.signOut.mockResolvedValue({ error: null });
 
-      await expect(actions.deleteAccount(mockActionEvent)).rejects.toThrow('Redirect');
+      await expect(actions.deleteAccount(mockActionEvent)).rejects.toThrow(
+        'Redirect'
+      );
 
-      expect(mockCookies.delete).toHaveBeenCalledWith('sb-access-token', { path: '/' });
-      expect(mockCookies.delete).toHaveBeenCalledWith('sb-refresh-token', { path: '/' });
+      expect(mockCookies.delete).toHaveBeenCalledWith('sb-access-token', {
+        path: '/',
+      });
+      expect(mockCookies.delete).toHaveBeenCalledWith('sb-refresh-token', {
+        path: '/',
+      });
     });
   });
 
@@ -583,18 +617,17 @@ describe('account/+page.server.ts', () => {
         },
       };
 
-      mockGetUserProfile.mockResolvedValue(createMockProfileResponse(mockUserProfile));
+      mockGetUserProfile.mockResolvedValue(
+        createMockProfileResponse(mockUserProfile)
+      );
       mockSuperValidate.mockRejectedValue(new Error('Form validation error'));
 
-      await expect(load(mockLoadEvent)).rejects.toThrow('Form validation error');
+      await expect(load(mockLoadEvent)).rejects.toThrow(
+        'Form validation error'
+      );
     });
 
     it('should handle checkIfUsernameIsUnique errors', async () => {
-      const mockRequest = new Request('http://localhost', {
-        method: 'POST',
-        body: new URLSearchParams({ username: 'newusername' }),
-      });
-
       const mockActionEvent: any = {
         request: mockRequest,
         cookies: mockCookies,
@@ -606,7 +639,9 @@ describe('account/+page.server.ts', () => {
       );
       mockCheckIfUsernameIsUnique.mockRejectedValue(new Error('Network error'));
 
-      await expect(actions.updateUsername(mockActionEvent)).rejects.toThrow('Network error');
+      await expect(actions.updateUsername(mockActionEvent)).rejects.toThrow(
+        'Network error'
+      );
     });
   });
 
@@ -620,11 +655,17 @@ describe('account/+page.server.ts', () => {
         },
       };
 
-      mockGetUserProfile.mockResolvedValue(createMockProfileResponse(mockUserProfile));
+      mockGetUserProfile.mockResolvedValue(
+        createMockProfileResponse(mockUserProfile)
+      );
       mockSuperValidate
-        .mockResolvedValueOnce(createMockSuperValidated({ email: 'test@example.com' }))
+        .mockResolvedValueOnce(
+          createMockSuperValidated({ email: 'test@example.com' })
+        )
         .mockResolvedValueOnce(createMockSuperValidated({}))
-        .mockResolvedValueOnce(createMockSuperValidated({ username: 'testuser' }));
+        .mockResolvedValueOnce(
+          createMockSuperValidated({ username: 'testuser' })
+        );
 
       const result = await load(mockLoadEvent);
 
@@ -641,11 +682,17 @@ describe('account/+page.server.ts', () => {
         },
       };
 
-      mockGetUserProfile.mockResolvedValue(createMockProfileResponse(mockUserProfile));
+      mockGetUserProfile.mockResolvedValue(
+        createMockProfileResponse(mockUserProfile)
+      );
       mockSuperValidate
-        .mockResolvedValueOnce(createMockSuperValidated({ email: 'test@example.com' }))
+        .mockResolvedValueOnce(
+          createMockSuperValidated({ email: 'test@example.com' })
+        )
         .mockResolvedValueOnce(createMockSuperValidated({}))
-        .mockResolvedValueOnce(createMockSuperValidated({ username: 'testuser' }));
+        .mockResolvedValueOnce(
+          createMockSuperValidated({ username: 'testuser' })
+        );
 
       const result = await load(mockLoadEvent);
 
@@ -654,3 +701,4 @@ describe('account/+page.server.ts', () => {
     });
   });
 });
+
