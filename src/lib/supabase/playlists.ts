@@ -363,11 +363,11 @@ export async function getPlaylistsForUsername({
     return { playlists: [], error };
   }
   // Cast to include deleted_at field since the SQL function now returns it
-  const playlistsWithDeletedAt = playlists.map(playlist => ({
+  const playlistsWithDeletedAt = playlists.map((playlist) => ({
     ...playlist,
-    deleted_at: null // Always null for active playlists returned by this function
+    deleted_at: null, // Always null for active playlists returned by this function
   })) as Playlist[];
-  
+
   return { playlists: playlistsWithDeletedAt, count, error };
 }
 
@@ -602,9 +602,9 @@ export async function getUserPlaylists({
   }
 
   // Cast to include deleted_at field since the SQL function now returns it
-  const userPlaylistsWithDeletedAt = (data || []).map(playlist => ({
+  const userPlaylistsWithDeletedAt = (data || []).map((playlist) => ({
     ...playlist,
-    deleted_at: null // Always null for active playlists returned by this function
+    deleted_at: null, // Always null for active playlists returned by this function
   })) as UserPlaylist[];
 
   return { userPlaylists: userPlaylistsWithDeletedAt, count, error };
@@ -701,13 +701,13 @@ export async function searchPlaylists({
       error
     );
   }
-  
+
   // Cast to include deleted_at field since the SQL function now returns it
-  const playlistsWithDeletedAt = (playlists || []).map(playlist => ({
+  const playlistsWithDeletedAt = (playlists || []).map((playlist) => ({
     ...playlist,
-    deleted_at: null // Always null for active playlists returned by this function
+    deleted_at: null, // Always null for active playlists returned by this function
   })) as ProfilePlaylist[];
-  
+
   return { playlists: playlistsWithDeletedAt, error, count };
 }
 

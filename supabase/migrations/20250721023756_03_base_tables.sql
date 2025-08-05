@@ -55,7 +55,9 @@ CREATE TABLE IF NOT EXISTS "public"."playlists" (
 ALTER TABLE "public"."playlists" OWNER TO "postgres";
 
 COMMENT ON COLUMN "public"."playlists"."name" IS 'Playlist name';
+
 COMMENT ON COLUMN "public"."playlists"."short_id" IS 'Short ID for nicer URLs';
+
 COMMENT ON COLUMN "public"."playlists"."deleted_at" IS 'Timestamp when playlist was soft deleted. NULL means not deleted.';
 
 -- Playlist videos table (without foreign keys initially)

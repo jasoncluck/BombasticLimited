@@ -508,7 +508,6 @@ EXCEPTION
 END;
 $$;
 
-
 -- Add administrative restore function for soft-deleted playlists
 CREATE OR REPLACE FUNCTION public.restore_playlist (p_playlist_id bigint) RETURNS BOOLEAN LANGUAGE plpgsql
 SET
@@ -538,7 +537,6 @@ EXCEPTION
     RETURN FALSE;
 END;
 $$;
-
 
 -- Initialize playlist positions in user_playlists for all users
 CREATE OR REPLACE FUNCTION public.initialize_user_playlist_positions () RETURNS VOID LANGUAGE plpgsql

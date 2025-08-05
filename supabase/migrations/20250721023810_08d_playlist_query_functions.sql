@@ -535,7 +535,6 @@ SET
   LIMIT 1;
 $$;
 
-
 -- Function to get user playlists
 CREATE OR REPLACE FUNCTION public.get_user_playlists (p_user_id uuid) RETURNS TABLE (
   id bigint,
