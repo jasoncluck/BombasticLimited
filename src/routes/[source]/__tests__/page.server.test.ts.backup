@@ -10,8 +10,6 @@ import {
   createMockVideo,
   createMockVideoResponse,
   createMockPlaylist,
-  createMockPlaylistDataResponse,
-  createMockPlaylistsResponse,
 } from '../../../tests/test-utils';
 
 // Mock dependencies
@@ -161,14 +159,10 @@ describe('[source]/+page.server.ts load function', () => {
         videosCount: 1,
         playlistDuration: { hours: 0, minutes: 30, seconds: 0 },
         error: null,
-        videosCount: 1,
-        playlistDuration: { hours: 0, minutes: 30, seconds: 0 },
-        error: null,
       });
       mockGetPlaylistsForUsername.mockResolvedValue({
         playlists: mockSourcePlaylists,
         count: 1,
-        error: null,
         error: null,
       });
       mockGetCroppedPlaylistImageUrlServer.mockResolvedValue('https://example.com/processed.jpg');
@@ -228,14 +222,10 @@ describe('[source]/+page.server.ts load function', () => {
         videosCount: 1,
         playlistDuration: { hours: 0, minutes: 30, seconds: 0 },
         error: null,
-        videosCount: 1,
-        playlistDuration: { hours: 0, minutes: 30, seconds: 0 },
-        error: null,
       });
       mockGetPlaylistsForUsername.mockResolvedValue({
         playlists: mockSourcePlaylists,
         count: 1,
-        error: null,
         error: null,
       });
       mockGetCroppedPlaylistImageUrlServer.mockResolvedValue('https://example.com/processed.jpg');
@@ -310,34 +300,38 @@ describe('[source]/+page.server.ts load function', () => {
       };
 
       mockGetVideos.mockResolvedValue(createMockVideoResponse(mockVideos));
-      mockGetPlaylistsForUsername.mockResolvedValue(
-        createMockPlaylistsResponse([], 0)
-      );
+      mockGetPlaylistsForUsername.mockResolvedValue({
+        playlists: [],
+        count: 0,
+      });
 
       const result = await load(jeffGerstmannEvent);
 
       // Should not call getPlaylistDataByYoutubeId for sources with no highlighted playlists
       expect(mockGetPlaylistDataByYoutubeId).not.toHaveBeenCalled();
-      expect((result as any).highlightPlaylists).toEqual([]);
+      expect(result.highlightPlaylists).toEqual([]);
     });
 
     it('should filter out null playlist results', async () => {
       mockGetVideos.mockResolvedValue(createMockVideoResponse(mockVideos));
       mockGetPlaylistDataByYoutubeId
-        .mockResolvedValueOnce(
-          createMockPlaylistDataResponse(mockPlaylist, [mockVideos[0]], 1)
-        )
-        .mockResolvedValueOnce(
-          createMockPlaylistDataResponse(null, [], 0)
-        );
-      mockGetPlaylistsForUsername.mockResolvedValue(
-        createMockPlaylistsResponse([], 0)
-      );
+        .mockResolvedValueOnce({
+          playlist: mockPlaylist,
+          videos: [mockVideos[0]],
+        })
+        .mockResolvedValueOnce({
+          playlist: null,
+          videos: [],
+        });
+      mockGetPlaylistsForUsername.mockResolvedValue({
+        playlists: [],
+        count: 0,
+      });
 
       const result = await load(mockLoadEvent);
 
-      expect((result as any).highlightPlaylists).toHaveLength(1);
-      expect((result as any).highlightPlaylists[0].playlist).toEqual(mockPlaylist);
+      expect(result.highlightPlaylists).toHaveLength(1);
+      expect(result.highlightPlaylists[0].playlist).toEqual(mockPlaylist);
     });
 
     it('should override playlist names from SOURCE_INFO', async () => {
@@ -345,19 +339,15 @@ describe('[source]/+page.server.ts load function', () => {
       mockGetPlaylistDataByYoutubeId.mockResolvedValue({
         playlist: { ...mockPlaylist, name: 'Original Name' },
         videos: [mockVideos[0]],
-        videosCount: 1,
-        playlistDuration: { hours: 0, minutes: 30, seconds: 0 },
-        error: null,
       });
       mockGetPlaylistsForUsername.mockResolvedValue({
         playlists: [],
         count: 0,
-        error: null,
       });
 
       const result = await load(mockLoadEvent);
 
-      expect((result as any).highlightPlaylists[0].playlist.name).toBe('Featured Playlist 2');
+      expect(result.highlightPlaylists[0].playlist.name).toBe('Featured Playlist 2');
     });
   });
 
@@ -367,7 +357,6 @@ describe('[source]/+page.server.ts load function', () => {
       mockGetPlaylistsForUsername.mockResolvedValue({
         playlists: [],
         count: 0,
-        error: null,
       });
 
       await load(mockLoadEvent);
@@ -393,7 +382,6 @@ describe('[source]/+page.server.ts load function', () => {
       mockGetPlaylistsForUsername.mockResolvedValue({
         playlists: [],
         count: 0,
-        error: null,
       });
 
       await load(anonymousEvent);
@@ -416,7 +404,6 @@ describe('[source]/+page.server.ts load function', () => {
       mockGetPlaylistsForUsername.mockResolvedValue({
         playlists: [],
         count: 0,
-        error: null,
       });
 
       await load(dataRequestEvent);
@@ -431,7 +418,6 @@ describe('[source]/+page.server.ts load function', () => {
       mockGetPlaylistsForUsername.mockResolvedValue({
         playlists: [],
         count: 0,
-        error: null,
       });
 
       await expect(load(mockLoadEvent)).rejects.toThrow('Database error');
@@ -443,7 +429,6 @@ describe('[source]/+page.server.ts load function', () => {
       mockGetPlaylistsForUsername.mockResolvedValue({
         playlists: [],
         count: 0,
-        error: null,
       });
 
       await expect(load(mockLoadEvent)).rejects.toThrow('Playlist error');
@@ -465,9 +450,6 @@ describe('[source]/+page.server.ts load function', () => {
       mockGetPlaylistDataByYoutubeId.mockResolvedValue({
         playlist: null,
         videos: [],
-        videosCount: 1,
-        playlistDuration: { hours: 0, minutes: 30, seconds: 0 },
-        error: null,
         videosCount: 0,
         playlistDuration: { hours: 0, minutes: 0, seconds: 0 },
         error: null,
@@ -475,7 +457,6 @@ describe('[source]/+page.server.ts load function', () => {
       mockGetPlaylistsForUsername.mockResolvedValue({
         playlists: [],
         count: 0,
-        error: null,
         error: null,
       });
 
@@ -506,9 +487,6 @@ describe('[source]/+page.server.ts load function', () => {
       mockGetPlaylistDataByYoutubeId.mockResolvedValue({
         playlist: mockPlaylist,
         videos: [mockVideos[0]],
-        videosCount: 1,
-        playlistDuration: { hours: 0, minutes: 30, seconds: 0 },
-        error: null,
       });
 
       await load(mockLoadEvent);
@@ -530,14 +508,10 @@ describe('[source]/+page.server.ts load function', () => {
       mockGetPlaylistDataByYoutubeId.mockResolvedValue({
         playlist: mockPlaylist,
         videos: [mockVideos[0]],
-        videosCount: 1,
-        playlistDuration: { hours: 0, minutes: 30, seconds: 0 },
-        error: null,
       });
       mockGetPlaylistsForUsername.mockResolvedValue({
         playlists: mockSourcePlaylists,
         count: 1,
-        error: null,
       });
       mockGetCroppedPlaylistImageUrlServer.mockResolvedValue('https://example.com/processed.jpg');
 
@@ -574,9 +548,6 @@ describe('[source]/+page.server.ts load function', () => {
       mockGetPlaylistDataByYoutubeId.mockResolvedValue({
         playlist: null,
         videos: [],
-        videosCount: 1,
-        playlistDuration: { hours: 0, minutes: 30, seconds: 0 },
-        error: null,
         videosCount: 0,
         playlistDuration: { hours: 0, minutes: 0, seconds: 0 },
         error: null,
@@ -585,14 +556,13 @@ describe('[source]/+page.server.ts load function', () => {
         playlists: [],
         count: 0,
         error: null,
-        error: null,
       });
 
       const result = await load(mockLoadEvent);
 
-      expect((result as any).videos).toEqual([]);
-      expect((result as any).highlightPlaylists).toEqual([]);
-      expect((result as any).processedSourcePlaylists).toEqual([]);
+      expect(result.videos).toEqual([]);
+      expect(result.highlightPlaylists).toEqual([]);
+      expect(result.processedSourcePlaylists).toEqual([]);
     });
   });
 });

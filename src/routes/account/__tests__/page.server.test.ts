@@ -7,6 +7,7 @@ import {
   createMockSession,
   createMockUserProfile,
   createMockProfileResponse,
+  createMockSuperValidated,
 } from '../../../tests/test-utils';
 
 // Mock dependencies
@@ -99,9 +100,9 @@ describe('account/+page.server.ts', () => {
     it('should load data for authenticated user', async () => {
       mockGetUserProfile.mockResolvedValue(createMockProfileResponse(mockUserProfile));
       mockSuperValidate
-        .mockResolvedValueOnce({ data: { email: mockSession.user.email } })
-        .mockResolvedValueOnce({ data: {} })
-        .mockResolvedValueOnce({ data: { username: mockUserProfile.username } });
+        .mockResolvedValueOnce(createMockSuperValidated({ email: mockSession.user.email }))
+        .mockResolvedValueOnce(createMockSuperValidated({}))
+        .mockResolvedValueOnce(createMockSuperValidated({ username: mockUserProfile.username }));
 
       const result = await load(mockLoadEvent);
 

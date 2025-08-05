@@ -146,7 +146,7 @@ describe('continue/+page.svelte Component Logic', () => {
         Math.ceil(params.count / params.perPage)
       );
       const numPages = getNumberOfPages({
-        count: null ?? 0,
+        count: 0,
         perPage: 20,
       });
 

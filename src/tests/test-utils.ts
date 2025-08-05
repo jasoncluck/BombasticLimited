@@ -182,16 +182,60 @@ export function createMockProfileResponse(profile: UserProfile | null = null) {
  */
 export function createMockPlaylist(overrides: Partial<any> = {}) {
   return {
-    id: 'playlist-1',
+    id: 1,
     short_id: 'abc123',
     name: 'Test Playlist',
     youtube_id: 'youtube123',
     thumbnail_url: 'https://example.com/thumb.jpg',
     thumbnail_maxres_url: 'https://example.com/maxres.jpg',
-    image_properties: '{"x": 0, "y": 0, "width": 100, "height": 100}',
+    image_properties: { x: 0, y: 0, width: 100, height: 100 },
     created_at: '2023-01-01T00:00:00Z',
-    updated_at: '2023-01-01T00:00:00Z',
+    type: 'Public' as const,
+    created_by: 'mock-user-id',
+    description: 'Mock playlist description',
+    profile_username: 'testuser',
     ...overrides,
+  };
+}
+
+/**
+ * Create mock playlist data response
+ */
+export function createMockPlaylistDataResponse(
+  playlist: any | null = null,
+  videos: any[] = [],
+  videosCount: number = 0
+) {
+  return {
+    playlist,
+    videos,
+    videosCount,
+    playlistDuration: { hours: 0, minutes: 30, seconds: 0 },
+    error: null,
+  };
+}
+
+/**
+ * Create mock playlists response
+ */
+export function createMockPlaylistsResponse(playlists: any[] = [], count: number = 0) {
+  return {
+    playlists,
+    count,
+    error: null,
+  };
+}
+
+/**
+ * Create mock SuperValidated response
+ */
+export function createMockSuperValidated(data: any = {}, valid: boolean = true) {
+  return {
+    id: 'mock-form-id',
+    data,
+    valid,
+    posted: false,
+    errors: {},
   };
 }
 

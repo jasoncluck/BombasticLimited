@@ -89,8 +89,8 @@ describe('continue/+page.server.ts load function', () => {
       const result = await load(mockLoadEvent);
 
       expect(mockLoadEvent.depends).toHaveBeenCalledWith('supabase:db:videos');
-      expect(result.videos).toEqual(mockContinueVideos);
-      expect(result.videosCount).toBe(2);
+      expect((result as any).videos).toEqual(mockContinueVideos);
+      expect((result as any).videosCount).toBe(2);
     });
 
     it('should redirect when no session', async () => {
@@ -138,8 +138,8 @@ describe('continue/+page.server.ts load function', () => {
         session: mockSession,
       });
 
-      expect(result.videos).toEqual(mockContinueVideos);
-      expect(result.videosCount).toBe(2);
+      expect((result as any).videos).toEqual(mockContinueVideos);
+      expect((result as any).videosCount).toBe(2);
     });
 
     it('should handle different page numbers', async () => {
@@ -256,8 +256,8 @@ describe('continue/+page.server.ts load function', () => {
 
       const result = await load(mockLoadEvent);
 
-      expect(result.videos).toEqual([]);
-      expect(result.videosCount).toBe(0);
+      expect((result as any).videos).toEqual([]);
+      expect((result as any).videosCount).toBe(0);
     });
 
     it('should handle null video results gracefully', async () => {
@@ -269,8 +269,8 @@ describe('continue/+page.server.ts load function', () => {
 
       const result = await load(mockLoadEvent);
 
-      expect(result.videos).toEqual([]);
-      expect(result.videosCount).toBe(0);
+      expect((result as any).videos).toEqual([]);
+      expect((result as any).videosCount).toBe(0);
     });
 
     it('should handle error responses from database', async () => {
@@ -280,8 +280,8 @@ describe('continue/+page.server.ts load function', () => {
       // The function should still return since it uses the response structure
       const result = await load(mockLoadEvent);
 
-      expect(result.videos).toEqual([]);
-      expect(result.videosCount).toBe(null);
+      expect((result as any).videos).toEqual([]);
+      expect((result as any).videosCount).toBe(null);
     });
   });
 
@@ -313,7 +313,7 @@ describe('continue/+page.server.ts load function', () => {
       const result = await load(mockLoadEvent);
 
       expect(Array.isArray(result.videos)).toBe(true);
-      expect(result.videos).toEqual([]);
+      expect((result as any).videos).toEqual([]);
     });
 
     it('should pass through content filter from parent', async () => {
@@ -332,7 +332,7 @@ describe('continue/+page.server.ts load function', () => {
 
       const result = await load(mockLoadEvent);
 
-      expect(result.contentFilter).toEqual(customContentFilter);
+      expect((result as any).contentFilter).toEqual(customContentFilter);
     });
   });
 
