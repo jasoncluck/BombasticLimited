@@ -542,19 +542,36 @@ DECLARE
   video_thumbnail_url text;
   video_thumbnail_maxres_url text;
   new_videos_added boolean := false;
+  current_user_id uuid;
+  playlist_owner_id uuid;
 BEGIN
+  -- Get the current authenticated user
+  current_user_id := auth.uid();
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'User must be authenticated to modify playlists';
+  END IF;
+
+  -- Lock operations for the current user to prevent concurrent modifications
+  PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || current_user_id::text));
+
   -- Check if video array is empty
   array_length := array_length(p_video_ids, 1);
   IF array_length IS NULL OR array_length = 0 THEN
     RAISE EXCEPTION 'Video IDs array cannot be empty';
   END IF;
 
-  -- Lock the playlist to prevent concurrent modifications
-  PERFORM 1 FROM public.playlists pl WHERE pl.id = p_playlist_id FOR UPDATE;
+  -- Lock the playlist to prevent concurrent modifications and get owner info
+  SELECT pl.created_by INTO playlist_owner_id
+  FROM public.playlists pl WHERE pl.id = p_playlist_id FOR UPDATE;
   
   -- Check if playlist exists
-  IF NOT FOUND THEN
+  IF playlist_owner_id IS NULL THEN
     RAISE EXCEPTION 'Playlist with ID % does not exist', p_playlist_id;
+  END IF;
+
+  -- If current user is not the owner, also lock the owner's operations to prevent conflicts
+  IF playlist_owner_id != current_user_id THEN
+    PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || playlist_owner_id::text));
   END IF;
   
   -- Check if playlist already has thumbnail images
@@ -648,10 +665,35 @@ DECLARE
   deleted_positions int2[];
   affected_count int;
   max_position int2;
+  current_user_id uuid;
+  playlist_owner_id uuid;
 BEGIN
+  -- Get the current authenticated user
+  current_user_id := auth.uid();
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'User must be authenticated to modify playlists';
+  END IF;
+
+  -- Lock operations for the current user to prevent concurrent modifications
+  PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || current_user_id::text));
+
   -- Check if video array is empty
   IF array_length(p_video_ids, 1) IS NULL OR array_length(p_video_ids, 1) = 0 THEN
     RAISE EXCEPTION 'Video IDs array cannot be empty';
+  END IF;
+
+  -- Lock the playlist and get owner info to prevent concurrent modifications
+  SELECT pl.created_by INTO playlist_owner_id
+  FROM public.playlists pl WHERE pl.id = p_playlist_id FOR UPDATE;
+  
+  -- Check if playlist exists
+  IF playlist_owner_id IS NULL THEN
+    RAISE EXCEPTION 'Playlist with ID % does not exist', p_playlist_id;
+  END IF;
+
+  -- If current user is not the owner, also lock the owner's operations to prevent conflicts
+  IF playlist_owner_id != current_user_id THEN
+    PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || playlist_owner_id::text));
   END IF;
 
   -- Start a transaction to ensure consistency
@@ -800,7 +842,7 @@ $$ LANGUAGE plpgsql
 SET
   search_path = '';
 
--- Function to update playlist video positions
+-- Function to update playlist video positions  
 CREATE OR REPLACE FUNCTION "public"."update_playlist_videos_positions" (
   "p_playlist_id" int8,
   "p_video_ids" TEXT[],
@@ -821,13 +863,38 @@ DECLARE
   i int;
   temp_video_id text;
   current_pos int2;
+  current_user_id uuid;
+  playlist_owner_id uuid;
 BEGIN
+    -- Get the current authenticated user
+    current_user_id := auth.uid();
+    IF current_user_id IS NULL THEN
+      RAISE EXCEPTION 'User must be authenticated to modify playlists';
+    END IF;
+
+    -- Lock operations for the current user to prevent concurrent modifications
+    PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || current_user_id::text));
+
     -- Validate input
     IF p_video_ids IS NULL OR array_length(p_video_ids, 1) = 0 THEN
       RAISE EXCEPTION 'Video IDs array cannot be empty';
     END IF;
     
     video_count := array_length(p_video_ids, 1);
+
+    -- Lock the playlist and get owner info to prevent concurrent modifications
+    SELECT pl.created_by INTO playlist_owner_id
+    FROM public.playlists pl WHERE pl.id = p_playlist_id FOR UPDATE;
+    
+    -- Check if playlist exists
+    IF playlist_owner_id IS NULL THEN
+      RAISE EXCEPTION 'Playlist with ID % does not exist', p_playlist_id;
+    END IF;
+
+    -- If current user is not the owner, also lock the owner's operations to prevent conflicts
+    IF playlist_owner_id != current_user_id THEN
+      PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || playlist_owner_id::text));
+    END IF;
     
     -- Get the current positions of videos being moved
     min_current_pos := 32767; -- max int2

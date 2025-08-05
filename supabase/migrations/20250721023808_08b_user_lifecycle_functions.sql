@@ -46,6 +46,9 @@ DECLARE
     user_id uuid := (SELECT auth.uid());
     deleted_count integer;
 BEGIN
+    -- Lock operations for this user to prevent concurrent modifications
+    PERFORM pg_advisory_xact_lock(hashtext('user_lifecycle_operations_' || user_id::text));
+    
     -- Attempt to delete the user and check if any rows were affected
     DELETE FROM auth.users 
     WHERE id = user_id;
