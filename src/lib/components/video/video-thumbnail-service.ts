@@ -1,7 +1,3 @@
-import {
-  getVideoThumbnailWebpUrl,
-  getVideoThumbnailWebpUrlsBatch,
-} from '../playlist/playlist-service';
 import type { Video } from '$lib/supabase/videos';
 import { browser } from '$app/environment';
 
@@ -35,21 +31,10 @@ export async function processVideoThumbnail(
       video.thumbnail_url
     );
 
-    if (processedUrl) {
-      // Cache the result
-      processedThumbnailCache.set(video.thumbnail_url, processedUrl);
-      return { ...video, processedThumbnailUrl: processedUrl };
-    }
-
-    // Fallback to client-side processing if server-side fails
-    const clientProcessedUrl = await getVideoThumbnailWebpUrl({
-      thumbnailUrl: video.thumbnail_url,
-    });
-
-    // Cache the result
-    processedThumbnailCache.set(video.thumbnail_url, clientProcessedUrl);
-
-    return { ...video, processedThumbnailUrl: clientProcessedUrl };
+    // Cache the result (whether successful or not)
+    processedThumbnailCache.set(video.thumbnail_url, processedUrl);
+    
+    return { ...video, processedThumbnailUrl: processedUrl };
   } catch (error) {
     console.error('Failed to process video thumbnail:', error);
     // Cache the failure to avoid retrying
@@ -90,7 +75,7 @@ export async function processVideoThumbnails(
   // Process uncached thumbnails in batch
   if (uncachedUrls.length > 0) {
     try {
-      // Try server-side batch processing first
+      // Use server-side batch processing only
       const processedUrls =
         await getVideoThumbnailWebpUrlsBatchServer(uncachedUrls);
 
@@ -107,39 +92,16 @@ export async function processVideoThumbnails(
       }
     } catch (serverError) {
       console.error(
-        'Server batch processing failed, falling back to client-side:',
+        'Server batch processing failed:',
         serverError
       );
 
-      // Fallback to client-side batch processing
-      try {
-        const processedUrls =
-          await getVideoThumbnailWebpUrlsBatch(uncachedUrls);
-
-        for (let i = 0; i < uncachedVideos.length; i++) {
-          const video = uncachedVideos[i];
-          const processedUrl = processedUrls[i];
-
-          // Cache the result
-          if (video.thumbnail_url) {
-            processedThumbnailCache.set(video.thumbnail_url, processedUrl);
-          }
-
-          results.push({ ...video, processedThumbnailUrl: processedUrl });
+      // Add uncached videos with null processed URLs instead of falling back to client-side
+      for (const video of uncachedVideos) {
+        if (video.thumbnail_url) {
+          processedThumbnailCache.set(video.thumbnail_url, null);
         }
-      } catch (clientError) {
-        console.error(
-          'Failed to process video thumbnails in batch:',
-          clientError
-        );
-
-        // Add uncached videos with null processed URLs
-        for (const video of uncachedVideos) {
-          if (video.thumbnail_url) {
-            processedThumbnailCache.set(video.thumbnail_url, null);
-          }
-          results.push({ ...video, processedThumbnailUrl: null });
-        }
+        results.push({ ...video, processedThumbnailUrl: null });
       }
     }
   }
@@ -189,19 +151,35 @@ async function getVideoThumbnailWebpUrlServer(
 
   try {
     const response = await fetch(
-      `/api/video-thumbnail?url=${encodeURIComponent(thumbnailUrl)}`
+      `/api/video-thumbnail?url=${encodeURIComponent(thumbnailUrl)}`,
+      {
+        // Add timeout and better error handling
+        signal: AbortSignal.timeout(15000), // 15 second timeout
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      }
     );
 
     if (!response.ok) {
       console.error(
         'Server-side thumbnail processing failed:',
-        response.status
+        response.status,
+        response.statusText
       );
       return null;
     }
 
     const data = await response.json();
-    return data.webpUrl || null;
+    
+    // Ensure we have a valid webpUrl
+    if (!data || !data.webpUrl || typeof data.webpUrl !== 'string') {
+      console.error('Invalid response from video thumbnail API:', data);
+      return null;
+    }
+    
+    return data.webpUrl;
   } catch (error) {
     console.error('Server-side thumbnail processing error:', error);
     return null;
@@ -221,20 +199,31 @@ async function getVideoThumbnailWebpUrlsBatchServer(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify({ thumbnailUrls }),
+      // Add timeout for batch processing
+      signal: AbortSignal.timeout(30000), // 30 second timeout for batch
     });
 
     if (!response.ok) {
       console.error(
         'Server-side batch thumbnail processing failed:',
-        response.status
+        response.status,
+        response.statusText
       );
       return thumbnailUrls.map(() => null);
     }
 
     const data = await response.json();
-    return data.webpUrls || thumbnailUrls.map(() => null);
+    
+    // Ensure we have a valid webpUrls array
+    if (!data || !Array.isArray(data.webpUrls)) {
+      console.error('Invalid response from batch video thumbnail API:', data);
+      return thumbnailUrls.map(() => null);
+    }
+    
+    return data.webpUrls;
   } catch (error) {
     console.error('Server-side batch thumbnail processing error:', error);
     return thumbnailUrls.map(() => null);

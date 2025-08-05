@@ -9,28 +9,13 @@ import {
 } from '../video-thumbnail-service';
 import type { Video } from '$lib/supabase/videos';
 
-// Mock the playlist-service functions
-vi.mock('../../playlist/playlist-service', () => ({
-  getVideoThumbnailWebpUrl: vi.fn(),
-  getVideoThumbnailWebpUrlsBatch: vi.fn(),
-}));
-
 // Mock browser environment
 vi.mock('$app/environment', () => ({
   browser: true,
 }));
 
-const mockGetVideoThumbnailWebpUrl = vi.mocked(
-  await import('../../playlist/playlist-service')
-).getVideoThumbnailWebpUrl;
-
-const mockGetVideoThumbnailWebpUrlsBatch = vi.mocked(
-  await import('../../playlist/playlist-service')
-).getVideoThumbnailWebpUrlsBatch;
-
-// Mock fetch for server-side API calls
+// Mock fetch globally for all tests
 const mockFetch = vi.fn();
-global.fetch = mockFetch;
 
 // Mock video data
 const createMockVideo = (id: string, thumbnailUrl?: string): Video => ({
@@ -48,13 +33,17 @@ describe('video-thumbnail-service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     clearThumbnailCache();
-    mockFetch.mockClear();
     
-    // Set up default fetch mock behavior
+    // Setup global fetch mock
+    global.fetch = mockFetch;
+    
+    // Set up default fetch mock behavior to return server failure
     mockFetch.mockImplementation(() => 
       Promise.resolve({
         ok: false,
         status: 500,
+        statusText: 'Internal Server Error',
+        json: () => Promise.resolve({}),
       } as Response)
     );
   });
@@ -79,7 +68,14 @@ describe('video-thumbnail-service', () => {
         processedThumbnailUrl: processedUrl,
       });
       expect(mockFetch).toHaveBeenCalledWith(
-        `/api/video-thumbnail?url=${encodeURIComponent(video.thumbnail_url!)}`
+        `/api/video-thumbnail?url=${encodeURIComponent(video.thumbnail_url!)}`,
+        expect.objectContaining({
+          signal: expect.any(AbortSignal),
+          headers: expect.objectContaining({
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          }),
+        })
       );
     });
 
@@ -89,7 +85,6 @@ describe('video-thumbnail-service', () => {
 
       const result = await processVideoThumbnail(video);
 
-      expect(mockGetVideoThumbnailWebpUrl).not.toHaveBeenCalled();
       expect(result).toEqual({
         ...video,
         processedThumbnailUrl: null,
@@ -118,36 +113,33 @@ describe('video-thumbnail-service', () => {
       expect(result.processedThumbnailUrl).toBe(processedUrl);
     });
 
-    it('should fallback to client-side processing when server fails', async () => {
+    it('should return null when server-side processing fails', async () => {
       const video = createMockVideo('1');
-      const processedUrl = 'data:image/webp;base64,client-processed-data';
 
-      // Mock server-side failure (default from beforeEach)
-      // Mock successful client-side processing
-      mockGetVideoThumbnailWebpUrl.mockResolvedValue(processedUrl);
+      // Mock server-side failure (default behavior from beforeEach)
 
       const result = await processVideoThumbnail(video);
 
       expect(result).toEqual({
         ...video,
-        processedThumbnailUrl: processedUrl,
+        processedThumbnailUrl: null,
       });
       expect(mockFetch).toHaveBeenCalledWith(
-        `/api/video-thumbnail?url=${encodeURIComponent(video.thumbnail_url!)}`
+        `/api/video-thumbnail?url=${encodeURIComponent(video.thumbnail_url!)}`,
+        expect.objectContaining({
+          signal: expect.any(AbortSignal),
+          headers: expect.objectContaining({
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          }),
+        })
       );
-      expect(mockGetVideoThumbnailWebpUrl).toHaveBeenCalledWith({
-        thumbnailUrl: video.thumbnail_url,
-      });
     });
 
     it('should handle processing errors gracefully', async () => {
       const video = createMockVideo('1');
 
       // Mock server-side failure (default from beforeEach)
-      // Mock client-side failure
-      mockGetVideoThumbnailWebpUrl.mockRejectedValue(
-        new Error('Processing failed')
-      );
 
       const result = await processVideoThumbnail(video);
 
@@ -161,10 +153,6 @@ describe('video-thumbnail-service', () => {
       const video = createMockVideo('1');
 
       // Mock server-side failure (default from beforeEach)
-      // Mock client-side failure
-      mockGetVideoThumbnailWebpUrl.mockRejectedValue(
-        new Error('Processing failed')
-      );
 
       // First call
       await processVideoThumbnail(video);
@@ -173,7 +161,6 @@ describe('video-thumbnail-service', () => {
       // Second call should use cached failure (no additional calls)
       const result = await processVideoThumbnail(video);
       expect(mockFetch).toHaveBeenCalledTimes(1);
-      expect(mockGetVideoThumbnailWebpUrl).toHaveBeenCalledTimes(1);
       expect(result.processedThumbnailUrl).toBe(null);
     });
   });
@@ -205,6 +192,7 @@ describe('video-thumbnail-service', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
           thumbnailUrls: [
@@ -213,6 +201,7 @@ describe('video-thumbnail-service', () => {
             videos[2].thumbnail_url,
           ],
         }),
+        signal: expect.any(AbortSignal),
       });
 
       expect(results).toEqual([
@@ -225,7 +214,6 @@ describe('video-thumbnail-service', () => {
     it('should handle empty video array', async () => {
       const results = await processVideoThumbnails([]);
       expect(results).toEqual([]);
-      expect(mockGetVideoThumbnailWebpUrlsBatch).not.toHaveBeenCalled();
     });
 
     it('should use cached results and only process uncached videos', async () => {
@@ -265,10 +253,12 @@ describe('video-thumbnail-service', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
           thumbnailUrls: [videos[1].thumbnail_url, videos[2].thumbnail_url],
         }),
+        signal: expect.any(AbortSignal),
       });
 
       expect(results[0].processedThumbnailUrl).toBe('cached-processed-1');
@@ -307,10 +297,12 @@ describe('video-thumbnail-service', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
           thumbnailUrls: [videos[0].thumbnail_url, videos[2].thumbnail_url],
         }),
+        signal: expect.any(AbortSignal),
       });
 
       expect(results[0].processedThumbnailUrl).toBe(
@@ -325,9 +317,7 @@ describe('video-thumbnail-service', () => {
     it('should handle batch processing errors gracefully', async () => {
       const videos = [createMockVideo('1'), createMockVideo('2')];
 
-      mockGetVideoThumbnailWebpUrlsBatch.mockRejectedValue(
-        new Error('Batch processing failed')
-      );
+      // Mock server-side failure (default behavior from beforeEach)
 
       const results = await processVideoThumbnails(videos);
 
@@ -374,7 +364,14 @@ describe('video-thumbnail-service', () => {
   describe('cache management', () => {
     it('should clear cache', async () => {
       const video = createMockVideo('1');
-      mockGetVideoThumbnailWebpUrl.mockResolvedValue('processed');
+      
+      // Mock successful server-side processing
+      mockFetch.mockImplementationOnce(() =>
+        Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ webpUrl: 'processed' }),
+        } as Response)
+      );
 
       await processVideoThumbnail(video);
       expect(getThumbnailCacheStats().size).toBe(1);
@@ -385,7 +382,14 @@ describe('video-thumbnail-service', () => {
 
     it('should provide cache statistics', async () => {
       const videos = [createMockVideo('1'), createMockVideo('2')];
-      mockGetVideoThumbnailWebpUrl.mockResolvedValue('processed');
+      
+      // Mock successful server-side processing for both calls
+      mockFetch.mockImplementation(() =>
+        Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ webpUrl: 'processed' }),
+        } as Response)
+      );
 
       await processVideoThumbnail(videos[0]);
       await processVideoThumbnail(videos[1]);
