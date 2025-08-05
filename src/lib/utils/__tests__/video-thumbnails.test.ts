@@ -33,7 +33,7 @@ const createMockVideo = (
 
 describe('video-thumbnails (updated for Vercel)', () => {
   describe('getVideoThumbnailUrl', () => {
-    it('should return Vercel-optimized URL for YouTube thumbnails', () => {
+    it('should fallback to server processing in development mode for YouTube thumbnails', () => {
       const video = createMockVideo(
         '1',
         'https://i.ytimg.com/vi/1/hqdefault.jpg',
@@ -42,11 +42,12 @@ describe('video-thumbnails (updated for Vercel)', () => {
 
       const result = getVideoThumbnailUrl(video);
 
-      const expectedUrl = `/_vercel/image?url=${encodeURIComponent('https://i.ytimg.com/vi/1/hqdefault.jpg')}&w=480&h=360&q=90`;
+      // In development mode, should use server processing
+      const expectedUrl = `/api/video-thumbnail?type=image&url=${encodeURIComponent('https://i.ytimg.com/vi/1/hqdefault.jpg')}`;
       expect(result).toBe(expectedUrl);
     });
 
-    it('should prefer thumbnail_url for better performance', () => {
+    it('should prefer thumbnail_url for better performance in development mode', () => {
       const video = createMockVideo(
         '1',
         'https://i.ytimg.com/vi/1/hqdefault.jpg',
@@ -55,8 +56,8 @@ describe('video-thumbnails (updated for Vercel)', () => {
 
       const result = getVideoThumbnailUrl(video);
 
-      // Should prefer standard thumbnail_url for performance
-      const expectedUrl = `/_vercel/image?url=${encodeURIComponent('https://i.ytimg.com/vi/1/hqdefault.jpg')}&w=480&h=360&q=90`;
+      // In development mode, should prefer standard thumbnail_url but use server processing
+      const expectedUrl = `/api/video-thumbnail?type=image&url=${encodeURIComponent('https://i.ytimg.com/vi/1/hqdefault.jpg')}`;
       expect(result).toBe(expectedUrl);
     });
 
@@ -81,7 +82,7 @@ describe('video-thumbnails (updated for Vercel)', () => {
       expect(result).toBe('');
     });
 
-    it('should accept custom config', () => {
+    it('should fallback to server processing in development mode even with custom config', () => {
       const video = createMockVideo(
         '1',
         'https://i.ytimg.com/vi/1/hqdefault.jpg',
@@ -96,7 +97,8 @@ describe('video-thumbnails (updated for Vercel)', () => {
 
       const result = getVideoThumbnailUrl(video, config);
 
-      const expectedUrl = `/_vercel/image?url=${encodeURIComponent('https://i.ytimg.com/vi/1/hqdefault.jpg')}&w=320&h=180&q=75&f=webp`;
+      // In development mode, should use server processing regardless of config
+      const expectedUrl = `/api/video-thumbnail?type=image&url=${encodeURIComponent('https://i.ytimg.com/vi/1/hqdefault.jpg')}`;
       expect(result).toBe(expectedUrl);
     });
   });
@@ -258,7 +260,7 @@ describe('video-thumbnails (updated for Vercel)', () => {
   });
 
   describe('getVideoThumbnailUrlWithSize', () => {
-    it('should return URL with specified dimensions', () => {
+    it('should fallback to server processing in development mode with specified dimensions', () => {
       const video = createMockVideo(
         '1',
         'https://i.ytimg.com/vi/1/hqdefault.jpg',
@@ -267,11 +269,12 @@ describe('video-thumbnails (updated for Vercel)', () => {
 
       const result = getVideoThumbnailUrlWithSize(video, 640, 360, 85);
 
-      const expectedUrl = `/_vercel/image?url=${encodeURIComponent('https://i.ytimg.com/vi/1/hqdefault.jpg')}&w=640&h=360&q=85`;
+      // In development mode, should use server processing regardless of dimensions
+      const expectedUrl = `/api/video-thumbnail?type=image&url=${encodeURIComponent('https://i.ytimg.com/vi/1/hqdefault.jpg')}`;
       expect(result).toBe(expectedUrl);
     });
 
-    it('should use default quality when not specified', () => {
+    it('should fallback to server processing in development mode with default quality', () => {
       const video = createMockVideo(
         '1',
         'https://i.ytimg.com/vi/1/hqdefault.jpg',
@@ -280,7 +283,8 @@ describe('video-thumbnails (updated for Vercel)', () => {
 
       const result = getVideoThumbnailUrlWithSize(video, 320, 180);
 
-      const expectedUrl = `/_vercel/image?url=${encodeURIComponent('https://i.ytimg.com/vi/1/hqdefault.jpg')}&w=320&h=180&q=90`;
+      // In development mode, should use server processing regardless of quality
+      const expectedUrl = `/api/video-thumbnail?type=image&url=${encodeURIComponent('https://i.ytimg.com/vi/1/hqdefault.jpg')}`;
       expect(result).toBe(expectedUrl);
     });
   });

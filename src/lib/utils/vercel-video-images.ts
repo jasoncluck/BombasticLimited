@@ -99,8 +99,22 @@ export function getVercelOptimizedVideoThumbnailUrl(
 }
 
 /**
+ * Check if we're running in a Vercel environment where Image API is available
+ */
+function isVercelImageApiAvailable(): boolean {
+  // In development mode, Vercel Image API is not available
+  if (import.meta.env.DEV) {
+    return false;
+  }
+
+  // In production/preview builds, assume Vercel Image API is available
+  return true;
+}
+
+/**
  * Get optimized video thumbnail URL with standard resolution
  * Always uses standard resolution configuration for optimal performance
+ * Falls back to server-side processing in development mode
  */
 export function getOptimizedVideoThumbnailUrl(
   video: Video,
@@ -112,7 +126,13 @@ export function getOptimizedVideoThumbnailUrl(
     return null;
   }
 
-  // Only use Vercel optimization for supported domains
+  // In development or when Vercel Image API is not available,
+  // always fall back to server-side processing for all thumbnails
+  if (!isVercelImageApiAvailable()) {
+    return `/api/video-thumbnail?type=image&url=${encodeURIComponent(thumbnailUrl)}`;
+  }
+
+  // Only use Vercel optimization for supported domains in production
   if (!isOptimizableVideoThumbnail(thumbnailUrl)) {
     // For non-YouTube thumbnails, fall back to server-side processing
     return `/api/video-thumbnail?type=image&url=${encodeURIComponent(thumbnailUrl)}`;
@@ -144,8 +164,13 @@ export function getResponsiveVideoThumbnailUrls(video: Video): {
     };
   }
 
-  if (!isOptimizableVideoThumbnail(thumbnailUrl)) {
-    // For non-YouTube thumbnails, use server-side processing
+  // In development or when Vercel Image API is not available,
+  // always fall back to server-side processing for all thumbnails
+  if (
+    !isVercelImageApiAvailable() ||
+    !isOptimizableVideoThumbnail(thumbnailUrl)
+  ) {
+    // For non-YouTube thumbnails or development mode, use server-side processing
     const serverUrl = `/api/video-thumbnail?type=image&url=${encodeURIComponent(thumbnailUrl)}`;
     return {
       default: serverUrl,

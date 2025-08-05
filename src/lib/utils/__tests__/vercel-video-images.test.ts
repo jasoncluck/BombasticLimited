@@ -153,7 +153,7 @@ describe('vercel-video-images', () => {
   });
 
   describe('getOptimizedVideoThumbnailUrl', () => {
-    it('should use Vercel optimization for YouTube thumbnails', () => {
+    it('should fallback to server processing in development mode for YouTube thumbnails', () => {
       const video = createMockVideo(
         '1',
         'https://i.ytimg.com/vi/1/hqdefault.jpg',
@@ -162,11 +162,12 @@ describe('vercel-video-images', () => {
 
       const result = getOptimizedVideoThumbnailUrl(video);
 
-      const expectedUrl = `/_vercel/image?url=${encodeURIComponent('https://i.ytimg.com/vi/1/hqdefault.jpg')}&w=480&h=360&q=90`;
+      // In development (import.meta.env.DEV = true), should fallback to server processing
+      const expectedUrl = `/api/video-thumbnail?type=image&url=${encodeURIComponent('https://i.ytimg.com/vi/1/hqdefault.jpg')}`;
       expect(result).toBe(expectedUrl);
     });
 
-    it('should use standard config even when maxres URL available', () => {
+    it('should fallback to server processing in development mode even when maxres URL available', () => {
       const video = createMockVideo(
         '1',
         'https://i.ytimg.com/vi/1/hqdefault.jpg',
@@ -175,8 +176,8 @@ describe('vercel-video-images', () => {
 
       const result = getOptimizedVideoThumbnailUrl(video);
 
-      // Should use thumbnail_url (standard) with standard config for performance
-      const expectedUrl = `/_vercel/image?url=${encodeURIComponent('https://i.ytimg.com/vi/1/hqdefault.jpg')}&w=480&h=360&q=90`;
+      // In development, should use server processing for thumbnail_url (standard) for performance
+      const expectedUrl = `/api/video-thumbnail?type=image&url=${encodeURIComponent('https://i.ytimg.com/vi/1/hqdefault.jpg')}`;
       expect(result).toBe(expectedUrl);
     });
 
@@ -201,7 +202,7 @@ describe('vercel-video-images', () => {
       expect(result).toBe(null);
     });
 
-    it('should use custom config when provided', () => {
+    it('should fallback to server processing in development mode with custom config', () => {
       const video = createMockVideo(
         '1',
         'https://i.ytimg.com/vi/1/hqdefault.jpg',
@@ -216,13 +217,14 @@ describe('vercel-video-images', () => {
 
       const result = getOptimizedVideoThumbnailUrl(video, customConfig);
 
-      const expectedUrl = `/_vercel/image?url=${encodeURIComponent('https://i.ytimg.com/vi/1/hqdefault.jpg')}&w=320&h=180&q=75&f=webp`;
+      // In development, should use server processing regardless of config
+      const expectedUrl = `/api/video-thumbnail?type=image&url=${encodeURIComponent('https://i.ytimg.com/vi/1/hqdefault.jpg')}`;
       expect(result).toBe(expectedUrl);
     });
   });
 
   describe('getResponsiveVideoThumbnailUrls', () => {
-    it('should return multiple sizes for YouTube thumbnails', () => {
+    it('should return server URLs in development mode for YouTube thumbnails', () => {
       const video = createMockVideo(
         '1',
         'https://i.ytimg.com/vi/1/hqdefault.jpg',
@@ -232,18 +234,13 @@ describe('vercel-video-images', () => {
       const result = getResponsiveVideoThumbnailUrls(video);
 
       const baseUrl = 'https://i.ytimg.com/vi/1/hqdefault.jpg';
-      expect(result.default).toBe(
-        `/_vercel/image?url=${encodeURIComponent(baseUrl)}&w=480&h=360&q=90`
-      );
-      expect(result.small).toBe(
-        `/_vercel/image?url=${encodeURIComponent(baseUrl)}&w=320&h=180&q=85`
-      );
-      expect(result.medium).toBe(
-        `/_vercel/image?url=${encodeURIComponent(baseUrl)}&w=640&h=360&q=90`
-      );
-      expect(result.large).toBe(
-        `/_vercel/image?url=${encodeURIComponent(baseUrl)}&w=1280&h=720&q=90`
-      );
+      const serverUrl = `/api/video-thumbnail?type=image&url=${encodeURIComponent(baseUrl)}`;
+
+      // In development, all sizes should use server processing
+      expect(result.default).toBe(serverUrl);
+      expect(result.small).toBe(serverUrl);
+      expect(result.medium).toBe(serverUrl);
+      expect(result.large).toBe(serverUrl);
     });
 
     it('should return server URLs for non-YouTube thumbnails', () => {
