@@ -33,7 +33,7 @@ export async function processVideoThumbnail(
 
     // Cache the result (whether successful or not)
     processedThumbnailCache.set(video.thumbnail_url, processedUrl);
-    
+
     return { ...video, processedThumbnailUrl: processedUrl };
   } catch (error) {
     console.error('Failed to process video thumbnail:', error);
@@ -91,10 +91,7 @@ export async function processVideoThumbnails(
         results.push({ ...video, processedThumbnailUrl: processedUrl });
       }
     } catch (serverError) {
-      console.error(
-        'Server batch processing failed:',
-        serverError
-      );
+      console.error('Server batch processing failed:', serverError);
 
       // Add uncached videos with null processed URLs instead of falling back to client-side
       for (const video of uncachedVideos) {
@@ -156,7 +153,7 @@ async function getVideoThumbnailWebpUrlServer(
         // Add timeout and better error handling
         signal: AbortSignal.timeout(15000), // 15 second timeout
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
           'Content-Type': 'application/json',
         },
       }
@@ -172,13 +169,13 @@ async function getVideoThumbnailWebpUrlServer(
     }
 
     const data = await response.json();
-    
+
     // Ensure we have a valid webpUrl
     if (!data || !data.webpUrl || typeof data.webpUrl !== 'string') {
       console.error('Invalid response from video thumbnail API:', data);
       return null;
     }
-    
+
     return data.webpUrl;
   } catch (error) {
     console.error('Server-side thumbnail processing error:', error);
@@ -199,7 +196,7 @@ async function getVideoThumbnailWebpUrlsBatchServer(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
       body: JSON.stringify({ thumbnailUrls }),
       // Add timeout for batch processing
@@ -216,13 +213,13 @@ async function getVideoThumbnailWebpUrlsBatchServer(
     }
 
     const data = await response.json();
-    
+
     // Ensure we have a valid webpUrls array
     if (!data || !Array.isArray(data.webpUrls)) {
       console.error('Invalid response from batch video thumbnail API:', data);
       return thumbnailUrls.map(() => null);
     }
-    
+
     return data.webpUrls;
   } catch (error) {
     console.error('Server-side batch thumbnail processing error:', error);

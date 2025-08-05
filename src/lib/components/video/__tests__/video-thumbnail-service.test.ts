@@ -33,12 +33,12 @@ describe('video-thumbnail-service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     clearThumbnailCache();
-    
+
     // Setup global fetch mock
     global.fetch = mockFetch;
-    
+
     // Set up default fetch mock behavior to return server failure
-    mockFetch.mockImplementation(() => 
+    mockFetch.mockImplementation(() =>
       Promise.resolve({
         ok: false,
         status: 500,
@@ -72,7 +72,7 @@ describe('video-thumbnail-service', () => {
         expect.objectContaining({
           signal: expect.any(AbortSignal),
           headers: expect.objectContaining({
-            'Accept': 'application/json',
+            Accept: 'application/json',
             'Content-Type': 'application/json',
           }),
         })
@@ -129,7 +129,7 @@ describe('video-thumbnail-service', () => {
         expect.objectContaining({
           signal: expect.any(AbortSignal),
           headers: expect.objectContaining({
-            'Accept': 'application/json',
+            Accept: 'application/json',
             'Content-Type': 'application/json',
           }),
         })
@@ -192,7 +192,7 @@ describe('video-thumbnail-service', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
         body: JSON.stringify({
           thumbnailUrls: [
@@ -237,12 +237,13 @@ describe('video-thumbnail-service', () => {
       mockFetch.mockImplementationOnce(() =>
         Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({
-            webpUrls: [
-              'data:image/webp;base64,processed-2',
-              'data:image/webp;base64,processed-3',
-            ],
-          }),
+          json: () =>
+            Promise.resolve({
+              webpUrls: [
+                'data:image/webp;base64,processed-2',
+                'data:image/webp;base64,processed-3',
+              ],
+            }),
         } as Response)
       );
 
@@ -253,7 +254,7 @@ describe('video-thumbnail-service', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
         body: JSON.stringify({
           thumbnailUrls: [videos[1].thumbnail_url, videos[2].thumbnail_url],
@@ -282,12 +283,13 @@ describe('video-thumbnail-service', () => {
       mockFetch.mockImplementationOnce(() =>
         Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({
-            webpUrls: [
-              'data:image/webp;base64,processed-1',
-              'data:image/webp;base64,processed-3',
-            ],
-          }),
+          json: () =>
+            Promise.resolve({
+              webpUrls: [
+                'data:image/webp;base64,processed-1',
+                'data:image/webp;base64,processed-3',
+              ],
+            }),
         } as Response)
       );
 
@@ -297,7 +299,7 @@ describe('video-thumbnail-service', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
         body: JSON.stringify({
           thumbnailUrls: [videos[0].thumbnail_url, videos[2].thumbnail_url],
@@ -364,7 +366,7 @@ describe('video-thumbnail-service', () => {
   describe('cache management', () => {
     it('should clear cache', async () => {
       const video = createMockVideo('1');
-      
+
       // Mock successful server-side processing
       mockFetch.mockImplementationOnce(() =>
         Promise.resolve({
@@ -382,7 +384,7 @@ describe('video-thumbnail-service', () => {
 
     it('should provide cache statistics', async () => {
       const videos = [createMockVideo('1'), createMockVideo('2')];
-      
+
       // Mock successful server-side processing for both calls
       mockFetch.mockImplementation(() =>
         Promise.resolve({

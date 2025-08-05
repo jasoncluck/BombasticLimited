@@ -3,38 +3,19 @@
   import Progress from '$lib/components/ui/progress/progress.svelte';
   import { getVideoSecondsOffset } from '$lib/components/video/video-service';
   import { Check } from '@lucide/svelte';
-  import {
-    processVideoThumbnail,
-    getVideoThumbnailUrl,
-    type VideoWithProcessedThumbnail,
-  } from '../../video/video-thumbnail-service';
-  import { onMount } from 'svelte';
+  import { getVideoThumbnailUrl } from '$lib/utils/video-thumbnails';
 
   type ContentCardProps = {
     video: Video;
   };
 
   const { video = $bindable() }: ContentCardProps = $props();
-
-  let videoWithThumbnail = $state<VideoWithProcessedThumbnail | undefined>();
-
-  onMount(() => {
-    if (video) {
-      processVideoThumbnail(video).then(
-        (processed: VideoWithProcessedThumbnail) => {
-          videoWithThumbnail = processed;
-        }
-      );
-    }
-  });
 </script>
 
 <div class="relative flex aspect-video h-[80px] w-32 shrink-0 items-center">
   <img
     class="h-full w-full object-cover"
-    src={videoWithThumbnail
-      ? getVideoThumbnailUrl(videoWithThumbnail)
-      : video.thumbnail_url}
+    src={getVideoThumbnailUrl(video)}
     alt={video.title}
   />
   {#if isVideoWithTimestamp(video) && !video.watched_at && video.video_start_seconds && video.duration}
