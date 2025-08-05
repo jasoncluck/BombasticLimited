@@ -194,6 +194,7 @@ export function createMockPlaylist(overrides: Partial<any> = {}) {
     created_by: 'mock-user-id',
     description: 'Mock playlist description',
     profile_username: 'testuser',
+    deleted_at: null,
     ...overrides,
   };
 }

@@ -53,7 +53,7 @@ INSERT INTO
 VALUES
   (
     'test_video_1',
-    'YouTube',
+    'giantbomb',
     'Test Video One',
     'This is a test video about cats',
     'https://example.com/thumb1.jpg',
@@ -63,7 +63,7 @@ VALUES
   ),
   (
     'test_video_2',
-    'YouTube',
+    'nextlander',
     'Another Test Video',
     'This video discusses dogs and puppies',
     'https://example.com/thumb2.jpg',
@@ -73,7 +73,7 @@ VALUES
   ),
   (
     'test_video_3',
-    'YouTube',
+    'jeffgerstmann',
     'Programming Tutorial',
     'Learn JavaScript basics',
     'https://example.com/thumb3.jpg',
@@ -83,7 +83,7 @@ VALUES
   ),
   (
     'pending_video',
-    'YouTube',
+    'remap',
     'Pending Delete Video',
     'This video is marked for deletion',
     'https://example.com/thumb4.jpg',

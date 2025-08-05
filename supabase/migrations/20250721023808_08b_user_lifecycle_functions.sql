@@ -69,7 +69,7 @@ DECLARE
   already_exists boolean := false;
 BEGIN
   user_id := gen_random_uuid();
-  encrypted_pw := crypt(password, gen_salt('bf'));
+  encrypted_pw := extensions.crypt(password, extensions.gen_salt('bf'));
 
   BEGIN
     INSERT INTO auth.users

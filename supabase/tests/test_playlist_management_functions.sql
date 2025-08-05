@@ -61,7 +61,7 @@ INSERT INTO
 VALUES
   (
     'mgmt_video_1',
-    'YouTube',
+    'giantbomb',
     'Management Test Video 1',
     'First test video',
     'https://example.com/thumb1.jpg',
@@ -72,7 +72,7 @@ VALUES
   ),
   (
     'mgmt_video_2',
-    'YouTube',
+    'nextlander',
     'Management Test Video 2',
     'Second test video',
     'https://example.com/thumb2.jpg',
@@ -83,7 +83,7 @@ VALUES
   ),
   (
     'mgmt_video_3',
-    'YouTube',
+    'jeffgerstmann',
     'Management Test Video 3',
     'Third test video',
     'https://example.com/thumb3.jpg',

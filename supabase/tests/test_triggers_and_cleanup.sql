@@ -230,7 +230,7 @@ BEGIN
   INSERT INTO public.videos (id, source, title, description, published_at, duration, pending_delete)
   VALUES (
     'trigger_test_video',
-    'YouTube',
+    'jeffgerstmann',
     'Trigger Test Video Title',
     'This video has searchable content for testing purposes',
     '2023-01-01 10:00:00+00',
@@ -409,7 +409,7 @@ INSERT INTO
 VALUES
   (
     'pending_video_1',
-    'YouTube',
+    'jeffgerstmann',
     'Pending Video 1',
     'This video should be deleted',
     '2023-01-01 10:00:00+00',
@@ -418,7 +418,7 @@ VALUES
   ),
   (
     'pending_video_2',
-    'YouTube',
+    'jeffgerstmann',
     'Pending Video 2',
     'This video should also be deleted',
     '2023-01-02 11:00:00+00',
@@ -427,7 +427,7 @@ VALUES
   ),
   (
     'normal_video',
-    'YouTube',
+    'jeffgerstmann',
     'Normal Video',
     'This video should remain',
     '2023-01-03 12:00:00+00',
@@ -720,7 +720,7 @@ BEGIN
   INSERT INTO public.videos (id, source, title, description, published_at, duration, pending_delete)
   VALUES (
     test_video_id,
-    'YouTube',
+    'jeffgerstmann',
     'Test Video with Special Chars: @#$%^&*()[]{}',
     'Description with émojis 🎵🎶 and special characters: <>&"''',
     '2023-01-01 10:00:00+00',
@@ -861,7 +861,7 @@ BEGIN
   INSERT INTO public.videos (id, source, title, description, published_at, duration, pending_delete)
   VALUES (
     lifecycle_video_id,
-    'YouTube',
+    'jeffgerstmann',
     'Lifecycle Test Video',
     'Video for testing complete trigger lifecycle',
     '2023-01-01 10:00:00+00',
@@ -1135,7 +1135,7 @@ BEGIN
   INSERT INTO public.videos (id, source, title, description, published_at, duration, pending_delete)
   VALUES (
     complex_video_id,
-    'YouTube',
+    'jeffgerstmann',
     'Complex Scenario Video',
     'Video for complex trigger testing scenario',
     '2023-01-01 10:00:00+00',

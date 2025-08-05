@@ -16,7 +16,8 @@ CREATE OR REPLACE FUNCTION public.get_playlists_for_username (p_username text) R
   youtube_id text,
   profile_username text,
   sorted_by public.playlist_sorted_by,
-  sort_order public.playlist_sort_order
+  sort_order public.playlist_sort_order,
+  deleted_at TIMESTAMP WITH TIME ZONE
 )
 SET
   search_path = '' LANGUAGE sql AS $$
@@ -34,7 +35,8 @@ SET
     p.youtube_id,
     prof.username AS profile_username,
     up.sorted_by,
-    up.sort_order
+    up.sort_order,
+    p.deleted_at
   FROM public.playlists p
   JOIN public.profiles prof ON p.created_by = prof.id
   LEFT JOIN public.user_playlists up 
@@ -63,7 +65,8 @@ CREATE OR REPLACE FUNCTION "public"."search_playlists" (
   "type" public.playlist_type,
   "youtube_id" text,
   "profile_username" text,
-  "search_rank" real
+  "search_rank" real,
+  "deleted_at" TIMESTAMP WITH TIME ZONE
 ) LANGUAGE "plpgsql" STABLE AS $$
 DECLARE
     clean_term text;
@@ -128,7 +131,8 @@ BEGIN
             WHEN word_count = 1 AND p.description IS NOT NULL AND lower(p.description) LIKE '%' || words[1] || '%' THEN 300
             WHEN prof.username IS NOT NULL AND lower(prof.username) LIKE '%' || clean_term || '%' THEN 250
             ELSE 0 
-        END)::real AS search_rank
+        END)::real AS search_rank,
+        p.deleted_at
     FROM public.playlists p
     LEFT JOIN public.profiles prof ON p.created_by = prof.id
     WHERE 

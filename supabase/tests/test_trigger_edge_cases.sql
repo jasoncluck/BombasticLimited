@@ -96,7 +96,7 @@ BEGIN
   INSERT INTO public.videos (id, source, title, published_at, duration, pending_delete)
   VALUES (
     test_video_id,
-    'YouTube',
+    'nextlander',
     'Concurrent Test Video',
     '2023-01-01 10:00:00+00',
     'PT5M30S',
@@ -238,7 +238,7 @@ BEGIN
   INSERT INTO public.videos (id, source, title, description, published_at, duration, pending_delete)
   VALUES (
     null_video_id,
-    'YouTube',
+    'nextlander',
     'NULL Description Video',
     NULL,
     '2023-01-01 10:00:00+00',
@@ -663,7 +663,7 @@ BEGIN
   INSERT INTO public.videos (id, source, title, published_at, duration, pending_delete)
   VALUES (
     integrity_video_id,
-    'YouTube',
+    'nextlander',
     'Integrity Test Video',
     '2023-01-01 10:00:00+00',
     'PT5M30S',
@@ -801,7 +801,7 @@ BEGIN
   INSERT INTO public.videos (id, source, title, description, published_at, duration, pending_delete)
   VALUES (
     interaction_video_id,
-    'YouTube',
+    'nextlander',
     'Final Interaction Video',
     'Complete trigger interaction testing',
     '2023-01-01 10:00:00+00',

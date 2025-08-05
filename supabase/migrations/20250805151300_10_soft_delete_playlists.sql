@@ -216,7 +216,8 @@ CREATE OR REPLACE FUNCTION public.get_user_playlists (p_user_id uuid) RETURNS TA
   sorted_by public.playlist_sorted_by,
   sort_order public.playlist_sort_order,
   youtube_id text,
-  profile_username text
+  profile_username text,
+  deleted_at TIMESTAMP WITH TIME ZONE
 )
 SET
   search_path = '' LANGUAGE sql AS $$
@@ -235,7 +236,8 @@ SET
     up.sorted_by,
     up.sort_order,
     p.youtube_id,
-    prof.username AS profile_username
+    prof.username AS profile_username,
+    p.deleted_at
   FROM public.user_playlists up
   JOIN public.playlists p ON up.id = p.id
   LEFT JOIN public.profiles prof ON p.created_by = prof.id

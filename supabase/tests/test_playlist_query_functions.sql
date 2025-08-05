@@ -145,7 +145,7 @@ INSERT INTO
 VALUES
   (
     'playlist_video_1',
-    'YouTube',
+    'giantbomb',
     'First Playlist Video',
     'First video in playlist',
     'https://example.com/thumb1.jpg',
@@ -155,7 +155,7 @@ VALUES
   ),
   (
     'playlist_video_2',
-    'YouTube',
+    'giantbomb',
     'Second Playlist Video',
     'Second video in playlist',
     'https://example.com/thumb2.jpg',
@@ -165,7 +165,7 @@ VALUES
   ),
   (
     'playlist_video_3',
-    'YouTube',
+    'giantbomb',
     'Third Playlist Video',
     'Third video in playlist',
     'https://example.com/thumb3.jpg',
