@@ -92,27 +92,27 @@
               {/each}
             </div>
 
-            <!-- Divider with exact spacing -->
-            <div class="mx-2 my-2">
-              <Skeleton class="h-px w-full" />
-            </div>
+            <!-- HR element matching real sidebar exactly -->
+            <hr class="m-2" />
 
-            <!-- Playlists Header Section Skeleton with exact dimensions -->
+            <!-- Playlists Header Section - exact match to real sidebar -->
             <div
-              class="flex flex-col {!isSidebarCollapsed
-                ? 'mx-6 my-3'
-                : 'mx-1 my-3 items-center'}"
+              class="m-3 flex flex-col {!isSidebarCollapsed
+                ? 'mx-6 items-start'
+                : 'items-center'}"
             >
-              <div class="flex h-[44px] w-full items-center">
+              <div class="flex h-[44px] items-center">
                 {#if !isSidebarCollapsed}
                   <!-- Full header with exact spacing -->
-                  <div class="flex w-full items-center space-x-4">
-                    <Skeleton class="h-10 w-10 flex-shrink-0 rounded-full" />
-                    <Skeleton class="h-6 w-20 flex-shrink-0" />
-                  </div>
+                  <Skeleton class="my-1 h-10 w-10 flex-shrink-0 rounded-full" />
+                  <h2
+                    class="ml-4 text-lg font-semibold tracking-tight opacity-50"
+                  >
+                    Playlists
+                  </h2>
                 {:else}
-                  <!-- Collapsed header -->
-                  <Skeleton class="h-10 w-10 flex-shrink-0 rounded-full" />
+                  <!-- Collapsed header - centered circle -->
+                  <Skeleton class="my-1 h-10 w-10 flex-shrink-0 rounded-full" />
                 {/if}
               </div>
             </div>
@@ -124,25 +124,51 @@
                 : 'mx-1'}"
             >
               <div class="flex flex-col">
-                <!-- Fixed number of playlist items -->
+                <!-- Fixed number of playlist items with Button-like structure -->
                 {#each Array(6), i}
+                  <!-- Simulate Button component structure -->
                   <div
-                    class="flex items-center {!isSidebarCollapsed
+                    class="focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground relative inline-flex items-center justify-center rounded-md text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-1 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 {!isSidebarCollapsed
                       ? 'h-[56px] px-2 py-1'
-                      : 'h-[56px] justify-center px-1 py-1'}"
+                      : 'h-[56px] w-10 justify-center px-1 py-1'}"
                   >
-                    {#if !isSidebarCollapsed}
-                      <!-- Full width playlist item skeleton -->
-                      <div class="flex w-full items-center space-x-3">
+                    <div
+                      class="absolute flex grow items-center
+                        {!isSidebarCollapsed ? 'w-full grow' : 'item-center'}"
+                    >
+                      {#if !isSidebarCollapsed}
+                        <!-- Full width playlist item skeleton -->
+                        <div class="flex w-full items-center space-x-3">
+                          <div
+                            class="flex h-12 w-12 flex-shrink-0 items-center justify-center"
+                          >
+                            <!-- Show ListVideo more frequently to match real behavior -->
+                            {#if i % 3 === 0}
+                              <Skeleton class="h-12 w-12 rounded" />
+                            {:else}
+                              <div
+                                class="bg-muted flex h-12 w-12 animate-pulse items-center justify-center rounded"
+                              >
+                                <ListVideo
+                                  class="text-muted-foreground h-8 w-8 opacity-50"
+                                />
+                              </div>
+                            {/if}
+                          </div>
+                          <div class="min-w-0 flex-1">
+                            <Skeleton class="h-4 w-full" />
+                          </div>
+                        </div>
+                      {:else}
+                        <!-- Collapsed playlist item skeleton -->
                         <div
                           class="flex h-12 w-12 flex-shrink-0 items-center justify-center"
                         >
-                          <!-- Simulate either image or ListVideo icon with exact dimensions -->
-                          {#if i % 2 === 1}
+                          {#if i % 3 === 0}
                             <Skeleton class="h-12 w-12 rounded" />
                           {:else}
                             <div
-                              class="bg-muted flex h-12 w-12 items-center justify-center rounded"
+                              class="bg-muted flex h-12 w-12 animate-pulse items-center justify-center rounded"
                             >
                               <ListVideo
                                 class="text-muted-foreground h-8 w-8 opacity-50"
@@ -150,28 +176,8 @@
                             </div>
                           {/if}
                         </div>
-                        <div class="min-w-0 flex-1">
-                          <Skeleton class="h-4 w-full" />
-                        </div>
-                      </div>
-                    {:else}
-                      <!-- Collapsed playlist item skeleton -->
-                      <div
-                        class="flex h-12 w-12 flex-shrink-0 items-center justify-center"
-                      >
-                        {#if i % 2 === 0}
-                          <Skeleton class="h-12 w-12 rounded" />
-                        {:else}
-                          <div
-                            class="bg-muted flex h-12 w-12 items-center justify-center rounded"
-                          >
-                            <ListVideo
-                              class="text-muted-foreground h-8 w-8 opacity-50"
-                            />
-                          </div>
-                        {/if}
-                      </div>
-                    {/if}
+                      {/if}
+                    </div>
                   </div>
                 {/each}
               </div>
