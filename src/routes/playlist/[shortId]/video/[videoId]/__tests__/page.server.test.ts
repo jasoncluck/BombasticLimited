@@ -55,7 +55,8 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
     video_start_seconds: null,
     updated_at: null,
     watched_at: null,
-    thumbnail_maxres_url: mockVideo.thumbnail_maxres_url || 'https://example.com/thumb_maxres.jpg',
+    thumbnail_maxres_url:
+      mockVideo.thumbnail_maxres_url || 'https://example.com/thumb_maxres.jpg',
     duration: mockVideo.duration || '00:30:00',
   } as const;
   const mockNextVideos: any[] = [];
@@ -189,9 +190,9 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
     });
 
     it('should handle video with timestamp', async () => {
-      const videoWithTimestamp = { 
-        ...mockPlaylistVideo, 
-        video_start_seconds: 300 
+      const videoWithTimestamp = {
+        ...mockPlaylistVideo,
+        video_start_seconds: 300,
       };
       const mockVideoContext = {
         playlist: mockPlaylist,

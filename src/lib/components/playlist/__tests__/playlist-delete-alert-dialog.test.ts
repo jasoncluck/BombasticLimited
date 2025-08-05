@@ -143,12 +143,12 @@ describe('PlaylistDeleteAlertDialog Component Logic', () => {
     });
 
     it('should handle delete error gracefully', async () => {
-      const deleteError = { 
+      const deleteError = {
         message: 'Delete failed',
         details: 'Server error details',
         hint: 'Check server logs',
         code: '500',
-        name: 'PostgrestError'
+        name: 'PostgrestError',
       };
       mockHandleDeletePlaylist.mockResolvedValue({ error: deleteError });
 

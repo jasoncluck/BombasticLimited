@@ -42,6 +42,7 @@
   import type { UserProfile } from '$lib/supabase/user-profiles';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import type { CombinedContentFilter } from './content-filter';
+  import PlaylistDeleteAlertDialog from '../playlist/playlist-delete-alert-dialog.svelte';
 
   let {
     videos = $bindable(),
@@ -99,6 +100,7 @@
 
   let open = $state(false);
   let subMenuOpen = $state(false);
+  let showDeleteDialog = $state(false);
 
   // Capture the operation videos when dropdown opens and keep them fixed
   let frozenOperationVideos = $state<Video[]>([]);
@@ -515,18 +517,25 @@
           <DropdownMenu.Item
             class="cursor-pointer"
             onclick={async () => {
-              const data = await handleDeletePlaylist({
-                playlist,
-                sidebarState,
-                supabase,
-                session,
-              });
+              // Check if it's a public playlist
+              if (playlist.type === 'Public') {
+                // Show confirmation dialog for public playlists
+                showDeleteDialog = true;
+              } else {
+                // Delete private playlist immediately
+                const data = await handleDeletePlaylist({
+                  playlist,
+                  sidebarState,
+                  supabase,
+                  session,
+                });
 
-              if (
-                !data?.error &&
-                page.url.pathname === `/playlist/${playlist.short_id}`
-              ) {
-                goto('/');
+                if (
+                  !data?.error &&
+                  page.url.pathname === `/playlist/${playlist.short_id}`
+                ) {
+                  goto('/');
+                }
               }
             }}
           >
@@ -576,4 +585,15 @@
       {/if}
     </DropdownMenu.Content>
   </DropdownMenu.Root>
+{/if}
+
+<!-- Show AlertDialog for public playlist deletion -->
+{#if playlist}
+  <PlaylistDeleteAlertDialog
+    {playlist}
+    {sidebarState}
+    {session}
+    {supabase}
+    bind:open={showDeleteDialog}
+  />
 {/if}

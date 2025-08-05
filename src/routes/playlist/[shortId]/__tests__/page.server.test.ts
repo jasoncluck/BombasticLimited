@@ -216,7 +216,9 @@ describe('playlist/[shortId]/+page.server.ts', () => {
       const result = await load(mockLoadEvent);
 
       expect(mockGetCroppedPlaylistImageUrlServer).not.toHaveBeenCalled();
-      expect((result as any).playlist.processedImageUrl).toBe('existing-image-url');
+      expect((result as any).playlist.processedImageUrl).toBe(
+        'existing-image-url'
+      );
     });
 
     it('should handle user playlist sort preferences', async () => {
@@ -327,16 +329,16 @@ describe('playlist/[shortId]/+page.server.ts', () => {
         image_properties: { x: 10, y: 10, width: 200, height: 200 },
       };
       const validFormData = createMockSuperValidated(formData);
-      const updatedPlaylist = { 
-        ...mockPlaylist, 
+      const updatedPlaylist = {
+        ...mockPlaylist,
         name: 'Updated Playlist',
-        search_vector: null 
+        search_vector: null,
       };
 
       mockSuperValidate.mockResolvedValue(validFormData);
-      mockUpdatePlaylistInfo.mockResolvedValue({ 
+      mockUpdatePlaylistInfo.mockResolvedValue({
         updatedPlaylist: updatedPlaylist as any,
-        error: null 
+        error: null,
       });
 
       const result = await actions.default(mockActionEvent);
