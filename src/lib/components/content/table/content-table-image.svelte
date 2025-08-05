@@ -3,6 +3,7 @@
   import Progress from '$lib/components/ui/progress/progress.svelte';
   import { getVideoSecondsOffset } from '$lib/components/video/video-service';
   import { Check } from '@lucide/svelte';
+  import { getVideoThumbnailUrl } from '$lib/utils/video-thumbnails';
 
   type ContentCardProps = {
     video: Video;
@@ -14,8 +15,11 @@
 <div class="relative flex aspect-video h-[80px] w-32 shrink-0 items-center">
   <img
     class="h-full w-full object-cover"
-    src={video.thumbnail_url}
+    src={getVideoThumbnailUrl(video)}
     alt={video.title}
+    loading="lazy"
+    decoding="async"
+    fetchpriority="auto"
   />
   {#if isVideoWithTimestamp(video) && !video.watched_at && video.video_start_seconds && video.duration}
     <Progress

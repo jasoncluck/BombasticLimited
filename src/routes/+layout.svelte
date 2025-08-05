@@ -248,7 +248,7 @@
     if ('serviceWorker' in navigator) {
       const handleServiceWorkerMessage = (event: MessageEvent) => {
         const { type } = event.data || {};
-        
+
         if (type === 'REQUEST_TAB_VISIBILITY') {
           // Respond with current tab visibility state
           event.ports[0]?.postMessage({
@@ -264,13 +264,19 @@
         }
       };
 
-      navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
-      
+      navigator.serviceWorker.addEventListener(
+        'message',
+        handleServiceWorkerMessage
+      );
+
       // Cleanup service worker listener
       const cleanupServiceWorker = () => {
-        navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
+        navigator.serviceWorker.removeEventListener(
+          'message',
+          handleServiceWorkerMessage
+        );
       };
-      
+
       // Add to cleanup list
       return () => {
         if (mediaCleanup && typeof mediaCleanup === 'function') {

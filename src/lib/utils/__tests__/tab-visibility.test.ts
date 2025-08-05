@@ -17,7 +17,10 @@ vi.stubGlobal('document', mockDocument);
 vi.stubGlobal('window', mockWindow);
 
 // Now import the module after mocks are set up
-import { useTabVisibility, createVisibilityAwareInterval } from '$lib/utils/tab-visibility';
+import {
+  useTabVisibility,
+  createVisibilityAwareInterval,
+} from '$lib/utils/tab-visibility';
 
 describe('Tab Visibility Utility', () => {
   beforeEach(() => {
@@ -46,7 +49,7 @@ describe('Tab Visibility Utility', () => {
 
       timer.start();
       timer.stop();
-      
+
       // Timer should be stopped and not call callback during test
       expect(callback).not.toHaveBeenCalled();
     });
@@ -67,20 +70,20 @@ describe('Tab Visibility Utility', () => {
       // Temporarily mock document as undefined
       const originalDocument = global.document;
       vi.stubGlobal('document', undefined);
-      
+
       const visibility = useTabVisibility();
-      
+
       expect(visibility.isVisible).toBe(true);
       expect(visibility.isHidden).toBe(false);
       expect(visibility.state).toEqual({ isVisible: true, isHidden: false });
-      
+
       // Restore document
       vi.stubGlobal('document', originalDocument);
     });
 
     it('should provide getter functions for state access', () => {
       const visibility = useTabVisibility();
-      
+
       // Should be able to access properties as getters
       expect(typeof visibility.isVisible).toBe('boolean');
       expect(typeof visibility.isHidden).toBe('boolean');

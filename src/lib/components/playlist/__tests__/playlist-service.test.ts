@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getCroppedPlaylistImageUrl } from '../playlist-service';
+import {
+  getCroppedPlaylistImageUrl,
+  getVideoThumbnailWebpUrl,
+  getVideoThumbnailWebpUrlsBatch,
+} from '../playlist-service';
 import type { ImageProperties } from '../playlist';
 
 // Mock dependencies
@@ -200,5 +204,257 @@ describe('getCroppedPlaylistImageUrl', () => {
     });
 
     expect(result).toBe(null);
+  });
+});
+
+describe('getVideoThumbnailWebpUrl', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    // Setup global mocks
+    global.fetch = mockFetch;
+    global.createImageBitmap = mockCreateImageBitmap;
+    global.OffscreenCanvas = MockOffscreenCanvas as any;
+  });
+
+  it('should process video thumbnail with OffscreenCanvas and return WebP data URL without cropping', async () => {
+    const mockImageBlob = new Blob(['fake-image-data'], { type: 'image/jpeg' });
+    const mockImageBitmap = { width: 320, height: 180 } as ImageBitmap;
+    const mockWebpBlob = new Blob(['fake-webp-data'], { type: 'image/webp' });
+
+    mockFetch.mockResolvedValue({
+      ok: true,
+      blob: () => Promise.resolve(mockImageBlob),
+    });
+
+    mockCreateImageBitmap.mockResolvedValue(mockImageBitmap);
+    mockGetContext.mockReturnValue({ drawImage: mockDrawImage });
+
+    // Mock ArrayBuffer and base64 conversion
+    const mockArrayBuffer = new ArrayBuffer(8);
+    const mockUint8Array = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]);
+    mockWebpBlob.arrayBuffer = vi.fn().mockResolvedValue(mockArrayBuffer);
+    Object.defineProperty(mockArrayBuffer, 'length', { value: 8 });
+
+    // Mock the Uint8Array constructor to return our mock
+    const originalUint8Array = global.Uint8Array;
+    global.Uint8Array = vi.fn().mockReturnValue(mockUint8Array) as any;
+
+    mockConvertToBlob.mockResolvedValue(mockWebpBlob);
+
+    const result = await getVideoThumbnailWebpUrl({
+      thumbnailUrl: 'https://example.com/video-thumb.jpg',
+    });
+
+    // Verify fetch was called
+    expect(mockFetch).toHaveBeenCalledWith(
+      'https://example.com/video-thumb.jpg'
+    );
+
+    // Verify OffscreenCanvas processing - should use original image dimensions (no cropping)
+    expect(mockCreateImageBitmap).toHaveBeenCalledWith(mockImageBlob);
+    expect(mockConvertToBlob).toHaveBeenCalledWith({
+      type: 'image/webp',
+      quality: 0.8,
+    });
+
+    // Should draw the full image without cropping (0, 0 coordinates)
+    expect(mockDrawImage).toHaveBeenCalledWith(mockImageBitmap, 0, 0);
+
+    // Verify result format
+    expect(result).toMatch(/^data:image\/webp;base64,/);
+
+    // Restore original constructor
+    global.Uint8Array = originalUint8Array;
+  });
+
+  it('should fallback to Canvas processing when OffscreenCanvas is not available', async () => {
+    // Disable OffscreenCanvas
+    delete (global as any).OffscreenCanvas;
+    delete (global as any).createImageBitmap;
+
+    // Create a more complete mock for the canvas fallback
+    const mockCanvas = {
+      width: 320,
+      height: 180,
+      getContext: vi.fn().mockReturnValue({
+        drawImage: mockDrawImage,
+      }),
+      toBlob: vi.fn(),
+    };
+
+    const mockCreateElement = vi.fn().mockReturnValue(mockCanvas);
+    global.document = { createElement: mockCreateElement } as any;
+
+    // Mock Image constructor
+    const mockImage = {
+      crossOrigin: '',
+      onload: null as any,
+      onerror: null as any,
+      src: '',
+      width: 320,
+      height: 180,
+    };
+
+    global.Image = vi.fn().mockImplementation(() => mockImage) as any;
+
+    // Mock FileReader
+    const mockFileReader = {
+      onload: null as any,
+      onerror: null as any,
+      readAsDataURL: vi.fn(),
+      result: 'data:image/webp;base64,mock-base64-data',
+    };
+
+    global.FileReader = vi.fn().mockImplementation(() => mockFileReader) as any;
+
+    const result = getVideoThumbnailWebpUrl({
+      thumbnailUrl: 'https://example.com/video-thumb.jpg',
+    });
+
+    // Simulate image load
+    mockImage.onload();
+
+    // Simulate toBlob callback
+    const mockBlob = new Blob(['mock-data'], { type: 'image/webp' });
+    mockCanvas.toBlob.mock.calls[0][0](mockBlob);
+
+    // Simulate FileReader load
+    mockFileReader.onload();
+
+    await expect(result).resolves.toBe(
+      'data:image/webp;base64,mock-base64-data'
+    );
+
+    expect(mockCreateElement).toHaveBeenCalledWith('canvas');
+    expect(mockCanvas.toBlob).toHaveBeenCalledWith(
+      expect.any(Function),
+      'image/webp',
+      0.8
+    );
+  });
+
+  it('should return null when no thumbnail URL is provided', async () => {
+    const result = await getVideoThumbnailWebpUrl({
+      thumbnailUrl: null,
+    });
+
+    expect(result).toBe(null);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it('should return null on processing error', async () => {
+    // Setup OffscreenCanvas
+    global.OffscreenCanvas = MockOffscreenCanvas as any;
+    global.createImageBitmap = mockCreateImageBitmap;
+
+    mockFetch.mockRejectedValue(new Error('Fetch failed'));
+
+    const result = await getVideoThumbnailWebpUrl({
+      thumbnailUrl: 'https://example.com/video-thumb.jpg',
+    });
+
+    expect(result).toBe(null);
+  });
+});
+
+describe('getVideoThumbnailWebpUrlsBatch', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    // Setup global mocks
+    global.fetch = mockFetch;
+    global.createImageBitmap = mockCreateImageBitmap;
+    global.OffscreenCanvas = MockOffscreenCanvas as any;
+  });
+
+  it('should process multiple video thumbnails in batch', async () => {
+    const mockImageBlob = new Blob(['fake-image-data'], { type: 'image/jpeg' });
+    const mockImageBitmap = { width: 320, height: 180 } as ImageBitmap;
+    const mockWebpBlob = new Blob(['fake-webp-data'], { type: 'image/webp' });
+
+    mockFetch.mockResolvedValue({
+      ok: true,
+      blob: () => Promise.resolve(mockImageBlob),
+    });
+
+    mockCreateImageBitmap.mockResolvedValue(mockImageBitmap);
+    mockGetContext.mockReturnValue({ drawImage: mockDrawImage });
+
+    // Mock ArrayBuffer and base64 conversion
+    const mockArrayBuffer = new ArrayBuffer(8);
+    const mockUint8Array = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]);
+    mockWebpBlob.arrayBuffer = vi.fn().mockResolvedValue(mockArrayBuffer);
+    Object.defineProperty(mockArrayBuffer, 'length', { value: 8 });
+
+    // Mock the Uint8Array constructor to return our mock
+    const originalUint8Array = global.Uint8Array;
+    global.Uint8Array = vi.fn().mockReturnValue(mockUint8Array) as any;
+
+    mockConvertToBlob.mockResolvedValue(mockWebpBlob);
+
+    const thumbnailUrls = [
+      'https://example.com/video1.jpg',
+      'https://example.com/video2.jpg',
+      null,
+      'https://example.com/video3.jpg',
+    ];
+
+    const results = await getVideoThumbnailWebpUrlsBatch(thumbnailUrls);
+
+    expect(results).toHaveLength(4);
+    expect(results[0]).toMatch(/^data:image\/webp;base64,/);
+    expect(results[1]).toMatch(/^data:image\/webp;base64,/);
+    expect(results[2]).toBe(null); // null input should return null
+    expect(results[3]).toMatch(/^data:image\/webp;base64,/);
+
+    // Verify fetch was called for non-null URLs
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+
+    // Restore original constructor
+    global.Uint8Array = originalUint8Array;
+  });
+
+  it('should handle errors gracefully in batch processing', async () => {
+    const mockImageBlob = new Blob(['fake-image-data'], { type: 'image/jpeg' });
+    const mockImageBitmap = { width: 320, height: 180 } as ImageBitmap;
+    const mockWebpBlob = new Blob(['fake-webp-data'], { type: 'image/webp' });
+
+    // Mock successful and failed responses
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        blob: () => Promise.resolve(mockImageBlob),
+      })
+      .mockRejectedValueOnce(new Error('Fetch failed'));
+
+    mockCreateImageBitmap.mockResolvedValue(mockImageBitmap);
+    mockGetContext.mockReturnValue({ drawImage: mockDrawImage });
+
+    // Mock ArrayBuffer and base64 conversion
+    const mockArrayBuffer = new ArrayBuffer(8);
+    const mockUint8Array = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]);
+    mockWebpBlob.arrayBuffer = vi.fn().mockResolvedValue(mockArrayBuffer);
+    Object.defineProperty(mockArrayBuffer, 'length', { value: 8 });
+
+    // Mock the Uint8Array constructor to return our mock
+    const originalUint8Array = global.Uint8Array;
+    global.Uint8Array = vi.fn().mockReturnValue(mockUint8Array) as any;
+
+    mockConvertToBlob.mockResolvedValue(mockWebpBlob);
+
+    const thumbnailUrls = [
+      'https://example.com/video1.jpg',
+      'https://example.com/video2.jpg',
+    ];
+
+    const results = await getVideoThumbnailWebpUrlsBatch(thumbnailUrls);
+
+    expect(results).toHaveLength(2);
+    expect(results[0]).toMatch(/^data:image\/webp;base64,/);
+    expect(results[1]).toBe(null); // Failed processing should return null
+
+    // Restore original constructor
+    global.Uint8Array = originalUint8Array;
   });
 });

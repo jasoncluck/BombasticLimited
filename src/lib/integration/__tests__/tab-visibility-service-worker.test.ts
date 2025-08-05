@@ -7,7 +7,7 @@ const mockServiceWorker = {
     postMessage: vi.fn(),
   },
   addEventListener: vi.fn(),
-  removeEventListener: vi.fn()
+  removeEventListener: vi.fn(),
 };
 
 const mockNavigator = {
@@ -28,15 +28,17 @@ describe('Tab Visibility Integration with Service Worker', () => {
     // Mock message event that service worker would send
     const messageEvent = {
       data: { type: 'REQUEST_TAB_VISIBILITY' },
-      ports: [{
-        postMessage: vi.fn()
-      }]
+      ports: [
+        {
+          postMessage: vi.fn(),
+        },
+      ],
     };
 
     // Simulate the message handler from +layout.svelte
     const handleServiceWorkerMessage = (event: any) => {
       const { type } = event.data || {};
-      
+
       if (type === 'REQUEST_TAB_VISIBILITY') {
         event.ports[0]?.postMessage({
           type: 'TAB_VISIBILITY_RESPONSE',
@@ -58,16 +60,18 @@ describe('Tab Visibility Integration with Service Worker', () => {
   it('should handle auth state requests', () => {
     const messageEvent = {
       data: { type: 'REQUEST_AUTH_STATE' },
-      ports: [{
-        postMessage: vi.fn()
-      }]
+      ports: [
+        {
+          postMessage: vi.fn(),
+        },
+      ],
     };
 
     const mockUser = { id: 'test-user' };
 
     const handleServiceWorkerMessage = (event: any) => {
       const { type } = event.data || {};
-      
+
       if (type === 'REQUEST_AUTH_STATE') {
         event.ports[0]?.postMessage({
           type: 'AUTH_STATE_RESPONSE',
@@ -110,21 +114,27 @@ describe('Tab Visibility Integration with Service Worker', () => {
       serviceWorker: {
         addEventListener,
         removeEventListener,
-        controller: { postMessage: vi.fn() }
-      }
+        controller: { postMessage: vi.fn() },
+      },
     };
 
     vi.stubGlobal('navigator', mockNavigatorWithEvents);
 
     // Simulate the setup from +layout.svelte
     const handleMessage = vi.fn();
-    mockNavigatorWithEvents.serviceWorker.addEventListener('message', handleMessage);
+    mockNavigatorWithEvents.serviceWorker.addEventListener(
+      'message',
+      handleMessage
+    );
 
     expect(addEventListener).toHaveBeenCalledWith('message', handleMessage);
 
     // Simulate cleanup
     const cleanup = () => {
-      mockNavigatorWithEvents.serviceWorker.removeEventListener('message', handleMessage);
+      mockNavigatorWithEvents.serviceWorker.removeEventListener(
+        'message',
+        handleMessage
+      );
     };
 
     cleanup();

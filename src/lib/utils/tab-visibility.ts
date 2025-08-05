@@ -41,14 +41,14 @@ class TabVisibilityManager {
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    
+
     // Also listen for focus/blur events for additional reliability
     window.addEventListener('focus', () => {
       if (document.hidden === false && !this._isVisible) {
         handleVisibilityChange();
       }
     });
-    
+
     window.addEventListener('blur', () => {
       if (document.hidden === true && this._isVisible) {
         handleVisibilityChange();
@@ -63,7 +63,7 @@ class TabVisibilityManager {
    */
   subscribe(callback: TabVisibilityCallback): () => void {
     this.callbacks.add(callback);
-    
+
     // Call immediately with current state
     callback({
       isVisible: this._isVisible,
@@ -161,9 +161,9 @@ export class VisibilityAwareTimer {
 
   start() {
     if (this.isActive) return;
-    
+
     this.isActive = true;
-    
+
     // Subscribe to visibility changes
     this.unsubscribeVisibility = tabVisibility.subscribe((state) => {
       if (state.isVisible) {
@@ -177,7 +177,7 @@ export class VisibilityAwareTimer {
   stop() {
     this.isActive = false;
     this.clearTimer();
-    
+
     if (this.unsubscribeVisibility) {
       this.unsubscribeVisibility();
       this.unsubscribeVisibility = null;
@@ -186,7 +186,7 @@ export class VisibilityAwareTimer {
 
   private resume() {
     if (!this.isActive) return;
-    
+
     this.clearTimer();
     this.timerId = setInterval(this.callback, this.interval);
   }
