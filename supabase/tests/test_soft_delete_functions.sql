@@ -3,24 +3,26 @@
 -- ============================================================================
 -- This test suite verifies the soft delete functionality for playlists
 -- using pgTAP testing framework
-
 BEGIN;
 
 -- Plan the number of tests
-SELECT plan(12);
+SELECT
+  plan (12);
 
 -- ============================================================================
 -- Test Setup: Create test data
 -- ============================================================================
-
 -- Create a test user for our tests
-INSERT INTO auth.users (id, email, created_at, updated_at )
-VALUES (
-  '00000000-0000-0000-0000-000000000001'::uuid,
-  'test@example.com',
-  NOW(),
-  NOW()
-) ON CONFLICT (id) DO NOTHING;
+INSERT INTO
+  auth.users (id, email, created_at, updated_at)
+VALUES
+  (
+    '00000000-0000-0000-0000-000000000001'::uuid,
+    'test@example.com',
+    NOW(),
+    NOW()
+  )
+ON CONFLICT (id) DO NOTHING;
 
 -- Create a test playlist and store test data
 DO $$
@@ -54,38 +56,54 @@ END $$;
 -- ============================================================================
 -- Test 1-3: Initial State Verification
 -- ============================================================================
+SELECT
+  ok (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        temp_test_data t
+        JOIN public.playlists p ON p.id = t.playlist_id
+      WHERE
+        p.deleted_at IS NULL
+    ),
+    'Test playlist exists and is not soft deleted initially'
+  );
 
-SELECT ok(
-  EXISTS(
-    SELECT 1 FROM temp_test_data t
-    JOIN public.playlists p ON p.id = t.playlist_id
-    WHERE p.deleted_at IS NULL
-  ),
-  'Test playlist exists and is not soft deleted initially'
-);
+SELECT
+  ok (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        temp_test_data t
+        JOIN public.user_playlists up ON up.id = t.playlist_id
+      WHERE
+        up.user_id = t.test_user_id
+    ),
+    'Test playlist is mapped to user initially'
+  );
 
-SELECT ok(
-  EXISTS(
-    SELECT 1 FROM temp_test_data t
-    JOIN public.user_playlists up ON up.id = t.playlist_id
-    WHERE up.user_id = t.test_user_id
-  ),
-  'Test playlist is mapped to user initially'
-);
-
-SELECT is(
-  (SELECT COUNT(*) FROM temp_test_data t
-   JOIN public.playlists p ON p.id = t.playlist_id
-   JOIN public.user_playlists up ON up.id = t.playlist_id
-   WHERE up.user_id = t.test_user_id AND p.deleted_at IS NULL),
-  1::bigint,
-  'User has exactly one active playlist before deletion'
-);
+SELECT
+  IS (
+    (
+      SELECT
+        COUNT(*)
+      FROM
+        temp_test_data t
+        JOIN public.playlists p ON p.id = t.playlist_id
+        JOIN public.user_playlists up ON up.id = t.playlist_id
+      WHERE
+        up.user_id = t.test_user_id
+        AND p.deleted_at IS NULL
+    ),
+    1::bigint,
+    'User has exactly one active playlist before deletion'
+  );
 
 -- ============================================================================
 -- Test 4-7: Soft Delete Operation
 -- ============================================================================
-
 -- Perform soft delete
 DO $$
 DECLARE
@@ -96,67 +114,99 @@ BEGIN
   PERFORM public.delete_playlist(test_user_id, playlist_id);
 END $$;
 
-SELECT ok(
-  EXISTS(
-    SELECT 1 FROM temp_test_data t
-    JOIN public.playlists p ON p.id = t.playlist_id
-    WHERE p.deleted_at IS NOT NULL
-  ),
-  'Playlist is soft deleted (has deleted_at timestamp)'
-);
+SELECT
+  ok (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        temp_test_data t
+        JOIN public.playlists p ON p.id = t.playlist_id
+      WHERE
+        p.deleted_at IS NOT NULL
+    ),
+    'Playlist is soft deleted (has deleted_at timestamp)'
+  );
 
-SELECT ok(
-  NOT EXISTS(
-    SELECT 1 FROM temp_test_data t
-    JOIN public.user_playlists up ON up.id = t.playlist_id
-    WHERE up.user_id = t.test_user_id
-  ),
-  'User mapping is removed from user_playlists after soft delete'
-);
+SELECT
+  ok (
+    NOT EXISTS (
+      SELECT
+        1
+      FROM
+        temp_test_data t
+        JOIN public.user_playlists up ON up.id = t.playlist_id
+      WHERE
+        up.user_id = t.test_user_id
+    ),
+    'User mapping is removed from user_playlists after soft delete'
+  );
 
-SELECT is(
-  (SELECT COUNT(*) FROM temp_test_data t
-   LEFT JOIN public.user_playlists up ON up.id = t.playlist_id AND up.user_id = t.test_user_id
-   LEFT JOIN public.playlists p ON p.id = t.playlist_id AND p.deleted_at IS NULL
-   WHERE up.id IS NOT NULL AND p.id IS NOT NULL),
-  0::bigint,
-  'User has no active playlists after deletion'
-);
+SELECT
+  IS (
+    (
+      SELECT
+        COUNT(*)
+      FROM
+        temp_test_data t
+        LEFT JOIN public.user_playlists up ON up.id = t.playlist_id
+        AND up.user_id = t.test_user_id
+        LEFT JOIN public.playlists p ON p.id = t.playlist_id
+        AND p.deleted_at IS NULL
+      WHERE
+        up.id IS NOT NULL
+        AND p.id IS NOT NULL
+    ),
+    0::bigint,
+    'User has no active playlists after deletion'
+  );
 
 -- Verify the playlist still exists in the database (not hard deleted)
-SELECT ok(
-  EXISTS(
-    SELECT 1 FROM temp_test_data t
-    JOIN public.playlists p ON p.id = t.playlist_id
-  ),
-  'Playlist record still exists in database (not hard deleted)'
-);
+SELECT
+  ok (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        temp_test_data t
+        JOIN public.playlists p ON p.id = t.playlist_id
+    ),
+    'Playlist record still exists in database (not hard deleted)'
+  );
 
 -- ============================================================================
 -- Test 8-9: Query Functions Exclude Soft Deleted Playlists  
 -- ============================================================================
-
 -- Test get_user_playlists excludes soft deleted playlists
-SELECT is(
-  (SELECT COUNT(*) FROM temp_test_data t
-   CROSS JOIN public.get_user_playlists(t.test_user_id)),
-  0::bigint,
-  'get_user_playlists excludes soft deleted playlists'
-);
+SELECT
+  IS (
+    (
+      SELECT
+        COUNT(*)
+      FROM
+        temp_test_data t
+        CROSS JOIN public.get_user_playlists (t.test_user_id)
+    ),
+    0::bigint,
+    'get_user_playlists excludes soft deleted playlists'
+  );
 
 -- Test get_playlist_data returns null for soft deleted playlist
-SELECT ok(
-  NOT EXISTS(
-    SELECT 1 FROM temp_test_data t
-    CROSS JOIN public.get_playlist_data(t.playlist_short_id)
-  ),
-  'get_playlist_data returns no results for soft deleted playlist'
-);
+SELECT
+  ok (
+    NOT EXISTS (
+      SELECT
+        1
+      FROM
+        temp_test_data t
+        CROSS JOIN public.get_playlist_data (t.playlist_short_id)
+    ),
+    'get_playlist_data returns no results for soft deleted playlist'
+  );
 
 -- ============================================================================
 -- Test 10-12: Restore Functionality
 -- ============================================================================
-
 -- Test restore function
 DO $$
 DECLARE
@@ -166,39 +216,52 @@ BEGIN
   PERFORM public.restore_playlist(playlist_id);
 END $$;
 
-SELECT ok(
-  EXISTS(
-    SELECT 1 FROM temp_test_data t
-    JOIN public.playlists p ON p.id = t.playlist_id
-    WHERE p.deleted_at IS NULL
-  ),
-  'Playlist is restored (deleted_at is NULL)'
-);
+SELECT
+  ok (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        temp_test_data t
+        JOIN public.playlists p ON p.id = t.playlist_id
+      WHERE
+        p.deleted_at IS NULL
+    ),
+    'Playlist is restored (deleted_at is NULL)'
+  );
 
 -- Verify restored playlist appears in query functions
-SELECT ok(
-  EXISTS(
-    SELECT 1 FROM temp_test_data t
-    CROSS JOIN public.get_playlist_data(t.playlist_short_id)
-  ),
-  'get_playlist_data returns results for restored playlist'
-);
+SELECT
+  ok (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        temp_test_data t
+        CROSS JOIN public.get_playlist_data (t.playlist_short_id)
+    ),
+    'get_playlist_data returns results for restored playlist'
+  );
 
 -- Note: User mapping is NOT automatically restored - this is by design
 -- The user would need to manually re-follow the playlist
-SELECT ok(
-  NOT EXISTS(
-    SELECT 1 FROM temp_test_data t
-    JOIN public.user_playlists up ON up.id = t.playlist_id
-    WHERE up.user_id = t.test_user_id
-  ),
-  'User mapping is not automatically restored (by design)'
-);
+SELECT
+  ok (
+    NOT EXISTS (
+      SELECT
+        1
+      FROM
+        temp_test_data t
+        JOIN public.user_playlists up ON up.id = t.playlist_id
+      WHERE
+        up.user_id = t.test_user_id
+    ),
+    'User mapping is not automatically restored (by design)'
+  );
 
 -- ============================================================================
 -- Test Cleanup
 -- ============================================================================
-
 -- Clean up test data
 DO $$
 DECLARE
@@ -210,12 +273,18 @@ BEGIN
 END $$;
 
 -- Clean up test user (only if it was created for testing)
-DELETE FROM auth.users WHERE id = '00000000-0000-0000-0000-000000000001'::uuid AND email = 'test@example.com';
+DELETE FROM auth.users
+WHERE
+  id = '00000000-0000-0000-0000-000000000001'::uuid
+  AND email = 'test@example.com';
 
 -- Drop temp table
 DROP TABLE temp_test_data;
 
 -- Finish the test suite
-SELECT * FROM finish();
+SELECT
+  *
+FROM
+  finish ();
 
 ROLLBACK;

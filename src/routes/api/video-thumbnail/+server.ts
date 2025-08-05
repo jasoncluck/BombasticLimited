@@ -14,14 +14,14 @@ export const GET: RequestHandler = async ({ url, request }) => {
     // Validate allowed domains for security
     const allowedDomains = [
       'i.ytimg.com',
-      'img.youtube.com', 
+      'img.youtube.com',
       'i1.ytimg.com',
       'i2.ytimg.com',
       'i3.ytimg.com',
       'i4.ytimg.com',
       'static-cdn.jtvnw.net',
     ];
-    
+
     const parsedUrl = new URL(thumbnailUrl);
     if (!allowedDomains.includes(parsedUrl.hostname)) {
       throw error(403, 'Domain not allowed');
@@ -42,14 +42,14 @@ export const GET: RequestHandler = async ({ url, request }) => {
       }
 
       const imageBuffer = Buffer.from(base64Data, 'base64');
-      
+
       return new Response(imageBuffer, {
         headers: {
           'Content-Type': 'image/webp',
           'Cache-Control': 'public, max-age=31536000, immutable', // 1 year cache
           'Content-Length': imageBuffer.length.toString(),
-          'Vary': 'Accept-Encoding',
-          'ETag': `"${Buffer.from(thumbnailUrl).toString('base64').slice(0, 16)}"`, // Simple ETag based on URL
+          Vary: 'Accept-Encoding',
+          ETag: `"${Buffer.from(thumbnailUrl).toString('base64').slice(0, 16)}"`, // Simple ETag based on URL
         },
       });
     }

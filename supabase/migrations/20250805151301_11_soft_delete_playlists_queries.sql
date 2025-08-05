@@ -1,7 +1,6 @@
 -- Migration: 11_soft_delete_playlists_queries.sql
 -- Purpose: Continue updating playlist query functions for soft delete functionality
 -- This migration updates the remaining RPC functions to filter out soft-deleted playlists
-
 -- Update get_playlists_for_username function  
 CREATE OR REPLACE FUNCTION public.get_playlists_for_username (p_username text) RETURNS TABLE (
   id bigint,

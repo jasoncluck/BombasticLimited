@@ -8,36 +8,40 @@
 -- - Error handling and recovery
 -- - Performance characteristics
 -- - Concurrent operation handling
-
 BEGIN;
 
 -- Plan the number of tests
-SELECT plan(20);
+SELECT
+  plan (20);
 
 -- ============================================================================
 -- Test Setup: Create test data
 -- ============================================================================
-
 -- Create test user for edge case testing
-INSERT INTO auth.users (id, email, created_at, updated_at)
-VALUES (
-  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'::uuid,
-  'edgecase@example.com',
-  NOW(),
-  NOW()
-) ON CONFLICT (id) DO NOTHING;
+INSERT INTO
+  auth.users (id, email, created_at, updated_at)
+VALUES
+  (
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'::uuid,
+    'edgecase@example.com',
+    NOW(),
+    NOW()
+  )
+ON CONFLICT (id) DO NOTHING;
 
 -- Create test profile
-INSERT INTO public.profiles (id, username)
-VALUES (
-  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'::uuid,
-  'edgecaseuser'
-) ON CONFLICT (id) DO NOTHING;
+INSERT INTO
+  public.profiles (id, username)
+VALUES
+  (
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'::uuid,
+    'edgecaseuser'
+  )
+ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
 -- Test 1-5: Concurrent Operations and Race Conditions
 -- ============================================================================
-
 -- Test concurrent playlist creation doesn't cause short_id collisions
 DO $$
 DECLARE
@@ -260,17 +264,52 @@ END $$;
 -- ============================================================================
 -- Test 6-10: Error Handling and Recovery
 -- ============================================================================
-
 -- Test trigger behavior when dependent functions are missing
 -- (This is more of a theoretical test since we can't actually drop the functions)
-SELECT ok(
-  EXISTS(SELECT 1 FROM pg_proc WHERE proname = 'set_short_id') AND
-  EXISTS(SELECT 1 FROM pg_proc WHERE proname = 'set_playlist_search_vector') AND
-  EXISTS(SELECT 1 FROM pg_proc WHERE proname = 'set_video_search_vector') AND
-  EXISTS(SELECT 1 FROM pg_proc WHERE proname = 'update_timestamp') AND
-  EXISTS(SELECT 1 FROM pg_proc WHERE proname = 'handle_user_changes'),
-  'All trigger-dependent functions exist and are accessible'
-);
+SELECT
+  ok (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        pg_proc
+      WHERE
+        proname = 'set_short_id'
+    )
+    AND EXISTS (
+      SELECT
+        1
+      FROM
+        pg_proc
+      WHERE
+        proname = 'set_playlist_search_vector'
+    )
+    AND EXISTS (
+      SELECT
+        1
+      FROM
+        pg_proc
+      WHERE
+        proname = 'set_video_search_vector'
+    )
+    AND EXISTS (
+      SELECT
+        1
+      FROM
+        pg_proc
+      WHERE
+        proname = 'update_timestamp'
+    )
+    AND EXISTS (
+      SELECT
+        1
+      FROM
+        pg_proc
+      WHERE
+        proname = 'handle_user_changes'
+    ),
+    'All trigger-dependent functions exist and are accessible'
+  );
 
 -- Test trigger resilience to invalid data types
 DO $$
@@ -300,19 +339,24 @@ END $$;
 
 -- Test trigger behavior with concurrent schema changes
 -- (Simulated - we can't actually change schema during test)
-SELECT ok(
-  EXISTS(
-    SELECT 1 FROM information_schema.triggers 
-    WHERE trigger_name IN (
-      'before_insert_set_short_id',
-      'update_playlist_search_vector',
-      'update_video_search_vector',
-      'update_user_video_timestamps_updated_at',
-      'on_auth_user_changes'
-    )
-  ),
-  'All expected triggers remain active and properly configured'
-);
+SELECT
+  ok (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        information_schema.triggers
+      WHERE
+        trigger_name IN (
+          'before_insert_set_short_id',
+          'update_playlist_search_vector',
+          'update_video_search_vector',
+          'update_user_video_timestamps_updated_at',
+          'on_auth_user_changes'
+        )
+    ),
+    'All expected triggers remain active and properly configured'
+  );
 
 -- Test trigger behavior with transaction boundaries
 DO $$
@@ -382,7 +426,6 @@ END $$;
 -- ============================================================================
 -- Test 11-15: Performance and Scalability
 -- ============================================================================
-
 -- Test trigger performance with bulk operations
 DO $$
 DECLARE
@@ -563,7 +606,6 @@ END $$;
 -- ============================================================================
 -- Test 16-20: Data Integrity and Consistency
 -- ============================================================================
-
 -- Test search vector consistency across updates
 DO $$
 DECLARE
@@ -799,7 +841,6 @@ END $$;
 -- ============================================================================
 -- Test Cleanup
 -- ============================================================================
-
 -- Clean up interaction test data
 DO $$
 DECLARE
@@ -817,7 +858,9 @@ EXCEPTION
 END $$;
 
 -- Clean up edge case test data
-DELETE FROM public.timestamps WHERE user_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'::uuid;
+DELETE FROM public.timestamps
+WHERE
+  user_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'::uuid;
 
 DO $$
 DECLARE
@@ -838,8 +881,13 @@ EXCEPTION
 END $$;
 
 -- Clean up test user data
-DELETE FROM public.profiles WHERE id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'::uuid;
-DELETE FROM auth.users WHERE id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'::uuid;
+DELETE FROM public.profiles
+WHERE
+  id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'::uuid;
+
+DELETE FROM auth.users
+WHERE
+  id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'::uuid;
 
 -- Drop temp tables
 DO $$
@@ -852,6 +900,9 @@ EXCEPTION
 END $$;
 
 -- Finish the test suite
-SELECT * FROM finish();
+SELECT
+  *
+FROM
+  finish ();
 
 ROLLBACK;

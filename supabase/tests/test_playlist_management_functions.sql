@@ -14,48 +14,101 @@
 -- - delete_playlist_videos()
 -- - validate_playlist_thumbnail_urls()
 -- - update_playlist_videos_positions()
-
 BEGIN;
 
 -- Plan the number of tests
-SELECT plan(30);
+SELECT
+  plan (30);
 
 -- ============================================================================
 -- Test Setup: Create test data
 -- ============================================================================
-
 -- Create test user
-INSERT INTO auth.users (id, email, created_at, updated_at)
-VALUES (
-  '66666666-6666-6666-6666-666666666666'::uuid,
-  'managementtest@example.com',
-  NOW(),
-  NOW()
-) ON CONFLICT (id) DO NOTHING;
+INSERT INTO
+  auth.users (id, email, created_at, updated_at)
+VALUES
+  (
+    '66666666-6666-6666-6666-666666666666'::uuid,
+    'managementtest@example.com',
+    NOW(),
+    NOW()
+  )
+ON CONFLICT (id) DO NOTHING;
 
 -- Create test profile
-INSERT INTO public.profiles (id, username)
-VALUES (
-  '66666666-6666-6666-6666-666666666666'::uuid,
-  'managementtestuser'
-) ON CONFLICT (id) DO NOTHING;
+INSERT INTO
+  public.profiles (id, username)
+VALUES
+  (
+    '66666666-6666-6666-6666-666666666666'::uuid,
+    'managementtestuser'
+  )
+ON CONFLICT (id) DO NOTHING;
 
 -- Create test videos for playlist operations
-INSERT INTO public.videos (id, source, title, description, thumbnail_url, thumbnail_maxres_url, published_at, duration, pending_delete)
-VALUES 
-  ('mgmt_video_1', 'YouTube', 'Management Test Video 1', 'First test video', 'https://example.com/thumb1.jpg', 'https://example.com/maxres1.jpg', '2023-01-01 10:00:00+00', 'PT5M30S', FALSE),
-  ('mgmt_video_2', 'YouTube', 'Management Test Video 2', 'Second test video', 'https://example.com/thumb2.jpg', 'https://example.com/maxres2.jpg', '2023-01-02 11:00:00+00', 'PT10M15S', FALSE),
-  ('mgmt_video_3', 'YouTube', 'Management Test Video 3', 'Third test video', 'https://example.com/thumb3.jpg', 'https://example.com/maxres3.jpg', '2023-01-03 12:00:00+00', 'PT8M45S', FALSE)
+INSERT INTO
+  public.videos (
+    id,
+    source,
+    title,
+    description,
+    thumbnail_url,
+    thumbnail_maxres_url,
+    published_at,
+    duration,
+    pending_delete
+  )
+VALUES
+  (
+    'mgmt_video_1',
+    'YouTube',
+    'Management Test Video 1',
+    'First test video',
+    'https://example.com/thumb1.jpg',
+    'https://example.com/maxres1.jpg',
+    '2023-01-01 10:00:00+00',
+    'PT5M30S',
+    FALSE
+  ),
+  (
+    'mgmt_video_2',
+    'YouTube',
+    'Management Test Video 2',
+    'Second test video',
+    'https://example.com/thumb2.jpg',
+    'https://example.com/maxres2.jpg',
+    '2023-01-02 11:00:00+00',
+    'PT10M15S',
+    FALSE
+  ),
+  (
+    'mgmt_video_3',
+    'YouTube',
+    'Management Test Video 3',
+    'Third test video',
+    'https://example.com/thumb3.jpg',
+    'https://example.com/maxres3.jpg',
+    '2023-01-03 12:00:00+00',
+    'PT8M45S',
+    FALSE
+  )
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
 -- Test 1-5: insert_playlist() Function
 -- ============================================================================
-
-SELECT ok(
-  EXISTS(SELECT 1 FROM pg_proc WHERE proname = 'insert_playlist'),
-  'insert_playlist function exists'
-);
+SELECT
+  ok (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        pg_proc
+      WHERE
+        proname = 'insert_playlist'
+    ),
+    'insert_playlist function exists'
+  );
 
 -- Test creating a new playlist
 DO $$
@@ -131,7 +184,6 @@ END $$;
 -- ============================================================================
 -- Test 6-9: follow_playlist() and unfollow_playlist() Functions
 -- ============================================================================
-
 -- First create a playlist that another user can follow
 DO $$
 DECLARE
@@ -212,11 +264,18 @@ END $$;
 -- ============================================================================
 -- Test 10-13: insert_playlist_videos() Function
 -- ============================================================================
-
-SELECT ok(
-  EXISTS(SELECT 1 FROM pg_proc WHERE proname = 'insert_playlist_videos'),
-  'insert_playlist_videos function exists'
-);
+SELECT
+  ok (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        pg_proc
+      WHERE
+        proname = 'insert_playlist_videos'
+    ),
+    'insert_playlist_videos function exists'
+  );
 
 -- Test adding videos to playlist
 DO $$
@@ -272,11 +331,18 @@ END $$;
 -- ============================================================================
 -- Test 14-16: delete_playlist_videos() Function
 -- ============================================================================
-
-SELECT ok(
-  EXISTS(SELECT 1 FROM pg_proc WHERE proname = 'delete_playlist_videos'),
-  'delete_playlist_videos function exists'
-);
+SELECT
+  ok (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        pg_proc
+      WHERE
+        proname = 'delete_playlist_videos'
+    ),
+    'delete_playlist_videos function exists'
+  );
 
 -- Test deleting videos from playlist
 DO $$
@@ -326,11 +392,18 @@ END $$;
 -- ============================================================================
 -- Test 17-19: validate_playlist_thumbnail_urls() Function
 -- ============================================================================
-
-SELECT ok(
-  EXISTS(SELECT 1 FROM pg_proc WHERE proname = 'validate_playlist_thumbnail_urls'),
-  'validate_playlist_thumbnail_urls function exists'
-);
+SELECT
+  ok (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        pg_proc
+      WHERE
+        proname = 'validate_playlist_thumbnail_urls'
+    ),
+    'validate_playlist_thumbnail_urls function exists'
+  );
 
 -- Test URL validation with valid URLs
 DO $$
@@ -362,11 +435,18 @@ END $$;
 -- ============================================================================
 -- Test 20-22: update_playlist_videos_positions() Function
 -- ============================================================================
-
-SELECT ok(
-  EXISTS(SELECT 1 FROM pg_proc WHERE proname = 'update_playlist_videos_positions'),
-  'update_playlist_videos_positions function exists'
-);
+SELECT
+  ok (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        pg_proc
+      WHERE
+        proname = 'update_playlist_videos_positions'
+    ),
+    'update_playlist_videos_positions function exists'
+  );
 
 -- Test updating video positions
 DO $$
@@ -399,16 +479,31 @@ END $$;
 -- ============================================================================
 -- Test 23-25: update_playlist_position() and delete_playlist() Functions
 -- ============================================================================
+SELECT
+  ok (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        pg_proc
+      WHERE
+        proname = 'update_playlist_position'
+    ),
+    'update_playlist_position function exists'
+  );
 
-SELECT ok(
-  EXISTS(SELECT 1 FROM pg_proc WHERE proname = 'update_playlist_position'),
-  'update_playlist_position function exists'
-);
-
-SELECT ok(
-  EXISTS(SELECT 1 FROM pg_proc WHERE proname = 'delete_playlist'),
-  'delete_playlist function exists'
-);
+SELECT
+  ok (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        pg_proc
+      WHERE
+        proname = 'delete_playlist'
+    ),
+    'delete_playlist function exists'
+  );
 
 -- Test playlist position updates and deletion
 DO $$
@@ -446,11 +541,18 @@ END $$;
 -- ============================================================================
 -- Test 26-28: initialize_user_playlist_positions() Function
 -- ============================================================================
-
-SELECT ok(
-  EXISTS(SELECT 1 FROM pg_proc WHERE proname = 'initialize_user_playlist_positions'),
-  'initialize_user_playlist_positions function exists'
-);
+SELECT
+  ok (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        pg_proc
+      WHERE
+        proname = 'initialize_user_playlist_positions'
+    ),
+    'initialize_user_playlist_positions function exists'
+  );
 
 -- Test position initialization
 DO $$
@@ -490,7 +592,6 @@ END $$;
 -- ============================================================================
 -- Test 29-30: Function Security and Error Handling
 -- ============================================================================
-
 -- Test that functions handle invalid playlist IDs gracefully
 DO $$
 DECLARE
@@ -510,15 +611,23 @@ BEGIN
 END $$;
 
 -- Test function permissions and security
-SELECT ok(
-  (SELECT COUNT(*) FROM pg_proc WHERE proname LIKE '%playlist%' AND pronamespace = 'public'::regnamespace) > 0,
-  'Playlist management functions are accessible in public schema'
-);
+SELECT
+  ok (
+    (
+      SELECT
+        COUNT(*)
+      FROM
+        pg_proc
+      WHERE
+        proname LIKE '%playlist%'
+        AND pronamespace = 'public'::regnamespace
+    ) > 0,
+    'Playlist management functions are accessible in public schema'
+  );
 
 -- ============================================================================
 -- Test Cleanup
 -- ============================================================================
-
 -- Clean up all test data
 DO $$
 DECLARE
@@ -533,9 +642,17 @@ BEGIN
 END $$;
 
 -- Clean up test videos, profiles, and users
-DELETE FROM public.videos WHERE id IN ('mgmt_video_1', 'mgmt_video_2', 'mgmt_video_3');
-DELETE FROM public.profiles WHERE id = '66666666-6666-6666-6666-666666666666'::uuid;
-DELETE FROM auth.users WHERE id = '66666666-6666-6666-6666-666666666666'::uuid;
+DELETE FROM public.videos
+WHERE
+  id IN ('mgmt_video_1', 'mgmt_video_2', 'mgmt_video_3');
+
+DELETE FROM public.profiles
+WHERE
+  id = '66666666-6666-6666-6666-666666666666'::uuid;
+
+DELETE FROM auth.users
+WHERE
+  id = '66666666-6666-6666-6666-666666666666'::uuid;
 
 -- Drop temp tables
 DO $$
@@ -547,6 +664,9 @@ EXCEPTION
 END $$;
 
 -- Finish the test suite
-SELECT * FROM finish();
+SELECT
+  *
+FROM
+  finish ();
 
 ROLLBACK;

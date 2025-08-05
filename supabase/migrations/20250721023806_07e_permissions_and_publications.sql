@@ -3,7 +3,6 @@
 -- Dependencies: Requires database schema to be established
 -- This migration configures database access permissions and realtime functionality
 -- ============================================================================
-
 -- Set up realtime publication
 ALTER PUBLICATION "supabase_realtime" OWNER TO "postgres";
 

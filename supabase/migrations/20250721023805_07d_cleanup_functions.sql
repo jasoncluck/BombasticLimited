@@ -3,7 +3,6 @@
 -- Dependencies: Requires base tables from 03_base_tables.sql (videos, timestamps)
 -- This migration adds functions for data cleanup and maintenance
 -- ============================================================================
-
 -- Function to delete pending videos and associated data
 CREATE OR REPLACE FUNCTION "public"."delete_pending_videos" () RETURNS "void" LANGUAGE "plpgsql"
 SET

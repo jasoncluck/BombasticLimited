@@ -3,7 +3,6 @@
 -- Dependencies: Requires base tables from 03_base_tables.sql and user profile functions (08a)
 -- This migration includes playlist creation, modification, and video management functions
 -- ============================================================================
-
 -- Function to insert a new playlist and create a user_playlists mapping with position management
 CREATE OR REPLACE FUNCTION public.insert_playlist (
   p_created_by uuid,

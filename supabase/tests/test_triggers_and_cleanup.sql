@@ -9,45 +9,54 @@
 -- - update_video_search_vector trigger
 -- - update_user_video_timestamps_updated_at trigger
 -- - delete_pending_videos() function
-
 BEGIN;
 
 -- Plan the number of tests
-SELECT plan(35);
+SELECT
+  plan (35);
 
 -- ============================================================================
 -- Test Setup: Create test data
 -- ============================================================================
-
 -- Create test user for trigger testing
-INSERT INTO auth.users (id, email, created_at, updated_at)
-VALUES (
-  '88888888-8888-8888-8888-888888888888'::uuid,
-  'triggertest@example.com',
-  NOW(),
-  NOW()
-) ON CONFLICT (id) DO NOTHING;
+INSERT INTO
+  auth.users (id, email, created_at, updated_at)
+VALUES
+  (
+    '88888888-8888-8888-8888-888888888888'::uuid,
+    'triggertest@example.com',
+    NOW(),
+    NOW()
+  )
+ON CONFLICT (id) DO NOTHING;
 
 -- Create test profile
-INSERT INTO public.profiles (id, username)
-VALUES (
-  '88888888-8888-8888-8888-888888888888'::uuid,
-  'triggertestuser'
-) ON CONFLICT (id) DO NOTHING;
+INSERT INTO
+  public.profiles (id, username)
+VALUES
+  (
+    '88888888-8888-8888-8888-888888888888'::uuid,
+    'triggertestuser'
+  )
+ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
 -- Test 1-4: before_insert_set_short_id Trigger
 -- ============================================================================
-
 -- Test that trigger exists
-SELECT ok(
-  EXISTS(
-    SELECT 1 FROM pg_trigger 
-    WHERE tgname = 'before_insert_set_short_id'
-    AND tgrelid = 'public.playlists'::regclass
-  ),
-  'before_insert_set_short_id trigger exists on playlists table'
-);
+SELECT
+  ok (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        pg_trigger
+      WHERE
+        tgname = 'before_insert_set_short_id'
+        AND tgrelid = 'public.playlists'::regclass
+    ),
+    'before_insert_set_short_id trigger exists on playlists table'
+  );
 
 -- Test that short_id is automatically generated on playlist insert
 DO $$
@@ -119,16 +128,20 @@ END $$;
 -- ============================================================================
 -- Test 5-7: update_playlist_search_vector Trigger
 -- ============================================================================
-
 -- Test that trigger exists
-SELECT ok(
-  EXISTS(
-    SELECT 1 FROM pg_trigger 
-    WHERE tgname = 'update_playlist_search_vector'
-    AND tgrelid = 'public.playlists'::regclass
-  ),
-  'update_playlist_search_vector trigger exists on playlists table'
-);
+SELECT
+  ok (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        pg_trigger
+      WHERE
+        tgname = 'update_playlist_search_vector'
+        AND tgrelid = 'public.playlists'::regclass
+    ),
+    'update_playlist_search_vector trigger exists on playlists table'
+  );
 
 -- Test that search vector is updated on playlist insert
 DO $$
@@ -193,16 +206,20 @@ END $$;
 -- ============================================================================
 -- Test 8-10: update_video_search_vector Trigger
 -- ============================================================================
-
 -- Test that trigger exists
-SELECT ok(
-  EXISTS(
-    SELECT 1 FROM pg_trigger 
-    WHERE tgname = 'update_video_search_vector'
-    AND tgrelid = 'public.videos'::regclass
-  ),
-  'update_video_search_vector trigger exists on videos table'
-);
+SELECT
+  ok (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        pg_trigger
+      WHERE
+        tgname = 'update_video_search_vector'
+        AND tgrelid = 'public.videos'::regclass
+    ),
+    'update_video_search_vector trigger exists on videos table'
+  );
 
 -- Test that search vector is updated on video insert
 DO $$
@@ -262,16 +279,20 @@ END $$;
 -- ============================================================================
 -- Test 11-13: update_user_video_timestamps_updated_at Trigger
 -- ============================================================================
-
 -- Test that trigger exists
-SELECT ok(
-  EXISTS(
-    SELECT 1 FROM pg_trigger 
-    WHERE tgname = 'update_user_video_timestamps_updated_at'
-    AND tgrelid = 'public.timestamps'::regclass
-  ),
-  'update_user_video_timestamps_updated_at trigger exists on timestamps table'
-);
+SELECT
+  ok (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        pg_trigger
+      WHERE
+        tgname = 'update_user_video_timestamps_updated_at'
+        AND tgrelid = 'public.timestamps'::regclass
+    ),
+    'update_user_video_timestamps_updated_at trigger exists on timestamps table'
+  );
 
 -- Create test playlist for timestamp testing
 DO $$
@@ -360,19 +381,59 @@ END $$;
 -- ============================================================================
 -- Test 14-17: delete_pending_videos() Function
 -- ============================================================================
-
 -- Test that function exists
-SELECT ok(
-  EXISTS(SELECT 1 FROM pg_proc WHERE proname = 'delete_pending_videos'),
-  'delete_pending_videos function exists'
-);
+SELECT
+  ok (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        pg_proc
+      WHERE
+        proname = 'delete_pending_videos'
+    ),
+    'delete_pending_videos function exists'
+  );
 
 -- Create test videos with pending delete status
-INSERT INTO public.videos (id, source, title, description, published_at, duration, pending_delete)
-VALUES 
-  ('pending_video_1', 'YouTube', 'Pending Video 1', 'This video should be deleted', '2023-01-01 10:00:00+00', 'PT5M30S', TRUE),
-  ('pending_video_2', 'YouTube', 'Pending Video 2', 'This video should also be deleted', '2023-01-02 11:00:00+00', 'PT10M15S', TRUE),
-  ('normal_video', 'YouTube', 'Normal Video', 'This video should remain', '2023-01-03 12:00:00+00', 'PT8M45S', FALSE)
+INSERT INTO
+  public.videos (
+    id,
+    source,
+    title,
+    description,
+    published_at,
+    duration,
+    pending_delete
+  )
+VALUES
+  (
+    'pending_video_1',
+    'YouTube',
+    'Pending Video 1',
+    'This video should be deleted',
+    '2023-01-01 10:00:00+00',
+    'PT5M30S',
+    TRUE
+  ),
+  (
+    'pending_video_2',
+    'YouTube',
+    'Pending Video 2',
+    'This video should also be deleted',
+    '2023-01-02 11:00:00+00',
+    'PT10M15S',
+    TRUE
+  ),
+  (
+    'normal_video',
+    'YouTube',
+    'Normal Video',
+    'This video should remain',
+    '2023-01-03 12:00:00+00',
+    'PT8M45S',
+    FALSE
+  )
 ON CONFLICT (id) DO NOTHING;
 
 -- Create timestamps for pending videos to test cascade deletion
@@ -390,53 +451,98 @@ BEGIN
 END $$;
 
 -- Test that pending videos exist before cleanup
-SELECT ok(
-  (SELECT COUNT(*) FROM public.videos WHERE pending_delete = TRUE) >= 2,
-  'Pending delete videos exist before cleanup'
-);
+SELECT
+  ok (
+    (
+      SELECT
+        COUNT(*)
+      FROM
+        public.videos
+      WHERE
+        pending_delete = TRUE
+    ) >= 2,
+    'Pending delete videos exist before cleanup'
+  );
 
 -- Test that associated timestamps exist before cleanup
-SELECT ok(
-  (SELECT COUNT(*) FROM public.timestamps WHERE video_id IN ('pending_video_1', 'pending_video_2')) >= 2,
-  'Timestamps for pending videos exist before cleanup'
-);
+SELECT
+  ok (
+    (
+      SELECT
+        COUNT(*)
+      FROM
+        public.timestamps
+      WHERE
+        video_id IN ('pending_video_1', 'pending_video_2')
+    ) >= 2,
+    'Timestamps for pending videos exist before cleanup'
+  );
 
 -- Run the cleanup function
-SELECT public.delete_pending_videos();
+SELECT
+  public.delete_pending_videos ();
 
 -- Test that pending videos were deleted
-SELECT is(
-  (SELECT COUNT(*) FROM public.videos WHERE id IN ('pending_video_1', 'pending_video_2')),
-  0::bigint,
-  'delete_pending_videos removes pending delete videos'
-);
+SELECT
+  IS (
+    (
+      SELECT
+        COUNT(*)
+      FROM
+        public.videos
+      WHERE
+        id IN ('pending_video_1', 'pending_video_2')
+    ),
+    0::bigint,
+    'delete_pending_videos removes pending delete videos'
+  );
 
 -- Test that associated timestamps were deleted
-SELECT is(
-  (SELECT COUNT(*) FROM public.timestamps WHERE video_id IN ('pending_video_1', 'pending_video_2')),
-  0::bigint,
-  'delete_pending_videos removes associated timestamps'
-);
+SELECT
+  IS (
+    (
+      SELECT
+        COUNT(*)
+      FROM
+        public.timestamps
+      WHERE
+        video_id IN ('pending_video_1', 'pending_video_2')
+    ),
+    0::bigint,
+    'delete_pending_videos removes associated timestamps'
+  );
 
 -- Test that normal videos were not affected
-SELECT ok(
-  EXISTS(SELECT 1 FROM public.videos WHERE id = 'normal_video'),
-  'delete_pending_videos does not affect normal videos'
-);
+SELECT
+  ok (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        public.videos
+      WHERE
+        id = 'normal_video'
+    ),
+    'delete_pending_videos does not affect normal videos'
+  );
 
 -- ============================================================================
 -- Test 18-22: on_auth_user_changes Trigger (Comprehensive)
 -- ============================================================================
-
 -- Test that the auth user trigger exists
-SELECT ok(
-  EXISTS(
-    SELECT 1 FROM pg_trigger 
-    WHERE tgname = 'on_auth_user_changes'
-    AND tgrelid = 'auth.users'::regclass
-  ),
-  'on_auth_user_changes trigger exists on auth.users table'
-);
+SELECT
+  ok (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        pg_trigger
+      WHERE
+        tgname = 'on_auth_user_changes'
+        AND tgrelid = 'auth.users'::regclass
+    ),
+    'on_auth_user_changes trigger exists on auth.users table'
+  );
 
 -- Test automatic profile creation on user insert with full_name
 DO $$
@@ -545,7 +651,6 @@ END $$;
 -- ============================================================================
 -- Test 23-27: Edge Cases and Error Conditions
 -- ============================================================================
-
 -- Test search vector trigger with null values
 DO $$
 DECLARE
@@ -716,7 +821,6 @@ END $$;
 -- ============================================================================
 -- Test 28-35: Advanced Trigger Integration and Data Consistency
 -- ============================================================================
-
 -- Test complete user-to-playlist-to-video lifecycle with all triggers
 DO $$
 DECLARE
@@ -1077,9 +1181,10 @@ END $$;
 -- ============================================================================
 -- Test Cleanup
 -- ============================================================================
-
 -- Clean up test data
-DELETE FROM public.timestamps WHERE user_id = '88888888-8888-8888-8888-888888888888'::uuid;
+DELETE FROM public.timestamps
+WHERE
+  user_id = '88888888-8888-8888-8888-888888888888'::uuid;
 
 -- Clean up lifecycle test data
 DO $$
@@ -1117,7 +1222,9 @@ BEGIN
 END $$;
 
 -- Clean up test videos
-DELETE FROM public.videos WHERE id IN ('trigger_test_video', 'normal_video');
+DELETE FROM public.videos
+WHERE
+  id IN ('trigger_test_video', 'normal_video');
 
 -- Clean up special test videos
 DO $$
@@ -1133,8 +1240,13 @@ EXCEPTION
 END $$;
 
 -- Clean up test user data
-DELETE FROM public.profiles WHERE id = '88888888-8888-8888-8888-888888888888'::uuid;
-DELETE FROM auth.users WHERE id = '88888888-8888-8888-8888-888888888888'::uuid;
+DELETE FROM public.profiles
+WHERE
+  id = '88888888-8888-8888-8888-888888888888'::uuid;
+
+DELETE FROM auth.users
+WHERE
+  id = '88888888-8888-8888-8888-888888888888'::uuid;
 
 -- Drop temp tables
 DO $$
@@ -1150,6 +1262,9 @@ EXCEPTION
 END $$;
 
 -- Finish the test suite
-SELECT * FROM finish();
+SELECT
+  *
+FROM
+  finish ();
 
 ROLLBACK;

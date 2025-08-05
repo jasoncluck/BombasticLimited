@@ -3,7 +3,6 @@
 -- Dependencies: Requires auth schema and user profile functions (08a)
 -- This migration includes user creation/deletion handlers and triggers
 -- ============================================================================
-
 -- Function to handle user changes (creates profile on user creation)
 CREATE OR REPLACE FUNCTION "public"."handle_user_changes" () RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
 SET

@@ -9,108 +9,132 @@
 -- - handle_user_changes() [trigger function]
 -- - create_user()
 -- - delete_user()
-
 BEGIN;
 
 -- Plan the number of tests
-SELECT plan(18);
+SELECT
+  plan (18);
 
 -- ============================================================================
 -- Test Setup: Create test data
 -- ============================================================================
-
 -- Create test users for our tests
-INSERT INTO auth.users (id, email, created_at, updated_at, raw_user_meta_data)
-VALUES (
-  '11111111-1111-1111-1111-111111111111'::uuid,
-  'test1@example.com',
-  NOW(),
-  NOW(),
-  '{"full_name": "Test User One"}'::jsonb
-), (
-  '22222222-2222-2222-2222-222222222222'::uuid,
-  'test2@example.com',
-  NOW(),
-  NOW(),
-  '{"full_name": "Test User Two"}'::jsonb
-) ON CONFLICT (id) DO NOTHING;
+INSERT INTO
+  auth.users (
+    id,
+    email,
+    created_at,
+    updated_at,
+    raw_user_meta_data
+  )
+VALUES
+  (
+    '11111111-1111-1111-1111-111111111111'::uuid,
+    'test1@example.com',
+    NOW(),
+    NOW(),
+    '{"full_name": "Test User One"}'::jsonb
+  ),
+  (
+    '22222222-2222-2222-2222-222222222222'::uuid,
+    'test2@example.com',
+    NOW(),
+    NOW(),
+    '{"full_name": "Test User Two"}'::jsonb
+  )
+ON CONFLICT (id) DO NOTHING;
 
 -- Create corresponding profiles
-INSERT INTO public.profiles (id, username)
-VALUES (
-  '11111111-1111-1111-1111-111111111111'::uuid,
-  'existinguser'
-), (
-  '22222222-2222-2222-2222-222222222222'::uuid,
-  'anotheruser'
-) ON CONFLICT (id) DO NOTHING;
+INSERT INTO
+  public.profiles (id, username)
+VALUES
+  (
+    '11111111-1111-1111-1111-111111111111'::uuid,
+    'existinguser'
+  ),
+  (
+    '22222222-2222-2222-2222-222222222222'::uuid,
+    'anotheruser'
+  )
+ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================================
 -- Test 1-4: is_unique_username() Function
 -- ============================================================================
+SELECT
+  IS (
+    public.is_unique_username ('existinguser'),
+    FALSE,
+    'is_unique_username returns false for existing username'
+  );
 
-SELECT is(
-  public.is_unique_username('existinguser'),
-  false,
-  'is_unique_username returns false for existing username'
-);
+SELECT
+  IS (
+    public.is_unique_username ('EXISTINGUSER'),
+    FALSE,
+    'is_unique_username is case-insensitive for existing username'
+  );
 
-SELECT is(
-  public.is_unique_username('EXISTINGUSER'),
-  false,
-  'is_unique_username is case-insensitive for existing username'
-);
+SELECT
+  IS (
+    public.is_unique_username ('uniqueusername123'),
+    TRUE,
+    'is_unique_username returns true for non-existing username'
+  );
 
-SELECT is(
-  public.is_unique_username('uniqueusername123'),
-  true,
-  'is_unique_username returns true for non-existing username'
-);
-
-SELECT is(
-  public.is_unique_username(''),
-  true,
-  'is_unique_username returns true for empty string'
-);
+SELECT
+  IS (
+    public.is_unique_username (''),
+    TRUE,
+    'is_unique_username returns true for empty string'
+  );
 
 -- ============================================================================
 -- Test 5-10: generate_unique_username() Function
 -- ============================================================================
+SELECT
+  ok (
+    public.generate_unique_username ('newuser') = 'newuser',
+    'generate_unique_username returns clean username when available'
+  );
 
-SELECT ok(
-  public.generate_unique_username('newuser') = 'newuser',
-  'generate_unique_username returns clean username when available'
-);
+SELECT
+  ok (
+    public.generate_unique_username ('existinguser') != 'existinguser',
+    'generate_unique_username modifies existing username'
+  );
 
-SELECT ok(
-  public.generate_unique_username('existinguser') != 'existinguser',
-  'generate_unique_username modifies existing username'
-);
+SELECT
+  ok (
+    public.generate_unique_username ('existinguser') LIKE 'existinguser%',
+    'generate_unique_username adds suffix to existing username'
+  );
 
-SELECT ok(
-  public.generate_unique_username('existinguser') LIKE 'existinguser%',
-  'generate_unique_username adds suffix to existing username'
-);
+SELECT
+  ok (
+    length(
+      public.generate_unique_username (
+        'this_is_a_very_long_username_that_exceeds_thirty_characters'
+      )
+    ) <= 30,
+    'generate_unique_username respects 30 character limit'
+  );
 
-SELECT ok(
-  length(public.generate_unique_username('this_is_a_very_long_username_that_exceeds_thirty_characters')) <= 30,
-  'generate_unique_username respects 30 character limit'
-);
+SELECT
+  ok (
+    public.generate_unique_username ('!!!@@@###') = 'user',
+    'generate_unique_username uses fallback for invalid characters'
+  );
 
-SELECT ok(
-  public.generate_unique_username('!!!@@@###') = 'user',
-  'generate_unique_username uses fallback for invalid characters'
-);
-
-SELECT ok(
-  public.generate_unique_username('') = 'user',
-  'generate_unique_username uses fallback for empty input'
-);
+SELECT
+  ok (
+    public.generate_unique_username ('') = 'user',
+    'generate_unique_username uses fallback for empty input'
+  );
 
 -- ============================================================================
 -- Test 11-13: create_user() Function
 -- ============================================================================
-
 DO $$
 DECLARE
   new_user_id uuid;
@@ -160,7 +184,6 @@ END $$;
 -- ============================================================================
 -- Test 14-15: handle_user_changes() Trigger Function
 -- ============================================================================
-
 DO $$
 DECLARE
   trigger_user_id uuid := '33333333-3333-3333-3333-333333333333'::uuid;
@@ -198,45 +221,75 @@ END $$;
 -- ============================================================================
 -- Test 16-18: delete_user() Function (Authentication required)
 -- ============================================================================
-
 -- Note: delete_user() requires auth.uid() which won't work in test context
 -- We'll test the function structure and error handling instead
-
-SELECT ok(
-  EXISTS(SELECT 1 FROM pg_proc WHERE proname = 'delete_user'),
-  'delete_user function exists'
-);
+SELECT
+  ok (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        pg_proc
+      WHERE
+        proname = 'delete_user'
+    ),
+    'delete_user function exists'
+  );
 
 -- Test that delete_user function has proper security definer
-SELECT is(
-  (SELECT prosecdef FROM pg_proc WHERE proname = 'delete_user' AND pronamespace = 'public'::regnamespace),
-  true,
-  'delete_user function is marked as SECURITY DEFINER'
-);
+SELECT
+  IS (
+    (
+      SELECT
+        prosecdef
+      FROM
+        pg_proc
+      WHERE
+        proname = 'delete_user'
+        AND pronamespace = 'public'::regnamespace
+    ),
+    TRUE,
+    'delete_user function is marked as SECURITY DEFINER'
+  );
 
 -- Test function signature
-SELECT is(
-  (SELECT pg_get_function_arguments(oid) FROM pg_proc WHERE proname = 'delete_user' AND pronamespace = 'public'::regnamespace),
-  '',
-  'delete_user function has no parameters'
-);
+SELECT
+  IS (
+    (
+      SELECT
+        pg_get_function_arguments(oid)
+      FROM
+        pg_proc
+      WHERE
+        proname = 'delete_user'
+        AND pronamespace = 'public'::regnamespace
+    ),
+    '',
+    'delete_user function has no parameters'
+  );
 
 -- ============================================================================
 -- Test Cleanup
 -- ============================================================================
-
 -- Clean up test users and profiles
-DELETE FROM public.profiles WHERE id IN (
-  '11111111-1111-1111-1111-111111111111'::uuid,
-  '22222222-2222-2222-2222-222222222222'::uuid
-);
+DELETE FROM public.profiles
+WHERE
+  id IN (
+    '11111111-1111-1111-1111-111111111111'::uuid,
+    '22222222-2222-2222-2222-222222222222'::uuid
+  );
 
-DELETE FROM auth.users WHERE id IN (
-  '11111111-1111-1111-1111-111111111111'::uuid,
-  '22222222-2222-2222-2222-222222222222'::uuid
-);
+DELETE FROM auth.users
+WHERE
+  id IN (
+    '11111111-1111-1111-1111-111111111111'::uuid,
+    '22222222-2222-2222-2222-222222222222'::uuid
+  );
 
 -- Finish the test suite
-SELECT * FROM finish();
+SELECT
+  *
+FROM
+  finish ();
 
 ROLLBACK;

@@ -86,7 +86,6 @@ CREATE EXTENSION IF NOT EXISTS btree_gin
 WITH
   SCHEMA "extensions";
 
-
 CREATE EXTENSION IF NOT EXISTS pgtap
 WITH
   SCHEMA "extensions";

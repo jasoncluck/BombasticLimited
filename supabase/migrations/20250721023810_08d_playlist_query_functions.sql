@@ -3,7 +3,6 @@
 -- Dependencies: Requires base tables from 03_base_tables.sql (playlists, playlist_videos, user_playlists)
 -- This migration includes playlist data access and search functions
 -- ============================================================================
-
 -- Function to get comprehensive playlist data with pagination and sorting
 CREATE OR REPLACE FUNCTION public.get_playlist_data (
   p_short_id text DEFAULT NULL,

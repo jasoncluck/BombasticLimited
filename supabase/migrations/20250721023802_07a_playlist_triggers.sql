@@ -3,7 +3,6 @@
 -- Dependencies: Requires functions from 02_core_functions.sql (set_short_id, set_playlist_search_vector)
 -- This migration adds triggers for automatic playlist data updates
 -- ============================================================================
-
 -- Trigger to automatically set short_id on playlist creation
 CREATE OR REPLACE TRIGGER "before_insert_set_short_id" BEFORE INSERT ON "public"."playlists" FOR EACH ROW
 EXECUTE FUNCTION "public"."set_short_id" ();

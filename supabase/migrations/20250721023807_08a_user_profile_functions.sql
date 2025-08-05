@@ -3,7 +3,6 @@
 -- Dependencies: Requires base tables from 03_base_tables.sql (profiles)
 -- This migration includes username validation, generation, and profile creation functions
 -- ============================================================================
-
 -- RPC function to check if username is unique
 CREATE OR REPLACE FUNCTION public.is_unique_username (p_username text) RETURNS boolean LANGUAGE plpgsql
 SET
