@@ -701,4 +701,3 @@ describe('account/+page.server.ts', () => {
     });
   });
 });
-

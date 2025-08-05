@@ -47,31 +47,31 @@ vi.mock('$lib/components/playlist/playlist-tiles.svelte', () => ({
 
 vi.mock('$lib/constants/source', () => ({
   SOURCE_INFO: {
-    giantbomb: { 
+    giantbomb: {
       displayName: 'Giant Bomb',
       websiteUrlDomain: 'giantbomb.com',
       supportUrl: 'https://support.giantbomb.com',
       highlightedPlaylists: [
-        { youtubeId: 'playlist1', name: 'Featured Playlist' }
-      ]
+        { youtubeId: 'playlist1', name: 'Featured Playlist' },
+      ],
     },
-    jeffgerstmann: { 
+    jeffgerstmann: {
       displayName: 'Jeff Gerstmann',
       websiteUrlDomain: null,
       supportUrl: 'https://patreon.com/jeffgerstmann',
-      highlightedPlaylists: []
+      highlightedPlaylists: [],
     },
-    nextlander: { 
+    nextlander: {
       displayName: 'Nextlander',
       websiteUrlDomain: 'nextlander.com',
       supportUrl: 'https://patreon.com/nextlander',
-      highlightedPlaylists: []
+      highlightedPlaylists: [],
     },
-    remap: { 
+    remap: {
       displayName: 'Remap Radio',
       websiteUrlDomain: null,
       supportUrl: 'https://patreon.com/remap',
-      highlightedPlaylists: []
+      highlightedPlaylists: [],
     },
   },
 }));
@@ -217,7 +217,7 @@ describe('[source]/+page.svelte Component Logic', () => {
       const activeStreams = { sources: ['giantbomb'] };
       const source = 'giantbomb';
       const shouldShowLive = activeStreams.sources.includes(source);
-      
+
       expect(shouldShowLive).toBe(true);
     });
 
@@ -225,7 +225,7 @@ describe('[source]/+page.svelte Component Logic', () => {
       const activeStreams = { sources: ['giantbomb'] };
       const source = 'jeffgerstmann';
       const shouldShowLive = activeStreams.sources.includes(source);
-      
+
       expect(shouldShowLive).toBe(false);
     });
 
@@ -233,7 +233,7 @@ describe('[source]/+page.svelte Component Logic', () => {
       const activeStreams = { sources: [] as string[] };
       const source = 'giantbomb';
       const shouldShowLive = activeStreams.sources.includes(source);
-      
+
       expect(shouldShowLive).toBe(false);
     });
   });
@@ -241,10 +241,10 @@ describe('[source]/+page.svelte Component Logic', () => {
   describe('carousel state management', () => {
     it('should initialize carousel state for all sections', () => {
       const highlightPlaylistShortIds = mockData.highlightPlaylists.map(
-        hp => hp.playlist.short_id
+        (hp) => hp.playlist.short_id
       );
       const sectionIds = ['latestVideos', ...highlightPlaylistShortIds];
-      
+
       expect(sectionIds).toContain('latestVideos');
       expect(sectionIds).toContain('abc123');
       expect(sectionIds).toHaveLength(2);
@@ -264,7 +264,7 @@ describe('[source]/+page.svelte Component Logic', () => {
 
       const newSectionIds = [
         'latestVideos',
-        ...newHighlightPlaylists.map(hp => hp.playlist.short_id),
+        ...newHighlightPlaylists.map((hp) => hp.playlist.short_id),
       ];
 
       expect(newSectionIds).toEqual(['latestVideos', 'new123', 'new456']);
@@ -273,7 +273,7 @@ describe('[source]/+page.svelte Component Logic', () => {
     it('should create carousel state for each section', () => {
       const sectionIds = ['latestVideos', 'abc123'];
       const carouselState: any = {};
-      
+
       for (const key of sectionIds) {
         carouselState[key] = { lastViewedIndex: 0 };
       }
@@ -339,13 +339,13 @@ describe('[source]/+page.svelte Component Logic', () => {
 
     it('should validate data structure consistency', () => {
       // Ensure data structure is consistent for component rendering
-      mockData.videos.forEach(video => {
+      mockData.videos.forEach((video) => {
         expect(video).toHaveProperty('id');
         expect(video).toHaveProperty('title');
         expect(video).toHaveProperty('source');
       });
 
-      mockData.highlightPlaylists.forEach(hp => {
+      mockData.highlightPlaylists.forEach((hp) => {
         expect(hp.playlist).toHaveProperty('short_id');
         expect(hp.playlist).toHaveProperty('name');
         expect(hp.videos).toBeInstanceOf(Array);

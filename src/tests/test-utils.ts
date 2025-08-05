@@ -218,7 +218,10 @@ export function createMockPlaylistDataResponse(
 /**
  * Create mock playlists response
  */
-export function createMockPlaylistsResponse(playlists: any[] = [], count: number = 0) {
+export function createMockPlaylistsResponse(
+  playlists: any[] = [],
+  count: number = 0
+) {
   return {
     playlists,
     count,
@@ -229,7 +232,10 @@ export function createMockPlaylistsResponse(playlists: any[] = [], count: number
 /**
  * Create mock SuperValidated response
  */
-export function createMockSuperValidated(data: any = {}, valid: boolean = true) {
+export function createMockSuperValidated(
+  data: any = {},
+  valid: boolean = true
+) {
   return {
     id: 'mock-form-id',
     data,

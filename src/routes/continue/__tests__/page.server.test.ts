@@ -40,7 +40,7 @@ const mockGetPaginationQueryParams = vi.mocked(getPaginationQueryParams);
 describe('continue/+page.server.ts load function', () => {
   const mockSupabase = {} as any;
   const mockSession = createMockSession();
-  
+
   const mockContinueVideos = [
     createMockVideoWithTimestamp({
       id: 'cv1',
@@ -71,7 +71,7 @@ describe('continue/+page.server.ts load function', () => {
     // Reset the mocks to their default behavior
     mockIsTimestampFilter.mockReturnValue(true);
     mockGetPaginationQueryParams.mockReturnValue(1);
-    
+
     mockLoadEvent.parent.mockResolvedValue({
       contentFilter: {
         sort: { key: 'dateTimestamp', order: 'descending' },
@@ -143,7 +143,9 @@ describe('continue/+page.server.ts load function', () => {
     });
 
     it('should handle different page numbers', async () => {
-      const { getPaginationQueryParams } = await import('$lib/components/pagination/pagination');
+      const { getPaginationQueryParams } = await import(
+        '$lib/components/pagination/pagination'
+      );
       vi.mocked(getPaginationQueryParams).mockReturnValue(3);
 
       mockGetInProgressVideos.mockResolvedValue(
@@ -164,8 +166,10 @@ describe('continue/+page.server.ts load function', () => {
     });
 
     it('should pass pagination query params correctly', async () => {
-      const { getPaginationQueryParams } = await import('$lib/components/pagination/pagination');
-      
+      const { getPaginationQueryParams } = await import(
+        '$lib/components/pagination/pagination'
+      );
+
       await load(mockLoadEvent);
 
       expect(getPaginationQueryParams).toHaveBeenCalledWith({
@@ -186,10 +190,14 @@ describe('continue/+page.server.ts load function', () => {
     });
 
     it('should throw error for invalid content filter', async () => {
-      const { isTimestampFilter } = await import('$lib/components/content/content-filter');
+      const { isTimestampFilter } = await import(
+        '$lib/components/content/content-filter'
+      );
       vi.mocked(isTimestampFilter).mockReturnValue(false);
 
-      await expect(load(mockLoadEvent)).rejects.toThrow('Invalid content filter');
+      await expect(load(mockLoadEvent)).rejects.toThrow(
+        'Invalid content filter'
+      );
     });
 
     it('should handle missing content filter from parent', async () => {
@@ -197,7 +205,9 @@ describe('continue/+page.server.ts load function', () => {
       // Override the mock to return false for missing contentFilter
       mockIsTimestampFilter.mockReturnValue(false);
 
-      await expect(load(mockLoadEvent)).rejects.toThrow('Invalid content filter');
+      await expect(load(mockLoadEvent)).rejects.toThrow(
+        'Invalid content filter'
+      );
     });
   });
 
@@ -209,7 +219,7 @@ describe('continue/+page.server.ts load function', () => {
 
       mockLoadEvent.parent.mockImplementation(async () => {
         parentCallTime = Date.now();
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
         return {
           contentFilter: {
             sort: { key: 'dateTimestamp', order: 'descending' },
@@ -218,7 +228,9 @@ describe('continue/+page.server.ts load function', () => {
         };
       });
 
-      const { getPaginationQueryParams } = await import('$lib/components/pagination/pagination');
+      const { getPaginationQueryParams } = await import(
+        '$lib/components/pagination/pagination'
+      );
       vi.mocked(getPaginationQueryParams).mockImplementation(() => {
         paginationCallTime = Date.now();
         return 1;
@@ -244,9 +256,13 @@ describe('continue/+page.server.ts load function', () => {
 
   describe('error handling', () => {
     it('should handle database errors gracefully', async () => {
-      mockGetInProgressVideos.mockRejectedValue(new Error('Database connection failed'));
+      mockGetInProgressVideos.mockRejectedValue(
+        new Error('Database connection failed')
+      );
 
-      await expect(load(mockLoadEvent)).rejects.toThrow('Database connection failed');
+      await expect(load(mockLoadEvent)).rejects.toThrow(
+        'Database connection failed'
+      );
     });
 
     it('should handle empty results', async () => {
@@ -411,7 +427,9 @@ describe('continue/+page.server.ts load function', () => {
           },
         };
 
-        await expect(load(loadEventWithFalsySession)).rejects.toThrow('Redirect');
+        await expect(load(loadEventWithFalsySession)).rejects.toThrow(
+          'Redirect'
+        );
         expect(mockRedirect).toHaveBeenCalledWith(303, '/');
         vi.clearAllMocks();
       }

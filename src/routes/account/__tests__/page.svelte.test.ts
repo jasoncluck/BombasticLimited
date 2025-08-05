@@ -37,40 +37,74 @@ vi.mock('$lib/supabase/user-profiles', () => ({
 }));
 
 vi.mock('$lib/components/ui/form', () => ({
-  Field: class MockField { constructor() {} },
-  Control: class MockControl { constructor() {} },
-  Label: class MockLabel { constructor() {} },
-  FieldErrors: class MockFieldErrors { constructor() {} },
+  Field: class MockField {
+    constructor() {}
+  },
+  Control: class MockControl {
+    constructor() {}
+  },
+  Label: class MockLabel {
+    constructor() {}
+  },
+  FieldErrors: class MockFieldErrors {
+    constructor() {}
+  },
 }));
 
 vi.mock('$lib/components/ui/input/input.svelte', () => ({
-  default: class MockInput { constructor() {} },
+  default: class MockInput {
+    constructor() {}
+  },
 }));
 
 vi.mock('$lib/components/ui/button/button.svelte', () => ({
-  default: class MockButton { constructor() {} },
+  default: class MockButton {
+    constructor() {}
+  },
   buttonVariants: vi.fn(() => 'button-class'),
 }));
 
 vi.mock('$lib/components/ui/alert/index.js', () => ({
-  Root: class MockAlertRoot { constructor() {} },
-  Title: class MockAlertTitle { constructor() {} },
-  Description: class MockAlertDescription { constructor() {} },
+  Root: class MockAlertRoot {
+    constructor() {}
+  },
+  Title: class MockAlertTitle {
+    constructor() {}
+  },
+  Description: class MockAlertDescription {
+    constructor() {}
+  },
 }));
 
 vi.mock('$lib/components/ui/dropdown-menu/index.js', () => ({}));
 vi.mock('$lib/components/ui/dialog/index.js', () => ({
-  Root: class MockDialogRoot { constructor() {} },
-  Trigger: class MockDialogTrigger { constructor() {} },
-  Content: class MockDialogContent { constructor() {} },
-  Header: class MockDialogHeader { constructor() {} },
-  Title: class MockDialogTitle { constructor() {} },
-  Footer: class MockDialogFooter { constructor() {} },
-  Close: class MockDialogClose { constructor() {} },
+  Root: class MockDialogRoot {
+    constructor() {}
+  },
+  Trigger: class MockDialogTrigger {
+    constructor() {}
+  },
+  Content: class MockDialogContent {
+    constructor() {}
+  },
+  Header: class MockDialogHeader {
+    constructor() {}
+  },
+  Title: class MockDialogTitle {
+    constructor() {}
+  },
+  Footer: class MockDialogFooter {
+    constructor() {}
+  },
+  Close: class MockDialogClose {
+    constructor() {}
+  },
 }));
 
 vi.mock('$lib/components/ui/label/label.svelte', () => ({
-  default: class MockLabel { constructor() {} },
+  default: class MockLabel {
+    constructor() {}
+  },
 }));
 
 describe('account/+page.svelte Component Logic', () => {
@@ -156,32 +190,36 @@ describe('account/+page.svelte Component Logic', () => {
     it('should not check username uniqueness for current username', () => {
       const currentUsername: string = 'testuser';
       const profileUsername: string = 'testuser';
-      
-      const shouldCheck = currentUsername !== profileUsername && currentUsername.length >= 2;
+
+      const shouldCheck =
+        currentUsername !== profileUsername && currentUsername.length >= 2;
       expect(shouldCheck).toBe(false);
     });
 
     it('should check username uniqueness for new username', () => {
       const currentUsername: string = 'newusername';
       const profileUsername: string = 'testuser';
-      
-      const shouldCheck = currentUsername !== profileUsername && currentUsername.length >= 2;
+
+      const shouldCheck =
+        currentUsername !== profileUsername && currentUsername.length >= 2;
       expect(shouldCheck).toBe(true);
     });
 
     it('should not check username uniqueness for short usernames', () => {
       const currentUsername: string = 'a';
       const profileUsername: string = 'testuser';
-      
-      const shouldCheck = currentUsername !== profileUsername && currentUsername.length >= 2;
+
+      const shouldCheck =
+        currentUsername !== profileUsername && currentUsername.length >= 2;
       expect(shouldCheck).toBe(false);
     });
 
     it('should handle empty username', () => {
       const currentUsername: string = '';
       const profileUsername: string = 'testuser';
-      
-      const shouldCheck = currentUsername !== profileUsername && currentUsername.length >= 2;
+
+      const shouldCheck =
+        currentUsername !== profileUsername && currentUsername.length >= 2;
       expect(shouldCheck).toBe(false);
     });
 
@@ -204,7 +242,7 @@ describe('account/+page.svelte Component Logic', () => {
       const formEmail: string = 'test@example.com';
       const sessionEmail: string = 'test@example.com';
       const isDisabled = formEmail === sessionEmail;
-      
+
       expect(isDisabled).toBe(true);
     });
 
@@ -212,7 +250,7 @@ describe('account/+page.svelte Component Logic', () => {
       const formEmail: string = 'newemail@example.com';
       const sessionEmail: string = 'test@example.com';
       const isDisabled = formEmail === sessionEmail;
-      
+
       expect(isDisabled).toBe(false);
     });
 
@@ -221,11 +259,12 @@ describe('account/+page.svelte Component Logic', () => {
       const profileUsername: string = 'testuser';
       const isCheckingUsername: boolean = false;
       const isUsernameUnique: boolean | null = null;
-      
-      const isDisabled = formUsername === profileUsername || 
-                        isCheckingUsername || 
-                        isUsernameUnique === false;
-      
+
+      const isDisabled =
+        formUsername === profileUsername ||
+        isCheckingUsername ||
+        isUsernameUnique === false;
+
       expect(isDisabled).toBe(true);
     });
 
@@ -234,11 +273,12 @@ describe('account/+page.svelte Component Logic', () => {
       const profileUsername: string = 'testuser';
       const isCheckingUsername: boolean = true;
       const isUsernameUnique: boolean | null = null;
-      
-      const isDisabled = formUsername === profileUsername || 
-                        isCheckingUsername || 
-                        isUsernameUnique === false;
-      
+
+      const isDisabled =
+        formUsername === profileUsername ||
+        isCheckingUsername ||
+        isUsernameUnique === false;
+
       expect(isDisabled).toBe(true);
     });
 
@@ -247,11 +287,12 @@ describe('account/+page.svelte Component Logic', () => {
       const profileUsername: string = 'testuser';
       const isCheckingUsername: boolean = false;
       const isUsernameUnique: boolean = false;
-      
-      const isDisabled = formUsername === profileUsername || 
-                        isCheckingUsername || 
-                        isUsernameUnique === false;
-      
+
+      const isDisabled =
+        formUsername === profileUsername ||
+        isCheckingUsername ||
+        isUsernameUnique === false;
+
       expect(isDisabled).toBe(true);
     });
 
@@ -260,11 +301,12 @@ describe('account/+page.svelte Component Logic', () => {
       const profileUsername: string = 'testuser';
       const isCheckingUsername: boolean = false;
       const isUsernameUnique: boolean = true as boolean;
-      
-      const isDisabled = formUsername === profileUsername || 
-                        isCheckingUsername || 
-                        isUsernameUnique === false;
-      
+
+      const isDisabled =
+        formUsername === profileUsername ||
+        isCheckingUsername ||
+        isUsernameUnique === false;
+
       expect(isDisabled).toBe(false);
     });
   });
@@ -274,11 +316,10 @@ describe('account/+page.svelte Component Logic', () => {
       const currentUsername: string = 'newusername';
       const isCheckingUsername: boolean = true;
       const isUsernameUnique: boolean | null = null;
-      
-      const shouldShowChecking = currentUsername && 
-                                currentUsername.length >= 2 && 
-                                isCheckingUsername;
-      
+
+      const shouldShowChecking =
+        currentUsername && currentUsername.length >= 2 && isCheckingUsername;
+
       expect(shouldShowChecking).toBe(true);
     });
 
@@ -286,12 +327,13 @@ describe('account/+page.svelte Component Logic', () => {
       const currentUsername: string = 'newusername';
       const isCheckingUsername: boolean = false;
       const isUsernameUnique: boolean = true;
-      
-      const shouldShowAvailable = currentUsername && 
-                                 currentUsername.length >= 2 && 
-                                 !isCheckingUsername && 
-                                 isUsernameUnique === true;
-      
+
+      const shouldShowAvailable =
+        currentUsername &&
+        currentUsername.length >= 2 &&
+        !isCheckingUsername &&
+        isUsernameUnique === true;
+
       expect(shouldShowAvailable).toBe(true);
     });
 
@@ -299,12 +341,13 @@ describe('account/+page.svelte Component Logic', () => {
       const currentUsername: string = 'newusername';
       const isCheckingUsername: boolean = false;
       const isUsernameUnique: boolean = false;
-      
-      const shouldShowNotAvailable = currentUsername && 
-                                    currentUsername.length >= 2 && 
-                                    !isCheckingUsername && 
-                                    isUsernameUnique === false;
-      
+
+      const shouldShowNotAvailable =
+        currentUsername &&
+        currentUsername.length >= 2 &&
+        !isCheckingUsername &&
+        isUsernameUnique === false;
+
       expect(shouldShowNotAvailable).toBe(true);
     });
 
@@ -312,9 +355,10 @@ describe('account/+page.svelte Component Logic', () => {
       const currentUsername: string = 'a';
       const isCheckingUsername: boolean = false;
       const isUsernameUnique: boolean = true;
-      
-      const shouldShowAnyMessage = currentUsername && currentUsername.length >= 2;
-      
+
+      const shouldShowAnyMessage =
+        currentUsername && currentUsername.length >= 2;
+
       expect(shouldShowAnyMessage).toBe(false);
     });
 
@@ -322,9 +366,10 @@ describe('account/+page.svelte Component Logic', () => {
       const currentUsername: string = '';
       const isCheckingUsername: boolean = false;
       const isUsernameUnique: boolean = true;
-      
-      const shouldShowAnyMessage = Boolean(currentUsername) && currentUsername.length >= 2;
-      
+
+      const shouldShowAnyMessage =
+        Boolean(currentUsername) && currentUsername.length >= 2;
+
       expect(shouldShowAnyMessage).toBe(false);
     });
   });
@@ -336,11 +381,11 @@ describe('account/+page.svelte Component Logic', () => {
         message: 'Email updated successfully',
         type: 'success',
       };
-      
-      const shouldShowEmailFlash = Boolean(mockFlash?.field === 'email' && 
-                                  mockFlash?.message && 
-                                  mockFlash?.type);
-      
+
+      const shouldShowEmailFlash = Boolean(
+        mockFlash?.field === 'email' && mockFlash?.message && mockFlash?.type
+      );
+
       expect(shouldShowEmailFlash).toBe(true);
     });
 
@@ -350,11 +395,11 @@ describe('account/+page.svelte Component Logic', () => {
         message: 'Username updated successfully',
         type: 'success',
       };
-      
-      const shouldShowUsernameFlash = Boolean(mockFlash?.field === 'username' && 
-                                     mockFlash?.message && 
-                                     mockFlash?.type);
-      
+
+      const shouldShowUsernameFlash = Boolean(
+        mockFlash?.field === 'username' && mockFlash?.message && mockFlash?.type
+      );
+
       expect(shouldShowUsernameFlash).toBe(true);
     });
 
@@ -364,11 +409,11 @@ describe('account/+page.svelte Component Logic', () => {
         message: 'Password reset email sent',
         type: 'success',
       };
-      
-      const shouldShowPasswordFlash = Boolean(mockFlash?.field === 'password' && 
-                                     mockFlash?.message && 
-                                     mockFlash?.type);
-      
+
+      const shouldShowPasswordFlash = Boolean(
+        mockFlash?.field === 'password' && mockFlash?.message && mockFlash?.type
+      );
+
       expect(shouldShowPasswordFlash).toBe(true);
     });
 
@@ -378,11 +423,11 @@ describe('account/+page.svelte Component Logic', () => {
         message: 'Unable to delete account',
         type: 'error',
       };
-      
-      const shouldShowDeleteFlash = Boolean(mockFlash?.field === 'delete' && 
-                                   mockFlash?.message && 
-                                   mockFlash?.type);
-      
+
+      const shouldShowDeleteFlash = Boolean(
+        mockFlash?.field === 'delete' && mockFlash?.message && mockFlash?.type
+      );
+
       expect(shouldShowDeleteFlash).toBe(true);
     });
 
@@ -392,11 +437,10 @@ describe('account/+page.svelte Component Logic', () => {
         message: 'Some message',
         type: 'success',
       };
-      
-      const shouldShowEmailFlash = mockFlash?.field === 'email' && 
-                                  mockFlash?.message && 
-                                  mockFlash?.type;
-      
+
+      const shouldShowEmailFlash =
+        mockFlash?.field === 'email' && mockFlash?.message && mockFlash?.type;
+
       expect(shouldShowEmailFlash).toBe(false);
     });
   });
@@ -406,7 +450,7 @@ describe('account/+page.svelte Component Logic', () => {
       // Small viewport: full width buttons
       const isSmallViewport = true;
       const buttonClass = isSmallViewport ? 'w-full' : 'w-full max-w-24';
-      
+
       if (isSmallViewport) {
         expect(buttonClass).toBe('w-full');
       } else {
@@ -417,12 +461,16 @@ describe('account/+page.svelte Component Logic', () => {
     it('should show different status message layouts for different screen sizes', () => {
       // Large viewport: status messages below form
       const isLargeViewport = true;
-      const statusMessageClass = isLargeViewport ? 'mt-2 hidden @lg:block' : 'flex w-full flex-col-reverse @lg:hidden';
-      
+      const statusMessageClass = isLargeViewport
+        ? 'mt-2 hidden @lg:block'
+        : 'flex w-full flex-col-reverse @lg:hidden';
+
       if (isLargeViewport) {
         expect(statusMessageClass).toBe('mt-2 hidden @lg:block');
       } else {
-        expect(statusMessageClass).toBe('flex w-full flex-col-reverse @lg:hidden');
+        expect(statusMessageClass).toBe(
+          'flex w-full flex-col-reverse @lg:hidden'
+        );
       }
     });
   });
@@ -430,21 +478,21 @@ describe('account/+page.svelte Component Logic', () => {
   describe('timeout handling', () => {
     it('should manage username validation timeout', () => {
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
-      
+
       // Clear existing timeout
       if (timeoutId) {
         clearTimeout(timeoutId);
         timeoutId = null;
       }
-      
+
       // Set new timeout
       timeoutId = setTimeout(() => {
         // Username validation logic
       }, 500);
-      
+
       expect(timeoutId).not.toBeNull();
       expect(typeof timeoutId).toBe('object'); // Node.js setTimeout returns an object
-      
+
       // Clean up
       if (timeoutId) {
         clearTimeout(timeoutId);
@@ -452,17 +500,20 @@ describe('account/+page.svelte Component Logic', () => {
     });
 
     it('should clear timeout on component destroy', () => {
-      let timeoutId: ReturnType<typeof setTimeout> | null = setTimeout(() => {}, 500);
-      
+      let timeoutId: ReturnType<typeof setTimeout> | null = setTimeout(
+        () => {},
+        500
+      );
+
       // Simulate component destroy
       const cleanup = () => {
         if (timeoutId) {
           clearTimeout(timeoutId);
         }
       };
-      
+
       cleanup();
-      
+
       // After cleanup, timeout should be cleared
       expect(timeoutId).not.toBeNull(); // Still exists but cleared
     });
@@ -487,10 +538,10 @@ describe('account/+page.svelte Component Logic', () => {
     it('should handle form enhancement properly', () => {
       // Mock the enhance function
       const mockEnhance = vi.fn((callback) => callback);
-      
+
       const mockCallback = vi.fn();
       mockEnhance(mockCallback);
-      
+
       expect(mockEnhance).toHaveBeenCalledWith(mockCallback);
     });
   });
@@ -502,7 +553,8 @@ describe('account/+page.svelte Component Logic', () => {
     });
 
     it('should show confirmation warning in dialog', () => {
-      const warningMessage = 'This action cannot be undone. Deleting your account will delete all associated data including any public playlists.';
+      const warningMessage =
+        'This action cannot be undone. Deleting your account will delete all associated data including any public playlists.';
       expect(warningMessage).toContain('cannot be undone');
       expect(warningMessage).toContain('delete all associated data');
       expect(warningMessage).toContain('public playlists');
@@ -510,15 +562,15 @@ describe('account/+page.svelte Component Logic', () => {
 
     it('should handle dialog cancellation', () => {
       let dialogCancelled = false;
-      
+
       const handleCancel = (e: Event) => {
         e.preventDefault();
         dialogCancelled = true;
       };
-      
+
       const mockEvent = { preventDefault: vi.fn() } as any;
       handleCancel(mockEvent);
-      
+
       expect(mockEvent.preventDefault).toHaveBeenCalled();
       expect(dialogCancelled).toBe(true);
     });

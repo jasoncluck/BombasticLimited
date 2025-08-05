@@ -32,7 +32,7 @@ vi.mock('$lib/components/pagination/pagination.svelte', () => ({
 }));
 
 vi.mock('$lib/components/pagination/pagination', () => ({
-  getNumberOfPages: vi.fn((params: { count: number; perPage: number }) => 
+  getNumberOfPages: vi.fn((params: { count: number; perPage: number }) =>
     Math.ceil(params.count / params.perPage)
   ),
   PAGINATION_QUERY_KEY: 'page',
@@ -110,7 +110,10 @@ describe('continue/+page.svelte Component Logic', () => {
 
     it('should validate timestamp filter structure', () => {
       expect(mockData.contentFilter).toHaveProperty('sort');
-      expect(mockData.contentFilter.sort).toHaveProperty('key', 'dateTimestamp');
+      expect(mockData.contentFilter.sort).toHaveProperty(
+        'key',
+        'dateTimestamp'
+      );
       expect(mockData.contentFilter.sort).toHaveProperty('order', 'descending');
       expect(mockData.contentFilter).toHaveProperty('type', 'timestamp');
     });
@@ -118,8 +121,9 @@ describe('continue/+page.svelte Component Logic', () => {
 
   describe('pagination logic', () => {
     it('should calculate correct number of pages', () => {
-      const getNumberOfPages = vi.fn((params: { count: number; perPage: number }) => 
-        Math.ceil(params.count / params.perPage)
+      const getNumberOfPages = vi.fn(
+        (params: { count: number; perPage: number }) =>
+          Math.ceil(params.count / params.perPage)
       );
       const numPages = getNumberOfPages({
         count: mockData.videosCount,
@@ -130,8 +134,9 @@ describe('continue/+page.svelte Component Logic', () => {
     });
 
     it('should handle zero videos count', () => {
-      const getNumberOfPages = vi.fn((params: { count: number; perPage: number }) => 
-        Math.ceil(params.count / params.perPage)
+      const getNumberOfPages = vi.fn(
+        (params: { count: number; perPage: number }) =>
+          Math.ceil(params.count / params.perPage)
       );
       const numPages = getNumberOfPages({
         count: 0,
@@ -142,8 +147,9 @@ describe('continue/+page.svelte Component Logic', () => {
     });
 
     it('should handle null videos count', () => {
-      const getNumberOfPages = vi.fn((params: { count: number; perPage: number }) => 
-        Math.ceil(params.count / params.perPage)
+      const getNumberOfPages = vi.fn(
+        (params: { count: number; perPage: number }) =>
+          Math.ceil(params.count / params.perPage)
       );
       const numPages = getNumberOfPages({
         count: 0,
@@ -170,7 +176,9 @@ describe('continue/+page.svelte Component Logic', () => {
     });
 
     it('should handle invalid page parameter', () => {
-      const urlWithInvalidPage = new URL('http://localhost:5173/continue?page=invalid');
+      const urlWithInvalidPage = new URL(
+        'http://localhost:5173/continue?page=invalid'
+      );
       const pageParam = urlWithInvalidPage.searchParams.get('page');
       const currentPage = pageParam ? parseInt(pageParam) : 1;
 
@@ -275,14 +283,16 @@ describe('continue/+page.svelte Component Logic', () => {
 
     it('should handle missing restored data', () => {
       const restoredData: any = null;
-      const showFloatingBreadcrumbs = restoredData?.showFloatingBreadcrumbs || false;
+      const showFloatingBreadcrumbs =
+        restoredData?.showFloatingBreadcrumbs || false;
 
       expect(showFloatingBreadcrumbs).toBe(false);
     });
 
     it('should handle partial restored data', () => {
       const restoredData = { someOtherProperty: true };
-      const showFloatingBreadcrumbs = (restoredData as any)?.showFloatingBreadcrumbs || false;
+      const showFloatingBreadcrumbs =
+        (restoredData as any)?.showFloatingBreadcrumbs || false;
 
       expect(showFloatingBreadcrumbs).toBe(false);
     });
@@ -363,7 +373,7 @@ describe('continue/+page.svelte Component Logic', () => {
 
     it('should validate data structure consistency', () => {
       // Ensure data structure is consistent for component rendering
-      mockData.videos.forEach(video => {
+      mockData.videos.forEach((video) => {
         expect(video).toHaveProperty('id');
         expect(video).toHaveProperty('title');
         expect(video).toHaveProperty('video_start_seconds');
@@ -382,8 +392,9 @@ describe('continue/+page.svelte Component Logic', () => {
       expect(emptyData.videos).toEqual([]);
       expect(emptyData.videosCount).toBe(0);
 
-      const getNumberOfPages = vi.fn((params: { count: number; perPage: number }) => 
-        Math.ceil(params.count / params.perPage)
+      const getNumberOfPages = vi.fn(
+        (params: { count: number; perPage: number }) =>
+          Math.ceil(params.count / params.perPage)
       );
       const numPages = getNumberOfPages({
         count: emptyData.videosCount,
