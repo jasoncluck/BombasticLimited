@@ -134,9 +134,9 @@
           class="aspect-[16/9] h-auto w-full"
           src={getVideoThumbnailUrl(video)}
           alt={video.title}
-          loading="lazy"
+          loading="eager"
           decoding="async"
-          fetchpriority="auto"
+          fetchpriority="high"
         />
         <div class="absolute top-0.5 right-0.5">
           <ContentDropdown

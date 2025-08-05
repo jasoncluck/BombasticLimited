@@ -396,18 +396,22 @@ const handleNavigationRequest = async (request: Request): Promise<Response> => {
   }
 };
 
-// Simple and efficient static asset caching
+// Simple and efficient static asset caching with optimized handling for Vercel images
 const cacheStaticAsset = async (request: Request): Promise<Response> => {
   const cache = await caches.open(STATIC_CACHE);
   const cached = await cache.match(request);
+  const url = new URL(request.url);
+  const isVercelImage = url.pathname.startsWith('/_vercel/image');
 
   if (cached) {
     // Serve from cache and optionally refresh in background for long-lived assets
     const cacheDate = cached.headers.get('date');
     if (cacheDate) {
       const age = Date.now() - new Date(cacheDate).getTime();
-      // Refresh assets older than 1 day in background
-      if (age > 86400000) {
+      // For Vercel images, refresh after 7 days; for other assets, refresh after 1 day
+      const refreshThreshold = isVercelImage ? 604800000 : 86400000;
+
+      if (age > refreshThreshold) {
         fetch(request)
           .then((response) => {
             if (response.ok) cache.put(request, response);
@@ -426,6 +430,12 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
       // Clone before caching
       const responseToCache = response.clone();
       cache.put(request, responseToCache);
+
+      if (isVercelImage && import.meta.env.DEV) {
+        console.log(
+          `SW [${getTimestamp()}]: ✅ Cached Vercel image: ${url.pathname}`
+        );
+      }
     }
     return response;
   } catch (error) {
@@ -653,10 +663,13 @@ sw.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle static assets
+  // Handle static assets and Vercel optimized images
+  // Note: Vercel image optimization URLs (/_vercel/image) are now properly cached
+  // for better performance and to eliminate image pop-in effects
   if (
     STATIC_ASSETS.includes(url.pathname) ||
-    STATIC_EXTENSIONS.test(url.pathname)
+    STATIC_EXTENSIONS.test(url.pathname) ||
+    url.pathname.startsWith('/_vercel/image')
   ) {
     event.respondWith(cacheStaticAsset(request));
     return;
