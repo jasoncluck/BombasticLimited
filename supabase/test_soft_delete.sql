@@ -1,6 +1,5 @@
 -- Test script to verify soft delete functionality
 -- This script can be run manually to test the soft delete implementation
-
 -- Create a test playlist (assumes a valid user_id exists)
 -- Replace 'test-user-id-here' with an actual user UUID from your auth.users table
 DO $$

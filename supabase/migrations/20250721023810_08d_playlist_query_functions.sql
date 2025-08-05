@@ -1,175 +1,9 @@
--- Migration: 11_soft_delete_playlists_queries.sql
--- Purpose: Continue updating playlist query functions for soft delete functionality
--- This migration updates the remaining RPC functions to filter out soft-deleted playlists
--- Update get_playlists_for_username function  
-CREATE OR REPLACE FUNCTION public.get_playlists_for_username (p_username text) RETURNS TABLE (
-  id bigint,
-  created_at TIMESTAMP WITH TIME ZONE,
-  name text,
-  short_id text,
-  created_by uuid,
-  description text,
-  thumbnail_url text,
-  thumbnail_maxres_url text,
-  type public.playlist_type,
-  image_properties jsonb,
-  youtube_id text,
-  profile_username text,
-  sorted_by public.playlist_sorted_by,
-  sort_order public.playlist_sort_order,
-  deleted_at TIMESTAMP WITH TIME ZONE
-)
-SET
-  search_path = '' LANGUAGE sql AS $$
-  SELECT
-    p.id,
-    p.created_at,
-    p.name,
-    p.short_id,
-    p.created_by,
-    p.description,
-    p.thumbnail_url,
-    p.thumbnail_maxres_url,
-    p.type,
-    p.image_properties,
-    p.youtube_id,
-    prof.username AS profile_username,
-    up.sorted_by,
-    up.sort_order,
-    p.deleted_at
-  FROM public.playlists p
-  JOIN public.profiles prof ON p.created_by = prof.id
-  LEFT JOIN public.user_playlists up 
-    ON up.id = p.id 
-  WHERE prof.username = p_username
-    AND p.deleted_at IS NULL  -- Filter out soft-deleted playlists
-  ORDER BY p.created_at DESC;
-$$;
-
--- Update search_playlists function
-CREATE OR REPLACE FUNCTION "public"."search_playlists" (
-  "search_term" "text",
-  "current_user_id" uuid DEFAULT NULL,
-  "limit_count" integer DEFAULT 50,
-  "offset_count" integer DEFAULT 0
-) RETURNS TABLE (
-  "id" bigint,
-  "short_id" text,
-  "name" text,
-  "description" text,
-  "thumbnail_url" text,
-  "thumbnail_maxres_url" text,
-  "image_properties" jsonb,
-  "created_at" TIMESTAMP WITH TIME ZONE,
-  "created_by" uuid,
-  "type" public.playlist_type,
-  "youtube_id" text,
-  "profile_username" text,
-  "search_rank" real,
-  "deleted_at" TIMESTAMP WITH TIME ZONE
-) LANGUAGE "plpgsql" STABLE AS $$
-DECLARE
-    clean_term text;
-    words text[];
-    word_count int;
-    phrase_query tsquery;
-    plain_query tsquery;
-BEGIN
-    -- Get current user if not provided
-    IF current_user_id IS NULL THEN
-        current_user_id := auth.uid();
-    END IF;
-    
-    -- Early exit for empty search
-    IF search_term IS NULL OR trim(search_term) = '' OR length(trim(search_term)) < 1 THEN
-        RETURN;
-    END IF;
-
-    -- Pre-compute all values
-    clean_term := lower(trim(regexp_replace(search_term, '\s+', ' ', 'g')));
-    words := string_to_array(clean_term, ' ');
-    word_count := array_length(words, 1);
-    
-    -- Pre-compile tsqueries (handle potential errors)
-    BEGIN
-        phrase_query := phraseto_tsquery('english', search_term);
-        plain_query := plainto_tsquery('english', search_term);
-    EXCEPTION 
-        WHEN OTHERS THEN
-            phrase_query := NULL;
-            plain_query := NULL;
-    END;
-    
-    RETURN QUERY
-    SELECT 
-        p.id, 
-        p.short_id,
-        p.name, 
-        p.description,
-        p.thumbnail_url,
-        p.thumbnail_maxres_url,
-        p.image_properties,
-        p.created_at,
-        p.created_by,
-        p.type,
-        p.youtube_id,
-        prof.username AS profile_username,
-        -- Simplified ranking to avoid type issues
-        (CASE 
-            WHEN lower(p.name) LIKE '%' || clean_term || '%' THEN 1000
-            WHEN lower(p.name) LIKE clean_term || '%' THEN 950
-            WHEN word_count > 1 AND (
-                SELECT COUNT(*) 
-                FROM unnest(words) AS word 
-                WHERE lower(p.name) LIKE '%' || word || '%'
-            ) = word_count THEN 900
-            WHEN phrase_query IS NOT NULL AND p.search_vector @@ phrase_query THEN 850
-            WHEN plain_query IS NOT NULL AND p.search_vector @@ plain_query THEN 800
-            WHEN p.description IS NOT NULL AND lower(p.description) LIKE '%' || clean_term || '%' THEN 500
-            WHEN word_count = 1 AND lower(p.name) LIKE '%' || words[1] || '%' THEN 450
-            WHEN p.description IS NOT NULL AND lower(p.description) LIKE clean_term || '%' THEN 350
-            WHEN word_count = 1 AND p.description IS NOT NULL AND lower(p.description) LIKE '%' || words[1] || '%' THEN 300
-            WHEN prof.username IS NOT NULL AND lower(prof.username) LIKE '%' || clean_term || '%' THEN 250
-            ELSE 0 
-        END)::real AS search_rank,
-        p.deleted_at
-    FROM public.playlists p
-    LEFT JOIN public.profiles prof ON p.created_by = prof.id
-    WHERE 
-        -- Filter out soft-deleted playlists
-        p.deleted_at IS NULL
-        AND (
-            -- Access control
-            (p.type = 'Public' OR (current_user_id IS NOT NULL AND p.created_by = current_user_id))
-            AND (
-                -- Search criteria
-                lower(p.name) LIKE '%' || clean_term || '%'
-                OR (p.description IS NOT NULL AND lower(p.description) LIKE '%' || clean_term || '%')
-                OR (phrase_query IS NOT NULL AND p.search_vector @@ phrase_query)
-                OR (plain_query IS NOT NULL AND p.search_vector @@ plain_query)
-                OR (word_count = 1 AND (
-                    lower(p.name) LIKE '%' || words[1] || '%'
-                    OR (p.description IS NOT NULL AND lower(p.description) LIKE '%' || words[1] || '%')
-                ))
-                OR (prof.username IS NOT NULL AND lower(prof.username) LIKE '%' || clean_term || '%')
-            )
-        )
-    ORDER BY 
-        (CASE 
-            WHEN lower(p.name) LIKE '%' || clean_term || '%' THEN 1000
-            WHEN lower(p.name) LIKE clean_term || '%' THEN 950
-            WHEN phrase_query IS NOT NULL AND p.search_vector @@ phrase_query THEN 850
-            WHEN plain_query IS NOT NULL AND p.search_vector @@ plain_query THEN 800
-            WHEN p.description IS NOT NULL AND lower(p.description) LIKE '%' || clean_term || '%' THEN 500
-            ELSE 0 
-        END) DESC,
-        p.created_at DESC
-    LIMIT limit_count 
-    OFFSET offset_count;
-END;
-$$;
-
--- Update get_playlist_data function
+-- Migration: 08d_playlist_query_functions.sql
+-- Purpose: Create playlist data retrieval functions
+-- Dependencies: Requires base tables from 03_base_tables.sql (playlists, playlist_videos, user_playlists)
+-- This migration includes playlist data access and search functions
+-- ============================================================================
+-- Function to get comprehensive playlist data with pagination and sorting
 CREATE OR REPLACE FUNCTION public.get_playlist_data (
   p_short_id text DEFAULT NULL,
   p_youtube_id text DEFAULT NULL,
@@ -228,7 +62,7 @@ BEGIN
     RAISE EXCEPTION 'Exactly one of p_short_id or p_youtube_id must be provided';
   END IF;
   
-  -- Get the playlist data by either short_id or youtube_id, excluding soft-deleted playlists
+  -- Get the playlist data by either short_id or youtube_id
   SELECT
     p.id,
     p.created_at,
@@ -248,9 +82,8 @@ BEGIN
   FROM public.playlists p
   LEFT JOIN public.profiles prof ON p.created_by = prof.id
   LEFT JOIN public.user_playlists up ON up.id = p.id AND up.user_id = p_user_id
-  WHERE ((p_short_id IS NOT NULL AND p.short_id = p_short_id)
-     OR (p_youtube_id IS NOT NULL AND p.youtube_id = p_youtube_id))
-    AND p.deleted_at IS NULL;  -- Filter out soft-deleted playlists
+  WHERE (p_short_id IS NOT NULL AND p.short_id = p_short_id)
+     OR (p_youtube_id IS NOT NULL AND p.youtube_id = p_youtube_id);
   
   -- If playlist not found, return empty
   IF playlist_record.id IS NULL THEN
@@ -419,7 +252,7 @@ BEGIN
 END;
 $$;
 
--- Update get_playlist_video_context function
+-- Function to get playlist video context (current video + surrounding videos)
 CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
   p_short_id text,
   p_video_id text,
@@ -467,7 +300,7 @@ DECLARE
   video_count bigint;
   current_video_pos integer;
 BEGIN
-  -- Get the playlist data, excluding soft-deleted playlists
+  -- Get the playlist data
   SELECT
     p.id,
     p.created_at,
@@ -487,8 +320,7 @@ BEGIN
   FROM public.playlists p
   LEFT JOIN public.profiles prof ON p.created_by = prof.id
   LEFT JOIN public.user_playlists up ON up.id = p.id AND up.user_id = p_user_id
-  WHERE p.short_id = p_short_id
-    AND p.deleted_at IS NULL;  -- Filter out soft-deleted playlists
+  WHERE p.short_id = p_short_id;
   
   -- If playlist not found, return empty
   IF playlist_record.id IS NULL THEN
@@ -613,5 +445,294 @@ BEGIN
   FROM ordered_videos ov
   WHERE ov.position_in_playlist BETWEEN current_video_pos AND LEAST(video_count, current_video_pos + p_context_limit)
   ORDER BY ov.position_in_playlist;
+END;
+$$;
+
+-- Function to get playlist by short_id
+CREATE OR REPLACE FUNCTION public.get_playlist_by_short_id (p_short_id text) RETURNS TABLE (
+  id bigint,
+  created_at TIMESTAMP WITH TIME ZONE,
+  name text,
+  short_id text,
+  created_by uuid,
+  description text,
+  thumbnail_url text,
+  thumbnail_maxres_url text,
+  type public.playlist_type,
+  image_properties jsonb,
+  youtube_id text,
+  profile_username text,
+  sorted_by public.playlist_sorted_by,
+  sort_order public.playlist_sort_order
+)
+SET
+  search_path = '' LANGUAGE sql AS $$
+  SELECT
+    p.id,
+    p.created_at,
+    p.name,
+    p.short_id,
+    p.created_by,
+    p.description,
+    p.thumbnail_url,
+    p.thumbnail_maxres_url,
+    p.type,
+    p.image_properties,
+    p.youtube_id,
+    prof.username AS profile_username,
+    up.sorted_by,
+    up.sort_order
+  FROM public.playlists p
+  LEFT JOIN public.profiles prof ON p.created_by = prof.id
+  LEFT JOIN public.user_playlists up 
+    ON up.id = p.id 
+  WHERE p.short_id = p_short_id
+  LIMIT 1;
+$$;
+
+-- Function to get playlist by youtube_id
+CREATE OR REPLACE FUNCTION public.get_playlist_by_youtube_id (p_youtube_id text) RETURNS TABLE (
+  id bigint,
+  created_at TIMESTAMP WITH TIME ZONE,
+  name text,
+  short_id text,
+  created_by uuid,
+  description text,
+  thumbnail_url text,
+  thumbnail_maxres_url text,
+  type public.playlist_type,
+  image_properties jsonb,
+  youtube_id text,
+  profile_username text,
+  sorted_by public.playlist_sorted_by,
+  sort_order public.playlist_sort_order
+)
+SET
+  search_path = '' LANGUAGE sql AS $$
+  SELECT
+    p.id,
+    p.created_at,
+    p.name,
+    p.short_id,
+
+    p.created_by,
+    p.description,
+    p.thumbnail_url,
+    p.thumbnail_maxres_url,
+    p.type,
+    p.image_properties,
+
+    p.youtube_id,
+    prof.username AS profile_username,
+    up.sorted_by,
+    up.sort_order
+  FROM public.playlists p
+  LEFT JOIN public.profiles prof ON p.created_by = prof.id
+
+  LEFT JOIN public.user_playlists up 
+    ON up.id = p.id 
+  WHERE p.youtube_id = p_youtube_id
+  LIMIT 1;
+$$;
+
+-- Function to get user playlists
+CREATE OR REPLACE FUNCTION public.get_user_playlists (p_user_id uuid) RETURNS TABLE (
+  id bigint,
+  created_by uuid,
+  created_at timestamptz,
+  name text,
+  short_id text,
+  description text,
+  type public.playlist_type,
+  thumbnail_url text,
+  thumbnail_maxres_url text,
+  image_properties jsonb,
+  playlist_position int2,
+  sorted_by public.playlist_sorted_by,
+  sort_order public.playlist_sort_order,
+  youtube_id text,
+  profile_username text
+)
+SET
+  search_path = '' LANGUAGE sql AS $$
+  SELECT
+    p.id,
+    p.created_by,
+    p.created_at,
+    p.name,
+    p.short_id,
+    p.description,
+    p.type,
+    p.thumbnail_url,
+    p.thumbnail_maxres_url,
+    p.image_properties,
+    up.playlist_position,
+    up.sorted_by,
+    up.sort_order,
+    p.youtube_id,
+    prof.username AS profile_username
+  FROM public.user_playlists up
+  JOIN public.playlists p ON up.id = p.id
+  LEFT JOIN public.profiles prof ON p.created_by = prof.id
+  WHERE up.user_id = p_user_id
+  ORDER BY up.playlist_position ASC;
+$$;
+
+-- Function to get playlists for a specific username 
+CREATE OR REPLACE FUNCTION public.get_playlists_for_username (p_username text) RETURNS TABLE (
+  id bigint,
+  created_at TIMESTAMP WITH TIME ZONE,
+  name text,
+  short_id text,
+  created_by uuid,
+  description text,
+  thumbnail_url text,
+  thumbnail_maxres_url text,
+  type public.playlist_type,
+  image_properties jsonb,
+  youtube_id text,
+  profile_username text,
+  sorted_by public.playlist_sorted_by,
+  sort_order public.playlist_sort_order
+)
+SET
+  search_path = '' LANGUAGE sql AS $$
+  SELECT
+    p.id,
+    p.created_at,
+    p.name,
+    p.short_id,
+    p.created_by,
+    p.description,
+    p.thumbnail_url,
+    p.thumbnail_maxres_url,
+    p.type,
+    p.image_properties,
+    p.youtube_id,
+    prof.username AS profile_username,
+    up.sorted_by,
+    up.sort_order
+  FROM public.playlists p
+  JOIN public.profiles prof ON p.created_by = prof.id
+  LEFT JOIN public.user_playlists up 
+    ON up.id = p.id 
+  WHERE prof.username = p_username
+  ORDER BY p.created_at DESC;
+$$;
+
+-- Function to search playlists
+CREATE OR REPLACE FUNCTION "public"."search_playlists" (
+  "search_term" "text",
+  "current_user_id" uuid DEFAULT NULL,
+  "limit_count" integer DEFAULT 50,
+  "offset_count" integer DEFAULT 0
+) RETURNS TABLE (
+  "id" bigint,
+  "short_id" text,
+  "name" text,
+  "description" text,
+  "thumbnail_url" text,
+  "thumbnail_maxres_url" text,
+  "image_properties" jsonb,
+  "created_at" TIMESTAMP WITH TIME ZONE,
+  "created_by" uuid,
+  "type" public.playlist_type,
+  "youtube_id" text,
+  "profile_username" text,
+  "search_rank" real
+) LANGUAGE "plpgsql" STABLE AS $$
+DECLARE
+    clean_term text;
+    words text[];
+    word_count int;
+    phrase_query tsquery;
+    plain_query tsquery;
+BEGIN
+    -- Get current user if not provided
+    IF current_user_id IS NULL THEN
+        current_user_id := auth.uid();
+    END IF;
+    
+    -- Early exit for empty search
+    IF search_term IS NULL OR trim(search_term) = '' OR length(trim(search_term)) < 1 THEN
+        RETURN;
+    END IF;
+
+    -- Pre-compute all values
+    clean_term := lower(trim(regexp_replace(search_term, '\s+', ' ', 'g')));
+    words := string_to_array(clean_term, ' ');
+    word_count := array_length(words, 1);
+    
+    -- Pre-compile tsqueries (handle potential errors)
+    BEGIN
+        phrase_query := phraseto_tsquery('english', search_term);
+        plain_query := plainto_tsquery('english', search_term);
+    EXCEPTION 
+        WHEN OTHERS THEN
+            phrase_query := NULL;
+            plain_query := NULL;
+    END;
+    
+    RETURN QUERY
+    SELECT 
+        p.id, 
+        p.short_id,
+        p.name, 
+        p.description,
+        p.thumbnail_url,
+        p.thumbnail_maxres_url,
+        p.image_properties,
+        p.created_at,
+        p.created_by,
+        p.type,
+        p.youtube_id,
+        prof.username AS profile_username,
+        -- Simplified ranking to avoid type issues
+        (CASE 
+            WHEN lower(p.name) LIKE '%' || clean_term || '%' THEN 1000
+            WHEN lower(p.name) LIKE clean_term || '%' THEN 950
+            WHEN word_count > 1 AND (
+                SELECT COUNT(*) 
+                FROM unnest(words) AS word 
+                WHERE lower(p.name) LIKE '%' || word || '%'
+            ) = word_count THEN 900
+            WHEN phrase_query IS NOT NULL AND p.search_vector @@ phrase_query THEN 850
+            WHEN plain_query IS NOT NULL AND p.search_vector @@ plain_query THEN 800
+            WHEN p.description IS NOT NULL AND lower(p.description) LIKE '%' || clean_term || '%' THEN 500
+            WHEN word_count = 1 AND lower(p.name) LIKE '%' || words[1] || '%' THEN 450
+            WHEN p.description IS NOT NULL AND lower(p.description) LIKE clean_term || '%' THEN 350
+            WHEN word_count = 1 AND p.description IS NOT NULL AND lower(p.description) LIKE '%' || words[1] || '%' THEN 300
+            WHEN prof.username IS NOT NULL AND lower(prof.username) LIKE '%' || clean_term || '%' THEN 250
+            ELSE 0 
+        END)::real AS search_rank
+    FROM public.playlists p
+    LEFT JOIN public.profiles prof ON p.created_by = prof.id
+    WHERE 
+        -- Access control
+        (p.type = 'Public' OR (current_user_id IS NOT NULL AND p.created_by = current_user_id))
+        AND (
+            -- Search criteria
+            lower(p.name) LIKE '%' || clean_term || '%'
+            OR (p.description IS NOT NULL AND lower(p.description) LIKE '%' || clean_term || '%')
+            OR (phrase_query IS NOT NULL AND p.search_vector @@ phrase_query)
+            OR (plain_query IS NOT NULL AND p.search_vector @@ plain_query)
+            OR (word_count = 1 AND (
+                lower(p.name) LIKE '%' || words[1] || '%'
+                OR (p.description IS NOT NULL AND lower(p.description) LIKE '%' || words[1] || '%')
+            ))
+            OR (prof.username IS NOT NULL AND lower(prof.username) LIKE '%' || clean_term || '%')
+        )
+    ORDER BY 
+        (CASE 
+            WHEN lower(p.name) LIKE '%' || clean_term || '%' THEN 1000
+            WHEN lower(p.name) LIKE clean_term || '%' THEN 950
+            WHEN phrase_query IS NOT NULL AND p.search_vector @@ phrase_query THEN 850
+            WHEN plain_query IS NOT NULL AND p.search_vector @@ plain_query THEN 800
+            WHEN p.description IS NOT NULL AND lower(p.description) LIKE '%' || clean_term || '%' THEN 500
+            ELSE 0 
+        END) DESC,
+        p.created_at DESC
+    LIMIT limit_count 
+    OFFSET offset_count;
 END;
 $$;

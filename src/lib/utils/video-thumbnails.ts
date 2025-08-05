@@ -95,6 +95,7 @@ export function extractOriginalUrl(optimizedUrl: string): string | null {
   }
 }
 
+
 /**
  * Check if video has high-resolution thumbnail available
  */
@@ -118,3 +119,4 @@ export function getVideoThumbnailUrlWithSize(
     format: 'auto',
   });
 }
+

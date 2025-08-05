@@ -1,15 +1,14 @@
 -- Migration: 10_soft_delete_playlists.sql
 -- Purpose: Add soft delete functionality for playlists
 -- This migration adds a deleted_at column to the playlists table and updates RPC functions
-
 -- Add deleted_at column to playlists table
-ALTER TABLE "public"."playlists" 
+ALTER TABLE "public"."playlists"
 ADD COLUMN "deleted_at" TIMESTAMP WITH TIME ZONE DEFAULT NULL;
 
 -- Create index on deleted_at for performance
-CREATE INDEX IF NOT EXISTS "playlists_deleted_at_idx" 
-ON "public"."playlists" ("deleted_at") 
-WHERE "deleted_at" IS NOT NULL;
+CREATE INDEX IF NOT EXISTS "playlists_deleted_at_idx" ON "public"."playlists" ("deleted_at")
+WHERE
+  "deleted_at" IS NOT NULL;
 
 -- Add comment for the new column
 COMMENT ON COLUMN "public"."playlists"."deleted_at" IS 'Timestamp when playlist was soft deleted. NULL means not deleted.';
@@ -115,7 +114,6 @@ END;
 $$;
 
 -- Update query functions to filter out soft-deleted playlists
-
 -- Update get_playlist_by_short_id function
 CREATE OR REPLACE FUNCTION public.get_playlist_by_short_id (p_short_id text) RETURNS TABLE (
   id bigint,
@@ -218,7 +216,8 @@ CREATE OR REPLACE FUNCTION public.get_user_playlists (p_user_id uuid) RETURNS TA
   sorted_by public.playlist_sorted_by,
   sort_order public.playlist_sort_order,
   youtube_id text,
-  profile_username text
+  profile_username text,
+  deleted_at TIMESTAMP WITH TIME ZONE
 )
 SET
   search_path = '' LANGUAGE sql AS $$
@@ -237,7 +236,8 @@ SET
     up.sorted_by,
     up.sort_order,
     p.youtube_id,
-    prof.username AS profile_username
+    prof.username AS profile_username,
+    p.deleted_at
   FROM public.user_playlists up
   JOIN public.playlists p ON up.id = p.id
   LEFT JOIN public.profiles prof ON p.created_by = prof.id
