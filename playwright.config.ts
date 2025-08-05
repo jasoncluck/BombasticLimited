@@ -1,4 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -94,7 +97,8 @@ export default defineConfig({
       DATABASE_URL: 'postgresql://postgres:postgres@127.0.0.1:54322/postgres',
       SUPABASE_URL: 'http://127.0.0.1:54321',
       SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || '',
-      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+      SUPABASE_SERVICE_ROLE_KEY:
+        process.env.PUBLIC_SUPABASE_SERVICE_ROLE_KEY || '',
 
       // Performance optimizations for your app
       NODE_ENV: 'test',
