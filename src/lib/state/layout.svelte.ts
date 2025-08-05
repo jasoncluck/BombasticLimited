@@ -139,7 +139,7 @@ export class LayoutStateClass implements LayoutState {
   }
 
   onLayoutChange(sizes: number[]) {
-    document.cookie = `PaneForge:layout=${JSON.stringify(sizes)}; path=/; domain=${page.url.hostname}`;
+    document.cookie = `PaneForge:layout=${JSON.stringify(sizes)}; path=/; max-age=${60 * 60 * 24 * 7}`;
   }
 
   setupNotifications(supabase: SupabaseClient) {
