@@ -187,7 +187,7 @@ export class SidebarStateClass {
       console.log('Sidebar: Skipping refresh - tab not visible');
       return;
     }
-    
+
     await this.loadData();
   }
 

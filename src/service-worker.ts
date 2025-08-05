@@ -63,13 +63,16 @@ const checkTabVisibility = async (): Promise<boolean> => {
     });
 
     const visibilityResults = await Promise.allSettled(visibilityPromises);
-    
+
     // Return true if any tab is visible
-    return visibilityResults.some((result) => 
-      result.status === 'fulfilled' && result.value === true
+    return visibilityResults.some(
+      (result) => result.status === 'fulfilled' && result.value === true
     );
   } catch (error) {
-    console.warn(`SW [${getTimestamp()}]: Error checking tab visibility:`, error);
+    console.warn(
+      `SW [${getTimestamp()}]: Error checking tab visibility:`,
+      error
+    );
     return false; // Default to not visible on error
   }
 };

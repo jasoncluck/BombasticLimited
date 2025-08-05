@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getCroppedPlaylistImageUrl, getVideoThumbnailWebpUrl, getVideoThumbnailWebpUrlsBatch } from '../playlist-service';
+import {
+  getCroppedPlaylistImageUrl,
+  getVideoThumbnailWebpUrl,
+  getVideoThumbnailWebpUrlsBatch,
+} from '../playlist-service';
 import type { ImageProperties } from '../playlist';
 
 // Mock dependencies
@@ -243,7 +247,9 @@ describe('getVideoThumbnailWebpUrl', () => {
     });
 
     // Verify fetch was called
-    expect(mockFetch).toHaveBeenCalledWith('https://example.com/video-thumb.jpg');
+    expect(mockFetch).toHaveBeenCalledWith(
+      'https://example.com/video-thumb.jpg'
+    );
 
     // Verify OffscreenCanvas processing - should use original image dimensions (no cropping)
     expect(mockCreateImageBitmap).toHaveBeenCalledWith(mockImageBlob);
@@ -251,7 +257,7 @@ describe('getVideoThumbnailWebpUrl', () => {
       type: 'image/webp',
       quality: 0.8,
     });
-    
+
     // Should draw the full image without cropping (0, 0 coordinates)
     expect(mockDrawImage).toHaveBeenCalledWith(mockImageBitmap, 0, 0);
 
@@ -316,7 +322,9 @@ describe('getVideoThumbnailWebpUrl', () => {
     // Simulate FileReader load
     mockFileReader.onload();
 
-    await expect(result).resolves.toBe('data:image/webp;base64,mock-base64-data');
+    await expect(result).resolves.toBe(
+      'data:image/webp;base64,mock-base64-data'
+    );
 
     expect(mockCreateElement).toHaveBeenCalledWith('canvas');
     expect(mockCanvas.toBlob).toHaveBeenCalledWith(

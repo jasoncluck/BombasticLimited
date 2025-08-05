@@ -116,7 +116,7 @@ export async function getVideoThumbnailWebpUrlsBatch(
 ) {
   // Process all images in parallel
   return Promise.all(
-    thumbnailUrls.map((thumbnailUrl) => 
+    thumbnailUrls.map((thumbnailUrl) =>
       getVideoThumbnailWebpUrlServer({ thumbnailUrl })
     )
   );

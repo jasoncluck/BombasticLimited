@@ -15,7 +15,11 @@
   import { getSortDisplayName } from './content-filter';
   import ContentCardSkeleton from './content-card-skeleton.svelte';
   import { onMount } from 'svelte';
-  import { processVideoThumbnail, getVideoThumbnailUrl, type VideoWithProcessedThumbnail } from '../video/video-thumbnail-service';
+  import {
+    processVideoThumbnail,
+    getVideoThumbnailUrl,
+    type VideoWithProcessedThumbnail,
+  } from '../video/video-thumbnail-service';
 
   type ContentCardProps = {
     video?: Video;
@@ -77,9 +81,11 @@
   onMount(() => {
     if (video && cardElement) {
       // Process video thumbnail asynchronously
-      processVideoThumbnail(video).then((processed: VideoWithProcessedThumbnail) => {
-        videoWithThumbnail = processed;
-      });
+      processVideoThumbnail(video).then(
+        (processed: VideoWithProcessedThumbnail) => {
+          videoWithThumbnail = processed;
+        }
+      );
 
       let checkCount = 0;
       const maxChecks = 5;
@@ -138,7 +144,9 @@
       <div class="relative">
         <img
           class="aspect-[16/9] h-auto w-full"
-          src={videoWithThumbnail ? getVideoThumbnailUrl(videoWithThumbnail) : video.thumbnail_url}
+          src={videoWithThumbnail
+            ? getVideoThumbnailUrl(videoWithThumbnail)
+            : video.thumbnail_url}
           alt={video.title}
           loading="lazy"
         />

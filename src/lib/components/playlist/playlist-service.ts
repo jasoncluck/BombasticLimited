@@ -608,14 +608,14 @@ async function processVideoThumbnailWithCanvas(
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    
+
     img.onload = () => {
       try {
         // Use the original image dimensions (no cropping)
         const canvas = document.createElement('canvas');
         canvas.width = img.width;
         canvas.height = img.height;
-        
+
         const ctx = canvas.getContext('2d');
         if (!ctx) throw new Error('Failed to get canvas context');
 
@@ -654,7 +654,7 @@ export async function getVideoThumbnailWebpUrlsBatch(
 ): Promise<Array<string | null>> {
   const batchSize = 5;
   const processedThumbnails = [];
-  
+
   for (let i = 0; i < thumbnailUrls.length; i += batchSize) {
     const batch = thumbnailUrls.slice(i, i + batchSize);
     const batchResults = await Promise.all(
@@ -672,6 +672,6 @@ export async function getVideoThumbnailWebpUrlsBatch(
     );
     processedThumbnails.push(...batchResults);
   }
-  
+
   return processedThumbnails;
 }

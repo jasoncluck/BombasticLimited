@@ -63,7 +63,7 @@ describe('History API Fix', () => {
       if (mockWindow.location.href.includes('logout=true')) {
         const url = new URL(mockWindow.location.href);
         url.searchParams.delete('logout');
-        
+
         // Should use SvelteKit's replaceState, not window.history.replaceState
         replaceState(url.toString(), {});
         mockWindow.location.reload();
@@ -73,10 +73,7 @@ describe('History API Fix', () => {
     handleLogoutParameter();
 
     // Verify SvelteKit's replaceState was called, not window.history.replaceState
-    expect(replaceState).toHaveBeenCalledWith(
-      'http://localhost:5173/',
-      {}
-    );
+    expect(replaceState).toHaveBeenCalledWith('http://localhost:5173/', {});
     expect(mockReplaceState).not.toHaveBeenCalled();
     expect(mockWindow.location.reload).toHaveBeenCalled();
   });
@@ -90,13 +87,10 @@ describe('History API Fix', () => {
     // Simulate the effect logic
     const url = new URL('http://localhost:5173/?logout=true');
     url.searchParams.delete('logout');
-    
+
     // This is what should happen in the fixed code
     replaceState(url.toString(), {});
 
-    expect(replaceState).toHaveBeenCalledWith(
-      'http://localhost:5173/',
-      {}
-    );
+    expect(replaceState).toHaveBeenCalledWith('http://localhost:5173/', {});
   });
 });

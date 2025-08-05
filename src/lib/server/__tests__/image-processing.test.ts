@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getCroppedPlaylistImageUrlServer, getVideoThumbnailWebpUrlServer, getVideoThumbnailWebpUrlsBatch } from '../image-processing';
+import {
+  getCroppedPlaylistImageUrlServer,
+  getVideoThumbnailWebpUrlServer,
+  getVideoThumbnailWebpUrlsBatch,
+} from '../image-processing';
 import type { ImageProperties } from '$lib/components/playlist/playlist';
 
 // Mock sharp
@@ -197,13 +201,16 @@ describe('getVideoThumbnailWebpUrlServer', () => {
     });
 
     // Verify fetch was called correctly
-    expect(global.fetch).toHaveBeenCalledWith('https://example.com/video-thumb.jpg', {
-      signal: expect.any(AbortSignal),
-      headers: {
-        Accept: 'image/*',
-        'User-Agent': 'Video-Service/1.0',
-      },
-    });
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://example.com/video-thumb.jpg',
+      {
+        signal: expect.any(AbortSignal),
+        headers: {
+          Accept: 'image/*',
+          'User-Agent': 'Video-Service/1.0',
+        },
+      }
+    );
 
     // Verify Sharp processing without extract (no cropping)
     expect(mockSharp).toHaveBeenCalledWith(mockImageBuffer, {
