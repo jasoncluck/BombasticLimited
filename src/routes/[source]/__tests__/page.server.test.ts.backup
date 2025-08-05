@@ -10,6 +10,8 @@ import {
   createMockVideo,
   createMockVideoResponse,
   createMockPlaylist,
+  createMockPlaylistDataResponse,
+  createMockPlaylistsResponse,
 } from '../../../tests/test-utils';
 
 // Mock dependencies
@@ -90,13 +92,13 @@ describe('[source]/+page.server.ts load function', () => {
   ];
 
   const mockPlaylist = createMockPlaylist({
-    id: 1,
+    id: 'p1',
     short_id: 'abc123',
     name: 'Test Playlist',
     youtube_id: 'playlist1',
     thumbnail_url: 'https://example.com/thumb.jpg',
     thumbnail_maxres_url: 'https://example.com/maxres.jpg',
-    image_properties: { x: 0, y: 0, width: 100, height: 100 },
+    image_properties: '{"x": 0, "y": 0, "width": 100, "height": 100}',
     type: 'Public' as const,
     created_by: mockSession.user.id,
     description: 'Test playlist description',
@@ -104,12 +106,12 @@ describe('[source]/+page.server.ts load function', () => {
 
   const mockSourcePlaylists = [
     createMockPlaylist({
-      id: 2,
+      id: 'sp1',
       short_id: 'def456',
       name: 'Source Playlist 1',
       thumbnail_url: 'https://example.com/thumb1.jpg',
       thumbnail_maxres_url: 'https://example.com/maxres1.jpg',
-      image_properties: { x: 0, y: 0, width: 100, height: 100 },
+      image_properties: '{"x": 0, "y": 0, "width": 100, "height": 100}',
       type: 'Public' as const,
       created_by: mockSession.user.id,
       description: 'Source playlist description',
@@ -153,25 +155,21 @@ describe('[source]/+page.server.ts load function', () => {
   describe('source validation', () => {
     it('should load data for valid source', async () => {
       mockGetVideos.mockResolvedValue(createMockVideoResponse(mockVideos));
-      mockGetPlaylistDataByYoutubeId.mockResolvedValue({
+      mockGetPlaylistDataByYoutubeId.mockResolvedValue(createMockPlaylistDataResponse({
         playlist: mockPlaylist,
         videos: [mockVideos[0]],
-        videosCount: 1,
-        playlistDuration: { hours: 0, minutes: 30, seconds: 0 },
-        error: null,
-      });
-      mockGetPlaylistsForUsername.mockResolvedValue({
+      }));
+      mockGetPlaylistsForUsername.mockResolvedValue(createMockPlaylistsResponse({
         playlists: mockSourcePlaylists,
         count: 1,
-        error: null,
-      });
+      }));
       mockGetCroppedPlaylistImageUrlServer.mockResolvedValue('https://example.com/processed.jpg');
 
       const result = await load(mockLoadEvent);
 
       expect(mockLoadEvent.depends).toHaveBeenCalledWith('supabase:db:videos');
       expect((result as any).source).toBe('giantbomb');
-      expect((result as any).videos).toEqual(mockVideos);
+      expect(result.videos).toEqual(mockVideos);
     });
 
     it('should redirect for invalid source', async () => {
@@ -197,18 +195,14 @@ describe('[source]/+page.server.ts load function', () => {
         mockGetPlaylistDataByYoutubeId.mockResolvedValue({
           playlist: null,
           videos: [],
-          videosCount: 0,
-          playlistDuration: { hours: 0, minutes: 0, seconds: 0 },
-          error: null,
         });
         mockGetPlaylistsForUsername.mockResolvedValue({
           playlists: [],
           count: 0,
-          error: null,
         });
 
         const result = await load(loadEvent);
-        expect((result as any).source).toBe(source);
+        expect(result.source).toBe(source);
       }
     });
   });
@@ -219,14 +213,10 @@ describe('[source]/+page.server.ts load function', () => {
       mockGetPlaylistDataByYoutubeId.mockResolvedValue({
         playlist: mockPlaylist,
         videos: [mockVideos[0]],
-        videosCount: 1,
-        playlistDuration: { hours: 0, minutes: 30, seconds: 0 },
-        error: null,
       });
       mockGetPlaylistsForUsername.mockResolvedValue({
         playlists: mockSourcePlaylists,
         count: 1,
-        error: null,
       });
       mockGetCroppedPlaylistImageUrlServer.mockResolvedValue('https://example.com/processed.jpg');
     });

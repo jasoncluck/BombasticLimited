@@ -312,7 +312,7 @@ describe('continue/+page.server.ts load function', () => {
 
       const result = await load(mockLoadEvent);
 
-      expect(Array.isArray(result.videos)).toBe(true);
+      expect(Array.isArray((result as any).videos)).toBe(true);
       expect((result as any).videos).toEqual([]);
     });
 

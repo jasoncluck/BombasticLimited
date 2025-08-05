@@ -154,32 +154,32 @@ describe('account/+page.svelte Component Logic', () => {
 
   describe('username validation logic', () => {
     it('should not check username uniqueness for current username', () => {
-      const currentUsername = 'testuser';
-      const profileUsername = 'testuser';
+      const currentUsername: string = 'testuser';
+      const profileUsername: string = 'testuser';
       
       const shouldCheck = currentUsername !== profileUsername && currentUsername.length >= 2;
       expect(shouldCheck).toBe(false);
     });
 
     it('should check username uniqueness for new username', () => {
-      const currentUsername = 'newusername';
-      const profileUsername = 'testuser';
+      const currentUsername: string = 'newusername';
+      const profileUsername: string = 'testuser';
       
       const shouldCheck = currentUsername !== profileUsername && currentUsername.length >= 2;
       expect(shouldCheck).toBe(true);
     });
 
     it('should not check username uniqueness for short usernames', () => {
-      const currentUsername = 'a';
-      const profileUsername = 'testuser';
+      const currentUsername: string = 'a';
+      const profileUsername: string = 'testuser';
       
       const shouldCheck = currentUsername !== profileUsername && currentUsername.length >= 2;
       expect(shouldCheck).toBe(false);
     });
 
     it('should handle empty username', () => {
-      const currentUsername = '';
-      const profileUsername = 'testuser';
+      const currentUsername: string = '';
+      const profileUsername: string = 'testuser';
       
       const shouldCheck = currentUsername !== profileUsername && currentUsername.length >= 2;
       expect(shouldCheck).toBe(false);
@@ -201,26 +201,26 @@ describe('account/+page.svelte Component Logic', () => {
 
   describe('form submission logic', () => {
     it('should disable email update button when email unchanged', () => {
-      const formEmail = 'test@example.com';
-      const sessionEmail = 'test@example.com';
+      const formEmail: string = 'test@example.com';
+      const sessionEmail: string = 'test@example.com';
       const isDisabled = formEmail === sessionEmail;
       
       expect(isDisabled).toBe(true);
     });
 
     it('should enable email update button when email changed', () => {
-      const formEmail = 'newemail@example.com';
-      const sessionEmail = 'test@example.com';
+      const formEmail: string = 'newemail@example.com';
+      const sessionEmail: string = 'test@example.com';
       const isDisabled = formEmail === sessionEmail;
       
       expect(isDisabled).toBe(false);
     });
 
     it('should disable username update button when username unchanged', () => {
-      const formUsername = 'testuser';
-      const profileUsername = 'testuser';
-      const isCheckingUsername = false;
-      const isUsernameUnique = null;
+      const formUsername: string = 'testuser';
+      const profileUsername: string = 'testuser';
+      const isCheckingUsername: boolean = false;
+      const isUsernameUnique: boolean | null = null;
       
       const isDisabled = formUsername === profileUsername || 
                         isCheckingUsername || 
@@ -230,10 +230,10 @@ describe('account/+page.svelte Component Logic', () => {
     });
 
     it('should disable username update button when checking username', () => {
-      const formUsername = 'newusername';
-      const profileUsername = 'testuser';
-      const isCheckingUsername = true;
-      const isUsernameUnique = null;
+      const formUsername: string = 'newusername';
+      const profileUsername: string = 'testuser';
+      const isCheckingUsername: boolean = true;
+      const isUsernameUnique: boolean | null = null;
       
       const isDisabled = formUsername === profileUsername || 
                         isCheckingUsername || 
@@ -243,10 +243,10 @@ describe('account/+page.svelte Component Logic', () => {
     });
 
     it('should disable username update button when username not unique', () => {
-      const formUsername = 'newusername';
-      const profileUsername = 'testuser';
-      const isCheckingUsername = false;
-      const isUsernameUnique = false;
+      const formUsername: string = 'newusername';
+      const profileUsername: string = 'testuser';
+      const isCheckingUsername: boolean = false;
+      const isUsernameUnique: boolean = false;
       
       const isDisabled = formUsername === profileUsername || 
                         isCheckingUsername || 
@@ -256,10 +256,10 @@ describe('account/+page.svelte Component Logic', () => {
     });
 
     it('should enable username update button when username is unique and different', () => {
-      const formUsername = 'newusername';
-      const profileUsername = 'testuser';
-      const isCheckingUsername = false;
-      const isUsernameUnique = true;
+      const formUsername: string = 'newusername';
+      const profileUsername: string = 'testuser';
+      const isCheckingUsername: boolean = false;
+      const isUsernameUnique: boolean = true as boolean;
       
       const isDisabled = formUsername === profileUsername || 
                         isCheckingUsername || 
@@ -271,9 +271,9 @@ describe('account/+page.svelte Component Logic', () => {
 
   describe('username status messages', () => {
     it('should show checking message when validating username', () => {
-      const currentUsername = 'newusername';
-      const isCheckingUsername = true;
-      const isUsernameUnique = null;
+      const currentUsername: string = 'newusername';
+      const isCheckingUsername: boolean = true;
+      const isUsernameUnique: boolean | null = null;
       
       const shouldShowChecking = currentUsername && 
                                 currentUsername.length >= 2 && 
@@ -283,9 +283,9 @@ describe('account/+page.svelte Component Logic', () => {
     });
 
     it('should show available message when username is unique', () => {
-      const currentUsername = 'newusername';
-      const isCheckingUsername = false;
-      const isUsernameUnique = true;
+      const currentUsername: string = 'newusername';
+      const isCheckingUsername: boolean = false;
+      const isUsernameUnique: boolean = true;
       
       const shouldShowAvailable = currentUsername && 
                                  currentUsername.length >= 2 && 
@@ -296,9 +296,9 @@ describe('account/+page.svelte Component Logic', () => {
     });
 
     it('should show not available message when username is taken', () => {
-      const currentUsername = 'newusername';
-      const isCheckingUsername = false;
-      const isUsernameUnique = false;
+      const currentUsername: string = 'newusername';
+      const isCheckingUsername: boolean = false;
+      const isUsernameUnique: boolean = false;
       
       const shouldShowNotAvailable = currentUsername && 
                                     currentUsername.length >= 2 && 
@@ -309,9 +309,9 @@ describe('account/+page.svelte Component Logic', () => {
     });
 
     it('should not show any message for short usernames', () => {
-      const currentUsername = 'a';
-      const isCheckingUsername = false;
-      const isUsernameUnique = true;
+      const currentUsername: string = 'a';
+      const isCheckingUsername: boolean = false;
+      const isUsernameUnique: boolean = true;
       
       const shouldShowAnyMessage = currentUsername && currentUsername.length >= 2;
       
@@ -319,9 +319,9 @@ describe('account/+page.svelte Component Logic', () => {
     });
 
     it('should not show any message for empty usernames', () => {
-      const currentUsername = '';
-      const isCheckingUsername = false;
-      const isUsernameUnique = true;
+      const currentUsername: string = '';
+      const isCheckingUsername: boolean = false;
+      const isUsernameUnique: boolean = true;
       
       const shouldShowAnyMessage = Boolean(currentUsername) && currentUsername.length >= 2;
       

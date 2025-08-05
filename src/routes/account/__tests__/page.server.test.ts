@@ -38,12 +38,22 @@ vi.mock('bad-words', () => {
   const mockFilterConstructor = vi.fn(() => ({
     isProfane: mockIsProfane,
   }));
-  return {
+  
+  // Export module with mock functions that can be accessed
+  const mockModule = {
     default: mockFilterConstructor,
     Filter: mockFilterConstructor,
     mockIsProfane,
     mockFilterConstructor,
   };
+  
+  // Store references globally for test access
+  (globalThis as any).badWordsMocks = {
+    mockIsProfane,
+    mockFilterConstructor,
+  };
+  
+  return mockModule;
 });
 
 vi.mock('$lib/supabase/user-profiles', () => ({
@@ -56,9 +66,6 @@ vi.mock('../auth/schema', () => ({
   passwordSchema: {},
   usernameSchema: {},
 }));
-
-// Import the mockIsProfane function to control it in tests after the mock is set up
-import { mockIsProfane, mockFilterConstructor } from 'bad-words';
 
 const mockRedirect = mockFlashRedirect;
 const mockFail = vi.mocked(fail);
@@ -86,7 +93,8 @@ describe('account/+page.server.ts', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset the profanity mock to return false by default
-    vi.mocked(mockIsProfane).mockReturnValue(false);
+    const { mockIsProfane } = (globalThis as any).badWordsMocks;
+    mockIsProfane.mockReturnValue(false);
   });
 
   describe('load function', () => {
@@ -323,7 +331,8 @@ describe('account/+page.server.ts', () => {
 
     it('should reject profane username', async () => {
       // Configure the mock to return true (profane) for this test
-      vi.mocked(mockIsProfane).mockReturnValueOnce(true);
+      const { mockIsProfane } = (globalThis as any).badWordsMocks;
+      mockIsProfane.mockReturnValueOnce(true);
       mockCheckIfUsernameIsUnique.mockResolvedValue(true);
 
       const result = await actions.updateUsername(mockActionEvent);
@@ -387,7 +396,8 @@ describe('account/+page.server.ts', () => {
       });
 
       // Mock the Filter constructor to capture timing
-      vi.mocked(mockFilterConstructor).mockImplementation(() => {
+      const { mockFilterConstructor } = (globalThis as any).badWordsMocks;
+      mockFilterConstructor.mockImplementation(() => {
         profanityCheckTime = Date.now();
         return {
           isProfane: () => false,
