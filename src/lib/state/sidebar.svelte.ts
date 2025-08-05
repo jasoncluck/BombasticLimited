@@ -5,6 +5,7 @@ import type { Database } from '$lib/supabase/database.types';
 import { getContext, setContext } from 'svelte';
 import { browser } from '$app/environment';
 import type { Source } from '$lib/constants/source';
+import { tabVisibility } from '$lib/utils/tab-visibility.js';
 
 export interface SidebarData {
   playlists: Playlist[];
@@ -181,6 +182,12 @@ export class SidebarStateClass {
     }
   }
   async refreshData(): Promise<void> {
+    // Only refresh if tab is visible to save resources
+    if (!tabVisibility.isVisible) {
+      console.log('Sidebar: Skipping refresh - tab not visible');
+      return;
+    }
+    
     await this.loadData();
   }
 
