@@ -40,7 +40,13 @@ export const DEFAULT_MAXRES_THUMBNAIL_CONFIG: VercelImageConfig = {
  * Prefers thumbnail_maxres_url when available, falls back to thumbnail_url
  */
 export function getBestThumbnailUrl(video: Video): string | null {
-  return video.thumbnail_maxres_url || video.thumbnail_url;
+  if (video.thumbnail_maxres_url) {
+    return video.thumbnail_maxres_url;
+  }
+  if (video.thumbnail_url && video.thumbnail_url.trim() !== '') {
+    return video.thumbnail_url;
+  }
+  return null;
 }
 
 /**

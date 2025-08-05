@@ -22,8 +22,10 @@ const createMockVideo = (
   id,
   title: `Video ${id}`,
   description: `Description for video ${id}`,
-  thumbnail_url: thumbnailUrl === undefined ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : thumbnailUrl,
-  thumbnail_maxres_url: thumbnailMaxResUrl,
+  thumbnail_url: thumbnailUrl === null || thumbnailUrl === '' 
+    ? '' 
+    : (thumbnailUrl || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`),
+  thumbnail_maxres_url: thumbnailMaxResUrl === undefined ? null : thumbnailMaxResUrl,
   published_at: '2023-01-01T00:00:00Z',
   duration: null,
   source: 'giantbomb',
@@ -50,7 +52,7 @@ describe('vercel-video-images', () => {
     });
 
     it('should return null when no thumbnails available', () => {
-      const video = createMockVideo('1', null, null);
+      const video = createMockVideo('1', '', null);
 
       const result = getBestThumbnailUrl(video);
       expect(result).toBe(null);
@@ -156,7 +158,7 @@ describe('vercel-video-images', () => {
     });
 
     it('should return null when no thumbnail URL', () => {
-      const video = createMockVideo('1', null, null);
+      const video = createMockVideo('1', '', null);
       
       const result = getOptimizedVideoThumbnailUrl(video);
       
@@ -200,7 +202,7 @@ describe('vercel-video-images', () => {
     });
 
     it('should return null values when no thumbnail URL', () => {
-      const video = createMockVideo('1', null, null);
+      const video = createMockVideo('1', '', null);
       
       const result = getResponsiveVideoThumbnailUrls(video);
       
