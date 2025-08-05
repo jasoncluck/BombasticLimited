@@ -80,7 +80,7 @@ Tests playlist creation and management functions from migration 08e:
 - Batch operations and error handling
 - Data consistency and integrity
 
-### 5. test_triggers_and_cleanup.sql (20 tests)
+### 5. test_triggers_and_cleanup.sql (35 tests)
 Tests database triggers and cleanup functions from migrations 07a-07e:
 
 **Triggers tested:**
@@ -88,6 +88,7 @@ Tests database triggers and cleanup functions from migrations 07a-07e:
 - `update_playlist_search_vector` - Playlist search vector updates
 - `update_video_search_vector` - Video search vector updates
 - `update_user_video_timestamps_updated_at` - Timestamp updates
+- `on_auth_user_changes` - User profile creation trigger
 
 **Functions tested:**
 - `delete_pending_videos()` - Cleanup of pending delete videos
@@ -96,9 +97,28 @@ Tests database triggers and cleanup functions from migrations 07a-07e:
 - Automatic short_id generation and uniqueness
 - Search vector population and updates
 - Timestamp trigger functionality
+- User profile creation from auth.users
 - Cleanup function cascade behavior
 - Multiple trigger integration
 - Data consistency maintenance
+- Edge cases with NULL values and special characters
+- Concurrent operations simulation
+- Performance under load testing
+
+### 6. test_trigger_edge_cases.sql (20 tests)
+Advanced trigger testing focusing on edge cases and performance:
+
+**Test coverage:**
+- Concurrent operations and race condition handling
+- Error handling and recovery scenarios
+- Performance and scalability testing with large datasets
+- Memory usage and resource management
+- Data integrity and consistency validation
+- Constraint violation handling
+- Transaction boundary behavior
+- Large content handling (10KB+ descriptions)
+- Complex interaction scenarios (full user lifecycle)
+- Trigger overhead measurement and optimization
 
 ## Running the Tests
 
@@ -123,11 +143,11 @@ pg_prove -h localhost -p 54322 -U postgres -d postgres supabase/tests/test_user_
 
 ## Test Statistics
 
-- **Total test files:** 5
-- **Total individual tests:** 108
+- **Total test files:** 6
+- **Total individual tests:** 143
 - **Functions covered:** 26
 - **Triggers covered:** 5
-- **Test categories:** User management, video operations, playlist queries, playlist management, triggers & cleanup
+- **Test categories:** User management, video operations, playlist queries, playlist management, triggers & cleanup, advanced edge cases
 
 ## Test Design Principles
 

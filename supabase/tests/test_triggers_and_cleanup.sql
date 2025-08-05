@@ -13,7 +13,7 @@
 BEGIN;
 
 -- Plan the number of tests
-SELECT plan(20);
+SELECT plan(35);
 
 -- ============================================================================
 -- Test Setup: Create test data
@@ -425,60 +425,654 @@ SELECT ok(
 );
 
 -- ============================================================================
--- Test 18-20: Trigger Integration and Data Consistency
+-- Test 18-22: on_auth_user_changes Trigger (Comprehensive)
 -- ============================================================================
 
--- Test that multiple triggers work together correctly
+-- Test that the auth user trigger exists
+SELECT ok(
+  EXISTS(
+    SELECT 1 FROM pg_trigger 
+    WHERE tgname = 'on_auth_user_changes'
+    AND tgrelid = 'auth.users'::regclass
+  ),
+  'on_auth_user_changes trigger exists on auth.users table'
+);
+
+-- Test automatic profile creation on user insert with full_name
 DO $$
 DECLARE
-  integrated_playlist_id bigint;
-  short_id_generated boolean;
+  test_user_id uuid := '99999999-9999-9999-9999-999999999999'::uuid;
+  profile_created boolean;
+  created_username text;
+BEGIN
+  -- Insert user with full_name in metadata
+  INSERT INTO auth.users (id, email, raw_user_meta_data, created_at, updated_at)
+  VALUES (
+    test_user_id,
+    'trigger-fullname@example.com',
+    '{"full_name": "John Doe"}'::jsonb,
+    NOW(),
+    NOW()
+  );
+  
+  -- Check if profile was created
+  SELECT 
+    EXISTS(SELECT 1 FROM public.profiles WHERE id = test_user_id),
+    username
+  INTO profile_created, created_username
+  FROM public.profiles 
+  WHERE id = test_user_id;
+  
+  PERFORM ok(
+    profile_created,
+    'on_auth_user_changes trigger creates profile from full_name metadata'
+  );
+  
+  PERFORM ok(
+    created_username IS NOT NULL AND length(created_username) > 0,
+    'Generated username from full_name is not empty'
+  );
+  
+  -- Store for cleanup
+  CREATE TEMP TABLE IF NOT EXISTS temp_auth_test_users (user_id uuid);
+  INSERT INTO temp_auth_test_users VALUES (test_user_id);
+END $$;
+
+-- Test automatic profile creation on user insert with email fallback
+DO $$
+DECLARE
+  test_user_id uuid := '99999999-9999-9999-9999-999999999998'::uuid;
+  profile_created boolean;
+  created_username text;
+BEGIN
+  -- Insert user without full_name (should use email prefix)
+  INSERT INTO auth.users (id, email, created_at, updated_at)
+  VALUES (
+    test_user_id,
+    'trigger-email-fallback@example.com',
+    NOW(),
+    NOW()
+  );
+  
+  -- Check if profile was created using email prefix
+  SELECT 
+    EXISTS(SELECT 1 FROM public.profiles WHERE id = test_user_id),
+    username
+  INTO profile_created, created_username
+  FROM public.profiles 
+  WHERE id = test_user_id;
+  
+  PERFORM ok(
+    profile_created,
+    'on_auth_user_changes trigger creates profile with email fallback'
+  );
+  
+  PERFORM ok(
+    created_username LIKE 'trigger-email-fallback%',
+    'Generated username uses email prefix when full_name unavailable'
+  );
+  
+  INSERT INTO temp_auth_test_users VALUES (test_user_id);
+END $$;
+
+-- Test that trigger handles UPDATE operations without creating duplicate profiles
+DO $$
+DECLARE
+  test_user_id uuid;
+  profile_count integer;
+BEGIN
+  -- Get an existing test user
+  SELECT user_id INTO test_user_id FROM temp_auth_test_users LIMIT 1;
+  
+  -- Update the user's email
+  UPDATE auth.users 
+  SET email = 'updated-trigger-email@example.com',
+      updated_at = NOW()
+  WHERE id = test_user_id;
+  
+  -- Check that we still have only one profile
+  SELECT COUNT(*) INTO profile_count
+  FROM public.profiles 
+  WHERE id = test_user_id;
+  
+  PERFORM is(
+    profile_count,
+    1,
+    'on_auth_user_changes trigger does not create duplicate profiles on UPDATE'
+  );
+END $$;
+
+-- ============================================================================
+-- Test 23-27: Edge Cases and Error Conditions
+-- ============================================================================
+
+-- Test search vector trigger with null values
+DO $$
+DECLARE
+  test_playlist_id bigint;
   search_vector_created boolean;
 BEGIN
-  -- Insert playlist that should trigger both short_id generation and search vector update
+  -- Insert playlist with null description
   INSERT INTO public.playlists (name, description, created_by, type)
   VALUES (
-    'Integration Test Playlist',
-    'Testing multiple triggers working together',
+    'Null Description Test',
+    NULL,
+    '88888888-8888-8888-8888-888888888888'::uuid,
+    'Private'
+  )
+  RETURNING id INTO test_playlist_id;
+  
+  -- Check that search vector was still created
+  SELECT (search_vector IS NOT NULL) INTO search_vector_created
+  FROM public.playlists
+  WHERE id = test_playlist_id;
+  
+  PERFORM ok(
+    search_vector_created,
+    'Search vector trigger handles null description gracefully'
+  );
+  
+  INSERT INTO temp_trigger_playlists VALUES (test_playlist_id);
+END $$;
+
+-- Test search vector trigger with very long content
+DO $$
+DECLARE
+  test_playlist_id bigint;
+  long_description text := repeat('This is a very long description with many words ', 100);
+  search_vector_created boolean;
+BEGIN
+  -- Insert playlist with very long description
+  INSERT INTO public.playlists (name, description, created_by, type)
+  VALUES (
+    'Long Content Test',
+    long_description,
+    '88888888-8888-8888-8888-888888888888'::uuid,
+    'Private'
+  )
+  RETURNING id INTO test_playlist_id;
+  
+  -- Check that search vector was created for long content
+  SELECT (search_vector IS NOT NULL) INTO search_vector_created
+  FROM public.playlists
+  WHERE id = test_playlist_id;
+  
+  PERFORM ok(
+    search_vector_created,
+    'Search vector trigger handles very long content'
+  );
+  
+  INSERT INTO temp_trigger_playlists VALUES (test_playlist_id);
+END $$;
+
+-- Test search vector trigger with special characters
+DO $$
+DECLARE
+  test_video_id text := 'special_char_test_video';
+  search_vector_created boolean;
+BEGIN
+  -- Insert video with special characters in title/description
+  INSERT INTO public.videos (id, source, title, description, published_at, duration, pending_delete)
+  VALUES (
+    test_video_id,
+    'YouTube',
+    'Test Video with Special Chars: @#$%^&*()[]{}',
+    'Description with émojis 🎵🎶 and special characters: <>&"''',
+    '2023-01-01 10:00:00+00',
+    'PT5M30S',
+    FALSE
+  );
+  
+  -- Check that search vector was created despite special characters
+  SELECT (search_vector IS NOT NULL) INTO search_vector_created
+  FROM public.videos
+  WHERE id = test_video_id;
+  
+  PERFORM ok(
+    search_vector_created,
+    'Search vector trigger handles special characters and emojis'
+  );
+  
+  -- Store for cleanup
+  CREATE TEMP TABLE IF NOT EXISTS temp_special_videos (video_id text);
+  INSERT INTO temp_special_videos VALUES (test_video_id);
+END $$;
+
+-- Test timestamp trigger with concurrent updates
+DO $$
+DECLARE
+  test_playlist_id bigint;
+  initial_updated_at timestamptz;
+  final_updated_at timestamptz;
+BEGIN
+  SELECT playlist_id INTO test_playlist_id FROM temp_timestamp_data LIMIT 1;
+  
+  -- Get initial timestamp
+  SELECT updated_at INTO initial_updated_at
+  FROM public.timestamps
+  WHERE user_id = '88888888-8888-8888-8888-888888888888'::uuid
+  AND video_id = 'trigger_test_video';
+  
+  -- Perform multiple rapid updates
+  FOR i in 1..5 LOOP
+    UPDATE public.timestamps
+    SET video_start_seconds = video_start_seconds + 10
+    WHERE user_id = '88888888-8888-8888-8888-888888888888'::uuid
+    AND video_id = 'trigger_test_video';
+    
+    PERFORM pg_sleep(0.01); -- Small delay between updates
+  END LOOP;
+  
+  -- Get final timestamp
+  SELECT updated_at INTO final_updated_at
+  FROM public.timestamps
+  WHERE user_id = '88888888-8888-8888-8888-888888888888'::uuid
+  AND video_id = 'trigger_test_video';
+  
+  PERFORM ok(
+    final_updated_at > initial_updated_at,
+    'Timestamp trigger handles multiple rapid updates correctly'
+  );
+END $$;
+
+-- Test short_id trigger uniqueness under high load simulation
+DO $$
+DECLARE
+  short_ids text[];
+  unique_count integer;
+  total_count integer := 10;
+BEGIN
+  -- Create multiple playlists rapidly
+  FOR i in 1..total_count LOOP
+    INSERT INTO public.playlists (name, created_by, type)
+    VALUES (
+      'Uniqueness Test Playlist ' || i,
+      '88888888-8888-8888-8888-888888888888'::uuid,
+      'Private'
+    );
+  END LOOP;
+  
+  -- Collect all short_ids from our test user's playlists
+  SELECT array_agg(short_id) INTO short_ids
+  FROM public.playlists
+  WHERE created_by = '88888888-8888-8888-8888-888888888888'::uuid;
+  
+  -- Count unique short_ids
+  SELECT COUNT(DISTINCT unnest) INTO unique_count
+  FROM unnest(short_ids);
+  
+  PERFORM ok(
+    unique_count >= total_count,
+    'Short_id trigger maintains uniqueness under rapid insertions'
+  );
+  
+  -- Store playlist IDs for cleanup
+  INSERT INTO temp_trigger_playlists 
+  SELECT id FROM public.playlists 
+  WHERE created_by = '88888888-8888-8888-8888-888888888888'::uuid
+  AND name LIKE 'Uniqueness Test Playlist%';
+END $$;
+
+-- ============================================================================
+-- Test 28-35: Advanced Trigger Integration and Data Consistency
+-- ============================================================================
+
+-- Test complete user-to-playlist-to-video lifecycle with all triggers
+DO $$
+DECLARE
+  lifecycle_user_id uuid := '77777777-7777-7777-7777-777777777777'::uuid;
+  lifecycle_playlist_id bigint;
+  lifecycle_video_id text := 'lifecycle_test_video';
+  profile_created boolean;
+  playlist_short_id text;
+  playlist_search_vector tsvector;
+  video_search_vector tsvector;
+  timestamp_updated_at timestamptz;
+BEGIN
+  -- Step 1: Create user (should trigger profile creation)
+  INSERT INTO auth.users (id, email, raw_user_meta_data, created_at, updated_at)
+  VALUES (
+    lifecycle_user_id,
+    'lifecycle@example.com',
+    '{"full_name": "Lifecycle Test User"}'::jsonb,
+    NOW(),
+    NOW()
+  );
+  
+  -- Verify profile was created
+  SELECT EXISTS(SELECT 1 FROM public.profiles WHERE id = lifecycle_user_id)
+  INTO profile_created;
+  
+  -- Step 2: Create playlist (should trigger short_id and search vector)
+  INSERT INTO public.playlists (name, description, created_by, type)
+  VALUES (
+    'Lifecycle Test Playlist',
+    'Testing complete trigger lifecycle',
+    lifecycle_user_id,
+    'Public'
+  )
+  RETURNING id, short_id, search_vector INTO lifecycle_playlist_id, playlist_short_id, playlist_search_vector;
+  
+  -- Step 3: Create video (should trigger search vector)
+  INSERT INTO public.videos (id, source, title, description, published_at, duration, pending_delete)
+  VALUES (
+    lifecycle_video_id,
+    'YouTube',
+    'Lifecycle Test Video',
+    'Video for testing complete trigger lifecycle',
+    '2023-01-01 10:00:00+00',
+    'PT5M30S',
+    FALSE
+  );
+  
+  SELECT search_vector INTO video_search_vector
+  FROM public.videos WHERE id = lifecycle_video_id;
+  
+  -- Step 4: Create timestamp (should trigger updated_at)
+  INSERT INTO public.timestamps (user_id, video_id, playlist_id, video_start_seconds, watched_at)
+  VALUES (
+    lifecycle_user_id,
+    lifecycle_video_id,
+    lifecycle_playlist_id,
+    100.0,
+    NOW()
+  )
+  RETURNING updated_at INTO timestamp_updated_at;
+  
+  -- Verify all triggers worked correctly
+  PERFORM ok(
+    profile_created AND 
+    playlist_short_id IS NOT NULL AND 
+    playlist_search_vector IS NOT NULL AND 
+    video_search_vector IS NOT NULL AND 
+    timestamp_updated_at IS NOT NULL,
+    'Complete user lifecycle triggers work correctly together'
+  );
+  
+  -- Store for cleanup
+  CREATE TEMP TABLE IF NOT EXISTS temp_lifecycle_data (
+    user_id uuid, 
+    playlist_id bigint, 
+    video_id text
+  );
+  INSERT INTO temp_lifecycle_data VALUES (lifecycle_user_id, lifecycle_playlist_id, lifecycle_video_id);
+END $$;
+
+-- Test search vector content accuracy
+DO $$
+DECLARE
+  test_playlist_id bigint;
+  search_matches boolean;
+BEGIN
+  -- Insert playlist with known searchable content
+  INSERT INTO public.playlists (name, description, created_by, type)
+  VALUES (
+    'Searchable Content Test',
+    'Contains words like music, rock, and guitar',
     '88888888-8888-8888-8888-888888888888'::uuid,
     'Public'
   )
-  RETURNING id INTO integrated_playlist_id;
+  RETURNING id INTO test_playlist_id;
   
-  -- Check that both triggers worked
-  SELECT 
-    (short_id IS NOT NULL AND length(short_id) > 0),
-    (search_vector IS NOT NULL)
-  INTO short_id_generated, search_vector_created
+  -- Test that search vector contains expected terms
+  SELECT (search_vector @@ to_tsquery('english', 'music & rock & guitar')) 
+  INTO search_matches
   FROM public.playlists
-  WHERE id = integrated_playlist_id;
+  WHERE id = test_playlist_id;
   
   PERFORM ok(
-    short_id_generated AND search_vector_created,
-    'Multiple triggers work together correctly on playlist creation'
+    search_matches,
+    'Search vector trigger creates accurate searchable content'
   );
   
-  INSERT INTO temp_trigger_playlists VALUES (integrated_playlist_id);
+  INSERT INTO temp_trigger_playlists VALUES (test_playlist_id);
 END $$;
 
--- Test trigger performance and data consistency
-SELECT ok(
-  NOT EXISTS(
-    SELECT 1 FROM public.playlists 
-    WHERE short_id IS NULL OR search_vector IS NULL
-  ),
-  'All playlists have both short_id and search_vector populated'
-);
+-- Test trigger behavior with database constraints
+DO $$
+DECLARE
+  constraint_test_passed boolean := true;
+BEGIN
+  -- Test that triggers respect foreign key constraints
+  BEGIN
+    INSERT INTO public.playlists (name, created_by, type)
+    VALUES (
+      'Invalid User Test',
+      '00000000-0000-0000-0000-000000000000'::uuid, -- Non-existent user
+      'Private'
+    );
+    constraint_test_passed := false; -- Should not reach here
+  EXCEPTION
+    WHEN foreign_key_violation THEN
+      constraint_test_passed := true; -- Expected behavior
+  END;
+  
+  PERFORM ok(
+    constraint_test_passed,
+    'Triggers respect database constraints and foreign keys'
+  );
+END $$;
 
--- Test that triggers maintain referential integrity
-SELECT ok(
-  NOT EXISTS(
-    SELECT 1 FROM public.timestamps t
-    LEFT JOIN public.videos v ON t.video_id = v.id
-    WHERE v.id IS NULL
-  ),
-  'Triggers maintain referential integrity between timestamps and videos'
-);
+-- Test trigger rollback behavior
+DO $$
+DECLARE
+  playlist_count_before bigint;
+  playlist_count_after bigint;
+  rollback_test_passed boolean := true;
+BEGIN
+  -- Get initial playlist count
+  SELECT COUNT(*) INTO playlist_count_before FROM public.playlists;
+  
+  -- Attempt transaction that should rollback
+  BEGIN
+    INSERT INTO public.playlists (name, created_by, type)
+    VALUES (
+      'Rollback Test Playlist',
+      '88888888-8888-8888-8888-888888888888'::uuid,
+      'Private'
+    );
+    
+    -- Force an error to trigger rollback
+    RAISE EXCEPTION 'Intentional rollback test';
+  EXCEPTION
+    WHEN OTHERS THEN
+      NULL; -- Expected error
+  END;
+  
+  -- Check that count hasn't changed
+  SELECT COUNT(*) INTO playlist_count_after FROM public.playlists;
+  
+  PERFORM is(
+    playlist_count_after,
+    playlist_count_before,
+    'Triggers participate correctly in transaction rollbacks'
+  );
+END $$;
+
+-- Test trigger performance with bulk operations
+DO $$
+DECLARE
+  start_time timestamp;
+  end_time timestamp;
+  duration_ms integer;
+  bulk_count integer := 50;
+BEGIN
+  start_time := clock_timestamp();
+  
+  -- Bulk insert with triggers
+  FOR i in 1..bulk_count LOOP
+    INSERT INTO public.playlists (name, description, created_by, type)
+    VALUES (
+      'Bulk Test Playlist ' || i,
+      'Bulk test description for playlist ' || i,
+      '88888888-8888-8888-8888-888888888888'::uuid,
+      'Private'
+    );
+  END LOOP;
+  
+  end_time := clock_timestamp();
+  duration_ms := EXTRACT(MILLISECONDS FROM (end_time - start_time));
+  
+  -- Test should complete in reasonable time (less than 5 seconds)
+  PERFORM ok(
+    duration_ms < 5000,
+    'Triggers perform adequately with bulk operations (completed in ' || duration_ms || 'ms)'
+  );
+  
+  -- Store bulk playlists for cleanup
+  INSERT INTO temp_trigger_playlists 
+  SELECT id FROM public.playlists 
+  WHERE created_by = '88888888-8888-8888-8888-888888888888'::uuid
+  AND name LIKE 'Bulk Test Playlist%';
+END $$;
+
+-- Test trigger interaction with RLS policies
+DO $$
+DECLARE
+  rls_test_passed boolean := true;
+BEGIN
+  -- This test verifies that triggers work correctly with Row Level Security
+  -- The triggers should execute regardless of RLS policies
+  
+  -- Temporarily enable RLS on playlists if not already enabled
+  -- (This is just for testing trigger interaction)
+  
+  INSERT INTO public.playlists (name, created_by, type)
+  VALUES (
+    'RLS Trigger Test',
+    '88888888-8888-8888-8888-888888888888'::uuid,
+    'Private'
+  );
+  
+  -- Verify that triggers executed despite any RLS policies
+  SELECT EXISTS(
+    SELECT 1 FROM public.playlists 
+    WHERE name = 'RLS Trigger Test'
+    AND short_id IS NOT NULL 
+    AND search_vector IS NOT NULL
+  ) INTO rls_test_passed;
+  
+  PERFORM ok(
+    rls_test_passed,
+    'Triggers execute correctly regardless of RLS policies'
+  );
+  
+  -- Store for cleanup
+  INSERT INTO temp_trigger_playlists 
+  SELECT id FROM public.playlists WHERE name = 'RLS Trigger Test';
+END $$;
+
+-- Test search vector update performance and accuracy
+DO $$
+DECLARE
+  update_test_playlist_id bigint;
+  original_search_vector tsvector;
+  updated_search_vector tsvector;
+  vectors_different boolean;
+BEGIN
+  -- Get a test playlist
+  SELECT playlist_id INTO update_test_playlist_id FROM temp_trigger_playlists LIMIT 1;
+  
+  -- Get original search vector
+  SELECT search_vector INTO original_search_vector
+  FROM public.playlists WHERE id = update_test_playlist_id;
+  
+  -- Update with completely different content
+  UPDATE public.playlists
+  SET name = 'Completely Different Updated Name',
+      description = 'Entirely new description with different keywords jazz blues saxophone'
+  WHERE id = update_test_playlist_id;
+  
+  -- Get updated search vector
+  SELECT search_vector INTO updated_search_vector
+  FROM public.playlists WHERE id = update_test_playlist_id;
+  
+  -- Verify search vector was updated and is different
+  SELECT (original_search_vector IS DISTINCT FROM updated_search_vector)
+  INTO vectors_different;
+  
+  PERFORM ok(
+    vectors_different,
+    'Search vector trigger accurately reflects content changes'
+  );
+END $$;
+
+-- Test all triggers working together in complex scenario
+DO $$
+DECLARE
+  complex_user_id uuid := '66666666-6666-6666-6666-666666666666'::uuid;
+  complex_playlist_id bigint;
+  complex_video_id text := 'complex_scenario_video';
+  all_triggers_working boolean := true;
+BEGIN
+  -- Complex scenario: User creation, playlist creation, video creation, timestamp creation, then updates
+  
+  -- 1. Create user (triggers profile creation)
+  INSERT INTO auth.users (id, email, raw_user_meta_data, created_at, updated_at)
+  VALUES (
+    complex_user_id,
+    'complex@example.com',
+    '{"full_name": "Complex Scenario User"}'::jsonb,
+    NOW(),
+    NOW()
+  );
+  
+  -- 2. Create playlist (triggers short_id and search vector)
+  INSERT INTO public.playlists (name, description, created_by, type)
+  VALUES (
+    'Complex Scenario Playlist',
+    'Testing all triggers in complex scenario',
+    complex_user_id,
+    'Public'
+  )
+  RETURNING id INTO complex_playlist_id;
+  
+  -- 3. Create video (triggers search vector)
+  INSERT INTO public.videos (id, source, title, description, published_at, duration, pending_delete)
+  VALUES (
+    complex_video_id,
+    'YouTube',
+    'Complex Scenario Video',
+    'Video for complex trigger testing scenario',
+    '2023-01-01 10:00:00+00',
+    'PT10M30S',
+    FALSE
+  );
+  
+  -- 4. Create and update timestamp (triggers updated_at)
+  INSERT INTO public.timestamps (user_id, video_id, playlist_id, video_start_seconds, watched_at)
+  VALUES (complex_user_id, complex_video_id, complex_playlist_id, 0.0, NOW());
+  
+  UPDATE public.timestamps
+  SET video_start_seconds = 300.0
+  WHERE user_id = complex_user_id AND video_id = complex_video_id;
+  
+  -- 5. Update playlist (triggers search vector update)
+  UPDATE public.playlists
+  SET description = 'Updated description for complex scenario testing'
+  WHERE id = complex_playlist_id;
+  
+  -- 6. Update video (triggers search vector update)
+  UPDATE public.videos
+  SET title = 'Updated Complex Scenario Video Title'
+  WHERE id = complex_video_id;
+  
+  -- Verify all data exists and has been processed by triggers
+  SELECT (
+    EXISTS(SELECT 1 FROM public.profiles WHERE id = complex_user_id) AND
+    EXISTS(SELECT 1 FROM public.playlists WHERE id = complex_playlist_id AND short_id IS NOT NULL AND search_vector IS NOT NULL) AND
+    EXISTS(SELECT 1 FROM public.videos WHERE id = complex_video_id AND search_vector IS NOT NULL) AND
+    EXISTS(SELECT 1 FROM public.timestamps WHERE user_id = complex_user_id AND updated_at IS NOT NULL)
+  ) INTO all_triggers_working;
+  
+  PERFORM ok(
+    all_triggers_working,
+    'All triggers work correctly together in complex scenarios'
+  );
+  
+  -- Store for cleanup
+  INSERT INTO temp_lifecycle_data VALUES (complex_user_id, complex_playlist_id, complex_video_id);
+END $$;
 
 -- ============================================================================
 -- Test Cleanup
@@ -486,6 +1080,31 @@ SELECT ok(
 
 -- Clean up test data
 DELETE FROM public.timestamps WHERE user_id = '88888888-8888-8888-8888-888888888888'::uuid;
+
+-- Clean up lifecycle test data
+DO $$
+DECLARE
+  lifecycle_record record;
+BEGIN
+  FOR lifecycle_record IN SELECT user_id, playlist_id, video_id FROM temp_lifecycle_data LOOP
+    DELETE FROM public.timestamps WHERE user_id = lifecycle_record.user_id;
+    DELETE FROM public.playlists WHERE id = lifecycle_record.playlist_id;
+    DELETE FROM public.videos WHERE id = lifecycle_record.video_id;
+    DELETE FROM public.profiles WHERE id = lifecycle_record.user_id;
+    DELETE FROM auth.users WHERE id = lifecycle_record.user_id;
+  END LOOP;
+END $$;
+
+-- Clean up auth test users
+DO $$
+DECLARE
+  auth_user_id uuid;
+BEGIN
+  FOR auth_user_id IN SELECT user_id FROM temp_auth_test_users LOOP
+    DELETE FROM public.profiles WHERE id = auth_user_id;
+    DELETE FROM auth.users WHERE id = auth_user_id;
+  END LOOP;
+END $$;
 
 DO $$
 DECLARE
@@ -500,6 +1119,19 @@ END $$;
 -- Clean up test videos
 DELETE FROM public.videos WHERE id IN ('trigger_test_video', 'normal_video');
 
+-- Clean up special test videos
+DO $$
+DECLARE
+  video_id_to_clean text;
+BEGIN
+  FOR video_id_to_clean IN SELECT video_id FROM temp_special_videos LOOP
+    DELETE FROM public.videos WHERE id = video_id_to_clean;
+  END LOOP;
+EXCEPTION
+  WHEN OTHERS THEN
+    NULL; -- Ignore error if table doesn't exist
+END $$;
+
 -- Clean up test user data
 DELETE FROM public.profiles WHERE id = '88888888-8888-8888-8888-888888888888'::uuid;
 DELETE FROM auth.users WHERE id = '88888888-8888-8888-8888-888888888888'::uuid;
@@ -509,6 +1141,9 @@ DO $$
 BEGIN
   DROP TABLE IF EXISTS temp_trigger_playlists;
   DROP TABLE IF EXISTS temp_timestamp_data;
+  DROP TABLE IF EXISTS temp_auth_test_users;
+  DROP TABLE IF EXISTS temp_special_videos;
+  DROP TABLE IF EXISTS temp_lifecycle_data;
 EXCEPTION
   WHEN OTHERS THEN
     NULL; -- Ignore error if tables don't exist

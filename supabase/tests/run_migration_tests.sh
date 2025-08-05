@@ -23,6 +23,7 @@ TEST_FILES=(
     "supabase/tests/test_playlist_query_functions.sql"
     "supabase/tests/test_playlist_management_functions.sql"
     "supabase/tests/test_triggers_and_cleanup.sql"
+    "supabase/tests/test_trigger_edge_cases.sql"
 )
 
 # Check if Supabase is running

@@ -171,6 +171,7 @@ The following test files are available:
 4. **test_playlist_query_functions.sql** - Tests playlist data retrieval functions (migration 08d)
 5. **test_playlist_management_functions.sql** - Tests playlist creation and management functions (migration 08e)
 6. **test_triggers_and_cleanup.sql** - Tests database triggers and cleanup functions (migrations 07a-07e)
+7. **test_trigger_edge_cases.sql** - Advanced trigger testing with edge cases and performance scenarios
 
 ### Running Migration Function Tests
 
@@ -192,7 +193,9 @@ The migration function tests cover:
 - **Video Operations**: Video queries, search functionality, timestamp management
 - **Playlist Queries**: Data retrieval, search, context functions
 - **Playlist Management**: Creation, following, position management, video operations
-- **Database Triggers**: Automatic short_id generation, search vector updates, timestamp triggers
+- **Database Triggers**: Automatic short_id generation, search vector updates, timestamp triggers, user profile creation
+- **Performance Testing**: Concurrent operations, large datasets, memory usage, trigger overhead
+- **Edge Cases**: NULL handling, special characters, constraint violations, transaction boundaries
 - **Data Integrity**: Cleanup functions, referential integrity, business logic validation
 
 ## Example Test File
