@@ -15,6 +15,7 @@
   import { getSortDisplayName } from './content-filter';
   import ContentCardSkeleton from './content-card-skeleton.svelte';
   import { onMount } from 'svelte';
+  import { processVideoThumbnail, getVideoThumbnailUrl, type VideoWithProcessedThumbnail } from '../video/video-thumbnail-service';
 
   type ContentCardProps = {
     video?: Video;
@@ -43,6 +44,7 @@
   const contentState = getContentState();
 
   let cardElement = $state<HTMLElement>();
+  let videoWithThumbnail = $state<VideoWithProcessedThumbnail | undefined>();
 
   const selectedVideos = $derived(
     contentState.selectedVideosBySection[sectionId] ?? []
@@ -74,6 +76,11 @@
   // Check if mouse is already over the card when component mounts
   onMount(() => {
     if (video && cardElement) {
+      // Process video thumbnail asynchronously
+      processVideoThumbnail(video).then((processed: VideoWithProcessedThumbnail) => {
+        videoWithThumbnail = processed;
+      });
+
       let checkCount = 0;
       const maxChecks = 5;
       const initialDelay = 200;
@@ -131,7 +138,7 @@
       <div class="relative">
         <img
           class="aspect-[16/9] h-auto w-full"
-          src={video.thumbnail_url}
+          src={videoWithThumbnail ? getVideoThumbnailUrl(videoWithThumbnail) : video.thumbnail_url}
           alt={video.title}
           loading="lazy"
         />
