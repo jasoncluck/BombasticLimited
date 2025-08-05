@@ -274,7 +274,7 @@ describe('continue/+page.svelte Component Logic', () => {
     });
 
     it('should handle missing restored data', () => {
-      const restoredData = null;
+      const restoredData: any = null;
       const showFloatingBreadcrumbs = restoredData?.showFloatingBreadcrumbs || false;
 
       expect(showFloatingBreadcrumbs).toBe(false);

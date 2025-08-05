@@ -169,7 +169,6 @@ describe('[source]/+page.server.ts load function', () => {
         playlists: mockSourcePlaylists,
         count: 1,
         error: null,
-        error: null,
       });
       mockGetCroppedPlaylistImageUrlServer.mockResolvedValue('https://example.com/processed.jpg');
 
@@ -235,7 +234,6 @@ describe('[source]/+page.server.ts load function', () => {
       mockGetPlaylistsForUsername.mockResolvedValue({
         playlists: mockSourcePlaylists,
         count: 1,
-        error: null,
         error: null,
       });
       mockGetCroppedPlaylistImageUrlServer.mockResolvedValue('https://example.com/processed.jpg');
@@ -476,7 +474,6 @@ describe('[source]/+page.server.ts load function', () => {
         playlists: [],
         count: 0,
         error: null,
-        error: null,
       });
 
       // Should not throw despite setHeaders error
@@ -584,7 +581,6 @@ describe('[source]/+page.server.ts load function', () => {
       mockGetPlaylistsForUsername.mockResolvedValue({
         playlists: [],
         count: 0,
-        error: null,
         error: null,
       });
 

@@ -33,8 +33,17 @@ vi.mock('sveltekit-flash-message/server', () => ({
 import { redirect as flashRedirect } from 'sveltekit-flash-message/server';
 const mockFlashRedirect = vi.mocked(flashRedirect);
 
-// Import the mockIsProfane function to control it in tests
-import { mockIsProfane, mockFilterConstructor } from 'bad-words';
+vi.mock('bad-words', () => {
+  const mockIsProfane = vi.fn(() => false);
+  const mockFilterConstructor = vi.fn(() => ({
+    isProfane: mockIsProfane,
+  }));
+  return {
+    default: mockFilterConstructor,
+    mockIsProfane,
+    mockFilterConstructor,
+  };
+});
 
 vi.mock('$lib/supabase/user-profiles', () => ({
   getUserProfile: vi.fn(),
@@ -47,17 +56,8 @@ vi.mock('../auth/schema', () => ({
   usernameSchema: {},
 }));
 
-vi.mock('bad-words', () => {
-  const mockIsProfane = vi.fn(() => false);
-  const mockFilterConstructor = vi.fn().mockImplementation(() => ({
-    isProfane: mockIsProfane,
-  }));
-  return {
-    Filter: mockFilterConstructor,
-    mockIsProfane, // Export the mock so we can control it in tests
-    mockFilterConstructor, // Export constructor mock for timing tests
-  };
-});
+// Import the mockIsProfane function to control it in tests after the mock is set up
+import { mockIsProfane, mockFilterConstructor } from 'bad-words';
 
 const mockRedirect = mockFlashRedirect;
 const mockFail = vi.mocked(fail);
@@ -111,7 +111,7 @@ describe('account/+page.server.ts', () => {
         supabase: mockSupabase,
         userId: mockSession.user.id,
       });
-      expect(result.profile).toEqual(mockUserProfile);
+      expect((result as any).profile).toEqual(mockUserProfile);
     });
 
     it('should redirect when no session', async () => {
@@ -141,7 +141,7 @@ describe('account/+page.server.ts', () => {
       mockSuperValidate.mockImplementation(async (...args) => {
         if (!superValidateTime) superValidateTime = Date.now();
         await new Promise(resolve => setTimeout(resolve, 5));
-        return { data: {} };
+        return createMockSuperValidated({});
       });
 
       await load(mockLoadEvent);
@@ -158,9 +158,9 @@ describe('account/+page.server.ts', () => {
     it('should initialize forms with correct data', async () => {
       mockGetUserProfile.mockResolvedValue(createMockProfileResponse(mockUserProfile));
       mockSuperValidate
-        .mockResolvedValueOnce({ data: { email: 'test@example.com' } })
-        .mockResolvedValueOnce({ data: {} })
-        .mockResolvedValueOnce({ data: { username: 'testuser' } });
+        .mockResolvedValueOnce(createMockSuperValidated({ email: 'test@example.com' }))
+        .mockResolvedValueOnce(createMockSuperValidated({}))
+        .mockResolvedValueOnce(createMockSuperValidated({ username: 'testuser' }));
 
       const result = await load(mockLoadEvent);
 
@@ -179,13 +179,13 @@ describe('account/+page.server.ts', () => {
     it('should handle missing profile gracefully', async () => {
       mockGetUserProfile.mockResolvedValue({ profile: null, error: null });
       mockSuperValidate
-        .mockResolvedValueOnce({ data: { email: 'test@example.com' } })
-        .mockResolvedValueOnce({ data: {} })
-        .mockResolvedValueOnce({ data: { username: '' } });
+        .mockResolvedValueOnce(createMockSuperValidated({ email: 'test@example.com' }))
+        .mockResolvedValueOnce(createMockSuperValidated({}))
+        .mockResolvedValueOnce(createMockSuperValidated({ username: '' }));
 
       const result = await load(mockLoadEvent);
 
-      expect(result.profile).toBeNull();
+      expect((result as any).profile).toBeNull();
       expect(mockSuperValidate).toHaveBeenCalledWith(
         { username: '' },
         expect.anything(),
@@ -208,9 +208,9 @@ describe('account/+page.server.ts', () => {
     };
 
     beforeEach(() => {
-      mockSuperValidate.mockResolvedValue({
-        data: { email: 'newemail@example.com' },
-      });
+      mockSuperValidate.mockResolvedValue(
+        createMockSuperValidated({ email: 'newemail@example.com' })
+      );
     });
 
     it('should update email successfully', async () => {
@@ -289,9 +289,9 @@ describe('account/+page.server.ts', () => {
     };
 
     beforeEach(() => {
-      mockSuperValidate.mockResolvedValue({
-        data: { username: 'newusername' },
-      });
+      mockSuperValidate.mockResolvedValue(
+        createMockSuperValidated({ username: 'newusername' })
+      );
     });
 
     it('should update username successfully', async () => {
@@ -590,9 +590,9 @@ describe('account/+page.server.ts', () => {
         locals: { supabase: mockSupabase },
       };
 
-      mockSuperValidate.mockResolvedValue({
-        data: { username: 'newusername' },
-      });
+      mockSuperValidate.mockResolvedValue(
+        createMockSuperValidated({ username: 'newusername' })
+      );
       mockCheckIfUsernameIsUnique.mockRejectedValue(new Error('Network error'));
 
       await expect(actions.updateUsername(mockActionEvent)).rejects.toThrow('Network error');
@@ -611,14 +611,14 @@ describe('account/+page.server.ts', () => {
 
       mockGetUserProfile.mockResolvedValue(createMockProfileResponse(mockUserProfile));
       mockSuperValidate
-        .mockResolvedValueOnce({ data: { email: 'test@example.com' } })
-        .mockResolvedValueOnce({ data: {} })
-        .mockResolvedValueOnce({ data: { username: 'testuser' } });
+        .mockResolvedValueOnce(createMockSuperValidated({ email: 'test@example.com' }))
+        .mockResolvedValueOnce(createMockSuperValidated({}))
+        .mockResolvedValueOnce(createMockSuperValidated({ username: 'testuser' }));
 
       const result = await load(mockLoadEvent);
 
-      expect(result.emailForm).toHaveProperty('data');
-      expect(result.emailForm.data).toHaveProperty('email');
+      expect((result as any).emailForm).toHaveProperty('data');
+      expect((result as any).emailForm.data).toHaveProperty('email');
     });
 
     it('should validate username form data structure', async () => {
@@ -632,14 +632,14 @@ describe('account/+page.server.ts', () => {
 
       mockGetUserProfile.mockResolvedValue(createMockProfileResponse(mockUserProfile));
       mockSuperValidate
-        .mockResolvedValueOnce({ data: { email: 'test@example.com' } })
-        .mockResolvedValueOnce({ data: {} })
-        .mockResolvedValueOnce({ data: { username: 'testuser' } });
+        .mockResolvedValueOnce(createMockSuperValidated({ email: 'test@example.com' }))
+        .mockResolvedValueOnce(createMockSuperValidated({}))
+        .mockResolvedValueOnce(createMockSuperValidated({ username: 'testuser' }));
 
       const result = await load(mockLoadEvent);
 
-      expect(result.usernameForm).toHaveProperty('data');
-      expect(result.usernameForm.data).toHaveProperty('username');
+      expect((result as any).usernameForm).toHaveProperty('data');
+      expect((result as any).usernameForm.data).toHaveProperty('username');
     });
   });
 });

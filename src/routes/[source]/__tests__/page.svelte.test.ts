@@ -230,7 +230,7 @@ describe('[source]/+page.svelte Component Logic', () => {
     });
 
     it('should handle empty active streams', () => {
-      const activeStreams = { sources: [] };
+      const activeStreams = { sources: [] as string[] };
       const source = 'giantbomb';
       const shouldShowLive = activeStreams.sources.includes(source);
       
