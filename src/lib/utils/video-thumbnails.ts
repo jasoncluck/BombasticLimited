@@ -1,7 +1,6 @@
 /**
- * Video thumbnail utility that leverages Vercel Image Optimization
- * Uses Vercel's Image API for better performance and edge caching
- * Falls back to server-side Sharp processing for non-YouTube thumbnails
+ * Video thumbnail utility that can use either Vercel Image Optimization or server-side processing
+ * Control the approach with the USE_VERCEL_IMAGES environment variable or feature flag
  */
 
 import type { Video } from '$lib/supabase/videos';
@@ -14,13 +13,30 @@ import {
 } from './vercel-video-images';
 
 /**
+ * Feature flag to control image processing approach
+ * Can be controlled via environment variable VITE_USE_VERCEL_IMAGES
+ * Set to false to use server-side processing for all thumbnails
+ * Set to true to use Vercel Image Optimization for YouTube thumbnails
+ */
+export const USE_VERCEL_IMAGES =
+  import.meta.env.VITE_USE_VERCEL_IMAGES !== 'false';
+
+/**
  * Get the optimal thumbnail URL for a video
- * Uses Vercel Image Optimization when possible, falls back to server processing
+ * Uses Vercel Image Optimization when enabled, otherwise uses server processing for all
  */
 export function getVideoThumbnailUrl(
   video: Video,
   config?: VercelImageConfig
 ): string {
+  // If Vercel images are disabled, always use server processing
+  if (!USE_VERCEL_IMAGES) {
+    const thumbnailUrl = getBestThumbnailUrl(video);
+    if (!thumbnailUrl) return '';
+    return `/api/video-thumbnail?type=image&url=${encodeURIComponent(thumbnailUrl)}`;
+  }
+
+  // Otherwise use the Vercel-optimized approach
   const optimizedUrl = getOptimizedVideoThumbnailUrl(video, config);
   return optimizedUrl || '';
 }
