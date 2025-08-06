@@ -9,7 +9,7 @@ export default defineConfig({
   fullyParallel: true, // Enable parallel execution with isolated auth states
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : 1, // Multiple workers with isolated auth states
+  workers: process.env.CI ? 1 : 5, // Multiple workers with isolated auth states
   reporter: 'html',
 
   // Global setup and teardown for authentication

@@ -114,8 +114,7 @@ test.describe('Mixed Authentication Flows', () => {
     // Search as unauthenticated user
     await unauthenticatedPage.goto('/');
     const unauthSearchInput = unauthenticatedPage.getByTestId('search-input');
-    await unauthSearchInput.fill(searchQuery);
-    await unauthSearchInput.press('Enter');
+    await unauthSearchInput.pressSequentially(searchQuery);
     // Wait for the search URL with the actual query parameter
     await unauthenticatedPage.waitForURL(
       new RegExp(`/search/${encodeURIComponent(searchQuery)}`)
@@ -129,7 +128,7 @@ test.describe('Mixed Authentication Flows', () => {
     // Search as authenticated user
     await authenticatedPage.goto('/');
     const authSearchInput = authenticatedPage.getByTestId('search-input');
-    await authSearchInput.fill(searchQuery);
+    await authSearchInput.pressSequentially(searchQuery);
     await authSearchInput.press('Enter');
     await authenticatedPage.waitForURL(
       new RegExp(`/search/${encodeURIComponent(searchQuery)}`)
