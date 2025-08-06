@@ -12,6 +12,7 @@ DECLARE
     avatar_url text;
     providers_array text[];
     providers_json text;
+    debug_msg text;
 BEGIN
     -- Handle INSERT operations (new user creation)
     IF TG_OP = 'INSERT' THEN
@@ -25,7 +26,20 @@ BEGIN
         );
         
         -- Extract avatar URL from raw_user_meta_data if it exists
-        avatar_url := NEW.raw_user_meta_data->>'avatar_url';
+        -- Discord OAuth provides avatar in both 'avatar_url' and 'picture' fields
+        avatar_url := COALESCE(
+            NEW.raw_user_meta_data->>'avatar_url',
+            NEW.raw_user_meta_data->>'picture'
+        );
+        
+        -- Debug logging for avatar extraction
+        debug_msg := format('INSERT: User %s - avatar_url: %s, picture: %s, final: %s', 
+            NEW.id::text, 
+            NEW.raw_user_meta_data->>'avatar_url',
+            NEW.raw_user_meta_data->>'picture',
+            avatar_url
+        );
+        RAISE LOG '%', debug_msg;
         
         -- Extract providers from raw_app_meta_data
         providers_json := NEW.raw_app_meta_data->>'providers';
@@ -49,7 +63,22 @@ BEGIN
     ELSIF TG_OP = 'UPDATE' THEN
         -- Check if raw_user_meta_data was updated with avatar_url
         IF (OLD.raw_user_meta_data IS DISTINCT FROM NEW.raw_user_meta_data) THEN
-            avatar_url := NEW.raw_user_meta_data->>'avatar_url';
+            -- Discord OAuth provides avatar in both 'avatar_url' and 'picture' fields
+            avatar_url := COALESCE(
+                NEW.raw_user_meta_data->>'avatar_url',
+                NEW.raw_user_meta_data->>'picture'
+            );
+            
+            -- Debug logging for avatar update
+            debug_msg := format('UPDATE: User %s - old avatar_url: %s, old picture: %s, new avatar_url: %s, new picture: %s, final: %s', 
+                NEW.id::text,
+                OLD.raw_user_meta_data->>'avatar_url',
+                OLD.raw_user_meta_data->>'picture',
+                NEW.raw_user_meta_data->>'avatar_url',
+                NEW.raw_user_meta_data->>'picture',
+                avatar_url
+            );
+            RAISE LOG '%', debug_msg;
             
             -- Update the profile with the new avatar_url
             UPDATE public.profiles 
