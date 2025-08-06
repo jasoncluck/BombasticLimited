@@ -1,114 +1,114 @@
-import { test, expect } from '@playwright/test';
+import { unauthenticatedTest as test, expect } from '../auth-fixtures';
 
 test.describe('Homepage', () => {
-  test('should render main elements on desktop', async ({ page }) => {
-    await page.goto('/');
+  test('should render main elements on desktop', async ({ unauthenticatedPage }) => {
+    await unauthenticatedPage.goto('/');
 
     // Basic navigation and layout checks
-    await expect(page.getByTestId('home-link')).toBeVisible();
-    await expect(page.getByRole('searchbox')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Login' })).toBeVisible();
+    await expect(unauthenticatedPage.getByTestId('home-link')).toBeVisible();
+    await expect(unauthenticatedPage.getByRole('searchbox')).toBeVisible();
+    await expect(unauthenticatedPage.getByRole('button', { name: 'Login' })).toBeVisible();
 
     // Check for main content
     await expect(
-      page.getByRole('heading', { name: 'Latest Videos' })
+      unauthenticatedPage.getByRole('heading', { name: 'Latest Videos' })
     ).toBeVisible();
 
     // Check sidebar
-    await expect(page.getByRole('complementary')).toBeVisible();
+    await expect(unauthenticatedPage.getByRole('complementary')).toBeVisible();
   });
 
-  test('mobile viewport - home link should be hidden', async ({ page }) => {
-    await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+  test('mobile viewport - home link should be hidden', async ({ unauthenticatedPage }) => {
+    await unauthenticatedPage.setViewportSize({ width: 375, height: 667 });
+    await unauthenticatedPage.goto('/');
+    await unauthenticatedPage.waitForLoadState('networkidle');
 
     // Home link should be hidden on mobile (hidden sm:block classes)
-    const homeLink = page.getByRole('link', { name: /home/i });
+    const homeLink = unauthenticatedPage.getByRole('link', { name: /home/i });
     await expect(homeLink).toBeHidden();
   });
 
-  test('mobile viewport - toggle menu should be visible', async ({ page }) => {
-    await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+  test('mobile viewport - toggle menu should be visible', async ({ unauthenticatedPage }) => {
+    await unauthenticatedPage.setViewportSize({ width: 375, height: 667 });
+    await unauthenticatedPage.goto('/');
+    await unauthenticatedPage.waitForLoadState('networkidle');
 
     // Toggle menu button should be visible on mobile
-    const toggleButton = page.getByRole('button', { name: /toggle menu/i });
+    const toggleButton = unauthenticatedPage.getByRole('button', { name: /toggle menu/i });
     await expect(toggleButton).toBeVisible();
 
     // The navigation should be present
-    const navigation = page.getByRole('navigation');
+    const navigation = unauthenticatedPage.getByRole('navigation');
     await expect(navigation).toBeVisible();
   });
 
-  test('should display all live channels in sidebar', async ({ page }) => {
-    await page.goto('/');
+  test('should display all live channels in sidebar', async ({ unauthenticatedPage }) => {
+    await unauthenticatedPage.goto('/');
 
     // Check for all four live channels using more specific selectors
     await expect(
-      page.getByRole('button', { name: /Live now Giant Bomb/ })
+      unauthenticatedPage.getByRole('button', { name: /Live now Giant Bomb/ })
     ).toBeVisible();
     await expect(
-      page.getByRole('button', { name: /Live now The Jeff Gerstmann Show/ })
+      unauthenticatedPage.getByRole('button', { name: /Live now The Jeff Gerstmann Show/ })
     ).toBeVisible();
     await expect(
-      page.getByRole('button', { name: /Live now Nextlander/ })
+      unauthenticatedPage.getByRole('button', { name: /Live now Nextlander/ })
     ).toBeVisible();
     await expect(
-      page.getByRole('button', { name: /Live now Remap/ })
+      unauthenticatedPage.getByRole('button', { name: /Live now Remap/ })
     ).toBeVisible();
 
     // Verify channel buttons are clickable
-    const giantBombButton = page.getByRole('button', {
+    const giantBombButton = unauthenticatedPage.getByRole('button', {
       name: /Live now Giant Bomb/,
     });
     await expect(giantBombButton).toBeVisible();
 
-    const jeffButton = page.getByRole('button', {
+    const jeffButton = unauthenticatedPage.getByRole('button', {
       name: /Live now The Jeff Gerstmann Show/,
     });
     await expect(jeffButton).toBeVisible();
 
-    const nextlanderButton = page.getByRole('button', {
+    const nextlanderButton = unauthenticatedPage.getByRole('button', {
       name: /Live now Nextlander/,
     });
     await expect(nextlanderButton).toBeVisible();
 
-    const remapButton = page.getByRole('button', {
+    const remapButton = unauthenticatedPage.getByRole('button', {
       name: /Live now Remap/,
     });
     await expect(remapButton).toBeVisible();
   });
 
-  test('should display video carousels for each source', async ({ page }) => {
-    await page.goto('/');
+  test('should display video carousels for each source', async ({ unauthenticatedPage }) => {
+    await unauthenticatedPage.goto('/');
 
     // Check for source-specific carousel links
-    await expect(page.getByRole('link', { name: 'Giant Bomb' })).toBeVisible();
+    await expect(unauthenticatedPage.getByRole('link', { name: 'Giant Bomb' })).toBeVisible();
     await expect(
-      page.getByRole('link', { name: 'The Jeff Gerstmann Show' })
+      unauthenticatedPage.getByRole('link', { name: 'The Jeff Gerstmann Show' })
     ).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Nextlander' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Remap' })).toBeVisible();
+    await expect(unauthenticatedPage.getByRole('link', { name: 'Nextlander' })).toBeVisible();
+    await expect(unauthenticatedPage.getByRole('link', { name: 'Remap' })).toBeVisible();
 
     // Verify carousel controls exist
-    const nextSlideButtons = page.getByRole('button', { name: 'Next slide' });
+    const nextSlideButtons = unauthenticatedPage.getByRole('button', { name: 'Next slide' });
     await expect(nextSlideButtons.first()).toBeVisible();
 
     // Check that video cards are present
-    const videoCards = page.locator('[role="group"]');
+    const videoCards = unauthenticatedPage.locator('[role="group"]');
     await expect(videoCards.first()).toBeVisible();
   });
 
   test('search functionality should navigate to search page', async ({
     page,
   }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await unauthenticatedPage.goto('/');
+    await unauthenticatedPage.waitForLoadState('networkidle');
 
     // Get the search input
-    const searchInput = page.getByRole('searchbox', { name: /search/i });
+    const searchInput = unauthenticatedPage.getByRole('searchbox', { name: /search/i });
     await expect(searchInput).toBeVisible();
 
     // Type search query
@@ -119,48 +119,48 @@ test.describe('Homepage', () => {
     await expect(page).toHaveURL(/\/search\/test%20search/);
 
     // Should show search results
-    const resultsHeading = page.getByRole('heading', { name: /results/i });
+    const resultsHeading = unauthenticatedPage.getByRole('heading', { name: /results/i });
     await expect(resultsHeading).toBeVisible();
   });
 
-  test('should navigate to individual video pages', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+  test('should navigate to individual video pages', async ({ unauthenticatedPage }) => {
+    await unauthenticatedPage.goto('/');
+    await unauthenticatedPage.waitForLoadState('networkidle');
 
     // Wait for video carousels to load and ensure we have buttons
-    const carouselItem = page.getByTestId('carousel-item');
+    const carouselItem = unauthenticatedPage.getByTestId('carousel-item');
     await carouselItem.first().click();
 
     // Should navigate to video page
-    await page.waitForURL(/\/video\//, { timeout: 10000 });
+    await unauthenticatedPage.waitForURL(/\/video\//, { timeout: 10000 });
 
     // Video page should load with iframe player
-    const videoFrame = page.locator('iframe');
+    const videoFrame = unauthenticatedPage.locator('iframe');
     await expect(videoFrame).toBeVisible();
   });
 
-  test('should navigate back from video page', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+  test('should navigate back from video page', async ({ unauthenticatedPage }) => {
+    await unauthenticatedPage.goto('/');
+    await unauthenticatedPage.waitForLoadState('networkidle');
 
     // Navigate to a video using carousel format (unauthenticated users)
-    const carouselItems = page.getByTestId('carousel-item');
+    const carouselItems = unauthenticatedPage.getByTestId('carousel-item');
     await expect(carouselItems.first()).toBeInViewport();
     await carouselItems.first().click();
-    await page.waitForURL(/\/video\//, { timeout: 10000 });
+    await unauthenticatedPage.waitForURL(/\/video\//, { timeout: 10000 });
 
     // Click home link to return
-    await page.getByTestId('home-link').click();
+    await unauthenticatedPage.getByTestId('home-link').click();
 
     // Should be back on homepage
-    await page.waitForURL('/', { timeout: 10000 });
+    await unauthenticatedPage.waitForURL('/', { timeout: 10000 });
     await expect(
-      page.getByRole('heading', { name: 'Latest Videos' })
+      unauthenticatedPage.getByRole('heading', { name: 'Latest Videos' })
     ).toBeVisible();
   });
 
-  test('should handle carousel navigation', async ({ page }) => {
-    await page.goto('/');
+  test('should handle carousel navigation', async ({ unauthenticatedPage }) => {
+    await unauthenticatedPage.goto('/');
 
     // Test "Next slide" button functionality
     const nextSlideButton = page
@@ -173,24 +173,24 @@ test.describe('Homepage', () => {
 
     // Page should remain stable
     await expect(
-      page.getByRole('heading', { name: 'Latest Videos' })
+      unauthenticatedPage.getByRole('heading', { name: 'Latest Videos' })
     ).toBeVisible();
   });
 
-  test('should display playlists section', async ({ page }) => {
-    await page.goto('/');
+  test('should display playlists section', async ({ unauthenticatedPage }) => {
+    await unauthenticatedPage.goto('/');
 
     // Check for playlists heading
     await expect(
-      page.getByRole('heading', { name: 'Playlists', level: 2 })
+      unauthenticatedPage.getByRole('heading', { name: 'Playlists', level: 2 })
     ).toBeVisible();
 
     // Verify playlists section exists in sidebar
-    const sidebar = page.getByRole('complementary');
+    const sidebar = unauthenticatedPage.getByRole('complementary');
     await expect(sidebar.getByText('Playlists')).toBeVisible();
   });
 
-  test('should work across different viewport sizes', async ({ page }) => {
+  test('should work across different viewport sizes', async ({ unauthenticatedPage }) => {
     const viewports = [
       { width: 1920, height: 1080 }, // Desktop
       { width: 1024, height: 768 }, // Tablet landscape
@@ -199,59 +199,59 @@ test.describe('Homepage', () => {
     ];
 
     for (const viewport of viewports) {
-      await page.setViewportSize(viewport);
-      await page.goto('/');
+      await unauthenticatedPage.setViewportSize(viewport);
+      await unauthenticatedPage.goto('/');
 
       // Core elements should be visible at all sizes
       // Home link is hidden on mobile, so check conditionally
       if (viewport.width >= 640) {
         // sm breakpoint
-        await expect(page.getByTestId('home-link')).toBeVisible();
+        await expect(unauthenticatedPage.getByTestId('home-link')).toBeVisible();
       }
 
-      await expect(page.getByRole('searchbox')).toBeVisible();
+      await expect(unauthenticatedPage.getByRole('searchbox')).toBeVisible();
       await expect(
-        page.getByRole('heading', { name: 'Latest Videos' })
+        unauthenticatedPage.getByRole('heading', { name: 'Latest Videos' })
       ).toBeVisible();
 
       if (viewport.width >= 640) {
-        await expect(page.getByRole('complementary')).toBeVisible();
+        await expect(unauthenticatedPage.getByRole('complementary')).toBeVisible();
       } else {
-        await expect(page.getByRole('complementary')).toBeHidden();
+        await expect(unauthenticatedPage.getByRole('complementary')).toBeHidden();
       }
     }
   });
 
-  test('should handle channel link navigation', async ({ page }) => {
-    await page.goto('/');
+  test('should handle channel link navigation', async ({ unauthenticatedPage }) => {
+    await unauthenticatedPage.goto('/');
 
     // Test Giant Bomb link
-    const giantBombLink = page.getByRole('link', { name: 'Giant Bomb' });
+    const giantBombLink = unauthenticatedPage.getByRole('link', { name: 'Giant Bomb' });
     await expect(giantBombLink).toBeVisible();
     await expect(giantBombLink).toHaveAttribute('href', '/giantbomb/latest');
 
     // Test Jeff Gerstmann Show link
-    const jeffLink = page.getByRole('link', {
+    const jeffLink = unauthenticatedPage.getByRole('link', {
       name: 'The Jeff Gerstmann Show',
     });
     await expect(jeffLink).toBeVisible();
     await expect(jeffLink).toHaveAttribute('href', '/jeffgerstmann/latest');
 
     // Test Nextlander link
-    const nextlanderLink = page.getByRole('link', { name: 'Nextlander' });
+    const nextlanderLink = unauthenticatedPage.getByRole('link', { name: 'Nextlander' });
     await expect(nextlanderLink).toBeVisible();
     await expect(nextlanderLink).toHaveAttribute('href', '/nextlander/latest');
 
     // Test Remap link
-    const remapLink = page.getByRole('link', { name: 'Remap' });
+    const remapLink = unauthenticatedPage.getByRole('link', { name: 'Remap' });
     await expect(remapLink).toBeVisible();
     await expect(remapLink).toHaveAttribute('href', '/remap/latest');
   });
 
-  test('should load video content dynamically', async ({ page }) => {
-    await page.goto('/');
+  test('should load video content dynamically', async ({ unauthenticatedPage }) => {
+    await unauthenticatedPage.goto('/');
 
-    const carouselItems = page.getByTestId('carousel-item');
+    const carouselItems = unauthenticatedPage.getByTestId('carousel-item');
     await expect(carouselItems.first()).toBeInViewport();
     const count = await carouselItems.count();
     expect(count).toBeGreaterThan(5); // Should have multiple videos loaded
@@ -262,10 +262,10 @@ test.describe('Homepage', () => {
     await expect(firstCard.locator('p').first()).toBeVisible(); // Title
   });
 
-  test('should handle empty search gracefully', async ({ page }) => {
-    await page.goto('/');
+  test('should handle empty search gracefully', async ({ unauthenticatedPage }) => {
+    await unauthenticatedPage.goto('/');
 
-    const searchBox = page.getByRole('searchbox');
+    const searchBox = unauthenticatedPage.getByRole('searchbox');
 
     // Test empty search
     await searchBox.fill('');
@@ -273,46 +273,46 @@ test.describe('Homepage', () => {
 
     // Should handle gracefully (stay on page or redirect appropriately)
     // The exact behavior may vary, but should not crash
-    await expect(page.locator('body')).toBeVisible();
+    await expect(unauthenticatedPage.locator('body')).toBeVisible();
   });
 
-  test('should display proper page metadata', async ({ page }) => {
-    await page.goto('/');
+  test('should display proper page metadata', async ({ unauthenticatedPage }) => {
+    await unauthenticatedPage.goto('/');
 
     // Check page title
     await expect(page).toHaveTitle(/Bombastic/);
 
     // Verify page loads completely
-    await page.waitForLoadState('networkidle');
+    await unauthenticatedPage.waitForLoadState('networkidle');
 
     // Check that main content is loaded
     await expect(
-      page.getByRole('heading', { name: 'Latest Videos' })
+      unauthenticatedPage.getByRole('heading', { name: 'Latest Videos' })
     ).toBeVisible();
   });
 
   test('should maintain layout integrity during interactions', async ({
     page,
   }) => {
-    await page.goto('/');
+    await unauthenticatedPage.goto('/');
 
     // Test search interaction doesn't break layout
-    const searchBox = page.getByRole('searchbox');
+    const searchBox = unauthenticatedPage.getByRole('searchbox');
     await searchBox.focus();
     await searchBox.fill('test query');
 
     // Layout should remain intact
     await expect(
-      page.getByRole('heading', { name: 'Latest Videos' })
+      unauthenticatedPage.getByRole('heading', { name: 'Latest Videos' })
     ).toBeVisible();
-    await expect(page.getByRole('complementary')).toBeVisible();
+    await expect(unauthenticatedPage.getByRole('complementary')).toBeVisible();
 
     // Clear search
     await searchBox.clear();
 
     // Layout should still be intact
     await expect(
-      page.getByRole('heading', { name: 'Latest Videos' })
+      unauthenticatedPage.getByRole('heading', { name: 'Latest Videos' })
     ).toBeVisible();
   });
 });

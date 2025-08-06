@@ -6,11 +6,15 @@ dotenv.config();
 export default defineConfig({
   testDir: './tests/e2e',
   testMatch: '**/*.test.ts',
-  fullyParallel: false, // Important: Don't run tests in parallel with shared DB
+  fullyParallel: true, // Enable parallel execution with isolated auth states
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : 3, // More workers locally, single in CI to avoid DB conflicts
+  workers: process.env.CI ? 1 : 3, // Multiple workers with isolated auth states
   reporter: 'html',
+
+  // Global setup and teardown for authentication
+  globalSetup: require.resolve('./tests/e2e/auth.setup.ts'),
+  globalTeardown: require.resolve('./tests/e2e/global.teardown.ts'),
 
   // Performance optimizations
   timeout: 30000, // Reduce from default 30s if tests don't need it
@@ -44,18 +48,17 @@ export default defineConfig({
   },
 
   projects: [
+    // Global authentication setup
     {
       name: 'setup',
-      testMatch: /.*\.setup\.ts/,
+      testMatch: /auth\.setup\.ts/,
     },
+    
+    // Main test execution
     {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        // Disable images and CSS for faster loading (optional)
-        // launchOptions: {
-        //   args: ['--disable-images', '--disable-javascript-harmony-shipping']
-        // }
       },
       dependencies: ['setup'],
     },
