@@ -54,7 +54,7 @@
       onclick={(e) => {
         e.preventDefault();
         searchQuery = '';
-        goto('/');
+        goto('/', { replaceState: true });
       }}
       class="hover:text-primary mr-4 hidden text-sm font-medium transition-colors sm:block"
     >
