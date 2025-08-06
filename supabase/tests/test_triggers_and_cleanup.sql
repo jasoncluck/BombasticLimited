@@ -403,6 +403,7 @@ INSERT INTO
     source,
     title,
     description,
+    thumbnail_url,
     published_at,
     duration,
     pending_delete
@@ -413,6 +414,7 @@ VALUES
     'jeffgerstmann',
     'Pending Video 1',
     'This video should be deleted',
+    'https://example.com/thumb_pending1.jpg',
     '2023-01-01 10:00:00+00',
     'PT5M30S',
     TRUE
@@ -422,6 +424,7 @@ VALUES
     'jeffgerstmann',
     'Pending Video 2',
     'This video should also be deleted',
+    'https://example.com/thumb_pending2.jpg',
     '2023-01-02 11:00:00+00',
     'PT10M15S',
     TRUE
@@ -431,6 +434,7 @@ VALUES
     'jeffgerstmann',
     'Normal Video',
     'This video should remain',
+    'https://example.com/thumb_normal.jpg',
     '2023-01-03 12:00:00+00',
     'PT8M45S',
     FALSE
@@ -448,7 +452,7 @@ BEGIN
   VALUES 
     ('88888888-8888-8888-8888-888888888888'::uuid, 'pending_video_1', test_playlist_id, 60.0, NOW()),
     ('88888888-8888-8888-8888-888888888888'::uuid, 'pending_video_2', test_playlist_id, 120.0, NOW())
-  ON CONFLICT (user_id, video_id, playlist_id) DO NOTHING;
+  ON CONFLICT (user_id, video_id) DO NOTHING;
 END $$;
 
 -- Test that pending videos exist before cleanup

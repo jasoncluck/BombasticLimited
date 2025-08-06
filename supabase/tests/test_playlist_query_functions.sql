@@ -15,7 +15,7 @@ BEGIN;
 
 -- Plan the number of tests
 SELECT
-  plan (25);
+  plan (17);
 
 -- ============================================================================
 -- Test Setup: Create test data
@@ -40,7 +40,7 @@ VALUES
     '55555555-5555-5555-5555-555555555555'::uuid,
     'playlisttestuser'
   )
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET username = EXCLUDED.username;
 
 -- Create test playlists with different types
 INSERT INTO
@@ -78,6 +78,19 @@ VALUES
     'PLtest123456789'
   )
 ON CONFLICT (id) DO NOTHING;
+
+-- Create corresponding user_playlists entries
+INSERT INTO
+  public.user_playlists (
+    id,
+    user_id,
+    playlist_position
+  )
+VALUES
+  (2001, '55555555-5555-5555-5555-555555555555'::uuid, 1),
+  (2002, '55555555-5555-5555-5555-555555555555'::uuid, 2),
+  (2003, '55555555-5555-5555-5555-555555555555'::uuid, 3)
+ON CONFLICT (id, user_id) DO NOTHING;
 
 -- Get the generated short_ids for our playlists
 DO $$

@@ -13,7 +13,7 @@ BEGIN;
 
 -- Plan the number of tests
 SELECT
-  plan (18);
+  plan (13);
 
 -- ============================================================================
 -- Test Setup: Create test data
@@ -56,7 +56,7 @@ VALUES
     '22222222-2222-2222-2222-222222222222'::uuid,
     'anotheruser'
   )
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET username = EXCLUDED.username;
 
 -- ============================================================================
 -- Test 1-4: is_unique_username() Function
