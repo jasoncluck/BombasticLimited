@@ -12,6 +12,8 @@
   import type { Snippet } from 'svelte';
   import { ListVideo } from '@lucide/svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
+  import { page } from '$app/state';
+  import { browser } from '$app/environment';
 
   let {
     layout,
@@ -36,6 +38,24 @@
   } = $props();
 
   const sidebarState = getSidebarState();
+
+  // Function to save sidebar state to cookie
+  function saveSidebarState(collapsed: boolean) {
+    if (browser) {
+      document.cookie = `sidebar:collapsed=${collapsed}; path=/; max-age=31536000`; // 1 year expiry
+    }
+  }
+
+  // Handle sidebar collapse/expand with cookie persistence
+  function handleSidebarCollapse() {
+    isSidebarCollapsed = true;
+    saveSidebarState(true);
+  }
+
+  function handleSidebarExpand() {
+    isSidebarCollapsed = false;
+    saveSidebarState(false);
+  }
 </script>
 
 <Resizable.PaneGroup
@@ -50,8 +70,8 @@
     maxSize={50}
     collapsedSize={COLLAPSED_SIDEBAR_SIZE}
     collapsible={true}
-    onCollapse={() => (isSidebarCollapsed = true)}
-    onExpand={() => (isSidebarCollapsed = false)}
+    onCollapse={handleSidebarCollapse}
+    onExpand={handleSidebarExpand}
     class="pane @container hidden h-full grow flex-col sm:ml-2 sm:flex {isSidebarCollapsed
       ? 'max-w-[75px] min-w-[75px]'
       : 'min-w-[200px]'}"
