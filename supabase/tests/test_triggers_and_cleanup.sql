@@ -13,7 +13,7 @@ BEGIN;
 
 -- Plan the number of tests
 SELECT
-  plan (35);
+  plan (40);
 
 -- ============================================================================
 -- Test Setup: Create test data
@@ -227,12 +227,13 @@ DECLARE
   search_vector_populated boolean;
 BEGIN
   -- Insert video with searchable content
-  INSERT INTO public.videos (id, source, title, description, published_at, duration, pending_delete)
+  INSERT INTO public.videos (id, source, title, description, thumbnail_url, published_at, duration, pending_delete)
   VALUES (
     'trigger_test_video',
     'jeffgerstmann',
     'Trigger Test Video Title',
     'This video has searchable content for testing purposes',
+    'https://example.com/thumb_trigger.jpg',
     '2023-01-01 10:00:00+00',
     'PT5M30S',
     FALSE
@@ -717,12 +718,13 @@ DECLARE
   search_vector_created boolean;
 BEGIN
   -- Insert video with special characters in title/description
-  INSERT INTO public.videos (id, source, title, description, published_at, duration, pending_delete)
+  INSERT INTO public.videos (id, source, title, description, thumbnail_url, published_at, duration, pending_delete)
   VALUES (
     test_video_id,
     'jeffgerstmann',
     'Test Video with Special Chars: @#$%^&*()[]{}',
     'Description with émojis 🎵🎶 and special characters: <>&"''',
+    'https://example.com/thumb_special.jpg',
     '2023-01-01 10:00:00+00',
     'PT5M30S',
     FALSE
@@ -858,12 +860,13 @@ BEGIN
   RETURNING id, short_id, search_vector INTO lifecycle_playlist_id, playlist_short_id, playlist_search_vector;
   
   -- Step 3: Create video (should trigger search vector)
-  INSERT INTO public.videos (id, source, title, description, published_at, duration, pending_delete)
+  INSERT INTO public.videos (id, source, title, description, thumbnail_url, published_at, duration, pending_delete)
   VALUES (
     lifecycle_video_id,
     'jeffgerstmann',
     'Lifecycle Test Video',
     'Video for testing complete trigger lifecycle',
+    'https://example.com/thumb_lifecycle.jpg',
     '2023-01-01 10:00:00+00',
     'PT5M30S',
     FALSE
@@ -1132,12 +1135,13 @@ BEGIN
   RETURNING id INTO complex_playlist_id;
   
   -- 3. Create video (triggers search vector)
-  INSERT INTO public.videos (id, source, title, description, published_at, duration, pending_delete)
+  INSERT INTO public.videos (id, source, title, description, thumbnail_url, published_at, duration, pending_delete)
   VALUES (
     complex_video_id,
     'jeffgerstmann',
     'Complex Scenario Video',
     'Video for complex trigger testing scenario',
+    'https://example.com/thumb_complex.jpg',
     '2023-01-01 10:00:00+00',
     'PT10M30S',
     FALSE

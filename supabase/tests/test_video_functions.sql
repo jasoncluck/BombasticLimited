@@ -140,7 +140,7 @@ VALUES
     NOW() - INTERVAL '30 minutes',
     NOW() - INTERVAL '30 minutes'
   )
-ON CONFLICT (user_id, video_id, playlist_id) DO NOTHING;
+ON CONFLICT (user_id, video_id) DO NOTHING;
 
 -- Store test user ID for queries that need auth context
 CREATE TEMP TABLE temp_test_user (user_id uuid);

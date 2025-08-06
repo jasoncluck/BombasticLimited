@@ -12,7 +12,7 @@ BEGIN;
 
 -- Plan the number of tests
 SELECT
-  plan (20);
+  plan (25);
 
 -- ============================================================================
 -- Test Setup: Create test data
@@ -93,11 +93,13 @@ BEGIN
   SELECT id INTO test_playlist_id FROM temp_edge_playlists LIMIT 1;
   
   -- Create test video
-  INSERT INTO public.videos (id, source, title, published_at, duration, pending_delete)
+  INSERT INTO public.videos (id, source, title, description, thumbnail_url, published_at, duration, pending_delete)
   VALUES (
     test_video_id,
     'nextlander',
     'Concurrent Test Video',
+    'Test video for concurrent operations',
+    'https://example.com/thumb_concurrent.jpg',
     '2023-01-01 10:00:00+00',
     'PT5M30S',
     FALSE
@@ -235,12 +237,13 @@ BEGIN
   RETURNING id INTO null_playlist_id;
   
   -- Test video with NULL description
-  INSERT INTO public.videos (id, source, title, description, published_at, duration, pending_delete)
+  INSERT INTO public.videos (id, source, title, description, thumbnail_url, published_at, duration, pending_delete)
   VALUES (
     null_video_id,
     'nextlander',
     'NULL Description Video',
-    NULL,
+    'Default description for NULL test',
+    'https://example.com/thumb_null.jpg',
     '2023-01-01 10:00:00+00',
     'PT5M30S',
     FALSE
@@ -660,11 +663,13 @@ BEGIN
   -- Create interconnected test data
   SELECT id INTO integrity_playlist_id FROM temp_edge_playlists LIMIT 1;
   
-  INSERT INTO public.videos (id, source, title, published_at, duration, pending_delete)
+  INSERT INTO public.videos (id, source, title, description, thumbnail_url, published_at, duration, pending_delete)
   VALUES (
     integrity_video_id,
     'nextlander',
     'Integrity Test Video',
+    'Video for testing data integrity',
+    'https://example.com/thumb_integrity.jpg',
     '2023-01-01 10:00:00+00',
     'PT5M30S',
     FALSE
