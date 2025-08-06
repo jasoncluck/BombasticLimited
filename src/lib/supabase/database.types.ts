@@ -128,6 +128,7 @@ export type Database = {
             | Database['public']['Enums']['content_display']
             | null;
           id: string;
+          providers: string[];
           sources: Database['public']['Enums']['source'][] | null;
           username: string | null;
         };
@@ -140,6 +141,7 @@ export type Database = {
             | Database['public']['Enums']['content_display']
             | null;
           id: string;
+          providers?: string[];
           sources?: Database['public']['Enums']['source'][] | null;
           username?: string | null;
         };
@@ -152,6 +154,7 @@ export type Database = {
             | Database['public']['Enums']['content_display']
             | null;
           id?: string;
+          providers?: string[];
           sources?: Database['public']['Enums']['source'][] | null;
           username?: string | null;
         };

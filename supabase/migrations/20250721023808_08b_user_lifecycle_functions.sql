@@ -25,14 +25,16 @@ BEGIN
         -- Extract avatar URL from raw_user_meta_data if it exists
         avatar_url := NEW.raw_user_meta_data->>'avatar_url';
         
-        -- Insert the new profile with username and avatar_url (if available)
+        -- Insert the new profile with username, avatar_url, and providers
+        -- The providers will be updated by the identity trigger when identities are created
+        -- but we set a default of ['email'] to ensure NOT NULL constraint is satisfied
         IF avatar_url IS NOT NULL AND avatar_url != '' THEN
-            INSERT INTO public.profiles (id, username, avatar_url)
-            VALUES (NEW.id, generated_username, avatar_url)
+            INSERT INTO public.profiles (id, username, avatar_url, providers)
+            VALUES (NEW.id, generated_username, avatar_url, ARRAY['email'])
             ON CONFLICT (id) DO NOTHING;
         ELSE
-            INSERT INTO public.profiles (id, username)
-            VALUES (NEW.id, generated_username)
+            INSERT INTO public.profiles (id, username, providers)
+            VALUES (NEW.id, generated_username, ARRAY['email'])
             ON CONFLICT (id) DO NOTHING;
         END IF;
     END IF;
