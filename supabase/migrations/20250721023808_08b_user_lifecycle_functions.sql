@@ -9,6 +9,7 @@ SET
   search_path = '' AS $$
 DECLARE
     generated_username text;
+    avatar_url text;
 BEGIN
     -- Only handle INSERT operations (new user creation)
     IF TG_OP = 'INSERT' THEN
@@ -21,10 +22,19 @@ BEGIN
             )
         );
         
-        -- Insert the new profile
-        INSERT INTO public.profiles (id, username)
-        VALUES (NEW.id, generated_username)
-        ON CONFLICT (id) DO NOTHING;
+        -- Extract avatar URL from raw_user_meta_data if it exists
+        avatar_url := NEW.raw_user_meta_data->>'avatar_url';
+        
+        -- Insert the new profile with username and avatar_url (if available)
+        IF avatar_url IS NOT NULL AND avatar_url != '' THEN
+            INSERT INTO public.profiles (id, username, avatar_url)
+            VALUES (NEW.id, generated_username, avatar_url)
+            ON CONFLICT (id) DO NOTHING;
+        ELSE
+            INSERT INTO public.profiles (id, username)
+            VALUES (NEW.id, generated_username)
+            ON CONFLICT (id) DO NOTHING;
+        END IF;
     END IF;
     
     RETURN NEW;

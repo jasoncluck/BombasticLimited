@@ -310,6 +310,7 @@
     {#each videos as video, i (video.id)}
       <Carousel.Item
         class={getItemClasses(video, i)}
+        data-testid="carousel-item"
         draggable="true"
         ondragstart={(e) => dragDrop.handleDragStart(e, i, sectionId)}
         ondragend={dragDrop.handleDragEnd}

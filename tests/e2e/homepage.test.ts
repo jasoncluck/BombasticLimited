@@ -128,14 +128,8 @@ test.describe('Homepage', () => {
     await page.waitForLoadState('networkidle');
 
     // Wait for video carousels to load and ensure we have buttons
-    await page.waitForSelector('[role="group"] button', { timeout: 30000 });
-
-    // Find the first clickable video button - be more specific to ensure it's found
-    const videoButton = page.locator('[role="group"] button').first();
-    await expect(videoButton).toBeVisible({ timeout: 15000 });
-
-    // Click on first video button
-    await videoButton.click();
+    const carouselItem = page.getByTestId('carousel-item');
+    await carouselItem.first().click();
 
     // Should navigate to video page
     await page.waitForURL(/\/video\//, { timeout: 10000 });
@@ -150,10 +144,9 @@ test.describe('Homepage', () => {
     await page.waitForLoadState('networkidle');
 
     // Navigate to a video using carousel format (unauthenticated users)
-    await page.waitForSelector('[role="group"]', { timeout: 30000 });
-    const firstVideoCard = page.locator('[role="group"] button').first();
-    await expect(firstVideoCard).toBeVisible();
-    await firstVideoCard.click();
+    const carouselItems = page.getByTestId('carousel-item');
+    await expect(carouselItems.first()).toBeInViewport();
+    await carouselItems.first().click();
     await page.waitForURL(/\/video\//, { timeout: 10000 });
 
     // Click home link to return
@@ -220,7 +213,12 @@ test.describe('Homepage', () => {
       await expect(
         page.getByRole('heading', { name: 'Latest Videos' })
       ).toBeVisible();
-      await expect(page.getByRole('complementary')).toBeVisible();
+
+      if (viewport.width >= 640) {
+        await expect(page.getByRole('complementary')).toBeVisible();
+      } else {
+        await expect(page.getByRole('complementary')).toBeHidden();
+      }
     }
   });
 
@@ -253,18 +251,15 @@ test.describe('Homepage', () => {
   test('should load video content dynamically', async ({ page }) => {
     await page.goto('/');
 
-    // Wait for video cards to appear with timeout
-    await page.waitForSelector('[role="group"]', { timeout: 15000 });
-
-    // Verify multiple video cards are loaded
-    const videoCards = page.locator('[role="group"]');
-    const count = await videoCards.count();
+    const carouselItems = page.getByTestId('carousel-item');
+    await expect(carouselItems.first()).toBeInViewport();
+    const count = await carouselItems.count();
     expect(count).toBeGreaterThan(5); // Should have multiple videos loaded
 
     // Verify video cards have proper structure
-    const firstCard = videoCards.first();
+    const firstCard = carouselItems.first();
     await expect(firstCard.locator('img')).toBeVisible(); // Thumbnail
-    await expect(firstCard.locator('paragraph').first()).toBeVisible(); // Title
+    await expect(firstCard.locator('p').first()).toBeVisible(); // Title
   });
 
   test('should handle empty search gracefully', async ({ page }) => {

@@ -128,7 +128,7 @@
     class="group h-64 w-full transform cursor-pointer will-change-transform"
     data-testid="video-card"
   >
-    <div role="button" tabindex="0" class="cursor-pointer text-left">
+    <div role="button" class="cursor-pointer text-left">
       <div class="relative">
         <img
           class="aspect-[16/9] h-auto w-full"
