@@ -5,6 +5,9 @@ import { load, actions } from '../+page.server';
 import {
   getUserProfile,
   checkIfUsernameIsUnique,
+  getUserDiscordIdentity,
+  linkDiscordIdentity,
+  unlinkDiscordIdentity,
 } from '$lib/supabase/user-profiles';
 import {
   createMockSession,
@@ -62,6 +65,9 @@ vi.mock('bad-words', () => {
 vi.mock('$lib/supabase/user-profiles', () => ({
   getUserProfile: vi.fn(),
   checkIfUsernameIsUnique: vi.fn(),
+  getUserDiscordIdentity: vi.fn(),
+  linkDiscordIdentity: vi.fn(),
+  unlinkDiscordIdentity: vi.fn(),
 }));
 
 vi.mock('../auth/schema', () => ({
@@ -82,6 +88,9 @@ const mockSuperValidate = vi.mocked(superValidate);
 const mockSetFlash = vi.mocked(setFlash);
 const mockGetUserProfile = vi.mocked(getUserProfile);
 const mockCheckIfUsernameIsUnique = vi.mocked(checkIfUsernameIsUnique);
+const mockGetUserDiscordIdentity = vi.mocked(getUserDiscordIdentity);
+const mockLinkDiscordIdentity = vi.mocked(linkDiscordIdentity);
+const mockUnlinkDiscordIdentity = vi.mocked(unlinkDiscordIdentity);
 
 describe('account/+page.server.ts', () => {
   const mockSupabase = {
@@ -104,6 +113,11 @@ describe('account/+page.server.ts', () => {
     // Reset the profanity mock to return false by default
     const { mockIsProfane } = (globalThis as any).badWordsMocks;
     mockIsProfane.mockReturnValue(false);
+    // Set up default mock for getUserDiscordIdentity
+    mockGetUserDiscordIdentity.mockResolvedValue({
+      identity: null,
+      error: null,
+    });
   });
 
   describe('load function', () => {
@@ -119,6 +133,10 @@ describe('account/+page.server.ts', () => {
       mockGetUserProfile.mockResolvedValue(
         createMockProfileResponse(mockUserProfile)
       );
+      mockGetUserDiscordIdentity.mockResolvedValue({
+        identity: null,
+        error: null,
+      });
       mockSuperValidate
         .mockResolvedValueOnce(
           createMockSuperValidated({ email: mockSession.user.email })
@@ -134,6 +152,10 @@ describe('account/+page.server.ts', () => {
         'supabase:db:profiles'
       );
       expect(mockGetUserProfile).toHaveBeenCalledWith({
+        supabase: mockSupabase,
+        userId: mockSession.user.id,
+      });
+      expect(mockGetUserDiscordIdentity).toHaveBeenCalledWith({
         supabase: mockSupabase,
         userId: mockSession.user.id,
       });
@@ -164,6 +186,11 @@ describe('account/+page.server.ts', () => {
         return createMockProfileResponse(mockUserProfile);
       });
 
+      mockGetUserDiscordIdentity.mockResolvedValue({
+        identity: null,
+        error: null,
+      });
+
       mockSuperValidate.mockImplementation(async (...args) => {
         if (!superValidateTime) superValidateTime = Date.now();
         await new Promise((resolve) => setTimeout(resolve, 5));
@@ -185,6 +212,10 @@ describe('account/+page.server.ts', () => {
       mockGetUserProfile.mockResolvedValue(
         createMockProfileResponse(mockUserProfile)
       );
+      mockGetUserDiscordIdentity.mockResolvedValue({
+        identity: null,
+        error: null,
+      });
       mockSuperValidate
         .mockResolvedValueOnce(
           createMockSuperValidated({ email: 'test@example.com' })
@@ -210,6 +241,10 @@ describe('account/+page.server.ts', () => {
 
     it('should handle missing profile gracefully', async () => {
       mockGetUserProfile.mockResolvedValue({ profile: null, error: null });
+      mockGetUserDiscordIdentity.mockResolvedValue({
+        identity: null,
+        error: null,
+      });
       mockSuperValidate
         .mockResolvedValueOnce(
           createMockSuperValidated({ email: 'test@example.com' })
@@ -658,6 +693,10 @@ describe('account/+page.server.ts', () => {
       mockGetUserProfile.mockResolvedValue(
         createMockProfileResponse(mockUserProfile)
       );
+      mockGetUserDiscordIdentity.mockResolvedValue({
+        identity: null,
+        error: null,
+      });
       mockSuperValidate
         .mockResolvedValueOnce(
           createMockSuperValidated({ email: 'test@example.com' })
@@ -685,6 +724,10 @@ describe('account/+page.server.ts', () => {
       mockGetUserProfile.mockResolvedValue(
         createMockProfileResponse(mockUserProfile)
       );
+      mockGetUserDiscordIdentity.mockResolvedValue({
+        identity: null,
+        error: null,
+      });
       mockSuperValidate
         .mockResolvedValueOnce(
           createMockSuperValidated({ email: 'test@example.com' })
