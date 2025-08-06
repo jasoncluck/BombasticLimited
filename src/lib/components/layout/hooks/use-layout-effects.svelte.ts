@@ -1,5 +1,5 @@
 import { browser } from '$app/environment';
-import { invalidateAll } from '$app/navigation';
+import { invalidateAll, invalidate } from '$app/navigation';
 import { notificationStore } from '$lib/stores/notification.js';
 import { toast } from 'svelte-sonner';
 import type { ContentState } from '$lib/state/content.svelte.js';
@@ -146,7 +146,15 @@ export function useLayoutEffects(
       }
     });
 
-    authUnsubscribe = layoutState.setupNotifications(supabase);
+    authUnsubscribe = (() => {
+      const { data } = supabase.auth.onAuthStateChange((_, newSession) => {
+        invalidate('supabase:auth');
+      });
+
+      return () => {
+        data.subscription.unsubscribe();
+      };
+    })();
 
     return () => {
       // Cleanup event listeners

@@ -14,7 +14,6 @@
   import { getSidebarState } from '$lib/state/sidebar.svelte';
 
   let {
-    layout,
     supabase,
     session,
     refreshSidebar,
@@ -23,7 +22,6 @@
     isNavigatingToContent,
     children,
   }: {
-    layout?: number[] | null;
     supabase: SupabaseClient<Database>;
     session: Session | null;
     refreshSidebar: () => Promise<void>;
@@ -42,11 +40,11 @@
 <Resizable.PaneGroup
   direction="horizontal"
   class="flex h-full overflow-hidden rounded-lg"
-  onLayoutChange={layoutState.onLayoutChange}
+  autoSaveId="bombify-layout"
 >
   <!-- Sidebar Pane (Desktop Only) -->
   <Resizable.Pane
-    defaultSize={layout?.[0] ?? 15}
+    defaultSize={15}
     minSize={12}
     maxSize={50}
     collapsedSize={COLLAPSED_SIDEBAR_SIZE}
@@ -199,8 +197,8 @@
 
   <!-- Main Content Pane -->
   <Resizable.Pane
+    defaultSize={85}
     class="pane @container flex min-w-[350px] sm:mr-1"
-    defaultSize={layout?.[1] ?? 85}
   >
     <ScrollArea
       type="scroll"

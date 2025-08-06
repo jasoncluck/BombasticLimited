@@ -124,9 +124,11 @@ describe('+layout.server.ts load function', () => {
   it('should handle layout cookie parsing for unified format', async () => {
     const mockUnifiedLayout = {
       panes: [300, 700],
-      sidebarCollapsed: true
+      sidebarCollapsed: true,
     };
-    mockLayoutEvent.cookies.get.mockReturnValue(JSON.stringify(mockUnifiedLayout));
+    mockLayoutEvent.cookies.get.mockReturnValue(
+      JSON.stringify(mockUnifiedLayout)
+    );
 
     const result = (await load(mockLayoutEvent)) as any;
 

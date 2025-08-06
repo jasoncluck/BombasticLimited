@@ -1,8 +1,7 @@
 import { getContext, setContext } from 'svelte';
-import { goto, invalidate } from '$app/navigation';
+import { goto } from '$app/navigation';
 import { showNotification } from '$lib/stores/notification.js';
 import debounce from 'debounce';
-import { page } from '$app/state';
 import { isSourceArray, SOURCE_INFO } from '$lib/constants/source';
 import { activeStreams } from '$lib/state/streaming.svelte';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -13,17 +12,11 @@ export interface LayoutConfig {
   searchDebounceMs: number;
 }
 
-// Unified layout and sidebar state for persistence
-export interface UnifiedLayoutState {
-  panes: number[];
-  sidebarCollapsed: boolean;
-}
-
 export interface LayoutState {
   // UI State
   isDraggingDivider: boolean;
   isSearching: boolean;
-  isSidebarCollapsed: boolean; // Add sidebar collapse state
+  isSidebarCollapsed: boolean;
 
   // Search state
   currentDebouncedSearch: ReturnType<typeof debounce> | null;
@@ -37,20 +30,9 @@ export interface LayoutState {
   searchRedirect: (e: Event) => Promise<Event>;
   handleSearch: (e: Event) => void;
 
-  // Layout methods
-  onLayoutChange: (sizes: number[]) => void;
-
   // Sidebar methods
   setSidebarCollapsed: (collapsed: boolean) => void;
   toggleSidebar: () => void;
-
-  // Unified persistence methods
-  saveUnifiedLayoutState: (sizes: number[], sidebarCollapsed: boolean) => void;
-  loadUnifiedLayoutState: () => UnifiedLayoutState | null;
-
-  // Notification setup
-  setupNotifications: (supabase: SupabaseClient) => () => void;
-  setupStreamingNotifications: () => void;
 
   // Cleanup method
   cleanup: () => void;
@@ -70,87 +52,39 @@ export class LayoutStateClass implements LayoutState {
   });
 
   constructor() {
-    // Initialize sidebar state from unified layout state on construction
-    this.loadInitialState();
+    // Initialize sidebar state from localStorage on construction
+    this.loadSidebarState();
   }
 
-  private loadInitialState(): void {
-    const unifiedState = this.loadUnifiedLayoutState();
-    if (unifiedState) {
-      this.isSidebarCollapsed = unifiedState.sidebarCollapsed;
-    }
-  }
-
-  /**
-   * Load unified layout state from cookie
-   */
-  loadUnifiedLayoutState(): UnifiedLayoutState | null {
-    if (!browser && typeof document === 'undefined') return null;
+  private loadSidebarState(): void {
+    if (!browser) return;
 
     try {
-      const cookies = document.cookie.split(';');
-      const layoutCookie = cookies.find((cookie) =>
-        cookie.trim().startsWith('PaneForge:layout=')
-      );
-
-      if (layoutCookie) {
-        const cookieValue = layoutCookie.split('=')[1];
-        const parsed = JSON.parse(decodeURIComponent(cookieValue));
-
-        // Handle the new unified format
-        if (
-          parsed &&
-          typeof parsed === 'object' &&
-          parsed.panes &&
-          Array.isArray(parsed.panes)
-        ) {
-          return {
-            panes: parsed.panes,
-            sidebarCollapsed: parsed.sidebarCollapsed ?? false,
-          };
-        }
-
-        // Handle legacy format (just array of numbers)
-        if (Array.isArray(parsed)) {
-          return {
-            panes: parsed,
-            sidebarCollapsed: false, // Default to expanded for legacy
-          };
-        }
+      const saved = localStorage.getItem('bombify-sidebar-collapsed');
+      if (saved !== null) {
+        this.isSidebarCollapsed = JSON.parse(saved);
       }
     } catch (error) {
-      console.error('Failed to load unified layout state from cookie:', error);
+      console.error('Failed to load sidebar state:', error);
     }
-
-    return null;
   }
 
-  /**
-   * Save unified layout state to cookie
-   */
-  saveUnifiedLayoutState(sizes: number[], sidebarCollapsed: boolean): void {
-    if (!browser && typeof document === 'undefined') return;
-
-    const unifiedState: UnifiedLayoutState = {
-      panes: sizes,
-      sidebarCollapsed,
-    };
+  private saveSidebarState(collapsed: boolean): void {
+    if (!browser) return;
 
     try {
-      const cookieValue = JSON.stringify(unifiedState);
-      const hostname = page?.url?.hostname || 'localhost';
-      document.cookie = `PaneForge:layout=${cookieValue}; path=/; domain=${hostname}; max-age=31536000`; // 1 year expiry
+      localStorage.setItem(
+        'bombify-sidebar-collapsed',
+        JSON.stringify(collapsed)
+      );
     } catch (error) {
-      console.error('Failed to save unified layout state to cookie:', error);
+      console.error('Failed to save sidebar state:', error);
     }
   }
 
   setSidebarCollapsed = (collapsed: boolean): void => {
     this.isSidebarCollapsed = collapsed;
-    // Update the unified state with current pane sizes
-    const currentState = this.loadUnifiedLayoutState();
-    const currentPanes = currentState?.panes || [15, 85]; // Default pane sizes
-    this.saveUnifiedLayoutState(currentPanes, collapsed);
+    this.saveSidebarState(collapsed);
   };
 
   toggleSidebar = (): void => {
@@ -241,67 +175,6 @@ export class LayoutStateClass implements LayoutState {
       this.searchRedirect(e, capturedSearchValue);
     }, this.config.searchDebounceMs);
     this.currentDebouncedSearch();
-  }
-
-  onLayoutChange(sizes: number[]) {
-    // Save both pane sizes and current sidebar collapsed state
-    this.saveUnifiedLayoutState(sizes, this.isSidebarCollapsed);
-  }
-
-  setupNotifications(supabase: SupabaseClient) {
-    const { data } = supabase.auth.onAuthStateChange((_, newSession) => {
-      invalidate('supabase:auth');
-    });
-
-    return () => {
-      data.subscription.unsubscribe();
-    };
-  }
-
-  async setupStreamingNotifications() {
-    const streamingSources = source('/api/twitch').select(
-      'streamingSubscriptions'
-    );
-
-    let initialMount = true;
-
-    const unsubscribe = streamingSources.subscribe((latestStreamingSources) => {
-      let latestStreamingSourcesParsed;
-
-      try {
-        latestStreamingSourcesParsed = JSON.parse(latestStreamingSources);
-      } catch {
-        return;
-      }
-
-      if (isSourceArray(latestStreamingSourcesParsed)) {
-        const removedSources = activeStreams.sources.filter(
-          (source) => !latestStreamingSourcesParsed.includes(source)
-        );
-        const addedSources = latestStreamingSourcesParsed.filter(
-          (source) => !activeStreams.sources.includes(source)
-        );
-
-        if (!initialMount) {
-          removedSources.forEach((removedSource) => {
-            showNotification(
-              `${SOURCE_INFO[removedSource].displayName} has ended their stream.`
-            );
-          });
-
-          addedSources.forEach((addedSource) => {
-            showNotification(
-              `${SOURCE_INFO[addedSource].displayName} has started streaming.`
-            );
-          });
-        }
-
-        activeStreams.sources = latestStreamingSourcesParsed;
-      }
-      initialMount = false;
-    });
-
-    return unsubscribe;
   }
 
   cleanup() {
