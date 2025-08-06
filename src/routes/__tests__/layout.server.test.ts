@@ -108,8 +108,6 @@ describe('+layout.server.ts load function', () => {
     });
   });
 
-
-
   it('should set appropriate cache headers for authenticated users', async () => {
     const mockSetHeaders = vi.fn();
     const authEvent = {

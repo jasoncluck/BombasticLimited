@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { 
-  PageStateClass, 
-  createViewportSnapshot, 
+import {
+  PageStateClass,
+  createViewportSnapshot,
   restoreViewportScroll,
   type ScrollPosition,
-  type ScrollState
+  type ScrollState,
 } from '../page.svelte.js';
 
 describe('PageState', () => {
@@ -15,7 +15,7 @@ describe('PageState', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
-    
+
     // Mock HTMLElement
     mockViewportElement = {
       scrollTop: 100,
@@ -88,24 +88,27 @@ describe('PageState', () => {
 
     it('should start auto scroll down', () => {
       pageState.startAutoScroll(mockViewportElement, mockScrollState);
-      
+
       expect(mockScrollState.scrolling).toBe(true);
       expect(mockScrollState.interval).not.toBeNull();
-      expect(global.window.setInterval).toHaveBeenCalledWith(expect.any(Function), 16);
+      expect(global.window.setInterval).toHaveBeenCalledWith(
+        expect.any(Function),
+        16
+      );
     });
 
     it('should start auto scroll up', () => {
       mockScrollState.direction = 'up';
       const initialScrollTop = mockViewportElement.scrollTop;
-      
+
       pageState.startAutoScroll(mockViewportElement, mockScrollState);
-      
+
       expect(mockScrollState.scrolling).toBe(true);
       expect(mockScrollState.interval).not.toBeNull();
-      
+
       // Fast forward to trigger scroll
       vi.advanceTimersByTime(16);
-      
+
       // Should have scrolled up (reduced scrollTop)
       expect(mockViewportElement.scrollTop).toBe(initialScrollTop - 10);
     });
@@ -113,35 +116,37 @@ describe('PageState', () => {
     it('should not scroll up below 0', () => {
       mockViewportElement.scrollTop = 2; // Very low scroll position
       mockScrollState.direction = 'up';
-      
+
       pageState.startAutoScroll(mockViewportElement, mockScrollState);
       vi.advanceTimersByTime(16);
-      
+
       expect(mockViewportElement.scrollTop).toBe(0); // Should not go below 0
     });
 
     it('should scroll down correctly', () => {
       const initialScrollTop = mockViewportElement.scrollTop;
       mockScrollState.direction = 'down';
-      
+
       pageState.startAutoScroll(mockViewportElement, mockScrollState);
       vi.advanceTimersByTime(16);
-      
+
       expect(mockViewportElement.scrollTop).toBe(initialScrollTop + 10);
     });
 
     it('should clear existing interval before starting new one', () => {
       const existingInterval = 123;
       mockScrollState.interval = existingInterval;
-      
+
       pageState.startAutoScroll(mockViewportElement, mockScrollState);
-      
-      expect(global.window.clearInterval).toHaveBeenCalledWith(existingInterval);
+
+      expect(global.window.clearInterval).toHaveBeenCalledWith(
+        existingInterval
+      );
     });
 
     it('should not start auto scroll without viewport reference', () => {
       pageState.startAutoScroll(null, mockScrollState);
-      
+
       expect(mockScrollState.scrolling).toBe(false);
       expect(mockScrollState.interval).toBeNull();
       expect(global.window.setInterval).not.toHaveBeenCalled();
@@ -149,9 +154,9 @@ describe('PageState', () => {
 
     it('should not start auto scroll without direction', () => {
       mockScrollState.direction = null;
-      
+
       pageState.startAutoScroll(mockViewportElement, mockScrollState);
-      
+
       expect(mockScrollState.scrolling).toBe(false);
       expect(mockScrollState.interval).toBeNull();
       expect(global.window.setInterval).not.toHaveBeenCalled();
@@ -161,15 +166,15 @@ describe('PageState', () => {
       // Set the content viewport reference before starting scroll
       pageState.viewportRefs.contentViewportRef = mockViewportElement;
       mockScrollState.direction = 'down';
-      
+
       pageState.startAutoScroll(mockViewportElement, mockScrollState);
-      
+
       // Verify that scroll started
       expect(mockScrollState.scrolling).toBe(true);
       expect(mockScrollState.interval).not.toBeNull();
-      
+
       vi.advanceTimersByTime(16);
-      
+
       // Verify element scrolled
       expect(mockViewportElement.scrollTop).toBeGreaterThan(100);
     });
@@ -181,9 +186,9 @@ describe('PageState', () => {
       mockScrollState.interval = intervalId;
       mockScrollState.scrolling = true;
       mockScrollState.direction = 'down';
-      
+
       pageState.stopAutoScroll(mockScrollState);
-      
+
       expect(global.window.clearInterval).toHaveBeenCalledWith(intervalId);
       expect(mockScrollState.interval).toBeNull();
       expect(mockScrollState.direction).toBeNull();
@@ -192,7 +197,7 @@ describe('PageState', () => {
 
     it('should handle stopping when no interval is active', () => {
       mockScrollState.interval = null;
-      
+
       expect(() => pageState.stopAutoScroll(mockScrollState)).not.toThrow();
       expect(global.window.clearInterval).not.toHaveBeenCalled();
     });
@@ -204,9 +209,9 @@ describe('PageState', () => {
       pageState.sidebarScrollState.interval = 456;
       pageState.contentScrollState.scrolling = true;
       pageState.sidebarScrollState.scrolling = true;
-      
+
       pageState.handleDragEnd();
-      
+
       expect(pageState.contentScrollState.scrolling).toBe(false);
       expect(pageState.sidebarScrollState.scrolling).toBe(false);
       expect(pageState.contentScrollState.interval).toBeNull();
@@ -224,7 +229,9 @@ describe('PageState', () => {
       } as any;
 
       // Test doesn't throw
-      expect(() => pageState.handleDragOver(mockDragEvent, 'video')).not.toThrow();
+      expect(() =>
+        pageState.handleDragOver(mockDragEvent, 'video')
+      ).not.toThrow();
     });
   });
 
@@ -236,7 +243,13 @@ describe('PageState', () => {
       } as any;
 
       // Should not throw error
-      expect(() => pageState.handleViewportDragOver(mockDragEvent, mockViewportElement, mockScrollState)).not.toThrow();
+      expect(() =>
+        pageState.handleViewportDragOver(
+          mockDragEvent,
+          mockViewportElement,
+          mockScrollState
+        )
+      ).not.toThrow();
     });
 
     it('should process drag events in different viewport areas', () => {
@@ -245,7 +258,13 @@ describe('PageState', () => {
         preventDefault: vi.fn(),
       } as any;
 
-      expect(() => pageState.handleViewportDragOver(mockDragEvent, mockViewportElement, mockScrollState)).not.toThrow();
+      expect(() =>
+        pageState.handleViewportDragOver(
+          mockDragEvent,
+          mockViewportElement,
+          mockScrollState
+        )
+      ).not.toThrow();
     });
 
     it('should handle drag events in middle area', () => {
@@ -254,7 +273,13 @@ describe('PageState', () => {
         preventDefault: vi.fn(),
       } as any;
 
-      expect(() => pageState.handleViewportDragOver(mockDragEvent, mockViewportElement, mockScrollState)).not.toThrow();
+      expect(() =>
+        pageState.handleViewportDragOver(
+          mockDragEvent,
+          mockViewportElement,
+          mockScrollState
+        )
+      ).not.toThrow();
     });
   });
 });
@@ -272,7 +297,7 @@ describe('Utility Functions', () => {
   describe('createViewportSnapshot', () => {
     it('should create snapshot from element', () => {
       const snapshot = createViewportSnapshot(mockElement);
-      
+
       expect(snapshot).toEqual({
         scrollTop: 150,
         scrollLeft: 75,
@@ -281,7 +306,7 @@ describe('Utility Functions', () => {
 
     it('should return default values for null element', () => {
       const snapshot = createViewportSnapshot(null);
-      
+
       expect(snapshot).toEqual({
         scrollTop: 0,
         scrollLeft: 0,
@@ -313,7 +338,7 @@ describe('Utility Functions', () => {
 
     it('should handle null position gracefully', () => {
       expect(() => restoreViewportScroll(mockElement, null)).not.toThrow();
-      
+
       // Element should remain unchanged
       expect(mockElement.scrollTop).toBe(150);
       expect(mockElement.scrollLeft).toBe(75);
