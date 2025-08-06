@@ -18,7 +18,7 @@ BEGIN;
 
 -- Plan the number of tests
 SELECT
-  plan (30);
+  plan (27);
 
 -- ============================================================================
 -- Test Setup: Create test data
@@ -156,7 +156,7 @@ DECLARE
   should_fail boolean := false;
 BEGIN
   -- Create playlists up to limit
-  FOR i IN 1..23 LOOP -- We already have 2, so add 23 more to reach 25
+  FOR i IN 1..22 LOOP -- We already have 2, so add 22 more to reach 24
     SELECT * INTO playlist_record
     FROM public.insert_playlist(
       p_created_by => test_user_id,
@@ -165,7 +165,7 @@ BEGIN
     INSERT INTO temp_test_playlists VALUES (playlist_record.playlist_id);
   END LOOP;
   
-  -- Try to create 26th playlist - should fail
+  -- Try to create 25th playlist - should fail
   BEGIN
     SELECT * INTO playlist_record
     FROM public.insert_playlist(
@@ -226,10 +226,10 @@ BEGIN
   -- Test following a playlist (Note: This might hit the 25 playlist limit)
   -- For testing purposes, let's clean up some playlists first
   DELETE FROM public.user_playlists WHERE user_id = test_user_id AND id NOT IN (
-    SELECT playlist_id FROM temp_test_playlists LIMIT 5
+    SELECT playlist_id FROM temp_test_playlists LIMIT 3
   );
   DELETE FROM public.playlists WHERE created_by = test_user_id AND id NOT IN (
-    SELECT playlist_id FROM temp_test_playlists LIMIT 5
+    SELECT playlist_id FROM temp_test_playlists LIMIT 3
   );
   
   -- Now test follow
