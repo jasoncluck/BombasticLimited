@@ -16,8 +16,8 @@ describe('User Preferences State', () => {
       userPreferences.contentDisplay = 'TABLE';
       expect(userPreferences.contentDisplay).toBe('TABLE');
       
-      userPreferences.contentDisplay = 'CAROUSEL';
-      expect(userPreferences.contentDisplay).toBe('CAROUSEL');
+      userPreferences.contentDisplay = 'TILES';
+      expect(userPreferences.contentDisplay).toBe('TILES');
       
       // Reset to default
       userPreferences.contentDisplay = 'TILES';
@@ -49,7 +49,7 @@ describe('User Preferences State', () => {
 
   describe('type safety', () => {
     it('should maintain type consistency for contentDisplay', () => {
-      const validDisplayTypes = ['TILES', 'TABLE', 'CAROUSEL'];
+      const validDisplayTypes = ['TILES', 'TABLE'];
       
       validDisplayTypes.forEach(type => {
         userPreferences.contentDisplay = type as any;
@@ -75,12 +75,12 @@ describe('User Preferences State', () => {
 
   describe('state persistence', () => {
     it('should maintain state across multiple reads', () => {
-      userPreferences.contentDisplay = 'CAROUSEL';
+      userPreferences.contentDisplay = 'TILES';
       userPreferences.contentDescription = 'FULL';
       
       // Read multiple times to ensure consistency
       for (let i = 0; i < 5; i++) {
-        expect(userPreferences.contentDisplay).toBe('CAROUSEL');
+        expect(userPreferences.contentDisplay).toBe('TILES');
         expect(userPreferences.contentDescription).toBe('FULL');
       }
       
@@ -90,7 +90,7 @@ describe('User Preferences State', () => {
     });
 
     it('should handle rapid state changes', () => {
-      const displayTypes = ['TILES', 'TABLE', 'CAROUSEL'];
+      const displayTypes = ['TILES', 'TABLE'];
       const descriptionTypes = ['BRIEF', 'FULL', 'NONE'];
       
       for (let i = 0; i < displayTypes.length; i++) {
@@ -134,13 +134,13 @@ describe('User Preferences State', () => {
 
     it('should maintain independence between properties', () => {
       // Change only contentDisplay
-      userPreferences.contentDisplay = 'CAROUSEL';
-      expect(userPreferences.contentDisplay).toBe('CAROUSEL');
+      userPreferences.contentDisplay = 'TABLE';
+      expect(userPreferences.contentDisplay).toBe('TABLE');
       expect(userPreferences.contentDescription).toBe('BRIEF'); // Should remain unchanged
       
       // Change only contentDescription
       userPreferences.contentDescription = 'FULL';
-      expect(userPreferences.contentDisplay).toBe('CAROUSEL'); // Should remain unchanged
+      expect(userPreferences.contentDisplay).toBe('TABLE'); // Should remain unchanged
       expect(userPreferences.contentDescription).toBe('FULL');
       
       // Reset to defaults

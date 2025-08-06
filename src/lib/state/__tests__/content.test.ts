@@ -52,14 +52,60 @@ describe('ContentState', () => {
     
     // Create mock PageState
     mockPageState = {
-      isLoading: false,
-      currentRoute: '/',
+      contentScrollPosition: null,
+      sidebarScrollPosition: null,
+      contentScrollState: {
+        scrolling: false,
+        direction: null,
+        interval: null,
+      },
+      sidebarScrollState: {
+        scrolling: false,
+        direction: null,
+        interval: null,
+      },
+      autoScrollConfig: {
+        scrollSpeed: 10,
+        scrollZoneSize: 50,
+      },
+      viewportRefs: {
+        sidebarViewportRef: null,
+        contentViewportRef: null,
+      },
+      startAutoScroll: vi.fn(),
+      stopAutoScroll: vi.fn(),
+      handleViewportDragOver: vi.fn(),
+      handleDragOver: vi.fn(),
+      handleDragEnd: vi.fn(),
+      handleDrop: vi.fn(),
+      createViewportSnapshot: vi.fn(),
+      restoreViewportScroll: vi.fn(),
+      setSidebarViewportRef: vi.fn(),
+      setContentViewportRef: vi.fn(),
+      cleanup: vi.fn(),
     } as PageState;
     
     // Create test data
     mockVideo = createMockVideo({ id: 'test-video-1', title: 'Test Video' });
     mockPlaylist = createMockPlaylist({ id: 1, created_by: 'user-1' });
-    mockSession = createMockSession({ user: { id: 'user-1' } });
+    mockSession = createMockSession({ 
+      user: {
+        id: 'user-1',
+        aud: 'authenticated',
+        role: 'authenticated',
+        email: 'test@example.com',
+        email_confirmed_at: '2023-01-01T00:00:00Z',
+        phone: '',
+        confirmed_at: '2023-01-01T00:00:00Z',
+        last_sign_in_at: '2023-01-01T00:00:00Z',
+        app_metadata: {},
+        user_metadata: {},
+        identities: [],
+        created_at: '2023-01-01T00:00:00Z',
+        updated_at: '2023-01-01T00:00:00Z',
+        is_anonymous: false,
+      }
+    });
     
     contentState = new ContentState(mockPageState);
   });
@@ -240,7 +286,7 @@ describe('ContentState', () => {
       contentState.draggedIndex = 1;
       contentState.targetIndex = 2;
       
-      const classes = contentState.getVideoDragClasses(2, 'CAROUSEL');
+      const classes = contentState.getVideoDragClasses(2, 'TILES');
       expect(classes).toContain('relative');
       // Should not contain table-specific after: classes
       expect(classes).not.toContain('after:bottom-0');

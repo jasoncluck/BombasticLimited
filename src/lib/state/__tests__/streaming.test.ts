@@ -119,7 +119,7 @@ describe('Streaming State', () => {
       const found = activeStreams.sources.find(source => source === 'nextlander');
       expect(found).toBe('nextlander');
       
-      const notFound = activeStreams.sources.find(source => source === 'nonexistent');
+      const notFound = activeStreams.sources.find(source => source === ('nonexistent' as any));
       expect(notFound).toBeUndefined();
     });
 

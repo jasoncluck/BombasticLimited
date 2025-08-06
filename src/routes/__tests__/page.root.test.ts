@@ -86,14 +86,31 @@ const mockGoto = vi.mocked(goto);
 describe('+page.svelte Enhanced Tests', () => {
   const createMockData = (overrides = {}) => ({
     sourceVideos: createMockSourceVideos(),
-    contentFilter: {
-      sort: { key: 'datePublished', order: 'descending' },
-      type: 'video',
+    sourceVideosContentFilters: {
+      sort: { key: 'datePublished' as const, order: 'descending' as const },
+      type: 'video' as const,
     },
     continueWatchingVideos: createMockContinueVideos(),
+    continueWatchingContentFilters: {
+      sort: { key: 'dateTimestamp' as const, order: 'descending' as const },
+      type: 'timestamp' as const,
+    },
+    // Layout server properties
+    contentFilter: {
+      sort: { key: 'datePublished' as const, order: 'descending' as const },
+      type: 'video' as const,
+    },
     userProfile: createMockUserProfile(),
     session: createMockSession(),
-    supabase: {},
+    supabase: {} as any,
+    etag: '"test-etag"',
+    lastModified: '2023-01-01T00:00:00.000Z',
+    cached: false,
+    cacheUserId: 'user-1',
+    cookies: [],
+    // Additional missing properties
+    playlistsCount: 0,
+    isSidebarCollapsed: false,
     ...overrides,
   });
 
@@ -146,10 +163,14 @@ describe('+page.svelte Enhanced Tests', () => {
       expect(sourceSections).toHaveLength(4); // Default sources: giantbomb, jeffgerstmann, nextlander, remap
       
       // Should render source links
-      expect(screen.getByTestId('source-link', { name: /giantbomb/i })).toBeInTheDocument();
-      expect(screen.getByTestId('source-link', { name: /jeffgerstmann/i })).toBeInTheDocument();
-      expect(screen.getByTestId('source-link', { name: /nextlander/i })).toBeInTheDocument();
-      expect(screen.getByTestId('source-link', { name: /remap/i })).toBeInTheDocument();
+      const sourceLinks = screen.getAllByTestId('source-link');
+      expect(sourceLinks).toHaveLength(4);
+      
+      // Verify we have links for each source
+      expect(screen.getByText('Giant Bomb')).toBeInTheDocument();
+      expect(screen.getByText('The Jeff Gerstmann Show')).toBeInTheDocument();
+      expect(screen.getByText('Nextlander')).toBeInTheDocument();
+      expect(screen.getByText('Remap')).toBeInTheDocument();
     });
   });
 
@@ -196,7 +217,7 @@ describe('+page.svelte Enhanced Tests', () => {
   describe('OAuth URL handling', () => {
     beforeEach(() => {
       // Reset page mock
-      page.url = new URL('http://localhost:5173/');
+      page.url = new URL('http://localhost:5173/') as any;
     });
 
     it('should handle OAuth code in URL', () => {
@@ -204,7 +225,7 @@ describe('+page.svelte Enhanced Tests', () => {
       isBrowser.mockReturnValue(true);
       
       // Set URL with OAuth code
-      page.url = new URL('http://localhost:5173/?code=oauth_code_123');
+      page.url = new URL('http://localhost:5173/?code=oauth_code_123') as any;
       
       const mockData = createMockData();
       render(Page, { props: { data: mockData } });
@@ -217,7 +238,7 @@ describe('+page.svelte Enhanced Tests', () => {
       const { isBrowser } = require('@supabase/ssr');
       isBrowser.mockReturnValue(true);
       
-      page.url = new URL('http://localhost:5173/?code=oauth_code&other=value&filter=test');
+      page.url = new URL('http://localhost:5173/?code=oauth_code&other=value&filter=test') as any;
       
       const mockData = createMockData();
       render(Page, { props: { data: mockData } });
@@ -230,7 +251,7 @@ describe('+page.svelte Enhanced Tests', () => {
       const { isBrowser } = require('@supabase/ssr');
       isBrowser.mockReturnValue(false);
       
-      page.url = new URL('http://localhost:5173/?code=oauth_code');
+      page.url = new URL('http://localhost:5173/?code=oauth_code') as any;
       
       const mockData = createMockData();
       render(Page, { props: { data: mockData } });
@@ -243,7 +264,7 @@ describe('+page.svelte Enhanced Tests', () => {
       const { isBrowser } = require('@supabase/ssr');
       isBrowser.mockReturnValue(true);
       
-      page.url = new URL('http://localhost:5173/?other=value');
+      page.url = new URL('http://localhost:5173/?other=value') as any;
       
       const mockData = createMockData();
       render(Page, { props: { data: mockData } });
@@ -269,17 +290,17 @@ describe('+page.svelte Enhanced Tests', () => {
       
       render(Page, { props: { data: mockData } });
       
-      const gbLink = screen.getByTestId('source-link', { name: /giantbomb/i });
-      expect(gbLink).toHaveAttribute('href', '/giantbomb/latest');
+      const gbLink = screen.getByText('Giant Bomb');
+      expect(gbLink.closest('a')).toHaveAttribute('href', '/giantbomb/latest');
       
-      const jgLink = screen.getByTestId('source-link', { name: /jeffgerstmann/i });
-      expect(jgLink).toHaveAttribute('href', '/jeffgerstmann/latest');
+      const jgLink = screen.getByText('The Jeff Gerstmann Show');
+      expect(jgLink.closest('a')).toHaveAttribute('href', '/jeffgerstmann/latest');
       
-      const nlLink = screen.getByTestId('source-link', { name: /nextlander/i });
-      expect(nlLink).toHaveAttribute('href', '/nextlander/latest');
+      const nlLink = screen.getByText('Nextlander');
+      expect(nlLink.closest('a')).toHaveAttribute('href', '/nextlander/latest');
       
-      const rmLink = screen.getByTestId('source-link', { name: /remap/i });
-      expect(rmLink).toHaveAttribute('href', '/remap/latest');
+      const rmLink = screen.getByText('Remap');
+      expect(rmLink.closest('a')).toHaveAttribute('href', '/remap/latest');
     });
   });
 
@@ -299,10 +320,11 @@ describe('+page.svelte Enhanced Tests', () => {
       render(Page, { props: { data: mockData } });
       
       // Verify source sections have correct data attributes
-      const gbSection = screen.getByTestId('source-section', { name: /giantbomb/i });
+      const sourceSections = screen.getAllByTestId('source-section');
+      const gbSection = sourceSections.find(section => section.getAttribute('data-source') === 'giantbomb');
       expect(gbSection).toHaveAttribute('data-source', 'giantbomb');
       
-      const jgSection = screen.getByTestId('source-section', { name: /jeffgerstmann/i });
+      const jgSection = sourceSections.find(section => section.getAttribute('data-source') === 'jeffgerstmann');
       expect(jgSection).toHaveAttribute('data-source', 'jeffgerstmann');
     });
   });
@@ -338,12 +360,35 @@ describe('+page.svelte Enhanced Tests', () => {
   describe('Error handling and edge cases', () => {
     it('should handle missing data gracefully', () => {
       const minimalData = {
-        sourceVideos: {},
-        contentFilter: {},
+        sourceVideos: {
+          giantbomb: [],
+          jeffgerstmann: [],
+          nextlander: [],
+          remap: [],
+        },
+        sourceVideosContentFilters: { 
+          sort: { key: 'datePublished' as const, order: 'descending' as const }, 
+          type: 'video' as const 
+        },
         continueWatchingVideos: [],
+        continueWatchingContentFilters: { 
+          sort: { key: 'dateTimestamp' as const, order: 'descending' as const }, 
+          type: 'timestamp' as const 
+        },
+        contentFilter: { 
+          sort: { key: 'datePublished' as const, order: 'descending' as const }, 
+          type: 'video' as const 
+        },
         userProfile: null,
         session: null,
-        supabase: {},
+        supabase: {} as any,
+        etag: '"test-etag"',
+        lastModified: '2023-01-01T00:00:00.000Z',
+        cached: false,
+        cacheUserId: null,
+        cookies: [],
+        playlistsCount: 0,
+        isSidebarCollapsed: false,
       };
       
       expect(() => {
