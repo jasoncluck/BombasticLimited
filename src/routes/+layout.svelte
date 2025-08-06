@@ -278,6 +278,7 @@
 
     // Initialize sidebar non-blocking (fast UI, loads data in background)
     const sidebarCleanup = sidebarState.initializeNonBlocking();
+    sidebarState.initializeEffects();
     
     if (import.meta.env.DEV) {
       console.log('✅ Sidebar initialized:', sidebarState.initialized);

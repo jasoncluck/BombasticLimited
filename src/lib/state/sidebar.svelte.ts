@@ -6,12 +6,18 @@ import { getContext, setContext } from 'svelte';
 import { browser } from '$app/environment';
 import type { Source } from '$lib/constants/source';
 import { tabVisibility } from '$lib/utils/tab-visibility.js';
+import { SIDEBAR_COOKIE_NAME, SIDEBAR_COOKIE_MAX_AGE } from '$lib/components/ui/sidebar/constants';
 
 export interface SidebarData {
   playlists: Playlist[];
   followedPlaylists: Playlist[];
   userProfile: UserProfile;
   userPlaylistsCount: number;
+}
+
+export interface SidebarCookieState {
+  collapsed: boolean;
+  defaultSize?: number;
 }
 
 export class SidebarStateClass {
@@ -38,12 +44,20 @@ export class SidebarStateClass {
   orderedSources = $state<Source[]>([]);
 
   constructor() {
-    // Initialize ordered sources from user profile when data loads
-    $effect(() => {
-      if (this.data?.userProfile?.sources) {
-        this.orderedSources = [...this.data.userProfile.sources];
-      }
-    });
+    // Load initial state from cookies if available
+    this.loadStateFromCookie();
+  }
+
+  // Initialize effects (should be called when component is mounted)
+  initializeEffects() {
+    if (browser) {
+      // Initialize ordered sources from user profile when data loads
+      $effect(() => {
+        if (this.data?.userProfile?.sources) {
+          this.orderedSources = [...this.data.userProfile.sources];
+        }
+      });
+    }
   }
 
   get initialized() {
@@ -220,6 +234,73 @@ export class SidebarStateClass {
     this.orderedSources = [];
     this.#initialized = false;
     this.#hasLoadedOnce = false;
+  }
+
+  // Cookie persistence methods
+  private loadStateFromCookie(): void {
+    // In tests, use global.document instead of checking browser
+    const doc = typeof document !== 'undefined' ? document : (global as any).document;
+    if (!doc) return;
+
+    try {
+      const cookies = doc.cookie.split('; ');
+      const sidebarCookie = cookies.find((c: string) => c.startsWith(`${SIDEBAR_COOKIE_NAME}=`));
+      
+      if (sidebarCookie) {
+        const cookieValue = sidebarCookie.split('=')[1];
+        const state: SidebarCookieState = JSON.parse(decodeURIComponent(cookieValue));
+        
+        this.collapsed = state.collapsed;
+      }
+    } catch (error) {
+      console.warn('Failed to load sidebar state from cookie:', error);
+    }
+  }
+
+  saveStateToCookie(collapsed?: boolean, defaultSize?: number): void {
+    // In tests, use global.document instead of checking browser
+    const doc = typeof document !== 'undefined' ? document : (global as any).document;
+    if (!doc) return;
+
+    try {
+      const state: SidebarCookieState = {
+        collapsed: collapsed ?? this.collapsed,
+        ...(defaultSize !== undefined && { defaultSize })
+      };
+
+      const cookieValue = encodeURIComponent(JSON.stringify(state));
+      doc.cookie = `${SIDEBAR_COOKIE_NAME}=${cookieValue}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+    } catch (error) {
+      console.warn('Failed to save sidebar state to cookie:', error);
+    }
+  }
+
+  // Get the default size from cookie
+  getDefaultSizeFromCookie(): number | undefined {
+    // In tests, use global.document instead of checking browser
+    const doc = typeof document !== 'undefined' ? document : (global as any).document;
+    if (!doc) return undefined;
+
+    try {
+      const cookies = doc.cookie.split('; ');
+      const sidebarCookie = cookies.find((c: string) => c.startsWith(`${SIDEBAR_COOKIE_NAME}=`));
+      
+      if (sidebarCookie) {
+        const cookieValue = sidebarCookie.split('=')[1];
+        const state: SidebarCookieState = JSON.parse(decodeURIComponent(cookieValue));
+        return state.defaultSize;
+      }
+    } catch (error) {
+      console.warn('Failed to read default size from cookie:', error);
+    }
+
+    return undefined;
+  }
+
+  // Update collapsed state and save to cookie
+  setCollapsed(collapsed: boolean, defaultSize?: number): void {
+    this.collapsed = collapsed;
+    this.saveStateToCookie(collapsed, defaultSize);
   }
 }
 
