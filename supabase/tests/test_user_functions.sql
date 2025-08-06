@@ -56,7 +56,9 @@ VALUES
     '22222222-2222-2222-2222-222222222222'::uuid,
     'anotheruser'
   )
-ON CONFLICT (id) DO UPDATE SET username = EXCLUDED.username;
+ON CONFLICT (id) DO UPDATE
+SET
+  username = EXCLUDED.username;
 
 -- ============================================================================
 -- Test 1-4: is_unique_username() Function

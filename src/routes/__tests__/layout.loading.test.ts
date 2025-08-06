@@ -74,9 +74,12 @@ describe('Layout Loading States and Timeouts', () => {
       setNavigationCacheState: vi.fn(() => mockNavigationCache),
     }));
 
-    vi.doMock('$lib/components/layout/hooks/use-layout-effects.svelte.js', () => ({
-      useLayoutEffects: vi.fn(() => mockLayoutEffects),
-    }));
+    vi.doMock(
+      '$lib/components/layout/hooks/use-layout-effects.svelte.js',
+      () => ({
+        useLayoutEffects: vi.fn(() => mockLayoutEffects),
+      })
+    );
   });
 
   afterEach(() => {
@@ -102,7 +105,9 @@ describe('Layout Loading States and Timeouts', () => {
           sidebarData: mockSidebarState.isDataLoaded,
           canShowBasicUI: isHydrated && mockMediaQuery.initialized,
           canShowFullUI:
-            isHydrated && mockMediaQuery.initialized && mockSidebarState.initialized,
+            isHydrated &&
+            mockMediaQuery.initialized &&
+            mockSidebarState.initialized,
         };
 
         // Development mode: Force show UI after timeout
@@ -123,7 +128,9 @@ describe('Layout Loading States and Timeouts', () => {
 
       // Simulate the 5-second timeout
       setTimeout(() => {
-        console.warn('🚨 Layout loading timeout - forcing UI to show (development mode)');
+        console.warn(
+          '🚨 Layout loading timeout - forcing UI to show (development mode)'
+        );
         forceShowUI = true;
       }, 5000);
 
@@ -138,7 +145,7 @@ describe('Layout Loading States and Timeouts', () => {
     it('should clear timeout when layout effects initialize successfully', async () => {
       let timeoutCleared = false;
       let timeoutId: NodeJS.Timeout | undefined;
-      
+
       // Simulate the timeout creation and clearing logic
       const createTimeout = (callback: () => void, delay: number) => {
         timeoutId = setTimeout(callback, delay);
@@ -175,7 +182,9 @@ describe('Layout Loading States and Timeouts', () => {
       let forceShowUI = false;
 
       // Simulate layout effects initialization failure
-      const layoutEffectsPromise = Promise.reject(new Error('Initialization failed'));
+      const layoutEffectsPromise = Promise.reject(
+        new Error('Initialization failed')
+      );
       mockLayoutEffects.initializeLayout.mockReturnValue(layoutEffectsPromise);
 
       try {
@@ -205,7 +214,9 @@ describe('Layout Loading States and Timeouts', () => {
         sidebarData: mockSidebarState.isDataLoaded,
         canShowBasicUI: isHydrated && mockMediaQuery.initialized,
         canShowFullUI:
-          isHydrated && mockMediaQuery.initialized && mockSidebarState.initialized,
+          isHydrated &&
+          mockMediaQuery.initialized &&
+          mockSidebarState.initialized,
       };
 
       // Should be able to show UI immediately
@@ -219,7 +230,9 @@ describe('Layout Loading States and Timeouts', () => {
       const getLoadingStates = () => ({
         canShowBasicUI: isHydrated && mockMediaQuery.initialized,
         canShowFullUI:
-          isHydrated && mockMediaQuery.initialized && mockSidebarState.initialized,
+          isHydrated &&
+          mockMediaQuery.initialized &&
+          mockSidebarState.initialized,
       });
 
       // Initial state: not hydrated
@@ -236,7 +249,7 @@ describe('Layout Loading States and Timeouts', () => {
       expect(getLoadingStates().canShowBasicUI).toBe(true);
       expect(getLoadingStates().canShowFullUI).toBe(false); // Still waiting for sidebar
 
-      // After sidebar initialization  
+      // After sidebar initialization
       mockSidebarState.initialized = true;
       expect(getLoadingStates().canShowBasicUI).toBe(true);
       expect(getLoadingStates().canShowFullUI).toBe(true);
@@ -247,14 +260,16 @@ describe('Layout Loading States and Timeouts', () => {
     it('should provide debug information in development mode', () => {
       const isHydrated = true;
       const forceShowUI = false;
-      
+
       const loadingStates = {
         mediaQuery: mockMediaQuery.initialized,
         sidebar: mockSidebarState.initialized,
         sidebarData: mockSidebarState.isDataLoaded,
         canShowBasicUI: isHydrated && mockMediaQuery.initialized,
         canShowFullUI:
-          isHydrated && mockMediaQuery.initialized && mockSidebarState.initialized,
+          isHydrated &&
+          mockMediaQuery.initialized &&
+          mockSidebarState.initialized,
       };
 
       // Simulate debug helper function
@@ -265,7 +280,7 @@ describe('Layout Loading States and Timeouts', () => {
       });
 
       const debugInfo = debugLoadingStates();
-      
+
       expect(debugInfo).toEqual({
         isHydrated: true,
         forceShowUI: false,

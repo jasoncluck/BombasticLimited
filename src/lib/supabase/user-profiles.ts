@@ -68,10 +68,10 @@ export async function getUserDiscordIdentity({
   supabase: SupabaseClient<Database>;
 }) {
   try {
-    // Try to use the RPC function to get user identities  
+    // Try to use the RPC function to get user identities
     // Note: This will fail initially until the migration is applied
     const result = await supabase.rpc('get_user_identities' as any, {
-      user_id: userId
+      user_id: userId,
     });
 
     if (result.error) {
@@ -95,7 +95,9 @@ export async function getUserDiscordIdentity({
       }
     }
 
-    const discordIdentity = identitiesArray.find((identity: any) => identity.provider === 'discord');
+    const discordIdentity = identitiesArray.find(
+      (identity: any) => identity.provider === 'discord'
+    );
     return { identity: discordIdentity || null, error: null };
   } catch (err) {
     // If RPC function doesn't exist yet, return null gracefully

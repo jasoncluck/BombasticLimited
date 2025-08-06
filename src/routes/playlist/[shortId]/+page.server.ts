@@ -74,7 +74,9 @@ export const load: PageServerLoad = async ({
     superValidate(playlist, zod(playlistSchema)),
     // Load creator profile for public playlists not owned by current user
     playlist.type === 'Public' && playlist.created_by !== session?.user.id
-      ? getUserProfile({ userId: playlist.created_by, supabase }).then(result => result.profile)
+      ? getUserProfile({ userId: playlist.created_by, supabase }).then(
+          (result) => result.profile
+        )
       : Promise.resolve(null),
   ]);
 

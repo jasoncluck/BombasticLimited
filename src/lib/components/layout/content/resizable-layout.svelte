@@ -15,7 +15,6 @@
 
   let {
     layout,
-    isSidebarCollapsed = $bindable(),
     supabase,
     session,
     refreshSidebar,
@@ -25,7 +24,6 @@
     children,
   }: {
     layout?: number[] | null;
-    isSidebarCollapsed: boolean;
     supabase: SupabaseClient<Database>;
     session: Session | null;
     refreshSidebar: () => Promise<void>;
@@ -36,6 +34,9 @@
   } = $props();
 
   const sidebarState = getSidebarState();
+
+  // Use the layout state's sidebar collapsed state
+  const isSidebarCollapsed = $derived(layoutState.isSidebarCollapsed);
 </script>
 
 <Resizable.PaneGroup
@@ -50,8 +51,8 @@
     maxSize={50}
     collapsedSize={COLLAPSED_SIDEBAR_SIZE}
     collapsible={true}
-    onCollapse={() => (isSidebarCollapsed = true)}
-    onExpand={() => (isSidebarCollapsed = false)}
+    onCollapse={() => layoutState.setSidebarCollapsed(true)}
+    onExpand={() => layoutState.setSidebarCollapsed(false)}
     class="pane @container hidden h-full grow flex-col sm:ml-2 sm:flex {isSidebarCollapsed
       ? 'max-w-[75px] min-w-[75px]'
       : 'min-w-[200px]'}"

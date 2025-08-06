@@ -23,22 +23,23 @@ export const load: PageServerLoad = async ({
   }
 
   // Run profile fetch, Discord identity fetch, and form validations in parallel
-  const [{ profile }, { identity: discordIdentity }, emailForm, passwordForm] = await Promise.all([
-    getUserProfile({
-      supabase,
-      userId: session.user.id,
-    }),
-    getUserDiscordIdentity({
-      supabase,
-      userId: session.user.id,
-    }),
-    superValidate({ email: session.user.email }, zod(emailSchema), {
-      errors: true,
-    }),
-    superValidate(zod(passwordSchema), {
-      errors: false,
-    }),
-  ]);
+  const [{ profile }, { identity: discordIdentity }, emailForm, passwordForm] =
+    await Promise.all([
+      getUserProfile({
+        supabase,
+        userId: session.user.id,
+      }),
+      getUserDiscordIdentity({
+        supabase,
+        userId: session.user.id,
+      }),
+      superValidate({ email: session.user.email }, zod(emailSchema), {
+        errors: true,
+      }),
+      superValidate(zod(passwordSchema), {
+        errors: false,
+      }),
+    ]);
 
   // Username form depends on profile data, so it runs after the parallel operations
   const usernameForm = await superValidate(
@@ -235,7 +236,11 @@ export const actions: Actions = {
 
     if (error) {
       setFlash(
-        { type: 'error', message: error.message || 'Failed to unlink Discord account', field: 'discord' },
+        {
+          type: 'error',
+          message: error.message || 'Failed to unlink Discord account',
+          field: 'discord',
+        },
         cookies
       );
       return fail(400);

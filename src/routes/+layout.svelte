@@ -49,6 +49,16 @@
   setPlaylistState(pageState, contentState, sidebarState);
   setSourceState(pageState);
 
+  // Sync server-provided sidebar state with layout state
+  $effect(() => {
+    if (
+      isSidebarCollapsed !== undefined &&
+      layoutState.isSidebarCollapsed !== isSidebarCollapsed
+    ) {
+      layoutState.isSidebarCollapsed = isSidebarCollapsed;
+    }
+  });
+
   let user = $derived(session?.user);
   let openAccountDrawer = $derived(sidebarState.openAccountDrawer);
 
@@ -268,7 +278,6 @@
     <!-- Full UI - sidebar may still be loading data -->
     <ResizableLayout
       {layout}
-      bind:isSidebarCollapsed
       {supabase}
       {session}
       {refreshSidebar}

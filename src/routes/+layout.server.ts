@@ -32,11 +32,31 @@ export const load: LayoutServerLoad = async ({
   });
 
   let layout = cookies.get('PaneForge:layout');
+  let layoutPanes = undefined;
+  let isSidebarCollapsed = false;
+
   if (layout) {
     try {
-      layout = JSON.parse(layout);
+      const parsed = JSON.parse(layout);
+
+      // Handle new unified format
+      if (
+        parsed &&
+        typeof parsed === 'object' &&
+        parsed.panes &&
+        Array.isArray(parsed.panes)
+      ) {
+        layoutPanes = parsed.panes;
+        isSidebarCollapsed = parsed.sidebarCollapsed ?? false;
+      }
+      // Handle legacy format (just array of numbers)
+      else if (Array.isArray(parsed)) {
+        layoutPanes = parsed;
+        isSidebarCollapsed = false; // Default to expanded for legacy
+      }
     } catch {
-      layout = undefined;
+      layoutPanes = undefined;
+      isSidebarCollapsed = false;
     }
   }
 
@@ -83,7 +103,8 @@ export const load: LayoutServerLoad = async ({
     contentFilter,
     cookies: cookies.getAll(),
     userProfile,
-    layout,
+    layout: layoutPanes,
+    isSidebarCollapsed,
     etag,
     lastModified: lastModified.toISOString(),
     cached: isCacheHit,
