@@ -34,17 +34,22 @@ export const load: LayoutServerLoad = async ({
   let layout = cookies.get('PaneForge:layout');
   let layoutPanes = undefined;
   let isSidebarCollapsed = false;
-  
+
   if (layout) {
     try {
       const parsed = JSON.parse(layout);
-      
+
       // Handle new unified format
-      if (parsed && typeof parsed === 'object' && parsed.panes && Array.isArray(parsed.panes)) {
+      if (
+        parsed &&
+        typeof parsed === 'object' &&
+        parsed.panes &&
+        Array.isArray(parsed.panes)
+      ) {
         layoutPanes = parsed.panes;
         isSidebarCollapsed = parsed.sidebarCollapsed ?? false;
       }
-      // Handle legacy format (just array of numbers)  
+      // Handle legacy format (just array of numbers)
       else if (Array.isArray(parsed)) {
         layoutPanes = parsed;
         isSidebarCollapsed = false; // Default to expanded for legacy

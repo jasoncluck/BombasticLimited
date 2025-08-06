@@ -51,7 +51,10 @@
 
   // Sync server-provided sidebar state with layout state
   $effect(() => {
-    if (isSidebarCollapsed !== undefined && layoutState.isSidebarCollapsed !== isSidebarCollapsed) {
+    if (
+      isSidebarCollapsed !== undefined &&
+      layoutState.isSidebarCollapsed !== isSidebarCollapsed
+    ) {
       layoutState.isSidebarCollapsed = isSidebarCollapsed;
     }
   });

@@ -78,49 +78,101 @@ describe('Layout Cookie Persistence', () => {
   });
 
   describe('onLayoutChange cookie persistence', () => {
-    it('should set PaneForge:layout cookie with correct values', () => {
+    it('should set PaneForge:layout cookie with unified format', () => {
       const layoutSizes = [250, 750];
 
       layoutState.onLayoutChange(layoutSizes);
 
-      // Check that cookie was set
-      expect(document.cookie).toContain('PaneForge:layout=[250,750]');
+      // Check that cookie was set with unified format
+      expect(document.cookie).toContain('PaneForge:layout=');
+      
+      // Parse the cookie to verify it contains the unified structure
+      const cookies = document.cookie.split('; ');
+      const layoutCookie = cookies.find(c => c.startsWith('PaneForge:layout='));
+      expect(layoutCookie).toBeDefined();
+      
+      if (layoutCookie) {
+        const [, value] = layoutCookie.split('=');
+        const state = JSON.parse(decodeURIComponent(value));
+        expect(state.panes).toEqual([250, 750]);
+        expect(state.sidebarCollapsed).toBe(false); // Default sidebar state
+      }
     });
 
     it('should set PaneForge:layout cookie for collapsed sidebar', () => {
       const collapsedSizes = [7, 993]; // COLLAPSED_SIDEBAR_SIZE = 7
-
+      
+      // First set sidebar to collapsed
+      layoutState.setSidebarCollapsed(true);
+      
       layoutState.onLayoutChange(collapsedSizes);
 
-      // Check that cookie was set with collapsed size
-      expect(document.cookie).toContain('PaneForge:layout=[7,993]');
+      // Check that cookie was set with unified format and collapsed state
+      const cookies = document.cookie.split('; ');
+      const layoutCookie = cookies.find(c => c.startsWith('PaneForge:layout='));
+      expect(layoutCookie).toBeDefined();
+      
+      if (layoutCookie) {
+        const [, value] = layoutCookie.split('=');
+        const state = JSON.parse(decodeURIComponent(value));
+        expect(state.panes).toEqual([7, 993]);
+        expect(state.sidebarCollapsed).toBe(true);
+      }
     });
 
     it('should overwrite existing PaneForge:layout cookie', () => {
       // Set initial layout
       const initialSizes = [300, 700];
       layoutState.onLayoutChange(initialSizes);
-      expect(document.cookie).toContain('PaneForge:layout=[300,700]');
-
+      
+      // Verify initial cookie
+      let cookies = document.cookie.split('; ');
+      let layoutCookie = cookies.find(c => c.startsWith('PaneForge:layout='));
+      expect(layoutCookie).toBeDefined();
+      
       // Change layout
       const newSizes = [400, 600];
       layoutState.onLayoutChange(newSizes);
 
-      // Should only have the new layout cookie
-      expect(document.cookie).toContain('PaneForge:layout=[400,600]');
-      expect(document.cookie).not.toContain('PaneForge:layout=[300,700]');
+      // Should only have one layout cookie with new values
+      cookies = document.cookie.split('; ');
+      const layoutCookies = cookies.filter(c => c.startsWith('PaneForge:layout='));
+      expect(layoutCookies).toHaveLength(1);
+      
+      layoutCookie = layoutCookies[0];
+      const [, value] = layoutCookie.split('=');
+      const state = JSON.parse(decodeURIComponent(value));
+      expect(state.panes).toEqual([400, 600]);
     });
 
     it('should handle edge cases for layout sizes', () => {
       // Test with zero values
       const edgeSizes = [0, 1000];
       layoutState.onLayoutChange(edgeSizes);
-      expect(document.cookie).toContain('PaneForge:layout=[0,1000]');
+      
+      const cookies = document.cookie.split('; ');
+      const layoutCookie = cookies.find(c => c.startsWith('PaneForge:layout='));
+      expect(layoutCookie).toBeDefined();
+      
+      if (layoutCookie) {
+        const [, value] = layoutCookie.split('=');
+        const state = JSON.parse(decodeURIComponent(value));
+        expect(state.panes).toEqual([0, 1000]);
+      }
 
       // Test with decimal values (should be preserved)
       const decimalSizes = [250.5, 749.5];
       layoutState.onLayoutChange(decimalSizes);
-      expect(document.cookie).toContain('PaneForge:layout=[250.5,749.5]');
+      
+      const cookies2 = document.cookie.split('; ');
+      const layoutCookie2 = cookies2.find(c => c.startsWith('PaneForge:layout='));
+      expect(layoutCookie2).toBeDefined();
+      
+      if (layoutCookie2) {
+        const [, value] = layoutCookie2.split('=');
+        const state = JSON.parse(decodeURIComponent(value));
+        expect(state.panes).toEqual([250.5, 749.5]);
+      }
     });
 
     it('should set cookie without domain for better compatibility', () => {
@@ -131,7 +183,7 @@ describe('Layout Cookie Persistence', () => {
       // The cookie should be set but should not include domain attribute
       // This test verifies that our fix removes the problematic domain setting
       const cookieString = document.cookie;
-      expect(cookieString).toContain('PaneForge:layout=[250,750]');
+      expect(cookieString).toContain('PaneForge:layout=');
 
       // We can't directly test the absence of domain in document.cookie,
       // but we can test that the cookie is accessible (which it wouldn't be with wrong domain)
@@ -148,7 +200,7 @@ describe('Layout Cookie Persistence', () => {
 
       // Verify it can be read back
       const cookies = document.cookie;
-      expect(cookies).toContain('PaneForge:layout=[200,800]');
+      expect(cookies).toContain('PaneForge:layout=');
 
       // Simulate reading the cookie (like the server would)
       const cookiePairs = cookies.split('; ');
@@ -159,26 +211,26 @@ describe('Layout Cookie Persistence', () => {
 
       if (layoutCookie) {
         const [, value] = layoutCookie.split('=');
-        const parsedLayout = JSON.parse(value);
-        expect(parsedLayout).toEqual([200, 800]);
+        const parsedLayout = JSON.parse(decodeURIComponent(value));
+        expect(parsedLayout.panes).toEqual([200, 800]);
+        expect(parsedLayout.sidebarCollapsed).toBe(false);
       }
     });
   });
 
   describe('sidebar collapse state detection', () => {
-    it('should persist collapsed state correctly', () => {
+    it('should persist collapsed state correctly in unified format', () => {
       const COLLAPSED_SIDEBAR_SIZE = 7;
       const collapsedLayout = [COLLAPSED_SIDEBAR_SIZE, 993];
-
+      
+      // Set sidebar to collapsed first
+      layoutState.setSidebarCollapsed(true);
       layoutState.onLayoutChange(collapsedLayout);
 
-      // Verify the cookie reflects collapsed state
+      // Verify the cookie reflects collapsed state in unified format
       const cookies = document.cookie;
-      expect(cookies).toContain(
-        `PaneForge:layout=[${COLLAPSED_SIDEBAR_SIZE},993]`
-      );
+      expect(cookies).toContain('PaneForge:layout=');
 
-      // Simulate the logic from layout.ts that determines if sidebar is collapsed
       const cookiePairs = cookies.split('; ');
       const layoutCookie = cookiePairs.find((c) =>
         c.startsWith('PaneForge:layout=')
@@ -186,26 +238,23 @@ describe('Layout Cookie Persistence', () => {
 
       if (layoutCookie) {
         const [, value] = layoutCookie.split('=');
-        const parsedLayout = JSON.parse(value) as number[];
-        const isSidebarCollapsed =
-          parsedLayout &&
-          Math.trunc(parsedLayout[0]) === COLLAPSED_SIDEBAR_SIZE;
-
-        expect(isSidebarCollapsed).toBe(true);
+        const parsedState = JSON.parse(decodeURIComponent(value));
+        expect(parsedState.panes).toEqual([COLLAPSED_SIDEBAR_SIZE, 993]);
+        expect(parsedState.sidebarCollapsed).toBe(true);
       }
     });
 
-    it('should persist expanded state correctly', () => {
-      const COLLAPSED_SIDEBAR_SIZE = 7;
+    it('should persist expanded state correctly in unified format', () => {
       const expandedLayout = [250, 750]; // Larger than collapsed size
 
+      // Ensure sidebar is expanded
+      layoutState.setSidebarCollapsed(false);
       layoutState.onLayoutChange(expandedLayout);
 
-      // Verify the cookie reflects expanded state
+      // Verify the cookie reflects expanded state in unified format
       const cookies = document.cookie;
-      expect(cookies).toContain('PaneForge:layout=[250,750]');
+      expect(cookies).toContain('PaneForge:layout=');
 
-      // Simulate the logic from layout.ts that determines if sidebar is collapsed
       const cookiePairs = cookies.split('; ');
       const layoutCookie = cookiePairs.find((c) =>
         c.startsWith('PaneForge:layout=')
@@ -213,12 +262,9 @@ describe('Layout Cookie Persistence', () => {
 
       if (layoutCookie) {
         const [, value] = layoutCookie.split('=');
-        const parsedLayout = JSON.parse(value) as number[];
-        const isSidebarCollapsed =
-          parsedLayout &&
-          Math.trunc(parsedLayout[0]) === COLLAPSED_SIDEBAR_SIZE;
-
-        expect(isSidebarCollapsed).toBe(false);
+        const parsedState = JSON.parse(decodeURIComponent(value));
+        expect(parsedState.panes).toEqual([250, 750]);
+        expect(parsedState.sidebarCollapsed).toBe(false);
       }
     });
   });
@@ -227,17 +273,19 @@ describe('Layout Cookie Persistence', () => {
     it('should save unified layout state with panes and sidebar collapsed state', () => {
       const sizes = [250, 750];
       const collapsed = true;
-      
+
       layoutState.saveUnifiedLayoutState(sizes, collapsed);
-      
+
       // Check that cookie was set with unified format
       expect(document.cookie).toContain('PaneForge:layout=');
-      
+
       // Parse the cookie to verify structure
       const cookies = document.cookie.split('; ');
-      const layoutCookie = cookies.find(c => c.startsWith('PaneForge:layout='));
+      const layoutCookie = cookies.find((c) =>
+        c.startsWith('PaneForge:layout=')
+      );
       expect(layoutCookie).toBeDefined();
-      
+
       if (layoutCookie) {
         const [, value] = layoutCookie.split('=');
         const state = JSON.parse(decodeURIComponent(value));
@@ -250,15 +298,15 @@ describe('Layout Cookie Persistence', () => {
       // Set up a unified layout cookie
       const unifiedState = {
         panes: [300, 700],
-        sidebarCollapsed: false
+        sidebarCollapsed: false,
       };
       document.cookie = `PaneForge:layout=${JSON.stringify(unifiedState)}; path=/`;
-      
+
       const loadedState = layoutState.loadUnifiedLayoutState();
-      
+
       expect(loadedState).toEqual({
         panes: [300, 700],
-        sidebarCollapsed: false
+        sidebarCollapsed: false,
       });
     });
 
@@ -266,12 +314,12 @@ describe('Layout Cookie Persistence', () => {
       // Set up a legacy format cookie (just array of numbers)
       const legacySizes = [400, 600];
       document.cookie = `PaneForge:layout=${JSON.stringify(legacySizes)}; path=/`;
-      
+
       const loadedState = layoutState.loadUnifiedLayoutState();
-      
+
       expect(loadedState).toEqual({
         panes: [400, 600],
-        sidebarCollapsed: false // Should default to false for legacy
+        sidebarCollapsed: false, // Should default to false for legacy
       });
     });
 
@@ -283,7 +331,7 @@ describe('Layout Cookie Persistence', () => {
     it('should handle malformed cookies gracefully', () => {
       // Set malformed cookie
       document.cookie = 'PaneForge:layout=invalid-json';
-      
+
       const loadedState = layoutState.loadUnifiedLayoutState();
       expect(loadedState).toBeNull();
     });
@@ -291,31 +339,31 @@ describe('Layout Cookie Persistence', () => {
     it('should update unified state when onLayoutChange is called', () => {
       // First set sidebar to collapsed
       layoutState.setSidebarCollapsed(true);
-      
+
       // Then trigger layout change
       const newSizes = [200, 800];
       layoutState.onLayoutChange(newSizes);
-      
+
       // Verify the unified state was saved
       const loadedState = layoutState.loadUnifiedLayoutState();
       expect(loadedState).toEqual({
         panes: [200, 800],
-        sidebarCollapsed: true
+        sidebarCollapsed: true,
       });
     });
 
     it('should update unified state when sidebar collapsed state changes', () => {
       // First set some pane sizes
       layoutState.onLayoutChange([350, 650]);
-      
+
       // Then change sidebar state
       layoutState.setSidebarCollapsed(true);
-      
+
       // Verify the unified state includes both
       const loadedState = layoutState.loadUnifiedLayoutState();
       expect(loadedState).toEqual({
         panes: [350, 650],
-        sidebarCollapsed: true
+        sidebarCollapsed: true,
       });
     });
   });

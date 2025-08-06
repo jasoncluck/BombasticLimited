@@ -96,20 +96,25 @@ export class LayoutStateClass implements LayoutState {
       if (layoutCookie) {
         const cookieValue = layoutCookie.split('=')[1];
         const parsed = JSON.parse(decodeURIComponent(cookieValue));
-        
+
         // Handle the new unified format
-        if (parsed && typeof parsed === 'object' && parsed.panes && Array.isArray(parsed.panes)) {
+        if (
+          parsed &&
+          typeof parsed === 'object' &&
+          parsed.panes &&
+          Array.isArray(parsed.panes)
+        ) {
           return {
             panes: parsed.panes,
-            sidebarCollapsed: parsed.sidebarCollapsed ?? false
+            sidebarCollapsed: parsed.sidebarCollapsed ?? false,
           };
         }
-        
+
         // Handle legacy format (just array of numbers)
         if (Array.isArray(parsed)) {
           return {
             panes: parsed,
-            sidebarCollapsed: false // Default to expanded for legacy
+            sidebarCollapsed: false, // Default to expanded for legacy
           };
         }
       }
@@ -128,7 +133,7 @@ export class LayoutStateClass implements LayoutState {
 
     const unifiedState: UnifiedLayoutState = {
       panes: sizes,
-      sidebarCollapsed
+      sidebarCollapsed,
     };
 
     try {

@@ -66,7 +66,9 @@ export class SidebarStateClass {
 
       if (sidebarCookie) {
         const cookieValue = sidebarCookie.split('=')[1];
-        const state: SidebarCookieState = JSON.parse(decodeURIComponent(cookieValue));
+        const state: SidebarCookieState = JSON.parse(
+          decodeURIComponent(cookieValue)
+        );
         this.collapsed = state.collapsed ?? false;
       }
     } catch (error) {
@@ -106,7 +108,9 @@ export class SidebarStateClass {
 
       if (sidebarCookie) {
         const cookieValue = sidebarCookie.split('=')[1];
-        const state: SidebarCookieState = JSON.parse(decodeURIComponent(cookieValue));
+        const state: SidebarCookieState = JSON.parse(
+          decodeURIComponent(cookieValue)
+        );
         return state.defaultSize;
       }
     } catch (error) {

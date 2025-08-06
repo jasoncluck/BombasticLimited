@@ -34,7 +34,7 @@
   } = $props();
 
   const sidebarState = getSidebarState();
-  
+
   // Use the layout state's sidebar collapsed state
   const isSidebarCollapsed = $derived(layoutState.isSidebarCollapsed);
 </script>
