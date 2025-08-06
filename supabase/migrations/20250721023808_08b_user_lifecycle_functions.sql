@@ -9,7 +9,7 @@ SET
   search_path = '' AS $$
 DECLARE
     generated_username text;
-    avatar_url text;
+    new_avatar_url text;
     providers_array text[];
     providers_json text;
     debug_msg text;
@@ -27,7 +27,7 @@ BEGIN
         
         -- Extract avatar URL from raw_user_meta_data if it exists
         -- Discord OAuth provides avatar in both 'avatar_url' and 'picture' fields
-        avatar_url := COALESCE(
+        new_avatar_url := COALESCE(
             NEW.raw_user_meta_data->>'avatar_url',
             NEW.raw_user_meta_data->>'picture'
         );
@@ -37,7 +37,7 @@ BEGIN
             NEW.id::text, 
             NEW.raw_user_meta_data->>'avatar_url',
             NEW.raw_user_meta_data->>'picture',
-            avatar_url
+            new_avatar_url
         );
         RAISE LOG '%', debug_msg;
         
@@ -56,7 +56,7 @@ BEGIN
         
         -- Insert the new profile with username, avatar_url, and providers from auth schema
         INSERT INTO public.profiles (id, username, avatar_url, providers)
-        VALUES (NEW.id, generated_username, avatar_url, providers_array)
+        VALUES (NEW.id, generated_username, new_avatar_url, providers_array)
         ON CONFLICT (id) DO NOTHING;
     
     -- Handle UPDATE operations (when user metadata gets updated)
@@ -64,7 +64,7 @@ BEGIN
         -- Check if raw_user_meta_data was updated with avatar_url
         IF (OLD.raw_user_meta_data IS DISTINCT FROM NEW.raw_user_meta_data) THEN
             -- Discord OAuth provides avatar in both 'avatar_url' and 'picture' fields
-            avatar_url := COALESCE(
+            new_avatar_url := COALESCE(
                 NEW.raw_user_meta_data->>'avatar_url',
                 NEW.raw_user_meta_data->>'picture'
             );
@@ -76,13 +76,13 @@ BEGIN
                 OLD.raw_user_meta_data->>'picture',
                 NEW.raw_user_meta_data->>'avatar_url',
                 NEW.raw_user_meta_data->>'picture',
-                avatar_url
+                new_avatar_url
             );
             RAISE LOG '%', debug_msg;
             
             -- Update the profile with the new avatar_url
             UPDATE public.profiles 
-            SET avatar_url = handle_user_changes.avatar_url
+            SET avatar_url = new_avatar_url
             WHERE id = NEW.id;
         END IF;
         
