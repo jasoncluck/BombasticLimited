@@ -167,10 +167,11 @@ SET
   avatar_url = (
     SELECT
       CASE
-        WHEN 'discord' = ANY(
-          SELECT array_agg(DISTINCT provider)
-          FROM auth.identities
-          WHERE user_id = profiles.id
+        WHEN EXISTS(
+          SELECT 1 
+          FROM auth.identities 
+          WHERE user_id = profiles.id 
+          AND provider = 'discord'
         ) THEN
           COALESCE(
             (SELECT raw_user_meta_data->>'avatar_url' FROM auth.users WHERE id = profiles.id),
