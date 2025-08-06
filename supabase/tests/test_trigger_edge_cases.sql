@@ -803,12 +803,13 @@ BEGIN
   RETURNING id INTO interaction_playlist_id;
   
   -- 3. Create video (should trigger search vector)
-  INSERT INTO public.videos (id, source, title, description, published_at, duration, pending_delete)
+  INSERT INTO public.videos (id, source, title, description, thumbnail_url, published_at, duration, pending_delete)
   VALUES (
     interaction_video_id,
     'nextlander',
     'Final Interaction Video',
     'Complete trigger interaction testing',
+    'https://example.com/thumb_interaction.jpg',
     '2023-01-01 10:00:00+00',
     'PT5M30S',
     FALSE

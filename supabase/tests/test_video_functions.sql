@@ -333,7 +333,7 @@ SELECT
       SELECT
         COUNT(*)
       FROM (
-        SELECT * FROM public.get_in_progress_videos_with_timestamps('44444444-4444-4444-4444-444444444444'::uuid) LIMIT 0
+        SELECT * FROM public.get_in_progress_videos_with_timestamps() LIMIT 0
       ) AS result
     ) >= 0,
     'get_in_progress_videos_with_timestamps returns expected columns'

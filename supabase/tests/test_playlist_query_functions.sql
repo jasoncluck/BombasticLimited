@@ -40,7 +40,7 @@ VALUES
     '55555555-5555-5555-5555-555555555555'::uuid,
     'playlisttestuser'
   )
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET username = EXCLUDED.username;
 
 -- Create test playlists with different types
 INSERT INTO
@@ -376,6 +376,29 @@ SELECT
   );
 
 -- Test retrieving playlists by username
+-- Debug: Check actual data
+DO $$
+DECLARE
+  actual_count int;
+  actual_usernames text[];
+  playlist_debug text;
+BEGIN
+  SELECT COUNT(*) INTO actual_count 
+  FROM public.get_playlists_for_username('playlisttestuser');
+  
+  SELECT array_agg(username) INTO actual_usernames 
+  FROM public.profiles 
+  WHERE username = 'playlisttestuser';
+  
+  SELECT string_agg(p.name || ' (by ' || prof.username || ')', ', ') INTO playlist_debug
+  FROM public.playlists p 
+  JOIN public.profiles prof ON p.created_by = prof.id 
+  WHERE prof.username = 'playlisttestuser';
+  
+  RAISE NOTICE 'Found % playlists for user. Usernames in profiles: %. Playlists: %', 
+    actual_count, actual_usernames, playlist_debug;
+END $$;
+
 SELECT
   IS (
     (

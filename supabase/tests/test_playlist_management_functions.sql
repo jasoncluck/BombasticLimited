@@ -192,22 +192,6 @@ DECLARE
   follow_result RECORD;
   unfollow_result RECORD;
 BEGIN
-  -- Create a playlist to follow
-  SELECT playlist_id INTO new_playlist_id
-  FROM public.insert_playlist(
-    p_created_by => test_user_id,
-    p_name => 'Followable Playlist',
-    p_type => 'Public'::public.playlist_type
-  );
-  
-  INSERT INTO temp_test_playlists VALUES (new_playlist_id);
-  
-  -- Test follow_playlist function exists
-  PERFORM ok(
-    EXISTS(SELECT 1 FROM pg_proc WHERE proname = 'follow_playlist'),
-    'follow_playlist function exists'
-  );
-  
   -- Create another user to test following
   INSERT INTO auth.users (id, email, created_at, updated_at)
   VALUES (
@@ -223,16 +207,29 @@ BEGIN
     'followeruser'
   ) ON CONFLICT (id) DO NOTHING;
   
-  -- Test following a playlist (Note: This might hit the 25 playlist limit)
-  -- For testing purposes, let's clean up some playlists first
+  -- Clean up some playlists first to avoid hitting the 25 playlist limit
   DELETE FROM public.user_playlists WHERE user_id = test_user_id AND id NOT IN (
     SELECT playlist_id FROM temp_test_playlists LIMIT 3
   );
   DELETE FROM public.playlists WHERE created_by = test_user_id AND id NOT IN (
     SELECT playlist_id FROM temp_test_playlists LIMIT 3
   );
+
+  -- Create a playlist to follow
+  SELECT playlist_id INTO new_playlist_id
+  FROM public.insert_playlist(
+    p_created_by => test_user_id,
+    p_name => 'Followable Playlist',
+    p_type => 'Public'::public.playlist_type
+  );
   
-  -- Now test follow
+  INSERT INTO temp_test_playlists VALUES (new_playlist_id);
+  
+  -- Test follow_playlist function exists
+  PERFORM ok(
+    EXISTS(SELECT 1 FROM pg_proc WHERE proname = 'follow_playlist'),
+    'follow_playlist function exists'
+  );
   SELECT * INTO follow_result
   FROM public.follow_playlist(
     p_user_id => '77777777-7777-7777-7777-777777777777'::uuid,

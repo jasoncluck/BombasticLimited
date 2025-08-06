@@ -452,7 +452,7 @@ BEGIN
   VALUES 
     ('88888888-8888-8888-8888-888888888888'::uuid, 'pending_video_1', test_playlist_id, 60.0, NOW()),
     ('88888888-8888-8888-8888-888888888888'::uuid, 'pending_video_2', test_playlist_id, 120.0, NOW())
-  ON CONFLICT (user_id, video_id, playlist_id) DO NOTHING;
+  ON CONFLICT (user_id, video_id) DO NOTHING;
 END $$;
 
 -- Test that pending videos exist before cleanup
