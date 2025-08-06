@@ -83,12 +83,16 @@ export function useLayoutEffects(
     let authUnsubscribe: (() => void) | undefined;
 
     async function initialize() {
-      await invalidateAll();
+      // Skip invalidateAll in development mode to prevent slow loading
+      if (!import.meta.env.DEV) {
+        await invalidateAll();
+      }
 
       // Initialize navigation cache first for best performance
       navigationCache.initialize();
       mediaQueryCleanup = mediaQuery.initialize();
-      sidebarCleanup = await sidebarState.initialize();
+      // Use non-blocking sidebar initialization to match main layout
+      sidebarCleanup = sidebarState.initializeNonBlocking();
 
       const currentUserId = session?.user.id ?? null;
 

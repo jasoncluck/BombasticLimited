@@ -283,14 +283,13 @@
       console.log('✅ Sidebar initialized:', sidebarState.initialized);
     }
 
-    // Initialize layout effects asynchronously
+    // Initialize layout effects asynchronously - don't block UI
     let layoutCleanup: (() => void) | undefined;
 
-    // Handle the promise properly
-    layoutEffects
-      .initializeLayout()
-      .then((cleanup) => {
-        layoutCleanup = cleanup;
+    // Handle the promise properly - but don't block the UI on this
+    const initializeLayoutEffects = async () => {
+      try {
+        layoutCleanup = await layoutEffects.initializeLayout();
         if (import.meta.env.DEV) {
           console.log('✅ Layout effects initialized');
           // Clear the fallback timeout since we're now ready
@@ -299,8 +298,7 @@
             fallbackTimeout = undefined;
           }
         }
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error('❌ Failed to initialize layout effects:', error);
         // In development, still show UI even if layout effects fail
         if (import.meta.env.DEV) {
@@ -311,7 +309,11 @@
             fallbackTimeout = undefined;
           }
         }
-      });
+      }
+    };
+
+    // Start layout effects initialization but don't wait for it
+    initializeLayoutEffects();
 
     // Add simple debug helpers in development (optional)
     if (import.meta.env.DEV) {
