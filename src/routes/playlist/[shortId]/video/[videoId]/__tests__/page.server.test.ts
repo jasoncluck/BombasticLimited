@@ -131,7 +131,13 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
       });
 
       expect(result).toEqual({
-        video: mockVideo,
+        video: {
+          ...mockVideo,
+          updated_at: null,
+          video_position: 1,
+          video_start_seconds: null,
+          watched_at: null,
+        },
         videos: mockNextVideos,
         profilePlaylist: {
           ...mockPlaylist,

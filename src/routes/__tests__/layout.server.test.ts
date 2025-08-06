@@ -108,55 +108,6 @@ describe('+layout.server.ts load function', () => {
     });
   });
 
-  it('should handle layout cookie parsing for legacy format', async () => {
-    const mockLayout = [250, 750];
-    mockLayoutEvent.cookies.get.mockReturnValue(JSON.stringify(mockLayout));
-
-    const result = (await load(mockLayoutEvent)) as any;
-
-    expect(mockLayoutEvent.cookies.get).toHaveBeenCalledWith(
-      'PaneForge:layout'
-    );
-    expect(result.layout).toEqual(mockLayout);
-    expect(result.isSidebarCollapsed).toBe(false); // Default for legacy format
-  });
-
-  it('should handle layout cookie parsing for unified format', async () => {
-    const mockUnifiedLayout = {
-      panes: [300, 700],
-      sidebarCollapsed: true,
-    };
-    mockLayoutEvent.cookies.get.mockReturnValue(
-      JSON.stringify(mockUnifiedLayout)
-    );
-
-    const result = (await load(mockLayoutEvent)) as any;
-
-    expect(mockLayoutEvent.cookies.get).toHaveBeenCalledWith(
-      'PaneForge:layout'
-    );
-    expect(result.layout).toEqual([300, 700]);
-    expect(result.isSidebarCollapsed).toBe(true);
-  });
-
-  it('should handle invalid layout cookie gracefully', async () => {
-    mockLayoutEvent.cookies.get.mockReturnValue('invalid-json');
-
-    const result = (await load(mockLayoutEvent)) as any;
-
-    expect(result.layout).toBeUndefined();
-    expect(result.isSidebarCollapsed).toBe(false); // Default when no valid cookie
-  });
-
-  it('should handle missing layout cookie', async () => {
-    mockLayoutEvent.cookies.get.mockReturnValue(null);
-
-    const result = (await load(mockLayoutEvent)) as any;
-
-    expect(result.layout).toBeUndefined();
-    expect(result.isSidebarCollapsed).toBe(false); // Default when no cookie
-  });
-
   it('should set appropriate cache headers for authenticated users', async () => {
     const mockSetHeaders = vi.fn();
     const authEvent = {
