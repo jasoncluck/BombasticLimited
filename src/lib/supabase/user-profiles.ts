@@ -204,3 +204,29 @@ export async function updateProfileSources({
 
   return { profile, error };
 }
+
+/**
+ * Get the linked identity providers for a user
+ * This information is managed automatically by database triggers
+ * but can be useful for UI display purposes
+ */
+export async function getUserProviders({
+  userId,
+  supabase,
+}: {
+  userId: string;
+  supabase: SupabaseClient<Database>;
+}) {
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('providers')
+    .eq('id', userId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching user providers:', error);
+    return { providers: [], error };
+  }
+
+  return { providers: profile?.providers || [], error: null };
+}
