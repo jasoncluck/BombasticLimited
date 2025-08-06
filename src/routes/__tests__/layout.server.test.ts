@@ -108,26 +108,6 @@ describe('+layout.server.ts load function', () => {
     });
   });
 
-  it('should handle layout cookie parsing', async () => {
-    const mockLayout = [250, 750];
-    mockLayoutEvent.cookies.get.mockReturnValue(JSON.stringify(mockLayout));
-
-    const result = (await load(mockLayoutEvent)) as any;
-
-    expect(mockLayoutEvent.cookies.get).toHaveBeenCalledWith(
-      'PaneForge:layout'
-    );
-    expect(result.layout).toEqual(mockLayout);
-  });
-
-  it('should handle invalid layout cookie gracefully', async () => {
-    mockLayoutEvent.cookies.get.mockReturnValue('invalid-json');
-
-    const result = (await load(mockLayoutEvent)) as any;
-
-    expect(result.layout).toBeUndefined();
-  });
-
   it('should set appropriate cache headers for authenticated users', async () => {
     const mockSetHeaders = vi.fn();
     const authEvent = {

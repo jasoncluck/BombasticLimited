@@ -14,6 +14,7 @@
   import { goto } from '$app/navigation';
   import { getSortDisplayName } from './content-filter';
   import ContentCardSkeleton from './content-card-skeleton.svelte';
+  import { getVideoThumbnailUrl } from '$lib/utils/video-thumbnails';
   import { onMount } from 'svelte';
 
   type ContentCardProps = {
@@ -127,13 +128,15 @@
     class="group h-64 w-full transform cursor-pointer will-change-transform"
     data-testid="video-card"
   >
-    <div role="button" tabindex="0" class="cursor-pointer text-left">
+    <div role="button" class="cursor-pointer text-left">
       <div class="relative">
         <img
           class="aspect-[16/9] h-auto w-full"
-          src={video.thumbnail_url}
+          src={getVideoThumbnailUrl(video)}
           alt={video.title}
-          loading="lazy"
+          loading="eager"
+          decoding="async"
+          fetchpriority="high"
         />
         <div class="absolute top-0.5 right-0.5">
           <ContentDropdown

@@ -7,6 +7,7 @@
   import type { Playlist } from '$lib/supabase/playlists';
   import type { Database } from '$lib/supabase/database.types';
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import PlaylistDeleteAlertDialog from './playlist-delete-alert-dialog.svelte';
   import {
     handleDeletePlaylist,
     handleUnfollowPlaylist,
@@ -38,54 +39,73 @@
   const sidebarState = getSidebarState();
 
   let open = $state(false);
+  let showDeleteDialog = $state(false);
 
   $effect(() => {
     if (open && contentState.selectedVideosBySection[sectionId].length < 1) {
       open = false;
     }
   });
+
+  async function handleDeleteOrUnfollow() {
+    if (playlist.created_by !== session?.user.id) {
+      // User doesn't own playlist - unfollow
+      const data = await handleUnfollowPlaylist({
+        playlist,
+        sidebarState,
+        supabase,
+        session,
+      });
+
+      if (
+        !data?.error &&
+        page.url.pathname === `/playlist/${playlist.short_id}`
+      ) {
+        goto('/');
+      }
+    } else {
+      // User owns playlist - check if it's public
+      if (playlist.type === 'Public') {
+        // Show confirmation dialog for public playlists
+        showDeleteDialog = true;
+      } else {
+        // Delete private playlist immediately
+        const data = await handleDeletePlaylist({
+          playlist,
+          sidebarState,
+          supabase,
+          session,
+        });
+
+        if (
+          !data?.error &&
+          page.url.pathname === `/playlist/${playlist.short_id}`
+        ) {
+          goto('/');
+        }
+      }
+    }
+  }
 </script>
 
 <ContextMenu.Root>
   <ContextMenu.Content class="p-1">
-    <ContextMenu.Item
-      onclick={async () => {
-        if (playlist.created_by !== session?.user.id) {
-          const data = await handleUnfollowPlaylist({
-            playlist,
-            sidebarState,
-            supabase,
-            session,
-          });
-
-          if (
-            !data?.error &&
-            page.url.pathname === `/playlist/${playlist.short_id}`
-          ) {
-            goto('/');
-          }
-        } else {
-          const data = await handleDeletePlaylist({
-            playlist,
-            sidebarState,
-            supabase,
-            session,
-          });
-
-          if (
-            !data?.error &&
-            page.url.pathname === `/playlist/${playlist.short_id}`
-          ) {
-            goto('/');
-          }
-        }
-      }}
-      >{playlist.created_by === session?.user.id
+    <ContextMenu.Item onclick={handleDeleteOrUnfollow}>
+      {playlist.created_by === session?.user.id
         ? 'Delete playlist'
-        : 'Unfollow playlist'}</ContextMenu.Item
-    >
+        : 'Unfollow playlist'}
+    </ContextMenu.Item>
   </ContextMenu.Content>
   <ContextMenu.Trigger class="h-full">
     {@render children()}
   </ContextMenu.Trigger>
 </ContextMenu.Root>
+
+<!-- Show AlertDialog for public playlist deletion -->
+<PlaylistDeleteAlertDialog
+  {playlist}
+  {sidebarState}
+  {session}
+  {supabase}
+  bind:open={showDeleteDialog}
+/>

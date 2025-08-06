@@ -540,3 +540,138 @@ async function processWithOffscreenCanvas(
 
   return `data:image/webp;base64,${base64}`;
 }
+
+// Video thumbnail processing without cropping - preserves original aspect ratio
+export async function getVideoThumbnailWebpUrl({
+  thumbnailUrl,
+}: {
+  thumbnailUrl: string | null;
+}): Promise<string | null> {
+  if (!thumbnailUrl) return null;
+
+  try {
+    // Try OffscreenCanvas first (more efficient)
+    if (
+      typeof OffscreenCanvas !== 'undefined' &&
+      typeof createImageBitmap !== 'undefined'
+    ) {
+      return await processVideoThumbnailWithOffscreenCanvas(thumbnailUrl);
+    } else {
+      // Fallback to regular Canvas
+      return await processVideoThumbnailWithCanvas(thumbnailUrl);
+    }
+  } catch (error) {
+    console.error('Browser video thumbnail processing failed:', error);
+    return null;
+  }
+}
+
+async function processVideoThumbnailWithOffscreenCanvas(
+  imageUrl: string
+): Promise<string> {
+  const response = await fetch(imageUrl);
+  if (!response.ok) throw new Error('Failed to fetch image');
+
+  const imageBlob = await response.blob();
+  const imageBitmap = await createImageBitmap(imageBlob);
+
+  // Use the original image dimensions (no cropping)
+  const canvas = new OffscreenCanvas(imageBitmap.width, imageBitmap.height);
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) throw new Error('Failed to get canvas context');
+
+  // Draw the full image without cropping
+  ctx.drawImage(imageBitmap, 0, 0);
+
+  const blob = await canvas.convertToBlob({ type: 'image/webp', quality: 0.8 });
+  const arrayBuffer = await blob.arrayBuffer();
+
+  const uint8Array = new Uint8Array(arrayBuffer);
+  let binaryString = '';
+
+  // Process in chunks to avoid call stack overflow
+  const chunkSize = 8192;
+  for (let i = 0; i < uint8Array.length; i += chunkSize) {
+    const chunk = uint8Array.subarray(i, i + chunkSize);
+    binaryString += String.fromCharCode.apply(null, Array.from(chunk));
+  }
+
+  const base64 = btoa(binaryString);
+
+  return `data:image/webp;base64,${base64}`;
+}
+
+async function processVideoThumbnailWithCanvas(
+  imageUrl: string
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+
+    img.onload = () => {
+      try {
+        // Use the original image dimensions (no cropping)
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Failed to get canvas context');
+
+        // Draw the full image without cropping
+        ctx.drawImage(img, 0, 0);
+
+        // Convert to WebP
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('Failed to create blob'));
+              return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = () => reject(new Error('Failed to read blob'));
+            reader.readAsDataURL(blob);
+          },
+          'image/webp',
+          0.8
+        );
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = imageUrl;
+  });
+}
+
+// Batch processing function for multiple video thumbnails
+export async function getVideoThumbnailWebpUrlsBatch(
+  thumbnailUrls: Array<string | null>
+): Promise<Array<string | null>> {
+  const batchSize = 5;
+  const processedThumbnails = [];
+
+  for (let i = 0; i < thumbnailUrls.length; i += batchSize) {
+    const batch = thumbnailUrls.slice(i, i + batchSize);
+    const batchResults = await Promise.all(
+      batch.map(async (thumbnailUrl) => {
+        try {
+          return await getVideoThumbnailWebpUrl({ thumbnailUrl });
+        } catch (error) {
+          console.error(
+            `Failed to process video thumbnail: ${thumbnailUrl}`,
+            error
+          );
+          return null;
+        }
+      })
+    );
+    processedThumbnails.push(...batchResults);
+  }
+
+  return processedThumbnails;
+}

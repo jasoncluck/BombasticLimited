@@ -3,5 +3,31 @@
   "devCommand": "npm run dev",
   "installCommand": "npm ci",
   "framework": "sveltekit",
-  "regions": ["pdx1", "iad1"]
+  "regions": ["pdx1", "iad1"],
+  "images": {
+    "sizes": [120, 240, 320, 480, 640, 720, 1280, 1920],
+    "domains": [
+      "i.ytimg.com",
+      "img.youtube.com",
+      "i1.ytimg.com",
+      "i2.ytimg.com",
+      "i3.ytimg.com",
+      "i4.ytimg.com"
+    ],
+    "formats": ["image/webp", "image/avif"],
+    "dangerouslyAllowSVG": false,
+    "contentSecurityPolicy": "default-src 'self'; script-src 'none'; sandbox;",
+    "remotePatterns": [
+      {
+        "protocol": "https",
+        "hostname": "**.ytimg.com",
+        "pathname": "/**"
+      }
+    ]
+  },
+  "git": {
+    "deploymentEnabled": {
+      "copilot*": false
+    }
+  }
 }

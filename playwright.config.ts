@@ -1,67 +1,116 @@
 import { defineConfig, devices } from '@playwright/test';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export default defineConfig({
   testDir: './tests/e2e',
   testMatch: '**/*.test.ts',
-  fullyParallel: false, // Important: Don't run tests in parallel with shared DB
+  fullyParallel: true, // Enable parallel execution with isolated auth states
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : 3, // More workers locally, single in CI to avoid DB conflicts
+  workers: process.env.CI ? 1 : 5, // Multiple workers with isolated auth states
   reporter: 'html',
 
+  // Global setup and teardown for authentication
+  globalSetup: './tests/e2e/auth.setup.ts',
+  globalTeardown: './tests/e2e/global.teardown.ts',
+
+  // Performance optimizations
+  timeout: 30000, // Reduce from default 30s if tests don't need it
+  expect: {
+    timeout: 10000, // Reduce assertion timeout from default 5s
+  },
+
   use: {
-    baseURL: 'http://localhost:5173', // Your dev server port
-    trace: 'on-first-retry',
+    baseURL: 'http://localhost:5173',
+    trace: 'retain-on-failure', // Only keep traces on failure to save disk space
     screenshot: 'only-on-failure',
-    // Add test IDs for better element selection
+    video: 'retain-on-failure', // Only keep videos on failure
     testIdAttribute: 'data-testid',
+
+    // Performance optimizations
+    navigationTimeout: 15000, // Reduce navigation timeout
+    actionTimeout: 10000, // Reduce action timeout
+
+    // Disable animations for faster tests
+    launchOptions: {
+      args: [
+        '--disable-web-security',
+        '--disable-features=TranslateUI',
+        '--disable-ipc-flooding-protection',
+        '--disable-renderer-backgrounding',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-background-timer-throttling',
+        '--no-sandbox', // Only for CI/Docker environments
+      ],
+    },
   },
 
   projects: [
+    // Global authentication setup
     {
       name: 'setup',
-      testMatch: /.*\.setup\.ts/,
+      testMatch: /auth\.setup\.ts/,
+      use: {
+        // Enable recording for auth setup
+        screenshot: 'on', // Capture all screenshots
+        video: 'on', // Record all videos
+        trace: 'on', // Enable tracing
+      },
     },
+
+    // Main test execution
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+      },
       dependencies: ['setup'],
     },
-    // Additional browsers for comprehensive local testing
-    // CI workflows use only chromium for faster execution
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-    // Mobile testing
-    {
-      name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
-    },
-    {
-      name: 'Mobile Safari',
-      use: { ...devices['iPhone 12'] },
-    },
+
+    // Only run additional browsers when specifically needed
+    // Use environment variable to control which browsers to test
+    ...(process.env.TEST_ALL_BROWSERS
+      ? [
+          {
+            name: 'firefox',
+            use: { ...devices['Desktop Firefox'] },
+            dependencies: ['setup'],
+          },
+          {
+            name: 'webkit',
+            use: { ...devices['Desktop Safari'] },
+            dependencies: ['setup'],
+          },
+          {
+            name: 'Mobile Chrome',
+            use: { ...devices['Pixel 5'] },
+            dependencies: ['setup'],
+          },
+          {
+            name: 'Mobile Safari',
+            use: { ...devices['iPhone 12'] },
+            dependencies: ['setup'],
+          },
+        ]
+      : []),
   ],
 
   webServer: {
     command: 'npm run dev',
     port: 5173,
     reuseExistingServer: !process.env.CI,
+    timeout: 120000, // Increase if your server takes time to start
     env: {
       DATABASE_URL: 'postgresql://postgres:postgres@127.0.0.1:54322/postgres',
       SUPABASE_URL: 'http://127.0.0.1:54321',
-      // These will be set dynamically by your test setup
       SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || '',
-      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+      SUPABASE_SERVICE_ROLE_KEY:
+        process.env.PUBLIC_SUPABASE_SERVICE_ROLE_KEY || '',
+
+      // Performance optimizations for your app
+      NODE_ENV: 'test',
     },
   },
-
-  // Global setup to ensure Supabase is running
-  globalSetup: './tests/e2e/global-setup.ts',
-  globalTeardown: './tests/e2e/global-teardown.ts',
 });

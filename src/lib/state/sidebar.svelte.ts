@@ -5,12 +5,22 @@ import type { Database } from '$lib/supabase/database.types';
 import { getContext, setContext } from 'svelte';
 import { browser } from '$app/environment';
 import type { Source } from '$lib/constants/source';
+import { tabVisibility } from '$lib/utils/tab-visibility.js';
+import {
+  SIDEBAR_COOKIE_NAME,
+  SIDEBAR_COOKIE_MAX_AGE,
+} from '$lib/components/ui/sidebar/constants';
 
 export interface SidebarData {
   playlists: Playlist[];
   followedPlaylists: Playlist[];
   userProfile: UserProfile;
   userPlaylistsCount: number;
+}
+
+export interface SidebarCookieState {
+  collapsed: boolean;
+  defaultSize?: number;
 }
 
 export class SidebarStateClass {
@@ -20,14 +30,14 @@ export class SidebarStateClass {
   #initialized = $state(false);
   #hasLoadedOnce = $state(false); // Track if we've loaded data at least once
 
+  // Sidebar state properties
+  collapsed = $state(false);
+  openAccountDrawer = $state(false);
+
   // Derived values for easier access
   playlists = $derived(this.data?.playlists ?? []);
   userProfile = $derived(this.data?.userProfile ?? null);
   userPlaylistsCount = $derived(this.data?.userPlaylistsCount ?? 0);
-
-  // UI state
-  collapsed = $state(false);
-  openAccountDrawer = $state(false);
 
   // Drag and drop state
   draggedSourceIndex = $state<number | null>(null);
@@ -37,12 +47,104 @@ export class SidebarStateClass {
   orderedSources = $state<Source[]>([]);
 
   constructor() {
-    // Initialize ordered sources from user profile when data loads
-    $effect(() => {
-      if (this.data?.userProfile?.sources) {
-        this.orderedSources = [...this.data.userProfile.sources];
+    // Initialize sidebar state from cookie on construction
+    this.loadStateFromCookie();
+  }
+
+  /**
+   * Load sidebar state from cookie
+   */
+  private loadStateFromCookie(): void {
+    // In tests, check if document exists instead of browser flag
+    if (typeof document === 'undefined') return;
+
+    try {
+      const cookies = document.cookie.split(';');
+      const sidebarCookie = cookies.find((cookie) =>
+        cookie.trim().startsWith(`${SIDEBAR_COOKIE_NAME}=`)
+      );
+
+      if (sidebarCookie) {
+        const cookieValue = sidebarCookie.split('=')[1];
+        const state: SidebarCookieState = JSON.parse(
+          decodeURIComponent(cookieValue)
+        );
+        this.collapsed = state.collapsed ?? false;
       }
-    });
+    } catch (error) {
+      console.error('Failed to load sidebar state from cookie:', error);
+      this.collapsed = false; // Default to expanded if cookie is malformed
+    }
+  }
+
+  /**
+   * Save sidebar state to cookie
+   */
+  saveStateToCookie(collapsed: boolean, defaultSize?: number): void {
+    // In tests, check if document exists instead of browser flag
+    if (typeof document === 'undefined') return;
+
+    const state: SidebarCookieState = { collapsed };
+    if (defaultSize !== undefined) {
+      state.defaultSize = defaultSize;
+    }
+
+    const cookieValue = encodeURIComponent(JSON.stringify(state));
+    document.cookie = `${SIDEBAR_COOKIE_NAME}=${cookieValue}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+  }
+
+  /**
+   * Get default size from cookie
+   */
+  getDefaultSizeFromCookie(): number | undefined {
+    // In tests, check if document exists instead of browser flag
+    if (typeof document === 'undefined') return undefined;
+
+    try {
+      const cookies = document.cookie.split(';');
+      const sidebarCookie = cookies.find((cookie) =>
+        cookie.trim().startsWith(`${SIDEBAR_COOKIE_NAME}=`)
+      );
+
+      if (sidebarCookie) {
+        const cookieValue = sidebarCookie.split('=')[1];
+        const state: SidebarCookieState = JSON.parse(
+          decodeURIComponent(cookieValue)
+        );
+        return state.defaultSize;
+      }
+    } catch (error) {
+      console.error('Failed to get default size from cookie:', error);
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Set collapsed state and save to cookie
+   */
+  setCollapsed(collapsed: boolean, defaultSize?: number): void {
+    this.collapsed = collapsed;
+    this.saveStateToCookie(collapsed, defaultSize);
+  }
+
+  /**
+   * Toggle collapsed state
+   */
+  toggleCollapsed(): void {
+    this.setCollapsed(!this.collapsed);
+  }
+
+  // Initialize effects (should be called when component is mounted)
+  initializeEffects() {
+    if (browser) {
+      // Initialize ordered sources from user profile when data loads
+      $effect(() => {
+        if (this.data?.userProfile?.sources) {
+          this.orderedSources = [...this.data.userProfile.sources];
+        }
+      });
+    }
   }
 
   get initialized() {
@@ -144,43 +246,13 @@ export class SidebarStateClass {
     }
   }
 
-  addOptimisticPlaylist(playlist: Playlist): void {
-    this.playlists = [...this.playlists, playlist];
-  }
-
-  removeOptimisticPlaylist(playlistId: number): void {
-    this.playlists = this.playlists.filter((p) => p.id !== playlistId);
-  }
-
-  removePlaylistOptimistically(playlistId: number): Playlist | null {
-    const playlist = this.playlists.find((p) => p.id === playlistId);
-    if (playlist) {
-      this.playlists = this.playlists.filter((p) => p.id !== playlistId);
-    }
-    return playlist || null;
-  }
-
-  restorePlaylist(playlist: Playlist): void {
-    this.playlists = [...this.playlists, playlist];
-  }
-
-  commitOptimisticPlaylist(tempId: number, realPlaylist: Playlist): void {
-    const index = this.playlists.findIndex((p) => p.id === tempId);
-    if (index >= 0) {
-      this.playlists[index] = realPlaylist;
-    }
-  }
-
-  updatePlaylistOptimistically(
-    playlistId: number,
-    updates: Partial<Playlist>
-  ): void {
-    const index = this.playlists.findIndex((p) => p.id === playlistId);
-    if (index >= 0) {
-      this.playlists[index] = { ...this.playlists[index], ...updates };
-    }
-  }
   async refreshData(): Promise<void> {
+    // Only refresh if tab is visible to save resources
+    if (!tabVisibility.isVisible) {
+      console.log('Sidebar: Skipping refresh - tab not visible');
+      return;
+    }
+
     await this.loadData();
   }
 
@@ -208,8 +280,6 @@ export class SidebarStateClass {
     this.data = null;
     this.loading = false;
     this.error = null;
-    this.collapsed = false;
-    this.openAccountDrawer = false;
     this.orderedSources = [];
     this.#initialized = false;
     this.#hasLoadedOnce = false;

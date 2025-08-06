@@ -31,26 +31,6 @@ export const load: LayoutServerLoad = async ({
     view,
   });
 
-  let layout = cookies.get('PaneForge:layout');
-  if (layout) {
-    try {
-      layout = JSON.parse(layout);
-    } catch {
-      layout = undefined;
-    }
-  }
-
-  // Get sidebar collapsed state from cookies
-  let isSidebarCollapsed: boolean | undefined = undefined;
-  const sidebarCollapsedCookie = cookies.get('sidebar:collapsed');
-  if (sidebarCollapsedCookie !== undefined) {
-    try {
-      isSidebarCollapsed = sidebarCollapsedCookie === 'true';
-    } catch {
-      isSidebarCollapsed = undefined;
-    }
-  }
-
   const { session } = await sessionPromise;
 
   // Simplified cache strategy - single cache validation approach
@@ -94,8 +74,6 @@ export const load: LayoutServerLoad = async ({
     contentFilter,
     cookies: cookies.getAll(),
     userProfile,
-    layout,
-    isSidebarCollapsed,
     etag,
     lastModified: lastModified.toISOString(),
     cached: isCacheHit,

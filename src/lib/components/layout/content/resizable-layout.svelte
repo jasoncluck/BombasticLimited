@@ -16,8 +16,6 @@
   import { browser } from '$app/environment';
 
   let {
-    layout,
-    isSidebarCollapsed = $bindable(),
     supabase,
     session,
     refreshSidebar,
@@ -26,8 +24,6 @@
     isNavigatingToContent,
     children,
   }: {
-    layout?: number[] | null;
-    isSidebarCollapsed: boolean;
     supabase: SupabaseClient<Database>;
     session: Session | null;
     refreshSidebar: () => Promise<void>;
@@ -39,39 +35,27 @@
 
   const sidebarState = getSidebarState();
 
-  // Function to save sidebar state to cookie
-  function saveSidebarState(collapsed: boolean) {
-    if (browser) {
-      document.cookie = `sidebar:collapsed=${collapsed}; path=/; max-age=31536000`; // 1 year expiry
-    }
-  }
 
-  // Handle sidebar collapse/expand with cookie persistence
-  function handleSidebarCollapse() {
-    isSidebarCollapsed = true;
-    saveSidebarState(true);
-  }
+  // Use the layout state's sidebar collapsed state
+  const isSidebarCollapsed = $derived(layoutState.isSidebarCollapsed);
 
-  function handleSidebarExpand() {
-    isSidebarCollapsed = false;
-    saveSidebarState(false);
-  }
 </script>
 
 <Resizable.PaneGroup
   direction="horizontal"
   class="flex h-full overflow-hidden rounded-lg"
-  onLayoutChange={layoutState.onLayoutChange}
+  autoSaveId="bombify-layout"
 >
   <!-- Sidebar Pane (Desktop Only) -->
   <Resizable.Pane
-    defaultSize={layout?.[0] ?? 15}
+    defaultSize={15}
     minSize={12}
     maxSize={50}
     collapsedSize={COLLAPSED_SIDEBAR_SIZE}
     collapsible={true}
-    onCollapse={handleSidebarCollapse}
-    onExpand={handleSidebarExpand}
+
+    onCollapse={() => layoutState.setSidebarCollapsed(true)}
+    onExpand={() => layoutState.setSidebarCollapsed(false)}
     class="pane @container hidden h-full grow flex-col sm:ml-2 sm:flex {isSidebarCollapsed
       ? 'max-w-[75px] min-w-[75px]'
       : 'min-w-[200px]'}"
@@ -101,7 +85,7 @@
                     <div class="flex w-full items-center space-x-3">
                       <Skeleton class="h-12 w-12 flex-shrink-0 rounded" />
                       <div class="min-w-0 flex-1">
-                        <Skeleton class="h-4 w-full" />
+                        <Skeleton class="h-4 w-3/4" />
                       </div>
                     </div>
                   {:else}
@@ -119,20 +103,24 @@
 
             <!-- Playlists Header Section Skeleton with exact dimensions -->
             <div
-              class="flex flex-col {!isSidebarCollapsed
-                ? 'mx-6 my-3'
-                : 'mx-1 my-3 items-center'}"
+              class="m-3 flex flex-col {!isSidebarCollapsed
+                ? 'mx-6 items-start'
+                : 'items-center'}"
             >
-              <div class="flex h-[44px] w-full items-center">
+              <div class="flex h-[44px] items-center">
                 {#if !isSidebarCollapsed}
                   <!-- Full header with exact spacing -->
-                  <div class="flex w-full items-center space-x-4">
-                    <Skeleton class="h-10 w-10 flex-shrink-0 rounded-full" />
-                    <Skeleton class="h-6 w-20 flex-shrink-0" />
+                  <div class="flex items-center">
+                    <Skeleton
+                      class="my-1 h-10 w-10 flex-shrink-0 rounded-full"
+                    />
+                    <div class="ml-4">
+                      <Skeleton class="h-6 w-20" />
+                    </div>
                   </div>
                 {:else}
-                  <!-- Collapsed header -->
-                  <Skeleton class="h-10 w-10 flex-shrink-0 rounded-full" />
+                  <!-- Collapsed header - centered circle -->
+                  <Skeleton class="my-1 h-10 w-10 flex-shrink-0 rounded-full" />
                 {/if}
               </div>
             </div>
@@ -147,9 +135,9 @@
                 <!-- Fixed number of playlist items -->
                 {#each Array(6), i}
                   <div
-                    class="flex items-center {!isSidebarCollapsed
+                    class="focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground relative inline-flex items-center justify-center rounded-md text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-1 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 {!isSidebarCollapsed
                       ? 'h-[56px] px-2 py-1'
-                      : 'h-[56px] justify-center px-1 py-1'}"
+                      : 'h-[56px] w-10 justify-center px-1 py-1'}"
                   >
                     {#if !isSidebarCollapsed}
                       <!-- Full width playlist item skeleton -->
@@ -157,12 +145,12 @@
                         <div
                           class="flex h-12 w-12 flex-shrink-0 items-center justify-center"
                         >
-                          <!-- Simulate either image or ListVideo icon with exact dimensions -->
-                          {#if i % 2 === 1}
+                          <!-- Show ListVideo more frequently to match real behavior -->
+                          {#if i % 3 === 0}
                             <Skeleton class="h-12 w-12 rounded" />
                           {:else}
                             <div
-                              class="bg-muted flex h-12 w-12 items-center justify-center rounded"
+                              class="bg-muted flex h-12 w-12 animate-pulse items-center justify-center rounded"
                             >
                               <ListVideo
                                 class="text-muted-foreground h-8 w-8 opacity-50"
@@ -171,19 +159,19 @@
                           {/if}
                         </div>
                         <div class="min-w-0 flex-1">
-                          <Skeleton class="h-4 w-full" />
+                          <Skeleton class="h-4 w-3/4" />
                         </div>
                       </div>
                     {:else}
-                      <!-- Collapsed playlist item skeleton -->
+                      <!-- Collapsed playlist item skeleton - properly centered -->
                       <div
                         class="flex h-12 w-12 flex-shrink-0 items-center justify-center"
                       >
-                        {#if i % 2 === 0}
+                        {#if i % 3 === 0}
                           <Skeleton class="h-12 w-12 rounded" />
                         {:else}
                           <div
-                            class="bg-muted flex h-12 w-12 items-center justify-center rounded"
+                            class="bg-muted flex h-12 w-12 animate-pulse items-center justify-center rounded"
                           >
                             <ListVideo
                               class="text-muted-foreground h-8 w-8 opacity-50"
@@ -218,8 +206,8 @@
 
   <!-- Main Content Pane -->
   <Resizable.Pane
+    defaultSize={85}
     class="pane @container flex min-w-[350px] sm:mr-1"
-    defaultSize={layout?.[1] ?? 85}
   >
     <ScrollArea
       type="scroll"

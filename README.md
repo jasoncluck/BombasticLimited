@@ -161,7 +161,8 @@ pkgx install supabase
 Available via [Nixpkgs](https://nixos.org/). Package script
 [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
 
-</details> 
+</details>
+
 ### Run the CLI
 
 ```bash

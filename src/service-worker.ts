@@ -24,9 +24,57 @@ const MAX_BACKGROUND_REFRESH_AGE = 30 * 60 * 1000; // 30 minutes - stop refreshi
 let backgroundRefreshTimer: ReturnType<typeof setTimeout> | null = null;
 const trackedRoutes = new Set<string>(MAIN_ROUTE_PATHS);
 
+// Tab visibility state tracking
+let isAnyTabVisible = true;
+
 // Helper function to get current timestamp for logging
 const getTimestamp = (): string => {
   return new Date().toISOString().replace('T', ' ').substring(0, 19);
+};
+
+// Helper function to check if any tabs are currently visible
+const checkTabVisibility = async (): Promise<boolean> => {
+  try {
+    const clients = await sw.clients.matchAll();
+    if (clients.length === 0) {
+      return false; // No clients means no visible tabs
+    }
+
+    // Request visibility state from all clients
+    const visibilityPromises = clients.map(async (client) => {
+      return new Promise<boolean>((resolve) => {
+        const messageChannel = new MessageChannel();
+        messageChannel.port1.onmessage = (event) => {
+          const { type, isVisible } = event.data || {};
+          if (type === 'TAB_VISIBILITY_RESPONSE') {
+            resolve(isVisible === true);
+          } else {
+            resolve(false); // Default to not visible if no response
+          }
+        };
+
+        client.postMessage({ type: 'REQUEST_TAB_VISIBILITY' }, [
+          messageChannel.port2,
+        ]);
+
+        // Timeout after 100ms
+        setTimeout(() => resolve(false), 100);
+      });
+    });
+
+    const visibilityResults = await Promise.allSettled(visibilityPromises);
+
+    // Return true if any tab is visible
+    return visibilityResults.some(
+      (result) => result.status === 'fulfilled' && result.value === true
+    );
+  } catch (error) {
+    console.warn(
+      `SW [${getTimestamp()}]: Error checking tab visibility:`,
+      error
+    );
+    return false; // Default to not visible on error
+  }
 };
 
 // Helper function to detect auth state from request or stored state
@@ -123,6 +171,15 @@ const stopBackgroundRefresh = (): void => {
 
 const performBackgroundRefresh = async (): Promise<void> => {
   try {
+    // Check if any tabs are visible before proceeding
+    const hasVisibleTabs = await checkTabVisibility();
+    if (!hasVisibleTabs) {
+      console.log(
+        `SW [${getTimestamp()}]: No visible tabs, skipping background refresh`
+      );
+      return;
+    }
+
     const authState = await getAuthState();
     const dataCache = await getDataCache();
     const now = Date.now();
@@ -131,14 +188,8 @@ const performBackgroundRefresh = async (): Promise<void> => {
       `SW [${getTimestamp()}]: Starting background refresh cycle (auth: ${authState})`
     );
 
-    // Check if any clients are active
+    // Get clients for messaging
     const clients = await sw.clients.matchAll();
-    if (clients.length === 0) {
-      console.log(
-        `SW [${getTimestamp()}]: No active clients, skipping background refresh`
-      );
-      return;
-    }
 
     let refreshedCount = 0;
     const refreshPromises = Array.from(trackedRoutes).map(async (route) => {
@@ -345,18 +396,22 @@ const handleNavigationRequest = async (request: Request): Promise<Response> => {
   }
 };
 
-// Simple and efficient static asset caching
+// Simple and efficient static asset caching with optimized handling for Vercel images
 const cacheStaticAsset = async (request: Request): Promise<Response> => {
   const cache = await caches.open(STATIC_CACHE);
   const cached = await cache.match(request);
+  const url = new URL(request.url);
+  const isVercelImage = url.pathname.startsWith('/_vercel/image');
 
   if (cached) {
     // Serve from cache and optionally refresh in background for long-lived assets
     const cacheDate = cached.headers.get('date');
     if (cacheDate) {
       const age = Date.now() - new Date(cacheDate).getTime();
-      // Refresh assets older than 1 day in background
-      if (age > 86400000) {
+      // For Vercel images, refresh after 7 days; for other assets, refresh after 1 day
+      const refreshThreshold = isVercelImage ? 604800000 : 86400000;
+
+      if (age > refreshThreshold) {
         fetch(request)
           .then((response) => {
             if (response.ok) cache.put(request, response);
@@ -375,6 +430,12 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
       // Clone before caching
       const responseToCache = response.clone();
       cache.put(request, responseToCache);
+
+      if (isVercelImage && import.meta.env.DEV) {
+        console.log(
+          `SW [${getTimestamp()}]: ✅ Cached Vercel image: ${url.pathname}`
+        );
+      }
     }
     return response;
   } catch (error) {
@@ -602,10 +663,13 @@ sw.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle static assets
+  // Handle static assets and Vercel optimized images
+  // Note: Vercel image optimization URLs (/_vercel/image) are now properly cached
+  // for better performance and to eliminate image pop-in effects
   if (
     STATIC_ASSETS.includes(url.pathname) ||
-    STATIC_EXTENSIONS.test(url.pathname)
+    STATIC_EXTENSIONS.test(url.pathname) ||
+    url.pathname.startsWith('/_vercel/image')
   ) {
     event.respondWith(cacheStaticAsset(request));
     return;
@@ -740,6 +804,12 @@ sw.addEventListener('message', (event) => {
 
     case 'REQUEST_AUTH_STATE': {
       // This is handled by getAuthState() function which sends to clients
+      // No action needed here as we're responding via ports
+      break;
+    }
+
+    case 'REQUEST_TAB_VISIBILITY': {
+      // This is handled by checkTabVisibility() function which sends to clients
       // No action needed here as we're responding via ports
       break;
     }

@@ -3,6 +3,7 @@
   import { Button, buttonVariants } from '$lib/components/ui/button';
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
   import * as Drawer from '$lib/components/ui/drawer/index.js';
+  import * as Avatar from '$lib/components/ui/avatar';
   import {
     Cog,
     GalleryHorizontal,
@@ -114,7 +115,16 @@
           size: 'icon',
         })}"
       >
-        <UserCircle class="h-[1.2rem] w-[1.2rem]" />
+        {#if userProfile?.avatar_url}
+          <Avatar.Root class="h-[1.2rem] w-[1.2rem]">
+            <Avatar.Image src={userProfile.avatar_url} alt="User avatar" />
+            <Avatar.Fallback>
+              <UserCircle class="h-[1.2rem] w-[1.2rem]" />
+            </Avatar.Fallback>
+          </Avatar.Root>
+        {:else}
+          <UserCircle class="h-[1.2rem] w-[1.2rem]" />
+        {/if}
         <span class="sr-only">Profile</span>
       </DropdownMenu.Trigger>
       <DropdownMenu.Content>
@@ -151,7 +161,16 @@
           class: 'cursor-pointer',
         })}
       >
-        <UserCircle class="h-[1.2rem] w-[1.2rem]" />
+        {#if userProfile?.avatar_url}
+          <Avatar.Root class="h-[1.2rem] w-[1.2rem]">
+            <Avatar.Image src={userProfile.avatar_url} alt="User avatar" />
+            <Avatar.Fallback>
+              <UserCircle class="h-[1.2rem] w-[1.2rem]" />
+            </Avatar.Fallback>
+          </Avatar.Root>
+        {:else}
+          <UserCircle class="h-[1.2rem] w-[1.2rem]" />
+        {/if}
         <span class="sr-only">Profile</span>
       </Drawer.Trigger>
       <Drawer.Content>
@@ -194,7 +213,7 @@
   <!-- Login Button (Not Authenticated) -->
   <Button
     class="cursor-pointer"
-    data-testid="login-button"
+    data-testid="nav-login-button"
     onclick={() => goto('/auth/login')}
     variant="outline"
   >

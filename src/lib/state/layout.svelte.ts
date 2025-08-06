@@ -1,12 +1,12 @@
 import { getContext, setContext } from 'svelte';
-import { goto, invalidate } from '$app/navigation';
+import { goto } from '$app/navigation';
 import { showNotification } from '$lib/stores/notification.js';
 import debounce from 'debounce';
-import { page } from '$app/state';
 import { isSourceArray, SOURCE_INFO } from '$lib/constants/source';
 import { activeStreams } from '$lib/state/streaming.svelte';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { source } from 'sveltekit-sse';
+import { browser } from '$app/environment';
 
 export interface LayoutConfig {
   searchDebounceMs: number;
@@ -15,11 +15,12 @@ export interface LayoutConfig {
 export interface LayoutState {
   // UI State
   isDraggingDivider: boolean;
-  isSearching: boolean; // NEW: Track search state
+  isSearching: boolean;
+  isSidebarCollapsed: boolean;
 
   // Search state
   currentDebouncedSearch: ReturnType<typeof debounce> | null;
-  searchAbortController: AbortController | null; // NEW: For canceling requests
+  searchAbortController: AbortController | null;
 
   // Configuration
   config: LayoutConfig;
@@ -29,12 +30,9 @@ export interface LayoutState {
   searchRedirect: (e: Event) => Promise<Event>;
   handleSearch: (e: Event) => void;
 
-  // Layout methods
-  onLayoutChange: (sizes: number[]) => void;
-
-  // Notification setup
-  setupNotifications: (supabase: SupabaseClient) => () => void;
-  setupStreamingNotifications: () => void;
+  // Sidebar methods
+  setSidebarCollapsed: (collapsed: boolean) => void;
+  toggleSidebar: () => void;
 
   // Cleanup method
   cleanup: () => void;
@@ -45,12 +43,53 @@ export class LayoutStateClass implements LayoutState {
 
   isDraggingDivider = $state(false);
   isSearching = $state(false);
+  isSidebarCollapsed = $state(false);
   currentDebouncedSearch = $state<ReturnType<typeof debounce> | null>(null);
-  searchAbortController = $state<AbortController | null>(null); // NEW
+  searchAbortController = $state<AbortController | null>(null);
 
   config = $state<LayoutConfig>({
     searchDebounceMs: 400,
   });
+
+  constructor() {
+    // Initialize sidebar state from localStorage on construction
+    this.loadSidebarState();
+  }
+
+  private loadSidebarState(): void {
+    if (!browser) return;
+
+    try {
+      const saved = localStorage.getItem('bombify-sidebar-collapsed');
+      if (saved !== null) {
+        this.isSidebarCollapsed = JSON.parse(saved);
+      }
+    } catch (error) {
+      console.error('Failed to load sidebar state:', error);
+    }
+  }
+
+  private saveSidebarState(collapsed: boolean): void {
+    if (!browser) return;
+
+    try {
+      localStorage.setItem(
+        'bombify-sidebar-collapsed',
+        JSON.stringify(collapsed)
+      );
+    } catch (error) {
+      console.error('Failed to save sidebar state:', error);
+    }
+  }
+
+  setSidebarCollapsed = (collapsed: boolean): void => {
+    this.isSidebarCollapsed = collapsed;
+    this.saveSidebarState(collapsed);
+  };
+
+  toggleSidebar = (): void => {
+    this.setSidebarCollapsed(!this.isSidebarCollapsed);
+  };
 
   async handleLogout(supabase: SupabaseClient) {
     const { error } = await supabase.auth.signOut();
@@ -138,67 +177,8 @@ export class LayoutStateClass implements LayoutState {
     this.currentDebouncedSearch();
   }
 
-  onLayoutChange(sizes: number[]) {
-    document.cookie = `PaneForge:layout=${JSON.stringify(sizes)}; path=/; domain=${page.url.hostname}`;
-  }
-
-  setupNotifications(supabase: SupabaseClient) {
-    const { data } = supabase.auth.onAuthStateChange((_, newSession) => {
-      invalidate('supabase:auth');
-    });
-
-    return () => {
-      data.subscription.unsubscribe();
-    };
-  }
-
-  async setupStreamingNotifications() {
-    const streamingSources = source('/api/twitch').select(
-      'streamingSubscriptions'
-    );
-
-    let initialMount = true;
-
-    const unsubscribe = streamingSources.subscribe((latestStreamingSources) => {
-      let latestStreamingSourcesParsed;
-
-      try {
-        latestStreamingSourcesParsed = JSON.parse(latestStreamingSources);
-      } catch {
-        return;
-      }
-
-      if (isSourceArray(latestStreamingSourcesParsed)) {
-        const removedSources = activeStreams.sources.filter(
-          (source) => !latestStreamingSourcesParsed.includes(source)
-        );
-        const addedSources = latestStreamingSourcesParsed.filter(
-          (source) => !activeStreams.sources.includes(source)
-        );
-
-        if (!initialMount) {
-          removedSources.forEach((removedSource) => {
-            showNotification(
-              `${SOURCE_INFO[removedSource].displayName} has ended their stream.`
-            );
-          });
-
-          addedSources.forEach((addedSource) => {
-            showNotification(
-              `${SOURCE_INFO[addedSource].displayName} has started streaming.`
-            );
-          });
-        }
-
-        activeStreams.sources = latestStreamingSourcesParsed;
-      }
-      initialMount = false;
-    });
-
-    return unsubscribe;
-  }
-
   cleanup() {
+    // Cancel any pending search operations
     if (this.currentDebouncedSearch?.isPending) {
       this.currentDebouncedSearch.clear();
     }
@@ -206,6 +186,11 @@ export class LayoutStateClass implements LayoutState {
       this.searchAbortController.abort();
       this.searchAbortController = null;
     }
+
+    // Reset search state but preserve sidebar collapsed state
+    this.isSearching = false;
+    this.isDraggingDivider = false;
+    // Note: Don't reset isSidebarCollapsed - it should persist across page refreshes
   }
 }
 

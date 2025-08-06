@@ -42,6 +42,7 @@
   import EditListDrawer from './drawer/edit-list-drawer.svelte';
   import type { CombinedContentFilter } from './content-filter';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
+  import { getVideoThumbnailUrl } from '$lib/utils/video-thumbnails';
 
   interface ContentDrawerProps {
     videos?: Video[];
@@ -155,9 +156,12 @@
             {@const video = operationVideos[0]}
             <div class="flex items-center gap-2">
               <img
-                src={video.thumbnail_url}
+                src={getVideoThumbnailUrl(video)}
                 alt={video.title}
                 class="aspect-video h-12"
+                loading="lazy"
+                decoding="async"
+                fetchpriority="auto"
               />
               <div class="flex flex-col gap-1">
                 <p class="text-sm font-normal">
@@ -235,9 +239,12 @@
             {#snippet itemRenderer(item)}
               {@const video = item as Video}
               <img
-                src={video.thumbnail_url}
+                src={getVideoThumbnailUrl(video)}
                 alt={video.title}
                 class="pointer-events-none aspect-video h-[60px]"
+                loading="lazy"
+                decoding="async"
+                fetchpriority="auto"
               />
               <div
                 class="pointer-events-none flex min-w-0 flex-1 flex-col gap-1"

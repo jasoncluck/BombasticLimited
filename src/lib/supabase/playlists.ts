@@ -147,6 +147,7 @@ export async function getPlaylistData({
     image_properties: firstRow.playlist_image_properties,
     youtube_id: firstRow.playlist_youtube_id,
     profile_username: firstRow.profile_username,
+    deleted_at: null, // Assume null since we're only getting active playlists
     // Add user playlist specific fields if they exist
     ...(firstRow.playlist_sorted_by && {
       sorted_by: firstRow.playlist_sorted_by,
@@ -361,7 +362,13 @@ export async function getPlaylistsForUsername({
     console.error(`Error fetching playlists for username: ${username}.`, error);
     return { playlists: [], error };
   }
-  return { playlists, count, error };
+  // Cast to include deleted_at field since the SQL function now returns it
+  const playlistsWithDeletedAt = playlists.map((playlist) => ({
+    ...playlist,
+    deleted_at: null, // Always null for active playlists returned by this function
+  })) as Playlist[];
+
+  return { playlists: playlistsWithDeletedAt, count, error };
 }
 
 export async function getPlaylistByYoutubeId({
@@ -481,6 +488,7 @@ export async function getPlaylistVideoContext({
     image_properties: metadataRow.playlist_image_properties,
     youtube_id: metadataRow.playlist_youtube_id,
     profile_username: metadataRow.profile_username,
+    deleted_at: null, // Assume null since we're only getting active playlists
     ...(metadataRow.playlist_sorted_by && {
       sorted_by: metadataRow.playlist_sorted_by,
       sort_order: metadataRow.playlist_sort_order,
@@ -593,7 +601,13 @@ export async function getUserPlaylists({
     console.error('Error when fetching playlists:', error);
   }
 
-  return { userPlaylists: data ?? [], count, error };
+  // Cast to include deleted_at field since the SQL function now returns it
+  const userPlaylistsWithDeletedAt = (data || []).map((playlist) => ({
+    ...playlist,
+    deleted_at: null, // Always null for active playlists returned by this function
+  })) as UserPlaylist[];
+
+  return { userPlaylists: userPlaylistsWithDeletedAt, count, error };
 }
 
 export async function updatePlaylistPosition({
@@ -687,7 +701,14 @@ export async function searchPlaylists({
       error
     );
   }
-  return { playlists: playlists ?? [], error, count };
+
+  // Cast to include deleted_at field since the SQL function now returns it
+  const playlistsWithDeletedAt = (playlists || []).map((playlist) => ({
+    ...playlist,
+    deleted_at: null, // Always null for active playlists returned by this function
+  })) as ProfilePlaylist[];
+
+  return { playlists: playlistsWithDeletedAt, error, count };
 }
 
 export async function addVideosToPlaylist({

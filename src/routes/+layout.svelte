@@ -22,28 +22,13 @@
 
   import '../app.css';
   import { setNavigationCacheState } from '$lib/state/navigation-cache/index.js';
-  import { page } from '$app/stores';
 
   injectSpeedInsights();
-
-  // Dev-only mode fix for hot reloading
-  if (import.meta.hot) {
-    import.meta.hot.on('vite:beforeUpdate', () => {
-      // Clear service worker caches on hot reload
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.controller?.postMessage({
-          type: 'CLEAR_ALL_CACHES',
-        });
-      }
-    });
-  }
 
   let { data, children } = $props();
   let {
     session,
     supabase,
-    layout,
-    isSidebarCollapsed,
     userProfile,
     etag,
     lastModified,
@@ -182,22 +167,6 @@
     }
   });
 
-  // Handle logout parameter (for account deletion)
-  $effect(() => {
-    if (
-      typeof window !== 'undefined' &&
-      $page.url.searchParams.get('logout') === 'true'
-    ) {
-      // Clear the URL parameter
-      const url = new URL(window.location.href);
-      url.searchParams.delete('logout');
-      window.history.replaceState({}, '', url.toString());
-
-      // Force a full page reload to clear any cached auth state
-      window.location.reload();
-    }
-  });
-
   // Progressive initialization with proper async handling
   onMount(() => {
     // Mark as hydrated immediately
@@ -296,8 +265,6 @@
   {:else}
     <!-- Full UI - sidebar may still be loading data -->
     <ResizableLayout
-      {layout}
-      bind:isSidebarCollapsed
       {supabase}
       {session}
       {refreshSidebar}

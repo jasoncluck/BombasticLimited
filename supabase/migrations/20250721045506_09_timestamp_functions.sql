@@ -224,6 +224,6 @@ BEGIN
   WHERE v.id = ANY(p_video_ids);
 
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER
+$$ LANGUAGE plpgsql
 SET
   search_path = '';
