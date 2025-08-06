@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ContentState, DEFAULT_SECTION_ID, VIDEO_DROPZONE_CLASSES, END_DROPZONE_CLASSES } from '../content.svelte.js';
+import {
+  ContentState,
+  DEFAULT_SECTION_ID,
+  VIDEO_DROPZONE_CLASSES,
+  END_DROPZONE_CLASSES,
+} from '../content.svelte.js';
 import type { PageState } from '../page.svelte.js';
 import {
   createMockVideo,
@@ -45,11 +50,11 @@ describe('ContentState', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Reset document mock
     mockDocument.body.classList.add.mockClear();
     mockDocument.body.classList.remove.mockClear();
-    
+
     // Create mock PageState
     mockPageState = {
       contentScrollPosition: null,
@@ -84,11 +89,11 @@ describe('ContentState', () => {
       setContentViewportRef: vi.fn(),
       cleanup: vi.fn(),
     } as PageState;
-    
+
     // Create test data
     mockVideo = createMockVideo({ id: 'test-video-1', title: 'Test Video' });
     mockPlaylist = createMockPlaylist({ id: 1, created_by: 'user-1' });
-    mockSession = createMockSession({ 
+    mockSession = createMockSession({
       user: {
         id: 'user-1',
         aud: 'authenticated',
@@ -104,9 +109,9 @@ describe('ContentState', () => {
         created_at: '2023-01-01T00:00:00Z',
         updated_at: '2023-01-01T00:00:00Z',
         is_anonymous: false,
-      }
+      },
     });
-    
+
     contentState = new ContentState(mockPageState);
   });
 
@@ -148,39 +153,41 @@ describe('ContentState', () => {
     it('should detect when context menu is open for specific section', () => {
       const sectionId = 'test-section';
       contentState.openContextMenuSection = sectionId;
-      
+
       expect(contentState.isContextMenuOpenForSection(sectionId)).toBe(true);
-      expect(contentState.isContextMenuOpenForSection('other-section')).toBe(false);
+      expect(contentState.isContextMenuOpenForSection('other-section')).toBe(
+        false
+      );
     });
 
     it('should use DEFAULT_SECTION_ID when no sectionId provided', () => {
       contentState.openContextMenuSection = DEFAULT_SECTION_ID;
-      
+
       expect(contentState.isContextMenuOpenForSection()).toBe(true);
     });
 
     it('should detect when context menu is open for any section', () => {
       contentState.selectedVideosBySection = {
-        'section1': [mockVideo],
-        'section2': [mockVideo],
+        section1: [mockVideo],
+        section2: [mockVideo],
       };
       contentState.openContextMenuSection = 'section1';
-      
+
       expect(contentState.isContextMenuOpenForAnySection()).toBe(true);
     });
 
     it('should return false when no context menu is open', () => {
       contentState.selectedVideosBySection = {
-        'section1': [mockVideo],
+        section1: [mockVideo],
       };
       contentState.openContextMenuSection = null;
-      
+
       expect(contentState.isContextMenuOpenForAnySection()).toBe(false);
     });
 
     it('should get isAnyContextMenuOpen correctly', () => {
       expect(contentState.isAnyContextMenuOpen).toBe(false);
-      
+
       contentState.openContextMenuSection = 'test-section';
       expect(contentState.isAnyContextMenuOpen).toBe(true);
     });
@@ -190,33 +197,33 @@ describe('ContentState', () => {
     it('should detect when drawer is open for specific section', () => {
       const sectionId = 'test-section';
       contentState.openDrawerSection = sectionId;
-      
+
       expect(contentState.isDrawerOpenForSection(sectionId)).toBe(true);
       expect(contentState.isDrawerOpenForSection('other-section')).toBe(false);
     });
 
     it('should use DEFAULT_SECTION_ID when no sectionId provided', () => {
       contentState.openDrawerSection = DEFAULT_SECTION_ID;
-      
+
       expect(contentState.isDrawerOpenForSection()).toBe(true);
     });
 
     it('should detect when drawer is open for any section', () => {
       contentState.selectedVideosBySection = {
-        'section1': [mockVideo],
-        'section2': [mockVideo],
+        section1: [mockVideo],
+        section2: [mockVideo],
       };
       contentState.openDrawerSection = 'section1';
-      
+
       expect(contentState.isDrawerOpenForAnySection()).toBe(true);
     });
 
     it('should return false when no drawer is open', () => {
       contentState.selectedVideosBySection = {
-        'section1': [mockVideo],
+        section1: [mockVideo],
       };
       contentState.openDrawerSection = null;
-      
+
       expect(contentState.isDrawerOpenForAnySection()).toBe(false);
     });
   });
@@ -224,16 +231,16 @@ describe('ContentState', () => {
   describe('state reset', () => {
     it('should reset all state to defaults', () => {
       // Set up some state
-      contentState.selectedVideosBySection = { 'section1': [mockVideo] };
-      contentState.hoveredVideosBySection = { 'section1': mockVideo };
+      contentState.selectedVideosBySection = { section1: [mockVideo] };
+      contentState.hoveredVideosBySection = { section1: mockVideo };
       contentState.isDropdownMenuOpen = true;
       contentState.openDropdownId = 'test-dropdown';
       contentState.openContextMenuSection = 'test-section';
       contentState.dragContentType = 'video';
-      
+
       // Reset state
       contentState.resetState();
-      
+
       // Verify state is reset
       expect(contentState.selectedVideosBySection).toEqual({});
       expect(contentState.hoveredVideosBySection).toEqual({});
@@ -247,23 +254,35 @@ describe('ContentState', () => {
   describe('CSS class helpers', () => {
     it('should return video dropzone classes when dragging video to owned playlist', () => {
       contentState.dragContentType = 'video';
-      
-      const classes = contentState.getVideoDropzoneClasses(mockPlaylist, mockSession);
+
+      const classes = contentState.getVideoDropzoneClasses(
+        mockPlaylist,
+        mockSession
+      );
       expect(classes).toEqual(VIDEO_DROPZONE_CLASSES);
     });
 
     it('should return empty array when not dragging video', () => {
       contentState.dragContentType = null;
-      
-      const classes = contentState.getVideoDropzoneClasses(mockPlaylist, mockSession);
+
+      const classes = contentState.getVideoDropzoneClasses(
+        mockPlaylist,
+        mockSession
+      );
       expect(classes).toEqual([]);
     });
 
     it('should return empty array when playlist not owned by user', () => {
       contentState.dragContentType = 'video';
-      const otherUserPlaylist = createMockPlaylist({ id: 2, created_by: 'other-user' });
-      
-      const classes = contentState.getVideoDropzoneClasses(otherUserPlaylist, mockSession);
+      const otherUserPlaylist = createMockPlaylist({
+        id: 2,
+        created_by: 'other-user',
+      });
+
+      const classes = contentState.getVideoDropzoneClasses(
+        otherUserPlaylist,
+        mockSession
+      );
       expect(classes).toEqual([]);
     });
 
@@ -275,7 +294,7 @@ describe('ContentState', () => {
     it('should get video drag classes for table display', () => {
       contentState.draggedIndex = 1;
       contentState.targetIndex = 2;
-      
+
       const classes = contentState.getVideoDragClasses(2, 'TABLE');
       expect(classes).toContain('relative');
       expect(classes).toContain('after:absolute');
@@ -285,7 +304,7 @@ describe('ContentState', () => {
     it('should get video drag classes for non-table display', () => {
       contentState.draggedIndex = 1;
       contentState.targetIndex = 2;
-      
+
       const classes = contentState.getVideoDragClasses(2, 'TILES');
       expect(classes).toContain('relative');
       // Should not contain table-specific after: classes
@@ -305,13 +324,13 @@ describe('ContentState', () => {
     it('should clear hover states during drag', () => {
       // Set up hover states
       contentState.hoveredVideosBySection = {
-        'section1': mockVideo,
-        'section2': mockVideo,
+        section1: mockVideo,
+        section2: mockVideo,
       };
       contentState.hoverTimeoutId = setTimeout(() => {}, 100);
-      
+
       contentState.clearHoverStatesDuringDrag();
-      
+
       // Verify hover states are cleared
       expect(contentState.hoveredVideosBySection['section1']).toBeNull();
       expect(contentState.hoveredVideosBySection['section2']).toBeNull();
@@ -325,7 +344,7 @@ describe('ContentState', () => {
 
     it('should handle clearTimeout when no timeout exists', () => {
       contentState.hoverTimeoutId = null;
-      
+
       expect(() => contentState.clearHoverStatesDuringDrag()).not.toThrow();
     });
   });
@@ -341,48 +360,50 @@ describe('ContentState', () => {
 
     it('should handle mouse enter when not dragging', () => {
       const sectionId = 'test-section';
-      
+
       contentState.handleMouseEnter({ video: mockVideo, sectionId });
-      
+
       expect(contentState.hoveredVideosBySection[sectionId]).toEqual(mockVideo);
     });
 
     it('should not update hover state when dragging', () => {
       const sectionId = 'test-section';
       contentState.dragContentType = 'video';
-      
+
       contentState.handleMouseEnter({ video: mockVideo, sectionId });
-      
+
       expect(contentState.hoveredVideosBySection[sectionId]).toBeUndefined();
     });
 
     it('should clear existing timeout on mouse enter', () => {
       const timeoutId = setTimeout(() => {}, 100);
       contentState.hoverTimeoutId = timeoutId;
-      
+
       contentState.handleMouseEnter({ video: mockVideo });
-      
+
       expect(contentState.hoverTimeoutId).toBeNull();
     });
 
     it('should use DEFAULT_SECTION_ID when no sectionId provided', () => {
       contentState.handleMouseEnter({ video: mockVideo });
-      
-      expect(contentState.hoveredVideosBySection[DEFAULT_SECTION_ID]).toEqual(mockVideo);
+
+      expect(contentState.hoveredVideosBySection[DEFAULT_SECTION_ID]).toEqual(
+        mockVideo
+      );
     });
 
     it('should handle mouse leave with timeout', () => {
       const sectionId = 'test-section';
       contentState.hoveredVideosBySection[sectionId] = mockVideo;
-      
+
       contentState.handleMouseLeave({ sectionId });
-      
+
       // Should set timeout
       expect(contentState.hoverTimeoutId).not.toBeNull();
-      
+
       // Fast forward time to trigger timeout
       vi.advanceTimersByTime(100);
-      
+
       expect(contentState.hoveredVideosBySection[sectionId]).toBeNull();
     });
 
@@ -390,11 +411,11 @@ describe('ContentState', () => {
       const sectionId = 'test-section';
       contentState.selectedVideosBySection[sectionId] = [mockVideo];
       contentState.hoveredVideosBySection[sectionId] = mockVideo;
-      
+
       contentState.handleMouseLeave({ sectionId, removeSelectedOnHover: true });
-      
+
       vi.advanceTimersByTime(100);
-      
+
       expect(contentState.selectedVideosBySection[sectionId]).toEqual([]);
     });
 
@@ -402,11 +423,11 @@ describe('ContentState', () => {
       const sectionId = 'test-section';
       contentState.hoveredVideosBySection[sectionId] = mockVideo;
       contentState.openContextMenuSection = sectionId;
-      
+
       contentState.handleMouseLeave({ sectionId });
-      
+
       vi.advanceTimersByTime(100);
-      
+
       expect(contentState.hoveredVideosBySection[sectionId]).toEqual(mockVideo);
     });
 
@@ -414,11 +435,11 @@ describe('ContentState', () => {
       const sectionId = 'test-section';
       contentState.hoveredVideosBySection[sectionId] = mockVideo;
       contentState.dragContentType = 'video';
-      
+
       contentState.handleMouseLeave({ sectionId });
-      
+
       vi.advanceTimersByTime(100);
-      
+
       expect(contentState.hoveredVideosBySection[sectionId]).toEqual(mockVideo);
     });
   });
@@ -427,9 +448,9 @@ describe('ContentState', () => {
     it('should close all dropdowns', () => {
       contentState.isDropdownMenuOpen = true;
       contentState.openDropdownId = 'test-dropdown';
-      
+
       contentState.closeAllDropdowns();
-      
+
       expect(contentState.isDropdownMenuOpen).toBe(false);
       expect(contentState.openDropdownId).toBeNull();
     });
@@ -440,32 +461,32 @@ describe('ContentState', () => {
       const originalDocument = global.document;
       // @ts-ignore
       global.document = undefined;
-      
+
       expect(() => contentState.clearHoverStatesDuringDrag()).not.toThrow();
-      
+
       global.document = originalDocument;
     });
 
     it('should handle undefined document.body in clearHoverStatesDuringDrag', () => {
       const originalDocument = global.document;
       global.document = {} as any;
-      
+
       expect(() => contentState.clearHoverStatesDuringDrag()).not.toThrow();
-      
+
       global.document = originalDocument;
     });
 
     it('should handle empty selectedVideosBySection in isContextMenuOpenForAnySection', () => {
       contentState.selectedVideosBySection = {};
       contentState.openContextMenuSection = 'test-section';
-      
+
       expect(contentState.isContextMenuOpenForAnySection()).toBe(false);
     });
 
     it('should handle empty selectedVideosBySection in isDrawerOpenForAnySection', () => {
       contentState.selectedVideosBySection = {};
       contentState.openDrawerSection = 'test-section';
-      
+
       expect(contentState.isDrawerOpenForAnySection()).toBe(false);
     });
   });
@@ -476,23 +497,23 @@ describe('ContentState', () => {
       const section2 = 'section2';
       const video1 = createMockVideo({ id: 'video1' });
       const video2 = createMockVideo({ id: 'video2' });
-      
+
       // Set up multiple sections
       contentState.selectedVideosBySection[section1] = [video1];
       contentState.selectedVideosBySection[section2] = [video2];
       contentState.hoveredVideosBySection[section1] = video1;
       contentState.hoveredVideosBySection[section2] = video2;
-      
+
       // Open context menu for one section
       contentState.openContextMenuSection = section1;
-      
+
       expect(contentState.isContextMenuOpenForSection(section1)).toBe(true);
       expect(contentState.isContextMenuOpenForSection(section2)).toBe(false);
       expect(contentState.isContextMenuOpenForAnySection()).toBe(true);
-      
+
       // Reset and verify cleanup
       contentState.resetState();
-      
+
       expect(contentState.selectedVideosBySection).toEqual({});
       expect(contentState.hoveredVideosBySection).toEqual({});
       expect(contentState.openContextMenuSection).toBeNull();
@@ -500,19 +521,19 @@ describe('ContentState', () => {
 
     it('should handle state transitions correctly', () => {
       const sectionId = 'test-section';
-      
+
       // Start with hover
       contentState.handleMouseEnter({ video: mockVideo, sectionId });
       expect(contentState.hoveredVideosBySection[sectionId]).toEqual(mockVideo);
-      
+
       // Start dragging
       contentState.dragContentType = 'video';
       contentState.clearHoverStatesDuringDrag();
       expect(contentState.hoveredVideosBySection[sectionId]).toBeNull();
-      
+
       // End dragging
       contentState.dragContentType = null;
-      
+
       // Test that methods don't throw
       expect(() => contentState.enableHoverStatesAfterDrag()).not.toThrow();
     });

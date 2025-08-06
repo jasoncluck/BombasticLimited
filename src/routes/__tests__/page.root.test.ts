@@ -121,51 +121,57 @@ describe('+page.svelte Enhanced Tests', () => {
   describe('Component rendering', () => {
     it('should render main structure correctly', () => {
       const mockData = createMockData();
-      
+
       render(Page, { props: { data: mockData } });
-      
+
       // Should render "Latest Videos" heading
       expect(screen.getByText('Latest Videos')).toBeInTheDocument();
-      
+
       // Should render continue watching section for authenticated users
-      expect(screen.getByTestId('continue-watching-section')).toBeInTheDocument();
+      expect(
+        screen.getByTestId('continue-watching-section')
+      ).toBeInTheDocument();
       expect(screen.getByTestId('continue-watching-link')).toBeInTheDocument();
     });
 
     it('should not render continue watching when no session', () => {
       const mockData = createMockData({ session: null });
-      
+
       render(Page, { props: { data: mockData } });
-      
+
       // Should not render continue watching section
-      expect(screen.queryByTestId('continue-watching-section')).not.toBeInTheDocument();
-      
+      expect(
+        screen.queryByTestId('continue-watching-section')
+      ).not.toBeInTheDocument();
+
       // Should still render main content
       expect(screen.getByText('Latest Videos')).toBeInTheDocument();
     });
 
     it('should not render continue watching when no videos', () => {
       const mockData = createMockData({ continueWatchingVideos: [] });
-      
+
       render(Page, { props: { data: mockData } });
-      
+
       // Should not render continue watching section
-      expect(screen.queryByTestId('continue-watching-section')).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId('continue-watching-section')
+      ).not.toBeInTheDocument();
     });
 
     it('should render source sections', () => {
       const mockData = createMockData();
-      
+
       render(Page, { props: { data: mockData } });
-      
+
       // Should render sections for each source
       const sourceSections = screen.getAllByTestId('source-section');
       expect(sourceSections).toHaveLength(4); // Default sources: giantbomb, jeffgerstmann, nextlander, remap
-      
+
       // Should render source links
       const sourceLinks = screen.getAllByTestId('source-link');
       expect(sourceLinks).toHaveLength(4);
-      
+
       // Verify we have links for each source
       expect(screen.getByText('Giant Bomb')).toBeInTheDocument();
       expect(screen.getByText('The Jeff Gerstmann Show')).toBeInTheDocument();
@@ -180,13 +186,13 @@ describe('+page.svelte Enhanced Tests', () => {
         sources: ['giantbomb', 'nextlander'],
       });
       const mockData = createMockData({ userProfile: customProfile });
-      
+
       render(Page, { props: { data: mockData } });
-      
+
       // Should only render sections for selected sources
       const sourceSections = screen.getAllByTestId('source-section');
       expect(sourceSections).toHaveLength(2);
-      
+
       expect(screen.getByText('Giant Bomb')).toBeInTheDocument();
       expect(screen.getByText('Nextlander')).toBeInTheDocument();
       expect(screen.queryByText('Jeff Gerstmann')).not.toBeInTheDocument();
@@ -196,18 +202,18 @@ describe('+page.svelte Enhanced Tests', () => {
     it('should handle user profile with empty sources array', () => {
       const customProfile = createMockUserProfile({ sources: [] });
       const mockData = createMockData({ userProfile: customProfile });
-      
+
       render(Page, { props: { data: mockData } });
-      
+
       // Should not render any source sections
       expect(screen.queryByTestId('source-section')).not.toBeInTheDocument();
     });
 
     it('should fall back to default sources when no user profile', () => {
       const mockData = createMockData({ userProfile: null });
-      
+
       render(Page, { props: { data: mockData } });
-      
+
       // Should render all default sources
       const sourceSections = screen.getAllByTestId('source-section');
       expect(sourceSections).toHaveLength(4);
@@ -223,13 +229,13 @@ describe('+page.svelte Enhanced Tests', () => {
     it('should handle OAuth code in URL', () => {
       const { isBrowser } = require('@supabase/ssr');
       isBrowser.mockReturnValue(true);
-      
+
       // Set URL with OAuth code
       page.url = new URL('http://localhost:5173/?code=oauth_code_123') as any;
-      
+
       const mockData = createMockData();
       render(Page, { props: { data: mockData } });
-      
+
       // Should call goto to remove the code parameter
       expect(mockGoto).toHaveBeenCalledWith('/', { replaceState: true });
     });
@@ -237,25 +243,29 @@ describe('+page.svelte Enhanced Tests', () => {
     it('should preserve other query parameters when removing code', () => {
       const { isBrowser } = require('@supabase/ssr');
       isBrowser.mockReturnValue(true);
-      
-      page.url = new URL('http://localhost:5173/?code=oauth_code&other=value&filter=test') as any;
-      
+
+      page.url = new URL(
+        'http://localhost:5173/?code=oauth_code&other=value&filter=test'
+      ) as any;
+
       const mockData = createMockData();
       render(Page, { props: { data: mockData } });
-      
+
       // Should preserve other parameters
-      expect(mockGoto).toHaveBeenCalledWith('/?other=value&filter=test', { replaceState: true });
+      expect(mockGoto).toHaveBeenCalledWith('/?other=value&filter=test', {
+        replaceState: true,
+      });
     });
 
     it('should not process OAuth when not in browser', () => {
       const { isBrowser } = require('@supabase/ssr');
       isBrowser.mockReturnValue(false);
-      
+
       page.url = new URL('http://localhost:5173/?code=oauth_code') as any;
-      
+
       const mockData = createMockData();
       render(Page, { props: { data: mockData } });
-      
+
       // Should not call goto
       expect(mockGoto).not.toHaveBeenCalled();
     });
@@ -263,12 +273,12 @@ describe('+page.svelte Enhanced Tests', () => {
     it('should not process when no OAuth code present', () => {
       const { isBrowser } = require('@supabase/ssr');
       isBrowser.mockReturnValue(true);
-      
+
       page.url = new URL('http://localhost:5173/?other=value') as any;
-      
+
       const mockData = createMockData();
       render(Page, { props: { data: mockData } });
-      
+
       // Should not call goto
       expect(mockGoto).not.toHaveBeenCalled();
     });
@@ -277,9 +287,9 @@ describe('+page.svelte Enhanced Tests', () => {
   describe('Content links and navigation', () => {
     it('should have correct continue watching link', () => {
       const mockData = createMockData();
-      
+
       render(Page, { props: { data: mockData } });
-      
+
       const continueLink = screen.getByTestId('continue-watching-link');
       expect(continueLink).toHaveAttribute('href', '/continue');
       expect(continueLink).toHaveTextContent('Continue Watching');
@@ -287,18 +297,21 @@ describe('+page.svelte Enhanced Tests', () => {
 
     it('should have correct source links', () => {
       const mockData = createMockData();
-      
+
       render(Page, { props: { data: mockData } });
-      
+
       const gbLink = screen.getByText('Giant Bomb');
       expect(gbLink.closest('a')).toHaveAttribute('href', '/giantbomb/latest');
-      
+
       const jgLink = screen.getByText('The Jeff Gerstmann Show');
-      expect(jgLink.closest('a')).toHaveAttribute('href', '/jeffgerstmann/latest');
-      
+      expect(jgLink.closest('a')).toHaveAttribute(
+        'href',
+        '/jeffgerstmann/latest'
+      );
+
       const nlLink = screen.getByText('Nextlander');
       expect(nlLink.closest('a')).toHaveAttribute('href', '/nextlander/latest');
-      
+
       const rmLink = screen.getByText('Remap');
       expect(rmLink.closest('a')).toHaveAttribute('href', '/remap/latest');
     });
@@ -307,24 +320,28 @@ describe('+page.svelte Enhanced Tests', () => {
   describe('Content component integration', () => {
     it('should pass correct props to continue watching content', () => {
       const mockData = createMockData();
-      
+
       render(Page, { props: { data: mockData } });
-      
+
       // The mock content component should be rendered
       expect(screen.getAllByTestId('mock-content')).toHaveLength(5); // 1 continue + 4 sources
     });
 
     it('should pass correct section IDs to content components', () => {
       const mockData = createMockData();
-      
+
       render(Page, { props: { data: mockData } });
-      
+
       // Verify source sections have correct data attributes
       const sourceSections = screen.getAllByTestId('source-section');
-      const gbSection = sourceSections.find(section => section.getAttribute('data-source') === 'giantbomb');
+      const gbSection = sourceSections.find(
+        (section) => section.getAttribute('data-source') === 'giantbomb'
+      );
       expect(gbSection).toHaveAttribute('data-source', 'giantbomb');
-      
-      const jgSection = sourceSections.find(section => section.getAttribute('data-source') === 'jeffgerstmann');
+
+      const jgSection = sourceSections.find(
+        (section) => section.getAttribute('data-source') === 'jeffgerstmann'
+      );
       expect(jgSection).toHaveAttribute('data-source', 'jeffgerstmann');
     });
   });
@@ -332,12 +349,12 @@ describe('+page.svelte Enhanced Tests', () => {
   describe('Snapshot functionality', () => {
     it('should handle snapshot capture correctly', () => {
       const mockData = createMockData();
-      
+
       const component = render(Page, { props: { data: mockData } });
-      
+
       // Access the component instance to test snapshot functionality
       const componentInstance = component.component;
-      
+
       // Test that snapshot object exists and has correct structure
       expect(componentInstance.snapshot).toBeDefined();
       expect(typeof componentInstance.snapshot.capture).toBe('function');
@@ -346,10 +363,10 @@ describe('+page.svelte Enhanced Tests', () => {
 
     it('should capture carousel and selected videos state', () => {
       const mockData = createMockData();
-      
+
       const component = render(Page, { props: { data: mockData } });
       const captured = component.component.snapshot.capture();
-      
+
       expect(captured).toHaveProperty('carouselsState');
       expect(captured).toHaveProperty('selectedVideos');
       expect(typeof captured.carouselsState).toBe('object');
@@ -366,18 +383,18 @@ describe('+page.svelte Enhanced Tests', () => {
           nextlander: [],
           remap: [],
         },
-        sourceVideosContentFilters: { 
-          sort: { key: 'datePublished' as const, order: 'descending' as const }, 
-          type: 'video' as const 
+        sourceVideosContentFilters: {
+          sort: { key: 'datePublished' as const, order: 'descending' as const },
+          type: 'video' as const,
         },
         continueWatchingVideos: [],
-        continueWatchingContentFilters: { 
-          sort: { key: 'dateTimestamp' as const, order: 'descending' as const }, 
-          type: 'timestamp' as const 
+        continueWatchingContentFilters: {
+          sort: { key: 'dateTimestamp' as const, order: 'descending' as const },
+          type: 'timestamp' as const,
         },
-        contentFilter: { 
-          sort: { key: 'datePublished' as const, order: 'descending' as const }, 
-          type: 'video' as const 
+        contentFilter: {
+          sort: { key: 'datePublished' as const, order: 'descending' as const },
+          type: 'video' as const,
         },
         userProfile: null,
         session: null,
@@ -390,7 +407,7 @@ describe('+page.svelte Enhanced Tests', () => {
         playlistsCount: 0,
         isSidebarCollapsed: false,
       };
-      
+
       expect(() => {
         render(Page, { props: { data: minimalData } });
       }).not.toThrow();
@@ -400,7 +417,7 @@ describe('+page.svelte Enhanced Tests', () => {
       const mockData = createMockData({
         sourceVideos: null,
       });
-      
+
       expect(() => {
         render(Page, { props: { data: mockData } });
       }).not.toThrow();
@@ -410,7 +427,7 @@ describe('+page.svelte Enhanced Tests', () => {
       const mockData = createMockData({
         contentFilter: null,
       });
-      
+
       expect(() => {
         render(Page, { props: { data: mockData } });
       }).not.toThrow();
@@ -420,23 +437,23 @@ describe('+page.svelte Enhanced Tests', () => {
   describe('Accessibility', () => {
     it('should have proper heading structure', () => {
       const mockData = createMockData();
-      
+
       render(Page, { props: { data: mockData } });
-      
+
       const mainHeading = screen.getByRole('heading', { level: 1 });
       expect(mainHeading).toHaveTextContent('Latest Videos');
     });
 
     it('should have accessible links', () => {
       const mockData = createMockData();
-      
+
       render(Page, { props: { data: mockData } });
-      
+
       const links = screen.getAllByRole('link');
       expect(links.length).toBeGreaterThan(0);
-      
+
       // All links should have accessible text
-      links.forEach(link => {
+      links.forEach((link) => {
         expect(link).toHaveAccessibleName();
       });
     });

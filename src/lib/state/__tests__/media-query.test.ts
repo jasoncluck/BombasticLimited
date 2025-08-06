@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { MediaQueryStateClass, type Breakpoint } from '../media-query.svelte.js';
+import {
+  MediaQueryStateClass,
+  type Breakpoint,
+} from '../media-query.svelte.js';
 
 // Mock browser environment
 vi.mock('$app/environment', () => ({
@@ -13,7 +16,7 @@ describe('MediaQueryState', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Create mock MediaQueryList
     mockMediaQueryList = {
       matches: false,
@@ -80,7 +83,7 @@ describe('MediaQueryState', () => {
     it('should handle initialization when browser is false', () => {
       // Browser is false by default in our mock
       const cleanup = mediaQueryState.initialize();
-      
+
       expect(mediaQueryState.initialized).toBe(true);
       expect(mockWindow.matchMedia).not.toHaveBeenCalled();
       expect(cleanup).toBeUndefined();
@@ -122,7 +125,9 @@ describe('MediaQueryState', () => {
       expect(mediaQueryState.isMaxXl).toBe(mediaQueryState.matches('max-xl'));
       expect(mediaQueryState.isMaxXl2).toBe(mediaQueryState.matches('max-2xl'));
       expect(mediaQueryState.canHover).toBe(mediaQueryState.matches('hover'));
-      expect(mediaQueryState.cannotHover).toBe(mediaQueryState.matches('no-hover'));
+      expect(mediaQueryState.cannotHover).toBe(
+        mediaQueryState.matches('no-hover')
+      );
     });
 
     it('should have consistent derived properties', () => {
@@ -135,15 +140,24 @@ describe('MediaQueryState', () => {
   describe('allMatches functionality', () => {
     it('should return complete matches object', () => {
       const allMatches = mediaQueryState.allMatches;
-      
+
       // Should contain all expected breakpoints
       const expectedKeys = [
-        'sm', 'md', 'lg', 'xl', '2xl',
-        'max-sm', 'max-md', 'max-lg', 'max-xl', 'max-2xl',
-        'hover', 'no-hover'
+        'sm',
+        'md',
+        'lg',
+        'xl',
+        '2xl',
+        'max-sm',
+        'max-md',
+        'max-lg',
+        'max-xl',
+        'max-2xl',
+        'hover',
+        'no-hover',
       ];
-      
-      expectedKeys.forEach(key => {
+
+      expectedKeys.forEach((key) => {
         expect(allMatches).toHaveProperty(key);
         expect(typeof allMatches[key]).toBe('boolean');
       });
@@ -152,7 +166,7 @@ describe('MediaQueryState', () => {
     it('should return a copy not the original', () => {
       const allMatches1 = mediaQueryState.allMatches;
       const allMatches2 = mediaQueryState.allMatches;
-      
+
       expect(allMatches1).not.toBe(allMatches2);
       expect(allMatches1).toEqual(allMatches2);
     });
@@ -161,9 +175,9 @@ describe('MediaQueryState', () => {
   describe('initialization state', () => {
     it('should track initialization state', () => {
       expect(mediaQueryState.initialized).toBe(false);
-      
+
       mediaQueryState.initialize();
-      
+
       expect(mediaQueryState.initialized).toBe(true);
     });
   });
@@ -171,7 +185,7 @@ describe('MediaQueryState', () => {
   describe('error handling', () => {
     it('should handle missing window gracefully', () => {
       delete (global as any).window;
-      
+
       expect(() => {
         const newState = new MediaQueryStateClass();
         newState.initialize();
@@ -190,7 +204,7 @@ describe('MediaQueryState', () => {
     it('should return cleanup function when browser is available', () => {
       // Mock browser environment
       vi.doMock('$app/environment', () => ({ browser: true }));
-      
+
       // Since we can't easily test the actual cleanup without complex mocking,
       // we'll just verify the basic functionality works
       expect(() => mediaQueryState.initialize()).not.toThrow();
@@ -201,13 +215,13 @@ describe('MediaQueryState', () => {
     it('should maintain state consistency', () => {
       // Test that the state is internally consistent
       const allMatches = mediaQueryState.allMatches;
-      
+
       // Some logical consistency checks for default SSR state
       if (allMatches['sm']) {
         // If sm is true, max-sm should be false (can't be both >= 640px and < 640px)
         expect(allMatches['max-sm']).toBe(false);
       }
-      
+
       if (allMatches['hover']) {
         // If hover is true, no-hover should be false
         expect(allMatches['no-hover']).toBe(false);
@@ -216,12 +230,21 @@ describe('MediaQueryState', () => {
 
     it('should handle all breakpoint queries', () => {
       const breakpoints = [
-        'sm', 'md', 'lg', 'xl', '2xl',
-        'max-sm', 'max-md', 'max-lg', 'max-xl', 'max-2xl',
-        'hover', 'no-hover'
+        'sm',
+        'md',
+        'lg',
+        'xl',
+        '2xl',
+        'max-sm',
+        'max-md',
+        'max-lg',
+        'max-xl',
+        'max-2xl',
+        'hover',
+        'no-hover',
       ];
-      
-      breakpoints.forEach(bp => {
+
+      breakpoints.forEach((bp) => {
         expect(typeof mediaQueryState.matches(bp)).toBe('boolean');
       });
     });

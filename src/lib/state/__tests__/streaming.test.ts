@@ -3,7 +3,12 @@ import { activeStreams } from '../streaming.svelte.js';
 import type { Source } from '$lib/constants/source.js';
 
 // Mock the Source type constants
-const mockSources: Source[] = ['giantbomb', 'jeffgerstmann', 'nextlander', 'remap'];
+const mockSources: Source[] = [
+  'giantbomb',
+  'jeffgerstmann',
+  'nextlander',
+  'remap',
+];
 
 describe('Streaming State', () => {
   describe('initialization', () => {
@@ -15,7 +20,7 @@ describe('Streaming State', () => {
     it('should have correct structure', () => {
       expect(typeof activeStreams).toBe('object');
       expect(activeStreams).toHaveProperty('sources');
-      
+
       // Verify there are no unexpected properties
       const keys = Object.keys(activeStreams);
       expect(keys).toHaveLength(1);
@@ -43,7 +48,7 @@ describe('Streaming State', () => {
 
     it('should allow removing sources from the array', () => {
       activeStreams.sources = ['giantbomb', 'nextlander', 'remap'];
-      
+
       // Remove middle element
       activeStreams.sources.splice(1, 1);
       expect(activeStreams.sources).toEqual(['giantbomb', 'remap']);
@@ -52,7 +57,7 @@ describe('Streaming State', () => {
     it('should allow replacing entire sources array', () => {
       activeStreams.sources = ['giantbomb', 'nextlander'];
       expect(activeStreams.sources).toEqual(['giantbomb', 'nextlander']);
-      
+
       activeStreams.sources = ['remap', 'jeffgerstmann'];
       expect(activeStreams.sources).toEqual(['remap', 'jeffgerstmann']);
     });
@@ -60,7 +65,7 @@ describe('Streaming State', () => {
     it('should allow clearing all sources', () => {
       activeStreams.sources = ['giantbomb', 'nextlander', 'remap'];
       expect(activeStreams.sources.length).toBe(3);
-      
+
       activeStreams.sources = [];
       expect(activeStreams.sources).toEqual([]);
       expect(activeStreams.sources.length).toBe(0);
@@ -76,16 +81,16 @@ describe('Streaming State', () => {
       // Test push
       activeStreams.sources.push('giantbomb');
       expect(activeStreams.sources.includes('giantbomb')).toBe(true);
-      
+
       // Test pop
       const popped = activeStreams.sources.pop();
       expect(popped).toBe('giantbomb');
       expect(activeStreams.sources.length).toBe(0);
-      
+
       // Test unshift
       activeStreams.sources.unshift('nextlander');
       expect(activeStreams.sources[0]).toBe('nextlander');
-      
+
       // Test shift
       const shifted = activeStreams.sources.shift();
       expect(shifted).toBe('nextlander');
@@ -94,13 +99,19 @@ describe('Streaming State', () => {
 
     it('should support filtering sources', () => {
       activeStreams.sources = ['giantbomb', 'nextlander', 'remap'];
-      
-      const filtered = activeStreams.sources.filter(source => source !== 'nextlander');
+
+      const filtered = activeStreams.sources.filter(
+        (source) => source !== 'nextlander'
+      );
       expect(filtered).toEqual(['giantbomb', 'remap']);
-      
+
       // Original array should remain unchanged until reassigned
-      expect(activeStreams.sources).toEqual(['giantbomb', 'nextlander', 'remap']);
-      
+      expect(activeStreams.sources).toEqual([
+        'giantbomb',
+        'nextlander',
+        'remap',
+      ]);
+
       // Reassign filtered result
       activeStreams.sources = filtered;
       expect(activeStreams.sources).toEqual(['giantbomb', 'remap']);
@@ -108,24 +119,30 @@ describe('Streaming State', () => {
 
     it('should support mapping over sources', () => {
       activeStreams.sources = ['giantbomb', 'nextlander'];
-      
-      const mapped = activeStreams.sources.map(source => source.toUpperCase());
+
+      const mapped = activeStreams.sources.map((source) =>
+        source.toUpperCase()
+      );
       expect(mapped).toEqual(['GIANTBOMB', 'NEXTLANDER']);
     });
 
     it('should support finding sources', () => {
       activeStreams.sources = ['giantbomb', 'nextlander', 'remap'];
-      
-      const found = activeStreams.sources.find(source => source === 'nextlander');
+
+      const found = activeStreams.sources.find(
+        (source) => source === 'nextlander'
+      );
       expect(found).toBe('nextlander');
-      
-      const notFound = activeStreams.sources.find(source => source === ('nonexistent' as any));
+
+      const notFound = activeStreams.sources.find(
+        (source) => source === ('nonexistent' as any)
+      );
       expect(notFound).toBeUndefined();
     });
 
     it('should support checking if source exists', () => {
       activeStreams.sources = ['giantbomb', 'nextlander'];
-      
+
       expect(activeStreams.sources.includes('giantbomb')).toBe(true);
       expect(activeStreams.sources.includes('remap')).toBe(false);
     });
@@ -139,35 +156,43 @@ describe('Streaming State', () => {
     it('should allow duplicate sources if not prevented', () => {
       activeStreams.sources.push('giantbomb');
       activeStreams.sources.push('giantbomb');
-      
+
       expect(activeStreams.sources).toEqual(['giantbomb', 'giantbomb']);
       expect(activeStreams.sources.length).toBe(2);
     });
 
     it('should be able to remove duplicates manually', () => {
       activeStreams.sources = ['giantbomb', 'nextlander', 'giantbomb', 'remap'];
-      
+
       // Remove duplicates using Set
       activeStreams.sources = [...new Set(activeStreams.sources)];
-      
-      expect(activeStreams.sources).toEqual(['giantbomb', 'nextlander', 'remap']);
+
+      expect(activeStreams.sources).toEqual([
+        'giantbomb',
+        'nextlander',
+        'remap',
+      ]);
       expect(activeStreams.sources.length).toBe(3);
     });
 
     it('should handle adding unique sources only', () => {
       activeStreams.sources = ['giantbomb', 'nextlander'];
-      
+
       // Helper function to add unique source
       const addUniqueSource = (source: Source) => {
         if (!activeStreams.sources.includes(source)) {
           activeStreams.sources.push(source);
         }
       };
-      
+
       addUniqueSource('remap'); // Should be added
       addUniqueSource('giantbomb'); // Should not be added (already exists)
-      
-      expect(activeStreams.sources).toEqual(['giantbomb', 'nextlander', 'remap']);
+
+      expect(activeStreams.sources).toEqual([
+        'giantbomb',
+        'nextlander',
+        'remap',
+      ]);
       expect(activeStreams.sources.length).toBe(3);
     });
   });
@@ -179,7 +204,7 @@ describe('Streaming State', () => {
 
     it('should maintain state across multiple reads', () => {
       activeStreams.sources = ['giantbomb', 'nextlander'];
-      
+
       // Read multiple times to ensure consistency
       for (let i = 0; i < 5; i++) {
         expect(activeStreams.sources).toEqual(['giantbomb', 'nextlander']);
@@ -195,8 +220,8 @@ describe('Streaming State', () => {
         ['jeffgerstmann', 'nextlander', 'remap'],
         [],
       ];
-      
-      testCases.forEach(sources => {
+
+      testCases.forEach((sources) => {
         activeStreams.sources = sources as Source[];
         expect(activeStreams.sources).toEqual(sources);
       });
@@ -205,10 +230,10 @@ describe('Streaming State', () => {
     it('should maintain array reference integrity', () => {
       const originalRef = activeStreams.sources;
       activeStreams.sources.push('giantbomb');
-      
+
       // The reference should be the same when modifying in place
       expect(activeStreams.sources).toBe(originalRef);
-      
+
       // But not when reassigning
       activeStreams.sources = ['nextlander'];
       expect(activeStreams.sources).not.toBe(originalRef);
@@ -225,7 +250,7 @@ describe('Streaming State', () => {
       const popped = activeStreams.sources.pop();
       expect(popped).toBeUndefined();
       expect(activeStreams.sources.length).toBe(0);
-      
+
       // Shift from empty array
       const shifted = activeStreams.sources.shift();
       expect(shifted).toBeUndefined();
@@ -237,10 +262,10 @@ describe('Streaming State', () => {
       for (let i = 0; i < 100; i++) {
         largeSources.push(mockSources[i % mockSources.length]);
       }
-      
+
       activeStreams.sources = largeSources;
       expect(activeStreams.sources.length).toBe(100);
-      
+
       // Clear
       activeStreams.sources = [];
       expect(activeStreams.sources.length).toBe(0);
@@ -249,15 +274,23 @@ describe('Streaming State', () => {
     it('should handle mixed operations correctly', () => {
       activeStreams.sources.push('giantbomb');
       expect(activeStreams.sources.length).toBe(1);
-      
+
       activeStreams.sources.unshift('nextlander');
       expect(activeStreams.sources).toEqual(['nextlander', 'giantbomb']);
-      
+
       activeStreams.sources.splice(1, 0, 'remap');
-      expect(activeStreams.sources).toEqual(['nextlander', 'remap', 'giantbomb']);
-      
+      expect(activeStreams.sources).toEqual([
+        'nextlander',
+        'remap',
+        'giantbomb',
+      ]);
+
       activeStreams.sources.reverse();
-      expect(activeStreams.sources).toEqual(['giantbomb', 'remap', 'nextlander']);
+      expect(activeStreams.sources).toEqual([
+        'giantbomb',
+        'remap',
+        'nextlander',
+      ]);
     });
   });
 });
