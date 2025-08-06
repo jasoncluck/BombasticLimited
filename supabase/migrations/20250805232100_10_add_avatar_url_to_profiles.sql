@@ -11,7 +11,6 @@ COMMENT ON COLUMN "public"."profiles"."avatar_url" IS 'Avatar URL from linked Di
 CREATE OR REPLACE FUNCTION public.get_user_identities(user_id uuid)
 RETURNS json
 LANGUAGE plpgsql
-SECURITY DEFINER
 AS $$
 DECLARE
     result json;
@@ -29,7 +28,6 @@ $$;
 CREATE OR REPLACE FUNCTION public.get_discord_avatar_url(user_id uuid)
 RETURNS text
 LANGUAGE plpgsql
-SECURITY DEFINER
 AS $$
 DECLARE
     discord_identity record;
