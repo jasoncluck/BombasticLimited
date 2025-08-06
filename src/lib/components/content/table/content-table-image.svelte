@@ -20,6 +20,7 @@
     loading="lazy"
     decoding="async"
     fetchpriority="auto"
+
   />
   {#if isVideoWithTimestamp(video) && !video.watched_at && video.video_start_seconds && video.duration}
     <Progress

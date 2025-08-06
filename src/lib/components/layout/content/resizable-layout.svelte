@@ -12,6 +12,8 @@
   import type { Snippet } from 'svelte';
   import { ListVideo } from '@lucide/svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
+  import { page } from '$app/state';
+  import { browser } from '$app/environment';
 
   let {
     supabase,
@@ -33,8 +35,10 @@
 
   const sidebarState = getSidebarState();
 
+
   // Use the layout state's sidebar collapsed state
   const isSidebarCollapsed = $derived(layoutState.isSidebarCollapsed);
+
 </script>
 
 <Resizable.PaneGroup
@@ -49,6 +53,7 @@
     maxSize={50}
     collapsedSize={COLLAPSED_SIDEBAR_SIZE}
     collapsible={true}
+
     onCollapse={() => layoutState.setSidebarCollapsed(true)}
     onExpand={() => layoutState.setSidebarCollapsed(false)}
     class="pane @container hidden h-full grow flex-col sm:ml-2 sm:flex {isSidebarCollapsed

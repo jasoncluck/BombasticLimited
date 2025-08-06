@@ -14,14 +14,17 @@
   href={`/playlist/${playlist.short_id}`}
 >
   {#if playlist.processedImageUrl}
-    <img
-      src={playlist.processedImageUrl}
-      alt={playlist.name}
-      class="h-full max-h-16 w-full max-w-16 justify-self-center rounded object-cover"
-    />
+    <div class="h-16 w-16 flex-shrink-0 justify-self-center">
+      <img
+        src={playlist.processedImageUrl}
+        alt={playlist.name}
+        class="h-full w-full rounded object-cover"
+        loading="lazy"
+      />
+    </div>
   {:else}
-    <div class="flex h-12 w-12 items-center justify-center justify-self-center">
-      <ListVideo class="!h-12 !w-12" />
+    <div class="flex h-16 w-16 items-center justify-center justify-self-center rounded bg-muted">
+      <ListVideo class="!h-8 !w-8 text-muted-foreground" />
     </div>
   {/if}
 
