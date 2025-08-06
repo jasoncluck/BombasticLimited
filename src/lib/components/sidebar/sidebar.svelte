@@ -342,9 +342,7 @@
         {#if !isSidebarCollapsed}
           <!-- Full header with exact spacing -->
           <Skeleton class="my-1 h-10 w-10 flex-shrink-0 rounded-full" />
-          <h2
-            class="ml-4 text-lg font-semibold tracking-tight opacity-50"
-          >
+          <h2 class="ml-4 text-lg font-semibold tracking-tight opacity-50">
             Playlists
           </h2>
         {:else}

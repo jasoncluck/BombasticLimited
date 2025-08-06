@@ -199,9 +199,15 @@ SELECT
     (
       SELECT
         COUNT(*)
-      FROM (
-        SELECT * FROM public.get_videos_with_timestamps() LIMIT 0
-      ) AS result
+      FROM
+        (
+          SELECT
+            *
+          FROM
+            public.get_videos_with_timestamps ()
+          LIMIT
+            0
+        ) AS result
     ) >= 0,
     'get_videos_with_timestamps returns expected columns'
   );
@@ -332,9 +338,15 @@ SELECT
     (
       SELECT
         COUNT(*)
-      FROM (
-        SELECT * FROM public.get_in_progress_videos_with_timestamps() LIMIT 0
-      ) AS result
+      FROM
+        (
+          SELECT
+            *
+          FROM
+            public.get_in_progress_videos_with_timestamps ()
+          LIMIT
+            0
+        ) AS result
     ) >= 0,
     'get_in_progress_videos_with_timestamps returns expected columns'
   );
