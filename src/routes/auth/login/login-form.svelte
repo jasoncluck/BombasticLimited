@@ -136,6 +136,7 @@
       <Button
         class="w-full cursor-pointer"
         type="submit"
+        data-testid="login-button"
         disabled={isSubmitting}
       >
         {#if isSubmitting}

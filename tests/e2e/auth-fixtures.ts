@@ -1,5 +1,11 @@
-import { test as base, expect, type Page, type BrowserContext } from '@playwright/test';
+import {
+  test as base,
+  expect,
+  type Page,
+  type BrowserContext,
+} from '@playwright/test';
 import path from 'path';
+import fs from 'fs';
 import { TestDataManager, type TestUser } from './utils/TestDataManager';
 
 export interface AuthenticatedFixtures {
@@ -23,17 +29,24 @@ export const authenticatedTest = base.extend<AuthenticatedFixtures>({
   },
 
   testUser: async ({ testDataManager }, use, workerInfo) => {
-    const testUser = await testDataManager.getOrCreateTestUser(workerInfo.workerIndex);
+    const testUser = await testDataManager.getOrCreateTestUser(
+      workerInfo.workerIndex
+    );
     await use(testUser);
   },
 
   authenticatedContext: async ({ browser }, use, workerInfo) => {
-    const authFile = path.join(process.cwd(), '.auth', `user-${workerInfo.workerIndex}.json`);
-    
+    const authFile = path.join(
+      process.cwd(),
+      '.auth',
+      `user-${workerInfo.workerIndex}.json`
+    );
+
     // Check if auth file exists
-    const fs = require('fs');
     if (!fs.existsSync(authFile)) {
-      throw new Error(`Authentication file not found for worker ${workerInfo.workerIndex}. Make sure global setup ran successfully.`);
+      throw new Error(
+        `Authentication file not found for worker ${workerInfo.workerIndex}. Make sure global setup ran successfully.`
+      );
     }
 
     const context = await browser.newContext({
@@ -68,23 +81,32 @@ export const unauthenticatedTest = base.extend<UnauthenticatedFixtures>({
 });
 
 // Mixed test that can test both authenticated and unauthenticated flows
-export const mixedTest = base.extend<AuthenticatedFixtures & UnauthenticatedFixtures>({
+export const mixedTest = base.extend<
+  AuthenticatedFixtures & UnauthenticatedFixtures
+>({
   testDataManager: async ({}, use) => {
     const manager = new TestDataManager();
     await use(manager);
   },
 
   testUser: async ({ testDataManager }, use, workerInfo) => {
-    const testUser = await testDataManager.getOrCreateTestUser(workerInfo.workerIndex);
+    const testUser = await testDataManager.getOrCreateTestUser(
+      workerInfo.workerIndex
+    );
     await use(testUser);
   },
 
   authenticatedContext: async ({ browser }, use, workerInfo) => {
-    const authFile = path.join(process.cwd(), '.auth', `user-${workerInfo.workerIndex}.json`);
-    
-    const fs = require('fs');
+    const authFile = path.join(
+      process.cwd(),
+      '.auth',
+      `user-${workerInfo.workerIndex}.json`
+    );
+
     if (!fs.existsSync(authFile)) {
-      throw new Error(`Authentication file not found for worker ${workerInfo.workerIndex}.`);
+      throw new Error(
+        `Authentication file not found for worker ${workerInfo.workerIndex}.`
+      );
     }
 
     const context = await browser.newContext({
@@ -115,3 +137,4 @@ export const mixedTest = base.extend<AuthenticatedFixtures & UnauthenticatedFixt
 });
 
 export { expect };
+

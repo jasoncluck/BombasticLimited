@@ -9,12 +9,12 @@ export default defineConfig({
   fullyParallel: true, // Enable parallel execution with isolated auth states
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : 3, // Multiple workers with isolated auth states
+  workers: process.env.CI ? 1 : 1, // Multiple workers with isolated auth states
   reporter: 'html',
 
   // Global setup and teardown for authentication
-  globalSetup: require.resolve('./tests/e2e/auth.setup.ts'),
-  globalTeardown: require.resolve('./tests/e2e/global.teardown.ts'),
+  globalSetup: './tests/e2e/auth.setup.ts',
+  globalTeardown: './tests/e2e/global.teardown.ts',
 
   // Performance optimizations
   timeout: 30000, // Reduce from default 30s if tests don't need it
@@ -52,8 +52,14 @@ export default defineConfig({
     {
       name: 'setup',
       testMatch: /auth\.setup\.ts/,
+      use: {
+        // Enable recording for auth setup
+        screenshot: 'on', // Capture all screenshots
+        video: 'on', // Record all videos
+        trace: 'on', // Enable tracing
+      },
     },
-    
+
     // Main test execution
     {
       name: 'chromium',

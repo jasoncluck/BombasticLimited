@@ -1,65 +1,143 @@
-import { test as setup, expect } from '@playwright/test';
+import { chromium, type FullConfig } from '@playwright/test';
 import path from 'path';
+import fs from 'fs';
 import { TestDataManager } from './utils/TestDataManager';
 
 const authDir = path.join(process.cwd(), '.auth');
 
-setup('authenticate test users', async ({ page }, workerInfo) => {
-  // Create unique authentication state file for this worker
-  const authFile = path.join(authDir, `user-${workerInfo.workerIndex}.json`);
+export default async function globalSetup(config: FullConfig) {
+  console.log('Starting global setup...');
 
-  const testDataManager = new TestDataManager();
-  const testUser = await testDataManager.getOrCreateTestUser(workerInfo.workerIndex);
-
-  console.log(`Setting up authentication for worker ${workerInfo.workerIndex} with user ${testUser.email}`);
-
-  // Navigate to login page
-  await page.goto('/auth/login');
-
-  // Fill in login form
-  await page.getByLabel('Email').fill(testUser.email);
-  await page.getByLabel('Password').fill(testUser.password);
-  
-  // Submit login
-  await page.getByRole('button', { name: 'Sign in' }).click();
-
-  // Wait for successful login and redirect
-  await expect(page).toHaveURL('/');
-  
-  // Verify we're logged in by checking for user-specific elements
-  await expect(page.getByRole('button', { name: /account|profile|logout/i })).toBeVisible({
-    timeout: 10000
-  });
-
-  // Save authentication state
-  await page.context().storageState({ path: authFile });
-  
-  console.log(`Authentication saved for worker ${workerInfo.workerIndex} at ${authFile}`);
-});
-
-setup('cleanup old authentication states', async () => {
-  const fs = require('fs');
-  const path = require('path');
-  
-  const authDir = path.join(process.cwd(), '.auth');
-  
   // Create auth directory if it doesn't exist
   if (!fs.existsSync(authDir)) {
     fs.mkdirSync(authDir, { recursive: true });
-    return;
   }
-  
-  // Clean up old auth files older than 1 hour
-  const files = fs.readdirSync(authDir);
-  const oneHourAgo = Date.now() - (60 * 60 * 1000);
-  
-  for (const file of files) {
-    const filePath = path.join(authDir, file);
-    const stats = fs.statSync(filePath);
-    
-    if (stats.mtime.getTime() < oneHourAgo) {
-      fs.unlinkSync(filePath);
-      console.log(`Cleaned up old auth file: ${file}`);
+
+  // Check if we already have valid auth files - skip setup if they exist and are recent
+  const testDataManager = new TestDataManager();
+  const maxWorkers = Math.max(config.workers || 3, 5);
+
+  console.log(
+    `Checking for existing auth files for up to ${maxWorkers} workers`
+  );
+
+  // Check if all required auth files exist and are recent (less than 24 hours old)
+  const oneHourAgo = Date.now() - 60 * 60 * 1000;
+  const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
+  let allAuthFilesValid = true;
+
+  for (let workerIndex = 0; workerIndex < maxWorkers; workerIndex++) {
+    const authFile = path.join(authDir, `user-${workerIndex}.json`);
+
+    if (!fs.existsSync(authFile)) {
+      allAuthFilesValid = false;
+      break;
+    }
+
+    const stats = fs.statSync(authFile);
+    if (stats.mtime.getTime() < twentyFourHoursAgo) {
+      console.log(
+        `Auth file for worker ${workerIndex} is older than 24 hours, will recreate`
+      );
+      allAuthFilesValid = false;
+      break;
     }
   }
-});
+
+  if (allAuthFilesValid) {
+    console.log('All auth files are valid and recent, skipping auth setup');
+    return;
+  }
+
+  // Clean up old auth files older than 1 hour
+  const files = fs.readdirSync(authDir);
+  for (const file of files) {
+    const filePath = path.join(authDir, file);
+    if (fs.existsSync(filePath)) {
+      const stats = fs.statSync(filePath);
+      if (stats.mtime.getTime() < oneHourAgo) {
+        fs.unlinkSync(filePath);
+        console.log(`Cleaned up old auth file: ${file}`);
+      }
+    }
+  }
+
+  console.log(`Creating/updating auth files for up to ${maxWorkers} workers`);
+
+  for (let workerIndex = 0; workerIndex < maxWorkers; workerIndex++) {
+    const authFile = path.join(authDir, `user-${workerIndex}.json`);
+
+    // Skip if auth file already exists and is recent
+    if (fs.existsSync(authFile)) {
+      const stats = fs.statSync(authFile);
+      if (stats.mtime.getTime() > twentyFourHoursAgo) {
+        console.log(`Skipping worker ${workerIndex} - auth file is recent`);
+        continue;
+      }
+    }
+
+    const browser = await chromium.launch();
+    const context = await browser.newContext();
+    const page = await context.newPage();
+
+    try {
+      const testUser = await testDataManager.getOrCreateTestUser(workerIndex);
+
+      console.log(
+        `Setting up authentication for worker ${workerIndex} with user ${testUser.email}`
+      );
+
+      // Navigate to login page
+      const baseURL =
+        config.projects[0].use?.baseURL || 'http://localhost:5173';
+      await page.goto(`${baseURL}/auth/login`);
+
+      // Wait for the page to be fully loaded
+      await page.waitForLoadState('domcontentloaded');
+
+      // Fill in login form
+      const emailField = page.locator('input[type="email"]');
+      const passwordField = page.locator('input[type="password"]');
+      const loginButton = page.locator('button[type="submit"]');
+
+      await emailField.waitFor({ state: 'visible' });
+      await emailField.fill(testUser.email);
+
+      await passwordField.waitFor({ state: 'visible' });
+      await passwordField.fill(testUser.password);
+
+      // Submit login
+      await loginButton.click();
+
+      // Wait for navigation to complete after login
+      await page.waitForURL((url) => !url.href.includes('/auth/login'), {
+        timeout: 10000,
+      });
+
+      // Wait for the page to be in the authenticated state
+      await page.waitForLoadState('networkidle');
+
+      // Wait for Profile button to confirm authentication
+      await page.waitForSelector('button:has-text("Profile")', {
+        timeout: 5000,
+      });
+
+      console.log('Found Profile button - authentication successful');
+
+      // Save authentication state
+      await context.storageState({ path: authFile });
+
+      console.log(
+        `Authentication saved for worker ${workerIndex} at ${authFile}`
+      );
+    } catch (error) {
+      console.error(`Failed to set up auth for worker ${workerIndex}:`, error);
+      // Continue with other workers
+    } finally {
+      await context.close();
+      await browser.close();
+    }
+  }
+
+  console.log('Global setup completed');
+}
