@@ -1,4 +1,4 @@
-import { unauthenticatedTest as test, expect } from '../auth-fixtures';
+import { unauthenticatedTest as test, expect } from './auth-fixtures';
 
 test.describe('Homepage', () => {
   test('should render main elements on desktop', async ({ unauthenticatedPage }) => {
@@ -102,7 +102,7 @@ test.describe('Homepage', () => {
   });
 
   test('search functionality should navigate to search page', async ({
-    page,
+    unauthenticatedPage,
   }) => {
     await unauthenticatedPage.goto('/');
     await unauthenticatedPage.waitForLoadState('networkidle');
@@ -116,7 +116,7 @@ test.describe('Homepage', () => {
     await searchInput.press('Enter');
 
     // Should navigate to search page
-    await expect(page).toHaveURL(/\/search\/test%20search/);
+    await expect(unauthenticatedPage).toHaveURL(/\/search\/test%20search/);
 
     // Should show search results
     const resultsHeading = unauthenticatedPage.getByRole('heading', { name: /results/i });
@@ -163,7 +163,7 @@ test.describe('Homepage', () => {
     await unauthenticatedPage.goto('/');
 
     // Test "Next slide" button functionality
-    const nextSlideButton = page
+    const nextSlideButton = unauthenticatedPage
       .getByRole('button', { name: 'Next slide' })
       .first();
     await expect(nextSlideButton).toBeVisible();
@@ -280,7 +280,7 @@ test.describe('Homepage', () => {
     await unauthenticatedPage.goto('/');
 
     // Check page title
-    await expect(page).toHaveTitle(/Bombastic/);
+    await expect(unauthenticatedPage).toHaveTitle(/Bombastic/);
 
     // Verify page loads completely
     await unauthenticatedPage.waitForLoadState('networkidle');
@@ -292,7 +292,7 @@ test.describe('Homepage', () => {
   });
 
   test('should maintain layout integrity during interactions', async ({
-    page,
+    unauthenticatedPage,
   }) => {
     await unauthenticatedPage.goto('/');
 

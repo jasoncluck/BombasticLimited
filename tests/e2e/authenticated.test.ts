@@ -1,4 +1,4 @@
-import { authenticatedTest as test, expect } from '../auth-fixtures';
+import { authenticatedTest as test, expect } from './auth-fixtures';
 
 test.describe('Authenticated User Features', () => {
   test('should access account page when authenticated', async ({ authenticatedPage, testUser }) => {

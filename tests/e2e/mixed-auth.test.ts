@@ -1,4 +1,4 @@
-import { mixedTest as test, expect } from '../auth-fixtures';
+import { mixedTest as test, expect } from './auth-fixtures';
 
 test.describe('Mixed Authentication Flows', () => {
   test('should show different UI for authenticated vs unauthenticated users', async ({ 

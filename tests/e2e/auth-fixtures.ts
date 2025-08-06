@@ -1,6 +1,6 @@
-import { test as base, expect, Page, BrowserContext } from '@playwright/test';
+import { test as base, expect, type Page, type BrowserContext } from '@playwright/test';
 import path from 'path';
-import { TestDataManager, type TestUser } from '../utils/TestDataManager';
+import { TestDataManager, type TestUser } from './utils/TestDataManager';
 
 export interface AuthenticatedFixtures {
   authenticatedPage: Page;

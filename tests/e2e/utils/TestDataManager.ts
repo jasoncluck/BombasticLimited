@@ -160,19 +160,39 @@ export class TestDataManager {
    * Creates test playlists for a user
    */
   async createTestPlaylist(userId: string, name: string = 'Test Playlist') {
+    const shortId = `test-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+    
     const { data, error } = await this.supabase
       .from('playlists')
       .insert({
-        user_id: userId,
+        created_by: userId,
         name,
+        short_id: shortId,
         description: 'Test playlist for e2e testing',
-        is_public: false
+        type: 'user' as Database['public']['Enums']['playlist_type']
       })
       .select()
       .single();
 
     if (error) {
       throw new Error(`Failed to create test playlist: ${error.message}`);
+    }
+
+    // Also create user_playlists entry to associate it with the user
+    const { error: userPlaylistError } = await this.supabase
+      .from('user_playlists')
+      .insert({
+        id: data.id,
+        user_id: userId,
+        playlist_position: 0,
+        sort_order: 'asc' as Database['public']['Enums']['playlist_sort_order'],
+        sorted_by: 'position' as Database['public']['Enums']['playlist_sorted_by']
+      });
+
+    if (userPlaylistError) {
+      // Clean up playlist if user_playlists creation fails
+      await this.supabase.from('playlists').delete().eq('id', data.id);
+      throw new Error(`Failed to create user playlist association: ${userPlaylistError.message}`);
     }
 
     return data;
@@ -183,11 +203,33 @@ export class TestDataManager {
    */
   async cleanupUserTestData(userId: string): Promise<void> {
     try {
-      // Clean up playlists
-      await this.supabase
-        .from('playlists')
-        .delete()
+      // Get user playlists first
+      const { data: userPlaylists } = await this.supabase
+        .from('user_playlists')
+        .select('id')
         .eq('user_id', userId);
+
+      if (userPlaylists && userPlaylists.length > 0) {
+        const playlistIds = userPlaylists.map(p => p.id);
+        
+        // Clean up playlist videos
+        await this.supabase
+          .from('playlist_videos')
+          .delete()
+          .in('playlist_id', playlistIds);
+
+        // Clean up user_playlists associations
+        await this.supabase
+          .from('user_playlists')
+          .delete()
+          .eq('user_id', userId);
+
+        // Clean up playlists themselves (only if created by this user)
+        await this.supabase
+          .from('playlists')
+          .delete()
+          .eq('created_by', userId);
+      }
 
       // Add other cleanup operations as needed
     } catch (error) {
