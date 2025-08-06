@@ -15,6 +15,7 @@
   import { handleCreatePlaylist } from '../playlist/playlist-service';
   import Button, { buttonVariants } from '../ui/button/button.svelte';
   import PlaylistContextMenu from '../playlist/playlist-context-menu.svelte';
+  import { Skeleton } from '$lib/components/ui/skeleton';
   import type { Playlist } from '$lib/supabase/playlists';
 
   let {
@@ -253,56 +254,81 @@
 
 <aside class="h-full overflow-hidden">
   <div class="flex flex-col {!isSidebarCollapsed ? 'mx-2' : 'mx-1'}">
-    {#each orderedSources as source, i (source)}
-      <Button
-        variant="ghost"
-        draggable={!!session}
-        class="{sourceState.getButtonClasses({
-          index: i,
-          isSelected: isSourceSelected(source),
-          isSidebarCollapsed,
-        })} {getSourceDragClasses(i)}"
-        size={!isSidebarCollapsed ? 'default' : 'icon'}
-        onclick={() => handleSourceClick(source)}
-        title={SOURCE_INFO[source].displayName}
-        onmouseenter={() => sourceState.handleMouseEnter(i)}
-        onmouseleave={() => sourceState.handleMouseLeave(i)}
-        ondragstart={(e) => handleSourceDragStart(e, i)}
-        ondragover={(e) => handleSourceDragOver(e, i)}
-        ondragleave={(e) => handleSourceDragLeave(e)}
-        ondrop={(e) => handleSourceDrop(e, i)}
-        ondragend={handleSourceDragEnd}
-      >
+    {#if sidebarState.showPlaceholder}
+      <!-- Skeleton sources when loading -->
+      {#each Array(4)}
         <div
-          class="absolute flex grow items-center
-                    {!isSidebarCollapsed ? 'w-full grow' : 'item-center'}"
+          class="flex items-center {!isSidebarCollapsed
+            ? 'h-[56px] px-2 py-1'
+            : 'h-[56px] justify-center px-1 py-1'}"
         >
-          {#if activeStreams.sources.includes(source)}
-            <Circle
-              class="absolute bottom-0 left-0"
-              fill="#eb0400"
-              strokeWidth={0}
-            />
-          {/if}
-          <span class="sr-only">Live now</span>
-
-          <div class="h-12 w-12 shrink-0">
-            <enhanced:img
-              src={SOURCE_INFO[source].image}
-              alt={SOURCE_INFO[source].displayName}
-              class="h-full w-full cursor-pointer object-cover"
-            />
-          </div>
           {#if !isSidebarCollapsed}
-            <span
-              class="mr-6 max-h-10 justify-start overflow-hidden px-3 text-left text-sm text-wrap"
-            >
-              {SOURCE_INFO[source].displayName}
-            </span>
+            <!-- Full width source item skeleton with exact spacing -->
+            <div class="flex w-full items-center space-x-3">
+              <Skeleton class="h-12 w-12 flex-shrink-0 rounded" />
+              <div class="min-w-0 flex-1">
+                <Skeleton class="h-4 w-full" />
+              </div>
+            </div>
+          {:else}
+            <!-- Collapsed source item skeleton -->
+            <Skeleton class="h-12 w-12 flex-shrink-0 rounded" />
           {/if}
         </div>
-      </Button>
-    {/each}
+      {/each}
+    {:else}
+      <!-- Real sources -->
+      {#each orderedSources as source, i (source)}
+        <Button
+          variant="ghost"
+          draggable={!!session}
+          class="{sourceState.getButtonClasses({
+            index: i,
+            isSelected: isSourceSelected(source),
+            isSidebarCollapsed,
+          })} {getSourceDragClasses(i)}"
+          size={!isSidebarCollapsed ? 'default' : 'icon'}
+          onclick={() => handleSourceClick(source)}
+          title={SOURCE_INFO[source].displayName}
+          onmouseenter={() => sourceState.handleMouseEnter(i)}
+          onmouseleave={() => sourceState.handleMouseLeave(i)}
+          ondragstart={(e) => handleSourceDragStart(e, i)}
+          ondragover={(e) => handleSourceDragOver(e, i)}
+          ondragleave={(e) => handleSourceDragLeave(e)}
+          ondrop={(e) => handleSourceDrop(e, i)}
+          ondragend={handleSourceDragEnd}
+        >
+          <div
+            class="absolute flex grow items-center
+                      {!isSidebarCollapsed ? 'w-full grow' : 'item-center'}"
+          >
+            {#if activeStreams.sources.includes(source)}
+              <Circle
+                class="absolute bottom-0 left-0"
+                fill="#eb0400"
+                strokeWidth={0}
+              />
+            {/if}
+            <span class="sr-only">Live now</span>
+
+            <div class="h-12 w-12 shrink-0">
+              <enhanced:img
+                src={SOURCE_INFO[source].image}
+                alt={SOURCE_INFO[source].displayName}
+                class="h-full w-full cursor-pointer object-cover"
+              />
+            </div>
+            {#if !isSidebarCollapsed}
+              <span
+                class="mr-6 max-h-10 justify-start overflow-hidden px-3 text-left text-sm text-wrap"
+              >
+                {SOURCE_INFO[source].displayName}
+              </span>
+            {/if}
+          </div>
+        </Button>
+      {/each}
+    {/if}
   </div>
   <hr class="m-2" />
   <div
@@ -311,7 +337,21 @@
       : 'items-center'}"
   >
     <div class="flex h-[44px] items-center">
-      {#if !session?.user.id}
+      {#if sidebarState.showPlaceholder}
+        <!-- Skeleton playlist header when loading-->
+        {#if !isSidebarCollapsed}
+          <!-- Full header with exact spacing -->
+          <Skeleton class="my-1 h-10 w-10 flex-shrink-0 rounded-full" />
+          <h2
+            class="ml-4 text-lg font-semibold tracking-tight opacity-50"
+          >
+            Playlists
+          </h2>
+        {:else}
+          <!-- Collapsed header - centered circle -->
+          <Skeleton class="my-1 h-10 w-10 flex-shrink-0 rounded-full" />
+        {/if}
+      {:else if !session?.user.id}
         <Popover.Root>
           <Popover.Trigger
             class={buttonVariants({
@@ -338,7 +378,7 @@
           <Plus />
         </Button>
       {/if}
-      {#if !isSidebarCollapsed}
+      {#if !isSidebarCollapsed && !sidebarState.showPlaceholder}
         <h2 class="ml-4 text-lg font-semibold tracking-tight">Playlists</h2>
       {/if}
     </div>
@@ -354,7 +394,64 @@
       : 'border-transparent'}"
   >
     <div class="flex flex-col">
-      {#if sidebarState.playlists === null}
+      {#if sidebarState.showPlaceholder}
+        <!-- Skeleton playlists when loading -->
+        {#each Array(6), i}
+          <!-- Simulate Button component structure -->
+          <div
+            class="focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground relative inline-flex items-center justify-center rounded-md text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-1 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 {!isSidebarCollapsed
+              ? 'h-[56px] px-2 py-1'
+              : 'h-[56px] w-10 justify-center px-1 py-1'}"
+          >
+            <div
+              class="absolute flex grow items-center
+                {!isSidebarCollapsed ? 'w-full grow' : 'item-center'}"
+            >
+              {#if !isSidebarCollapsed}
+                <!-- Full width playlist item skeleton -->
+                <div class="flex w-full items-center space-x-3">
+                  <div
+                    class="flex h-12 w-12 flex-shrink-0 items-center justify-center"
+                  >
+                    <!-- Show ListVideo more frequently to match real behavior -->
+                    {#if i % 3 === 0}
+                      <Skeleton class="h-12 w-12 rounded" />
+                    {:else}
+                      <div
+                        class="bg-muted flex h-12 w-12 animate-pulse items-center justify-center rounded"
+                      >
+                        <ListVideo
+                          class="text-muted-foreground h-8 w-8 opacity-50"
+                        />
+                      </div>
+                    {/if}
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <Skeleton class="h-4 w-full" />
+                  </div>
+                </div>
+              {:else}
+                <!-- Collapsed playlist item skeleton -->
+                <div
+                  class="flex h-12 w-12 flex-shrink-0 items-center justify-center"
+                >
+                  {#if i % 3 === 0}
+                    <Skeleton class="h-12 w-12 rounded" />
+                  {:else}
+                    <div
+                      class="bg-muted flex h-12 w-12 animate-pulse items-center justify-center rounded"
+                    >
+                      <ListVideo
+                        class="text-muted-foreground h-8 w-8 opacity-50"
+                      />
+                    </div>
+                  {/if}
+                </div>
+              {/if}
+            </div>
+          </div>
+        {/each}
+      {:else if sidebarState.playlists === null}
         <Loader class="w-full animate-spin" />
       {:else if session && sidebarState.playlists.length > 0}
         <div class="flex flex-col">
