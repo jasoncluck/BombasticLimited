@@ -30,6 +30,10 @@ export class SidebarStateClass {
   #initialized = $state(false);
   #hasLoadedOnce = $state(false); // Track if we've loaded data at least once
 
+  // Sidebar state properties
+  collapsed = $state(false);
+  openAccountDrawer = $state(false);
+
   // Derived values for easier access
   playlists = $derived(this.data?.playlists ?? []);
   userProfile = $derived(this.data?.userProfile ?? null);
@@ -42,7 +46,90 @@ export class SidebarStateClass {
   // Source ordering state
   orderedSources = $state<Source[]>([]);
 
-  constructor() {}
+  constructor() {
+    // Initialize sidebar state from cookie on construction
+    this.loadStateFromCookie();
+  }
+
+  /**
+   * Load sidebar state from cookie
+   */
+  private loadStateFromCookie(): void {
+    // In tests, check if document exists instead of browser flag
+    if (typeof document === 'undefined') return;
+
+    try {
+      const cookies = document.cookie.split(';');
+      const sidebarCookie = cookies.find((cookie) =>
+        cookie.trim().startsWith(`${SIDEBAR_COOKIE_NAME}=`)
+      );
+
+      if (sidebarCookie) {
+        const cookieValue = sidebarCookie.split('=')[1];
+        const state: SidebarCookieState = JSON.parse(decodeURIComponent(cookieValue));
+        this.collapsed = state.collapsed ?? false;
+      }
+    } catch (error) {
+      console.error('Failed to load sidebar state from cookie:', error);
+      this.collapsed = false; // Default to expanded if cookie is malformed
+    }
+  }
+
+  /**
+   * Save sidebar state to cookie
+   */
+  saveStateToCookie(collapsed: boolean, defaultSize?: number): void {
+    // In tests, check if document exists instead of browser flag
+    if (typeof document === 'undefined') return;
+
+    const state: SidebarCookieState = { collapsed };
+    if (defaultSize !== undefined) {
+      state.defaultSize = defaultSize;
+    }
+
+    const cookieValue = encodeURIComponent(JSON.stringify(state));
+    document.cookie = `${SIDEBAR_COOKIE_NAME}=${cookieValue}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+  }
+
+  /**
+   * Get default size from cookie
+   */
+  getDefaultSizeFromCookie(): number | undefined {
+    // In tests, check if document exists instead of browser flag
+    if (typeof document === 'undefined') return undefined;
+
+    try {
+      const cookies = document.cookie.split(';');
+      const sidebarCookie = cookies.find((cookie) =>
+        cookie.trim().startsWith(`${SIDEBAR_COOKIE_NAME}=`)
+      );
+
+      if (sidebarCookie) {
+        const cookieValue = sidebarCookie.split('=')[1];
+        const state: SidebarCookieState = JSON.parse(decodeURIComponent(cookieValue));
+        return state.defaultSize;
+      }
+    } catch (error) {
+      console.error('Failed to get default size from cookie:', error);
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Set collapsed state and save to cookie
+   */
+  setCollapsed(collapsed: boolean, defaultSize?: number): void {
+    this.collapsed = collapsed;
+    this.saveStateToCookie(collapsed, defaultSize);
+  }
+
+  /**
+   * Toggle collapsed state
+   */
+  toggleCollapsed(): void {
+    this.setCollapsed(!this.collapsed);
+  }
 
   // Initialize effects (should be called when component is mounted)
   initializeEffects() {

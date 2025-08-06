@@ -222,4 +222,101 @@ describe('Layout Cookie Persistence', () => {
       }
     });
   });
+
+  describe('Unified Layout State persistence', () => {
+    it('should save unified layout state with panes and sidebar collapsed state', () => {
+      const sizes = [250, 750];
+      const collapsed = true;
+      
+      layoutState.saveUnifiedLayoutState(sizes, collapsed);
+      
+      // Check that cookie was set with unified format
+      expect(document.cookie).toContain('PaneForge:layout=');
+      
+      // Parse the cookie to verify structure
+      const cookies = document.cookie.split('; ');
+      const layoutCookie = cookies.find(c => c.startsWith('PaneForge:layout='));
+      expect(layoutCookie).toBeDefined();
+      
+      if (layoutCookie) {
+        const [, value] = layoutCookie.split('=');
+        const state = JSON.parse(decodeURIComponent(value));
+        expect(state.panes).toEqual([250, 750]);
+        expect(state.sidebarCollapsed).toBe(true);
+      }
+    });
+
+    it('should load unified layout state from cookie', () => {
+      // Set up a unified layout cookie
+      const unifiedState = {
+        panes: [300, 700],
+        sidebarCollapsed: false
+      };
+      document.cookie = `PaneForge:layout=${JSON.stringify(unifiedState)}; path=/`;
+      
+      const loadedState = layoutState.loadUnifiedLayoutState();
+      
+      expect(loadedState).toEqual({
+        panes: [300, 700],
+        sidebarCollapsed: false
+      });
+    });
+
+    it('should handle legacy format (array of numbers) in loadUnifiedLayoutState', () => {
+      // Set up a legacy format cookie (just array of numbers)
+      const legacySizes = [400, 600];
+      document.cookie = `PaneForge:layout=${JSON.stringify(legacySizes)}; path=/`;
+      
+      const loadedState = layoutState.loadUnifiedLayoutState();
+      
+      expect(loadedState).toEqual({
+        panes: [400, 600],
+        sidebarCollapsed: false // Should default to false for legacy
+      });
+    });
+
+    it('should return null when no layout cookie exists', () => {
+      const loadedState = layoutState.loadUnifiedLayoutState();
+      expect(loadedState).toBeNull();
+    });
+
+    it('should handle malformed cookies gracefully', () => {
+      // Set malformed cookie
+      document.cookie = 'PaneForge:layout=invalid-json';
+      
+      const loadedState = layoutState.loadUnifiedLayoutState();
+      expect(loadedState).toBeNull();
+    });
+
+    it('should update unified state when onLayoutChange is called', () => {
+      // First set sidebar to collapsed
+      layoutState.setSidebarCollapsed(true);
+      
+      // Then trigger layout change
+      const newSizes = [200, 800];
+      layoutState.onLayoutChange(newSizes);
+      
+      // Verify the unified state was saved
+      const loadedState = layoutState.loadUnifiedLayoutState();
+      expect(loadedState).toEqual({
+        panes: [200, 800],
+        sidebarCollapsed: true
+      });
+    });
+
+    it('should update unified state when sidebar collapsed state changes', () => {
+      // First set some pane sizes
+      layoutState.onLayoutChange([350, 650]);
+      
+      // Then change sidebar state
+      layoutState.setSidebarCollapsed(true);
+      
+      // Verify the unified state includes both
+      const loadedState = layoutState.loadUnifiedLayoutState();
+      expect(loadedState).toEqual({
+        panes: [350, 650],
+        sidebarCollapsed: true
+      });
+    });
+  });
 });

@@ -13,6 +13,12 @@ export interface LayoutConfig {
   searchDebounceMs: number;
 }
 
+// Unified layout and sidebar state for persistence
+export interface UnifiedLayoutState {
+  panes: number[];
+  sidebarCollapsed: boolean;
+}
+
 export interface LayoutState {
   // UI State
   isDraggingDivider: boolean;
@@ -38,6 +44,10 @@ export interface LayoutState {
   setSidebarCollapsed: (collapsed: boolean) => void;
   toggleSidebar: () => void;
 
+  // Unified persistence methods
+  saveUnifiedLayoutState: (sizes: number[], sidebarCollapsed: boolean) => void;
+  loadUnifiedLayoutState: () => UnifiedLayoutState | null;
+
   // Notification setup
   setupNotifications: (supabase: SupabaseClient) => () => void;
   setupStreamingNotifications: () => void;
@@ -60,34 +70,82 @@ export class LayoutStateClass implements LayoutState {
   });
 
   constructor() {
-    // Initialize sidebar state from cookie on construction
-    this.isSidebarCollapsed = this.readSidebarStateFromCookie();
+    // Initialize sidebar state from unified layout state on construction
+    this.loadInitialState();
   }
 
-  private readSidebarStateFromCookie(): boolean {
-    if (!browser) return false;
+  private loadInitialState(): void {
+    const unifiedState = this.loadUnifiedLayoutState();
+    if (unifiedState) {
+      this.isSidebarCollapsed = unifiedState.sidebarCollapsed;
+    }
+  }
 
-    const cookies = document.cookie.split(';');
-    const sidebarCookie = cookies.find((cookie) =>
-      cookie.trim().startsWith('sidebar:collapsed=')
-    );
+  /**
+   * Load unified layout state from cookie
+   */
+  loadUnifiedLayoutState(): UnifiedLayoutState | null {
+    if (!browser && typeof document === 'undefined') return null;
 
-    if (sidebarCookie) {
-      return sidebarCookie.split('=')[1] === 'true';
+    try {
+      const cookies = document.cookie.split(';');
+      const layoutCookie = cookies.find((cookie) =>
+        cookie.trim().startsWith('PaneForge:layout=')
+      );
+
+      if (layoutCookie) {
+        const cookieValue = layoutCookie.split('=')[1];
+        const parsed = JSON.parse(decodeURIComponent(cookieValue));
+        
+        // Handle the new unified format
+        if (parsed && typeof parsed === 'object' && parsed.panes && Array.isArray(parsed.panes)) {
+          return {
+            panes: parsed.panes,
+            sidebarCollapsed: parsed.sidebarCollapsed ?? false
+          };
+        }
+        
+        // Handle legacy format (just array of numbers)
+        if (Array.isArray(parsed)) {
+          return {
+            panes: parsed,
+            sidebarCollapsed: false // Default to expanded for legacy
+          };
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load unified layout state from cookie:', error);
     }
 
-    return false; // default to expanded
+    return null;
   }
 
-  private saveSidebarStateToCookie(collapsed: boolean): void {
-    if (browser) {
-      document.cookie = `sidebar:collapsed=${collapsed}; path=/; max-age=31536000`; // 1 year expiry
+  /**
+   * Save unified layout state to cookie
+   */
+  saveUnifiedLayoutState(sizes: number[], sidebarCollapsed: boolean): void {
+    if (!browser && typeof document === 'undefined') return;
+
+    const unifiedState: UnifiedLayoutState = {
+      panes: sizes,
+      sidebarCollapsed
+    };
+
+    try {
+      const cookieValue = JSON.stringify(unifiedState);
+      const hostname = page?.url?.hostname || 'localhost';
+      document.cookie = `PaneForge:layout=${cookieValue}; path=/; domain=${hostname}; max-age=31536000`; // 1 year expiry
+    } catch (error) {
+      console.error('Failed to save unified layout state to cookie:', error);
     }
   }
 
   setSidebarCollapsed = (collapsed: boolean): void => {
     this.isSidebarCollapsed = collapsed;
-    this.saveSidebarStateToCookie(collapsed);
+    // Update the unified state with current pane sizes
+    const currentState = this.loadUnifiedLayoutState();
+    const currentPanes = currentState?.panes || [15, 85]; // Default pane sizes
+    this.saveUnifiedLayoutState(currentPanes, collapsed);
   };
 
   toggleSidebar = (): void => {
@@ -181,7 +239,8 @@ export class LayoutStateClass implements LayoutState {
   }
 
   onLayoutChange(sizes: number[]) {
-    document.cookie = `PaneForge:layout=${JSON.stringify(sizes)}; path=/; domain=${page.url.hostname}`;
+    // Save both pane sizes and current sidebar collapsed state
+    this.saveUnifiedLayoutState(sizes, this.isSidebarCollapsed);
   }
 
   setupNotifications(supabase: SupabaseClient) {
