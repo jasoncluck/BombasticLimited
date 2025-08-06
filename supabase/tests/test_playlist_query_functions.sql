@@ -15,7 +15,7 @@ BEGIN;
 
 -- Plan the number of tests
 SELECT
-  plan (29);
+  plan (20);
 
 -- ============================================================================
 -- Test Setup: Create test data
