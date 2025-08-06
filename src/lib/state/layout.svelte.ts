@@ -7,6 +7,7 @@ import { isSourceArray, SOURCE_INFO } from '$lib/constants/source';
 import { activeStreams } from '$lib/state/streaming.svelte';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { source } from 'sveltekit-sse';
+import { browser } from '$app/environment';
 
 export interface LayoutConfig {
   searchDebounceMs: number;
@@ -15,11 +16,12 @@ export interface LayoutConfig {
 export interface LayoutState {
   // UI State
   isDraggingDivider: boolean;
-  isSearching: boolean; // NEW: Track search state
+  isSearching: boolean;
+  isSidebarCollapsed: boolean; // Add sidebar collapse state
 
   // Search state
   currentDebouncedSearch: ReturnType<typeof debounce> | null;
-  searchAbortController: AbortController | null; // NEW: For canceling requests
+  searchAbortController: AbortController | null;
 
   // Configuration
   config: LayoutConfig;
@@ -31,6 +33,10 @@ export interface LayoutState {
 
   // Layout methods
   onLayoutChange: (sizes: number[]) => void;
+
+  // Sidebar methods
+  setSidebarCollapsed: (collapsed: boolean) => void;
+  toggleSidebar: () => void;
 
   // Notification setup
   setupNotifications: (supabase: SupabaseClient) => () => void;
@@ -45,12 +51,48 @@ export class LayoutStateClass implements LayoutState {
 
   isDraggingDivider = $state(false);
   isSearching = $state(false);
+  isSidebarCollapsed = $state(false);
   currentDebouncedSearch = $state<ReturnType<typeof debounce> | null>(null);
-  searchAbortController = $state<AbortController | null>(null); // NEW
+  searchAbortController = $state<AbortController | null>(null);
 
   config = $state<LayoutConfig>({
     searchDebounceMs: 400,
   });
+
+  constructor() {
+    // Initialize sidebar state from cookie on construction
+    this.isSidebarCollapsed = this.readSidebarStateFromCookie();
+  }
+
+  private readSidebarStateFromCookie(): boolean {
+    if (!browser) return false;
+
+    const cookies = document.cookie.split(';');
+    const sidebarCookie = cookies.find((cookie) =>
+      cookie.trim().startsWith('sidebar:collapsed=')
+    );
+
+    if (sidebarCookie) {
+      return sidebarCookie.split('=')[1] === 'true';
+    }
+
+    return false; // default to expanded
+  }
+
+  private saveSidebarStateToCookie(collapsed: boolean): void {
+    if (browser) {
+      document.cookie = `sidebar:collapsed=${collapsed}; path=/; max-age=31536000`; // 1 year expiry
+    }
+  }
+
+  setSidebarCollapsed = (collapsed: boolean): void => {
+    this.isSidebarCollapsed = collapsed;
+    this.saveSidebarStateToCookie(collapsed);
+  };
+
+  toggleSidebar = (): void => {
+    this.setSidebarCollapsed(!this.isSidebarCollapsed);
+  };
 
   async handleLogout(supabase: SupabaseClient) {
     const { error } = await supabase.auth.signOut();
@@ -139,7 +181,7 @@ export class LayoutStateClass implements LayoutState {
   }
 
   onLayoutChange(sizes: number[]) {
-    document.cookie = `PaneForge:layout=${JSON.stringify(sizes)}; path=/; max-age=${60 * 60 * 24 * 7}`;
+    document.cookie = `PaneForge:layout=${JSON.stringify(sizes)}; path=/; domain=${page.url.hostname}`;
   }
 
   setupNotifications(supabase: SupabaseClient) {
@@ -199,6 +241,7 @@ export class LayoutStateClass implements LayoutState {
   }
 
   cleanup() {
+    // Cancel any pending search operations
     if (this.currentDebouncedSearch?.isPending) {
       this.currentDebouncedSearch.clear();
     }
@@ -206,6 +249,11 @@ export class LayoutStateClass implements LayoutState {
       this.searchAbortController.abort();
       this.searchAbortController = null;
     }
+
+    // Reset search state but preserve sidebar collapsed state
+    this.isSearching = false;
+    this.isDraggingDivider = false;
+    // Note: Don't reset isSidebarCollapsed - it should persist across page refreshes
   }
 }
 

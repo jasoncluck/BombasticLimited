@@ -22,23 +22,8 @@
 
   import '../app.css';
   import { setNavigationCacheState } from '$lib/state/navigation-cache/index.js';
-  import { page } from '$app/stores';
-  import { replaceState } from '$app/navigation';
-  import { tabVisibility } from '$lib/utils/tab-visibility.js';
 
   injectSpeedInsights();
-
-  // Dev-only mode fix for hot reloading
-  if (import.meta.hot) {
-    import.meta.hot.on('vite:beforeUpdate', () => {
-      // Clear service worker caches on hot reload
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.controller?.postMessage({
-          type: 'CLEAR_ALL_CACHES',
-        });
-      }
-    });
-  }
 
   let { data, children } = $props();
   let {
@@ -71,11 +56,10 @@
   let searchQuery = $state('');
   // Progressive loading states
   let isHydrated = $state(false);
-  let forceShowUI = $state(false); // Development fallback
 
-  // More granular loading states with development fallbacks
+  // More granular loading states
   const loadingStates = $derived.by(() => {
-    const states = {
+    return {
       mediaQuery: mediaQuery.initialized,
       sidebar: sidebarState.initialized,
       sidebarData: sidebarState.isDataLoaded,
@@ -85,14 +69,6 @@
       canShowFullUI:
         isHydrated && mediaQuery.initialized && sidebarState.initialized,
     };
-    
-    // Development mode: Force show UI after timeout to prevent infinite loading
-    if (import.meta.env.DEV && forceShowUI) {
-      states.canShowBasicUI = true;
-      states.canShowFullUI = true;
-    }
-    
-    return states;
   });
 
   // Use custom hooks
@@ -193,128 +169,29 @@
     }
   });
 
-  // Handle logout parameter (for account deletion)
-  $effect(() => {
-    if (
-      typeof window !== 'undefined' &&
-      $page.url.searchParams.get('logout') === 'true'
-    ) {
-      // Clear the URL parameter using SvelteKit's replaceState
-      const url = new URL(window.location.href);
-      url.searchParams.delete('logout');
-      replaceState(url.toString(), {});
-
-      // Force a full page reload to clear any cached auth state
-      window.location.reload();
-    }
-  });
-
-  // Development mode: Monitor loading states and force UI if stuck
-  if (import.meta.env.DEV) {
-    $effect(() => {
-      // Only monitor after hydration starts
-      if (!isHydrated) return;
-
-      const checkStates = () => {
-        const states = {
-          isHydrated,
-          mediaQuery: mediaQuery.initialized,
-          sidebar: sidebarState.initialized,
-          canShowBasicUI: loadingStates.canShowBasicUI,
-          canShowFullUI: loadingStates.canShowFullUI,
-        };
-        
-        console.log('🔍 Loading state check:', states);
-        
-        // Force UI if we're stuck in any loading state for too long
-        if (isHydrated && (!loadingStates.canShowBasicUI || !loadingStates.canShowFullUI)) {
-          console.warn('⚠️ Loading states seem stuck, will force UI soon...');
-        }
-      };
-
-      // Check states periodically in development
-      const interval = setInterval(checkStates, 2000);
-      
-      return () => {
-        clearInterval(interval);
-      };
-    });
-  }
+  // Progressive initialization with proper async handling
   onMount(() => {
     // Mark as hydrated immediately
     isHydrated = true;
 
-    // Development mode: Add timeout fallback to prevent infinite loading
-    let fallbackTimeout: ReturnType<typeof setTimeout> | undefined;
-    if (import.meta.env.DEV) {
-      fallbackTimeout = setTimeout(() => {
-        console.warn('🚨 Layout loading timeout - forcing UI to show (development mode)');
-        console.log('Current loading states:', {
-          isHydrated,
-          mediaQuery: mediaQuery.initialized,
-          sidebar: sidebarState.initialized,
-          sidebarData: sidebarState.isDataLoaded,
-        });
-        forceShowUI = true;
-      }, 5000); // 5 second timeout in development
-    }
-
-    // Track initialization progress for debugging
-    if (import.meta.env.DEV) {
-      console.log('🔄 Layout initialization starting...');
-      console.log('Initial states:', {
-        isHydrated,
-        mediaQuery: mediaQuery.initialized,
-        sidebar: sidebarState.initialized,
-      });
-    }
-
     // Initialize media queries immediately (fast, synchronous)
     const mediaCleanup = mediaQuery.initialize();
-    
-    if (import.meta.env.DEV) {
-      console.log('✅ Media query initialized:', mediaQuery.initialized);
-    }
 
     // Initialize sidebar non-blocking (fast UI, loads data in background)
     const sidebarCleanup = sidebarState.initializeNonBlocking();
-    sidebarState.initializeEffects();
-    
-    if (import.meta.env.DEV) {
-      console.log('✅ Sidebar initialized:', sidebarState.initialized);
-    }
 
-    // Initialize layout effects asynchronously - don't block UI
+    // Initialize layout effects asynchronously
     let layoutCleanup: (() => void) | undefined;
 
-    // Handle the promise properly - but don't block the UI on this
-    const initializeLayoutEffects = async () => {
-      try {
-        layoutCleanup = await layoutEffects.initializeLayout();
-        if (import.meta.env.DEV) {
-          console.log('✅ Layout effects initialized');
-          // Clear the fallback timeout since we're now ready
-          if (fallbackTimeout) {
-            clearTimeout(fallbackTimeout);
-            fallbackTimeout = undefined;
-          }
-        }
-      } catch (error) {
-        console.error('❌ Failed to initialize layout effects:', error);
-        // In development, still show UI even if layout effects fail
-        if (import.meta.env.DEV) {
-          console.warn('Forcing UI to show despite layout effects failure');
-          forceShowUI = true;
-          if (fallbackTimeout) {
-            clearTimeout(fallbackTimeout);
-            fallbackTimeout = undefined;
-          }
-        }
-      }
-    };
-
-    // Start layout effects initialization but don't wait for it
-    initializeLayoutEffects();
+    // Handle the promise properly
+    layoutEffects
+      .initializeLayout()
+      .then((cleanup) => {
+        layoutCleanup = cleanup;
+      })
+      .catch((error) => {
+        console.error('Failed to initialize layout effects:', error);
+      });
 
     // Add simple debug helpers in development (optional)
     if (import.meta.env.DEV) {
@@ -332,78 +209,12 @@
             });
           }
         },
-        // Add new debug helpers for loading states
-        loadingStates: () => ({
-          isHydrated,
-          forceShowUI,
-          ...loadingStates,
-        }),
-        forceShowUI: () => {
-          console.log('🔧 Manually forcing UI to show');
-          forceShowUI = true;
-        },
       };
       console.log('🔧 Cache debug tools available at window.cacheDebug');
-      console.log('🔧 Use window.cacheDebug.forceShowUI() to manually show UI');
-      console.log('🔧 Use window.cacheDebug.loadingStates() to check states');
     }
 
-    // Setup service worker message handling for tab visibility
-    if ('serviceWorker' in navigator) {
-      const handleServiceWorkerMessage = (event: MessageEvent) => {
-        const { type } = event.data || {};
-
-        if (type === 'REQUEST_TAB_VISIBILITY') {
-          // Respond with current tab visibility state
-          event.ports[0]?.postMessage({
-            type: 'TAB_VISIBILITY_RESPONSE',
-            isVisible: tabVisibility.isVisible,
-          });
-        } else if (type === 'REQUEST_AUTH_STATE') {
-          // Respond with current auth state
-          event.ports[0]?.postMessage({
-            type: 'AUTH_STATE_RESPONSE',
-            isAuthenticated: !!user,
-          });
-        }
-      };
-
-      navigator.serviceWorker.addEventListener(
-        'message',
-        handleServiceWorkerMessage
-      );
-
-      // Cleanup service worker listener
-      const cleanupServiceWorker = () => {
-        navigator.serviceWorker.removeEventListener(
-          'message',
-          handleServiceWorkerMessage
-        );
-      };
-
-      // Add to cleanup list
-      return () => {
-        if (fallbackTimeout) {
-          clearTimeout(fallbackTimeout);
-        }
-        if (mediaCleanup && typeof mediaCleanup === 'function') {
-          mediaCleanup();
-        }
-        if (sidebarCleanup && typeof sidebarCleanup === 'function') {
-          sidebarCleanup();
-        }
-        if (layoutCleanup && typeof layoutCleanup === 'function') {
-          layoutCleanup();
-        }
-        cleanupServiceWorker();
-      };
-    }
-
-    // Return cleanup function for non-service worker case
+    // Return cleanup function
     return () => {
-      if (fallbackTimeout) {
-        clearTimeout(fallbackTimeout);
-      }
       if (mediaCleanup && typeof mediaCleanup === 'function') {
         mediaCleanup();
       }
@@ -447,21 +258,11 @@
     <!-- Basic hydration but waiting for media queries -->
     <div class="flex h-[calc(100dvh-60px)] w-full items-center justify-center">
       <Loader size="lg" message="Setting up interface..." />
-      {#if import.meta.env.DEV}
-        <div class="absolute bottom-4 text-xs text-gray-500">
-          Debug: mediaQuery={mediaQuery.initialized}, hydrated={isHydrated}
-        </div>
-      {/if}
     </div>
   {:else if !loadingStates.canShowFullUI}
     <!-- Show minimal UI while sidebar initializes -->
     <div class="flex h-[calc(100dvh-60px)] w-full items-center justify-center">
       <Loader size="md" message="Almost ready..." />
-      {#if import.meta.env.DEV}
-        <div class="absolute bottom-4 text-xs text-gray-500">
-          Debug: sidebar={sidebarState.initialized}, loading={sidebarState.loading}
-        </div>
-      {/if}
     </div>
   {:else}
     <!-- Full UI - sidebar may still be loading data -->

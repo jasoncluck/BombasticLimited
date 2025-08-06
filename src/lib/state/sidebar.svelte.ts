@@ -6,7 +6,10 @@ import { getContext, setContext } from 'svelte';
 import { browser } from '$app/environment';
 import type { Source } from '$lib/constants/source';
 import { tabVisibility } from '$lib/utils/tab-visibility.js';
-import { SIDEBAR_COOKIE_NAME, SIDEBAR_COOKIE_MAX_AGE } from '$lib/components/ui/sidebar/constants';
+import {
+  SIDEBAR_COOKIE_NAME,
+  SIDEBAR_COOKIE_MAX_AGE,
+} from '$lib/components/ui/sidebar/constants';
 
 export interface SidebarData {
   playlists: Playlist[];
@@ -32,10 +35,6 @@ export class SidebarStateClass {
   userProfile = $derived(this.data?.userProfile ?? null);
   userPlaylistsCount = $derived(this.data?.userPlaylistsCount ?? 0);
 
-  // UI state
-  collapsed = $state(false);
-  openAccountDrawer = $state(false);
-
   // Drag and drop state
   draggedSourceIndex = $state<number | null>(null);
   targetSourceIndex = $state<number | null>(null);
@@ -43,10 +42,7 @@ export class SidebarStateClass {
   // Source ordering state
   orderedSources = $state<Source[]>([]);
 
-  constructor() {
-    // Load initial state from cookies if available
-    this.loadStateFromCookie();
-  }
+  constructor() {}
 
   // Initialize effects (should be called when component is mounted)
   initializeEffects() {
@@ -159,42 +155,6 @@ export class SidebarStateClass {
     }
   }
 
-  addOptimisticPlaylist(playlist: Playlist): void {
-    this.playlists = [...this.playlists, playlist];
-  }
-
-  removeOptimisticPlaylist(playlistId: number): void {
-    this.playlists = this.playlists.filter((p) => p.id !== playlistId);
-  }
-
-  removePlaylistOptimistically(playlistId: number): Playlist | null {
-    const playlist = this.playlists.find((p) => p.id === playlistId);
-    if (playlist) {
-      this.playlists = this.playlists.filter((p) => p.id !== playlistId);
-    }
-    return playlist || null;
-  }
-
-  restorePlaylist(playlist: Playlist): void {
-    this.playlists = [...this.playlists, playlist];
-  }
-
-  commitOptimisticPlaylist(tempId: number, realPlaylist: Playlist): void {
-    const index = this.playlists.findIndex((p) => p.id === tempId);
-    if (index >= 0) {
-      this.playlists[index] = realPlaylist;
-    }
-  }
-
-  updatePlaylistOptimistically(
-    playlistId: number,
-    updates: Partial<Playlist>
-  ): void {
-    const index = this.playlists.findIndex((p) => p.id === playlistId);
-    if (index >= 0) {
-      this.playlists[index] = { ...this.playlists[index], ...updates };
-    }
-  }
   async refreshData(): Promise<void> {
     // Only refresh if tab is visible to save resources
     if (!tabVisibility.isVisible) {
@@ -229,78 +189,9 @@ export class SidebarStateClass {
     this.data = null;
     this.loading = false;
     this.error = null;
-    this.collapsed = false;
-    this.openAccountDrawer = false;
     this.orderedSources = [];
     this.#initialized = false;
     this.#hasLoadedOnce = false;
-  }
-
-  // Cookie persistence methods
-  private loadStateFromCookie(): void {
-    // In tests, use global.document instead of checking browser
-    const doc = typeof document !== 'undefined' ? document : (global as any).document;
-    if (!doc) return;
-
-    try {
-      const cookies = doc.cookie.split('; ');
-      const sidebarCookie = cookies.find((c: string) => c.startsWith(`${SIDEBAR_COOKIE_NAME}=`));
-      
-      if (sidebarCookie) {
-        const cookieValue = sidebarCookie.split('=')[1];
-        const state: SidebarCookieState = JSON.parse(decodeURIComponent(cookieValue));
-        
-        this.collapsed = state.collapsed;
-      }
-    } catch (error) {
-      console.warn('Failed to load sidebar state from cookie:', error);
-    }
-  }
-
-  saveStateToCookie(collapsed?: boolean, defaultSize?: number): void {
-    // In tests, use global.document instead of checking browser
-    const doc = typeof document !== 'undefined' ? document : (global as any).document;
-    if (!doc) return;
-
-    try {
-      const state: SidebarCookieState = {
-        collapsed: collapsed ?? this.collapsed,
-        ...(defaultSize !== undefined && { defaultSize })
-      };
-
-      const cookieValue = encodeURIComponent(JSON.stringify(state));
-      doc.cookie = `${SIDEBAR_COOKIE_NAME}=${cookieValue}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
-    } catch (error) {
-      console.warn('Failed to save sidebar state to cookie:', error);
-    }
-  }
-
-  // Get the default size from cookie
-  getDefaultSizeFromCookie(): number | undefined {
-    // In tests, use global.document instead of checking browser
-    const doc = typeof document !== 'undefined' ? document : (global as any).document;
-    if (!doc) return undefined;
-
-    try {
-      const cookies = doc.cookie.split('; ');
-      const sidebarCookie = cookies.find((c: string) => c.startsWith(`${SIDEBAR_COOKIE_NAME}=`));
-      
-      if (sidebarCookie) {
-        const cookieValue = sidebarCookie.split('=')[1];
-        const state: SidebarCookieState = JSON.parse(decodeURIComponent(cookieValue));
-        return state.defaultSize;
-      }
-    } catch (error) {
-      console.warn('Failed to read default size from cookie:', error);
-    }
-
-    return undefined;
-  }
-
-  // Update collapsed state and save to cookie
-  setCollapsed(collapsed: boolean, defaultSize?: number): void {
-    this.collapsed = collapsed;
-    this.saveStateToCookie(collapsed, defaultSize);
   }
 }
 

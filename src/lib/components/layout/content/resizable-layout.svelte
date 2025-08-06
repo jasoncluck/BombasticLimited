@@ -2,6 +2,7 @@
   import * as Resizable from '$lib/components/ui/resizable';
   import ScrollArea from '$lib/components/ui/scroll-area/scroll-area.svelte';
   import Sidebar from '$lib/components/sidebar/sidebar.svelte';
+  import { Skeleton } from '$lib/components/ui/skeleton';
   import { COLLAPSED_SIDEBAR_SIZE } from '$lib/constants/layout';
   import LoadingOverlay from './loading-overlay.svelte';
   import type { PageState } from '$lib/state/page.svelte.js';
@@ -9,6 +10,7 @@
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
   import type { Snippet } from 'svelte';
+  import { ListVideo } from '@lucide/svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
 
   let {
@@ -34,41 +36,22 @@
   } = $props();
 
   const sidebarState = getSidebarState();
-
-  // Get initial sidebar state from cookies
-  const initialDefaultSize = sidebarState.getDefaultSizeFromCookie() ?? (layout?.[0] ?? 15);
-  const initialCollapsed = sidebarState.collapsed;
-
-  // Initialize the bindable collapsed state from sidebar state
-  if (isSidebarCollapsed !== initialCollapsed) {
-    isSidebarCollapsed = initialCollapsed;
-  }
 </script>
 
 <Resizable.PaneGroup
   direction="horizontal"
   class="flex h-full overflow-hidden rounded-lg"
-  onLayoutChange={(sizes) => {
-    layoutState.onLayoutChange(sizes);
-    // Save sidebar state with the current pane size
-    sidebarState.saveStateToCookie(isSidebarCollapsed, sizes[0]);
-  }}
+  onLayoutChange={layoutState.onLayoutChange}
 >
   <!-- Sidebar Pane (Desktop Only) -->
   <Resizable.Pane
-    defaultSize={initialDefaultSize}
+    defaultSize={layout?.[0] ?? 15}
     minSize={12}
     maxSize={50}
     collapsedSize={COLLAPSED_SIDEBAR_SIZE}
     collapsible={true}
-    onCollapse={() => {
-      isSidebarCollapsed = true;
-      sidebarState.setCollapsed(true);
-    }}
-    onExpand={() => {
-      isSidebarCollapsed = false;
-      sidebarState.setCollapsed(false);
-    }}
+    onCollapse={() => (isSidebarCollapsed = true)}
+    onExpand={() => (isSidebarCollapsed = false)}
     class="pane @container hidden h-full grow flex-col sm:ml-2 sm:flex {isSidebarCollapsed
       ? 'max-w-[75px] min-w-[75px]'
       : 'min-w-[200px]'}"
@@ -81,7 +64,122 @@
     >
       <!-- Fixed height container to prevent layout shifts -->
       <div class="min-h-full">
-        <Sidebar {isSidebarCollapsed} {supabase} {session} {refreshSidebar} />
+        {#if sidebarState.showPlaceholder}
+          <!-- Skeleton with exact dimensions matching real sidebar -->
+          <aside class="h-full overflow-hidden">
+            <!-- Sources Section Skeleton -->
+            <div class="flex flex-col {!isSidebarCollapsed ? 'mx-2' : 'mx-1'}">
+              <!-- Fixed number of source items with exact heights -->
+              {#each Array(4)}
+                <div
+                  class="flex items-center {!isSidebarCollapsed
+                    ? 'h-[56px] px-2 py-1'
+                    : 'h-[56px] justify-center px-1 py-1'}"
+                >
+                  {#if !isSidebarCollapsed}
+                    <!-- Full width source item skeleton with exact spacing -->
+                    <div class="flex w-full items-center space-x-3">
+                      <Skeleton class="h-12 w-12 flex-shrink-0 rounded" />
+                      <div class="min-w-0 flex-1">
+                        <Skeleton class="h-4 w-full" />
+                      </div>
+                    </div>
+                  {:else}
+                    <!-- Collapsed source item skeleton -->
+                    <Skeleton class="h-12 w-12 flex-shrink-0 rounded" />
+                  {/if}
+                </div>
+              {/each}
+            </div>
+
+            <!-- Divider with exact spacing -->
+            <div class="mx-2 my-2">
+              <Skeleton class="h-px w-full" />
+            </div>
+
+            <!-- Playlists Header Section Skeleton with exact dimensions -->
+            <div
+              class="flex flex-col {!isSidebarCollapsed
+                ? 'mx-6 my-3'
+                : 'mx-1 my-3 items-center'}"
+            >
+              <div class="flex h-[44px] w-full items-center">
+                {#if !isSidebarCollapsed}
+                  <!-- Full header with exact spacing -->
+                  <div class="flex w-full items-center space-x-4">
+                    <Skeleton class="h-10 w-10 flex-shrink-0 rounded-full" />
+                    <Skeleton class="h-6 w-20 flex-shrink-0" />
+                  </div>
+                {:else}
+                  <!-- Collapsed header -->
+                  <Skeleton class="h-10 w-10 flex-shrink-0 rounded-full" />
+                {/if}
+              </div>
+            </div>
+
+            <!-- Playlists Container Skeleton with exact border and spacing -->
+            <div
+              class="rounded-md border-2 border-transparent {!isSidebarCollapsed
+                ? 'mx-2'
+                : 'mx-1'}"
+            >
+              <div class="flex flex-col">
+                <!-- Fixed number of playlist items -->
+                {#each Array(6), i}
+                  <div
+                    class="flex items-center {!isSidebarCollapsed
+                      ? 'h-[56px] px-2 py-1'
+                      : 'h-[56px] justify-center px-1 py-1'}"
+                  >
+                    {#if !isSidebarCollapsed}
+                      <!-- Full width playlist item skeleton -->
+                      <div class="flex w-full items-center space-x-3">
+                        <div
+                          class="flex h-12 w-12 flex-shrink-0 items-center justify-center"
+                        >
+                          <!-- Simulate either image or ListVideo icon with exact dimensions -->
+                          {#if i % 2 === 1}
+                            <Skeleton class="h-12 w-12 rounded" />
+                          {:else}
+                            <div
+                              class="bg-muted flex h-12 w-12 items-center justify-center rounded"
+                            >
+                              <ListVideo
+                                class="text-muted-foreground h-8 w-8 opacity-50"
+                              />
+                            </div>
+                          {/if}
+                        </div>
+                        <div class="min-w-0 flex-1">
+                          <Skeleton class="h-4 w-full" />
+                        </div>
+                      </div>
+                    {:else}
+                      <!-- Collapsed playlist item skeleton -->
+                      <div
+                        class="flex h-12 w-12 flex-shrink-0 items-center justify-center"
+                      >
+                        {#if i % 2 === 0}
+                          <Skeleton class="h-12 w-12 rounded" />
+                        {:else}
+                          <div
+                            class="bg-muted flex h-12 w-12 items-center justify-center rounded"
+                          >
+                            <ListVideo
+                              class="text-muted-foreground h-8 w-8 opacity-50"
+                            />
+                          </div>
+                        {/if}
+                      </div>
+                    {/if}
+                  </div>
+                {/each}
+              </div>
+            </div>
+          </aside>
+        {:else}
+          <Sidebar {isSidebarCollapsed} {supabase} {session} {refreshSidebar} />
+        {/if}
       </div>
     </ScrollArea>
   </Resizable.Pane>
