@@ -66,10 +66,10 @@ describe('Simplified Layout State', () => {
 
     it('should update sidebar state when setSidebarCollapsed is called', () => {
       expect(layoutState.isSidebarCollapsed).toBe(false);
-      
+
       layoutState.setSidebarCollapsed(true);
       expect(layoutState.isSidebarCollapsed).toBe(true);
-      
+
       layoutState.setSidebarCollapsed(false);
       expect(layoutState.isSidebarCollapsed).toBe(false);
     });
