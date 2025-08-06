@@ -67,6 +67,12 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
+    -- Only process if this is a Discord provider change
+    IF (TG_OP = 'DELETE' AND OLD.provider != 'discord') OR 
+       (TG_OP != 'DELETE' AND NEW.provider != 'discord') THEN
+        RETURN COALESCE(NEW, OLD);
+    END IF;
+
     -- Update avatar_url in profiles table
     UPDATE public.profiles 
     SET avatar_url = public.get_discord_avatar_url(
@@ -85,11 +91,11 @@ END;
 $$;
 
 -- Trigger to automatically update avatar_url when Discord identity changes
+-- FIXED: Remove WHEN clause and handle filtering inside the function
 DROP TRIGGER IF EXISTS trigger_update_profile_avatar_discord ON auth.identities;
 CREATE TRIGGER trigger_update_profile_avatar_discord
     AFTER INSERT OR UPDATE OR DELETE ON auth.identities
     FOR EACH ROW
-    WHEN ((NEW.provider = 'discord') OR (OLD.provider = 'discord'))
     EXECUTE FUNCTION public.update_profile_avatar_from_discord();
 
 -- Update existing profiles with Discord avatars
