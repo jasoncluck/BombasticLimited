@@ -13,7 +13,7 @@ DECLARE
     providers_array text[];
     providers_json text;
 BEGIN
-    -- Only handle INSERT operations (new user creation)
+    -- Handle INSERT operations (new user creation)
     IF TG_OP = 'INSERT' THEN
         -- Generate a unique username from the user's name or email
         generated_username := public.generate_unique_username(
@@ -44,6 +44,36 @@ BEGIN
         INSERT INTO public.profiles (id, username, avatar_url, providers)
         VALUES (NEW.id, generated_username, avatar_url, providers_array)
         ON CONFLICT (id) DO NOTHING;
+    
+    -- Handle UPDATE operations (when user metadata gets updated)
+    ELSIF TG_OP = 'UPDATE' THEN
+        -- Check if raw_user_meta_data was updated with avatar_url
+        IF (OLD.raw_user_meta_data IS DISTINCT FROM NEW.raw_user_meta_data) THEN
+            avatar_url := NEW.raw_user_meta_data->>'avatar_url';
+            
+            -- Update the profile with the new avatar_url
+            UPDATE public.profiles 
+            SET avatar_url = handle_user_changes.avatar_url
+            WHERE id = NEW.id;
+        END IF;
+        
+        -- Check if raw_app_meta_data was updated with providers
+        IF (OLD.raw_app_meta_data IS DISTINCT FROM NEW.raw_app_meta_data) THEN
+            providers_json := NEW.raw_app_meta_data->>'providers';
+            
+            -- Only update if providers is not null
+            IF providers_json IS NOT NULL THEN
+                -- Parse JSON array to PostgreSQL text array
+                SELECT array_agg(value::text)
+                INTO providers_array
+                FROM json_array_elements_text(providers_json::json);
+                
+                -- Update the profile with the new providers
+                UPDATE public.profiles 
+                SET providers = providers_array
+                WHERE id = NEW.id;
+            END IF;
+        END IF;
     END IF;
     
     RETURN NEW;

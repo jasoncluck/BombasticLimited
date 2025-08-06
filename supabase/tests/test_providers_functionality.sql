@@ -11,7 +11,7 @@ BEGIN;
 
 -- Plan the number of tests
 SELECT
-  plan (14);
+  plan (16);
 
 -- ============================================================================
 -- Test 1: Providers column exists and has correct constraints
@@ -411,6 +411,126 @@ SELECT
     )$$,
     'Providers field is null in auth metadata for user test-explicit-null-providers',
     'Should error when providers field is explicitly null in auth metadata'
+  );
+
+-- ============================================================================
+-- Test 13: Test avatar_url update when raw_user_meta_data is updated after user creation
+-- ============================================================================
+-- First, create a user without avatar_url
+INSERT INTO
+  auth.users (
+    id, 
+    email, 
+    raw_app_meta_data,
+    raw_user_meta_data,
+    created_at, 
+    updated_at
+  )
+VALUES
+  (
+    'test-avatar-update'::uuid,
+    'avatar-update@example.com',
+    '{"provider": "discord", "providers": ["discord"]}'::jsonb,
+    '{"full_name": "Test User"}'::jsonb,
+    NOW(),
+    NOW()
+  )
+ON CONFLICT (id) DO NOTHING;
+
+-- Verify profile was created without avatar_url
+SELECT
+  is(
+    (
+      SELECT
+        avatar_url
+      FROM
+        public.profiles
+      WHERE
+        id = 'test-avatar-update'::uuid
+    ),
+    NULL,
+    'Profile should be created without avatar_url initially'
+  );
+
+-- Now update the user with avatar_url in raw_user_meta_data
+UPDATE auth.users 
+SET 
+  raw_user_meta_data = '{"full_name": "Test User", "avatar_url": "https://cdn.discordapp.com/avatars/123/updated-avatar.png"}'::jsonb,
+  updated_at = NOW()
+WHERE id = 'test-avatar-update'::uuid;
+
+-- Verify the profile avatar_url was updated
+SELECT
+  is(
+    (
+      SELECT
+        avatar_url
+      FROM
+        public.profiles
+      WHERE
+        id = 'test-avatar-update'::uuid
+    ),
+    'https://cdn.discordapp.com/avatars/123/updated-avatar.png',
+    'Profile avatar_url should be updated when raw_user_meta_data is updated'
+  );
+
+-- ============================================================================
+-- Test 14: Test providers update when raw_app_meta_data is updated after user creation
+-- ============================================================================
+-- First, create a user with initial providers
+INSERT INTO
+  auth.users (
+    id, 
+    email, 
+    raw_app_meta_data,
+    created_at, 
+    updated_at
+  )
+VALUES
+  (
+    'test-providers-update'::uuid,
+    'providers-update@example.com',
+    '{"provider": "email", "providers": ["email"]}'::jsonb,
+    NOW(),
+    NOW()
+  )
+ON CONFLICT (id) DO NOTHING;
+
+-- Verify profile was created with initial providers
+SELECT
+  is(
+    (
+      SELECT
+        providers
+      FROM
+        public.profiles
+      WHERE
+        id = 'test-providers-update'::uuid
+    ),
+    ARRAY['email'],
+    'Profile should be created with initial email provider'
+  );
+
+-- Now update the user with additional providers in raw_app_meta_data
+UPDATE auth.users 
+SET 
+  raw_app_meta_data = '{"provider": "discord", "providers": ["email", "discord"]}'::jsonb,
+  updated_at = NOW()
+WHERE id = 'test-providers-update'::uuid;
+
+-- Verify the profile providers were updated
+SELECT
+  is(
+    (
+      SELECT
+        providers
+      FROM
+        public.profiles
+      WHERE
+        id = 'test-providers-update'::uuid
+    ),
+    ARRAY['email', 'discord'],
+    'Profile providers should be updated when raw_app_meta_data is updated'
   );
 
 -- ============================================================================
