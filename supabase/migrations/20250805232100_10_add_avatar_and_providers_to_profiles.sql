@@ -67,6 +67,8 @@ DECLARE
     current_user_id uuid;
     current_providers text[];
     discord_avatar text;
+    user_metadata record;
+    debug_msg text;
 BEGIN
     -- Get the user ID for the operation
     current_user_id := CASE 
@@ -92,10 +94,32 @@ BEGIN
         current_providers := ARRAY['email'];
     END IF;
 
-    -- Get Discord avatar URL if Discord is in providers
+    -- Get Discord avatar URL from auth.users.raw_user_meta_data if Discord is in providers
     discord_avatar := NULL;
     IF 'discord' = ANY(current_providers) THEN
-        discord_avatar := public.get_discord_avatar_url(current_user_id);
+        -- Extract avatar URL from raw_user_meta_data using same logic as handle_user_changes
+        SELECT raw_user_meta_data INTO user_metadata
+        FROM auth.users 
+        WHERE id = current_user_id;
+        
+        IF user_metadata IS NOT NULL THEN
+            -- Discord OAuth provides avatar in both 'avatar_url' and 'picture' fields
+            discord_avatar := COALESCE(
+                user_metadata->>'avatar_url',
+                user_metadata->>'picture'
+            );
+            
+            -- Debug logging for avatar extraction
+            debug_msg := format('IDENTITY_CHANGE: User %s - TG_OP: %s, avatar_url: %s, picture: %s, final: %s, providers: %s', 
+                current_user_id::text,
+                TG_OP,
+                user_metadata->>'avatar_url',
+                user_metadata->>'picture',
+                discord_avatar,
+                current_providers::text
+            );
+            RAISE LOG '%', debug_msg;
+        END IF;
     END IF;
 
     -- Update the profile with new providers array and avatar_url
@@ -140,7 +164,21 @@ SET
     WHERE
       user_id = profiles.id
   ),
-  avatar_url = public.get_discord_avatar_url (id)
+  avatar_url = (
+    SELECT
+      CASE
+        WHEN 'discord' = ANY(
+          SELECT array_agg(DISTINCT provider)
+          FROM auth.identities
+          WHERE user_id = profiles.id
+        ) THEN
+          COALESCE(
+            (SELECT raw_user_meta_data->>'avatar_url' FROM auth.users WHERE id = profiles.id),
+            (SELECT raw_user_meta_data->>'picture' FROM auth.users WHERE id = profiles.id)
+          )
+        ELSE NULL
+      END
+  )
 WHERE
   id IN (
     SELECT DISTINCT
