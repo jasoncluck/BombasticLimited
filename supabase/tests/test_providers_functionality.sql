@@ -11,7 +11,7 @@ BEGIN;
 
 -- Plan the number of tests
 SELECT
-  plan (12);
+  plan (14);
 
 -- ============================================================================
 -- Test 1: Providers column exists and has correct constraints
@@ -230,6 +230,7 @@ INSERT INTO
     id,
     email,
     raw_user_meta_data,
+    raw_app_meta_data,
     created_at,
     updated_at
   )
@@ -238,6 +239,7 @@ VALUES
     'test-discord-signup'::uuid,
     'discord-user@example.com',
     '{"avatar_url": "https://cdn.discordapp.com/avatars/123/avatar.png", "full_name": "Discord User"}'::jsonb,
+    '{"provider": "discord", "providers": ["discord"]}'::jsonb,
     NOW(),
     NOW()
   )
@@ -298,11 +300,18 @@ SELECT
 -- Test 10: Test email-only user maintains email provider
 -- ============================================================================
 INSERT INTO
-  auth.users (id, email, created_at, updated_at)
+  auth.users (
+    id, 
+    email, 
+    raw_app_meta_data,
+    created_at, 
+    updated_at
+  )
 VALUES
   (
     'test-email-only'::uuid,
     'email-only@example.com',
+    '{"provider": "email", "providers": ["email"]}'::jsonb,
     NOW(),
     NOW()
   )
@@ -358,6 +367,50 @@ SELECT
     ),
     NULL,
     'Email-only user should have NULL avatar_url'
+  );
+
+-- ============================================================================
+-- Test 11: Test error handling when providers field is null in auth metadata
+-- ============================================================================
+SELECT
+  throws_ok (
+    $$INSERT INTO auth.users (
+      id, 
+      email, 
+      raw_app_meta_data,
+      created_at, 
+      updated_at
+    ) VALUES (
+      'test-null-providers'::uuid,
+      'null-providers@example.com',
+      '{}'::jsonb,
+      NOW(),
+      NOW()
+    )$$,
+    'Providers field is null in auth metadata for user test-null-providers',
+    'Should error when providers field is missing in auth metadata'
+  );
+
+-- ============================================================================
+-- Test 12: Test error handling when providers field is explicitly null
+-- ============================================================================
+SELECT
+  throws_ok (
+    $$INSERT INTO auth.users (
+      id, 
+      email, 
+      raw_app_meta_data,
+      created_at, 
+      updated_at
+    ) VALUES (
+      'test-explicit-null-providers'::uuid,
+      'explicit-null-providers@example.com',
+      '{"provider": "email", "providers": null}'::jsonb,
+      NOW(),
+      NOW()
+    )$$,
+    'Providers field is null in auth metadata for user test-explicit-null-providers',
+    'Should error when providers field is explicitly null in auth metadata'
   );
 
 -- ============================================================================

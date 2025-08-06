@@ -10,6 +10,8 @@ SET
 DECLARE
     generated_username text;
     avatar_url text;
+    providers_array text[];
+    providers_json text;
 BEGIN
     -- Only handle INSERT operations (new user creation)
     IF TG_OP = 'INSERT' THEN
@@ -25,18 +27,23 @@ BEGIN
         -- Extract avatar URL from raw_user_meta_data if it exists
         avatar_url := NEW.raw_user_meta_data->>'avatar_url';
         
-        -- Insert the new profile with username, avatar_url, and providers
-        -- The providers will be updated by the identity trigger when identities are created
-        -- but we set a default of ['email'] to ensure NOT NULL constraint is satisfied
-        IF avatar_url IS NOT NULL AND avatar_url != '' THEN
-            INSERT INTO public.profiles (id, username, avatar_url, providers)
-            VALUES (NEW.id, generated_username, avatar_url, ARRAY['email'])
-            ON CONFLICT (id) DO NOTHING;
-        ELSE
-            INSERT INTO public.profiles (id, username, providers)
-            VALUES (NEW.id, generated_username, ARRAY['email'])
-            ON CONFLICT (id) DO NOTHING;
+        -- Extract providers from raw_app_meta_data
+        providers_json := NEW.raw_app_meta_data->>'providers';
+        
+        -- Error if providers is null - we should not fallback to default
+        IF providers_json IS NULL THEN
+            RAISE EXCEPTION 'Providers field is null in auth metadata for user %', NEW.id;
         END IF;
+        
+        -- Parse JSON array to PostgreSQL text array
+        SELECT array_agg(value::text)
+        INTO providers_array
+        FROM json_array_elements_text(providers_json::json);
+        
+        -- Insert the new profile with username, avatar_url, and providers from auth schema
+        INSERT INTO public.profiles (id, username, avatar_url, providers)
+        VALUES (NEW.id, generated_username, avatar_url, providers_array)
+        ON CONFLICT (id) DO NOTHING;
     END IF;
     
     RETURN NEW;
