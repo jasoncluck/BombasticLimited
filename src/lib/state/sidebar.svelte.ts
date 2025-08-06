@@ -244,7 +244,7 @@ export class SidebarStateClass {
 
     try {
       const cookies = doc.cookie.split('; ');
-      const sidebarCookie = cookies.find(c => c.startsWith(`${SIDEBAR_COOKIE_NAME}=`));
+      const sidebarCookie = cookies.find((c: string) => c.startsWith(`${SIDEBAR_COOKIE_NAME}=`));
       
       if (sidebarCookie) {
         const cookieValue = sidebarCookie.split('=')[1];
@@ -283,7 +283,7 @@ export class SidebarStateClass {
 
     try {
       const cookies = doc.cookie.split('; ');
-      const sidebarCookie = cookies.find(c => c.startsWith(`${SIDEBAR_COOKIE_NAME}=`));
+      const sidebarCookie = cookies.find((c: string) => c.startsWith(`${SIDEBAR_COOKIE_NAME}=`));
       
       if (sidebarCookie) {
         const cookieValue = sidebarCookie.split('=')[1];
