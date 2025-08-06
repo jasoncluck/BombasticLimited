@@ -586,7 +586,7 @@ BEGIN
     'Large dataset scalability test description ' || generate_series || 
     ' with additional content to test search vector performance at scale',
     'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'::uuid,
-    CASE WHEN generate_series % 2 = 0 THEN 'Public' ELSE 'Private' END
+    CASE WHEN generate_series % 2 = 0 THEN 'Public'::public.playlist_type ELSE 'Private'::public.playlist_type END
   FROM generate_series(1, large_dataset_size);
   
   scalability_end := clock_timestamp();

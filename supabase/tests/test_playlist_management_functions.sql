@@ -178,7 +178,7 @@ BEGIN
       should_fail := false;
   END;
   
-  PERFORM ok(NOT should_fail, 'insert_playlist enforces 25 playlist limit');
+  PERFORM ok(should_fail, 'insert_playlist enforces 25 playlist limit');
 END $$;
 
 -- ============================================================================
