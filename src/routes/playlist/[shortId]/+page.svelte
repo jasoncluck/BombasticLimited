@@ -18,6 +18,7 @@
     videos = [],
     videosCount,
     userProfile,
+    creatorProfile,
     supabase,
     session,
     playlistDuration,
@@ -54,6 +55,7 @@
     playlist,
     playlistDuration,
     videosCount: videosCount ?? 0,
+    creatorProfile,
     supabase,
     session,
   });

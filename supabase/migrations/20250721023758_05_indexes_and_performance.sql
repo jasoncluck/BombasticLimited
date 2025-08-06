@@ -83,8 +83,6 @@ CREATE INDEX IF NOT EXISTS "playlists_deleted_at_idx" ON "public"."playlists" ("
 WHERE
   "deleted_at" IS NOT NULL;
 
-
-
 -- ============================================================================
 -- ADDITIONAL PERFORMANCE INDEXES
 -- ============================================================================
