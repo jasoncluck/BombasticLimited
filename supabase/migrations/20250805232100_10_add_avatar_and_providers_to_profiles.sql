@@ -16,20 +16,6 @@ COMMENT ON COLUMN "public"."profiles"."providers" IS 'Array of linked identity p
 ALTER TABLE "public"."profiles"
 ADD CONSTRAINT profiles_providers_not_empty CHECK (array_length(providers, 1) > 0);
 
--- Function to get user identities (needed since auth.identities is not directly accessible)
-CREATE OR REPLACE FUNCTION public.get_user_identities (user_id uuid) RETURNS json LANGUAGE plpgsql AS $$
-DECLARE
-    result json;
-BEGIN
-    SELECT json_agg(row_to_json(identities))
-    INTO result
-    FROM auth.identities
-    WHERE identities.user_id = get_user_identities.user_id;
-    
-    RETURN COALESCE(result, '[]'::json);
-END;
-$$;
-
 -- Function to extract Discord avatar URL from auth.identities
 CREATE OR REPLACE FUNCTION public.get_discord_avatar_url (user_id uuid) RETURNS text LANGUAGE plpgsql AS $$
 DECLARE
@@ -67,7 +53,7 @@ DECLARE
     current_user_id uuid;
     current_providers text[];
     discord_avatar text;
-    user_metadata record;
+    user_metadata jsonb;
     debug_msg text;
 BEGIN
     -- Get the user ID for the operation
@@ -167,16 +153,32 @@ SET
   avatar_url = (
     SELECT
       CASE
-        WHEN EXISTS(
-          SELECT 1 
-          FROM auth.identities 
-          WHERE user_id = profiles.id 
-          AND provider = 'discord'
-        ) THEN
-          COALESCE(
-            (SELECT raw_user_meta_data->>'avatar_url' FROM auth.users WHERE id = profiles.id),
-            (SELECT raw_user_meta_data->>'picture' FROM auth.users WHERE id = profiles.id)
+        WHEN EXISTS (
+          SELECT
+            1
+          FROM
+            auth.identities
+          WHERE
+            user_id = profiles.id
+            AND provider = 'discord'
+        ) THEN COALESCE(
+          (
+            SELECT
+              raw_user_meta_data ->> 'avatar_url'
+            FROM
+              auth.users
+            WHERE
+              id = profiles.id
+          ),
+          (
+            SELECT
+              raw_user_meta_data ->> 'picture'
+            FROM
+              auth.users
+            WHERE
+              id = profiles.id
           )
+        )
         ELSE NULL
       END
   )

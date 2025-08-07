@@ -93,7 +93,6 @@ const mockGetUserDiscordIdentity = vi.mocked(getUserDiscordIdentity);
 const mockLinkDiscordIdentity = vi.mocked(linkDiscordIdentity);
 const mockUnlinkDiscordIdentity = vi.mocked(unlinkDiscordIdentity);
 
-
 describe('account/+page.server.ts', () => {
   const mockSupabase = {
     auth: {

@@ -301,10 +301,10 @@ SELECT
 -- ============================================================================
 INSERT INTO
   auth.users (
-    id, 
-    email, 
+    id,
+    email,
     raw_app_meta_data,
-    created_at, 
+    created_at,
     updated_at
   )
 VALUES
@@ -419,11 +419,11 @@ SELECT
 -- First, create a user without avatar_url
 INSERT INTO
   auth.users (
-    id, 
-    email, 
+    id,
+    email,
     raw_app_meta_data,
     raw_user_meta_data,
-    created_at, 
+    created_at,
     updated_at
   )
 VALUES
@@ -439,7 +439,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Verify profile was created without avatar_url
 SELECT
-  is(
+  IS (
     (
       SELECT
         avatar_url
@@ -453,15 +453,16 @@ SELECT
   );
 
 -- Now update the user with avatar_url in raw_user_meta_data
-UPDATE auth.users 
-SET 
+UPDATE auth.users
+SET
   raw_user_meta_data = '{"full_name": "Test User", "avatar_url": "https://cdn.discordapp.com/avatars/123/updated-avatar.png"}'::jsonb,
   updated_at = NOW()
-WHERE id = 'test-avatar-update'::uuid;
+WHERE
+  id = 'test-avatar-update'::uuid;
 
 -- Verify the profile avatar_url was updated
 SELECT
-  is(
+  IS (
     (
       SELECT
         avatar_url
@@ -480,10 +481,10 @@ SELECT
 -- First, create a user with initial providers
 INSERT INTO
   auth.users (
-    id, 
-    email, 
+    id,
+    email,
     raw_app_meta_data,
-    created_at, 
+    created_at,
     updated_at
   )
 VALUES
@@ -498,7 +499,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Verify profile was created with initial providers
 SELECT
-  is(
+  IS (
     (
       SELECT
         providers
@@ -512,15 +513,16 @@ SELECT
   );
 
 -- Now update the user with additional providers in raw_app_meta_data
-UPDATE auth.users 
-SET 
+UPDATE auth.users
+SET
   raw_app_meta_data = '{"provider": "discord", "providers": ["email", "discord"]}'::jsonb,
   updated_at = NOW()
-WHERE id = 'test-providers-update'::uuid;
+WHERE
+  id = 'test-providers-update'::uuid;
 
 -- Verify the profile providers were updated
 SELECT
-  is(
+  IS (
     (
       SELECT
         providers

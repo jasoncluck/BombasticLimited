@@ -4,8 +4,8 @@ import { emailSchema, passwordSchema, usernameSchema } from '../auth/schema';
 import { redirect, setFlash } from 'sveltekit-flash-message/server';
 import {
   checkIfUsernameIsUnique,
-  getUserProfile,
   getUserDiscordIdentity,
+  getUserProfile,
   linkDiscordIdentity,
   unlinkDiscordIdentity,
 } from '$lib/supabase/user-profiles';
@@ -15,7 +15,6 @@ import { Filter } from 'bad-words';
 export const load: PageServerLoad = async ({
   depends,
   locals: { supabase, session },
-  url,
 }) => {
   depends('supabase:db:profiles');
   if (!session) {
@@ -23,7 +22,7 @@ export const load: PageServerLoad = async ({
   }
 
   // Run profile fetch, Discord identity fetch, and form validations in parallel
-  const [{ profile }, { identity: discordIdentity }, emailForm, passwordForm] =
+  const [{ profile }, discordIdentity, emailForm, passwordForm] =
     await Promise.all([
       getUserProfile({
         supabase,
@@ -31,7 +30,6 @@ export const load: PageServerLoad = async ({
       }),
       getUserDiscordIdentity({
         supabase,
-        userId: session.user.id,
       }),
       superValidate({ email: session.user.email }, zod(emailSchema), {
         errors: true,

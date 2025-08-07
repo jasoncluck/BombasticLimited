@@ -10,10 +10,13 @@
 BEGIN;
 
 -- Plan the number of tests
-SELECT plan(8);
+SELECT
+  plan (8);
 
 -- Clean up any existing test data
-DELETE FROM auth.users WHERE email LIKE '%discord-test%';
+DELETE FROM auth.users
+WHERE
+  email LIKE '%discord-test%';
 
 -- ============================================================================
 -- Test 1: Avatar URL extraction prioritizes avatar_url over picture
@@ -268,6 +271,9 @@ END;
 $$;
 
 -- Finish the test suite
-SELECT * FROM finish();
+SELECT
+  *
+FROM
+  finish ();
 
 ROLLBACK;

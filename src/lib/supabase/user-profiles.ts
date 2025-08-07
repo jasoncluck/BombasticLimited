@@ -61,49 +61,27 @@ export async function getProfile({
 }
 
 export async function getUserDiscordIdentity({
-  userId,
   supabase,
 }: {
-  userId: string;
   supabase: SupabaseClient<Database>;
 }) {
-  try {
-    // Try to use the RPC function to get user identities
-    // Note: This will fail initially until the migration is applied
-    const result = await supabase.rpc('get_user_identities' as any, {
-      user_id: userId,
-    });
+  const { data: userIdentities } = await supabase.auth.getUserIdentities();
 
-    if (result.error) {
-      console.error('Error fetching Discord identity:', result.error);
-      return { identity: null, error: result.error };
-    }
-
-    if (!result.data) {
-      return { identity: null, error: null };
-    }
-
-    // Parse the JSON response and find Discord identity
-    let identitiesArray: any[] = [];
-    if (Array.isArray(result.data)) {
-      identitiesArray = result.data;
-    } else if (typeof result.data === 'string') {
-      try {
-        identitiesArray = JSON.parse(result.data);
-      } catch {
-        identitiesArray = [];
-      }
-    }
-
-    const discordIdentity = identitiesArray.find(
-      (identity: any) => identity.provider === 'discord'
-    );
-    return { identity: discordIdentity || null, error: null };
-  } catch (err) {
-    // If RPC function doesn't exist yet, return null gracefully
-    console.log('RPC function get_user_identities not yet available:', err);
-    return { identity: null, error: null };
+  if (!userIdentities) {
+    throw new Error('Unable to unlink discord identity, no identities found.');
   }
+
+  const discordIdentity = userIdentities.identities.find(
+    (identity) => identity.provider === 'discord'
+  );
+
+  if (!discordIdentity) {
+    throw new Error(
+      'Unable to unlink discord identity, no discord identity found.'
+    );
+  }
+
+  return discordIdentity;
 }
 
 export async function linkDiscordIdentity({
@@ -124,29 +102,15 @@ export async function linkDiscordIdentity({
 }
 
 export async function unlinkDiscordIdentity({
-  userId,
   supabase,
 }: {
   userId: string;
   supabase: SupabaseClient<Database>;
 }) {
   try {
-    // Get the Discord identity first
-    const { identity, error: fetchError } = await getUserDiscordIdentity({
-      userId,
-      supabase,
-    });
+    const discordIdentity = await getUserDiscordIdentity({ supabase });
 
-    if (fetchError || !identity) {
-      return { error: fetchError || new Error('No Discord identity found') };
-    }
-
-    // Use the correct parameters for unlinkIdentity based on Supabase documentation
-    const { error } = await supabase.auth.unlinkIdentity({
-      provider: 'discord',
-      user_id: userId,
-      identity_id: identity.id,
-    } as any);
+    const { error } = await supabase.auth.unlinkIdentity(discordIdentity);
 
     return { error };
   } catch (err) {
