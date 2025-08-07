@@ -2,11 +2,11 @@ import { type Actions } from '@sveltejs/kit';
 import { setFlash } from 'sveltekit-flash-message/server';
 import { fail, superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
-import { passwordSchema } from '../../schema';
+import { passwordConfirmationSchema } from '../../schema';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-  const form = await superValidate(zod(passwordSchema));
+  const form = await superValidate(zod(passwordConfirmationSchema));
 
   return {
     form,
@@ -19,7 +19,7 @@ export const actions: Actions = {
     cookies,
     locals: { supabase, session },
   }) => {
-    const form = await superValidate(request, zod(passwordSchema));
+    const form = await superValidate(request, zod(passwordConfirmationSchema));
 
     if (!session || !session.user.email) {
       throw new Error(`Could not find email for account: ${session?.user.id}`);
