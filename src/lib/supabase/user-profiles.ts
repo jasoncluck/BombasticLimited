@@ -19,6 +19,29 @@ export async function checkIfUsernameIsUnique({
 }
 
 export async function getUserProfile({
+  session,
+  supabase,
+}: {
+  session: Session | null;
+  supabase: SupabaseClient<Database>;
+}) {
+  if (!session) {
+    return { profile: null, error: null };
+  }
+
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select()
+    .eq('id', session.user.id)
+    .single();
+
+  if (error) {
+    console.error(error);
+  }
+  return { profile, error };
+}
+
+export async function getProfileById({
   userId,
   supabase,
 }: {
@@ -65,23 +88,25 @@ export async function getUserDiscordIdentity({
 }: {
   supabase: SupabaseClient<Database>;
 }) {
-  const { data: userIdentities } = await supabase.auth.getUserIdentities();
+  try {
+    const { data: userIdentities } = await supabase.auth.getUserIdentities();
 
-  if (!userIdentities) {
-    throw new Error('Unable to unlink discord identity, no identities found.');
-  }
+    if (!userIdentities) {
+      return { identity: null, error: 'No identities found' };
+    }
 
-  const discordIdentity = userIdentities.identities.find(
-    (identity) => identity.provider === 'discord'
-  );
-
-  if (!discordIdentity) {
-    throw new Error(
-      'Unable to unlink discord identity, no discord identity found.'
+    const discordIdentity = userIdentities.identities.find(
+      (identity) => identity.provider === 'discord'
     );
-  }
 
-  return discordIdentity;
+    if (!discordIdentity) {
+      return { identity: null, error: null }; // No discord identity is not an error
+    }
+
+    return { identity: discordIdentity, error: null };
+  } catch (err) {
+    return { identity: null, error: err instanceof Error ? err.message : 'Unknown error' };
+  }
 }
 
 export async function linkDiscordIdentity({
@@ -104,15 +129,22 @@ export async function linkDiscordIdentity({
 export async function unlinkDiscordIdentity({
   supabase,
 }: {
-  userId: string;
   supabase: SupabaseClient<Database>;
 }) {
   try {
-    const discordIdentity = await getUserDiscordIdentity({ supabase });
+    const { identity: discordIdentity, error } = await getUserDiscordIdentity({ supabase });
 
-    const { error } = await supabase.auth.unlinkIdentity(discordIdentity);
+    if (error) {
+      return { error: new Error(error) };
+    }
 
-    return { error };
+    if (!discordIdentity) {
+      return { error: new Error('No Discord identity found to unlink') };
+    }
+
+    const { error: unlinkError } = await supabase.auth.unlinkIdentity(discordIdentity);
+
+    return { error: unlinkError };
   } catch (err) {
     return { error: err as Error };
   }
@@ -175,16 +207,20 @@ export async function updateProfileSources({
  * but can be useful for UI display purposes
  */
 export async function getUserProviders({
-  userId,
+  session,
   supabase,
 }: {
-  userId: string;
+  session: Session | null;
   supabase: SupabaseClient<Database>;
 }) {
+  if (!session) {
+    return { providers: [], error: null };
+  }
+
   const { data: profile, error } = await supabase
     .from('profiles')
     .select('providers')
-    .eq('id', userId)
+    .eq('id', session.user.id)
     .single();
 
   if (error) {

@@ -143,9 +143,9 @@
   // Single effect to handle auth state changes
   $effect(() => {
     if (navigationCache && navigationCache.initialized) {
-      const isCurrentlyAuthenticated = !!user;
+      const isCurrentlyAuthenticated = !!session?.user;
 
-      console.log('Layout effect - user object:', user ? 'present' : 'null');
+      console.log('Layout effect - user object:', session?.user ? 'present' : 'null');
       console.log(
         'Layout effect - isCurrentlyAuthenticated:',
         isCurrentlyAuthenticated

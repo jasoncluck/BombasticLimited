@@ -22,11 +22,11 @@ export const load: PageServerLoad = async ({
   }
 
   // Run profile fetch, Discord identity fetch, and form validations in parallel
-  const [{ profile }, discordIdentity, emailForm, passwordForm] =
+  const [{ profile }, discordResult, emailForm, passwordForm] =
     await Promise.all([
       getUserProfile({
         supabase,
-        userId: session.user.id,
+        session,
       }),
       getUserDiscordIdentity({
         supabase,
@@ -50,7 +50,7 @@ export const load: PageServerLoad = async ({
 
   return {
     profile,
-    discordIdentity,
+    discordIdentity: discordResult.identity,
     emailForm,
     usernameForm,
     passwordForm,
@@ -228,7 +228,6 @@ export const actions: Actions = {
     }
 
     const { error } = await unlinkDiscordIdentity({
-      userId: session.user.id,
       supabase,
     });
 
