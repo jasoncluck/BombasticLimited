@@ -27,6 +27,7 @@
   import type { Database } from '$lib/supabase/database.types';
   import { onMount } from 'svelte';
   import { enhance } from '$app/forms';
+  import { goto, invalidate } from '$app/navigation';
   import * as Dialog from '$lib/components/ui/dialog/index.js';
   import * as Avatar from '$lib/components/ui/avatar';
   import DiscordIcon from '$lib/assets/icons/DiscordIcon.svelte';
@@ -118,7 +119,7 @@
     }
   });
 
-  // Cleanup on component destroy
+  // Cleanup on component destroy and handle OAuth returns
   onMount(() => {
     return () => {
       if (timeoutId) {

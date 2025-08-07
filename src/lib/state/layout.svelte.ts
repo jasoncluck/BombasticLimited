@@ -48,7 +48,7 @@ export class LayoutStateClass implements LayoutState {
   searchAbortController = $state<AbortController | null>(null);
 
   config = $state<LayoutConfig>({
-    searchDebounceMs: 400,
+    searchDebounceMs: 250,
   });
 
   constructor() {

@@ -37,7 +37,10 @@
   if (isBrowser() && page.url.searchParams.get('code')) {
     const url = new URL(page.url);
     url.searchParams.delete('code');
-    goto(url.pathname + url.search, { replaceState: true });
+    goto(url.pathname + url.search, {
+      replaceState: true,
+      invalidate: ['supabase:db:profiles'],
+    });
   }
 
   let sectionIds = sourceWithContinueStateKeys;
