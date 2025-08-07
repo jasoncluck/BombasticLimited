@@ -121,31 +121,6 @@
 
   // Cleanup on component destroy and handle OAuth returns
   onMount(() => {
-    // Check if we're returning from Discord OAuth
-    // This will refresh profile data to get the updated avatar_url
-    const urlParams = new URLSearchParams(window.location.search);
-    const hasOAuthReturn =
-      urlParams.has('code') ||
-      urlParams.has('state') ||
-      // Check if we just came from an OAuth flow by looking at referrer
-      document.referrer.includes('discord.com');
-
-    console.log(hasOAuthReturn);
-    console.log(hasOAuthReturn);
-    if (hasOAuthReturn) {
-      // Invalidate profile data to ensure fresh fetch after OAuth
-      invalidate('supabase:db:profiles');
-      // Clean up URL parameters
-      const url = new URL(window.location.href);
-      url.searchParams.delete('code');
-      url.searchParams.delete('state');
-      window.location.reload();
-      goto(url, {
-        replaceState: true,
-        invalidate: ['supabase:db:profiles', 'supabase:db:auth'],
-      });
-    }
-
     return () => {
       if (timeoutId) {
         clearTimeout(timeoutId);
