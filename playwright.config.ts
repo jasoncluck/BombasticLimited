@@ -9,7 +9,7 @@ export default defineConfig({
   fullyParallel: true, // Enable parallel execution with isolated auth states
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : 2, // Multiple workers with isolated auth states
+  workers: process.env.CI ? 1 : 5, // Multiple workers with isolated auth states
   reporter: 'html',
 
   // Global setup and teardown for authentication
@@ -98,7 +98,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'npm run dev',
+    command: 'npm run dev:test',
     port: 5173,
     reuseExistingServer: !process.env.CI,
     timeout: 120000, // Increase if your server takes time to start
@@ -108,9 +108,6 @@ export default defineConfig({
       SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || '',
       SUPABASE_SERVICE_ROLE_KEY:
         process.env.PUBLIC_SUPABASE_SERVICE_ROLE_KEY || '',
-
-      // Performance optimizations for your app
-      NODE_ENV: 'test',
     },
   },
 });

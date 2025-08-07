@@ -4,8 +4,35 @@ import tailwindcss from '@tailwindcss/vite';
 import { enhancedImages } from '@sveltejs/enhanced-img';
 import viteCompression from 'vite-plugin-compression';
 
+const isTest = process.env.NODE_ENV === 'test';
+
 export default defineConfig({
   plugins: [sveltekit(), tailwindcss(), enhancedImages(), viteCompression()],
+
+  // Disable HMR during testing to prevent dev server hangs
+  server: isTest
+    ? {
+        hmr: false,
+        watch: {
+          // Ignore test files and other non-essential files to prevent restarts
+          ignored: [
+            '**/tests/**',
+            '**/*.test.*',
+            '**/*.spec.*',
+            '**/node_modules/**',
+            '**/.git/**',
+          ],
+        },
+        // Prevent server from restarting on file changes during tests
+        middlewareMode: false,
+      }
+    : {
+        // Normal dev mode with full HMR capabilities
+        hmr: {
+          overlay: true,
+        },
+      },
+
   test: {
     setupFiles: [],
     env: {

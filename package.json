@@ -11,6 +11,7 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "dev": "vite dev",
+    "dev:test": "NODE_ENV=test vite dev --mode test",
     "format": "node --max-old-space-size=4096 ./node_modules/.bin/prettier --write --log-level error .",
     "format:src": "node --max-old-space-size=4096 ./node_modules/.bin/prettier --write --log-level error src/",
     "format:check": "node --max-old-space-size=4096 ./node_modules/.bin/prettier --check --log-level error .",
