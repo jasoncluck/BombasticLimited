@@ -48,13 +48,27 @@ export const load = async ({
       });
 
   /**
-   * It's fine to use `getSession` here, because on the client, `getSession` is
-   * safe, and on the server, it reads `session` from the `LayoutData`, which
-   * safely checked the session using `safeGetSession`.
+   * Use `getClaims` for enhanced security by validating JWT claims directly.
+   * If getClaims is not available, fall back to getSession.
    */
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  let session = null;
+  try {
+    const {
+      data,
+      error,
+    } = await supabase.auth.getClaims();
+    
+    if (!error && data.claims) {
+      // If claims are valid, get the session
+      const { data: sessionData } = await supabase.auth.getSession();
+      session = sessionData.session;
+    }
+  } catch (error) {
+    // Fallback to getSession if getClaims is not available
+    console.warn('getClaims not available, falling back to getSession:', error);
+    const { data } = await supabase.auth.getSession();
+    session = data.session;
+  }
 
   // Handle the case where server returns minimal cached data
   if (data.cached) {
