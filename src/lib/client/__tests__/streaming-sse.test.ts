@@ -20,7 +20,7 @@ vi.mock('$lib/constants/source', () => ({
 
 // Mock EventSource
 class MockEventSource {
-  readyState = EventSource.CONNECTING;
+  readyState: number = EventSource.CONNECTING;
   url: string;
   withCredentials: boolean;
   listeners: { [key: string]: ((event: Event) => void)[] } = {};
@@ -38,7 +38,7 @@ class MockEventSource {
   }
 
   close() {
-    this.readyState = EventSource.CLOSED;
+    this.readyState = EventSource.CLOSED as any;
   }
 
   // Test helper to simulate events
@@ -50,7 +50,7 @@ class MockEventSource {
   }
 
   simulateOpen() {
-    this.readyState = EventSource.OPEN;
+    this.readyState = EventSource.OPEN as any;
     const event = new Event('open');
     if (this.listeners['open']) {
       this.listeners['open'].forEach((listener) => listener(event));
@@ -286,7 +286,7 @@ describe('StreamingSSEService', () => {
       const eventSource = (service as any).eventSource as MockEventSource;
       
       // Simulate connection closed
-      eventSource.readyState = EventSource.CLOSED;
+      eventSource.readyState = EventSource.CLOSED as any;
       eventSource.simulateError();
       
       // Fast-forward time to trigger reconnection
@@ -307,7 +307,7 @@ describe('StreamingSSEService', () => {
       // Simulate multiple failed connections
       for (let i = 0; i < 6; i++) {
         const eventSource = (service as any).eventSource as MockEventSource;
-        eventSource.readyState = EventSource.CLOSED;
+        eventSource.readyState = EventSource.CLOSED as any;
         eventSource.simulateError();
         
         // Fast-forward time
