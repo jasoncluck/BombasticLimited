@@ -137,4 +137,3 @@ export const mixedTest = base.extend<
 });
 
 export { expect };
-

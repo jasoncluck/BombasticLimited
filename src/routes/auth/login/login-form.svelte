@@ -146,17 +146,31 @@
         {/if}
       </Button>
 
-      <Button
-        variant="link"
-        type="button"
-        class="w-full cursor-pointer"
-        disabled={isSubmitting}
-        onclick={() => {
-          goto('/auth/signup');
-        }}
-      >
-        Create a new account
-      </Button>
+      <div class="flex flex-col gap-2">
+        <Button
+          variant="link"
+          type="button"
+          class="text-muted-foreground w-full cursor-pointer"
+          disabled={isSubmitting}
+          onclick={() => {
+            goto('/auth/forgot-password');
+          }}
+        >
+          Forgot your password?
+        </Button>
+
+        <Button
+          variant="link"
+          type="button"
+          class="w-full cursor-pointer"
+          disabled={isSubmitting}
+          onclick={() => {
+            goto('/auth/signup');
+          }}
+        >
+          Create a new account
+        </Button>
+      </div>
     </Card.Footer>
   </form>
 </Card.Root>

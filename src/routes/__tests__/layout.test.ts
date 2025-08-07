@@ -62,14 +62,14 @@ describe('+layout.ts load function', () => {
     vi.clearAllMocks();
     // Mock getClaims to return valid claims by default
     mockSupabase.auth.getClaims.mockResolvedValue({
-      data: { 
-        claims: { 
-          sub: mockSession.user.id, 
+      data: {
+        claims: {
+          sub: mockSession.user.id,
           email: mockSession.user.email,
-          role: 'authenticated' 
-        } 
+          role: 'authenticated',
+        },
       },
-      error: null
+      error: null,
     });
     mockSupabase.auth.getSession.mockResolvedValue({
       data: { session: mockSession },

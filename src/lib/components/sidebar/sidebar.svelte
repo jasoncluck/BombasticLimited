@@ -498,16 +498,16 @@
                     <div class="h-12 w-12 shrink-0">
                       <img
                         src={playlist.processedImageUrl}
-                        class="h-full w-full cursor-pointer object-cover rounded"
+                        class="h-full w-full cursor-pointer rounded object-cover"
                         alt={`Image for playlist: ${playlist.name}`}
                         loading="lazy"
                       />
                     </div>
                   {:else}
                     <div
-                      class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded bg-muted"
+                      class="bg-muted flex h-12 w-12 flex-shrink-0 items-center justify-center rounded"
                     >
-                      <ListVideo class="!h-8 !w-8 text-muted-foreground" />
+                      <ListVideo class="text-muted-foreground !h-8 !w-8" />
                     </div>
                   {/if}
                   {#if !isSidebarCollapsed}

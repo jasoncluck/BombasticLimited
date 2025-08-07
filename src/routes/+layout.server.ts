@@ -31,7 +31,7 @@ export const load: LayoutServerLoad = async ({
     view,
   });
 
-  const { session, user } = await sessionPromise;
+  const { session } = await sessionPromise;
 
   // Simplified cache strategy - single cache validation approach
   const userId = session?.user?.id || null;

@@ -6,7 +6,7 @@ const mockSupabaseClient = {
     getClaims: vi.fn(),
     getUser: vi.fn(),
     getSession: vi.fn(),
-  }
+  },
 };
 
 describe('Supabase auth getClaims', () => {
@@ -21,11 +21,11 @@ describe('Supabase auth getClaims', () => {
 
     mockSupabaseClient.auth.getClaims.mockResolvedValue({
       data: { claims: mockClaims },
-      error: null
+      error: null,
     });
 
     const { data, error } = await mockSupabaseClient.auth.getClaims();
-    
+
     expect(error).toBeNull();
     expect(data.claims).toEqual(mockClaims);
     expect(data.claims.sub).toBe('user-123');

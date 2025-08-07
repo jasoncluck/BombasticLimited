@@ -16,6 +16,7 @@ export const loginSchema = emailSchema.merge(passwordSchema);
 export const signupSchema = emailSchema
   .merge(usernameSchema)
   .merge(passwordSchema);
+export const forgotPasswordSchema = emailSchema;
 
 export type EmailSchema = typeof emailSchema;
 export type UsernameSchema = typeof usernameSchema;
@@ -23,3 +24,4 @@ export type PasswordSchema = typeof passwordSchema;
 
 export type LoginSchema = typeof loginSchema;
 export type SignupSchema = typeof signupSchema;
+export type ForgotPasswordSchema = typeof forgotPasswordSchema;

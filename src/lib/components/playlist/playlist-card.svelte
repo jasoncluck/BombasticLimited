@@ -23,8 +23,10 @@
       />
     </div>
   {:else}
-    <div class="flex h-16 w-16 items-center justify-center justify-self-center rounded bg-muted">
-      <ListVideo class="!h-8 !w-8 text-muted-foreground" />
+    <div
+      class="bg-muted flex h-16 w-16 items-center justify-center justify-self-center rounded"
+    >
+      <ListVideo class="text-muted-foreground !h-8 !w-8" />
     </div>
   {/if}
 

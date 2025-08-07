@@ -1,6 +1,5 @@
 import { vi } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { UserProfile } from '$lib/supabase/user-profiles';
 import {
   createMockSession,
   createMockUserProfile,
@@ -16,12 +15,12 @@ export function createMockSupabaseClient() {
   return {
     auth: {
       getClaims: vi.fn().mockResolvedValue({
-        data: { 
-          claims: { 
-            sub: mockSession.user.id, 
+        data: {
+          claims: {
+            sub: mockSession.user.id,
             email: mockSession.user.email,
-            role: 'authenticated' 
-          } 
+            role: 'authenticated',
+          },
         },
         error: null,
       }),

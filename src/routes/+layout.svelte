@@ -145,7 +145,10 @@
     if (navigationCache && navigationCache.initialized) {
       const isCurrentlyAuthenticated = !!session?.user;
 
-      console.log('Layout effect - user object:', session?.user ? 'present' : 'null');
+      console.log(
+        'Layout effect - user object:',
+        session?.user ? 'present' : 'null'
+      );
       console.log(
         'Layout effect - isCurrentlyAuthenticated:',
         isCurrentlyAuthenticated

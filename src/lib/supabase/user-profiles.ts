@@ -105,7 +105,10 @@ export async function getUserDiscordIdentity({
 
     return { identity: discordIdentity, error: null };
   } catch (err) {
-    return { identity: null, error: err instanceof Error ? err.message : 'Unknown error' };
+    return {
+      identity: null,
+      error: err instanceof Error ? err.message : 'Unknown error',
+    };
   }
 }
 
@@ -132,7 +135,9 @@ export async function unlinkDiscordIdentity({
   supabase: SupabaseClient<Database>;
 }) {
   try {
-    const { identity: discordIdentity, error } = await getUserDiscordIdentity({ supabase });
+    const { identity: discordIdentity, error } = await getUserDiscordIdentity({
+      supabase,
+    });
 
     if (error) {
       return { error: new Error(error) };
@@ -142,7 +147,8 @@ export async function unlinkDiscordIdentity({
       return { error: new Error('No Discord identity found to unlink') };
     }
 
-    const { error: unlinkError } = await supabase.auth.unlinkIdentity(discordIdentity);
+    const { error: unlinkError } =
+      await supabase.auth.unlinkIdentity(discordIdentity);
 
     return { error: unlinkError };
   } catch (err) {

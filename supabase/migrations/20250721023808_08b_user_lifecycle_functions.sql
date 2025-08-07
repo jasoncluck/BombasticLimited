@@ -3,6 +3,7 @@
 -- Dependencies: Requires auth schema and user profile functions (08a)
 -- This migration includes user creation/deletion handlers and triggers
 -- ============================================================================
+--
 -- Function to handle user changes (creates profile on user creation)
 CREATE OR REPLACE FUNCTION "public"."handle_user_changes" () RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
 SET
@@ -27,17 +28,24 @@ BEGIN
         
         -- Extract avatar URL from raw_user_meta_data if it exists
         -- Discord OAuth provides avatar in both 'avatar_url' and 'picture' fields
+        -- For email sign-ups, both fields will be NULL or missing, resulting in NULL avatar_url
         new_avatar_url := COALESCE(
             NEW.raw_user_meta_data->>'avatar_url',
             NEW.raw_user_meta_data->>'picture'
         );
         
+        -- Explicitly handle NULL case for email sign-ups
+        IF new_avatar_url = '' THEN
+            new_avatar_url := NULL;
+        END IF;
+        
         -- Debug logging for avatar extraction
-        debug_msg := format('INSERT: User %s - avatar_url: %s, picture: %s, final: %s', 
+        debug_msg := format('INSERT: User %s - avatar_url: %s, picture: %s, final: %s (email signup: %s)', 
             NEW.id::text, 
             NEW.raw_user_meta_data->>'avatar_url',
             NEW.raw_user_meta_data->>'picture',
-            new_avatar_url
+            COALESCE(new_avatar_url, 'NULL'),
+            CASE WHEN new_avatar_url IS NULL THEN 'true' ELSE 'false' END
         );
         RAISE LOG '%', debug_msg;
         
@@ -54,7 +62,7 @@ BEGIN
         INTO providers_array
         FROM json_array_elements_text(providers_json::json);
         
-        -- Insert the new profile with username, avatar_url, and providers from auth schema
+        -- Insert the new profile with username, avatar_url (can be NULL), and providers from auth schema
         INSERT INTO public.profiles (id, username, avatar_url, providers)
         VALUES (NEW.id, generated_username, new_avatar_url, providers_array)
         ON CONFLICT (id) DO NOTHING;
@@ -69,6 +77,11 @@ BEGIN
                 NEW.raw_user_meta_data->>'picture'
             );
             
+            -- Explicitly handle empty string case
+            IF new_avatar_url = '' THEN
+                new_avatar_url := NULL;
+            END IF;
+            
             -- Debug logging for avatar update
             debug_msg := format('UPDATE: User %s - old avatar_url: %s, old picture: %s, new avatar_url: %s, new picture: %s, final: %s', 
                 NEW.id::text,
@@ -76,11 +89,11 @@ BEGIN
                 OLD.raw_user_meta_data->>'picture',
                 NEW.raw_user_meta_data->>'avatar_url',
                 NEW.raw_user_meta_data->>'picture',
-                new_avatar_url
+                COALESCE(new_avatar_url, 'NULL')
             );
             RAISE LOG '%', debug_msg;
             
-            -- Update the profile with the new avatar_url
+            -- Update the profile with the new avatar_url (can be NULL)
             UPDATE public.profiles 
             SET avatar_url = new_avatar_url
             WHERE id = NEW.id;

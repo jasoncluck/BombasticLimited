@@ -8,20 +8,17 @@ const createMockEvent = () => ({
         getClaims: vi.fn(),
         getUser: vi.fn(),
         getSession: vi.fn(),
-      }
-    }
-  }
+      },
+    },
+  },
 });
 
 // Import the safeGetSession logic (we'll need to refactor it to be testable)
 // For now, let's create a standalone version of the logic for testing
 async function safeGetSession(supabase: any) {
   try {
-    const {
-      data,
-      error,
-    } = await supabase.auth.getClaims();
-    
+    const { data, error } = await supabase.auth.getClaims();
+
     if (error || !data.claims) {
       return { session: null, user: null };
     }
@@ -41,7 +38,7 @@ async function safeGetSession(supabase: any) {
       data: { user },
       error: userError,
     } = await supabase.auth.getUser();
-    
+
     if (userError || !user) {
       return { session: null, user: null };
     }
@@ -65,14 +62,14 @@ describe('safeGetSession', () => {
   it('should return null session and user when getClaims fails', async () => {
     mockEvent.locals.supabase.auth.getClaims.mockResolvedValue({
       data: { claims: null },
-      error: { message: 'Unauthorized' }
+      error: { message: 'Unauthorized' },
     });
 
     const result = await safeGetSession(mockEvent.locals.supabase);
 
     expect(result).toEqual({
       session: null,
-      user: null
+      user: null,
     });
     expect(mockEvent.locals.supabase.auth.getSession).not.toHaveBeenCalled();
   });
@@ -80,14 +77,14 @@ describe('safeGetSession', () => {
   it('should return null session and user when claims are null', async () => {
     mockEvent.locals.supabase.auth.getClaims.mockResolvedValue({
       data: { claims: null },
-      error: null
+      error: null,
     });
 
     const result = await safeGetSession(mockEvent.locals.supabase);
 
     expect(result).toEqual({
       session: null,
-      user: null
+      user: null,
     });
     expect(mockEvent.locals.supabase.auth.getSession).not.toHaveBeenCalled();
   });
@@ -99,19 +96,19 @@ describe('safeGetSession', () => {
 
     mockEvent.locals.supabase.auth.getClaims.mockResolvedValue({
       data: { claims: mockClaims },
-      error: null
+      error: null,
     });
 
     mockEvent.locals.supabase.auth.getSession.mockResolvedValue({
       data: { session: mockSession },
-      error: null
+      error: null,
     });
 
     const result = await safeGetSession(mockEvent.locals.supabase);
 
     expect(result).toEqual({
       session: mockSession,
-      user: mockUser
+      user: mockUser,
     });
     expect(mockEvent.locals.supabase.auth.getClaims).toHaveBeenCalled();
     expect(mockEvent.locals.supabase.auth.getSession).toHaveBeenCalled();
@@ -120,26 +117,29 @@ describe('safeGetSession', () => {
   it('should fallback to getUser when getClaims throws error', async () => {
     const mockUser = { id: 'user-123', email: 'test@example.com' };
     const mockSession = { access_token: 'token-123', user: mockUser };
+    const mockClaims = { sub: 'user-123', email: 'test@example.com' };
 
     // Make getClaims throw an error (method not available)
-    mockEvent.locals.supabase.auth.getClaims.mockRejectedValue(new Error('getClaims not available'));
+    mockEvent.locals.supabase.auth.getClaims.mockRejectedValue(
+      new Error('getClaims not available')
+    );
 
     // Setup fallback mocks
     mockEvent.locals.supabase.auth.getUser.mockResolvedValue({
       data: { user: mockUser },
-      error: null
+      error: null,
     });
 
     mockEvent.locals.supabase.auth.getSession.mockResolvedValue({
       data: { session: mockSession },
-      error: null
+      error: null,
     });
 
     const result = await safeGetSession(mockEvent.locals.supabase);
 
     expect(result).toEqual({
       session: mockSession,
-      user: mockUser
+      user: mockUser,
     });
     expect(mockEvent.locals.supabase.auth.getClaims).toHaveBeenCalled();
     expect(mockEvent.locals.supabase.auth.getUser).toHaveBeenCalled();
@@ -148,19 +148,21 @@ describe('safeGetSession', () => {
 
   it('should return null when fallback getUser also fails', async () => {
     // Make getClaims throw an error
-    mockEvent.locals.supabase.auth.getClaims.mockRejectedValue(new Error('getClaims not available'));
+    mockEvent.locals.supabase.auth.getClaims.mockRejectedValue(
+      new Error('getClaims not available')
+    );
 
     // Make getUser fail too
     mockEvent.locals.supabase.auth.getUser.mockResolvedValue({
       data: { user: null },
-      error: { message: 'Token expired' }
+      error: { message: 'Token expired' },
     });
 
     const result = await safeGetSession(mockEvent.locals.supabase);
 
     expect(result).toEqual({
       session: null,
-      user: null
+      user: null,
     });
     expect(mockEvent.locals.supabase.auth.getClaims).toHaveBeenCalled();
     expect(mockEvent.locals.supabase.auth.getUser).toHaveBeenCalled();

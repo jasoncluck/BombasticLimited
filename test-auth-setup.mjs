@@ -31,8 +31,13 @@ async function testAuthenticationSetup() {
 
     // Test 4: Create test playlist
     console.log('4. Creating test playlist...');
-    const playlist = await testDataManager.createTestPlaylist(testUser.id, 'Test Setup Validation Playlist');
-    console.log(`✅ Test playlist created: ${playlist.name} (ID: ${playlist.id})\n`);
+    const playlist = await testDataManager.createTestPlaylist(
+      testUser.id,
+      'Test Setup Validation Playlist'
+    );
+    console.log(
+      `✅ Test playlist created: ${playlist.name} (ID: ${playlist.id})\n`
+    );
 
     // Test 5: Cleanup test data
     console.log('5. Cleaning up test data...');
@@ -44,19 +49,22 @@ async function testAuthenticationSetup() {
     await testDataManager.cleanupTestUser(999);
     console.log('✅ Test user cleaned up\n');
 
-    console.log('🎉 All tests passed! Authentication model is properly configured.\n');
+    console.log(
+      '🎉 All tests passed! Authentication model is properly configured.\n'
+    );
     console.log('Next steps:');
     console.log('- Run `npm run test:e2e` to execute the full test suite');
-    console.log('- Check the .auth/ directory for authentication states during tests');
+    console.log(
+      '- Check the .auth/ directory for authentication states during tests'
+    );
     console.log('- Review the tests/e2e/README.md for usage documentation');
-
   } catch (error) {
     console.error('❌ Test failed:', error.message);
     console.error('\nTroubleshooting:');
     console.error('- Check that Supabase is running (npm run test:setup)');
     console.error('- Verify SUPABASE_SERVICE_ROLE_KEY is set');
     console.error('- Ensure database is properly migrated');
-    
+
     process.exit(1);
   }
 }
