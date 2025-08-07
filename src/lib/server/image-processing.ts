@@ -70,17 +70,25 @@ export async function getCroppedPlaylistImageUrlServer({
     // Apply upscaling for small standard resolution images
     if (isStandardResolution) {
       const shouldUpscale =
-        validatedCrop.width < 224 || validatedCrop.height < 224;
+        validatedCrop.width < 320 || validatedCrop.height < 320; // Increased threshold
 
       if (shouldUpscale) {
-        const targetSize = 224; // Target size for playlist thumbnails
+        // Enhanced target size for better quality on modern displays
+        const targetSize = validatedCrop.width <= 180 ? 384 : 320; // Larger for very small crops
         console.log(
           `Upscaling from ${validatedCrop.width}x${validatedCrop.height} to ${targetSize}x${targetSize}`
         );
 
         processedInstance = processedInstance.resize(targetSize, targetSize, {
-          kernel: sharp.kernel.lanczos3, // High-quality upscaling
+          kernel: 'lanczos3', // High-quality upscaling kernel
           fit: 'fill',
+        });
+
+        // Add sharpening after upscaling to restore detail
+        processedInstance = processedInstance.sharpen({
+          sigma: 1.0, // Mild sharpening
+          flat: 1.0,
+          jagged: 2.0,
         });
       }
     }
@@ -89,10 +97,14 @@ export async function getCroppedPlaylistImageUrlServer({
     let mimeType: string;
 
     if (isStandardResolution) {
+      // Determine if image was upscaled for quality adjustment
+      const wasUpscaled = validatedCrop.width < 320 || validatedCrop.height < 320;
+      const quality = wasUpscaled ? 99 : 95; // Higher quality for upscaled images
+      
       // For standard resolution, use higher quality settings
       processedImageBuffer = await processedInstance
         .jpeg({
-          quality: 98, // Higher quality for upscaled images
+          quality, // Optimized quality based on upscaling
           progressive: true,
           mozjpeg: true,
         })
@@ -207,11 +219,12 @@ function validateAndAdjustCropDimensions(
       const isYouTubeHigh = imageWidth === 480 && imageHeight === 360;
 
       if (isYouTubeMedium) {
-        // 320x180 medium: crop 180x180 square from center
+        // 320x180 medium: improved less aggressive cropping strategy
+        // Use 280x180 crop (preserves more content) then upscale to square
         scaledProperties = {
-          x: Math.round((320 - 180) / 2), // 70px from left
+          x: Math.round((320 - 280) / 2), // 20px from left (vs 70px before)
           y: 0,
-          width: 180,
+          width: 280, // Preserve more width (vs 180 before)
           height: 180,
         };
       } else if (isYouTubeDefault) {
