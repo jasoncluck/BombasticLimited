@@ -119,7 +119,7 @@
     "@googleapis/youtube": "^27.0.1",
     "@neodrag/svelte": "^2.3.3",
     "@supabase/ssr": "^0.6.1",
-    "@supabase/supabase-js": "^2.50.5",
+    "@supabase/supabase-js": "^2.53.0",
     "@tanstack/svelte-query": "^5.83.0",
     "@vercel/speed-insights": "^1.2.0",
     "amazon-cognito-identity-js": "^6.3.15",
