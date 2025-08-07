@@ -6,7 +6,13 @@
   const {
     playlist,
     isFollowedPlaylist = false,
-  }: { playlist: Playlist & { avatar_url?: string | null; profile_username?: string } ; isFollowedPlaylist: boolean } = $props();
+  }: {
+    playlist: Playlist & {
+      avatar_url?: string | null;
+      profile_username?: string;
+    };
+    isFollowedPlaylist: boolean;
+  } = $props();
 </script>
 
 <a
@@ -38,7 +44,7 @@
     <p class="text-muted-foreground line-clamp-3 text-xs">
       {playlist.description}
     </p>
-    
+
     <!-- Avatar and username display -->
     {#if playlist.profile_username}
       <div class="mt-2 flex items-center gap-2">
@@ -56,9 +62,9 @@
         <p class="text-muted-foreground text-xs">{playlist.profile_username}</p>
       </div>
     {/if}
-    
+
     {#if isFollowedPlaylist}
-      <p class="text-muted-foreground flex items-center gap-1 text-xs mt-1">
+      <p class="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
         <Check size="14" /> Following
       </p>
     {/if}

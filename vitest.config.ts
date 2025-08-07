@@ -8,7 +8,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: [
       './src/tests/setup-globals.ts',
-      './src/lib/state/navigation-cache/__tests__/setup.ts'
+      './src/lib/state/navigation-cache/__tests__/setup.ts',
     ],
     globals: true,
     include: ['src/**/*.{test,spec}.{js,ts}'],

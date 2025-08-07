@@ -707,16 +707,18 @@ export async function searchPlaylists({
   // Fetch user profiles with avatar_url for playlist creators
   let playlistsWithAvatars = playlistsWithDeletedAt;
   if (playlistsWithDeletedAt.length > 0) {
-    const creatorIds = [...new Set(playlistsWithDeletedAt.map(p => p.created_by))];
-    
+    const creatorIds = [
+      ...new Set(playlistsWithDeletedAt.map((p) => p.created_by)),
+    ];
+
     const { data: profiles, error: profileError } = await supabase
       .from('profiles')
       .select('id, avatar_url')
       .in('id', creatorIds);
 
     if (!profileError && profiles) {
-      const profileMap = new Map(profiles.map(p => [p.id, p.avatar_url]));
-      playlistsWithAvatars = playlistsWithDeletedAt.map(playlist => ({
+      const profileMap = new Map(profiles.map((p) => [p.id, p.avatar_url]));
+      playlistsWithAvatars = playlistsWithDeletedAt.map((playlist) => ({
         ...playlist,
         avatar_url: profileMap.get(playlist.created_by) || null,
       }));
