@@ -884,7 +884,6 @@ export async function updatePlaylistImage({
 export async function followPlaylist({
   playlistId,
   supabase,
-  session,
   position,
 }: {
   playlistId: number;
@@ -909,7 +908,6 @@ export async function followPlaylist({
 export async function unfollowPlaylist({
   playlistId,
   supabase,
-  session,
 }: {
   playlistId: number;
   supabase: SupabaseClient<Database>;

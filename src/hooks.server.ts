@@ -57,12 +57,9 @@ const supabase: Handle = async ({ event, resolve }) => {
    */
   event.locals.safeGetSession = async () => {
     try {
-      const {
-        data,
-        error,
-      } = await event.locals.supabase.auth.getClaims();
-      
-      if (error || !data.claims) {
+      const { data, error } = await event.locals.supabase.auth.getClaims();
+
+      if (error || !data?.claims) {
         return { session: null, user: null };
       }
 
@@ -82,7 +79,7 @@ const supabase: Handle = async ({ event, resolve }) => {
         data: { user },
         error: userError,
       } = await event.locals.supabase.auth.getUser();
-      
+
       if (userError || !user) {
         return { session: null, user: null };
       }

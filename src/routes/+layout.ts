@@ -53,12 +53,9 @@ export const load = async ({
    */
   let session = null;
   try {
-    const {
-      data,
-      error,
-    } = await supabase.auth.getClaims();
-    
-    if (!error && data.claims) {
+    const { data, error } = await supabase.auth.getClaims();
+
+    if (!error && data?.claims) {
       // If claims are valid, get the session
       const { data: sessionData } = await supabase.auth.getSession();
       session = sessionData.session;

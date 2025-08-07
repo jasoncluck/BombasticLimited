@@ -171,7 +171,6 @@ $$;
 
 -- Function to follow (add) a playlist to user's account
 CREATE OR REPLACE FUNCTION public.follow_playlist (
-  p_user_id uuid,
   p_playlist_id bigint,
   p_playlist_position int2 DEFAULT NULL
 ) RETURNS TABLE (
@@ -186,21 +185,32 @@ DECLARE
   actual_position int2;
   already_linked boolean;
   playlist_count int2;
+  current_user_id uuid;
 BEGIN
+  -- Rest of function remains the same...
+  -- Get the current user ID from auth context
+  current_user_id := auth.uid();
+  
+  -- Check if user is authenticated
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'AUTHENTICATION_REQUIRED: User must be authenticated to follow playlists'
+      USING ERRCODE = 'P0001';
+  END IF;
+
   -- Lock all operations for this user to prevent concurrent playlist modifications
-  PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || p_user_id::text));
+  PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || current_user_id::text));
   
   -- Also lock all existing user playlists with FOR UPDATE to prevent concurrent position changes
   PERFORM 1
   FROM public.user_playlists up
-  WHERE up.user_id = p_user_id
+  WHERE up.user_id = current_user_id
   FOR UPDATE;
 
   -- Check if user already has 25 or more playlists
   SELECT COUNT(*)
     INTO playlist_count
     FROM public.user_playlists up
-    WHERE up.user_id = p_user_id;
+    WHERE up.user_id = current_user_id;
 
   IF playlist_count >= 25 THEN
     RAISE EXCEPTION 'PLAYLIST_LIMIT_EXCEEDED: User cannot have more than 25 playlists'
@@ -210,7 +220,7 @@ BEGIN
   -- Check if this playlist is already followed by the user
   SELECT EXISTS(
     SELECT 1 FROM public.user_playlists up
-    WHERE up.user_id = p_user_id AND up.id = p_playlist_id
+    WHERE up.user_id = current_user_id AND up.id = p_playlist_id
   ) INTO already_linked;
 
   IF already_linked THEN
@@ -221,24 +231,20 @@ BEGIN
   SELECT COALESCE(MAX(up.playlist_position), 0)
     INTO max_position
     FROM public.user_playlists up
-    WHERE up.user_id = p_user_id;
+    WHERE up.user_id = current_user_id;
 
   -- If no position specified, use max_position + 1
   IF p_playlist_position IS NULL THEN
     actual_position := LEAST(max_position + 1, 50);
   ELSE
-    -- Validate position range
-    IF p_playlist_position < 1 OR p_playlist_position > 50 THEN
-      RAISE EXCEPTION 'Position must be between 1 and 50';
-    END IF;
-    actual_position := p_playlist_position;
+    actual_position := LEAST(GREATEST(p_playlist_position, 1), 50);
   END IF;
 
   -- Shift existing playlists if inserting at a specific position
   IF actual_position <= max_position THEN
     UPDATE public.user_playlists up
       SET playlist_position = playlist_position + 1
-      WHERE up.user_id = p_user_id 
+      WHERE up.user_id = current_user_id 
         AND up.playlist_position >= actual_position;
   END IF;
 
@@ -250,40 +256,51 @@ BEGIN
   )
   VALUES (
     p_playlist_id,
-    p_user_id,
+    current_user_id,
     actual_position
   );
 
-  -- Assign return values
-  playlist_id := p_playlist_id;
-  user_id := p_user_id;
-  playlist_position := actual_position;
-
-  RETURN NEXT;
+  -- Return values
+  RETURN QUERY SELECT p_playlist_id, current_user_id, actual_position;
 END;
 $$;
 
 -- Function to unfollow (remove) a playlist from user's account
-CREATE OR REPLACE FUNCTION public.unfollow_playlist (p_user_id uuid, p_playlist_id bigint) RETURNS TABLE (playlist_id bigint, user_id uuid) LANGUAGE plpgsql
+CREATE OR REPLACE FUNCTION public.unfollow_playlist (
+  p_playlist_id bigint
+) RETURNS TABLE (
+  playlist_id bigint, 
+  user_id uuid
+) LANGUAGE plpgsql
 SET
   search_path = '' AS $$
 DECLARE
   removed_position int2;
+  current_user_id uuid;
 BEGIN
+  -- Get the current user ID from auth context
+  current_user_id := auth.uid();
+  
+  -- Check if user is authenticated
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'AUTHENTICATION_REQUIRED: User must be authenticated to unfollow playlists'
+      USING ERRCODE = 'P0001';
+  END IF;
+
   -- Lock all operations for this user to prevent concurrent playlist modifications
-  PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || p_user_id::text));
+  PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || current_user_id::text));
   
   -- Also lock all existing user playlists with FOR UPDATE to prevent concurrent position changes
   PERFORM 1
   FROM public.user_playlists up
-  WHERE up.user_id = p_user_id
+  WHERE up.user_id = current_user_id
   FOR UPDATE;
 
   -- Find the playlist position of the playlist to be removed
   SELECT up.playlist_position
     INTO removed_position
     FROM public.user_playlists up
-    WHERE up.user_id = p_user_id AND up.id = p_playlist_id;
+    WHERE up.user_id = current_user_id AND up.id = p_playlist_id;
 
   IF removed_position IS NULL THEN
     RAISE EXCEPTION 'Playlist not found in user''s account';
@@ -291,30 +308,27 @@ BEGIN
 
   -- Delete the user_playlist row
   DELETE FROM public.user_playlists up
-    WHERE up.user_id = p_user_id AND up.id = p_playlist_id;
+    WHERE up.user_id = current_user_id AND up.id = p_playlist_id;
 
   -- Shift up all playlists that were after the removed position
   UPDATE public.user_playlists up
     SET playlist_position = up.playlist_position - 1
-    WHERE up.user_id = p_user_id AND up.playlist_position > removed_position;
+    WHERE up.user_id = current_user_id AND up.playlist_position > removed_position;
 
-  -- Assign return values
-  playlist_id := p_playlist_id;
-  user_id := p_user_id;
-  RETURN NEXT;
+  -- Return values
+  RETURN QUERY SELECT p_playlist_id, current_user_id;
 END;
 $$;
 
 -- Function to update the position of a playlist for a user in user_playlists
 CREATE OR REPLACE FUNCTION public.update_playlist_position (
-  p_user_id uuid,
   p_playlist_id bigint,
   p_new_position int2
 ) RETURNS TABLE (
   playlist_id bigint,
   user_id uuid,
   created_by uuid,
-  created_at timestamptz,
+  created_at TIMESTAMP WITH TIME ZONE,
   name text,
   short_id text,
   description text,
@@ -322,29 +336,43 @@ CREATE OR REPLACE FUNCTION public.update_playlist_position (
   thumbnail_url text,
   thumbnail_maxres_url text,
   image_properties jsonb,
-  playlist_position int2
+  youtube_id text,
+  playlist_position int2,
+  sorted_by public.playlist_sorted_by,
+  sort_order public.playlist_sort_order
 ) LANGUAGE plpgsql
 SET
-  search_path TO '' AS $$
+  search_path = '' AS $$  
 DECLARE
   current_position int2;
   max_position int2;
   updated_playlist public.playlists%ROWTYPE;
+  current_user_id uuid;
 BEGIN
+  -- Rest of function remains the same...
+  -- Get the current user ID from auth context
+  current_user_id := auth.uid();
+  
+  -- Check if user is authenticated
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'AUTHENTICATION_REQUIRED: User must be authenticated to update playlist positions'
+      USING ERRCODE = 'P0001';
+  END IF;
+
   -- Lock all operations for this user to prevent concurrent playlist modifications
-  PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || p_user_id::text));
+  PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || current_user_id::text));
   
   -- Also lock all existing user playlists with FOR UPDATE to prevent concurrent position changes
   PERFORM 1
   FROM public.user_playlists up
-  WHERE up.user_id = p_user_id
+  WHERE up.user_id = current_user_id
   FOR UPDATE;
 
   -- Find the current position of the playlist for this user
   SELECT up.playlist_position
     INTO current_position
     FROM public.user_playlists up
-    WHERE up.user_id = p_user_id
+    WHERE up.user_id = current_user_id
       AND up.id = p_playlist_id;
 
   IF NOT FOUND THEN
@@ -355,33 +383,38 @@ BEGIN
   SELECT COALESCE(MAX(up.playlist_position), 0)
     INTO max_position
     FROM public.user_playlists up
-    WHERE up.user_id = p_user_id;
+    WHERE up.user_id = current_user_id;
 
   -- Validate new position range
   IF p_new_position < 1 OR p_new_position > max_position THEN
     RAISE EXCEPTION 'New position must be between 1 and %', max_position;
   END IF;
 
-  -- If position isn't changing, do nothing but return playlist info
+  -- If position hasn't changed, just return current info
   IF current_position = p_new_position THEN
     SELECT * FROM public.playlists p
       WHERE p.id = p_playlist_id
       INTO updated_playlist;
 
-    playlist_id := updated_playlist.id;
-    user_id := p_user_id;
-    created_by := updated_playlist.created_by;
-    created_at := updated_playlist.created_at;
-    name := updated_playlist.name;
-    short_id := updated_playlist.short_id;
-    description := updated_playlist.description;
-    type := updated_playlist.type;
-    thumbnail_url := updated_playlist.thumbnail_url;
-    thumbnail_maxres_url := updated_playlist.thumbnail_maxres_url;
-    image_properties := updated_playlist.image_properties;
-    playlist_position := current_position;
-
-    RETURN NEXT;
+    RETURN QUERY SELECT 
+      updated_playlist.id,
+      current_user_id,
+      updated_playlist.created_by,
+      updated_playlist.created_at,
+      updated_playlist.name,
+      updated_playlist.short_id,
+      updated_playlist.description,
+      updated_playlist.type,
+      updated_playlist.thumbnail_url,
+      updated_playlist.thumbnail_maxres_url,
+      updated_playlist.image_properties,
+      updated_playlist.youtube_id,
+      p_new_position,
+      up.sorted_by,
+      up.sort_order
+    FROM public.user_playlists up
+    WHERE up.user_id = current_user_id AND up.id = p_playlist_id;
+    
     RETURN;
   END IF;
 
@@ -389,7 +422,7 @@ BEGIN
   -- to avoid conflicts during the update
   UPDATE public.user_playlists up
     SET playlist_position = -9999
-    WHERE up.user_id = p_user_id
+    WHERE up.user_id = current_user_id
       AND up.id = p_playlist_id;
 
   -- Moving down (to a higher number)
@@ -397,7 +430,7 @@ BEGIN
     -- Shift items between current and new position down by 1
     UPDATE public.user_playlists up
       SET playlist_position = up.playlist_position - 1
-      WHERE up.user_id = p_user_id
+      WHERE up.user_id = current_user_id
         AND up.playlist_position > current_position
         AND up.playlist_position <= p_new_position;
   -- Moving up (to a lower number)
@@ -405,7 +438,7 @@ BEGIN
     -- Shift items between new and current position up by 1
     UPDATE public.user_playlists up
       SET playlist_position = up.playlist_position + 1
-      WHERE up.user_id = p_user_id
+      WHERE up.user_id = current_user_id
         AND up.playlist_position >= p_new_position
         AND up.playlist_position < current_position;
   END IF;
@@ -413,7 +446,7 @@ BEGIN
   -- Set the playlist to its new position for the user
   UPDATE public.user_playlists up
     SET playlist_position = p_new_position
-    WHERE up.user_id = p_user_id
+    WHERE up.user_id = current_user_id
       AND up.id = p_playlist_id;
 
   -- Get updated playlist info
@@ -421,39 +454,56 @@ BEGIN
     WHERE p.id = p_playlist_id
     INTO updated_playlist;
 
-  playlist_id := updated_playlist.id;
-  user_id := p_user_id;
-  created_by := updated_playlist.created_by;
-  created_at := updated_playlist.created_at;
-  name := updated_playlist.name;
-  short_id := updated_playlist.short_id;
-  description := updated_playlist.description;
-  type := updated_playlist.type;
-  thumbnail_url := updated_playlist.thumbnail_url;
-  thumbnail_maxres_url := updated_playlist.thumbnail_maxres_url;
-  image_properties := updated_playlist.image_properties;
-  playlist_position := p_new_position;
-
-  RETURN NEXT;
+  -- Return updated playlist information
+  RETURN QUERY SELECT 
+    updated_playlist.id,
+    current_user_id,
+    updated_playlist.created_by,
+    updated_playlist.created_at,
+    updated_playlist.name,
+    updated_playlist.short_id,
+    updated_playlist.description,
+    updated_playlist.type,
+    updated_playlist.thumbnail_url,
+    updated_playlist.thumbnail_maxres_url,
+    updated_playlist.image_properties,
+    updated_playlist.youtube_id,
+    p_new_position,
+    up.sorted_by,
+    up.sort_order
+  FROM public.user_playlists up
+  WHERE up.user_id = current_user_id AND up.id = p_playlist_id;
 END;
 $$;
 
 -- Delete a playlist for a user (from user_playlists), and reorder remaining positions for that user
-CREATE OR REPLACE FUNCTION public.delete_playlist (p_user_id uuid, p_playlist_id bigint) RETURNS BOOLEAN LANGUAGE plpgsql
+CREATE OR REPLACE FUNCTION public.delete_playlist (
+  p_playlist_id bigint
+) RETURNS BOOLEAN LANGUAGE plpgsql
 SET
-  search_path TO '' AS $$
+  search_path = '' AS $$
 DECLARE
   deleted_position int2;
   max_position int2;
   playlist_owner uuid;
+  current_user_id uuid;
 BEGIN
+  -- Get the current user ID from auth context
+  current_user_id := auth.uid();
+  
+  -- Check if user is authenticated
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'AUTHENTICATION_REQUIRED: User must be authenticated to delete playlists'
+      USING ERRCODE = 'P0001';
+  END IF;
+
   -- Lock all operations for this user to prevent concurrent playlist modifications
-  PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || p_user_id::text));
+  PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || current_user_id::text));
   
   -- Also lock all existing user playlists with FOR UPDATE to prevent concurrent position changes
   PERFORM 1
   FROM public.user_playlists up
-  WHERE up.user_id = p_user_id
+  WHERE up.user_id = current_user_id
   FOR UPDATE;
   
   -- Find the position of the playlist to be deleted and check ownership
@@ -461,57 +511,53 @@ BEGIN
     INTO deleted_position, playlist_owner
     FROM public.user_playlists up
     JOIN public.playlists p ON up.id = p.id
-    WHERE up.user_id = p_user_id AND up.id = p_playlist_id;
+    WHERE up.user_id = current_user_id AND up.id = p_playlist_id;
 
   -- If not found, raise exception
   IF deleted_position IS NULL THEN
-    RAISE EXCEPTION 'Playlist mapping not found for user_id: % and playlist_id: %', p_user_id, p_playlist_id;
+    RAISE EXCEPTION 'Playlist mapping not found for user_id: % and playlist_id: %', current_user_id, p_playlist_id;
   END IF;
 
   -- Check if user is the owner of the playlist
-  IF playlist_owner = p_user_id THEN
+  IF playlist_owner = current_user_id THEN
     -- User owns the playlist: soft delete it and remove all user mappings
     UPDATE public.playlists
       SET deleted_at = NOW()
       WHERE id = p_playlist_id AND deleted_at IS NULL;
     
-    -- Remove all user mappings for this playlist since it's soft deleted
-    DELETE FROM public.user_playlists
-      WHERE id = p_playlist_id;
+    -- Remove all user mappings to this playlist
+    DELETE FROM public.user_playlists up
+      WHERE up.id = p_playlist_id;
     
     -- For owners, we don't need to reorder positions since all users lose access
   ELSE
     -- User is just a follower: only remove their mapping (unfollow)
     DELETE FROM public.user_playlists up
-      WHERE up.user_id = p_user_id AND up.id = p_playlist_id;
+      WHERE up.user_id = current_user_id AND up.id = p_playlist_id;
     
     -- Find the new maximum position for this user after deletion
     SELECT COALESCE(MAX(up.playlist_position), 0)
       INTO max_position
       FROM public.user_playlists up
-      WHERE up.user_id = p_user_id;
+      WHERE up.user_id = current_user_id;
 
     -- If there are playlists with higher positions, decrement their positions to fill the gap
     IF deleted_position <= max_position THEN
       UPDATE public.user_playlists up
         SET playlist_position = up.playlist_position - 1
-        WHERE up.user_id = p_user_id
+        WHERE up.user_id = current_user_id
           AND up.playlist_position > deleted_position;
     END IF;
   END IF;
 
   RETURN TRUE;
-EXCEPTION
-  WHEN OTHERS THEN
-    RAISE INFO 'Error in delete_playlist: %', SQLERRM;
-    RETURN FALSE;
 END;
 $$;
 
 -- Add administrative restore function for soft-deleted playlists
 CREATE OR REPLACE FUNCTION public.restore_playlist (p_playlist_id bigint) RETURNS BOOLEAN LANGUAGE plpgsql
 SET
-  search_path TO '' AS $$
+  search_path = '' AS $$
 DECLARE
   playlist_exists boolean;
 BEGIN
@@ -575,7 +621,8 @@ CREATE OR REPLACE FUNCTION "public"."insert_playlist_videos" ("p_playlist_id" in
   playlist_id int8,
   video_id text,
   video_position int2
-) AS $$
+) LANGUAGE plpgsql
+SET search_path = '' AS $$
 DECLARE
   max_position int2;
   current_position int2;
@@ -699,12 +746,12 @@ BEGIN
   END IF;
   
 END;
-$$ LANGUAGE plpgsql
-SET
-  search_path = '';
+$$;
 
 -- Function to delete videos from a playlist
-CREATE OR REPLACE FUNCTION public.delete_playlist_videos (p_playlist_id int8, p_video_ids TEXT[]) RETURNS TABLE (video_id text, success boolean, message text) AS $$
+CREATE OR REPLACE FUNCTION public.delete_playlist_videos (p_playlist_id int8, p_video_ids TEXT[]) RETURNS TABLE (video_id text, success boolean, message text) 
+LANGUAGE plpgsql
+SET search_path = '' AS $$
 DECLARE
   v_id text;
   video_positions jsonb;
@@ -840,9 +887,7 @@ BEGIN
 
   RETURN;
 END;
-$$ LANGUAGE plpgsql
-SET
-  search_path = '';
+$$;
 
 -- Function to validate playlist thumbnail URLs
 CREATE OR REPLACE FUNCTION public.validate_playlist_thumbnail_urls (
