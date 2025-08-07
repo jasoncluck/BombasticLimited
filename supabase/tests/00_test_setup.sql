@@ -1,6 +1,5 @@
 -- Test setup for pgTAP testing framework
 -- This file ensures pgTAP is available and sets up basic test infrastructure
-
 BEGIN;
 
 -- Check if pgTAP extension is available
@@ -13,12 +12,23 @@ END
 $$;
 
 -- Test that pgTAP is working
-SELECT plan(3);
+SELECT
+  plan (3);
 
 -- Basic sanity checks
-SELECT ok(true, 'pgTAP is working correctly');
-SELECT ok(1 = 1, 'Basic equality test passes');
-SELECT ok(current_database() IS NOT NULL, 'Database connection is active');
+SELECT
+  ok (TRUE, 'pgTAP is working correctly');
 
-SELECT finish();
+SELECT
+  ok (1 = 1, 'Basic equality test passes');
+
+SELECT
+  ok (
+    current_database() IS NOT NULL,
+    'Database connection is active'
+  );
+
+SELECT
+  finish ();
+
 ROLLBACK;
