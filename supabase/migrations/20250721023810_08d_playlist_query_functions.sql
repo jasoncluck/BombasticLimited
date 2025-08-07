@@ -256,7 +256,6 @@ $$;
 CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
   p_short_id text,
   p_video_id text,
-  p_user_id uuid DEFAULT NULL,
   p_context_limit integer DEFAULT 5
 ) RETURNS TABLE (
   -- Playlist metadata (first row only)
@@ -287,166 +286,114 @@ CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
   video_start_seconds numeric,
   video_watched_at TIMESTAMP WITH TIME ZONE,
   video_updated_at TIMESTAMP WITH TIME ZONE,
-  -- Context metadata
-  total_videos_count bigint,
-  current_video_index integer,
+  video_timestamp_playlist_id bigint,
+  video_timestamp_sorted_by public.playlist_sorted_by,
+  video_timestamp_sort_order public.playlist_sort_order,
+  -- Context data
   is_current_video boolean,
-  is_metadata_row boolean
+  total_videos_count bigint,
+  current_video_index int2
 )
 SET
-  search_path = '' LANGUAGE plpgsql AS $$
-DECLARE
-  playlist_record RECORD;
-  video_count bigint;
-  current_video_pos integer;
-BEGIN
-  -- Get the playlist data, excluding soft-deleted playlists
-  SELECT
-    p.id,
-    p.created_at,
-    p.name,
-    p.short_id,
-    p.created_by,
-    p.description,
-    p.thumbnail_url,
-    p.thumbnail_maxres_url,
-    p.type,
-    p.image_properties,
-    p.youtube_id,
-    prof.username AS profile_username,
-    up.sorted_by,
-    up.sort_order
-  INTO playlist_record
-  FROM public.playlists p
-  LEFT JOIN public.profiles prof ON p.created_by = prof.id
-  LEFT JOIN public.user_playlists up ON up.id = p.id AND up.user_id = p_user_id
-  WHERE p.short_id = p_short_id
-    AND p.deleted_at IS NULL;  -- Filter out soft-deleted playlists
-  
-  -- If playlist not found, return empty
-  IF playlist_record.id IS NULL THEN
-    RETURN;
-  END IF;
-  
-  -- Get total video count
-  SELECT COUNT(*)
-  INTO video_count
-  FROM public.playlist_videos pv
-  WHERE pv.playlist_id = playlist_record.id;
-  
-  -- Find the current video's position (using natural video_position order)
-  WITH ordered_videos AS (
+  search_path = '' LANGUAGE sql SECURITY DEFINER AS $$
+  WITH playlist_info AS (
     SELECT 
+      p.id,
+      p.created_at,
+      p.name,
+      p.short_id,
+      p.created_by,
+      p.description,
+      p.thumbnail_url,
+      p.thumbnail_maxres_url,
+      p.type,
+      p.image_properties,
+      p.youtube_id,
+      prof.username AS profile_username,
+      -- Get user-specific sorted_by and sort_order if user is authenticated
+      CASE WHEN auth.uid() IS NOT NULL THEN up.sorted_by ELSE NULL END AS sorted_by,
+      CASE WHEN auth.uid() IS NOT NULL THEN up.sort_order ELSE NULL END AS sort_order
+    FROM public.playlists p
+    LEFT JOIN public.profiles prof ON p.created_by = prof.id
+    LEFT JOIN public.user_playlists up ON p.id = up.id AND up.user_id = auth.uid()
+    WHERE p.short_id = p_short_id 
+      AND p.deleted_at IS NULL
+  ),
+  target_video AS (
+    SELECT pv.position
+    FROM public.playlist_videos pv
+    JOIN playlist_info pi ON pv.playlist_id = pi.id
+    WHERE pv.video_id = p_video_id
+  ),
+  total_count AS (
+    SELECT COUNT(*) as total
+    FROM public.playlist_videos pv
+    JOIN playlist_info pi ON pv.playlist_id = pi.id
+  ),
+  context_videos AS (
+    SELECT 
+      pi.*,
       pv.video_id,
-      ROW_NUMBER() OVER (ORDER BY pv.video_position) as position_in_playlist
-    FROM public.playlist_videos pv
-    WHERE pv.playlist_id = playlist_record.id
-  )
-  SELECT position_in_playlist::integer
-  INTO current_video_pos
-  FROM ordered_videos ov
-  WHERE ov.video_id = p_video_id;
-  
-  -- If video not found in playlist, return empty
-  IF current_video_pos IS NULL THEN
-    RETURN;
-  END IF;
-  
-  -- Return metadata row
-  RETURN QUERY
-  SELECT
-    playlist_record.id,
-    playlist_record.created_at,
-    playlist_record.name,
-    playlist_record.short_id,
-    playlist_record.created_by,
-    playlist_record.description,
-    playlist_record.thumbnail_url,
-    playlist_record.thumbnail_maxres_url,
-    playlist_record.type,
-    playlist_record.image_properties,
-    playlist_record.youtube_id,
-    playlist_record.profile_username,
-    playlist_record.sorted_by,
-    playlist_record.sort_order,
-    
-    NULL::text, -- video_id
-    NULL::int2, -- video_position
-    NULL::public.source, -- video_source
-    NULL::text, -- video_title
-    NULL::text, -- video_description
-    NULL::text, -- video_thumbnail_url
-    NULL::text, -- video_thumbnail_maxres_url
-    NULL::timestamp with time zone, -- video_published_at
-    NULL::text, -- video_duration
-    NULL::numeric, -- video_start_seconds
-    NULL::timestamp with time zone, -- video_watched_at
-    NULL::timestamp with time zone, -- video_updated_at
-    
-    video_count,
-    current_video_pos,
-    false, -- is_current_video
-    true; -- is_metadata_row
-  
-  -- Return current video + next videos (in natural video_position order)
-  RETURN QUERY
-  WITH ordered_videos AS (
-    SELECT 
-      pv.video_id as playlist_video_id,
-      pv.video_position,
-      v.source,
-      v.title,
-      v.description,
-      v.thumbnail_url,
-      v.thumbnail_maxres_url,
-      v.published_at,
-      v.duration,
+      pv.position AS video_position,
+      v.source AS video_source,
+      v.title AS video_title,
+      v.description AS video_description,
+      v.thumbnail_url AS video_thumbnail_url,
+      v.thumbnail_maxres_url AS video_thumbnail_maxres_url,
+      v.published_at AS video_published_at,
+      v.duration AS video_duration,
       t.video_start_seconds,
-      t.watched_at,
-      t.updated_at,
-      ROW_NUMBER() OVER (ORDER BY pv.video_position) as position_in_playlist
-    FROM public.playlist_videos pv
+      t.watched_at AS video_watched_at,
+      t.updated_at AS video_updated_at,
+      t.playlist_id AS video_timestamp_playlist_id,
+      t.sorted_by AS video_timestamp_sorted_by,
+      t.sort_order AS video_timestamp_sort_order,
+      (pv.video_id = p_video_id) AS is_current_video,
+      tc.total AS total_videos_count,
+      pv.position AS current_video_index
+    FROM playlist_info pi
+    JOIN public.playlist_videos pv ON pi.id = pv.playlist_id
     JOIN public.videos v ON pv.video_id = v.id
-    LEFT JOIN public.timestamps t ON pv.video_id = t.video_id AND t.user_id = p_user_id
-    WHERE pv.playlist_id = playlist_record.id
+    LEFT JOIN public.timestamps t ON v.id = t.video_id AND t.user_id = auth.uid()
+    CROSS JOIN total_count tc
+    CROSS JOIN target_video tv
+    WHERE pv.position BETWEEN (tv.position - p_context_limit) AND (tv.position + p_context_limit)
+    ORDER BY pv.position
   )
-  SELECT
-    playlist_record.id,
-    playlist_record.created_at,
-    playlist_record.name,
-    playlist_record.short_id,
-    playlist_record.created_by,
-    playlist_record.description,
-    playlist_record.thumbnail_url,
-    playlist_record.thumbnail_maxres_url,
-    playlist_record.type,
-    playlist_record.image_properties,
-    playlist_record.youtube_id,
-    playlist_record.profile_username,
-    playlist_record.sorted_by,
-    playlist_record.sort_order,
-    
-    ov.playlist_video_id,
-    ov.video_position,
-    ov.source,
-    ov.title,
-    ov.description,
-    ov.thumbnail_url,
-    ov.thumbnail_maxres_url,
-    ov.published_at,
-    ov.duration,
-    ov.video_start_seconds,
-    ov.watched_at,
-    ov.updated_at,
-    
-    video_count,
-    current_video_pos,
-    (ov.playlist_video_id = p_video_id), -- is_current_video
-    false -- is_metadata_row
-  FROM ordered_videos ov
-  WHERE ov.position_in_playlist BETWEEN current_video_pos AND LEAST(video_count, current_video_pos + p_context_limit)
-  ORDER BY ov.position_in_playlist;
-END;
+  SELECT 
+    id,
+    created_at,
+    name,
+    short_id,
+    created_by,
+    description,
+    thumbnail_url,
+    thumbnail_maxres_url,
+    type,
+    image_properties,
+    youtube_id,
+    profile_username,
+    sorted_by,
+    sort_order,
+    video_id,
+    video_position,
+    video_source,
+    video_title,
+    video_description,
+    video_thumbnail_url,
+    video_thumbnail_maxres_url,
+    video_published_at,
+    video_duration,
+    video_start_seconds,
+    video_watched_at,
+    video_updated_at,
+    video_timestamp_playlist_id,
+    video_timestamp_sorted_by,
+    video_timestamp_sort_order,
+    is_current_video,
+    total_videos_count,
+    current_video_index
+  FROM context_videos;
 $$;
 
 -- Function to get playlist by short_id
@@ -536,7 +483,7 @@ SET
 $$;
 
 -- Function to get user playlists
-CREATE OR REPLACE FUNCTION public.get_user_playlists (p_user_id uuid) RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.get_user_playlists () RETURNS TABLE (
   id bigint,
   created_by uuid,
   created_at timestamptz,
@@ -555,7 +502,7 @@ CREATE OR REPLACE FUNCTION public.get_user_playlists (p_user_id uuid) RETURNS TA
   deleted_at TIMESTAMP WITH TIME ZONE
 )
 SET
-  search_path = '' LANGUAGE sql AS $$
+  search_path = '' LANGUAGE sql SECURITY DEFINER AS $$
   SELECT
     p.id,
     p.created_by,
@@ -576,7 +523,7 @@ SET
   FROM public.user_playlists up
   JOIN public.playlists p ON up.id = p.id
   LEFT JOIN public.profiles prof ON p.created_by = prof.id
-  WHERE up.user_id = p_user_id
+  WHERE up.user_id = auth.uid()
     AND p.deleted_at IS NULL  -- Filter out soft-deleted playlists
   ORDER BY up.playlist_position ASC;
 $$;
