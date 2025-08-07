@@ -52,7 +52,7 @@ export function useNavigation(
 
       // Store ETag information with security validation
       if (browser && to && etag && lastModified && !cached) {
-        const currentUserId = user?.id ?? null;
+        const currentUserId = session?.user?.id ?? null;
         const currentCacheUserId = cacheUserId ?? null;
 
         // Validate user context for both authenticated and non-authenticated users
@@ -84,7 +84,7 @@ export function useNavigation(
       const shouldShow = navigationCache.shouldShowLoading(
         from?.href,
         to?.href,
-        session
+        session?.user?.id ?? null
       );
       if (!shouldShow) return false;
     }

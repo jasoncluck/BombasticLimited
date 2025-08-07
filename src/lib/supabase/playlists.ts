@@ -398,14 +398,12 @@ export async function getPlaylistVideoContext({
   videoId,
   contentFilter,
   supabase,
-  userId,
   contextLimit = 5,
 }: {
   shortId: string;
   videoId: string;
   contentFilter: PlaylistVideosFilter;
   supabase: SupabaseClient<Database>;
-  userId?: string;
   contextLimit?: number;
 }): Promise<{
   playlist: UserPlaylist | ProfilePlaylist | null;
@@ -420,7 +418,6 @@ export async function getPlaylistVideoContext({
   let query = supabase.rpc('get_playlist_video_context', {
     p_short_id: shortId,
     p_video_id: videoId,
-    p_user_id: userId,
     p_context_limit: contextLimit,
   });
 
@@ -594,7 +591,7 @@ export async function getUserPlaylists({
   }
 
   const { data, count, error } = await supabase
-    .rpc('get_user_playlists', { p_user_id: session.user.id })
+    .rpc('get_user_playlists')
     .order('playlist_position', { ascending: false });
 
   if (error) {
@@ -623,7 +620,6 @@ export async function updatePlaylistPosition({
 }) {
   const { error } = await supabase.rpc('update_playlist_position', {
     p_playlist_id: playlistId,
-    p_user_id: session.user.id,
     p_new_position: position,
   });
 
@@ -645,7 +641,6 @@ export async function deletePlaylist({
 }) {
   const { error } = await supabase.rpc('delete_playlist', {
     p_playlist_id: playlistId,
-    p_user_id: session.user.id,
   });
 
   console.log(error);
@@ -889,7 +884,6 @@ export async function updatePlaylistImage({
 export async function followPlaylist({
   playlistId,
   supabase,
-  session,
   position,
 }: {
   playlistId: number;
@@ -900,7 +894,6 @@ export async function followPlaylist({
   const { error } = await supabase
     .rpc('follow_playlist', {
       p_playlist_id: playlistId,
-      p_user_id: session.user.id,
       p_playlist_position: position,
     })
     .select();
@@ -915,7 +908,6 @@ export async function followPlaylist({
 export async function unfollowPlaylist({
   playlistId,
   supabase,
-  session,
 }: {
   playlistId: number;
   supabase: SupabaseClient<Database>;
@@ -924,7 +916,6 @@ export async function unfollowPlaylist({
   const { error } = await supabase
     .rpc('unfollow_playlist', {
       p_playlist_id: playlistId,
-      p_user_id: session.user.id,
     })
     .select();
 
