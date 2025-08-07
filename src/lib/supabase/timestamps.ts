@@ -35,7 +35,6 @@ export async function saveVideoTimestamp({
   if (session) {
     const { data: videos, error: upsertError } = await supabase
       .rpc('insert_timestamp', {
-        p_user_id: session.user.id,
         p_video_id: videoTimestamp.videoId,
         p_video_start_seconds: videoTimestamp.timestampStartSeconds,
         p_watched_at: videoTimestamp.watchedAt,
@@ -79,7 +78,6 @@ export async function saveVideoTimestamps({
 
     const { data: videos, error: upsertError } = await supabase
       .rpc('insert_timestamps', {
-        p_user_id: session.user.id,
         p_video_ids: video_ids,
         p_video_start_seconds: video_start_seconds,
         p_watched_at: watched_at,
@@ -110,7 +108,6 @@ export async function deleteVideoTimestamps({
   if (session?.user && videoIds.length > 0) {
     const { data: videos, error: deleteError } = await supabase
       .rpc('delete_timestamps', {
-        p_user_id: session.user.id,
         p_video_ids: videoIds,
       })
       .select();
