@@ -20,8 +20,7 @@ CREATE OR REPLACE FUNCTION public.insert_timestamp (
   playlist_id bigint,
   sorted_by public.playlist_sorted_by,
   sort_order public.playlist_sort_order
-)
-LANGUAGE plpgsql
+) LANGUAGE plpgsql
 SET
   search_path = '' AS $$ 
 DECLARE
@@ -109,7 +108,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION public.insert_timestamps (
   p_video_ids TEXT[],
   p_video_start_seconds NUMERIC[] DEFAULT NULL,
@@ -129,8 +127,7 @@ CREATE OR REPLACE FUNCTION public.insert_timestamps (
   playlist_id bigint,
   sorted_by public.playlist_sorted_by,
   sort_order public.playlist_sort_order
-)
-LANGUAGE plpgsql
+) LANGUAGE plpgsql
 SET
   search_path = '' AS $$
 DECLARE
@@ -222,11 +219,9 @@ BEGIN
   WHERE v.id = ANY(p_video_ids);
 
 END;
-$$; 
+$$;
 
-CREATE OR REPLACE FUNCTION public.delete_timestamps (
-  p_video_ids TEXT[]
-) RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.delete_timestamps (p_video_ids TEXT[]) RETURNS TABLE (
   id text,
   source public.source,
   title text,
@@ -238,8 +233,7 @@ CREATE OR REPLACE FUNCTION public.delete_timestamps (
   video_start_seconds numeric,
   watched_at TIMESTAMP WITH TIME ZONE,
   updated_at TIMESTAMP WITH TIME ZONE
-) 
-LANGUAGE plpgsql
+) LANGUAGE plpgsql
 SET
   search_path = '' AS $$ 
 DECLARE

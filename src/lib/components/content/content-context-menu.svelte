@@ -21,9 +21,9 @@
   import { page } from '$app/state';
   import {
     CircleCheck,
+    CircleMinus,
+    CirclePlus,
     ImagePlay,
-    MinusCircle,
-    PlusCircle,
     TimerReset,
   } from '@lucide/svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
@@ -166,7 +166,7 @@
         {#if filteredPlaylists.length > 0}
           <ContextMenu.Sub>
             <ContextMenu.SubTrigger onclick={(e) => e.stopPropagation()}>
-              <PlusCircle class="dropdown-icon" />
+              <CirclePlus class="dropdown-icon" />
               Add {operationVideos.length === 1
                 ? 'video'
                 : `${operationVideos.length} videos`} to playlist
@@ -229,7 +229,7 @@
               }
             }}
           >
-            <MinusCircle class="dropdown-icon" />
+            <CircleMinus class="dropdown-icon" />
             Remove {operationVideos.length === 1
               ? 'video'
               : `${operationVideos.length} videos`} from playlist

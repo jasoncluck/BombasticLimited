@@ -22,48 +22,47 @@ const STREAM_CHECK_INTERVAL = 45000; // 45 seconds between API checks
  */
 async function updateStreamStatus() {
   const now = Date.now();
-  
+
   // Skip if we've checked recently to avoid excessive API calls
   if (now - lastStreamCheck < STREAM_CHECK_INTERVAL) {
     return;
   }
-  
+
   lastStreamCheck = now;
-  
+
   try {
     // Get all Twitch user IDs from sources
-    const twitchIds = SOURCES.map(source => SOURCE_INFO[source].twitchId);
-    
+    const twitchIds = SOURCES.map((source) => SOURCE_INFO[source].twitchId);
+
     // Fetch stream status for all sources
     const streamStatuses = await getMultipleStreamStatus(twitchIds);
-    
+
     // Update the streaming sources set
     const previouslyLive = new Set(streamingSources);
     streamingSources.clear();
-    
+
     for (const status of streamStatuses) {
       // Find the source name by matching twitchId
-      const sourceName = SOURCES.find(source => 
-        SOURCE_INFO[source].twitchId === status.userId
+      const sourceName = SOURCES.find(
+        (source) => SOURCE_INFO[source].twitchId === status.userId
       );
-      
+
       if (sourceName && status.isLive) {
         streamingSources.add(sourceName);
-        
+
         // Log when stream comes online
         if (!previouslyLive.has(sourceName)) {
           console.log(`${sourceName} has started streaming on Twitch.`);
         }
       }
     }
-    
+
     // Log when streams go offline
     for (const prevSource of previouslyLive) {
       if (!streamingSources.has(prevSource)) {
         console.log(`${prevSource} has ended the Twitch stream.`);
       }
     }
-    
   } catch (error) {
     console.error('Failed to update Twitch stream status:', error);
   }
@@ -78,18 +77,18 @@ export async function POST() {
       while (true) {
         // Check for stream updates
         await updateStreamStatus();
-        
+
         // Emit current streaming sources
         const { error } = emit(
           'streamingSubscriptions',
           JSON.stringify(Array.from(streamingSources.values()))
         );
-        
+
         if (error) {
           console.error('SSE emit error:', error);
           return;
         }
-        
+
         // Wait before next iteration (shorter than API check interval for responsive SSE)
         await delay(10000);
       }

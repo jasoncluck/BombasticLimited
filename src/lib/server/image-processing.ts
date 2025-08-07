@@ -51,8 +51,6 @@ export async function getCroppedPlaylistImageUrlServer({
     const imageWidth = metadata.width || 0;
     const imageHeight = metadata.height || 0;
 
-    console.log('Original image:', imageWidth, 'x', imageHeight);
-
     // Validate and adjust crop dimensions
     const validatedCrop = validateAndAdjustCropDimensions(
       imageProperties,

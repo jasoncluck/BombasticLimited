@@ -134,7 +134,6 @@ CREATE TABLE IF NOT EXISTS "public"."profiles" (
   PRIMARY KEY ("id")
 );
 
-
 ALTER TABLE "public"."profiles" OWNER TO "postgres";
 
 -- User playlists table (without foreign keys initially)

@@ -30,14 +30,12 @@
   import {
     Ellipsis,
     ListChecks,
-    Edit,
-    PlusCircle,
-    MinusCircle,
     ImagePlay,
     TimerReset,
     CircleCheck,
     CircleMinus,
     CirclePlus,
+    Pencil,
   } from '@lucide/svelte';
   import type { UserProfile } from '$lib/supabase/user-profiles';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
@@ -300,7 +298,7 @@
           onclick={() => (playlistState.openEditPlaylist = true)}
         >
           <div class="flex items-center gap-2">
-            <Edit class="dropdown-icon" />
+            <Pencil class="dropdown-icon" />
             Edit
           </div>
         </DropdownMenu.Item>
@@ -317,7 +315,7 @@
               class="stable-trigger"
             >
               <div class="flex items-center gap-2">
-                <PlusCircle class="dropdown-icon" />
+                <CirclePlus class="dropdown-icon" />
                 Add {frozenOperationVideos.length === 1
                   ? 'video'
                   : `${frozenOperationVideos.length} videos`} to playlist
@@ -387,7 +385,7 @@
             }}
           >
             <div class="flex items-center gap-2">
-              <MinusCircle class="dropdown-icon" />
+              <CircleMinus class="dropdown-icon" />
 
               Remove {frozenOperationVideos.length === 1
                 ? 'video'

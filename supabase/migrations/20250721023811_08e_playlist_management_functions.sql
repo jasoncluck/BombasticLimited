@@ -266,12 +266,7 @@ END;
 $$;
 
 -- Function to unfollow (remove) a playlist from user's account
-CREATE OR REPLACE FUNCTION public.unfollow_playlist (
-  p_playlist_id bigint
-) RETURNS TABLE (
-  playlist_id bigint, 
-  user_id uuid
-) LANGUAGE plpgsql
+CREATE OR REPLACE FUNCTION public.unfollow_playlist (p_playlist_id bigint) RETURNS TABLE (playlist_id bigint, user_id uuid) LANGUAGE plpgsql
 SET
   search_path = '' AS $$
 DECLARE
@@ -321,10 +316,7 @@ END;
 $$;
 
 -- Function to update the position of a playlist for a user in user_playlists
-CREATE OR REPLACE FUNCTION public.update_playlist_position (
-  p_playlist_id bigint,
-  p_new_position int2
-) RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.update_playlist_position (p_playlist_id bigint, p_new_position int2) RETURNS TABLE (
   playlist_id bigint,
   user_id uuid,
   created_by uuid,
@@ -477,9 +469,7 @@ END;
 $$;
 
 -- Delete a playlist for a user (from user_playlists), and reorder remaining positions for that user
-CREATE OR REPLACE FUNCTION public.delete_playlist (
-  p_playlist_id bigint
-) RETURNS BOOLEAN LANGUAGE plpgsql
+CREATE OR REPLACE FUNCTION public.delete_playlist (p_playlist_id bigint) RETURNS BOOLEAN LANGUAGE plpgsql
 SET
   search_path = '' AS $$
 DECLARE
@@ -622,7 +612,8 @@ CREATE OR REPLACE FUNCTION "public"."insert_playlist_videos" ("p_playlist_id" in
   video_id text,
   video_position int2
 ) LANGUAGE plpgsql
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
 DECLARE
   max_position int2;
   current_position int2;
@@ -749,9 +740,9 @@ END;
 $$;
 
 -- Function to delete videos from a playlist
-CREATE OR REPLACE FUNCTION public.delete_playlist_videos (p_playlist_id int8, p_video_ids TEXT[]) RETURNS TABLE (video_id text, success boolean, message text) 
-LANGUAGE plpgsql
-SET search_path = '' AS $$
+CREATE OR REPLACE FUNCTION public.delete_playlist_videos (p_playlist_id int8, p_video_ids TEXT[]) RETURNS TABLE (video_id text, success boolean, message text) LANGUAGE plpgsql
+SET
+  search_path = '' AS $$
 DECLARE
   v_id text;
   video_positions jsonb;

@@ -27,11 +27,10 @@
     ChevronRight,
     CircleCheck,
     CircleMinus,
-    Edit,
+    CirclePlus,
     ImagePlay,
     ListVideo,
-    MinusCircle,
-    PlusCircle,
+    Pencil,
     TimerReset,
   } from '@lucide/svelte';
   import { SOURCE_INFO } from '$lib/constants/source';
@@ -210,7 +209,7 @@
               clearSelectionAfterAction();
             }}
           >
-            <Edit class="drawer-icon" />
+            <Pencil class="drawer-icon" />
             Edit
           </Button>
         {/if}
@@ -277,7 +276,7 @@
           >
             {#snippet trigger()}
               <Button class="drawer-button" variant="ghost" data-drawer-trigger>
-                <PlusCircle class="drawer-icon" />
+                <CirclePlus class="drawer-icon" />
                 Add video to playlist
                 <ChevronRight class="ml-auto" />
               </Button>
@@ -347,7 +346,7 @@
               contentState.openDrawerSection = null;
             }}
           >
-            <MinusCircle class="drawer-icon" />
+            <CircleMinus class="drawer-icon" />
             Remove from playlist
           </Button>
         {/if}

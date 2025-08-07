@@ -9,7 +9,10 @@
     type Infer,
     type SuperValidated,
   } from 'sveltekit-superforms';
-  import { passwordConfirmationSchema, type PasswordConfirmationSchema } from '../../schema';
+  import {
+    passwordConfirmationSchema,
+    type PasswordConfirmationSchema,
+  } from '../../schema';
   import type { Database } from '$lib/supabase/database.types';
   import { zodClient } from 'sveltekit-superforms/adapters';
   import { getFlash, updateFlash } from 'sveltekit-flash-message';
@@ -69,7 +72,9 @@
       <Card.Root class="gap-6 p-6">
         <Card.Header>
           <Card.Title class="text-2xl">Update Password</Card.Title>
-          <Card.Description>Enter your new password and confirm it</Card.Description>
+          <Card.Description
+            >Enter your new password and confirm it</Card.Description
+          >
         </Card.Header>
 
         <form method="POST" action="?/updatePassword" use:enhance>
@@ -97,7 +102,9 @@
                 <div class=" flex flex-wrap items-center gap-2">
                   <Form.Control>
                     {#snippet children({ props })}
-                      <Form.Label class="text-right">Confirm New Password</Form.Label>
+                      <Form.Label class="text-right"
+                        >Confirm New Password</Form.Label
+                      >
                       <Input
                         {...props}
                         class="col-span-3"

@@ -10,7 +10,7 @@ describe('Password Confirmation Schemas', () => {
         password: 'testpassword123',
         confirmPassword: 'testpassword123',
       };
-      
+
       const result = signupSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
@@ -22,10 +22,10 @@ describe('Password Confirmation Schemas', () => {
         password: 'testpassword123',
         confirmPassword: 'differentpassword',
       };
-      
+
       const result = signupSchema.safeParse(data);
       expect(result.success).toBe(false);
-      
+
       if (!result.success) {
         expect(result.error.issues).toEqual(
           expect.arrayContaining([
@@ -44,7 +44,7 @@ describe('Password Confirmation Schemas', () => {
         username: 'testuser',
         password: 'testpassword123',
       };
-      
+
       const result = signupSchema.safeParse(data);
       expect(result.success).toBe(false);
     });
@@ -56,7 +56,7 @@ describe('Password Confirmation Schemas', () => {
         password: 'testpassword123',
         confirmPassword: 'testpassword123',
       };
-      
+
       const result = passwordConfirmationSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
@@ -66,10 +66,10 @@ describe('Password Confirmation Schemas', () => {
         password: 'testpassword123',
         confirmPassword: 'differentpassword',
       };
-      
+
       const result = passwordConfirmationSchema.safeParse(data);
       expect(result.success).toBe(false);
-      
+
       if (!result.success) {
         expect(result.error.issues).toEqual(
           expect.arrayContaining([
@@ -87,7 +87,7 @@ describe('Password Confirmation Schemas', () => {
         password: 'short',
         confirmPassword: 'short',
       };
-      
+
       const result = passwordConfirmationSchema.safeParse(data);
       expect(result.success).toBe(false);
     });

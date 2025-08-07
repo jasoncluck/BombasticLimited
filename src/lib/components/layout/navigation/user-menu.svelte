@@ -10,6 +10,7 @@
     LogOut,
     Table,
     UserCircle,
+    Bug,
   } from '@lucide/svelte';
   import { handleUpdateProfileContentDisplay } from '$lib/components/profile/profile-service';
   import type { LayoutState } from '$lib/state/layout.svelte.js';
@@ -142,6 +143,17 @@
               Settings
             </div>
           </DropdownMenu.Item>
+          <DropdownMenu.Item class="cursor-pointer">
+            <a
+              href="https://github.com/jasoncluck/Bombastic/issues/new?template=bug_report.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex items-center gap-2 text-inherit no-underline"
+            >
+              <Bug class="text-orange-500" />
+              Report Bug
+            </a>
+          </DropdownMenu.Item>
           <DropdownMenu.Item
             class="cursor-pointer"
             data-testid="logout-button"
@@ -194,6 +206,20 @@
           <Cog />
           Settings
         </Button>
+        <a
+          href="https://github.com/jasoncluck/Bombastic/issues/new?template=bug_report.md"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="drawer-button text-inherit no-underline {buttonVariants({
+            variant: 'ghost',
+          })}"
+          onclick={() => {
+            openAccountDrawer = false;
+          }}
+        >
+          <Bug class="text-orange-500" />
+          Report Bug
+        </a>
         <Button
           variant="ghost"
           class="drawer-button"
