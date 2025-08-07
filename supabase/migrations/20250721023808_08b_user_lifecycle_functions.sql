@@ -9,9 +9,12 @@ SET
   search_path = '' AS $$
 DECLARE
     generated_username text;
-    avatar_url text;
+    new_avatar_url text;
+    providers_array text[];
+    providers_json text;
+    debug_msg text;
 BEGIN
-    -- Only handle INSERT operations (new user creation)
+    -- Handle INSERT operations (new user creation)
     IF TG_OP = 'INSERT' THEN
         -- Generate a unique username from the user's name or email
         generated_username := public.generate_unique_username(
@@ -23,17 +26,82 @@ BEGIN
         );
         
         -- Extract avatar URL from raw_user_meta_data if it exists
-        avatar_url := NEW.raw_user_meta_data->>'avatar_url';
+        -- Discord OAuth provides avatar in both 'avatar_url' and 'picture' fields
+        new_avatar_url := COALESCE(
+            NEW.raw_user_meta_data->>'avatar_url',
+            NEW.raw_user_meta_data->>'picture'
+        );
         
-        -- Insert the new profile with username and avatar_url (if available)
-        IF avatar_url IS NOT NULL AND avatar_url != '' THEN
-            INSERT INTO public.profiles (id, username, avatar_url)
-            VALUES (NEW.id, generated_username, avatar_url)
-            ON CONFLICT (id) DO NOTHING;
-        ELSE
-            INSERT INTO public.profiles (id, username)
-            VALUES (NEW.id, generated_username)
-            ON CONFLICT (id) DO NOTHING;
+        -- Debug logging for avatar extraction
+        debug_msg := format('INSERT: User %s - avatar_url: %s, picture: %s, final: %s', 
+            NEW.id::text, 
+            NEW.raw_user_meta_data->>'avatar_url',
+            NEW.raw_user_meta_data->>'picture',
+            new_avatar_url
+        );
+        RAISE LOG '%', debug_msg;
+        
+        -- Extract providers from raw_app_meta_data
+        providers_json := NEW.raw_app_meta_data->>'providers';
+        
+        -- Error if providers is null - we should not fallback to default
+        IF providers_json IS NULL THEN
+            RAISE EXCEPTION 'Providers field is null in auth metadata for user %', NEW.id;
+        END IF;
+        
+        -- Parse JSON array to PostgreSQL text array
+        SELECT array_agg(value::text)
+        INTO providers_array
+        FROM json_array_elements_text(providers_json::json);
+        
+        -- Insert the new profile with username, avatar_url, and providers from auth schema
+        INSERT INTO public.profiles (id, username, avatar_url, providers)
+        VALUES (NEW.id, generated_username, new_avatar_url, providers_array)
+        ON CONFLICT (id) DO NOTHING;
+    
+    -- Handle UPDATE operations (when user metadata gets updated)
+    ELSIF TG_OP = 'UPDATE' THEN
+        -- Check if raw_user_meta_data was updated with avatar_url
+        IF (OLD.raw_user_meta_data IS DISTINCT FROM NEW.raw_user_meta_data) THEN
+            -- Discord OAuth provides avatar in both 'avatar_url' and 'picture' fields
+            new_avatar_url := COALESCE(
+                NEW.raw_user_meta_data->>'avatar_url',
+                NEW.raw_user_meta_data->>'picture'
+            );
+            
+            -- Debug logging for avatar update
+            debug_msg := format('UPDATE: User %s - old avatar_url: %s, old picture: %s, new avatar_url: %s, new picture: %s, final: %s', 
+                NEW.id::text,
+                OLD.raw_user_meta_data->>'avatar_url',
+                OLD.raw_user_meta_data->>'picture',
+                NEW.raw_user_meta_data->>'avatar_url',
+                NEW.raw_user_meta_data->>'picture',
+                new_avatar_url
+            );
+            RAISE LOG '%', debug_msg;
+            
+            -- Update the profile with the new avatar_url
+            UPDATE public.profiles 
+            SET avatar_url = new_avatar_url
+            WHERE id = NEW.id;
+        END IF;
+        
+        -- Check if raw_app_meta_data was updated with providers
+        IF (OLD.raw_app_meta_data IS DISTINCT FROM NEW.raw_app_meta_data) THEN
+            providers_json := NEW.raw_app_meta_data->>'providers';
+            
+            -- Only update if providers is not null
+            IF providers_json IS NOT NULL THEN
+                -- Parse JSON array to PostgreSQL text array
+                SELECT array_agg(value::text)
+                INTO providers_array
+                FROM json_array_elements_text(providers_json::json);
+                
+                -- Update the profile with the new providers
+                UPDATE public.profiles 
+                SET providers = providers_array
+                WHERE id = NEW.id;
+            END IF;
         END IF;
     END IF;
     

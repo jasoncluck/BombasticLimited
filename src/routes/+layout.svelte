@@ -47,7 +47,6 @@
   setPlaylistState(pageState, contentState, sidebarState);
   setSourceState(pageState);
 
-  let user = $derived(session?.user);
   let openAccountDrawer = $derived(sidebarState.openAccountDrawer);
 
   let lastUserState: boolean | null = null;
@@ -80,7 +79,7 @@
       lastModified,
       cached,
       cacheUserId,
-      user
+      session
     )
   );
   const layoutEffects = $derived(

@@ -4,6 +4,7 @@ import { browser } from '$app/environment';
 import { tick } from 'svelte';
 import type { NavigationCacheState } from '$lib/state/navigation-cache/navigation-cache.svelte.js';
 import type { PageState } from '$lib/state/page.svelte.js';
+import type { Session } from '@supabase/supabase-js';
 
 export function useNavigation(
   navigationCache: NavigationCacheState,
@@ -13,7 +14,7 @@ export function useNavigation(
   lastModified: string | null,
   cached: boolean,
   cacheUserId: string | null,
-  user: any
+  session: Session | null
 ) {
   function setupNavigationHooks(userProfile: any, session: any) {
     beforeNavigate(({ from }) => {
@@ -83,7 +84,7 @@ export function useNavigation(
       const shouldShow = navigationCache.shouldShowLoading(
         from?.href,
         to?.href,
-        user?.id ?? null
+        session
       );
       if (!shouldShow) return false;
     }

@@ -89,6 +89,7 @@ const mockSetFlash = vi.mocked(setFlash);
 const mockGetUserProfile = vi.mocked(getUserProfile);
 const mockCheckIfUsernameIsUnique = vi.mocked(checkIfUsernameIsUnique);
 const mockGetUserDiscordIdentity = vi.mocked(getUserDiscordIdentity);
+
 const mockLinkDiscordIdentity = vi.mocked(linkDiscordIdentity);
 const mockUnlinkDiscordIdentity = vi.mocked(unlinkDiscordIdentity);
 

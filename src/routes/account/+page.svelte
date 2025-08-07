@@ -10,13 +10,16 @@
     type EmailSchema,
     type UsernameSchema,
   } from '../auth/schema';
-  import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
   import Button, {
     buttonVariants,
   } from '$lib/components/ui/button/button.svelte';
   import { getFlash, updateFlash } from 'sveltekit-flash-message';
   import { page } from '$app/state';
-  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type {
+    Session,
+    SupabaseClient,
+    UserIdentity,
+  } from '@supabase/supabase-js';
   import {
     checkIfUsernameIsUnique,
     type UserProfile,
@@ -35,7 +38,7 @@
   }: {
     data: {
       profile: UserProfile;
-      discordIdentity: any;
+      discordIdentity: UserIdentity;
       emailForm: SuperValidated<Infer<EmailSchema>>;
       usernameForm: SuperValidated<Infer<UsernameSchema>>;
       supabase: SupabaseClient<Database>;
@@ -267,92 +270,93 @@
     {/if}
 
     <!-- Discord Account Linking Section -->
-    <!-- <div class="mt-8 border-t pt-8"> -->
-    <!--   <h2 class="mb-4 text-lg font-semibold">Discord Account</h2> -->
-    <!--   {#if discordIdentity} -->
-    <!--     <!-- Discord Account Linked -->
-    <!--     <div class="flex w-full flex-wrap items-center gap-4 @lg:flex-nowrap"> -->
-    <!--       <Label class="min-w-20">Discord</Label> -->
-    <!--       <div -->
-    <!--         class="border-input bg-background flex min-w-[300px] flex-1 items-center gap-3 rounded-md border px-3 py-2" -->
-    <!--       > -->
-    <!--         {#if profile.avatar_url} -->
-    <!--           <Avatar.Root class="h-8 w-8"> -->
-    <!--             <Avatar.Image src={profile.avatar_url} alt="Discord avatar" /> -->
-    <!--             <Avatar.Fallback> -->
-    <!--               <DiscordIcon size={16} class="text-[#5865F2]" /> -->
-    <!--             </Avatar.Fallback> -->
-    <!--           </Avatar.Root> -->
-    <!--         {:else}
-    <!--           <DiscordIcon size={20} class="text-[#5865F2]" /> -->
-    <!--         {/if}
-    <!--         <div class="flex-1"> -->
-    <!--           <p class="text-sm font-medium"> -->
-    <!--             {discordIdentity.identity_data?.global_name || -->
-    <!--               discordIdentity.identity_data?.username || -->
-    <!--               'Discord User'} -->
-    <!--           </p> -->
-    <!--           <p class="text-muted-foreground text-xs">Account linked</p> -->
-    <!--         </div> -->
-    <!--       </div> -->
-    <!--       <form -->
-    <!--         use:enhance={() => { -->
-    <!--           return async () => { -->
-    <!--             await updateFlash(page); -->
-    <!--           }; -->
-    <!--         }} -->
-    <!--         method="POST" -->
-    <!--         action="?/unlinkDiscord" -->
-    <!--       > -->
-    <!--         <Button -->
-    <!--           type="submit" -->
-    <!--           variant="destructive" -->
-    <!--           class="w-full cursor-pointer @lg:w-auto" -->
-    <!--         > -->
-    <!--           Unlink -->
-    <!--         </Button> -->
-    <!--       </form> -->
-    <!--     </div> -->
-    <!--   {:else} -->
-    <!--     <!-- Discord Account Not Linked -->
-    <!--     <div class="flex w-full flex-wrap items-center gap-4 @lg:flex-nowrap"> -->
-    <!--       <Label class="min-w-20">Discord</Label> -->
-    <!--       <div -->
-    <!--         class="border-input bg-background text-muted-foreground flex min-w-[300px] flex-1 items-center gap-3 rounded-md border px-3 py-2" -->
-    <!--       > -->
-    <!--         <DiscordIcon size={20} class="text-[#5865F2]" /> -->
-    <!--         <span class="text-sm">No Discord account linked</span> -->
-    <!--       </div> -->
-    <!--       <form -->
-    <!--         use:enhance={() => { -->
-    <!--           return async () => { -->
-    <!--             await updateFlash(page); -->
-    <!--           }; -->
-    <!--         }} -->
-    <!--         method="POST" -->
-    <!--         action="?/linkDiscord" -->
-    <!--       > -->
-    <!--         <Button -->
-    <!--           type="submit" -->
-    <!--           variant="secondary" -->
-    <!--           class="w-full cursor-pointer @lg:w-auto" -->
-    <!--         > -->
-    <!--           <DiscordIcon size={16} class="mr-2 text-[#5865F2]" /> -->
-    <!--           Link Discord -->
-    <!--         </Button> -->
-    <!--       </form> -->
-    <!--     </div> -->
-    <!--   {/if} -->
-    <!---->
-    <!--   {#if $flash?.field === 'discord' && $flash?.message && $flash?.type} -->
-    <!--     <Alert.Root class="mt-4"> -->
-    <!--       <Alert.Title -->
-    <!--         >{$flash.type === 'error' ? 'Error' : 'Success'}</Alert.Title -->
-    <!--       > -->
-    <!--       <Alert.Description>{$flash.message}</Alert.Description> -->
-    <!--     </Alert.Root> -->
-    <!--   {/if} -->
-    <!-- </div> -->
+    <div class="mt-8 border-t pt-8">
+      <h2 class="mb-4 text-lg font-semibold">Discord Account</h2>
+
+      {#if discordIdentity}
+        <!-- Discord Account Linked -->
+        <div class="flex w-full flex-wrap items-center gap-4 @lg:flex-nowrap">
+          <Label class="min-w-20">Discord</Label>
+          <div
+            class="border-input bg-background flex min-w-[300px] flex-1 items-center gap-3 rounded-md border px-3 py-2"
+          >
+            {#if profile.avatar_url}
+              <Avatar.Root class="h-8 w-8">
+                <Avatar.Image src={profile.avatar_url} alt="Discord avatar" />
+                <Avatar.Fallback>
+                  <DiscordIcon size={16} class="text-[#5865F2]" />
+                </Avatar.Fallback>
+              </Avatar.Root>
+            {:else}
+              <DiscordIcon size={20} class="text-[#5865F2]" />
+            {/if}
+            <div class="flex-1">
+              <p class="text-sm font-medium">
+                {discordIdentity.identity_data?.full_name ||
+                  discordIdentity.identity_data?.username ||
+                  'Discord User'}
+              </p>
+              <p class="text-muted-foreground text-xs">Account linked</p>
+            </div>
+          </div>
+          <!-- <form -->
+          <!--   use:enhance={() => { -->
+          <!--     return async () => { -->
+          <!--       await updateFlash(page); -->
+          <!--     }; -->
+          <!--   }} -->
+          <!--   method="POST" -->
+          <!--   action="?/unlinkDiscord" -->
+          <!-- > -->
+          <!--   <Button -->
+          <!--     type="submit" -->
+          <!--     variant="destructive" -->
+          <!--     class="w-full cursor-pointer @lg:w-auto" -->
+          <!--   > -->
+          <!--     Unlink -->
+          <!--   </Button> -->
+          <!-- </form> -->
+        </div>
+      {:else}
+        <!-- Discord Account Not Linked -->
+        <div class="flex w-full flex-wrap items-center gap-4 @lg:flex-nowrap">
+          <Label class="min-w-20">Discord</Label>
+          <div
+            class="border-input bg-background text-muted-foreground flex min-w-[300px] flex-1 items-center gap-3 rounded-md border px-3 py-2"
+          >
+            <DiscordIcon size={20} class="text-[#5865F2]" />
+            <span class="text-sm">No Discord account linked</span>
+          </div>
+          <form
+            use:enhance={() => {
+              return async () => {
+                await updateFlash(page);
+              };
+            }}
+            method="POST"
+            action="?/linkDiscord"
+          >
+            <Button
+              type="submit"
+              variant="secondary"
+              class="w-full cursor-pointer @lg:w-auto"
+            >
+              <DiscordIcon size={16} class="mr-2 text-[#5865F2]" />
+              Link Discord
+            </Button>
+          </form>
+        </div>
+      {/if}
+
+      {#if $flash?.field === 'discord' && $flash?.message && $flash?.type}
+        <Alert.Root class="mt-4">
+          <Alert.Title
+            >{$flash.type === 'error' ? 'Error' : 'Success'}</Alert.Title
+          >
+          <Alert.Description>{$flash.message}</Alert.Description>
+        </Alert.Root>
+      {/if}
+    </div>
 
     <Dialog.Root>
       <Dialog.Trigger

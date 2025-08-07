@@ -80,6 +80,7 @@ export function createMockUserProfile(
     id: 'user-1',
     username: 'testuser',
     avatar_url: null,
+    providers: ['email'],
     sources: ['giantbomb', 'jeffgerstmann', 'nextlander', 'remap'],
     content_display: 'TILES',
     content_description: 'FULL',

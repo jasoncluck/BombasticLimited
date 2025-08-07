@@ -122,39 +122,51 @@ export type Database = {
         Row: {
           avatar_url: string | null
           content_description:
-            | Database["public"]["Enums"]["content_description"]
-            | null
-          content_display: Database["public"]["Enums"]["content_display"] | null
-          id: string
-          sources: Database["public"]["Enums"]["source"][] | null
-          username: string | null
-        }
+
+            | Database['public']['Enums']['content_description']
+            | null;
+          content_display:
+            | Database['public']['Enums']['content_display']
+            | null;
+          id: string;
+          providers: string[];
+          sources: Database['public']['Enums']['source'][] | null;
+          username: string | null;
+        };
+
         Insert: {
           avatar_url?: string | null
           content_description?:
             | Database["public"]["Enums"]["content_description"]
             | null
           content_display?:
-            | Database["public"]["Enums"]["content_display"]
-            | null
-          id: string
-          sources?: Database["public"]["Enums"]["source"][] | null
-          username?: string | null
-        }
+
+            | Database['public']['Enums']['content_display']
+            | null;
+          id: string;
+          providers?: string[];
+          sources?: Database['public']['Enums']['source'][] | null;
+          username?: string | null;
+        };
+
+
         Update: {
           avatar_url?: string | null
           content_description?:
             | Database["public"]["Enums"]["content_description"]
             | null
           content_display?:
-            | Database["public"]["Enums"]["content_display"]
-            | null
-          id?: string
-          sources?: Database["public"]["Enums"]["source"][] | null
-          username?: string | null
-        }
-        Relationships: []
-      }
+
+            | Database['public']['Enums']['content_display']
+            | null;
+          id?: string;
+          providers?: string[];
+          sources?: Database['public']['Enums']['source'][] | null;
+          username?: string | null;
+        };
+        Relationships: [];
+      };
+
       timestamps: {
         Row: {
           created_at: string
