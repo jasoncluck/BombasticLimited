@@ -33,4 +33,7 @@ vite.config.ts.timestamp-*
 /playwright/.cache/
 /coverage/
 
+# Authentication states (temporary test files)
+/.auth/
+
 .trigger

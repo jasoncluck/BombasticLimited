@@ -52,24 +52,25 @@ const supabase: Handle = async ({ event, resolve }) => {
 
   /**
    * Unlike `supabase.auth.getSession()`, which returns the session _without_
-   * validating the JWT, this function uses `getClaims()` to validate the
-   * JWT before returning the session. getClaims() is faster than getUser().
+   * validating the JWT, this function uses `getUser()` to authenticate 
+   * the data by contacting the Supabase Auth server, ensuring security.
    */
   event.locals.safeGetSession = async () => {
     const {
+      data: { user },
+      error,
+    } = await event.locals.supabase.auth.getUser();
+    
+    if (error || !user) {
+      return { session: null, user: null };
+    }
+
+    // If user exists, we can safely get the session
+    const {
       data: { session },
     } = await event.locals.supabase.auth.getSession();
-    if (!session) {
-      return { session: null, user: null };
-    }
 
-    const { error } = await event.locals.supabase.auth.getClaims();
-    if (error) {
-      // JWT validation has failed
-      return { session: null, user: null };
-    }
-
-    return { session };
+    return { session, user };
   };
 
   return resolve(event, {
@@ -84,8 +85,9 @@ const supabase: Handle = async ({ event, resolve }) => {
 };
 
 const authGuard: Handle = async ({ event, resolve }) => {
-  const { session } = await event.locals.safeGetSession();
+  const { session, user } = await event.locals.safeGetSession();
   event.locals.session = session;
+  event.locals.user = user;
 
   if (!event.locals.session && event.url.pathname.startsWith('/account')) {
     redirect(303, '/auth/login');

@@ -213,7 +213,7 @@
   <!-- Login Button (Not Authenticated) -->
   <Button
     class="cursor-pointer"
-    data-testid="login-button"
+    data-testid="nav-login-button"
     onclick={() => goto('/auth/login')}
     variant="outline"
   >
