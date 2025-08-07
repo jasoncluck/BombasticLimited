@@ -32,7 +32,6 @@ export const load: PageServerLoad = async ({
     videoId,
     contentFilter, // This will be used for sorting in the query
     supabase,
-    userId: user?.id,
     contextLimit: 5,
   });
 

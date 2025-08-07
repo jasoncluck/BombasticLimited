@@ -457,8 +457,9 @@ export async function getPlaylistVideoContext({
   }
 
   // Split metadata row from video rows
-  const metadataRow = data.find((row) => row.is_metadata_row);
-  const videoRows = data.filter((row) => !row.is_metadata_row);
+  // Since all rows contain the same playlist metadata, use the first row for metadata
+  const metadataRow = data[0];
+  const videoRows = data; // All rows contain video data
 
   if (!metadataRow) {
     return {

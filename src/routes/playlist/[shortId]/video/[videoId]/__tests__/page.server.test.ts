@@ -125,7 +125,6 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
           sort: { key: 'playlistOrder', order: 'ascending' },
         },
         supabase: mockSupabase,
-        userId: 'user-1',
         contextLimit: 5,
       });
 
