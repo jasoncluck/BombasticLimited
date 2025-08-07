@@ -13,7 +13,7 @@ import { playlistSchema } from '../schema';
 import { getPaginationQueryParams } from '$lib/components/pagination/pagination';
 import { parseImageProperties } from '$lib/components/playlist/playlist';
 import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
-import { getUserProfile } from '$lib/supabase/user-profiles';
+import { getUserProfile, getProfileById } from '$lib/supabase/user-profiles';
 import {
   redirect as flashRedirect,
   setFlash,
@@ -76,6 +76,7 @@ vi.mock('bad-words', () => ({
 
 vi.mock('$lib/supabase/user-profiles', () => ({
   getUserProfile: vi.fn(),
+  getProfileById: vi.fn(),
 }));
 
 const mockRedirect = vi.mocked(redirect);
@@ -93,6 +94,7 @@ const mockGetCroppedPlaylistImageUrlServer = vi.mocked(
   getCroppedPlaylistImageUrlServer
 );
 const mockGetUserProfile = vi.mocked(getUserProfile);
+const mockGetProfileById = vi.mocked(getProfileById);
 const mockSetFlash = vi.mocked(setFlash);
 
 describe('playlist/[shortId]/+page.server.ts', () => {
@@ -145,6 +147,11 @@ describe('playlist/[shortId]/+page.server.ts', () => {
     mockZod.mockReturnValue({} as any);
     // Mock getUserProfile to return null profile by default
     mockGetUserProfile.mockResolvedValue({
+      profile: null,
+      error: null,
+    });
+    // Mock getProfileById to return null profile by default
+    mockGetProfileById.mockResolvedValue({
       profile: null,
       error: null,
     });
