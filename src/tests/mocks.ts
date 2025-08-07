@@ -57,6 +57,12 @@ export function createMockSupabaseClient() {
         })),
       })),
     })),
+    rpc: vi.fn((functionName, params) => ({
+      select: vi.fn().mockResolvedValue({
+        data: [],
+        error: null,
+      }),
+    })),
   } as unknown as SupabaseClient;
 }
 
