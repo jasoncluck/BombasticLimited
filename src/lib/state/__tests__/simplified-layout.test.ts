@@ -101,7 +101,7 @@ describe('Simplified Layout State', () => {
 
   describe('Configuration', () => {
     it('should have correct default search debounce configuration', () => {
-      expect(layoutState.config.searchDebounceMs).toBe(400);
+      expect(layoutState.config.searchDebounceMs).toBe(250);
     });
   });
 });
