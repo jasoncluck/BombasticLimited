@@ -85,11 +85,7 @@ export async function getCroppedPlaylistImageUrlServer({
         });
 
         // Add sharpening after upscaling to restore detail
-        processedInstance = processedInstance.sharpen({
-          sigma: 1.0, // Mild sharpening
-          flat: 1.0,
-          jagged: 2.0,
-        });
+        processedInstance = processedInstance.sharpen(1.0, 1.0, 2.0); // sigma, flat, jagged
       }
     }
 
