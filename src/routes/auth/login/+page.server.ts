@@ -6,11 +6,11 @@ import { redirect, setFlash } from 'sveltekit-flash-message/server';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals: { session } }) => {
-  const loginForm = await superValidate(zod(loginSchema));
-
   if (session) {
     redirect(303, '/');
   }
+
+  const loginForm = await superValidate(zod(loginSchema));
 
   return {
     loginForm,

@@ -26,7 +26,6 @@ import {
   type SortOrder,
 } from '../content/content-filter';
 import { parseImageProperties, type ImageProperties } from './playlist';
-import { getCroppedImg } from '../ui/image-cropper/utils';
 import type { SidebarState } from '$lib/state/sidebar.svelte';
 
 export type PlaylistImages = Record<string, string | undefined>;
@@ -38,12 +37,72 @@ export const PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS: ImageProperties = {
   width: 720,
 };
 
+// Updated to use medium thumbnail dimensions (320x180)
 export const PLAYLIST_IMAGE_CROP_DEFAULTS: ImageProperties = {
-  x: 70,
+  x: 70, // (320-180)/2 = 70
   y: 0,
   height: 180,
   width: 180,
 };
+
+// Add specific defaults for different YouTube thumbnail sizes
+export const YOUTUBE_THUMBNAIL_CROP_DEFAULTS = {
+  // 120x90 default thumbnails
+  default: {
+    x: 15, // (120-90)/2
+    y: 0,
+    width: 90,
+    height: 90,
+  },
+  // 320x180 medium thumbnails
+  medium: {
+    x: 70, // (320-180)/2
+    y: 0,
+    width: 180,
+    height: 180,
+  },
+  // 480x360 high thumbnails
+  high: {
+    x: 60, // (480-360)/2
+    y: 0,
+    width: 360,
+    height: 360,
+  },
+} as const;
+
+// Helper function to detect YouTube thumbnail size and get appropriate crop dimensions
+function getOptimalCropDimensions(
+  imageWidth: number,
+  imageHeight: number,
+  imageProperties: ImageProperties | null,
+  isMaxRes: boolean
+): ImageProperties {
+  if (isMaxRes) {
+    // For maxres images, use the provided image properties or defaults
+    return imageProperties || PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS;
+  }
+
+  // For standard resolution, detect YouTube thumbnail size
+  if (imageWidth === 320 && imageHeight === 180) {
+    // Medium thumbnail
+    return YOUTUBE_THUMBNAIL_CROP_DEFAULTS.medium;
+  } else if (imageWidth === 480 && imageHeight === 360) {
+    // High thumbnail
+    return YOUTUBE_THUMBNAIL_CROP_DEFAULTS.high;
+  } else if (imageWidth === 120 && imageHeight === 90) {
+    // Default thumbnail
+    return YOUTUBE_THUMBNAIL_CROP_DEFAULTS.default;
+  } else {
+    // Unknown size - create centered square crop
+    const cropSize = Math.min(imageWidth, imageHeight);
+    return {
+      x: Math.round((imageWidth - cropSize) / 2),
+      y: Math.round((imageHeight - cropSize) / 2),
+      width: cropSize,
+      height: cropSize,
+    };
+  }
+}
 
 export async function handleCreatePlaylist({
   sidebarState,
@@ -470,11 +529,7 @@ export async function getCroppedPlaylistImageUrl({
   const imageUrl = thumbnailMaxResUrl ?? thumbnailUrl;
   if (!imageUrl) return null;
 
-  if (!imageProperties) {
-    imageProperties = thumbnailMaxResUrl
-      ? PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS
-      : PLAYLIST_IMAGE_CROP_DEFAULTS;
-  }
+  const isMaxRes = !!thumbnailMaxResUrl;
 
   try {
     // Try OffscreenCanvas first (more efficient)
@@ -482,10 +537,14 @@ export async function getCroppedPlaylistImageUrl({
       typeof OffscreenCanvas !== 'undefined' &&
       typeof createImageBitmap !== 'undefined'
     ) {
-      return await processWithOffscreenCanvas(imageUrl, imageProperties);
+      return await processWithOffscreenCanvas(
+        imageUrl,
+        imageProperties,
+        isMaxRes
+      );
     } else {
       // Fallback to regular Canvas
-      return await getCroppedImg(imageUrl, imageProperties);
+      return await processWithCanvas(imageUrl, imageProperties, isMaxRes);
     }
   } catch (error) {
     console.error('Browser image processing failed:', error);
@@ -495,7 +554,8 @@ export async function getCroppedPlaylistImageUrl({
 
 async function processWithOffscreenCanvas(
   imageUrl: string,
-  imageProperties: ImageProperties
+  imageProperties: ImageProperties | null,
+  isMaxRes: boolean
 ): Promise<string> {
   const response = await fetch(imageUrl);
   if (!response.ok) throw new Error('Failed to fetch image');
@@ -503,27 +563,55 @@ async function processWithOffscreenCanvas(
   const imageBlob = await response.blob();
   const imageBitmap = await createImageBitmap(imageBlob);
 
-  const canvas = new OffscreenCanvas(
-    imageProperties.width,
-    imageProperties.height
+  // Get optimal crop dimensions based on actual image size
+  const optimalCrop = getOptimalCropDimensions(
+    imageBitmap.width,
+    imageBitmap.height,
+    imageProperties,
+    isMaxRes
   );
+
+  console.log('Client-side processing:', {
+    originalSize: `${imageBitmap.width}x${imageBitmap.height}`,
+    cropArea: optimalCrop,
+    isMaxRes,
+  });
+
+  // Determine target output size
+  let targetWidth = optimalCrop.width;
+  let targetHeight = optimalCrop.height;
+
+  // For small standard resolution crops, upscale to improve quality
+  if (!isMaxRes && (optimalCrop.width < 200 || optimalCrop.height < 200)) {
+    targetWidth = 224;
+    targetHeight = 224;
+    console.log(
+      `Upscaling from ${optimalCrop.width}x${optimalCrop.height} to ${targetWidth}x${targetHeight}`
+    );
+  }
+
+  const canvas = new OffscreenCanvas(targetWidth, targetHeight);
   const ctx = canvas.getContext('2d');
 
   if (!ctx) throw new Error('Failed to get canvas context');
 
+  // Draw cropped and potentially upscaled image
   ctx.drawImage(
     imageBitmap,
-    imageProperties.x,
-    imageProperties.y,
-    imageProperties.width,
-    imageProperties.height,
+    optimalCrop.x,
+    optimalCrop.y,
+    optimalCrop.width,
+    optimalCrop.height,
     0,
     0,
-    imageProperties.width,
-    imageProperties.height
+    targetWidth,
+    targetHeight
   );
 
-  const blob = await canvas.convertToBlob({ type: 'image/webp', quality: 0.8 });
+  const blob = await canvas.convertToBlob({
+    type: 'image/webp',
+    quality: !isMaxRes && targetWidth > optimalCrop.width ? 0.9 : 0.8, // Higher quality for upscaled images
+  });
   const arrayBuffer = await blob.arrayBuffer();
 
   const uint8Array = new Uint8Array(arrayBuffer);
@@ -539,6 +627,94 @@ async function processWithOffscreenCanvas(
   const base64 = btoa(binaryString);
 
   return `data:image/webp;base64,${base64}`;
+}
+
+// Fallback Canvas processing for older browsers
+async function processWithCanvas(
+  imageUrl: string,
+  imageProperties: ImageProperties | null,
+  isMaxRes: boolean
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+
+    img.onload = () => {
+      try {
+        // Get optimal crop dimensions based on actual image size
+        const optimalCrop = getOptimalCropDimensions(
+          img.width,
+          img.height,
+          imageProperties,
+          isMaxRes
+        );
+
+        console.log('Client-side canvas processing:', {
+          originalSize: `${img.width}x${img.height}`,
+          cropArea: optimalCrop,
+          isMaxRes,
+        });
+
+        // Determine target output size
+        let targetWidth = optimalCrop.width;
+        let targetHeight = optimalCrop.height;
+
+        // For small standard resolution crops, upscale to improve quality
+        if (
+          !isMaxRes &&
+          (optimalCrop.width < 200 || optimalCrop.height < 200)
+        ) {
+          targetWidth = 224;
+          targetHeight = 224;
+          console.log(
+            `Canvas upscaling from ${optimalCrop.width}x${optimalCrop.height} to ${targetWidth}x${targetHeight}`
+          );
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Failed to get canvas context');
+
+        // Draw cropped and potentially upscaled image
+        ctx.drawImage(
+          img,
+          optimalCrop.x,
+          optimalCrop.y,
+          optimalCrop.width,
+          optimalCrop.height,
+          0,
+          0,
+          targetWidth,
+          targetHeight
+        );
+
+        // Convert to WebP
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('Failed to create blob'));
+              return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = () => reject(new Error('Failed to read blob'));
+            reader.readAsDataURL(blob);
+          },
+          'image/webp',
+          !isMaxRes && targetWidth > optimalCrop.width ? 0.9 : 0.8 // Higher quality for upscaled images
+        );
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = imageUrl;
+  });
 }
 
 // Video thumbnail processing without cropping - preserves original aspect ratio

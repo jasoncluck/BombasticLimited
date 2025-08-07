@@ -16,18 +16,16 @@
   import DiscordIcon from '$lib/assets/icons/DiscordIcon.svelte';
 
   let {
-    data,
+    form,
+    supabase,
   }: {
-    data: {
-      form: SuperValidated<Infer<LoginSchema>>;
-      supabase: SupabaseClient<Database>;
-    };
+    form: SuperValidated<Infer<LoginSchema>>;
+    supabase: SupabaseClient<Database>;
   } = $props();
 
-  const { supabase } = $derived(data);
   const flash = getFlash(page);
 
-  const loginForm = superForm(data.form, {
+  const loginForm = superForm(form, {
     validators: zodClient(loginSchema),
     validationMethod: 'onsubmit',
 
