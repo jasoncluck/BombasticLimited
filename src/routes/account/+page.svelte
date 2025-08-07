@@ -27,7 +27,7 @@
   import type { Database } from '$lib/supabase/database.types';
   import { onMount } from 'svelte';
   import { enhance } from '$app/forms';
-  import { invalidate } from '$app/navigation';
+  import { goto, invalidate } from '$app/navigation';
   import * as Dialog from '$lib/components/ui/dialog/index.js';
   import * as Avatar from '$lib/components/ui/avatar';
   import DiscordIcon from '$lib/assets/icons/DiscordIcon.svelte';
@@ -124,11 +124,14 @@
     // Check if we're returning from Discord OAuth
     // This will refresh profile data to get the updated avatar_url
     const urlParams = new URLSearchParams(window.location.search);
-    const hasOAuthReturn = urlParams.has('code') || 
-                          urlParams.has('state') || 
-                          // Check if we just came from an OAuth flow by looking at referrer
-                          document.referrer.includes('discord.com');
-    
+    const hasOAuthReturn =
+      urlParams.has('code') ||
+      urlParams.has('state') ||
+      // Check if we just came from an OAuth flow by looking at referrer
+      document.referrer.includes('discord.com');
+
+    console.log(hasOAuthReturn);
+    console.log(hasOAuthReturn);
     if (hasOAuthReturn) {
       // Invalidate profile data to ensure fresh fetch after OAuth
       invalidate('supabase:db:profiles');
@@ -136,9 +139,13 @@
       const url = new URL(window.location.href);
       url.searchParams.delete('code');
       url.searchParams.delete('state');
-      window.history.replaceState({}, '', url.toString());
+      window.location.reload();
+      goto(url, {
+        replaceState: true,
+        invalidate: ['supabase:db:profiles', 'supabase:db:auth'],
+      });
     }
-    
+
     return () => {
       if (timeoutId) {
         clearTimeout(timeoutId);
