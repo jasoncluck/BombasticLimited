@@ -594,7 +594,7 @@ export async function getUserPlaylists({
   }
 
   const { data, count, error } = await supabase
-    .rpc('get_user_playlists', { p_user_id: session.user.id })
+    .rpc('get_user_playlists')
     .order('playlist_position', { ascending: false });
 
   if (error) {
