@@ -1,9 +1,6 @@
 import { AppTokenAuthProvider } from '@twurple/auth';
 import { ApiClient } from '@twurple/api';
-import {
-  TWITCH_CLIENT_ID,
-  TWITCH_CLIENT_SECRET,
-} from '$env/static/private';
+import { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } from '$env/static/private';
 import type { HelixStream } from '@twurple/api';
 
 const clientId = TWITCH_CLIENT_ID;
@@ -40,7 +37,9 @@ const RATE_LIMIT_DELAY = 100; // 100ms between requests to respect rate limits
 /**
  * Get stream status for a single user
  */
-export async function getStreamStatus(userId: string): Promise<StreamStatus | null> {
+export async function getStreamStatus(
+  userId: string
+): Promise<StreamStatus | null> {
   if (!apiClient) {
     console.warn('Twitch API client not initialized - missing credentials');
     return null;
@@ -48,9 +47,9 @@ export async function getStreamStatus(userId: string): Promise<StreamStatus | nu
 
   const now = Date.now();
   const cached = streamCache.get(userId);
-  
+
   // Return cached result if still valid
-  if (cached && (now - cached.lastChecked) < CACHE_DURATION) {
+  if (cached && now - cached.lastChecked < CACHE_DURATION) {
     return cached;
   }
 
@@ -62,17 +61,17 @@ export async function getStreamStatus(userId: string): Promise<StreamStatus | nu
       lastChecked: now,
       stream: stream || undefined,
     };
-    
+
     streamCache.set(userId, status);
     return status;
   } catch (error) {
     console.error(`Failed to fetch stream status for user ${userId}:`, error);
-    
+
     // Return cached data if available, even if stale
     if (cached) {
       return cached;
     }
-    
+
     // Return offline status as fallback
     const fallbackStatus: StreamStatus = {
       userId,
@@ -87,26 +86,28 @@ export async function getStreamStatus(userId: string): Promise<StreamStatus | nu
 /**
  * Get stream status for multiple users with rate limiting
  */
-export async function getMultipleStreamStatus(userIds: string[]): Promise<StreamStatus[]> {
+export async function getMultipleStreamStatus(
+  userIds: string[]
+): Promise<StreamStatus[]> {
   if (!apiClient) {
     console.warn('Twitch API client not initialized - missing credentials');
     return [];
   }
 
   const results: StreamStatus[] = [];
-  
+
   for (let i = 0; i < userIds.length; i++) {
     const status = await getStreamStatus(userIds[i]);
     if (status) {
       results.push(status);
     }
-    
+
     // Add delay between requests to respect rate limits (except for last request)
     if (i < userIds.length - 1) {
-      await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_DELAY));
+      await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY));
     }
   }
-  
+
   return results;
 }
 

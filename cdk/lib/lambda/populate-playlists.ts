@@ -84,34 +84,56 @@ export const populatePlaylists = async ({
 
   try {
     const email = `${source}@bombastic.ltd`;
-    // Securely generate a random password (never used for login)
-    const password = randomBytes(32).toString('base64url');
     const username = source;
 
-    // Call the RPC and extract the userId
-    const { data: userId, error: userError } = await supabaseClient.rpc(
-      'create_user',
-      {
-        email,
-        password,
-        username,
-      }
-    );
+    // First, try to find an existing user by email or username
+    const { data: existingUser, error: findUserError } = await supabaseClient
+      .from('auth.users') // Adjust table name as needed - might be 'users' or 'profiles'
+      .select('id')
+      .or(`email.eq.${email},username.eq.${username}`)
+      .single();
 
-    if (!userId) {
-      console.error(
+    let userId: string;
+
+    if (existingUser && !findUserError) {
+      // User exists, use the existing user ID
+      userId = existingUser.id;
+      console.log(
         JSON.stringify({
-          stage: 'create_user',
+          stage: 'user_found',
+          message: `Found existing user for ${email}: ${userId}`,
           source,
-          error: userError,
         })
       );
-      throw new Error('Failed to create or fetch user for source.');
     } else {
+      // User doesn't exist, create a new one
+      const password = randomBytes(32).toString('base64url');
+
+      const { data: newUserId, error: userError } = await supabaseClient.rpc(
+        'create_user',
+        {
+          email,
+          password,
+          username,
+        }
+      );
+
+      if (!newUserId) {
+        console.error(
+          JSON.stringify({
+            stage: 'create_user',
+            source,
+            error: userError,
+          })
+        );
+        throw new Error('Failed to create user for source.');
+      }
+
+      userId = newUserId;
       console.log(
         JSON.stringify({
           stage: 'create_user',
-          message: `User for ${email}: ${userId}`,
+          message: `Created new user for ${email}: ${userId}`,
           source,
         })
       );
