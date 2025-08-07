@@ -13,6 +13,7 @@ export default defineConfig({
     globals: true,
     include: ['src/**/*.{test,spec}.{js,ts}'],
     exclude: ['tests/**/*', 'node_modules/**/*'],
+    teardownTimeout: 30000,
   },
   resolve: {
     alias: {
