@@ -1,0 +1,35 @@
+<svg width="96" height="96" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="purpleGrad96" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:hsl(263.4 70% 55%);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:hsl(263.4 70% 45%);stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow96">
+      <feDropShadow dx="1" dy="3" stdDeviation="2" flood-color="hsl(217.9 10.6% 40%)" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <circle cx="48" cy="48" r="44" fill="white" stroke="hsl(217.9 10.6% 90%)" stroke-width="2"/>
+  
+  <!-- Much larger B -->
+  <text
+    x="48"
+    y="70"
+    font-family="system-ui,-apple-system,sans-serif"
+    font-size="68"
+    font-weight="700"
+    text-anchor="middle"
+    fill="url(#purpleGrad96)"
+    filter="url(#shadow96)">B</text>
+  
+  <!-- Smaller LTD -->
+  <text
+    x="48"
+    y="85"
+    font-family="system-ui,-apple-system,sans-serif"
+    font-size="10"
+    font-weight="600"
+    text-anchor="middle"
+    letter-spacing="1.5px"
+    fill="hsl(217.9 10.6% 60%)">LTD</text>
+</svg>

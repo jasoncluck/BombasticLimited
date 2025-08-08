@@ -1,0 +1,36 @@
+<svg width="180" height="180" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="purpleGrad180" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:hsl(263.4 70% 55%);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:hsl(263.4 70% 45%);stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow180">
+      <feDropShadow dx="2" dy="4" stdDeviation="3" flood-color="hsl(217.9 10.6% 40%)" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Rounded rectangle background for iOS -->
+  <rect x="0" y="0" width="180" height="180" rx="32" ry="32" fill="white"/>
+  
+  <!-- Much larger B -->
+  <text
+    x="90"
+    y="130"
+    font-family="system-ui,-apple-system,sans-serif"
+    font-size="120"
+    font-weight="700"
+    text-anchor="middle"
+    fill="url(#purpleGrad180)"
+    filter="url(#shadow180)">B</text>
+  
+  <!-- Smaller LTD -->
+  <text
+    x="90"
+    y="155"
+    font-family="system-ui,-apple-system,sans-serif"
+    font-size="18"
+    font-weight="600"
+    text-anchor="middle"
+    letter-spacing="2px"
+    fill="hsl(217.9 10.6% 60%)">LTD</text>
+</svg>
