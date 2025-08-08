@@ -29,7 +29,7 @@
   import { getPlaylistState } from '$lib/state/playlist.svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { invalidate } from '$app/navigation';
-  import { getCroppedPlaylistImageUrl } from './playlist-service';
+  import { getCroppedPlaylistImageUrl, isLowResolutionThumbnail } from './playlist-service';
   import { parseImageProperties } from './playlist';
 
   let {
@@ -58,6 +58,9 @@
   const cropState = useImageCropperCrop();
 
   const isPlaylistOwner = $derived(playlist.created_by === session?.user.id);
+  const isLowResThumbnail = $derived(
+    isLowResolutionThumbnail(playlist.thumbnail_maxres_url, playlist.thumbnail_url)
+  );
 
   const playlistForm = $derived(
     superForm(form, {
@@ -157,11 +160,17 @@
                     {/snippet}
                   </DropdownMenu.Trigger>
                   <DropdownMenu.Content align="start">
-                    <DropdownMenu.Item
-                      onclick={() => {
-                        cropperState.rootState.open = true;
-                      }}>Update crop</DropdownMenu.Item
-                    >
+                    {#if isLowResThumbnail}
+                      <DropdownMenu.Item disabled
+                        >This video doesn't have a high-resolution thumbnail and cannot be cropped</DropdownMenu.Item
+                      >
+                    {:else}
+                      <DropdownMenu.Item
+                        onclick={() => {
+                          cropperState.rootState.open = true;
+                        }}>Update crop</DropdownMenu.Item
+                      >
+                    {/if}
                     <DropdownMenu.Item
                       onclick={() => {
                         $formData.isDeletingPlaylistImage = true;

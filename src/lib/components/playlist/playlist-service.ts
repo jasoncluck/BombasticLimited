@@ -37,13 +37,29 @@ export const PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS: ImageProperties = {
   width: 720,
 };
 
-// Updated to use improved less aggressive medium thumbnail dimensions (320x180)
+// Updated to use medium thumbnail dimensions (320x180)
 export const PLAYLIST_IMAGE_CROP_DEFAULTS: ImageProperties = {
-  x: 20, // (320-280)/2 = 20 - less aggressive than previous 70
+  x: 70, // (320-180)/2 = 70
   y: 0,
   height: 180,
-  width: 280, // Preserve more content (was 180)
+  width: 180,
 };
+
+/**
+ * Determines if a playlist thumbnail is low-resolution and cannot be cropped effectively
+ */
+export function isLowResolutionThumbnail(
+  thumbnailMaxResUrl: string | null,
+  thumbnailUrl: string | null
+): boolean {
+  // If there's a maxres URL available, it's high resolution
+  if (thumbnailMaxResUrl) {
+    return false;
+  }
+  
+  // If there's only a standard thumbnail URL, it's low resolution
+  return !!thumbnailUrl;
+}
 
 // Add specific defaults for different YouTube thumbnail sizes
 export const YOUTUBE_THUMBNAIL_CROP_DEFAULTS = {
@@ -54,11 +70,11 @@ export const YOUTUBE_THUMBNAIL_CROP_DEFAULTS = {
     width: 90,
     height: 90,
   },
-  // 320x180 medium thumbnails - improved less aggressive cropping
+  // 320x180 medium thumbnails
   medium: {
-    x: 20, // (320-280)/2 - preserve more content
+    x: 70, // (320-180)/2
     y: 0,
-    width: 280, // Less aggressive crop (was 180)
+    width: 180,
     height: 180,
   },
   // 480x360 high thumbnails
@@ -582,10 +598,9 @@ async function processWithOffscreenCanvas(
   let targetHeight = optimalCrop.height;
 
   // For small standard resolution crops, upscale to improve quality
-  if (!isMaxRes && (optimalCrop.width < 320 || optimalCrop.height < 320)) {
-    // Enhanced target size matching server-side logic
-    targetWidth = optimalCrop.width <= 180 ? 384 : 320;
-    targetHeight = optimalCrop.width <= 180 ? 384 : 320;
+  if (!isMaxRes && (optimalCrop.width < 200 || optimalCrop.height < 200)) {
+    targetWidth = 224;
+    targetHeight = 224;
     console.log(
       `Upscaling from ${optimalCrop.width}x${optimalCrop.height} to ${targetWidth}x${targetHeight}`
     );
@@ -663,11 +678,10 @@ async function processWithCanvas(
         // For small standard resolution crops, upscale to improve quality
         if (
           !isMaxRes &&
-          (optimalCrop.width < 320 || optimalCrop.height < 320)
+          (optimalCrop.width < 200 || optimalCrop.height < 200)
         ) {
-          // Enhanced target size matching server-side logic
-          targetWidth = optimalCrop.width <= 180 ? 384 : 320;
-          targetHeight = optimalCrop.width <= 180 ? 384 : 320;
+          targetWidth = 224;
+          targetHeight = 224;
           console.log(
             `Canvas upscaling from ${optimalCrop.width}x${optimalCrop.height} to ${targetWidth}x${targetHeight}`
           );
