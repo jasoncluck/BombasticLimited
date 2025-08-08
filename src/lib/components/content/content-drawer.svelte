@@ -229,24 +229,24 @@
               <Pencil class="drawer-icon" />
               Edit
             </Button>
+          {:else}
+            <!-- Nested Edit Playlist Drawer - only render when open to prevent spacing issues -->
+            <ImageCropper.Root src={playlist.processedImageUrl ?? undefined}>
+              <PlaylistEditDrawer
+                {form}
+                playlist={playlist}
+                {session}
+                formId="content-drawer-nested-edit-form"
+                bind:open={editPlaylistDrawerOpen}
+                nested={true}
+              >
+                {#snippet trigger()}
+                  <!-- Empty trigger as we control open programmatically -->
+                  <div></div>
+                {/snippet}
+              </PlaylistEditDrawer>
+            </ImageCropper.Root>
           {/if}
-          
-          <!-- Nested Edit Playlist Drawer -->
-          <ImageCropper.Root src={playlist.processedImageUrl ?? undefined}>
-            <PlaylistEditDrawer
-              {form}
-              playlist={playlist}
-              {session}
-              formId="content-drawer-nested-edit-form"
-              bind:open={editPlaylistDrawerOpen}
-              nested={true}
-            >
-              {#snippet trigger()}
-                <!-- Empty trigger as we control open programmatically -->
-                <div></div>
-              {/snippet}
-            </PlaylistEditDrawer>
-          </ImageCropper.Root>
         {/if}
         <!-- Reorder content -->
         {#if contentFilter.sort.key === 'playlistOrder' && isPlaylistOwner && variant === 'header' && videos && videos.length > 0}

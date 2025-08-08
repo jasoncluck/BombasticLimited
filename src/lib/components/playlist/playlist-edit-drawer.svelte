@@ -107,6 +107,14 @@
   $effect(() => {
     if (open) {
       isSubmitting = false;
+      // Refresh form data with current playlist values when drawer opens
+      $formData.id = playlist.id;
+      $formData.name = playlist.name;
+      $formData.description = playlist.description ?? '';
+      $formData.type = playlist.type;
+      $formData.image_properties = playlist.image_properties;
+      $formData.isDeletingPlaylistImage = false;
+      isPublic = playlist.type === 'Public';
     }
   });
 
