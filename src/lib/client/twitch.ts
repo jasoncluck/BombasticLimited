@@ -36,8 +36,8 @@ const RATE_LIMIT_DELAY = 100; // 100ms between requests to respect rate limits
 
 // Development testing variables
 let testStartTime: number | null = null;
-const TEST_LIVE_START = 10000; // Go live after 10 seconds
-const TEST_LIVE_END = 20000; // Go offline after 20 seconds
+const TEST_LIVE_START = 0; // Go live after 10 seconds
+const TEST_LIVE_END = 10000; // Go offline after 20 seconds
 
 /**
  * Get stream status for a single user

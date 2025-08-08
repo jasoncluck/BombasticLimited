@@ -15,15 +15,15 @@
       <clipPath id="clip-bomb-part">
         <!-- x and width tuned so only "Bomb" is covered.
              Start x matches the text's x. -->
-        <rect x="10" y="4" width={bombWidth} height="18" />
+        <rect x="2" y="8" width={bombWidth} height="18" />
       </clipPath>
     </defs>
 
     <!-- Full word in purple -->
     <text
       id="brandWord"
-      x="10"
-      y="17"
+      x="2"
+      y="22"
       font-family="system-ui,-apple-system,sans-serif"
       font-size="16"
       font-weight="700"
@@ -34,8 +34,8 @@
 
     <!-- Grey overlay clipped to first portion -->
     <text
-      x="10"
-      y="17"
+      x="2"
+      y="22"
       font-family="system-ui,-apple-system,sans-serif"
       font-size="16"
       font-weight="700"
@@ -46,8 +46,8 @@
     >
 
     <text
-      x="50"
-      y="32"
+      x="42"
+      y="34"
       font-family="system-ui,-apple-system,sans-serif"
       font-size="9"
       font-weight="600"
