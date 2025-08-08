@@ -1,6 +1,6 @@
 <script lang="ts">
   let { class: className = 'h-8 w-auto', ...restProps } = $props();
-  // Width guess for “Bomb” in this font/size; tweak if needed.
+  // Width guess for "Bomb" in this font/size; tweak if needed.
   const bombWidth = 36; // adjust if clipping too short/long
 </script>
 
@@ -13,8 +13,8 @@
   >
     <defs>
       <clipPath id="clip-bomb-part">
-        <!-- x and width tuned so only “Bomb” is covered.
-             Start x matches the text’s x. -->
+        <!-- x and width tuned so only "Bomb" is covered.
+             Start x matches the text's x. -->
         <rect x="10" y="4" width={bombWidth} height="18" />
       </clipPath>
     </defs>
@@ -46,12 +46,13 @@
     >
 
     <text
-      x="10"
+      x="50"
       y="32"
       font-family="system-ui,-apple-system,sans-serif"
       font-size="9"
       font-weight="600"
       letter-spacing="1.5px"
+      text-anchor="middle"
       fill="hsl(217.9 10.6% 60%)">LIMITED</text
     >
   </svg>
