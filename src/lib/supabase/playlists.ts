@@ -668,7 +668,7 @@ export async function searchPlaylists({
   supabase: SupabaseClient<Database>;
   session: Session | null;
 }): Promise<{
-  playlists: ProfilePlaylist[];
+  playlists: (ProfilePlaylist & { avatar_url?: string | null })[];
   error: PostgrestError | null;
   count?: number | null;
 }> {
@@ -704,7 +704,28 @@ export async function searchPlaylists({
     deleted_at: null, // Always null for active playlists returned by this function
   })) as ProfilePlaylist[];
 
-  return { playlists: playlistsWithDeletedAt, error, count };
+  // Fetch user profiles with avatar_url for playlist creators
+  let playlistsWithAvatars = playlistsWithDeletedAt;
+  if (playlistsWithDeletedAt.length > 0) {
+    const creatorIds = [
+      ...new Set(playlistsWithDeletedAt.map((p) => p.created_by)),
+    ];
+
+    const { data: profiles, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, avatar_url')
+      .in('id', creatorIds);
+
+    if (!profileError && profiles) {
+      const profileMap = new Map(profiles.map((p) => [p.id, p.avatar_url]));
+      playlistsWithAvatars = playlistsWithDeletedAt.map((playlist) => ({
+        ...playlist,
+        avatar_url: profileMap.get(playlist.created_by) || null,
+      }));
+    }
+  }
+
+  return { playlists: playlistsWithAvatars, error, count };
 }
 
 export async function addVideosToPlaylist({

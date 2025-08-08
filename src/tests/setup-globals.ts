@@ -9,3 +9,12 @@ Object.defineProperty(globalThis, '__SVELTEKIT_PAYLOAD__', {
   writable: true,
   configurable: true,
 });
+
+// Ensure window can be properly cleaned up during test teardown
+if (typeof globalThis !== 'undefined' && globalThis.window) {
+  Object.defineProperty(globalThis, 'window', {
+    value: globalThis.window,
+    writable: true,
+    configurable: true,
+  });
+}

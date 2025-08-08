@@ -248,7 +248,7 @@ describe('getCroppedPlaylistImageUrl', () => {
     expect(result).toBe('data:image/webp;base64,ZmFrZS13ZWJwLWRhdGE=');
     expect(global.Image).toHaveBeenCalled();
     expect(mockCanvas.toBlob).toHaveBeenCalled();
-    
+
     // Verify that proper dimensions were used for maxres crop
     expect(mockCanvas.width).toBe(720); // Default width for maxres
     expect(mockCanvas.height).toBe(720); // Default height for maxres

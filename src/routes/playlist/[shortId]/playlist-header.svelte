@@ -206,19 +206,17 @@
                     </div>
                   {:else}
                     <div class="flex items-center gap-2">
-                      {#if creatorProfile?.avatar_url}
-                        <Avatar.Root class="h-6 w-6">
-                          <Avatar.Image
-                            src={creatorProfile.avatar_url}
-                            alt="{playlist.profile_username} avatar"
-                          />
-                          <Avatar.Fallback class="text-xs">
-                            {playlist.profile_username
-                              ?.slice(0, 2)
-                              .toUpperCase()}
-                          </Avatar.Fallback>
-                        </Avatar.Root>
-                      {/if}
+                      <Avatar.Root class="h-6 w-6">
+                        <Avatar.Image
+                          src={creatorProfile?.avatar_url}
+                          alt="{playlist.profile_username} avatar"
+                        />
+                        <Avatar.Fallback class="text-xs">
+                          {playlist.profile_username
+                            ?.slice(0, 2)
+                            .toUpperCase()}
+                        </Avatar.Fallback>
+                      </Avatar.Root>
                       <p class="text-sm">{playlist.profile_username}</p>
                     </div>
                   {/if}
@@ -336,19 +334,17 @@
                     </div>
                   {:else}
                     <div class="flex items-center gap-2">
-                      {#if creatorProfile?.avatar_url}
-                        <Avatar.Root class="h-6 w-6">
-                          <Avatar.Image
-                            src={creatorProfile.avatar_url}
-                            alt="{playlist.profile_username} avatar"
-                          />
-                          <Avatar.Fallback class="text-xs">
-                            {playlist.profile_username
-                              ?.slice(0, 2)
-                              .toUpperCase()}
-                          </Avatar.Fallback>
-                        </Avatar.Root>
-                      {/if}
+                      <Avatar.Root class="h-6 w-6">
+                        <Avatar.Image
+                          src={creatorProfile?.avatar_url}
+                          alt="{playlist.profile_username} avatar"
+                        />
+                        <Avatar.Fallback class="text-xs">
+                          {playlist.profile_username
+                            ?.slice(0, 2)
+                            .toUpperCase()}
+                        </Avatar.Fallback>
+                      </Avatar.Root>
                       <p class="text-sm">{playlist.profile_username}</p>
                     </div>
                   {/if}
