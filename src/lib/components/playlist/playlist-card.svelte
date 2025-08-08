@@ -49,17 +49,15 @@
     {#if playlist.profile_username}
       <div class="mt-2 flex items-center gap-2">
         <p class="text-muted-foreground text-xs">{playlist.profile_username}</p>
-        {#if playlist.avatar_url}
-          <Avatar.Root class="h-4 w-4">
-            <Avatar.Image
-              src={playlist.avatar_url}
-              alt="{playlist.profile_username} avatar"
-            />
-            <Avatar.Fallback class="text-xs">
-              {playlist.profile_username.slice(0, 2).toUpperCase()}
-            </Avatar.Fallback>
-          </Avatar.Root>
-        {/if}
+        <Avatar.Root class="h-4 w-4">
+          <Avatar.Image
+            src={playlist.avatar_url}
+            alt="{playlist.profile_username} avatar"
+          />
+          <Avatar.Fallback class="text-xs">
+            {playlist.profile_username.slice(0, 2).toUpperCase()}
+          </Avatar.Fallback>
+        </Avatar.Root>
       </div>
     {/if}
 
