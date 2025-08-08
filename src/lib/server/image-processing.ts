@@ -60,30 +60,12 @@ export async function getCroppedPlaylistImageUrlServer({
     );
 
     // Extract the crop area
-    let processedInstance = sharpInstance.extract({
+    const processedInstance = sharpInstance.extract({
       left: validatedCrop.x,
       top: validatedCrop.y,
       width: validatedCrop.width,
       height: validatedCrop.height,
     });
-
-    // Apply upscaling for small standard resolution images
-    if (isStandardResolution) {
-      const shouldUpscale =
-        validatedCrop.width < 224 || validatedCrop.height < 224;
-
-      if (shouldUpscale) {
-        const targetSize = 224; // Target size for playlist thumbnails
-        console.log(
-          `Upscaling from ${validatedCrop.width}x${validatedCrop.height} to ${targetSize}x${targetSize}`
-        );
-
-        processedInstance = processedInstance.resize(targetSize, targetSize, {
-          kernel: sharp.kernel.lanczos3, // High-quality upscaling
-          fit: 'fill',
-        });
-      }
-    }
 
     let processedImageBuffer: Buffer;
     let mimeType: string;

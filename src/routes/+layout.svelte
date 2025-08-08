@@ -58,7 +58,6 @@
   // More granular loading states
   const loadingStates = $derived.by(() => {
     return {
-      mediaQuery: mediaQuery.initialized,
       sidebar: sidebarState.initialized,
       sidebarData: sidebarState.isDataLoaded,
       // Show UI as soon as we have basic functionality
@@ -242,36 +241,23 @@
 </svelte:head>
 
 <div class="flex h-full flex-col">
-  <!-- Main Navigation Bar - Show immediately with fallbacks -->
-  <MainNavigation
-    {userProfile}
-    {session}
-    {supabase}
-    {layoutState}
-    {contentState}
-    canHover={loadingStates.mediaQuery ? mediaQuery.canHover : true}
-    bind:searchQuery
-    bind:openAccountDrawer
-  />
-
   <!-- Main Content Area with Progressive Loading -->
   {#if !isHydrated}
     <!-- SSR/Initial Load State -->
     <div class="flex h-[calc(100dvh-60px)] w-full items-center justify-center">
-      <Loader size="lg" message="Initializing..." />
-    </div>
-  {:else if !loadingStates.canShowBasicUI}
-    <!-- Basic hydration but waiting for media queries -->
-    <div class="flex h-[calc(100dvh-60px)] w-full items-center justify-center">
-      <Loader size="lg" message="Setting up interface..." />
-    </div>
-  {:else if !loadingStates.canShowFullUI}
-    <!-- Show minimal UI while sidebar initializes -->
-    <div class="flex h-[calc(100dvh-60px)] w-full items-center justify-center">
-      <Loader size="md" message="Almost ready..." />
+      <Loader size="lg" message="Loading..." />
     </div>
   {:else}
     <!-- Full UI - sidebar may still be loading data -->
+    <MainNavigation
+      {userProfile}
+      {session}
+      {supabase}
+      {layoutState}
+      {contentState}
+      bind:searchQuery
+      bind:openAccountDrawer
+    />
     <ResizableLayout
       {supabase}
       {session}

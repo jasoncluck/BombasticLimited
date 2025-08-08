@@ -18,7 +18,6 @@
     supabase,
     layoutState,
     contentState,
-    canHover,
     searchQuery = $bindable(),
     openAccountDrawer = $bindable(),
   }: {
@@ -27,7 +26,6 @@
     supabase: SupabaseClient<Database>;
     layoutState: LayoutState;
     contentState: ContentState;
-    canHover: boolean;
     searchQuery: string;
     openAccountDrawer: boolean;
   } = $props();
@@ -94,7 +92,6 @@
         {supabase}
         {layoutState}
         {contentState}
-        {canHover}
         bind:openAccountDrawer
       />
     </div>

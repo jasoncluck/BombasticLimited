@@ -33,7 +33,7 @@ export const load: LayoutServerLoad = async ({
 
   const { session } = await sessionPromise;
 
-  // Simplified cache strategy - single cache validation approach
+  //Single cache validation approach
   const userId = session?.user?.id || null;
   const timeSlot = Math.floor(Date.now() / 600000); // 10 minute slots
 

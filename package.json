@@ -36,6 +36,8 @@
     "test:e2e:reset-each": "RESET_DB=true RESET_DB_EACH_TEST=true playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:integration": "vitest run src/routes/",
+    "test:e2e:single": "playwright test --grep",
+    "test:e2e:headed:single": "playwright test --headed --grep",
     "test:setup": "supabase start && npm run generate-types",
     "test:sql": "supabase test db",
     "test:teardown": "supabase stop",

@@ -20,6 +20,7 @@
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
   import type { UserProfile } from '$lib/supabase/user-profiles';
+  import { getMediaQueryState } from '$lib/state/media-query.svelte';
 
   let {
     userProfile,
@@ -27,7 +28,6 @@
     supabase,
     layoutState,
     contentState,
-    canHover,
     openAccountDrawer = $bindable(),
   }: {
     userProfile: UserProfile | null;
@@ -35,9 +35,10 @@
     supabase: SupabaseClient<Database>;
     layoutState: LayoutState;
     contentState: ContentState;
-    canHover: boolean;
     openAccountDrawer: boolean;
   } = $props();
+
+  const { canHover } = getMediaQueryState();
 </script>
 
 {#if session}

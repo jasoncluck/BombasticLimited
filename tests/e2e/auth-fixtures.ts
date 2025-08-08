@@ -25,7 +25,6 @@ export const authenticatedTest = base.extend<AuthenticatedFixtures>({
   testDataManager: async ({}, use) => {
     const manager = new TestDataManager();
     await use(manager);
-    // Cleanup happens in global teardown
   },
 
   testUser: async ({ testDataManager }, use, workerInfo) => {
@@ -42,7 +41,6 @@ export const authenticatedTest = base.extend<AuthenticatedFixtures>({
       `user-${workerInfo.workerIndex}.json`
     );
 
-    // Check if auth file exists
     if (!fs.existsSync(authFile)) {
       throw new Error(
         `Authentication file not found for worker ${workerInfo.workerIndex}. Make sure global setup ran successfully.`
@@ -67,8 +65,10 @@ export const authenticatedTest = base.extend<AuthenticatedFixtures>({
 // Test with unauthenticated user context
 export const unauthenticatedTest = base.extend<UnauthenticatedFixtures>({
   unauthenticatedContext: async ({ browser }, use) => {
-    // Create fresh context with no stored auth state
-    const context = await browser.newContext();
+    const context = await browser.newContext({
+      // Explicitly clear all storage state
+      storageState: { cookies: [], origins: [] },
+    });
     await use(context);
     await context.close();
   },
@@ -80,10 +80,50 @@ export const unauthenticatedTest = base.extend<UnauthenticatedFixtures>({
   },
 });
 
-// Mixed test that can test both authenticated and unauthenticated flows
+// Mixed test - using delayed/conditional fixture initialization
 export const mixedTest = base.extend<
   AuthenticatedFixtures & UnauthenticatedFixtures
 >({
+  // Initialize unauthenticated context FIRST and independently
+  unauthenticatedContext: async ({ browser }, use) => {
+    console.log('Creating unauthenticated context...');
+    const context = await browser.newContext({
+      // Force completely clean state
+      storageState: { cookies: [], origins: [] },
+      // Add extra headers to distinguish this context
+      extraHTTPHeaders: {
+        'X-Test-Context': 'unauthenticated',
+        'Cache-Control': 'no-cache',
+      },
+    });
+    console.log('Unauthenticated context created successfully');
+    await use(context);
+    await context.close();
+  },
+
+  unauthenticatedPage: async ({ unauthenticatedContext }, use) => {
+    console.log('Creating unauthenticated page...');
+    const page = await unauthenticatedContext.newPage();
+
+    // Add debugging to see what's happening
+    page.on('response', (response) => {
+      if (response.status() >= 400 || response.url().includes('auth')) {
+        console.log(`Unauth response: ${response.status()} ${response.url()}`);
+      }
+    });
+
+    page.on('request', (request) => {
+      if (request.url().includes('auth')) {
+        console.log(`Unauth request: ${request.method()} ${request.url()}`);
+      }
+    });
+
+    console.log('Unauthenticated page created successfully');
+    await use(page);
+    await page.close();
+  },
+
+  // Only initialize authenticated fixtures if they're actually used
   testDataManager: async ({}, use) => {
     const manager = new TestDataManager();
     await use(manager);
@@ -111,6 +151,9 @@ export const mixedTest = base.extend<
 
     const context = await browser.newContext({
       storageState: authFile,
+      extraHTTPHeaders: {
+        'X-Test-Context': 'authenticated',
+      },
     });
 
     await use(context);
@@ -119,18 +162,6 @@ export const mixedTest = base.extend<
 
   authenticatedPage: async ({ authenticatedContext }, use) => {
     const page = await authenticatedContext.newPage();
-    await use(page);
-    await page.close();
-  },
-
-  unauthenticatedContext: async ({ browser }, use) => {
-    const context = await browser.newContext();
-    await use(context);
-    await context.close();
-  },
-
-  unauthenticatedPage: async ({ unauthenticatedContext }, use) => {
-    const page = await unauthenticatedContext.newPage();
     await use(page);
     await page.close();
   },
