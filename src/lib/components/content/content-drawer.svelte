@@ -40,9 +40,12 @@
   import FullHeightDrawer from './drawer/full-height-drawer.svelte';
   import EditListDrawer from './drawer/edit-list-drawer.svelte';
   import type { CombinedContentFilter } from './content-filter';
+  import type { SuperValidated } from 'sveltekit-superforms';
+  import type { PlaylistSchema } from '../../../routes/playlist/[shortId]/schema';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { getVideoThumbnailUrl } from '$lib/utils/video-thumbnails';
   import PlaylistDeleteAlertDrawer from '../playlist/playlist-delete-alert-drawer.svelte';
+  import PlaylistEditDrawer from '../playlist/playlist-edit-drawer.svelte';
 
   interface ContentDrawerProps {
     videos?: Video[];
@@ -54,6 +57,7 @@
     supabase: SupabaseClient<Database>;
     session: Session | null;
     onSelectAll?: () => void;
+    form?: SuperValidated<PlaylistSchema>;
   }
 
   let {
@@ -65,6 +69,7 @@
     supabase,
     session,
     children,
+    form,
   }: ContentDrawerProps = $props();
 
   const contentState = getContentState();
@@ -92,6 +97,7 @@
 
   let addToPlaylistDrawerOpen = $state(false);
   let showDeleteDrawer = $state(false);
+  let editPlaylistDrawerOpen = $state(false);
 
   const filteredPlaylists = $derived(
     playlists.filter(
@@ -201,19 +207,34 @@
         <hr />
 
         <!-- Edit button for header variant -->
-        {#if variant === 'header' && isPlaylistOwner && playlistState.openEditPlaylist === false}
-          <Button
-            class="drawer-button"
-            variant="ghost"
-            onclick={() => {
-              playlistState.openEditPlaylist = true;
-              contentState.openDrawerSection = null;
-              clearSelectionAfterAction();
-            }}
+        {#if variant === 'header' && isPlaylistOwner && form && playlist}
+          {#if !editPlaylistDrawerOpen}
+            <Button
+              class="drawer-button"
+              variant="ghost"
+              onclick={() => {
+                editPlaylistDrawerOpen = true;
+              }}
+            >
+              <Pencil class="drawer-icon" />
+              Edit
+            </Button>
+          {/if}
+          
+          <!-- Nested Edit Playlist Drawer -->
+          <PlaylistEditDrawer
+            {form}
+            playlist={playlist}
+            {session}
+            formId="content-drawer-nested-edit-form"
+            bind:open={editPlaylistDrawerOpen}
+            nested={true}
           >
-            <Pencil class="drawer-icon" />
-            Edit
-          </Button>
+            {#snippet trigger()}
+              <!-- Empty trigger as we control open programmatically -->
+              <div></div>
+            {/snippet}
+          </PlaylistEditDrawer>
         {/if}
         <!-- Reorder content -->
         {#if contentFilter.sort.key === 'playlistOrder' && isPlaylistOwner && variant === 'header' && videos && videos.length > 0}

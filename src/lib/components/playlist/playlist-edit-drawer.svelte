@@ -40,6 +40,7 @@
     trigger,
     open = $bindable(),
     session,
+    nested = false,
   }: {
     form: SuperValidated<PlaylistSchema>;
     formId?: string;
@@ -47,6 +48,7 @@
     playlist: Playlist;
     open: boolean;
     session: Session | null;
+    nested?: boolean;
   } = $props();
 
   const playlistState = getPlaylistState();
@@ -123,7 +125,7 @@
 <Drawer.Root
   bind:open
   handleOnly={true}
-  nested={false}
+  {nested}
   onAnimationEnd={(open) => {
     if (open === false) {
       console.log('settin to false');

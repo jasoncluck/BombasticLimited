@@ -82,5 +82,6 @@
     {contentFilter}
     {supabase}
     {session}
+    {form}
   />
 </div>

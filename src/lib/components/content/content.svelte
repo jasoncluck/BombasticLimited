@@ -50,6 +50,7 @@
     tilesDisplay: TilesDisplay;
     supabase: SupabaseClient<Database>;
     session: Session | null;
+    form?: import('sveltekit-superforms').SuperValidated<import('../../../routes/playlist/[shortId]/schema').PlaylistSchema>;
   };
 
   let {
@@ -65,6 +66,7 @@
     sectionId = DEFAULT_SECTION_ID,
     userProfile,
     tilesDisplay,
+    form,
     ...restProps
   }: ContentProps = $props();
 
@@ -175,6 +177,7 @@
       {sectionId}
       {supabase}
       {session}
+      {form}
     >
       <div bind:this={contentRef} {...restProps} class="flex flex-col gap-5">
         <!-- Table view for small screens (up to sm breakpoint) -->
