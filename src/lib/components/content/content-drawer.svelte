@@ -114,11 +114,20 @@
 
   const isPlaylistOwner = $derived(session?.user.id === playlist?.created_by);
 
+  // Effect to ensure nested drawer closes when main drawer closes
+  $effect(() => {
+    if (!isThisSectionMenuOpen && editPlaylistDrawerOpen) {
+      editPlaylistDrawerOpen = false;
+    }
+  });
+
   function clearSelectionAfterAction() {
     contentState.openDrawerSection = null;
     contentState.drawerVariant = null;
     contentState.selectedVideosBySection[sectionId] = [];
     contentState.hoveredVideosBySection[sectionId] = null;
+    // Also reset the nested edit drawer state to prevent desync
+    editPlaylistDrawerOpen = false;
   }
 
   async function handleVideoReorder(
