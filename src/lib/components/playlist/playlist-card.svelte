@@ -48,7 +48,6 @@
     <!-- Avatar and username display -->
     {#if playlist.profile_username}
       <div class="mt-2 flex items-center gap-2">
-        <p class="text-muted-foreground text-xs">{playlist.profile_username}</p>
         <Avatar.Root class="h-4 w-4">
           <Avatar.Image
             src={playlist.avatar_url}
@@ -58,6 +57,7 @@
             {playlist.profile_username.slice(0, 2).toUpperCase()}
           </Avatar.Fallback>
         </Avatar.Root>
+        <p class="text-muted-foreground text-xs">{playlist.profile_username}</p>
       </div>
     {/if}
 
