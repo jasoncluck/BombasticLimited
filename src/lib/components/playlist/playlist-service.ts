@@ -45,6 +45,22 @@ export const PLAYLIST_IMAGE_CROP_DEFAULTS: ImageProperties = {
   width: 180,
 };
 
+/**
+ * Determines if a playlist thumbnail is low-resolution and cannot be cropped effectively
+ */
+export function isLowResolutionThumbnail(
+  thumbnailMaxResUrl: string | null,
+  thumbnailUrl: string | null
+): boolean {
+  // If there's a maxres URL available, it's high resolution
+  if (thumbnailMaxResUrl) {
+    return false;
+  }
+  
+  // If there's only a standard thumbnail URL, it's low resolution
+  return !!thumbnailUrl;
+}
+
 // Add specific defaults for different YouTube thumbnail sizes
 export const YOUTUBE_THUMBNAIL_CROP_DEFAULTS = {
   // 120x90 default thumbnails
