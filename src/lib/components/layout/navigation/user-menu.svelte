@@ -9,8 +9,10 @@
     GalleryHorizontal,
     LogOut,
     Table,
-    UserCircle,
     Bug,
+    CircleUser,
+    TriangleAlert,
+    UserCircle,
   } from '@lucide/svelte';
   import { handleUpdateProfileContentDisplay } from '$lib/components/profile/profile-service';
   import type { LayoutState } from '$lib/state/layout.svelte.js';
@@ -46,7 +48,7 @@
       id="user-preferences"
       class={buttonVariants({
         variant: 'outline',
-        class: 'hidden cursor-pointer outline-none sm:block',
+        class: 'hidden cursor-pointer outline-none sm:flex',
       })}
     >
       <div class="flex items-center gap-2">
@@ -124,11 +126,11 @@
               class="h-full w-full rounded-full object-cover"
             />
             <Avatar.Fallback>
-              <UserCircle class="h-[1.2rem] w-[1.2rem]" />
+              <CircleUser class="h-[1.2rem] w-[1.2rem]" />
             </Avatar.Fallback>
           </Avatar.Root>
         {:else}
-          <UserCircle class="h-[1.2rem] w-[1.2rem]" />
+          <CircleUser class="h-[1.2rem] w-[1.2rem]" />
         {/if}
         <span class="sr-only">Profile</span>
       </DropdownMenu.Trigger>
@@ -150,7 +152,7 @@
               rel="noopener noreferrer"
               class="flex items-center gap-2 text-inherit no-underline"
             >
-              <Bug class="text-orange-500" />
+              <TriangleAlert />
               Report Bug
             </a>
           </DropdownMenu.Item>
@@ -186,11 +188,11 @@
             />
 
             <Avatar.Fallback>
-              <UserCircle class="h-[1.2rem] w-[1.2rem]" />
+              <CircleUser class="h-[1.2rem] w-[1.2rem]" />
             </Avatar.Fallback>
           </Avatar.Root>
         {:else}
-          <UserCircle class="h-[1.2rem] w-[1.2rem]" />
+          <CircleUser class="h-[1.2rem] w-[1.2rem]" />
         {/if}
         <span class="sr-only">Profile</span>
       </Drawer.Trigger>
@@ -217,7 +219,7 @@
             openAccountDrawer = false;
           }}
         >
-          <Bug class="text-orange-500" />
+          <TriangleAlert />
           Report Bug
         </a>
         <Button
