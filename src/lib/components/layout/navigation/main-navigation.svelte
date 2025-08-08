@@ -54,7 +54,7 @@
         searchQuery = '';
         goto('/', { replaceState: true });
       }}
-      class="ml-2 transition-opacity duration-200 hover:opacity-80 sm:ml-0"
+      class="ml-2 hidden transition-opacity duration-200 hover:opacity-80 sm:ml-0 sm:block"
     >
       <BrandLogo class="h-8 w-auto" />
       <span class="sr-only">Bombastic Home</span>
