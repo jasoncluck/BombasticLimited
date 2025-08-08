@@ -1,79 +1,171 @@
-import { activeStreams } from '$lib/state/streaming.svelte.js';
 import { showNotification } from '$lib/stores/notification.js';
 import { SOURCE_INFO, type Source } from '$lib/constants/source.js';
+import type { SidebarState } from '$lib/state/sidebar.svelte.js';
+import { source, type Source as SSESource } from 'sveltekit-sse';
+import { browser } from '$app/environment';
+
+// Key for localStorage to track shown notifications
+const SHOWN_NOTIFICATIONS_KEY = 'bombastic_shown_stream_notifications';
+// How long to remember a notification was shown (24 hours)
+const NOTIFICATION_EXPIRY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Interface for tracking shown notifications
+ */
+interface ShownNotification {
+  source: Source;
+  timestamp: number;
+}
+
+/**
+ * Get shown notifications from localStorage
+ */
+function getShownNotifications(): ShownNotification[] {
+  if (!browser) return [];
+  
+  try {
+    const stored = localStorage.getItem(SHOWN_NOTIFICATIONS_KEY);
+    if (!stored) return [];
+    
+    const notifications: ShownNotification[] = JSON.parse(stored);
+    const now = Date.now();
+    
+    // Filter out expired notifications
+    const validNotifications = notifications.filter(
+      (notification) => now - notification.timestamp < NOTIFICATION_EXPIRY_MS
+    );
+    
+    // Save back if we filtered any out
+    if (validNotifications.length !== notifications.length) {
+      localStorage.setItem(SHOWN_NOTIFICATIONS_KEY, JSON.stringify(validNotifications));
+    }
+    
+    return validNotifications;
+  } catch (error) {
+    console.error('Failed to load shown notifications:', error);
+    return [];
+  }
+}
+
+/**
+ * Check if notification for a source was recently shown
+ */
+function wasNotificationRecentlyShown(source: Source): boolean {
+  const shownNotifications = getShownNotifications();
+  return shownNotifications.some((notification) => notification.source === source);
+}
+
+/**
+ * Mark a notification as shown for a source
+ */
+function markNotificationAsShown(source: Source): void {
+  if (!browser) return;
+  
+  try {
+    const shownNotifications = getShownNotifications();
+    
+    // Remove any existing entry for this source
+    const filteredNotifications = shownNotifications.filter(
+      (notification) => notification.source !== source
+    );
+    
+    // Add new entry
+    filteredNotifications.push({
+      source,
+      timestamp: Date.now(),
+    });
+    
+    localStorage.setItem(SHOWN_NOTIFICATIONS_KEY, JSON.stringify(filteredNotifications));
+  } catch (error) {
+    console.error('Failed to save shown notification:', error);
+  }
+}
 
 /**
  * Service to manage SSE connection for Twitch streaming updates
  */
 export class StreamingSSEService {
-  private eventSource: EventSource | null = null;
-  private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
-  private reconnectDelay = 1000; // Start with 1 second
-  private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+  private connection: SSESource | null = null;
+  private sidebarState: SidebarState | null = null;
+  private isInitialLoad = true;
+
+  /**
+   * Set the sidebar state for managing streaming sources
+   */
+  public setSidebarState(sidebarState: SidebarState): void {
+    this.sidebarState = sidebarState;
+  }
+
+  /**
+   * Get the current connection status
+   */
+  public getStatus(): 'disconnected' | 'connecting' | 'connected' | 'error' {
+    if (!this.connection) {
+      return 'disconnected';
+    }
+    
+    // For sveltekit-sse, we don't have direct access to EventSource readyState
+    // We'll track status through the connection lifecycle
+    return 'connecting';
+  }
 
   /**
    * Start the SSE connection to receive streaming updates
    */
   public start(): void {
-    if (this.eventSource) {
+    if (this.connection) {
       console.log('SSE connection already exists');
       return;
     }
 
-    try {
-      this.eventSource = new EventSource('/api/twitch', {
-        withCredentials: true,
-      });
+    // Reset initial load flag when starting
+    this.isInitialLoad = true;
 
-      this.eventSource.addEventListener('streamingSubscriptions', (event) => {
+    try {
+      this.connection = source('/api/twitch');
+
+      this.connection.select('streamingSubscriptions').subscribe((data) => {
         try {
-          const streamingSources: Source[] = JSON.parse(event.data);
+          const streamingSources: Source[] = JSON.parse(data);
           this.updateStreamingState(streamingSources);
         } catch (error) {
           console.error('Failed to parse streaming update:', error);
         }
       });
 
-      this.eventSource.addEventListener('open', () => {
+      this.connection.select('open').subscribe(() => {
         console.log('Twitch streaming SSE connection established');
-        this.reconnectAttempts = 0;
-        this.reconnectDelay = 1000; // Reset delay on successful connection
       });
 
-      this.eventSource.addEventListener('error', (event) => {
+      this.connection.select('error').subscribe((event) => {
         console.error('Twitch streaming SSE error:', event);
-        this.handleConnectionError();
       });
     } catch (error) {
       console.error('Failed to create EventSource:', error);
-      this.scheduleReconnect();
     }
   }
 
-  /**
-   * Stop the SSE connection and cleanup
-   */
+  // /**
+  //  * Stop the SSE connection and cleanup
+  //  */
   public stop(): void {
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout);
-      this.reconnectTimeout = null;
-    }
-
-    if (this.eventSource) {
-      this.eventSource.close();
-      this.eventSource = null;
+    if (this.connection) {
+      this.connection.close();
+      this.connection = null;
       console.log('Twitch streaming SSE connection closed');
     }
-
-    this.reconnectAttempts = 0;
   }
 
   /**
    * Update the local streaming state and send notifications
    */
   private updateStreamingState(newStreamingSources: Source[]): void {
-    const previousStreams = new Set(activeStreams.sources);
+    if (!this.sidebarState) {
+      console.warn('SidebarState not set in StreamingSSEService');
+      return;
+    }
+
+    const previousStreams = new Set(this.sidebarState.getStreamingSources());
     const currentStreams = new Set(newStreamingSources);
 
     // Find sources that just started streaming
@@ -82,74 +174,36 @@ export class StreamingSSEService {
     );
 
     // Find sources that stopped streaming
-    const stoppedStreaming = activeStreams.sources.filter(
-      (source) => !currentStreams.has(source)
-    );
+    const stoppedStreaming = this.sidebarState
+      .getStreamingSources()
+      .filter((source) => !currentStreams.has(source));
 
-    // Update the active streams state
-    activeStreams.sources = [...newStreamingSources];
+    // Update the sidebar streaming state
+    this.sidebarState.updateStreamingSources(newStreamingSources);
 
-    // Send notifications for stream status changes
-    startedStreaming.forEach((source) => {
-      const displayName = SOURCE_INFO[source]?.displayName || source;
-      showNotification(`${displayName} has started streaming!`, 'success');
-    });
+    // Only send notifications for real-time changes, not on initial load
+    if (!this.isInitialLoad) {
+      // Send notifications for stream status changes
+      startedStreaming.forEach((source) => {
+        const displayName = SOURCE_INFO[source]?.displayName || source;
+        
+        // Only show notification if it wasn't recently shown
+        if (!wasNotificationRecentlyShown(source)) {
+          showNotification(`${displayName} is now streaming!`, 'success');
+          markNotificationAsShown(source);
+        }
+      });
+    }
+
+    // Mark initial load as complete after first update
+    if (this.isInitialLoad) {
+      this.isInitialLoad = false;
+    }
 
     stoppedStreaming.forEach((source) => {
       const displayName = SOURCE_INFO[source]?.displayName || source;
       console.log(`${displayName} has stopped streaming`);
     });
-  }
-
-  /**
-   * Handle connection errors with exponential backoff
-   */
-  private handleConnectionError(): void {
-    if (this.eventSource?.readyState === EventSource.CLOSED) {
-      this.scheduleReconnect();
-    }
-  }
-
-  /**
-   * Schedule a reconnection attempt with exponential backoff
-   */
-  private scheduleReconnect(): void {
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error(
-        'Maximum reconnection attempts reached for Twitch streaming SSE'
-      );
-      return;
-    }
-
-    this.reconnectAttempts++;
-    const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
-
-    console.log(
-      `Attempting to reconnect to Twitch streaming SSE in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`
-    );
-
-    this.reconnectTimeout = setTimeout(() => {
-      this.stop(); // Clean up current connection
-      this.start(); // Start new connection
-    }, delay);
-  }
-
-  /**
-   * Get the current connection status
-   */
-  public getStatus(): string {
-    if (!this.eventSource) return 'disconnected';
-
-    switch (this.eventSource.readyState) {
-      case EventSource.CONNECTING:
-        return 'connecting';
-      case EventSource.OPEN:
-        return 'connected';
-      case EventSource.CLOSED:
-        return 'closed';
-      default:
-        return 'unknown';
-    }
   }
 }
 

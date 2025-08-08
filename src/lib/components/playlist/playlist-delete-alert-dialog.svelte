@@ -62,8 +62,8 @@
     <AlertDialog.Header>
       <AlertDialog.Title>Delete Public Playlist</AlertDialog.Title>
       <AlertDialog.Description>
-        You are about to delete the public playlist "{playlist.name}". Deleting
-        this will also remove the playlist from any followers accounts.
+        You are about to delete the public playlist "New Playlist #5". Deleting
+        this will also remove the playlist from any followers' accounts.
       </AlertDialog.Description>
     </AlertDialog.Header>
     <AlertDialog.Footer>

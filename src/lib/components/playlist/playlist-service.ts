@@ -56,7 +56,7 @@ export function isLowResolutionThumbnail(
   if (thumbnailMaxResUrl) {
     return false;
   }
-  
+
   // If there's only a standard thumbnail URL, it's low resolution
   return !!thumbnailUrl;
 }

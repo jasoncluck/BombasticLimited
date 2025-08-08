@@ -9,10 +9,8 @@
     GalleryHorizontal,
     LogOut,
     Table,
-    Bug,
     CircleUser,
     TriangleAlert,
-    UserCircle,
   } from '@lucide/svelte';
   import { handleUpdateProfileContentDisplay } from '$lib/components/profile/profile-service';
   import type { LayoutState } from '$lib/state/layout.svelte.js';
@@ -174,14 +172,14 @@
     <!-- Mobile User Menu -->
     <Drawer.Root bind:open={openAccountDrawer}>
       <Drawer.Trigger
-        class={buttonVariants({
-          variant: 'outline',
+        data-testid="user-menu-drawer-trigger"
+        class="cursor-pointer !rounded-full outline-none {buttonVariants({
+          variant: userProfile?.avatar_url ? 'ghost' : 'outline',
           size: 'icon',
-          class: 'cursor-pointer',
-        })}
+        })}"
       >
         {#if userProfile?.avatar_url}
-          <Avatar.Root class="h-[1.2rem] w-[1.2rem]">
+          <Avatar.Root class="rounded-full">
             <Avatar.Image
               src={userProfile.avatar_url}
               alt="User avatar"

@@ -180,7 +180,8 @@
     // Initialize sidebar non-blocking (fast UI, loads data in background)
     const sidebarCleanup = sidebarState.initializeNonBlocking();
 
-    // Start streaming SSE connection
+    // Start streaming SSE connection with sidebar state
+    streamingSSE.setSidebarState(sidebarState);
     streamingSSE.start();
 
     // Initialize layout effects asynchronously
@@ -195,26 +196,6 @@
       .catch((error) => {
         console.error('Failed to initialize layout effects:', error);
       });
-
-    // Add simple debug helpers in development (optional)
-    if (import.meta.env.DEV) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).cacheDebug = {
-        updateAuth: () => navigationCache.updateAuthStatus(),
-        stats: () => navigationCache.getPreloadStats(),
-        clearCache: () => {
-          if (
-            'serviceWorker' in navigator &&
-            navigator.serviceWorker.controller
-          ) {
-            navigator.serviceWorker.controller.postMessage({
-              type: 'CLEAR_CACHE',
-            });
-          }
-        },
-      };
-      console.log('🔧 Cache debug tools available at window.cacheDebug');
-    }
 
     // Return cleanup function
     return () => {

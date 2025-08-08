@@ -3,7 +3,6 @@ import { goto } from '$app/navigation';
 import { showNotification } from '$lib/stores/notification.js';
 import debounce from 'debounce';
 import { isSourceArray, SOURCE_INFO } from '$lib/constants/source';
-import { activeStreams } from '$lib/state/streaming.svelte';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { source } from 'sveltekit-sse';
 import { browser } from '$app/environment';

@@ -28,7 +28,10 @@
   import { getPlaylistState } from '$lib/state/playlist.svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { parseImageProperties } from './playlist';
-  import { getCroppedPlaylistImageUrl, isLowResolutionThumbnail } from './playlist-service';
+  import {
+    getCroppedPlaylistImageUrl,
+    isLowResolutionThumbnail,
+  } from './playlist-service';
 
   let {
     form,
@@ -58,7 +61,10 @@
 
   const isPlaylistOwner = $derived(playlist.created_by === session?.user.id);
   const isLowResThumbnail = $derived(
-    isLowResolutionThumbnail(playlist.thumbnail_maxres_url, playlist.thumbnail_url)
+    isLowResolutionThumbnail(
+      playlist.thumbnail_maxres_url,
+      playlist.thumbnail_url
+    )
   );
   const sidebarState = getSidebarState();
 
@@ -118,8 +124,9 @@
   bind:open
   handleOnly={true}
   nested={false}
-  onClose={() => {
+  onAnimationEnd={(open) => {
     if (open === false) {
+      console.log('settin to false');
       playlistState.openEditPlaylist = false;
     }
   }}
@@ -173,7 +180,8 @@
                     <DropdownMenu.Content align="start">
                       {#if isLowResThumbnail}
                         <DropdownMenu.Item disabled
-                          >This video doesn't have a high-resolution thumbnail and cannot be cropped</DropdownMenu.Item
+                          >This video doesn't have a high-resolution thumbnail
+                          and cannot be cropped</DropdownMenu.Item
                         >
                       {:else}
                         <DropdownMenu.Item

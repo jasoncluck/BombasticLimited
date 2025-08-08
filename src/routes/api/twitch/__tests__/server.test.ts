@@ -33,16 +33,16 @@ describe('/api/twitch endpoint', () => {
     vi.clearAllMocks();
   });
 
-  it('should export POST function', async () => {
+  it('should export GET function', async () => {
     const module = await import('../+server.js');
 
-    expect(typeof module.POST).toBe('function');
+    expect(typeof module.GET).toBe('function');
   });
 
   it('should return SSE response', async () => {
-    const { POST } = await import('../+server.js');
+    const { GET } = await import('../+server.js');
 
-    const response = await POST();
+    const response = await GET();
 
     expect(response).toBeInstanceOf(Response);
     expect(response.headers.get('content-type')).toBe('text/event-stream');
@@ -50,9 +50,9 @@ describe('/api/twitch endpoint', () => {
 
   it('should use sveltekit-sse produce function', async () => {
     const { produce } = await import('sveltekit-sse');
-    const { POST } = await import('../+server.js');
+    const { GET } = await import('../+server.js');
 
-    await POST();
+    await GET();
 
     expect(produce).toHaveBeenCalledWith(
       expect.any(Function),

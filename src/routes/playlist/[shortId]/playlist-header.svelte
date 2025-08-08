@@ -212,9 +212,7 @@
                           alt="{playlist.profile_username} avatar"
                         />
                         <Avatar.Fallback class="text-xs">
-                          {playlist.profile_username
-                            ?.slice(0, 2)
-                            .toUpperCase()}
+                          {playlist.profile_username?.slice(0, 2).toUpperCase()}
                         </Avatar.Fallback>
                       </Avatar.Root>
                       <p class="text-sm">{playlist.profile_username}</p>
@@ -340,9 +338,7 @@
                           alt="{playlist.profile_username} avatar"
                         />
                         <Avatar.Fallback class="text-xs">
-                          {playlist.profile_username
-                            ?.slice(0, 2)
-                            .toUpperCase()}
+                          {playlist.profile_username?.slice(0, 2).toUpperCase()}
                         </Avatar.Fallback>
                       </Avatar.Root>
                       <p class="text-sm">{playlist.profile_username}</p>

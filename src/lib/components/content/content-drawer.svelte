@@ -42,6 +42,7 @@
   import type { CombinedContentFilter } from './content-filter';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { getVideoThumbnailUrl } from '$lib/utils/video-thumbnails';
+  import PlaylistDeleteAlertDrawer from '../playlist/playlist-delete-alert-drawer.svelte';
 
   interface ContentDrawerProps {
     videos?: Video[];
@@ -90,6 +91,7 @@
   );
 
   let addToPlaylistDrawerOpen = $state(false);
+  let showDeleteDrawer = $state(false);
 
   const filteredPlaylists = $derived(
     playlists.filter(
@@ -446,20 +448,28 @@
             class="drawer-button"
             variant="ghost"
             onclick={async () => {
-              const data = await handleDeletePlaylist({
-                playlist,
-                sidebarState,
-                supabase,
-                session,
-              });
+              // Check if it's a public playlist
+              if (playlist.type === 'Public') {
+                // Show confirmation drawer for public playlists
+                showDeleteDrawer = true;
+                contentState.openDrawerSection = null;
+              } else {
+                // Delete private playlist immediately
+                const data = await handleDeletePlaylist({
+                  playlist,
+                  sidebarState,
+                  supabase,
+                  session,
+                });
 
-              if (
-                !data?.error &&
-                page.url.pathname === `/playlist/${playlist.short_id}`
-              ) {
-                goto('/');
+                if (
+                  !data?.error &&
+                  page.url.pathname === `/playlist/${playlist.short_id}`
+                ) {
+                  goto('/');
+                }
+                clearSelectionAfterAction();
               }
-              clearSelectionAfterAction();
             }}
           >
             <CircleMinus class="drawer-icon" />
@@ -483,4 +493,15 @@
 {:else}
   <!-- On desktop, just render children without drawer -->
   {@render children()}
+{/if}
+
+<!-- Show Delete Drawer for public playlist deletion -->
+{#if playlist}
+  <PlaylistDeleteAlertDrawer
+    {playlist}
+    {sidebarState}
+    {session}
+    {supabase}
+    bind:open={showDeleteDrawer}
+  />
 {/if}

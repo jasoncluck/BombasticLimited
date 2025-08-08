@@ -34,6 +34,11 @@ const streamCache = new Map<string, StreamStatus>();
 const CACHE_DURATION = 30 * 1000; // 30 seconds cache
 const RATE_LIMIT_DELAY = 100; // 100ms between requests to respect rate limits
 
+// Development testing variables
+let testStartTime: number | null = null;
+const TEST_LIVE_START = 10000; // Go live after 10 seconds
+const TEST_LIVE_END = 20000; // Go offline after 20 seconds
+
 /**
  * Get stream status for a single user
  */
@@ -89,6 +94,64 @@ export async function getStreamStatus(
 export async function getMultipleStreamStatus(
   userIds: string[]
 ): Promise<StreamStatus[]> {
+  // Development testing mode
+  if (process.env.NODE_ENV === 'development') {
+    const now = Date.now();
+
+    // Initialize test start time on first call
+    if (testStartTime === null) {
+      testStartTime = now;
+      console.log('🚀 DEVELOPMENT MODE: Test sequence started');
+      console.log('📅 Schedule: Nextlander goes live in 10s, offline in 20s');
+    }
+
+    const elapsedTime = now - testStartTime;
+    const isLive =
+      elapsedTime >= TEST_LIVE_START && elapsedTime < TEST_LIVE_END;
+
+    // Log status changes
+    if (elapsedTime < TEST_LIVE_START) {
+      const secondsUntilLive = Math.ceil(
+        (TEST_LIVE_START - elapsedTime) / 1000
+      );
+      if (secondsUntilLive <= 5 && elapsedTime % 1000 < 500) {
+        // Log every second for last 5 seconds
+        console.log(
+          `⏰ Nextlander goes live in ${secondsUntilLive} seconds...`
+        );
+      }
+    } else if (
+      elapsedTime >= TEST_LIVE_START &&
+      elapsedTime < TEST_LIVE_START + 1000
+    ) {
+      // Just went live (within first second)
+      console.log('🔴 TEST: Nextlander stream has started!');
+    } else if (isLive && elapsedTime < TEST_LIVE_END) {
+      const secondsUntilOffline = Math.ceil(
+        (TEST_LIVE_END - elapsedTime) / 1000
+      );
+      if (secondsUntilOffline <= 3 && elapsedTime % 1000 < 500) {
+        // Log countdown for last 3 seconds
+        console.log(
+          `📺 TEST: Nextlander stream ends in ${secondsUntilOffline} seconds...`
+        );
+      }
+    } else if (
+      elapsedTime >= TEST_LIVE_END &&
+      elapsedTime < TEST_LIVE_END + 1000
+    ) {
+      // Just went offline (within first second)
+      console.log('⚫ TEST: Nextlander stream has ended!');
+    }
+
+    return userIds.map((userId) => ({
+      userId,
+      isLive: userId === '689331234' && isLive, // Nextlander live between 10-20 seconds
+      lastChecked: now,
+    }));
+  }
+
+  // Production mode - use real API
   if (!apiClient) {
     console.warn('Twitch API client not initialized - missing credentials');
     return [];
@@ -116,6 +179,14 @@ export async function getMultipleStreamStatus(
  */
 export function clearStreamCache(): void {
   streamCache.clear();
+}
+
+/**
+ * Reset test timing (useful for testing)
+ */
+export function resetTestTimer(): void {
+  testStartTime = null;
+  console.log('🔄 Test timer reset - next call will restart the sequence');
 }
 
 /**

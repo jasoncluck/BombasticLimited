@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { StreamingSSEService } from '../streaming-sse.js';
-import { activeStreams } from '$lib/state/streaming.svelte.js';
 import { showNotification } from '$lib/stores/notification.js';
+import type { SidebarState } from '$lib/state/sidebar.svelte.js';
+import type { Source } from '$lib/constants/source.js';
 
 // Mock the notification store
 vi.mock('$lib/stores/notification', () => ({
@@ -17,6 +18,29 @@ vi.mock('$lib/constants/source', () => ({
     jeffgerstmann: { displayName: 'The Jeff Gerstmann Show' },
   },
 }));
+
+// Mock sidebar state
+class MockSidebarState
+  implements
+    Pick<
+      SidebarState,
+      'updateStreamingSources' | 'getStreamingSources' | 'isSourceStreaming'
+    >
+{
+  private streamingSources: Source[] = [];
+
+  updateStreamingSources(sources: Source[]): void {
+    this.streamingSources = [...sources];
+  }
+
+  getStreamingSources(): Source[] {
+    return [...this.streamingSources];
+  }
+
+  isSourceStreaming(source: Source): boolean {
+    return this.streamingSources.includes(source);
+  }
+}
 
 // Mock EventSource
 class MockEventSource {
@@ -70,15 +94,17 @@ global.EventSource = MockEventSource as any;
 
 describe('StreamingSSEService', () => {
   let service: StreamingSSEService;
+  let mockSidebarState: MockSidebarState;
   let mockShowNotification: any;
 
   beforeEach(() => {
-    // Reset the streaming state
-    activeStreams.sources = [];
-    
+    // Create mock sidebar state
+    mockSidebarState = new MockSidebarState();
+
     // Create a new service instance
     service = new StreamingSSEService();
-    
+    service.setSidebarState(mockSidebarState as any);
+
     // Get the mocked showNotification function
     mockShowNotification = vi.mocked(showNotification);
     mockShowNotification.mockClear();
@@ -101,16 +127,16 @@ describe('StreamingSSEService', () => {
     it('should not create multiple connections', () => {
       service.start();
       const firstStatus = service.getStatus();
-      
+
       service.start();
       const secondStatus = service.getStatus();
-      
+
       expect(firstStatus).toBe(secondStatus);
     });
 
     it('should connect to the correct endpoint', () => {
       service.start();
-      
+
       // Access the private eventSource through any to test
       const eventSource = (service as any).eventSource;
       expect(eventSource.url).toBe('/api/twitch');
@@ -132,7 +158,7 @@ describe('StreamingSSEService', () => {
       service.start();
       const eventSource = (service as any).eventSource as MockEventSource;
       eventSource.simulateOpen();
-      
+
       // Need to check the actual status through the service
       expect(eventSource.readyState).toBe(EventSource.OPEN);
     });
@@ -152,21 +178,27 @@ describe('StreamingSSEService', () => {
     it('should update streaming state when receiving data', () => {
       const eventSource = (service as any).eventSource as MockEventSource;
       const streamingData = ['giantbomb', 'nextlander'];
-      
-      eventSource.simulateEvent('streamingSubscriptions', JSON.stringify(streamingData));
-      
-      expect(activeStreams.sources).toEqual(streamingData);
+
+      eventSource.simulateEvent(
+        'streamingSubscriptions',
+        JSON.stringify(streamingData)
+      );
+
+      expect(mockSidebarState.getStreamingSources()).toEqual(streamingData);
     });
 
     it('should send notifications for new streams', () => {
       const eventSource = (service as any).eventSource as MockEventSource;
-      
+
       // Start with no streams
-      expect(activeStreams.sources).toEqual([]);
-      
+      expect(mockSidebarState.getStreamingSources()).toEqual([]);
+
       // Simulate a stream starting
-      eventSource.simulateEvent('streamingSubscriptions', JSON.stringify(['giantbomb']));
-      
+      eventSource.simulateEvent(
+        'streamingSubscriptions',
+        JSON.stringify(['giantbomb'])
+      );
+
       expect(mockShowNotification).toHaveBeenCalledWith(
         'Giant Bomb has started streaming!',
         'success'
@@ -175,26 +207,35 @@ describe('StreamingSSEService', () => {
 
     it('should not send notifications for existing streams', () => {
       const eventSource = (service as any).eventSource as MockEventSource;
-      
+
       // Start with a stream already active
-      activeStreams.sources = ['giantbomb'];
-      
+      mockSidebarState.updateStreamingSources(['giantbomb']);
+
       // Simulate the same stream continuing
-      eventSource.simulateEvent('streamingSubscriptions', JSON.stringify(['giantbomb']));
-      
+      eventSource.simulateEvent(
+        'streamingSubscriptions',
+        JSON.stringify(['giantbomb'])
+      );
+
       expect(mockShowNotification).not.toHaveBeenCalled();
     });
 
     it('should handle multiple stream changes', () => {
       const eventSource = (service as any).eventSource as MockEventSource;
-      
+
       // Start with one stream
-      activeStreams.sources = ['giantbomb'];
-      
+      mockSidebarState.updateStreamingSources(['giantbomb']);
+
       // Add another stream
-      eventSource.simulateEvent('streamingSubscriptions', JSON.stringify(['giantbomb', 'nextlander']));
-      
-      expect(activeStreams.sources).toEqual(['giantbomb', 'nextlander']);
+      eventSource.simulateEvent(
+        'streamingSubscriptions',
+        JSON.stringify(['giantbomb', 'nextlander'])
+      );
+
+      expect(mockSidebarState.getStreamingSources()).toEqual([
+        'giantbomb',
+        'nextlander',
+      ]);
       expect(mockShowNotification).toHaveBeenCalledWith(
         'Nextlander has started streaming!',
         'success'
@@ -204,30 +245,37 @@ describe('StreamingSSEService', () => {
     it('should handle streams ending', () => {
       const eventSource = (service as any).eventSource as MockEventSource;
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-      
+
       // Start with two streams
-      activeStreams.sources = ['giantbomb', 'nextlander'];
-      
+      mockSidebarState.updateStreamingSources(['giantbomb', 'nextlander']);
+
       // Remove one stream
-      eventSource.simulateEvent('streamingSubscriptions', JSON.stringify(['giantbomb']));
-      
-      expect(activeStreams.sources).toEqual(['giantbomb']);
-      expect(consoleSpy).toHaveBeenCalledWith('Nextlander has stopped streaming');
-      
+      eventSource.simulateEvent(
+        'streamingSubscriptions',
+        JSON.stringify(['giantbomb'])
+      );
+
+      expect(mockSidebarState.getStreamingSources()).toEqual(['giantbomb']);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Nextlander has stopped streaming'
+      );
+
       consoleSpy.mockRestore();
     });
 
     it('should handle invalid JSON gracefully', () => {
       const eventSource = (service as any).eventSource as MockEventSource;
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
       eventSource.simulateEvent('streamingSubscriptions', 'invalid json');
-      
+
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         'Failed to parse streaming update:',
         expect.any(Error)
       );
-      
+
       consoleErrorSpy.mockRestore();
     });
   });
@@ -236,36 +284,38 @@ describe('StreamingSSEService', () => {
     it('should close connection when stopped', () => {
       service.start();
       const eventSource = (service as any).eventSource as MockEventSource;
-      
+
       service.stop();
-      
+
       expect(eventSource.readyState).toBe(EventSource.CLOSED);
       expect(service.getStatus()).toBe('disconnected');
     });
 
     it('should handle connection errors', () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
       service.start();
       const eventSource = (service as any).eventSource as MockEventSource;
-      
+
       eventSource.simulateError();
-      
+
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         'Twitch streaming SSE error:',
         expect.any(Event)
       );
-      
+
       consoleErrorSpy.mockRestore();
     });
 
     it('should reset reconnection attempts on successful connection', () => {
       service.start();
       const eventSource = (service as any).eventSource as MockEventSource;
-      
+
       // Simulate successful connection
       eventSource.simulateOpen();
-      
+
       expect((service as any).reconnectAttempts).toBe(0);
     });
   });
@@ -280,50 +330,54 @@ describe('StreamingSSEService', () => {
     });
 
     it('should attempt to reconnect after connection error', () => {
-      const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-      
+      const consoleLogSpy = vi
+        .spyOn(console, 'log')
+        .mockImplementation(() => {});
+
       service.start();
       const eventSource = (service as any).eventSource as MockEventSource;
-      
+
       // Simulate connection closed
       eventSource.readyState = EventSource.CLOSED as any;
       eventSource.simulateError();
-      
+
       // Fast-forward time to trigger reconnection
       vi.advanceTimersByTime(2000);
-      
+
       expect(consoleLogSpy).toHaveBeenCalledWith(
         expect.stringContaining('Attempting to reconnect')
       );
-      
+
       consoleLogSpy.mockRestore();
     });
 
     it.skip('should stop reconnecting after max attempts', () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
       service.start();
-      
+
       // Simulate multiple failed connections
       for (let i = 0; i < 6; i++) {
         const eventSource = (service as any).eventSource as MockEventSource;
         eventSource.readyState = EventSource.CLOSED as any;
         eventSource.simulateError();
-        
+
         // Fast-forward time
         vi.advanceTimersByTime(10000);
-        
+
         // Stop and restart to simulate reconnection attempt
         if (i < 5) {
           service.stop();
           service.start();
         }
       }
-      
+
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         'Maximum reconnection attempts reached for Twitch streaming SSE'
       );
-      
+
       consoleErrorSpy.mockRestore();
     });
   });

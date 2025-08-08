@@ -46,6 +46,9 @@ export class SidebarStateClass {
   // Source ordering state
   orderedSources = $state<Source[]>([]);
 
+  // Streaming sources state
+  streamingSources = $state<Source[]>([]);
+
   constructor() {
     // Initialize sidebar state from cookie on construction
     this.loadStateFromCookie();
@@ -281,8 +284,22 @@ export class SidebarStateClass {
     this.loading = false;
     this.error = null;
     this.orderedSources = [];
+    this.streamingSources = [];
     this.#initialized = false;
     this.#hasLoadedOnce = false;
+  }
+
+  // Streaming sources management
+  updateStreamingSources(sources: Source[]): void {
+    this.streamingSources = [...sources];
+  }
+
+  isSourceStreaming(source: Source): boolean {
+    return this.streamingSources.includes(source);
+  }
+
+  getStreamingSources(): Source[] {
+    return [...this.streamingSources];
   }
 }
 

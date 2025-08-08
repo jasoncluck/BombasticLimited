@@ -3,7 +3,6 @@
   import { type SupabaseClient, type Session } from '@supabase/supabase-js';
   import { SOURCE_INFO, SOURCES } from '$lib/constants/source';
   import * as Popover from '$lib/components/ui/popover';
-  import { activeStreams } from '$lib/state/streaming.svelte';
   import { goto, invalidate } from '$app/navigation';
   import { getContentState } from '$lib/state/content.svelte';
   import { getPlaylistState } from '$lib/state/playlist.svelte';
@@ -17,6 +16,7 @@
   import PlaylistContextMenu from '../playlist/playlist-context-menu.svelte';
   import { Skeleton } from '$lib/components/ui/skeleton';
   import type { Playlist } from '$lib/supabase/playlists';
+  import StreamingIndicator from '../streaming/streaming-indicator.svelte';
 
   let {
     supabase,
@@ -302,13 +302,10 @@
             class="absolute flex grow items-center
                       {!isSidebarCollapsed ? 'w-full grow' : 'item-center'}"
           >
-            {#if activeStreams.sources.includes(source)}
-              <Circle
-                class="absolute bottom-0 left-0"
-                fill="#eb0400"
-                strokeWidth={0}
-              />
-            {/if}
+            <StreamingIndicator
+              isStreaming={sidebarState.isSourceStreaming(source)}
+              size="xs"
+            />
             <span class="sr-only">Live now</span>
 
             <div class="h-12 w-12 shrink-0">

@@ -85,8 +85,20 @@ export async function POST() {
         );
 
         if (error) {
-          console.error('SSE emit error:', error);
-          return;
+          // Check if it's a client disconnection (normal) vs actual error
+          const isClientDisconnection = error.message?.includes(
+            'Client disconnected from the stream'
+          );
+
+          if (isClientDisconnection) {
+            // This is normal - client closed the connection
+            console.log('Client disconnected from Twitch stream monitoring');
+            return;
+          } else {
+            // This is an actual error we should log
+            console.error('SSE emit error:', error);
+            return;
+          }
         }
 
         // Wait before next iteration (shorter than API check interval for responsive SSE)
