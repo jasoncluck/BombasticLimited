@@ -46,6 +46,7 @@
   import { getVideoThumbnailUrl } from '$lib/utils/video-thumbnails';
   import PlaylistDeleteAlertDrawer from '../playlist/playlist-delete-alert-drawer.svelte';
   import PlaylistEditDrawer from '../playlist/playlist-edit-drawer.svelte';
+  import * as ImageCropper from '$lib/components/ui/image-cropper';
 
   interface ContentDrawerProps {
     videos?: Video[];
@@ -231,19 +232,21 @@
           {/if}
           
           <!-- Nested Edit Playlist Drawer -->
-          <PlaylistEditDrawer
-            {form}
-            playlist={playlist}
-            {session}
-            formId="content-drawer-nested-edit-form"
-            bind:open={editPlaylistDrawerOpen}
-            nested={true}
-          >
-            {#snippet trigger()}
-              <!-- Empty trigger as we control open programmatically -->
-              <div></div>
-            {/snippet}
-          </PlaylistEditDrawer>
+          <ImageCropper.Root src={playlist.processedImageUrl ?? undefined}>
+            <PlaylistEditDrawer
+              {form}
+              playlist={playlist}
+              {session}
+              formId="content-drawer-nested-edit-form"
+              bind:open={editPlaylistDrawerOpen}
+              nested={true}
+            >
+              {#snippet trigger()}
+                <!-- Empty trigger as we control open programmatically -->
+                <div></div>
+              {/snippet}
+            </PlaylistEditDrawer>
+          </ImageCropper.Root>
         {/if}
         <!-- Reorder content -->
         {#if contentFilter.sort.key === 'playlistOrder' && isPlaylistOwner && variant === 'header' && videos && videos.length > 0}
