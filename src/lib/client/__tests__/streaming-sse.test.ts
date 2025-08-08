@@ -200,7 +200,7 @@ describe('StreamingSSEService', () => {
       );
 
       expect(mockShowNotification).toHaveBeenCalledWith(
-        'Giant Bomb has started streaming!',
+        'Giant Bomb has started streaming.',
         'success'
       );
     });
@@ -237,8 +237,7 @@ describe('StreamingSSEService', () => {
         'nextlander',
       ]);
       expect(mockShowNotification).toHaveBeenCalledWith(
-        'Nextlander has started streaming!',
-        'success'
+        'Nextlander has started streaming'
       );
     });
 
@@ -257,7 +256,7 @@ describe('StreamingSSEService', () => {
 
       expect(mockSidebarState.getStreamingSources()).toEqual(['giantbomb']);
       expect(consoleSpy).toHaveBeenCalledWith(
-        'Nextlander has stopped streaming'
+        'Nextlander has stopped streaming.'
       );
 
       consoleSpy.mockRestore();

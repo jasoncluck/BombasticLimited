@@ -40,7 +40,7 @@
 <Resizable.PaneGroup
   direction="horizontal"
   class="flex h-full overflow-hidden rounded-lg"
-  autoSaveId="bombify-layout"
+  autoSaveId="bombastic-layout"
 >
   <!-- Sidebar Pane (Desktop Only) -->
   <Resizable.Pane

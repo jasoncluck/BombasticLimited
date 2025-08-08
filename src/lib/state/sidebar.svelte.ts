@@ -377,7 +377,7 @@ export class SidebarStateClass {
 
         // Only show notification if it wasn't recently shown
         if (!this.wasNotificationRecentlyShown(source)) {
-          showNotification(`${displayName} is now streaming!`, 'success');
+          showNotification(`${displayName} is now streaming.`);
           this.recordShownNotification(source);
         }
       });
@@ -385,8 +385,7 @@ export class SidebarStateClass {
       // Send notifications for streams that stopped
       stoppedStreaming.forEach((source) => {
         const displayName = SOURCE_INFO[source]?.displayName || source;
-        showNotification(`${displayName} has stopped streaming`, 'info');
-        console.log(`${displayName} has stopped streaming`);
+        showNotification(`${displayName} has stopped streaming.`);
       });
     }
 
