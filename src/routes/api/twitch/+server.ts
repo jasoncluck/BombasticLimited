@@ -28,7 +28,6 @@ async function updateStreamStatus() {
     return;
   }
 
-
   lastStreamCheck = now;
 
   try {
@@ -51,7 +50,6 @@ async function updateStreamStatus() {
       if (sourceName && status.isLive) {
         streamingSources.add(sourceName);
 
-
         // Log when stream comes online
         if (!previouslyLive.has(sourceName)) {
           console.log(`${sourceName} has started streaming on Twitch.`);
@@ -65,13 +63,12 @@ async function updateStreamStatus() {
         console.log(`${prevSource} has ended the Twitch stream.`);
       }
     }
-
   } catch (error) {
     console.error('Failed to update Twitch stream status:', error);
   }
 }
 
-export async function GET() {
+export async function POST() {
   return produce(
     async function start({ emit }) {
       // Initial stream status check
