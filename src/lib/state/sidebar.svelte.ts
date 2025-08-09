@@ -5,8 +5,8 @@ import { getContext, setContext } from 'svelte';
 import { browser } from '$app/environment';
 import type { Source } from '$lib/constants/source';
 import { SOURCE_INFO } from '$lib/constants/source';
-import { tabVisibility } from '$lib/utils/tab-visibility.js';
-import { showNotification } from '$lib/stores/notification.ts';
+import { tabVisibility } from '$lib/utils/tab-visibility';
+import { showNotification } from '$lib/stores/notification';
 import { source, type Source as SSESource } from 'sveltekit-sse';
 import {
   SIDEBAR_COOKIE_NAME,

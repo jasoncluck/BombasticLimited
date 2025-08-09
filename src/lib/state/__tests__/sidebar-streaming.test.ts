@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { SidebarStateClass } from '../sidebar.svelte.js';
-import type { Source } from '$lib/constants/source.js';
+import { SidebarStateClass } from '../sidebar.svelte';
+import type { Source } from '$lib/constants/source';
+import { showNotification } from '$lib/stores/notification';
 
 // Mock the notification store
 vi.mock('$lib/stores/notification.ts', () => ({
@@ -125,9 +126,8 @@ describe('SidebarStateClass - Streaming Functionality', () => {
     });
 
     it('should show notifications when streams start', async () => {
-      const { showNotification } = await import('$lib/stores/notification.ts');
       const mockShowNotification = vi.mocked(showNotification);
-      
+
       // Start with no streams
       sidebarState.updateStreamingSources([]);
 
@@ -140,9 +140,8 @@ describe('SidebarStateClass - Streaming Functionality', () => {
     });
 
     it('should show notifications when streams stop', async () => {
-      const { showNotification } = await import('$lib/stores/notification.ts');
       const mockShowNotification = vi.mocked(showNotification);
-      
+
       // Start with a streaming source
       sidebarState.updateStreamingSources(['giantbomb']);
 
@@ -155,9 +154,8 @@ describe('SidebarStateClass - Streaming Functionality', () => {
     });
 
     it('should not show duplicate notifications for recently shown sources', async () => {
-      const { showNotification } = await import('$lib/stores/notification.ts');
       const mockShowNotification = vi.mocked(showNotification);
-      
+
       // Mock localStorage to return a recent notification
       const recentNotification = JSON.stringify([
         {
@@ -165,9 +163,11 @@ describe('SidebarStateClass - Streaming Functionality', () => {
           timestamp: Date.now() - 1000, // 1 second ago
         },
       ]);
-      
+
       // Setup mock on the global localStorage directly
-      vi.mocked(global.localStorage.getItem).mockReturnValue(recentNotification);
+      vi.mocked(global.localStorage.getItem).mockReturnValue(
+        recentNotification
+      );
 
       // Start with no streams
       sidebarState.updateStreamingSources([]);
@@ -179,9 +179,8 @@ describe('SidebarStateClass - Streaming Functionality', () => {
     });
 
     it('should show notifications for expired notification records', async () => {
-      const { showNotification } = await import('$lib/stores/notification.ts');
       const mockShowNotification = vi.mocked(showNotification);
-      
+
       // Mock localStorage to return an expired notification (25 hours ago)
       const expiredNotification = JSON.stringify([
         {
@@ -189,7 +188,9 @@ describe('SidebarStateClass - Streaming Functionality', () => {
           timestamp: Date.now() - 25 * 60 * 60 * 1000,
         },
       ]);
-      vi.mocked(global.localStorage.getItem).mockReturnValue(expiredNotification);
+      vi.mocked(global.localStorage.getItem).mockReturnValue(
+        expiredNotification
+      );
 
       // Start with no streams
       sidebarState.updateStreamingSources([]);
@@ -203,9 +204,8 @@ describe('SidebarStateClass - Streaming Functionality', () => {
     });
 
     it('should record notifications in localStorage', async () => {
-      const { showNotification } = await import('$lib/stores/notification.ts');
       const mockShowNotification = vi.mocked(showNotification);
-      
+
       // Start with no streams
       sidebarState.updateStreamingSources([]);
 
@@ -219,9 +219,8 @@ describe('SidebarStateClass - Streaming Functionality', () => {
     });
 
     it('should not show notifications on initial stream load', async () => {
-      const { showNotification } = await import('$lib/stores/notification.ts');
       const mockShowNotification = vi.mocked(showNotification);
-      
+
       // Reset to initial load state
       sidebarState.setInitialStreamLoadFlag(true);
 
@@ -238,9 +237,8 @@ describe('SidebarStateClass - Streaming Functionality', () => {
     });
 
     it('should handle multiple simultaneous stream changes', async () => {
-      const { showNotification } = await import('$lib/stores/notification.ts');
       const mockShowNotification = vi.mocked(showNotification);
-      
+
       // Start with some streams
       sidebarState.updateStreamingSources(['giantbomb', 'nextlander']);
 

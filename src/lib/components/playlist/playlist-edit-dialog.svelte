@@ -207,8 +207,8 @@
                   ><p class="text-sm">
                     Playlist images can only be set to thumbnails of videos
                     added to the playlist. Select a video to set it's thumbnail
-                    as the playlist image. Once complete, the image can be
-                    cropped using this button.
+                    as the playlist image. The image can then be cropped using
+                    this button.
                   </p>
                 </Popover.Content>
               </Popover.Root>
@@ -267,7 +267,7 @@
                 <Form.Control>
                   {#snippet children({ props })}
                     <!-- textarea border + pad = 9px -->
-                    <Form.Label for="isPublic" class="cursor-pointer text-right"
+                    <Form.Label for="isPublic" class="mr-1 cursor-pointer"
                       >Public Playlist</Form.Label
                     >
                     <Checkbox

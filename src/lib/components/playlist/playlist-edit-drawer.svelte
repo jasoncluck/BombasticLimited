@@ -117,7 +117,9 @@
       $formData.name = playlist.name;
       $formData.description = playlist.description ?? '';
       $formData.type = playlist.type;
-      $formData.image_properties = parseImageProperties(playlist.image_properties);
+      $formData.image_properties = parseImageProperties(
+        playlist.image_properties
+      );
       $formData.isDeletingPlaylistImage = false;
       isPublic = playlist.type === 'Public';
     }
@@ -234,8 +236,8 @@
                     ><p class="text-sm">
                       Playlist images can only be set to thumbnails of videos
                       added to the playlist. Select a video to set it's
-                      thumbnail as the playlist image. Once complete, the image
-                      can be cropped using this button.
+                      thumbnail as the playlist image. The image can then be
+                      cropped using this button.
                     </p>
                   </Popover.Content>
                 </Popover.Root>

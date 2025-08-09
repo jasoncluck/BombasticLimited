@@ -147,11 +147,9 @@
                             <Skeleton class="h-12 w-12 rounded" />
                           {:else}
                             <div
-                              class="bg-muted flex h-12 w-12 animate-pulse items-center justify-center rounded"
+                              class="h-12 w-12 animate-pulse items-center justify-center rounded"
                             >
-                              <ListVideo
-                                class="text-muted-foreground h-8 w-8 opacity-50"
-                              />
+                              <ListVideo class="h-8 w-8 opacity-50" />
                             </div>
                           {/if}
                         </div>
