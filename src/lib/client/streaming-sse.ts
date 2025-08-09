@@ -120,7 +120,7 @@ class StreamingSSE {
       this.reconnectAttempts = 0;
     });
 
-    this.eventSource.onerror = (error) => {
+    this.eventSource.addEventListener('error', (error) => {
       console.error('Twitch streaming SSE error:', error);
       
       // Try to reconnect if not at max attempts
@@ -130,9 +130,9 @@ class StreamingSSE {
           this.reconnectAttempts++;
           this.stop();
           this.start();
-        }, 5000);
+        }, 1000);
       }
-    };
+    });
 
     console.log('Streaming SSE connection started');
   }

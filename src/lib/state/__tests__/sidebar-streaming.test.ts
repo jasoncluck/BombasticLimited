@@ -136,8 +136,7 @@ describe('SidebarStateClass - Streaming Functionality', () => {
       sidebarState['updateStreamingState'](['giantbomb']);
 
       expect(showNotification).toHaveBeenCalledWith(
-        'Giant Bomb is now streaming!',
-        'success'
+        'Giant Bomb is now streaming.'
       );
     });
 
@@ -151,8 +150,7 @@ describe('SidebarStateClass - Streaming Functionality', () => {
       sidebarState['updateStreamingState']([]);
 
       expect(showNotification).toHaveBeenCalledWith(
-        'Giant Bomb has stopped streaming',
-        'info'
+        'Giant Bomb has stopped streaming.'
       );
     });
 
@@ -196,8 +194,7 @@ describe('SidebarStateClass - Streaming Functionality', () => {
       sidebarState['updateStreamingState'](['giantbomb']);
 
       expect(showNotification).toHaveBeenCalledWith(
-        'Giant Bomb is now streaming!',
-        'success'
+        'Giant Bomb is now streaming.'
       );
     });
 
@@ -244,12 +241,10 @@ describe('SidebarStateClass - Streaming Functionality', () => {
       sidebarState['updateStreamingState'](['nextlander', 'remap']);
 
       expect(showNotification).toHaveBeenCalledWith(
-        'Giant Bomb has stopped streaming',
-        'info'
+        'Giant Bomb has stopped streaming.'
       );
       expect(showNotification).toHaveBeenCalledWith(
-        'Remap is now streaming!',
-        'success'
+        'Remap is now streaming.'
       );
       expect(showNotification).toHaveBeenCalledTimes(2);
     });
