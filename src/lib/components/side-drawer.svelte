@@ -144,7 +144,7 @@
               <EditSourceDrawer
                 sources={userProfile.sources ?? []}
                 title="Reorder sources"
-                subtitle="Drag the handle to reorder sources"
+                subtitle="Drag the handle to reorder sources."
                 onReorder={handleSourceReorder}
                 onClose={() => {
                   invalidate('supabase:db:profiles');
@@ -191,8 +191,8 @@
                 }}
                 title={SOURCE_INFO[source].displayName}
               >
-                <StreamingIndicator 
-                  isStreaming={sidebarState.isSourceStreaming(source)} 
+                <StreamingIndicator
+                  isStreaming={sidebarState.isSourceStreaming(source)}
                   size="sm"
                 />
                 <span class="sr-only">Live now</span>
