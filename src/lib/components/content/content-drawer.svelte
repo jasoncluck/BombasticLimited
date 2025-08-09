@@ -218,35 +218,30 @@
 
         <!-- Edit button for header variant -->
         {#if variant === 'header' && isPlaylistOwner && form && playlist}
-          {#if !editPlaylistDrawerOpen}
-            <Button
-              class="drawer-button"
-              variant="ghost"
-              onclick={() => {
-                editPlaylistDrawerOpen = true;
-              }}
+          <!-- Nested Edit Playlist Drawer - only render when open to prevent spacing issues -->
+          <ImageCropper.Root src={playlist.processedImageUrl ?? undefined}>
+            <PlaylistEditDrawer
+              {form}
+              {playlist}
+              {session}
+              formId="content-drawer-nested-edit-form"
+              bind:open={editPlaylistDrawerOpen}
+              nested={true}
             >
-              <Pencil class="drawer-icon" />
-              Edit
-            </Button>
-          {:else}
-            <!-- Nested Edit Playlist Drawer - only render when open to prevent spacing issues -->
-            <ImageCropper.Root src={playlist.processedImageUrl ?? undefined}>
-              <PlaylistEditDrawer
-                {form}
-                {playlist}
-                {session}
-                formId="content-drawer-nested-edit-form"
-                bind:open={editPlaylistDrawerOpen}
-                nested={true}
-              >
-                {#snippet trigger()}
-                  <!-- Empty trigger as we control open programmatically -->
-                  <div></div>
-                {/snippet}
-              </PlaylistEditDrawer>
-            </ImageCropper.Root>
-          {/if}
+              {#snippet trigger()}
+                <Button
+                  class="drawer-button"
+                  variant="ghost"
+                  onclick={() => {
+                    editPlaylistDrawerOpen = true;
+                  }}
+                >
+                  <Pencil class="drawer-icon" />
+                  Edit
+                </Button>
+              {/snippet}
+            </PlaylistEditDrawer>
+          </ImageCropper.Root>
         {/if}
         <!-- Reorder content -->
         {#if contentFilter.sort.key === 'playlistOrder' && isPlaylistOwner && variant === 'header' && videos && videos.length > 0}

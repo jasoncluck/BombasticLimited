@@ -156,7 +156,7 @@
 
                     {#if playlist.description && playlist.description.length > 1}
                       <p
-                        class="text-muted-foreground mb-2 text-left text-sm break-all"
+                        class="text-muted-foreground mb-3 text-left text-sm break-all"
                       >
                         {playlist.description}
                       </p>
@@ -263,7 +263,9 @@
                     class="flex flex-col {isPlaylistOwner && 'cursor-pointer'} 
             items-start border-none bg-transparent p-0 text-left"
                   >
-                    <p class="text-muted-foreground text-sm tracking-tight">
+                    <p
+                      class="text-muted-foreground mb-1 text-sm tracking-tight"
+                    >
                       {playlist.type === 'Public'
                         ? 'Public Playlist'
                         : 'Private Playlist'}
@@ -275,7 +277,7 @@
                     </h2>
                     {#if playlist.description && playlist.description.length > 1}
                       <p
-                        class="text-muted-foreground mb-1 text-left text-sm break-all"
+                        class="text-muted-foreground mb-2 text-left text-sm break-all"
                       >
                         {playlist.description}
                       </p>
@@ -283,7 +285,7 @@
                   </div>
 
                   <!-- Username, video count and duration for mobile -->
-                  <div class="mt-2 flex flex-wrap items-start gap-2">
+                  <div class="mt-2 flex flex-wrap items-center gap-2">
                     {#if playlist.profile_username}
                       {#if isSource(playlist.profile_username)}
                         {@const sourceInfo =
