@@ -14,7 +14,7 @@
   import { handleCreatePlaylist } from '../playlist/playlist-service';
   import Button, { buttonVariants } from '../ui/button/button.svelte';
   import PlaylistContextMenu from '../playlist/playlist-context-menu.svelte';
-  import SidebarItem from './SidebarItem.svelte';
+  import SidebarItem from './sidebar-item.svelte';
   import { Skeleton } from '$lib/components/ui/skeleton';
   import type { Playlist } from '$lib/supabase/playlists';
   import StreamingIndicator from '../streaming/streaming-indicator.svelte';

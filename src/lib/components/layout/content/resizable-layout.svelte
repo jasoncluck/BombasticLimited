@@ -2,7 +2,7 @@
   import * as Resizable from '$lib/components/ui/resizable';
   import ScrollArea from '$lib/components/ui/scroll-area/scroll-area.svelte';
   import Sidebar from '$lib/components/sidebar/sidebar.svelte';
-  import SidebarItem from '$lib/components/sidebar/SidebarItem.svelte';
+  import SidebarItem from '$lib/components/sidebar/sidebar-item.svelte';
   import { Skeleton } from '$lib/components/ui/skeleton';
   import { COLLAPSED_SIDEBAR_SIZE } from '$lib/constants/layout';
   import LoadingOverlay from './loading-overlay.svelte';
@@ -63,7 +63,7 @@
     >
       <!-- Fixed height container to prevent layout shifts -->
       <div class="min-h-full">
-        {#if sidebarState.showPlaceholder}
+        {#if false}
           <!-- Skeleton with exact dimensions matching real sidebar -->
           <aside class="h-full overflow-hidden">
             <!-- Sources Section Skeleton -->
