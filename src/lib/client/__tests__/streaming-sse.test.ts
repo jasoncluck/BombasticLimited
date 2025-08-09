@@ -242,13 +242,13 @@ describe('StreamingSSEService', () => {
         'nextlander',
       ]);
       expect(mockShowNotification).toHaveBeenCalledWith(
-        'Nextlander has started streaming'
+        'Nextlander has started streaming.',
+        'success'
       );
     });
 
     it('should handle streams ending', () => {
       const eventSource = (service as any).eventSource as MockEventSource;
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       // Start with two streams
       mockSidebarState.updateStreamingSources(['giantbomb', 'nextlander']);
@@ -260,11 +260,9 @@ describe('StreamingSSEService', () => {
       );
 
       expect(mockSidebarState.getStreamingSources()).toEqual(['giantbomb']);
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(mockShowNotification).toHaveBeenCalledWith(
         'Nextlander has stopped streaming.'
       );
-
-      consoleSpy.mockRestore();
     });
 
     it('should handle invalid JSON gracefully', () => {

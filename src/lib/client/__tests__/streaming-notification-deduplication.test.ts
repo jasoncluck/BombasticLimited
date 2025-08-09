@@ -123,7 +123,7 @@ describe('StreamingSSEService notification deduplication', () => {
       // Second call - real-time update (should show notification)
       privateService.updateStreamingState(['nextlander']);
       expect(showNotification).toHaveBeenCalledWith(
-        'Nextlander is now streaming!',
+        'Nextlander has started streaming.',
         'success'
       );
     });
@@ -137,7 +137,7 @@ describe('StreamingSSEService notification deduplication', () => {
       // First real-time update - should show notification
       privateService.updateStreamingState(['nextlander']);
       expect(showNotification).toHaveBeenCalledWith(
-        'Nextlander is now streaming!',
+        'Nextlander has started streaming.',
         'success'
       );
 
@@ -183,7 +183,7 @@ describe('StreamingSSEService notification deduplication', () => {
       newPrivateService.updateStreamingState(['nextlander']);
 
       expect(showNotification).toHaveBeenCalledWith(
-        'Nextlander is now streaming!',
+        'Nextlander has started streaming.',
         'success'
       );
     });
@@ -197,7 +197,7 @@ describe('StreamingSSEService notification deduplication', () => {
       // First source starts streaming
       privateService.updateStreamingState(['nextlander']);
       expect(showNotification).toHaveBeenCalledWith(
-        'Nextlander is now streaming!',
+        'Nextlander has started streaming.',
         'success'
       );
 
@@ -206,7 +206,7 @@ describe('StreamingSSEService notification deduplication', () => {
       // Second source starts streaming
       privateService.updateStreamingState(['nextlander', 'giantbomb']);
       expect(showNotification).toHaveBeenCalledWith(
-        'Giant Bomb is now streaming!',
+        'Giant Bomb has started streaming.',
         'success'
       );
       expect(showNotification).toHaveBeenCalledTimes(1); // Only the new one
@@ -230,7 +230,7 @@ describe('StreamingSSEService notification deduplication', () => {
 
       // Notification should be shown since it's after initial load
       expect(showNotification).toHaveBeenCalledWith(
-        'Nextlander is now streaming!',
+        'Nextlander has started streaming.',
         'success'
       );
     });

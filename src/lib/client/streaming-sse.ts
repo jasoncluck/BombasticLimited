@@ -14,6 +14,10 @@ class StreamingSSE {
 
   setSidebarState(state: any) {
     this.sidebarState = state;
+    // Sync initial state from sidebar if available
+    if (state?.getStreamingSources) {
+      this.streamingSources = state.getStreamingSources();
+    }
   }
 
   getStatus() {
@@ -37,9 +41,13 @@ class StreamingSSE {
    * Update the local streaming state and send notifications
    */
   private updateStreamingState(newStreamingSources: Source[]): void {
-    // Get current streaming sources from sidebar state if available
-    const currentSidebarSources = this.sidebarState?.getStreamingSources?.() || [];
-    const previousStreams = new Set(currentSidebarSources.length > 0 ? currentSidebarSources : this.streamingSources);
+    // For the first call, initialize from sidebar state if our internal state is empty
+    if (this.streamingSources.length === 0 && this.sidebarState?.getStreamingSources) {
+      this.streamingSources = this.sidebarState.getStreamingSources();
+    }
+    
+    // Use the service's internal state for comparison
+    const previousStreams = new Set(this.streamingSources);
     const currentStreams = new Set(newStreamingSources);
 
     // Find sources that just started streaming
@@ -70,14 +78,11 @@ class StreamingSSE {
         }
       });
 
-      // Send notifications for streams that stopped (or log for testing)
+      // Send notifications for streams that stopped
       stoppedStreaming.forEach((source) => {
         const displayName = SOURCE_INFO[source]?.displayName || source;
         if (browser) {
           showNotification(`${displayName} has stopped streaming.`);
-        } else {
-          // For testing environments that expect console.log
-          console.log(`${displayName} has stopped streaming.`);
         }
       });
     }
