@@ -2,6 +2,7 @@
   import type { Playlist } from '$lib/supabase/playlists';
   import { Check, ListVideo } from '@lucide/svelte';
   import * as Avatar from '$lib/components/ui/avatar';
+  import { isSource, SOURCE_INFO } from '$lib/constants/source';
 
   const {
     playlist,
@@ -46,12 +47,24 @@
     </p>
 
     <!-- Avatar and username display -->
-    {#if playlist.profile_username}
+    {#if isSource(playlist.profile_username)}
+      <div class="mt-2 flex items-center gap-2">
+        <Avatar.Root class="h-4 w-4">
+          <Avatar.Image
+            src={SOURCE_INFO[playlist.profile_username].image.img.src}
+            alt={`Profile picture for user: ${SOURCE_INFO[playlist.profile_username].displayName}`}
+          />
+        </Avatar.Root>
+        <p class="text-muted-foreground text-xs">
+          {SOURCE_INFO[playlist.profile_username].displayName}
+        </p>
+      </div>
+    {:else if playlist.profile_username}
       <div class="mt-2 flex items-center gap-2">
         <Avatar.Root class="h-4 w-4">
           <Avatar.Image
             src={playlist.avatar_url}
-            alt="{playlist.profile_username} avatar"
+            alt="Profile picture for user: {playlist.profile_username}"
           />
           <Avatar.Fallback class="text-xs">
             {playlist.profile_username.slice(0, 2).toUpperCase()}

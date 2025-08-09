@@ -35,7 +35,6 @@
     userProfile: UserProfile | null;
     supabase: SupabaseClient<Database>;
     videos: Video[];
-    videosCount: number;
     view: ContentView;
   }
 
@@ -50,7 +49,6 @@
     showFloatingBreadcrumbs = $bindable(),
     supabase,
     videos,
-    videosCount,
     view,
     ...restProps
   }: SharedContentHeaderProps = $props();

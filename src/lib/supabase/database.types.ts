@@ -79,7 +79,6 @@ export type Database = {
           id: number
           image_properties: Json | null
           name: string
-          published_at: string
           search_vector: unknown | null
           short_id: string
           thumbnail_maxres_url: string | null
@@ -95,7 +94,6 @@ export type Database = {
           id?: number
           image_properties?: Json | null
           name: string
-          published_at?: string
           search_vector?: unknown | null
           short_id: string
           thumbnail_maxres_url?: string | null
@@ -111,7 +109,6 @@ export type Database = {
           id?: number
           image_properties?: Json | null
           name?: string
-          published_at?: string
           search_vector?: unknown | null
           short_id?: string
           thumbnail_maxres_url?: string | null
@@ -367,32 +364,11 @@ export type Database = {
           playlist_short_id: string
         }[]
       }
-      get_playlist_by_short_id: {
-        Args: { p_short_id: string }
-        Returns: {
-          id: number
-          created_at: string
-          published_at: string
-          name: string
-          short_id: string
-          created_by: string
-          description: string
-          thumbnail_url: string
-          thumbnail_maxres_url: string
-          type: Database["public"]["Enums"]["playlist_type"]
-          image_properties: Json
-          youtube_id: string
-          profile_username: string
-          sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
-          sort_order: Database["public"]["Enums"]["playlist_sort_order"]
-        }[]
-      }
       get_playlist_by_youtube_id: {
         Args: { p_youtube_id: string }
         Returns: {
           id: number
           created_at: string
-          published_at: string
           name: string
           short_id: string
           created_by: string
@@ -420,7 +396,6 @@ export type Database = {
         Returns: {
           playlist_id: number
           playlist_created_at: string
-          playlist_published_at: string
           playlist_name: string
           playlist_short_id: string
           playlist_created_by: string
@@ -496,7 +471,6 @@ export type Database = {
         Returns: {
           id: number
           created_at: string
-          published_at: string
           name: string
           short_id: string
           created_by: string
@@ -518,7 +492,6 @@ export type Database = {
           id: number
           created_by: string
           created_at: string
-          published_at: string
           name: string
           short_id: string
           description: string
@@ -662,7 +635,6 @@ export type Database = {
           thumbnail_maxres_url: string
           image_properties: Json
           created_at: string
-          published_at: string
           created_by: string
           type: Database["public"]["Enums"]["playlist_type"]
           youtube_id: string
