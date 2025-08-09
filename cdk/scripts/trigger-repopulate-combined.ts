@@ -9,10 +9,28 @@ const lambda = new LambdaClient({
   region: process.env.AWS_REGION || 'us-west-2',
 });
 
-const VIDEOS_FUNCTION_NAME =
-  process.env.LAMBDA_FUNCTION_NAME || 'BombasticPopulateVideos';
-const PLAYLISTS_FUNCTION_NAME =
-  process.env.PLAYLISTS_LAMBDA_FUNCTION_NAME || 'BombasticPopulatePlaylists';
+// Detect staging flag
+const isStaging = process.argv.includes('--staging');
+
+// Helper function to get function name with staging suffix if needed
+function getFunctionName(baseName: string, envVarName?: string): string {
+  // Environment variables take precedence
+  if (envVarName && process.env[envVarName]) {
+    return process.env[envVarName]!;
+  }
+  
+  // Add staging suffix if staging flag is present
+  return isStaging ? `${baseName}-staging` : baseName;
+}
+
+const VIDEOS_FUNCTION_NAME = getFunctionName(
+  'BombasticPopulateVideos',
+  'LAMBDA_FUNCTION_NAME'
+);
+const PLAYLISTS_FUNCTION_NAME = getFunctionName(
+  'BombasticPopulatePlaylists',
+  'PLAYLISTS_LAMBDA_FUNCTION_NAME'
+);
 
 async function invokeLambdaSync(
   functionName: string,
@@ -86,6 +104,7 @@ async function triggerRepopulateCombined() {
   console.log(
     `🚀 Starting sequential repopulation (${operations.join(' → ')}) for: ${sources.join(', ')}`
   );
+  console.log(`🔧 Environment: ${isStaging ? 'staging' : 'production'}`);
   console.log(`🔧 Videos Function: ${VIDEOS_FUNCTION_NAME}`);
   console.log(`🔧 Playlists Function: ${PLAYLISTS_FUNCTION_NAME}`);
   console.log(`🌍 Region: ${process.env.AWS_REGION || 'us-west-2'}`);
