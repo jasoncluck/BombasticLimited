@@ -6,7 +6,7 @@ import { browser } from '$app/environment';
 import type { Source } from '$lib/constants/source';
 import { SOURCE_INFO } from '$lib/constants/source';
 import { tabVisibility } from '$lib/utils/tab-visibility.js';
-import { showNotification } from '$lib/stores/notification.js';
+import { showNotification } from '$lib/stores/notification.ts';
 import { source, type Source as SSESource } from 'sveltekit-sse';
 import {
   SIDEBAR_COOKIE_NAME,
@@ -369,8 +369,14 @@ export class SidebarStateClass {
     // Update the sidebar streaming state
     this.updateStreamingSources(newStreamingSources);
 
+    // Check if this is the initial load and handle flag
+    const isInitialLoad = this.#isInitialStreamLoad;
+    if (isInitialLoad) {
+      this.#isInitialStreamLoad = false;
+    }
+
     // Only send notifications for real-time changes, not on initial load
-    if (!this.#isInitialStreamLoad) {
+    if (!isInitialLoad) {
       // Send notifications for streams that started
       startedStreaming.forEach((source) => {
         const displayName = SOURCE_INFO[source]?.displayName || source;
@@ -387,11 +393,6 @@ export class SidebarStateClass {
         const displayName = SOURCE_INFO[source]?.displayName || source;
         showNotification(`${displayName} has stopped streaming.`);
       });
-    }
-
-    // Mark initial load as complete after first update
-    if (this.#isInitialStreamLoad) {
-      this.#isInitialStreamLoad = false;
     }
   }
 
@@ -495,6 +496,21 @@ export class SidebarStateClass {
 
   getStreamingSources(): Source[] {
     return [...this.streamingSources];
+  }
+
+  // Test helper methods (only for testing)
+  /**
+   * Set the initial stream load flag (for testing)
+   */
+  setInitialStreamLoadFlag(value: boolean): void {
+    this.#isInitialStreamLoad = value;
+  }
+
+  /**
+   * Get the initial stream load flag (for testing)
+   */
+  getInitialStreamLoadFlag(): boolean {
+    return this.#isInitialStreamLoad;
   }
 
   // Convenience methods for backward compatibility
