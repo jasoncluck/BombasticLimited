@@ -180,7 +180,11 @@
         Playlists
       </a>
 
-      <PlaylistTiles playlists={processedSourcePlaylists} {session} />
+      <PlaylistTiles
+        playlists={processedSourcePlaylists}
+        showUsername={false}
+        {session}
+      />
     </div>
   </div>
 </div>

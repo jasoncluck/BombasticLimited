@@ -18,17 +18,17 @@
   };
 </script>
 
-<div
-  class="flex items-center justify-center p-4 {visible
-    ? 'visible'
-    : 'invisible'}"
->
-  <div class="text-center">
-    <div
-      class="border-primary mx-auto mb-2 animate-spin rounded-full border-b-2 {sizeClasses[
-        size
-      ]}"
-    ></div>
-    <p class="text-muted-foreground text-sm">{message}</p>
+{#if visible}
+  <div
+    class="pointer-events-none fixed inset-0 flex items-center justify-center"
+  >
+    <div class="text-center">
+      <div
+        class="border-primary mx-auto mb-2 animate-spin rounded-full border-b-2 {sizeClasses[
+          size
+        ]}"
+      ></div>
+      <p class="text-muted-foreground text-sm">{message}</p>
+    </div>
   </div>
-</div>
+{/if}

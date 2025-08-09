@@ -7,12 +7,14 @@
   const {
     playlist,
     isFollowedPlaylist = false,
+    showUsername = true,
   }: {
     playlist: Playlist & {
       avatar_url?: string | null;
       profile_username?: string;
     };
     isFollowedPlaylist: boolean;
+    showUsername?: boolean;
   } = $props();
 </script>
 
@@ -49,31 +51,35 @@
     </p>
 
     <!-- Avatar and username display -->
-    {#if isSource(playlist.profile_username)}
-      <div class="mt-2 flex items-center gap-2">
-        <Avatar.Root class="h-6 w-6">
-          <Avatar.Image
-            src={SOURCE_INFO[playlist.profile_username].image.img.src}
-            alt={`Profile picture for user: ${SOURCE_INFO[playlist.profile_username].displayName}`}
-          />
-        </Avatar.Root>
-        <p class="text-muted-foreground text-xs">
-          {SOURCE_INFO[playlist.profile_username].displayName}
-        </p>
-      </div>
-    {:else if playlist.profile_username}
-      <div class="mt-2 flex items-center gap-2">
-        <Avatar.Root class="h-6 w-6">
-          <Avatar.Image
-            src={playlist.avatar_url}
-            alt="Profile picture for user: {playlist.profile_username}"
-          />
-          <Avatar.Fallback class="text-xs">
-            {playlist.profile_username.slice(0, 2).toUpperCase()}
-          </Avatar.Fallback>
-        </Avatar.Root>
-        <p class="text-muted-foreground text-xs">{playlist.profile_username}</p>
-      </div>
+    {#if showUsername}
+      {#if isSource(playlist.profile_username)}
+        <div class="mt-2 flex items-center gap-2">
+          <Avatar.Root class="h-6 w-6">
+            <Avatar.Image
+              src={SOURCE_INFO[playlist.profile_username].image.img.src}
+              alt={`Profile picture for user: ${SOURCE_INFO[playlist.profile_username].displayName}`}
+            />
+          </Avatar.Root>
+          <p class="text-muted-foreground text-xs">
+            {SOURCE_INFO[playlist.profile_username].displayName}
+          </p>
+        </div>
+      {:else if playlist.profile_username}
+        <div class="mt-2 flex items-center gap-2">
+          <Avatar.Root class="h-6 w-6">
+            <Avatar.Image
+              src={playlist.avatar_url}
+              alt="Profile picture for user: {playlist.profile_username}"
+            />
+            <Avatar.Fallback class="text-xs">
+              {playlist.profile_username.slice(0, 2).toUpperCase()}
+            </Avatar.Fallback>
+          </Avatar.Root>
+          <p class="text-muted-foreground text-xs">
+            {playlist.profile_username}
+          </p>
+        </div>
+      {/if}
     {/if}
 
     {#if isFollowedPlaylist}

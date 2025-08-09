@@ -54,19 +54,6 @@
   // Progressive loading states
   let isHydrated = $state(false);
 
-  // More granular loading states
-  const loadingStates = $derived.by(() => {
-    return {
-      sidebar: sidebarState.initialized,
-      sidebarData: sidebarState.isDataLoaded,
-      // Show UI as soon as we have basic functionality
-      canShowBasicUI: isHydrated && mediaQuery.initialized,
-      // Show full UI when everything is ready (but don't wait for sidebar data)
-      canShowFullUI:
-        isHydrated && mediaQuery.initialized && sidebarState.initialized,
-    };
-  });
-
   // Use custom hooks
   const preloading = usePreloading(navigationCache);
   const navigation = $derived(
@@ -216,11 +203,13 @@
   <script src="https://embed.twitch.tv/embed/v1.js"></script>
 </svelte:head>
 
-<div class="flex h-full flex-col">
+<div class="bg-background flex h-full flex-col">
   <!-- Main Content Area with Progressive Loading -->
   {#if !isHydrated}
     <!-- SSR/Initial Load State -->
-    <div class="flex h-[calc(100dvh-60px)] w-full items-center justify-center">
+    <div
+      class="relative flex h-[calc(100dvh)] w-full items-center justify-center"
+    >
       <Loader size="lg" message="Loading..." />
     </div>
   {:else}

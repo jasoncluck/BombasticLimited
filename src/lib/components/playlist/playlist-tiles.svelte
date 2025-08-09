@@ -6,8 +6,13 @@
 
   const {
     playlists,
+    showUsername = true,
     session,
-  }: { playlists: Playlist[]; session: Session | null } = $props();
+  }: {
+    playlists: Playlist[];
+    showUsername?: boolean;
+    session: Session | null;
+  } = $props();
 
   const sidebarState = getSidebarState();
 </script>
@@ -23,6 +28,6 @@
     {@const isFollowedPlaylist = sidebarState
       .getFollowedPlaylists(session)
       .some((p) => p.id === playlist.id)}
-    <PlaylistCard {playlist} {isFollowedPlaylist} />
+    <PlaylistCard {playlist} {isFollowedPlaylist} {showUsername} />
   {/each}
 </div>

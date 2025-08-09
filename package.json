@@ -20,7 +20,6 @@
     "prepare": "svelte-kit sync || echo ''",
     "preview": "vite preview",
     "supabase:seed": "supabase db dump -f supabase/seed.sql --data-only",
-    "supabase:seed:auth": "supabase db dump --schema auth -f supabase/seed-auth.sql --data-only",
     "test": "vitest",
     "test:ci": "vitest run --coverage --reporter=verbose",
     "test:db:reset": "supabase db reset",
