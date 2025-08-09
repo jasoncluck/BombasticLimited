@@ -12,7 +12,7 @@ import { RestApi } from 'aws-cdk-lib/aws-apigateway';
 import { CHANNEL_SOURCES } from '../channel';
 
 interface VideoStackProps extends StackProps {
-  environment: 'production' | 'staging';
+  stage: 'Production' | 'Staging';
   environmentVariables: {
     GOOGLE_API_KEY?: string;
     PUBLIC_SUPABASE_URL?: string;
@@ -26,11 +26,16 @@ export class VideoStack extends Stack {
   constructor(scope: Construct, id: string, props: VideoStackProps) {
     super(scope, id, props);
 
-    const { environment, environmentVariables } = props;
+    const { stage, environmentVariables } = props;
+
+    // Enable deletion protection for production
+    if (stage === 'Production') {
+      this.terminationProtection = true;
+    }
 
     // Validate required environment variables
     if (!environmentVariables.GOOGLE_API_KEY) {
-      throw new Error(`Missing Google API key for ${environment} environment.`);
+      throw new Error(`Missing Google API key for ${stage} environment.`);
     }
 
     if (
@@ -38,13 +43,12 @@ export class VideoStack extends Stack {
       !environmentVariables.PUBLIC_SUPABASE_URL
     ) {
       throw new Error(
-        `Could not find Supabase environment variables for ${environment}.`
+        `Could not find Supabase environment variables for ${stage}.`
       );
     }
 
     // Create environment-specific function names
-    const functionNameSuffix =
-      environment === 'production' ? '' : `-${environment}`;
+    const functionNameSuffix = stage === 'Production' ? '' : `-${stage}`;
 
     // Lambda to populate the database with the current videos.
     const populateVideosLambda = new nodejs.NodejsFunction(
@@ -52,7 +56,7 @@ export class VideoStack extends Stack {
       'BombasticPopulateVideos',
       {
         functionName: `BombasticPopulateVideos${functionNameSuffix}`,
-        description: `Populates a table with videos using the YouTube API (${environment})`,
+        description: `Populates a table with videos using the YouTube API (${stage})`,
         entry: path.join(__dirname, '../lambda/populate-videos.ts'),
         handler: 'populateVideos',
         runtime: lambda.Runtime.NODEJS_20_X,
@@ -62,7 +66,7 @@ export class VideoStack extends Stack {
           SUPABASE_SERVICE_API_KEY:
             environmentVariables.SUPABASE_SERVICE_API_KEY,
           PUBLIC_SUPABASE_URL: environmentVariables.PUBLIC_SUPABASE_URL,
-          ENVIRONMENT: environment,
+          ENVIRONMENT: stage,
         },
       }
     );
@@ -72,7 +76,7 @@ export class VideoStack extends Stack {
       this,
       'PopulateVideoLambdaErrorAlarm',
       {
-        alarmName: `PopulateVideoLambdaErrorAlarm-${environment}`,
+        alarmName: `PopulateVideoLambdaErrorAlarm-${stage}`,
         metric: populateVideosLambda.metricErrors({
           period: Duration.minutes(5),
         }),
@@ -80,7 +84,7 @@ export class VideoStack extends Stack {
         evaluationPeriods: 5,
         actionsEnabled: false,
         datapointsToAlarm: 5,
-        alarmDescription: `Alarm if the populate-videos Lambda has any errors in a 5-minute period (${environment})`,
+        alarmDescription: `Alarm if the populate-videos Lambda has any errors in a 5-minute period (${stage})`,
         treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
       }
     );
@@ -90,7 +94,7 @@ export class VideoStack extends Stack {
       'BombasticPopulatePlaylists',
       {
         functionName: `BombasticPopulatePlaylists${functionNameSuffix}`,
-        description: `Populates the playlists table using the YouTube API (${environment})`,
+        description: `Populates the playlists table using the YouTube API (${stage})`,
         entry: path.join(__dirname, '../lambda/populate-playlists.ts'),
         handler: 'populatePlaylists',
         runtime: lambda.Runtime.NODEJS_20_X,
@@ -100,7 +104,7 @@ export class VideoStack extends Stack {
           SUPABASE_SERVICE_API_KEY:
             environmentVariables.SUPABASE_SERVICE_API_KEY,
           PUBLIC_SUPABASE_URL: environmentVariables.PUBLIC_SUPABASE_URL,
-          ENVIRONMENT: environment,
+          ENVIRONMENT: stage,
         },
       }
     );
@@ -110,7 +114,7 @@ export class VideoStack extends Stack {
       this,
       'PopulatePlaylistsLambdaErrorAlarm',
       {
-        alarmName: `PopulatePlaylistsLambdaErrorAlarm-${environment}`,
+        alarmName: `PopulatePlaylistsLambdaErrorAlarm-${stage}`,
         metric: populatePlaylistsLambda.metricErrors({
           period: Duration.minutes(5),
         }),
@@ -118,26 +122,27 @@ export class VideoStack extends Stack {
         evaluationPeriods: 5,
         actionsEnabled: false,
         datapointsToAlarm: 5,
-        alarmDescription: `Alarm if the populate-playlists Lambda has any errors in a 5-minute period (${environment})`,
+        alarmDescription: `Alarm if the populate-playlists Lambda has any errors in a 5-minute period (${stage})`,
         treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
       }
     );
 
     // Create environment-specific schedules (different schedules for staging vs production)
+    // AWS EventBridge cron format: minute hour day-of-month month day-of-week year
     const videosSchedule =
-      environment === 'production'
+      stage === 'Production'
         ? 'cron(0,30 * * * ? *)' // Every 30 minutes for production
         : 'cron(0 */2 * * ? *)'; // Every 2 hours for staging
 
     const playlistsSchedule =
-      environment === 'production'
+      stage === 'Production'
         ? 'cron(0 12 * * ? *)' // Daily at noon for production
-        : 'cron(0 14 * * 1 *)'; // Weekly on Mondays at 2 PM for staging
+        : 'cron(0 14 ? * 1 *)'; // Weekly on Mondays at 2 PM for staging
 
     for (const source of CHANNEL_SOURCES) {
       // Schedule the videos lambda
       const videosSourceRule = new events.Rule(this, `${source}_Videos_Rule`, {
-        ruleName: `${source}_Videos_Rule_${environment}`,
+        ruleName: `${source}_Videos_Rule_${stage}`,
         schedule: events.Schedule.expression(videosSchedule),
       });
 
@@ -152,7 +157,7 @@ export class VideoStack extends Stack {
         this,
         `${source}_Playlists_Rule`,
         {
-          ruleName: `${source}_Playlists_Rule_${environment}`,
+          ruleName: `${source}_Playlists_Rule_${stage}`,
           schedule: events.Schedule.expression(playlistsSchedule),
         }
       );
@@ -168,7 +173,7 @@ export class VideoStack extends Stack {
       this,
       'RepopulateStateMachine',
       {
-        stateMachineName: `BombasticRepopulateStateMachine-${environment}`,
+        stateMachineName: `BombasticRepopulateStateMachine-${stage}`,
         timeout: Duration.hours(2), // Allow up to 2 hours for full repopulation
         definition: stepfunctions.Chain.start(
           new stepfunctions.Map(this, 'ProcessSources', {
@@ -195,14 +200,14 @@ export class VideoStack extends Stack {
       'BombasticTriggerRepopulate',
       {
         functionName: `BombasticTriggerRepopulate${functionNameSuffix}`,
-        description: `Triggers the repopulation Step Function (${environment})`,
+        description: `Triggers the repopulation Step Function (${stage})`,
         entry: path.join(__dirname, '../lambda/trigger-repopulate.ts'),
         handler: 'handler',
         runtime: lambda.Runtime.NODEJS_20_X,
         timeout: Duration.seconds(30),
         environment: {
           STATE_MACHINE_ARN: repopulateStateMachine.stateMachineArn,
-          ENVIRONMENT: environment,
+          ENVIRONMENT: stage,
         },
       }
     );
