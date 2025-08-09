@@ -13,6 +13,7 @@ class StreamingSSE {
     // Connect to your existing +twitch/+server.ts SSE endpoint
     this.eventSource = new EventSource('/twitch');
 
+
     this.eventSource.addEventListener('streamingSubscriptions', (event) => {
       try {
         const streamingSources = JSON.parse(event.data);
@@ -44,6 +45,7 @@ class StreamingSSE {
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
+
 
     console.log('Streaming SSE connection stopped');
   }
