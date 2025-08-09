@@ -83,7 +83,12 @@
       updateFlash(page);
       if (event.form.valid) {
         const { isDeletingPlaylistImage, ...data } = event.form.data;
-        open = false;
+
+        // Delay closing to allow animation to complete
+        setTimeout(() => {
+          open = false;
+        }, 200);
+
         playlistForm.reset();
 
         const updatedPlaylist = Object.assign(playlist, data);

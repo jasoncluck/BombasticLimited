@@ -234,7 +234,7 @@
             <ImageCropper.Root src={playlist.processedImageUrl ?? undefined}>
               <PlaylistEditDrawer
                 {form}
-                playlist={playlist}
+                {playlist}
                 {session}
                 formId="content-drawer-nested-edit-form"
                 bind:open={editPlaylistDrawerOpen}

@@ -87,18 +87,27 @@ describe('StreamingSSEService notification deduplication', () => {
   describe('notification deduplication', () => {
     it('should not show notification on initial load', () => {
       // Debug: check initial state
-      console.log('Initial streaming sources:', mockSidebarState.getStreamingSources());
-      
+      console.log(
+        'Initial streaming sources:',
+        mockSidebarState.getStreamingSources()
+      );
+
       // Simulate receiving streaming data for the first time (initial load)
       const newStreamingSources: Source[] = ['nextlander'];
-      
+
       // Use private method for testing
       const privateService = service as any;
       privateService.updateStreamingState(newStreamingSources);
 
       // Debug: check if notification was called
-      console.log('showNotification calls:', (showNotification as any).mock.calls);
-      console.log('localStorage setItem calls:', localStorageMock.setItem.mock.calls);
+      console.log(
+        'showNotification calls:',
+        (showNotification as any).mock.calls
+      );
+      console.log(
+        'localStorage setItem calls:',
+        localStorageMock.setItem.mock.calls
+      );
 
       // Should NOT show notification on initial load
       expect(showNotification).not.toHaveBeenCalled();
@@ -106,25 +115,31 @@ describe('StreamingSSEService notification deduplication', () => {
 
     it('should show notification for new streaming source after initial load', () => {
       const privateService = service as any;
-      
+
       // First call - initial load (no notification)
       privateService.updateStreamingState([]);
       expect(showNotification).not.toHaveBeenCalled();
-      
+
       // Second call - real-time update (should show notification)
       privateService.updateStreamingState(['nextlander']);
-      expect(showNotification).toHaveBeenCalledWith('Nextlander is now streaming!', 'success');
+      expect(showNotification).toHaveBeenCalledWith(
+        'Nextlander is now streaming!',
+        'success'
+      );
     });
 
     it('should not show notification for recently shown source', () => {
       const privateService = service as any;
-      
+
       // Initial load
       privateService.updateStreamingState([]);
-      
+
       // First real-time update - should show notification
       privateService.updateStreamingState(['nextlander']);
-      expect(showNotification).toHaveBeenCalledWith('Nextlander is now streaming!', 'success');
+      expect(showNotification).toHaveBeenCalledWith(
+        'Nextlander is now streaming!',
+        'success'
+      );
 
       // Clear the mock
       vi.clearAllMocks();
@@ -136,10 +151,10 @@ describe('StreamingSSEService notification deduplication', () => {
 
     it('should show notification again after expiry time', () => {
       const privateService = service as any;
-      
+
       // Initial load
       privateService.updateStreamingState([]);
-      
+
       // Mock the current time
       const now = Date.now();
       vi.spyOn(Date, 'now').mockReturnValue(now);
@@ -157,34 +172,43 @@ describe('StreamingSSEService notification deduplication', () => {
       service = new StreamingSSEService();
       service.setSidebarState(mockSidebarState as unknown as SidebarState);
       const newPrivateService = service as any;
-      
+
       // Reset sidebar state to simulate page refresh
       mockSidebarState.updateStreamingSources([]);
 
       // Initial load (should not show notification)
       newPrivateService.updateStreamingState([]);
-      
+
       // Same source streaming again (should show notification since expired)
       newPrivateService.updateStreamingState(['nextlander']);
 
-      expect(showNotification).toHaveBeenCalledWith('Nextlander is now streaming!', 'success');
+      expect(showNotification).toHaveBeenCalledWith(
+        'Nextlander is now streaming!',
+        'success'
+      );
     });
 
     it('should handle multiple sources independently', () => {
       const privateService = service as any;
-      
+
       // Initial load
       privateService.updateStreamingState([]);
 
       // First source starts streaming
       privateService.updateStreamingState(['nextlander']);
-      expect(showNotification).toHaveBeenCalledWith('Nextlander is now streaming!', 'success');
+      expect(showNotification).toHaveBeenCalledWith(
+        'Nextlander is now streaming!',
+        'success'
+      );
 
       vi.clearAllMocks();
 
       // Second source starts streaming
       privateService.updateStreamingState(['nextlander', 'giantbomb']);
-      expect(showNotification).toHaveBeenCalledWith('Giant Bomb is now streaming!', 'success');
+      expect(showNotification).toHaveBeenCalledWith(
+        'Giant Bomb is now streaming!',
+        'success'
+      );
       expect(showNotification).toHaveBeenCalledTimes(1); // Only the new one
     });
 
@@ -195,17 +219,20 @@ describe('StreamingSSEService notification deduplication', () => {
       });
 
       const privateService = service as any;
-      
+
       // Initial load
       privateService.updateStreamingState([]);
-      
+
       // Should not throw an error and should show notification after initial load
       expect(() => {
         privateService.updateStreamingState(['nextlander']);
       }).not.toThrow();
 
       // Notification should be shown since it's after initial load
-      expect(showNotification).toHaveBeenCalledWith('Nextlander is now streaming!', 'success');
+      expect(showNotification).toHaveBeenCalledWith(
+        'Nextlander is now streaming!',
+        'success'
+      );
     });
   });
 });

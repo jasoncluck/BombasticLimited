@@ -50,7 +50,9 @@
     tilesDisplay: TilesDisplay;
     supabase: SupabaseClient<Database>;
     session: Session | null;
-    form?: import('sveltekit-superforms').SuperValidated<import('../../../routes/playlist/[shortId]/schema').PlaylistSchema>;
+    form?: import('sveltekit-superforms').SuperValidated<
+      import('../../../routes/playlist/[shortId]/schema').PlaylistSchema
+    >;
   };
 
   let {

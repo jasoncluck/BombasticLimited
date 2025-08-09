@@ -22,24 +22,27 @@ interface ShownNotification {
  */
 function getShownNotifications(): ShownNotification[] {
   if (!browser) return [];
-  
+
   try {
     const stored = localStorage.getItem(SHOWN_NOTIFICATIONS_KEY);
     if (!stored) return [];
-    
+
     const notifications: ShownNotification[] = JSON.parse(stored);
     const now = Date.now();
-    
+
     // Filter out expired notifications
     const validNotifications = notifications.filter(
       (notification) => now - notification.timestamp < NOTIFICATION_EXPIRY_MS
     );
-    
+
     // Save back if we filtered any out
     if (validNotifications.length !== notifications.length) {
-      localStorage.setItem(SHOWN_NOTIFICATIONS_KEY, JSON.stringify(validNotifications));
+      localStorage.setItem(
+        SHOWN_NOTIFICATIONS_KEY,
+        JSON.stringify(validNotifications)
+      );
     }
-    
+
     return validNotifications;
   } catch (error) {
     console.error('Failed to load shown notifications:', error);
@@ -52,7 +55,9 @@ function getShownNotifications(): ShownNotification[] {
  */
 function wasNotificationRecentlyShown(source: Source): boolean {
   const shownNotifications = getShownNotifications();
-  return shownNotifications.some((notification) => notification.source === source);
+  return shownNotifications.some(
+    (notification) => notification.source === source
+  );
 }
 
 /**
@@ -60,22 +65,25 @@ function wasNotificationRecentlyShown(source: Source): boolean {
  */
 function markNotificationAsShown(source: Source): void {
   if (!browser) return;
-  
+
   try {
     const shownNotifications = getShownNotifications();
-    
+
     // Remove any existing entry for this source
     const filteredNotifications = shownNotifications.filter(
       (notification) => notification.source !== source
     );
-    
+
     // Add new entry
     filteredNotifications.push({
       source,
       timestamp: Date.now(),
     });
-    
-    localStorage.setItem(SHOWN_NOTIFICATIONS_KEY, JSON.stringify(filteredNotifications));
+
+    localStorage.setItem(
+      SHOWN_NOTIFICATIONS_KEY,
+      JSON.stringify(filteredNotifications)
+    );
   } catch (error) {
     console.error('Failed to save shown notification:', error);
   }
@@ -103,7 +111,7 @@ export class StreamingSSEService {
     if (!this.connection) {
       return 'disconnected';
     }
-    
+
     // For sveltekit-sse, we don't have direct access to EventSource readyState
     // We'll track status through the connection lifecycle
     return 'connecting';
@@ -186,7 +194,7 @@ export class StreamingSSEService {
       // Send notifications for stream status changes
       startedStreaming.forEach((source) => {
         const displayName = SOURCE_INFO[source]?.displayName || source;
-        
+
         // Only show notification if it wasn't recently shown
         if (!wasNotificationRecentlyShown(source)) {
           showNotification(`${displayName} is now streaming!`, 'success');

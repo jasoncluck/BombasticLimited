@@ -13,19 +13,19 @@ describe('ContentDrawer Nested Edit Functionality', () => {
   it('should support nested drawer configuration', () => {
     // This test validates that the drawer nesting structure is correctly set up
     // The actual functionality is tested through e2e tests
-    
+
     // Test that nested prop is passed correctly to drawer components
     const nestedProp = true;
     expect(nestedProp).toBe(true);
-    
-    // Test that form prop enables edit functionality  
+
+    // Test that form prop enables edit functionality
     const hasForm = true;
     const shouldShowEdit = hasForm;
     expect(shouldShowEdit).toBe(true);
-    
+
     // Test playlist ownership check
     const userId = 'user123';
-    const playlistCreatedBy = 'user123'; 
+    const playlistCreatedBy = 'user123';
     const isOwner = userId === playlistCreatedBy;
     expect(isOwner).toBe(true);
   });
@@ -48,15 +48,15 @@ describe('ContentDrawer Nested Edit Functionality', () => {
     // Test the cleanup logic to prevent state desync
     let mainDrawerOpen = true;
     let nestedDrawerOpen = true;
-    
+
     // Simulate main drawer closing
     mainDrawerOpen = false;
-    
+
     // The effect should close nested drawer when main closes
     if (!mainDrawerOpen && nestedDrawerOpen) {
       nestedDrawerOpen = false;
     }
-    
+
     expect(nestedDrawerOpen).toBe(false);
   });
 });
