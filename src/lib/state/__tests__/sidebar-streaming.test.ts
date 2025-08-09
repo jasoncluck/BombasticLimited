@@ -117,13 +117,13 @@ describe('SidebarStateClass - Streaming Functionality', () => {
   describe('streaming state notifications', () => {
     beforeEach(() => {
       // Enable browser environment for notification tests
-      global.browser = true;
+      (global as any).browser = true;
       // Mock initial stream load as false to allow notifications
-      sidebarState['#isInitialStreamLoad'] = false;
+      (sidebarState as any)['#isInitialStreamLoad'] = false;
     });
 
     afterEach(() => {
-      global.browser = false;
+      (global as any).browser = false;
     });
 
     it('should show notifications when streams start', async () => {
@@ -220,7 +220,7 @@ describe('SidebarStateClass - Streaming Functionality', () => {
       const { showNotification } = await import('$lib/stores/notification.js');
 
       // Reset to initial load state
-      sidebarState['#isInitialStreamLoad'] = true;
+      (sidebarState as any)['#isInitialStreamLoad'] = true;
 
       // Start with no streams
       sidebarState.updateStreamingSources([]);
@@ -231,7 +231,7 @@ describe('SidebarStateClass - Streaming Functionality', () => {
       expect(showNotification).not.toHaveBeenCalled();
 
       // Verify initial load flag is cleared after first update
-      expect(sidebarState['#isInitialStreamLoad']).toBe(false);
+      expect((sidebarState as any)['#isInitialStreamLoad']).toBe(false);
     });
 
     it('should handle multiple simultaneous stream changes', async () => {

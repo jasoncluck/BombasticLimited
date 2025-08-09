@@ -117,7 +117,7 @@
       $formData.name = playlist.name;
       $formData.description = playlist.description ?? '';
       $formData.type = playlist.type;
-      $formData.image_properties = playlist.image_properties;
+      $formData.image_properties = parseImageProperties(playlist.image_properties);
       $formData.isDeletingPlaylistImage = false;
       isPublic = playlist.type === 'Public';
     }

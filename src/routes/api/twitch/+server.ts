@@ -71,7 +71,7 @@ async function updateStreamStatus() {
   }
 }
 
-export async function POST() {
+export async function GET() {
   return produce(
     async function start({ emit }) {
       // Initial stream status check

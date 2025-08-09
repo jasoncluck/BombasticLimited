@@ -1,5 +1,3 @@
-import { getMultipleStreamStatus } from '$lib/client/streaming-sse.js';
-
 class StreamingSSE {
   private sidebarState: any = null;
   private eventSource: EventSource | null = null;
@@ -9,9 +7,33 @@ class StreamingSSE {
     this.sidebarState = state;
   }
 
+  getStatus() {
+    if (!this.eventSource) {
+      return 'disconnected';
+    }
+    
+    switch (this.eventSource.readyState) {
+      case EventSource.CONNECTING:
+        return 'connecting';
+      case EventSource.OPEN:
+        return 'connected';
+      case EventSource.CLOSED:
+        return 'disconnected';
+      default:
+        return 'disconnected';
+    }
+  }
+
   start() {
+    // Don't create multiple connections
+    if (this.eventSource) {
+      return;
+    }
+
     // Connect to your existing +twitch/+server.ts SSE endpoint
-    this.eventSource = new EventSource('/twitch');
+    this.eventSource = new EventSource('/api/twitch', {
+      withCredentials: true
+    });
 
 
     this.eventSource.addEventListener('streamingSubscriptions', (event) => {
@@ -51,5 +73,6 @@ class StreamingSSE {
   }
 }
 
-// Export a singleton instance
+// Export both the class and a singleton instance
+export class StreamingSSEService extends StreamingSSE {}
 export const streamingSSE = new StreamingSSE();
