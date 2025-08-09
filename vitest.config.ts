@@ -6,10 +6,14 @@ export default defineConfig({
   plugins: [sveltekit()],
   test: {
     environment: 'jsdom',
-    setupFiles: ['./src/lib/state/navigation-cache/__tests__/setup.ts'],
+    setupFiles: [
+      './src/tests/setup-globals.ts',
+      './src/lib/state/navigation-cache/__tests__/setup.ts',
+    ],
     globals: true,
     include: ['src/**/*.{test,spec}.{js,ts}'],
     exclude: ['tests/**/*', 'node_modules/**/*'],
+    teardownTimeout: 30000,
   },
   resolve: {
     alias: {

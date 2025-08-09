@@ -19,6 +19,29 @@ export async function checkIfUsernameIsUnique({
 }
 
 export async function getUserProfile({
+  session,
+  supabase,
+}: {
+  session: Session | null;
+  supabase: SupabaseClient<Database>;
+}) {
+  if (!session) {
+    return { profile: null, error: null };
+  }
+
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select()
+    .eq('id', session.user.id)
+    .single();
+
+  if (error) {
+    console.error(error);
+  }
+  return { profile, error };
+}
+
+export async function getProfileById({
   userId,
   supabase,
 }: {
@@ -61,48 +84,31 @@ export async function getProfile({
 }
 
 export async function getUserDiscordIdentity({
-  userId,
   supabase,
 }: {
-  userId: string;
   supabase: SupabaseClient<Database>;
 }) {
   try {
-    // Try to use the RPC function to get user identities
-    // Note: This will fail initially until the migration is applied
-    const result = await supabase.rpc('get_user_identities' as any, {
-      user_id: userId,
-    });
+    const { data: userIdentities } = await supabase.auth.getUserIdentities();
 
-    if (result.error) {
-      console.error('Error fetching Discord identity:', result.error);
-      return { identity: null, error: result.error };
+    if (!userIdentities) {
+      return { identity: null, error: 'No identities found' };
     }
 
-    if (!result.data) {
-      return { identity: null, error: null };
-    }
-
-    // Parse the JSON response and find Discord identity
-    let identitiesArray: any[] = [];
-    if (Array.isArray(result.data)) {
-      identitiesArray = result.data;
-    } else if (typeof result.data === 'string') {
-      try {
-        identitiesArray = JSON.parse(result.data);
-      } catch {
-        identitiesArray = [];
-      }
-    }
-
-    const discordIdentity = identitiesArray.find(
-      (identity: any) => identity.provider === 'discord'
+    const discordIdentity = userIdentities.identities.find(
+      (identity) => identity.provider === 'discord'
     );
-    return { identity: discordIdentity || null, error: null };
+
+    if (!discordIdentity) {
+      return { identity: null, error: null }; // No discord identity is not an error
+    }
+
+    return { identity: discordIdentity, error: null };
   } catch (err) {
-    // If RPC function doesn't exist yet, return null gracefully
-    console.log('RPC function get_user_identities not yet available:', err);
-    return { identity: null, error: null };
+    return {
+      identity: null,
+      error: err instanceof Error ? err.message : 'Unknown error',
+    };
   }
 }
 
@@ -124,31 +130,27 @@ export async function linkDiscordIdentity({
 }
 
 export async function unlinkDiscordIdentity({
-  userId,
   supabase,
 }: {
-  userId: string;
   supabase: SupabaseClient<Database>;
 }) {
   try {
-    // Get the Discord identity first
-    const { identity, error: fetchError } = await getUserDiscordIdentity({
-      userId,
+    const { identity: discordIdentity, error } = await getUserDiscordIdentity({
       supabase,
     });
 
-    if (fetchError || !identity) {
-      return { error: fetchError || new Error('No Discord identity found') };
+    if (error) {
+      return { error: new Error(error) };
     }
 
-    // Use the correct parameters for unlinkIdentity based on Supabase documentation
-    const { error } = await supabase.auth.unlinkIdentity({
-      provider: 'discord',
-      user_id: userId,
-      identity_id: identity.id,
-    } as any);
+    if (!discordIdentity) {
+      return { error: new Error('No Discord identity found to unlink') };
+    }
 
-    return { error };
+    const { error: unlinkError } =
+      await supabase.auth.unlinkIdentity(discordIdentity);
+
+    return { error: unlinkError };
   } catch (err) {
     return { error: err as Error };
   }
@@ -203,4 +205,34 @@ export async function updateProfileSources({
   }
 
   return { profile, error };
+}
+
+/**
+ * Get the linked identity providers for a user
+ * This information is managed automatically by database triggers
+ * but can be useful for UI display purposes
+ */
+export async function getUserProviders({
+  session,
+  supabase,
+}: {
+  session: Session | null;
+  supabase: SupabaseClient<Database>;
+}) {
+  if (!session) {
+    return { providers: [], error: null };
+  }
+
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('providers')
+    .eq('id', session.user.id)
+    .single();
+
+  if (error) {
+    console.error('Error fetching user providers:', error);
+    return { providers: [], error };
+  }
+
+  return { providers: profile?.providers || [], error: null };
 }

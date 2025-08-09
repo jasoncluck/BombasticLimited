@@ -1,11 +1,18 @@
 <script lang="ts">
   import type { Playlist } from '$lib/supabase/playlists';
   import { Check, ListVideo } from '@lucide/svelte';
+  import * as Avatar from '$lib/components/ui/avatar';
 
   const {
     playlist,
     isFollowedPlaylist = false,
-  }: { playlist: Playlist; isFollowedPlaylist: boolean } = $props();
+  }: {
+    playlist: Playlist & {
+      avatar_url?: string | null;
+      profile_username?: string;
+    };
+    isFollowedPlaylist: boolean;
+  } = $props();
 </script>
 
 <a
@@ -23,8 +30,10 @@
       />
     </div>
   {:else}
-    <div class="flex h-16 w-16 items-center justify-center justify-self-center rounded bg-muted">
-      <ListVideo class="!h-8 !w-8 text-muted-foreground" />
+    <div
+      class="bg-muted flex h-16 w-16 items-center justify-center justify-self-center rounded"
+    >
+      <ListVideo class="text-muted-foreground !h-8 !w-8" />
     </div>
   {/if}
 
@@ -35,11 +44,25 @@
     <p class="text-muted-foreground line-clamp-3 text-xs">
       {playlist.description}
     </p>
-    <p class="text-muted-foreground line-clamp-3 text-xs">
-      {playlist.description}
-    </p>
+
+    <!-- Avatar and username display -->
+    {#if playlist.profile_username}
+      <div class="mt-2 flex items-center gap-2">
+        <Avatar.Root class="h-4 w-4">
+          <Avatar.Image
+            src={playlist.avatar_url}
+            alt="{playlist.profile_username} avatar"
+          />
+          <Avatar.Fallback class="text-xs">
+            {playlist.profile_username.slice(0, 2).toUpperCase()}
+          </Avatar.Fallback>
+        </Avatar.Root>
+        <p class="text-muted-foreground text-xs">{playlist.profile_username}</p>
+      </div>
+    {/if}
+
     {#if isFollowedPlaylist}
-      <p class="text-muted-foreground flex items-center gap-1 text-xs">
+      <p class="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
         <Check size="14" /> Following
       </p>
     {/if}

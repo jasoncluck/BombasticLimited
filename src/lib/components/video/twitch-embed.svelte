@@ -1,46 +1,69 @@
 <script lang="ts">
-  import VideoEmbed from '$lib/components/video/video-embed.svelte';
+  import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import { onMount } from 'svelte';
   import AspectRatio from '../ui/aspect-ratio/aspect-ratio.svelte';
 
-  const { channel } = $props();
+  interface Props {
+    channel: string;
+  }
 
-  let player: any = null;
-  let mounted = false;
+  const { channel }: Props = $props();
 
-  function createOrUpdatePlayer() {
+  let player: any = $state(null);
+  let mounted = $state(false);
+  let embedElement: HTMLElement | undefined = $state();
+  let playerCreated = $state(false);
+
+  const mediaQuery = getMediaQueryState();
+  let shouldShowChat = $derived(mediaQuery.isLg);
+
+  async function createPlayer() {
     const windowRef: any = window;
 
-    if (!mounted || typeof windowRef.Twitch === 'undefined') {
+    if (
+      !mounted ||
+      typeof windowRef.Twitch === 'undefined' ||
+      !channel ||
+      playerCreated
+    ) {
       return;
     }
 
-    // If player exists, destroy it first
-    if (player) {
-      try {
-        player.destroy();
-      } catch (error) {
-        console.warn('Error destroying Twitch player:', error);
-      }
-      player = null;
-    }
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
-    // Create new player with updated channel
-    if (channel) {
-      player = new windowRef.Twitch.Player('twitch-embed', {
+      const embedEl = document.getElementById('twitch-embed');
+      if (!embedEl) {
+        console.warn('Twitch embed element not found');
+        return;
+      }
+
+      player = new windowRef.Twitch.Embed('twitch-embed', {
         width: '100%',
         height: '100%',
-        channel,
+        channel: channel,
+        layout: 'video',
+        theme: 'dark',
+        parent: [window.location.hostname, 'localhost'],
+        autoplay: false,
+        muted: false,
       });
+
+      playerCreated = true;
+      console.log('Twitch player created successfully');
+    } catch (error) {
+      console.error('Error creating Twitch player:', error);
     }
   }
 
   onMount(() => {
     mounted = true;
-    createOrUpdatePlayer();
+    const cleanup = mediaQuery.initialize();
+
+    createPlayer();
 
     return () => {
-      // Cleanup on unmount
+      cleanup?.();
       if (player) {
         try {
           player.destroy();
@@ -50,13 +73,35 @@
       }
     };
   });
-
-  // React to channel changes
-  $effect(() => {
-    createOrUpdatePlayer();
-  });
 </script>
 
-<AspectRatio ratio={16 / 9}>
-  <VideoEmbed divId="twitch-embed" />
+<!-- Use 21:9 aspect ratio when chat is enabled, 16:9 when not -->
+<AspectRatio ratio={shouldShowChat ? 21 / 9 : 16 / 9}>
+  <div
+    class="grid h-full w-full gap-4 transition-all duration-300 ease-in-out {shouldShowChat
+      ? 'grid-cols-[1fr_320px]'
+      : 'grid-cols-1'}"
+  >
+    <!-- Video container -->
+    <div class="relative">
+      <div
+        id="twitch-embed"
+        bind:this={embedElement}
+        class="absolute inset-0 h-full w-full rounded bg-black"
+      ></div>
+    </div>
+
+    <!-- Chat container - only rendered when needed -->
+    {#if shouldShowChat}
+      <div class="overflow-hidden rounded bg-gray-900">
+        <iframe
+          src="https://www.twitch.tv/embed/{channel}/chat?darkpopout&parent={window
+            .location.hostname}&parent=localhost"
+          class="h-full w-full border-0"
+          title="Twitch Chat for {channel}"
+          allow="accelerometer;"
+        ></iframe>
+      </div>
+    {/if}
+  </div>
 </AspectRatio>

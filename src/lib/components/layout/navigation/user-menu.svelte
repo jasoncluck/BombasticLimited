@@ -9,100 +9,105 @@
     GalleryHorizontal,
     LogOut,
     Table,
-    UserCircle,
+    CircleUser,
+    TriangleAlert,
   } from '@lucide/svelte';
   import { handleUpdateProfileContentDisplay } from '$lib/components/profile/profile-service';
   import type { LayoutState } from '$lib/state/layout.svelte.js';
-  import type { ContentState } from '$lib/state/content.svelte.js';
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
   import type { UserProfile } from '$lib/supabase/user-profiles';
+  import { getMediaQueryState } from '$lib/state/media-query.svelte';
+  import { getContentState } from '$lib/state/content.svelte';
 
   let {
     userProfile,
     session,
     supabase,
     layoutState,
-    contentState,
-    canHover,
     openAccountDrawer = $bindable(),
   }: {
     userProfile: UserProfile | null;
     session: Session | null;
     supabase: SupabaseClient<Database>;
     layoutState: LayoutState;
-    contentState: ContentState;
-    canHover: boolean;
     openAccountDrawer: boolean;
   } = $props();
+
+  const contentState = getContentState();
+  const mediaQueryState = getMediaQueryState();
+
+  const { canHover, isSm } = $derived(mediaQueryState);
 </script>
 
 {#if session}
   <!-- Content Display Preference (Desktop) -->
-  <DropdownMenu.Root>
-    <DropdownMenu.Trigger
-      data-testid="user-preferences"
-      id="user-preferences"
-      class={buttonVariants({
-        variant: 'outline',
-        class: 'hidden cursor-pointer outline-none sm:block',
-      })}
-    >
-      <div class="flex items-center gap-2">
-        {#if userProfile?.content_display === 'TILES'}
-          <div class="flex items-center gap-2">
-            <GalleryHorizontal />
-            Card
-          </div>
-        {:else}
-          <div class="flex items-center gap-2">
-            <Table />
-            Table
-          </div>
-        {/if}
-      </div>
-    </DropdownMenu.Trigger>
-    <DropdownMenu.Content>
-      <DropdownMenu.Group>
-        <DropdownMenu.Item
-          class="cursor-pointer"
-          onclick={() => {
-            if (userProfile?.content_display !== 'TILES') {
-              contentState.resetState();
-              handleUpdateProfileContentDisplay({
-                contentDisplay: 'TILES',
-                supabase,
-                session,
-              });
-            }
-          }}
-        >
-          <div class="flex items-center gap-2">
-            <GalleryHorizontal />
-            Card
-          </div>
-        </DropdownMenu.Item>
-        <DropdownMenu.Item
-          class="cursor-pointer"
-          onclick={() => {
-            if (userProfile?.content_display !== 'TABLE') {
-              contentState.resetState();
-              handleUpdateProfileContentDisplay({
-                contentDisplay: 'TABLE',
-                supabase,
-                session,
-              });
-            }
-          }}
-        >
-          <div class="flex items-center gap-2">
-            <Table />
-            Table
-          </div>
-        </DropdownMenu.Item>
-      </DropdownMenu.Group>
-    </DropdownMenu.Content>
-  </DropdownMenu.Root>
+  {#if isSm}
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger
+        data-testid="user-preferences"
+        id="user-preferences"
+        class={buttonVariants({
+          variant: 'ghost',
+          class: 'cursor-pointer outline-none',
+        })}
+      >
+        <div class="flex items-center gap-2">
+          {#if userProfile?.content_display === 'TILES'}
+            <div class="flex items-center gap-2">
+              <GalleryHorizontal />
+              Card
+            </div>
+          {:else}
+            <div class="flex items-center gap-2">
+              <Table />
+              Table
+            </div>
+          {/if}
+        </div>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Content>
+        <DropdownMenu.Group>
+          <DropdownMenu.Item
+            class="cursor-pointer"
+            onclick={() => {
+              if (userProfile?.content_display !== 'TILES') {
+                contentState.resetState();
+                handleUpdateProfileContentDisplay({
+                  contentDisplay: 'TILES',
+                  supabase,
+                  session,
+                });
+              }
+            }}
+          >
+            <div class="flex items-center gap-2">
+              <GalleryHorizontal />
+              Card
+            </div>
+          </DropdownMenu.Item>
+          <DropdownMenu.Item
+            class="cursor-pointer"
+            onclick={() => {
+              if (userProfile?.content_display !== 'TABLE') {
+                contentState.resetState();
+                handleUpdateProfileContentDisplay({
+                  contentDisplay: 'TABLE',
+                  supabase,
+                  session,
+                });
+              }
+            }}
+          >
+            <div class="flex items-center gap-2">
+              <Table />
+              Table
+            </div>
+          </DropdownMenu.Item>
+        </DropdownMenu.Group>
+      </DropdownMenu.Content>
+    </DropdownMenu.Root>
+  {/if}
 
   <!-- User Menu -->
   {#if canHover}
@@ -110,20 +115,24 @@
     <DropdownMenu.Root>
       <DropdownMenu.Trigger
         data-testid="user-menu-trigger"
-        class="cursor-pointer outline-none {buttonVariants({
-          variant: 'outline',
+        class="cursor-pointer !rounded-full outline-none {buttonVariants({
+          variant: userProfile?.avatar_url ? 'ghost' : 'outline',
           size: 'icon',
         })}"
       >
         {#if userProfile?.avatar_url}
-          <Avatar.Root class="h-[1.2rem] w-[1.2rem]">
-            <Avatar.Image src={userProfile.avatar_url} alt="User avatar" />
+          <Avatar.Root class="rounded-full">
+            <Avatar.Image
+              src={userProfile.avatar_url}
+              alt="User avatar"
+              class="h-full w-full rounded-full object-cover"
+            />
             <Avatar.Fallback>
-              <UserCircle class="h-[1.2rem] w-[1.2rem]" />
+              <CircleUser class="h-[1.2rem] w-[1.2rem]" />
             </Avatar.Fallback>
           </Avatar.Root>
         {:else}
-          <UserCircle class="h-[1.2rem] w-[1.2rem]" />
+          <CircleUser class="h-[1.2rem] w-[1.2rem]" />
         {/if}
         <span class="sr-only">Profile</span>
       </DropdownMenu.Trigger>
@@ -137,6 +146,17 @@
               <Cog />
               Settings
             </div>
+          </DropdownMenu.Item>
+          <DropdownMenu.Item class="cursor-pointer">
+            <a
+              href="https://github.com/jasoncluck/Bombastic/issues/new?template=bug_report.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex items-center gap-2 text-inherit no-underline"
+            >
+              <TriangleAlert />
+              Report Bug
+            </a>
           </DropdownMenu.Item>
           <DropdownMenu.Item
             class="cursor-pointer"
@@ -155,21 +175,26 @@
     <!-- Mobile User Menu -->
     <Drawer.Root bind:open={openAccountDrawer}>
       <Drawer.Trigger
-        class={buttonVariants({
-          variant: 'outline',
+        data-testid="user-menu-drawer-trigger"
+        class="cursor-pointer !rounded-full outline-none {buttonVariants({
+          variant: userProfile?.avatar_url ? 'ghost' : 'outline',
           size: 'icon',
-          class: 'cursor-pointer',
-        })}
+        })}"
       >
         {#if userProfile?.avatar_url}
-          <Avatar.Root class="h-[1.2rem] w-[1.2rem]">
-            <Avatar.Image src={userProfile.avatar_url} alt="User avatar" />
+          <Avatar.Root class="rounded-full">
+            <Avatar.Image
+              src={userProfile.avatar_url}
+              alt="User avatar"
+              class="h-full w-full object-cover"
+            />
+
             <Avatar.Fallback>
-              <UserCircle class="h-[1.2rem] w-[1.2rem]" />
+              <CircleUser class="h-[1.2rem] w-[1.2rem]" />
             </Avatar.Fallback>
           </Avatar.Root>
         {:else}
-          <UserCircle class="h-[1.2rem] w-[1.2rem]" />
+          <CircleUser class="h-[1.2rem] w-[1.2rem]" />
         {/if}
         <span class="sr-only">Profile</span>
       </Drawer.Trigger>
@@ -185,6 +210,20 @@
           <Cog />
           Settings
         </Button>
+        <a
+          href="https://github.com/jasoncluck/Bombastic/issues/new?template=bug_report.md"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="drawer-button text-inherit no-underline {buttonVariants({
+            variant: 'ghost',
+          })}"
+          onclick={() => {
+            openAccountDrawer = false;
+          }}
+        >
+          <TriangleAlert />
+          Report Bug
+        </a>
         <Button
           variant="ghost"
           class="drawer-button"

@@ -16,7 +16,7 @@ let hasErrors = false;
 const requiredEnvVars = [
   'SUPABASE_URL',
   'SUPABASE_ANON_KEY',
-  'SUPABASE_SERVICE_ROLE_KEY'
+  'SUPABASE_SERVICE_ROLE_KEY',
 ];
 
 console.log('1. Checking environment variables...');
@@ -34,10 +34,10 @@ for (const envVar of requiredEnvVars) {
 console.log('\n2. Checking required files...');
 const requiredFiles = [
   'tests/e2e/auth.setup.ts',
-  'tests/e2e/global.teardown.ts', 
+  'tests/e2e/global.teardown.ts',
   'tests/e2e/auth-fixtures.ts',
   'tests/e2e/utils/TestDataManager.ts',
-  'playwright.config.ts'
+  'playwright.config.ts',
 ];
 
 for (const file of requiredFiles) {
@@ -69,28 +69,30 @@ if (!fs.existsSync(authDir)) {
 console.log('\n4. Checking Playwright configuration...');
 try {
   const config = fs.readFileSync('playwright.config.ts', 'utf8');
-  
+
   if (config.includes('globalSetup') && config.includes('auth.setup.ts')) {
     console.log('   ✅ Global setup configured');
   } else {
     console.error('   ❌ Global setup not properly configured');
     hasErrors = true;
   }
-  
-  if (config.includes('globalTeardown') && config.includes('global.teardown.ts')) {
+
+  if (
+    config.includes('globalTeardown') &&
+    config.includes('global.teardown.ts')
+  ) {
     console.log('   ✅ Global teardown configured');
   } else {
     console.error('   ❌ Global teardown not properly configured');
     hasErrors = true;
   }
-  
+
   if (config.includes('fullyParallel: true')) {
     console.log('   ✅ Parallel execution enabled');
   } else {
     console.error('   ❌ Parallel execution not enabled');
     hasErrors = true;
   }
-  
 } catch (err) {
   console.error(`   ❌ Failed to read playwright.config.ts: ${err.message}`);
   hasErrors = true;
@@ -101,7 +103,7 @@ console.log('\n5. Checking dependencies...');
 try {
   const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
   const requiredDeps = ['@playwright/test', '@supabase/supabase-js'];
-  
+
   for (const dep of requiredDeps) {
     if (packageJson.devDependencies?.[dep] || packageJson.dependencies?.[dep]) {
       console.log(`   ✅ ${dep} installed`);

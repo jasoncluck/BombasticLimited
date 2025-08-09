@@ -52,24 +52,45 @@ const supabase: Handle = async ({ event, resolve }) => {
 
   /**
    * Unlike `supabase.auth.getSession()`, which returns the session _without_
-   * validating the JWT, this function uses `getClaims()` to validate the
-   * JWT before returning the session. getClaims() is faster than getUser().
+   * validating the JWT, this function uses `getClaims()` to get validated
+   * JWT claims directly from the server, ensuring security.
    */
   event.locals.safeGetSession = async () => {
-    const {
-      data: { session },
-    } = await event.locals.supabase.auth.getSession();
-    if (!session) {
-      return { session: null, user: null };
-    }
+    try {
+      const { data, error } = await event.locals.supabase.auth.getClaims();
 
-    const { error } = await event.locals.supabase.auth.getClaims();
-    if (error) {
-      // JWT validation has failed
-      return { session: null, user: null };
-    }
+      if (error || !data?.claims) {
+        return { session: null, user: null };
+      }
 
-    return { session };
+      // If claims exist, get the session (claims validate the JWT)
+      const {
+        data: { session },
+      } = await event.locals.supabase.auth.getSession();
+
+      // Create user object from claims
+      const user = session?.user || null;
+
+      return { session, user };
+    } catch (error) {
+      // Fallback to getUser if getClaims is not available
+      console.warn('getClaims not available, falling back to getUser:', error);
+      const {
+        data: { user },
+        error: userError,
+      } = await event.locals.supabase.auth.getUser();
+
+      if (userError || !user) {
+        return { session: null, user: null };
+      }
+
+      // If user exists, we can safely get the session
+      const {
+        data: { session },
+      } = await event.locals.supabase.auth.getSession();
+
+      return { session, user };
+    }
   };
 
   return resolve(event, {
@@ -84,8 +105,9 @@ const supabase: Handle = async ({ event, resolve }) => {
 };
 
 const authGuard: Handle = async ({ event, resolve }) => {
-  const { session } = await event.locals.safeGetSession();
+  const { session, user } = await event.locals.safeGetSession();
   event.locals.session = session;
+  event.locals.user = user;
 
   if (!event.locals.session && event.url.pathname.startsWith('/account')) {
     redirect(303, '/auth/login');

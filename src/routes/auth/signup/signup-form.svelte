@@ -199,6 +199,24 @@
         </div>
       </Form.Field>
 
+      <Form.Field form={signupForm} name="confirmPassword">
+        <div class="space-y-2">
+          <Form.Control>
+            {#snippet children({ props })}
+              <Form.Label>Confirm Password</Form.Label>
+              <Input
+                {...props}
+                class="w-full"
+                bind:value={$formData.confirmPassword}
+                autocomplete="new-password"
+                type="password"
+              />
+            {/snippet}
+          </Form.Control>
+          <Form.FieldErrors class="text-xs" />
+        </div>
+      </Form.Field>
+
       {#if $flash?.message && $flash?.type}
         <Alert.Root>
           <Alert.Title

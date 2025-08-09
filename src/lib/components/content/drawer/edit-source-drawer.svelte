@@ -16,7 +16,7 @@
   let {
     sources,
     title = 'Reorder sources',
-    subtitle = 'Drag the handle to reorder sources',
+    subtitle = 'Drag the handle to reorder sources.',
     triggerClass = '',
     triggerVariant = 'ghost',
     onClose,

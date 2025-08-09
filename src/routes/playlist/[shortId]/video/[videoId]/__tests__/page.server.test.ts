@@ -63,6 +63,7 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
 
   const mockLoadEvent: any = {
     locals: {
+      safeGetSession: vi.fn(),
       supabase: mockSupabase,
     },
     params: {
@@ -91,13 +92,11 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
       'processed-image-url'
     );
 
-    // Mock supabase auth.getUser()
-    mockSupabase.auth = {
-      getUser: vi.fn().mockResolvedValue({
-        data: { user: { id: 'user-1' } },
-        error: null,
-      }),
-    };
+    // Mock safeGetSession instead of supabase auth.getUser()
+    mockLoadEvent.locals.safeGetSession.mockResolvedValue({
+      user: { id: 'user-1' },
+      session: { access_token: 'token-123' },
+    });
   });
 
   describe('load function', () => {
@@ -126,7 +125,6 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
           sort: { key: 'playlistOrder', order: 'ascending' },
         },
         supabase: mockSupabase,
-        userId: 'user-1',
         contextLimit: 5,
       });
 
@@ -245,9 +243,9 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
     });
 
     it('should handle auth error gracefully', async () => {
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: null },
-        error: { message: 'Auth error' },
+      mockLoadEvent.locals.safeGetSession.mockResolvedValue({
+        user: null,
+        session: null,
       });
 
       const mockVideoContext = {

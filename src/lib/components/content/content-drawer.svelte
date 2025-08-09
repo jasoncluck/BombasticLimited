@@ -27,11 +27,10 @@
     ChevronRight,
     CircleCheck,
     CircleMinus,
-    Edit,
+    CirclePlus,
     ImagePlay,
     ListVideo,
-    MinusCircle,
-    PlusCircle,
+    Pencil,
     TimerReset,
   } from '@lucide/svelte';
   import { SOURCE_INFO } from '$lib/constants/source';
@@ -41,8 +40,13 @@
   import FullHeightDrawer from './drawer/full-height-drawer.svelte';
   import EditListDrawer from './drawer/edit-list-drawer.svelte';
   import type { CombinedContentFilter } from './content-filter';
+  import type { SuperValidated } from 'sveltekit-superforms';
+  import type { PlaylistSchema } from '../../../routes/playlist/[shortId]/schema';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { getVideoThumbnailUrl } from '$lib/utils/video-thumbnails';
+  import PlaylistDeleteAlertDrawer from '../playlist/playlist-delete-alert-drawer.svelte';
+  import PlaylistEditDrawer from '../playlist/playlist-edit-drawer.svelte';
+  import * as ImageCropper from '$lib/components/ui/image-cropper';
 
   interface ContentDrawerProps {
     videos?: Video[];
@@ -54,6 +58,7 @@
     supabase: SupabaseClient<Database>;
     session: Session | null;
     onSelectAll?: () => void;
+    form?: SuperValidated<PlaylistSchema>;
   }
 
   let {
@@ -65,6 +70,7 @@
     supabase,
     session,
     children,
+    form,
   }: ContentDrawerProps = $props();
 
   const contentState = getContentState();
@@ -91,6 +97,8 @@
   );
 
   let addToPlaylistDrawerOpen = $state(false);
+  let showDeleteDrawer = $state(false);
+  let editPlaylistDrawerOpen = $state(false);
 
   const filteredPlaylists = $derived(
     playlists.filter(
@@ -107,11 +115,20 @@
 
   const isPlaylistOwner = $derived(session?.user.id === playlist?.created_by);
 
+  // Effect to ensure nested drawer closes when main drawer closes
+  $effect(() => {
+    if (!isThisSectionMenuOpen && editPlaylistDrawerOpen) {
+      editPlaylistDrawerOpen = false;
+    }
+  });
+
   function clearSelectionAfterAction() {
     contentState.openDrawerSection = null;
     contentState.drawerVariant = null;
     contentState.selectedVideosBySection[sectionId] = [];
     contentState.hoveredVideosBySection[sectionId] = null;
+    // Also reset the nested edit drawer state to prevent desync
+    editPlaylistDrawerOpen = false;
   }
 
   async function handleVideoReorder(
@@ -200,19 +217,31 @@
         <hr />
 
         <!-- Edit button for header variant -->
-        {#if variant === 'header' && isPlaylistOwner && playlistState.openEditPlaylist === false}
-          <Button
-            class="drawer-button"
-            variant="ghost"
-            onclick={() => {
-              playlistState.openEditPlaylist = true;
-              contentState.openDrawerSection = null;
-              clearSelectionAfterAction();
-            }}
-          >
-            <Edit class="drawer-icon" />
-            Edit
-          </Button>
+        {#if variant === 'header' && isPlaylistOwner && form && playlist}
+          <!-- Nested Edit Playlist Drawer - only render when open to prevent spacing issues -->
+          <ImageCropper.Root src={playlist.processedImageUrl ?? undefined}>
+            <PlaylistEditDrawer
+              {form}
+              {playlist}
+              {session}
+              formId="content-drawer-nested-edit-form"
+              bind:open={editPlaylistDrawerOpen}
+              nested={true}
+            >
+              {#snippet trigger()}
+                <Button
+                  class="drawer-button"
+                  variant="ghost"
+                  onclick={() => {
+                    editPlaylistDrawerOpen = true;
+                  }}
+                >
+                  <Pencil class="drawer-icon" />
+                  Edit
+                </Button>
+              {/snippet}
+            </PlaylistEditDrawer>
+          </ImageCropper.Root>
         {/if}
         <!-- Reorder content -->
         {#if contentFilter.sort.key === 'playlistOrder' && isPlaylistOwner && variant === 'header' && videos && videos.length > 0}
@@ -277,7 +306,7 @@
           >
             {#snippet trigger()}
               <Button class="drawer-button" variant="ghost" data-drawer-trigger>
-                <PlusCircle class="drawer-icon" />
+                <CirclePlus class="drawer-icon" />
                 Add video to playlist
                 <ChevronRight class="ml-auto" />
               </Button>
@@ -347,7 +376,7 @@
               contentState.openDrawerSection = null;
             }}
           >
-            <MinusCircle class="drawer-icon" />
+            <CircleMinus class="drawer-icon" />
             Remove from playlist
           </Button>
         {/if}
@@ -447,20 +476,28 @@
             class="drawer-button"
             variant="ghost"
             onclick={async () => {
-              const data = await handleDeletePlaylist({
-                playlist,
-                sidebarState,
-                supabase,
-                session,
-              });
+              // Check if it's a public playlist
+              if (playlist.type === 'Public') {
+                // Show confirmation drawer for public playlists
+                showDeleteDrawer = true;
+                contentState.openDrawerSection = null;
+              } else {
+                // Delete private playlist immediately
+                const data = await handleDeletePlaylist({
+                  playlist,
+                  sidebarState,
+                  supabase,
+                  session,
+                });
 
-              if (
-                !data?.error &&
-                page.url.pathname === `/playlist/${playlist.short_id}`
-              ) {
-                goto('/');
+                if (
+                  !data?.error &&
+                  page.url.pathname === `/playlist/${playlist.short_id}`
+                ) {
+                  goto('/');
+                }
+                clearSelectionAfterAction();
               }
-              clearSelectionAfterAction();
             }}
           >
             <CircleMinus class="drawer-icon" />
@@ -484,4 +521,15 @@
 {:else}
   <!-- On desktop, just render children without drawer -->
   {@render children()}
+{/if}
+
+<!-- Show Delete Drawer for public playlist deletion -->
+{#if playlist}
+  <PlaylistDeleteAlertDrawer
+    {playlist}
+    {sidebarState}
+    {session}
+    {supabase}
+    bind:open={showDeleteDrawer}
+  />
 {/if}

@@ -1,6 +1,5 @@
 import { vi } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { UserProfile } from '$lib/supabase/user-profiles';
 import {
   createMockSession,
   createMockUserProfile,
@@ -12,14 +11,25 @@ import {
  * Create a mocked Supabase client with common methods
  */
 export function createMockSupabaseClient() {
+  const mockSession = createMockSession();
   return {
     auth: {
+      getClaims: vi.fn().mockResolvedValue({
+        data: {
+          claims: {
+            sub: mockSession.user.id,
+            email: mockSession.user.email,
+            role: 'authenticated',
+          },
+        },
+        error: null,
+      }),
       getSession: vi.fn().mockResolvedValue({
-        data: { session: createMockSession() },
+        data: { session: mockSession },
         error: null,
       }),
       getUser: vi.fn().mockResolvedValue({
-        data: { user: createMockSession().user },
+        data: { user: mockSession.user },
         error: null,
       }),
     },
@@ -56,6 +66,12 @@ export function createMockSupabaseClient() {
           }),
         })),
       })),
+    })),
+    rpc: vi.fn((functionName, params) => ({
+      select: vi.fn().mockResolvedValue({
+        data: [],
+        error: null,
+      }),
     })),
   } as unknown as SupabaseClient;
 }

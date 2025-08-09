@@ -27,7 +27,7 @@ describe('Twitch API Client', () => {
   describe('cache management', () => {
     it('should clear cache correctly', async () => {
       const { clearStreamCache, getCacheStats } = await import('../twitch.js');
-      
+
       clearStreamCache();
       const stats = getCacheStats();
       expect(stats.size).toBe(0);
@@ -36,7 +36,7 @@ describe('Twitch API Client', () => {
 
     it('should provide cache statistics structure', async () => {
       const { getCacheStats } = await import('../twitch.js');
-      
+
       const stats = getCacheStats();
       expect(stats).toHaveProperty('size');
       expect(stats).toHaveProperty('entries');
@@ -47,7 +47,7 @@ describe('Twitch API Client', () => {
   describe('function availability', () => {
     it('should export all required functions', async () => {
       const twitchModule = await import('../twitch.js');
-      
+
       expect(typeof twitchModule.getStreamStatus).toBe('function');
       expect(typeof twitchModule.getMultipleStreamStatus).toBe('function');
       expect(typeof twitchModule.clearStreamCache).toBe('function');
@@ -57,13 +57,19 @@ describe('Twitch API Client', () => {
     it('should handle missing credentials gracefully', async () => {
       // Since we're in test environment, the API client won't initialize
       // This tests the graceful degradation behavior
-      const { getStreamStatus, getMultipleStreamStatus } = await import('../twitch.js');
-      
+
+      const { getStreamStatus, getMultipleStreamStatus } = await import(
+        '../twitch.js'
+      );
+
       const singleResult = await getStreamStatus('123456');
       const multipleResult = await getMultipleStreamStatus(['123', '456']);
-      
+
       // Should handle gracefully - either return null or empty array
-      expect(singleResult === null || typeof singleResult === 'object').toBe(true);
+      expect(singleResult === null || typeof singleResult === 'object').toBe(
+        true
+      );
+
       expect(Array.isArray(multipleResult)).toBe(true);
     });
   });
@@ -71,9 +77,10 @@ describe('Twitch API Client', () => {
   describe('API structure', () => {
     it('should maintain expected StreamStatus interface', async () => {
       const { getStreamStatus } = await import('../twitch.js');
-      
+
       const result = await getStreamStatus('123456');
-      
+
+
       // If we get a result, it should have the expected structure
       if (result) {
         expect(result).toHaveProperty('userId');
@@ -84,4 +91,7 @@ describe('Twitch API Client', () => {
       }
     });
   });
+
 });
+
+

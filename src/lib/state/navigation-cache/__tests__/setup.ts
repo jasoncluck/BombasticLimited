@@ -89,5 +89,13 @@ beforeEach(() => {
     writable: true,
   });
 
+  // Mock SvelteKit payload global
+  Object.defineProperty(global, '__SVELTEKIT_PAYLOAD__', {
+    value: {
+      data: {},
+    },
+    writable: true,
+  });
+
   vi.clearAllMocks();
 });

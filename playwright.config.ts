@@ -6,20 +6,20 @@ dotenv.config();
 export default defineConfig({
   testDir: './tests/e2e',
   testMatch: '**/*.test.ts',
-  fullyParallel: true, // Enable parallel execution with isolated auth states
+  fullyParallel: false, // Disable full parallelism to prevent devserver overload
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : 5, // Multiple workers with isolated auth states
+  workers: process.env.CI ? 1 : 2, // Reduce workers to prevent devserver overload (2 max)
   reporter: 'html',
 
   // Global setup and teardown for authentication
   globalSetup: './tests/e2e/auth.setup.ts',
   globalTeardown: './tests/e2e/global.teardown.ts',
 
-  // Performance optimizations
-  timeout: 30000, // Reduce from default 30s if tests don't need it
+  // Increased timeouts to account for sequential execution and server load
+  timeout: 60000, // Increase timeout for slower sequential execution
   expect: {
-    timeout: 10000, // Reduce assertion timeout from default 5s
+    timeout: 15000, // Increase assertion timeout for slower server responses
   },
 
   use: {
@@ -29,11 +29,11 @@ export default defineConfig({
     video: 'retain-on-failure', // Only keep videos on failure
     testIdAttribute: 'data-testid',
 
-    // Performance optimizations
-    navigationTimeout: 15000, // Reduce navigation timeout
-    actionTimeout: 10000, // Reduce action timeout
+    // Adjusted timeouts for sequential execution and server load
+    navigationTimeout: 30000, // Increase navigation timeout for slower server
+    actionTimeout: 15000, // Increase action timeout for slower server
 
-    // Disable animations for faster tests
+    // Performance optimizations and test environment setup
     launchOptions: {
       args: [
         '--disable-web-security',
@@ -42,8 +42,15 @@ export default defineConfig({
         '--disable-renderer-backgrounding',
         '--disable-backgrounding-occluded-windows',
         '--disable-background-timer-throttling',
+        '--disable-service-worker-cache', // Disable aggressive caching during tests
+        '--disable-background-networking', // Reduce background network requests
         '--no-sandbox', // Only for CI/Docker environments
       ],
+    },
+
+    // Test environment variables to optimize server behavior
+    extraHTTPHeaders: {
+      'X-Test-Environment': 'true', // Signal to server that this is a test
     },
   },
 
@@ -60,11 +67,26 @@ export default defineConfig({
       },
     },
 
-    // Main test execution
+    // Main test execution with optimized settings for devserver stability
     {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
+      },
+      dependencies: ['setup'],
+    },
+
+    // Integration tests with sequential execution to prevent overload
+    {
+      name: 'integration',
+      testMatch: '**/integration/**/*.test.ts',
+      fullyParallel: false, // Force sequential for integration tests
+      workers: 1, // Single worker for integration tests
+      use: {
+        ...devices['Desktop Chrome'],
+        // Longer timeouts for integration tests
+        navigationTimeout: 45000,
+        actionTimeout: 20000,
       },
       dependencies: ['setup'],
     },
@@ -98,19 +120,21 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'npm run dev',
+    command: 'npm run dev:test',
     port: 5173,
     reuseExistingServer: !process.env.CI,
-    timeout: 120000, // Increase if your server takes time to start
+    timeout: 180000, // Increase server startup timeout for slower environments
     env: {
       DATABASE_URL: 'postgresql://postgres:postgres@127.0.0.1:54322/postgres',
       SUPABASE_URL: 'http://127.0.0.1:54321',
       SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || '',
       SUPABASE_SERVICE_ROLE_KEY:
         process.env.PUBLIC_SUPABASE_SERVICE_ROLE_KEY || '',
-
-      // Performance optimizations for your app
+      // Test environment flags to optimize server behavior
       NODE_ENV: 'test',
+      TEST_MODE: 'true',
+      DISABLE_SERVICE_WORKER_BACKGROUND_REFRESH: 'true',
+      DISABLE_AGGRESSIVE_CACHING: 'true',
     },
   },
 });

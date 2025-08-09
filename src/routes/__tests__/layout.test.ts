@@ -29,6 +29,7 @@ const mockIsBrowser = vi.mocked(isBrowser);
 describe('+layout.ts load function', () => {
   const mockSupabase = {
     auth: {
+      getClaims: vi.fn(),
       getSession: vi.fn(),
     },
   } as any;
@@ -59,6 +60,17 @@ describe('+layout.ts load function', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Mock getClaims to return valid claims by default
+    mockSupabase.auth.getClaims.mockResolvedValue({
+      data: {
+        claims: {
+          sub: mockSession.user.id,
+          email: mockSession.user.email,
+          role: 'authenticated',
+        },
+      },
+      error: null,
+    });
     mockSupabase.auth.getSession.mockResolvedValue({
       data: { session: mockSession },
     });

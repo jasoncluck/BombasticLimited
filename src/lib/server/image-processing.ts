@@ -23,11 +23,13 @@ export async function getCroppedPlaylistImageUrlServer({
       : PLAYLIST_IMAGE_CROP_DEFAULTS;
   }
 
+  // Determine if we're using standard resolution (thumbnail_url only)
+  const isStandardResolution = !thumbnailMaxResUrl && thumbnailUrl;
+
   try {
     // Fetch image with optimized settings
     const response = await fetch(imageUrl, {
-      // Add timeout and headers for better performance
-      signal: AbortSignal.timeout(10000), // 10 second timeout
+      signal: AbortSignal.timeout(10000),
       headers: {
         Accept: 'image/*',
         'User-Agent': 'Playlist-Service/1.0',
@@ -37,30 +39,64 @@ export async function getCroppedPlaylistImageUrlServer({
     if (!response.ok)
       throw new Error(`Failed to fetch image: ${response.status}`);
 
-    // Use response.arrayBuffer() directly without intermediate conversion
     const imageBuffer = await response.arrayBuffer();
 
-    // Optimize Sharp processing with pipeline approach
-    const processedImageBuffer = await sharp(imageBuffer, {
-      // Sharp optimization options
+    const sharpInstance = sharp(imageBuffer, {
       failOnError: false,
-      density: 72, // Optimize for web display
-    })
-      .extract({
-        left: Math.max(0, imageProperties.x),
-        top: Math.max(0, imageProperties.y),
-        width: Math.max(1, imageProperties.width),
-        height: Math.max(1, imageProperties.height),
-      })
-      .webp({
-        quality: 80,
-        effort: 4, // Good balance between compression and processing time
-      })
-      .toBuffer();
+      density: isStandardResolution ? 150 : 72, // Higher density for small images
+    });
+
+    // Get image metadata to validate crop dimensions
+    const metadata = await sharpInstance.metadata();
+    const imageWidth = metadata.width || 0;
+    const imageHeight = metadata.height || 0;
+
+    // Validate and adjust crop dimensions
+    const validatedCrop = validateAndAdjustCropDimensions(
+      imageProperties,
+      imageWidth,
+      imageHeight,
+      thumbnailMaxResUrl ? 'maxres' : 'standard'
+    );
+
+    // Extract the crop area
+    const processedInstance = sharpInstance.extract({
+      left: validatedCrop.x,
+      top: validatedCrop.y,
+      width: validatedCrop.width,
+      height: validatedCrop.height,
+    });
+
+    let processedImageBuffer: Buffer;
+    let mimeType: string;
+
+    if (isStandardResolution) {
+      // For standard resolution, use higher quality settings
+      processedImageBuffer = await processedInstance
+        .jpeg({
+          quality: 98, // Higher quality for upscaled images
+          progressive: true,
+          mozjpeg: true,
+        })
+        .toBuffer();
+      mimeType = 'image/jpeg';
+    } else {
+      // For high-resolution images, continue using WebP
+      processedImageBuffer = await processedInstance
+        .webp({
+          quality: 90,
+          effort: 2,
+          lossless: false,
+          nearLossless: false,
+          smartSubsample: true,
+        })
+        .toBuffer();
+      mimeType = 'image/webp';
+    }
 
     // Convert to base64 data URL
     const base64 = processedImageBuffer.toString('base64');
-    return `data:image/webp;base64,${base64}`;
+    return `data:${mimeType};base64,${base64}`;
   } catch (error) {
     console.error('Server image processing failed:', error);
     return null;
@@ -76,9 +112,8 @@ export async function getVideoThumbnailWebpUrlServer({
   if (!thumbnailUrl) return null;
 
   try {
-    // Fetch image with optimized settings for speed
     const response = await fetch(thumbnailUrl, {
-      signal: AbortSignal.timeout(8000), // Reduced timeout for faster processing
+      signal: AbortSignal.timeout(8000),
       headers: {
         Accept: 'image/*',
         'User-Agent': 'Video-Service/1.0',
@@ -90,22 +125,20 @@ export async function getVideoThumbnailWebpUrlServer({
 
     const imageBuffer = await response.arrayBuffer();
 
-    // Process with Sharp but without cropping - preserve original aspect ratio
     const processedImageBuffer = await sharp(imageBuffer, {
       failOnError: false,
-      density: 72, // Optimize for web display
-      pages: 1, // Only process first frame for faster processing
+      density: 72,
+      pages: 1,
     })
       .webp({
-        quality: 90, // Increased quality for better visual appearance
-        effort: 2, // Reduced effort for faster processing
+        quality: 90,
+        effort: 2,
         lossless: false,
         nearLossless: false,
-        smartSubsample: true, // Better compression with minimal quality loss
+        smartSubsample: true,
       })
       .toBuffer();
 
-    // Convert to base64 data URL
     const base64 = processedImageBuffer.toString('base64');
     return `data:image/webp;base64,${base64}`;
   } catch (error) {
@@ -114,11 +147,10 @@ export async function getVideoThumbnailWebpUrlServer({
   }
 }
 
-// Batch processing function for multiple video thumbnails
+// Batch processing functions remain the same...
 export async function getVideoThumbnailWebpUrlsBatch(
   thumbnailUrls: Array<string | null>
 ) {
-  // Process all images in parallel
   return Promise.all(
     thumbnailUrls.map((thumbnailUrl) =>
       getVideoThumbnailWebpUrlServer({ thumbnailUrl })
@@ -126,7 +158,6 @@ export async function getVideoThumbnailWebpUrlsBatch(
   );
 }
 
-// Optional: Batch processing function for multiple images
 export async function getCroppedPlaylistImageUrlsBatch(
   requests: Array<{
     imageProperties: ImageProperties | null;
@@ -134,8 +165,98 @@ export async function getCroppedPlaylistImageUrlsBatch(
     thumbnailUrl?: string | null;
   }>
 ) {
-  // Process all images in parallel
   return Promise.all(
     requests.map((request) => getCroppedPlaylistImageUrlServer(request))
   );
+}
+
+/**
+ * Updated validation function that handles YouTube thumbnail sizes correctly
+ */
+function validateAndAdjustCropDimensions(
+  imageProperties: ImageProperties,
+  imageWidth: number,
+  imageHeight: number,
+  imageType: 'maxres' | 'standard'
+): ImageProperties {
+  if (imageWidth > 0 && imageHeight > 0) {
+    let scaledProperties = { ...imageProperties };
+
+    if (imageType === 'standard') {
+      // Handle known YouTube thumbnail sizes
+      const isYouTubeMedium = imageWidth === 320 && imageHeight === 180;
+      const isYouTubeDefault = imageWidth === 120 && imageHeight === 90;
+      const isYouTubeHigh = imageWidth === 480 && imageHeight === 360;
+
+      if (isYouTubeMedium) {
+        // 320x180 medium: crop 180x180 square from center
+        scaledProperties = {
+          x: Math.round((320 - 180) / 2), // 70px from left
+          y: 0,
+          width: 180,
+          height: 180,
+        };
+      } else if (isYouTubeDefault) {
+        // 120x90 default: crop 90x90 square from center
+        scaledProperties = {
+          x: Math.round((120 - 90) / 2), // 15px from left
+          y: 0,
+          width: 90,
+          height: 90,
+        };
+      } else if (isYouTubeHigh) {
+        // 480x360 high: crop 360x360 square from center
+        scaledProperties = {
+          x: Math.round((480 - 360) / 2), // 60px from left
+          y: 0,
+          width: 360,
+          height: 360,
+        };
+      } else {
+        // For other standard sizes, create a square crop centered on the image
+        const cropSize = Math.min(imageWidth, imageHeight);
+        scaledProperties = {
+          x: Math.round((imageWidth - cropSize) / 2),
+          y: Math.round((imageHeight - cropSize) / 2),
+          width: cropSize,
+          height: cropSize,
+        };
+      }
+    } else {
+      // For maxres images, use properties as-is but validate bounds
+      scaledProperties = { ...imageProperties };
+    }
+
+    // Ensure crop area is within image bounds
+    const adjustedX = Math.max(0, Math.min(scaledProperties.x, imageWidth - 1));
+    const adjustedY = Math.max(
+      0,
+      Math.min(scaledProperties.y, imageHeight - 1)
+    );
+
+    const maxWidth = imageWidth - adjustedX;
+    const maxHeight = imageHeight - adjustedY;
+    const adjustedWidth = Math.max(
+      1,
+      Math.min(scaledProperties.width, maxWidth)
+    );
+    const adjustedHeight = Math.max(
+      1,
+      Math.min(scaledProperties.height, maxHeight)
+    );
+
+    return {
+      x: adjustedX,
+      y: adjustedY,
+      width: adjustedWidth,
+      height: adjustedHeight,
+    };
+  }
+
+  return {
+    x: Math.max(0, imageProperties.x),
+    y: Math.max(0, imageProperties.y),
+    width: Math.max(1, imageProperties.width),
+    height: Math.max(1, imageProperties.height),
+  };
 }

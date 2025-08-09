@@ -12,8 +12,6 @@
   import type { Snippet } from 'svelte';
   import { ListVideo } from '@lucide/svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
-  import { page } from '$app/state';
-  import { browser } from '$app/environment';
 
   let {
     supabase,
@@ -35,16 +33,14 @@
 
   const sidebarState = getSidebarState();
 
-
   // Use the layout state's sidebar collapsed state
   const isSidebarCollapsed = $derived(layoutState.isSidebarCollapsed);
-
 </script>
 
 <Resizable.PaneGroup
   direction="horizontal"
   class="flex h-full overflow-hidden rounded-lg"
-  autoSaveId="bombify-layout"
+  autoSaveId="bombastic-layout"
 >
   <!-- Sidebar Pane (Desktop Only) -->
   <Resizable.Pane
@@ -53,7 +49,6 @@
     maxSize={50}
     collapsedSize={COLLAPSED_SIDEBAR_SIZE}
     collapsible={true}
-
     onCollapse={() => layoutState.setSidebarCollapsed(true)}
     onExpand={() => layoutState.setSidebarCollapsed(false)}
     class="pane @container hidden h-full grow flex-col sm:ml-2 sm:flex {isSidebarCollapsed
@@ -131,13 +126,15 @@
                 ? 'mx-2'
                 : 'mx-1'}"
             >
-              <div class="flex flex-col">
+              <div
+                class="flex flex-col {isSidebarCollapsed ? 'items-center' : ''}"
+              >
                 <!-- Fixed number of playlist items -->
                 {#each Array(6), i}
                   <div
                     class="focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground relative inline-flex items-center justify-center rounded-md text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-1 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 {!isSidebarCollapsed
-                      ? 'h-[56px] px-2 py-1'
-                      : 'h-[56px] w-10 justify-center px-1 py-1'}"
+                      ? 'h-[56px] w-full px-2 py-1'
+                      : 'h-[56px] w-12 px-1 py-1'}"
                   >
                     {#if !isSidebarCollapsed}
                       <!-- Full width playlist item skeleton -->

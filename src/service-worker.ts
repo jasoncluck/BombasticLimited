@@ -9,6 +9,17 @@ import { MAIN_ROUTE_PATHS } from '$lib/constants/routes';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
+// Test environment detection for reduced server load
+const isTestEnvironment = (): boolean => {
+  return (
+    (typeof process !== 'undefined' &&
+      (process.env?.NODE_ENV === 'test' ||
+        process.env?.TEST_MODE === 'true')) ||
+    (sw.location.hostname === 'localhost' &&
+      (sw.location.port === '5173' || sw.location.port === '4173'))
+  );
+};
+
 const STATIC_CACHE = `bombastic-static-${version}`;
 const DATA_CACHE_AUTH = `bombastic-data-auth-${version}`;
 const DATA_CACHE_ANON = `bombastic-data-anon-${version}`;
@@ -18,11 +29,13 @@ const STATIC_ASSETS = [...build, ...files];
 const STATIC_EXTENSIONS =
   /\.(js|css|woff2?|ttf|eot|jpg|jpeg|png|gif|svg|webp|ico|avif)$/;
 
-// Background refresh configuration
+// Background refresh configuration - disabled in test environment
 const BACKGROUND_REFRESH_INTERVAL = 2 * 60 * 1000; // 2 minutes
 const MAX_BACKGROUND_REFRESH_AGE = 30 * 60 * 1000; // 30 minutes - stop refreshing after this
 let backgroundRefreshTimer: ReturnType<typeof setTimeout> | null = null;
-const trackedRoutes = new Set<string>(MAIN_ROUTE_PATHS);
+const trackedRoutes = new Set<string>(
+  isTestEnvironment() ? [] : MAIN_ROUTE_PATHS
+); // No background refresh in tests
 
 // Tab visibility state tracking
 let isAnyTabVisible = true;
@@ -146,8 +159,16 @@ const shouldCacheResponse = (response: Response): boolean => {
   );
 };
 
-// Background refresh functionality
+// Background refresh functionality - disabled in test environments
 const startBackgroundRefresh = (): void => {
+  // Skip background refresh in test environments to reduce server load
+  if (isTestEnvironment()) {
+    console.log(
+      `SW [${getTimestamp()}]: Background refresh disabled in test environment`
+    );
+    return;
+  }
+
   if (backgroundRefreshTimer) {
     clearInterval(backgroundRefreshTimer);
   }
@@ -170,6 +191,14 @@ const stopBackgroundRefresh = (): void => {
 };
 
 const performBackgroundRefresh = async (): Promise<void> => {
+  // Skip in test environment to reduce server load
+  if (isTestEnvironment()) {
+    console.log(
+      `SW [${getTimestamp()}]: Background refresh skipped in test environment`
+    );
+    return;
+  }
+
   try {
     // Check if any tabs are visible before proceeding
     const hasVisibleTabs = await checkTabVisibility();
@@ -308,8 +337,13 @@ const performBackgroundRefresh = async (): Promise<void> => {
   }
 };
 
-// Add route to background refresh tracking
+// Add route to background refresh tracking - disabled in test mode
 const addRouteToTracking = (route: string): void => {
+  // Skip adding routes in test mode to reduce server load
+  if (isTestEnvironment()) {
+    return;
+  }
+
   trackedRoutes.add(route);
   console.log(
     `SW [${getTimestamp()}]: Added ${route} to background refresh tracking`

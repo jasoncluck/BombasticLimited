@@ -180,8 +180,12 @@ describe('+page.svelte Logic Tests', () => {
 
       expect(mockData.continueWatchingContentFilters).toHaveProperty('sort');
       expect(mockData.continueWatchingContentFilters).toHaveProperty('type');
-      expect(mockData.continueWatchingContentFilters.sort.key).toBe('dateTimestamp');
-      expect(mockData.continueWatchingContentFilters.sort.order).toBe('descending');
+      expect(mockData.continueWatchingContentFilters.sort.key).toBe(
+        'dateTimestamp'
+      );
+      expect(mockData.continueWatchingContentFilters.sort.order).toBe(
+        'descending'
+      );
       expect(mockData.continueWatchingContentFilters.type).toBe('timestamp');
     });
 
@@ -221,12 +225,22 @@ describe('+page.svelte Logic Tests', () => {
   describe('User preferences logic', () => {
     it('should use default sources when no user profile', () => {
       const mockData = createMockData({ userProfile: null });
-      
+
       // Component logic: sources = userProfile?.sources ?? SOURCES
-      const sources = mockData.userProfile?.sources ?? ['giantbomb', 'jeffgerstmann', 'nextlander', 'remap'];
-      
+      const sources = mockData.userProfile?.sources ?? [
+        'giantbomb',
+        'jeffgerstmann',
+        'nextlander',
+        'remap',
+      ];
+
       expect(sources).toHaveLength(4);
-      expect(sources).toEqual(['giantbomb', 'jeffgerstmann', 'nextlander', 'remap']);
+      expect(sources).toEqual([
+        'giantbomb',
+        'jeffgerstmann',
+        'nextlander',
+        'remap',
+      ]);
     });
 
     it('should use user selected sources when available', () => {
@@ -235,7 +249,12 @@ describe('+page.svelte Logic Tests', () => {
       });
       const mockData = createMockData({ userProfile: customProfile });
 
-      const sources = mockData.userProfile?.sources ?? ['giantbomb', 'jeffgerstmann', 'nextlander', 'remap'];
+      const sources = mockData.userProfile?.sources ?? [
+        'giantbomb',
+        'jeffgerstmann',
+        'nextlander',
+        'remap',
+      ];
 
       expect(sources).toHaveLength(2);
       expect(sources).toEqual(['giantbomb', 'nextlander']);
@@ -245,7 +264,12 @@ describe('+page.svelte Logic Tests', () => {
       const customProfile = createMockUserProfile({ sources: [] });
       const mockData = createMockData({ userProfile: customProfile });
 
-      const sources = mockData.userProfile?.sources ?? ['giantbomb', 'jeffgerstmann', 'nextlander', 'remap'];
+      const sources = mockData.userProfile?.sources ?? [
+        'giantbomb',
+        'jeffgerstmann',
+        'nextlander',
+        'remap',
+      ];
 
       expect(sources).toHaveLength(0);
     });
@@ -255,7 +279,7 @@ describe('+page.svelte Logic Tests', () => {
     it('should show continue watching when session and videos exist', () => {
       const mockData = createMockData();
 
-      const shouldShowContinueWatching = 
+      const shouldShowContinueWatching =
         mockData.session && mockData.continueWatchingVideos.length > 0;
 
       expect(shouldShowContinueWatching).toBe(true);
@@ -264,8 +288,9 @@ describe('+page.svelte Logic Tests', () => {
     it('should not show continue watching when no session', () => {
       const mockData = createMockData({ session: null });
 
-      const shouldShowContinueWatching = 
-        Boolean(mockData.session && mockData.continueWatchingVideos.length > 0);
+      const shouldShowContinueWatching = Boolean(
+        mockData.session && mockData.continueWatchingVideos.length > 0
+      );
 
       expect(shouldShowContinueWatching).toBe(false);
     });
@@ -273,20 +298,21 @@ describe('+page.svelte Logic Tests', () => {
     it('should not show continue watching when no videos', () => {
       const mockData = createMockData({ continueWatchingVideos: [] });
 
-      const shouldShowContinueWatching = 
+      const shouldShowContinueWatching =
         mockData.session && mockData.continueWatchingVideos.length > 0;
 
       expect(shouldShowContinueWatching).toBe(false);
     });
 
     it('should not show continue watching when no session and no videos', () => {
-      const mockData = createMockData({ 
-        session: null, 
-        continueWatchingVideos: [] 
+      const mockData = createMockData({
+        session: null,
+        continueWatchingVideos: [],
       });
 
-      const shouldShowContinueWatching = 
-        Boolean(mockData.session && mockData.continueWatchingVideos.length > 0);
+      const shouldShowContinueWatching = Boolean(
+        mockData.session && mockData.continueWatchingVideos.length > 0
+      );
 
       expect(shouldShowContinueWatching).toBe(false);
     });
@@ -295,8 +321,8 @@ describe('+page.svelte Logic Tests', () => {
   describe('URL and navigation logic', () => {
     it('should construct correct source URLs', () => {
       const sources = ['giantbomb', 'jeffgerstmann', 'nextlander', 'remap'];
-      
-      sources.forEach(source => {
+
+      sources.forEach((source) => {
         const expectedUrl = `/${source}/latest`;
         expect(expectedUrl).toBe(`/${source}/latest`);
       });
@@ -345,10 +371,10 @@ describe('+page.svelte Logic Tests', () => {
         'cached',
         'cacheUserId',
         'playlistsCount',
-        'isSidebarCollapsed'
+        'isSidebarCollapsed',
       ];
 
-      requiredProps.forEach(prop => {
+      requiredProps.forEach((prop) => {
         expect(mockData).toHaveProperty(prop);
       });
     });
@@ -379,7 +405,7 @@ describe('+page.svelte Logic Tests', () => {
       expect(mockSelectedVideos).toHaveProperty('continueWatching');
 
       // Each carousel state should have lastViewedIndex
-      Object.values(mockCarouselState).forEach(state => {
+      Object.values(mockCarouselState).forEach((state) => {
         expect(state).toHaveProperty('lastViewedIndex');
         expect(typeof state.lastViewedIndex).toBe('number');
       });

@@ -398,14 +398,12 @@ export async function getPlaylistVideoContext({
   videoId,
   contentFilter,
   supabase,
-  userId,
   contextLimit = 5,
 }: {
   shortId: string;
   videoId: string;
   contentFilter: PlaylistVideosFilter;
   supabase: SupabaseClient<Database>;
-  userId?: string;
   contextLimit?: number;
 }): Promise<{
   playlist: UserPlaylist | ProfilePlaylist | null;
@@ -420,7 +418,6 @@ export async function getPlaylistVideoContext({
   let query = supabase.rpc('get_playlist_video_context', {
     p_short_id: shortId,
     p_video_id: videoId,
-    p_user_id: userId,
     p_context_limit: contextLimit,
   });
 
@@ -460,8 +457,9 @@ export async function getPlaylistVideoContext({
   }
 
   // Split metadata row from video rows
-  const metadataRow = data.find((row) => row.is_metadata_row);
-  const videoRows = data.filter((row) => !row.is_metadata_row);
+  // Since all rows contain the same playlist metadata, use the first row for metadata
+  const metadataRow = data[0];
+  const videoRows = data; // All rows contain video data
 
   if (!metadataRow) {
     return {
@@ -594,7 +592,7 @@ export async function getUserPlaylists({
   }
 
   const { data, count, error } = await supabase
-    .rpc('get_user_playlists', { p_user_id: session.user.id })
+    .rpc('get_user_playlists')
     .order('playlist_position', { ascending: false });
 
   if (error) {
@@ -623,7 +621,6 @@ export async function updatePlaylistPosition({
 }) {
   const { error } = await supabase.rpc('update_playlist_position', {
     p_playlist_id: playlistId,
-    p_user_id: session.user.id,
     p_new_position: position,
   });
 
@@ -645,7 +642,6 @@ export async function deletePlaylist({
 }) {
   const { error } = await supabase.rpc('delete_playlist', {
     p_playlist_id: playlistId,
-    p_user_id: session.user.id,
   });
 
   console.log(error);
@@ -672,7 +668,7 @@ export async function searchPlaylists({
   supabase: SupabaseClient<Database>;
   session: Session | null;
 }): Promise<{
-  playlists: ProfilePlaylist[];
+  playlists: (ProfilePlaylist & { avatar_url?: string | null })[];
   error: PostgrestError | null;
   count?: number | null;
 }> {
@@ -708,7 +704,28 @@ export async function searchPlaylists({
     deleted_at: null, // Always null for active playlists returned by this function
   })) as ProfilePlaylist[];
 
-  return { playlists: playlistsWithDeletedAt, error, count };
+  // Fetch user profiles with avatar_url for playlist creators
+  let playlistsWithAvatars = playlistsWithDeletedAt;
+  if (playlistsWithDeletedAt.length > 0) {
+    const creatorIds = [
+      ...new Set(playlistsWithDeletedAt.map((p) => p.created_by)),
+    ];
+
+    const { data: profiles, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, avatar_url')
+      .in('id', creatorIds);
+
+    if (!profileError && profiles) {
+      const profileMap = new Map(profiles.map((p) => [p.id, p.avatar_url]));
+      playlistsWithAvatars = playlistsWithDeletedAt.map((playlist) => ({
+        ...playlist,
+        avatar_url: profileMap.get(playlist.created_by) || null,
+      }));
+    }
+  }
+
+  return { playlists: playlistsWithAvatars, error, count };
 }
 
 export async function addVideosToPlaylist({
@@ -889,7 +906,6 @@ export async function updatePlaylistImage({
 export async function followPlaylist({
   playlistId,
   supabase,
-  session,
   position,
 }: {
   playlistId: number;
@@ -900,7 +916,6 @@ export async function followPlaylist({
   const { error } = await supabase
     .rpc('follow_playlist', {
       p_playlist_id: playlistId,
-      p_user_id: session.user.id,
       p_playlist_position: position,
     })
     .select();
@@ -915,7 +930,6 @@ export async function followPlaylist({
 export async function unfollowPlaylist({
   playlistId,
   supabase,
-  session,
 }: {
   playlistId: number;
   supabase: SupabaseClient<Database>;
@@ -924,7 +938,6 @@ export async function unfollowPlaylist({
   const { error } = await supabase
     .rpc('unfollow_playlist', {
       p_playlist_id: playlistId,
-      p_user_id: session.user.id,
     })
     .select();
 

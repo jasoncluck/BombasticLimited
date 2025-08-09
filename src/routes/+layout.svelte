@@ -47,7 +47,6 @@
   setPlaylistState(pageState, contentState, sidebarState);
   setSourceState(pageState);
 
-  let user = $derived(session?.user);
   let openAccountDrawer = $derived(sidebarState.openAccountDrawer);
 
   let lastUserState: boolean | null = null;
@@ -58,7 +57,6 @@
   // More granular loading states
   const loadingStates = $derived.by(() => {
     return {
-      mediaQuery: mediaQuery.initialized,
       sidebar: sidebarState.initialized,
       sidebarData: sidebarState.isDataLoaded,
       // Show UI as soon as we have basic functionality
@@ -80,7 +78,7 @@
       lastModified,
       cached,
       cacheUserId,
-      user
+      session
     )
   );
   const layoutEffects = $derived(
@@ -144,9 +142,12 @@
   // Single effect to handle auth state changes
   $effect(() => {
     if (navigationCache && navigationCache.initialized) {
-      const isCurrentlyAuthenticated = !!user;
+      const isCurrentlyAuthenticated = !!session?.user;
 
-      console.log('Layout effect - user object:', user ? 'present' : 'null');
+      console.log(
+        'Layout effect - user object:',
+        session?.user ? 'present' : 'null'
+      );
       console.log(
         'Layout effect - isCurrentlyAuthenticated:',
         isCurrentlyAuthenticated
@@ -176,6 +177,7 @@
     const mediaCleanup = mediaQuery.initialize();
 
     // Initialize sidebar non-blocking (fast UI, loads data in background)
+    // This now also starts the SSE connection automatically
     const sidebarCleanup = sidebarState.initializeNonBlocking();
 
     // Initialize layout effects asynchronously
@@ -191,26 +193,6 @@
         console.error('Failed to initialize layout effects:', error);
       });
 
-    // Add simple debug helpers in development (optional)
-    if (import.meta.env.DEV) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).cacheDebug = {
-        updateAuth: () => navigationCache.updateAuthStatus(),
-        stats: () => navigationCache.getPreloadStats(),
-        clearCache: () => {
-          if (
-            'serviceWorker' in navigator &&
-            navigator.serviceWorker.controller
-          ) {
-            navigator.serviceWorker.controller.postMessage({
-              type: 'CLEAR_CACHE',
-            });
-          }
-        },
-      };
-      console.log('🔧 Cache debug tools available at window.cacheDebug');
-    }
-
     // Return cleanup function
     return () => {
       if (mediaCleanup && typeof mediaCleanup === 'function') {
@@ -222,6 +204,7 @@
       if (layoutCleanup && typeof layoutCleanup === 'function') {
         layoutCleanup();
       }
+      // SSE connection is now automatically cleaned up by sidebarCleanup
     };
   });
 </script>
@@ -234,36 +217,23 @@
 </svelte:head>
 
 <div class="flex h-full flex-col">
-  <!-- Main Navigation Bar - Show immediately with fallbacks -->
-  <MainNavigation
-    {userProfile}
-    {session}
-    {supabase}
-    {layoutState}
-    {contentState}
-    canHover={loadingStates.mediaQuery ? mediaQuery.canHover : true}
-    bind:searchQuery
-    bind:openAccountDrawer
-  />
-
   <!-- Main Content Area with Progressive Loading -->
   {#if !isHydrated}
     <!-- SSR/Initial Load State -->
     <div class="flex h-[calc(100dvh-60px)] w-full items-center justify-center">
-      <Loader size="lg" message="Initializing..." />
-    </div>
-  {:else if !loadingStates.canShowBasicUI}
-    <!-- Basic hydration but waiting for media queries -->
-    <div class="flex h-[calc(100dvh-60px)] w-full items-center justify-center">
-      <Loader size="lg" message="Setting up interface..." />
-    </div>
-  {:else if !loadingStates.canShowFullUI}
-    <!-- Show minimal UI while sidebar initializes -->
-    <div class="flex h-[calc(100dvh-60px)] w-full items-center justify-center">
-      <Loader size="md" message="Almost ready..." />
+      <Loader size="lg" message="Loading..." />
     </div>
   {:else}
     <!-- Full UI - sidebar may still be loading data -->
+    <MainNavigation
+      {userProfile}
+      {session}
+      {supabase}
+      {layoutState}
+      {contentState}
+      bind:searchQuery
+      bind:openAccountDrawer
+    />
     <ResizableLayout
       {supabase}
       {session}

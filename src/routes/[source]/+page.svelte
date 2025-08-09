@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { activeStreams } from '$lib/state/streaming.svelte';
   import { Radio } from '@lucide/svelte';
   import TwitchEmbed from '$lib/components/video/twitch-embed.svelte';
   import Content from '$lib/components/content/content.svelte';
   import { SOURCE_INFO } from '$lib/constants/source';
   import Button from '$lib/components/ui/button/button.svelte';
   import { getContentState } from '$lib/state/content.svelte';
+  import { getSidebarState } from '$lib/state/sidebar.svelte';
   import type { Snapshot } from './$types';
   import { handlePlaylistNavigation } from '$lib/components/playlist/playlist';
   import PlaylistTiles from '$lib/components/playlist/playlist-tiles.svelte';
@@ -30,6 +30,7 @@
   } = $derived(data);
 
   const contentState = getContentState();
+  const sidebarState = getSidebarState();
   const mediaQueryState = getMediaQueryState();
 
   const highlightPlaylistShortIds = $derived(
@@ -103,15 +104,17 @@
       Support {SOURCE_INFO[source].displayName}
     </Button>
   </div>
-  {#if activeStreams.sources.includes(source)}
-    <div class="mb-8 flex w-full flex-col items-start">
-      <h2 class="header-link">
-        <div class="flex items-center">
-          <Radio class="mr-2" /> Live
-        </div>
-      </h2>
-      <TwitchEmbed channel={source} />
-    </div>
+  {#if sidebarState.isSourceStreaming(source)}
+    {#key source}
+      <div class="mb-8 flex w-full flex-col items-start">
+        <h2 class="header-link">
+          <div class="flex items-center">
+            <Radio class="mr-2" /> Live
+          </div>
+        </h2>
+        <TwitchEmbed channel={source} />
+      </div>
+    {/key}
   {/if}
 
   <div class="flex flex-col gap-8">

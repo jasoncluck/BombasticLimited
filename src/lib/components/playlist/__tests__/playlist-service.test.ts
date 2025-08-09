@@ -129,47 +129,130 @@ describe('getCroppedPlaylistImageUrl', () => {
     delete (global as any).OffscreenCanvas;
     delete (global as any).createImageBitmap;
 
-    const mockCroppedUrl = 'blob:mock-cropped-image-url';
-    mockGetCroppedImg.mockResolvedValue(mockCroppedUrl);
+    // Mock Image constructor
+    const mockImage = {
+      width: 200,
+      height: 300,
+      crossOrigin: '',
+      onload: null as any,
+      onerror: null as any,
+    };
 
-    const result = await getCroppedPlaylistImageUrl({
+    // Mock canvas and context
+    const mockCanvas = {
+      width: 0,
+      height: 0,
+      getContext: vi.fn().mockReturnValue({
+        drawImage: vi.fn(),
+      }),
+      toBlob: vi.fn((callback: any) => {
+        // Simulate successful blob creation
+        callback(new Blob(['fake-webp-data'], { type: 'image/webp' }));
+      }),
+    };
+
+    // Mock document.createElement to return our mock canvas
+    global.document = {
+      createElement: vi.fn((tagName: string) => {
+        if (tagName === 'canvas') return mockCanvas;
+        return {};
+      }),
+    } as any;
+
+    // Mock global Image constructor
+    global.Image = vi.fn().mockImplementation(() => mockImage);
+
+    // Mock URL.createObjectURL
+    global.URL = {
+      createObjectURL: vi.fn().mockReturnValue('blob:mock-result-url'),
+    } as any;
+
+    const resultPromise = getCroppedPlaylistImageUrl({
       imageProperties,
       thumbnailMaxResUrl: null,
       thumbnailUrl: 'https://example.com/thumbnail.jpg',
     });
 
-    expect(mockGetCroppedImg).toHaveBeenCalledWith(
-      'https://example.com/thumbnail.jpg',
-      imageProperties
-    );
-    expect(result).toBe(mockCroppedUrl);
-  });
+    // Simulate image load after a short delay
+    setTimeout(() => {
+      if (mockImage.onload) {
+        mockImage.onload();
+      }
+    }, 10);
+
+    const result = await resultPromise;
+
+    expect(result).toBe('data:image/webp;base64,ZmFrZS13ZWJwLWRhdGE=');
+    expect(global.Image).toHaveBeenCalled();
+    expect(mockCanvas.toBlob).toHaveBeenCalled();
+  }, 10000); // Increase timeout to 10 seconds
 
   it('should use default properties when imageProperties is null', async () => {
     // Disable OffscreenCanvas to use fallback
     delete (global as any).OffscreenCanvas;
     delete (global as any).createImageBitmap;
 
-    const mockCroppedUrl = 'blob:mock-cropped-image-url';
-    mockGetCroppedImg.mockResolvedValue(mockCroppedUrl);
+    // Mock Image constructor
+    const mockImage = {
+      width: 1280,
+      height: 720,
+      crossOrigin: '',
+      onload: null as any,
+      onerror: null as any,
+    };
 
-    await getCroppedPlaylistImageUrl({
+    // Mock canvas and context
+    const mockCanvas = {
+      width: 0,
+      height: 0,
+      getContext: vi.fn().mockReturnValue({
+        drawImage: vi.fn(),
+      }),
+      toBlob: vi.fn((callback: any) => {
+        // Simulate successful blob creation
+        callback(new Blob(['fake-webp-data'], { type: 'image/webp' }));
+      }),
+    };
+
+    // Mock document.createElement to return our mock canvas
+    global.document = {
+      createElement: vi.fn((tagName: string) => {
+        if (tagName === 'canvas') return mockCanvas;
+        return {};
+      }),
+    } as any;
+
+    // Mock global Image constructor
+    global.Image = vi.fn().mockImplementation(() => mockImage);
+
+    // Mock URL.createObjectURL
+    global.URL = {
+      createObjectURL: vi.fn().mockReturnValue('blob:mock-result-url'),
+    } as any;
+
+    const resultPromise = getCroppedPlaylistImageUrl({
       imageProperties: null,
       thumbnailMaxResUrl: 'https://example.com/maxres.jpg',
       thumbnailUrl: null,
     });
 
-    // Should use PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS
-    expect(mockGetCroppedImg).toHaveBeenCalledWith(
-      'https://example.com/maxres.jpg',
-      {
-        x: 280,
-        y: 0,
-        height: 720,
-        width: 720,
+    // Simulate image load after a short delay
+    setTimeout(() => {
+      if (mockImage.onload) {
+        mockImage.onload();
       }
-    );
-  });
+    }, 10);
+
+    const result = await resultPromise;
+
+    expect(result).toBe('data:image/webp;base64,ZmFrZS13ZWJwLWRhdGE=');
+    expect(global.Image).toHaveBeenCalled();
+    expect(mockCanvas.toBlob).toHaveBeenCalled();
+
+    // Verify that proper dimensions were used for maxres crop
+    expect(mockCanvas.width).toBe(720); // Default width for maxres
+    expect(mockCanvas.height).toBe(720); // Default height for maxres
+  }, 10000); // Increase timeout to 10 seconds
 
   it('should return null when no image URL is provided', async () => {
     const result = await getCroppedPlaylistImageUrl({

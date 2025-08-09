@@ -1,11 +1,13 @@
 import type { Playlist } from '$lib/supabase/playlists';
 import type { UserProfile } from '$lib/supabase/user-profiles';
-import type { SupabaseClient, Session } from '@supabase/supabase-js';
-import type { Database } from '$lib/supabase/database.types';
+import type { Session } from '@supabase/supabase-js';
 import { getContext, setContext } from 'svelte';
 import { browser } from '$app/environment';
 import type { Source } from '$lib/constants/source';
+import { SOURCE_INFO } from '$lib/constants/source';
 import { tabVisibility } from '$lib/utils/tab-visibility.js';
+import { showNotification } from '$lib/stores/notification.js';
+import { source, type Source as SSESource } from 'sveltekit-sse';
 import {
   SIDEBAR_COOKIE_NAME,
   SIDEBAR_COOKIE_MAX_AGE,
@@ -21,6 +23,52 @@ export interface SidebarData {
 export interface SidebarCookieState {
   collapsed: boolean;
   defaultSize?: number;
+}
+
+// Key for localStorage to track shown notifications
+const SHOWN_NOTIFICATIONS_KEY = 'bombastic_shown_stream_notifications';
+// How long to remember a notification was shown (24 hours)
+const NOTIFICATION_EXPIRY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Interface for tracking shown notifications
+ */
+interface ShownNotification {
+  source: Source;
+  timestamp: number;
+}
+
+/**
+ * Get shown notifications from localStorage
+ */
+function getShownNotifications(): ShownNotification[] {
+  if (!browser) return [];
+
+  try {
+    const stored = localStorage.getItem(SHOWN_NOTIFICATIONS_KEY);
+    if (!stored) return [];
+
+    const notifications: ShownNotification[] = JSON.parse(stored);
+    const now = Date.now();
+
+    // Filter out expired notifications
+    const validNotifications = notifications.filter(
+      (notification) => now - notification.timestamp < NOTIFICATION_EXPIRY_MS
+    );
+
+    // Save back if we filtered any out
+    if (validNotifications.length !== notifications.length) {
+      localStorage.setItem(
+        SHOWN_NOTIFICATIONS_KEY,
+        JSON.stringify(validNotifications)
+      );
+    }
+
+    return validNotifications;
+  } catch (error) {
+    console.error('Failed to load shown notifications:', error);
+    return [];
+  }
 }
 
 export class SidebarStateClass {
@@ -45,6 +93,14 @@ export class SidebarStateClass {
 
   // Source ordering state
   orderedSources = $state<Source[]>([]);
+
+  // Streaming sources state
+  streamingSources = $state<Source[]>([]);
+
+  // SSE connection state
+  #sseConnection = $state<SSESource | null>(null);
+  #sseConnected = $state(false);
+  #isInitialStreamLoad = $state(true);
 
   constructor() {
     // Initialize sidebar state from cookie on construction
@@ -151,10 +207,46 @@ export class SidebarStateClass {
     return this.#initialized;
   }
 
+  get sseConnected() {
+    return this.#sseConnected;
+  }
+
   getFollowedPlaylists(session: Session | null) {
     return (
       this.data?.playlists.filter((up) => up.created_by !== session?.user.id) ??
       []
+    );
+  }
+
+  /**
+   * Record that a notification was shown
+   */
+  private recordShownNotification(source: Source): void {
+    if (!browser) return;
+
+    try {
+      const shownNotifications = getShownNotifications();
+      shownNotifications.push({
+        source,
+        timestamp: Date.now(),
+      });
+
+      localStorage.setItem(
+        SHOWN_NOTIFICATIONS_KEY,
+        JSON.stringify(shownNotifications)
+      );
+    } catch (error) {
+      console.error('Failed to record shown notification:', error);
+    }
+  }
+
+  /**
+   * Check if a notification was recently shown for this source
+   */
+  private wasNotificationRecentlyShown(source: Source): boolean {
+    const shownNotifications = getShownNotifications();
+    return shownNotifications.some(
+      (notification) => notification.source === source
     );
   }
 
@@ -170,6 +262,9 @@ export class SidebarStateClass {
     // Load initial data
     await this.loadData();
     this.#initialized = true;
+
+    // Start SSE connection
+    this.startSSEConnection();
 
     // Return cleanup function
     return () => {
@@ -195,11 +290,110 @@ export class SidebarStateClass {
       this.loadDataInBackground();
     }
 
+    // Start SSE connection
+    this.startSSEConnection();
+
     // Return cleanup function
     return () => {
       this.cleanup();
     };
   };
+
+  /**
+   * Start SSE connection for streaming updates using sveltekit-sse
+   */
+  startSSEConnection(): void {
+    if (!browser || this.#sseConnection) {
+      return; // Already connected or not in browser
+    }
+
+    // Reset initial load flag when starting
+    this.#isInitialStreamLoad = true;
+
+    try {
+      console.log('Starting SSE connection to /api/twitch...');
+      this.#sseConnection = source('/api/twitch');
+
+      this.#sseConnection.select('streamingSubscriptions').subscribe((data) => {
+        try {
+          const streamingSources: Source[] = JSON.parse(data);
+          this.updateStreamingState(streamingSources);
+        } catch (error) {
+          console.error('Failed to parse streaming update:', error);
+        }
+      });
+
+      this.#sseConnection.select('open').subscribe(() => {
+        this.#sseConnected = true;
+        console.log('Twitch streaming SSE connection established');
+      });
+
+      this.#sseConnection.select('error').subscribe((event) => {
+        this.#sseConnected = false;
+        console.error('Twitch streaming SSE error:', event);
+      });
+    } catch (error) {
+      console.error('Failed to create SSE connection:', error);
+    }
+  }
+
+  /**
+   * Stop SSE connection
+   */
+  stopSSEConnection(): void {
+    if (this.#sseConnection) {
+      this.#sseConnection.close();
+      this.#sseConnection = null;
+      this.#sseConnected = false;
+      console.log('Twitch streaming SSE connection closed');
+    }
+  }
+
+  /**
+   * Update the local streaming state and send notifications
+   */
+  private updateStreamingState(newStreamingSources: Source[]): void {
+    const previousStreams = new Set(this.streamingSources);
+    const currentStreams = new Set(newStreamingSources);
+
+    // Find sources that just started streaming
+    const startedStreaming = newStreamingSources.filter(
+      (source) => !previousStreams.has(source)
+    );
+
+    // Find sources that stopped streaming
+    const stoppedStreaming = this.streamingSources.filter(
+      (source) => !currentStreams.has(source)
+    );
+
+    // Update the sidebar streaming state
+    this.updateStreamingSources(newStreamingSources);
+
+    // Only send notifications for real-time changes, not on initial load
+    if (!this.#isInitialStreamLoad) {
+      // Send notifications for streams that started
+      startedStreaming.forEach((source) => {
+        const displayName = SOURCE_INFO[source]?.displayName || source;
+
+        // Only show notification if it wasn't recently shown
+        if (!this.wasNotificationRecentlyShown(source)) {
+          showNotification(`${displayName} is now streaming.`);
+          this.recordShownNotification(source);
+        }
+      });
+
+      // Send notifications for streams that stopped
+      stoppedStreaming.forEach((source) => {
+        const displayName = SOURCE_INFO[source]?.displayName || source;
+        showNotification(`${displayName} has stopped streaming.`);
+      });
+    }
+
+    // Mark initial load as complete after first update
+    if (this.#isInitialStreamLoad) {
+      this.#isInitialStreamLoad = false;
+    }
+  }
 
   // Data loading methods
   async loadData(): Promise<void> {
@@ -276,13 +470,48 @@ export class SidebarStateClass {
 
   // Cleanup method
   cleanup(): void {
+    // Stop SSE connection
+    this.stopSSEConnection();
+
     // Reset all state
     this.data = null;
     this.loading = false;
     this.error = null;
     this.orderedSources = [];
+    this.streamingSources = [];
     this.#initialized = false;
     this.#hasLoadedOnce = false;
+    this.#isInitialStreamLoad = true;
+  }
+
+  // Streaming sources management
+  updateStreamingSources(sources: Source[]): void {
+    this.streamingSources = [...sources];
+  }
+
+  isSourceStreaming(source: Source): boolean {
+    return this.streamingSources.includes(source);
+  }
+
+  getStreamingSources(): Source[] {
+    return [...this.streamingSources];
+  }
+
+  // Convenience methods for backward compatibility
+  setSidebarState(state: any): void {
+    // This method exists for compatibility but doesn't need to do anything
+    // since the sidebar state is already "this"
+    console.log('setSidebarState called - sidebar state is already set');
+  }
+
+  start(): void {
+    // Alias for startSSEConnection for backward compatibility
+    this.startSSEConnection();
+  }
+
+  stop(): void {
+    // Alias for stopSSEConnection for backward compatibility
+    this.stopSSEConnection();
   }
 }
 

@@ -19,7 +19,7 @@
   let {
     items,
     title = 'Reorder items',
-    subtitle = 'Drag the handle to reorder items',
+    subtitle = 'Drag the handle to reorder items.',
     triggerClass = '',
     triggerVariant = 'ghost',
     onClose,

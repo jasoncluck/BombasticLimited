@@ -18,10 +18,14 @@ vi.mock('$lib/constants/source.js', () => ({
 
 // Mock sveltekit-sse to return a simple response
 vi.mock('sveltekit-sse', () => ({
-  produce: vi.fn(() => Promise.resolve(new Response('', { 
-    status: 200,
-    headers: { 'content-type': 'text/event-stream' }
-  }))),
+  produce: vi.fn(() =>
+    Promise.resolve(
+      new Response('', {
+        status: 200,
+        headers: { 'content-type': 'text/event-stream' },
+      })
+    )
+  ),
 }));
 
 describe('/api/twitch endpoint', () => {
@@ -29,31 +33,32 @@ describe('/api/twitch endpoint', () => {
     vi.clearAllMocks();
   });
 
-  it('should export POST function', async () => {
+  it('should export GET function', async () => {
     const module = await import('../+server.js');
-    
-    expect(typeof module.POST).toBe('function');
+
+    expect(typeof module.GET).toBe('function');
   });
 
   it('should return SSE response', async () => {
-    const { POST } = await import('../+server.js');
-    
-    const response = await POST();
-    
+    const { GET } = await import('../+server.js');
+
+    const response = await GET();
+
     expect(response).toBeInstanceOf(Response);
     expect(response.headers.get('content-type')).toBe('text/event-stream');
   });
 
   it('should use sveltekit-sse produce function', async () => {
     const { produce } = await import('sveltekit-sse');
-    const { POST } = await import('../+server.js');
-    
-    await POST();
-    
+    const { GET } = await import('../+server.js');
+
+    await GET();
+
     expect(produce).toHaveBeenCalledWith(
       expect.any(Function),
       expect.objectContaining({
-        stop: expect.any(Function)
+        stop: expect.any(Function),
+
       })
     );
   });
@@ -62,9 +67,11 @@ describe('/api/twitch endpoint', () => {
     // Test that all dependencies can be imported without errors
     const twitchModule = await import('$lib/client/twitch.js');
     const sourceModule = await import('$lib/constants/source.js');
-    
+
     expect(typeof twitchModule.getMultipleStreamStatus).toBe('function');
     expect(Array.isArray(sourceModule.SOURCES)).toBe(true);
     expect(typeof sourceModule.SOURCE_INFO).toBe('object');
   });
+
 });
+

@@ -28,7 +28,10 @@
   import { getPlaylistState } from '$lib/state/playlist.svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { parseImageProperties } from './playlist';
-  import { getCroppedPlaylistImageUrl } from './playlist-service';
+  import {
+    getCroppedPlaylistImageUrl,
+    isLowResolutionThumbnail,
+  } from './playlist-service';
 
   let {
     form,
@@ -37,6 +40,7 @@
     trigger,
     open = $bindable(),
     session,
+    nested = false,
   }: {
     form: SuperValidated<PlaylistSchema>;
     formId?: string;
@@ -44,6 +48,7 @@
     playlist: Playlist;
     open: boolean;
     session: Session | null;
+    nested?: boolean;
   } = $props();
 
   const playlistState = getPlaylistState();
@@ -57,6 +62,12 @@
   const cropState = useImageCropperCrop();
 
   const isPlaylistOwner = $derived(playlist.created_by === session?.user.id);
+  const isLowResThumbnail = $derived(
+    isLowResolutionThumbnail(
+      playlist.thumbnail_maxres_url,
+      playlist.thumbnail_url
+    )
+  );
   const sidebarState = getSidebarState();
 
   const playlistForm = superForm(form, {
@@ -72,7 +83,12 @@
       updateFlash(page);
       if (event.form.valid) {
         const { isDeletingPlaylistImage, ...data } = event.form.data;
-        open = false;
+
+        // Delay closing to allow animation to complete
+        setTimeout(() => {
+          open = false;
+        }, 200);
+
         playlistForm.reset();
 
         const updatedPlaylist = Object.assign(playlist, data);
@@ -96,6 +112,14 @@
   $effect(() => {
     if (open) {
       isSubmitting = false;
+      // Refresh form data with current playlist values when drawer opens
+      $formData.id = playlist.id;
+      $formData.name = playlist.name;
+      $formData.description = playlist.description ?? '';
+      $formData.type = playlist.type;
+      $formData.image_properties = playlist.image_properties;
+      $formData.isDeletingPlaylistImage = false;
+      isPublic = playlist.type === 'Public';
     }
   });
 
@@ -114,9 +138,10 @@
 <Drawer.Root
   bind:open
   handleOnly={true}
-  nested={false}
-  onClose={() => {
+  {nested}
+  onAnimationEnd={(open) => {
     if (open === false) {
+      console.log('settin to false');
       playlistState.openEditPlaylist = false;
     }
   }}
@@ -146,7 +171,7 @@
       class="flex min-h-0 flex-1 flex-col"
     >
       <div class="min-h-0 flex-1 overflow-y-auto p-1">
-        <div class="px-4 pb-4">
+        <div class="px-4 pb-2">
           <div class="mb-4 flex flex-col justify-center gap-4 sm:flex-row">
             <div class="relative m-6 flex justify-center">
               {#if (playlist.thumbnail_maxres_url || playlist.thumbnail_url) && !$formData.isDeletingPlaylistImage}
@@ -168,11 +193,18 @@
                       {/snippet}
                     </DropdownMenu.Trigger>
                     <DropdownMenu.Content align="start">
-                      <DropdownMenu.Item
-                        onclick={() => {
-                          cropperState.rootState.open = true;
-                        }}>Update crop</DropdownMenu.Item
-                      >
+                      {#if isLowResThumbnail}
+                        <DropdownMenu.Item disabled
+                          >This video doesn't have a high-resolution thumbnail
+                          and cannot be cropped</DropdownMenu.Item
+                        >
+                      {:else}
+                        <DropdownMenu.Item
+                          onclick={() => {
+                            cropperState.rootState.open = true;
+                          }}>Update crop</DropdownMenu.Item
+                        >
+                      {/if}
                       <DropdownMenu.Item
                         onclick={() => {
                           $formData.isDeletingPlaylistImage = true;
@@ -320,32 +352,31 @@
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Non-sticky Footer - now flows naturally with the content -->
-      <div class="p-4 pt-2">
-        <div class="flex flex-col gap-2">
-          <Drawer.Footer class="drawer-footer flex gap-2">
-            <Button type="submit" class="drawer-button-footer">
-              {#if isSubmitting}
-                <Loader class="animate-spin" />
-              {:else}
-                Save Changes
-              {/if}
-            </Button>
+        <div class="p-4">
+          <div class="flex flex-col gap-2">
+            <Drawer.Footer class="drawer-footer flex gap-2">
+              <Button type="submit" class="drawer-button-footer">
+                {#if isSubmitting}
+                  <Loader class="animate-spin" />
+                {:else}
+                  Save Changes
+                {/if}
+              </Button>
 
-            <Drawer.Close
-              onclick={(e) => {
-                e.preventDefault();
-                open = false;
-              }}
-              class={buttonVariants({
-                class: 'drawer-button-footer',
-                variant: 'outline',
-              })}
-              >Close
-            </Drawer.Close>
-          </Drawer.Footer>
+              <Drawer.Close
+                onclick={(e) => {
+                  e.preventDefault();
+                  open = false;
+                }}
+                class={buttonVariants({
+                  class: 'drawer-button-footer',
+                  variant: 'outline',
+                })}
+                >Close
+              </Drawer.Close>
+            </Drawer.Footer>
+          </div>
         </div>
       </div>
     </form>

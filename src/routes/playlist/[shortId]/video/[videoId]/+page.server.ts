@@ -7,7 +7,7 @@ import { parseImageProperties } from '$lib/components/playlist/playlist';
 import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
 
 export const load: PageServerLoad = async ({
-  locals: { supabase },
+  locals: { safeGetSession, supabase },
   depends,
   params,
   parent,
@@ -17,14 +17,7 @@ export const load: PageServerLoad = async ({
   const videoId = params.videoId;
 
   // Get authenticated user securely
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-  if (userError) {
-    console.error('Error getting user:', userError);
-  }
+  const { user } = await safeGetSession();
 
   // Run parent() first to get contentFilter
   const { contentFilter } = await parent();
@@ -39,7 +32,6 @@ export const load: PageServerLoad = async ({
     videoId,
     contentFilter, // This will be used for sorting in the query
     supabase,
-    userId: user?.id,
     contextLimit: 5,
   });
 

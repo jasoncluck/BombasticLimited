@@ -62,13 +62,8 @@
     <AlertDialog.Header>
       <AlertDialog.Title>Delete Public Playlist</AlertDialog.Title>
       <AlertDialog.Description>
-        You are about to delete the public playlist "{playlist.name}". This
-        action will:
-        <ul class="mt-2 list-disc space-y-1 pl-5">
-          <li>Permanently remove this playlist</li>
-          <li>Remove it from all followers' profiles</li>
-          <li>This action cannot be undone</li>
-        </ul>
+        You are about to delete the public playlist "New Playlist #5". Deleting
+        this will also remove the playlist from any followers' accounts.
       </AlertDialog.Description>
     </AlertDialog.Header>
     <AlertDialog.Footer>

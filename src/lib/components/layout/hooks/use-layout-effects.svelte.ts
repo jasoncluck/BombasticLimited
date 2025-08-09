@@ -80,7 +80,6 @@ export function useLayoutEffects(
     let mediaQueryCleanup: (() => void) | undefined;
     let sidebarCleanup: (() => void) | undefined;
     let notificationStoreUnsubscribe: (() => void) | undefined;
-    let authUnsubscribe: (() => void) | undefined;
 
     async function initialize() {
       // Skip invalidateAll in development mode to prevent slow loading
@@ -146,16 +145,6 @@ export function useLayoutEffects(
       }
     });
 
-    authUnsubscribe = (() => {
-      const { data } = supabase.auth.onAuthStateChange((_, newSession) => {
-        invalidate('supabase:auth');
-      });
-
-      return () => {
-        data.subscription.unsubscribe();
-      };
-    })();
-
     return () => {
       // Cleanup event listeners
       window.removeEventListener('dragover', handleDragOver);
@@ -166,7 +155,6 @@ export function useLayoutEffects(
       pageState.cleanup();
 
       // Cleanup subscriptions
-      if (authUnsubscribe) authUnsubscribe();
       if (notificationStoreUnsubscribe) notificationStoreUnsubscribe();
       layoutState.cleanup();
 

@@ -1,6 +1,8 @@
 # Playwright Authentication Model
 
-This project implements the Playwright authentication model following the "one account per parallel worker" pattern, enabling efficient testing of both authenticated and non-authenticated user flows.
+This project implements the Playwright authentication model following the "one
+account per parallel worker" pattern, enabling efficient testing of both
+authenticated and non-authenticated user flows.
 
 ## Architecture Overview
 
@@ -8,7 +10,8 @@ The authentication system consists of:
 
 1. **TestDataManager**: Creates and manages test users for each parallel worker
 2. **Global Setup**: Authenticates users and stores auth states before tests run
-3. **Auth Fixtures**: Provides authenticated and unauthenticated contexts for tests
+3. **Auth Fixtures**: Provides authenticated and unauthenticated contexts for
+   tests
 4. **Global Teardown**: Cleans up test data and authentication states
 
 ## File Structure
@@ -35,7 +38,10 @@ tests/e2e/
 ```typescript
 import { authenticatedTest as test, expect } from '../auth-fixtures';
 
-test('should access protected features', async ({ authenticatedPage, testUser }) => {
+test('should access protected features', async ({
+  authenticatedPage,
+  testUser,
+}) => {
   await authenticatedPage.goto('/account');
   await expect(authenticatedPage.getByText(testUser.username)).toBeVisible();
 });
@@ -48,7 +54,9 @@ import { unauthenticatedTest as test, expect } from '../auth-fixtures';
 
 test('should show login button', async ({ unauthenticatedPage }) => {
   await unauthenticatedPage.goto('/');
-  await expect(unauthenticatedPage.getByRole('button', { name: 'Login' })).toBeVisible();
+  await expect(
+    unauthenticatedPage.getByRole('button', { name: 'Login' })
+  ).toBeVisible();
 });
 ```
 
@@ -57,32 +65,37 @@ test('should show login button', async ({ unauthenticatedPage }) => {
 ```typescript
 import { mixedTest as test, expect } from '../auth-fixtures';
 
-test('should show different UI for different user types', async ({ 
-  authenticatedPage, 
-  unauthenticatedPage 
+test('should show different UI for different user types', async ({
+  authenticatedPage,
+  unauthenticatedPage,
 }) => {
   await authenticatedPage.goto('/');
   await unauthenticatedPage.goto('/');
-  
+
   // Compare authenticated vs unauthenticated experience
   await expect(authenticatedPage.getByText('Account')).toBeVisible();
-  await expect(unauthenticatedPage.getByRole('button', { name: 'Login' })).toBeVisible();
+  await expect(
+    unauthenticatedPage.getByRole('button', { name: 'Login' })
+  ).toBeVisible();
 });
 ```
 
 ## Available Fixtures
 
 ### authenticatedTest
+
 - `authenticatedPage`: Page with authenticated user context
 - `authenticatedContext`: Browser context with stored auth state
 - `testUser`: Test user data (id, email, password, username)
 - `testDataManager`: Manager for test data operations
 
 ### unauthenticatedTest
+
 - `unauthenticatedPage`: Page with no authentication
 - `unauthenticatedContext`: Fresh browser context
 
 ### mixedTest
+
 - All fixtures from both authenticated and unauthenticated tests
 - Useful for testing both user types in the same test
 
@@ -100,10 +113,13 @@ The `TestDataManager` provides methods for:
 ```typescript
 test('should manage user data', async ({ testDataManager, testUser }) => {
   // Create test playlist
-  const playlist = await testDataManager.createTestPlaylist(testUser.id, 'Test Playlist');
-  
+  const playlist = await testDataManager.createTestPlaylist(
+    testUser.id,
+    'Test Playlist'
+  );
+
   // Use playlist in test...
-  
+
   // Cleanup happens automatically in teardown
 });
 ```
@@ -133,11 +149,11 @@ export default defineConfig({
   // Enable parallel execution
   fullyParallel: true,
   workers: process.env.CI ? 1 : 3,
-  
+
   // Global setup and teardown
   globalSetup: require.resolve('./tests/e2e/auth.setup.ts'),
   globalTeardown: require.resolve('./tests/e2e/global.teardown.ts'),
-  
+
   projects: [
     {
       name: 'setup',
@@ -155,16 +171,22 @@ export default defineConfig({
 
 Required environment variables:
 
-- `SUPABASE_URL`: Supabase project URL (defaults to local: http://127.0.0.1:54321)
-- `SUPABASE_SERVICE_ROLE_KEY` or `PUBLIC_SUPABASE_SERVICE_ROLE_KEY`: Service role key for admin operations
+- `SUPABASE_URL`: Supabase project URL (defaults to local:
+  http://127.0.0.1:54321)
+- `SUPABASE_SERVICE_ROLE_KEY` or `PUBLIC_SUPABASE_SERVICE_ROLE_KEY`: Service
+  role key for admin operations
 - `SUPABASE_ANON_KEY`: Anonymous key for client operations
 
 ## Best Practices
 
-1. **Use appropriate fixtures**: Choose `authenticatedTest`, `unauthenticatedTest`, or `mixedTest` based on your test needs
-2. **Clean up test data**: Use `testDataManager` methods to clean up any test data you create
-3. **Test both user types**: Consider how features work for both authenticated and unauthenticated users
-4. **Leverage parallel execution**: Tests run in parallel with isolated auth states
+1. **Use appropriate fixtures**: Choose `authenticatedTest`,
+   `unauthenticatedTest`, or `mixedTest` based on your test needs
+2. **Clean up test data**: Use `testDataManager` methods to clean up any test
+   data you create
+3. **Test both user types**: Consider how features work for both authenticated
+   and unauthenticated users
+4. **Leverage parallel execution**: Tests run in parallel with isolated auth
+   states
 5. **Handle async operations**: Always await authentication and data operations
 
 ## Debugging

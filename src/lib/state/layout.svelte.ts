@@ -3,7 +3,6 @@ import { goto } from '$app/navigation';
 import { showNotification } from '$lib/stores/notification.js';
 import debounce from 'debounce';
 import { isSourceArray, SOURCE_INFO } from '$lib/constants/source';
-import { activeStreams } from '$lib/state/streaming.svelte';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { source } from 'sveltekit-sse';
 import { browser } from '$app/environment';
@@ -48,7 +47,7 @@ export class LayoutStateClass implements LayoutState {
   searchAbortController = $state<AbortController | null>(null);
 
   config = $state<LayoutConfig>({
-    searchDebounceMs: 400,
+    searchDebounceMs: 250,
   });
 
   constructor() {
@@ -60,7 +59,7 @@ export class LayoutStateClass implements LayoutState {
     if (!browser) return;
 
     try {
-      const saved = localStorage.getItem('bombify-sidebar-collapsed');
+      const saved = localStorage.getItem('bombastic-sidebar-collapsed');
       if (saved !== null) {
         this.isSidebarCollapsed = JSON.parse(saved);
       }
@@ -74,7 +73,7 @@ export class LayoutStateClass implements LayoutState {
 
     try {
       localStorage.setItem(
-        'bombify-sidebar-collapsed',
+        'bombastic-sidebar-collapsed',
         JSON.stringify(collapsed)
       );
     } catch (error) {

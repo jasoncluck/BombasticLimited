@@ -11,11 +11,13 @@ const mockSharp = vi.fn();
 const mockExtract = vi.fn();
 const mockWebp = vi.fn();
 const mockToBuffer = vi.fn();
+const mockMetadata = vi.fn();
 
 vi.mock('sharp', () => ({
   default: (...args: any[]) => {
     mockSharp(...args);
     return {
+      metadata: mockMetadata,
       extract: mockExtract.mockReturnThis(),
       webp: mockWebp.mockReturnThis(),
       toBuffer: mockToBuffer,
@@ -29,6 +31,11 @@ global.fetch = vi.fn();
 describe('getCroppedPlaylistImageUrlServer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Set up default metadata response
+    mockMetadata.mockResolvedValue({
+      width: 1280,
+      height: 720,
+    });
   });
 
   it('should process image and return WebP data URL', async () => {
@@ -78,8 +85,11 @@ describe('getCroppedPlaylistImageUrlServer', () => {
     });
 
     expect(mockWebp).toHaveBeenCalledWith({
-      quality: 80,
-      effort: 4,
+      quality: 90,
+      effort: 2,
+      lossless: false,
+      nearLossless: false,
+      smartSubsample: true,
     });
 
     // Verify result format
@@ -183,6 +193,11 @@ describe('getCroppedPlaylistImageUrlServer', () => {
 describe('getVideoThumbnailWebpUrlServer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Set up default metadata response for video thumbnails too
+    mockMetadata.mockResolvedValue({
+      width: 1280,
+      height: 720,
+    });
   });
 
   it('should process video thumbnail and return WebP data URL without cropping', async () => {
@@ -275,6 +290,11 @@ describe('getVideoThumbnailWebpUrlServer', () => {
 describe('getVideoThumbnailWebpUrlsBatch', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Set up default metadata response for batch processing too
+    mockMetadata.mockResolvedValue({
+      width: 1280,
+      height: 720,
+    });
   });
 
   it('should process multiple video thumbnails in batch', async () => {

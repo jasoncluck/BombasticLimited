@@ -9,7 +9,7 @@ export default async function globalTeardown() {
     const testDataManager = new TestDataManager();
 
     // Clean up test data for all known workers
-    for (let workerId = 0; workerId < 5; workerId++) {
+    for (let workerId = 0; workerId < 10; workerId++) {
       try {
         const testUser = await testDataManager.getOrCreateTestUser(workerId);
         await testDataManager.cleanupUserTestData(testUser.id);

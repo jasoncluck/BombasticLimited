@@ -15,10 +15,10 @@ export default async function globalSetup(config: FullConfig) {
 
   // Check if we already have valid auth files - skip setup if they exist and are recent
   const testDataManager = new TestDataManager();
-  const maxWorkers = Math.max(config.workers || 3, 5);
+  const maxWorkers = Math.min(config.workers || 2, 2); // Reduced worker count to prevent server overload
 
   console.log(
-    `Checking for existing auth files for up to ${maxWorkers} workers`
+    `Checking for existing auth files for up to ${maxWorkers} workers (reduced from potential ${config.workers || 'default'} for server stability)`
   );
 
   // Check if all required auth files exist and are recent (less than 24 hours old)
@@ -76,8 +76,18 @@ export default async function globalSetup(config: FullConfig) {
       }
     }
 
-    const browser = await chromium.launch();
-    const context = await browser.newContext();
+    const browser = await chromium.launch({
+      args: [
+        '--disable-background-networking',
+        '--disable-background-timer-throttling',
+      ],
+    });
+    const context = await browser.newContext({
+      extraHTTPHeaders: {
+        'X-Test-Environment': 'true',
+        'X-Test-Worker-ID': workerIndex.toString(),
+      },
+    });
     const page = await context.newPage();
 
     try {

@@ -1,7 +1,6 @@
 <script lang="ts">
   import { goto, invalidate } from '$app/navigation';
   import { SOURCES, SOURCE_INFO, type Source } from '$lib/constants/source';
-  import { activeStreams } from '$lib/state/streaming.svelte';
   import {
     Circle,
     Edit,
@@ -31,6 +30,7 @@
   import EditListDrawer from './content/drawer/edit-list-drawer.svelte';
   import EditSourceDrawer from './content/drawer/edit-source-drawer.svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
+  import StreamingIndicator from './streaming/streaming-indicator.svelte';
 
   let {
     handleLogout,
@@ -144,7 +144,7 @@
               <EditSourceDrawer
                 sources={userProfile.sources ?? []}
                 title="Reorder sources"
-                subtitle="Drag the handle to reorder sources"
+                subtitle="Drag the handle to reorder sources."
                 onReorder={handleSourceReorder}
                 onClose={() => {
                   invalidate('supabase:db:profiles');
@@ -191,14 +191,11 @@
                 }}
                 title={SOURCE_INFO[source].displayName}
               >
-                {#if activeStreams.sources.includes(source)}
-                  <Circle
-                    class="absolute bottom-2 left-2"
-                    fill="#eb0400"
-                    strokeWidth={0}
-                  />
-                  <span class="sr-only">Live now</span>
-                {/if}
+                <StreamingIndicator
+                  isStreaming={sidebarState.isSourceStreaming(source)}
+                  size="sm"
+                />
+                <span class="sr-only">Live now</span>
                 <div class="h-12 w-12 flex-none">
                   <enhanced:img
                     src={SOURCE_INFO[source].image}
