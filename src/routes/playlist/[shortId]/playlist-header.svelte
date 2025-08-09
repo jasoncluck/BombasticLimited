@@ -93,7 +93,6 @@
   bind:showFloatingBreadcrumbs
   bind:open
   view="playlist"
-  {videosCount}
   {contentFilter}
   {playlist}
   {videos}

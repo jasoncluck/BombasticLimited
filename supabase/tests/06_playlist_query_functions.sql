@@ -83,7 +83,6 @@ SELECT
     'search_playlists should find playlists matching description search'
   );
 
-
 -- Test get_playlist_by_youtube_id functionality
 SELECT
   ok (

@@ -210,4 +210,5 @@ BEGIN
   RETURN user_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER
-SET search_path = '';
+SET
+  search_path = '';

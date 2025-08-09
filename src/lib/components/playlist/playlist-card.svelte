@@ -17,8 +17,8 @@
 </script>
 
 <a
-  class="grid transform cursor-pointer grid-cols-[4rem_1fr] items-center gap-2
-      rounded p-3 hover:brightness-110"
+  class="hover:bg-secondary/50 grid transform cursor-pointer grid-cols-[4rem_1fr] items-center
+      gap-4 rounded p-3 hover:brightness-110"
   href={`/playlist/${playlist.short_id}`}
 >
   {#if playlist.processedImageUrl}
@@ -38,18 +38,20 @@
     </div>
   {/if}
 
-  <div class="ml-2 min-w-0">
+  <div class="min-w-0">
     <p class="mb-1 text-sm font-medium">
       {playlist.name}
     </p>
-    <p class="text-muted-foreground line-clamp-3 text-xs">
+    <p
+      class="text-muted-foreground line-clamp-1 max-w-48 text-xs text-wrap break-words"
+    >
       {playlist.description}
     </p>
 
     <!-- Avatar and username display -->
     {#if isSource(playlist.profile_username)}
       <div class="mt-2 flex items-center gap-2">
-        <Avatar.Root class="h-4 w-4">
+        <Avatar.Root class="h-6 w-6">
           <Avatar.Image
             src={SOURCE_INFO[playlist.profile_username].image.img.src}
             alt={`Profile picture for user: ${SOURCE_INFO[playlist.profile_username].displayName}`}
@@ -61,7 +63,7 @@
       </div>
     {:else if playlist.profile_username}
       <div class="mt-2 flex items-center gap-2">
-        <Avatar.Root class="h-4 w-4">
+        <Avatar.Root class="h-6 w-6">
           <Avatar.Image
             src={playlist.avatar_url}
             alt="Profile picture for user: {playlist.profile_username}"
