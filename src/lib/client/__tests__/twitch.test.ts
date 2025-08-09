@@ -80,7 +80,6 @@ describe('Twitch API Client', () => {
 
       const result = await getStreamStatus('123456');
 
-
       // If we get a result, it should have the expected structure
       if (result) {
         expect(result).toHaveProperty('userId');
@@ -91,7 +90,4 @@ describe('Twitch API Client', () => {
       }
     });
   });
-
 });
-
-

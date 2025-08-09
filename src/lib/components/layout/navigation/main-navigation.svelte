@@ -91,7 +91,6 @@
         {session}
         {supabase}
         {layoutState}
-        {contentState}
         bind:openAccountDrawer
       />
     </div>

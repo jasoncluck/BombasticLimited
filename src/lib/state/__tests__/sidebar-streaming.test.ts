@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { SidebarStateClass } from '../sidebar.svelte.js';
-import type { Source } from '$lib/constants/source.js';
+import { SidebarStateClass } from '../sidebar.svelte';
+import type { Source } from '$lib/constants/source';
+import { showNotification } from '$lib/stores/notification';
 
 // Mock the notification store
-vi.mock('$lib/stores/notification.js', () => ({
+vi.mock('$lib/stores/notification.ts', () => ({
   showNotification: vi.fn(),
 }));
 
@@ -17,10 +18,9 @@ vi.mock('$lib/constants/source', () => ({
 }));
 
 // Mock browser environment
-Object.defineProperty(global, 'browser', {
-  value: false,
-  writable: true,
-});
+vi.mock('$app/environment', () => ({
+  browser: true,
+}));
 
 // Mock localStorage
 const localStorageMock = {
@@ -29,6 +29,11 @@ const localStorageMock = {
   removeItem: vi.fn(),
   clear: vi.fn(),
 };
+
+// Store the original localStorage if it exists
+const originalLocalStorage = global.localStorage;
+
+// Set up localStorage mock
 Object.defineProperty(global, 'localStorage', {
   value: localStorageMock,
   writable: true,
@@ -116,18 +121,12 @@ describe('SidebarStateClass - Streaming Functionality', () => {
 
   describe('streaming state notifications', () => {
     beforeEach(() => {
-      // Enable browser environment for notification tests
-      global.browser = true;
       // Mock initial stream load as false to allow notifications
-      sidebarState['#isInitialStreamLoad'] = false;
-    });
-
-    afterEach(() => {
-      global.browser = false;
+      sidebarState.setInitialStreamLoadFlag(false);
     });
 
     it('should show notifications when streams start', async () => {
-      const { showNotification } = await import('$lib/stores/notification.js');
+      const mockShowNotification = vi.mocked(showNotification);
 
       // Start with no streams
       sidebarState.updateStreamingSources([]);
@@ -135,14 +134,13 @@ describe('SidebarStateClass - Streaming Functionality', () => {
       // Add a streaming source
       sidebarState['updateStreamingState'](['giantbomb']);
 
-      expect(showNotification).toHaveBeenCalledWith(
-        'Giant Bomb is now streaming!',
-        'success'
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        'Giant Bomb is now streaming.'
       );
     });
 
     it('should show notifications when streams stop', async () => {
-      const { showNotification } = await import('$lib/stores/notification.js');
+      const mockShowNotification = vi.mocked(showNotification);
 
       // Start with a streaming source
       sidebarState.updateStreamingSources(['giantbomb']);
@@ -150,14 +148,13 @@ describe('SidebarStateClass - Streaming Functionality', () => {
       // Remove the streaming source
       sidebarState['updateStreamingState']([]);
 
-      expect(showNotification).toHaveBeenCalledWith(
-        'Giant Bomb has stopped streaming',
-        'info'
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        'Giant Bomb has stopped streaming.'
       );
     });
 
     it('should not show duplicate notifications for recently shown sources', async () => {
-      const { showNotification } = await import('$lib/stores/notification.js');
+      const mockShowNotification = vi.mocked(showNotification);
 
       // Mock localStorage to return a recent notification
       const recentNotification = JSON.stringify([
@@ -166,7 +163,11 @@ describe('SidebarStateClass - Streaming Functionality', () => {
           timestamp: Date.now() - 1000, // 1 second ago
         },
       ]);
-      localStorageMock.getItem.mockReturnValue(recentNotification);
+
+      // Setup mock on the global localStorage directly
+      vi.mocked(global.localStorage.getItem).mockReturnValue(
+        recentNotification
+      );
 
       // Start with no streams
       sidebarState.updateStreamingSources([]);
@@ -174,11 +175,11 @@ describe('SidebarStateClass - Streaming Functionality', () => {
       // Add a streaming source that was recently notified
       sidebarState['updateStreamingState'](['giantbomb']);
 
-      expect(showNotification).not.toHaveBeenCalled();
+      expect(mockShowNotification).not.toHaveBeenCalled();
     });
 
     it('should show notifications for expired notification records', async () => {
-      const { showNotification } = await import('$lib/stores/notification.js');
+      const mockShowNotification = vi.mocked(showNotification);
 
       // Mock localStorage to return an expired notification (25 hours ago)
       const expiredNotification = JSON.stringify([
@@ -187,7 +188,9 @@ describe('SidebarStateClass - Streaming Functionality', () => {
           timestamp: Date.now() - 25 * 60 * 60 * 1000,
         },
       ]);
-      localStorageMock.getItem.mockReturnValue(expiredNotification);
+      vi.mocked(global.localStorage.getItem).mockReturnValue(
+        expiredNotification
+      );
 
       // Start with no streams
       sidebarState.updateStreamingSources([]);
@@ -195,14 +198,13 @@ describe('SidebarStateClass - Streaming Functionality', () => {
       // Add a streaming source with expired notification
       sidebarState['updateStreamingState'](['giantbomb']);
 
-      expect(showNotification).toHaveBeenCalledWith(
-        'Giant Bomb is now streaming!',
-        'success'
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        'Giant Bomb is now streaming.'
       );
     });
 
     it('should record notifications in localStorage', async () => {
-      const { showNotification } = await import('$lib/stores/notification.js');
+      const mockShowNotification = vi.mocked(showNotification);
 
       // Start with no streams
       sidebarState.updateStreamingSources([]);
@@ -210,17 +212,17 @@ describe('SidebarStateClass - Streaming Functionality', () => {
       // Add a streaming source
       sidebarState['updateStreamingState'](['giantbomb']);
 
-      expect(localStorageMock.setItem).toHaveBeenCalledWith(
+      expect(vi.mocked(global.localStorage.setItem)).toHaveBeenCalledWith(
         'bombastic_shown_stream_notifications',
         expect.stringContaining('giantbomb')
       );
     });
 
     it('should not show notifications on initial stream load', async () => {
-      const { showNotification } = await import('$lib/stores/notification.js');
+      const mockShowNotification = vi.mocked(showNotification);
 
       // Reset to initial load state
-      sidebarState['#isInitialStreamLoad'] = true;
+      sidebarState.setInitialStreamLoadFlag(true);
 
       // Start with no streams
       sidebarState.updateStreamingSources([]);
@@ -228,14 +230,14 @@ describe('SidebarStateClass - Streaming Functionality', () => {
       // Add a streaming source during initial load
       sidebarState['updateStreamingState'](['giantbomb']);
 
-      expect(showNotification).not.toHaveBeenCalled();
+      expect(mockShowNotification).not.toHaveBeenCalled();
 
       // Verify initial load flag is cleared after first update
-      expect(sidebarState['#isInitialStreamLoad']).toBe(false);
+      expect(sidebarState.getInitialStreamLoadFlag()).toBe(false);
     });
 
     it('should handle multiple simultaneous stream changes', async () => {
-      const { showNotification } = await import('$lib/stores/notification.js');
+      const mockShowNotification = vi.mocked(showNotification);
 
       // Start with some streams
       sidebarState.updateStreamingSources(['giantbomb', 'nextlander']);
@@ -243,15 +245,13 @@ describe('SidebarStateClass - Streaming Functionality', () => {
       // Update to different streams (one stops, one continues, one starts)
       sidebarState['updateStreamingState'](['nextlander', 'remap']);
 
-      expect(showNotification).toHaveBeenCalledWith(
-        'Giant Bomb has stopped streaming',
-        'info'
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        'Giant Bomb has stopped streaming.'
       );
-      expect(showNotification).toHaveBeenCalledWith(
-        'Remap is now streaming!',
-        'success'
+      expect(mockShowNotification).toHaveBeenCalledWith(
+        'Remap is now streaming.'
       );
-      expect(showNotification).toHaveBeenCalledTimes(2);
+      expect(mockShowNotification).toHaveBeenCalledTimes(2);
     });
   });
 

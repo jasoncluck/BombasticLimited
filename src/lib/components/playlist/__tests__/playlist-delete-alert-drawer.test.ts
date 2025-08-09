@@ -114,7 +114,7 @@ describe('PlaylistDeleteAlertDrawer Component Logic', () => {
     it('should validate playlist type and properties', () => {
       expect(mockProps.playlist.type).toBe('Public');
       expect(mockProps.playlist.name).toBe('My Test Playlist');
-      expect(mockProps.playlist.processedImageUrl).toBe(
+      expect((mockProps.playlist as any).processedImageUrl).toBe(
         'https://example.com/playlist-image.jpg'
       );
     });
@@ -287,7 +287,7 @@ describe('PlaylistDeleteAlertDrawer Component Logic', () => {
 
       expect(playlist.name).toBe('My Test Playlist');
       expect(playlist.type).toBe('Public');
-      expect(playlist.processedImageUrl).toBe(
+      expect((playlist as any).processedImageUrl).toBe(
         'https://example.com/playlist-image.jpg'
       );
     });

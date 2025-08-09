@@ -1,9 +1,5 @@
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
-import {
-  S3Client,
-  ListObjectsV2Command,
-  GetObjectCommand,
-} from '@aws-sdk/client-s3';
+import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
@@ -17,11 +13,11 @@ const s3Client = new S3Client({
 });
 
 const BACKUP_FUNCTION_NAME =
-  process.env.BACKUP_LAMBDA_FUNCTION_NAME || 'BombifyDatabaseBackup-prod';
+  process.env.BACKUP_LAMBDA_FUNCTION_NAME || 'BombasticDatabaseBackup-prod';
 const RESTORE_FUNCTION_NAME =
-  process.env.RESTORE_LAMBDA_FUNCTION_NAME || 'BombifyDatabaseRestore-prod';
+  process.env.RESTORE_LAMBDA_FUNCTION_NAME || 'BombasticDatabaseRestore-prod';
 const BACKUP_BUCKET_NAME =
-  process.env.BACKUP_BUCKET_NAME || 'bombify-database-backups-prod';
+  process.env.BACKUP_BUCKET_NAME || 'bombastic-database-backups-prod';
 
 interface DisasterRecoveryOptions {
   scenario:

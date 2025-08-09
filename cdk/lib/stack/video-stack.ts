@@ -30,9 +30,9 @@ export class VideoStack extends Stack {
     // Lambda to populate the database with the current videos.
     const populateVideosLambda = new nodejs.NodejsFunction(
       this,
-      'BombifyPopulateVideos',
+      'BombasticPopulateVideos',
       {
-        functionName: 'BombifyPopulateVideos',
+        functionName: 'BombasticPopulateVideos',
         description: 'Populates a table with videos using the YouTube API',
         entry: path.join(__dirname, '../lambda/populate-videos.ts'),
         handler: 'populateVideos',
@@ -67,9 +67,9 @@ export class VideoStack extends Stack {
 
     const populatePlaylistsLambda = new nodejs.NodejsFunction(
       this,
-      'BombifyPopulatePlaylists',
+      'BombasticPopulatePlaylists',
       {
-        functionName: 'BombifyPopulatePlaylists',
+        functionName: 'BombasticPopulatePlaylists',
         description: 'Populates the playlists table using the YouTube API',
         entry: path.join(__dirname, '../lambda/populate-playlists.ts'),
         handler: 'populatePlaylists',
@@ -134,7 +134,7 @@ export class VideoStack extends Stack {
       this,
       'RepopulateStateMachine',
       {
-        stateMachineName: 'BombifyRepopulateStateMachine',
+        stateMachineName: 'BombasticRepopulateStateMachine',
         timeout: Duration.hours(2), // Allow up to 2 hours for full repopulation
         definition: stepfunctions.Chain.start(
           new stepfunctions.Map(this, 'ProcessSources', {
@@ -158,9 +158,9 @@ export class VideoStack extends Stack {
     // Create a trigger lambda for the Step Function
     const triggerRepopulateLambda = new nodejs.NodejsFunction(
       this,
-      'BombifyTriggerRepopulate',
+      'BombasticTriggerRepopulate',
       {
-        functionName: 'BombifyTriggerRepopulate',
+        functionName: 'BombasticTriggerRepopulate',
         description: 'Triggers the repopulation Step Function',
         entry: path.join(__dirname, '../lambda/trigger-repopulate.ts'),
         handler: 'handler',

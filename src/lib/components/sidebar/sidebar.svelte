@@ -502,9 +502,9 @@
                     </div>
                   {:else}
                     <div
-                      class="bg-muted flex h-12 w-12 flex-shrink-0 items-center justify-center rounded"
+                      class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded"
                     >
-                      <ListVideo class="text-muted-foreground !h-8 !w-8" />
+                      <ListVideo class="!h-8 !w-8" />
                     </div>
                   {/if}
                   {#if !isSidebarCollapsed}

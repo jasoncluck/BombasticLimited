@@ -8,7 +8,7 @@ const lambdaClient = new LambdaClient({
 });
 
 const BACKUP_FUNCTION_NAME =
-  process.env.BACKUP_LAMBDA_FUNCTION_NAME || 'BombifyDatabaseBackup-prod';
+  process.env.BACKUP_LAMBDA_FUNCTION_NAME || 'BombasticDatabaseBackup-prod';
 
 interface BackupOptions {
   dryRun?: boolean;
@@ -103,7 +103,7 @@ Examples:
 
 Environment Variables:
   AWS_REGION                    AWS region (default: us-west-2)
-  BACKUP_LAMBDA_FUNCTION_NAME   Lambda function name (default: BombifyDatabaseBackup-prod)
+  BACKUP_LAMBDA_FUNCTION_NAME   Lambda function name (default: BombasticDatabaseBackup-prod)
 
 💡 CloudWatch Logs:
   View logs at: https://console.aws.amazon.com/cloudwatch/home?region=${process.env.AWS_REGION || 'us-west-2'}#logsV2:log-groups/log-group/$252Faws$252Flambda$252F${BACKUP_FUNCTION_NAME}

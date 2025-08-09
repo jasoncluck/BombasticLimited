@@ -184,12 +184,19 @@ describe('MediaQueryState', () => {
 
   describe('error handling', () => {
     it('should handle missing window gracefully', () => {
-      delete (global as any).window;
+      // Save original window and temporarily set to undefined
+      const originalWindow = (global as any).window;
+      (global as any).window = undefined;
 
-      expect(() => {
-        const newState = new MediaQueryStateClass();
-        newState.initialize();
-      }).not.toThrow();
+      try {
+        expect(() => {
+          const newState = new MediaQueryStateClass();
+          newState.initialize();
+        }).not.toThrow();
+      } finally {
+        // Restore original window
+        (global as any).window = originalWindow;
+      }
     });
 
     it('should handle initialization multiple times', () => {
