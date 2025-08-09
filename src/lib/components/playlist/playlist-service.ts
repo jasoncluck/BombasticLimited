@@ -594,24 +594,14 @@ async function processWithOffscreenCanvas(
   });
 
   // Determine target output size
-  let targetWidth = optimalCrop.width;
-  let targetHeight = optimalCrop.height;
-
-  // For small standard resolution crops, upscale to improve quality
-  if (!isMaxRes && (optimalCrop.width < 200 || optimalCrop.height < 200)) {
-    targetWidth = 224;
-    targetHeight = 224;
-    console.log(
-      `Upscaling from ${optimalCrop.width}x${optimalCrop.height} to ${targetWidth}x${targetHeight}`
-    );
-  }
+  const targetWidth = optimalCrop.width;
+  const targetHeight = optimalCrop.height;
 
   const canvas = new OffscreenCanvas(targetWidth, targetHeight);
   const ctx = canvas.getContext('2d');
 
   if (!ctx) throw new Error('Failed to get canvas context');
 
-  // Draw cropped and potentially upscaled image
   ctx.drawImage(
     imageBitmap,
     optimalCrop.x,
@@ -626,7 +616,7 @@ async function processWithOffscreenCanvas(
 
   const blob = await canvas.convertToBlob({
     type: 'image/webp',
-    quality: !isMaxRes && targetWidth > optimalCrop.width ? 0.9 : 0.8, // Higher quality for upscaled images
+    quality: !isMaxRes && targetWidth > optimalCrop.width ? 0.9 : 0.8,
   });
   const arrayBuffer = await blob.arrayBuffer();
 
@@ -672,20 +662,8 @@ async function processWithCanvas(
         });
 
         // Determine target output size
-        let targetWidth = optimalCrop.width;
-        let targetHeight = optimalCrop.height;
-
-        // For small standard resolution crops, upscale to improve quality
-        if (
-          !isMaxRes &&
-          (optimalCrop.width < 200 || optimalCrop.height < 200)
-        ) {
-          targetWidth = 224;
-          targetHeight = 224;
-          console.log(
-            `Canvas upscaling from ${optimalCrop.width}x${optimalCrop.height} to ${targetWidth}x${targetHeight}`
-          );
-        }
+        const targetWidth = optimalCrop.width;
+        const targetHeight = optimalCrop.height;
 
         const canvas = document.createElement('canvas');
         canvas.width = targetWidth;
@@ -694,7 +672,6 @@ async function processWithCanvas(
         const ctx = canvas.getContext('2d');
         if (!ctx) throw new Error('Failed to get canvas context');
 
-        // Draw cropped and potentially upscaled image
         ctx.drawImage(
           img,
           optimalCrop.x,
@@ -721,7 +698,7 @@ async function processWithCanvas(
             reader.readAsDataURL(blob);
           },
           'image/webp',
-          !isMaxRes && targetWidth > optimalCrop.width ? 0.9 : 0.8 // Higher quality for upscaled images
+          !isMaxRes && targetWidth > optimalCrop.width ? 0.9 : 0.8 // Higher quality for lower resolution images
         );
       } catch (error) {
         reject(error);
