@@ -17,7 +17,7 @@ import * as logs from 'aws-cdk-lib/aws-logs';
 import * as path from 'path';
 
 export interface BackupStackProps extends StackProps {
-  environment?: string;
+  stage?: string;
 }
 
 export class BackupStack extends Stack {
@@ -27,8 +27,8 @@ export class BackupStack extends Stack {
   constructor(scope: Construct, id: string, props: BackupStackProps) {
     super(scope, id, props);
 
-    const environment = props.environment || 'prod';
-    const bucketName = `bombastic-database-backups-${environment}`;
+    const stage = props.stage || 'prod';
+    const bucketName = `bombastic-database-backups-${stage}`;
 
     // S3 Bucket for database backups
     this.backupBucket = new s3.Bucket(this, 'DatabaseBackupBucket', {
@@ -55,7 +55,7 @@ export class BackupStack extends Stack {
             },
           ],
           expiration:
-            environment === 'staging' ? Duration.days(90) : Duration.days(2555), // ~7 years for production
+            stage === 'staging' ? Duration.days(90) : Duration.days(2555), // ~7 years for production
         },
         {
           id: 'NonCurrentVersionCleanup',
@@ -70,14 +70,12 @@ export class BackupStack extends Stack {
         },
       ],
       removalPolicy:
-        environment === 'staging'
-          ? RemovalPolicy.DESTROY
-          : RemovalPolicy.RETAIN,
+        stage === 'staging' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
     });
 
     // IAM Role for database backup operations
     this.backupRole = new iam.Role(this, 'DatabaseBackupRole', {
-      roleName: `bombastic-database-backup-role-${environment}`,
+      roleName: `bombastic-database-backup-role-${stage}`,
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName(
@@ -120,7 +118,7 @@ export class BackupStack extends Stack {
       this,
       'DatabaseBackupFunction',
       {
-        functionName: `BombasticDatabaseBackup-${environment}`,
+        functionName: `BombasticDatabaseBackup-${stage}`,
         description: 'Performs database backups to S3',
         entry: path.join(__dirname, '../lambda/database-backup.ts'),
         handler: 'handler',
@@ -130,7 +128,7 @@ export class BackupStack extends Stack {
         role: this.backupRole,
         environment: {
           BACKUP_BUCKET_NAME: this.backupBucket.bucketName,
-          ENVIRONMENT: environment,
+          ENVIRONMENT: stage,
           SUPABASE_SERVICE_API_KEY_PROD:
             process.env.SUPABASE_SERVICE_API_KEY_PROD ?? '',
           PUBLIC_SUPABASE_URL_PROD: process.env.PUBLIC_SUPABASE_URL_PROD ?? '',
@@ -145,7 +143,7 @@ export class BackupStack extends Stack {
       this,
       'DatabaseRestoreFunction',
       {
-        functionName: `BombasticDatabaseRestore-${environment}`,
+        functionName: `BombasticDatabaseRestore-${stage}`,
         description:
           'Performs database restore operations from S3 backups for disaster recovery',
         entry: path.join(__dirname, '../lambda/database-restore.ts'),
@@ -156,7 +154,7 @@ export class BackupStack extends Stack {
         role: this.backupRole,
         environment: {
           BACKUP_BUCKET_NAME: this.backupBucket.bucketName,
-          ENVIRONMENT: environment,
+          ENVIRONMENT: stage,
           SUPABASE_SERVICE_API_KEY_PROD:
             process.env.SUPABASE_SERVICE_API_KEY_PROD || '',
           PUBLIC_SUPABASE_URL_PROD: process.env.PUBLIC_SUPABASE_URL_PROD || '',
@@ -208,7 +206,7 @@ export class BackupStack extends Stack {
 
     // CloudWatch Dashboard for backup monitoring
     const dashboard = new cloudwatch.Dashboard(this, 'BackupDashboard', {
-      dashboardName: `BombasticBackups-${environment}`,
+      dashboardName: `BombasticBackups-${stage}`,
     });
 
     dashboard.addWidgets(

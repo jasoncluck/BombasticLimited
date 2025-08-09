@@ -1,6 +1,5 @@
 import { youtube, youtube_v3 } from '@googleapis/youtube';
 import { createClient } from '@supabase/supabase-js';
-import { randomBytes } from 'crypto';
 import { CHANNEL_INFO, ChannelSource } from '../channel';
 
 const MAX_RESULTS = 5; // Reduced from 50 since playlists are not added frequently
@@ -53,8 +52,8 @@ export const populatePlaylists = async ({
 }: {
   source: ChannelSource;
 }) => {
-  const supabaseApiKey = process.env.SUPABASE_SERVICE_API_KEY_PROD;
-  const supabaseUrl = process.env.PUBLIC_SUPABASE_URL_PROD;
+  const supabaseApiKey = process.env.SUPABASE_SERVICE_API_KEY;
+  const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
   if (!supabaseApiKey || !supabaseUrl) {
     const errMsg = 'Could not find Supabase env.';
     console.error(JSON.stringify({ stage: 'init', error: errMsg }));
@@ -101,40 +100,39 @@ export const populatePlaylists = async ({
       console.log(
         JSON.stringify({
           stage: 'user_found',
-          message: `Found existing user for ${email}: ${userId}`,
-          source,
+          message: `Found existing user for source: ${source}`,
+          userId,
         })
       );
     } else {
       // User doesn't exist, create a new one
-      const password = randomBytes(32).toString('base64url');
-
-      const { data: newUserId, error: userError } = await supabaseClient.rpc(
-        'create_user',
-        {
+      const { data: newUser, error: createUserError } = await supabaseClient
+        .from('auth.users')
+        .insert({
           email,
-          password,
           username,
-        }
-      );
+          // Add other necessary fields based on your user schema
+        })
+        .select('id')
+        .single();
 
-      if (!newUserId) {
+      if (createUserError || !newUser) {
         console.error(
           JSON.stringify({
             stage: 'create_user',
             source,
-            error: userError,
+            error: createUserError,
           })
         );
-        throw new Error('Failed to create user for source.');
+        throw new Error(`Failed to create user for source: ${source}`);
       }
 
-      userId = newUserId;
+      userId = newUser.id;
       console.log(
         JSON.stringify({
-          stage: 'create_user',
-          message: `Created new user for ${email}: ${userId}`,
-          source,
+          stage: 'user_created',
+          message: `Created new user for source: ${source}`,
+          userId,
         })
       );
     }
@@ -144,385 +142,84 @@ export const populatePlaylists = async ({
       auth: process.env.GOOGLE_API_KEY,
     });
 
-    const youtubePlaylistIds = new Set<string>();
+    // Fetch playlists from YouTube
+    const { data } = await youtubeClient.playlists.list({
+      part: ['id', 'snippet', 'contentDetails'],
+      channelId: channelId,
+      maxResults: MAX_RESULTS,
+    });
 
-    // Step 1: Fetch ALL playlists from YouTube first (excluding uploads playlist)
-    let pageToken: string | null | undefined;
-    let totalPlaylistsProcessed = 0;
-    let uploadsPlaylistSkipped = false;
+    const youtubePlaylistItems = data.items || [];
 
-    do {
-      let items;
-      try {
-        const { data } = await youtubeClient.playlists.list({
-          part: ['id', 'snippet'],
-          channelId,
-          maxResults: MAX_RESULTS,
-          ...(pageToken && { pageToken }),
-        });
+    console.log(
+      JSON.stringify({
+        stage: 'fetch_youtube_playlists',
+        message: `Fetched ${youtubePlaylistItems.length} playlists from YouTube`,
+        source,
+      })
+    );
 
-        ({ nextPageToken: pageToken, items } = data);
-
-        if (!items || items.length === 0) {
-          console.log(
-            JSON.stringify({
-              stage: 'fetch_youtube_playlists',
-              message: `No playlists found for: ${source}`,
-              source,
-            })
-          );
-          break;
-        }
-      } catch (e) {
-        console.error(
-          JSON.stringify({
-            stage: 'fetch_youtube_playlists',
-            source,
-            channelId,
-            error: e,
-          })
-        );
-        throw e;
-      }
-
-      for (const item of items) {
-        if (!item.id) continue;
-
-        // Skip the uploads playlist since it's handled by populateVideos
-        if (item.id === uploadPlaylistId) {
-          uploadsPlaylistSkipped = true;
-          console.log(
-            JSON.stringify({
-              stage: 'skip_uploads_playlist',
-              message: `Skipping uploads playlist ${item.id} as it's handled by populateVideos`,
-              source,
-              playlistId: item.id,
-              playlistName: item.snippet?.title,
-            })
-          );
-          continue;
-        }
-
-        youtubePlaylistIds.add(item.id);
-        totalPlaylistsProcessed++;
-
-        // Get the best quality thumbnails with proper fallbacks
+    // Process playlists
+    const playlists = youtubePlaylistItems
+      .filter((item) => item.id !== uploadPlaylistId) // Exclude the upload playlist
+      .map((item) => {
         const { thumbnailUrl, thumbnailMaxResUrl } = getBestThumbnailUrl(
           item.snippet?.thumbnails
         );
 
-        // Log thumbnail information for debugging
-        console.log(
-          JSON.stringify({
-            stage: 'thumbnail_selection',
-            playlistId: item.id,
-            playlistName: item.snippet?.title,
-            availableThumbnails: {
-              default: item.snippet?.thumbnails?.default?.url
-                ? 'available'
-                : 'missing',
-              medium: item.snippet?.thumbnails?.medium?.url
-                ? 'available'
-                : 'missing',
-              high: item.snippet?.thumbnails?.high?.url
-                ? 'available'
-                : 'missing',
-              maxres: item.snippet?.thumbnails?.maxres?.url
-                ? 'available'
-                : 'missing',
-            },
-            selectedThumbnails: {
-              thumbnailUrl: thumbnailUrl ? 'selected' : 'none',
-              thumbnailMaxResUrl: thumbnailMaxResUrl ? 'selected' : 'none',
-            },
-            source,
-          })
-        );
-
-        // Use autogenerated ID
-        const playlistObj = {
-          youtube_id: item.id,
-          name: item.snippet?.title ?? 'Untitled',
-          created_by: userId,
+        return {
+          id: item.id,
+          title: item.snippet?.title,
+          description: item.snippet?.description,
+          published_at: item.snippet?.publishedAt,
           thumbnail_url: removeLiveSuffix(thumbnailUrl),
           thumbnail_maxres_url: removeLiveSuffix(thumbnailMaxResUrl),
-          type: 'Public',
+          source: source,
+          user_id: userId,
         };
+      });
 
-        // Upsert playlist and get the row (to get the internal playlist id)
-        const { data: upsertedPlaylist, error: playlistError } =
-          await supabaseClient
-            .from('playlists')
-            .upsert(playlistObj, {
-              onConflict: 'youtube_id',
-            })
-            .select()
-            .single();
-
-        if (playlistError || !upsertedPlaylist) {
-          console.error(
-            JSON.stringify({
-              stage: 'upsert_playlist',
-              source,
-              playlistId: item.id,
-              error: playlistError,
-              playlistObj,
-            })
-          );
-          continue;
-        }
-
-        // Now fetch video IDs for this playlist from YouTube
-        let videoPageToken: string | null | undefined;
-        const allVideoIds: string[] = [];
-        do {
-          try {
-            const { data: playlistItemsData } =
-              await youtubeClient.playlistItems.list({
-                part: ['contentDetails'],
-                playlistId: item.id!,
-                maxResults: 50,
-                ...(videoPageToken && { pageToken: videoPageToken }),
-              });
-            const { items: videoItems, nextPageToken: nextVideoPageToken } =
-              playlistItemsData ?? {};
-
-            if (videoItems && videoItems.length > 0) {
-              allVideoIds.push(
-                ...videoItems
-                  .map((v) => v.contentDetails?.videoId)
-                  .filter((videoId): videoId is string => !!videoId)
-              );
-            }
-
-            videoPageToken = nextVideoPageToken;
-          } catch (e) {
-            console.error(
-              JSON.stringify({
-                stage: 'fetch_playlist_videos',
-                source,
-                playlistId: item.id,
-                error: e,
-              })
-            );
-            throw e;
-          }
-        } while (videoPageToken);
-
-        if (allVideoIds.length === 0) {
-          console.log(
-            JSON.stringify({
-              stage: 'no_videos_in_playlist',
-              message: `No videos found for playlist ${playlistObj.name}. Will clean up any existing playlist_videos.`,
-              source,
-              playlistId: item.id,
-            })
-          );
-        }
-
-        // Get existing playlist_videos for this playlist to identify what to delete
-        const { data: existingPlaylistVideos, error: existingError } =
-          await supabaseClient
-            .from('playlist_videos')
-            .select('video_id')
-            .eq('playlist_id', upsertedPlaylist.id);
-
-        if (existingError) {
-          console.error(
-            JSON.stringify({
-              stage: 'fetch_existing_playlist_videos',
-              source,
-              playlistId: item.id,
-              internalPlaylistId: upsertedPlaylist.id,
-              error: existingError,
-            })
-          );
-          throw new Error('Failed to fetch existing playlist videos');
-        }
-
-        // Find videos to remove (exist in DB but not in YouTube)
-        const existingVideoIds = (existingPlaylistVideos || []).map(
-          (pv) => pv.video_id
-        );
-        const videosToRemove = existingVideoIds.filter(
-          (videoId) => !allVideoIds.includes(videoId)
-        );
-
-        // Remove playlist_videos that are no longer in YouTube
-        if (videosToRemove.length > 0) {
-          const { error: deleteError } = await supabaseClient
-            .from('playlist_videos')
-            .delete()
-            .eq('playlist_id', upsertedPlaylist.id)
-            .in('video_id', videosToRemove);
-
-          if (deleteError) {
-            console.error(
-              JSON.stringify({
-                stage: 'delete_stale_playlist_videos',
-                source,
-                playlistId: item.id,
-                internalPlaylistId: upsertedPlaylist.id,
-                videosToRemove,
-                error: deleteError,
-              })
-            );
-          } else {
-            console.log(
-              JSON.stringify({
-                stage: 'delete_stale_playlist_videos',
-                message: `Removed ${videosToRemove.length} stale videos from playlist ${playlistObj.name}`,
-                source,
-                playlistId: item.id,
-                removedVideoIds: videosToRemove,
-              })
-            );
-          }
-        }
-
-        // Insert/update current playlist_videos
-        let videoPosition = 1;
-        for (const videoId of allVideoIds) {
-          const { error: insertError } = await supabaseClient
-            .from('playlist_videos')
-            .upsert(
-              {
-                playlist_id: upsertedPlaylist.id,
-                video_id: videoId,
-                video_position: videoPosition,
-              },
-              {
-                onConflict: 'playlist_id,video_id',
-              }
-            );
-
-          if (insertError) {
-            console.error(
-              JSON.stringify({
-                stage: 'upsert_playlist_video',
-                source,
-                playlistId: item.id,
-                videoId,
-                error: insertError,
-              })
-            );
-          }
-          videoPosition++;
-        }
-
-        console.log(
-          JSON.stringify({
-            stage: 'playlist_processing_complete',
-            message: `Processed playlist ${playlistObj.name}: ${allVideoIds.length} videos total, ${videosToRemove.length} removed`,
-            source,
-            playlistId: item.id,
-            totalVideos: allVideoIds.length,
-            removedVideos: videosToRemove.length,
-          })
-        );
-      }
-    } while (pageToken);
-
-    // Step 2: Handle playlists that no longer exist on YouTube (excluding uploads playlist)
-    // Get all playlists for this user that are "Official" type, excluding uploads playlist
-    const { data: existingPlaylists, error: existingPlaylistsError } =
-      await supabaseClient
+    if (playlists.length > 0) {
+      // Upsert playlists
+      const { error: upsertError } = await supabaseClient
         .from('playlists')
-        .select('id, youtube_id, name')
-        .eq('created_by', userId)
-        .eq('type', 'Public')
-        .neq('youtube_id', uploadPlaylistId); // Exclude uploads playlist from cleanup
+        .upsert(playlists, { onConflict: 'id' });
 
-    if (existingPlaylistsError) {
-      console.error(
-        JSON.stringify({
-          stage: 'fetch_existing_playlists',
-          source,
-          error: existingPlaylistsError,
-        })
-      );
-      throw new Error('Failed to fetch existing playlists');
-    }
-
-    // Find playlists to remove (exist in DB but not in YouTube, excluding uploads playlist)
-    const playlistsToRemove = (existingPlaylists || []).filter(
-      (playlist) =>
-        playlist.youtube_id && !youtubePlaylistIds.has(playlist.youtube_id)
-    );
-
-    if (playlistsToRemove.length > 0) {
-      // First, delete all playlist_videos for these playlists
-      for (const playlist of playlistsToRemove) {
-        const { error: deletePlaylistVideosError } = await supabaseClient
-          .from('playlist_videos')
-          .delete()
-          .eq('playlist_id', playlist.id);
-
-        if (deletePlaylistVideosError) {
-          console.error(
-            JSON.stringify({
-              stage: 'delete_playlist_videos_for_removed_playlist',
-              source,
-              playlistId: playlist.id,
-              youtubeId: playlist.youtube_id,
-              error: deletePlaylistVideosError,
-            })
-          );
-        }
-      }
-
-      // Then delete the playlists themselves
-      const playlistIdsToRemove = playlistsToRemove.map((p) => p.id);
-      const { error: deletePlaylistsError } = await supabaseClient
-        .from('playlists')
-        .delete()
-        .in('id', playlistIdsToRemove);
-
-      if (deletePlaylistsError) {
+      if (upsertError) {
         console.error(
           JSON.stringify({
-            stage: 'delete_removed_playlists',
+            stage: 'upsert_playlists',
             source,
-            playlistIdsToRemove,
-            error: deletePlaylistsError,
+            error: upsertError,
           })
         );
-      } else {
-        console.log(
-          JSON.stringify({
-            stage: 'delete_removed_playlists',
-            message: `Removed ${playlistsToRemove.length} playlists that no longer exist on YouTube`,
-            source,
-            removedPlaylists: playlistsToRemove.map((p) => ({
-              id: p.id,
-              name: p.name,
-              youtube_id: p.youtube_id,
-            })),
-          })
-        );
+        throw upsertError;
       }
-    }
 
-    console.log(
-      JSON.stringify({
-        stage: 'sync_complete',
-        message: `Playlist sync completed for ${source}. Processed ${totalPlaylistsProcessed} YouTube playlists (skipped uploads playlist), removed ${playlistsToRemove.length} stale playlists`,
-        source,
-        youtubePlaylistsProcessed: totalPlaylistsProcessed,
-        playlistsRemoved: playlistsToRemove.length,
-        uploadsPlaylistSkipped,
-      })
-    );
+      console.log(
+        JSON.stringify({
+          stage: 'upsert_playlists_success',
+          message: `Upserted ${playlists.length} playlists for source: ${source}`,
+          playlistIds: playlists.map((p) => p.id),
+        })
+      );
+    } else {
+      console.log(
+        JSON.stringify({
+          stage: 'no_playlists_found',
+          message: `No public playlists found for source: ${source}`,
+        })
+      );
+    }
   } catch (e) {
-    // Final catch-all for unhandled errors
     console.error(
       JSON.stringify({
-        stage: 'final',
+        stage: 'final_error',
         source,
         error: e instanceof Error ? e.message : e,
         stack: e instanceof Error ? e.stack : undefined,
       })
     );
-    throw e; // Rethrow to signal Lambda failure
+    throw e;
   }
 };
