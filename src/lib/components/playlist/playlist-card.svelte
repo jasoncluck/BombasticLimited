@@ -17,8 +17,8 @@
 </script>
 
 <a
-  class="hover:bg-secondary grid transform cursor-pointer grid-cols-[4rem_1fr] items-center
-      gap-2 rounded p-3"
+  class="grid transform cursor-pointer grid-cols-[4rem_1fr] items-center gap-2
+      rounded p-3 hover:brightness-110"
   href={`/playlist/${playlist.short_id}`}
 >
   {#if playlist.processedImageUrl}
@@ -38,7 +38,7 @@
     </div>
   {/if}
 
-  <div class="min-w-0">
+  <div class="ml-2 min-w-0">
     <p class="mb-1 text-sm font-medium">
       {playlist.name}
     </p>
