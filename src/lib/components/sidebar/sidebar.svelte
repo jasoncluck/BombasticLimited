@@ -322,13 +322,13 @@
         <!-- Skeleton playlist header when loading-->
         {#if !isSidebarCollapsed}
           <!-- Full header with exact spacing matching real content structure -->
-          <Skeleton class="my-1 h-10 w-10 flex-shrink-0 rounded-full" />
+          <Skeleton class="my-1 h-9 w-9 flex-shrink-0 rounded-full" />
           <h2 class="ml-4 text-lg font-semibold tracking-tight opacity-50">
             Playlists
           </h2>
         {:else}
           <!-- Collapsed header - centered circle -->
-          <Skeleton class="my-1 h-10 w-10 flex-shrink-0 rounded-full" />
+          <Skeleton class="my-1 h-9 w-9 flex-shrink-0 rounded-full" />
         {/if}
       {:else}
         <!-- Real content with identical structure to skeleton -->
