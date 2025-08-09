@@ -9,6 +9,11 @@ vi.mock('$lib/stores/notification', () => ({
   showNotification: vi.fn(),
 }));
 
+// Mock browser environment
+vi.mock('$app/environment', () => ({
+  browser: true,
+}));
+
 // Mock the source constants
 vi.mock('$lib/constants/source', () => ({
   SOURCE_INFO: {
