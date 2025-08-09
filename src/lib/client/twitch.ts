@@ -1,6 +1,8 @@
 import { AppTokenAuthProvider } from '@twurple/auth';
 import { ApiClient } from '@twurple/api';
+
 import { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } from '$env/static/private';
+
 import type { HelixStream } from '@twurple/api';
 
 const clientId = TWITCH_CLIENT_ID;
@@ -45,6 +47,7 @@ const TEST_LIVE_END = 10000; // Go offline after 20 seconds
 export async function getStreamStatus(
   userId: string
 ): Promise<StreamStatus | null> {
+
   if (!apiClient) {
     console.warn('Twitch API client not initialized - missing credentials');
     return null;
@@ -53,8 +56,10 @@ export async function getStreamStatus(
   const now = Date.now();
   const cached = streamCache.get(userId);
 
+
   // Return cached result if still valid
   if (cached && now - cached.lastChecked < CACHE_DURATION) {
+
     return cached;
   }
 
@@ -91,6 +96,7 @@ export async function getStreamStatus(
 /**
  * Get stream status for multiple users with rate limiting
  */
+
 export async function getMultipleStreamStatus(
   userIds: string[]
 ): Promise<StreamStatus[]> {
@@ -152,6 +158,7 @@ export async function getMultipleStreamStatus(
   }
 
   // Production mode - use real API
+
   if (!apiClient) {
     console.warn('Twitch API client not initialized - missing credentials');
     return [];
@@ -165,11 +172,13 @@ export async function getMultipleStreamStatus(
       results.push(status);
     }
 
+
     // Add delay between requests to respect rate limits (except for last request)
     if (i < userIds.length - 1) {
       await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY));
     }
   }
+
 
   return results;
 }
@@ -182,6 +191,7 @@ export function clearStreamCache(): void {
 }
 
 /**
+
  * Reset test timing (useful for testing)
  */
 export function resetTestTimer(): void {

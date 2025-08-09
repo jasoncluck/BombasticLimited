@@ -57,6 +57,7 @@ describe('Twitch API Client', () => {
     it('should handle missing credentials gracefully', async () => {
       // Since we're in test environment, the API client won't initialize
       // This tests the graceful degradation behavior
+
       const { getStreamStatus, getMultipleStreamStatus } = await import(
         '../twitch.js'
       );
@@ -68,6 +69,7 @@ describe('Twitch API Client', () => {
       expect(singleResult === null || typeof singleResult === 'object').toBe(
         true
       );
+
       expect(Array.isArray(multipleResult)).toBe(true);
     });
   });
@@ -77,6 +79,7 @@ describe('Twitch API Client', () => {
       const { getStreamStatus } = await import('../twitch.js');
 
       const result = await getStreamStatus('123456');
+
 
       // If we get a result, it should have the expected structure
       if (result) {
@@ -88,4 +91,7 @@ describe('Twitch API Client', () => {
       }
     });
   });
+
 });
+
+

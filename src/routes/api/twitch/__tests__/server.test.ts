@@ -58,6 +58,7 @@ describe('/api/twitch endpoint', () => {
       expect.any(Function),
       expect.objectContaining({
         stop: expect.any(Function),
+
       })
     );
   });
@@ -71,4 +72,6 @@ describe('/api/twitch endpoint', () => {
     expect(Array.isArray(sourceModule.SOURCES)).toBe(true);
     expect(typeof sourceModule.SOURCE_INFO).toBe('object');
   });
+
 });
+
