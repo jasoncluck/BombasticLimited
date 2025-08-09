@@ -143,7 +143,9 @@
                     class="flex flex-col {isPlaylistOwner && 'cursor-pointer'} 
             items-start border-none bg-transparent p-0 text-left"
                   >
-                    <p class="text-muted-foreground text-sm tracking-tight">
+                    <p
+                      class="text-muted-foreground mb-2 text-sm tracking-tight"
+                    >
                       {playlist.type === 'Public'
                         ? 'Public Playlist'
                         : 'Private Playlist'}

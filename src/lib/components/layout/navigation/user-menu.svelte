@@ -14,97 +14,100 @@
   } from '@lucide/svelte';
   import { handleUpdateProfileContentDisplay } from '$lib/components/profile/profile-service';
   import type { LayoutState } from '$lib/state/layout.svelte.js';
-  import type { ContentState } from '$lib/state/content.svelte.js';
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
   import type { UserProfile } from '$lib/supabase/user-profiles';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
+  import { getContentState } from '$lib/state/content.svelte';
 
   let {
     userProfile,
     session,
     supabase,
     layoutState,
-    contentState,
     openAccountDrawer = $bindable(),
   }: {
     userProfile: UserProfile | null;
     session: Session | null;
     supabase: SupabaseClient<Database>;
     layoutState: LayoutState;
-    contentState: ContentState;
     openAccountDrawer: boolean;
   } = $props();
 
-  const { canHover } = getMediaQueryState();
+  const contentState = getContentState();
+  const mediaQueryState = getMediaQueryState();
+
+  const { canHover, isSm } = $derived(mediaQueryState);
 </script>
 
 {#if session}
   <!-- Content Display Preference (Desktop) -->
-  <DropdownMenu.Root>
-    <DropdownMenu.Trigger
-      data-testid="user-preferences"
-      id="user-preferences"
-      class={buttonVariants({
-        variant: 'outline',
-        class: 'hidden cursor-pointer outline-none sm:flex',
-      })}
-    >
-      <div class="flex items-center gap-2">
-        {#if userProfile?.content_display === 'TILES'}
-          <div class="flex items-center gap-2">
-            <GalleryHorizontal />
-            Card
-          </div>
-        {:else}
-          <div class="flex items-center gap-2">
-            <Table />
-            Table
-          </div>
-        {/if}
-      </div>
-    </DropdownMenu.Trigger>
-    <DropdownMenu.Content>
-      <DropdownMenu.Group>
-        <DropdownMenu.Item
-          class="cursor-pointer"
-          onclick={() => {
-            if (userProfile?.content_display !== 'TILES') {
-              contentState.resetState();
-              handleUpdateProfileContentDisplay({
-                contentDisplay: 'TILES',
-                supabase,
-                session,
-              });
-            }
-          }}
-        >
-          <div class="flex items-center gap-2">
-            <GalleryHorizontal />
-            Card
-          </div>
-        </DropdownMenu.Item>
-        <DropdownMenu.Item
-          class="cursor-pointer"
-          onclick={() => {
-            if (userProfile?.content_display !== 'TABLE') {
-              contentState.resetState();
-              handleUpdateProfileContentDisplay({
-                contentDisplay: 'TABLE',
-                supabase,
-                session,
-              });
-            }
-          }}
-        >
-          <div class="flex items-center gap-2">
-            <Table />
-            Table
-          </div>
-        </DropdownMenu.Item>
-      </DropdownMenu.Group>
-    </DropdownMenu.Content>
-  </DropdownMenu.Root>
+  {#if isSm}
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger
+        data-testid="user-preferences"
+        id="user-preferences"
+        class={buttonVariants({
+          variant: 'ghost',
+          class: 'cursor-pointer outline-none',
+        })}
+      >
+        <div class="flex items-center gap-2">
+          {#if userProfile?.content_display === 'TILES'}
+            <div class="flex items-center gap-2">
+              <GalleryHorizontal />
+              Card
+            </div>
+          {:else}
+            <div class="flex items-center gap-2">
+              <Table />
+              Table
+            </div>
+          {/if}
+        </div>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Content>
+        <DropdownMenu.Group>
+          <DropdownMenu.Item
+            class="cursor-pointer"
+            onclick={() => {
+              if (userProfile?.content_display !== 'TILES') {
+                contentState.resetState();
+                handleUpdateProfileContentDisplay({
+                  contentDisplay: 'TILES',
+                  supabase,
+                  session,
+                });
+              }
+            }}
+          >
+            <div class="flex items-center gap-2">
+              <GalleryHorizontal />
+              Card
+            </div>
+          </DropdownMenu.Item>
+          <DropdownMenu.Item
+            class="cursor-pointer"
+            onclick={() => {
+              if (userProfile?.content_display !== 'TABLE') {
+                contentState.resetState();
+                handleUpdateProfileContentDisplay({
+                  contentDisplay: 'TABLE',
+                  supabase,
+                  session,
+                });
+              }
+            }}
+          >
+            <div class="flex items-center gap-2">
+              <Table />
+              Table
+            </div>
+          </DropdownMenu.Item>
+        </DropdownMenu.Group>
+      </DropdownMenu.Content>
+    </DropdownMenu.Root>
+  {/if}
 
   <!-- User Menu -->
   {#if canHover}
