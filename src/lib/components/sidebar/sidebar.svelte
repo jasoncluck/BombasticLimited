@@ -14,6 +14,7 @@
   import { handleCreatePlaylist } from '../playlist/playlist-service';
   import Button, { buttonVariants } from '../ui/button/button.svelte';
   import PlaylistContextMenu from '../playlist/playlist-context-menu.svelte';
+  import SidebarItem from './SidebarItem.svelte';
   import { Skeleton } from '$lib/components/ui/skeleton';
   import type { Playlist } from '$lib/supabase/playlists';
   import StreamingIndicator from '../streaming/streaming-indicator.svelte';
@@ -257,24 +258,7 @@
     {#if sidebarState.showPlaceholder}
       <!-- Skeleton sources when loading -->
       {#each Array(4)}
-        <div
-          class="flex items-center {!isSidebarCollapsed
-            ? 'h-[56px] px-2 py-1'
-            : 'h-[56px] justify-center px-1 py-1'}"
-        >
-          {#if !isSidebarCollapsed}
-            <!-- Full width source item skeleton with exact spacing -->
-            <div class="flex w-full items-center space-x-3">
-              <Skeleton class="h-12 w-12 flex-shrink-0 rounded" />
-              <div class="min-w-0 flex-1">
-                <Skeleton class="h-4 w-full" />
-              </div>
-            </div>
-          {:else}
-            <!-- Collapsed source item skeleton -->
-            <Skeleton class="h-12 w-12 flex-shrink-0 rounded" />
-          {/if}
-        </div>
+        <SidebarItem isLoading={true} {isSidebarCollapsed} />
       {/each}
     {:else}
       <!-- Real sources -->
@@ -392,59 +376,15 @@
       {#if sidebarState.showPlaceholder}
         <!-- Skeleton playlists when loading -->
         {#each Array(6), i}
-          <!-- Simulate Button component structure -->
-          <div
+          <SidebarItem 
+            isLoading={true} 
+            {isSidebarCollapsed} 
+            showSpecialIcon={true}
+            iconIndex={i}
             class="focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground relative inline-flex items-center justify-center rounded-md text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-1 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 {!isSidebarCollapsed
               ? 'h-[56px] px-2 py-1'
               : 'h-[56px] w-10 justify-center px-1 py-1'}"
-          >
-            <div
-              class="absolute flex grow items-center
-                {!isSidebarCollapsed ? 'w-full grow' : 'item-center'}"
-            >
-              {#if !isSidebarCollapsed}
-                <!-- Full width playlist item skeleton -->
-                <div class="flex w-full items-center space-x-3">
-                  <div
-                    class="flex h-12 w-12 flex-shrink-0 items-center justify-center"
-                  >
-                    <!-- Show ListVideo more frequently to match real behavior -->
-                    {#if i % 3 === 0}
-                      <Skeleton class="h-12 w-12 rounded" />
-                    {:else}
-                      <div
-                        class="bg-muted flex h-12 w-12 animate-pulse items-center justify-center rounded"
-                      >
-                        <ListVideo
-                          class="text-muted-foreground h-8 w-8 opacity-50"
-                        />
-                      </div>
-                    {/if}
-                  </div>
-                  <div class="min-w-0 flex-1">
-                    <Skeleton class="h-4 w-full" />
-                  </div>
-                </div>
-              {:else}
-                <!-- Collapsed playlist item skeleton -->
-                <div
-                  class="flex h-12 w-12 flex-shrink-0 items-center justify-center"
-                >
-                  {#if i % 3 === 0}
-                    <Skeleton class="h-12 w-12 rounded" />
-                  {:else}
-                    <div
-                      class="bg-muted flex h-12 w-12 animate-pulse items-center justify-center rounded"
-                    >
-                      <ListVideo
-                        class="text-muted-foreground h-8 w-8 opacity-50"
-                      />
-                    </div>
-                  {/if}
-                </div>
-              {/if}
-            </div>
-          </div>
+          />
         {/each}
       {:else if sidebarState.playlists === null}
         <Loader class="w-full animate-spin" />
