@@ -63,7 +63,7 @@
     >
       <!-- Fixed height container to prevent layout shifts -->
       <div class="min-h-full">
-        {#if false}
+        {#if sidebarState.showPlaceholder}
           <!-- Skeleton with exact dimensions matching real sidebar -->
           <aside class="h-full overflow-hidden">
             <!-- Sources Section Skeleton -->
