@@ -45,13 +45,6 @@ SELECT
   );
 
 SELECT
-  has_function (
-    'public',
-    'get_playlist_by_short_id',
-    'Function get_playlist_by_short_id should exist'
-  );
-
-SELECT
   finish ();
 
 ROLLBACK;

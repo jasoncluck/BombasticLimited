@@ -23,20 +23,6 @@ SELECT
 SELECT
   has_function (
     'public',
-    'get_playlist_by_short_id',
-    'Function get_playlist_by_short_id should exist'
-  );
-
-SELECT
-  has_function (
-    'public',
-    'get_playlist_by_youtube_id',
-    'Function get_playlist_by_youtube_id should exist'
-  );
-
-SELECT
-  has_function (
-    'public',
     'get_playlists_for_username',
     'Function get_playlists_for_username should exist'
   );
@@ -97,26 +83,6 @@ SELECT
     'search_playlists should find playlists matching description search'
   );
 
--- Test get_playlist_by_short_id functionality
-SELECT
-  ok (
-    EXISTS (
-      SELECT
-        1
-      FROM
-        public.get_playlist_by_short_id (
-          (
-            SELECT
-              short_id
-            FROM
-              public.playlists
-            WHERE
-              id = 9100
-          )
-        )
-    ),
-    'get_playlist_by_short_id should find playlist by generated short_id'
-  );
 
 -- Test get_playlist_by_youtube_id functionality
 SELECT

@@ -35,7 +35,6 @@ All playlist query functions now filter out soft-deleted playlists with
 `WHERE deleted_at IS NULL`:
 
 - `get_playlist_data` - Main playlist + videos query
-- `get_playlist_by_short_id` - Lookup by short ID
 - `get_playlist_by_youtube_id` - Lookup by YouTube ID
 - `get_user_playlists` - User's playlist collection
 - `get_playlists_for_username` - Public playlists for a username

@@ -396,49 +396,6 @@ SET
   FROM context_videos;
 $$;
 
--- Function to get playlist by short_id
-CREATE OR REPLACE FUNCTION public.get_playlist_by_short_id (p_short_id text) RETURNS TABLE (
-  id bigint,
-  created_at TIMESTAMP WITH TIME ZONE,
-  name text,
-  short_id text,
-  created_by uuid,
-  description text,
-  thumbnail_url text,
-  thumbnail_maxres_url text,
-  type public.playlist_type,
-  image_properties jsonb,
-  youtube_id text,
-  profile_username text,
-  sorted_by public.playlist_sorted_by,
-  sort_order public.playlist_sort_order
-)
-SET
-  search_path = '' LANGUAGE sql AS $$
-  SELECT
-    p.id,
-    p.created_at,
-    p.name,
-    p.short_id,
-    p.created_by,
-    p.description,
-    p.thumbnail_url,
-    p.thumbnail_maxres_url,
-    p.type,
-    p.image_properties,
-    p.youtube_id,
-    prof.username AS profile_username,
-    up.sorted_by,
-    up.sort_order
-  FROM public.playlists p
-  LEFT JOIN public.profiles prof ON p.created_by = prof.id
-  LEFT JOIN public.user_playlists up 
-    ON up.id = p.id 
-  WHERE p.short_id = p_short_id
-    AND p.deleted_at IS NULL  -- Filter out soft-deleted playlists
-  LIMIT 1;
-$$;
-
 -- Function to get playlist by youtube_id
 CREATE OR REPLACE FUNCTION public.get_playlist_by_youtube_id (p_youtube_id text) RETURNS TABLE (
   id bigint,
