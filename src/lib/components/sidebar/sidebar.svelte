@@ -376,9 +376,9 @@
       {#if sidebarState.showPlaceholder}
         <!-- Skeleton playlists when loading -->
         {#each Array(6), i}
-          <SidebarItem 
-            isLoading={true} 
-            {isSidebarCollapsed} 
+          <SidebarItem
+            isLoading={true}
+            {isSidebarCollapsed}
             showSpecialIcon={true}
             iconIndex={i}
             class="focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground relative inline-flex items-center justify-center rounded-md text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-1 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 {!isSidebarCollapsed

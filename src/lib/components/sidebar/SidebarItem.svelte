@@ -30,8 +30,8 @@
   // Consistent container classes for both states
   const containerClasses = $derived(
     `flex items-center transition-all duration-200 ease-in-out ${
-      !isSidebarCollapsed 
-        ? 'h-[56px] px-2 py-1' 
+      !isSidebarCollapsed
+        ? 'h-[56px] px-2 py-1'
         : 'h-[56px] justify-center px-1 py-1'
     } ${className}`
   );
@@ -46,7 +46,9 @@
         {#if showSpecialIcon && iconIndex % 3 !== 0}
           <!-- Special icon case for playlists -->
           <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center">
-            <div class="bg-muted flex h-12 w-12 animate-pulse items-center justify-center rounded">
+            <div
+              class="bg-muted flex h-12 w-12 animate-pulse items-center justify-center rounded"
+            >
               <ListVideo class="text-muted-foreground h-8 w-8 opacity-50" />
             </div>
           </div>
@@ -62,7 +64,9 @@
       {#if showSpecialIcon && iconIndex % 3 !== 0}
         <!-- Special icon case for playlists -->
         <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center">
-          <div class="bg-muted flex h-12 w-12 animate-pulse items-center justify-center rounded">
+          <div
+            class="bg-muted flex h-12 w-12 animate-pulse items-center justify-center rounded"
+          >
             <ListVideo class="text-muted-foreground h-8 w-8 opacity-50" />
           </div>
         </div>
@@ -75,25 +79,33 @@
     {@render children()}
   {:else}
     <!-- Real content with exact same structure -->
-    <div class="absolute flex grow items-center {!isSidebarCollapsed ? 'w-full grow' : 'item-center'}">
+    <div
+      class="absolute flex grow items-center {!isSidebarCollapsed
+        ? 'w-full grow'
+        : 'item-center'}"
+    >
       {#if imageUrl}
         <div class="h-12 w-12 shrink-0">
           <img
             src={imageUrl}
             alt={imageAlt || title || ''}
-            class="h-full w-full cursor-pointer object-cover rounded"
+            class="h-full w-full cursor-pointer rounded object-cover"
             loading="lazy"
           />
         </div>
       {:else}
         <!-- Default icon fallback -->
-        <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded">
+        <div
+          class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded"
+        >
           <ListVideo class="!h-8 !w-8" />
         </div>
       {/if}
-      
+
       {#if !isSidebarCollapsed && title}
-        <span class="mr-6 max-h-10 justify-start overflow-hidden px-3 text-left text-sm text-wrap">
+        <span
+          class="mr-6 max-h-10 justify-start overflow-hidden px-3 text-left text-sm text-wrap"
+        >
           {title}
         </span>
       {/if}

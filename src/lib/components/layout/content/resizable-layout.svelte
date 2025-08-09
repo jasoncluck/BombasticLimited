@@ -11,7 +11,6 @@
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
   import type { Snippet } from 'svelte';
-  import { ListVideo } from '@lucide/svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
 
   let {
@@ -115,8 +114,8 @@
               >
                 <!-- Fixed number of playlist items -->
                 {#each Array(6), i}
-                  <SidebarItem 
-                    isLoading={true} 
+                  <SidebarItem
+                    isLoading={true}
                     {isSidebarCollapsed}
                     showSpecialIcon={true}
                     iconIndex={i}
