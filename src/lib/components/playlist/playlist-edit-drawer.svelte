@@ -166,7 +166,7 @@
       class="flex min-h-0 flex-1 flex-col"
     >
       <div class="min-h-0 flex-1 overflow-y-auto p-1">
-        <div class="px-4 pb-4">
+        <div class="px-4 pb-2">
           <div class="mb-4 flex flex-col justify-center gap-4 sm:flex-row">
             <div class="relative m-6 flex justify-center">
               {#if (playlist.thumbnail_maxres_url || playlist.thumbnail_url) && !$formData.isDeletingPlaylistImage}
@@ -347,32 +347,31 @@
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Non-sticky Footer - now flows naturally with the content -->
-      <div class="p-4 pt-2">
-        <div class="flex flex-col gap-2">
-          <Drawer.Footer class="drawer-footer flex gap-2">
-            <Button type="submit" class="drawer-button-footer">
-              {#if isSubmitting}
-                <Loader class="animate-spin" />
-              {:else}
-                Save Changes
-              {/if}
-            </Button>
+        <div class="p-4">
+          <div class="flex flex-col gap-2">
+            <Drawer.Footer class="drawer-footer flex gap-2">
+              <Button type="submit" class="drawer-button-footer">
+                {#if isSubmitting}
+                  <Loader class="animate-spin" />
+                {:else}
+                  Save Changes
+                {/if}
+              </Button>
 
-            <Drawer.Close
-              onclick={(e) => {
-                e.preventDefault();
-                open = false;
-              }}
-              class={buttonVariants({
-                class: 'drawer-button-footer',
-                variant: 'outline',
-              })}
-              >Close
-            </Drawer.Close>
-          </Drawer.Footer>
+              <Drawer.Close
+                onclick={(e) => {
+                  e.preventDefault();
+                  open = false;
+                }}
+                class={buttonVariants({
+                  class: 'drawer-button-footer',
+                  variant: 'outline',
+                })}
+                >Close
+              </Drawer.Close>
+            </Drawer.Footer>
+          </div>
         </div>
       </div>
     </form>

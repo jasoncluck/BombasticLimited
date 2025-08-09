@@ -167,7 +167,8 @@
                   <div class="mt-0 flex flex-wrap items-center gap-2">
                     {#if playlist.profile_username}
                       {#if isSource(playlist.profile_username)}
-                        {@const sourceInfo = SOURCE_INFO[playlist.profile_username]}
+                        {@const sourceInfo =
+                          SOURCE_INFO[playlist.profile_username]}
                         <div class="flex items-center gap-2">
                           <img
                             alt={`${sourceInfo.displayName} playlist`}
@@ -200,7 +201,9 @@
                               alt="{playlist.profile_username} avatar"
                             />
                             <Avatar.Fallback class="text-xs">
-                              {playlist.profile_username?.slice(0, 2).toUpperCase()}
+                              {playlist.profile_username
+                                ?.slice(0, 2)
+                                .toUpperCase()}
                             </Avatar.Fallback>
                           </Avatar.Root>
                           <p class="text-sm">{playlist.profile_username}</p>
@@ -272,7 +275,7 @@
                     </h2>
                     {#if playlist.description && playlist.description.length > 1}
                       <p
-                        class="text-muted-foreground text-left text-sm break-all"
+                        class="text-muted-foreground mb-1 text-left text-sm break-all"
                       >
                         {playlist.description}
                       </p>
@@ -283,7 +286,8 @@
                   <div class="mt-2 flex flex-wrap items-start gap-2">
                     {#if playlist.profile_username}
                       {#if isSource(playlist.profile_username)}
-                        {@const sourceInfo = SOURCE_INFO[playlist.profile_username]}
+                        {@const sourceInfo =
+                          SOURCE_INFO[playlist.profile_username]}
                         <div class="flex items-center gap-2">
                           <img
                             alt={`${sourceInfo.displayName} playlist`}
@@ -316,7 +320,9 @@
                               alt="{playlist.profile_username} avatar"
                             />
                             <Avatar.Fallback class="text-xs">
-                              {playlist.profile_username?.slice(0, 2).toUpperCase()}
+                              {playlist.profile_username
+                                ?.slice(0, 2)
+                                .toUpperCase()}
                             </Avatar.Fallback>
                           </Avatar.Root>
                           <p class="text-sm">{playlist.profile_username}</p>
