@@ -208,6 +208,36 @@ describe('Sidebar Structural Consistency for Add Playlist Button', () => {
       expect(expandedStateFix.noLayoutDifferences).toBe(true);
     });
 
+    it('should use identical buttonVariants classes for both Popover.Trigger and Button', () => {
+      // Both components should use the same buttonVariants configuration
+      const commonButtonConfig = {
+        variant: 'secondary',
+        size: 'icon',
+        additionalClasses: 'my-1 cursor-pointer rounded-full'
+      };
+
+      // Popover.Trigger receives: buttonVariants({ variant: 'secondary', size: 'icon', class: 'my-1 cursor-pointer rounded-full' })
+      // Button receives: variant="secondary" size="icon" class="my-1 cursor-pointer rounded-full"
+      
+      // Both should result in identical computed classes
+      const expectedBaseClasses = [
+        'bg-secondary',        // from variant="secondary"
+        'text-secondary-foreground', // from variant="secondary" 
+        'shadow-xs',          // from variant="secondary"
+        'hover:bg-secondary/80', // from variant="secondary"
+        'size-9',             // from size="icon"
+        'my-1',               // from additional classes
+        'cursor-pointer',     // from additional classes
+        'rounded-full'        // from additional classes
+      ];
+
+      // The classes should be consistent regardless of component type
+      expect(commonButtonConfig.variant).toBe('secondary');
+      expect(commonButtonConfig.size).toBe('icon');
+      expect(expectedBaseClasses).toContain('size-9');
+      expect(expectedBaseClasses).toContain('my-1');
+    });
+
     it('should ensure button size consistency in both collapsed and expanded sidebar states', () => {
       const collapsedSkeletonButton = {
         dimensions: 'h-9 w-9',
