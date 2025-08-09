@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "build": "npm run format && npm run check && vite build",
+    "build": "npm run format && npm run check && npm run test:ci && vite build",
     "build:preview": "vite build --mode preview",
     "build:test": "npm run check && vite build",
     "build:vercel": "npm run check && vite build --mode production",

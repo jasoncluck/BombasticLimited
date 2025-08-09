@@ -75,34 +75,43 @@ export async function POST() {
       await updateStreamStatus();
 
       while (true) {
-        // Check for stream updates
-        await updateStreamStatus();
+        try {
+          // Check for stream updates
+          await updateStreamStatus();
 
-        // Emit current streaming sources
-        const { error } = emit(
-          'streamingSubscriptions',
-          JSON.stringify(Array.from(streamingSources.values()))
-        );
+          // Prepare the data to send
+          const streamingData = Array.from(streamingSources.values());
+          const jsonData = JSON.stringify(streamingData);
 
-        if (error) {
-          // Check if it's a client disconnection (normal) vs actual error
-          const isClientDisconnection = error.message?.includes(
-            'Client disconnected from the stream'
-          );
+          // Emit current streaming sources with error handling
+          const { error } = emit('streamingSubscriptions', jsonData);
 
-          if (isClientDisconnection) {
-            // This is normal - client closed the connection
-            console.log('Client disconnected from Twitch stream monitoring');
-            return;
-          } else {
-            // This is an actual error we should log
-            console.error('SSE emit error:', error);
-            return;
+          if (error) {
+            // Check if it's a client disconnection (normal) vs actual error
+            const isClientDisconnection =
+              error.message?.includes('Client disconnected') ||
+              error.message?.includes('Connection closed') ||
+              error.message?.includes('stream closed') ||
+              error.message?.includes('Client disconnected from the stream');
+
+            if (isClientDisconnection) {
+              // This is normal - client closed the connection
+              console.log('Client disconnected from Twitch stream monitoring');
+              return;
+            } else {
+              // This is an actual error we should log
+              console.error('SSE emit error:', error);
+              return;
+            }
           }
-        }
 
-        // Wait before next iteration (shorter than API check interval for responsive SSE)
-        await delay(10000);
+          // Wait before next iteration (shorter than API check interval for responsive SSE)
+          await delay(10000);
+        } catch (loopError) {
+          console.error('Error in SSE loop:', loopError);
+          // Break the loop on unexpected errors to prevent infinite error loops
+          return;
+        }
       }
     },
     {

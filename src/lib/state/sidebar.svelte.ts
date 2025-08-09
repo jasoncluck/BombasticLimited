@@ -316,9 +316,26 @@ export class SidebarStateClass {
 
       this.#sseConnection.select('streamingSubscriptions').subscribe((data) => {
         try {
+          // Check if we received complete data
+          if (!data || data.trim() === '') {
+            console.log('Received empty SSE data, skipping');
+            return;
+          }
+
           const streamingSources: Source[] = JSON.parse(data);
           this.updateStreamingState(streamingSources);
         } catch (error) {
+          if (
+            error instanceof SyntaxError &&
+            error.message.includes('Unexpected end of JSON input')
+          ) {
+            // This is likely due to server disconnection - ignore and let reconnection handle it
+            console.log(
+              'SSE connection interrupted during JSON transmission, will reconnect'
+            );
+            return;
+          }
+          // Log other JSON parsing errors as they might be genuine issues
           console.error('Failed to parse streaming update:', error);
         }
       });
@@ -330,7 +347,10 @@ export class SidebarStateClass {
 
       this.#sseConnection.select('error').subscribe((event) => {
         this.#sseConnected = false;
-        console.error('Twitch streaming SSE error:', event);
+        console.log(
+          'Twitch streaming SSE connection error (will auto-reconnect):',
+          event
+        );
       });
     } catch (error) {
       console.error('Failed to create SSE connection:', error);
