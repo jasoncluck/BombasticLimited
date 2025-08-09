@@ -80,21 +80,21 @@ describe('Sidebar Structural Consistency for Add Playlist Button', () => {
     it('should have consistent button dimensions between skeleton and real states', () => {
       // Button size consistency test
       const skeletonButtonSize = {
-        height: 'h-9', // 36px - matches size="icon"
-        width: 'w-9', // 36px - matches size="icon"
-        marginY: 'my-1', // consistent margin
+        height: 'h-9',     // 36px - matches size="icon" 
+        width: 'w-9',      // 36px - matches size="icon"
+        marginY: 'my-1'    // consistent margin
       };
 
       const realButtonSize = {
-        height: 'size-9', // 36px from buttonVariants size="icon"
-        width: 'size-9', // 36px from buttonVariants size="icon"
-        marginY: 'my-1', // consistent margin
+        height: 'size-9',  // 36px from buttonVariants size="icon"
+        width: 'size-9',   // 36px from buttonVariants size="icon" 
+        marginY: 'my-1'    // consistent margin
       };
 
       // Both should result in 36px dimensions (2.25rem)
       const skeletonPixelSize = 36; // h-9 w-9
       const realButtonPixelSize = 36; // size-9
-
+      
       expect(skeletonPixelSize).toBe(realButtonPixelSize);
       expect(skeletonButtonSize.marginY).toBe('my-1');
     });
@@ -213,22 +213,22 @@ describe('Sidebar Structural Consistency for Add Playlist Button', () => {
       const commonButtonConfig = {
         variant: 'secondary',
         size: 'icon',
-        additionalClasses: 'my-1 cursor-pointer rounded-full',
+        additionalClasses: 'my-1 cursor-pointer rounded-full'
       };
 
       // Popover.Trigger receives: buttonVariants({ variant: 'secondary', size: 'icon', class: 'my-1 cursor-pointer rounded-full' })
       // Button receives: variant="secondary" size="icon" class="my-1 cursor-pointer rounded-full"
-
+      
       // Both should result in identical computed classes
       const expectedBaseClasses = [
-        'bg-secondary', // from variant="secondary"
-        'text-secondary-foreground', // from variant="secondary"
-        'shadow-xs', // from variant="secondary"
+        'bg-secondary',        // from variant="secondary"
+        'text-secondary-foreground', // from variant="secondary" 
+        'shadow-xs',          // from variant="secondary"
         'hover:bg-secondary/80', // from variant="secondary"
-        'size-9', // from size="icon"
-        'my-1', // from additional classes
-        'cursor-pointer', // from additional classes
-        'rounded-full', // from additional classes
+        'size-9',             // from size="icon"
+        'my-1',               // from additional classes
+        'cursor-pointer',     // from additional classes
+        'rounded-full'        // from additional classes
       ];
 
       // The classes should be consistent regardless of component type
@@ -242,25 +242,25 @@ describe('Sidebar Structural Consistency for Add Playlist Button', () => {
       const collapsedSkeletonButton = {
         dimensions: 'h-9 w-9',
         margin: 'my-1',
-        shape: 'rounded-full',
+        shape: 'rounded-full'
       };
 
       const expandedSkeletonButton = {
-        dimensions: 'h-9 w-9',
+        dimensions: 'h-9 w-9', 
         margin: 'my-1',
-        shape: 'rounded-full',
+        shape: 'rounded-full'
       };
 
       const collapsedRealButton = {
         size: 'icon', // results in size-9
         margin: 'my-1',
-        shape: 'rounded-full',
+        shape: 'rounded-full'
       };
 
       const expandedRealButton = {
         size: 'icon', // results in size-9
-        margin: 'my-1',
-        shape: 'rounded-full',
+        margin: 'my-1', 
+        shape: 'rounded-full'
       };
 
       // All states should have identical button dimensions
