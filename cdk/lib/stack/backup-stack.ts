@@ -28,7 +28,7 @@ export class BackupStack extends Stack {
     super(scope, id, props);
 
     const environment = props.environment || 'prod';
-    const bucketName = `bombify-database-backups-${environment}`;
+    const bucketName = `bombastic-database-backups-${environment}`;
 
     // S3 Bucket for database backups
     this.backupBucket = new s3.Bucket(this, 'DatabaseBackupBucket', {
@@ -77,7 +77,7 @@ export class BackupStack extends Stack {
 
     // IAM Role for database backup operations
     this.backupRole = new iam.Role(this, 'DatabaseBackupRole', {
-      roleName: `bombify-database-backup-role-${environment}`,
+      roleName: `bombastic-database-backup-role-${environment}`,
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName(
@@ -120,7 +120,7 @@ export class BackupStack extends Stack {
       this,
       'DatabaseBackupFunction',
       {
-        functionName: `BombifyDatabaseBackup-${environment}`,
+        functionName: `BombasticDatabaseBackup-${environment}`,
         description: 'Performs database backups to S3',
         entry: path.join(__dirname, '../lambda/database-backup.ts'),
         handler: 'handler',
@@ -145,7 +145,7 @@ export class BackupStack extends Stack {
       this,
       'DatabaseRestoreFunction',
       {
-        functionName: `BombifyDatabaseRestore-${environment}`,
+        functionName: `BombasticDatabaseRestore-${environment}`,
         description:
           'Performs database restore operations from S3 backups for disaster recovery',
         entry: path.join(__dirname, '../lambda/database-restore.ts'),
@@ -208,7 +208,7 @@ export class BackupStack extends Stack {
 
     // CloudWatch Dashboard for backup monitoring
     const dashboard = new cloudwatch.Dashboard(this, 'BackupDashboard', {
-      dashboardName: `BombifyBackups-${environment}`,
+      dashboardName: `BombasticBackups-${environment}`,
     });
 
     dashboard.addWidgets(

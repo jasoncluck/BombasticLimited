@@ -172,7 +172,7 @@ BACKUP_LAMBDA_FUNCTION_NAME=...    # Override function name
 View backup metrics at:
 
 ```
-https://console.aws.amazon.com/cloudwatch/home?region={region}#dashboards:name=BombifyBackups-{environment}
+https://console.aws.amazon.com/cloudwatch/home?region={region}#dashboards:name=BombasticBackups-{environment}
 ```
 
 ### Lambda Logs
@@ -180,7 +180,7 @@ https://console.aws.amazon.com/cloudwatch/home?region={region}#dashboards:name=B
 View backup logs at:
 
 ```
-https://console.aws.amazon.com/cloudwatch/home?region={region}#logsV2:log-groups/log-group/$252Faws$252Flambda$252FBombifyDatabaseBackup-{environment}
+https://console.aws.amazon.com/cloudwatch/home?region={region}#logsV2:log-groups/log-group/$252Faws$252Flambda$252FBombasticDatabaseBackup-{environment}
 ```
 
 ### CloudWatch Alarms
@@ -259,6 +259,7 @@ For manual recovery scenarios:
    ```
 
 4. **Execute Restore**
+
    ```bash
    npm run restore -- --backup-key <backup-key>
    ```

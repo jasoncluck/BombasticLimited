@@ -7,6 +7,7 @@ Before deploying the backup infrastructure, ensure you have:
 1. **AWS CLI configured** with appropriate permissions
 2. **AWS CDK installed** globally: `npm install -g aws-cdk`
 3. **Environment variables** set:
+
    ```bash
    export SUPABASE_SERVICE_API_KEY_PROD=your_supabase_service_key
    export PUBLIC_SUPABASE_URL_PROD=your_supabase_url
@@ -40,17 +41,17 @@ npx cdk bootstrap
 ### 4. Deploy Backup Stack
 
 ```bash
-npx cdk deploy BombifyStack/BackupStack
+npx cdk deploy BombasticStack/BackupStack
 ```
 
 ### 5. Verify Deployment
 
 Check the CloudFormation console to ensure all resources were created:
 
-- S3 bucket: `bombify-database-backups-{environment}`
-- Lambda function: `BombifyDatabaseBackup-{environment}`
-- IAM role: `bombify-database-backup-role-{environment}`
-- CloudWatch dashboard: `BombifyBackups-{environment}`
+- S3 bucket: `bombastic-database-backups-{environment}`
+- Lambda function: `BombasticDatabaseBackup-{environment}`
+- IAM role: `bombastic-database-backup-role-{environment}`
+- CloudWatch dashboard: `BombasticBackups-{environment}`
 
 ## Testing the Backup
 
@@ -75,14 +76,14 @@ This will perform a complete backup and upload to S3.
 Check your S3 bucket for the backup file:
 
 ```
-s3://bombify-database-backups-{environment}/backups/{environment}/{date}/database-backup-{timestamp}.json
+s3://bombastic-database-backups-{environment}/backups/{environment}/{date}/database-backup-{timestamp}.json
 ```
 
 ## Monitoring
 
 ### CloudWatch Dashboard
 
-Navigate to CloudWatch > Dashboards > `BombifyBackups-{environment}` to view:
+Navigate to CloudWatch > Dashboards > `BombasticBackups-{environment}` to view:
 
 - Lambda invocation metrics
 - Error rates
@@ -93,7 +94,7 @@ Navigate to CloudWatch > Dashboards > `BombifyBackups-{environment}` to view:
 View backup logs at:
 
 ```
-/aws/lambda/BombifyDatabaseBackup-{environment}
+/aws/lambda/BombasticDatabaseBackup-{environment}
 ```
 
 ### CloudWatch Alarms
@@ -130,7 +131,7 @@ import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 const s3 = new S3Client({});
 const response = await s3.send(
   new GetObjectCommand({
-    Bucket: 'bombify-database-backups-prod',
+    Bucket: 'bombastic-database-backups-prod',
     Key: 'backups/prod/2024-01-15/database-backup-2024-01-15T02-00-00-000Z.json',
   })
 );
@@ -196,12 +197,12 @@ echo $PUBLIC_SUPABASE_URL_PROD
 
 # Test Lambda function directly
 aws lambda invoke \
-  --function-name BombifyDatabaseBackup-prod \
+  --function-name BombasticDatabaseBackup-prod \
   --payload '{"dryRun": true}' \
   response.json
 
 # Check S3 bucket contents
-aws s3 ls s3://bombify-database-backups-prod/backups/ --recursive
+aws s3 ls s3://bombastic-database-backups-prod/backups/ --recursive
 ```
 
 ## Maintenance
@@ -219,7 +220,7 @@ To update the backup infrastructure:
 
 1. Modify code in `lib/stack/backup-stack.ts`
 2. Run `npm run build`
-3. Deploy with `npx cdk deploy BombifyStack/BackupStack`
+3. Deploy with `npx cdk deploy BombasticStack/BackupStack`
 
 ## Support
 

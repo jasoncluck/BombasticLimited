@@ -160,7 +160,7 @@ VALUES
     '5846dc40-6691-4e3c-8d31-d4f24c769beb',
     'authenticated',
     'authenticated',
-    'nextlander@bombify.net',
+    'nextlander@bombastic.net',
     '$2a$06$n0mjGKI9y7j0Ktwp2zYPPuMM70qPM0.2RZST7JpaKiBk5yyipBBJy',
     '2023-05-03 19:41:43.585805+00',
     NULL,
@@ -196,7 +196,7 @@ VALUES
     '7220f041-5102-49d3-ad89-1103f06dd484',
     'authenticated',
     'authenticated',
-    'remap@bombify.net',
+    'remap@bombastic.net',
     '$2a$06$723dMAxR9j0K/krOcenNXu/EqkdQaz6u78pq1MgJGvkbcPZ2Shx2.',
     '2023-05-03 19:41:43.585805+00',
     NULL,
@@ -318,7 +318,7 @@ VALUES
   (
     '6b402cb9-c744-4fe2-a5fb-f6e30f0e57ba',
     '6b402cb9-c744-4fe2-a5fb-f6e30f0e57ba',
-    '{"sub": "6b402cb9-c744-4fe2-a5fb-f6e30f0e57ba", "email": "giantbomb@bombify.net"}',
+    '{"sub": "6b402cb9-c744-4fe2-a5fb-f6e30f0e57ba", "email": "giantbomb@bombastic.net"}',
     'email',
     '2023-05-03 19:41:43.582456+00',
     '2023-05-03 19:41:43.582497+00',
@@ -328,7 +328,7 @@ VALUES
   (
     'f0d75547-1eda-43e9-827f-89131c886349',
     'f0d75547-1eda-43e9-827f-89131c886349',
-    '{"sub": "f0d75547-1eda-43e9-827f-89131c886349", "email": "jeffgerstmann@bombify.net"}',
+    '{"sub": "f0d75547-1eda-43e9-827f-89131c886349", "email": "jeffgerstmann@bombastic.net"}',
     'email',
     '2023-05-03 19:41:43.582456+00',
     '2023-05-03 19:41:43.582497+00',
@@ -338,7 +338,7 @@ VALUES
   (
     '5846dc40-6691-4e3c-8d31-d4f24c769beb',
     '5846dc40-6691-4e3c-8d31-d4f24c769beb',
-    '{"sub": "5846dc40-6691-4e3c-8d31-d4f24c769beb", "email": "nextlander@bombify.net"}',
+    '{"sub": "5846dc40-6691-4e3c-8d31-d4f24c769beb", "email": "nextlander@bombastic.net"}',
     'email',
     '2023-05-03 19:41:43.582456+00',
     '2023-05-03 19:41:43.582497+00',
@@ -348,7 +348,7 @@ VALUES
   (
     '7220f041-5102-49d3-ad89-1103f06dd484',
     '7220f041-5102-49d3-ad89-1103f06dd484',
-    '{"sub": "7220f041-5102-49d3-ad89-1103f06dd484", "email": "remap@bombify.net"}',
+    '{"sub": "7220f041-5102-49d3-ad89-1103f06dd484", "email": "remap@bombastic.net"}',
     'email',
     '2023-05-03 19:41:43.582456+00',
     '2023-05-03 19:41:43.582497+00',

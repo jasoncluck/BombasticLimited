@@ -4,7 +4,7 @@
 
 ### ✅ S3 Bucket Configuration
 
-- Bucket name: `bombify-database-backups-{environment}`
+- Bucket name: `bombastic-database-backups-{environment}`
 - Encryption: SSE-S3 managed encryption
 - Versioning: Enabled for backup file history
 - Public access: Completely blocked for security
@@ -17,14 +17,14 @@
 
 ### ✅ IAM Role and Policies
 
-- Role: `bombify-database-backup-role-{environment}`
+- Role: `bombastic-database-backup-role-{environment}`
 - Least privilege access to S3 bucket operations
 - CloudWatch logs permissions
 - Lambda execution permissions
 
 ### ✅ Lambda Function
 
-- Function: `BombifyDatabaseBackup-{environment}`
+- Function: `BombasticDatabaseBackup-{environment}`
 - Runtime: Node.js 20.x
 - Timeout: 15 minutes
 - Memory: 512 MB
@@ -34,7 +34,7 @@
 ### ✅ CloudWatch Monitoring
 
 - Error alarms for backup failures
-- Dashboard: `BombifyBackups-{environment}`
+- Dashboard: `BombasticBackups-{environment}`
 - Log retention: 1 month
 - Metrics for invocations, errors, and duration
 
@@ -84,8 +84,8 @@ npm run backup:dry-run           # Test run
 npm run backup -- --tables videos,playlists  # Specific tables
 
 # Monitor backups
-# CloudWatch Dashboard: BombifyBackups-{environment}
-# Lambda Logs: /aws/lambda/BombifyDatabaseBackup-{environment}
+# CloudWatch Dashboard: BombasticBackups-{environment}
+# Lambda Logs: /aws/lambda/BombasticDatabaseBackup-{environment}
 ```
 
 ## Files Created/Modified

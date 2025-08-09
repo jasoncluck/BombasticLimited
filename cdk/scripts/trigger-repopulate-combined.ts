@@ -10,9 +10,9 @@ const lambda = new LambdaClient({
 });
 
 const VIDEOS_FUNCTION_NAME =
-  process.env.LAMBDA_FUNCTION_NAME || 'BombifyPopulateVideos';
+  process.env.LAMBDA_FUNCTION_NAME || 'BombasticPopulateVideos';
 const PLAYLISTS_FUNCTION_NAME =
-  process.env.PLAYLISTS_LAMBDA_FUNCTION_NAME || 'BombifyPopulatePlaylists';
+  process.env.PLAYLISTS_LAMBDA_FUNCTION_NAME || 'BombasticPopulatePlaylists';
 
 async function invokeLambdaSync(
   functionName: string,
