@@ -196,13 +196,15 @@
 </script>
 
 {#if mediaQueryState.canHover}
-  <div class="flex flex-col items-start gap-4">
+  <div class="flex flex-col items-center gap-4">
     <DropdownMenu.Root>
       <DropdownMenu.Trigger
         class="hover:text-primary flex cursor-pointer items-center gap-1 outline-none"
       >
-        <span class="text-sm">{sortOptionInfo.displayName}</span>
-        <List size={20} />
+        <span class="mr-1 text-sm tracking-tight"
+          >{sortOptionInfo.displayName}</span
+        >
+        <List size={15} />
       </DropdownMenu.Trigger>
       <DropdownMenu.Content class="outline-none">
         <DropdownMenu.Group>

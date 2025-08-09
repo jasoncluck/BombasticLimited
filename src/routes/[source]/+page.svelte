@@ -87,7 +87,7 @@
       </h1>
       {#if SOURCE_INFO[source].websiteUrlDomain}
         <a
-          class="text-muted-foreground mt-1 ml-1 text-sm hover:underline"
+          class="text-muted-foreground mt-1 text-sm hover:underline"
           target="_blank"
           href={`https://www.${SOURCE_INFO[source].websiteUrlDomain}`}
         >
