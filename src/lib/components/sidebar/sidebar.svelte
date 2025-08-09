@@ -321,7 +321,7 @@
       {#if sidebarState.showPlaceholder}
         <!-- Skeleton playlist header when loading-->
         {#if !isSidebarCollapsed}
-          <!-- Full header with exact spacing -->
+          <!-- Full header with exact spacing matching real content structure -->
           <Skeleton class="my-1 h-10 w-10 flex-shrink-0 rounded-full" />
           <h2 class="ml-4 text-lg font-semibold tracking-tight opacity-50">
             Playlists
@@ -330,35 +330,38 @@
           <!-- Collapsed header - centered circle -->
           <Skeleton class="my-1 h-10 w-10 flex-shrink-0 rounded-full" />
         {/if}
-      {:else if !session?.user.id}
-        <Popover.Root>
-          <Popover.Trigger
-            class={buttonVariants({
-              variant: 'secondary',
-              size: 'icon',
-              class: 'my-1 cursor-pointer rounded-full',
-            })}
+      {:else}
+        <!-- Real content with identical structure to skeleton -->
+        {#if !session?.user.id}
+          <Popover.Root>
+            <Popover.Trigger
+              class={buttonVariants({
+                variant: 'secondary',
+                size: 'icon',
+                class: 'my-1 cursor-pointer rounded-full',
+              })}
+            >
+              <Plus />
+            </Popover.Trigger>
+            <Popover.Content
+              >Create an account or login to use playlists.</Popover.Content
+            >
+          </Popover.Root>
+        {:else}
+          <Button
+            variant="secondary"
+            title="Create Playlist"
+            class="my-1 cursor-pointer rounded-full"
+            size="icon"
+            onclick={() =>
+              handleCreatePlaylist({ sidebarState, supabase, session })}
           >
             <Plus />
-          </Popover.Trigger>
-          <Popover.Content
-            >Create an account or login to use playlists.</Popover.Content
-          >
-        </Popover.Root>
-      {:else}
-        <Button
-          variant="secondary"
-          title="Create Playlist"
-          class="my-1 cursor-pointer rounded-full"
-          size="icon"
-          onclick={() =>
-            handleCreatePlaylist({ sidebarState, supabase, session })}
-        >
-          <Plus />
-        </Button>
-      {/if}
-      {#if !isSidebarCollapsed && !sidebarState.showPlaceholder}
-        <h2 class="ml-4 text-lg font-semibold tracking-tight">Playlists</h2>
+          </Button>
+        {/if}
+        {#if !isSidebarCollapsed}
+          <h2 class="ml-4 text-lg font-semibold tracking-tight">Playlists</h2>
+        {/if}
       {/if}
     </div>
   </div>

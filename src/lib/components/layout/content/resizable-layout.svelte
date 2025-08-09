@@ -87,15 +87,13 @@
             >
               <div class="flex h-[44px] items-center">
                 {#if !isSidebarCollapsed}
-                  <!-- Full header with exact spacing -->
-                  <div class="flex items-center">
-                    <Skeleton
-                      class="my-1 h-10 w-10 flex-shrink-0 rounded-full"
-                    />
-                    <div class="ml-4">
-                      <Skeleton class="h-6 w-20" />
-                    </div>
-                  </div>
+                  <!-- Full header with exact spacing matching real content structure -->
+                  <Skeleton class="my-1 h-10 w-10 flex-shrink-0 rounded-full" />
+                  <h2
+                    class="ml-4 text-lg font-semibold tracking-tight opacity-50"
+                  >
+                    Playlists
+                  </h2>
                 {:else}
                   <!-- Collapsed header - centered circle -->
                   <Skeleton class="my-1 h-10 w-10 flex-shrink-0 rounded-full" />
