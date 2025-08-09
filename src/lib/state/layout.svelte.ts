@@ -59,7 +59,7 @@ export class LayoutStateClass implements LayoutState {
     if (!browser) return;
 
     try {
-      const saved = localStorage.getItem('bombify-sidebar-collapsed');
+      const saved = localStorage.getItem('bombastic-sidebar-collapsed');
       if (saved !== null) {
         this.isSidebarCollapsed = JSON.parse(saved);
       }
@@ -73,7 +73,7 @@ export class LayoutStateClass implements LayoutState {
 
     try {
       localStorage.setItem(
-        'bombify-sidebar-collapsed',
+        'bombastic-sidebar-collapsed',
         JSON.stringify(collapsed)
       );
     } catch (error) {

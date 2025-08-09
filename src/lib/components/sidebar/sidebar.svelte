@@ -304,7 +304,7 @@
           >
             <StreamingIndicator
               isStreaming={sidebarState.isSourceStreaming(source)}
-              size="xs"
+              size="sm"
             />
             <span class="sr-only">Live now</span>
 

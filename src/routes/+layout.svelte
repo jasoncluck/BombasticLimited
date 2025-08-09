@@ -19,7 +19,6 @@
   import { setLayoutState } from '$lib/state/layout.svelte';
   import { setSourceState } from '$lib/state/source.svelte';
   import { setSidebarState } from '$lib/state/sidebar.svelte';
-  import { streamingSSE } from '$lib/client/streaming-sse.js';
 
   import '../app.css';
   import { setNavigationCacheState } from '$lib/state/navigation-cache/index.js';
@@ -178,11 +177,8 @@
     const mediaCleanup = mediaQuery.initialize();
 
     // Initialize sidebar non-blocking (fast UI, loads data in background)
+    // This now also starts the SSE connection automatically
     const sidebarCleanup = sidebarState.initializeNonBlocking();
-
-    // Start streaming SSE connection with sidebar state
-    streamingSSE.setSidebarState(sidebarState);
-    streamingSSE.start();
 
     // Initialize layout effects asynchronously
     let layoutCleanup: (() => void) | undefined;
@@ -208,8 +204,7 @@
       if (layoutCleanup && typeof layoutCleanup === 'function') {
         layoutCleanup();
       }
-      // Stop streaming SSE connection
-      streamingSSE.stop();
+      // SSE connection is now automatically cleaned up by sidebarCleanup
     };
   });
 </script>

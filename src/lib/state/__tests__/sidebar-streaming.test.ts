@@ -1,12 +1,50 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { SidebarStateClass } from '../sidebar.svelte.js';
 import type { Source } from '$lib/constants/source.js';
+
+// Mock the notification store
+vi.mock('$lib/stores/notification.js', () => ({
+  showNotification: vi.fn(),
+}));
+
+// Mock the source constants
+vi.mock('$lib/constants/source', () => ({
+  SOURCE_INFO: {
+    giantbomb: { displayName: 'Giant Bomb' },
+    nextlander: { displayName: 'Nextlander' },
+    remap: { displayName: 'Remap' },
+  },
+}));
+
+// Mock browser environment
+Object.defineProperty(global, 'browser', {
+  value: false,
+  writable: true,
+});
+
+// Mock localStorage
+const localStorageMock = {
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
+};
+Object.defineProperty(global, 'localStorage', {
+  value: localStorageMock,
+  writable: true,
+});
 
 describe('SidebarStateClass - Streaming Functionality', () => {
   let sidebarState: SidebarStateClass;
 
   beforeEach(() => {
     sidebarState = new SidebarStateClass();
+    vi.clearAllMocks();
+    localStorageMock.getItem.mockReturnValue(null);
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
   });
 
   describe('streaming sources management', () => {
@@ -73,6 +111,147 @@ describe('SidebarStateClass - Streaming Functionality', () => {
 
       sidebarState.cleanup();
       expect(sidebarState.getStreamingSources()).toEqual([]);
+    });
+  });
+
+  describe('streaming state notifications', () => {
+    beforeEach(() => {
+      // Enable browser environment for notification tests
+      global.browser = true;
+      // Mock initial stream load as false to allow notifications
+      sidebarState['#isInitialStreamLoad'] = false;
+    });
+
+    afterEach(() => {
+      global.browser = false;
+    });
+
+    it('should show notifications when streams start', async () => {
+      const { showNotification } = await import('$lib/stores/notification.js');
+
+      // Start with no streams
+      sidebarState.updateStreamingSources([]);
+
+      // Add a streaming source
+      sidebarState['updateStreamingState'](['giantbomb']);
+
+      expect(showNotification).toHaveBeenCalledWith(
+        'Giant Bomb is now streaming!',
+        'success'
+      );
+    });
+
+    it('should show notifications when streams stop', async () => {
+      const { showNotification } = await import('$lib/stores/notification.js');
+
+      // Start with a streaming source
+      sidebarState.updateStreamingSources(['giantbomb']);
+
+      // Remove the streaming source
+      sidebarState['updateStreamingState']([]);
+
+      expect(showNotification).toHaveBeenCalledWith(
+        'Giant Bomb has stopped streaming',
+        'info'
+      );
+    });
+
+    it('should not show duplicate notifications for recently shown sources', async () => {
+      const { showNotification } = await import('$lib/stores/notification.js');
+
+      // Mock localStorage to return a recent notification
+      const recentNotification = JSON.stringify([
+        {
+          source: 'giantbomb',
+          timestamp: Date.now() - 1000, // 1 second ago
+        },
+      ]);
+      localStorageMock.getItem.mockReturnValue(recentNotification);
+
+      // Start with no streams
+      sidebarState.updateStreamingSources([]);
+
+      // Add a streaming source that was recently notified
+      sidebarState['updateStreamingState'](['giantbomb']);
+
+      expect(showNotification).not.toHaveBeenCalled();
+    });
+
+    it('should show notifications for expired notification records', async () => {
+      const { showNotification } = await import('$lib/stores/notification.js');
+
+      // Mock localStorage to return an expired notification (25 hours ago)
+      const expiredNotification = JSON.stringify([
+        {
+          source: 'giantbomb',
+          timestamp: Date.now() - 25 * 60 * 60 * 1000,
+        },
+      ]);
+      localStorageMock.getItem.mockReturnValue(expiredNotification);
+
+      // Start with no streams
+      sidebarState.updateStreamingSources([]);
+
+      // Add a streaming source with expired notification
+      sidebarState['updateStreamingState'](['giantbomb']);
+
+      expect(showNotification).toHaveBeenCalledWith(
+        'Giant Bomb is now streaming!',
+        'success'
+      );
+    });
+
+    it('should record notifications in localStorage', async () => {
+      const { showNotification } = await import('$lib/stores/notification.js');
+
+      // Start with no streams
+      sidebarState.updateStreamingSources([]);
+
+      // Add a streaming source
+      sidebarState['updateStreamingState'](['giantbomb']);
+
+      expect(localStorageMock.setItem).toHaveBeenCalledWith(
+        'bombastic_shown_stream_notifications',
+        expect.stringContaining('giantbomb')
+      );
+    });
+
+    it('should not show notifications on initial stream load', async () => {
+      const { showNotification } = await import('$lib/stores/notification.js');
+
+      // Reset to initial load state
+      sidebarState['#isInitialStreamLoad'] = true;
+
+      // Start with no streams
+      sidebarState.updateStreamingSources([]);
+
+      // Add a streaming source during initial load
+      sidebarState['updateStreamingState'](['giantbomb']);
+
+      expect(showNotification).not.toHaveBeenCalled();
+
+      // Verify initial load flag is cleared after first update
+      expect(sidebarState['#isInitialStreamLoad']).toBe(false);
+    });
+
+    it('should handle multiple simultaneous stream changes', async () => {
+      const { showNotification } = await import('$lib/stores/notification.js');
+
+      // Start with some streams
+      sidebarState.updateStreamingSources(['giantbomb', 'nextlander']);
+
+      // Update to different streams (one stops, one continues, one starts)
+      sidebarState['updateStreamingState'](['nextlander', 'remap']);
+
+      expect(showNotification).toHaveBeenCalledWith(
+        'Giant Bomb has stopped streaming',
+        'info'
+      );
+      expect(showNotification).toHaveBeenCalledWith(
+        'Remap is now streaming!',
+        'success'
+      );
+      expect(showNotification).toHaveBeenCalledTimes(2);
     });
   });
 
