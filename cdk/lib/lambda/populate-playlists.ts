@@ -1,5 +1,5 @@
-import { youtube, youtube_v3 } from '@googleapis/youtube';
 import { createClient } from '@supabase/supabase-js';
+import { youtube, youtube_v3 } from '@googleapis/youtube';
 import { CHANNEL_INFO, ChannelSource } from '../channel';
 
 const MAX_RESULTS = 5; // Reduced from 50 since playlists are not added frequently
@@ -84,58 +84,51 @@ export const populatePlaylists = async ({
   try {
     const email = `${source}@bombastic.ltd`;
     const username = source;
+    const defaultPassword = 'temp_password_123'; // You may want to generate a random password
 
-    // First, try to find an existing user by email or username
-    const { data: existingUser, error: findUserError } = await supabaseClient
-      .from('auth.users') // Adjust table name as needed - might be 'users' or 'profiles'
-      .select('id')
-      .or(`email.eq.${email},username.eq.${username}`)
-      .single();
+    // Call the create_user function which handles both creation and existing user cases
+    const { data: userId, error: createUserError } = await supabaseClient.rpc(
+      'create_user',
+      {
+        email,
+        password: defaultPassword,
+        username,
+      }
+    );
 
-    let userId: string;
-
-    if (existingUser && !findUserError) {
-      // User exists, use the existing user ID
-      userId = existingUser.id;
-      console.log(
+    if (createUserError) {
+      console.error(
         JSON.stringify({
-          stage: 'user_found',
-          message: `Found existing user for source: ${source}`,
-          userId,
+          stage: 'create_or_get_user',
+          source,
+          error: createUserError,
+          message: `Failed to create or get user for source: ${source}`,
         })
       );
-    } else {
-      // User doesn't exist, create a new one
-      const { data: newUser, error: createUserError } = await supabaseClient
-        .from('auth.users')
-        .insert({
-          email,
-          username,
-          // Add other necessary fields based on your user schema
-        })
-        .select('id')
-        .single();
-
-      if (createUserError || !newUser) {
-        console.error(
-          JSON.stringify({
-            stage: 'create_user',
-            source,
-            error: createUserError,
-          })
-        );
-        throw new Error(`Failed to create user for source: ${source}`);
-      }
-
-      userId = newUser.id;
-      console.log(
-        JSON.stringify({
-          stage: 'user_created',
-          message: `Created new user for source: ${source}`,
-          userId,
-        })
+      throw new Error(
+        `Failed to create or get user for source: ${source}: ${createUserError.message}`
       );
     }
+
+    if (!userId) {
+      console.error(
+        JSON.stringify({
+          stage: 'create_or_get_user',
+          source,
+          error: 'No user ID returned',
+          message: `No user ID returned for source: ${source}`,
+        })
+      );
+      throw new Error(`No user ID returned for source: ${source}`);
+    }
+
+    console.log(
+      JSON.stringify({
+        stage: 'user_handled',
+        message: `Successfully handled user for source: ${source}`,
+        userId,
+      })
+    );
 
     const youtubeClient = youtube({
       version: 'v3',

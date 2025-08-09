@@ -18,9 +18,9 @@ function getFunctionName(baseName: string, envVarName?: string): string {
   if (envVarName && process.env[envVarName]) {
     return process.env[envVarName]!;
   }
-  
+
   // Add staging suffix if staging flag is present
-  return isStaging ? `${baseName}-staging` : baseName;
+  return isStaging ? `${baseName}-Staging` : baseName;
 }
 
 const VIDEOS_FUNCTION_NAME = getFunctionName(
