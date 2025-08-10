@@ -94,6 +94,7 @@
     @apply bg-background text-foreground;
   }
 }
+
 @utility bg-background-lighter {
   background-color: hsl(var(--background-lighter));
 }

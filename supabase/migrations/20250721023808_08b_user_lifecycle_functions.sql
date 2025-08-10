@@ -152,58 +152,60 @@ BEGIN
 END;
 $$;
 
--- Function to create a user (for testing purposes)
+-- Function to create a user or return existing user (for testing purposes)
 CREATE OR REPLACE FUNCTION public.create_user (email text, password text, username text) RETURNS uuid AS $$
 DECLARE
   user_id uuid;
   encrypted_pw text;
-  already_exists boolean := false;
 BEGIN
+  -- First, check if user already exists
+  SELECT id INTO user_id FROM auth.users WHERE auth.users.email = create_user.email;
+  
+  -- If user exists, return their ID
+  IF user_id IS NOT NULL THEN
+    RETURN user_id;
+  END IF;
+
+  -- User doesn't exist, create new one
   user_id := gen_random_uuid();
   encrypted_pw := extensions.crypt(password, extensions.gen_salt('bf'));
 
-  BEGIN
-    INSERT INTO auth.users
-      (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, recovery_sent_at, last_sign_in_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token)
-    VALUES
-      (
-        '00000000-0000-0000-0000-000000000000',
-        user_id,
-        'authenticated',
-        'authenticated',
-        email,
-        encrypted_pw,
-        '2023-05-03 19:41:43.585805+00',
-        '2023-04-22 13:10:03.275387+00',
-        '2023-04-22 13:10:31.458239+00',
-        '{"provider":"email","providers":["email"]}',
-        format('{"username": "%s"}', username)::jsonb,
-        '2023-05-03 19:41:43.580424+00',
-        '2023-05-03 19:41:43.585948+00',
-        '',
-        '',
-        '',
-        ''
-      );
+  INSERT INTO auth.users
+    (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, recovery_sent_at, last_sign_in_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token)
+  VALUES
+    (
+      '00000000-0000-0000-0000-000000000000',
+      user_id,
+      'authenticated',
+      'authenticated',
+      email,
+      encrypted_pw,
+      '2023-05-03 19:41:43.585805+00',
+      '2023-04-22 13:10:03.275387+00',
+      '2023-04-22 13:10:31.458239+00',
+      '{"provider":"email","providers":["email"]}',
+      format('{"username": "%s"}', username)::jsonb,
+      '2023-05-03 19:41:43.580424+00',
+      '2023-05-03 19:41:43.585948+00',
+      '',
+      '',
+      '',
+      ''
+    );
 
-    -- Only if the user was created, add identity
-    INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at)
-    VALUES
-      (
-        gen_random_uuid(),
-        user_id,
-        format('{"sub":"%s","email":"%s"}', user_id::text, email)::jsonb,
-        'email',
-        user_id::text,
-        '2023-05-03 19:41:43.582456+00',
-        '2023-05-03 19:41:43.582497+00',
-        '2023-05-03 19:41:43.582497+00'
-      );
-  EXCEPTION
-    WHEN unique_violation THEN
-      already_exists := true;
-      SELECT id INTO user_id FROM auth.users WHERE auth.users.email = create_user.email;
-  END;
+  -- Add identity for the new user
+  INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at)
+  VALUES
+    (
+      gen_random_uuid(),
+      user_id,
+      format('{"sub":"%s","email":"%s"}', user_id::text, email)::jsonb,
+      'email',
+      user_id::text,
+      '2023-05-03 19:41:43.582456+00',
+      '2023-05-03 19:41:43.582497+00',
+      '2023-05-03 19:41:43.582497+00'
+    );
 
   RETURN user_id;
 END;

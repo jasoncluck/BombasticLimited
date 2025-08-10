@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "build": "npm run format && npm run check && vite build",
+    "build": "npm run format && npm run check && npm run test:ci && vite build",
     "build:preview": "vite build --mode preview",
     "build:test": "npm run check && vite build",
     "build:vercel": "npm run check && vite build --mode production",
@@ -20,7 +20,6 @@
     "prepare": "svelte-kit sync || echo ''",
     "preview": "vite preview",
     "supabase:seed": "supabase db dump -f supabase/seed.sql --data-only",
-    "supabase:seed:auth": "supabase db dump --schema auth -f supabase/seed-auth.sql --data-only",
     "test": "vitest",
     "test:ci": "vitest run --coverage --reporter=verbose",
     "test:db:reset": "supabase db reset",

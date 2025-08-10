@@ -370,25 +370,6 @@ export type Database = {
           playlist_short_id: string;
         }[];
       };
-      get_playlist_by_short_id: {
-        Args: { p_short_id: string };
-        Returns: {
-          id: number;
-          created_at: string;
-          name: string;
-          short_id: string;
-          created_by: string;
-          description: string;
-          thumbnail_url: string;
-          thumbnail_maxres_url: string;
-          type: Database['public']['Enums']['playlist_type'];
-          image_properties: Json;
-          youtube_id: string;
-          profile_username: string;
-          sorted_by: Database['public']['Enums']['playlist_sorted_by'];
-          sort_order: Database['public']['Enums']['playlist_sort_order'];
-        }[];
-      };
       get_playlist_by_youtube_id: {
         Args: { p_youtube_id: string };
         Returns: {

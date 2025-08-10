@@ -12,8 +12,8 @@ export const populateVideos = async ({
   source: ChannelSource;
   repopulate: boolean;
 }) => {
-  const supabaseApiKey = process.env.SUPABASE_SERVICE_API_KEY_PROD;
-  const supabaseUrl = process.env.PUBLIC_SUPABASE_URL_PROD;
+  const supabaseApiKey = process.env.SUPABASE_SERVICE_API_KEY;
+  const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
   if (!supabaseApiKey || !supabaseUrl) {
     const errMsg = 'Could not find Supabase env.';
     console.error(JSON.stringify({ stage: 'init', error: errMsg }));

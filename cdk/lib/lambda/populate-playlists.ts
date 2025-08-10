@@ -1,6 +1,5 @@
 import { youtube, youtube_v3 } from '@googleapis/youtube';
 import { createClient } from '@supabase/supabase-js';
-import { randomBytes } from 'crypto';
 import { CHANNEL_INFO, ChannelSource } from '../channel';
 
 const MAX_RESULTS = 5; // Reduced from 50 since playlists are not added frequently
@@ -53,8 +52,8 @@ export const populatePlaylists = async ({
 }: {
   source: ChannelSource;
 }) => {
-  const supabaseApiKey = process.env.SUPABASE_SERVICE_API_KEY_PROD;
-  const supabaseUrl = process.env.PUBLIC_SUPABASE_URL_PROD;
+  const supabaseApiKey = process.env.SUPABASE_SERVICE_API_KEY;
+  const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
   if (!supabaseApiKey || !supabaseUrl) {
     const errMsg = 'Could not find Supabase env.';
     console.error(JSON.stringify({ stage: 'init', error: errMsg }));
@@ -85,59 +84,51 @@ export const populatePlaylists = async ({
   try {
     const email = `${source}@bombastic.ltd`;
     const username = source;
+    const defaultPassword = 'temp_password_123'; // You may want to generate a random password
 
-    // First, try to find an existing user by email or username
-    const { data: existingUser, error: findUserError } = await supabaseClient
-      .from('auth.users') // Adjust table name as needed - might be 'users' or 'profiles'
-      .select('id')
-      .or(`email.eq.${email},username.eq.${username}`)
-      .single();
-
-    let userId: string;
-
-    if (existingUser && !findUserError) {
-      // User exists, use the existing user ID
-      userId = existingUser.id;
-      console.log(
-        JSON.stringify({
-          stage: 'user_found',
-          message: `Found existing user for ${email}: ${userId}`,
-          source,
-        })
-      );
-    } else {
-      // User doesn't exist, create a new one
-      const password = randomBytes(32).toString('base64url');
-
-      const { data: newUserId, error: userError } = await supabaseClient.rpc(
-        'create_user',
-        {
-          email,
-          password,
-          username,
-        }
-      );
-
-      if (!newUserId) {
-        console.error(
-          JSON.stringify({
-            stage: 'create_user',
-            source,
-            error: userError,
-          })
-        );
-        throw new Error('Failed to create user for source.');
+    // Call the create_user function which handles both creation and existing user cases
+    const { data: userId, error: createUserError } = await supabaseClient.rpc(
+      'create_user',
+      {
+        email,
+        password: defaultPassword,
+        username,
       }
+    );
 
-      userId = newUserId;
-      console.log(
+    if (createUserError) {
+      console.error(
         JSON.stringify({
-          stage: 'create_user',
-          message: `Created new user for ${email}: ${userId}`,
+          stage: 'create_or_get_user',
           source,
+          error: createUserError,
+          message: `Failed to create or get user for source: ${source}`,
         })
+      );
+      throw new Error(
+        `Failed to create or get user for source: ${source}: ${createUserError.message}`
       );
     }
+
+    if (!userId) {
+      console.error(
+        JSON.stringify({
+          stage: 'create_or_get_user',
+          source,
+          error: 'No user ID returned',
+          message: `No user ID returned for source: ${source}`,
+        })
+      );
+      throw new Error(`No user ID returned for source: ${source}`);
+    }
+
+    console.log(
+      JSON.stringify({
+        stage: 'user_handled',
+        message: `Successfully handled user for source: ${source}`,
+        userId,
+      })
+    );
 
     const youtubeClient = youtube({
       version: 'v3',
@@ -246,6 +237,7 @@ export const populatePlaylists = async ({
           created_by: userId,
           thumbnail_url: removeLiveSuffix(thumbnailUrl),
           thumbnail_maxres_url: removeLiveSuffix(thumbnailMaxResUrl),
+          created_at: item.snippet?.publishedAt,
           type: 'Public',
         };
 

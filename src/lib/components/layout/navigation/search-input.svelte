@@ -6,7 +6,7 @@
   let {
     layoutState,
     searchQuery = $bindable(),
-    class: className = 'sm:w-72 w-52',
+    class: className = 'sm:w-64 w-52',
   }: {
     layoutState: LayoutState;
     searchQuery: string;

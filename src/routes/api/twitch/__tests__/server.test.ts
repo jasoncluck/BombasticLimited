@@ -33,16 +33,16 @@ describe('/api/twitch endpoint', () => {
     vi.clearAllMocks();
   });
 
-  it('should export GET function', async () => {
+  it('should export POST function', async () => {
     const module = await import('../+server.js');
 
-    expect(typeof module.GET).toBe('function');
+    expect(typeof module.POST).toBe('function');
   });
 
   it('should return SSE response', async () => {
-    const { GET } = await import('../+server.js');
+    const { POST } = await import('../+server.js');
 
-    const response = await GET();
+    const response = await POST();
 
     expect(response).toBeInstanceOf(Response);
     expect(response.headers.get('content-type')).toBe('text/event-stream');
@@ -50,15 +50,14 @@ describe('/api/twitch endpoint', () => {
 
   it('should use sveltekit-sse produce function', async () => {
     const { produce } = await import('sveltekit-sse');
-    const { GET } = await import('../+server.js');
+    const { POST } = await import('../+server.js');
 
-    await GET();
+    await POST();
 
     expect(produce).toHaveBeenCalledWith(
       expect.any(Function),
       expect.objectContaining({
         stop: expect.any(Function),
-
       })
     );
   });
@@ -72,6 +71,4 @@ describe('/api/twitch endpoint', () => {
     expect(Array.isArray(sourceModule.SOURCES)).toBe(true);
     expect(typeof sourceModule.SOURCE_INFO).toBe('object');
   });
-
 });
-

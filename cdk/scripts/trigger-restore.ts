@@ -8,7 +8,7 @@ const lambdaClient = new LambdaClient({
 });
 
 const RESTORE_FUNCTION_NAME =
-  process.env.RESTORE_LAMBDA_FUNCTION_NAME || 'BombifyDatabaseRestore-prod';
+  process.env.RESTORE_LAMBDA_FUNCTION_NAME || 'BombasticDatabaseRestore-prod';
 
 interface RestoreOptions {
   backupKey?: string;
@@ -129,7 +129,7 @@ Examples:
 
 Environment Variables:
   AWS_REGION                      AWS region (default: us-west-2)
-  RESTORE_LAMBDA_FUNCTION_NAME    Lambda function name (default: BombifyDatabaseRestore-prod)
+  RESTORE_LAMBDA_FUNCTION_NAME    Lambda function name (default: BombasticDatabaseRestore-prod)
 
 ⚠️  WARNING: Restore operations modify your database. Always test with --dry-run first!
 

@@ -47,7 +47,6 @@
   bind:showFloatingBreadcrumbs
   bind:currentPage
   {view}
-  {videosCount}
   {contentFilter}
   {videos}
   playlist={profilePlaylist}
@@ -70,7 +69,7 @@
             {SOURCE_INFO[source].displayName}
           </h2>
         {:else}
-          <h2 class="header-primary text-left">
+          <h2 class="header-primary-no-margin text-left">
             {title}
           </h2>
         {/if}
