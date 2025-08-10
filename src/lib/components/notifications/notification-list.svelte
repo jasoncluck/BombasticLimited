@@ -16,12 +16,7 @@
     AtSign,
     LoaderIcon
   } from '@lucide/svelte';
-  import { 
-    notifications, 
-    isNotificationLoading, 
-    notificationManager,
-    notificationState
-  } from '$lib/stores/notification';
+  import { getNotificationState } from '$lib/state/notifications.svelte';
   import type { SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
   import type { NotificationWithMeta, NotificationType } from '$lib/supabase/notifications';
@@ -41,28 +36,27 @@
     onNotificationClick?: () => void;
   } = $props();
 
+  const notificationState = getNotificationState();
+
   // Load more notifications when scrolling near bottom
   let loadingMore = $state(false);
 
   $effect(() => {
-    notificationManager.initialize(supabase);
+    notificationState.initialize(supabase);
     if (filterType) {
-      notificationManager.loadNotifications({ type: filterType });
+      notificationState.loadNotifications({ type: filterType });
     } else {
-      notificationManager.loadNotifications();
+      notificationState.loadNotifications();
     }
     
     // For demo purposes, if no real notifications exist, show demo data
-    if ($notifications.length === 0 && !$isNotificationLoading) {
+    if (notificationState.notifications.length === 0 && !notificationState.isLoading) {
       const demoNotifications = createDemoNotifications();
       // Simulate adding them to the store for demo
       setTimeout(() => {
-        if ($notifications.length === 0) {
-          notificationState.update(state => ({
-            ...state,
-            notifications: demoNotifications,
-            unreadCount: demoNotifications.filter(n => !n.read).length
-          }));
+        if (notificationState.notifications.length === 0) {
+          notificationState.notifications = demoNotifications;
+          notificationState.unreadCount = demoNotifications.filter(n => !n.read).length;
         }
       }, 1000);
     }
@@ -108,7 +102,7 @@
   async function handleNotificationClick(notification: NotificationWithMeta) {
     // Mark as read if unread
     if (!notification.read) {
-      await notificationManager.markAsRead([notification.id]);
+      await notificationState.markAsRead([notification.id]);
     }
 
     // Navigate to action URL if provided
@@ -123,21 +117,21 @@
   // Handle mark as read
   async function handleMarkAsRead(notification: NotificationWithMeta, event: Event) {
     event.stopPropagation();
-    await notificationManager.markAsRead([notification.id]);
+    await notificationState.markAsRead([notification.id]);
   }
 
   // Handle delete notification
   async function handleDelete(notification: NotificationWithMeta, event: Event) {
     event.stopPropagation();
-    await notificationManager.deleteNotifications([notification.id]);
+    await notificationState.deleteNotifications([notification.id]);
   }
 
   // Load more notifications
   async function loadMore() {
-    if (loadingMore || !$notificationState.hasMore) return;
+    if (loadingMore || !notificationState.hasMore) return;
     
     loadingMore = true;
-    await notificationManager.loadNotifications(
+    await notificationState.loadNotifications(
       filterType ? { type: filterType } : {},
       true // append
     );
@@ -156,7 +150,7 @@
 </script>
 
 <div class="w-full">
-  {#if $isNotificationLoading && $notifications.length === 0}
+  {#if notificationState.isLoading && notificationState.notifications.length === 0}
     <!-- Loading skeleton -->
     <div class="space-y-2 p-4">
       {#each Array(3) as _}
@@ -169,7 +163,7 @@
         </div>
       {/each}
     </div>
-  {:else if $notifications.length === 0}
+  {:else if notificationState.notifications.length === 0}
     <!-- Empty state -->
     <div class="flex flex-col items-center justify-center p-8 text-center">
       <Bell class="h-12 w-12 text-muted-foreground mb-4" />
@@ -184,7 +178,7 @@
       onscroll={handleScroll}
     >
       <div class="space-y-1">
-        {#each $notifications as notification (notification.id)}
+        {#each notificationState.notifications as notification (notification.id)}
           <div
             class="group flex items-start space-x-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors
               {!notification.read ? 'bg-muted/20' : ''}
@@ -288,13 +282,13 @@
             <LoaderIcon class="h-4 w-4 animate-spin mr-2" />
             <span class="text-sm text-muted-foreground">Loading more...</span>
           </div>
-        {:else if $notificationState.hasMore}
+        {:else if notificationState.hasMore}
           <div class="flex items-center justify-center p-4">
             <Button
               variant="ghost"
               size="sm"
               onclick={loadMore}
-              disabled={$isNotificationLoading}
+              disabled={notificationState.isLoading}
             >
               Load more
             </Button>

@@ -1,6 +1,5 @@
 import { browser } from '$app/environment';
 import { invalidateAll, invalidate } from '$app/navigation';
-import { notificationStore } from '$lib/stores/notification.js';
 import { toast } from 'svelte-sonner';
 import type { ContentState } from '$lib/state/content.svelte.js';
 import type { NavigationCacheState } from '$lib/state/navigation-cache/navigation-cache.svelte.js';
@@ -79,7 +78,6 @@ export function useLayoutEffects(
   async function initializeLayout() {
     let mediaQueryCleanup: (() => void) | undefined;
     let sidebarCleanup: (() => void) | undefined;
-    let notificationStoreUnsubscribe: (() => void) | undefined;
 
     async function initialize() {
       // Skip invalidateAll in development mode to prevent slow loading
@@ -126,25 +124,6 @@ export function useLayoutEffects(
     window.addEventListener('dragend', handleDragEnd);
     window.addEventListener('drop', handleDrop);
 
-    // Notification subscriptions
-    notificationStoreUnsubscribe = notificationStore.subscribe((value) => {
-      if (value) {
-        switch (value.type) {
-          case 'success':
-            toast.success(value.message);
-            break;
-          case 'warning':
-            toast.warning(value.message);
-            break;
-          case 'error':
-            toast.error(value.message);
-            break;
-          default:
-            toast(value.message);
-        }
-      }
-    });
-
     return () => {
       // Cleanup event listeners
       window.removeEventListener('dragover', handleDragOver);
@@ -155,7 +134,6 @@ export function useLayoutEffects(
       pageState.cleanup();
 
       // Cleanup subscriptions
-      if (notificationStoreUnsubscribe) notificationStoreUnsubscribe();
       layoutState.cleanup();
 
       // Cleanup state initializations

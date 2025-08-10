@@ -8,7 +8,7 @@
   import { getPlaylistState } from '$lib/state/playlist.svelte';
   import { page } from '$app/state';
   import { updateProfileSources } from '$lib/supabase/user-profiles';
-  import { showNotification } from '$lib/stores/notification';
+  import { showNotification } from '$lib/state/notifications.svelte';
   import { getSourceState } from '$lib/state/source.svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { handleCreatePlaylist } from '../playlist/playlist-service';

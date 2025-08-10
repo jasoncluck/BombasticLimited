@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { SidebarStateClass } from '../sidebar.svelte';
 import type { Source } from '$lib/constants/source';
-import { showNotification } from '$lib/stores/notification';
+import { showNotification } from '$lib/state/notifications.svelte';
 
 // Mock the notification store
-vi.mock('$lib/stores/notification.ts', () => ({
+vi.mock('$lib/state/notifications.svelte', () => ({
   showNotification: vi.fn(),
 }));
 

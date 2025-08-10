@@ -1,5 +1,5 @@
 import { goto, invalidate } from '$app/navigation';
-import { showNotification } from '$lib/stores/notification';
+import { showNotification } from '$lib/state/notifications.svelte';
 import type { Database } from '$lib/supabase/database.types';
 import {
   addVideosToPlaylist,

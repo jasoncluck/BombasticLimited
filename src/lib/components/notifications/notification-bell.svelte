@@ -4,7 +4,7 @@
   import { Button, buttonVariants } from '$lib/components/ui/button';
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
   import * as Drawer from '$lib/components/ui/drawer';
-  import { unreadCount, notificationManager } from '$lib/stores/notification';
+  import { getNotificationState } from '$lib/state/notifications.svelte';
   import NotificationList from './notification-list.svelte';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import type { SupabaseClient } from '@supabase/supabase-js';
@@ -21,16 +21,18 @@
   const mediaQueryState = getMediaQueryState();
   const { canHover } = $derived(mediaQueryState);
 
+  const notificationState = getNotificationState();
+
   // Initialize notification manager
   $effect(() => {
-    notificationManager.initialize(supabase);
-    notificationManager.loadNotifications();
-    notificationManager.loadUnreadCount();
+    notificationState.initialize(supabase);
+    notificationState.loadNotifications();
+    notificationState.loadUnreadCount();
   });
 
   // Handle mark all as read
   async function handleMarkAllAsRead() {
-    await notificationManager.markAllAsRead();
+    await notificationState.markAllAsRead();
   }
 
   // Close dropdown/drawer handler
@@ -52,12 +54,12 @@
       })}"
     >
       <Bell class="h-[1.2rem] w-[1.2rem]" />
-      {#if $unreadCount > 0}
+      {#if notificationState.unreadCount > 0}
         <Badge
           variant="destructive"
           class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-medium"
         >
-          {$unreadCount > 99 ? '99+' : $unreadCount}
+          {notificationState.unreadCount > 99 ? '99+' : notificationState.unreadCount}
         </Badge>
       {/if}
       <span class="sr-only">Notifications</span>
@@ -69,7 +71,7 @@
     >
       <div class="flex items-center justify-between border-b px-4 py-2">
         <h4 class="font-semibold">Notifications</h4>
-        {#if $unreadCount > 0}
+        {#if notificationState.unreadCount > 0}
           <Button
             variant="ghost"
             size="sm"
@@ -102,12 +104,12 @@
       })}"
     >
       <Bell class="h-[1.2rem] w-[1.2rem]" />
-      {#if $unreadCount > 0}
+      {#if notificationState.unreadCount > 0}
         <Badge
           variant="destructive"
           class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-medium"
         >
-          {$unreadCount > 99 ? '99+' : $unreadCount}
+          {notificationState.unreadCount > 99 ? '99+' : notificationState.unreadCount}
         </Badge>
       {/if}
       <span class="sr-only">Notifications</span>
@@ -117,7 +119,7 @@
       <div class="mx-auto w-full max-w-sm">
         <div class="flex items-center justify-between p-4 pb-2">
           <Drawer.Title class="text-lg font-semibold">Notifications</Drawer.Title>
-          {#if $unreadCount > 0}
+          {#if notificationState.unreadCount > 0}
             <Button
               variant="ghost"
               size="sm"

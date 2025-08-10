@@ -6,7 +6,7 @@ import { browser } from '$app/environment';
 import type { Source } from '$lib/constants/source';
 import { SOURCE_INFO } from '$lib/constants/source';
 import { tabVisibility } from '$lib/utils/tab-visibility';
-import { showNotification } from '$lib/stores/notification';
+import { showNotification } from '$lib/state/notifications.svelte';
 import { source, type Source as SSESource } from 'sveltekit-sse';
 import {
   SIDEBAR_COOKIE_NAME,

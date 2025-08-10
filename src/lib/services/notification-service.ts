@@ -155,6 +155,34 @@ export class NotificationService {
   }
 
   /**
+   * Create a notification for all users
+   * Note: This is a stub implementation until the database migration is applied
+   * Once the migration is applied, this will call the create_notification_for_all_users database function
+   */
+  async createNotificationForAllUsers(
+    type: NotificationType,
+    title: string,
+    message: string,
+    metadata: Record<string, any> = {},
+    actionUrl?: string
+  ): Promise<{ count: number | null; error: any }> {
+    // Stub implementation
+    console.log('Creating notification for all users:', { type, title, message, metadata, actionUrl });
+    
+    // Once the database migration is applied, this would call:
+    // const { data, error } = await this.supabase.rpc('create_notification_for_all_users', {
+    //   notification_type: type,
+    //   notification_title: title,
+    //   notification_message: message,
+    //   notification_metadata: metadata,
+    //   notification_action_url: actionUrl
+    // });
+    // return { count: data, error };
+    
+    return { count: 0, error: null };
+  }
+
+  /**
    * Format relative time for notifications
    */
   private formatRelativeTime(timestamp: string): string {

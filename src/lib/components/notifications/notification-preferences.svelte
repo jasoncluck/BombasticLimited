@@ -15,10 +15,7 @@
     AtSign,
     CheckCircle
   } from '@lucide/svelte';
-  import { 
-    notificationManager, 
-    notificationPreferences 
-  } from '$lib/stores/notification';
+  import { getNotificationState } from '$lib/state/notifications.svelte';
   import type { SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
   import type { NotificationPreferences } from '$lib/supabase/notifications';
@@ -34,22 +31,24 @@
   let saveMessage = $state<{ type: 'success' | 'error'; text: string } | null>(null);
   let localPreferences = $state<NotificationPreferences | null>(null);
 
+  const notificationState = getNotificationState();
+
   // Initialize and load preferences
   $effect(() => {
-    notificationManager.initialize(supabase);
+    notificationState.initialize(supabase);
     loadPreferences();
   });
 
   // Sync with store
   $effect(() => {
-    if ($notificationPreferences && !localPreferences) {
-      localPreferences = { ...$notificationPreferences };
+    if (notificationState.preferences && !localPreferences) {
+      localPreferences = { ...notificationState.preferences };
     }
   });
 
   async function loadPreferences() {
     isLoading = true;
-    const result = await notificationManager.loadPreferences();
+    const result = await notificationState.loadPreferences();
     
     if (result && !result.error && result.data) {
       localPreferences = { ...result.data };
@@ -64,7 +63,7 @@
     isLoading = true;
     saveMessage = null;
     
-    const result = await notificationManager.updatePreferences({
+    const result = await notificationState.updatePreferences({
       system_notifications: localPreferences.system_notifications,
       content_notifications: localPreferences.content_notifications,
       user_notifications: localPreferences.user_notifications,
@@ -99,6 +98,38 @@
         email_notifications: false,
         push_notifications: false
       };
+    }
+  }
+
+  async function sendGlobalWelcomeNotification() {
+    // Example of how to send a notification to all users
+    const service = notificationState.notificationService;
+    if (!service) {
+      showDemoNotification('system', {
+        title: 'Service not initialized',
+        message: 'Notification service is not yet initialized.',
+      });
+      return;
+    }
+
+    const result = await service.createNotificationForAllUsers(
+      'system',
+      'Welcome to Bombastic!',
+      'Thanks for being part of our community. Enjoy exploring the latest content from your favorite creators.',
+      { source: 'admin_welcome' },
+      '/account/notifications'
+    );
+    
+    if (result?.error) {
+      showDemoNotification('system', {
+        title: 'Error sending global notification',
+        message: 'Failed to send global notification. This is a demo error.',
+      });
+    } else {
+      showDemoNotification('system', {
+        title: 'Global notification sent!',
+        message: `Welcome notification sent to ${result?.count || 0} users. (This is a demo simulation)`,
+      });
     }
   }
 
@@ -359,6 +390,14 @@
         onclick={simulateRealtimeNotification}
       >
         Simulate Real-time
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onclick={sendGlobalWelcomeNotification}
+        class="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-blue-700 hover:bg-gradient-to-r hover:from-blue-100 hover:to-indigo-100"
+      >
+        Send Global Welcome
       </Button>
     </div>
   </Card.Root>

@@ -19,6 +19,7 @@
   import { setLayoutState } from '$lib/state/layout.svelte';
   import { setSourceState } from '$lib/state/source.svelte';
   import { setSidebarState } from '$lib/state/sidebar.svelte';
+  import { setNotificationState } from '$lib/state/notifications.svelte';
 
   import '../app.css';
   import { setNavigationCacheState } from '$lib/state/navigation-cache/index.js';
@@ -43,6 +44,7 @@
   const mediaQuery = setMediaQueryState();
   const navigationCache = setNavigationCacheState();
   const sidebarState = setSidebarState();
+  const notificationState = setNotificationState();
 
   setPlaylistState(pageState, contentState, sidebarState);
   setSourceState(pageState);

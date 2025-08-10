@@ -1,6 +1,6 @@
 import { getContext, setContext } from 'svelte';
 import { goto } from '$app/navigation';
-import { showNotification } from '$lib/stores/notification.js';
+import { showNotification } from '$lib/state/notifications.svelte.js';
 import debounce from 'debounce';
 import { isSourceArray, SOURCE_INFO } from '$lib/constants/source';
 import type { SupabaseClient } from '@supabase/supabase-js';

@@ -1,5 +1,5 @@
 import type { NotificationWithMeta, NotificationType } from '$lib/supabase/notifications';
-import { showNotificationToast } from '$lib/stores/notification';
+import { showNotificationToast } from '$lib/state/notifications.svelte';
 
 /**
  * Demo notifications for testing the system

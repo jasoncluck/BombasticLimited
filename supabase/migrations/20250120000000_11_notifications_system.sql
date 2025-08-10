@@ -111,10 +111,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Trigger to create notification preferences when a profile is created
+-- Trigger to create notification preferences when a user is created
 -- This ensures every user has notification preferences
-CREATE TRIGGER create_notification_preferences_on_profile_creation
-    AFTER INSERT ON public.profiles
+-- Use auth.users instead of profiles to avoid dependency issues
+CREATE TRIGGER create_notification_preferences_on_user_creation
+    AFTER INSERT ON auth.users
     FOR EACH ROW
     EXECUTE FUNCTION public.create_notification_preferences_for_user();
 
@@ -193,11 +194,60 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Function to create notifications for all users
+-- Useful for system-wide announcements like "Welcome" messages
+CREATE OR REPLACE FUNCTION public.create_notification_for_all_users(
+    notification_type notification_type,
+    notification_title text,
+    notification_message text,
+    notification_metadata jsonb DEFAULT '{}',
+    notification_action_url text DEFAULT NULL
+)
+RETURNS integer AS $$
+DECLARE
+    user_record record;
+    notification_count integer := 0;
+    user_preferences record;
+BEGIN
+    -- Loop through all users who have notification preferences
+    FOR user_record IN 
+        SELECT DISTINCT user_id 
+        FROM public.notification_preferences
+    LOOP
+        -- Get user's notification preferences
+        SELECT * INTO user_preferences
+        FROM public.notification_preferences
+        WHERE user_id = user_record.user_id;
+        
+        -- Check if user wants this type of notification
+        IF user_preferences IS NOT NULL AND (
+            (notification_type = 'system' AND user_preferences.system_notifications) OR
+            (notification_type = 'content' AND user_preferences.content_notifications) OR
+            (notification_type = 'user' AND user_preferences.user_notifications) OR
+            (notification_type = 'playlist_update' AND user_preferences.playlist_notifications) OR
+            (notification_type = 'mention' AND user_preferences.mention_notifications)
+        ) THEN
+            -- Create the notification for this user
+            INSERT INTO public.notifications (
+                user_id, type, title, message, metadata, action_url
+            ) VALUES (
+                user_record.user_id, notification_type, notification_title, 
+                notification_message, notification_metadata, notification_action_url
+            );
+            
+            notification_count := notification_count + 1;
+        END IF;
+    END LOOP;
+    
+    RETURN notification_count;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Create default notification preferences for existing users who don't have them
 INSERT INTO public.notification_preferences (user_id)
-SELECT p.id
-FROM public.profiles p
-LEFT JOIN public.notification_preferences np ON p.id = np.user_id
+SELECT u.id
+FROM auth.users u
+LEFT JOIN public.notification_preferences np ON u.id = np.user_id
 WHERE np.user_id IS NULL
 ON CONFLICT (user_id) DO NOTHING;
 

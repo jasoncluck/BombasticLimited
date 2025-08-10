@@ -6,7 +6,7 @@ vi.mock('$app/navigation', () => ({
   goto: vi.fn(),
 }));
 
-vi.mock('$lib/stores/notification', () => ({
+vi.mock('$lib/state/notifications.svelte', () => ({
   showNotification: vi.fn(),
 }));
 
