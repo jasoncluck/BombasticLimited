@@ -633,3 +633,42 @@ export async function cleanupImageCache(): Promise<void> {
   await imageCacheManager.initialize();
   await imageCacheManager.cleanup();
 }
+
+// Helper function to generate playlist image URL for client-side requests
+export function generatePlaylistImageUrl({
+  thumbnailUrl,
+  thumbnailMaxResUrl,
+  imageProperties,
+  format = 'auto',
+  quality = 90,
+  responseType = 'image'
+}: {
+  thumbnailUrl?: string | null;
+  thumbnailMaxResUrl?: string | null;
+  imageProperties?: ImageProperties | null;
+  format?: 'auto' | 'webp' | 'jpeg' | 'avif';
+  quality?: number;
+  responseType?: 'image' | 'json';
+}): string | null {
+  const effectiveUrl = thumbnailMaxResUrl || thumbnailUrl;
+  if (!effectiveUrl) return null;
+
+  const params = new URLSearchParams();
+  
+  if (thumbnailMaxResUrl) {
+    params.set('maxresUrl', thumbnailMaxResUrl);
+  }
+  if (thumbnailUrl) {
+    params.set('url', thumbnailUrl);
+  }
+  
+  params.set('format', format);
+  params.set('quality', quality.toString());
+  params.set('type', responseType);
+  
+  if (imageProperties) {
+    params.set('imageProperties', encodeURIComponent(JSON.stringify(imageProperties)));
+  }
+  
+  return `/api/playlist-image?${params.toString()}`;
+}

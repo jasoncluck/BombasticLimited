@@ -4,7 +4,7 @@ import {
   searchPlaylists,
 } from '$lib/supabase/playlists';
 import { parseImageProperties } from '$lib/components/playlist/playlist';
-import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
+import { generatePlaylistImageUrl } from '$lib/server/image-processing';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
@@ -22,9 +22,6 @@ export const load: PageServerLoad = async ({
 
   const searchString = params.query;
 
-  // Get Accept header for optimal format detection
-  const acceptHeader = request.headers.get('accept');
-
   const { playlists: playlistResults, count: playlistsCount } =
     await searchPlaylists({
       searchString,
@@ -34,19 +31,17 @@ export const load: PageServerLoad = async ({
       session,
     });
 
-  // Process playlist images server-side with AVIF format detection
-  const processedPlaylistResults = await Promise.all(
-    playlistResults.map(async (playlist) => ({
-      ...playlist,
-      processedImageUrl: await getCroppedPlaylistImageUrlServer({
-        imageProperties: parseImageProperties(playlist.image_properties),
-        thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
-        thumbnailUrl: playlist.thumbnail_url,
-        acceptHeader,
-        options: { format: 'auto' },
-      }),
-    }))
-  );
+  // Generate playlist image URLs instead of processing inline
+  const processedPlaylistResults = playlistResults.map((playlist) => ({
+    ...playlist,
+    processedImageUrl: generatePlaylistImageUrl({
+      imageProperties: parseImageProperties(playlist.image_properties),
+      thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
+      thumbnailUrl: playlist.thumbnail_url,
+      format: 'auto', // Enable AVIF format detection
+      quality: 90,
+    }),
+  }));
 
   return {
     playlistResults: processedPlaylistResults,

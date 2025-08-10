@@ -6,7 +6,7 @@ import {
   getPlaylistDataByYoutubeId,
   getPlaylistsForUsername,
 } from '$lib/supabase/playlists';
-import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
+import { getCroppedPlaylistImageUrlServer, generatePlaylistImageUrl } from '$lib/server/image-processing';
 import {
   createMockSession,
   createMockUserProfile,
@@ -37,6 +37,7 @@ vi.mock('$lib/supabase/playlists', () => ({
 
 vi.mock('$lib/server/image-processing', () => ({
   getCroppedPlaylistImageUrlServer: vi.fn(),
+  generatePlaylistImageUrl: vi.fn(),
 }));
 
 vi.mock('$lib/constants/source', () => ({
@@ -82,6 +83,7 @@ const mockGetPlaylistsForUsername = vi.mocked(getPlaylistsForUsername);
 const mockGetCroppedPlaylistImageUrlServer = vi.mocked(
   getCroppedPlaylistImageUrlServer
 );
+const mockGeneratePlaylistImageUrl = vi.mocked(generatePlaylistImageUrl);
 const mockRedirect = vi.mocked(redirect);
 
 // Import the mocked functions so we can control them
@@ -229,6 +231,7 @@ describe('[source]/+page.server.ts load function', () => {
       mockGetCroppedPlaylistImageUrlServer.mockResolvedValue(
         'https://example.com/processed.jpg'
       );
+      mockGeneratePlaylistImageUrl.mockReturnValue('/api/playlist-image?url=test');
     });
 
     it('should fetch videos for the source', async () => {

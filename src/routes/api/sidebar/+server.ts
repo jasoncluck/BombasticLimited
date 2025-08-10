@@ -3,7 +3,7 @@ import type { RequestHandler } from './$types';
 import { getUserPlaylists } from '$lib/supabase/playlists';
 import { getProfile } from '$lib/supabase/user-profiles';
 import { parseImageProperties } from '$lib/components/playlist/playlist';
-import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
+import { generatePlaylistImageUrl } from '$lib/server/image-processing';
 
 export const GET: RequestHandler = async ({ locals, request }) => {
   const { session, supabase } = locals;
@@ -11,9 +11,6 @@ export const GET: RequestHandler = async ({ locals, request }) => {
   if (!session) {
     return json({ playlists: [], userProfile: null, userPlaylistsCount: 0 });
   }
-
-  // Get Accept header for optimal format detection
-  const acceptHeader = request.headers.get('accept');
 
   // Run getUserPlaylists and getProfile concurrently
   const [
@@ -24,26 +21,29 @@ export const GET: RequestHandler = async ({ locals, request }) => {
     getProfile({ supabase, session }),
   ]);
 
-  // Process playlist images concurrently if playlists exist
+  // Generate playlist image URLs instead of processing inline
   let processedPlaylists = userPlaylists;
   if (userPlaylists) {
-    const playlistImagePromises = userPlaylists.map(async (userPlaylist) => ({
+    processedPlaylists = userPlaylists.map((userPlaylist) => ({
       ...userPlaylist,
-      processedImageUrl: await getCroppedPlaylistImageUrlServer({
+      processedImageUrl: generatePlaylistImageUrl({
         imageProperties: parseImageProperties(userPlaylist.image_properties),
         thumbnailMaxResUrl: userPlaylist.thumbnail_maxres_url,
         thumbnailUrl: userPlaylist.thumbnail_url,
-        acceptHeader,
-        options: { format: 'auto' },
+        format: 'auto', // Enable AVIF format detection
+        quality: 90,
       }),
     }));
-
-    processedPlaylists = await Promise.all(playlistImagePromises);
   }
 
   return json({
     playlists: processedPlaylists ?? [],
     userProfile,
     userPlaylistsCount: userPlaylistsCount ?? 0,
+  }, {
+    headers: {
+      'Cache-Control': 'public, max-age=300, stale-while-revalidate=600', // 5min cache, 10min stale
+      Vary: 'Accept',
+    },
   });
 };

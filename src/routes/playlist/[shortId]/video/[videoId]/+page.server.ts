@@ -4,7 +4,7 @@ import { isVideoWithTimestamp } from '$lib/supabase/videos';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { parseImageProperties } from '$lib/components/playlist/playlist';
-import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
+import { generatePlaylistImageUrl } from '$lib/server/image-processing';
 
 export const load: PageServerLoad = async ({
   locals: { safeGetSession, supabase },
@@ -55,18 +55,15 @@ export const load: PageServerLoad = async ({
     redirect(303, `/video/${params.videoId}`);
   }
 
-  // Get Accept header for optimal format detection
-  const acceptHeader = request.headers.get('accept');
-
-  // Process playlist image if needed
+  // Generate playlist image URL if needed
   const processedImageUrl = profilePlaylist.processedImageUrl
     ? profilePlaylist.processedImageUrl
-    : await getCroppedPlaylistImageUrlServer({
+    : generatePlaylistImageUrl({
         imageProperties: parseImageProperties(profilePlaylist.image_properties),
         thumbnailMaxResUrl: profilePlaylist.thumbnail_maxres_url,
         thumbnailUrl: profilePlaylist.thumbnail_url,
-        acceptHeader,
-        options: { format: 'auto' },
+        format: 'auto', // Enable AVIF format detection
+        quality: 90,
       });
 
   // Update playlist with processed image URL if it was generated

@@ -12,7 +12,7 @@ import {
 import { playlistSchema } from '../schema';
 import { getPaginationQueryParams } from '$lib/components/pagination/pagination';
 import { parseImageProperties } from '$lib/components/playlist/playlist';
-import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
+import { getCroppedPlaylistImageUrlServer, generatePlaylistImageUrl } from '$lib/server/image-processing';
 import { getUserProfile, getProfileById } from '$lib/supabase/user-profiles';
 import {
   redirect as flashRedirect,
@@ -59,6 +59,7 @@ vi.mock('$lib/components/playlist/playlist', () => ({
 
 vi.mock('$lib/server/image-processing', () => ({
   getCroppedPlaylistImageUrlServer: vi.fn(),
+  generatePlaylistImageUrl: vi.fn(),
 }));
 
 vi.mock('sveltekit-flash-message/server', () => ({
@@ -93,6 +94,7 @@ const mockParseImageProperties = vi.mocked(parseImageProperties);
 const mockGetCroppedPlaylistImageUrlServer = vi.mocked(
   getCroppedPlaylistImageUrlServer
 );
+const mockGeneratePlaylistImageUrl = vi.mocked(generatePlaylistImageUrl);
 const mockGetUserProfile = vi.mocked(getUserProfile);
 const mockGetProfileById = vi.mocked(getProfileById);
 const mockSetFlash = vi.mocked(setFlash);
@@ -149,6 +151,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
     mockGetCroppedPlaylistImageUrlServer.mockResolvedValue(
       'processed-image-url'
     );
+    mockGeneratePlaylistImageUrl.mockReturnValue('/api/playlist-image?url=test');
     mockZod.mockReturnValue({} as any);
     // Mock getUserProfile to return null profile by default
     mockGetUserProfile.mockResolvedValue({
