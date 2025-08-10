@@ -18,7 +18,7 @@ export function useNavigation(
 ) {
   const layoutState = getLayoutState();
 
-  function setupNavigationHooks(session: any) {
+  function setupNavigationHooks(session: Session | null) {
     beforeNavigate(({ from }) => {
       if (from) {
         pageState.contentScrollPosition = pageState.createViewportSnapshot(
