@@ -20,6 +20,7 @@
     session,
     supabase,
     layoutState,
+    searchQuery = $bindable(),
     openAccountDrawer = $bindable(),
   }: {
     userProfile: UserProfile | null;
