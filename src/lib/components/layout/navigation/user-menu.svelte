@@ -13,29 +13,28 @@
     TriangleAlert,
   } from '@lucide/svelte';
   import { handleUpdateProfileContentDisplay } from '$lib/components/profile/profile-service';
-  import type { LayoutState } from '$lib/state/layout.svelte.js';
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
   import type { UserProfile } from '$lib/supabase/user-profiles';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import { getContentState } from '$lib/state/content.svelte';
+  import { getLayoutState } from '$lib/state/layout.svelte';
 
   let {
     userProfile,
     session,
     supabase,
-    layoutState,
     openAccountDrawer = $bindable(),
   }: {
     userProfile: UserProfile | null;
     session: Session | null;
     supabase: SupabaseClient<Database>;
-    layoutState: LayoutState;
     openAccountDrawer: boolean;
   } = $props();
 
   const contentState = getContentState();
   const mediaQueryState = getMediaQueryState();
+  const layoutState = getLayoutState();
 
   const { canHover, isSm } = $derived(mediaQueryState);
 </script>

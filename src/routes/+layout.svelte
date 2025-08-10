@@ -50,7 +50,7 @@
   let openAccountDrawer = $derived(sidebarState.openAccountDrawer);
 
   let lastUserState: boolean | null = null;
-  let searchQuery = $state('');
+
   // Progressive loading states
   let isHydrated = $state(false);
 
@@ -60,7 +60,6 @@
     useNavigation(
       navigationCache,
       pageState,
-      { value: searchQuery },
       etag,
       lastModified,
       cached,
@@ -99,7 +98,7 @@
         content: pageState.createViewportSnapshot(
           pageState.viewportRefs.contentViewportRef
         ),
-        searchQuery,
+        searchQuery: layoutState.searchQuery,
       };
     },
     restore: (restored) => {
@@ -108,7 +107,7 @@
         pageState.viewportRefs.contentViewportRef,
         restored.content
       );
-      searchQuery = restored.searchQuery;
+      layoutState.setSearchQuery(restored.searchQuery);
     },
   };
 
@@ -203,7 +202,7 @@
   <script src="https://embed.twitch.tv/embed/v1.js"></script>
 </svelte:head>
 
-<div class=" flex h-full flex-col">
+<div class="flex h-full flex-col">
   <!-- Main Content Area with Progressive Loading -->
   {#if !isHydrated}
     <!-- SSR/Initial Load State -->
@@ -220,7 +219,6 @@
       {supabase}
       {layoutState}
       {contentState}
-      bind:searchQuery
       bind:openAccountDrawer
     />
     <ResizableLayout

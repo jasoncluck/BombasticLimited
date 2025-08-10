@@ -6,7 +6,10 @@
   import SearchInput from './search-input.svelte';
   import UserMenu from './user-menu.svelte';
   import type { LayoutState } from '$lib/state/layout.svelte.js';
-  import type { ContentState } from '$lib/state/content.svelte.js';
+  import {
+    getContentState,
+    type ContentState,
+  } from '$lib/state/content.svelte.js';
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
   import type { UserProfile } from '$lib/supabase/user-profiles';
@@ -17,7 +20,6 @@
     session,
     supabase,
     layoutState,
-    searchQuery = $bindable(),
     openAccountDrawer = $bindable(),
   }: {
     userProfile: UserProfile | null;
@@ -25,7 +27,6 @@
     supabase: SupabaseClient<Database>;
     layoutState: LayoutState;
     contentState: ContentState;
-    searchQuery: string;
     openAccountDrawer: boolean;
   } = $props();
 </script>
@@ -48,7 +49,7 @@
       data-testid="brand-logo-link"
       onclick={(e) => {
         e.preventDefault();
-        searchQuery = '';
+        layoutState.clearSearchQuery();
         goto('/', { replaceState: true });
       }}
       class="ml-2 hidden transition-opacity duration-200 hover:opacity-80 sm:ml-0 sm:block"
@@ -69,7 +70,7 @@
       class="hidden rounded-full sm:flex"
       onclick={(e) => {
         e.preventDefault();
-        searchQuery = '';
+        layoutState.clearSearchQuery();
         goto('/', { replaceState: true });
       }}
       data-testid="home-link"
@@ -79,19 +80,13 @@
     </Button>
 
     <!-- Search Input -->
-    <SearchInput {layoutState} bind:searchQuery />
+    <SearchInput {layoutState} />
   </div>
 
   <!-- Right Section: User Controls -->
   <div class="ml-auto">
     <div class="flex items-center gap-4">
-      <UserMenu
-        {userProfile}
-        {session}
-        {supabase}
-        {layoutState}
-        bind:openAccountDrawer
-      />
+      <UserMenu {userProfile} {session} {supabase} bind:openAccountDrawer />
     </div>
   </div>
 </nav>

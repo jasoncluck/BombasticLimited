@@ -4,19 +4,21 @@ import { browser } from '$app/environment';
 import { tick } from 'svelte';
 import type { NavigationCacheState } from '$lib/state/navigation-cache/navigation-cache.svelte.js';
 import type { PageState } from '$lib/state/page.svelte.js';
+import { getLayoutState, type LayoutState } from '$lib/state/layout.svelte.js';
 import type { Session } from '@supabase/supabase-js';
 
 export function useNavigation(
   navigationCache: NavigationCacheState,
   pageState: PageState,
-  searchQuery: { value: string },
   etag: string | null,
   lastModified: string | null,
   cached: boolean,
   cacheUserId: string | null,
   session: Session | null
 ) {
-  function setupNavigationHooks(userProfile: any, session: any) {
+  const layoutState = getLayoutState();
+
+  function setupNavigationHooks(session: any) {
     beforeNavigate(({ from }) => {
       if (from) {
         pageState.contentScrollPosition = pageState.createViewportSnapshot(
@@ -42,7 +44,7 @@ export function useNavigation(
         !to.url.pathname.startsWith('/search/') &&
         to.url.pathname !== '/'
       ) {
-        searchQuery.value = '';
+        layoutState.clearSearchQuery();
       }
 
       // Invalidate video cache when leaving video pages
