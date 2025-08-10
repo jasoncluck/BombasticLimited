@@ -45,21 +45,19 @@
 
   const hoveredVideo = $derived(contentState.hoveredVideosBySection[sectionId]);
 
-  // Create drag drop functionality - use $derived to recreate when dependencies change
-  const dragDrop = $derived(
-    contentState.createDragDrop({
-      allowVideoReorder,
-      videos,
-      videosCount,
-      playlist,
-      contentFilter,
-      supabase,
-      clearSelection: true,
-      onVideosUpdate: (updatedVideos) => {
-        videos = updatedVideos;
-      },
-    })
-  );
+  // Create drag drop functionality
+  const dragDrop = contentState.createDragDrop({
+    allowVideoReorder,
+    videos,
+    videosCount,
+    playlist,
+    contentFilter,
+    supabase,
+    clearSelection: true,
+    onVideosUpdate: (updatedVideos) => {
+      videos = updatedVideos;
+    },
+  });
 
   let api = $state<CarouselAPI>();
   let showPreviousButton = $state(false);
