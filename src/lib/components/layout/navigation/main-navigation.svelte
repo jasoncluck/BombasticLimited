@@ -17,7 +17,6 @@
     session,
     supabase,
     layoutState,
-    contentState,
     searchQuery = $bindable(),
     openAccountDrawer = $bindable(),
   }: {
