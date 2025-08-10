@@ -457,7 +457,6 @@
       rounded-b-md px-4 whitespace-pre-line will-change-transform
       {userPreferences.contentDescription === 'BRIEF' &&
             'line-clamp-4 overflow-clip pb-1'}"
-          style="left: -0.5rem; right: -0.5rem; width: auto;"
         >
           {video.description}
         </p>

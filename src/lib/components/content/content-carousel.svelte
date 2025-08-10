@@ -17,7 +17,7 @@
   };
 
   let {
-    videos,
+    videos = $bindable(),
     videosCount,
     sectionId = DEFAULT_SECTION_ID,
     isContinueVideos,
