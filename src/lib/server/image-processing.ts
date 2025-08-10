@@ -80,9 +80,11 @@ export function getMemoryUsage() {
 }
 
 // Browser format support detection
-export function detectOptimalFormat(acceptHeader?: string | null): 'avif' | 'webp' | 'jpeg' {
+export function detectOptimalFormat(
+  acceptHeader?: string | null
+): 'avif' | 'webp' | 'jpeg' {
   if (!acceptHeader) return 'webp'; // Default to WebP
-  
+
   const accept = acceptHeader.toLowerCase();
   if (accept.includes('image/avif')) return 'avif';
   if (accept.includes('image/webp')) return 'webp';
@@ -96,14 +98,18 @@ export function calculateOptimalQuality(
   baseQuality = 90
 ): number {
   const imageSize = (metadata.width || 0) * (metadata.height || 0);
-  
+
   // Adjust quality based on image size
-  if (imageSize > 1920 * 1080) { // Large images
-    return targetFormat === 'jpeg' ? Math.max(baseQuality - 10, 75) : Math.max(baseQuality - 5, 85);
-  } else if (imageSize < 640 * 360) { // Small images
+  if (imageSize > 1920 * 1080) {
+    // Large images
+    return targetFormat === 'jpeg'
+      ? Math.max(baseQuality - 10, 75)
+      : Math.max(baseQuality - 5, 85);
+  } else if (imageSize < 640 * 360) {
+    // Small images
     return Math.min(baseQuality + 5, 95);
   }
-  
+
   return baseQuality;
 }
 
@@ -201,8 +207,15 @@ export async function getCroppedPlaylistImageUrlServer({
     });
 
     // Determine output format
-    const targetFormat = options.format === 'auto' ? 'webp' : (options.format || 'webp');
-    const quality = options.quality || calculateOptimalQuality(metadata, targetFormat, isStandardResolution ? 95 : 90);
+    const targetFormat =
+      options.format === 'auto' ? 'webp' : options.format || 'webp';
+    const quality =
+      options.quality ||
+      calculateOptimalQuality(
+        metadata,
+        targetFormat,
+        isStandardResolution ? 95 : 90
+      );
 
     let processedImageBuffer: Buffer;
     let mimeType: string;
@@ -219,7 +232,7 @@ export async function getCroppedPlaylistImageUrlServer({
           .toBuffer();
         mimeType = 'image/avif';
         break;
-      
+
       case 'webp':
         processedImageBuffer = await processedInstance
           .webp({
@@ -233,7 +246,7 @@ export async function getCroppedPlaylistImageUrlServer({
           .toBuffer();
         mimeType = 'image/webp';
         break;
-      
+
       case 'jpeg':
       default:
         processedImageBuffer = await processedInstance
@@ -330,10 +343,12 @@ export async function getVideoThumbnailWebpUrlServer({
 
     // Get metadata for smart optimization
     const metadata = await sharpInstance.metadata();
-    
+
     // Determine output format
-    const targetFormat = options.format === 'auto' ? 'webp' : (options.format || 'webp');
-    const quality = options.quality || calculateOptimalQuality(metadata, targetFormat, 90);
+    const targetFormat =
+      options.format === 'auto' ? 'webp' : options.format || 'webp';
+    const quality =
+      options.quality || calculateOptimalQuality(metadata, targetFormat, 90);
 
     let processedImageBuffer: Buffer;
     let mimeType: string;
@@ -360,7 +375,7 @@ export async function getVideoThumbnailWebpUrlServer({
           .toBuffer();
         mimeType = 'image/avif';
         break;
-      
+
       case 'webp':
         processedImageBuffer = await pipeline
           .webp({
@@ -374,7 +389,7 @@ export async function getVideoThumbnailWebpUrlServer({
           .toBuffer();
         mimeType = 'image/webp';
         break;
-      
+
       case 'jpeg':
       default:
         processedImageBuffer = await pipeline
@@ -422,36 +437,40 @@ export async function getVideoThumbnailWebpUrlsBatch(
   request?: Request
 ): Promise<Array<string | null>> {
   if (thumbnailUrls.length === 0) return [];
-  
+
   // Log memory usage before processing
   const initialMemory = getMemoryUsage();
-  console.log(`Starting batch processing of ${thumbnailUrls.length} images. Memory: ${initialMemory.heapUsed}MB`);
-  
+  console.log(
+    `Starting batch processing of ${thumbnailUrls.length} images. Memory: ${initialMemory.heapUsed}MB`
+  );
+
   // Process in chunks to manage memory
   const chunkSize = MAX_CONCURRENT_PROCESSING;
   const results: Array<string | null> = [];
-  
+
   for (let i = 0; i < thumbnailUrls.length; i += chunkSize) {
     const chunk = thumbnailUrls.slice(i, i + chunkSize);
-    
+
     const chunkResults = await Promise.all(
       chunk.map((thumbnailUrl) =>
         getVideoThumbnailWebpUrlServer({ thumbnailUrl, options, request })
       )
     );
-    
+
     results.push(...chunkResults);
-    
+
     // Force garbage collection between chunks if available
     if (global.gc && i + chunkSize < thumbnailUrls.length) {
       global.gc();
     }
   }
-  
+
   // Log final memory usage
   const finalMemory = getMemoryUsage();
-  console.log(`Batch processing complete. Memory: ${finalMemory.heapUsed}MB (${finalMemory.heapUsed - initialMemory.heapUsed > 0 ? '+' : ''}${finalMemory.heapUsed - initialMemory.heapUsed}MB)`);
-  
+  console.log(
+    `Batch processing complete. Memory: ${finalMemory.heapUsed}MB (${finalMemory.heapUsed - initialMemory.heapUsed > 0 ? '+' : ''}${finalMemory.heapUsed - initialMemory.heapUsed}MB)`
+  );
+
   return results;
 }
 
@@ -465,29 +484,29 @@ export async function getCroppedPlaylistImageUrlsBatch(
   requestContext?: Request
 ): Promise<Array<string | null>> {
   if (requests.length === 0) return [];
-  
+
   // Process in chunks for memory management
   const chunkSize = MAX_CONCURRENT_PROCESSING;
   const results: Array<string | null> = [];
-  
+
   for (let i = 0; i < requests.length; i += chunkSize) {
     const chunk = requests.slice(i, i + chunkSize);
-    
+
     const chunkResults = await Promise.all(
       chunk.map((request) => getCroppedPlaylistImageUrlServer({
         ...request,
         request: requestContext
       }))
     );
-    
+
     results.push(...chunkResults);
-    
+
     // Force garbage collection between chunks if available
     if (global.gc && i + chunkSize < requests.length) {
       global.gc();
     }
   }
-  
+
   return results;
 }
 
@@ -498,7 +517,7 @@ export async function generateProgressiveImages(
   request?: Request
 ): Promise<Array<{ size: string; dataUrl: string | null }>> {
   const results: Array<{ size: string; dataUrl: string | null }> = [];
-  
+
   for (const size of sizes) {
     try {
       const dataUrl = await getVideoThumbnailWebpUrlServer({
@@ -511,20 +530,23 @@ export async function generateProgressiveImages(
         },
         request,
       });
-      
+
       results.push({
         size: `${size.width}x${size.height}`,
         dataUrl,
       });
     } catch (error) {
-      console.error(`Failed to generate ${size.width}x${size.height} image:`, error);
+      console.error(
+        `Failed to generate ${size.width}x${size.height} image:`,
+        error
+      );
       results.push({
         size: `${size.width}x${size.height}`,
         dataUrl: null,
       });
     }
   }
-  
+
   return results;
 }
 
@@ -536,31 +558,36 @@ async function fetchWithRetry(
   delay = 1000
 ): Promise<Response> {
   let lastError: Error = new Error('Unknown error');
-  
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const response = await fetch(url, options);
       if (response.ok) return response;
-      
+
       // Don't retry on client errors (4xx)
       if (response.status >= 400 && response.status < 500) {
         throw new Error(`Client error: ${response.status}`);
       }
-      
+
       throw new Error(`Server error: ${response.status}`);
     } catch (error) {
       lastError = error as Error;
-      
+
       // Don't retry on client errors or last attempt
-      if (attempt === maxRetries || (error as Error).message.includes('Client error')) {
+      if (
+        attempt === maxRetries ||
+        (error as Error).message.includes('Client error')
+      ) {
         break;
       }
-      
+
       // Exponential backoff
-      await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, attempt - 1)));
+      await new Promise((resolve) =>
+        setTimeout(resolve, delay * Math.pow(2, attempt - 1))
+      );
     }
   }
-  
+
   throw lastError;
 }
 
