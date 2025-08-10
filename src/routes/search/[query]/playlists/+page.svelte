@@ -6,7 +6,6 @@
     updatePaginationQueryParams,
   } from '$lib/components/pagination/pagination.js';
   import Pagination from '$lib/components/pagination/pagination.svelte';
-  import { processPlaylists } from '$lib/components/playlist/playlist-service.js';
   import PlaylistTiles from '$lib/components/playlist/playlist-tiles.svelte';
   import { DEFAULT_NUM_PLAYLISTS_PAGINATION } from '$lib/supabase/playlists.js';
 
@@ -25,7 +24,7 @@
     })
   );
 
-  const processedPlaylistsPromise = $derived(processPlaylists(playlistResults));
+  // No need for client-side processing - playlists are already processed server-side
 </script>
 
 <div class="mx-2 flex gap-6">
@@ -60,22 +59,5 @@
   />
 {/if}
 
-{#await processedPlaylistsPromise}
-  <div class="flex items-center justify-center p-8">
-    <div class="text-center">
-      <div
-        class="border-primary mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-b-2"
-      ></div>
-      <p class="text-muted-foreground text-sm">Loading playlists...</p>
-    </div>
-  </div>
-{:then processedPlaylists}
-  <PlaylistTiles playlists={processedPlaylists} {session} />
-{:catch error}
-  <div class="flex items-center justify-center p-8">
-    <div class="text-center">
-      <p class="text-destructive mb-2 text-sm">Failed to load playlists</p>
-      <p class="text-muted-foreground text-xs">{error.message}</p>
-    </div>
-  </div>
-{/await}
+<!-- Direct use of server-processed playlists -->
+<PlaylistTiles playlists={playlistResults} {session} />

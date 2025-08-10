@@ -312,14 +312,10 @@ export async function handleUpdatePlaylistImage({
 
   if (error) {
     showNotification('Unable update playlist image');
-  } else if (updatedPlaylist && !isResetImage) {
-    await getCroppedPlaylistImageUrl({
-      imageProperties: parseImageProperties(playlist.image_properties),
-      thumbnailMaxResUrl,
-      thumbnailUrl,
-    });
   }
 
+  // Refresh data to get server-processed images with AVIF support
+  // instead of using client-side processing
   await invalidate('supabase:db:videos');
   await sidebarState.refreshData();
   return { error };
