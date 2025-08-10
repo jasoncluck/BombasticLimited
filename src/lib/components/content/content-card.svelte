@@ -18,7 +18,6 @@
   import { getVideoThumbnailUrl } from '$lib/utils/video-thumbnails';
   import { onMount } from 'svelte';
   import { handleContentNavigation } from './content';
-  import type { CombinedContentFilter } from './content-filter';
   import type { Playlist } from '$lib/supabase/playlists';
 
   type ContentCardProps = {
@@ -134,7 +133,7 @@
 
     // Only apply hover and selected states to cards that are in view
     if (isInViewCard && (isSelectedCard || isHoveredCard)) {
-      classes += ' z-40 !bg-secondary brightness-110';
+      classes += ' z-40 bg-secondary/50 rounded-b-lg brightness-110';
     }
 
     // Add drag drop classes if enabled
@@ -336,9 +335,7 @@
     ondragover={dragDrop && index !== undefined
       ? (e) => dragDrop.handleDragOver(e, index)
       : undefined}
-    ondragleave={dragDrop
-      ? (e) => dragDrop.handleDragLeave(e)
-      : undefined}
+    ondragleave={dragDrop ? (e) => dragDrop.handleDragLeave(e) : undefined}
     ondrop={dragDrop && index !== undefined
       ? (e) => dragDrop.handleDrop(e, index, sectionId)
       : undefined}
@@ -350,7 +347,7 @@
     oncontextmenu={handleContextMenu}
     onkeydown={handleKeyDown}
   >
-    <div class="cursor-pointer text-left">
+    <div class="cursor-pointer overflow-hidden text-left">
       <div class="relative">
         <img
           class="aspect-[16/9] h-auto w-full"
@@ -390,9 +387,33 @@
         {/if}
       </div>
 
-      <p class="p-2 text-sm">
+      <p class="p-2 text-sm/5 tracking-tight">
         {video.title}
       </p>
+
+      <!-- Date/Description section - they occupy the same space -->
+      <div class="min-h-[1rem] px-2">
+        {#if shouldShowDescription && userPreferences.contentDescription !== 'NONE'}
+          <!-- Show description when hovering/selected -->
+          <p
+            class="break-anywhere pointer-events-none transform
+            text-xs tracking-tight whitespace-pre-line will-change-transform
+            {userPreferences.contentDescription === 'BRIEF' &&
+              'line-clamp-4 overflow-clip'}"
+          >
+            {video.description}
+          </p>
+        {:else}
+          <!-- Show date by default -->
+          <p class="text-muted-foreground pointer-events-none text-xs">
+            {new Date(video.published_at).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })}
+          </p>
+        {/if}
+      </div>
 
       {#if isVideoWithTimestamp(video) && video.playlist_name && video.playlist_short_id}
         <div
@@ -434,31 +455,6 @@
             </div>
           </div>
         </div>
-      {/if}
-
-      <p
-        class="text-muted-foreground pointer-events-none w-full transform px-2 text-xs/4 @sm:absolute
-        {shouldShowDescription ? '@sm:invisible @sm:bg-transparent ' : 'block'}"
-      >
-        {new Date(video.published_at).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        })}
-      </p>
-
-      <!-- Description overlay -->
-      {#if userPreferences.contentDescription !== 'NONE'}
-        <p
-          class="pointer-events-none text-sm @sm:absolute @sm:opacity-0
-      {shouldShowDescription ? '@sm:bg-secondary @sm:opacity-100' : ''}
-      break-anywhere z-40 transform
-      rounded-b-md px-4 whitespace-pre-line will-change-transform
-      {userPreferences.contentDescription === 'BRIEF' &&
-            'line-clamp-4 overflow-clip pb-1'}"
-        >
-          {video.description}
-        </p>
       {/if}
     </div>
   </div>
