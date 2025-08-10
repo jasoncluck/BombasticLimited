@@ -463,12 +463,6 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
       // Clone before caching
       const responseToCache = response.clone();
       cache.put(request, responseToCache);
-
-      if (isVercelImage && import.meta.env.DEV) {
-        console.log(
-          `SW [${getTimestamp()}]: ✅ Cached Vercel image: ${url.pathname}`
-        );
-      }
     }
     return response;
   } catch (error) {
@@ -696,7 +690,7 @@ sw.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle static assets 
+  // Handle static assets
   if (
     STATIC_ASSETS.includes(url.pathname) ||
     STATIC_EXTENSIONS.test(url.pathname)
