@@ -92,9 +92,9 @@
       isHovered
   );
 
-  // Create drag drop functionality when needed
+  // Create drag drop functionality when videos are available
   const dragDrop = $derived(
-    allowVideoReorder && videos && index !== undefined
+    videos && index !== undefined
       ? contentState.createDragDrop({
           allowVideoReorder,
           videos,
@@ -138,7 +138,7 @@
     }
 
     // Add drag drop classes if enabled
-    if (dragDrop && allowVideoReorder) {
+    if (dragDrop) {
       classes += ` ${contentState.getVideoDragClasses(index, 'TILES')}`;
     }
 
@@ -329,17 +329,17 @@
     data-testid="video-card"
     role="button"
     tabindex="0"
-    draggable={allowVideoReorder && !!dragDrop}
+    draggable={!!dragDrop}
     ondragstart={dragDrop && index !== undefined
       ? (e) => dragDrop.handleDragStart(e, index, sectionId)
       : undefined}
-    ondragover={allowVideoReorder && dragDrop && index !== undefined
+    ondragover={dragDrop && index !== undefined
       ? (e) => dragDrop.handleDragOver(e, index)
       : undefined}
-    ondragleave={allowVideoReorder && dragDrop
+    ondragleave={dragDrop
       ? (e) => dragDrop.handleDragLeave(e)
       : undefined}
-    ondrop={allowVideoReorder && dragDrop && index !== undefined
+    ondrop={dragDrop && index !== undefined
       ? (e) => dragDrop.handleDrop(e, index, sectionId)
       : undefined}
     ondragend={dragDrop ? dragDrop.handleDragEnd : undefined}
