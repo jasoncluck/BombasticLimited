@@ -91,7 +91,7 @@ describe('getCroppedPlaylistImageUrlServer', () => {
       lossless: false,
       nearLossless: false,
       smartSubsample: true,
-      progressive: true, // Added progressive loading support
+      // Progressive is not available for WebP, handled by format itself
     });
 
     // Verify result format
@@ -244,7 +244,7 @@ describe('getVideoThumbnailWebpUrlServer', () => {
       lossless: false,
       nearLossless: false,
       smartSubsample: true,
-      progressive: true, // Added progressive loading support
+      // Progressive is not available for WebP, handled by format itself
     });
 
     // Verify result format

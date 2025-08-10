@@ -15,6 +15,21 @@ export interface ImageProcessingOptions {
   lossless?: boolean;
 }
 
+// Memory management for large batch operations
+const MAX_CONCURRENT_PROCESSING = 5;
+const PROCESSING_TIMEOUT = 30000; // 30 seconds
+
+// Memory usage monitoring
+export function getMemoryUsage() {
+  const used = process.memoryUsage();
+  return {
+    rss: Math.round(used.rss / 1024 / 1024), // MB
+    heapTotal: Math.round(used.heapTotal / 1024 / 1024), // MB
+    heapUsed: Math.round(used.heapUsed / 1024 / 1024), // MB
+    external: Math.round(used.external / 1024 / 1024), // MB
+  };
+}
+
 // Browser format support detection
 export function detectOptimalFormat(acceptHeader?: string | null): 'avif' | 'webp' | 'jpeg' {
   if (!acceptHeader) return 'webp'; // Default to WebP
@@ -136,7 +151,7 @@ export async function getCroppedPlaylistImageUrlServer({
             lossless: options.lossless || false,
             nearLossless: false,
             smartSubsample: true,
-            progressive: options.progressive !== false,
+            // Progressive is not available for WebP, handled by format itself
           })
           .toBuffer();
         mimeType = 'image/webp';
@@ -237,7 +252,7 @@ export async function getVideoThumbnailWebpUrlServer({
             lossless: options.lossless || false,
             nearLossless: false,
             smartSubsample: true,
-            progressive: options.progressive !== false,
+            // Progressive is not available for WebP, handled by format itself
           })
           .toBuffer();
         mimeType = 'image/webp';
@@ -266,16 +281,43 @@ export async function getVideoThumbnailWebpUrlServer({
   }
 }
 
-// Enhanced batch processing with optimizations
+// Enhanced batch processing with concurrency control and memory management
 export async function getVideoThumbnailWebpUrlsBatch(
   thumbnailUrls: Array<string | null>,
   options: ImageProcessingOptions = {}
-) {
-  return Promise.all(
-    thumbnailUrls.map((thumbnailUrl) =>
-      getVideoThumbnailWebpUrlServer({ thumbnailUrl, options })
-    )
-  );
+): Promise<Array<string | null>> {
+  if (thumbnailUrls.length === 0) return [];
+  
+  // Log memory usage before processing
+  const initialMemory = getMemoryUsage();
+  console.log(`Starting batch processing of ${thumbnailUrls.length} images. Memory: ${initialMemory.heapUsed}MB`);
+  
+  // Process in chunks to manage memory
+  const chunkSize = MAX_CONCURRENT_PROCESSING;
+  const results: Array<string | null> = [];
+  
+  for (let i = 0; i < thumbnailUrls.length; i += chunkSize) {
+    const chunk = thumbnailUrls.slice(i, i + chunkSize);
+    
+    const chunkResults = await Promise.all(
+      chunk.map((thumbnailUrl) =>
+        getVideoThumbnailWebpUrlServer({ thumbnailUrl, options })
+      )
+    );
+    
+    results.push(...chunkResults);
+    
+    // Force garbage collection between chunks if available
+    if (global.gc && i + chunkSize < thumbnailUrls.length) {
+      global.gc();
+    }
+  }
+  
+  // Log final memory usage
+  const finalMemory = getMemoryUsage();
+  console.log(`Batch processing complete. Memory: ${finalMemory.heapUsed}MB (${finalMemory.heapUsed - initialMemory.heapUsed > 0 ? '+' : ''}${finalMemory.heapUsed - initialMemory.heapUsed}MB)`);
+  
+  return results;
 }
 
 export async function getCroppedPlaylistImageUrlsBatch(
@@ -285,10 +327,29 @@ export async function getCroppedPlaylistImageUrlsBatch(
     thumbnailUrl?: string | null;
     options?: ImageProcessingOptions;
   }>
-) {
-  return Promise.all(
-    requests.map((request) => getCroppedPlaylistImageUrlServer(request))
-  );
+): Promise<Array<string | null>> {
+  if (requests.length === 0) return [];
+  
+  // Process in chunks for memory management
+  const chunkSize = MAX_CONCURRENT_PROCESSING;
+  const results: Array<string | null> = [];
+  
+  for (let i = 0; i < requests.length; i += chunkSize) {
+    const chunk = requests.slice(i, i + chunkSize);
+    
+    const chunkResults = await Promise.all(
+      chunk.map((request) => getCroppedPlaylistImageUrlServer(request))
+    );
+    
+    results.push(...chunkResults);
+    
+    // Force garbage collection between chunks if available
+    if (global.gc && i + chunkSize < requests.length) {
+      global.gc();
+    }
+  }
+  
+  return results;
 }
 
 // Progressive image generation for responsive loading
@@ -333,7 +394,7 @@ async function fetchWithRetry(
   maxRetries = 3,
   delay = 1000
 ): Promise<Response> {
-  let lastError: Error;
+  let lastError: Error = new Error('Unknown error');
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
