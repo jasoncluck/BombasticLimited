@@ -47,38 +47,56 @@
   let watchTimeTracker = $state<ReturnType<
     typeof createVideoWatchTimeTracker
   > | null>(null);
+  
+  // Track the current video/user combination to prevent unnecessary tracker recreation
+  let currentTrackingKey = $state<string | null>(null);
 
   // Initialize watch time tracker when component mounts
   $effect(() => {
-    if (session?.user && video.id) {
-      // Only create tracker if we don't already have one for this video
-      if (
-        !watchTimeTracker ||
-        watchTimeTracker.getCurrentVideoId !== video.id
-      ) {
+    const userId = session?.user?.id;
+    const videoId = video.id;
+    
+    if (userId && videoId) {
+      const trackingKey = `${userId}-${videoId}`;
+      
+      // Only create tracker if we don't already have one for this user/video combination
+      if (currentTrackingKey !== trackingKey) {
         // Clean up existing tracker if any
-        if (watchTimeTracker) {
-          watchTimeTracker.endSession().catch(console.error);
-        }
-
-        watchTimeTracker = createVideoWatchTimeTracker({
-          videoId: video.id,
-          supabase,
-          session,
-        });
-
-        // Start tracking session
-        watchTimeTracker.startSession().catch(console.error);
-      }
-
-      // Cleanup on unmount or video change
-      return () => {
         if (watchTimeTracker) {
           watchTimeTracker.endSession().catch(console.error);
           watchTimeTracker = null;
         }
-      };
+
+        // Create new tracker
+        watchTimeTracker = createVideoWatchTimeTracker({
+          videoId,
+          supabase,
+          session,
+        });
+
+        // Update tracking key
+        currentTrackingKey = trackingKey;
+
+        // Start tracking session
+        watchTimeTracker.startSession().catch(console.error);
+      }
+    } else {
+      // Clean up if user is not logged in or no video
+      if (watchTimeTracker) {
+        watchTimeTracker.endSession().catch(console.error);
+        watchTimeTracker = null;
+      }
+      currentTrackingKey = null;
     }
+
+    // Cleanup on unmount or change
+    return () => {
+      if (watchTimeTracker) {
+        watchTimeTracker.endSession().catch(console.error);
+        watchTimeTracker = null;
+      }
+      currentTrackingKey = null;
+    };
   });
 
   $effect(() => {
@@ -239,7 +257,9 @@
     // End watch time tracking session before page unload
     if (watchTimeTracker) {
       watchTimeTracker.endSession().catch(console.error);
+      watchTimeTracker = null;
     }
+    currentTrackingKey = null;
   }
 
   function handleVisibilityChange() {
@@ -248,7 +268,9 @@
       // End watch time tracking session when page becomes hidden
       if (watchTimeTracker) {
         watchTimeTracker.endSession().catch(console.error);
+        watchTimeTracker = null;
       }
+      currentTrackingKey = null;
     }
   }
 
@@ -366,7 +388,9 @@
     // End watch time tracking session before navigation
     if (watchTimeTracker) {
       watchTimeTracker.endSession().catch(console.error);
+      watchTimeTracker = null;
     }
+    currentTrackingKey = null;
   });
 
   onDestroy(() => {
@@ -381,6 +405,7 @@
       watchTimeTracker.endSession().catch(console.error);
       watchTimeTracker = null;
     }
+    currentTrackingKey = null;
   });
 </script>
 
