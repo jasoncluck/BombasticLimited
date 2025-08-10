@@ -48,6 +48,7 @@
   setSourceState(pageState);
 
   let openAccountDrawer = $derived(sidebarState.openAccountDrawer);
+  let openNotificationDrawer = $state(false);
 
   let lastUserState: boolean | null = null;
   let searchQuery = $state('');
@@ -222,6 +223,7 @@
       {contentState}
       bind:searchQuery
       bind:openAccountDrawer
+      bind:openNotificationDrawer
     />
     <ResizableLayout
       {supabase}

@@ -1,0 +1,206 @@
+-- Migration: 11_notifications_system.sql
+-- Purpose: Create comprehensive notifications system with tables, types, and RLS policies
+
+-- Create notification type enum
+CREATE TYPE public.notification_type AS ENUM (
+  'system',
+  'content',
+  'user',
+  'playlist_update',
+  'mention'
+);
+
+-- Create notifications table
+CREATE TABLE IF NOT EXISTS public.notifications (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  type notification_type NOT NULL DEFAULT 'system',
+  title text NOT NULL,
+  message text NOT NULL,
+  metadata jsonb DEFAULT '{}',
+  read boolean NOT NULL DEFAULT false,
+  action_url text,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+-- Create notification preferences table
+CREATE TABLE IF NOT EXISTS public.notification_preferences (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
+  system_notifications boolean NOT NULL DEFAULT true,
+  content_notifications boolean NOT NULL DEFAULT true,
+  user_notifications boolean NOT NULL DEFAULT true,
+  playlist_notifications boolean NOT NULL DEFAULT true,
+  mention_notifications boolean NOT NULL DEFAULT true,
+  email_notifications boolean NOT NULL DEFAULT false,
+  push_notifications boolean NOT NULL DEFAULT false,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+-- Add comments for documentation
+COMMENT ON TABLE public.notifications IS 'User notifications with different types and metadata';
+COMMENT ON TABLE public.notification_preferences IS 'User notification preferences and settings';
+
+COMMENT ON COLUMN public.notifications.type IS 'Type of notification: system, content, user, playlist_update, mention';
+COMMENT ON COLUMN public.notifications.metadata IS 'Additional notification data (JSON)';
+COMMENT ON COLUMN public.notifications.action_url IS 'Optional URL for notification action/link';
+
+-- Create indexes for performance
+CREATE INDEX IF NOT EXISTS notifications_user_id_idx ON public.notifications(user_id);
+CREATE INDEX IF NOT EXISTS notifications_user_id_read_idx ON public.notifications(user_id, read);
+CREATE INDEX IF NOT EXISTS notifications_user_id_created_at_idx ON public.notifications(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS notifications_type_idx ON public.notifications(type);
+CREATE INDEX IF NOT EXISTS notifications_read_idx ON public.notifications(read);
+
+-- Create updated_at trigger for notifications
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE TRIGGER update_notifications_updated_at 
+    BEFORE UPDATE ON public.notifications 
+    FOR EACH ROW 
+    EXECUTE FUNCTION public.update_updated_at_column();
+
+CREATE TRIGGER update_notification_preferences_updated_at 
+    BEFORE UPDATE ON public.notification_preferences 
+    FOR EACH ROW 
+    EXECUTE FUNCTION public.update_updated_at_column();
+
+-- Enable Row Level Security (RLS)
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notification_preferences ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for notifications
+CREATE POLICY "Users can view their own notifications" ON public.notifications
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own notifications" ON public.notifications
+    FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "System can insert notifications" ON public.notifications
+    FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Users can delete their own notifications" ON public.notifications
+    FOR DELETE USING (auth.uid() = user_id);
+
+-- RLS Policies for notification preferences
+CREATE POLICY "Users can view their own notification preferences" ON public.notification_preferences
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own notification preferences" ON public.notification_preferences
+    FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own notification preferences" ON public.notification_preferences
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Function to create default notification preferences for new users
+CREATE OR REPLACE FUNCTION public.create_notification_preferences_for_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.notification_preferences (user_id)
+    VALUES (NEW.id)
+    ON CONFLICT (user_id) DO NOTHING;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger to create notification preferences when a profile is created
+-- This ensures every user has notification preferences
+CREATE TRIGGER create_notification_preferences_on_profile_creation
+    AFTER INSERT ON public.profiles
+    FOR EACH ROW
+    EXECUTE FUNCTION public.create_notification_preferences_for_user();
+
+-- Function to get unread notification count for a user
+CREATE OR REPLACE FUNCTION public.get_unread_notification_count(target_user_id uuid)
+RETURNS integer AS $$
+BEGIN
+    RETURN (
+        SELECT COUNT(*)::integer
+        FROM public.notifications
+        WHERE user_id = target_user_id AND read = false
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to mark notifications as read
+CREATE OR REPLACE FUNCTION public.mark_notifications_as_read(
+    target_user_id uuid,
+    notification_ids uuid[] DEFAULT NULL
+)
+RETURNS void AS $$
+BEGIN
+    IF notification_ids IS NULL THEN
+        -- Mark all notifications as read for user
+        UPDATE public.notifications
+        SET read = true, updated_at = now()
+        WHERE user_id = target_user_id AND read = false;
+    ELSE
+        -- Mark specific notifications as read
+        UPDATE public.notifications
+        SET read = true, updated_at = now()
+        WHERE user_id = target_user_id 
+        AND id = ANY(notification_ids)
+        AND read = false;
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to create a notification
+CREATE OR REPLACE FUNCTION public.create_notification(
+    target_user_id uuid,
+    notification_type notification_type,
+    notification_title text,
+    notification_message text,
+    notification_metadata jsonb DEFAULT '{}',
+    notification_action_url text DEFAULT NULL
+)
+RETURNS uuid AS $$
+DECLARE
+    notification_id uuid;
+    user_preferences record;
+BEGIN
+    -- Get user's notification preferences
+    SELECT * INTO user_preferences
+    FROM public.notification_preferences
+    WHERE user_id = target_user_id;
+    
+    -- Check if user wants this type of notification
+    IF user_preferences IS NULL OR (
+        (notification_type = 'system' AND user_preferences.system_notifications) OR
+        (notification_type = 'content' AND user_preferences.content_notifications) OR
+        (notification_type = 'user' AND user_preferences.user_notifications) OR
+        (notification_type = 'playlist_update' AND user_preferences.playlist_notifications) OR
+        (notification_type = 'mention' AND user_preferences.mention_notifications)
+    ) THEN
+        -- Create the notification
+        INSERT INTO public.notifications (
+            user_id, type, title, message, metadata, action_url
+        ) VALUES (
+            target_user_id, notification_type, notification_title, 
+            notification_message, notification_metadata, notification_action_url
+        ) RETURNING id INTO notification_id;
+    END IF;
+    
+    RETURN notification_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create default notification preferences for existing users who don't have them
+INSERT INTO public.notification_preferences (user_id)
+SELECT p.id
+FROM public.profiles p
+LEFT JOIN public.notification_preferences np ON p.id = np.user_id
+WHERE np.user_id IS NULL
+ON CONFLICT (user_id) DO NOTHING;
+
+-- Enable realtime for notifications
+ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.notification_preferences;

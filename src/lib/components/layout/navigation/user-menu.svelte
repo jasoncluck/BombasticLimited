@@ -12,6 +12,7 @@
     CircleUser,
     TriangleAlert,
   } from '@lucide/svelte';
+  import NotificationBell from '$lib/components/notifications/notification-bell.svelte';
   import { handleUpdateProfileContentDisplay } from '$lib/components/profile/profile-service';
   import type { LayoutState } from '$lib/state/layout.svelte.js';
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
@@ -26,12 +27,14 @@
     supabase,
     layoutState,
     openAccountDrawer = $bindable(),
+    openNotificationDrawer = $bindable(),
   }: {
     userProfile: UserProfile | null;
     session: Session | null;
     supabase: SupabaseClient<Database>;
     layoutState: LayoutState;
     openAccountDrawer: boolean;
+    openNotificationDrawer?: boolean;
   } = $props();
 
   const contentState = getContentState();
@@ -41,6 +44,9 @@
 </script>
 
 {#if session}
+  <!-- Notifications Bell -->
+  <NotificationBell {supabase} bind:openNotificationDrawer />
+
   <!-- Content Display Preference (Desktop) -->
   {#if isSm}
     <DropdownMenu.Root>

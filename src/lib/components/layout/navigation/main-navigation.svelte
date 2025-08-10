@@ -20,6 +20,7 @@
     contentState,
     searchQuery = $bindable(),
     openAccountDrawer = $bindable(),
+    openNotificationDrawer = $bindable(),
   }: {
     userProfile: UserProfile | null;
     session: Session | null;
@@ -28,6 +29,7 @@
     contentState: ContentState;
     searchQuery: string;
     openAccountDrawer: boolean;
+    openNotificationDrawer?: boolean;
   } = $props();
 </script>
 
@@ -92,6 +94,7 @@
         {supabase}
         {layoutState}
         bind:openAccountDrawer
+        bind:openNotificationDrawer
       />
     </div>
   </div>
