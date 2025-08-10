@@ -4,7 +4,8 @@
 -- This migration includes video search, filtering, and retrieval functions
 -- ============================================================================
 -- Function to get videos with user timestamps
-CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps" () RETURNS TABLE (
+CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps" () 
+RETURNS TABLE (
   "id" "text",
   "source" "public"."source",
   "title" "text",
@@ -17,11 +18,11 @@ CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps" () RETURNS TABL
   "watched_at" TIMESTAMP WITH TIME ZONE,
   "updated_at" TIMESTAMP WITH TIME ZONE,
   playlist_id bigint
-) LANGUAGE "plpgsql"
-SET
-  search_path = '' AS $$
-BEGIN
-    RETURN QUERY
+) 
+LANGUAGE SQL
+STABLE
+SET search_path = '' 
+AS $$
     SELECT 
         v.id, 
         v.source, 
@@ -38,12 +39,11 @@ BEGIN
     FROM 
         public.videos v
     LEFT JOIN public.timestamps t ON v.id = t.video_id 
-        AND t.user_id = (SELECT auth.uid())
+        AND t.user_id = auth.uid()
     WHERE 
         v.pending_delete = FALSE
     ORDER BY 
         v.published_at DESC;
-END;
 $$;
 
 -- Function to search videos with advanced ranking
@@ -62,7 +62,9 @@ CREATE OR REPLACE FUNCTION "public"."search_videos" (
   "video_start_seconds" numeric,
   "updated_at" TIMESTAMP WITH TIME ZONE,
   "search_rank" real
-) LANGUAGE "plpgsql" STABLE AS $$
+) LANGUAGE "plpgsql" 
+SET
+  search_path = '' STABLE AS $$
 DECLARE
     clean_term text;
     words text[];
