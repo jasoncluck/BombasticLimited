@@ -4,22 +4,25 @@
   import { Badge } from '$lib/components/ui/badge';
   import { Skeleton } from '$lib/components/ui/skeleton';
   import { ScrollArea } from '$lib/components/ui/scroll-area';
-  import { 
-    Check, 
-    X, 
-    Trash2, 
+  import {
+    Check,
+    X,
+    Trash2,
     ExternalLink,
     Bell,
     User,
     Play,
     AlertCircle,
     AtSign,
-    LoaderIcon
+    LoaderIcon,
   } from '@lucide/svelte';
   import { getNotificationState } from '$lib/state/notifications.svelte';
   import type { SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
-  import type { NotificationWithMeta, NotificationType } from '$lib/supabase/notifications';
+  import type {
+    NotificationWithMeta,
+    NotificationType,
+  } from '$lib/supabase/notifications';
   import { createDemoNotifications } from '$lib/utils/demo-notifications';
 
   let {
@@ -27,7 +30,7 @@
     showActions = true,
     compact = false,
     filterType,
-    onNotificationClick
+    onNotificationClick,
   }: {
     supabase: SupabaseClient<Database>;
     showActions?: boolean;
@@ -48,15 +51,20 @@
     } else {
       notificationState.loadNotifications();
     }
-    
+
     // For demo purposes, if no real notifications exist, show demo data
-    if (notificationState.notifications.length === 0 && !notificationState.isLoading) {
+    if (
+      notificationState.notifications.length === 0 &&
+      !notificationState.isLoading
+    ) {
       const demoNotifications = createDemoNotifications();
       // Simulate adding them to the store for demo
       setTimeout(() => {
         if (notificationState.notifications.length === 0) {
           notificationState.notifications = demoNotifications;
-          notificationState.unreadCount = demoNotifications.filter(n => !n.read).length;
+          notificationState.unreadCount = demoNotifications.filter(
+            (n) => !n.read
+          ).length;
         }
       }, 1000);
     }
@@ -115,13 +123,19 @@
   }
 
   // Handle mark as read
-  async function handleMarkAsRead(notification: NotificationWithMeta, event: Event) {
+  async function handleMarkAsRead(
+    notification: NotificationWithMeta,
+    event: Event
+  ) {
     event.stopPropagation();
     await notificationState.markAsRead([notification.id]);
   }
 
   // Handle delete notification
-  async function handleDelete(notification: NotificationWithMeta, event: Event) {
+  async function handleDelete(
+    notification: NotificationWithMeta,
+    event: Event
+  ) {
     event.stopPropagation();
     await notificationState.deleteNotifications([notification.id]);
   }
@@ -129,7 +143,7 @@
   // Load more notifications
   async function loadMore() {
     if (loadingMore || !notificationState.hasMore) return;
-    
+
     loadingMore = true;
     await notificationState.loadNotifications(
       filterType ? { type: filterType } : {},
@@ -141,9 +155,10 @@
   // Handle scroll for infinite loading
   function handleScroll(event: Event) {
     const target = event.target as HTMLElement;
-    const scrolledToBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 100;
-    
-    if (scrolledToBottom && $notificationState.hasMore && !loadingMore && !$isNotificationLoading) {
+    const scrolledToBottom =
+      target.scrollHeight - target.scrollTop <= target.clientHeight + 100;
+
+    if (scrolledToBottom && notificationState.hasMore && !loadingMore) {
       loadMore();
     }
   }
@@ -153,7 +168,7 @@
   {#if notificationState.isLoading && notificationState.notifications.length === 0}
     <!-- Loading skeleton -->
     <div class="space-y-2 p-4">
-      {#each Array(3) as _}
+      {#each Array(3)}}
         <div class="flex items-start space-x-3">
           <Skeleton class="h-8 w-8 rounded-full" />
           <div class="flex-1 space-y-2">
@@ -166,31 +181,34 @@
   {:else if notificationState.notifications.length === 0}
     <!-- Empty state -->
     <div class="flex flex-col items-center justify-center p-8 text-center">
-      <Bell class="h-12 w-12 text-muted-foreground mb-4" />
+      <Bell class="text-muted-foreground mb-4 h-12 w-12" />
       <p class="text-muted-foreground">
         {filterType ? `No ${filterType} notifications` : 'No notifications yet'}
       </p>
     </div>
   {:else}
     <!-- Notifications list -->
-    <ScrollArea 
+    <ScrollArea
       class="w-full {compact ? 'max-h-80' : 'max-h-96'}"
       onscroll={handleScroll}
     >
       <div class="space-y-1">
         {#each notificationState.notifications as notification (notification.id)}
           <div
-            class="group flex items-start space-x-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors
+            class="group hover:bg-muted/50 flex cursor-pointer items-start space-x-3 p-3 transition-colors
               {!notification.read ? 'bg-muted/20' : ''}
-              {notification.is_new ? 'ring-1 ring-primary/20' : ''}"
+              {notification.is_new ? 'ring-primary/20 ring-1' : ''}"
             onclick={() => handleNotificationClick(notification)}
             role="button"
             tabindex="0"
-            onkeydown={(e) => e.key === 'Enter' && handleNotificationClick(notification)}
+            onkeydown={(e) =>
+              e.key === 'Enter' && handleNotificationClick(notification)}
           >
             <!-- Icon -->
-            <div class="flex-shrink-0 mt-1">
-              <div class="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+            <div class="mt-1 flex-shrink-0">
+              <div
+                class="bg-muted flex h-8 w-8 items-center justify-center rounded-full"
+              >
                 {#if notification.type === 'system'}
                   <AlertCircle class="h-4 w-4 text-orange-500" />
                 {:else if notification.type === 'content'}
@@ -206,26 +224,32 @@
                 {/if}
               </div>
               {#if !notification.read}
-                <div class="absolute -ml-1 -mt-1 h-3 w-3 rounded-full bg-blue-500"></div>
+                <div
+                  class="absolute -mt-1 -ml-1 h-3 w-3 rounded-full bg-blue-500"
+                ></div>
               {/if}
             </div>
 
             <!-- Content -->
-            <div class="flex-1 min-w-0">
+            <div class="min-w-0 flex-1">
               <div class="flex items-start justify-between">
                 <div class="flex-1">
-                  <p class="text-sm font-medium leading-tight {!notification.read ? 'font-semibold' : ''}">
+                  <p
+                    class="text-sm leading-tight font-medium {!notification.read
+                      ? 'font-semibold'
+                      : ''}"
+                  >
                     {notification.title}
                   </p>
-                  <p class="text-sm text-muted-foreground mt-1 line-clamp-2">
+                  <p class="text-muted-foreground mt-1 line-clamp-2 text-sm">
                     {notification.message}
                   </p>
-                  
-                  <div class="flex items-center space-x-2 mt-2">
+
+                  <div class="mt-2 flex items-center space-x-2">
                     <Badge variant="outline" class="text-xs">
                       {notification.type}
                     </Badge>
-                    <span class="text-xs text-muted-foreground">
+                    <span class="text-muted-foreground text-xs">
                       {notification.formatted_time}
                     </span>
                     {#if notification.is_new}
@@ -236,7 +260,9 @@
 
                 <!-- Actions -->
                 {#if showActions}
-                  <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                  <div
+                    class="ml-2 flex items-center space-x-1 opacity-0 transition-opacity group-hover:opacity-100"
+                  >
                     {#if !notification.read}
                       <Button
                         variant="ghost"
@@ -248,7 +274,7 @@
                         <Check class="h-3 w-3" />
                       </Button>
                     {/if}
-                    
+
                     {#if notification.action_url}
                       <Button
                         variant="ghost"
@@ -259,11 +285,11 @@
                         <ExternalLink class="h-3 w-3" />
                       </Button>
                     {/if}
-                    
+
                     <Button
                       variant="ghost"
                       size="sm"
-                      class="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                      class="text-destructive hover:text-destructive h-6 w-6 p-0"
                       onclick={(e) => handleDelete(notification, e)}
                       title="Delete notification"
                     >
@@ -279,8 +305,8 @@
         <!-- Load more indicator -->
         {#if loadingMore}
           <div class="flex items-center justify-center p-4">
-            <LoaderIcon class="h-4 w-4 animate-spin mr-2" />
-            <span class="text-sm text-muted-foreground">Loading more...</span>
+            <LoaderIcon class="mr-2 h-4 w-4 animate-spin" />
+            <span class="text-muted-foreground text-sm">Loading more...</span>
           </div>
         {:else if notificationState.hasMore}
           <div class="flex items-center justify-center p-4">
@@ -307,3 +333,4 @@
     overflow: hidden;
   }
 </style>
+

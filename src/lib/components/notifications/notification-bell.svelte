@@ -12,11 +12,13 @@
 
   let {
     supabase,
-    openNotificationDrawer = $bindable()
+    openNotificationDrawer = $bindable(),
   }: {
     supabase: SupabaseClient<Database>;
     openNotificationDrawer?: boolean;
   } = $props();
+
+  console.log(openNotificationDrawer);
 
   const mediaQueryState = getMediaQueryState();
   const { canHover } = $derived(mediaQueryState);
@@ -57,18 +59,17 @@
       {#if notificationState.unreadCount > 0}
         <Badge
           variant="destructive"
-          class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-medium"
+          class="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-medium"
         >
-          {notificationState.unreadCount > 99 ? '99+' : notificationState.unreadCount}
+          {notificationState.unreadCount > 99
+            ? '99+'
+            : notificationState.unreadCount}
         </Badge>
       {/if}
       <span class="sr-only">Notifications</span>
     </DropdownMenu.Trigger>
-    
-    <DropdownMenu.Content 
-      class="w-80 max-h-96 overflow-hidden p-0"
-      align="end"
-    >
+
+    <DropdownMenu.Content class="max-h-96 w-80 overflow-hidden p-0" align="end">
       <div class="flex items-center justify-between border-b px-4 py-2">
         <h4 class="font-semibold">Notifications</h4>
         {#if notificationState.unreadCount > 0}
@@ -82,10 +83,10 @@
           </Button>
         {/if}
       </div>
-      
+
       <div class="max-h-80 overflow-y-auto">
-        <NotificationList 
-          {supabase} 
+        <NotificationList
+          {supabase}
           onNotificationClick={handleClose}
           showActions={false}
           compact={true}
@@ -107,18 +108,22 @@
       {#if notificationState.unreadCount > 0}
         <Badge
           variant="destructive"
-          class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-medium"
+          class="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-medium"
         >
-          {notificationState.unreadCount > 99 ? '99+' : notificationState.unreadCount}
+          {notificationState.unreadCount > 99
+            ? '99+'
+            : notificationState.unreadCount}
         </Badge>
       {/if}
       <span class="sr-only">Notifications</span>
     </Drawer.Trigger>
-    
+
     <Drawer.Content>
       <div class="mx-auto w-full max-w-sm">
         <div class="flex items-center justify-between p-4 pb-2">
-          <Drawer.Title class="text-lg font-semibold">Notifications</Drawer.Title>
+          <Drawer.Title class="text-lg font-semibold"
+            >Notifications</Drawer.Title
+          >
           {#if notificationState.unreadCount > 0}
             <Button
               variant="ghost"
@@ -130,16 +135,16 @@
             </Button>
           {/if}
         </div>
-        
+
         <div class="max-h-96 overflow-y-auto px-4 pb-4">
-          <NotificationList 
-            {supabase} 
+          <NotificationList
+            {supabase}
             onNotificationClick={handleClose}
             showActions={false}
             compact={true}
           />
         </div>
-        
+
         <Drawer.Footer>
           <Drawer.Close
             class={buttonVariants({
@@ -154,3 +159,4 @@
     </Drawer.Content>
   </Drawer.Root>
 {/if}
+
