@@ -332,12 +332,14 @@ $$;
 -- TRIGGER TO AUTO-RECORD HISTORY WHEN TIMESTAMPS UPDATE
 -- ============================================================================
 -- Function to automatically record video history when timestamps are updated
+-- This function now checks for existing recent sessions to prevent duplicates
 CREATE OR REPLACE FUNCTION "public"."auto_record_video_history" () RETURNS TRIGGER LANGUAGE plpgsql
 SET
   search_path = '' AS $$
 DECLARE
   video_source "public"."source";
   watch_duration numeric;
+  recent_session_count integer;
 BEGIN
   -- Only proceed if this is an INSERT or UPDATE with meaningful changes
   IF TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (
@@ -345,43 +347,53 @@ BEGIN
     OLD.watched_at IS DISTINCT FROM NEW.watched_at
   )) THEN
     
-    -- Get video source
-    SELECT v.source INTO video_source
-    FROM public.videos v
-    WHERE v.id = NEW.video_id;
-
-    -- Calculate estimated watch duration based on timestamp changes
-    -- This is a simplified calculation - actual implementation would track real play time
-    watch_duration := 0;
+    -- Check if there's already a recent video history session (within last 5 minutes)
+    -- This prevents duplicate entries when manual tracking is active
+    SELECT COUNT(*) INTO recent_session_count
+    FROM public.video_history vh
+    WHERE vh.user_id = NEW.user_id 
+      AND vh.video_id = NEW.video_id
+      AND vh.session_start_time >= now() - INTERVAL '5 minutes';
     
-    IF NEW.video_start_seconds IS NOT NULL AND NEW.video_start_seconds > 0 THEN
-      -- If there's a meaningful timestamp, estimate some watch time
-      watch_duration := LEAST(30, NEW.video_start_seconds); -- Cap at 30 seconds estimation
-    END IF;
+    -- Only create a new session if no recent session exists
+    IF recent_session_count = 0 THEN
+      -- Get video source
+      SELECT v.source INTO video_source
+      FROM public.videos v
+      WHERE v.id = NEW.video_id;
 
-    -- Record video history session (non-blocking)
-    BEGIN
-      INSERT INTO public.video_history (
-        user_id,
-        video_id,
-        source,
-        seconds_watched,
-        session_start_time,
-        session_end_time
-      )
-      VALUES (
-        NEW.user_id,
-        NEW.video_id,
-        video_source,
-        watch_duration,
-        COALESCE(NEW.watched_at, now()),
-        NEW.watched_at
-      );
-    EXCEPTION
-      WHEN OTHERS THEN
-        -- Log error but don't fail the timestamp update
-        RAISE WARNING 'Failed to auto-record video history: %', SQLERRM;
-    END;
+      -- Calculate estimated watch duration based on timestamp changes
+      watch_duration := 0;
+      
+      IF NEW.video_start_seconds IS NOT NULL AND NEW.video_start_seconds > 0 THEN
+        -- If there's a meaningful timestamp, estimate some watch time
+        watch_duration := LEAST(30, NEW.video_start_seconds); -- Cap at 30 seconds estimation
+      END IF;
+
+      -- Record video history session (non-blocking)
+      BEGIN
+        INSERT INTO public.video_history (
+          user_id,
+          video_id,
+          source,
+          seconds_watched,
+          session_start_time,
+          session_end_time
+        )
+        VALUES (
+          NEW.user_id,
+          NEW.video_id,
+          video_source,
+          watch_duration,
+          COALESCE(NEW.watched_at, now()),
+          NEW.watched_at
+        );
+      EXCEPTION
+        WHEN OTHERS THEN
+          -- Log error but don't fail the timestamp update
+          RAISE WARNING 'Failed to auto-record video history: %', SQLERRM;
+      END;
+    END IF;
   END IF;
 
   RETURN NEW;

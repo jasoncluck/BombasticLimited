@@ -58,7 +58,7 @@
       ) {
         // Clean up existing tracker if any
         if (watchTimeTracker) {
-          watchTimeTracker.endSession();
+          watchTimeTracker.endSession().catch(console.error);
         }
 
         watchTimeTracker = createVideoWatchTimeTracker({
@@ -68,13 +68,14 @@
         });
 
         // Start tracking session
-        watchTimeTracker.startSession();
+        watchTimeTracker.startSession().catch(console.error);
       }
 
-      // Cleanup on unmount
+      // Cleanup on unmount or video change
       return () => {
         if (watchTimeTracker) {
-          watchTimeTracker.endSession();
+          watchTimeTracker.endSession().catch(console.error);
+          watchTimeTracker = null;
         }
       };
     }
@@ -235,11 +236,19 @@
 
   function handleBeforeUnload() {
     saveCurrentTime({ useBeacon: true });
+    // End watch time tracking session before page unload
+    if (watchTimeTracker) {
+      watchTimeTracker.endSession().catch(console.error);
+    }
   }
 
   function handleVisibilityChange() {
     if (document.visibilityState === 'hidden') {
       saveCurrentTime({ useBeacon: true });
+      // End watch time tracking session when page becomes hidden
+      if (watchTimeTracker) {
+        watchTimeTracker.endSession().catch(console.error);
+      }
     }
   }
 
@@ -353,6 +362,11 @@
 
   beforeNavigate(() => {
     saveCurrentTime(); // async is ok for in-app navigation
+    
+    // End watch time tracking session before navigation
+    if (watchTimeTracker) {
+      watchTimeTracker.endSession().catch(console.error);
+    }
   });
 
   onDestroy(() => {
@@ -360,6 +374,12 @@
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       saveCurrentTime();
+    }
+    
+    // Ensure watch time tracker is properly ended
+    if (watchTimeTracker) {
+      watchTimeTracker.endSession().catch(console.error);
+      watchTimeTracker = null;
     }
   });
 </script>
