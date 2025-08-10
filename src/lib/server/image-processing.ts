@@ -4,6 +4,55 @@ import {
   PLAYLIST_IMAGE_CROP_DEFAULTS,
 } from '$lib/components/playlist/playlist-service';
 import sharp from 'sharp';
+import {
+  ImageCacheManager,
+  generateImageCacheKey,
+  generatePlaylistImageCacheKey,
+  type ImageCacheMetadata
+} from './image-cache';
+
+// Initialize image cache manager
+const imageCacheManager = ImageCacheManager.getInstance();
+
+// Helper function to detect auth state from request headers or context
+function detectAuthState(request?: Request): 'auth' | 'anon' {
+  if (!request) return 'anon';
+  
+  try {
+    // Check for auth cookies in the request
+    const cookieHeader = request.headers.get('cookie');
+    if (cookieHeader) {
+      const authCookie = cookieHeader
+        .split(';')
+        .find(cookie => cookie.trim().startsWith('sb-127-auth-token'));
+      
+      if (authCookie) {
+        const cookieValue = authCookie.split('=')[1];
+        const isAuthenticated = !!(
+          cookieValue &&
+          cookieValue !== 'null' &&
+          cookieValue !== 'undefined' &&
+          cookieValue.trim() !== '' &&
+          cookieValue !== '%7B%7D' &&
+          cookieValue !== '{}'
+        );
+        return isAuthenticated ? 'auth' : 'anon';
+      }
+    }
+  } catch (error) {
+    console.warn('Error detecting auth state:', error);
+  }
+  
+  return 'anon';
+}
+
+// Helper function to extract userId from request (simplified - returns null for now)
+// In a real implementation, this would decode the auth token to get the user ID
+function extractUserId(request?: Request): string | null {
+  // For now, return null since we don't have direct access to user ID from request
+  // In a full implementation, you'd decode the JWT token or lookup from session
+  return null;
+}
 
 // Enhanced image processing configuration
 export interface ImageProcessingOptions {
@@ -63,11 +112,13 @@ export async function getCroppedPlaylistImageUrlServer({
   thumbnailMaxResUrl,
   thumbnailUrl,
   options = {},
+  request,
 }: {
   imageProperties: ImageProperties | null;
   thumbnailMaxResUrl: string | null;
   thumbnailUrl?: string | null;
   options?: ImageProcessingOptions;
+  request?: Request;
 }) {
   const imageUrl = thumbnailMaxResUrl || thumbnailUrl;
   if (!imageUrl) return null;
@@ -76,6 +127,32 @@ export async function getCroppedPlaylistImageUrlServer({
     imageProperties = thumbnailMaxResUrl
       ? PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS
       : PLAYLIST_IMAGE_CROP_DEFAULTS;
+  }
+
+  // Initialize cache manager
+  await imageCacheManager.initialize();
+
+  // Detect auth state and user ID
+  const authState = detectAuthState(request);
+  const userId = extractUserId(request);
+
+  // Generate cache key
+  const cacheKey = generatePlaylistImageCacheKey(
+    imageUrl,
+    imageProperties,
+    options,
+    authState
+  );
+
+  // Check cache first
+  try {
+    const cachedResult = await imageCacheManager.get(cacheKey, userId, authState);
+    if (cachedResult) {
+      console.log(`Cache hit for playlist image: ${imageUrl}`);
+      return cachedResult;
+    }
+  } catch (error) {
+    console.warn('Error reading from image cache:', error);
   }
 
   // Determine if we're using standard resolution (thumbnail_url only)
@@ -174,7 +251,24 @@ export async function getCroppedPlaylistImageUrlServer({
 
     // Convert to base64 data URL
     const base64 = processedImageBuffer.toString('base64');
-    return `data:${mimeType};base64,${base64}`;
+    const dataUrl = `data:${mimeType};base64,${base64}`;
+
+    // Store in cache
+    try {
+      await imageCacheManager.set(
+        cacheKey,
+        dataUrl,
+        imageUrl,
+        options,
+        userId,
+        authState
+      );
+      console.log(`Cached playlist image: ${imageUrl} (auth: ${authState})`);
+    } catch (error) {
+      console.warn('Error storing to image cache:', error);
+    }
+
+    return dataUrl;
   } catch (error) {
     console.error('Server image processing failed:', error);
     return null;
@@ -185,11 +279,34 @@ export async function getCroppedPlaylistImageUrlServer({
 export async function getVideoThumbnailWebpUrlServer({
   thumbnailUrl,
   options = {},
+  request,
 }: {
   thumbnailUrl: string | null;
   options?: ImageProcessingOptions;
+  request?: Request;
 }) {
   if (!thumbnailUrl) return null;
+
+  // Initialize cache manager
+  await imageCacheManager.initialize();
+
+  // Detect auth state and user ID
+  const authState = detectAuthState(request);
+  const userId = extractUserId(request);
+
+  // Generate cache key
+  const cacheKey = generateImageCacheKey(thumbnailUrl, options, authState);
+
+  // Check cache first
+  try {
+    const cachedResult = await imageCacheManager.get(cacheKey, userId, authState);
+    if (cachedResult) {
+      console.log(`Cache hit for video thumbnail: ${thumbnailUrl}`);
+      return cachedResult;
+    }
+  } catch (error) {
+    console.warn('Error reading from image cache:', error);
+  }
 
   try {
     const response = await fetchWithRetry(thumbnailUrl, {
@@ -274,7 +391,24 @@ export async function getVideoThumbnailWebpUrlServer({
     }
 
     const base64 = processedImageBuffer.toString('base64');
-    return `data:${mimeType};base64,${base64}`;
+    const dataUrl = `data:${mimeType};base64,${base64}`;
+
+    // Store in cache
+    try {
+      await imageCacheManager.set(
+        cacheKey,
+        dataUrl,
+        thumbnailUrl,
+        options,
+        userId,
+        authState
+      );
+      console.log(`Cached video thumbnail: ${thumbnailUrl} (auth: ${authState})`);
+    } catch (error) {
+      console.warn('Error storing to image cache:', error);
+    }
+
+    return dataUrl;
   } catch (error) {
     console.error('Server video thumbnail processing failed:', error);
     return null;
@@ -284,7 +418,8 @@ export async function getVideoThumbnailWebpUrlServer({
 // Enhanced batch processing with concurrency control and memory management
 export async function getVideoThumbnailWebpUrlsBatch(
   thumbnailUrls: Array<string | null>,
-  options: ImageProcessingOptions = {}
+  options: ImageProcessingOptions = {},
+  request?: Request
 ): Promise<Array<string | null>> {
   if (thumbnailUrls.length === 0) return [];
   
@@ -301,7 +436,7 @@ export async function getVideoThumbnailWebpUrlsBatch(
     
     const chunkResults = await Promise.all(
       chunk.map((thumbnailUrl) =>
-        getVideoThumbnailWebpUrlServer({ thumbnailUrl, options })
+        getVideoThumbnailWebpUrlServer({ thumbnailUrl, options, request })
       )
     );
     
@@ -326,7 +461,8 @@ export async function getCroppedPlaylistImageUrlsBatch(
     thumbnailMaxResUrl: string | null;
     thumbnailUrl?: string | null;
     options?: ImageProcessingOptions;
-  }>
+  }>,
+  requestContext?: Request
 ): Promise<Array<string | null>> {
   if (requests.length === 0) return [];
   
@@ -338,7 +474,10 @@ export async function getCroppedPlaylistImageUrlsBatch(
     const chunk = requests.slice(i, i + chunkSize);
     
     const chunkResults = await Promise.all(
-      chunk.map((request) => getCroppedPlaylistImageUrlServer(request))
+      chunk.map((request) => getCroppedPlaylistImageUrlServer({
+        ...request,
+        request: requestContext
+      }))
     );
     
     results.push(...chunkResults);
@@ -355,7 +494,8 @@ export async function getCroppedPlaylistImageUrlsBatch(
 // Progressive image generation for responsive loading
 export async function generateProgressiveImages(
   thumbnailUrl: string,
-  sizes: Array<{ width: number; height: number; quality?: number }>
+  sizes: Array<{ width: number; height: number; quality?: number }>,
+  request?: Request
 ): Promise<Array<{ size: string; dataUrl: string | null }>> {
   const results: Array<{ size: string; dataUrl: string | null }> = [];
   
@@ -369,6 +509,7 @@ export async function generateProgressiveImages(
           quality: size.quality || 85,
           format: 'webp',
         },
+        request,
       });
       
       results.push({
@@ -512,4 +653,24 @@ function validateAndAdjustCropDimensions(
     width: Math.max(1, imageProperties.width),
     height: Math.max(1, imageProperties.height),
   };
+}
+
+// Image cache management functions
+export async function clearImageCache(authState?: 'auth' | 'anon'): Promise<void> {
+  await imageCacheManager.initialize();
+  await imageCacheManager.clear(authState);
+}
+
+export async function getImageCacheStats(): Promise<{
+  memoryEntries: number;
+  memorySize: number;
+  authEntries: { auth: number; anon: number };
+}> {
+  await imageCacheManager.initialize();
+  return imageCacheManager.getStats();
+}
+
+export async function cleanupImageCache(): Promise<void> {
+  await imageCacheManager.initialize();
+  await imageCacheManager.cleanup();
 }
