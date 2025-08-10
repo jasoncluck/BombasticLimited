@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GET } from '../+server';
+import { GET } from '../../src/routes/api/playlist-image/+server';
 import * as imageProcessing from '$lib/server/image-processing';
 
 // Mock the image processing functions

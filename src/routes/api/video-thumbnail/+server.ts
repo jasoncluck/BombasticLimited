@@ -111,14 +111,7 @@ export const GET: RequestHandler = async ({ url, request }) => {
         'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800', // 24h cache, 7d stale
         Vary: 'Accept',
       },
-      {
-        headers: {
-          'Cache-Control':
-            'public, max-age=86400, stale-while-revalidate=604800', // 24h cache, 7d stale
-          Vary: 'Accept',
-        },
-      }
-    );
+    });
   } catch (err) {
     console.error('Video thumbnail processing error:', err);
     throw error(500, 'Internal server error');
@@ -148,24 +141,16 @@ export const POST: RequestHandler = async ({ request }) => {
     
     const webpUrls = await getVideoThumbnailWebpUrlsBatch(thumbnailUrls, options, acceptHeader);
 
-    const webpUrls = await getVideoThumbnailWebpUrlsBatch(
-      thumbnailUrls,
-      options
-    );
-
-    return json(
-      {
-        webpUrls,
-        processedCount: webpUrls.filter((url) => url !== null).length,
-        totalCount: thumbnailUrls.length,
+    return json({ 
+      webpUrls,
+      processedCount: webpUrls.filter(url => url !== null).length,
+      totalCount: thumbnailUrls.length 
+    }, {
+      headers: {
+        'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400', // 1h cache, 24h stale
+        Vary: 'Accept',
       },
-      {
-        headers: {
-          'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400', // 1h cache, 24h stale
-          Vary: 'Accept',
-        },
-      }
-    );
+    });
   } catch (err) {
     console.error('Batch video thumbnail processing error:', err);
     throw error(500, 'Internal server error');

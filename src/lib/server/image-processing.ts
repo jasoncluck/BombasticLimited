@@ -103,7 +103,9 @@ export function getMemoryUsage() {
 // Browser format support detection
 export function detectOptimalFormat(acceptHeader?: string | null): 'avif' | 'webp' | 'jpeg' {
   if (!acceptHeader) {
-    return 'avif'; // Default to AVIF for best compression
+    // For external images (like YouTube) without Accept headers, 
+    // default to WebP for broader compatibility while still providing good compression
+    return 'webp';
   }
   
   const accept = acceptHeader.toLowerCase();
@@ -119,11 +121,14 @@ export function detectOptimalFormat(acceptHeader?: string | null): 'avif' | 'web
   }
   
   // For modern browsers that accept all image types but don't explicitly list AVIF/WebP
-  // We should default to the best format (AVIF) since most modern browsers support it
+  // We should try AVIF first for supporting browsers, but fallback to WebP for better compatibility
   if (accept.includes('image/*') || accept.includes('*/*')) {
-    return 'avif'; // Default to AVIF for modern browsers with generic support
+    // Since we can't be certain about AVIF support with generic headers,
+    // use WebP as a safer default that still provides good compression
+    return 'webp';
   }
   
+  // Fallback to JPEG for maximum compatibility
   return 'jpeg';
 }
 
@@ -184,6 +189,13 @@ export async function processImageServer({
   } else {
     targetFormat = (options.format as 'avif' | 'webp' | 'jpeg');
   }
+
+  // Enhanced fallback chain for external images (e.g., YouTube)
+  // If no Accept header is available, use a conservative approach
+  const formatFallbackChain: ('avif' | 'webp' | 'jpeg')[] = acceptHeader 
+    ? [targetFormat, 'webp', 'jpeg'] 
+    : ['webp', 'jpeg']; // Skip AVIF for external sources without Accept headers
+
 
   // Determine if we're using standard resolution (for cropped images)
   const isStandardResolution = isCropped && !isMaxRes;
@@ -257,50 +269,73 @@ export async function processImageServer({
       isStandardResolution ? 95 : 90
     );
 
-    console.log(`Processing image with format: ${targetFormat}, quality: ${quality}, size: ${imageWidth}x${imageHeight}`);
+    console.log(`Processing image with format: ${targetFormat}, quality: ${quality}, size: ${imageWidth}x${imageHeight}, acceptHeader: ${acceptHeader ? 'present' : 'missing'}`);
 
-    let processedImageBuffer: Buffer;
-    let mimeType: string;
+    let processedImageBuffer: Buffer | undefined;
+    let mimeType: string = 'image/jpeg'; // Default fallback
+    let actualFormat = targetFormat;
 
-    // Enhanced format handling with progressive loading support
-    switch (targetFormat) {
-      case 'avif':
-        processedImageBuffer = await processedInstance
-          .avif({
-            quality: Math.min(quality, 85), // AVIF handles lower quality better
-            effort: 4, // Higher effort for better compression
-            lossless: options.lossless || false,
-          })
-          .toBuffer();
-        mimeType = 'image/avif';
+    // Enhanced format handling with fallback support
+    for (const format of formatFallbackChain) {
+      try {
+        switch (format) {
+          case 'avif':
+            processedImageBuffer = await processedInstance
+              .avif({
+                quality: Math.min(quality, 85), // AVIF handles lower quality better
+                effort: 4, // Higher effort for better compression
+                lossless: options.lossless || false,
+              })
+              .toBuffer();
+            mimeType = 'image/avif';
+            actualFormat = 'avif';
+            break;
+
+          case 'webp':
+            processedImageBuffer = await processedInstance
+              .webp({
+                quality,
+                effort: 3, // Balanced effort for WebP
+                lossless: options.lossless || false,
+                nearLossless: false,
+                smartSubsample: true,
+              })
+              .toBuffer();
+            mimeType = 'image/webp';
+            actualFormat = 'webp';
+            break;
+
+          case 'jpeg':
+          default:
+            processedImageBuffer = await processedInstance
+              .jpeg({
+                quality,
+                progressive: options.progressive !== false,
+                mozjpeg: true,
+                optimiseScans: true,
+                overshootDeringing: true,
+              })
+              .toBuffer();
+            mimeType = 'image/jpeg';
+            actualFormat = 'jpeg';
+            break;
+        }
+        
+        // If we get here, the format worked - break out of the fallback loop
         break;
+      } catch (formatError) {
+        console.warn(`Failed to process image with ${format} format, trying next fallback:`, formatError);
+        
+        // If this was the last format in the chain, re-throw the error
+        if (format === formatFallbackChain[formatFallbackChain.length - 1]) {
+          throw formatError;
+        }
+        // Otherwise, continue to the next format in the fallback chain
+      }
+    }
 
-      case 'webp':
-        processedImageBuffer = await processedInstance
-          .webp({
-            quality,
-            effort: 3, // Balanced effort for WebP
-            lossless: options.lossless || false,
-            nearLossless: false,
-            smartSubsample: true,
-          })
-          .toBuffer();
-        mimeType = 'image/webp';
-        break;
-
-      case 'jpeg':
-      default:
-        processedImageBuffer = await processedInstance
-          .jpeg({
-            quality,
-            progressive: options.progressive !== false,
-            mozjpeg: true,
-            optimiseScans: true,
-            overshootDeringing: true,
-          })
-          .toBuffer();
-        mimeType = 'image/jpeg';
-        break;
+    if (!processedImageBuffer) {
+      throw new Error('Failed to process image with any available format');
     }
 
     // Convert to base64 data URL
