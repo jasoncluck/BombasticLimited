@@ -5,14 +5,69 @@ import {
 } from '$lib/components/playlist/playlist-service';
 import sharp from 'sharp';
 
+// Enhanced image processing configuration
+export interface ImageProcessingOptions {
+  format?: 'auto' | 'webp' | 'jpeg' | 'avif';
+  quality?: number;
+  width?: number;
+  height?: number;
+  progressive?: boolean;
+  lossless?: boolean;
+}
+
+// Memory management for large batch operations
+const MAX_CONCURRENT_PROCESSING = 5;
+const PROCESSING_TIMEOUT = 30000; // 30 seconds
+
+// Memory usage monitoring
+export function getMemoryUsage() {
+  const used = process.memoryUsage();
+  return {
+    rss: Math.round(used.rss / 1024 / 1024), // MB
+    heapTotal: Math.round(used.heapTotal / 1024 / 1024), // MB
+    heapUsed: Math.round(used.heapUsed / 1024 / 1024), // MB
+    external: Math.round(used.external / 1024 / 1024), // MB
+  };
+}
+
+// Browser format support detection
+export function detectOptimalFormat(acceptHeader?: string | null): 'avif' | 'webp' | 'jpeg' {
+  if (!acceptHeader) return 'webp'; // Default to WebP
+  
+  const accept = acceptHeader.toLowerCase();
+  if (accept.includes('image/avif')) return 'avif';
+  if (accept.includes('image/webp')) return 'webp';
+  return 'jpeg';
+}
+
+// Smart quality adjustment based on image content and size
+export function calculateOptimalQuality(
+  metadata: sharp.Metadata,
+  targetFormat: string,
+  baseQuality = 90
+): number {
+  const imageSize = (metadata.width || 0) * (metadata.height || 0);
+  
+  // Adjust quality based on image size
+  if (imageSize > 1920 * 1080) { // Large images
+    return targetFormat === 'jpeg' ? Math.max(baseQuality - 10, 75) : Math.max(baseQuality - 5, 85);
+  } else if (imageSize < 640 * 360) { // Small images
+    return Math.min(baseQuality + 5, 95);
+  }
+  
+  return baseQuality;
+}
+
 export async function getCroppedPlaylistImageUrlServer({
   imageProperties,
   thumbnailMaxResUrl,
   thumbnailUrl,
+  options = {},
 }: {
   imageProperties: ImageProperties | null;
   thumbnailMaxResUrl: string | null;
   thumbnailUrl?: string | null;
+  options?: ImageProcessingOptions;
 }) {
   const imageUrl = thumbnailMaxResUrl || thumbnailUrl;
   if (!imageUrl) return null;
@@ -27,8 +82,8 @@ export async function getCroppedPlaylistImageUrlServer({
   const isStandardResolution = !thumbnailMaxResUrl && thumbnailUrl;
 
   try {
-    // Fetch image with optimized settings
-    const response = await fetch(imageUrl, {
+    // Fetch image with optimized settings and retry logic
+    const response = await fetchWithRetry(imageUrl, {
       signal: AbortSignal.timeout(10000),
       headers: {
         Accept: 'image/*',
@@ -43,7 +98,8 @@ export async function getCroppedPlaylistImageUrlServer({
 
     const sharpInstance = sharp(imageBuffer, {
       failOnError: false,
-      density: isStandardResolution ? 150 : 72, // Higher density for small images
+      density: isStandardResolution ? 150 : 72,
+      pages: 1, // Handle animated images
     });
 
     // Get image metadata to validate crop dimensions
@@ -67,31 +123,53 @@ export async function getCroppedPlaylistImageUrlServer({
       height: validatedCrop.height,
     });
 
+    // Determine output format
+    const targetFormat = options.format === 'auto' ? 'webp' : (options.format || 'webp');
+    const quality = options.quality || calculateOptimalQuality(metadata, targetFormat, isStandardResolution ? 95 : 90);
+
     let processedImageBuffer: Buffer;
     let mimeType: string;
 
-    if (isStandardResolution) {
-      // For standard resolution, use higher quality settings
-      processedImageBuffer = await processedInstance
-        .jpeg({
-          quality: 98, // Higher quality for upscaled images
-          progressive: true,
-          mozjpeg: true,
-        })
-        .toBuffer();
-      mimeType = 'image/jpeg';
-    } else {
-      // For high-resolution images, continue using WebP
-      processedImageBuffer = await processedInstance
-        .webp({
-          quality: 90,
-          effort: 2,
-          lossless: false,
-          nearLossless: false,
-          smartSubsample: true,
-        })
-        .toBuffer();
-      mimeType = 'image/webp';
+    // Enhanced format handling with progressive loading support
+    switch (targetFormat) {
+      case 'avif':
+        processedImageBuffer = await processedInstance
+          .avif({
+            quality: Math.min(quality, 85), // AVIF handles lower quality better
+            effort: 4, // Higher effort for better compression
+            lossless: options.lossless || false,
+          })
+          .toBuffer();
+        mimeType = 'image/avif';
+        break;
+      
+      case 'webp':
+        processedImageBuffer = await processedInstance
+          .webp({
+            quality,
+            effort: 3, // Balanced effort for WebP
+            lossless: options.lossless || false,
+            nearLossless: false,
+            smartSubsample: true,
+            // Progressive is not available for WebP, handled by format itself
+          })
+          .toBuffer();
+        mimeType = 'image/webp';
+        break;
+      
+      case 'jpeg':
+      default:
+        processedImageBuffer = await processedInstance
+          .jpeg({
+            quality,
+            progressive: options.progressive !== false,
+            mozjpeg: true,
+            optimiseScans: true,
+            overshootDeringing: true,
+          })
+          .toBuffer();
+        mimeType = 'image/jpeg';
+        break;
     }
 
     // Convert to base64 data URL
@@ -103,16 +181,18 @@ export async function getCroppedPlaylistImageUrlServer({
   }
 }
 
-// Video thumbnail processing without cropping - preserves original aspect ratio
+// Enhanced video thumbnail processing with format support and optimization
 export async function getVideoThumbnailWebpUrlServer({
   thumbnailUrl,
+  options = {},
 }: {
   thumbnailUrl: string | null;
+  options?: ImageProcessingOptions;
 }) {
   if (!thumbnailUrl) return null;
 
   try {
-    const response = await fetch(thumbnailUrl, {
+    const response = await fetchWithRetry(thumbnailUrl, {
       signal: AbortSignal.timeout(8000),
       headers: {
         Accept: 'image/*',
@@ -125,37 +205,119 @@ export async function getVideoThumbnailWebpUrlServer({
 
     const imageBuffer = await response.arrayBuffer();
 
-    const processedImageBuffer = await sharp(imageBuffer, {
+    const sharpInstance = sharp(imageBuffer, {
       failOnError: false,
       density: 72,
       pages: 1,
-    })
-      .webp({
-        quality: 90,
-        effort: 2,
-        lossless: false,
-        nearLossless: false,
-        smartSubsample: true,
-      })
-      .toBuffer();
+    });
+
+    // Get metadata for smart optimization
+    const metadata = await sharpInstance.metadata();
+    
+    // Determine output format
+    const targetFormat = options.format === 'auto' ? 'webp' : (options.format || 'webp');
+    const quality = options.quality || calculateOptimalQuality(metadata, targetFormat, 90);
+
+    let processedImageBuffer: Buffer;
+    let mimeType: string;
+
+    // Apply resize if specified
+    let pipeline = sharpInstance;
+    if (options.width || options.height) {
+      pipeline = pipeline.resize(options.width, options.height, {
+        fit: 'cover',
+        position: 'center',
+        withoutEnlargement: true,
+      });
+    }
+
+    // Enhanced format handling
+    switch (targetFormat) {
+      case 'avif':
+        processedImageBuffer = await pipeline
+          .avif({
+            quality: Math.min(quality, 85),
+            effort: 4,
+            lossless: options.lossless || false,
+          })
+          .toBuffer();
+        mimeType = 'image/avif';
+        break;
+      
+      case 'webp':
+        processedImageBuffer = await pipeline
+          .webp({
+            quality,
+            effort: 3,
+            lossless: options.lossless || false,
+            nearLossless: false,
+            smartSubsample: true,
+            // Progressive is not available for WebP, handled by format itself
+          })
+          .toBuffer();
+        mimeType = 'image/webp';
+        break;
+      
+      case 'jpeg':
+      default:
+        processedImageBuffer = await pipeline
+          .jpeg({
+            quality,
+            progressive: options.progressive !== false,
+            mozjpeg: true,
+            optimiseScans: true,
+            overshootDeringing: true,
+          })
+          .toBuffer();
+        mimeType = 'image/jpeg';
+        break;
+    }
 
     const base64 = processedImageBuffer.toString('base64');
-    return `data:image/webp;base64,${base64}`;
+    return `data:${mimeType};base64,${base64}`;
   } catch (error) {
     console.error('Server video thumbnail processing failed:', error);
     return null;
   }
 }
 
-// Batch processing functions remain the same...
+// Enhanced batch processing with concurrency control and memory management
 export async function getVideoThumbnailWebpUrlsBatch(
-  thumbnailUrls: Array<string | null>
-) {
-  return Promise.all(
-    thumbnailUrls.map((thumbnailUrl) =>
-      getVideoThumbnailWebpUrlServer({ thumbnailUrl })
-    )
-  );
+  thumbnailUrls: Array<string | null>,
+  options: ImageProcessingOptions = {}
+): Promise<Array<string | null>> {
+  if (thumbnailUrls.length === 0) return [];
+  
+  // Log memory usage before processing
+  const initialMemory = getMemoryUsage();
+  console.log(`Starting batch processing of ${thumbnailUrls.length} images. Memory: ${initialMemory.heapUsed}MB`);
+  
+  // Process in chunks to manage memory
+  const chunkSize = MAX_CONCURRENT_PROCESSING;
+  const results: Array<string | null> = [];
+  
+  for (let i = 0; i < thumbnailUrls.length; i += chunkSize) {
+    const chunk = thumbnailUrls.slice(i, i + chunkSize);
+    
+    const chunkResults = await Promise.all(
+      chunk.map((thumbnailUrl) =>
+        getVideoThumbnailWebpUrlServer({ thumbnailUrl, options })
+      )
+    );
+    
+    results.push(...chunkResults);
+    
+    // Force garbage collection between chunks if available
+    if (global.gc && i + chunkSize < thumbnailUrls.length) {
+      global.gc();
+    }
+  }
+  
+  // Log final memory usage
+  const finalMemory = getMemoryUsage();
+  console.log(`Batch processing complete. Memory: ${finalMemory.heapUsed}MB (${finalMemory.heapUsed - initialMemory.heapUsed > 0 ? '+' : ''}${finalMemory.heapUsed - initialMemory.heapUsed}MB)`);
+  
+  return results;
 }
 
 export async function getCroppedPlaylistImageUrlsBatch(
@@ -163,11 +325,102 @@ export async function getCroppedPlaylistImageUrlsBatch(
     imageProperties: ImageProperties | null;
     thumbnailMaxResUrl: string | null;
     thumbnailUrl?: string | null;
+    options?: ImageProcessingOptions;
   }>
-) {
-  return Promise.all(
-    requests.map((request) => getCroppedPlaylistImageUrlServer(request))
-  );
+): Promise<Array<string | null>> {
+  if (requests.length === 0) return [];
+  
+  // Process in chunks for memory management
+  const chunkSize = MAX_CONCURRENT_PROCESSING;
+  const results: Array<string | null> = [];
+  
+  for (let i = 0; i < requests.length; i += chunkSize) {
+    const chunk = requests.slice(i, i + chunkSize);
+    
+    const chunkResults = await Promise.all(
+      chunk.map((request) => getCroppedPlaylistImageUrlServer(request))
+    );
+    
+    results.push(...chunkResults);
+    
+    // Force garbage collection between chunks if available
+    if (global.gc && i + chunkSize < requests.length) {
+      global.gc();
+    }
+  }
+  
+  return results;
+}
+
+// Progressive image generation for responsive loading
+export async function generateProgressiveImages(
+  thumbnailUrl: string,
+  sizes: Array<{ width: number; height: number; quality?: number }>
+): Promise<Array<{ size: string; dataUrl: string | null }>> {
+  const results: Array<{ size: string; dataUrl: string | null }> = [];
+  
+  for (const size of sizes) {
+    try {
+      const dataUrl = await getVideoThumbnailWebpUrlServer({
+        thumbnailUrl,
+        options: {
+          width: size.width,
+          height: size.height,
+          quality: size.quality || 85,
+          format: 'webp',
+        },
+      });
+      
+      results.push({
+        size: `${size.width}x${size.height}`,
+        dataUrl,
+      });
+    } catch (error) {
+      console.error(`Failed to generate ${size.width}x${size.height} image:`, error);
+      results.push({
+        size: `${size.width}x${size.height}`,
+        dataUrl: null,
+      });
+    }
+  }
+  
+  return results;
+}
+
+// Fetch with retry logic for better reliability
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  maxRetries = 3,
+  delay = 1000
+): Promise<Response> {
+  let lastError: Error = new Error('Unknown error');
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+      if (response.ok) return response;
+      
+      // Don't retry on client errors (4xx)
+      if (response.status >= 400 && response.status < 500) {
+        throw new Error(`Client error: ${response.status}`);
+      }
+      
+      throw new Error(`Server error: ${response.status}`);
+    } catch (error) {
+      lastError = error as Error;
+      
+      // Don't retry on client errors or last attempt
+      if (attempt === maxRetries || (error as Error).message.includes('Client error')) {
+        break;
+      }
+      
+      // Exponential backoff
+      await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, attempt - 1)));
+    }
+  }
+  
+  throw lastError;
 }
 
 /**

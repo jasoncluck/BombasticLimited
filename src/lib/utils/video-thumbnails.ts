@@ -1,44 +1,71 @@
 /**
- * Video thumbnail utility that can use either Vercel Image Optimization or server-side processing
- * Control the approach with the USE_VERCEL_IMAGES environment variable or feature flag
+ * Enhanced video thumbnail utility using server-side processing only
+ * Provides smart format detection, progressive loading, and optimized caching
  */
 
 import type { Video } from '$lib/supabase/videos';
-import {
-  getOptimizedVideoThumbnailUrl,
-  getBestThumbnailUrl,
-  isVercelOptimizedUrl,
-  extractOriginalUrlFromVercel,
-  type VercelImageConfig,
-} from './vercel-video-images';
 
 /**
- * Feature flag to control image processing approach
- * Can be controlled via environment variable VITE_USE_VERCEL_IMAGES
- * Set to false to use server-side processing for all thumbnails
- * Set to true to use Vercel Image Optimization for YouTube thumbnails
+ * Configuration for image processing
  */
-export const USE_VERCEL_IMAGES =
-  import.meta.env.VITE_USE_VERCEL_IMAGES !== 'false';
+export interface ImageConfig {
+  width?: number;
+  height?: number;
+  quality?: number;
+  format?: 'webp' | 'avif' | 'jpeg' | 'auto';
+  progressive?: boolean;
+}
 
 /**
- * Get the optimal thumbnail URL for a video
- * Uses Vercel Image Optimization when enabled, otherwise uses server processing for all
+ * Default configuration for video thumbnails
+ */
+export const DEFAULT_VIDEO_THUMBNAIL_CONFIG: ImageConfig = {
+  width: 480,
+  height: 360,
+  quality: 90,
+  format: 'auto', // Auto-detect best format based on browser support
+};
+
+/**
+ * High-resolution configuration for video thumbnails
+ */
+export const DEFAULT_MAXRES_THUMBNAIL_CONFIG: ImageConfig = {
+  width: 1280,
+  height: 720,
+  quality: 90,
+  format: 'auto',
+};
+
+/**
+ * Get the best available thumbnail URL for a video
+ * Prefers thumbnail_url for better performance, falls back to thumbnail_maxres_url
+ */
+export function getBestThumbnailUrl(video: Video): string | null {
+  if (video.thumbnail_url && video.thumbnail_url.trim() !== '') {
+    return video.thumbnail_url;
+  }
+  if (video.thumbnail_maxres_url) {
+    return video.thumbnail_maxres_url;
+  }
+  return null;
+}
+
+/**
+ * Get optimized video thumbnail URL using server-side processing
+ * Always uses server-side processing for consistent results
  */
 export function getVideoThumbnailUrl(
   video: Video,
-  config?: VercelImageConfig
+  config?: ImageConfig
 ): string {
-  // If Vercel images are disabled, always use server processing
-  if (!USE_VERCEL_IMAGES) {
-    const thumbnailUrl = getBestThumbnailUrl(video);
-    if (!thumbnailUrl) return '';
-    return `/api/video-thumbnail?type=image&url=${encodeURIComponent(thumbnailUrl)}`;
+  const thumbnailUrl = getBestThumbnailUrl(video);
+  
+  if (!thumbnailUrl) {
+    return '';
   }
 
-  // Otherwise use the Vercel-optimized approach
-  const optimizedUrl = getOptimizedVideoThumbnailUrl(video, config);
-  return optimizedUrl || '';
+  // Always use server-side processing for all thumbnails
+  return buildServerThumbnailUrl(thumbnailUrl, config);
 }
 
 /**
@@ -50,16 +77,36 @@ export function getBestVideoThumbnailUrl(video: Video): string | null {
 }
 
 /**
- * Get JSON response with WebP data URL (for backwards compatibility)
+ * Get JSON response with processed data URL
  * Uses server-side processing for data URL format
  */
-export function getVideoThumbnailDataUrl(video: Video): string {
+export function getVideoThumbnailDataUrl(video: Video, config?: ImageConfig): string {
   const thumbnailUrl = getBestThumbnailUrl(video);
   if (!thumbnailUrl) {
     return '';
   }
 
-  return `/api/video-thumbnail?type=json&url=${encodeURIComponent(thumbnailUrl)}`;
+  const params = new URLSearchParams();
+  params.set('url', thumbnailUrl);
+  params.set('type', 'json');
+  
+  if (config) {
+    addConfigParams(params, config);
+  }
+
+  return `/api/video-thumbnail?${params.toString()}`;
+}
+
+/**
+ * Get progressive images for responsive loading
+ */
+export function getVideoThumbnailProgressiveUrl(video: Video): string {
+  const thumbnailUrl = getBestThumbnailUrl(video);
+  if (!thumbnailUrl) {
+    return '';
+  }
+
+  return `/api/video-thumbnail?type=progressive&url=${encodeURIComponent(thumbnailUrl)}`;
 }
 
 /**
@@ -71,22 +118,17 @@ export function getDirectThumbnailUrl(video: Video): string | null {
 }
 
 /**
- * Check if a thumbnail URL is optimized (goes through Vercel or our API)
+ * Check if a thumbnail URL is optimized (goes through our API)
  */
 export function isOptimizedThumbnailUrl(url: string): boolean {
-  return isVercelOptimizedUrl(url) || url.startsWith('/api/video-thumbnail?');
+  return url.startsWith('/api/video-thumbnail?');
 }
 
 /**
  * Extract original URL from optimized thumbnail URL
- * Supports both Vercel Image API and server-side API formats
+ * Supports server-side API format
  */
 export function extractOriginalUrl(optimizedUrl: string): string | null {
-  if (isVercelOptimizedUrl(optimizedUrl)) {
-    return extractOriginalUrlFromVercel(optimizedUrl);
-  }
-
-  // Handle server-side API format
   try {
     const urlObj = new URL(optimizedUrl, 'http://localhost');
     return urlObj.searchParams.get('url');
@@ -117,4 +159,94 @@ export function getVideoThumbnailUrlWithSize(
     quality,
     format: 'auto',
   });
+}
+
+/**
+ * Get multiple thumbnail sizes for responsive images
+ */
+export function getResponsiveVideoThumbnailUrls(video: Video): {
+  default: string | null;
+  small: string | null;
+  medium: string | null;
+  large: string | null;
+} {
+  const thumbnailUrl = getBestThumbnailUrl(video);
+
+  if (!thumbnailUrl) {
+    return {
+      default: null,
+      small: null,
+      medium: null,
+      large: null,
+    };
+  }
+
+  return {
+    default: buildServerThumbnailUrl(thumbnailUrl, DEFAULT_VIDEO_THUMBNAIL_CONFIG),
+    small: buildServerThumbnailUrl(thumbnailUrl, {
+      width: 320,
+      height: 180,
+      quality: 85,
+      format: 'auto',
+    }),
+    medium: buildServerThumbnailUrl(thumbnailUrl, {
+      width: 640,
+      height: 360,
+      quality: 90,
+      format: 'auto',
+    }),
+    large: buildServerThumbnailUrl(thumbnailUrl, {
+      width: 1280,
+      height: 720,
+      quality: 90,
+      format: 'auto',
+    }),
+  };
+}
+
+/**
+ * Get cache key for video thumbnail (useful for client-side caching)
+ */
+export function getVideoThumbnailCacheKey(
+  video: Video,
+  config?: ImageConfig
+): string {
+  const thumbnailUrl = getBestThumbnailUrl(video);
+  const configKey = config ? JSON.stringify(config) : 'default';
+  return `video-thumb:${video.id}:${thumbnailUrl}:${configKey}`;
+}
+
+// Helper functions
+
+/**
+ * Build server-side thumbnail URL with configuration
+ */
+function buildServerThumbnailUrl(thumbnailUrl: string, config?: ImageConfig): string {
+  const params = new URLSearchParams();
+  params.set('url', thumbnailUrl);
+  params.set('type', 'image');
+  
+  if (config) {
+    addConfigParams(params, config);
+  }
+
+  return `/api/video-thumbnail?${params.toString()}`;
+}
+
+/**
+ * Add configuration parameters to URL search params
+ */
+function addConfigParams(params: URLSearchParams, config: ImageConfig): void {
+  if (config.format && config.format !== 'auto') {
+    params.set('format', config.format);
+  }
+  if (config.quality !== undefined) {
+    params.set('quality', config.quality.toString());
+  }
+  if (config.width !== undefined) {
+    params.set('width', config.width.toString());
+  }
+  if (config.height !== undefined) {
+    params.set('height', config.height.toString());
+  }
 }

@@ -8,6 +8,11 @@ import {
   extractOriginalUrl,
   hasMaxResThumbnail,
   getVideoThumbnailUrlWithSize,
+  getVideoThumbnailProgressiveUrl,
+  getResponsiveVideoThumbnailUrls,
+  getVideoThumbnailCacheKey,
+  DEFAULT_VIDEO_THUMBNAIL_CONFIG,
+  DEFAULT_MAXRES_THUMBNAIL_CONFIG,
 } from '../video-thumbnails';
 import type { Video } from '$lib/supabase/videos';
 
@@ -31,9 +36,9 @@ const createMockVideo = (
   source: 'giantbomb',
 });
 
-describe('video-thumbnails (updated for Vercel)', () => {
+describe('video-thumbnails (server-side only)', () => {
   describe('getVideoThumbnailUrl', () => {
-    it('should fallback to server processing in development mode for YouTube thumbnails', () => {
+    it('should use server processing for YouTube thumbnails', () => {
       const video = createMockVideo(
         '1',
         'https://i.ytimg.com/vi/1/hqdefault.jpg',
@@ -42,12 +47,11 @@ describe('video-thumbnails (updated for Vercel)', () => {
 
       const result = getVideoThumbnailUrl(video);
 
-      // In development mode, should use server processing
-      const expectedUrl = `/api/video-thumbnail?type=image&url=${encodeURIComponent('https://i.ytimg.com/vi/1/hqdefault.jpg')}`;
-      expect(result).toBe(expectedUrl);
+      // Should use server processing with URL as first parameter
+      expect(result).toMatch(/^\/api\/video-thumbnail\?url=https%3A%2F%2Fi\.ytimg\.com%2Fvi%2F1%2Fhqdefault\.jpg&type=image$/);
     });
 
-    it('should prefer thumbnail_url for better performance in development mode', () => {
+    it('should prefer thumbnail_url for better performance', () => {
       const video = createMockVideo(
         '1',
         'https://i.ytimg.com/vi/1/hqdefault.jpg',
@@ -56,12 +60,11 @@ describe('video-thumbnails (updated for Vercel)', () => {
 
       const result = getVideoThumbnailUrl(video);
 
-      // In development mode, should prefer standard thumbnail_url but use server processing
-      const expectedUrl = `/api/video-thumbnail?type=image&url=${encodeURIComponent('https://i.ytimg.com/vi/1/hqdefault.jpg')}`;
-      expect(result).toBe(expectedUrl);
+      // Should prefer standard thumbnail_url and use server processing
+      expect(result).toMatch(/^\/api\/video-thumbnail\?url=https%3A%2F%2Fi\.ytimg\.com%2Fvi%2F1%2Fhqdefault\.jpg&type=image$/);
     });
 
-    it('should fallback to server API for non-YouTube thumbnails', () => {
+    it('should use server API for non-YouTube thumbnails', () => {
       const video = createMockVideo(
         '1',
         'https://example.com/thumbnail.jpg',
@@ -70,8 +73,7 @@ describe('video-thumbnails (updated for Vercel)', () => {
 
       const result = getVideoThumbnailUrl(video);
 
-      const expectedUrl = `/api/video-thumbnail?type=image&url=${encodeURIComponent('https://example.com/thumbnail.jpg')}`;
-      expect(result).toBe(expectedUrl);
+      expect(result).toMatch(/^\/api\/video-thumbnail\?url=https%3A%2F%2Fexample\.com%2Fthumbnail\.jpg&type=image$/);
     });
 
     it('should return empty string when no thumbnail URL', () => {
@@ -82,7 +84,7 @@ describe('video-thumbnails (updated for Vercel)', () => {
       expect(result).toBe('');
     });
 
-    it('should fallback to server processing in development mode even with custom config', () => {
+    it('should include custom config parameters', () => {
       const video = createMockVideo(
         '1',
         'https://i.ytimg.com/vi/1/hqdefault.jpg',
@@ -97,9 +99,11 @@ describe('video-thumbnails (updated for Vercel)', () => {
 
       const result = getVideoThumbnailUrl(video, config);
 
-      // In development mode, should use server processing regardless of config
-      const expectedUrl = `/api/video-thumbnail?type=image&url=${encodeURIComponent('https://i.ytimg.com/vi/1/hqdefault.jpg')}`;
-      expect(result).toBe(expectedUrl);
+      // Should include all config parameters
+      expect(result).toContain('format=webp');
+      expect(result).toContain('quality=75');
+      expect(result).toContain('width=320');
+      expect(result).toContain('height=180');
     });
   });
 
@@ -148,8 +152,7 @@ describe('video-thumbnails (updated for Vercel)', () => {
 
       const result = getVideoThumbnailDataUrl(video);
 
-      const expectedUrl = `/api/video-thumbnail?type=json&url=${encodeURIComponent('https://i.ytimg.com/vi/1/hqdefault.jpg')}`;
-      expect(result).toBe(expectedUrl);
+      expect(result).toMatch(/^\/api\/video-thumbnail\?url=https%3A%2F%2Fi\.ytimg\.com%2Fvi%2F1%2Fhqdefault\.jpg&type=json$/);
     });
 
     it('should prefer thumbnail_url for better performance', () => {
@@ -162,14 +165,35 @@ describe('video-thumbnails (updated for Vercel)', () => {
       const result = getVideoThumbnailDataUrl(video);
 
       // Should prefer standard thumbnail_url for performance
-      const expectedUrl = `/api/video-thumbnail?type=json&url=${encodeURIComponent('https://i.ytimg.com/vi/1/hqdefault.jpg')}`;
-      expect(result).toBe(expectedUrl);
+      expect(result).toMatch(/^\/api\/video-thumbnail\?url=https%3A%2F%2Fi\.ytimg\.com%2Fvi%2F1%2Fhqdefault\.jpg&type=json$/);
     });
 
     it('should return empty string when no thumbnail URL', () => {
       const video = createMockVideo('1', '', null);
 
       const result = getVideoThumbnailDataUrl(video);
+
+      expect(result).toBe('');
+    });
+  });
+
+  describe('getVideoThumbnailProgressiveUrl', () => {
+    it('should return progressive API URL', () => {
+      const video = createMockVideo(
+        '1',
+        'https://i.ytimg.com/vi/1/hqdefault.jpg',
+        null
+      );
+
+      const result = getVideoThumbnailProgressiveUrl(video);
+
+      expect(result).toBe('/api/video-thumbnail?type=progressive&url=https%3A%2F%2Fi.ytimg.com%2Fvi%2F1%2Fhqdefault.jpg');
+    });
+
+    it('should return empty string when no thumbnail URL', () => {
+      const video = createMockVideo('1', '', null);
+
+      const result = getVideoThumbnailProgressiveUrl(video);
 
       expect(result).toBe('');
     });
@@ -191,16 +215,14 @@ describe('video-thumbnails (updated for Vercel)', () => {
   });
 
   describe('isOptimizedThumbnailUrl', () => {
-    it('should return true for Vercel-optimized URLs', () => {
-      const url =
-        '/_vercel/image?url=https%3A//i.ytimg.com/vi/1/hqdefault.jpg&w=480&h=360&q=90';
+    it('should return false for non-API URLs', () => {
+      const url = '/_vercel/image?url=https%3A//i.ytimg.com/vi/1/hqdefault.jpg&w=480&h=360&q=90';
 
-      expect(isOptimizedThumbnailUrl(url)).toBe(true);
+      expect(isOptimizedThumbnailUrl(url)).toBe(false);
     });
 
     it('should return true for server API URLs', () => {
-      const url =
-        '/api/video-thumbnail?type=image&url=https%3A//example.com/thumb.jpg';
+      const url = '/api/video-thumbnail?type=image&url=https%3A//example.com/thumb.jpg';
 
       expect(isOptimizedThumbnailUrl(url)).toBe(true);
     });
@@ -213,18 +235,8 @@ describe('video-thumbnails (updated for Vercel)', () => {
   });
 
   describe('extractOriginalUrl', () => {
-    it('should extract URL from Vercel-optimized format', () => {
-      const optimizedUrl =
-        '/_vercel/image?url=https%3A//i.ytimg.com/vi/1/hqdefault.jpg&w=480&h=360&q=90';
-
-      const result = extractOriginalUrl(optimizedUrl);
-
-      expect(result).toBe('https://i.ytimg.com/vi/1/hqdefault.jpg');
-    });
-
     it('should extract URL from server API format', () => {
-      const optimizedUrl =
-        '/api/video-thumbnail?type=image&url=https%3A//example.com/thumb.jpg';
+      const optimizedUrl = '/api/video-thumbnail?type=image&url=https%3A//example.com/thumb.jpg';
 
       const result = extractOriginalUrl(optimizedUrl);
 
@@ -260,7 +272,7 @@ describe('video-thumbnails (updated for Vercel)', () => {
   });
 
   describe('getVideoThumbnailUrlWithSize', () => {
-    it('should fallback to server processing in development mode with specified dimensions', () => {
+    it('should include specified dimensions and quality', () => {
       const video = createMockVideo(
         '1',
         'https://i.ytimg.com/vi/1/hqdefault.jpg',
@@ -269,12 +281,12 @@ describe('video-thumbnails (updated for Vercel)', () => {
 
       const result = getVideoThumbnailUrlWithSize(video, 640, 360, 85);
 
-      // In development mode, should use server processing regardless of dimensions
-      const expectedUrl = `/api/video-thumbnail?type=image&url=${encodeURIComponent('https://i.ytimg.com/vi/1/hqdefault.jpg')}`;
-      expect(result).toBe(expectedUrl);
+      expect(result).toContain('quality=85');
+      expect(result).toContain('width=640');
+      expect(result).toContain('height=360');
     });
 
-    it('should fallback to server processing in development mode with default quality', () => {
+    it('should use default quality when not specified', () => {
       const video = createMockVideo(
         '1',
         'https://i.ytimg.com/vi/1/hqdefault.jpg',
@@ -283,9 +295,104 @@ describe('video-thumbnails (updated for Vercel)', () => {
 
       const result = getVideoThumbnailUrlWithSize(video, 320, 180);
 
-      // In development mode, should use server processing regardless of quality
-      const expectedUrl = `/api/video-thumbnail?type=image&url=${encodeURIComponent('https://i.ytimg.com/vi/1/hqdefault.jpg')}`;
-      expect(result).toBe(expectedUrl);
+      expect(result).toContain('quality=90');
+      expect(result).toContain('width=320');
+      expect(result).toContain('height=180');
+    });
+  });
+
+  describe('getResponsiveVideoThumbnailUrls', () => {
+    it('should return server URLs for all sizes', () => {
+      const video = createMockVideo(
+        '1',
+        'https://i.ytimg.com/vi/1/hqdefault.jpg',
+        null
+      );
+
+      const result = getResponsiveVideoThumbnailUrls(video);
+
+      // All should be server URLs
+      expect(result.default).toMatch(/^\/api\/video-thumbnail/);
+      expect(result.small).toMatch(/^\/api\/video-thumbnail/);
+      expect(result.medium).toMatch(/^\/api\/video-thumbnail/);
+      expect(result.large).toMatch(/^\/api\/video-thumbnail/);
+    });
+
+    it('should return null values when no thumbnail URL', () => {
+      const video = createMockVideo('1', '', null);
+
+      const result = getResponsiveVideoThumbnailUrls(video);
+
+      expect(result.default).toBe(null);
+      expect(result.small).toBe(null);
+      expect(result.medium).toBe(null);
+      expect(result.large).toBe(null);
+    });
+  });
+
+  describe('getVideoThumbnailCacheKey', () => {
+    it('should generate cache key with default config', () => {
+      const video = createMockVideo(
+        '1',
+        'https://i.ytimg.com/vi/1/hqdefault.jpg',
+        null
+      );
+
+      const result = getVideoThumbnailCacheKey(video);
+
+      expect(result).toBe(
+        'video-thumb:1:https://i.ytimg.com/vi/1/hqdefault.jpg:default'
+      );
+    });
+
+    it('should generate cache key with custom config', () => {
+      const video = createMockVideo(
+        '1',
+        'https://i.ytimg.com/vi/1/hqdefault.jpg',
+        null
+      );
+      const config = { width: 320, height: 180, quality: 85 };
+
+      const result = getVideoThumbnailCacheKey(video, config);
+
+      expect(result).toBe(
+        'video-thumb:1:https://i.ytimg.com/vi/1/hqdefault.jpg:{"width":320,"height":180,"quality":85}'
+      );
+    });
+
+    it('should use thumbnail_url when both URLs available', () => {
+      const video = createMockVideo(
+        '1',
+        'https://i.ytimg.com/vi/1/hqdefault.jpg',
+        'https://i.ytimg.com/vi/1/maxresdefault.jpg'
+      );
+
+      const result = getVideoThumbnailCacheKey(video);
+
+      // Should prefer thumbnail_url for performance
+      expect(result).toBe(
+        'video-thumb:1:https://i.ytimg.com/vi/1/hqdefault.jpg:default'
+      );
+    });
+  });
+
+  describe('configuration constants', () => {
+    it('should have correct default video thumbnail config', () => {
+      expect(DEFAULT_VIDEO_THUMBNAIL_CONFIG).toEqual({
+        width: 480,
+        height: 360,
+        quality: 90,
+        format: 'auto',
+      });
+    });
+
+    it('should have correct default maxres thumbnail config', () => {
+      expect(DEFAULT_MAXRES_THUMBNAIL_CONFIG).toEqual({
+        width: 1280,
+        height: 720,
+        quality: 90,
+        format: 'auto',
+      });
     });
   });
 });

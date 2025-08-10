@@ -1,16 +1,13 @@
 /**
- * Performance measurement utility for comparing image loading approaches
- * Compares Vercel Image Optimization vs SvelteKit server processing
+ * Performance measurement utility for server-side image processing
+ * Measures loading performance and optimization effectiveness
  */
 
 import type { Video } from '$lib/supabase/videos';
-import {
-  getBestThumbnailUrl,
-  isOptimizableVideoThumbnail,
-} from './vercel-video-images';
+import { getBestThumbnailUrl } from './video-thumbnails';
 
 export interface ImageLoadingMetrics {
-  approach: 'vercel' | 'server';
+  approach: 'server' | 'direct';
   url: string;
   loadTimeMs: number;
   imageSize?: {
@@ -31,16 +28,16 @@ export interface PerformanceTestResult {
   testId: string;
   timestamp: number;
   videos: Video[];
-  vercelMetrics: ImageLoadingMetrics[];
   serverMetrics: ImageLoadingMetrics[];
+  directMetrics: ImageLoadingMetrics[];
   summary: {
-    vercelAverage: number;
     serverAverage: number;
-    vercelMedian: number;
+    directAverage: number;
     serverMedian: number;
-    vercelTotal: number;
+    directMedian: number;
     serverTotal: number;
-    winner: 'vercel' | 'server' | 'tie';
+    directTotal: number;
+    winner: 'server' | 'direct' | 'tie';
     difference: number;
     differencePercent: number;
   };
@@ -51,7 +48,7 @@ export interface PerformanceTestResult {
  */
 async function measureImageLoadTime(
   url: string,
-  approach: 'vercel' | 'server'
+  approach: 'server' | 'direct'
 ): Promise<ImageLoadingMetrics> {
   const startTime = performance.now();
 
@@ -98,32 +95,20 @@ async function measureImageLoadTime(
 }
 
 /**
- * Generate both Vercel and server URLs for a video
+ * Generate both server-processed and direct URLs for a video
  */
 function generateComparisonUrls(video: Video): {
-  vercel: string | null;
   server: string | null;
+  direct: string | null;
 } {
   const thumbnailUrl = getBestThumbnailUrl(video);
   if (!thumbnailUrl) {
-    return { vercel: null, server: null };
+    return { server: null, direct: null };
   }
 
   const serverUrl = `/api/video-thumbnail?type=image&url=${encodeURIComponent(thumbnailUrl)}`;
 
-  // Only generate Vercel URL for optimizable thumbnails
-  let vercelUrl: string | null = null;
-  if (isOptimizableVideoThumbnail(thumbnailUrl)) {
-    const params = new URLSearchParams({
-      url: thumbnailUrl,
-      w: '480',
-      h: '360',
-      q: '90',
-    });
-    vercelUrl = `/_vercel/image?${params.toString()}`;
-  }
-
-  return { vercel: vercelUrl, server: serverUrl };
+  return { server: serverUrl, direct: thumbnailUrl };
 }
 
 /**
@@ -156,8 +141,8 @@ export async function runImagePerformanceTest(
     }
   }
 
-  const vercelMetrics: ImageLoadingMetrics[] = [];
   const serverMetrics: ImageLoadingMetrics[] = [];
+  const directMetrics: ImageLoadingMetrics[] = [];
 
   // Test each video
   for (let i = 0; i < testVideos.length; i++) {
@@ -185,23 +170,21 @@ export async function runImagePerformanceTest(
       }
     }
 
-    // Test Vercel approach (only for YouTube videos)
-    if (urls.vercel) {
+    // Test direct approach 
+    if (urls.direct) {
       try {
-        const vercelMetric = await measureImageLoadTime(urls.vercel, 'vercel');
-        vercelMetrics.push(vercelMetric);
-        console.log(`  📈 Vercel: ${vercelMetric.loadTimeMs.toFixed(0)}ms`);
+        const directMetric = await measureImageLoadTime(urls.direct, 'direct');
+        directMetrics.push(directMetric);
+        console.log(`  📈 Direct: ${directMetric.loadTimeMs.toFixed(0)}ms`);
       } catch (error) {
-        console.error(`  ❌ Vercel failed:`, error);
-        vercelMetrics.push({
-          approach: 'vercel',
-          url: urls.vercel,
+        console.error(`  ❌ Direct failed:`, error);
+        directMetrics.push({
+          approach: 'direct',
+          url: urls.direct,
           loadTimeMs: 0,
           error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
-    } else {
-      console.log(`  ⏭️ Skipping Vercel (non-YouTube thumbnail)`);
     }
 
     // Add small delay between tests to avoid overwhelming the server
@@ -211,65 +194,65 @@ export async function runImagePerformanceTest(
   }
 
   // Calculate summary statistics
-  const vercelTimes = vercelMetrics
-    .filter((m) => !m.error)
-    .map((m) => m.loadTimeMs);
   const serverTimes = serverMetrics
     .filter((m) => !m.error)
     .map((m) => m.loadTimeMs);
+  const directTimes = directMetrics
+    .filter((m) => !m.error)
+    .map((m) => m.loadTimeMs);
 
-  const vercelAverage =
-    vercelTimes.length > 0
-      ? vercelTimes.reduce((a, b) => a + b, 0) / vercelTimes.length
-      : 0;
   const serverAverage =
     serverTimes.length > 0
       ? serverTimes.reduce((a, b) => a + b, 0) / serverTimes.length
       : 0;
-
-  const vercelMedian =
-    vercelTimes.length > 0
-      ? vercelTimes.sort((a, b) => a - b)[Math.floor(vercelTimes.length / 2)]
+  const directAverage =
+    directTimes.length > 0
+      ? directTimes.reduce((a, b) => a + b, 0) / directTimes.length
       : 0;
+
   const serverMedian =
     serverTimes.length > 0
       ? serverTimes.sort((a, b) => a - b)[Math.floor(serverTimes.length / 2)]
       : 0;
+  const directMedian =
+    directTimes.length > 0
+      ? directTimes.sort((a, b) => a - b)[Math.floor(directTimes.length / 2)]
+      : 0;
 
-  const vercelTotal = vercelTimes.reduce((a, b) => a + b, 0);
   const serverTotal = serverTimes.reduce((a, b) => a + b, 0);
+  const directTotal = directTimes.reduce((a, b) => a + b, 0);
 
-  let winner: 'vercel' | 'server' | 'tie' = 'tie';
-  const difference = Math.abs(vercelAverage - serverAverage);
+  let winner: 'server' | 'direct' | 'tie' = 'tie';
+  const difference = Math.abs(serverAverage - directAverage);
   const differencePercent =
-    serverAverage > 0 ? (difference / serverAverage) * 100 : 0;
+    directAverage > 0 ? (difference / directAverage) * 100 : 0;
 
-  if (vercelAverage > 0 && serverAverage > 0) {
-    if (vercelAverage < serverAverage * 0.95) {
+  if (serverAverage > 0 && directAverage > 0) {
+    if (serverAverage < directAverage * 0.95) {
       // At least 5% faster to be considered winner
-      winner = 'vercel';
-    } else if (serverAverage < vercelAverage * 0.95) {
       winner = 'server';
+    } else if (directAverage < serverAverage * 0.95) {
+      winner = 'direct';
     }
-  } else if (vercelAverage > 0) {
-    winner = 'vercel';
   } else if (serverAverage > 0) {
     winner = 'server';
+  } else if (directAverage > 0) {
+    winner = 'direct';
   }
 
   const result: PerformanceTestResult = {
     testId,
     timestamp: Date.now(),
     videos: testVideos,
-    vercelMetrics,
     serverMetrics,
+    directMetrics,
     summary: {
-      vercelAverage,
       serverAverage,
-      vercelMedian,
+      directAverage,
       serverMedian,
-      vercelTotal,
+      directMedian,
       serverTotal,
+      directTotal,
       winner,
       difference,
       differencePercent,
@@ -279,22 +262,22 @@ export async function runImagePerformanceTest(
   // Log results
   console.log(`\n📊 Performance Test Results (${testId})`);
   console.log(`┌─────────────────────────────┬─────────────┬─────────────┐`);
-  console.log(`│ Metric                      │ Vercel      │ Server      │`);
+  console.log(`│ Metric                      │ Server      │ Direct      │`);
   console.log(`├─────────────────────────────┼─────────────┼─────────────┤`);
   console.log(
-    `│ Average Load Time           │ ${vercelAverage.toFixed(0).padStart(8)}ms │ ${serverAverage.toFixed(0).padStart(8)}ms │`
+    `│ Average Load Time           │ ${serverAverage.toFixed(0).padStart(8)}ms │ ${directAverage.toFixed(0).padStart(8)}ms │`
   );
   console.log(
-    `│ Median Load Time            │ ${vercelMedian.toFixed(0).padStart(8)}ms │ ${serverMedian.toFixed(0).padStart(8)}ms │`
+    `│ Median Load Time            │ ${serverMedian.toFixed(0).padStart(8)}ms │ ${directMedian.toFixed(0).padStart(8)}ms │`
   );
   console.log(
-    `│ Total Time                  │ ${vercelTotal.toFixed(0).padStart(8)}ms │ ${serverTotal.toFixed(0).padStart(8)}ms │`
+    `│ Total Time                  │ ${serverTotal.toFixed(0).padStart(8)}ms │ ${directTotal.toFixed(0).padStart(8)}ms │`
   );
   console.log(
-    `│ Successful Images           │ ${vercelTimes.length.toString().padStart(8)}    │ ${serverTimes.length.toString().padStart(8)}    │`
+    `│ Successful Images           │ ${serverTimes.length.toString().padStart(8)}    │ ${directTimes.length.toString().padStart(8)}    │`
   );
   console.log(
-    `│ Failed Images               │ ${(vercelMetrics.length - vercelTimes.length).toString().padStart(8)}    │ ${(serverMetrics.length - serverTimes.length).toString().padStart(8)}    │`
+    `│ Failed Images               │ ${(serverMetrics.length - serverTimes.length).toString().padStart(8)}    │ ${(directMetrics.length - directTimes.length).toString().padStart(8)}    │`
   );
   console.log(`└─────────────────────────────┴─────────────┴─────────────┘`);
   console.log(
@@ -302,7 +285,7 @@ export async function runImagePerformanceTest(
   );
   if (winner !== 'tie') {
     console.log(
-      `💡 ${winner === 'vercel' ? 'Vercel' : 'Server'} is ${differencePercent.toFixed(1)}% faster on average`
+      `💡 ${winner === 'server' ? 'Server' : 'Direct'} is ${differencePercent.toFixed(1)}% faster on average`
     );
   }
 
