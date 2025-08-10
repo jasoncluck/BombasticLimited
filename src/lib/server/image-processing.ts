@@ -8,7 +8,7 @@ import {
   ImageCacheManager,
   generateImageCacheKey,
   generatePlaylistImageCacheKey,
-  type ImageCacheEntry
+  type ImageCacheMetadata
 } from './image-cache';
 
 // Initialize image cache manager
@@ -44,6 +44,14 @@ function detectAuthState(request?: Request): 'auth' | 'anon' {
   }
   
   return 'anon';
+}
+
+// Helper function to extract userId from request (simplified - returns null for now)
+// In a real implementation, this would decode the auth token to get the user ID
+function extractUserId(request?: Request): string | null {
+  // For now, return null since we don't have direct access to user ID from request
+  // In a full implementation, you'd decode the JWT token or lookup from session
+  return null;
 }
 
 // Enhanced image processing configuration
@@ -124,8 +132,9 @@ export async function getCroppedPlaylistImageUrlServer({
   // Initialize cache manager
   await imageCacheManager.initialize();
 
-  // Detect auth state
+  // Detect auth state and user ID
   const authState = detectAuthState(request);
+  const userId = extractUserId(request);
 
   // Generate cache key
   const cacheKey = generatePlaylistImageCacheKey(
@@ -137,7 +146,7 @@ export async function getCroppedPlaylistImageUrlServer({
 
   // Check cache first
   try {
-    const cachedResult = await imageCacheManager.get(cacheKey);
+    const cachedResult = await imageCacheManager.get(cacheKey, userId, authState);
     if (cachedResult) {
       console.log(`Cache hit for playlist image: ${imageUrl}`);
       return cachedResult;
@@ -251,6 +260,7 @@ export async function getCroppedPlaylistImageUrlServer({
         dataUrl,
         imageUrl,
         options,
+        userId,
         authState
       );
       console.log(`Cached playlist image: ${imageUrl} (auth: ${authState})`);
@@ -280,15 +290,16 @@ export async function getVideoThumbnailWebpUrlServer({
   // Initialize cache manager
   await imageCacheManager.initialize();
 
-  // Detect auth state
+  // Detect auth state and user ID
   const authState = detectAuthState(request);
+  const userId = extractUserId(request);
 
   // Generate cache key
   const cacheKey = generateImageCacheKey(thumbnailUrl, options, authState);
 
   // Check cache first
   try {
-    const cachedResult = await imageCacheManager.get(cacheKey);
+    const cachedResult = await imageCacheManager.get(cacheKey, userId, authState);
     if (cachedResult) {
       console.log(`Cache hit for video thumbnail: ${thumbnailUrl}`);
       return cachedResult;
@@ -389,6 +400,7 @@ export async function getVideoThumbnailWebpUrlServer({
         dataUrl,
         thumbnailUrl,
         options,
+        userId,
         authState
       );
       console.log(`Cached video thumbnail: ${thumbnailUrl} (auth: ${authState})`);

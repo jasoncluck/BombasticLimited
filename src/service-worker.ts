@@ -845,6 +845,15 @@ sw.addEventListener('message', (event) => {
       break;
     }
 
+    case 'IMAGE_CACHED': {
+      const { cacheKey, authState } = event.data || {};
+      console.log(`SW [${getTimestamp()}]: Image cached notification for ${cacheKey} (${authState})`);
+      
+      // This is just a notification message - no action needed
+      // The actual caching is handled by the ImageCacheManager
+      break;
+    }
+
     case 'AUTH_STATE_CHANGED': {
       const { newAuthState, oldAuthState } = event.data || {};
       console.log(

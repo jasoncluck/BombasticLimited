@@ -1,4 +1,5 @@
 import type { ImageProcessingOptions } from './image-processing';
+import { EnhancedMemoryCache } from './enhanced-memory-cache';
 
 // Image cache configuration
 export const IMAGE_CACHE_CONFIG = {
@@ -9,16 +10,11 @@ export const IMAGE_CACHE_CONFIG = {
   MAX_CACHE_ENTRIES: 1000,
 } as const;
 
-// Enhanced image cache entry interface
-export interface ImageCacheEntry {
-  dataUrl: string;
-  timestamp: number;
-  ttl: number;
-  size: number;
+// Image metadata for cache entries
+export interface ImageCacheMetadata {
   originalUrl: string;
   cacheKey: string;
   processingOptions: ImageProcessingOptions;
-  authState: 'auth' | 'anon';
 }
 
 // Generate cache key from URL and processing options
@@ -72,14 +68,16 @@ export function generatePlaylistImageCacheKey(
   return `playlist:${authState}:${urlPart}:${optionsHash}`;
 }
 
-// Image cache manager class
+// Refactored image cache manager using enhanced memory cache
 export class ImageCacheManager {
   private static instance: ImageCacheManager | null = null;
-  private cache: Cache | null = null;
-  private memoryCache = new Map<string, ImageCacheEntry>();
+  private serviceWorkerCache: Cache | null = null;
+  private memoryCache: EnhancedMemoryCache<string>;
   private initialized = false;
 
-  private constructor() {}
+  private constructor() {
+    this.memoryCache = new EnhancedMemoryCache<string>(IMAGE_CACHE_CONFIG.MAX_CACHE_SIZE);
+  }
 
   static getInstance(): ImageCacheManager {
     if (!ImageCacheManager.instance) {
@@ -92,9 +90,9 @@ export class ImageCacheManager {
     if (this.initialized) return;
     
     try {
-      // Only initialize cache in browser environment (service worker)
+      // Only initialize service worker cache in browser environment
       if (typeof caches !== 'undefined') {
-        this.cache = await caches.open(IMAGE_CACHE_CONFIG.CACHE_NAME);
+        this.serviceWorkerCache = await caches.open(IMAGE_CACHE_CONFIG.CACHE_NAME);
       }
       this.initialized = true;
     } catch (error) {
@@ -102,30 +100,37 @@ export class ImageCacheManager {
     }
   }
 
-  async get(cacheKey: string): Promise<string | null> {
+  async get(cacheKey: string, userId: string | null = null, authState: 'auth' | 'anon' = 'anon'): Promise<string | null> {
     // First check memory cache
-    const memoryEntry = this.memoryCache.get(cacheKey);
-    if (memoryEntry && this.isEntryValid(memoryEntry)) {
-      return memoryEntry.dataUrl;
+    const memoryResult = this.memoryCache.get(cacheKey, userId, authState);
+    if (memoryResult) {
+      return memoryResult;
     }
 
     // Check service worker cache if available
-    if (this.cache) {
+    if (this.serviceWorkerCache) {
       try {
-        const response = await this.cache.match(cacheKey);
+        const response = await this.serviceWorkerCache.match(cacheKey);
         if (response) {
           const data = await response.json();
-          if (this.isEntryValid(data)) {
+          if (this.isValidCacheData(data)) {
             // Update memory cache
-            this.memoryCache.set(cacheKey, data);
+            this.memoryCache.set(
+              cacheKey,
+              data.dataUrl,
+              data.ttl,
+              userId,
+              authState,
+              data.metadata
+            );
             return data.dataUrl;
           } else {
             // Remove expired entry
-            await this.cache.delete(cacheKey);
+            await this.serviceWorkerCache.delete(cacheKey);
           }
         }
       } catch (error) {
-        console.warn('Error reading from image cache:', error);
+        console.warn('Error reading from service worker image cache:', error);
       }
     }
 
@@ -137,50 +142,55 @@ export class ImageCacheManager {
     dataUrl: string,
     originalUrl: string,
     processingOptions: ImageProcessingOptions,
+    userId: string | null = null,
     authState: 'auth' | 'anon' = 'anon',
     ttl: number = IMAGE_CACHE_CONFIG.DEFAULT_TTL
   ): Promise<void> {
-    const entry: ImageCacheEntry = {
-      dataUrl,
-      timestamp: Date.now(),
-      ttl,
-      size: this.calculateSize(dataUrl),
+    const metadata: ImageCacheMetadata = {
       originalUrl,
       cacheKey,
       processingOptions,
-      authState,
     };
 
     // Store in memory cache
-    this.memoryCache.set(cacheKey, entry);
+    this.memoryCache.set(cacheKey, dataUrl, ttl, userId, authState, metadata);
 
     // Store in service worker cache if available
-    if (this.cache) {
+    if (this.serviceWorkerCache) {
       try {
-        const response = new Response(JSON.stringify(entry), {
+        const cacheData = {
+          dataUrl,
+          timestamp: Date.now(),
+          ttl,
+          metadata,
+          authState,
+          userId,
+        };
+
+        const response = new Response(JSON.stringify(cacheData), {
           headers: {
             'Content-Type': 'application/json',
             'Cache-Control': `max-age=${Math.floor(ttl / 1000)}`,
           },
         });
-        await this.cache.put(cacheKey, response);
+        await this.serviceWorkerCache.put(cacheKey, response);
       } catch (error) {
-        console.warn('Error storing to image cache:', error);
+        console.warn('Error storing to service worker image cache:', error);
       }
     }
 
-    // Cleanup if necessary
-    await this.cleanup();
+    // Send message to service worker about cache update
+    this.notifyServiceWorkerOfCacheUpdate(cacheKey, authState);
   }
 
   async delete(cacheKey: string): Promise<void> {
     this.memoryCache.delete(cacheKey);
     
-    if (this.cache) {
+    if (this.serviceWorkerCache) {
       try {
-        await this.cache.delete(cacheKey);
+        await this.serviceWorkerCache.delete(cacheKey);
       } catch (error) {
-        console.warn('Error deleting from image cache:', error);
+        console.warn('Error deleting from service worker image cache:', error);
       }
     }
   }
@@ -188,111 +198,65 @@ export class ImageCacheManager {
   async clear(authState?: 'auth' | 'anon'): Promise<void> {
     if (authState) {
       // Clear entries for specific auth state
-      const keysToDelete: string[] = [];
-      for (const [key, entry] of this.memoryCache.entries()) {
-        if (entry.authState === authState) {
-          keysToDelete.push(key);
-        }
-      }
+      this.memoryCache.clearForAuthState(authState);
       
-      for (const key of keysToDelete) {
-        await this.delete(key);
+      if (this.serviceWorkerCache) {
+        try {
+          const keys = await this.serviceWorkerCache.keys();
+          const keysToDelete = keys.filter(request => {
+            const url = new URL(request.url);
+            return url.pathname.includes(`${authState}:`);
+          });
+          
+          await Promise.all(keysToDelete.map(key => this.serviceWorkerCache?.delete(key)));
+        } catch (error) {
+          console.warn('Error clearing auth-specific image cache:', error);
+        }
       }
     } else {
       // Clear all entries
       this.memoryCache.clear();
       
-      if (this.cache) {
+      if (this.serviceWorkerCache) {
         try {
-          const keys = await this.cache.keys();
-          await Promise.all(keys.map(key => this.cache?.delete(key)));
+          const keys = await this.serviceWorkerCache.keys();
+          await Promise.all(keys.map(key => this.serviceWorkerCache?.delete(key)));
         } catch (error) {
-          console.warn('Error clearing image cache:', error);
+          console.warn('Error clearing all image cache:', error);
         }
       }
     }
   }
 
   async cleanup(): Promise<void> {
-    const now = Date.now();
-    const memoryKeysToDelete: string[] = [];
-    const cacheKeysToDelete: string[] = [];
+    // Cleanup memory cache
+    this.memoryCache.cleanup();
 
-    // Check memory cache for expired entries
-    for (const [key, entry] of this.memoryCache.entries()) {
-      if (!this.isEntryValid(entry)) {
-        memoryKeysToDelete.push(key);
-      }
-    }
-
-    // Remove expired entries from memory
-    for (const key of memoryKeysToDelete) {
-      this.memoryCache.delete(key);
-    }
-
-    // Check service worker cache if available
-    if (this.cache) {
+    // Cleanup service worker cache if available
+    if (this.serviceWorkerCache) {
       try {
-        const keys = await this.cache.keys();
+        const keys = await this.serviceWorkerCache.keys();
+        const keysToDelete: string[] = [];
         
         for (const request of keys) {
           try {
-            const response = await this.cache.match(request);
+            const response = await this.serviceWorkerCache.match(request);
             if (response) {
               const data = await response.json();
-              if (!this.isEntryValid(data)) {
-                cacheKeysToDelete.push(request.url);
+              if (!this.isValidCacheData(data)) {
+                keysToDelete.push(request.url);
               }
             }
           } catch {
             // Invalid entry, mark for deletion
-            cacheKeysToDelete.push(request.url);
+            keysToDelete.push(request.url);
           }
         }
 
         // Delete expired entries
-        await Promise.all(cacheKeysToDelete.map(key => this.cache?.delete(key)));
+        await Promise.all(keysToDelete.map(key => this.serviceWorkerCache?.delete(key)));
       } catch (error) {
-        console.warn('Error during image cache cleanup:', error);
-      }
-    }
-
-    // Check cache size limits
-    await this.enforceSize();
-  }
-
-  private async enforceSize(): Promise<void> {
-    // Enforce memory cache size
-    if (this.memoryCache.size > IMAGE_CACHE_CONFIG.MAX_CACHE_ENTRIES) {
-      const entries = Array.from(this.memoryCache.entries());
-      // Sort by timestamp (oldest first)
-      entries.sort(([, a], [, b]) => a.timestamp - b.timestamp);
-      
-      const entriesToDelete = entries.slice(0, this.memoryCache.size - IMAGE_CACHE_CONFIG.MAX_CACHE_ENTRIES);
-      for (const [key] of entriesToDelete) {
-        await this.delete(key);
-      }
-    }
-
-    // Enforce total size limit
-    let totalSize = 0;
-    const entries = Array.from(this.memoryCache.entries());
-    
-    for (const [, entry] of entries) {
-      totalSize += entry.size;
-    }
-
-    if (totalSize > IMAGE_CACHE_CONFIG.MAX_CACHE_SIZE) {
-      // Sort by timestamp (oldest first)
-      entries.sort(([, a], [, b]) => a.timestamp - b.timestamp);
-      
-      for (const [key, entry] of entries) {
-        await this.delete(key);
-        totalSize -= entry.size;
-        
-        if (totalSize <= IMAGE_CACHE_CONFIG.MAX_CACHE_SIZE * 0.8) {
-          break;
-        }
+        console.warn('Error during service worker image cache cleanup:', error);
       }
     }
   }
@@ -302,28 +266,35 @@ export class ImageCacheManager {
     memorySize: number;
     authEntries: { auth: number; anon: number };
   } {
-    let totalSize = 0;
-    const authStats = { auth: 0, anon: 0 };
-
-    for (const [, entry] of this.memoryCache.entries()) {
-      totalSize += entry.size;
-      authStats[entry.authState]++;
-    }
-
+    const stats = this.memoryCache.getStats();
     return {
-      memoryEntries: this.memoryCache.size,
-      memorySize: totalSize,
-      authEntries: authStats,
+      memoryEntries: stats.entries,
+      memorySize: stats.size,
+      authEntries: stats.authEntries,
     };
   }
 
-  private isEntryValid(entry: ImageCacheEntry): boolean {
-    return Date.now() - entry.timestamp < entry.ttl;
+  // Follow the existing pattern of notifying service worker
+  private notifyServiceWorkerOfCacheUpdate(cacheKey: string, authState: 'auth' | 'anon'): void {
+    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      try {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'IMAGE_CACHED',
+          cacheKey,
+          authState,
+          timestamp: Date.now(),
+        });
+      } catch (error) {
+        console.warn('Failed to notify service worker of image cache update:', error);
+      }
+    }
   }
 
-  private calculateSize(dataUrl: string): number {
-    // Estimate size based on base64 data URL length
-    // Base64 encoding increases size by ~33%, so decode length is roughly dataUrl.length * 0.75
-    return dataUrl.length * 0.75;
+  private isValidCacheData(data: any): boolean {
+    return data && 
+           typeof data.dataUrl === 'string' &&
+           typeof data.timestamp === 'number' &&
+           typeof data.ttl === 'number' &&
+           (Date.now() - data.timestamp < data.ttl);
   }
 }

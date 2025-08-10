@@ -117,17 +117,17 @@ describe('Image Cache', () => {
       const options = { format: 'webp' as const, quality: 90 };
 
       // Store in cache
-      await cacheManager.set(cacheKey, dataUrl, originalUrl, options, 'anon');
+      await cacheManager.set(cacheKey, dataUrl, originalUrl, options, null, 'anon');
 
       // Should find in memory cache
-      const result = await cacheManager.get(cacheKey);
+      const result = await cacheManager.get(cacheKey, null, 'anon');
       expect(result).toBe(dataUrl);
     });
 
     it('should return null for non-existent cache entries', async () => {
       await cacheManager.initialize();
       
-      const result = await cacheManager.get('non-existent-key');
+      const result = await cacheManager.get('non-existent-key', null, 'anon');
       expect(result).toBe(null);
     });
 
@@ -141,17 +141,17 @@ describe('Image Cache', () => {
       const shortTTL = 100; // 100ms
 
       // Store with short TTL
-      await cacheManager.set(cacheKey, dataUrl, originalUrl, options, 'anon', shortTTL);
+      await cacheManager.set(cacheKey, dataUrl, originalUrl, options, null, 'anon', shortTTL);
 
       // Should be available immediately
-      let result = await cacheManager.get(cacheKey);
+      let result = await cacheManager.get(cacheKey, null, 'anon');
       expect(result).toBe(dataUrl);
 
       // Wait for expiration
       await new Promise(resolve => setTimeout(resolve, 150));
 
       // Should be null after expiration
-      result = await cacheManager.get(cacheKey);
+      result = await cacheManager.get(cacheKey, null, 'anon');
       expect(result).toBe(null);
     });
 
@@ -165,19 +165,19 @@ describe('Image Cache', () => {
       const options = { format: 'webp' as const, quality: 90 };
 
       // Store auth and anon entries
-      await cacheManager.set(authKey, dataUrl, originalUrl, options, 'auth');
-      await cacheManager.set(anonKey, dataUrl, originalUrl, options, 'anon');
+      await cacheManager.set(authKey, dataUrl, originalUrl, options, null, 'auth');
+      await cacheManager.set(anonKey, dataUrl, originalUrl, options, null, 'anon');
 
       // Both should be available
-      expect(await cacheManager.get(authKey)).toBe(dataUrl);
-      expect(await cacheManager.get(anonKey)).toBe(dataUrl);
+      expect(await cacheManager.get(authKey, null, 'auth')).toBe(dataUrl);
+      expect(await cacheManager.get(anonKey, null, 'anon')).toBe(dataUrl);
 
       // Clear only auth entries
       await cacheManager.clear('auth');
 
       // Auth should be gone, anon should remain
-      expect(await cacheManager.get(authKey)).toBe(null);
-      expect(await cacheManager.get(anonKey)).toBe(dataUrl);
+      expect(await cacheManager.get(authKey, null, 'auth')).toBe(null);
+      expect(await cacheManager.get(anonKey, null, 'anon')).toBe(dataUrl);
     });
 
     it('should enforce size limits', async () => {
@@ -190,8 +190,8 @@ describe('Image Cache', () => {
       const largeDataUrl = 'data:image/webp;base64,' + 'a'.repeat(2000); // ~2KB
       const options = { format: 'webp' as const, quality: 90 };
 
-      await cacheManager.set('key1', largeDataUrl, 'https://example.com/1.jpg', options, 'anon');
-      await cacheManager.set('key2', largeDataUrl, 'https://example.com/2.jpg', options, 'anon');
+      await cacheManager.set('key1', largeDataUrl, 'https://example.com/1.jpg', options, null, 'anon');
+      await cacheManager.set('key2', largeDataUrl, 'https://example.com/2.jpg', options, null, 'anon');
 
       // Should have enforced size limits
       const stats = cacheManager.getStats();
@@ -207,9 +207,9 @@ describe('Image Cache', () => {
       const dataUrl = 'data:image/webp;base64,testdata';
       const options = { format: 'webp' as const, quality: 90 };
 
-      await cacheManager.set('auth-key', dataUrl, 'https://example.com/1.jpg', options, 'auth');
-      await cacheManager.set('anon-key1', dataUrl, 'https://example.com/2.jpg', options, 'anon');
-      await cacheManager.set('anon-key2', dataUrl, 'https://example.com/3.jpg', options, 'anon');
+      await cacheManager.set('auth-key', dataUrl, 'https://example.com/1.jpg', options, null, 'auth');
+      await cacheManager.set('anon-key1', dataUrl, 'https://example.com/2.jpg', options, null, 'anon');
+      await cacheManager.set('anon-key2', dataUrl, 'https://example.com/3.jpg', options, null, 'anon');
 
       const stats = cacheManager.getStats();
       expect(stats.memoryEntries).toBe(3);
@@ -247,9 +247,9 @@ describe('Image Cache', () => {
       const shortTTL = 100; // 100ms
 
       // Store multiple entries with short TTL
-      await cacheManager.set('key1', dataUrl, 'https://example.com/1.jpg', options, 'anon', shortTTL);
-      await cacheManager.set('key2', dataUrl, 'https://example.com/2.jpg', options, 'anon', shortTTL);
-      await cacheManager.set('key3', dataUrl, 'https://example.com/3.jpg', options, 'anon'); // Long TTL
+      await cacheManager.set('key1', dataUrl, 'https://example.com/1.jpg', options, null, 'anon', shortTTL);
+      await cacheManager.set('key2', dataUrl, 'https://example.com/2.jpg', options, null, 'anon', shortTTL);
+      await cacheManager.set('key3', dataUrl, 'https://example.com/3.jpg', options, null, 'anon'); // Long TTL
 
       // Wait for expiration
       await new Promise(resolve => setTimeout(resolve, 150));
@@ -258,9 +258,9 @@ describe('Image Cache', () => {
       await cacheManager.cleanup();
 
       // Only the long TTL entry should remain
-      expect(await cacheManager.get('key1')).toBe(null);
-      expect(await cacheManager.get('key2')).toBe(null);
-      expect(await cacheManager.get('key3')).toBe(dataUrl);
+      expect(await cacheManager.get('key1', null, 'anon')).toBe(null);
+      expect(await cacheManager.get('key2', null, 'anon')).toBe(null);
+      expect(await cacheManager.get('key3', null, 'anon')).toBe(dataUrl);
     });
   });
 });
