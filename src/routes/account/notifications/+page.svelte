@@ -11,7 +11,10 @@
 
 <svelte:head>
   <title>Notification Settings - Bombastic</title>
-  <meta name="description" content="Manage your notification preferences and settings" />
+  <meta
+    name="description"
+    content="Manage your notification preferences and settings"
+  />
 </svelte:head>
 
 <div class="container mx-auto max-w-4xl px-4 py-8">

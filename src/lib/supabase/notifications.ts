@@ -1,5 +1,10 @@
 // Temporary types until database migration is run and types are generated
-export type NotificationType = 'system' | 'content' | 'user' | 'playlist_update' | 'mention';
+export type NotificationType =
+  | 'system'
+  | 'content'
+  | 'user'
+  | 'playlist_update'
+  | 'mention';
 
 export interface Notification {
   id: string;

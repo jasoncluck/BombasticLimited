@@ -48,7 +48,9 @@ describe('video-thumbnails (server-side only)', () => {
       const result = getVideoThumbnailUrl(video);
 
       // Should use server processing with URL as first parameter
-      expect(result).toMatch(/^\/api\/video-thumbnail\?url=https%3A%2F%2Fi\.ytimg\.com%2Fvi%2F1%2Fhqdefault\.jpg&type=image$/);
+      expect(result).toMatch(
+        /^\/api\/video-thumbnail\?url=https%3A%2F%2Fi\.ytimg\.com%2Fvi%2F1%2Fhqdefault\.jpg&type=image$/
+      );
     });
 
     it('should prefer thumbnail_url for better performance', () => {
@@ -61,7 +63,9 @@ describe('video-thumbnails (server-side only)', () => {
       const result = getVideoThumbnailUrl(video);
 
       // Should prefer standard thumbnail_url and use server processing
-      expect(result).toMatch(/^\/api\/video-thumbnail\?url=https%3A%2F%2Fi\.ytimg\.com%2Fvi%2F1%2Fhqdefault\.jpg&type=image$/);
+      expect(result).toMatch(
+        /^\/api\/video-thumbnail\?url=https%3A%2F%2Fi\.ytimg\.com%2Fvi%2F1%2Fhqdefault\.jpg&type=image$/
+      );
     });
 
     it('should use server API for non-YouTube thumbnails', () => {
@@ -73,7 +77,9 @@ describe('video-thumbnails (server-side only)', () => {
 
       const result = getVideoThumbnailUrl(video);
 
-      expect(result).toMatch(/^\/api\/video-thumbnail\?url=https%3A%2F%2Fexample\.com%2Fthumbnail\.jpg&type=image$/);
+      expect(result).toMatch(
+        /^\/api\/video-thumbnail\?url=https%3A%2F%2Fexample\.com%2Fthumbnail\.jpg&type=image$/
+      );
     });
 
     it('should return empty string when no thumbnail URL', () => {
@@ -152,7 +158,9 @@ describe('video-thumbnails (server-side only)', () => {
 
       const result = getVideoThumbnailDataUrl(video);
 
-      expect(result).toMatch(/^\/api\/video-thumbnail\?url=https%3A%2F%2Fi\.ytimg\.com%2Fvi%2F1%2Fhqdefault\.jpg&type=json$/);
+      expect(result).toMatch(
+        /^\/api\/video-thumbnail\?url=https%3A%2F%2Fi\.ytimg\.com%2Fvi%2F1%2Fhqdefault\.jpg&type=json$/
+      );
     });
 
     it('should prefer thumbnail_url for better performance', () => {
@@ -165,7 +173,9 @@ describe('video-thumbnails (server-side only)', () => {
       const result = getVideoThumbnailDataUrl(video);
 
       // Should prefer standard thumbnail_url for performance
-      expect(result).toMatch(/^\/api\/video-thumbnail\?url=https%3A%2F%2Fi\.ytimg\.com%2Fvi%2F1%2Fhqdefault\.jpg&type=json$/);
+      expect(result).toMatch(
+        /^\/api\/video-thumbnail\?url=https%3A%2F%2Fi\.ytimg\.com%2Fvi%2F1%2Fhqdefault\.jpg&type=json$/
+      );
     });
 
     it('should return empty string when no thumbnail URL', () => {
@@ -187,7 +197,9 @@ describe('video-thumbnails (server-side only)', () => {
 
       const result = getVideoThumbnailProgressiveUrl(video);
 
-      expect(result).toBe('/api/video-thumbnail?type=progressive&url=https%3A%2F%2Fi.ytimg.com%2Fvi%2F1%2Fhqdefault.jpg');
+      expect(result).toBe(
+        '/api/video-thumbnail?type=progressive&url=https%3A%2F%2Fi.ytimg.com%2Fvi%2F1%2Fhqdefault.jpg'
+      );
     });
 
     it('should return empty string when no thumbnail URL', () => {
@@ -216,13 +228,15 @@ describe('video-thumbnails (server-side only)', () => {
 
   describe('isOptimizedThumbnailUrl', () => {
     it('should return false for non-API URLs', () => {
-      const url = '/_vercel/image?url=https%3A//i.ytimg.com/vi/1/hqdefault.jpg&w=480&h=360&q=90';
+      const url =
+        '/_vercel/image?url=https%3A//i.ytimg.com/vi/1/hqdefault.jpg&w=480&h=360&q=90';
 
       expect(isOptimizedThumbnailUrl(url)).toBe(false);
     });
 
     it('should return true for server API URLs', () => {
-      const url = '/api/video-thumbnail?type=image&url=https%3A//example.com/thumb.jpg';
+      const url =
+        '/api/video-thumbnail?type=image&url=https%3A//example.com/thumb.jpg';
 
       expect(isOptimizedThumbnailUrl(url)).toBe(true);
     });
@@ -236,7 +250,8 @@ describe('video-thumbnails (server-side only)', () => {
 
   describe('extractOriginalUrl', () => {
     it('should extract URL from server API format', () => {
-      const optimizedUrl = '/api/video-thumbnail?type=image&url=https%3A//example.com/thumb.jpg';
+      const optimizedUrl =
+        '/api/video-thumbnail?type=image&url=https%3A//example.com/thumb.jpg';
 
       const result = extractOriginalUrl(optimizedUrl);
 

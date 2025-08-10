@@ -1,4 +1,7 @@
-import type { NotificationWithMeta, NotificationType } from '$lib/supabase/notifications';
+import type {
+  NotificationWithMeta,
+  NotificationType,
+} from '$lib/supabase/notifications';
 import { showNotificationToast } from '$lib/state/notifications.svelte';
 
 /**
@@ -8,7 +11,7 @@ export function createDemoNotifications(): NotificationWithMeta[] {
   const now = new Date();
   const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
   const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
-  
+
   return [
     {
       id: '1',
@@ -22,10 +25,10 @@ export function createDemoNotifications(): NotificationWithMeta[] {
       created_at: oneHourAgo.toISOString(),
       updated_at: oneHourAgo.toISOString(),
       formatted_time: '1 hour ago',
-      is_new: true
+      is_new: true,
     },
     {
-      id: '2', 
+      id: '2',
       user_id: 'demo-user',
       type: 'content' as NotificationType,
       title: 'New Video Available',
@@ -36,11 +39,11 @@ export function createDemoNotifications(): NotificationWithMeta[] {
       created_at: oneHourAgo.toISOString(),
       updated_at: oneHourAgo.toISOString(),
       formatted_time: '1 hour ago',
-      is_new: true
+      is_new: true,
     },
     {
       id: '3',
-      user_id: 'demo-user', 
+      user_id: 'demo-user',
       type: 'playlist_update' as NotificationType,
       title: 'Playlist Updated',
       message: 'Someone added 3 new videos to "Best of Giant Bomb".',
@@ -50,21 +53,22 @@ export function createDemoNotifications(): NotificationWithMeta[] {
       created_at: twoDaysAgo.toISOString(),
       updated_at: twoDaysAgo.toISOString(),
       formatted_time: '2 days ago',
-      is_new: false
+      is_new: false,
     },
     {
       id: '4',
       user_id: 'demo-user',
       type: 'mention' as NotificationType,
       title: 'You were mentioned',
-      message: 'jdoe mentioned you in a comment on "Quick Look: Cyberpunk 2077".',
+      message:
+        'jdoe mentioned you in a comment on "Quick Look: Cyberpunk 2077".',
       metadata: { comment_id: 'c456', video_id: 'v789' },
       read: true,
       action_url: '/video/v789#comment-c456',
       created_at: twoDaysAgo.toISOString(),
       updated_at: twoDaysAgo.toISOString(),
       formatted_time: '2 days ago',
-      is_new: false
+      is_new: false,
     },
     {
       id: '5',
@@ -78,8 +82,8 @@ export function createDemoNotifications(): NotificationWithMeta[] {
       created_at: twoDaysAgo.toISOString(),
       updated_at: twoDaysAgo.toISOString(),
       formatted_time: '2 days ago',
-      is_new: false
-    }
+      is_new: false,
+    },
   ];
 }
 
@@ -88,8 +92,9 @@ export function createDemoNotifications(): NotificationWithMeta[] {
  */
 export function showDemoNotification(type: NotificationType = 'content') {
   const demoNotifications = createDemoNotifications();
-  const notification = demoNotifications.find(n => n.type === type) || demoNotifications[0];
-  
+  const notification =
+    demoNotifications.find((n) => n.type === type) || demoNotifications[0];
+
   showNotificationToast(notification);
 }
 
@@ -109,8 +114,8 @@ export function simulateRealtimeNotification() {
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     formatted_time: 'Just now',
-    is_new: true
+    is_new: true,
   };
-  
+
   showNotificationToast(notification);
 }

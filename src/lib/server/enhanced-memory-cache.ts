@@ -126,7 +126,7 @@ export class EnhancedMemoryCache<T = any> {
 
   getStats(): CacheStats {
     const authStats = { auth: 0, anon: 0 };
-    
+
     for (const [, entry] of this.cache) {
       authStats[entry.authState]++;
     }

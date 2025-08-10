@@ -7,6 +7,6 @@ export const load: PageServerLoad = async ({ locals: { session } }) => {
   }
 
   return {
-    session
+    session,
   };
 };

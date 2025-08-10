@@ -7,7 +7,7 @@ import type {
   NotificationCounts,
   CreateNotificationParams,
   NotificationFilters,
-  NotificationType
+  NotificationType,
 } from '$lib/supabase/notifications';
 
 export class NotificationService {
@@ -15,171 +15,273 @@ export class NotificationService {
 
   /**
    * Get notifications for the current user
-   * Note: This is a stub implementation until the database migration is applied
    */
   async getNotifications(filters: NotificationFilters = {}): Promise<{
     data: NotificationWithMeta[] | null;
     error: any;
     count?: number;
   }> {
-    // Stub implementation - returns empty array
-    const mockData: NotificationWithMeta[] = [];
-    return { data: mockData, error: null, count: 0 };
+    try {
+      let query = this.supabase
+        .from('notifications')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false });
+
+      // Apply filters
+      if (filters.type) {
+        query = query.eq('type', filters.type);
+      }
+      if (filters.read !== undefined) {
+        query = query.eq('read', filters.read);
+      }
+
+      // Apply pagination
+      const limit = filters.limit || 20;
+      const offset = filters.offset || 0;
+      query = query.range(offset, offset + limit - 1);
+
+      const { data, error, count } = await query;
+
+      if (error) {
+        return { data: null, error };
+      }
+
+      // Format notifications with metadata
+      const formattedData =
+        data?.map((notification) => ({
+          ...notification,
+          metadata: (notification.metadata as Record<string, any>) || {},
+          action_url: notification.action_url || undefined,
+          formatted_time: this.formatRelativeTime(notification.created_at),
+          is_new: this.isWithinLastHour(notification.created_at),
+        })) || [];
+
+      return { data: formattedData, error: null, count: count || 0 };
+    } catch (error) {
+      return { data: null, error };
+    }
   }
 
   /**
    * Get unread notification count
-   * Note: This is a stub implementation until the database migration is applied
    */
   async getUnreadCount(): Promise<{ data: number | null; error: any }> {
-    // Stub implementation
-    return { data: 0, error: null };
+    try {
+      const userId = (await this.supabase.auth.getUser()).data.user?.id;
+      if (!userId) {
+        return { data: null, error: new Error('User not authenticated') };
+      }
+
+      const { data, error } = await this.supabase.rpc(
+        'get_unread_notification_count',
+        {
+          target_user_id: userId,
+        }
+      );
+
+      if (error) {
+        return { data: null, error };
+      }
+
+      return { data: data || 0, error: null };
+    } catch (error) {
+      return { data: null, error };
+    }
   }
 
   /**
    * Get notification counts by type
-   * Note: This is a stub implementation until the database migration is applied
    */
-  async getNotificationCounts(): Promise<{ data: NotificationCounts | null; error: any }> {
-    const counts: NotificationCounts = {
-      total: 0,
-      unread: 0,
-      by_type: {
-        system: 0,
-        content: 0,
-        user: 0,
-        playlist_update: 0,
-        mention: 0
+  async getNotificationCounts(): Promise<{
+    data: NotificationCounts | null;
+    error: any;
+  }> {
+    try {
+      const userId = (await this.supabase.auth.getUser()).data.user?.id;
+      if (!userId) {
+        return { data: null, error: new Error('User not authenticated') };
       }
-    };
 
-    return { data: counts, error: null };
+      const { data, error } = await this.supabase
+        .from('notifications')
+        .select('type, read')
+        .eq('user_id', userId);
+
+      if (error) {
+        return { data: null, error };
+      }
+
+      const counts: NotificationCounts = {
+        total: data?.length || 0,
+        unread: data?.filter((n) => !n.read).length || 0,
+        by_type: {
+          system: data?.filter((n) => n.type === 'system').length || 0,
+          content: data?.filter((n) => n.type === 'content').length || 0,
+          user: data?.filter((n) => n.type === 'user').length || 0,
+          playlist_update:
+            data?.filter((n) => n.type === 'playlist_update').length || 0,
+          mention: data?.filter((n) => n.type === 'mention').length || 0,
+        },
+      };
+
+      return { data: counts, error: null };
+    } catch (error) {
+      return { data: null, error };
+    }
   }
 
   /**
    * Mark notifications as read
-   * Note: This is a stub implementation until the database migration is applied
    */
   async markAsRead(notificationIds?: string[]): Promise<{ error: any }> {
-    // Stub implementation
-    return { error: null };
+    try {
+      const userId = (await this.supabase.auth.getUser()).data.user?.id;
+      if (!userId) {
+        return { error: new Error('User not authenticated') };
+      }
+
+      const { error } = await this.supabase.rpc('mark_notifications_as_read', {
+        target_user_id: userId,
+        notification_ids: notificationIds || undefined,
+      });
+
+      return { error };
+    } catch (error) {
+      return { error };
+    }
   }
 
   /**
    * Create a new notification
-   * Note: This is a stub implementation until the database migration is applied
    */
-  async createNotification(params: CreateNotificationParams): Promise<{ data: string | null; error: any }> {
-    // Stub implementation
-    return { data: null, error: null };
+  async createNotification(
+    params: CreateNotificationParams
+  ): Promise<{ data: string | null; error: any }> {
+    try {
+      const { data, error } = await this.supabase.rpc('create_notification', {
+        target_user_id: params.user_id,
+        notification_type: params.type,
+        notification_title: params.title,
+        notification_message: params.message,
+        notification_metadata: params.metadata || {},
+        notification_action_url: params.action_url || undefined,
+      });
+
+      return { data, error };
+    } catch (error) {
+      return { data: null, error };
+    }
   }
 
   /**
    * Delete notifications
-   * Note: This is a stub implementation until the database migration is applied
    */
-  async deleteNotifications(notificationIds: string[]): Promise<{ error: any }> {
-    // Stub implementation
-    return { error: null };
+  async deleteNotifications(
+    notificationIds: string[]
+  ): Promise<{ error: any }> {
+    try {
+      const userId = (await this.supabase.auth.getUser()).data.user?.id;
+      if (!userId) {
+        return { error: new Error('User not authenticated') };
+      }
+
+      const { error } = await this.supabase
+        .from('notifications')
+        .delete()
+        .eq('user_id', userId)
+        .in('id', notificationIds);
+
+      return { error };
+    } catch (error) {
+      return { error };
+    }
   }
 
   /**
    * Get notification preferences for current user
-   * Note: This is a stub implementation until the database migration is applied
    */
-  async getNotificationPreferences(): Promise<{ data: NotificationPreferences | null; error: any }> {
-    // Stub implementation - return default preferences
-    const defaultPreferences: NotificationPreferences = {
-      id: 'stub-id',
-      user_id: 'stub-user-id',
-      system_notifications: true,
-      content_notifications: true,
-      user_notifications: true,
-      playlist_notifications: true,
-      mention_notifications: true,
-      email_notifications: false,
-      push_notifications: false,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
+  async getNotificationPreferences(): Promise<{
+    data: NotificationPreferences | null;
+    error: any;
+  }> {
+    try {
+      const userId = (await this.supabase.auth.getUser()).data.user?.id;
+      if (!userId) {
+        return { data: null, error: new Error('User not authenticated') };
+      }
 
-    return { data: defaultPreferences, error: null };
+      const { data, error } = await this.supabase
+        .from('notification_preferences')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      return { data, error };
+    } catch (error) {
+      return { data: null, error };
+    }
   }
 
   /**
    * Update notification preferences
-   * Note: This is a stub implementation until the database migration is applied
    */
   async updateNotificationPreferences(
-    preferences: Partial<Omit<NotificationPreferences, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
+    preferences: Partial<
+      Omit<
+        NotificationPreferences,
+        'id' | 'user_id' | 'created_at' | 'updated_at'
+      >
+    >
   ): Promise<{ data: NotificationPreferences | null; error: any }> {
-    // Stub implementation
-    const updatedPreferences: NotificationPreferences = {
-      id: 'stub-id',
-      user_id: 'stub-user-id',
-      system_notifications: preferences.system_notifications ?? true,
-      content_notifications: preferences.content_notifications ?? true,
-      user_notifications: preferences.user_notifications ?? true,
-      playlist_notifications: preferences.playlist_notifications ?? true,
-      mention_notifications: preferences.mention_notifications ?? true,
-      email_notifications: preferences.email_notifications ?? false,
-      push_notifications: preferences.push_notifications ?? false,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
+    try {
+      const userId = (await this.supabase.auth.getUser()).data.user?.id;
+      if (!userId) {
+        return { data: null, error: new Error('User not authenticated') };
+      }
 
-    return { data: updatedPreferences, error: null };
+      const { data, error } = await this.supabase
+        .from('notification_preferences')
+        .update(preferences)
+        .eq('user_id', userId)
+        .select()
+        .single();
+
+      return { data, error };
+    } catch (error) {
+      return { data: null, error };
+    }
   }
 
   /**
    * Subscribe to real-time notification changes
-   * Note: This is a stub implementation until the database migration is applied
    */
   subscribeToNotifications(
     callback: (payload: any) => void,
     filterType?: NotificationType
   ) {
-    // Stub implementation - create a dummy channel
-    const channel = this.supabase.channel('notifications-stub');
-    return channel.subscribe();
+    const channel = this.supabase
+      .channel('notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: filterType ? `type=eq.${filterType}` : undefined,
+        },
+        callback
+      )
+      .subscribe();
+
+    return channel;
   }
 
   /**
    * Unsubscribe from real-time notifications
-   * Note: This is a stub implementation until the database migration is applied
    */
   unsubscribeFromNotifications(channelName: string = 'notifications') {
-    // Stub implementation
     const channel = this.supabase.channel(channelName);
     return this.supabase.removeChannel(channel);
-  }
-
-  /**
-   * Create a notification for all users
-   * Note: This is a stub implementation until the database migration is applied
-   * Once the migration is applied, this will call the create_notification_for_all_users database function
-   */
-  async createNotificationForAllUsers(
-    type: NotificationType,
-    title: string,
-    message: string,
-    metadata: Record<string, any> = {},
-    actionUrl?: string
-  ): Promise<{ count: number | null; error: any }> {
-    // Stub implementation
-    console.log('Creating notification for all users:', { type, title, message, metadata, actionUrl });
-    
-    // Once the database migration is applied, this would call:
-    // const { data, error } = await this.supabase.rpc('create_notification_for_all_users', {
-    //   notification_type: type,
-    //   notification_title: title,
-    //   notification_message: message,
-    //   notification_metadata: metadata,
-    //   notification_action_url: actionUrl
-    // });
-    // return { count: data, error };
-    
-    return { count: 0, error: null };
   }
 
   /**
@@ -188,7 +290,9 @@ export class NotificationService {
   private formatRelativeTime(timestamp: string): string {
     const now = new Date();
     const notificationTime = new Date(timestamp);
-    const diffInSeconds = Math.floor((now.getTime() - notificationTime.getTime()) / 1000);
+    const diffInSeconds = Math.floor(
+      (now.getTime() - notificationTime.getTime()) / 1000
+    );
 
     if (diffInSeconds < 60) {
       return 'Just now';

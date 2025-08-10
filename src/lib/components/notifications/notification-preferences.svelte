@@ -5,37 +5,42 @@
   import * as Card from '$lib/components/ui/card';
   import * as Alert from '$lib/components/ui/alert';
   import { Separator } from '$lib/components/ui/separator';
-  import { 
-    Bell, 
-    Mail, 
-    Smartphone, 
-    AlertCircle, 
-    User, 
-    Play, 
+  import {
+    Bell,
+    Mail,
+    Smartphone,
+    AlertCircle,
+    User,
+    Play,
     AtSign,
-    CheckCircle
+    CheckCircle,
   } from '@lucide/svelte';
   import { getNotificationState } from '$lib/state/notifications.svelte';
   import type { SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
   import type { NotificationPreferences } from '$lib/supabase/notifications';
-  import { simulateRealtimeNotification, showDemoNotification } from '$lib/utils/demo-notifications';
+  import {
+    simulateRealtimeNotification,
+    showDemoNotification,
+  } from '$lib/utils/demo-notifications';
 
   let {
-    supabase
+    supabase,
   }: {
     supabase: SupabaseClient<Database>;
   } = $props();
 
   let isLoading = $state(false);
-  let saveMessage = $state<{ type: 'success' | 'error'; text: string } | null>(null);
+  let saveMessage = $state<{ type: 'success' | 'error'; text: string } | null>(
+    null
+  );
   let localPreferences = $state<NotificationPreferences | null>(null);
 
   const notificationState = getNotificationState();
 
   // Initialize and load preferences - only run once when supabase changes
   let preferencesInitializationGuard = $state(false);
-  
+
   $effect(() => {
     if (supabase && !preferencesInitializationGuard) {
       preferencesInitializationGuard = true;
@@ -54,20 +59,20 @@
   async function loadPreferences() {
     isLoading = true;
     const result = await notificationState.loadPreferences();
-    
+
     if (result && !result.error && result.data) {
       localPreferences = { ...result.data };
     }
-    
+
     isLoading = false;
   }
 
   async function savePreferences() {
     if (!localPreferences) return;
-    
+
     isLoading = true;
     saveMessage = null;
-    
+
     const result = await notificationState.updatePreferences({
       system_notifications: localPreferences.system_notifications,
       content_notifications: localPreferences.content_notifications,
@@ -75,19 +80,25 @@
       playlist_notifications: localPreferences.playlist_notifications,
       mention_notifications: localPreferences.mention_notifications,
       email_notifications: localPreferences.email_notifications,
-      push_notifications: localPreferences.push_notifications
+      push_notifications: localPreferences.push_notifications,
     });
-    
+
     if (result?.error) {
-      saveMessage = { type: 'error', text: 'Failed to save preferences. Please try again.' };
+      saveMessage = {
+        type: 'error',
+        text: 'Failed to save preferences. Please try again.',
+      };
     } else {
-      saveMessage = { type: 'success', text: 'Notification preferences saved successfully!' };
+      saveMessage = {
+        type: 'success',
+        text: 'Notification preferences saved successfully!',
+      };
       // Clear success message after 3 seconds
       setTimeout(() => {
         saveMessage = null;
       }, 3000);
     }
-    
+
     isLoading = false;
   }
 
@@ -101,40 +112,8 @@
         playlist_notifications: true,
         mention_notifications: true,
         email_notifications: false,
-        push_notifications: false
+        push_notifications: false,
       };
-    }
-  }
-
-  async function sendGlobalWelcomeNotification() {
-    // Example of how to send a notification to all users
-    const service = notificationState.notificationService;
-    if (!service) {
-      showDemoNotification('system', {
-        title: 'Service not initialized',
-        message: 'Notification service is not yet initialized.',
-      });
-      return;
-    }
-
-    const result = await service.createNotificationForAllUsers(
-      'system',
-      'Welcome to Bombastic!',
-      'Thanks for being part of our community. Enjoy exploring the latest content from your favorite creators.',
-      { source: 'admin_welcome' },
-      '/account/notifications'
-    );
-    
-    if (result?.error) {
-      showDemoNotification('system', {
-        title: 'Error sending global notification',
-        message: 'Failed to send global notification. This is a demo error.',
-      });
-    } else {
-      showDemoNotification('system', {
-        title: 'Global notification sent!',
-        message: `Welcome notification sent to ${result?.count || 0} users. (This is a demo simulation)`,
-      });
     }
   }
 
@@ -143,32 +122,33 @@
       key: 'system_notifications' as keyof NotificationPreferences,
       icon: AlertCircle,
       title: 'System Notifications',
-      description: 'Important updates, maintenance notices, and system announcements'
+      description:
+        'Important updates, maintenance notices, and system announcements',
     },
     {
       key: 'content_notifications' as keyof NotificationPreferences,
       icon: Bell,
       title: 'Content Notifications',
-      description: 'New videos, content updates, and featured content alerts'
+      description: 'New videos, content updates, and featured content alerts',
     },
     {
       key: 'user_notifications' as keyof NotificationPreferences,
       icon: User,
       title: 'User Activity',
-      description: 'Friend requests, follows, and other user interactions'
+      description: 'Friend requests, follows, and other user interactions',
     },
     {
       key: 'playlist_notifications' as keyof NotificationPreferences,
       icon: Play,
       title: 'Playlist Updates',
-      description: 'Changes to playlists you follow or collaborate on'
+      description: 'Changes to playlists you follow or collaborate on',
     },
     {
       key: 'mention_notifications' as keyof NotificationPreferences,
       icon: AtSign,
       title: 'Mentions',
-      description: 'When someone mentions you in comments or discussions'
-    }
+      description: 'When someone mentions you in comments or discussions',
+    },
   ];
 
   const deliveryMethods = [
@@ -176,17 +156,20 @@
       key: 'email_notifications' as keyof NotificationPreferences,
       icon: Mail,
       title: 'Email Notifications',
-      description: 'Receive notifications via email (coming soon)'
+      description: 'Receive notifications via email (coming soon)',
     },
     {
       key: 'push_notifications' as keyof NotificationPreferences,
       icon: Smartphone,
       title: 'Push Notifications',
-      description: 'Browser push notifications (coming soon)'
-    }
+      description: 'Browser push notifications (coming soon)',
+    },
   ];
 
-  function updatePreference(key: keyof NotificationPreferences, value: boolean) {
+  function updatePreference(
+    key: keyof NotificationPreferences,
+    value: boolean
+  ) {
     if (localPreferences) {
       (localPreferences as any)[key] = value;
     }
@@ -195,20 +178,29 @@
 
 <div class="space-y-6">
   <div>
-    <h2 class="text-2xl font-semibold tracking-tight">Notification Preferences</h2>
+    <h2 class="text-2xl font-semibold tracking-tight">
+      Notification Preferences
+    </h2>
     <p class="text-muted-foreground">
-      Choose which notifications you'd like to receive and how you'd like to receive them.
+      Choose which notifications you'd like to receive and how you'd like to
+      receive them.
     </p>
   </div>
 
   {#if saveMessage}
-    <Alert.Root class={saveMessage.type === 'success' ? 'border-green-200 bg-green-50 text-green-800' : ''}>
+    <Alert.Root
+      class={saveMessage.type === 'success'
+        ? 'border-green-200 bg-green-50 text-green-800'
+        : ''}
+    >
       {#if saveMessage.type === 'success'}
         <CheckCircle class="h-4 w-4" />
       {:else}
         <AlertCircle class="h-4 w-4" />
       {/if}
-      <Alert.Title>{saveMessage.type === 'success' ? 'Success' : 'Error'}</Alert.Title>
+      <Alert.Title
+        >{saveMessage.type === 'success' ? 'Success' : 'Error'}</Alert.Title
+      >
       <Alert.Description>{saveMessage.text}</Alert.Description>
     </Alert.Root>
   {/if}
@@ -227,26 +219,31 @@
     <div class="space-y-4">
       {#if localPreferences}
         {#each notificationTypes as type}
-          <div class="flex items-center justify-between space-x-4 rounded-lg border p-4">
+          <div
+            class="flex items-center justify-between space-x-4 rounded-lg border p-4"
+          >
             <div class="flex items-start space-x-3">
               <div class="mt-1">
                 {#if type.key === 'system_notifications'}
-                  <AlertCircle class="h-5 w-5 text-muted-foreground" />
+                  <AlertCircle class="text-muted-foreground h-5 w-5" />
                 {:else if type.key === 'content_notifications'}
-                  <Bell class="h-5 w-5 text-muted-foreground" />
+                  <Bell class="text-muted-foreground h-5 w-5" />
                 {:else if type.key === 'user_notifications'}
-                  <User class="h-5 w-5 text-muted-foreground" />
+                  <User class="text-muted-foreground h-5 w-5" />
                 {:else if type.key === 'playlist_notifications'}
-                  <Play class="h-5 w-5 text-muted-foreground" />
+                  <Play class="text-muted-foreground h-5 w-5" />
                 {:else if type.key === 'mention_notifications'}
-                  <AtSign class="h-5 w-5 text-muted-foreground" />
+                  <AtSign class="text-muted-foreground h-5 w-5" />
                 {/if}
               </div>
               <div class="space-y-1">
-                <Label for={type.key as string} class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                <Label
+                  for={type.key as string}
+                  class="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
                   {type.title}
                 </Label>
-                <p class="text-sm text-muted-foreground">
+                <p class="text-muted-foreground text-sm">
                   {type.description}
                 </p>
               </div>
@@ -263,15 +260,17 @@
         <!-- Loading skeleton -->
         <div class="space-y-4">
           {#each Array(5) as _}
-            <div class="flex items-center justify-between space-x-4 rounded-lg border p-4">
+            <div
+              class="flex items-center justify-between space-x-4 rounded-lg border p-4"
+            >
               <div class="flex items-start space-x-3">
-                <div class="h-5 w-5 bg-muted animate-pulse rounded"></div>
+                <div class="bg-muted h-5 w-5 animate-pulse rounded"></div>
                 <div class="space-y-2">
-                  <div class="h-4 w-32 bg-muted animate-pulse rounded"></div>
-                  <div class="h-3 w-48 bg-muted animate-pulse rounded"></div>
+                  <div class="bg-muted h-4 w-32 animate-pulse rounded"></div>
+                  <div class="bg-muted h-3 w-48 animate-pulse rounded"></div>
                 </div>
               </div>
-              <div class="h-6 w-11 bg-muted animate-pulse rounded-full"></div>
+              <div class="bg-muted h-6 w-11 animate-pulse rounded-full"></div>
             </div>
           {/each}
         </div>
@@ -293,20 +292,28 @@
     <div class="space-y-4">
       {#if localPreferences}
         {#each deliveryMethods as method}
-          <div class="flex items-center justify-between space-x-4 rounded-lg border p-4 {method.key === 'email_notifications' || method.key === 'push_notifications' ? 'opacity-60' : ''}">
+          <div
+            class="flex items-center justify-between space-x-4 rounded-lg border p-4 {method.key ===
+              'email_notifications' || method.key === 'push_notifications'
+              ? 'opacity-60'
+              : ''}"
+          >
             <div class="flex items-start space-x-3">
               <div class="mt-1">
                 {#if method.key === 'email_notifications'}
-                  <Mail class="h-5 w-5 text-muted-foreground" />
+                  <Mail class="text-muted-foreground h-5 w-5" />
                 {:else if method.key === 'push_notifications'}
-                  <Smartphone class="h-5 w-5 text-muted-foreground" />
+                  <Smartphone class="text-muted-foreground h-5 w-5" />
                 {/if}
               </div>
               <div class="space-y-1">
-                <Label for={method.key as string} class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                <Label
+                  for={method.key as string}
+                  class="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
                   {method.title}
                 </Label>
-                <p class="text-sm text-muted-foreground">
+                <p class="text-muted-foreground text-sm">
                   {method.description}
                 </p>
               </div>
@@ -314,8 +321,11 @@
             <Switch
               id={method.key as string}
               checked={localPreferences[method.key] as boolean}
-              onCheckedChange={(checked) => updatePreference(method.key, checked)}
-              disabled={isLoading || method.key === 'email_notifications' || method.key === 'push_notifications'}
+              onCheckedChange={(checked) =>
+                updatePreference(method.key, checked)}
+              disabled={isLoading ||
+                method.key === 'email_notifications' ||
+                method.key === 'push_notifications'}
             />
           </div>
         {/each}
@@ -323,15 +333,17 @@
         <!-- Loading skeleton -->
         <div class="space-y-4">
           {#each Array(2) as _}
-            <div class="flex items-center justify-between space-x-4 rounded-lg border p-4">
+            <div
+              class="flex items-center justify-between space-x-4 rounded-lg border p-4"
+            >
               <div class="flex items-start space-x-3">
-                <div class="h-5 w-5 bg-muted animate-pulse rounded"></div>
+                <div class="bg-muted h-5 w-5 animate-pulse rounded"></div>
                 <div class="space-y-2">
-                  <div class="h-4 w-32 bg-muted animate-pulse rounded"></div>
-                  <div class="h-3 w-48 bg-muted animate-pulse rounded"></div>
+                  <div class="bg-muted h-4 w-32 animate-pulse rounded"></div>
+                  <div class="bg-muted h-3 w-48 animate-pulse rounded"></div>
                 </div>
               </div>
-              <div class="h-6 w-11 bg-muted animate-pulse rounded-full"></div>
+              <div class="bg-muted h-6 w-11 animate-pulse rounded-full"></div>
             </div>
           {/each}
         </div>
@@ -342,7 +354,7 @@
   <Separator />
 
   <!-- Demo Section (for testing) -->
-  <Card.Root class="p-6 bg-muted/20 border-dashed">
+  <Card.Root class="bg-muted/20 border-dashed p-6">
     <Card.Header class="px-0 pt-0">
       <Card.Title class="flex items-center gap-2 text-sm">
         <Bell class="h-4 w-4" />
@@ -396,23 +408,17 @@
       >
         Simulate Real-time
       </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        onclick={sendGlobalWelcomeNotification}
-        class="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-blue-700 hover:bg-gradient-to-r hover:from-blue-100 hover:to-indigo-100"
-      >
-        Send Global Welcome
-      </Button>
     </div>
   </Card.Root>
 
   <Separator />
 
-  <div class="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+  <div
+    class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+  >
     <div class="space-y-1">
       <h3 class="text-lg font-medium">Manage Preferences</h3>
-      <p class="text-sm text-muted-foreground">
+      <p class="text-muted-foreground text-sm">
         Save your changes or reset to default settings
       </p>
     </div>

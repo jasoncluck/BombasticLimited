@@ -167,7 +167,7 @@ describe('getCroppedPlaylistImageUrlServer', () => {
 
     // Use a unique URL to avoid cache hits from other tests
     const uniqueUrl = `https://example.com/image-fetch-error-${Date.now()}.jpg`;
-    
+
     const result = await getCroppedPlaylistImageUrlServer({
       imageProperties: null,
       thumbnailMaxResUrl: uniqueUrl,
@@ -180,7 +180,7 @@ describe('getCroppedPlaylistImageUrlServer', () => {
   it('should return null on processing error', async () => {
     // Use a unique URL to avoid cache hits from other tests
     const uniqueUrl = `https://example.com/image-processing-error-${Date.now()}.jpg`;
-    
+
     (global.fetch as any).mockResolvedValue({
       ok: true,
       arrayBuffer: () => Promise.resolve(new ArrayBuffer(1000)),
@@ -286,7 +286,7 @@ describe('getVideoThumbnailWebpUrlServer', () => {
   it('should return null on processing error', async () => {
     // Use a unique URL to avoid cache hits from other tests
     const uniqueUrl = `https://example.com/video-processing-error-${Date.now()}.jpg`;
-    
+
     (global.fetch as any).mockResolvedValue({
       ok: true,
       arrayBuffer: () => Promise.resolve(new ArrayBuffer(1000)),
@@ -346,7 +346,7 @@ describe('getVideoThumbnailWebpUrlsBatch', () => {
     // Use unique URLs to avoid cache hits from other tests
     const uniqueUrl1 = `https://example.com/video-batch-1-${Date.now()}.jpg`;
     const uniqueUrl2 = `https://example.com/video-batch-2-${Date.now()}.jpg`;
-    
+
     (global.fetch as any)
       .mockResolvedValueOnce({
         ok: true,
@@ -361,10 +361,7 @@ describe('getVideoThumbnailWebpUrlsBatch', () => {
       .mockResolvedValueOnce(Buffer.from('success-data'))
       .mockRejectedValueOnce(new Error('Processing failed'));
 
-    const thumbnailUrls = [
-      uniqueUrl1,
-      uniqueUrl2,
-    ];
+    const thumbnailUrls = [uniqueUrl1, uniqueUrl2];
 
     const results = await getVideoThumbnailWebpUrlsBatch(thumbnailUrls);
 

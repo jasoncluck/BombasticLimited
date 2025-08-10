@@ -45,17 +45,26 @@
   let loadingMore = $state(false);
 
   // Initialize and load notifications - only run once when supabase or filterType changes
-  let listInitializationGuard = $state({ supabase: null, filterType: null });
-  
+  let listInitializationGuard = $state<{
+    supabase: SupabaseClient<Database> | null;
+    filterType: NotificationType | undefined | null;
+  }>({ supabase: null, filterType: null });
+
   $effect(() => {
-    if (supabase && (listInitializationGuard.supabase !== supabase || listInitializationGuard.filterType !== filterType)) {
-      listInitializationGuard = { supabase, filterType };
-      
+    if (
+      supabase &&
+      (listInitializationGuard.supabase !== supabase ||
+        listInitializationGuard.filterType !== filterType)
+    ) {
+      listInitializationGuard = { supabase, filterType: filterType || null };
+
       notificationState.initialize(supabase);
-      
+
       // Only load notifications if we haven't loaded them yet or if filterType changed
-      const shouldLoad = notificationState.notifications.length === 0 && !notificationState.isLoading;
-      
+      const shouldLoad =
+        notificationState.notifications.length === 0 &&
+        !notificationState.isLoading;
+
       if (shouldLoad) {
         if (filterType) {
           notificationState.loadNotifications({ type: filterType });
@@ -342,8 +351,8 @@
   .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
 </style>
-

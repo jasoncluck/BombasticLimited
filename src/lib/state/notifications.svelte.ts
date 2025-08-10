@@ -409,4 +409,3 @@ export function showNotification(
 export function clearNotification() {
   // For compatibility with legacy code - Sonner handles dismissal automatically
 }
-
