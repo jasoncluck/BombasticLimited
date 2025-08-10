@@ -9,6 +9,7 @@
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import type { SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
+  import { onMount } from 'svelte';
 
   let {
     supabase,
@@ -25,15 +26,14 @@
 
   const notificationState = getNotificationState();
 
-  // Initialize notification manager - only run once when supabase changes
-  let initializationGuard = $state(false);
-  
-  $effect(() => {
-    if (supabase && !initializationGuard) {
-      initializationGuard = true;
+  onMount(() => {
+    if (supabase) {
       notificationState.initialize(supabase);
       // Only load if not already loaded
-      if (notificationState.notifications.length === 0 && !notificationState.isLoading) {
+      if (
+        notificationState.notifications.length === 0 &&
+        !notificationState.isLoading
+      ) {
         notificationState.loadNotifications();
         notificationState.loadUnreadCount();
       }
@@ -167,4 +167,3 @@
     </Drawer.Content>
   </Drawer.Root>
 {/if}
-
