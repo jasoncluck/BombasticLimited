@@ -61,7 +61,7 @@
       data-scroll-area="sidebar"
     >
       <!-- Fixed height container to prevent layout shifts -->
-      <div class="min-h-full">
+      <div class="h-full">
         {#if sidebarState.showPlaceholder}
           <!-- Simple centered loader -->
           <div class="flex h-full items-center justify-center">
