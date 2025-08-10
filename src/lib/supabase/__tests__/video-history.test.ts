@@ -32,16 +32,16 @@ describe('VideoWatchTimeTracker', () => {
   test('should track watch time correctly during play/pause cycles', () => {
     // Start playing at 10 seconds
     tracker.onPlay(10);
-    
+
     // Pause at 20 seconds (watched 10 seconds)
     tracker.onPause(20);
-    
+
     // Start playing again at 25 seconds
     tracker.onPlay(25);
-    
+
     // Pause at 35 seconds (watched 10 more seconds)
     tracker.onPause(35);
-    
+
     const stats = tracker.getStats();
     expect(stats.totalSecondsWatched).toBe(20);
   });
@@ -49,13 +49,13 @@ describe('VideoWatchTimeTracker', () => {
   test('should not count seeking time as watch time', () => {
     // Start playing at 10 seconds
     tracker.onPlay(10);
-    
+
     // User seeks to 100 seconds (should not count as 90 seconds watched)
     tracker.onSeek(100);
-    
+
     // Pause at 110 seconds (should only count 10 seconds from after seek)
     tracker.onPause(110);
-    
+
     const stats = tracker.getStats();
     expect(stats.totalSecondsWatched).toBe(10);
   });
@@ -63,20 +63,24 @@ describe('VideoWatchTimeTracker', () => {
   test('should handle invalid time differences gracefully', () => {
     // Start playing at 10 seconds
     tracker.onPlay(10);
-    
+
     // Simulate a large time jump (more than 60 seconds) - should be ignored
     tracker.onPause(100);
-    
+
     const stats = tracker.getStats();
     expect(stats.totalSecondsWatched).toBe(0);
   });
 
   test('should not track when user is not authenticated', () => {
-    const trackerNoAuth = new VideoWatchTimeTracker(videoId, mockSupabase, null);
-    
+    const trackerNoAuth = new VideoWatchTimeTracker(
+      videoId,
+      mockSupabase,
+      null
+    );
+
     trackerNoAuth.onPlay(10);
     trackerNoAuth.onPause(20);
-    
+
     const stats = trackerNoAuth.getStats();
     // Since no user is authenticated, no tracking should occur
     expect(stats.totalSecondsWatched).toBe(0);
@@ -110,18 +114,19 @@ describe('VideoWatchTimeTracker', () => {
       data: {},
       error: null,
     });
-    
-    const mockRpc = vi.fn()
+
+    const mockRpc = vi
+      .fn()
       .mockReturnValueOnce({ single: mockSingleStart }) // startSession
       .mockReturnValueOnce({ single: mockSingleUpdate }); // endSession
     mockSupabase.rpc = mockRpc;
 
     await tracker.startSession();
-    
+
     // Simulate some watch time
     tracker.onPlay(10);
     tracker.onPause(20);
-    
+
     await tracker.endSession();
 
     // Check that startSession was called first

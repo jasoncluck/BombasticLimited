@@ -763,30 +763,41 @@ sw.addEventListener('message', (event) => {
 
     case 'CLEAR_IMAGE_CACHE': {
       const { authState } = event.data || {};
-      console.log(`SW [${getTimestamp()}]: Clearing image cache for ${authState || 'all'} state(s)`);
+      console.log(
+        `SW [${getTimestamp()}]: Clearing image cache for ${authState || 'all'} state(s)`
+      );
 
       event.waitUntil(
         (async () => {
           try {
             const imageCache = await caches.open(IMAGE_CACHE);
-            
+
             if (authState) {
               // Clear only entries for specific auth state
               const keys = await imageCache.keys();
-              const keysToDelete = keys.filter(request => {
+              const keysToDelete = keys.filter((request) => {
                 const url = new URL(request.url);
                 return url.pathname.includes(`${authState}:`);
               });
-              
-              await Promise.all(keysToDelete.map(key => imageCache.delete(key)));
-              console.log(`SW [${getTimestamp()}]: Cleared ${keysToDelete.length} ${authState} image cache entries`);
+
+              await Promise.all(
+                keysToDelete.map((key) => imageCache.delete(key))
+              );
+              console.log(
+                `SW [${getTimestamp()}]: Cleared ${keysToDelete.length} ${authState} image cache entries`
+              );
             } else {
               // Clear all image cache
               await caches.delete(IMAGE_CACHE);
-              console.log(`SW [${getTimestamp()}]: Image cache cleared completely`);
+              console.log(
+                `SW [${getTimestamp()}]: Image cache cleared completely`
+              );
             }
           } catch (error) {
-            console.error(`SW [${getTimestamp()}]: Error clearing image cache:`, error);
+            console.error(
+              `SW [${getTimestamp()}]: Error clearing image cache:`,
+              error
+            );
           }
         })()
       );
@@ -795,24 +806,24 @@ sw.addEventListener('message', (event) => {
 
     case 'GET_IMAGE_CACHE_STATS': {
       console.log(`SW [${getTimestamp()}]: Received image cache stats request`);
-      
+
       event.waitUntil(
         (async () => {
           try {
             const imageCache = await caches.open(IMAGE_CACHE);
             const keys = await imageCache.keys();
-            
+
             let totalSize = 0;
             let authEntries = 0;
             let anonEntries = 0;
-            
+
             for (const request of keys) {
               try {
                 const response = await imageCache.match(request);
                 if (response) {
                   const data = await response.json();
                   totalSize += data.size || 0;
-                  
+
                   if (data.authState === 'auth') {
                     authEntries++;
                   } else {
@@ -838,7 +849,10 @@ sw.addEventListener('message', (event) => {
               });
             }
           } catch (error) {
-            console.error(`SW [${getTimestamp()}]: Error getting image cache stats:`, error);
+            console.error(
+              `SW [${getTimestamp()}]: Error getting image cache stats:`,
+              error
+            );
           }
         })()
       );
@@ -847,8 +861,10 @@ sw.addEventListener('message', (event) => {
 
     case 'IMAGE_CACHED': {
       const { cacheKey, authState } = event.data || {};
-      console.log(`SW [${getTimestamp()}]: Image cached notification for ${cacheKey} (${authState})`);
-      
+      console.log(
+        `SW [${getTimestamp()}]: Image cached notification for ${cacheKey} (${authState})`
+      );
+
       // This is just a notification message - no action needed
       // The actual caching is handled by the ImageCacheManager
       break;
@@ -870,15 +886,22 @@ sw.addEventListener('message', (event) => {
             try {
               const imageCache = await caches.open(IMAGE_CACHE);
               const keys = await imageCache.keys();
-              const keysToDelete = keys.filter(request => {
+              const keysToDelete = keys.filter((request) => {
                 const url = new URL(request.url);
                 return url.pathname.includes(`${oldAuthState}:`);
               });
-              
-              await Promise.all(keysToDelete.map(key => imageCache.delete(key)));
-              console.log(`SW [${getTimestamp()}]: Cleared ${keysToDelete.length} ${oldAuthState} image cache entries due to auth change`);
+
+              await Promise.all(
+                keysToDelete.map((key) => imageCache.delete(key))
+              );
+              console.log(
+                `SW [${getTimestamp()}]: Cleared ${keysToDelete.length} ${oldAuthState} image cache entries due to auth change`
+              );
             } catch (error) {
-              console.warn(`SW [${getTimestamp()}]: Error clearing old auth image cache:`, error);
+              console.warn(
+                `SW [${getTimestamp()}]: Error clearing old auth image cache:`,
+                error
+              );
             }
           })()
         );

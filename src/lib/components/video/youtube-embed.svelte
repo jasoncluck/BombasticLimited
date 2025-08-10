@@ -15,7 +15,10 @@
     type CombinedContentFilter,
   } from '../content/content-filter';
   import AspectRatio from '../ui/aspect-ratio/aspect-ratio.svelte';
-  import { handleAddVideoTimestamp, createVideoWatchTimeTracker } from './video-service';
+  import {
+    handleAddVideoTimestamp,
+    createVideoWatchTimeTracker,
+  } from './video-service';
 
   const VIDEO_SAVE_SECONDS_START = 15;
   const VIDEO_DELETE_SECONDS_PERCENT = 0.95;
@@ -39,22 +42,35 @@
 
   let startSeconds = $state(0);
   let player = $state<any>();
-  
+
   // Video history tracking
-  let watchTimeTracker = $state<ReturnType<typeof createVideoWatchTimeTracker> | null>(null);
+  let watchTimeTracker = $state<ReturnType<
+    typeof createVideoWatchTimeTracker
+  > | null>(null);
 
   // Initialize watch time tracker when component mounts
   $effect(() => {
     if (session?.user && video.id) {
-      watchTimeTracker = createVideoWatchTimeTracker({
-        videoId: video.id,
-        supabase,
-        session,
-      });
-      
-      // Start tracking session
-      watchTimeTracker.startSession();
-      
+      // Only create tracker if we don't already have one for this video
+      if (
+        !watchTimeTracker ||
+        watchTimeTracker.getCurrentVideoId !== video.id
+      ) {
+        // Clean up existing tracker if any
+        if (watchTimeTracker) {
+          watchTimeTracker.endSession();
+        }
+
+        watchTimeTracker = createVideoWatchTimeTracker({
+          videoId: video.id,
+          supabase,
+          session,
+        });
+
+        // Start tracking session
+        watchTimeTracker.startSession();
+      }
+
       // Cleanup on unmount
       return () => {
         if (watchTimeTracker) {
@@ -241,7 +257,7 @@
     if (!watchTimeTracker) return;
 
     const currentTime = event.target.getCurrentTime() || 0;
-    
+
     // YouTube player states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (cued)
     switch (event.data) {
       case 1: // Playing
@@ -260,16 +276,16 @@
   let lastKnownTime = 0;
   function handleSeekingEvents() {
     if (!player || !watchTimeTracker) return;
-    
+
     try {
       const currentTime = player.getCurrentTime() || 0;
       const timeDiff = Math.abs(currentTime - lastKnownTime);
-      
+
       // If time difference is significant (more than 2 seconds), it's likely a seek
       if (timeDiff > 2) {
         watchTimeTracker.onSeek(currentTime);
       }
-      
+
       lastKnownTime = currentTime;
     } catch (error) {
       // Ignore errors, player might not be ready
@@ -281,7 +297,7 @@
   $effect(() => {
     if (player && watchTimeTracker) {
       seekDetectionInterval = setInterval(handleSeekingEvents, 1000);
-      
+
       return () => {
         if (seekDetectionInterval) {
           clearInterval(seekDetectionInterval);
@@ -324,9 +340,9 @@
             rel: 0,
             modestbranding: true,
           },
-          events: { 
+          events: {
             onReady: onPlayerReady,
-            onStateChange: onPlayerStateChange
+            onStateChange: onPlayerStateChange,
           },
         });
       }

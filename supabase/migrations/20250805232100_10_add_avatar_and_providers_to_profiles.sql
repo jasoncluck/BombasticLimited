@@ -17,8 +17,7 @@ ALTER TABLE "public"."profiles"
 ADD CONSTRAINT profiles_providers_not_empty CHECK (array_length(providers, 1) > 0);
 
 -- Function to extract Discord avatar URL from auth.identities
-CREATE OR REPLACE FUNCTION public.get_discord_avatar_url (user_id uuid) RETURNS text 
-LANGUAGE plpgsql 
+CREATE OR REPLACE FUNCTION public.get_discord_avatar_url (user_id uuid) RETURNS text LANGUAGE plpgsql
 SET
   search_path = '' STABLE AS $$
 DECLARE
@@ -51,8 +50,7 @@ END;
 $$;
 
 -- Function to update profile avatar_url and providers when identities are linked/unlinked
-CREATE OR REPLACE FUNCTION public.update_profile_from_identity_changes () RETURNS trigger LANGUAGE plpgsql 
-SECURITY DEFINER 
+CREATE OR REPLACE FUNCTION public.update_profile_from_identity_changes () RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
 SET
   search_path = '' AS $$
 DECLARE

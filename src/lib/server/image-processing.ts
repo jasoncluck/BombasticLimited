@@ -8,7 +8,7 @@ import {
   ImageCacheManager,
   generateImageCacheKey,
   generatePlaylistImageCacheKey,
-  type ImageCacheMetadata
+  type ImageCacheMetadata,
 } from './image-cache';
 
 // Initialize image cache manager
@@ -17,15 +17,15 @@ const imageCacheManager = ImageCacheManager.getInstance();
 // Helper function to detect auth state from request headers or context
 function detectAuthState(request?: Request): 'auth' | 'anon' {
   if (!request) return 'anon';
-  
+
   try {
     // Check for auth cookies in the request
     const cookieHeader = request.headers.get('cookie');
     if (cookieHeader) {
       const authCookie = cookieHeader
         .split(';')
-        .find(cookie => cookie.trim().startsWith('sb-127-auth-token'));
-      
+        .find((cookie) => cookie.trim().startsWith('sb-127-auth-token'));
+
       if (authCookie) {
         const cookieValue = authCookie.split('=')[1];
         const isAuthenticated = !!(
@@ -42,7 +42,7 @@ function detectAuthState(request?: Request): 'auth' | 'anon' {
   } catch (error) {
     console.warn('Error detecting auth state:', error);
   }
-  
+
   return 'anon';
 }
 
@@ -152,7 +152,11 @@ export async function getCroppedPlaylistImageUrlServer({
 
   // Check cache first
   try {
-    const cachedResult = await imageCacheManager.get(cacheKey, userId, authState);
+    const cachedResult = await imageCacheManager.get(
+      cacheKey,
+      userId,
+      authState
+    );
     if (cachedResult) {
       console.log(`Cache hit for playlist image: ${imageUrl}`);
       return cachedResult;
@@ -312,7 +316,11 @@ export async function getVideoThumbnailWebpUrlServer({
 
   // Check cache first
   try {
-    const cachedResult = await imageCacheManager.get(cacheKey, userId, authState);
+    const cachedResult = await imageCacheManager.get(
+      cacheKey,
+      userId,
+      authState
+    );
     if (cachedResult) {
       console.log(`Cache hit for video thumbnail: ${thumbnailUrl}`);
       return cachedResult;
@@ -418,7 +426,9 @@ export async function getVideoThumbnailWebpUrlServer({
         userId,
         authState
       );
-      console.log(`Cached video thumbnail: ${thumbnailUrl} (auth: ${authState})`);
+      console.log(
+        `Cached video thumbnail: ${thumbnailUrl} (auth: ${authState})`
+      );
     } catch (error) {
       console.warn('Error storing to image cache:', error);
     }
@@ -493,10 +503,12 @@ export async function getCroppedPlaylistImageUrlsBatch(
     const chunk = requests.slice(i, i + chunkSize);
 
     const chunkResults = await Promise.all(
-      chunk.map((request) => getCroppedPlaylistImageUrlServer({
-        ...request,
-        request: requestContext
-      }))
+      chunk.map((request) =>
+        getCroppedPlaylistImageUrlServer({
+          ...request,
+          request: requestContext,
+        })
+      )
     );
 
     results.push(...chunkResults);
@@ -683,7 +695,9 @@ function validateAndAdjustCropDimensions(
 }
 
 // Image cache management functions
-export async function clearImageCache(authState?: 'auth' | 'anon'): Promise<void> {
+export async function clearImageCache(
+  authState?: 'auth' | 'anon'
+): Promise<void> {
   await imageCacheManager.initialize();
   await imageCacheManager.clear(authState);
 }

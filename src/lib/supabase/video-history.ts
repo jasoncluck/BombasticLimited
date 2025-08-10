@@ -85,15 +85,25 @@ export async function recordVideoHistory({
   error?: PostgrestError | null;
 }> {
   if (!session?.user) {
-    return { history: null, error: { message: 'User not authenticated', details: '', hint: '', code: 'AUTHENTICATION_REQUIRED' } as PostgrestError };
+    return {
+      history: null,
+      error: {
+        message: 'User not authenticated',
+        details: '',
+        hint: '',
+        code: 'AUTHENTICATION_REQUIRED',
+      } as PostgrestError,
+    };
   }
 
   const { data, error } = await supabase
     .rpc('record_video_history', {
       p_video_id: videoHistory.videoId,
       p_seconds_watched: videoHistory.secondsWatched || 0,
-      p_session_start_time: videoHistory.sessionStartTime?.toISOString() || undefined,
-      p_session_end_time: videoHistory.sessionEndTime?.toISOString() || undefined,
+      p_session_start_time:
+        videoHistory.sessionStartTime?.toISOString() || undefined,
+      p_session_end_time:
+        videoHistory.sessionEndTime?.toISOString() || undefined,
     })
     .single();
 
@@ -118,7 +128,15 @@ export async function updateVideoHistorySession({
   error?: PostgrestError | null;
 }> {
   if (!session?.user) {
-    return { history: null, error: { message: 'User not authenticated', details: '', hint: '', code: 'AUTHENTICATION_REQUIRED' } as PostgrestError };
+    return {
+      history: null,
+      error: {
+        message: 'User not authenticated',
+        details: '',
+        hint: '',
+        code: 'AUTHENTICATION_REQUIRED',
+      } as PostgrestError,
+    };
   }
 
   const { data, error } = await supabase
@@ -150,7 +168,15 @@ export async function getUserVideoHistory({
   error?: PostgrestError | null;
 }> {
   if (!session?.user) {
-    return { history: [], error: { message: 'User not authenticated', details: '', hint: '', code: 'AUTHENTICATION_REQUIRED' } as PostgrestError };
+    return {
+      history: [],
+      error: {
+        message: 'User not authenticated',
+        details: '',
+        hint: '',
+        code: 'AUTHENTICATION_REQUIRED',
+      } as PostgrestError,
+    };
   }
 
   const { data, error } = await supabase.rpc('get_user_video_history', {
@@ -179,7 +205,15 @@ export async function getVideoAnalytics({
   error?: PostgrestError | null;
 }> {
   if (!session?.user) {
-    return { analytics: [], error: { message: 'User not authenticated', details: '', hint: '', code: 'AUTHENTICATION_REQUIRED' } as PostgrestError };
+    return {
+      analytics: [],
+      error: {
+        message: 'User not authenticated',
+        details: '',
+        hint: '',
+        code: 'AUTHENTICATION_REQUIRED',
+      } as PostgrestError,
+    };
   }
 
   const { data, error } = await supabase.rpc('get_video_analytics', {
@@ -209,11 +243,22 @@ export class VideoWatchTimeTracker {
   private isPlaying: boolean = false;
   private saveInterval: NodeJS.Timeout | null = null;
 
-  constructor(videoId: string, supabase: SupabaseClient<Database>, session: Session | null) {
+  constructor(
+    videoId: string,
+    supabase: SupabaseClient<Database>,
+    session: Session | null
+  ) {
     this.videoId = videoId;
     this.supabase = supabase;
     this.session = session;
     this.sessionStartTime = new Date();
+  }
+
+  /**
+   * Get the video ID this tracker is for
+   */
+  get getCurrentVideoId(): string {
+    return this.videoId;
   }
 
   /**
@@ -251,7 +296,7 @@ export class VideoWatchTimeTracker {
    */
   onPlay(currentTimeSeconds: number): void {
     if (!this.session?.user) return; // Don't track if not authenticated
-    
+
     this.isPlaying = true;
     this.lastPlayTime = currentTimeSeconds;
   }
@@ -261,11 +306,12 @@ export class VideoWatchTimeTracker {
    */
   onPause(currentTimeSeconds: number): void {
     if (!this.session?.user) return; // Don't track if not authenticated
-    
+
     if (this.isPlaying && this.lastPlayTime !== null) {
       // Only count time if not seeking (small time difference)
       const timeDiff = currentTimeSeconds - this.lastPlayTime;
-      if (timeDiff > 0 && timeDiff < 60) { // Sanity check: not more than 60 seconds
+      if (timeDiff > 0 && timeDiff < 60) {
+        // Sanity check: not more than 60 seconds
         this.totalSecondsWatched += timeDiff;
       }
     }
@@ -277,7 +323,7 @@ export class VideoWatchTimeTracker {
    */
   onSeek(newTimeSeconds: number): void {
     if (!this.session?.user) return; // Don't track if not authenticated
-    
+
     // Don't count seeking time, just update the last play time
     this.lastPlayTime = newTimeSeconds;
   }
@@ -322,7 +368,8 @@ export class VideoWatchTimeTracker {
    * Get current tracking stats
    */
   getStats(): { totalSecondsWatched: number; sessionDuration: number } {
-    const sessionDuration = (new Date().getTime() - this.sessionStartTime.getTime()) / 1000;
+    const sessionDuration =
+      (new Date().getTime() - this.sessionStartTime.getTime()) / 1000;
     return {
       totalSecondsWatched: this.totalSecondsWatched,
       sessionDuration,

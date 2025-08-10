@@ -73,8 +73,18 @@ describe('Image Cache', () => {
       const cropProperties = { x: 10, y: 20, width: 100, height: 150 };
       const options = { format: 'webp' as const, quality: 85 };
 
-      const key1 = generatePlaylistImageCacheKey(url, cropProperties, options, 'auth');
-      const key2 = generatePlaylistImageCacheKey(url, cropProperties, options, 'auth');
+      const key1 = generatePlaylistImageCacheKey(
+        url,
+        cropProperties,
+        options,
+        'auth'
+      );
+      const key2 = generatePlaylistImageCacheKey(
+        url,
+        cropProperties,
+        options,
+        'auth'
+      );
 
       expect(key1).toBe(key2);
       expect(key1).toContain('playlist:auth:example.com/playlist.jpg');
@@ -110,14 +120,21 @@ describe('Image Cache', () => {
 
     it('should store and retrieve cached images', async () => {
       await cacheManager.initialize();
-      
+
       const cacheKey = 'test-key';
       const dataUrl = 'data:image/webp;base64,testdata';
       const originalUrl = 'https://example.com/test.jpg';
       const options = { format: 'webp' as const, quality: 90 };
 
       // Store in cache
-      await cacheManager.set(cacheKey, dataUrl, originalUrl, options, null, 'anon');
+      await cacheManager.set(
+        cacheKey,
+        dataUrl,
+        originalUrl,
+        options,
+        null,
+        'anon'
+      );
 
       // Should find in memory cache
       const result = await cacheManager.get(cacheKey, null, 'anon');
@@ -126,14 +143,14 @@ describe('Image Cache', () => {
 
     it('should return null for non-existent cache entries', async () => {
       await cacheManager.initialize();
-      
+
       const result = await cacheManager.get('non-existent-key', null, 'anon');
       expect(result).toBe(null);
     });
 
     it('should handle cache expiration', async () => {
       await cacheManager.initialize();
-      
+
       const cacheKey = 'test-key';
       const dataUrl = 'data:image/webp;base64,testdata';
       const originalUrl = 'https://example.com/test.jpg';
@@ -141,14 +158,22 @@ describe('Image Cache', () => {
       const shortTTL = 100; // 100ms
 
       // Store with short TTL
-      await cacheManager.set(cacheKey, dataUrl, originalUrl, options, null, 'anon', shortTTL);
+      await cacheManager.set(
+        cacheKey,
+        dataUrl,
+        originalUrl,
+        options,
+        null,
+        'anon',
+        shortTTL
+      );
 
       // Should be available immediately
       let result = await cacheManager.get(cacheKey, null, 'anon');
       expect(result).toBe(dataUrl);
 
       // Wait for expiration
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150));
 
       // Should be null after expiration
       result = await cacheManager.get(cacheKey, null, 'anon');
@@ -157,7 +182,7 @@ describe('Image Cache', () => {
 
     it('should clear cache entries by auth state', async () => {
       await cacheManager.initialize();
-      
+
       const authKey = 'auth-key';
       const anonKey = 'anon-key';
       const dataUrl = 'data:image/webp;base64,testdata';
@@ -165,8 +190,22 @@ describe('Image Cache', () => {
       const options = { format: 'webp' as const, quality: 90 };
 
       // Store auth and anon entries
-      await cacheManager.set(authKey, dataUrl, originalUrl, options, null, 'auth');
-      await cacheManager.set(anonKey, dataUrl, originalUrl, options, null, 'anon');
+      await cacheManager.set(
+        authKey,
+        dataUrl,
+        originalUrl,
+        options,
+        null,
+        'auth'
+      );
+      await cacheManager.set(
+        anonKey,
+        dataUrl,
+        originalUrl,
+        options,
+        null,
+        'anon'
+      );
 
       // Both should be available
       expect(await cacheManager.get(authKey, null, 'auth')).toBe(dataUrl);
@@ -182,7 +221,7 @@ describe('Image Cache', () => {
 
     it('should enforce size limits', async () => {
       await cacheManager.initialize();
-      
+
       // Set a very small max size for testing
       const originalMaxSize = IMAGE_CACHE_CONFIG.MAX_CACHE_SIZE;
       (IMAGE_CACHE_CONFIG as any).MAX_CACHE_SIZE = 1000; // 1KB
@@ -190,8 +229,22 @@ describe('Image Cache', () => {
       const largeDataUrl = 'data:image/webp;base64,' + 'a'.repeat(2000); // ~2KB
       const options = { format: 'webp' as const, quality: 90 };
 
-      await cacheManager.set('key1', largeDataUrl, 'https://example.com/1.jpg', options, null, 'anon');
-      await cacheManager.set('key2', largeDataUrl, 'https://example.com/2.jpg', options, null, 'anon');
+      await cacheManager.set(
+        'key1',
+        largeDataUrl,
+        'https://example.com/1.jpg',
+        options,
+        null,
+        'anon'
+      );
+      await cacheManager.set(
+        'key2',
+        largeDataUrl,
+        'https://example.com/2.jpg',
+        options,
+        null,
+        'anon'
+      );
 
       // Should have enforced size limits
       const stats = cacheManager.getStats();
@@ -203,13 +256,34 @@ describe('Image Cache', () => {
 
     it('should provide accurate stats', async () => {
       await cacheManager.initialize();
-      
+
       const dataUrl = 'data:image/webp;base64,testdata';
       const options = { format: 'webp' as const, quality: 90 };
 
-      await cacheManager.set('auth-key', dataUrl, 'https://example.com/1.jpg', options, null, 'auth');
-      await cacheManager.set('anon-key1', dataUrl, 'https://example.com/2.jpg', options, null, 'anon');
-      await cacheManager.set('anon-key2', dataUrl, 'https://example.com/3.jpg', options, null, 'anon');
+      await cacheManager.set(
+        'auth-key',
+        dataUrl,
+        'https://example.com/1.jpg',
+        options,
+        null,
+        'auth'
+      );
+      await cacheManager.set(
+        'anon-key1',
+        dataUrl,
+        'https://example.com/2.jpg',
+        options,
+        null,
+        'anon'
+      );
+      await cacheManager.set(
+        'anon-key2',
+        dataUrl,
+        'https://example.com/3.jpg',
+        options,
+        null,
+        'anon'
+      );
 
       const stats = cacheManager.getStats();
       expect(stats.memoryEntries).toBe(3);
@@ -221,10 +295,10 @@ describe('Image Cache', () => {
     it('should handle service worker cache unavailable gracefully', async () => {
       // Mock caches as undefined to simulate unavailable environment
       (global as any).caches = undefined;
-      
+
       const newManager = ImageCacheManager.getInstance();
       await newManager.initialize();
-      
+
       const cacheKey = 'test-key';
       const dataUrl = 'data:image/webp;base64,testdata';
       const originalUrl = 'https://example.com/test.jpg';
@@ -241,18 +315,41 @@ describe('Image Cache', () => {
 
     it('should cleanup expired entries', async () => {
       await cacheManager.initialize();
-      
+
       const dataUrl = 'data:image/webp;base64,testdata';
       const options = { format: 'webp' as const, quality: 90 };
       const shortTTL = 100; // 100ms
 
       // Store multiple entries with short TTL
-      await cacheManager.set('key1', dataUrl, 'https://example.com/1.jpg', options, null, 'anon', shortTTL);
-      await cacheManager.set('key2', dataUrl, 'https://example.com/2.jpg', options, null, 'anon', shortTTL);
-      await cacheManager.set('key3', dataUrl, 'https://example.com/3.jpg', options, null, 'anon'); // Long TTL
+      await cacheManager.set(
+        'key1',
+        dataUrl,
+        'https://example.com/1.jpg',
+        options,
+        null,
+        'anon',
+        shortTTL
+      );
+      await cacheManager.set(
+        'key2',
+        dataUrl,
+        'https://example.com/2.jpg',
+        options,
+        null,
+        'anon',
+        shortTTL
+      );
+      await cacheManager.set(
+        'key3',
+        dataUrl,
+        'https://example.com/3.jpg',
+        options,
+        null,
+        'anon'
+      ); // Long TTL
 
       // Wait for expiration
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150));
 
       // Run cleanup
       await cacheManager.cleanup();

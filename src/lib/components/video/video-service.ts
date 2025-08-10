@@ -250,7 +250,15 @@ export async function recordSimpleVideoHistory({
   session: Session | null;
 }): Promise<{ success: boolean; error?: PostgrestError | null }> {
   if (!session?.user) {
-    return { success: false, error: { message: 'User not authenticated', details: '', hint: '', code: 'AUTHENTICATION_REQUIRED' } as PostgrestError };
+    return {
+      success: false,
+      error: {
+        message: 'User not authenticated',
+        details: '',
+        hint: '',
+        code: 'AUTHENTICATION_REQUIRED',
+      } as PostgrestError,
+    };
   }
 
   const { history, error } = await recordVideoHistory({
