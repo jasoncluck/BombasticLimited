@@ -15,7 +15,7 @@
     type CombinedContentFilter,
   } from '../content/content-filter';
   import AspectRatio from '../ui/aspect-ratio/aspect-ratio.svelte';
-  import { handleAddVideoTimestamp } from './video-service';
+  import { handleAddVideoTimestamp, createVideoWatchTimeTracker } from './video-service';
 
   const VIDEO_SAVE_SECONDS_START = 15;
   const VIDEO_DELETE_SECONDS_PERCENT = 0.95;
@@ -38,8 +38,31 @@
   } = $props();
 
   let startSeconds = $state(0);
-
   let player = $state<any>();
+  
+  // Video history tracking
+  let watchTimeTracker = $state<ReturnType<typeof createVideoWatchTimeTracker> | null>(null);
+
+  // Initialize watch time tracker when component mounts
+  $effect(() => {
+    if (session?.user && video.id) {
+      watchTimeTracker = createVideoWatchTimeTracker({
+        videoId: video.id,
+        supabase,
+        session,
+      });
+      
+      // Start tracking session
+      watchTimeTracker.startSession();
+      
+      // Cleanup on unmount
+      return () => {
+        if (watchTimeTracker) {
+          watchTimeTracker.endSession();
+        }
+      };
+    }
+  });
 
   $effect(() => {
     if (!player || typeof window === 'undefined') return;
@@ -213,6 +236,60 @@
     }
   }
 
+  // Handle YouTube player state changes for video history tracking
+  function onPlayerStateChange(event: { data: number; target: any }) {
+    if (!watchTimeTracker) return;
+
+    const currentTime = event.target.getCurrentTime() || 0;
+    
+    // YouTube player states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (cued)
+    switch (event.data) {
+      case 1: // Playing
+        watchTimeTracker.onPlay(currentTime);
+        break;
+      case 2: // Paused
+        watchTimeTracker.onPause(currentTime);
+        break;
+      case 0: // Ended
+        watchTimeTracker.onPause(currentTime);
+        break;
+    }
+  }
+
+  // Handle seeking events
+  let lastKnownTime = 0;
+  function handleSeekingEvents() {
+    if (!player || !watchTimeTracker) return;
+    
+    try {
+      const currentTime = player.getCurrentTime() || 0;
+      const timeDiff = Math.abs(currentTime - lastKnownTime);
+      
+      // If time difference is significant (more than 2 seconds), it's likely a seek
+      if (timeDiff > 2) {
+        watchTimeTracker.onSeek(currentTime);
+      }
+      
+      lastKnownTime = currentTime;
+    } catch (error) {
+      // Ignore errors, player might not be ready
+    }
+  }
+
+  // Set up periodic seeking detection
+  let seekDetectionInterval: NodeJS.Timeout | null = null;
+  $effect(() => {
+    if (player && watchTimeTracker) {
+      seekDetectionInterval = setInterval(handleSeekingEvents, 1000);
+      
+      return () => {
+        if (seekDetectionInterval) {
+          clearInterval(seekDetectionInterval);
+        }
+      };
+    }
+  });
+
   onMount(async () => {
     // Get current search param 't'
     const searchParamT = page.url.searchParams.get('t');
@@ -247,7 +324,10 @@
             rel: 0,
             modestbranding: true,
           },
-          events: { onReady: onPlayerReady },
+          events: { 
+            onReady: onPlayerReady,
+            onStateChange: onPlayerStateChange
+          },
         });
       }
       window.addEventListener('beforeunload', handleBeforeUnload);

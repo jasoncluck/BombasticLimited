@@ -1,7 +1,3 @@
-/**
- * Video service contains some clientside "helper" functions that
- * do not interact directly with the supabase API directly.
- */
 import { type Video, getInProgressVideos } from '$lib/supabase/videos';
 import { getVideos } from '$lib/supabase/videos';
 import { showNotification } from '$lib/stores/notification.js';
@@ -20,6 +16,11 @@ import {
   saveVideoTimestamps,
   type TimestampWithVideoId,
 } from '$lib/supabase/timestamps';
+import {
+  VideoWatchTimeTracker,
+  recordVideoHistory,
+  type VideoHistorySession,
+} from '$lib/supabase/video-history';
 
 export async function fetchMoreInProgressVideos({
   contentFilter,
@@ -213,6 +214,62 @@ export function videoDurationSecondsToTime(durationSeconds: number) {
   const minutes = Math.floor((durationSeconds % 3600) / 60);
   const seconds = durationSeconds % 60;
   return { hours, minutes, seconds };
+}
+
+/**
+ * Create a video watch time tracker for tracking actual viewing analytics
+ */
+export function createVideoWatchTimeTracker({
+  videoId,
+  supabase,
+  session,
+}: {
+  videoId: string;
+  supabase: SupabaseClient<Database>;
+  session: Session | null;
+}): VideoWatchTimeTracker {
+  return new VideoWatchTimeTracker(videoId, supabase, session);
+}
+
+/**
+ * Record a simple video history session (for non-tracked playback)
+ */
+export async function recordSimpleVideoHistory({
+  videoId,
+  secondsWatched,
+  sessionStartTime,
+  sessionEndTime,
+  supabase,
+  session,
+}: {
+  videoId: string;
+  secondsWatched?: number;
+  sessionStartTime?: Date;
+  sessionEndTime?: Date;
+  supabase: SupabaseClient<Database>;
+  session: Session | null;
+}): Promise<{ success: boolean; error?: PostgrestError | null }> {
+  if (!session?.user) {
+    return { success: false, error: { message: 'User not authenticated', details: '', hint: '', code: 'AUTHENTICATION_REQUIRED' } as PostgrestError };
+  }
+
+  const { history, error } = await recordVideoHistory({
+    videoHistory: {
+      videoId,
+      secondsWatched,
+      sessionStartTime,
+      sessionEndTime,
+    },
+    supabase,
+    session,
+  });
+
+  if (error) {
+    showNotification('Unable to record video history', 'error');
+    return { success: false, error };
+  }
+
+  return { success: true };
 }
 
 /**
