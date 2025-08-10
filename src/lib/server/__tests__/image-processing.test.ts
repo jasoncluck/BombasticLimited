@@ -373,3 +373,150 @@ describe('getVideoThumbnailWebpUrlsBatch', () => {
     expect(results[1]).toBe(null); // Failed processing should return null
   });
 });
+
+describe('Image Processing Cache Integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Set up default metadata response
+    mockMetadata.mockResolvedValue({
+      width: 1280,
+      height: 720,
+    });
+  });
+
+  it('should cache processed playlist images', async () => {
+    const imageProperties = {
+      x: 10,
+      y: 20,
+      width: 100,
+      height: 150,
+    };
+
+    const mockImageBuffer = new ArrayBuffer(1000);
+    const mockProcessedBuffer = Buffer.from('processed-webp-data');
+
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      arrayBuffer: () => Promise.resolve(mockImageBuffer),
+    });
+
+    mockToBuffer.mockResolvedValue(mockProcessedBuffer);
+
+    // First call should process the image
+    const result1 = await getCroppedPlaylistImageUrlServer({
+      imageProperties,
+      thumbnailMaxResUrl: 'https://example.com/cached-image.jpg',
+      thumbnailUrl: null,
+    });
+
+    expect(result1).toContain('data:image/webp;base64,');
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+
+    // Second call should return cached result
+    const result2 = await getCroppedPlaylistImageUrlServer({
+      imageProperties,
+      thumbnailMaxResUrl: 'https://example.com/cached-image.jpg',
+      thumbnailUrl: null,
+    });
+
+    expect(result2).toBe(result1);
+    // Fetch should not be called again
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('should cache processed video thumbnails', async () => {
+    const mockImageBuffer = new ArrayBuffer(1000);
+    const mockProcessedBuffer = Buffer.from('processed-webp-video-data');
+
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      arrayBuffer: () => Promise.resolve(mockImageBuffer),
+    });
+
+    mockToBuffer.mockResolvedValue(mockProcessedBuffer);
+
+    // First call should process the image
+    const result1 = await getVideoThumbnailWebpUrlServer({
+      thumbnailUrl: 'https://example.com/cached-video-thumb.jpg',
+    });
+
+    expect(result1).toContain('data:image/webp;base64,');
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+
+    // Second call should return cached result
+    const result2 = await getVideoThumbnailWebpUrlServer({
+      thumbnailUrl: 'https://example.com/cached-video-thumb.jpg',
+    });
+
+    expect(result2).toBe(result1);
+    // Fetch should not be called again
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('should use different cache entries for different processing options', async () => {
+    const mockImageBuffer = new ArrayBuffer(1000);
+    const mockProcessedBuffer1 = Buffer.from('processed-webp-quality-90');
+    const mockProcessedBuffer2 = Buffer.from('processed-webp-quality-70');
+
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      arrayBuffer: () => Promise.resolve(mockImageBuffer),
+    });
+
+    // First call with quality 90
+    mockToBuffer.mockResolvedValueOnce(mockProcessedBuffer1);
+    const result1 = await getVideoThumbnailWebpUrlServer({
+      thumbnailUrl: 'https://example.com/options-test.jpg',
+      options: { quality: 90 },
+    });
+
+    // Second call with quality 70 (different options)
+    mockToBuffer.mockResolvedValueOnce(mockProcessedBuffer2);
+    const result2 = await getVideoThumbnailWebpUrlServer({
+      thumbnailUrl: 'https://example.com/options-test.jpg',
+      options: { quality: 70 },
+    });
+
+    expect(result1).not.toBe(result2);
+    expect(global.fetch).toHaveBeenCalledTimes(2); // Different cache keys, both should fetch
+  });
+
+  it('should use auth-aware caching', async () => {
+    const mockImageBuffer = new ArrayBuffer(1000);
+    const mockProcessedBuffer = Buffer.from('processed-webp-data');
+
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      arrayBuffer: () => Promise.resolve(mockImageBuffer),
+    });
+
+    mockToBuffer.mockResolvedValue(mockProcessedBuffer);
+
+    // Create mock request with auth cookie
+    const authRequest = {
+      headers: new Map([
+        ['cookie', 'sb-127-auth-token=valid-token; other=value'],
+      ]),
+    } as any;
+
+    const anonRequest = {
+      headers: new Map([['cookie', 'other=value']]),
+    } as any;
+
+    // Auth request
+    const authResult = await getVideoThumbnailWebpUrlServer({
+      thumbnailUrl: 'https://example.com/auth-test.jpg',
+      request: authRequest,
+    });
+
+    // Anonymous request (should not use auth cache)
+    const anonResult = await getVideoThumbnailWebpUrlServer({
+      thumbnailUrl: 'https://example.com/auth-test.jpg',
+      request: anonRequest,
+    });
+
+    expect(authResult).toContain('data:image/webp;base64,');
+    expect(anonResult).toContain('data:image/webp;base64,');
+    expect(global.fetch).toHaveBeenCalledTimes(2); // Different auth states, both should fetch
+  });
+});
