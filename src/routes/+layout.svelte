@@ -122,7 +122,7 @@
 
   // Setup navigation hooks
   $effect(() => {
-    navigation.setupNavigationHooks(userProfile, session);
+    navigation.setupNavigationHooks(session);
   });
 
   // Single effect to handle auth state changes
