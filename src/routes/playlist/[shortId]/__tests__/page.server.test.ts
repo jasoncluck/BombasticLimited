@@ -113,6 +113,11 @@ describe('playlist/[shortId]/+page.server.ts', () => {
     params: { shortId: 'abc123' },
     depends: vi.fn(),
     parent: vi.fn(),
+    request: {
+      headers: {
+        get: vi.fn(() => null),
+      },
+    },
   };
 
   const mockActionEvent: any = {

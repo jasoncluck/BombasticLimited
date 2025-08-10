@@ -15,11 +15,15 @@ export const load: PageServerLoad = async ({
   parent,
   locals: { supabase, session },
   depends,
+  request,
 }) => {
   depends('supabase:db:videos');
 
   const { contentFilter } = await parent();
   const searchString = params.query;
+
+  // Get Accept header for optimal format detection
+  const acceptHeader = request.headers.get('accept');
 
   if (!isVideoFilter(contentFilter)) {
     throw new Error('Invalid content filter');
@@ -91,6 +95,8 @@ export const load: PageServerLoad = async ({
             ),
             thumbnailMaxResUrl: profilePlaylist.thumbnail_maxres_url,
             thumbnailUrl: profilePlaylist.thumbnail_url,
+            acceptHeader,
+            options: { format: 'auto' },
           }),
         }))
       ),

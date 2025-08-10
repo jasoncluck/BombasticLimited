@@ -29,6 +29,7 @@ export const load: PageServerLoad = async ({
   parent,
   params,
   depends,
+  request,
 }) => {
   // Remove automatic dependencies - we'll handle updates optimistically
   // Only keep video dependencies since those might come from other sources
@@ -63,6 +64,9 @@ export const load: PageServerLoad = async ({
     redirect(302, '/');
   }
 
+  // Get Accept header for optimal format detection
+  const acceptHeader = request.headers.get('accept');
+
   const [processedImageUrl, form, creatorProfile] = await Promise.all([
     playlist.processedImageUrl
       ? Promise.resolve(playlist.processedImageUrl)
@@ -70,6 +74,8 @@ export const load: PageServerLoad = async ({
           imageProperties: parseImageProperties(playlist.image_properties),
           thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
           thumbnailUrl: playlist.thumbnail_url,
+          acceptHeader,
+          options: { format: 'auto' },
         }),
     superValidate(playlist, zod(playlistSchema)),
     // Load creator profile for all playlists to ensure avatar is available

@@ -691,13 +691,11 @@ describe('Image Processing Cache Integration', () => {
     // Auth request
     const authResult = await getVideoThumbnailWebpUrlServer({
       thumbnailUrl: 'https://example.com/auth-test.jpg',
-      request: authRequest,
     });
 
     // Anonymous request (should not use auth cache)
     const anonResult = await getVideoThumbnailWebpUrlServer({
       thumbnailUrl: 'https://example.com/auth-test.jpg',
-      request: anonRequest,
     });
 
     expect(authResult).toContain('data:image/webp;base64,');

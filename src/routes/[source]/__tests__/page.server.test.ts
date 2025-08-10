@@ -288,6 +288,8 @@ describe('[source]/+page.server.ts load function', () => {
         imageProperties: { x: 0, y: 0, width: 100, height: 100 },
         thumbnailMaxResUrl: 'https://example.com/maxres1.jpg',
         thumbnailUrl: 'https://example.com/thumb1.jpg',
+        acceptHeader: null,
+        options: { format: 'auto' },
       });
     });
   });

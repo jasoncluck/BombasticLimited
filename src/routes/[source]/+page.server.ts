@@ -69,6 +69,9 @@ export const load: PageServerLoad = async ({
     type: 'playlist',
   };
 
+  // Get Accept header for optimal format detection  
+  const acceptHeader = request.headers.get('accept');
+
   // Run all major operations in parallel
   const [videos, highlightPlaylistsResults, sourcePlaylistsData] =
     await Promise.all([
@@ -125,6 +128,8 @@ export const load: PageServerLoad = async ({
         imageProperties: parseImageProperties(playlist.image_properties),
         thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
         thumbnailUrl: playlist.thumbnail_url,
+        acceptHeader,
+        options: { format: 'auto' },
       }),
     }))
   );

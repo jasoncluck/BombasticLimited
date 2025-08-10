@@ -59,6 +59,9 @@ export const load: PageServerLoad = async ({
       supabase,
     });
 
+  // Get Accept header for optimal format detection
+  const acceptHeader = request.headers.get('accept');
+
   // Process playlists server-side (similar to [source] route)
   const processedPlaylists = await Promise.all(
     playlistsForUsername.map(async (playlist) => ({
@@ -67,6 +70,8 @@ export const load: PageServerLoad = async ({
         imageProperties: parseImageProperties(playlist.image_properties),
         thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
         thumbnailUrl: playlist.thumbnail_url,
+        acceptHeader,
+        options: { format: 'auto' },
       }),
     }))
   );

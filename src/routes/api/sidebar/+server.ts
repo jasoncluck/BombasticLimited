@@ -5,12 +5,15 @@ import { getProfile } from '$lib/supabase/user-profiles';
 import { parseImageProperties } from '$lib/components/playlist/playlist';
 import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
 
-export const GET: RequestHandler = async ({ locals }) => {
+export const GET: RequestHandler = async ({ locals, request }) => {
   const { session, supabase } = locals;
 
   if (!session) {
     return json({ playlists: [], userProfile: null, userPlaylistsCount: 0 });
   }
+
+  // Get Accept header for optimal format detection
+  const acceptHeader = request.headers.get('accept');
 
   // Run getUserPlaylists and getProfile concurrently
   const [
@@ -30,6 +33,8 @@ export const GET: RequestHandler = async ({ locals }) => {
         imageProperties: parseImageProperties(userPlaylist.image_properties),
         thumbnailMaxResUrl: userPlaylist.thumbnail_maxres_url,
         thumbnailUrl: userPlaylist.thumbnail_url,
+        acceptHeader,
+        options: { format: 'auto' },
       }),
     }));
 

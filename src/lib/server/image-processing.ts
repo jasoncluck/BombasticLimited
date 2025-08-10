@@ -414,12 +414,7 @@ export async function getCroppedPlaylistImageUrlsBatch(
     const chunk = requests.slice(i, i + chunkSize);
 
     const chunkResults = await Promise.all(
-      chunk.map((request) =>
-        getCroppedPlaylistImageUrlServer({
-          ...request,
-          request: requestContext,
-        })
-      )
+      chunk.map((request) => getCroppedPlaylistImageUrlServer(request))
     );
 
     results.push(...chunkResults);

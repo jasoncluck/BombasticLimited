@@ -11,6 +11,7 @@ export const load: PageServerLoad = async ({
   depends,
   params,
   parent,
+  request,
 }) => {
   depends('supabase:db:videos');
 
@@ -54,6 +55,9 @@ export const load: PageServerLoad = async ({
     redirect(303, `/video/${params.videoId}`);
   }
 
+  // Get Accept header for optimal format detection
+  const acceptHeader = request.headers.get('accept');
+
   // Process playlist image if needed
   const processedImageUrl = profilePlaylist.processedImageUrl
     ? profilePlaylist.processedImageUrl
@@ -61,6 +65,8 @@ export const load: PageServerLoad = async ({
         imageProperties: parseImageProperties(profilePlaylist.image_properties),
         thumbnailMaxResUrl: profilePlaylist.thumbnail_maxres_url,
         thumbnailUrl: profilePlaylist.thumbnail_url,
+        acceptHeader,
+        options: { format: 'auto' },
       });
 
   // Update playlist with processed image URL if it was generated
