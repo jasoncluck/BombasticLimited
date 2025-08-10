@@ -32,11 +32,21 @@ describe('Search Playlists Page Server Load', () => {
       thumbnail_url: 'https://example.com/thumb.jpg',
       thumbnail_maxres_url: 'https://example.com/maxres.jpg',
       image_properties: { x: 0, y: 0, width: 100, height: 100 },
+      type: 'Public' as const,
+      created_at: '2023-01-01T00:00:00Z',
+      created_by: 'user-id',
+      deleted_at: null,
+      description: 'Test description',
+      search_vector: null,
+      short_id: 'test-short-id',
+      youtube_id: null,
+      profile_username: 'testuser',
     };
 
     mockSearchPlaylists.mockResolvedValue({
       playlists: [mockPlaylist],
       count: 1,
+      error: null,
     });
 
     mockGetCroppedPlaylistImageUrlServer.mockResolvedValue('processed-image-url');
@@ -59,8 +69,8 @@ describe('Search Playlists Page Server Load', () => {
       options: { format: 'auto' },
     });
 
-    expect(result.playlistResults).toHaveLength(1);
-    expect(result.playlistResults[0]).toMatchObject({
+    expect(result?.playlistResults).toHaveLength(1);
+    expect(result?.playlistResults?.[0]).toMatchObject({
       ...mockPlaylist,
       processedImageUrl: 'processed-image-url',
     });
