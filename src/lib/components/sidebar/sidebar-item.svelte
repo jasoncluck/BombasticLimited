@@ -11,7 +11,6 @@
     imageUrl,
     imageAlt,
     title,
-    children,
     class: className = '',
     ...restProps
   }: {
@@ -24,7 +23,6 @@
     title?: string;
     children?: Snippet;
     class?: string;
-    [key: string]: any;
   } = $props();
 
   // Consistent container classes for both states
@@ -74,9 +72,6 @@
         <Skeleton class="h-12 w-12 flex-shrink-0 rounded" />
       {/if}
     {/if}
-  {:else if children}
-    <!-- Custom content provided via children snippet -->
-    {@render children()}
   {:else}
     <!-- Real content with exact same structure -->
     <div

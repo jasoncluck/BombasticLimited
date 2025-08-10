@@ -14,10 +14,4 @@
   class:pointer-events-none={!isNavigatingToContent}
   class:scale-100={isNavigatingToContent}
   class:scale-95={!isNavigatingToContent}
->
-  <!-- Uncomment if you want to show a loader during navigation -->
-  <!-- <div class="flex flex-col items-center space-y-2"> -->
-  <!--   <Loader size="lg" message="" /> -->
-  <!--   <p class="text-sm text-muted-foreground">Loading...</p> -->
-  <!-- </div> -->
-</div>
+></div>
