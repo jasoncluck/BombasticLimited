@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Circle, ListVideo, Loader, Plus } from '@lucide/svelte';
+  import { Circle, ListVideo, Loader2, Plus } from '@lucide/svelte';
   import { type SupabaseClient, type Session } from '@supabase/supabase-js';
   import { SOURCE_INFO, SOURCES } from '$lib/constants/source';
   import * as Popover from '$lib/components/ui/popover';
@@ -15,7 +15,6 @@
   import Button, { buttonVariants } from '../ui/button/button.svelte';
   import PlaylistContextMenu from '../playlist/playlist-context-menu.svelte';
   import SidebarItem from './sidebar-item.svelte';
-  import { Skeleton } from '$lib/components/ui/skeleton';
   import type { Playlist } from '$lib/supabase/playlists';
   import StreamingIndicator from '../streaming/streaming-indicator.svelte';
 
@@ -254,13 +253,14 @@
 </script>
 
 <aside class="h-full overflow-hidden">
-  <div class="flex flex-col {!isSidebarCollapsed ? 'mx-2' : 'mx-1'}">
-    {#if sidebarState.showPlaceholder}
-      <!-- Skeleton sources when loading -->
-      {#each Array(4)}
-        <SidebarItem isLoading={true} {isSidebarCollapsed} />
-      {/each}
-    {:else}
+  {#if sidebarState.showPlaceholder}
+    <!-- Simple centered loader for entire sidebar -->
+    <div class="flex h-full items-center justify-center">
+      <Loader2 class="h-8 w-8 animate-spin text-muted-foreground" />
+    </div>
+  {:else}
+    <!-- Real sidebar content -->
+    <div class="flex flex-col {!isSidebarCollapsed ? 'mx-2' : 'mx-1'}">
       <!-- Real sources -->
       {#each orderedSources as source, i (source)}
         <Button
@@ -309,28 +309,14 @@
           </div>
         </Button>
       {/each}
-    {/if}
-  </div>
-  <hr class="m-2" />
-  <div
-    class="m-3 flex flex-col {!isSidebarCollapsed
-      ? 'mx-6 items-start'
-      : 'items-center'}"
-  >
-    <div class="flex h-[44px] items-center">
-      {#if sidebarState.showPlaceholder}
-        <!-- Skeleton playlist header when loading-->
-        {#if !isSidebarCollapsed}
-          <!-- Full header with exact spacing matching real content structure -->
-          <Skeleton class="my-1 h-9 w-9 flex-shrink-0 rounded-full" />
-          <h2 class="ml-4 text-lg font-semibold tracking-tight opacity-50">
-            Playlists
-          </h2>
-        {:else}
-          <!-- Collapsed header - centered circle -->
-          <Skeleton class="my-1 h-9 w-9 flex-shrink-0 rounded-full" />
-        {/if}
-      {:else}
+    </div>
+    <hr class="m-2" />
+    <div
+      class="m-3 flex flex-col {!isSidebarCollapsed
+        ? 'mx-6 items-start'
+        : 'items-center'}"
+    >
+      <div class="flex h-[44px] items-center">
         <!-- Real content with identical structure to skeleton -->
         {#if !session?.user.id}
           <Popover.Root>
@@ -362,36 +348,22 @@
         {#if !isSidebarCollapsed}
           <h2 class="ml-4 text-lg font-semibold tracking-tight">Playlists</h2>
         {/if}
-      {/if}
+      </div>
     </div>
-  </div>
 
-  <div
-    class="rounded-md border-2 transition-colors duration-150 {!isSidebarCollapsed
-      ? 'mx-2'
-      : 'mx-1'}
-    {sidebarState.playlists.length > 0 &&
-    contentState.dragContentType === 'video'
-      ? 'border-secondary/80'
-      : 'border-transparent'}"
-  >
-    <div class="flex flex-col">
-      {#if sidebarState.showPlaceholder}
-        <!-- Skeleton playlists when loading -->
-        {#each Array(6), i}
-          <SidebarItem
-            isLoading={true}
-            {isSidebarCollapsed}
-            showSpecialIcon={true}
-            iconIndex={i}
-            class="focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground relative inline-flex items-center justify-center rounded-md text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-1 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 {!isSidebarCollapsed
-              ? 'h-[56px] px-2 py-1'
-              : 'h-[56px] w-10 justify-center px-1 py-1'}"
-          />
-        {/each}
-      {:else if sidebarState.playlists === null}
-        <Loader class="w-full animate-spin" />
-      {:else if session && sidebarState.playlists.length > 0}
+    <div
+      class="rounded-md border-2 transition-colors duration-150 {!isSidebarCollapsed
+        ? 'mx-2'
+        : 'mx-1'}
+      {sidebarState.playlists.length > 0 &&
+      contentState.dragContentType === 'video'
+        ? 'border-secondary/80'
+        : 'border-transparent'}"
+    >
+      <div class="flex flex-col">
+        {#if sidebarState.playlists === null}
+          <Loader2 class="w-full animate-spin" />
+        {:else if session && sidebarState.playlists.length > 0}
         <div class="flex flex-col">
           {#each sidebarState.playlists as playlist, i (playlist.id)}
             <PlaylistContextMenu
@@ -465,4 +437,5 @@
       {/if}
     </div>
   </div>
+  {/if}
 </aside>

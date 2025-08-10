@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { Skeleton } from '$lib/components/ui/skeleton';
-  import { ListVideo } from '@lucide/svelte';
+  import { ListVideo, Loader2 } from '@lucide/svelte';
   import type { Snippet } from 'svelte';
 
   let {
@@ -37,41 +36,10 @@
 
 <div class={containerClasses} {...restProps}>
   {#if isLoading}
-    <!-- Skeleton state with exact same structure as real content -->
-    {#if !isSidebarCollapsed}
-      <!-- Full width skeleton with exact spacing matching real content -->
-      <div class="flex w-full items-center space-x-3">
-        {#if showSpecialIcon && iconIndex % 3 !== 0}
-          <!-- Special icon case for playlists -->
-          <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center">
-            <div
-              class="bg-muted flex h-12 w-12 animate-pulse items-center justify-center rounded"
-            >
-              <ListVideo class="text-muted-foreground h-8 w-8 opacity-50" />
-            </div>
-          </div>
-        {:else}
-          <Skeleton class="h-12 w-12 flex-shrink-0 rounded" />
-        {/if}
-        <div class="min-w-0 flex-1">
-          <Skeleton class="h-4 w-full" />
-        </div>
-      </div>
-    {:else}
-      <!-- Collapsed skeleton -->
-      {#if showSpecialIcon && iconIndex % 3 !== 0}
-        <!-- Special icon case for playlists -->
-        <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center">
-          <div
-            class="bg-muted flex h-12 w-12 animate-pulse items-center justify-center rounded"
-          >
-            <ListVideo class="text-muted-foreground h-8 w-8 opacity-50" />
-          </div>
-        </div>
-      {:else}
-        <Skeleton class="h-12 w-12 flex-shrink-0 rounded" />
-      {/if}
-    {/if}
+    <!-- Simple centered loader -->
+    <div class="flex h-full w-full items-center justify-center">
+      <Loader2 class="h-6 w-6 animate-spin text-muted-foreground" />
+    </div>
   {:else}
     <!-- Real content with exact same structure -->
     <div

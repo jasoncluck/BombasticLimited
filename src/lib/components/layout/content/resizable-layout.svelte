@@ -2,8 +2,7 @@
   import * as Resizable from '$lib/components/ui/resizable';
   import ScrollArea from '$lib/components/ui/scroll-area/scroll-area.svelte';
   import Sidebar from '$lib/components/sidebar/sidebar.svelte';
-  import SidebarItem from '$lib/components/sidebar/sidebar-item.svelte';
-  import { Skeleton } from '$lib/components/ui/skeleton';
+  import { Loader2 } from '@lucide/svelte';
   import { COLLAPSED_SIDEBAR_SIZE } from '$lib/constants/layout';
   import LoadingOverlay from './loading-overlay.svelte';
   import type { PageState } from '$lib/state/page.svelte.js';
@@ -64,67 +63,10 @@
       <!-- Fixed height container to prevent layout shifts -->
       <div class="min-h-full">
         {#if sidebarState.showPlaceholder}
-          <!-- Skeleton with exact dimensions matching real sidebar -->
-          <aside class="h-full overflow-hidden">
-            <!-- Sources Section Skeleton -->
-            <div class="flex flex-col {!isSidebarCollapsed ? 'mx-2' : 'mx-1'}">
-              <!-- Fixed number of source items with exact heights -->
-              {#each Array(4)}
-                <SidebarItem isLoading={true} {isSidebarCollapsed} />
-              {/each}
-            </div>
-
-            <!-- Divider with exact spacing -->
-            <div class="mx-2 my-2">
-              <Skeleton class="h-px w-full" />
-            </div>
-
-            <!-- Playlists Header Section Skeleton with exact dimensions -->
-            <div
-              class="m-3 flex flex-col {!isSidebarCollapsed
-                ? 'mx-6 items-start'
-                : 'items-center'}"
-            >
-              <div class="flex h-[44px] items-center">
-                {#if !isSidebarCollapsed}
-                  <!-- Full header with exact spacing matching real content structure -->
-                  <Skeleton class="my-1 h-9 w-9 flex-shrink-0 rounded-full" />
-                  <h2
-                    class="ml-4 text-lg font-semibold tracking-tight opacity-50"
-                  >
-                    Playlists
-                  </h2>
-                {:else}
-                  <!-- Collapsed header - centered circle -->
-                  <Skeleton class="my-1 h-9 w-9 flex-shrink-0 rounded-full" />
-                {/if}
-              </div>
-            </div>
-
-            <!-- Playlists Container Skeleton with exact border and spacing -->
-            <div
-              class="rounded-md border-2 border-transparent {!isSidebarCollapsed
-                ? 'mx-2'
-                : 'mx-1'}"
-            >
-              <div
-                class="flex flex-col {isSidebarCollapsed ? 'items-center' : ''}"
-              >
-                <!-- Fixed number of playlist items -->
-                {#each Array(6), i}
-                  <SidebarItem
-                    isLoading={true}
-                    {isSidebarCollapsed}
-                    showSpecialIcon={true}
-                    iconIndex={i}
-                    class="focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground relative inline-flex items-center justify-center rounded-md text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-1 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 {!isSidebarCollapsed
-                      ? 'w-full'
-                      : 'w-12'}"
-                  />
-                {/each}
-              </div>
-            </div>
-          </aside>
+          <!-- Simple centered loader -->
+          <div class="flex h-full items-center justify-center">
+            <Loader2 class="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
         {:else}
           <Sidebar {isSidebarCollapsed} {supabase} {session} {refreshSidebar} />
         {/if}
