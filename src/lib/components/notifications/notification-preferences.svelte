@@ -22,6 +22,7 @@
   import type { SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
   import type { NotificationPreferences } from '$lib/supabase/notifications';
+  import { simulateRealtimeNotification, showDemoNotification } from '$lib/utils/demo-notifications';
 
   let {
     supabase
@@ -206,7 +207,7 @@
                 {/if}
               </div>
               <div class="space-y-1">
-                <Label for={type.key} class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                <Label for={type.key as string} class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   {type.title}
                 </Label>
                 <p class="text-sm text-muted-foreground">
@@ -215,7 +216,7 @@
               </div>
             </div>
             <Switch
-              id={type.key}
+              id={type.key as string}
               checked={localPreferences[type.key] as boolean}
               onCheckedChange={(checked) => updatePreference(type.key, checked)}
               disabled={isLoading}
@@ -266,7 +267,7 @@
                 {/if}
               </div>
               <div class="space-y-1">
-                <Label for={method.key} class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                <Label for={method.key as string} class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   {method.title}
                 </Label>
                 <p class="text-sm text-muted-foreground">
@@ -275,7 +276,7 @@
               </div>
             </div>
             <Switch
-              id={method.key}
+              id={method.key as string}
               checked={localPreferences[method.key] as boolean}
               onCheckedChange={(checked) => updatePreference(method.key, checked)}
               disabled={isLoading || method.key === 'email_notifications' || method.key === 'push_notifications'}
@@ -299,6 +300,66 @@
           {/each}
         </div>
       {/if}
+    </div>
+  </Card.Root>
+
+  <Separator />
+
+  <!-- Demo Section (for testing) -->
+  <Card.Root class="p-6 bg-muted/20 border-dashed">
+    <Card.Header class="px-0 pt-0">
+      <Card.Title class="flex items-center gap-2 text-sm">
+        <Bell class="h-4 w-4" />
+        Test Notifications (Demo)
+      </Card.Title>
+      <Card.Description class="text-sm">
+        Test the notification system with demo notifications
+      </Card.Description>
+    </Card.Header>
+
+    <div class="flex flex-wrap gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        onclick={() => showDemoNotification('system')}
+      >
+        Test System
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onclick={() => showDemoNotification('content')}
+      >
+        Test Content
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onclick={() => showDemoNotification('user')}
+      >
+        Test User
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onclick={() => showDemoNotification('playlist_update')}
+      >
+        Test Playlist
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onclick={() => showDemoNotification('mention')}
+      >
+        Test Mention
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onclick={simulateRealtimeNotification}
+      >
+        Simulate Real-time
+      </Button>
     </div>
   </Card.Root>
 

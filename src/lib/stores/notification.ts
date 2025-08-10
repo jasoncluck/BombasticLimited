@@ -1,4 +1,5 @@
 import { writable, derived, get } from 'svelte/store';
+import { toast } from 'svelte-sonner';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '$lib/supabase/database.types';
 import type { 
@@ -9,7 +10,7 @@ import type {
 } from '$lib/supabase/notifications';
 import { createNotificationService } from '$lib/services/notification-service';
 
-// Toast notification store (existing functionality)
+// Toast notification store (existing functionality but enhanced)
 export const notificationStore = writable<{
   message: string;
   type?: 'success' | 'error' | 'warning';
@@ -19,11 +20,89 @@ export function showNotification(
   message: string,
   type?: 'success' | 'error' | 'warning'
 ) {
+  // Use Sonner toast for better UX
+  switch (type) {
+    case 'success':
+      toast.success(message);
+      break;
+    case 'error':
+      toast.error(message);
+      break;
+    case 'warning':
+      toast.warning(message);
+      break;
+    default:
+      toast(message);
+      break;
+  }
+  
+  // Also update the store for any legacy components
   notificationStore.set({ message, type });
 }
 
 export function clearNotification() {
   notificationStore.set(null);
+}
+
+// Enhanced toast functions for notifications
+export function showNotificationToast(notification: NotificationWithMeta) {
+  const toastMessage = `${notification.title}: ${notification.message}`;
+  
+  switch (notification.type) {
+    case 'system':
+      toast.warning(toastMessage, {
+        description: 'System Notification',
+        duration: 6000,
+        action: notification.action_url ? {
+          label: 'View',
+          onClick: () => window.location.href = notification.action_url!
+        } : undefined
+      });
+      break;
+    case 'content':
+      toast.success(toastMessage, {
+        description: 'New Content',
+        duration: 5000,
+        action: notification.action_url ? {
+          label: 'View',
+          onClick: () => window.location.href = notification.action_url!
+        } : undefined
+      });
+      break;
+    case 'user':
+      toast(toastMessage, {
+        description: 'User Activity',
+        duration: 4000,
+        action: notification.action_url ? {
+          label: 'View',
+          onClick: () => window.location.href = notification.action_url!
+        } : undefined
+      });
+      break;
+    case 'playlist_update':
+      toast(toastMessage, {
+        description: 'Playlist Update',
+        duration: 4000,
+        action: notification.action_url ? {
+          label: 'View',
+          onClick: () => window.location.href = notification.action_url!
+        } : undefined
+      });
+      break;
+    case 'mention':
+      toast(toastMessage, {
+        description: 'You were mentioned',
+        duration: 6000,
+        action: notification.action_url ? {
+          label: 'View',
+          onClick: () => window.location.href = notification.action_url!
+        } : undefined
+      });
+      break;
+    default:
+      toast(toastMessage);
+      break;
+  }
 }
 
 // Comprehensive notification system stores
@@ -253,10 +332,7 @@ class NotificationManager {
               }
 
               // Show toast for new notifications
-              showNotification(
-                `${newRecord.title}: ${newRecord.message}`,
-                this.getToastTypeFromNotificationType(newRecord.type)
-              );
+              showNotificationToast(formattedNotification);
             }
             break;
 
@@ -322,21 +398,6 @@ class NotificationManager {
       return `${days} day${days === 1 ? '' : 's'} ago`;
     }
     return notificationTime.toLocaleDateString();
-  }
-
-  private getToastTypeFromNotificationType(type: NotificationType): 'success' | 'error' | 'warning' {
-    switch (type) {
-      case 'system':
-        return 'warning';
-      case 'content':
-      case 'playlist_update':
-        return 'success';
-      case 'user':
-      case 'mention':
-        return 'success';
-      default:
-        return 'success';
-    }
   }
 
   destroy() {

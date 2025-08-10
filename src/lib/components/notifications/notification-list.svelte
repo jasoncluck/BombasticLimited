@@ -25,6 +25,7 @@
   import type { SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
   import type { NotificationWithMeta, NotificationType } from '$lib/supabase/notifications';
+  import { createDemoNotifications } from '$lib/utils/demo-notifications';
 
   let {
     supabase,
@@ -49,6 +50,21 @@
       notificationManager.loadNotifications({ type: filterType });
     } else {
       notificationManager.loadNotifications();
+    }
+    
+    // For demo purposes, if no real notifications exist, show demo data
+    if ($notifications.length === 0 && !$isNotificationLoading) {
+      const demoNotifications = createDemoNotifications();
+      // Simulate adding them to the store for demo
+      setTimeout(() => {
+        if ($notifications.length === 0) {
+          notificationState.update(state => ({
+            ...state,
+            notifications: demoNotifications,
+            unreadCount: demoNotifications.filter(n => !n.read).length
+          }));
+        }
+      }, 1000);
     }
   });
 
