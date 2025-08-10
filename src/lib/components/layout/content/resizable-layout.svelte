@@ -2,7 +2,7 @@
   import * as Resizable from '$lib/components/ui/resizable';
   import ScrollArea from '$lib/components/ui/scroll-area/scroll-area.svelte';
   import Sidebar from '$lib/components/sidebar/sidebar.svelte';
-  import { Loader2 } from '@lucide/svelte';
+  import Loader from '$lib/components/loader.svelte';
   import { COLLAPSED_SIDEBAR_SIZE } from '$lib/constants/layout';
   import LoadingOverlay from './loading-overlay.svelte';
   import type { PageState } from '$lib/state/page.svelte.js';
@@ -65,7 +65,7 @@
         {#if sidebarState.showPlaceholder}
           <!-- Simple centered loader -->
           <div class="flex h-full items-center justify-center">
-            <Loader2 class="text-muted-foreground h-8 w-8 animate-spin" />
+            <Loader variant="block" size="md" message="" />
           </div>
         {:else}
           <Sidebar {isSidebarCollapsed} {supabase} {session} {refreshSidebar} />

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Circle, ListVideo, Loader2, Plus } from '@lucide/svelte';
+  import { Circle, ListVideo, Plus } from '@lucide/svelte';
   import { type SupabaseClient, type Session } from '@supabase/supabase-js';
   import { SOURCE_INFO, SOURCES } from '$lib/constants/source';
   import * as Popover from '$lib/components/ui/popover';
@@ -14,9 +14,9 @@
   import { handleCreatePlaylist } from '../playlist/playlist-service';
   import Button, { buttonVariants } from '../ui/button/button.svelte';
   import PlaylistContextMenu from '../playlist/playlist-context-menu.svelte';
-  import SidebarItem from './sidebar-item.svelte';
   import type { Playlist } from '$lib/supabase/playlists';
   import StreamingIndicator from '../streaming/streaming-indicator.svelte';
+  import Loader from '../loader.svelte';
 
   let {
     supabase,
@@ -256,7 +256,7 @@
   {#if sidebarState.showPlaceholder}
     <!-- Simple centered loader for entire sidebar -->
     <div class="flex h-full items-center justify-center">
-      <Loader2 class="text-muted-foreground h-8 w-8 animate-spin" />
+      <Loader variant="block" size="md" message="" />
     </div>
   {:else}
     <!-- Real sidebar content -->
@@ -362,7 +362,7 @@
     >
       <div class="flex flex-col">
         {#if sidebarState.playlists === null}
-          <Loader2 class="w-full animate-spin" />
+          <Loader variant="block" size="sm" message="" />
         {:else if session && sidebarState.playlists.length > 0}
           <div class="flex flex-col">
             {#each sidebarState.playlists as playlist, i (playlist.id)}
