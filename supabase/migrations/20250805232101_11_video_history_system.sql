@@ -81,7 +81,7 @@ CREATE OR REPLACE FUNCTION "public"."record_video_history" (
   p_session_start_time TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   p_session_end_time TIMESTAMP WITH TIME ZONE DEFAULT NULL
 ) RETURNS TABLE (
-  id bigint,
+  history_id bigint,
   user_id uuid,
   video_id text,
   source "public"."source",
@@ -138,7 +138,7 @@ BEGIN
   -- Return the created record
   RETURN QUERY
   SELECT
-    vh.id,
+    vh.id AS history_id,
     vh.user_id,
     vh.video_id,
     vh.source,
@@ -162,7 +162,7 @@ CREATE OR REPLACE FUNCTION "public"."update_video_history_session" (
   p_seconds_watched numeric DEFAULT NULL,
   p_session_end_time TIMESTAMP WITH TIME ZONE DEFAULT NULL
 ) RETURNS TABLE (
-  id bigint,
+  history_id bigint,
   user_id uuid,
   video_id text,
   source "public"."source",
@@ -204,7 +204,7 @@ BEGIN
   -- Return the updated record
   RETURN QUERY
   SELECT
-    vh.id,
+    vh.id AS history_id,
     vh.user_id,
     vh.video_id,
     vh.source,
@@ -225,7 +225,7 @@ CREATE OR REPLACE FUNCTION "public"."get_user_video_history" (
   p_limit integer DEFAULT 50,
   p_offset integer DEFAULT 0
 ) RETURNS TABLE (
-  id bigint,
+  history_id bigint,
   user_id uuid,
   video_id text,
   source "public"."source",
@@ -255,7 +255,7 @@ BEGIN
   -- Return video history with video details
   RETURN QUERY
   SELECT
-    vh.id AS id,
+    vh.id AS history_id,
     vh.user_id AS user_id,
     vh.video_id AS video_id,
     vh.source AS source,
