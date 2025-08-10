@@ -6,7 +6,6 @@
     getContentState,
     DEFAULT_SECTION_ID,
   } from '$lib/state/content.svelte';
-  import type { Video } from '$lib/supabase/videos';
   import { onMount } from 'svelte';
 
   type ContentTilesProps = ContentDisplayProps & {
