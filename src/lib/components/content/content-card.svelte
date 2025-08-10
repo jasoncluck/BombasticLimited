@@ -93,21 +93,20 @@
   );
 
   // Create drag drop functionality when needed
-  const dragDrop = $derived(() => {
-    if (!allowVideoReorder || !videos || index === undefined) {
-      return null;
-    }
-    return contentState.createDragDrop({
-      allowVideoReorder,
-      videos,
-      videosCount,
-      playlist,
-      contentFilter,
-      supabase,
-      clearSelection: true,
-      onVideosUpdate,
-    });
-  });
+  const dragDrop = $derived(
+    allowVideoReorder && videos && index !== undefined
+      ? contentState.createDragDrop({
+          allowVideoReorder,
+          videos,
+          videosCount,
+          playlist,
+          contentFilter,
+          supabase,
+          clearSelection: true,
+          onVideosUpdate,
+        })
+      : null
+  );
 
   const selectedVideoIds = $derived(
     selectedVideos.length > 0
@@ -139,7 +138,7 @@
     }
 
     // Add drag drop classes if enabled
-    if (dragDrop() && allowVideoReorder) {
+    if (dragDrop && allowVideoReorder) {
       classes += ` ${contentState.getVideoDragClasses(index, 'TILES')}`;
     }
 
@@ -330,20 +329,20 @@
     data-testid="video-card"
     role="button"
     tabindex="0"
-    draggable={allowVideoReorder && !!dragDrop()}
-    ondragstart={dragDrop() && index !== undefined
-      ? (e) => dragDrop()!.handleDragStart(e, index, sectionId)
+    draggable={allowVideoReorder && !!dragDrop}
+    ondragstart={dragDrop && index !== undefined
+      ? (e) => dragDrop.handleDragStart(e, index, sectionId)
       : undefined}
-    ondragover={allowVideoReorder && dragDrop() && index !== undefined
-      ? (e) => dragDrop()!.handleDragOver(e, index)
+    ondragover={allowVideoReorder && dragDrop && index !== undefined
+      ? (e) => dragDrop.handleDragOver(e, index)
       : undefined}
-    ondragleave={allowVideoReorder && dragDrop()
-      ? (e) => dragDrop()!.handleDragLeave(e)
+    ondragleave={allowVideoReorder && dragDrop
+      ? (e) => dragDrop.handleDragLeave(e)
       : undefined}
-    ondrop={allowVideoReorder && dragDrop() && index !== undefined
-      ? (e) => dragDrop()!.handleDrop(e, index, sectionId)
+    ondrop={allowVideoReorder && dragDrop && index !== undefined
+      ? (e) => dragDrop.handleDrop(e, index, sectionId)
       : undefined}
-    ondragend={dragDrop() ? dragDrop()!.handleDragEnd : undefined}
+    ondragend={dragDrop ? dragDrop.handleDragEnd : undefined}
     onmouseenter={handleMouseEnter}
     onmouseleave={handleMouseLeave}
     onmousedown={handleMouseDown}
