@@ -265,7 +265,12 @@ export class VideoWatchTimeTracker {
    * Start tracking video playback
    */
   async startSession(): Promise<void> {
-    if (!this.session?.user) return;
+    if (!this.session?.user) {
+      console.log('Video tracking: Start session skipped - no authenticated user');
+      return;
+    }
+
+    console.log(`Video tracking: Starting session for video ${this.videoId}`);
 
     try {
       const { history } = await recordVideoHistory({
@@ -280,10 +285,14 @@ export class VideoWatchTimeTracker {
 
       if (history) {
         this.currentHistoryId = history.id;
+        console.log(`Video tracking: Session started with history ID: ${this.currentHistoryId}`);
+      } else {
+        console.log('Video tracking: Failed to create history record - no history returned');
       }
 
       // Set up periodic saving (every 10 seconds)
       this.saveInterval = setInterval(() => {
+        console.log('Video tracking: Periodic save triggered');
         this.saveProgress();
       }, 10000);
     } catch (error) {
@@ -297,6 +306,7 @@ export class VideoWatchTimeTracker {
   onPlay(currentTimeSeconds: number): void {
     if (!this.session?.user) return; // Don't track if not authenticated
 
+    console.log(`Video tracking: Play at ${currentTimeSeconds}s`);
     this.isPlaying = true;
     this.lastPlayTime = currentTimeSeconds;
   }
@@ -307,13 +317,20 @@ export class VideoWatchTimeTracker {
   onPause(currentTimeSeconds: number): void {
     if (!this.session?.user) return; // Don't track if not authenticated
 
-    if (this.isPlaying && this.lastPlayTime !== null) {
-      // Only count time if not seeking (small time difference)
+    if (this.isPlaying && typeof this.lastPlayTime === 'number') {
+      // Only count time if not seeking (reasonable time difference)
       const timeDiff = currentTimeSeconds - this.lastPlayTime;
+      console.log(`Video tracking: Pause at ${currentTimeSeconds}s, diff: ${timeDiff}s, total before: ${this.totalSecondsWatched}s`);
+      
       if (timeDiff > 0 && timeDiff < 60) {
-        // Sanity check: not more than 60 seconds
+        // Sanity check: not more than 60 seconds at once
         this.totalSecondsWatched += timeDiff;
+        console.log(`Video tracking: Added ${timeDiff}s, new total: ${this.totalSecondsWatched}s`);
+      } else {
+        console.log(`Video tracking: Ignoring time diff of ${timeDiff}s (out of range)`);
       }
+    } else {
+      console.log(`Video tracking: Pause ignored - isPlaying: ${this.isPlaying}, lastPlayTime: ${this.lastPlayTime}`);
     }
     this.isPlaying = false;
   }
@@ -324,6 +341,7 @@ export class VideoWatchTimeTracker {
   onSeek(newTimeSeconds: number): void {
     if (!this.session?.user) return; // Don't track if not authenticated
 
+    console.log(`Video tracking: Seek to ${newTimeSeconds}s`);
     // Don't count seeking time, just update the last play time
     this.lastPlayTime = newTimeSeconds;
   }
@@ -337,28 +355,47 @@ export class VideoWatchTimeTracker {
       this.saveInterval = null;
     }
 
+    // If video is still playing when session ends, we need to account for the final segment
+    // However, we can't use onPause(this.lastPlayTime) because lastPlayTime might be stale
+    // Instead, we'll just mark as not playing and let the periodic saves handle the rest
     if (this.isPlaying) {
-      // If video is still playing when session ends, count the final segment
-      this.onPause(this.lastPlayTime);
+      this.isPlaying = false;
     }
 
-    await this.saveProgress(true);
+    try {
+      await this.saveProgress(true);
+    } catch (error) {
+      console.error('Failed to end video history session:', error);
+      // Still try to save without session end time as fallback
+      try {
+        await this.saveProgress(false);
+      } catch (fallbackError) {
+        console.error('Failed to save video history even without session end:', fallbackError);
+      }
+    }
   }
 
   /**
    * Save current progress to database
    */
   private async saveProgress(isSessionEnd: boolean = false): Promise<void> {
-    if (!this.currentHistoryId || !this.session?.user) return;
+    if (!this.currentHistoryId || !this.session?.user) {
+      console.log(`Video tracking: Save skipped - historyId: ${this.currentHistoryId}, user: ${!!this.session?.user}`);
+      return;
+    }
+
+    console.log(`Video tracking: Saving progress - seconds: ${this.totalSecondsWatched}, isSessionEnd: ${isSessionEnd}, historyId: ${this.currentHistoryId}`);
 
     try {
-      await updateVideoHistorySession({
+      const result = await updateVideoHistorySession({
         historyId: this.currentHistoryId,
         secondsWatched: this.totalSecondsWatched,
         sessionEndTime: isSessionEnd ? new Date() : undefined,
         supabase: this.supabase,
         session: this.session,
       });
+      
+      console.log(`Video tracking: Save successful`, result);
     } catch (error) {
       console.error('Failed to save video history progress:', error);
     }

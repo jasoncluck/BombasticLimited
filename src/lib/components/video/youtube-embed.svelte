@@ -56,13 +56,18 @@
     const userId = session?.user?.id;
     const videoId = video.id;
 
+    console.log(`Video tracking: onMount - userId: ${userId}, videoId: ${videoId}`);
+
     if (userId && videoId) {
       const trackingKey = `${userId}-${videoId}`;
 
       // Only create tracker if we don't already have one for this user/video combination
       if (currentTrackingKey !== trackingKey) {
+        console.log(`Video tracking: Creating new tracker - old key: ${currentTrackingKey}, new key: ${trackingKey}`);
+        
         // Clean up existing tracker if any
         if (watchTimeTracker) {
+          console.log('Video tracking: Cleaning up existing tracker');
           watchTimeTracker.endSession().catch(console.error);
           watchTimeTracker = null;
         }
@@ -78,9 +83,13 @@
         currentTrackingKey = trackingKey;
 
         // Start tracking session
+        console.log('Video tracking: Starting new session');
         watchTimeTracker.startSession().catch(console.error);
+      } else {
+        console.log(`Video tracking: Tracker already exists for key: ${trackingKey}`);
       }
     } else {
+      console.log('Video tracking: No user or video, cleaning up');
       // Clean up if user is not logged in or no video
       if (watchTimeTracker) {
         watchTimeTracker.endSession().catch(console.error);
@@ -91,7 +100,9 @@
 
     // Cleanup on unmount or change
     return () => {
+      console.log('Video tracking: onMount cleanup called');
       if (watchTimeTracker) {
+        console.log('Video tracking: Ending session in cleanup');
         watchTimeTracker.endSession().catch(console.error);
         watchTimeTracker = null;
       }
@@ -285,21 +296,30 @@
 
   // Handle YouTube player state changes for video history tracking
   function onPlayerStateChange(event: { data: number; target: any }) {
-    if (!watchTimeTracker) return;
+    if (!watchTimeTracker) {
+      console.log('Video tracking: Player state change ignored - no tracker');
+      return;
+    }
 
     const currentTime = event.target.getCurrentTime() || 0;
+    console.log(`Video tracking: Player state change - state: ${event.data}, time: ${currentTime}s`);
 
     // YouTube player states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (cued)
     switch (event.data) {
-      case YT.PlayerState.PLAYING:
+      case 1: // Playing
+        console.log('Video tracking: YouTube player PLAYING');
         watchTimeTracker.onPlay(currentTime);
         break;
-      case YT.PlayerState.PAUSED: // Paused
+      case 2: // Paused
+        console.log('Video tracking: YouTube player PAUSED');
         watchTimeTracker.onPause(currentTime);
         break;
-      case YT.PlayerState.ENDED: // Ended
+      case 0: // Ended
+        console.log('Video tracking: YouTube player ENDED');
         watchTimeTracker.onPause(currentTime);
         break;
+      default:
+        console.log(`Video tracking: YouTube player state ${event.data} ignored`);
     }
   }
 
