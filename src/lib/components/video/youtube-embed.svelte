@@ -47,18 +47,18 @@
   let watchTimeTracker = $state<ReturnType<
     typeof createVideoWatchTimeTracker
   > | null>(null);
-  
+
   // Track the current video/user combination to prevent unnecessary tracker recreation
   let currentTrackingKey = $state<string | null>(null);
 
   // Initialize watch time tracker when component mounts
-  $effect(() => {
+  onMount(() => {
     const userId = session?.user?.id;
     const videoId = video.id;
-    
+
     if (userId && videoId) {
       const trackingKey = `${userId}-${videoId}`;
-      
+
       // Only create tracker if we don't already have one for this user/video combination
       if (currentTrackingKey !== trackingKey) {
         // Clean up existing tracker if any
@@ -291,13 +291,13 @@
 
     // YouTube player states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (cued)
     switch (event.data) {
-      case 1: // Playing
+      case YT.PlayerState.PLAYING:
         watchTimeTracker.onPlay(currentTime);
         break;
-      case 2: // Paused
+      case YT.PlayerState.PAUSED: // Paused
         watchTimeTracker.onPause(currentTime);
         break;
-      case 0: // Ended
+      case YT.PlayerState.ENDED: // Ended
         watchTimeTracker.onPause(currentTime);
         break;
     }
@@ -384,7 +384,7 @@
 
   beforeNavigate(() => {
     saveCurrentTime(); // async is ok for in-app navigation
-    
+
     // End watch time tracking session before navigation
     if (watchTimeTracker) {
       watchTimeTracker.endSession().catch(console.error);
@@ -399,7 +399,7 @@
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       saveCurrentTime();
     }
-    
+
     // Ensure watch time tracker is properly ended
     if (watchTimeTracker) {
       watchTimeTracker.endSession().catch(console.error);
