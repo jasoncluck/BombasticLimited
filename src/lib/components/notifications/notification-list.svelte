@@ -44,29 +44,42 @@
   // Load more notifications when scrolling near bottom
   let loadingMore = $state(false);
 
+  // Initialize and load notifications - only run once when supabase or filterType changes
+  let listInitializationGuard = $state({ supabase: null, filterType: null });
+  
   $effect(() => {
-    notificationState.initialize(supabase);
-    if (filterType) {
-      notificationState.loadNotifications({ type: filterType });
-    } else {
-      notificationState.loadNotifications();
-    }
-
-    // For demo purposes, if no real notifications exist, show demo data
-    if (
-      notificationState.notifications.length === 0 &&
-      !notificationState.isLoading
-    ) {
-      const demoNotifications = createDemoNotifications();
-      // Simulate adding them to the store for demo
-      setTimeout(() => {
-        if (notificationState.notifications.length === 0) {
-          notificationState.notifications = demoNotifications;
-          notificationState.unreadCount = demoNotifications.filter(
-            (n) => !n.read
-          ).length;
+    if (supabase && (listInitializationGuard.supabase !== supabase || listInitializationGuard.filterType !== filterType)) {
+      listInitializationGuard = { supabase, filterType };
+      
+      notificationState.initialize(supabase);
+      
+      // Only load notifications if we haven't loaded them yet or if filterType changed
+      const shouldLoad = notificationState.notifications.length === 0 && !notificationState.isLoading;
+      
+      if (shouldLoad) {
+        if (filterType) {
+          notificationState.loadNotifications({ type: filterType });
+        } else {
+          notificationState.loadNotifications();
         }
-      }, 1000);
+
+        // For demo purposes, if no real notifications exist, show demo data
+        if (
+          notificationState.notifications.length === 0 &&
+          !notificationState.isLoading
+        ) {
+          const demoNotifications = createDemoNotifications();
+          // Simulate adding them to the store for demo
+          setTimeout(() => {
+            if (notificationState.notifications.length === 0) {
+              notificationState.notifications = demoNotifications;
+              notificationState.unreadCount = demoNotifications.filter(
+                (n) => !n.read
+              ).length;
+            }
+          }, 1000);
+        }
+      }
     }
   });
 

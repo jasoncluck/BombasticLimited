@@ -33,10 +33,15 @@
 
   const notificationState = getNotificationState();
 
-  // Initialize and load preferences
+  // Initialize and load preferences - only run once when supabase changes
+  let preferencesInitializationGuard = $state(false);
+  
   $effect(() => {
-    notificationState.initialize(supabase);
-    loadPreferences();
+    if (supabase && !preferencesInitializationGuard) {
+      preferencesInitializationGuard = true;
+      notificationState.initialize(supabase);
+      loadPreferences();
+    }
   });
 
   // Sync with store

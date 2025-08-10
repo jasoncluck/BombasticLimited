@@ -118,7 +118,7 @@ export class NotificationStateClass {
   }
 
   initialize(supabase: SupabaseClient<Database>) {
-    if (this.isInitialized) return;
+    if (this.isInitialized && this.supabase === supabase) return;
 
     this.supabase = supabase;
     this.notificationService = createNotificationService(supabase);

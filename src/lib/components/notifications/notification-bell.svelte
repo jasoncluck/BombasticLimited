@@ -25,11 +25,19 @@
 
   const notificationState = getNotificationState();
 
-  // Initialize notification manager
+  // Initialize notification manager - only run once when supabase changes
+  let initializationGuard = $state(false);
+  
   $effect(() => {
-    notificationState.initialize(supabase);
-    notificationState.loadNotifications();
-    notificationState.loadUnreadCount();
+    if (supabase && !initializationGuard) {
+      initializationGuard = true;
+      notificationState.initialize(supabase);
+      // Only load if not already loaded
+      if (notificationState.notifications.length === 0 && !notificationState.isLoading) {
+        notificationState.loadNotifications();
+        notificationState.loadUnreadCount();
+      }
+    }
   });
 
   // Handle mark all as read
