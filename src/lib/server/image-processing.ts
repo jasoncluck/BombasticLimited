@@ -114,7 +114,7 @@ export function detectOptimalFormat(
 
 // Smart quality adjustment based on image content and size
 export function calculateOptimalQuality(
-  metadata: sharp.Metadata,
+  metadata: Partial<sharp.Metadata>,
   targetFormat: string,
   baseQuality = 90
 ): number {

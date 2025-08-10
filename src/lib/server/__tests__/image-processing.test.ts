@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import sharp from 'sharp';
 import {
   getCroppedPlaylistImageUrlServer,
   getVideoThumbnailWebpUrlServer,
@@ -84,7 +85,7 @@ describe('detectOptimalFormat', () => {
 
 describe('calculateOptimalQuality', () => {
   it('should adjust quality based on format', () => {
-    const metadata = { width: 1280, height: 720 };
+    const metadata: Partial<sharp.Metadata> = { width: 1280, height: 720 };
     
     // AVIF should get lower quality (better compression)
     const avifQuality = calculateOptimalQuality(metadata, 'avif', 90);
@@ -102,11 +103,11 @@ describe('calculateOptimalQuality', () => {
 
   it('should adjust quality based on image size', () => {
     // Large image
-    const largeMetadata = { width: 2560, height: 1440 };
+    const largeMetadata: Partial<sharp.Metadata> = { width: 2560, height: 1440 };
     const largeQuality = calculateOptimalQuality(largeMetadata, 'webp', 90);
     
     // Small image  
-    const smallMetadata = { width: 320, height: 180 };
+    const smallMetadata: Partial<sharp.Metadata> = { width: 320, height: 180 };
     const smallQuality = calculateOptimalQuality(smallMetadata, 'webp', 90);
     
     expect(smallQuality).toBeGreaterThan(largeQuality);
