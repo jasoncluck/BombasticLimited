@@ -38,7 +38,7 @@
   {#if isLoading}
     <!-- Simple centered loader -->
     <div class="flex h-full w-full items-center justify-center">
-      <Loader2 class="h-6 w-6 animate-spin text-muted-foreground" />
+      <Loader2 class="text-muted-foreground h-6 w-6 animate-spin" />
     </div>
   {:else}
     <!-- Real content with exact same structure -->
