@@ -75,6 +75,7 @@ describe('getCroppedPlaylistImageUrlServer', () => {
     expect(mockSharp).toHaveBeenCalledWith(mockImageBuffer, {
       failOnError: false,
       density: 72,
+      pages: 1, // Added for animated image handling
     });
 
     expect(mockExtract).toHaveBeenCalledWith({
@@ -86,10 +87,11 @@ describe('getCroppedPlaylistImageUrlServer', () => {
 
     expect(mockWebp).toHaveBeenCalledWith({
       quality: 90,
-      effort: 2,
+      effort: 3, // Enhanced effort level
       lossless: false,
       nearLossless: false,
       smartSubsample: true,
+      progressive: true, // Added progressive loading support
     });
 
     // Verify result format
@@ -238,10 +240,11 @@ describe('getVideoThumbnailWebpUrlServer', () => {
 
     expect(mockWebp).toHaveBeenCalledWith({
       quality: 90,
-      effort: 2,
+      effort: 3, // Enhanced effort level
       lossless: false,
       nearLossless: false,
       smartSubsample: true,
+      progressive: true, // Added progressive loading support
     });
 
     // Verify result format

@@ -430,20 +430,19 @@ const handleNavigationRequest = async (request: Request): Promise<Response> => {
   }
 };
 
-// Simple and efficient static asset caching with optimized handling for Vercel images
+// Simple and efficient static asset caching
 const cacheStaticAsset = async (request: Request): Promise<Response> => {
   const cache = await caches.open(STATIC_CACHE);
   const cached = await cache.match(request);
   const url = new URL(request.url);
-  const isVercelImage = url.pathname.startsWith('/_vercel/image');
 
   if (cached) {
     // Serve from cache and optionally refresh in background for long-lived assets
     const cacheDate = cached.headers.get('date');
     if (cacheDate) {
       const age = Date.now() - new Date(cacheDate).getTime();
-      // For Vercel images, refresh after 7 days; for other assets, refresh after 1 day
-      const refreshThreshold = isVercelImage ? 604800000 : 86400000;
+      // Refresh static assets after 1 day
+      const refreshThreshold = 86400000;
 
       if (age > refreshThreshold) {
         fetch(request)
@@ -697,13 +696,10 @@ sw.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle static assets and Vercel optimized images
-  // Note: Vercel image optimization URLs (/_vercel/image) are now properly cached
-  // for better performance and to eliminate image pop-in effects
+  // Handle static assets 
   if (
     STATIC_ASSETS.includes(url.pathname) ||
-    STATIC_EXTENSIONS.test(url.pathname) ||
-    url.pathname.startsWith('/_vercel/image')
+    STATIC_EXTENSIONS.test(url.pathname)
   ) {
     event.respondWith(cacheStaticAsset(request));
     return;
