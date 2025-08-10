@@ -101,14 +101,29 @@ export function getMemoryUsage() {
 }
 
 // Browser format support detection
-export function detectOptimalFormat(
-  acceptHeader?: string | null
-): 'avif' | 'webp' | 'jpeg' {
-  if (!acceptHeader) return 'webp'; // Default to WebP
-
+export function detectOptimalFormat(acceptHeader?: string | null): 'avif' | 'webp' | 'jpeg' {
+  if (!acceptHeader) {
+    return 'avif'; // Default to AVIF for best compression
+  }
+  
   const accept = acceptHeader.toLowerCase();
-  if (accept.includes('image/avif')) return 'avif';
-  if (accept.includes('image/webp')) return 'webp';
+  
+  // Explicit AVIF support
+  if (accept.includes('image/avif')) {
+    return 'avif';
+  }
+  
+  // Explicit WebP support
+  if (accept.includes('image/webp')) {
+    return 'webp';
+  }
+  
+  // For modern browsers that accept all image types but don't explicitly list AVIF/WebP
+  // We should default to the best format (AVIF) since most modern browsers support it
+  if (accept.includes('image/*') || accept.includes('*/*')) {
+    return 'avif'; // Default to AVIF for modern browsers with generic support
+  }
+  
   return 'jpeg';
 }
 
@@ -164,12 +179,10 @@ export async function processImageServer({
 
   // Determine optimal format based on Accept header or explicit format
   let targetFormat: 'avif' | 'webp' | 'jpeg';
-  if (options.format === 'auto') {
+  if (options.format === 'auto' || !options.format) {
     targetFormat = detectOptimalFormat(acceptHeader);
-    console.log(`Auto-detected optimal format: ${targetFormat} based on Accept header: ${acceptHeader}`);
   } else {
-    targetFormat = (options.format as 'avif' | 'webp' | 'jpeg') || 'webp';
-    console.log(`Using explicit format: ${targetFormat}`);
+    targetFormat = (options.format as 'avif' | 'webp' | 'jpeg');
   }
 
   // Determine if we're using standard resolution (for cropped images)
@@ -294,7 +307,6 @@ export async function processImageServer({
     const base64 = processedImageBuffer.toString('base64');
     const dataUrl = `data:${mimeType};base64,${base64}`;
     
-    console.log(`Successfully processed image: ${mimeType}, size: ${Math.round(processedImageBuffer.length / 1024)}KB`);
     return dataUrl;
   } catch (error) {
     console.error(`Server image processing failed for ${imageUrl}:`, error);

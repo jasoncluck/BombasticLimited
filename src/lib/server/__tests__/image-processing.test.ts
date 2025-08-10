@@ -72,14 +72,21 @@ describe('detectOptimalFormat', () => {
     expect(detectOptimalFormat('text/html,image/webp,*/*')).toBe('webp');
   });
 
-  it('should fallback to JPEG when neither AVIF nor WebP is supported', () => {
-    expect(detectOptimalFormat('image/jpeg,*/*')).toBe('jpeg');
-    expect(detectOptimalFormat('text/html,*/*')).toBe('jpeg');
+  it('should fallback to AVIF for generic image support', () => {
+    expect(detectOptimalFormat('image/jpeg,*/*')).toBe('avif');
+    expect(detectOptimalFormat('text/html,*/*')).toBe('avif');
+    expect(detectOptimalFormat('image/*')).toBe('avif');
   });
 
-  it('should default to WebP when no Accept header is provided', () => {
-    expect(detectOptimalFormat(null)).toBe('webp');
-    expect(detectOptimalFormat(undefined)).toBe('webp');
+  it('should fallback to JPEG only for very specific legacy cases', () => {
+    expect(detectOptimalFormat('image/jpeg')).toBe('jpeg');
+    expect(detectOptimalFormat('text/html')).toBe('jpeg');
+    expect(detectOptimalFormat('application/json')).toBe('jpeg');
+  });
+
+  it('should default to AVIF when no Accept header is provided', () => {
+    expect(detectOptimalFormat(null)).toBe('avif');
+    expect(detectOptimalFormat(undefined)).toBe('avif');
   });
 });
 
@@ -590,17 +597,17 @@ describe('Image Processing Cache Integration', () => {
     // First call should process the image
     const result1 = await getCroppedPlaylistImageUrlServer({
       imageProperties,
-      thumbnailMaxResUrl: 'https://example.com/cached-image.jpg',
+      thumbnailMaxResUrl: 'https://i.ytimg.com/vi/cached-image.jpg',
       thumbnailUrl: null,
     });
 
-    expect(result1).toContain('data:image/webp;base64,');
+    expect(result1).toContain('data:image/avif;base64,');
     expect(global.fetch).toHaveBeenCalledTimes(1);
 
     // Second call should return cached result
     const result2 = await getCroppedPlaylistImageUrlServer({
       imageProperties,
-      thumbnailMaxResUrl: 'https://example.com/cached-image.jpg',
+      thumbnailMaxResUrl: 'https://i.ytimg.com/vi/cached-image.jpg',
       thumbnailUrl: null,
     });
 
@@ -622,15 +629,15 @@ describe('Image Processing Cache Integration', () => {
 
     // First call should process the image
     const result1 = await getVideoThumbnailWebpUrlServer({
-      thumbnailUrl: 'https://example.com/cached-video-thumb.jpg',
+      thumbnailUrl: 'https://i.ytimg.com/vi/cached-video-thumb.jpg',
     });
 
-    expect(result1).toContain('data:image/webp;base64,');
+    expect(result1).toContain('data:image/avif;base64,');
     expect(global.fetch).toHaveBeenCalledTimes(1);
 
     // Second call should return cached result
     const result2 = await getVideoThumbnailWebpUrlServer({
-      thumbnailUrl: 'https://example.com/cached-video-thumb.jpg',
+      thumbnailUrl: 'https://i.ytimg.com/vi/cached-video-thumb.jpg',
     });
 
     expect(result2).toBe(result1);
@@ -651,14 +658,14 @@ describe('Image Processing Cache Integration', () => {
     // First call with quality 90
     mockToBuffer.mockResolvedValueOnce(mockProcessedBuffer1);
     const result1 = await getVideoThumbnailWebpUrlServer({
-      thumbnailUrl: 'https://example.com/options-test.jpg',
+      thumbnailUrl: 'https://i.ytimg.com/vi/options-test.jpg',
       options: { quality: 90 },
     });
 
     // Second call with quality 70 (different options)
     mockToBuffer.mockResolvedValueOnce(mockProcessedBuffer2);
     const result2 = await getVideoThumbnailWebpUrlServer({
-      thumbnailUrl: 'https://example.com/options-test.jpg',
+      thumbnailUrl: 'https://i.ytimg.com/vi/options-test.jpg',
       options: { quality: 70 },
     });
 
@@ -690,16 +697,16 @@ describe('Image Processing Cache Integration', () => {
 
     // Auth request
     const authResult = await getVideoThumbnailWebpUrlServer({
-      thumbnailUrl: 'https://example.com/auth-test.jpg',
+      thumbnailUrl: 'https://i.ytimg.com/vi/auth-test.jpg',
     });
 
     // Anonymous request (should not use auth cache)
     const anonResult = await getVideoThumbnailWebpUrlServer({
-      thumbnailUrl: 'https://example.com/auth-test.jpg',
+      thumbnailUrl: 'https://i.ytimg.com/vi/auth-test.jpg',
     });
 
-    expect(authResult).toContain('data:image/webp;base64,');
-    expect(anonResult).toContain('data:image/webp;base64,');
+    expect(authResult).toContain('data:image/avif;base64,');
+    expect(anonResult).toContain('data:image/avif;base64,');
     expect(global.fetch).toHaveBeenCalledTimes(2); // Different auth states, both should fetch
   });
 });
