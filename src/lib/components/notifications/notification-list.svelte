@@ -169,7 +169,6 @@
     >
       <div class="space-y-1">
         {#each $notifications as notification (notification.id)}
-          {@const IconComponent = getNotificationIcon(notification.type)}
           <div
             class="group flex items-start space-x-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors
               {!notification.read ? 'bg-muted/20' : ''}
@@ -182,9 +181,19 @@
             <!-- Icon -->
             <div class="flex-shrink-0 mt-1">
               <div class="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-                <IconComponent 
-                  class="h-4 w-4 {getNotificationColor(notification.type)}" 
-                />
+                {#if notification.type === 'system'}
+                  <AlertCircle class="h-4 w-4 text-orange-500" />
+                {:else if notification.type === 'content'}
+                  <Bell class="h-4 w-4 text-blue-500" />
+                {:else if notification.type === 'user'}
+                  <User class="h-4 w-4 text-green-500" />
+                {:else if notification.type === 'playlist_update'}
+                  <Play class="h-4 w-4 text-purple-500" />
+                {:else if notification.type === 'mention'}
+                  <AtSign class="h-4 w-4 text-red-500" />
+                {:else}
+                  <Bell class="h-4 w-4 text-gray-500" />
+                {/if}
               </div>
               {#if !notification.read}
                 <div class="absolute -ml-1 -mt-1 h-3 w-3 rounded-full bg-blue-500"></div>
