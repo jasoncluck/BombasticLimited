@@ -45,18 +45,19 @@
   let loadingMore = $state(false);
 
   // Initialize and load notifications - only run once when supabase or filterType changes
-  let listInitializationGuard = $state<{
-    supabase: SupabaseClient<Database> | null;
-    filterType: NotificationType | undefined | null;
-  }>({ supabase: null, filterType: null });
+  let isInitialized = $state(false);
+  let currentSupabase: SupabaseClient<Database> | null = null;
+  let currentFilterType: NotificationType | undefined | null = null;
 
   $effect(() => {
+    // Only run if supabase or filterType actually changed
     if (
       supabase &&
-      (listInitializationGuard.supabase !== supabase ||
-        listInitializationGuard.filterType !== filterType)
+      (currentSupabase !== supabase || currentFilterType !== filterType)
     ) {
-      listInitializationGuard = { supabase, filterType: filterType || null };
+      // Update tracking variables without triggering reactive updates
+      currentSupabase = supabase;
+      currentFilterType = filterType;
 
       notificationState.initialize(supabase);
 
@@ -88,6 +89,10 @@
             }
           }, 1000);
         }
+      }
+
+      if (!isInitialized) {
+        isInitialized = true;
       }
     }
   });

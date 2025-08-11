@@ -38,21 +38,13 @@ CREATE TABLE IF NOT EXISTS public.notification_preferences (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
--- Create profile_notifications table to map each user to notifications
-CREATE TABLE IF NOT EXISTS public.profile_notifications (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
-  notification_id uuid NOT NULL REFERENCES public.notifications (id) ON DELETE CASCADE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
-  UNIQUE(user_id, notification_id)
-);
+-- Note: profile_notifications table removed as it was deemed unnecessary
+-- The notifications table already has user_id which provides the mapping
 
 -- Add comments for documentation
 COMMENT ON TABLE public.notifications IS 'User notifications with different types and metadata';
 
 COMMENT ON TABLE public.notification_preferences IS 'User notification preferences and settings';
-
-COMMENT ON TABLE public.profile_notifications IS 'Maps users to their notifications';
 
 COMMENT ON COLUMN public.notifications.type IS 'Type of notification: system, content, user, playlist_update, mention';
 
@@ -70,10 +62,6 @@ CREATE INDEX IF NOT EXISTS notifications_user_id_created_at_idx ON public.notifi
 CREATE INDEX IF NOT EXISTS notifications_type_idx ON public.notifications (type);
 
 CREATE INDEX IF NOT EXISTS notifications_read_idx ON public.notifications (read);
-
-CREATE INDEX IF NOT EXISTS profile_notifications_user_id_idx ON public.profile_notifications (user_id);
-
-CREATE INDEX IF NOT EXISTS profile_notifications_notification_id_idx ON public.profile_notifications (notification_id);
 
 -- Create updated_at trigger for notifications
 CREATE OR REPLACE FUNCTION public.update_updated_at_column () RETURNS TRIGGER AS $$
@@ -95,8 +83,6 @@ EXECUTE FUNCTION public.update_updated_at_column ();
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE public.notification_preferences ENABLE ROW LEVEL SECURITY;
-
-ALTER TABLE public.profile_notifications ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for notifications
 CREATE POLICY "Users can view their own notifications" ON public.notifications FOR
@@ -125,17 +111,6 @@ FOR UPDATE
 CREATE POLICY "Users can insert their own notification preferences" ON public.notification_preferences FOR INSERT
 WITH
   CHECK (auth.uid () = user_id);
-
--- RLS Policies for profile_notifications
-CREATE POLICY "Users can view their own profile notifications" ON public.profile_notifications FOR
-SELECT
-  USING (user_id = auth.uid());
-
-CREATE POLICY "System can insert profile notifications" ON public.profile_notifications FOR INSERT
-WITH
-  CHECK (TRUE);
-
-CREATE POLICY "Users can delete their own profile notifications" ON public.profile_notifications FOR DELETE USING (user_id = auth.uid());
 
 -- Function to create default notification preferences for new users
 CREATE OR REPLACE FUNCTION public.create_notification_preferences_for_user () RETURNS TRIGGER AS $$
@@ -220,11 +195,6 @@ BEGIN
             target_user_id, notification_type, notification_title, 
             notification_message, notification_metadata, notification_action_url
         ) RETURNING id INTO notification_id;
-        
-        -- Also create entry in profile_notifications table
-        INSERT INTO public.profile_notifications (user_id, notification_id)
-        VALUES (target_user_id, notification_id)
-        ON CONFLICT (user_id, notification_id) DO NOTHING;
     END IF;
     
     RETURN notification_id;
@@ -272,11 +242,6 @@ BEGIN
                 notification_message, notification_metadata, notification_action_url
             ) RETURNING id INTO notification_id;
             
-            -- Also create entry in profile_notifications table
-            INSERT INTO public.profile_notifications (user_id, notification_id)
-            VALUES (user_record.user_id, notification_id)
-            ON CONFLICT (user_id, notification_id) DO NOTHING;
-            
             notification_count := notification_count + 1;
         END IF;
     END LOOP;
@@ -303,6 +268,3 @@ ADD TABLE public.notifications;
 
 ALTER PUBLICATION supabase_realtime
 ADD TABLE public.notification_preferences;
-
-ALTER PUBLICATION supabase_realtime
-ADD TABLE public.profile_notifications;
