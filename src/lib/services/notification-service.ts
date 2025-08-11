@@ -7,7 +7,7 @@ import type {
   NotificationCounts,
   CreateNotificationParams,
   NotificationFilters,
-  NotificationType
+  NotificationType,
 } from '$lib/supabase/notifications';
 
 export class NotificationService {
@@ -22,15 +22,21 @@ export class NotificationService {
     count?: number;
   }> {
     try {
-      console.log('🔔 NotificationService: getNotifications called with filters:', filters);
-      
+      console.log(
+        '🔔 NotificationService: getNotifications called with filters:',
+        filters
+      );
+
       const user = await this.supabase.auth.getUser();
       if (!user.data.user?.id) {
         console.log('🔔 NotificationService: No authenticated user found');
         return { data: [], error: null, count: 0 };
       }
 
-      console.log('🔔 NotificationService: User authenticated:', user.data.user.id);
+      console.log(
+        '🔔 NotificationService: User authenticated:',
+        user.data.user.id
+      );
 
       let query = this.supabase
         .from('notifications')
@@ -51,7 +57,10 @@ export class NotificationService {
       }
 
       if (filters.offset) {
-        query = query.range(filters.offset, filters.offset + (filters.limit || 20) - 1);
+        query = query.range(
+          filters.offset,
+          filters.offset + (filters.limit || 20) - 1
+        );
       }
 
       console.log('🔔 NotificationService: Executing query...');
@@ -62,29 +71,36 @@ export class NotificationService {
         return { data: null, error };
       }
 
-      console.log('🔔 NotificationService: Query successful:', { 
-        recordCount: data?.length || 0, 
+      console.log('🔔 NotificationService: Query successful:', {
+        recordCount: data?.length || 0,
         totalCount: count,
-        firstRecord: data?.[0] ? { 
-          id: data[0].id, 
-          title: data[0].title, 
-          type: data[0].type,
-          read: data[0].read 
-        } : null 
+        firstRecord: data?.[0]
+          ? {
+              id: data[0].id,
+              title: data[0].title,
+              type: data[0].type,
+              read: data[0].read,
+            }
+          : null,
       });
 
       // Format the notifications with metadata
-      const formattedData: NotificationWithMeta[] = (data || []).map(notification => ({
-        ...notification,
-        metadata: notification.metadata as Record<string, any> || {},
-        action_url: notification.action_url || undefined,
-        formatted_time: this.formatRelativeTime(notification.created_at),
-        is_new: this.isWithinLastHour(notification.created_at)
-      }));
+      const formattedData: NotificationWithMeta[] = (data || []).map(
+        (notification) => ({
+          ...notification,
+          metadata: (notification.metadata as Record<string, any>) || {},
+          action_url: notification.action_url || undefined,
+          formatted_time: this.formatRelativeTime(notification.created_at),
+          is_new: this.isWithinLastHour(notification.created_at),
+        })
+      );
 
       return { data: formattedData, error: null, count: count || 0 };
     } catch (error) {
-      console.error('🔔 NotificationService: Exception in getNotifications:', error);
+      console.error(
+        '🔔 NotificationService: Exception in getNotifications:',
+        error
+      );
       return { data: null, error };
     }
   }
@@ -95,28 +111,42 @@ export class NotificationService {
   async getUnreadCount(): Promise<{ data: number | null; error: any }> {
     try {
       console.log('🔔 NotificationService: getUnreadCount called');
-      
+
       const user = await this.supabase.auth.getUser();
       if (!user.data.user?.id) {
-        console.log('🔔 NotificationService: No authenticated user for unread count');
+        console.log(
+          '🔔 NotificationService: No authenticated user for unread count'
+        );
         return { data: 0, error: null };
       }
 
-      console.log('🔔 NotificationService: Getting unread count for user:', user.data.user.id);
+      console.log(
+        '🔔 NotificationService: Getting unread count for user:',
+        user.data.user.id
+      );
 
-      const { data, error } = await this.supabase.rpc('get_unread_notification_count', {
-        target_user_id: user.data.user.id
-      });
+      const { data, error } = await this.supabase.rpc(
+        'get_unread_notification_count',
+        {
+          target_user_id: user.data.user.id,
+        }
+      );
 
       if (error) {
-        console.error('🔔 NotificationService: RPC error for unread count:', error);
+        console.error(
+          '🔔 NotificationService: RPC error for unread count:',
+          error
+        );
       } else {
         console.log('🔔 NotificationService: Unread count RPC result:', data);
       }
 
       return { data: data || 0, error };
     } catch (error) {
-      console.error('🔔 NotificationService: Exception in getUnreadCount:', error);
+      console.error(
+        '🔔 NotificationService: Exception in getUnreadCount:',
+        error
+      );
       return { data: null, error };
     }
   }
@@ -124,7 +154,10 @@ export class NotificationService {
   /**
    * Get notification counts by type
    */
-  async getNotificationCounts(): Promise<{ data: NotificationCounts | null; error: any }> {
+  async getNotificationCounts(): Promise<{
+    data: NotificationCounts | null;
+    error: any;
+  }> {
     try {
       const user = await this.supabase.auth.getUser();
       if (!user.data.user?.id) {
@@ -136,8 +169,8 @@ export class NotificationService {
             content: 0,
             user: 0,
             playlist_update: 0,
-            mention: 0
-          }
+            mention: 0,
+          },
         };
         return { data: emptyCounts, error: null };
       }
@@ -153,14 +186,16 @@ export class NotificationService {
 
       const counts: NotificationCounts = {
         total: notifications.length,
-        unread: notifications.filter(n => !n.read).length,
+        unread: notifications.filter((n) => !n.read).length,
         by_type: {
-          system: notifications.filter(n => n.type === 'system').length,
-          content: notifications.filter(n => n.type === 'content').length,
-          user: notifications.filter(n => n.type === 'user').length,
-          playlist_update: notifications.filter(n => n.type === 'playlist_update').length,
-          mention: notifications.filter(n => n.type === 'mention').length
-        }
+          system: notifications.filter((n) => n.type === 'system').length,
+          content: notifications.filter((n) => n.type === 'content').length,
+          user: notifications.filter((n) => n.type === 'user').length,
+          playlist_update: notifications.filter(
+            (n) => n.type === 'playlist_update'
+          ).length,
+          mention: notifications.filter((n) => n.type === 'mention').length,
+        },
       };
 
       return { data: counts, error: null };
@@ -181,7 +216,7 @@ export class NotificationService {
 
       const { error } = await this.supabase.rpc('mark_notifications_as_read', {
         target_user_id: user.data.user.id,
-        notification_ids: notificationIds || undefined
+        notification_ids: notificationIds || undefined,
       });
 
       return { error };
@@ -193,14 +228,19 @@ export class NotificationService {
   /**
    * Create a new notification
    */
-  async createNotification(params: CreateNotificationParams): Promise<{ data: string | null; error: any }> {
+  async createNotification(
+    params: CreateNotificationParams
+  ): Promise<{ data: string | null; error: any }> {
     try {
-      console.log('🔔 NotificationService: createNotification called with params:', {
-        user_id: params.user_id,
-        type: params.type,
-        title: params.title,
-        message: params.message.substring(0, 50) + '...'
-      });
+      console.log(
+        '🔔 NotificationService: createNotification called with params:',
+        {
+          user_id: params.user_id,
+          type: params.type,
+          title: params.title,
+          message: params.message.substring(0, 50) + '...',
+        }
+      );
 
       const { data, error } = await this.supabase.rpc('create_notification', {
         target_user_id: params.user_id,
@@ -208,18 +248,27 @@ export class NotificationService {
         notification_title: params.title,
         notification_message: params.message,
         notification_metadata: params.metadata || {},
-        notification_action_url: params.action_url
+        notification_action_url: params.action_url,
       });
 
       if (error) {
-        console.error('🔔 NotificationService: Error creating notification:', error);
+        console.error(
+          '🔔 NotificationService: Error creating notification:',
+          error
+        );
       } else {
-        console.log('🔔 NotificationService: Notification created successfully with ID:', data);
+        console.log(
+          '🔔 NotificationService: Notification created successfully with ID:',
+          data
+        );
       }
 
       return { data, error };
     } catch (error) {
-      console.error('🔔 NotificationService: Exception in createNotification:', error);
+      console.error(
+        '🔔 NotificationService: Exception in createNotification:',
+        error
+      );
       return { data: null, error };
     }
   }
@@ -227,7 +276,9 @@ export class NotificationService {
   /**
    * Delete notifications
    */
-  async deleteNotifications(notificationIds: string[]): Promise<{ error: any }> {
+  async deleteNotifications(
+    notificationIds: string[]
+  ): Promise<{ error: any }> {
     try {
       const user = await this.supabase.auth.getUser();
       if (!user.data.user?.id) {
@@ -249,7 +300,10 @@ export class NotificationService {
   /**
    * Get notification preferences for current user
    */
-  async getNotificationPreferences(): Promise<{ data: NotificationPreferences | null; error: any }> {
+  async getNotificationPreferences(): Promise<{
+    data: NotificationPreferences | null;
+    error: any;
+  }> {
     try {
       const user = await this.supabase.auth.getUser();
       if (!user.data.user?.id) {
@@ -272,7 +326,12 @@ export class NotificationService {
    * Update notification preferences
    */
   async updateNotificationPreferences(
-    preferences: Partial<Omit<NotificationPreferences, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
+    preferences: Partial<
+      Omit<
+        NotificationPreferences,
+        'id' | 'user_id' | 'created_at' | 'updated_at'
+      >
+    >
   ): Promise<{ data: NotificationPreferences | null; error: any }> {
     try {
       const user = await this.supabase.auth.getUser();
@@ -304,13 +363,16 @@ export class NotificationService {
     action_url?: string;
   }): Promise<{ data: number | null; error: any }> {
     try {
-      const { data, error } = await this.supabase.rpc('create_notification_for_all_users', {
-        notification_type: params.type,
-        notification_title: params.title,
-        notification_message: params.message,
-        notification_metadata: params.metadata || {},
-        notification_action_url: params.action_url
-      });
+      const { data, error } = await this.supabase.rpc(
+        'create_notification_for_all_users',
+        {
+          notification_type: params.type,
+          notification_title: params.title,
+          notification_message: params.message,
+          notification_metadata: params.metadata || {},
+          notification_action_url: params.action_url,
+        }
+      );
 
       return { data, error };
     } catch (error) {
@@ -324,7 +386,9 @@ export class NotificationService {
   private formatRelativeTime(timestamp: string): string {
     const now = new Date();
     const notificationTime = new Date(timestamp);
-    const diffInSeconds = Math.floor((now.getTime() - notificationTime.getTime()) / 1000);
+    const diffInSeconds = Math.floor(
+      (now.getTime() - notificationTime.getTime()) / 1000
+    );
 
     if (diffInSeconds < 60) {
       return 'Just now';

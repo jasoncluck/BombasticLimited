@@ -380,11 +380,7 @@
       >
         Test Content
       </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        onclick={() => showDemoToast('user')}
-      >
+      <Button variant="outline" size="sm" onclick={() => showDemoToast('user')}>
         Test User
       </Button>
       <Button

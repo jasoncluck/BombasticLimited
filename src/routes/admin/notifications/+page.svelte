@@ -13,7 +13,7 @@
     { value: 'content', label: 'Content' },
     { value: 'user', label: 'User' },
     { value: 'playlist_update', label: 'Playlist Update' },
-    { value: 'mention', label: 'Mention' }
+    { value: 'mention', label: 'Mention' },
   ];
 
   let selectedType = 'system';
@@ -26,21 +26,24 @@
     welcome: {
       type: 'system',
       title: 'Welcome to Bombastic!',
-      message: 'Thanks for being part of our community! Explore playlists and discover great content.',
-      actionUrl: '/account/notifications'
+      message:
+        'Thanks for being part of our community! Explore playlists and discover great content.',
+      actionUrl: '/account/notifications',
     },
     feature: {
       type: 'system',
       title: 'New Feature Released!',
-      message: 'Check out our enhanced playlist features and improved user experience.',
-      actionUrl: '/features'
+      message:
+        'Check out our enhanced playlist features and improved user experience.',
+      actionUrl: '/features',
     },
     maintenance: {
       type: 'system',
       title: 'Scheduled Maintenance',
-      message: 'We will be performing maintenance tonight from 2-4 AM EST. Some features may be temporarily unavailable.',
-      actionUrl: ''
-    }
+      message:
+        'We will be performing maintenance tonight from 2-4 AM EST. Some features may be temporarily unavailable.',
+      actionUrl: '',
+    },
   };
 
   function loadTemplate(templateName: keyof typeof templates) {
@@ -63,15 +66,19 @@
   <title>Admin - Notification Management | Bombastic</title>
 </svelte:head>
 
-<div class="container mx-auto px-4 py-8 max-w-4xl">
+<div class="container mx-auto max-w-4xl px-4 py-8">
   <div class="mb-8">
-    <h1 class="text-3xl font-bold mb-2">Notification Management</h1>
-    <p class="text-gray-600">Send notifications to all users or test notifications</p>
+    <h1 class="mb-2 text-3xl font-bold">Notification Management</h1>
+    <p class="text-gray-600">
+      Send notifications to all users or test notifications
+    </p>
   </div>
 
   <!-- Result Messages -->
   {#if form?.success}
-    <div class="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+    <div
+      class="mb-6 rounded border border-green-400 bg-green-100 p-4 text-green-700"
+    >
       {#if form.count !== undefined}
         ✅ Global notification sent successfully to {form.count} users!
       {:else}
@@ -79,44 +86,44 @@
       {/if}
     </div>
   {:else if form?.error}
-    <div class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+    <div class="mb-6 rounded border border-red-400 bg-red-100 p-4 text-red-700">
       ❌ Error: {form.error}
     </div>
   {/if}
 
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+  <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
     <!-- Notification Form -->
-    <div class="bg-white shadow-lg rounded-lg p-6">
-      <h2 class="text-xl font-semibold mb-4">Create Notification</h2>
+    <div class="rounded-lg bg-white p-6 shadow-lg">
+      <h2 class="mb-4 text-xl font-semibold">Create Notification</h2>
 
       <!-- Template Buttons -->
       <div class="mb-6">
-        <h3 class="text-sm font-medium text-gray-700 mb-2">Quick Templates:</h3>
+        <h3 class="mb-2 text-sm font-medium text-gray-700">Quick Templates:</h3>
         <div class="flex flex-wrap gap-2">
           <button
             type="button"
-            class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+            class="rounded bg-blue-100 px-3 py-1 text-sm text-blue-700 hover:bg-blue-200"
             onclick={() => loadTemplate('welcome')}
           >
             Welcome
           </button>
           <button
             type="button"
-            class="px-3 py-1 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200"
+            class="rounded bg-green-100 px-3 py-1 text-sm text-green-700 hover:bg-green-200"
             onclick={() => loadTemplate('feature')}
           >
             New Feature
           </button>
           <button
             type="button"
-            class="px-3 py-1 text-sm bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200"
+            class="rounded bg-yellow-100 px-3 py-1 text-sm text-yellow-700 hover:bg-yellow-200"
             onclick={() => loadTemplate('maintenance')}
           >
             Maintenance
           </button>
           <button
             type="button"
-            class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+            class="rounded bg-gray-100 px-3 py-1 text-sm text-gray-700 hover:bg-gray-200"
             onclick={resetForm}
           >
             Clear
@@ -124,24 +131,30 @@
         </div>
       </div>
 
-      <form method="POST" use:enhance={() => {
-        isSubmitting = true;
-        return async ({ update }) => {
-          await update();
-          isSubmitting = false;
-        };
-      }}>
+      <form
+        method="POST"
+        use:enhance={() => {
+          isSubmitting = true;
+          return async ({ update }) => {
+            await update();
+            isSubmitting = false;
+          };
+        }}
+      >
         <div class="space-y-4">
           <!-- Type Selection -->
           <div>
-            <label for="type" class="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              for="type"
+              class="mb-1 block text-sm font-medium text-gray-700"
+            >
               Type
             </label>
             <select
               id="type"
               name="type"
               bind:value={selectedType}
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
             >
               {#each notificationTypes as type}
                 <option value={type.value}>{type.label}</option>
@@ -151,7 +164,10 @@
 
           <!-- Title -->
           <div>
-            <label for="title" class="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              for="title"
+              class="mb-1 block text-sm font-medium text-gray-700"
+            >
               Title
             </label>
             <input
@@ -160,14 +176,17 @@
               type="text"
               bind:value={title}
               required
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               placeholder="Enter notification title"
             />
           </div>
 
           <!-- Message -->
           <div>
-            <label for="message" class="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              for="message"
+              class="mb-1 block text-sm font-medium text-gray-700"
+            >
               Message
             </label>
             <textarea
@@ -176,14 +195,17 @@
               bind:value={message}
               required
               rows="3"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               placeholder="Enter notification message"
             ></textarea>
           </div>
 
           <!-- Action URL (Optional) -->
           <div>
-            <label for="actionUrl" class="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              for="actionUrl"
+              class="mb-1 block text-sm font-medium text-gray-700"
+            >
               Action URL (Optional)
             </label>
             <input
@@ -191,7 +213,7 @@
               name="actionUrl"
               type="url"
               bind:value={actionUrl}
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               placeholder="https://example.com/link"
             />
           </div>
@@ -202,7 +224,7 @@
               type="submit"
               formaction="?/sendGlobalNotification"
               disabled={isSubmitting || !title || !message}
-              class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="flex-1 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {#if isSubmitting}
                 Sending...
@@ -215,7 +237,7 @@
               type="submit"
               formaction="?/sendTestNotification"
               disabled={testSubmitting || !title || !message}
-              class="flex-1 bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="flex-1 rounded-md bg-green-600 px-4 py-2 text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {#if testSubmitting}
                 Testing...
@@ -229,14 +251,18 @@
     </div>
 
     <!-- Info Panel -->
-    <div class="bg-white shadow-lg rounded-lg p-6">
-      <h2 class="text-xl font-semibold mb-4">Information</h2>
-      
+    <div class="rounded-lg bg-white p-6 shadow-lg">
+      <h2 class="mb-4 text-xl font-semibold">Information</h2>
+
       <div class="space-y-4">
         <div>
-          <h3 class="text-sm font-medium text-gray-700 mb-2">Notification Types:</h3>
-          <ul class="text-sm text-gray-600 space-y-1">
-            <li><strong>System:</strong> Platform announcements, maintenance</li>
+          <h3 class="mb-2 text-sm font-medium text-gray-700">
+            Notification Types:
+          </h3>
+          <ul class="space-y-1 text-sm text-gray-600">
+            <li>
+              <strong>System:</strong> Platform announcements, maintenance
+            </li>
             <li><strong>Content:</strong> New videos, updates</li>
             <li><strong>User:</strong> User interactions, follows</li>
             <li><strong>Playlist Update:</strong> Playlist changes</li>
@@ -245,7 +271,7 @@
         </div>
 
         <div>
-          <h3 class="text-sm font-medium text-gray-700 mb-2">User Stats:</h3>
+          <h3 class="mb-2 text-sm font-medium text-gray-700">User Stats:</h3>
           <p class="text-sm text-gray-600">
             Sample users in system: {data.users.length}
             {#if data.users.length > 0}
@@ -256,12 +282,14 @@
         </div>
 
         <div>
-          <h3 class="text-sm font-medium text-gray-700 mb-2">Tips:</h3>
-          <ul class="text-sm text-gray-600 space-y-1">
+          <h3 class="mb-2 text-sm font-medium text-gray-700">Tips:</h3>
+          <ul class="space-y-1 text-sm text-gray-600">
             <li>• Use "Test" button to preview notifications</li>
             <li>• Action URLs are optional but enhance engagement</li>
             <li>• Users can disable notification types in their preferences</li>
-            <li>• Notifications appear under the bell icon only (no toast popups)</li>
+            <li>
+              • Notifications appear under the bell icon only (no toast popups)
+            </li>
             <li>• Users must click the bell to see their notifications</li>
           </ul>
         </div>

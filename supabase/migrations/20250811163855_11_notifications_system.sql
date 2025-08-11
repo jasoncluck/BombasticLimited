@@ -1,4 +1,3 @@
-
 -- Migration: 11_notifications_system.sql
 -- Purpose: Create comprehensive notifications system with tables, types, and RLS policies
 -- Create notification type enum
@@ -41,7 +40,6 @@ CREATE TABLE IF NOT EXISTS public.notification_preferences (
 
 -- Note: profile_notifications table removed as it was deemed unnecessary
 -- The notifications table already has user_id which provides the mapping
-
 -- Add comments for documentation
 COMMENT ON TABLE public.notifications IS 'User notifications with different types and metadata';
 
@@ -264,12 +262,18 @@ WHERE
 ON CONFLICT (user_id) DO NOTHING;
 
 -- Set jason@bombastic.ltd as admin if the profile exists
-UPDATE public.profiles 
-SET account_type = 'admin'
-WHERE id IN (
-  SELECT id FROM auth.users 
-  WHERE email = 'jason@bombastic.ltd'
-);
+UPDATE public.profiles
+SET
+  account_type = 'admin'
+WHERE
+  id IN (
+    SELECT
+      id
+    FROM
+      auth.users
+    WHERE
+      email = 'jason@bombastic.ltd'
+  );
 
 -- Note: Realtime subscriptions removed for simplicity
 -- The notifications system will use polling instead of realtime updates

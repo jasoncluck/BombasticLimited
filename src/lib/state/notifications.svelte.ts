@@ -71,17 +71,24 @@ export class NotificationStateClass {
       this.loadNotifications();
       this.loadUnreadCount();
     } else {
-      console.log('🔔 NotificationState: Initial data already loaded or loading in progress');
+      console.log(
+        '🔔 NotificationState: Initial data already loaded or loading in progress'
+      );
     }
   }
 
   async loadNotifications(filters: NotificationFilters = {}, append = false) {
     if (!this.notificationService) {
-      console.warn('🔔 NotificationState: Cannot load notifications - service not initialized');
+      console.warn(
+        '🔔 NotificationState: Cannot load notifications - service not initialized'
+      );
       return;
     }
 
-    console.log('🔔 NotificationState: Loading notifications...', { filters, append });
+    console.log('🔔 NotificationState: Loading notifications...', {
+      filters,
+      append,
+    });
     this.isLoading = true;
     this.error = null;
 
@@ -95,13 +102,19 @@ export class NotificationStateClass {
       });
 
     if (error) {
-      console.error('🔔 NotificationState: Error loading notifications:', error);
+      console.error(
+        '🔔 NotificationState: Error loading notifications:',
+        error
+      );
       this.isLoading = false;
       this.error = error.message;
       return;
     }
 
-    console.log('🔔 NotificationState: Loaded notifications successfully:', { count: data?.length, total: count });
+    console.log('🔔 NotificationState: Loaded notifications successfully:', {
+      count: data?.length,
+      total: count,
+    });
 
     if (append) {
       this.notifications = [...this.notifications, ...(data || [])];
@@ -120,7 +133,9 @@ export class NotificationStateClass {
 
   async loadUnreadCount() {
     if (!this.notificationService) {
-      console.warn('🔔 NotificationState: Cannot load unread count - service not initialized');
+      console.warn(
+        '🔔 NotificationState: Cannot load unread count - service not initialized'
+      );
       return;
     }
 
@@ -224,7 +239,10 @@ export class NotificationStateClass {
 
     // Remove existing event listener if it exists
     if (this.visibilityChangeHandler) {
-      document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
+      document.removeEventListener(
+        'visibilitychange',
+        this.visibilityChangeHandler
+      );
     }
 
     // Set up polling to check for new notifications every 5 minutes
@@ -282,13 +300,16 @@ export class NotificationStateClass {
       clearInterval(this.pollingInterval);
       this.pollingInterval = null;
     }
-    
+
     // Remove event listener
     if (this.visibilityChangeHandler) {
-      document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
+      document.removeEventListener(
+        'visibilitychange',
+        this.visibilityChangeHandler
+      );
       this.visibilityChangeHandler = null;
     }
-    
+
     this.isInitialized = false;
   }
 
