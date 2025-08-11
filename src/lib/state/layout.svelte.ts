@@ -1,5 +1,6 @@
 import { getContext, setContext } from 'svelte';
 import { goto } from '$app/navigation';
+import { invalidateAll } from '$app/navigation';
 import { showToast } from '$lib/state/notifications.svelte.js';
 import debounce from 'debounce';
 import { isSourceArray, SOURCE_INFO } from '$lib/constants/source';
@@ -91,15 +92,28 @@ export class LayoutStateClass implements LayoutState {
   };
 
   async handleLogout(supabase: SupabaseClient) {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error signing out:', error);
-      showToast('Error logging out', 'error');
-    } else {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error signing out:', error);
+        showToast('Error logging out', 'error');
+        return;
+      }
+      
       showToast('Logged out successfully', 'success');
+      
+      // Invalidate all data and let SvelteKit handle the state updates
+      await invalidateAll();
+      
+      // Navigate to home page
+      await goto('/', { replaceState: true });
+      
+    } catch (error) {
+      console.error('Logout error:', error);
+      showToast('Error during logout', 'error');
+      // Fallback to page reload if invalidation fails
+      window.location.href = '/';
     }
-    // Force immediate reload to ensure clean state
-    window.location.href = '/';
   }
 
   async searchRedirect(e: Event, expectedValue?: string): Promise<Event> {
