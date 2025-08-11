@@ -55,7 +55,6 @@ export const actions: Actions = {
     const type = formData.get('type') as string;
     const title = formData.get('title') as string;
     const message = formData.get('message') as string;
-    const actionUrl = (formData.get('actionUrl') as string) || undefined;
     const startDatetime = (formData.get('startDatetime') as string) || undefined;
     const endDatetime = (formData.get('endDatetime') as string) || undefined;
 
@@ -66,7 +65,6 @@ export const actions: Actions = {
         title,
         message,
         metadata: { source: 'admin_panel' },
-        action_url: actionUrl,
         start_datetime: startDatetime,
         end_datetime: endDatetime,
       });
@@ -100,7 +98,6 @@ export const actions: Actions = {
     const type = formData.get('type') as string;
     const title = formData.get('title') as string;
     const message = formData.get('message') as string;
-    const actionUrl = (formData.get('actionUrl') as string) || undefined;
     const startDatetime = (formData.get('startDatetime') as string) || undefined;
     const endDatetime = (formData.get('endDatetime') as string) || undefined;
 
@@ -112,7 +109,6 @@ export const actions: Actions = {
         title,
         message,
         metadata: { source: 'admin_test' },
-        action_url: actionUrl,
         start_datetime: startDatetime,
         end_datetime: endDatetime,
       });

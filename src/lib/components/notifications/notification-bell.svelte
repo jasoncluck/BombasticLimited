@@ -32,9 +32,18 @@
     }
   });
 
-  // Handle mark all as read
-  async function handleMarkAllAsRead() {
-    await notificationState.markAllAsRead();
+  // Auto-mark all notifications as read when bell menu opens
+  async function handleMenuOpen() {
+    if (notificationState.unreadCount > 0) {
+      // Get all unread notification IDs
+      const unreadIds = notificationState.notifications
+        .filter(n => !n.read)
+        .map(n => n.id);
+      
+      if (unreadIds.length > 0) {
+        await notificationState.markAsRead(unreadIds);
+      }
+    }
   }
 
   // Close dropdown/drawer handler
@@ -47,7 +56,7 @@
 
 {#if canHover}
   <!-- Desktop Notification Dropdown -->
-  <DropdownMenu.Root>
+  <DropdownMenu.Root onOpenChange={(open) => open && handleMenuOpen()}>
     <DropdownMenu.Trigger
       data-testid="notification-bell"
       class="relative cursor-pointer outline-none {buttonVariants({
@@ -72,16 +81,6 @@
     <DropdownMenu.Content class="max-h-96 w-80 overflow-hidden p-0" align="end">
       <div class="flex items-center justify-between border-b px-4 py-2">
         <h4 class="font-semibold">Notifications</h4>
-        {#if notificationState.unreadCount > 0}
-          <Button
-            variant="ghost"
-            size="sm"
-            class="h-8 px-2 text-xs"
-            onclick={handleMarkAllAsRead}
-          >
-            Mark all read
-          </Button>
-        {/if}
       </div>
 
       <div class="max-h-80 overflow-y-auto">
@@ -96,7 +95,7 @@
   </DropdownMenu.Root>
 {:else}
   <!-- Mobile Notification Drawer -->
-  <Drawer.Root bind:open={openNotificationDrawer}>
+  <Drawer.Root bind:open={openNotificationDrawer} onOpenChange={(open) => open && handleMenuOpen()}>
     <Drawer.Trigger
       data-testid="notification-bell-mobile"
       class="relative cursor-pointer outline-none {buttonVariants({
@@ -124,16 +123,6 @@
           <Drawer.Title class="text-lg font-semibold"
             >Notifications</Drawer.Title
           >
-          {#if notificationState.unreadCount > 0}
-            <Button
-              variant="ghost"
-              size="sm"
-              class="h-8 px-2 text-xs"
-              onclick={handleMarkAllAsRead}
-            >
-              Mark all read
-            </Button>
-          {/if}
         </div>
 
         <div class="max-h-96 overflow-y-auto px-4 pb-4">

@@ -28,7 +28,6 @@
   let selectedTypeValue = $state('system');
   let title = $state('');
   let message = $state('');
-  let actionUrl = $state('');
   let startDatetime = $state('');
   let endDatetime = $state('');
 
@@ -39,21 +38,18 @@
       title: 'Welcome to Bombastic!',
       message:
         'Thanks for being part of our community! Explore playlists and discover great content.',
-      actionUrl: '',
     },
     feature: {
       type: 'system',
       title: 'New Feature Released!',
       message:
-        'Check out our enhanced playlist features and improved user experience.',
-      actionUrl: '/features',
+        'Check out our <a href="/features">enhanced playlist features</a> and improved user experience.',
     },
     maintenance: {
       type: 'system',
       title: 'Scheduled Maintenance',
       message:
-        'We will be performing maintenance tonight from 2-4 AM EST. Some features may be temporarily unavailable.',
-      actionUrl: '',
+        'We will be performing maintenance tonight from <b>2-4 AM EST</b>. Some features may be temporarily unavailable.<br><br>For updates, visit our <a href="/status">status page</a>.',
     },
   };
 
@@ -63,7 +59,6 @@
     selectedTypeValue = template.type;
     title = template.title;
     message = template.message;
-    actionUrl = template.actionUrl;
   }
 
   function resetForm() {
@@ -71,7 +66,6 @@
     selectedTypeValue = 'system';
     title = '';
     message = '';
-    actionUrl = '';
     startDatetime = '';
     endDatetime = '';
   }
@@ -154,6 +148,7 @@
             return async ({ update }) => {
               await update();
               isSubmitting = false;
+              // Note: Form is intentionally not cleared to allow easy testing then sending workflow
             };
           }}
         >
@@ -205,25 +200,12 @@
                 value={message}
                 oninput={(e) => message = e.currentTarget.value}
                 required
-                rows={3}
-                placeholder="Enter notification message (HTML supported: &lt;b&gt;bold&lt;/b&gt;, &lt;i&gt;italic&lt;/i&gt;, etc.)"
+                rows={4}
+                placeholder="Enter notification message (HTML supported: &lt;b&gt;bold&lt;/b&gt;, &lt;i&gt;italic&lt;/i&gt;, &lt;a href=&quot;...&quot;&gt;link&lt;/a&gt;, etc.)"
               />
               <p class="text-xs text-muted-foreground">
-                HTML tags like &lt;b&gt;, &lt;i&gt;, &lt;u&gt;, &lt;br&gt; are supported
+                HTML tags like &lt;b&gt;, &lt;i&gt;, &lt;u&gt;, &lt;br&gt;, &lt;a href="..."&gt; are supported for rich formatting and links
               </p>
-            </div>
-
-            <!-- Action URL (Optional) -->
-            <div class="space-y-2">
-              <Label for="actionUrl">Action URL (Optional)</Label>
-              <Input
-                id="actionUrl"
-                name="actionUrl"
-                type="url"
-                value={actionUrl}
-                oninput={(e) => actionUrl = e.currentTarget.value}
-                placeholder="https://example.com/link"
-              />
             </div>
 
             <!-- Start DateTime (Optional) -->
@@ -334,10 +316,11 @@
         <div>
           <h3 class="mb-3 text-sm font-medium">Usage</h3>
           <ul class="space-y-1 text-sm text-muted-foreground">
-            <li>• Use "Test" button to preview notifications</li>
-            <li>• Action URLs are optional but enhance engagement</li>
+            <li>• Use "Test" button to preview notifications before sending</li>
+            <li>• Use HTML links: &lt;a href="..."&gt;link text&lt;/a&gt;</li>
             <li>• Notifications appear under the bell icon only</li>
             <li>• Users can remove notifications individually</li>
+            <li>• Form doesn't clear after submit for easy test/send workflow</li>
           </ul>
         </div>
       </Card.Content>

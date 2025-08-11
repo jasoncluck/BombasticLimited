@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
   import { Button } from '$lib/components/ui/button';
   import { Badge } from '$lib/components/ui/badge';
   import { Skeleton } from '$lib/components/ui/skeleton';
@@ -102,27 +101,11 @@
     }
   }
 
-  // Handle notification click
-  async function handleNotificationClick(notification: NotificationWithMeta) {
-    // Mark as read if unread
-    if (!notification.read) {
-      await notificationState.markAsRead([notification.id]);
-    }
-
-    // Navigate to notification detail page
-    goto(`/notifications/${notification.id}`);
-
-    // Call the callback if provided
+  // Handle notification click - now just a visual click, no navigation needed
+  function handleNotificationClick(notification: NotificationWithMeta) {
+    // No action needed - notifications are marked as read when bell opens
+    // Call the callback if provided (to close the menu)
     onNotificationClick?.();
-  }
-
-  // Handle mark as read
-  async function handleMarkAsRead(
-    notification: NotificationWithMeta,
-    event: Event
-  ) {
-    event.stopPropagation();
-    await notificationState.markAsRead([notification.id]);
   }
 
   // Handle delete notification
@@ -234,7 +217,7 @@
                   >
                     {notification.title}
                   </p>
-                  <div class="text-muted-foreground mt-1 line-clamp-2 text-sm">
+                  <div class="text-muted-foreground mt-1 text-sm">
                     {@html notification.message}
                   </div>
 
@@ -247,29 +230,6 @@
 
                 <!-- Actions -->
                 <div class="ml-2 flex items-center space-x-1">
-                  {#if !notification.read && showActions}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      class="h-6 w-6 p-0 opacity-0 transition-opacity group-hover:opacity-100"
-                      onclick={(e) => handleMarkAsRead(notification, e)}
-                      title="Mark as read"
-                    >
-                      <Check class="h-3 w-3" />
-                    </Button>
-                  {/if}
-
-                  {#if notification.action_url && showActions}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      class="h-6 w-6 p-0 opacity-0 transition-opacity group-hover:opacity-100"
-                      title="Open link"
-                    >
-                      <ExternalLink class="h-3 w-3" />
-                    </Button>
-                  {/if}
-
                   <Button
                     variant="ghost"
                     size="sm"

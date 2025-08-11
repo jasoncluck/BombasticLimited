@@ -92,11 +92,14 @@ export class LayoutStateClass implements LayoutState {
 
   async handleLogout(supabase: SupabaseClient) {
     const { error } = await supabase.auth.signOut();
-    showToast('Logged out.', 'success');
     if (error) {
       console.error('Error signing out:', error);
+      showToast('Error logging out', 'error');
+    } else {
+      showToast('Logged out successfully', 'success');
     }
-    window.location.reload();
+    // Force immediate reload to ensure clean state
+    window.location.href = '/';
   }
 
   async searchRedirect(e: Event, expectedValue?: string): Promise<Event> {
