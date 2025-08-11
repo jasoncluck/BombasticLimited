@@ -192,8 +192,7 @@
         {#each notificationState.notifications as notification (notification.id)}
           <div
             class="group hover:bg-muted/50 flex cursor-pointer items-start space-x-3 p-3 transition-colors
-              {!notification.read ? 'bg-muted/20' : ''}
-              {notification.is_new ? 'ring-primary/20 ring-1' : ''}"
+              {!notification.read ? 'bg-muted/20' : ''}"
             onclick={() => handleNotificationClick(notification)}
             role="button"
             tabindex="0"
@@ -242,57 +241,47 @@
                   </p>
 
                   <div class="mt-2 flex items-center space-x-2">
-                    <Badge variant="outline" class="text-xs">
-                      {notification.type}
-                    </Badge>
                     <span class="text-muted-foreground text-xs">
                       {notification.formatted_time}
                     </span>
-                    {#if notification.is_new}
-                      <Badge variant="secondary" class="text-xs">New</Badge>
-                    {/if}
                   </div>
                 </div>
 
                 <!-- Actions -->
-                {#if showActions}
-                  <div
-                    class="ml-2 flex items-center space-x-1 opacity-0 transition-opacity group-hover:opacity-100"
-                  >
-                    {#if !notification.read}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        class="h-6 w-6 p-0"
-                        onclick={(e) => handleMarkAsRead(notification, e)}
-                        title="Mark as read"
-                      >
-                        <Check class="h-3 w-3" />
-                      </Button>
-                    {/if}
-
-                    {#if notification.action_url}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        class="h-6 w-6 p-0"
-                        title="Open link"
-                      >
-                        <ExternalLink class="h-3 w-3" />
-                      </Button>
-                    {/if}
-
+                <div class="ml-2 flex items-center space-x-1">
+                  {#if !notification.read && showActions}
                     <Button
                       variant="ghost"
                       size="sm"
-                      class="text-destructive hover:text-destructive h-6 w-6 p-0"
-                      onclick={(e) => handleDelete(notification, e)}
-                      title="Delete notification"
+                      class="h-6 w-6 p-0 opacity-0 transition-opacity group-hover:opacity-100"
+                      onclick={(e) => handleMarkAsRead(notification, e)}
+                      title="Mark as read"
                     >
-                      <Trash2 class="h-3 w-3" />
+                      <Check class="h-3 w-3" />
                     </Button>
-                  </div>
-                {/if}
+                  {/if}
+
+                  {#if notification.action_url && showActions}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      class="h-6 w-6 p-0 opacity-0 transition-opacity group-hover:opacity-100"
+                      title="Open link"
+                    >
+                      <ExternalLink class="h-3 w-3" />
+                    </Button>
+                  {/if}
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    class="text-muted-foreground hover:text-destructive h-6 w-6 p-0 opacity-60 transition-opacity hover:opacity-100"
+                    onclick={(e) => handleDelete(notification, e)}
+                    title="Remove notification"
+                  >
+                    <Trash2 class="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
