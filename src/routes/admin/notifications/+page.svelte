@@ -55,7 +55,9 @@
 
   function loadTemplate(templateName: keyof typeof templates) {
     const template = templates[templateName];
-    selectedType = notificationTypes.find(t => t.value === template.type) || notificationTypes[0];
+    selectedType =
+      notificationTypes.find((t) => t.value === template.type) ||
+      notificationTypes[0];
     selectedTypeValue = template.type;
     title = template.title;
     message = template.message;
@@ -74,7 +76,10 @@
   $effect(() => {
     if (form?.success) {
       if (form.count !== undefined) {
-        showToast(`✅ Global notification sent successfully to ${form.count} users!`, 'success');
+        showToast(
+          `✅ Global notification sent successfully to ${form.count} users!`,
+          'success'
+        );
       } else {
         showToast('✅ Test notification sent successfully!', 'success');
       }
@@ -130,11 +135,7 @@
             >
               Maintenance
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onclick={resetForm}
-            >
+            <Button variant="outline" size="sm" onclick={resetForm}>
               <RotateCcw class="mr-2 h-4 w-4" />
               Clear
             </Button>
@@ -161,7 +162,9 @@
                 bind:value={selectedTypeValue}
                 onValueChange={(v) => {
                   if (v) {
-                    selectedType = notificationTypes.find(t => t.value === v) || notificationTypes[0];
+                    selectedType =
+                      notificationTypes.find((t) => t.value === v) ||
+                      notificationTypes[0];
                   }
                 }}
               >
@@ -185,7 +188,7 @@
                 name="title"
                 type="text"
                 value={title}
-                oninput={(e) => title = e.currentTarget.value}
+                oninput={(e) => (title = e.currentTarget.value)}
                 required
                 placeholder="Enter notification title"
               />
@@ -198,13 +201,14 @@
                 id="message"
                 name="message"
                 value={message}
-                oninput={(e) => message = e.currentTarget.value}
+                oninput={(e) => (message = e.currentTarget.value)}
                 required
                 rows={4}
                 placeholder="Enter notification message (HTML supported: &lt;b&gt;bold&lt;/b&gt;, &lt;i&gt;italic&lt;/i&gt;, &lt;a href=&quot;...&quot;&gt;link&lt;/a&gt;, etc.)"
               />
-              <p class="text-xs text-muted-foreground">
-                HTML tags like &lt;b&gt;, &lt;i&gt;, &lt;u&gt;, &lt;br&gt;, &lt;a href="..."&gt; are supported for rich formatting and links
+              <p class="text-muted-foreground text-xs">
+                HTML tags like &lt;b&gt;, &lt;i&gt;, &lt;u&gt;, &lt;br&gt;,
+                &lt;a href="..."&gt; are supported for rich formatting and links
               </p>
             </div>
 
@@ -216,10 +220,11 @@
                 name="startDatetime"
                 type="datetime-local"
                 value={startDatetime}
-                oninput={(e) => startDatetime = e.currentTarget.value}
+                oninput={(e) => (startDatetime = e.currentTarget.value)}
               />
-              <p class="text-xs text-muted-foreground">
-                When notification should start being visible (default: immediately)
+              <p class="text-muted-foreground text-xs">
+                When notification should start being visible (default:
+                immediately)
               </p>
             </div>
 
@@ -231,10 +236,11 @@
                 name="endDatetime"
                 type="datetime-local"
                 value={endDatetime}
-                oninput={(e) => endDatetime = e.currentTarget.value}
+                oninput={(e) => (endDatetime = e.currentTarget.value)}
               />
-              <p class="text-xs text-muted-foreground">
-                When notification should automatically expire (default: never expires)
+              <p class="text-muted-foreground text-xs">
+                When notification should automatically expire (default: never
+                expires)
               </p>
             </div>
 
@@ -285,42 +291,51 @@
           <div class="space-y-2">
             <div class="flex items-center gap-2">
               <Badge variant="outline">System</Badge>
-              <span class="text-sm text-muted-foreground">Platform announcements, maintenance</span>
+              <span class="text-muted-foreground text-sm"
+                >Platform announcements, maintenance</span
+              >
             </div>
             <div class="flex items-center gap-2">
               <Badge variant="outline">Content</Badge>
-              <span class="text-sm text-muted-foreground">New videos, updates</span>
+              <span class="text-muted-foreground text-sm"
+                >New videos, updates</span
+              >
             </div>
             <div class="flex items-center gap-2">
               <Badge variant="outline">User</Badge>
-              <span class="text-sm text-muted-foreground">User interactions, follows</span>
+              <span class="text-muted-foreground text-sm"
+                >User interactions, follows</span
+              >
             </div>
             <div class="flex items-center gap-2">
               <Badge variant="outline">Playlist</Badge>
-              <span class="text-sm text-muted-foreground">Playlist changes</span>
+              <span class="text-muted-foreground text-sm">Playlist changes</span
+              >
             </div>
             <div class="flex items-center gap-2">
               <Badge variant="outline">Mention</Badge>
-              <span class="text-sm text-muted-foreground">User mentions</span>
+              <span class="text-muted-foreground text-sm">User mentions</span>
             </div>
           </div>
         </div>
 
         <div>
           <h3 class="mb-3 text-sm font-medium">User Stats</h3>
-          <p class="text-sm text-muted-foreground">
+          <p class="text-muted-foreground text-sm">
             Users in system: {data.users.length}
           </p>
         </div>
 
         <div>
           <h3 class="mb-3 text-sm font-medium">Usage</h3>
-          <ul class="space-y-1 text-sm text-muted-foreground">
+          <ul class="text-muted-foreground space-y-1 text-sm">
             <li>• Use "Test" button to preview notifications before sending</li>
             <li>• Use HTML links: &lt;a href="..."&gt;link text&lt;/a&gt;</li>
             <li>• Notifications appear under the bell icon only</li>
             <li>• Users can remove notifications individually</li>
-            <li>• Form doesn't clear after submit for easy test/send workflow</li>
+            <li>
+              • Form doesn't clear after submit for easy test/send workflow
+            </li>
           </ul>
         </div>
       </Card.Content>

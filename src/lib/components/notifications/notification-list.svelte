@@ -22,6 +22,8 @@
     NotificationWithMeta,
     NotificationType,
   } from '$lib/supabase/notifications';
+  import { createSafeHtml } from '$lib/utils/html-sanitizer';
+  import FaviconIcon from '$lib/components/icons/favicon-icon.svelte';
 
   let {
     supabase,
@@ -186,7 +188,7 @@
                 class="bg-muted flex h-8 w-8 items-center justify-center rounded-full"
               >
                 {#if notification.type === 'system'}
-                  <Bell class="h-4 w-4 text-orange-500" />
+                  <FaviconIcon class="h-4 w-4" />
                 {:else}
                   <Bell class="h-4 w-4 text-gray-500" />
                 {/if}
@@ -210,7 +212,8 @@
                     {notification.title}
                   </p>
                   <div class="text-muted-foreground mt-1 text-sm">
-                    {@html notification.message}
+                    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+                    {@html createSafeHtml(notification.message)}
                   </div>
 
                   <div class="mt-2 flex items-center space-x-2">
@@ -259,13 +262,3 @@
     </ScrollArea>
   {/if}
 </div>
-
-<style>
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-</style>

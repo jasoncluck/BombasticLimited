@@ -37,9 +37,9 @@
     if (notificationState.unreadCount > 0) {
       // Get all unread notification IDs
       const unreadIds = notificationState.notifications
-        .filter(n => !n.read)
-        .map(n => n.id);
-      
+        .filter((n) => !n.read)
+        .map((n) => n.id);
+
       if (unreadIds.length > 0) {
         await notificationState.markAsRead(unreadIds);
       }
@@ -95,7 +95,10 @@
   </DropdownMenu.Root>
 {:else}
   <!-- Mobile Notification Drawer -->
-  <Drawer.Root bind:open={openNotificationDrawer} onOpenChange={(open) => open && handleMenuOpen()}>
+  <Drawer.Root
+    bind:open={openNotificationDrawer}
+    onOpenChange={(open) => open && handleMenuOpen()}
+  >
     <Drawer.Trigger
       data-testid="notification-bell-mobile"
       class="relative cursor-pointer outline-none {buttonVariants({

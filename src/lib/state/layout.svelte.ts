@@ -99,15 +99,14 @@ export class LayoutStateClass implements LayoutState {
         showToast('Error logging out', 'error');
         return;
       }
-      
+
       showToast('Logged out successfully', 'success');
-      
+
       // Invalidate all data and let SvelteKit handle the state updates
       await invalidateAll();
-      
+
       // Navigate to home page
       await goto('/', { replaceState: true });
-      
     } catch (error) {
       console.error('Logout error:', error);
       showToast('Error during logout', 'error');

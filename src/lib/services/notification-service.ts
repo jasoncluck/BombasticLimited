@@ -394,7 +394,8 @@ export class NotificationService {
       // If datetime params are provided, update all recently created notifications
       if ((params.start_datetime || params.end_datetime) && data && data > 0) {
         const updateData: any = {};
-        if (params.start_datetime) updateData.start_datetime = params.start_datetime;
+        if (params.start_datetime)
+          updateData.start_datetime = params.start_datetime;
         if (params.end_datetime) updateData.end_datetime = params.end_datetime;
 
         // Update notifications created in the last minute for this title/message

@@ -277,24 +277,27 @@ WHERE
 
 -- Migration: Add start_datetime and end_datetime to notifications
 -- Purpose: Allow scheduling notifications and automatic expiration
-
 -- Add new columns to notifications table
-ALTER TABLE public.notifications 
+ALTER TABLE public.notifications
 ADD COLUMN start_datetime TIMESTAMP WITH TIME ZONE DEFAULT now(),
 ADD COLUMN end_datetime TIMESTAMP WITH TIME ZONE DEFAULT NULL;
 
 -- Add comments for documentation
 COMMENT ON COLUMN public.notifications.start_datetime IS 'When notification should start being visible (default: immediately)';
+
 COMMENT ON COLUMN public.notifications.end_datetime IS 'When notification should automatically be removed (null = never expires)';
 
 -- Add index for performance when filtering by datetime
 CREATE INDEX IF NOT EXISTS notifications_start_datetime_idx ON public.notifications (start_datetime);
+
 CREATE INDEX IF NOT EXISTS notifications_end_datetime_idx ON public.notifications (end_datetime);
 
 -- Update existing notifications to have start_datetime as creation time
-UPDATE public.notifications 
-SET start_datetime = created_at 
-WHERE start_datetime IS NULL;
+UPDATE public.notifications
+SET
+  start_datetime = created_at
+WHERE
+  start_datetime IS NULL;
 
 -- Update the create_notification function to support datetime parameters
 CREATE OR REPLACE FUNCTION public.create_notification (
@@ -390,7 +393,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Create function to automatically clean up expired notifications
-CREATE OR REPLACE FUNCTION public.cleanup_expired_notifications() RETURNS integer AS $$
+CREATE OR REPLACE FUNCTION public.cleanup_expired_notifications () RETURNS integer AS $$
 DECLARE
     deleted_count integer;
 BEGIN
@@ -407,16 +410,10 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Update the notification queries to respect start/end datetime
 -- This will be handled in the application layer for better control
-
-
-
-
 -- Migration: 14_welcome_notification.sql
 -- Purpose: Add welcome notification system for new users only
-
 -- Function to create a welcome notification for new users
-CREATE OR REPLACE FUNCTION public.create_welcome_notification_for_new_user()
-RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION public.create_welcome_notification_for_new_user () RETURNS TRIGGER AS $$
 BEGIN
     -- Insert welcome notification for the new user
     INSERT INTO public.notifications (
@@ -440,9 +437,9 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Trigger to create welcome notification when a user is created
 -- This runs after the notification preferences are created
 CREATE TRIGGER create_welcome_notification_on_user_creation
-    AFTER INSERT ON public.profiles
-    FOR EACH ROW
-    EXECUTE FUNCTION public.create_welcome_notification_for_new_user();
+AFTER INSERT ON public.profiles FOR EACH ROW
+EXECUTE FUNCTION public.create_welcome_notification_for_new_user ();
 
-COMMENT ON FUNCTION public.create_welcome_notification_for_new_user() IS 'Creates a welcome notification for newly registered users';
+COMMENT ON FUNCTION public.create_welcome_notification_for_new_user () IS 'Creates a welcome notification for newly registered users';
+
 COMMENT ON TRIGGER create_welcome_notification_on_user_creation ON public.profiles IS 'Automatically sends welcome notification to new users';

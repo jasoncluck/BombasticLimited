@@ -55,7 +55,8 @@ export const actions: Actions = {
     const type = formData.get('type') as string;
     const title = formData.get('title') as string;
     const message = formData.get('message') as string;
-    const startDatetime = (formData.get('startDatetime') as string) || undefined;
+    const startDatetime =
+      (formData.get('startDatetime') as string) || undefined;
     const endDatetime = (formData.get('endDatetime') as string) || undefined;
 
     try {
@@ -98,7 +99,8 @@ export const actions: Actions = {
     const type = formData.get('type') as string;
     const title = formData.get('title') as string;
     const message = formData.get('message') as string;
-    const startDatetime = (formData.get('startDatetime') as string) || undefined;
+    const startDatetime =
+      (formData.get('startDatetime') as string) || undefined;
     const endDatetime = (formData.get('endDatetime') as string) || undefined;
 
     try {
