@@ -261,7 +261,8 @@
             <li>• Use "Test" button to preview notifications</li>
             <li>• Action URLs are optional but enhance engagement</li>
             <li>• Users can disable notification types in their preferences</li>
-            <li>• Global notifications are added to profile_notifications table</li>
+            <li>• Notifications appear under the bell icon only (no toast popups)</li>
+            <li>• Users must click the bell to see their notifications</li>
           </ul>
         </div>
       </div>

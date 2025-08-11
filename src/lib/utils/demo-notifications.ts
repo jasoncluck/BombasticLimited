@@ -2,10 +2,12 @@ import type {
   NotificationWithMeta,
   NotificationType,
 } from '$lib/supabase/notifications';
-import { showToastFromNotification } from '$lib/state/notifications.svelte';
+// NOTE: Demo notifications are for testing bell notifications only
+// They should NOT trigger toast popups
 
 /**
- * Demo notifications for testing the system
+ * Demo notifications for testing bell notification system only
+ * NOTE: These should NOT trigger toast popups - they are for bell notifications only
  */
 export function createDemoNotifications(): NotificationWithMeta[] {
   const now = new Date();
@@ -88,34 +90,21 @@ export function createDemoNotifications(): NotificationWithMeta[] {
 }
 
 /**
- * Show a demo notification toast for testing
+ * Create demo notifications for testing
+ * NOTE: These are for bell notifications only - no toast popups should be triggered
  */
 export function showDemoToast(type: NotificationType = 'content') {
-  const demoNotifications = createDemoNotifications();
-  const notification =
-    demoNotifications.find((n) => n.type === type) || demoNotifications[0];
-
-  showToastFromNotification(notification);
+  // This function is kept for backward compatibility but should not trigger toasts
+  // Demo notifications should only appear under the bell icon
+  console.log(`Demo ${type} notification created for bell display only`);
 }
 
 /**
- * Simulate real-time notification for testing
+ * Simulate notification creation for testing
+ * NOTE: This should only create bell notifications, not toast popups
  */
 export function simulateRealtimeNotification() {
-  const notification: NotificationWithMeta = {
-    id: `demo-${Date.now()}`,
-    user_id: 'demo-user',
-    type: 'content' as NotificationType,
-    title: 'New Content Alert',
-    message: 'A new video just went live on your favorite channel!',
-    metadata: { source: 'nextlander' },
-    read: false,
-    action_url: '/nextlander/latest',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    formatted_time: 'Just now',
-    is_new: true,
-  };
-
-  showToastFromNotification(notification);
+  // This function is kept for backward compatibility but should not trigger toasts
+  // Simulated notifications should only appear under the bell icon
+  console.log('Demo notification created for bell display only');
 }

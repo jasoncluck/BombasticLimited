@@ -22,76 +22,8 @@ const initialState = {
   lastFetch: null,
 };
 
-// Toast functions for temporary popup notifications (NOT related to bell notifications)
-export function showToastFromNotification(notification: NotificationWithMeta) {
-  const toastMessage = `${notification.title}: ${notification.message}`;
-
-  switch (notification.type) {
-    case 'system':
-      toast.warning(toastMessage, {
-        description: 'System Notification',
-        duration: 6000,
-        action: notification.action_url
-          ? {
-              label: 'View',
-              onClick: () => (window.location.href = notification.action_url!),
-            }
-          : undefined,
-      });
-      break;
-    case 'content':
-      toast.success(toastMessage, {
-        description: 'New Content',
-        duration: 5000,
-        action: notification.action_url
-          ? {
-              label: 'View',
-              onClick: () => (window.location.href = notification.action_url!),
-            }
-          : undefined,
-      });
-      break;
-    case 'user':
-      toast(toastMessage, {
-        description: 'User Activity',
-        duration: 4000,
-        action: notification.action_url
-          ? {
-              label: 'View',
-              onClick: () => (window.location.href = notification.action_url!),
-            }
-          : undefined,
-      });
-      break;
-    case 'playlist_update':
-      toast(toastMessage, {
-        description: 'Playlist Update',
-        duration: 4000,
-        action: notification.action_url
-          ? {
-              label: 'View',
-              onClick: () => (window.location.href = notification.action_url!),
-            }
-          : undefined,
-      });
-      break;
-    case 'mention':
-      toast(toastMessage, {
-        description: 'You were mentioned',
-        duration: 6000,
-        action: notification.action_url
-          ? {
-              label: 'View',
-              onClick: () => (window.location.href = notification.action_url!),
-            }
-          : undefined,
-      });
-      break;
-    default:
-      toast(toastMessage);
-      break;
-  }
-}
+// NOTE: Bell notifications should ONLY appear under the bell icon
+// They should NOT trigger toast popups - toasts are separate system for temporary messages
 
 export class NotificationStateClass {
   // State properties using Svelte 5 runes
