@@ -160,7 +160,7 @@
     <div class="flex flex-col items-center justify-center p-8 text-center">
       <Bell class="text-muted-foreground mb-4 h-12 w-12" />
       <p class="text-muted-foreground">
-        {filterType ? `No ${filterType} notifications` : 'No notifications yet'}
+        {filterType ? `No ${filterType} notifications` : 'No notifications'}
       </p>
     </div>
   {:else}
@@ -186,15 +186,7 @@
                 class="bg-muted flex h-8 w-8 items-center justify-center rounded-full"
               >
                 {#if notification.type === 'system'}
-                  <AlertCircle class="h-4 w-4 text-orange-500" />
-                {:else if notification.type === 'content'}
-                  <Bell class="h-4 w-4 text-blue-500" />
-                {:else if notification.type === 'user'}
-                  <User class="h-4 w-4 text-green-500" />
-                {:else if notification.type === 'playlist_update'}
-                  <Play class="h-4 w-4 text-purple-500" />
-                {:else if notification.type === 'mention'}
-                  <AtSign class="h-4 w-4 text-red-500" />
+                  <Bell class="h-4 w-4 text-orange-500" />
                 {:else}
                   <Bell class="h-4 w-4 text-gray-500" />
                 {/if}
