@@ -33,7 +33,6 @@
     isCarousel?: boolean;
     slidesInView?: number[];
     carouselState?: CarouselState;
-    onCarouselStateUpdate?: (state: CarouselState) => void;
   } & Pick<
     ContentDisplayProps,
     | 'isContinueVideos'
@@ -64,8 +63,7 @@
     // Carousel-specific props
     isCarousel = false,
     slidesInView,
-    carouselState,
-    onCarouselStateUpdate,
+    carouselState = $bindable(),
   }: ContentCardProps = $props();
 
   const contentState = getContentState();
@@ -200,7 +198,6 @@
     // Update carousel state before handling click if in carousel context
     if (isCarousel && carouselState && index !== undefined) {
       carouselState.lastViewedIndex = index;
-      onCarouselStateUpdate?.(carouselState);
     }
 
     // Use the updated handleVideoClick with context menu handling

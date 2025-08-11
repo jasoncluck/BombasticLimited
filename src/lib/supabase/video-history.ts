@@ -13,15 +13,16 @@ import type { Source } from '$lib/constants/source';
 
 // Type definitions for video history
 export type VideoHistoryRecord = {
-  id: number;
+  id: string;
   user_id: string;
   video_id: string;
   source: Source;
-  seconds_watched: number;
   session_start_time: string;
   session_end_time: string | null;
+  seconds_watched: number;
   created_at: string;
   updated_at: string;
+  is_resumed?: boolean; // New field to indicate if session was resumed
 };
 
 export type VideoHistoryWithVideo = VideoHistoryRecord & {
@@ -40,25 +41,26 @@ export type VideoAnalytics = {
   first_watched: string;
 };
 
-export type VideoHistorySession = {
-  videoId: string;
-  secondsWatched?: number;
-  sessionStartTime?: Date;
-  sessionEndTime?: Date;
-};
-
 interface VideoHistoryCommonProps {
   supabase: SupabaseClient<Database>;
   session?: Session | null;
 }
 
-interface RecordVideoHistoryProps extends VideoHistoryCommonProps {
-  videoHistory: VideoHistorySession;
+interface StartVideoHistoryProps extends VideoHistoryCommonProps {
+  videoId: string;
+  sessionStartTime?: Date;
 }
 
-interface UpdateVideoHistoryProps extends VideoHistoryCommonProps {
-  historyId: number;
-  secondsWatched?: number;
+interface UpdateVideoHistorySecondsProps extends VideoHistoryCommonProps {
+  videoId: string;
+  sessionStartTime: Date;
+  secondsWatched: number;
+  sessionEndTime?: Date;
+}
+
+interface UpdateVideoHistoryEndTimeProps extends VideoHistoryCommonProps {
+  videoId: string;
+  sessionStartTime: Date;
   sessionEndTime?: Date;
 }
 
@@ -74,13 +76,14 @@ interface GetVideoAnalyticsProps extends VideoHistoryCommonProps {
 }
 
 /**
- * Record a new video history session
+ * Start a new video history session or resume an existing one within 5 minutes
  */
-export async function recordVideoHistory({
-  videoHistory,
+export async function startVideoHistorySession({
+  videoId,
+  sessionStartTime,
   supabase,
   session,
-}: RecordVideoHistoryProps): Promise<{
+}: StartVideoHistoryProps): Promise<{
   history: VideoHistoryRecord | null;
   error?: PostgrestError | null;
 }> {
@@ -96,34 +99,41 @@ export async function recordVideoHistory({
     };
   }
 
+  console.log('📽️ Starting/resuming video history session for:', videoId);
+  console.log('📅 Session start time:', sessionStartTime?.toISOString());
+
   const { data, error } = await supabase
-    .rpc('record_video_history', {
-      p_video_id: videoHistory.videoId,
-      p_seconds_watched: videoHistory.secondsWatched || 0,
-      p_session_start_time:
-        videoHistory.sessionStartTime?.toISOString() || undefined,
-      p_session_end_time:
-        videoHistory.sessionEndTime?.toISOString() || undefined,
+    .rpc('start_video_history_session', {
+      p_video_id: videoId,
+      p_session_start_time: sessionStartTime?.toISOString() || undefined,
     })
     .single();
 
   if (error) {
-    console.error('Error recording video history:', error);
+    console.error('❌ Error starting/resuming video history session:', error);
+  } else if (data) {
+    if (data.is_resumed) {
+      console.log('🔄 Video history session RESUMED successfully:', data);
+      console.log(`⏱️ Resuming with ${data.seconds_watched}s already watched`);
+    } else {
+      console.log('✅ Video history session STARTED successfully:', data);
+    }
   }
 
   return { history: data as VideoHistoryRecord | null, error };
 }
 
 /**
- * Update an existing video history session
+ * Update the seconds watched for a specific video session
  */
-export async function updateVideoHistorySession({
-  historyId,
+export async function updateVideoHistorySecondsWatched({
+  videoId,
+  sessionStartTime,
   secondsWatched,
   sessionEndTime,
   supabase,
   session,
-}: UpdateVideoHistoryProps): Promise<{
+}: UpdateVideoHistorySecondsProps): Promise<{
   history: VideoHistoryRecord | null;
   error?: PostgrestError | null;
 }> {
@@ -139,16 +149,81 @@ export async function updateVideoHistorySession({
     };
   }
 
+  console.log('⏱️ Updating video history seconds watched for:', videoId);
+  console.log('📅 Session start time:', sessionStartTime.toISOString());
+  console.log('🕐 Seconds watched:', secondsWatched);
+  if (sessionEndTime) {
+    console.log('📅 Session end time:', sessionEndTime.toISOString());
+  }
+
   const { data, error } = await supabase
-    .rpc('update_video_history_session', {
-      p_history_id: historyId,
-      p_seconds_watched: secondsWatched || undefined,
+    .rpc('update_video_history_seconds_watched', {
+      p_video_id: videoId,
+      p_session_start_time: sessionStartTime.toISOString(),
+      p_seconds_watched: secondsWatched,
       p_session_end_time: sessionEndTime?.toISOString() || undefined,
     })
     .single();
 
   if (error) {
-    console.error('Error updating video history session:', error);
+    console.error('❌ Error updating video history seconds watched:', error);
+  } else if (data) {
+    console.log('✅ Video history seconds watched updated successfully');
+    console.log(`⏱️ Total seconds watched: ${data.seconds_watched}s`);
+  } else {
+    console.log('⚠️ No matching session found to update for video:', videoId);
+    console.log('⚠️ Session start time was:', sessionStartTime.toISOString());
+  }
+
+  return { history: data as VideoHistoryRecord | null, error };
+}
+
+/**
+ * Update the end time of a specific video session (legacy function)
+ */
+export async function updateVideoHistoryEndTime({
+  videoId,
+  sessionStartTime,
+  sessionEndTime,
+  supabase,
+  session,
+}: UpdateVideoHistoryEndTimeProps): Promise<{
+  history: VideoHistoryRecord | null;
+  error?: PostgrestError | null;
+}> {
+  if (!session?.user) {
+    return {
+      history: null,
+      error: {
+        message: 'User not authenticated',
+        details: '',
+        hint: '',
+        code: 'AUTHENTICATION_REQUIRED',
+      } as PostgrestError,
+    };
+  }
+
+  const endTime = sessionEndTime || new Date();
+  console.log('⏰ Updating video history end time for:', videoId);
+  console.log('📅 Session start time:', sessionStartTime.toISOString());
+  console.log('📅 Session end time:', endTime.toISOString());
+
+  const { data, error } = await supabase
+    .rpc('update_video_history_end_time', {
+      p_video_id: videoId,
+      p_session_start_time: sessionStartTime.toISOString(),
+      p_session_end_time: endTime.toISOString(),
+    })
+    .single();
+
+  if (error) {
+    console.error('❌ Error updating video history end time:', error);
+  } else if (data) {
+    console.log('✅ Video history end time updated successfully');
+    console.log(`⏱️ Total seconds watched: ${data.seconds_watched}s`);
+  } else {
+    console.log('⚠️ No matching session found to update for video:', videoId);
+    console.log('⚠️ Session start time was:', sessionStartTime.toISOString());
   }
 
   return { history: data as VideoHistoryRecord | null, error };
@@ -163,10 +238,7 @@ export async function getUserVideoHistory({
   offset = 0,
   supabase,
   session,
-}: GetVideoHistoryProps): Promise<{
-  history: VideoHistoryWithVideo[];
-  error?: PostgrestError | null;
-}> {
+}: GetVideoHistoryProps) {
   if (!session?.user) {
     return {
       history: [],
@@ -189,7 +261,7 @@ export async function getUserVideoHistory({
     console.error('Error getting user video history:', error);
   }
 
-  return { history: (data as VideoHistoryWithVideo[]) || [], error };
+  return { history: data || [], error };
 }
 
 /**
@@ -229,19 +301,26 @@ export async function getVideoAnalytics({
 }
 
 /**
- * Helper function to track video watch time during playback
- * This would be used by the client-side video player
+ * Enhanced video watch time tracker that tracks actual seconds watched
+ * Now supports resuming existing sessions within 5 minutes with proper time tracking
+ * Interval only runs when video is actively playing
  */
 export class VideoWatchTimeTracker {
   private videoId: string;
   private supabase: SupabaseClient<Database>;
   private session: Session | null;
-  private currentHistoryId: number | null = null;
   private sessionStartTime: Date;
-  private totalSecondsWatched: number = 0;
-  private lastPlayTime: number = 0;
   private isPlaying: boolean = false;
   private saveInterval: NodeJS.Timeout | null = null;
+  private lastSaveTime: Date;
+  private sessionActive: boolean = false;
+
+  // Time tracking variables
+  private totalSecondsWatched: number = 0;
+  private lastPlayTime: number = 0;
+  private lastVideoPosition: number = 0;
+  private isResumedSession: boolean = false;
+  private lastSavedSecondsWatched: number = 0; // Track what we last saved to avoid double-counting
 
   constructor(
     videoId: string,
@@ -252,6 +331,7 @@ export class VideoWatchTimeTracker {
     this.supabase = supabase;
     this.session = session;
     this.sessionStartTime = new Date();
+    this.lastSaveTime = this.sessionStartTime;
   }
 
   /**
@@ -262,41 +342,113 @@ export class VideoWatchTimeTracker {
   }
 
   /**
-   * Start tracking video playback
+   * Start tracking video session (or resume existing one)
    */
   async startSession(): Promise<void> {
     if (!this.session?.user) {
-      console.log('Video tracking: Start session skipped - no authenticated user');
+      console.log(
+        '🚫 Video tracking: Start session skipped - no authenticated user'
+      );
       return;
     }
 
-    console.log(`Video tracking: Starting session for video ${this.videoId}`);
+    console.log(
+      `🎬 Video tracking: Starting/resuming session for video ${this.videoId}`
+    );
+    console.log(
+      `📅 Session start time: ${this.sessionStartTime.toISOString()}`
+    );
 
     try {
-      const { history } = await recordVideoHistory({
-        videoHistory: {
-          videoId: this.videoId,
-          sessionStartTime: this.sessionStartTime,
-          secondsWatched: 0,
-        },
+      const { history, error } = await startVideoHistorySession({
+        videoId: this.videoId,
+        sessionStartTime: this.sessionStartTime,
         supabase: this.supabase,
         session: this.session,
       });
 
-      if (history) {
-        this.currentHistoryId = history.id;
-        console.log(`Video tracking: Session started with history ID: ${this.currentHistoryId}`);
-      } else {
-        console.log('Video tracking: Failed to create history record - no history returned');
+      if (error) {
+        console.error(
+          '❌ Video tracking: Failed to start/resume session:',
+          error
+        );
+        return;
       }
 
-      // Set up periodic saving (every 10 seconds)
-      this.saveInterval = setInterval(() => {
-        console.log('Video tracking: Periodic save triggered');
-        this.saveProgress();
-      }, 10000);
+      if (history) {
+        this.sessionActive = true;
+        this.isResumedSession = history.is_resumed || false;
+
+        if (this.isResumedSession) {
+          // For resumed sessions, use the original session start time and existing seconds watched
+          this.sessionStartTime = new Date(history.session_start_time);
+          this.totalSecondsWatched = history.seconds_watched;
+          this.lastSavedSecondsWatched = history.seconds_watched; // Important: track what was already saved
+
+          console.log(
+            `🔄 Video tracking: Session RESUMED successfully with ID: ${history.id}`
+          );
+          console.log(
+            `⏱️ Resuming with ${this.totalSecondsWatched}s already watched`
+          );
+          console.log(
+            `📅 Original session start time: ${this.sessionStartTime.toISOString()}`
+          );
+        } else {
+          this.lastSavedSecondsWatched = 0; // New session starts at 0
+          console.log(
+            `✅ Video tracking: New session STARTED successfully with ID: ${history.id}`
+          );
+        }
+      } else {
+        console.log('⚠️ Video tracking: Session start returned no data');
+        this.sessionActive = true; // Assume it worked for duplicate prevention
+      }
+
+      // Note: We don't start the interval here anymore - it will start when video plays
+      console.log(
+        '📝 Video tracking: Session initialized, interval will start when video plays'
+      );
     } catch (error) {
-      console.error('Failed to start video history session:', error);
+      console.error('💥 Failed to start/resume video history session:', error);
+    }
+  }
+
+  /**
+   * Start the save interval (only when playing)
+   */
+  private startSaveInterval(): void {
+    if (this.saveInterval) {
+      console.log('⚠️ Video tracking: Save interval already running');
+      return;
+    }
+
+    console.log('⏰ Video tracking: Starting save interval (video is playing)');
+    this.saveInterval = setInterval(() => {
+      if (this.sessionActive && this.isPlaying) {
+        console.log(
+          '⏰ Video tracking: Periodic seconds watched update triggered'
+        );
+        this.updateSecondsWatched();
+      } else {
+        console.log(
+          '⏸️ Video tracking: Stopping interval - video no longer playing'
+        );
+        this.stopSaveInterval();
+      }
+    }, 10000);
+  }
+
+  /**
+   * Stop the save interval (when paused/not playing)
+   */
+  private stopSaveInterval(): void {
+    if (this.saveInterval) {
+      console.log(
+        '⏹️ Video tracking: Stopping save interval (video not playing)'
+      );
+      clearInterval(this.saveInterval);
+      this.saveInterval = null;
     }
   }
 
@@ -304,112 +456,303 @@ export class VideoWatchTimeTracker {
    * Update tracking when video starts playing
    */
   onPlay(currentTimeSeconds: number): void {
-    if (!this.session?.user) return; // Don't track if not authenticated
+    if (!this.session?.user || !this.sessionActive) return;
 
-    console.log(`Video tracking: Play at ${currentTimeSeconds}s`);
+    const resumeInfo = this.isResumedSession ? ' (resumed session)' : '';
+    console.log(
+      `▶️ Video tracking: Play at ${currentTimeSeconds}s${resumeInfo}`
+    );
+    console.log(`📊 Current total watched: ${this.totalSecondsWatched}s`);
+
     this.isPlaying = true;
-    this.lastPlayTime = currentTimeSeconds;
+    this.lastPlayTime = Date.now();
+    this.lastVideoPosition = currentTimeSeconds;
+
+    // Start the interval now that video is playing
+    this.startSaveInterval();
+
+    // For resumed sessions, don't immediately update - wait for actual time to accumulate
+    // For new sessions, we can update immediately
+    if (!this.isResumedSession) {
+      this.updateSecondsWatched();
+    }
   }
 
   /**
    * Update tracking when video is paused
    */
   onPause(currentTimeSeconds: number): void {
-    if (!this.session?.user) return; // Don't track if not authenticated
+    if (!this.session?.user || !this.sessionActive) return;
 
-    if (this.isPlaying && typeof this.lastPlayTime === 'number') {
-      // Only count time if not seeking (reasonable time difference)
-      const timeDiff = currentTimeSeconds - this.lastPlayTime;
-      console.log(`Video tracking: Pause at ${currentTimeSeconds}s, diff: ${timeDiff}s, total before: ${this.totalSecondsWatched}s`);
-      
-      if (timeDiff > 0 && timeDiff < 60) {
-        // Sanity check: not more than 60 seconds at once
-        this.totalSecondsWatched += timeDiff;
-        console.log(`Video tracking: Added ${timeDiff}s, new total: ${this.totalSecondsWatched}s`);
+    console.log(`⏸️ Video tracking: Pause at ${currentTimeSeconds}s`);
+
+    if (this.isPlaying && this.lastPlayTime > 0) {
+      // Calculate time watched during this play session
+      const playDurationMs = Date.now() - this.lastPlayTime;
+      const playDurationSeconds = Math.max(
+        0,
+        Math.floor(playDurationMs / 1000)
+      );
+
+      // Verify it's reasonable (not more than expected based on video position change)
+      const videoPositionChange = Math.abs(
+        currentTimeSeconds - this.lastVideoPosition
+      );
+      const actualWatchTime = Math.min(
+        playDurationSeconds,
+        videoPositionChange + 2
+      ); // Allow 2s buffer
+
+      // Only add time if it's meaningful (more than 1 second)
+      if (actualWatchTime >= 1) {
+        this.totalSecondsWatched += actualWatchTime;
+        console.log(
+          `⏱️ Video tracking: Added ${actualWatchTime}s (play duration: ${playDurationSeconds}s, position change: ${videoPositionChange}s)`
+        );
+        console.log(`📊 New total watched: ${this.totalSecondsWatched}s`);
       } else {
-        console.log(`Video tracking: Ignoring time diff of ${timeDiff}s (out of range)`);
+        console.log(
+          `⏱️ Video tracking: Skipping ${actualWatchTime}s (too small to count)`
+        );
       }
-    } else {
-      console.log(`Video tracking: Pause ignored - isPlaying: ${this.isPlaying}, lastPlayTime: ${this.lastPlayTime}`);
     }
+
     this.isPlaying = false;
+    this.lastVideoPosition = currentTimeSeconds;
+
+    // Stop the interval since video is no longer playing
+    this.stopSaveInterval();
+
+    // Update seconds watched when pausing (but only if we have new time to save)
+    this.updateSecondsWatched();
   }
 
   /**
    * Update tracking when user seeks in video
    */
   onSeek(newTimeSeconds: number): void {
-    if (!this.session?.user) return; // Don't track if not authenticated
+    if (!this.session?.user || !this.sessionActive) return;
 
-    console.log(`Video tracking: Seek to ${newTimeSeconds}s`);
-    // Don't count seeking time, just update the last play time
-    this.lastPlayTime = newTimeSeconds;
+    console.log(
+      `⏭️ Video tracking: Seek to ${newTimeSeconds}s (from ${this.lastVideoPosition}s)`
+    );
+
+    // If we were playing during the seek, add the time up to the seek point
+    if (this.isPlaying && this.lastPlayTime > 0) {
+      const timeSincePlay = Math.max(
+        0,
+        Math.floor((Date.now() - this.lastPlayTime) / 1000)
+      );
+      const positionDiff = Math.abs(newTimeSeconds - this.lastVideoPosition);
+
+      // Only count time if it's a reasonable progression (not a big jump)
+      if (positionDiff <= timeSincePlay + 2 && timeSincePlay >= 1) {
+        this.totalSecondsWatched += timeSincePlay;
+        console.log(`⏱️ Video tracking: Added ${timeSincePlay}s before seek`);
+      } else {
+        console.log(
+          `⏭️ Video tracking: Seek detected, not counting ${timeSincePlay}s (position jump: ${positionDiff}s)`
+        );
+      }
+    }
+
+    // Update tracking position and time
+    this.lastVideoPosition = newTimeSeconds;
+    if (this.isPlaying) {
+      this.lastPlayTime = Date.now();
+    }
+
+    console.log(`📊 Total watched after seek: ${this.totalSecondsWatched}s`);
   }
 
   /**
    * End the tracking session
    */
   async endSession(): Promise<void> {
-    if (this.saveInterval) {
-      clearInterval(this.saveInterval);
-      this.saveInterval = null;
+    console.log('🛑 Video tracking: Ending session...');
+
+    // Stop the interval
+    this.stopSaveInterval();
+
+    // If video is still playing when session ends, count the final segment
+    if (this.isPlaying && this.lastPlayTime > 0) {
+      const finalDurationMs = Date.now() - this.lastPlayTime;
+      const finalDurationSeconds = Math.max(
+        0,
+        Math.floor(finalDurationMs / 1000)
+      );
+
+      if (finalDurationSeconds >= 1) {
+        this.totalSecondsWatched += finalDurationSeconds;
+        console.log(`⏱️ Video tracking: Added final ${finalDurationSeconds}s`);
+      }
     }
 
-    // If video is still playing when session ends, we need to account for the final segment
-    // However, we can't use onPause(this.lastPlayTime) because lastPlayTime might be stale
-    // Instead, we'll just mark as not playing and let the periodic saves handle the rest
-    if (this.isPlaying) {
-      this.isPlaying = false;
-    }
+    this.isPlaying = false;
 
-    try {
-      await this.saveProgress(true);
-    } catch (error) {
-      console.error('Failed to end video history session:', error);
-      // Still try to save without session end time as fallback
+    if (this.sessionActive) {
       try {
-        await this.saveProgress(false);
-      } catch (fallbackError) {
-        console.error('Failed to save video history even without session end:', fallbackError);
+        // Final update with total seconds watched and current time as session end
+        await this.updateSecondsWatched(true);
+        const sessionType = this.isResumedSession ? 'resumed' : 'new';
+        console.log(
+          `✅ Video tracking: ${sessionType} session ended successfully. Total watched: ${this.totalSecondsWatched}s`
+        );
+        this.sessionActive = false;
+      } catch (error) {
+        console.error('💥 Failed to end video history session:', error);
       }
     }
   }
 
   /**
-   * Save current progress to database
+   * Update the seconds watched in the database
+   * Only saves if there's actually new time to save
    */
-  private async saveProgress(isSessionEnd: boolean = false): Promise<void> {
-    if (!this.currentHistoryId || !this.session?.user) {
-      console.log(`Video tracking: Save skipped - historyId: ${this.currentHistoryId}, user: ${!!this.session?.user}`);
+  private async updateSecondsWatched(
+    isSessionEnd: boolean = false
+  ): Promise<void> {
+    if (!this.session?.user || !this.sessionActive) {
+      console.log(
+        'Video tracking: Seconds watched update skipped - no user session or inactive'
+      );
       return;
     }
 
-    console.log(`Video tracking: Saving progress - seconds: ${this.totalSecondsWatched}, isSessionEnd: ${isSessionEnd}, historyId: ${this.currentHistoryId}`);
+    // Calculate current total including any active playback
+    let currentTotal = this.totalSecondsWatched;
+    if (this.isPlaying && this.lastPlayTime > 0) {
+      const currentSegmentMs = Date.now() - this.lastPlayTime;
+      const currentSegmentSeconds = Math.max(
+        0,
+        Math.floor(currentSegmentMs / 1000)
+      );
+      currentTotal += currentSegmentSeconds;
+    }
+
+    // Only update if we have new time to save (more than 1 second difference from last save)
+    // OR if this is a session end (always save final state)
+    const timeDifference = currentTotal - this.lastSavedSecondsWatched;
+    if (!isSessionEnd && timeDifference < 1) {
+      console.log(
+        `⏭️ Video tracking: Skipping update - only ${timeDifference}s new time (need at least 1s)`
+      );
+      return;
+    }
+
+    const now = new Date();
+    this.lastSaveTime = now;
+
+    console.log(
+      `⏱️ Video tracking: Updating seconds watched to ${currentTotal}s (was ${this.lastSavedSecondsWatched}s, +${timeDifference}s)`
+    );
+    console.log(
+      `🔑 Using session start time: ${this.sessionStartTime.toISOString()}`
+    );
 
     try {
-      const result = await updateVideoHistorySession({
-        historyId: this.currentHistoryId,
-        secondsWatched: this.totalSecondsWatched,
-        sessionEndTime: isSessionEnd ? new Date() : undefined,
+      const { history, error } = await updateVideoHistorySecondsWatched({
+        videoId: this.videoId,
+        sessionStartTime: this.sessionStartTime,
+        secondsWatched: currentTotal,
+        sessionEndTime: isSessionEnd ? now : undefined,
         supabase: this.supabase,
         session: this.session,
       });
-      
-      console.log(`Video tracking: Save successful`, result);
+
+      if (error) {
+        console.error(
+          'Video tracking: Failed to update seconds watched:',
+          error
+        );
+        return;
+      }
+
+      if (history) {
+        this.lastSavedSecondsWatched = history.seconds_watched; // Update our tracking of what was saved
+        console.log(
+          `✅ Video tracking: Seconds watched updated successfully: ${history.seconds_watched}s`
+        );
+      } else {
+        console.log(
+          '⚠️ Video tracking: Seconds watched update returned no data - no matching session found'
+        );
+        console.log('🔍 Debug info:');
+        console.log(`   Video ID: ${this.videoId}`);
+        console.log(`   Session Start: ${this.sessionStartTime.toISOString()}`);
+      }
     } catch (error) {
-      console.error('Failed to save video history progress:', error);
+      console.error('Failed to update seconds watched:', error);
     }
   }
 
   /**
    * Get current tracking stats
    */
-  getStats(): { totalSecondsWatched: number; sessionDuration: number } {
+  getStats(): {
+    totalSecondsWatched: number;
+    lastSavedSecondsWatched: number;
+    sessionDuration: number;
+    lastSaveDuration: number;
+    isCurrentlyPlaying: boolean;
+    sessionStartTime: string;
+    isResumedSession: boolean;
+    intervalActive: boolean;
+  } {
+    const now = new Date();
     const sessionDuration =
-      (new Date().getTime() - this.sessionStartTime.getTime()) / 1000;
+      (now.getTime() - this.sessionStartTime.getTime()) / 1000;
+    const lastSaveDuration =
+      (now.getTime() - this.lastSaveTime.getTime()) / 1000;
+
+    // Calculate current total including active playback
+    let currentTotal = this.totalSecondsWatched;
+    if (this.isPlaying && this.lastPlayTime > 0) {
+      const currentSegmentMs = Date.now() - this.lastPlayTime;
+      const currentSegmentSeconds = Math.max(
+        0,
+        Math.floor(currentSegmentMs / 1000)
+      );
+      currentTotal += currentSegmentSeconds;
+    }
+
     return {
-      totalSecondsWatched: this.totalSecondsWatched,
+      totalSecondsWatched: currentTotal,
+      lastSavedSecondsWatched: this.lastSavedSecondsWatched,
       sessionDuration,
+      lastSaveDuration,
+      isCurrentlyPlaying: this.isPlaying,
+      sessionStartTime: this.sessionStartTime.toISOString(),
+      isResumedSession: this.isResumedSession,
+      intervalActive: this.saveInterval !== null,
     };
+  }
+
+  /**
+   * Check if the tracker is currently active
+   */
+  get isActive(): boolean {
+    return this.sessionActive;
+  }
+
+  /**
+   * Check if the save interval is running
+   */
+  get isIntervalActive(): boolean {
+    return this.saveInterval !== null;
+  }
+
+  /**
+   * Get the current session start time
+   */
+  get getSessionStartTime(): Date {
+    return this.sessionStartTime;
+  }
+
+  /**
+   * Check if this is a resumed session
+   */
+  get getIsResumedSession(): boolean {
+    return this.isResumedSession;
   }
 }

@@ -48,65 +48,55 @@
     typeof createVideoWatchTimeTracker
   > | null>(null);
 
-  // Track the current video/user combination to prevent unnecessary tracker recreation
-  let currentTrackingKey = $state<string | null>(null);
+  // Track if the video is actually playing (not just the YouTube player state)
+  let isActuallyPlaying = $state(false);
 
   // Initialize watch time tracker when component mounts
   onMount(() => {
     const userId = session?.user?.id;
     const videoId = video.id;
 
-    console.log(`Video tracking: onMount - userId: ${userId}, videoId: ${videoId}`);
+    console.log(
+      `🎬 Video tracking: Initializing for video ${videoId}, user: ${userId ? 'authenticated' : 'not authenticated'}`
+    );
 
     if (userId && videoId) {
-      const trackingKey = `${userId}-${videoId}`;
+      console.log('✅ Video tracking: Creating new tracker');
 
-      // Only create tracker if we don't already have one for this user/video combination
-      if (currentTrackingKey !== trackingKey) {
-        console.log(`Video tracking: Creating new tracker - old key: ${currentTrackingKey}, new key: ${trackingKey}`);
-        
-        // Clean up existing tracker if any
-        if (watchTimeTracker) {
-          console.log('Video tracking: Cleaning up existing tracker');
-          watchTimeTracker.endSession().catch(console.error);
-          watchTimeTracker = null;
-        }
-
-        // Create new tracker
-        watchTimeTracker = createVideoWatchTimeTracker({
-          videoId,
-          supabase,
-          session,
-        });
-
-        // Update tracking key
-        currentTrackingKey = trackingKey;
-
-        // Start tracking session
-        console.log('Video tracking: Starting new session');
-        watchTimeTracker.startSession().catch(console.error);
-      } else {
-        console.log(`Video tracking: Tracker already exists for key: ${trackingKey}`);
+      // Clean up existing tracker if any
+      if (watchTimeTracker) {
+        console.log('🧹 Video tracking: Cleaning up existing tracker');
+        watchTimeTracker.endSession().catch(console.error);
+        watchTimeTracker = null;
       }
+
+      // Create new tracker
+      watchTimeTracker = createVideoWatchTimeTracker({
+        videoId,
+        supabase,
+        session,
+      });
+
+      // Start tracking session
+      console.log('🚀 Video tracking: Starting new session');
+      watchTimeTracker.startSession().catch(console.error);
     } else {
-      console.log('Video tracking: No user or video, cleaning up');
+      console.log('🚫 Video tracking: No user or video, cleaning up');
       // Clean up if user is not logged in or no video
       if (watchTimeTracker) {
         watchTimeTracker.endSession().catch(console.error);
         watchTimeTracker = null;
       }
-      currentTrackingKey = null;
     }
 
-    // Cleanup on unmount or change
+    // Cleanup on unmount
     return () => {
-      console.log('Video tracking: onMount cleanup called');
+      console.log('🧹 Video tracking: onMount cleanup called');
       if (watchTimeTracker) {
-        console.log('Video tracking: Ending session in cleanup');
+        console.log('🛑 Video tracking: Ending session in cleanup');
         watchTimeTracker.endSession().catch(console.error);
         watchTimeTracker = null;
       }
-      currentTrackingKey = null;
     };
   });
 
@@ -264,24 +254,56 @@
   }
 
   function handleBeforeUnload() {
+    console.log('🌐 Video tracking: Page unload detected');
     saveCurrentTime({ useBeacon: true });
     // End watch time tracking session before page unload
     if (watchTimeTracker) {
+      console.log('🛑 Video tracking: Ending session before unload');
       watchTimeTracker.endSession().catch(console.error);
       watchTimeTracker = null;
     }
-    currentTrackingKey = null;
   }
 
   function handleVisibilityChange() {
     if (document.visibilityState === 'hidden') {
+      console.log(
+        '👁️ Video tracking: Page visibility changed to hidden (tab switch/minimize)'
+      );
+      // Save current timestamp position but DON'T end the tracking session
       saveCurrentTime({ useBeacon: true });
-      // End watch time tracking session when page becomes hidden
-      if (watchTimeTracker) {
-        watchTimeTracker.endSession().catch(console.error);
-        watchTimeTracker = null;
+
+      // Pause the video tracking if it's currently playing
+      if (isActuallyPlaying && watchTimeTracker) {
+        console.log('⏸️ Video tracking: Pausing tracking due to tab switch');
+        const currentTime = player?.getCurrentTime() || 0;
+        watchTimeTracker.onPause(currentTime);
+        isActuallyPlaying = false;
       }
-      currentTrackingKey = null;
+    } else if (document.visibilityState === 'visible') {
+      console.log(
+        '👁️ Video tracking: Page visibility changed to visible (tab focus)'
+      );
+
+      // Resume tracking if the YouTube player is actually playing
+      if (player && watchTimeTracker) {
+        try {
+          const playerState = player.getPlayerState();
+          const currentTime = player.getCurrentTime() || 0;
+
+          // YouTube player states: 1 = playing
+          if (playerState === 1) {
+            console.log(
+              '▶️ Video tracking: Resuming tracking - video is playing'
+            );
+            watchTimeTracker.onPlay(currentTime);
+            isActuallyPlaying = true;
+          }
+        } catch (error) {
+          console.log(
+            '⚠️ Video tracking: Could not check player state on visibility change'
+          );
+        }
+      }
     }
   }
 
@@ -297,29 +319,44 @@
   // Handle YouTube player state changes for video history tracking
   function onPlayerStateChange(event: { data: number; target: any }) {
     if (!watchTimeTracker) {
-      console.log('Video tracking: Player state change ignored - no tracker');
+      console.log(
+        '⚠️ Video tracking: Player state change ignored - no tracker'
+      );
       return;
     }
 
     const currentTime = event.target.getCurrentTime() || 0;
-    console.log(`Video tracking: Player state change - state: ${event.data}, time: ${currentTime}s`);
+    console.log(
+      `📺 Video tracking: Player state change - state: ${event.data}, time: ${currentTime}s`
+    );
 
     // YouTube player states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (cued)
     switch (event.data) {
       case 1: // Playing
-        console.log('Video tracking: YouTube player PLAYING');
+        console.log('▶️ Video tracking: YouTube player PLAYING');
         watchTimeTracker.onPlay(currentTime);
+        isActuallyPlaying = true;
         break;
       case 2: // Paused
-        console.log('Video tracking: YouTube player PAUSED');
+        console.log('⏸️ Video tracking: YouTube player PAUSED');
         watchTimeTracker.onPause(currentTime);
+        isActuallyPlaying = false;
         break;
       case 0: // Ended
-        console.log('Video tracking: YouTube player ENDED');
+        console.log('🏁 Video tracking: YouTube player ENDED');
         watchTimeTracker.onPause(currentTime);
+        isActuallyPlaying = false;
+        break;
+      case 3: // Buffering
+        console.log(
+          '🔄 Video tracking: YouTube player BUFFERING - keeping current state'
+        );
+        // Don't change isActuallyPlaying state during buffering
         break;
       default:
-        console.log(`Video tracking: YouTube player state ${event.data} ignored`);
+        console.log(
+          `📺 Video tracking: YouTube player state ${event.data} ignored`
+        );
     }
   }
 
@@ -334,6 +371,9 @@
 
       // If time difference is significant (more than 2 seconds), it's likely a seek
       if (timeDiff > 2) {
+        console.log(
+          `⏭️ Video tracking: Seek detected from ${lastKnownTime}s to ${currentTime}s`
+        );
         watchTimeTracker.onSeek(currentTime);
       }
 
@@ -403,17 +443,19 @@
   });
 
   beforeNavigate(() => {
+    console.log('🧭 Video tracking: Navigation detected');
     saveCurrentTime(); // async is ok for in-app navigation
 
     // End watch time tracking session before navigation
     if (watchTimeTracker) {
+      console.log('🛑 Video tracking: Ending session before navigation');
       watchTimeTracker.endSession().catch(console.error);
       watchTimeTracker = null;
     }
-    currentTrackingKey = null;
   });
 
   onDestroy(() => {
+    console.log('💥 Video tracking: Component destroyed');
     if (typeof window !== 'undefined') {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -422,10 +464,10 @@
 
     // Ensure watch time tracker is properly ended
     if (watchTimeTracker) {
+      console.log('🛑 Video tracking: Final cleanup - ending session');
       watchTimeTracker.endSession().catch(console.error);
       watchTimeTracker = null;
     }
-    currentTrackingKey = null;
   });
 </script>
 

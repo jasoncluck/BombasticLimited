@@ -247,7 +247,6 @@ export type Database = {
       video_history: {
         Row: {
           created_at: string
-          id: number
           seconds_watched: number
           session_end_time: string | null
           session_start_time: string
@@ -258,7 +257,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          id?: number
           seconds_watched?: number
           session_end_time?: string | null
           session_start_time?: string
@@ -269,7 +267,6 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          id?: number
           seconds_watched?: number
           session_end_time?: string | null
           session_start_time?: string
@@ -569,7 +566,7 @@ export type Database = {
       get_user_video_history: {
         Args: { p_limit?: number; p_offset?: number; p_video_id?: string }
         Returns: {
-          history_id: number
+          id: string
           user_id: string
           video_id: string
           source: Database["public"]["Enums"]["source"]
@@ -703,25 +700,6 @@ export type Database = {
         Args: { p_username: string }
         Returns: boolean
       }
-      record_video_history: {
-        Args: {
-          p_seconds_watched?: number
-          p_session_end_time?: string
-          p_session_start_time?: string
-          p_video_id: string
-        }
-        Returns: {
-          history_id: number
-          user_id: string
-          video_id: string
-          source: Database["public"]["Enums"]["source"]
-          seconds_watched: number
-          session_start_time: string
-          session_end_time: string
-          created_at: string
-          updated_at: string
-        }[]
-      }
       restore_playlist: {
         Args: { p_playlist_id: number }
         Returns: boolean
@@ -766,6 +744,21 @@ export type Database = {
           search_rank: number
         }[]
       }
+      start_video_history_session: {
+        Args: { p_session_start_time?: string; p_video_id: string }
+        Returns: {
+          id: string
+          user_id: string
+          video_id: string
+          source: Database["public"]["Enums"]["source"]
+          seconds_watched: number
+          session_start_time: string
+          session_end_time: string
+          created_at: string
+          updated_at: string
+          is_resumed: boolean
+        }[]
+      }
       unfollow_playlist: {
         Args: { p_playlist_id: number }
         Returns: {
@@ -806,14 +799,33 @@ export type Database = {
           result_video_position: number
         }[]
       }
-      update_video_history_session: {
+      update_video_history_end_time: {
         Args: {
-          p_history_id: number
-          p_seconds_watched?: number
           p_session_end_time?: string
+          p_session_start_time: string
+          p_video_id: string
         }
         Returns: {
-          history_id: number
+          id: string
+          user_id: string
+          video_id: string
+          source: Database["public"]["Enums"]["source"]
+          seconds_watched: number
+          session_start_time: string
+          session_end_time: string
+          created_at: string
+          updated_at: string
+        }[]
+      }
+      update_video_history_seconds_watched: {
+        Args: {
+          p_seconds_watched: number
+          p_session_end_time?: string
+          p_session_start_time: string
+          p_video_id: string
+        }
+        Returns: {
+          id: string
           user_id: string
           video_id: string
           source: Database["public"]["Enums"]["source"]

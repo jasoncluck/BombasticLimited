@@ -272,10 +272,7 @@
           }}
           isCarousel={true}
           {slidesInView}
-          {carouselState}
-          onCarouselStateUpdate={(state) => {
-            carouselState = state;
-          }}
+          bind:carouselState
         />
       </Carousel.Item>
     {/each}

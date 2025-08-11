@@ -18,8 +18,8 @@ import {
 } from '$lib/supabase/timestamps';
 import {
   VideoWatchTimeTracker,
-  recordVideoHistory,
-  type VideoHistorySession,
+  startVideoHistorySession,
+  updateVideoHistoryEndTime,
 } from '$lib/supabase/video-history';
 
 export async function fetchMoreInProgressVideos({
@@ -232,19 +232,65 @@ export function createVideoWatchTimeTracker({
 }
 
 /**
- * Record a simple video history session (for non-tracked playback)
+ * Start a new video history session for simple tracking
  */
-export async function recordSimpleVideoHistory({
+export async function startSimpleVideoHistory({
   videoId,
-  secondsWatched,
   sessionStartTime,
+  supabase,
+  session,
+}: {
+  videoId: string;
+  sessionStartTime?: Date;
+  supabase: SupabaseClient<Database>;
+  session: Session | null;
+}): Promise<{ success: boolean; error?: PostgrestError | null }> {
+  if (!session?.user) {
+    return {
+      success: false,
+      error: {
+        message: 'User not authenticated',
+        details: '',
+        hint: '',
+        code: 'AUTHENTICATION_REQUIRED',
+      } as PostgrestError,
+    };
+  }
+
+  console.log('🎬 Starting simple video history for:', videoId);
+
+  const { history, error } = await startVideoHistorySession({
+    videoId,
+    sessionStartTime,
+    supabase,
+    session,
+  });
+
+  if (error) {
+    console.error('❌ Failed to start video history:', error);
+    showNotification('Unable to start video history tracking', 'error');
+    return { success: false, error };
+  }
+
+  if (history) {
+    console.log('✅ Video history session started:', history.id);
+  }
+
+  return { success: true };
+}
+
+/**
+ * End a video history session for simple tracking
+ */
+export async function endSimpleVideoHistory({
+  videoId,
+  sessionStartTime, // Now required!
   sessionEndTime,
   supabase,
   session,
 }: {
   videoId: string;
-  secondsWatched?: number;
-  sessionStartTime?: Date;
+  sessionStartTime: Date; // Added this required parameter
   sessionEndTime?: Date;
   supabase: SupabaseClient<Database>;
   session: Session | null;
@@ -261,23 +307,102 @@ export async function recordSimpleVideoHistory({
     };
   }
 
-  const { history, error } = await recordVideoHistory({
-    videoHistory: {
-      videoId,
-      secondsWatched,
-      sessionStartTime,
-      sessionEndTime,
-    },
+  console.log('🏁 Ending simple video history for:', videoId);
+  console.log('🔑 Using session start time:', sessionStartTime.toISOString());
+
+  const { history, error } = await updateVideoHistoryEndTime({
+    videoId,
+    sessionStartTime, // Pass the required start time
+    sessionEndTime,
     supabase,
     session,
   });
 
   if (error) {
-    showNotification('Unable to record video history', 'error');
+    console.error('❌ Failed to end video history:', error);
+    showNotification('Unable to save video history', 'error');
     return { success: false, error };
   }
 
+  if (history) {
+    console.log(
+      `✅ Video history session ended. Duration: ${history.seconds_watched}s`
+    );
+  }
+
   return { success: true };
+}
+
+/**
+ * Record a complete video history session (for quick one-off tracking)
+ * Now properly tracks the session start time for ending
+ */
+export async function recordCompleteVideoHistory({
+  videoId,
+  sessionStartTime,
+  sessionEndTime,
+  supabase,
+  session,
+}: {
+  videoId: string;
+  sessionStartTime?: Date;
+  sessionEndTime?: Date;
+  supabase: SupabaseClient<Database>;
+  session: Session | null;
+}): Promise<{
+  success: boolean;
+  sessionStartTime?: Date;
+  error?: PostgrestError | null;
+}> {
+  if (!session?.user) {
+    return {
+      success: false,
+      error: {
+        message: 'User not authenticated',
+        details: '',
+        hint: '',
+        code: 'AUTHENTICATION_REQUIRED',
+      } as PostgrestError,
+    };
+  }
+
+  console.log('📊 Recording complete video history for:', videoId);
+
+  // Use provided start time or create a new one
+  const actualStartTime = sessionStartTime || new Date();
+
+  // Start the session
+  const startResult = await startSimpleVideoHistory({
+    videoId,
+    sessionStartTime: actualStartTime,
+    supabase,
+    session,
+  });
+
+  if (!startResult.success) {
+    return startResult;
+  }
+
+  // End the session if we have an end time
+  if (sessionEndTime) {
+    const endResult = await endSimpleVideoHistory({
+      videoId,
+      sessionStartTime: actualStartTime, // Use the same start time
+      sessionEndTime,
+      supabase,
+      session,
+    });
+
+    return {
+      ...endResult,
+      sessionStartTime: actualStartTime,
+    };
+  }
+
+  return {
+    success: true,
+    sessionStartTime: actualStartTime,
+  };
 }
 
 /**
