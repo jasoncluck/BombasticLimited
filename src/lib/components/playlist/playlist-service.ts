@@ -1,5 +1,5 @@
 import { goto, invalidate } from '$app/navigation';
-import { showNotification } from '$lib/state/notifications.svelte';
+import { showToast } from '$lib/state/notifications.svelte';
 import type { Database } from '$lib/supabase/database.types';
 import {
   addVideosToPlaylist,
@@ -143,18 +143,18 @@ export async function handleCreatePlaylist({
 
   if (error) {
     if (error.code === 'P0001') {
-      showNotification(
+      showToast(
         `Unable to create playlist, a maximum of ${USER_PLAYLIST_LIMIT} playlists can be created or followed.`,
         'error'
       );
     } else {
-      showNotification('Error creating playlist', 'error');
+      showToast('Error creating playlist', 'error');
     }
   }
 
   // Trigger populates short ID
   if (!error && playlist) {
-    showNotification(`Created Playlist: ${playlist.name}`);
+    showToast(`Created Playlist: ${playlist.name}`);
   }
 
   sidebarState.refreshData();
@@ -185,9 +185,9 @@ export async function handleDeletePlaylist({
   });
 
   if (error) {
-    showNotification(`Unable to delete playlist: ${playlist.name}.`, 'error');
+    showToast(`Unable to delete playlist: ${playlist.name}.`, 'error');
   } else {
-    showNotification(`Deleted ${playlist.name}.`, 'success');
+    showToast(`Deleted ${playlist.name}.`, 'success');
   }
   sidebarState.refreshData();
   return { error };
@@ -224,15 +224,15 @@ export async function handleAddVideosToPlaylist({
 
   if (error) {
     if (error.code === 'P0001') {
-      showNotification(
+      showToast(
         `${videos.length === 1 ? 'Video' : 'Videos'} could not be added. Playlists can not contain more than ${PLAYLIST_VIDEO_LIMIT} videos.`
       );
     } else {
-      showNotification('Unable to add video to playlist.');
+      showToast('Unable to add video to playlist.');
     }
     console.error(error);
   } else {
-    showNotification(
+    showToast(
       `Added ${videos.length > 1 ? 'videos' : 'video'} to ${playlist.name}`
     );
   }
@@ -277,9 +277,9 @@ export async function handleRemoveVideosFromPlaylist({
   }
 
   if (error) {
-    showNotification('Unable to remove video from playlist.');
+    showToast('Unable to remove video from playlist.');
   } else {
-    showNotification(`Removed video from ${playlist.name}.`);
+    showToast(`Removed video from ${playlist.name}.`);
   }
   invalidate('supabase:db:videos');
   return { error };
@@ -311,7 +311,7 @@ export async function handleUpdatePlaylistImage({
   });
 
   if (error) {
-    showNotification('Unable update playlist image');
+    showToast('Unable update playlist image');
   } else if (updatedPlaylist && !isResetImage) {
     await getCroppedPlaylistImageUrl({
       imageProperties: parseImageProperties(playlist.image_properties),
@@ -423,16 +423,16 @@ export async function handleFollowPlaylist({
 
   if (error) {
     if (error?.code === 'P0001') {
-      showNotification(
+      showToast(
         `Unable to follow playlist, a maximum of ${USER_PLAYLIST_LIMIT} playlists can be followed or created.`,
         'error'
       );
     } else {
-      showNotification('Error creating playlist', 'error');
+      showToast('Error creating playlist', 'error');
     }
   } else {
     if (!error) {
-      showNotification(`Followed playlist: ${playlist.name} `, 'success');
+      showToast(`Followed playlist: ${playlist.name} `, 'success');
     }
   }
 }
@@ -463,9 +463,9 @@ export async function handleUnfollowPlaylist({
   sidebarState.refreshData();
 
   if (!error) {
-    showNotification(`Unfollowed playlist: ${playlist.name} `, 'success');
+    showToast(`Unfollowed playlist: ${playlist.name} `, 'success');
   } else {
-    showNotification(`Unable to unfollow playlist: ${error.message}`, 'error');
+    showToast(`Unable to unfollow playlist: ${error.message}`, 'error');
   }
   return { error };
 }
@@ -497,7 +497,7 @@ export async function handleUpdatePlaylistSort({
   });
 
   if (error) {
-    showNotification('Unable to update playlist sort settings', 'error');
+    showToast('Unable to update playlist sort settings', 'error');
   }
 
   return { updatedPlaylist, error };

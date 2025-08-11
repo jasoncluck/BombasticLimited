@@ -2,7 +2,7 @@ import type {
   NotificationWithMeta,
   NotificationType,
 } from '$lib/supabase/notifications';
-import { showNotificationToast } from '$lib/state/notifications.svelte';
+import { showToastFromNotification } from '$lib/state/notifications.svelte';
 
 /**
  * Demo notifications for testing the system
@@ -90,12 +90,12 @@ export function createDemoNotifications(): NotificationWithMeta[] {
 /**
  * Show a demo notification toast for testing
  */
-export function showDemoNotification(type: NotificationType = 'content') {
+export function showDemoToast(type: NotificationType = 'content') {
   const demoNotifications = createDemoNotifications();
   const notification =
     demoNotifications.find((n) => n.type === type) || demoNotifications[0];
 
-  showNotificationToast(notification);
+  showToastFromNotification(notification);
 }
 
 /**
@@ -117,5 +117,5 @@ export function simulateRealtimeNotification() {
     is_new: true,
   };
 
-  showNotificationToast(notification);
+  showToastFromNotification(notification);
 }

@@ -20,8 +20,8 @@
   import type { Database } from '$lib/supabase/database.types';
   import type { NotificationPreferences } from '$lib/supabase/notifications';
   import {
+    showDemoToast,
     simulateRealtimeNotification,
-    showDemoNotification,
   } from '$lib/utils/demo-notifications';
 
   let {
@@ -369,35 +369,35 @@
       <Button
         variant="outline"
         size="sm"
-        onclick={() => showDemoNotification('system')}
+        onclick={() => showDemoToast('system')}
       >
         Test System
       </Button>
       <Button
         variant="outline"
         size="sm"
-        onclick={() => showDemoNotification('content')}
+        onclick={() => showDemoToast('content')}
       >
         Test Content
       </Button>
       <Button
         variant="outline"
         size="sm"
-        onclick={() => showDemoNotification('user')}
+        onclick={() => showDemoToast('user')}
       >
         Test User
       </Button>
       <Button
         variant="outline"
         size="sm"
-        onclick={() => showDemoNotification('playlist_update')}
+        onclick={() => showDemoToast('playlist_update')}
       >
         Test Playlist
       </Button>
       <Button
         variant="outline"
         size="sm"
-        onclick={() => showDemoNotification('mention')}
+        onclick={() => showDemoToast('mention')}
       >
         Test Mention
       </Button>

@@ -23,7 +23,6 @@
     NotificationWithMeta,
     NotificationType,
   } from '$lib/supabase/notifications';
-  import { createDemoNotifications } from '$lib/utils/demo-notifications';
 
   let {
     supabase,
@@ -71,23 +70,6 @@
           notificationState.loadNotifications({ type: filterType });
         } else {
           notificationState.loadNotifications();
-        }
-
-        // For demo purposes, if no real notifications exist, show demo data
-        if (
-          notificationState.notifications.length === 0 &&
-          !notificationState.isLoading
-        ) {
-          const demoNotifications = createDemoNotifications();
-          // Simulate adding them to the store for demo
-          setTimeout(() => {
-            if (notificationState.notifications.length === 0) {
-              notificationState.notifications = demoNotifications;
-              notificationState.unreadCount = demoNotifications.filter(
-                (n) => !n.read
-              ).length;
-            }
-          }, 1000);
         }
       }
 

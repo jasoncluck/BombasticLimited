@@ -4,7 +4,7 @@
  */
 import { type Video, getInProgressVideos } from '$lib/supabase/videos';
 import { getVideos } from '$lib/supabase/videos';
-import { showNotification } from '$lib/state/notifications.svelte.js';
+import { showToast } from '$lib/state/notifications.svelte.js';
 import type {
   PostgrestError,
   Session,
@@ -43,7 +43,7 @@ export async function fetchMoreInProgressVideos({
   });
 
   if (error) {
-    showNotification(
+    showToast(
       `Unable to retrieve next set of videos: ${error.message}`,
       'error'
     );
@@ -84,7 +84,7 @@ export async function fetchMoreSourceVideos({
   });
 
   if (error) {
-    showNotification(
+    showToast(
       `Unable to retrieve next set of videos for ${source}: ${error.message}`,
       'error'
     );
@@ -135,7 +135,7 @@ export async function handleAddVideoTimestamps({
   invalidate('supabase:db:videos');
 
   if (error) {
-    showNotification('Unable to save timestamp');
+    showToast('Unable to save timestamp');
   }
   return { updatedVideos: updatedVideos ?? [], error };
 }
@@ -164,9 +164,9 @@ export async function handleDeleteVideosTimestamp({
   invalidate('supabase:db:videos');
 
   if (error) {
-    showNotification('Unable to remove video from watchlist.');
+    showToast('Unable to remove video from watchlist.');
   } else {
-    showNotification(
+    showToast(
       isContinueVideos
         ? 'Removed from Continue Watching'
         : 'Video progress reset'

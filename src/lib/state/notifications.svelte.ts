@@ -22,8 +22,8 @@ const initialState = {
   lastFetch: null,
 };
 
-// Enhanced toast functions for notifications
-export function showNotificationToast(notification: NotificationWithMeta) {
+// Toast functions for temporary popup notifications (NOT related to bell notifications)
+export function showToastFromNotification(notification: NotificationWithMeta) {
   const toastMessage = `${notification.title}: ${notification.message}`;
 
   switch (notification.type) {
@@ -344,8 +344,8 @@ export function getNotificationState(key = DEFAULT_KEY) {
   return getContext<NotificationState>(key);
 }
 
-// Legacy toast functions for backward compatibility
-export function showNotification(
+// Legacy toast functions for backward compatibility (NOT related to bell notifications)
+export function showToast(
   message: string,
   type?: 'success' | 'error' | 'warning'
 ) {
@@ -365,6 +365,6 @@ export function showNotification(
   }
 }
 
-export function clearNotification() {
+export function clearToast() {
   // For compatibility with legacy code - Sonner handles dismissal automatically
 }

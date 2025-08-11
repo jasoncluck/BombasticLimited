@@ -8,7 +8,7 @@
   import { getPlaylistState } from '$lib/state/playlist.svelte';
   import { page } from '$app/state';
   import { updateProfileSources } from '$lib/supabase/user-profiles';
-  import { showNotification } from '$lib/state/notifications.svelte';
+  import { showToast } from '$lib/state/notifications.svelte';
   import { getSourceState } from '$lib/state/source.svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { handleCreatePlaylist } from '../playlist/playlist-service';
@@ -188,7 +188,7 @@
           invalidate('supabase:db:profiles');
         } catch (error) {
           console.error('Failed to update source ordering:', error);
-          showNotification('An error occurred, unable to reorder.');
+          showToast('An error occurred, unable to reorder.');
 
           // Rollback on error
           orderedSources = originalOrder;

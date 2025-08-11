@@ -1,6 +1,6 @@
 import { getContext, setContext } from 'svelte';
 import { goto } from '$app/navigation';
-import { showNotification } from '$lib/state/notifications.svelte.js';
+import { showToast } from '$lib/state/notifications.svelte.js';
 import debounce from 'debounce';
 import { isSourceArray, SOURCE_INFO } from '$lib/constants/source';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -92,7 +92,7 @@ export class LayoutStateClass implements LayoutState {
 
   async handleLogout(supabase: SupabaseClient) {
     const { error } = await supabase.auth.signOut();
-    showNotification('Logged out.', 'success');
+    showToast('Logged out.', 'success');
     if (error) {
       console.error('Error signing out:', error);
     }

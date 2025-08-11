@@ -263,5 +263,13 @@ WHERE
   np.user_id IS NULL
 ON CONFLICT (user_id) DO NOTHING;
 
+-- Set jason@bombastic.ltd as admin if the profile exists
+UPDATE public.profiles 
+SET account_type = 'admin'
+WHERE id IN (
+  SELECT id FROM auth.users 
+  WHERE email = 'jason@bombastic.ltd'
+);
+
 -- Note: Realtime subscriptions removed for simplicity
 -- The notifications system will use polling instead of realtime updates

@@ -6,7 +6,7 @@ import { browser } from '$app/environment';
 import type { Source } from '$lib/constants/source';
 import { SOURCE_INFO } from '$lib/constants/source';
 import { tabVisibility } from '$lib/utils/tab-visibility';
-import { showNotification } from '$lib/state/notifications.svelte';
+import { showToast } from '$lib/state/notifications.svelte';
 import { source, type Source as SSESource } from 'sveltekit-sse';
 import {
   SIDEBAR_COOKIE_NAME,
@@ -403,7 +403,7 @@ export class SidebarStateClass {
 
         // Only show notification if it wasn't recently shown
         if (!this.wasNotificationRecentlyShown(source)) {
-          showNotification(`${displayName} is now streaming.`);
+          showToast(`${displayName} is now streaming.`);
           this.recordShownNotification(source);
         }
       });
@@ -411,7 +411,7 @@ export class SidebarStateClass {
       // Send notifications for streams that stopped
       stoppedStreaming.forEach((source) => {
         const displayName = SOURCE_INFO[source]?.displayName || source;
-        showNotification(`${displayName} has stopped streaming.`);
+        showToast(`${displayName} has stopped streaming.`);
       });
     }
   }
