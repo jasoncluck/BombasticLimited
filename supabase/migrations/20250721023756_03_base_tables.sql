@@ -131,6 +131,7 @@ CREATE TABLE IF NOT EXISTS "public"."profiles" (
   "content_description" "public"."content_description" DEFAULT 'BRIEF',
   "content_display" "public"."content_display" DEFAULT 'TILES',
   "avatar_url" text DEFAULT NULL,
+  "isAdmin" boolean DEFAULT NULL,
   PRIMARY KEY ("id")
 );
 

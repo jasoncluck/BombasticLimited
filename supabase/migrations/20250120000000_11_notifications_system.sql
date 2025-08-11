@@ -192,6 +192,11 @@ BEGIN
             target_user_id, notification_type, notification_title, 
             notification_message, notification_metadata, notification_action_url
         ) RETURNING id INTO notification_id;
+        
+        -- Also create entry in profile_notifications table
+        INSERT INTO public.profile_notifications (profile_id, notification_id)
+        VALUES (target_user_id, notification_id)
+        ON CONFLICT (profile_id, notification_id) DO NOTHING;
     END IF;
     
     RETURN notification_id;
@@ -211,6 +216,7 @@ DECLARE
     user_record record;
     notification_count integer := 0;
     user_preferences record;
+    notification_id uuid;
 BEGIN
     -- Loop through all users who have notification preferences
     FOR user_record IN 
@@ -236,7 +242,12 @@ BEGIN
             ) VALUES (
                 user_record.user_id, notification_type, notification_title, 
                 notification_message, notification_metadata, notification_action_url
-            );
+            ) RETURNING id INTO notification_id;
+            
+            -- Also create entry in profile_notifications table
+            INSERT INTO public.profile_notifications (profile_id, notification_id)
+            VALUES (user_record.user_id, notification_id)
+            ON CONFLICT (profile_id, notification_id) DO NOTHING;
             
             notification_count := notification_count + 1;
         END IF;
@@ -264,3 +275,37 @@ ADD TABLE public.notifications;
 
 ALTER PUBLICATION supabase_realtime
 ADD TABLE public.notification_preferences;
+
+-- Create profile_notifications table to map each user profile to notifications
+CREATE TABLE IF NOT EXISTS public.profile_notifications (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  profile_id uuid NOT NULL REFERENCES public.profiles (id) ON DELETE CASCADE,
+  notification_id uuid NOT NULL REFERENCES public.notifications (id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
+  UNIQUE(profile_id, notification_id)
+);
+
+-- Add comments for documentation
+COMMENT ON TABLE public.profile_notifications IS 'Maps user profiles to their notifications';
+
+-- Create indexes for performance
+CREATE INDEX IF NOT EXISTS profile_notifications_profile_id_idx ON public.profile_notifications (profile_id);
+CREATE INDEX IF NOT EXISTS profile_notifications_notification_id_idx ON public.profile_notifications (notification_id);
+
+-- Enable Row Level Security (RLS)
+ALTER TABLE public.profile_notifications ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for profile_notifications
+CREATE POLICY "Users can view their own profile notifications" ON public.profile_notifications FOR
+SELECT
+  USING (profile_id = auth.uid());
+
+CREATE POLICY "System can insert profile notifications" ON public.profile_notifications FOR INSERT
+WITH
+  CHECK (TRUE);
+
+CREATE POLICY "Users can delete their own profile notifications" ON public.profile_notifications FOR DELETE USING (profile_id = auth.uid());
+
+-- Enable realtime for profile_notifications
+ALTER PUBLICATION supabase_realtime
+ADD TABLE public.profile_notifications;
