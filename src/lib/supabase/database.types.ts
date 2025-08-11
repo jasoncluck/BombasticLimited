@@ -199,6 +199,35 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          notification_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notification_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notification_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_notifications_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -239,27 +268,6 @@ export type Database = {
           providers?: string[]
           sources?: Database["public"]["Enums"]["source"][] | null
           username?: string | null
-        }
-        Relationships: []
-      }
-      profile_notifications: {
-        Row: {
-          created_at: string
-          id: string
-          notification_id: string
-          profile_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          notification_id: string
-          profile_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          notification_id?: string
-          profile_id?: string
         }
         Relationships: []
       }

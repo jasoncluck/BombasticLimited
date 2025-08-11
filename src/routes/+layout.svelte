@@ -206,8 +206,6 @@
   <script src="https://embed.twitch.tv/embed/v1.js"></script>
 </svelte:head>
 
-sendGlobalWelcomeNotification()
-
 <div class=" flex h-full flex-col">
   <!-- Main Content Area with Progressive Loading -->
   {#if !isHydrated}
