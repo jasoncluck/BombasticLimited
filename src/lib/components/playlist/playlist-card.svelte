@@ -29,7 +29,8 @@
         src={playlist.processedImageUrl}
         alt={playlist.name}
         class="h-full w-full rounded object-cover"
-        loading="lazy"
+        decoding="async"
+        loading="eager"
       />
     </div>
   {:else}
