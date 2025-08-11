@@ -42,6 +42,7 @@ export class NotificationStateClass {
     typeof createNotificationService
   > | null = null;
   private pollingInterval: NodeJS.Timeout | null = null;
+  private visibilityChangeHandler: (() => void) | null = null;
   private isInitialized = false;
   private readonly POLLING_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -51,19 +52,36 @@ export class NotificationStateClass {
   }
 
   initialize(supabase: SupabaseClient<Database>) {
-    if (this.isInitialized && this.supabase === supabase) return;
+    if (this.isInitialized && this.supabase === supabase) {
+      console.log('🔔 NotificationState: Already initialized, skipping...');
+      return;
+    }
 
+    console.log('🔔 NotificationState: Initializing...');
     this.supabase = supabase;
     this.notificationService = createNotificationService(supabase);
     this.isInitialized = true;
 
     // Set up polling for notifications
     this.setupPolling();
+
+    // Load initial data if not already loaded
+    if (this.notifications.length === 0 && !this.isLoading) {
+      console.log('🔔 NotificationState: Loading initial data...');
+      this.loadNotifications();
+      this.loadUnreadCount();
+    } else {
+      console.log('🔔 NotificationState: Initial data already loaded or loading in progress');
+    }
   }
 
   async loadNotifications(filters: NotificationFilters = {}, append = false) {
-    if (!this.notificationService) return;
+    if (!this.notificationService) {
+      console.warn('🔔 NotificationState: Cannot load notifications - service not initialized');
+      return;
+    }
 
+    console.log('🔔 NotificationState: Loading notifications...', { filters, append });
     this.isLoading = true;
     this.error = null;
 
@@ -77,10 +95,13 @@ export class NotificationStateClass {
       });
 
     if (error) {
+      console.error('🔔 NotificationState: Error loading notifications:', error);
       this.isLoading = false;
       this.error = error.message;
       return;
     }
+
+    console.log('🔔 NotificationState: Loaded notifications successfully:', { count: data?.length, total: count });
 
     if (append) {
       this.notifications = [...this.notifications, ...(data || [])];
@@ -98,12 +119,19 @@ export class NotificationStateClass {
   }
 
   async loadUnreadCount() {
-    if (!this.notificationService) return;
+    if (!this.notificationService) {
+      console.warn('🔔 NotificationState: Cannot load unread count - service not initialized');
+      return;
+    }
 
+    console.log('🔔 NotificationState: Loading unread count...');
     const { data, error } = await this.notificationService.getUnreadCount();
 
-    if (!error && data !== null) {
-      this.unreadCount = data;
+    if (error) {
+      console.error('🔔 NotificationState: Error loading unread count:', error);
+    } else {
+      console.log('🔔 NotificationState: Unread count loaded:', data);
+      this.unreadCount = data || 0;
     }
   }
 
@@ -194,6 +222,11 @@ export class NotificationStateClass {
       clearInterval(this.pollingInterval);
     }
 
+    // Remove existing event listener if it exists
+    if (this.visibilityChangeHandler) {
+      document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
+    }
+
     // Set up polling to check for new notifications every 5 minutes
     this.pollingInterval = setInterval(() => {
       // Only poll if the page is visible (user is active)
@@ -206,15 +239,18 @@ export class NotificationStateClass {
       }
     }, this.POLLING_INTERVAL_MS);
 
-    // Also poll when the page becomes visible again
-    document.addEventListener('visibilitychange', () => {
+    // Create a single event handler and store reference for cleanup
+    this.visibilityChangeHandler = () => {
       if (document.visibilityState === 'visible') {
         this.loadUnreadCount();
         if (this.notifications.length > 0) {
           this.loadNotifications();
         }
       }
-    });
+    };
+
+    // Add the event listener
+    document.addEventListener('visibilitychange', this.visibilityChangeHandler);
   }
 
   private formatRelativeTime(timestamp: string): string {
@@ -246,6 +282,13 @@ export class NotificationStateClass {
       clearInterval(this.pollingInterval);
       this.pollingInterval = null;
     }
+    
+    // Remove event listener
+    if (this.visibilityChangeHandler) {
+      document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
+      this.visibilityChangeHandler = null;
+    }
+    
     this.isInitialized = false;
   }
 

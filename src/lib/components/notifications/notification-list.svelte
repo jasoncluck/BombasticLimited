@@ -44,7 +44,6 @@
   let loadingMore = $state(false);
 
   // Initialize and load notifications - only run once when supabase or filterType changes
-  let isInitialized = $state(false);
   let currentSupabase: SupabaseClient<Database> | null = null;
   let currentFilterType: NotificationType | undefined | null = null;
 
@@ -60,21 +59,9 @@
 
       notificationState.initialize(supabase);
 
-      // Only load notifications if we haven't loaded them yet or if filterType changed
-      const shouldLoad =
-        notificationState.notifications.length === 0 &&
-        !notificationState.isLoading;
-
-      if (shouldLoad) {
-        if (filterType) {
-          notificationState.loadNotifications({ type: filterType });
-        } else {
-          notificationState.loadNotifications();
-        }
-      }
-
-      if (!isInitialized) {
-        isInitialized = true;
+      // If we have a specific filter type and this is different from what's loaded
+      if (filterType && filterType !== currentFilterType) {
+        notificationState.loadNotifications({ type: filterType });
       }
     }
   });

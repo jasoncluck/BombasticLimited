@@ -29,14 +29,6 @@
   onMount(() => {
     if (supabase) {
       notificationState.initialize(supabase);
-      // Only load if not already loaded
-      if (
-        notificationState.notifications.length === 0 &&
-        !notificationState.isLoading
-      ) {
-        notificationState.loadNotifications();
-        notificationState.loadUnreadCount();
-      }
     }
   });
 
