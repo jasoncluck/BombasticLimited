@@ -42,6 +42,8 @@ export class NotificationService {
         .from('notifications')
         .select('*', { count: 'exact' })
         .eq('user_id', user.data.user.id)
+        .lte('start_datetime', new Date().toISOString()) // Only show notifications that have started
+        .or('end_datetime.is.null,end_datetime.gt.' + new Date().toISOString()) // Not expired
         .order('created_at', { ascending: false });
 
       if (filters.type) {
@@ -229,7 +231,10 @@ export class NotificationService {
    * Create a new notification
    */
   async createNotification(
-    params: CreateNotificationParams
+    params: CreateNotificationParams & {
+      start_datetime?: string;
+      end_datetime?: string;
+    }
   ): Promise<{ data: string | null; error: any }> {
     try {
       console.log(
@@ -239,17 +244,26 @@ export class NotificationService {
           type: params.type,
           title: params.title,
           message: params.message.substring(0, 50) + '...',
+          start_datetime: params.start_datetime,
+          end_datetime: params.end_datetime,
         }
       );
 
-      const { data, error } = await this.supabase.rpc('create_notification', {
-        target_user_id: params.user_id,
-        notification_type: params.type,
-        notification_title: params.title,
-        notification_message: params.message,
-        notification_metadata: params.metadata || {},
-        notification_action_url: params.action_url,
-      });
+      // For now, use direct table insert since RPC doesn't support datetime params yet
+      const { data, error } = await this.supabase
+        .from('notifications')
+        .insert({
+          user_id: params.user_id,
+          type: params.type,
+          title: params.title,
+          message: params.message,
+          metadata: params.metadata || {},
+          action_url: params.action_url,
+          start_datetime: params.start_datetime || new Date().toISOString(),
+          end_datetime: params.end_datetime || null,
+        })
+        .select('id')
+        .single();
 
       if (error) {
         console.error(
@@ -259,11 +273,11 @@ export class NotificationService {
       } else {
         console.log(
           '🔔 NotificationService: Notification created successfully with ID:',
-          data
+          data?.id
         );
       }
 
-      return { data, error };
+      return { data: data?.id || null, error };
     } catch (error) {
       console.error(
         '🔔 NotificationService: Exception in createNotification:',
@@ -361,8 +375,11 @@ export class NotificationService {
     message: string;
     metadata?: Record<string, any>;
     action_url?: string;
+    start_datetime?: string;
+    end_datetime?: string;
   }): Promise<{ data: number | null; error: any }> {
     try {
+      // For now, use the original RPC function and then update the datetime fields separately
       const { data, error } = await this.supabase.rpc(
         'create_notification_for_all_users',
         {
@@ -373,6 +390,21 @@ export class NotificationService {
           notification_action_url: params.action_url,
         }
       );
+
+      // If datetime params are provided, update all recently created notifications
+      if ((params.start_datetime || params.end_datetime) && data && data > 0) {
+        const updateData: any = {};
+        if (params.start_datetime) updateData.start_datetime = params.start_datetime;
+        if (params.end_datetime) updateData.end_datetime = params.end_datetime;
+
+        // Update notifications created in the last minute for this title/message
+        await this.supabase
+          .from('notifications')
+          .update(updateData)
+          .eq('title', params.title)
+          .eq('message', params.message)
+          .gte('created_at', new Date(Date.now() - 60000).toISOString());
+      }
 
       return { data, error };
     } catch (error) {

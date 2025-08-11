@@ -109,10 +109,8 @@
       await notificationState.markAsRead([notification.id]);
     }
 
-    // Navigate to action URL if provided
-    if (notification.action_url) {
-      goto(notification.action_url);
-    }
+    // Navigate to notification detail page
+    goto(`/notifications/${notification.id}`);
 
     // Call the callback if provided
     onNotificationClick?.();
@@ -236,9 +234,9 @@
                   >
                     {notification.title}
                   </p>
-                  <p class="text-muted-foreground mt-1 line-clamp-2 text-sm">
-                    {notification.message}
-                  </p>
+                  <div class="text-muted-foreground mt-1 line-clamp-2 text-sm">
+                    {@html notification.message}
+                  </div>
 
                   <div class="mt-2 flex items-center space-x-2">
                     <span class="text-muted-foreground text-xs">

@@ -56,6 +56,8 @@ export const actions: Actions = {
     const title = formData.get('title') as string;
     const message = formData.get('message') as string;
     const actionUrl = (formData.get('actionUrl') as string) || undefined;
+    const startDatetime = (formData.get('startDatetime') as string) || undefined;
+    const endDatetime = (formData.get('endDatetime') as string) || undefined;
 
     try {
       const notificationService = createNotificationService(supabase);
@@ -65,6 +67,8 @@ export const actions: Actions = {
         message,
         metadata: { source: 'admin_panel' },
         action_url: actionUrl,
+        start_datetime: startDatetime,
+        end_datetime: endDatetime,
       });
 
       return { success: true, count: result.data };
@@ -97,6 +101,8 @@ export const actions: Actions = {
     const title = formData.get('title') as string;
     const message = formData.get('message') as string;
     const actionUrl = (formData.get('actionUrl') as string) || undefined;
+    const startDatetime = (formData.get('startDatetime') as string) || undefined;
+    const endDatetime = (formData.get('endDatetime') as string) || undefined;
 
     try {
       const notificationService = createNotificationService(supabase);
@@ -107,6 +113,8 @@ export const actions: Actions = {
         message,
         metadata: { source: 'admin_test' },
         action_url: actionUrl,
+        start_datetime: startDatetime,
+        end_datetime: endDatetime,
       });
 
       return { success: true, id: result.data };

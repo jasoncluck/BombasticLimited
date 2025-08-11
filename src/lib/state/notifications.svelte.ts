@@ -174,6 +174,12 @@ export class NotificationStateClass {
       } else {
         this.unreadCount = 0;
       }
+
+      // Force refresh of data from server to ensure consistency
+      setTimeout(() => {
+        this.loadNotifications();
+        this.loadUnreadCount();
+      }, 100);
     }
 
     return { error };
@@ -199,6 +205,12 @@ export class NotificationStateClass {
       );
 
       this.unreadCount = Math.max(0, this.unreadCount - deletedUnreadCount);
+
+      // Force refresh of data from server to ensure consistency
+      setTimeout(() => {
+        this.loadNotifications();
+        this.loadUnreadCount();
+      }, 100);
     }
 
     return { error };

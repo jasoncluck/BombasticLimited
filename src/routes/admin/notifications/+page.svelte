@@ -9,12 +9,12 @@
   import * as Card from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
   import { Send, TestTube, RotateCcw } from '@lucide/svelte';
+  import { showToast } from '$lib/state/notifications.svelte';
 
-  export let data: PageData;
-  export let form: ActionData;
+  let { data, form }: { data: PageData; form: ActionData } = $props();
 
-  let isSubmitting = false;
-  let testSubmitting = false;
+  let isSubmitting = $state(false);
+  let testSubmitting = $state(false);
 
   const notificationTypes = [
     { value: 'system', label: 'System' },
@@ -24,10 +24,13 @@
     { value: 'mention', label: 'Mention' },
   ];
 
-  let selectedType = { value: 'system', label: 'System' };
-  let title = '';
-  let message = '';
-  let actionUrl = '';
+  let selectedType = $state({ value: 'system', label: 'System' });
+  let selectedTypeValue = $state('system');
+  let title = $state('');
+  let message = $state('');
+  let actionUrl = $state('');
+  let startDatetime = $state('');
+  let endDatetime = $state('');
 
   // Predefined templates
   const templates = {
@@ -57,6 +60,7 @@
   function loadTemplate(templateName: keyof typeof templates) {
     const template = templates[templateName];
     selectedType = notificationTypes.find(t => t.value === template.type) || notificationTypes[0];
+    selectedTypeValue = template.type;
     title = template.title;
     message = template.message;
     actionUrl = template.actionUrl;
@@ -64,10 +68,26 @@
 
   function resetForm() {
     selectedType = notificationTypes[0];
+    selectedTypeValue = 'system';
     title = '';
     message = '';
     actionUrl = '';
+    startDatetime = '';
+    endDatetime = '';
   }
+
+  // Handle form submission success
+  $effect(() => {
+    if (form?.success) {
+      if (form.count !== undefined) {
+        showToast(`✅ Global notification sent successfully to ${form.count} users!`, 'success');
+      } else {
+        showToast('✅ Test notification sent successfully!', 'success');
+      }
+    } else if (form?.error) {
+      showToast(`❌ Error: ${form.error}`, 'error');
+    }
+  });
 </script>
 
 <svelte:head>
@@ -82,28 +102,7 @@
     </p>
   </div>
 
-  <!-- Result Messages -->
-  {#if form?.success}
-    <Card.Root class="mb-6 border-green-200 bg-green-50">
-      <Card.Content class="p-4">
-        <div class="flex items-center gap-2 text-green-700">
-          {#if form.count !== undefined}
-            ✅ Global notification sent successfully to {form.count} users!
-          {:else}
-            ✅ Test notification sent successfully!
-          {/if}
-        </div>
-      </Card.Content>
-    </Card.Root>
-  {:else if form?.error}
-    <Card.Root class="mb-6 border-red-200 bg-red-50">
-      <Card.Content class="p-4">
-        <div class="flex items-center gap-2 text-red-700">
-          ❌ Error: {form.error}
-        </div>
-      </Card.Content>
-    </Card.Root>
-  {/if}
+  <!-- Remove the result messages section since we're using toasts now -->
 
   <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
     <!-- Notification Form -->
@@ -162,9 +161,17 @@
             <!-- Type Selection -->
             <div class="space-y-2">
               <Label for="type">Type</Label>
-              <Select.Root bind:selected={selectedType}>
+              <Select.Root
+                type="single"
+                bind:value={selectedTypeValue}
+                onValueChange={(v) => {
+                  if (v) {
+                    selectedType = notificationTypes.find(t => t.value === v) || notificationTypes[0];
+                  }
+                }}
+              >
                 <Select.Trigger>
-                  <Select.Value placeholder="Select notification type" />
+                  {selectedType?.label || 'Select notification type'}
                 </Select.Trigger>
                 <Select.Content>
                   {#each notificationTypes as type}
@@ -172,7 +179,7 @@
                   {/each}
                 </Select.Content>
               </Select.Root>
-              <input type="hidden" name="type" value={selectedType?.value || 'system'} />
+              <input type="hidden" name="type" value={selectedTypeValue} />
             </div>
 
             <!-- Title -->
@@ -182,7 +189,8 @@
                 id="title"
                 name="title"
                 type="text"
-                bind:value={title}
+                value={title}
+                oninput={(e) => title = e.currentTarget.value}
                 required
                 placeholder="Enter notification title"
               />
@@ -194,11 +202,15 @@
               <Textarea
                 id="message"
                 name="message"
-                bind:value={message}
+                value={message}
+                oninput={(e) => message = e.currentTarget.value}
                 required
                 rows={3}
-                placeholder="Enter notification message"
+                placeholder="Enter notification message (HTML supported: &lt;b&gt;bold&lt;/b&gt;, &lt;i&gt;italic&lt;/i&gt;, etc.)"
               />
+              <p class="text-xs text-muted-foreground">
+                HTML tags like &lt;b&gt;, &lt;i&gt;, &lt;u&gt;, &lt;br&gt; are supported
+              </p>
             </div>
 
             <!-- Action URL (Optional) -->
@@ -208,9 +220,40 @@
                 id="actionUrl"
                 name="actionUrl"
                 type="url"
-                bind:value={actionUrl}
+                value={actionUrl}
+                oninput={(e) => actionUrl = e.currentTarget.value}
                 placeholder="https://example.com/link"
               />
+            </div>
+
+            <!-- Start DateTime (Optional) -->
+            <div class="space-y-2">
+              <Label for="startDatetime">Start Date & Time (Optional)</Label>
+              <Input
+                id="startDatetime"
+                name="startDatetime"
+                type="datetime-local"
+                value={startDatetime}
+                oninput={(e) => startDatetime = e.currentTarget.value}
+              />
+              <p class="text-xs text-muted-foreground">
+                When notification should start being visible (default: immediately)
+              </p>
+            </div>
+
+            <!-- End DateTime (Optional) -->
+            <div class="space-y-2">
+              <Label for="endDatetime">End Date & Time (Optional)</Label>
+              <Input
+                id="endDatetime"
+                name="endDatetime"
+                type="datetime-local"
+                value={endDatetime}
+                oninput={(e) => endDatetime = e.currentTarget.value}
+              />
+              <p class="text-xs text-muted-foreground">
+                When notification should automatically expire (default: never expires)
+              </p>
             </div>
 
             <!-- Action Buttons -->
