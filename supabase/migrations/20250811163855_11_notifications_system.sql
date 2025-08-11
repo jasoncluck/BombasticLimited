@@ -1,3 +1,4 @@
+
 -- Migration: 11_notifications_system.sql
 -- Purpose: Create comprehensive notifications system with tables, types, and RLS policies
 -- Create notification type enum
@@ -13,7 +14,7 @@ CREATE TYPE public.notification_type AS ENUM(
 CREATE TABLE IF NOT EXISTS public.notifications (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
-  type notification_type NOT NULL DEFAULT 'system',
+  type public.notification_type NOT NULL DEFAULT 'system',
   title text NOT NULL,
   message text NOT NULL,
   metadata jsonb DEFAULT '{}',
@@ -165,7 +166,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Function to create a notification
 CREATE OR REPLACE FUNCTION public.create_notification (
   target_user_id uuid,
-  notification_type notification_type,
+  notification_type public.notification_type,
   notification_title text,
   notification_message text,
   notification_metadata jsonb DEFAULT '{}',
@@ -204,7 +205,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Function to create notifications for all users
 -- Useful for system-wide announcements like "Welcome" messages
 CREATE OR REPLACE FUNCTION public.create_notification_for_all_users (
-  notification_type notification_type,
+  notification_type public.notification_type,
   notification_title text,
   notification_message text,
   notification_metadata jsonb DEFAULT '{}',

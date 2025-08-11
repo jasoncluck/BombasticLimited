@@ -117,6 +117,8 @@ ALTER TYPE "public"."playlist_sorted_by" OWNER TO "postgres";
 
 CREATE TYPE "public"."playlist_sort_order" AS ENUM('ascending', 'descending');
 
+CREATE TYPE "public"."profile_account_type" AS ENUM('default', 'admin');
+
 ALTER TYPE "public"."playlist_sort_order" OWNER TO "postgres";
 
 -- Create sequences for tables

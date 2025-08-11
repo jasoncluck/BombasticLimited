@@ -199,49 +199,25 @@ export type Database = {
         }
         Relationships: []
       }
-      profile_notifications: {
-        Row: {
-          created_at: string
-          id: string
-          notification_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          notification_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          notification_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "profile_notifications_notification_id_fkey"
-            columns: ["notification_id"]
-            isOneToOne: false
-            referencedRelation: "notifications"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
+          account_type:
+            | Database["public"]["Enums"]["profile_account_type"]
+            | null
           avatar_url: string | null
           content_description:
             | Database["public"]["Enums"]["content_description"]
             | null
           content_display: Database["public"]["Enums"]["content_display"] | null
           id: string
-          isAdmin: boolean | null
           providers: string[]
           sources: Database["public"]["Enums"]["source"][] | null
           username: string | null
         }
         Insert: {
+          account_type?:
+            | Database["public"]["Enums"]["profile_account_type"]
+            | null
           avatar_url?: string | null
           content_description?:
             | Database["public"]["Enums"]["content_description"]
@@ -250,12 +226,14 @@ export type Database = {
             | Database["public"]["Enums"]["content_display"]
             | null
           id: string
-          isAdmin?: boolean | null
           providers?: string[]
           sources?: Database["public"]["Enums"]["source"][] | null
           username?: string | null
         }
         Update: {
+          account_type?:
+            | Database["public"]["Enums"]["profile_account_type"]
+            | null
           avatar_url?: string | null
           content_description?:
             | Database["public"]["Enums"]["content_description"]
@@ -264,7 +242,6 @@ export type Database = {
             | Database["public"]["Enums"]["content_display"]
             | null
           id?: string
-          isAdmin?: boolean | null
           providers?: string[]
           sources?: Database["public"]["Enums"]["source"][] | null
           username?: string | null
@@ -862,6 +839,7 @@ export type Database = {
       playlist_sort_order: "ascending" | "descending"
       playlist_sorted_by: "title" | "datePublished" | "playlistOrder"
       playlist_type: "Public" | "Private"
+      profile_account_type: "default" | "admin"
       source: "giantbomb" | "nextlander" | "jeffgerstmann" | "remap"
     }
     CompositeTypes: {
@@ -1005,6 +983,7 @@ export const Constants = {
       playlist_sort_order: ["ascending", "descending"],
       playlist_sorted_by: ["title", "datePublished", "playlistOrder"],
       playlist_type: ["Public", "Private"],
+      profile_account_type: ["default", "admin"],
       source: ["giantbomb", "nextlander", "jeffgerstmann", "remap"],
     },
   },

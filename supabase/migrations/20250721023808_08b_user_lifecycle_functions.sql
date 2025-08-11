@@ -63,9 +63,9 @@ BEGIN
         FROM json_array_elements_text(providers_json::json);
         
         -- Insert the new profile with username, avatar_url (can be NULL), isAdmin, and providers from auth schema
-        INSERT INTO public.profiles (id, username, avatar_url, providers, isAdmin)
+        INSERT INTO public.profiles (id, username, avatar_url, providers, account_type)
         VALUES (NEW.id, generated_username, new_avatar_url, providers_array, 
-                CASE WHEN NEW.email = 'jason@bombastic.ltd' THEN true ELSE NULL END)
+          CASE WHEN NEW.email = 'jason@bombastic.ltd' THEN 'admin'::public.profile_account_type ELSE 'default'::public.profile_account_type END)
         ON CONFLICT (id) DO NOTHING;
     
     -- Handle UPDATE operations (when user metadata gets updated)

@@ -84,7 +84,7 @@ export function createMockUserProfile(
     sources: ['giantbomb', 'jeffgerstmann', 'nextlander', 'remap'],
     content_display: 'TILES',
     content_description: 'FULL',
-    isAdmin: null,
+    account_type: 'default',
     ...overrides,
   };
 }

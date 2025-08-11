@@ -2,7 +2,9 @@ import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { createNotificationService } from '$lib/services/notification-service';
 
-export const load: PageServerLoad = async ({ locals: { supabase, session } }) => {
+export const load: PageServerLoad = async ({
+  locals: { supabase, session },
+}) => {
   if (!session) {
     throw redirect(302, '/auth/login');
   }
@@ -10,11 +12,11 @@ export const load: PageServerLoad = async ({ locals: { supabase, session } }) =>
   // Check if user is admin
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('isAdmin')
+    .select('account_type')
     .eq('id', session.user.id)
     .single();
 
-  if (error || !profile?.isAdmin) {
+  if (error || profile.account_type !== 'admin') {
     throw redirect(302, '/');
   }
 
@@ -25,12 +27,15 @@ export const load: PageServerLoad = async ({ locals: { supabase, session } }) =>
     .limit(10);
 
   return {
-    users: users || []
+    users: users || [],
   };
 };
 
 export const actions: Actions = {
-  sendGlobalNotification: async ({ request, locals: { supabase, session } }) => {
+  sendGlobalNotification: async ({
+    request,
+    locals: { supabase, session },
+  }) => {
     if (!session) {
       return { success: false, error: 'Not authenticated' };
     }
@@ -38,11 +43,11 @@ export const actions: Actions = {
     // Check if user is admin
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('isAdmin')
+      .select('account_type')
       .eq('id', session.user.id)
       .single();
 
-    if (profileError || !profile?.isAdmin) {
+    if (profileError || profile.account_type !== 'admin') {
       return { success: false, error: 'Not authorized' };
     }
 
@@ -50,7 +55,7 @@ export const actions: Actions = {
     const type = formData.get('type') as string;
     const title = formData.get('title') as string;
     const message = formData.get('message') as string;
-    const actionUrl = formData.get('actionUrl') as string || undefined;
+    const actionUrl = (formData.get('actionUrl') as string) || undefined;
 
     try {
       const notificationService = createNotificationService(supabase);
@@ -59,12 +64,15 @@ export const actions: Actions = {
         title,
         message,
         metadata: { source: 'admin_panel' },
-        action_url: actionUrl
+        action_url: actionUrl,
       });
 
       return { success: true, count: result.data };
     } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
     }
   },
 
@@ -76,11 +84,11 @@ export const actions: Actions = {
     // Check if user is admin
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('isAdmin')
+      .select('account_type')
       .eq('id', session.user.id)
       .single();
 
-    if (profileError || !profile?.isAdmin) {
+    if (profileError || profile?.account_type !== 'admin') {
       return { success: false, error: 'Not authorized' };
     }
 
@@ -88,7 +96,7 @@ export const actions: Actions = {
     const type = formData.get('type') as string;
     const title = formData.get('title') as string;
     const message = formData.get('message') as string;
-    const actionUrl = formData.get('actionUrl') as string || undefined;
+    const actionUrl = (formData.get('actionUrl') as string) || undefined;
 
     try {
       const notificationService = createNotificationService(supabase);
@@ -98,12 +106,16 @@ export const actions: Actions = {
         title,
         message,
         metadata: { source: 'admin_test' },
-        action_url: actionUrl
+        action_url: actionUrl,
       });
 
       return { success: true, id: result.data };
     } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
     }
-  }
+  },
 };
+
