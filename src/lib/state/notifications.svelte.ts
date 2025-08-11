@@ -109,8 +109,9 @@ export class NotificationStateClass {
   public notificationService: ReturnType<
     typeof createNotificationService
   > | null = null;
-  private realtimeChannel: any = null;
+  private pollingInterval: NodeJS.Timeout | null = null;
   private isInitialized = false;
+  private readonly POLLING_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
   constructor() {
     // Initialize with default state
@@ -124,8 +125,8 @@ export class NotificationStateClass {
     this.notificationService = createNotificationService(supabase);
     this.isInitialized = true;
 
-    // Set up realtime subscription
-    this.setupRealtimeSubscription();
+    // Set up polling for notifications
+    this.setupPolling();
   }
 
   async loadNotifications(filters: NotificationFilters = {}, append = false) {
@@ -255,77 +256,33 @@ export class NotificationStateClass {
     return { data, error };
   }
 
-  private setupRealtimeSubscription() {
-    if (!this.notificationService) return;
+  private setupPolling() {
+    // Clear any existing polling interval
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+    }
 
-    this.realtimeChannel = this.notificationService.subscribeToNotifications(
-      (payload) => {
-        const { eventType, new: newRecord, old: oldRecord } = payload;
-
-        switch (eventType) {
-          case 'INSERT':
-            // Add new notification to the beginning
-            if (newRecord) {
-              const formattedNotification = {
-                ...newRecord,
-                formatted_time: this.formatRelativeTime(newRecord.created_at),
-                is_new: true,
-              };
-              this.notifications = [
-                formattedNotification,
-                ...this.notifications,
-              ];
-
-              if (!newRecord.read) {
-                this.unreadCount += 1;
-              }
-
-              // Show toast for new notifications
-              showNotificationToast(formattedNotification);
-            }
-            break;
-
-          case 'UPDATE':
-            // Update existing notification
-            if (newRecord) {
-              const index = this.notifications.findIndex(
-                (n) => n.id === newRecord.id
-              );
-              if (index !== -1) {
-                const wasUnread = !this.notifications[index].read;
-                const isNowRead = newRecord.read;
-
-                this.notifications[index] = {
-                  ...newRecord,
-                  formatted_time: this.formatRelativeTime(newRecord.created_at),
-                  is_new: false,
-                };
-
-                if (wasUnread && isNowRead) {
-                  this.unreadCount = Math.max(0, this.unreadCount - 1);
-                }
-              }
-            }
-            break;
-
-          case 'DELETE':
-            // Remove deleted notification
-            if (oldRecord) {
-              const deletedNotification = this.notifications.find(
-                (n) => n.id === oldRecord.id
-              );
-              this.notifications = this.notifications.filter(
-                (n) => n.id !== oldRecord.id
-              );
-
-              if (deletedNotification && !deletedNotification.read) {
-                this.unreadCount = Math.max(0, this.unreadCount - 1);
-              }
-            }
-            break;
+    // Set up polling to check for new notifications every 5 minutes
+    this.pollingInterval = setInterval(() => {
+      // Only poll if the page is visible (user is active)
+      if (document.visibilityState === 'visible') {
+        this.loadUnreadCount();
+        // Optionally refresh the notifications list if it's been loaded
+        if (this.notifications.length > 0) {
+          this.loadNotifications();
         }
       }
-    );
+    }, this.POLLING_INTERVAL_MS);
+
+    // Also poll when the page becomes visible again
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        this.loadUnreadCount();
+        if (this.notifications.length > 0) {
+          this.loadNotifications();
+        }
+      }
+    });
   }
 
   private formatRelativeTime(timestamp: string): string {
@@ -352,8 +309,10 @@ export class NotificationStateClass {
   }
 
   destroy() {
-    if (this.realtimeChannel && this.notificationService) {
-      this.notificationService.unsubscribeFromNotifications();
+    // Clear polling interval
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
     }
     this.isInitialized = false;
   }

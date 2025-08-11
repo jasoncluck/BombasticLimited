@@ -132,29 +132,6 @@ export class NotificationService {
   }
 
   /**
-   * Subscribe to real-time notification changes
-   * Note: This is a stub implementation until the database migration is applied
-   */
-  subscribeToNotifications(
-    callback: (payload: any) => void,
-    filterType?: NotificationType
-  ) {
-    // Stub implementation - create a dummy channel
-    const channel = this.supabase.channel('notifications-stub');
-    return channel.subscribe();
-  }
-
-  /**
-   * Unsubscribe from real-time notifications
-   * Note: This is a stub implementation until the database migration is applied
-   */
-  unsubscribeFromNotifications(channelName: string = 'notifications') {
-    // Stub implementation
-    const channel = this.supabase.channel(channelName);
-    return this.supabase.removeChannel(channel);
-  }
-
-  /**
    * Create a notification for all users
    * Note: This is a stub implementation until the database migration is applied
    * Once the migration is applied, this will call the create_notification_for_all_users database function

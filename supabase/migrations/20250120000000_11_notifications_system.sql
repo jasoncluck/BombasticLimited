@@ -262,9 +262,5 @@ WHERE
   np.user_id IS NULL
 ON CONFLICT (user_id) DO NOTHING;
 
--- Enable realtime for notifications
-ALTER PUBLICATION supabase_realtime
-ADD TABLE public.notifications;
-
-ALTER PUBLICATION supabase_realtime
-ADD TABLE public.notification_preferences;
+-- Note: Realtime subscriptions removed for simplicity
+-- The notifications system will use polling instead of realtime updates
