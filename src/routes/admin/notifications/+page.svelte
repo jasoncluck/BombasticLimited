@@ -27,13 +27,17 @@
     };
   } = $props();
 
+  let currentAction = $state<string>('');
+
   const notificationForm = superForm(data.form, {
     validators: zodClient(notificationSchema),
     validationMethod: 'onsubmit',
     resetForm: false, // Prevent form reset after submission
 
     onSubmit({ formData, cancel }) {
-      const action = formData.get('_action');
+      const action = formData.get('_action')?.toString() || '';
+      currentAction = action;
+
       if (action === 'sendTestNotification') {
         testSubmitting = true;
       } else {
@@ -41,9 +45,8 @@
       }
     },
     onResult(event) {
-      const action = event.result.data?._action;
       if (event.result.type !== 'redirect') {
-        if (action === 'sendTestNotification') {
+        if (currentAction === 'sendTestNotification') {
           testSubmitting = false;
         } else {
           isSubmitting = false;
@@ -55,11 +58,16 @@
 
       // Handle success/error messages
       if (form.valid && !form.errors) {
-        const action = form.data._action;
-        if (action === 'sendTestNotification') {
+        if (currentAction === 'sendTestNotification') {
           showToast('✅ Test notification sent successfully!', 'success');
         } else {
           showToast(`✅ Global notification sent successfully!`, 'success');
+        }
+      } else if (form.errors) {
+        // Handle validation errors
+        const errorMessages = Object.values(form.errors).flat();
+        if (errorMessages.length > 0) {
+          showToast(`❌ Error: ${errorMessages[0]}`, 'error');
         }
       }
     },
@@ -131,6 +139,16 @@
         notificationTypes[0];
     }
   });
+
+  // Enhanced form submission handler
+  function handleFormSubmit(action: string) {
+    return async (event: SubmitEvent) => {
+      const form = event.currentTarget as HTMLFormElement;
+      const formData = new FormData(form);
+      formData.set('_action', action);
+      currentAction = action;
+    };
+  }
 </script>
 
 <svelte:head>
@@ -319,6 +337,7 @@
                   !$formData.title ||
                   !$formData.message}
                 class="flex-1"
+                onclick={handleFormSubmit('sendGlobalNotification')}
               >
                 {#if isSubmitting}
                   <Loader class="mr-2 h-4 w-4 animate-spin" />
@@ -337,6 +356,7 @@
                   !$formData.message}
                 variant="outline"
                 class="flex-1"
+                onclick={handleFormSubmit('sendTestNotification')}
               >
                 {#if testSubmitting}
                   <Loader class="mr-2 h-4 w-4 animate-spin" />
@@ -348,9 +368,6 @@
               </Button>
             </div>
           </div>
-
-          <!-- Hidden field to track which action was submitted -->
-          <input type="hidden" name="_action" value="" />
         </form>
       </Card.Content>
     </Card.Root>
