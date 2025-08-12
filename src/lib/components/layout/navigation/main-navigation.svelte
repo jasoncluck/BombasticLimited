@@ -5,30 +5,25 @@
   import SideDrawer from '$lib/components/side-drawer.svelte';
   import SearchInput from './search-input.svelte';
   import UserMenu from './user-menu.svelte';
-  import type { LayoutState } from '$lib/state/layout.svelte.js';
-  import {
-    getContentState,
-    type ContentState,
-  } from '$lib/state/content.svelte.js';
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
   import type { UserProfile } from '$lib/supabase/user-profiles';
   import BrandLogo from '$lib/assets/brand-logo.svelte';
+  import { getLayoutState } from '$lib/state/layout.svelte';
 
   let {
     userProfile,
     session,
     supabase,
-    layoutState,
     openAccountDrawer = $bindable(),
   }: {
     userProfile: UserProfile | null;
     session: Session | null;
     supabase: SupabaseClient<Database>;
-    layoutState: LayoutState;
-    contentState: ContentState;
     openAccountDrawer: boolean;
   } = $props();
+
+  const layoutState = getLayoutState();
 </script>
 
 <nav class="relative m-2 flex items-center p-1" data-testid="main-navigation">

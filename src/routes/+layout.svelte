@@ -213,14 +213,7 @@
     </div>
   {:else}
     <!-- Full UI - sidebar may still be loading data -->
-    <MainNavigation
-      {userProfile}
-      {session}
-      {supabase}
-      {layoutState}
-      {contentState}
-      bind:openAccountDrawer
-    />
+    <MainNavigation {userProfile} {session} {supabase} bind:openAccountDrawer />
     <ResizableLayout
       {supabase}
       {session}
