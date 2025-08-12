@@ -1,6 +1,9 @@
--- Migration: 06_row_level_security.sql
--- Purpose: Enable RLS on tables and create all security policies
--- This migration sets up comprehensive access controls
+-- Migration: 06_row_level_security_optimized_fixed.sql
+-- Purpose: Enable RLS on tables and create all optimized security policies
+-- Date: 2025-08-10
+-- Author: jasoncluck
+-- This migration sets up comprehensive access controls with performance optimizations
+-- Fixed: All auth.uid() calls wrapped in subqueries to prevent per-row evaluation
 -- ============================================================================
 -- 1. ENABLE ROW LEVEL SECURITY ON ALL TABLES
 -- ============================================================================
@@ -17,6 +20,30 @@ ALTER TABLE "public"."profiles" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."user_playlists" ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================================
+-- 1.5. RLS PERFORMANCE INDEXES
+-- ============================================================================
+-- Critical indexes for playlist RLS policies
+CREATE INDEX IF NOT EXISTS idx_playlists_type_created_by ON public.playlists (type, created_by);
+
+CREATE INDEX IF NOT EXISTS idx_playlists_created_by ON public.playlists (created_by)
+WHERE
+  created_by IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_playlists_id_type_created ON public.playlists (id, type, created_by);
+
+-- Timestamps user_id index for RLS
+CREATE INDEX IF NOT EXISTS idx_timestamps_user_id_rls ON public.timestamps (user_id)
+WHERE
+  user_id IS NOT NULL;
+
+-- User playlists performance indexes
+CREATE INDEX IF NOT EXISTS idx_user_playlists_user_id_rls ON public.user_playlists (user_id)
+WHERE
+  user_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_user_playlists_id_covering ON public.user_playlists (id) INCLUDE (user_id);
+
+-- ============================================================================
 -- 2. VIDEOS TABLE POLICIES
 -- ============================================================================
 CREATE POLICY "Enable read access for all users" ON "public"."videos" FOR
@@ -24,111 +51,112 @@ SELECT
   USING (TRUE);
 
 -- ============================================================================
--- 3. PLAYLISTS TABLE POLICIES  
+-- 3. OPTIMIZED PLAYLISTS TABLE POLICIES (FIXED)
 -- ============================================================================
-CREATE POLICY "Enable insert for users based on created_by" ON "public"."playlists" FOR INSERT TO "authenticated"
-WITH
-  CHECK (
-    (
-      (
-        SELECT
-          "auth"."uid" () AS "uid"
-      ) = "created_by"
-    )
-  );
-
-CREATE POLICY "Allow users to update their own playlists" ON "public"."playlists"
-FOR UPDATE
-  TO "authenticated" USING (
-    (
-      (
-        SELECT
-          "auth"."uid" () AS "uid"
-      ) = "created_by"
-    )
-  )
-WITH
-  CHECK (
-    (
-      (
-        SELECT
-          "auth"."uid" () AS "uid"
-      ) = "created_by"
-    )
-  );
-
-CREATE POLICY "Enable read access for public playlists and own playlists" ON public.playlists FOR
+-- Fixed: auth.uid() wrapped in subquery
+CREATE POLICY "playlists_select_optimized" ON "public"."playlists" FOR
 SELECT
   USING (
+    -- Check user ownership first (most selective for authenticated users)
+    created_by = (
+      SELECT
+        auth.uid ()
+    )
+    OR
+    -- Then check if public (indexed condition)
     type = 'Public'
-    OR created_by = (
+  );
+
+-- Fixed: auth.uid() wrapped in subquery
+CREATE POLICY "playlists_insert_optimized" ON "public"."playlists" FOR INSERT TO authenticated
+WITH
+  CHECK (
+    created_by = (
       SELECT
         auth.uid ()
     )
   );
 
--- ============================================================================
--- 4. PLAYLIST_VIDEOS TABLE POLICIES
--- ============================================================================
-CREATE POLICY "Allow read access for public playlists and owned playlists" ON "public"."playlist_videos" FOR
-SELECT
-  TO authenticated,
-  anon USING (
-    playlist_id IN (
+-- Fixed: auth.uid() wrapped in subquery
+CREATE POLICY "playlists_update_optimized" ON "public"."playlists"
+FOR UPDATE
+  TO authenticated USING (
+    created_by = (
       SELECT
-        id
-      FROM
-        public.playlists
-      WHERE
-        type IN ('Public')
+        auth.uid ()
     )
-    OR (
-      (
-        SELECT
-          auth.uid ()
-      ) IS NOT NULL
-      AND playlist_id IN (
-        SELECT
-          id
-        FROM
-          public.playlists
-        WHERE
-          created_by = (
-            SELECT
-              auth.uid ()
-          )
-      )
+  )
+WITH
+  CHECK (
+    created_by = (
+      SELECT
+        auth.uid ()
     )
   );
 
-CREATE POLICY "Allow authenticated users to insert playlist videos into their own playlists" ON "public"."playlist_videos" FOR INSERT TO authenticated
+-- Fixed: auth.uid() wrapped in subquery
+CREATE POLICY "playlists_delete_optimized" ON "public"."playlists" FOR DELETE TO authenticated USING (
+  created_by = (
+    SELECT
+      auth.uid ()
+  )
+);
+
+-- ============================================================================
+-- 4. OPTIMIZED PLAYLIST_VIDEOS TABLE POLICIES (FIXED)
+-- ============================================================================
+-- Fixed: auth.uid() wrapped in subquery
+CREATE POLICY "playlist_videos_select_optimized" ON "public"."playlist_videos" FOR
+SELECT
+  TO authenticated,
+  anon USING (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        public.playlists p
+      WHERE
+        p.id = playlist_videos.playlist_id
+        AND (
+          p.created_by = (
+            SELECT
+              auth.uid ()
+          )
+          OR p.type = 'Public'
+        )
+    )
+  );
+
+-- Fixed: auth.uid() wrapped in subquery
+CREATE POLICY "playlist_videos_insert_optimized" ON "public"."playlist_videos" FOR INSERT TO authenticated
 WITH
   CHECK (
     EXISTS (
       SELECT
         1
       FROM
-        public.playlists
+        public.playlists p
       WHERE
-        playlists.id = playlist_videos.playlist_id
-        AND playlists.created_by = (
+        p.id = playlist_videos.playlist_id
+        AND p.created_by = (
           SELECT
             auth.uid ()
         )
     )
   );
 
-CREATE POLICY "Allow authenticated users to update playlist videos in their own playlists" ON "public"."playlist_videos"
+-- Fixed: auth.uid() wrapped in subquery
+CREATE POLICY "playlist_videos_update_optimized" ON "public"."playlist_videos"
 FOR UPDATE
   TO authenticated USING (
     EXISTS (
       SELECT
         1
       FROM
-        public.playlists
+        public.playlists p
       WHERE
-        playlists.id = playlist_videos.playlist_id
-        AND playlists.created_by = (
+        p.id = playlist_videos.playlist_id
+        AND p.created_by = (
           SELECT
             auth.uid ()
         )
@@ -140,25 +168,26 @@ WITH
       SELECT
         1
       FROM
-        public.playlists
+        public.playlists p
       WHERE
-        playlists.id = playlist_videos.playlist_id
-        AND playlists.created_by = (
+        p.id = playlist_videos.playlist_id
+        AND p.created_by = (
           SELECT
             auth.uid ()
         )
     )
   );
 
-CREATE POLICY "Allow authenticated users to delete playlist videos from their own playlists" ON "public"."playlist_videos" FOR DELETE TO authenticated USING (
+-- Fixed: auth.uid() wrapped in subquery
+CREATE POLICY "playlist_videos_delete_optimized" ON "public"."playlist_videos" FOR DELETE TO authenticated USING (
   EXISTS (
     SELECT
       1
     FROM
-      public.playlists
+      public.playlists p
     WHERE
-      playlists.id = playlist_videos.playlist_id
-      AND playlists.created_by = (
+      p.id = playlist_videos.playlist_id
+      AND p.created_by = (
         SELECT
           auth.uid ()
       )
@@ -166,66 +195,31 @@ CREATE POLICY "Allow authenticated users to delete playlist videos from their ow
 );
 
 -- ============================================================================
--- 5. TIMESTAMPS TABLE POLICIES
+-- 5. OPTIMIZED TIMESTAMPS TABLE POLICIES (FIXED)
 -- ============================================================================
-CREATE POLICY "Authenticated users can insert their own video timestamps" ON "public"."timestamps" FOR INSERT TO "authenticated"
-WITH
-  CHECK (
-    (
-      (
-        SELECT
-          "auth"."uid" () AS "uid"
-      ) = "user_id"
-    )
-  );
-
-CREATE POLICY "Authenticated users can select their own video timestamps" ON "public"."timestamps" FOR
-SELECT
-  TO "authenticated" USING (
-    (
-      (
-        SELECT
-          "auth"."uid" () AS "uid"
-      ) = "user_id"
-    )
-  );
-
-CREATE POLICY "Authenticated users can update their own video timestamps" ON "public"."timestamps"
-FOR UPDATE
-  TO "authenticated" USING (
-    (
-      (
-        SELECT
-          "auth"."uid" () AS "uid"
-      ) = "user_id"
-    )
+-- Fixed: auth.uid() wrapped in subquery
+CREATE POLICY "timestamps_user_access" ON "public"."timestamps" FOR ALL TO authenticated USING (
+  user_id = (
+    SELECT
+      auth.uid ()
   )
+)
 WITH
   CHECK (
-    (
-      (
-        SELECT
-          "auth"."uid" () AS "uid"
-      ) = "user_id"
-    )
-  );
-
-CREATE POLICY "Enable delete for users based on user_id" ON "public"."timestamps" FOR DELETE USING (
-  (
-    (
+    user_id = (
       SELECT
-        "auth"."uid" () AS "uid"
-    ) = "user_id"
-  )
-);
+        auth.uid ()
+    )
+  );
 
 -- ============================================================================
--- 6. PROFILES TABLE POLICIES
+-- 6. PROFILES TABLE POLICIES (FIXED)
 -- ============================================================================
 CREATE POLICY "Allow public read access to profiles" ON "public"."profiles" FOR
 SELECT
   TO public USING (TRUE);
 
+-- Fixed: auth.uid() wrapped in subquery
 CREATE POLICY "Allow update if user owns profile" ON "public"."profiles"
 FOR UPDATE
   TO authenticated USING (
@@ -236,16 +230,20 @@ FOR UPDATE
   );
 
 -- ============================================================================
--- 7. USER_PLAYLISTS TABLE POLICIES
+-- 7. OPTIMIZED USER_PLAYLISTS TABLE POLICIES (FIXED)
 -- ============================================================================
-CREATE POLICY "Users can SELECT their own user_playlists and public playlists" ON "public"."user_playlists" FOR
+-- Fixed: auth.uid() wrapped in subquery
+CREATE POLICY "user_playlists_select_optimized" ON "public"."user_playlists" FOR
 SELECT
   USING (
-    user_playlists.user_id = (
+    -- Check user ownership first (most selective)
+    user_id = (
       SELECT
         auth.uid ()
     )
-    OR EXISTS (
+    OR
+    -- Then check if playlist is public
+    EXISTS (
       SELECT
         1
       FROM
@@ -256,10 +254,11 @@ SELECT
     )
   );
 
-CREATE POLICY "Users can INSERT user_playlists for playlists they created or are Public" ON "public"."user_playlists" FOR INSERT
+-- Fixed: auth.uid() wrapped in subquery
+CREATE POLICY "user_playlists_insert_optimized" ON "public"."user_playlists" FOR INSERT TO authenticated
 WITH
   CHECK (
-    user_playlists.user_id = (
+    user_id = (
       SELECT
         auth.uid ()
     )
@@ -274,24 +273,80 @@ WITH
     )
   );
 
-CREATE POLICY "Users can UPDATE their own user_playlists" ON "public"."user_playlists"
+-- Fixed: auth.uid() wrapped in subquery
+CREATE POLICY "user_playlists_update_optimized" ON "public"."user_playlists"
 FOR UPDATE
-  USING (
-    user_playlists.user_id = (
+  TO authenticated USING (
+    user_id = (
+      SELECT
+        auth.uid ()
+    )
+  )
+WITH
+  CHECK (
+    user_id = (
       SELECT
         auth.uid ()
     )
   );
 
-CREATE POLICY "Users can DELETE their own user_playlists" ON "public"."user_playlists" FOR DELETE USING (
-  user_playlists.user_id = (
+-- Fixed: auth.uid() wrapped in subquery
+CREATE POLICY "user_playlists_delete_optimized" ON "public"."user_playlists" FOR DELETE TO authenticated USING (
+  user_id = (
     SELECT
       auth.uid ()
   )
 );
 
 -- ============================================================================
--- 8. AUTH SCHEMA POLICIES (if allowed)
+-- 8. SECURITY DEFINER HELPER FUNCTIONS (OPTIONAL PERFORMANCE BOOST)
+-- ============================================================================
+-- Function to get user's accessible playlists (bypasses RLS for performance)
+CREATE OR REPLACE FUNCTION public.get_user_accessible_playlists (target_user_id uuid DEFAULT NULL) RETURNS TABLE (
+  id bigint,
+  name text,
+  type public.playlist_type,
+  created_by uuid,
+  created_at timestamptz,
+  updated_at timestamptz
+) LANGUAGE sql SECURITY DEFINER STABLE
+SET
+  search_path = '' AS $$
+  SELECT 
+    p.id,
+    p.name,
+    p.type,
+    p.created_by,
+    p.created_at,
+    p.updated_at
+  FROM public.playlists p
+  WHERE 
+    -- Public playlists
+    p.type = 'Public'
+    OR 
+    -- User's own playlists
+    p.created_by = COALESCE(target_user_id, auth.uid())
+  ORDER BY p.updated_at DESC;
+$$;
+
+-- Function to check if user can access a specific playlist
+CREATE OR REPLACE FUNCTION public.can_user_access_playlist (playlist_id bigint, user_id uuid DEFAULT NULL) RETURNS boolean LANGUAGE sql SECURITY DEFINER STABLE
+SET
+  search_path = '' AS $$
+  SELECT EXISTS (
+    SELECT 1 
+    FROM public.playlists p 
+    WHERE 
+      p.id = playlist_id
+      AND (
+        p.type = 'Public'
+        OR p.created_by = COALESCE(user_id, auth.uid())
+      )
+  );
+$$;
+
+-- ============================================================================
+-- 9. AUTH SCHEMA POLICIES (if allowed)
 -- ============================================================================
 -- Note: These may need to be handled separately if auth schema access is restricted
 -- CREATE POLICY "Allow users to read their own account" ON auth.users 

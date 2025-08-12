@@ -3,9 +3,9 @@ import type { RequestHandler } from './$types';
 import { getUserPlaylists } from '$lib/supabase/playlists';
 import { getProfile } from '$lib/supabase/user-profiles';
 import { parseImageProperties } from '$lib/components/playlist/playlist';
-import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
+import { generatePlaylistImageUrl } from '$lib/server/image-processing';
 
-export const GET: RequestHandler = async ({ locals }) => {
+export const GET: RequestHandler = async ({ locals, request }) => {
   const { session, supabase } = locals;
 
   if (!session) {
@@ -21,24 +21,29 @@ export const GET: RequestHandler = async ({ locals }) => {
     getProfile({ supabase, session }),
   ]);
 
-  // Process playlist images concurrently if playlists exist
+  // Generate playlist image URLs instead of processing inline
   let processedPlaylists = userPlaylists;
   if (userPlaylists) {
-    const playlistImagePromises = userPlaylists.map(async (userPlaylist) => ({
+    processedPlaylists = userPlaylists.map((userPlaylist) => ({
       ...userPlaylist,
-      processedImageUrl: await getCroppedPlaylistImageUrlServer({
+      processedImageUrl: generatePlaylistImageUrl({
         imageProperties: parseImageProperties(userPlaylist.image_properties),
         thumbnailMaxResUrl: userPlaylist.thumbnail_maxres_url,
         thumbnailUrl: userPlaylist.thumbnail_url,
+        format: 'auto', // Enable AVIF format detection
+        quality: 90,
       }),
     }));
-
-    processedPlaylists = await Promise.all(playlistImagePromises);
   }
 
   return json({
     playlists: processedPlaylists ?? [],
     userProfile,
     userPlaylistsCount: userPlaylistsCount ?? 0,
+  }, {
+    headers: {
+      'Cache-Control': 'public, max-age=300, stale-while-revalidate=600', // 5min cache, 10min stale
+      Vary: 'Accept',
+    },
   });
 };

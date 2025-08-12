@@ -273,7 +273,7 @@
 
     <!-- Discord Account Linking Section -->
     <div class="mt-8 border-t pt-8">
-      <h2 class="mb-4 text-lg font-semibold">Discord Account</h2>
+      <h2 class="mb-4 text-lg font-semibold">Linked Accounts</h2>
 
       {#if discordIdentity}
         <!-- Discord Account Linked -->

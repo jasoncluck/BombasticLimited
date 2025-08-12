@@ -29,7 +29,8 @@
         src={playlist.processedImageUrl}
         alt={playlist.name}
         class="h-full w-full rounded object-cover"
-        loading="lazy"
+        decoding="async"
+        loading="eager"
       />
     </div>
   {:else}
@@ -53,7 +54,7 @@
     <!-- Avatar and username display -->
     {#if showUsername}
       {#if isSource(playlist.profile_username)}
-        <div class="mt-2 flex items-center gap-2">
+        <div class=" flex items-center gap-2">
           <Avatar.Root class="h-6 w-6">
             <Avatar.Image
               src={SOURCE_INFO[playlist.profile_username].image.img.src}

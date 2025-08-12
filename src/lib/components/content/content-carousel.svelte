@@ -1,11 +1,7 @@
 <script lang="ts">
   import * as Carousel from '$lib/components/ui/carousel';
   import ContentCard from './content-card.svelte';
-  import {
-    handleContentNavigation,
-    type CarouselState,
-    type ContentDisplayProps,
-  } from './content';
+  import { type CarouselState, type ContentDisplayProps } from './content';
   import type { CarouselAPI } from '../ui/carousel/context';
   import { onDestroy } from 'svelte';
   import {
@@ -13,7 +9,6 @@
     getContentState,
   } from '$lib/state/content.svelte';
   import type { CombinedContentFilter } from './content-filter';
-  import type { Video } from '$lib/supabase/videos';
 
   type ContentCarouselProps = ContentDisplayProps & {
     carouselState?: CarouselState;
@@ -22,7 +17,7 @@
   };
 
   let {
-    videos,
+    videos = $bindable(),
     videosCount,
     sectionId = DEFAULT_SECTION_ID,
     isContinueVideos,
@@ -165,7 +160,7 @@
       carouselState.lastViewedIndex > -1
     ) {
       waitForCarouselReady(api).then((isReady) => {
-        if (isReady) {
+        if (isReady && carouselState) {
           scrollToVideoIndex(carouselState.lastViewedIndex);
         } else {
           isInitializing = false;
@@ -212,26 +207,6 @@
     }
   }
 
-  function getItemClasses(video: Video, index: number) {
-    const isSelected = selectedVideoIds.has(video.id);
-    const isHovered = hoveredVideo?.id === video.id;
-    const isInView = slidesInView.includes(index);
-
-    let classes = `group @4xl:basis-1/5 @sm:basis-1/3 basis-full p-2 rounded-md outline-none `;
-
-    // Only apply hover and selected states to cards that are in view
-    if (isInView && (isSelected || isHovered)) {
-      classes += ' !bg-secondary brightness-110';
-    }
-
-    // Add drag drop classes if enabled
-    if (dragDrop && allowVideoReorder) {
-      classes += ` ${contentState.getVideoDragClasses(index, 'TILES')}`;
-    }
-
-    return classes;
-  }
-
   // Add function to handle mouse leaving the entire carousel
   function handleCarouselMouseLeave() {
     contentState.hoveredVideosBySection[sectionId] = null;
@@ -239,44 +214,6 @@
     if (contentState.hoverTimeoutId) {
       clearTimeout(contentState.hoverTimeoutId);
       contentState.hoverTimeoutId = null;
-    }
-  }
-
-  // Only allow mouse interactions on visible cards
-  function handleMouseEnter(video: Video, index: number) {
-    if (slidesInView.includes(index)) {
-      contentState.handleMouseEnter({
-        video,
-        sectionId,
-      });
-    }
-  }
-
-  function handleMouseLeave(index: number) {
-    if (slidesInView.includes(index)) {
-      contentState.handleMouseLeave({
-        sectionId,
-      });
-    }
-  }
-
-  function handleMouseDown(event: MouseEvent, video: Video, index: number) {
-    // Only process if the video is currently visible in the carousel
-    if (!slidesInView.includes(index)) {
-      return;
-    }
-
-    if (event.shiftKey || event.ctrlKey || event.metaKey) {
-      return;
-    }
-
-    const isCurrentlySelected = selectedVideoIds.has(video.id);
-
-    // If clicking on a video that is not currently selected or hovered, clear the states
-    if (!isCurrentlySelected) {
-      contentState.selectedVideosBySection[sectionId] = hoveredVideo
-        ? [hoveredVideo]
-        : [];
     }
   }
 </script>
@@ -313,52 +250,8 @@
   <Carousel.Content>
     {#each videos as video, i (video.id)}
       <Carousel.Item
-        class={getItemClasses(video, i)}
+        class="group basis-full rounded-md p-2 outline-none @sm:basis-1/3 @4xl:basis-1/5"
         data-testid="carousel-item"
-        draggable="true"
-        ondragstart={(e) => dragDrop.handleDragStart(e, i, sectionId)}
-        ondragend={dragDrop.handleDragEnd}
-        onmouseenter={() => handleMouseEnter(video, i)}
-        onmouseleave={() => handleMouseLeave(i)}
-        onmousedown={(e) => handleMouseDown(e, video, i)}
-        onclick={(e) => {
-          // Update carousel state before handling click
-          if (carouselState) {
-            carouselState.lastViewedIndex = i;
-          }
-
-          // Use the updated handleVideoClick with context menu handling
-          contentState.handleVideoClick({
-            event: e,
-            video,
-            videos,
-            playlist,
-            sectionId,
-            enableDoubleClick: false,
-            onNavigate: (video, playlist) => {
-              handleContentNavigation({
-                video,
-                contentFilter,
-                playlist,
-              });
-            },
-          });
-        }}
-        oncontextmenu={(event) => {
-          const isCtrlPressed = event.ctrlKey || event.metaKey;
-
-          if (isCtrlPressed) {
-            event.preventDefault();
-            event.stopPropagation();
-            return;
-          } else {
-            // Handle right-click context menu behavior
-            contentState.handleContextMenu({
-              video,
-              sectionId,
-            });
-          }
-        }}
       >
         <ContentCard
           {video}
@@ -370,6 +263,16 @@
           {sectionId}
           {supabase}
           {session}
+          {allowVideoReorder}
+          index={i}
+          {playlist}
+          {videosCount}
+          onVideosUpdate={(updatedVideos) => {
+            videos = updatedVideos;
+          }}
+          isCarousel={true}
+          {slidesInView}
+          bind:carouselState
         />
       </Carousel.Item>
     {/each}

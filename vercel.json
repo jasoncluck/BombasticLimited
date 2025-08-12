@@ -8,5 +8,35 @@
     "deploymentEnabled": {
       "copilot*": false
     }
+  },
+  "headers": [
+    {
+      "source": "/site.webmanifest",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/manifest+json"
+        }
+      ]
+    }
+  ],
+  "images": {
+    "sizes": [
+      16, 32, 48, 64, 96, 128, 256, 384, 640, 750, 828, 1080, 1200, 1920, 2048,
+      3840
+    ],
+    "formats": ["image/webp", "image/avif"],
+    "domains": [
+      "i.ytimg.com",
+      "img.youtube.com",
+      "i1.ytimg.com",
+      "i2.ytimg.com",
+      "i3.ytimg.com",
+      "i4.ytimg.com",
+      "static-cdn.jtvnw.net"
+    ],
+    "minimumCacheTTL": 31536000,
+    "dangerouslyAllowSVG": false,
+    "contentSecurityPolicy": "default-src 'self'; script-src 'none'; sandbox;"
   }
 }

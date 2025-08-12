@@ -4,7 +4,7 @@ import { load } from '../+page.server';
 import { getPlaylistVideoContext } from '$lib/supabase/playlists';
 import { isVideoWithTimestamp } from '$lib/supabase/videos';
 import { parseImageProperties } from '$lib/components/playlist/playlist';
-import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
+import { getCroppedPlaylistImageUrlServer, generatePlaylistImageUrl } from '$lib/server/image-processing';
 import {
   createMockPlaylist,
   createMockVideo,
@@ -31,6 +31,7 @@ vi.mock('$lib/components/playlist/playlist', () => ({
 
 vi.mock('$lib/server/image-processing', () => ({
   getCroppedPlaylistImageUrlServer: vi.fn(),
+  generatePlaylistImageUrl: vi.fn(),
 }));
 
 vi.mock('$lib/components/content/content-filter', () => ({
@@ -44,6 +45,7 @@ const mockParseImageProperties = vi.mocked(parseImageProperties);
 const mockGetCroppedPlaylistImageUrlServer = vi.mocked(
   getCroppedPlaylistImageUrlServer
 );
+const mockGeneratePlaylistImageUrl = vi.mocked(generatePlaylistImageUrl);
 
 describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
   const mockSupabase = {} as any;
@@ -96,6 +98,7 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
     mockGetCroppedPlaylistImageUrlServer.mockResolvedValue(
       'processed-image-url'
     );
+    mockGeneratePlaylistImageUrl.mockReturnValue('/api/playlist-image?url=test');
 
     // Mock safeGetSession instead of supabase auth.getUser()
     mockLoadEvent.locals.safeGetSession.mockResolvedValue({

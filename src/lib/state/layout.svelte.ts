@@ -3,7 +3,6 @@ import { goto } from '$app/navigation';
 import { invalidateAll } from '$app/navigation';
 import { showToast } from '$lib/state/notifications.svelte.js';
 import debounce from 'debounce';
-import { isSourceArray, SOURCE_INFO } from '$lib/constants/source';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { source } from 'sveltekit-sse';
 import { browser } from '$app/environment';
@@ -19,6 +18,7 @@ export interface LayoutState {
   isSidebarCollapsed: boolean;
 
   // Search state
+  searchQuery: string;
   currentDebouncedSearch: ReturnType<typeof debounce> | null;
   searchAbortController: AbortController | null;
 
@@ -29,6 +29,10 @@ export interface LayoutState {
   handleLogout: (supabase: SupabaseClient) => Promise<void>;
   searchRedirect: (e: Event) => Promise<Event>;
   handleSearch: (e: Event) => void;
+
+  // Search methods
+  setSearchQuery: (value: string) => void;
+  clearSearchQuery: () => void;
 
   // Sidebar methods
   setSidebarCollapsed: (collapsed: boolean) => void;
@@ -44,6 +48,7 @@ export class LayoutStateClass implements LayoutState {
   isDraggingDivider = $state(false);
   isSearching = $state(false);
   isSidebarCollapsed = $state(false);
+  searchQuery = $state('');
   currentDebouncedSearch = $state<ReturnType<typeof debounce> | null>(null);
   searchAbortController = $state<AbortController | null>(null);
 
@@ -81,6 +86,14 @@ export class LayoutStateClass implements LayoutState {
       console.error('Failed to save sidebar state:', error);
     }
   }
+
+  setSearchQuery = (value: string): void => {
+    this.searchQuery = value;
+  };
+
+  clearSearchQuery = (): void => {
+    this.searchQuery = '';
+  };
 
   setSidebarCollapsed = (collapsed: boolean): void => {
     this.isSidebarCollapsed = collapsed;
@@ -163,6 +176,9 @@ export class LayoutStateClass implements LayoutState {
     const input = e.target as HTMLInputElement;
     const searchValue = input.value.trim();
 
+    // Update the searchQuery state to match the input
+    this.searchQuery = input.value;
+
     // Cancel current debounced search if it exists
     if (this.currentDebouncedSearch?.isPending) {
       this.currentDebouncedSearch.clear();
@@ -205,6 +221,7 @@ export class LayoutStateClass implements LayoutState {
     // Reset search state but preserve sidebar collapsed state
     this.isSearching = false;
     this.isDraggingDivider = false;
+    this.searchQuery = '';
     // Note: Don't reset isSidebarCollapsed - it should persist across page refreshes
   }
 }

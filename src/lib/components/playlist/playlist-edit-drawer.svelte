@@ -28,10 +28,7 @@
   import { getPlaylistState } from '$lib/state/playlist.svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { parseImageProperties } from './playlist';
-  import {
-    getCroppedPlaylistImageUrl,
-    isLowResolutionThumbnail,
-  } from './playlist-service';
+  import { isLowResolutionThumbnail } from './playlist-service';
 
   let {
     form,
@@ -95,13 +92,8 @@
         if (isDeletingPlaylistImage) {
           updatedPlaylist.thumbnail_url = null;
           updatedPlaylist.thumbnail_maxres_url = null;
-        } else {
-          await getCroppedPlaylistImageUrl({
-            imageProperties: parseImageProperties(playlist.image_properties),
-            thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
-            thumbnailUrl: playlist.thumbnail_url,
-          });
         }
+        // Sidebar refresh will get server-processed images with AVIF support
         sidebarState.refreshData();
       }
     },

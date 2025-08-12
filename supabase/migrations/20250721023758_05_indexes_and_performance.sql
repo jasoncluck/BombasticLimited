@@ -31,6 +31,9 @@ WHERE
 -- Duration index for sorting
 CREATE INDEX IF NOT EXISTS idx_videos_duration ON public.videos (duration);
 
+-- Alternative index order for timestamps when querying by user first
+CREATE INDEX IF NOT EXISTS idx_timestamps_user_video ON public.timestamps (user_id, video_id);
+
 -- ============================================================================
 -- PLAYLIST PERFORMANCE INDEXES (CRITICAL ADDITIONS)
 -- ============================================================================
@@ -88,3 +91,21 @@ WHERE
 -- ============================================================================
 -- For profiles join in playlist functions
 CREATE INDEX IF NOT EXISTS idx_profiles_username ON public.profiles (username);
+
+-- ============================================================================
+-- RLS PERFORMANCE INDEXES
+-- ============================================================================
+-- Critical indexes for playlist RLS policies
+CREATE INDEX IF NOT EXISTS idx_playlists_type_created_by ON public.playlists (type, created_by);
+
+CREATE INDEX IF NOT EXISTS idx_playlists_created_by ON public.playlists (created_by)
+WHERE
+  created_by IS NOT NULL;
+
+-- Index for playlist_videos RLS lookups
+CREATE INDEX IF NOT EXISTS idx_playlists_id_type_created ON public.playlists (id, type, created_by);
+
+-- Timestamps user_id index (should already exist but ensuring it's there)
+CREATE INDEX IF NOT EXISTS idx_timestamps_user_id_rls ON public.timestamps (user_id)
+WHERE
+  user_id IS NOT NULL;

@@ -20,7 +20,7 @@ import { getPaginationQueryParams } from '$lib/components/pagination/pagination'
 import { Filter } from 'bad-words';
 import { redirect, setFlash } from 'sveltekit-flash-message/server';
 import { parseImageProperties } from '$lib/components/playlist/playlist';
-import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
+import { generatePlaylistImageUrl } from '$lib/server/image-processing';
 import { getProfileById } from '$lib/supabase/user-profiles';
 
 export const load: PageServerLoad = async ({
@@ -29,6 +29,7 @@ export const load: PageServerLoad = async ({
   parent,
   params,
   depends,
+  request,
 }) => {
   // Remove automatic dependencies - we'll handle updates optimistically
   // Only keep video dependencies since those might come from other sources
@@ -66,11 +67,13 @@ export const load: PageServerLoad = async ({
   const [processedImageUrl, form, creatorProfile] = await Promise.all([
     playlist.processedImageUrl
       ? Promise.resolve(playlist.processedImageUrl)
-      : getCroppedPlaylistImageUrlServer({
+      : Promise.resolve(generatePlaylistImageUrl({
           imageProperties: parseImageProperties(playlist.image_properties),
           thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
           thumbnailUrl: playlist.thumbnail_url,
-        }),
+          format: 'auto', // Enable AVIF format detection
+          quality: 90,
+        })),
     superValidate(playlist, zod(playlistSchema)),
     // Load creator profile for all playlists to ensure avatar is available
     getProfileById({ userId: playlist.created_by, supabase }).then(

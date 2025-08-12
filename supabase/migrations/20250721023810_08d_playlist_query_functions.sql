@@ -551,7 +551,10 @@ CREATE OR REPLACE FUNCTION "public"."search_playlists" (
   "profile_username" text,
   "search_rank" real,
   "deleted_at" TIMESTAMP WITH TIME ZONE
-) LANGUAGE "plpgsql" STABLE AS $$
+) LANGUAGE "plpgsql"
+SET
+  search_path = '' STABLE AS $$
+
 DECLARE
     clean_term text;
     words text[];

@@ -701,6 +701,15 @@ sw.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Handle image API endpoints (video thumbnails and playlist images)
+  if (
+    url.pathname.startsWith('/api/video-thumbnail') ||
+    url.pathname.startsWith('/api/playlist-image')
+  ) {
+    event.respondWith(cacheStaticAsset(request));
+    return;
+  }
+
   // Handle navigation requests and data requests with ETag validation
   if (
     request.mode === 'navigate' ||

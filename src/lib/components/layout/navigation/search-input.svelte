@@ -5,11 +5,9 @@
 
   let {
     layoutState,
-    searchQuery = $bindable(),
-    class: className = 'sm:w-64 w-52',
+    class: className = 'sm:w-72 w-52',
   }: {
     layoutState: LayoutState;
-    searchQuery: string;
     class?: string;
   } = $props();
 </script>
@@ -21,7 +19,7 @@
     oninput={(e) => layoutState.handleSearch(e)}
     placeholder="Search"
     class={className}
-    bind:value={searchQuery}
+    bind:value={layoutState.searchQuery}
   />
   <Loader message="" size="sm" visible={layoutState.isSearching} />
 </div>

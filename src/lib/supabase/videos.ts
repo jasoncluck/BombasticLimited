@@ -14,6 +14,12 @@ import type {
 } from '@supabase/supabase-js';
 import type { Database } from './database.types';
 import type { PlaylistVideo } from './playlists';
+import {
+  getUserVideoHistory,
+  getVideoAnalytics,
+  type VideoHistoryWithVideo,
+  type VideoAnalytics,
+} from './video-history';
 
 export const DEFAULT_NUM_VIDEOS_PAGINATION = 100;
 export const DEFAULT_NUM_VIDEOS_OVERVIEW = 15;
@@ -221,4 +227,57 @@ export function isVideoWithPlaylistTimestamp(
     'playlist_sort_order' in video &&
     !!video.playlist_sort_order
   );
+}
+
+/**
+ * Get video history for a user with optional video filtering
+ */
+export async function getVideosHistory({
+  videoId,
+  limit = DEFAULT_NUM_VIDEOS_OVERVIEW,
+  offset = 0,
+  supabase,
+  session,
+}: {
+  videoId?: string;
+  limit?: number;
+  offset?: number;
+  supabase: SupabaseClient<Database>;
+  session?: Session | null;
+}): Promise<{
+  history: VideoHistoryWithVideo[];
+  error?: PostgrestError | null;
+}> {
+  return getUserVideoHistory({
+    videoId,
+    limit,
+    offset,
+    supabase,
+    session,
+  });
+}
+
+/**
+ * Get video analytics for a user
+ */
+export async function getVideosAnalytics({
+  videoId,
+  daysBack = 30,
+  supabase,
+  session,
+}: {
+  videoId?: string;
+  daysBack?: number;
+  supabase: SupabaseClient<Database>;
+  session?: Session | null;
+}): Promise<{
+  analytics: VideoAnalytics[];
+  error?: PostgrestError | null;
+}> {
+  return getVideoAnalytics({
+    videoId,
+    daysBack,
+    supabase,
+    session,
+  });
 }
