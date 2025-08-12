@@ -180,7 +180,6 @@ export async function handleDeletePlaylist({
 
   const { error } = await deletePlaylist({
     playlistId: playlist.id,
-    session,
     supabase,
   });
 

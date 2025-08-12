@@ -10,9 +10,11 @@
   import type { UserProfile } from '$lib/supabase/user-profiles';
   import BrandLogo from '$lib/assets/brand-logo.svelte';
   import { getLayoutState } from '$lib/state/layout.svelte';
+  import type { NotificationWithMeta } from '$lib/supabase/notifications';
 
   let {
     userProfile,
+    notifications,
     session,
     supabase,
     searchQuery = $bindable(),
@@ -20,6 +22,7 @@
     openNotificationDrawer = $bindable(),
   }: {
     userProfile: UserProfile | null;
+    notifications: NotificationWithMeta[] | null;
     session: Session | null;
     supabase: SupabaseClient<Database>;
     searchQuery: string;
@@ -87,6 +90,7 @@
     <div class="flex items-center gap-4">
       <UserMenu
         {userProfile}
+        {notifications}
         {session}
         {supabase}
         {layoutState}

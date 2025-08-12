@@ -12,7 +12,7 @@
   import { superForm, type SuperValidated } from 'sveltekit-superforms';
   import { zodClient, type Infer } from 'sveltekit-superforms/adapters';
   import * as Form from '$lib/components/ui/form';
-  import { getFlash, updateFlash } from 'sveltekit-flash-message';
+  import { updateFlash } from 'sveltekit-flash-message';
   import { page } from '$app/state';
   import { writable } from 'svelte/store';
   import {
@@ -30,62 +30,64 @@
 
   let currentAction = $state<string>('');
 
-  const notificationForm = data.form ? superForm(data.form, {
-    validators: zodClient(notificationSchema),
-    validationMethod: 'onsubmit',
-    resetForm: false, // Prevent form reset after submission
+  const notificationForm = data.form
+    ? superForm(data.form, {
+        validators: zodClient(notificationSchema),
+        validationMethod: 'onsubmit',
+        resetForm: false, // Prevent form reset after submission
 
-    onSubmit({ formData, cancel }) {
-      const action = formData.get('_action')?.toString() || '';
-      currentAction = action;
+        onSubmit({ formData, cancel }) {
+          const action = formData.get('_action')?.toString() || '';
+          currentAction = action;
 
-      if (action === 'sendTestNotification') {
-        testSubmitting = true;
-      } else {
-        isSubmitting = true;
-      }
-    },
-    onResult(event) {
-      if (event.result.type !== 'redirect') {
-        if (currentAction === 'sendTestNotification') {
-          testSubmitting = false;
-        } else {
-          isSubmitting = false;
-        }
-      }
-    },
-    onUpdated({ form }) {
-      updateFlash(page);
+          if (action === 'sendTestNotification') {
+            testSubmitting = true;
+          } else {
+            isSubmitting = true;
+          }
+        },
+        onResult(event) {
+          if (event.result.type !== 'redirect') {
+            if (currentAction === 'sendTestNotification') {
+              testSubmitting = false;
+            } else {
+              isSubmitting = false;
+            }
+          }
+        },
+        onUpdated({ form }) {
+          updateFlash(page);
 
-      // Handle success/error messages
-      if (form.valid && !form.errors) {
-        if (currentAction === 'sendTestNotification') {
-          showToast('✅ Test notification sent successfully!', 'success');
-        } else {
-          showToast(`✅ Global notification sent successfully!`, 'success');
-        }
-      } else if (form.errors) {
-        // Handle validation errors
-        const errorMessages = Object.values(form.errors).flat();
-        if (errorMessages.length > 0) {
-          showToast(`❌ Error: ${errorMessages[0]}`, 'error');
-        }
-      }
-    },
-  }) : null;
+          // Handle success/error messages
+          if (form.valid && !form.errors) {
+            if (currentAction === 'sendTestNotification') {
+              showToast('✅ Test notification sent successfully!', 'success');
+            } else {
+              showToast(`✅ Global notification sent successfully!`, 'success');
+            }
+          } else if (form.errors) {
+            // Handle validation errors
+            const errorMessages = Object.values(form.errors).flat();
+            if (errorMessages.length > 0) {
+              showToast(`❌ Error: ${errorMessages[0]}`, 'error');
+            }
+          }
+        },
+      })
+    : null;
 
   let isSubmitting = $state(false);
   let testSubmitting = $state(false);
 
-  const { form: formData, enhance } = notificationForm || { 
-    form: writable({ 
+  const { form: formData, enhance } = notificationForm || {
+    form: writable({
       type: 'system',
       title: '',
       message: '',
       startDatetime: '',
-      endDatetime: ''
-    }), 
-    enhance: (node: HTMLFormElement) => ({ destroy: () => {} }) 
+      endDatetime: '',
+    }),
+    enhance: (node: HTMLFormElement) => ({ destroy: () => {} }),
   };
 
   const notificationTypes = [
@@ -122,7 +124,7 @@
 
   function loadTemplate(templateName: keyof typeof templates) {
     if (!notificationForm) return;
-    
+
     const template = templates[templateName];
     selectedType =
       notificationTypes.find((t) => t.value === template.type) ||
@@ -136,7 +138,7 @@
 
   function resetForm() {
     if (!notificationForm) return;
-    
+
     selectedType = notificationTypes[0];
     $formData.type = 'system';
     $formData.title = '';
@@ -207,171 +209,172 @@
         </div>
 
         {#if data.form && notificationForm}
-        <form method="POST" use:enhance>
-          <div class="space-y-6">
-            <!-- Type Selection -->
-            <Form.Field form={notificationForm} name="type">
-              <Form.Control>
-                {#snippet children({ props })}
-                  <Label for="type">Type</Label>
-                  <Select.Root
-                    type="single"
-                    bind:value={$formData.type}
-                    onValueChange={(v) => {
-                      if (v) {
-                        $formData.type = v;
-                        selectedType =
-                          notificationTypes.find((t) => t.value === v) ||
-                          notificationTypes[0];
-                      }
-                    }}
-                  >
-                    <Select.Trigger>
-                      {selectedType?.label || 'Select notification type'}
-                    </Select.Trigger>
-                    <Select.Content>
-                      {#each notificationTypes as type}
-                        <Select.Item value={type.value}
-                          >{type.label}</Select.Item
-                        >
-                      {/each}
-                    </Select.Content>
-                  </Select.Root>
-                  <input
-                    type="hidden"
-                    name="type"
-                    bind:value={$formData.type}
-                  />
-                {/snippet}
-              </Form.Control>
-              <Form.FieldErrors class="text-xs" />
-            </Form.Field>
+          <form method="POST" use:enhance>
+            <div class="space-y-6">
+              <!-- Type Selection -->
+              <Form.Field form={notificationForm} name="type">
+                <Form.Control>
+                  {#snippet children({ props })}
+                    <Label for="type">Type</Label>
+                    <Select.Root
+                      type="single"
+                      bind:value={$formData.type}
+                      onValueChange={(v) => {
+                        if (v) {
+                          $formData.type = v;
+                          selectedType =
+                            notificationTypes.find((t) => t.value === v) ||
+                            notificationTypes[0];
+                        }
+                      }}
+                    >
+                      <Select.Trigger>
+                        {selectedType?.label || 'Select notification type'}
+                      </Select.Trigger>
+                      <Select.Content>
+                        {#each notificationTypes as type (type.value)}
+                          <Select.Item value={type.value}
+                            >{type.label}</Select.Item
+                          >
+                        {/each}
+                      </Select.Content>
+                    </Select.Root>
+                    <input
+                      type="hidden"
+                      name="type"
+                      bind:value={$formData.type}
+                    />
+                  {/snippet}
+                </Form.Control>
+                <Form.FieldErrors class="text-xs" />
+              </Form.Field>
 
-            <!-- Title -->
-            <Form.Field form={notificationForm} name="title">
-              <Form.Control>
-                {#snippet children({ props })}
-                  <Label for="title">Title</Label>
-                  <Input
-                    {...props}
-                    id="title"
-                    name="title"
-                    type="text"
-                    bind:value={$formData.title}
-                    required
-                    placeholder="Enter notification title"
-                  />
-                {/snippet}
-              </Form.Control>
-              <Form.FieldErrors class="text-xs" />
-            </Form.Field>
+              <!-- Title -->
+              <Form.Field form={notificationForm} name="title">
+                <Form.Control>
+                  {#snippet children({ props })}
+                    <Label for="title">Title</Label>
+                    <Input
+                      {...props}
+                      id="title"
+                      name="title"
+                      type="text"
+                      bind:value={$formData.title}
+                      required
+                      placeholder="Enter notification title"
+                    />
+                  {/snippet}
+                </Form.Control>
+                <Form.FieldErrors class="text-xs" />
+              </Form.Field>
 
-            <!-- Message -->
-            <Form.Field form={notificationForm} name="message">
-              <Form.Control>
-                {#snippet children({ props })}
-                  <Label for="message">Message</Label>
-                  <Textarea
-                    {...props}
-                    id="message"
-                    name="message"
-                    bind:value={$formData.message}
-                    required
-                    rows={4}
-                    placeholder="Enter notification message (HTML supported: &lt;b&gt;bold&lt;/b&gt;, &lt;i&gt;italic&lt;/i&gt;, &lt;a href=&quot;...&quot;&gt;link&lt;/a&gt;, etc.)"
-                  />
-                  <p class="text-muted-foreground text-xs">
-                    HTML tags like &lt;b&gt;, &lt;i&gt;, &lt;u&gt;, &lt;br&gt;,
-                    &lt;a href="..."&gt; are supported for rich formatting and
-                    links
-                  </p>
-                {/snippet}
-              </Form.Control>
-              <Form.FieldErrors class="text-xs" />
-            </Form.Field>
+              <!-- Message -->
+              <Form.Field form={notificationForm} name="message">
+                <Form.Control>
+                  {#snippet children({ props })}
+                    <Label for="message">Message</Label>
+                    <Textarea
+                      {...props}
+                      id="message"
+                      name="message"
+                      bind:value={$formData.message}
+                      required
+                      rows={4}
+                      placeholder="Enter notification message (HTML supported: &lt;b&gt;bold&lt;/b&gt;, &lt;i&gt;italic&lt;/i&gt;, &lt;a href=&quot;...&quot;&gt;link&lt;/a&gt;, etc.)"
+                    />
+                    <p class="text-muted-foreground text-xs">
+                      HTML tags like &lt;b&gt;, &lt;i&gt;, &lt;u&gt;,
+                      &lt;br&gt;, &lt;a href="..."&gt; are supported for rich
+                      formatting and links
+                    </p>
+                  {/snippet}
+                </Form.Control>
+                <Form.FieldErrors class="text-xs" />
+              </Form.Field>
 
-            <!-- Start DateTime (Optional) -->
-            <Form.Field form={notificationForm} name="startDatetime">
-              <Form.Control>
-                {#snippet children({ props })}
-                  <Label for="startDatetime">Start Date & Time (Optional)</Label
-                  >
-                  <Input
-                    {...props}
-                    id="startDatetime"
-                    name="startDatetime"
-                    type="datetime-local"
-                    bind:value={$formData.startDatetime}
-                  />
-                  <p class="text-muted-foreground text-xs">
-                    When notification should start being visible (default:
-                    immediately)
-                  </p>
-                {/snippet}
-              </Form.Control>
-              <Form.FieldErrors class="text-xs" />
-            </Form.Field>
+              <!-- Start DateTime (Optional) -->
+              <Form.Field form={notificationForm} name="startDatetime">
+                <Form.Control>
+                  {#snippet children({ props })}
+                    <Label for="startDatetime"
+                      >Start Date & Time (Optional)</Label
+                    >
+                    <Input
+                      {...props}
+                      id="startDatetime"
+                      name="startDatetime"
+                      type="datetime-local"
+                      bind:value={$formData.startDatetime}
+                    />
+                    <p class="text-muted-foreground text-xs">
+                      When notification should start being visible (default:
+                      immediately)
+                    </p>
+                  {/snippet}
+                </Form.Control>
+                <Form.FieldErrors class="text-xs" />
+              </Form.Field>
 
-            <!-- End DateTime (Optional) -->
-            <Form.Field form={notificationForm} name="endDatetime">
-              <Form.Control>
-                {#snippet children({ props })}
-                  <Label for="endDatetime">End Date & Time (Optional)</Label>
-                  <Input
-                    {...props}
-                    id="endDatetime"
-                    name="endDatetime"
-                    type="datetime-local"
-                    bind:value={$formData.endDatetime}
-                  />
-                  <p class="text-muted-foreground text-xs">
-                    When notification should automatically expire (default:
-                    never expires)
-                  </p>
-                {/snippet}
-              </Form.Control>
-              <Form.FieldErrors class="text-xs" />
-            </Form.Field>
+              <!-- End DateTime (Optional) -->
+              <Form.Field form={notificationForm} name="endDatetime">
+                <Form.Control>
+                  {#snippet children({ props })}
+                    <Label for="endDatetime">End Date & Time (Optional)</Label>
+                    <Input
+                      {...props}
+                      id="endDatetime"
+                      name="endDatetime"
+                      type="datetime-local"
+                      bind:value={$formData.endDatetime}
+                    />
+                    <p class="text-muted-foreground text-xs">
+                      When notification should automatically expire (default:
+                      never expires)
+                    </p>
+                  {/snippet}
+                </Form.Control>
+                <Form.FieldErrors class="text-xs" />
+              </Form.Field>
 
-            <!-- Action Buttons -->
-            <div class="flex gap-3 pt-4">
-              <Button
-                type="submit"
-                formaction="?/sendGlobalNotification"
-                disabled={isSubmitting ||
-                  !$formData.title ||
-                  !$formData.message}
-                class="flex-1"
-              >
-                {#if isSubmitting}
-                  <Loader class="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
-                {:else}
-                  <Send class="mr-2 h-4 w-4" />
-                  Send to All Users
-                {/if}
-              </Button>
+              <!-- Action Buttons -->
+              <div class="flex gap-3 pt-4">
+                <Button
+                  type="submit"
+                  formaction="?/sendGlobalNotification"
+                  disabled={isSubmitting ||
+                    !$formData.title ||
+                    !$formData.message}
+                  class="flex-1"
+                >
+                  {#if isSubmitting}
+                    <Loader class="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  {:else}
+                    <Send class="mr-2 h-4 w-4" />
+                    Send to All Users
+                  {/if}
+                </Button>
 
-              <Button
-                type="submit"
-                formaction="?/sendTestNotification"
-                disabled={testSubmitting ||
-                  !$formData.title ||
-                  !$formData.message}
-                variant="outline"
-                class="flex-1"
-              >
-                {#if testSubmitting}
-                  <Loader class="mr-2 h-4 w-4 animate-spin" />
-                  Testing...
-                {:else}
-                  <TestTube class="mr-2 h-4 w-4" />
-                  Test (Send to Me)
-                {/if}
-              </Button>
+                <Button
+                  type="submit"
+                  formaction="?/sendTestNotification"
+                  disabled={testSubmitting ||
+                    !$formData.title ||
+                    !$formData.message}
+                  variant="outline"
+                  class="flex-1"
+                >
+                  {#if testSubmitting}
+                    <Loader class="mr-2 h-4 w-4 animate-spin" />
+                    Testing...
+                  {:else}
+                    <TestTube class="mr-2 h-4 w-4" />
+                    Test (Send to Me)
+                  {/if}
+                </Button>
+              </div>
             </div>
-          </div>
-        </form>
+          </form>
         {/if}
       </Card.Content>
     </Card.Root>

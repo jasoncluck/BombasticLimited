@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { invalidate } from '$app/navigation';
   import { Toaster } from '$lib/components/ui/sonner/index.js';
   import { injectSpeedInsights } from '@vercel/speed-insights/sveltekit';
   import Loader from '$lib/components/loader.svelte';
@@ -35,6 +36,7 @@
     lastModified,
     cached,
     cacheUserId,
+    notifications,
   } = $derived(data);
 
   // Initialize all state
@@ -44,7 +46,7 @@
   const mediaQuery = setMediaQueryState();
   const navigationCache = setNavigationCacheState();
   const sidebarState = setSidebarState();
-  const notificationState = setNotificationState();
+  setNotificationState();
 
   setPlaylistState(pageState, contentState, sidebarState);
   setSourceState(pageState);
@@ -56,6 +58,9 @@
   let searchQuery = $state('');
   // Progressive loading states
   let isHydrated = $state(false);
+
+  // Tab visibility state for auth invalidation
+  let wasTabHidden = $state(false);
 
   // Use custom hooks
   const preloading = usePreloading(navigationCache);
@@ -119,6 +124,20 @@
     await sidebarState.refreshData();
   }
 
+  // Handle tab visibility changes for auth invalidation
+  function handleVisibilityChange() {
+    if (document.hidden) {
+      // Tab became hidden
+      wasTabHidden = true;
+      console.log('Tab hidden - marking for auth refresh on return');
+    } else if (wasTabHidden) {
+      // Tab became visible again after being hidden
+      console.log('Tab visible again - invalidating auth');
+      invalidate('supabase:auth');
+      wasTabHidden = false;
+    }
+  }
+
   // Reset drag state
   if (contentState.dragContentType) {
     contentState.dragContentType = null;
@@ -163,6 +182,9 @@
     // Mark as hydrated immediately
     isHydrated = true;
 
+    // Set up visibility change listener for auth invalidation
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     // Initialize media queries immediately (fast, synchronous)
     const mediaCleanup = mediaQuery.initialize();
 
@@ -185,6 +207,9 @@
 
     // Return cleanup function
     return () => {
+      // Clean up visibility change listener
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+
       if (mediaCleanup && typeof mediaCleanup === 'function') {
         mediaCleanup();
       }
@@ -219,6 +244,7 @@
     <!-- Full UI - sidebar may still be loading data -->
     <MainNavigation
       {userProfile}
+      {notifications}
       {session}
       {supabase}
       bind:searchQuery

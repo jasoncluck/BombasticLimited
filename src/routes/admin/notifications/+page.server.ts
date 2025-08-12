@@ -1,6 +1,10 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
-import { createNotificationService } from '$lib/services/notification-service';
+import {
+  createNotificationForAllUsers,
+  createNotification,
+  type NotificationType,
+} from '$lib/supabase/notifications';
 
 export const load: PageServerLoad = async ({
   locals: { supabase, session },
@@ -52,31 +56,33 @@ export const actions: Actions = {
     }
 
     const formData = await request.formData();
-    const type = formData.get('type') as string;
+    const type = formData.get('type') as NotificationType;
     const title = formData.get('title') as string;
     const message = formData.get('message') as string;
     const startDatetime =
       (formData.get('startDatetime') as string) || undefined;
     const endDatetime = (formData.get('endDatetime') as string) || undefined;
 
-    try {
-      const notificationService = createNotificationService(supabase);
-      const result = await notificationService.createNotificationForAllUsers({
-        type: type as any,
+    const { data, error } = await createNotificationForAllUsers({
+      supabase,
+      params: {
+        type,
         title,
         message,
         metadata: { source: 'admin_panel' },
         start_datetime: startDatetime,
         end_datetime: endDatetime,
-      });
+      },
+    });
 
-      return { success: true, count: result.data };
-    } catch (error) {
+    if (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error.message || 'Failed to send notification',
       };
     }
+
+    return { success: true, count: data };
   },
 
   sendTestNotification: async ({ request, locals: { supabase, session } }) => {
@@ -96,31 +102,33 @@ export const actions: Actions = {
     }
 
     const formData = await request.formData();
-    const type = formData.get('type') as string;
+    const type = formData.get('type') as NotificationType;
     const title = formData.get('title') as string;
     const message = formData.get('message') as string;
     const startDatetime =
       (formData.get('startDatetime') as string) || undefined;
     const endDatetime = (formData.get('endDatetime') as string) || undefined;
 
-    try {
-      const notificationService = createNotificationService(supabase);
-      const result = await notificationService.createNotification({
+    const { data, error } = await createNotification({
+      supabase,
+      params: {
         user_id: session.user.id,
-        type: type as any,
+        type,
         title,
         message,
         metadata: { source: 'admin_test' },
         start_datetime: startDatetime,
         end_datetime: endDatetime,
-      });
+      },
+    });
 
-      return { success: true, id: result.data };
-    } catch (error) {
+    if (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error.message || 'Failed to create notification',
       };
     }
+
+    return { success: true, id: data };
   },
 };

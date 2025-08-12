@@ -20,9 +20,11 @@
   import type { UserProfile } from '$lib/supabase/user-profiles';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import { getContentState } from '$lib/state/content.svelte';
+  import type { NotificationWithMeta } from '$lib/supabase/notifications';
 
   let {
     userProfile,
+    notifications,
     session,
     supabase,
     layoutState,
@@ -30,6 +32,7 @@
     openNotificationDrawer = $bindable(),
   }: {
     userProfile: UserProfile | null;
+    notifications: NotificationWithMeta[] | null;
     session: Session | null;
     supabase: SupabaseClient<Database>;
     layoutState: LayoutState;
@@ -41,10 +44,9 @@
   const mediaQueryState = getMediaQueryState();
 
   const { canHover, isSm } = $derived(mediaQueryState);
+  console.log('JMC');
+  console.log(notifications);
 </script>
-
-<!-- Notifications Bell -->
-<NotificationBell {supabase} bind:openNotificationDrawer />
 
 <!-- Content Display Preference (Desktop) -->
 {#if isSm}
@@ -112,6 +114,16 @@
       </DropdownMenu.Group>
     </DropdownMenu.Content>
   </DropdownMenu.Root>
+{/if}
+
+<!-- Notifications Bell -->
+{#if notifications && notifications.length > 0}
+  <NotificationBell
+    {notifications}
+    {supabase}
+    {session}
+    bind:openNotificationDrawer
+  />
 {/if}
 
 <!-- User Menu -->

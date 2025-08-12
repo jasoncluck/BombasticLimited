@@ -14,6 +14,7 @@ import type {
   VideoFilter,
 } from '$lib/components/content/content-filter';
 import type { UserProfile } from '$lib/supabase/user-profiles';
+import type { NotificationWithMeta } from '$lib/supabase/notifications';
 
 export const load = async ({
   data,
@@ -84,6 +85,7 @@ export const load = async ({
       lastModified: data.lastModified || null,
       cached: true,
       cacheUserId: data.cacheUserId || null,
+      notifications: [],
     };
   }
 
@@ -96,6 +98,7 @@ export const load = async ({
     etag = null,
     lastModified = null,
     cacheUserId = null,
+    notifications = null,
   }: {
     playlistsCount?: number | null;
     userProfile?: UserProfile | null;
@@ -104,6 +107,7 @@ export const load = async ({
     etag?: string | null;
     lastModified?: string | null;
     cacheUserId?: string | null;
+    notifications?: NotificationWithMeta[] | null;
   } = data;
 
   // Handle layout safely
@@ -149,5 +153,6 @@ export const load = async ({
     lastModified,
     cached: false,
     cacheUserId,
+    notifications,
   };
 };

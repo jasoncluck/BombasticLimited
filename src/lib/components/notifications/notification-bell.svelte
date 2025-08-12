@@ -1,48 +1,44 @@
 <script lang="ts">
   import { Bell } from '@lucide/svelte';
   import { Badge } from '$lib/components/ui/badge';
-  import { Button, buttonVariants } from '$lib/components/ui/button';
+  import { buttonVariants } from '$lib/components/ui/button';
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
   import * as Drawer from '$lib/components/ui/drawer';
-  import { getNotificationState } from '$lib/state/notifications.svelte';
   import NotificationList from './notification-list.svelte';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
-  import type { SupabaseClient } from '@supabase/supabase-js';
+  import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
-  import { onMount } from 'svelte';
+  import {
+    markAsRead,
+    type NotificationWithMeta,
+  } from '$lib/supabase/notifications';
+  import { invalidate } from '$app/navigation';
 
   let {
+    notifications,
     supabase,
+    session,
     openNotificationDrawer = $bindable(),
   }: {
+    notifications: NotificationWithMeta[];
     supabase: SupabaseClient<Database>;
+    session: Session | null;
     openNotificationDrawer?: boolean;
   } = $props();
-
-  console.log(openNotificationDrawer);
 
   const mediaQueryState = getMediaQueryState();
   const { canHover } = $derived(mediaQueryState);
 
-  const notificationState = getNotificationState();
-
-  onMount(() => {
-    if (supabase) {
-      notificationState.initialize(supabase);
-    }
-  });
+  const notificationIds = $derived(notifications.map((n) => n.id));
+  const unreadNotifications = $derived(
+    notifications.filter((n) => n.read === false)
+  );
 
   // Auto-mark all notifications as read when bell menu opens
   async function handleMenuOpen() {
-    if (notificationState.unreadCount > 0) {
-      // Get all unread notification IDs
-      const unreadIds = notificationState.notifications
-        .filter((n) => !n.read)
-        .map((n) => n.id);
-
-      if (unreadIds.length > 0) {
-        await notificationState.markAsRead(unreadIds);
-      }
+    if (unreadNotifications) {
+      markAsRead({ notificationIds, supabase, session });
+      invalidate('supabase:db:notifications');
     }
   }
 
@@ -65,14 +61,12 @@
       })}"
     >
       <Bell class="h-[1.2rem] w-[1.2rem]" />
-      {#if notificationState.unreadCount > 0}
+      {#if unreadNotifications.length > 0}
         <Badge
           variant="destructive"
           class="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-medium"
         >
-          {notificationState.unreadCount > 99
-            ? '99+'
-            : notificationState.unreadCount}
+          {unreadNotifications.length > 99 ? '99+' : unreadNotifications.length}
         </Badge>
       {/if}
       <span class="sr-only">Notifications</span>
@@ -86,6 +80,8 @@
       <div class="max-h-80 overflow-y-auto">
         <NotificationList
           {supabase}
+          {session}
+          {notifications}
           onNotificationClick={handleClose}
           showActions={false}
           compact={true}
@@ -107,14 +103,12 @@
       })}"
     >
       <Bell class="h-[1.2rem] w-[1.2rem]" />
-      {#if notificationState.unreadCount > 0}
+      {#if unreadNotifications.length > 0}
         <Badge
           variant="destructive"
           class="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-medium"
         >
-          {notificationState.unreadCount > 99
-            ? '99+'
-            : notificationState.unreadCount}
+          {unreadNotifications.length > 99 ? '99+' : unreadNotifications.length}
         </Badge>
       {/if}
       <span class="sr-only">Notifications</span>
@@ -131,6 +125,8 @@
         <div class="max-h-96 overflow-y-auto px-4 pb-4">
           <NotificationList
             {supabase}
+            {session}
+            {notifications}
             onNotificationClick={handleClose}
             showActions={false}
             compact={true}
