@@ -13,6 +13,7 @@
   import { goto } from '$app/navigation';
   import type { SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
+  import { writable } from 'svelte/store';
 
   let {
     data,
@@ -25,7 +26,8 @@
 
   const flash = getFlash(page);
 
-  const forgotPasswordFormHandler = superForm(data.form, {
+  // Only initialize superForm if data.form exists
+  const forgotPasswordFormHandler = data.form ? superForm(data.form, {
     validators: zodClient(forgotPasswordSchema),
     validationMethod: 'onsubmit',
 
@@ -40,15 +42,19 @@
     onUpdated() {
       updateFlash(page);
     },
-  });
+  }) : null;
 
   let isSubmitting = $state(false);
 
-  const { form: formData, enhance } = forgotPasswordFormHandler;
+  const { form: formData, enhance } = forgotPasswordFormHandler || { 
+    form: writable({ email: '' }), 
+    enhance: (node: HTMLFormElement) => ({ destroy: () => {} }) 
+  };
 </script>
 
 <div class="flex flex-row justify-center">
   <div class="mt-24 w-[400px]">
+    {#if data.form && forgotPasswordFormHandler}
     <Card.Root class="gap-6 p-6">
       <Card.Header>
         <Card.Title class="text-2xl">Reset Password</Card.Title>
@@ -134,5 +140,6 @@
         </Card.Footer>
       </form>
     </Card.Root>
+    {/if}
   </div>
 </div>

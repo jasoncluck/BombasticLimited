@@ -14,6 +14,7 @@
   import * as Form from '$lib/components/ui/form';
   import { getFlash, updateFlash } from 'sveltekit-flash-message';
   import { page } from '$app/state';
+  import { writable } from 'svelte/store';
   import {
     notificationSchema,
     type NotificationSchema,
@@ -29,7 +30,7 @@
 
   let currentAction = $state<string>('');
 
-  const notificationForm = superForm(data.form, {
+  const notificationForm = data.form ? superForm(data.form, {
     validators: zodClient(notificationSchema),
     validationMethod: 'onsubmit',
     resetForm: false, // Prevent form reset after submission
@@ -71,12 +72,21 @@
         }
       }
     },
-  });
+  }) : null;
 
   let isSubmitting = $state(false);
   let testSubmitting = $state(false);
 
-  const { form: formData, enhance } = notificationForm;
+  const { form: formData, enhance } = notificationForm || { 
+    form: writable({ 
+      type: 'system',
+      title: '',
+      message: '',
+      startDatetime: '',
+      endDatetime: ''
+    }), 
+    enhance: (node: HTMLFormElement) => ({ destroy: () => {} }) 
+  };
 
   const notificationTypes = [
     { value: 'system', label: 'System' },
@@ -111,6 +121,8 @@
   };
 
   function loadTemplate(templateName: keyof typeof templates) {
+    if (!notificationForm) return;
+    
     const template = templates[templateName];
     selectedType =
       notificationTypes.find((t) => t.value === template.type) ||
@@ -123,6 +135,8 @@
   }
 
   function resetForm() {
+    if (!notificationForm) return;
+    
     selectedType = notificationTypes[0];
     $formData.type = 'system';
     $formData.title = '';
@@ -133,22 +147,12 @@
 
   // Sync selectedType with form data
   $effect(() => {
-    if ($formData.type) {
+    if (notificationForm && $formData.type) {
       selectedType =
         notificationTypes.find((t) => t.value === $formData.type) ||
         notificationTypes[0];
     }
   });
-
-  // Enhanced form submission handler
-  function handleFormSubmit(action: string) {
-    return async (event: SubmitEvent) => {
-      const form = event.currentTarget as HTMLFormElement;
-      const formData = new FormData(form);
-      formData.set('_action', action);
-      currentAction = action;
-    };
-  }
 </script>
 
 <svelte:head>
@@ -202,6 +206,7 @@
           </div>
         </div>
 
+        {#if data.form && notificationForm}
         <form method="POST" use:enhance>
           <div class="space-y-6">
             <!-- Type Selection -->
@@ -337,7 +342,6 @@
                   !$formData.title ||
                   !$formData.message}
                 class="flex-1"
-                onclick={handleFormSubmit('sendGlobalNotification')}
               >
                 {#if isSubmitting}
                   <Loader class="mr-2 h-4 w-4 animate-spin" />
@@ -356,7 +360,6 @@
                   !$formData.message}
                 variant="outline"
                 class="flex-1"
-                onclick={handleFormSubmit('sendTestNotification')}
               >
                 {#if testSubmitting}
                   <Loader class="mr-2 h-4 w-4 animate-spin" />
@@ -369,6 +372,7 @@
             </div>
           </div>
         </form>
+        {/if}
       </Card.Content>
     </Card.Root>
 
