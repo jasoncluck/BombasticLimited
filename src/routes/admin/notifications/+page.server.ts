@@ -1,13 +1,13 @@
-import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import {
   createNotificationForAllUsers,
   createNotification,
   type NotificationType,
 } from '$lib/supabase/notifications';
-import { superValidate } from 'sveltekit-superforms';
+import { fail, superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { adminNotificationSchema } from './admin-notifications-schema';
+import { redirect, setFlash } from 'sveltekit-flash-message/server';
 
 export const load: PageServerLoad = async ({
   locals: { supabase, session },
@@ -30,7 +30,6 @@ export const load: PageServerLoad = async ({
   const adminNotificationForm = await superValidate(
     zod(adminNotificationSchema)
   );
-  console.log(adminNotificationSchema);
 
   // Get all users for testing
   const { data: users } = await supabase
@@ -40,17 +39,24 @@ export const load: PageServerLoad = async ({
 
   return {
     users: users || [],
-    adminNotificationForm,
+    form: adminNotificationForm,
   };
 };
 
 export const actions: Actions = {
   sendGlobalNotification: async ({
     request,
+    cookies,
     locals: { supabase, session },
   }) => {
     if (!session) {
-      return { success: false, error: 'Not authenticated' };
+      return fail(401, { error: 'Not authenticated' });
+    }
+
+    const form = await superValidate(request, zod(adminNotificationSchema));
+
+    if (!form.valid) {
+      return fail(400, { form });
     }
 
     // Check if user is admin
@@ -61,16 +67,11 @@ export const actions: Actions = {
       .single();
 
     if (profileError || profile.account_type !== 'admin') {
-      return { success: false, error: 'Not authorized' };
+      setFlash({ type: 'error', message: 'Not authorized' }, cookies);
+      return fail(403, { form });
     }
 
-    const formData = await request.formData();
-    const type = formData.get('type') as NotificationType;
-    const title = formData.get('title') as string;
-    const message = formData.get('message') as string;
-    const startDatetime =
-      (formData.get('startDatetime') as string) || undefined;
-    const endDatetime = (formData.get('endDatetime') as string) || undefined;
+    const { type, title, message, startDatetime, endDatetime } = form.data;
 
     const { data, error } = await createNotificationForAllUsers({
       supabase,
@@ -85,18 +86,40 @@ export const actions: Actions = {
     });
 
     if (error) {
-      return {
-        success: false,
-        error: error.message || 'Failed to send notification',
-      };
+      setFlash(
+        {
+          type: 'error',
+          message: error.message || 'Failed to send notification',
+        },
+        cookies
+      );
+      return fail(500, { form });
     }
 
-    return { success: true, count: data };
+    setFlash(
+      {
+        type: 'success',
+        message: `Global notification sent to ${data} users`,
+      },
+      cookies
+    );
+
+    return { form };
   },
 
-  sendTestNotification: async ({ request, locals: { supabase, session } }) => {
+  sendTestNotification: async ({
+    request,
+    cookies,
+    locals: { supabase, session },
+  }) => {
     if (!session) {
-      return { success: false, error: 'Not authenticated' };
+      return fail(401, { error: 'Not authenticated' });
+    }
+
+    const form = await superValidate(request, zod(adminNotificationSchema));
+
+    if (!form.valid) {
+      return fail(400, { form });
     }
 
     // Check if user is admin
@@ -107,16 +130,11 @@ export const actions: Actions = {
       .single();
 
     if (profileError || profile?.account_type !== 'admin') {
-      return { success: false, error: 'Not authorized' };
+      setFlash({ type: 'error', message: 'Not authorized' }, cookies);
+      return fail(403, { form });
     }
 
-    const formData = await request.formData();
-    const type = formData.get('type') as NotificationType;
-    const title = formData.get('title') as string;
-    const message = formData.get('message') as string;
-    const startDatetime =
-      (formData.get('startDatetime') as string) || undefined;
-    const endDatetime = (formData.get('endDatetime') as string) || undefined;
+    const { type, title, message, startDatetime, endDatetime } = form.data;
 
     const { data, error } = await createNotification({
       supabase,
@@ -132,12 +150,24 @@ export const actions: Actions = {
     });
 
     if (error) {
-      return {
-        success: false,
-        error: error.message || 'Failed to create notification',
-      };
+      setFlash(
+        {
+          type: 'error',
+          message: error.message || 'Failed to send test notification',
+        },
+        cookies
+      );
+      return fail(500, { form });
     }
 
-    return { success: true, id: data };
+    setFlash(
+      {
+        type: 'success',
+        message: 'Test notification sent successfully',
+      },
+      cookies
+    );
+
+    return { form };
   },
 };

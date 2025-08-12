@@ -10,22 +10,21 @@ SET
   search_path = '' AS $$
 DECLARE
     generated_username text;
-    existing_username text;
     new_avatar_url text;
     providers_array text[];
     providers_json text;
     debug_msg text;
+    user_username text;
+    old_username text;
+    new_username text;
 BEGIN
     -- Handle INSERT operations (new user creation)
     IF TG_OP = 'INSERT' THEN
-        -- Check if a profile already exists for this user (preserves existing usernames)
-        SELECT username INTO existing_username 
-        FROM public.profiles 
-        WHERE id = NEW.id;
+        -- First check if username is provided in raw_user_meta_data (Discord OAuth)
+        user_username := NEW.raw_user_meta_data->>'username';
         
-        -- Only generate a new username if no profile exists
-        IF existing_username IS NULL THEN
-            -- Generate a unique username from the user's name or email
+        -- If no username provided, generate one from full_name or email
+        IF user_username IS NULL OR TRIM(user_username) = '' THEN
             generated_username := public.generate_unique_username(
                 COALESCE(
                     NEW.raw_user_meta_data->>'full_name',
@@ -34,8 +33,8 @@ BEGIN
                 )
             );
         ELSE
-            -- Use the existing username to preserve user's custom username
-            generated_username := existing_username;
+            -- Use the provided username, but still ensure it's unique
+            generated_username := public.generate_unique_username(user_username);
         END IF;
         
         -- Extract avatar URL from raw_user_meta_data if it exists
@@ -52,14 +51,14 @@ BEGIN
         END IF;
         
         -- Debug logging for avatar extraction
-        debug_msg := format('INSERT: User %s - avatar_url: %s, picture: %s, final: %s (email signup: %s), username: %s (existing: %s)', 
+        debug_msg := format('INSERT: User %s - avatar_url: %s, picture: %s, final: %s (email signup: %s), username from meta: %s, final username: %s', 
             NEW.id::text, 
             NEW.raw_user_meta_data->>'avatar_url',
             NEW.raw_user_meta_data->>'picture',
             COALESCE(new_avatar_url, 'NULL'),
             CASE WHEN new_avatar_url IS NULL THEN 'true' ELSE 'false' END,
-            generated_username,
-            COALESCE(existing_username, 'none')
+            COALESCE(user_username, 'NULL'),
+            generated_username
         );
         RAISE LOG '%', debug_msg;
         
@@ -77,22 +76,29 @@ BEGIN
         FROM json_array_elements_text(providers_json::json);
         
         -- Insert the new profile with username, avatar_url (can be NULL), isAdmin, and providers from auth schema
-        -- Use ON CONFLICT DO UPDATE to preserve existing username while updating other fields
         INSERT INTO public.profiles (id, username, avatar_url, providers, account_type)
         VALUES (NEW.id, generated_username, new_avatar_url, providers_array, 
-          CASE WHEN NEW.email = 'jason@bombastic.ltd' THEN 'admin'::public.profile_account_type ELSE 'default'::public.profile_account_type END)
-        ON CONFLICT (id) DO UPDATE SET
-            avatar_url = EXCLUDED.avatar_url,
-            providers = EXCLUDED.providers,
-            account_type = EXCLUDED.account_type
-            -- Deliberately NOT updating username to preserve existing custom usernames
-        ;
+                CASE WHEN NEW.email = 'jason@bombastic.ltd' THEN 'admin'::public.profile_account_type ELSE 'default'::public.profile_account_type END)
+        ON CONFLICT (id) DO NOTHING;
     
     -- Handle UPDATE operations (when user metadata gets updated)
     ELSIF TG_OP = 'UPDATE' THEN
-        -- Check if raw_user_meta_data was updated with avatar_url
+        -- Check if raw_user_meta_data was updated
         IF (OLD.raw_user_meta_data IS DISTINCT FROM NEW.raw_user_meta_data) THEN
-            -- Discord OAuth provides avatar in both 'avatar_url' and 'picture' fields
+            -- Check for username changes
+            old_username := OLD.raw_user_meta_data->>'username';
+            new_username := NEW.raw_user_meta_data->>'username';
+            
+            IF old_username IS DISTINCT FROM new_username AND new_username IS NOT NULL THEN
+                -- Update username in profiles table
+                UPDATE public.profiles 
+                SET username = new_username
+                WHERE id = NEW.id;
+                
+                RAISE LOG 'Username updated for user %: % -> %', NEW.id, old_username, new_username;
+            END IF;
+            
+            -- Handle avatar updates
             new_avatar_url := COALESCE(
                 NEW.raw_user_meta_data->>'avatar_url',
                 NEW.raw_user_meta_data->>'picture'

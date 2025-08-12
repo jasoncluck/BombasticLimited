@@ -25,6 +25,8 @@
     data,
   }: { data: { form: SuperValidated<Infer<AdminNotificationSchema>> } } =
     $props();
+  console.log('JMC');
+  console.log(data.form);
 
   let currentAction = $state<string>('');
 
@@ -53,8 +55,6 @@
       }
     },
     onUpdated({ form }) {
-      updateFlash(page);
-
       // Handle success/error messages
       if (form.valid && !form.errors) {
         if (currentAction === 'sendTestNotification') {

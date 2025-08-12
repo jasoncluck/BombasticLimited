@@ -12,33 +12,32 @@
   import { createSafeHtml } from '$lib/utils/html-sanitizer';
   import FaviconIcon from '$lib/components/icons/favicon-icon.svelte';
   import { invalidate } from '$app/navigation';
+  import { slide, fade } from 'svelte/transition';
+  import { quintOut } from 'svelte/easing';
 
   let {
     notifications,
     supabase,
-    compact = false,
     filterType,
     session,
   }: {
     notifications: NotificationWithMeta[];
     supabase: SupabaseClient<Database>;
     showActions?: boolean;
-    compact?: boolean;
     session: Session | null;
     filterType?: NotificationType;
     onNotificationClick?: () => void;
   } = $props();
 
-  async function handleDelete(
-    notification: NotificationWithMeta,
-    event: Event
-  ) {
-    event.stopPropagation();
+  // Track which notifications are being deleted for animation
+
+  async function handleDelete(notification: NotificationWithMeta) {
     await deleteNotifications({
       notificationIds: [notification.id],
       supabase,
       session,
     });
+
     invalidate('supabase:db:notifications');
   }
 </script>
@@ -46,7 +45,10 @@
 <div class="w-full">
   {#if notifications.length === 0}
     <!-- Empty state -->
-    <div class="flex flex-col items-center justify-center p-8 text-center">
+    <div
+      class="flex flex-col items-center justify-center p-8 text-center"
+      in:fade={{ duration: 300, delay: 150 }}
+    >
       <Bell class="text-muted-foreground mb-4 h-12 w-12" />
       <p class="text-muted-foreground">
         {filterType ? `No ${filterType} notifications` : 'No notifications'}
@@ -54,12 +56,14 @@
     </div>
   {:else}
     <!-- Notifications list -->
-    <ScrollArea class="w-full {compact ? 'max-h-80' : 'max-h-96'}">
+    <ScrollArea class="w-full" type="scroll">
       <div class="space-y-1">
         {#each notifications as notification (notification.id)}
           <div
             class="group hover:bg-muted/50 flex items-start space-x-3 p-3 transition-colors
-              {!notification.read ? 'bg-muted/20' : ''}"
+                {!notification.read ? 'bg-muted/20' : ''}"
+            in:slide={{ duration: 300, easing: quintOut }}
+            out:slide={{ duration: 250, easing: quintOut }}
           >
             <!-- Icon -->
             <div class="mt-1 flex-shrink-0">
@@ -107,8 +111,8 @@
                   <Button
                     variant="ghost"
                     size="sm"
-                    class="ghost-button-minimal text-muted-foreground h-6 w-6 p-0 opacity-60 transition-opacity hover:opacity-100"
-                    onclick={(e) => handleDelete(notification, e)}
+                    class="ghost-button-minimal text-muted-foreground h-6 w-6 p-0 opacity-60 transition-opacity hover:text-red-500 hover:opacity-100"
+                    onclick={() => handleDelete(notification)}
                     title="Remove notification"
                   >
                     <X class="h-3 w-3" />
