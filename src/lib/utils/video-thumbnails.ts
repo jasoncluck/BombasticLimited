@@ -59,7 +59,7 @@ export function getVideoThumbnailUrl(
   config?: ImageConfig
 ): string {
   const thumbnailUrl = getBestThumbnailUrl(video);
-  
+
   if (!thumbnailUrl) {
     return '';
   }
@@ -80,7 +80,10 @@ export function getBestVideoThumbnailUrl(video: Video): string | null {
  * Get JSON response with processed data URL
  * Uses server-side processing for data URL format
  */
-export function getVideoThumbnailDataUrl(video: Video, config?: ImageConfig): string {
+export function getVideoThumbnailDataUrl(
+  video: Video,
+  config?: ImageConfig
+): string {
   const thumbnailUrl = getBestThumbnailUrl(video);
   if (!thumbnailUrl) {
     return '';
@@ -89,7 +92,7 @@ export function getVideoThumbnailDataUrl(video: Video, config?: ImageConfig): st
   const params = new URLSearchParams();
   params.set('url', thumbnailUrl);
   params.set('type', 'json');
-  
+
   if (config) {
     addConfigParams(params, config);
   }
@@ -182,7 +185,10 @@ export function getResponsiveVideoThumbnailUrls(video: Video): {
   }
 
   return {
-    default: buildServerThumbnailUrl(thumbnailUrl, DEFAULT_VIDEO_THUMBNAIL_CONFIG),
+    default: buildServerThumbnailUrl(
+      thumbnailUrl,
+      DEFAULT_VIDEO_THUMBNAIL_CONFIG
+    ),
     small: buildServerThumbnailUrl(thumbnailUrl, {
       width: 320,
       height: 180,
@@ -221,11 +227,14 @@ export function getVideoThumbnailCacheKey(
 /**
  * Build server-side thumbnail URL with configuration
  */
-function buildServerThumbnailUrl(thumbnailUrl: string, config?: ImageConfig): string {
+function buildServerThumbnailUrl(
+  thumbnailUrl: string,
+  config?: ImageConfig
+): string {
   const params = new URLSearchParams();
   params.set('url', thumbnailUrl);
   params.set('type', 'image');
-  
+
   if (config) {
     addConfigParams(params, config);
   }

@@ -26,7 +26,7 @@ export function generateImageCacheKey(
   // Create a stable key based on URL and processing parameters
   const url = new URL(originalUrl);
   const urlPart = `${url.hostname}${url.pathname}`;
-  
+
   // Include relevant processing options in the key
   const optionsParts = [
     options.format || 'webp',
@@ -36,7 +36,7 @@ export function generateImageCacheKey(
     options.progressive ? 'prog' : 'no-prog',
     options.lossless ? 'lossless' : 'lossy',
   ];
-  
+
   const optionsHash = optionsParts.join('-');
   return `img:${authState}:${urlPart}:${optionsHash}`;
 }
@@ -44,18 +44,23 @@ export function generateImageCacheKey(
 // Generate playlist image cache key with crop properties
 export function generatePlaylistImageCacheKey(
   originalUrl: string,
-  cropProperties: { x: number; y: number; width: number; height: number } | null,
+  cropProperties: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null,
   options: ImageProcessingOptions,
   authState: 'auth' | 'anon' = 'anon'
 ): string {
   const url = new URL(originalUrl);
   const urlPart = `${url.hostname}${url.pathname}`;
-  
+
   // Include crop properties in the key
   const cropPart = cropProperties
     ? `crop-${cropProperties.x}-${cropProperties.y}-${cropProperties.width}-${cropProperties.height}`
     : 'no-crop';
-  
+
   const optionsParts = [
     options.format || 'webp',
     options.quality || 90,
@@ -63,7 +68,7 @@ export function generatePlaylistImageCacheKey(
     options.progressive ? 'prog' : 'no-prog',
     options.lossless ? 'lossless' : 'lossy',
   ];
-  
+
   const optionsHash = optionsParts.join('-');
   return `playlist:${authState}:${urlPart}:${optionsHash}`;
 }
@@ -76,7 +81,9 @@ export class ImageCacheManager {
   private initialized = false;
 
   private constructor() {
-    this.memoryCache = new EnhancedMemoryCache<string>(IMAGE_CACHE_CONFIG.MAX_CACHE_SIZE);
+    this.memoryCache = new EnhancedMemoryCache<string>(
+      IMAGE_CACHE_CONFIG.MAX_CACHE_SIZE
+    );
   }
 
   static getInstance(): ImageCacheManager {
@@ -88,11 +95,13 @@ export class ImageCacheManager {
 
   async initialize(): Promise<void> {
     if (this.initialized) return;
-    
+
     try {
       // Only initialize service worker cache in browser environment
       if (typeof caches !== 'undefined') {
-        this.serviceWorkerCache = await caches.open(IMAGE_CACHE_CONFIG.CACHE_NAME);
+        this.serviceWorkerCache = await caches.open(
+          IMAGE_CACHE_CONFIG.CACHE_NAME
+        );
       }
       this.initialized = true;
     } catch (error) {
@@ -100,7 +109,11 @@ export class ImageCacheManager {
     }
   }
 
-  async get(cacheKey: string, userId: string | null = null, authState: 'auth' | 'anon' = 'anon'): Promise<string | null> {
+  async get(
+    cacheKey: string,
+    userId: string | null = null,
+    authState: 'auth' | 'anon' = 'anon'
+  ): Promise<string | null> {
     // First check memory cache
     const memoryResult = this.memoryCache.get(cacheKey, userId, authState);
     if (memoryResult) {
@@ -185,7 +198,7 @@ export class ImageCacheManager {
 
   async delete(cacheKey: string): Promise<void> {
     this.memoryCache.delete(cacheKey);
-    
+
     if (this.serviceWorkerCache) {
       try {
         await this.serviceWorkerCache.delete(cacheKey);
@@ -199,16 +212,18 @@ export class ImageCacheManager {
     if (authState) {
       // Clear entries for specific auth state
       this.memoryCache.clearForAuthState(authState);
-      
+
       if (this.serviceWorkerCache) {
         try {
           const keys = await this.serviceWorkerCache.keys();
-          const keysToDelete = keys.filter(request => {
+          const keysToDelete = keys.filter((request) => {
             const url = new URL(request.url);
             return url.pathname.includes(`${authState}:`);
           });
-          
-          await Promise.all(keysToDelete.map(key => this.serviceWorkerCache?.delete(key)));
+
+          await Promise.all(
+            keysToDelete.map((key) => this.serviceWorkerCache?.delete(key))
+          );
         } catch (error) {
           console.warn('Error clearing auth-specific image cache:', error);
         }
@@ -216,11 +231,13 @@ export class ImageCacheManager {
     } else {
       // Clear all entries
       this.memoryCache.clear();
-      
+
       if (this.serviceWorkerCache) {
         try {
           const keys = await this.serviceWorkerCache.keys();
-          await Promise.all(keys.map(key => this.serviceWorkerCache?.delete(key)));
+          await Promise.all(
+            keys.map((key) => this.serviceWorkerCache?.delete(key))
+          );
         } catch (error) {
           console.warn('Error clearing all image cache:', error);
         }
@@ -237,7 +254,7 @@ export class ImageCacheManager {
       try {
         const keys = await this.serviceWorkerCache.keys();
         const keysToDelete: string[] = [];
-        
+
         for (const request of keys) {
           try {
             const response = await this.serviceWorkerCache.match(request);
@@ -254,7 +271,9 @@ export class ImageCacheManager {
         }
 
         // Delete expired entries
-        await Promise.all(keysToDelete.map(key => this.serviceWorkerCache?.delete(key)));
+        await Promise.all(
+          keysToDelete.map((key) => this.serviceWorkerCache?.delete(key))
+        );
       } catch (error) {
         console.warn('Error during service worker image cache cleanup:', error);
       }
@@ -275,8 +294,15 @@ export class ImageCacheManager {
   }
 
   // Follow the existing pattern of notifying service worker
-  private notifyServiceWorkerOfCacheUpdate(cacheKey: string, authState: 'auth' | 'anon'): void {
-    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
+  private notifyServiceWorkerOfCacheUpdate(
+    cacheKey: string,
+    authState: 'auth' | 'anon'
+  ): void {
+    if (
+      typeof navigator !== 'undefined' &&
+      'serviceWorker' in navigator &&
+      navigator.serviceWorker.controller
+    ) {
       try {
         navigator.serviceWorker.controller.postMessage({
           type: 'IMAGE_CACHED',
@@ -285,16 +311,21 @@ export class ImageCacheManager {
           timestamp: Date.now(),
         });
       } catch (error) {
-        console.warn('Failed to notify service worker of image cache update:', error);
+        console.warn(
+          'Failed to notify service worker of image cache update:',
+          error
+        );
       }
     }
   }
 
   private isValidCacheData(data: any): boolean {
-    return data && 
-           typeof data.dataUrl === 'string' &&
-           typeof data.timestamp === 'number' &&
-           typeof data.ttl === 'number' &&
-           (Date.now() - data.timestamp < data.ttl);
+    return (
+      data &&
+      typeof data.dataUrl === 'string' &&
+      typeof data.timestamp === 'number' &&
+      typeof data.ttl === 'number' &&
+      Date.now() - data.timestamp < data.ttl
+    );
   }
 }

@@ -612,7 +612,6 @@ export async function updatePlaylistPosition({
   playlistId,
   position,
   supabase,
-  session,
 }: {
   playlistId: number;
   position: number;
@@ -633,11 +632,9 @@ export async function updatePlaylistPosition({
 
 export async function deletePlaylist({
   playlistId,
-  session,
   supabase,
 }: {
   playlistId: number;
-  session: Session;
   supabase: SupabaseClient<Database>;
 }) {
   const { error } = await supabase.rpc('delete_playlist', {

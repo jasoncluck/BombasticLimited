@@ -170,7 +170,7 @@ export async function runImagePerformanceTest(
       }
     }
 
-    // Test direct approach 
+    // Test direct approach
     if (urls.direct) {
       try {
         const directMetric = await measureImageLoadTime(urls.direct, 'direct');

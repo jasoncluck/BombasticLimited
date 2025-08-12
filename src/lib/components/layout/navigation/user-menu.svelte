@@ -12,6 +12,7 @@
     CircleUser,
     TriangleAlert,
   } from '@lucide/svelte';
+  import NotificationBell from '$lib/components/notifications/notification-bell.svelte';
   import { handleUpdateProfileContentDisplay } from '$lib/components/profile/profile-service';
   import type { LayoutState } from '$lib/state/layout.svelte.js';
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
@@ -19,19 +20,24 @@
   import type { UserProfile } from '$lib/supabase/user-profiles';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import { getContentState } from '$lib/state/content.svelte';
+  import type { NotificationWithMeta } from '$lib/supabase/notifications';
 
   let {
     userProfile,
+    notifications,
     session,
     supabase,
     layoutState,
     openAccountDrawer = $bindable(),
+    openNotificationDrawer = $bindable(),
   }: {
     userProfile: UserProfile | null;
+    notifications: NotificationWithMeta[] | null;
     session: Session | null;
     supabase: SupabaseClient<Database>;
     layoutState: LayoutState;
     openAccountDrawer: boolean;
+    openNotificationDrawer?: boolean;
   } = $props();
 
   const contentState = getContentState();
@@ -40,76 +46,86 @@
   const { canHover, isSm } = $derived(mediaQueryState);
 </script>
 
-{#if session}
-  <!-- Content Display Preference (Desktop) -->
-  {#if isSm}
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger
-        data-testid="user-preferences"
-        id="user-preferences"
-        class={buttonVariants({
-          variant: 'ghost',
-          class: 'cursor-pointer outline-none',
-        })}
-      >
-        <div class="flex items-center gap-2">
-          {#if userProfile?.content_display === 'TILES'}
-            <div class="flex items-center gap-2">
-              <GalleryHorizontal />
-              Card
-            </div>
-          {:else}
-            <div class="flex items-center gap-2">
-              <Table />
-              Table
-            </div>
-          {/if}
-        </div>
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Content>
-        <DropdownMenu.Group>
-          <DropdownMenu.Item
-            class="cursor-pointer"
-            onclick={() => {
-              if (userProfile?.content_display !== 'TILES') {
-                contentState.resetState();
-                handleUpdateProfileContentDisplay({
-                  contentDisplay: 'TILES',
-                  supabase,
-                  session,
-                });
-              }
-            }}
-          >
-            <div class="flex items-center gap-2">
-              <GalleryHorizontal />
-              Card
-            </div>
-          </DropdownMenu.Item>
-          <DropdownMenu.Item
-            class="cursor-pointer"
-            onclick={() => {
-              if (userProfile?.content_display !== 'TABLE') {
-                contentState.resetState();
-                handleUpdateProfileContentDisplay({
-                  contentDisplay: 'TABLE',
-                  supabase,
-                  session,
-                });
-              }
-            }}
-          >
-            <div class="flex items-center gap-2">
-              <Table />
-              Table
-            </div>
-          </DropdownMenu.Item>
-        </DropdownMenu.Group>
-      </DropdownMenu.Content>
-    </DropdownMenu.Root>
-  {/if}
+<!-- Content Display Preference (Desktop) -->
+{#if isSm}
+  <DropdownMenu.Root>
+    <DropdownMenu.Trigger
+      data-testid="user-preferences"
+      id="user-preferences"
+      class={buttonVariants({
+        variant: 'ghost',
+        class: 'cursor-pointer outline-none',
+      })}
+    >
+      <div class="flex items-center gap-2">
+        {#if userProfile?.content_display === 'TILES'}
+          <div class="flex items-center gap-2">
+            <GalleryHorizontal />
+            Card
+          </div>
+        {:else}
+          <div class="flex items-center gap-2">
+            <Table />
+            Table
+          </div>
+        {/if}
+      </div>
+    </DropdownMenu.Trigger>
+    <DropdownMenu.Content>
+      <DropdownMenu.Group>
+        <DropdownMenu.Item
+          class="cursor-pointer"
+          onclick={() => {
+            if (userProfile?.content_display !== 'TILES') {
+              contentState.resetState();
+              handleUpdateProfileContentDisplay({
+                contentDisplay: 'TILES',
+                supabase,
+                session,
+              });
+            }
+          }}
+        >
+          <div class="flex items-center gap-2">
+            <GalleryHorizontal />
+            Card
+          </div>
+        </DropdownMenu.Item>
+        <DropdownMenu.Item
+          class="cursor-pointer"
+          onclick={() => {
+            if (userProfile?.content_display !== 'TABLE') {
+              contentState.resetState();
+              handleUpdateProfileContentDisplay({
+                contentDisplay: 'TABLE',
+                supabase,
+                session,
+              });
+            }
+          }}
+        >
+          <div class="flex items-center gap-2">
+            <Table />
+            Table
+          </div>
+        </DropdownMenu.Item>
+      </DropdownMenu.Group>
+    </DropdownMenu.Content>
+  </DropdownMenu.Root>
+{/if}
 
-  <!-- User Menu -->
+<!-- Notifications Bell -->
+{#if notifications && notifications.length > 0}
+  <NotificationBell
+    {notifications}
+    {supabase}
+    {session}
+    bind:openNotificationDrawer
+  />
+{/if}
+
+<!-- User Menu -->
+{#if session}
   {#if canHover}
     <!-- Desktop User Menu -->
     <DropdownMenu.Root>

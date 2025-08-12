@@ -72,6 +72,11 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
     },
     depends: vi.fn(),
     parent: vi.fn(),
+    request: {
+      headers: {
+        get: vi.fn(() => null),
+      },
+    },
   };
 
   beforeEach(() => {
