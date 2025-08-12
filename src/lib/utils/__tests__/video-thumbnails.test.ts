@@ -227,6 +227,13 @@ describe('video-thumbnails (server-side only)', () => {
   });
 
   describe('isOptimizedThumbnailUrl', () => {
+    it('should return false for non-API URLs', () => {
+      const url =
+        '/_vercel/image?url=https%3A//i.ytimg.com/vi/1/hqdefault.jpg&w=480&h=360&q=90';
+
+      expect(isOptimizedThumbnailUrl(url)).toBe(false);
+    });
+
     it('should return true for server API URLs', () => {
       const url =
         '/api/video-thumbnail?type=image&url=https%3A//example.com/thumb.jpg';

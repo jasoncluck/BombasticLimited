@@ -3,6 +3,7 @@ import { getFilterOptionFromQueryParams } from '$lib/components/content/content-
 import { getProfile } from '$lib/supabase/user-profiles';
 import { MAIN_ROUTES } from '$lib/constants/routes.js';
 import type { LayoutServerLoad } from './$types';
+import { getNotifications } from '$lib/supabase/notifications';
 
 export const load: LayoutServerLoad = async ({
   locals: { safeGetSession, supabase },
@@ -14,6 +15,7 @@ export const load: LayoutServerLoad = async ({
   request,
 }) => {
   depends('supabase:db:profiles');
+  depends('supabase:db:notifications');
 
   const sessionPromise = safeGetSession();
 
@@ -64,10 +66,16 @@ export const load: LayoutServerLoad = async ({
 
   const isCacheHit = clientEtag === etag;
 
-  const { profile: userProfile } = await getProfile({
-    session,
-    supabase,
-  });
+  const [{ profile: userProfile }, { data: notifications }] = await Promise.all(
+    [
+      getProfile({
+        session,
+        supabase,
+      }),
+
+      getNotifications({ supabase, session }),
+    ]
+  );
 
   return {
     session,
@@ -78,5 +86,6 @@ export const load: LayoutServerLoad = async ({
     lastModified: lastModified.toISOString(),
     cached: isCacheHit,
     cacheUserId: userId,
+    notifications,
   };
 };

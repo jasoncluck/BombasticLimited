@@ -10,17 +10,24 @@
   import type { UserProfile } from '$lib/supabase/user-profiles';
   import BrandLogo from '$lib/assets/brand-logo.svelte';
   import { getLayoutState } from '$lib/state/layout.svelte';
+  import type { NotificationWithMeta } from '$lib/supabase/notifications';
 
   let {
     userProfile,
+    notifications,
     session,
     supabase,
+    searchQuery = $bindable(),
     openAccountDrawer = $bindable(),
+    openNotificationDrawer = $bindable(),
   }: {
     userProfile: UserProfile | null;
+    notifications: NotificationWithMeta[] | null;
     session: Session | null;
     supabase: SupabaseClient<Database>;
+    searchQuery: string;
     openAccountDrawer: boolean;
+    openNotificationDrawer?: boolean;
   } = $props();
 
   const layoutState = getLayoutState();
@@ -44,7 +51,7 @@
       data-testid="brand-logo-link"
       onclick={(e) => {
         e.preventDefault();
-        layoutState.clearSearchQuery();
+        searchQuery = '';
         goto('/', { replaceState: true });
       }}
       class="ml-2 hidden transition-opacity duration-200 hover:opacity-80 sm:ml-0 sm:block"
@@ -65,7 +72,7 @@
       class="hidden rounded-full sm:flex"
       onclick={(e) => {
         e.preventDefault();
-        layoutState.clearSearchQuery();
+        searchQuery = '';
         goto('/', { replaceState: true });
       }}
       data-testid="home-link"
@@ -75,13 +82,21 @@
     </Button>
 
     <!-- Search Input -->
-    <SearchInput {layoutState} />
+    <SearchInput {layoutState} bind:searchQuery />
   </div>
 
   <!-- Right Section: User Controls -->
   <div class="ml-auto">
     <div class="flex items-center gap-4">
-      <UserMenu {userProfile} {session} {supabase} bind:openAccountDrawer />
+      <UserMenu
+        {userProfile}
+        {notifications}
+        {session}
+        {supabase}
+        {layoutState}
+        bind:openAccountDrawer
+        bind:openNotificationDrawer
+      />
     </div>
   </div>
 </nav>

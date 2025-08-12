@@ -1,5 +1,5 @@
 import { goto, invalidate } from '$app/navigation';
-import { showNotification } from '$lib/stores/notification';
+import { showToast } from '$lib/state/notifications.svelte';
 import type { Database } from '$lib/supabase/database.types';
 import {
   addVideosToPlaylist,
@@ -143,18 +143,18 @@ export async function handleCreatePlaylist({
 
   if (error) {
     if (error.code === 'P0001') {
-      showNotification(
+      showToast(
         `Unable to create playlist, a maximum of ${USER_PLAYLIST_LIMIT} playlists can be created or followed.`,
         'error'
       );
     } else {
-      showNotification('Error creating playlist', 'error');
+      showToast('Error creating playlist', 'error');
     }
   }
 
   // Trigger populates short ID
   if (!error && playlist) {
-    showNotification(`Created Playlist: ${playlist.name}`);
+    showToast(`Created Playlist: ${playlist.name}`);
   }
 
   sidebarState.refreshData();
@@ -180,14 +180,13 @@ export async function handleDeletePlaylist({
 
   const { error } = await deletePlaylist({
     playlistId: playlist.id,
-    session,
     supabase,
   });
 
   if (error) {
-    showNotification(`Unable to delete playlist: ${playlist.name}.`, 'error');
+    showToast(`Unable to delete playlist: ${playlist.name}.`, 'error');
   } else {
-    showNotification(`Deleted ${playlist.name}.`, 'success');
+    showToast(`Deleted ${playlist.name}.`, 'success');
   }
   sidebarState.refreshData();
   return { error };
@@ -224,15 +223,15 @@ export async function handleAddVideosToPlaylist({
 
   if (error) {
     if (error.code === 'P0001') {
-      showNotification(
+      showToast(
         `${videos.length === 1 ? 'Video' : 'Videos'} could not be added. Playlists can not contain more than ${PLAYLIST_VIDEO_LIMIT} videos.`
       );
     } else {
-      showNotification('Unable to add video to playlist.');
+      showToast('Unable to add video to playlist.');
     }
     console.error(error);
   } else {
-    showNotification(
+    showToast(
       `Added ${videos.length > 1 ? 'videos' : 'video'} to ${playlist.name}`
     );
   }
@@ -277,9 +276,9 @@ export async function handleRemoveVideosFromPlaylist({
   }
 
   if (error) {
-    showNotification('Unable to remove video from playlist.');
+    showToast('Unable to remove video from playlist.');
   } else {
-    showNotification(`Removed video from ${playlist.name}.`);
+    showToast(`Removed video from ${playlist.name}.`);
   }
   invalidate('supabase:db:videos');
   return { error };
@@ -311,11 +310,15 @@ export async function handleUpdatePlaylistImage({
   });
 
   if (error) {
-    showNotification('Unable update playlist image');
+    showToast('Unable update playlist image');
+  } else if (updatedPlaylist && !isResetImage) {
+    await getCroppedPlaylistImageUrl({
+      imageProperties: parseImageProperties(playlist.image_properties),
+      thumbnailMaxResUrl,
+      thumbnailUrl,
+    });
   }
 
-  // Refresh data to get server-processed images with AVIF support
-  // instead of using client-side processing
   await invalidate('supabase:db:videos');
   await sidebarState.refreshData();
   return { error };
@@ -419,16 +422,16 @@ export async function handleFollowPlaylist({
 
   if (error) {
     if (error?.code === 'P0001') {
-      showNotification(
+      showToast(
         `Unable to follow playlist, a maximum of ${USER_PLAYLIST_LIMIT} playlists can be followed or created.`,
         'error'
       );
     } else {
-      showNotification('Error creating playlist', 'error');
+      showToast('Error creating playlist', 'error');
     }
   } else {
     if (!error) {
-      showNotification(`Followed playlist: ${playlist.name} `, 'success');
+      showToast(`Followed playlist: ${playlist.name} `, 'success');
     }
   }
 }
@@ -459,9 +462,9 @@ export async function handleUnfollowPlaylist({
   sidebarState.refreshData();
 
   if (!error) {
-    showNotification(`Unfollowed playlist: ${playlist.name} `, 'success');
+    showToast(`Unfollowed playlist: ${playlist.name} `, 'success');
   } else {
-    showNotification(`Unable to unfollow playlist: ${error.message}`, 'error');
+    showToast(`Unable to unfollow playlist: ${error.message}`, 'error');
   }
   return { error };
 }
@@ -493,14 +496,12 @@ export async function handleUpdatePlaylistSort({
   });
 
   if (error) {
-    showNotification('Unable to update playlist sort settings', 'error');
+    showToast('Unable to update playlist sort settings', 'error');
   }
 
   return { updatedPlaylist, error };
 }
 
-// @deprecated This function uses client-side Canvas processing which only supports WebP format.
-// Use server-side processing with getCroppedPlaylistImageUrlServer instead for AVIF support.
 // For each playlist create and add the associated playlist image
 export async function processPlaylists(playlists: Playlist[]) {
   const batchSize = 5;
@@ -530,8 +531,6 @@ export async function processPlaylists(playlists: Playlist[]) {
   return processedPlaylists;
 }
 
-// @deprecated This function uses client-side Canvas processing which only supports WebP format.
-// Use server-side processing with getCroppedPlaylistImageUrlServer instead for AVIF support.
 // Functions for getting cropped playlist images in the browser for use when deferring image rendering
 export async function getCroppedPlaylistImageUrl({
   imageProperties,
@@ -710,8 +709,6 @@ async function processWithCanvas(
   });
 }
 
-// @deprecated This function uses client-side Canvas processing which only supports WebP format.
-// Use server-side processing with getVideoThumbnailWebpUrlServer instead for AVIF support.
 // Video thumbnail processing without cropping - preserves original aspect ratio
 export async function getVideoThumbnailWebpUrl({
   thumbnailUrl,
@@ -819,8 +816,6 @@ async function processVideoThumbnailWithCanvas(
   });
 }
 
-// @deprecated This function uses client-side Canvas processing which only supports WebP format.
-// Use server-side processing with getVideoThumbnailWebpUrlsBatch instead for AVIF support.
 // Batch processing function for multiple video thumbnails
 export async function getVideoThumbnailWebpUrlsBatch(
   thumbnailUrls: Array<string | null>
