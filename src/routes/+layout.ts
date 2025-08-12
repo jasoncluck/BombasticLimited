@@ -85,7 +85,7 @@ export const load = async ({
       lastModified: data.lastModified || null,
       cached: true,
       cacheUserId: data.cacheUserId || null,
-      notifications: [],
+      notifications: null,
     };
   }
 

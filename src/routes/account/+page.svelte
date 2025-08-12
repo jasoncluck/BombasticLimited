@@ -360,28 +360,6 @@
       {/if}
     </div>
 
-    <!-- Notification Preferences Section -->
-    <div class="mt-8 border-t pt-8">
-      <h2 class="mb-4 text-lg font-semibold">Notification Settings</h2>
-      <div class="flex w-full flex-wrap items-center gap-4 @lg:flex-nowrap">
-        <Label class="min-w-20">Notifications</Label>
-        <div
-          class="border-input bg-background text-muted-foreground flex min-w-[300px] flex-1 items-center gap-3 rounded-md border px-3 py-2"
-        >
-          <Bell size={20} class="text-blue-500" />
-          <span class="text-sm">Manage your notification preferences</span>
-        </div>
-        <Button
-          variant="secondary"
-          class="w-full cursor-pointer @lg:w-auto"
-          onclick={() => goto('/account/notifications')}
-        >
-          <Bell size={16} class="mr-2" />
-          Manage Notifications
-        </Button>
-      </div>
-    </div>
-
     <Dialog.Root>
       <Dialog.Trigger
         class="mt-20 w-full @lg:w-[200px] {buttonVariants({

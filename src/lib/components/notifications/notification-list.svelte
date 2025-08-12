@@ -11,6 +11,7 @@
   } from '$lib/supabase/notifications';
   import { createSafeHtml } from '$lib/utils/html-sanitizer';
   import FaviconIcon from '$lib/components/icons/favicon-icon.svelte';
+  import { invalidate } from '$app/navigation';
 
   let {
     notifications,
@@ -38,6 +39,7 @@
       supabase,
       session,
     });
+    invalidate('supabase:db:notifications');
   }
 </script>
 
@@ -56,7 +58,7 @@
       <div class="space-y-1">
         {#each notifications as notification (notification.id)}
           <div
-            class="group hover:bg-muted/50 flex cursor-pointer items-start space-x-3 p-3 transition-colors
+            class="group hover:bg-muted/50 flex items-start space-x-3 p-3 transition-colors
               {!notification.read ? 'bg-muted/20' : ''}"
           >
             <!-- Icon -->
@@ -105,7 +107,7 @@
                   <Button
                     variant="ghost"
                     size="sm"
-                    class="text-muted-foreground hover:text-destructive h-6 w-6 p-0 opacity-60 transition-opacity hover:opacity-100"
+                    class="ghost-button-minimal text-muted-foreground h-6 w-6 p-0 opacity-60 transition-opacity hover:opacity-100"
                     onclick={(e) => handleDelete(notification, e)}
                     title="Remove notification"
                   >

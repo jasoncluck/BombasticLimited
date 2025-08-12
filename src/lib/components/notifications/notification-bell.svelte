@@ -37,7 +37,7 @@
   // Auto-mark all notifications as read when bell menu opens
   async function handleMenuOpen() {
     if (unreadNotifications) {
-      markAsRead({ notificationIds, supabase, session });
+      await markAsRead({ notificationIds, supabase, session });
       invalidate('supabase:db:notifications');
     }
   }
@@ -55,7 +55,7 @@
   <DropdownMenu.Root onOpenChange={(open) => open && handleMenuOpen()}>
     <DropdownMenu.Trigger
       data-testid="notification-bell"
-      class="relative cursor-pointer outline-none {buttonVariants({
+      class="relative !cursor-pointer outline-none {buttonVariants({
         variant: 'ghost',
         size: 'icon',
       })}"

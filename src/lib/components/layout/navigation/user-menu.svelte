@@ -44,8 +44,6 @@
   const mediaQueryState = getMediaQueryState();
 
   const { canHover, isSm } = $derived(mediaQueryState);
-  console.log('JMC');
-  console.log(notifications);
 </script>
 
 <!-- Content Display Preference (Desktop) -->

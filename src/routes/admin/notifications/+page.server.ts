@@ -5,6 +5,9 @@ import {
   createNotification,
   type NotificationType,
 } from '$lib/supabase/notifications';
+import { superValidate } from 'sveltekit-superforms';
+import { zod } from 'sveltekit-superforms/adapters';
+import { adminNotificationSchema } from './admin-notifications-schema';
 
 export const load: PageServerLoad = async ({
   locals: { supabase, session },
@@ -24,6 +27,11 @@ export const load: PageServerLoad = async ({
     throw redirect(302, '/');
   }
 
+  const adminNotificationForm = await superValidate(
+    zod(adminNotificationSchema)
+  );
+  console.log(adminNotificationSchema);
+
   // Get all users for testing
   const { data: users } = await supabase
     .from('profiles')
@@ -32,6 +40,7 @@ export const load: PageServerLoad = async ({
 
   return {
     users: users || [],
+    adminNotificationForm,
   };
 };
 

@@ -16,65 +16,61 @@
   import { page } from '$app/state';
   import { writable } from 'svelte/store';
   import {
-    notificationSchema,
-    type NotificationSchema,
+    adminNotificationSchema,
+    type AdminNotificationSchema,
   } from './admin-notifications-schema';
+  import users from '@lucide/svelte/icons/users';
 
   let {
     data,
-  }: {
-    data: PageData & {
-      form: SuperValidated<Infer<NotificationSchema>>;
-    };
-  } = $props();
+  }: { data: { form: SuperValidated<Infer<AdminNotificationSchema>> } } =
+    $props();
 
   let currentAction = $state<string>('');
 
-  const notificationForm = data.form
-    ? superForm(data.form, {
-        validators: zodClient(notificationSchema),
-        validationMethod: 'onsubmit',
-        resetForm: false, // Prevent form reset after submission
+  const notificationForm = superForm(data.form, {
+    validators: zodClient(adminNotificationSchema),
+    validationMethod: 'onsubmit',
+    resetForm: false, // Prevent form reset after submission
 
-        onSubmit({ formData, cancel }) {
-          const action = formData.get('_action')?.toString() || '';
-          currentAction = action;
+    onSubmit({ formData, cancel }) {
+      const action = formData.get('_action')?.toString() || '';
+      currentAction = action;
 
-          if (action === 'sendTestNotification') {
-            testSubmitting = true;
-          } else {
-            isSubmitting = true;
-          }
-        },
-        onResult(event) {
-          if (event.result.type !== 'redirect') {
-            if (currentAction === 'sendTestNotification') {
-              testSubmitting = false;
-            } else {
-              isSubmitting = false;
-            }
-          }
-        },
-        onUpdated({ form }) {
-          updateFlash(page);
+      if (action === 'sendTestNotification') {
+        testSubmitting = true;
+      } else {
+        isSubmitting = true;
+      }
+    },
+    onResult(event) {
+      if (event.result.type !== 'redirect') {
+        if (currentAction === 'sendTestNotification') {
+          testSubmitting = false;
+        } else {
+          isSubmitting = false;
+        }
+      }
+    },
+    onUpdated({ form }) {
+      updateFlash(page);
 
-          // Handle success/error messages
-          if (form.valid && !form.errors) {
-            if (currentAction === 'sendTestNotification') {
-              showToast('✅ Test notification sent successfully!', 'success');
-            } else {
-              showToast(`✅ Global notification sent successfully!`, 'success');
-            }
-          } else if (form.errors) {
-            // Handle validation errors
-            const errorMessages = Object.values(form.errors).flat();
-            if (errorMessages.length > 0) {
-              showToast(`❌ Error: ${errorMessages[0]}`, 'error');
-            }
-          }
-        },
-      })
-    : null;
+      // Handle success/error messages
+      if (form.valid && !form.errors) {
+        if (currentAction === 'sendTestNotification') {
+          showToast('✅ Test notification sent successfully!', 'success');
+        } else {
+          showToast(`✅ Global notification sent successfully!`, 'success');
+        }
+      } else if (form.errors) {
+        // Handle validation errors
+        const errorMessages = Object.values(form.errors).flat();
+        if (errorMessages.length > 0) {
+          showToast(`❌ Error: ${errorMessages[0]}`, 'error');
+        }
+      }
+    },
+  });
 
   let isSubmitting = $state(false);
   let testSubmitting = $state(false);
@@ -208,7 +204,7 @@
           </div>
         </div>
 
-        {#if data.form && notificationForm}
+        {#if data && notificationForm}
           <form method="POST" use:enhance>
             <div class="space-y-6">
               <!-- Type Selection -->
@@ -422,7 +418,7 @@
         <div>
           <h3 class="mb-3 text-sm font-medium">User Stats</h3>
           <p class="text-muted-foreground text-sm">
-            Users in system: {data.users.length}
+            Users in system: {users.length}
           </p>
         </div>
 

@@ -5,12 +5,7 @@ import type {
 } from '@supabase/supabase-js';
 import type { Database, Json, Tables } from './database.types';
 
-export type NotificationType =
-  | 'system'
-  | 'content'
-  | 'user'
-  | 'playlist_update'
-  | 'mention';
+export type NotificationType = Database['public']['Enums']['notification_type'];
 
 export interface Notification {
   id: string;
@@ -47,48 +42,6 @@ export interface NotificationUpdate {
   metadata?: Record<string, unknown>;
   read?: boolean;
   action_url?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface NotificationPreferences {
-  id: string;
-  user_id: string;
-  system_notifications: boolean;
-  content_notifications: boolean;
-  user_notifications: boolean;
-  playlist_notifications: boolean;
-  mention_notifications: boolean;
-  email_notifications: boolean;
-  push_notifications: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface NotificationPreferencesInsert {
-  id?: string;
-  user_id: string;
-  system_notifications?: boolean;
-  content_notifications?: boolean;
-  user_notifications?: boolean;
-  playlist_notifications?: boolean;
-  mention_notifications?: boolean;
-  email_notifications?: boolean;
-  push_notifications?: boolean;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface NotificationPreferencesUpdate {
-  id?: string;
-  user_id?: string;
-  system_notifications?: boolean;
-  content_notifications?: boolean;
-  user_notifications?: boolean;
-  playlist_notifications?: boolean;
-  mention_notifications?: boolean;
-  email_notifications?: boolean;
-  push_notifications?: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -267,10 +220,7 @@ export async function getNotificationCounts({
       unread: 0,
       by_type: {
         system: 0,
-        content: 0,
-        user: 0,
         playlist_update: 0,
-        mention: 0,
       },
     };
     return { data: emptyCounts, error: null };
@@ -288,10 +238,7 @@ export async function getNotificationCounts({
         unread: 0,
         by_type: {
           system: 0,
-          content: 0,
-          user: 0,
           playlist_update: 0,
-          mention: 0,
         },
       },
       error,
@@ -303,11 +250,8 @@ export async function getNotificationCounts({
     unread: notifications.filter((n) => !n.read).length,
     by_type: {
       system: notifications.filter((n) => n.type === 'system').length,
-      content: notifications.filter((n) => n.type === 'content').length,
-      user: notifications.filter((n) => n.type === 'user').length,
       playlist_update: notifications.filter((n) => n.type === 'playlist_update')
         .length,
-      mention: notifications.filter((n) => n.type === 'mention').length,
     },
   };
 
@@ -324,7 +268,7 @@ export async function markAsRead({
 }: {
   supabase: SupabaseClient<Database>;
   session: Session | null;
-  notificationIds?: string[];
+  notificationIds: string[];
 }): Promise<{ error: PostgrestError | null }> {
   if (!session?.user.id) {
     return { error: { message: 'User not authenticated' } as PostgrestError };
@@ -400,72 +344,6 @@ export async function deleteNotifications({
     .in('id', notificationIds);
 
   return { error };
-}
-
-/**
- * Get notification preferences for current user
- */
-export async function getNotificationPreferences({
-  supabase,
-  session,
-}: {
-  supabase: SupabaseClient<Database>;
-  session: Session | null;
-}): Promise<{
-  data: NotificationPreferences | null;
-  error: PostgrestError | null;
-}> {
-  if (!session?.user.id) {
-    return {
-      data: null,
-      error: { message: 'User not authenticated' } as PostgrestError,
-    };
-  }
-
-  const { data, error } = await supabase
-    .from('notification_preferences')
-    .select('*')
-    .eq('user_id', session.user.id)
-    .single();
-
-  return { data, error };
-}
-
-/**
- * Update notification preferences
- */
-export async function updateNotificationPreferences({
-  supabase,
-  session,
-  preferences,
-}: {
-  supabase: SupabaseClient<Database>;
-  session: Session | null;
-  preferences: Partial<
-    Omit<
-      NotificationPreferences,
-      'id' | 'user_id' | 'created_at' | 'updated_at'
-    >
-  >;
-}): Promise<{
-  data: NotificationPreferences | null;
-  error: PostgrestError | null;
-}> {
-  if (!session?.user.id) {
-    return {
-      data: null,
-      error: { message: 'User not authenticated' } as PostgrestError,
-    };
-  }
-
-  const { data, error } = await supabase
-    .from('notification_preferences')
-    .update(preferences)
-    .eq('user_id', session.user.id)
-    .select()
-    .single();
-
-  return { data, error };
 }
 
 /**

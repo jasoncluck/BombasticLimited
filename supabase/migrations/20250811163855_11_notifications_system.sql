@@ -1,13 +1,7 @@
 -- Migration: 11_notifications_system.sql
 -- Purpose: Create comprehensive notifications system with tables, types, and RLS policies
 -- Create notification type enum
-CREATE TYPE public.notification_type AS ENUM(
-  'system',
-  'content',
-  'user',
-  'playlist_update',
-  'mention'
-);
+CREATE TYPE public.notification_type AS ENUM('system', 'playlist_update');
 
 -- Create notifications table
 CREATE TABLE IF NOT EXISTS public.notifications (
