@@ -2,7 +2,6 @@ import type { PageServerLoad, Actions } from './$types';
 import {
   createNotificationForAllUsers,
   createNotification,
-  type NotificationType,
 } from '$lib/supabase/notifications';
 import { fail, superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
@@ -136,7 +135,7 @@ export const actions: Actions = {
 
     const { type, title, message, startDatetime, endDatetime } = form.data;
 
-    const { data, error } = await createNotification({
+    const { error } = await createNotification({
       supabase,
       params: {
         user_id: session.user.id,

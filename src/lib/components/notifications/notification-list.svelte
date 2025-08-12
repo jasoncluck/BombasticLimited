@@ -29,8 +29,6 @@
     onNotificationClick?: () => void;
   } = $props();
 
-  // Track which notifications are being deleted for animation
-
   async function handleDelete(notification: NotificationWithMeta) {
     await deleteNotifications({
       notificationIds: [notification.id],
@@ -78,7 +76,7 @@
               </div>
               {#if !notification.read}
                 <div
-                  class="absolute -mt-1 -ml-1 h-3 w-3 rounded-full bg-blue-500"
+                  class="bg-primary absolute -mt-1 -ml-1 h-3 w-3 rounded-full"
                 ></div>
               {/if}
             </div>
@@ -94,7 +92,14 @@
                   >
                     {notification.title}
                   </p>
-                  <div class="text-muted-foreground mt-1 text-sm">
+                  <div
+                    class="text-muted-foreground [&_b]:text-foreground [&_strong]:text-foreground
+                    [&_a]:text-primary [&_a]:decoration-primary/30
+                    [&_a]:hover:text-primary [&_a]:hover:decoration-primary/50 mt-1
+                    text-sm leading-relaxed [&_a]:inline-block [&_a]:break-words [&_a]:underline
+                    [&_a]:transition-colors
+                     [&_b]:font-semibold [&_em]:italic [&_i]:italic [&_strong]:font-semibold [&_u]:underline"
+                  >
                     <!-- eslint-disable-next-line svelte/no-at-html-tags -->
                     {@html createSafeHtml(notification.message)}
                   </div>

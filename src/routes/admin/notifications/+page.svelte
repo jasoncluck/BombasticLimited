@@ -1,5 +1,4 @@
 <script lang="ts">
-  import type { PageData } from './$types';
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
   import { Label } from '$lib/components/ui/label';
@@ -12,21 +11,18 @@
   import { superForm, type SuperValidated } from 'sveltekit-superforms';
   import { zodClient, type Infer } from 'sveltekit-superforms/adapters';
   import * as Form from '$lib/components/ui/form';
-  import { updateFlash } from 'sveltekit-flash-message';
-  import { page } from '$app/state';
   import { writable } from 'svelte/store';
   import {
     adminNotificationSchema,
     type AdminNotificationSchema,
   } from './admin-notifications-schema';
   import users from '@lucide/svelte/icons/users';
+  import type { NotificationType } from '$lib/supabase/notifications';
 
   let {
     data,
   }: { data: { form: SuperValidated<Infer<AdminNotificationSchema>> } } =
     $props();
-  console.log('JMC');
-  console.log(data.form);
 
   let currentAction = $state<string>('');
 
@@ -35,7 +31,7 @@
     validationMethod: 'onsubmit',
     resetForm: false, // Prevent form reset after submission
 
-    onSubmit({ formData, cancel }) {
+    onSubmit({ formData }) {
       const action = formData.get('_action')?.toString() || '';
       currentAction = action;
 
@@ -83,7 +79,7 @@
       startDatetime: '',
       endDatetime: '',
     }),
-    enhance: (node: HTMLFormElement) => ({ destroy: () => {} }),
+    enhance: () => ({ destroy: () => {} }),
   };
 
   const notificationTypes = [
@@ -97,7 +93,14 @@
   let selectedType = $state({ value: 'system', label: 'System' });
 
   // Predefined templates
-  const templates = {
+  const templates: Record<
+    string,
+    {
+      type: NotificationType;
+      title: string;
+      message: string;
+    }
+  > = {
     welcome: {
       type: 'system',
       title: 'Welcome to Bombastic!',
@@ -217,7 +220,7 @@
                       bind:value={$formData.type}
                       onValueChange={(v) => {
                         if (v) {
-                          $formData.type = v;
+                          $formData.type = v as NotificationType;
                           selectedType =
                             notificationTypes.find((t) => t.value === v) ||
                             notificationTypes[0];

@@ -55,7 +55,7 @@
   <DropdownMenu.Root onOpenChange={(open) => open && handleMenuOpen()}>
     <DropdownMenu.Trigger
       data-testid="notification-bell"
-      class="relative !cursor-pointer outline-none {buttonVariants({
+      class="relative cursor-pointer outline-none {buttonVariants({
         variant: 'ghost',
         size: 'icon',
       })}"
@@ -84,7 +84,6 @@
           {notifications}
           onNotificationClick={handleClose}
           showActions={false}
-          compact={true}
         />
       </div>
     </DropdownMenu.Content>
@@ -129,7 +128,6 @@
             {notifications}
             onNotificationClick={handleClose}
             showActions={false}
-            compact={true}
           />
         </div>
 
