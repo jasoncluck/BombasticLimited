@@ -14,6 +14,7 @@ export interface Notification {
   message: string;
   metadata: Record<string, unknown>;
   action_url?: string;
+  is_test: boolean;
   start_datetime: string;
   end_datetime?: string;
   notification_created_at: string;
@@ -34,6 +35,7 @@ export interface NotificationInsert {
   metadata?: Record<string, unknown>;
   read?: boolean;
   action_url?: string;
+  is_test?: boolean;
   start_datetime?: string;
   end_datetime?: string;
 }
@@ -47,6 +49,7 @@ export interface NotificationUpdate {
   metadata?: Record<string, unknown>;
   read?: boolean;
   action_url?: string;
+  is_test?: boolean;
   start_datetime?: string;
   end_datetime?: string;
 }
@@ -78,6 +81,7 @@ export interface CreateNotificationParams {
   message: string;
   metadata?: Record<string, Json>;
   action_url?: string;
+  is_test?: boolean;
 }
 
 export interface NotificationFilters {
@@ -314,6 +318,7 @@ export async function createNotification({
     notification_message: params.message,
     notification_title: params.title,
     notification_type: params.type,
+    notification_is_test: params.is_test ?? false,
     notification_end_datetime: params.end_datetime,
     notification_start_datetime: params.start_datetime,
     notification_metadata: params.metadata,
@@ -378,6 +383,7 @@ export async function createNotificationForAllUsers({
     message: string;
     metadata?: Record<string, Json>;
     action_url?: string;
+    is_test?: boolean;
     start_datetime?: string;
     end_datetime?: string;
   };
@@ -390,6 +396,7 @@ export async function createNotificationForAllUsers({
       notification_message: params.message,
       notification_metadata: params.metadata || {},
       notification_action_url: params.action_url,
+      notification_is_test: params.is_test ?? false,
       notification_start_datetime: params.start_datetime,
       notification_end_datetime: params.end_datetime,
     }
@@ -438,6 +445,7 @@ export function isNotification(obj: unknown): obj is Notification {
     typeof obj.message === 'string' &&
     isRecord(obj.metadata) &&
     typeof obj.read === 'boolean' &&
+    typeof obj.is_test === 'boolean' &&
     (typeof obj.action_url === 'string' || obj.action_url === undefined) &&
     typeof obj.assigned_at === 'string' &&
     typeof obj.user_notification_updated_at === 'string'

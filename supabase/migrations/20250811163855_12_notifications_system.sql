@@ -1,7 +1,8 @@
 -- Migration: 12_notifications_system_with_rpc_and_cron.sql
 -- Purpose: Create comprehensive notifications system with integer PK and reusable welcome notification
--- Date: 2025-08-13 15:32:07 UTC
+-- Date: 2025-08-13 16:20:10 UTC
 -- Author: jasoncluck
+-- Updated: 2025-08-13 18:37:04 UTC - Added is_test column for test notifications
 
 -- Create notification type enum
 CREATE TYPE public.notification_type AS ENUM('system', 'playlist_update');
@@ -18,6 +19,7 @@ CREATE TABLE IF NOT EXISTS public.notifications (
     message text NOT NULL,
     metadata jsonb DEFAULT '{}',
     action_url text,
+    is_test boolean NOT NULL DEFAULT FALSE,
     start_datetime TIMESTAMP WITH TIME ZONE DEFAULT now(),
     end_datetime TIMESTAMP WITH TIME ZONE DEFAULT NULL,
     created_by uuid REFERENCES auth.users (id) ON DELETE SET NULL,
@@ -31,12 +33,14 @@ COMMENT ON COLUMN public.notifications.id IS 'Auto-incrementing integer primary 
 COMMENT ON COLUMN public.notifications.type IS 'Type of notification: system, content, user, playlist_update, mention';
 COMMENT ON COLUMN public.notifications.metadata IS 'Additional notification data (JSON)';
 COMMENT ON COLUMN public.notifications.action_url IS 'Optional URL for notification action/link';
+COMMENT ON COLUMN public.notifications.is_test IS 'Whether this is a test notification (true) or production notification (false)';
 COMMENT ON COLUMN public.notifications.start_datetime IS 'When notification should start being visible (default: immediately)';
 COMMENT ON COLUMN public.notifications.end_datetime IS 'When notification should automatically be removed (null = never expires)';
 COMMENT ON COLUMN public.notifications.created_by IS 'Admin user who created this notification';
 
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS notifications_type_idx ON public.notifications (type);
+CREATE INDEX IF NOT EXISTS notifications_is_test_idx ON public.notifications (is_test);
 CREATE INDEX IF NOT EXISTS notifications_start_datetime_idx ON public.notifications (start_datetime);
 CREATE INDEX IF NOT EXISTS notifications_end_datetime_idx ON public.notifications (end_datetime);
 CREATE INDEX IF NOT EXISTS notifications_created_by_idx ON public.notifications (created_by);
@@ -160,6 +164,7 @@ INSERT INTO public.notifications (
     title, 
     message, 
     metadata,
+    is_test,
     start_datetime,
     end_datetime,
     created_by
@@ -168,6 +173,7 @@ INSERT INTO public.notifications (
     'Welcome to Bombastic!',
     'Thanks for joining our community! Explore playlists, discover great content, and enjoy your experience.<br><br>Get started by browsing our <a href="/playlists">featured playlists</a> or <a href="/account">customizing your preferences</a>.',
     '{"source": "welcome_new_user", "is_welcome": true, "reusable": true}'::jsonb,
+    FALSE, -- Welcome notification is not a test
     now(),
     NULL, -- Never expires
     NULL -- System created, not by specific admin
@@ -224,16 +230,16 @@ BEGIN
     
     IF notification_ids IS NULL THEN
         -- Mark all notifications as read for current user
-        UPDATE public.user_notifications
+        UPDATE public.user_notifications un
         SET read = true, updated_at = now()
-        WHERE user_id = auth.uid() AND read = false;
+        WHERE un.user_id = auth.uid() AND un.read = false;
     ELSE
         -- Mark specific notifications as read for current user
-        UPDATE public.user_notifications
+        UPDATE public.user_notifications un
         SET read = true, updated_at = now()
-        WHERE user_id = auth.uid() 
-        AND notification_id = ANY(notification_ids)
-        AND read = false;
+        WHERE un.user_id = auth.uid() 
+        AND un.notification_id = ANY(notification_ids)
+        AND un.read = false;
     END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -251,6 +257,7 @@ CREATE OR REPLACE FUNCTION public.get_user_notifications(
     message text,
     metadata jsonb,
     action_url text,
+    is_test boolean,
     start_datetime timestamp with time zone,
     end_datetime timestamp with time zone,
     notification_created_at timestamp with time zone,
@@ -275,6 +282,7 @@ BEGIN
         n.message,
         n.metadata,
         n.action_url,
+        n.is_test,
         n.start_datetime,
         n.end_datetime,
         n.created_at as notification_created_at,
@@ -315,11 +323,11 @@ BEGIN
     END IF;
     
     -- Mark the user's notifications as dismissed
-    UPDATE public.user_notifications
+    UPDATE public.user_notifications un
     SET dismissed = true, updated_at = now()
-    WHERE user_id = auth.uid() 
-    AND notification_id = ANY(notification_ids)
-    AND dismissed = false;
+    WHERE un.user_id = auth.uid() 
+    AND un.notification_id = ANY(notification_ids)
+    AND un.dismissed = false;
     
     GET DIAGNOSTICS updated_count = ROW_COUNT;
     
@@ -340,67 +348,72 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Function to create a notification and assign to users (Admin only)
+-- Function to create a notification and assign to users (Admin only) - FIXED AMBIGUOUS REFERENCES
 CREATE OR REPLACE FUNCTION public.create_notification(
     notification_type public.notification_type,
     notification_title text,
     notification_message text,
     notification_metadata jsonb DEFAULT '{}',
     notification_action_url text DEFAULT NULL,
+    notification_is_test boolean DEFAULT FALSE,
     notification_start_datetime TIMESTAMP WITH TIME ZONE DEFAULT now(),
     notification_end_datetime TIMESTAMP WITH TIME ZONE DEFAULT NULL,
     target_user_ids uuid[] DEFAULT NULL
 ) RETURNS integer AS $$
 DECLARE
-    notification_id integer;
-    user_id uuid;
+    new_notification_id integer;
+    target_user_id uuid;
+    actual_target_users uuid[];
 BEGIN
     -- Check if current user is admin
     IF NOT public.is_admin() THEN
         RAISE EXCEPTION 'Access denied: Only administrators can create notifications';
     END IF;
     
+    -- Determine actual target users based on is_test flag
+    IF notification_is_test = TRUE THEN
+        -- For test notifications, always use current user (auth.uid())
+        actual_target_users := ARRAY[auth.uid()];
+    ELSE
+        -- For production notifications, use provided target_user_ids or current user if none provided
+        actual_target_users := COALESCE(target_user_ids, ARRAY[auth.uid()]);
+    END IF;
+    
     -- Create the notification
     INSERT INTO public.notifications (
-        type, title, message, metadata, action_url, 
+        type, title, message, metadata, action_url, is_test,
         start_datetime, end_datetime, created_by
     ) VALUES (
         notification_type, notification_title, notification_message, 
-        notification_metadata, notification_action_url,
+        notification_metadata, notification_action_url, notification_is_test,
         notification_start_datetime, notification_end_datetime, auth.uid()
-    ) RETURNING id INTO notification_id;
+    ) RETURNING id INTO new_notification_id;
     
-    -- If specific user IDs provided, assign to those users
-    IF target_user_ids IS NOT NULL THEN
-        FOREACH user_id IN ARRAY target_user_ids
-        LOOP
-            INSERT INTO public.user_notifications (notification_id, user_id)
-            VALUES (notification_id, user_id)
-            ON CONFLICT (notification_id, user_id) DO NOTHING;
-        END LOOP;
-    ELSE
-        -- If no specific users, assign to current authenticated user
+    -- Assign to determined target users
+    FOREACH target_user_id IN ARRAY actual_target_users
+    LOOP
         INSERT INTO public.user_notifications (notification_id, user_id)
-        VALUES (notification_id, auth.uid())
+        VALUES (new_notification_id, target_user_id)
         ON CONFLICT (notification_id, user_id) DO NOTHING;
-    END IF;
+    END LOOP;
     
-    RETURN notification_id;
+    RETURN new_notification_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Function to create notifications for all users (Admin only)
+-- Function to create notifications for all users (Admin only) - FIXED AMBIGUOUS REFERENCES
 CREATE OR REPLACE FUNCTION public.create_notification_for_all_users(
     notification_type public.notification_type,
     notification_title text,
     notification_message text,
     notification_metadata jsonb DEFAULT '{}',
     notification_action_url text DEFAULT NULL,
+    notification_is_test boolean DEFAULT FALSE,
     notification_start_datetime TIMESTAMP WITH TIME ZONE DEFAULT now(),
     notification_end_datetime TIMESTAMP WITH TIME ZONE DEFAULT NULL
 ) RETURNS integer AS $$
 DECLARE
-    notification_id integer;
+    new_notification_id integer;
     user_count integer := 0;
 BEGIN
     -- Check if current user is admin
@@ -410,18 +423,18 @@ BEGIN
     
     -- Create the notification
     INSERT INTO public.notifications (
-        type, title, message, metadata, action_url,
+        type, title, message, metadata, action_url, is_test,
         start_datetime, end_datetime, created_by
     ) VALUES (
         notification_type, notification_title, notification_message,
-        notification_metadata, notification_action_url,
+        notification_metadata, notification_action_url, notification_is_test,
         notification_start_datetime, notification_end_datetime, auth.uid()
-    ) RETURNING id INTO notification_id;
+    ) RETURNING id INTO new_notification_id;
     
-    -- Assign to all users
+    -- Assign to all users - using explicit table alias to avoid ambiguity
     INSERT INTO public.user_notifications (notification_id, user_id)
-    SELECT notification_id, au.id
-    FROM auth.users au
+    SELECT new_notification_id, users.id
+    FROM auth.users users
     ON CONFLICT (notification_id, user_id) DO NOTHING;
     
     GET DIAGNOSTICS user_count = ROW_COUNT;
@@ -455,13 +468,12 @@ BEGIN
     
     -- Count affected users before deletion
     SELECT COUNT(*) INTO affected_users
-    FROM public.user_notifications
-    WHERE notification_id = remove_notification.notification_id;
+    FROM public.user_notifications un
+    WHERE un.notification_id = remove_notification.notification_id;
     
     -- Delete the notification (this will cascade to user_notifications)
-    DELETE FROM public.notifications
-    WHERE id = notification_id 
-    AND type = 'system'; -- Safety check to only allow removing system notifications
+    DELETE FROM public.notifications n
+    WHERE n.id = remove_notification.notification_id;
     
     GET DIAGNOSTICS deleted_count = ROW_COUNT;
     
@@ -470,7 +482,7 @@ BEGIN
     VALUES (
         'notification_removed',
         jsonb_build_object(
-            'notification_id', notification_id,
+            'notification_id', remove_notification.notification_id,
             'affected_users', affected_users,
             'removed_by', auth.uid(),
             'removal_time', now(),
@@ -491,10 +503,10 @@ DECLARE
 BEGIN
     -- Delete notifications that have expired (end_datetime < now)
     -- But never delete the welcome notification (ID = 1)
-    DELETE FROM public.notifications
-    WHERE end_datetime IS NOT NULL 
-    AND end_datetime < now()
-    AND id != 1; -- Protect welcome notification
+    DELETE FROM public.notifications n
+    WHERE n.end_datetime IS NOT NULL 
+    AND n.end_datetime < now()
+    AND n.id != 1; -- Protect welcome notification
     
     GET DIAGNOSTICS deleted_count = ROW_COUNT;
     
@@ -526,10 +538,10 @@ BEGIN
     
     -- Delete notifications that have expired (end_datetime < now)
     -- But never delete the welcome notification (ID = 1)
-    DELETE FROM public.notifications
-    WHERE end_datetime IS NOT NULL 
-    AND end_datetime < now()
-    AND id != 1; -- Protect welcome notification
+    DELETE FROM public.notifications n
+    WHERE n.end_datetime IS NOT NULL 
+    AND n.end_datetime < now()
+    AND n.id != 1; -- Protect welcome notification
     
     GET DIAGNOSTICS deleted_count = ROW_COUNT;
     
@@ -579,6 +591,7 @@ SELECT
     n.message,
     n.metadata,
     n.action_url,
+    n.is_test,
     n.start_datetime,
     n.end_datetime,
     n.created_by,
@@ -636,12 +649,12 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- =====================================================
 
 COMMENT ON FUNCTION public.get_unread_notification_count() IS 'Returns count of unread, active notifications for the current authenticated user';
-COMMENT ON FUNCTION public.mark_notifications_as_read(integer[]) IS 'Marks notifications as read for the current authenticated user';
+COMMENT ON FUNCTION public.mark_notifications_as_read(integer[]) IS 'Marks notifications as read for the current authenticated user - fixed ambiguous column references';
 COMMENT ON FUNCTION public.get_user_notifications(integer, integer, boolean, public.notification_type) IS 'Gets paginated notifications for the current authenticated user with optional filters';
-COMMENT ON FUNCTION public.remove_user_notification(integer[]) IS 'User function to dismiss their own notifications';
-COMMENT ON FUNCTION public.create_notification(public.notification_type, text, text, jsonb, text, timestamp with time zone, timestamp with time zone, uuid[]) IS 'Creates a notification and assigns it to specified users or current user (Admin only)';
-COMMENT ON FUNCTION public.create_notification_for_all_users(public.notification_type, text, text, jsonb, text, timestamp with time zone, timestamp with time zone) IS 'Creates a notification and assigns it to all users (Admin only)';
-COMMENT ON FUNCTION public.remove_notification(integer) IS 'Admin-only RPC function to remove notifications and all user assignments (cannot delete welcome notification)';
+COMMENT ON FUNCTION public.remove_user_notification(integer[]) IS 'User function to dismiss their own notifications - fixed ambiguous column references';
+COMMENT ON FUNCTION public.create_notification(public.notification_type, text, text, jsonb, text, boolean, timestamp with time zone, timestamp with time zone, uuid[]) IS 'Creates a notification and assigns it to specified users or current user (Admin only) - includes is_test parameter';
+COMMENT ON FUNCTION public.create_notification_for_all_users(public.notification_type, text, text, jsonb, text, boolean, timestamp with time zone, timestamp with time zone) IS 'Creates a notification and assigns it to all users (Admin only) - includes is_test parameter';
+COMMENT ON FUNCTION public.remove_notification(integer) IS 'Admin-only RPC function to remove notifications and all user assignments (cannot delete welcome notification) - fixed ambiguous column references';
 COMMENT ON FUNCTION public.cleanup_expired_notifications() IS 'Admin-only function to manually clean up expired notifications (protects welcome notification)';
 COMMENT ON FUNCTION public.cleanup_expired_notifications_cron() IS 'Automated function to clean up expired notifications, runs daily via cron (protects welcome notification)';
 COMMENT ON FUNCTION public.create_welcome_notification_for_new_user() IS 'Assigns the reusable welcome notification (ID=1) to newly registered users';
@@ -656,11 +669,11 @@ VALUES (
         'migration_name', '12_notifications_system_with_rpc_and_cron.sql',
         'completion_time', now(),
         'author', 'jasoncluck',
-        'description', 'Complete notification system with integer PK, reusable welcome notification, and secure user functions'
+        'description', 'Complete notification system with integer PK, reusable welcome notification, and secure user functions - added is_test column support'
     ),
     now()
 );
 
 -- Note: To enable cron job, run this separately if you have superuser access:
 -- CREATE EXTENSION IF NOT EXISTS pg_cron;
--- SELECT cron.schedule('cleanup-expired-notifications', '0 2 * * *', 'SELECT public.cleanup_expired_notifications_cron();');
+-- SELECT cron.schedule('cleanup-expired-notifications', '0 2 * * * ', 'SELECT public.cleanup_expired_notifications_cron();');

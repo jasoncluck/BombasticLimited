@@ -13,9 +13,10 @@
     Loader,
     Trash2,
     Clock,
-    XCircle,
     CircleCheck,
     Activity,
+    CircleX,
+    FlaskConical,
   } from '@lucide/svelte';
   import { showToast } from '$lib/state/notifications.svelte';
   import { superForm, type SuperValidated } from 'sveltekit-superforms';
@@ -31,10 +32,37 @@
   import type { Database } from '$lib/supabase/database.types';
   import { getNavigationState } from '$lib/state/navigation.svelte';
   import { invalidate } from '$app/navigation';
-  import type { SupabaseClient } from '@supabase/supabase-js';
 
   type NotificationRow = Database['public']['Tables']['notifications']['Row'];
   type SystemLogRow = Database['public']['Tables']['system_logs']['Row'];
+
+  // Type guards for system logs
+  function isNotificationCleanupLog(details: any): details is {
+    deleted_count: number;
+    cleanup_time: string;
+    trigger: string;
+  } {
+    return details && typeof details.deleted_count === 'number';
+  }
+
+  function isNotificationRemovedLog(details: any): details is {
+    notification_id: number;
+    affected_users: number;
+    removed_by: string;
+    removal_time: string;
+    success: boolean;
+  } {
+    return details && typeof details.affected_users === 'number';
+  }
+
+  function isUserNotificationDismissedLog(details: any): details is {
+    notification_ids: number[];
+    dismissed_by: string;
+    dismissed_count: number;
+    dismissed_time: string;
+  } {
+    return details && typeof details.dismissed_count === 'number';
+  }
 
   let {
     data,
@@ -45,44 +73,73 @@
       sentNotifications: NotificationRow[];
       expiredNotifications: NotificationRow[];
       users: { id: string; username: string | null }[];
-      systemLogs?: SystemLogRow[]; // Optional new data
-      supabase: SupabaseClient<Database>;
+      systemLogs?: SystemLogRow[];
     };
   } = $props();
-  const { supabase } = $derived(data);
 
   const navigationState = getNavigationState();
 
   let isSubmitting = $state(false);
   let testSubmitting = $state(false);
   let manualCleanupSubmitting = $state(false);
-
   let currentAction = $state<string>('');
-  let cancellingId = $state<string | null>(null);
+  let cancellingId = $state<number | null>(null);
 
-  // Updated cancelNotification function to use RPC
-  async function cancelNotification(notificationId: string) {
-    if (cancellingId) return; // Prevent multiple concurrent cancellations
+  // Client-side form state using $state runes
+
+  // Notification sections configuration
+  const notificationSections = $derived([
+    {
+      title: 'Pending Notifications',
+      icon: Clock,
+      iconColor: 'text-yellow-500',
+      data: data.pendingNotifications,
+      description: 'Notifications scheduled to be sent in the future',
+      actionText: { normal: 'Cancel', loading: 'Canceling...' },
+    },
+    {
+      title: 'Active Notifications',
+      icon: CircleCheck,
+      iconColor: 'text-green-500',
+      data: data.sentNotifications,
+      description: 'Notifications currently visible to users',
+      actionText: { normal: 'Remove', loading: 'Removing...' },
+    },
+    {
+      title: 'Expired Notifications',
+      icon: CircleX,
+      iconColor: 'text-red-500',
+      data: data.expiredNotifications,
+      description: 'Notifications that have passed their expiration date',
+      actionText: { normal: 'Remove', loading: 'Removing...' },
+    },
+  ]);
+
+  async function cancelNotification(notificationId: number) {
+    if (cancellingId !== null) return;
 
     cancellingId = notificationId;
 
     try {
-      const { data: result, error } = await supabase.rpc(
-        'remove_notification',
-        {
-          notification_id: notificationId,
-        }
-      );
+      const formData = new FormData();
+      formData.append('notificationId', notificationId.toString());
 
-      if (error) {
-        console.error('Error canceling notification:', error);
-        showToast('Failed to cancel notification', 'error');
-      } else if (result) {
+      const response = await fetch('?/cancelNotification', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
         showToast('Notification canceled successfully', 'success');
+
+        // Use targeted refresh instead of invalidate to prevent form reset
         navigationState.refreshData();
-        invalidate('supabase:db:notifications');
       } else {
-        showToast('Notification not found or already removed', 'error');
+        console.error(
+          `❌ Client: Failed to cancel notification:`,
+          response.status
+        );
+        showToast('Failed to cancel notification', 'error');
       }
     } catch (error) {
       console.error('Error canceling notification:', error);
@@ -90,29 +147,30 @@
     } finally {
       cancellingId = null;
     }
+    invalidate('supabase:db:notifications');
   }
 
-  // Optional: Manual cleanup function
   async function triggerManualCleanup() {
     if (manualCleanupSubmitting) return;
 
     manualCleanupSubmitting = true;
 
     try {
-      const { data: deletedCount, error } = await supabase.rpc(
-        'cleanup_expired_notifications'
-      );
+      const response = await fetch('?/manualCleanup', {
+        method: 'POST',
+      });
 
-      if (error) {
-        console.error('Error during manual cleanup:', error);
-        showToast('Failed to cleanup expired notifications', 'error');
-      } else {
+      const result = await response.json();
+
+      if (response.ok) {
+        const deletedCount = result.deletedCount || 0;
         showToast(
           `Manual cleanup completed. Removed ${deletedCount} expired notifications.`,
           'success'
         );
         navigationState.refreshData();
-        invalidate('supabase:db:notifications');
+      } else {
+        showToast('Failed to cleanup expired notifications', 'error');
       }
     } catch (error) {
       console.error('Error during manual cleanup:', error);
@@ -124,35 +182,27 @@
 
   function formatDateTime(dateTimeString: string | null): string {
     if (!dateTimeString) return 'N/A';
-
     try {
       return new Date(dateTimeString).toLocaleString();
-    } catch (error) {
+    } catch {
       return 'Invalid Date';
     }
   }
 
-  function getNotificationStatus(notification: any): {
-    text: string;
-    variant: 'default' | 'secondary' | 'destructive' | 'outline';
-  } {
-    const now = new Date().toISOString();
-
-    if (notification.start_datetime && notification.start_datetime > now) {
-      return { text: 'Pending', variant: 'outline' };
+  function formatDateTimeShort(dateTimeString: string | null): string {
+    if (!dateTimeString) return 'N/A';
+    try {
+      return new Date(dateTimeString).toLocaleDateString();
+    } catch {
+      return 'Invalid';
     }
-
-    if (notification.end_datetime && notification.end_datetime <= now) {
-      return { text: 'Expired', variant: 'destructive' };
-    }
-
-    return { text: 'Active', variant: 'default' };
   }
 
   const notificationForm = superForm(data.form, {
+    resetForm: false,
+    invalidateAll: false,
     validators: zodClient(adminNotificationSchema),
     validationMethod: 'onsubmit',
-    resetForm: false, // Prevent form reset after submission
 
     onSubmit({ formData }) {
       const action = formData.get('_action')?.toString() || '';
@@ -174,7 +224,6 @@
       }
     },
     onUpdated({ form }) {
-      // Handle success/error messages
       if (form.valid && !form.errors) {
         if (currentAction === 'sendTestNotification') {
           showToast('✅ Test notification sent successfully!', 'success');
@@ -182,30 +231,30 @@
           showToast(`✅ Global notification sent successfully!`, 'success');
         }
       } else if (form.errors) {
-        // Handle validation errors
         const errorMessages = Object.values(form.errors).flat();
         if (errorMessages.length > 0) {
           showToast(`❌ Error: ${errorMessages[0]}`, 'error');
         }
       }
-      invalidate('supabase:db:notifications');
+
+      // Only invalidate for global notifications, not test notifications
+      if (currentAction !== 'sendTestNotification') {
+        invalidate('supabase:db:notifications');
+      }
+
       navigationState.refreshData();
     },
   });
 
-  const { form: formData, enhance } = notificationForm;
+  const { form: formData, enhance: formEnhance } = notificationForm;
 
   const notificationTypes = [
     { value: 'system', label: 'System' },
-    { value: 'content', label: 'Content' },
-    { value: 'user', label: 'User' },
     { value: 'playlist_update', label: 'Playlist Update' },
-    { value: 'mention', label: 'Mention' },
   ];
 
   let selectedType = $state({ value: 'system', label: 'System' });
 
-  // Predefined templates
   const templates: Record<
     string,
     {
@@ -242,7 +291,6 @@
       notificationTypes.find((t) => t.value === template.type) ||
       notificationTypes[0];
 
-    // Update form data
     $formData.type = template.type;
     $formData.title = template.title;
     $formData.message = template.message;
@@ -252,6 +300,7 @@
     if (!notificationForm) return;
 
     selectedType = notificationTypes[0];
+
     $formData.type = 'system';
     $formData.title = '';
     $formData.message = '';
@@ -273,19 +322,21 @@
   <title>Admin - Notification Management | Bombastic</title>
 </svelte:head>
 
-<div class="container mx-auto max-w-4xl">
-  <div class="mb-8">
-    <h1 class="mb-2 text-3xl font-bold">Notification Management</h1>
-    <p class="text-muted-foreground">
+<div class="container mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-8">
+  <!-- Header -->
+  <div class="mb-6 sm:mb-8">
+    <h1 class="mb-2 text-2xl font-bold sm:text-3xl">Notification Management</h1>
+    <p class="text-muted-foreground text-sm sm:text-base">
       Send notifications to all users or test notifications
     </p>
   </div>
 
-  <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
+  <!-- Top Section: Form and Info -->
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:gap-8">
     <!-- Notification Form -->
     <Card.Root>
       <Card.Header>
-        <Card.Title>Create Notification</Card.Title>
+        <Card.Title class="text-lg sm:text-xl">Create Notification</Card.Title>
       </Card.Header>
       <Card.Content>
         <!-- Template Buttons -->
@@ -296,6 +347,7 @@
               variant="outline"
               size="sm"
               onclick={() => loadTemplate('welcome')}
+              class="text-xs sm:text-sm"
             >
               Welcome
             </Button>
@@ -303,6 +355,7 @@
               variant="outline"
               size="sm"
               onclick={() => loadTemplate('feature')}
+              class="text-xs sm:text-sm"
             >
               New Feature
             </Button>
@@ -310,24 +363,30 @@
               variant="outline"
               size="sm"
               onclick={() => loadTemplate('maintenance')}
+              class="text-xs sm:text-sm"
             >
               Maintenance
             </Button>
-            <Button variant="outline" size="sm" onclick={resetForm}>
-              <RotateCcw class="mr-2 h-4 w-4" />
+            <Button
+              variant="outline"
+              size="sm"
+              onclick={resetForm}
+              class="text-xs sm:text-sm"
+            >
+              <RotateCcw class="mr-1 h-3 w-3 sm:mr-2 sm:h-4 sm:w-4" />
               Clear
             </Button>
           </div>
         </div>
 
         {#if data && notificationForm}
-          <form method="POST" use:enhance>
-            <div class="space-y-6">
+          <form method="POST" use:formEnhance>
+            <div class="space-y-4 sm:space-y-6">
               <!-- Type Selection -->
               <Form.Field form={notificationForm} name="type">
                 <Form.Control>
                   {#snippet children({ props })}
-                    <Label for="type">Type</Label>
+                    <Label for="type" class="text-sm">Type</Label>
                     <Select.Root
                       type="single"
                       bind:value={$formData.type}
@@ -340,7 +399,7 @@
                         }
                       }}
                     >
-                      <Select.Trigger>
+                      <Select.Trigger class="w-full">
                         {selectedType?.label || 'Select notification type'}
                       </Select.Trigger>
                       <Select.Content>
@@ -365,7 +424,7 @@
               <Form.Field form={notificationForm} name="title">
                 <Form.Control>
                   {#snippet children({ props })}
-                    <Label for="title">Title</Label>
+                    <Label for="title" class="text-sm">Title</Label>
                     <Input
                       {...props}
                       id="title"
@@ -374,6 +433,7 @@
                       bind:value={$formData.title}
                       required
                       placeholder="Enter notification title"
+                      class="w-full"
                     />
                   {/snippet}
                 </Form.Control>
@@ -384,7 +444,7 @@
               <Form.Field form={notificationForm} name="message">
                 <Form.Control>
                   {#snippet children({ props })}
-                    <Label for="message">Message</Label>
+                    <Label for="message" class="text-sm">Message</Label>
                     <Textarea
                       {...props}
                       id="message"
@@ -392,19 +452,19 @@
                       bind:value={$formData.message}
                       required
                       rows={4}
-                      placeholder="Enter notification message (HTML supported: &lt;b&gt;bold&lt;/b&gt;, &lt;i&gt;italic&lt;/i&gt;, &lt;a href=&quot;...&quot;&gt;link&lt;/a&gt;, etc.)"
+                      placeholder="Enter notification message (HTML supported)"
+                      class="w-full resize-none"
                     />
-                    <p class="text-muted-foreground text-xs">
+                    <p class="text-muted-foreground mt-1 text-xs">
                       HTML tags like &lt;b&gt;, &lt;i&gt;, &lt;u&gt;,
-                      &lt;br&gt;, &lt;a href="..."&gt; are supported for rich
-                      formatting and links
+                      &lt;br&gt;, &lt;a href="..."&gt; are supported
                     </p>
                   {/snippet}
                 </Form.Control>
                 <Form.FieldErrors class="text-xs" />
               </Form.Field>
 
-              <!-- Start DateTime (Optional) -->
+              <!-- Start DateTime -->
               <Form.Field form={notificationForm} name="startDatetime">
                 <Form.Control>
                   {#snippet children({ props })}
@@ -421,7 +481,7 @@
                 <Form.FieldErrors class="text-xs" />
               </Form.Field>
 
-              <!-- End DateTime (Optional) -->
+              <!-- End DateTime -->
               <Form.Field form={notificationForm} name="endDatetime">
                 <Form.Control>
                   {#snippet children({ props })}
@@ -439,31 +499,14 @@
               </Form.Field>
 
               <!-- Action Buttons -->
-              <div class="flex gap-3 pt-4">
-                <Button
-                  type="submit"
-                  formaction="?/sendGlobalNotification"
-                  disabled={isSubmitting ||
-                    !$formData.title ||
-                    !$formData.message}
-                  class="flex-1"
-                >
-                  {#if isSubmitting}
-                    <Loader class="mr-2 h-4 w-4 animate-spin" />
-                    Sending...
-                  {:else}
-                    <Send class="mr-2 h-4 w-4" />
-                    Send to All Users
-                  {/if}
-                </Button>
-
+              <div class="flex flex-col gap-3 pt-4 sm:flex-row">
+                <!-- Test Button - Primary -->
                 <Button
                   type="submit"
                   formaction="?/sendTestNotification"
                   disabled={testSubmitting ||
                     !$formData.title ||
                     !$formData.message}
-                  variant="outline"
                   class="flex-1"
                 >
                   {#if testSubmitting}
@@ -471,7 +514,28 @@
                     Testing...
                   {:else}
                     <TestTube class="mr-2 h-4 w-4" />
-                    Test (Send to Me)
+                    <span class="hidden sm:inline">Test (Send to Me)</span>
+                    <span class="sm:hidden">Test</span>
+                  {/if}
+                </Button>
+
+                <!-- Send to All Button - Secondary -->
+                <Button
+                  type="submit"
+                  formaction="?/sendGlobalNotification"
+                  disabled={isSubmitting ||
+                    !$formData.title ||
+                    !$formData.message}
+                  variant="outline"
+                  class="flex-1"
+                >
+                  {#if isSubmitting}
+                    <Loader class="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  {:else}
+                    <Send class="mr-2 h-4 w-4" />
+                    <span class="hidden sm:inline">Send to All Users</span>
+                    <span class="sm:hidden">Send to All</span>
                   {/if}
                 </Button>
               </div>
@@ -482,340 +546,303 @@
     </Card.Root>
 
     <!-- Info Panel -->
-    <Card.Root>
-      <Card.Header>
-        <Card.Title>Information & Actions</Card.Title>
-      </Card.Header>
-      <Card.Content class="space-y-6">
-        <!-- Manual Cleanup Button -->
-        <div>
-          <h3 class="mb-3 text-sm font-medium">Admin Actions</h3>
-          <Button
-            variant="outline"
-            size="sm"
-            onclick={triggerManualCleanup}
-            disabled={manualCleanupSubmitting}
+    <div class="space-y-6">
+      <!-- Information & Actions Card -->
+      <Card.Root>
+        <Card.Header>
+          <Card.Title class="text-lg sm:text-xl"
+            >Information & Actions</Card.Title
           >
-            {#if manualCleanupSubmitting}
-              <Loader class="mr-2 h-4 w-4 animate-spin" />
-              Cleaning up...
-            {:else}
-              <Trash2 class="mr-2 h-4 w-4" />
-              Manual Cleanup Expired
-            {/if}
-          </Button>
-          <p class="text-muted-foreground mt-1 text-xs">
-            Remove all expired notifications manually (also runs automatically
-            daily at 2 AM UTC)
-          </p>
-        </div>
+        </Card.Header>
+        <Card.Content class="space-y-4 sm:space-y-6">
+          <!-- Manual Cleanup Button -->
+          <div>
+            <h3 class="mb-3 text-sm font-medium">Admin Actions</h3>
+            <Button
+              variant="outline"
+              size="sm"
+              onclick={triggerManualCleanup}
+              disabled={manualCleanupSubmitting}
+              class="w-full text-xs sm:w-auto sm:text-sm"
+            >
+              {#if manualCleanupSubmitting}
+                <Loader class="mr-2 h-4 w-4 animate-spin" />
+                Cleaning up...
+              {:else}
+                <Trash2 class="mr-2 h-4 w-4" />
+                Manual Cleanup Expired
+              {/if}
+            </Button>
+            <p class="text-muted-foreground mt-1 text-xs">
+              Remove all expired notifications manually (also runs automatically
+              daily at 2 AM UTC)
+            </p>
+          </div>
 
-        <div>
-          <h3 class="mb-3 text-sm font-medium">Notification Types</h3>
-          <div class="space-y-2">
-            <div class="flex items-center gap-2">
-              <Badge variant="outline">System</Badge>
-              <span class="text-muted-foreground text-sm"
-                >Platform announcements, maintenance</span
-              >
-            </div>
-            <div class="flex items-center gap-2">
-              <Badge variant="outline">Content</Badge>
-              <span class="text-muted-foreground text-sm"
-                >New videos, updates</span
-              >
-            </div>
-            <div class="flex items-center gap-2">
-              <Badge variant="outline">User</Badge>
-              <span class="text-muted-foreground text-sm"
-                >User interactions, follows</span
-              >
-            </div>
-            <div class="flex items-center gap-2">
-              <Badge variant="outline">Playlist</Badge>
-              <span class="text-muted-foreground text-sm">Playlist changes</span
-              >
-            </div>
-            <div class="flex items-center gap-2">
-              <Badge variant="outline">Mention</Badge>
-              <span class="text-muted-foreground text-sm">User mentions</span>
-              >
+          <div>
+            <h3 class="mb-3 text-sm font-medium">Notification Types</h3>
+            <div class="space-y-2">
+              <div class="flex items-center gap-2">
+                <Badge variant="outline" class="text-xs">System</Badge>
+                <span class="text-muted-foreground text-xs sm:text-sm"
+                  >Platform announcements, maintenance</span
+                >
+              </div>
+              <div class="flex items-center gap-2">
+                <Badge variant="outline" class="text-xs">Playlist Update</Badge>
+                <span class="text-muted-foreground text-xs sm:text-sm"
+                  >Playlist changes and updates</span
+                >
+              </div>
             </div>
           </div>
-        </div>
 
-        <div>
-          <h3 class="mb-3 text-sm font-medium">User Stats</h3>
-          <p class="text-muted-foreground text-sm">
-            Users in system: {data.users?.length || 0}
-          </p>
-        </div>
-
-        <div>
-          <h3 class="mb-3 text-sm font-medium">Usage</h3>
-          <ul class="text-muted-foreground space-y-1 text-sm">
-            <li>• Use "Test" button to preview notifications before sending</li>
-            <li>• Use HTML links: &lt;a href="..."&gt;link text&lt;/a&gt;</li>
-            <li>• Notifications appear under the bell icon only</li>
-            <li>• Users can remove notifications individually</li>
-            <li>
-              • Form doesn't clear after submit for easy test/send workflow
-            </li>
-            <li>• Expired notifications are automatically cleaned up daily</li>
-          </ul>
-        </div>
-
-        <!-- Optional: System Logs Display -->
-        {#if data.systemLogs && data.systemLogs.length > 0}
           <div>
-            <h3 class="mb-3 flex items-center gap-2 text-sm font-medium">
-              <Activity class="h-4 w-4" />
+            <h3 class="mb-3 text-sm font-medium">User Stats</h3>
+            <p class="text-muted-foreground text-xs sm:text-sm">
+              Users in system: {data.users?.length || 0}
+            </p>
+          </div>
+
+          <div>
+            <h3 class="mb-3 text-sm font-medium">Usage Tips</h3>
+            <ul class="text-muted-foreground space-y-1 text-xs sm:text-sm">
+              <li>
+                • Use "Test" button to preview notifications before sending
+              </li>
+              <li>• HTML links: &lt;a href="..."&gt;link text&lt;/a&gt;</li>
+              <li>• Notifications appear under the bell icon</li>
+              <li>• Users can dismiss notifications individually</li>
+              <li>• Form persists during test workflow for easy refinements</li>
+              <li>
+                • Expired notifications are cleaned up automatically daily
+              </li>
+              <li>• Test notifications are only sent to you, not all users</li>
+            </ul>
+          </div>
+        </Card.Content>
+      </Card.Root>
+
+      <!-- Recent Activity Card -->
+      {#if data.systemLogs && data.systemLogs.length > 0}
+        <Card.Root>
+          <Card.Header>
+            <Card.Title class="flex items-center gap-2 text-lg sm:text-xl">
+              <Activity class="h-5 w-5" />
               Recent Activity
-            </h3>
+            </Card.Title>
+          </Card.Header>
+          <Card.Content>
             <div class="flex max-h-64 flex-col gap-2 overflow-y-auto">
               {#each data.systemLogs.slice(0, 5) as log (log.id)}
-                <div class="rounded border p-2 text-xs">
-                  <div class="flex items-center justify-between">
-                    <span class="font-medium">{log.event_type}</span>
-                    <span class="text-muted-foreground">
-                      {formatDateTime(log.created_at)}
+                <div class="rounded border p-3 text-xs sm:text-sm">
+                  <div
+                    class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <span class="font-medium"
+                      >{log.event_type
+                        .replace('_', ' ')
+                        .replace(/\b\w/g, (l) => l.toUpperCase())}</span
+                    >
+                    <span class="text-muted-foreground text-xs">
+                      {formatDateTimeShort(log.created_at)}
                     </span>
                   </div>
                   {#if log.details && typeof log.details === 'object'}
-                    <div class="text-muted-foreground mt-1">
-                      {#if log.event_type === 'notification_cleanup'}
-                        Removed {log.details.deleted_count || 0} expired notifications
-                      {:else if log.event_type === 'notification_removed'}
-                        Notification removed by admin
+                    <div class="text-muted-foreground mt-1 text-xs">
+                      {#if log.event_type === 'notification_cleanup' && isNotificationCleanupLog(log.details)}
+                        Removed {log.details.deleted_count} expired notifications
+                      {:else if log.event_type === 'notification_removed' && isNotificationRemovedLog(log.details)}
+                        Notification removed by admin (affected {log.details
+                          .affected_users} users)
+                      {:else if log.event_type === 'user_notification_dismissed' && isUserNotificationDismissedLog(log.details)}
+                        User dismissed {log.details.dismissed_count} notification(s)
                       {/if}
                     </div>
                   {/if}
                 </div>
               {/each}
             </div>
-          </div>
-        {/if}
-      </Card.Content>
-    </Card.Root>
+          </Card.Content>
+        </Card.Root>
+      {/if}
+    </div>
   </div>
 
   <!-- Notification Management Lists -->
-  <div class="mt-8">
-    <h2 class="mb-6 text-2xl font-bold">Notification Management</h2>
+  <div class="mt-8 sm:mt-12">
+    <h2 class="mb-6 text-xl font-bold sm:text-2xl">Notification Management</h2>
 
-    <div class="space-y-8">
-      <!-- Pending Notifications -->
-      <Card.Root>
-        <Card.Header>
-          <Card.Title class="flex items-center gap-2">
-            <Clock class="h-5 w-5 text-yellow-500" />
-            Pending Notifications ({data.pendingNotifications.length})
-          </Card.Title>
-          <p class="text-muted-foreground text-sm">
-            Notifications scheduled to be sent in the future
-          </p>
-        </Card.Header>
-        <Card.Content>
-          {#if data.pendingNotifications.length === 0}
-            <p class="text-muted-foreground py-4">No pending notifications</p>
-          {:else}
-            <Table.Root>
-              <Table.Header>
-                <Table.Row>
-                  <Table.Head>Title</Table.Head>
-                  <Table.Head>Start Date</Table.Head>
-                  <Table.Head>End Date</Table.Head>
-                  <Table.Head>Created</Table.Head>
-                  <Table.Head>Actions</Table.Head>
-                </Table.Row>
-              </Table.Header>
-              <Table.Body>
-                {#each data.pendingNotifications as notification (notification.id)}
-                  <Table.Row>
-                    <Table.Cell>
+    <div class="space-y-6 sm:space-y-8">
+      {#each notificationSections as section (section.title)}
+        <Card.Root>
+          <Card.Header>
+            <Card.Title class="flex items-center gap-2 text-lg sm:text-xl">
+              {#if section.icon === Clock}
+                <Clock class="h-5 w-5 {section.iconColor}" />
+              {:else if section.icon === CircleCheck}
+                <CircleCheck class="h-5 w-5 {section.iconColor}" />
+              {:else if section.icon === CircleX}
+                <CircleX class="h-5 w-5 {section.iconColor}" />
+              {/if}
+              {section.title} ({section.data.length})
+            </Card.Title>
+            <p class="text-muted-foreground text-sm">
+              {section.description}
+            </p>
+          </Card.Header>
+          <Card.Content>
+            {#if section.data.length === 0}
+              <p class="text-muted-foreground py-4">
+                No {section.title.toLowerCase()}
+              </p>
+            {:else}
+              <!-- Mobile Card View -->
+              <div class="space-y-4 sm:hidden">
+                {#each section.data as notification (notification.id)}
+                  <div class="rounded border p-4">
+                    <div class="mb-2">
+                      <div class="flex items-center gap-2">
+                        <div class="font-medium">{notification.title}</div>
+                        {#if notification.is_test}
+                          <Badge variant="secondary" class="text-xs">
+                            <FlaskConical class="mr-1 h-3 w-3" />
+                            Test
+                          </Badge>
+                        {/if}
+                      </div>
+                      <div
+                        class="text-muted-foreground mt-1 line-clamp-2 text-sm"
+                      >
+                        {notification.message}
+                      </div>
+                    </div>
+                    <div class="text-muted-foreground mb-3 space-y-1 text-xs">
                       <div>
-                        <div class="font-medium">{notification.title}</div>
-                        <div
-                          class="text-muted-foreground max-w-md truncate text-sm"
-                        >
-                          {notification.message}
-                        </div>
+                        Start: {formatDateTimeShort(
+                          notification.start_datetime
+                        )}
                       </div>
-                    </Table.Cell>
-                    <Table.Cell
-                      >{formatDateTime(notification.start_datetime)}</Table.Cell
-                    >
-                    <Table.Cell
-                      >{formatDateTime(notification.end_datetime)}</Table.Cell
-                    >
-                    <Table.Cell
-                      >{formatDateTime(notification.created_at)}</Table.Cell
-                    >
-                    <Table.Cell>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        disabled={cancellingId === notification.id}
-                        onclick={() => cancelNotification(notification.id)}
-                      >
-                        {#if cancellingId === notification.id}
-                          <Loader class="mr-2 h-3 w-3 animate-spin" />
-                          Canceling...
-                        {:else}
-                          <Trash2 class="mr-2 h-3 w-3" />
-                          Cancel
-                        {/if}
-                      </Button>
-                    </Table.Cell>
-                  </Table.Row>
-                {/each}
-              </Table.Body>
-            </Table.Root>
-          {/if}
-        </Card.Content>
-      </Card.Root>
-
-      <!-- Sent/Active Notifications -->
-      <Card.Root>
-        <Card.Header>
-          <Card.Title class="flex items-center gap-2">
-            <CircleCheck class="h-5 w-5 text-green-500" />
-            Active Notifications ({data.sentNotifications.length})
-          </Card.Title>
-          <p class="text-muted-foreground text-sm">
-            Notifications currently visible to users
-          </p>
-        </Card.Header>
-        <Card.Content>
-          {#if data.sentNotifications.length === 0}
-            <p class="text-muted-foreground py-4">No active notifications</p>
-          {:else}
-            <Table.Root>
-              <Table.Header>
-                <Table.Row>
-                  <Table.Head>Title</Table.Head>
-                  <Table.Head>Start Date</Table.Head>
-                  <Table.Head>End Date</Table.Head>
-                  <Table.Head>Created</Table.Head>
-                  <Table.Head>Actions</Table.Head>
-                </Table.Row>
-              </Table.Header>
-              <Table.Body>
-                {#each data.sentNotifications as notification (notification.id)}
-                  <Table.Row>
-                    <Table.Cell>
-                      <div class="w-xs">
-                        <div class="font-medium">{notification.title}</div>
-                        <div
-                          class="text-muted-foreground max-w-md truncate text-sm"
-                        >
-                          {notification.message}
-                        </div>
-                      </div>
-                    </Table.Cell>
-                    <Table.Cell
-                      >{formatDateTime(notification.start_datetime)}</Table.Cell
-                    >
-                    <Table.Cell
-                      >{formatDateTime(notification.end_datetime)}</Table.Cell
-                    >
-                    <Table.Cell
-                      >{formatDateTime(notification.created_at)}</Table.Cell
-                    >
-                    <Table.Cell>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        disabled={cancellingId === notification.id}
-                        onclick={() => cancelNotification(notification.id)}
-                      >
-                        {#if cancellingId === notification.id}
-                          <Loader class="mr-2 h-3 w-3 animate-spin" />
-                          Removing...
-                        {:else}
-                          <Trash2 class="mr-2 h-3 w-3" />
-                          Remove
-                        {/if}
-                      </Button>
-                    </Table.Cell>
-                  </Table.Row>
-                {/each}
-              </Table.Body>
-            </Table.Root>
-          {/if}
-        </Card.Content>
-      </Card.Root>
-
-      <!-- Expired Notifications -->
-      <Card.Root>
-        <Card.Header>
-          <Card.Title class="flex items-center gap-2">
-            <XCircle class="h-5 w-5 text-red-500" />
-            Expired Notifications ({data.expiredNotifications.length})
-          </Card.Title>
-          <p class="text-muted-foreground text-sm">
-            Notifications that have passed their expiration date
-          </p>
-        </Card.Header>
-        <Card.Content>
-          {#if data.expiredNotifications.length === 0}
-            <p class="text-muted-foreground py-4">No expired notifications</p>
-          {:else}
-            <Table.Root>
-              <Table.Header>
-                <Table.Row>
-                  <Table.Head>Title</Table.Head>
-                  <Table.Head>Start Date</Table.Head>
-                  <Table.Head>End Date</Table.Head>
-                  <Table.Head>Created</Table.Head>
-                  <Table.Head>Actions</Table.Head>
-                </Table.Row>
-              </Table.Header>
-              <Table.Body>
-                {#each data.expiredNotifications as notification (notification.id)}
-                  <Table.Row>
-                    <Table.Cell>
                       <div>
-                        <div class="font-medium">{notification.title}</div>
-                        <div
-                          class="text-muted-foreground max-w-md truncate text-sm"
-                        >
-                          {notification.message}
-                        </div>
+                        End: {formatDateTimeShort(notification.end_datetime)}
                       </div>
-                    </Table.Cell>
-                    <Table.Cell
-                      >{formatDateTime(notification.start_datetime)}</Table.Cell
+                      <div>
+                        Created: {formatDateTimeShort(notification.created_at)}
+                      </div>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      disabled={cancellingId === notification.id}
+                      onclick={() => cancelNotification(notification.id)}
+                      class="w-full"
                     >
-                    <Table.Cell
-                      >{formatDateTime(notification.end_datetime)}</Table.Cell
-                    >
-                    <Table.Cell
-                      >{formatDateTime(notification.created_at)}</Table.Cell
-                    >
-                    <Table.Cell>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        disabled={cancellingId === notification.id}
-                        onclick={() => cancelNotification(notification.id)}
-                      >
-                        {#if cancellingId === notification.id}
-                          <Loader class="mr-2 h-3 w-3 animate-spin" />
-                          Removing...
-                        {:else}
-                          <Trash2 class="mr-2 h-3 w-3" />
-                          Remove
-                        {/if}
-                      </Button>
-                    </Table.Cell>
-                  </Table.Row>
+                      {#if cancellingId === notification.id}
+                        <Loader class="mr-2 h-3 w-3 animate-spin" />
+                        {section.actionText.loading}
+                      {:else}
+                        <Trash2 class="mr-2 h-3 w-3" />
+                        {section.actionText.normal}
+                      {/if}
+                    </Button>
+                  </div>
                 {/each}
-              </Table.Body>
-            </Table.Root>
-          {/if}
-        </Card.Content>
-      </Card.Root>
+              </div>
+
+              <!-- Desktop Table View -->
+              <div class="hidden overflow-x-auto sm:block">
+                <Table.Root>
+                  <Table.Header>
+                    <Table.Row>
+                      <Table.Head class="min-w-[200px]">Title</Table.Head>
+                      <Table.Head class="w-[80px]">Type</Table.Head>
+                      <Table.Head class="hidden w-[140px] lg:table-cell"
+                        >Start Date</Table.Head
+                      >
+                      <Table.Head class="hidden w-[140px] lg:table-cell"
+                        >End Date</Table.Head
+                      >
+                      <Table.Head class="hidden w-[120px] md:table-cell"
+                        >Created</Table.Head
+                      >
+                      <Table.Head class="w-[100px]">Actions</Table.Head>
+                    </Table.Row>
+                  </Table.Header>
+                  <Table.Body>
+                    {#each section.data as notification (notification.id)}
+                      <Table.Row>
+                        <Table.Cell class="max-w-0">
+                          <div class="min-w-0">
+                            <div class="flex items-center gap-2">
+                              <div class="truncate font-medium">
+                                {notification.title}
+                              </div>
+                              {#if notification.is_test}
+                                <Badge variant="secondary" class="text-xs">
+                                  <FlaskConical class="mr-1 h-3 w-3" />
+                                  Test
+                                </Badge>
+                              {/if}
+                            </div>
+                            <div
+                              class="text-muted-foreground mt-1 truncate text-sm"
+                            >
+                              {notification.message}
+                            </div>
+                          </div>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Badge variant="outline" class="text-xs">
+                            {notification.type === 'system'
+                              ? 'System'
+                              : 'Playlist'}
+                          </Badge>
+                        </Table.Cell>
+                        <Table.Cell class="hidden lg:table-cell">
+                          <span class="text-xs"
+                            >{formatDateTime(notification.start_datetime)}</span
+                          >
+                        </Table.Cell>
+                        <Table.Cell class="hidden lg:table-cell">
+                          <span class="text-xs"
+                            >{formatDateTime(notification.end_datetime)}</span
+                          >
+                        </Table.Cell>
+                        <Table.Cell class="hidden md:table-cell">
+                          <span class="text-xs"
+                            >{formatDateTime(notification.created_at)}</span
+                          >
+                        </Table.Cell>
+                        <Table.Cell>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            disabled={cancellingId === notification.id}
+                            onclick={() => cancelNotification(notification.id)}
+                            class="whitespace-nowrap"
+                          >
+                            {#if cancellingId === notification.id}
+                              <Loader class="h-3 w-3 animate-spin sm:mr-2" />
+                              <span class="hidden sm:inline"
+                                >{section.actionText.loading}</span
+                              >
+                            {:else}
+                              <Trash2 class="h-3 w-3 sm:mr-2" />
+                              <span class="hidden sm:inline"
+                                >{section.actionText.normal}</span
+                              >
+                            {/if}
+                          </Button>
+                        </Table.Cell>
+                      </Table.Row>
+                    {/each}
+                  </Table.Body>
+                </Table.Root>
+              </div>
+            {/if}
+          </Card.Content>
+        </Card.Root>
+      {/each}
     </div>
   </div>
 </div>

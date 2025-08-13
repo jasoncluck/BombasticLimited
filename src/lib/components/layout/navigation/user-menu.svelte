@@ -40,7 +40,7 @@
   const navigationState = getNavigationState();
 
   const {
-    data: { notifications },
+    data: { userNotifications },
   } = $derived(navigationState);
 
   const { canHover, isSm } = $derived(mediaQueryState);
@@ -115,7 +115,7 @@
 {/if}
 
 <!-- Notifications Bell -->
-{#if session && notifications.length > 0}
+{#if session && userNotifications.length > 0}
   <NotificationBell {supabase} {session} bind:openNotificationDrawer />
 {/if}
 

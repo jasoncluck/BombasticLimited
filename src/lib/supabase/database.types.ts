@@ -41,6 +41,7 @@ export type Database = {
           created_by: string | null
           end_datetime: string | null
           id: number
+          is_test: boolean
           message: string
           metadata: Json | null
           start_datetime: string | null
@@ -54,6 +55,7 @@ export type Database = {
           created_by?: string | null
           end_datetime?: string | null
           id?: number
+          is_test?: boolean
           message: string
           metadata?: Json | null
           start_datetime?: string | null
@@ -67,6 +69,7 @@ export type Database = {
           created_by?: string | null
           end_datetime?: string | null
           id?: number
+          is_test?: boolean
           message?: string
           metadata?: Json | null
           start_datetime?: string | null
@@ -450,6 +453,7 @@ export type Database = {
           created_by: string | null
           dismissed: boolean | null
           end_datetime: string | null
+          is_test: boolean | null
           message: string | null
           metadata: Json | null
           notification_created_at: string | null
@@ -482,6 +486,7 @@ export type Database = {
         Args: {
           notification_action_url?: string
           notification_end_datetime?: string
+          notification_is_test?: boolean
           notification_message: string
           notification_metadata?: Json
           notification_start_datetime?: string
@@ -495,6 +500,7 @@ export type Database = {
         Args: {
           notification_action_url?: string
           notification_end_datetime?: string
+          notification_is_test?: boolean
           notification_message: string
           notification_metadata?: Json
           notification_start_datetime?: string
@@ -728,6 +734,7 @@ export type Database = {
           assigned_at: string
           dismissed: boolean
           end_datetime: string
+          is_test: boolean
           message: string
           metadata: Json
           notification_created_at: string
