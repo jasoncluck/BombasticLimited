@@ -6,7 +6,6 @@
   import { COLLAPSED_SIDEBAR_SIZE } from '$lib/constants/layout';
   import LoadingOverlay from './loading-overlay.svelte';
   import type { PageState } from '$lib/state/page.svelte.js';
-  import type { LayoutState } from '$lib/state/layout.svelte.js';
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
   import type { Snippet } from 'svelte';
@@ -17,7 +16,6 @@
     session,
     refreshSidebar,
     pageState,
-    layoutState,
     isNavigatingToContent,
     children,
   }: {
@@ -25,15 +23,14 @@
     session: Session | null;
     refreshSidebar: () => Promise<void>;
     pageState: PageState;
-    layoutState: LayoutState;
     isNavigatingToContent: boolean;
     children: Snippet;
   } = $props();
 
   const sidebarState = getSidebarState();
 
-  // Use the layout state's sidebar collapsed state
-  const isSidebarCollapsed = $derived(layoutState.isSidebarCollapsed);
+  // Use the navigation state's sidebar collapsed state
+  const isSidebarCollapsed = $derived(sidebarState.isSidebarCollapsed);
 </script>
 
 <Resizable.PaneGroup
@@ -48,8 +45,8 @@
     maxSize={50}
     collapsedSize={COLLAPSED_SIDEBAR_SIZE}
     collapsible={true}
-    onCollapse={() => layoutState.setSidebarCollapsed(true)}
-    onExpand={() => layoutState.setSidebarCollapsed(false)}
+    onCollapse={() => sidebarState.setSidebarCollapsed(true)}
+    onExpand={() => sidebarState.setSidebarCollapsed(false)}
     class="pane @container hidden h-full grow flex-col sm:ml-2 sm:flex {isSidebarCollapsed
       ? 'max-w-[75px] min-w-[75px]'
       : 'min-w-[200px]'}"
@@ -77,11 +74,11 @@
   <!-- Resizable Handle -->
   <Resizable.Handle
     onDraggingChange={(isDragging) =>
-      (layoutState.isDraggingDivider = isDragging)}
+      (sidebarState.isDraggingDivider = isDragging)}
     draggable={true}
     class="bg-background end-[2px] hidden w-1 after:h-[calc(100%-16px)] after:transition 
     after:duration-300 after:ease-out sm:ml-1 sm:flex
-    {layoutState.isDraggingDivider
+    {sidebarState.isDraggingDivider
       ? 'after:bg-foreground after:w-[1px]'
       : 'hover:after:bg-muted-foreground after:w-[1px]'}"
   />

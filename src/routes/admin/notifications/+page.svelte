@@ -6,25 +6,109 @@
   import * as Select from '$lib/components/ui/select';
   import * as Card from '$lib/components/ui/card';
   import { Badge } from '$lib/components/ui/badge';
-  import { Send, TestTube, RotateCcw, Loader } from '@lucide/svelte';
+  import {
+    Send,
+    TestTube,
+    RotateCcw,
+    Loader,
+    Trash2,
+    Clock,
+    CheckCircle,
+    XCircle,
+  } from '@lucide/svelte';
   import { showToast } from '$lib/state/notifications.svelte';
   import { superForm, type SuperValidated } from 'sveltekit-superforms';
   import { zodClient, type Infer } from 'sveltekit-superforms/adapters';
   import * as Form from '$lib/components/ui/form';
-  import { writable } from 'svelte/store';
+  import * as Table from '$lib/components/ui/table';
+  import DatetimeInput from '$lib/components/ui/datetime-input.svelte';
   import {
     adminNotificationSchema,
     type AdminNotificationSchema,
   } from './admin-notifications-schema';
   import users from '@lucide/svelte/icons/users';
   import type { NotificationType } from '$lib/supabase/notifications';
+  import type { Database } from '$lib/supabase/database.types';
+  import { getNavigationState } from '$lib/state/navigation.svelte';
+
+  type NotificationRow = Database['public']['Tables']['notifications']['Row'];
 
   let {
     data,
-  }: { data: { form: SuperValidated<Infer<AdminNotificationSchema>> } } =
-    $props();
+  }: {
+    data: {
+      form: SuperValidated<Infer<AdminNotificationSchema>>;
+      pendingNotifications: NotificationRow[];
+      sentNotifications: NotificationRow[];
+      expiredNotifications: NotificationRow[];
+      users: { id: string; username: string | null }[];
+    };
+  } = $props();
+
+  const navigationState = getNavigationState();
+
+  let isSubmitting = $state(false);
+  let testSubmitting = $state(false);
 
   let currentAction = $state<string>('');
+  let cancellingId = $state<string | null>(null);
+
+  async function cancelNotification(notificationId: string) {
+    if (cancellingId) return; // Prevent multiple concurrent cancellations
+
+    cancellingId = notificationId;
+
+    try {
+      const formData = new FormData();
+      formData.append('notificationId', notificationId);
+
+      const response = await fetch('?/cancelNotification', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        showToast('Notification canceled successfully', 'success');
+        // Refresh the page to update the lists
+        navigationState.refreshData();
+        window.location.reload();
+      } else {
+        showToast('Failed to cancel notification', 'error');
+      }
+    } catch (error) {
+      console.error('Error canceling notification:', error);
+      showToast('Failed to cancel notification', 'error');
+    } finally {
+      cancellingId = null;
+    }
+  }
+
+  function formatDateTime(dateTimeString: string | null): string {
+    if (!dateTimeString) return 'N/A';
+
+    try {
+      return new Date(dateTimeString).toLocaleString();
+    } catch (error) {
+      return 'Invalid Date';
+    }
+  }
+
+  function getNotificationStatus(notification: any): {
+    text: string;
+    variant: 'default' | 'secondary' | 'destructive' | 'outline';
+  } {
+    const now = new Date().toISOString();
+
+    if (notification.start_datetime && notification.start_datetime > now) {
+      return { text: 'Pending', variant: 'outline' };
+    }
+
+    if (notification.end_datetime && notification.end_datetime <= now) {
+      return { text: 'Expired', variant: 'destructive' };
+    }
+
+    return { text: 'Active', variant: 'default' };
+  }
 
   const notificationForm = superForm(data.form, {
     validators: zodClient(adminNotificationSchema),
@@ -65,22 +149,11 @@
           showToast(`❌ Error: ${errorMessages[0]}`, 'error');
         }
       }
+      navigationState.refreshData();
     },
   });
 
-  let isSubmitting = $state(false);
-  let testSubmitting = $state(false);
-
-  const { form: formData, enhance } = notificationForm || {
-    form: writable({
-      type: 'system',
-      title: '',
-      message: '',
-      startDatetime: '',
-      endDatetime: '',
-    }),
-    enhance: () => ({ destroy: () => {} }),
-  };
+  const { form: formData, enhance } = notificationForm;
 
   const notificationTypes = [
     { value: 'system', label: 'System' },
@@ -103,7 +176,7 @@
   > = {
     welcome: {
       type: 'system',
-      title: 'Welcome to Bombastic!',
+      title: 'Upcoming Event',
       message:
         'Thanks for being part of our community! Explore playlists and discover great content.',
     },
@@ -295,20 +368,14 @@
               <Form.Field form={notificationForm} name="startDatetime">
                 <Form.Control>
                   {#snippet children({ props })}
-                    <Label for="startDatetime"
-                      >Start Date & Time (Optional)</Label
-                    >
-                    <Input
+                    <DatetimeInput
                       {...props}
                       id="startDatetime"
                       name="startDatetime"
-                      type="datetime-local"
+                      label="Start Date & Time (Optional)"
                       bind:value={$formData.startDatetime}
+                      description="When notification should start being visible (default: immediately)"
                     />
-                    <p class="text-muted-foreground text-xs">
-                      When notification should start being visible (default:
-                      immediately)
-                    </p>
                   {/snippet}
                 </Form.Control>
                 <Form.FieldErrors class="text-xs" />
@@ -318,18 +385,14 @@
               <Form.Field form={notificationForm} name="endDatetime">
                 <Form.Control>
                   {#snippet children({ props })}
-                    <Label for="endDatetime">End Date & Time (Optional)</Label>
-                    <Input
+                    <DatetimeInput
                       {...props}
                       id="endDatetime"
                       name="endDatetime"
-                      type="datetime-local"
+                      label="End Date & Time (Optional)"
                       bind:value={$formData.endDatetime}
+                      description="When notification should automatically expire (default: never expires)"
                     />
-                    <p class="text-muted-foreground text-xs">
-                      When notification should automatically expire (default:
-                      never expires)
-                    </p>
                   {/snippet}
                 </Form.Control>
                 <Form.FieldErrors class="text-xs" />
@@ -421,7 +484,7 @@
         <div>
           <h3 class="mb-3 text-sm font-medium">User Stats</h3>
           <p class="text-muted-foreground text-sm">
-            Users in system: {users.length}
+            Users in system: {data.users?.length || 0}
           </p>
         </div>
 
@@ -439,5 +502,225 @@
         </div>
       </Card.Content>
     </Card.Root>
+  </div>
+
+  <!-- Notification Management Lists -->
+  <div class="mt-8">
+    <h2 class="mb-6 text-2xl font-bold">Notification Management</h2>
+
+    <div class="space-y-8">
+      <!-- Pending Notifications -->
+      <Card.Root>
+        <Card.Header>
+          <Card.Title class="flex items-center gap-2">
+            <Clock class="h-5 w-5 text-yellow-500" />
+            Pending Notifications ({data.pendingNotifications.length})
+          </Card.Title>
+          <p class="text-muted-foreground text-sm">
+            Notifications scheduled to be sent in the future
+          </p>
+        </Card.Header>
+        <Card.Content>
+          {#if data.pendingNotifications.length === 0}
+            <p class="text-muted-foreground py-4">No pending notifications</p>
+          {:else}
+            <Table.Root>
+              <Table.Header>
+                <Table.Row>
+                  <Table.Head>Title</Table.Head>
+                  <Table.Head>Start Date</Table.Head>
+                  <Table.Head>End Date</Table.Head>
+                  <Table.Head>Created</Table.Head>
+                  <Table.Head>Actions</Table.Head>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {#each data.pendingNotifications as notification (notification.id)}
+                  <Table.Row>
+                    <Table.Cell>
+                      <div>
+                        <div class="font-medium">{notification.title}</div>
+                        <div
+                          class="text-muted-foreground max-w-md truncate text-sm"
+                        >
+                          {notification.message}
+                        </div>
+                      </div>
+                    </Table.Cell>
+                    <Table.Cell
+                      >{formatDateTime(notification.start_datetime)}</Table.Cell
+                    >
+                    <Table.Cell
+                      >{formatDateTime(notification.end_datetime)}</Table.Cell
+                    >
+                    <Table.Cell
+                      >{formatDateTime(notification.created_at)}</Table.Cell
+                    >
+                    <Table.Cell>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        disabled={cancellingId === notification.id}
+                        onclick={() => cancelNotification(notification.id)}
+                      >
+                        {#if cancellingId === notification.id}
+                          <Loader class="mr-2 h-3 w-3 animate-spin" />
+                          Canceling...
+                        {:else}
+                          <Trash2 class="mr-2 h-3 w-3" />
+                          Cancel
+                        {/if}
+                      </Button>
+                    </Table.Cell>
+                  </Table.Row>
+                {/each}
+              </Table.Body>
+            </Table.Root>
+          {/if}
+        </Card.Content>
+      </Card.Root>
+
+      <!-- Sent/Active Notifications -->
+      <Card.Root>
+        <Card.Header>
+          <Card.Title class="flex items-center gap-2">
+            <CheckCircle class="h-5 w-5 text-green-500" />
+            Active Notifications ({data.sentNotifications.length})
+          </Card.Title>
+          <p class="text-muted-foreground text-sm">
+            Notifications currently visible to users
+          </p>
+        </Card.Header>
+        <Card.Content>
+          {#if data.sentNotifications.length === 0}
+            <p class="text-muted-foreground py-4">No active notifications</p>
+          {:else}
+            <Table.Root>
+              <Table.Header>
+                <Table.Row>
+                  <Table.Head>Title</Table.Head>
+                  <Table.Head>Start Date</Table.Head>
+                  <Table.Head>End Date</Table.Head>
+                  <Table.Head>Created</Table.Head>
+                  <Table.Head>Actions</Table.Head>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {#each data.sentNotifications as notification (notification.id)}
+                  <Table.Row>
+                    <Table.Cell>
+                      <div>
+                        <div class="font-medium">{notification.title}</div>
+                        <div
+                          class="text-muted-foreground max-w-md truncate text-sm"
+                        >
+                          {notification.message}
+                        </div>
+                      </div>
+                    </Table.Cell>
+                    <Table.Cell
+                      >{formatDateTime(notification.start_datetime)}</Table.Cell
+                    >
+                    <Table.Cell
+                      >{formatDateTime(notification.end_datetime)}</Table.Cell
+                    >
+                    <Table.Cell
+                      >{formatDateTime(notification.created_at)}</Table.Cell
+                    >
+                    <Table.Cell>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        disabled={cancellingId === notification.id}
+                        onclick={() => cancelNotification(notification.id)}
+                      >
+                        {#if cancellingId === notification.id}
+                          <Loader class="mr-2 h-3 w-3 animate-spin" />
+                          Canceling...
+                        {:else}
+                          <Trash2 class="mr-2 h-3 w-3" />
+                          Remove
+                        {/if}
+                      </Button>
+                    </Table.Cell>
+                  </Table.Row>
+                {/each}
+              </Table.Body>
+            </Table.Root>
+          {/if}
+        </Card.Content>
+      </Card.Root>
+
+      <!-- Expired Notifications -->
+      <Card.Root>
+        <Card.Header>
+          <Card.Title class="flex items-center gap-2">
+            <XCircle class="h-5 w-5 text-red-500" />
+            Expired Notifications ({data.expiredNotifications.length})
+          </Card.Title>
+          <p class="text-muted-foreground text-sm">
+            Notifications that have passed their expiration date
+          </p>
+        </Card.Header>
+        <Card.Content>
+          {#if data.expiredNotifications.length === 0}
+            <p class="text-muted-foreground py-4">No expired notifications</p>
+          {:else}
+            <Table.Root>
+              <Table.Header>
+                <Table.Row>
+                  <Table.Head>Title</Table.Head>
+                  <Table.Head>Start Date</Table.Head>
+                  <Table.Head>End Date</Table.Head>
+                  <Table.Head>Created</Table.Head>
+                  <Table.Head>Actions</Table.Head>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {#each data.expiredNotifications as notification (notification.id)}
+                  <Table.Row>
+                    <Table.Cell>
+                      <div>
+                        <div class="font-medium">{notification.title}</div>
+                        <div
+                          class="text-muted-foreground max-w-md truncate text-sm"
+                        >
+                          {notification.message}
+                        </div>
+                      </div>
+                    </Table.Cell>
+                    <Table.Cell
+                      >{formatDateTime(notification.start_datetime)}</Table.Cell
+                    >
+                    <Table.Cell
+                      >{formatDateTime(notification.end_datetime)}</Table.Cell
+                    >
+                    <Table.Cell
+                      >{formatDateTime(notification.created_at)}</Table.Cell
+                    >
+                    <Table.Cell>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        disabled={cancellingId === notification.id}
+                        onclick={() => cancelNotification(notification.id)}
+                      >
+                        {#if cancellingId === notification.id}
+                          <Loader class="mr-2 h-3 w-3 animate-spin" />
+                          Removing...
+                        {:else}
+                          <Trash2 class="mr-2 h-3 w-3" />
+                          Remove
+                        {/if}
+                      </Button>
+                    </Table.Cell>
+                  </Table.Row>
+                {/each}
+              </Table.Body>
+            </Table.Root>
+          {/if}
+        </Card.Content>
+      </Card.Root>
+    </div>
   </div>
 </div>

@@ -11,23 +11,27 @@
   } from '$lib/supabase/notifications';
   import { createSafeHtml } from '$lib/utils/html-sanitizer';
   import FaviconIcon from '$lib/components/icons/favicon-icon.svelte';
-  import { invalidate } from '$app/navigation';
   import { slide, fade } from 'svelte/transition';
   import { quintOut } from 'svelte/easing';
+  import { getNavigationState } from '$lib/state/navigation.svelte';
+  import Loader from '../loader.svelte';
 
   let {
-    notifications,
     supabase,
     filterType,
     session,
   }: {
-    notifications: NotificationWithMeta[];
     supabase: SupabaseClient<Database>;
     showActions?: boolean;
     session: Session | null;
     filterType?: NotificationType;
     onNotificationClick?: () => void;
   } = $props();
+
+  const navigationState = getNavigationState();
+  const {
+    data: { notifications },
+  } = $derived(navigationState);
 
   async function handleDelete(notification: NotificationWithMeta) {
     await deleteNotifications({
@@ -36,99 +40,104 @@
       session,
     });
 
-    invalidate('supabase:db:notifications');
+    console.log('refreshing after delete');
+    navigationState.refreshData();
   }
 </script>
 
-<div class="w-full">
-  {#if notifications.length === 0}
-    <!-- Empty state -->
-    <div
-      class="flex flex-col items-center justify-center p-8 text-center"
-      in:fade={{ duration: 300, delay: 150 }}
-    >
-      <Bell class="text-muted-foreground mb-4 h-12 w-12" />
-      <p class="text-muted-foreground">
-        {filterType ? `No ${filterType} notifications` : 'No notifications'}
-      </p>
-    </div>
-  {:else}
-    <!-- Notifications list -->
-    <ScrollArea class="w-full" type="scroll">
-      <div class="space-y-1">
-        {#each notifications as notification (notification.id)}
-          <div
-            class="group hover:bg-muted/50 flex items-start space-x-3 p-3 transition-colors
+{#if !notifications}
+  <Loader variant="block" />
+{:else}
+  <div class="w-full overflow-hidden">
+    {#if notifications.length === 0}
+      <!-- Empty state -->
+      <div
+        class="flex flex-col items-center justify-center p-8 text-center"
+        in:fade={{ duration: 300, delay: 150 }}
+      >
+        <Bell class="text-muted-foreground mb-4 h-12 w-12" />
+        <p class="text-muted-foreground">
+          {filterType ? `No ${filterType} notifications` : 'No notifications'}
+        </p>
+      </div>
+    {:else}
+      <!-- Notifications list -->
+      <ScrollArea type="scroll">
+        <div class="space-y-1">
+          {#each notifications as notification (notification.id)}
+            <div
+              class="group hover:bg-muted/50 flex items-start space-x-3 p-3 transition-colors
                 {!notification.read ? 'bg-muted/20' : ''}"
-            in:slide={{ duration: 300, easing: quintOut }}
-            out:slide={{ duration: 250, easing: quintOut }}
-          >
-            <!-- Icon -->
-            <div class="mt-1 flex-shrink-0">
-              <div
-                class="bg-muted flex h-8 w-8 items-center justify-center rounded-full"
-              >
-                {#if notification.type === 'system'}
-                  <FaviconIcon class="h-4 w-4" />
-                {:else}
-                  <Bell class="h-4 w-4 text-gray-500" />
+              in:slide={{ duration: 300, easing: quintOut }}
+              out:slide={{ duration: 250, easing: quintOut }}
+            >
+              <!-- Icon -->
+              <div class="mt-1 flex-shrink-0">
+                <div
+                  class="bg-muted flex h-8 w-8 items-center justify-center rounded-full"
+                >
+                  {#if notification.type === 'system'}
+                    <FaviconIcon class="h-4 w-4" />
+                  {:else}
+                    <Bell class="h-4 w-4 text-gray-500" />
+                  {/if}
+                </div>
+                {#if !notification.read}
+                  <div
+                    class="bg-primary absolute -mt-1 -ml-1 h-3 w-3 rounded-full"
+                  ></div>
                 {/if}
               </div>
-              {#if !notification.read}
-                <div
-                  class="bg-primary absolute -mt-1 -ml-1 h-3 w-3 rounded-full"
-                ></div>
-              {/if}
-            </div>
 
-            <!-- Content -->
-            <div class="min-w-0 flex-1">
-              <div class="flex items-start justify-between">
-                <div class="flex-1">
-                  <p
-                    class="text-sm leading-tight font-medium {!notification.read
-                      ? 'font-semibold'
-                      : ''}"
-                  >
-                    {notification.title}
-                  </p>
-                  <div
-                    class="text-muted-foreground [&_b]:text-foreground [&_strong]:text-foreground
-                    [&_a]:text-primary [&_a]:decoration-primary/30
-                    [&_a]:hover:text-primary [&_a]:hover:decoration-primary/50 mt-1
-                    text-sm leading-relaxed [&_a]:inline-block [&_a]:break-words [&_a]:underline
-                    [&_a]:transition-colors
-                     [&_b]:font-semibold [&_em]:italic [&_i]:italic [&_strong]:font-semibold [&_u]:underline"
-                  >
-                    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-                    {@html createSafeHtml(notification.message)}
+              <!-- Content -->
+              <div class="min-w-0 flex-1">
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <p
+                      class="text-sm leading-tight font-medium {!notification.read
+                        ? 'font-semibold'
+                        : ''}"
+                    >
+                      {notification.title}
+                    </p>
+                    <div
+                      class="text-muted-foreground [&_b]:text-foreground [&_strong]:text-foreground
+                        [&_a]:text-primary [&_a]:decoration-primary/30
+                        [&_a]:hover:text-primary [&_a]:hover:decoration-primary/50 mt-1
+                        text-sm leading-relaxed [&_a]:inline-block [&_a]:cursor-pointer [&_a]:break-words
+                        [&_a]:transition-colors
+                        [&_b]:font-semibold [&_em]:italic [&_i]:italic [&_strong]:font-semibold [&_u]:underline"
+                    >
+                      <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+                      {@html createSafeHtml(notification.message)}
+                    </div>
+
+                    <div class="mt-2 flex items-center space-x-2">
+                      <span class="text-muted-foreground text-xs">
+                        {notification.formatted_time}
+                      </span>
+                    </div>
                   </div>
 
-                  <div class="mt-2 flex items-center space-x-2">
-                    <span class="text-muted-foreground text-xs">
-                      {notification.formatted_time}
-                    </span>
+                  <!-- Actions -->
+                  <div class="ml-2 flex items-center space-x-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      class="ghost-button-minimal text-muted-foreground h-6 w-6 p-0 opacity-60 transition-opacity hover:text-red-500 hover:opacity-100"
+                      onclick={() => handleDelete(notification)}
+                      title="Remove notification"
+                    >
+                      <X class="h-3 w-3" />
+                      <span class="sr-only"> Remove notification </span>
+                    </Button>
                   </div>
-                </div>
-
-                <!-- Actions -->
-                <div class="ml-2 flex items-center space-x-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    class="ghost-button-minimal text-muted-foreground h-6 w-6 p-0 opacity-60 transition-opacity hover:text-red-500 hover:opacity-100"
-                    onclick={() => handleDelete(notification)}
-                    title="Remove notification"
-                  >
-                    <X class="h-3 w-3" />
-                    <span class="sr-only"> Remove notification </span>
-                  </Button>
                 </div>
               </div>
             </div>
-          </div>
-        {/each}
-      </div>
-    </ScrollArea>
-  {/if}
-</div>
+          {/each}
+        </div>
+      </ScrollArea>
+    {/if}
+  </div>
+{/if}

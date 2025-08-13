@@ -51,6 +51,15 @@ export interface NotificationWithMeta extends Notification {
   is_new?: boolean;
 }
 
+export interface NotificationPreferences {
+  id: string;
+  user_id: string;
+  email_notifications: boolean;
+  push_notifications: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface NotificationCounts {
   total: number;
   unread: number;
@@ -58,7 +67,7 @@ export interface NotificationCounts {
 }
 
 export interface CreateNotificationParams {
-  user_id: string;
+  user_id?: string;
   type: NotificationType;
   title: string;
   message: string;
@@ -120,12 +129,12 @@ export async function getNotifications({
   session: Session | null;
   filters?: NotificationFilters;
 }): Promise<{
-  data: NotificationWithMeta[];
+  notifications: NotificationWithMeta[];
   error: PostgrestError | null;
   count?: number;
 }> {
   if (!session?.user.id) {
-    return { data: [], error: null, count: 0 };
+    return { notifications: [], error: null, count: 0 };
   }
 
   let query = supabase
@@ -158,7 +167,7 @@ export async function getNotifications({
   const { data, error, count } = await query;
 
   if (error) {
-    return { data: [], error };
+    return { notifications: [], error };
   }
 
   // Format the notifications with metadata
@@ -172,7 +181,7 @@ export async function getNotifications({
     })
   );
 
-  return { data: formattedData, error: null, count: count || 0 };
+  return { notifications: formattedData, error: null, count: count || 0 };
 }
 
 /**
@@ -295,20 +304,16 @@ export async function createNotification({
     end_datetime?: string;
   };
 }): Promise<{ data: string | null; error: PostgrestError | null }> {
-  const { data, error } = await supabase
-    .from('notifications')
-    .insert({
-      user_id: params.user_id,
-      type: params.type,
-      title: params.title,
-      message: params.message,
-      metadata: params.metadata || {},
-      action_url: params.action_url,
-      start_datetime: params.start_datetime || new Date().toISOString(),
-      end_datetime: params.end_datetime || null,
-    })
-    .select('id')
-    .single();
+  const { data, error } = await supabase.rpc('create_notification', {
+    target_user_id: params.user_id,
+    notification_message: params.message,
+    notification_title: params.title,
+    notification_type: params.type,
+    notification_end_datetime: params.end_datetime,
+    notification_start_datetime: params.start_datetime,
+    notification_metadata: params.metadata,
+    notification_action_url: params.action_url,
+  });
 
   if (error) {
     console.error(
@@ -318,7 +323,7 @@ export async function createNotification({
     return { data: null, error };
   }
 
-  return { data: data?.id || null, error: null };
+  return { data: data || null, error: null };
 }
 
 /**
@@ -333,15 +338,18 @@ export async function deleteNotifications({
   session: Session | null;
   notificationIds: string[];
 }): Promise<{ error: PostgrestError | null }> {
-  if (!session?.user.id) {
+  console.log(notificationIds);
+  if (!session) {
     return { error: { message: 'User not authenticated' } as PostgrestError };
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('notifications')
     .delete()
-    .eq('user_id', session.user.id)
-    .in('id', notificationIds);
+    .in('id', notificationIds)
+    .select();
+
+  console.log(data);
 
   return { error };
 }
@@ -392,6 +400,25 @@ export async function createNotificationForAllUsers({
   }
 
   return { data, error };
+}
+
+/**
+ * Show a notification toast
+ */
+export function showNotification(
+  message: string,
+  type: 'success' | 'error' | 'warning' = 'warning'
+): void {
+  // This function will delegate to the showToast function
+  import('$lib/state/notifications.svelte.js')
+    .then(({ showToast }) => {
+      showToast(message, type);
+    })
+    .catch((error) => {
+      console.error('Failed to show notification:', error);
+      // Fallback to console
+      console.log(`[${type.toUpperCase()}] ${message}`);
+    });
 }
 
 // Type guards

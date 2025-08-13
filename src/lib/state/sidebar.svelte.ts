@@ -25,6 +25,101 @@ export interface SidebarCookieState {
   defaultSize?: number;
 }
 
+/**
+ * Sidebar configuration interface (from layout pattern)
+ */
+export interface SidebarConfig {
+  searchDebounceMs: number;
+}
+
+/**
+ * Sidebar state interface (following layout pattern)
+ */
+export interface SidebarState {
+  // Core data state
+  data: SidebarData | null;
+  loading: boolean;
+  error: string | null;
+  initialized: boolean;
+
+  // UI State (from layout)
+  isDraggingDivider: boolean;
+  isSidebarCollapsed: boolean;
+
+  // Sidebar state properties
+  collapsed: boolean;
+  openAccountDrawer: boolean;
+
+  // Derived values
+  playlists: Playlist[];
+  userProfile: UserProfile | null;
+  userPlaylistsCount: number;
+
+  // Drag and drop state
+  draggedSourceIndex: number | null;
+  targetSourceIndex: number | null;
+
+  // Source ordering state
+  orderedSources: Source[];
+
+  // Streaming sources state
+  streamingSources: Source[];
+
+  // SSE connection state
+  sseConnected: boolean;
+
+  // Configuration
+  config: SidebarConfig;
+
+  // Sidebar methods (from layout)
+  setSidebarCollapsed: (collapsed: boolean) => void;
+  toggleSidebar: () => void;
+
+  // Cookie methods
+  saveStateToCookie: (collapsed: boolean, defaultSize?: number) => void;
+  getDefaultSizeFromCookie: () => number | undefined;
+  setCollapsed: (collapsed: boolean, defaultSize?: number) => void;
+  toggleCollapsed: () => void;
+
+  // Data methods
+  loadData: () => Promise<void>;
+  loadDataInBackground: () => Promise<void>;
+  refreshData: () => Promise<void>;
+  initialize: () => Promise<() => void>;
+  initializeNonBlocking: () => () => void;
+  initializeEffects: () => void;
+
+  // SSE methods
+  startSSEConnection: () => void;
+  stopSSEConnection: () => void;
+  start: () => void;
+  stop: () => void;
+
+  // Streaming methods
+  updateStreamingSources: (sources: Source[]) => void;
+  isSourceStreaming: (source: Source) => boolean;
+  getStreamingSources: () => Source[];
+
+  // Utility methods
+  getFollowedPlaylists: (session: Session | null) => Playlist[];
+
+  // Validation helpers
+  isDataLoaded: boolean;
+  hasPlaylists: boolean;
+  hasError: boolean;
+  showPlaceholder: boolean;
+
+  // Test helpers
+  setInitialStreamLoadFlag: (value: boolean) => void;
+  getInitialStreamLoadFlag: () => boolean;
+
+  // Cleanup method
+  cleanup: () => void;
+
+  // Backward compatibility
+  setSidebarState: (state: any) => void;
+}
+
 // Key for localStorage to track shown notifications
 const SHOWN_NOTIFICATIONS_KEY = 'bombastic_shown_stream_notifications';
 // How long to remember a notification was shown (24 hours)
@@ -71,12 +166,16 @@ function getShownNotifications(): ShownNotification[] {
   }
 }
 
-export class SidebarStateClass {
+export class SidebarStateClass implements SidebarState {
   data = $state<SidebarData | null>(null);
   loading = $state(true);
   error = $state<string | null>(null);
   #initialized = $state(false);
   #hasLoadedOnce = $state(false); // Track if we've loaded data at least once
+
+  // UI State (from layout pattern)
+  isDraggingDivider = $state(false);
+  isSidebarCollapsed = $state(false);
 
   // Sidebar state properties
   collapsed = $state(false);
@@ -102,9 +201,50 @@ export class SidebarStateClass {
   #sseConnected = $state(false);
   #isInitialStreamLoad = $state(true);
 
+  // Configuration (from layout pattern)
+  config = $state<SidebarConfig>({
+    searchDebounceMs: 250,
+  });
+
   constructor() {
     // Initialize sidebar state from cookie on construction
     this.loadStateFromCookie();
+    // Also initialize sidebar collapsed state from localStorage (from layout pattern)
+    this.loadSidebarStateFromLocalStorage();
+  }
+
+  /**
+   * Load sidebar state from localStorage (from layout pattern)
+   */
+  private loadSidebarStateFromLocalStorage(): void {
+    if (!browser) return;
+
+    try {
+      const saved = localStorage.getItem('bombastic-sidebar-collapsed');
+      if (saved !== null) {
+        this.isSidebarCollapsed = JSON.parse(saved);
+        // Also sync with the collapsed state for consistency
+        this.collapsed = this.isSidebarCollapsed;
+      }
+    } catch (error) {
+      console.error('Failed to load sidebar state from localStorage:', error);
+    }
+  }
+
+  /**
+   * Save sidebar state to localStorage (from layout pattern)
+   */
+  private saveSidebarStateToLocalStorage(collapsed: boolean): void {
+    if (!browser) return;
+
+    try {
+      localStorage.setItem(
+        'bombastic-sidebar-collapsed',
+        JSON.stringify(collapsed)
+      );
+    } catch (error) {
+      console.error('Failed to save sidebar state to localStorage:', error);
+    }
   }
 
   /**
@@ -190,6 +330,20 @@ export class SidebarStateClass {
   toggleCollapsed(): void {
     this.setCollapsed(!this.collapsed);
   }
+
+  /**
+   * Sidebar methods (from layout pattern)
+   */
+  setSidebarCollapsed = (collapsed: boolean): void => {
+    this.isSidebarCollapsed = collapsed;
+    this.collapsed = collapsed; // Keep both states in sync
+    this.saveSidebarStateToLocalStorage(collapsed);
+    this.saveStateToCookie(collapsed);
+  };
+
+  toggleSidebar = (): void => {
+    this.setSidebarCollapsed(!this.isSidebarCollapsed);
+  };
 
   // Initialize effects (should be called when component is mounted)
   initializeEffects() {
@@ -503,6 +657,8 @@ export class SidebarStateClass {
     this.#initialized = false;
     this.#hasLoadedOnce = false;
     this.#isInitialStreamLoad = true;
+    this.isDraggingDivider = false;
+    // Note: Don't reset isSidebarCollapsed or collapsed - they should persist across page refreshes
   }
 
   // Streaming sources management
@@ -551,16 +707,13 @@ export class SidebarStateClass {
   }
 }
 
-// Export the class type for use elsewhere
-export type SidebarState = SidebarStateClass;
-
 const DEFAULT_KEY = '$_sidebar_state';
 
-export function setSidebarState(key = DEFAULT_KEY) {
+export function setSidebarState(key = DEFAULT_KEY): SidebarStateClass {
   const sidebarState = new SidebarStateClass();
   return setContext(key, sidebarState);
 }
 
-export function getSidebarState(key = DEFAULT_KEY) {
+export function getSidebarState(key = DEFAULT_KEY): SidebarState {
   return getContext<SidebarState>(key);
 }

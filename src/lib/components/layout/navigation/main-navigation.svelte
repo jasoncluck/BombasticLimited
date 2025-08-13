@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
   import { House } from '@lucide/svelte';
   import { Button } from '$lib/components/ui/button';
   import SideDrawer from '$lib/components/side-drawer.svelte';
@@ -9,28 +9,52 @@
   import type { Database } from '$lib/supabase/database.types';
   import type { UserProfile } from '$lib/supabase/user-profiles';
   import BrandLogo from '$lib/assets/brand-logo.svelte';
-  import { getLayoutState } from '$lib/state/layout.svelte';
-  import type { NotificationWithMeta } from '$lib/supabase/notifications';
+  import { getNavigationState } from '$lib/state/navigation.svelte';
 
   let {
     userProfile,
-    notifications,
     session,
     supabase,
-    searchQuery = $bindable(),
     openAccountDrawer = $bindable(),
-    openNotificationDrawer = $bindable(),
   }: {
     userProfile: UserProfile | null;
-    notifications: NotificationWithMeta[] | null;
     session: Session | null;
     supabase: SupabaseClient<Database>;
-    searchQuery: string;
     openAccountDrawer: boolean;
-    openNotificationDrawer?: boolean;
   } = $props();
 
-  const layoutState = getLayoutState();
+  const navigationState = getNavigationState();
+
+  // Sync navigation state with current context
+  $effect(() => {
+    navigationState.updateContext({
+      session,
+      userProfile,
+      supabase,
+    });
+  });
+
+  // Sync account drawer state
+  $effect(() => {
+    navigationState.openAccountDrawer = openAccountDrawer;
+  });
+
+  $effect(() => {
+    openAccountDrawer = navigationState.openAccountDrawer;
+  });
+
+  // Update active route when page changes
+  $effect(() => {
+    if ($page?.url?.pathname) {
+      navigationState.updateActiveRoute($page.url.pathname);
+    }
+  });
+
+  // Get navigation items for easier access
+  const homeNavItem = $derived(navigationState.getNavigationItem('home'));
+  const brandLogoNavItem = $derived(
+    navigationState.getNavigationItem('brand-logo')
+  );
 </script>
 
 <nav class="relative m-2 flex items-center p-1" data-testid="main-navigation">
@@ -41,48 +65,48 @@
       <SideDrawer
         {supabase}
         {session}
-        handleLogout={() => layoutState.handleLogout(supabase)}
+        handleLogout={() => navigationState.handleLogout()}
       />
     </div>
 
     <!-- Brand Logo -->
-    <a
-      href="/"
-      data-testid="brand-logo-link"
-      onclick={(e) => {
-        e.preventDefault();
-        searchQuery = '';
-        goto('/', { replaceState: true });
-      }}
-      class="ml-2 hidden transition-opacity duration-200 hover:opacity-80 sm:ml-0 sm:block"
-    >
-      <BrandLogo class="h-8 w-auto" />
-      <span class="sr-only">Bombastic Home</span>
-    </a>
+    {#if brandLogoNavItem && navigationState.config.enableBrandLogo}
+      <a
+        href={brandLogoNavItem.href}
+        data-testid={brandLogoNavItem.testId}
+        onclick={(e) => navigationState.handleNavigation(e, brandLogoNavItem)}
+        class={navigationState.getNavigationButtonClasses(
+          brandLogoNavItem,
+          'ml-2 hidden sm:ml-0 sm:block'
+        )}
+      >
+        <BrandLogo class="h-8 w-auto" />
+        <span class="sr-only">{brandLogoNavItem.label}</span>
+      </a>
+    {/if}
   </div>
 
   <!-- Center Section: Home Button + Search -->
   <div
     class="absolute top-1/2 left-1/2 flex -translate-x-[calc(50%-28px)] -translate-y-1/2 items-center gap-3"
   >
-    <!-- Home Button (Desktop Only) - Now in circular button -->
-    <Button
-      variant="outline"
-      size="icon"
-      class="hidden rounded-full sm:flex"
-      onclick={(e) => {
-        e.preventDefault();
-        searchQuery = '';
-        goto('/', { replaceState: true });
-      }}
-      data-testid="home-link"
-    >
-      <House size={18} />
-      <span class="sr-only">Home</span>
-    </Button>
+    <!-- Home Button (Desktop Only) - Now using navigation state -->
+    {#if homeNavItem && navigationState.config.enableHomeNavigation}
+      <Button
+        variant="outline"
+        size="icon"
+        class="hidden rounded-full sm:flex"
+        onclick={(e) => navigationState.handleNavigation(e, homeNavItem)}
+        data-testid={homeNavItem.testId}
+        disabled={navigationState.isNavigating}
+      >
+        <House size={18} />
+        <span class="sr-only">{homeNavItem.label}</span>
+      </Button>
+    {/if}
 
     <!-- Search Input -->
-    <SearchInput {layoutState} bind:searchQuery />
+    <SearchInput {navigationState} />
   </div>
 
   <!-- Right Section: User Controls -->
@@ -90,12 +114,9 @@
     <div class="flex items-center gap-4">
       <UserMenu
         {userProfile}
-        {notifications}
         {session}
         {supabase}
-        {layoutState}
-        bind:openAccountDrawer
-        bind:openNotificationDrawer
+        bind:openAccountDrawer={navigationState.openAccountDrawer}
       />
     </div>
   </div>

@@ -27,8 +27,6 @@
   import type { Database } from '$lib/supabase/database.types';
   import { onMount } from 'svelte';
   import { enhance } from '$app/forms';
-  import { goto, invalidate } from '$app/navigation';
-  import { Bell } from '@lucide/svelte';
   import * as Dialog from '$lib/components/ui/dialog/index.js';
   import * as Avatar from '$lib/components/ui/avatar';
   import DiscordIcon from '$lib/assets/icons/DiscordIcon.svelte';

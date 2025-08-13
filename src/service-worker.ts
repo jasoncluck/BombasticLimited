@@ -20,6 +20,13 @@ const isTestEnvironment = (): boolean => {
   );
 };
 
+const shouldSkipServiceWorkerCache = (url: URL): boolean => {
+  // Skip service worker caching for API routes that need fresh data
+  const apiRoutesToSkip = ['/api/navigation', '/api/notifications'];
+
+  return apiRoutesToSkip.some((route) => url.pathname.startsWith(route));
+};
+
 const STATIC_CACHE = `bombastic-static-${version}`;
 const DATA_CACHE_AUTH = `bombastic-data-auth-${version}`;
 const DATA_CACHE_ANON = `bombastic-data-anon-${version}`;
@@ -217,6 +224,10 @@ const performBackgroundRefresh = async (): Promise<void> => {
     console.log(
       `SW [${getTimestamp()}]: Starting background refresh cycle (auth: ${authState})`
     );
+    console.log(
+      `SW [${getTimestamp()}]: Tracked routes:`,
+      Array.from(trackedRoutes)
+    );
 
     // Get clients for messaging
     const clients = await sw.clients.matchAll();
@@ -224,11 +235,26 @@ const performBackgroundRefresh = async (): Promise<void> => {
     let refreshedCount = 0;
     const refreshPromises = Array.from(trackedRoutes).map(async (route) => {
       try {
+        // ADD VALIDATION HERE
+        if (!route || typeof route !== 'string' || !route.startsWith('/')) {
+          console.error(
+            `SW [${getTimestamp()}]: Invalid route detected: "${route}" (type: ${typeof route})`
+          );
+          trackedRoutes.delete(route);
+          return;
+        }
+
+        // Log the route being processed
+        console.log(`SW [${getTimestamp()}]: Processing route: "${route}"`);
+
         const cacheKey = getCacheKey(route, authState);
 
         // Check if route is still cached
         const cachedResponse = await dataCache.match(cacheKey);
         if (!cachedResponse) {
+          console.log(
+            `SW [${getTimestamp()}]: Route not cached, skipping: ${route}`
+          );
           return; // Not cached, skip
         }
 
@@ -245,8 +271,18 @@ const performBackgroundRefresh = async (): Promise<void> => {
           }
         }
 
+        // Construct URLs properly
+        const routeUrl = new URL(route, sw.location.origin).toString();
+        const dataUrl = new URL(
+          `${route}/__data.json`,
+          sw.location.origin
+        ).toString();
+
+        console.log(`SW [${getTimestamp()}]: Fetching route: ${routeUrl}`);
+        console.log(`SW [${getTimestamp()}]: Fetching data: ${dataUrl}`);
+
         // Fetch fresh content
-        const freshResponse = await fetch(route, {
+        const freshResponse = await fetch(routeUrl, {
           headers: {
             Accept:
               'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -277,7 +313,7 @@ const performBackgroundRefresh = async (): Promise<void> => {
         refreshedCount++;
 
         // Also refresh the data endpoint
-        const dataResponse = await fetch(`${route}/__data.json`);
+        const dataResponse = await fetch(dataUrl);
         if (dataResponse.ok) {
           const dataCacheKey = getCacheKey(`${route}/__data.json`, authState);
           await dataCache.put(dataCacheKey, dataResponse.clone());
@@ -307,9 +343,16 @@ const performBackgroundRefresh = async (): Promise<void> => {
                 },
               });
             });
-          } catch {
-            // Ignore JSON parsing errors
+          } catch (jsonError) {
+            console.warn(
+              `SW [${getTimestamp()}]: JSON parsing error for ${dataUrl}:`,
+              jsonError
+            );
           }
+        } else {
+          console.warn(
+            `SW [${getTimestamp()}]: Data fetch failed for ${dataUrl}: ${dataResponse.status}`
+          );
         }
 
         console.log(
@@ -345,9 +388,17 @@ const addRouteToTracking = (route: string): void => {
     return;
   }
 
+  // Validate route before adding
+  if (!route || typeof route !== 'string' || !route.startsWith('/')) {
+    console.error(
+      `SW [${getTimestamp()}]: Attempted to add invalid route to tracking: "${route}"`
+    );
+    return;
+  }
+
   trackedRoutes.add(route);
   console.log(
-    `SW [${getTimestamp()}]: Added ${route} to background refresh tracking`
+    `SW [${getTimestamp()}]: Added ${route} to background refresh tracking (total: ${trackedRoutes.size})`
   );
 };
 
@@ -369,7 +420,14 @@ const handleNavigationRequest = async (request: Request): Promise<Response> => {
 
       // Add route to background refresh tracking if it's a main route
       if (MAIN_ROUTE_PATHS.includes(url.pathname) || url.pathname === '/') {
+        console.log(
+          `SW [${getTimestamp()}]: Adding route to tracking: "${url.pathname}"`
+        );
         addRouteToTracking(url.pathname);
+      } else {
+        console.log(
+          `SW [${getTimestamp()}]: Route not in MAIN_ROUTE_PATHS: "${url.pathname}"`
+        );
       }
 
       // Extract data and send to memory cache for __data.json requests
@@ -689,6 +747,12 @@ sw.addEventListener('fetch', (event) => {
     url.origin !== sw.location.origin ||
     !shouldHandleRequest(url)
   ) {
+    return;
+  }
+
+  // NEW: Skip service worker caching for certain API routes
+  if (shouldSkipServiceWorkerCache(url)) {
+    // Let these requests go directly to network without SW intervention
     return;
   }
 

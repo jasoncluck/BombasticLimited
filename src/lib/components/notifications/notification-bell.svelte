@@ -8,37 +8,38 @@
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
-  import {
-    markAsRead,
-    type NotificationWithMeta,
-  } from '$lib/supabase/notifications';
-  import { invalidate } from '$app/navigation';
+  import { markAsRead } from '$lib/supabase/notifications';
+  import { getNavigationState } from '$lib/state/navigation.svelte';
 
   let {
-    notifications,
     supabase,
     session,
     openNotificationDrawer = $bindable(),
   }: {
-    notifications: NotificationWithMeta[];
     supabase: SupabaseClient<Database>;
     session: Session | null;
     openNotificationDrawer?: boolean;
   } = $props();
 
   const mediaQueryState = getMediaQueryState();
+  const navigationState = getNavigationState();
+
+  const {
+    data: { notifications },
+  } = $derived(navigationState);
+
   const { canHover } = $derived(mediaQueryState);
 
-  const notificationIds = $derived(notifications.map((n) => n.id));
+  const notificationIds = $derived(notifications.map((n) => n.id) ?? []);
   const unreadNotifications = $derived(
-    notifications.filter((n) => n.read === false)
+    notifications.filter((n) => n.read === false) ?? []
   );
 
   // Auto-mark all notifications as read when bell menu opens
   async function handleMenuOpen() {
     if (unreadNotifications) {
       await markAsRead({ notificationIds, supabase, session });
-      invalidate('supabase:db:notifications');
+      navigationState.refreshData();
     }
   }
 
@@ -81,7 +82,6 @@
         <NotificationList
           {supabase}
           {session}
-          {notifications}
           onNotificationClick={handleClose}
           showActions={false}
         />
@@ -125,7 +125,6 @@
           <NotificationList
             {supabase}
             {session}
-            {notifications}
             onNotificationClick={handleClose}
             showActions={false}
           />

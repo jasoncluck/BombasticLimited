@@ -1,13 +1,13 @@
 <script lang="ts">
   import Input from '$lib/components/ui/input/input.svelte';
   import Loader from '$lib/components/loader.svelte';
-  import type { LayoutState } from '$lib/state/layout.svelte.js';
+  import type { NavigationState } from '$lib/state/navigation.svelte.js';
 
   let {
-    layoutState,
+    navigationState,
     class: className = 'sm:w-72 w-52',
   }: {
-    layoutState: LayoutState;
+    navigationState: NavigationState;
     class?: string;
   } = $props();
 </script>
@@ -16,10 +16,10 @@
   <Input
     type="search"
     data-testid="search-input"
-    oninput={(e) => layoutState.handleSearch(e)}
+    oninput={(e) => navigationState.handleSearch(e)}
     placeholder="Search"
     class={className}
-    bind:value={layoutState.searchQuery}
+    bind:value={navigationState.searchQuery}
   />
-  <Loader message="" size="sm" visible={layoutState.isSearching} />
+  <Loader message="" size="sm" visible={navigationState.isSearching} />
 </div>

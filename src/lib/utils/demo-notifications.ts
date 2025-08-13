@@ -93,7 +93,7 @@ export function createDemoNotifications(): NotificationWithMeta[] {
  * Create demo notifications for testing
  * NOTE: These are for bell notifications only - no toast popups should be triggered
  */
-export function showDemoToast(type: NotificationType = 'content') {
+export function showDemoToast(type: NotificationType = 'system') {
   // This function is kept for backward compatibility but should not trigger toasts
   // Demo notifications should only appear under the bell icon
   console.log(`Demo ${type} notification created for bell display only`);

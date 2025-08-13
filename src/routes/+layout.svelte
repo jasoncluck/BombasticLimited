@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { invalidate } from '$app/navigation';
   import { Toaster } from '$lib/components/ui/sonner/index.js';
   import { injectSpeedInsights } from '@vercel/speed-insights/sveltekit';
   import Loader from '$lib/components/loader.svelte';
@@ -17,13 +16,14 @@
   import { setMediaQueryState } from '$lib/state/media-query.svelte';
   import { setPlaylistState } from '$lib/state/playlist.svelte';
   import { setPageState } from '$lib/state/page.svelte';
-  import { setLayoutState } from '$lib/state/layout.svelte';
   import { setSourceState } from '$lib/state/source.svelte';
   import { setSidebarState } from '$lib/state/sidebar.svelte';
-  import { setNotificationState } from '$lib/state/notifications.svelte';
+  import { setNavigationState } from '$lib/state/navigation.svelte';
 
   import '../app.css';
   import { setNavigationCacheState } from '$lib/state/navigation-cache/index.js';
+  import { invalidate } from '$app/navigation';
+  import type { Session } from '@supabase/supabase-js';
 
   injectSpeedInsights();
 
@@ -36,30 +36,26 @@
     lastModified,
     cached,
     cacheUserId,
-    notifications,
   } = $derived(data);
 
   // Initialize all state
-  const layoutState = setLayoutState();
   const pageState = setPageState();
   const contentState = setContentState(pageState);
   const mediaQuery = setMediaQueryState();
   const navigationCache = setNavigationCacheState();
   const sidebarState = setSidebarState();
-  setNotificationState();
+  const navigationState = setNavigationState();
 
   setPlaylistState(pageState, contentState, sidebarState);
   setSourceState(pageState);
 
   let openAccountDrawer = $derived(sidebarState.openAccountDrawer);
-  let openNotificationDrawer = $state(false);
 
-  let lastUserState: boolean | null = null;
-  let searchQuery = $state('');
   // Progressive loading states
   let isHydrated = $state(false);
 
-  // Tab visibility state for auth invalidation
+  // Track auth state for visibility change detection
+  let lastKnownAuthState: boolean | null = $state(null);
   let wasTabHidden = $state(false);
 
   // Use custom hooks
@@ -68,7 +64,6 @@
     useNavigation(
       navigationCache,
       pageState,
-      { value: searchQuery },
       etag,
       lastModified,
       cached,
@@ -83,7 +78,7 @@
       navigationCache,
       mediaQuery,
       sidebarState,
-      layoutState,
+      navigationState,
       supabase,
       session,
       etag,
@@ -107,7 +102,7 @@
         content: pageState.createViewportSnapshot(
           pageState.viewportRefs.contentViewportRef
         ),
-        searchQuery,
+        searchQuery: navigationState.searchQuery,
       };
     },
     restore: (restored) => {
@@ -116,7 +111,7 @@
         pageState.viewportRefs.contentViewportRef,
         restored.content
       );
-      searchQuery = restored.searchQuery;
+      navigationState.setSearchQuery(restored.searchQuery);
     },
   };
 
@@ -124,16 +119,98 @@
     await sidebarState.refreshData();
   }
 
-  // Handle tab visibility changes for auth invalidation
-  function handleVisibilityChange() {
+  // Centralized data refresh function with proper ordering
+  async function performDataRefresh(
+    reason: string,
+    includeAuth: boolean = false
+  ) {
+    console.log(includeAuth);
+    try {
+      // Step 1: Invalidate auth first if requested
+      if (includeAuth) {
+        await invalidate('supabase:auth');
+      }
+
+      // Step 2: Refresh sidebar and navigation state concurrently
+      sidebarState.refreshData();
+      navigationState.refreshData();
+    } catch (error) {
+      console.error(`Failed to perform data refresh - ${reason}:`, error);
+    }
+  }
+
+  // Auth state change handler using Supabase events
+  async function handleSupabaseAuthStateChange(
+    event: string,
+    session: Session | null
+  ) {
+    const isAuthenticated = !!session?.user;
+
+    // Update our tracking state
+    lastKnownAuthState = isAuthenticated;
+
+    try {
+      // Update navigation cache status
+      navigationCache.updateAuthStatus();
+
+      // Perform data refresh with auth invalidation to ensure latest session
+      performDataRefresh(`supabase auth: ${event}`, true);
+    } catch (error) {
+      console.error(
+        `Failed to handle Supabase auth state change - ${event}:`,
+        error
+      );
+    }
+  }
+
+  // Enhanced visibility change handler with auth state checking
+  async function handleVisibilityChange() {
     if (document.hidden) {
       // Tab became hidden
       wasTabHidden = true;
-      console.log('Tab hidden - marking for auth refresh on return');
     } else if (wasTabHidden) {
       // Tab became visible again after being hidden
-      console.log('Tab visible again - invalidating auth');
-      invalidate('supabase:auth');
+
+      let authStateChanged = false;
+
+      try {
+        // Get current session from Supabase to check if auth state changed
+        const {
+          data: { session: currentSession },
+        } = await supabase.auth.getSession();
+        const currentAuthState = !!currentSession?.user;
+
+        // Check if auth state has changed
+        if (lastKnownAuthState !== currentAuthState) {
+          console.log(
+            `Auth state changed while tab was hidden: ${lastKnownAuthState} -> ${currentAuthState}`
+          );
+
+          authStateChanged = true;
+
+          // Update our tracking state
+          lastKnownAuthState = currentAuthState;
+
+          // Update navigation cache status
+          navigationCache.updateAuthStatus();
+        } else {
+          console.log('Auth state unchanged');
+        }
+      } catch (error) {
+        console.error(
+          'Failed to check auth state on visibility change:',
+          error
+        );
+        // If we can't check auth state, assume it might have changed for safety
+        authStateChanged = true;
+      }
+
+      // Always refresh navigation and sidebar data, but only invalidate auth if it changed
+      await performDataRefresh(
+        `visibility change${authStateChanged ? ' - auth state changed' : ''}`,
+        authStateChanged
+      );
+
       wasTabHidden = false;
     }
   }
@@ -145,36 +222,38 @@
 
   // Setup navigation hooks
   $effect(() => {
-    navigation.setupNavigationHooks(userProfile, session);
+    navigation.setupNavigationHooks(session);
   });
 
-  // Single effect to handle auth state changes
+  // Initialize lastKnownAuthState when session changes
   $effect(() => {
-    if (navigationCache && navigationCache.initialized) {
-      const isCurrentlyAuthenticated = !!session?.user;
-
-      console.log(
-        'Layout effect - user object:',
-        session?.user ? 'present' : 'null'
-      );
-      console.log(
-        'Layout effect - isCurrentlyAuthenticated:',
-        isCurrentlyAuthenticated
-      );
-      console.log('Layout effect - lastUserState:', lastUserState);
-
-      // Only update auth status if state actually changed
-      if (lastUserState !== isCurrentlyAuthenticated) {
-        console.log(
-          `Layout: Auth state changed from ${lastUserState} to ${isCurrentlyAuthenticated}`
-        );
-
-        navigationCache.updateAuthStatus();
-        lastUserState = isCurrentlyAuthenticated;
-      } else {
-        console.log('Layout: Auth state unchanged, skipping update');
+    if (isHydrated) {
+      const currentAuthState = !!session?.user;
+      if (lastKnownAuthState === null) {
+        // Initialize on first run
+        lastKnownAuthState = currentAuthState;
+        console.log('Initialized auth state tracking:', currentAuthState);
       }
     }
+  });
+
+  // 5-minute periodic sync interval
+  $effect(() => {
+    if (!session || !isHydrated) return;
+
+    console.log('Setting up 5-minute sync interval');
+
+    const interval = setInterval(() => {
+      // Only sync if tab is visible and user is authenticated
+      if (!document.hidden && session?.user) {
+        performDataRefresh('5-minute interval', false);
+      }
+    }, 300000); // 5 minutes = 300,000ms
+
+    return () => {
+      console.log('Cleaning up 5-minute sync interval');
+      clearInterval(interval);
+    };
   });
 
   // Progressive initialization with proper async handling
@@ -182,8 +261,7 @@
     // Mark as hydrated immediately
     isHydrated = true;
 
-    // Set up visibility change listener for auth invalidation
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    const navigationCleanup = navigationState.initializeNonBlocking();
 
     // Initialize media queries immediately (fast, synchronous)
     const mediaCleanup = mediaQuery.initialize();
@@ -205,11 +283,34 @@
         console.error('Failed to initialize layout effects:', error);
       });
 
+    // Set up Supabase auth state change listener
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        handleSupabaseAuthStateChange(event, session);
+      }
+    );
+
+    // Set up visibility change listener for data refresh and auth state checking
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Log initial setup
+    console.log(
+      'Layout initialized with Supabase auth events, visibility-based data refresh, and 5-minute sync'
+    );
+
     // Return cleanup function
     return () => {
+      // Clean up Supabase auth listener
+      if (authListener?.subscription) {
+        authListener.subscription.unsubscribe();
+      }
+
       // Clean up visibility change listener
       document.removeEventListener('visibilitychange', handleVisibilityChange);
 
+      if (navigationCleanup && typeof navigationCleanup === 'function') {
+        navigationCleanup();
+      }
       if (mediaCleanup && typeof mediaCleanup === 'function') {
         mediaCleanup();
       }
@@ -231,7 +332,7 @@
   <script src="https://embed.twitch.tv/embed/v1.js"></script>
 </svelte:head>
 
-<div class=" flex h-full flex-col">
+<div class="flex h-full flex-col">
   <!-- Main Content Area with Progressive Loading -->
   {#if !isHydrated}
     <!-- SSR/Initial Load State -->
@@ -242,21 +343,12 @@
     </div>
   {:else}
     <!-- Full UI - sidebar may still be loading data -->
-    <MainNavigation
-      {userProfile}
-      {notifications}
-      {session}
-      {supabase}
-      bind:searchQuery
-      bind:openAccountDrawer
-      bind:openNotificationDrawer
-    />
+    <MainNavigation {userProfile} {session} {supabase} bind:openAccountDrawer />
     <ResizableLayout
       {supabase}
       {session}
       {refreshSidebar}
       {pageState}
-      {layoutState}
       {isNavigatingToContent}
     >
       {@render children()}
