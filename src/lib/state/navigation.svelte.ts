@@ -374,7 +374,6 @@ export class NavigationStateClass implements NavigationState {
       showToast('Logged out successfully', 'success');
 
       // Invalidate all data and let SvelteKit handle the state updates
-      console.log('SHOULD INVALIDATE ALL');
       this.refreshData();
       await invalidateAll();
 
@@ -537,9 +536,6 @@ export class NavigationStateClass implements NavigationState {
       const response = await fetch('/api/navigation');
       if (response.ok) {
         const navigationData = await response.json();
-        console.log('NAV DATA');
-        console.trace();
-        console.log(navigationData);
         this.data = {
           userProfile: navigationData.userProfile ?? null,
           navigationItems: navigationData.navigationItems ?? [],
@@ -586,12 +582,6 @@ export class NavigationStateClass implements NavigationState {
   }
 
   async refreshData(): Promise<void> {
-    // Only refresh if tab is visible to save resources
-    // console.log(tabVisibility.isVisible);
-    // if (!tabVisibility.isVisible) {
-    //   return;
-    // }
-
     await this.loadData();
   }
 

@@ -7,21 +7,21 @@ import { fail, superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { adminNotificationSchema } from './admin-notifications-schema';
 import { redirect, setFlash } from 'sveltekit-flash-message/server';
-import { getProfile } from '$lib/supabase/user-profiles';
 
 export const load: PageServerLoad = async ({
   locals: { supabase, session },
+  depends,
   parent,
 }) => {
+  depends('supabase:db:notifications');
+
   if (!session) {
     throw redirect(302, '/auth/login');
   }
 
-  console.log('BEFORE PROFILE CHECK');
-
   const { userProfile } = await parent();
-  // Check if user is admin
 
+  // Check if user is admin
   if (!userProfile || userProfile?.account_type !== 'admin') {
     throw redirect(302, '/');
   }
@@ -59,11 +59,27 @@ export const load: PageServerLoad = async ({
     (n) => n.end_datetime && n.end_datetime <= now
   );
 
-  // Get all users for testing
-  const { data: users } = await supabase
+  // Get all users for reference
+  const { data: users, error: usersError } = await supabase
     .from('profiles')
     .select('id, username')
+    .limit(50); // Increased limit for better admin visibility
+
+  if (usersError) {
+    console.error('Error fetching users:', usersError);
+  }
+
+  // Get system logs for monitoring (last 10 entries)
+  const { data: systemLogs, error: logsError } = await supabase
+    .from('system_logs')
+    .select('*')
+    .in('event_type', ['notification_removed', 'notification_cleanup'])
+    .order('created_at', { ascending: false })
     .limit(10);
+
+  if (logsError) {
+    console.error('Error fetching system logs:', logsError);
+  }
 
   return {
     users: users || [],
@@ -71,6 +87,7 @@ export const load: PageServerLoad = async ({
     pendingNotifications,
     sentNotifications,
     expiredNotifications,
+    systemLogs: systemLogs || [], // Optional: for admin monitoring
   };
 };
 
@@ -92,38 +109,56 @@ export const actions: Actions = {
 
     const { type, title, message, startDatetime, endDatetime } = form.data;
 
-    const { data, error } = await createNotificationForAllUsers({
-      supabase,
-      params: {
-        type,
-        title,
-        message,
-        metadata: { source: 'admin_panel' },
-        start_datetime: startDatetime,
-        end_datetime: endDatetime,
-      },
-    });
+    try {
+      const { data, error } = await createNotificationForAllUsers({
+        supabase,
+        params: {
+          type,
+          title,
+          message,
+          metadata: {
+            source: 'admin_panel',
+            created_by: session.user.id,
+            created_at: new Date().toISOString(),
+          },
+          start_datetime: startDatetime,
+          end_datetime: endDatetime,
+        },
+      });
 
-    if (error) {
+      if (error) {
+        console.error('Error sending global notification:', error);
+        setFlash(
+          {
+            type: 'error',
+            message: error.message || 'Failed to send notification',
+          },
+          cookies
+        );
+        return fail(500, { form });
+      }
+
+      setFlash(
+        {
+          type: 'success',
+          message: `Global notification sent to ${data} users successfully`,
+        },
+        cookies
+      );
+
+      return { form };
+    } catch (error) {
+      console.error('Unexpected error sending global notification:', error);
       setFlash(
         {
           type: 'error',
-          message: error.message || 'Failed to send notification',
+          message:
+            'An unexpected error occurred while sending the notification',
         },
         cookies
       );
       return fail(500, { form });
     }
-
-    setFlash(
-      {
-        type: 'success',
-        message: `Global notification sent to ${data} users`,
-      },
-      cookies
-    );
-
-    return { form };
   },
 
   sendTestNotification: async ({
@@ -143,98 +178,100 @@ export const actions: Actions = {
 
     const { type, title, message, startDatetime, endDatetime } = form.data;
 
-    const { error } = await createNotification({
-      supabase,
-      params: {
-        type,
-        title,
-        message,
-        metadata: { source: 'admin_test' },
-        start_datetime: startDatetime,
-        end_datetime: endDatetime,
-      },
-    });
+    try {
+      const { error } = await createNotification({
+        supabase,
+        params: {
+          type,
+          title,
+          message,
+          metadata: {
+            source: 'admin_test',
+            created_by: session.user.id,
+            created_at: new Date().toISOString(),
+          },
+          start_datetime: startDatetime,
+          end_datetime: endDatetime,
+        },
+      });
 
-    if (error) {
+      if (error) {
+        console.error('Error sending test notification:', error);
+        setFlash(
+          {
+            type: 'error',
+            message: error.message || 'Failed to send test notification',
+          },
+          cookies
+        );
+        return fail(500, { form });
+      }
+
+      setFlash(
+        {
+          type: 'success',
+          message: 'Test notification sent successfully to your account',
+        },
+        cookies
+      );
+
+      return { form };
+    } catch (error) {
+      console.error('Unexpected error sending test notification:', error);
       setFlash(
         {
           type: 'error',
-          message: error.message || 'Failed to send test notification',
+          message:
+            'An unexpected error occurred while sending the test notification',
         },
         cookies
       );
       return fail(500, { form });
     }
-
-    setFlash(
-      {
-        type: 'success',
-        message: 'Test notification sent successfully',
-      },
-      cookies
-    );
-
-    return { form };
   },
 
-  cancelNotification: async ({
-    request,
-    cookies,
-    locals: { supabase, session },
-  }) => {
+  // Optional: Manual cleanup action for admins
+  manualCleanup: async ({ cookies, locals: { supabase, session } }) => {
     if (!session) {
       return fail(401, { error: 'Not authenticated' });
     }
 
-    // Check if user is admin
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('account_type')
-      .single();
-
-    if (profileError || profile.account_type !== 'admin') {
-      setFlash({ type: 'error', message: 'Not authorized' }, cookies);
-      return fail(403, { error: 'Not authorized' });
-    }
-
-    const formData = await request.formData();
-    const notificationId = formData.get('notificationId')?.toString();
-
-    if (!notificationId) {
-      setFlash(
-        { type: 'error', message: 'Notification ID is required' },
-        cookies
+    try {
+      const { data: deletedCount, error } = await supabase.rpc(
+        'cleanup_expired_notifications'
       );
-      return fail(400, { error: 'Notification ID is required' });
-    }
 
-    // Delete the notification from all users
-    const { error } = await supabase
-      .from('notifications')
-      .delete()
-      .eq('id', notificationId)
-      .eq('type', 'system'); // Safety check to only allow canceling system notifications
+      if (error) {
+        console.error('Error during manual cleanup:', error);
+        setFlash(
+          {
+            type: 'error',
+            message: error.message || 'Failed to cleanup expired notifications',
+          },
+          cookies
+        );
+        return fail(500, { error: error.message });
+      }
 
-    if (error) {
-      console.error('Error canceling notification:', error);
       setFlash(
         {
-          type: 'error',
-          message: error.message || 'Failed to cancel notification',
+          type: 'success',
+          message: `Manual cleanup completed. Removed ${deletedCount} expired notifications.`,
         },
         cookies
       );
-      return fail(500, { error: error.message });
+
+      return { success: true, deletedCount };
+    } catch (error) {
+      console.error('Unexpected error during manual cleanup:', error);
+      setFlash(
+        {
+          type: 'error',
+          message: 'An unexpected error occurred during cleanup',
+        },
+        cookies
+      );
+      return fail(500, { error: 'Unexpected error' });
     }
-
-    setFlash(
-      {
-        type: 'success',
-        message: 'Notification canceled successfully',
-      },
-      cookies
-    );
-
-    return { success: true };
   },
 };

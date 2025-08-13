@@ -13,8 +13,9 @@
     Loader,
     Trash2,
     Clock,
-    CheckCircle,
     XCircle,
+    CircleCheck,
+    Activity,
   } from '@lucide/svelte';
   import { showToast } from '$lib/state/notifications.svelte';
   import { superForm, type SuperValidated } from 'sveltekit-superforms';
@@ -26,12 +27,14 @@
     adminNotificationSchema,
     type AdminNotificationSchema,
   } from './admin-notifications-schema';
-  import users from '@lucide/svelte/icons/users';
   import type { NotificationType } from '$lib/supabase/notifications';
   import type { Database } from '$lib/supabase/database.types';
   import { getNavigationState } from '$lib/state/navigation.svelte';
+  import { invalidate } from '$app/navigation';
+  import type { SupabaseClient } from '@supabase/supabase-js';
 
   type NotificationRow = Database['public']['Tables']['notifications']['Row'];
+  type SystemLogRow = Database['public']['Tables']['system_logs']['Row'];
 
   let {
     data,
@@ -42,44 +45,80 @@
       sentNotifications: NotificationRow[];
       expiredNotifications: NotificationRow[];
       users: { id: string; username: string | null }[];
+      systemLogs?: SystemLogRow[]; // Optional new data
+      supabase: SupabaseClient<Database>;
     };
   } = $props();
+  const { supabase } = $derived(data);
 
   const navigationState = getNavigationState();
 
   let isSubmitting = $state(false);
   let testSubmitting = $state(false);
+  let manualCleanupSubmitting = $state(false);
 
   let currentAction = $state<string>('');
   let cancellingId = $state<string | null>(null);
 
+  // Updated cancelNotification function to use RPC
   async function cancelNotification(notificationId: string) {
     if (cancellingId) return; // Prevent multiple concurrent cancellations
 
     cancellingId = notificationId;
 
     try {
-      const formData = new FormData();
-      formData.append('notificationId', notificationId);
+      const { data: result, error } = await supabase.rpc(
+        'remove_notification',
+        {
+          notification_id: notificationId,
+        }
+      );
 
-      const response = await fetch('?/cancelNotification', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (response.ok) {
-        showToast('Notification canceled successfully', 'success');
-        // Refresh the page to update the lists
-        navigationState.refreshData();
-        window.location.reload();
-      } else {
+      if (error) {
+        console.error('Error canceling notification:', error);
         showToast('Failed to cancel notification', 'error');
+      } else if (result) {
+        showToast('Notification canceled successfully', 'success');
+        navigationState.refreshData();
+        invalidate('supabase:db:notifications');
+      } else {
+        showToast('Notification not found or already removed', 'error');
       }
     } catch (error) {
       console.error('Error canceling notification:', error);
       showToast('Failed to cancel notification', 'error');
     } finally {
       cancellingId = null;
+    }
+  }
+
+  // Optional: Manual cleanup function
+  async function triggerManualCleanup() {
+    if (manualCleanupSubmitting) return;
+
+    manualCleanupSubmitting = true;
+
+    try {
+      const { data: deletedCount, error } = await supabase.rpc(
+        'cleanup_expired_notifications'
+      );
+
+      if (error) {
+        console.error('Error during manual cleanup:', error);
+        showToast('Failed to cleanup expired notifications', 'error');
+      } else {
+        showToast(
+          `Manual cleanup completed. Removed ${deletedCount} expired notifications.`,
+          'success'
+        );
+        navigationState.refreshData();
+        invalidate('supabase:db:notifications');
+      }
+    } catch (error) {
+      console.error('Error during manual cleanup:', error);
+      showToast('Failed to cleanup expired notifications', 'error');
+    } finally {
+      manualCleanupSubmitting = false;
     }
   }
 
@@ -176,7 +215,7 @@
   > = {
     welcome: {
       type: 'system',
-      title: 'Upcoming Event',
+      title: 'Welcome Message',
       message:
         'Thanks for being part of our community! Explore playlists and discover great content.',
     },
@@ -444,9 +483,32 @@
     <!-- Info Panel -->
     <Card.Root>
       <Card.Header>
-        <Card.Title>Information</Card.Title>
+        <Card.Title>Information & Actions</Card.Title>
       </Card.Header>
       <Card.Content class="space-y-6">
+        <!-- Manual Cleanup Button -->
+        <div>
+          <h3 class="mb-3 text-sm font-medium">Admin Actions</h3>
+          <Button
+            variant="outline"
+            size="sm"
+            onclick={triggerManualCleanup}
+            disabled={manualCleanupSubmitting}
+          >
+            {#if manualCleanupSubmitting}
+              <Loader class="mr-2 h-4 w-4 animate-spin" />
+              Cleaning up...
+            {:else}
+              <Trash2 class="mr-2 h-4 w-4" />
+              Manual Cleanup Expired
+            {/if}
+          </Button>
+          <p class="text-muted-foreground mt-1 text-xs">
+            Remove all expired notifications manually (also runs automatically
+            daily at 2 AM UTC)
+          </p>
+        </div>
+
         <div>
           <h3 class="mb-3 text-sm font-medium">Notification Types</h3>
           <div class="space-y-2">
@@ -498,8 +560,40 @@
             <li>
               • Form doesn't clear after submit for easy test/send workflow
             </li>
+            <li>• Expired notifications are automatically cleaned up daily</li>
           </ul>
         </div>
+
+        <!-- Optional: System Logs Display -->
+        {#if data.systemLogs && data.systemLogs.length > 0}
+          <div>
+            <h3 class="mb-3 flex items-center gap-2 text-sm font-medium">
+              <Activity class="h-4 w-4" />
+              Recent Activity
+            </h3>
+            <div class="max-h-32 space-y-1 overflow-y-auto">
+              {#each data.systemLogs.slice(0, 5) as log (log.id)}
+                <div class="rounded border p-2 text-xs">
+                  <div class="flex items-center justify-between">
+                    <span class="font-medium">{log.event_type}</span>
+                    <span class="text-muted-foreground">
+                      {formatDateTime(log.created_at)}
+                    </span>
+                  </div>
+                  {#if log.details && typeof log.details === 'object'}
+                    <div class="text-muted-foreground mt-1">
+                      {#if log.event_type === 'notification_cleanup'}
+                        Removed {log.details.deleted_count || 0} expired notifications
+                      {:else if log.event_type === 'notification_removed'}
+                        Notification removed by admin
+                      {/if}
+                    </div>
+                  {/if}
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/if}
       </Card.Content>
     </Card.Root>
   </div>
@@ -584,7 +678,7 @@
       <Card.Root>
         <Card.Header>
           <Card.Title class="flex items-center gap-2">
-            <CheckCircle class="h-5 w-5 text-green-500" />
+            <CircleCheck class="h-5 w-5 text-green-500" />
             Active Notifications ({data.sentNotifications.length})
           </Card.Title>
           <p class="text-muted-foreground text-sm">
@@ -636,7 +730,7 @@
                       >
                         {#if cancellingId === notification.id}
                           <Loader class="mr-2 h-3 w-3 animate-spin" />
-                          Canceling...
+                          Removing...
                         {:else}
                           <Trash2 class="mr-2 h-3 w-3" />
                           Remove
