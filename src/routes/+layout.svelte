@@ -124,7 +124,6 @@
     reason: string,
     includeAuth: boolean = false
   ) {
-    console.log(includeAuth);
     try {
       // Step 1: Invalidate auth first if requested
       if (includeAuth) {
@@ -182,10 +181,6 @@
 
         // Check if auth state has changed
         if (lastKnownAuthState !== currentAuthState) {
-          console.log(
-            `Auth state changed while tab was hidden: ${lastKnownAuthState} -> ${currentAuthState}`
-          );
-
           authStateChanged = true;
 
           // Update our tracking state
@@ -193,8 +188,6 @@
 
           // Update navigation cache status
           navigationCache.updateAuthStatus();
-        } else {
-          console.log('Auth state unchanged');
         }
       } catch (error) {
         console.error(
@@ -232,7 +225,6 @@
       if (lastKnownAuthState === null) {
         // Initialize on first run
         lastKnownAuthState = currentAuthState;
-        console.log('Initialized auth state tracking:', currentAuthState);
       }
     }
   });
@@ -240,8 +232,6 @@
   // 5-minute periodic sync interval
   $effect(() => {
     if (!session || !isHydrated) return;
-
-    console.log('Setting up 5-minute sync interval');
 
     const interval = setInterval(() => {
       // Only sync if tab is visible and user is authenticated
@@ -251,7 +241,6 @@
     }, 300000); // 5 minutes = 300,000ms
 
     return () => {
-      console.log('Cleaning up 5-minute sync interval');
       clearInterval(interval);
     };
   });
@@ -292,11 +281,6 @@
 
     // Set up visibility change listener for data refresh and auth state checking
     document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    // Log initial setup
-    console.log(
-      'Layout initialized with Supabase auth events, visibility-based data refresh, and 5-minute sync'
-    );
 
     // Return cleanup function
     return () => {

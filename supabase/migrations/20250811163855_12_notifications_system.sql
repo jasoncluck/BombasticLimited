@@ -5,7 +5,7 @@
 -- Updated: 2025-08-13 18:37:04 UTC - Added is_test column for test notifications
 
 -- Create notification type enum
-CREATE TYPE public.notification_type AS ENUM('system', 'playlist_update');
+CREATE TYPE public.notification_type AS ENUM('system' );
 
 -- =====================================================
 -- STEP 1: Create main notifications table with integer PK
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS public.notifications (
 -- Add comments for documentation
 COMMENT ON TABLE public.notifications IS 'Master notifications that can be assigned to multiple users';
 COMMENT ON COLUMN public.notifications.id IS 'Auto-incrementing integer primary key (first notification is welcome message)';
-COMMENT ON COLUMN public.notifications.type IS 'Type of notification: system, content, user, playlist_update, mention';
+COMMENT ON COLUMN public.notifications.type IS 'Type of notification';
 COMMENT ON COLUMN public.notifications.metadata IS 'Additional notification data (JSON)';
 COMMENT ON COLUMN public.notifications.action_url IS 'Optional URL for notification action/link';
 COMMENT ON COLUMN public.notifications.is_test IS 'Whether this is a test notification (true) or production notification (false)';

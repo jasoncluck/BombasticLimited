@@ -8,6 +8,7 @@ import type { Database } from '$lib/supabase/database.types';
 import type { UserProfile } from '$lib/supabase/user-profiles';
 import { browser } from '$app/environment';
 import type { NotificationWithMeta } from '$lib/supabase/notifications';
+
 /**
  * Navigation item interface defining structure for navigation elements
  */
@@ -29,6 +30,7 @@ export interface NavigationConfig {
   enableBrandLogo: boolean;
   homeRouteReplaceState: boolean;
   searchDebounceMs: number;
+  notificationRefreshIntervalMs: number; // New config option
 }
 
 /**
@@ -132,6 +134,8 @@ export interface NavigationState {
 export class NavigationStateClass implements NavigationState {
   // Private tracking variables
   private lastSearchValue: string = '';
+  private refreshInterval: number | null = null;
+  private lastRefreshTime: number = 0;
 
   // Core data state
   data = $state<NavigationData>({
@@ -167,6 +171,7 @@ export class NavigationStateClass implements NavigationState {
     enableBrandLogo: true,
     homeRouteReplaceState: true,
     searchDebounceMs: 250,
+    notificationRefreshIntervalMs: 5 * 60 * 1000, // 5 minutes
   });
 
   // User context (passed from parent components)
@@ -205,6 +210,37 @@ export class NavigationStateClass implements NavigationState {
     ];
   }
 
+  /**
+   * Start the notification refresh interval
+   */
+  private startRefreshInterval(): void {
+    if (!browser || this.refreshInterval) return;
+
+    this.refreshInterval = window.setInterval(() => {
+      // Only refresh if we have a session and enough time has passed
+      if (this.session && this.#hasLoadedOnce) {
+        const now = Date.now();
+        const timeSinceLastRefresh = now - this.lastRefreshTime;
+
+        // Ensure at least 4.5 minutes have passed since last refresh to avoid rapid refreshes
+        if (timeSinceLastRefresh >= 4.5 * 60 * 1000) {
+          this.loadDataInBackground();
+          this.lastRefreshTime = now;
+        }
+      }
+    }, this.config.notificationRefreshIntervalMs);
+  }
+
+  /**
+   * Stop the notification refresh interval
+   */
+  private stopRefreshInterval(): void {
+    if (this.refreshInterval) {
+      window.clearInterval(this.refreshInterval);
+      this.refreshInterval = null;
+    }
+  }
+
   // Initialize effects (should be called when component is mounted)
   initializeEffects() {
     if (browser) {
@@ -212,6 +248,15 @@ export class NavigationStateClass implements NavigationState {
       $effect(() => {
         if (this.data?.navigationItems) {
           this.navigationItems = [...this.data.navigationItems];
+        }
+      });
+
+      // Start/stop refresh interval based on session state
+      $effect(() => {
+        if (this.session && this.#hasLoadedOnce) {
+          this.startRefreshInterval();
+        } else {
+          this.stopRefreshInterval();
         }
       });
     }
@@ -233,6 +278,11 @@ export class NavigationStateClass implements NavigationState {
     // Load initial data
     await this.loadData();
     this.#initialized = true;
+
+    // Start refresh interval if we have a session
+    if (this.session) {
+      this.startRefreshInterval();
+    }
 
     // Return cleanup function
     return () => {
@@ -362,6 +412,9 @@ export class NavigationStateClass implements NavigationState {
     }
 
     try {
+      // Stop refresh interval on logout
+      this.stopRefreshInterval();
+
       const { error } = await this.supabase.auth.signOut();
 
       if (error) {
@@ -497,7 +550,18 @@ export class NavigationStateClass implements NavigationState {
    * Update configuration
    */
   updateConfig(updates: Partial<NavigationConfig>): void {
+    const oldInterval = this.config.notificationRefreshIntervalMs;
     this.config = { ...this.config, ...updates };
+
+    // If refresh interval changed, restart the interval
+    if (
+      updates.notificationRefreshIntervalMs &&
+      updates.notificationRefreshIntervalMs !== oldInterval &&
+      this.refreshInterval
+    ) {
+      this.stopRefreshInterval();
+      this.startRefreshInterval();
+    }
   }
 
   /**
@@ -535,13 +599,14 @@ export class NavigationStateClass implements NavigationState {
       const response = await fetch('/api/navigation');
       if (response.ok) {
         const navigationData = await response.json();
-        console.log(navigationData);
+
         this.data = {
           userProfile: navigationData.userProfile ?? null,
           navigationItems: navigationData.navigationItems ?? [],
           userNotifications: navigationData.notifications ?? [],
         };
         this.#hasLoadedOnce = true; // Mark that we've successfully loaded data
+        this.lastRefreshTime = Date.now(); // Update last refresh time
       } else {
         this.error = `Failed to load navigation data: ${response.statusText}`;
         console.error(this.error);
@@ -564,6 +629,7 @@ export class NavigationStateClass implements NavigationState {
       const response = await fetch('/api/navigation');
       if (response.ok) {
         const navigationData = await response.json();
+
         this.data = {
           userProfile: navigationData.userProfile || null,
           navigationItems:
@@ -571,6 +637,7 @@ export class NavigationStateClass implements NavigationState {
           userNotifications: navigationData.notifications ?? [],
         };
         this.#hasLoadedOnce = true; // Mark that we've successfully loaded data
+        this.lastRefreshTime = Date.now(); // Update last refresh time
       } else {
         this.error = `Failed to load navigation data: ${response.statusText}`;
         console.error(this.error);
@@ -618,6 +685,9 @@ export class NavigationStateClass implements NavigationState {
    * Cleanup method
    */
   cleanup(): void {
+    // Stop refresh interval
+    this.stopRefreshInterval();
+
     // Cancel any pending search operations
     if (this.currentDebouncedSearch?.isPending) {
       this.currentDebouncedSearch.clear();
@@ -641,6 +711,7 @@ export class NavigationStateClass implements NavigationState {
     this.isSearching = false;
     this.searchQuery = '';
     this.openAccountDrawer = false;
+    this.lastRefreshTime = 0;
   }
 }
 

@@ -1073,7 +1073,7 @@ export type Database = {
     Enums: {
       content_description: "FULL" | "BRIEF" | "NONE"
       content_display: "TABLE" | "TILES"
-      notification_type: "system" | "playlist_update"
+      notification_type: "system"
       playlist_sort_order: "ascending" | "descending"
       playlist_sorted_by: "title" | "datePublished" | "playlistOrder"
       playlist_type: "Public" | "Private"
@@ -1211,7 +1211,7 @@ export const Constants = {
     Enums: {
       content_description: ["FULL", "BRIEF", "NONE"],
       content_display: ["TABLE", "TILES"],
-      notification_type: ["system", "playlist_update"],
+      notification_type: ["system"],
       playlist_sort_order: ["ascending", "descending"],
       playlist_sorted_by: ["title", "datePublished", "playlistOrder"],
       playlist_type: ["Public", "Private"],

@@ -47,7 +47,7 @@
 </script>
 
 <!-- Content Display Preference (Desktop) -->
-{#if isSm}
+{#if session && isSm}
   <DropdownMenu.Root>
     <DropdownMenu.Trigger
       data-testid="user-preferences"

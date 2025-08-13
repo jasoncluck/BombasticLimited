@@ -43,6 +43,32 @@
     console.log('refreshing after delete');
     navigationState.refreshData();
   }
+
+  // Helper function to format relative time based on start_datetime or created_at
+  function formatRelativeTime(notification: NotificationWithMeta): string {
+    const timestamp =
+      notification.start_datetime || notification.notification_created_at;
+    const now = new Date();
+    const notificationTime = new Date(timestamp);
+    const diffInSeconds = Math.floor(
+      (now.getTime() - notificationTime.getTime()) / 1000
+    );
+
+    if (diffInSeconds < 60) {
+      return 'Just now';
+    } else if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+    } else if (diffInSeconds < 86400) {
+      const hours = Math.floor(diffInSeconds / 3600);
+      return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+    } else if (diffInSeconds < 604800) {
+      const days = Math.floor(diffInSeconds / 86400);
+      return `${days} day${days === 1 ? '' : 's'} ago`;
+    } else {
+      return notificationTime.toLocaleDateString();
+    }
+  }
 </script>
 
 {#if !userNotifications}
@@ -114,7 +140,7 @@
 
                     <div class="mt-2 flex items-center space-x-2">
                       <span class="text-muted-foreground text-xs">
-                        {userNotification.formatted_time}
+                        {formatRelativeTime(userNotification)}
                       </span>
                     </div>
                   </div>

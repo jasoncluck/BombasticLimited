@@ -93,6 +93,29 @@ export interface NotificationFilters {
   order_direction?: 'asc' | 'desc';
 }
 
+type SystemLogRow = Database['public']['Tables']['system_logs']['Row'];
+
+export interface NotificationCleanupLog {
+  deleted_count: number;
+  cleanup_time: string;
+  trigger: string;
+}
+
+export interface NotificationRemovedLog {
+  notification_id: number;
+  affected_users: number;
+  removed_by: string;
+  removal_time: string;
+  success: boolean;
+}
+
+export interface UserNotificationDismissedLog {
+  notification_ids: number[];
+  dismissed_by: string;
+  dismissed_count: number;
+  dismissed_time: string;
+}
+
 // Utility functions
 function formatRelativeTime(timestamp: string): string {
   const now = new Date();
@@ -462,4 +485,85 @@ export function isNotificationWithMeta(
     (typeof (obj as NotificationWithMeta).is_new === 'boolean' ||
       (obj as NotificationWithMeta).is_new === undefined)
   );
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+export function isNotificationCleanupLog(
+  details: unknown
+): details is NotificationCleanupLog {
+  if (!isObject(details)) return false;
+
+  return (
+    typeof details.deleted_count === 'number' &&
+    typeof details.cleanup_time === 'string' &&
+    typeof details.trigger === 'string'
+  );
+}
+
+export function isNotificationRemovedLog(
+  details: unknown
+): details is NotificationRemovedLog {
+  if (!isObject(details)) return false;
+
+  return (
+    typeof details.notification_id === 'number' &&
+    typeof details.affected_users === 'number' &&
+    typeof details.removed_by === 'string' &&
+    typeof details.removal_time === 'string' &&
+    typeof details.success === 'boolean'
+  );
+}
+
+export function isUserNotificationDismissedLog(
+  details: unknown
+): details is UserNotificationDismissedLog {
+  if (!isObject(details)) return false;
+
+  return (
+    Array.isArray(details.notification_ids) &&
+    details.notification_ids.every((id) => typeof id === 'number') &&
+    typeof details.dismissed_by === 'string' &&
+    typeof details.dismissed_count === 'number' &&
+    typeof details.dismissed_time === 'string'
+  );
+}
+
+// Additional utility type guard for system logs
+export function isValidSystemLog(log: unknown): log is SystemLogRow {
+  if (!isObject(log)) return false;
+
+  return (
+    typeof log.id === 'string' &&
+    typeof log.event_type === 'string' &&
+    typeof log.created_at === 'string' &&
+    (log.details === null || isObject(log.details))
+  );
+}
+
+// Type guard to determine which log type we're dealing with
+export function getLogType(
+  log: SystemLogRow
+): 'cleanup' | 'removed' | 'dismissed' | 'unknown' {
+  if (
+    log.event_type === 'notification_cleanup' &&
+    isNotificationCleanupLog(log.details)
+  ) {
+    return 'cleanup';
+  }
+  if (
+    log.event_type === 'notification_removed' &&
+    isNotificationRemovedLog(log.details)
+  ) {
+    return 'removed';
+  }
+  if (
+    log.event_type === 'user_notification_dismissed' &&
+    isUserNotificationDismissedLog(log.details)
+  ) {
+    return 'dismissed';
+  }
+  return 'unknown';
 }

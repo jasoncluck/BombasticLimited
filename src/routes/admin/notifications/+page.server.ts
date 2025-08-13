@@ -10,11 +10,8 @@ import { redirect, setFlash } from 'sveltekit-flash-message/server';
 
 export const load: PageServerLoad = async ({
   locals: { supabase, session },
-  depends,
   parent,
 }) => {
-  depends('supabase:db:notifications');
-
   if (!session) {
     throw redirect(302, '/auth/login');
   }
@@ -30,42 +27,7 @@ export const load: PageServerLoad = async ({
     zod(adminNotificationSchema)
   );
 
-  // Get all system notifications for admin management (excluding playlist notifications)
-  const { data: allNotifications, error: notificationError } = await supabase
-    .from('notifications')
-    .select('*')
-    .eq('type', 'system') // Only system notifications, not playlist_update
-    .order('created_at', { ascending: false });
-
-  if (notificationError) {
-    console.error('Error fetching notifications:', notificationError);
-  }
-
-  // Categorize notifications by their status (fix timezone comparison)
-  const now = new Date();
-  const notifications = allNotifications ?? [];
-
-  const pendingNotifications = notifications.filter((n) => {
-    if (!n.start_datetime) return false;
-    const startDate = new Date(n.start_datetime);
-    return startDate > now;
-  });
-
-  const sentNotifications = notifications.filter((n) => {
-    const startDate = n.start_datetime ? new Date(n.start_datetime) : null;
-    const endDate = n.end_datetime ? new Date(n.end_datetime) : null;
-
-    const hasStarted = !startDate || startDate <= now;
-    const hasNotExpired = !endDate || endDate > now;
-
-    return hasStarted && hasNotExpired;
-  });
-
-  const expiredNotifications = notifications.filter((n) => {
-    if (!n.end_datetime) return false;
-    const endDate = new Date(n.end_datetime);
-    return endDate <= now;
-  });
+  // Categorize notifications by their status
 
   // Get all users for reference
   const { data: users, error: usersError } = await supabase
@@ -77,29 +39,9 @@ export const load: PageServerLoad = async ({
     console.error('Error fetching users:', usersError);
   }
 
-  // Get system logs for monitoring (last 10 entries)
-  const { data: systemLogs, error: logsError } = await supabase
-    .from('system_logs')
-    .select('*')
-    .in('event_type', [
-      'notification_removed',
-      'notification_cleanup',
-      'user_notification_dismissed',
-    ])
-    .order('created_at', { ascending: false })
-    .limit(10);
-
-  if (logsError) {
-    console.error('Error fetching system logs:', logsError);
-  }
-
   return {
     users: users || [],
     form: adminNotificationForm,
-    pendingNotifications,
-    sentNotifications,
-    expiredNotifications,
-    systemLogs: systemLogs || [],
   };
 };
 
@@ -121,6 +63,10 @@ export const actions: Actions = {
 
     const { type, title, message, startDatetime, endDatetime } = form.data;
 
+    // Convert local datetimes to UTC
+    const startDatetimeUtc = convertLocalToUtc(startDatetime);
+    const endDatetimeUtc = convertLocalToUtc(endDatetime);
+
     const { data, error } = await createNotificationForAllUsers({
       supabase,
       params: {
@@ -133,8 +79,8 @@ export const actions: Actions = {
           created_by: session.user.id,
           created_at: new Date().toISOString(),
         },
-        start_datetime: startDatetime || undefined,
-        end_datetime: endDatetime || undefined,
+        start_datetime: startDatetimeUtc,
+        end_datetime: endDatetimeUtc,
       },
     });
 
@@ -158,7 +104,14 @@ export const actions: Actions = {
       cookies
     );
 
-    return { form };
+    // Return success without clearing form - client will handle clearing if needed
+    return {
+      form,
+      success: true,
+      action: 'sendGlobalNotification',
+      userCount: data || 0,
+      shouldRefreshNotifications: true,
+    };
   },
 
   sendTestNotification: async ({
@@ -178,6 +131,17 @@ export const actions: Actions = {
 
     const { type, title, message, startDatetime, endDatetime } = form.data;
 
+    // Convert local datetimes to UTC
+    const startDatetimeUtc = convertLocalToUtc(startDatetime);
+    const endDatetimeUtc = convertLocalToUtc(endDatetime);
+
+    console.log('🧪 Server: Test notification datetime conversion:', {
+      localStart: startDatetime,
+      utcStart: startDatetimeUtc,
+      localEnd: endDatetime,
+      utcEnd: endDatetimeUtc,
+    });
+
     try {
       const { error } = await createNotification({
         supabase,
@@ -192,8 +156,8 @@ export const actions: Actions = {
             created_by: session.user.id,
             created_at: new Date().toISOString(),
           },
-          start_datetime: startDatetime || undefined,
-          end_datetime: endDatetime || undefined,
+          start_datetime: startDatetimeUtc,
+          end_datetime: endDatetimeUtc,
         },
       });
 
@@ -217,7 +181,13 @@ export const actions: Actions = {
         cookies
       );
 
-      return { form };
+      // Return success - preserve form for test notifications
+      return {
+        form,
+        success: true,
+        action: 'sendTestNotification',
+        shouldRefreshNotifications: true,
+      };
     } catch (error) {
       console.error('Unexpected error sending test notification:', error);
       setFlash(
@@ -262,7 +232,11 @@ export const actions: Actions = {
         cookies
       );
 
-      return { success: true, deletedCount: deletedCount || 0 };
+      return {
+        success: true,
+        deletedCount: deletedCount || 0,
+        shouldRefreshNotifications: true,
+      };
     } catch (error) {
       console.error('Unexpected error during manual cleanup:', error);
       setFlash(
@@ -292,55 +266,66 @@ export const actions: Actions = {
       return fail(400, { error: 'Notification ID is required' });
     }
 
-    try {
-      const { data: success, error } = await supabase.rpc(
-        'remove_notification',
-        {
-          notification_id: parseInt(notificationId.toString(), 10),
-        }
-      );
+    const { data: success, error } = await supabase.rpc('remove_notification', {
+      notification_id: parseInt(notificationId.toString(), 10),
+    });
 
-      if (error) {
-        console.error('Error canceling notification:', error);
-        setFlash(
-          {
-            type: 'error',
-            message: error.message || 'Failed to cancel notification',
-          },
-          cookies
-        );
-        return fail(500, { error: error.message });
-      }
-
-      if (success) {
-        setFlash(
-          {
-            type: 'success',
-            message: 'Notification canceled successfully',
-          },
-          cookies
-        );
-      } else {
-        setFlash(
-          {
-            type: 'error',
-            message: 'Notification not found or already removed',
-          },
-          cookies
-        );
-      }
-
-      return { success };
-    } catch (error) {
-      console.error('Unexpected error canceling notification:', error);
+    if (error) {
+      console.error('Error canceling notification:', error);
       setFlash(
         {
           type: 'error',
-          message: 'An unexpected error occurred while canceling notification',
+          message: error.message || 'Failed to cancel notification',
         },
         cookies
       );
-      return fail(500, { error: 'Unexpected error' });
+      return fail(500, { error: error.message });
     }
+
+    if (success) {
+      setFlash(
+        {
+          type: 'success',
+          message: 'Notification canceled successfully',
+        },
+        cookies
+      );
+    } else {
+      setFlash(
+        {
+          type: 'error',
+          message: 'Notification not found or already removed',
+        },
+        cookies
+      );
+    }
+
+    return {
+      success,
+      error,
+      shouldRefreshNotifications: true,
+    };
   },
 };
+
+/**
+ * Converts local datetime string to UTC ISO string
+ * Input: "2025-08-13T12:54" (local time from datetime-local input)
+ * Output: "2025-08-13T19:54:00.000Z" (UTC ISO string)
+ */
+function convertLocalToUtc(
+  localDateTimeString?: string | null
+): string | undefined {
+  if (!localDateTimeString) return undefined;
+
+  try {
+    // Create a date object treating the input as local time
+    const localDate = new Date(localDateTimeString);
+
+    // Return as UTC ISO string
+    return localDate.toISOString();
+  } catch (error) {
+    console.error('Error converting local datetime to UTC:', error);
+    return undefined;
+  }
+}
