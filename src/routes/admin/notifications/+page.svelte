@@ -188,6 +188,7 @@
           showToast(`❌ Error: ${errorMessages[0]}`, 'error');
         }
       }
+      invalidate('supabase:db:notifications');
       navigationState.refreshData();
     },
   });
@@ -272,7 +273,7 @@
   <title>Admin - Notification Management | Bombastic</title>
 </svelte:head>
 
-<div class="container mx-auto max-w-4xl px-4 py-8">
+<div class="container mx-auto max-w-4xl">
   <div class="mb-8">
     <h1 class="mb-2 text-3xl font-bold">Notification Management</h1>
     <p class="text-muted-foreground">
@@ -571,7 +572,7 @@
               <Activity class="h-4 w-4" />
               Recent Activity
             </h3>
-            <div class="max-h-32 space-y-1 overflow-y-auto">
+            <div class="flex max-h-64 flex-col gap-2 overflow-y-auto">
               {#each data.systemLogs.slice(0, 5) as log (log.id)}
                 <div class="rounded border p-2 text-xs">
                   <div class="flex items-center justify-between">
@@ -703,7 +704,7 @@
                 {#each data.sentNotifications as notification (notification.id)}
                   <Table.Row>
                     <Table.Cell>
-                      <div>
+                      <div class="w-xs">
                         <div class="font-medium">{notification.title}</div>
                         <div
                           class="text-muted-foreground max-w-md truncate text-sm"

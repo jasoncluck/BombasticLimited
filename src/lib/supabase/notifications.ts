@@ -3,25 +3,30 @@ import type {
   Session,
   SupabaseClient,
 } from '@supabase/supabase-js';
-import type { Database, Json, Tables } from './database.types';
+import type { Database, Json } from './database.types';
 
 export type NotificationType = Database['public']['Enums']['notification_type'];
 
 export interface Notification {
-  id: string;
-  user_id: string;
+  notification_id: number;
   type: NotificationType;
   title: string;
   message: string;
   metadata: Record<string, unknown>;
-  read: boolean;
   action_url?: string;
-  created_at: string;
-  updated_at: string;
+  start_datetime: string;
+  end_datetime?: string;
+  notification_created_at: string;
+  user_notification_id: string;
+  user_id?: string;
+  read: boolean;
+  dismissed: boolean;
+  assigned_at: string;
+  user_notification_updated_at: string;
 }
 
 export interface NotificationInsert {
-  id?: string;
+  notification_id?: number;
   user_id: string;
   type: NotificationType;
   title: string;
@@ -29,12 +34,12 @@ export interface NotificationInsert {
   metadata?: Record<string, unknown>;
   read?: boolean;
   action_url?: string;
-  created_at?: string;
-  updated_at?: string;
+  start_datetime?: string;
+  end_datetime?: string;
 }
 
 export interface NotificationUpdate {
-  id?: string;
+  notification_id?: number;
   user_id?: string;
   type?: NotificationType;
   title?: string;
@@ -42,8 +47,8 @@ export interface NotificationUpdate {
   metadata?: Record<string, unknown>;
   read?: boolean;
   action_url?: string;
-  created_at?: string;
-  updated_at?: string;
+  start_datetime?: string;
+  end_datetime?: string;
 }
 
 export interface NotificationWithMeta extends Notification {
@@ -118,7 +123,7 @@ function isWithinLastHour(timestamp: string): boolean {
 // Notification service functions
 
 /**
- * Get notifications for the current user
+ * Get notifications for the current authenticated user
  */
 export async function getNotifications({
   supabase,
@@ -137,36 +142,18 @@ export async function getNotifications({
     return { notifications: [], error: null, count: 0 };
   }
 
-  let query = supabase
-    .from('notifications')
-    .select('*', { count: 'exact' })
-    .eq('user_id', session.user.id)
-    .lte('start_datetime', new Date().toISOString()) // Only show notifications that have started
-    .or('end_datetime.is.null,end_datetime.gt.' + new Date().toISOString()) // Not expired
-    .order('created_at', { ascending: false });
-
-  if (filters.type) {
-    query = query.eq('type', filters.type);
-  }
-
-  if (filters.read !== undefined) {
-    query = query.eq('read', filters.read);
-  }
-
-  if (filters.limit) {
-    query = query.limit(filters.limit);
-  }
-
-  if (filters.offset) {
-    query = query.range(
-      filters.offset,
-      filters.offset + (filters.limit || 20) - 1
-    );
-  }
-
-  const { data, error, count } = await query;
+  const { data, error } = await supabase.rpc('get_user_notifications', {
+    limit_count: filters.limit ?? 20,
+    offset_count: filters.offset ?? 0,
+    filter_read: filters.read,
+    filter_type: filters.type,
+  });
 
   if (error) {
+    console.error(
+      '🔔 NotificationService: RPC error for get_user_notifications:',
+      error
+    );
     return { notifications: [], error };
   }
 
@@ -176,16 +163,20 @@ export async function getNotifications({
       ...notification,
       metadata: (notification.metadata as Record<string, unknown>) || {},
       action_url: notification.action_url || undefined,
-      formatted_time: formatRelativeTime(notification.created_at),
-      is_new: isWithinLastHour(notification.created_at),
+      formatted_time: formatRelativeTime(notification.assigned_at),
+      is_new: isWithinLastHour(notification.assigned_at),
     })
   );
 
-  return { notifications: formattedData, error: null, count: count || 0 };
+  return {
+    notifications: formattedData,
+    error: null,
+    count: data?.length || 0,
+  };
 }
 
 /**
- * Get unread notification count
+ * Get unread notification count for current authenticated user
  */
 export async function getUnreadCount({
   supabase,
@@ -198,9 +189,7 @@ export async function getUnreadCount({
     return { data: 0, error: null };
   }
 
-  const { data, error } = await supabase.rpc('get_unread_notification_count', {
-    target_user_id: session.user.id,
-  });
+  const { data, error } = await supabase.rpc('get_unread_notification_count');
 
   if (error) {
     console.error('🔔 NotificationService: RPC error for unread count:', error);
@@ -211,7 +200,7 @@ export async function getUnreadCount({
 }
 
 /**
- * Get notification counts by type
+ * Get notification counts by type using the RPC function
  */
 export async function getNotificationCounts({
   supabase,
@@ -235,12 +224,22 @@ export async function getNotificationCounts({
     return { data: emptyCounts, error: null };
   }
 
-  const { data: notifications, error } = await supabase
-    .from('notifications')
-    .select('type, read')
-    .eq('user_id', session.user.id);
+  // Use the RPC function to get all notifications for counting
+  const { data: notifications, error } = await supabase.rpc(
+    'get_user_notifications',
+    {
+      limit_count: 1000, // Get a large number for counting
+      offset_count: 0,
+      filter_read: null, // Get both read and unread
+      filter_type: null, // Get all types
+    }
+  );
 
   if (error) {
+    console.error(
+      '🔔 NotificationService: RPC error for notification counts:',
+      error
+    );
     return {
       data: {
         total: 0,
@@ -255,12 +254,12 @@ export async function getNotificationCounts({
   }
 
   const counts: NotificationCounts = {
-    total: notifications.length,
-    unread: notifications.filter((n) => !n.read).length,
+    total: notifications?.length || 0,
+    unread: notifications?.filter((n) => !n.read).length || 0,
     by_type: {
-      system: notifications.filter((n) => n.type === 'system').length,
-      playlist_update: notifications.filter((n) => n.type === 'playlist_update')
-        .length,
+      system: notifications?.filter((n) => n.type === 'system').length || 0,
+      playlist_update:
+        notifications?.filter((n) => n.type === 'playlist_update').length || 0,
     },
   };
 
@@ -268,7 +267,7 @@ export async function getNotificationCounts({
 }
 
 /**
- * Mark notifications as read
+ * Mark notifications as read for current authenticated user
  */
 export async function markAsRead({
   supabase,
@@ -277,16 +276,22 @@ export async function markAsRead({
 }: {
   supabase: SupabaseClient<Database>;
   session: Session | null;
-  notificationIds: string[];
+  notificationIds?: number[]; // Made optional since function can mark all as read
 }): Promise<{ error: PostgrestError | null }> {
   if (!session?.user.id) {
     return { error: { message: 'User not authenticated' } as PostgrestError };
   }
 
   const { error } = await supabase.rpc('mark_notifications_as_read', {
-    target_user_id: session.user.id,
-    notification_ids: notificationIds || undefined,
+    notification_ids: notificationIds,
   });
+
+  if (error) {
+    console.error(
+      '🔔 NotificationService: RPC error for mark_notifications_as_read:',
+      error
+    );
+  }
 
   return { error };
 }
@@ -303,9 +308,9 @@ export async function createNotification({
     start_datetime?: string;
     end_datetime?: string;
   };
-}): Promise<{ data: string | null; error: PostgrestError | null }> {
+}): Promise<{ data: number | null; error: PostgrestError | null }> {
   const { data, error } = await supabase.rpc('create_notification', {
-    target_user_id: params.user_id,
+    target_user_ids: params.user_id ? [params.user_id] : null,
     notification_message: params.message,
     notification_title: params.title,
     notification_type: params.type,
@@ -327,7 +332,7 @@ export async function createNotification({
 }
 
 /**
- * Delete notifications
+ * Remove/dismiss user's own notifications
  */
 export async function deleteNotifications({
   supabase,
@@ -336,22 +341,27 @@ export async function deleteNotifications({
 }: {
   supabase: SupabaseClient<Database>;
   session: Session | null;
-  notificationIds: string[];
-}): Promise<{ error: PostgrestError | null }> {
-  console.log(notificationIds);
+  notificationIds: number[];
+}): Promise<{ data: number | null; error: PostgrestError | null }> {
   if (!session) {
-    return { error: { message: 'User not authenticated' } as PostgrestError };
+    return {
+      data: null,
+      error: { message: 'User not authenticated' } as PostgrestError,
+    };
   }
 
-  const { data, error } = await supabase
-    .from('notifications')
-    .delete()
-    .in('id', notificationIds)
-    .select();
+  const { data, error } = await supabase.rpc('remove_user_notification', {
+    notification_ids: notificationIds,
+  });
 
-  console.log(data);
+  if (error) {
+    console.error(
+      '🔔 NotificationService: Error removing user notifications:',
+      error
+    );
+  }
 
-  return { error };
+  return { data, error };
 }
 
 /**
@@ -380,23 +390,16 @@ export async function createNotificationForAllUsers({
       notification_message: params.message,
       notification_metadata: params.metadata || {},
       notification_action_url: params.action_url,
+      notification_start_datetime: params.start_datetime,
+      notification_end_datetime: params.end_datetime,
     }
   );
 
-  // If datetime params are provided, update all recently created notifications
-  if ((params.start_datetime || params.end_datetime) && data && data > 0) {
-    const updateData: Partial<Tables<'notifications'>> = {};
-    if (params.start_datetime)
-      updateData.start_datetime = params.start_datetime;
-    if (params.end_datetime) updateData.end_datetime = params.end_datetime;
-
-    // Update notifications created in the last minute for this title/message
-    await supabase
-      .from('notifications')
-      .update(updateData)
-      .eq('title', params.title)
-      .eq('message', params.message)
-      .gte('created_at', new Date(Date.now() - 60000).toISOString());
+  if (error) {
+    console.error(
+      '🔔 NotificationService: Error creating notification for all users:',
+      error
+    );
   }
 
   return { data, error };
@@ -429,16 +432,15 @@ function isRecord(val: unknown): val is Record<string, unknown> {
 export function isNotification(obj: unknown): obj is Notification {
   return (
     isRecord(obj) &&
-    typeof obj.id === 'string' &&
-    typeof obj.user_id === 'string' &&
+    typeof obj.notification_id === 'number' &&
     typeof obj.type === 'string' &&
     typeof obj.title === 'string' &&
     typeof obj.message === 'string' &&
     isRecord(obj.metadata) &&
     typeof obj.read === 'boolean' &&
     (typeof obj.action_url === 'string' || obj.action_url === undefined) &&
-    typeof obj.created_at === 'string' &&
-    typeof obj.updated_at === 'string'
+    typeof obj.assigned_at === 'string' &&
+    typeof obj.user_notification_updated_at === 'string'
   );
 }
 

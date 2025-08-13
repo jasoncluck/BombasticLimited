@@ -30,12 +30,12 @@
 
   const navigationState = getNavigationState();
   const {
-    data: { notifications },
+    data: { userNotifications },
   } = $derived(navigationState);
 
   async function handleDelete(notification: NotificationWithMeta) {
     await deleteNotifications({
-      notificationIds: [notification.id],
+      notificationIds: [notification.notification_id],
       supabase,
       session,
     });
@@ -45,11 +45,11 @@
   }
 </script>
 
-{#if !notifications}
+{#if !userNotifications}
   <Loader variant="block" />
 {:else}
   <div class="w-full overflow-hidden">
-    {#if notifications.length === 0}
+    {#if userNotifications.length === 0}
       <!-- Empty state -->
       <div
         class="flex flex-col items-center justify-center p-8 text-center"
@@ -64,10 +64,10 @@
       <!-- Notifications list -->
       <ScrollArea type="scroll">
         <div class="space-y-1">
-          {#each notifications as notification (notification.id)}
+          {#each userNotifications as userNotification (userNotification.notification_id)}
             <div
               class="group hover:bg-muted/50 flex items-start space-x-3 p-3 transition-colors
-                {!notification.read ? 'bg-muted/20' : ''}"
+                {!userNotification.read ? 'bg-muted/20' : ''}"
               in:slide={{ duration: 300, easing: quintOut }}
               out:slide={{ duration: 250, easing: quintOut }}
             >
@@ -76,13 +76,13 @@
                 <div
                   class="bg-muted flex h-8 w-8 items-center justify-center rounded-full"
                 >
-                  {#if notification.type === 'system'}
+                  {#if userNotification.type === 'system'}
                     <FaviconIcon class="h-4 w-4" />
                   {:else}
                     <Bell class="h-4 w-4 text-gray-500" />
                   {/if}
                 </div>
-                {#if !notification.read}
+                {#if !userNotification.read}
                   <div
                     class="bg-primary absolute -mt-1 -ml-1 h-3 w-3 rounded-full"
                   ></div>
@@ -94,11 +94,11 @@
                 <div class="flex items-start justify-between">
                   <div class="flex-1">
                     <p
-                      class="text-sm leading-tight font-medium {!notification.read
+                      class="text-sm leading-tight font-medium {!userNotification.read
                         ? 'font-semibold'
                         : ''}"
                     >
-                      {notification.title}
+                      {userNotification.title}
                     </p>
                     <div
                       class="text-muted-foreground [&_b]:text-foreground [&_strong]:text-foreground
@@ -109,12 +109,12 @@
                         [&_b]:font-semibold [&_em]:italic [&_i]:italic [&_strong]:font-semibold [&_u]:underline"
                     >
                       <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-                      {@html createSafeHtml(notification.message)}
+                      {@html createSafeHtml(userNotification.message)}
                     </div>
 
                     <div class="mt-2 flex items-center space-x-2">
                       <span class="text-muted-foreground text-xs">
-                        {notification.formatted_time}
+                        {userNotification.formatted_time}
                       </span>
                     </div>
                   </div>
@@ -125,7 +125,7 @@
                       variant="ghost"
                       size="sm"
                       class="ghost-button-minimal text-muted-foreground h-6 w-6 p-0 opacity-60 transition-opacity hover:text-red-500 hover:opacity-100"
-                      onclick={() => handleDelete(notification)}
+                      onclick={() => handleDelete(userNotification)}
                       title="Remove notification"
                     >
                       <X class="h-3 w-3" />

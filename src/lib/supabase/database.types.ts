@@ -38,44 +38,41 @@ export type Database = {
         Row: {
           action_url: string | null
           created_at: string
+          created_by: string | null
           end_datetime: string | null
-          id: string
+          id: number
           message: string
           metadata: Json | null
-          read: boolean
           start_datetime: string | null
           title: string
           type: Database["public"]["Enums"]["notification_type"]
           updated_at: string
-          user_id: string
         }
         Insert: {
           action_url?: string | null
           created_at?: string
+          created_by?: string | null
           end_datetime?: string | null
-          id?: string
+          id?: number
           message: string
           metadata?: Json | null
-          read?: boolean
           start_datetime?: string | null
           title: string
           type?: Database["public"]["Enums"]["notification_type"]
           updated_at?: string
-          user_id: string
         }
         Update: {
           action_url?: string | null
           created_at?: string
+          created_by?: string | null
           end_datetime?: string | null
-          id?: string
+          id?: number
           message?: string
           metadata?: Json | null
-          read?: boolean
           start_datetime?: string | null
           title?: string
           type?: Database["public"]["Enums"]["notification_type"]
           updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }
@@ -212,6 +209,27 @@ export type Database = {
         }
         Relationships: []
       }
+      system_logs: {
+        Row: {
+          created_at: string
+          details: Json | null
+          event_type: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          id?: string
+        }
+        Relationships: []
+      }
       timestamps: {
         Row: {
           created_at: string
@@ -262,6 +280,51 @@ export type Database = {
             columns: ["video_id"]
             isOneToOne: false
             referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_notifications: {
+        Row: {
+          created_at: string
+          dismissed: boolean
+          id: string
+          notification_id: number
+          read: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dismissed?: boolean
+          id?: string
+          notification_id: number
+          read?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dismissed?: boolean
+          id?: string
+          notification_id?: number
+          read?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_notifications_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "active_user_notifications"
+            referencedColumns: ["notification_id"]
+          },
+          {
+            foreignKeyName: "user_notifications_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
             referencedColumns: ["id"]
           },
         ]
@@ -380,7 +443,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      active_user_notifications: {
+        Row: {
+          action_url: string | null
+          assigned_at: string | null
+          created_by: string | null
+          dismissed: boolean | null
+          end_datetime: string | null
+          message: string | null
+          metadata: Json | null
+          notification_created_at: string | null
+          notification_id: number | null
+          read: boolean | null
+          start_datetime: string | null
+          title: string | null
+          type: Database["public"]["Enums"]["notification_type"] | null
+          user_id: string | null
+          user_notification_id: string | null
+          user_notification_updated_at: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       can_user_access_playlist: {
@@ -388,6 +471,10 @@ export type Database = {
         Returns: boolean
       }
       cleanup_expired_notifications: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      cleanup_expired_notifications_cron: {
         Args: Record<PropertyKey, never>
         Returns: number
       }
@@ -400,9 +487,9 @@ export type Database = {
           notification_start_datetime?: string
           notification_title: string
           notification_type: Database["public"]["Enums"]["notification_type"]
-          target_user_id?: string
+          target_user_ids?: string[]
         }
-        Returns: string
+        Returns: number
       }
       create_notification_for_all_users: {
         Args: {
@@ -615,7 +702,7 @@ export type Database = {
         }[]
       }
       get_unread_notification_count: {
-        Args: { target_user_id: string }
+        Args: Record<PropertyKey, never>
         Returns: number
       }
       get_user_accessible_playlists: {
@@ -627,6 +714,30 @@ export type Database = {
           name: string
           type: Database["public"]["Enums"]["playlist_type"]
           updated_at: string
+        }[]
+      }
+      get_user_notifications: {
+        Args: {
+          filter_read?: boolean
+          filter_type?: Database["public"]["Enums"]["notification_type"]
+          limit_count?: number
+          offset_count?: number
+        }
+        Returns: {
+          action_url: string
+          assigned_at: string
+          dismissed: boolean
+          end_datetime: string
+          message: string
+          metadata: Json
+          notification_created_at: string
+          notification_id: number
+          read: boolean
+          start_datetime: string
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_notification_id: string
+          user_notification_updated_at: string
         }[]
       }
       get_user_playlists: {
@@ -792,8 +903,16 @@ export type Database = {
         Returns: boolean
       }
       mark_notifications_as_read: {
-        Args: { notification_ids?: string[]; target_user_id: string }
+        Args: { notification_ids?: number[] }
         Returns: undefined
+      }
+      remove_notification: {
+        Args: { notification_id: number }
+        Returns: boolean
+      }
+      remove_user_notification: {
+        Args: { notification_ids: number[] }
+        Returns: number
       }
       restore_playlist: {
         Args: { p_playlist_id: number }
@@ -838,6 +957,10 @@ export type Database = {
           updated_at: string
           video_start_seconds: number
         }[]
+      }
+      setup_notification_cleanup_cron: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       start_video_history_session: {
         Args: { p_session_start_time?: string; p_video_id: string }

@@ -25,14 +25,16 @@
   const navigationState = getNavigationState();
 
   const {
-    data: { notifications },
+    data: { userNotifications },
   } = $derived(navigationState);
 
   const { canHover } = $derived(mediaQueryState);
 
-  const notificationIds = $derived(notifications.map((n) => n.id) ?? []);
+  const notificationIds = $derived(
+    userNotifications.map((n) => n.notification_id) ?? []
+  );
   const unreadNotifications = $derived(
-    notifications.filter((n) => n.read === false) ?? []
+    userNotifications.filter((n) => n.read === false) ?? []
   );
 
   // Auto-mark all notifications as read when bell menu opens

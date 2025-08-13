@@ -7,7 +7,6 @@ import type { SupabaseClient, Session } from '@supabase/supabase-js';
 import type { Database } from '$lib/supabase/database.types';
 import type { UserProfile } from '$lib/supabase/user-profiles';
 import { browser } from '$app/environment';
-import { tabVisibility } from '$lib/utils/tab-visibility';
 import type { NotificationWithMeta } from '$lib/supabase/notifications';
 /**
  * Navigation item interface defining structure for navigation elements
@@ -38,7 +37,7 @@ export interface NavigationConfig {
 export interface NavigationData {
   userProfile: UserProfile | null;
   navigationItems: NavigationItem[];
-  notifications: NotificationWithMeta[];
+  userNotifications: NotificationWithMeta[];
 }
 
 /**
@@ -138,7 +137,7 @@ export class NavigationStateClass implements NavigationState {
   data = $state<NavigationData>({
     userProfile: null,
     navigationItems: [],
-    notifications: [],
+    userNotifications: [],
   });
 
   loading = $state(true);
@@ -154,7 +153,7 @@ export class NavigationStateClass implements NavigationState {
   navigationItems = $state<NavigationItem[]>([]);
 
   // Notifications
-  notifications = $state<NotificationWithMeta[]>([]);
+  userNotifications = $state<NotificationWithMeta[]>([]);
 
   // Search state
   searchQuery = $state('');
@@ -536,10 +535,11 @@ export class NavigationStateClass implements NavigationState {
       const response = await fetch('/api/navigation');
       if (response.ok) {
         const navigationData = await response.json();
+        console.log(navigationData);
         this.data = {
           userProfile: navigationData.userProfile ?? null,
           navigationItems: navigationData.navigationItems ?? [],
-          notifications: navigationData.notifications ?? [],
+          userNotifications: navigationData.notifications ?? [],
         };
         this.#hasLoadedOnce = true; // Mark that we've successfully loaded data
       } else {
@@ -568,7 +568,7 @@ export class NavigationStateClass implements NavigationState {
           userProfile: navigationData.userProfile || null,
           navigationItems:
             navigationData.navigationItems || this.navigationItems,
-          notifications: navigationData.notifications ?? [],
+          userNotifications: navigationData.notifications ?? [],
         };
         this.#hasLoadedOnce = true; // Mark that we've successfully loaded data
       } else {
@@ -628,7 +628,11 @@ export class NavigationStateClass implements NavigationState {
     }
 
     // Reset all state
-    this.data = { userProfile: null, navigationItems: [], notifications: [] };
+    this.data = {
+      userProfile: null,
+      navigationItems: [],
+      userNotifications: [],
+    };
     this.loading = false;
     this.error = null;
     this.#initialized = false;
