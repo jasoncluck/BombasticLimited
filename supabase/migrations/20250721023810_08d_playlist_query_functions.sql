@@ -13,7 +13,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data (
   p_sort_key text DEFAULT NULL,
   p_sort_order text DEFAULT NULL
 ) RETURNS TABLE (
-  -- Playlist data
+  -- Playlist data with optimized image paths
   playlist_id bigint,
   playlist_created_at TIMESTAMP WITH TIME ZONE,
   playlist_name text,
@@ -22,13 +22,18 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data (
   playlist_description text,
   playlist_thumbnail_url text,
   playlist_thumbnail_maxres_url text,
+  playlist_thumbnail_webp_path text,
+  playlist_thumbnail_avif_path text,
+  playlist_thumbnail_maxres_webp_path text,
+  playlist_thumbnail_maxres_avif_path text,
+  playlist_image_processing_status text,
   playlist_type public.playlist_type,
   playlist_image_properties jsonb,
   playlist_youtube_id text,
   profile_username text,
   playlist_sorted_by public.playlist_sorted_by,
   playlist_sort_order public.playlist_sort_order,
-  -- Video data (will be null for the duration-only row)
+  -- Video data with optimized image paths  
   video_id text,
   video_position int2,
   video_source public.source,
@@ -36,6 +41,11 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data (
   video_description text,
   video_thumbnail_url text,
   video_thumbnail_maxres_url text,
+  video_thumbnail_webp_path text,
+  video_thumbnail_avif_path text,
+  video_thumbnail_maxres_webp_path text,
+  video_thumbnail_maxres_avif_path text,
+  video_image_processing_status text,
   video_published_at TIMESTAMP WITH TIME ZONE,
   video_duration text,
   video_start_seconds numeric,
@@ -72,6 +82,11 @@ BEGIN
     p.description,
     p.thumbnail_url,
     p.thumbnail_maxres_url,
+    p.thumbnail_webp_path,
+    p.thumbnail_avif_path,
+    p.thumbnail_maxres_webp_path,
+    p.thumbnail_maxres_avif_path,
+    p.image_processing_status,
     p.type,
     p.image_properties,
     p.youtube_id,
@@ -96,75 +111,53 @@ BEGIN
   effective_sort_key := COALESCE(p_sort_key, playlist_record.sorted_by::text, 'video_position');
   effective_sort_order := COALESCE(p_sort_order, playlist_record.sort_order::text, 'ascending');
   
-  -- Get total video count
-  SELECT COUNT(*)
-  INTO video_count
-  FROM public.playlist_videos pv
-  WHERE pv.playlist_id = playlist_record.id;
-  
-  -- Calculate total duration
-  SELECT COALESCE(SUM(
-    CASE 
-      WHEN v.duration ~ '^PT(\d+H)?(\d+M)?(\d+S)?$' THEN
-        COALESCE(
-          (CASE WHEN v.duration ~ 'PT(\d+)H' THEN 
-            CAST(substring(v.duration from 'PT(\d+)H') AS INTEGER) * 3600
-          ELSE 0 END) +
-          (CASE WHEN v.duration ~ '(\d+)M' THEN 
-            CAST(substring(v.duration from '(\d+)M') AS INTEGER) * 60
-          ELSE 0 END) +
-          (CASE WHEN v.duration ~ '(\d+)S' THEN 
-            CAST(substring(v.duration from '(\d+)S') AS INTEGER)
-          ELSE 0 END), 0)
-      ELSE 0
-    END
-  ), 0)
-  INTO total_duration
+  -- Get total video count and duration
+  SELECT COUNT(*), COALESCE(SUM(duration_seconds), 0)
+  INTO video_count, total_duration
   FROM public.playlist_videos pv
   JOIN public.videos v ON pv.video_id = v.id
-  WHERE pv.playlist_id = playlist_record.id;
-  
-  -- Return one row with just playlist data and totals (duration row)
-  RETURN QUERY
-  SELECT
-    playlist_record.id,
-    playlist_record.created_at,
-    playlist_record.name,
-    playlist_record.short_id,
-    playlist_record.created_by,
-    playlist_record.description,
-    playlist_record.thumbnail_url,
-    playlist_record.thumbnail_maxres_url,
-    playlist_record.type,
-    playlist_record.image_properties,
-    playlist_record.youtube_id,
-    playlist_record.profile_username,
-    playlist_record.sorted_by,
-    playlist_record.sort_order,
-    
-    NULL::text, -- video_id
-    NULL::int2, -- video_position
-    NULL::public.source, -- video_source
-    NULL::text, -- video_title
-    NULL::text, -- video_description
-    NULL::text, -- video_thumbnail_url
-    NULL::text, -- video_thumbnail_maxres_url
-    NULL::timestamp with time zone, -- video_published_at
-    NULL::text, -- video_duration
-    NULL::numeric, -- video_start_seconds
-    NULL::timestamp with time zone, -- video_watched_at
-    NULL::timestamp with time zone, -- video_updated_at
-    
-    video_count,
-    total_duration,
-    true; -- is_duration_row
+  WHERE pv.playlist_id = playlist_record.id
+    AND v.pending_delete = FALSE;
   
   -- Calculate pagination
   start_index := (p_current_page - 1) * p_limit;
   
-  -- Return paginated video data with dynamic sorting
+  -- Return main data query with both playlist and video optimized image paths
   RETURN QUERY
-  SELECT
+  WITH sorted_videos AS (
+    SELECT 
+      pv.video_id,
+      pv.position,
+      v.source,
+      v.title,
+      v.description,
+      v.thumbnail_url,
+      v.thumbnail_maxres_url,
+      v.thumbnail_webp_path,
+      v.thumbnail_avif_path,
+      v.thumbnail_maxres_webp_path,
+      v.thumbnail_maxres_avif_path,
+      v.image_processing_status,
+      v.published_at,
+      v.duration,
+      COALESCE(t.video_start_seconds, 0) AS video_start_seconds,
+      t.watched_at,
+      t.updated_at,
+      -- Add sort helpers
+      CASE 
+        WHEN effective_sort_key = 'video_position' THEN pv.position::text
+        WHEN effective_sort_key = 'video_title' THEN v.title
+        WHEN effective_sort_key = 'published_at' THEN v.published_at::text
+        WHEN effective_sort_key = 'duration' THEN v.duration
+        ELSE pv.position::text
+      END as sort_value
+    FROM public.playlist_videos pv
+    JOIN public.videos v ON pv.video_id = v.id
+    LEFT JOIN public.timestamps t ON v.id = t.video_id AND t.user_id = p_user_id
+    WHERE pv.playlist_id = playlist_record.id
+      AND v.pending_delete = FALSE
+  )
+  SELECT 
     playlist_record.id,
     playlist_record.created_at,
     playlist_record.name,
@@ -173,83 +166,77 @@ BEGIN
     playlist_record.description,
     playlist_record.thumbnail_url,
     playlist_record.thumbnail_maxres_url,
+    playlist_record.thumbnail_webp_path,
+    playlist_record.thumbnail_avif_path,
+    playlist_record.thumbnail_maxres_webp_path,
+    playlist_record.thumbnail_maxres_avif_path,
+    playlist_record.image_processing_status,
     playlist_record.type,
     playlist_record.image_properties,
     playlist_record.youtube_id,
     playlist_record.profile_username,
     playlist_record.sorted_by,
     playlist_record.sort_order,
-    
-    pv.video_id,
-    pv.video_position,
-    v.source,
-    v.title,
-    v.description,
-    v.thumbnail_url,
-    v.thumbnail_maxres_url,
-    v.published_at,
-    v.duration,
-    COALESCE(t.video_start_seconds, 0) AS video_start_seconds,
-    t.watched_at,
-    t.updated_at,
-    
+    sv.video_id,
+    sv.position,
+    sv.source,
+    sv.title,
+    sv.description,
+    sv.thumbnail_url,
+    sv.thumbnail_maxres_url,
+    sv.thumbnail_webp_path,
+    sv.thumbnail_avif_path,
+    sv.thumbnail_maxres_webp_path,
+    sv.thumbnail_maxres_avif_path,
+    sv.image_processing_status,
+    sv.published_at,
+    sv.duration,
+    sv.video_start_seconds,
+    sv.watched_at,
+    sv.updated_at,
     video_count,
     total_duration,
-    false -- is_duration_row
-  FROM public.playlist_videos pv
-  JOIN public.videos v ON pv.video_id = v.id
-  LEFT JOIN public.timestamps t ON pv.video_id = t.video_id AND t.user_id = p_user_id
-  WHERE pv.playlist_id = playlist_record.id
+    false AS is_duration_row
+  FROM sorted_videos sv
   ORDER BY 
     CASE 
-      WHEN effective_sort_key = 'video_position' OR effective_sort_key = 'playlistOrder' THEN 
-        CASE WHEN effective_sort_order = 'ascending' THEN pv.video_position ELSE -pv.video_position END
-      WHEN effective_sort_key = 'published_at' OR effective_sort_key = 'datePublished' THEN 
-        CASE WHEN effective_sort_order = 'ascending' THEN EXTRACT(EPOCH FROM v.published_at) ELSE -EXTRACT(EPOCH FROM v.published_at) END
-      WHEN effective_sort_key = 'title' THEN 
-        CASE WHEN effective_sort_order = 'ascending' THEN ASCII(UPPER(SUBSTRING(v.title, 1, 1))) ELSE -ASCII(UPPER(SUBSTRING(v.title, 1, 1))) END
-      WHEN effective_sort_key = 'duration' THEN
-        CASE WHEN effective_sort_order = 'ascending' THEN 
-          CASE 
-            WHEN v.duration ~ '^PT(\d+H)?(\d+M)?(\d+S)?$' THEN
-              COALESCE(
-                (CASE WHEN v.duration ~ 'PT(\d+)H' THEN 
-                  CAST(substring(v.duration from 'PT(\d+)H') AS INTEGER) * 3600
-                ELSE 0 END) +
-                (CASE WHEN v.duration ~ '(\d+)M' THEN 
-                  CAST(substring(v.duration from '(\d+)M') AS INTEGER) * 60
-                ELSE 0 END) +
-                (CASE WHEN v.duration ~ '(\d+)S' THEN 
-                  CAST(substring(v.duration from '(\d+)S') AS INTEGER)
-                ELSE 0 END), 0)
-            ELSE 0
-          END
-        ELSE 
-          -CASE 
-            WHEN v.duration ~ '^PT(\d+H)?(\d+M)?(\d+S)?$' THEN
-              COALESCE(
-                (CASE WHEN v.duration ~ 'PT(\d+)H' THEN 
-                  CAST(substring(v.duration from 'PT(\d+)H') AS INTEGER) * 3600
-                ELSE 0 END) +
-                (CASE WHEN v.duration ~ '(\d+)M' THEN 
-                  CAST(substring(v.duration from '(\d+)M') AS INTEGER) * 60
-                ELSE 0 END) +
-                (CASE WHEN v.duration ~ '(\d+)S' THEN 
-                  CAST(substring(v.duration from '(\d+)S') AS INTEGER)
-                ELSE 0 END), 0)
-            ELSE 0
-          END
+      WHEN effective_sort_order = 'ascending' THEN
+        CASE effective_sort_key
+          WHEN 'video_position' THEN sv.position
+          ELSE NULL
         END
-      ELSE pv.video_position
-    END,
-    -- Secondary sort by title for non-position sorts to ensure consistent ordering
-    CASE 
-      WHEN effective_sort_key = 'title' THEN 
-        CASE WHEN effective_sort_order = 'ascending' THEN v.title ELSE NULL END
-      WHEN effective_sort_key != 'video_position' AND effective_sort_key != 'playlistOrder' THEN v.title
       ELSE NULL
-    END
-  LIMIT p_limit OFFSET start_index;
+    END ASC,
+    CASE 
+      WHEN effective_sort_order = 'descending' THEN
+        CASE effective_sort_key
+          WHEN 'video_position' THEN sv.position
+          ELSE NULL
+        END
+      ELSE NULL
+    END DESC,
+    CASE 
+      WHEN effective_sort_order = 'ascending' THEN
+        CASE effective_sort_key
+          WHEN 'video_title' THEN sv.title
+          WHEN 'published_at' THEN sv.published_at::text
+          WHEN 'duration' THEN sv.duration
+          ELSE NULL
+        END
+      ELSE NULL
+    END ASC,
+    CASE 
+      WHEN effective_sort_order = 'descending' THEN
+        CASE effective_sort_key
+          WHEN 'video_title' THEN sv.title
+          WHEN 'published_at' THEN sv.published_at::text
+          WHEN 'duration' THEN sv.duration
+          ELSE NULL
+        END
+      ELSE NULL
+    END DESC
+  OFFSET start_index
+  LIMIT p_limit;
 END;
 $$;
 
@@ -440,47 +427,60 @@ SET
 $$;
 
 -- Function to get user playlists
-CREATE OR REPLACE FUNCTION public.get_user_playlists () RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.get_followed_playlists(p_user_id uuid)
+RETURNS TABLE (
   id bigint,
-  created_by uuid,
-  created_at timestamptz,
+  created_at TIMESTAMP WITH TIME ZONE,
   name text,
   short_id text,
+  created_by uuid,
   description text,
-  type public.playlist_type,
   thumbnail_url text,
   thumbnail_maxres_url text,
+  thumbnail_webp_path text,
+  thumbnail_avif_path text,
+  thumbnail_maxres_webp_path text,
+  thumbnail_maxres_avif_path text,
+  image_processing_status text,
+  type public.playlist_type,
   image_properties jsonb,
-  playlist_position int2,
-  sorted_by public.playlist_sorted_by,
-  sort_order public.playlist_sort_order,
   youtube_id text,
   profile_username text,
-  deleted_at TIMESTAMP WITH TIME ZONE
+  sorted_by public.playlist_sorted_by,
+  sort_order public.playlist_sort_order,
+  playlist_position integer,
+  followed_at TIMESTAMP WITH TIME ZONE,
+  avatar_url text
 )
 SET
-  search_path = '' LANGUAGE sql SECURITY DEFINER AS $$
+  search_path = '' LANGUAGE sql AS $$
   SELECT
     p.id,
-    p.created_by,
     p.created_at,
     p.name,
     p.short_id,
+    p.created_by,
     p.description,
-    p.type,
     p.thumbnail_url,
     p.thumbnail_maxres_url,
+    p.thumbnail_webp_path,
+    p.thumbnail_avif_path,
+    p.thumbnail_maxres_webp_path,
+    p.thumbnail_maxres_avif_path,
+    p.image_processing_status,
+    p.type,
     p.image_properties,
-    up.playlist_position,
-    up.sorted_by,
-    up.sort_order,
     p.youtube_id,
     prof.username AS profile_username,
-    p.deleted_at
+    up.sorted_by,
+    up.sort_order,
+    up.playlist_position,
+    up.created_at AS followed_at,
+    prof.avatar_url
   FROM public.user_playlists up
   JOIN public.playlists p ON up.id = p.id
-  LEFT JOIN public.profiles prof ON p.created_by = prof.id
-  WHERE up.user_id = auth.uid()
+  JOIN public.profiles prof ON p.created_by = prof.id
+  WHERE up.user_id = p_user_id
     AND p.deleted_at IS NULL  -- Filter out soft-deleted playlists
   ORDER BY up.playlist_position ASC;
 $$;
@@ -495,6 +495,11 @@ CREATE OR REPLACE FUNCTION public.get_playlists_for_username (p_username text) R
   description text,
   thumbnail_url text,
   thumbnail_maxres_url text,
+  thumbnail_webp_path text,
+  thumbnail_avif_path text,
+  thumbnail_maxres_webp_path text,
+  thumbnail_maxres_avif_path text,
+  image_processing_status text,
   type public.playlist_type,
   image_properties jsonb,
   youtube_id text,
@@ -514,6 +519,11 @@ SET
     p.description,
     p.thumbnail_url,
     p.thumbnail_maxres_url,
+    p.thumbnail_webp_path,
+    p.thumbnail_avif_path,
+    p.thumbnail_maxres_webp_path,
+    p.thumbnail_maxres_avif_path,
+    p.image_processing_status,
     p.type,
     p.image_properties,
     p.youtube_id,
@@ -543,6 +553,11 @@ CREATE OR REPLACE FUNCTION "public"."search_playlists" (
   "description" text,
   "thumbnail_url" text,
   "thumbnail_maxres_url" text,
+  "thumbnail_webp_path" text,
+  "thumbnail_avif_path" text,
+  "thumbnail_maxres_webp_path" text,
+  "thumbnail_maxres_avif_path" text,
+  "image_processing_status" text,
   "image_properties" jsonb,
   "created_at" TIMESTAMP WITH TIME ZONE,
   "created_by" uuid,
@@ -581,77 +596,94 @@ BEGIN
     BEGIN
         phrase_query := phraseto_tsquery('english', search_term);
         plain_query := plainto_tsquery('english', search_term);
-    EXCEPTION 
+    EXCEPTION
         WHEN OTHERS THEN
             phrase_query := NULL;
             plain_query := NULL;
     END;
     
     RETURN QUERY
-    SELECT 
-        p.id, 
-        p.short_id,
-        p.name, 
-        p.description,
-        p.thumbnail_url,
-        p.thumbnail_maxres_url,
-        p.image_properties,
-        p.created_at,
-        p.created_by,
-        p.type,
-        p.youtube_id,
-        prof.username AS profile_username,
-        -- Simplified ranking to avoid type issues
-        (CASE 
-            WHEN lower(p.name) LIKE '%' || clean_term || '%' THEN 1000
-            WHEN lower(p.name) LIKE clean_term || '%' THEN 950
-            WHEN word_count > 1 AND (
-                SELECT COUNT(*) 
-                FROM unnest(words) AS word 
-                WHERE lower(p.name) LIKE '%' || word || '%'
-            ) = word_count THEN 900
-            WHEN phrase_query IS NOT NULL AND p.search_vector @@ phrase_query THEN 850
-            WHEN plain_query IS NOT NULL AND p.search_vector @@ plain_query THEN 800
-            WHEN p.description IS NOT NULL AND lower(p.description) LIKE '%' || clean_term || '%' THEN 500
-            WHEN word_count = 1 AND lower(p.name) LIKE '%' || words[1] || '%' THEN 450
-            WHEN p.description IS NOT NULL AND lower(p.description) LIKE clean_term || '%' THEN 350
-            WHEN word_count = 1 AND p.description IS NOT NULL AND lower(p.description) LIKE '%' || words[1] || '%' THEN 300
-            WHEN prof.username IS NOT NULL AND lower(prof.username) LIKE '%' || clean_term || '%' THEN 250
-            ELSE 0 
-        END)::real AS search_rank,
-        p.deleted_at
-    FROM public.playlists p
-    LEFT JOIN public.profiles prof ON p.created_by = prof.id
-    WHERE 
-        -- Filter out soft-deleted playlists
-        p.deleted_at IS NULL
-        AND (
-            -- Access control
-            (p.type = 'Public' OR (current_user_id IS NOT NULL AND p.created_by = current_user_id))
+    WITH ranked_playlists AS (
+        SELECT 
+            p.id,
+            p.short_id,
+            p.name,
+            p.description,
+            p.thumbnail_url,
+            p.thumbnail_maxres_url,
+            p.thumbnail_webp_path,
+            p.thumbnail_avif_path,
+            p.thumbnail_maxres_webp_path,
+            p.thumbnail_maxres_avif_path,
+            p.image_processing_status,
+            p.image_properties,
+            p.created_at,
+            p.created_by,
+            p.type,
+            p.youtube_id,
+            prof.username AS profile_username,
+            p.deleted_at,
+            -- Fixed: Cast ALL calculations to real explicitly
+            (CASE 
+                WHEN lower(p.name) LIKE '%' || clean_term || '%' THEN 1000.0
+                WHEN lower(p.name) LIKE clean_term || '%' THEN 950.0
+                WHEN p.search_vector @@ phrase_query AND phrase_query IS NOT NULL THEN 
+                    850.0 + (ts_rank_cd(p.search_vector, phrase_query) * 100.0)::real
+                WHEN p.search_vector @@ plain_query AND plain_query IS NOT NULL THEN 
+                    800.0 + (ts_rank_cd(p.search_vector, plain_query) * 100.0)::real
+                WHEN lower(p.name) ~ ('\y' || clean_term || '\y') THEN 750.0
+                WHEN word_count > 1 AND (
+                    SELECT COUNT(*) 
+                    FROM unnest(words) AS word 
+                    WHERE lower(p.name) LIKE '%' || word || '%'
+                ) >= word_count THEN 700.0
+                WHEN lower(p.description) LIKE '%' || clean_term || '%' THEN 500.0
+                WHEN word_count = 1 AND lower(p.name) LIKE '%' || words[1] || '%' THEN 450.0
+                WHEN lower(p.description) LIKE clean_term || '%' THEN 350.0
+                WHEN word_count = 1 AND lower(p.description) LIKE '%' || words[1] || '%' THEN 300.0
+                ELSE 0.0 
+            END)::real AS search_rank
+        FROM public.playlists p
+        LEFT JOIN public.profiles prof ON p.created_by = prof.id
+        WHERE 
+            p.deleted_at IS NULL
             AND (
-                -- Search criteria
                 lower(p.name) LIKE '%' || clean_term || '%'
-                OR (p.description IS NOT NULL AND lower(p.description) LIKE '%' || clean_term || '%')
+                OR lower(p.description) LIKE '%' || clean_term || '%'
                 OR (phrase_query IS NOT NULL AND p.search_vector @@ phrase_query)
                 OR (plain_query IS NOT NULL AND p.search_vector @@ plain_query)
                 OR (word_count = 1 AND (
                     lower(p.name) LIKE '%' || words[1] || '%'
-                    OR (p.description IS NOT NULL AND lower(p.description) LIKE '%' || words[1] || '%')
+                    OR lower(p.description) LIKE '%' || words[1] || '%'
                 ))
-                OR (prof.username IS NOT NULL AND lower(prof.username) LIKE '%' || clean_term || '%')
             )
-        )
+    )
+    SELECT 
+        rp.id,
+        rp.short_id,
+        rp.name,
+        rp.description,
+        rp.thumbnail_url,
+        rp.thumbnail_maxres_url,
+        rp.thumbnail_webp_path,
+        rp.thumbnail_avif_path,
+        rp.thumbnail_maxres_webp_path,
+        rp.thumbnail_maxres_avif_path,
+        rp.image_processing_status,
+        rp.image_properties,
+        rp.created_at,
+        rp.created_by,
+        rp.type,
+        rp.youtube_id,
+        rp.profile_username,
+        rp.search_rank,
+        rp.deleted_at
+    FROM ranked_playlists rp
+    WHERE rp.search_rank > 0
     ORDER BY 
-        (CASE 
-            WHEN lower(p.name) LIKE '%' || clean_term || '%' THEN 1000
-            WHEN lower(p.name) LIKE clean_term || '%' THEN 950
-            WHEN phrase_query IS NOT NULL AND p.search_vector @@ phrase_query THEN 850
-            WHEN plain_query IS NOT NULL AND p.search_vector @@ plain_query THEN 800
-            WHEN p.description IS NOT NULL AND lower(p.description) LIKE '%' || clean_term || '%' THEN 500
-            ELSE 0 
-        END) DESC,
-        p.created_at DESC
-    LIMIT limit_count 
+        rp.search_rank DESC,
+        rp.created_at DESC
+    LIMIT limit_count
     OFFSET offset_count;
 END;
 $$;
