@@ -10,11 +10,15 @@
     hasOptimizedImages,
   } from '$lib/utils/video-thumbnails-storage';
 
+  import type { SupabaseClient } from '@supabase/supabase-js';
+  import type { Database } from '$lib/supabase/database.types';
+
   type ContentCardProps = {
     video: Video;
+    supabase: SupabaseClient<Database>;
   };
 
-  const { video = $bindable() }: ContentCardProps = $props();
+  const { video = $bindable(), supabase }: ContentCardProps = $props();
 </script>
 
 <div class="relative flex aspect-video h-[80px] w-32 shrink-0 items-center">

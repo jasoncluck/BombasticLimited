@@ -94,7 +94,14 @@ file_size_limit = "50MiB"
 # [storage.image_transformation]
 # enabled = true
 
-# Uncomment to configure local storage buckets
+# Configure storage buckets for image processing
+[storage.buckets.optimized-images]
+public = true
+file_size_limit = "50MiB"
+allowed_mime_types = ["image/png", "image/jpeg", "image/webp", "image/avif"]
+objects_path = "./storage/optimized-images"
+
+# Uncomment to configure additional local storage buckets
 # [storage.buckets.images]
 # public = false
 # file_size_limit = "50MiB"

@@ -57,6 +57,7 @@ export function createContentColumns({
         const video = row.original;
         return renderComponent(ContentTableImage, {
           video,
+          supabase,
         });
       },
       enableSorting: false,

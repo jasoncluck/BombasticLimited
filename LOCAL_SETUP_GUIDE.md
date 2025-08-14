@@ -34,18 +34,48 @@ Before setting up the image processing system, ensure you have:
    npx supabase migration up
    ```
 
-2. **Create Storage Bucket**
+2. **Storage Bucket Auto-Setup**
    
-   The system requires an `optimized-images` bucket in Supabase Storage. This will be created automatically when you run the test script, or you can create it manually:
+   The `optimized-images` bucket is now automatically configured in `supabase/config.toml` and will be created when you run:
    
+   ```bash
+   npx supabase start
+   ```
+   
+   The bucket configuration includes:
+   - Public access enabled
+   - 50MiB file size limit
+   - Allowed MIME types: `image/png`, `image/jpeg`, `image/webp`, `image/avif`
+   - Local storage path: `./storage/optimized-images`
+
+3. **Manual Bucket Creation** (if needed)
+   
+   If automatic setup doesn't work, create manually:
    - Go to Supabase Dashboard → Storage
    - Create a new bucket named `optimized-images`
    - Make it public
-   - Set allowed MIME types: `image/webp`, `image/avif`
+   - Set allowed MIME types: `image/png`, `image/jpeg`, `image/webp`, `image/avif`
 
 ## Local Development
 
-### Option 1: Using Inngest Dev Server (Recommended)
+⚠️ **Important**: Image processing is CPU-intensive and can overload your dev server. See [Development Server Optimization Guide](./DEVSERVER_OPTIMIZATION.md) for solutions.
+
+### Option 1: Optimized Development (Recommended)
+
+For the best development experience, use these optimized npm scripts:
+
+```bash
+# Standard development with optimizations
+npm run dev
+
+# Development with increased memory for heavy processing
+npm run dev:memory
+
+# Development with image processing disabled (fastest)
+npm run dev:no-processing
+```
+
+### Option 2: Using Inngest Dev Server
 
 1. **Install Inngest CLI**
    ```bash
@@ -70,9 +100,9 @@ Before setting up the image processing system, ensure you have:
    npm run script:test-image-processing
    ```
 
-### Option 2: Without Inngest (Testing Only)
+### Option 3: Without Background Processing
 
-If you just want to test the image processing functions without background processing:
+If you want to focus on UI development without image processing overhead:
 
 1. **Start SvelteKit**
    ```bash

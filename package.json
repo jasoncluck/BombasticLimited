@@ -11,6 +11,8 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "dev": "vite dev",
+    "dev:memory": "NODE_OPTIONS='--max-old-space-size=4096' vite dev",
+    "dev:no-processing": "DISABLE_IMAGE_PROCESSING=true vite dev",
     "dev:test": "NODE_ENV=test vite dev --mode test",
     "format": "node --max-old-space-size=4096 ./node_modules/.bin/prettier --write --log-level error .",
     "format:src": "node --max-old-space-size=4096 ./node_modules/.bin/prettier --write --log-level error src/",
@@ -45,6 +47,8 @@
     "script:process-existing-images": "tsx scripts/process-existing-images.ts",
     "script:setup-local-dev": "tsx scripts/setup-local-dev.ts",
     "script:test-image-processing": "tsx scripts/test-image-processing.ts",
+    "script:clear-processing-queue": "tsx scripts/clear-processing-queue.ts",
+    "script:cleanup-failed-jobs": "tsx scripts/cleanup-failed-jobs.ts",
     "vercel-build": "npm run build:vercel"
   },
   "devDependencies": {

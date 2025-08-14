@@ -88,11 +88,17 @@ async function downloadImage(sourceUrl: string): Promise<Buffer> {
 }
 
 /**
- * Process image buffer into WebP and AVIF formats
+ * Process image buffer into WebP and AVIF formats with throttling
  */
 async function processImageFormats(
   buffer: Buffer
 ): Promise<{ webp: Buffer; avif: Buffer }> {
+  // Add throttling to prevent server overload
+  const throttleDelay = process.env.NODE_ENV === 'development' ? 1000 : 0; // 1 second delay in dev
+  if (throttleDelay > 0) {
+    await new Promise(resolve => setTimeout(resolve, throttleDelay));
+  }
+
   const sharpInstance = sharp(buffer);
 
   // Get metadata for optimization
@@ -112,24 +118,26 @@ async function processImageFormats(
     });
   }
 
-  // Generate WebP
+  // Generate WebP with lower effort in development to reduce CPU usage
+  const webpEffort = process.env.NODE_ENV === 'development' ? 1 : 3;
   const webpBuffer = await pipeline
     .clone()
     .webp({
       quality: webpQuality,
-      effort: 3,
+      effort: webpEffort,
       lossless: false,
       nearLossless: false,
       smartSubsample: true,
     })
     .toBuffer();
 
-  // Generate AVIF
+  // Generate AVIF with lower effort in development
+  const avifEffort = process.env.NODE_ENV === 'development' ? 2 : 4;
   const avifBuffer = await pipeline
     .clone()
     .avif({
       quality: avifQuality,
-      effort: 4,
+      effort: avifEffort,
       lossless: false,
     })
     .toBuffer();
@@ -293,7 +301,7 @@ export const batchProcessImages = inngest.createFunction(
   {
     id: 'batch-process-images',
     name: 'Batch Process Images',
-    concurrency: 5, // Limit concurrent batch processing
+    concurrency: process.env.NODE_ENV === 'development' ? 1 : 5, // Reduce concurrency in dev
   },
   { event: 'image.batch.process' },
   async ({ event }) => {
@@ -303,25 +311,53 @@ export const batchProcessImages = inngest.createFunction(
 
     const results = [];
 
-    // Process images in parallel with concurrency limit
-    for (const job of jobs) {
-      try {
-        // Send individual processing event
-        await inngest.send({
-          name: 'image.process',
-          data: job,
-        });
-        results.push({ success: true, entityId: job.entityId });
-      } catch (error) {
-        console.error(
-          `Failed to queue processing for ${job.entityType} ${job.entityId}:`,
-          error
-        );
-        results.push({
-          success: false,
-          entityId: job.entityId,
-          error: error instanceof Error ? error.message : String(error),
-        });
+    // In development, process sequentially to prevent server overload
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Development mode: Processing images sequentially');
+      for (const job of jobs) {
+        try {
+          // Send individual processing event
+          await inngest.send({
+            name: 'image.process',
+            data: job,
+          });
+          results.push({ success: true, entityId: job.entityId });
+          
+          // Add delay between jobs in development
+          await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
+        } catch (error) {
+          console.error(
+            `Failed to queue processing for ${job.entityType} ${job.entityId}:`,
+            error
+          );
+          results.push({
+            success: false,
+            entityId: job.entityId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+    } else {
+      // Process images in parallel with concurrency limit in production
+      for (const job of jobs) {
+        try {
+          // Send individual processing event
+          await inngest.send({
+            name: 'image.process',
+            data: job,
+          });
+          results.push({ success: true, entityId: job.entityId });
+        } catch (error) {
+          console.error(
+            `Failed to queue processing for ${job.entityType} ${job.entityId}:`,
+            error
+          );
+          results.push({
+            success: false,
+            entityId: job.entityId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
       }
     }
 
