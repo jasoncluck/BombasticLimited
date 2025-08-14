@@ -41,14 +41,12 @@ CREATE TABLE IF NOT EXISTS "public"."playlists" (
   "search_vector" tsvector,
   "youtube_id" text DEFAULT NULL,
   "description" text,
-  "thumbnail_url" text,
-  "thumbnail_maxres_url" text,
   "image_properties" jsonb,
   "type" "public"."playlist_type" NOT NULL DEFAULT 'Private',
   "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   "deleted_at" TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   "duration_seconds" integer DEFAULT 0,
-  "image_path" text,
+  "image_url" text,
   "image_webp_url" text,
   "image_avif_url" text,
   CONSTRAINT "playlists_pkey" PRIMARY KEY ("id"),
@@ -67,11 +65,11 @@ COMMENT ON COLUMN "public"."playlists"."deleted_at" IS 'Timestamp when playlist 
 
 COMMENT ON COLUMN "public"."playlists"."duration_seconds" IS 'Total duration of playlist in seconds, automatically calculated';
 
-COMMENT ON COLUMN "public"."playlists"."image_path" IS 'Path to uploaded cropped playlist image in Supabase Storage (JPEG)';
+COMMENT ON COLUMN "public"."playlists"."image_url" IS 'URL to uploaded cropped playlist image in Supabase Storage (JPEG)';
 
-COMMENT ON COLUMN "public"."playlists"."image_webp_url" IS 'Path to optimized WebP version of uploaded playlist image';
+COMMENT ON COLUMN "public"."playlists"."image_webp_url" IS 'URL to optimized WebP version of uploaded playlist image';
 
-COMMENT ON COLUMN "public"."playlists"."image_avif_url" IS 'Path to optimized AVIF version of uploaded playlist image';
+COMMENT ON COLUMN "public"."playlists"."image_avif_url" IS 'URL to optimized AVIF version of uploaded playlist image';
 
 -- Playlist videos table (without foreign keys initially)
 CREATE TABLE IF NOT EXISTS "public"."playlist_videos" (

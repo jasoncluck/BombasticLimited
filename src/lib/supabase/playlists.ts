@@ -141,13 +141,10 @@ export async function getPlaylistData({
     short_id: firstRow.playlist_short_id,
     created_by: firstRow.playlist_created_by,
     description: firstRow.playlist_description,
-    thumbnail_url: firstRow.playlist_thumbnail_url,
-    thumbnail_maxres_url: firstRow.playlist_thumbnail_maxres_url,
-    // Include optimized image paths for fallback chain
-    thumbnail_webp_url: firstRow.playlist_thumbnail_webp_url,
-    thumbnail_avif_url: firstRow.playlist_thumbnail_avif_url,
-    thumbnail_maxres_webp_url: firstRow.playlist_thumbnail_maxres_webp_url,
-    thumbnail_maxres_avif_url: firstRow.playlist_thumbnail_maxres_avif_url,
+    image_url: firstRow.playlist_image_url,
+    // Include optimized image URLs for fallback chain
+    image_webp_url: firstRow.playlist_image_webp_url,
+    image_avif_url: firstRow.playlist_image_avif_url,
     image_processing_status: firstRow.playlist_image_processing_status,
     type: firstRow.playlist_type,
     image_properties: firstRow.playlist_image_properties,
@@ -492,8 +489,9 @@ export async function getPlaylistVideoContext({
     short_id: metadataRow.playlist_short_id,
     created_by: metadataRow.playlist_created_by,
     description: metadataRow.playlist_description,
-    thumbnail_url: metadataRow.playlist_thumbnail_url,
-    thumbnail_maxres_url: metadataRow.playlist_thumbnail_maxres_url,
+    image_url: metadataRow.playlist_image_url,
+    image_webp_url: metadataRow.playlist_image_webp_url,
+    image_avif_url: metadataRow.playlist_image_avif_url,
     type: metadataRow.playlist_type,
     image_properties: metadataRow.playlist_image_properties,
     youtube_id: metadataRow.playlist_youtube_id,
@@ -860,8 +858,9 @@ export async function updatePlaylistImage({
     const { error } = await supabase
       .from('playlists')
       .update({
-        thumbnail_url: null,
-        thumbnail_maxres_url: null,
+        image_url: null,
+        image_webp_url: null,
+        image_avif_url: null,
         image_properties: null,
       })
       .eq('id', playlistId)
@@ -870,46 +869,101 @@ export async function updatePlaylistImage({
     return { error };
   }
 
-  const { data: isValid, error: validationError } = await supabase.rpc(
-    'validate_playlist_thumbnail_urls',
-    {
-      p_playlist_id: playlistId,
-      p_thumbnail_maxres_url: thumbnailMaxResUrl ?? undefined,
-      p_thumbnail_url: thumbnailUrl ?? undefined,
+  // This function is obsolete - playlists now only use uploaded images
+  // const { data: isValid, error: validationError } = await supabase.rpc(
+  //   'validate_playlist_thumbnail_urls',
+  //   {
+  //     p_playlist_id: playlistId,
+  //     p_thumbnail_maxres_url: thumbnailMaxResUrl ?? undefined,
+  //     p_thumbnail_url: thumbnailUrl ?? undefined,
+  //   }
+  // );
+
+  // if (validationError) {
+  //   console.error('Error validating URLs:', validationError);
+  //   return { error: validationError };
+  // }
+
+  // if (!isValid) {
+  //   const error = {
+  //     message: 'Invalid image URLs. URLs must be from videos in this playlist.',
+  //     code: 'invalid_image_urls',
+  //   };
+
+  //   console.error(error);
+  //   return { error };
+  // }
+
+  // Playlists now only use uploaded images, not YouTube thumbnails
+  const error = {
+    message: 'Playlist images are now uploaded only. Use uploadPlaylistImage instead.',
+    code: 'deprecated_function',
+  };
+
+  console.error(error);
+  return { error };
+}
+
+export async function uploadPlaylistImage({
+  playlistId,
+  imageDataUrl,
+  imageName,
+  imageProperties,
+  supabase,
+}: {
+  playlistId: number;
+  imageDataUrl: string;
+  imageName?: string;
+  imageProperties?: PlaylistImageProperties;
+  supabase: SupabaseClient<Database>;
+}) {
+  try {
+    // Convert data URL to blob
+    const response = await fetch(imageDataUrl);
+    const blob = await response.blob();
+    
+    // Generate filename if not provided
+    const fileName = imageName || `playlist-${playlistId}-${Date.now()}.jpg`;
+    const filePath = `playlist-images/${fileName}`;
+    
+    // Upload to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('optimized-images')
+      .upload(filePath, blob, {
+        contentType: 'image/jpeg',
+        upsert: true,
+      });
+      
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      return { error: uploadError };
     }
-  );
-
-  if (validationError) {
-    console.error('Error validating URLs:', validationError);
-    return { error: validationError };
-  }
-
-  if (!isValid) {
-    const error = {
-      message: 'Invalid image URLs. URLs must be from videos in this playlist.',
-      code: 'invalid_image_urls',
+    
+    // Update playlist with uploaded image URL using RPC function
+    const { data: updateData, error: updateError } = await supabase.rpc(
+      'update_playlist_uploaded_image',
+      {
+        p_playlist_id: playlistId,
+        p_image_url: uploadData.path,
+        p_image_properties: imageProperties || null,
+      }
+    );
+    
+    if (updateError) {
+      console.error('Database update error:', updateError);
+      return { error: updateError };
+    }
+    
+    return { 
+      data: { 
+        imagePath: uploadData.path,
+        success: updateData?.[0]?.success || false 
+      } 
     };
-
-    console.error(error);
-    return { error };
+  } catch (error) {
+    console.error('Upload playlist image error:', error);
+    return { error: error as Error };
   }
-
-  const { data: updatedPlaylist, error: updateError } = await supabase
-    .from('playlists')
-    .update({
-      thumbnail_url: thumbnailUrl,
-      thumbnail_maxres_url: thumbnailMaxResUrl,
-      image_properties: null,
-    })
-    .eq('id', playlistId)
-    .select()
-    .single();
-
-  if (updateError) {
-    console.error('Error updating playlist:', updateError);
-  }
-
-  return { updatedPlaylist, error: updateError };
 }
 
 export async function followPlaylist({
@@ -1057,9 +1111,9 @@ export function isPlaylist(obj: unknown): obj is Playlist {
     'image_properties' in obj && // Accepts any (Json)
     typeof obj.name === 'string' &&
     typeof obj.short_id === 'string' &&
-    (typeof obj.thumbnail_maxres_url === 'string' ||
-      obj.thumbnail_maxres_url === null) &&
-    (typeof obj.thumbnail_url === 'string' || obj.thumbnail_url === null) &&
+    (typeof obj.image_url === 'string' || obj.image_url === null) &&
+    (typeof obj.image_webp_url === 'string' || obj.image_webp_url === null) &&
+    (typeof obj.image_avif_url === 'string' || obj.image_avif_url === null) &&
     typeof obj.type === 'string' &&
     typeof obj.updated_at === 'string' &&
     (typeof obj.youtube_id === 'string' || obj.youtube_id === null)
@@ -1081,9 +1135,9 @@ export function isUserPlaylist(obj: unknown): obj is UserPlaylist {
     typeof obj.created_by === 'string' &&
     (typeof obj.description === 'string' || obj.description === null) &&
     'image_properties' in obj && // Accepts any (Json)
-    (typeof obj.thumbnail_maxres_url === 'string' ||
-      obj.thumbnail_maxres_url === null) &&
-    (typeof obj.thumbnail_url === 'string' || obj.thumbnail_url === null) &&
+    (typeof obj.image_url === 'string' || obj.image_url === null) &&
+    (typeof obj.image_webp_url === 'string' || obj.image_webp_url === null) &&
+    (typeof obj.image_avif_url === 'string' || obj.image_avif_url === null) &&
     typeof obj.type === 'string' &&
     (typeof obj.youtube_id === 'string' || obj.youtube_id === null)
   );
