@@ -1,17 +1,19 @@
-import { inngest, type ImageProcessingEvent, type BatchImageProcessingEvent, type CleanupJobsEvent } from './client';
+import { inngest } from './client';
 import sharp from 'sharp';
 import { createClient } from '@supabase/supabase-js';
 import { validateImageUrl } from '../server/image-processing';
+import { SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
+import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 
 // Initialize Supabase client with service role key for server-side operations
-const supabaseUrl = process.env.PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseUrl = PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = SUPABASE_SERVICE_ROLE_KEY;
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
-    persistSession: false
-  }
+    persistSession: false,
+  },
 });
 
 // Configuration
@@ -22,7 +24,7 @@ const PROCESSING_TIMEOUT = 30000; // 30 seconds
 // Domain validation for security
 const ALLOWED_DOMAINS = [
   'i.ytimg.com',
-  'img.youtube.com', 
+  'img.youtube.com',
   'i1.ytimg.com',
   'i2.ytimg.com',
   'i3.ytimg.com',
@@ -39,7 +41,11 @@ interface ProcessingResult {
 /**
  * Generate storage paths for optimized images
  */
-function generateStoragePaths(entityType: string, entityId: string, imageType: string) {
+function generateStoragePaths(
+  entityType: string,
+  entityId: string,
+  imageType: string
+) {
   const basePath = `${entityType}s/${entityId}/${imageType}`;
   return {
     webpPath: `${basePath}.webp`,
@@ -69,7 +75,9 @@ async function downloadImage(sourceUrl: string): Promise<Buffer> {
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      throw new Error(`Failed to download image: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Failed to download image: ${response.status} ${response.statusText}`
+      );
     }
 
     const buffer = await response.arrayBuffer();
@@ -82,17 +90,19 @@ async function downloadImage(sourceUrl: string): Promise<Buffer> {
 /**
  * Process image buffer into WebP and AVIF formats
  */
-async function processImageFormats(buffer: Buffer): Promise<{ webp: Buffer; avif: Buffer }> {
+async function processImageFormats(
+  buffer: Buffer
+): Promise<{ webp: Buffer; avif: Buffer }> {
   const sharpInstance = sharp(buffer);
-  
+
   // Get metadata for optimization
   const metadata = await sharpInstance.metadata();
-  
+
   // Calculate optimal quality based on image characteristics
   const baseQuality = 85;
   const webpQuality = Math.min(baseQuality, 90);
   const avifQuality = Math.min(baseQuality - 5, 85); // AVIF is more efficient
-  
+
   // Apply resize if image is too large (max 1920px width)
   let pipeline = sharpInstance;
   if (metadata.width && metadata.width > 1920) {
@@ -130,7 +140,12 @@ async function processImageFormats(buffer: Buffer): Promise<{ webp: Buffer; avif
 /**
  * Upload processed images to Supabase Storage
  */
-async function uploadToStorage(webpBuffer: Buffer, avifBuffer: Buffer, webpPath: string, avifPath: string): Promise<{ webpPath: string; avifPath: string }> {
+async function uploadToStorage(
+  webpBuffer: Buffer,
+  avifBuffer: Buffer,
+  webpPath: string,
+  avifPath: string
+): Promise<{ webpPath: string; avifPath: string }> {
   // Upload WebP
   const { error: webpError } = await supabase.storage
     .from(STORAGE_BUCKET)
@@ -164,7 +179,7 @@ async function uploadToStorage(webpBuffer: Buffer, avifBuffer: Buffer, webpPath:
  * Process a single image: download, optimize, and upload
  */
 export const processImage = inngest.createFunction(
-  { 
+  {
     id: 'process-image',
     name: 'Process Single Image',
     retries: MAX_RETRIES,
@@ -172,18 +187,23 @@ export const processImage = inngest.createFunction(
   { event: 'image.process' },
   async ({ event }): Promise<ProcessingResult> => {
     const { entityType, entityId, imageType, sourceUrl } = event.data;
-    
-    console.log(`Processing image for ${entityType} ${entityId}, type: ${imageType}`);
+
+    console.log(
+      `Processing image for ${entityType} ${entityId}, type: ${imageType}`
+    );
 
     try {
       // Get and mark job as processing
-      const { data: jobId, error: jobError } = await supabase.rpc('queue_image_processing_job', {
-        p_entity_type: entityType,
-        p_entity_id: entityId,
-        p_image_type: imageType,
-        p_source_url: sourceUrl,
-        p_priority: event.data.priority || 100,
-      });
+      const { data: jobId, error: jobError } = await supabase.rpc(
+        'queue_image_processing_job',
+        {
+          p_entity_type: entityType,
+          p_entity_id: entityId,
+          p_image_type: imageType,
+          p_source_url: sourceUrl,
+          p_priority: event.data.priority || 100,
+        }
+      );
 
       if (jobError) {
         throw new Error(`Failed to queue job: ${jobError.message}`);
@@ -195,20 +215,33 @@ export const processImage = inngest.createFunction(
       const imageBuffer = await downloadImage(sourceUrl);
 
       // Process image into WebP and AVIF
-      const { webp: webpBuffer, avif: avifBuffer } = await processImageFormats(imageBuffer);
+      const { webp: webpBuffer, avif: avifBuffer } =
+        await processImageFormats(imageBuffer);
 
       // Generate storage paths
-      const { webpPath, avifPath } = generateStoragePaths(entityType, entityId, imageType);
+      const { webpPath, avifPath } = generateStoragePaths(
+        entityType,
+        entityId,
+        imageType
+      );
 
       // Upload to Supabase Storage
-      const uploadResult = await uploadToStorage(webpBuffer, avifBuffer, webpPath, avifPath);
+      const uploadResult = await uploadToStorage(
+        webpBuffer,
+        avifBuffer,
+        webpPath,
+        avifPath
+      );
 
       // Mark job as completed
-      const { error: completeError } = await supabase.rpc('complete_image_processing_job', {
-        job_id: jobId,
-        webp_path: uploadResult.webpPath,
-        avif_path: uploadResult.avifPath,
-      });
+      const { error: completeError } = await supabase.rpc(
+        'complete_image_processing_job',
+        {
+          job_id: jobId,
+          webp_path: uploadResult.webpPath,
+          avif_path: uploadResult.avifPath,
+        }
+      );
 
       if (completeError) {
         throw new Error(`Failed to complete job: ${completeError.message}`);
@@ -219,10 +252,12 @@ export const processImage = inngest.createFunction(
         webpPath: uploadResult.webpPath,
         avifPath: uploadResult.avifPath,
       };
-
     } catch (error) {
-      console.error(`Failed to process image for ${entityType} ${entityId}:`, error);
-      
+      console.error(
+        `Failed to process image for ${entityType} ${entityId}:`,
+        error
+      );
+
       // Mark job as failed if we have a job ID
       try {
         const { data } = await supabase
@@ -263,7 +298,7 @@ export const batchProcessImages = inngest.createFunction(
   { event: 'image.batch.process' },
   async ({ event }) => {
     const { jobs } = event.data;
-    
+
     console.log(`Starting batch processing of ${jobs.length} images`);
 
     const results = [];
@@ -278,20 +313,25 @@ export const batchProcessImages = inngest.createFunction(
         });
         results.push({ success: true, entityId: job.entityId });
       } catch (error) {
-        console.error(`Failed to queue processing for ${job.entityType} ${job.entityId}:`, error);
-        results.push({ 
-          success: false, 
-          entityId: job.entityId, 
-          error: error instanceof Error ? error.message : String(error) 
+        console.error(
+          `Failed to queue processing for ${job.entityType} ${job.entityId}:`,
+          error
+        );
+        results.push({
+          success: false,
+          entityId: job.entityId,
+          error: error instanceof Error ? error.message : String(error),
         });
       }
     }
 
-    const successful = results.filter(r => r.success).length;
-    const failed = results.filter(r => !r.success).length;
+    const successful = results.filter((r) => r.success).length;
+    const failed = results.filter((r) => !r.success).length;
 
-    console.log(`Batch processing completed: ${successful} successful, ${failed} failed`);
-    
+    console.log(
+      `Batch processing completed: ${successful} successful, ${failed} failed`
+    );
+
     return {
       totalJobs: jobs.length,
       successful,
@@ -313,9 +353,13 @@ export const cleanupFailedJobs = inngest.createFunction(
   async ({ event }) => {
     const { olderThanHours = 24, status = 'failed' } = event.data;
 
-    console.log(`Cleaning up ${status} jobs older than ${olderThanHours} hours`);
+    console.log(
+      `Cleaning up ${status} jobs older than ${olderThanHours} hours`
+    );
 
-    const cutoffTime = new Date(Date.now() - olderThanHours * 60 * 60 * 1000).toISOString();
+    const cutoffTime = new Date(
+      Date.now() - olderThanHours * 60 * 60 * 1000
+    ).toISOString();
 
     const { data, error } = await supabase
       .from('image_processing_jobs')
@@ -336,4 +380,9 @@ export const cleanupFailedJobs = inngest.createFunction(
 );
 
 // Export all functions
-export const imageFunctions = [processImage, batchProcessImages, cleanupFailedJobs];
+export const imageFunctions = [
+  processImage,
+  batchProcessImages,
+  cleanupFailedJobs,
+];
+

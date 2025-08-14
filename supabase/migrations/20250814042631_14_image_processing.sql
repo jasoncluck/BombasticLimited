@@ -70,7 +70,7 @@ CREATE INDEX IF NOT EXISTS "idx_videos_image_processing_status" ON "public"."vid
 CREATE INDEX IF NOT EXISTS "idx_playlists_image_processing_status" ON "public"."playlists" USING btree ("image_processing_status");
 
 -- Create trigger to update updated_at timestamp
-CREATE OR REPLACE FUNCTION update_image_processing_jobs_updated_at()
+CREATE OR REPLACE FUNCTION public.update_image_processing_jobs_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.updated_at = now();
@@ -81,10 +81,10 @@ $$ language plpgsql;
 CREATE TRIGGER trigger_update_image_processing_jobs_updated_at
   BEFORE UPDATE ON "public"."image_processing_jobs"
   FOR EACH ROW
-  EXECUTE FUNCTION update_image_processing_jobs_updated_at();
+  EXECUTE FUNCTION public.update_image_processing_jobs_updated_at();
 
 -- Function to get next job for processing
-CREATE OR REPLACE FUNCTION get_next_image_processing_job()
+CREATE OR REPLACE FUNCTION public.get_next_image_processing_job()
 RETURNS TABLE (
   job_id uuid,
   entity_type text,
@@ -113,7 +113,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to mark job as processing
-CREATE OR REPLACE FUNCTION start_image_processing_job(job_id uuid)
+CREATE OR REPLACE FUNCTION public.start_image_processing_job(job_id uuid)
 RETURNS boolean AS $$
 BEGIN
   UPDATE "public"."image_processing_jobs"
@@ -128,7 +128,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to mark job as completed
-CREATE OR REPLACE FUNCTION complete_image_processing_job(
+CREATE OR REPLACE FUNCTION public.complete_image_processing_job(
   job_id uuid,
   webp_path text DEFAULT NULL,
   avif_path text DEFAULT NULL
@@ -198,7 +198,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to mark job as failed
-CREATE OR REPLACE FUNCTION fail_image_processing_job(
+CREATE OR REPLACE FUNCTION public.fail_image_processing_job(
   job_id uuid,
   error_msg text
 )
@@ -251,7 +251,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to queue image processing job
-CREATE OR REPLACE FUNCTION queue_image_processing_job(
+CREATE OR REPLACE FUNCTION public.queue_image_processing_job(
   p_entity_type text,
   p_entity_id text,
   p_image_type text,

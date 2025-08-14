@@ -6,6 +6,9 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 // Configuration
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
@@ -23,20 +26,23 @@ if (!supabaseUrl || !supabaseServiceKey) {
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
-    persistSession: false
-  }
+    persistSession: false,
+  },
 });
 
 async function checkDatabaseConnection() {
   console.log('🔗 Checking database connection...');
-  
+
   try {
-    const { data, error } = await supabase.from('videos').select('count').limit(1);
-    
+    const { data, error } = await supabase
+      .from('videos')
+      .select('count')
+      .limit(1);
+
     if (error) {
       throw error;
     }
-    
+
     console.log('✅ Database connection successful');
     return true;
   } catch (error) {
@@ -47,14 +53,14 @@ async function checkDatabaseConnection() {
 
 async function checkImageProcessingTables() {
   console.log('🗃️  Checking image processing tables...');
-  
+
   try {
     // Check if image_processing_jobs table exists
     const { data, error } = await supabase
       .from('image_processing_jobs')
       .select('count')
       .limit(1);
-    
+
     if (error && error.message.includes('does not exist')) {
       console.log('⚠️  image_processing_jobs table not found');
       console.log('You need to apply the migration:');
@@ -63,7 +69,7 @@ async function checkImageProcessingTables() {
     } else if (error) {
       throw error;
     }
-    
+
     console.log('✅ Image processing tables exist');
     return true;
   } catch (error) {
@@ -74,7 +80,7 @@ async function checkImageProcessingTables() {
 
 async function checkDatabaseFunctions() {
   console.log('⚙️  Checking database functions...');
-  
+
   try {
     // Test the queue function
     const { data, error } = await supabase.rpc('queue_image_processing_job', {
@@ -84,7 +90,7 @@ async function checkDatabaseFunctions() {
       p_source_url: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/maxresdefault.jpg',
       p_priority: 999,
     });
-    
+
     if (error && error.message.includes('does not exist')) {
       console.log('⚠️  Database functions not found');
       console.log('You need to apply the migration:');
@@ -93,15 +99,12 @@ async function checkDatabaseFunctions() {
     } else if (error) {
       throw error;
     }
-    
+
     console.log('✅ Database functions available');
-    
+
     // Clean up test job
-    await supabase
-      .from('image_processing_jobs')
-      .delete()
-      .eq('id', data);
-    
+    await supabase.from('image_processing_jobs').delete().eq('id', data);
+
     return true;
   } catch (error) {
     console.error('❌ Function check failed:', error);
@@ -111,39 +114,43 @@ async function checkDatabaseFunctions() {
 
 async function setupStorageBucket() {
   console.log('🗂️  Setting up storage bucket...');
-  
+
   try {
     // Check if bucket exists
-    const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-    
+    const { data: buckets, error: bucketsError } =
+      await supabase.storage.listBuckets();
+
     if (bucketsError) {
       throw bucketsError;
     }
-    
-    const existingBucket = buckets?.find(b => b.name === 'optimized-images');
-    
+
+    const existingBucket = buckets?.find((b) => b.name === 'optimized-images');
+
     if (existingBucket) {
       console.log('✅ optimized-images bucket already exists');
       return true;
     }
-    
+
     console.log('📦 Creating optimized-images bucket...');
-    
-    const { error: createError } = await supabase.storage.createBucket('optimized-images', {
-      public: true,
-      allowedMimeTypes: ['image/webp', 'image/avif'],
-      fileSizeLimit: 10485760, // 10MB
-    });
-    
+
+    const { error: createError } = await supabase.storage.createBucket(
+      'optimized-images',
+      {
+        public: true,
+        allowedMimeTypes: ['image/webp', 'image/avif'],
+        fileSizeLimit: 10485760, // 10MB
+      }
+    );
+
     if (createError) {
       throw createError;
     }
-    
+
     console.log('✅ optimized-images bucket created successfully');
     return true;
   } catch (error) {
     console.error('❌ Storage setup failed:', error);
-    
+
     // Provide manual setup instructions
     console.log('\n📝 Manual setup required:');
     console.log('1. Go to your Supabase Dashboard → Storage');
@@ -151,41 +158,39 @@ async function setupStorageBucket() {
     console.log('3. Make it public');
     console.log('4. Set allowed MIME types: image/webp, image/avif');
     console.log('5. Set file size limit: 10MB');
-    
+
     return false;
   }
 }
 
 async function testStorageAccess() {
   console.log('🧪 Testing storage access...');
-  
+
   try {
     // Test upload
     const testData = Buffer.from('test-setup-content');
     const testPath = 'setup-test/test-file.txt';
-    
+
     const { error: uploadError } = await supabase.storage
       .from('optimized-images')
       .upload(testPath, testData, { upsert: true });
-    
+
     if (uploadError) {
       throw uploadError;
     }
-    
+
     // Test download
     const { data: downloadData, error: downloadError } = await supabase.storage
       .from('optimized-images')
       .download(testPath);
-    
+
     if (downloadError) {
       throw downloadError;
     }
-    
+
     // Clean up
-    await supabase.storage
-      .from('optimized-images')
-      .remove([testPath]);
-    
+    await supabase.storage.from('optimized-images').remove([testPath]);
+
     console.log('✅ Storage read/write access confirmed');
     return true;
   } catch (error) {
@@ -196,18 +201,18 @@ async function testStorageAccess() {
 
 async function checkEnvironmentVariables() {
   console.log('🔧 Checking environment variables...');
-  
+
   const required = {
-    'PUBLIC_SUPABASE_URL': process.env.PUBLIC_SUPABASE_URL,
-    'SUPABASE_SERVICE_ROLE_KEY': process.env.SUPABASE_SERVICE_ROLE_KEY,
+    PUBLIC_SUPABASE_URL: process.env.PUBLIC_SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   };
-  
+
   const optional = {
-    'INNGEST_SIGNING_KEY': process.env.INNGEST_SIGNING_KEY,
+    INNGEST_SIGNING_KEY: process.env.INNGEST_SIGNING_KEY,
   };
-  
+
   let allRequiredPresent = true;
-  
+
   console.log('\n Required variables:');
   for (const [key, value] of Object.entries(required)) {
     if (value) {
@@ -217,7 +222,7 @@ async function checkEnvironmentVariables() {
       allRequiredPresent = false;
     }
   }
-  
+
   console.log('\n Optional variables:');
   for (const [key, value] of Object.entries(optional)) {
     if (value) {
@@ -226,18 +231,18 @@ async function checkEnvironmentVariables() {
       console.log(`  ⚠️  ${key}: Not set (background processing won't work)`);
     }
   }
-  
+
   return allRequiredPresent;
 }
 
 async function showNextSteps(allChecksPass: boolean) {
   console.log('\n🎯 Next Steps:');
-  
+
   if (!allChecksPass) {
     console.log('❌ Setup incomplete. Please fix the issues above first.');
     return;
   }
-  
+
   console.log('✅ Local setup complete! You can now:');
   console.log('');
   console.log('1. Test the image processing system:');
@@ -255,7 +260,9 @@ async function showNextSteps(allChecksPass: boolean) {
   console.log('   npm run dev');
   console.log('');
   console.log('4. Test API endpoints directly:');
-  console.log('   curl "http://localhost:5173/api/video-thumbnail?url=https://i.ytimg.com/vi/dQw4w9WgXcQ/maxresdefault.jpg&format=webp"');
+  console.log(
+    '   curl "http://localhost:5173/api/video-thumbnail?url=https://i.ytimg.com/vi/dQw4w9WgXcQ/maxresdefault.jpg&format=webp"'
+  );
   console.log('');
   console.log('📚 For more details, see LOCAL_SETUP_GUIDE.md');
 }
@@ -263,7 +270,7 @@ async function showNextSteps(allChecksPass: boolean) {
 async function main() {
   console.log('🚀 Image Processing Local Setup');
   console.log('================================\n');
-  
+
   const checks = [
     checkEnvironmentVariables,
     checkDatabaseConnection,
@@ -272,9 +279,9 @@ async function main() {
     setupStorageBucket,
     testStorageAccess,
   ];
-  
+
   let allPassed = true;
-  
+
   for (const check of checks) {
     try {
       const result = await check();
@@ -288,9 +295,9 @@ async function main() {
       console.log('');
     }
   }
-  
+
   await showNextSteps(allPassed);
-  
+
   if (!allPassed) {
     process.exit(1);
   }
@@ -315,3 +322,4 @@ No options are required - the script will check and set up everything automatica
 }
 
 main().catch(console.error);
+

@@ -1,4 +1,7 @@
 #!/usr/bin/env tsx
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 /**
  * Test script for the image processing queue
@@ -26,13 +29,13 @@ if (!supabaseUrl || !supabaseServiceKey) {
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
-    persistSession: false
-  }
+    persistSession: false,
+  },
 });
 
 async function testSingleImageProcessing() {
   console.log('🧪 Testing single image processing...');
-  
+
   try {
     // Send a single image processing event
     const event = await inngest.send({
@@ -45,7 +48,7 @@ async function testSingleImageProcessing() {
         priority: 1,
       },
     });
-    
+
     console.log('✅ Single image processing event sent:', event.ids[0]);
     return event.ids[0];
   } catch (error) {
@@ -56,7 +59,7 @@ async function testSingleImageProcessing() {
 
 async function testBatchImageProcessing() {
   console.log('🧪 Testing batch image processing...');
-  
+
   try {
     const jobs = [
       {
@@ -81,12 +84,12 @@ async function testBatchImageProcessing() {
         priority: 10,
       },
     ];
-    
+
     const event = await inngest.send({
       name: 'image.batch.process',
       data: { jobs },
     });
-    
+
     console.log('✅ Batch image processing event sent:', event.ids[0]);
     console.log(`   Queued ${jobs.length} jobs for processing`);
     return event.ids[0];
@@ -98,7 +101,7 @@ async function testBatchImageProcessing() {
 
 async function testCleanupJobs() {
   console.log('🧪 Testing job cleanup...');
-  
+
   try {
     const event = await inngest.send({
       name: 'image.cleanup',
@@ -107,7 +110,7 @@ async function testCleanupJobs() {
         status: 'failed',
       },
     });
-    
+
     console.log('✅ Cleanup event sent:', event.ids[0]);
     return event.ids[0];
   } catch (error) {
@@ -118,28 +121,30 @@ async function testCleanupJobs() {
 
 async function checkJobsInQueue() {
   console.log('📊 Checking jobs in queue...');
-  
+
   try {
     const { data, error } = await supabase
       .from('image_processing_jobs')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(10);
-    
+
     if (error) {
       throw error;
     }
-    
+
     console.log(`Found ${data?.length || 0} recent jobs in queue:`);
-    
+
     if (data && data.length > 0) {
       data.forEach((job, index) => {
-        console.log(`  ${index + 1}. ${job.entity_type}:${job.entity_id}:${job.image_type} - ${job.status} (${job.attempts}/${job.max_attempts} attempts)`);
+        console.log(
+          `  ${index + 1}. ${job.entity_type}:${job.entity_id}:${job.image_type} - ${job.status} (${job.attempts}/${job.max_attempts} attempts)`
+        );
       });
     } else {
       console.log('  No jobs found');
     }
-    
+
     return data;
   } catch (error) {
     console.error('❌ Failed to check jobs:', error);
@@ -149,56 +154,59 @@ async function checkJobsInQueue() {
 
 async function testStorageBucketAccess() {
   console.log('🗂️  Testing Supabase Storage access...');
-  
+
   try {
     // Test bucket exists
-    const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-    
+    const { data: buckets, error: bucketsError } =
+      await supabase.storage.listBuckets();
+
     if (bucketsError) {
       throw bucketsError;
     }
-    
-    const optimizedImagesBucket = buckets?.find(b => b.name === 'optimized-images');
-    
+
+    const optimizedImagesBucket = buckets?.find(
+      (b) => b.name === 'optimized-images'
+    );
+
     if (!optimizedImagesBucket) {
       console.log('⚠️  optimized-images bucket not found. Creating it...');
-      
-      const { error: createError } = await supabase.storage.createBucket('optimized-images', {
-        public: true,
-        allowedMimeTypes: ['image/webp', 'image/avif'],
-        fileSizeLimit: 10485760, // 10MB
-      });
-      
+
+      const { error: createError } = await supabase.storage.createBucket(
+        'optimized-images',
+        {
+          public: true,
+          allowedMimeTypes: ['image/webp', 'image/avif'],
+          fileSizeLimit: 10485760, // 10MB
+        }
+      );
+
       if (createError) {
         throw createError;
       }
-      
+
       console.log('✅ Created optimized-images bucket');
     } else {
       console.log('✅ optimized-images bucket exists');
     }
-    
+
     // Test upload/download access
     const testData = Buffer.from('test-file-content');
     const testPath = 'test/test-file.txt';
-    
+
     const { error: uploadError } = await supabase.storage
       .from('optimized-images')
       .upload(testPath, testData, { upsert: true });
-    
+
     if (uploadError) {
       throw uploadError;
     }
-    
+
     console.log('✅ Upload test successful');
-    
+
     // Clean up test file
-    await supabase.storage
-      .from('optimized-images')
-      .remove([testPath]);
-    
+    await supabase.storage.from('optimized-images').remove([testPath]);
+
     console.log('✅ Storage access test completed');
-    
   } catch (error) {
     console.error('❌ Storage access test failed:', error);
     throw error;
@@ -207,35 +215,39 @@ async function testStorageBucketAccess() {
 
 async function testDatabaseFunctions() {
   console.log('🗃️  Testing database functions...');
-  
+
   try {
     // Test queue function
-    const { data: queueResult, error: queueError } = await supabase.rpc('queue_image_processing_job', {
-      p_entity_type: 'video',
-      p_entity_id: TEST_VIDEO_ID + '-db-test',
-      p_image_type: 'thumbnail',
-      p_source_url: TEST_IMAGE_URL,
-      p_priority: 999,
-    });
-    
+    const { data: queueResult, error: queueError } = await supabase.rpc(
+      'queue_image_processing_job',
+      {
+        p_entity_type: 'video',
+        p_entity_id: TEST_VIDEO_ID + '-db-test',
+        p_image_type: 'thumbnail',
+        p_source_url: TEST_IMAGE_URL,
+        p_priority: 999,
+      }
+    );
+
     if (queueError) {
       throw queueError;
     }
-    
+
     console.log('✅ Queue function test successful, job ID:', queueResult);
-    
+
     // Test get next job function
-    const { data: nextJob, error: nextJobError } = await supabase.rpc('get_next_image_processing_job');
-    
+    const { data: nextJob, error: nextJobError } = await supabase.rpc(
+      'get_next_image_processing_job'
+    );
+
     if (nextJobError) {
       throw nextJobError;
     }
-    
+
     console.log('✅ Get next job function test successful');
     if (nextJob && nextJob.length > 0) {
       console.log('   Next job:', nextJob[0]);
     }
-    
   } catch (error) {
     console.error('❌ Database functions test failed:', error);
     throw error;
@@ -244,8 +256,8 @@ async function testDatabaseFunctions() {
 
 async function waitAndCheckProgress(eventIds: string[]) {
   console.log('⏳ Waiting 30 seconds for processing to complete...');
-  await new Promise(resolve => setTimeout(resolve, 30000));
-  
+  await new Promise((resolve) => setTimeout(resolve, 30000));
+
   console.log('📊 Checking processing progress...');
   await checkJobsInQueue();
 }
@@ -253,42 +265,45 @@ async function waitAndCheckProgress(eventIds: string[]) {
 async function main() {
   console.log('🚀 Starting image processing test...');
   console.log('');
-  
+
   try {
     // Test storage access first
     await testStorageBucketAccess();
     console.log('');
-    
+
     // Test database functions
     await testDatabaseFunctions();
     console.log('');
-    
+
     // Check initial queue state
     await checkJobsInQueue();
     console.log('');
-    
+
     // Test single image processing
     const singleEventId = await testSingleImageProcessing();
     console.log('');
-    
+
     // Test batch processing
     const batchEventId = await testBatchImageProcessing();
     console.log('');
-    
+
     // Test cleanup
     const cleanupEventId = await testCleanupJobs();
     console.log('');
-    
+
     // Wait and check progress
     await waitAndCheckProgress([singleEventId, batchEventId, cleanupEventId]);
-    
+
     console.log('✅ All tests completed!');
     console.log('');
     console.log('💡 Tips:');
     console.log('   - Check the Inngest dashboard for job execution details');
-    console.log('   - Monitor the image_processing_jobs table for status updates');
-    console.log('   - Check the optimized-images storage bucket for processed files');
-    
+    console.log(
+      '   - Monitor the image_processing_jobs table for status updates'
+    );
+    console.log(
+      '   - Check the optimized-images storage bucket for processed files'
+    );
   } catch (error) {
     console.error('❌ Test failed:', error);
     process.exit(1);
@@ -312,3 +327,4 @@ No options are required - the script uses test data automatically.
 }
 
 main().catch(console.error);
+
