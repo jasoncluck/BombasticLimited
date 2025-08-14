@@ -187,6 +187,7 @@ export type Database = {
           thumbnail_url: string | null
           thumbnail_webp_path: string | null
           type: Database["public"]["Enums"]["playlist_type"]
+          updated_at: string | null
           youtube_id: string | null
         }
         Insert: {
@@ -209,6 +210,7 @@ export type Database = {
           thumbnail_url?: string | null
           thumbnail_webp_path?: string | null
           type?: Database["public"]["Enums"]["playlist_type"]
+          updated_at?: string | null
           youtube_id?: string | null
         }
         Update: {
@@ -231,6 +233,7 @@ export type Database = {
           thumbnail_url?: string | null
           thumbnail_webp_path?: string | null
           type?: Database["public"]["Enums"]["playlist_type"]
+          updated_at?: string | null
           youtube_id?: string | null
         }
         Relationships: []

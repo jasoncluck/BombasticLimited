@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS "public"."playlists" (
   "thumbnail_maxres_url" text,
   "image_properties" jsonb,
   "type" "public"."playlist_type" NOT NULL DEFAULT 'Private',
+  "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   "deleted_at" TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   CONSTRAINT "playlists_pkey" PRIMARY KEY ("id"),
   CONSTRAINT "playlists_name_check" CHECK (length("name") <= 50),

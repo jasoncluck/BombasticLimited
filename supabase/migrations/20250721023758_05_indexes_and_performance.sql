@@ -61,6 +61,8 @@ CREATE INDEX IF NOT EXISTS idx_videos_published_title ON public.videos (publishe
 
 CREATE INDEX IF NOT EXISTS idx_videos_duration_title ON public.videos (duration, title);
 
+CREATE INDEX IF NOT EXISTS "idx_playlists_updated_at" ON "public"."playlists" USING btree ("updated_at");
+
 -- ============================================================================
 -- FOREIGN KEY AND JOIN INDEXES
 -- ============================================================================
