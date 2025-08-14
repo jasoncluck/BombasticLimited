@@ -87,11 +87,20 @@
           isSubmitting = false;
           playlistForm.reset();
 
+          // Update playlist object with new data including image_properties
           const updatedPlaylist = Object.assign(playlist, data);
           if (isDeletingPlaylistImage) {
             updatedPlaylist.thumbnail_url = null;
             updatedPlaylist.thumbnail_maxres_url = null;
+            updatedPlaylist.image_properties = null;
           }
+          
+          // Force reactive update by creating new object reference if image_properties changed
+          if (data.image_properties !== playlist.image_properties) {
+            // Create new playlist object to trigger reactivity in PlaylistImage component
+            Object.assign(playlist, { ...playlist, ...data });
+          }
+          
           // Sidebar refresh will get server-processed images with AVIF support
           sidebarState.refreshData();
           invalidate('supabase:db:playlists');

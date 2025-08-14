@@ -27,6 +27,7 @@
   import { page } from '$app/state';
   import { getPlaylistState } from '$lib/state/playlist.svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
+  import { invalidate } from '$app/navigation';
   import { parseImageProperties } from './playlist';
   import { isLowResolutionThumbnail } from './playlist-service';
 
@@ -81,6 +82,20 @@
       if (event.form.valid) {
         const { isDeletingPlaylistImage, ...data } = event.form.data;
 
+        // Update playlist object with new data including image_properties
+        const updatedPlaylist = Object.assign(playlist, data);
+        if (isDeletingPlaylistImage) {
+          updatedPlaylist.thumbnail_url = null;
+          updatedPlaylist.thumbnail_maxres_url = null;
+          updatedPlaylist.image_properties = null;
+        }
+        
+        // Force reactive update by creating new object reference if image_properties changed
+        if (data.image_properties !== playlist.image_properties) {
+          // Create new playlist object to trigger reactivity in PlaylistImage component
+          Object.assign(playlist, { ...playlist, ...data });
+        }
+
         // Delay closing to allow animation to complete
         setTimeout(() => {
           open = false;
@@ -88,13 +103,10 @@
 
         playlistForm.reset();
 
-        const updatedPlaylist = Object.assign(playlist, data);
-        if (isDeletingPlaylistImage) {
-          updatedPlaylist.thumbnail_url = null;
-          updatedPlaylist.thumbnail_maxres_url = null;
-        }
         // Sidebar refresh will get server-processed images with AVIF support
         sidebarState.refreshData();
+        // Add invalidate to refresh playlist data like in dialog version
+        invalidate('supabase:db:playlists');
       }
     },
   });

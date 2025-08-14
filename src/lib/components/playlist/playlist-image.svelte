@@ -36,8 +36,8 @@
     large: 'h-24 w-24',
   };
 
-  // Fallback URL for playlists without optimized images
-  function getPlaylistImageFallbackUrl(): string | null {
+  // Reactive fallback URL for playlists without optimized images
+  const playlistImageFallbackUrl = $derived.by(() => {
     // Use maxres URL first for better quality when cropping, fallback to regular thumbnail
     const effectiveUrl =
       playlist.thumbnail_maxres_url || playlist.thumbnail_url;
@@ -58,7 +58,7 @@
     }
 
     return `/api/playlist-image?${params.toString()}`;
-  }
+  });
 </script>
 
 <div
@@ -82,7 +82,7 @@
       {/each}
       <img
         class="h-full w-full rounded object-cover"
-        src={optimizedResult.url || getPlaylistImageFallbackUrl()}
+        src={optimizedResult.url || playlistImageFallbackUrl}
         alt={playlist.name}
         loading="lazy"
         decoding="async"
@@ -93,7 +93,7 @@
     <!-- Immediate server-side square cropping for playlists without optimized images -->
     <img
       class="h-full w-full rounded object-cover"
-      src={getPlaylistImageFallbackUrl()}
+      src={playlistImageFallbackUrl}
       alt={playlist.name}
       loading="lazy"
       decoding="async"
