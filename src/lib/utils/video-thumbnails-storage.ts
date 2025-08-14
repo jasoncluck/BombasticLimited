@@ -7,7 +7,7 @@ import { detectOptimalFormat } from './image-format-detection';
 const STORAGE_BUCKET = 'optimized-images';
 
 export interface VideoThumbnailPaths {
-  id?: string;
+  id?: string | number | bigint;
   thumbnail_webp_url?: string | null;
   thumbnail_avif_url?: string | null;
   thumbnail_maxres_webp_url?: string | null;
