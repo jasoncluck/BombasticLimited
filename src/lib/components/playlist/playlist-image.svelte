@@ -39,7 +39,7 @@
 
   // Fallback URL for playlists without optimized images
   function getPlaylistImageFallbackUrl(): string | null {
-    // Use API endpoint for immediate square cropping
+    // Use maxres URL first for better quality when cropping, fallback to regular thumbnail
     const effectiveUrl = playlist.thumbnail_maxres_url || playlist.thumbnail_url;
     if (!effectiveUrl) return null;
 

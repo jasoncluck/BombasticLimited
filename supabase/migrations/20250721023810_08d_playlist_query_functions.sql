@@ -90,6 +90,7 @@ BEGIN
     p.type,
     p.image_properties,
     p.youtube_id,
+    p.duration_seconds,
     prof.username AS profile_username,
     up.sorted_by,
     up.sort_order
@@ -111,13 +112,16 @@ BEGIN
   effective_sort_key := COALESCE(p_sort_key, playlist_record.sorted_by::text, 'video_position');
   effective_sort_order := COALESCE(p_sort_order, playlist_record.sort_order::text, 'ascending');
   
-  -- Get total video count and duration
-  SELECT COUNT(*), COALESCE(SUM(duration_seconds), 0)
-  INTO video_count, total_duration
+  -- Get total video count and duration from playlist record
+  SELECT COUNT(*)
+  INTO video_count
   FROM public.playlist_videos pv
   JOIN public.videos v ON pv.video_id = v.id
   WHERE pv.playlist_id = playlist_record.id
     AND v.pending_delete = FALSE;
+  
+  -- Use pre-calculated duration from playlist table
+  total_duration := playlist_record.duration_seconds;
   
   -- Calculate pagination
   start_index := (p_current_page - 1) * p_limit;
