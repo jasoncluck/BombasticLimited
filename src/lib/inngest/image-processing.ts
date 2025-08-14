@@ -54,9 +54,24 @@ function generateStoragePaths(
 }
 
 /**
- * Download and validate image from source URL
+ * Download and validate image from source URL (supports external URLs and Supabase Storage paths)
  */
 async function downloadImage(sourceUrl: string): Promise<Buffer> {
+  // Check if it's a Supabase Storage path (starts with playlists/ or videos/)
+  if (sourceUrl.startsWith('playlists/') || sourceUrl.startsWith('videos/')) {
+    // Download from Supabase Storage
+    const { data, error } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .download(sourceUrl);
+
+    if (error) {
+      throw new Error(`Failed to download from storage: ${error.message}`);
+    }
+
+    return Buffer.from(await data.arrayBuffer());
+  }
+
+  // Handle external URLs (YouTube thumbnails, etc.)
   if (!validateImageUrl(sourceUrl)) {
     throw new Error(`Invalid or disallowed image URL: ${sourceUrl}`);
   }
@@ -93,7 +108,8 @@ async function downloadImage(sourceUrl: string): Promise<Buffer> {
 async function processImageFormats(
   buffer: Buffer,
   entityType?: string,
-  imageType?: string
+  imageType?: string,
+  sourceUrl?: string
 ): Promise<{ webp: Buffer; avif: Buffer }> {
   // Add throttling to prevent server overload
   const throttleDelay = process.env.NODE_ENV === 'development' ? 1000 : 0; // 1 second delay in dev
@@ -106,13 +122,16 @@ async function processImageFormats(
   // Get metadata for optimization
   const metadata = await sharpInstance.metadata();
 
-  // Apply playlist-specific square cropping if this is a playlist
+  // Apply playlist-specific square cropping if this is a playlist from external source (YouTube)
+  // Skip cropping for uploaded images from storage (they're already cropped by user)
   let pipeline = sharpInstance;
-  if (entityType === 'playlist') {
+  const isUploadedImage = sourceUrl?.startsWith('playlists/') || sourceUrl?.startsWith('videos/');
+  
+  if (entityType === 'playlist' && !isUploadedImage) {
     const imageWidth = metadata.width || 0;
     const imageHeight = metadata.height || 0;
 
-    // Create square crop based on image dimensions
+    // Create square crop based on image dimensions (only for YouTube thumbnails)
     const cropDimensions = getPlaylistCropDimensions(
       imageWidth,
       imageHeight,
@@ -309,7 +328,8 @@ export const processImage = inngest.createFunction(
       const { webp: webpBuffer, avif: avifBuffer } = await processImageFormats(
         imageBuffer,
         entityType,
-        imageType
+        imageType,
+        sourceUrl
       );
 
       // Generate storage paths
