@@ -11,9 +11,10 @@
   import { Button, buttonVariants } from '$lib/components/ui/button';
   import type { Playlist } from '$lib/supabase/playlists';
   import { zodClient } from 'sveltekit-superforms/adapters';
-  import { EditIcon, ListVideo, Loader } from '@lucide/svelte';
+  import { EditIcon, ListVideo, Loader, CropIcon } from '@lucide/svelte';
   import Textarea from '$lib/components/ui/textarea/textarea.svelte';
   import * as ImageCropper from '$lib/components/ui/image-cropper';
+  import { getCroppedImg } from '$lib/components/ui/image-cropper/utils';
   import {
     useImageCropperCrop,
     useImageCropperCropper,
@@ -30,6 +31,7 @@
   import { invalidate } from '$app/navigation';
   import { parseImageProperties } from './playlist';
   import { isLowResolutionThumbnail } from './playlist-service';
+  import { uploadPlaylistImage } from '$lib/utils/image-upload';
 
   let {
     form,
@@ -52,6 +54,7 @@
   const playlistState = getPlaylistState();
   let isSubmitting = $state(false);
   let isPublic = $state(playlist.type === 'Public');
+  let isUploadingImage = $state(false);
   const flash = getFlash(page);
 
   const triggerSnippet = trigger;
@@ -67,6 +70,56 @@
     )
   );
   const sidebarState = getSidebarState();
+
+  // Handle cropped image upload
+  async function handleCroppedImageUpload(croppedDataUrl: string) {
+    if (!session?.user?.id) return;
+    
+    isUploadingImage = true;
+    try {
+      // Upload cropped image to storage
+      const uploadResult = await uploadPlaylistImage({
+        playlistId: playlist.id,
+        dataURL: croppedDataUrl,
+        supabase: page.data.supabase,
+      });
+
+      if (!uploadResult.success) {
+        console.error('Image upload failed:', uploadResult.error);
+        return;
+      }
+
+      // Update playlist with new image path using RPC function
+      const { data: updateResult, error: updateError } = await page.data.supabase
+        .rpc('update_playlist_uploaded_image', {
+          p_playlist_id: playlist.id,
+          p_image_path: uploadResult.imagePath!,
+          p_image_properties: cropState.rootState.pixelCrop,
+        });
+
+      if (updateError) {
+        console.error('Failed to update playlist image:', updateError);
+        return;
+      }
+
+      // Update local playlist object
+      playlist.image_path = uploadResult.imagePath!;
+      playlist.image_properties = JSON.stringify(cropState.rootState.pixelCrop);
+      
+      // Clear YouTube thumbnail URLs since we now have uploaded image
+      playlist.thumbnail_url = null;
+      playlist.thumbnail_maxres_url = null;
+
+      // Refresh data
+      sidebarState.refreshData();
+      invalidate('supabase:db:playlists');
+      
+    } catch (error) {
+      console.error('Upload error:', error);
+    } finally {
+      isUploadingImage = false;
+    }
+  }
 
   const playlistForm = superForm(form, {
     validators: zodClient(playlistSchema),
@@ -132,10 +185,7 @@
   $effect(() => {
     $formData.type = isPublic ? 'Public' : 'Private';
 
-    if (cropState.rootState.pixelCrop) {
-      $formData.image_properties = cropState.rootState.pixelCrop;
-    }
-
+    // Set the source image for the cropper
     cropperState.rootState.tempUrl =
       playlist.thumbnail_maxres_url ?? playlist.thumbnail_url;
   });
@@ -251,7 +301,34 @@
             <ImageCropper.Dialog>
               <ImageCropper.Cropper cropShape="rect" />
               <ImageCropper.Controls>
-                <ImageCropper.Crop />
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={isUploadingImage}
+                  onclick={async () => {
+                    if (!cropState.rootState.pixelCrop || !cropState.rootState.tempUrl) return;
+                    
+                    // Get cropped image data
+                    const croppedDataUrl = await getCroppedImg(
+                      cropState.rootState.tempUrl, 
+                      cropState.rootState.pixelCrop
+                    );
+                    
+                    // Upload the cropped image
+                    await handleCroppedImageUpload(croppedDataUrl);
+                    
+                    // Close cropper
+                    cropperState.rootState.open = false;
+                  }}
+                >
+                  {#if isUploadingImage}
+                    <Loader class="animate-spin" />
+                    Uploading...
+                  {:else}
+                    <CropIcon />
+                    Save Crop
+                  {/if}
+                </Button>
                 <ImageCropper.Cancel />
               </ImageCropper.Controls>
             </ImageCropper.Dialog>

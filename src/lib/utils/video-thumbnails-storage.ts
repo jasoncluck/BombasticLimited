@@ -15,6 +15,10 @@ export interface VideoThumbnailPaths {
   thumbnail_url?: string | null;
   thumbnail_maxres_url?: string | null;
   image_processing_status?: string | null;
+  // For playlists - uploaded images
+  image_path?: string | null;
+  image_webp_path?: string | null;
+  image_avif_path?: string | null;
 }
 
 export interface OptimizedImageResult {
@@ -74,6 +78,45 @@ export function getOptimizedImageUrl(
 }
 
 /**
+ * Get optimized playlist image URL with smart fallback chain
+ * Priority: AVIF (uploaded) -> WebP (uploaded) -> Original uploaded JPEG -> YouTube thumbnail fallback
+ */
+export function getOptimizedPlaylistImageUrl(
+  paths: VideoThumbnailPaths,
+  supabase: SupabaseClient<Database>,
+  acceptHeader?: string | null
+): OptimizedImageResult {
+  // Detect optimal format based on browser support
+  const optimalFormat = detectOptimalFormat(acceptHeader);
+
+  // Try uploaded image optimized versions first
+  if (optimalFormat === 'avif' && paths.image_avif_path) {
+    const url = getStorageUrl(paths.image_avif_path, supabase);
+    if (url) {
+      return { url, format: 'avif', source: 'storage' };
+    }
+  }
+
+  if ((optimalFormat === 'webp' || optimalFormat === 'avif') && paths.image_webp_path) {
+    const url = getStorageUrl(paths.image_webp_path, supabase);
+    if (url) {
+      return { url, format: 'webp', source: 'storage' };
+    }
+  }
+
+  // Try original uploaded image
+  if (paths.image_path) {
+    const url = getStorageUrl(paths.image_path, supabase);
+    if (url) {
+      return { url, format: 'jpeg', source: 'storage' };
+    }
+  }
+
+  // Fallback to YouTube thumbnail chain (for playlists without uploaded images)
+  return getOptimizedImageUrl(paths, 'thumbnail_maxres', supabase, acceptHeader);
+}
+
+/**
  * Get public URL for a file in Supabase Storage
  */
 function getStorageUrl(
@@ -109,6 +152,13 @@ export function hasOptimizedImages(
       : paths.thumbnail_maxres_avif_path;
 
   return !!(webpPath || avifPath);
+}
+
+/**
+ * Check if a playlist has uploaded images (either original or optimized)
+ */
+export function hasUploadedPlaylistImage(paths: VideoThumbnailPaths): boolean {
+  return !!(paths.image_path || paths.image_webp_path || paths.image_avif_path);
 }
 
 /**

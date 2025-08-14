@@ -174,9 +174,12 @@ export type Database = {
           description: string | null
           duration_seconds: number
           id: number
+          image_avif_path: string | null
+          image_path: string | null
           image_processing_status: string | null
           image_processing_updated_at: string | null
           image_properties: Json | null
+          image_webp_path: string | null
           name: string
           search_vector: unknown | null
           short_id: string
@@ -197,9 +200,12 @@ export type Database = {
           description?: string | null
           duration_seconds?: number
           id?: number
+          image_avif_path?: string | null
+          image_path?: string | null
           image_processing_status?: string | null
           image_processing_updated_at?: string | null
           image_properties?: Json | null
+          image_webp_path?: string | null
           name: string
           search_vector?: unknown | null
           short_id: string
@@ -220,9 +226,12 @@ export type Database = {
           description?: string | null
           duration_seconds?: number
           id?: number
+          image_avif_path?: string | null
+          image_path?: string | null
           image_processing_status?: string | null
           image_processing_updated_at?: string | null
           image_properties?: Json | null
+          image_webp_path?: string | null
           name?: string
           search_vector?: unknown | null
           short_id?: string

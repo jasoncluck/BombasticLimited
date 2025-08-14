@@ -1,8 +1,10 @@
 <script lang="ts">
   import { ListVideo } from '@lucide/svelte';
   import {
+    getOptimizedPlaylistImageUrl,
     getOptimizedImageUrl,
     generatePictureSources,
+    hasUploadedPlaylistImage,
     hasOptimizedImages,
     type VideoThumbnailPaths,
   } from '$lib/utils/video-thumbnails-storage';
@@ -38,6 +40,11 @@
 
   // Reactive fallback URL for playlists without optimized images
   const playlistImageFallbackUrl = $derived.by(() => {
+    // If playlist has uploaded images, don't use server processing
+    if (hasUploadedPlaylistImage(playlist)) {
+      return null;
+    }
+
     // Use maxres URL first for better quality when cropping, fallback to regular thumbnail
     const effectiveUrl =
       playlist.thumbnail_maxres_url || playlist.thumbnail_url;
@@ -64,8 +71,31 @@
 <div
   class="relative {className || sizeClasses[size]} flex-shrink-0 justify-self-center"
 >
-  {#if hasOptimizedImages(playlist)}
-    <!-- Use optimized images with smart fallback chain -->
+  {#if hasUploadedPlaylistImage(playlist)}
+    <!-- Use uploaded playlist images with optimized fallback chain -->
+    {@const optimizedResult = getOptimizedPlaylistImageUrl(
+      playlist,
+      supabase
+    )}
+    <picture>
+      <!-- Generate picture sources for uploaded images -->
+      {#if playlist.image_avif_path}
+        <source srcset={supabase.storage.from('optimized-images').getPublicUrl(playlist.image_avif_path).data.publicUrl} type="image/avif" />
+      {/if}
+      {#if playlist.image_webp_path}
+        <source srcset={supabase.storage.from('optimized-images').getPublicUrl(playlist.image_webp_path).data.publicUrl} type="image/webp" />
+      {/if}
+      <img
+        class="h-full w-full rounded object-cover"
+        src={optimizedResult.url}
+        alt={playlist.name}
+        loading="lazy"
+        decoding="async"
+        fetchpriority="auto"
+      />
+    </picture>
+  {:else if hasOptimizedImages(playlist, 'thumbnail_maxres') || hasOptimizedImages(playlist, 'thumbnail')}
+    <!-- Use optimized YouTube thumbnail images with smart fallback chain -->
     {@const pictureSources = generatePictureSources(
       playlist,
       'thumbnail_maxres',
