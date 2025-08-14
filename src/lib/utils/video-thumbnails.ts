@@ -51,8 +51,8 @@ export function getBestThumbnailUrl(video: Video): string | null {
 }
 
 /**
- * Get optimized video thumbnail URL using server-side processing
- * Always uses server-side processing for consistent results
+ * Get video thumbnail URL - returns original URL to avoid server-side processing
+ * The background processing system handles optimization separately
  */
 export function getVideoThumbnailUrl(
   video: Video,
@@ -64,8 +64,9 @@ export function getVideoThumbnailUrl(
     return '';
   }
 
-  // Always use server-side processing for all thumbnails
-  return buildServerThumbnailUrl(thumbnailUrl, config);
+  // Return original URL directly - no server-side processing
+  // Components will use optimized storage system when available
+  return thumbnailUrl;
 }
 
 /**
@@ -77,8 +78,8 @@ export function getBestVideoThumbnailUrl(video: Video): string | null {
 }
 
 /**
- * Get JSON response with processed data URL
- * Uses server-side processing for data URL format
+ * Get JSON response with processed data URL - DEPRECATED
+ * Returns original URL to avoid server-side processing
  */
 export function getVideoThumbnailDataUrl(
   video: Video,
@@ -89,19 +90,13 @@ export function getVideoThumbnailDataUrl(
     return '';
   }
 
-  const params = new URLSearchParams();
-  params.set('url', thumbnailUrl);
-  params.set('type', 'json');
-
-  if (config) {
-    addConfigParams(params, config);
-  }
-
-  return `/api/video-thumbnail?${params.toString()}`;
+  // Return original URL directly - no server-side processing
+  return thumbnailUrl;
 }
 
 /**
- * Get progressive images for responsive loading
+ * Get progressive images for responsive loading - DEPRECATED
+ * Returns original URL to avoid server-side processing
  */
 export function getVideoThumbnailProgressiveUrl(video: Video): string {
   const thumbnailUrl = getBestThumbnailUrl(video);
@@ -109,7 +104,8 @@ export function getVideoThumbnailProgressiveUrl(video: Video): string {
     return '';
   }
 
-  return `/api/video-thumbnail?type=progressive&url=${encodeURIComponent(thumbnailUrl)}`;
+  // Return original URL directly - no server-side processing
+  return thumbnailUrl;
 }
 
 /**
@@ -165,7 +161,7 @@ export function getVideoThumbnailUrlWithSize(
 }
 
 /**
- * Get multiple thumbnail sizes for responsive images
+ * Get multiple thumbnail sizes for responsive images - returns original URLs
  */
 export function getResponsiveVideoThumbnailUrls(video: Video): {
   default: string | null;
@@ -184,29 +180,13 @@ export function getResponsiveVideoThumbnailUrls(video: Video): {
     };
   }
 
+  // Return original URL for all sizes - no server-side processing
+  // Background processing system handles optimization separately
   return {
-    default: buildServerThumbnailUrl(
-      thumbnailUrl,
-      DEFAULT_VIDEO_THUMBNAIL_CONFIG
-    ),
-    small: buildServerThumbnailUrl(thumbnailUrl, {
-      width: 320,
-      height: 180,
-      quality: 85,
-      format: 'auto',
-    }),
-    medium: buildServerThumbnailUrl(thumbnailUrl, {
-      width: 640,
-      height: 360,
-      quality: 90,
-      format: 'auto',
-    }),
-    large: buildServerThumbnailUrl(thumbnailUrl, {
-      width: 1280,
-      height: 720,
-      quality: 90,
-      format: 'auto',
-    }),
+    default: thumbnailUrl,
+    small: thumbnailUrl,
+    medium: thumbnailUrl,
+    large: thumbnailUrl,
   };
 }
 

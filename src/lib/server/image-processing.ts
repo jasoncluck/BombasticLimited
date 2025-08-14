@@ -638,7 +638,7 @@ export async function cleanupImageCache(): Promise<void> {
   await imageCacheManager.cleanup();
 }
 
-// Helper function to generate playlist image URL for client-side requests
+// Helper function to generate playlist image URL - returns original URL to avoid server-side processing
 export function generatePlaylistImageUrl({
   thumbnailUrl,
   thumbnailMaxResUrl,
@@ -657,22 +657,7 @@ export function generatePlaylistImageUrl({
   const effectiveUrl = thumbnailMaxResUrl || thumbnailUrl;
   if (!effectiveUrl) return null;
 
-  const params = new URLSearchParams();
-  
-  if (thumbnailMaxResUrl) {
-    params.set('maxresUrl', thumbnailMaxResUrl);
-  }
-  if (thumbnailUrl) {
-    params.set('url', thumbnailUrl);
-  }
-  
-  params.set('format', format);
-  params.set('quality', quality.toString());
-  params.set('type', responseType);
-  
-  if (imageProperties) {
-    params.set('imageProperties', encodeURIComponent(JSON.stringify(imageProperties)));
-  }
-  
-  return `/api/playlist-image?${params.toString()}`;
+  // Return original URL directly - no server-side processing
+  // Background processing system handles optimization separately
+  return effectiveUrl;
 }
