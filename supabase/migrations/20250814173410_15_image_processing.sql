@@ -35,13 +35,13 @@ ADD COLUMN IF NOT EXISTS "image_processing_status" text DEFAULT 'pending' CHECK 
 ),
 ADD COLUMN IF NOT EXISTS "image_processing_updated_at" TIMESTAMP WITH TIME ZONE DEFAULT now();
 
-COMMENT ON COLUMN "public"."playlists"."thumbnail_webp_path" IS 'Supabase Storage path for WebP thumbnail';
+COMMENT ON COLUMN "public"."playlists"."thumbnail_webp_path" IS 'Supabase Storage path for WebP thumbnail (YouTube thumbnail processed)';
 
-COMMENT ON COLUMN "public"."playlists"."thumbnail_avif_path" IS 'Supabase Storage path for AVIF thumbnail';
+COMMENT ON COLUMN "public"."playlists"."thumbnail_avif_path" IS 'Supabase Storage path for AVIF thumbnail (YouTube thumbnail processed)';
 
-COMMENT ON COLUMN "public"."playlists"."thumbnail_maxres_webp_path" IS 'Supabase Storage path for WebP max-res thumbnail';
+COMMENT ON COLUMN "public"."playlists"."thumbnail_maxres_webp_path" IS 'Supabase Storage path for WebP max-res thumbnail (YouTube thumbnail processed)';
 
-COMMENT ON COLUMN "public"."playlists"."thumbnail_maxres_avif_path" IS 'Supabase Storage path for AVIF max-res thumbnail';
+COMMENT ON COLUMN "public"."playlists"."thumbnail_maxres_avif_path" IS 'Supabase Storage path for AVIF max-res thumbnail (YouTube thumbnail processed)';
 
 COMMENT ON COLUMN "public"."playlists"."image_processing_status" IS 'Status of background image processing for this playlist';
 
@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS "public"."image_processing_jobs" (
   "id" uuid DEFAULT gen_random_uuid() NOT NULL,
   "entity_type" text NOT NULL CHECK (entity_type IN ('video', 'playlist')),
   "entity_id" text NOT NULL,
-  "image_type" text NOT NULL CHECK (image_type IN ('thumbnail', 'thumbnail_maxres')),
+  "image_type" text NOT NULL CHECK (image_type IN ('thumbnail', 'thumbnail_maxres', 'uploaded_image')),
   "source_url" text NOT NULL,
   "status" text DEFAULT 'pending' NOT NULL CHECK (
     status IN (
@@ -225,6 +225,15 @@ BEGIN
         image_processing_status = 'completed',
         image_processing_updated_at = now()
       WHERE id = job_record.entity_id::bigint;
+    ELSIF job_record.image_type = 'uploaded_image' THEN
+      -- Handle uploaded playlist images (stored in image_webp_path, image_avif_path)
+      UPDATE "public"."playlists"
+      SET 
+        image_webp_path = COALESCE(webp_path, image_webp_path),
+        image_avif_path = COALESCE(avif_path, image_avif_path),
+        image_processing_status = 'completed',
+        image_processing_updated_at = now()
+      WHERE id = job_record.entity_id::bigint;
     END IF;
   END IF;
   
@@ -384,18 +393,32 @@ SET search_path = ''
 AS $$
 BEGIN
   -- Queue processing if:
-  -- 1. INSERT operation with thumbnail URLs
+  -- 1. INSERT operation with thumbnail URLs or uploaded image
   -- 2. UPDATE operation where thumbnail URLs changed
   -- 3. UPDATE operation where image_properties changed (crop settings)
+  -- 4. UPDATE operation where uploaded image_path changed
   IF (TG_OP = 'INSERT') OR 
      (TG_OP = 'UPDATE' AND (
        COALESCE(OLD.thumbnail_url, '') != COALESCE(NEW.thumbnail_url, '') OR
        COALESCE(OLD.thumbnail_maxres_url, '') != COALESCE(NEW.thumbnail_maxres_url, '') OR
-       COALESCE(OLD.image_properties::text, '') != COALESCE(NEW.image_properties::text, '')
+       COALESCE(OLD.image_properties::text, '') != COALESCE(NEW.image_properties::text, '') OR
+       COALESCE(OLD.image_path, '') != COALESCE(NEW.image_path, '')
      )) THEN
     
-    -- Queue thumbnail processing if URL exists
-    IF NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '' THEN
+    -- Queue processing for uploaded images first (higher priority)
+    IF NEW.image_path IS NOT NULL AND NEW.image_path != '' THEN
+      PERFORM public.queue_image_processing_job(
+        'playlist',
+        NEW.id::text,
+        'uploaded_image',
+        NEW.image_path,
+        25 -- Higher priority for uploaded images
+      );
+    END IF;
+    
+    -- Queue thumbnail processing if URL exists and no uploaded image
+    IF NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '' AND 
+       (NEW.image_path IS NULL OR NEW.image_path = '') THEN
       PERFORM public.queue_image_processing_job(
         'playlist',
         NEW.id::text,
@@ -405,8 +428,9 @@ BEGIN
       );
     END IF;
 
-    -- Queue maxres thumbnail processing if URL exists
-    IF NEW.thumbnail_maxres_url IS NOT NULL AND NEW.thumbnail_maxres_url != '' THEN
+    -- Queue maxres thumbnail processing if URL exists and no uploaded image
+    IF NEW.thumbnail_maxres_url IS NOT NULL AND NEW.thumbnail_maxres_url != '' AND
+       (NEW.image_path IS NULL OR NEW.image_path = '') THEN
       PERFORM public.queue_image_processing_job(
         'playlist',
         NEW.id::text,
@@ -447,6 +471,21 @@ BEGIN
   
   IF OLD.thumbnail_maxres_avif_path IS NOT NULL THEN
     storage_paths := array_append(storage_paths, OLD.thumbnail_maxres_avif_path);
+  END IF;
+
+  -- For playlists, also cleanup uploaded image paths
+  IF TG_TABLE_NAME = 'playlists' THEN
+    IF OLD.image_path IS NOT NULL THEN
+      storage_paths := array_append(storage_paths, OLD.image_path);
+    END IF;
+    
+    IF OLD.image_webp_path IS NOT NULL THEN
+      storage_paths := array_append(storage_paths, OLD.image_webp_path);
+    END IF;
+    
+    IF OLD.image_avif_path IS NOT NULL THEN
+      storage_paths := array_append(storage_paths, OLD.image_avif_path);
+    END IF;
   END IF;
 
   -- TODO: Implement actual file deletion from Supabase Storage
@@ -492,13 +531,39 @@ CREATE TRIGGER trigger_playlist_image_processing BEFORE INSERT
 OR
 UPDATE OF thumbnail_url,
 thumbnail_maxres_url,
-image_properties ON public.playlists FOR EACH ROW
+image_properties,
+image_path ON public.playlists FOR EACH ROW
 EXECUTE FUNCTION public.trigger_queue_playlist_image_processing ();
 
 DROP TRIGGER IF EXISTS trigger_playlist_image_cleanup ON public.playlists;
 
 CREATE TRIGGER trigger_playlist_image_cleanup BEFORE DELETE ON public.playlists FOR EACH ROW
 EXECUTE FUNCTION public.trigger_cleanup_optimized_images ();
+
+-- Function to update playlist with uploaded image
+CREATE OR REPLACE FUNCTION public.update_playlist_uploaded_image(
+  p_playlist_id bigint,
+  p_image_path text,
+  p_image_properties jsonb DEFAULT NULL
+) RETURNS TABLE (
+  success boolean,
+  playlist_id bigint,
+  image_path text
+) LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  -- Update playlist with uploaded image path
+  UPDATE public.playlists 
+  SET 
+    image_path = p_image_path,
+    image_properties = COALESCE(p_image_properties, image_properties),
+    image_processing_status = 'pending',
+    image_processing_updated_at = now()
+  WHERE id = p_playlist_id;
+  
+  -- Return success result
+  RETURN QUERY SELECT true, p_playlist_id, p_image_path;
+END;
+$$;
 
 -- Add comments
 COMMENT ON FUNCTION public.trigger_queue_video_image_processing () IS 'Automatically queue image processing jobs when video thumbnails are added/updated';
