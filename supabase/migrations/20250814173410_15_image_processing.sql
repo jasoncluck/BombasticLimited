@@ -117,7 +117,11 @@ CREATE OR REPLACE FUNCTION public.get_next_image_processing_job () RETURNS TABLE
   image_type text,
   source_url text,
   attempts integer
-) AS $$
+) 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 BEGIN
   -- Get the next pending job with highest priority (lowest number)
   RETURN QUERY
@@ -135,10 +139,14 @@ BEGIN
   LIMIT 1
   FOR UPDATE SKIP LOCKED;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Function to mark job as processing
-CREATE OR REPLACE FUNCTION public.start_image_processing_job (job_id uuid) RETURNS boolean AS $$
+CREATE OR REPLACE FUNCTION public.start_image_processing_job (job_id uuid) RETURNS boolean 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 BEGIN
   UPDATE "public"."image_processing_jobs"
   SET 
@@ -149,14 +157,18 @@ BEGIN
   
   RETURN FOUND;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Function to mark job as completed
 CREATE OR REPLACE FUNCTION public.complete_image_processing_job (
   job_id uuid,
   webp_path text DEFAULT NULL,
   avif_path text DEFAULT NULL
-) RETURNS boolean AS $$
+) RETURNS boolean 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 DECLARE
   job_record RECORD;
 BEGIN
@@ -218,10 +230,14 @@ BEGIN
   
   RETURN TRUE;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Function to mark job as failed
-CREATE OR REPLACE FUNCTION public.fail_image_processing_job (job_id uuid, error_msg text) RETURNS boolean AS $$
+CREATE OR REPLACE FUNCTION public.fail_image_processing_job (job_id uuid, error_msg text) RETURNS boolean 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 DECLARE
   job_record RECORD;
   new_status text;
@@ -267,7 +283,7 @@ BEGIN
   
   RETURN TRUE;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Function to queue image processing job
 CREATE OR REPLACE FUNCTION public.queue_image_processing_job (
@@ -276,7 +292,11 @@ CREATE OR REPLACE FUNCTION public.queue_image_processing_job (
   p_image_type text,
   p_source_url text,
   p_priority integer DEFAULT 100
-) RETURNS uuid AS $$
+) RETURNS uuid 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 DECLARE
   job_id uuid;
 BEGIN
@@ -307,7 +327,7 @@ BEGIN
   
   RETURN job_id;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Set up RLS policies for image_processing_jobs (admin only)
 ALTER TABLE "public"."image_processing_jobs" ENABLE ROW LEVEL SECURITY;
@@ -357,13 +377,21 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to queue image processing for playlists
-CREATE OR REPLACE FUNCTION public.trigger_queue_playlist_image_processing () RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION public.trigger_queue_playlist_image_processing () RETURNS TRIGGER 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 BEGIN
-  -- Only queue processing if thumbnail URLs are provided and different from OLD values
+  -- Queue processing if:
+  -- 1. INSERT operation with thumbnail URLs
+  -- 2. UPDATE operation where thumbnail URLs changed
+  -- 3. UPDATE operation where image_properties changed (crop settings)
   IF (TG_OP = 'INSERT') OR 
      (TG_OP = 'UPDATE' AND (
        COALESCE(OLD.thumbnail_url, '') != COALESCE(NEW.thumbnail_url, '') OR
-       COALESCE(OLD.thumbnail_maxres_url, '') != COALESCE(NEW.thumbnail_maxres_url, '')
+       COALESCE(OLD.thumbnail_maxres_url, '') != COALESCE(NEW.thumbnail_maxres_url, '') OR
+       COALESCE(OLD.image_properties::text, '') != COALESCE(NEW.image_properties::text, '')
      )) THEN
     
     -- Queue thumbnail processing if URL exists
@@ -395,7 +423,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Function to cleanup optimized images when entities are deleted
 CREATE OR REPLACE FUNCTION public.trigger_cleanup_optimized_images () RETURNS TRIGGER AS $$
@@ -459,13 +487,12 @@ DROP TRIGGER IF EXISTS trigger_video_image_cleanup ON public.videos;
 CREATE TRIGGER trigger_video_image_cleanup BEFORE DELETE ON public.videos FOR EACH ROW
 EXECUTE FUNCTION public.trigger_cleanup_optimized_images ();
 
--- Create triggers for playlists table
-DROP TRIGGER IF EXISTS trigger_playlist_image_processing ON public.playlists;
 
 CREATE TRIGGER trigger_playlist_image_processing BEFORE INSERT
 OR
 UPDATE OF thumbnail_url,
-thumbnail_maxres_url ON public.playlists FOR EACH ROW
+thumbnail_maxres_url,
+image_properties ON public.playlists FOR EACH ROW
 EXECUTE FUNCTION public.trigger_queue_playlist_image_processing ();
 
 DROP TRIGGER IF EXISTS trigger_playlist_image_cleanup ON public.playlists;
