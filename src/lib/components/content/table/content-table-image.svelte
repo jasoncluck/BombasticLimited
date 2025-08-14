@@ -4,6 +4,11 @@
   import { getVideoSecondsOffset } from '$lib/components/video/video-service';
   import { Check } from '@lucide/svelte';
   import { getVideoThumbnailUrl } from '$lib/utils/video-thumbnails';
+  import { 
+    getOptimizedImageUrl, 
+    generatePictureSources, 
+    hasOptimizedImages 
+  } from '$lib/utils/video-thumbnails-storage';
 
   type ContentCardProps = {
     video: Video;
@@ -13,14 +18,34 @@
 </script>
 
 <div class="relative flex aspect-video h-[80px] w-32 shrink-0 items-center">
-  <img
-    class="h-full w-full object-cover"
-    src={getVideoThumbnailUrl(video)}
-    alt={video.title}
-    loading="lazy"
-    decoding="async"
-    fetchpriority="auto"
-  />
+  {#if hasOptimizedImages(video)}
+    <!-- Use optimized images with smart fallback chain -->
+    {@const pictureSources = generatePictureSources(video)}
+    {@const optimizedResult = getOptimizedImageUrl(video)}
+    <picture>
+      {#each pictureSources as source}
+        <source srcset={source.srcset} type={source.type} />
+      {/each}
+      <img
+        class="h-full w-full object-cover"
+        src={optimizedResult.url || getVideoThumbnailUrl(video)}
+        alt={video.title}
+        loading="lazy"
+        decoding="async"
+        fetchpriority="auto"
+      />
+    </picture>
+  {:else}
+    <!-- Fallback to current system for backward compatibility -->
+    <img
+      class="h-full w-full object-cover"
+      src={getVideoThumbnailUrl(video)}
+      alt={video.title}
+      loading="lazy"
+      decoding="async"
+      fetchpriority="auto"
+    />
+  {/if}
   {#if isVideoWithTimestamp(video) && !video.watched_at && video.video_start_seconds && video.duration}
     <Progress
       class="absolute -bottom-1 left-0 h-[5%]"

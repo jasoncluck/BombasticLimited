@@ -42,6 +42,8 @@
     "test:teardown": "supabase stop",
     "test:unit": "vitest run src/lib/",
     "test:watch": "vitest --ui",
+    "script:process-existing-images": "tsx scripts/process-existing-images.ts",
+    "script:test-image-processing": "tsx scripts/test-image-processing.ts",
     "vercel-build": "npm run build:vercel"
   },
   "devDependencies": {
@@ -127,6 +129,7 @@
     "crypto-js": "^4.2.0",
     "debounce": "^2.2.0",
     "embla-carousel-svelte": "^8.6.0",
+    "inngest": "^3.40.1",
     "jose": "^6.0.12",
     "paneforge": "^1.0.2",
     "sharp": "^0.34.3",

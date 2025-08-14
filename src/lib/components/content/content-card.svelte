@@ -16,6 +16,12 @@
   import { getSortDisplayName } from './content-filter';
   import ContentCardSkeleton from './content-card-skeleton.svelte';
   import { getVideoThumbnailUrl } from '$lib/utils/video-thumbnails';
+  import { 
+    getOptimizedImageUrl, 
+    generatePictureSources, 
+    hasOptimizedImages,
+    type VideoThumbnailPaths 
+  } from '$lib/utils/video-thumbnails-storage';
   import { onMount } from 'svelte';
   import { handleContentNavigation } from './content';
   import type { Playlist } from '$lib/supabase/playlists';
@@ -346,14 +352,34 @@
   >
     <div class="flex flex-1 cursor-pointer flex-col overflow-hidden text-left">
       <div class="relative flex-shrink-0">
-        <img
-          class="aspect-[16/9] h-auto w-full"
-          src={getVideoThumbnailUrl(video)}
-          alt={video.title}
-          loading="eager"
-          decoding="async"
-          fetchpriority="high"
-        />
+        {#if hasOptimizedImages(video)}
+          <!-- Use optimized images with smart fallback chain -->
+          {@const pictureSources = generatePictureSources(video)}
+          {@const optimizedResult = getOptimizedImageUrl(video)}
+          <picture>
+            {#each pictureSources as source}
+              <source srcset={source.srcset} type={source.type} />
+            {/each}
+            <img
+              class="aspect-[16/9] h-auto w-full"
+              src={optimizedResult.url || getVideoThumbnailUrl(video)}
+              alt={video.title}
+              loading="eager"
+              decoding="async"
+              fetchpriority="high"
+            />
+          </picture>
+        {:else}
+          <!-- Fallback to current system for backward compatibility -->
+          <img
+            class="aspect-[16/9] h-auto w-full"
+            src={getVideoThumbnailUrl(video)}
+            alt={video.title}
+            loading="eager"
+            decoding="async"
+            fetchpriority="high"
+          />
+        {/if}
         <div class="absolute top-0.5 right-0.5">
           <ContentDropdown
             videos={[video]}
