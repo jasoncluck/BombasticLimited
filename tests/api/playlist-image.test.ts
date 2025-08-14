@@ -1,12 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET } from '../../src/routes/api/playlist-image/+server';
 import * as imageProcessing from '$lib/server/image-processing';
+import * as imageFormatDetection from '$lib/utils/image-format-detection';
 
 // Mock the image processing functions
 vi.mock('$lib/server/image-processing', () => ({
   getCroppedPlaylistImageUrlServer: vi.fn(),
-  detectOptimalFormat: vi.fn(),
   validateImageUrl: vi.fn(),
+}));
+
+vi.mock('$lib/utils/image-format-detection', () => ({
+  detectOptimalFormat: vi.fn(),
 }));
 
 vi.mock('$lib/components/playlist/playlist', () => ({
@@ -14,7 +18,7 @@ vi.mock('$lib/components/playlist/playlist', () => ({
 }));
 
 const mockGetCroppedPlaylistImageUrlServer = vi.mocked(imageProcessing.getCroppedPlaylistImageUrlServer);
-const mockDetectOptimalFormat = vi.mocked(imageProcessing.detectOptimalFormat);
+const mockDetectOptimalFormat = vi.mocked(imageFormatDetection.detectOptimalFormat);
 const mockValidateImageUrl = vi.mocked(imageProcessing.validateImageUrl);
 
 describe('Playlist Image API', () => {

@@ -10,6 +10,7 @@ import {
   generatePlaylistImageCacheKey,
   type ImageCacheMetadata,
 } from './image-cache';
+import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 
 // Initialize image cache manager
 const imageCacheManager = ImageCacheManager.getInstance();
@@ -98,38 +99,6 @@ export function getMemoryUsage() {
     heapUsed: Math.round(used.heapUsed / 1024 / 1024), // MB
     external: Math.round(used.external / 1024 / 1024), // MB
   };
-}
-
-// Browser format support detection
-export function detectOptimalFormat(acceptHeader?: string | null): 'avif' | 'webp' | 'jpeg' {
-  if (!acceptHeader) {
-    // For external images (like YouTube) without Accept headers, 
-    // default to WebP for broader compatibility while still providing good compression
-    return 'webp';
-  }
-  
-  const accept = acceptHeader.toLowerCase();
-  
-  // Explicit AVIF support
-  if (accept.includes('image/avif')) {
-    return 'avif';
-  }
-  
-  // Explicit WebP support
-  if (accept.includes('image/webp')) {
-    return 'webp';
-  }
-  
-  // For modern browsers that accept all image types but don't explicitly list AVIF/WebP
-  // We should try AVIF first for supporting browsers, but fallback to WebP for better compatibility
-  if (accept.includes('image/*') || accept.includes('*/*')) {
-    // Since we can't be certain about AVIF support with generic headers,
-    // use WebP as a safer default that still provides good compression
-    return 'webp';
-  }
-  
-  // Fallback to JPEG for maximum compatibility
-  return 'jpeg';
 }
 
 // Smart quality adjustment based on image content and size

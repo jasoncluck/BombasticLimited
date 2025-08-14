@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { detectOptimalFormat } from '../server/image-processing';
+import { detectOptimalFormat } from './image-format-detection';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL!;

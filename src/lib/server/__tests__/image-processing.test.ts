@@ -6,9 +6,9 @@ import {
   getVideoThumbnailWebpUrlsBatch,
   processImageServer,
   validateImageUrl,
-  detectOptimalFormat,
   calculateOptimalQuality,
 } from '../image-processing';
+import { detectOptimalFormat } from '../../utils/image-format-detection';
 import type { ImageProperties } from '$lib/components/playlist/playlist';
 
 // Mock sharp

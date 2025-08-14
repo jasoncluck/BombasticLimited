@@ -1,5 +1,5 @@
 import { inngest, type ImageProcessingEvent, type BatchImageProcessingEvent, type CleanupJobsEvent } from './client';
-import * as sharp from 'sharp';
+import sharp from 'sharp';
 import { createClient } from '@supabase/supabase-js';
 import { validateImageUrl } from '../server/image-processing';
 
@@ -83,7 +83,7 @@ async function downloadImage(sourceUrl: string): Promise<Buffer> {
  * Process image buffer into WebP and AVIF formats
  */
 async function processImageFormats(buffer: Buffer): Promise<{ webp: Buffer; avif: Buffer }> {
-  const sharpInstance = sharp.default ? sharp.default(buffer) : sharp(buffer);
+  const sharpInstance = sharp(buffer);
   
   // Get metadata for optimization
   const metadata = await sharpInstance.metadata();
@@ -321,13 +321,14 @@ export const cleanupFailedJobs = inngest.createFunction(
       .from('image_processing_jobs')
       .delete()
       .eq('status', status)
-      .lt('updated_at', cutoffTime);
+      .lt('updated_at', cutoffTime)
+      .select();
 
     if (error) {
       throw new Error(`Failed to cleanup jobs: ${error.message}`);
     }
 
-    const deletedCount = data && Array.isArray(data) ? data.length : 0;
+    const deletedCount = data?.length || 0;
 
     console.log(`Cleanup completed: removed ${deletedCount} ${status} jobs`);
     return { deletedCount };

@@ -1,4 +1,5 @@
-import { getVideoThumbnailWebpUrlServer, detectOptimalFormat, generateProgressiveImages, validateImageUrl } from '$lib/server/image-processing';
+import { getVideoThumbnailWebpUrlServer, generateProgressiveImages, validateImageUrl } from '$lib/server/image-processing';
+import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import type { RequestHandler } from './$types';
 import { error, json } from '@sveltejs/kit';
 
