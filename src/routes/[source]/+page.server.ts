@@ -10,8 +10,6 @@ import {
   getPlaylistDataByYoutubeId,
   getPlaylistsForUsername,
 } from '$lib/supabase/playlists';
-import { parseImageProperties } from '$lib/components/playlist/playlist';
-import { generatePlaylistImageUrl } from '$lib/server/image-processing';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
@@ -117,23 +115,15 @@ export const load: PageServerLoad = async ({
     (result) => result !== null
   );
 
-  // Generate playlist image URLs instead of processing inline
-  const processedSourcePlaylists = sourcePlaylistsData.playlists.map((playlist) => ({
-    ...playlist,
-    processedImageUrl: generatePlaylistImageUrl({
-      imageProperties: parseImageProperties(playlist.image_properties),
-      thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
-      thumbnailUrl: playlist.thumbnail_url,
-      format: 'auto', // Enable AVIF format detection
-      quality: 90,
-    }),
-  }));
-
+  // Return playlists directly with optimized image paths from database
+  // The new playlist-image component will handle fallback and processing
   return {
     videos: videos ?? [],
     highlightPlaylists,
-    processedSourcePlaylists, // Return processed playlists instead of raw data
+    processedSourcePlaylists: sourcePlaylistsData.playlists, // Use raw playlists with optimized paths
     source,
     contentFilter,
+    supabase, // Pass supabase client to component
+    session,
   };
 };

@@ -1,7 +1,5 @@
 import { isVideoFilter } from '$lib/components/content/content-filter';
-import { parseImageProperties } from '$lib/components/playlist/playlist';
 import { SOURCES } from '$lib/constants/source';
-import { generatePlaylistImageUrl } from '$lib/server/image-processing';
 import { searchPlaylists } from '$lib/supabase/playlists';
 import {
   getVideos,
@@ -53,56 +51,34 @@ export const load: PageServerLoad = async ({
     }),
   ]);
 
-  // Process everything in parallel
-  const [processedSourceVideos, processedPlaylistSearchResults] =
-    await Promise.all([
-      // Process source videos
-      Promise.resolve(
-        (() => {
-          const sourceVideos: SourceVideos = {
-            giantbomb: [],
-            jeffgerstmann: [],
-            nextlander: [],
-            remap: [],
-          };
+  // Process source videos
+  const sourceVideos: SourceVideos = {
+    giantbomb: [],
+    jeffgerstmann: [],
+    nextlander: [],
+    remap: [],
+  };
 
-          const sourceVideosCount: SourceVideosCount = {
-            giantbomb: null,
-            jeffgerstmann: null,
-            nextlander: null,
-            remap: null,
-          };
+  const sourceVideosCount: SourceVideosCount = {
+    giantbomb: null,
+    jeffgerstmann: null,
+    nextlander: null,
+    remap: null,
+  };
 
-          sourceVideosResults.forEach(({ source, videos, count }) => {
-            sourceVideos[source] = videos;
-            sourceVideosCount[source] = count;
-          });
-
-          return { sourceVideos, sourceVideosCount };
-        })()
-      ),
-
-      // Generate playlist image URLs instead of processing inline
-      playlistSearchResults.map((profilePlaylist) => ({
-        ...profilePlaylist,
-        processedImageUrl: generatePlaylistImageUrl({
-          imageProperties: parseImageProperties(
-            profilePlaylist.image_properties
-          ),
-          thumbnailMaxResUrl: profilePlaylist.thumbnail_maxres_url,
-          thumbnailUrl: profilePlaylist.thumbnail_url,
-          format: 'auto', // Enable AVIF format detection
-          quality: 90,
-        }),
-      })),
-    ]);
+  sourceVideosResults.forEach(({ source, videos, count }) => {
+    sourceVideos[source] = videos;
+    sourceVideosCount[source] = count;
+  });
 
   return {
-    sourceVideos: processedSourceVideos.sourceVideos ?? [],
-    sourceVideosCount: processedSourceVideos.sourceVideosCount,
+    sourceVideos: sourceVideos ?? [],
+    sourceVideosCount: sourceVideosCount,
     searchString,
     playlistsCount,
-    playlistSearchResults: processedPlaylistSearchResults,
+    playlistSearchResults, // Use raw playlists with optimized image paths from database
     contentFilter,
+    supabase, // Pass supabase client to component
+    session,
   };
 };
