@@ -400,6 +400,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_by_youtube_id (p_youtube_id text)
   type public.playlist_type,
   image_properties jsonb,
   youtube_id text,
+  duration_seconds integer,
   profile_username text,
   sorted_by public.playlist_sorted_by,
   sort_order public.playlist_sort_order
@@ -418,6 +419,7 @@ SET
     p.type,
     p.image_properties,
     p.youtube_id,
+    p.duration_seconds,
     prof.username AS profile_username,
     up.sorted_by,
     up.sort_order
@@ -449,6 +451,7 @@ RETURNS TABLE (
   type public.playlist_type,
   image_properties jsonb,
   youtube_id text,
+  duration_seconds integer,
   profile_username text,
   sorted_by public.playlist_sorted_by,
   sort_order public.playlist_sort_order,
@@ -475,6 +478,7 @@ SET
     p.type,
     p.image_properties,
     p.youtube_id,
+    p.duration_seconds,
     prof.username AS profile_username,
     up.sorted_by,
     up.sort_order,
@@ -507,6 +511,7 @@ CREATE OR REPLACE FUNCTION public.get_playlists_for_username (p_username text) R
   type public.playlist_type,
   image_properties jsonb,
   youtube_id text,
+  duration_seconds integer,
   profile_username text,
   sorted_by public.playlist_sorted_by,
   sort_order public.playlist_sort_order,
@@ -531,6 +536,7 @@ SET
     p.type,
     p.image_properties,
     p.youtube_id,
+    p.duration_seconds,
     prof.username AS profile_username,
     up.sorted_by,
     up.sort_order,
@@ -567,6 +573,7 @@ CREATE OR REPLACE FUNCTION "public"."search_playlists" (
   "created_by" uuid,
   "type" public.playlist_type,
   "youtube_id" text,
+  "duration_seconds" integer,
   "profile_username" text,
   "search_rank" real,
   "deleted_at" TIMESTAMP WITH TIME ZONE
@@ -625,6 +632,7 @@ BEGIN
             p.created_by,
             p.type,
             p.youtube_id,
+            p.duration_seconds,
             prof.username AS profile_username,
             p.deleted_at,
             -- Fixed: Cast ALL calculations to real explicitly
@@ -679,6 +687,7 @@ BEGIN
         rp.created_by,
         rp.type,
         rp.youtube_id,
+        rp.duration_seconds,
         rp.profile_username,
         rp.search_rank,
         rp.deleted_at
