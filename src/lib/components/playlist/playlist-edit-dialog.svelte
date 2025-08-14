@@ -11,7 +11,13 @@
   import { Button } from '$lib/components/ui/button';
   import type { Playlist } from '$lib/supabase/playlists';
   import { zodClient } from 'sveltekit-superforms/adapters';
-  import { EditIcon, ListVideo, Loader, CropIcon } from '@lucide/svelte';
+  import {
+    EditIcon,
+    ListVideo,
+    Loader,
+    CropIcon,
+    Pencil,
+  } from '@lucide/svelte';
   import Textarea from '$lib/components/ui/textarea/textarea.svelte';
   import * as ImageCropper from '$lib/components/ui/image-cropper';
   import { getCroppedImg } from '$lib/components/ui/image-cropper/utils';
@@ -31,7 +37,6 @@
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { invalidate } from '$app/navigation';
   import { isLowResolutionThumbnail } from './playlist-service';
-  import { parseImageProperties } from './playlist';
   import { uploadPlaylistImage } from '$lib/utils/image-upload';
 
   let {
@@ -71,7 +76,7 @@
   // Handle cropped image upload
   async function handleCroppedImageUpload(croppedDataUrl: string) {
     if (!session?.user?.id) return;
-    
+
     isUploadingImage = true;
     try {
       // Upload cropped image to storage
@@ -87,12 +92,14 @@
       }
 
       // Update playlist with new image path using RPC function
-      const { data: updateResult, error: updateError } = await page.data.supabase
-        .rpc('update_playlist_uploaded_image', {
+      const { error: updateError } = await page.data.supabase.rpc(
+        'update_playlist_uploaded_image',
+        {
           p_playlist_id: playlist.id,
           p_image_path: uploadResult.imagePath!,
           p_image_properties: cropState.rootState.pixelCrop,
-        });
+        }
+      );
 
       if (updateError) {
         console.error('Failed to update playlist image:', updateError);
@@ -102,7 +109,7 @@
       // Update local playlist object
       playlist.image_path = uploadResult.imagePath!;
       playlist.image_properties = JSON.stringify(cropState.rootState.pixelCrop);
-      
+
       // Clear YouTube thumbnail URLs since we now have uploaded image
       playlist.thumbnail_url = null;
       playlist.thumbnail_maxres_url = null;
@@ -110,7 +117,6 @@
       // Refresh data
       sidebarState.refreshData();
       invalidate('supabase:db:playlists');
-      
     } catch (error) {
       console.error('Upload error:', error);
     } finally {
@@ -147,13 +153,13 @@
             updatedPlaylist.thumbnail_maxres_url = null;
             updatedPlaylist.image_properties = null;
           }
-          
+
           // Force reactive update by creating new object reference if image_properties changed
           if (data.image_properties !== playlist.image_properties) {
             // Create new playlist object to trigger reactivity in PlaylistImage component
             Object.assign(playlist, { ...playlist, ...data });
           }
-          
+
           // Sidebar refresh will get server-processed images with AVIF support
           sidebarState.refreshData();
           invalidate('supabase:db:playlists');
@@ -208,11 +214,12 @@
                     {#snippet child({ props })}
                       <Button
                         {...props}
-                        class="hover:bg-secondary absolute -right-3 -bottom-3 rounded-full hover:brightness-110"
+                        class="hover:bg-secondary \ absolute -right-3 -bottom-3 rounded-full opacity-75 transition-all
+                        duration-150 hover:scale-105 hover:opacity-100 hover:brightness-110"
                         variant="secondary"
                         size="icon"
                       >
-                        <EditIcon class="size-4" />
+                        <Pencil class="size-4" />
                       </Button>
                     {/snippet}
                   </DropdownMenu.Trigger>
@@ -269,34 +276,7 @@
           <ImageCropper.Dialog>
             <ImageCropper.Cropper cropShape="rect" />
             <ImageCropper.Controls>
-              <Button
-                type="button"
-                size="sm"
-                disabled={isUploadingImage}
-                onclick={async () => {
-                  if (!cropState.rootState.pixelCrop || !cropState.rootState.tempUrl) return;
-                  
-                  // Get cropped image data
-                  const croppedDataUrl = await getCroppedImg(
-                    cropState.rootState.tempUrl, 
-                    cropState.rootState.pixelCrop
-                  );
-                  
-                  // Upload the cropped image
-                  await handleCroppedImageUpload(croppedDataUrl);
-                  
-                  // Close cropper
-                  cropperState.rootState.open = false;
-                }}
-              >
-                {#if isUploadingImage}
-                  <Loader class="animate-spin" />
-                  Uploading...
-                {:else}
-                  <CropIcon />
-                  Save Crop
-                {/if}
-              </Button>
+              <ImageCropper.Crop />
               <ImageCropper.Cancel />
             </ImageCropper.Controls>
           </ImageCropper.Dialog>

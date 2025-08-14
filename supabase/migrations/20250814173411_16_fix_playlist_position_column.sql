@@ -4,6 +4,8 @@
 -- This migration fixes the column name mismatch between pv.position and pv.video_position
 -- ============================================================================
 -- Re-create the get_playlist_data function with correct column references
+DROP FUNCTION public.get_playlist_data;
+
 CREATE OR REPLACE FUNCTION public.get_playlist_data (
   p_short_id text DEFAULT NULL,
   p_youtube_id text DEFAULT NULL,

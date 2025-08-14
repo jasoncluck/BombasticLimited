@@ -172,7 +172,7 @@ export type Database = {
           created_by: string
           deleted_at: string | null
           description: string | null
-          duration_seconds: number
+          duration_seconds: number | null
           id: number
           image_avif_path: string | null
           image_path: string | null
@@ -198,7 +198,7 @@ export type Database = {
           created_by: string
           deleted_at?: string | null
           description?: string | null
-          duration_seconds?: number
+          duration_seconds?: number | null
           id?: number
           image_avif_path?: string | null
           image_path?: string | null
@@ -224,7 +224,7 @@ export type Database = {
           created_by?: string
           deleted_at?: string | null
           description?: string | null
-          duration_seconds?: number
+          duration_seconds?: number | null
           id?: number
           image_avif_path?: string | null
           image_path?: string | null
@@ -844,8 +844,11 @@ export type Database = {
           description: string
           duration_seconds: number
           id: number
+          image_avif_path: string
+          image_path: string
           image_processing_status: string
           image_properties: Json
+          image_webp_path: string
           name: string
           profile_username: string
           short_id: string
@@ -912,8 +915,11 @@ export type Database = {
           description: string
           duration_seconds: number
           id: number
+          image_avif_path: string
+          image_path: string
           image_processing_status: string
           image_properties: Json
+          image_webp_path: string
           name: string
           playlist_position: number
           profile_username: string
@@ -1116,8 +1122,11 @@ export type Database = {
           description: string
           duration_seconds: number
           id: number
+          image_avif_path: string
+          image_path: string
           image_processing_status: string
           image_properties: Json
+          image_webp_path: string
           name: string
           profile_username: string
           search_rank: number
@@ -1205,6 +1214,18 @@ export type Database = {
           type: Database["public"]["Enums"]["playlist_type"]
           user_id: string
           youtube_id: string
+        }[]
+      }
+      update_playlist_uploaded_image: {
+        Args: {
+          p_image_path: string
+          p_image_properties?: Json
+          p_playlist_id: number
+        }
+        Returns: {
+          image_path: string
+          playlist_id: number
+          success: boolean
         }[]
       }
       update_playlist_videos_positions: {
