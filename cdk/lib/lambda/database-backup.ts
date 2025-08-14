@@ -71,24 +71,6 @@ export const handler = async (
 
     console.log('Attempting to connect to PostgreSQL...');
 
-    // Validate connection string
-    try {
-      const url = new URL(supabaseDbUrl);
-      console.log('URL parsed successfully:', {
-        protocol: url.protocol,
-        hostname: url.hostname,
-        port: url.port,
-        pathname: url.pathname,
-        username: url.username,
-        password: url.password ? '***HIDDEN***' : 'NOT SET',
-      });
-    } catch (urlError) {
-      console.error('Failed to parse as URL:', (urlError as Error).message);
-      throw new Error(
-        `Invalid SUPABASE_DB_URL_PROD format: ${(urlError as Error).message}`
-      );
-    }
-
     // Initialize PostgreSQL client
     const pgClient = new Client({
       connectionString: supabaseDbUrl,
