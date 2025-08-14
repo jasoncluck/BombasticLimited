@@ -133,7 +133,7 @@ export async function getPlaylistData({
   // First row contains the duration and count info
   const firstRow = data[0];
 
-  // Extract playlist data from first row
+  // Extract playlist data from first row including optimized image paths
   const playlist: UserPlaylist | ProfilePlaylist = {
     id: firstRow.playlist_id,
     created_at: firstRow.playlist_created_at,
@@ -143,6 +143,12 @@ export async function getPlaylistData({
     description: firstRow.playlist_description,
     thumbnail_url: firstRow.playlist_thumbnail_url,
     thumbnail_maxres_url: firstRow.playlist_thumbnail_maxres_url,
+    // Include optimized image paths for fallback chain
+    thumbnail_webp_path: firstRow.playlist_thumbnail_webp_path,
+    thumbnail_avif_path: firstRow.playlist_thumbnail_avif_path,
+    thumbnail_maxres_webp_path: firstRow.playlist_thumbnail_maxres_webp_path,
+    thumbnail_maxres_avif_path: firstRow.playlist_thumbnail_maxres_avif_path,
+    image_processing_status: firstRow.playlist_image_processing_status,
     type: firstRow.playlist_type,
     image_properties: firstRow.playlist_image_properties,
     youtube_id: firstRow.playlist_youtube_id,
@@ -166,6 +172,12 @@ export async function getPlaylistData({
       description: row.video_description,
       thumbnail_url: row.video_thumbnail_url,
       thumbnail_maxres_url: row.video_thumbnail_maxres_url,
+      // Include optimized image paths for video thumbnails too
+      thumbnail_webp_path: row.video_thumbnail_webp_path,
+      thumbnail_avif_path: row.video_thumbnail_avif_path,
+      thumbnail_maxres_webp_path: row.video_thumbnail_maxres_webp_path,
+      thumbnail_maxres_avif_path: row.video_thumbnail_maxres_avif_path,
+      image_processing_status: row.video_image_processing_status,
       published_at: row.video_published_at,
       duration: row.video_duration,
       video_start_seconds: row.video_start_seconds,

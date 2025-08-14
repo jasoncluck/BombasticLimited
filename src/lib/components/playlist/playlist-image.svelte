@@ -62,9 +62,7 @@
 </script>
 
 <div
-  class="relative {sizeClasses[
-    size
-  ]} flex-shrink-0 justify-self-center {className}"
+  class="relative {className || sizeClasses[size]} flex-shrink-0 justify-self-center"
 >
   {#if hasOptimizedImages(playlist)}
     <!-- Use optimized images with smart fallback chain -->
