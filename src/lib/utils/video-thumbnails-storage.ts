@@ -8,17 +8,17 @@ const STORAGE_BUCKET = 'optimized-images';
 
 export interface VideoThumbnailPaths {
   id?: string;
-  thumbnail_webp_path?: string | null;
-  thumbnail_avif_path?: string | null;
-  thumbnail_maxres_webp_path?: string | null;
-  thumbnail_maxres_avif_path?: string | null;
+  thumbnail_webp_url?: string | null;
+  thumbnail_avif_url?: string | null;
+  thumbnail_maxres_webp_url?: string | null;
+  thumbnail_maxres_avif_url?: string | null;
   thumbnail_url?: string | null;
   thumbnail_maxres_url?: string | null;
   image_processing_status?: string | null;
   // For playlists - uploaded images
   image_path?: string | null;
-  image_webp_path?: string | null;
-  image_avif_path?: string | null;
+  image_webp_url?: string | null;
+  image_avif_url?: string | null;
 }
 
 export interface OptimizedImageResult {
@@ -43,12 +43,12 @@ export function getOptimizedImageUrl(
   // Get storage paths based on image type
   const webpPath =
     imageType === 'thumbnail'
-      ? paths.thumbnail_webp_path
-      : paths.thumbnail_maxres_webp_path;
+      ? paths.thumbnail_webp_url
+      : paths.thumbnail_maxres_webp_url;
   const avifPath =
     imageType === 'thumbnail'
-      ? paths.thumbnail_avif_path
-      : paths.thumbnail_maxres_avif_path;
+      ? paths.thumbnail_avif_url
+      : paths.thumbnail_maxres_avif_url;
   const originalUrl =
     imageType === 'thumbnail'
       ? paths.thumbnail_url
@@ -90,15 +90,15 @@ export function getOptimizedPlaylistImageUrl(
   const optimalFormat = detectOptimalFormat(acceptHeader);
 
   // Try uploaded image optimized versions first
-  if (optimalFormat === 'avif' && paths.image_avif_path) {
-    const url = getStorageUrl(paths.image_avif_path, supabase);
+  if (optimalFormat === 'avif' && paths.image_avif_url) {
+    const url = getStorageUrl(paths.image_avif_url, supabase);
     if (url) {
       return { url, format: 'avif', source: 'storage' };
     }
   }
 
-  if ((optimalFormat === 'webp' || optimalFormat === 'avif') && paths.image_webp_path) {
-    const url = getStorageUrl(paths.image_webp_path, supabase);
+  if ((optimalFormat === 'webp' || optimalFormat === 'avif') && paths.image_webp_url) {
+    const url = getStorageUrl(paths.image_webp_url, supabase);
     if (url) {
       return { url, format: 'webp', source: 'storage' };
     }
@@ -144,12 +144,12 @@ export function hasOptimizedImages(
 ): boolean {
   const webpPath =
     imageType === 'thumbnail'
-      ? paths.thumbnail_webp_path
-      : paths.thumbnail_maxres_webp_path;
+      ? paths.thumbnail_webp_url
+      : paths.thumbnail_maxres_webp_url;
   const avifPath =
     imageType === 'thumbnail'
-      ? paths.thumbnail_avif_path
-      : paths.thumbnail_maxres_avif_path;
+      ? paths.thumbnail_avif_url
+      : paths.thumbnail_maxres_avif_url;
 
   return !!(webpPath || avifPath);
 }
@@ -158,7 +158,7 @@ export function hasOptimizedImages(
  * Check if a playlist has uploaded images (either original or optimized)
  */
 export function hasUploadedPlaylistImage(paths: VideoThumbnailPaths): boolean {
-  return !!(paths.image_path || paths.image_webp_path || paths.image_avif_path);
+  return !!(paths.image_path || paths.image_webp_url || paths.image_avif_url);
 }
 
 /**
@@ -188,12 +188,12 @@ export function generatePictureSources(
   // Get storage paths
   const webpPath =
     imageType === 'thumbnail'
-      ? paths.thumbnail_webp_path
-      : paths.thumbnail_maxres_webp_path;
+      ? paths.thumbnail_webp_url
+      : paths.thumbnail_maxres_webp_url;
   const avifPath =
     imageType === 'thumbnail'
-      ? paths.thumbnail_avif_path
-      : paths.thumbnail_maxres_avif_path;
+      ? paths.thumbnail_avif_url
+      : paths.thumbnail_maxres_avif_url;
 
   // Add AVIF source (highest priority)
   if (avifPath) {

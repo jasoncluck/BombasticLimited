@@ -79,11 +79,11 @@
     )}
     <picture>
       <!-- Generate picture sources for uploaded images -->
-      {#if playlist.image_avif_path}
-        <source srcset={supabase.storage.from('optimized-images').getPublicUrl(playlist.image_avif_path).data.publicUrl} type="image/avif" />
+      {#if playlist.image_avif_url}
+        <source srcset={supabase.storage.from('optimized-images').getPublicUrl(playlist.image_avif_url).data.publicUrl} type="image/avif" />
       {/if}
-      {#if playlist.image_webp_path}
-        <source srcset={supabase.storage.from('optimized-images').getPublicUrl(playlist.image_webp_path).data.publicUrl} type="image/webp" />
+      {#if playlist.image_webp_url}
+        <source srcset={supabase.storage.from('optimized-images').getPublicUrl(playlist.image_webp_url).data.publicUrl} type="image/webp" />
       {/if}
       <img
         class="h-full w-full rounded object-cover"

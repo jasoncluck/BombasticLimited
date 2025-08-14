@@ -49,8 +49,8 @@ CREATE TABLE IF NOT EXISTS "public"."playlists" (
   "deleted_at" TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   "duration_seconds" integer DEFAULT 0,
   "image_path" text,
-  "image_webp_path" text,
-  "image_avif_path" text,
+  "image_webp_url" text,
+  "image_avif_url" text,
   CONSTRAINT "playlists_pkey" PRIMARY KEY ("id"),
   CONSTRAINT "playlists_name_check" CHECK (length("name") <= 50),
   CONSTRAINT "playlists_youtube_id_unique" UNIQUE ("youtube_id"),
@@ -69,9 +69,9 @@ COMMENT ON COLUMN "public"."playlists"."duration_seconds" IS 'Total duration of 
 
 COMMENT ON COLUMN "public"."playlists"."image_path" IS 'Path to uploaded cropped playlist image in Supabase Storage (JPEG)';
 
-COMMENT ON COLUMN "public"."playlists"."image_webp_path" IS 'Path to optimized WebP version of uploaded playlist image';
+COMMENT ON COLUMN "public"."playlists"."image_webp_url" IS 'Path to optimized WebP version of uploaded playlist image';
 
-COMMENT ON COLUMN "public"."playlists"."image_avif_path" IS 'Path to optimized AVIF version of uploaded playlist image';
+COMMENT ON COLUMN "public"."playlists"."image_avif_url" IS 'Path to optimized AVIF version of uploaded playlist image';
 
 -- Playlist videos table (without foreign keys initially)
 CREATE TABLE IF NOT EXISTS "public"."playlist_videos" (

@@ -61,6 +61,7 @@
   let isSubmitting = $state(false);
   let isPublic = $state(playlist.type === 'Public');
   let isUploadingImage = $state(false);
+  let pendingCroppedImage = $state<string | null>(null);
 
   const cropperState = useImageCropperCropper();
   const cropState = useImageCropperCrop();
@@ -73,54 +74,25 @@
     )
   );
 
-  // Handle cropped image upload
-  async function handleCroppedImageUpload(croppedDataUrl: string) {
-    if (!session?.user?.id) return;
-
-    isUploadingImage = true;
+  // Handle cropped image - store it for later upload instead of immediate upload
+  async function handleImageCrop() {
     try {
-      // Upload cropped image to storage
-      const uploadResult = await uploadPlaylistImage({
-        playlistId: playlist.id,
-        dataURL: croppedDataUrl,
-        supabase: page.data.supabase,
-      });
-
-      if (!uploadResult.success) {
-        console.error('Image upload failed:', uploadResult.error);
-        return;
-      }
-
-      // Update playlist with new image path using RPC function
-      const { error: updateError } = await page.data.supabase.rpc(
-        'update_playlist_uploaded_image',
-        {
-          p_playlist_id: playlist.id,
-          p_image_path: uploadResult.imagePath!,
-          p_image_properties: cropState.rootState.pixelCrop,
-        }
+      const croppedCanvas = await getCroppedImg(
+        cropperState.rootState.tempUrl!,
+        cropState.rootState.pixelCrop!
       );
-
-      if (updateError) {
-        console.error('Failed to update playlist image:', updateError);
-        return;
-      }
-
-      // Update local playlist object
-      playlist.image_path = uploadResult.imagePath!;
-      playlist.image_properties = JSON.stringify(cropState.rootState.pixelCrop);
-
-      // Clear YouTube thumbnail URLs since we now have uploaded image
-      playlist.thumbnail_url = null;
-      playlist.thumbnail_maxres_url = null;
-
-      // Refresh data
-      sidebarState.refreshData();
-      invalidate('supabase:db:playlists');
+      
+      // Convert canvas to data URL for storage until form submission
+      const croppedDataUrl = croppedCanvas.toDataURL('image/jpeg', 0.9);
+      pendingCroppedImage = croppedDataUrl;
+      
+      // Close the cropper dialog
+      cropperState.rootState.open = false;
+      
+      // Update the image properties to reflect the new crop
+      $formData.image_properties = JSON.stringify(cropState.rootState.pixelCrop);
     } catch (error) {
-      console.error('Upload error:', error);
-    } finally {
-      isUploadingImage = false;
+      console.error('Error cropping image:', error);
     }
   }
 
@@ -129,9 +101,54 @@
       validators: zodClient(playlistSchema),
       id: formId ?? 'playlist-dialog-form',
       dataType: 'json',
-      onSubmit() {
+      async onSubmit() {
         isSubmitting = true;
         $flash = undefined;
+        
+        // Handle pending cropped image upload before form submission
+        if (pendingCroppedImage && session?.user?.id) {
+          isUploadingImage = true;
+          try {
+            // Upload cropped image to storage
+            const uploadResult = await uploadPlaylistImage({
+              playlistId: playlist.id,
+              dataURL: pendingCroppedImage,
+              supabase: page.data.supabase,
+            });
+
+            if (!uploadResult.success) {
+              console.error('Image upload failed:', uploadResult.error);
+              // Continue with form submission even if image upload fails
+            } else {
+              // Update playlist with new image path using RPC function
+              const { error: updateError } = await page.data.supabase.rpc(
+                'update_playlist_uploaded_image',
+                {
+                  p_playlist_id: playlist.id,
+                  p_image_path: uploadResult.imagePath!,
+                  p_image_properties: cropState.rootState.pixelCrop,
+                }
+              );
+
+              if (updateError) {
+                console.error('Failed to update playlist image:', updateError);
+              } else {
+                // Update local playlist object
+                playlist.image_path = uploadResult.imagePath!;
+                playlist.image_properties = JSON.stringify(cropState.rootState.pixelCrop);
+
+                // Clear YouTube thumbnail URLs since we now have uploaded image
+                playlist.thumbnail_url = null;
+                playlist.thumbnail_maxres_url = null;
+              }
+            }
+          } catch (error) {
+            console.error('Upload error:', error);
+          } finally {
+            isUploadingImage = false;
+            pendingCroppedImage = null;
+          }
+        }
       },
       onResult(event) {
         if (event.result.type !== 'success') {
@@ -208,7 +225,21 @@
           <div class="relative m-6 flex justify-center">
             {#if (playlist.thumbnail_maxres_url || playlist.thumbnail_url) && !$formData.isDeletingPlaylistImage}
               <div class="relative h-56 w-56">
-                <ImageCropper.Preview class="h-full w-full rounded-md" />
+                {#if pendingCroppedImage}
+                  <!-- Show cropped preview -->
+                  <img 
+                    src={pendingCroppedImage} 
+                    alt="Cropped preview" 
+                    class="h-full w-full rounded-md object-cover"
+                  />
+                  <div class="absolute top-2 right-2">
+                    <div class="bg-yellow-500 text-white text-xs px-2 py-1 rounded">
+                      Changes Pending
+                    </div>
+                  </div>
+                {:else}
+                  <ImageCropper.Preview class="h-full w-full rounded-md" />
+                {/if}
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger class="outline-none">
                     {#snippet child({ props })}
@@ -276,7 +307,13 @@
           <ImageCropper.Dialog>
             <ImageCropper.Cropper cropShape="rect" />
             <ImageCropper.Controls>
-              <ImageCropper.Crop />
+              <Button
+                type="button"
+                onclick={handleImageCrop}
+                class="mr-2"
+              >
+                Apply Crop
+              </Button>
               <ImageCropper.Cancel />
             </ImageCropper.Controls>
           </ImageCropper.Dialog>
@@ -376,9 +413,13 @@
           </Alert.Root>
         {/if}
         <Dialog.Footer>
-          <Button type="submit">
-            {#if isSubmitting}
-              <Loader class="animate-spin" />
+          <Button type="submit" disabled={isSubmitting || isUploadingImage}>
+            {#if isUploadingImage}
+              <Loader class="animate-spin mr-2" />
+              Uploading Image...
+            {:else if isSubmitting}
+              <Loader class="animate-spin mr-2" />
+              Saving...
             {:else}
               Save Changes
             {/if}

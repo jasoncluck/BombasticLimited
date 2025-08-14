@@ -174,21 +174,21 @@ export type Database = {
           description: string | null
           duration_seconds: number | null
           id: number
-          image_avif_path: string | null
+          image_avif_url: string | null
           image_path: string | null
           image_processing_status: string | null
           image_processing_updated_at: string | null
           image_properties: Json | null
-          image_webp_path: string | null
+          image_webp_url: string | null
           name: string
           search_vector: unknown | null
           short_id: string
-          thumbnail_avif_path: string | null
-          thumbnail_maxres_avif_path: string | null
+          thumbnail_avif_url: string | null
+          thumbnail_maxres_avif_url: string | null
           thumbnail_maxres_url: string | null
-          thumbnail_maxres_webp_path: string | null
+          thumbnail_maxres_webp_url: string | null
           thumbnail_url: string | null
-          thumbnail_webp_path: string | null
+          thumbnail_webp_url: string | null
           type: Database["public"]["Enums"]["playlist_type"]
           updated_at: string | null
           youtube_id: string | null
@@ -200,21 +200,21 @@ export type Database = {
           description?: string | null
           duration_seconds?: number | null
           id?: number
-          image_avif_path?: string | null
+          image_avif_url?: string | null
           image_path?: string | null
           image_processing_status?: string | null
           image_processing_updated_at?: string | null
           image_properties?: Json | null
-          image_webp_path?: string | null
+          image_webp_url?: string | null
           name: string
           search_vector?: unknown | null
           short_id: string
-          thumbnail_avif_path?: string | null
-          thumbnail_maxres_avif_path?: string | null
+          thumbnail_avif_url?: string | null
+          thumbnail_maxres_avif_url?: string | null
           thumbnail_maxres_url?: string | null
-          thumbnail_maxres_webp_path?: string | null
+          thumbnail_maxres_webp_url?: string | null
           thumbnail_url?: string | null
-          thumbnail_webp_path?: string | null
+          thumbnail_webp_url?: string | null
           type?: Database["public"]["Enums"]["playlist_type"]
           updated_at?: string | null
           youtube_id?: string | null
@@ -226,21 +226,21 @@ export type Database = {
           description?: string | null
           duration_seconds?: number | null
           id?: number
-          image_avif_path?: string | null
+          image_avif_url?: string | null
           image_path?: string | null
           image_processing_status?: string | null
           image_processing_updated_at?: string | null
           image_properties?: Json | null
-          image_webp_path?: string | null
+          image_webp_url?: string | null
           name?: string
           search_vector?: unknown | null
           short_id?: string
-          thumbnail_avif_path?: string | null
-          thumbnail_maxres_avif_path?: string | null
+          thumbnail_avif_url?: string | null
+          thumbnail_maxres_avif_url?: string | null
           thumbnail_maxres_url?: string | null
-          thumbnail_maxres_webp_path?: string | null
+          thumbnail_maxres_webp_url?: string | null
           thumbnail_url?: string | null
-          thumbnail_webp_path?: string | null
+          thumbnail_webp_url?: string | null
           type?: Database["public"]["Enums"]["playlist_type"]
           updated_at?: string | null
           youtube_id?: string | null
@@ -503,12 +503,12 @@ export type Database = {
           published_at: string
           search_vector: unknown | null
           source: Database["public"]["Enums"]["source"]
-          thumbnail_avif_path: string | null
-          thumbnail_maxres_avif_path: string | null
+          thumbnail_avif_url: string | null
+          thumbnail_maxres_avif_url: string | null
           thumbnail_maxres_url: string | null
-          thumbnail_maxres_webp_path: string | null
+          thumbnail_maxres_webp_url: string | null
           thumbnail_url: string
-          thumbnail_webp_path: string | null
+          thumbnail_webp_url: string | null
           title: string
         }
         Insert: {
@@ -521,12 +521,12 @@ export type Database = {
           published_at?: string
           search_vector?: unknown | null
           source: Database["public"]["Enums"]["source"]
-          thumbnail_avif_path?: string | null
-          thumbnail_maxres_avif_path?: string | null
+          thumbnail_avif_url?: string | null
+          thumbnail_maxres_avif_url?: string | null
           thumbnail_maxres_url?: string | null
-          thumbnail_maxres_webp_path?: string | null
+          thumbnail_maxres_webp_url?: string | null
           thumbnail_url: string
-          thumbnail_webp_path?: string | null
+          thumbnail_webp_url?: string | null
           title: string
         }
         Update: {
@@ -539,12 +539,12 @@ export type Database = {
           published_at?: string
           search_vector?: unknown | null
           source?: Database["public"]["Enums"]["source"]
-          thumbnail_avif_path?: string | null
-          thumbnail_maxres_avif_path?: string | null
+          thumbnail_avif_url?: string | null
+          thumbnail_maxres_avif_url?: string | null
           thumbnail_maxres_url?: string | null
-          thumbnail_maxres_webp_path?: string | null
+          thumbnail_maxres_webp_url?: string | null
           thumbnail_url?: string
-          thumbnail_webp_path?: string | null
+          thumbnail_webp_url?: string | null
           title?: string
         }
         Relationships: []
@@ -699,12 +699,12 @@ export type Database = {
           playlist_sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
           published_at: string
           source: Database["public"]["Enums"]["source"]
-          thumbnail_avif_path: string
-          thumbnail_maxres_avif_path: string
+          thumbnail_avif_url: string
+          thumbnail_maxres_avif_url: string
           thumbnail_maxres_url: string
-          thumbnail_maxres_webp_path: string
+          thumbnail_maxres_webp_url: string
           thumbnail_url: string
-          thumbnail_webp_path: string
+          thumbnail_webp_url: string
           title: string
           updated_at: string
           video_start_seconds: number
@@ -764,12 +764,12 @@ export type Database = {
           playlist_short_id: string
           playlist_sort_order: Database["public"]["Enums"]["playlist_sort_order"]
           playlist_sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
-          playlist_thumbnail_avif_path: string
-          playlist_thumbnail_maxres_avif_path: string
+          playlist_thumbnail_avif_url: string
+          playlist_thumbnail_maxres_avif_url: string
           playlist_thumbnail_maxres_url: string
-          playlist_thumbnail_maxres_webp_path: string
+          playlist_thumbnail_maxres_webp_url: string
           playlist_thumbnail_url: string
-          playlist_thumbnail_webp_path: string
+          playlist_thumbnail_webp_url: string
           playlist_type: Database["public"]["Enums"]["playlist_type"]
           playlist_youtube_id: string
           profile_username: string
@@ -783,12 +783,12 @@ export type Database = {
           video_published_at: string
           video_source: Database["public"]["Enums"]["source"]
           video_start_seconds: number
-          video_thumbnail_avif_path: string
-          video_thumbnail_maxres_avif_path: string
+          video_thumbnail_avif_url: string
+          video_thumbnail_maxres_avif_url: string
           video_thumbnail_maxres_url: string
-          video_thumbnail_maxres_webp_path: string
+          video_thumbnail_maxres_webp_url: string
           video_thumbnail_url: string
-          video_thumbnail_webp_path: string
+          video_thumbnail_webp_url: string
           video_title: string
           video_updated_at: string
           video_watched_at: string
@@ -844,22 +844,22 @@ export type Database = {
           description: string
           duration_seconds: number
           id: number
-          image_avif_path: string
+          image_avif_url: string
           image_path: string
           image_processing_status: string
           image_properties: Json
-          image_webp_path: string
+          image_webp_url: string
           name: string
           profile_username: string
           short_id: string
           sort_order: Database["public"]["Enums"]["playlist_sort_order"]
           sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
-          thumbnail_avif_path: string
-          thumbnail_maxres_avif_path: string
+          thumbnail_avif_url: string
+          thumbnail_maxres_avif_url: string
           thumbnail_maxres_url: string
-          thumbnail_maxres_webp_path: string
+          thumbnail_maxres_webp_url: string
           thumbnail_url: string
-          thumbnail_webp_path: string
+          thumbnail_webp_url: string
           type: Database["public"]["Enums"]["playlist_type"]
           youtube_id: string
         }[]
@@ -915,23 +915,23 @@ export type Database = {
           description: string
           duration_seconds: number
           id: number
-          image_avif_path: string
+          image_avif_url: string
           image_path: string
           image_processing_status: string
           image_properties: Json
-          image_webp_path: string
+          image_webp_url: string
           name: string
           playlist_position: number
           profile_username: string
           short_id: string
           sort_order: Database["public"]["Enums"]["playlist_sort_order"]
           sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
-          thumbnail_avif_path: string
-          thumbnail_maxres_avif_path: string
+          thumbnail_avif_url: string
+          thumbnail_maxres_avif_url: string
           thumbnail_maxres_url: string
-          thumbnail_maxres_webp_path: string
+          thumbnail_maxres_webp_url: string
           thumbnail_url: string
-          thumbnail_webp_path: string
+          thumbnail_webp_url: string
           type: Database["public"]["Enums"]["playlist_type"]
           youtube_id: string
         }[]
@@ -975,12 +975,12 @@ export type Database = {
           playlist_id: number
           published_at: string
           source: Database["public"]["Enums"]["source"]
-          thumbnail_avif_path: string
-          thumbnail_maxres_avif_path: string
+          thumbnail_avif_url: string
+          thumbnail_maxres_avif_url: string
           thumbnail_maxres_url: string
-          thumbnail_maxres_webp_path: string
+          thumbnail_maxres_webp_url: string
           thumbnail_url: string
-          thumbnail_webp_path: string
+          thumbnail_webp_url: string
           title: string
           updated_at: string
           video_start_seconds: number
@@ -1122,21 +1122,21 @@ export type Database = {
           description: string
           duration_seconds: number
           id: number
-          image_avif_path: string
+          image_avif_url: string
           image_path: string
           image_processing_status: string
           image_properties: Json
-          image_webp_path: string
+          image_webp_url: string
           name: string
           profile_username: string
           search_rank: number
           short_id: string
-          thumbnail_avif_path: string
-          thumbnail_maxres_avif_path: string
+          thumbnail_avif_url: string
+          thumbnail_maxres_avif_url: string
           thumbnail_maxres_url: string
-          thumbnail_maxres_webp_path: string
+          thumbnail_maxres_webp_url: string
           thumbnail_url: string
-          thumbnail_webp_path: string
+          thumbnail_webp_url: string
           type: Database["public"]["Enums"]["playlist_type"]
           youtube_id: string
         }[]
@@ -1151,12 +1151,12 @@ export type Database = {
           published_at: string
           search_rank: number
           source: Database["public"]["Enums"]["source"]
-          thumbnail_avif_path: string
-          thumbnail_maxres_avif_path: string
+          thumbnail_avif_url: string
+          thumbnail_maxres_avif_url: string
           thumbnail_maxres_url: string
-          thumbnail_maxres_webp_path: string
+          thumbnail_maxres_webp_url: string
           thumbnail_url: string
-          thumbnail_webp_path: string
+          thumbnail_webp_url: string
           title: string
           updated_at: string
           video_start_seconds: number

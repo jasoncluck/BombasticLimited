@@ -5,43 +5,43 @@
 -- ============================================================================
 -- Add optimized image storage paths to videos table
 ALTER TABLE "public"."videos"
-ADD COLUMN IF NOT EXISTS "thumbnail_webp_path" text,
-ADD COLUMN IF NOT EXISTS "thumbnail_avif_path" text,
-ADD COLUMN IF NOT EXISTS "thumbnail_maxres_webp_path" text,
-ADD COLUMN IF NOT EXISTS "thumbnail_maxres_avif_path" text,
+ADD COLUMN IF NOT EXISTS "thumbnail_webp_url" text,
+ADD COLUMN IF NOT EXISTS "thumbnail_avif_url" text,
+ADD COLUMN IF NOT EXISTS "thumbnail_maxres_webp_url" text,
+ADD COLUMN IF NOT EXISTS "thumbnail_maxres_avif_url" text,
 ADD COLUMN IF NOT EXISTS "image_processing_status" text DEFAULT 'pending' CHECK (
   image_processing_status IN ('pending', 'processing', 'completed', 'failed')
 ),
 ADD COLUMN IF NOT EXISTS "image_processing_updated_at" TIMESTAMP WITH TIME ZONE DEFAULT now();
 
-COMMENT ON COLUMN "public"."videos"."thumbnail_webp_path" IS 'Supabase Storage path for WebP thumbnail';
+COMMENT ON COLUMN "public"."videos"."thumbnail_webp_url" IS 'Supabase Storage path for WebP thumbnail';
 
-COMMENT ON COLUMN "public"."videos"."thumbnail_avif_path" IS 'Supabase Storage path for AVIF thumbnail';
+COMMENT ON COLUMN "public"."videos"."thumbnail_avif_url" IS 'Supabase Storage path for AVIF thumbnail';
 
-COMMENT ON COLUMN "public"."videos"."thumbnail_maxres_webp_path" IS 'Supabase Storage path for WebP max-res thumbnail';
+COMMENT ON COLUMN "public"."videos"."thumbnail_maxres_webp_url" IS 'Supabase Storage path for WebP max-res thumbnail';
 
-COMMENT ON COLUMN "public"."videos"."thumbnail_maxres_avif_path" IS 'Supabase Storage path for AVIF max-res thumbnail';
+COMMENT ON COLUMN "public"."videos"."thumbnail_maxres_avif_url" IS 'Supabase Storage path for AVIF max-res thumbnail';
 
 COMMENT ON COLUMN "public"."videos"."image_processing_status" IS 'Status of background image processing for this video';
 
 -- Add optimized image storage paths to playlists table
 ALTER TABLE "public"."playlists"
-ADD COLUMN IF NOT EXISTS "thumbnail_webp_path" text,
-ADD COLUMN IF NOT EXISTS "thumbnail_avif_path" text,
-ADD COLUMN IF NOT EXISTS "thumbnail_maxres_webp_path" text,
-ADD COLUMN IF NOT EXISTS "thumbnail_maxres_avif_path" text,
+ADD COLUMN IF NOT EXISTS "thumbnail_webp_url" text,
+ADD COLUMN IF NOT EXISTS "thumbnail_avif_url" text,
+ADD COLUMN IF NOT EXISTS "thumbnail_maxres_webp_url" text,
+ADD COLUMN IF NOT EXISTS "thumbnail_maxres_avif_url" text,
 ADD COLUMN IF NOT EXISTS "image_processing_status" text DEFAULT 'pending' CHECK (
   image_processing_status IN ('pending', 'processing', 'completed', 'failed')
 ),
 ADD COLUMN IF NOT EXISTS "image_processing_updated_at" TIMESTAMP WITH TIME ZONE DEFAULT now();
 
-COMMENT ON COLUMN "public"."playlists"."thumbnail_webp_path" IS 'Supabase Storage path for WebP thumbnail (YouTube thumbnail processed)';
+COMMENT ON COLUMN "public"."playlists"."thumbnail_webp_url" IS 'Supabase Storage path for WebP thumbnail (YouTube thumbnail processed)';
 
-COMMENT ON COLUMN "public"."playlists"."thumbnail_avif_path" IS 'Supabase Storage path for AVIF thumbnail (YouTube thumbnail processed)';
+COMMENT ON COLUMN "public"."playlists"."thumbnail_avif_url" IS 'Supabase Storage path for AVIF thumbnail (YouTube thumbnail processed)';
 
-COMMENT ON COLUMN "public"."playlists"."thumbnail_maxres_webp_path" IS 'Supabase Storage path for WebP max-res thumbnail (YouTube thumbnail processed)';
+COMMENT ON COLUMN "public"."playlists"."thumbnail_maxres_webp_url" IS 'Supabase Storage path for WebP max-res thumbnail (YouTube thumbnail processed)';
 
-COMMENT ON COLUMN "public"."playlists"."thumbnail_maxres_avif_path" IS 'Supabase Storage path for AVIF max-res thumbnail (YouTube thumbnail processed)';
+COMMENT ON COLUMN "public"."playlists"."thumbnail_maxres_avif_url" IS 'Supabase Storage path for AVIF max-res thumbnail (YouTube thumbnail processed)';
 
 COMMENT ON COLUMN "public"."playlists"."image_processing_status" IS 'Status of background image processing for this playlist';
 
@@ -194,8 +194,8 @@ BEGIN
     IF job_record.image_type = 'thumbnail' THEN
       UPDATE "public"."videos"
       SET 
-        thumbnail_webp_path = COALESCE(webp_path, thumbnail_webp_path),
-        thumbnail_avif_path = COALESCE(avif_path, thumbnail_avif_path),
+        thumbnail_webp_url = COALESCE(webp_path, thumbnail_webp_url),
+        thumbnail_avif_url = COALESCE(avif_path, thumbnail_avif_url),
         image_processing_status = 'completed',
         image_processing_updated_at = now()
       WHERE id = job_record.entity_id;
@@ -212,8 +212,8 @@ BEGIN
     IF job_record.image_type = 'thumbnail' THEN
       UPDATE "public"."playlists"
       SET 
-        thumbnail_webp_path = COALESCE(webp_path, thumbnail_webp_path),
-        thumbnail_avif_path = COALESCE(avif_path, thumbnail_avif_path),
+        thumbnail_webp_url = COALESCE(webp_path, thumbnail_webp_url),
+        thumbnail_avif_url = COALESCE(avif_path, thumbnail_avif_url),
         image_processing_status = 'completed',
         image_processing_updated_at = now()
       WHERE id = job_record.entity_id::bigint;
@@ -229,8 +229,8 @@ BEGIN
       -- Handle uploaded playlist images (stored in image_webp_path, image_avif_path)
       UPDATE "public"."playlists"
       SET 
-        image_webp_path = COALESCE(webp_path, image_webp_path),
-        image_avif_path = COALESCE(avif_path, image_avif_path),
+        image_webp_url = COALESCE(webp_path, image_webp_url),
+        image_avif_url = COALESCE(avif_path, image_avif_url),
         image_processing_status = 'completed',
         image_processing_updated_at = now()
       WHERE id = job_record.entity_id::bigint;
@@ -457,20 +457,20 @@ BEGIN
   -- Collect all storage paths that need cleanup
   storage_paths := ARRAY[]::text[];
   
-  IF OLD.thumbnail_webp_path IS NOT NULL THEN
-    storage_paths := array_append(storage_paths, OLD.thumbnail_webp_path);
+  IF OLD.thumbnail_webp_url IS NOT NULL THEN
+    storage_paths := array_append(storage_paths, OLD.thumbnail_webp_url);
   END IF;
   
-  IF OLD.thumbnail_avif_path IS NOT NULL THEN
-    storage_paths := array_append(storage_paths, OLD.thumbnail_avif_path);
+  IF OLD.thumbnail_avif_url IS NOT NULL THEN
+    storage_paths := array_append(storage_paths, OLD.thumbnail_avif_url);
   END IF;
   
-  IF OLD.thumbnail_maxres_webp_path IS NOT NULL THEN
-    storage_paths := array_append(storage_paths, OLD.thumbnail_maxres_webp_path);
+  IF OLD.thumbnail_maxres_webp_url IS NOT NULL THEN
+    storage_paths := array_append(storage_paths, OLD.thumbnail_maxres_webp_url);
   END IF;
   
-  IF OLD.thumbnail_maxres_avif_path IS NOT NULL THEN
-    storage_paths := array_append(storage_paths, OLD.thumbnail_maxres_avif_path);
+  IF OLD.thumbnail_maxres_avif_url IS NOT NULL THEN
+    storage_paths := array_append(storage_paths, OLD.thumbnail_maxres_avif_url);
   END IF;
 
   -- For playlists, also cleanup uploaded image paths
@@ -479,12 +479,12 @@ BEGIN
       storage_paths := array_append(storage_paths, OLD.image_path);
     END IF;
     
-    IF OLD.image_webp_path IS NOT NULL THEN
-      storage_paths := array_append(storage_paths, OLD.image_webp_path);
+    IF OLD.image_webp_url IS NOT NULL THEN
+      storage_paths := array_append(storage_paths, OLD.image_webp_url);
     END IF;
     
-    IF OLD.image_avif_path IS NOT NULL THEN
-      storage_paths := array_append(storage_paths, OLD.image_avif_path);
+    IF OLD.image_avif_url IS NOT NULL THEN
+      storage_paths := array_append(storage_paths, OLD.image_avif_url);
     END IF;
   END IF;
 
