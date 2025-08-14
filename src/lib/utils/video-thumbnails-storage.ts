@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { detectOptimalFormat } from '$lib/server/image-processing';
+import { detectOptimalFormat } from '../server/image-processing';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL!;
@@ -170,7 +170,7 @@ export async function queueVideoImageProcessing(
   
   if (jobs.length > 0) {
     // Send batch processing event to Inngest
-    const { inngest } = await import('$lib/inngest/client');
+    const { inngest } = await import('../inngest/client');
     await inngest.send({
       name: 'image.batch.process',
       data: { jobs },
@@ -211,7 +211,7 @@ export async function queuePlaylistImageProcessing(
   
   if (jobs.length > 0) {
     // Send batch processing event to Inngest
-    const { inngest } = await import('$lib/inngest/client');
+    const { inngest } = await import('../inngest/client');
     await inngest.send({
       name: 'image.batch.process',
       data: { jobs },

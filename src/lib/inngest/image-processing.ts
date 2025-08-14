@@ -1,7 +1,7 @@
 import { inngest, type ImageProcessingEvent, type BatchImageProcessingEvent, type CleanupJobsEvent } from './client';
-import sharp from 'sharp';
+import * as sharp from 'sharp';
 import { createClient } from '@supabase/supabase-js';
-import { validateImageUrl } from '$lib/server/image-processing';
+import { validateImageUrl } from '../server/image-processing';
 
 // Initialize Supabase client with service role key for server-side operations
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL!;
@@ -83,7 +83,7 @@ async function downloadImage(sourceUrl: string): Promise<Buffer> {
  * Process image buffer into WebP and AVIF formats
  */
 async function processImageFormats(buffer: Buffer): Promise<{ webp: Buffer; avif: Buffer }> {
-  const sharpInstance = sharp(buffer);
+  const sharpInstance = sharp.default ? sharp.default(buffer) : sharp(buffer);
   
   // Get metadata for optimization
   const metadata = await sharpInstance.metadata();
@@ -170,65 +170,49 @@ export const processImage = inngest.createFunction(
     retries: MAX_RETRIES,
   },
   { event: 'image.process' },
-  async ({ event, step }): Promise<ProcessingResult> => {
+  async ({ event }): Promise<ProcessingResult> => {
     const { entityType, entityId, imageType, sourceUrl } = event.data;
     
     console.log(`Processing image for ${entityType} ${entityId}, type: ${imageType}`);
 
     try {
-      // Step 1: Get and mark job as processing
-      const jobId = await step.run('get-job', async () => {
-        const { data, error } = await supabase.rpc('queue_image_processing_job', {
-          p_entity_type: entityType,
-          p_entity_id: entityId,
-          p_image_type: imageType,
-          p_source_url: sourceUrl,
-          p_priority: event.data.priority || 100,
-        });
-
-        if (error) {
-          throw new Error(`Failed to queue job: ${error.message}`);
-        }
-
-        await supabase.rpc('start_image_processing_job', { job_id: data });
-        return data;
+      // Get and mark job as processing
+      const { data: jobId, error: jobError } = await supabase.rpc('queue_image_processing_job', {
+        p_entity_type: entityType,
+        p_entity_id: entityId,
+        p_image_type: imageType,
+        p_source_url: sourceUrl,
+        p_priority: event.data.priority || 100,
       });
 
-      // Step 2: Download source image
-      const imageBuffer = await step.run('download-image', async () => {
-        return await downloadImage(sourceUrl);
-      });
+      if (jobError) {
+        throw new Error(`Failed to queue job: ${jobError.message}`);
+      }
 
-      // Step 3: Process image into WebP and AVIF
-      const processedImages = await step.run('process-formats', async () => {
-        // Ensure imageBuffer is a proper Buffer
-        const buffer = Buffer.isBuffer(imageBuffer) ? imageBuffer : Buffer.from(imageBuffer);
-        return await processImageFormats(buffer);
-      });
+      await supabase.rpc('start_image_processing_job', { job_id: jobId });
 
-      // Step 4: Generate storage paths
+      // Download source image
+      const imageBuffer = await downloadImage(sourceUrl);
+
+      // Process image into WebP and AVIF
+      const { webp: webpBuffer, avif: avifBuffer } = await processImageFormats(imageBuffer);
+
+      // Generate storage paths
       const { webpPath, avifPath } = generateStoragePaths(entityType, entityId, imageType);
 
-      // Step 5: Upload to Supabase Storage
-      const uploadResult = await step.run('upload-to-storage', async () => {
-        // Ensure buffers are proper Buffer instances
-        const webpBuffer = Buffer.isBuffer(processedImages.webp) ? processedImages.webp : Buffer.from(processedImages.webp);
-        const avifBuffer = Buffer.isBuffer(processedImages.avif) ? processedImages.avif : Buffer.from(processedImages.avif);
-        return await uploadToStorage(webpBuffer, avifBuffer, webpPath, avifPath);
+      // Upload to Supabase Storage
+      const uploadResult = await uploadToStorage(webpBuffer, avifBuffer, webpPath, avifPath);
+
+      // Mark job as completed
+      const { error: completeError } = await supabase.rpc('complete_image_processing_job', {
+        job_id: jobId,
+        webp_path: uploadResult.webpPath,
+        avif_path: uploadResult.avifPath,
       });
 
-      // Step 6: Mark job as completed
-      await step.run('complete-job', async () => {
-        const { error } = await supabase.rpc('complete_image_processing_job', {
-          job_id: jobId,
-          webp_path: uploadResult.webpPath,
-          avif_path: uploadResult.avifPath,
-        });
-
-        if (error) {
-          throw new Error(`Failed to complete job: ${error.message}`);
-        }
-      });
+      if (completeError) {
+        throw new Error(`Failed to complete job: ${completeError.message}`);
+      }
 
       console.log(`Successfully processed image for ${entityType} ${entityId}`);
       return {
@@ -277,39 +261,31 @@ export const batchProcessImages = inngest.createFunction(
     concurrency: 5, // Limit concurrent batch processing
   },
   { event: 'image.batch.process' },
-  async ({ event, step }) => {
+  async ({ event }) => {
     const { jobs } = event.data;
     
     console.log(`Starting batch processing of ${jobs.length} images`);
 
-    const results = await step.run('process-batch', async () => {
-      // Process images in parallel with concurrency limit
-      const processPromises = jobs.map(async (job: {
-        entityType: 'video' | 'playlist';
-        entityId: string;
-        imageType: 'thumbnail' | 'thumbnail_maxres';
-        sourceUrl: string;
-        priority?: number;
-      }) => {
-        try {
-          // Send individual processing event
-          await inngest.send({
-            name: 'image.process',
-            data: job,
-          });
-          return { success: true, entityId: job.entityId };
-        } catch (error) {
-          console.error(`Failed to queue processing for ${job.entityType} ${job.entityId}:`, error);
-          return { 
-            success: false, 
-            entityId: job.entityId, 
-            error: error instanceof Error ? error.message : String(error) 
-          };
-        }
-      });
+    const results = [];
 
-      return await Promise.all(processPromises);
-    });
+    // Process images in parallel with concurrency limit
+    for (const job of jobs) {
+      try {
+        // Send individual processing event
+        await inngest.send({
+          name: 'image.process',
+          data: job,
+        });
+        results.push({ success: true, entityId: job.entityId });
+      } catch (error) {
+        console.error(`Failed to queue processing for ${job.entityType} ${job.entityId}:`, error);
+        results.push({ 
+          success: false, 
+          entityId: job.entityId, 
+          error: error instanceof Error ? error.message : String(error) 
+        });
+      }
+    }
 
     const successful = results.filter(r => r.success).length;
     const failed = results.filter(r => !r.success).length;
@@ -334,29 +310,27 @@ export const cleanupFailedJobs = inngest.createFunction(
     name: 'Cleanup Failed Jobs',
   },
   { event: 'image.cleanup' },
-  async ({ event, step }) => {
+  async ({ event }) => {
     const { olderThanHours = 24, status = 'failed' } = event.data;
 
     console.log(`Cleaning up ${status} jobs older than ${olderThanHours} hours`);
 
-    const result = await step.run('cleanup-jobs', async () => {
-      const cutoffTime = new Date(Date.now() - olderThanHours * 60 * 60 * 1000).toISOString();
+    const cutoffTime = new Date(Date.now() - olderThanHours * 60 * 60 * 1000).toISOString();
 
-      const { data, error } = await supabase
-        .from('image_processing_jobs')
-        .delete()
-        .eq('status', status)
-        .lt('updated_at', cutoffTime);
+    const { data, error } = await supabase
+      .from('image_processing_jobs')
+      .delete()
+      .eq('status', status)
+      .lt('updated_at', cutoffTime);
 
-      if (error) {
-        throw new Error(`Failed to cleanup jobs: ${error.message}`);
-      }
+    if (error) {
+      throw new Error(`Failed to cleanup jobs: ${error.message}`);
+    }
 
-      return { deletedCount: Array.isArray(data) ? data.length : 0 };
-    });
+    const deletedCount = data && Array.isArray(data) ? data.length : 0;
 
-    console.log(`Cleanup completed: removed ${result.deletedCount} ${status} jobs`);
-    return result;
+    console.log(`Cleanup completed: removed ${deletedCount} ${status} jobs`);
+    return { deletedCount };
   }
 );
 

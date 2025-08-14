@@ -1,4 +1,4 @@
-import { queueVideoImageProcessing, queuePlaylistImageProcessing } from '$lib/utils/video-thumbnails-storage';
+import { queueVideoImageProcessing, queuePlaylistImageProcessing } from '../utils/video-thumbnails-storage';
 
 /**
  * Hook to queue image processing when a new video is created or updated
@@ -118,7 +118,7 @@ export async function batchProcessVideoImages(videos: Array<{
   
   if (jobs.length > 0) {
     try {
-      const { inngest } = await import('$lib/inngest/client');
+      const { inngest } = await import('../inngest/client');
       await inngest.send({
         name: 'image.batch.process',
         data: { jobs },
@@ -164,7 +164,7 @@ export async function batchProcessPlaylistImages(playlists: Array<{
   
   if (jobs.length > 0) {
     try {
-      const { inngest } = await import('$lib/inngest/client');
+      const { inngest } = await import('../inngest/client');
       await inngest.send({
         name: 'image.batch.process',
         data: { jobs },
