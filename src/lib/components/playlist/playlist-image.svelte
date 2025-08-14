@@ -13,7 +13,7 @@
 
   type PlaylistImageProps = {
     playlist: VideoThumbnailPaths & {
-      id?: string | bigint;
+      id?: string | bigint | number;
       name: string;
       image_properties?: string | null;
     };
