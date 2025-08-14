@@ -321,7 +321,7 @@
 {:else}
   <div
     bind:this={cardElement}
-    class={getCardClasses()}
+    class="{getCardClasses()} flex flex-col"
     data-testid="video-card"
     role="button"
     tabindex="0"
@@ -344,8 +344,8 @@
     oncontextmenu={handleContextMenu}
     onkeydown={handleKeyDown}
   >
-    <div class="cursor-pointer overflow-hidden text-left">
-      <div class="relative">
+    <div class="flex flex-1 cursor-pointer flex-col overflow-hidden text-left">
+      <div class="relative flex-shrink-0">
         <img
           class="aspect-[16/9] h-auto w-full"
           src={getVideoThumbnailUrl(video)}
@@ -384,25 +384,32 @@
         {/if}
       </div>
 
-      <p class="p-2 text-sm/5 tracking-tight">
+      <p class="flex-shrink-0 p-2 text-sm/5 tracking-tight">
         {video.title}
       </p>
 
-      <!-- Date/Description section - they occupy the same space -->
-      <div class="min-h-[1rem] px-2">
+      <!-- Date/Description section with flex-1 to fill remaining space -->
+      <div class="flex flex-1 flex-col justify-start overflow-hidden px-2 pb-2">
         {#if shouldShowDescription && userPreferences.contentDescription !== 'NONE'}
           <!-- Show description when hovering/selected -->
-          <p
-            class="break-anywhere pointer-events-none transform
-            text-xs tracking-tight whitespace-pre-line will-change-transform
-            {userPreferences.contentDescription === 'BRIEF' &&
-              'line-clamp-4 overflow-clip'}"
+          <div
+            class="pointer-events-none transform overflow-hidden
+      text-xs leading-5 tracking-tight break-words will-change-transform
+      {userPreferences.contentDescription === 'BRIEF'
+              ? 'max-h-15'
+              : 'max-h-20'}"
+            style="display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: {userPreferences.contentDescription ===
+            'BRIEF'
+              ? '3'
+              : '4'};"
           >
             {video.description}
-          </p>
+          </div>
         {:else}
           <!-- Show date by default -->
-          <p class="text-muted-foreground pointer-events-none text-xs">
+          <p
+            class="text-muted-foreground pointer-events-none text-xs leading-5"
+          >
             {new Date(video.published_at).toLocaleDateString('en-US', {
               year: 'numeric',
               month: 'long',
@@ -412,9 +419,10 @@
         {/if}
       </div>
 
+      <!-- Playlist section with flex-shrink-0 to prevent compression -->
       {#if isVideoWithTimestamp(video) && video.playlist_name && video.playlist_short_id}
         <div
-          class="text-secondary-foreground hover:text-primary z-10 mt-1 mb-3 line-clamp-2 flex items-center gap-2 px-2 text-xs"
+          class="text-secondary-foreground hover:text-primary z-10 mt-1 mb-3 line-clamp-2 flex flex-shrink-0 items-center gap-2 px-2 text-xs"
         >
           <ListVideo size="16" class="shrink-0 self-start" />
           <div class="flex w-full flex-col justify-center gap-2">
@@ -425,7 +433,7 @@
                 goto(`playlist/${video.playlist_short_id}`);
               }}
               href={`playlist/${video.playlist_short_id}`}
-              class="flex items-center gap-2 truncate whitespace-normal"
+              class="flex cursor-pointer items-center gap-2 truncate whitespace-normal"
             >
               <span class="truncate">{video.playlist_name}</span>
             </a>

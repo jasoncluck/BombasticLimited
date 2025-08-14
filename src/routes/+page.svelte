@@ -16,6 +16,8 @@
     type SourceWithStateKeys,
   } from '$lib/components/content/content.js';
   import { getMediaQueryState } from '$lib/state/media-query.svelte.js';
+  import { getSidebarState } from '$lib/state/sidebar.svelte.js';
+  import { getNavigationState } from '$lib/state/navigation.svelte.js';
 
   let { data } = $props();
 
@@ -30,6 +32,9 @@
 
   const contentState = getContentState();
   const mediaQueryState = getMediaQueryState();
+  const sidebarState = getSidebarState();
+  const navigationState = getNavigationState();
+
   const sources = $derived(userProfile?.sources ?? SOURCES);
 
   // After oauth authn there is a history stack update that doesn't trigger a proper invalidation.
@@ -41,6 +46,8 @@
       replaceState: true,
       invalidate: ['supabase:db:profiles'],
     });
+    sidebarState.refreshData();
+    navigationState.refreshData();
   }
 
   let sectionIds = sourceWithContinueStateKeys;

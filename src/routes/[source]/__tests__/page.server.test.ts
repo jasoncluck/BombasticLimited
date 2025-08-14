@@ -6,7 +6,10 @@ import {
   getPlaylistDataByYoutubeId,
   getPlaylistsForUsername,
 } from '$lib/supabase/playlists';
-import { getCroppedPlaylistImageUrlServer, generatePlaylistImageUrl } from '$lib/server/image-processing';
+import {
+  getCroppedPlaylistImageUrlServer,
+  generatePlaylistImageUrl,
+} from '$lib/server/image-processing';
 import {
   createMockSession,
   createMockUserProfile,
@@ -231,7 +234,9 @@ describe('[source]/+page.server.ts load function', () => {
       mockGetCroppedPlaylistImageUrlServer.mockResolvedValue(
         'https://example.com/processed.jpg'
       );
-      mockGeneratePlaylistImageUrl.mockReturnValue('/api/playlist-image?url=test');
+      mockGeneratePlaylistImageUrl.mockReturnValue(
+        '/api/playlist-image?url=test'
+      );
     });
 
     it('should fetch videos for the source', async () => {

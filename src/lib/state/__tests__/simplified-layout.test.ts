@@ -1,13 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { LayoutStateClass } from '../layout.svelte.js';
+import { NavigationStateClass } from '../navigation.svelte.js';
 
 // Mock dependencies first
 vi.mock('$app/navigation', () => ({
   goto: vi.fn(),
+  invalidateAll: vi.fn(),
 }));
 
 vi.mock('$lib/state/notifications.svelte', () => ({
-  showNotification: vi.fn(),
+  showToast: vi.fn(),
 }));
 
 vi.mock('debounce', () => ({
@@ -46,62 +47,98 @@ vi.mock('$app/environment', () => ({
   browser: true,
 }));
 
-describe('Simplified Layout State', () => {
-  let layoutState: LayoutStateClass;
+describe('Navigation State with Layout Functionality', () => {
+  let navigationState: NavigationStateClass;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    localStorageMock.getItem.mockReturnValue(null); // Default to no saved state
-    layoutState = new LayoutStateClass();
+    localStorageMock.getItem.mockReturnValue('false'); // Return valid JSON for sidebar state
+    navigationState = new NavigationStateClass();
   });
 
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('Sidebar state management', () => {
+  describe('Sidebar state management (moved from layout)', () => {
     it('should initialize with collapsed state as false by default', () => {
-      expect(layoutState.isSidebarCollapsed).toBe(false);
+      expect(navigationState.isSidebarCollapsed).toBe(false);
     });
 
     it('should update sidebar state when setSidebarCollapsed is called', () => {
-      expect(layoutState.isSidebarCollapsed).toBe(false);
+      expect(navigationState.isSidebarCollapsed).toBe(false);
 
-      layoutState.setSidebarCollapsed(true);
-      expect(layoutState.isSidebarCollapsed).toBe(true);
+      navigationState.setSidebarCollapsed(true);
+      expect(navigationState.isSidebarCollapsed).toBe(true);
 
-      layoutState.setSidebarCollapsed(false);
-      expect(layoutState.isSidebarCollapsed).toBe(false);
+      navigationState.setSidebarCollapsed(false);
+      expect(navigationState.isSidebarCollapsed).toBe(false);
     });
 
     it('should toggle sidebar state correctly', () => {
-      expect(layoutState.isSidebarCollapsed).toBe(false);
+      expect(navigationState.isSidebarCollapsed).toBe(false);
 
-      layoutState.toggleSidebar();
-      expect(layoutState.isSidebarCollapsed).toBe(true);
+      navigationState.toggleSidebar();
+      expect(navigationState.isSidebarCollapsed).toBe(true);
 
-      layoutState.toggleSidebar();
-      expect(layoutState.isSidebarCollapsed).toBe(false);
+      navigationState.toggleSidebar();
+      expect(navigationState.isSidebarCollapsed).toBe(false);
+    });
+  });
+
+  describe('Search state management (moved from layout)', () => {
+    it('should initialize with empty search query', () => {
+      expect(navigationState.searchQuery).toBe('');
+      expect(navigationState.isSearching).toBe(false);
+    });
+
+    it('should update search query', () => {
+      navigationState.setSearchQuery('test query');
+      expect(navigationState.searchQuery).toBe('test query');
+    });
+
+    it('should clear search query', () => {
+      navigationState.setSearchQuery('test query');
+      navigationState.clearSearchQuery();
+      expect(navigationState.searchQuery).toBe('');
     });
   });
 
   describe('Cleanup functionality', () => {
-    it('should preserve sidebar state during cleanup', () => {
-      layoutState.setSidebarCollapsed(true);
-      layoutState.isDraggingDivider = true;
-      layoutState.isSearching = true;
+    it('should preserve sidebar state during cleanup but reset other states', () => {
+      navigationState.setSidebarCollapsed(true);
+      navigationState.isDraggingDivider = true;
+      navigationState.isSearching = true;
+      navigationState.searchQuery = 'test';
 
-      layoutState.cleanup();
+      navigationState.cleanup();
 
-      expect(layoutState.isSidebarCollapsed).toBe(true); // Should preserve
-      expect(layoutState.isDraggingDivider).toBe(false); // Should reset
-      expect(layoutState.isSearching).toBe(false); // Should reset
+      expect(navigationState.isSidebarCollapsed).toBe(true); // Should preserve
+      expect(navigationState.isDraggingDivider).toBe(false); // Should reset
+      expect(navigationState.isSearching).toBe(false); // Should reset
+      expect(navigationState.searchQuery).toBe(''); // Should reset
     });
   });
 
   describe('Configuration', () => {
     it('should have correct default search debounce configuration', () => {
-      expect(layoutState.config.searchDebounceMs).toBe(250);
+      expect(navigationState.config.searchDebounceMs).toBe(250);
+    });
+
+    it('should have navigation-specific configuration', () => {
+      expect(navigationState.config.enableHomeNavigation).toBe(true);
+      expect(navigationState.config.enableBrandLogo).toBe(true);
+      expect(navigationState.config.homeRouteReplaceState).toBe(true);
+    });
+  });
+
+  describe('RefreshData functionality (similar to sidebar)', () => {
+    it('should have refreshData method', () => {
+      expect(typeof navigationState.refreshData).toBe('function');
+    });
+
+    it('should not throw when refreshData is called', async () => {
+      await expect(navigationState.refreshData()).resolves.not.toThrow();
     });
   });
 });

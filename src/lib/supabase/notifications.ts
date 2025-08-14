@@ -3,25 +3,31 @@ import type {
   Session,
   SupabaseClient,
 } from '@supabase/supabase-js';
-import type { Database, Json, Tables } from './database.types';
+import type { Database, Json } from './database.types';
 
 export type NotificationType = Database['public']['Enums']['notification_type'];
 
 export interface Notification {
-  id: string;
-  user_id: string;
+  notification_id: number;
   type: NotificationType;
   title: string;
   message: string;
   metadata: Record<string, unknown>;
-  read: boolean;
   action_url?: string;
-  created_at: string;
-  updated_at: string;
+  is_test: boolean;
+  start_datetime: string;
+  end_datetime?: string;
+  notification_created_at: string;
+  user_notification_id: string;
+  user_id?: string;
+  read: boolean;
+  dismissed: boolean;
+  assigned_at: string;
+  user_notification_updated_at: string;
 }
 
 export interface NotificationInsert {
-  id?: string;
+  notification_id?: number;
   user_id: string;
   type: NotificationType;
   title: string;
@@ -29,12 +35,13 @@ export interface NotificationInsert {
   metadata?: Record<string, unknown>;
   read?: boolean;
   action_url?: string;
-  created_at?: string;
-  updated_at?: string;
+  is_test?: boolean;
+  start_datetime?: string;
+  end_datetime?: string;
 }
 
 export interface NotificationUpdate {
-  id?: string;
+  notification_id?: number;
   user_id?: string;
   type?: NotificationType;
   title?: string;
@@ -42,13 +49,23 @@ export interface NotificationUpdate {
   metadata?: Record<string, unknown>;
   read?: boolean;
   action_url?: string;
-  created_at?: string;
-  updated_at?: string;
+  is_test?: boolean;
+  start_datetime?: string;
+  end_datetime?: string;
 }
 
 export interface NotificationWithMeta extends Notification {
   formatted_time?: string;
   is_new?: boolean;
+}
+
+export interface NotificationPreferences {
+  id: string;
+  user_id: string;
+  email_notifications: boolean;
+  push_notifications: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface NotificationCounts {
@@ -58,12 +75,13 @@ export interface NotificationCounts {
 }
 
 export interface CreateNotificationParams {
-  user_id: string;
+  user_id?: string;
   type: NotificationType;
   title: string;
   message: string;
   metadata?: Record<string, Json>;
   action_url?: string;
+  is_test?: boolean;
 }
 
 export interface NotificationFilters {
@@ -73,6 +91,29 @@ export interface NotificationFilters {
   offset?: number;
   order_by?: 'created_at' | 'updated_at';
   order_direction?: 'asc' | 'desc';
+}
+
+type SystemLogRow = Database['public']['Tables']['system_logs']['Row'];
+
+export interface NotificationCleanupLog {
+  deleted_count: number;
+  cleanup_time: string;
+  trigger: string;
+}
+
+export interface NotificationRemovedLog {
+  notification_id: number;
+  affected_users: number;
+  removed_by: string;
+  removal_time: string;
+  success: boolean;
+}
+
+export interface UserNotificationDismissedLog {
+  notification_ids: number[];
+  dismissed_by: string;
+  dismissed_count: number;
+  dismissed_time: string;
 }
 
 // Utility functions
@@ -109,7 +150,7 @@ function isWithinLastHour(timestamp: string): boolean {
 // Notification service functions
 
 /**
- * Get notifications for the current user
+ * Get notifications for the current authenticated user
  */
 export async function getNotifications({
   supabase,
@@ -120,45 +161,27 @@ export async function getNotifications({
   session: Session | null;
   filters?: NotificationFilters;
 }): Promise<{
-  data: NotificationWithMeta[];
+  notifications: NotificationWithMeta[];
   error: PostgrestError | null;
   count?: number;
 }> {
   if (!session?.user.id) {
-    return { data: [], error: null, count: 0 };
+    return { notifications: [], error: null, count: 0 };
   }
 
-  let query = supabase
-    .from('notifications')
-    .select('*', { count: 'exact' })
-    .eq('user_id', session.user.id)
-    .lte('start_datetime', new Date().toISOString()) // Only show notifications that have started
-    .or('end_datetime.is.null,end_datetime.gt.' + new Date().toISOString()) // Not expired
-    .order('created_at', { ascending: false });
-
-  if (filters.type) {
-    query = query.eq('type', filters.type);
-  }
-
-  if (filters.read !== undefined) {
-    query = query.eq('read', filters.read);
-  }
-
-  if (filters.limit) {
-    query = query.limit(filters.limit);
-  }
-
-  if (filters.offset) {
-    query = query.range(
-      filters.offset,
-      filters.offset + (filters.limit || 20) - 1
-    );
-  }
-
-  const { data, error, count } = await query;
+  const { data, error } = await supabase.rpc('get_user_notifications', {
+    limit_count: filters.limit ?? 20,
+    offset_count: filters.offset ?? 0,
+    filter_read: filters.read,
+    filter_type: filters.type,
+  });
 
   if (error) {
-    return { data: [], error };
+    console.error(
+      '🔔 NotificationService: RPC error for get_user_notifications:',
+      error
+    );
+    return { notifications: [], error };
   }
 
   // Format the notifications with metadata
@@ -167,16 +190,20 @@ export async function getNotifications({
       ...notification,
       metadata: (notification.metadata as Record<string, unknown>) || {},
       action_url: notification.action_url || undefined,
-      formatted_time: formatRelativeTime(notification.created_at),
-      is_new: isWithinLastHour(notification.created_at),
+      formatted_time: formatRelativeTime(notification.assigned_at),
+      is_new: isWithinLastHour(notification.assigned_at),
     })
   );
 
-  return { data: formattedData, error: null, count: count || 0 };
+  return {
+    notifications: formattedData,
+    error: null,
+    count: data?.length || 0,
+  };
 }
 
 /**
- * Get unread notification count
+ * Get unread notification count for current authenticated user
  */
 export async function getUnreadCount({
   supabase,
@@ -189,9 +216,7 @@ export async function getUnreadCount({
     return { data: 0, error: null };
   }
 
-  const { data, error } = await supabase.rpc('get_unread_notification_count', {
-    target_user_id: session.user.id,
-  });
+  const { data, error } = await supabase.rpc('get_unread_notification_count');
 
   if (error) {
     console.error('🔔 NotificationService: RPC error for unread count:', error);
@@ -202,7 +227,7 @@ export async function getUnreadCount({
 }
 
 /**
- * Get notification counts by type
+ * Get notification counts by type using the RPC function
  */
 export async function getNotificationCounts({
   supabase,
@@ -226,12 +251,22 @@ export async function getNotificationCounts({
     return { data: emptyCounts, error: null };
   }
 
-  const { data: notifications, error } = await supabase
-    .from('notifications')
-    .select('type, read')
-    .eq('user_id', session.user.id);
+  // Use the RPC function to get all notifications for counting
+  const { data: notifications, error } = await supabase.rpc(
+    'get_user_notifications',
+    {
+      limit_count: 1000, // Get a large number for counting
+      offset_count: 0,
+      filter_read: null, // Get both read and unread
+      filter_type: null, // Get all types
+    }
+  );
 
   if (error) {
+    console.error(
+      '🔔 NotificationService: RPC error for notification counts:',
+      error
+    );
     return {
       data: {
         total: 0,
@@ -246,12 +281,12 @@ export async function getNotificationCounts({
   }
 
   const counts: NotificationCounts = {
-    total: notifications.length,
-    unread: notifications.filter((n) => !n.read).length,
+    total: notifications?.length || 0,
+    unread: notifications?.filter((n) => !n.read).length || 0,
     by_type: {
-      system: notifications.filter((n) => n.type === 'system').length,
-      playlist_update: notifications.filter((n) => n.type === 'playlist_update')
-        .length,
+      system: notifications?.filter((n) => n.type === 'system').length || 0,
+      playlist_update:
+        notifications?.filter((n) => n.type === 'playlist_update').length || 0,
     },
   };
 
@@ -259,7 +294,7 @@ export async function getNotificationCounts({
 }
 
 /**
- * Mark notifications as read
+ * Mark notifications as read for current authenticated user
  */
 export async function markAsRead({
   supabase,
@@ -268,16 +303,22 @@ export async function markAsRead({
 }: {
   supabase: SupabaseClient<Database>;
   session: Session | null;
-  notificationIds: string[];
+  notificationIds?: number[]; // Made optional since function can mark all as read
 }): Promise<{ error: PostgrestError | null }> {
   if (!session?.user.id) {
     return { error: { message: 'User not authenticated' } as PostgrestError };
   }
 
   const { error } = await supabase.rpc('mark_notifications_as_read', {
-    target_user_id: session.user.id,
-    notification_ids: notificationIds || undefined,
+    notification_ids: notificationIds,
   });
+
+  if (error) {
+    console.error(
+      '🔔 NotificationService: RPC error for mark_notifications_as_read:',
+      error
+    );
+  }
 
   return { error };
 }
@@ -294,21 +335,18 @@ export async function createNotification({
     start_datetime?: string;
     end_datetime?: string;
   };
-}): Promise<{ data: string | null; error: PostgrestError | null }> {
-  const { data, error } = await supabase
-    .from('notifications')
-    .insert({
-      user_id: params.user_id,
-      type: params.type,
-      title: params.title,
-      message: params.message,
-      metadata: params.metadata || {},
-      action_url: params.action_url,
-      start_datetime: params.start_datetime || new Date().toISOString(),
-      end_datetime: params.end_datetime || null,
-    })
-    .select('id')
-    .single();
+}): Promise<{ data: number | null; error: PostgrestError | null }> {
+  const { data, error } = await supabase.rpc('create_notification', {
+    target_user_ids: params.user_id ? [params.user_id] : null,
+    notification_message: params.message,
+    notification_title: params.title,
+    notification_type: params.type,
+    notification_is_test: params.is_test ?? false,
+    notification_end_datetime: params.end_datetime,
+    notification_start_datetime: params.start_datetime,
+    notification_metadata: params.metadata,
+    notification_action_url: params.action_url,
+  });
 
   if (error) {
     console.error(
@@ -318,11 +356,11 @@ export async function createNotification({
     return { data: null, error };
   }
 
-  return { data: data?.id || null, error: null };
+  return { data: data || null, error: null };
 }
 
 /**
- * Delete notifications
+ * Remove/dismiss user's own notifications
  */
 export async function deleteNotifications({
   supabase,
@@ -331,19 +369,27 @@ export async function deleteNotifications({
 }: {
   supabase: SupabaseClient<Database>;
   session: Session | null;
-  notificationIds: string[];
-}): Promise<{ error: PostgrestError | null }> {
-  if (!session?.user.id) {
-    return { error: { message: 'User not authenticated' } as PostgrestError };
+  notificationIds: number[];
+}): Promise<{ data: number | null; error: PostgrestError | null }> {
+  if (!session) {
+    return {
+      data: null,
+      error: { message: 'User not authenticated' } as PostgrestError,
+    };
   }
 
-  const { error } = await supabase
-    .from('notifications')
-    .delete()
-    .eq('user_id', session.user.id)
-    .in('id', notificationIds);
+  const { data, error } = await supabase.rpc('remove_user_notification', {
+    notification_ids: notificationIds,
+  });
 
-  return { error };
+  if (error) {
+    console.error(
+      '🔔 NotificationService: Error removing user notifications:',
+      error
+    );
+  }
+
+  return { data, error };
 }
 
 /**
@@ -360,6 +406,7 @@ export async function createNotificationForAllUsers({
     message: string;
     metadata?: Record<string, Json>;
     action_url?: string;
+    is_test?: boolean;
     start_datetime?: string;
     end_datetime?: string;
   };
@@ -372,26 +419,39 @@ export async function createNotificationForAllUsers({
       notification_message: params.message,
       notification_metadata: params.metadata || {},
       notification_action_url: params.action_url,
+      notification_is_test: params.is_test ?? false,
+      notification_start_datetime: params.start_datetime,
+      notification_end_datetime: params.end_datetime,
     }
   );
 
-  // If datetime params are provided, update all recently created notifications
-  if ((params.start_datetime || params.end_datetime) && data && data > 0) {
-    const updateData: Partial<Tables<'notifications'>> = {};
-    if (params.start_datetime)
-      updateData.start_datetime = params.start_datetime;
-    if (params.end_datetime) updateData.end_datetime = params.end_datetime;
-
-    // Update notifications created in the last minute for this title/message
-    await supabase
-      .from('notifications')
-      .update(updateData)
-      .eq('title', params.title)
-      .eq('message', params.message)
-      .gte('created_at', new Date(Date.now() - 60000).toISOString());
+  if (error) {
+    console.error(
+      '🔔 NotificationService: Error creating notification for all users:',
+      error
+    );
   }
 
   return { data, error };
+}
+
+/**
+ * Show a notification toast
+ */
+export function showNotification(
+  message: string,
+  type: 'success' | 'error' | 'warning' = 'warning'
+): void {
+  // This function will delegate to the showToast function
+  import('$lib/state/notifications.svelte.js')
+    .then(({ showToast }) => {
+      showToast(message, type);
+    })
+    .catch((error) => {
+      console.error('Failed to show notification:', error);
+      // Fallback to console
+      console.log(`[${type.toUpperCase()}] ${message}`);
+    });
 }
 
 // Type guards
@@ -402,16 +462,16 @@ function isRecord(val: unknown): val is Record<string, unknown> {
 export function isNotification(obj: unknown): obj is Notification {
   return (
     isRecord(obj) &&
-    typeof obj.id === 'string' &&
-    typeof obj.user_id === 'string' &&
+    typeof obj.notification_id === 'number' &&
     typeof obj.type === 'string' &&
     typeof obj.title === 'string' &&
     typeof obj.message === 'string' &&
     isRecord(obj.metadata) &&
     typeof obj.read === 'boolean' &&
+    typeof obj.is_test === 'boolean' &&
     (typeof obj.action_url === 'string' || obj.action_url === undefined) &&
-    typeof obj.created_at === 'string' &&
-    typeof obj.updated_at === 'string'
+    typeof obj.assigned_at === 'string' &&
+    typeof obj.user_notification_updated_at === 'string'
   );
 }
 
@@ -425,4 +485,85 @@ export function isNotificationWithMeta(
     (typeof (obj as NotificationWithMeta).is_new === 'boolean' ||
       (obj as NotificationWithMeta).is_new === undefined)
   );
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+export function isNotificationCleanupLog(
+  details: unknown
+): details is NotificationCleanupLog {
+  if (!isObject(details)) return false;
+
+  return (
+    typeof details.deleted_count === 'number' &&
+    typeof details.cleanup_time === 'string' &&
+    typeof details.trigger === 'string'
+  );
+}
+
+export function isNotificationRemovedLog(
+  details: unknown
+): details is NotificationRemovedLog {
+  if (!isObject(details)) return false;
+
+  return (
+    typeof details.notification_id === 'number' &&
+    typeof details.affected_users === 'number' &&
+    typeof details.removed_by === 'string' &&
+    typeof details.removal_time === 'string' &&
+    typeof details.success === 'boolean'
+  );
+}
+
+export function isUserNotificationDismissedLog(
+  details: unknown
+): details is UserNotificationDismissedLog {
+  if (!isObject(details)) return false;
+
+  return (
+    Array.isArray(details.notification_ids) &&
+    details.notification_ids.every((id) => typeof id === 'number') &&
+    typeof details.dismissed_by === 'string' &&
+    typeof details.dismissed_count === 'number' &&
+    typeof details.dismissed_time === 'string'
+  );
+}
+
+// Additional utility type guard for system logs
+export function isValidSystemLog(log: unknown): log is SystemLogRow {
+  if (!isObject(log)) return false;
+
+  return (
+    typeof log.id === 'string' &&
+    typeof log.event_type === 'string' &&
+    typeof log.created_at === 'string' &&
+    (log.details === null || isObject(log.details))
+  );
+}
+
+// Type guard to determine which log type we're dealing with
+export function getLogType(
+  log: SystemLogRow
+): 'cleanup' | 'removed' | 'dismissed' | 'unknown' {
+  if (
+    log.event_type === 'notification_cleanup' &&
+    isNotificationCleanupLog(log.details)
+  ) {
+    return 'cleanup';
+  }
+  if (
+    log.event_type === 'notification_removed' &&
+    isNotificationRemovedLog(log.details)
+  ) {
+    return 'removed';
+  }
+  if (
+    log.event_type === 'user_notification_dismissed' &&
+    isUserNotificationDismissedLog(log.details)
+  ) {
+    return 'dismissed';
+  }
+  return 'unknown';
 }

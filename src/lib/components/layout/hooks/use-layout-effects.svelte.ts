@@ -5,7 +5,7 @@ import type { ContentState } from '$lib/state/content.svelte.js';
 import type { NavigationCacheState } from '$lib/state/navigation-cache/navigation-cache.svelte.js';
 import type { MediaQueryState } from '$lib/state/media-query.svelte.js';
 import type { SidebarState } from '$lib/state/sidebar.svelte.js';
-import type { LayoutState } from '$lib/state/layout.svelte.js';
+import type { NavigationState } from '$lib/state/navigation.svelte.js';
 import type { PageState } from '$lib/state/page.svelte.js';
 import type { Session, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '$lib/supabase/database.types';
@@ -16,7 +16,7 @@ export function useLayoutEffects(
   navigationCache: NavigationCacheState,
   mediaQuery: MediaQueryState,
   sidebarState: SidebarState,
-  layoutState: LayoutState,
+  navigationState: NavigationState,
   supabase: SupabaseClient<Database>,
   session: Session | null,
   etag: string | null,
@@ -134,7 +134,7 @@ export function useLayoutEffects(
       pageState.cleanup();
 
       // Cleanup subscriptions
-      layoutState.cleanup();
+      navigationState.cleanup();
 
       // Cleanup state initializations
       if (mediaQueryCleanup) mediaQueryCleanup();

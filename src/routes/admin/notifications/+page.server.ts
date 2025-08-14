@@ -10,19 +10,16 @@ import { redirect, setFlash } from 'sveltekit-flash-message/server';
 
 export const load: PageServerLoad = async ({
   locals: { supabase, session },
+  parent,
 }) => {
   if (!session) {
     throw redirect(302, '/auth/login');
   }
 
-  // Check if user is admin
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('account_type')
-    .eq('id', session.user.id)
-    .single();
+  const { userProfile } = await parent();
 
-  if (error || profile.account_type !== 'admin') {
+  // Check if user is admin
+  if (!userProfile || userProfile?.account_type !== 'admin') {
     throw redirect(302, '/');
   }
 
@@ -30,11 +27,17 @@ export const load: PageServerLoad = async ({
     zod(adminNotificationSchema)
   );
 
-  // Get all users for testing
-  const { data: users } = await supabase
+  // Categorize notifications by their status
+
+  // Get all users for reference
+  const { data: users, error: usersError } = await supabase
     .from('profiles')
     .select('id, username')
-    .limit(10);
+    .limit(1000);
+
+  if (usersError) {
+    console.error('Error fetching users:', usersError);
+  }
 
   return {
     users: users || [],
@@ -58,19 +61,11 @@ export const actions: Actions = {
       return fail(400, { form });
     }
 
-    // Check if user is admin
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('account_type')
-      .eq('id', session.user.id)
-      .single();
-
-    if (profileError || profile.account_type !== 'admin') {
-      setFlash({ type: 'error', message: 'Not authorized' }, cookies);
-      return fail(403, { form });
-    }
-
     const { type, title, message, startDatetime, endDatetime } = form.data;
+
+    // Convert local datetimes to UTC
+    const startDatetimeUtc = convertLocalToUtc(startDatetime);
+    const endDatetimeUtc = convertLocalToUtc(endDatetime);
 
     const { data, error } = await createNotificationForAllUsers({
       supabase,
@@ -78,13 +73,19 @@ export const actions: Actions = {
         type,
         title,
         message,
-        metadata: { source: 'admin_panel' },
-        start_datetime: startDatetime,
-        end_datetime: endDatetime,
+        is_test: false, // Production notification
+        metadata: {
+          source: 'admin_panel',
+          created_by: session.user.id,
+          created_at: new Date().toISOString(),
+        },
+        start_datetime: startDatetimeUtc,
+        end_datetime: endDatetimeUtc,
       },
     });
 
     if (error) {
+      console.error('Error sending global notification:', error);
       setFlash(
         {
           type: 'error',
@@ -98,12 +99,19 @@ export const actions: Actions = {
     setFlash(
       {
         type: 'success',
-        message: `Global notification sent to ${data} users`,
+        message: `Global notification sent to ${data || 0} users successfully`,
       },
       cookies
     );
 
-    return { form };
+    // Return success without clearing form - client will handle clearing if needed
+    return {
+      form,
+      success: true,
+      action: 'sendGlobalNotification',
+      userCount: data || 0,
+      shouldRefreshNotifications: true,
+    };
   },
 
   sendTestNotification: async ({
@@ -121,52 +129,203 @@ export const actions: Actions = {
       return fail(400, { form });
     }
 
-    // Check if user is admin
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('account_type')
-      .eq('id', session.user.id)
-      .single();
-
-    if (profileError || profile?.account_type !== 'admin') {
-      setFlash({ type: 'error', message: 'Not authorized' }, cookies);
-      return fail(403, { form });
-    }
-
     const { type, title, message, startDatetime, endDatetime } = form.data;
 
-    const { error } = await createNotification({
-      supabase,
-      params: {
-        user_id: session.user.id,
-        type,
-        title,
-        message,
-        metadata: { source: 'admin_test' },
-        start_datetime: startDatetime,
-        end_datetime: endDatetime,
-      },
+    // Convert local datetimes to UTC
+    const startDatetimeUtc = convertLocalToUtc(startDatetime);
+    const endDatetimeUtc = convertLocalToUtc(endDatetime);
+
+    console.log('🧪 Server: Test notification datetime conversion:', {
+      localStart: startDatetime,
+      utcStart: startDatetimeUtc,
+      localEnd: endDatetime,
+      utcEnd: endDatetimeUtc,
     });
 
-    if (error) {
+    try {
+      const { error } = await createNotification({
+        supabase,
+        params: {
+          type,
+          title,
+          message,
+          is_test: true, // Test notification
+          user_id: session.user.id,
+          metadata: {
+            source: 'admin_test',
+            created_by: session.user.id,
+            created_at: new Date().toISOString(),
+          },
+          start_datetime: startDatetimeUtc,
+          end_datetime: endDatetimeUtc,
+        },
+      });
+
+      if (error) {
+        console.error('Error sending test notification:', error);
+        setFlash(
+          {
+            type: 'error',
+            message: error.message || 'Failed to send test notification',
+          },
+          cookies
+        );
+        return fail(500, { form });
+      }
+
+      setFlash(
+        {
+          type: 'success',
+          message: 'Test notification sent successfully to your account',
+        },
+        cookies
+      );
+
+      // Return success - preserve form for test notifications
+      return {
+        form,
+        success: true,
+        action: 'sendTestNotification',
+        shouldRefreshNotifications: true,
+      };
+    } catch (error) {
+      console.error('Unexpected error sending test notification:', error);
       setFlash(
         {
           type: 'error',
-          message: error.message || 'Failed to send test notification',
+          message:
+            'An unexpected error occurred while sending the test notification',
         },
         cookies
       );
       return fail(500, { form });
     }
+  },
 
-    setFlash(
-      {
-        type: 'success',
-        message: 'Test notification sent successfully',
-      },
-      cookies
-    );
+  manualCleanup: async ({ cookies, locals: { supabase, session } }) => {
+    if (!session) {
+      return fail(401, { error: 'Not authenticated' });
+    }
 
-    return { form };
+    try {
+      const { data: deletedCount, error } = await supabase.rpc(
+        'cleanup_expired_notifications'
+      );
+
+      if (error) {
+        console.error('Error during manual cleanup:', error);
+        setFlash(
+          {
+            type: 'error',
+            message: error.message || 'Failed to cleanup expired notifications',
+          },
+          cookies
+        );
+        return fail(500, { error: error.message });
+      }
+
+      setFlash(
+        {
+          type: 'success',
+          message: `Manual cleanup completed. Removed ${deletedCount || 0} expired notifications.`,
+        },
+        cookies
+      );
+
+      return {
+        success: true,
+        deletedCount: deletedCount || 0,
+        shouldRefreshNotifications: true,
+      };
+    } catch (error) {
+      console.error('Unexpected error during manual cleanup:', error);
+      setFlash(
+        {
+          type: 'error',
+          message: 'An unexpected error occurred during cleanup',
+        },
+        cookies
+      );
+      return fail(500, { error: 'Unexpected error' });
+    }
+  },
+
+  cancelNotification: async ({
+    request,
+    cookies,
+    locals: { supabase, session },
+  }) => {
+    if (!session) {
+      return fail(401, { error: 'Not authenticated' });
+    }
+
+    const formData = await request.formData();
+    const notificationId = formData.get('notificationId');
+
+    if (!notificationId) {
+      return fail(400, { error: 'Notification ID is required' });
+    }
+
+    const { data: success, error } = await supabase.rpc('remove_notification', {
+      notification_id: parseInt(notificationId.toString(), 10),
+    });
+
+    if (error) {
+      console.error('Error canceling notification:', error);
+      setFlash(
+        {
+          type: 'error',
+          message: error.message || 'Failed to cancel notification',
+        },
+        cookies
+      );
+      return fail(500, { error: error.message });
+    }
+
+    if (success) {
+      setFlash(
+        {
+          type: 'success',
+          message: 'Notification canceled successfully',
+        },
+        cookies
+      );
+    } else {
+      setFlash(
+        {
+          type: 'error',
+          message: 'Notification not found or already removed',
+        },
+        cookies
+      );
+    }
+
+    return {
+      success,
+      error,
+      shouldRefreshNotifications: true,
+    };
   },
 };
+
+/**
+ * Converts local datetime string to UTC ISO string
+ * Input: "2025-08-13T12:54" (local time from datetime-local input)
+ * Output: "2025-08-13T19:54:00.000Z" (UTC ISO string)
+ */
+function convertLocalToUtc(
+  localDateTimeString?: string | null
+): string | undefined {
+  if (!localDateTimeString) return undefined;
+
+  try {
+    // Create a date object treating the input as local time
+    const localDate = new Date(localDateTimeString);
+
+    // Return as UTC ISO string
+    return localDate.toISOString();
+  } catch (error) {
+    console.error('Error converting local datetime to UTC:', error);
+    return undefined;
+  }
+}

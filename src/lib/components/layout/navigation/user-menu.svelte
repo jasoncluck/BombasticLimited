@@ -14,40 +14,40 @@
   } from '@lucide/svelte';
   import NotificationBell from '$lib/components/notifications/notification-bell.svelte';
   import { handleUpdateProfileContentDisplay } from '$lib/components/profile/profile-service';
-  import type { LayoutState } from '$lib/state/layout.svelte.js';
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
   import type { UserProfile } from '$lib/supabase/user-profiles';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import { getContentState } from '$lib/state/content.svelte';
-  import type { NotificationWithMeta } from '$lib/supabase/notifications';
+  import { getNavigationState } from '$lib/state/navigation.svelte';
 
   let {
     userProfile,
-    notifications,
     session,
     supabase,
-    layoutState,
     openAccountDrawer = $bindable(),
     openNotificationDrawer = $bindable(),
   }: {
     userProfile: UserProfile | null;
-    notifications: NotificationWithMeta[] | null;
     session: Session | null;
     supabase: SupabaseClient<Database>;
-    layoutState: LayoutState;
     openAccountDrawer: boolean;
     openNotificationDrawer?: boolean;
   } = $props();
 
   const contentState = getContentState();
   const mediaQueryState = getMediaQueryState();
+  const navigationState = getNavigationState();
+
+  const {
+    data: { userNotifications },
+  } = $derived(navigationState);
 
   const { canHover, isSm } = $derived(mediaQueryState);
 </script>
 
 <!-- Content Display Preference (Desktop) -->
-{#if isSm}
+{#if session && isSm}
   <DropdownMenu.Root>
     <DropdownMenu.Trigger
       data-testid="user-preferences"
@@ -115,13 +115,8 @@
 {/if}
 
 <!-- Notifications Bell -->
-{#if notifications && notifications.length > 0}
-  <NotificationBell
-    {notifications}
-    {supabase}
-    {session}
-    bind:openNotificationDrawer
-  />
+{#if session && userNotifications.length > 0}
+  <NotificationBell {supabase} {session} bind:openNotificationDrawer />
 {/if}
 
 <!-- User Menu -->
@@ -177,7 +172,7 @@
           <DropdownMenu.Item
             class="cursor-pointer"
             data-testid="logout-button"
-            onclick={() => layoutState.handleLogout(supabase)}
+            onclick={() => navigationState.handleLogout()}
           >
             <div class="flex items-center gap-2">
               <LogOut />
@@ -244,7 +239,7 @@
           variant="ghost"
           class="drawer-button"
           onclick={() => {
-            layoutState.handleLogout(supabase);
+            navigationState.handleLogout();
             openAccountDrawer = false;
           }}
         >

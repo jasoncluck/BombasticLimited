@@ -31,7 +31,7 @@
 </script>
 
 <form method="POST" class="mt-24 flex justify-center">
-  <Card.Root class="p-6 md:w-1/2 lg:w-1/3">
+  <Card.Root class="p-6 md:w-xl">
     <Card.Header class="flex flex-col gap-2">
       <Card.Title class="text-2xl">Almost done</Card.Title>
     </Card.Header>
@@ -53,7 +53,7 @@
         >
       </div>
     </div>
-    <Card.Footer>
+    <Card.Footer class="flex items-center justify-center">
       <div class="flex flex-col gap-4">
         <p>Use the button below to send a new verification email.</p>
 

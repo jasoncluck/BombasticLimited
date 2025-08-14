@@ -1,6 +1,7 @@
 import { type Video, getInProgressVideos } from '$lib/supabase/videos';
 import { getVideos } from '$lib/supabase/videos';
 import { showToast } from '$lib/state/notifications.svelte';
+import { showNotification } from '$lib/supabase/notifications';
 import type {
   PostgrestError,
   Session,

@@ -36,14 +36,19 @@ export const GET: RequestHandler = async ({ locals, request }) => {
     }));
   }
 
-  return json({
-    playlists: processedPlaylists ?? [],
-    userProfile,
-    userPlaylistsCount: userPlaylistsCount ?? 0,
-  }, {
-    headers: {
-      'Cache-Control': 'public, max-age=300, stale-while-revalidate=600', // 5min cache, 10min stale
-      Vary: 'Accept',
+  return json(
+    {
+      playlists: processedPlaylists ?? [],
+      userProfile,
+      userPlaylistsCount: userPlaylistsCount ?? 0,
     },
-  });
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        Pragma: 'no-cache',
+        Expires: '0',
+      },
+    }
+  );
 };

@@ -49,11 +49,6 @@ async function updateStreamStatus() {
 
       if (sourceName && status.isLive) {
         streamingSources.add(sourceName);
-
-        // Log when stream comes online
-        if (!previouslyLive.has(sourceName)) {
-          console.log(`${sourceName} has started streaming on Twitch.`);
-        }
       }
     }
 
