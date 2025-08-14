@@ -53,7 +53,7 @@ DECLARE
   total_duration integer := 0;
 BEGIN
   -- Sum up all video durations in the playlist, excluding pending delete videos
-  SELECT COALESCE(SUM(duration_to_seconds(v.duration)), 0)
+  SELECT COALESCE(SUM(public.duration_to_seconds(v.duration)), 0)
   INTO total_duration
   FROM public.playlist_videos pv
   JOIN public.videos v ON pv.video_id = v.id

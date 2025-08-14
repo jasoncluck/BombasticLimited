@@ -30,7 +30,7 @@
 - `get_playlist_data()` now uses pre-calculated `duration_seconds` instead of
   summing in query
 - All playlist query functions include `duration_seconds` field:
-  - `get_followed_playlists()`
+  - `get_user_playlists()`
   - `get_playlists_for_username()`
   - `get_playlist_by_youtube_id()`
   - `search_playlists()`

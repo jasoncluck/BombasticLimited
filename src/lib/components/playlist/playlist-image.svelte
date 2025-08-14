@@ -6,10 +6,10 @@
     hasOptimizedImages,
     type VideoThumbnailPaths,
   } from '$lib/utils/video-thumbnails-storage';
-  import { parseImageProperties } from '$lib/components/playlist/playlist';
 
   import type { SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
+  import { SvelteURLSearchParams } from 'svelte/reactivity';
 
   type PlaylistImageProps = {
     playlist: VideoThumbnailPaths & {
@@ -43,7 +43,7 @@
       playlist.thumbnail_maxres_url || playlist.thumbnail_url;
     if (!effectiveUrl) return null;
 
-    const params = new URLSearchParams({
+    const params = new SvelteURLSearchParams({
       url: playlist.thumbnail_url || '',
       maxresUrl: playlist.thumbnail_maxres_url || '',
       type: 'image',

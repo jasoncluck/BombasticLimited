@@ -433,12 +433,12 @@ SET
 $$;
 
 -- Function to get user playlists
-CREATE OR REPLACE FUNCTION public.get_followed_playlists (p_user_id uuid) RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.get_user_playlists () RETURNS TABLE (
   id bigint,
-  created_at TIMESTAMP WITH TIME ZONE,
+  created_by uuid,
+  created_at timestamptz,
   name text,
   short_id text,
-  created_by uuid,
   description text,
   thumbnail_url text,
   thumbnail_maxres_url text,
@@ -451,21 +451,22 @@ CREATE OR REPLACE FUNCTION public.get_followed_playlists (p_user_id uuid) RETURN
   image_properties jsonb,
   youtube_id text,
   duration_seconds integer,
+  deleted_at TIMESTAMP WITH TIME ZONE,
   profile_username text,
   sorted_by public.playlist_sorted_by,
   sort_order public.playlist_sort_order,
   playlist_position integer,
-  followed_at TIMESTAMP WITH TIME ZONE,
+  added_at TIMESTAMP WITH TIME ZONE,
   avatar_url text
 )
 SET
   search_path = '' LANGUAGE sql AS $$
   SELECT
     p.id,
+    p.created_by,
     p.created_at,
     p.name,
     p.short_id,
-    p.created_by,
     p.description,
     p.thumbnail_url,
     p.thumbnail_maxres_url,
@@ -478,16 +479,17 @@ SET
     p.image_properties,
     p.youtube_id,
     p.duration_seconds,
+    p.deleted_at,
     prof.username AS profile_username,
     up.sorted_by,
     up.sort_order,
     up.playlist_position,
-    up.created_at AS followed_at,
+    up.added_at,
     prof.avatar_url
   FROM public.user_playlists up
   JOIN public.playlists p ON up.id = p.id
-  JOIN public.profiles prof ON p.created_by = prof.id
-  WHERE up.user_id = p_user_id
+  LEFT JOIN public.profiles prof ON p.created_by = prof.id
+    WHERE up.user_id = auth.uid()
     AND p.deleted_at IS NULL  -- Filter out soft-deleted playlists
   ORDER BY up.playlist_position ASC;
 $$;

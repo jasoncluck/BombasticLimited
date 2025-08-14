@@ -144,6 +144,7 @@ CREATE TABLE IF NOT EXISTS "public"."user_playlists" (
   "playlist_position" int2 DEFAULT NULL,
   "sorted_by" "public"."playlist_sorted_by" DEFAULT 'playlistOrder' NOT NULL,
   "sort_order" "public"."playlist_sort_order" DEFAULT 'ascending' NOT NULL,
+  "added_at" TIMESTAMP WITH TIME ZONE DEFAULT "now" () NOT NULL,
   PRIMARY KEY ("id", "user_id")
 );
 
