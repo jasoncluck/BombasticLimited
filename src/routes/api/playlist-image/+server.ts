@@ -1,7 +1,6 @@
 import {
   getCroppedPlaylistImageUrlServer,
   validateImageUrl,
-  queuePlaylistImageProcessing,
 } from '$lib/server/image-processing';
 import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import { parseImageProperties } from '$lib/components/playlist/playlist';
@@ -49,20 +48,8 @@ export const GET: RequestHandler = async ({ url, request }) => {
       },
     });
 
-    // Queue background processing for AVIF/WebP optimization if playlist ID provided
-    if (playlistId && croppedImageDataUrl) {
-      try {
-        await queuePlaylistImageProcessing(
-          playlistId,
-          thumbnailUrl,
-          thumbnailMaxResUrl,
-          50 // Lower priority for playlists
-        );
-      } catch (queueError) {
-        console.warn('Failed to queue background processing:', queueError);
-        // Don't fail the request if queueing fails
-      }
-    }
+    // Note: Background processing is handled automatically by database triggers
+    // when playlist thumbnail URLs are inserted/updated
 
     if (responseType === 'image') {
       if (croppedImageDataUrl) {
@@ -92,7 +79,7 @@ export const GET: RequestHandler = async ({ url, request }) => {
         originalUrl: effectiveUrl,
         imageProperties,
         processed: !!croppedImageDataUrl,
-        backgroundProcessing: !!playlistId,
+        backgroundProcessing: 'handled by database triggers',
       },
       {
         headers: {
