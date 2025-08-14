@@ -172,6 +172,7 @@ export type Database = {
           created_by: string
           deleted_at: string | null
           description: string | null
+          duration_seconds: number
           id: number
           image_processing_status: string | null
           image_processing_updated_at: string | null
@@ -193,6 +194,7 @@ export type Database = {
           created_by: string
           deleted_at?: string | null
           description?: string | null
+          duration_seconds?: number
           id?: number
           image_processing_status?: string | null
           image_processing_updated_at?: string | null
@@ -214,6 +216,7 @@ export type Database = {
           created_by?: string
           deleted_at?: string | null
           description?: string | null
+          duration_seconds?: number
           id?: number
           image_processing_status?: string | null
           image_processing_updated_at?: string | null
@@ -557,6 +560,10 @@ export type Database = {
       }
     }
     Functions: {
+      calculate_playlist_duration: {
+        Args: { playlist_id_param: number }
+        Returns: number
+      }
       can_user_access_playlist: {
         Args: { playlist_id: number; user_id?: string }
         Returns: boolean
@@ -640,6 +647,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      duration_to_seconds: {
+        Args: { duration_text: string }
+        Returns: number
+      }
       fail_image_processing_job: {
         Args: { error_msg: string; job_id: string }
         Returns: boolean
@@ -667,6 +678,7 @@ export type Database = {
           created_at: string
           created_by: string
           description: string
+          duration_seconds: number
           followed_at: string
           id: number
           image_processing_status: string
@@ -729,6 +741,7 @@ export type Database = {
           created_at: string
           created_by: string
           description: string
+          duration_seconds: number
           id: number
           image_properties: Json
           name: string
@@ -842,6 +855,7 @@ export type Database = {
           created_by: string
           deleted_at: string
           description: string
+          duration_seconds: number
           id: number
           image_processing_status: string
           image_properties: Json
@@ -1084,6 +1098,7 @@ export type Database = {
           created_by: string
           deleted_at: string
           description: string
+          duration_seconds: number
           id: number
           image_processing_status: string
           image_properties: Json
@@ -1151,6 +1166,10 @@ export type Database = {
           playlist_id: number
           user_id: string
         }[]
+      }
+      update_playlist_duration: {
+        Args: { playlist_id_param: number }
+        Returns: undefined
       }
       update_playlist_position: {
         Args: { p_new_position: number; p_playlist_id: number }

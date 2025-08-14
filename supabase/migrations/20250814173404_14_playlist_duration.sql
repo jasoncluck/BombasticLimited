@@ -1,3 +1,4 @@
+
 -- Migration: 15_playlist_duration_seconds.sql
 -- Purpose: Add duration_seconds column to playlists and auto-calculate from video durations
 -- Dependencies: Requires base tables from 03_base_tables.sql (playlists, playlist_videos, videos)

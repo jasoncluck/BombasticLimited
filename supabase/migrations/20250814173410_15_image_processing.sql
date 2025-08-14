@@ -1,3 +1,5 @@
+
+
 -- Migration: image_processing_system.sql
 -- Purpose: Add background image processing with Supabase Storage support
 -- Dependencies: Requires base tables from 03_base_tables.sql (videos, playlists)
