@@ -4,10 +4,10 @@
   import { getVideoSecondsOffset } from '$lib/components/video/video-service';
   import { Check } from '@lucide/svelte';
   import { getVideoThumbnailUrl } from '$lib/utils/video-thumbnails';
-  import { 
-    getOptimizedImageUrl, 
-    generatePictureSources, 
-    hasOptimizedImages 
+  import {
+    getOptimizedImageUrl,
+    generatePictureSources,
+    hasOptimizedImages,
   } from '$lib/utils/video-thumbnails-storage';
 
   type ContentCardProps = {
@@ -20,8 +20,16 @@
 <div class="relative flex aspect-video h-[80px] w-32 shrink-0 items-center">
   {#if hasOptimizedImages(video)}
     <!-- Use optimized images with smart fallback chain -->
-    {@const pictureSources = generatePictureSources(video)}
-    {@const optimizedResult = getOptimizedImageUrl(video)}
+    {@const pictureSources = generatePictureSources(
+      video,
+      'thumbnail_maxres',
+      supabase
+    )}
+    {@const optimizedResult = getOptimizedImageUrl(
+      video,
+      'thumbnail_maxres',
+      supabase
+    )}
     <picture>
       {#each pictureSources as source}
         <source srcset={source.srcset} type={source.type} />

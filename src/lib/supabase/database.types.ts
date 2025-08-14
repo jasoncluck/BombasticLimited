@@ -34,6 +34,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      image_processing_jobs: {
+        Row: {
+          attempts: number
+          created_at: string
+          entity_id: string
+          entity_type: string
+          error_message: string | null
+          id: string
+          image_type: string
+          max_attempts: number
+          priority: number
+          processing_completed_at: string | null
+          processing_started_at: string | null
+          source_url: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          error_message?: string | null
+          id?: string
+          image_type: string
+          max_attempts?: number
+          priority?: number
+          processing_completed_at?: string | null
+          processing_started_at?: string | null
+          source_url: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          error_message?: string | null
+          id?: string
+          image_type?: string
+          max_attempts?: number
+          priority?: number
+          processing_completed_at?: string | null
+          processing_started_at?: string | null
+          source_url?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           action_url: string | null
@@ -122,12 +173,18 @@ export type Database = {
           deleted_at: string | null
           description: string | null
           id: number
+          image_processing_status: string | null
+          image_processing_updated_at: string | null
           image_properties: Json | null
           name: string
           search_vector: unknown | null
           short_id: string
+          thumbnail_avif_path: string | null
+          thumbnail_maxres_avif_path: string | null
           thumbnail_maxres_url: string | null
+          thumbnail_maxres_webp_path: string | null
           thumbnail_url: string | null
+          thumbnail_webp_path: string | null
           type: Database["public"]["Enums"]["playlist_type"]
           youtube_id: string | null
         }
@@ -137,12 +194,18 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           id?: number
+          image_processing_status?: string | null
+          image_processing_updated_at?: string | null
           image_properties?: Json | null
           name: string
           search_vector?: unknown | null
           short_id: string
+          thumbnail_avif_path?: string | null
+          thumbnail_maxres_avif_path?: string | null
           thumbnail_maxres_url?: string | null
+          thumbnail_maxres_webp_path?: string | null
           thumbnail_url?: string | null
+          thumbnail_webp_path?: string | null
           type?: Database["public"]["Enums"]["playlist_type"]
           youtube_id?: string | null
         }
@@ -152,12 +215,18 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           id?: number
+          image_processing_status?: string | null
+          image_processing_updated_at?: string | null
           image_properties?: Json | null
           name?: string
           search_vector?: unknown | null
           short_id?: string
+          thumbnail_avif_path?: string | null
+          thumbnail_maxres_avif_path?: string | null
           thumbnail_maxres_url?: string | null
+          thumbnail_maxres_webp_path?: string | null
           thumbnail_url?: string | null
+          thumbnail_webp_path?: string | null
           type?: Database["public"]["Enums"]["playlist_type"]
           youtube_id?: string | null
         }
@@ -410,36 +479,54 @@ export type Database = {
           description: string
           duration: string | null
           id: string
+          image_processing_status: string | null
+          image_processing_updated_at: string | null
           pending_delete: boolean | null
           published_at: string
           search_vector: unknown | null
           source: Database["public"]["Enums"]["source"]
+          thumbnail_avif_path: string | null
+          thumbnail_maxres_avif_path: string | null
           thumbnail_maxres_url: string | null
+          thumbnail_maxres_webp_path: string | null
           thumbnail_url: string
+          thumbnail_webp_path: string | null
           title: string
         }
         Insert: {
           description: string
           duration?: string | null
           id: string
+          image_processing_status?: string | null
+          image_processing_updated_at?: string | null
           pending_delete?: boolean | null
           published_at?: string
           search_vector?: unknown | null
           source: Database["public"]["Enums"]["source"]
+          thumbnail_avif_path?: string | null
+          thumbnail_maxres_avif_path?: string | null
           thumbnail_maxres_url?: string | null
+          thumbnail_maxres_webp_path?: string | null
           thumbnail_url: string
+          thumbnail_webp_path?: string | null
           title: string
         }
         Update: {
           description?: string
           duration?: string | null
           id?: string
+          image_processing_status?: string | null
+          image_processing_updated_at?: string | null
           pending_delete?: boolean | null
           published_at?: string
           search_vector?: unknown | null
           source?: Database["public"]["Enums"]["source"]
+          thumbnail_avif_path?: string | null
+          thumbnail_maxres_avif_path?: string | null
           thumbnail_maxres_url?: string | null
+          thumbnail_maxres_webp_path?: string | null
           thumbnail_url?: string
+          thumbnail_webp_path?: string | null
           title?: string
         }
         Relationships: []
@@ -481,6 +568,10 @@ export type Database = {
       cleanup_expired_notifications_cron: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      complete_image_processing_job: {
+        Args: { avif_path?: string; job_id: string; webp_path?: string }
+        Returns: boolean
       }
       create_notification: {
         Args: {
@@ -549,6 +640,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      fail_image_processing_job: {
+        Args: { error_msg: string; job_id: string }
+        Returns: boolean
+      }
       follow_playlist: {
         Args: { p_playlist_id: number; p_playlist_position?: number }
         Returns: {
@@ -583,6 +678,17 @@ export type Database = {
           updated_at: string
           video_start_seconds: number
           watched_at: string
+        }[]
+      }
+      get_next_image_processing_job: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          attempts: number
+          entity_id: string
+          entity_type: string
+          image_type: string
+          job_id: string
+          source_url: string
         }[]
       }
       get_playlist_by_youtube_id: {
@@ -913,6 +1019,16 @@ export type Database = {
         Args: { notification_ids?: number[] }
         Returns: undefined
       }
+      queue_image_processing_job: {
+        Args: {
+          p_entity_id: string
+          p_entity_type: string
+          p_image_type: string
+          p_priority?: number
+          p_source_url: string
+        }
+        Returns: string
+      }
       remove_notification: {
         Args: { notification_id: number }
         Returns: boolean
@@ -968,6 +1084,10 @@ export type Database = {
       setup_notification_cleanup_cron: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      start_image_processing_job: {
+        Args: { job_id: string }
+        Returns: boolean
       }
       start_video_history_session: {
         Args: { p_session_start_time?: string; p_video_id: string }

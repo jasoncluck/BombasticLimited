@@ -86,7 +86,9 @@ async function getVideosToProcess(): Promise<Video[]> {
     );
   }
 
-  const { data, error } = await query.order('created_at', { ascending: false });
+  const { data, error } = await query.order('published_at', {
+    ascending: false,
+  });
 
   if (error) {
     throw new Error(`Failed to fetch videos: ${error.message}`);

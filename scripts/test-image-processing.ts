@@ -13,7 +13,7 @@ import { inngest } from '../src/lib/inngest/client.js';
 
 // Test configuration
 const TEST_VIDEO_ID = 'test-video-' + Date.now();
-const TEST_PLAYLIST_ID = 'test-playlist-' + Date.now();
+const TEST_PLAYLIST_ID = 123456;
 const TEST_IMAGE_URL = 'https://i.ytimg.com/vi/dQw4w9WgXcQ/maxresdefault.jpg'; // Rick Roll thumbnail
 
 // Initialize Supabase client
@@ -175,7 +175,12 @@ async function testStorageBucketAccess() {
         'optimized-images',
         {
           public: true,
-          allowedMimeTypes: ['image/webp', 'image/avif', 'image/jpeg', 'image/png'],
+          allowedMimeTypes: [
+            'image/webp',
+            'image/avif',
+            'image/jpeg',
+            'image/png',
+          ],
           fileSizeLimit: 10485760, // 10MB
         }
       );
@@ -195,15 +200,15 @@ async function testStorageBucketAccess() {
       0x52, 0x49, 0x46, 0x46, 0x26, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50,
       0x56, 0x50, 0x38, 0x20, 0x1a, 0x00, 0x00, 0x00, 0x30, 0x01, 0x00, 0x9d,
       0x01, 0x2a, 0x01, 0x00, 0x01, 0x00, 0x02, 0x00, 0x34, 0x25, 0xa4, 0x00,
-      0x03, 0x70, 0x00, 0xfe, 0xfb, 0xfd, 0x50, 0x00
+      0x03, 0x70, 0x00, 0xfe, 0xfb, 0xfd, 0x50, 0x00,
     ]);
     const testPath = 'test/test-file.webp';
 
     const { error: uploadError } = await supabase.storage
       .from('optimized-images')
-      .upload(testPath, testData, { 
+      .upload(testPath, testData, {
         contentType: 'image/webp',
-        upsert: true 
+        upsert: true,
       });
 
     if (uploadError) {
@@ -336,4 +341,3 @@ No options are required - the script uses test data automatically.
 }
 
 main().catch(console.error);
-

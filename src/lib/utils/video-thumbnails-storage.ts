@@ -1,15 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
+import type { Database } from '$lib/supabase/database.types';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { detectOptimalFormat } from './image-format-detection';
-import {
-  PUBLIC_SUPABASE_ANON_KEY,
-  PUBLIC_SUPABASE_URL,
-} from '$env/static/public';
 
 // Initialize Supabase client
-const supabaseUrl = PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = PUBLIC_SUPABASE_ANON_KEY;
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const STORAGE_BUCKET = 'optimized-images';
 
@@ -37,6 +30,7 @@ export interface OptimizedImageResult {
 export function getOptimizedImageUrl(
   paths: VideoThumbnailPaths,
   imageType: 'thumbnail' | 'thumbnail_maxres' = 'thumbnail',
+  supabase: SupabaseClient<Database>,
   acceptHeader?: string | null
 ): OptimizedImageResult {
   // Detect optimal format based on browser support
@@ -58,14 +52,14 @@ export function getOptimizedImageUrl(
 
   // Try to get optimized image from storage
   if (optimalFormat === 'avif' && avifPath) {
-    const url = getStorageUrl(avifPath);
+    const url = getStorageUrl(avifPath, supabase);
     if (url) {
       return { url, format: 'avif', source: 'storage' };
     }
   }
 
   if ((optimalFormat === 'webp' || optimalFormat === 'avif') && webpPath) {
-    const url = getStorageUrl(webpPath);
+    const url = getStorageUrl(webpPath, supabase);
     if (url) {
       return { url, format: 'webp', source: 'storage' };
     }
@@ -82,7 +76,10 @@ export function getOptimizedImageUrl(
 /**
  * Get public URL for a file in Supabase Storage
  */
-function getStorageUrl(path: string): string | null {
+function getStorageUrl(
+  path: string,
+  supabase: SupabaseClient<Database>
+): string | null {
   if (!path) return null;
 
   try {
@@ -120,10 +117,11 @@ export function hasOptimizedImages(
 export function getOptimizedVideoThumbnails(
   videos: VideoThumbnailPaths[],
   imageType: 'thumbnail' | 'thumbnail_maxres' = 'thumbnail',
+  supabase: SupabaseClient<Database>,
   acceptHeader?: string | null
 ): OptimizedImageResult[] {
   return videos.map((video) =>
-    getOptimizedImageUrl(video, imageType, acceptHeader)
+    getOptimizedImageUrl(video, imageType, supabase, acceptHeader)
   );
 }
 
@@ -132,7 +130,8 @@ export function getOptimizedVideoThumbnails(
  */
 export function generatePictureSources(
   paths: VideoThumbnailPaths,
-  imageType: 'thumbnail' | 'thumbnail_maxres' = 'thumbnail'
+  imageType: 'thumbnail' | 'thumbnail_maxres' = 'thumbnail',
+  supabase: SupabaseClient<Database>
 ): Array<{ srcset: string; type: string }> {
   const sources: Array<{ srcset: string; type: string }> = [];
 
@@ -148,7 +147,7 @@ export function generatePictureSources(
 
   // Add AVIF source (highest priority)
   if (avifPath) {
-    const avifUrl = getStorageUrl(avifPath);
+    const avifUrl = getStorageUrl(avifPath, supabase);
     if (avifUrl) {
       sources.push({ srcset: avifUrl, type: 'image/avif' });
     }
@@ -156,7 +155,7 @@ export function generatePictureSources(
 
   // Add WebP source (fallback)
   if (webpPath) {
-    const webpUrl = getStorageUrl(webpPath);
+    const webpUrl = getStorageUrl(webpPath, supabase);
     if (webpUrl) {
       sources.push({ srcset: webpUrl, type: 'image/webp' });
     }
@@ -252,7 +251,8 @@ export async function queuePlaylistImageProcessing(
  */
 export async function getImageProcessingStatus(
   entityType: 'video' | 'playlist',
-  entityId: string
+  entityId: string,
+  supabase: SupabaseClient<Database>
 ): Promise<'pending' | 'processing' | 'completed' | 'failed' | null> {
   try {
     const tableName = entityType === 'video' ? 'videos' : 'playlists';
@@ -273,4 +273,3 @@ export async function getImageProcessingStatus(
     return null;
   }
 }
-

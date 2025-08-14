@@ -16,11 +16,10 @@
   import { getSortDisplayName } from './content-filter';
   import ContentCardSkeleton from './content-card-skeleton.svelte';
   import { getVideoThumbnailUrl } from '$lib/utils/video-thumbnails';
-  import { 
-    getOptimizedImageUrl, 
-    generatePictureSources, 
+  import {
+    getOptimizedImageUrl,
+    generatePictureSources,
     hasOptimizedImages,
-    type VideoThumbnailPaths 
   } from '$lib/utils/video-thumbnails-storage';
   import { onMount } from 'svelte';
   import { handleContentNavigation } from './content';
@@ -354,10 +353,18 @@
       <div class="relative flex-shrink-0">
         {#if hasOptimizedImages(video)}
           <!-- Use optimized images with smart fallback chain -->
-          {@const pictureSources = generatePictureSources(video)}
-          {@const optimizedResult = getOptimizedImageUrl(video)}
+          {@const pictureSources = generatePictureSources(
+            video,
+            'thumbnail_maxres',
+            supabase
+          )}
+          {@const optimizedResult = getOptimizedImageUrl(
+            video,
+            'thumbnail_maxres',
+            supabase
+          )}
           <picture>
-            {#each pictureSources as source}
+            {#each pictureSources as source (source.srcset)}
               <source srcset={source.srcset} type={source.type} />
             {/each}
             <img
