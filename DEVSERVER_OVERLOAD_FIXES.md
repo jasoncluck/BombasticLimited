@@ -1,14 +1,19 @@
 # SvelteKit Server Overload Fixes
 
-This document outlines the changes made to remove server-side image processing and eliminate SvelteKit server overload.
+This document outlines the changes made to remove server-side image processing
+and eliminate SvelteKit server overload.
 
 ## Problem
 
-The background image processing system was implemented, but the SvelteKit server was still being overloaded because:
+The background image processing system was implemented, but the SvelteKit server
+was still being overloaded because:
 
-1. `getVideoThumbnailUrl()` function was routing all requests through `/api/video-thumbnail` 
-2. `/api/playlist-image` endpoint was performing real-time JPG → AVIF/WebP conversion
-3. Server-side Sharp processing was happening during page loads instead of using the optimized storage fallback chain
+1. `getVideoThumbnailUrl()` function was routing all requests through
+   `/api/video-thumbnail`
+2. `/api/playlist-image` endpoint was performing real-time JPG → AVIF/WebP
+   conversion
+3. Server-side Sharp processing was happening during page loads instead of using
+   the optimized storage fallback chain
 
 ## Solution
 
@@ -16,9 +21,11 @@ The background image processing system was implemented, but the SvelteKit server
 
 **File: `src/lib/utils/video-thumbnails.ts`**
 
-- `getVideoThumbnailUrl()` now returns original URLs directly instead of API endpoints
+- `getVideoThumbnailUrl()` now returns original URLs directly instead of API
+  endpoints
 - `getVideoThumbnailDataUrl()` returns original URLs (marked as deprecated)
-- `getVideoThumbnailProgressiveUrl()` returns original URLs (marked as deprecated) 
+- `getVideoThumbnailProgressiveUrl()` returns original URLs (marked as
+  deprecated)
 - `getResponsiveVideoThumbnailUrls()` returns original URLs for all sizes
 
 ### 2. Disabled Server-Side Processing APIs
@@ -54,7 +61,8 @@ The background image processing system was implemented, but the SvelteKit server
 
 - ✅ **Zero server-side processing** during page loads
 - ✅ **No more JPG → AVIF conversion lag**
-- ✅ **Direct CDN delivery** of original images when optimized versions unavailable
+- ✅ **Direct CDN delivery** of original images when optimized versions
+  unavailable
 - ✅ **SvelteKit server freed up** for actual application logic
 - ✅ **Background processing system** handles optimization separately
 
@@ -69,7 +77,10 @@ Components are already correctly implemented with the optimized storage system:
     {#each generatePictureSources(video) as source}
       <source srcset={source.srcset} type={source.type} />
     {/each}
-    <img src={optimizedResult.url || getVideoThumbnailUrl(video)} alt={video.title} />
+    <img
+      src={optimizedResult.url || getVideoThumbnailUrl(video)}
+      alt={video.title}
+    />
   </picture>
 {:else}
   <!-- Fallback to original JPEG (no server processing) -->
@@ -88,6 +99,9 @@ The system now correctly:
 
 ## Migration Notes
 
-- Existing API endpoints return deprecation warnings but remain functional for backward compatibility
-- All image URLs now point to original sources or optimized storage, never to server processing endpoints
-- Background processing system continues to work independently to create optimized images
+- Existing API endpoints return deprecation warnings but remain functional for
+  backward compatibility
+- All image URLs now point to original sources or optimized storage, never to
+  server processing endpoints
+- Background processing system continues to work independently to create
+  optimized images

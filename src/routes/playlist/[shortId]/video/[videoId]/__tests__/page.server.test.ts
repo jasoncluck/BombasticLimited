@@ -4,7 +4,10 @@ import { load } from '../+page.server';
 import { getPlaylistVideoContext } from '$lib/supabase/playlists';
 import { isVideoWithTimestamp } from '$lib/supabase/videos';
 import { parseImageProperties } from '$lib/components/playlist/playlist';
-import { getCroppedPlaylistImageUrlServer, generatePlaylistImageUrl } from '$lib/server/image-processing';
+import {
+  getCroppedPlaylistImageUrlServer,
+  generatePlaylistImageUrl,
+} from '$lib/server/image-processing';
 import {
   createMockPlaylist,
   createMockVideo,
@@ -98,7 +101,9 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
     mockGetCroppedPlaylistImageUrlServer.mockResolvedValue(
       'processed-image-url'
     );
-    mockGeneratePlaylistImageUrl.mockReturnValue('/api/playlist-image?url=test');
+    mockGeneratePlaylistImageUrl.mockReturnValue(
+      '/api/playlist-image?url=test'
+    );
 
     // Mock safeGetSession instead of supabase auth.getUser()
     mockLoadEvent.locals.safeGetSession.mockResolvedValue({

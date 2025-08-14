@@ -6,7 +6,6 @@
     hasOptimizedImages,
     type VideoThumbnailPaths,
   } from '$lib/utils/video-thumbnails-storage';
-  import { generatePlaylistImageUrl } from '$lib/server/image-processing';
   import { parseImageProperties } from '$lib/components/playlist/playlist';
 
   import type { SupabaseClient } from '@supabase/supabase-js';
@@ -33,14 +32,15 @@
   // Size mappings for different use cases
   const sizeClasses = {
     small: 'h-12 w-12',
-    medium: 'h-16 w-16', 
+    medium: 'h-16 w-16',
     large: 'h-24 w-24',
   };
 
   // Fallback URL for playlists without optimized images
   function getPlaylistImageFallbackUrl(): string | null {
     // Use maxres URL first for better quality when cropping, fallback to regular thumbnail
-    const effectiveUrl = playlist.thumbnail_maxres_url || playlist.thumbnail_url;
+    const effectiveUrl =
+      playlist.thumbnail_maxres_url || playlist.thumbnail_url;
     if (!effectiveUrl) return null;
 
     const params = new URLSearchParams({
@@ -61,7 +61,11 @@
   }
 </script>
 
-<div class="relative {sizeClasses[size]} flex-shrink-0 justify-self-center {className}">
+<div
+  class="relative {sizeClasses[
+    size
+  ]} flex-shrink-0 justify-self-center {className}"
+>
   {#if hasOptimizedImages(playlist)}
     <!-- Use optimized images with smart fallback chain -->
     {@const pictureSources = generatePictureSources(

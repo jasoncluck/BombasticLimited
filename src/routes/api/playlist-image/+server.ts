@@ -1,4 +1,8 @@
-import { getCroppedPlaylistImageUrlServer, validateImageUrl, queuePlaylistImageProcessing } from '$lib/server/image-processing';
+import {
+  getCroppedPlaylistImageUrlServer,
+  validateImageUrl,
+  queuePlaylistImageProcessing,
+} from '$lib/server/image-processing';
 import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import { parseImageProperties } from '$lib/components/playlist/playlist';
 import type { RequestHandler } from './$types';
@@ -81,26 +85,29 @@ export const GET: RequestHandler = async ({ url, request }) => {
     }
 
     // Return JSON response with processing result
-    return json({ 
-      croppedImageUrl: croppedImageDataUrl,
-      format: detectOptimalFormat(acceptHeader),
-      originalUrl: effectiveUrl,
-      imageProperties,
-      processed: !!croppedImageDataUrl,
-      backgroundProcessing: !!playlistId
-    }, {
-      headers: {
-        'Cache-Control': 'public, max-age=300', // 5 minute cache for JSON responses
+    return json(
+      {
+        croppedImageUrl: croppedImageDataUrl,
+        format: detectOptimalFormat(acceptHeader),
+        originalUrl: effectiveUrl,
+        imageProperties,
+        processed: !!croppedImageDataUrl,
+        backgroundProcessing: !!playlistId,
       },
-    });
+      {
+        headers: {
+          'Cache-Control': 'public, max-age=300', // 5 minute cache for JSON responses
+        },
+      }
+    );
   } catch (err) {
     console.error('Playlist image API error:', err);
-    
+
     // Fallback to original image if processing fails
     if (responseType === 'image') {
       return Response.redirect(effectiveUrl, 302);
     }
-    
+
     throw error(500, 'Internal server error');
   }
 };

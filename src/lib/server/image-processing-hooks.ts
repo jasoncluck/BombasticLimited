@@ -1,4 +1,7 @@
-import { queueVideoImageProcessing, queuePlaylistImageProcessing } from '../utils/video-thumbnails-storage';
+import {
+  queueVideoImageProcessing,
+  queuePlaylistImageProcessing,
+} from '../utils/video-thumbnails-storage';
 
 /**
  * Hook to queue image processing when a new video is created or updated
@@ -17,7 +20,10 @@ export async function onVideoCreated(video: {
     );
     console.log(`Queued image processing for video: ${video.id}`);
   } catch (error) {
-    console.error(`Failed to queue image processing for video ${video.id}:`, error);
+    console.error(
+      `Failed to queue image processing for video ${video.id}:`,
+      error
+    );
   }
 }
 
@@ -38,7 +44,10 @@ export async function onVideoUpdated(video: {
     );
     console.log(`Queued image processing for updated video: ${video.id}`);
   } catch (error) {
-    console.error(`Failed to queue image processing for updated video ${video.id}:`, error);
+    console.error(
+      `Failed to queue image processing for updated video ${video.id}:`,
+      error
+    );
   }
 }
 
@@ -59,7 +68,10 @@ export async function onPlaylistCreated(playlist: {
     );
     console.log(`Queued image processing for playlist: ${playlist.id}`);
   } catch (error) {
-    console.error(`Failed to queue image processing for playlist ${playlist.id}:`, error);
+    console.error(
+      `Failed to queue image processing for playlist ${playlist.id}:`,
+      error
+    );
   }
 }
 
@@ -80,20 +92,25 @@ export async function onPlaylistUpdated(playlist: {
     );
     console.log(`Queued image processing for updated playlist: ${playlist.id}`);
   } catch (error) {
-    console.error(`Failed to queue image processing for updated playlist ${playlist.id}:`, error);
+    console.error(
+      `Failed to queue image processing for updated playlist ${playlist.id}:`,
+      error
+    );
   }
 }
 
 /**
  * Batch process images for multiple videos (e.g., when importing videos)
  */
-export async function batchProcessVideoImages(videos: Array<{
-  id: string;
-  thumbnail_url: string | null;
-  thumbnail_maxres_url: string | null;
-}>): Promise<void> {
+export async function batchProcessVideoImages(
+  videos: Array<{
+    id: string;
+    thumbnail_url: string | null;
+    thumbnail_maxres_url: string | null;
+  }>
+): Promise<void> {
   const jobs = [];
-  
+
   for (const video of videos) {
     if (video.thumbnail_url) {
       jobs.push({
@@ -104,7 +121,7 @@ export async function batchProcessVideoImages(videos: Array<{
         priority: 100,
       });
     }
-    
+
     if (video.thumbnail_maxres_url) {
       jobs.push({
         entityType: 'video' as const,
@@ -115,7 +132,7 @@ export async function batchProcessVideoImages(videos: Array<{
       });
     }
   }
-  
+
   if (jobs.length > 0) {
     try {
       const { inngest } = await import('../inngest/client');
@@ -123,7 +140,9 @@ export async function batchProcessVideoImages(videos: Array<{
         name: 'image.batch.process',
         data: { jobs },
       });
-      console.log(`Queued batch processing for ${videos.length} videos (${jobs.length} jobs)`);
+      console.log(
+        `Queued batch processing for ${videos.length} videos (${jobs.length} jobs)`
+      );
     } catch (error) {
       console.error('Failed to queue batch video image processing:', error);
     }
@@ -133,13 +152,15 @@ export async function batchProcessVideoImages(videos: Array<{
 /**
  * Batch process images for multiple playlists
  */
-export async function batchProcessPlaylistImages(playlists: Array<{
-  id: string;
-  thumbnail_url: string | null;
-  thumbnail_maxres_url: string | null;
-}>): Promise<void> {
+export async function batchProcessPlaylistImages(
+  playlists: Array<{
+    id: string;
+    thumbnail_url: string | null;
+    thumbnail_maxres_url: string | null;
+  }>
+): Promise<void> {
   const jobs = [];
-  
+
   for (const playlist of playlists) {
     if (playlist.thumbnail_url) {
       jobs.push({
@@ -150,7 +171,7 @@ export async function batchProcessPlaylistImages(playlists: Array<{
         priority: 100,
       });
     }
-    
+
     if (playlist.thumbnail_maxres_url) {
       jobs.push({
         entityType: 'playlist' as const,
@@ -161,7 +182,7 @@ export async function batchProcessPlaylistImages(playlists: Array<{
       });
     }
   }
-  
+
   if (jobs.length > 0) {
     try {
       const { inngest } = await import('../inngest/client');
@@ -169,7 +190,9 @@ export async function batchProcessPlaylistImages(playlists: Array<{
         name: 'image.batch.process',
         data: { jobs },
       });
-      console.log(`Queued batch processing for ${playlists.length} playlists (${jobs.length} jobs)`);
+      console.log(
+        `Queued batch processing for ${playlists.length} playlists (${jobs.length} jobs)`
+      );
     } catch (error) {
       console.error('Failed to queue batch playlist image processing:', error);
     }

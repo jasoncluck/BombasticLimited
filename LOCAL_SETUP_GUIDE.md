@@ -1,18 +1,21 @@
 # Background Image Processing - Local Development Setup
 
-This guide helps you set up and test the background image processing system locally.
+This guide helps you set up and test the background image processing system
+locally.
 
 ## Prerequisites
 
 Before setting up the image processing system, ensure you have:
 
 1. **Supabase Local Setup** (if using local development)
+
    ```bash
    # Start Supabase locally
    npx supabase start
    ```
 
 2. **Environment Variables** - Add these to your `.env.local`:
+
    ```bash
    # Supabase (required)
    PUBLIC_SUPABASE_URL=your_supabase_url
@@ -26,22 +29,24 @@ Before setting up the image processing system, ensure you have:
 ## Database Setup
 
 1. **Apply Migration**
+
    ```bash
    # Apply the image processing migration
    npx supabase db push
-   
+
    # Or if using remote database
    npx supabase migration up
    ```
 
 2. **Storage Bucket Auto-Setup**
-   
-   The `optimized-images` bucket is now automatically configured in `supabase/config.toml` and will be created when you run:
-   
+
+   The `optimized-images` bucket is now automatically configured in
+   `supabase/config.toml` and will be created when you run:
+
    ```bash
    npx supabase start
    ```
-   
+
    The bucket configuration includes:
    - Public access enabled
    - 50MiB file size limit
@@ -49,16 +54,19 @@ Before setting up the image processing system, ensure you have:
    - Local storage path: `./storage/optimized-images`
 
 3. **Manual Bucket Creation** (if needed)
-   
+
    If automatic setup doesn't work, create manually:
    - Go to Supabase Dashboard → Storage
    - Create a new bucket named `optimized-images`
    - Make it public
-   - Set allowed MIME types: `image/png`, `image/jpeg`, `image/webp`, `image/avif`
+   - Set allowed MIME types: `image/png`, `image/jpeg`, `image/webp`,
+     `image/avif`
 
 ## Local Development
 
-⚠️ **Important**: Image processing is CPU-intensive and can overload your dev server. See [Development Server Optimization Guide](./DEVSERVER_OPTIMIZATION.md) for solutions.
+⚠️ **Important**: Image processing is CPU-intensive and can overload your dev
+server. See [Development Server Optimization Guide](./DEVSERVER_OPTIMIZATION.md)
+for solutions.
 
 ### Option 1: Optimized Development (Recommended)
 
@@ -78,17 +86,20 @@ npm run dev:no-processing
 ### Option 2: Using Inngest Dev Server
 
 1. **Install Inngest CLI**
+
    ```bash
    npm install -g inngest-cli
    ```
 
 2. **Start Inngest Dev Server**
+
    ```bash
    # In one terminal
    npx inngest-cli@latest dev
    ```
 
 3. **Start Your SvelteKit App**
+
    ```bash
    # In another terminal
    npm run dev
@@ -105,15 +116,17 @@ npm run dev:no-processing
 If you want to focus on UI development without image processing overhead:
 
 1. **Start SvelteKit**
+
    ```bash
    npm run dev
    ```
 
 2. **Test API Endpoints Directly**
+
    ```bash
    # Test video thumbnail processing
    curl "http://localhost:5173/api/video-thumbnail?url=https://i.ytimg.com/vi/dQw4w9WgXcQ/maxresdefault.jpg&format=webp"
-   
+
    # Test playlist image processing
    curl "http://localhost:5173/api/playlist-image?url=https://i.ytimg.com/vi/dQw4w9WgXcQ/maxresdefault.jpg&format=avif"
    ```
@@ -129,6 +142,7 @@ npm run script:test-image-processing
 ```
 
 This script will:
+
 - ✅ Test Supabase Storage access
 - ✅ Test database functions
 - ✅ Send test events to Inngest
@@ -148,7 +162,7 @@ npm run script:process-existing-images
 # Process only videos
 npm run script:process-existing-images -- --videos
 
-# Process only playlists  
+# Process only playlists
 npm run script:process-existing-images -- --playlists
 
 # Force reprocess even if optimized images exist
@@ -163,24 +177,38 @@ Monitor processing status via SQL:
 
 ```sql
 -- Check recent jobs
-SELECT * FROM image_processing_jobs 
-ORDER BY created_at DESC 
-LIMIT 10;
+SELECT
+  *
+FROM
+  image_processing_jobs
+ORDER BY
+  created_at DESC
+LIMIT
+  10;
 
 -- Check job status summary
-SELECT status, COUNT(*) 
-FROM image_processing_jobs 
-GROUP BY status;
+SELECT
+  status,
+  COUNT(*)
+FROM
+  image_processing_jobs
+GROUP BY
+  status;
 
 -- Check entity processing status
-SELECT image_processing_status, COUNT(*) 
-FROM videos 
-GROUP BY image_processing_status;
+SELECT
+  image_processing_status,
+  COUNT(*)
+FROM
+  videos
+GROUP BY
+  image_processing_status;
 ```
 
 ### Inngest Dashboard
 
 When using Inngest dev server, visit:
+
 - Local: `http://localhost:8288`
 - Production: Your Inngest dashboard URL
 

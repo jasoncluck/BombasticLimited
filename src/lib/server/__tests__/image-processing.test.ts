@@ -47,7 +47,9 @@ describe('validateImageUrl', () => {
   });
 
   it('should allow valid Twitch domains', () => {
-    expect(validateImageUrl('https://static-cdn.jtvnw.net/image.jpg')).toBe(true);
+    expect(validateImageUrl('https://static-cdn.jtvnw.net/image.jpg')).toBe(
+      true
+    );
   });
 
   it('should reject invalid domains', () => {
@@ -93,16 +95,16 @@ describe('detectOptimalFormat', () => {
 describe('calculateOptimalQuality', () => {
   it('should adjust quality based on format', () => {
     const metadata: Partial<sharp.Metadata> = { width: 1280, height: 720 };
-    
+
     // AVIF should get lower quality (better compression)
     const avifQuality = calculateOptimalQuality(metadata, 'avif', 90);
     expect(avifQuality).toBeLessThan(90);
-    
+
     // WebP should get slightly lower quality
     const webpQuality = calculateOptimalQuality(metadata, 'webp', 90);
     expect(webpQuality).toBeLessThan(90);
     expect(webpQuality).toBeGreaterThan(avifQuality);
-    
+
     // JPEG should maintain higher quality
     const jpegQuality = calculateOptimalQuality(metadata, 'jpeg', 90);
     expect(jpegQuality).toBe(90);
@@ -110,13 +112,16 @@ describe('calculateOptimalQuality', () => {
 
   it('should adjust quality based on image size', () => {
     // Large image
-    const largeMetadata: Partial<sharp.Metadata> = { width: 2560, height: 1440 };
+    const largeMetadata: Partial<sharp.Metadata> = {
+      width: 2560,
+      height: 1440,
+    };
     const largeQuality = calculateOptimalQuality(largeMetadata, 'webp', 90);
-    
-    // Small image  
+
+    // Small image
     const smallMetadata: Partial<sharp.Metadata> = { width: 320, height: 180 };
     const smallQuality = calculateOptimalQuality(smallMetadata, 'webp', 90);
-    
+
     expect(smallQuality).toBeGreaterThan(largeQuality);
   });
 });
@@ -135,7 +140,7 @@ describe('processImageServer', () => {
       imageUrl: 'https://evil.com/image.jpg',
       options: {},
     });
-    
+
     expect(result).toBe(null);
     expect(global.fetch).not.toHaveBeenCalled();
   });
@@ -264,7 +269,7 @@ describe('getCroppedPlaylistImageUrlServer', () => {
       },
     });
 
-    // Verify Sharp processing  
+    // Verify Sharp processing
     expect(mockSharp).toHaveBeenCalledWith(mockImageBuffer, {
       failOnError: false,
       density: 72, // maxres URLs get 72, standard URLs get 150
@@ -438,7 +443,7 @@ describe('getVideoThumbnailWebpUrlServer', () => {
     expect(mockExtract).not.toHaveBeenCalled(); // No cropping for video thumbnails
 
     expect(mockWebp).toHaveBeenCalledWith({
-      quality: 85, // Format-aware quality - WebP gets reduced from 90 to 85  
+      quality: 85, // Format-aware quality - WebP gets reduced from 90 to 85
       effort: 3, // Enhanced effort level
       lossless: false,
       nearLossless: false,

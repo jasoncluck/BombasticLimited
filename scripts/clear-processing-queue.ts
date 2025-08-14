@@ -49,8 +49,12 @@ async function clearProcessingQueue() {
     }
 
     console.log(`📊 Found ${jobs.length} jobs to clear:`);
-    console.log(`- Pending: ${jobs.filter(j => j.status === 'pending').length}`);
-    console.log(`- Processing: ${jobs.filter(j => j.status === 'processing').length}`);
+    console.log(
+      `- Pending: ${jobs.filter((j) => j.status === 'pending').length}`
+    );
+    console.log(
+      `- Processing: ${jobs.filter((j) => j.status === 'processing').length}`
+    );
 
     // Delete all pending and processing jobs
     const { error: deleteError } = await supabase
@@ -64,7 +68,6 @@ async function clearProcessingQueue() {
 
     console.log('✅ Successfully cleared processing queue');
     console.log('💡 You can now restart your dev server');
-
   } catch (error) {
     console.error('❌ Failed to clear processing queue:', error);
     process.exit(1);

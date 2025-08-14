@@ -98,7 +98,7 @@ async function processImageFormats(
   // Add throttling to prevent server overload
   const throttleDelay = process.env.NODE_ENV === 'development' ? 1000 : 0; // 1 second delay in dev
   if (throttleDelay > 0) {
-    await new Promise(resolve => setTimeout(resolve, throttleDelay));
+    await new Promise((resolve) => setTimeout(resolve, throttleDelay));
   }
 
   const sharpInstance = sharp(buffer);
@@ -111,18 +111,24 @@ async function processImageFormats(
   if (entityType === 'playlist') {
     const imageWidth = metadata.width || 0;
     const imageHeight = metadata.height || 0;
-    
+
     // Create square crop based on image dimensions
-    const cropDimensions = getPlaylistCropDimensions(imageWidth, imageHeight, imageType === 'thumbnail_maxres');
-    
+    const cropDimensions = getPlaylistCropDimensions(
+      imageWidth,
+      imageHeight,
+      imageType === 'thumbnail_maxres'
+    );
+
     pipeline = pipeline.extract({
       left: cropDimensions.x,
       top: cropDimensions.y,
       width: cropDimensions.width,
       height: cropDimensions.height,
     });
-    
-    console.log(`Applied playlist square crop: ${cropDimensions.width}x${cropDimensions.height} from ${imageWidth}x${imageHeight}`);
+
+    console.log(
+      `Applied playlist square crop: ${cropDimensions.width}x${cropDimensions.height} from ${imageWidth}x${imageHeight}`
+    );
   }
 
   // Calculate optimal quality based on image characteristics
@@ -169,8 +175,8 @@ async function processImageFormats(
  * Get optimal crop dimensions for playlist square images
  */
 function getPlaylistCropDimensions(
-  imageWidth: number, 
-  imageHeight: number, 
+  imageWidth: number,
+  imageHeight: number,
   isMaxRes: boolean
 ): { x: number; y: number; width: number; height: number } {
   if (isMaxRes) {
@@ -211,7 +217,7 @@ function getPlaylistCropDimensions(
       };
     }
   }
-  
+
   // For unknown sizes, create centered square crop
   const cropSize = Math.min(imageWidth, imageHeight);
   return {
@@ -300,8 +306,11 @@ export const processImage = inngest.createFunction(
       const imageBuffer = await downloadImage(sourceUrl);
 
       // Process image into WebP and AVIF
-      const { webp: webpBuffer, avif: avifBuffer } =
-        await processImageFormats(imageBuffer, entityType, imageType);
+      const { webp: webpBuffer, avif: avifBuffer } = await processImageFormats(
+        imageBuffer,
+        entityType,
+        imageType
+      );
 
       // Generate storage paths
       const { webpPath, avifPath } = generateStoragePaths(
@@ -399,9 +408,9 @@ export const batchProcessImages = inngest.createFunction(
             data: job,
           });
           results.push({ success: true, entityId: job.entityId });
-          
+
           // Add delay between jobs in development
-          await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
+          await new Promise((resolve) => setTimeout(resolve, 2000)); // 2 second delay
         } catch (error) {
           console.error(
             `Failed to queue processing for ${job.entityType} ${job.entityId}:`,
@@ -498,4 +507,3 @@ export const imageFunctions = [
   batchProcessImages,
   cleanupFailedJobs,
 ];
-

@@ -72,7 +72,7 @@ const PROCESSING_TIMEOUT = 30000; // 30 seconds
 // Domain validation for security
 const ALLOWED_DOMAINS = [
   'i.ytimg.com',
-  'img.youtube.com', 
+  'img.youtube.com',
   'i1.ytimg.com',
   'i2.ytimg.com',
   'i3.ytimg.com',
@@ -108,7 +108,7 @@ export function calculateOptimalQuality(
   baseQuality = 90
 ): number {
   const imageSize = (metadata.width || 0) * (metadata.height || 0);
-  
+
   // Format-specific quality adjustments
   let formatQuality = baseQuality;
   if (targetFormat === 'avif') {
@@ -118,14 +118,18 @@ export function calculateOptimalQuality(
     // WebP is efficient but not as much as AVIF
     formatQuality = Math.max(baseQuality - 5, 80);
   }
-  
+
   // Adjust quality based on image size
-  if (imageSize > 1920 * 1080) { // Large images
-    return targetFormat === 'jpeg' ? Math.max(formatQuality - 10, 75) : Math.max(formatQuality - 5, 70);
-  } else if (imageSize < 640 * 360) { // Small images
+  if (imageSize > 1920 * 1080) {
+    // Large images
+    return targetFormat === 'jpeg'
+      ? Math.max(formatQuality - 10, 75)
+      : Math.max(formatQuality - 5, 70);
+  } else if (imageSize < 640 * 360) {
+    // Small images
     return Math.min(formatQuality + 5, 95);
   }
-  
+
   return formatQuality;
 }
 
@@ -156,15 +160,14 @@ export async function processImageServer({
   if (options.format === 'auto' || !options.format) {
     targetFormat = detectOptimalFormat(acceptHeader);
   } else {
-    targetFormat = (options.format as 'avif' | 'webp' | 'jpeg');
+    targetFormat = options.format as 'avif' | 'webp' | 'jpeg';
   }
 
   // Enhanced fallback chain for external images (e.g., YouTube)
   // If no Accept header is available, use a conservative approach
-  const formatFallbackChain: ('avif' | 'webp' | 'jpeg')[] = acceptHeader 
-    ? [targetFormat, 'webp', 'jpeg'] 
+  const formatFallbackChain: ('avif' | 'webp' | 'jpeg')[] = acceptHeader
+    ? [targetFormat, 'webp', 'jpeg']
     : ['webp', 'jpeg']; // Skip AVIF for external sources without Accept headers
-
 
   // Determine if we're using standard resolution (for cropped images)
   const isStandardResolution = isCropped && !isMaxRes;
@@ -200,9 +203,10 @@ export async function processImageServer({
     // Apply cropping if needed
     if (isCropped) {
       // Use provided image properties or defaults
-      const cropProperties = imageProperties || 
-        (isMaxRes 
-          ? PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS 
+      const cropProperties =
+        imageProperties ||
+        (isMaxRes
+          ? PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS
           : PLAYLIST_IMAGE_CROP_DEFAULTS);
 
       // Validate and adjust crop dimensions
@@ -224,21 +228,29 @@ export async function processImageServer({
 
     // Apply resize if specified (for non-cropped images)
     if (!isCropped && (options.width || options.height)) {
-      processedInstance = processedInstance.resize(options.width, options.height, {
-        fit: 'cover',
-        position: 'center',
-        withoutEnlargement: true,
-      });
+      processedInstance = processedInstance.resize(
+        options.width,
+        options.height,
+        {
+          fit: 'cover',
+          position: 'center',
+          withoutEnlargement: true,
+        }
+      );
     }
 
     // Calculate optimal quality
-    const quality = options.quality || calculateOptimalQuality(
-      metadata, 
-      targetFormat, 
-      isStandardResolution ? 95 : 90
-    );
+    const quality =
+      options.quality ||
+      calculateOptimalQuality(
+        metadata,
+        targetFormat,
+        isStandardResolution ? 95 : 90
+      );
 
-    console.log(`Processing image with format: ${targetFormat}, quality: ${quality}, size: ${imageWidth}x${imageHeight}, acceptHeader: ${acceptHeader ? 'present' : 'missing'}`);
+    console.log(
+      `Processing image with format: ${targetFormat}, quality: ${quality}, size: ${imageWidth}x${imageHeight}, acceptHeader: ${acceptHeader ? 'present' : 'missing'}`
+    );
 
     let processedImageBuffer: Buffer | undefined;
     let mimeType: string = 'image/jpeg'; // Default fallback
@@ -289,12 +301,15 @@ export async function processImageServer({
             actualFormat = 'jpeg';
             break;
         }
-        
+
         // If we get here, the format worked - break out of the fallback loop
         break;
       } catch (formatError) {
-        console.warn(`Failed to process image with ${format} format, trying next fallback:`, formatError);
-        
+        console.warn(
+          `Failed to process image with ${format} format, trying next fallback:`,
+          formatError
+        );
+
         // If this was the last format in the chain, re-throw the error
         if (format === formatFallbackChain[formatFallbackChain.length - 1]) {
           throw formatError;
@@ -310,7 +325,7 @@ export async function processImageServer({
     // Convert to base64 data URL
     const base64 = processedImageBuffer.toString('base64');
     const dataUrl = `data:${mimeType};base64,${base64}`;
-    
+
     return dataUrl;
   } catch (error) {
     console.error(`Server image processing failed for ${imageUrl}:`, error);
@@ -645,7 +660,7 @@ export function generatePlaylistImageUrl({
   imageProperties,
   format = 'auto',
   quality = 90,
-  responseType = 'image'
+  responseType = 'image',
 }: {
   thumbnailUrl?: string | null;
   thumbnailMaxResUrl?: string | null;

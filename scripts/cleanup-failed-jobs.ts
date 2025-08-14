@@ -32,7 +32,9 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 async function cleanupFailedJobs() {
   try {
     const olderThanHours = 24;
-    console.log(`🧹 Cleaning up failed jobs older than ${olderThanHours} hours...`);
+    console.log(
+      `🧹 Cleaning up failed jobs older than ${olderThanHours} hours...`
+    );
 
     const cutoffTime = new Date(
       Date.now() - olderThanHours * 60 * 60 * 1000
@@ -71,7 +73,6 @@ async function cleanupFailedJobs() {
 
     const deletedCount = deletedJobs?.length || 0;
     console.log(`✅ Successfully cleaned up ${deletedCount} failed jobs`);
-
   } catch (error) {
     console.error('❌ Failed to cleanup failed jobs:', error);
     process.exit(1);

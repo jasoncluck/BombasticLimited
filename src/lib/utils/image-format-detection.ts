@@ -6,25 +6,27 @@
 /**
  * Browser format support detection based on Accept header
  */
-export function detectOptimalFormat(acceptHeader?: string | null): 'avif' | 'webp' | 'jpeg' {
+export function detectOptimalFormat(
+  acceptHeader?: string | null
+): 'avif' | 'webp' | 'jpeg' {
   if (!acceptHeader) {
-    // For external images (like YouTube) without Accept headers, 
+    // For external images (like YouTube) without Accept headers,
     // default to WebP for broader compatibility while still providing good compression
     return 'webp';
   }
-  
+
   const accept = acceptHeader.toLowerCase();
-  
+
   // Explicit AVIF support
   if (accept.includes('image/avif')) {
     return 'avif';
   }
-  
+
   // Explicit WebP support
   if (accept.includes('image/webp')) {
     return 'webp';
   }
-  
+
   // For modern browsers that accept all image types but don't explicitly list AVIF/WebP
   // We should try AVIF first for supporting browsers, but fallback to WebP for better compatibility
   if (accept.includes('image/*') || accept.includes('*/*')) {
@@ -32,7 +34,7 @@ export function detectOptimalFormat(acceptHeader?: string | null): 'avif' | 'web
     // use WebP as a safer default that still provides good compression
     return 'webp';
   }
-  
+
   // Fallback to JPEG for maximum compatibility
   return 'jpeg';
 }
@@ -49,12 +51,12 @@ export function detectBrowserImageSupport(): Promise<{
     const canvas = document.createElement('canvas');
     canvas.width = 1;
     canvas.height = 1;
-    
+
     const checkSupport = {
       avif: false,
       webp: false,
     };
-    
+
     let pendingChecks = 2;
     const checkComplete = () => {
       pendingChecks--;
@@ -62,13 +64,13 @@ export function detectBrowserImageSupport(): Promise<{
         resolve(checkSupport);
       }
     };
-    
+
     // Check AVIF support
     canvas.toBlob((blob) => {
       checkSupport.avif = blob !== null;
       checkComplete();
     }, 'image/avif');
-    
+
     // Check WebP support
     canvas.toBlob((blob) => {
       checkSupport.webp = blob !== null;
@@ -80,18 +82,20 @@ export function detectBrowserImageSupport(): Promise<{
 /**
  * Get optimal format based on browser support (client-side)
  */
-export async function getOptimalFormatForBrowser(): Promise<'avif' | 'webp' | 'jpeg'> {
+export async function getOptimalFormatForBrowser(): Promise<
+  'avif' | 'webp' | 'jpeg'
+> {
   try {
     const support = await detectBrowserImageSupport();
-    
+
     if (support.avif) {
       return 'avif';
     }
-    
+
     if (support.webp) {
       return 'webp';
     }
-    
+
     return 'jpeg';
   } catch {
     // Fallback to WebP on any error

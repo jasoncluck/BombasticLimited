@@ -12,7 +12,10 @@ import {
 import { playlistSchema } from '../schema';
 import { getPaginationQueryParams } from '$lib/components/pagination/pagination';
 import { parseImageProperties } from '$lib/components/playlist/playlist';
-import { getCroppedPlaylistImageUrlServer, generatePlaylistImageUrl } from '$lib/server/image-processing';
+import {
+  getCroppedPlaylistImageUrlServer,
+  generatePlaylistImageUrl,
+} from '$lib/server/image-processing';
 import { getUserProfile, getProfileById } from '$lib/supabase/user-profiles';
 import {
   redirect as flashRedirect,
@@ -151,7 +154,9 @@ describe('playlist/[shortId]/+page.server.ts', () => {
     mockGetCroppedPlaylistImageUrlServer.mockResolvedValue(
       'processed-image-url'
     );
-    mockGeneratePlaylistImageUrl.mockReturnValue('/api/playlist-image?url=test');
+    mockGeneratePlaylistImageUrl.mockReturnValue(
+      '/api/playlist-image?url=test'
+    );
     mockZod.mockReturnValue({} as any);
     // Mock getUserProfile to return null profile by default
     mockGetUserProfile.mockResolvedValue({

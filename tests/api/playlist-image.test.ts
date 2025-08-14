@@ -14,11 +14,17 @@ vi.mock('$lib/utils/image-format-detection', () => ({
 }));
 
 vi.mock('$lib/components/playlist/playlist', () => ({
-  parseImageProperties: vi.fn().mockReturnValue({ x: 0, y: 0, width: 100, height: 100 }),
+  parseImageProperties: vi
+    .fn()
+    .mockReturnValue({ x: 0, y: 0, width: 100, height: 100 }),
 }));
 
-const mockGetCroppedPlaylistImageUrlServer = vi.mocked(imageProcessing.getCroppedPlaylistImageUrlServer);
-const mockDetectOptimalFormat = vi.mocked(imageFormatDetection.detectOptimalFormat);
+const mockGetCroppedPlaylistImageUrlServer = vi.mocked(
+  imageProcessing.getCroppedPlaylistImageUrlServer
+);
+const mockDetectOptimalFormat = vi.mocked(
+  imageFormatDetection.detectOptimalFormat
+);
 const mockValidateImageUrl = vi.mocked(imageProcessing.validateImageUrl);
 
 describe('Playlist Image API', () => {
@@ -32,9 +38,11 @@ describe('Playlist Image API', () => {
     const mockDataUrl = 'data:image/avif;base64,fake-image-data';
     mockGetCroppedPlaylistImageUrlServer.mockResolvedValue(mockDataUrl);
 
-    const url = new URL('http://localhost/api/playlist-image?url=https://i.ytimg.com/test.jpg&format=auto&quality=90&type=image');
+    const url = new URL(
+      'http://localhost/api/playlist-image?url=https://i.ytimg.com/test.jpg&format=auto&quality=90&type=image'
+    );
     const request = new Request(url, {
-      headers: { accept: 'image/avif,image/webp,image/*' }
+      headers: { accept: 'image/avif,image/webp,image/*' },
     });
 
     const response = await GET({ url, request } as any);
@@ -52,7 +60,9 @@ describe('Playlist Image API', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toBe('image/avif');
-    expect(response.headers.get('cache-control')).toBe('public, max-age=31536000, immutable');
+    expect(response.headers.get('cache-control')).toBe(
+      'public, max-age=31536000, immutable'
+    );
     expect(response.headers.get('vary')).toBe('Accept');
   });
 
@@ -60,16 +70,18 @@ describe('Playlist Image API', () => {
     const mockDataUrl = 'data:image/avif;base64,fake-image-data';
     mockGetCroppedPlaylistImageUrlServer.mockResolvedValue(mockDataUrl);
 
-    const url = new URL('http://localhost/api/playlist-image?url=https://i.ytimg.com/test.jpg&format=auto&quality=90&type=json');
+    const url = new URL(
+      'http://localhost/api/playlist-image?url=https://i.ytimg.com/test.jpg&format=auto&quality=90&type=json'
+    );
     const request = new Request(url, {
-      headers: { accept: 'image/avif,image/webp,image/*' }
+      headers: { accept: 'image/avif,image/webp,image/*' },
     });
 
     const response = await GET({ url, request } as any);
 
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toContain('application/json');
-    
+
     const data = await response.json();
     expect(data).toEqual({
       webpUrl: mockDataUrl,
@@ -82,10 +94,17 @@ describe('Playlist Image API', () => {
     const mockDataUrl = 'data:image/avif;base64,fake-image-data';
     mockGetCroppedPlaylistImageUrlServer.mockResolvedValue(mockDataUrl);
 
-    const imageProps = JSON.stringify({ x: 10, y: 20, width: 200, height: 200 });
+    const imageProps = JSON.stringify({
+      x: 10,
+      y: 20,
+      width: 200,
+      height: 200,
+    });
     const encodedProps = encodeURIComponent(imageProps);
-    
-    const url = new URL(`http://localhost/api/playlist-image?url=https://i.ytimg.com/test.jpg&imageProperties=${encodedProps}&type=image`);
+
+    const url = new URL(
+      `http://localhost/api/playlist-image?url=https://i.ytimg.com/test.jpg&imageProperties=${encodedProps}&type=image`
+    );
     const request = new Request(url);
 
     const response = await GET({ url, request } as any);
