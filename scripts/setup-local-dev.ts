@@ -137,7 +137,7 @@ async function setupStorageBucket() {
       'optimized-images',
       {
         public: true,
-        allowedMimeTypes: ['image/webp', 'image/avif'],
+        allowedMimeTypes: ['image/webp', 'image/avif', 'image/jpeg', 'image/png'],
         fileSizeLimit: 10485760, // 10MB
       }
     );
@@ -167,13 +167,22 @@ async function testStorageAccess() {
   console.log('🧪 Testing storage access...');
 
   try {
-    // Test upload
-    const testData = Buffer.from('test-setup-content');
-    const testPath = 'setup-test/test-file.txt';
+    // Test upload with a minimal WebP image
+    // This is a minimal 1x1 pixel WebP image (42 bytes)
+    const testData = Buffer.from([
+      0x52, 0x49, 0x46, 0x46, 0x26, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50,
+      0x56, 0x50, 0x38, 0x20, 0x1a, 0x00, 0x00, 0x00, 0x30, 0x01, 0x00, 0x9d,
+      0x01, 0x2a, 0x01, 0x00, 0x01, 0x00, 0x02, 0x00, 0x34, 0x25, 0xa4, 0x00,
+      0x03, 0x70, 0x00, 0xfe, 0xfb, 0xfd, 0x50, 0x00
+    ]);
+    const testPath = 'setup-test/test-file.webp';
 
     const { error: uploadError } = await supabase.storage
       .from('optimized-images')
-      .upload(testPath, testData, { upsert: true });
+      .upload(testPath, testData, { 
+        contentType: 'image/webp',
+        upsert: true 
+      });
 
     if (uploadError) {
       throw uploadError;
