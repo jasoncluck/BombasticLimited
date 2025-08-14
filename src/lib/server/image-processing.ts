@@ -661,3 +661,44 @@ export function generatePlaylistImageUrl({
   // Background processing system handles optimization separately
   return effectiveUrl;
 }
+
+/**
+ * Queue playlist image processing for background optimization
+ */
+export async function queuePlaylistImageProcessing(
+  playlistId: string,
+  thumbnailUrl: string | null,
+  thumbnailMaxresUrl: string | null,
+  priority: number = 100
+): Promise<void> {
+  const jobs = [];
+
+  if (thumbnailUrl) {
+    jobs.push({
+      entityType: 'playlist' as const,
+      entityId: playlistId,
+      imageType: 'thumbnail' as const,
+      sourceUrl: thumbnailUrl,
+      priority,
+    });
+  }
+
+  if (thumbnailMaxresUrl) {
+    jobs.push({
+      entityType: 'playlist' as const,
+      entityId: playlistId,
+      imageType: 'thumbnail_maxres' as const,
+      sourceUrl: thumbnailMaxresUrl,
+      priority,
+    });
+  }
+
+  if (jobs.length > 0) {
+    // Send batch processing event to Inngest
+    const { inngest } = await import('../inngest/client');
+    await inngest.send({
+      name: 'image.batch.process',
+      data: { jobs },
+    });
+  }
+}

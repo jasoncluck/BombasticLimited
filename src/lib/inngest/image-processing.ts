@@ -88,10 +88,12 @@ async function downloadImage(sourceUrl: string): Promise<Buffer> {
 }
 
 /**
- * Process image buffer into WebP and AVIF formats with throttling
+ * Process image buffer into WebP and AVIF formats with throttling and optional cropping
  */
 async function processImageFormats(
-  buffer: Buffer
+  buffer: Buffer,
+  entityType?: string,
+  imageType?: string
 ): Promise<{ webp: Buffer; avif: Buffer }> {
   // Add throttling to prevent server overload
   const throttleDelay = process.env.NODE_ENV === 'development' ? 1000 : 0; // 1 second delay in dev
@@ -104,13 +106,31 @@ async function processImageFormats(
   // Get metadata for optimization
   const metadata = await sharpInstance.metadata();
 
+  // Apply playlist-specific square cropping if this is a playlist
+  let pipeline = sharpInstance;
+  if (entityType === 'playlist') {
+    const imageWidth = metadata.width || 0;
+    const imageHeight = metadata.height || 0;
+    
+    // Create square crop based on image dimensions
+    const cropDimensions = getPlaylistCropDimensions(imageWidth, imageHeight, imageType === 'thumbnail_maxres');
+    
+    pipeline = pipeline.extract({
+      left: cropDimensions.x,
+      top: cropDimensions.y,
+      width: cropDimensions.width,
+      height: cropDimensions.height,
+    });
+    
+    console.log(`Applied playlist square crop: ${cropDimensions.width}x${cropDimensions.height} from ${imageWidth}x${imageHeight}`);
+  }
+
   // Calculate optimal quality based on image characteristics
   const baseQuality = 85;
   const webpQuality = Math.min(baseQuality, 90);
   const avifQuality = Math.min(baseQuality - 5, 85); // AVIF is more efficient
 
   // Apply resize if image is too large (max 1920px width)
-  let pipeline = sharpInstance;
   if (metadata.width && metadata.width > 1920) {
     pipeline = pipeline.resize(1920, null, {
       fit: 'inside',
@@ -143,6 +163,63 @@ async function processImageFormats(
     .toBuffer();
 
   return { webp: webpBuffer, avif: avifBuffer };
+}
+
+/**
+ * Get optimal crop dimensions for playlist square images
+ */
+function getPlaylistCropDimensions(
+  imageWidth: number, 
+  imageHeight: number, 
+  isMaxRes: boolean
+): { x: number; y: number; width: number; height: number } {
+  if (isMaxRes) {
+    // For maxres images (1280x720), crop 720x720 square from center
+    if (imageWidth === 1280 && imageHeight === 720) {
+      return {
+        x: Math.round((1280 - 720) / 2), // 280px from left
+        y: 0,
+        width: 720,
+        height: 720,
+      };
+    }
+  } else {
+    // For standard resolution images, detect YouTube thumbnail sizes
+    if (imageWidth === 320 && imageHeight === 180) {
+      // Medium thumbnail: crop 180x180 square from center
+      return {
+        x: Math.round((320 - 180) / 2), // 70px from left
+        y: 0,
+        width: 180,
+        height: 180,
+      };
+    } else if (imageWidth === 480 && imageHeight === 360) {
+      // High thumbnail: crop 360x360 square from center
+      return {
+        x: Math.round((480 - 360) / 2), // 60px from left
+        y: 0,
+        width: 360,
+        height: 360,
+      };
+    } else if (imageWidth === 120 && imageHeight === 90) {
+      // Default thumbnail: crop 90x90 square from center
+      return {
+        x: Math.round((120 - 90) / 2), // 15px from left
+        y: 0,
+        width: 90,
+        height: 90,
+      };
+    }
+  }
+  
+  // For unknown sizes, create centered square crop
+  const cropSize = Math.min(imageWidth, imageHeight);
+  return {
+    x: Math.round((imageWidth - cropSize) / 2),
+    y: Math.round((imageHeight - cropSize) / 2),
+    width: cropSize,
+    height: cropSize,
+  };
 }
 
 /**
@@ -224,7 +301,7 @@ export const processImage = inngest.createFunction(
 
       // Process image into WebP and AVIF
       const { webp: webpBuffer, avif: avifBuffer } =
-        await processImageFormats(imageBuffer);
+        await processImageFormats(imageBuffer, entityType, imageType);
 
       // Generate storage paths
       const { webpPath, avifPath } = generateStoragePaths(

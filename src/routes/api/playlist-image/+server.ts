@@ -1,4 +1,4 @@
-import { getCroppedPlaylistImageUrlServer, validateImageUrl } from '$lib/server/image-processing';
+import { getCroppedPlaylistImageUrlServer, validateImageUrl, queuePlaylistImageProcessing } from '$lib/server/image-processing';
 import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import { parseImageProperties } from '$lib/components/playlist/playlist';
 import type { RequestHandler } from './$types';
@@ -8,6 +8,8 @@ export const GET: RequestHandler = async ({ url, request }) => {
   const thumbnailUrl = url.searchParams.get('url');
   const thumbnailMaxResUrl = url.searchParams.get('maxresUrl');
   const responseType = url.searchParams.get('type') || 'image';
+  const playlistId = url.searchParams.get('playlistId');
+  const imagePropertiesParam = url.searchParams.get('imageProperties');
 
   if (!thumbnailUrl && !thumbnailMaxResUrl) {
     throw error(400, 'Missing thumbnail URL parameter (url or maxresUrl)');
@@ -19,29 +21,86 @@ export const GET: RequestHandler = async ({ url, request }) => {
   }
 
   try {
-    // DISABLED: Server-side processing to prevent SvelteKit server overload
-    // Background processing system handles optimization instead
-    console.warn('[DEPRECATED] playlist-image API called - use background processing system instead');
-
-    // Return redirect to original image to avoid server-side processing
-    if (responseType === 'image') {
-      return Response.redirect(effectiveUrl, 302);
+    // Parse image properties if provided
+    let imageProperties = null;
+    if (imagePropertiesParam) {
+      try {
+        imageProperties = parseImageProperties(imagePropertiesParam);
+      } catch (parseError) {
+        console.warn('Failed to parse image properties:', parseError);
+        imageProperties = null;
+      }
     }
 
-    // Return JSON with original URL for backward compatibility
+    // Process image immediately to provide cropped square playlist image
+    const acceptHeader = request.headers.get('accept');
+    const croppedImageDataUrl = await getCroppedPlaylistImageUrlServer({
+      imageProperties,
+      thumbnailMaxResUrl,
+      thumbnailUrl,
+      acceptHeader,
+      options: {
+        format: 'auto', // Detect optimal format
+        quality: 90,
+      },
+    });
+
+    // Queue background processing for AVIF/WebP optimization if playlist ID provided
+    if (playlistId && croppedImageDataUrl) {
+      try {
+        await queuePlaylistImageProcessing(
+          playlistId,
+          thumbnailUrl,
+          thumbnailMaxResUrl,
+          50 // Lower priority for playlists
+        );
+      } catch (queueError) {
+        console.warn('Failed to queue background processing:', queueError);
+        // Don't fail the request if queueing fails
+      }
+    }
+
+    if (responseType === 'image') {
+      if (croppedImageDataUrl) {
+        // Return the cropped square image directly
+        const [mimeType, base64Data] = croppedImageDataUrl.split(',');
+        const imageBuffer = Buffer.from(base64Data, 'base64');
+        const contentType = mimeType.split(':')[1].split(';')[0];
+
+        return new Response(imageBuffer, {
+          headers: {
+            'Content-Type': contentType,
+            'Cache-Control': 'public, max-age=3600', // 1 hour cache
+            'Content-Length': imageBuffer.length.toString(),
+          },
+        });
+      } else {
+        // Fallback to original image if processing fails
+        return Response.redirect(effectiveUrl, 302);
+      }
+    }
+
+    // Return JSON response with processing result
     return json({ 
-      webpUrl: null, // No processed image available
-      format: 'jpeg',
+      croppedImageUrl: croppedImageDataUrl,
+      format: detectOptimalFormat(acceptHeader),
       originalUrl: effectiveUrl,
-      deprecated: true,
-      message: 'Use background processing system instead'
+      imageProperties,
+      processed: !!croppedImageDataUrl,
+      backgroundProcessing: !!playlistId
     }, {
       headers: {
-        'Cache-Control': 'public, max-age=300', // Short cache for deprecated endpoint
+        'Cache-Control': 'public, max-age=300', // 5 minute cache for JSON responses
       },
     });
   } catch (err) {
     console.error('Playlist image API error:', err);
+    
+    // Fallback to original image if processing fails
+    if (responseType === 'image') {
+      return Response.redirect(effectiveUrl, 302);
+    }
+    
     throw error(500, 'Internal server error');
   }
 };
