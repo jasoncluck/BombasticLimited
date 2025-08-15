@@ -46,6 +46,8 @@ CREATE TABLE IF NOT EXISTS "public"."playlists" (
   "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   "deleted_at" TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   "duration_seconds" integer DEFAULT 0,
+  "image_processing_updated_at" TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+  "image_processing_status" text DEFAULT NULL,
   "image_url" text,
   "image_webp_url" text,
   "image_avif_url" text,
@@ -64,6 +66,10 @@ COMMENT ON COLUMN "public"."playlists"."short_id" IS 'Short ID for nicer URLs';
 COMMENT ON COLUMN "public"."playlists"."deleted_at" IS 'Timestamp when playlist was soft deleted. NULL means not deleted.';
 
 COMMENT ON COLUMN "public"."playlists"."duration_seconds" IS 'Total duration of playlist in seconds, automatically calculated';
+
+COMMENT ON COLUMN "public"."playlists"."image_processing_updated_at" IS 'Timestamp when playlist image processing was last updated';
+
+COMMENT ON COLUMN "public"."playlists"."image_processing_status" IS 'Status of playlist image processing (pending, processing, completed, failed)';
 
 COMMENT ON COLUMN "public"."playlists"."image_url" IS 'URL to uploaded cropped playlist image in Supabase Storage (JPEG)';
 

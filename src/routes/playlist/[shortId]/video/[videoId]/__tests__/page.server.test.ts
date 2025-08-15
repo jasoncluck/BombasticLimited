@@ -60,10 +60,7 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
     video_start_seconds: null,
     updated_at: null,
     watched_at: null,
-    thumbnail_maxres_url:
-      mockVideo.thumbnail_maxres_url || 'https://example.com/thumb_maxres.jpg',
-    duration: mockVideo.duration || '00:30:00',
-  } as const;
+  };
   const mockNextVideos: any[] = [];
 
   const mockLoadEvent: any = {
@@ -405,11 +402,9 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
       expect(mockParseImageProperties).toHaveBeenCalledWith(
         mockPlaylist.image_properties
       );
-      expect(mockGetCroppedPlaylistImageUrlServer).toHaveBeenCalledWith({
-        imageProperties: { x: 0, y: 0, width: 100, height: 100 },
-        thumbnailMaxResUrl: mockPlaylist.thumbnail_maxres_url,
-        thumbnailUrl: mockPlaylist.thumbnail_url,
-      });
+      // Note: Playlists now use uploaded images rather than cropped YouTube thumbnails
+      // The getCroppedPlaylistImageUrlServer function should not be called for uploaded images
+      expect(mockGetCroppedPlaylistImageUrlServer).not.toHaveBeenCalled();
     });
   });
 });

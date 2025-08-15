@@ -9,8 +9,7 @@ CREATE OR REPLACE FUNCTION public.insert_playlist (
   p_name text DEFAULT NULL,
   p_description text DEFAULT NULL,
   p_type public.playlist_type DEFAULT 'Private'::public.playlist_type,
-  p_thumbnail_url text DEFAULT NULL,
-  p_thumbnail_maxres_url text DEFAULT NULL,
+  p_image_url text DEFAULT NULL,
   p_image_properties jsonb DEFAULT NULL,
   p_playlist_position int2 DEFAULT NULL
 ) RETURNS TABLE (
@@ -21,8 +20,9 @@ CREATE OR REPLACE FUNCTION public.insert_playlist (
   short_id text,
   description text,
   type public.playlist_type,
-  thumbnail_url text,
-  thumbnail_maxres_url text,
+  image_url text,
+  image_webp_url text,
+  image_avif_url text,
   image_properties jsonb,
   playlist_position int2
 ) LANGUAGE plpgsql
@@ -125,8 +125,7 @@ BEGIN
     name, 
     description, 
     type, 
-    thumbnail_url, 
-    thumbnail_maxres_url, 
+    image_url,
     image_properties
   )
   VALUES (
@@ -134,8 +133,7 @@ BEGIN
     final_name,
     p_description,
     p_type,
-    p_thumbnail_url,
-    p_thumbnail_maxres_url,
+    p_image_url,
     p_image_properties
   )
   RETURNING * INTO inserted_playlist;
@@ -160,8 +158,9 @@ BEGIN
   short_id := inserted_playlist.short_id;
   description := inserted_playlist.description;
   type := inserted_playlist.type;
-  thumbnail_url := inserted_playlist.thumbnail_url;
-  thumbnail_maxres_url := inserted_playlist.thumbnail_maxres_url;
+  image_url := inserted_playlist.image_url;
+  image_webp_url := inserted_playlist.image_webp_url;
+  image_avif_url := inserted_playlist.image_avif_url;
   image_properties := inserted_playlist.image_properties;
   playlist_position := actual_position;
 
@@ -325,8 +324,9 @@ CREATE OR REPLACE FUNCTION public.update_playlist_position (p_playlist_id bigint
   short_id text,
   description text,
   type public.playlist_type,
-  thumbnail_url text,
-  thumbnail_maxres_url text,
+  image_url text,
+  image_webp_url text,
+  image_avif_url text,
   image_properties jsonb,
   youtube_id text,
   playlist_position int2,
@@ -397,8 +397,9 @@ BEGIN
       updated_playlist.short_id,
       updated_playlist.description,
       updated_playlist.type,
-      updated_playlist.thumbnail_url,
-      updated_playlist.thumbnail_maxres_url,
+      updated_playlist.image_url,
+      updated_playlist.image_webp_url,
+      updated_playlist.image_avif_url,
       updated_playlist.image_properties,
       updated_playlist.youtube_id,
       p_new_position,
@@ -456,8 +457,9 @@ BEGIN
     updated_playlist.short_id,
     updated_playlist.description,
     updated_playlist.type,
-    updated_playlist.thumbnail_url,
-    updated_playlist.thumbnail_maxres_url,
+    updated_playlist.image_url,
+    updated_playlist.image_webp_url,
+    updated_playlist.image_avif_url,
     updated_playlist.image_properties,
     updated_playlist.youtube_id,
     p_new_position,
@@ -623,8 +625,6 @@ DECLARE
   existing_video_positions jsonb;
   first_video_id text;
   playlist_has_image boolean := false;
-  video_thumbnail_url text;
-  video_thumbnail_maxres_url text;
   new_videos_added boolean := false;
   current_user_id uuid;
   playlist_owner_id uuid;
@@ -658,9 +658,8 @@ BEGIN
     PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || playlist_owner_id::text));
   END IF;
   
-  -- Check if playlist already has thumbnail images
-  SELECT (pl.thumbnail_url IS NOT NULL AND TRIM(pl.thumbnail_url) != '') OR 
-         (pl.thumbnail_maxres_url IS NOT NULL AND TRIM(pl.thumbnail_maxres_url) != '')
+  -- Check if playlist already has uploaded images
+  SELECT (pl.image_url IS NOT NULL AND TRIM(pl.image_url) != '')
   INTO playlist_has_image
   FROM public.playlists pl
   WHERE pl.id = p_playlist_id;
@@ -708,33 +707,8 @@ BEGIN
     END IF;
   END LOOP;
   
-  -- Update playlist image if conditions are met
-  IF NOT playlist_has_image AND new_videos_added AND first_video_id IS NOT NULL THEN
-    -- Get the first video's thumbnail information from videos table
-    SELECT v.thumbnail_url, v.thumbnail_maxres_url
-    INTO video_thumbnail_url, video_thumbnail_maxres_url
-    FROM public.videos v
-    WHERE v.id = first_video_id;
-    
-    -- Update playlist with the first video's thumbnail if we found valid thumbnails
-    IF (video_thumbnail_url IS NOT NULL AND TRIM(video_thumbnail_url) != '') OR 
-       (video_thumbnail_maxres_url IS NOT NULL AND TRIM(video_thumbnail_maxres_url) != '') THEN
-      
-      UPDATE public.playlists pl
-      SET 
-        thumbnail_url = CASE 
-          WHEN video_thumbnail_url IS NOT NULL AND TRIM(video_thumbnail_url) != '' 
-          THEN video_thumbnail_url 
-          ELSE pl.thumbnail_url 
-        END,
-        thumbnail_maxres_url = CASE 
-          WHEN video_thumbnail_maxres_url IS NOT NULL AND TRIM(video_thumbnail_maxres_url) != '' 
-          THEN video_thumbnail_maxres_url 
-          ELSE pl.thumbnail_maxres_url 
-        END
-      WHERE pl.id = p_playlist_id;
-    END IF;
-  END IF;
+  -- Note: Playlist images are now handled separately via uploaded images only
+  -- No automatic thumbnail setting from videos
   
 END;
 $$;
@@ -879,50 +853,6 @@ BEGIN
   RETURN;
 END;
 $$;
-
--- Function to validate playlist thumbnail URLs
-CREATE OR REPLACE FUNCTION public.validate_playlist_thumbnail_urls (
-  p_playlist_id INT8,
-  p_thumbnail_url TEXT DEFAULT NULL,
-  p_thumbnail_maxres_url TEXT DEFAULT NULL
-) RETURNS BOOLEAN AS $$
-DECLARE
-  thumbnail_valid BOOLEAN := TRUE;
-  maxres_valid BOOLEAN := TRUE;
-BEGIN
-  -- If both URLs are NULL, they're considered valid
-  IF p_thumbnail_url IS NULL AND p_thumbnail_maxres_url IS NULL THEN
-    RETURN TRUE;
-  END IF;
-
-  -- Check if thumbnail_url is valid (skip validation if null)
-  IF p_thumbnail_url IS NOT NULL THEN
-    SELECT EXISTS (
-      SELECT 1
-      FROM public.playlist_videos pv
-      JOIN public.videos v ON pv.video_id = v.id
-      WHERE pv.playlist_id = p_playlist_id
-      AND v.thumbnail_url = p_thumbnail_url
-    ) INTO thumbnail_valid;
-  END IF;
-  
-  -- Check if thumbnail_maxres_url is valid (skip validation if null)
-  IF p_thumbnail_maxres_url IS NOT NULL THEN
-    SELECT EXISTS (
-      SELECT 1
-      FROM public.playlist_videos pv
-      JOIN public.videos v ON pv.video_id = v.id
-      WHERE pv.playlist_id = p_playlist_id
-      AND v.thumbnail_maxres_url = p_thumbnail_maxres_url
-    ) INTO maxres_valid;
-  END IF;
-  
-  -- Return true only if both URLs are valid
-  RETURN thumbnail_valid AND maxres_valid;
-END;
-$$ LANGUAGE plpgsql
-SET
-  search_path = '';
 
 -- Function to update playlist video positions  
 CREATE OR REPLACE FUNCTION "public"."update_playlist_videos_positions" (
