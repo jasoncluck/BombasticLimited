@@ -166,8 +166,7 @@ export function hasOptimizedImages(
  * Check if a playlist has uploaded images (either original or optimized)
  */
 export function hasUploadedPlaylistImage(paths: VideoThumbnailPaths): boolean {
-  console.log('IN HAS UPLOADED');
-  return !!(paths.image_path || paths.image_webp_url || paths.image_avif_url);
+  return !!(paths.image_url || paths.image_webp_url || paths.image_avif_url);
 }
 
 /**
@@ -329,6 +328,10 @@ export async function getImageProcessingStatus(
     return data?.image_processing_status || null;
   } catch (error) {
     console.warn('Failed to get processing status:', error);
+    return null;
+  }
+}
+', error);
     return null;
   }
 }

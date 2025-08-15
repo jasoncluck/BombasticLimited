@@ -45,26 +45,9 @@
       return null;
     }
 
-    // Use maxres URL first for better quality when cropping, fallback to regular thumbnail
-    const effectiveUrl =
-      playlist.thumbnail_maxres_url || playlist.thumbnail_url;
-    if (!effectiveUrl) return null;
-
-    const params = new SvelteURLSearchParams({
-      url: playlist.thumbnail_url || '',
-      maxresUrl: playlist.thumbnail_maxres_url || '',
-      type: 'image',
-    });
-
-    if (playlist.id) {
-      params.set('playlistId', playlist.id.toString());
-    }
-
-    if (playlist.image_properties) {
-      params.set('imageProperties', playlist.image_properties);
-    }
-
-    return `/api/playlist-image?${params.toString()}`;
+    // No fallback needed for playlists without uploaded images
+    // Playlists no longer use YouTube thumbnails
+    return null;
   });
 </script>
 
@@ -102,47 +85,10 @@
         fetchpriority="auto"
       />
     </picture>
-  {:else if hasOptimizedImages(playlist, 'thumbnail_maxres') || hasOptimizedImages(playlist, 'thumbnail')}
-    <!-- Use optimized YouTube thumbnail images with smart fallback chain -->
-    {@const pictureSources = generatePictureSources(
-      playlist,
-      'thumbnail_maxres',
-      supabase
-    )}
-    {@const optimizedResult = getOptimizedImageUrl(
-      playlist,
-      'thumbnail_maxres',
-      supabase
-    )}
-    <picture>
-      {#each pictureSources as source}
-        <source srcset={source.srcset} type={source.type} />
-      {/each}
-      <img
-        class="h-full w-full rounded object-cover"
-        src={optimizedResult.url || playlistImageFallbackUrl}
-        alt={playlist.name}
-        loading="lazy"
-        decoding="async"
-        fetchpriority="auto"
-      />
-    </picture>
-  {:else if playlist.thumbnail_url || playlist.thumbnail_maxres_url}
-    <!-- Immediate server-side square cropping for playlists without optimized images -->
-    <img
-      class="h-full w-full rounded object-cover"
-      src={playlistImageFallbackUrl}
-      alt={playlist.name}
-      loading="lazy"
-      decoding="async"
-      fetchpriority="auto"
-    />
   {:else}
     <!-- Default placeholder for playlists without any image -->
-
     <div
-      class="flex h-56 min-h-32 w-56 min-w-32 items-center justify-center {isPlaylistOwner &&
-        'cursor-pointer'}border-none bg-transparent p-0"
+      class="flex h-56 min-h-32 w-56 min-w-32 items-center justify-center border-none bg-transparent p-0"
     >
       <ListVideo size={128} />
     </div>

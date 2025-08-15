@@ -118,29 +118,12 @@
             {#snippet trigger()}
               <div class="flex flex-col gap-4 md:flex-row">
                 <div class="flex justify-center">
-                  {#if playlist.image_url}
-                    <div
-                      class="flex h-56 w-56 items-center justify-center {isPlaylistOwner &&
-                        'cursor-pointer'} border-none bg-transparent p-0"
-                    >
-                      <img
-                        src={playlist.image_url}
-                        alt={`Image for playlist: ${playlist.name}`}
-                      />
-                      <!-- <PlaylistImage  -->
-                      <!--   {playlist}  -->
-                      <!--   {supabase}  -->
-                      <!--   class="h-56 w-56" -->
-                      <!-- /> -->
-                    </div>
-                  {:else}
-                    <div
-                      class="flex h-56 min-h-32 w-56 min-w-32 items-center justify-center {isPlaylistOwner &&
-                        'cursor-pointer'}border-none bg-transparent p-0"
-                    >
-                      <ListVideo size={128} />
-                    </div>
-                  {/if}
+                  <div
+                    class="flex h-56 w-56 items-center justify-center {isPlaylistOwner &&
+                      'cursor-pointer'} border-none bg-transparent p-0"
+                  >
+                    <PlaylistImage {playlist} {supabase} class="h-56 w-56" />
+                  </div>
                 </div>
 
                 <div class="relative mt-4 flex min-w-2xs flex-1 flex-col">
@@ -245,21 +228,12 @@
             {#snippet trigger()}
               <div class="flex flex-col gap-4">
                 <div class="flex justify-center">
-                  {#if playlist.thumbnail_url || playlist.thumbnail_maxres_url}
-                    <div
-                      class="flex h-56 w-56 items-center justify-center {isPlaylistOwner &&
-                        'cursor-pointer'} border-none bg-transparent p-0"
-                    >
-                      <PlaylistImage {playlist} {supabase} class="h-56 w-56" />
-                    </div>
-                  {:else}
-                    <div
-                      class="flex h-56 min-h-32 w-56 min-w-32 items-center justify-center {isPlaylistOwner &&
-                        'cursor-pointer'}border-none bg-transparent p-0"
-                    >
-                      <ListVideo size={128} />
-                    </div>
-                  {/if}
+                  <div
+                    class="flex h-56 w-56 items-center justify-center {isPlaylistOwner &&
+                      'cursor-pointer'} border-none bg-transparent p-0"
+                  >
+                    <PlaylistImage {playlist} {supabase} class="h-56 w-56" />
+                  </div>
                 </div>
 
                 <div class="relative flex min-w-2xs flex-1 flex-col">

@@ -207,11 +207,6 @@ BEGIN
         image_processing_updated_at = now()
       WHERE id = job_record.entity_id::bigint;
     END IF;
-        image_avif_url = COALESCE(avif_path, image_avif_url),
-        image_processing_status = 'completed',
-        image_processing_updated_at = now()
-      WHERE id = job_record.entity_id::bigint;
-    END IF;
   END IF;
   
   RETURN TRUE;
