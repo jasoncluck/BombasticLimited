@@ -43,21 +43,18 @@ interface Video {
   id: string;
   thumbnail_url: string | null;
   thumbnail_maxres_url: string | null;
-  thumbnail_webp_path: string | null;
-  thumbnail_avif_path: string | null;
-  thumbnail_maxres_webp_path: string | null;
-  thumbnail_maxres_avif_path: string | null;
+  thumbnail_webp_url: string | null;
+  thumbnail_avif_url: string | null;
+  thumbnail_maxres_webp_url: string | null;
+  thumbnail_maxres_avif_url: string | null;
   image_processing_status: string | null;
 }
 
 interface Playlist {
   id: string;
-  thumbnail_url: string | null;
-  thumbnail_maxres_url: string | null;
-  thumbnail_webp_path: string | null;
-  thumbnail_avif_path: string | null;
-  thumbnail_maxres_webp_path: string | null;
-  thumbnail_maxres_avif_path: string | null;
+  image_url: string | null;
+  image_webp_url: string | null;
+  image_avif_url: string | null;
   image_processing_status: string | null;
 }
 
@@ -71,10 +68,10 @@ async function getVideosToProcess(): Promise<Video[]> {
       id,
       thumbnail_url,
       thumbnail_maxres_url,
-      thumbnail_webp_path,
-      thumbnail_avif_path,
-      thumbnail_maxres_webp_path,
-      thumbnail_maxres_avif_path,
+      thumbnail_webp_url,
+      thumbnail_avif_url,
+      thumbnail_maxres_webp_url,
+      thumbnail_maxres_avif_url,
       image_processing_status
     `
     )
@@ -105,16 +102,13 @@ async function getPlaylistsToProcess(): Promise<Playlist[]> {
     .select(
       `
       id,
-      thumbnail_url,
-      thumbnail_maxres_url,
-      thumbnail_webp_path,
-      thumbnail_avif_path,
-      thumbnail_maxres_webp_path,
-      thumbnail_maxres_avif_path,
+      image_url,
+      image_webp_url,
+      image_avif_url,
       image_processing_status
     `
     )
-    .or('thumbnail_url.not.is.null,thumbnail_maxres_url.not.is.null')
+    .or('image_url.not.is.null')
     .is('deleted_at', null);
 
   if (!FORCE_REPROCESS) {
@@ -140,7 +134,7 @@ function createVideoJobs(videos: Video[]) {
     if (
       !FORCE_REPROCESS &&
       video.image_processing_status === 'completed' &&
-      (video.thumbnail_webp_path || video.thumbnail_avif_path)
+      (video.thumbnail_webp_url || video.thumbnail_avif_url)
     ) {
       continue;
     }
@@ -177,27 +171,17 @@ function createPlaylistJobs(playlists: Playlist[]) {
     if (
       !FORCE_REPROCESS &&
       playlist.image_processing_status === 'completed' &&
-      (playlist.thumbnail_webp_path || playlist.thumbnail_avif_path)
+      (playlist.thumbnail_webp_url || playlist.thumbnail_avif_url)
     ) {
       continue;
     }
 
-    if (playlist.thumbnail_url) {
+    if (playlist.image_url) {
       jobs.push({
         entityType: 'playlist' as const,
         entityId: playlist.id.toString(),
         imageType: 'thumbnail' as const,
-        sourceUrl: playlist.thumbnail_url,
-        priority: 200,
-      });
-    }
-
-    if (playlist.thumbnail_maxres_url) {
-      jobs.push({
-        entityType: 'playlist' as const,
-        entityId: playlist.id.toString(),
-        imageType: 'thumbnail_maxres' as const,
-        sourceUrl: playlist.thumbnail_maxres_url,
+        sourceUrl: playlist.image_url,
         priority: 200,
       });
     }
