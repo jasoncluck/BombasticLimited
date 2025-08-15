@@ -118,16 +118,20 @@
             {#snippet trigger()}
               <div class="flex flex-col gap-4 md:flex-row">
                 <div class="flex justify-center">
-                  {#if playlist.thumbnail_url || playlist.thumbnail_maxres_url}
+                  {#if playlist.image_url}
                     <div
                       class="flex h-56 w-56 items-center justify-center {isPlaylistOwner &&
                         'cursor-pointer'} border-none bg-transparent p-0"
                     >
-                      <PlaylistImage 
-                        {playlist} 
-                        {supabase} 
-                        class="h-56 w-56"
+                      <img
+                        src={playlist.image_url}
+                        alt={`Image for playlist: ${playlist.name}`}
                       />
+                      <!-- <PlaylistImage  -->
+                      <!--   {playlist}  -->
+                      <!--   {supabase}  -->
+                      <!--   class="h-56 w-56" -->
+                      <!-- /> -->
                     </div>
                   {:else}
                     <div
@@ -246,11 +250,7 @@
                       class="flex h-56 w-56 items-center justify-center {isPlaylistOwner &&
                         'cursor-pointer'} border-none bg-transparent p-0"
                     >
-                      <PlaylistImage 
-                        {playlist} 
-                        {supabase} 
-                        class="h-56 w-56"
-                      />
+                      <PlaylistImage {playlist} {supabase} class="h-56 w-56" />
                     </div>
                   {:else}
                     <div

@@ -97,7 +97,10 @@ export function getOptimizedPlaylistImageUrl(
     }
   }
 
-  if ((optimalFormat === 'webp' || optimalFormat === 'avif') && paths.image_webp_url) {
+  if (
+    (optimalFormat === 'webp' || optimalFormat === 'avif') &&
+    paths.image_webp_url
+  ) {
     const url = getStorageUrl(paths.image_webp_url, supabase);
     if (url) {
       return { url, format: 'webp', source: 'storage' };
@@ -113,7 +116,12 @@ export function getOptimizedPlaylistImageUrl(
   }
 
   // Fallback to YouTube thumbnail chain (for playlists without uploaded images)
-  return getOptimizedImageUrl(paths, 'thumbnail_maxres', supabase, acceptHeader);
+  return getOptimizedImageUrl(
+    paths,
+    'thumbnail_maxres',
+    supabase,
+    acceptHeader
+  );
 }
 
 /**
@@ -158,6 +166,7 @@ export function hasOptimizedImages(
  * Check if a playlist has uploaded images (either original or optimized)
  */
 export function hasUploadedPlaylistImage(paths: VideoThumbnailPaths): boolean {
+  console.log('IN HAS UPLOADED');
   return !!(paths.image_path || paths.image_webp_url || paths.image_avif_url);
 }
 

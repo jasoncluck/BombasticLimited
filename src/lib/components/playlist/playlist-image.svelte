@@ -69,21 +69,29 @@
 </script>
 
 <div
-  class="relative {className || sizeClasses[size]} flex-shrink-0 justify-self-center"
+  class="relative {className ||
+    sizeClasses[size]} flex-shrink-0 justify-self-center"
 >
   {#if hasUploadedPlaylistImage(playlist)}
     <!-- Use uploaded playlist images with optimized fallback chain -->
-    {@const optimizedResult = getOptimizedPlaylistImageUrl(
-      playlist,
-      supabase
-    )}
+    {@const optimizedResult = getOptimizedPlaylistImageUrl(playlist, supabase)}
     <picture>
       <!-- Generate picture sources for uploaded images -->
       {#if playlist.image_avif_url}
-        <source srcset={supabase.storage.from('optimized-images').getPublicUrl(playlist.image_avif_url).data.publicUrl} type="image/avif" />
+        <source
+          srcset={supabase.storage
+            .from('optimized-images')
+            .getPublicUrl(playlist.image_avif_url).data.publicUrl}
+          type="image/avif"
+        />
       {/if}
       {#if playlist.image_webp_url}
-        <source srcset={supabase.storage.from('optimized-images').getPublicUrl(playlist.image_webp_url).data.publicUrl} type="image/webp" />
+        <source
+          srcset={supabase.storage
+            .from('optimized-images')
+            .getPublicUrl(playlist.image_webp_url).data.publicUrl}
+          type="image/webp"
+        />
       {/if}
       <img
         class="h-full w-full rounded object-cover"
@@ -131,10 +139,12 @@
     />
   {:else}
     <!-- Default placeholder for playlists without any image -->
+
     <div
-      class="bg-muted flex h-full w-full items-center justify-center rounded"
+      class="flex h-56 min-h-32 w-56 min-w-32 items-center justify-center {isPlaylistOwner &&
+        'cursor-pointer'}border-none bg-transparent p-0"
     >
-      <ListVideo class="text-muted-foreground !h-8 !w-8" />
+      <ListVideo size={128} />
     </div>
   {/if}
 </div>

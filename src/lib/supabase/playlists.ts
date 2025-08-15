@@ -24,9 +24,7 @@ export const DEFAULT_NUM_PLAYLISTS_OVERVIEW = 5;
 export const DEFAULT_NUM_PLAYLISTS_PAGINATION = 15;
 export const PLAYLIST_VIDEO_LIMIT = 100;
 
-export type Playlist = Omit<Tables<'playlists'>, 'search_vector'> & {
-  processedImageUrl?: string | null;
-};
+export type Playlist = Omit<Tables<'playlists'>, 'search_vector'> & {};
 
 export type ProfilePlaylist = Playlist & {
   profile_username: string;
@@ -939,13 +937,16 @@ export async function uploadPlaylistImage({
       return { error: uploadError };
     }
 
+    console.log(uploadData.path);
     // Update playlist with uploaded image URL using RPC function
     const { data: updateData, error: updateError } = await supabase.rpc(
       'update_playlist_uploaded_image',
       {
         p_playlist_id: playlistId,
         p_image_url: uploadData.path,
-        p_image_properties: JSON.stringify(imageProperties) || null,
+        p_image_properties: imageProperties
+          ? JSON.stringify(imageProperties)
+          : null,
       }
     );
 
@@ -954,9 +955,15 @@ export async function uploadPlaylistImage({
       return { error: updateError };
     }
 
+    // Get public URL for the uploaded image
+    const { data: publicUrl } = supabase.storage
+      .from('optimized-images')
+      .getPublicUrl(uploadData.path);
+
     return {
       data: {
         imagePath: uploadData.path,
+        publicUrl: publicUrl.publicUrl, // Direct public URL
         success: updateData?.[0]?.success || false,
       },
     };

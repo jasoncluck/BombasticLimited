@@ -64,28 +64,13 @@ export const load: PageServerLoad = async ({
     redirect(302, '/');
   }
 
-  const [processedImageUrl, form, creatorProfile] = await Promise.all([
-    playlist.processedImageUrl
-      ? Promise.resolve(playlist.processedImageUrl)
-      : Promise.resolve(
-          generatePlaylistImageUrl({
-            imageProperties: parseImageProperties(playlist.image_properties),
-            thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
-            thumbnailUrl: playlist.thumbnail_url,
-            format: 'auto', // Enable AVIF format detection
-            quality: 90,
-          })
-        ),
+  const [form, creatorProfile] = await Promise.all([
     superValidate(playlist, zod(playlistSchema)),
     // Load creator profile for all playlists to ensure avatar is available
     getProfileById({ userId: playlist.created_by, supabase }).then(
       (result) => result.profile
     ),
   ]);
-
-  if (!playlist.processedImageUrl) {
-    playlist.processedImageUrl = processedImageUrl;
-  }
 
   const effectiveContentFilter =
     isUserPlaylist(playlist) &&
