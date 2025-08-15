@@ -174,15 +174,18 @@ export type Database = {
           description: string | null
           duration_seconds: number | null
           id: number
-          image_avif_url: string | null
           image_processing_status: string | null
           image_processing_updated_at: string | null
           image_properties: Json | null
-          image_url: string | null
-          image_webp_url: string | null
           name: string
           search_vector: unknown | null
           short_id: string
+          thumbnail_avif_url: string | null
+          thumbnail_maxres_avif_url: string | null
+          thumbnail_maxres_url: string | null
+          thumbnail_maxres_webp_url: string | null
+          thumbnail_url: string | null
+          thumbnail_webp_url: string | null
           type: Database["public"]["Enums"]["playlist_type"]
           updated_at: string | null
           youtube_id: string | null
@@ -194,15 +197,18 @@ export type Database = {
           description?: string | null
           duration_seconds?: number | null
           id?: number
-          image_avif_url?: string | null
           image_processing_status?: string | null
           image_processing_updated_at?: string | null
           image_properties?: Json | null
-          image_url?: string | null
-          image_webp_url?: string | null
           name: string
           search_vector?: unknown | null
           short_id: string
+          thumbnail_avif_url?: string | null
+          thumbnail_maxres_avif_url?: string | null
+          thumbnail_maxres_url?: string | null
+          thumbnail_maxres_webp_url?: string | null
+          thumbnail_url?: string | null
+          thumbnail_webp_url?: string | null
           type?: Database["public"]["Enums"]["playlist_type"]
           updated_at?: string | null
           youtube_id?: string | null
@@ -214,15 +220,18 @@ export type Database = {
           description?: string | null
           duration_seconds?: number | null
           id?: number
-          image_avif_url?: string | null
           image_processing_status?: string | null
           image_processing_updated_at?: string | null
           image_properties?: Json | null
-          image_url?: string | null
-          image_webp_url?: string | null
           name?: string
           search_vector?: unknown | null
           short_id?: string
+          thumbnail_avif_url?: string | null
+          thumbnail_maxres_avif_url?: string | null
+          thumbnail_maxres_url?: string | null
+          thumbnail_maxres_webp_url?: string | null
+          thumbnail_url?: string | null
+          thumbnail_webp_url?: string | null
           type?: Database["public"]["Enums"]["playlist_type"]
           updated_at?: string | null
           youtube_id?: string | null

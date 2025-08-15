@@ -48,9 +48,12 @@ CREATE TABLE IF NOT EXISTS "public"."playlists" (
   "duration_seconds" integer DEFAULT 0,
   "image_processing_updated_at" TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   "image_processing_status" text DEFAULT NULL,
-  "image_url" text,
-  "image_webp_url" text,
-  "image_avif_url" text,
+  "thumbnail_url" text,
+  "thumbnail_webp_url" text,
+  "thumbnail_avif_url" text,
+  "thumbnail_maxres_url" text,
+  "thumbnail_maxres_webp_url" text,
+  "thumbnail_maxres_avif_url" text,
   CONSTRAINT "playlists_pkey" PRIMARY KEY ("id"),
   CONSTRAINT "playlists_name_check" CHECK (length("name") <= 50),
   CONSTRAINT "playlists_youtube_id_unique" UNIQUE ("youtube_id"),
@@ -71,11 +74,17 @@ COMMENT ON COLUMN "public"."playlists"."image_processing_updated_at" IS 'Timesta
 
 COMMENT ON COLUMN "public"."playlists"."image_processing_status" IS 'Status of playlist image processing (pending, processing, completed, failed)';
 
-COMMENT ON COLUMN "public"."playlists"."image_url" IS 'URL to uploaded cropped playlist image in Supabase Storage (JPEG)';
+COMMENT ON COLUMN "public"."playlists"."thumbnail_url" IS 'URL to uploaded cropped playlist image in Supabase Storage (JPEG)';
 
-COMMENT ON COLUMN "public"."playlists"."image_webp_url" IS 'URL to optimized WebP version of uploaded playlist image';
+COMMENT ON COLUMN "public"."playlists"."thumbnail_webp_url" IS 'URL to optimized WebP version of uploaded playlist image';
 
-COMMENT ON COLUMN "public"."playlists"."image_avif_url" IS 'URL to optimized AVIF version of uploaded playlist image';
+COMMENT ON COLUMN "public"."playlists"."thumbnail_avif_url" IS 'URL to optimized AVIF version of uploaded playlist image';
+
+COMMENT ON COLUMN "public"."playlists"."thumbnail_maxres_url" IS 'URL to uploaded cropped playlist image maxres version in Supabase Storage (JPEG)';
+
+COMMENT ON COLUMN "public"."playlists"."thumbnail_maxres_webp_url" IS 'URL to optimized WebP version of uploaded playlist maxres image';
+
+COMMENT ON COLUMN "public"."playlists"."thumbnail_maxres_avif_url" IS 'URL to optimized AVIF version of uploaded playlist maxres image';
 
 -- Playlist videos table (without foreign keys initially)
 CREATE TABLE IF NOT EXISTS "public"."playlist_videos" (

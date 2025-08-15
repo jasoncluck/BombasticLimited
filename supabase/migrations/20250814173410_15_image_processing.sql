@@ -196,13 +196,22 @@ BEGIN
       WHERE id = job_record.entity_id;
     END IF;
   ELSIF job_record.entity_type = 'playlist' THEN
-    IF job_record.image_type = 'uploaded_image' THEN
-      -- Handle uploaded playlist images (stored in image_webp_url, image_avif_url)
+    IF job_record.image_type = 'uploaded_image' OR job_record.image_type = 'thumbnail' THEN
+      -- Handle uploaded playlist images (stored in thumbnail_webp_url, thumbnail_avif_url)
       UPDATE "public"."playlists"
       SET 
-        image_webp_url = COALESCE(webp_path, image_webp_url),
-        image_avif_url = COALESCE(avif_path, image_avif_url),
-        image_processing_status = 'completed'::public.image_processing_status,
+        thumbnail_webp_url = COALESCE(webp_path, thumbnail_webp_url),
+        thumbnail_avif_url = COALESCE(avif_path, thumbnail_avif_url),
+        image_processing_status = 'completed',
+        image_processing_updated_at = now()
+      WHERE id = job_record.entity_id::bigint;
+    ELSIF job_record.image_type = 'thumbnail_maxres' THEN
+      -- Handle uploaded playlist maxres images
+      UPDATE "public"."playlists"
+      SET 
+        thumbnail_maxres_webp_url = COALESCE(webp_path, thumbnail_maxres_webp_url),
+        thumbnail_maxres_avif_url = COALESCE(avif_path, thumbnail_maxres_avif_url),
+        image_processing_status = 'completed',
         image_processing_updated_at = now()
       WHERE id = job_record.entity_id::bigint;
     END IF;
@@ -370,16 +379,28 @@ BEGIN
   IF (TG_OP = 'INSERT') OR 
      (TG_OP = 'UPDATE' AND (
        COALESCE(OLD.image_properties::text, '') != COALESCE(NEW.image_properties::text, '') OR
-       COALESCE(OLD.image_url, '') != COALESCE(NEW.image_url, '')
+       COALESCE(OLD.thumbnail_url, '') != COALESCE(NEW.thumbnail_url, '') OR
+       COALESCE(OLD.thumbnail_maxres_url, '') != COALESCE(NEW.thumbnail_maxres_url, '')
      )) THEN
     
-    -- Queue processing for uploaded images (only processing type for playlists now)
-    IF NEW.image_url IS NOT NULL AND NEW.image_url != '' THEN
+    -- Queue processing for uploaded images (both thumbnail and maxres processing types for playlists)
+    IF NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '' THEN
       PERFORM public.queue_image_processing_job(
         'playlist',
         NEW.id::text,
-        'uploaded_image',
-        NEW.image_url,
+        'thumbnail',
+        NEW.thumbnail_url,
+        25 -- High priority for uploaded images
+      );
+    END IF;
+
+    -- Queue processing for maxres images if provided
+    IF NEW.thumbnail_maxres_url IS NOT NULL AND NEW.thumbnail_maxres_url != '' THEN
+      PERFORM public.queue_image_processing_job(
+        'playlist',
+        NEW.id::text,
+        'thumbnail_maxres',
+        NEW.thumbnail_maxres_url,
         25 -- High priority for uploaded images
       );
     END IF;
@@ -422,16 +443,28 @@ BEGIN
 
   -- For playlists, cleanup uploaded image paths
   IF TG_TABLE_NAME = 'playlists' THEN
-    IF OLD.image_url IS NOT NULL THEN
-      storage_paths := array_append(storage_paths, OLD.image_url);
+    IF OLD.thumbnail_url IS NOT NULL THEN
+      storage_paths := array_append(storage_paths, OLD.thumbnail_url);
     END IF;
     
-    IF OLD.image_webp_url IS NOT NULL THEN
-      storage_paths := array_append(storage_paths, OLD.image_webp_url);
+    IF OLD.thumbnail_webp_url IS NOT NULL THEN
+      storage_paths := array_append(storage_paths, OLD.thumbnail_webp_url);
     END IF;
     
-    IF OLD.image_avif_url IS NOT NULL THEN
-      storage_paths := array_append(storage_paths, OLD.image_avif_url);
+    IF OLD.thumbnail_avif_url IS NOT NULL THEN
+      storage_paths := array_append(storage_paths, OLD.thumbnail_avif_url);
+    END IF;
+
+    IF OLD.thumbnail_maxres_url IS NOT NULL THEN
+      storage_paths := array_append(storage_paths, OLD.thumbnail_maxres_url);
+    END IF;
+    
+    IF OLD.thumbnail_maxres_webp_url IS NOT NULL THEN
+      storage_paths := array_append(storage_paths, OLD.thumbnail_maxres_webp_url);
+    END IF;
+    
+    IF OLD.thumbnail_maxres_avif_url IS NOT NULL THEN
+      storage_paths := array_append(storage_paths, OLD.thumbnail_maxres_avif_url);
     END IF;
   END IF;
 
@@ -477,7 +510,8 @@ EXECUTE FUNCTION public.trigger_cleanup_optimized_images ();
 CREATE TRIGGER trigger_playlist_image_processing BEFORE INSERT
 OR
 UPDATE OF image_properties,
-image_url ON public.playlists FOR EACH ROW
+thumbnail_url,
+thumbnail_maxres_url ON public.playlists FOR EACH ROW
 EXECUTE FUNCTION public.trigger_queue_playlist_image_processing ();
 
 DROP TRIGGER IF EXISTS trigger_playlist_image_cleanup ON public.playlists;
@@ -489,27 +523,27 @@ EXECUTE FUNCTION public.trigger_cleanup_optimized_images ();
 -- Function to validate video thumbnails and update playlist image
 CREATE OR REPLACE FUNCTION public.validate_and_update_playlist_image(
   p_playlist_id bigint,
-  p_image_url text,
+  p_thumbnail_url text,
   p_video_thumbnail_url text DEFAULT NULL,
   p_video_thumbnail_maxres_url text DEFAULT NULL,
   p_image_properties jsonb DEFAULT NULL
 ) RETURNS TABLE (
   success boolean,
   playlist_id bigint,
-  image_url text,
+  thumbnail_url text,
   error_message text
 ) LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE
-  current_image_url text;
+  current_thumbnail_url text;
   thumbnail_exists boolean := false;
   maxres_exists boolean := false;
   validation_passed boolean := false;
   error_msg text := NULL;
-  image_url_changed boolean := false;
+  thumbnail_url_changed boolean := false;
   needs_validation boolean := false;
 BEGIN
-  -- Get current playlist image URL (use table alias to avoid ambiguity)
-  SELECT p.image_url INTO current_image_url
+  -- Get current playlist thumbnail URL (use table alias to avoid ambiguity)
+  SELECT p.thumbnail_url INTO current_thumbnail_url
   FROM public.playlists p
   WHERE p.id = p_playlist_id;
 
@@ -520,13 +554,13 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Check if image URL has changed
-  image_url_changed := (current_image_url IS DISTINCT FROM p_image_url);
+  -- Check if thumbnail URL has changed
+  thumbnail_url_changed := (current_thumbnail_url IS DISTINCT FROM p_thumbnail_url);
 
   -- Only need validation if:
-  -- 1. Image URL has changed AND
-  -- 2. New image URL is not NULL (setting an actual image, not removing it)
-  needs_validation := image_url_changed AND p_image_url IS NOT NULL;
+  -- 1. Thumbnail URL has changed AND
+  -- 2. New thumbnail URL is not NULL (setting an actual image, not removing it)
+  needs_validation := thumbnail_url_changed AND p_thumbnail_url IS NOT NULL;
 
   -- Only perform validation if needed
   IF needs_validation THEN
@@ -569,35 +603,35 @@ BEGIN
   END IF;
 
   -- Handle different update scenarios separately to avoid CASE type issues
-  IF image_url_changed AND p_image_url IS NOT NULL THEN
+  IF thumbnail_url_changed AND p_thumbnail_url IS NOT NULL THEN
     -- Setting a new image
     UPDATE public.playlists pl
     SET 
-      image_url = p_image_url,
+      thumbnail_url = p_thumbnail_url,
       image_properties = COALESCE(p_image_properties, pl.image_properties),
-      image_processing_status = 'completed'::public.image_processing_status,
+      image_processing_status = 'completed',
       image_processing_updated_at = now()
     WHERE pl.id = p_playlist_id;
-  ELSIF image_url_changed AND p_image_url IS NULL THEN
+  ELSIF thumbnail_url_changed AND p_thumbnail_url IS NULL THEN
     -- Removing image
     UPDATE public.playlists pl
     SET 
-      image_url = NULL,
+      thumbnail_url = NULL,
       image_properties = COALESCE(p_image_properties, pl.image_properties),
       image_processing_status = NULL,
       image_processing_updated_at = now()
     WHERE pl.id = p_playlist_id;
   ELSE
-    -- No image URL change, just update other fields
+    -- No thumbnail URL change, just update other fields
     UPDATE public.playlists pl
     SET 
-      image_url = p_image_url,
+      thumbnail_url = p_thumbnail_url,
       image_properties = COALESCE(p_image_properties, pl.image_properties)
     WHERE pl.id = p_playlist_id;
   END IF;
   
   -- Return success result
-  RETURN QUERY SELECT true, p_playlist_id, p_image_url, NULL::text;
+  RETURN QUERY SELECT true, p_playlist_id, p_thumbnail_url, NULL::text;
 END;
 $$;
 
