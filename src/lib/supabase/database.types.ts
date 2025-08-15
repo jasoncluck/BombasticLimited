@@ -479,7 +479,9 @@ export type Database = {
           description: string
           duration: string | null
           id: string
-          image_processing_status: string | null
+          image_processing_status:
+            | Database["public"]["Enums"]["image_processing_status"]
+            | null
           image_processing_updated_at: string | null
           pending_delete: boolean | null
           published_at: string
@@ -497,7 +499,9 @@ export type Database = {
           description: string
           duration?: string | null
           id: string
-          image_processing_status?: string | null
+          image_processing_status?:
+            | Database["public"]["Enums"]["image_processing_status"]
+            | null
           image_processing_updated_at?: string | null
           pending_delete?: boolean | null
           published_at?: string
@@ -515,7 +519,9 @@ export type Database = {
           description?: string
           duration?: string | null
           id?: string
-          image_processing_status?: string | null
+          image_processing_status?:
+            | Database["public"]["Enums"]["image_processing_status"]
+            | null
           image_processing_updated_at?: string | null
           pending_delete?: boolean | null
           published_at?: string
@@ -1244,6 +1250,7 @@ export type Database = {
     Enums: {
       content_description: "FULL" | "BRIEF" | "NONE"
       content_display: "TABLE" | "TILES"
+      image_processing_status: "pending" | "processing" | "completed" | "failed"
       notification_type: "system"
       playlist_sort_order: "ascending" | "descending"
       playlist_sorted_by: "title" | "datePublished" | "playlistOrder"
@@ -1382,6 +1389,7 @@ export const Constants = {
     Enums: {
       content_description: ["FULL", "BRIEF", "NONE"],
       content_display: ["TABLE", "TILES"],
+      image_processing_status: ["pending", "processing", "completed", "failed"],
       notification_type: ["system"],
       playlist_sort_order: ["ascending", "descending"],
       playlist_sorted_by: ["title", "datePublished", "playlistOrder"],

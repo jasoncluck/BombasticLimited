@@ -8,6 +8,7 @@
   import Content from '$lib/components/content/content.svelte';
   import type { Snapshot } from '@sveltejs/kit';
   import type { Video } from '$lib/supabase/videos';
+  import { IMAGES_BUCKET } from '$lib/constants/images';
 
   const { data } = $props();
   const {
@@ -62,7 +63,10 @@
 </script>
 
 <div class="relative flex grow flex-col">
-  <ImageCropper.Root src={playlist.image_url ?? undefined}>
+  <ImageCropper.Root
+    src={supabase.storage.from(IMAGES_BUCKET).getPublicUrl(playlist.image_url)
+      .data.publicUrl ?? undefined}
+  >
     <PlaylistHeader
       {userProfile}
       {...playlistHeaderProps}

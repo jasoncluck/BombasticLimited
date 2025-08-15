@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { validateImageUrl } from '../server/image-processing';
 import { SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
 import { PUBLIC_SUPABASE_URL } from '$env/static/public';
+import { IMAGES_BUCKET } from '$lib/constants/images';
 
 // Initialize Supabase client with service role key for server-side operations
 const supabaseUrl = PUBLIC_SUPABASE_URL;
@@ -17,7 +18,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 });
 
 // Configuration
-const STORAGE_BUCKET = 'optimized-images';
+const STORAGE_BUCKET = IMAGES_BUCKET;
 const MAX_RETRIES = 3;
 const PROCESSING_TIMEOUT = 30000; // 30 seconds
 
@@ -125,8 +126,9 @@ async function processImageFormats(
   // Apply playlist-specific square cropping if this is a playlist from external source (YouTube)
   // Skip cropping for uploaded images from storage (they're already cropped by user)
   let pipeline = sharpInstance;
-  const isUploadedImage = sourceUrl?.startsWith('playlists/') || sourceUrl?.startsWith('videos/');
-  
+  const isUploadedImage =
+    sourceUrl?.startsWith('playlists/') || sourceUrl?.startsWith('videos/');
+
   if (entityType === 'playlist' && !isUploadedImage) {
     const imageWidth = metadata.width || 0;
     const imageHeight = metadata.height || 0;

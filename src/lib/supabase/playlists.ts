@@ -18,6 +18,7 @@ import {
 } from './videos';
 import type { Source } from '$lib/constants/source';
 import { videoDurationToSeconds } from '$lib/components/video/video-service';
+import { IMAGES_BUCKET } from '$lib/constants/images';
 
 export const USER_PLAYLIST_LIMIT = 25;
 export const DEFAULT_NUM_PLAYLISTS_OVERVIEW = 5;
@@ -926,7 +927,7 @@ export async function uploadPlaylistImage({
 
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('optimized-images')
+      .from(IMAGES_BUCKET)
       .upload(filePath, blob, {
         contentType: 'image/jpeg',
         upsert: true,
@@ -937,7 +938,6 @@ export async function uploadPlaylistImage({
       return { error: uploadError };
     }
 
-    console.log(uploadData.path);
     // Update playlist with uploaded image URL using RPC function
     const { data: updateData, error: updateError } = await supabase.rpc(
       'update_playlist_uploaded_image',
@@ -957,7 +957,7 @@ export async function uploadPlaylistImage({
 
     // Get public URL for the uploaded image
     const { data: publicUrl } = supabase.storage
-      .from('optimized-images')
+      .from(IMAGES_BUCKET)
       .getPublicUrl(uploadData.path);
 
     return {

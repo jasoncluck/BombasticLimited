@@ -165,14 +165,14 @@ async function testStorageBucketAccess() {
     }
 
     const optimizedImagesBucket = buckets?.find(
-      (b) => b.name === 'optimized-images'
+      (b) => b.name === 'content-images'
     );
 
     if (!optimizedImagesBucket) {
-      console.log('⚠️  optimized-images bucket not found. Creating it...');
+      console.log('⚠️  content-images bucket not found. Creating it...');
 
       const { error: createError } = await supabase.storage.createBucket(
-        'optimized-images',
+        'content-images',
         {
           public: true,
           allowedMimeTypes: [
@@ -189,9 +189,9 @@ async function testStorageBucketAccess() {
         throw createError;
       }
 
-      console.log('✅ Created optimized-images bucket');
+      console.log('✅ Created content-images bucket');
     } else {
-      console.log('✅ optimized-images bucket exists');
+      console.log('✅ content-images bucket exists');
     }
 
     // Test upload/download access with a minimal WebP image
@@ -205,7 +205,7 @@ async function testStorageBucketAccess() {
     const testPath = 'test/test-file.webp';
 
     const { error: uploadError } = await supabase.storage
-      .from('optimized-images')
+      .from('content-images')
       .upload(testPath, testData, {
         contentType: 'image/webp',
         upsert: true,
@@ -218,7 +218,7 @@ async function testStorageBucketAccess() {
     console.log('✅ Upload test successful');
 
     // Clean up test file
-    await supabase.storage.from('optimized-images').remove([testPath]);
+    await supabase.storage.from('content-images').remove([testPath]);
 
     console.log('✅ Storage access test completed');
   } catch (error) {
@@ -316,7 +316,7 @@ async function main() {
       '   - Monitor the image_processing_jobs table for status updates'
     );
     console.log(
-      '   - Check the optimized-images storage bucket for processed files'
+      '   - Check the content-images storage bucket for processed files'
     );
   } catch (error) {
     console.error('❌ Test failed:', error);

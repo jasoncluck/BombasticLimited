@@ -1,12 +1,11 @@
 import type { Database } from '$lib/supabase/database.types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { detectOptimalFormat } from './image-format-detection';
+import { IMAGES_BUCKET } from '$lib/constants/images';
 
 // Initialize Supabase client
 
-const STORAGE_BUCKET = 'optimized-images';
-
-export interface VideoThumbnailPaths {
+export interface ThumbnailPaths {
   id?: string | number | bigint;
   thumbnail_webp_url?: string | null;
   thumbnail_avif_url?: string | null;
@@ -16,7 +15,7 @@ export interface VideoThumbnailPaths {
   thumbnail_maxres_url?: string | null;
   image_processing_status?: string | null;
   // For playlists - uploaded images
-  image_path?: string | null;
+  image_url?: string | null;
   image_webp_url?: string | null;
   image_avif_url?: string | null;
 }
@@ -32,7 +31,7 @@ export interface OptimizedImageResult {
  * Priority: AVIF (if supported) -> WebP (if supported) -> Original JPEG
  */
 export function getOptimizedImageUrl(
-  paths: VideoThumbnailPaths,
+  paths: ThumbnailPaths,
   imageType: 'thumbnail' | 'thumbnail_maxres' = 'thumbnail',
   supabase: SupabaseClient<Database>,
   acceptHeader?: string | null
@@ -82,7 +81,7 @@ export function getOptimizedImageUrl(
  * Priority: AVIF (uploaded) -> WebP (uploaded) -> Original uploaded JPEG -> YouTube thumbnail fallback
  */
 export function getOptimizedPlaylistImageUrl(
-  paths: VideoThumbnailPaths,
+  paths: ThumbnailPaths,
   supabase: SupabaseClient<Database>,
   acceptHeader?: string | null
 ): OptimizedImageResult {
@@ -134,7 +133,7 @@ function getStorageUrl(
   if (!path) return null;
 
   try {
-    const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+    const { data } = supabase.storage.from(IMAGES_BUCKET).getPublicUrl(path);
 
     return data.publicUrl;
   } catch (error) {
@@ -147,7 +146,7 @@ function getStorageUrl(
  * Check if optimized images are available for an entity
  */
 export function hasOptimizedImages(
-  paths: VideoThumbnailPaths,
+  paths: ThumbnailPaths,
   imageType: 'thumbnail' | 'thumbnail_maxres' = 'thumbnail'
 ): boolean {
   const webpPath =
@@ -165,7 +164,7 @@ export function hasOptimizedImages(
 /**
  * Check if a playlist has uploaded images (either original or optimized)
  */
-export function hasUploadedPlaylistImage(paths: VideoThumbnailPaths): boolean {
+export function hasUploadedPlaylistImage(paths: ThumbnailPaths): boolean {
   return !!(paths.image_url || paths.image_webp_url || paths.image_avif_url);
 }
 
@@ -173,7 +172,7 @@ export function hasUploadedPlaylistImage(paths: VideoThumbnailPaths): boolean {
  * Get multiple optimized image URLs for videos
  */
 export function getOptimizedVideoThumbnails(
-  videos: VideoThumbnailPaths[],
+  videos: ThumbnailPaths[],
   imageType: 'thumbnail' | 'thumbnail_maxres' = 'thumbnail',
   supabase: SupabaseClient<Database>,
   acceptHeader?: string | null
@@ -187,7 +186,7 @@ export function getOptimizedVideoThumbnails(
  * Generate picture element sources for responsive images with format fallbacks
  */
 export function generatePictureSources(
-  paths: VideoThumbnailPaths,
+  paths: ThumbnailPaths,
   imageType: 'thumbnail' | 'thumbnail_maxres' = 'thumbnail',
   supabase: SupabaseClient<Database>
 ): Array<{ srcset: string; type: string }> {
@@ -269,7 +268,6 @@ export async function queueVideoImageProcessing(
 export async function queuePlaylistImageProcessing(
   playlistId: string,
   imageUrl: string | null,
-  _maxresUrl: string | null = null, // Ignored for backward compatibility
   priority: number = 100
 ): Promise<void> {
   const jobs = [];
@@ -319,10 +317,6 @@ export async function getImageProcessingStatus(
     return data?.image_processing_status || null;
   } catch (error) {
     console.warn('Failed to get processing status:', error);
-    return null;
-  }
-}
-', error);
     return null;
   }
 }

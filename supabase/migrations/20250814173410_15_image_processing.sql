@@ -9,9 +9,8 @@ ADD COLUMN IF NOT EXISTS "thumbnail_webp_url" text,
 ADD COLUMN IF NOT EXISTS "thumbnail_avif_url" text,
 ADD COLUMN IF NOT EXISTS "thumbnail_maxres_webp_url" text,
 ADD COLUMN IF NOT EXISTS "thumbnail_maxres_avif_url" text,
-ADD COLUMN IF NOT EXISTS "image_processing_status" text DEFAULT 'pending' CHECK (
-  image_processing_status IN ('pending', 'processing', 'completed', 'failed')
-),
+ADD COLUMN image_processing_status public.image_processing_status DEFAULT 'pending',
+
 ADD COLUMN IF NOT EXISTS "image_processing_updated_at" TIMESTAMP WITH TIME ZONE DEFAULT now();
 
 COMMENT ON COLUMN "public"."videos"."thumbnail_webp_url" IS 'Supabase Storage path for WebP thumbnail';

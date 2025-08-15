@@ -1,7 +1,6 @@
+import { IMAGES_BUCKET } from '$lib/constants/images';
 import type { Database } from '$lib/supabase/database.types';
 import type { SupabaseClient } from '@supabase/supabase-js';
-
-const STORAGE_BUCKET = 'optimized-images';
 
 /**
  * Converts a data URL to a File object
@@ -12,11 +11,11 @@ export function dataURLtoFile(dataURL: string, filename: string): File {
   const bstr = atob(arr[1]);
   let n = bstr.length;
   const u8arr = new Uint8Array(n);
-  
+
   while (n--) {
     u8arr[n] = bstr.charCodeAt(n);
   }
-  
+
   return new File([u8arr], filename, { type: mime });
 }
 
@@ -41,10 +40,10 @@ export async function uploadPlaylistImage({
     // Convert data URL to file
     const filename = `playlist-${playlistId}-${Date.now()}.jpg`;
     const file = dataURLtoFile(dataURL, filename);
-    
+
     // Upload to storage
     const { data, error } = await supabase.storage
-      .from(STORAGE_BUCKET)
+      .from(IMAGES_BUCKET)
       .upload(`playlists/${filename}`, file, {
         contentType: 'image/jpeg',
         upsert: false, // Don't overwrite existing files
@@ -60,7 +59,7 @@ export async function uploadPlaylistImage({
 
     // Get public URL
     const { data: publicUrlData } = supabase.storage
-      .from(STORAGE_BUCKET)
+      .from(IMAGES_BUCKET)
       .getPublicUrl(data.path);
 
     return {
@@ -92,7 +91,7 @@ export async function deletePlaylistImage({
 }> {
   try {
     const { error } = await supabase.storage
-      .from(STORAGE_BUCKET)
+      .from(IMAGES_BUCKET)
       .remove([imagePath]);
 
     if (error) {
@@ -112,3 +111,4 @@ export async function deletePlaylistImage({
     };
   }
 }
+

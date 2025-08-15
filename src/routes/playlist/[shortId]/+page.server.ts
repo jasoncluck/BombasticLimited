@@ -63,6 +63,7 @@ export const load: PageServerLoad = async ({
     console.error(`Playlist was not found`);
     redirect(302, '/');
   }
+  console.log(playlist);
 
   const [form, creatorProfile] = await Promise.all([
     superValidate(playlist, zod(playlistSchema)),

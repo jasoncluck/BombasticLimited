@@ -2,23 +2,16 @@
   import { ListVideo } from '@lucide/svelte';
   import {
     getOptimizedPlaylistImageUrl,
-    getOptimizedImageUrl,
-    generatePictureSources,
     hasUploadedPlaylistImage,
-    hasOptimizedImages,
-    type VideoThumbnailPaths,
   } from '$lib/utils/video-thumbnails-storage';
 
   import type { SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
-  import { SvelteURLSearchParams } from 'svelte/reactivity';
+  import type { Playlist } from '$lib/supabase/playlists';
+  import { IMAGES_BUCKET } from '$lib/constants/images';
 
   type PlaylistImageProps = {
-    playlist: VideoThumbnailPaths & {
-      id?: string | bigint | number;
-      name: string;
-      image_properties?: string | null;
-    };
+    playlist: Playlist;
     supabase: SupabaseClient<Database>;
     size?: 'small' | 'medium' | 'large';
     class?: string;
@@ -39,16 +32,16 @@
   };
 
   // Reactive fallback URL for playlists without optimized images
-  const playlistImageFallbackUrl = $derived.by(() => {
-    // If playlist has uploaded images, don't use server processing
-    if (hasUploadedPlaylistImage(playlist)) {
-      return null;
-    }
-
-    // No fallback needed for playlists without uploaded images
-    // Playlists no longer use YouTube thumbnails
-    return null;
-  });
+  // const playlistImageFallbackUrl = $derived.by(() => {
+  //   // If playlist has uploaded images, don't use server processing
+  //   if (hasUploadedPlaylistImage(playlist)) {
+  //     return null;
+  //   }
+  //
+  //   // No fallback needed for playlists without uploaded images
+  //   // Playlists no longer use YouTube thumbnails
+  //   return null;
+  // });
 </script>
 
 <div
@@ -63,7 +56,7 @@
       {#if playlist.image_avif_url}
         <source
           srcset={supabase.storage
-            .from('optimized-images')
+            .from(IMAGES_BUCKET)
             .getPublicUrl(playlist.image_avif_url).data.publicUrl}
           type="image/avif"
         />
@@ -71,11 +64,12 @@
       {#if playlist.image_webp_url}
         <source
           srcset={supabase.storage
-            .from('optimized-images')
+            .from(IMAGES_BUCKET)
             .getPublicUrl(playlist.image_webp_url).data.publicUrl}
           type="image/webp"
         />
       {/if}
+
       <img
         class="h-full w-full rounded object-cover"
         src={optimizedResult.url}
