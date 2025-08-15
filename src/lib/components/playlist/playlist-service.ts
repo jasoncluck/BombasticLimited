@@ -9,7 +9,6 @@ import {
   followPlaylist,
   PLAYLIST_VIDEO_LIMIT,
   unfollowPlaylist,
-  updatePlaylistImage,
   updatePlaylistPosition,
   updatePlaylistSort,
   updatePlaylistVideoPosition,
@@ -18,7 +17,11 @@ import {
   type Playlist,
   type PlaylistVideo,
 } from '$lib/supabase/playlists';
-import { type Session, type SupabaseClient } from '@supabase/supabase-js';
+import {
+  PostgrestError,
+  type Session,
+  type SupabaseClient,
+} from '@supabase/supabase-js';
 import type { Video } from '$lib/supabase/videos';
 import {
   isPlaylistVideosFilter,
@@ -26,7 +29,7 @@ import {
   type SortKey,
   type SortOrder,
 } from '../content/content-filter';
-import { parseImageProperties, type ImageProperties } from './playlist';
+import { type ImageProperties } from './playlist';
 import type { SidebarState } from '$lib/state/sidebar.svelte';
 import { showToast } from '$lib/state/notifications.svelte';
 
@@ -262,14 +265,13 @@ export async function handleRemoveVideosFromPlaylist({
 
   for (const video of videos) {
     if (
-      playlist.thumbnail_maxres_url === video.thumbnail_maxres_url ||
-      playlist.thumbnail_url === video.thumbnail_url
+      playlist.image_url === video.thumbnail_maxres_url ||
+      playlist.image_url === video.thumbnail_url
     ) {
       await handleUpdatePlaylistImage({
         playlist,
         sidebarState,
-        thumbnailMaxResUrl: null,
-        thumbnailUrl: null,
+        imageUrl: playlist.image_url,
         supabase,
       });
 
@@ -288,37 +290,41 @@ export async function handleRemoveVideosFromPlaylist({
 
 export async function handleUpdatePlaylistImage({
   playlist,
-  thumbnailUrl,
+  imageUrl,
   sidebarState,
-  thumbnailMaxResUrl,
   supabase,
 }: {
   playlist: Playlist;
-  thumbnailUrl: string;
   sidebarState: SidebarState;
-  thumbnailMaxResUrl: string | null;
+  imageUrl: string | null;
   supabase: SupabaseClient<Database>;
-}) {
-  const isResetImage = thumbnailUrl === null && thumbnailMaxResUrl === null;
+}): Promise<{ error: Error | null }> {
+  const isResetImage = imageUrl === null;
   if (isResetImage) {
-    playlist.processedImageUrl = null;
+    playlist.image_url = null;
+    return { error: null };
   }
 
-  const { updatedPlaylist, error } = await uploadPlaylistImage({
+  console.log(imageUrl);
+
+  const { data, error } = await uploadPlaylistImage({
     playlistId: playlist.id,
-    imageDataUrl: thumbnailMaxResUrl ?? thumbnailUrl,
+    imageUrl,
     supabase,
   });
 
   if (error) {
-    showNotification('Unable update playlist image');
+    showNotification('Unable to update playlist image');
+    return { error };
   }
 
-  // Refresh data to get server-processed images with AVIF support
-  // instead of using client-side processing
+  // Update the local playlist object
+  playlist.image_url = data?.publicUrl || null;
+
+  // Refresh data
   await invalidate('supabase:db:videos');
   await sidebarState.refreshData();
-  return { error };
+  return { error: null };
 }
 
 export async function handleUpdatePlaylistVideoPosition({
@@ -497,354 +503,4 @@ export async function handleUpdatePlaylistSort({
   }
 
   return { updatedPlaylist, error };
-}
-
-// @deprecated This function uses client-side Canvas processing which only supports WebP format.
-// Use server-side processing with getCroppedPlaylistImageUrlServer instead for AVIF support.
-// For each playlist create and add the associated playlist image
-export async function processPlaylists(playlists: Playlist[]) {
-  const batchSize = 5;
-  const processedPlaylists = [];
-  for (let i = 0; i < playlists.length; i += batchSize) {
-    const batch = playlists.slice(i, i + batchSize);
-    const batchResults = await Promise.all(
-      batch.map(async (playlist) => {
-        try {
-          const processedImageUrl = await getCroppedPlaylistImageUrl({
-            thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
-            thumbnailUrl: playlist.thumbnail_url,
-            imageProperties: parseImageProperties(playlist.image_properties),
-          });
-          return { ...playlist, processedImageUrl };
-        } catch (error) {
-          console.error(
-            `Failed to process image for playlist ${playlist.name}:`,
-            error
-          );
-          return { ...playlist, processedImageUrl: null };
-        }
-      })
-    );
-    processedPlaylists.push(...batchResults);
-  }
-  return processedPlaylists;
-}
-
-// @deprecated This function uses client-side Canvas processing which only supports WebP format.
-// Use server-side processing with getCroppedPlaylistImageUrlServer instead for AVIF support.
-// Functions for getting cropped playlist images in the browser for use when deferring image rendering
-export async function getCroppedPlaylistImageUrl({
-  imageProperties,
-  thumbnailMaxResUrl,
-  thumbnailUrl,
-}: {
-  imageProperties: ImageProperties | null;
-  thumbnailMaxResUrl: string | null;
-  thumbnailUrl?: string | null;
-}): Promise<string | null> {
-  const imageUrl = thumbnailMaxResUrl ?? thumbnailUrl;
-  if (!imageUrl) return null;
-
-  const isMaxRes = !!thumbnailMaxResUrl;
-
-  try {
-    // Try OffscreenCanvas first (more efficient)
-    if (
-      typeof OffscreenCanvas !== 'undefined' &&
-      typeof createImageBitmap !== 'undefined'
-    ) {
-      return await processWithOffscreenCanvas(
-        imageUrl,
-        imageProperties,
-        isMaxRes
-      );
-    } else {
-      // Fallback to regular Canvas
-      return await processWithCanvas(imageUrl, imageProperties, isMaxRes);
-    }
-  } catch (error) {
-    console.error('Browser image processing failed:', error);
-    return null;
-  }
-}
-
-async function processWithOffscreenCanvas(
-  imageUrl: string,
-  imageProperties: ImageProperties | null,
-  isMaxRes: boolean
-): Promise<string> {
-  const response = await fetch(imageUrl);
-  if (!response.ok) throw new Error('Failed to fetch image');
-
-  const imageBlob = await response.blob();
-  const imageBitmap = await createImageBitmap(imageBlob);
-
-  // Get optimal crop dimensions based on actual image size
-  const optimalCrop = getOptimalCropDimensions(
-    imageBitmap.width,
-    imageBitmap.height,
-    imageProperties,
-    isMaxRes
-  );
-
-  console.log('Client-side processing:', {
-    originalSize: `${imageBitmap.width}x${imageBitmap.height}`,
-    cropArea: optimalCrop,
-    isMaxRes,
-  });
-
-  // Determine target output size
-  const targetWidth = optimalCrop.width;
-  const targetHeight = optimalCrop.height;
-
-  const canvas = new OffscreenCanvas(targetWidth, targetHeight);
-  const ctx = canvas.getContext('2d');
-
-  if (!ctx) throw new Error('Failed to get canvas context');
-
-  ctx.drawImage(
-    imageBitmap,
-    optimalCrop.x,
-    optimalCrop.y,
-    optimalCrop.width,
-    optimalCrop.height,
-    0,
-    0,
-    targetWidth,
-    targetHeight
-  );
-
-  const blob = await canvas.convertToBlob({
-    type: 'image/webp',
-    quality: !isMaxRes && targetWidth > optimalCrop.width ? 0.9 : 0.8,
-  });
-  const arrayBuffer = await blob.arrayBuffer();
-
-  const uint8Array = new Uint8Array(arrayBuffer);
-  let binaryString = '';
-
-  // Process in chunks to avoid call stack overflow
-  const chunkSize = 8192;
-  for (let i = 0; i < uint8Array.length; i += chunkSize) {
-    const chunk = uint8Array.subarray(i, i + chunkSize);
-    binaryString += String.fromCharCode.apply(null, Array.from(chunk));
-  }
-
-  const base64 = btoa(binaryString);
-
-  return `data:image/webp;base64,${base64}`;
-}
-
-// Fallback Canvas processing for older browsers
-async function processWithCanvas(
-  imageUrl: string,
-  imageProperties: ImageProperties | null,
-  isMaxRes: boolean
-): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-
-    img.onload = () => {
-      try {
-        // Get optimal crop dimensions based on actual image size
-        const optimalCrop = getOptimalCropDimensions(
-          img.width,
-          img.height,
-          imageProperties,
-          isMaxRes
-        );
-
-        console.log('Client-side canvas processing:', {
-          originalSize: `${img.width}x${img.height}`,
-          cropArea: optimalCrop,
-          isMaxRes,
-        });
-
-        // Determine target output size
-        const targetWidth = optimalCrop.width;
-        const targetHeight = optimalCrop.height;
-
-        const canvas = document.createElement('canvas');
-        canvas.width = targetWidth;
-        canvas.height = targetHeight;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) throw new Error('Failed to get canvas context');
-
-        ctx.drawImage(
-          img,
-          optimalCrop.x,
-          optimalCrop.y,
-          optimalCrop.width,
-          optimalCrop.height,
-          0,
-          0,
-          targetWidth,
-          targetHeight
-        );
-
-        // Convert to WebP
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) {
-              reject(new Error('Failed to create blob'));
-              return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = () => reject(new Error('Failed to read blob'));
-            reader.readAsDataURL(blob);
-          },
-          'image/webp',
-          !isMaxRes && targetWidth > optimalCrop.width ? 0.9 : 0.8 // Higher quality for lower resolution images
-        );
-      } catch (error) {
-        reject(error);
-      }
-    };
-
-    img.onerror = () => reject(new Error('Failed to load image'));
-    img.src = imageUrl;
-  });
-}
-
-// @deprecated This function uses client-side Canvas processing which only supports WebP format.
-// Use server-side processing with getVideoThumbnailWebpUrlServer instead for AVIF support.
-// Video thumbnail processing without cropping - preserves original aspect ratio
-export async function getVideoThumbnailWebpUrl({
-  thumbnailUrl,
-}: {
-  thumbnailUrl: string | null;
-}): Promise<string | null> {
-  if (!thumbnailUrl) return null;
-
-  try {
-    // Try OffscreenCanvas first (more efficient)
-    if (
-      typeof OffscreenCanvas !== 'undefined' &&
-      typeof createImageBitmap !== 'undefined'
-    ) {
-      return await processVideoThumbnailWithOffscreenCanvas(thumbnailUrl);
-    } else {
-      // Fallback to regular Canvas
-      return await processVideoThumbnailWithCanvas(thumbnailUrl);
-    }
-  } catch (error) {
-    console.error('Browser video thumbnail processing failed:', error);
-    return null;
-  }
-}
-
-async function processVideoThumbnailWithOffscreenCanvas(
-  imageUrl: string
-): Promise<string> {
-  const response = await fetch(imageUrl);
-  if (!response.ok) throw new Error('Failed to fetch image');
-
-  const imageBlob = await response.blob();
-  const imageBitmap = await createImageBitmap(imageBlob);
-
-  // Use the original image dimensions (no cropping)
-  const canvas = new OffscreenCanvas(imageBitmap.width, imageBitmap.height);
-  const ctx = canvas.getContext('2d');
-
-  if (!ctx) throw new Error('Failed to get canvas context');
-
-  // Draw the full image without cropping
-  ctx.drawImage(imageBitmap, 0, 0);
-
-  const blob = await canvas.convertToBlob({ type: 'image/webp', quality: 0.8 });
-  const arrayBuffer = await blob.arrayBuffer();
-
-  const uint8Array = new Uint8Array(arrayBuffer);
-  let binaryString = '';
-
-  // Process in chunks to avoid call stack overflow
-  const chunkSize = 8192;
-  for (let i = 0; i < uint8Array.length; i += chunkSize) {
-    const chunk = uint8Array.subarray(i, i + chunkSize);
-    binaryString += String.fromCharCode.apply(null, Array.from(chunk));
-  }
-
-  const base64 = btoa(binaryString);
-
-  return `data:image/webp;base64,${base64}`;
-}
-
-async function processVideoThumbnailWithCanvas(
-  imageUrl: string
-): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-
-    img.onload = () => {
-      try {
-        // Use the original image dimensions (no cropping)
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) throw new Error('Failed to get canvas context');
-
-        // Draw the full image without cropping
-        ctx.drawImage(img, 0, 0);
-
-        // Convert to WebP
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) {
-              reject(new Error('Failed to create blob'));
-              return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = () => reject(new Error('Failed to read blob'));
-            reader.readAsDataURL(blob);
-          },
-          'image/webp',
-          0.8
-        );
-      } catch (error) {
-        reject(error);
-      }
-    };
-
-    img.onerror = () => reject(new Error('Failed to load image'));
-    img.src = imageUrl;
-  });
-}
-
-// @deprecated This function uses client-side Canvas processing which only supports WebP format.
-// Use server-side processing with getVideoThumbnailWebpUrlsBatch instead for AVIF support.
-// Batch processing function for multiple video thumbnails
-export async function getVideoThumbnailWebpUrlsBatch(
-  thumbnailUrls: Array<string | null>
-): Promise<Array<string | null>> {
-  const batchSize = 5;
-  const processedThumbnails = [];
-
-  for (let i = 0; i < thumbnailUrls.length; i += batchSize) {
-    const batch = thumbnailUrls.slice(i, i + batchSize);
-    const batchResults = await Promise.all(
-      batch.map(async (thumbnailUrl) => {
-        try {
-          return await getVideoThumbnailWebpUrl({ thumbnailUrl });
-        } catch (error) {
-          console.error(
-            `Failed to process video thumbnail: ${thumbnailUrl}`,
-            error
-          );
-          return null;
-        }
-      })
-    );
-    processedThumbnails.push(...batchResults);
-  }
-
-  return processedThumbnails;
 }

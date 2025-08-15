@@ -905,25 +905,32 @@ export async function updatePlaylistImage({
 
 export async function uploadPlaylistImage({
   playlistId,
-  imageDataUrl,
+  imageUrl,
   imageName,
-  imageProperties,
   supabase,
 }: {
   playlistId: number;
-  imageDataUrl: string;
+  imageUrl: string;
   imageName?: string;
-  imageProperties?: PlaylistImageProperties;
   supabase: SupabaseClient<Database>;
-}) {
+}): Promise<{
+  data?: {
+    imagePath: string;
+    publicUrl: string;
+    success: boolean;
+  };
+  error?: Error | null;
+}> {
   try {
     // Convert data URL to blob
-    const response = await fetch(imageDataUrl);
+    const response = await fetch(imageUrl);
     const blob = await response.blob();
 
     // Generate filename if not provided
     const fileName = imageName || `playlist-${playlistId}-${Date.now()}.jpg`;
     const filePath = `playlist-images/${fileName}`;
+
+    console.log('JMC TEST BEFORE');
 
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
@@ -933,26 +940,12 @@ export async function uploadPlaylistImage({
         upsert: true,
       });
 
+    console.log('JMC TEST');
+    console.log(uploadError);
+
     if (uploadError) {
       console.error('Upload error:', uploadError);
       return { error: uploadError };
-    }
-
-    // Update playlist with uploaded image URL using RPC function
-    const { data: updateData, error: updateError } = await supabase.rpc(
-      'update_playlist_uploaded_image',
-      {
-        p_playlist_id: playlistId,
-        p_image_url: uploadData.path,
-        p_image_properties: imageProperties
-          ? JSON.stringify(imageProperties)
-          : null,
-      }
-    );
-
-    if (updateError) {
-      console.error('Database update error:', updateError);
-      return { error: updateError };
     }
 
     // Get public URL for the uploaded image
@@ -960,11 +953,28 @@ export async function uploadPlaylistImage({
       .from(IMAGES_BUCKET)
       .getPublicUrl(uploadData.path);
 
+    console.log('Full public URL:', publicUrl.publicUrl);
+
+    // Update playlist with the full public URL - no need for image_properties since image is already processed
+    const { data: updateData, error: updateError } = await supabase
+      .from('playlists')
+      .update({
+        image_url: publicUrl.publicUrl,
+        image_properties: null, // Clear any old crop properties
+      })
+      .eq('id', playlistId)
+      .select();
+
+    if (updateError) {
+      console.error('Database update error:', updateError);
+      return { error: updateError };
+    }
+
     return {
       data: {
         imagePath: uploadData.path,
-        publicUrl: publicUrl.publicUrl, // Direct public URL
-        success: updateData?.[0]?.success || false,
+        publicUrl: publicUrl.publicUrl,
+        success: true,
       },
     };
   } catch (error) {

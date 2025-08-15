@@ -3,6 +3,7 @@ import {
   isUserPlaylist,
   updatePlaylistImage,
   updatePlaylistInfo,
+  uploadPlaylistImage,
   type PlaylistVideo,
 } from '$lib/supabase/playlists';
 import { type Actions, type RequestEvent } from '@sveltejs/kit';
@@ -63,7 +64,6 @@ export const load: PageServerLoad = async ({
     console.error(`Playlist was not found`);
     redirect(302, '/');
   }
-  console.log(playlist);
 
   const [form, creatorProfile] = await Promise.all([
     superValidate(playlist, zod(playlistSchema)),
@@ -98,7 +98,6 @@ export const load: PageServerLoad = async ({
     creatorProfile,
   };
 };
-
 export const actions: Actions = {
   default: async ({
     request,
@@ -116,7 +115,14 @@ export const actions: Actions = {
       });
     }
 
-    const { name, description, id, isDeletingPlaylistImage, type } = form.data;
+    const {
+      name,
+      description,
+      id,
+      isDeletingPlaylistImage,
+      type,
+      imageDataUrl,
+    } = form.data;
 
     const filter = new Filter();
     const [nameIsProfane, descriptionIsProfane] = await Promise.all([
@@ -150,31 +156,72 @@ export const actions: Actions = {
       return fail(400, { form });
     }
 
-    let { image_properties } = form.data;
-
+    // Handle image deletion
     if (isDeletingPlaylistImage) {
-      await updatePlaylistImage({
-        playlistId: id,
-        thumbnailMaxResUrl: null,
-        thumbnailUrl: null,
-        supabase,
-      });
+      const { error: deleteError } = await supabase
+        .from('playlists')
+        .update({
+          image_url: null,
+          image_webp_url: null,
+          image_avif_url: null,
+          image_properties: null,
+        })
+        .eq('id', id);
+
+      if (deleteError) {
+        console.error('Error deleting playlist image:', deleteError);
+      }
     }
 
-    if (
-      image_properties?.x === 0 &&
-      image_properties?.y === 0 &&
-      image_properties?.height === 0 &&
-      image_properties?.width === 0
-    ) {
-      image_properties = null;
+    // Handle new image upload if imageDataUrl is provided
+    if (imageDataUrl && imageDataUrl.startsWith('data:')) {
+      try {
+        const uploadResult = await uploadPlaylistImage({
+          playlistId: id,
+          imageDataUrl,
+          imageName: `playlist-${id}-${Date.now()}.jpg`,
+          // Don't pass imageProperties since the image is already cropped
+          supabase,
+        });
+
+        if (uploadResult.error) {
+          console.error('Image upload error:', uploadResult.error);
+          setFlash(
+            {
+              type: 'error',
+              message: 'Failed to upload image. Please try again.',
+            },
+            cookies
+          );
+          return fail(400, { form });
+        }
+
+        setFlash(
+          {
+            type: 'success',
+            message: 'Playlist image uploaded successfully.',
+          },
+          cookies
+        );
+      } catch (error) {
+        console.error('Image processing error:', error);
+        setFlash(
+          {
+            type: 'error',
+            message: 'Failed to process image. Please try again.',
+          },
+          cookies
+        );
+        return fail(400, { form });
+      }
     }
 
+    // Update playlist info (no need to pass image_properties since we're storing the final image)
     const { updatedPlaylist } = await updatePlaylistInfo({
       playlistId: id,
       name,
       description,
-      imageProperties: image_properties,
+      imageProperties: null, // Clear any old crop properties
       type,
       supabase,
       session,

@@ -654,7 +654,7 @@ export type Database = {
         Args: { duration_text: string }
         Returns: number
       }
-      fail_image_processing_job: {
+      fail_imge_processing_job: {
         Args: { error_msg: string; job_id: string }
         Returns: boolean
       }

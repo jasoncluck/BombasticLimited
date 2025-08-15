@@ -11,16 +11,9 @@
   import { Button } from '$lib/components/ui/button';
   import type { Playlist } from '$lib/supabase/playlists';
   import { zodClient } from 'sveltekit-superforms/adapters';
-  import {
-    EditIcon,
-    ListVideo,
-    Loader,
-    CropIcon,
-    Pencil,
-  } from '@lucide/svelte';
+  import { EditIcon, ListVideo, Loader } from '@lucide/svelte';
   import Textarea from '$lib/components/ui/textarea/textarea.svelte';
   import * as ImageCropper from '$lib/components/ui/image-cropper';
-  import { getCroppedImg } from '$lib/components/ui/image-cropper/utils';
   import {
     useImageCropperCrop,
     useImageCropperCropper,
@@ -37,7 +30,6 @@
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { invalidate } from '$app/navigation';
   import { isLowResolutionThumbnail } from './playlist-service';
-  import { uploadPlaylistImage } from '$lib/utils/image-upload';
 
   let {
     form,
@@ -60,8 +52,6 @@
   const flash = getFlash(page);
   let isSubmitting = $state(false);
   let isPublic = $state(playlist.type === 'Public');
-  let isUploadingImage = $state(false);
-  let pendingCroppedImage = $state<string | null>(null);
 
   const cropperState = useImageCropperCropper();
   const cropState = useImageCropperCrop();
@@ -74,81 +64,14 @@
     )
   );
 
-  // Handle cropped image - store it for later upload instead of immediate upload
-  async function handleImageCrop() {
-    try {
-      const croppedCanvas = await getCroppedImg(
-        cropperState.rootState.tempUrl!,
-        cropState.rootState.pixelCrop!
-      );
-      
-      // Convert canvas to data URL for storage until form submission
-      const croppedDataUrl = croppedCanvas.toDataURL('image/jpeg', 0.9);
-      pendingCroppedImage = croppedDataUrl;
-      
-      // Close the cropper dialog
-      cropperState.rootState.open = false;
-      
-      // Update the image properties to reflect the new crop
-      $formData.image_properties = JSON.stringify(cropState.rootState.pixelCrop);
-    } catch (error) {
-      console.error('Error cropping image:', error);
-    }
-  }
-
   const playlistForm = $derived(
     superForm(form, {
       validators: zodClient(playlistSchema),
       id: formId ?? 'playlist-dialog-form',
       dataType: 'json',
-      async onSubmit() {
+      onSubmit() {
         isSubmitting = true;
         $flash = undefined;
-        
-        // Handle pending cropped image upload before form submission
-        if (pendingCroppedImage && session?.user?.id) {
-          isUploadingImage = true;
-          try {
-            // Upload cropped image to storage
-            const uploadResult = await uploadPlaylistImage({
-              playlistId: playlist.id,
-              dataURL: pendingCroppedImage,
-              supabase: page.data.supabase,
-            });
-
-            if (!uploadResult.success) {
-              console.error('Image upload failed:', uploadResult.error);
-              // Continue with form submission even if image upload fails
-            } else {
-              // Update playlist with new image path using RPC function
-              const { error: updateError } = await page.data.supabase.rpc(
-                'update_playlist_uploaded_image',
-                {
-                  p_playlist_id: playlist.id,
-                  p_image_url: uploadResult.imagePath!,
-                  p_image_properties: cropState.rootState.pixelCrop,
-                }
-              );
-
-              if (updateError) {
-                console.error('Failed to update playlist image:', updateError);
-              } else {
-                // Update local playlist object
-                playlist.image_path = uploadResult.imagePath!;
-                playlist.image_properties = JSON.stringify(cropState.rootState.pixelCrop);
-
-                // Clear YouTube thumbnail URLs since we now have uploaded image
-                playlist.thumbnail_url = null;
-                playlist.thumbnail_maxres_url = null;
-              }
-            }
-          } catch (error) {
-            console.error('Upload error:', error);
-          } finally {
-            isUploadingImage = false;
-            pendingCroppedImage = null;
-          }
-        }
       },
       onResult(event) {
         if (event.result.type !== 'success') {
@@ -163,20 +86,10 @@
           isSubmitting = false;
           playlistForm.reset();
 
-          // Update playlist object with new data including image_properties
           const updatedPlaylist = Object.assign(playlist, data);
           if (isDeletingPlaylistImage) {
-            updatedPlaylist.thumbnail_url = null;
-            updatedPlaylist.thumbnail_maxres_url = null;
-            updatedPlaylist.image_properties = null;
+            updatedPlaylist.image_url = null;
           }
-
-          // Force reactive update by creating new object reference if image_properties changed
-          if (data.image_properties !== playlist.image_properties) {
-            // Create new playlist object to trigger reactivity in PlaylistImage component
-            Object.assign(playlist, { ...playlist, ...data });
-          }
-
           // Sidebar refresh will get server-processed images with AVIF support
           sidebarState.refreshData();
           invalidate('supabase:db:playlists');
@@ -189,17 +102,35 @@
   $effect(() => {
     $formData.type = isPublic ? 'Public' : 'Private';
 
-    // Set the source image for the cropper
-    cropperState.rootState.tempUrl =
-      playlist.thumbnail_maxres_url ?? playlist.thumbnail_url;
+    if (cropState.rootState.pixelCrop) {
+      $formData.image_properties = cropState.rootState.pixelCrop;
+    }
+
+    // Set the initial image URL when the dialog opens
+    if (open && !cropperState.rootState.tempUrl) {
+      cropperState.rootState.tempUrl = playlist.image_url;
+    }
+
+    // Only set imageDataUrl if we have a cropped/processed image
+    // Check if the src is different from the original playlist image
+    if (
+      cropState.rootState.src &&
+      cropState.rootState.src !== playlist.image_url
+    ) {
+      $formData.imageDataUrl = cropState.rootState.src;
+    }
   });
 </script>
 
+<!-- Rest of your component remains the same -->
 <Dialog.Root
   bind:open
   onOpenChange={(open) => {
     if (open === false) {
       playlistState.openEditPlaylist = false;
+      // Reset the cropper state when closing
+      cropperState.rootState.tempUrl = null;
+      cropState.rootState.src = null;
     }
   }}
 >
@@ -223,34 +154,19 @@
 
         <div class="mb-4 flex flex-col justify-center gap-4 sm:flex-row">
           <div class="relative m-6 flex justify-center">
-            {#if (playlist.thumbnail_maxres_url || playlist.thumbnail_url) && !$formData.isDeletingPlaylistImage}
+            {#if playlist.image_url && !$formData.isDeletingPlaylistImage}
               <div class="relative h-56 w-56">
-                {#if pendingCroppedImage}
-                  <!-- Show cropped preview -->
-                  <img 
-                    src={pendingCroppedImage} 
-                    alt="Cropped preview" 
-                    class="h-full w-full rounded-md object-cover"
-                  />
-                  <div class="absolute top-2 right-2">
-                    <div class="bg-yellow-500 text-white text-xs px-2 py-1 rounded">
-                      Changes Pending
-                    </div>
-                  </div>
-                {:else}
-                  <ImageCropper.Preview class="h-full w-full rounded-md" />
-                {/if}
+                <ImageCropper.Preview class="h-full w-full rounded-md" />
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger class="outline-none">
                     {#snippet child({ props })}
                       <Button
                         {...props}
-                        class="hover:bg-secondary \ absolute -right-3 -bottom-3 rounded-full opacity-75 transition-all
-                        duration-150 hover:scale-105 hover:opacity-100 hover:brightness-110"
+                        class="hover:bg-secondary absolute -right-3 -bottom-3 rounded-full hover:brightness-110"
                         variant="secondary"
                         size="icon"
                       >
-                        <Pencil class="size-4" />
+                        <EditIcon class="size-4" />
                       </Button>
                     {/snippet}
                   </DropdownMenu.Trigger>
@@ -294,10 +210,8 @@
                 </Popover.Trigger>
                 <Popover.Content align="start"
                   ><p class="text-sm">
-                    Playlist images can only be set to thumbnails of videos
-                    added to the playlist. Select a video to set it's thumbnail
-                    as the playlist image. The image can then be cropped using
-                    this button.
+                    Upload a new image or crop an existing video thumbnail as
+                    the playlist image.
                   </p>
                 </Popover.Content>
               </Popover.Root>
@@ -307,13 +221,7 @@
           <ImageCropper.Dialog>
             <ImageCropper.Cropper cropShape="rect" />
             <ImageCropper.Controls>
-              <Button
-                type="button"
-                onclick={handleImageCrop}
-                class="mr-2"
-              >
-                Apply Crop
-              </Button>
+              <ImageCropper.Crop />
               <ImageCropper.Cancel />
             </ImageCropper.Controls>
           </ImageCropper.Dialog>
@@ -404,6 +312,18 @@
                 {/snippet}
               </Form.Control>
             </Form.Field>
+            <!-- Add the hidden field for imageDataUrl -->
+            <Form.Field form={playlistForm} name="imageDataUrl">
+              <Form.Control>
+                {#snippet children({ props })}
+                  <Input
+                    {...props}
+                    hidden
+                    bind:value={$formData.imageDataUrl}
+                  />
+                {/snippet}
+              </Form.Control>
+            </Form.Field>
           </div>
         </div>
         {#if $flash?.message && $flash?.type === 'error'}
@@ -413,13 +333,9 @@
           </Alert.Root>
         {/if}
         <Dialog.Footer>
-          <Button type="submit" disabled={isSubmitting || isUploadingImage}>
-            {#if isUploadingImage}
-              <Loader class="animate-spin mr-2" />
-              Uploading Image...
-            {:else if isSubmitting}
-              <Loader class="animate-spin mr-2" />
-              Saving...
+          <Button type="submit">
+            {#if isSubmitting}
+              <Loader class="animate-spin" />
             {:else}
               Save Changes
             {/if}

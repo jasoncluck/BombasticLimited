@@ -521,7 +521,7 @@ COMMENT ON FUNCTION public.trigger_cleanup_optimized_images () IS 'Cleanup optim
 CREATE POLICY "Allow playlist image uploads" ON storage.objects
 FOR INSERT WITH CHECK (
   auth.role() = 'authenticated' AND
-  bucket_id = 'optimized-images' AND
+  bucket_id = 'content-images' AND
   (storage.foldername(name))[1] = 'playlist-images'
 );
 
