@@ -485,28 +485,81 @@ DROP TRIGGER IF EXISTS trigger_playlist_image_cleanup ON public.playlists;
 CREATE TRIGGER trigger_playlist_image_cleanup BEFORE DELETE ON public.playlists FOR EACH ROW
 EXECUTE FUNCTION public.trigger_cleanup_optimized_images ();
 
--- Function to update playlist with uploaded image
-CREATE OR REPLACE FUNCTION public.update_playlist_uploaded_image(
+
+-- Function to validate video thumbnails and update playlist image
+CREATE OR REPLACE FUNCTION public.validate_and_update_playlist_image(
   p_playlist_id bigint,
   p_image_url text,
+  p_video_thumbnail_url text DEFAULT NULL,
+  p_video_thumbnail_maxres_url text DEFAULT NULL,
   p_image_properties jsonb DEFAULT NULL
 ) RETURNS TABLE (
   success boolean,
   playlist_id bigint,
-  image_url text
+  image_url text,
+  error_message text
 ) LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+  thumbnail_exists boolean := false;
+  maxres_exists boolean := false;
+  validation_passed boolean := false;
+  error_msg text := NULL;
 BEGIN
-  -- Update playlist with uploaded image URL
+  -- Validate that at least one thumbnail URL was provided
+  IF p_video_thumbnail_url IS NULL AND p_video_thumbnail_maxres_url IS NULL THEN
+    error_msg := 'At least one video thumbnail URL must be provided for validation';
+    RETURN QUERY SELECT false, p_playlist_id, NULL::text, error_msg;
+    RETURN;
+  END IF;
+
+  -- Check if regular thumbnail URL exists in videos table
+  IF p_video_thumbnail_url IS NOT NULL THEN
+    SELECT EXISTS(
+      SELECT 1 FROM public.videos 
+      WHERE thumbnail_url = p_video_thumbnail_url
+    ) INTO thumbnail_exists;
+  END IF;
+
+  -- Check if maxres thumbnail URL exists in videos table
+  IF p_video_thumbnail_maxres_url IS NOT NULL THEN
+    SELECT EXISTS(
+      SELECT 1 FROM public.videos 
+      WHERE thumbnail_maxres_url = p_video_thumbnail_maxres_url
+    ) INTO maxres_exists;
+  END IF;
+
+  -- Validation passes if at least one provided thumbnail exists
+  validation_passed := (p_video_thumbnail_url IS NOT NULL AND thumbnail_exists) OR 
+                      (p_video_thumbnail_maxres_url IS NOT NULL AND maxres_exists);
+
+  IF NOT validation_passed THEN
+    error_msg := format('No matching video thumbnails found in database. Provided URLs: thumbnail=%s (exists: %s), maxres=%s (exists: %s)', 
+                       COALESCE(p_video_thumbnail_url, 'NULL'), 
+                       CASE WHEN p_video_thumbnail_url IS NOT NULL THEN thumbnail_exists::text ELSE 'N/A' END,
+                       COALESCE(p_video_thumbnail_maxres_url, 'NULL'),
+                       CASE WHEN p_video_thumbnail_maxres_url IS NOT NULL THEN maxres_exists::text ELSE 'N/A' END);
+    RETURN QUERY SELECT false, p_playlist_id, NULL::text, error_msg;
+    RETURN;
+  END IF;
+
+  -- Validation passed - update playlist with uploaded image URL
   UPDATE public.playlists 
   SET 
     image_url = p_image_url,
     image_properties = COALESCE(p_image_properties, image_properties),
-    image_processing_status = 'pending',
+    image_processing_status = 'completed'::public.image_processing_status,
     image_processing_updated_at = now()
   WHERE id = p_playlist_id;
   
+  -- Check if update was successful
+  IF NOT FOUND THEN
+    error_msg := format('Playlist with ID %s not found', p_playlist_id);
+    RETURN QUERY SELECT false, p_playlist_id, NULL::text, error_msg;
+    RETURN;
+  END IF;
+
   -- Return success result
-  RETURN QUERY SELECT true, p_playlist_id, p_image_url;
+  RETURN QUERY SELECT true, p_playlist_id, p_image_url, NULL::text;
 END;
 $$;
 

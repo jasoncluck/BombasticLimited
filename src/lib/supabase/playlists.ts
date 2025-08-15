@@ -19,6 +19,8 @@ import {
 import type { Source } from '$lib/constants/source';
 import { videoDurationToSeconds } from '$lib/components/video/video-service';
 import { IMAGES_BUCKET } from '$lib/constants/images';
+import { getCroppedPlaylistImageUrl } from '$lib/components/playlist/playlist-service';
+import type { ImageProperties } from '$lib/components/playlist/playlist';
 
 export const USER_PLAYLIST_LIMIT = 25;
 export const DEFAULT_NUM_PLAYLISTS_OVERVIEW = 5;
@@ -650,8 +652,6 @@ export async function deletePlaylist({
     p_playlist_id: playlistId,
   });
 
-  console.log(error);
-
   if (error) {
     console.error('Error when deleting playlists:', error);
   }
@@ -843,16 +843,19 @@ export async function updatePlaylistInfo({
 
 export async function updatePlaylistImage({
   playlistId,
-  thumbnailUrl,
-  thumbnailMaxResUrl,
+  videoThumbnailUrl,
+  imageProperties = null,
+  videoThumbnailMaxResUrl,
   supabase,
 }: {
   playlistId: number;
-  thumbnailUrl: string | null;
-  thumbnailMaxResUrl: string | null;
+  videoThumbnailUrl: string | null;
+  videoThumbnailMaxResUrl: string | null;
+  imageProperties?: ImageProperties;
   supabase: SupabaseClient<Database>;
 }) {
-  const isResetImage = thumbnailUrl === null && thumbnailMaxResUrl === null;
+  const isResetImage = !videoThumbnailMaxResUrl && !videoThumbnailUrl;
+
   if (isResetImage) {
     const { error } = await supabase
       .from('playlists')
@@ -861,6 +864,8 @@ export async function updatePlaylistImage({
         image_webp_url: null,
         image_avif_url: null,
         image_properties: null,
+        image_processing_status: null,
+        image_processing_updated_at: null,
       })
       .eq('id', playlistId)
       .select();
@@ -868,49 +873,118 @@ export async function updatePlaylistImage({
     return { error };
   }
 
-  // const { data: isValid, error: validationError } = await supabase.rpc(
-  //   'validate_playlist_thumbnail_urls',
-  //   {
-  //     p_playlist_id: playlistId,
-  //     p_thumbnail_maxres_url: thumbnailMaxResUrl ?? undefined,
-  //     p_thumbnail_url: thumbnailUrl ?? undefined,
-  //   }
-  // );
+  try {
+    // Step 1: Determine which image to process (prefer maxres)
+    const imageToProcess = videoThumbnailMaxResUrl || videoThumbnailUrl;
+    if (!imageToProcess) {
+      return {
+        updatedPlaylist: null,
+        error: new Error('No valid image URL to process'),
+      };
+    }
 
-  // if (validationError) {
-  //   console.error('Error validating URLs:', validationError);
-  //   return { error: validationError };
-  // }
+    // Step 2: Process the image using Sharp (you'll add this function next)
+    const processedImageDataUrl = await getCroppedPlaylistImageUrl({
+      imageProperties,
+      thumbnailMaxResUrl: videoThumbnailMaxResUrl,
+      thumbnailUrl: videoThumbnailUrl,
+    });
 
-  // if (!isValid) {
-  //   const error = {
-  //     message: 'Invalid image URLs. URLs must be from videos in this playlist.',
-  //     code: 'invalid_image_urls',
-  //   };
+    if (!processedImageDataUrl) {
+      throw new Error('Unable to process image, stopping.');
+    }
 
-  //   console.error(error);
-  //   return { error };
-  // }
+    // Step 3: Upload processed image to Supabase storage
+    const uploadResult = await uploadPlaylistImage({
+      playlistId,
+      imageUrl: processedImageDataUrl,
+      supabase,
+    });
 
-  // Playlists now only use uploaded images, not YouTube thumbnails
-  const error = {
-    message:
-      'Playlist images are now uploaded only. Use uploadPlaylistImage instead.',
-    code: 'deprecated_function',
-  };
+    if (uploadResult.error) {
+      console.error('Upload error:', uploadResult.error);
+      return {
+        updatedPlaylist: null,
+        error: uploadResult.error,
+      };
+    }
 
-  console.error(error);
-  return { error };
+    // Step 4: Validate thumbnails and update database with final URL
+    // This function validates the thumbnails exist before allowing the update
+    const { data: updateData, error: updateError } = await supabase.rpc(
+      'validate_and_update_playlist_image',
+      {
+        p_playlist_id: playlistId,
+        p_image_url: uploadResult.data?.publicUrl,
+        p_video_thumbnail_url: videoThumbnailUrl ?? null,
+        p_video_thumbnail_maxres_url: videoThumbnailMaxResUrl ?? null,
+        p_image_properties: null,
+      }
+    );
+
+    if (updateError) {
+      console.error('Database update error:', updateError);
+
+      // Clean up uploaded image if database update fails
+      try {
+        await supabase.storage
+          .from(IMAGES_BUCKET)
+          .remove([uploadResult.data?.imagePath || '']);
+      } catch (cleanupError) {
+        console.error('Failed to cleanup uploaded image:', cleanupError);
+      }
+
+      return {
+        updatedPlaylist: null,
+        error: updateError,
+      };
+    }
+
+    const result = updateData?.[0];
+
+    if (!result?.success) {
+      console.error('Validation failed:', result?.error_message);
+
+      // Clean up uploaded image if validation fails
+      try {
+        await supabase.storage
+          .from(IMAGES_BUCKET)
+          .remove([uploadResult.data?.imagePath || '']);
+      } catch (cleanupError) {
+        console.error('Failed to cleanup uploaded image:', cleanupError);
+      }
+
+      return {
+        updatedPlaylist: null,
+        error: new Error(`Validation failed: ${result?.error_message}`),
+      };
+    }
+
+    return {
+      updatedPlaylist: {
+        id: result?.playlist_id,
+        image_url: result?.image_url,
+        success: result?.success,
+      },
+      error: null,
+    };
+  } catch (error) {
+    console.error('Error in updatePlaylistImage:', error);
+    return {
+      updatedPlaylist: null,
+      error: error as Error,
+    };
+  }
 }
 
 export async function uploadPlaylistImage({
   playlistId,
-  imageDataUrl,
+  imageUrl,
   imageName,
   supabase,
 }: {
   playlistId: number;
-  imageDataUrl: string;
+  imageUrl: string;
   imageName?: string;
   supabase: SupabaseClient<Database>;
 }): Promise<{
@@ -923,7 +997,7 @@ export async function uploadPlaylistImage({
 }> {
   try {
     // Convert data URL to blob
-    const response = await fetch(imageDataUrl);
+    const response = await fetch(imageUrl);
     const blob = await response.blob();
 
     // Generate filename if not provided
@@ -972,61 +1046,6 @@ export async function uploadPlaylistImage({
     };
   } catch (error) {
     console.error('Upload playlist image error:', error);
-    return { error: error as Error };
-  }
-}
-
-/**
- * Crop a YouTube thumbnail using Sharp and upload as playlist image
- */
-export async function cropAndUploadYouTubeThumbnail({
-  playlistId,
-  thumbnailUrl,
-  thumbnailMaxResUrl,
-  imageProperties,
-  supabase,
-}: {
-  playlistId: number;
-  thumbnailUrl?: string | null;
-  thumbnailMaxResUrl?: string | null;
-  imageProperties?: PlaylistImageProperties | null;
-  supabase: SupabaseClient<Database>;
-}): Promise<{
-  data?: {
-    imagePath: string;
-    publicUrl: string;
-    success: boolean;
-  };
-  error?: Error | null;
-}> {
-  try {
-    // Import Sharp processing function dynamically to avoid client-side import
-    const { getCroppedPlaylistImageUrlServer } = await import('$lib/server/image-processing');
-    
-    // Use Sharp to crop the YouTube thumbnail
-    const croppedDataUrl = await getCroppedPlaylistImageUrlServer({
-      imageProperties: imageProperties || null,
-      thumbnailMaxResUrl: thumbnailMaxResUrl || null,
-      thumbnailUrl: thumbnailUrl || null,
-      options: {
-        format: 'jpeg',
-        quality: 95,
-      },
-    });
-
-    if (!croppedDataUrl) {
-      return { error: new Error('Failed to crop YouTube thumbnail') };
-    }
-
-    // Now upload the cropped image using the existing function
-    return uploadPlaylistImage({
-      playlistId,
-      imageDataUrl: croppedDataUrl,
-      imageName: `playlist-${playlistId}-cropped-${Date.now()}.jpg`,
-      supabase,
-    });
-  } catch (error) {
-    console.error('Crop and upload YouTube thumbnail error:', error);
     return { error: error as Error };
   }
 }

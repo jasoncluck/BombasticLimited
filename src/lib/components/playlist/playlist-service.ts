@@ -9,6 +9,7 @@ import {
   followPlaylist,
   PLAYLIST_VIDEO_LIMIT,
   unfollowPlaylist,
+  updatePlaylistImage,
   updatePlaylistPosition,
   updatePlaylistSort,
   updatePlaylistVideoPosition,
@@ -32,6 +33,7 @@ import {
 import { type ImageProperties } from './playlist';
 import type { SidebarState } from '$lib/state/sidebar.svelte';
 import { showToast } from '$lib/state/notifications.svelte';
+import { getCroppedImg } from '../ui/image-cropper/utils';
 
 export type PlaylistImages = Record<string, string | undefined>;
 
@@ -290,41 +292,33 @@ export async function handleRemoveVideosFromPlaylist({
 
 export async function handleUpdatePlaylistImage({
   playlist,
-  imageUrl,
   sidebarState,
+  thumbnailUrl,
+  thumbnailMaxResUrl,
   supabase,
 }: {
   playlist: Playlist;
   sidebarState: SidebarState;
-  imageUrl: string | null;
+  thumbnailUrl: string | null;
+  thumbnailMaxResUrl: string | null;
   supabase: SupabaseClient<Database>;
-}): Promise<{ error: Error | null }> {
-  const isResetImage = imageUrl === null;
-  if (isResetImage) {
-    playlist.image_url = null;
-    return { error: null };
-  }
-
-  console.log(imageUrl);
-
-  const { data, error } = await uploadPlaylistImage({
+}) {
+  const { updatedPlaylist, error } = await updatePlaylistImage({
     playlistId: playlist.id,
-    imageUrl,
+    videoThumbnailMaxResUrl: thumbnailMaxResUrl,
+    videoThumbnailUrl: thumbnailUrl,
     supabase,
   });
 
   if (error) {
-    showNotification('Unable to update playlist image');
-    return { error };
+    showNotification('Unable update playlist image');
   }
 
-  // Update the local playlist object
-  playlist.image_url = data?.publicUrl || null;
-
-  // Refresh data
+  // Refresh data to get server-processed images with AVIF support
+  // instead of using client-side processing
   await invalidate('supabase:db:videos');
   await sidebarState.refreshData();
-  return { error: null };
+  return { error };
 }
 
 export async function handleUpdatePlaylistVideoPosition({
@@ -503,4 +497,88 @@ export async function handleUpdatePlaylistSort({
   }
 
   return { updatedPlaylist, error };
+}
+
+// Functions for getting cropped playlist images in the browser for use when deferring image rendering
+export async function getCroppedPlaylistImageUrl({
+  imageProperties,
+  thumbnailMaxResUrl,
+  thumbnailUrl,
+}: {
+  imageProperties: ImageProperties | null;
+  thumbnailMaxResUrl: string | null;
+  thumbnailUrl?: string | null;
+}): Promise<string | null> {
+  const imageUrl = thumbnailMaxResUrl ?? thumbnailUrl;
+  if (!imageUrl) return null;
+
+  if (!imageProperties) {
+    imageProperties = thumbnailMaxResUrl
+      ? PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS
+      : PLAYLIST_IMAGE_CROP_DEFAULTS;
+  }
+
+  try {
+    // Try OffscreenCanvas first (more efficient)
+    if (
+      typeof OffscreenCanvas !== 'undefined' &&
+      typeof createImageBitmap !== 'undefined'
+    ) {
+      return await processWithOffscreenCanvas(imageUrl, imageProperties);
+    } else {
+      // Fallback to regular Canvas
+      return await getCroppedImg(imageUrl, imageProperties);
+    }
+  } catch (error) {
+    console.error('Browser image processing failed:', error);
+    return null;
+  }
+}
+
+async function processWithOffscreenCanvas(
+  imageUrl: string,
+  imageProperties: ImageProperties
+): Promise<string> {
+  const response = await fetch(imageUrl);
+  if (!response.ok) throw new Error('Failed to fetch image');
+
+  const imageBlob = await response.blob();
+  const imageBitmap = await createImageBitmap(imageBlob);
+
+  const canvas = new OffscreenCanvas(
+    imageProperties.width,
+    imageProperties.height
+  );
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) throw new Error('Failed to get canvas context');
+
+  ctx.drawImage(
+    imageBitmap,
+    imageProperties.x,
+    imageProperties.y,
+    imageProperties.width,
+    imageProperties.height,
+    0,
+    0,
+    imageProperties.width,
+    imageProperties.height
+  );
+
+  const blob = await canvas.convertToBlob({ type: 'image/webp', quality: 0.8 });
+  const arrayBuffer = await blob.arrayBuffer();
+
+  const uint8Array = new Uint8Array(arrayBuffer);
+  let binaryString = '';
+
+  // Process in chunks to avoid call stack overflow
+  const chunkSize = 8192;
+  for (let i = 0; i < uint8Array.length; i += chunkSize) {
+    const chunk = uint8Array.subarray(i, i + chunkSize);
+    binaryString += String.fromCharCode.apply(null, Array.from(chunk));
+  }
+
+  const base64 = btoa(binaryString);
+
+  return `data:image/webp;base64,${base64}`;
 }

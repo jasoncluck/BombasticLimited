@@ -142,11 +142,6 @@ export class NavigationCacheStateClass implements NavigationCacheState {
           const { type, routes } = event.data || {};
 
           if (type === 'PRELOADED_ROUTES_RESPONSE' && Array.isArray(routes)) {
-            console.log(
-              `Navigation Cache: Received ${routes.length} preloaded routes from SW:`,
-              routes
-            );
-
             // Mark all routes as preloaded
             routes.forEach((route) => {
               this.markRouteAsPreloaded(route);
@@ -197,9 +192,6 @@ export class NavigationCacheStateClass implements NavigationCacheState {
 
     switch (type) {
       case 'CACHE_UPDATED':
-        console.log(
-          `Route ${data?.url} was refreshed in background at ${data?.timestamp}`
-        );
         break;
       case 'CACHE_SET':
         // Let memory cache handle service worker messages
@@ -208,18 +200,12 @@ export class NavigationCacheStateClass implements NavigationCacheState {
       case 'ROUTE_PRELOADED':
         // Mark route as preloaded by the service worker
         if (event.data.route) {
-          if (import.meta.env.DEV) {
-            console.log(`SW: Route marked as preloaded: ${event.data.route}`);
-          }
           this.markRouteAsPreloaded(event.data.route);
         }
         break;
       case 'STORE_PRELOADED_ROUTES':
         // Handle preloaded routes data from service worker
         if (event.data.data?.routes) {
-          console.log(
-            `Navigation Cache: Storing ${event.data.data.routes.length} preloaded routes from SW`
-          );
           event.data.data.routes.forEach((route: string) => {
             this.markRouteAsPreloaded(route);
           });
@@ -240,10 +226,6 @@ export class NavigationCacheStateClass implements NavigationCacheState {
             ? 'anon'
             : null;
       const newAuthState = isAuthenticated ? 'auth' : 'anon';
-
-      console.log(
-        `Auth status changed from ${this.lastAuthStatus} to ${isAuthenticated}`
-      );
 
       this.lastAuthStatus = isAuthenticated;
 
@@ -271,10 +253,6 @@ export class NavigationCacheStateClass implements NavigationCacheState {
 
     // Clear preloaded routes since they might be auth-specific
     this.preloadedRoutes.clear();
-
-    console.log(
-      `Navigation Cache: Cleared cache data for auth state change: ${oldAuthState} -> ${newAuthState}`
-    );
   }
 
   private notifyServiceWorkerOfAuthChange(
@@ -289,10 +267,6 @@ export class NavigationCacheStateClass implements NavigationCacheState {
           newAuthState: newAuthState,
           timestamp: Date.now(),
         });
-
-        console.log(
-          `Notified service worker of auth state change: ${oldAuthState} -> ${newAuthState}`
-        );
       } catch (error) {
         console.warn(
           'Failed to notify service worker of auth state change:',
@@ -426,20 +400,8 @@ export class NavigationCacheStateClass implements NavigationCacheState {
       // For main routes, assume they're likely cached if service worker is active
       // This prevents showing loading overlay for routes that are probably cached
       if (this.serviceWorkerReady) {
-        if (import.meta.env.DEV) {
-          console.log(
-            `Assuming main route ${pathname} is cached by service worker`
-          );
-        }
         return true;
       }
-    }
-
-    // Debug logging (temporary)
-    if (import.meta.env.DEV) {
-      console.log(
-        `Cache miss: ${pathname} (preloaded routes: ${Array.from(this.preloadedRoutes).join(', ')}, memory entries: ${this.memoryCache.getStats().entries})`
-      );
     }
 
     return false;
@@ -565,13 +527,6 @@ export class NavigationCacheStateClass implements NavigationCacheState {
   private markRouteAsPreloaded(url: string): void {
     const pathname = extractPathname(url);
     this.preloadedRoutes.add(pathname);
-
-    // Debug logging (temporary)
-    if (import.meta.env.DEV) {
-      console.log(
-        `Route marked as preloaded: ${pathname} (total: ${this.preloadedRoutes.size})`
-      );
-    }
   }
 
   private isRoutePreloaded(url: string): boolean {

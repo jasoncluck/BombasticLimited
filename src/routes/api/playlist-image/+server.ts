@@ -1,4 +1,7 @@
-import { getCroppedPlaylistImageUrlServer, validateImageUrl } from '$lib/server/image-processing';
+import {
+  getCroppedPlaylistImageUrlServer,
+  validateImageUrl,
+} from '$lib/server/image-processing';
 import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import { parseImageProperties } from '$lib/components/playlist/playlist';
 import type { RequestHandler } from './$types';
@@ -8,7 +11,9 @@ export const GET: RequestHandler = async ({ url, request }) => {
   const thumbnailUrl = url.searchParams.get('url');
   const thumbnailMaxResUrl = url.searchParams.get('maxresUrl');
   const responseType = url.searchParams.get('type') || 'image'; // 'image' or 'json'
-  const format = url.searchParams.get('format') as 'auto' | 'webp' | 'jpeg' | 'avif' || 'auto';
+  const format =
+    (url.searchParams.get('format') as 'auto' | 'webp' | 'jpeg' | 'avif') ||
+    'auto';
   const quality = parseInt(url.searchParams.get('quality') || '90');
   const imagePropertiesParam = url.searchParams.get('imageProperties');
 
@@ -31,7 +36,9 @@ export const GET: RequestHandler = async ({ url, request }) => {
     let imageProperties = null;
     if (imagePropertiesParam) {
       try {
-        imageProperties = parseImageProperties(JSON.parse(decodeURIComponent(imagePropertiesParam)));
+        imageProperties = parseImageProperties(
+          JSON.parse(decodeURIComponent(imagePropertiesParam))
+        );
       } catch (err) {
         console.warn('Failed to parse image properties:', err);
       }
@@ -39,7 +46,7 @@ export const GET: RequestHandler = async ({ url, request }) => {
 
     // Get Accept header for format detection
     const acceptHeader = request.headers.get('accept');
-    
+
     // Process playlist image with cropping using Sharp
     const dataUrl = await getCroppedPlaylistImageUrlServer({
       imageProperties,
@@ -65,21 +72,22 @@ export const GET: RequestHandler = async ({ url, request }) => {
       }
 
       const imageBuffer = Buffer.from(base64Data, 'base64');
-      
+
       // Determine content type from data URL
       const mimeType = dataUrl.split(';')[0].split(':')[1] || 'image/webp';
 
       // Determine the actual format used for ETag generation
-      const actualFormat = format === 'auto' ? detectOptimalFormat(acceptHeader) : format;
+      const actualFormat =
+        format === 'auto' ? detectOptimalFormat(acceptHeader) : format;
 
       // Create cache key from all parameters that affect the output
       const cacheKeyParams = [
         effectiveUrl,
         actualFormat,
         quality,
-        imagePropertiesParam || 'default'
+        imagePropertiesParam || 'default',
       ].join('|');
-      
+
       return new Response(imageBuffer, {
         headers: {
           'Content-Type': mimeType,
@@ -92,17 +100,22 @@ export const GET: RequestHandler = async ({ url, request }) => {
     }
 
     // Return JSON (for backwards compatibility)
-    const actualFormat = format === 'auto' ? detectOptimalFormat(acceptHeader) : format;
-    return json({ 
-      webpUrl: dataUrl,
-      format: actualFormat,
-      originalUrl: effectiveUrl 
-    }, {
-      headers: {
-        'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800', // 24h cache, 7d stale
-        Vary: 'Accept',
+    const actualFormat =
+      format === 'auto' ? detectOptimalFormat(acceptHeader) : format;
+    return json(
+      {
+        webpUrl: dataUrl,
+        format: actualFormat,
+        originalUrl: effectiveUrl,
       },
-    });
+      {
+        headers: {
+          'Cache-Control':
+            'public, max-age=86400, stale-while-revalidate=604800', // 24h cache, 7d stale
+          Vary: 'Accept',
+        },
+      }
+    );
   } catch (err) {
     console.error('Playlist image processing error:', err);
     throw error(500, 'Internal server error');

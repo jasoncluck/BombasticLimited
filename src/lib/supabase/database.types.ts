@@ -680,7 +680,7 @@ export type Database = {
           description: string
           duration: string
           id: string
-          image_processing_status: string
+          image_processing_status: Database["public"]["Enums"]["image_processing_status"]
           playlist_name: string
           playlist_short_id: string
           playlist_sort_order: Database["public"]["Enums"]["playlist_sort_order"]
@@ -944,7 +944,7 @@ export type Database = {
           description: string
           duration: string
           id: string
-          image_processing_status: string
+          image_processing_status: Database["public"]["Enums"]["image_processing_status"]
           playlist_id: number
           published_at: string
           source: Database["public"]["Enums"]["source"]
@@ -1114,7 +1114,7 @@ export type Database = {
           description: string
           duration: string
           id: string
-          image_processing_status: string
+          image_processing_status: Database["public"]["Enums"]["image_processing_status"]
           published_at: string
           search_rank: number
           source: Database["public"]["Enums"]["source"]
@@ -1184,18 +1184,6 @@ export type Database = {
           youtube_id: string
         }[]
       }
-      update_playlist_uploaded_image: {
-        Args: {
-          p_image_properties?: Json
-          p_image_url: string
-          p_playlist_id: number
-        }
-        Returns: {
-          image_url: string
-          playlist_id: number
-          success: boolean
-        }[]
-      }
       update_playlist_videos_positions: {
         Args: {
           p_new_position: number
@@ -1244,6 +1232,21 @@ export type Database = {
           updated_at: string
           user_id: string
           video_id: string
+        }[]
+      }
+      validate_and_update_playlist_image: {
+        Args: {
+          p_image_properties?: Json
+          p_image_url: string
+          p_playlist_id: number
+          p_video_thumbnail_maxres_url?: string
+          p_video_thumbnail_url?: string
+        }
+        Returns: {
+          error_message: string
+          image_url: string
+          playlist_id: number
+          success: boolean
         }[]
       }
     }

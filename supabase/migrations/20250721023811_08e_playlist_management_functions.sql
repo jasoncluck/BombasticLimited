@@ -854,6 +854,7 @@ BEGIN
 END;
 $$;
 
+
 -- Function to update playlist video positions  
 CREATE OR REPLACE FUNCTION "public"."update_playlist_videos_positions" (
   "p_playlist_id" int8,

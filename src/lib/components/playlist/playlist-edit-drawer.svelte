@@ -79,16 +79,18 @@
         cropperState.rootState.tempUrl!,
         cropState.rootState.pixelCrop!
       );
-      
+
       // Convert canvas to data URL for storage until form submission
       const croppedDataUrl = croppedCanvas.toDataURL('image/jpeg', 0.9);
       pendingCroppedImage = croppedDataUrl;
-      
+
       // Close the cropper dialog
       cropperState.rootState.open = false;
-      
+
       // Update the image properties to reflect the new crop
-      $formData.image_properties = JSON.stringify(cropState.rootState.pixelCrop);
+      $formData.image_properties = JSON.stringify(
+        cropState.rootState.pixelCrop
+      );
     } catch (error) {
       console.error('Error cropping image:', error);
     }
@@ -101,50 +103,17 @@
     async onSubmit() {
       $flash = undefined;
       isSubmitting = true;
-      
+
       // Handle pending cropped image upload before form submission
       if (pendingCroppedImage && session?.user?.id) {
         isUploadingImage = true;
-        try {
-          // Upload cropped image to storage
-          const uploadResult = await uploadPlaylistImage({
-            playlistId: playlist.id,
-            dataURL: pendingCroppedImage,
-            supabase: page.data.supabase,
-          });
-
-          if (!uploadResult.success) {
-            console.error('Image upload failed:', uploadResult.error);
-            // Continue with form submission even if image upload fails
-          } else {
-            // Update playlist with new image path using RPC function
-            const { error: updateError } = await page.data.supabase.rpc(
-              'update_playlist_uploaded_image',
-              {
-                p_playlist_id: playlist.id,
-                p_image_url: uploadResult.imagePath!,
-                p_image_properties: cropState.rootState.pixelCrop,
-              }
-            );
-
-            if (updateError) {
-              console.error('Failed to update playlist image:', updateError);
-            } else {
-              // Update local playlist object
-              playlist.image_path = uploadResult.imagePath!;
-              playlist.image_properties = JSON.stringify(cropState.rootState.pixelCrop);
-
-              // Clear YouTube thumbnail URLs since we now have uploaded image
-              playlist.thumbnail_url = null;
-              playlist.thumbnail_maxres_url = null;
-            }
-          }
-        } catch (error) {
-          console.error('Upload error:', error);
-        } finally {
-          isUploadingImage = false;
-          pendingCroppedImage = null;
-        }
+        // TODO: FIX
+        // Upload cropped image to storage
+        // const uploadResult = await uploadPlaylistImage({
+        //   playlistId: playlist.id,
+        //   dataURL: pendingCroppedImage,
+        //   supabase: page.data.supabase,
+        // });
       }
     },
     async onUpdated(event) {
@@ -156,11 +125,10 @@
         // Update playlist object with new data including image_properties
         const updatedPlaylist = Object.assign(playlist, data);
         if (isDeletingPlaylistImage) {
-          updatedPlaylist.thumbnail_url = null;
-          updatedPlaylist.thumbnail_maxres_url = null;
+          updatedPlaylist.image_url = null;
           updatedPlaylist.image_properties = null;
         }
-        
+
         // Force reactive update by creating new object reference if image_properties changed
         if (data.image_properties !== playlist.image_properties) {
           // Create new playlist object to trigger reactivity in PlaylistImage component
@@ -252,13 +220,15 @@
                 <div class="relative h-56 w-56">
                   {#if pendingCroppedImage}
                     <!-- Show cropped preview -->
-                    <img 
-                      src={pendingCroppedImage} 
-                      alt="Cropped preview" 
+                    <img
+                      src={pendingCroppedImage}
+                      alt="Cropped preview"
                       class="h-full w-full rounded-md object-cover"
                     />
                     <div class="absolute top-2 right-2">
-                      <div class="bg-yellow-500 text-white text-xs px-2 py-1 rounded">
+                      <div
+                        class="rounded bg-yellow-500 px-2 py-1 text-xs text-white"
+                      >
                         Changes Pending
                       </div>
                     </div>
@@ -333,11 +303,7 @@
             <ImageCropper.Dialog>
               <ImageCropper.Cropper cropShape="rect" />
               <ImageCropper.Controls>
-                <Button
-                  type="button"
-                  onclick={handleImageCrop}
-                  class="mr-2"
-                >
+                <Button type="button" onclick={handleImageCrop} class="mr-2">
                   Apply Crop
                 </Button>
                 <ImageCropper.Cancel />
@@ -450,12 +416,16 @@
         <div class="p-4">
           <div class="flex flex-col gap-2">
             <Drawer.Footer class="drawer-footer flex gap-2">
-              <Button type="submit" class="drawer-button-footer" disabled={isSubmitting || isUploadingImage}>
+              <Button
+                type="submit"
+                class="drawer-button-footer"
+                disabled={isSubmitting || isUploadingImage}
+              >
                 {#if isUploadingImage}
-                  <Loader class="animate-spin mr-2" />
+                  <Loader class="mr-2 animate-spin" />
                   Uploading Image...
                 {:else if isSubmitting}
-                  <Loader class="animate-spin mr-2" />
+                  <Loader class="mr-2 animate-spin" />
                   Saving...
                 {:else}
                   Save Changes
