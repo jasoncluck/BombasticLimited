@@ -70,8 +70,11 @@ export const playlistSchema = z.object({
   id: z.number(),
   type: z.enum(PLAYLIST_TYPES).default('Private'),
   isDeletingPlaylistImage: z.boolean().default(false),
-  // Add support for base64 image data
+  // Add support for base64 image data (frontend cropping)
   imageDataUrl: z.string().optional(),
+  // Add support for YouTube thumbnail URLs (server-side cropping)
+  thumbnailUrl: z.string().optional(),
+  thumbnailMaxResUrl: z.string().optional(),
 });
 
 export type PlaylistSchema = z.infer<typeof playlistSchema>;

@@ -1,4 +1,5 @@
-import { getCroppedPlaylistImageUrlServer, detectOptimalFormat, validateImageUrl } from '$lib/server/image-processing';
+import { getCroppedPlaylistImageUrlServer, validateImageUrl } from '$lib/server/image-processing';
+import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import { parseImageProperties } from '$lib/components/playlist/playlist';
 import type { RequestHandler } from './$types';
 import { error, json } from '@sveltejs/kit';

@@ -1005,9 +1005,9 @@ export async function cropAndUploadYouTubeThumbnail({
     
     // Use Sharp to crop the YouTube thumbnail
     const croppedDataUrl = await getCroppedPlaylistImageUrlServer({
-      imageProperties,
-      thumbnailMaxResUrl,
-      thumbnailUrl,
+      imageProperties: imageProperties || null,
+      thumbnailMaxResUrl: thumbnailMaxResUrl || null,
+      thumbnailUrl: thumbnailUrl || null,
       options: {
         format: 'jpeg',
         quality: 95,

@@ -4,6 +4,7 @@ import {
   updatePlaylistImage,
   updatePlaylistInfo,
   uploadPlaylistImage,
+  cropAndUploadYouTubeThumbnail,
   type PlaylistVideo,
 } from '$lib/supabase/playlists';
 import { type Actions, type RequestEvent } from '@sveltejs/kit';
@@ -122,6 +123,9 @@ export const actions: Actions = {
       isDeletingPlaylistImage,
       type,
       imageDataUrl,
+      image_properties,
+      thumbnailUrl,
+      thumbnailMaxResUrl,
     } = form.data;
 
     const filter = new Filter();
@@ -173,7 +177,7 @@ export const actions: Actions = {
       }
     }
 
-    // Handle new image upload if imageDataUrl is provided
+    // Handle new image upload if imageDataUrl is provided (frontend cropping scenario)
     if (imageDataUrl && imageDataUrl.startsWith('data:')) {
       try {
         const uploadResult = await uploadPlaylistImage({
@@ -209,6 +213,48 @@ export const actions: Actions = {
           {
             type: 'error',
             message: 'Failed to process image. Please try again.',
+          },
+          cookies
+        );
+        return fail(400, { form });
+      }
+    }
+    // Handle YouTube thumbnail cropping scenario
+    else if ((thumbnailUrl || thumbnailMaxResUrl) && image_properties) {
+      try {
+        const cropResult = await cropAndUploadYouTubeThumbnail({
+          playlistId: id,
+          thumbnailUrl,
+          thumbnailMaxResUrl,
+          imageProperties: image_properties,
+          supabase,
+        });
+
+        if (cropResult.error) {
+          console.error('YouTube thumbnail crop error:', cropResult.error);
+          setFlash(
+            {
+              type: 'error',
+              message: 'Failed to crop and upload thumbnail. Please try again.',
+            },
+            cookies
+          );
+          return fail(400, { form });
+        }
+
+        setFlash(
+          {
+            type: 'success',
+            message: 'Playlist thumbnail cropped and uploaded successfully.',
+          },
+          cookies
+        );
+      } catch (error) {
+        console.error('YouTube thumbnail processing error:', error);
+        setFlash(
+          {
+            type: 'error',
+            message: 'Failed to process thumbnail. Please try again.',
           },
           cookies
         );
