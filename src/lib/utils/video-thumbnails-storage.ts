@@ -108,8 +108,8 @@ export function getOptimizedPlaylistImageUrl(
   }
 
   // Try original uploaded image
-  if (paths.image_path) {
-    const url = getStorageUrl(paths.image_path, supabase);
+  if (paths.image_url) {
+    const url = getStorageUrl(paths.image_url, supabase);
     if (url) {
       return { url, format: 'jpeg', source: 'storage' };
     }
@@ -264,32 +264,23 @@ export async function queueVideoImageProcessing(
 }
 
 /**
- * Queue image processing for a playlist
+ * Queue image processing for a playlist (uploaded images only)
  */
 export async function queuePlaylistImageProcessing(
   playlistId: string,
-  thumbnailUrl: string | null,
-  thumbnailMaxresUrl: string | null,
+  imageUrl: string | null,
+  _maxresUrl: string | null = null, // Ignored for backward compatibility
   priority: number = 100
 ): Promise<void> {
   const jobs = [];
 
-  if (thumbnailUrl) {
+  // Only process uploaded images for playlists
+  if (imageUrl) {
     jobs.push({
       entityType: 'playlist' as const,
       entityId: playlistId,
-      imageType: 'thumbnail' as const,
-      sourceUrl: thumbnailUrl,
-      priority,
-    });
-  }
-
-  if (thumbnailMaxresUrl) {
-    jobs.push({
-      entityType: 'playlist' as const,
-      entityId: playlistId,
-      imageType: 'thumbnail_maxres' as const,
-      sourceUrl: thumbnailMaxresUrl,
+      imageType: 'uploaded_image' as const,
+      sourceUrl: imageUrl,
       priority,
     });
   }

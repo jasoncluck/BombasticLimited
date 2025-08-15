@@ -56,17 +56,19 @@ export async function onVideoUpdated(video: {
  */
 export async function onPlaylistCreated(playlist: {
   id: string;
-  thumbnail_url: string | null;
-  thumbnail_maxres_url: string | null;
+  image_url: string | null;
 }): Promise<void> {
   try {
-    await queuePlaylistImageProcessing(
-      playlist.id.toString(),
-      playlist.thumbnail_url,
-      playlist.thumbnail_maxres_url,
-      50 // Higher priority for new content
-    );
-    console.log(`Queued image processing for playlist: ${playlist.id}`);
+    // Only process if playlist has uploaded image
+    if (playlist.image_url) {
+      await queuePlaylistImageProcessing(
+        playlist.id.toString(),
+        playlist.image_url,
+        null, // No maxres for uploaded images
+        50 // Higher priority for new content
+      );
+      console.log(`Queued image processing for playlist: ${playlist.id}`);
+    }
   } catch (error) {
     console.error(
       `Failed to queue image processing for playlist ${playlist.id}:`,
@@ -76,21 +78,23 @@ export async function onPlaylistCreated(playlist: {
 }
 
 /**
- * Hook to queue image processing when a playlist is updated with new thumbnails
+ * Hook to queue image processing when a playlist is updated with new images
  */
 export async function onPlaylistUpdated(playlist: {
   id: string;
-  thumbnail_url: string | null;
-  thumbnail_maxres_url: string | null;
+  image_url: string | null;
 }): Promise<void> {
   try {
-    await queuePlaylistImageProcessing(
-      playlist.id.toString(),
-      playlist.thumbnail_url,
-      playlist.thumbnail_maxres_url,
-      75 // Medium priority for updates
-    );
-    console.log(`Queued image processing for updated playlist: ${playlist.id}`);
+    // Only process if playlist has uploaded image
+    if (playlist.image_url) {
+      await queuePlaylistImageProcessing(
+        playlist.id.toString(),
+        playlist.image_url,
+        null, // No maxres for uploaded images
+        75 // Medium priority for updates
+      );
+      console.log(`Queued image processing for updated playlist: ${playlist.id}`);
+    }
   } catch (error) {
     console.error(
       `Failed to queue image processing for updated playlist ${playlist.id}:`,

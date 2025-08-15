@@ -125,7 +125,7 @@
                 'update_playlist_uploaded_image',
                 {
                   p_playlist_id: playlist.id,
-                  p_image_path: uploadResult.imagePath!,
+                  p_image_url: uploadResult.imagePath!,
                   p_image_properties: cropState.rootState.pixelCrop,
                 }
               );
