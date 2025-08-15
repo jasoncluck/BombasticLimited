@@ -905,12 +905,12 @@ export async function updatePlaylistImage({
 
 export async function uploadPlaylistImage({
   playlistId,
-  imageUrl,
+  imageDataUrl,
   imageName,
   supabase,
 }: {
   playlistId: number;
-  imageUrl: string;
+  imageDataUrl: string;
   imageName?: string;
   supabase: SupabaseClient<Database>;
 }): Promise<{
@@ -923,14 +923,12 @@ export async function uploadPlaylistImage({
 }> {
   try {
     // Convert data URL to blob
-    const response = await fetch(imageUrl);
+    const response = await fetch(imageDataUrl);
     const blob = await response.blob();
 
     // Generate filename if not provided
     const fileName = imageName || `playlist-${playlistId}-${Date.now()}.jpg`;
     const filePath = `playlist-images/${fileName}`;
-
-    console.log('JMC TEST BEFORE');
 
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
@@ -939,9 +937,6 @@ export async function uploadPlaylistImage({
         contentType: 'image/jpeg',
         upsert: true,
       });
-
-    console.log('JMC TEST');
-    console.log(uploadError);
 
     if (uploadError) {
       console.error('Upload error:', uploadError);
@@ -952,8 +947,6 @@ export async function uploadPlaylistImage({
     const { data: publicUrl } = supabase.storage
       .from(IMAGES_BUCKET)
       .getPublicUrl(uploadData.path);
-
-    console.log('Full public URL:', publicUrl.publicUrl);
 
     // Update playlist with the full public URL - no need for image_properties since image is already processed
     const { data: updateData, error: updateError } = await supabase
@@ -979,6 +972,61 @@ export async function uploadPlaylistImage({
     };
   } catch (error) {
     console.error('Upload playlist image error:', error);
+    return { error: error as Error };
+  }
+}
+
+/**
+ * Crop a YouTube thumbnail using Sharp and upload as playlist image
+ */
+export async function cropAndUploadYouTubeThumbnail({
+  playlistId,
+  thumbnailUrl,
+  thumbnailMaxResUrl,
+  imageProperties,
+  supabase,
+}: {
+  playlistId: number;
+  thumbnailUrl?: string | null;
+  thumbnailMaxResUrl?: string | null;
+  imageProperties?: PlaylistImageProperties | null;
+  supabase: SupabaseClient<Database>;
+}): Promise<{
+  data?: {
+    imagePath: string;
+    publicUrl: string;
+    success: boolean;
+  };
+  error?: Error | null;
+}> {
+  try {
+    // Import Sharp processing function dynamically to avoid client-side import
+    const { getCroppedPlaylistImageUrlServer } = await import('$lib/server/image-processing');
+    
+    // Use Sharp to crop the YouTube thumbnail
+    const croppedDataUrl = await getCroppedPlaylistImageUrlServer({
+      imageProperties,
+      thumbnailMaxResUrl,
+      thumbnailUrl,
+      options: {
+        format: 'jpeg',
+        quality: 95,
+      },
+    });
+
+    if (!croppedDataUrl) {
+      return { error: new Error('Failed to crop YouTube thumbnail') };
+    }
+
+    // Now upload the cropped image using the existing function
+    return uploadPlaylistImage({
+      playlistId,
+      imageDataUrl: croppedDataUrl,
+      imageName: `playlist-${playlistId}-cropped-${Date.now()}.jpg`,
+      supabase,
+    });
+  } catch (error) {
+    console.error('Crop and upload YouTube thumbnail error:', error);
     return { error: error as Error };
   }
 }
