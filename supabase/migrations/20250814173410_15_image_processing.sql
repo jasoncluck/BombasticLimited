@@ -522,3 +522,31 @@ COMMENT ON FUNCTION public.trigger_queue_video_image_processing () IS 'Automatic
 COMMENT ON FUNCTION public.trigger_queue_playlist_image_processing () IS 'Automatically queue image processing jobs when playlist thumbnails are added/updated';
 
 COMMENT ON FUNCTION public.trigger_cleanup_optimized_images () IS 'Cleanup optimized images and processing jobs when entities are deleted';
+
+-- Policy for playlist images bucket
+CREATE POLICY "Allow playlist image uploads" ON storage.objects
+FOR INSERT WITH CHECK (
+  auth.role() = 'authenticated' AND
+  bucket_id = 'optimized-images' AND
+  (storage.foldername(name))[1] = 'playlist-images'
+);
+
+-- Policy for reading playlist images
+CREATE POLICY "Allow playlist image reads" ON storage.objects
+FOR SELECT USING (
+  auth.role() = 'authenticated' AND
+  bucket_id = 'optimized-images' AND
+  (storage.foldername(name))[1] = 'playlist-images'
+);
+
+-- Policy for updating playlist images (for upsert)
+CREATE POLICY "Allow playlist image updates" ON storage.objects
+FOR UPDATE USING (
+  auth.role() = 'authenticated' AND
+  bucket_id = 'optimized-images' AND
+  (storage.foldername(name))[1] = 'playlist-images'
+) WITH CHECK (
+  auth.role() = 'authenticated' AND
+  bucket_id = 'optimized-images' AND
+  (storage.foldername(name))[1] = 'playlist-images'
+);

@@ -869,7 +869,6 @@ export async function updatePlaylistImage({
     return { error };
   }
 
-  // This function is obsolete - playlists now only use uploaded images
   // const { data: isValid, error: validationError } = await supabase.rpc(
   //   'validate_playlist_thumbnail_urls',
   //   {
@@ -896,7 +895,8 @@ export async function updatePlaylistImage({
 
   // Playlists now only use uploaded images, not YouTube thumbnails
   const error = {
-    message: 'Playlist images are now uploaded only. Use uploadPlaylistImage instead.',
+    message:
+      'Playlist images are now uploaded only. Use uploadPlaylistImage instead.',
     code: 'deprecated_function',
   };
 
@@ -921,11 +921,11 @@ export async function uploadPlaylistImage({
     // Convert data URL to blob
     const response = await fetch(imageDataUrl);
     const blob = await response.blob();
-    
+
     // Generate filename if not provided
     const fileName = imageName || `playlist-${playlistId}-${Date.now()}.jpg`;
     const filePath = `playlist-images/${fileName}`;
-    
+
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('optimized-images')
@@ -933,32 +933,32 @@ export async function uploadPlaylistImage({
         contentType: 'image/jpeg',
         upsert: true,
       });
-      
+
     if (uploadError) {
       console.error('Upload error:', uploadError);
       return { error: uploadError };
     }
-    
+
     // Update playlist with uploaded image URL using RPC function
     const { data: updateData, error: updateError } = await supabase.rpc(
       'update_playlist_uploaded_image',
       {
         p_playlist_id: playlistId,
         p_image_url: uploadData.path,
-        p_image_properties: imageProperties || null,
+        p_image_properties: JSON.stringify(imageProperties) || null,
       }
     );
-    
+
     if (updateError) {
       console.error('Database update error:', updateError);
       return { error: updateError };
     }
-    
-    return { 
-      data: { 
+
+    return {
+      data: {
         imagePath: uploadData.path,
-        success: updateData?.[0]?.success || false 
-      } 
+        success: updateData?.[0]?.success || false,
+      },
     };
   } catch (error) {
     console.error('Upload playlist image error:', error);

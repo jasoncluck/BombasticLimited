@@ -13,6 +13,7 @@ import {
   updatePlaylistPosition,
   updatePlaylistSort,
   updatePlaylistVideoPosition,
+  uploadPlaylistImage,
   USER_PLAYLIST_LIMIT,
   type Playlist,
   type PlaylistVideo,
@@ -293,7 +294,7 @@ export async function handleUpdatePlaylistImage({
   supabase,
 }: {
   playlist: Playlist;
-  thumbnailUrl: string | null;
+  thumbnailUrl: string;
   sidebarState: SidebarState;
   thumbnailMaxResUrl: string | null;
   supabase: SupabaseClient<Database>;
@@ -303,10 +304,9 @@ export async function handleUpdatePlaylistImage({
     playlist.processedImageUrl = null;
   }
 
-  const { updatedPlaylist, error } = await updatePlaylistImage({
+  const { updatedPlaylist, error } = await uploadPlaylistImage({
     playlistId: playlist.id,
-    thumbnailUrl,
-    thumbnailMaxResUrl,
+    imageDataUrl: thumbnailMaxResUrl ?? thumbnailUrl,
     supabase,
   });
 
