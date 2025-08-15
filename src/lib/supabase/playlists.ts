@@ -21,6 +21,7 @@ import { videoDurationToSeconds } from '$lib/components/video/video-service';
 import { IMAGES_BUCKET } from '$lib/constants/images';
 import { getCroppedPlaylistImageUrl } from '$lib/components/playlist/playlist-service';
 import type { ImageProperties } from '$lib/components/playlist/playlist';
+import { browser } from '$app/environment';
 
 export const USER_PLAYLIST_LIMIT = 25;
 export const DEFAULT_NUM_PLAYLISTS_OVERVIEW = 5;
@@ -841,17 +842,21 @@ export async function updatePlaylistInfo({
   return { updatedPlaylist, error };
 }
 
+/**
+ * Update a playlist image. Playlist images must be cropped so a processed cropped image
+ * must be passed as an argument.
+ */
 export async function updatePlaylistImage({
   playlistId,
+  processedPlaylistImage,
   videoThumbnailUrl,
-  imageProperties = null,
   videoThumbnailMaxResUrl,
   supabase,
 }: {
   playlistId: number;
+  processedPlaylistImage: string | null;
   videoThumbnailUrl: string | null;
   videoThumbnailMaxResUrl: string | null;
-  imageProperties?: ImageProperties;
   supabase: SupabaseClient<Database>;
 }) {
   const isResetImage = !videoThumbnailMaxResUrl && !videoThumbnailUrl;
@@ -883,21 +888,15 @@ export async function updatePlaylistImage({
       };
     }
 
-    // Step 2: Process the image using Sharp (you'll add this function next)
-    const processedImageDataUrl = await getCroppedPlaylistImageUrl({
-      imageProperties,
-      thumbnailMaxResUrl: videoThumbnailMaxResUrl,
-      thumbnailUrl: videoThumbnailUrl,
-    });
-
-    if (!processedImageDataUrl) {
-      throw new Error('Unable to process image, stopping.');
+    // TODO: If the playlist is removed this will likely be hit
+    if (!processedPlaylistImage) {
+      throw new Error('Unable to process image, preventing upload.');
     }
 
     // Step 3: Upload processed image to Supabase storage
     const uploadResult = await uploadPlaylistImage({
       playlistId,
-      imageUrl: processedImageDataUrl,
+      imageUrl: processedPlaylistImage,
       supabase,
     });
 
@@ -921,6 +920,9 @@ export async function updatePlaylistImage({
         p_image_properties: null,
       }
     );
+
+    console.log('JMC AFTER UPDATE');
+    console.log(updateData);
 
     if (updateError) {
       console.error('Database update error:', updateError);

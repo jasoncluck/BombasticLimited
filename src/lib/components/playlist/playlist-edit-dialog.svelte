@@ -11,7 +11,7 @@
   import { Button } from '$lib/components/ui/button';
   import type { Playlist } from '$lib/supabase/playlists';
   import { zodClient } from 'sveltekit-superforms/adapters';
-  import { EditIcon, ListVideo, Loader } from '@lucide/svelte';
+  import { ListVideo, Loader, Pencil } from '@lucide/svelte';
   import Textarea from '$lib/components/ui/textarea/textarea.svelte';
   import * as ImageCropper from '$lib/components/ui/image-cropper';
   import {
@@ -25,11 +25,12 @@
   import ScrollArea from '../ui/scroll-area/scroll-area.svelte';
   import { getFlash, updateFlash } from 'sveltekit-flash-message';
   import { page } from '$app/state';
-  import type { Session } from '@supabase/supabase-js';
+  import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import { getPlaylistState } from '$lib/state/playlist.svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { invalidate } from '$app/navigation';
-  import { isLowResolutionThumbnail } from './playlist-service';
+  import type { Database } from '$lib/supabase/database.types';
+  import { handleUpdatePlaylistImage } from './playlist-service';
 
   let {
     form,
@@ -37,6 +38,7 @@
     playlist,
     open = $bindable(),
     trigger,
+    supabase,
     session,
   }: {
     form: SuperValidated<PlaylistSchema>;
@@ -45,6 +47,7 @@
     trigger: Snippet;
     open: boolean;
     session: Session | null;
+    supabase: SupabaseClient<Database>;
   } = $props();
 
   const playlistState = getPlaylistState();
@@ -57,12 +60,6 @@
   const cropState = useImageCropperCrop();
 
   const isPlaylistOwner = $derived(playlist.created_by === session?.user.id);
-  const isLowResThumbnail = $derived(
-    isLowResolutionThumbnail(
-      playlist.thumbnail_maxres_url,
-      playlist.thumbnail_url
-    )
-  );
 
   const playlistForm = $derived(
     superForm(form, {
@@ -80,6 +77,7 @@
       },
       async onUpdated(event) {
         updateFlash(page);
+
         if (event.form.valid) {
           const { isDeletingPlaylistImage, ...data } = event.form.data;
           open = false;
@@ -90,6 +88,7 @@
           if (isDeletingPlaylistImage) {
             updatedPlaylist.image_url = null;
           }
+
           // Sidebar refresh will get server-processed images with AVIF support
           sidebarState.refreshData();
           invalidate('supabase:db:playlists');
@@ -117,7 +116,7 @@
       cropState.rootState.src &&
       cropState.rootState.src !== playlist.image_url
     ) {
-      $formData.imageDataUrl = cropState.rootState.src;
+      // $formData.image_url = cropState.rootState.src;
     }
   });
 </script>
@@ -130,7 +129,6 @@
       playlistState.openEditPlaylist = false;
       // Reset the cropper state when closing
       cropperState.rootState.tempUrl = null;
-      cropState.rootState.src = null;
     }
   }}
 >
@@ -166,23 +164,23 @@
                         variant="secondary"
                         size="icon"
                       >
-                        <EditIcon class="size-4" />
+                        <Pencil class="size-4" />
                       </Button>
                     {/snippet}
                   </DropdownMenu.Trigger>
                   <DropdownMenu.Content align="start">
-                    {#if isLowResThumbnail}
-                      <DropdownMenu.Item disabled
-                        >This video doesn't have a high-resolution thumbnail and
-                        cannot be cropped</DropdownMenu.Item
-                      >
-                    {:else}
-                      <DropdownMenu.Item
-                        onclick={() => {
-                          cropperState.rootState.open = true;
-                        }}>Update crop</DropdownMenu.Item
-                      >
-                    {/if}
+                    <!-- {#if isLowResThumbnail} -->
+                    <!--   <DropdownMenu.Item disabled -->
+                    <!--     >This video doesn't have a high-resolution thumbnail and -->
+                    <!--     cannot be cropped</DropdownMenu.Item -->
+                    <!--   > -->
+                    <!-- {:else} -->
+                    <DropdownMenu.Item
+                      onclick={() => {
+                        cropperState.rootState.open = true;
+                      }}>Update crop</DropdownMenu.Item
+                    >
+                    <!-- {/if} -->
                     <DropdownMenu.Item
                       onclick={() => {
                         $formData.isDeletingPlaylistImage = true;
@@ -204,7 +202,7 @@
                       variant="outline"
                       size="icon"
                     >
-                      <EditIcon class="size-4" />
+                      <Pencil class="size-4" />
                     </Button>
                   {/snippet}
                 </Popover.Trigger>
@@ -313,14 +311,10 @@
               </Form.Control>
             </Form.Field>
             <!-- Add the hidden field for imageDataUrl -->
-            <Form.Field form={playlistForm} name="imageDataUrl">
+            <Form.Field form={playlistForm} name="image_url">
               <Form.Control>
                 {#snippet children({ props })}
-                  <Input
-                    {...props}
-                    hidden
-                    bind:value={$formData.imageDataUrl}
-                  />
+                  <Input {...props} hidden bind:value={$formData.image_url} />
                 {/snippet}
               </Form.Control>
             </Form.Field>

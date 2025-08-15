@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Circle, ListVideo, Plus } from '@lucide/svelte';
+  import { ListVideo, Plus } from '@lucide/svelte';
   import { type SupabaseClient, type Session } from '@supabase/supabase-js';
   import { SOURCE_INFO, SOURCES } from '$lib/constants/source';
   import * as Popover from '$lib/components/ui/popover';
@@ -329,7 +329,7 @@
             >
               <Plus />
             </Popover.Trigger>
-            <Popover.Content
+            <Popover.Content class="text-sm"
               >Create an account or login to use playlists.</Popover.Content
             >
           </Popover.Root>
@@ -406,10 +406,10 @@
                     class="absolute flex grow items-center
                     {!isSidebarCollapsed ? 'w-full grow' : 'item-center'}"
                   >
-                    {#if playlist.processedImageUrl}
+                    {#if playlist.image_url}
                       <div class="h-12 w-12 shrink-0">
                         <img
-                          src={playlist.processedImageUrl}
+                          src={playlist.image_url}
                           class="h-full w-full cursor-pointer rounded object-cover"
                           alt={`Image for playlist: ${playlist.name}`}
                           loading="lazy"

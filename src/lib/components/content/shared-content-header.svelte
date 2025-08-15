@@ -128,7 +128,7 @@
                   <PlusCircle class="!h-8 !w-8" />
                 </Button>
               </Popover.Trigger>
-              <Popover.Content>
+              <Popover.Content class="text-sm">
                 Create an account or login to follow playlists.
               </Popover.Content>
             </Popover.Root>

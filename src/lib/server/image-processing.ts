@@ -11,6 +11,7 @@ import {
   type ImageCacheMetadata,
 } from './image-cache';
 import { detectOptimalFormat } from '$lib/utils/image-format-detection';
+import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 
 // Initialize image cache manager
 const imageCacheManager = ImageCacheManager.getInstance();
@@ -78,6 +79,7 @@ const ALLOWED_DOMAINS = [
   'i3.ytimg.com',
   'i4.ytimg.com',
   'static-cdn.jtvnw.net',
+  PUBLIC_SUPABASE_URL,
 ];
 
 // Validate URL domain for security
@@ -142,18 +144,24 @@ export async function processImageServer({
   isCropped = false,
   isMaxRes = false,
 }: {
-  imageUrl: string;
+  imageUrl: string | null;
   imageProperties?: ImageProperties | null;
   acceptHeader?: string | null;
   options?: ImageProcessingOptions;
   isCropped?: boolean;
   isMaxRes?: boolean;
 }) {
-  // Validate URL domain for security
-  if (!validateImageUrl(imageUrl)) {
-    console.warn(`Domain not allowed for URL: ${imageUrl}`);
+  if (!imageUrl) {
     return null;
   }
+  // Validate URL domain for security
+  // if (!validateImageUrl(imageUrl)) {
+  //   console.warn(`Domain not allowed for URL: ${imageUrl}`);
+  //   return null;
+  // }
+  //
+  console.log('image properties');
+  console.log(imageProperties);
 
   // Determine optimal format based on Accept header or explicit format
   let targetFormat: 'avif' | 'webp' | 'jpeg';

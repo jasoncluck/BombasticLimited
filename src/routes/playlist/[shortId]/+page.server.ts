@@ -3,8 +3,6 @@ import {
   isUserPlaylist,
   updatePlaylistImage,
   updatePlaylistInfo,
-  uploadPlaylistImage,
-  cropAndUploadYouTubeThumbnail,
   type PlaylistVideo,
 } from '$lib/supabase/playlists';
 import { type Actions, type RequestEvent } from '@sveltejs/kit';
@@ -21,9 +19,12 @@ import { DEFAULT_NUM_VIDEOS_PAGINATION } from '$lib/supabase/videos';
 import { getPaginationQueryParams } from '$lib/components/pagination/pagination';
 import { Filter } from 'bad-words';
 import { redirect, setFlash } from 'sveltekit-flash-message/server';
-import { parseImageProperties } from '$lib/components/playlist/playlist';
-import { generatePlaylistImageUrl } from '$lib/server/image-processing';
 import { getProfileById } from '$lib/supabase/user-profiles';
+import {
+  getCroppedPlaylistImageUrlServer,
+  processImageServer,
+} from '$lib/server/image-processing';
+import { parseImageProperties } from '$lib/components/playlist/playlist';
 
 export const load: PageServerLoad = async ({
   locals: { supabase, session },
@@ -31,10 +32,7 @@ export const load: PageServerLoad = async ({
   parent,
   params,
   depends,
-  request,
 }) => {
-  // Remove automatic dependencies - we'll handle updates optimistically
-  // Only keep video dependencies since those might come from other sources
   depends('supabase:db:videos', 'supabase:db:playlists');
 
   const { contentFilter } = await parent();
@@ -65,6 +63,9 @@ export const load: PageServerLoad = async ({
     console.error(`Playlist was not found`);
     redirect(302, '/');
   }
+
+  console.log('on load');
+  console.log(playlist);
 
   const [form, creatorProfile] = await Promise.all([
     superValidate(playlist, zod(playlistSchema)),
@@ -99,6 +100,7 @@ export const load: PageServerLoad = async ({
     creatorProfile,
   };
 };
+
 export const actions: Actions = {
   default: async ({
     request,
@@ -116,17 +118,8 @@ export const actions: Actions = {
       });
     }
 
-    const {
-      name,
-      description,
-      id,
-      isDeletingPlaylistImage,
-      type,
-      imageDataUrl,
-      image_properties,
-      thumbnailUrl,
-      thumbnailMaxResUrl,
-    } = form.data;
+    const { name, description, id, type, image_url } = form.data;
+    let { image_properties } = form.data;
 
     const filter = new Filter();
     const [nameIsProfane, descriptionIsProfane] = await Promise.all([
@@ -160,114 +153,33 @@ export const actions: Actions = {
       return fail(400, { form });
     }
 
-    // Handle image deletion
-    if (isDeletingPlaylistImage) {
-      const { error: deleteError } = await supabase
-        .from('playlists')
-        .update({
-          image_url: null,
-          image_webp_url: null,
-          image_avif_url: null,
-          image_properties: null,
-        })
-        .eq('id', id);
-
-      if (deleteError) {
-        console.error('Error deleting playlist image:', deleteError);
-      }
+    if (
+      image_properties?.x === 0 &&
+      image_properties?.y === 0 &&
+      image_properties?.height === 0 &&
+      image_properties?.width === 0
+    ) {
+      image_properties = null;
     }
 
-    // Handle new image upload if imageDataUrl is provided (frontend cropping scenario)
-    if (imageDataUrl && imageDataUrl.startsWith('data:')) {
-      try {
-        const uploadResult = await uploadPlaylistImage({
-          playlistId: id,
-          imageDataUrl,
-          imageName: `playlist-${id}-${Date.now()}.jpg`,
-          // Don't pass imageProperties since the image is already cropped
-          supabase,
-        });
+    const processedPlaylistImage = await getCroppedPlaylistImageUrlServer({
+      imageProperties: image_properties,
+      thumbnailMaxResUrl: image_url,
+    });
 
-        if (uploadResult.error) {
-          console.error('Image upload error:', uploadResult.error);
-          setFlash(
-            {
-              type: 'error',
-              message: 'Failed to upload image. Please try again.',
-            },
-            cookies
-          );
-          return fail(400, { form });
-        }
+    await updatePlaylistImage({
+      playlistId: id,
+      videoThumbnailMaxResUrl: image_url,
+      videoThumbnailUrl: null,
+      processedPlaylistImage,
+      supabase,
+    });
 
-        setFlash(
-          {
-            type: 'success',
-            message: 'Playlist image uploaded successfully.',
-          },
-          cookies
-        );
-      } catch (error) {
-        console.error('Image processing error:', error);
-        setFlash(
-          {
-            type: 'error',
-            message: 'Failed to process image. Please try again.',
-          },
-          cookies
-        );
-        return fail(400, { form });
-      }
-    }
-    // Handle YouTube thumbnail cropping scenario
-    else if ((thumbnailUrl || thumbnailMaxResUrl) && image_properties) {
-      try {
-        const cropResult = await cropAndUploadYouTubeThumbnail({
-          playlistId: id,
-          thumbnailUrl,
-          thumbnailMaxResUrl,
-          imageProperties: image_properties,
-          supabase,
-        });
-
-        if (cropResult.error) {
-          console.error('YouTube thumbnail crop error:', cropResult.error);
-          setFlash(
-            {
-              type: 'error',
-              message: 'Failed to crop and upload thumbnail. Please try again.',
-            },
-            cookies
-          );
-          return fail(400, { form });
-        }
-
-        setFlash(
-          {
-            type: 'success',
-            message: 'Playlist thumbnail cropped and uploaded successfully.',
-          },
-          cookies
-        );
-      } catch (error) {
-        console.error('YouTube thumbnail processing error:', error);
-        setFlash(
-          {
-            type: 'error',
-            message: 'Failed to process thumbnail. Please try again.',
-          },
-          cookies
-        );
-        return fail(400, { form });
-      }
-    }
-
-    // Update playlist info (no need to pass image_properties since we're storing the final image)
     const { updatedPlaylist } = await updatePlaylistInfo({
       playlistId: id,
       name,
       description,
-      imageProperties: null, // Clear any old crop properties
+      imageProperties: image_properties,
       type,
       supabase,
       session,

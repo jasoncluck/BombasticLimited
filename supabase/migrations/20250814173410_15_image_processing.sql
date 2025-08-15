@@ -500,64 +500,102 @@ CREATE OR REPLACE FUNCTION public.validate_and_update_playlist_image(
   error_message text
 ) LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE
+  current_image_url text;
   thumbnail_exists boolean := false;
   maxres_exists boolean := false;
   validation_passed boolean := false;
   error_msg text := NULL;
+  image_url_changed boolean := false;
+  needs_validation boolean := false;
 BEGIN
-  -- Validate that at least one thumbnail URL was provided
-  IF p_video_thumbnail_url IS NULL AND p_video_thumbnail_maxres_url IS NULL THEN
-    error_msg := 'At least one video thumbnail URL must be provided for validation';
-    RETURN QUERY SELECT false, p_playlist_id, NULL::text, error_msg;
-    RETURN;
-  END IF;
+  -- Get current playlist image URL (use table alias to avoid ambiguity)
+  SELECT p.image_url INTO current_image_url
+  FROM public.playlists p
+  WHERE p.id = p_playlist_id;
 
-  -- Check if regular thumbnail URL exists in videos table
-  IF p_video_thumbnail_url IS NOT NULL THEN
-    SELECT EXISTS(
-      SELECT 1 FROM public.videos 
-      WHERE thumbnail_url = p_video_thumbnail_url
-    ) INTO thumbnail_exists;
-  END IF;
-
-  -- Check if maxres thumbnail URL exists in videos table
-  IF p_video_thumbnail_maxres_url IS NOT NULL THEN
-    SELECT EXISTS(
-      SELECT 1 FROM public.videos 
-      WHERE thumbnail_maxres_url = p_video_thumbnail_maxres_url
-    ) INTO maxres_exists;
-  END IF;
-
-  -- Validation passes if at least one provided thumbnail exists
-  validation_passed := (p_video_thumbnail_url IS NOT NULL AND thumbnail_exists) OR 
-                      (p_video_thumbnail_maxres_url IS NOT NULL AND maxres_exists);
-
-  IF NOT validation_passed THEN
-    error_msg := format('No matching video thumbnails found in database. Provided URLs: thumbnail=%s (exists: %s), maxres=%s (exists: %s)', 
-                       COALESCE(p_video_thumbnail_url, 'NULL'), 
-                       CASE WHEN p_video_thumbnail_url IS NOT NULL THEN thumbnail_exists::text ELSE 'N/A' END,
-                       COALESCE(p_video_thumbnail_maxres_url, 'NULL'),
-                       CASE WHEN p_video_thumbnail_maxres_url IS NOT NULL THEN maxres_exists::text ELSE 'N/A' END);
-    RETURN QUERY SELECT false, p_playlist_id, NULL::text, error_msg;
-    RETURN;
-  END IF;
-
-  -- Validation passed - update playlist with uploaded image URL
-  UPDATE public.playlists 
-  SET 
-    image_url = p_image_url,
-    image_properties = COALESCE(p_image_properties, image_properties),
-    image_processing_status = 'completed'::public.image_processing_status,
-    image_processing_updated_at = now()
-  WHERE id = p_playlist_id;
-  
-  -- Check if update was successful
+  -- Check if playlist exists
   IF NOT FOUND THEN
     error_msg := format('Playlist with ID %s not found', p_playlist_id);
     RETURN QUERY SELECT false, p_playlist_id, NULL::text, error_msg;
     RETURN;
   END IF;
 
+  -- Check if image URL has changed
+  image_url_changed := (current_image_url IS DISTINCT FROM p_image_url);
+
+  -- Only need validation if:
+  -- 1. Image URL has changed AND
+  -- 2. New image URL is not NULL (setting an actual image, not removing it)
+  needs_validation := image_url_changed AND p_image_url IS NOT NULL;
+
+  -- Only perform validation if needed
+  IF needs_validation THEN
+    -- Validate that at least one thumbnail URL was provided for new/changed images
+    IF p_video_thumbnail_url IS NULL AND p_video_thumbnail_maxres_url IS NULL THEN
+      error_msg := 'At least one video thumbnail URL must be provided for validation when setting an image';
+      RETURN QUERY SELECT false, p_playlist_id, NULL::text, error_msg;
+      RETURN;
+    END IF;
+
+    -- Check if regular thumbnail URL exists in videos table
+    IF p_video_thumbnail_url IS NOT NULL THEN
+      SELECT EXISTS(
+        SELECT 1 FROM public.videos v
+        WHERE v.thumbnail_url = p_video_thumbnail_url
+      ) INTO thumbnail_exists;
+    END IF;
+
+    -- Check if maxres thumbnail URL exists in videos table
+    IF p_video_thumbnail_maxres_url IS NOT NULL THEN
+      SELECT EXISTS(
+        SELECT 1 FROM public.videos v
+        WHERE v.thumbnail_maxres_url = p_video_thumbnail_maxres_url
+      ) INTO maxres_exists;
+    END IF;
+
+    -- Validation passes if at least one provided thumbnail exists
+    validation_passed := (p_video_thumbnail_url IS NOT NULL AND thumbnail_exists) OR 
+                        (p_video_thumbnail_maxres_url IS NOT NULL AND maxres_exists);
+
+    IF NOT validation_passed THEN
+      error_msg := format('No matching video thumbnails found in database. Provided URLs: thumbnail=%s (exists: %s), maxres=%s (exists: %s)', 
+                         COALESCE(p_video_thumbnail_url, 'NULL'), 
+                         CASE WHEN p_video_thumbnail_url IS NOT NULL THEN thumbnail_exists::text ELSE 'N/A' END,
+                         COALESCE(p_video_thumbnail_maxres_url, 'NULL'),
+                         CASE WHEN p_video_thumbnail_maxres_url IS NOT NULL THEN maxres_exists::text ELSE 'N/A' END);
+      RETURN QUERY SELECT false, p_playlist_id, NULL::text, error_msg;
+      RETURN;
+    END IF;
+  END IF;
+
+  -- Handle different update scenarios separately to avoid CASE type issues
+  IF image_url_changed AND p_image_url IS NOT NULL THEN
+    -- Setting a new image
+    UPDATE public.playlists pl
+    SET 
+      image_url = p_image_url,
+      image_properties = COALESCE(p_image_properties, pl.image_properties),
+      image_processing_status = 'completed'::public.image_processing_status,
+      image_processing_updated_at = now()
+    WHERE pl.id = p_playlist_id;
+  ELSIF image_url_changed AND p_image_url IS NULL THEN
+    -- Removing image
+    UPDATE public.playlists pl
+    SET 
+      image_url = NULL,
+      image_properties = COALESCE(p_image_properties, pl.image_properties),
+      image_processing_status = NULL,
+      image_processing_updated_at = now()
+    WHERE pl.id = p_playlist_id;
+  ELSE
+    -- No image URL change, just update other fields
+    UPDATE public.playlists pl
+    SET 
+      image_url = p_image_url,
+      image_properties = COALESCE(p_image_properties, pl.image_properties)
+    WHERE pl.id = p_playlist_id;
+  END IF;
+  
   -- Return success result
   RETURN QUERY SELECT true, p_playlist_id, p_image_url, NULL::text;
 END;
