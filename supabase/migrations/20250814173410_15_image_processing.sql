@@ -183,7 +183,7 @@ BEGIN
       SET 
         thumbnail_webp_url = COALESCE(webp_path, thumbnail_webp_url),
         thumbnail_avif_url = COALESCE(avif_path, thumbnail_avif_url),
-        image_processing_status = 'completed',
+        image_processing_status = 'completed'::public.image_processing_status,
         image_processing_updated_at = now()
       WHERE id = job_record.entity_id;
     ELSIF job_record.image_type = 'thumbnail_maxres' THEN
@@ -191,7 +191,7 @@ BEGIN
       SET 
         thumbnail_maxres_webp_path = COALESCE(webp_path, thumbnail_maxres_webp_path),
         thumbnail_maxres_avif_path = COALESCE(avif_path, thumbnail_maxres_avif_path),
-        image_processing_status = 'completed',
+        image_processing_status = 'completed'::public.image_processing_status,
         image_processing_updated_at = now()
       WHERE id = job_record.entity_id;
     END IF;
@@ -202,7 +202,7 @@ BEGIN
       SET 
         image_webp_url = COALESCE(webp_path, image_webp_url),
         image_avif_url = COALESCE(avif_path, image_avif_url),
-        image_processing_status = 'completed',
+        image_processing_status = 'completed'::public.image_processing_status,
         image_processing_updated_at = now()
       WHERE id = job_record.entity_id::bigint;
     END IF;

@@ -745,7 +745,7 @@ export type Database = {
           playlist_description: string
           playlist_id: number
           playlist_image_avif_url: string
-          playlist_image_processing_status: string
+          playlist_image_processing_status: Database["public"]["Enums"]["image_processing_status"]
           playlist_image_properties: Json
           playlist_image_url: string
           playlist_image_webp_url: string
@@ -761,7 +761,7 @@ export type Database = {
           video_description: string
           video_duration: string
           video_id: string
-          video_image_processing_status: string
+          video_image_processing_status: Database["public"]["Enums"]["image_processing_status"]
           video_position: number
           video_published_at: string
           video_source: Database["public"]["Enums"]["source"]
@@ -791,7 +791,7 @@ export type Database = {
           playlist_description: string
           playlist_id: number
           playlist_image_avif_url: string
-          playlist_image_processing_status: string
+          playlist_image_processing_status: Database["public"]["Enums"]["image_processing_status"]
           playlist_image_properties: Json
           playlist_image_url: string
           playlist_image_webp_url: string

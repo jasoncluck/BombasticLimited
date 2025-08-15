@@ -25,7 +25,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data (
   playlist_image_url text,
   playlist_image_webp_url text,
   playlist_image_avif_url text,
-  playlist_image_processing_status text,
+  playlist_image_processing_status public.image_processing_status,
   playlist_type public.playlist_type,
   playlist_image_properties jsonb,
   playlist_youtube_id text,
@@ -44,7 +44,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data (
   video_thumbnail_avif_url text,
   video_thumbnail_maxres_webp_url text,
   video_thumbnail_maxres_avif_url text,
-  video_image_processing_status text,
+  video_image_processing_status public.image_processing_status,
   video_published_at TIMESTAMP WITH TIME ZONE,
   video_duration text,
   video_start_seconds numeric,
@@ -238,6 +238,7 @@ END;
 $$;
 
 -- Re-create the get_playlist_video_context function with correct column references
+DROP FUNCTION public.get_playlist_video_context;
 CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
   p_short_id text,
   p_video_id text,
@@ -253,7 +254,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
   playlist_image_url text,
   playlist_image_webp_url text,
   playlist_image_avif_url text,
-  playlist_image_processing_status text,
+  playlist_image_processing_status public.image_processing_status,
   playlist_type public.playlist_type,
   playlist_image_properties jsonb,
   playlist_youtube_id text,
