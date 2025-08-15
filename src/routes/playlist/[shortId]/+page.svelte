@@ -60,13 +60,16 @@
     supabase,
     session,
   });
+
+  const playlistImageUrl = $derived(
+    playlist.image_url
+      ? supabase.storage.from(IMAGES_BUCKET).getPublicUrl(playlist.image_url)
+      : undefined
+  );
 </script>
 
 <div class="relative flex grow flex-col">
-  <ImageCropper.Root
-    src={supabase.storage.from(IMAGES_BUCKET).getPublicUrl(playlist.image_url)
-      .data.publicUrl ?? undefined}
-  >
+  <ImageCropper.Root src={playlistImageUrl?.data.publicUrl}>
     <PlaylistHeader
       {userProfile}
       {...playlistHeaderProps}

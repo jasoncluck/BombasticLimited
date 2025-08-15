@@ -213,7 +213,7 @@ END;
 $$;
 
 -- Function to mark job as failed
-CREATE OR REPLACE FUNCTION public.fail_image_processing_job (job_id uuid, error_msg text) RETURNS boolean 
+CREATE OR REPLACE FUNCTION public.fail_imge_processing_job (job_id uuid, error_msg text) RETURNS boolean 
 LANGUAGE plpgsql 
 SECURITY DEFINER
 SET search_path = ''
@@ -529,7 +529,7 @@ FOR INSERT WITH CHECK (
 CREATE POLICY "Allow playlist image reads" ON storage.objects
 FOR SELECT USING (
   auth.role() = 'authenticated' AND
-  bucket_id = 'optimized-images' AND
+  bucket_id = 'content-images' AND
   (storage.foldername(name))[1] = 'playlist-images'
 );
 
@@ -537,10 +537,10 @@ FOR SELECT USING (
 CREATE POLICY "Allow playlist image updates" ON storage.objects
 FOR UPDATE USING (
   auth.role() = 'authenticated' AND
-  bucket_id = 'optimized-images' AND
+  bucket_id = 'content-images' AND
   (storage.foldername(name))[1] = 'playlist-images'
 ) WITH CHECK (
   auth.role() = 'authenticated' AND
-  bucket_id = 'optimized-images' AND
+  bucket_id = 'content-images' AND
   (storage.foldername(name))[1] = 'playlist-images'
 );

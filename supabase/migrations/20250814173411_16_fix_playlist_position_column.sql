@@ -167,7 +167,7 @@ BEGIN
     playlist_record.image_url,
     playlist_record.image_webp_url,
     playlist_record.image_avif_url,
-    playlist_record.image_processing_status,
+    playlist_record.image_processing_status::public.image_processing_status,  -- Explicit cast
     playlist_record.type,
     playlist_record.image_properties,
     playlist_record.youtube_id,
@@ -185,7 +185,7 @@ BEGIN
     sv.thumbnail_avif_url,
     sv.thumbnail_maxres_webp_url,
     sv.thumbnail_maxres_avif_url,
-    sv.image_processing_status,
+    sv.image_processing_status::public.image_processing_status,  -- Explicit cast
     sv.published_at,
     sv.duration,
     sv.video_start_seconds,
