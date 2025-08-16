@@ -69,7 +69,7 @@
   let targetSourceIndex = $state<number | null>(null);
 
   // Create drag and drop handlers for playlists
-  const dragDropHandlers = $derived(
+  const playlistDragDropHandlers = $derived(
     playlistState.createPlaylistDragDrop({
       playlists: sidebarState.playlists ?? [],
       supabase,
@@ -396,11 +396,14 @@
                   value={playlist.name}
                   onmouseenter={() => playlistState.handleMouseEnter(i)}
                   onmouseleave={() => playlistState.handleMouseLeave(i)}
-                  ondragstart={(e) => dragDropHandlers.handleDragStart(e, i)}
-                  ondragover={(e) => dragDropHandlers.handleDragOver(e, i)}
-                  ondragleave={(e) => dragDropHandlers.handleDragLeave(e, i)}
-                  ondrop={(e) => dragDropHandlers.handleDrop(e, i)}
-                  ondragend={dragDropHandlers.handleDragEnd}
+                  ondragstart={(e) =>
+                    playlistDragDropHandlers.handleDragStart(e, i)}
+                  ondragover={(e) =>
+                    playlistDragDropHandlers.handleDragOver(e, i)}
+                  ondragleave={(e) =>
+                    playlistDragDropHandlers.handleDragLeave(e, i)}
+                  ondrop={(e) => playlistDragDropHandlers.handleDrop(e, i)}
+                  ondragend={playlistDragDropHandlers.handleDragEnd}
                 >
                   <div
                     class="absolute flex grow items-center

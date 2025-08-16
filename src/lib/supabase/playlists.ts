@@ -193,7 +193,7 @@ function transformVideoFromContextRPC(
 }
 
 // Helper to detect browser format support
-function detectPreferredFormat(): string {
+function detectPreferredImageFormat(): string {
   if (!browser) return 'jpeg'; // Server-side fallback
 
   // Check AVIF support
@@ -245,7 +245,7 @@ export async function getPlaylistData({
 
   const sortKey = contentFilter ? contentFilter.sort.key : undefined;
   const sortOrder = contentFilter ? contentFilter.sort.order : undefined;
-  const preferredFormat = detectPreferredFormat();
+  const preferredFormat = detectPreferredImageFormat();
 
   const { data, error } = await supabase.rpc('get_playlist_data', {
     p_short_id: shortId,
@@ -255,7 +255,7 @@ export async function getPlaylistData({
     p_limit: limit,
     p_sort_key: sortKey,
     p_sort_order: sortOrder,
-    p_preferred_format: preferredFormat,
+    p_preferred_image_format: preferredFormat,
   });
 
   console.log(data);
@@ -370,7 +370,7 @@ export async function getPlaylistsForUsername({
   count?: number | null;
   error: PostgrestError | null;
 }> {
-  const preferredFormat = detectPreferredFormat();
+  const preferredFormat = detectPreferredImageFormat();
 
   const {
     data: playlists,
@@ -381,7 +381,7 @@ export async function getPlaylistsForUsername({
       'get_playlists_for_username',
       {
         p_username: username,
-        p_preferred_format: preferredFormat,
+        p_preferred_image_format: preferredFormat,
       },
       { count: 'exact' }
     )
@@ -424,12 +424,12 @@ export async function getPlaylistByYoutubeId({
   youtubeId: string;
   supabase: SupabaseClient<Database>;
 }) {
-  const preferredFormat = detectPreferredFormat();
+  const preferredFormat = detectPreferredImageFormat();
 
   const { data, error } = await supabase
     .rpc('get_playlist_by_youtube_id', {
       p_youtube_id: youtubeId,
-      p_preferred_format: preferredFormat,
+      p_preferred_image_format: preferredFormat,
     })
     .single();
 
@@ -463,14 +463,14 @@ export async function getPlaylistVideoContext({
   nextVideo: PlaylistVideoWithTimestamp | null;
   error: PostgrestError | null;
 }> {
-  const preferredFormat = detectPreferredFormat();
+  const preferredFormat = detectPreferredImageFormat();
 
   // Call the simplified RPC function
   let query = supabase.rpc('get_playlist_video_context', {
     p_short_id: shortId,
     p_video_id: videoId,
     p_context_limit: contextLimit,
-    p_preferred_format: preferredFormat,
+    p_preferred_image_format: preferredFormat,
   });
 
   // Apply sorting based on contentFilter
@@ -612,7 +612,7 @@ export async function createPlaylist({
       p_created_by: session?.user.id,
       p_name: name,
       p_type: 'Private',
-      p_preferred_format: detectPreferredFormat(),
+      p_preferred_image_format: detectPreferredImageFormat(),
     })
     .single();
 
@@ -638,13 +638,15 @@ export async function getUserPlaylists({
     return { userPlaylists: [], count: null, error: null };
   }
 
-  const preferredFormat = detectPreferredFormat();
+  const preferredFormat = detectPreferredImageFormat();
 
   const { data, count, error } = await supabase
     .rpc('get_user_playlists', {
-      p_preferred_format: preferredFormat,
+      p_preferred_image_format: preferredFormat,
     })
     .order('playlist_position', { ascending: false });
+
+  console.log(data);
 
   if (error) {
     console.error('Error when fetching playlists:', error);
@@ -721,7 +723,7 @@ export async function searchPlaylists({
   error: PostgrestError | null;
   count?: number | null;
 }> {
-  const preferredFormat = detectPreferredFormat();
+  const preferredImageFormat = detectPreferredImageFormat();
 
   const {
     data: playlists,
@@ -733,7 +735,7 @@ export async function searchPlaylists({
       {
         search_term: searchString,
         current_user_id: session?.user.id,
-        p_preferred_format: preferredFormat,
+        p_preferred_image_format: preferredImageFormat,
       },
       { count: 'exact' }
     )
@@ -856,7 +858,6 @@ export async function updatePlaylistInfo({
   playlistId,
   name,
   description,
-  imageProperties,
   type,
   supabase,
 }: {
@@ -873,7 +874,6 @@ export async function updatePlaylistInfo({
     .update({
       name: name.trim(),
       description: description?.trim(),
-      image_properties: imageProperties as Json,
       type,
     })
     .eq('id', playlistId)
@@ -899,11 +899,15 @@ export async function updatePlaylistImage({
 }: {
   playlistId: number;
   processedPlaylistImage: string | null;
-  thumbnailVideoId: string | null;
+  thumbnailVideoId?: string;
   imageProperties: ImageProperties | null;
   supabase: SupabaseClient<Database>;
 }) {
   const isResetImage = !processedPlaylistImage || !thumbnailVideoId;
+
+  console.log('UPDATE PLAYLIST_IMAGE');
+  console.log(thumbnailVideoId);
+  console.log(isResetImage);
 
   if (isResetImage) {
     const { error } = await supabase
@@ -941,7 +945,7 @@ export async function updatePlaylistImage({
     {
       p_playlist_id: playlistId,
       p_image_url: uploadResult.data?.publicUrl,
-      p_thumbnail_video_id: thumbnailVideoId ?? undefined,
+      p_thumbnail_video_id: thumbnailVideoId,
       p_image_properties: imageProperties,
     }
   );

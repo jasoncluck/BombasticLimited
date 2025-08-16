@@ -738,7 +738,7 @@ export type Database = {
         }[]
       }
       get_playlist_by_youtube_id: {
-        Args: { p_preferred_format?: string; p_youtube_id: string }
+        Args: { p_preferred_image_format?: string; p_youtube_id: string }
         Returns: {
           created_at: string
           created_by: string
@@ -759,7 +759,7 @@ export type Database = {
         Args: {
           p_current_page?: number
           p_limit?: number
-          p_preferred_format?: string
+          p_preferred_image_format?: string
           p_short_id?: string
           p_sort_key?: string
           p_sort_order?: string
@@ -807,7 +807,7 @@ export type Database = {
       get_playlist_video_context: {
         Args: {
           p_context_limit?: number
-          p_preferred_format?: string
+          p_preferred_image_format?: string
           p_short_id: string
           p_video_id: string
         }
@@ -852,7 +852,7 @@ export type Database = {
         }[]
       }
       get_playlists_for_username: {
-        Args: { p_preferred_format?: string; p_username: string }
+        Args: { p_preferred_image_format?: string; p_username: string }
         Returns: {
           created_at: string
           created_by: string
@@ -916,7 +916,7 @@ export type Database = {
         }[]
       }
       get_user_playlists: {
-        Args: { p_preferred_format?: string }
+        Args: { p_preferred_image_format?: string }
         Returns: {
           added_at: string
           avatar_url: string
@@ -1015,7 +1015,7 @@ export type Database = {
           p_image_url?: string
           p_name?: string
           p_playlist_position?: number
-          p_preferred_format?: string
+          p_preferred_image_format?: string
           p_type?: Database["public"]["Enums"]["playlist_type"]
         }
         Returns: {
@@ -1130,7 +1130,7 @@ export type Database = {
           current_user_id?: string
           limit_count?: number
           offset_count?: number
-          p_preferred_format?: string
+          p_preferred_image_format?: string
           search_term: string
         }
         Returns: {

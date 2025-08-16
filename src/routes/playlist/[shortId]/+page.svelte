@@ -59,11 +59,11 @@
     supabase,
     session,
   });
+  console.log(playlist.thumbnail_maxres_url);
 </script>
 
 <div class="relative flex grow flex-col">
-  {playlist.thumbnail_maxres_url}
-  <ImageCropper.Root src={playlist.thumbnail_maxres_url ?? undefined}>
+  <ImageCropper.Root src={playlist.thumbnail_maxres_url}>
     <PlaylistHeader
       {userProfile}
       {...playlistHeaderProps}

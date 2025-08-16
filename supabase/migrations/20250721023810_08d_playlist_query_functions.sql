@@ -39,7 +39,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data (
   p_limit integer DEFAULT 20,
   p_sort_key text DEFAULT NULL,
   p_sort_order text DEFAULT NULL,
-  p_preferred_format text DEFAULT 'avif'
+  p_preferred_image_format text DEFAULT 'avif'
 ) RETURNS TABLE (
   -- Playlist data with single optimized image URL
   playlist_id bigint,
@@ -110,7 +110,7 @@ BEGIN
       p.image_avif_url,
       p.image_webp_url,
       p.image_jpg_url,
-      p_preferred_format
+      p_preferred_image_format
     ) as best_playlist_image_url,
     p.image_processing_status,
     p.type,
@@ -193,13 +193,13 @@ BEGIN
         v.thumbnail_maxres_avif_url,
         v.thumbnail_maxres_webp_url,
         v.thumbnail_maxres_url,
-        p_preferred_format
+        p_preferred_image_format
       ),
       public.select_best_image_format(
         v.thumbnail_avif_url,
         v.thumbnail_webp_url,
         v.thumbnail_url,
-        p_preferred_format
+        p_preferred_image_format
       )
     ) as video_image_url,
     v.image_processing_status as video_image_processing_status,
@@ -262,7 +262,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
   p_short_id text,
   p_video_id text,
   p_context_limit integer DEFAULT 5,
-  p_preferred_format text DEFAULT 'avif'
+  p_preferred_image_format text DEFAULT 'avif'
 ) RETURNS TABLE (
   -- Playlist metadata (first row only)
   playlist_id bigint,
@@ -320,7 +320,7 @@ SET
         p.image_avif_url,
         p.image_webp_url,
         p.image_jpg_url,
-        p_preferred_format
+        p_preferred_image_format
       ) as best_playlist_image_url,
       p.image_processing_status,
       p.type,
@@ -368,13 +368,13 @@ SET
           v.thumbnail_maxres_avif_url,
           v.thumbnail_maxres_webp_url,
           v.thumbnail_maxres_url,
-          p_preferred_format
+          p_preferred_image_format
         ),
         public.select_best_image_format(
           v.thumbnail_avif_url,
           v.thumbnail_webp_url,
           v.thumbnail_url,
-          p_preferred_format
+          p_preferred_image_format
         )
       ) as best_video_image_url,
       v.published_at AS video_published_at,
@@ -441,7 +441,7 @@ $$;
 -- Function to get playlist by youtube_id
 CREATE OR REPLACE FUNCTION public.get_playlist_by_youtube_id (
   p_youtube_id text,
-  p_preferred_format text DEFAULT 'avif'
+  p_preferred_image_format text DEFAULT 'avif'
 ) RETURNS TABLE (
   id bigint,
   created_at TIMESTAMP WITH TIME ZONE,
@@ -484,7 +484,7 @@ $$;
 
 -- Function to get user playlists
 CREATE OR REPLACE FUNCTION public.get_user_playlists (
-  p_preferred_format text DEFAULT 'avif'
+  p_preferred_image_format text DEFAULT 'avif'
 ) RETURNS TABLE (
   id bigint,
   created_by uuid,
@@ -497,9 +497,9 @@ CREATE OR REPLACE FUNCTION public.get_user_playlists (
   type public.playlist_type,
   image_properties jsonb,
   youtube_id text,
-  thumbnail_video_id text,           -- The video ID used as thumbnail
-  playlist_thumbnail_url text,       -- thumbnail_url from the linked video
-  playlist_thumbnail_maxres_url text, -- thumbnail_maxres_url from the linked video
+  thumbnail_video_id text,           
+  playlist_thumbnail_url text,      
+  playlist_thumbnail_maxres_url text, 
   duration_seconds integer,
   deleted_at TIMESTAMP WITH TIME ZONE,
   profile_username text,
@@ -522,17 +522,17 @@ LANGUAGE sql AS $$
       p.image_avif_url,
       p.image_webp_url,
       p.image_jpg_url,
-      p_preferred_format
+      p_preferred_image_format
     ) as image_url,
     p.image_processing_status::public.image_processing_status,
     p.type,
     p.image_properties,
     p.youtube_id,
-    p.thumbnail_video_id,                    -- Include thumbnail_video_id
-    thumb_video.thumbnail_url,               -- Get thumbnail_url from linked video
-    thumb_video.thumbnail_maxres_url,        -- Get thumbnail_maxres_url from linked video
+    p.thumbnail_video_id,                    
+    thumb_video.thumbnail_url as playlist_thumbnail_url,              
+    thumb_video.thumbnail_maxres_url as playlist_thumbnail_maxres_url,      
     p.duration_seconds,
-    p.deleted_at,                            -- Return actual deleted_at value
+    p.deleted_at,                    
     prof.username AS profile_username,
     up.sorted_by,
     up.sort_order,
@@ -542,16 +542,16 @@ LANGUAGE sql AS $$
   FROM public.user_playlists up
   JOIN public.playlists p ON up.id = p.id
   LEFT JOIN public.profiles prof ON p.created_by = prof.id
-  LEFT JOIN public.videos thumb_video ON p.thumbnail_video_id = thumb_video.id  -- JOIN with videos table
+  LEFT JOIN public.videos thumb_video ON p.thumbnail_video_id = thumb_video.id AND thumb_video.pending_delete = FALSE
   WHERE up.user_id = auth.uid()
-    -- REMOVED: AND p.deleted_at IS NULL  -- Now allow deleted playlists to be returned
+    AND p.deleted_at IS NULL  -- Re-add filter for active playlists only
   ORDER BY up.playlist_position ASC;
 $$;
 
 -- Function to get playlists for a specific username 
 CREATE OR REPLACE FUNCTION public.get_playlists_for_username (
   p_username text,
-  p_preferred_format text DEFAULT 'avif'
+  p_preferred_image_format text DEFAULT 'avif'
 ) RETURNS TABLE (
   id bigint,
   created_at TIMESTAMP WITH TIME ZONE,
@@ -586,7 +586,7 @@ SET
       p.image_avif_url,
       p.image_webp_url,
       p.image_jpg_url,
-      p_preferred_format
+      p_preferred_image_format
     ) as image_url,
     p.image_processing_status::public.image_processing_status,
     p.type,
@@ -616,7 +616,7 @@ CREATE OR REPLACE FUNCTION "public"."search_playlists" (
   "current_user_id" uuid DEFAULT NULL,
   "limit_count" integer DEFAULT 50,
   "offset_count" integer DEFAULT 0,
-  "p_preferred_format" text DEFAULT 'avif'
+  "p_preferred_image_format" text DEFAULT 'avif'
 ) RETURNS TABLE (
   "id" bigint,
   "short_id" text,
@@ -683,7 +683,7 @@ BEGIN
               p.image_avif_url,
               p.image_webp_url,
               p.image_jpg_url,
-              p_preferred_format
+              p_preferred_image_format
             ) as best_image_url,
             p.image_processing_status::public.image_processing_status,
             p.image_properties,

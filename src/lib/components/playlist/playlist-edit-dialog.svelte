@@ -29,6 +29,7 @@
   import { getPlaylistState } from '$lib/state/playlist.svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { invalidate } from '$app/navigation';
+  import { isLowResolutionThumbnail } from './playlist-service';
 
   let {
     form,
@@ -56,6 +57,12 @@
   const cropState = useImageCropperCrop();
 
   const isPlaylistOwner = $derived(playlist.created_by === session?.user.id);
+  const isLowResThumbnail = $derived(
+    isLowResolutionThumbnail(
+      playlist.thumbnail_maxres_url,
+      playlist.thumbnail_url
+    )
+  );
 
   const playlistForm = $derived(
     superForm(form, {
@@ -75,15 +82,14 @@
         updateFlash(page);
 
         if (event.form.valid) {
-          const { isDeletingPlaylistImage, ...data } = event.form.data;
           open = false;
           isSubmitting = false;
           playlistForm.reset();
 
-          const updatedPlaylist = Object.assign(playlist, data);
-          if (isDeletingPlaylistImage) {
-            updatedPlaylist.thumbnail_video_id = null;
-          }
+          // const updatedPlaylist = Object.assign(playlist, data);
+          // if (isDeletingPlaylistImage) {
+          //   updatedPlaylist.thumbnail_video_id = null;
+          // }
 
           // Sidebar refresh will get server-processed images with AVIF support
           sidebarState.refreshData();
@@ -100,20 +106,6 @@
     if (cropState.rootState.pixelCrop) {
       $formData.image_properties = cropState.rootState.pixelCrop;
     }
-
-    // Set the initial image URL when the dialog opens
-    if (open && !cropperState.rootState.tempUrl) {
-      cropperState.rootState.tempUrl = playlist.thumbnail_maxres_url;
-    }
-
-    // Only set imageDataUrl if we have a cropped/processed image
-    // Check if the src is different from the original playlist image
-    // if (
-    //   cropState.rootState.src &&
-    //   cropState.rootState.src !== playlist.image_url
-    // ) {
-    //   // $formData.image_url = cropState.rootState.src;
-    // }
   });
 </script>
 
@@ -148,7 +140,7 @@
 
         <div class="mb-4 flex flex-col justify-center gap-4 sm:flex-row">
           <div class="relative m-6 flex justify-center">
-            {#if (playlist.thumbnail_maxres_url || playlist.thumbnail_url) && !$formData.isDeletingPlaylistImage}
+            {#if ($formData.thumbnail_maxres_url || $formData.thumbnail_url) && !$formData.isDeletingPlaylistImage}
               <div class="relative h-56 w-56">
                 <ImageCropper.Preview class="h-full w-full rounded-md" />
                 <DropdownMenu.Root>
@@ -165,18 +157,18 @@
                     {/snippet}
                   </DropdownMenu.Trigger>
                   <DropdownMenu.Content align="start">
-                    <!-- {#if isLowResThumbnail} -->
-                    <!--   <DropdownMenu.Item disabled -->
-                    <!--     >This video doesn't have a high-resolution thumbnail and -->
-                    <!--     cannot be cropped</DropdownMenu.Item -->
-                    <!--   > -->
-                    <!-- {:else} -->
-                    <DropdownMenu.Item
-                      onclick={() => {
-                        cropperState.rootState.open = true;
-                      }}>Update crop</DropdownMenu.Item
-                    >
-                    <!-- {/if} -->
+                    {#if isLowResThumbnail}
+                      <DropdownMenu.Item disabled
+                        >This video doesn't have a high-resolution thumbnail and
+                        cannot be cropped</DropdownMenu.Item
+                      >
+                    {:else}
+                      <DropdownMenu.Item
+                        onclick={() => {
+                          cropperState.rootState.open = true;
+                        }}>Update crop</DropdownMenu.Item
+                      >
+                    {/if}
                     <DropdownMenu.Item
                       onclick={() => {
                         $formData.isDeletingPlaylistImage = true;
@@ -302,6 +294,40 @@
                     {...props}
                     hidden
                     bind:value={$formData.isDeletingPlaylistImage}
+                  />
+                {/snippet}
+              </Form.Control>
+            </Form.Field>
+            <!-- Add the hidden field for imageDataUrl -->
+            <Form.Field form={playlistForm} name="thumbnail_video_id">
+              <Form.Control>
+                {#snippet children({ props })}
+                  <Input
+                    {...props}
+                    hidden
+                    bind:value={$formData.thumbnail_video_id}
+                  />
+                {/snippet}
+              </Form.Control>
+            </Form.Field>
+            <Form.Field form={playlistForm} name="thumbnail_url">
+              <Form.Control>
+                {#snippet children({ props })}
+                  <Input
+                    {...props}
+                    hidden
+                    bind:value={$formData.thumbnail_url}
+                  />
+                {/snippet}
+              </Form.Control>
+            </Form.Field>
+            <Form.Field form={playlistForm} name="thumbnail_maxres_url">
+              <Form.Control>
+                {#snippet children({ props })}
+                  <Input
+                    {...props}
+                    hidden
+                    bind:value={$formData.thumbnail_maxres_url}
                   />
                 {/snippet}
               </Form.Control>

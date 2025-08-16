@@ -70,10 +70,9 @@ export const playlistSchema = z.object({
   id: z.number(),
   type: z.enum(PLAYLIST_TYPES).default('Private'),
   isDeletingPlaylistImage: z.boolean().default(false),
-  image_url: z.string().nullable(),
-  // Add support for YouTube thumbnail URLs (server-side cropping)
-  thumbnailUrl: z.string().optional(),
-  thumbnailMaxResUrl: z.string().optional(),
+  thumbnail_url: z.string().optional(),
+  thumbnail_maxres_url: z.string().optional(),
+  thumbnail_video_id: z.string().optional(),
 });
 
 export type PlaylistSchema = z.infer<typeof playlistSchema>;

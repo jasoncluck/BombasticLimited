@@ -214,6 +214,7 @@ export async function handleAddVideosToPlaylist({
     return { error: null };
   }
 
+  // Step 1: Add videos to playlist (this will set thumbnail_video_id if needed)
   const { error } = await addVideosToPlaylist({
     videoIds: videos.map((v) => v.id),
     playlistId: playlist.id,
@@ -230,15 +231,33 @@ export async function handleAddVideosToPlaylist({
       showNotification('Unable to add video to playlist.');
     }
     console.error(error);
-  } else {
-    showNotification(
-      `Added ${videos.length > 1 ? 'videos' : 'video'} to ${playlist.name}`
-    );
+    return { error };
   }
 
-  await sidebarState.refreshData();
-  await invalidate('supabase:db:videos');
-  return { error };
+  showNotification(
+    `Added ${videos.length > 1 ? 'videos' : 'video'} to ${playlist.name}`
+  );
+
+  // Step 2: If playlist didn't have a thumbnail, process the image
+  // We check the original playlist state, not the updated one
+  if (!playlist.thumbnail_video_id) {
+    // Process the image for the first video that was added
+    // This will update the playlist with the processed image
+    await handleUpdatePlaylistImage({
+      playlist: { ...playlist, thumbnail_video_id: videos[0].id }, // Simulate updated playlist
+      thumbnailVideo: videos[0],
+      sidebarState,
+      supabase,
+    });
+  } else {
+    // If thumbnail already existed, just refresh data
+    await Promise.all([
+      sidebarState.refreshData(),
+      invalidate('supabase:db:videos'),
+    ]);
+  }
+
+  return { error: null };
 }
 
 export async function handleRemoveVideosFromPlaylist({
@@ -258,26 +277,13 @@ export async function handleRemoveVideosFromPlaylist({
     supabase,
   });
 
-  for (const video of videos) {
-    // Check if this video is the current playlist thumbnail source
-    if (playlist.thumbnail_video_id === video.id) {
-      await handleUpdatePlaylistImage({
-        playlist,
-        sidebarState,
-        thumbnailMaxResUrl: null, // Remove the image
-        thumbnailUrl: null,
-        supabase,
-      });
-
-      sidebarState.refreshData();
-    }
-  }
-
   if (error) {
     showNotification('Unable to remove video from playlist.');
   } else {
     showNotification(`Removed video from ${playlist.name}.`);
   }
+
+  sidebarState.refreshData();
   invalidate('supabase:db:videos');
   return { error };
 }
@@ -291,7 +297,7 @@ export async function handleUpdatePlaylistImage({
 }: {
   playlist: Playlist;
   sidebarState: SidebarState;
-  thumbnailVideo: Video | null;
+  thumbnailVideo?: Video;
   imageProperties?: ImageProperties | null;
   supabase: SupabaseClient<Database>;
 }) {
@@ -306,7 +312,7 @@ export async function handleUpdatePlaylistImage({
   const { error } = await updatePlaylistImage({
     playlistId: playlist.id,
     processedPlaylistImage,
-    thumbnailVideoId: thumbnailVideo?.id ?? null,
+    thumbnailVideoId: thumbnailVideo?.id,
     imageProperties,
     supabase,
   });

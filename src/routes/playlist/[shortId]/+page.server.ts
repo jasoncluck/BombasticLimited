@@ -20,6 +20,7 @@ import { getPaginationQueryParams } from '$lib/components/pagination/pagination'
 import { Filter } from 'bad-words';
 import { redirect, setFlash } from 'sveltekit-flash-message/server';
 import { getProfileById } from '$lib/supabase/user-profiles';
+import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
 
 export const load: PageServerLoad = async ({
   locals: { supabase, session },
@@ -57,9 +58,6 @@ export const load: PageServerLoad = async ({
     console.error(`Playlist was not found`);
     redirect(302, '/');
   }
-
-  console.log('on load');
-  console.log(playlist);
 
   const [form, creatorProfile] = await Promise.all([
     superValidate(playlist, zod(playlistSchema)),
@@ -112,7 +110,15 @@ export const actions: Actions = {
       });
     }
 
-    const { name, description, id, type, image_url } = form.data;
+    const {
+      name,
+      description,
+      id,
+      type,
+      thumbnail_video_id,
+      thumbnail_maxres_url,
+      thumbnail_url,
+    } = form.data;
     let { image_properties } = form.data;
 
     const filter = new Filter();
@@ -156,16 +162,26 @@ export const actions: Actions = {
       image_properties = null;
     }
 
+    console.log(thumbnail_url);
+    console.log(thumbnail_maxres_url);
+
+    const processedPlaylistImage = await getCroppedPlaylistImageUrlServer({
+      thumbnailUrl: thumbnail_url,
+      thumbnailMaxResUrl: thumbnail_maxres_url,
+      imageProperties: image_properties,
+    });
+
     // With the new system, we don't need to pass the image URL through the form
     // The image is handled separately via the new database structure
     await updatePlaylistImage({
       playlistId: id,
-      videoThumbnailMaxResUrl: image_url,
-      videoThumbnailUrl: null,
+      processedPlaylistImage,
+      imageProperties: image_properties,
+      thumbnailVideoId: thumbnail_video_id,
       supabase,
     });
 
-    const { updatedPlaylist } = await updatePlaylistInfo({
+    await updatePlaylistInfo({
       playlistId: id,
       name,
       description,
@@ -177,7 +193,6 @@ export const actions: Actions = {
 
     // Return the updated playlist data for optimistic updates
     return {
-      updatedPlaylist,
       form,
       success: true,
     };

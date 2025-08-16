@@ -349,8 +349,8 @@ export async function getCroppedPlaylistImageUrlServer({
   acceptHeader = null,
 }: {
   imageProperties: ImageProperties | null;
-  thumbnailMaxResUrl: string | null;
-  thumbnailUrl?: string | null;
+  thumbnailMaxResUrl?: string;
+  thumbnailUrl?: string;
   options?: ImageProcessingOptions;
   acceptHeader?: string | null;
 }) {
