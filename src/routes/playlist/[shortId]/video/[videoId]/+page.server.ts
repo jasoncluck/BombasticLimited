@@ -1,24 +1,18 @@
 import { isPlaylistVideosFilter } from '$lib/components/content/content-filter';
 import { getPlaylistVideoContext } from '$lib/supabase/playlists';
-import { isVideoWithTimestamp } from '$lib/supabase/videos';
+import { incrementVideoView, isVideoWithTimestamp } from '$lib/supabase/videos';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { parseImageProperties } from '$lib/components/playlist/playlist';
-import { generatePlaylistImageUrl } from '$lib/server/image-processing';
 
 export const load: PageServerLoad = async ({
-  locals: { safeGetSession, supabase },
+  locals: { supabase },
   depends,
   params,
   parent,
-  request,
 }) => {
   depends('supabase:db:videos');
 
   const videoId = params.videoId;
-
-  // Get authenticated user securely
-  const { user } = await safeGetSession();
 
   // Run parent() first to get contentFilter
   const { contentFilter } = await parent();
@@ -55,28 +49,14 @@ export const load: PageServerLoad = async ({
     redirect(303, `/video/${params.videoId}`);
   }
 
-  // Generate playlist image URL if needed
-  const processedImageUrl = profilePlaylist.processedImageUrl
-    ? profilePlaylist.processedImageUrl
-    : generatePlaylistImageUrl({
-        imageProperties: parseImageProperties(profilePlaylist.image_properties),
-        thumbnailMaxResUrl: profilePlaylist.thumbnail_maxres_url,
-        thumbnailUrl: profilePlaylist.thumbnail_url,
-        format: 'auto', // Enable AVIF format detection
-        quality: 90,
-      });
-
-  // Update playlist with processed image URL if it was generated
-  if (!profilePlaylist.processedImageUrl) {
-    profilePlaylist.processedImageUrl = processedImageUrl;
-  }
+  incrementVideoView({ videoId, supabase });
 
   return {
     video: currentVideo,
     videos: nextVideos,
     profilePlaylist,
     contentFilter,
-    timestampStartSeconds: isVideoWithTimestamp(currentVideo)
+    timestampStartSeconds: currentVideo.video_start_seconds
       ? currentVideo.video_start_seconds
       : 0,
     // Navigation data

@@ -779,6 +779,9 @@ export type Database = {
           playlist_short_id: string
           playlist_sort_order: Database["public"]["Enums"]["playlist_sort_order"]
           playlist_sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
+          playlist_thumbnail_maxres_url: string
+          playlist_thumbnail_url: string
+          playlist_thumbnail_video_id: string
           playlist_type: Database["public"]["Enums"]["playlist_type"]
           playlist_youtube_id: string
           profile_username: string
@@ -1001,6 +1004,7 @@ export type Database = {
           p_image_url?: string
           p_name?: string
           p_playlist_position?: number
+          p_preferred_format?: string
           p_type?: Database["public"]["Enums"]["playlist_type"]
         }
         Returns: {
@@ -1021,10 +1025,10 @@ export type Database = {
       insert_playlist_videos: {
         Args: { p_playlist_id: number; p_video_ids: string[] }
         Returns: {
-          id: number
-          playlist_id: number
-          video_id: string
-          video_position: number
+          result_id: number
+          result_playlist_id: number
+          result_video_id: string
+          result_video_position: number
         }[]
       }
       insert_timestamp: {

@@ -47,12 +47,14 @@ export type Playlist = {
   type: GetPlaylistDataResponse['playlist_type'];
   image_properties: GetPlaylistDataResponse['playlist_image_properties'];
   youtube_id: GetPlaylistDataResponse['playlist_youtube_id'];
+  thumbnail_video_id: GetPlaylistDataResponse['playlist_thumbnail_video_id'];
+  thumbnail_url: GetPlaylistDataResponse['playlist_thumbnail_url'];
+  thumbnail_maxres_url: GetPlaylistDataResponse['playlist_thumbnail_maxres_url'];
   deleted_at: null; // Always null for active playlists from RPC
   duration_seconds: GetPlaylistDataResponse['total_duration_seconds'];
   // Optional properties that may not always be present
   updated_at?: string | null;
   image_processing_updated_at?: string | null;
-  thumbnail_video_id?: string | null;
 };
 
 export type ProfilePlaylist = Playlist & {
@@ -109,8 +111,14 @@ function transformPlaylistFromRPC(rpcData: GetPlaylistDataResponse): Playlist {
     type: rpcData.playlist_type,
     image_properties: rpcData.playlist_image_properties,
     youtube_id: rpcData.playlist_youtube_id,
+    thumbnail_video_id: rpcData.playlist_thumbnail_video_id,
+    thumbnail_url: rpcData.playlist_thumbnail_url,
+    thumbnail_maxres_url: rpcData.playlist_thumbnail_maxres_url,
     deleted_at: null,
     duration_seconds: rpcData.total_duration_seconds,
+    // Optional fields that aren't returned by get_playlist_data RPC
+    updated_at: null,
+    image_processing_updated_at: null,
   };
 }
 
@@ -246,6 +254,8 @@ export async function getPlaylistData({
     p_preferred_format: preferredFormat,
   });
 
+  console.log(data);
+
   if (error) {
     console.error('Error fetching playlist data:', error);
     return {
@@ -269,35 +279,42 @@ export async function getPlaylistData({
 
   const firstRow = data[0];
 
-  // Transform using type-safe function
+  // Transform using type-safe function - this creates the base playlist
   const basePlaylist = transformPlaylistFromRPC(firstRow);
 
-  // Add user-specific fields if they exist
+  // Properly construct the playlist with all available fields
   const playlist: UserPlaylist | ProfilePlaylist = {
     ...basePlaylist,
+    // Add profile username which is always available
     profile_username: firstRow.profile_username,
-    ...(firstRow.playlist_sorted_by && {
-      sorted_by: firstRow.playlist_sorted_by,
-      sort_order: firstRow.playlist_sort_order,
-      playlist_position: null,
-    }),
+    // Add user-specific playlist fields if they exist (when user is authenticated and it's their playlist)
+    ...(firstRow.playlist_sorted_by &&
+      firstRow.playlist_sort_order && {
+        sorted_by: firstRow.playlist_sorted_by,
+        sort_order: firstRow.playlist_sort_order,
+        playlist_position: null, // This would come from user_playlists table, not available in this RPC
+        added_at: undefined, // Not available from get_playlist_data RPC
+        avatar_url: undefined, // Not available from get_playlist_data RPC
+      }),
   };
 
-  // Transform videos
+  // Transform videos with all thumbnail fields
   const videos: PlaylistVideoWithTimestamp[] = data
-    .filter((row) => !row.is_duration_row)
+    .filter((row) => !row.is_duration_row && row.video_id) // Make sure we have valid video data
     .map(transformVideoFromRPC);
 
   // Convert total seconds to hours, minutes, seconds
-  const totalSeconds = firstRow.total_duration_seconds;
+  const totalSeconds = firstRow.total_duration_seconds || 0;
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
 
+  console.log(playlist);
+
   return {
     playlist,
     videos,
-    videosCount: Number(firstRow.total_videos_count),
+    videosCount: Number(firstRow.total_videos_count || 0),
     playlistDuration: { hours, minutes, seconds },
     error: null,
   };
@@ -580,6 +597,7 @@ export async function createPlaylist({
       p_created_by: session?.user.id,
       p_name: name,
       p_type: 'Private',
+      p_preferred_format: detectPreferredFormat(),
     })
     .single();
 

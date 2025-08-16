@@ -328,6 +328,18 @@ export async function getInProgressVideos({
   return { videos: transformedVideos, count, error };
 }
 
+export function incrementVideoView({
+  videoId,
+  supabase,
+}: {
+  videoId: string;
+  supabase: SupabaseClient<Database>;
+}) {
+  supabase.rpc('increment_video_views', {
+    video_id: videoId,
+  });
+}
+
 export function isVideoWithTimestamp(
   video: Video
 ): video is VideoWithTimestamp {
@@ -353,57 +365,4 @@ export function isVideoWithPlaylistTimestamp(
     'playlist_sort_order' in video &&
     !!video.playlist_sort_order
   );
-}
-
-/**
- * Get video history for a user with optional video filtering
- */
-export async function getVideosHistory({
-  videoId,
-  limit = DEFAULT_NUM_VIDEOS_OVERVIEW,
-  offset = 0,
-  supabase,
-  session,
-}: {
-  videoId?: string;
-  limit?: number;
-  offset?: number;
-  supabase: SupabaseClient<Database>;
-  session?: Session | null;
-}): Promise<{
-  history: VideoHistoryWithVideo[];
-  error?: PostgrestError | null;
-}> {
-  return getUserVideoHistory({
-    videoId,
-    limit,
-    offset,
-    supabase,
-    session,
-  });
-}
-
-/**
- * Get video analytics for a user
- */
-export async function getVideosAnalytics({
-  videoId,
-  daysBack = 30,
-  supabase,
-  session,
-}: {
-  videoId?: string;
-  daysBack?: number;
-  supabase: SupabaseClient<Database>;
-  session?: Session | null;
-}): Promise<{
-  analytics: VideoAnalytics[];
-  error?: PostgrestError | null;
-}> {
-  return getVideoAnalytics({
-    videoId,
-    daysBack,
-    supabase,
-    session,
-  });
 }

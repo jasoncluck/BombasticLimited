@@ -136,11 +136,9 @@ export async function handleCreatePlaylist({
     throw new Error('Attempted to create a playlist without a valid session.');
   }
 
-  // No need to generate name here - the database will handle it
   const { playlist, error } = await createPlaylist({
     session,
     supabase,
-    // No name parameter - let the database generate it
   });
 
   if (error) {
@@ -301,7 +299,6 @@ export async function handleUpdatePlaylistImage({
   // The database function and background processing will handle this
   const { error } = await updatePlaylistImage({
     playlistId: playlist.id,
-    processedPlaylistImage: null, // Not needed with new system
     videoThumbnailMaxResUrl: thumbnailMaxResUrl,
     videoThumbnailUrl: thumbnailUrl,
     supabase,
