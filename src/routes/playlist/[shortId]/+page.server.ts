@@ -115,6 +115,7 @@ export const actions: Actions = {
       description,
       id,
       type,
+      isDeletingPlaylistImage,
       thumbnail_video_id,
       thumbnail_maxres_url,
       thumbnail_url,
@@ -153,43 +154,49 @@ export const actions: Actions = {
       return fail(400, { form });
     }
 
-    if (
-      image_properties?.x === 0 &&
-      image_properties?.y === 0 &&
-      image_properties?.height === 0 &&
-      image_properties?.width === 0
-    ) {
-      image_properties = null;
+    if (isDeletingPlaylistImage) {
+      await updatePlaylistImage({
+        playlistId: id,
+        processedPlaylistImage: null,
+        imageProperties: null,
+        supabase,
+      });
+    } else {
+      if (
+        image_properties?.x === 0 &&
+        image_properties?.y === 0 &&
+        image_properties?.height === 0 &&
+        image_properties?.width === 0
+      ) {
+        image_properties = null;
+      }
+
+      const processedPlaylistImage = await getCroppedPlaylistImageUrlServer({
+        thumbnailUrl: thumbnail_url,
+        thumbnailMaxResUrl: thumbnail_maxres_url,
+        imageProperties: image_properties,
+      });
+
+      // With the new system, we don't need to pass the image URL through the form
+      // The image is handled separately via the new database structure
+      await updatePlaylistImage({
+        playlistId: id,
+        processedPlaylistImage,
+        imageProperties: image_properties,
+        thumbnailVideoId: thumbnail_video_id,
+        supabase,
+      });
+
+      await updatePlaylistInfo({
+        playlistId: id,
+        name,
+        description,
+        imageProperties: image_properties,
+        type,
+        supabase,
+        session,
+      });
     }
-
-    console.log(thumbnail_url);
-    console.log(thumbnail_maxres_url);
-
-    const processedPlaylistImage = await getCroppedPlaylistImageUrlServer({
-      thumbnailUrl: thumbnail_url,
-      thumbnailMaxResUrl: thumbnail_maxres_url,
-      imageProperties: image_properties,
-    });
-
-    // With the new system, we don't need to pass the image URL through the form
-    // The image is handled separately via the new database structure
-    await updatePlaylistImage({
-      playlistId: id,
-      processedPlaylistImage,
-      imageProperties: image_properties,
-      thumbnailVideoId: thumbnail_video_id,
-      supabase,
-    });
-
-    await updatePlaylistInfo({
-      playlistId: id,
-      name,
-      description,
-      imageProperties: image_properties,
-      type,
-      supabase,
-      session,
-    });
 
     // Return the updated playlist data for optimistic updates
     return {

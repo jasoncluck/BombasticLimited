@@ -88,8 +88,6 @@
   const showComma = $derived(formattedDuration.length > 0);
 </script>
 
-{playlist.image_url}
-{playlist.image_properties}
 <SharedContentHeader
   {breadcrumbs}
   bind:showFloatingBreadcrumbs

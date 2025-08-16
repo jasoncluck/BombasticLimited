@@ -258,8 +258,6 @@ export async function getPlaylistData({
     p_preferred_image_format: preferredFormat,
   });
 
-  console.log(data);
-
   if (error) {
     console.error('Error fetching playlist data:', error);
     return {
@@ -312,8 +310,6 @@ export async function getPlaylistData({
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-
-  console.log(playlist);
 
   return {
     playlist,
@@ -646,8 +642,6 @@ export async function getUserPlaylists({
     })
     .order('playlist_position', { ascending: false });
 
-  console.log(data);
-
   if (error) {
     console.error('Error when fetching playlists:', error);
   }
@@ -904,15 +898,13 @@ export async function updatePlaylistImage({
   supabase: SupabaseClient<Database>;
 }) {
   const isResetImage = !processedPlaylistImage || !thumbnailVideoId;
-  console.log('isReset');
-  console.log(isResetImage);
-  console.log(imageProperties);
 
   if (isResetImage) {
     const { error } = await supabase
       .from('playlists')
       .update({
-        image_url: null,
+        thumbnail_video_id: null,
+        image_jpg_url: null,
         image_webp_url: null,
         image_avif_url: null,
         image_properties: null,
