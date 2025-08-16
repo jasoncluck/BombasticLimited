@@ -16,7 +16,7 @@
     handleFollowPlaylist,
     handleUnfollowPlaylist,
   } from '../playlist/playlist-service';
-  import { MinusCircle, Play, PlusCircle } from '@lucide/svelte';
+  import { CircleMinus, CirclePlus, Play } from '@lucide/svelte';
   import { fade } from 'svelte/transition';
   import Button from '../ui/button/button.svelte';
   import * as Popover from '$lib/components/ui/popover';
@@ -125,7 +125,7 @@
                   variant="ghost"
                   class="ghost-button-minimal !px-3 !py-2"
                 >
-                  <PlusCircle class="!h-8 !w-8" />
+                  <CirclePlus class="!h-8 !w-8" />
                 </Button>
               </Popover.Trigger>
               <Popover.Content class="text-sm">
@@ -146,7 +146,7 @@
                 });
               }}
             >
-              <PlusCircle class="!h-8 !w-8" />
+              <CirclePlus class="!h-8 !w-8" />
             </Button>
           {/if}
         {/if}
@@ -163,7 +163,7 @@
               });
             }}
           >
-            <MinusCircle class="!h-8 !w-8" />
+            <CircleMinus class="!h-8 !w-8" />
           </Button>
         {/if}
 

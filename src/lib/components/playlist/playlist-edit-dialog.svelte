@@ -108,9 +108,8 @@
     }
 
     // Set the initial image URL when the dialog opens
-    if (open && !cropperState.rootState.tempUrl) {
-      cropperState.rootState.tempUrl = playlist.thumbnail_maxres_url;
-    }
+    cropperState.rootState.tempUrl =
+      playlist.thumbnail_maxres_url ?? playlist.thumbnail_url;
   });
 </script>
 

@@ -56,7 +56,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data (
   playlist_thumbnail_video_id text,
   playlist_thumbnail_url text,
   playlist_thumbnail_maxres_url text,
-  playlist_deleted_at TIMESTAMP WITH TIME ZONE,   -- Add deleted_at field
+  playlist_deleted_at TIMESTAMP WITH TIME ZONE,
   profile_username text,
   playlist_sorted_by public.playlist_sorted_by,
   playlist_sort_order public.playlist_sort_order,
@@ -97,7 +97,6 @@ BEGIN
   END IF;
   
   -- Get the playlist data by either short_id or youtube_id
-  -- REMOVE the deleted_at filter to allow fetching deleted playlists
   SELECT
     p.id,
     p.created_at,
@@ -117,7 +116,7 @@ BEGIN
     p.image_properties,
     p.youtube_id,
     p.thumbnail_video_id,
-    p.deleted_at,                                              -- Include deleted_at
+    p.deleted_at,
     p.duration_seconds,
     prof.username AS profile_username,
     COALESCE(up.sorted_by, 'playlistOrder'::public.playlist_sorted_by) as sorted_by,
@@ -132,7 +131,6 @@ BEGIN
   LEFT JOIN public.videos thumb_video ON p.thumbnail_video_id = thumb_video.id
   WHERE ((p_short_id IS NOT NULL AND p.short_id = p_short_id)
      OR (p_youtube_id IS NOT NULL AND p.youtube_id = p_youtube_id));
-    -- Removed: AND p.deleted_at IS NULL  -- Now allow deleted playlists
   
   -- If playlist not found, return empty
   IF playlist_record.id IS NULL THEN
@@ -140,11 +138,10 @@ BEGIN
   END IF;
   
   -- Determine effective sort key and order
-  -- Use provided parameters if available, otherwise use playlist's saved preferences
   effective_sort_key := COALESCE(p_sort_key, playlist_record.sorted_by::text, 'playlistOrder');
   effective_sort_order := COALESCE(p_sort_order, playlist_record.sort_order::text, 'ascending');
   
-  -- Get total video count and duration from playlist record
+  -- Get total video count and duration
   SELECT COUNT(*)
   INTO video_count
   FROM public.playlist_videos pv
@@ -158,7 +155,50 @@ BEGIN
   -- Calculate pagination
   start_index := (p_current_page - 1) * p_limit;
   
-  -- Return main data query with explicit column aliases
+  -- If no videos in playlist, return just the playlist metadata
+  IF video_count = 0 THEN
+    RETURN QUERY
+    SELECT 
+      playlist_record.id as playlist_id,
+      playlist_record.created_at as playlist_created_at,
+      playlist_record.name as playlist_name,
+      playlist_record.short_id as playlist_short_id,
+      playlist_record.created_by as playlist_created_by,
+      playlist_record.description as playlist_description,
+      playlist_record.best_playlist_image_url as playlist_image_url,
+      playlist_record.image_processing_status as playlist_image_processing_status,
+      playlist_record.type as playlist_type,
+      playlist_record.image_properties as playlist_image_properties,
+      playlist_record.youtube_id as playlist_youtube_id,
+      playlist_record.thumbnail_video_id as playlist_thumbnail_video_id,
+      playlist_record.playlist_thumbnail_url as playlist_thumbnail_url,
+      playlist_record.playlist_thumbnail_maxres_url as playlist_thumbnail_maxres_url,
+      playlist_record.deleted_at as playlist_deleted_at,
+      playlist_record.profile_username as profile_username,
+      playlist_record.sorted_by as playlist_sorted_by,
+      playlist_record.sort_order as playlist_sort_order,
+      -- Video data (all NULL since no videos)
+      NULL::text as video_id,
+      NULL::int2 as video_position,
+      NULL::public.source as video_source,
+      NULL::text as video_title,
+      NULL::text as video_description,
+      NULL::text as video_thumbnail_url,
+      NULL::text as video_thumbnail_maxres_url,
+      NULL::text as video_image_url,
+      NULL::public.image_processing_status as video_image_processing_status,
+      NULL::TIMESTAMP WITH TIME ZONE as video_published_at,
+      NULL::text as video_duration,
+      0::numeric as video_start_seconds,
+      NULL::TIMESTAMP WITH TIME ZONE as video_watched_at,
+      NULL::TIMESTAMP WITH TIME ZONE as video_updated_at,
+      0::bigint as total_videos_count,
+      COALESCE(total_duration, 0) as total_duration_seconds,
+      false as is_duration_row;
+    RETURN;
+  END IF;
+  
+  -- Return main data query with videos
   RETURN QUERY
   SELECT 
     playlist_record.id as playlist_id,
@@ -175,7 +215,7 @@ BEGIN
     playlist_record.thumbnail_video_id as playlist_thumbnail_video_id,
     playlist_record.playlist_thumbnail_url as playlist_thumbnail_url,
     playlist_record.playlist_thumbnail_maxres_url as playlist_thumbnail_maxres_url,
-    playlist_record.deleted_at as playlist_deleted_at,         -- Return deleted_at
+    playlist_record.deleted_at as playlist_deleted_at,
     playlist_record.profile_username as profile_username,
     playlist_record.sorted_by as playlist_sorted_by,
     playlist_record.sort_order as playlist_sort_order,
@@ -187,7 +227,7 @@ BEGIN
     v.description as video_description,
     v.thumbnail_url as video_thumbnail_url,
     v.thumbnail_maxres_url as video_thumbnail_maxres_url,
-    -- Use select_best_image_format for video thumbnails (prefer maxres if available)
+    -- Use select_best_image_format for video thumbnails
     COALESCE(
       public.select_best_image_format(
         v.thumbnail_maxres_avif_url,

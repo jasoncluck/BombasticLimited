@@ -3,13 +3,9 @@
   import { Check, ListVideo } from '@lucide/svelte';
   import * as Avatar from '$lib/components/ui/avatar';
   import { isSource, SOURCE_INFO } from '$lib/constants/source';
-  import PlaylistImage from './playlist-image.svelte';
-  import type { SupabaseClient } from '@supabase/supabase-js';
-  import type { Database } from '$lib/supabase/database.types';
 
   const {
     playlist,
-    supabase,
     isFollowedPlaylist = false,
     showUsername = true,
   }: {
@@ -17,7 +13,6 @@
       avatar_url?: string | null;
       profile_username?: string;
     };
-    supabase: SupabaseClient<Database>;
     isFollowedPlaylist: boolean;
     showUsername?: boolean;
   } = $props();
@@ -28,7 +23,23 @@
       gap-4 rounded p-3 hover:brightness-110"
   href={`/playlist/${playlist.short_id}`}
 >
-  <PlaylistImage {playlist} {supabase} size="medium" />
+  {#if playlist.image_url}
+    <div class="h-16 w-16 flex-shrink-0 justify-self-center">
+      <img
+        src={playlist.image_url}
+        alt={playlist.name}
+        class="h-full w-full rounded object-cover"
+        decoding="async"
+        loading="eager"
+      />
+    </div>
+  {:else}
+    <div
+      class="bg-muted flex h-16 w-16 items-center justify-center justify-self-center rounded"
+    >
+      <ListVideo class="text-muted-foreground !h-8 !w-8" />
+    </div>
+  {/if}
 
   <div class="min-w-0">
     <p class="mb-1 text-sm font-medium">

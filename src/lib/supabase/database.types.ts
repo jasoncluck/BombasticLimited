@@ -1243,22 +1243,9 @@ export type Database = {
       update_playlist_position: {
         Args: { p_new_position: number; p_playlist_id: number }
         Returns: {
-          created_at: string
-          created_by: string
-          description: string
-          image_avif_url: string
-          image_properties: Json
-          image_url: string
-          image_webp_url: string
-          name: string
           playlist_id: number
           playlist_position: number
-          short_id: string
-          sort_order: Database["public"]["Enums"]["playlist_sort_order"]
-          sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
-          type: Database["public"]["Enums"]["playlist_type"]
-          user_id: string
-          youtube_id: string
+          success: boolean
         }[]
       }
       update_playlist_videos_positions: {

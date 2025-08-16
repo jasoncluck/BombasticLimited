@@ -214,7 +214,6 @@ export async function handleAddVideosToPlaylist({
     return { error: null };
   }
 
-  // Step 1: Add videos to playlist (this will set thumbnail_video_id if needed)
   const { error } = await addVideosToPlaylist({
     videoIds: videos.map((v) => v.id),
     playlistId: playlist.id,
@@ -238,7 +237,7 @@ export async function handleAddVideosToPlaylist({
     `Added ${videos.length > 1 ? 'videos' : 'video'} to ${playlist.name}`
   );
 
-  // Step 2: If playlist didn't have a thumbnail, process the image
+  // If playlist didn't have a thumbnail, process the image
   // We check the original playlist state, not the updated one
   if (!playlist.thumbnail_video_id) {
     // Process the image for the first video that was added
@@ -303,7 +302,8 @@ export async function handleUpdatePlaylistImage({
 }) {
   const processedPlaylistImage = thumbnailVideo
     ? await getCroppedPlaylistImageUrl({
-        imageProperties: parseImageProperties(playlist.image_properties),
+        imageProperties:
+          imageProperties || parseImageProperties(playlist.image_properties),
         thumbnailMaxResUrl: thumbnailVideo.thumbnail_maxres_url,
         thumbnailUrl: thumbnailVideo.thumbnail_url,
       })
@@ -506,7 +506,6 @@ export async function handleUpdatePlaylistSort({
   return { updatedPlaylist, error };
 }
 
-// Functions for getting cropped playlist images in the browser for use when deferring image rendering
 export async function getCroppedPlaylistImageUrl({
   imageProperties,
   thumbnailMaxResUrl,
@@ -519,11 +518,7 @@ export async function getCroppedPlaylistImageUrl({
   const imageUrl = thumbnailMaxResUrl ?? thumbnailUrl;
   if (!imageUrl) return null;
 
-  if (!imageProperties) {
-    imageProperties = thumbnailMaxResUrl
-      ? PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS
-      : PLAYLIST_IMAGE_CROP_DEFAULTS;
-  }
+  const isMaxRes = !!thumbnailMaxResUrl;
 
   try {
     // Try OffscreenCanvas first (more efficient)
@@ -531,10 +526,14 @@ export async function getCroppedPlaylistImageUrl({
       typeof OffscreenCanvas !== 'undefined' &&
       typeof createImageBitmap !== 'undefined'
     ) {
-      return await processWithOffscreenCanvas(imageUrl, imageProperties);
+      return await processWithOffscreenCanvas(
+        imageUrl,
+        imageProperties,
+        isMaxRes
+      );
     } else {
       // Fallback to regular Canvas
-      return await getCroppedImg(imageUrl, imageProperties);
+      return await processWithCanvas(imageUrl, imageProperties, isMaxRes);
     }
   } catch (error) {
     console.error('Browser image processing failed:', error);
@@ -544,7 +543,8 @@ export async function getCroppedPlaylistImageUrl({
 
 async function processWithOffscreenCanvas(
   imageUrl: string,
-  imageProperties: ImageProperties
+  imageProperties: ImageProperties | null,
+  isMaxRes: boolean
 ): Promise<string> {
   const response = await fetch(imageUrl);
   if (!response.ok) throw new Error('Failed to fetch image');
@@ -552,25 +552,175 @@ async function processWithOffscreenCanvas(
   const imageBlob = await response.blob();
   const imageBitmap = await createImageBitmap(imageBlob);
 
-  const canvas = new OffscreenCanvas(
-    imageProperties.width,
-    imageProperties.height
+  // Get optimal crop dimensions based on actual image size
+  const optimalCrop = getOptimalCropDimensions(
+    imageBitmap.width,
+    imageBitmap.height,
+    imageProperties,
+    isMaxRes
   );
+
+  console.log('Client-side processing:', {
+    originalSize: `${imageBitmap.width}x${imageBitmap.height}`,
+    cropArea: optimalCrop,
+    isMaxRes,
+  });
+
+  // Determine target output size
+  const targetWidth = optimalCrop.width;
+  const targetHeight = optimalCrop.height;
+
+  const canvas = new OffscreenCanvas(targetWidth, targetHeight);
   const ctx = canvas.getContext('2d');
 
   if (!ctx) throw new Error('Failed to get canvas context');
 
   ctx.drawImage(
     imageBitmap,
-    imageProperties.x,
-    imageProperties.y,
-    imageProperties.width,
-    imageProperties.height,
+    optimalCrop.x,
+    optimalCrop.y,
+    optimalCrop.width,
+    optimalCrop.height,
     0,
     0,
-    imageProperties.width,
-    imageProperties.height
+    targetWidth,
+    targetHeight
   );
+
+  const blob = await canvas.convertToBlob({
+    type: 'image/webp',
+    quality: !isMaxRes && targetWidth > optimalCrop.width ? 0.9 : 0.8,
+  });
+  const arrayBuffer = await blob.arrayBuffer();
+
+  const uint8Array = new Uint8Array(arrayBuffer);
+  let binaryString = '';
+
+  // Process in chunks to avoid call stack overflow
+  const chunkSize = 8192;
+  for (let i = 0; i < uint8Array.length; i += chunkSize) {
+    const chunk = uint8Array.subarray(i, i + chunkSize);
+    binaryString += String.fromCharCode.apply(null, Array.from(chunk));
+  }
+
+  const base64 = btoa(binaryString);
+
+  return `data:image/webp;base64,${base64}`;
+}
+
+// Fallback Canvas processing for older browsers
+async function processWithCanvas(
+  imageUrl: string,
+  imageProperties: ImageProperties | null,
+  isMaxRes: boolean
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+
+    img.onload = () => {
+      try {
+        // Get optimal crop dimensions based on actual image size
+        const optimalCrop = getOptimalCropDimensions(
+          img.width,
+          img.height,
+          imageProperties,
+          isMaxRes
+        );
+
+        // Determine target output size
+        const targetWidth = optimalCrop.width;
+        const targetHeight = optimalCrop.height;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Failed to get canvas context');
+
+        ctx.drawImage(
+          img,
+          optimalCrop.x,
+          optimalCrop.y,
+          optimalCrop.width,
+          optimalCrop.height,
+          0,
+          0,
+          targetWidth,
+          targetHeight
+        );
+
+        // Convert to WebP
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('Failed to create blob'));
+              return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = () => reject(new Error('Failed to read blob'));
+            reader.readAsDataURL(blob);
+          },
+          'image/webp',
+          !isMaxRes && targetWidth > optimalCrop.width ? 0.9 : 0.8 // Higher quality for lower resolution images
+        );
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = imageUrl;
+  });
+}
+
+// @deprecated This function uses client-side Canvas processing which only supports WebP format.
+// Use server-side processing with getVideoThumbnailWebpUrlServer instead for AVIF support.
+// Video thumbnail processing without cropping - preserves original aspect ratio
+export async function getVideoThumbnailWebpUrl({
+  thumbnailUrl,
+}: {
+  thumbnailUrl: string | null;
+}): Promise<string | null> {
+  if (!thumbnailUrl) return null;
+
+  try {
+    // Try OffscreenCanvas first (more efficient)
+    if (
+      typeof OffscreenCanvas !== 'undefined' &&
+      typeof createImageBitmap !== 'undefined'
+    ) {
+      return await processVideoThumbnailWithOffscreenCanvas(thumbnailUrl);
+    } else {
+      // Fallback to regular Canvas
+      return await processVideoThumbnailWithCanvas(thumbnailUrl);
+    }
+  } catch (error) {
+    console.error('Browser video thumbnail processing failed:', error);
+    return null;
+  }
+}
+
+async function processVideoThumbnailWithOffscreenCanvas(
+  imageUrl: string
+): Promise<string> {
+  const response = await fetch(imageUrl);
+  if (!response.ok) throw new Error('Failed to fetch image');
+
+  const imageBlob = await response.blob();
+  const imageBitmap = await createImageBitmap(imageBlob);
+
+  // Use the original image dimensions (no cropping)
+  const canvas = new OffscreenCanvas(imageBitmap.width, imageBitmap.height);
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) throw new Error('Failed to get canvas context');
+
+  // Draw the full image without cropping
+  ctx.drawImage(imageBitmap, 0, 0);
 
   const blob = await canvas.convertToBlob({ type: 'image/webp', quality: 0.8 });
   const arrayBuffer = await blob.arrayBuffer();
@@ -588,4 +738,50 @@ async function processWithOffscreenCanvas(
   const base64 = btoa(binaryString);
 
   return `data:image/webp;base64,${base64}`;
+}
+
+async function processVideoThumbnailWithCanvas(
+  imageUrl: string
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+
+    img.onload = () => {
+      try {
+        // Use the original image dimensions (no cropping)
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) throw new Error('Failed to get canvas context');
+
+        // Draw the full image without cropping
+        ctx.drawImage(img, 0, 0);
+
+        // Convert to WebP
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('Failed to create blob'));
+              return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = () => reject(new Error('Failed to read blob'));
+            reader.readAsDataURL(blob);
+          },
+          'image/webp',
+          0.8
+        );
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = imageUrl;
+  });
 }
