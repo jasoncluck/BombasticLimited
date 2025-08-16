@@ -1211,6 +1211,21 @@ export type Database = {
         Args: { playlist_id_param: number }
         Returns: undefined
       }
+      update_playlist_image: {
+        Args: {
+          p_image_properties?: Json
+          p_image_url?: string
+          p_playlist_id: number
+          p_thumbnail_video_id?: string
+        }
+        Returns: {
+          error_message: string
+          image_jpg_url: string
+          playlist_id: number
+          success: boolean
+          thumbnail_video_id: string
+        }[]
+      }
       update_playlist_position: {
         Args: { p_new_position: number; p_playlist_id: number }
         Returns: {
@@ -1280,21 +1295,6 @@ export type Database = {
           updated_at: string
           user_id: string
           video_id: string
-        }[]
-      }
-      validate_and_update_playlist_image: {
-        Args: {
-          p_image_properties?: Json
-          p_image_url?: string
-          p_playlist_id: number
-          p_thumbnail_video_id?: string
-        }
-        Returns: {
-          error_message: string
-          image_url: string
-          playlist_id: number
-          success: boolean
-          thumbnail_video_id: string
         }[]
       }
     }

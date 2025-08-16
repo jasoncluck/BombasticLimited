@@ -471,7 +471,7 @@ CREATE TRIGGER trigger_playlist_image_cleanup BEFORE DELETE ON public.playlists 
 EXECUTE FUNCTION public.trigger_cleanup_optimized_images ();
 
 -- Function to validate video thumbnails and update playlist image
-CREATE OR REPLACE FUNCTION public.validate_and_update_playlist_image(
+CREATE OR REPLACE FUNCTION public.update_playlist_image(
   p_playlist_id bigint,
   p_thumbnail_video_id text DEFAULT NULL,
   p_image_url text DEFAULT NULL,
@@ -480,105 +480,60 @@ CREATE OR REPLACE FUNCTION public.validate_and_update_playlist_image(
   success boolean,
   playlist_id bigint,
   thumbnail_video_id text,
-  image_url text,
+  image_jpg_url text,
   error_message text
 ) LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE
-  current_thumbnail_video_id text;
-  current_image_url text;
-  video_exists boolean := false;
-  validation_passed boolean := false;
   error_msg text := NULL;
-  thumbnail_video_changed boolean := false;
-  image_url_changed boolean := false;
-  needs_validation boolean := false;
 BEGIN
-  -- Get current playlist data
-  SELECT p.thumbnail_video_id, p.image_jpg_url 
-  INTO current_thumbnail_video_id, current_image_url
-  FROM public.playlists p
-  WHERE p.id = p_playlist_id;
-
   -- Check if playlist exists
-  IF NOT FOUND THEN
+  IF NOT EXISTS(SELECT 1 FROM public.playlists WHERE id = p_playlist_id) THEN
     error_msg := format('Playlist with ID %s not found', p_playlist_id);
     RETURN QUERY SELECT false, p_playlist_id, NULL::text, NULL::text, error_msg;
     RETURN;
   END IF;
 
-  -- Check what has changed
-  thumbnail_video_changed := (current_thumbnail_video_id IS DISTINCT FROM p_thumbnail_video_id);
-  image_url_changed := (current_image_url IS DISTINCT FROM p_image_url);
-
-  -- Only need validation if:
-  -- 1. Thumbnail video ID has changed AND
-  -- 2. New thumbnail video ID is not NULL (setting an actual video, not removing it)
-  needs_validation := thumbnail_video_changed AND p_thumbnail_video_id IS NOT NULL;
-
-  -- Validate the video exists if we're setting a new thumbnail video
-  IF needs_validation THEN
-    SELECT EXISTS(
-      SELECT 1 FROM public.videos v
-      WHERE v.id = p_thumbnail_video_id
-    ) INTO video_exists;
-
-    IF NOT video_exists THEN
-      error_msg := format('Video with ID %s not found in database', p_thumbnail_video_id);
-      RETURN QUERY SELECT false, p_playlist_id, NULL::text, NULL::text, error_msg;
-      RETURN;
-    END IF;
-  END IF;
-
-  -- Update the playlist based on what's being changed
-  IF thumbnail_video_changed OR image_url_changed THEN
-    -- Determine the update strategy based on what's being set
-    IF p_image_url IS NOT NULL THEN
-      -- Setting a custom cropped image - clear video thumbnail and set image_url
-      UPDATE public.playlists pl
-      SET 
-        thumbnail_video_id = NULL,
-        image_jpg_url = p_image_url,
-        image_webp_url = NULL,  -- Clear other formats since we're setting a custom image
-        image_avif_url = NULL,
-        image_properties = COALESCE(p_image_properties, pl.image_properties),
-        image_processing_status = 'completed',  -- Custom image is already processed
-        image_processing_updated_at = now()
-      WHERE pl.id = p_playlist_id;
-      
-    ELSIF p_thumbnail_video_id IS NOT NULL THEN
-      -- Setting a video thumbnail - clear custom image and set video reference
-      UPDATE public.playlists pl
-      SET 
-        thumbnail_video_id = p_thumbnail_video_id,
-        image_jpg_url = NULL,   -- Clear custom image
-        image_webp_url = NULL,
-        image_avif_url = NULL,
-        image_properties = COALESCE(p_image_properties, pl.image_properties),
-        image_processing_status = 'pending',
-        image_processing_updated_at = now()
-      WHERE pl.id = p_playlist_id;
-      
-    ELSE
-      -- Both p_thumbnail_video_id and p_image_url are NULL
-      -- Reset to default (placeholder image) - clear all image references
-      UPDATE public.playlists pl
-      SET 
-        thumbnail_video_id = NULL,
-        image_jpg_url = NULL,
-        image_webp_url = NULL,
-        image_avif_url = NULL,
-        image_properties = NULL,  -- Clear crop properties too
-        image_processing_status = NULL,
-        image_processing_updated_at = now()
-      WHERE pl.id = p_playlist_id;
-    END IF;
+  -- Update the playlist based on what's being set
+  IF p_image_url IS NOT NULL THEN
+    -- Setting a custom cropped image - clear video thumbnail and set image_url
+    UPDATE public.playlists pl
+    SET 
+      thumbnail_video_id = NULL,
+      image_jpg_url = p_image_url,
+      image_webp_url = NULL,  -- Clear other formats since we're setting a custom image
+      image_avif_url = NULL,
+      image_properties = COALESCE(p_image_properties, pl.image_properties),
+      image_processing_status = 'completed',  -- Custom image is already processed
+      image_processing_updated_at = now()
+    WHERE pl.id = p_playlist_id;
+    
+  ELSIF p_thumbnail_video_id IS NOT NULL THEN
+    -- Setting a video thumbnail - clear custom image and set video reference
+    -- Foreign key constraint will automatically validate the video exists
+    UPDATE public.playlists pl
+    SET 
+      thumbnail_video_id = p_thumbnail_video_id,
+      image_jpg_url = NULL,   -- Clear custom image
+      image_webp_url = NULL,
+      image_avif_url = NULL,
+      image_properties = COALESCE(p_image_properties, pl.image_properties),
+      image_processing_status = 'pending',
+      image_processing_updated_at = now()
+    WHERE pl.id = p_playlist_id;
+    
   ELSE
-    -- No major changes, just update properties if provided
-    IF p_image_properties IS NOT NULL THEN
-      UPDATE public.playlists pl
-      SET image_properties = p_image_properties
-      WHERE pl.id = p_playlist_id;
-    END IF;
+    -- Both p_thumbnail_video_id and p_image_url are NULL
+    -- Reset to default (placeholder image) - clear all image references
+    UPDATE public.playlists pl
+    SET 
+      thumbnail_video_id = NULL,
+      image_jpg_url = NULL,
+      image_webp_url = NULL,
+      image_avif_url = NULL,
+      image_properties = NULL,  -- Clear crop properties too
+      image_processing_status = NULL,
+      image_processing_updated_at = now()
+    WHERE pl.id = p_playlist_id;
   END IF;
   
   -- Return success result
@@ -588,6 +543,13 @@ BEGIN
     p_thumbnail_video_id, 
     p_image_url,
     NULL::text;
+
+EXCEPTION
+  -- Handle foreign key constraint violations
+  WHEN foreign_key_violation THEN
+    error_msg := format('Video with ID %s not found', p_thumbnail_video_id);
+    RETURN QUERY SELECT false, p_playlist_id, NULL::text, NULL::text, error_msg;
+    RETURN;
 END;
 $$;
 

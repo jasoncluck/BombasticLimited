@@ -285,32 +285,29 @@ export async function handleRemoveVideosFromPlaylist({
 export async function handleUpdatePlaylistImage({
   playlist,
   sidebarState,
-  thumbnailUrl,
-  thumbnailMaxResUrl,
+  thumbnailVideo,
+  imageProperties = null,
   supabase,
 }: {
   playlist: Playlist;
   sidebarState: SidebarState;
-  thumbnailUrl: string | null;
-  thumbnailMaxResUrl: string | null;
+  thumbnailVideo: Video | null;
+  imageProperties?: ImageProperties | null;
   supabase: SupabaseClient<Database>;
 }) {
-  const processedPlaylistImage = await getCroppedPlaylistImageUrl({
-    imageProperties: parseImageProperties(playlist.image_properties),
-    thumbnailMaxResUrl,
-    thumbnailUrl,
-  });
-
-  if (!processedPlaylistImage) {
-    showNotification('Unable to crop playlist image.');
-    throw new Error('Unable to process image, preventing upload.');
-  }
+  const processedPlaylistImage = thumbnailVideo
+    ? await getCroppedPlaylistImageUrl({
+        imageProperties: parseImageProperties(playlist.image_properties),
+        thumbnailMaxResUrl: thumbnailVideo.thumbnail_maxres_url,
+        thumbnailUrl: thumbnailVideo.thumbnail_url,
+      })
+    : null;
 
   const { error } = await updatePlaylistImage({
     playlistId: playlist.id,
     processedPlaylistImage,
-    videoThumbnailMaxResUrl: thumbnailMaxResUrl,
-    videoThumbnailUrl: thumbnailUrl,
+    thumbnailVideoId: thumbnailVideo?.id ?? null,
+    imageProperties,
     supabase,
   });
 

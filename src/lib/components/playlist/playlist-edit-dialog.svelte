@@ -25,12 +25,10 @@
   import ScrollArea from '../ui/scroll-area/scroll-area.svelte';
   import { getFlash, updateFlash } from 'sveltekit-flash-message';
   import { page } from '$app/state';
-  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { Session } from '@supabase/supabase-js';
   import { getPlaylistState } from '$lib/state/playlist.svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { invalidate } from '$app/navigation';
-  import type { Database } from '$lib/supabase/database.types';
-  import { handleUpdatePlaylistImage } from './playlist-service';
 
   let {
     form,
@@ -38,7 +36,6 @@
     playlist,
     open = $bindable(),
     trigger,
-    supabase,
     session,
   }: {
     form: SuperValidated<PlaylistSchema>;
@@ -47,7 +44,6 @@
     trigger: Snippet;
     open: boolean;
     session: Session | null;
-    supabase: SupabaseClient<Database>;
   } = $props();
 
   const playlistState = getPlaylistState();
@@ -86,7 +82,7 @@
 
           const updatedPlaylist = Object.assign(playlist, data);
           if (isDeletingPlaylistImage) {
-            updatedPlaylist.image_url = null;
+            updatedPlaylist.thumbnail_video_id = null;
           }
 
           // Sidebar refresh will get server-processed images with AVIF support
@@ -107,17 +103,17 @@
 
     // Set the initial image URL when the dialog opens
     if (open && !cropperState.rootState.tempUrl) {
-      cropperState.rootState.tempUrl = playlist.image_url;
+      cropperState.rootState.tempUrl = playlist.thumbnail_maxres_url;
     }
 
     // Only set imageDataUrl if we have a cropped/processed image
     // Check if the src is different from the original playlist image
-    if (
-      cropState.rootState.src &&
-      cropState.rootState.src !== playlist.image_url
-    ) {
-      // $formData.image_url = cropState.rootState.src;
-    }
+    // if (
+    //   cropState.rootState.src &&
+    //   cropState.rootState.src !== playlist.image_url
+    // ) {
+    //   // $formData.image_url = cropState.rootState.src;
+    // }
   });
 </script>
 
@@ -152,7 +148,7 @@
 
         <div class="mb-4 flex flex-col justify-center gap-4 sm:flex-row">
           <div class="relative m-6 flex justify-center">
-            {#if playlist.image_url && !$formData.isDeletingPlaylistImage}
+            {#if (playlist.thumbnail_maxres_url || playlist.thumbnail_url) && !$formData.isDeletingPlaylistImage}
               <div class="relative h-56 w-56">
                 <ImageCropper.Preview class="h-full w-full rounded-md" />
                 <DropdownMenu.Root>
@@ -307,14 +303,6 @@
                     hidden
                     bind:value={$formData.isDeletingPlaylistImage}
                   />
-                {/snippet}
-              </Form.Control>
-            </Form.Field>
-            <!-- Add the hidden field for imageDataUrl -->
-            <Form.Field form={playlistForm} name="image_url">
-              <Form.Control>
-                {#snippet children({ props })}
-                  <Input {...props} hidden bind:value={$formData.image_url} />
                 {/snippet}
               </Form.Control>
             </Form.Field>

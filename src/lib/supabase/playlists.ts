@@ -51,7 +51,7 @@ export type Playlist = {
   thumbnail_video_id: GetPlaylistDataResponse['playlist_thumbnail_video_id'];
   thumbnail_url: GetPlaylistDataResponse['playlist_thumbnail_url'];
   thumbnail_maxres_url: GetPlaylistDataResponse['playlist_thumbnail_maxres_url'];
-  deleted_at: null; // Always null for active playlists from RPC
+  deleted_at: GetPlaylistDataResponse['playlist_deleted_at']; // Now uses actual deleted_at from DB
   duration_seconds: GetPlaylistDataResponse['total_duration_seconds'];
   // Optional properties that may not always be present
   updated_at?: string | null;
@@ -115,7 +115,7 @@ function transformPlaylistFromRPC(rpcData: GetPlaylistDataResponse): Playlist {
     thumbnail_video_id: rpcData.playlist_thumbnail_video_id,
     thumbnail_url: rpcData.playlist_thumbnail_url,
     thumbnail_maxres_url: rpcData.playlist_thumbnail_maxres_url,
-    deleted_at: null,
+    deleted_at: rpcData.playlist_deleted_at,
     duration_seconds: rpcData.total_duration_seconds,
     // Optional fields that aren't returned by get_playlist_data RPC
     updated_at: null,
@@ -142,6 +142,8 @@ function transformUserPlaylistFromRPC(
     duration_seconds: rpcData.duration_seconds,
     profile_username: rpcData.profile_username,
     playlist_position: rpcData.playlist_position,
+    thumbnail_url: rpcData.playlist_thumbnail_url,
+    thumbnail_maxres_url: rpcData.playlist_thumbnail_maxres_url,
     sorted_by: rpcData.sorted_by,
     sort_order: rpcData.sort_order,
     added_at: rpcData.added_at,
@@ -863,64 +865,109 @@ export async function updatePlaylistInfo({
  */
 export async function updatePlaylistImage({
   playlistId,
-  videoId,
-  imageUrl,
+  processedPlaylistImage,
+  thumbnailVideoId,
   imageProperties,
   supabase,
 }: {
   playlistId: number;
-  videoId?: string;
-  imageUrl?: string;
-  imageProperties?: CropArea | null;
+  processedPlaylistImage: string | null;
+  thumbnailVideoId: string | null;
+  imageProperties: ImageProperties | null;
   supabase: SupabaseClient<Database>;
 }) {
-  try {
-    // Call the RPC function with the provided parameters
-    // If both videoId and imageUrl are null/undefined, it will reset to default placeholder
-    const { data: updateData, error: updateError } = await supabase.rpc(
-      'validate_and_update_playlist_image',
-      {
-        p_playlist_id: playlistId,
-        p_thumbnail_video_id: videoId,
-        p_image_url: imageUrl,
-        p_image_properties: imageProperties as Json,
-      }
-    );
+  const isResetImage = !processedPlaylistImage || !thumbnailVideoId;
 
-    if (updateError) {
-      console.error('Database update error:', updateError);
-      return {
-        updatedPlaylist: null,
-        error: updateError,
-      };
-    }
+  if (isResetImage) {
+    const { error } = await supabase
+      .from('playlists')
+      .update({
+        image_url: null,
+        image_webp_url: null,
+        image_avif_url: null,
+        image_properties: null,
+        image_processing_status: null,
+        image_processing_updated_at: null,
+      })
+      .eq('id', playlistId)
+      .select();
 
-    const result = updateData?.[0];
+    return { error };
+  }
 
-    if (!result?.success) {
-      console.error('Validation failed:', result?.error_message);
-      return {
-        updatedPlaylist: null,
-        error: new Error(`Validation failed: ${result?.error_message}`),
-      };
-    }
+  const uploadResult = await uploadPlaylistImage({
+    playlistId,
+    imageUrl: processedPlaylistImage,
+    supabase,
+  });
 
-    return {
-      updatedPlaylist: {
-        id: result?.playlist_id,
-        thumbnail_video_id: result?.thumbnail_video_id,
-        image_url: result?.image_url,
-        success: result?.success,
-      },
-      error: null,
-    };
-  } catch (error) {
-    console.error('Error in updatePlaylistImage:', error);
+  if (uploadResult.error) {
+    console.error('Upload error:', uploadResult.error);
     return {
       updatedPlaylist: null,
-      error: error as Error,
+      error: uploadResult.error,
     };
   }
+
+  const { data: updateData, error: updateError } = await supabase.rpc(
+    'update_playlist_image',
+    {
+      p_playlist_id: playlistId,
+      p_image_url: uploadResult.data?.publicUrl,
+      p_thumbnail_video_id: thumbnailVideoId ?? undefined,
+      p_image_properties: imageProperties,
+    }
+  );
+
+  console.log('JMC AFTER UPDATE');
+  console.log(updateData);
+
+  if (updateError) {
+    console.error('Database update error:', updateError);
+
+    // Clean up uploaded image if database update fails
+    try {
+      await supabase.storage
+        .from(IMAGES_BUCKET)
+        .remove([uploadResult.data?.imagePath || '']);
+    } catch (cleanupError) {
+      console.error('Failed to cleanup uploaded image:', cleanupError);
+    }
+
+    return {
+      updatedPlaylist: null,
+      error: updateError,
+    };
+  }
+
+  const result = updateData?.[0];
+
+  if (!result?.success) {
+    console.error('Validation failed:', result?.error_message);
+
+    // Clean up uploaded image if validation fails
+    try {
+      await supabase.storage
+        .from(IMAGES_BUCKET)
+        .remove([uploadResult.data?.imagePath || '']);
+    } catch (cleanupError) {
+      console.error('Failed to cleanup uploaded image:', cleanupError);
+    }
+
+    return {
+      updatedPlaylist: null,
+      error: new Error(`Validation failed: ${result?.error_message}`),
+    };
+  }
+
+  return {
+    updatedPlaylist: {
+      id: result?.playlist_id,
+      image_url: result?.image_jpg_url,
+      success: result?.success,
+    },
+    error: null,
+  };
 }
 
 export async function uploadPlaylistImage({
@@ -968,20 +1015,20 @@ export async function uploadPlaylistImage({
       .from(IMAGES_BUCKET)
       .getPublicUrl(uploadData.path);
 
-    // Update playlist with the full public URL - no need for image_properties since image is already processed
-    const { error: updateError } = await supabase
-      .from('playlists')
-      .update({
-        image_url: publicUrl.publicUrl,
-        image_properties: null, // Clear any old crop properties
-      })
-      .eq('id', playlistId)
-      .select();
-
-    if (updateError) {
-      console.error('Database update error:', updateError);
-      return { error: updateError };
-    }
+    // // Update playlist with the full public URL - no need for image_properties since image is already processed
+    // const { data: updateData, error: updateError } = await supabase
+    //   .from('playlists')
+    //   .update({
+    //     image_url: publicUrl.publicUrl,
+    //     image_properties: null, // Clear any old crop properties
+    //   })
+    //   .eq('id', playlistId)
+    //   .select();
+    //
+    // if (updateError) {
+    //   console.error('Database update error:', updateError);
+    //   return { error: updateError };
+    // }
 
     return {
       data: {

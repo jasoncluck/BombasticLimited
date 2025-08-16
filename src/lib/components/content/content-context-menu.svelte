@@ -243,8 +243,7 @@
               const { error } = await handleUpdatePlaylistImage({
                 playlist,
                 sidebarState,
-                thumbnailUrl: operationVideos[0].thumbnail_url,
-                thumbnailMaxResUrl: operationVideos[0].thumbnail_maxres_url,
+                thumbnailVideo: operationVideos[0],
                 supabase,
               });
 

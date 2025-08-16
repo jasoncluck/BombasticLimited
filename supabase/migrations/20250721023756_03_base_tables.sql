@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS "public"."playlists" (
   "duration_seconds" integer DEFAULT 0,
   
   -- Source video reference for thumbnail generation
-  "thumbnail_video_id" text REFERENCES "public"."videos"("id") ON DELETE SET NULL,
+  "thumbnail_video_id" text REFERENCES "public"."videos"("id") ON DELETE SET NULL DEFAULT NULL,
   
   -- Crop dimensions for generating playlist thumbnails from video thumbnail
   "image_properties" jsonb, -- {x: number, y: number, width: number, height: number}

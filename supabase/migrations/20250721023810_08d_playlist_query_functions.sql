@@ -53,9 +53,10 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data (
   playlist_type public.playlist_type,
   playlist_image_properties jsonb,
   playlist_youtube_id text,
-  playlist_thumbnail_video_id text,           -- The video ID used as thumbnail
-  playlist_thumbnail_url text,                -- thumbnail_url from the linked video
-  playlist_thumbnail_maxres_url text,         -- thumbnail_maxres_url from the linked video
+  playlist_thumbnail_video_id text,
+  playlist_thumbnail_url text,
+  playlist_thumbnail_maxres_url text,
+  playlist_deleted_at TIMESTAMP WITH TIME ZONE,   -- Add deleted_at field
   profile_username text,
   playlist_sorted_by public.playlist_sorted_by,
   playlist_sort_order public.playlist_sort_order,
@@ -95,8 +96,8 @@ BEGIN
     RAISE EXCEPTION 'Exactly one of p_short_id or p_youtube_id must be provided';
   END IF;
   
-  -- Get the playlist data by either short_id or youtube_id, excluding soft-deleted playlists
-  -- Include JOIN with thumbnail video to get its thumbnail URLs
+  -- Get the playlist data by either short_id or youtube_id
+  -- REMOVE the deleted_at filter to allow fetching deleted playlists
   SELECT
     p.id,
     p.created_at,
@@ -116,6 +117,7 @@ BEGIN
     p.image_properties,
     p.youtube_id,
     p.thumbnail_video_id,
+    p.deleted_at,                                              -- Include deleted_at
     p.duration_seconds,
     prof.username AS profile_username,
     COALESCE(up.sorted_by, 'playlistOrder'::public.playlist_sorted_by) as sorted_by,
@@ -129,8 +131,8 @@ BEGIN
   LEFT JOIN public.user_playlists up ON up.id = p.id AND up.user_id = p_user_id
   LEFT JOIN public.videos thumb_video ON p.thumbnail_video_id = thumb_video.id
   WHERE ((p_short_id IS NOT NULL AND p.short_id = p_short_id)
-     OR (p_youtube_id IS NOT NULL AND p.youtube_id = p_youtube_id))
-    AND p.deleted_at IS NULL;  -- Filter out soft-deleted playlists
+     OR (p_youtube_id IS NOT NULL AND p.youtube_id = p_youtube_id));
+    -- Removed: AND p.deleted_at IS NULL  -- Now allow deleted playlists
   
   -- If playlist not found, return empty
   IF playlist_record.id IS NULL THEN
@@ -173,6 +175,7 @@ BEGIN
     playlist_record.thumbnail_video_id as playlist_thumbnail_video_id,
     playlist_record.playlist_thumbnail_url as playlist_thumbnail_url,
     playlist_record.playlist_thumbnail_maxres_url as playlist_thumbnail_maxres_url,
+    playlist_record.deleted_at as playlist_deleted_at,         -- Return deleted_at
     playlist_record.profile_username as profile_username,
     playlist_record.sorted_by as playlist_sorted_by,
     playlist_record.sort_order as playlist_sort_order,
@@ -182,8 +185,8 @@ BEGIN
     v.source as video_source,
     v.title as video_title,
     v.description as video_description,
-    v.thumbnail_url as video_thumbnail_url,                    -- Direct from videos table
-    v.thumbnail_maxres_url as video_thumbnail_maxres_url,      -- Direct from videos table
+    v.thumbnail_url as video_thumbnail_url,
+    v.thumbnail_maxres_url as video_thumbnail_maxres_url,
     -- Use select_best_image_format for video thumbnails (prefer maxres if available)
     COALESCE(
       public.select_best_image_format(
