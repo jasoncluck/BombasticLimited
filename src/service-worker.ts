@@ -171,9 +171,6 @@ const shouldCacheResponse = (response: Response): boolean => {
 const startBackgroundRefresh = (): void => {
   // Skip background refresh in test environments to reduce server load
   if (isTestEnvironment()) {
-    console.log(
-      `SW [${getTimestamp()}]: Background refresh disabled in test environment`
-    );
     return;
   }
 
@@ -184,26 +181,18 @@ const startBackgroundRefresh = (): void => {
   backgroundRefreshTimer = setInterval(async () => {
     await performBackgroundRefresh();
   }, BACKGROUND_REFRESH_INTERVAL);
-
-  console.log(
-    `SW [${getTimestamp()}]: Background refresh started (every ${BACKGROUND_REFRESH_INTERVAL / 1000}s)`
-  );
 };
 
 const stopBackgroundRefresh = (): void => {
   if (backgroundRefreshTimer) {
     clearInterval(backgroundRefreshTimer);
     backgroundRefreshTimer = null;
-    console.log(`SW [${getTimestamp()}]: Background refresh stopped`);
   }
 };
 
 const performBackgroundRefresh = async (): Promise<void> => {
   // Skip in test environment to reduce server load
   if (isTestEnvironment()) {
-    console.log(
-      `SW [${getTimestamp()}]: Background refresh skipped in test environment`
-    );
     return;
   }
 
@@ -211,23 +200,12 @@ const performBackgroundRefresh = async (): Promise<void> => {
     // Check if any tabs are visible before proceeding
     const hasVisibleTabs = await checkTabVisibility();
     if (!hasVisibleTabs) {
-      console.log(
-        `SW [${getTimestamp()}]: No visible tabs, skipping background refresh`
-      );
       return;
     }
 
     const authState = await getAuthState();
     const dataCache = await getDataCache();
     const now = Date.now();
-
-    console.log(
-      `SW [${getTimestamp()}]: Starting background refresh cycle (auth: ${authState})`
-    );
-    console.log(
-      `SW [${getTimestamp()}]: Tracked routes:`,
-      Array.from(trackedRoutes)
-    );
 
     // Get clients for messaging
     const clients = await sw.clients.matchAll();
@@ -244,17 +222,11 @@ const performBackgroundRefresh = async (): Promise<void> => {
           return;
         }
 
-        // Log the route being processed
-        console.log(`SW [${getTimestamp()}]: Processing route: "${route}"`);
-
         const cacheKey = getCacheKey(route, authState);
 
         // Check if route is still cached
         const cachedResponse = await dataCache.match(cacheKey);
         if (!cachedResponse) {
-          console.log(
-            `SW [${getTimestamp()}]: Route not cached, skipping: ${route}`
-          );
           return; // Not cached, skip
         }
 
@@ -263,9 +235,6 @@ const performBackgroundRefresh = async (): Promise<void> => {
         if (cacheDate) {
           const age = now - new Date(cacheDate).getTime();
           if (age > MAX_BACKGROUND_REFRESH_AGE) {
-            console.log(
-              `SW [${getTimestamp()}]: Route ${route} too old, removing from tracking`
-            );
             trackedRoutes.delete(route);
             return;
           }
@@ -278,9 +247,6 @@ const performBackgroundRefresh = async (): Promise<void> => {
           sw.location.origin
         ).toString();
 
-        console.log(`SW [${getTimestamp()}]: Fetching route: ${routeUrl}`);
-        console.log(`SW [${getTimestamp()}]: Fetching data: ${dataUrl}`);
-
         // Fetch fresh content
         const freshResponse = await fetch(routeUrl, {
           headers: {
@@ -290,9 +256,6 @@ const performBackgroundRefresh = async (): Promise<void> => {
         });
 
         if (!freshResponse.ok) {
-          console.warn(
-            `SW [${getTimestamp()}]: Background refresh failed for ${route}: ${freshResponse.status}`
-          );
           return;
         }
 
@@ -302,9 +265,6 @@ const performBackgroundRefresh = async (): Promise<void> => {
 
         if (cachedEtag && freshEtag && cachedEtag === freshEtag) {
           // Content hasn't changed, but update the cache timestamp
-          console.log(
-            `SW [${getTimestamp()}]: No changes for ${route} (ETag match)`
-          );
           return;
         }
 
@@ -354,10 +314,6 @@ const performBackgroundRefresh = async (): Promise<void> => {
             `SW [${getTimestamp()}]: Data fetch failed for ${dataUrl}: ${dataResponse.status}`
           );
         }
-
-        console.log(
-          `SW [${getTimestamp()}]: ✅ Background refreshed: ${route} (auth: ${authState})`
-        );
       } catch (error) {
         console.warn(
           `SW [${getTimestamp()}]: Background refresh error for ${route}:`,
@@ -367,12 +323,6 @@ const performBackgroundRefresh = async (): Promise<void> => {
     });
 
     await Promise.allSettled(refreshPromises);
-
-    if (refreshedCount > 0) {
-      console.log(
-        `SW [${getTimestamp()}]: Background refresh complete - updated ${refreshedCount} routes (auth: ${authState})`
-      );
-    }
   } catch (error) {
     console.error(
       `SW [${getTimestamp()}]: Background refresh cycle failed:`,
@@ -397,9 +347,6 @@ const addRouteToTracking = (route: string): void => {
   }
 
   trackedRoutes.add(route);
-  console.log(
-    `SW [${getTimestamp()}]: Added ${route} to background refresh tracking (total: ${trackedRoutes.size})`
-  );
 };
 
 // Handle navigation requests with auth-aware caching
@@ -420,14 +367,7 @@ const handleNavigationRequest = async (request: Request): Promise<Response> => {
 
       // Add route to background refresh tracking if it's a main route
       if (MAIN_ROUTE_PATHS.includes(url.pathname) || url.pathname === '/') {
-        console.log(
-          `SW [${getTimestamp()}]: Adding route to tracking: "${url.pathname}"`
-        );
         addRouteToTracking(url.pathname);
-      } else {
-        console.log(
-          `SW [${getTimestamp()}]: Route not in MAIN_ROUTE_PATHS: "${url.pathname}"`
-        );
       }
 
       // Extract data and send to memory cache for __data.json requests
@@ -459,11 +399,6 @@ const handleNavigationRequest = async (request: Request): Promise<Response> => {
 
     return networkResponse;
   } catch (error) {
-    // Only serve from cache if network completely fails
-    console.log(
-      `SW [${getTimestamp()}]: Network failed for ${url.pathname}, trying cache (auth: ${authState})`
-    );
-
     // Try auth-specific cache first
     const cacheKey = getCacheKey(request.url, authState);
     let cached = await cache.match(cacheKey);
@@ -472,17 +407,9 @@ const handleNavigationRequest = async (request: Request): Promise<Response> => {
     if (!cached && authState === 'auth') {
       const anonCacheKey = getCacheKey(request.url, 'anon');
       cached = await cache.match(anonCacheKey);
-      if (cached) {
-        console.log(
-          `SW [${getTimestamp()}]: Serving anonymous cached content for authenticated user: ${url.pathname}`
-        );
-      }
     }
 
     if (cached) {
-      console.log(
-        `SW [${getTimestamp()}]: Serving cached content for ${url.pathname} (auth: ${authState})`
-      );
       return cached;
     }
     throw error;
@@ -536,10 +463,6 @@ const preloadCriticalResources = async (): Promise<void> => {
   const authState = await getAuthState();
   const dataCache = await getDataCache();
 
-  console.log(
-    `SW [${getTimestamp()}]: Starting critical resource preload... (auth: ${authState})`
-  );
-
   // Preload critical assets that aren't already cached
   const criticalAssets = build.filter(
     (asset) =>
@@ -555,10 +478,6 @@ const preloadCriticalResources = async (): Promise<void> => {
         const response = await fetch(asset);
         if (response.ok) {
           await staticCache.put(asset, response);
-          console.log(
-            `SW [${getTimestamp()}]: ✅ Critical asset cached:`,
-            asset
-          );
         }
       } catch (error) {
         console.warn(
@@ -597,9 +516,6 @@ const preloadCriticalResources = async (): Promise<void> => {
         const htmlToCache = htmlResponse.value.clone();
         const htmlCacheKey = getCacheKey(route, authState);
         await dataCache.put(htmlCacheKey, htmlToCache);
-        console.log(
-          `SW [${getTimestamp()}]: ✅ Route cached: ${route} (auth: ${authState})`
-        );
         routeSuccessfullyPreloaded = true;
 
         // Add to background refresh tracking
@@ -611,9 +527,6 @@ const preloadCriticalResources = async (): Promise<void> => {
         const dataToCache = dataResponse.value.clone();
         const dataCacheKey = getCacheKey(`${route}/__data.json`, authState);
         await dataCache.put(dataCacheKey, dataToCache);
-        console.log(
-          `SW [${getTimestamp()}]: ✅ Route data cached: ${route}/__data.json (auth: ${authState})`
-        );
 
         // Extract data and try to send to clients (may not be available during install)
         try {
@@ -681,21 +594,12 @@ const preloadCriticalResources = async (): Promise<void> => {
         });
       });
     });
-
-    console.log(
-      `SW [${getTimestamp()}]: ✅ Stored ${preloadedRoutes.length} preloaded routes (auth: ${authState}):`,
-      preloadedRoutes
-    );
   } catch (error) {
     console.warn(
       `SW [${getTimestamp()}]: Failed to store preloaded routes:`,
       error
     );
   }
-
-  console.log(
-    `SW [${getTimestamp()}]: Critical resource preload complete (auth: ${authState})`
-  );
 };
 
 // Clean up old caches efficiently including auth-specific caches and image cache
@@ -711,23 +615,15 @@ const cleanupOldCaches = async (): Promise<void> => {
   );
 
   await Promise.all(oldCaches.map((name) => caches.delete(name)));
-
-  if (oldCaches.length > 0) {
-    console.log(`SW [${getTimestamp()}]: Cleaned up old caches:`, oldCaches);
-  }
 };
 
 // Install event - preload critical assets
 sw.addEventListener('install', (event) => {
-  console.log(`SW [${getTimestamp()}]: Installing version ${version}`);
-
   event.waitUntil(Promise.all([preloadCriticalResources(), sw.skipWaiting()]));
 });
 
 // Activate event - clean up and take control
 sw.addEventListener('activate', (event) => {
-  console.log(`SW [${getTimestamp()}]: Activating version ${version}`);
-
   event.waitUntil(
     Promise.all([cleanupOldCaches(), sw.clients.claim()]).then(() => {
       // Start background refresh after activation
@@ -793,13 +689,11 @@ sw.addEventListener('message', (event) => {
 
   switch (type) {
     case 'SKIP_WAITING': {
-      console.log(`SW [${getTimestamp()}]: Received SKIP_WAITING message`);
       sw.skipWaiting();
       break;
     }
 
     case 'CLEAR_CACHE': {
-      console.log(`SW [${getTimestamp()}]: Received CLEAR_CACHE message`);
       event.waitUntil(
         Promise.all([
           caches.delete(STATIC_CACHE),
@@ -807,9 +701,6 @@ sw.addEventListener('message', (event) => {
           caches.delete(DATA_CACHE_ANON),
           caches.delete(IMAGE_CACHE),
         ]).then(() => {
-          console.log(
-            `SW [${getTimestamp()}]: All caches cleared successfully`
-          );
           // Stop background refresh when cache is cleared
           stopBackgroundRefresh();
           trackedRoutes.clear();
@@ -822,23 +713,13 @@ sw.addEventListener('message', (event) => {
       const { authState } = event.data || {};
       const cacheToDelete =
         authState === 'auth' ? DATA_CACHE_AUTH : DATA_CACHE_ANON;
-      console.log(`SW [${getTimestamp()}]: Clearing ${authState} cache`);
 
-      event.waitUntil(
-        caches.delete(cacheToDelete).then(() => {
-          console.log(
-            `SW [${getTimestamp()}]: ${authState} cache cleared successfully`
-          );
-        })
-      );
+      event.waitUntil(caches.delete(cacheToDelete));
       break;
     }
 
     case 'CLEAR_IMAGE_CACHE': {
       const { authState } = event.data || {};
-      console.log(
-        `SW [${getTimestamp()}]: Clearing image cache for ${authState || 'all'} state(s)`
-      );
 
       event.waitUntil(
         (async () => {
@@ -856,15 +737,9 @@ sw.addEventListener('message', (event) => {
               await Promise.all(
                 keysToDelete.map((key) => imageCache.delete(key))
               );
-              console.log(
-                `SW [${getTimestamp()}]: Cleared ${keysToDelete.length} ${authState} image cache entries`
-              );
             } else {
               // Clear all image cache
               await caches.delete(IMAGE_CACHE);
-              console.log(
-                `SW [${getTimestamp()}]: Image cache cleared completely`
-              );
             }
           } catch (error) {
             console.error(
@@ -878,8 +753,6 @@ sw.addEventListener('message', (event) => {
     }
 
     case 'GET_IMAGE_CACHE_STATS': {
-      console.log(`SW [${getTimestamp()}]: Received image cache stats request`);
-
       event.waitUntil(
         (async () => {
           try {
@@ -933,21 +806,11 @@ sw.addEventListener('message', (event) => {
     }
 
     case 'IMAGE_CACHED': {
-      const { cacheKey, authState } = event.data || {};
-      console.log(
-        `SW [${getTimestamp()}]: Image cached notification for ${cacheKey} (${authState})`
-      );
-
-      // This is just a notification message - no action needed
-      // The actual caching is handled by the ImageCacheManager
       break;
     }
 
     case 'AUTH_STATE_CHANGED': {
       const { newAuthState, oldAuthState } = event.data || {};
-      console.log(
-        `SW [${getTimestamp()}]: Auth state changed from ${oldAuthState} to ${newAuthState}`
-      );
 
       // Clear tracked routes to force re-evaluation with new auth state
       trackedRoutes.clear();
@@ -967,9 +830,6 @@ sw.addEventListener('message', (event) => {
               await Promise.all(
                 keysToDelete.map((key) => imageCache.delete(key))
               );
-              console.log(
-                `SW [${getTimestamp()}]: Cleared ${keysToDelete.length} ${oldAuthState} image cache entries due to auth change`
-              );
             } catch (error) {
               console.warn(
                 `SW [${getTimestamp()}]: Error clearing old auth image cache:`,
@@ -986,25 +846,16 @@ sw.addEventListener('message', (event) => {
     }
 
     case 'START_BACKGROUND_REFRESH': {
-      console.log(
-        `SW [${getTimestamp()}]: Starting background refresh on client request`
-      );
       startBackgroundRefresh();
       break;
     }
 
     case 'STOP_BACKGROUND_REFRESH': {
-      console.log(
-        `SW [${getTimestamp()}]: Stopping background refresh on client request`
-      );
       stopBackgroundRefresh();
       break;
     }
 
     case 'REQUEST_PRELOADED_ROUTES': {
-      console.log(
-        `SW [${getTimestamp()}]: Client requesting preloaded routes list`
-      );
       // Send current preloaded routes by checking what's in cache for current auth state
       event.waitUntil(
         (async () => {
@@ -1052,7 +903,6 @@ sw.addEventListener('message', (event) => {
     }
 
     default: {
-      console.log(`SW [${getTimestamp()}]: Received message type: ${type}`);
       break;
     }
   }
@@ -1067,8 +917,5 @@ sw.addEventListener('error', (event) => {
 sw.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
     // Optionally reduce refresh frequency when page is hidden
-    console.log(
-      `SW [${getTimestamp()}]: Page hidden, continuing background refresh`
-    );
   }
 });

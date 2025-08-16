@@ -14,7 +14,7 @@ describe('Admin Notifications Management', () => {
         message: 'This is pending',
         start_datetime: futureDate,
         end_datetime: null,
-        created_at: now
+        created_at: now,
       },
       {
         id: '2',
@@ -23,7 +23,7 @@ describe('Admin Notifications Management', () => {
         message: 'This is active',
         start_datetime: pastDate,
         end_datetime: null,
-        created_at: pastDate
+        created_at: pastDate,
       },
       {
         id: '3',
@@ -32,22 +32,23 @@ describe('Admin Notifications Management', () => {
         message: 'This is expired',
         start_datetime: pastDate,
         end_datetime: pastDate,
-        created_at: pastDate
-      }
+        created_at: pastDate,
+      },
     ];
 
     // Test categorization logic
     const pendingNotifications = allNotifications.filter(
-      n => n.start_datetime && n.start_datetime > now
+      (n) => n.start_datetime && n.start_datetime > now
     );
-    
+
     const sentNotifications = allNotifications.filter(
-      n => (!n.start_datetime || n.start_datetime <= now) && 
-          (!n.end_datetime || n.end_datetime > now)
+      (n) =>
+        (!n.start_datetime || n.start_datetime <= now) &&
+        (!n.end_datetime || n.end_datetime > now)
     );
-    
+
     const expiredNotifications = allNotifications.filter(
-      n => n.end_datetime && n.end_datetime <= now
+      (n) => n.end_datetime && n.end_datetime <= now
     );
 
     expect(pendingNotifications).toHaveLength(1);
@@ -63,7 +64,7 @@ describe('Admin Notifications Management', () => {
   it('should format datetime correctly', () => {
     const formatDateTime = (dateTimeString: string | null): string => {
       if (!dateTimeString) return 'N/A';
-      
+
       try {
         return new Date(dateTimeString).toLocaleString();
       } catch (error) {
@@ -73,7 +74,7 @@ describe('Admin Notifications Management', () => {
 
     const testDate = '2024-01-01T12:00:00.000Z';
     const formatted = formatDateTime(testDate);
-    
+
     expect(formatted).not.toBe('Invalid Date');
     expect(formatted).not.toBe('N/A');
     expect(formatted).toContain('2024');
@@ -82,7 +83,7 @@ describe('Admin Notifications Management', () => {
   it('should handle null datetime values', () => {
     const formatDateTime = (dateTimeString: string | null): string => {
       if (!dateTimeString) return 'N/A';
-      
+
       try {
         return new Date(dateTimeString).toLocaleString();
       } catch (error) {
@@ -96,17 +97,22 @@ describe('Admin Notifications Management', () => {
   });
 
   it('should determine notification status correctly', () => {
-    const getNotificationStatus = (notification: any): { text: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } => {
+    const getNotificationStatus = (
+      notification: any
+    ): {
+      text: string;
+      variant: 'default' | 'secondary' | 'destructive' | 'outline';
+    } => {
       const now = new Date().toISOString();
-      
+
       if (notification.start_datetime && notification.start_datetime > now) {
         return { text: 'Pending', variant: 'outline' };
       }
-      
+
       if (notification.end_datetime && notification.end_datetime <= now) {
         return { text: 'Expired', variant: 'destructive' };
       }
-      
+
       return { text: 'Active', variant: 'default' };
     };
 
@@ -116,21 +122,30 @@ describe('Admin Notifications Management', () => {
 
     const pendingNotification = {
       start_datetime: futureDate,
-      end_datetime: null
+      end_datetime: null,
     };
 
     const activeNotification = {
       start_datetime: pastDate,
-      end_datetime: null
+      end_datetime: null,
     };
 
     const expiredNotification = {
       start_datetime: pastDate,
-      end_datetime: pastDate
+      end_datetime: pastDate,
     };
 
-    expect(getNotificationStatus(pendingNotification)).toEqual({ text: 'Pending', variant: 'outline' });
-    expect(getNotificationStatus(activeNotification)).toEqual({ text: 'Active', variant: 'default' });
-    expect(getNotificationStatus(expiredNotification)).toEqual({ text: 'Expired', variant: 'destructive' });
+    expect(getNotificationStatus(pendingNotification)).toEqual({
+      text: 'Pending',
+      variant: 'outline',
+    });
+    expect(getNotificationStatus(activeNotification)).toEqual({
+      text: 'Active',
+      variant: 'default',
+    });
+    expect(getNotificationStatus(expiredNotification)).toEqual({
+      text: 'Expired',
+      variant: 'destructive',
+    });
   });
 });

@@ -34,6 +34,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      image_processing_jobs: {
+        Row: {
+          attempts: number
+          created_at: string
+          entity_id: string
+          entity_type: string
+          error_message: string | null
+          id: string
+          image_type: string
+          max_attempts: number
+          priority: number
+          processing_completed_at: string | null
+          processing_started_at: string | null
+          source_url: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          error_message?: string | null
+          id?: string
+          image_type: string
+          max_attempts?: number
+          priority?: number
+          processing_completed_at?: string | null
+          processing_started_at?: string | null
+          source_url: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          error_message?: string | null
+          id?: string
+          image_type?: string
+          max_attempts?: number
+          priority?: number
+          processing_completed_at?: string | null
+          processing_started_at?: string | null
+          source_url?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           action_url: string | null
@@ -121,14 +172,22 @@ export type Database = {
           created_by: string
           deleted_at: string | null
           description: string | null
+          duration_seconds: number | null
           id: number
+          image_avif_url: string | null
+          image_jpg_url: string | null
+          image_processing_status:
+            | Database["public"]["Enums"]["image_processing_status"]
+            | null
+          image_processing_updated_at: string | null
           image_properties: Json | null
+          image_webp_url: string | null
           name: string
           search_vector: unknown | null
           short_id: string
-          thumbnail_maxres_url: string | null
-          thumbnail_url: string | null
+          thumbnail_video_id: string | null
           type: Database["public"]["Enums"]["playlist_type"]
+          updated_at: string | null
           youtube_id: string | null
         }
         Insert: {
@@ -136,14 +195,22 @@ export type Database = {
           created_by: string
           deleted_at?: string | null
           description?: string | null
+          duration_seconds?: number | null
           id?: number
+          image_avif_url?: string | null
+          image_jpg_url?: string | null
+          image_processing_status?:
+            | Database["public"]["Enums"]["image_processing_status"]
+            | null
+          image_processing_updated_at?: string | null
           image_properties?: Json | null
+          image_webp_url?: string | null
           name: string
           search_vector?: unknown | null
           short_id: string
-          thumbnail_maxres_url?: string | null
-          thumbnail_url?: string | null
+          thumbnail_video_id?: string | null
           type?: Database["public"]["Enums"]["playlist_type"]
+          updated_at?: string | null
           youtube_id?: string | null
         }
         Update: {
@@ -151,17 +218,33 @@ export type Database = {
           created_by?: string
           deleted_at?: string | null
           description?: string | null
+          duration_seconds?: number | null
           id?: number
+          image_avif_url?: string | null
+          image_jpg_url?: string | null
+          image_processing_status?:
+            | Database["public"]["Enums"]["image_processing_status"]
+            | null
+          image_processing_updated_at?: string | null
           image_properties?: Json | null
+          image_webp_url?: string | null
           name?: string
           search_vector?: unknown | null
           short_id?: string
-          thumbnail_maxres_url?: string | null
-          thumbnail_url?: string | null
+          thumbnail_video_id?: string | null
           type?: Database["public"]["Enums"]["playlist_type"]
+          updated_at?: string | null
           youtube_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "playlists_thumbnail_video_id_fkey"
+            columns: ["thumbnail_video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -334,6 +417,7 @@ export type Database = {
       }
       user_playlists: {
         Row: {
+          added_at: string
           id: number
           playlist_position: number | null
           sort_order: Database["public"]["Enums"]["playlist_sort_order"]
@@ -341,6 +425,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          added_at?: string
           id: number
           playlist_position?: number | null
           sort_order?: Database["public"]["Enums"]["playlist_sort_order"]
@@ -348,6 +433,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          added_at?: string
           id?: number
           playlist_position?: number | null
           sort_order?: Database["public"]["Enums"]["playlist_sort_order"]
@@ -410,37 +496,64 @@ export type Database = {
           description: string
           duration: string | null
           id: string
+          image_processing_status:
+            | Database["public"]["Enums"]["image_processing_status"]
+            | null
+          image_processing_updated_at: string | null
           pending_delete: boolean | null
           published_at: string
           search_vector: unknown | null
           source: Database["public"]["Enums"]["source"]
+          thumbnail_avif_url: string | null
+          thumbnail_maxres_avif_url: string | null
           thumbnail_maxres_url: string | null
+          thumbnail_maxres_webp_url: string | null
           thumbnail_url: string
+          thumbnail_webp_url: string | null
           title: string
+          views: number
         }
         Insert: {
           description: string
           duration?: string | null
           id: string
+          image_processing_status?:
+            | Database["public"]["Enums"]["image_processing_status"]
+            | null
+          image_processing_updated_at?: string | null
           pending_delete?: boolean | null
           published_at?: string
           search_vector?: unknown | null
           source: Database["public"]["Enums"]["source"]
+          thumbnail_avif_url?: string | null
+          thumbnail_maxres_avif_url?: string | null
           thumbnail_maxres_url?: string | null
+          thumbnail_maxres_webp_url?: string | null
           thumbnail_url: string
+          thumbnail_webp_url?: string | null
           title: string
+          views?: number
         }
         Update: {
           description?: string
           duration?: string | null
           id?: string
+          image_processing_status?:
+            | Database["public"]["Enums"]["image_processing_status"]
+            | null
+          image_processing_updated_at?: string | null
           pending_delete?: boolean | null
           published_at?: string
           search_vector?: unknown | null
           source?: Database["public"]["Enums"]["source"]
+          thumbnail_avif_url?: string | null
+          thumbnail_maxres_avif_url?: string | null
           thumbnail_maxres_url?: string | null
+          thumbnail_maxres_webp_url?: string | null
           thumbnail_url?: string
+          thumbnail_webp_url?: string | null
           title?: string
+          views?: number
         }
         Relationships: []
       }
@@ -470,6 +583,10 @@ export type Database = {
       }
     }
     Functions: {
+      calculate_playlist_duration: {
+        Args: { playlist_id_param: number }
+        Returns: number
+      }
       can_user_access_playlist: {
         Args: { playlist_id: number; user_id?: string }
         Returns: boolean
@@ -481,6 +598,15 @@ export type Database = {
       cleanup_expired_notifications_cron: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      complete_image_processing_job: {
+        Args: {
+          avif_path?: string
+          job_id: string
+          jpg_path?: string
+          webp_path?: string
+        }
+        Returns: boolean
       }
       create_notification: {
         Args: {
@@ -549,6 +675,14 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      duration_to_seconds: {
+        Args: { duration_text: string }
+        Returns: number
+      }
+      fail_image_processing_job: {
+        Args: { error_msg: string; job_id: string }
+        Returns: boolean
+      }
       follow_playlist: {
         Args: { p_playlist_id: number; p_playlist_position?: number }
         Returns: {
@@ -571,26 +705,45 @@ export type Database = {
           description: string
           duration: string
           id: string
+          image_processing_status: Database["public"]["Enums"]["image_processing_status"]
+          image_processing_updated_at: string
           playlist_name: string
           playlist_short_id: string
           playlist_sort_order: Database["public"]["Enums"]["playlist_sort_order"]
           playlist_sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
           published_at: string
           source: Database["public"]["Enums"]["source"]
+          thumbnail_avif_url: string
+          thumbnail_maxres_avif_url: string
           thumbnail_maxres_url: string
+          thumbnail_maxres_webp_url: string
           thumbnail_url: string
+          thumbnail_webp_url: string
           title: string
           updated_at: string
           video_start_seconds: number
+          views: number
           watched_at: string
         }[]
       }
+      get_next_image_processing_job: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          attempts: number
+          entity_id: string
+          entity_type: string
+          image_type: string
+          job_id: string
+          source_url: string
+        }[]
+      }
       get_playlist_by_youtube_id: {
-        Args: { p_youtube_id: string }
+        Args: { p_preferred_image_format?: string; p_youtube_id: string }
         Returns: {
           created_at: string
           created_by: string
           description: string
+          duration_seconds: number
           id: number
           image_properties: Json
           name: string
@@ -598,8 +751,6 @@ export type Database = {
           short_id: string
           sort_order: Database["public"]["Enums"]["playlist_sort_order"]
           sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
-          thumbnail_maxres_url: string
-          thumbnail_url: string
           type: Database["public"]["Enums"]["playlist_type"]
           youtube_id: string
         }[]
@@ -608,6 +759,7 @@ export type Database = {
         Args: {
           p_current_page?: number
           p_limit?: number
+          p_preferred_image_format?: string
           p_short_id?: string
           p_sort_key?: string
           p_sort_order?: string
@@ -618,15 +770,19 @@ export type Database = {
           is_duration_row: boolean
           playlist_created_at: string
           playlist_created_by: string
+          playlist_deleted_at: string
           playlist_description: string
           playlist_id: number
+          playlist_image_processing_status: Database["public"]["Enums"]["image_processing_status"]
           playlist_image_properties: Json
+          playlist_image_url: string
           playlist_name: string
           playlist_short_id: string
           playlist_sort_order: Database["public"]["Enums"]["playlist_sort_order"]
           playlist_sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
           playlist_thumbnail_maxres_url: string
           playlist_thumbnail_url: string
+          playlist_thumbnail_video_id: string
           playlist_type: Database["public"]["Enums"]["playlist_type"]
           playlist_youtube_id: string
           profile_username: string
@@ -635,6 +791,8 @@ export type Database = {
           video_description: string
           video_duration: string
           video_id: string
+          video_image_processing_status: Database["public"]["Enums"]["image_processing_status"]
+          video_image_url: string
           video_position: number
           video_published_at: string
           video_source: Database["public"]["Enums"]["source"]
@@ -649,6 +807,7 @@ export type Database = {
       get_playlist_video_context: {
         Args: {
           p_context_limit?: number
+          p_preferred_image_format?: string
           p_short_id: string
           p_video_id: string
         }
@@ -657,15 +816,19 @@ export type Database = {
           is_current_video: boolean
           playlist_created_at: string
           playlist_created_by: string
+          playlist_deleted_at: string
           playlist_description: string
           playlist_id: number
+          playlist_image_processing_status: Database["public"]["Enums"]["image_processing_status"]
           playlist_image_properties: Json
+          playlist_image_url: string
           playlist_name: string
           playlist_short_id: string
           playlist_sort_order: Database["public"]["Enums"]["playlist_sort_order"]
           playlist_sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
           playlist_thumbnail_maxres_url: string
           playlist_thumbnail_url: string
+          playlist_thumbnail_video_id: string
           playlist_type: Database["public"]["Enums"]["playlist_type"]
           playlist_youtube_id: string
           profile_username: string
@@ -673,6 +836,7 @@ export type Database = {
           video_description: string
           video_duration: string
           video_id: string
+          video_image_url: string
           video_position: number
           video_published_at: string
           video_source: Database["public"]["Enums"]["source"]
@@ -688,21 +852,25 @@ export type Database = {
         }[]
       }
       get_playlists_for_username: {
-        Args: { p_username: string }
+        Args: { p_preferred_image_format?: string; p_username: string }
         Returns: {
           created_at: string
           created_by: string
           deleted_at: string
           description: string
+          duration_seconds: number
           id: number
+          image_processing_status: Database["public"]["Enums"]["image_processing_status"]
           image_properties: Json
+          image_url: string
           name: string
+          playlist_thumbnail_maxres_url: string
+          playlist_thumbnail_url: string
           profile_username: string
           short_id: string
           sort_order: Database["public"]["Enums"]["playlist_sort_order"]
           sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
-          thumbnail_maxres_url: string
-          thumbnail_url: string
+          thumbnail_video_id: string
           type: Database["public"]["Enums"]["playlist_type"]
           youtube_id: string
         }[]
@@ -748,22 +916,28 @@ export type Database = {
         }[]
       }
       get_user_playlists: {
-        Args: Record<PropertyKey, never>
+        Args: { p_preferred_image_format?: string }
         Returns: {
+          added_at: string
+          avatar_url: string
           created_at: string
           created_by: string
           deleted_at: string
           description: string
+          duration_seconds: number
           id: number
+          image_processing_status: Database["public"]["Enums"]["image_processing_status"]
           image_properties: Json
+          image_url: string
           name: string
           playlist_position: number
+          playlist_thumbnail_maxres_url: string
+          playlist_thumbnail_url: string
           profile_username: string
           short_id: string
           sort_order: Database["public"]["Enums"]["playlist_sort_order"]
           sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
-          thumbnail_maxres_url: string
-          thumbnail_url: string
+          thumbnail_video_id: string
           type: Database["public"]["Enums"]["playlist_type"]
           youtube_id: string
         }[]
@@ -803,16 +977,31 @@ export type Database = {
           description: string
           duration: string
           id: string
+          image_processing_status: Database["public"]["Enums"]["image_processing_status"]
+          image_processing_updated_at: string
           playlist_id: number
+          playlist_name: string
+          playlist_short_id: string
+          playlist_sort_order: Database["public"]["Enums"]["playlist_sort_order"]
+          playlist_sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
           published_at: string
           source: Database["public"]["Enums"]["source"]
+          thumbnail_avif_url: string
+          thumbnail_maxres_avif_url: string
           thumbnail_maxres_url: string
+          thumbnail_maxres_webp_url: string
           thumbnail_url: string
+          thumbnail_webp_url: string
           title: string
           updated_at: string
           video_start_seconds: number
+          views: number
           watched_at: string
         }[]
+      }
+      increment_video_views: {
+        Args: { video_id: string }
+        Returns: undefined
       }
       initialize_user_playlist_positions: {
         Args: Record<PropertyKey, never>
@@ -823,33 +1012,34 @@ export type Database = {
           p_created_by: string
           p_description?: string
           p_image_properties?: Json
+          p_image_url?: string
           p_name?: string
           p_playlist_position?: number
-          p_thumbnail_maxres_url?: string
-          p_thumbnail_url?: string
+          p_preferred_image_format?: string
           p_type?: Database["public"]["Enums"]["playlist_type"]
         }
         Returns: {
           created_at: string
           created_by: string
           description: string
+          image_avif_url: string
           image_properties: Json
+          image_url: string
+          image_webp_url: string
           name: string
           playlist_id: number
           playlist_position: number
           short_id: string
-          thumbnail_maxres_url: string
-          thumbnail_url: string
           type: Database["public"]["Enums"]["playlist_type"]
         }[]
       }
       insert_playlist_videos: {
         Args: { p_playlist_id: number; p_video_ids: string[] }
         Returns: {
-          id: number
-          playlist_id: number
-          video_id: string
-          video_position: number
+          result_id: number
+          result_playlist_id: number
+          result_video_id: string
+          result_video_position: number
         }[]
       }
       insert_timestamp: {
@@ -913,6 +1103,16 @@ export type Database = {
         Args: { notification_ids?: number[] }
         Returns: undefined
       }
+      queue_image_processing_job: {
+        Args: {
+          p_entity_id: string
+          p_entity_type: string
+          p_image_type: string
+          p_priority?: number
+          p_source_url: string
+        }
+        Returns: string
+      }
       remove_notification: {
         Args: { notification_id: number }
         Returns: boolean
@@ -930,6 +1130,7 @@ export type Database = {
           current_user_id?: string
           limit_count?: number
           offset_count?: number
+          p_preferred_image_format?: string
           search_term: string
         }
         Returns: {
@@ -937,14 +1138,18 @@ export type Database = {
           created_by: string
           deleted_at: string
           description: string
+          duration_seconds: number
           id: number
+          image_processing_status: Database["public"]["Enums"]["image_processing_status"]
           image_properties: Json
+          image_url: string
           name: string
+          playlist_thumbnail_maxres_url: string
+          playlist_thumbnail_url: string
           profile_username: string
           search_rank: number
           short_id: string
-          thumbnail_maxres_url: string
-          thumbnail_url: string
+          thumbnail_video_id: string
           type: Database["public"]["Enums"]["playlist_type"]
           youtube_id: string
         }[]
@@ -955,19 +1160,44 @@ export type Database = {
           description: string
           duration: string
           id: string
+          image_processing_status: Database["public"]["Enums"]["image_processing_status"]
+          image_processing_updated_at: string
+          playlist_name: string
+          playlist_short_id: string
+          playlist_sort_order: Database["public"]["Enums"]["playlist_sort_order"]
+          playlist_sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
           published_at: string
           search_rank: number
           source: Database["public"]["Enums"]["source"]
+          thumbnail_avif_url: string
+          thumbnail_maxres_avif_url: string
           thumbnail_maxres_url: string
+          thumbnail_maxres_webp_url: string
           thumbnail_url: string
+          thumbnail_webp_url: string
           title: string
           updated_at: string
           video_start_seconds: number
+          views: number
+          watched_at: string
         }[]
+      }
+      select_best_image_format: {
+        Args: {
+          avif_url: string
+          jpg_url: string
+          preferred_format?: string
+          webp_url: string
+        }
+        Returns: string
       }
       setup_notification_cleanup_cron: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      start_image_processing_job: {
+        Args: { job_id: string }
+        Returns: boolean
       }
       start_video_history_session: {
         Args: { p_session_start_time?: string; p_video_id: string }
@@ -991,24 +1221,31 @@ export type Database = {
           user_id: string
         }[]
       }
+      update_playlist_duration: {
+        Args: { playlist_id_param: number }
+        Returns: undefined
+      }
+      update_playlist_image: {
+        Args: {
+          p_image_properties?: Json
+          p_image_url?: string
+          p_playlist_id: number
+          p_thumbnail_video_id?: string
+        }
+        Returns: {
+          error_message: string
+          image_jpg_url: string
+          playlist_id: number
+          success: boolean
+          thumbnail_video_id: string
+        }[]
+      }
       update_playlist_position: {
         Args: { p_new_position: number; p_playlist_id: number }
         Returns: {
-          created_at: string
-          created_by: string
-          description: string
-          image_properties: Json
-          name: string
           playlist_id: number
           playlist_position: number
-          short_id: string
-          sort_order: Database["public"]["Enums"]["playlist_sort_order"]
-          sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
-          thumbnail_maxres_url: string
-          thumbnail_url: string
-          type: Database["public"]["Enums"]["playlist_type"]
-          user_id: string
-          youtube_id: string
+          success: boolean
         }[]
       }
       update_playlist_videos_positions: {
@@ -1061,18 +1298,11 @@ export type Database = {
           video_id: string
         }[]
       }
-      validate_playlist_thumbnail_urls: {
-        Args: {
-          p_playlist_id: number
-          p_thumbnail_maxres_url?: string
-          p_thumbnail_url?: string
-        }
-        Returns: boolean
-      }
     }
     Enums: {
       content_description: "FULL" | "BRIEF" | "NONE"
       content_display: "TABLE" | "TILES"
+      image_processing_status: "pending" | "processing" | "completed" | "failed"
       notification_type: "system"
       playlist_sort_order: "ascending" | "descending"
       playlist_sorted_by: "title" | "datePublished" | "playlistOrder"
@@ -1211,6 +1441,7 @@ export const Constants = {
     Enums: {
       content_description: ["FULL", "BRIEF", "NONE"],
       content_display: ["TABLE", "TILES"],
+      image_processing_status: ["pending", "processing", "completed", "failed"],
       notification_type: ["system"],
       playlist_sort_order: ["ascending", "descending"],
       playlist_sorted_by: ["title", "datePublished", "playlistOrder"],

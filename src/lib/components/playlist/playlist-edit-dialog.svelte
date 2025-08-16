@@ -11,7 +11,7 @@
   import { Button } from '$lib/components/ui/button';
   import type { Playlist } from '$lib/supabase/playlists';
   import { zodClient } from 'sveltekit-superforms/adapters';
-  import { EditIcon, ListVideo, Loader } from '@lucide/svelte';
+  import { ListVideo, Loader, Pencil } from '@lucide/svelte';
   import Textarea from '$lib/components/ui/textarea/textarea.svelte';
   import * as ImageCropper from '$lib/components/ui/image-cropper';
   import {
@@ -30,7 +30,6 @@
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { invalidate } from '$app/navigation';
   import { isLowResolutionThumbnail } from './playlist-service';
-  import { parseImageProperties } from './playlist';
 
   let {
     form,
@@ -81,17 +80,17 @@
       },
       async onUpdated(event) {
         updateFlash(page);
+
         if (event.form.valid) {
-          const { isDeletingPlaylistImage, ...data } = event.form.data;
           open = false;
           isSubmitting = false;
           playlistForm.reset();
 
-          const updatedPlaylist = Object.assign(playlist, data);
-          if (isDeletingPlaylistImage) {
-            updatedPlaylist.thumbnail_url = null;
-            updatedPlaylist.thumbnail_maxres_url = null;
-          }
+          // const updatedPlaylist = Object.assign(playlist, data);
+          // if (isDeletingPlaylistImage) {
+          //   updatedPlaylist.thumbnail_video_id = null;
+          // }
+
           // Sidebar refresh will get server-processed images with AVIF support
           sidebarState.refreshData();
           invalidate('supabase:db:playlists');
@@ -108,16 +107,20 @@
       $formData.image_properties = cropState.rootState.pixelCrop;
     }
 
+    // Set the initial image URL when the dialog opens
     cropperState.rootState.tempUrl =
       playlist.thumbnail_maxres_url ?? playlist.thumbnail_url;
   });
 </script>
 
+<!-- Rest of your component remains the same -->
 <Dialog.Root
   bind:open
   onOpenChange={(open) => {
     if (open === false) {
       playlistState.openEditPlaylist = false;
+      // Reset the cropper state when closing
+      cropperState.rootState.tempUrl = null;
     }
   }}
 >
@@ -141,7 +144,7 @@
 
         <div class="mb-4 flex flex-col justify-center gap-4 sm:flex-row">
           <div class="relative m-6 flex justify-center">
-            {#if (playlist.thumbnail_maxres_url || playlist.thumbnail_url) && !$formData.isDeletingPlaylistImage}
+            {#if ($formData.thumbnail_maxres_url || $formData.thumbnail_url) && !$formData.isDeletingPlaylistImage}
               <div class="relative h-56 w-56">
                 <ImageCropper.Preview class="h-full w-full rounded-md" />
                 <DropdownMenu.Root>
@@ -153,7 +156,7 @@
                         variant="secondary"
                         size="icon"
                       >
-                        <EditIcon class="size-4" />
+                        <Pencil class="size-4" />
                       </Button>
                     {/snippet}
                   </DropdownMenu.Trigger>
@@ -191,16 +194,14 @@
                       variant="outline"
                       size="icon"
                     >
-                      <EditIcon class="size-4" />
+                      <Pencil class="size-4" />
                     </Button>
                   {/snippet}
                 </Popover.Trigger>
                 <Popover.Content align="start"
                   ><p class="text-sm">
-                    Playlist images can only be set to thumbnails of videos
-                    added to the playlist. Select a video to set it's thumbnail
-                    as the playlist image. The image can then be cropped using
-                    this button.
+                    Upload a new image or crop an existing video thumbnail as
+                    the playlist image.
                   </p>
                 </Popover.Content>
               </Popover.Root>
@@ -297,6 +298,40 @@
                     {...props}
                     hidden
                     bind:value={$formData.isDeletingPlaylistImage}
+                  />
+                {/snippet}
+              </Form.Control>
+            </Form.Field>
+            <!-- Add the hidden field for imageDataUrl -->
+            <Form.Field form={playlistForm} name="thumbnail_video_id">
+              <Form.Control>
+                {#snippet children({ props })}
+                  <Input
+                    {...props}
+                    hidden
+                    bind:value={$formData.thumbnail_video_id}
+                  />
+                {/snippet}
+              </Form.Control>
+            </Form.Field>
+            <Form.Field form={playlistForm} name="thumbnail_url">
+              <Form.Control>
+                {#snippet children({ props })}
+                  <Input
+                    {...props}
+                    hidden
+                    bind:value={$formData.thumbnail_url}
+                  />
+                {/snippet}
+              </Form.Control>
+            </Form.Field>
+            <Form.Field form={playlistForm} name="thumbnail_maxres_url">
+              <Form.Control>
+                {#snippet children({ props })}
+                  <Input
+                    {...props}
+                    hidden
+                    bind:value={$formData.thumbnail_maxres_url}
                   />
                 {/snippet}
               </Form.Control>

@@ -10,7 +10,7 @@
   import { DEFAULT_NUM_PLAYLISTS_PAGINATION } from '$lib/supabase/playlists.js';
 
   const { data } = $props();
-  let { playlistResults, playlistsCount, session } = $derived(data);
+  let { playlistResults, playlistsCount, session, supabase } = $derived(data);
 
   const pageFromQueryParams = page.url.searchParams.get(PAGINATION_QUERY_KEY);
   let currentPage = $state(
@@ -60,4 +60,4 @@
 {/if}
 
 <!-- Direct use of server-processed playlists -->
-<PlaylistTiles playlists={playlistResults} {session} />
+<PlaylistTiles playlists={playlistResults} {supabase} {session} />

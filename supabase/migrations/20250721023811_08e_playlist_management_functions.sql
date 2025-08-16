@@ -3,16 +3,16 @@
 -- Dependencies: Requires base tables from 03_base_tables.sql and user profile functions (08a)
 -- This migration includes playlist creation, modification, and video management functions
 -- ============================================================================
--- Function to insert a new playlist and create a user_playlists mapping with position management
+
 CREATE OR REPLACE FUNCTION public.insert_playlist (
   p_created_by uuid,
   p_name text DEFAULT NULL,
   p_description text DEFAULT NULL,
   p_type public.playlist_type DEFAULT 'Private'::public.playlist_type,
-  p_thumbnail_url text DEFAULT NULL,
-  p_thumbnail_maxres_url text DEFAULT NULL,
+  p_image_url text DEFAULT NULL,
   p_image_properties jsonb DEFAULT NULL,
-  p_playlist_position int2 DEFAULT NULL
+  p_playlist_position int2 DEFAULT NULL,
+  p_preferred_image_format text DEFAULT 'avif'
 ) RETURNS TABLE (
   playlist_id bigint,
   created_by uuid,
@@ -21,8 +21,9 @@ CREATE OR REPLACE FUNCTION public.insert_playlist (
   short_id text,
   description text,
   type public.playlist_type,
-  thumbnail_url text,
-  thumbnail_maxres_url text,
+  image_url text,
+  image_webp_url text,
+  image_avif_url text,
   image_properties jsonb,
   playlist_position int2
 ) LANGUAGE plpgsql
@@ -37,6 +38,7 @@ DECLARE
   base_name text := 'New Playlist';
   counter int := 2;
   name_exists boolean;
+  selected_image_url text;
 BEGIN
   -- Lock all operations for this user to prevent concurrent playlist modifications
   PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || p_created_by::text));
@@ -120,13 +122,13 @@ BEGIN
   END IF;
 
   -- Insert the new playlist with the generated/provided name
+  -- Store the input image URL in the jpg_url column for now
   INSERT INTO public.playlists (
     created_by, 
     name, 
     description, 
     type, 
-    thumbnail_url, 
-    thumbnail_maxres_url, 
+    image_jpg_url,
     image_properties
   )
   VALUES (
@@ -134,8 +136,7 @@ BEGIN
     final_name,
     p_description,
     p_type,
-    p_thumbnail_url,
-    p_thumbnail_maxres_url,
+    p_image_url,
     p_image_properties
   )
   RETURNING * INTO inserted_playlist;
@@ -152,6 +153,14 @@ BEGIN
     actual_position
   );
 
+  -- Use select_best_image_format to get the best available image URL
+  SELECT public.select_best_image_format(
+    inserted_playlist.image_avif_url,
+    inserted_playlist.image_webp_url,
+    inserted_playlist.image_jpg_url,
+    p_preferred_image_format
+  ) INTO selected_image_url;
+
   -- Assign return values
   playlist_id := inserted_playlist.id;
   created_by := inserted_playlist.created_by;
@@ -160,8 +169,9 @@ BEGIN
   short_id := inserted_playlist.short_id;
   description := inserted_playlist.description;
   type := inserted_playlist.type;
-  thumbnail_url := inserted_playlist.thumbnail_url;
-  thumbnail_maxres_url := inserted_playlist.thumbnail_maxres_url;
+  image_url := selected_image_url; -- Use the selected best format
+  image_webp_url := inserted_playlist.image_webp_url;
+  image_avif_url := inserted_playlist.image_avif_url;
   image_properties := inserted_playlist.image_properties;
   playlist_position := actual_position;
 
@@ -316,32 +326,21 @@ END;
 $$;
 
 -- Function to update the position of a playlist for a user in user_playlists
-CREATE OR REPLACE FUNCTION public.update_playlist_position (p_playlist_id bigint, p_new_position int2) RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.update_playlist_position (
+  p_playlist_id bigint, 
+  p_new_position int2
+) RETURNS TABLE (
   playlist_id bigint,
-  user_id uuid,
-  created_by uuid,
-  created_at TIMESTAMP WITH TIME ZONE,
-  name text,
-  short_id text,
-  description text,
-  type public.playlist_type,
-  thumbnail_url text,
-  thumbnail_maxres_url text,
-  image_properties jsonb,
-  youtube_id text,
   playlist_position int2,
-  sorted_by public.playlist_sorted_by,
-  sort_order public.playlist_sort_order
-) LANGUAGE plpgsql
-SET
-  search_path = '' AS $$  
+  success boolean
+) 
+SET search_path = '' 
+LANGUAGE plpgsql AS $$  
 DECLARE
   current_position int2;
   max_position int2;
-  updated_playlist public.playlists%ROWTYPE;
   current_user_id uuid;
 BEGIN
-  -- Rest of function remains the same...
   -- Get the current user ID from auth context
   current_user_id := auth.uid();
   
@@ -384,29 +383,11 @@ BEGIN
 
   -- If position hasn't changed, just return current info
   IF current_position = p_new_position THEN
-    SELECT * FROM public.playlists p
-      WHERE p.id = p_playlist_id
-      INTO updated_playlist;
-
-    RETURN QUERY SELECT 
-      updated_playlist.id,
-      current_user_id,
-      updated_playlist.created_by,
-      updated_playlist.created_at,
-      updated_playlist.name,
-      updated_playlist.short_id,
-      updated_playlist.description,
-      updated_playlist.type,
-      updated_playlist.thumbnail_url,
-      updated_playlist.thumbnail_maxres_url,
-      updated_playlist.image_properties,
-      updated_playlist.youtube_id,
+    RETURN QUERY 
+    SELECT 
+      p_playlist_id,
       p_new_position,
-      up.sorted_by,
-      up.sort_order
-    FROM public.user_playlists up
-    WHERE up.user_id = current_user_id AND up.id = p_playlist_id;
-    
+      true;
     RETURN;
   END IF;
 
@@ -441,30 +422,12 @@ BEGIN
     WHERE up.user_id = current_user_id
       AND up.id = p_playlist_id;
 
-  -- Get updated playlist info
-  SELECT * FROM public.playlists p
-    WHERE p.id = p_playlist_id
-    INTO updated_playlist;
-
-  -- Return updated playlist information
-  RETURN QUERY SELECT 
-    updated_playlist.id,
-    current_user_id,
-    updated_playlist.created_by,
-    updated_playlist.created_at,
-    updated_playlist.name,
-    updated_playlist.short_id,
-    updated_playlist.description,
-    updated_playlist.type,
-    updated_playlist.thumbnail_url,
-    updated_playlist.thumbnail_maxres_url,
-    updated_playlist.image_properties,
-    updated_playlist.youtube_id,
+  -- Return confirmation of the update
+  RETURN QUERY 
+  SELECT 
+    p_playlist_id,
     p_new_position,
-    up.sorted_by,
-    up.sort_order
-  FROM public.user_playlists up
-  WHERE up.user_id = current_user_id AND up.id = p_playlist_id;
+    true;
 END;
 $$;
 
@@ -605,29 +568,184 @@ BEGIN
 END;
 $$;
 
+
+-- Function to validate video thumbnails and update playlist image
+CREATE OR REPLACE FUNCTION public.update_playlist_image(
+  p_playlist_id bigint,
+  p_thumbnail_video_id text DEFAULT NULL,
+  p_image_url text DEFAULT NULL,
+  p_image_properties jsonb DEFAULT NULL
+) RETURNS TABLE (
+  success boolean,
+  playlist_id bigint,
+  thumbnail_video_id text,
+  image_jpg_url text,
+  error_message text
+) LANGUAGE plpgsql SECURITY DEFINER 
+SET search_path = '' AS $$
+DECLARE
+  error_msg text := NULL;
+  updated_row record;
+  rows_affected integer;
+  current_user_id uuid;
+  playlist_owner_id uuid;
+BEGIN
+  -- Get current authenticated user
+  current_user_id := auth.uid();
+  IF current_user_id IS NULL THEN
+    error_msg := 'User must be authenticated to update playlist images';
+    RETURN QUERY SELECT false, p_playlist_id, NULL::text, NULL::text, error_msg;
+    RETURN;
+  END IF;
+
+  -- Check if playlist exists and get owner
+  SELECT pl.created_by 
+  INTO playlist_owner_id
+  FROM public.playlists pl 
+  WHERE pl.id = p_playlist_id;
+  
+  IF playlist_owner_id IS NULL THEN
+    error_msg := format('Playlist with ID %s not found', p_playlist_id);
+    RETURN QUERY SELECT false, p_playlist_id, NULL::text, NULL::text, error_msg;
+    RETURN;
+  END IF;
+
+  -- Verify user owns the playlist (security check)
+  IF playlist_owner_id != current_user_id THEN
+    error_msg := 'You can only update images for your own playlists';
+    RETURN QUERY SELECT false, p_playlist_id, NULL::text, NULL::text, error_msg;
+    RETURN;
+  END IF;
+
+  -- **CRITICAL SECURITY CHECK**: If setting a thumbnail_video_id, verify it exists in THIS playlist
+  IF p_thumbnail_video_id IS NOT NULL THEN
+    IF NOT EXISTS(
+      SELECT 1 
+      FROM public.playlist_videos pv 
+      WHERE pv.playlist_id = p_playlist_id 
+      AND pv.video_id = p_thumbnail_video_id
+    ) THEN
+      error_msg := format('Video with ID %s is not in this playlist', p_thumbnail_video_id);
+      RETURN QUERY SELECT false, p_playlist_id, NULL::text, NULL::text, error_msg;
+      RETURN;
+    END IF;
+  END IF;
+
+  -- Update the playlist based on what's being set
+  IF p_image_url IS NOT NULL AND p_thumbnail_video_id IS NOT NULL THEN
+    -- Setting a processed image from a video thumbnail - keep both references
+    UPDATE public.playlists pl
+    SET 
+      thumbnail_video_id = p_thumbnail_video_id,  -- Keep the video reference
+      image_jpg_url = p_image_url,               -- Set the processed image
+      image_webp_url = NULL,  -- Clear other formats since we're setting a custom image
+      image_avif_url = NULL,
+      image_properties = p_image_properties,
+      image_processing_status = 'completed',  -- Image is processed
+      image_processing_updated_at = now()
+    WHERE pl.id = p_playlist_id;
+    
+  ELSIF p_image_url IS NOT NULL THEN
+    -- Setting a custom cropped image without video reference - clear video thumbnail
+    UPDATE public.playlists pl
+    SET 
+      thumbnail_video_id = NULL,
+      image_jpg_url = p_image_url,
+      image_webp_url = NULL,
+      image_avif_url = NULL,
+      image_properties = p_image_properties,
+      image_processing_status = 'completed',
+      image_processing_updated_at = now()
+    WHERE pl.id = p_playlist_id;
+    
+  ELSIF p_thumbnail_video_id IS NOT NULL THEN
+    -- Setting a video thumbnail - clear custom image and set video reference
+    UPDATE public.playlists pl
+    SET 
+      thumbnail_video_id = p_thumbnail_video_id,
+      image_jpg_url = NULL,   -- Clear custom image
+      image_webp_url = NULL,
+      image_avif_url = NULL,
+      image_properties = p_image_properties,
+      image_processing_status = 'pending',
+      image_processing_updated_at = now()
+    WHERE pl.id = p_playlist_id;
+    
+  ELSE
+    -- Both p_thumbnail_video_id and p_image_url are NULL - reset everything
+    UPDATE public.playlists pl
+    SET 
+      thumbnail_video_id = NULL,
+      image_jpg_url = NULL,
+      image_webp_url = NULL,
+      image_avif_url = NULL,
+      image_properties = NULL,
+      image_processing_status = NULL,
+      image_processing_updated_at = now()
+    WHERE pl.id = p_playlist_id;
+  END IF;
+  
+  GET DIAGNOSTICS rows_affected = ROW_COUNT;
+  
+  IF rows_affected = 0 THEN
+    error_msg := format('Failed to update playlist with ID %s', p_playlist_id);
+    RETURN QUERY SELECT false, p_playlist_id, NULL::text, NULL::text, error_msg;
+    RETURN;
+  END IF;
+  
+  -- Get the actual updated values
+  SELECT pl.thumbnail_video_id, pl.image_jpg_url
+  INTO updated_row
+  FROM public.playlists pl
+  WHERE pl.id = p_playlist_id;
+  
+  -- Return success result with actual stored values
+  RETURN QUERY SELECT 
+    true, 
+    p_playlist_id, 
+    updated_row.thumbnail_video_id, 
+    updated_row.image_jpg_url,
+    NULL::text;
+
+EXCEPTION
+  -- Handle foreign key constraint violations
+  WHEN foreign_key_violation THEN
+    error_msg := format('Video with ID %s not found', p_thumbnail_video_id);
+    RETURN QUERY SELECT false, p_playlist_id, NULL::text, NULL::text, error_msg;
+    RETURN;
+    
+  -- Handle any other errors
+  WHEN OTHERS THEN
+    error_msg := format('Unexpected error: %s', SQLERRM);
+    RETURN QUERY SELECT false, p_playlist_id, NULL::text, NULL::text, error_msg;
+    RETURN;
+END;
+$$;
+
 -- Function to insert videos into a playlist
-CREATE OR REPLACE FUNCTION "public"."insert_playlist_videos" ("p_playlist_id" int8, "p_video_ids" TEXT[]) RETURNS TABLE (
-  id int8,
-  playlist_id int8,
-  video_id text,
-  video_position int2
+CREATE OR REPLACE FUNCTION "public"."insert_playlist_videos" (
+  "p_playlist_id" int8, 
+  "p_video_ids" TEXT[]
+) RETURNS TABLE (
+  result_id int8,
+  result_playlist_id int8,
+  result_video_id text,
+  result_video_position int2
 ) LANGUAGE plpgsql
-SET
-  search_path = '' AS $$
+SET search_path = '' AS $$
 DECLARE
   max_position int2;
   current_position int2;
   inserted_row public.playlist_videos%ROWTYPE;
   v_id text;
-  array_length int;
-  existing_video_positions jsonb;
-  first_video_id text;
-  playlist_has_image boolean := false;
-  video_thumbnail_url text;
-  video_thumbnail_maxres_url text;
-  new_videos_added boolean := false;
   current_user_id uuid;
   playlist_owner_id uuid;
+  existing_video_positions jsonb;
+  first_video_id text;
+  playlist_has_thumbnail boolean := false;
+  new_videos_added boolean := false;
+  current_thumbnail_video_id text;
+  valid_video_count int;
 BEGIN
   -- Get the current authenticated user
   current_user_id := auth.uid();
@@ -635,37 +753,73 @@ BEGIN
     RAISE EXCEPTION 'User must be authenticated to modify playlists';
   END IF;
 
-  -- Lock operations for the current user to prevent concurrent modifications
-  PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || current_user_id::text));
-
-  -- Check if video array is empty
-  array_length := array_length(p_video_ids, 1);
-  IF array_length IS NULL OR array_length = 0 THEN
+  -- Validate input
+  IF p_video_ids IS NULL OR array_length(p_video_ids, 1) = 0 THEN
     RAISE EXCEPTION 'Video IDs array cannot be empty';
   END IF;
 
-  -- Lock the playlist to prevent concurrent modifications and get owner info
-  SELECT pl.created_by INTO playlist_owner_id
-  FROM public.playlists pl WHERE pl.id = p_playlist_id FOR UPDATE;
+  -- **SECURITY CHECK**: Verify all video IDs exist in the videos table
+  -- This prevents users from inserting references to non-existent videos
+  SELECT COUNT(*)
+  INTO valid_video_count
+  FROM public.videos v
+  WHERE v.id = ANY(p_video_ids)
+  AND v.pending_delete = FALSE;  -- Also ensure videos aren't marked for deletion
+  
+  IF valid_video_count != array_length(p_video_ids, 1) THEN
+    RAISE EXCEPTION 'One or more video IDs are invalid or do not exist in the videos table';
+  END IF;
+
+  -- Lock operations for the current user to prevent concurrent modifications
+  PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || current_user_id::text));
+
+  -- Lock the playlist and get owner + thumbnail info
+  SELECT pl.created_by, pl.thumbnail_video_id 
+  INTO playlist_owner_id, current_thumbnail_video_id
+  FROM public.playlists pl 
+  WHERE pl.id = p_playlist_id 
+  FOR UPDATE;
   
   -- Check if playlist exists
   IF playlist_owner_id IS NULL THEN
     RAISE EXCEPTION 'Playlist with ID % does not exist', p_playlist_id;
   END IF;
-
-  -- If current user is not the owner, also lock the owner's operations to prevent conflicts
+  
+  -- **SECURITY CHECK**: Verify user owns the playlist
   IF playlist_owner_id != current_user_id THEN
-    PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || playlist_owner_id::text));
+    RAISE EXCEPTION 'You can only add videos to your own playlists';
   END IF;
   
-  -- Check if playlist already has thumbnail images
-  SELECT (pl.thumbnail_url IS NOT NULL AND TRIM(pl.thumbnail_url) != '') OR 
-         (pl.thumbnail_maxres_url IS NOT NULL AND TRIM(pl.thumbnail_maxres_url) != '')
-  INTO playlist_has_image
-  FROM public.playlists pl
-  WHERE pl.id = p_playlist_id;
+  -- Check if playlist already has a valid thumbnail video set
+  -- Also verify the current thumbnail video still exists in the playlist
+  playlist_has_thumbnail := false;
+  IF current_thumbnail_video_id IS NOT NULL AND TRIM(current_thumbnail_video_id) != '' THEN
+    -- Verify the current thumbnail video still exists in this playlist
+    IF EXISTS(
+      SELECT 1 
+      FROM public.playlist_videos pv 
+      WHERE pv.playlist_id = p_playlist_id 
+      AND pv.video_id = current_thumbnail_video_id
+    ) THEN
+      playlist_has_thumbnail := true;
+    ELSE
+      -- Current thumbnail video doesn't exist in playlist, clear it
+      UPDATE public.playlists 
+      SET 
+        thumbnail_video_id = NULL,
+        image_jpg_url = NULL,
+        image_webp_url = NULL,
+        image_avif_url = NULL,
+        image_properties = NULL,
+        image_processing_status = NULL,
+        image_processing_updated_at = now()
+      WHERE id = p_playlist_id;
+      
+      RAISE NOTICE 'Cleared invalid thumbnail_video_id % for playlist %', current_thumbnail_video_id, p_playlist_id;
+    END IF;
+  END IF;
   
-  -- Find the maximum position for this playlist
+  -- Get the current max position for this playlist
   SELECT COALESCE(MAX(pv.video_position), 0)
   INTO max_position
   FROM public.playlist_videos pv
@@ -686,11 +840,12 @@ BEGIN
   current_position := max_position;
   first_video_id := p_video_ids[1];
   
-  -- Insert new videos only (skip existing ones)
+  -- Process each video ID
   FOREACH v_id IN ARRAY p_video_ids
   LOOP
-    -- Check if this video is already in the playlist
+    -- Check if this video is already in the playlist using JSONB lookup
     IF NOT (existing_video_positions ? v_id) THEN
+      -- Insert new video
       current_position := current_position + 1;
       new_videos_added := true;
       
@@ -698,42 +853,36 @@ BEGIN
       VALUES (p_playlist_id, v_id, current_position)
       RETURNING * INTO inserted_row;
       
-      RETURN QUERY SELECT inserted_row.id, inserted_row.playlist_id, inserted_row.video_id, inserted_row.video_position;
+      -- Return the inserted row
+      RETURN QUERY SELECT 
+        inserted_row.id, 
+        inserted_row.playlist_id, 
+        inserted_row.video_id, 
+        inserted_row.video_position;
     ELSE
       -- Return existing video info for consistency
       RETURN QUERY 
-      SELECT pv.id, pv.playlist_id, pv.video_id, pv.video_position
+      SELECT 
+        pv.id, 
+        pv.playlist_id, 
+        pv.video_id, 
+        pv.video_position
       FROM public.playlist_videos pv
       WHERE pv.playlist_id = p_playlist_id AND pv.video_id = v_id;
     END IF;
   END LOOP;
   
-  -- Update playlist image if conditions are met
-  IF NOT playlist_has_image AND new_videos_added AND first_video_id IS NOT NULL THEN
-    -- Get the first video's thumbnail information from videos table
-    SELECT v.thumbnail_url, v.thumbnail_maxres_url
-    INTO video_thumbnail_url, video_thumbnail_maxres_url
-    FROM public.videos v
-    WHERE v.id = first_video_id;
+  -- Set thumbnail video ID if playlist doesn't have one
+  -- Just set the reference - let the client handle image processing
+  IF NOT playlist_has_thumbnail THEN
+    UPDATE public.playlists 
+    SET 
+      thumbnail_video_id = first_video_id,
+      image_processing_status = 'pending',
+      image_processing_updated_at = now()
+    WHERE id = p_playlist_id;
     
-    -- Update playlist with the first video's thumbnail if we found valid thumbnails
-    IF (video_thumbnail_url IS NOT NULL AND TRIM(video_thumbnail_url) != '') OR 
-       (video_thumbnail_maxres_url IS NOT NULL AND TRIM(video_thumbnail_maxres_url) != '') THEN
-      
-      UPDATE public.playlists pl
-      SET 
-        thumbnail_url = CASE 
-          WHEN video_thumbnail_url IS NOT NULL AND TRIM(video_thumbnail_url) != '' 
-          THEN video_thumbnail_url 
-          ELSE pl.thumbnail_url 
-        END,
-        thumbnail_maxres_url = CASE 
-          WHEN video_thumbnail_maxres_url IS NOT NULL AND TRIM(video_thumbnail_maxres_url) != '' 
-          THEN video_thumbnail_maxres_url 
-          ELSE pl.thumbnail_maxres_url 
-        END
-      WHERE pl.id = p_playlist_id;
-    END IF;
+    RAISE NOTICE 'Set thumbnail_video_id to % for playlist % - client will process image', first_video_id, p_playlist_id;
   END IF;
   
 END;
@@ -751,6 +900,8 @@ DECLARE
   max_position int2;
   current_user_id uuid;
   playlist_owner_id uuid;
+  playlist_thumbnail_video_id text;
+  thumbnail_video_deleted boolean := FALSE;
 BEGIN
   -- Get the current authenticated user
   current_user_id := auth.uid();
@@ -766,8 +917,9 @@ BEGIN
     RAISE EXCEPTION 'Video IDs array cannot be empty';
   END IF;
 
-  -- Lock the playlist and get owner info to prevent concurrent modifications
-  SELECT pl.created_by INTO playlist_owner_id
+  -- Lock the playlist and get owner info + thumbnail video ID to prevent concurrent modifications
+  SELECT pl.created_by, pl.thumbnail_video_id 
+  INTO playlist_owner_id, playlist_thumbnail_video_id
   FROM public.playlists pl WHERE pl.id = p_playlist_id FOR UPDATE;
   
   -- Check if playlist exists
@@ -778,6 +930,11 @@ BEGIN
   -- If current user is not the owner, also lock the owner's operations to prevent conflicts
   IF playlist_owner_id != current_user_id THEN
     PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || playlist_owner_id::text));
+  END IF;
+
+  -- Check if any of the videos being deleted is the current thumbnail video
+  IF playlist_thumbnail_video_id IS NOT NULL AND playlist_thumbnail_video_id = ANY(p_video_ids) THEN
+    thumbnail_video_deleted := TRUE;
   END IF;
 
   -- Start a transaction to ensure consistency
@@ -817,6 +974,22 @@ BEGIN
         RETURN NEXT;
       END IF;
     END LOOP;
+    
+    -- If the thumbnail video was deleted, clear ALL related fields including the video ID reference
+    IF thumbnail_video_deleted THEN
+      UPDATE public.playlists pl
+      SET 
+        thumbnail_video_id = NULL,           -- NULL out the video ID reference
+        image_jpg_url = NULL,
+        image_webp_url = NULL,
+        image_avif_url = NULL,
+        image_properties = NULL,
+        image_processing_status = NULL,
+        image_processing_updated_at = now()
+      WHERE pl.id = p_playlist_id;
+      
+      RAISE INFO 'Cleared thumbnail video ID and custom playlist image for playlist % because thumbnail video was deleted', p_playlist_id;
+    END IF;
     
     -- Sort the deleted positions to process them in ascending order
     SELECT array_agg(pos ORDER BY pos)
@@ -879,50 +1052,6 @@ BEGIN
   RETURN;
 END;
 $$;
-
--- Function to validate playlist thumbnail URLs
-CREATE OR REPLACE FUNCTION public.validate_playlist_thumbnail_urls (
-  p_playlist_id INT8,
-  p_thumbnail_url TEXT DEFAULT NULL,
-  p_thumbnail_maxres_url TEXT DEFAULT NULL
-) RETURNS BOOLEAN AS $$
-DECLARE
-  thumbnail_valid BOOLEAN := TRUE;
-  maxres_valid BOOLEAN := TRUE;
-BEGIN
-  -- If both URLs are NULL, they're considered valid
-  IF p_thumbnail_url IS NULL AND p_thumbnail_maxres_url IS NULL THEN
-    RETURN TRUE;
-  END IF;
-
-  -- Check if thumbnail_url is valid (skip validation if null)
-  IF p_thumbnail_url IS NOT NULL THEN
-    SELECT EXISTS (
-      SELECT 1
-      FROM public.playlist_videos pv
-      JOIN public.videos v ON pv.video_id = v.id
-      WHERE pv.playlist_id = p_playlist_id
-      AND v.thumbnail_url = p_thumbnail_url
-    ) INTO thumbnail_valid;
-  END IF;
-  
-  -- Check if thumbnail_maxres_url is valid (skip validation if null)
-  IF p_thumbnail_maxres_url IS NOT NULL THEN
-    SELECT EXISTS (
-      SELECT 1
-      FROM public.playlist_videos pv
-      JOIN public.videos v ON pv.video_id = v.id
-      WHERE pv.playlist_id = p_playlist_id
-      AND v.thumbnail_maxres_url = p_thumbnail_maxres_url
-    ) INTO maxres_valid;
-  END IF;
-  
-  -- Return true only if both URLs are valid
-  RETURN thumbnail_valid AND maxres_valid;
-END;
-$$ LANGUAGE plpgsql
-SET
-  search_path = '';
 
 -- Function to update playlist video positions  
 CREATE OR REPLACE FUNCTION "public"."update_playlist_videos_positions" (

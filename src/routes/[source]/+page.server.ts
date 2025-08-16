@@ -10,8 +10,6 @@ import {
   getPlaylistDataByYoutubeId,
   getPlaylistsForUsername,
 } from '$lib/supabase/playlists';
-import { parseImageProperties } from '$lib/components/playlist/playlist';
-import { generatePlaylistImageUrl } from '$lib/server/image-processing';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
@@ -19,9 +17,6 @@ export const load: PageServerLoad = async ({
   parent,
   depends,
   locals: { supabase, session },
-  setHeaders,
-  isDataRequest,
-  request,
 }) => {
   depends('supabase:db:videos');
 
@@ -35,33 +30,6 @@ export const load: PageServerLoad = async ({
 
   if (!isVideoFilter(contentFilter)) {
     throw new Error('Invalid content filter');
-  }
-
-  // Add 2-minute caching headers
-  const userId = session?.user?.id || null;
-  const timeSlot = Math.floor(Date.now() / 120000); // 2 minute slots (120 seconds)
-
-  const cacheKey = `${source}-${userId || 'anon'}-${timeSlot}`;
-  const etag = `"${cacheKey}"`;
-  const lastModified = new Date(timeSlot * 120000);
-
-  const clientEtag = request.headers.get('if-none-match');
-
-  if (!isDataRequest) {
-    try {
-      const cacheControl = session
-        ? 'private, max-age=120, must-revalidate'
-        : 'public, max-age=120, s-maxage=240';
-
-      setHeaders({
-        etag: etag,
-        'last-modified': lastModified.toUTCString(),
-        'cache-control': cacheControl,
-        vary: 'Authorization, Cookie',
-      });
-    } catch {
-      // Headers already set
-    }
   }
 
   const playlistContentFilter: PlaylistVideosFilter = {
@@ -117,22 +85,12 @@ export const load: PageServerLoad = async ({
     (result) => result !== null
   );
 
-  // Generate playlist image URLs instead of processing inline
-  const processedSourcePlaylists = sourcePlaylistsData.playlists.map((playlist) => ({
-    ...playlist,
-    processedImageUrl: generatePlaylistImageUrl({
-      imageProperties: parseImageProperties(playlist.image_properties),
-      thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
-      thumbnailUrl: playlist.thumbnail_url,
-      format: 'auto', // Enable AVIF format detection
-      quality: 90,
-    }),
-  }));
-
+  // Return playlists directly with optimized image paths from database
+  // The new playlist-image component will handle fallback and processing
   return {
     videos: videos ?? [],
     highlightPlaylists,
-    processedSourcePlaylists, // Return processed playlists instead of raw data
+    processedSourcePlaylists: sourcePlaylistsData.playlists, // Use raw playlists with optimized paths
     source,
     contentFilter,
   };

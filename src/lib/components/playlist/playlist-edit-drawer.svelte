@@ -11,9 +11,10 @@
   import { Button, buttonVariants } from '$lib/components/ui/button';
   import type { Playlist } from '$lib/supabase/playlists';
   import { zodClient } from 'sveltekit-superforms/adapters';
-  import { EditIcon, ListVideo, Loader } from '@lucide/svelte';
+  import { EditIcon, ListVideo, Loader, CropIcon } from '@lucide/svelte';
   import Textarea from '$lib/components/ui/textarea/textarea.svelte';
   import * as ImageCropper from '$lib/components/ui/image-cropper';
+  import { getCroppedImg } from '$lib/components/ui/image-cropper/utils';
   import {
     useImageCropperCrop,
     useImageCropperCropper,
@@ -27,8 +28,10 @@
   import { page } from '$app/state';
   import { getPlaylistState } from '$lib/state/playlist.svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
+  import { invalidate } from '$app/navigation';
   import { parseImageProperties } from './playlist';
   import { isLowResolutionThumbnail } from './playlist-service';
+  import { uploadPlaylistImage } from '$lib/utils/image-upload';
 
   let {
     form,
@@ -51,6 +54,8 @@
   const playlistState = getPlaylistState();
   let isSubmitting = $state(false);
   let isPublic = $state(playlist.type === 'Public');
+  let isUploadingImage = $state(false);
+  let pendingCroppedImage = $state<string | null>(null);
   const flash = getFlash(page);
 
   const triggerSnippet = trigger;
@@ -67,19 +72,68 @@
   );
   const sidebarState = getSidebarState();
 
+  // Handle cropped image - store it for later upload instead of immediate upload
+  async function handleImageCrop() {
+    try {
+      const croppedCanvas = await getCroppedImg(
+        cropperState.rootState.tempUrl!,
+        cropState.rootState.pixelCrop!
+      );
+
+      // Convert canvas to data URL for storage until form submission
+      const croppedDataUrl = croppedCanvas.toDataURL('image/jpeg', 0.9);
+      pendingCroppedImage = croppedDataUrl;
+
+      // Close the cropper dialog
+      cropperState.rootState.open = false;
+
+      // Update the image properties to reflect the new crop
+      $formData.image_properties = JSON.stringify(
+        cropState.rootState.pixelCrop
+      );
+    } catch (error) {
+      console.error('Error cropping image:', error);
+    }
+  }
+
   const playlistForm = superForm(form, {
     validators: zodClient(playlistSchema),
     id: formId ?? 'playlist-drawer-form',
     dataType: 'json',
-    onSubmit() {
+    async onSubmit() {
       $flash = undefined;
       isSubmitting = true;
+
+      // Handle pending cropped image upload before form submission
+      if (pendingCroppedImage && session?.user?.id) {
+        isUploadingImage = true;
+        // TODO: FIX
+        // Upload cropped image to storage
+        // const uploadResult = await uploadPlaylistImage({
+        //   playlistId: playlist.id,
+        //   dataURL: pendingCroppedImage,
+        //   supabase: page.data.supabase,
+        // });
+      }
     },
     async onUpdated(event) {
       isSubmitting = false;
       updateFlash(page);
       if (event.form.valid) {
         const { isDeletingPlaylistImage, ...data } = event.form.data;
+
+        // Update playlist object with new data including image_properties
+        const updatedPlaylist = Object.assign(playlist, data);
+        if (isDeletingPlaylistImage) {
+          updatedPlaylist.image_url = null;
+          updatedPlaylist.image_properties = null;
+        }
+
+        // Force reactive update by creating new object reference if image_properties changed
+        if (data.image_properties !== playlist.image_properties) {
+          // Create new playlist object to trigger reactivity in PlaylistImage component
+          Object.assign(playlist, { ...playlist, ...data });
+        }
 
         // Delay closing to allow animation to complete
         setTimeout(() => {
@@ -88,13 +142,10 @@
 
         playlistForm.reset();
 
-        const updatedPlaylist = Object.assign(playlist, data);
-        if (isDeletingPlaylistImage) {
-          updatedPlaylist.thumbnail_url = null;
-          updatedPlaylist.thumbnail_maxres_url = null;
-        }
         // Sidebar refresh will get server-processed images with AVIF support
         sidebarState.refreshData();
+        // Add invalidate to refresh playlist data like in dialog version
+        invalidate('supabase:db:playlists');
       }
     },
   });
@@ -120,10 +171,7 @@
   $effect(() => {
     $formData.type = isPublic ? 'Public' : 'Private';
 
-    if (cropState.rootState.pixelCrop) {
-      $formData.image_properties = cropState.rootState.pixelCrop;
-    }
-
+    // Set the source image for the cropper
     cropperState.rootState.tempUrl =
       playlist.thumbnail_maxres_url ?? playlist.thumbnail_url;
   });
@@ -170,9 +218,25 @@
             <div class="relative m-6 flex justify-center">
               {#if (playlist.thumbnail_maxres_url || playlist.thumbnail_url) && !$formData.isDeletingPlaylistImage}
                 <div class="relative h-56 w-56">
-                  <ImageCropper.Preview
-                    class="h-full w-full overflow-scroll rounded-md"
-                  />
+                  {#if pendingCroppedImage}
+                    <!-- Show cropped preview -->
+                    <img
+                      src={pendingCroppedImage}
+                      alt="Cropped preview"
+                      class="h-full w-full rounded-md object-cover"
+                    />
+                    <div class="absolute top-2 right-2">
+                      <div
+                        class="rounded bg-yellow-500 px-2 py-1 text-xs text-white"
+                      >
+                        Changes Pending
+                      </div>
+                    </div>
+                  {:else}
+                    <ImageCropper.Preview
+                      class="h-full w-full overflow-scroll rounded-md"
+                    />
+                  {/if}
                   <DropdownMenu.Root>
                     <DropdownMenu.Trigger class="outline-none">
                       {#snippet child({ props })}
@@ -239,7 +303,9 @@
             <ImageCropper.Dialog>
               <ImageCropper.Cropper cropShape="rect" />
               <ImageCropper.Controls>
-                <ImageCropper.Crop />
+                <Button type="button" onclick={handleImageCrop} class="mr-2">
+                  Apply Crop
+                </Button>
                 <ImageCropper.Cancel />
               </ImageCropper.Controls>
             </ImageCropper.Dialog>
@@ -350,9 +416,17 @@
         <div class="p-4">
           <div class="flex flex-col gap-2">
             <Drawer.Footer class="drawer-footer flex gap-2">
-              <Button type="submit" class="drawer-button-footer">
-                {#if isSubmitting}
-                  <Loader class="animate-spin" />
+              <Button
+                type="submit"
+                class="drawer-button-footer"
+                disabled={isSubmitting || isUploadingImage}
+              >
+                {#if isUploadingImage}
+                  <Loader class="mr-2 animate-spin" />
+                  Uploading Image...
+                {:else if isSubmitting}
+                  <Loader class="mr-2 animate-spin" />
+                  Saving...
                 {:else}
                   Save Changes
                 {/if}

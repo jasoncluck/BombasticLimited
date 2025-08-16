@@ -23,10 +23,10 @@
       gap-4 rounded p-3 hover:brightness-110"
   href={`/playlist/${playlist.short_id}`}
 >
-  {#if playlist.processedImageUrl}
+  {#if playlist.image_url}
     <div class="h-16 w-16 flex-shrink-0 justify-self-center">
       <img
-        src={playlist.processedImageUrl}
+        src={playlist.image_url}
         alt={playlist.name}
         class="h-full w-full rounded object-cover"
         decoding="async"

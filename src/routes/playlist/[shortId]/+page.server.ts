@@ -19,9 +19,8 @@ import { DEFAULT_NUM_VIDEOS_PAGINATION } from '$lib/supabase/videos';
 import { getPaginationQueryParams } from '$lib/components/pagination/pagination';
 import { Filter } from 'bad-words';
 import { redirect, setFlash } from 'sveltekit-flash-message/server';
-import { parseImageProperties } from '$lib/components/playlist/playlist';
-import { generatePlaylistImageUrl } from '$lib/server/image-processing';
 import { getProfileById } from '$lib/supabase/user-profiles';
+import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
 
 export const load: PageServerLoad = async ({
   locals: { supabase, session },
@@ -29,10 +28,7 @@ export const load: PageServerLoad = async ({
   parent,
   params,
   depends,
-  request,
 }) => {
-  // Remove automatic dependencies - we'll handle updates optimistically
-  // Only keep video dependencies since those might come from other sources
   depends('supabase:db:videos', 'supabase:db:playlists');
 
   const { contentFilter } = await parent();
@@ -41,7 +37,6 @@ export const load: PageServerLoad = async ({
     throw new Error(`Invalid content filter`);
   }
 
-  // ... rest of the load function stays the same
   const currentPage = getPaginationQueryParams({
     searchParams: url.searchParams,
   });
@@ -64,26 +59,13 @@ export const load: PageServerLoad = async ({
     redirect(302, '/');
   }
 
-  const [processedImageUrl, form, creatorProfile] = await Promise.all([
-    playlist.processedImageUrl
-      ? Promise.resolve(playlist.processedImageUrl)
-      : Promise.resolve(generatePlaylistImageUrl({
-          imageProperties: parseImageProperties(playlist.image_properties),
-          thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
-          thumbnailUrl: playlist.thumbnail_url,
-          format: 'auto', // Enable AVIF format detection
-          quality: 90,
-        })),
+  const [form, creatorProfile] = await Promise.all([
     superValidate(playlist, zod(playlistSchema)),
     // Load creator profile for all playlists to ensure avatar is available
     getProfileById({ userId: playlist.created_by, supabase }).then(
       (result) => result.profile
     ),
   ]);
-
-  if (!playlist.processedImageUrl) {
-    playlist.processedImageUrl = processedImageUrl;
-  }
 
   const effectiveContentFilter =
     isUserPlaylist(playlist) &&
@@ -128,7 +110,17 @@ export const actions: Actions = {
       });
     }
 
-    const { name, description, id, isDeletingPlaylistImage, type } = form.data;
+    const {
+      name,
+      description,
+      id,
+      type,
+      isDeletingPlaylistImage,
+      thumbnail_video_id,
+      thumbnail_maxres_url,
+      thumbnail_url,
+    } = form.data;
+    let { image_properties } = form.data;
 
     const filter = new Filter();
     const [nameIsProfane, descriptionIsProfane] = await Promise.all([
@@ -162,39 +154,52 @@ export const actions: Actions = {
       return fail(400, { form });
     }
 
-    let { image_properties } = form.data;
-
     if (isDeletingPlaylistImage) {
       await updatePlaylistImage({
         playlistId: id,
-        thumbnailMaxResUrl: null,
-        thumbnailUrl: null,
+        processedPlaylistImage: null,
+        imageProperties: null,
         supabase,
+      });
+    } else {
+      if (
+        image_properties?.x === 0 &&
+        image_properties?.y === 0 &&
+        image_properties?.height === 0 &&
+        image_properties?.width === 0
+      ) {
+        image_properties = null;
+      }
+
+      const processedPlaylistImage = await getCroppedPlaylistImageUrlServer({
+        thumbnailUrl: thumbnail_url,
+        thumbnailMaxResUrl: thumbnail_maxres_url,
+        imageProperties: image_properties,
+      });
+
+      // With the new system, we don't need to pass the image URL through the form
+      // The image is handled separately via the new database structure
+      await updatePlaylistImage({
+        playlistId: id,
+        processedPlaylistImage,
+        imageProperties: image_properties,
+        thumbnailVideoId: thumbnail_video_id,
+        supabase,
+      });
+
+      await updatePlaylistInfo({
+        playlistId: id,
+        name,
+        description,
+        imageProperties: image_properties,
+        type,
+        supabase,
+        session,
       });
     }
 
-    if (
-      image_properties?.x === 0 &&
-      image_properties?.y === 0 &&
-      image_properties?.height === 0 &&
-      image_properties?.width === 0
-    ) {
-      image_properties = null;
-    }
-
-    const { updatedPlaylist } = await updatePlaylistInfo({
-      playlistId: id,
-      name,
-      description,
-      imageProperties: image_properties,
-      type,
-      supabase,
-      session,
-    });
-
     // Return the updated playlist data for optimistic updates
     return {
-      updatedPlaylist,
       form,
       success: true,
     };

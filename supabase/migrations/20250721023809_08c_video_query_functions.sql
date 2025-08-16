@@ -3,6 +3,7 @@
 -- Dependencies: Requires base tables from 03_base_tables.sql (videos, timestamps)
 -- This migration includes video search, filtering, and retrieval functions
 -- ============================================================================
+
 -- Function to get videos with user timestamps
 CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps" () RETURNS TABLE (
   "id" "text",
@@ -11,12 +12,23 @@ CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps" () RETURNS TABL
   "description" "text",
   "thumbnail_url" "text",
   "thumbnail_maxres_url" "text",
+  "thumbnail_webp_url" "text",
+  "thumbnail_avif_url" "text",
+  "thumbnail_maxres_webp_url" "text",
+  "thumbnail_maxres_avif_url" "text",
+  "image_processing_status" public.image_processing_status,
+  "image_processing_updated_at" TIMESTAMP WITH TIME ZONE,
   "published_at" TIMESTAMP WITH TIME ZONE,
   "duration" "text",
+  "views" bigint,
   "video_start_seconds" numeric,
   "watched_at" TIMESTAMP WITH TIME ZONE,
   "updated_at" TIMESTAMP WITH TIME ZONE,
-  playlist_id bigint
+  "playlist_id" bigint,
+  "playlist_name" text,
+  "playlist_short_id" text,
+  "playlist_sorted_by" public.playlist_sorted_by,
+  "playlist_sort_order" public.playlist_sort_order
 ) LANGUAGE SQL STABLE
 SET
   search_path = '' AS $$
@@ -26,17 +38,29 @@ SET
         v.title, 
         v.description, 
         v.thumbnail_url, 
-        v.thumbnail_maxres_url, 
+        v.thumbnail_maxres_url,
+        v.thumbnail_webp_url,
+        v.thumbnail_avif_url,
+        v.thumbnail_maxres_webp_url,
+        v.thumbnail_maxres_avif_url,
+        v.image_processing_status,
+        v.image_processing_updated_at,
         v.published_at, 
-        v.duration, 
+        v.duration,
+        v.views,
         COALESCE(t.video_start_seconds, 0) AS video_start_seconds,
         t.watched_at,
         t.updated_at,
-        t.playlist_id
+        t.playlist_id,
+        p.name as playlist_name,
+        p.short_id as playlist_short_id,
+        t.sorted_by as playlist_sorted_by,
+        t.sort_order as playlist_sort_order
     FROM 
         public.videos v
     LEFT JOIN public.timestamps t ON v.id = t.video_id 
         AND t.user_id = auth.uid()
+    LEFT JOIN public.playlists p ON t.playlist_id = p.id
     WHERE 
         v.pending_delete = FALSE
     ORDER BY 
@@ -54,10 +78,22 @@ CREATE OR REPLACE FUNCTION "public"."search_videos" (
   "description" "text",
   "thumbnail_url" "text",
   "thumbnail_maxres_url" "text",
+  "thumbnail_webp_url" "text",
+  "thumbnail_avif_url" "text",
+  "thumbnail_maxres_webp_url" "text",
+  "thumbnail_maxres_avif_url" "text",
+  "image_processing_status" public.image_processing_status,
+  "image_processing_updated_at" TIMESTAMP WITH TIME ZONE,
   "published_at" TIMESTAMP WITH TIME ZONE,
   "duration" "text",
+  "views" bigint,
   "video_start_seconds" numeric,
   "updated_at" TIMESTAMP WITH TIME ZONE,
+  "watched_at" TIMESTAMP WITH TIME ZONE,
+  "playlist_name" text,
+  "playlist_short_id" text,
+  "playlist_sorted_by" public.playlist_sorted_by,
+  "playlist_sort_order" public.playlist_sort_order,
   "search_rank" real
 ) LANGUAGE "plpgsql"
 SET
@@ -80,8 +116,15 @@ BEGIN
     words := string_to_array(clean_term, ' ');
     word_count := array_length(words, 1);
     
-    phrase_query := phraseto_tsquery('english', search_term);
-    plain_query := plainto_tsquery('english', search_term);
+    -- Handle potential tsquery errors
+    BEGIN
+        phrase_query := phraseto_tsquery('english', search_term);
+        plain_query := plainto_tsquery('english', search_term);
+    EXCEPTION
+        WHEN OTHERS THEN
+            phrase_query := NULL;
+            plain_query := NULL;
+    END;
     
     RETURN QUERY
     WITH ranked_videos AS (
@@ -92,15 +135,22 @@ BEGIN
             v.description, 
             v.thumbnail_url, 
             v.thumbnail_maxres_url,
+            v.thumbnail_webp_url,
+            v.thumbnail_avif_url,
+            v.thumbnail_maxres_webp_url,
+            v.thumbnail_maxres_avif_url,
+            v.image_processing_status,
+            v.image_processing_updated_at,
             v.published_at, 
             v.duration,
+            v.views,
             -- Fixed: Cast ALL calculations to real explicitly
             (CASE 
                 WHEN lower(v.title) LIKE '%' || clean_term || '%' THEN 1000.0
                 WHEN lower(v.title) LIKE clean_term || '%' THEN 950.0
-                WHEN v.search_vector @@ phrase_query THEN 
+                WHEN phrase_query IS NOT NULL AND v.search_vector @@ phrase_query THEN 
                     850.0 + (ts_rank_cd(v.search_vector, phrase_query) * 100.0)::real
-                WHEN v.search_vector @@ plain_query THEN 
+                WHEN plain_query IS NOT NULL AND v.search_vector @@ plain_query THEN 
                     800.0 + (ts_rank_cd(v.search_vector, plain_query) * 100.0)::real
                 WHEN lower(v.title) ~ ('\y' || clean_term || '\y') THEN 750.0
                 WHEN word_count > 1 AND (
@@ -116,14 +166,17 @@ BEGIN
             END)::real AS search_rank
         FROM public.videos v
         WHERE 
-            lower(v.title) LIKE '%' || clean_term || '%'
-            OR lower(v.description) LIKE '%' || clean_term || '%'
-            OR v.search_vector @@ phrase_query
-            OR v.search_vector @@ plain_query
-            OR (word_count = 1 AND (
-                lower(v.title) LIKE '%' || words[1] || '%'
-                OR lower(v.description) LIKE '%' || words[1] || '%'
-            ))
+            v.pending_delete = FALSE
+            AND (
+                lower(v.title) LIKE '%' || clean_term || '%'
+                OR lower(v.description) LIKE '%' || clean_term || '%'
+                OR (phrase_query IS NOT NULL AND v.search_vector @@ phrase_query)
+                OR (plain_query IS NOT NULL AND v.search_vector @@ plain_query)
+                OR (word_count = 1 AND (
+                    lower(v.title) LIKE '%' || words[1] || '%'
+                    OR lower(v.description) LIKE '%' || words[1] || '%'
+                ))
+            )
     )
     SELECT 
         rv.id, 
@@ -132,13 +185,26 @@ BEGIN
         rv.description, 
         rv.thumbnail_url, 
         rv.thumbnail_maxres_url,
+        rv.thumbnail_webp_url,
+        rv.thumbnail_avif_url,
+        rv.thumbnail_maxres_webp_url,
+        rv.thumbnail_maxres_avif_url,
+        rv.image_processing_status,
+        rv.image_processing_updated_at,
         rv.published_at, 
         rv.duration,
-        t.video_start_seconds,
+        rv.views,
+        COALESCE(t.video_start_seconds, 0) as video_start_seconds,
         t.updated_at,
+        t.watched_at,
+        p.name as playlist_name,
+        p.short_id as playlist_short_id,
+        t.sorted_by as playlist_sorted_by,
+        t.sort_order as playlist_sort_order,
         rv.search_rank
     FROM ranked_videos rv
     LEFT JOIN public.timestamps t ON rv.id = t.video_id AND t.user_id = current_user_id
+    LEFT JOIN public.playlists p ON t.playlist_id = p.id
     WHERE rv.search_rank > 0
     ORDER BY 
         rv.search_rank DESC,
@@ -155,8 +221,15 @@ CREATE OR REPLACE FUNCTION "public"."get_in_progress_videos_with_timestamps" () 
   description text,
   thumbnail_url text,
   thumbnail_maxres_url text,
+  thumbnail_webp_url text,
+  thumbnail_avif_url text,
+  thumbnail_maxres_webp_url text,
+  thumbnail_maxres_avif_url text,
+  image_processing_status public.image_processing_status,
+  image_processing_updated_at TIMESTAMP WITH TIME ZONE,
   published_at TIMESTAMP WITH TIME ZONE,
   duration text,
+  views bigint,
   video_start_seconds numeric,
   watched_at TIMESTAMP WITH TIME ZONE,
   updated_at TIMESTAMP WITH TIME ZONE,
@@ -175,9 +248,16 @@ BEGIN
         v.title, 
         v.description, 
         v.thumbnail_url, 
-        v.thumbnail_maxres_url, 
+        v.thumbnail_maxres_url,
+        v.thumbnail_webp_url,
+        v.thumbnail_avif_url,
+        v.thumbnail_maxres_webp_url,
+        v.thumbnail_maxres_avif_url,
+        v.image_processing_status,
+        v.image_processing_updated_at,
         v.published_at, 
-        v.duration, 
+        v.duration,
+        v.views,
         t.video_start_seconds, 
         t.watched_at, 
         t.updated_at,
@@ -194,3 +274,39 @@ BEGIN
     ORDER BY t.watched_at DESC;
 END;
 $$;
+
+-- Function to increment video views safely
+CREATE OR REPLACE FUNCTION public.increment_video_views(video_id text)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET
+  search_path = '' AS $$
+BEGIN
+  UPDATE public.videos 
+  SET views = views + 1 
+  WHERE id = video_id;
+END;
+$$;
+
+-- Add RLS policy to allow reading views but restrict direct updates
+-- Note: Only creates policy if RLS is enabled and policy doesn't already exist
+DO $$
+BEGIN
+  -- Check if RLS is enabled on videos table and policy doesn't exist
+  IF EXISTS (
+    SELECT 1 FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE c.relname = 'videos' 
+    AND n.nspname = 'public' 
+    AND c.relrowsecurity = true
+  ) AND NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+    AND tablename = 'videos' 
+    AND policyname = 'Allow read access to video views'
+  ) THEN
+    -- Create the policy
+    EXECUTE 'CREATE POLICY "Allow read access to video views" ON "public"."videos" FOR SELECT USING (true)';
+  END IF;
+END $$;

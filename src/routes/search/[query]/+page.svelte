@@ -86,7 +86,7 @@
           {playlistsCount === 1 ? 'playlist' : 'playlists'}
         </p>
 
-        <PlaylistTiles playlists={playlistSearchResults} {session} />
+        <PlaylistTiles playlists={playlistSearchResults} {supabase} {session} />
       </div>
     {/if}
 

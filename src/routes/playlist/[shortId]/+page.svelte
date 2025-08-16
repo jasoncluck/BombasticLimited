@@ -62,7 +62,9 @@
 </script>
 
 <div class="relative flex grow flex-col">
-  <ImageCropper.Root src={playlist.processedImageUrl ?? undefined}>
+  <ImageCropper.Root
+    src={playlist.thumbnail_maxres_url ?? playlist.thumbnail_url}
+  >
     <PlaylistHeader
       {userProfile}
       {...playlistHeaderProps}

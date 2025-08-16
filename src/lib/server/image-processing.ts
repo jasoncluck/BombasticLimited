@@ -10,6 +10,8 @@ import {
   generatePlaylistImageCacheKey,
   type ImageCacheMetadata,
 } from './image-cache';
+import { detectOptimalFormat } from '$lib/utils/image-format-detection';
+import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 
 // Initialize image cache manager
 const imageCacheManager = ImageCacheManager.getInstance();
@@ -71,12 +73,13 @@ const PROCESSING_TIMEOUT = 30000; // 30 seconds
 // Domain validation for security
 const ALLOWED_DOMAINS = [
   'i.ytimg.com',
-  'img.youtube.com', 
+  'img.youtube.com',
   'i1.ytimg.com',
   'i2.ytimg.com',
   'i3.ytimg.com',
   'i4.ytimg.com',
   'static-cdn.jtvnw.net',
+  PUBLIC_SUPABASE_URL,
 ];
 
 // Validate URL domain for security
@@ -100,38 +103,6 @@ export function getMemoryUsage() {
   };
 }
 
-// Browser format support detection
-export function detectOptimalFormat(acceptHeader?: string | null): 'avif' | 'webp' | 'jpeg' {
-  if (!acceptHeader) {
-    // For external images (like YouTube) without Accept headers, 
-    // default to WebP for broader compatibility while still providing good compression
-    return 'webp';
-  }
-  
-  const accept = acceptHeader.toLowerCase();
-  
-  // Explicit AVIF support
-  if (accept.includes('image/avif')) {
-    return 'avif';
-  }
-  
-  // Explicit WebP support
-  if (accept.includes('image/webp')) {
-    return 'webp';
-  }
-  
-  // For modern browsers that accept all image types but don't explicitly list AVIF/WebP
-  // We should try AVIF first for supporting browsers, but fallback to WebP for better compatibility
-  if (accept.includes('image/*') || accept.includes('*/*')) {
-    // Since we can't be certain about AVIF support with generic headers,
-    // use WebP as a safer default that still provides good compression
-    return 'webp';
-  }
-  
-  // Fallback to JPEG for maximum compatibility
-  return 'jpeg';
-}
-
 // Smart quality adjustment based on image content and size
 export function calculateOptimalQuality(
   metadata: Partial<sharp.Metadata>,
@@ -139,7 +110,7 @@ export function calculateOptimalQuality(
   baseQuality = 90
 ): number {
   const imageSize = (metadata.width || 0) * (metadata.height || 0);
-  
+
   // Format-specific quality adjustments
   let formatQuality = baseQuality;
   if (targetFormat === 'avif') {
@@ -149,14 +120,18 @@ export function calculateOptimalQuality(
     // WebP is efficient but not as much as AVIF
     formatQuality = Math.max(baseQuality - 5, 80);
   }
-  
+
   // Adjust quality based on image size
-  if (imageSize > 1920 * 1080) { // Large images
-    return targetFormat === 'jpeg' ? Math.max(formatQuality - 10, 75) : Math.max(formatQuality - 5, 70);
-  } else if (imageSize < 640 * 360) { // Small images
+  if (imageSize > 1920 * 1080) {
+    // Large images
+    return targetFormat === 'jpeg'
+      ? Math.max(formatQuality - 10, 75)
+      : Math.max(formatQuality - 5, 70);
+  } else if (imageSize < 640 * 360) {
+    // Small images
     return Math.min(formatQuality + 5, 95);
   }
-  
+
   return formatQuality;
 }
 
@@ -169,33 +144,38 @@ export async function processImageServer({
   isCropped = false,
   isMaxRes = false,
 }: {
-  imageUrl: string;
+  imageUrl: string | null;
   imageProperties?: ImageProperties | null;
   acceptHeader?: string | null;
   options?: ImageProcessingOptions;
   isCropped?: boolean;
   isMaxRes?: boolean;
 }) {
-  // Validate URL domain for security
-  if (!validateImageUrl(imageUrl)) {
-    console.warn(`Domain not allowed for URL: ${imageUrl}`);
+  if (!imageUrl) {
     return null;
   }
+  // Validate URL domain for security
+  // if (!validateImageUrl(imageUrl)) {
+  //   console.warn(`Domain not allowed for URL: ${imageUrl}`);
+  //   return null;
+  // }
+  //
+  console.log('image properties');
+  console.log(imageProperties);
 
   // Determine optimal format based on Accept header or explicit format
   let targetFormat: 'avif' | 'webp' | 'jpeg';
   if (options.format === 'auto' || !options.format) {
     targetFormat = detectOptimalFormat(acceptHeader);
   } else {
-    targetFormat = (options.format as 'avif' | 'webp' | 'jpeg');
+    targetFormat = options.format as 'avif' | 'webp' | 'jpeg';
   }
 
   // Enhanced fallback chain for external images (e.g., YouTube)
   // If no Accept header is available, use a conservative approach
-  const formatFallbackChain: ('avif' | 'webp' | 'jpeg')[] = acceptHeader 
-    ? [targetFormat, 'webp', 'jpeg'] 
+  const formatFallbackChain: ('avif' | 'webp' | 'jpeg')[] = acceptHeader
+    ? [targetFormat, 'webp', 'jpeg']
     : ['webp', 'jpeg']; // Skip AVIF for external sources without Accept headers
-
 
   // Determine if we're using standard resolution (for cropped images)
   const isStandardResolution = isCropped && !isMaxRes;
@@ -231,9 +211,10 @@ export async function processImageServer({
     // Apply cropping if needed
     if (isCropped) {
       // Use provided image properties or defaults
-      const cropProperties = imageProperties || 
-        (isMaxRes 
-          ? PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS 
+      const cropProperties =
+        imageProperties ||
+        (isMaxRes
+          ? PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS
           : PLAYLIST_IMAGE_CROP_DEFAULTS);
 
       // Validate and adjust crop dimensions
@@ -255,21 +236,29 @@ export async function processImageServer({
 
     // Apply resize if specified (for non-cropped images)
     if (!isCropped && (options.width || options.height)) {
-      processedInstance = processedInstance.resize(options.width, options.height, {
-        fit: 'cover',
-        position: 'center',
-        withoutEnlargement: true,
-      });
+      processedInstance = processedInstance.resize(
+        options.width,
+        options.height,
+        {
+          fit: 'cover',
+          position: 'center',
+          withoutEnlargement: true,
+        }
+      );
     }
 
     // Calculate optimal quality
-    const quality = options.quality || calculateOptimalQuality(
-      metadata, 
-      targetFormat, 
-      isStandardResolution ? 95 : 90
-    );
+    const quality =
+      options.quality ||
+      calculateOptimalQuality(
+        metadata,
+        targetFormat,
+        isStandardResolution ? 95 : 90
+      );
 
-    console.log(`Processing image with format: ${targetFormat}, quality: ${quality}, size: ${imageWidth}x${imageHeight}, acceptHeader: ${acceptHeader ? 'present' : 'missing'}`);
+    console.log(
+      `Processing image with format: ${targetFormat}, quality: ${quality}, size: ${imageWidth}x${imageHeight}, acceptHeader: ${acceptHeader ? 'present' : 'missing'}`
+    );
 
     let processedImageBuffer: Buffer | undefined;
     let mimeType: string = 'image/jpeg'; // Default fallback
@@ -320,12 +309,15 @@ export async function processImageServer({
             actualFormat = 'jpeg';
             break;
         }
-        
+
         // If we get here, the format worked - break out of the fallback loop
         break;
       } catch (formatError) {
-        console.warn(`Failed to process image with ${format} format, trying next fallback:`, formatError);
-        
+        console.warn(
+          `Failed to process image with ${format} format, trying next fallback:`,
+          formatError
+        );
+
         // If this was the last format in the chain, re-throw the error
         if (format === formatFallbackChain[formatFallbackChain.length - 1]) {
           throw formatError;
@@ -341,7 +333,7 @@ export async function processImageServer({
     // Convert to base64 data URL
     const base64 = processedImageBuffer.toString('base64');
     const dataUrl = `data:${mimeType};base64,${base64}`;
-    
+
     return dataUrl;
   } catch (error) {
     console.error(`Server image processing failed for ${imageUrl}:`, error);
@@ -357,8 +349,8 @@ export async function getCroppedPlaylistImageUrlServer({
   acceptHeader = null,
 }: {
   imageProperties: ImageProperties | null;
-  thumbnailMaxResUrl: string | null;
-  thumbnailUrl?: string | null;
+  thumbnailMaxResUrl?: string;
+  thumbnailUrl?: string;
   options?: ImageProcessingOptions;
   acceptHeader?: string | null;
 }) {
@@ -669,14 +661,14 @@ export async function cleanupImageCache(): Promise<void> {
   await imageCacheManager.cleanup();
 }
 
-// Helper function to generate playlist image URL for client-side requests
+// Helper function to generate playlist image URL - returns original URL to avoid server-side processing
 export function generatePlaylistImageUrl({
   thumbnailUrl,
   thumbnailMaxResUrl,
   imageProperties,
   format = 'auto',
   quality = 90,
-  responseType = 'image'
+  responseType = 'image',
 }: {
   thumbnailUrl?: string | null;
   thumbnailMaxResUrl?: string | null;
@@ -688,22 +680,48 @@ export function generatePlaylistImageUrl({
   const effectiveUrl = thumbnailMaxResUrl || thumbnailUrl;
   if (!effectiveUrl) return null;
 
-  const params = new URLSearchParams();
-  
-  if (thumbnailMaxResUrl) {
-    params.set('maxresUrl', thumbnailMaxResUrl);
-  }
+  // Return original URL directly - no server-side processing
+  // Background processing system handles optimization separately
+  return effectiveUrl;
+}
+
+/**
+ * Queue playlist image processing for background optimization
+ */
+export async function queuePlaylistImageProcessing(
+  playlistId: string,
+  thumbnailUrl: string | null,
+  thumbnailMaxresUrl: string | null,
+  priority: number = 100
+): Promise<void> {
+  const jobs = [];
+
   if (thumbnailUrl) {
-    params.set('url', thumbnailUrl);
+    jobs.push({
+      entityType: 'playlist' as const,
+      entityId: playlistId,
+      imageType: 'thumbnail' as const,
+      sourceUrl: thumbnailUrl,
+      priority,
+    });
   }
-  
-  params.set('format', format);
-  params.set('quality', quality.toString());
-  params.set('type', responseType);
-  
-  if (imageProperties) {
-    params.set('imageProperties', encodeURIComponent(JSON.stringify(imageProperties)));
+
+  if (thumbnailMaxresUrl) {
+    jobs.push({
+      entityType: 'playlist' as const,
+      entityId: playlistId,
+      imageType: 'thumbnail_maxres' as const,
+      sourceUrl: thumbnailMaxresUrl,
+      priority,
+    });
   }
-  
-  return `/api/playlist-image?${params.toString()}`;
+
+  if (jobs.length > 0) {
+    // Send batch processing event to Inngest
+    const { inngest } = await import('../inngest/client');
+    await inngest.send({
+      name: 'image.batch.process',
+      data: { jobs },
+    });
+  }
 }

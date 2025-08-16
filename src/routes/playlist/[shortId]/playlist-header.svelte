@@ -103,128 +103,122 @@
   {...props}
 >
   <div class="m-4 mb-8 flex flex-col">
-    <div class="playlist-header-content">
+    <div class="playlist-header-content min-h-[230px]">
       <!-- Desktop/Hover layout -->
       {#if mediaQueryState.canHover}
-        <div class="hover-layout">
-          <PlaylistEditDialog
-            {form}
-            {playlist}
-            formId="playlist-dialog-form"
-            {session}
-            bind:open
-          >
-            {#snippet trigger()}
-              <div class="flex flex-col gap-4 md:flex-row">
-                <div class="flex justify-center">
-                  {#if playlist.processedImageUrl}
-                    <div
-                      class="flex h-56 w-56 items-center justify-center {isPlaylistOwner &&
-                        'cursor-pointer'} border-none bg-transparent p-0"
-                    >
-                      <img
-                        src={playlist.processedImageUrl}
-                        alt={`Image for playlist: ${playlist.name}`}
-                      />
-                    </div>
+        <PlaylistEditDialog
+          {form}
+          {playlist}
+          formId="playlist-dialog-form"
+          {session}
+          bind:open
+        >
+          {#snippet trigger()}
+            <div class="flex flex-col gap-4 md:flex-row">
+              <div class="flex justify-center">
+                <div
+                  class="flex h-56 min-h-32 w-56 min-w-32 items-center justify-center overflow-hidden rounded-lg border-none bg-transparent p-0 {isPlaylistOwner &&
+                    'cursor-pointer'}"
+                >
+                  {#if playlist.image_url}
+                    <img
+                      src={playlist.image_url}
+                      alt={`Image for playlist: ${playlist.name}`}
+                      class="h-full w-full object-cover"
+                    />
                   {:else}
-                    <div
-                      class="flex h-56 min-h-32 w-56 min-w-32 items-center justify-center {isPlaylistOwner &&
-                        'cursor-pointer'}border-none bg-transparent p-0"
-                    >
-                      <ListVideo size={128} />
+                    <div class="flex h-full w-full items-center justify-center">
+                      <ListVideo size={120} class="text-muted-foreground" />
                     </div>
                   {/if}
                 </div>
+              </div>
 
-                <div class="relative mt-4 flex min-w-2xs flex-1 flex-col">
-                  <div
-                    class="flex flex-col {isPlaylistOwner && 'cursor-pointer'} 
+              <div class="relative mt-4 flex min-w-2xs flex-1 flex-col">
+                <div
+                  class="flex flex-col {isPlaylistOwner && 'cursor-pointer'} 
             items-start border-none bg-transparent p-0 text-left"
+                >
+                  <p class="text-muted-foreground mb-2 text-sm tracking-tight">
+                    {playlist.type === 'Public'
+                      ? 'Public Playlist'
+                      : 'Private Playlist'}
+                  </p>
+                  <h2
+                    class="header-playlist break-anywhere font-extrabold tracking-tight text-wrap"
                   >
+                    {playlist.name}
+                  </h2>
+
+                  {#if playlist.description && playlist.description.length > 1}
                     <p
-                      class="text-muted-foreground mb-2 text-sm tracking-tight"
+                      class="text-muted-foreground mb-3 text-left text-sm break-all"
                     >
-                      {playlist.type === 'Public'
-                        ? 'Public Playlist'
-                        : 'Private Playlist'}
+                      {playlist.description}
                     </p>
-                    <h2
-                      class="header-playlist break-anywhere font-extrabold tracking-tight text-wrap"
-                    >
-                      {playlist.name}
-                    </h2>
+                  {/if}
+                </div>
 
-                    {#if playlist.description && playlist.description.length > 1}
-                      <p
-                        class="text-muted-foreground mb-3 text-left text-sm break-all"
-                      >
-                        {playlist.description}
-                      </p>
-                    {/if}
-                  </div>
-
-                  <!-- Username, video count and duration - kept in original position for hover -->
-                  <div class="mt-0 flex flex-wrap items-center gap-2">
-                    {#if playlist.profile_username}
-                      {#if isSource(playlist.profile_username)}
-                        {@const sourceInfo =
-                          SOURCE_INFO[playlist.profile_username]}
-                        <div class="flex items-center gap-2">
-                          <img
-                            alt={`${sourceInfo.displayName} playlist`}
-                            class="h-6 w-6"
-                            src={sourceInfo.image.img.src}
+                <!-- Username, video count and duration - kept in original position for hover -->
+                <div class="mt-0 flex flex-wrap items-center gap-2">
+                  {#if playlist.profile_username}
+                    {#if isSource(playlist.profile_username)}
+                      {@const sourceInfo =
+                        SOURCE_INFO[playlist.profile_username]}
+                      <div class="flex items-center gap-2">
+                        <img
+                          alt={`${sourceInfo.displayName} playlist`}
+                          class="h-6 w-6"
+                          src={sourceInfo.image.img.src}
+                        />
+                        <p class="text-sm">
+                          {sourceInfo.displayName}
+                        </p>
+                        <Circle
+                          size="5"
+                          class="stroke-muted-foreground fill-muted-foreground shrink-0 justify-center self-center"
+                        />
+                        <a
+                          href="https://www.youtube.com/playlist?list={playlist.youtube_id}"
+                          class="flex gap-2 hover:underline"
+                        >
+                          <Youtube
+                            size="20"
+                            class="stroke-muted-foreground shrink-0 justify-center"
                           />
-                          <p class="text-sm">
-                            {sourceInfo.displayName}
-                          </p>
-                          <Circle
-                            size="5"
-                            class="stroke-muted-foreground fill-muted-foreground shrink-0 justify-center self-center"
+                          <p class="text-sm">YouTube</p>
+                        </a>
+                      </div>
+                    {:else}
+                      <div class="flex items-center gap-2">
+                        <Avatar.Root class="h-6 w-6">
+                          <Avatar.Image
+                            src={creatorProfile?.avatar_url}
+                            alt="{playlist.profile_username} avatar"
                           />
-                          <a
-                            href="https://www.youtube.com/playlist?list={playlist.youtube_id}"
-                            class="flex gap-2 hover:underline"
-                          >
-                            <Youtube
-                              size="20"
-                              class="stroke-muted-foreground shrink-0 justify-center"
-                            />
-                            <p class="text-sm">YouTube</p>
-                          </a>
-                        </div>
-                      {:else}
-                        <div class="flex items-center gap-2">
-                          <Avatar.Root class="h-6 w-6">
-                            <Avatar.Image
-                              src={creatorProfile?.avatar_url}
-                              alt="{playlist.profile_username} avatar"
-                            />
-                            <Avatar.Fallback class="text-xs">
-                              {playlist.profile_username
-                                ?.slice(0, 2)
-                                .toUpperCase()}
-                            </Avatar.Fallback>
-                          </Avatar.Root>
-                          <p class="text-sm">{playlist.profile_username}</p>
-                        </div>
-                      {/if}
-                      <Circle
-                        size="5"
-                        class="stroke-muted-foreground fill-muted-foreground shrink-0 self-center"
-                      />
+                          <Avatar.Fallback class="text-xs">
+                            {playlist.profile_username
+                              ?.slice(0, 2)
+                              .toUpperCase()}
+                          </Avatar.Fallback>
+                        </Avatar.Root>
+                        <p class="text-sm">{playlist.profile_username}</p>
+                      </div>
                     {/if}
-                    <p class="text-muted-foreground text-sm">
-                      {videosLabel}{showComma ? ', ' : ''}
-                      {formattedDuration}
-                    </p>
-                  </div>
+                    <Circle
+                      size="5"
+                      class="stroke-muted-foreground fill-muted-foreground shrink-0 self-center"
+                    />
+                  {/if}
+                  <p class="text-muted-foreground text-sm">
+                    {videosLabel}{showComma ? ', ' : ''}
+                    {formattedDuration}
+                  </p>
                 </div>
               </div>
-            {/snippet}
-          </PlaylistEditDialog>
-        </div>
+            </div>
+          {/snippet}
+        </PlaylistEditDialog>
 
         <!-- Mobile/Touch layout -->
       {:else}
@@ -239,24 +233,26 @@
             {#snippet trigger()}
               <div class="flex flex-col gap-4">
                 <div class="flex justify-center">
-                  {#if playlist.processedImageUrl}
-                    <div
-                      class="flex h-56 w-56 items-center justify-center {isPlaylistOwner &&
-                        'cursor-pointer'} border-none bg-transparent p-0"
-                    >
+                  <div
+                    class="flex h-56 min-h-32 w-56 min-w-32 items-center justify-center overflow-hidden rounded-lg border-none bg-transparent p-0 {isPlaylistOwner &&
+                      'cursor-pointer'}"
+                  >
+                    {#if playlist.image_url}
                       <img
-                        src={playlist.processedImageUrl}
+                        src={playlist.image_url}
                         alt={`Image for playlist: ${playlist.name}`}
+                        class="h-full w-full object-cover"
                       />
-                    </div>
-                  {:else}
-                    <div
-                      class="flex h-56 min-h-32 w-56 min-w-32 items-center justify-center {isPlaylistOwner &&
-                        'cursor-pointer'}border-none bg-transparent p-0"
-                    >
-                      <ListVideo size={128} />
-                    </div>
-                  {/if}
+                    {:else}
+                      <div
+                        class="flex h-full w-full items-center justify-center bg-transparent"
+                      >
+                        <ListVideo
+                          class="text-muted-foreground h-full w-full p-12"
+                        />
+                      </div>
+                    {/if}
+                  </div>
                 </div>
 
                 <div class="relative flex min-w-2xs flex-1 flex-col">

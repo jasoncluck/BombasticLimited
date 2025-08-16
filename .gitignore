@@ -13,6 +13,11 @@ node_modules
 .env
 .env.*
 
+# Testing files
+test-playlist-*.sql
+test-playlist-*.mjs
+test-playlist-*.js
+
 # OS
 .DS_Store
 Thumbs.db

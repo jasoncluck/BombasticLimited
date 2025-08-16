@@ -28,6 +28,7 @@ import {
 import { parseImageProperties, type ImageProperties } from './playlist';
 import type { SidebarState } from '$lib/state/sidebar.svelte';
 import { showToast } from '$lib/state/notifications.svelte';
+import { getCroppedImg } from '../ui/image-cropper/utils';
 
 export type PlaylistImages = Record<string, string | undefined>;
 
@@ -135,11 +136,9 @@ export async function handleCreatePlaylist({
     throw new Error('Attempted to create a playlist without a valid session.');
   }
 
-  // No need to generate name here - the database will handle it
   const { playlist, error } = await createPlaylist({
     session,
     supabase,
-    // No name parameter - let the database generate it
   });
 
   if (error) {
@@ -192,7 +191,6 @@ export async function handleDeletePlaylist({
   sidebarState.refreshData();
   return { error };
 }
-
 export async function handleAddVideosToPlaylist({
   playlist,
   videos,
@@ -231,15 +229,41 @@ export async function handleAddVideosToPlaylist({
       showNotification('Unable to add video to playlist.');
     }
     console.error(error);
-  } else {
-    showNotification(
-      `Added ${videos.length > 1 ? 'videos' : 'video'} to ${playlist.name}`
-    );
+    return { error };
   }
 
-  await sidebarState.refreshData();
-  await invalidate('supabase:db:videos');
-  return { error };
+  showNotification(
+    `Added ${videos.length > 1 ? 'videos' : 'video'} to ${playlist.name}`
+  );
+
+  // If playlist didn't have a thumbnail, process the image
+  if (!playlist.thumbnail_video_id) {
+    // The RPC function set the thumbnail_video_id, now process the image
+    const processedPlaylistImage = await getCroppedPlaylistImageUrl({
+      imageProperties: null, // No existing properties for new thumbnail
+      thumbnailMaxResUrl: videos[0].thumbnail_maxres_url,
+      thumbnailUrl: videos[0].thumbnail_url,
+    });
+
+    // Update with the processed image
+    const { error: imageError } = await updatePlaylistImage({
+      playlistId: playlist.id,
+      processedPlaylistImage,
+      thumbnailVideoId: videos[0].id,
+      imageProperties: null,
+      supabase,
+    });
+
+    if (imageError) {
+      console.error('Failed to process playlist image:', imageError);
+    }
+  }
+
+  // Refresh data
+  invalidate('supabase:db:videos');
+  sidebarState.refreshData();
+
+  return { error: null };
 }
 
 export async function handleRemoveVideosFromPlaylist({
@@ -259,54 +283,43 @@ export async function handleRemoveVideosFromPlaylist({
     supabase,
   });
 
-  for (const video of videos) {
-    if (
-      playlist.thumbnail_maxres_url === video.thumbnail_maxres_url ||
-      playlist.thumbnail_url === video.thumbnail_url
-    ) {
-      await handleUpdatePlaylistImage({
-        playlist,
-        sidebarState,
-        thumbnailMaxResUrl: null,
-        thumbnailUrl: null,
-        supabase,
-      });
-
-      sidebarState.refreshData();
-    }
-  }
-
   if (error) {
     showNotification('Unable to remove video from playlist.');
   } else {
     showNotification(`Removed video from ${playlist.name}.`);
   }
+
+  sidebarState.refreshData();
   invalidate('supabase:db:videos');
   return { error };
 }
 
 export async function handleUpdatePlaylistImage({
   playlist,
-  thumbnailUrl,
   sidebarState,
-  thumbnailMaxResUrl,
+  thumbnailVideo,
+  imageProperties = null,
   supabase,
 }: {
   playlist: Playlist;
-  thumbnailUrl: string | null;
   sidebarState: SidebarState;
-  thumbnailMaxResUrl: string | null;
+  thumbnailVideo?: Video;
+  imageProperties?: ImageProperties | null;
   supabase: SupabaseClient<Database>;
 }) {
-  const isResetImage = thumbnailUrl === null && thumbnailMaxResUrl === null;
-  if (isResetImage) {
-    playlist.processedImageUrl = null;
-  }
+  const processedPlaylistImage = thumbnailVideo
+    ? await getCroppedPlaylistImageUrl({
+        imageProperties: imageProperties, // Remove the fallback to existing properties
+        thumbnailMaxResUrl: thumbnailVideo.thumbnail_maxres_url,
+        thumbnailUrl: thumbnailVideo.thumbnail_url,
+      })
+    : null;
 
-  const { updatedPlaylist, error } = await updatePlaylistImage({
+  const { error } = await updatePlaylistImage({
     playlistId: playlist.id,
-    thumbnailUrl,
-    thumbnailMaxResUrl,
+    processedPlaylistImage,
+    thumbnailVideoId: thumbnailVideo?.id,
+    imageProperties,
     supabase,
   });
 
@@ -314,10 +327,8 @@ export async function handleUpdatePlaylistImage({
     showNotification('Unable update playlist image');
   }
 
-  // Refresh data to get server-processed images with AVIF support
-  // instead of using client-side processing
-  await invalidate('supabase:db:videos');
-  await sidebarState.refreshData();
+  invalidate('supabase:db:videos');
+  sidebarState.refreshData();
   return { error };
 }
 
@@ -499,40 +510,6 @@ export async function handleUpdatePlaylistSort({
   return { updatedPlaylist, error };
 }
 
-// @deprecated This function uses client-side Canvas processing which only supports WebP format.
-// Use server-side processing with getCroppedPlaylistImageUrlServer instead for AVIF support.
-// For each playlist create and add the associated playlist image
-export async function processPlaylists(playlists: Playlist[]) {
-  const batchSize = 5;
-  const processedPlaylists = [];
-  for (let i = 0; i < playlists.length; i += batchSize) {
-    const batch = playlists.slice(i, i + batchSize);
-    const batchResults = await Promise.all(
-      batch.map(async (playlist) => {
-        try {
-          const processedImageUrl = await getCroppedPlaylistImageUrl({
-            thumbnailMaxResUrl: playlist.thumbnail_maxres_url,
-            thumbnailUrl: playlist.thumbnail_url,
-            imageProperties: parseImageProperties(playlist.image_properties),
-          });
-          return { ...playlist, processedImageUrl };
-        } catch (error) {
-          console.error(
-            `Failed to process image for playlist ${playlist.name}:`,
-            error
-          );
-          return { ...playlist, processedImageUrl: null };
-        }
-      })
-    );
-    processedPlaylists.push(...batchResults);
-  }
-  return processedPlaylists;
-}
-
-// @deprecated This function uses client-side Canvas processing which only supports WebP format.
-// Use server-side processing with getCroppedPlaylistImageUrlServer instead for AVIF support.
-// Functions for getting cropped playlist images in the browser for use when deferring image rendering
 export async function getCroppedPlaylistImageUrl({
   imageProperties,
   thumbnailMaxResUrl,
@@ -654,12 +631,6 @@ async function processWithCanvas(
           imageProperties,
           isMaxRes
         );
-
-        console.log('Client-side canvas processing:', {
-          originalSize: `${img.width}x${img.height}`,
-          cropArea: optimalCrop,
-          isMaxRes,
-        });
 
         // Determine target output size
         const targetWidth = optimalCrop.width;
@@ -817,34 +788,4 @@ async function processVideoThumbnailWithCanvas(
     img.onerror = () => reject(new Error('Failed to load image'));
     img.src = imageUrl;
   });
-}
-
-// @deprecated This function uses client-side Canvas processing which only supports WebP format.
-// Use server-side processing with getVideoThumbnailWebpUrlsBatch instead for AVIF support.
-// Batch processing function for multiple video thumbnails
-export async function getVideoThumbnailWebpUrlsBatch(
-  thumbnailUrls: Array<string | null>
-): Promise<Array<string | null>> {
-  const batchSize = 5;
-  const processedThumbnails = [];
-
-  for (let i = 0; i < thumbnailUrls.length; i += batchSize) {
-    const batch = thumbnailUrls.slice(i, i + batchSize);
-    const batchResults = await Promise.all(
-      batch.map(async (thumbnailUrl) => {
-        try {
-          return await getVideoThumbnailWebpUrl({ thumbnailUrl });
-        } catch (error) {
-          console.error(
-            `Failed to process video thumbnail: ${thumbnailUrl}`,
-            error
-          );
-          return null;
-        }
-      })
-    );
-    processedThumbnails.push(...batchResults);
-  }
-
-  return processedThumbnails;
 }

@@ -183,6 +183,7 @@
       <PlaylistTiles
         playlists={processedSourcePlaylists}
         showUsername={false}
+        {supabase}
         {session}
       />
     </div>

@@ -240,17 +240,14 @@
           <ContextMenu.Item
             class="p-2"
             onclick={async () => {
-              const { error } = await handleUpdatePlaylistImage({
+              handleUpdatePlaylistImage({
                 playlist,
                 sidebarState,
-                thumbnailUrl: operationVideos[0].thumbnail_url,
-                thumbnailMaxResUrl: operationVideos[0].thumbnail_maxres_url,
+                thumbnailVideo: operationVideos[0],
                 supabase,
               });
 
-              if (!error) {
-                handleSelectionAfterAction();
-              }
+              handleSelectionAfterAction();
             }}
           >
             <ImagePlay class="dropdown-icon" />

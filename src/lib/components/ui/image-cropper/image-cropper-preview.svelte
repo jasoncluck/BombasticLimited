@@ -16,16 +16,13 @@
 {#if child}
   {@render child({ src: previewState.rootState.src })}
 {:else}
-  <Avatar.Root
+  <!-- Use regular img tag that respects the container size instead of fixed Avatar size -->
+  <img
+    src={previewState.rootState.src}
     class={cn(
-      'ring-accent ring-offset-background size-20 ring-2 ring-offset-2',
+      'ring-accent ring-offset-background w-full h-full object-cover ring-2 ring-offset-2 rounded',
       className
     )}
-  >
-    <Avatar.Image src={previewState.rootState.src} />
-    <!-- <Avatar.Fallback> -->
-    <!--   <UploadIcon class="size-4" /> -->
-    <!--   <span class="sr-only">Upload image</span> -->
-    <!-- </Avatar.Fallback> -->
-  </Avatar.Root>
+    alt="Image preview"
+  />
 {/if}

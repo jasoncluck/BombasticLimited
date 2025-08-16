@@ -2,13 +2,12 @@
   import { goto, invalidate } from '$app/navigation';
   import { SOURCES, SOURCE_INFO, type Source } from '$lib/constants/source';
   import {
-    Circle,
-    Edit,
     House,
     ListVideo,
     LogIn,
     LogOut,
     Menu,
+    Pencil,
     Plus,
     Settings,
   } from '@lucide/svelte';
@@ -154,7 +153,7 @@
                   <Badge
                     class="bg-secondary flex cursor-pointer items-center gap-2"
                   >
-                    <Edit />
+                    <Pencil />
                     Reorder
                   </Badge>
                 {/snippet}
@@ -224,7 +223,7 @@
               >
                 {#snippet trigger()}
                   <Badge class="bg-secondary flex items-center gap-2">
-                    <Edit />
+                    <Pencil />
                     Reorder</Badge
                   >
                 {/snippet}
@@ -232,10 +231,10 @@
                 {#snippet itemRenderer(item)}
                   {@const playlist = item as Playlist}
                   <div class="m-1 flex w-full items-center gap-2">
-                    {#if playlist.processedImageUrl}
+                    {#if playlist.image_url}
                       <div class="h-12 w-12 flex-none">
                         <img
-                          src={playlist.processedImageUrl}
+                          src={playlist.image_url}
                           class="h-12 w-12 cursor-pointer object-cover"
                           alt={`Image for playlist: ${playlist.name}`}
                         />
@@ -308,10 +307,10 @@
                   title={playlist.name}
                 >
                   <div class="flex items-center overflow-hidden">
-                    {#if playlist.processedImageUrl}
+                    {#if playlist.image_url}
                       <div class="h-12 w-12 flex-none">
                         <img
-                          src={playlist.processedImageUrl}
+                          src={playlist.image_url}
                           class="h-12 w-12 cursor-pointer object-cover"
                           alt={`Image for playlist: ${playlist.name}`}
                         />

@@ -83,8 +83,10 @@ END;
 $$;
 
 -- Trigger to calculate seconds_watched before insert/update
-CREATE TRIGGER "trigger_calculate_seconds_watched" BEFORE INSERT OR UPDATE ON "public"."video_history" 
-FOR EACH ROW EXECUTE FUNCTION "public"."calculate_seconds_watched" ();
+CREATE TRIGGER "trigger_calculate_seconds_watched" BEFORE INSERT
+OR
+UPDATE ON "public"."video_history" FOR EACH ROW
+EXECUTE FUNCTION "public"."calculate_seconds_watched" ();
 
 -- Trigger to update updated_at on video_history updates
 CREATE TRIGGER "trigger_update_video_history_updated_at" BEFORE
@@ -94,7 +96,6 @@ EXECUTE FUNCTION "public"."update_video_history_updated_at" ();
 -- ============================================================================
 -- RPC FUNCTIONS FOR VIDEO HISTORY
 -- ============================================================================
-
 -- Function to start a new video history session or resume an existing one
 CREATE OR REPLACE FUNCTION "public"."start_video_history_session" (
   p_video_id text,
@@ -111,7 +112,8 @@ CREATE OR REPLACE FUNCTION "public"."start_video_history_session" (
   updated_at TIMESTAMP WITH TIME ZONE,
   is_resumed boolean
 ) LANGUAGE sql SECURITY DEFINER
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
   WITH video_source_lookup AS (
     SELECT v.source
     FROM public.videos v
@@ -259,7 +261,8 @@ CREATE OR REPLACE FUNCTION "public"."update_video_history_seconds_watched" (
   created_at TIMESTAMP WITH TIME ZONE,
   updated_at TIMESTAMP WITH TIME ZONE
 ) LANGUAGE sql SECURITY DEFINER
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
   WITH authenticated_user AS (
     SELECT auth.uid() as id
   ),
@@ -308,7 +311,8 @@ CREATE OR REPLACE FUNCTION "public"."update_video_history_end_time" (
   created_at TIMESTAMP WITH TIME ZONE,
   updated_at TIMESTAMP WITH TIME ZONE
 ) LANGUAGE sql SECURITY DEFINER
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
   WITH authenticated_user AS (
     SELECT auth.uid() as id
   ),
@@ -370,7 +374,8 @@ CREATE OR REPLACE FUNCTION "public"."get_user_video_history" (
   video_duration text,
   video_thumbnail_url text
 ) LANGUAGE sql SECURITY DEFINER
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
   SELECT
     vh.user_id::text || '|' || vh.video_id || '|' || EXTRACT(EPOCH FROM vh.session_start_time)::bigint::text AS id,
     vh.user_id,
@@ -406,7 +411,8 @@ CREATE OR REPLACE FUNCTION "public"."get_video_analytics" (
   last_watched TIMESTAMP WITH TIME ZONE,
   first_watched TIMESTAMP WITH TIME ZONE
 ) LANGUAGE sql SECURITY DEFINER
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
   WITH start_date AS (
     SELECT now() - INTERVAL '1 day' * p_days_back as date
   )

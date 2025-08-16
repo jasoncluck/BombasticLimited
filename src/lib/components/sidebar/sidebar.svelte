@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Circle, ListVideo, Plus } from '@lucide/svelte';
+  import { ListVideo, Plus } from '@lucide/svelte';
   import { type SupabaseClient, type Session } from '@supabase/supabase-js';
   import { SOURCE_INFO, SOURCES } from '$lib/constants/source';
   import * as Popover from '$lib/components/ui/popover';
@@ -69,7 +69,7 @@
   let targetSourceIndex = $state<number | null>(null);
 
   // Create drag and drop handlers for playlists
-  const dragDropHandlers = $derived(
+  const playlistDragDropHandlers = $derived(
     playlistState.createPlaylistDragDrop({
       playlists: sidebarState.playlists ?? [],
       supabase,
@@ -329,7 +329,7 @@
             >
               <Plus />
             </Popover.Trigger>
-            <Popover.Content
+            <Popover.Content class="text-sm"
               >Create an account or login to use playlists.</Popover.Content
             >
           </Popover.Root>
@@ -396,20 +396,23 @@
                   value={playlist.name}
                   onmouseenter={() => playlistState.handleMouseEnter(i)}
                   onmouseleave={() => playlistState.handleMouseLeave(i)}
-                  ondragstart={(e) => dragDropHandlers.handleDragStart(e, i)}
-                  ondragover={(e) => dragDropHandlers.handleDragOver(e, i)}
-                  ondragleave={(e) => dragDropHandlers.handleDragLeave(e, i)}
-                  ondrop={(e) => dragDropHandlers.handleDrop(e, i)}
-                  ondragend={dragDropHandlers.handleDragEnd}
+                  ondragstart={(e) =>
+                    playlistDragDropHandlers.handleDragStart(e, i)}
+                  ondragover={(e) =>
+                    playlistDragDropHandlers.handleDragOver(e, i)}
+                  ondragleave={(e) =>
+                    playlistDragDropHandlers.handleDragLeave(e, i)}
+                  ondrop={(e) => playlistDragDropHandlers.handleDrop(e, i)}
+                  ondragend={playlistDragDropHandlers.handleDragEnd}
                 >
                   <div
                     class="absolute flex grow items-center
                     {!isSidebarCollapsed ? 'w-full grow' : 'item-center'}"
                   >
-                    {#if playlist.processedImageUrl}
+                    {#if playlist.image_url}
                       <div class="h-12 w-12 shrink-0">
                         <img
-                          src={playlist.processedImageUrl}
+                          src={playlist.image_url}
                           class="h-full w-full cursor-pointer rounded object-cover"
                           alt={`Image for playlist: ${playlist.name}`}
                           loading="lazy"
