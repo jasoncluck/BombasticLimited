@@ -18,7 +18,14 @@ CREATE TABLE IF NOT EXISTS "public"."videos" (
   "search_vector" "tsvector",
   "pending_delete" boolean DEFAULT TRUE,
   "duration" "text" DEFAULT ''::"text",
-  "thumbnail_maxres_url" "text"
+  "thumbnail_maxres_url" "text",
+  "thumbnail_webp_url" text,
+  "thumbnail_avif_url" text,
+  "thumbnail_maxres_webp_url" text,
+  "thumbnail_maxres_avif_url" text,
+  "image_processing_status" public.image_processing_status DEFAULT 'pending',
+  "image_processing_updated_at" TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  "views" bigint DEFAULT 0 NOT NULL
 );
 
 ALTER TABLE "public"."videos" OWNER TO "postgres";
@@ -26,6 +33,18 @@ ALTER TABLE "public"."videos" OWNER TO "postgres";
 COMMENT ON COLUMN "public"."videos"."pending_delete" IS 'Pending delete flag is used for detecting and removing deleted videos from YouTube';
 
 COMMENT ON COLUMN "public"."videos"."thumbnail_maxres_url" IS 'Max res url';
+
+COMMENT ON COLUMN "public"."videos"."thumbnail_webp_url" IS 'Supabase Storage path for WebP thumbnail';
+
+COMMENT ON COLUMN "public"."videos"."thumbnail_avif_url" IS 'Supabase Storage path for AVIF thumbnail';
+
+COMMENT ON COLUMN "public"."videos"."thumbnail_maxres_webp_url" IS 'Supabase Storage path for WebP max-res thumbnail';
+
+COMMENT ON COLUMN "public"."videos"."thumbnail_maxres_avif_url" IS 'Supabase Storage path for AVIF max-res thumbnail';
+
+COMMENT ON COLUMN "public"."videos"."image_processing_status" IS 'Status of background image processing for this video';
+
+COMMENT ON COLUMN "public"."videos"."views" IS 'Total number of times this video has been viewed by users';
 
 -- Videos constraints (no foreign keys)
 ALTER TABLE ONLY "public"."videos"
@@ -41,19 +60,26 @@ CREATE TABLE IF NOT EXISTS "public"."playlists" (
   "search_vector" tsvector,
   "youtube_id" text DEFAULT NULL,
   "description" text,
-  "image_properties" jsonb,
   "type" "public"."playlist_type" NOT NULL DEFAULT 'Private',
   "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   "deleted_at" TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   "duration_seconds" integer DEFAULT 0,
-  "image_processing_updated_at" TIMESTAMP WITH TIME ZONE DEFAULT NULL,
-  "image_processing_status" text DEFAULT NULL,
-  "thumbnail_url" text,
-  "thumbnail_webp_url" text,
-  "thumbnail_avif_url" text,
-  "thumbnail_maxres_url" text,
-  "thumbnail_maxres_webp_url" text,
-  "thumbnail_maxres_avif_url" text,
+  
+  -- Source video reference for thumbnail generation
+  "thumbnail_video_id" text REFERENCES "public"."videos"("id") ON DELETE SET NULL,
+  
+  -- Crop dimensions for generating playlist thumbnails from video thumbnail
+  "image_properties" jsonb, -- {x: number, y: number, width: number, height: number}
+  
+  -- Generated cropped playlist images (stored in Supabase Storage)
+  "image_jpg_url" text,
+  "image_webp_url" text, 
+  "image_avif_url" text,
+  
+  -- Image processing tracking
+  "image_processing_status" public.image_processing_status DEFAULT 'pending',
+  "image_processing_updated_at" TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  
   CONSTRAINT "playlists_pkey" PRIMARY KEY ("id"),
   CONSTRAINT "playlists_name_check" CHECK (length("name") <= 50),
   CONSTRAINT "playlists_youtube_id_unique" UNIQUE ("youtube_id"),
@@ -62,29 +88,15 @@ CREATE TABLE IF NOT EXISTS "public"."playlists" (
 
 ALTER TABLE "public"."playlists" OWNER TO "postgres";
 
-COMMENT ON COLUMN "public"."playlists"."name" IS 'Playlist name';
+-- Comments for clarity
+COMMENT ON COLUMN "public"."playlists"."thumbnail_video_id" IS 'Reference to video used as source for playlist thumbnail';
+COMMENT ON COLUMN "public"."playlists"."image_properties" IS 'Crop dimensions {x, y, width, height} for generating playlist image from video thumbnail';
+COMMENT ON COLUMN "public"."playlists"."image_jpg_url" IS 'Supabase Storage path for cropped playlist image in JPG format';
+COMMENT ON COLUMN "public"."playlists"."image_webp_url" IS 'Supabase Storage path for cropped playlist image in WebP format';
+COMMENT ON COLUMN "public"."playlists"."image_avif_url" IS 'Supabase Storage path for cropped playlist image in AVIF format';
+COMMENT ON COLUMN "public"."playlists"."image_processing_status" IS 'Status of background image processing for playlist thumbnail generation';
 
-COMMENT ON COLUMN "public"."playlists"."short_id" IS 'Short ID for nicer URLs';
-
-COMMENT ON COLUMN "public"."playlists"."deleted_at" IS 'Timestamp when playlist was soft deleted. NULL means not deleted.';
-
-COMMENT ON COLUMN "public"."playlists"."duration_seconds" IS 'Total duration of playlist in seconds, automatically calculated';
-
-COMMENT ON COLUMN "public"."playlists"."image_processing_updated_at" IS 'Timestamp when playlist image processing was last updated';
-
-COMMENT ON COLUMN "public"."playlists"."image_processing_status" IS 'Status of playlist image processing (pending, processing, completed, failed)';
-
-COMMENT ON COLUMN "public"."playlists"."thumbnail_url" IS 'URL to uploaded cropped playlist image in Supabase Storage (JPEG)';
-
-COMMENT ON COLUMN "public"."playlists"."thumbnail_webp_url" IS 'URL to optimized WebP version of uploaded playlist image';
-
-COMMENT ON COLUMN "public"."playlists"."thumbnail_avif_url" IS 'URL to optimized AVIF version of uploaded playlist image';
-
-COMMENT ON COLUMN "public"."playlists"."thumbnail_maxres_url" IS 'URL to uploaded cropped playlist image maxres version in Supabase Storage (JPEG)';
-
-COMMENT ON COLUMN "public"."playlists"."thumbnail_maxres_webp_url" IS 'URL to optimized WebP version of uploaded playlist maxres image';
-
-COMMENT ON COLUMN "public"."playlists"."thumbnail_maxres_avif_url" IS 'URL to optimized AVIF version of uploaded playlist maxres image';
+ALTER TABLE "public"."playlists" OWNER TO "postgres";
 
 -- Playlist videos table (without foreign keys initially)
 CREATE TABLE IF NOT EXISTS "public"."playlist_videos" (

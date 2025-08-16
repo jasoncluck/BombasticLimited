@@ -19,8 +19,6 @@ import {
 import type { Source } from '$lib/constants/source';
 import { videoDurationToSeconds } from '$lib/components/video/video-service';
 import { IMAGES_BUCKET } from '$lib/constants/images';
-import { getCroppedPlaylistImageUrl } from '$lib/components/playlist/playlist-service';
-import type { ImageProperties } from '$lib/components/playlist/playlist';
 import { browser } from '$app/environment';
 
 export const USER_PLAYLIST_LIMIT = 25;
@@ -28,45 +26,181 @@ export const DEFAULT_NUM_PLAYLISTS_OVERVIEW = 5;
 export const DEFAULT_NUM_PLAYLISTS_PAGINATION = 15;
 export const PLAYLIST_VIDEO_LIMIT = 100;
 
-export type Playlist = Omit<Tables<'playlists'>, 'search_vector'> & {};
+// Infer types from Supabase RPC functions
+type GetPlaylistDataResponse =
+  Database['public']['Functions']['get_playlist_data']['Returns'][0];
+type GetUserPlaylistsResponse =
+  Database['public']['Functions']['get_user_playlists']['Returns'][0];
+type GetPlaylistVideoContextResponse =
+  Database['public']['Functions']['get_playlist_video_context']['Returns'][0];
+
+// Map RPC response fields to client-friendly names
+export type Playlist = {
+  id: GetPlaylistDataResponse['playlist_id'];
+  created_at: GetPlaylistDataResponse['playlist_created_at'];
+  name: GetPlaylistDataResponse['playlist_name'];
+  short_id: GetPlaylistDataResponse['playlist_short_id'];
+  created_by: GetPlaylistDataResponse['playlist_created_by'];
+  description: GetPlaylistDataResponse['playlist_description'];
+  image_url: GetPlaylistDataResponse['playlist_image_url'];
+  image_processing_status: GetPlaylistDataResponse['playlist_image_processing_status'];
+  type: GetPlaylistDataResponse['playlist_type'];
+  image_properties: GetPlaylistDataResponse['playlist_image_properties'];
+  youtube_id: GetPlaylistDataResponse['playlist_youtube_id'];
+  deleted_at: null; // Always null for active playlists from RPC
+  duration_seconds: GetPlaylistDataResponse['total_duration_seconds'];
+  // Optional properties that may not always be present
+  updated_at?: string | null;
+  image_processing_updated_at?: string | null;
+  thumbnail_video_id?: string | null;
+};
 
 export type ProfilePlaylist = Playlist & {
-  profile_username: string;
-} & Playlist;
+  profile_username: GetPlaylistDataResponse['profile_username'];
+};
 
 export type UserPlaylist = ProfilePlaylist & {
-  // User playlist specific fields from user_playlists table
-  playlist_position: number | null;
-  sorted_by: string;
-  created_by: string;
-  sort_order: string;
+  playlist_position: GetUserPlaylistsResponse['playlist_position'];
+  sorted_by: GetUserPlaylistsResponse['sorted_by'];
+  sort_order: GetUserPlaylistsResponse['sort_order'];
+  added_at?: GetUserPlaylistsResponse['added_at'];
+  avatar_url?: GetUserPlaylistsResponse['avatar_url'];
+};
+
+// Video types from RPC response
+export type PlaylistVideoWithTimestamp = {
+  id: GetPlaylistDataResponse['video_id'];
+  video_position: GetPlaylistDataResponse['video_position'];
+  source: GetPlaylistDataResponse['video_source'];
+  title: GetPlaylistDataResponse['video_title'];
+  description: GetPlaylistDataResponse['video_description'];
+  thumbnail_url: GetPlaylistDataResponse['video_thumbnail_url'];
+  thumbnail_maxres_url: GetPlaylistDataResponse['video_thumbnail_maxres_url'];
+  image_url: GetPlaylistDataResponse['video_image_url'];
+  published_at: GetPlaylistDataResponse['video_published_at'];
+  duration: GetPlaylistDataResponse['video_duration'];
+  video_start_seconds: GetPlaylistDataResponse['video_start_seconds'];
+  updated_at: GetPlaylistDataResponse['video_updated_at'];
+  watched_at: GetPlaylistDataResponse['video_watched_at'];
 };
 
 export type PlaylistVideo = Tables<'playlist_videos'>;
 export const PLAYLIST_TYPES = ['Public', 'Private'] as const;
 export type PlaylistType = (typeof PLAYLIST_TYPES)[number];
 
-// Flattened rpc return
-export type PlaylistVideoWithTimestamp = {
-  id: string;
-  video_position: number;
-  source: Source;
-  title: string;
-  description: string;
-  thumbnail_url: string;
-  thumbnail_maxres_url: string;
-  published_at: string;
-  duration: string;
-  video_start_seconds: number | null;
-  updated_at: string | null;
-  watched_at: string | null;
-};
-
 export interface PlaylistImageProperties {
   x: number;
   y: number;
   height: number;
   width: number;
+}
+
+// Transform functions to map RPC responses to client types
+function transformPlaylistFromRPC(rpcData: GetPlaylistDataResponse): Playlist {
+  return {
+    id: rpcData.playlist_id,
+    created_at: rpcData.playlist_created_at,
+    name: rpcData.playlist_name,
+    short_id: rpcData.playlist_short_id,
+    created_by: rpcData.playlist_created_by,
+    description: rpcData.playlist_description,
+    image_url: rpcData.playlist_image_url,
+    image_processing_status: rpcData.playlist_image_processing_status,
+    type: rpcData.playlist_type,
+    image_properties: rpcData.playlist_image_properties,
+    youtube_id: rpcData.playlist_youtube_id,
+    deleted_at: null,
+    duration_seconds: rpcData.total_duration_seconds,
+  };
+}
+
+function transformUserPlaylistFromRPC(
+  rpcData: GetUserPlaylistsResponse
+): UserPlaylist {
+  return {
+    id: rpcData.id,
+    created_at: rpcData.created_at,
+    name: rpcData.name,
+    short_id: rpcData.short_id,
+    created_by: rpcData.created_by,
+    description: rpcData.description,
+    image_url: rpcData.image_url,
+    image_processing_status: rpcData.image_processing_status,
+    type: rpcData.type,
+    image_properties: rpcData.image_properties,
+    youtube_id: rpcData.youtube_id,
+    deleted_at: null,
+    duration_seconds: rpcData.duration_seconds,
+    profile_username: rpcData.profile_username,
+    playlist_position: rpcData.playlist_position,
+    sorted_by: rpcData.sorted_by,
+    sort_order: rpcData.sort_order,
+    added_at: rpcData.added_at,
+    avatar_url: rpcData.avatar_url,
+  };
+}
+
+function transformVideoFromRPC(
+  rpcData: GetPlaylistDataResponse
+): PlaylistVideoWithTimestamp {
+  return {
+    id: rpcData.video_id,
+    video_position: rpcData.video_position,
+    source: rpcData.video_source as Source,
+    title: rpcData.video_title,
+    description: rpcData.video_description,
+    thumbnail_url: rpcData.video_thumbnail_url,
+    thumbnail_maxres_url: rpcData.video_thumbnail_maxres_url,
+    image_url: rpcData.video_image_url,
+    published_at: rpcData.video_published_at,
+    duration: rpcData.video_duration,
+    video_start_seconds: rpcData.video_start_seconds,
+    updated_at: rpcData.video_updated_at,
+    watched_at: rpcData.video_watched_at,
+  };
+}
+
+function transformVideoFromContextRPC(
+  rpcData: GetPlaylistVideoContextResponse
+): PlaylistVideoWithTimestamp {
+  return {
+    id: rpcData.video_id,
+    video_position: rpcData.video_position,
+    source: rpcData.video_source as Source,
+    title: rpcData.video_title,
+    description: rpcData.video_description,
+    thumbnail_url: rpcData.video_thumbnail_url,
+    thumbnail_maxres_url: rpcData.video_thumbnail_maxres_url,
+    image_url: rpcData.video_image_url,
+    published_at: rpcData.video_published_at,
+    duration: rpcData.video_duration,
+    video_start_seconds: rpcData.video_start_seconds,
+    updated_at: rpcData.video_updated_at,
+    watched_at: rpcData.video_watched_at,
+  };
+}
+
+// Helper to detect browser format support
+function detectPreferredFormat(): string {
+  if (!browser) return 'jpeg'; // Server-side fallback
+
+  // Check AVIF support
+  const avifCanvas = document.createElement('canvas');
+  avifCanvas.width = 1;
+  avifCanvas.height = 1;
+  if (avifCanvas.toDataURL('image/avif').indexOf('image/avif') === 5) {
+    return 'avif';
+  }
+
+  // Check WebP support
+  const webpCanvas = document.createElement('canvas');
+  webpCanvas.width = 1;
+  webpCanvas.height = 1;
+  if (webpCanvas.toDataURL('image/webp').indexOf('image/webp') === 5) {
+    return 'webp';
+  }
+
+  return 'jpeg';
 }
 
 export async function getPlaylistData({
@@ -97,9 +231,9 @@ export async function getPlaylistData({
     throw new Error('Exactly one of shortId or youtubeId must be provided');
   }
 
-  // Only pass sort parameters if we want to override saved sort preferences
   const sortKey = contentFilter ? contentFilter.sort.key : undefined;
   const sortOrder = contentFilter ? contentFilter.sort.order : undefined;
+  const preferredFormat = detectPreferredFormat();
 
   const { data, error } = await supabase.rpc('get_playlist_data', {
     p_short_id: shortId,
@@ -109,6 +243,7 @@ export async function getPlaylistData({
     p_limit: limit,
     p_sort_key: sortKey,
     p_sort_order: sortOrder,
+    p_preferred_format: preferredFormat,
   });
 
   if (error) {
@@ -132,59 +267,26 @@ export async function getPlaylistData({
     };
   }
 
-  // First row contains the duration and count info
   const firstRow = data[0];
 
-  // Extract playlist data from first row including optimized image paths
+  // Transform using type-safe function
+  const basePlaylist = transformPlaylistFromRPC(firstRow);
+
+  // Add user-specific fields if they exist
   const playlist: UserPlaylist | ProfilePlaylist = {
-    id: firstRow.playlist_id,
-    created_at: firstRow.playlist_created_at,
-    name: firstRow.playlist_name,
-    short_id: firstRow.playlist_short_id,
-    created_by: firstRow.playlist_created_by,
-    description: firstRow.playlist_description,
-    thumbnail_url: firstRow.playlist_thumbnail_url,
-    thumbnail_webp_url: firstRow.playlist_thumbnail_webp_url,
-    thumbnail_avif_url: firstRow.playlist_thumbnail_avif_url,
-    thumbnail_maxres_url: firstRow.playlist_thumbnail_maxres_url,
-    thumbnail_maxres_webp_url: firstRow.playlist_thumbnail_maxres_webp_url,
-    thumbnail_maxres_avif_url: firstRow.playlist_thumbnail_maxres_avif_url,
-    image_processing_status: firstRow.playlist_image_processing_status,
-    type: firstRow.playlist_type,
-    image_properties: firstRow.playlist_image_properties,
-    youtube_id: firstRow.playlist_youtube_id,
+    ...basePlaylist,
     profile_username: firstRow.profile_username,
-    deleted_at: null, // Assume null since we're only getting active playlists
-    // Add user playlist specific fields if they exist
     ...(firstRow.playlist_sorted_by && {
       sorted_by: firstRow.playlist_sorted_by,
       sort_order: firstRow.playlist_sort_order,
+      playlist_position: null,
     }),
   };
 
-  // Extract videos (skip the first row which is the duration row)
+  // Transform videos
   const videos: PlaylistVideoWithTimestamp[] = data
     .filter((row) => !row.is_duration_row)
-    .map((row) => ({
-      id: row.video_id,
-      video_position: row.video_position,
-      source: row.video_source,
-      title: row.video_title,
-      description: row.video_description,
-      thumbnail_url: row.video_thumbnail_url,
-      thumbnail_maxres_url: row.video_thumbnail_maxres_url,
-      // Include optimized image paths for video thumbnails too
-      thumbnail_webp_url: row.video_thumbnail_webp_url,
-      thumbnail_avif_url: row.video_thumbnail_avif_url,
-      thumbnail_maxres_webp_url: row.video_thumbnail_maxres_webp_url,
-      thumbnail_maxres_avif_url: row.video_thumbnail_maxres_avif_url,
-      image_processing_status: row.video_image_processing_status,
-      published_at: row.video_published_at,
-      duration: row.video_duration,
-      video_start_seconds: row.video_start_seconds,
-      updated_at: row.video_updated_at,
-      watched_at: row.video_watched_at,
-    }));
+    .map(transformVideoFromRPC);
 
   // Convert total seconds to hours, minutes, seconds
   const totalSeconds = firstRow.total_duration_seconds;
@@ -227,111 +329,6 @@ export async function getPlaylistDataByYoutubeId({
   });
 }
 
-// export async function getPlaylistData({
-//   shortId,
-//   contentFilter,
-//   currentPage = 1,
-//   limit = DEFAULT_NUM_VIDEOS_PAGINATION,
-//   supabase,
-//   session,
-// }: {
-//   shortId: string;
-//   contentFilter?: PlaylistVideosFilter;
-//   currentPage?: number;
-//   limit?: number;
-//   supabase: SupabaseClient<Database>;
-//   session: Session | null;
-// }): Promise<{
-//   playlist: UserPlaylist | ProfilePlaylist | null;
-//   videos: PlaylistVideoWithTimestamp[];
-//   videosCount: number;
-//   playlistDuration: { hours: number; minutes: number; seconds: number };
-//   error: PostgrestError | null;
-// }> {
-//   // Only pass sort parameters if we want to override saved sort preferences
-//   const sortKey = contentFilter ? contentFilter.sort.key : undefined;
-//   const sortOrder = contentFilter ? contentFilter.sort.order : undefined;
-//
-//   const { data, error } = await supabase.rpc("get_playlist_data", {
-//     p_short_id: shortId,
-//     p_user_id: session?.user.id,
-//     p_current_page: currentPage,
-//     p_limit: limit,
-//     p_sort_key: sortKey,
-//     p_sort_order: sortOrder,
-//   });
-//   if (error) {
-//     console.error("Error fetching playlist data:", error);
-//     return {
-//       playlist: null,
-//       videos: [],
-//       videosCount: 0,
-//       playlistDuration: { hours: 0, minutes: 0, seconds: 0 },
-//       error,
-//     };
-//   }
-//
-//   if (!data || data.length === 0) {
-//     return {
-//       playlist: null,
-//       videos: [],
-//       videosCount: 0,
-//       playlistDuration: { hours: 0, minutes: 0, seconds: 0 },
-//       error: null,
-//     };
-//   }
-//
-//   // First row contains the duration and count info
-//   const firstRow = data[0];
-//
-//   // Extract playlist data from first row
-//   const playlist: UserPlaylist | ProfilePlaylist = {
-//     id: firstRow.playlist_id,
-//     created_at: firstRow.playlist_created_at,
-//     name: firstRow.playlist_name,
-//     short_id: firstRow.playlist_short_id,
-//     created_by: firstRow.playlist_created_by,
-//     description: firstRow.playlist_description,
-//     thumbnail_url: firstRow.playlist_thumbnail_url,
-//     thumbnail_maxres_url: firstRow.playlist_thumbnail_maxres_url,
-//     type: firstRow.playlist_type,
-//     image_properties: firstRow.playlist_image_properties,
-//     youtube_id: firstRow.playlist_youtube_id,
-//     profile_username: firstRow.profile_username,
-//   };
-//
-//   // Extract videos (skip the first row which is the duration row)
-//   const videos: PlaylistVideoWithTimestamp[] = data
-//     .filter((row) => !row.is_duration_row)
-//     .map((row) => ({
-//       id: row.video_id,
-//       video_position: row.video_position,
-//       source: row.video_source,
-//       title: row.video_title,
-//       description: row.video_description,
-//       thumbnail_url: row.video_thumbnail_url,
-//       thumbnail_maxres_url: row.video_thumbnail_maxres_url,
-//       published_at: row.video_published_at,
-//       duration: row.video_duration,
-//       video_start_seconds: row.video_start_seconds,
-//       updated_at: row.video_updated_at,
-//     }));
-//
-//   // Convert total seconds to hours, minutes, seconds
-//   const totalSeconds = firstRow.total_duration_seconds;
-//   const hours = Math.floor(totalSeconds / 3600);
-//   const minutes = Math.floor((totalSeconds % 3600) / 60);
-//   const seconds = totalSeconds % 60;
-//
-//   return {
-//     playlist,
-//     videos,
-//     videosCount: Number(firstRow.total_videos_count),
-//     playlistDuration: { hours, minutes, seconds },
-//     error: null,
-//   };
-// }
-
 export async function getPlaylistsForUsername({
   username,
   currentPage = 1,
@@ -347,41 +344,48 @@ export async function getPlaylistsForUsername({
   count?: number | null;
   error: PostgrestError | null;
 }> {
-  const query = supabase
+  const preferredFormat = detectPreferredFormat();
+
+  const {
+    data: playlists,
+    count,
+    error,
+  } = await supabase
     .rpc(
       'get_playlists_for_username',
       {
         p_username: username,
+        p_preferred_format: preferredFormat,
       },
       { count: 'exact' }
     )
     .order('name', { ascending: true })
-    .limit(limit)
-    .select();
-
-  if (limit) {
-    query.limit(limit);
-  }
-
-  if (currentPage && currentPage > 1) {
-    const startIndex = (currentPage - 1) * limit;
-    const endIndex = startIndex + limit - 1;
-    query.range(startIndex, endIndex);
-  }
-
-  const { data: playlists, count, error } = await query;
+    .range((currentPage - 1) * limit, currentPage * limit - 1);
 
   if (error || !playlists) {
     console.error(`Error fetching playlists for username: ${username}.`, error);
     return { playlists: [], error };
   }
-  // Cast to include deleted_at field since the SQL function now returns it
-  const playlistsWithDeletedAt = playlists.map((playlist) => ({
-    ...playlist,
-    deleted_at: null, // Always null for active playlists returned by this function
-  })) as Playlist[];
 
-  return { playlists: playlistsWithDeletedAt, count, error };
+  // Transform each playlist - use type assertion since we know the RPC returns proper types
+  const transformedPlaylists: Playlist[] = playlists.map((playlist) => ({
+    id: playlist.id,
+    created_at: playlist.created_at,
+    name: playlist.name,
+    short_id: playlist.short_id,
+    created_by: playlist.created_by,
+    description: playlist.description,
+    image_url: playlist.image_url,
+    image_processing_status:
+      playlist.image_processing_status as Playlist['image_processing_status'],
+    type: playlist.type,
+    image_properties: playlist.image_properties,
+    youtube_id: playlist.youtube_id,
+    deleted_at: null,
+    duration_seconds: playlist.duration_seconds,
+  }));
+
+  return { playlists: transformedPlaylists, count, error };
 }
 
 export async function getPlaylistByYoutubeId({
@@ -391,9 +395,12 @@ export async function getPlaylistByYoutubeId({
   youtubeId: string;
   supabase: SupabaseClient<Database>;
 }) {
+  const preferredFormat = detectPreferredFormat();
+
   const { data, error } = await supabase
     .rpc('get_playlist_by_youtube_id', {
       p_youtube_id: youtubeId,
+      p_preferred_format: preferredFormat,
     })
     .single();
 
@@ -427,11 +434,14 @@ export async function getPlaylistVideoContext({
   nextVideo: PlaylistVideoWithTimestamp | null;
   error: PostgrestError | null;
 }> {
+  const preferredFormat = detectPreferredFormat();
+
   // Call the simplified RPC function
   let query = supabase.rpc('get_playlist_video_context', {
     p_short_id: shortId,
     p_video_id: videoId,
     p_context_limit: contextLimit,
+    p_preferred_format: preferredFormat,
   });
 
   // Apply sorting based on contentFilter
@@ -494,34 +504,24 @@ export async function getPlaylistVideoContext({
     created_by: metadataRow.playlist_created_by,
     description: metadataRow.playlist_description,
     image_url: metadataRow.playlist_image_url,
-    image_webp_url: metadataRow.playlist_image_webp_url,
-    image_avif_url: metadataRow.playlist_image_avif_url,
     type: metadataRow.playlist_type,
     image_properties: metadataRow.playlist_image_properties,
     youtube_id: metadataRow.playlist_youtube_id,
     profile_username: metadataRow.profile_username,
-    deleted_at: null, // Assume null since we're only getting active playlists
+    deleted_at: null,
+    duration_seconds: 0, // Use 0 instead of null for context queries
+    image_processing_status: metadataRow.playlist_image_processing_status,
     ...(metadataRow.playlist_sorted_by && {
       sorted_by: metadataRow.playlist_sorted_by,
       sort_order: metadataRow.playlist_sort_order,
+      playlist_position: null,
     }),
   };
 
-  // Convert video rows to video objects
-  const allVideos: PlaylistVideoWithTimestamp[] = videoRows.map((row) => ({
-    id: row.video_id,
-    video_position: row.video_position,
-    source: row.video_source,
-    title: row.video_title,
-    description: row.video_description,
-    thumbnail_url: row.video_thumbnail_url,
-    thumbnail_maxres_url: row.video_thumbnail_maxres_url,
-    published_at: row.video_published_at,
-    duration: row.video_duration,
-    video_start_seconds: row.video_start_seconds,
-    updated_at: row.video_updated_at,
-    watched_at: row.video_watched_at,
-  }));
+  // Convert video rows to video objects using the correct transform function
+  const allVideos: PlaylistVideoWithTimestamp[] = videoRows.map(
+    transformVideoFromContextRPC
+  );
 
   // Find current video and next videos
   const currentVideoIndex = metadataRow.current_video_index - 1; // Convert to 0-based index
@@ -605,21 +605,21 @@ export async function getUserPlaylists({
     return { userPlaylists: [], count: null, error: null };
   }
 
+  const preferredFormat = detectPreferredFormat();
+
   const { data, count, error } = await supabase
-    .rpc('get_user_playlists')
+    .rpc('get_user_playlists', {
+      p_preferred_format: preferredFormat,
+    })
     .order('playlist_position', { ascending: false });
 
   if (error) {
     console.error('Error when fetching playlists:', error);
   }
 
-  // Cast to include deleted_at field since the SQL function now returns it
-  const userPlaylistsWithDeletedAt = (data || []).map((playlist) => ({
-    ...playlist,
-    deleted_at: null, // Always null for active playlists returned by this function
-  })) as UserPlaylist[];
+  const userPlaylists = (data || []).map(transformUserPlaylistFromRPC);
 
-  return { userPlaylists: userPlaylistsWithDeletedAt, count, error };
+  return { userPlaylists, count, error };
 }
 
 export async function updatePlaylistPosition({
@@ -664,6 +664,8 @@ export async function deletePlaylist({
   return { error };
 }
 
+// Replace the searchPlaylists function with this corrected version:
+
 export async function searchPlaylists({
   searchString,
   limit = 15,
@@ -681,60 +683,53 @@ export async function searchPlaylists({
   error: PostgrestError | null;
   count?: number | null;
 }> {
-  const query = supabase
+  const preferredFormat = detectPreferredFormat();
+
+  const {
+    data: playlists,
+    error,
+    count,
+  } = await supabase
     .rpc(
       'search_playlists',
       {
         search_term: searchString,
         current_user_id: session?.user.id,
+        p_preferred_format: preferredFormat,
       },
       { count: 'exact' }
     )
-    .limit(limit);
-
-  const { data: playlists, error, count } = await query;
-
-  if (currentPage && currentPage > 1) {
-    const startIndex = (currentPage - 1) * limit;
-    const endIndex = startIndex + limit - 1;
-    query.range(startIndex, endIndex);
-  }
+    .range((currentPage - 1) * limit, currentPage * limit - 1);
 
   if (error) {
-    console.error(
-      'Encountered an error when searching playlists and was unable to complete the request.',
-      error
-    );
+    console.error('Error searching playlists:', error);
   }
 
-  // Cast to include deleted_at field since the SQL function now returns it
-  const playlistsWithDeletedAt = (playlists || []).map((playlist) => ({
-    ...playlist,
-    deleted_at: null, // Always null for active playlists returned by this function
-  })) as ProfilePlaylist[];
+  // Transform search results with proper avatar_url typing
+  const transformedPlaylists = (playlists || []).map(
+    (playlist): ProfilePlaylist & { avatar_url?: string | null } => ({
+      id: playlist.id,
+      created_at: playlist.created_at,
+      name: playlist.name,
+      short_id: playlist.short_id,
+      created_by: playlist.created_by,
+      description: playlist.description,
+      image_url: playlist.image_url,
+      image_processing_status: playlist.image_processing_status,
+      type: playlist.type,
+      image_properties: playlist.image_properties,
+      youtube_id: playlist.youtube_id,
+      deleted_at: null,
+      duration_seconds: playlist.duration_seconds,
+      profile_username: playlist.profile_username,
+      avatar_url:
+        'avatar_url' in playlist
+          ? (playlist.avatar_url as string | null)
+          : undefined,
+    })
+  );
 
-  // Fetch user profiles with avatar_url for playlist creators
-  let playlistsWithAvatars = playlistsWithDeletedAt;
-  if (playlistsWithDeletedAt.length > 0) {
-    const creatorIds = [
-      ...new Set(playlistsWithDeletedAt.map((p) => p.created_by)),
-    ];
-
-    const { data: profiles, error: profileError } = await supabase
-      .from('profiles')
-      .select('id, avatar_url')
-      .in('id', creatorIds);
-
-    if (!profileError && profiles) {
-      const profileMap = new Map(profiles.map((p) => [p.id, p.avatar_url]));
-      playlistsWithAvatars = playlistsWithDeletedAt.map((playlist) => ({
-        ...playlist,
-        avatar_url: profileMap.get(playlist.created_by) || null,
-      }));
-    }
-  }
-
-  return { playlists: playlistsWithAvatars, error, count };
+  return { playlists: transformedPlaylists, error, count };
 }
 
 export async function addVideosToPlaylist({
@@ -845,18 +840,15 @@ export async function updatePlaylistInfo({
 }
 
 /**
- * Update a playlist image. Playlist images must be cropped so a processed cropped image
- * must be passed as an argument.
+ * Update a playlist image. Uses the new database structure with single source video reference.
  */
 export async function updatePlaylistImage({
   playlistId,
-  processedPlaylistImage,
   videoThumbnailUrl,
   videoThumbnailMaxResUrl,
   supabase,
 }: {
   playlistId: number;
-  processedPlaylistImage: string | null;
   videoThumbnailUrl: string | null;
   videoThumbnailMaxResUrl: string | null;
   supabase: SupabaseClient<Database>;
@@ -867,9 +859,7 @@ export async function updatePlaylistImage({
     const { error } = await supabase
       .from('playlists')
       .update({
-        image_url: null,
-        image_webp_url: null,
-        image_avif_url: null,
+        thumbnail_video_id: null,
         image_properties: null,
         image_processing_status: null,
         image_processing_updated_at: null,
@@ -881,7 +871,7 @@ export async function updatePlaylistImage({
   }
 
   try {
-    // Step 1: Determine which image to process (prefer maxres)
+    // Step 1: Find the video ID for the provided thumbnail URL
     const imageToProcess = videoThumbnailMaxResUrl || videoThumbnailUrl;
     if (!imageToProcess) {
       return {
@@ -890,54 +880,37 @@ export async function updatePlaylistImage({
       };
     }
 
-    // TODO: If the playlist is removed this will likely be hit
-    if (!processedPlaylistImage) {
-      throw new Error('Unable to process image, preventing upload.');
-    }
+    // Find the video that matches this thumbnail URL
+    const { data: video, error: videoError } = await supabase
+      .from('videos')
+      .select('id')
+      .or(
+        `thumbnail_url.eq.${imageToProcess},thumbnail_maxres_url.eq.${imageToProcess}`
+      )
+      .single();
 
-    // Step 3: Upload processed image to Supabase storage
-    const uploadResult = await uploadPlaylistImage({
-      playlistId,
-      imageUrl: processedPlaylistImage,
-      supabase,
-    });
-
-    if (uploadResult.error) {
-      console.error('Upload error:', uploadResult.error);
+    if (videoError || !video) {
+      console.error('Video lookup error:', videoError);
       return {
         updatedPlaylist: null,
-        error: uploadResult.error,
+        error: new Error('Could not find video for thumbnail URL'),
       };
     }
 
-    // Step 4: Validate thumbnails and update database with final URL
-    // This function validates the thumbnails exist before allowing the update
+    // Step 2: Update playlist with video reference using the validation function
     const { data: updateData, error: updateError } = await supabase.rpc(
       'validate_and_update_playlist_image',
       {
         p_playlist_id: playlistId,
-        p_image_url: uploadResult.data?.publicUrl,
-        p_video_thumbnail_url: videoThumbnailUrl ?? null,
-        p_video_thumbnail_maxres_url: videoThumbnailMaxResUrl ?? null,
-        p_image_properties: null,
+        p_thumbnail_video_id: video.id,
+        p_video_thumbnail_url: videoThumbnailUrl ?? undefined,
+        p_video_thumbnail_maxres_url: videoThumbnailMaxResUrl ?? undefined,
+        p_image_properties: null, // Let the system use defaults or existing properties
       }
     );
 
-    console.log('JMC AFTER UPDATE');
-    console.log(updateData);
-
     if (updateError) {
       console.error('Database update error:', updateError);
-
-      // Clean up uploaded image if database update fails
-      try {
-        await supabase.storage
-          .from(IMAGES_BUCKET)
-          .remove([uploadResult.data?.imagePath || '']);
-      } catch (cleanupError) {
-        console.error('Failed to cleanup uploaded image:', cleanupError);
-      }
-
       return {
         updatedPlaylist: null,
         error: updateError,
@@ -948,16 +921,6 @@ export async function updatePlaylistImage({
 
     if (!result?.success) {
       console.error('Validation failed:', result?.error_message);
-
-      // Clean up uploaded image if validation fails
-      try {
-        await supabase.storage
-          .from(IMAGES_BUCKET)
-          .remove([uploadResult.data?.imagePath || '']);
-      } catch (cleanupError) {
-        console.error('Failed to cleanup uploaded image:', cleanupError);
-      }
-
       return {
         updatedPlaylist: null,
         error: new Error(`Validation failed: ${result?.error_message}`),
@@ -967,7 +930,7 @@ export async function updatePlaylistImage({
     return {
       updatedPlaylist: {
         id: result?.playlist_id,
-        image_url: result?.image_url,
+        thumbnail_video_id: result?.thumbnail_video_id,
         success: result?.success,
       },
       error: null,
@@ -1027,7 +990,7 @@ export async function uploadPlaylistImage({
       .getPublicUrl(uploadData.path);
 
     // Update playlist with the full public URL - no need for image_properties since image is already processed
-    const { data: updateData, error: updateError } = await supabase
+    const { error: updateError } = await supabase
       .from('playlists')
       .update({
         image_url: publicUrl.publicUrl,
@@ -1196,14 +1159,11 @@ export function isPlaylist(obj: unknown): obj is Playlist {
     typeof obj.created_at === 'string' &&
     typeof obj.created_by === 'string' &&
     (typeof obj.description === 'string' || obj.description === null) &&
-    'image_properties' in obj && // Accepts any (Json)
+    'image_properties' in obj &&
     typeof obj.name === 'string' &&
     typeof obj.short_id === 'string' &&
     (typeof obj.image_url === 'string' || obj.image_url === null) &&
-    (typeof obj.image_webp_url === 'string' || obj.image_webp_url === null) &&
-    (typeof obj.image_avif_url === 'string' || obj.image_avif_url === null) &&
     typeof obj.type === 'string' &&
-    typeof obj.updated_at === 'string' &&
     (typeof obj.youtube_id === 'string' || obj.youtube_id === null)
   );
 }
@@ -1214,18 +1174,15 @@ export function isUserPlaylist(obj: unknown): obj is UserPlaylist {
     typeof obj.id === 'number' &&
     (typeof obj.playlist_position === 'number' ||
       obj.playlist_position === null) &&
-    typeof obj.sorted_by === 'string' && // playlist_sorted_by enum
-    typeof obj.sort_order === 'string' && // playlist_sort_order enum
-    // Playlist data (joined from playlists table)
+    typeof obj.sorted_by === 'string' &&
+    typeof obj.sort_order === 'string' &&
     typeof obj.name === 'string' &&
     typeof obj.short_id === 'string' &&
     typeof obj.created_at === 'string' &&
     typeof obj.created_by === 'string' &&
     (typeof obj.description === 'string' || obj.description === null) &&
-    'image_properties' in obj && // Accepts any (Json)
+    'image_properties' in obj &&
     (typeof obj.image_url === 'string' || obj.image_url === null) &&
-    (typeof obj.image_webp_url === 'string' || obj.image_webp_url === null) &&
-    (typeof obj.image_avif_url === 'string' || obj.image_avif_url === null) &&
     typeof obj.type === 'string' &&
     (typeof obj.youtube_id === 'string' || obj.youtube_id === null)
   );

@@ -2,7 +2,16 @@ import type { Session, SupabaseClient } from '@supabase/supabase-js';
 import type { Database, Tables } from './database.types';
 import type { ContentDisplay } from '$lib/components/content/content';
 
+// Infer types from Supabase RPC functions
+type IsUniqueUsernameResponse =
+  Database['public']['Functions']['is_unique_username']['Returns'];
+
 export type UserProfile = Tables<'profiles'>;
+
+// Transform function if needed (profiles are simple table queries, so probably not needed)
+function transformProfileFromTable(profile: Tables<'profiles'>): UserProfile {
+  return profile;
+}
 
 export async function checkIfUsernameIsUnique({
   username,
@@ -10,12 +19,12 @@ export async function checkIfUsernameIsUnique({
 }: {
   username: string;
   supabase: SupabaseClient<Database>;
-}) {
+}): Promise<boolean> {
   const { data: isUnique } = await supabase.rpc('is_unique_username', {
     p_username: username,
   });
 
-  return isUnique;
+  return (isUnique as IsUniqueUsernameResponse) ?? false;
 }
 
 export async function getUserProfile({
@@ -37,8 +46,13 @@ export async function getUserProfile({
 
   if (error) {
     console.error(error);
+    return { profile: null, error };
   }
-  return { profile, error };
+
+  return {
+    profile: profile ? transformProfileFromTable(profile) : null,
+    error,
+  };
 }
 
 export async function getProfileById({
@@ -56,8 +70,13 @@ export async function getProfileById({
 
   if (error) {
     console.error(error);
+    return { profile: null, error };
   }
-  return { profile, error };
+
+  return {
+    profile: profile ? transformProfileFromTable(profile) : null,
+    error,
+  };
 }
 
 export async function getProfile({
@@ -79,8 +98,13 @@ export async function getProfile({
 
   if (error) {
     console.error(error);
+    return { profile: null, error };
   }
-  return { profile, error };
+
+  return {
+    profile: profile ? transformProfileFromTable(profile) : null,
+    error,
+  };
 }
 
 export async function getUserDiscordIdentity({
@@ -173,12 +197,18 @@ export async function updateProfileContentDisplay({
     .from('profiles')
     .update({ content_display: contentDisplay })
     .eq('id', session.user.id)
+    .select()
     .single();
 
   if (error) {
     console.error(error);
+    return { profile: null, error };
   }
-  return { profile, error };
+
+  return {
+    profile: profile ? transformProfileFromTable(profile) : null,
+    error,
+  };
 }
 
 export async function updateProfileSources({
@@ -198,13 +228,18 @@ export async function updateProfileSources({
     .from('profiles')
     .update({ sources })
     .eq('id', session.user.id)
+    .select()
     .single();
 
   if (error) {
     console.error(error);
+    return { profile: null, error };
   }
 
-  return { profile, error };
+  return {
+    profile: profile ? transformProfileFromTable(profile) : null,
+    error,
+  };
 }
 
 /**

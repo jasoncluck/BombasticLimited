@@ -13,16 +13,11 @@ import {
   updatePlaylistPosition,
   updatePlaylistSort,
   updatePlaylistVideoPosition,
-  uploadPlaylistImage,
   USER_PLAYLIST_LIMIT,
   type Playlist,
   type PlaylistVideo,
 } from '$lib/supabase/playlists';
-import {
-  PostgrestError,
-  type Session,
-  type SupabaseClient,
-} from '@supabase/supabase-js';
+import { type Session, type SupabaseClient } from '@supabase/supabase-js';
 import type { Video } from '$lib/supabase/videos';
 import {
   isPlaylistVideosFilter,
@@ -266,15 +261,13 @@ export async function handleRemoveVideosFromPlaylist({
   });
 
   for (const video of videos) {
-    if (
-      playlist.image_url === video.thumbnail_maxres_url ||
-      playlist.image_url === video.thumbnail_url
-    ) {
+    // Check if this video is the current playlist thumbnail source
+    if (playlist.thumbnail_video_id === video.id) {
       await handleUpdatePlaylistImage({
         playlist,
         sidebarState,
-        thumbnailMaxResUrl: video.thumbnail_maxres_url,
-        thumbnailUrl: video.thumbnailUrl,
+        thumbnailMaxResUrl: null, // Remove the image
+        thumbnailUrl: null,
         supabase,
       });
 
@@ -304,20 +297,11 @@ export async function handleUpdatePlaylistImage({
   thumbnailMaxResUrl: string | null;
   supabase: SupabaseClient<Database>;
 }) {
-  const processedPlaylistImage = await getCroppedPlaylistImageUrl({
-    imageProperties: playlist.image_properties,
-    thumbnailMaxResUrl,
-    thumbnailUrl,
-  });
-
-  if (!processedPlaylistImage) {
-    showNotification('Unable to crop playlist image.');
-    throw new Error('Unable to process image, preventing upload.');
-  }
-
+  // Note: We no longer need to process the image client-side
+  // The database function and background processing will handle this
   const { error } = await updatePlaylistImage({
     playlistId: playlist.id,
-    processedPlaylistImage,
+    processedPlaylistImage: null, // Not needed with new system
     videoThumbnailMaxResUrl: thumbnailMaxResUrl,
     videoThumbnailUrl: thumbnailUrl,
     supabase,

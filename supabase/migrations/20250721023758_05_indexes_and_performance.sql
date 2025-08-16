@@ -53,6 +53,9 @@ CREATE INDEX IF NOT EXISTS idx_playlist_videos_video_id ON public.playlist_video
 -- User playlists join optimization
 CREATE INDEX IF NOT EXISTS idx_user_playlists_playlist_user ON public.user_playlists (id, user_id);
 
+CREATE INDEX IF NOT EXISTS "idx_playlists_image_processing" ON "public"."playlists" USING btree ("image_processing_status", "image_processing_updated_at");
+CREATE INDEX IF NOT EXISTS "idx_playlists_thumbnail_video" ON "public"."playlists" USING btree ("thumbnail_video_id");
+
 -- ============================================================================
 -- SORTING PERFORMANCE INDEXES
 -- ============================================================================

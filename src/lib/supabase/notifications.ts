@@ -5,6 +5,12 @@ import type {
 } from '@supabase/supabase-js';
 import type { Database, Json } from './database.types';
 
+// Infer types from Supabase RPC functions
+type GetUserNotificationsResponse =
+  Database['public']['Functions']['get_user_notifications']['Returns'][0];
+type GetUnreadNotificationCountResponse =
+  Database['public']['Functions']['get_unread_notification_count']['Returns'];
+
 export type NotificationType = Database['public']['Enums']['notification_type'];
 
 export interface Notification {
@@ -13,13 +19,13 @@ export interface Notification {
   title: string;
   message: string;
   metadata: Record<string, unknown>;
-  action_url?: string;
+  action_url?: string | null;
   is_test: boolean;
   start_datetime: string;
-  end_datetime?: string;
+  end_datetime?: string | null;
   notification_created_at: string;
   user_notification_id: string;
-  user_id?: string;
+  user_id?: string | null;
   read: boolean;
   dismissed: boolean;
   assigned_at: string;
@@ -116,6 +122,32 @@ export interface UserNotificationDismissedLog {
   dismissed_time: string;
 }
 
+// Transform function for RPC response
+function transformNotificationFromRPC(
+  rpcData: GetUserNotificationsResponse
+): NotificationWithMeta {
+  return {
+    notification_id: rpcData.notification_id,
+    type: rpcData.type,
+    title: rpcData.title,
+    message: rpcData.message,
+    metadata: (rpcData.metadata as Record<string, unknown>) || {},
+    action_url: rpcData.action_url || null,
+    is_test: rpcData.is_test,
+    start_datetime: rpcData.start_datetime,
+    end_datetime: rpcData.end_datetime || null,
+    notification_created_at: rpcData.notification_created_at,
+    user_notification_id: rpcData.user_notification_id,
+    user_id: undefined, // This field doesn't exist in the RPC response
+    read: rpcData.read,
+    dismissed: rpcData.dismissed,
+    assigned_at: rpcData.assigned_at,
+    user_notification_updated_at: rpcData.user_notification_updated_at,
+    formatted_time: formatRelativeTime(rpcData.assigned_at),
+    is_new: isWithinLastHour(rpcData.assigned_at),
+  };
+}
+
 // Utility functions
 function formatRelativeTime(timestamp: string): string {
   const now = new Date();
@@ -184,15 +216,9 @@ export async function getNotifications({
     return { notifications: [], error };
   }
 
-  // Format the notifications with metadata
-  const formattedData: NotificationWithMeta[] = (data || []).map(
-    (notification) => ({
-      ...notification,
-      metadata: (notification.metadata as Record<string, unknown>) || {},
-      action_url: notification.action_url || undefined,
-      formatted_time: formatRelativeTime(notification.assigned_at),
-      is_new: isWithinLastHour(notification.assigned_at),
-    })
+  // Transform the notifications using the RPC response
+  const formattedData = (data || []).map((notification) =>
+    transformNotificationFromRPC(notification as GetUserNotificationsResponse)
   );
 
   return {
@@ -223,7 +249,10 @@ export async function getUnreadCount({
     return { data: 0, error };
   }
 
-  return { data: data || 0, error: null };
+  return {
+    data: (data as GetUnreadNotificationCountResponse) || 0,
+    error: null,
+  };
 }
 
 /**
@@ -245,7 +274,6 @@ export async function getNotificationCounts({
       unread: 0,
       by_type: {
         system: 0,
-        playlist_update: 0,
       },
     };
     return { data: emptyCounts, error: null };
@@ -257,8 +285,6 @@ export async function getNotificationCounts({
     {
       limit_count: 1000, // Get a large number for counting
       offset_count: 0,
-      filter_read: null, // Get both read and unread
-      filter_type: null, // Get all types
     }
   );
 
@@ -273,7 +299,6 @@ export async function getNotificationCounts({
         unread: 0,
         by_type: {
           system: 0,
-          playlist_update: 0,
         },
       },
       error,
@@ -285,8 +310,6 @@ export async function getNotificationCounts({
     unread: notifications?.filter((n) => !n.read).length || 0,
     by_type: {
       system: notifications?.filter((n) => n.type === 'system').length || 0,
-      playlist_update:
-        notifications?.filter((n) => n.type === 'playlist_update').length || 0,
     },
   };
 
@@ -337,7 +360,7 @@ export async function createNotification({
   };
 }): Promise<{ data: number | null; error: PostgrestError | null }> {
   const { data, error } = await supabase.rpc('create_notification', {
-    target_user_ids: params.user_id ? [params.user_id] : null,
+    target_user_ids: params.user_id ? [params.user_id] : [],
     notification_message: params.message,
     notification_title: params.title,
     notification_type: params.type,
@@ -469,7 +492,9 @@ export function isNotification(obj: unknown): obj is Notification {
     isRecord(obj.metadata) &&
     typeof obj.read === 'boolean' &&
     typeof obj.is_test === 'boolean' &&
-    (typeof obj.action_url === 'string' || obj.action_url === undefined) &&
+    (typeof obj.action_url === 'string' ||
+      obj.action_url === null ||
+      obj.action_url === undefined) &&
     typeof obj.assigned_at === 'string' &&
     typeof obj.user_notification_updated_at === 'string'
   );

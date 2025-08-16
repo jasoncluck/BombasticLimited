@@ -3,6 +3,33 @@
 -- Dependencies: Requires base tables from 03_base_tables.sql (playlists, playlist_videos, user_playlists)
 -- This migration includes playlist data access and search functions
 -- ============================================================================
+
+-- Helper function to select best available image format
+CREATE OR REPLACE FUNCTION public.select_best_image_format(
+  avif_url text,
+  webp_url text,
+  jpg_url text,
+  preferred_format text DEFAULT 'avif'
+) RETURNS text
+LANGUAGE plpgsql
+IMMUTABLE
+AS $$
+BEGIN
+  -- Start from preferred format and fallback through the chain
+  CASE preferred_format
+    WHEN 'avif' THEN
+      RETURN COALESCE(avif_url, webp_url, jpg_url);
+    WHEN 'webp' THEN
+      RETURN COALESCE(webp_url, jpg_url, avif_url);
+    WHEN 'jpeg', 'jpg' THEN
+      RETURN COALESCE(jpg_url, webp_url, avif_url);
+    ELSE
+      -- Default fallback order
+      RETURN COALESCE(avif_url, webp_url, jpg_url);
+  END CASE;
+END;
+$$;
+
 -- Function to get comprehensive playlist data with pagination and sorting
 CREATE OR REPLACE FUNCTION public.get_playlist_data (
   p_short_id text DEFAULT NULL,
@@ -11,22 +38,18 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data (
   p_current_page integer DEFAULT 1,
   p_limit integer DEFAULT 20,
   p_sort_key text DEFAULT NULL,
-  p_sort_order text DEFAULT NULL
+  p_sort_order text DEFAULT NULL,
+  p_preferred_format text DEFAULT 'avif'
 ) RETURNS TABLE (
-  -- Playlist data with uploaded image URLs only
+  -- Playlist data with single optimized image URL
   playlist_id bigint,
   playlist_created_at TIMESTAMP WITH TIME ZONE,
   playlist_name text,
   playlist_short_id text,
   playlist_created_by uuid,
   playlist_description text,
-  playlist_thumbnail_url text,
-  playlist_thumbnail_webp_url text,
-  playlist_thumbnail_avif_url text,
-  playlist_thumbnail_maxres_url text,
-  playlist_thumbnail_maxres_webp_url text,
-  playlist_thumbnail_maxres_avif_url text,
-  playlist_image_processing_status text,
+  playlist_image_url text,
+  playlist_image_processing_status public.image_processing_status,
   playlist_type public.playlist_type,
   playlist_image_properties jsonb,
   playlist_youtube_id text,
@@ -41,11 +64,8 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data (
   video_description text,
   video_thumbnail_url text,
   video_thumbnail_maxres_url text,
-  video_thumbnail_webp_url text,
-  video_thumbnail_avif_url text,
-  video_thumbnail_maxres_webp_url text,
-  video_thumbnail_maxres_avif_url text,
-  video_image_processing_status text,
+  video_image_url text,
+  video_image_processing_status public.image_processing_status,
   video_published_at TIMESTAMP WITH TIME ZONE,
   video_duration text,
   video_start_seconds numeric,
@@ -80,12 +100,13 @@ BEGIN
     p.short_id,
     p.created_by,
     p.description,
-    p.thumbnail_url,
-    p.thumbnail_webp_url,
-    p.thumbnail_avif_url,
-    p.thumbnail_maxres_url,
-    p.thumbnail_maxres_webp_url,
-    p.thumbnail_maxres_avif_url,
+    -- Select best playlist image format
+    public.select_best_image_format(
+      p.image_avif_url,
+      p.image_webp_url,
+      p.image_jpg_url,
+      p_preferred_format
+    ) as best_playlist_image_url,
     p.image_processing_status,
     p.type,
     p.image_properties,
@@ -137,10 +158,21 @@ BEGIN
       v.description,
       v.thumbnail_url,
       v.thumbnail_maxres_url,
-      v.thumbnail_webp_url,
-      v.thumbnail_avif_url,
-      v.thumbnail_maxres_webp_url,
-      v.thumbnail_maxres_avif_url,
+      -- Select best video thumbnail format (prefer maxres if available)
+      COALESCE(
+        public.select_best_image_format(
+          v.thumbnail_maxres_avif_url,
+          v.thumbnail_maxres_webp_url,
+          v.thumbnail_maxres_url,
+          p_preferred_format
+        ),
+        public.select_best_image_format(
+          v.thumbnail_avif_url,
+          v.thumbnail_webp_url,
+          v.thumbnail_url,
+          p_preferred_format
+        )
+      ) as best_video_image_url,
       v.image_processing_status,
       v.published_at,
       v.duration,
@@ -168,12 +200,7 @@ BEGIN
     playlist_record.short_id,
     playlist_record.created_by,
     playlist_record.description,
-    playlist_record.thumbnail_url,
-    playlist_record.thumbnail_webp_url,
-    playlist_record.thumbnail_avif_url,
-    playlist_record.thumbnail_maxres_url,
-    playlist_record.thumbnail_maxres_webp_url,
-    playlist_record.thumbnail_maxres_avif_url,
+    playlist_record.best_playlist_image_url,
     playlist_record.image_processing_status,
     playlist_record.type,
     playlist_record.image_properties,
@@ -188,10 +215,7 @@ BEGIN
     sv.description,
     sv.thumbnail_url,
     sv.thumbnail_maxres_url,
-    sv.thumbnail_webp_url,
-    sv.thumbnail_avif_url,
-    sv.thumbnail_maxres_webp_url,
-    sv.thumbnail_maxres_avif_url,
+    sv.best_video_image_url,
     sv.image_processing_status,
     sv.published_at,
     sv.duration,
@@ -247,7 +271,8 @@ $$;
 CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
   p_short_id text,
   p_video_id text,
-  p_context_limit integer DEFAULT 5
+  p_context_limit integer DEFAULT 5,
+  p_preferred_format text DEFAULT 'avif'
 ) RETURNS TABLE (
   -- Playlist metadata (first row only)
   playlist_id bigint,
@@ -256,13 +281,8 @@ CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
   playlist_short_id text,
   playlist_created_by uuid,
   playlist_description text,
-  playlist_thumbnail_url text,
-  playlist_thumbnail_webp_url text,
-  playlist_thumbnail_avif_url text,
-  playlist_thumbnail_maxres_url text,
-  playlist_thumbnail_maxres_webp_url text,
-  playlist_thumbnail_maxres_avif_url text,
-  playlist_image_processing_status text,
+  playlist_image_url text,
+  playlist_image_processing_status public.image_processing_status,
   playlist_type public.playlist_type,
   playlist_image_properties jsonb,
   playlist_youtube_id text,
@@ -277,6 +297,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
   video_description text,
   video_thumbnail_url text,
   video_thumbnail_maxres_url text,
+  video_image_url text,
   video_published_at TIMESTAMP WITH TIME ZONE,
   video_duration text,
   video_start_seconds numeric,
@@ -300,12 +321,13 @@ SET
       p.short_id,
       p.created_by,
       p.description,
-      p.thumbnail_url,
-      p.thumbnail_webp_url,
-      p.thumbnail_avif_url,
-      p.thumbnail_maxres_url,
-      p.thumbnail_maxres_webp_url,
-      p.thumbnail_maxres_avif_url,
+      -- Select best playlist image format
+      public.select_best_image_format(
+        p.image_avif_url,
+        p.image_webp_url,
+        p.image_jpg_url,
+        p_preferred_format
+      ) as best_playlist_image_url,
       p.image_processing_status,
       p.type,
       p.image_properties,
@@ -341,6 +363,21 @@ SET
       v.description AS video_description,
       v.thumbnail_url AS video_thumbnail_url,
       v.thumbnail_maxres_url AS video_thumbnail_maxres_url,
+      -- Select best video thumbnail format
+      COALESCE(
+        public.select_best_image_format(
+          v.thumbnail_maxres_avif_url,
+          v.thumbnail_maxres_webp_url,
+          v.thumbnail_maxres_url,
+          p_preferred_format
+        ),
+        public.select_best_image_format(
+          v.thumbnail_avif_url,
+          v.thumbnail_webp_url,
+          v.thumbnail_url,
+          p_preferred_format
+        )
+      ) as best_video_image_url,
       v.published_at AS video_published_at,
       v.duration AS video_duration,
       t.video_start_seconds,
@@ -368,12 +405,7 @@ SET
     short_id,
     created_by,
     description,
-    thumbnail_url,
-    thumbnail_webp_url,
-    thumbnail_avif_url,
-    thumbnail_maxres_url,
-    thumbnail_maxres_webp_url,
-    thumbnail_maxres_avif_url,
+    best_playlist_image_url,
     image_processing_status,
     type,
     image_properties,
@@ -388,6 +420,7 @@ SET
     video_description,
     video_thumbnail_url,
     video_thumbnail_maxres_url,
+    best_video_image_url,
     video_published_at,
     video_duration,
     video_start_seconds,
@@ -403,7 +436,10 @@ SET
 $$;
 
 -- Function to get playlist by youtube_id
-CREATE OR REPLACE FUNCTION public.get_playlist_by_youtube_id (p_youtube_id text) RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.get_playlist_by_youtube_id (
+  p_youtube_id text,
+  p_preferred_format text DEFAULT 'avif'
+) RETURNS TABLE (
   id bigint,
   created_at TIMESTAMP WITH TIME ZONE,
   name text,
@@ -444,20 +480,17 @@ SET
 $$;
 
 -- Function to get user playlists
-CREATE OR REPLACE FUNCTION public.get_user_playlists () RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.get_user_playlists (
+  p_preferred_format text DEFAULT 'avif'
+) RETURNS TABLE (
   id bigint,
   created_by uuid,
   created_at timestamptz,
   name text,
   short_id text,
   description text,
-  thumbnail_url text,
-  thumbnail_webp_url text,
-  thumbnail_avif_url text,
-  thumbnail_maxres_url text,
-  thumbnail_maxres_webp_url text,
-  thumbnail_maxres_avif_url text,
-  image_processing_status text,
+  image_url text,
+  image_processing_status public.image_processing_status,
   type public.playlist_type,
   image_properties jsonb,
   youtube_id text,
@@ -479,13 +512,13 @@ SET
     p.name,
     p.short_id,
     p.description,
-    p.thumbnail_url,
-    p.thumbnail_webp_url,
-    p.thumbnail_avif_url,
-    p.thumbnail_maxres_url,
-    p.thumbnail_maxres_webp_url,
-    p.thumbnail_maxres_avif_url,
-    p.image_processing_status,
+    public.select_best_image_format(
+      p.image_avif_url,
+      p.image_webp_url,
+      p.image_jpg_url,
+      p_preferred_format
+    ),
+    p.image_processing_status::public.image_processing_status,
     p.type,
     p.image_properties,
     p.youtube_id,
@@ -506,20 +539,18 @@ SET
 $$;
 
 -- Function to get playlists for a specific username 
-CREATE OR REPLACE FUNCTION public.get_playlists_for_username (p_username text) RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.get_playlists_for_username (
+  p_username text,
+  p_preferred_format text DEFAULT 'avif'
+) RETURNS TABLE (
   id bigint,
   created_at TIMESTAMP WITH TIME ZONE,
   name text,
   short_id text,
   created_by uuid,
   description text,
-  thumbnail_url text,
-  thumbnail_webp_url text,
-  thumbnail_avif_url text,
-  thumbnail_maxres_url text,
-  thumbnail_maxres_webp_url text,
-  thumbnail_maxres_avif_url text,
-  image_processing_status text,
+  image_url text,
+  image_processing_status public.image_processing_status,
   type public.playlist_type,
   image_properties jsonb,
   youtube_id text,
@@ -538,13 +569,13 @@ SET
     p.short_id,
     p.created_by,
     p.description,
-    p.thumbnail_url,
-    p.thumbnail_webp_url,
-    p.thumbnail_avif_url,
-    p.thumbnail_maxres_url,
-    p.thumbnail_maxres_webp_url,
-    p.thumbnail_maxres_avif_url,
-    p.image_processing_status,
+    public.select_best_image_format(
+      p.image_avif_url,
+      p.image_webp_url,
+      p.image_jpg_url,
+      p_preferred_format
+    ),
+    p.image_processing_status::public.image_processing_status,
     p.type,
     p.image_properties,
     p.youtube_id,
@@ -567,19 +598,15 @@ CREATE OR REPLACE FUNCTION "public"."search_playlists" (
   "search_term" "text",
   "current_user_id" uuid DEFAULT NULL,
   "limit_count" integer DEFAULT 50,
-  "offset_count" integer DEFAULT 0
+  "offset_count" integer DEFAULT 0,
+  "p_preferred_format" text DEFAULT 'avif'
 ) RETURNS TABLE (
   "id" bigint,
   "short_id" text,
   "name" text,
   "description" text,
-  "thumbnail_url" text,
-  "thumbnail_webp_url" text,
-  "thumbnail_avif_url" text,
-  "thumbnail_maxres_url" text,
-  "thumbnail_maxres_webp_url" text,
-  "thumbnail_maxres_avif_url" text,
-  "image_processing_status" text,
+  "image_url" text,
+  "image_processing_status" public.image_processing_status,
   "image_properties" jsonb,
   "created_at" TIMESTAMP WITH TIME ZONE,
   "created_by" uuid,
@@ -632,13 +659,13 @@ BEGIN
             p.short_id,
             p.name,
             p.description,
-            p.thumbnail_url,
-            p.thumbnail_webp_url,
-            p.thumbnail_avif_url,
-            p.thumbnail_maxres_url,
-            p.thumbnail_maxres_webp_url,
-            p.thumbnail_maxres_avif_url,
-            p.image_processing_status,
+            public.select_best_image_format(
+              p.image_avif_url,
+              p.image_webp_url,
+              p.image_jpg_url,
+              p_preferred_format
+            ) as best_image_url,
+            p.image_processing_status::public.image_processing_status,
             p.image_properties,
             p.created_at,
             p.created_by,
@@ -687,12 +714,7 @@ BEGIN
         rp.short_id,
         rp.name,
         rp.description,
-        rp.thumbnail_url,
-        rp.thumbnail_webp_url,
-        rp.thumbnail_avif_url,
-        rp.thumbnail_maxres_url,
-        rp.thumbnail_maxres_webp_url,
-        rp.thumbnail_maxres_avif_url,
+        rp.best_image_url,
         rp.image_processing_status,
         rp.image_properties,
         rp.created_at,

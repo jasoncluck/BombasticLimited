@@ -20,11 +20,6 @@ import { getPaginationQueryParams } from '$lib/components/pagination/pagination'
 import { Filter } from 'bad-words';
 import { redirect, setFlash } from 'sveltekit-flash-message/server';
 import { getProfileById } from '$lib/supabase/user-profiles';
-import {
-  getCroppedPlaylistImageUrlServer,
-  processImageServer,
-} from '$lib/server/image-processing';
-import { parseImageProperties } from '$lib/components/playlist/playlist';
 
 export const load: PageServerLoad = async ({
   locals: { supabase, session },
@@ -41,7 +36,6 @@ export const load: PageServerLoad = async ({
     throw new Error(`Invalid content filter`);
   }
 
-  // ... rest of the load function stays the same
   const currentPage = getPaginationQueryParams({
     searchParams: url.searchParams,
   });
@@ -162,16 +156,12 @@ export const actions: Actions = {
       image_properties = null;
     }
 
-    const processedPlaylistImage = await getCroppedPlaylistImageUrlServer({
-      imageProperties: image_properties,
-      thumbnailMaxResUrl: image_url,
-    });
-
+    // With the new system, we don't need to pass the image URL through the form
+    // The image is handled separately via the new database structure
     await updatePlaylistImage({
       playlistId: id,
       videoThumbnailMaxResUrl: image_url,
       videoThumbnailUrl: null,
-      processedPlaylistImage,
       supabase,
     });
 
