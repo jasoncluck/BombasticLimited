@@ -138,12 +138,13 @@ function transformUserPlaylistFromRPC(
     type: rpcData.type,
     image_properties: rpcData.image_properties,
     youtube_id: rpcData.youtube_id,
-    deleted_at: null,
+    thumbnail_video_id: rpcData.thumbnail_video_id, // Add thumbnail fields
+    thumbnail_url: rpcData.playlist_thumbnail_url, // Map from RPC response
+    thumbnail_maxres_url: rpcData.playlist_thumbnail_maxres_url, // Map from RPC response
+    deleted_at: rpcData.deleted_at,
     duration_seconds: rpcData.duration_seconds,
     profile_username: rpcData.profile_username,
     playlist_position: rpcData.playlist_position,
-    thumbnail_url: rpcData.playlist_thumbnail_url,
-    thumbnail_maxres_url: rpcData.playlist_thumbnail_maxres_url,
     sorted_by: rpcData.sorted_by,
     sort_order: rpcData.sort_order,
     added_at: rpcData.added_at,
@@ -360,7 +361,12 @@ export async function getPlaylistsForUsername({
   limit?: number;
   supabase: SupabaseClient<Database>;
 }): Promise<{
-  playlists: Playlist[];
+  playlists: (Playlist & {
+    profile_username: string;
+    thumbnail_video_id?: string | null;
+    thumbnail_url?: string | null;
+    thumbnail_maxres_url?: string | null;
+  })[];
   count?: number | null;
   error: PostgrestError | null;
 }> {
@@ -387,8 +393,7 @@ export async function getPlaylistsForUsername({
     return { playlists: [], error };
   }
 
-  // Transform each playlist - use type assertion since we know the RPC returns proper types
-  const transformedPlaylists: Playlist[] = playlists.map((playlist) => ({
+  const transformedPlaylists = playlists.map((playlist) => ({
     id: playlist.id,
     created_at: playlist.created_at,
     name: playlist.name,
@@ -401,8 +406,12 @@ export async function getPlaylistsForUsername({
     type: playlist.type,
     image_properties: playlist.image_properties,
     youtube_id: playlist.youtube_id,
-    deleted_at: null,
+    thumbnail_video_id: playlist.thumbnail_video_id,
+    thumbnail_url: playlist.playlist_thumbnail_url,
+    thumbnail_maxres_url: playlist.playlist_thumbnail_maxres_url,
+    deleted_at: playlist.deleted_at,
     duration_seconds: playlist.duration_seconds,
+    profile_username: playlist.profile_username,
   }));
 
   return { playlists: transformedPlaylists, count, error };
@@ -527,8 +536,11 @@ export async function getPlaylistVideoContext({
     type: metadataRow.playlist_type,
     image_properties: metadataRow.playlist_image_properties,
     youtube_id: metadataRow.playlist_youtube_id,
+    thumbnail_video_id: metadataRow.playlist_thumbnail_video_id,
+    thumbnail_url: metadataRow.playlist_thumbnail_url,
+    thumbnail_maxres_url: metadataRow.playlist_thumbnail_maxres_url,
+    deleted_at: metadataRow.playlist_deleted_at,
     profile_username: metadataRow.profile_username,
-    deleted_at: null,
     duration_seconds: 0, // Use 0 instead of null for context queries
     image_processing_status: metadataRow.playlist_image_processing_status,
     ...(metadataRow.playlist_sorted_by && {
@@ -700,7 +712,12 @@ export async function searchPlaylists({
   supabase: SupabaseClient<Database>;
   session: Session | null;
 }): Promise<{
-  playlists: (ProfilePlaylist & { avatar_url?: string | null })[];
+  playlists: (ProfilePlaylist & {
+    avatar_url?: string | null;
+    thumbnail_video_id?: string | null;
+    thumbnail_url?: string | null;
+    thumbnail_maxres_url?: string | null;
+  })[];
   error: PostgrestError | null;
   count?: number | null;
 }> {
@@ -726,9 +743,16 @@ export async function searchPlaylists({
     console.error('Error searching playlists:', error);
   }
 
-  // Transform search results with proper avatar_url typing
+  // Transform search results with proper avatar_url and thumbnail fields typing
   const transformedPlaylists = (playlists || []).map(
-    (playlist): ProfilePlaylist & { avatar_url?: string | null } => ({
+    (
+      playlist
+    ): ProfilePlaylist & {
+      avatar_url?: string | null;
+      thumbnail_video_id?: string | null;
+      thumbnail_url?: string | null;
+      thumbnail_maxres_url?: string | null;
+    } => ({
       id: playlist.id,
       created_at: playlist.created_at,
       name: playlist.name,
@@ -740,7 +764,10 @@ export async function searchPlaylists({
       type: playlist.type,
       image_properties: playlist.image_properties,
       youtube_id: playlist.youtube_id,
-      deleted_at: null,
+      thumbnail_video_id: playlist.thumbnail_video_id,
+      thumbnail_url: playlist.playlist_thumbnail_url,
+      thumbnail_maxres_url: playlist.playlist_thumbnail_maxres_url,
+      deleted_at: playlist.deleted_at,
       duration_seconds: playlist.duration_seconds,
       profile_username: playlist.profile_username,
       avatar_url:
@@ -970,7 +997,7 @@ export async function updatePlaylistImage({
   };
 }
 
-export async function uploadPlaylistImage({
+async function uploadPlaylistImage({
   playlistId,
   imageUrl,
   imageName,
@@ -1014,21 +1041,6 @@ export async function uploadPlaylistImage({
     const { data: publicUrl } = supabase.storage
       .from(IMAGES_BUCKET)
       .getPublicUrl(uploadData.path);
-
-    // // Update playlist with the full public URL - no need for image_properties since image is already processed
-    // const { data: updateData, error: updateError } = await supabase
-    //   .from('playlists')
-    //   .update({
-    //     image_url: publicUrl.publicUrl,
-    //     image_properties: null, // Clear any old crop properties
-    //   })
-    //   .eq('id', playlistId)
-    //   .select();
-    //
-    // if (updateError) {
-    //   console.error('Database update error:', updateError);
-    //   return { error: updateError };
-    // }
 
     return {
       data: {

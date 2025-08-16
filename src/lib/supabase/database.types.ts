@@ -770,6 +770,7 @@ export type Database = {
           is_duration_row: boolean
           playlist_created_at: string
           playlist_created_by: string
+          playlist_deleted_at: string
           playlist_description: string
           playlist_id: number
           playlist_image_processing_status: Database["public"]["Enums"]["image_processing_status"]
@@ -815,6 +816,7 @@ export type Database = {
           is_current_video: boolean
           playlist_created_at: string
           playlist_created_by: string
+          playlist_deleted_at: string
           playlist_description: string
           playlist_id: number
           playlist_image_processing_status: Database["public"]["Enums"]["image_processing_status"]
@@ -824,6 +826,9 @@ export type Database = {
           playlist_short_id: string
           playlist_sort_order: Database["public"]["Enums"]["playlist_sort_order"]
           playlist_sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
+          playlist_thumbnail_maxres_url: string
+          playlist_thumbnail_url: string
+          playlist_thumbnail_video_id: string
           playlist_type: Database["public"]["Enums"]["playlist_type"]
           playlist_youtube_id: string
           profile_username: string
@@ -859,10 +864,13 @@ export type Database = {
           image_properties: Json
           image_url: string
           name: string
+          playlist_thumbnail_maxres_url: string
+          playlist_thumbnail_url: string
           profile_username: string
           short_id: string
           sort_order: Database["public"]["Enums"]["playlist_sort_order"]
           sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
+          thumbnail_video_id: string
           type: Database["public"]["Enums"]["playlist_type"]
           youtube_id: string
         }[]
@@ -923,10 +931,13 @@ export type Database = {
           image_url: string
           name: string
           playlist_position: number
+          playlist_thumbnail_maxres_url: string
+          playlist_thumbnail_url: string
           profile_username: string
           short_id: string
           sort_order: Database["public"]["Enums"]["playlist_sort_order"]
           sorted_by: Database["public"]["Enums"]["playlist_sorted_by"]
+          thumbnail_video_id: string
           type: Database["public"]["Enums"]["playlist_type"]
           youtube_id: string
         }[]
@@ -1133,9 +1144,12 @@ export type Database = {
           image_properties: Json
           image_url: string
           name: string
+          playlist_thumbnail_maxres_url: string
+          playlist_thumbnail_url: string
           profile_username: string
           search_rank: number
           short_id: string
+          thumbnail_video_id: string
           type: Database["public"]["Enums"]["playlist_type"]
           youtube_id: string
         }[]

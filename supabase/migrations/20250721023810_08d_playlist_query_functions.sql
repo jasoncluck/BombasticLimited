@@ -276,6 +276,10 @@ CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
   playlist_type public.playlist_type,
   playlist_image_properties jsonb,
   playlist_youtube_id text,
+  playlist_thumbnail_video_id text,           -- The video ID used as thumbnail
+  playlist_thumbnail_url text,                -- thumbnail_url from the linked video
+  playlist_thumbnail_maxres_url text,         -- thumbnail_maxres_url from the linked video
+  playlist_deleted_at TIMESTAMP WITH TIME ZONE, -- Add deleted_at field
   profile_username text,
   playlist_sorted_by public.playlist_sorted_by,
   playlist_sort_order public.playlist_sort_order,
@@ -322,6 +326,10 @@ SET
       p.type,
       p.image_properties,
       p.youtube_id,
+      p.thumbnail_video_id,                    -- Include thumbnail_video_id
+      thumb_video.thumbnail_url as playlist_thumbnail_url,     -- Get thumbnail_url from linked video
+      thumb_video.thumbnail_maxres_url as playlist_thumbnail_maxres_url, -- Get thumbnail_maxres_url from linked video
+      p.deleted_at,                            -- Include deleted_at
       prof.username AS profile_username,
       -- Get user-specific sorted_by and sort_order if user is authenticated
       CASE WHEN auth.uid() IS NOT NULL THEN up.sorted_by ELSE NULL END AS sorted_by,
@@ -329,8 +337,9 @@ SET
     FROM public.playlists p
     LEFT JOIN public.profiles prof ON p.created_by = prof.id
     LEFT JOIN public.user_playlists up ON p.id = up.id AND up.user_id = auth.uid()
+    LEFT JOIN public.videos thumb_video ON p.thumbnail_video_id = thumb_video.id  -- JOIN with videos table
     WHERE p.short_id = p_short_id 
-      AND p.deleted_at IS NULL
+      -- REMOVED: AND p.deleted_at IS NULL  -- Now allow deleted playlists
   ),
   target_video AS (
     SELECT pv.video_position as position
@@ -400,6 +409,10 @@ SET
     type,
     image_properties,
     youtube_id,
+    thumbnail_video_id,                     -- Add thumbnail fields to output
+    playlist_thumbnail_url,
+    playlist_thumbnail_maxres_url,
+    deleted_at,                             -- Add deleted_at to output
     profile_username,
     sorted_by,
     sort_order,
@@ -484,6 +497,9 @@ CREATE OR REPLACE FUNCTION public.get_user_playlists (
   type public.playlist_type,
   image_properties jsonb,
   youtube_id text,
+  thumbnail_video_id text,           -- The video ID used as thumbnail
+  playlist_thumbnail_url text,       -- thumbnail_url from the linked video
+  playlist_thumbnail_maxres_url text, -- thumbnail_maxres_url from the linked video
   duration_seconds integer,
   deleted_at TIMESTAMP WITH TIME ZONE,
   profile_username text,
@@ -493,8 +509,8 @@ CREATE OR REPLACE FUNCTION public.get_user_playlists (
   added_at TIMESTAMP WITH TIME ZONE,
   avatar_url text
 )
-SET
-  search_path = '' LANGUAGE sql AS $$
+SET search_path = '' 
+LANGUAGE sql AS $$
   SELECT
     p.id,
     p.created_by,
@@ -507,13 +523,16 @@ SET
       p.image_webp_url,
       p.image_jpg_url,
       p_preferred_format
-    ),
+    ) as image_url,
     p.image_processing_status::public.image_processing_status,
     p.type,
     p.image_properties,
     p.youtube_id,
+    p.thumbnail_video_id,                    -- Include thumbnail_video_id
+    thumb_video.thumbnail_url,               -- Get thumbnail_url from linked video
+    thumb_video.thumbnail_maxres_url,        -- Get thumbnail_maxres_url from linked video
     p.duration_seconds,
-    p.deleted_at,
+    p.deleted_at,                            -- Return actual deleted_at value
     prof.username AS profile_username,
     up.sorted_by,
     up.sort_order,
@@ -523,8 +542,9 @@ SET
   FROM public.user_playlists up
   JOIN public.playlists p ON up.id = p.id
   LEFT JOIN public.profiles prof ON p.created_by = prof.id
-    WHERE up.user_id = auth.uid()
-    AND p.deleted_at IS NULL  -- Filter out soft-deleted playlists
+  LEFT JOIN public.videos thumb_video ON p.thumbnail_video_id = thumb_video.id  -- JOIN with videos table
+  WHERE up.user_id = auth.uid()
+    -- REMOVED: AND p.deleted_at IS NULL  -- Now allow deleted playlists to be returned
   ORDER BY up.playlist_position ASC;
 $$;
 
@@ -544,6 +564,9 @@ CREATE OR REPLACE FUNCTION public.get_playlists_for_username (
   type public.playlist_type,
   image_properties jsonb,
   youtube_id text,
+  thumbnail_video_id text,           -- The video ID used as thumbnail
+  playlist_thumbnail_url text,       -- thumbnail_url from the linked video
+  playlist_thumbnail_maxres_url text, -- thumbnail_maxres_url from the linked video
   duration_seconds integer,
   profile_username text,
   sorted_by public.playlist_sorted_by,
@@ -564,22 +587,26 @@ SET
       p.image_webp_url,
       p.image_jpg_url,
       p_preferred_format
-    ),
+    ) as image_url,
     p.image_processing_status::public.image_processing_status,
     p.type,
     p.image_properties,
     p.youtube_id,
+    p.thumbnail_video_id,                    -- Include thumbnail_video_id
+    thumb_video.thumbnail_url,               -- Get thumbnail_url from linked video
+    thumb_video.thumbnail_maxres_url,        -- Get thumbnail_maxres_url from linked video
     p.duration_seconds,
     prof.username AS profile_username,
     up.sorted_by,
     up.sort_order,
-    p.deleted_at
+    p.deleted_at                             -- Return actual deleted_at value
   FROM public.playlists p
   JOIN public.profiles prof ON p.created_by = prof.id
   LEFT JOIN public.user_playlists up 
     ON up.id = p.id 
+  LEFT JOIN public.videos thumb_video ON p.thumbnail_video_id = thumb_video.id  -- JOIN with videos table
   WHERE prof.username = p_username
-    AND p.deleted_at IS NULL  -- Filter out soft-deleted playlists
+    -- REMOVED: AND p.deleted_at IS NULL  -- Now allow deleted playlists to be returned
   ORDER BY p.created_at DESC;
 $$;
 
@@ -602,6 +629,9 @@ CREATE OR REPLACE FUNCTION "public"."search_playlists" (
   "created_by" uuid,
   "type" public.playlist_type,
   "youtube_id" text,
+  "thumbnail_video_id" text,           -- The video ID used as thumbnail
+  "playlist_thumbnail_url" text,       -- thumbnail_url from the linked video
+  "playlist_thumbnail_maxres_url" text, -- thumbnail_maxres_url from the linked video
   "duration_seconds" integer,
   "profile_username" text,
   "search_rank" real,
@@ -661,9 +691,12 @@ BEGIN
             p.created_by,
             p.type,
             p.youtube_id,
+            p.thumbnail_video_id,                    -- Include thumbnail_video_id
+            thumb_video.thumbnail_url,               -- Get thumbnail_url from linked video
+            thumb_video.thumbnail_maxres_url,        -- Get thumbnail_maxres_url from linked video
             p.duration_seconds,
             prof.username AS profile_username,
-            p.deleted_at,
+            p.deleted_at,                            -- Return actual deleted_at value
             -- Fixed: Cast ALL calculations to real explicitly
             (CASE 
                 WHEN lower(p.name) LIKE '%' || clean_term || '%' THEN 1000.0
@@ -686,9 +719,10 @@ BEGIN
             END)::real AS search_rank
         FROM public.playlists p
         LEFT JOIN public.profiles prof ON p.created_by = prof.id
+        LEFT JOIN public.videos thumb_video ON p.thumbnail_video_id = thumb_video.id  -- JOIN with videos table
         WHERE 
-            p.deleted_at IS NULL
-            AND (
+            -- REMOVED: p.deleted_at IS NULL  -- Now allow deleted playlists to be returned
+            (
                 lower(p.name) LIKE '%' || clean_term || '%'
                 OR lower(p.description) LIKE '%' || clean_term || '%'
                 OR (phrase_query IS NOT NULL AND p.search_vector @@ phrase_query)
@@ -711,6 +745,9 @@ BEGIN
         rp.created_by,
         rp.type,
         rp.youtube_id,
+        rp.thumbnail_video_id,
+        rp.playlist_thumbnail_url,
+        rp.playlist_thumbnail_maxres_url,
         rp.duration_seconds,
         rp.profile_username,
         rp.search_rank,
