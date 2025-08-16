@@ -191,7 +191,6 @@ export async function handleDeletePlaylist({
   sidebarState.refreshData();
   return { error };
 }
-
 export async function handleAddVideosToPlaylist({
   playlist,
   videos,
@@ -238,23 +237,31 @@ export async function handleAddVideosToPlaylist({
   );
 
   // If playlist didn't have a thumbnail, process the image
-  // We check the original playlist state, not the updated one
   if (!playlist.thumbnail_video_id) {
-    // Process the image for the first video that was added
-    // This will update the playlist with the processed image
-    await handleUpdatePlaylistImage({
-      playlist: { ...playlist, thumbnail_video_id: videos[0].id }, // Simulate updated playlist
-      thumbnailVideo: videos[0],
-      sidebarState,
+    // The RPC function set the thumbnail_video_id, now process the image
+    const processedPlaylistImage = await getCroppedPlaylistImageUrl({
+      imageProperties: null, // No existing properties for new thumbnail
+      thumbnailMaxResUrl: videos[0].thumbnail_maxres_url,
+      thumbnailUrl: videos[0].thumbnail_url,
+    });
+
+    // Update with the processed image
+    const { error: imageError } = await updatePlaylistImage({
+      playlistId: playlist.id,
+      processedPlaylistImage,
+      thumbnailVideoId: videos[0].id,
+      imageProperties: null,
       supabase,
     });
-  } else {
-    // If thumbnail already existed, just refresh data
-    await Promise.all([
-      sidebarState.refreshData(),
-      invalidate('supabase:db:videos'),
-    ]);
+
+    if (imageError) {
+      console.error('Failed to process playlist image:', imageError);
+    }
   }
+
+  // Refresh data
+  invalidate('supabase:db:videos');
+  sidebarState.refreshData();
 
   return { error: null };
 }
@@ -302,8 +309,7 @@ export async function handleUpdatePlaylistImage({
 }) {
   const processedPlaylistImage = thumbnailVideo
     ? await getCroppedPlaylistImageUrl({
-        imageProperties:
-          imageProperties || parseImageProperties(playlist.image_properties),
+        imageProperties: imageProperties, // Remove the fallback to existing properties
         thumbnailMaxResUrl: thumbnailVideo.thumbnail_maxres_url,
         thumbnailUrl: thumbnailVideo.thumbnail_url,
       })
@@ -321,10 +327,8 @@ export async function handleUpdatePlaylistImage({
     showNotification('Unable update playlist image');
   }
 
-  // Refresh data to get server-processed images with AVIF support
-  // instead of using client-side processing
-  await invalidate('supabase:db:videos');
-  await sidebarState.refreshData();
+  invalidate('supabase:db:videos');
+  sidebarState.refreshData();
   return { error };
 }
 

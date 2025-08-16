@@ -86,11 +86,10 @@
     `${videosCount} ${videosCount === 1 ? 'video' : 'videos'}`
   );
   const showComma = $derived(formattedDuration.length > 0);
-
-  // REMOVE the thumbnailUrl derived - this was causing the reactivity issue
-  // When playlist.image_url is cleared, we should show the fallback icon
 </script>
 
+{playlist.image_url}
+{playlist.image_properties}
 <SharedContentHeader
   {breadcrumbs}
   bind:showFloatingBreadcrumbs

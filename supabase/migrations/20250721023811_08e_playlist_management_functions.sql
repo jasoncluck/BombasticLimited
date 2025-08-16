@@ -632,89 +632,72 @@ BEGIN
   END IF;
 
   -- Update the playlist based on what's being set
-  IF p_image_url IS NOT NULL THEN
-    -- Setting a custom cropped image - clear video thumbnail and set image_url
+  IF p_image_url IS NOT NULL AND p_thumbnail_video_id IS NOT NULL THEN
+    -- Setting a processed image from a video thumbnail - keep both references
+    UPDATE public.playlists pl
+    SET 
+      thumbnail_video_id = p_thumbnail_video_id,  -- Keep the video reference
+      image_jpg_url = p_image_url,               -- Set the processed image
+      image_webp_url = NULL,  -- Clear other formats since we're setting a custom image
+      image_avif_url = NULL,
+      image_properties = p_image_properties,
+      image_processing_status = 'completed',  -- Image is processed
+      image_processing_updated_at = now()
+    WHERE pl.id = p_playlist_id;
+    
+  ELSIF p_image_url IS NOT NULL THEN
+    -- Setting a custom cropped image without video reference - clear video thumbnail
     UPDATE public.playlists pl
     SET 
       thumbnail_video_id = NULL,
       image_jpg_url = p_image_url,
-      image_webp_url = NULL,  -- Clear other formats since we're setting a custom image
+      image_webp_url = NULL,
       image_avif_url = NULL,
-      image_properties = p_image_properties,  -- Changed: removed COALESCE
-      image_processing_status = 'completed',  -- Custom image is already processed
+      image_properties = p_image_properties,
+      image_processing_status = 'completed',
       image_processing_updated_at = now()
-    WHERE pl.id = p_playlist_id;
-    
-    GET DIAGNOSTICS rows_affected = ROW_COUNT;
-    
-    IF rows_affected = 0 THEN
-      error_msg := format('Failed to update playlist with ID %s', p_playlist_id);
-      RETURN QUERY SELECT false, p_playlist_id, NULL::text, NULL::text, error_msg;
-      RETURN;
-    END IF;
-    
-    -- Get the actual updated values
-    SELECT pl.thumbnail_video_id, pl.image_jpg_url
-    INTO updated_row
-    FROM public.playlists pl
     WHERE pl.id = p_playlist_id;
     
   ELSIF p_thumbnail_video_id IS NOT NULL THEN
     -- Setting a video thumbnail - clear custom image and set video reference
-    -- We already validated the video exists in this playlist above
     UPDATE public.playlists pl
     SET 
       thumbnail_video_id = p_thumbnail_video_id,
       image_jpg_url = NULL,   -- Clear custom image
       image_webp_url = NULL,
       image_avif_url = NULL,
-      image_properties = p_image_properties,  -- Changed: removed COALESCE
+      image_properties = p_image_properties,
       image_processing_status = 'pending',
       image_processing_updated_at = now()
     WHERE pl.id = p_playlist_id;
     
-    GET DIAGNOSTICS rows_affected = ROW_COUNT;
-    
-    IF rows_affected = 0 THEN
-      error_msg := format('Failed to update playlist with ID %s', p_playlist_id);
-      RETURN QUERY SELECT false, p_playlist_id, NULL::text, NULL::text, error_msg;
-      RETURN;
-    END IF;
-    
-    -- Get the actual updated values
-    SELECT pl.thumbnail_video_id, pl.image_jpg_url
-    INTO updated_row
-    FROM public.playlists pl
-    WHERE pl.id = p_playlist_id;
-    
   ELSE
-    -- Both p_thumbnail_video_id and p_image_url are NULL
-    -- Reset to default (placeholder image) - clear all image references
+    -- Both p_thumbnail_video_id and p_image_url are NULL - reset everything
     UPDATE public.playlists pl
     SET 
       thumbnail_video_id = NULL,
       image_jpg_url = NULL,
       image_webp_url = NULL,
       image_avif_url = NULL,
-      image_properties = NULL,  -- Clear crop properties too
+      image_properties = NULL,
       image_processing_status = NULL,
       image_processing_updated_at = now()
     WHERE pl.id = p_playlist_id;
-    
-    GET DIAGNOSTICS rows_affected = ROW_COUNT;
-    
-    IF rows_affected = 0 THEN
-      error_msg := format('Failed to update playlist with ID %s', p_playlist_id);
-      RETURN QUERY SELECT false, p_playlist_id, NULL::text, NULL::text, error_msg;
-      RETURN;
-    END IF;
-    
-    -- Get the actual updated values (should be NULL)
-    SELECT pl.thumbnail_video_id, pl.image_jpg_url
-    INTO updated_row
-    FROM public.playlists pl
-    WHERE pl.id = p_playlist_id;
   END IF;
+  
+  GET DIAGNOSTICS rows_affected = ROW_COUNT;
+  
+  IF rows_affected = 0 THEN
+    error_msg := format('Failed to update playlist with ID %s', p_playlist_id);
+    RETURN QUERY SELECT false, p_playlist_id, NULL::text, NULL::text, error_msg;
+    RETURN;
+  END IF;
+  
+  -- Get the actual updated values
+  SELECT pl.thumbnail_video_id, pl.image_jpg_url
+  INTO updated_row
+  FROM public.playlists pl
+  WHERE pl.id = p_playlist_id;
   
   -- Return success result with actual stored values
   RETURN QUERY SELECT 
@@ -890,13 +873,8 @@ BEGIN
   END LOOP;
   
   -- Set thumbnail video ID if playlist doesn't have one
-  -- **SECURITY**: We can safely do this because we've already validated:
-  -- 1. All video IDs exist in the videos table
-  -- 2. User owns the playlist
-  -- 3. Videos will be/are in the playlist
+  -- Just set the reference - let the client handle image processing
   IF NOT playlist_has_thumbnail THEN
-    -- Set just the thumbnail_video_id first without image processing
-    -- This ensures the reference is set within the same transaction
     UPDATE public.playlists 
     SET 
       thumbnail_video_id = first_video_id,
@@ -904,8 +882,7 @@ BEGIN
       image_processing_updated_at = now()
     WHERE id = p_playlist_id;
     
-    -- Log that we set the thumbnail
-    RAISE NOTICE 'Set thumbnail_video_id to % for playlist % (new_videos_added: %)', first_video_id, p_playlist_id, new_videos_added;
+    RAISE NOTICE 'Set thumbnail_video_id to % for playlist % - client will process image', first_video_id, p_playlist_id;
   END IF;
   
 END;

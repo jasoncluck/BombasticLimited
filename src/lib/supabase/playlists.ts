@@ -904,10 +904,9 @@ export async function updatePlaylistImage({
   supabase: SupabaseClient<Database>;
 }) {
   const isResetImage = !processedPlaylistImage || !thumbnailVideoId;
-
-  console.log('UPDATE PLAYLIST_IMAGE');
-  console.log(thumbnailVideoId);
+  console.log('isReset');
   console.log(isResetImage);
+  console.log(imageProperties);
 
   if (isResetImage) {
     const { error } = await supabase
@@ -949,9 +948,6 @@ export async function updatePlaylistImage({
       p_image_properties: imageProperties,
     }
   );
-
-  console.log('JMC AFTER UPDATE');
-  console.log(updateData);
 
   if (updateError) {
     console.error('Database update error:', updateError);
@@ -1024,16 +1020,36 @@ async function uploadPlaylistImage({
     const response = await fetch(imageUrl);
     const blob = await response.blob();
 
-    // Generate filename if not provided
-    const fileName = imageName || `playlist-${playlistId}-${Date.now()}.jpg`;
+    // Generate filename with timestamp to prevent caching issues
+    const timestamp = Date.now();
+    const fileName = imageName || `playlist-${playlistId}-${timestamp}.jpg`;
     const filePath = `playlist-images/${fileName}`;
+
+    // Delete old playlist images before uploading new one
+    try {
+      const { data: existingFiles } = await supabase.storage
+        .from(IMAGES_BUCKET)
+        .list('playlist-images', {
+          search: `playlist-${playlistId}-`,
+        });
+
+      if (existingFiles && existingFiles.length > 0) {
+        const oldFilePaths = existingFiles.map(
+          (file) => `playlist-images/${file.name}`
+        );
+        await supabase.storage.from(IMAGES_BUCKET).remove(oldFilePaths);
+      }
+    } catch (cleanupError) {
+      console.warn('Failed to cleanup old playlist images:', cleanupError);
+      // Don't fail the upload if cleanup fails
+    }
 
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from(IMAGES_BUCKET)
       .upload(filePath, blob, {
         contentType: 'image/jpeg',
-        upsert: true,
+        upsert: false, // Changed to false since we're using unique filenames
       });
 
     if (uploadError) {
