@@ -1285,13 +1285,13 @@ export type Database = {
       validate_and_update_playlist_image: {
         Args: {
           p_image_properties?: Json
+          p_image_url?: string
           p_playlist_id: number
-          p_thumbnail_video_id: string
-          p_video_thumbnail_maxres_url?: string
-          p_video_thumbnail_url?: string
+          p_thumbnail_video_id?: string
         }
         Returns: {
           error_message: string
+          image_url: string
           playlist_id: number
           success: boolean
           thumbnail_video_id: string

@@ -473,115 +473,121 @@ EXECUTE FUNCTION public.trigger_cleanup_optimized_images ();
 -- Function to validate video thumbnails and update playlist image
 CREATE OR REPLACE FUNCTION public.validate_and_update_playlist_image(
   p_playlist_id bigint,
-  p_thumbnail_video_id text,
-  p_video_thumbnail_url text DEFAULT NULL,
-  p_video_thumbnail_maxres_url text DEFAULT NULL,
+  p_thumbnail_video_id text DEFAULT NULL,
+  p_image_url text DEFAULT NULL,
   p_image_properties jsonb DEFAULT NULL
 ) RETURNS TABLE (
   success boolean,
   playlist_id bigint,
   thumbnail_video_id text,
+  image_url text,
   error_message text
 ) LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE
   current_thumbnail_video_id text;
-  thumbnail_exists boolean := false;
-  maxres_exists boolean := false;
+  current_image_url text;
+  video_exists boolean := false;
   validation_passed boolean := false;
   error_msg text := NULL;
   thumbnail_video_changed boolean := false;
+  image_url_changed boolean := false;
   needs_validation boolean := false;
 BEGIN
-  -- Get current playlist thumbnail video ID
-  SELECT p.thumbnail_video_id INTO current_thumbnail_video_id
+  -- Get current playlist data
+  SELECT p.thumbnail_video_id, p.image_jpg_url 
+  INTO current_thumbnail_video_id, current_image_url
   FROM public.playlists p
   WHERE p.id = p_playlist_id;
 
   -- Check if playlist exists
   IF NOT FOUND THEN
     error_msg := format('Playlist with ID %s not found', p_playlist_id);
-    RETURN QUERY SELECT false, p_playlist_id, NULL::text, error_msg;
+    RETURN QUERY SELECT false, p_playlist_id, NULL::text, NULL::text, error_msg;
     RETURN;
   END IF;
 
-  -- Check if thumbnail video ID has changed
+  -- Check what has changed
   thumbnail_video_changed := (current_thumbnail_video_id IS DISTINCT FROM p_thumbnail_video_id);
+  image_url_changed := (current_image_url IS DISTINCT FROM p_image_url);
 
   -- Only need validation if:
   -- 1. Thumbnail video ID has changed AND
   -- 2. New thumbnail video ID is not NULL (setting an actual video, not removing it)
   needs_validation := thumbnail_video_changed AND p_thumbnail_video_id IS NOT NULL;
 
-  -- Only perform validation if needed
+  -- Validate the video exists if we're setting a new thumbnail video
   IF needs_validation THEN
-    -- Validate that at least one thumbnail URL was provided for new/changed videos
-    IF p_video_thumbnail_url IS NULL AND p_video_thumbnail_maxres_url IS NULL THEN
-      error_msg := 'At least one video thumbnail URL must be provided for validation when setting a video';
-      RETURN QUERY SELECT false, p_playlist_id, NULL::text, error_msg;
-      RETURN;
-    END IF;
+    SELECT EXISTS(
+      SELECT 1 FROM public.videos v
+      WHERE v.id = p_thumbnail_video_id
+    ) INTO video_exists;
 
-    -- Check if regular thumbnail URL exists in videos table
-    IF p_video_thumbnail_url IS NOT NULL THEN
-      SELECT EXISTS(
-        SELECT 1 FROM public.videos v
-        WHERE v.thumbnail_url = p_video_thumbnail_url
-      ) INTO thumbnail_exists;
-    END IF;
-
-    -- Check if maxres thumbnail URL exists in videos table
-    IF p_video_thumbnail_maxres_url IS NOT NULL THEN
-      SELECT EXISTS(
-        SELECT 1 FROM public.videos v
-        WHERE v.thumbnail_maxres_url = p_video_thumbnail_maxres_url
-      ) INTO maxres_exists;
-    END IF;
-
-    -- Validation passes if at least one provided thumbnail exists
-    validation_passed := (p_video_thumbnail_url IS NOT NULL AND thumbnail_exists) OR 
-                        (p_video_thumbnail_maxres_url IS NOT NULL AND maxres_exists);
-
-    IF NOT validation_passed THEN
-      error_msg := format('No matching video thumbnails found in database. Provided URLs: thumbnail=%s (exists: %s), maxres=%s (exists: %s)', 
-                         COALESCE(p_video_thumbnail_url, 'NULL'), 
-                         CASE WHEN p_video_thumbnail_url IS NOT NULL THEN thumbnail_exists::text ELSE 'N/A' END,
-                         COALESCE(p_video_thumbnail_maxres_url, 'NULL'),
-                         CASE WHEN p_video_thumbnail_maxres_url IS NOT NULL THEN maxres_exists::text ELSE 'N/A' END);
-      RETURN QUERY SELECT false, p_playlist_id, NULL::text, error_msg;
+    IF NOT video_exists THEN
+      error_msg := format('Video with ID %s not found in database', p_thumbnail_video_id);
+      RETURN QUERY SELECT false, p_playlist_id, NULL::text, NULL::text, error_msg;
       RETURN;
     END IF;
   END IF;
 
-  -- Handle different update scenarios separately to avoid CASE type issues
-  IF thumbnail_video_changed AND p_thumbnail_video_id IS NOT NULL THEN
-    -- Setting a new video
-    UPDATE public.playlists pl
-    SET 
-      thumbnail_video_id = p_thumbnail_video_id,
-      image_properties = COALESCE(p_image_properties, pl.image_properties),
-      image_processing_status = 'pending',
-      image_processing_updated_at = now()
-    WHERE pl.id = p_playlist_id;
-  ELSIF thumbnail_video_changed AND p_thumbnail_video_id IS NULL THEN
-    -- Removing video
-    UPDATE public.playlists pl
-    SET 
-      thumbnail_video_id = NULL,
-      image_properties = COALESCE(p_image_properties, pl.image_properties),
-      image_processing_status = NULL,
-      image_processing_updated_at = now()
-    WHERE pl.id = p_playlist_id;
+  -- Update the playlist based on what's being changed
+  IF thumbnail_video_changed OR image_url_changed THEN
+    -- Determine the update strategy based on what's being set
+    IF p_image_url IS NOT NULL THEN
+      -- Setting a custom cropped image - clear video thumbnail and set image_url
+      UPDATE public.playlists pl
+      SET 
+        thumbnail_video_id = NULL,
+        image_jpg_url = p_image_url,
+        image_webp_url = NULL,  -- Clear other formats since we're setting a custom image
+        image_avif_url = NULL,
+        image_properties = COALESCE(p_image_properties, pl.image_properties),
+        image_processing_status = 'completed',  -- Custom image is already processed
+        image_processing_updated_at = now()
+      WHERE pl.id = p_playlist_id;
+      
+    ELSIF p_thumbnail_video_id IS NOT NULL THEN
+      -- Setting a video thumbnail - clear custom image and set video reference
+      UPDATE public.playlists pl
+      SET 
+        thumbnail_video_id = p_thumbnail_video_id,
+        image_jpg_url = NULL,   -- Clear custom image
+        image_webp_url = NULL,
+        image_avif_url = NULL,
+        image_properties = COALESCE(p_image_properties, pl.image_properties),
+        image_processing_status = 'pending',
+        image_processing_updated_at = now()
+      WHERE pl.id = p_playlist_id;
+      
+    ELSE
+      -- Both p_thumbnail_video_id and p_image_url are NULL
+      -- Reset to default (placeholder image) - clear all image references
+      UPDATE public.playlists pl
+      SET 
+        thumbnail_video_id = NULL,
+        image_jpg_url = NULL,
+        image_webp_url = NULL,
+        image_avif_url = NULL,
+        image_properties = NULL,  -- Clear crop properties too
+        image_processing_status = NULL,
+        image_processing_updated_at = now()
+      WHERE pl.id = p_playlist_id;
+    END IF;
   ELSE
-    -- No thumbnail video ID change, just update other fields
-    UPDATE public.playlists pl
-    SET 
-      thumbnail_video_id = p_thumbnail_video_id,
-      image_properties = COALESCE(p_image_properties, pl.image_properties)
-    WHERE pl.id = p_playlist_id;
+    -- No major changes, just update properties if provided
+    IF p_image_properties IS NOT NULL THEN
+      UPDATE public.playlists pl
+      SET image_properties = p_image_properties
+      WHERE pl.id = p_playlist_id;
+    END IF;
   END IF;
   
   -- Return success result
-  RETURN QUERY SELECT true, p_playlist_id, p_thumbnail_video_id, NULL::text;
+  RETURN QUERY SELECT 
+    true, 
+    p_playlist_id, 
+    p_thumbnail_video_id, 
+    p_image_url,
+    NULL::text;
 END;
 $$;
 

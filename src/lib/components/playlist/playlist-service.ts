@@ -25,7 +25,7 @@ import {
   type SortKey,
   type SortOrder,
 } from '../content/content-filter';
-import { type ImageProperties } from './playlist';
+import { parseImageProperties, type ImageProperties } from './playlist';
 import type { SidebarState } from '$lib/state/sidebar.svelte';
 import { showToast } from '$lib/state/notifications.svelte';
 import { getCroppedImg } from '../ui/image-cropper/utils';
@@ -295,10 +295,20 @@ export async function handleUpdatePlaylistImage({
   thumbnailMaxResUrl: string | null;
   supabase: SupabaseClient<Database>;
 }) {
-  // Note: We no longer need to process the image client-side
-  // The database function and background processing will handle this
+  const processedPlaylistImage = await getCroppedPlaylistImageUrl({
+    imageProperties: parseImageProperties(playlist.image_properties),
+    thumbnailMaxResUrl,
+    thumbnailUrl,
+  });
+
+  if (!processedPlaylistImage) {
+    showNotification('Unable to crop playlist image.');
+    throw new Error('Unable to process image, preventing upload.');
+  }
+
   const { error } = await updatePlaylistImage({
     playlistId: playlist.id,
+    processedPlaylistImage,
     videoThumbnailMaxResUrl: thumbnailMaxResUrl,
     videoThumbnailUrl: thumbnailUrl,
     supabase,

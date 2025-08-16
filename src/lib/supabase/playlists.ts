@@ -20,6 +20,7 @@ import type { Source } from '$lib/constants/source';
 import { videoDurationToSeconds } from '$lib/components/video/video-service';
 import { IMAGES_BUCKET } from '$lib/constants/images';
 import { browser } from '$app/environment';
+import type { ImageProperties } from '$lib/components/playlist/playlist';
 
 export const USER_PLAYLIST_LIMIT = 25;
 export const DEFAULT_NUM_PLAYLISTS_OVERVIEW = 5;
@@ -862,68 +863,27 @@ export async function updatePlaylistInfo({
  */
 export async function updatePlaylistImage({
   playlistId,
-  videoThumbnailUrl,
-  videoThumbnailMaxResUrl,
+  videoId,
+  imageUrl,
+  imageProperties,
   supabase,
 }: {
   playlistId: number;
-  videoThumbnailUrl: string | null;
-  videoThumbnailMaxResUrl: string | null;
+  videoId?: string;
+  imageUrl?: string;
+  imageProperties?: CropArea | null;
   supabase: SupabaseClient<Database>;
 }) {
-  const isResetImage = !videoThumbnailMaxResUrl && !videoThumbnailUrl;
-
-  if (isResetImage) {
-    const { error } = await supabase
-      .from('playlists')
-      .update({
-        thumbnail_video_id: null,
-        image_properties: null,
-        image_processing_status: null,
-        image_processing_updated_at: null,
-      })
-      .eq('id', playlistId)
-      .select();
-
-    return { error };
-  }
-
   try {
-    // Step 1: Find the video ID for the provided thumbnail URL
-    const imageToProcess = videoThumbnailMaxResUrl || videoThumbnailUrl;
-    if (!imageToProcess) {
-      return {
-        updatedPlaylist: null,
-        error: new Error('No valid image URL to process'),
-      };
-    }
-
-    // Find the video that matches this thumbnail URL
-    const { data: video, error: videoError } = await supabase
-      .from('videos')
-      .select('id')
-      .or(
-        `thumbnail_url.eq.${imageToProcess},thumbnail_maxres_url.eq.${imageToProcess}`
-      )
-      .single();
-
-    if (videoError || !video) {
-      console.error('Video lookup error:', videoError);
-      return {
-        updatedPlaylist: null,
-        error: new Error('Could not find video for thumbnail URL'),
-      };
-    }
-
-    // Step 2: Update playlist with video reference using the validation function
+    // Call the RPC function with the provided parameters
+    // If both videoId and imageUrl are null/undefined, it will reset to default placeholder
     const { data: updateData, error: updateError } = await supabase.rpc(
       'validate_and_update_playlist_image',
       {
         p_playlist_id: playlistId,
-        p_thumbnail_video_id: video.id,
-        p_video_thumbnail_url: videoThumbnailUrl ?? undefined,
-        p_video_thumbnail_maxres_url: videoThumbnailMaxResUrl ?? undefined,
-        p_image_properties: null, // Let the system use defaults or existing properties
+        p_thumbnail_video_id: videoId,
+        p_image_url: imageUrl,
+        p_image_properties: imageProperties as Json,
       }
     );
 
@@ -949,6 +909,7 @@ export async function updatePlaylistImage({
       updatedPlaylist: {
         id: result?.playlist_id,
         thumbnail_video_id: result?.thumbnail_video_id,
+        image_url: result?.image_url,
         success: result?.success,
       },
       error: null,
@@ -1107,6 +1068,30 @@ export async function updatePlaylistSort({
   }
 
   return { updatedPlaylist, error };
+}
+
+export function parseImageProperties(jsonb: Json): ImageProperties | null {
+  if (!jsonb) return null;
+
+  try {
+    // Handle if it's already an object
+    const obj = typeof jsonb === 'string' ? JSON.parse(jsonb) : jsonb;
+
+    if (
+      obj &&
+      typeof obj === 'object' &&
+      typeof obj.x === 'number' &&
+      typeof obj.y === 'number' &&
+      typeof obj.height === 'number' &&
+      typeof obj.width === 'number'
+    ) {
+      return obj as ImageProperties;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 export async function getPlaylistTotalDuration({
