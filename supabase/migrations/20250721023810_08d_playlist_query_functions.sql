@@ -4,7 +4,7 @@
 -- This migration includes playlist data access and search functions
 -- ============================================================================
 
--- Helper function to select best available image format
+-- Helper function to select best available image format (unified for videos and playlists)
 CREATE OR REPLACE FUNCTION public.select_best_image_format(
   avif_url text,
   webp_url text,
@@ -105,11 +105,11 @@ BEGIN
     p.short_id,
     p.created_by,
     p.description,
-    -- Use select_best_image_format for playlist images
+    -- Use unified select_best_image_format for playlist images (pass NULL for jpg_url)
     public.select_best_image_format(
       p.image_avif_url,
       p.image_webp_url,
-      p.image_jpg_url,
+      NULL, -- No JPG support for playlists
       p_preferred_image_format
     ) as best_playlist_image_url,
     p.image_processing_status,
@@ -228,18 +228,18 @@ BEGIN
     v.description as video_description,
     v.thumbnail_url as video_thumbnail_url,
     v.thumbnail_maxres_url as video_thumbnail_maxres_url,
-    -- Use select_best_image_format for video thumbnails
+    -- Use unified select_best_image_format for video thumbnails (with JPG fallback)
     COALESCE(
       public.select_best_image_format(
         v.thumbnail_maxres_avif_url,
         v.thumbnail_maxres_webp_url,
-        v.thumbnail_maxres_url,
+        v.thumbnail_maxres_url,  -- JPG fallback for videos
         p_preferred_image_format
       ),
       public.select_best_image_format(
         v.thumbnail_avif_url,
         v.thumbnail_webp_url,
-        v.thumbnail_url,
+        v.thumbnail_url,  -- JPG fallback for videos
         p_preferred_image_format
       )
     ) as video_image_url,
@@ -356,11 +356,11 @@ SET
       p.short_id,
       p.created_by,
       p.description,
-      -- Select best playlist image format
+      -- Use unified select_best_image_format for playlist images (pass NULL for jpg_url)
       public.select_best_image_format(
         p.image_avif_url,
         p.image_webp_url,
-        p.image_jpg_url,
+        NULL, -- No JPG support for playlists
         p_preferred_image_format
       ) as best_playlist_image_url,
       p.image_processing_status,
@@ -403,18 +403,18 @@ SET
       v.description AS video_description,
       v.thumbnail_url AS video_thumbnail_url,
       v.thumbnail_maxres_url AS video_thumbnail_maxres_url,
-      -- Select best video thumbnail format
+      -- Use unified select_best_image_format for video thumbnails (with JPG fallback)
       COALESCE(
         public.select_best_image_format(
           v.thumbnail_maxres_avif_url,
           v.thumbnail_maxres_webp_url,
-          v.thumbnail_maxres_url,
+          v.thumbnail_maxres_url,  -- JPG fallback for videos
           p_preferred_image_format
         ),
         public.select_best_image_format(
           v.thumbnail_avif_url,
           v.thumbnail_webp_url,
-          v.thumbnail_url,
+          v.thumbnail_url,  -- JPG fallback for videos
           p_preferred_image_format
         )
       ) as best_video_image_url,
@@ -562,7 +562,7 @@ LANGUAGE sql AS $$
     public.select_best_image_format(
       p.image_avif_url,
       p.image_webp_url,
-      p.image_jpg_url,
+      NULL, -- No JPG support for playlists
       p_preferred_image_format
     ) as image_url,
     p.image_processing_status::public.image_processing_status,
@@ -626,7 +626,7 @@ SET
     public.select_best_image_format(
       p.image_avif_url,
       p.image_webp_url,
-      p.image_jpg_url,
+      NULL, -- No JPG support for playlists
       p_preferred_image_format
     ) as image_url,
     p.image_processing_status::public.image_processing_status,
@@ -723,7 +723,7 @@ BEGIN
             public.select_best_image_format(
               p.image_avif_url,
               p.image_webp_url,
-              p.image_jpg_url,
+              NULL, -- No JPG support for playlists
               p_preferred_image_format
             ) as best_image_url,
             p.image_processing_status::public.image_processing_status,

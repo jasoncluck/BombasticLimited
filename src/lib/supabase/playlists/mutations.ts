@@ -240,25 +240,44 @@ async function uploadPlaylistImage({
 
     // Generate filename with timestamp to prevent caching issues
     const timestamp = Date.now();
-    const fileName = imageName || `playlist-${playlistId}-${timestamp}.jpg`;
+    const fileName = imageName || `playlist-${playlistId}-${timestamp}.webp`;
     const filePath = `playlists/${playlistId}/${fileName}`;
 
     // Delete old playlist images before uploading new one
+    // Delete old playlist images before uploading new one
     try {
-      const { data: existingFiles } = await supabase.storage
+      console.log(`Cleaning up old images for playlist ${playlistId}`);
+
+      // List ALL files in the playlist folder (not just ones matching the pattern)
+      const { data: existingFiles, error: listError } = await supabase.storage
         .from(IMAGES_BUCKET)
-        .list(`playlists/${playlistId}`, {
-          search: `playlist-${playlistId}-`,
-        });
+        .list(`playlists/${playlistId}`);
+
+      if (listError) {
+        console.error('Error listing existing files:', listError);
+      } else {
+        console.log('Found existing files:', existingFiles);
+      }
 
       if (existingFiles && existingFiles.length > 0) {
         const oldFilePaths = existingFiles.map(
           (file) => `playlists/${playlistId}/${file.name}`
         );
-        await supabase.storage.from(IMAGES_BUCKET).remove(oldFilePaths);
+
+        console.log('Attempting to delete:', oldFilePaths);
+
+        const { data: deleteData, error: deleteError } = await supabase.storage
+          .from(IMAGES_BUCKET)
+          .remove(oldFilePaths);
+
+        if (deleteError) {
+          console.error('Delete error:', deleteError);
+        } else {
+          console.log('Successfully deleted files:', deleteData);
+        }
       }
     } catch (cleanupError) {
-      console.warn('Failed to cleanup old playlist images:', cleanupError);
+      console.error('Cleanup failed with exception:', cleanupError);
       // Don't fail the upload if cleanup fails
     }
 
@@ -266,8 +285,8 @@ async function uploadPlaylistImage({
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from(IMAGES_BUCKET)
       .upload(filePath, blob, {
-        contentType: 'image/jpeg',
-        upsert: false, // Changed to false since we're using unique filenames
+        contentType: 'image/webp',
+        upsert: true, // Changed to false since we're using unique filenames
       });
 
     if (uploadError) {
@@ -282,7 +301,7 @@ async function uploadPlaylistImage({
 
     return {
       data: {
-        imagePath: uploadData.path, // This is just "playlists/{playlistId}/filename.jpg"
+        imagePath: uploadData.path,
         publicUrl: publicUrl.publicUrl,
         success: true,
       },
@@ -316,7 +335,6 @@ export async function updatePlaylistImage({
       .from('playlists')
       .update({
         thumbnail_video_id: null,
-        image_jpg_url: null,
         image_webp_url: null,
         image_avif_url: null,
         image_properties: null,
@@ -351,7 +369,7 @@ export async function updatePlaylistImage({
     'update_playlist_image',
     {
       p_playlist_id: playlistId,
-      p_image_url: uploadResult.data?.imagePath, // Use imagePath instead of publicUrl
+      p_image_url: uploadResult.data?.imagePath,
       p_thumbnail_video_id: thumbnailVideoId,
       p_image_properties: imagePropertiesJson,
     }
@@ -398,7 +416,7 @@ export async function updatePlaylistImage({
   return {
     updatedPlaylist: {
       id: result?.playlist_id,
-      image_url: result?.image_jpg_url,
+      image_url: result?.image_webp_url,
       success: result?.success,
     },
     error: null,

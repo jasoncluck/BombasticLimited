@@ -1,6 +1,6 @@
 import { serve } from 'inngest/sveltekit';
 import { inngest } from '$lib/inngest/client';
-import { imageFunctions } from '$lib/inngest/image-processing';
+import { imageFunctions } from '$lib/inngest/async-image-processing';
 
 // Serve Inngest functions via SvelteKit API endpoint
 export const { GET, POST, PUT } = serve({

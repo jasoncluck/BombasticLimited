@@ -72,7 +72,6 @@ CREATE TABLE IF NOT EXISTS "public"."playlists" (
   "image_properties" jsonb, -- {x: number, y: number, width: number, height: number}
   
   -- Generated cropped playlist images (stored in Supabase Storage)
-  "image_jpg_url" text,
   "image_webp_url" text, 
   "image_avif_url" text,
   
@@ -91,7 +90,6 @@ ALTER TABLE "public"."playlists" OWNER TO "postgres";
 -- Comments for clarity
 COMMENT ON COLUMN "public"."playlists"."thumbnail_video_id" IS 'Reference to video used as source for playlist thumbnail';
 COMMENT ON COLUMN "public"."playlists"."image_properties" IS 'Crop dimensions {x, y, width, height} for generating playlist image from video thumbnail';
-COMMENT ON COLUMN "public"."playlists"."image_jpg_url" IS 'Supabase Storage path for cropped playlist image in JPG format';
 COMMENT ON COLUMN "public"."playlists"."image_webp_url" IS 'Supabase Storage path for cropped playlist image in WebP format';
 COMMENT ON COLUMN "public"."playlists"."image_avif_url" IS 'Supabase Storage path for cropped playlist image in AVIF format';
 COMMENT ON COLUMN "public"."playlists"."image_processing_status" IS 'Status of background image processing for playlist thumbnail generation';

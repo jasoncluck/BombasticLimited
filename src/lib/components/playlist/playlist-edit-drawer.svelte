@@ -11,7 +11,7 @@
   import { Button, buttonVariants } from '$lib/components/ui/button';
   import type { Playlist } from '$lib/supabase/playlists';
   import { zodClient } from 'sveltekit-superforms/adapters';
-  import { EditIcon, ListVideo, Loader, CropIcon } from '@lucide/svelte';
+  import { Pencil, ListVideo, Loader } from '@lucide/svelte';
   import Textarea from '$lib/components/ui/textarea/textarea.svelte';
   import * as ImageCropper from '$lib/components/ui/image-cropper';
   import { getCroppedImg } from '$lib/components/ui/image-cropper/utils';
@@ -31,7 +31,6 @@
   import { invalidate } from '$app/navigation';
   import { parseImageProperties } from './playlist';
   import { isLowResolutionThumbnail } from './playlist-service';
-  import { uploadPlaylistImage } from '$lib/utils/image-upload';
 
   let {
     form,
@@ -243,7 +242,7 @@
                           variant="outline"
                           size="icon"
                         >
-                          <EditIcon class="size-4" />
+                          <Pencil class="size-4" />
                         </Button>
                       {/snippet}
                     </DropdownMenu.Trigger>
@@ -281,7 +280,7 @@
                         variant="outline"
                         size="icon"
                       >
-                        <EditIcon class="size-4" />
+                        <Pencil class="size-4" />
                       </Button>
                     {/snippet}
                   </Popover.Trigger>

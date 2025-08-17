@@ -122,13 +122,13 @@ BEGIN
   END IF;
 
   -- Insert the new playlist with the generated/provided name
-  -- Store the input image URL in the jpg_url column for now
+  -- Store the input image URL in the webp_url column for WebP-first approach
   INSERT INTO public.playlists (
     created_by, 
     name, 
     description, 
     type, 
-    image_jpg_url,
+    image_webp_url,
     image_properties
   )
   VALUES (
@@ -153,11 +153,10 @@ BEGIN
     actual_position
   );
 
-  -- Use select_best_image_format to get the best available image URL
   SELECT public.select_best_image_format(
     inserted_playlist.image_avif_url,
     inserted_playlist.image_webp_url,
-    inserted_playlist.image_jpg_url,
+    NULL, 
     p_preferred_image_format
   ) INTO selected_image_url;
 
@@ -197,7 +196,6 @@ DECLARE
   playlist_count int2;
   current_user_id uuid;
 BEGIN
-  -- Rest of function remains the same...
   -- Get the current user ID from auth context
   current_user_id := auth.uid();
   
@@ -568,8 +566,7 @@ BEGIN
 END;
 $$;
 
-
--- Function to validate video thumbnails and update playlist image
+-- Function to validate video thumbnails and update playlist image (WebP-first approach)
 CREATE OR REPLACE FUNCTION public.update_playlist_image(
   p_playlist_id bigint,
   p_thumbnail_video_id text DEFAULT NULL,
@@ -579,7 +576,7 @@ CREATE OR REPLACE FUNCTION public.update_playlist_image(
   success boolean,
   playlist_id bigint,
   thumbnail_video_id text,
-  image_jpg_url text,
+  image_webp_url text,
   error_message text
 ) LANGUAGE plpgsql SECURITY DEFINER 
 SET search_path = '' AS $$
@@ -631,17 +628,16 @@ BEGIN
     END IF;
   END IF;
 
-  -- Update the playlist based on what's being set
+  -- Update the playlist based on what's being set (WebP-first approach)
   IF p_image_url IS NOT NULL AND p_thumbnail_video_id IS NOT NULL THEN
     -- Setting a processed image from a video thumbnail - keep both references
     UPDATE public.playlists pl
     SET 
       thumbnail_video_id = p_thumbnail_video_id,  -- Keep the video reference
-      image_jpg_url = p_image_url,               -- Set the processed image
-      image_webp_url = NULL,  -- Clear other formats since we're setting a custom image
-      image_avif_url = NULL,
+      image_webp_url = p_image_url,              -- Set the processed WebP image
+      image_avif_url = NULL,                     -- Clear AVIF (will be generated later)
       image_properties = p_image_properties,
-      image_processing_status = 'completed',  -- Image is processed
+      image_processing_status = 'pending',       -- Mark for AVIF generation
       image_processing_updated_at = now()
     WHERE pl.id = p_playlist_id;
     
@@ -650,11 +646,10 @@ BEGIN
     UPDATE public.playlists pl
     SET 
       thumbnail_video_id = NULL,
-      image_jpg_url = p_image_url,
-      image_webp_url = NULL,
-      image_avif_url = NULL,
+      image_webp_url = p_image_url,             -- Set the processed WebP image
+      image_avif_url = NULL,                    -- Clear AVIF (will be generated later)
       image_properties = p_image_properties,
-      image_processing_status = 'completed',
+      image_processing_status = 'pending',      -- Mark for AVIF generation
       image_processing_updated_at = now()
     WHERE pl.id = p_playlist_id;
     
@@ -663,9 +658,8 @@ BEGIN
     UPDATE public.playlists pl
     SET 
       thumbnail_video_id = p_thumbnail_video_id,
-      image_jpg_url = NULL,   -- Clear custom image
-      image_webp_url = NULL,
-      image_avif_url = NULL,
+      image_webp_url = NULL,  -- Clear WebP
+      image_avif_url = NULL,  -- Clear AVIF
       image_properties = p_image_properties,
       image_processing_status = 'pending',
       image_processing_updated_at = now()
@@ -676,9 +670,8 @@ BEGIN
     UPDATE public.playlists pl
     SET 
       thumbnail_video_id = NULL,
-      image_jpg_url = NULL,
-      image_webp_url = NULL,
-      image_avif_url = NULL,
+      image_webp_url = NULL,  -- Clear WebP
+      image_avif_url = NULL,  -- Clear AVIF
       image_properties = NULL,
       image_processing_status = NULL,
       image_processing_updated_at = now()
@@ -694,7 +687,7 @@ BEGIN
   END IF;
   
   -- Get the actual updated values
-  SELECT pl.thumbnail_video_id, pl.image_jpg_url
+  SELECT pl.thumbnail_video_id, pl.image_webp_url
   INTO updated_row
   FROM public.playlists pl
   WHERE pl.id = p_playlist_id;
@@ -704,7 +697,7 @@ BEGIN
     true, 
     p_playlist_id, 
     updated_row.thumbnail_video_id, 
-    updated_row.image_jpg_url,
+    updated_row.image_webp_url,
     NULL::text;
 
 EXCEPTION
@@ -803,13 +796,12 @@ BEGIN
     ) THEN
       playlist_has_thumbnail := true;
     ELSE
-      -- Current thumbnail video doesn't exist in playlist, clear it
+      -- Current thumbnail video doesn't exist in playlist, clear it (WebP-first approach)
       UPDATE public.playlists 
       SET 
         thumbnail_video_id = NULL,
-        image_jpg_url = NULL,
-        image_webp_url = NULL,
-        image_avif_url = NULL,
+        image_webp_url = NULL,   -- Clear WebP
+        image_avif_url = NULL,   -- Clear AVIF
         image_properties = NULL,
         image_processing_status = NULL,
         image_processing_updated_at = now()
@@ -975,14 +967,13 @@ BEGIN
       END IF;
     END LOOP;
     
-    -- If the thumbnail video was deleted, clear ALL related fields including the video ID reference
+    -- If the thumbnail video was deleted, clear ALL related fields including the video ID reference (WebP-first approach)
     IF thumbnail_video_deleted THEN
       UPDATE public.playlists pl
       SET 
         thumbnail_video_id = NULL,           -- NULL out the video ID reference
-        image_jpg_url = NULL,
-        image_webp_url = NULL,
-        image_avif_url = NULL,
+        image_webp_url = NULL,               -- Clear WebP
+        image_avif_url = NULL,               -- Clear AVIF
         image_properties = NULL,
         image_processing_status = NULL,
         image_processing_updated_at = now()
@@ -1032,7 +1023,6 @@ BEGIN
       FOR v_id IN SELECT unnest(p_video_ids)
       LOOP
         -- Check if we've already returned a result for this video
-        -- Fixed: reference to the correct function name
         SELECT COUNT(*) INTO affected_count
         FROM (SELECT * FROM public.playlist_videos) AS results 
         WHERE results.video_id = v_id;

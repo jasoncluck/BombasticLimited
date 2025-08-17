@@ -175,7 +175,6 @@ export type Database = {
           duration_seconds: number | null
           id: number
           image_avif_url: string | null
-          image_jpg_url: string | null
           image_processing_status:
             | Database["public"]["Enums"]["image_processing_status"]
             | null
@@ -198,7 +197,6 @@ export type Database = {
           duration_seconds?: number | null
           id?: number
           image_avif_url?: string | null
-          image_jpg_url?: string | null
           image_processing_status?:
             | Database["public"]["Enums"]["image_processing_status"]
             | null
@@ -221,7 +219,6 @@ export type Database = {
           duration_seconds?: number | null
           id?: number
           image_avif_url?: string | null
-          image_jpg_url?: string | null
           image_processing_status?:
             | Database["public"]["Enums"]["image_processing_status"]
             | null
@@ -589,6 +586,10 @@ export type Database = {
       }
       can_user_access_playlist: {
         Args: { playlist_id: number; user_id?: string }
+        Returns: boolean
+      }
+      check_playlist_ownership: {
+        Args: { playlist_id: number; user_id: string }
         Returns: boolean
       }
       cleanup_expired_notifications: {
@@ -1234,7 +1235,7 @@ export type Database = {
         }
         Returns: {
           error_message: string
-          image_jpg_url: string
+          image_webp_url: string
           playlist_id: number
           success: boolean
           thumbnail_video_id: string

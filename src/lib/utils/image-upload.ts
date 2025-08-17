@@ -20,63 +20,6 @@ export function dataURLtoFile(dataURL: string, filename: string): File {
 }
 
 /**
- * Uploads a cropped playlist image to Supabase Storage
- */
-export async function uploadPlaylistImage({
-  playlistId,
-  dataURL,
-  supabase,
-}: {
-  playlistId: number | string | bigint;
-  dataURL: string;
-  supabase: SupabaseClient<Database>;
-}): Promise<{
-  success: boolean;
-  imagePath?: string;
-  publicUrl?: string;
-  error?: string;
-}> {
-  try {
-    // Convert data URL to file
-    const filename = `playlist-${playlistId}-${Date.now()}.jpg`;
-    const file = dataURLtoFile(dataURL, filename);
-
-    // Upload to storage
-    const { data, error } = await supabase.storage
-      .from(IMAGES_BUCKET)
-      .upload(`playlists/${filename}`, file, {
-        contentType: 'image/jpeg',
-        upsert: false, // Don't overwrite existing files
-      });
-
-    if (error) {
-      console.error('Storage upload error:', error);
-      return {
-        success: false,
-        error: error.message,
-      };
-    }
-
-    // Get public URL
-    const { data: publicUrlData } = supabase.storage
-      .from(IMAGES_BUCKET)
-      .getPublicUrl(data.path);
-
-    return {
-      success: true,
-      imagePath: data.path,
-      publicUrl: publicUrlData.publicUrl,
-    };
-  } catch (err) {
-    console.error('Upload error:', err);
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : 'Unknown error',
-    };
-  }
-}
-
-/**
  * Deletes a playlist image from Supabase Storage
  */
 export async function deletePlaylistImage({
@@ -111,4 +54,3 @@ export async function deletePlaylistImage({
     };
   }
 }
-

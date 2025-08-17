@@ -19,7 +19,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 // Configuration
 const STORAGE_BUCKET = IMAGES_BUCKET;
 const MAX_RETRIES = 3;
-const PROCESSING_TIMEOUT = 30000; // 30 seconds
+const PROCESSING_TIMEOUT = 60000; // Increased timeout for quality processing
 
 // Crop defaults
 interface ImageProperties {
@@ -44,10 +44,55 @@ const PLAYLIST_IMAGE_CROP_DEFAULTS: ImageProperties = {
 };
 
 interface ProcessingResult {
-  jpgPath?: string;
   webpPath?: string;
   avifPath?: string;
   error?: string;
+}
+
+/**
+ * Delete existing optimized images for an entity
+ */
+async function deleteExistingOptimizedImages(
+  entityType: string,
+  entityId: string
+): Promise<void> {
+  if (entityType === 'playlist') {
+    // Get current image URLs from database
+    const { data: playlist, error } = await supabase
+      .from('playlists')
+      .select('image_webp_url, image_avif_url')
+      .eq('id', entityId)
+      .single();
+
+    if (error) {
+      console.warn(`Failed to get existing playlist images: ${error.message}`);
+      return;
+    }
+
+    const filesToDelete = [];
+    if (playlist?.image_webp_url) {
+      filesToDelete.push(playlist.image_webp_url);
+    }
+    if (playlist?.image_avif_url) {
+      filesToDelete.push(playlist.image_avif_url);
+    }
+
+    if (filesToDelete.length > 0) {
+      const { error: deleteError } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .remove(filesToDelete);
+
+      if (deleteError) {
+        console.warn(
+          `Failed to delete existing images: ${deleteError.message}`
+        );
+      } else {
+        console.log(
+          `Deleted ${filesToDelete.length} existing images for playlist ${entityId}`
+        );
+      }
+    }
+  }
 }
 
 /**
@@ -57,14 +102,13 @@ function generateStoragePaths(
   entityType: string,
   entityId: string,
   imageType: string
-): { jpgPath?: string; webpPath: string; avifPath: string } {
+): { webpPath: string; avifPath: string } {
   const timestamp = Date.now();
 
   if (entityType === 'playlist') {
     // Use playlists/{playlistId}/ structure
     const basePath = `playlists/${entityId}/playlist-${entityId}-${timestamp}`;
     return {
-      // No JPG path for playlists in background processing
       webpPath: `${basePath}.webp`,
       avifPath: `${basePath}.avif`,
     };
@@ -73,14 +117,12 @@ function generateStoragePaths(
     if (imageType === 'thumbnail') {
       const basePath = `thumbnails/${entityId}/thumbnail-${entityId}-${timestamp}`;
       return {
-        jpgPath: `${basePath}.jpg`,
         webpPath: `${basePath}.webp`,
         avifPath: `${basePath}.avif`,
       };
     } else if (imageType === 'thumbnail_maxres') {
       const basePath = `thumbnails/${entityId}/thumbnail-maxres-${entityId}-${timestamp}`;
       return {
-        jpgPath: `${basePath}.jpg`,
         webpPath: `${basePath}.webp`,
         avifPath: `${basePath}.avif`,
       };
@@ -90,22 +132,55 @@ function generateStoragePaths(
   // Fallback
   const basePath = `${entityType}s/${entityId}/${entityType}-${entityId}-${timestamp}`;
   return {
-    jpgPath: `${basePath}.jpg`,
     webpPath: `${basePath}.webp`,
     avifPath: `${basePath}.avif`,
   };
 }
 
 /**
+ * Check if we already have optimized images for this entity
+ */
+async function checkExistingOptimizedImages(
+  entityType: string,
+  entityId: string
+): Promise<{ hasWebP: boolean; hasAVIF: boolean; shouldSkip: boolean }> {
+  if (entityType === 'playlist') {
+    const { data: playlist, error } = await supabase
+      .from('playlists')
+      .select('image_webp_url, image_avif_url, image_processing_status')
+      .eq('id', entityId)
+      .single();
+
+    if (error) {
+      console.warn(
+        `Failed to check existing playlist images: ${error.message}`
+      );
+      return { hasWebP: false, hasAVIF: false, shouldSkip: false };
+    }
+
+    const hasWebP =
+      playlist?.image_webp_url && playlist.image_webp_url.trim() !== '';
+    const hasAVIF =
+      playlist?.image_avif_url && playlist.image_avif_url.trim() !== '';
+
+    // Never skip - we want to replace existing images with new versions
+    const shouldSkip = false;
+
+    return { hasWebP, hasAVIF, shouldSkip };
+  }
+
+  return { hasWebP: false, hasAVIF: false, shouldSkip: false };
+}
+
+/**
  * Download and validate image from source URL
  */
 async function downloadImage(sourceUrl: string): Promise<Buffer> {
-  // Check if it's a Supabase Storage path (starts with playlists/ or thumbnails/)
+  // Check if it's a Supabase Storage path
   if (
     sourceUrl.startsWith('playlists/') ||
     sourceUrl.startsWith('thumbnails/')
   ) {
-    // Download from Supabase Storage
     const { data, error } = await supabase.storage
       .from(STORAGE_BUCKET)
       .download(sourceUrl);
@@ -176,7 +251,6 @@ async function getPlaylistCropProperties(
   }
 
   // Use defaults based on source URL resolution detection
-  // Check if this looks like a maxres URL or get image dimensions
   try {
     const imageBuffer = await downloadImage(sourceUrl);
     const metadata = await sharp(imageBuffer).metadata();
@@ -212,27 +286,36 @@ async function getPlaylistCropProperties(
 }
 
 /**
- * Process image buffer into different formats with optional cropping
+ * **HIGH-QUALITY** image processing with advanced optimization
  */
 async function processImageFormats(
   buffer: Buffer,
   entityType?: string,
   playlistId?: string,
   sourceUrl?: string
-): Promise<{ jpg?: Buffer; webp: Buffer; avif: Buffer }> {
-  // Add throttling to prevent server overload
-  const throttleDelay = process.env.NODE_ENV === 'development' ? 1000 : 0; // 1 second delay in dev
-  if (throttleDelay > 0) {
-    await new Promise((resolve) => setTimeout(resolve, throttleDelay));
-  }
+): Promise<{ webp: Buffer; avif: Buffer }> {
+  console.log('🎨 Starting HIGH-QUALITY image processing...');
 
-  const sharpInstance = sharp(buffer);
+  const sharpInstance = sharp(buffer, {
+    // **QUALITY: Enhanced input options**
+    failOnError: false,
+    density: 300, // High DPI for quality
+    limitInputPixels: false, // Allow large images
+  });
 
   // Get metadata for optimization
   const metadata = await sharpInstance.metadata();
+  console.log(
+    `📐 Source image: ${metadata.width}x${metadata.height}, ${metadata.format}, ${Math.round((metadata.size || 0) / 1024)}KB`
+  );
 
   // Apply playlist-specific cropping
   let pipeline = sharpInstance;
+  let finalOutputSize = {
+    width: metadata.width || 1920,
+    height: metadata.height || 1080,
+  };
+
   if (entityType === 'playlist' && playlistId && sourceUrl) {
     const cropProps = await getPlaylistCropProperties(playlistId, sourceUrl);
 
@@ -244,64 +327,97 @@ async function processImageFormats(
     });
 
     console.log(
-      `Applied playlist crop: ${cropProps.width}x${cropProps.height} from ${metadata.width}x${metadata.height} at (${cropProps.x}, ${cropProps.y})`
+      `✂️ Applied crop: ${cropProps.width}x${cropProps.height} from ${metadata.width}x${metadata.height} at (${cropProps.x}, ${cropProps.y})`
     );
+
+    // **QUALITY: High-resolution output sizes**
+    // Create multiple sizes for responsive images
+    const outputSize = cropProps.width <= 180 ? 512 : 1024; // Much larger for quality
+    finalOutputSize = { width: outputSize, height: outputSize };
+
+    pipeline = pipeline
+      .resize(outputSize, outputSize, {
+        fit: 'cover',
+        withoutEnlargement: false,
+        kernel: sharp.kernel.lanczos3, // **QUALITY: Best resampling algorithm**
+      })
+      // **QUALITY: Advanced sharpening**
+      .sharpen({
+        sigma: 1.0,
+        m1: 1.0,
+        m2: 2.0,
+        x1: 2.0,
+        y2: 10.0,
+        y3: 20.0,
+      });
+
+    console.log(`📏 Resized to: ${outputSize}x${outputSize} (HIGH-QUALITY)`);
   }
 
-  // Calculate optimal quality based on image characteristics
-  const baseQuality = 85;
-  const jpgQuality = Math.min(baseQuality, 90);
-  const webpQuality = Math.min(baseQuality, 90);
-  const avifQuality = Math.min(baseQuality - 5, 85); // AVIF is more efficient
-
-  // Apply resize if image is too large (max 1920px width)
-  if (metadata.width && metadata.width > 1920) {
-    pipeline = pipeline.resize(1920, null, {
-      fit: 'inside',
-      withoutEnlargement: false,
+  // **QUALITY: Advanced preprocessing**
+  pipeline = pipeline
+    // Normalize image
+    .normalize()
+    // Enhance contrast slightly
+    .modulate({
+      brightness: 1.02,
+      saturation: 1.05,
+      hue: 0,
     });
-  }
 
-  const result: { jpg?: Buffer; webp: Buffer; avif: Buffer } = {
+  // **QUALITY: Calculate adaptive quality based on content and size**
+  const pixelCount = finalOutputSize.width * finalOutputSize.height;
+  const isLargeImage = pixelCount > 500000; // 500K pixels
+
+  // Higher quality for smaller images, optimized for larger ones
+  const webpQuality = isLargeImage ? 92 : 95;
+  const avifQuality = isLargeImage ? 85 : 88;
+
+  const result: { webp: Buffer; avif: Buffer } = {
     webp: Buffer.alloc(0),
     avif: Buffer.alloc(0),
   };
 
-  // Generate JPG only for videos (not playlists)
-  if (entityType === 'video') {
-    result.jpg = await pipeline
-      .clone()
-      .jpeg({
-        quality: jpgQuality,
-        progressive: true,
-        mozjpeg: true,
-      })
-      .toBuffer();
-  }
-
-  // Generate WebP with lower effort in development to reduce CPU usage
-  const webpEffort = process.env.NODE_ENV === 'development' ? 1 : 3;
+  // **HIGH-QUALITY WebP** - Maximum effort for best compression
+  console.log('🔄 Generating HIGH-QUALITY WebP...');
   result.webp = await pipeline
     .clone()
     .webp({
       quality: webpQuality,
-      effort: webpEffort,
+      effort: 6,
       lossless: false,
       nearLossless: false,
       smartSubsample: true,
+      preset: 'photo',
+      alphaQuality: 100,
     })
     .toBuffer();
 
-  // Generate AVIF with lower effort in development
-  const avifEffort = process.env.NODE_ENV === 'development' ? 2 : 4;
+  const webpSizeKB = Math.round(result.webp.length / 1024);
+  console.log(`✅ WebP generated: ${webpSizeKB}KB at quality ${webpQuality}`);
+
+  // **HIGH-QUALITY AVIF** - Maximum effort for best compression
+  console.log('🔄 Generating HIGH-QUALITY AVIF...');
   result.avif = await pipeline
     .clone()
     .avif({
       quality: avifQuality,
-      effort: avifEffort,
+      effort: 9, // **QUALITY: Maximum effort (0-9)**
       lossless: false,
     })
     .toBuffer();
+
+  const avifSizeKB = Math.round(result.avif.length / 1024);
+  const compressionRatio = Math.round(
+    ((result.webp.length - result.avif.length) / result.webp.length) * 100
+  );
+
+  console.log(
+    `✅ AVIF generated: ${avifSizeKB}KB at quality ${avifQuality} (${compressionRatio}% smaller than WebP)`
+  );
+  console.log(
+    `🎯 Total processing completed: WebP=${webpSizeKB}KB, AVIF=${avifSizeKB}KB`
+  );
 
   return result;
 }
@@ -310,33 +426,17 @@ async function processImageFormats(
  * Upload processed images to Supabase Storage
  */
 async function uploadToStorage(
-  jpgBuffer: Buffer | null,
   webpBuffer: Buffer,
   avifBuffer: Buffer,
-  jpgPath: string | undefined,
   webpPath: string,
   avifPath: string
-): Promise<{ jpgPath?: string; webpPath: string; avifPath: string }> {
-  const results: { jpgPath?: string; webpPath: string; avifPath: string } = {
+): Promise<{ webpPath: string; avifPath: string }> {
+  const results: { webpPath: string; avifPath: string } = {
     webpPath,
     avifPath,
   };
 
-  // Upload JPG if provided (only for videos now)
-  if (jpgBuffer && jpgPath) {
-    const { error: jpgError } = await supabase.storage
-      .from(STORAGE_BUCKET)
-      .upload(jpgPath, jpgBuffer, {
-        contentType: 'image/jpeg',
-        cacheControl: '31536000', // 1 year
-        upsert: true,
-      });
-
-    if (jpgError) {
-      throw new Error(`Failed to upload JPG image: ${jpgError.message}`);
-    }
-    results.jpgPath = jpgPath;
-  }
+  console.log('📤 Uploading optimized images to storage...');
 
   // Upload WebP
   const { error: webpError } = await supabase.storage
@@ -364,6 +464,7 @@ async function uploadToStorage(
     throw new Error(`Failed to upload AVIF image: ${avifError.message}`);
   }
 
+  console.log(`✅ Successfully uploaded: ${webpPath}, ${avifPath}`);
   return results;
 }
 
@@ -372,8 +473,8 @@ async function uploadToStorage(
  */
 export const processImage = inngest.createFunction(
   {
-    id: 'process-image',
-    name: 'Process Single Image',
+    id: 'process-image-hq',
+    name: 'Process Single Image (High Quality)',
     retries: MAX_RETRIES,
   },
   { event: 'image.process' },
@@ -381,10 +482,28 @@ export const processImage = inngest.createFunction(
     const { entityType, entityId, imageType, sourceUrl } = event.data;
 
     console.log(
-      `Processing image for ${entityType} ${entityId}, type: ${imageType}`
+      `🚀 Starting HIGH-QUALITY processing for ${entityType} ${entityId}, type: ${imageType}`
     );
+    console.log(`📸 Source URL: ${sourceUrl}`);
+
+    const startTime = Date.now();
 
     try {
+      // Check existing images
+      const { hasWebP, hasAVIF } = await checkExistingOptimizedImages(
+        entityType,
+        entityId
+      );
+
+      console.log(
+        `🔍 Existing images for ${entityType} ${entityId}: WebP: ${hasWebP}, AVIF: ${hasAVIF} - generating NEW high-quality versions`
+      );
+
+      // Delete existing images before creating new ones
+      if (hasWebP || hasAVIF) {
+        await deleteExistingOptimizedImages(entityType, entityId);
+      }
+
       // Get and mark job as processing
       const { data: jobId, error: jobError } = await supabase.rpc(
         'queue_image_processing_job',
@@ -404,14 +523,12 @@ export const processImage = inngest.createFunction(
       await supabase.rpc('start_image_processing_job', { job_id: jobId });
 
       // Download source image
+      console.log('📥 Downloading source image...');
       const imageBuffer = await downloadImage(sourceUrl);
+      console.log(`✅ Downloaded ${Math.round(imageBuffer.length / 1024)}KB`);
 
-      // Process image into different formats
-      const {
-        jpg: jpgBuffer,
-        webp: webpBuffer,
-        avif: avifBuffer,
-      } = await processImageFormats(
+      // Process image with HIGH QUALITY settings
+      const { webp: webpBuffer, avif: avifBuffer } = await processImageFormats(
         imageBuffer,
         entityType,
         entityType === 'playlist' ? entityId : undefined,
@@ -419,18 +536,15 @@ export const processImage = inngest.createFunction(
       );
 
       // Generate storage paths
-      const { jpgPath, webpPath, avifPath } = generateStoragePaths(
+      const { webpPath, avifPath } = generateStoragePaths(
         entityType,
         entityId,
         imageType
       );
 
-      // Upload to Supabase Storage (no JPG for playlists)
       const uploadResult = await uploadToStorage(
-        jpgBuffer || null,
         webpBuffer,
         avifBuffer,
-        jpgPath,
         webpPath,
         avifPath
       );
@@ -440,7 +554,6 @@ export const processImage = inngest.createFunction(
         'complete_image_processing_job',
         {
           job_id: jobId,
-          jpg_path: uploadResult.jpgPath,
           webp_path: uploadResult.webpPath,
           avif_path: uploadResult.avifPath,
         }
@@ -450,19 +563,22 @@ export const processImage = inngest.createFunction(
         throw new Error(`Failed to complete job: ${completeError.message}`);
       }
 
-      console.log(`Successfully processed image for ${entityType} ${entityId}`);
+      const processingTime = Date.now() - startTime;
+      console.log(
+        `🎉 Successfully processed HIGH-QUALITY image for ${entityType} ${entityId} in ${processingTime}ms`
+      );
+
       return {
-        jpgPath: uploadResult.jpgPath,
         webpPath: uploadResult.webpPath,
         avifPath: uploadResult.avifPath,
       };
     } catch (error) {
       console.error(
-        `Failed to process image for ${entityType} ${entityId}:`,
+        `❌ Failed to process HIGH-QUALITY image for ${entityType} ${entityId}:`,
         error
       );
 
-      // Mark job as failed if we have a job ID
+      // Mark job as failed
       try {
         const { data } = await supabase
           .from('image_processing_jobs')
@@ -491,39 +607,42 @@ export const processImage = inngest.createFunction(
 );
 
 /**
- * Process multiple images in batch
+ * Process multiple images in batch with HIGH QUALITY
  */
 export const batchProcessImages = inngest.createFunction(
   {
-    id: 'batch-process-images',
-    name: 'Batch Process Images',
-    concurrency: process.env.NODE_ENV === 'development' ? 1 : 5, // Reduce concurrency in dev
+    id: 'batch-process-images-hq',
+    name: 'Batch Process Images (High Quality)',
+    concurrency: process.env.NODE_ENV === 'development' ? 1 : 3, // Reduced for quality processing
   },
   { event: 'image.batch.process' },
   async ({ event }) => {
     const { jobs } = event.data;
 
-    console.log(`Starting batch processing of ${jobs.length} images`);
+    console.log(
+      `🚀 Starting HIGH-QUALITY batch processing of ${jobs.length} images`
+    );
 
     const results = [];
 
-    // In development, process sequentially to prevent server overload
+    // Process sequentially in development, with longer delays for quality processing
     if (process.env.NODE_ENV === 'development') {
-      console.log('Development mode: Processing images sequentially');
+      console.log(
+        '🐌 Development mode: Processing HIGH-QUALITY images sequentially'
+      );
       for (const job of jobs) {
         try {
-          // Send individual processing event
           await inngest.send({
             name: 'image.process',
             data: job,
           });
           results.push({ success: true, entityId: job.entityId });
 
-          // Add delay between jobs in development
-          await new Promise((resolve) => setTimeout(resolve, 2000)); // 2 second delay
+          // Longer delay for quality processing
+          await new Promise((resolve) => setTimeout(resolve, 5000)); // 5 second delay
         } catch (error) {
           console.error(
-            `Failed to queue processing for ${job.entityType} ${job.entityId}:`,
+            `❌ Failed to queue HIGH-QUALITY processing for ${job.entityType} ${job.entityId}:`,
             error
           );
           results.push({
@@ -534,10 +653,9 @@ export const batchProcessImages = inngest.createFunction(
         }
       }
     } else {
-      // Process images in parallel with concurrency limit in production
+      // Production: parallel with reduced concurrency for quality
       for (const job of jobs) {
         try {
-          // Send individual processing event
           await inngest.send({
             name: 'image.process',
             data: job,
@@ -545,7 +663,7 @@ export const batchProcessImages = inngest.createFunction(
           results.push({ success: true, entityId: job.entityId });
         } catch (error) {
           console.error(
-            `Failed to queue processing for ${job.entityType} ${job.entityId}:`,
+            `❌ Failed to queue HIGH-QUALITY processing for ${job.entityType} ${job.entityId}:`,
             error
           );
           results.push({
@@ -561,7 +679,7 @@ export const batchProcessImages = inngest.createFunction(
     const failed = results.filter((r) => !r.success).length;
 
     console.log(
-      `Batch processing completed: ${successful} successful, ${failed} failed`
+      `🎯 HIGH-QUALITY batch processing completed: ${successful} successful, ${failed} failed`
     );
 
     return {
@@ -586,7 +704,7 @@ export const cleanupFailedJobs = inngest.createFunction(
     const { olderThanHours = 24, status = 'failed' } = event.data;
 
     console.log(
-      `Cleaning up ${status} jobs older than ${olderThanHours} hours`
+      `🧹 Cleaning up ${status} jobs older than ${olderThanHours} hours`
     );
 
     const cutoffTime = new Date(
@@ -606,7 +724,7 @@ export const cleanupFailedJobs = inngest.createFunction(
 
     const deletedCount = data?.length || 0;
 
-    console.log(`Cleanup completed: removed ${deletedCount} ${status} jobs`);
+    console.log(`✅ Cleanup completed: removed ${deletedCount} ${status} jobs`);
     return { deletedCount };
   }
 );

@@ -25,10 +25,9 @@ import {
   type SortKey,
   type SortOrder,
 } from '../content/content-filter';
-import { parseImageProperties, type ImageProperties } from './playlist';
+import { type ImageProperties } from './playlist';
 import type { SidebarState } from '$lib/state/sidebar.svelte';
 import { showToast } from '$lib/state/notifications.svelte';
-import { getCroppedImg } from '../ui/image-cropper/utils';
 
 export type PlaylistImages = Record<string, string | undefined>;
 
@@ -510,6 +509,10 @@ export async function handleUpdatePlaylistSort({
   return { updatedPlaylist, error };
 }
 
+/**
+ * Fast browser-based image cropping for immediate preview
+ * Optimized for speed over quality - background processing handles optimization
+ */
 export async function getCroppedPlaylistImageUrl({
   imageProperties,
   thumbnailMaxResUrl,
@@ -525,27 +528,30 @@ export async function getCroppedPlaylistImageUrl({
   const isMaxRes = !!thumbnailMaxResUrl;
 
   try {
-    // Try OffscreenCanvas first (more efficient)
+    // Use fast OffscreenCanvas processing for immediate results
     if (
       typeof OffscreenCanvas !== 'undefined' &&
       typeof createImageBitmap !== 'undefined'
     ) {
-      return await processWithOffscreenCanvas(
+      return await processWithFastOffscreenCanvas(
         imageUrl,
         imageProperties,
         isMaxRes
       );
     } else {
-      // Fallback to regular Canvas
-      return await processWithCanvas(imageUrl, imageProperties, isMaxRes);
+      // Fallback to regular Canvas with speed optimizations
+      return await processWithFastCanvas(imageUrl, imageProperties, isMaxRes);
     }
   } catch (error) {
-    console.error('Browser image processing failed:', error);
+    console.error('Fast browser image processing failed:', error);
     return null;
   }
 }
 
-async function processWithOffscreenCanvas(
+/**
+ * Fast OffscreenCanvas processing - optimized for speed
+ */
+async function processWithFastOffscreenCanvas(
   imageUrl: string,
   imageProperties: ImageProperties | null,
   isMaxRes: boolean
@@ -564,21 +570,16 @@ async function processWithOffscreenCanvas(
     isMaxRes
   );
 
-  console.log('Client-side processing:', {
-    originalSize: `${imageBitmap.width}x${imageBitmap.height}`,
-    cropArea: optimalCrop,
-    isMaxRes,
-  });
+  // **SPEED OPTIMIZATION: Use smaller output size for browser preview**
+  // Background processing will create high-quality versions
+  const previewSize = isMaxRes ? 360 : 180; // Much smaller for speed
 
-  // Determine target output size
-  const targetWidth = optimalCrop.width;
-  const targetHeight = optimalCrop.height;
-
-  const canvas = new OffscreenCanvas(targetWidth, targetHeight);
+  const canvas = new OffscreenCanvas(previewSize, previewSize);
   const ctx = canvas.getContext('2d');
 
   if (!ctx) throw new Error('Failed to get canvas context');
 
+  // **SPEED: Single draw operation with scaling**
   ctx.drawImage(
     imageBitmap,
     optimalCrop.x,
@@ -587,33 +588,28 @@ async function processWithOffscreenCanvas(
     optimalCrop.height,
     0,
     0,
-    targetWidth,
-    targetHeight
+    previewSize,
+    previewSize
   );
 
+  // **SPEED: Lower quality for instant preview**
   const blob = await canvas.convertToBlob({
     type: 'image/webp',
-    quality: !isMaxRes && targetWidth > optimalCrop.width ? 0.9 : 0.8,
+    quality: 0.7, // Lower quality for speed
   });
+
   const arrayBuffer = await blob.arrayBuffer();
-
   const uint8Array = new Uint8Array(arrayBuffer);
-  let binaryString = '';
 
-  // Process in chunks to avoid call stack overflow
-  const chunkSize = 8192;
-  for (let i = 0; i < uint8Array.length; i += chunkSize) {
-    const chunk = uint8Array.subarray(i, i + chunkSize);
-    binaryString += String.fromCharCode.apply(null, Array.from(chunk));
-  }
-
-  const base64 = btoa(binaryString);
-
+  // **SPEED: Optimized base64 conversion**
+  const base64 = btoa(String.fromCharCode(...uint8Array));
   return `data:image/webp;base64,${base64}`;
 }
 
-// Fallback Canvas processing for older browsers
-async function processWithCanvas(
+/**
+ * Fast Canvas processing fallback - optimized for speed
+ */
+async function processWithFastCanvas(
   imageUrl: string,
   imageProperties: ImageProperties | null,
   isMaxRes: boolean
@@ -624,7 +620,7 @@ async function processWithCanvas(
 
     img.onload = () => {
       try {
-        // Get optimal crop dimensions based on actual image size
+        // Get optimal crop dimensions
         const optimalCrop = getOptimalCropDimensions(
           img.width,
           img.height,
@@ -632,17 +628,20 @@ async function processWithCanvas(
           isMaxRes
         );
 
-        // Determine target output size
-        const targetWidth = optimalCrop.width;
-        const targetHeight = optimalCrop.height;
+        // **SPEED: Smaller preview size**
+        const previewSize = isMaxRes ? 360 : 180;
 
         const canvas = document.createElement('canvas');
-        canvas.width = targetWidth;
-        canvas.height = targetHeight;
+        canvas.width = previewSize;
+        canvas.height = previewSize;
 
         const ctx = canvas.getContext('2d');
         if (!ctx) throw new Error('Failed to get canvas context');
 
+        // **SPEED: Disable image smoothing for faster processing**
+        ctx.imageSmoothingEnabled = false;
+
+        // Single draw operation
         ctx.drawImage(
           img,
           optimalCrop.x,
@@ -651,11 +650,11 @@ async function processWithCanvas(
           optimalCrop.height,
           0,
           0,
-          targetWidth,
-          targetHeight
+          previewSize,
+          previewSize
         );
 
-        // Convert to WebP
+        // **SPEED: Lower quality WebP for instant preview**
         canvas.toBlob(
           (blob) => {
             if (!blob) {
@@ -669,7 +668,7 @@ async function processWithCanvas(
             reader.readAsDataURL(blob);
           },
           'image/webp',
-          !isMaxRes && targetWidth > optimalCrop.width ? 0.9 : 0.8 // Higher quality for lower resolution images
+          0.7 // Lower quality for speed
         );
       } catch (error) {
         reject(error);
@@ -692,23 +691,22 @@ export async function getVideoThumbnailWebpUrl({
   if (!thumbnailUrl) return null;
 
   try {
-    // Try OffscreenCanvas first (more efficient)
+    // **SPEED: Fast processing for video thumbnails**
     if (
       typeof OffscreenCanvas !== 'undefined' &&
       typeof createImageBitmap !== 'undefined'
     ) {
-      return await processVideoThumbnailWithOffscreenCanvas(thumbnailUrl);
+      return await processVideoThumbnailWithFastOffscreenCanvas(thumbnailUrl);
     } else {
-      // Fallback to regular Canvas
-      return await processVideoThumbnailWithCanvas(thumbnailUrl);
+      return await processVideoThumbnailWithFastCanvas(thumbnailUrl);
     }
   } catch (error) {
-    console.error('Browser video thumbnail processing failed:', error);
+    console.error('Fast browser video thumbnail processing failed:', error);
     return null;
   }
 }
 
-async function processVideoThumbnailWithOffscreenCanvas(
+async function processVideoThumbnailWithFastOffscreenCanvas(
   imageUrl: string
 ): Promise<string> {
   const response = await fetch(imageUrl);
@@ -717,34 +715,31 @@ async function processVideoThumbnailWithOffscreenCanvas(
   const imageBlob = await response.blob();
   const imageBitmap = await createImageBitmap(imageBlob);
 
-  // Use the original image dimensions (no cropping)
-  const canvas = new OffscreenCanvas(imageBitmap.width, imageBitmap.height);
+  // **SPEED: Limit size for performance**
+  const maxSize = 320;
+  const scale = Math.min(
+    maxSize / imageBitmap.width,
+    maxSize / imageBitmap.height
+  );
+  const width = Math.round(imageBitmap.width * scale);
+  const height = Math.round(imageBitmap.height * scale);
+
+  const canvas = new OffscreenCanvas(width, height);
   const ctx = canvas.getContext('2d');
 
   if (!ctx) throw new Error('Failed to get canvas context');
 
-  // Draw the full image without cropping
-  ctx.drawImage(imageBitmap, 0, 0);
+  ctx.drawImage(imageBitmap, 0, 0, width, height);
 
-  const blob = await canvas.convertToBlob({ type: 'image/webp', quality: 0.8 });
+  const blob = await canvas.convertToBlob({ type: 'image/webp', quality: 0.7 });
   const arrayBuffer = await blob.arrayBuffer();
-
   const uint8Array = new Uint8Array(arrayBuffer);
-  let binaryString = '';
-
-  // Process in chunks to avoid call stack overflow
-  const chunkSize = 8192;
-  for (let i = 0; i < uint8Array.length; i += chunkSize) {
-    const chunk = uint8Array.subarray(i, i + chunkSize);
-    binaryString += String.fromCharCode.apply(null, Array.from(chunk));
-  }
-
-  const base64 = btoa(binaryString);
+  const base64 = btoa(String.fromCharCode(...uint8Array));
 
   return `data:image/webp;base64,${base64}`;
 }
 
-async function processVideoThumbnailWithCanvas(
+async function processVideoThumbnailWithFastCanvas(
   imageUrl: string
 ): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -753,18 +748,23 @@ async function processVideoThumbnailWithCanvas(
 
     img.onload = () => {
       try {
-        // Use the original image dimensions (no cropping)
+        // **SPEED: Limit size for performance**
+        const maxSize = 320;
+        const scale = Math.min(maxSize / img.width, maxSize / img.height);
+        const width = Math.round(img.width * scale);
+        const height = Math.round(img.height * scale);
+
         const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
+        canvas.width = width;
+        canvas.height = height;
 
         const ctx = canvas.getContext('2d');
         if (!ctx) throw new Error('Failed to get canvas context');
 
-        // Draw the full image without cropping
-        ctx.drawImage(img, 0, 0);
+        // **SPEED: Disable smoothing**
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(img, 0, 0, width, height);
 
-        // Convert to WebP
         canvas.toBlob(
           (blob) => {
             if (!blob) {
@@ -778,7 +778,7 @@ async function processVideoThumbnailWithCanvas(
             reader.readAsDataURL(blob);
           },
           'image/webp',
-          0.8
+          0.7 // Lower quality for speed
         );
       } catch (error) {
         reject(error);

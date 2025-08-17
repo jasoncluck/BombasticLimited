@@ -7,9 +7,6 @@ import {
   getPlaylistsForUsername,
 } from '$lib/supabase/playlists';
 import {
-  generatePlaylistImageUrl,
-} from '$lib/server/image-processing';
-import {
   createMockSession,
   createMockUserProfile,
   createMockVideo,
@@ -81,7 +78,6 @@ vi.mock('$lib/components/playlist/playlist', () => ({
 const mockGetVideos = vi.mocked(getVideos);
 const mockGetPlaylistDataByYoutubeId = vi.mocked(getPlaylistDataByYoutubeId);
 const mockGetPlaylistsForUsername = vi.mocked(getPlaylistsForUsername);
-const mockGeneratePlaylistImageUrl = vi.mocked(generatePlaylistImageUrl);
 const mockRedirect = vi.mocked(redirect);
 
 // Import the mocked functions so we can control them
@@ -222,9 +218,6 @@ describe('[source]/+page.server.ts load function', () => {
       );
       mockGetPlaylistsForUsername.mockResolvedValue(
         createMockPlaylistsResponse(mockSourcePlaylists, 1)
-      );
-      mockGeneratePlaylistImageUrl.mockReturnValue(
-        '/api/playlist-image?url=test'
       );
     });
 
@@ -430,7 +423,6 @@ describe('[source]/+page.server.ts load function', () => {
 
   describe('parallel execution', () => {
     it('should execute major operations in parallel', async () => {
-      const startTime = Date.now();
       let getVideosTime: number | null = null;
       let getPlaylistsTime: number | null = null;
 

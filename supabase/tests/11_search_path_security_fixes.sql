@@ -131,9 +131,9 @@ SELECT has_function(
 -- Test playlist query function
 SELECT has_function(
   'public',
-  'select_best_image_format',
+  'select_best_playlist_image_format',
   ARRAY['text', 'text', 'text', 'text'],
-  'Function select_best_image_format should exist'
+  'Function select_best_playlist_image_format should exist'
 );
 
 -- Test image processing functions

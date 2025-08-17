@@ -53,7 +53,6 @@ interface Video {
 interface Playlist {
   id: string;
   thumbnail_video_id: string | null;
-  image_jpg_url: string | null;
   image_webp_url: string | null;
   image_avif_url: string | null;
   image_processing_status: string | null;
@@ -107,7 +106,6 @@ async function getPlaylistsToProcess(): Promise<Playlist[]> {
       `
       id,
       thumbnail_video_id,
-      image_jpg_url,
       image_webp_url,
       image_avif_url,
       image_processing_status
@@ -220,13 +218,10 @@ function createPlaylistJobs(playlists: Playlist[]) {
       video_thumbnail_url: !!playlist.video_thumbnail_url,
       video_thumbnail_maxres_url: !!playlist.video_thumbnail_maxres_url,
       image_processing_status: playlist.image_processing_status,
-      has_jpg: !!playlist.image_jpg_url,
       has_webp: !!playlist.image_webp_url,
       has_avif: !!playlist.image_avif_url,
     });
 
-    // For playlists, we only care about WebP and AVIF (not JPG)
-    // JPG might be an old format or user-uploaded image
     const hasOptimizedImages =
       playlist.image_webp_url && playlist.image_avif_url;
 
