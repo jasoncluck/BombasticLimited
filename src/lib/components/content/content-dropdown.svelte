@@ -401,9 +401,7 @@
               const { error } = await handleUpdatePlaylistImage({
                 playlist,
                 sidebarState,
-                thumbnailUrl: frozenOperationVideos[0].thumbnail_url,
-                thumbnailMaxResUrl:
-                  frozenOperationVideos[0].thumbnail_maxres_url,
+                thumbnailVideo: frozenOperationVideos[0],
                 supabase,
               });
 

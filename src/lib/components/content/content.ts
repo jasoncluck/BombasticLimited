@@ -121,7 +121,9 @@ export function handleContentNavigation({
   } else if (isVideoWithPlaylistTimestamp(video)) {
     if (
       isSortKey(video.playlist_sorted_by, 'playlist') &&
-      isSortOrder(video.playlist_sort_order)
+      isSortOrder(video.playlist_sort_order) &&
+      video.playlist_sorted_by &&
+      video.playlist_sort_order
     ) {
       searchParams.set(video.playlist_sorted_by, video.playlist_sort_order);
     }

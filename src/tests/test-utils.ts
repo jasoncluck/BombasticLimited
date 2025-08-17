@@ -17,6 +17,13 @@ export function createMockVideo(overrides: Partial<Video> = {}): Video {
     thumbnail_maxres_url: 'https://example.com/thumb_maxres.jpg',
     published_at: '2023-01-01T00:00:00Z',
     duration: '00:30:00',
+    views: 0,
+    image_processing_status: 'completed',
+    image_processing_updated_at: '2023-01-01T00:00:00Z',
+    thumbnail_webp_url: 'https://example.com/thumb.webp',
+    thumbnail_avif_url: 'https://example.com/thumb.avif',
+    thumbnail_maxres_webp_url: 'https://example.com/thumb_maxres.webp',
+    thumbnail_maxres_avif_url: 'https://example.com/thumb_maxres.avif',
     ...overrides,
   };
 }
@@ -204,6 +211,10 @@ export function createMockPlaylist(overrides: Partial<any> = {}) {
     description: 'Mock playlist description',
     profile_username: 'testuser',
     deleted_at: null,
+    // Add missing required properties
+    image_url: 'https://example.com/playlist_image.jpg',
+    thumbnail_video_id: 'video-1',
+    duration_seconds: 1800,
     ...overrides,
   };
 }
