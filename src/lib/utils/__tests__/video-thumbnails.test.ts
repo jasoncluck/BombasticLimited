@@ -32,8 +32,17 @@ const createMockVideo = (
   thumbnail_maxres_url:
     thumbnailMaxResUrl === undefined ? null : thumbnailMaxResUrl,
   published_at: '2023-01-01T00:00:00Z',
-  duration: null,
+  duration: '00:30:00', // Change from null to string
   source: 'giantbomb',
+  // Add missing required Video properties
+  image_url: null,
+  views: 0,
+  image_processing_status: 'completed',
+  image_processing_updated_at: null,
+  thumbnail_webp_url: null,
+  thumbnail_avif_url: null,
+  thumbnail_maxres_webp_url: null,
+  thumbnail_maxres_avif_url: null,
 });
 
 describe('video-thumbnails (server-side only)', () => {
