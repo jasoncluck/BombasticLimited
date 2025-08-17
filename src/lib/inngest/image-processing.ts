@@ -1,7 +1,6 @@
 import { inngest } from './client';
 import sharp from 'sharp';
 import { createClient } from '@supabase/supabase-js';
-import { validateImageUrl } from '../server/image-processing';
 import { SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
 import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 import { IMAGES_BUCKET } from '$lib/constants/images';
@@ -22,18 +21,30 @@ const STORAGE_BUCKET = IMAGES_BUCKET;
 const MAX_RETRIES = 3;
 const PROCESSING_TIMEOUT = 30000; // 30 seconds
 
-// Domain validation for security
-const ALLOWED_DOMAINS = [
-  'i.ytimg.com',
-  'img.youtube.com',
-  'i1.ytimg.com',
-  'i2.ytimg.com',
-  'i3.ytimg.com',
-  'i4.ytimg.com',
-  'static-cdn.jtvnw.net',
-];
+// Crop defaults
+interface ImageProperties {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+const PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS: ImageProperties = {
+  x: 280,
+  y: 0,
+  height: 720,
+  width: 720,
+};
+
+const PLAYLIST_IMAGE_CROP_DEFAULTS: ImageProperties = {
+  x: 70, // (320-180)/2 = 70
+  y: 0,
+  height: 180,
+  width: 180,
+};
 
 interface ProcessingResult {
+  jpgPath?: string;
   webpPath?: string;
   avifPath?: string;
   error?: string;
@@ -46,20 +57,54 @@ function generateStoragePaths(
   entityType: string,
   entityId: string,
   imageType: string
-) {
-  const basePath = `${entityType}s/${entityId}/${imageType}`;
+): { jpgPath?: string; webpPath: string; avifPath: string } {
+  const timestamp = Date.now();
+
+  if (entityType === 'playlist') {
+    // Use playlist-images/{playlistId}/ structure
+    const basePath = `playlist-images/${entityId}/playlist-${entityId}-${timestamp}`;
+    return {
+      // No JPG path for playlists in background processing
+      webpPath: `${basePath}.webp`,
+      avifPath: `${basePath}.avif`,
+    };
+  } else if (entityType === 'video') {
+    // Keep existing video structure
+    if (imageType === 'thumbnail') {
+      const basePath = `thumbnails/${entityId}/thumbnail-${entityId}-${timestamp}`;
+      return {
+        jpgPath: `${basePath}.jpg`,
+        webpPath: `${basePath}.webp`,
+        avifPath: `${basePath}.avif`,
+      };
+    } else if (imageType === 'thumbnail_maxres') {
+      const basePath = `thumbnails/${entityId}/thumbnail-maxres-${entityId}-${timestamp}`;
+      return {
+        jpgPath: `${basePath}.jpg`,
+        webpPath: `${basePath}.webp`,
+        avifPath: `${basePath}.avif`,
+      };
+    }
+  }
+
+  // Fallback
+  const basePath = `${entityType}s/${entityId}/${entityType}-${entityId}-${timestamp}`;
   return {
+    jpgPath: `${basePath}.jpg`,
     webpPath: `${basePath}.webp`,
     avifPath: `${basePath}.avif`,
   };
 }
 
 /**
- * Download and validate image from source URL (supports external URLs and Supabase Storage paths)
+ * Download and validate image from source URL
  */
 async function downloadImage(sourceUrl: string): Promise<Buffer> {
-  // Check if it's a Supabase Storage path (starts with playlists/ or videos/)
-  if (sourceUrl.startsWith('playlists/') || sourceUrl.startsWith('videos/')) {
+  // Check if it's a Supabase Storage path (starts with playlist-images/ or thumbnails/)
+  if (
+    sourceUrl.startsWith('playlist-images/') ||
+    sourceUrl.startsWith('thumbnails/')
+  ) {
     // Download from Supabase Storage
     const { data, error } = await supabase.storage
       .from(STORAGE_BUCKET)
@@ -70,11 +115,6 @@ async function downloadImage(sourceUrl: string): Promise<Buffer> {
     }
 
     return Buffer.from(await data.arrayBuffer());
-  }
-
-  // Handle external URLs (YouTube thumbnails, etc.)
-  if (!validateImageUrl(sourceUrl)) {
-    throw new Error(`Invalid or disallowed image URL: ${sourceUrl}`);
   }
 
   const controller = new AbortController();
@@ -104,14 +144,82 @@ async function downloadImage(sourceUrl: string): Promise<Buffer> {
 }
 
 /**
- * Process image buffer into WebP and AVIF formats with throttling and optional cropping
+ * Get playlist crop properties from database or use defaults
+ */
+async function getPlaylistCropProperties(
+  playlistId: string,
+  sourceUrl: string
+): Promise<ImageProperties> {
+  // Get playlist image_properties
+  const { data: playlist, error } = await supabase
+    .from('playlists')
+    .select('image_properties')
+    .eq('id', playlistId)
+    .single();
+
+  if (error) {
+    console.warn(`Failed to get playlist crop properties: ${error.message}`);
+  }
+
+  // If we have custom crop properties, use them
+  if (playlist?.image_properties) {
+    const props = playlist.image_properties as ImageProperties;
+    // Validate the properties have required fields
+    if (
+      typeof props.x === 'number' &&
+      typeof props.y === 'number' &&
+      typeof props.width === 'number' &&
+      typeof props.height === 'number'
+    ) {
+      return props;
+    }
+  }
+
+  // Use defaults based on source URL resolution detection
+  // Check if this looks like a maxres URL or get image dimensions
+  try {
+    const imageBuffer = await downloadImage(sourceUrl);
+    const metadata = await sharp(imageBuffer).metadata();
+
+    const imageWidth = metadata.width || 0;
+    const imageHeight = metadata.height || 0;
+
+    // Detect if this is a maxres image (1280x720)
+    if (imageWidth === 1280 && imageHeight === 720) {
+      return PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS;
+    }
+    // Detect if this is a medium thumbnail (320x180)
+    else if (imageWidth === 320 && imageHeight === 180) {
+      return PLAYLIST_IMAGE_CROP_DEFAULTS;
+    }
+    // For other sizes, create a centered square crop
+    else {
+      const cropSize = Math.min(imageWidth, imageHeight);
+      return {
+        x: Math.round((imageWidth - cropSize) / 2),
+        y: Math.round((imageHeight - cropSize) / 2),
+        width: cropSize,
+        height: cropSize,
+      };
+    }
+  } catch (error) {
+    console.warn(
+      'Failed to detect image dimensions, using standard defaults:',
+      error
+    );
+    return PLAYLIST_IMAGE_CROP_DEFAULTS;
+  }
+}
+
+/**
+ * Process image buffer into different formats with optional cropping
  */
 async function processImageFormats(
   buffer: Buffer,
   entityType?: string,
-  imageType?: string,
+  playlistId?: string,
   sourceUrl?: string
-): Promise<{ webp: Buffer; avif: Buffer }> {
+): Promise<{ jpg?: Buffer; webp: Buffer; avif: Buffer }> {
   // Add throttling to prevent server overload
   const throttleDelay = process.env.NODE_ENV === 'development' ? 1000 : 0; // 1 second delay in dev
   if (throttleDelay > 0) {
@@ -123,37 +231,26 @@ async function processImageFormats(
   // Get metadata for optimization
   const metadata = await sharpInstance.metadata();
 
-  // Apply playlist-specific square cropping if this is a playlist from external source (YouTube)
-  // Skip cropping for uploaded images from storage (they're already cropped by user)
+  // Apply playlist-specific cropping
   let pipeline = sharpInstance;
-  const isUploadedImage =
-    sourceUrl?.startsWith('playlists/') || sourceUrl?.startsWith('videos/');
-
-  if (entityType === 'playlist' && !isUploadedImage) {
-    const imageWidth = metadata.width || 0;
-    const imageHeight = metadata.height || 0;
-
-    // Create square crop based on image dimensions (only for YouTube thumbnails)
-    const cropDimensions = getPlaylistCropDimensions(
-      imageWidth,
-      imageHeight,
-      imageType === 'thumbnail_maxres'
-    );
+  if (entityType === 'playlist' && playlistId && sourceUrl) {
+    const cropProps = await getPlaylistCropProperties(playlistId, sourceUrl);
 
     pipeline = pipeline.extract({
-      left: cropDimensions.x,
-      top: cropDimensions.y,
-      width: cropDimensions.width,
-      height: cropDimensions.height,
+      left: cropProps.x,
+      top: cropProps.y,
+      width: cropProps.width,
+      height: cropProps.height,
     });
 
     console.log(
-      `Applied playlist square crop: ${cropDimensions.width}x${cropDimensions.height} from ${imageWidth}x${imageHeight}`
+      `Applied playlist crop: ${cropProps.width}x${cropProps.height} from ${metadata.width}x${metadata.height} at (${cropProps.x}, ${cropProps.y})`
     );
   }
 
   // Calculate optimal quality based on image characteristics
   const baseQuality = 85;
+  const jpgQuality = Math.min(baseQuality, 90);
   const webpQuality = Math.min(baseQuality, 90);
   const avifQuality = Math.min(baseQuality - 5, 85); // AVIF is more efficient
 
@@ -165,9 +262,26 @@ async function processImageFormats(
     });
   }
 
+  const result: { jpg?: Buffer; webp: Buffer; avif: Buffer } = {
+    webp: Buffer.alloc(0),
+    avif: Buffer.alloc(0),
+  };
+
+  // Generate JPG only for videos (not playlists)
+  if (entityType === 'video') {
+    result.jpg = await pipeline
+      .clone()
+      .jpeg({
+        quality: jpgQuality,
+        progressive: true,
+        mozjpeg: true,
+      })
+      .toBuffer();
+  }
+
   // Generate WebP with lower effort in development to reduce CPU usage
   const webpEffort = process.env.NODE_ENV === 'development' ? 1 : 3;
-  const webpBuffer = await pipeline
+  result.webp = await pipeline
     .clone()
     .webp({
       quality: webpQuality,
@@ -180,7 +294,7 @@ async function processImageFormats(
 
   // Generate AVIF with lower effort in development
   const avifEffort = process.env.NODE_ENV === 'development' ? 2 : 4;
-  const avifBuffer = await pipeline
+  result.avif = await pipeline
     .clone()
     .avif({
       quality: avifQuality,
@@ -189,75 +303,41 @@ async function processImageFormats(
     })
     .toBuffer();
 
-  return { webp: webpBuffer, avif: avifBuffer };
-}
-
-/**
- * Get optimal crop dimensions for playlist square images
- */
-function getPlaylistCropDimensions(
-  imageWidth: number,
-  imageHeight: number,
-  isMaxRes: boolean
-): { x: number; y: number; width: number; height: number } {
-  if (isMaxRes) {
-    // For maxres images (1280x720), crop 720x720 square from center
-    if (imageWidth === 1280 && imageHeight === 720) {
-      return {
-        x: Math.round((1280 - 720) / 2), // 280px from left
-        y: 0,
-        width: 720,
-        height: 720,
-      };
-    }
-  } else {
-    // For standard resolution images, detect YouTube thumbnail sizes
-    if (imageWidth === 320 && imageHeight === 180) {
-      // Medium thumbnail: crop 180x180 square from center
-      return {
-        x: Math.round((320 - 180) / 2), // 70px from left
-        y: 0,
-        width: 180,
-        height: 180,
-      };
-    } else if (imageWidth === 480 && imageHeight === 360) {
-      // High thumbnail: crop 360x360 square from center
-      return {
-        x: Math.round((480 - 360) / 2), // 60px from left
-        y: 0,
-        width: 360,
-        height: 360,
-      };
-    } else if (imageWidth === 120 && imageHeight === 90) {
-      // Default thumbnail: crop 90x90 square from center
-      return {
-        x: Math.round((120 - 90) / 2), // 15px from left
-        y: 0,
-        width: 90,
-        height: 90,
-      };
-    }
-  }
-
-  // For unknown sizes, create centered square crop
-  const cropSize = Math.min(imageWidth, imageHeight);
-  return {
-    x: Math.round((imageWidth - cropSize) / 2),
-    y: Math.round((imageHeight - cropSize) / 2),
-    width: cropSize,
-    height: cropSize,
-  };
+  return result;
 }
 
 /**
  * Upload processed images to Supabase Storage
  */
 async function uploadToStorage(
+  jpgBuffer: Buffer | null,
   webpBuffer: Buffer,
   avifBuffer: Buffer,
+  jpgPath: string | undefined,
   webpPath: string,
   avifPath: string
-): Promise<{ webpPath: string; avifPath: string }> {
+): Promise<{ jpgPath?: string; webpPath: string; avifPath: string }> {
+  const results: { jpgPath?: string; webpPath: string; avifPath: string } = {
+    webpPath,
+    avifPath,
+  };
+
+  // Upload JPG if provided (only for videos now)
+  if (jpgBuffer && jpgPath) {
+    const { error: jpgError } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .upload(jpgPath, jpgBuffer, {
+        contentType: 'image/jpeg',
+        cacheControl: '31536000', // 1 year
+        upsert: true,
+      });
+
+    if (jpgError) {
+      throw new Error(`Failed to upload JPG image: ${jpgError.message}`);
+    }
+    results.jpgPath = jpgPath;
+  }
+
   // Upload WebP
   const { error: webpError } = await supabase.storage
     .from(STORAGE_BUCKET)
@@ -284,7 +364,7 @@ async function uploadToStorage(
     throw new Error(`Failed to upload AVIF image: ${avifError.message}`);
   }
 
-  return { webpPath, avifPath };
+  return results;
 }
 
 /**
@@ -326,25 +406,31 @@ export const processImage = inngest.createFunction(
       // Download source image
       const imageBuffer = await downloadImage(sourceUrl);
 
-      // Process image into WebP and AVIF
-      const { webp: webpBuffer, avif: avifBuffer } = await processImageFormats(
+      // Process image into different formats
+      const {
+        jpg: jpgBuffer,
+        webp: webpBuffer,
+        avif: avifBuffer,
+      } = await processImageFormats(
         imageBuffer,
         entityType,
-        imageType,
+        entityType === 'playlist' ? entityId : undefined,
         sourceUrl
       );
 
       // Generate storage paths
-      const { webpPath, avifPath } = generateStoragePaths(
+      const { jpgPath, webpPath, avifPath } = generateStoragePaths(
         entityType,
         entityId,
         imageType
       );
 
-      // Upload to Supabase Storage
+      // Upload to Supabase Storage (no JPG for playlists)
       const uploadResult = await uploadToStorage(
+        jpgBuffer || null,
         webpBuffer,
         avifBuffer,
+        jpgPath,
         webpPath,
         avifPath
       );
@@ -354,6 +440,7 @@ export const processImage = inngest.createFunction(
         'complete_image_processing_job',
         {
           job_id: jobId,
+          jpg_path: uploadResult.jpgPath,
           webp_path: uploadResult.webpPath,
           avif_path: uploadResult.avifPath,
         }
@@ -365,6 +452,7 @@ export const processImage = inngest.createFunction(
 
       console.log(`Successfully processed image for ${entityType} ${entityId}`);
       return {
+        jpgPath: uploadResult.jpgPath,
         webpPath: uploadResult.webpPath,
         avifPath: uploadResult.avifPath,
       };

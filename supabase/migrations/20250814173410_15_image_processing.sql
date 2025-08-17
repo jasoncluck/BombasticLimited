@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS "public"."image_processing_jobs" (
   "id" uuid DEFAULT gen_random_uuid() NOT NULL,
   "entity_type" text NOT NULL CHECK (entity_type IN ('video', 'playlist')),
   "entity_id" text NOT NULL,
-  "image_type" text NOT NULL CHECK (image_type IN ('thumbnail', 'thumbnail_maxres', 'uploaded_image')),
+  "image_type" text NOT NULL CHECK (image_type IN ('thumbnail', 'thumbnail_maxres', 'playlist_image')),
   "source_url" text NOT NULL,
   "status" text DEFAULT 'pending' NOT NULL CHECK (
     status IN (
@@ -54,7 +54,7 @@ COMMENT ON COLUMN "public"."image_processing_jobs"."entity_type" IS 'Type of ent
 
 COMMENT ON COLUMN "public"."image_processing_jobs"."entity_id" IS 'ID of the video or playlist being processed';
 
-COMMENT ON COLUMN "public"."image_processing_jobs"."image_type" IS 'Type of image being processed (thumbnail or thumbnail_maxres)';
+COMMENT ON COLUMN "public"."image_processing_jobs"."image_type" IS 'Type of image being processed (thumbnail, thumbnail_maxres, or playlist_image)';
 
 COMMENT ON COLUMN "public"."image_processing_jobs"."priority" IS 'Job priority (lower numbers = higher priority)';
 
@@ -72,12 +72,15 @@ CREATE INDEX IF NOT EXISTS "idx_videos_image_processing_status" ON "public"."vid
 CREATE INDEX IF NOT EXISTS "idx_playlists_image_processing_status" ON "public"."playlists" USING btree ("image_processing_status");
 
 -- Create trigger to update updated_at timestamp
-CREATE OR REPLACE FUNCTION public.update_image_processing_jobs_updated_at () RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION public.update_image_processing_jobs_updated_at () RETURNS TRIGGER 
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
 BEGIN
   NEW.updated_at = now();
   RETURN NEW;
 END;
-$$ language plpgsql;
+$$;
 
 CREATE TRIGGER trigger_update_image_processing_jobs_updated_at BEFORE
 UPDATE ON "public"."image_processing_jobs" FOR EACH ROW
@@ -302,7 +305,10 @@ ALTER TABLE "public"."image_processing_jobs" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Service role can manage image processing jobs" ON "public"."image_processing_jobs" FOR ALL USING (auth.role () = 'service_role');
 
 -- Function to queue image processing for videos
-CREATE OR REPLACE FUNCTION public.trigger_queue_video_image_processing () RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION public.trigger_queue_video_image_processing () RETURNS TRIGGER 
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
 BEGIN
   -- Only queue processing if thumbnail URLs are provided and different from OLD values
   IF (TG_OP = 'INSERT') OR 
@@ -340,7 +346,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Function to queue image processing for playlists
 CREATE OR REPLACE FUNCTION public.trigger_queue_playlist_image_processing () RETURNS TRIGGER 
@@ -348,30 +354,46 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = ''
 AS $$
+DECLARE
+  source_video RECORD;
+  source_url text;
+  crop_changed boolean := false;
 BEGIN
-  -- Queue processing if:
-  -- 1. INSERT operation with uploaded image
-  -- 2. UPDATE operation where image_properties changed (crop settings)
-  -- 3. UPDATE operation where thumbnail_video_id changed
+  -- Check if image_properties or thumbnail_video_id changed
   IF (TG_OP = 'INSERT') OR 
      (TG_OP = 'UPDATE' AND (
        COALESCE(OLD.image_properties::text, '') != COALESCE(NEW.image_properties::text, '') OR
        COALESCE(OLD.thumbnail_video_id, '') != COALESCE(NEW.thumbnail_video_id, '')
      )) THEN
     
-    -- Queue processing for playlist cropped images if we have a source video
-    IF NEW.thumbnail_video_id IS NOT NULL THEN
-      PERFORM public.queue_image_processing_job(
-        'playlist',
-        NEW.id::text,
-        'uploaded_image',
-        NEW.thumbnail_video_id, -- Use video ID as source reference
-        25 -- High priority for playlist images
-      );
+    crop_changed := true;
+  END IF;
+  
+  -- Queue processing if crop settings changed and we have a thumbnail video
+  IF crop_changed AND NEW.thumbnail_video_id IS NOT NULL THEN
+    -- Get the video details to find the highest resolution thumbnail
+    SELECT thumbnail_maxres_url, thumbnail_url 
+    INTO source_video
+    FROM "public"."videos" 
+    WHERE id = NEW.thumbnail_video_id;
+    
+    IF FOUND THEN
+      -- Use highest resolution available (maxres preferred)
+      source_url := COALESCE(source_video.thumbnail_maxres_url, source_video.thumbnail_url);
+      
+      IF source_url IS NOT NULL AND source_url != '' THEN
+        PERFORM public.queue_image_processing_job(
+          'playlist',
+          NEW.id::text,
+          'playlist_image',
+          source_url,
+          25 -- High priority for playlist images
+        );
 
-      -- Update processing status to pending
-      NEW.image_processing_status = 'pending';
-      NEW.image_processing_updated_at = now();
+        -- Update processing status to pending
+        NEW.image_processing_status = 'pending';
+        NEW.image_processing_updated_at = now();
+      END IF;
     END IF;
   END IF;
 
@@ -380,7 +402,10 @@ END;
 $$;
 
 -- Function to cleanup optimized images when entities are deleted
-CREATE OR REPLACE FUNCTION public.trigger_cleanup_optimized_images () RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION public.trigger_cleanup_optimized_images () RETURNS TRIGGER 
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
 DECLARE
   storage_paths text[];
 BEGIN
@@ -443,7 +468,7 @@ BEGIN
 
   RETURN OLD;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Create triggers for videos table
 DROP TRIGGER IF EXISTS trigger_video_image_processing ON public.videos;
@@ -459,6 +484,9 @@ DROP TRIGGER IF EXISTS trigger_video_image_cleanup ON public.videos;
 CREATE TRIGGER trigger_video_image_cleanup BEFORE DELETE ON public.videos FOR EACH ROW
 EXECUTE FUNCTION public.trigger_cleanup_optimized_images ();
 
+-- Create triggers for playlists table
+DROP TRIGGER IF EXISTS trigger_playlist_image_processing ON public.playlists;
+
 CREATE TRIGGER trigger_playlist_image_processing BEFORE INSERT
 OR
 UPDATE OF image_properties,
@@ -473,11 +501,10 @@ EXECUTE FUNCTION public.trigger_cleanup_optimized_images ();
 -- Add comments
 COMMENT ON FUNCTION public.trigger_queue_video_image_processing () IS 'Automatically queue image processing jobs when video thumbnails are added/updated';
 
-COMMENT ON FUNCTION public.trigger_queue_playlist_image_processing () IS 'Automatically queue image processing jobs when playlist thumbnails are added/updated';
+COMMENT ON FUNCTION public.trigger_queue_playlist_image_processing () IS 'Automatically queue image processing jobs when playlist image properties or thumbnail video are updated';
 
 COMMENT ON FUNCTION public.trigger_cleanup_optimized_images () IS 'Cleanup optimized images and processing jobs when entities are deleted';
 
--- Policy for playlist images bucket
 CREATE POLICY "Allow playlist image uploads" ON storage.objects
 FOR INSERT WITH CHECK (
   auth.role() = 'authenticated' AND
@@ -485,7 +512,6 @@ FOR INSERT WITH CHECK (
   (storage.foldername(name))[1] = 'playlist-images'
 );
 
--- Policy for reading playlist images
 CREATE POLICY "Allow playlist image reads" ON storage.objects
 FOR SELECT USING (
   auth.role() = 'authenticated' AND
@@ -493,7 +519,6 @@ FOR SELECT USING (
   (storage.foldername(name))[1] = 'playlist-images'
 );
 
--- Policy for updating playlist images (for upsert)
 CREATE POLICY "Allow playlist image updates" ON storage.objects
 FOR UPDATE USING (
   auth.role() = 'authenticated' AND

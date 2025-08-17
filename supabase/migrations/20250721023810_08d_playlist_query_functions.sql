@@ -13,6 +13,7 @@ CREATE OR REPLACE FUNCTION public.select_best_image_format(
 ) RETURNS text
 LANGUAGE plpgsql
 IMMUTABLE
+SET search_path = ''
 AS $$
 BEGIN
   -- Start from preferred format and fallback through the chain

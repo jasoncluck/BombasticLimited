@@ -14,12 +14,6 @@ import type {
 } from '@supabase/supabase-js';
 import type { Database } from './database.types';
 import type { PlaylistVideo } from './playlists';
-import {
-  getUserVideoHistory,
-  getVideoAnalytics,
-  type VideoHistoryWithVideo,
-  type VideoAnalytics,
-} from './video-history';
 
 export const DEFAULT_NUM_VIDEOS_PAGINATION = 100;
 export const DEFAULT_NUM_VIDEOS_OVERVIEW = 15;

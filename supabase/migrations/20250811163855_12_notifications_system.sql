@@ -98,12 +98,15 @@ CREATE INDEX IF NOT EXISTS user_notifications_notification_user_idx ON public.us
 -- STEP 3: Create utility functions and triggers
 -- =====================================================
 -- Create updated_at trigger function
-CREATE OR REPLACE FUNCTION public.update_updated_at_column () RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION public.update_updated_at_column () RETURNS TRIGGER 
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
 BEGIN
     NEW.updated_at = now();
     RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$;
 
 -- Create triggers for updated_at
 CREATE TRIGGER update_notifications_updated_at BEFORE
@@ -123,7 +126,11 @@ ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_notifications ENABLE ROW LEVEL SECURITY;
 
 -- Helper function to check if current user is admin
-CREATE OR REPLACE FUNCTION public.is_admin () RETURNS boolean AS $$
+CREATE OR REPLACE FUNCTION public.is_admin () RETURNS boolean 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 BEGIN
     RETURN EXISTS (
         SELECT 1 
@@ -132,7 +139,7 @@ BEGIN
         AND account_type = 'admin'
     );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- RLS Policies for notifications (admin only for direct access)
 CREATE POLICY "Admins can manage notifications" ON public.notifications FOR ALL USING (public.is_admin ())
@@ -220,7 +227,11 @@ END $$;
 -- STEP 7: Create notification management functions
 -- =====================================================
 -- Function to get unread notification count for current authenticated user
-CREATE OR REPLACE FUNCTION public.get_unread_notification_count () RETURNS integer AS $$
+CREATE OR REPLACE FUNCTION public.get_unread_notification_count () RETURNS integer 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 BEGIN
     -- Check if user is authenticated
     IF auth.uid() IS NULL THEN
@@ -238,10 +249,14 @@ BEGIN
         AND (n.end_datetime IS NULL OR n.end_datetime > now())
     );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- Function to mark notifications as read for current authenticated user
-CREATE OR REPLACE FUNCTION public.mark_notifications_as_read (notification_ids INTEGER[] DEFAULT NULL) RETURNS void AS $$
+CREATE OR REPLACE FUNCTION public.mark_notifications_as_read (notification_ids INTEGER[] DEFAULT NULL) RETURNS void 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 BEGIN
     -- Check if user is authenticated
     IF auth.uid() IS NULL THEN
@@ -262,7 +277,7 @@ BEGIN
         AND un.read = false;
     END IF;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- Function to get all notifications for current authenticated user (with pagination)
 CREATE OR REPLACE FUNCTION public.get_user_notifications (
@@ -286,7 +301,11 @@ CREATE OR REPLACE FUNCTION public.get_user_notifications (
   dismissed boolean,
   assigned_at TIMESTAMP WITH TIME ZONE,
   user_notification_updated_at TIMESTAMP WITH TIME ZONE
-) AS $$
+) 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 BEGIN
     -- Check if user is authenticated
     IF auth.uid() IS NULL THEN
@@ -323,10 +342,14 @@ BEGIN
     LIMIT limit_count
     OFFSET offset_count;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- Function for users to remove/dismiss their own notifications
-CREATE OR REPLACE FUNCTION public.remove_user_notification (notification_ids INTEGER[]) RETURNS integer AS $$
+CREATE OR REPLACE FUNCTION public.remove_user_notification (notification_ids INTEGER[]) RETURNS integer 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 DECLARE
     updated_count integer;
 BEGIN
@@ -364,7 +387,7 @@ BEGIN
     
     RETURN updated_count;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- Function to create a notification and assign to users (Admin only) - FIXED AMBIGUOUS REFERENCES
 CREATE OR REPLACE FUNCTION public.create_notification (
@@ -377,7 +400,11 @@ CREATE OR REPLACE FUNCTION public.create_notification (
   notification_start_datetime TIMESTAMP WITH TIME ZONE DEFAULT now(),
   notification_end_datetime TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   target_user_ids UUID[] DEFAULT NULL
-) RETURNS integer AS $$
+) RETURNS integer 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 DECLARE
     new_notification_id integer;
     target_user_id uuid;
@@ -417,7 +444,7 @@ BEGIN
     
     RETURN new_notification_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- Function to create notifications for all users (Admin only) - FIXED AMBIGUOUS REFERENCES
 CREATE OR REPLACE FUNCTION public.create_notification_for_all_users (
@@ -429,7 +456,11 @@ CREATE OR REPLACE FUNCTION public.create_notification_for_all_users (
   notification_is_test boolean DEFAULT FALSE,
   notification_start_datetime TIMESTAMP WITH TIME ZONE DEFAULT now(),
   notification_end_datetime TIMESTAMP WITH TIME ZONE DEFAULT NULL
-) RETURNS integer AS $$
+) RETURNS integer 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 DECLARE
     new_notification_id integer;
     user_count integer := 0;
@@ -459,10 +490,14 @@ BEGIN
     
     RETURN user_count;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- RPC function to remove/cancel notifications (Admin only)
-CREATE OR REPLACE FUNCTION public.remove_notification (notification_id integer) RETURNS boolean AS $$
+CREATE OR REPLACE FUNCTION public.remove_notification (notification_id integer) RETURNS boolean 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 DECLARE
     deleted_count integer;
     affected_users integer;
@@ -510,10 +545,14 @@ BEGIN
     -- Return true if notification was deleted, false if not found
     RETURN deleted_count > 0;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- Cleanup function for expired notifications (cron version)
-CREATE OR REPLACE FUNCTION public.cleanup_expired_notifications_cron () RETURNS integer AS $$
+CREATE OR REPLACE FUNCTION public.cleanup_expired_notifications_cron () RETURNS integer 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 DECLARE
     deleted_count integer;
 BEGIN
@@ -540,10 +579,14 @@ BEGIN
     
     RETURN deleted_count;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- Manual cleanup function for admins
-CREATE OR REPLACE FUNCTION public.cleanup_expired_notifications () RETURNS integer AS $$
+CREATE OR REPLACE FUNCTION public.cleanup_expired_notifications () RETURNS integer 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 DECLARE
     deleted_count integer;
 BEGIN
@@ -575,10 +618,14 @@ BEGIN
     
     RETURN deleted_count;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- Welcome notification function for new users (now reuses notification ID = 1)
-CREATE OR REPLACE FUNCTION public.create_welcome_notification_for_new_user () RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION public.create_welcome_notification_for_new_user () RETURNS TRIGGER 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 BEGIN
     -- Assign the welcome notification (ID = 1) to the new user
     INSERT INTO public.user_notifications (notification_id, user_id)
@@ -587,7 +634,7 @@ BEGIN
     
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- Trigger to create welcome notification when a user is created
 CREATE TRIGGER create_welcome_notification_on_user_creation
@@ -656,7 +703,11 @@ WHERE
   );
 
 -- Create a manual function to setup cron job (in case you need to run it separately)
-CREATE OR REPLACE FUNCTION public.setup_notification_cleanup_cron () RETURNS text AS $$
+CREATE OR REPLACE FUNCTION public.setup_notification_cleanup_cron () RETURNS text 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 BEGIN
     -- This function can be called manually to setup the cron job
     -- if you have the necessary permissions
@@ -671,7 +722,7 @@ EXCEPTION
     WHEN OTHERS THEN
         RETURN 'Failed to schedule cron job. Error: ' || SQLERRM || '. You may need to install pg_cron extension or have superuser privileges.';
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- =====================================================
 -- STEP 10: Add documentation comments
