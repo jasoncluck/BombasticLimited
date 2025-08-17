@@ -72,12 +72,15 @@ CREATE INDEX IF NOT EXISTS "idx_videos_image_processing_status" ON "public"."vid
 CREATE INDEX IF NOT EXISTS "idx_playlists_image_processing_status" ON "public"."playlists" USING btree ("image_processing_status");
 
 -- Create trigger to update updated_at timestamp
-CREATE OR REPLACE FUNCTION public.update_image_processing_jobs_updated_at () RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION public.update_image_processing_jobs_updated_at () RETURNS TRIGGER 
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
 BEGIN
   NEW.updated_at = now();
   RETURN NEW;
 END;
-$$ language plpgsql;
+$$;
 
 CREATE TRIGGER trigger_update_image_processing_jobs_updated_at BEFORE
 UPDATE ON "public"."image_processing_jobs" FOR EACH ROW
@@ -302,7 +305,10 @@ ALTER TABLE "public"."image_processing_jobs" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Service role can manage image processing jobs" ON "public"."image_processing_jobs" FOR ALL USING (auth.role () = 'service_role');
 
 -- Function to queue image processing for videos
-CREATE OR REPLACE FUNCTION public.trigger_queue_video_image_processing () RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION public.trigger_queue_video_image_processing () RETURNS TRIGGER 
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
 BEGIN
   -- Only queue processing if thumbnail URLs are provided and different from OLD values
   IF (TG_OP = 'INSERT') OR 
@@ -340,7 +346,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Function to queue image processing for playlists
 CREATE OR REPLACE FUNCTION public.trigger_queue_playlist_image_processing () RETURNS TRIGGER 
@@ -380,7 +386,10 @@ END;
 $$;
 
 -- Function to cleanup optimized images when entities are deleted
-CREATE OR REPLACE FUNCTION public.trigger_cleanup_optimized_images () RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION public.trigger_cleanup_optimized_images () RETURNS TRIGGER 
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
 DECLARE
   storage_paths text[];
 BEGIN
@@ -443,7 +452,7 @@ BEGIN
 
   RETURN OLD;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Create triggers for videos table
 DROP TRIGGER IF EXISTS trigger_video_image_processing ON public.videos;
