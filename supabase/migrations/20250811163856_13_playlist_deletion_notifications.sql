@@ -2,7 +2,11 @@
 -- Purpose: Add notification system for public playlist deletions
 -- Send notifications to all users following a public playlist when it gets deleted
 -- Function to notify followers when a public playlist is deleted
-CREATE OR REPLACE FUNCTION public.notify_playlist_deletion () RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION public.notify_playlist_deletion () RETURNS TRIGGER 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = ''
+AS $$
 DECLARE
     follower_record record;
     notification_count integer := 0;
@@ -47,7 +51,7 @@ BEGIN
     
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 -- Create trigger to fire when playlists are updated (for soft deletion)
 CREATE TRIGGER playlist_deletion_notification_trigger

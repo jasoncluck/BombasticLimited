@@ -15,12 +15,15 @@ EXECUTE FUNCTION "public"."set_playlist_search_vector" ();
 
 
 CREATE OR REPLACE FUNCTION public.update_playlists_updated_at()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
 BEGIN
   NEW.updated_at = now();
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 COMMENT ON FUNCTION public.update_playlists_updated_at() IS 'Trigger function to automatically update updated_at timestamp for playlists';
 
