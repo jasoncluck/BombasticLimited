@@ -81,16 +81,14 @@
       );
 
       // Convert canvas to data URL for storage until form submission
-      const croppedDataUrl = croppedCanvas.toDataURL('image/jpeg', 0.9);
+      const croppedDataUrl = (croppedCanvas as HTMLCanvasElement).toDataURL('image/jpeg', 0.9);
       pendingCroppedImage = croppedDataUrl;
 
       // Close the cropper dialog
       cropperState.rootState.open = false;
 
       // Update the image properties to reflect the new crop
-      $formData.image_properties = JSON.stringify(
-        cropState.rootState.pixelCrop
-      );
+      $formData.image_properties = cropState.rootState.pixelCrop;
     } catch (error) {
       console.error('Error cropping image:', error);
     }
@@ -126,7 +124,7 @@
         const updatedPlaylist = Object.assign(playlist, data);
         if (isDeletingPlaylistImage) {
           updatedPlaylist.image_url = null;
-          updatedPlaylist.image_properties = null;
+          updatedPlaylist.image_properties = undefined;
         }
 
         // Force reactive update by creating new object reference if image_properties changed

@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   getCroppedPlaylistImageUrl,
   getVideoThumbnailWebpUrl,
-  getVideoThumbnailWebpUrlsBatch,
 } from '../playlist-service';
 import type { ImageProperties } from '../playlist';
 

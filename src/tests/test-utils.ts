@@ -232,7 +232,7 @@ export function createMockPlaylist(overrides: Partial<any> = {}) {
     thumbnail_maxres_url: 'https://example.com/playlist_maxres_image.jpg',
     thumbnail_maxres_webp_url: 'https://example.com/playlist_maxres_image.webp',
     thumbnail_maxres_avif_url: 'https://example.com/playlist_maxres_image.avif',
-    image_processing_status: 'completed',
+    image_processing_status: 'completed' as const,
     image_processing_updated_at: '2023-01-01T00:00:00Z',
     image_properties: { x: 0, y: 0, width: 100, height: 100 },
     created_at: '2023-01-01T00:00:00Z',
