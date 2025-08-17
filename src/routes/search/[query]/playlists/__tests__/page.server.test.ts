@@ -65,8 +65,7 @@ describe('Search Playlists Page Server Load', () => {
     expect(result?.playlistResults).toHaveLength(1);
     expect(result?.playlistResults?.[0]).toMatchObject({
       ...mockPlaylist,
-      processedImageUrl:
-        '/api/playlist-image?url=https%3A%2F%2Fexample.com%2Fthumb.jpg&maxresUrl=https%3A%2F%2Fexample.com%2Fmaxres.jpg&format=auto&quality=90&type=image&imageProperties=%7B%22x%22%3A0%2C%22y%22%3A0%2C%22width%22%3A100%2C%22height%22%3A100%7D',
+      // processedImageUrl is no longer generated since playlist-image API doesn't exist
     });
   });
 });

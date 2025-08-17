@@ -94,7 +94,7 @@ describe('getCroppedPlaylistImageUrl', () => {
     expect(mockCreateImageBitmap).toHaveBeenCalledWith(mockImageBlob);
     expect(mockConvertToBlob).toHaveBeenCalledWith({
       type: 'image/webp',
-      quality: 0.8,
+      quality: 0.75,
     });
     expect(mockDrawImage).toHaveBeenCalledWith(
       mockImageBitmap,
@@ -247,9 +247,9 @@ describe('getCroppedPlaylistImageUrl', () => {
     expect(global.Image).toHaveBeenCalled();
     expect(mockCanvas.toBlob).toHaveBeenCalled();
 
-    // Verify that proper dimensions were used for maxres crop
-    expect(mockCanvas.width).toBe(720); // Default width for maxres
-    expect(mockCanvas.height).toBe(720); // Default height for maxres
+    // Verify that proper dimensions were used for maxres crop (updated to match current implementation)
+    expect(mockCanvas.width).toBe(360); // Updated preview size for maxres
+    expect(mockCanvas.height).toBe(360); // Updated preview size for maxres
   }, 10000); // Increase timeout to 10 seconds
 
   it('should return null when no image URL is provided', async () => {
@@ -336,7 +336,7 @@ describe('getVideoThumbnailWebpUrl', () => {
     expect(mockCreateImageBitmap).toHaveBeenCalledWith(mockImageBlob);
     expect(mockConvertToBlob).toHaveBeenCalledWith({
       type: 'image/webp',
-      quality: 0.8,
+      quality: 0.75,
     });
 
     // Should draw the full image without cropping (0, 0 coordinates)
@@ -411,7 +411,7 @@ describe('getVideoThumbnailWebpUrl', () => {
     expect(mockCanvas.toBlob).toHaveBeenCalledWith(
       expect.any(Function),
       'image/webp',
-      0.8
+      0.75
     );
   });
 

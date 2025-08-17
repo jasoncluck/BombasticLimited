@@ -133,6 +133,9 @@ describe('playlist/[shortId]/+page.server.ts', () => {
       supabase: mockSupabase,
       session: mockSession,
     },
+    params: {
+      shortId: 'abc123',
+    },
     cookies: {},
   };
 
@@ -191,6 +194,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
       );
       expect(mockGetPlaylistData).toHaveBeenCalledWith({
         shortId: 'abc123',
+        acceptHeader: null,
         contentFilter: {
           type: 'playlist',
           sort: { key: 'playlistOrder', order: 'ascending' },
