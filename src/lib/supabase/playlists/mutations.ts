@@ -13,21 +13,18 @@ import type {
   PlaylistImageProperties,
 } from './types';
 import { playlistImagePropertiesToJson } from '$lib/components/playlist/playlist';
-import { getBestImageFormat } from './utils';
 
 /**
- * Create a new playlist
+ * Create a new playlist - default image is an icon so no accept header needed
  */
 export async function createPlaylist({
   name,
   session,
   supabase,
-  acceptHeader,
 }: {
   name?: string;
   session: Session | null;
   supabase: SupabaseClient<Database>;
-  acceptHeader: string | null;
 }) {
   if (!session) {
     throw new Error('Unable to create playlist, invalid session');
@@ -38,7 +35,6 @@ export async function createPlaylist({
       p_created_by: session?.user.id,
       p_name: name,
       p_type: 'Private',
-      p_preferred_image_format: getBestImageFormat('playlist', acceptHeader),
     })
     .single();
 

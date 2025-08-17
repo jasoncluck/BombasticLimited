@@ -121,6 +121,8 @@ function getOptimalCropDimensions(
   }
 }
 
+// ... (all your existing handler functions remain the same until the image processing functions)
+
 export async function handleCreatePlaylist({
   sidebarState,
   session,
@@ -190,6 +192,7 @@ export async function handleDeletePlaylist({
   sidebarState.refreshData();
   return { error };
 }
+
 export async function handleAddVideosToPlaylist({
   playlist,
   videos,
@@ -550,6 +553,7 @@ export async function getCroppedPlaylistImageUrl({
 
 /**
  * Fast OffscreenCanvas processing - optimized for speed
+ * **BRIGHTNESS FIX: Match server processing quality and settings**
  */
 async function processWithFastOffscreenCanvas(
   imageUrl: string,
@@ -579,6 +583,10 @@ async function processWithFastOffscreenCanvas(
 
   if (!ctx) throw new Error('Failed to get canvas context');
 
+  // **BRIGHTNESS FIX: Enable smoothing to match server processing**
+  ctx.imageSmoothingEnabled = true; // **CHANGED: Enable smoothing for consistency**
+  ctx.imageSmoothingQuality = 'high'; // **ADD: High quality smoothing**
+
   // **SPEED: Single draw operation with scaling**
   ctx.drawImage(
     imageBitmap,
@@ -592,10 +600,10 @@ async function processWithFastOffscreenCanvas(
     previewSize
   );
 
-  // **SPEED: Lower quality for instant preview**
+  // **BRIGHTNESS FIX: Use quality that matches server processing**
   const blob = await canvas.convertToBlob({
     type: 'image/webp',
-    quality: 0.7, // Lower quality for speed
+    quality: 0.75, // **CHANGED: Match server quality more closely**
   });
 
   const arrayBuffer = await blob.arrayBuffer();
@@ -608,6 +616,7 @@ async function processWithFastOffscreenCanvas(
 
 /**
  * Fast Canvas processing fallback - optimized for speed
+ * **BRIGHTNESS FIX: Match server processing quality and settings**
  */
 async function processWithFastCanvas(
   imageUrl: string,
@@ -638,8 +647,9 @@ async function processWithFastCanvas(
         const ctx = canvas.getContext('2d');
         if (!ctx) throw new Error('Failed to get canvas context');
 
-        // **SPEED: Disable image smoothing for faster processing**
-        ctx.imageSmoothingEnabled = false;
+        // **BRIGHTNESS FIX: Consistent rendering settings**
+        ctx.imageSmoothingEnabled = true; // **CHANGED: Enable smoothing**
+        ctx.imageSmoothingQuality = 'high'; // **ADD: High quality**
 
         // Single draw operation
         ctx.drawImage(
@@ -654,7 +664,7 @@ async function processWithFastCanvas(
           previewSize
         );
 
-        // **SPEED: Lower quality WebP for instant preview**
+        // **BRIGHTNESS FIX: Match server quality**
         canvas.toBlob(
           (blob) => {
             if (!blob) {
@@ -668,7 +678,7 @@ async function processWithFastCanvas(
             reader.readAsDataURL(blob);
           },
           'image/webp',
-          0.7 // Lower quality for speed
+          0.75 // **CHANGED: Match server quality**
         );
       } catch (error) {
         reject(error);
@@ -729,9 +739,17 @@ async function processVideoThumbnailWithFastOffscreenCanvas(
 
   if (!ctx) throw new Error('Failed to get canvas context');
 
+  // **BRIGHTNESS FIX: Enable smoothing for consistency**
+  ctx.imageSmoothingEnabled = true; // **CHANGED: Enable smoothing**
+  ctx.imageSmoothingQuality = 'high'; // **ADD: High quality**
+
   ctx.drawImage(imageBitmap, 0, 0, width, height);
 
-  const blob = await canvas.convertToBlob({ type: 'image/webp', quality: 0.7 });
+  // **BRIGHTNESS FIX: Match server quality**
+  const blob = await canvas.convertToBlob({
+    type: 'image/webp',
+    quality: 0.75,
+  }); // **CHANGED: Match server quality**
   const arrayBuffer = await blob.arrayBuffer();
   const uint8Array = new Uint8Array(arrayBuffer);
   const base64 = btoa(String.fromCharCode(...uint8Array));
@@ -761,8 +779,8 @@ async function processVideoThumbnailWithFastCanvas(
         const ctx = canvas.getContext('2d');
         if (!ctx) throw new Error('Failed to get canvas context');
 
-        // **SPEED: Disable smoothing**
-        ctx.imageSmoothingEnabled = false;
+        ctx.imageSmoothingEnabled = true; // **CHANGED: Enable smoothing**
+        ctx.imageSmoothingQuality = 'high'; // **ADD: High quality**
         ctx.drawImage(img, 0, 0, width, height);
 
         canvas.toBlob(
@@ -778,7 +796,7 @@ async function processVideoThumbnailWithFastCanvas(
             reader.readAsDataURL(blob);
           },
           'image/webp',
-          0.7 // Lower quality for speed
+          0.75 // **CHANGED: Match server quality**
         );
       } catch (error) {
         reject(error);

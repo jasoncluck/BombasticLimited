@@ -58,7 +58,9 @@ export type PlaylistVideoWithTimestamp = {
   title: GetPlaylistDataResponse['video_title'];
   description: GetPlaylistDataResponse['video_description'];
   thumbnail_url: GetPlaylistDataResponse['video_thumbnail_url'];
-  thumbnail_maxres_url: GetPlaylistDataResponse['video_thumbnail_maxres_url'] | null;
+  thumbnail_maxres_url:
+    | GetPlaylistDataResponse['video_thumbnail_maxres_url']
+    | null;
   image_url: GetPlaylistDataResponse['video_image_url'] | null;
   published_at: GetPlaylistDataResponse['video_published_at'];
   duration: GetPlaylistDataResponse['video_duration'];

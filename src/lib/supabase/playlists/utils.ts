@@ -12,7 +12,7 @@ import type {
  * Detect optimal image format based on Accept header (server) or browser capabilities (client)
  */
 export function detectOptimalImageFormat(
-  acceptHeader: string | null
+  acceptHeader?: string | null
 ): 'avif' | 'webp' | 'jpeg' {
   // Server-side: Parse Accept header
 
@@ -192,7 +192,7 @@ export function getBestPlaylistImageUrl(
     image_webp_url: string | null;
     image_url: string | null;
   },
-  acceptHeader?: string | null
+  acceptHeader: string | null
 ): string | null {
   const preferredFormat = detectOptimalImageFormat(acceptHeader);
 

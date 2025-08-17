@@ -1,10 +1,6 @@
 import { goto } from '$app/navigation';
 import type { Json } from '$lib/supabase/database.types';
-import {
-  type Playlist,
-  type PlaylistImageProperties,
-  isUserPlaylist,
-} from '$lib/supabase/playlists';
+import { type Playlist, isUserPlaylist } from '$lib/supabase/playlists';
 import {
   type CombinedContentFilter,
   getSortKeysForView,
@@ -12,13 +8,6 @@ import {
   isSortKey,
   isSortOrder,
 } from '../content/content-filter';
-
-export interface ImageProperties extends Record<string, Json> {
-  x: number;
-  y: number;
-  height: number;
-  width: number;
-}
 
 export function handlePlaylistNavigation({
   playlist,

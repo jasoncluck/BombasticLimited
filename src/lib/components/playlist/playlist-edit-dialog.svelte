@@ -15,13 +15,14 @@
   import Textarea from '$lib/components/ui/textarea/textarea.svelte';
   import * as ImageCropper from '$lib/components/ui/image-cropper';
   import {
+    useImageCropperCancel,
     useImageCropperCrop,
     useImageCropperCropper,
   } from '$lib/components/ui/image-cropper/image-cropper.svelte.js';
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
   import * as Popover from '$lib/components/ui/popover';
   import Checkbox from '$lib/components/ui/checkbox/checkbox.svelte';
-  import type { Snippet } from 'svelte';
+  import { onMount, type Snippet } from 'svelte';
   import ScrollArea from '../ui/scroll-area/scroll-area.svelte';
   import { getFlash, updateFlash } from 'sveltekit-flash-message';
   import { page } from '$app/state';
@@ -106,6 +107,11 @@
     if (cropState.rootState.pixelCrop) {
       $formData.image_properties = cropState.rootState.pixelCrop;
     }
+
+    // if (cancelState.rootState.pixelCrop) {
+    //   console.log('in cancel');
+    //   $formData.image_properties = null;
+    // }
 
     // Set the initial image URL when the dialog opens
     cropperState.rootState.tempUrl =

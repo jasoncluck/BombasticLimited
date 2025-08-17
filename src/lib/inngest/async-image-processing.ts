@@ -288,6 +288,8 @@ async function getPlaylistCropProperties(
 /**
  * **HIGH-QUALITY** image processing with advanced optimization
  */
+// In your image_processing_worker.ts, update the processImageFormats function:
+
 async function processImageFormats(
   buffer: Buffer,
   entityType?: string,
@@ -297,19 +299,17 @@ async function processImageFormats(
   console.log('🎨 Starting HIGH-QUALITY image processing...');
 
   const sharpInstance = sharp(buffer, {
-    // **QUALITY: Enhanced input options**
     failOnError: false,
-    density: 300, // High DPI for quality
-    limitInputPixels: false, // Allow large images
+    density: 300,
+    limitInputPixels: false,
   });
 
-  // Get metadata for optimization
+  // Get metadata
   const metadata = await sharpInstance.metadata();
   console.log(
     `📐 Source image: ${metadata.width}x${metadata.height}, ${metadata.format}, ${Math.round((metadata.size || 0) / 1024)}KB`
   );
 
-  // Apply playlist-specific cropping
   let pipeline = sharpInstance;
   let finalOutputSize = {
     width: metadata.width || 1920,
@@ -326,22 +326,15 @@ async function processImageFormats(
       height: cropProps.height,
     });
 
-    console.log(
-      `✂️ Applied crop: ${cropProps.width}x${cropProps.height} from ${metadata.width}x${metadata.height} at (${cropProps.x}, ${cropProps.y})`
-    );
-
-    // **QUALITY: High-resolution output sizes**
-    // Create multiple sizes for responsive images
-    const outputSize = cropProps.width <= 180 ? 512 : 1024; // Much larger for quality
+    const outputSize = cropProps.width <= 180 ? 512 : 1024;
     finalOutputSize = { width: outputSize, height: outputSize };
 
     pipeline = pipeline
       .resize(outputSize, outputSize, {
         fit: 'cover',
         withoutEnlargement: false,
-        kernel: sharp.kernel.lanczos3, // **QUALITY: Best resampling algorithm**
+        kernel: sharp.kernel.lanczos3,
       })
-      // **QUALITY: Advanced sharpening**
       .sharpen({
         sigma: 1.0,
         m1: 1.0,
@@ -350,26 +343,13 @@ async function processImageFormats(
         y2: 10.0,
         y3: 20.0,
       });
-
-    console.log(`📏 Resized to: ${outputSize}x${outputSize} (HIGH-QUALITY)`);
   }
 
-  // **QUALITY: Advanced preprocessing**
-  pipeline = pipeline
-    // Normalize image
-    .normalize()
-    // Enhance contrast slightly
-    .modulate({
-      brightness: 1.02,
-      saturation: 1.05,
-      hue: 0,
-    });
+  pipeline = pipeline.toColourspace('srgb');
 
-  // **QUALITY: Calculate adaptive quality based on content and size**
   const pixelCount = finalOutputSize.width * finalOutputSize.height;
-  const isLargeImage = pixelCount > 500000; // 500K pixels
+  const isLargeImage = pixelCount > 500000;
 
-  // Higher quality for smaller images, optimized for larger ones
   const webpQuality = isLargeImage ? 92 : 95;
   const avifQuality = isLargeImage ? 85 : 88;
 
@@ -378,7 +358,6 @@ async function processImageFormats(
     avif: Buffer.alloc(0),
   };
 
-  // **HIGH-QUALITY WebP** - Maximum effort for best compression
   console.log('🔄 Generating HIGH-QUALITY WebP...');
   result.webp = await pipeline
     .clone()
@@ -393,31 +372,16 @@ async function processImageFormats(
     })
     .toBuffer();
 
-  const webpSizeKB = Math.round(result.webp.length / 1024);
-  console.log(`✅ WebP generated: ${webpSizeKB}KB at quality ${webpQuality}`);
-
-  // **HIGH-QUALITY AVIF** - Maximum effort for best compression
   console.log('🔄 Generating HIGH-QUALITY AVIF...');
   result.avif = await pipeline
     .clone()
     .avif({
       quality: avifQuality,
-      effort: 9, // **QUALITY: Maximum effort (0-9)**
+      effort: 9,
       lossless: false,
+      chromaSubsampling: '4:4:4',
     })
     .toBuffer();
-
-  const avifSizeKB = Math.round(result.avif.length / 1024);
-  const compressionRatio = Math.round(
-    ((result.webp.length - result.avif.length) / result.webp.length) * 100
-  );
-
-  console.log(
-    `✅ AVIF generated: ${avifSizeKB}KB at quality ${avifQuality} (${compressionRatio}% smaller than WebP)`
-  );
-  console.log(
-    `🎯 Total processing completed: WebP=${webpSizeKB}KB, AVIF=${avifSizeKB}KB`
-  );
 
   return result;
 }

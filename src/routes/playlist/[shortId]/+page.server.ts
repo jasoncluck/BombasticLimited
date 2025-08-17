@@ -1,8 +1,10 @@
 import {
   getPlaylistData,
   isUserPlaylist,
+  parseImageProperties,
   updatePlaylistImage,
   updatePlaylistInfo,
+  type PlaylistImageProperties,
   type PlaylistVideo,
 } from '$lib/supabase/playlists';
 import { type Actions, type RequestEvent } from '@sveltejs/kit';
@@ -105,11 +107,32 @@ export const load: PageServerLoad = async ({
   };
 };
 
+// Helper function to compare image properties
+function imagePropertiesChanged(
+  current: PlaylistImageProperties | null,
+  submitted: PlaylistImageProperties | null
+): boolean {
+  // If both are null/undefined, no change
+  if (!current && !submitted) return false;
+
+  // If one is null and other isn't, there's a change
+  if (!current || !submitted) return true;
+
+  // Compare the actual values
+  return (
+    current.x !== submitted.x ||
+    current.y !== submitted.y ||
+    current.width !== submitted.width ||
+    current.height !== submitted.height
+  );
+}
+
 export const actions: Actions = {
   default: async ({
     request,
     locals: { supabase, session },
     cookies,
+    params,
   }: RequestEvent) => {
     if (!session) {
       redirect(302, '/auth');
@@ -166,6 +189,20 @@ export const actions: Actions = {
       return fail(400, { form });
     }
 
+    // Get current playlist data to compare image properties
+    const { playlist: currentPlaylist } = await getPlaylistData({
+      shortId: params.shortId,
+      currentPage: 1,
+      limit: 1,
+      acceptHeader: null,
+      supabase,
+      session,
+    });
+
+    if (!currentPlaylist) {
+      return fail(404, { form });
+    }
+
     if (isDeletingPlaylistImage) {
       await updatePlaylistImage({
         playlistId: id,
@@ -174,6 +211,7 @@ export const actions: Actions = {
         supabase,
       });
     } else {
+      // Normalize zero values to null
       if (
         image_properties?.x === 0 &&
         image_properties?.y === 0 &&
@@ -183,32 +221,46 @@ export const actions: Actions = {
         image_properties = null;
       }
 
-      const processedPlaylistImage = await getCroppedPlaylistImageUrlServer({
-        thumbnailUrl: thumbnail_url,
-        thumbnailMaxResUrl: thumbnail_maxres_url,
-        imageProperties: image_properties,
-      });
+      // Check if image properties have actually changed
+      const hasImagePropertiesChanged = imagePropertiesChanged(
+        parseImageProperties(currentPlaylist.image_properties),
+        image_properties
+      );
 
-      // With the new system, we don't need to pass the image URL through the form
-      // The image is handled separately via the new database structure
-      await updatePlaylistImage({
-        playlistId: id,
-        processedPlaylistImage,
-        imageProperties: image_properties,
-        thumbnailVideoId: thumbnail_video_id,
-        supabase,
-      });
+      // Check if thumbnail URLs have changed
+      const hasThumbnailChanged =
+        currentPlaylist.thumbnail_url !== thumbnail_url ||
+        currentPlaylist.thumbnail_maxres_url !== thumbnail_maxres_url ||
+        currentPlaylist.thumbnail_video_id !== thumbnail_video_id;
 
-      await updatePlaylistInfo({
-        playlistId: id,
-        name,
-        description,
-        imageProperties: image_properties,
-        type,
-        supabase,
-        session,
-      });
+      // Only process image if something image-related has changed
+      if (hasImagePropertiesChanged || hasThumbnailChanged) {
+        const processedPlaylistImage = await getCroppedPlaylistImageUrlServer({
+          thumbnailUrl: thumbnail_url,
+          thumbnailMaxResUrl: thumbnail_maxres_url,
+          imageProperties: image_properties,
+        });
+
+        await updatePlaylistImage({
+          playlistId: id,
+          processedPlaylistImage,
+          imageProperties: image_properties,
+          thumbnailVideoId: thumbnail_video_id,
+          supabase,
+        });
+      }
     }
+
+    // Always update playlist info (name, description, type) regardless of image changes
+    await updatePlaylistInfo({
+      playlistId: id,
+      name,
+      description,
+      imageProperties: image_properties,
+      type,
+      supabase,
+      session,
+    });
 
     // Return the updated playlist data for optimistic updates
     return {

@@ -150,6 +150,7 @@ export async function getPlaylistDataByYoutubeId({
   limit = DEFAULT_NUM_VIDEOS_OVERVIEW,
   supabase,
   session,
+  acceptHeader,
 }: {
   youtubeId: string;
   contentFilter?: PlaylistVideosFilter;
@@ -157,6 +158,7 @@ export async function getPlaylistDataByYoutubeId({
   limit?: number;
   supabase: SupabaseClient<Database>;
   session: Session | null;
+  acceptHeader: string | null;
 }) {
   return getPlaylistData({
     youtubeId,
@@ -165,6 +167,7 @@ export async function getPlaylistDataByYoutubeId({
     limit,
     supabase,
     session,
+    acceptHeader,
   });
 }
 
