@@ -246,6 +246,11 @@ export function createMockPlaylist(overrides: Partial<any> = {}) {
     image_url: 'https://example.com/playlist_image.jpg',
     thumbnail_video_id: 'video-1',
     duration_seconds: 1800,
+    // Add missing database table properties
+    image_avif_url: 'https://example.com/playlist_image.avif',
+    image_jpg_url: 'https://example.com/playlist_image.jpg',
+    image_webp_url: 'https://example.com/playlist_image.webp',
+    updated_at: '2023-01-01T00:00:00Z',
     // Add UserPlaylist properties
     playlist_position: 1,
     sorted_by: 'title',

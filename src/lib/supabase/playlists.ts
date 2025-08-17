@@ -78,14 +78,14 @@ export type PlaylistVideoWithTimestamp = {
   source: GetPlaylistDataResponse['video_source'];
   title: GetPlaylistDataResponse['video_title'];
   description: GetPlaylistDataResponse['video_description'];
-  thumbnail_url: GetPlaylistDataResponse['video_thumbnail_url'] | null;
+  thumbnail_url: GetPlaylistDataResponse['video_thumbnail_url'];
   thumbnail_maxres_url: GetPlaylistDataResponse['video_thumbnail_maxres_url'] | null;
-  image_url: GetPlaylistDataResponse['video_image_url'];
+  image_url: GetPlaylistDataResponse['video_image_url'] | null;
   published_at: GetPlaylistDataResponse['video_published_at'];
   duration: GetPlaylistDataResponse['video_duration'];
-  video_start_seconds: GetPlaylistDataResponse['video_start_seconds'];
-  updated_at: GetPlaylistDataResponse['video_updated_at'];
-  watched_at: GetPlaylistDataResponse['video_watched_at'];
+  video_start_seconds: GetPlaylistDataResponse['video_start_seconds'] | null;
+  updated_at: GetPlaylistDataResponse['video_updated_at'] | null;
+  watched_at: GetPlaylistDataResponse['video_watched_at'] | null;
   // Additional Video properties to make it compatible with VideoWithTimestamp
   views: number;
   image_processing_status: 'pending' | 'processing' | 'completed' | 'failed';
