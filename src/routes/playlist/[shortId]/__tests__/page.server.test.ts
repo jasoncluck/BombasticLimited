@@ -202,7 +202,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
       });
 
       expect(result).toEqual({
-        playlist: { ...mockPlaylist, processedImageUrl: 'processed-image-url' },
+        playlist: mockPlaylist,
         videos: mockVideos,
         videosCount: 0,
         contentFilter: {
@@ -229,29 +229,6 @@ describe('playlist/[shortId]/+page.server.ts', () => {
       expect(mockFlashRedirect).toHaveBeenCalledWith(302, '/');
     });
 
-    it('should use existing processed image URL when available', async () => {
-      const playlistWithImage = {
-        ...mockPlaylist,
-        processedImageUrl: 'existing-image-url',
-      };
-      const mockFormData = createMockSuperValidated(playlistWithImage);
-
-      mockGetPlaylistData.mockResolvedValue({
-        playlist: playlistWithImage,
-        videos: mockVideos,
-        videosCount: 0,
-        playlistDuration: mockPlaylistDuration,
-        error: null,
-      });
-      mockSuperValidate.mockResolvedValue(mockFormData);
-
-      const result = await load(mockLoadEvent);
-
-      expect(mockGetCroppedPlaylistImageUrlServer).not.toHaveBeenCalled();
-      expect((result as any).playlist.processedImageUrl).toBe(
-        'existing-image-url'
-      );
-    });
 
     it('should handle user playlist sort preferences', async () => {
       const userPlaylist = {
@@ -386,7 +363,6 @@ describe('playlist/[shortId]/+page.server.ts', () => {
       });
 
       expect(result).toEqual({
-        updatedPlaylist,
         form: validFormData,
         success: true,
       });
@@ -413,8 +389,8 @@ describe('playlist/[shortId]/+page.server.ts', () => {
 
       expect(mockUpdatePlaylistImage).toHaveBeenCalledWith({
         playlistId: 1,
-        thumbnailMaxResUrl: null,
-        thumbnailUrl: null,
+        processedPlaylistImage: null,
+        imageProperties: null,
         supabase: mockSupabase,
       });
     });

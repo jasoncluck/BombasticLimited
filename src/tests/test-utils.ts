@@ -253,7 +253,7 @@ export function createMockPlaylist(overrides: Partial<any> = {}) {
     updated_at: '2023-01-01T00:00:00Z',
     // Add UserPlaylist properties
     playlist_position: 1,
-    sorted_by: 'title',
+    sorted_by: 'playlistOrder',
     sort_order: 'ascending',
     added_at: '2023-01-01T00:00:00Z',
     avatar_url: null,

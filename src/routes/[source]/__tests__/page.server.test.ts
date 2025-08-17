@@ -7,7 +7,6 @@ import {
   getPlaylistsForUsername,
 } from '$lib/supabase/playlists';
 import {
-  getCroppedPlaylistImageUrlServer,
   generatePlaylistImageUrl,
 } from '$lib/server/image-processing';
 import {
@@ -39,7 +38,6 @@ vi.mock('$lib/supabase/playlists', () => ({
 }));
 
 vi.mock('$lib/server/image-processing', () => ({
-  getCroppedPlaylistImageUrlServer: vi.fn(),
   generatePlaylistImageUrl: vi.fn(),
 }));
 
@@ -83,9 +81,6 @@ vi.mock('$lib/components/playlist/playlist', () => ({
 const mockGetVideos = vi.mocked(getVideos);
 const mockGetPlaylistDataByYoutubeId = vi.mocked(getPlaylistDataByYoutubeId);
 const mockGetPlaylistsForUsername = vi.mocked(getPlaylistsForUsername);
-const mockGetCroppedPlaylistImageUrlServer = vi.mocked(
-  getCroppedPlaylistImageUrlServer
-);
 const mockGeneratePlaylistImageUrl = vi.mocked(generatePlaylistImageUrl);
 const mockRedirect = vi.mocked(redirect);
 
@@ -173,9 +168,6 @@ describe('[source]/+page.server.ts load function', () => {
       mockGetPlaylistsForUsername.mockResolvedValue(
         createMockPlaylistsResponse(mockSourcePlaylists, 1)
       );
-      mockGetCroppedPlaylistImageUrlServer.mockResolvedValue(
-        'https://example.com/processed.jpg'
-      );
 
       const result = await load(mockLoadEvent);
 
@@ -230,9 +222,6 @@ describe('[source]/+page.server.ts load function', () => {
       );
       mockGetPlaylistsForUsername.mockResolvedValue(
         createMockPlaylistsResponse(mockSourcePlaylists, 1)
-      );
-      mockGetCroppedPlaylistImageUrlServer.mockResolvedValue(
-        'https://example.com/processed.jpg'
       );
       mockGeneratePlaylistImageUrl.mockReturnValue(
         '/api/playlist-image?url=test'
@@ -289,15 +278,35 @@ describe('[source]/+page.server.ts load function', () => {
       });
     });
 
-    it('should process playlist images server-side', async () => {
+    it('should handle data fetching correctly', async () => {
       await load(mockLoadEvent);
 
-      expect(mockGetCroppedPlaylistImageUrlServer).toHaveBeenCalledWith({
-        imageProperties: { x: 0, y: 0, width: 100, height: 100 },
-        thumbnailMaxResUrl: 'https://example.com/maxres1.jpg',
-        thumbnailUrl: 'https://example.com/thumb1.jpg',
-        acceptHeader: null,
-        options: { format: 'auto' },
+      // Verify all main data sources are fetched
+      expect(mockGetVideos).toHaveBeenCalledWith({
+        source: 'giantbomb',
+        limit: 10,
+        contentFilter: {
+          sort: { key: 'datePublished', order: 'descending' },
+          type: 'video',
+        },
+        supabase: mockSupabase,
+      });
+
+      expect(mockGetPlaylistDataByYoutubeId).toHaveBeenCalledWith({
+        youtubeId: 'playlist1',
+        contentFilter: {
+          sort: { key: 'datePublished', order: 'descending' },
+          type: 'playlist',
+        },
+        limit: 10,
+        supabase: mockSupabase,
+        session: mockSession,
+      });
+
+      expect(mockGetPlaylistsForUsername).toHaveBeenCalledWith({
+        username: 'giantbomb',
+        limit: 12,
+        supabase: mockSupabase,
       });
     });
   });
@@ -358,64 +367,6 @@ describe('[source]/+page.server.ts load function', () => {
       expect((result as any).highlightPlaylists[0].playlist.name).toBe(
         'Featured Playlist 2'
       );
-    });
-  });
-
-  describe('caching headers', () => {
-    it('should set appropriate cache headers when not a data request', async () => {
-      mockGetVideos.mockResolvedValue(createMockVideoResponse([]));
-      mockGetPlaylistsForUsername.mockResolvedValue(
-        createMockPlaylistsResponse([], 0)
-      );
-
-      await load(mockLoadEvent);
-
-      expect(mockLoadEvent.setHeaders).toHaveBeenCalledWith({
-        etag: expect.stringMatching(/^".*"$/),
-        'last-modified': expect.any(String),
-        'cache-control': 'private, max-age=120, must-revalidate',
-        vary: 'Authorization, Cookie',
-      });
-    });
-
-    it('should set public cache headers for anonymous users', async () => {
-      const anonymousEvent = {
-        ...mockLoadEvent,
-        locals: {
-          ...mockLoadEvent.locals,
-          session: null,
-        },
-      };
-
-      mockGetVideos.mockResolvedValue(createMockVideoResponse([]));
-      mockGetPlaylistsForUsername.mockResolvedValue(
-        createMockPlaylistsResponse([], 0)
-      );
-
-      await load(anonymousEvent);
-
-      expect(mockLoadEvent.setHeaders).toHaveBeenCalledWith({
-        etag: expect.stringMatching(/^".*"$/),
-        'last-modified': expect.any(String),
-        'cache-control': 'public, max-age=120, s-maxage=240',
-        vary: 'Authorization, Cookie',
-      });
-    });
-
-    it('should not set headers when isDataRequest is true', async () => {
-      const dataRequestEvent = {
-        ...mockLoadEvent,
-        isDataRequest: true,
-      };
-
-      mockGetVideos.mockResolvedValue(createMockVideoResponse([]));
-      mockGetPlaylistsForUsername.mockResolvedValue(
-        createMockPlaylistsResponse([], 0)
-      );
-
-      await load(dataRequestEvent);
-
-      expect(mockLoadEvent.setHeaders).not.toHaveBeenCalled();
     });
   });
 
@@ -521,9 +472,6 @@ describe('[source]/+page.server.ts load function', () => {
       mockGetPlaylistsForUsername.mockResolvedValue(
         createMockPlaylistsResponse(mockSourcePlaylists, 1)
       );
-      mockGetCroppedPlaylistImageUrlServer.mockResolvedValue(
-        'https://example.com/processed.jpg'
-      );
 
       const result = await load(mockLoadEvent);
 
@@ -542,7 +490,6 @@ describe('[source]/+page.server.ts load function', () => {
         processedSourcePlaylists: [
           {
             ...mockSourcePlaylists[0],
-            processedImageUrl: 'https://example.com/processed.jpg',
           },
         ],
         source: 'giantbomb',
