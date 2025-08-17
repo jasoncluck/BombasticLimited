@@ -1,6 +1,10 @@
 import { goto } from '$app/navigation';
 import type { Json } from '$lib/supabase/database.types';
-import { type Playlist, isUserPlaylist } from '$lib/supabase/playlists';
+import {
+  type Playlist,
+  type PlaylistImageProperties,
+  isUserPlaylist,
+} from '$lib/supabase/playlists';
 import {
   type CombinedContentFilter,
   getSortKeysForView,
@@ -46,7 +50,9 @@ export function handlePlaylistNavigation({
   goto(targetUrl);
 }
 
-export function parseImageProperties(jsonb: Json): ImageProperties | null {
+export function parseImageProperties(
+  jsonb: Json
+): PlaylistImageProperties | null {
   if (!jsonb) return null;
 
   try {
@@ -61,7 +67,7 @@ export function parseImageProperties(jsonb: Json): ImageProperties | null {
       typeof obj.height === 'number' &&
       typeof obj.width === 'number'
     ) {
-      return obj as ImageProperties;
+      return obj as PlaylistImageProperties;
     }
 
     return null;
@@ -81,8 +87,4 @@ export function playlistImagePropertiesToJson(
     width: properties.width,
     height: properties.height,
   } as Json;
-}
-
-export function serializeImageProperties(props: ImageProperties | null): Json {
-  return props;
 }

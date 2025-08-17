@@ -115,7 +115,7 @@
 {/if}
 
 <!-- Notifications Bell -->
-{#if session && userNotifications.length > 0}
+{#if session && mediaQueryState.isSm && userNotifications.length > 0}
   <NotificationBell {supabase} {session} bind:openNotificationDrawer />
 {/if}
 

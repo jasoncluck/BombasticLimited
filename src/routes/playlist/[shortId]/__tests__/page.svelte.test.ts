@@ -15,10 +15,6 @@ vi.mock('$lib/state/content.svelte', () => ({
   }),
 }));
 
-vi.mock('$lib/components/ui/image-cropper', () => ({
-  default: {},
-}));
-
 vi.mock('./playlist-header.svelte', () => ({
   default: class MockPlaylistHeader {
     constructor() {}

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import * as ImageCropper from '$lib/components/ui/image-cropper';
   import {
     DEFAULT_SECTION_ID,
     getContentState,
@@ -62,14 +61,12 @@
 </script>
 
 <div class="relative flex grow flex-col">
-  <ImageCropper.Root src={playlist.image_url ?? undefined}>
-    <PlaylistHeader
-      {userProfile}
-      {...playlistHeaderProps}
-      bind:showFloatingBreadcrumbs
-      {videos}
-    />
-  </ImageCropper.Root>
+  <PlaylistHeader
+    {userProfile}
+    {...playlistHeaderProps}
+    bind:showFloatingBreadcrumbs
+    {videos}
+  />
 
   <Content
     {playlist}

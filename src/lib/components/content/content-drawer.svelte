@@ -46,7 +46,6 @@
   import { getVideoThumbnailUrl } from '$lib/utils/video-thumbnails';
   import PlaylistDeleteAlertDrawer from '../playlist/playlist-delete-alert-drawer.svelte';
   import PlaylistEditDrawer from '../playlist/playlist-edit-drawer.svelte';
-  import * as ImageCropper from '$lib/components/ui/image-cropper';
 
   interface ContentDrawerProps {
     videos?: Video[];
@@ -74,7 +73,6 @@
   }: ContentDrawerProps = $props();
 
   const contentState = getContentState();
-  const playlistState = getPlaylistState();
   const mediaQueryState = getMediaQueryState();
   const sidebarState = getSidebarState();
 
@@ -219,29 +217,27 @@
         <!-- Edit button for header variant -->
         {#if variant === 'header' && isPlaylistOwner && form && playlist}
           <!-- Nested Edit Playlist Drawer - only render when open to prevent spacing issues -->
-          <ImageCropper.Root src={playlist.processedImageUrl ?? undefined}>
-            <PlaylistEditDrawer
-              {form}
-              {playlist}
-              {session}
-              formId="content-drawer-nested-edit-form"
-              bind:open={editPlaylistDrawerOpen}
-              nested={true}
-            >
-              {#snippet trigger()}
-                <Button
-                  class="drawer-button"
-                  variant="ghost"
-                  onclick={() => {
-                    editPlaylistDrawerOpen = true;
-                  }}
-                >
-                  <Pencil class="drawer-icon" />
-                  Edit
-                </Button>
-              {/snippet}
-            </PlaylistEditDrawer>
-          </ImageCropper.Root>
+          <PlaylistEditDrawer
+            {form}
+            {playlist}
+            {session}
+            formId="content-drawer-nested-edit-form"
+            bind:open={editPlaylistDrawerOpen}
+            nested={true}
+          >
+            {#snippet trigger()}
+              <Button
+                class="drawer-button"
+                variant="ghost"
+                onclick={() => {
+                  editPlaylistDrawerOpen = true;
+                }}
+              >
+                <Pencil class="drawer-icon" />
+                Edit
+              </Button>
+            {/snippet}
+          </PlaylistEditDrawer>
         {/if}
         <!-- Reorder content -->
         {#if contentFilter.sort.key === 'playlistOrder' && isPlaylistOwner && variant === 'header' && videos && videos.length > 0}
