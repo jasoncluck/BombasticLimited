@@ -509,23 +509,23 @@ CREATE POLICY "Allow playlist image uploads" ON storage.objects
 FOR INSERT WITH CHECK (
   auth.role() = 'authenticated' AND
   bucket_id = 'content-images' AND
-  (storage.foldername(name))[1] = 'playlist-images'
+  (storage.foldername(name))[1] = 'playlists'
 );
 
 CREATE POLICY "Allow playlist image reads" ON storage.objects
 FOR SELECT USING (
   auth.role() = 'authenticated' AND
   bucket_id = 'content-images' AND
-  (storage.foldername(name))[1] = 'playlist-images'
+  (storage.foldername(name))[1] = 'playlists'
 );
 
 CREATE POLICY "Allow playlist image updates" ON storage.objects
 FOR UPDATE USING (
   auth.role() = 'authenticated' AND
   bucket_id = 'content-images' AND
-  (storage.foldername(name))[1] = 'playlist-images'
+  (storage.foldername(name))[1] = 'playlists'
 ) WITH CHECK (
   auth.role() = 'authenticated' AND
   bucket_id = 'content-images' AND
-  (storage.foldername(name))[1] = 'playlist-images'
+  (storage.foldername(name))[1] = 'playlists'
 );

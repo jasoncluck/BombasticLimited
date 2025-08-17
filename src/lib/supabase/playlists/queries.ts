@@ -16,6 +16,7 @@ import {
   transformUserPlaylistFromRPC,
   transformVideoFromRPC,
   transformVideoFromContextRPC,
+  getFullImageUrl,
 } from './transforms';
 import {
   type Playlist,
@@ -94,8 +95,8 @@ export async function getPlaylistData({
 
   const firstRow = data[0];
 
-  // Transform using simplified function
-  const basePlaylist = transformPlaylistFromRPC(firstRow);
+  // Transform using function with supabase client
+  const basePlaylist = transformPlaylistFromRPC(firstRow, supabase);
 
   // Properly construct the playlist with all available fields
   const playlist: UserPlaylist | ProfilePlaylist = {
@@ -113,10 +114,10 @@ export async function getPlaylistData({
       }),
   };
 
-  // Transform videos with all thumbnail fields
+  // Transform videos with supabase client
   const videos: PlaylistVideoWithTimestamp[] = data
     .filter((row) => !row.is_duration_row && row.video_id) // Make sure we have valid video data
-    .map(transformVideoFromRPC);
+    .map((row) => transformVideoFromRPC(row, supabase));
 
   // Convert total seconds to hours, minutes, seconds
   const totalSeconds = firstRow.total_duration_seconds || 0;
@@ -214,7 +215,7 @@ export async function getPlaylistsForUsername({
     short_id: playlist.short_id,
     created_by: playlist.created_by,
     description: playlist.description,
-    image_url: playlist.image_url, // Already optimized by RPC function
+    image_url: getFullImageUrl(playlist.image_url, supabase), // Convert to full URL
     image_processing_status:
       playlist.image_processing_status as Playlist['image_processing_status'],
     type: playlist.type,
@@ -352,7 +353,9 @@ export async function getPlaylistVideoContext({
     short_id: metadataRow.playlist_short_id,
     created_by: metadataRow.playlist_created_by,
     description: metadataRow.playlist_description,
-    image_url: metadataRow.playlist_image_url, // Already optimized by RPC function
+    image_url:
+      getFullImageUrl(metadataRow.playlist_image_url, supabase) ??
+      metadataRow.playlist_image_url,
     type: metadataRow.playlist_type,
     image_properties: metadataRow.playlist_image_properties,
     youtube_id: metadataRow.playlist_youtube_id,
@@ -371,8 +374,8 @@ export async function getPlaylistVideoContext({
   };
 
   // Convert video rows to video objects using the correct transform function
-  const allVideos: PlaylistVideoWithTimestamp[] = videoRows.map(
-    transformVideoFromContextRPC
+  const allVideos: PlaylistVideoWithTimestamp[] = videoRows.map((row) =>
+    transformVideoFromContextRPC(row, supabase)
   );
 
   // Find current video and next videos
@@ -426,8 +429,10 @@ export async function getUserPlaylists({
     console.error('Error when fetching playlists:', error);
   }
 
-  // Use simplified transform function
-  const userPlaylists = (data || []).map(transformUserPlaylistFromRPC);
+  // Pass supabase client to transform function
+  const userPlaylists = (data || []).map((playlist) =>
+    transformUserPlaylistFromRPC(playlist, supabase)
+  );
 
   return { userPlaylists, count, error };
 }
@@ -479,7 +484,7 @@ export async function searchPlaylists({
     console.error('Error searching playlists:', error);
   }
 
-  // Transform search results - URLs already optimized by RPC function
+  // Transform search results with full URLs
   const transformedPlaylists = (playlists || []).map((playlist) => ({
     id: playlist.id,
     created_at: playlist.created_at,
@@ -487,7 +492,7 @@ export async function searchPlaylists({
     short_id: playlist.short_id,
     created_by: playlist.created_by,
     description: playlist.description,
-    image_url: playlist.image_url, // Already optimized by RPC function
+    image_url: getFullImageUrl(playlist.image_url, supabase), // Convert to full URL
     image_processing_status: playlist.image_processing_status,
     type: playlist.type,
     image_properties: playlist.image_properties,
