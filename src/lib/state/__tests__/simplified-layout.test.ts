@@ -60,32 +60,6 @@ describe('Navigation State with Layout Functionality', () => {
     vi.clearAllMocks();
   });
 
-  describe('Sidebar state management (moved from layout)', () => {
-    it('should initialize with collapsed state as false by default', () => {
-      expect(navigationState.isSidebarCollapsed).toBe(false);
-    });
-
-    it('should update sidebar state when setSidebarCollapsed is called', () => {
-      expect(navigationState.isSidebarCollapsed).toBe(false);
-
-      navigationState.setSidebarCollapsed(true);
-      expect(navigationState.isSidebarCollapsed).toBe(true);
-
-      navigationState.setSidebarCollapsed(false);
-      expect(navigationState.isSidebarCollapsed).toBe(false);
-    });
-
-    it('should toggle sidebar state correctly', () => {
-      expect(navigationState.isSidebarCollapsed).toBe(false);
-
-      navigationState.toggleSidebar();
-      expect(navigationState.isSidebarCollapsed).toBe(true);
-
-      navigationState.toggleSidebar();
-      expect(navigationState.isSidebarCollapsed).toBe(false);
-    });
-  });
-
   describe('Search state management (moved from layout)', () => {
     it('should initialize with empty search query', () => {
       expect(navigationState.searchQuery).toBe('');
@@ -105,16 +79,12 @@ describe('Navigation State with Layout Functionality', () => {
   });
 
   describe('Cleanup functionality', () => {
-    it('should preserve sidebar state during cleanup but reset other states', () => {
-      navigationState.setSidebarCollapsed(true);
-      navigationState.isDraggingDivider = true;
+    it('should reset search states during cleanup', () => {
       navigationState.isSearching = true;
       navigationState.searchQuery = 'test';
 
       navigationState.cleanup();
 
-      expect(navigationState.isSidebarCollapsed).toBe(true); // Should preserve
-      expect(navigationState.isDraggingDivider).toBe(false); // Should reset
       expect(navigationState.isSearching).toBe(false); // Should reset
       expect(navigationState.searchQuery).toBe(''); // Should reset
     });

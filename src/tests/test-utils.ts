@@ -15,8 +15,16 @@ export function createMockVideo(overrides: Partial<Video> = {}): Video {
     source: 'giantbomb',
     thumbnail_url: 'https://example.com/thumb.jpg',
     thumbnail_maxres_url: 'https://example.com/thumb_maxres.jpg',
+    image_url: 'https://example.com/video_image.jpg', // Add missing image_url
     published_at: '2023-01-01T00:00:00Z',
     duration: '00:30:00',
+    views: 0,
+    image_processing_status: 'completed',
+    image_processing_updated_at: '2023-01-01T00:00:00Z',
+    thumbnail_webp_url: 'https://example.com/thumb.webp',
+    thumbnail_avif_url: 'https://example.com/thumb.avif',
+    thumbnail_maxres_webp_url: 'https://example.com/thumb_maxres.webp',
+    thumbnail_maxres_avif_url: 'https://example.com/thumb_maxres.avif',
     ...overrides,
   };
 }
@@ -181,6 +189,36 @@ export function createMockProfileResponse(profile: UserProfile | null = null) {
 }
 
 /**
+ * Mock PlaylistVideoWithTimestamp data factory
+ */
+export function createMockPlaylistVideoWithTimestamp(overrides: Partial<any> = {}) {
+  return {
+    id: 'video-1',
+    video_position: 1,
+    source: 'giantbomb' as const,
+    title: 'Test Video in Playlist',
+    description: 'Test video description',
+    thumbnail_url: 'https://example.com/thumb.jpg',
+    thumbnail_maxres_url: 'https://example.com/thumb_maxres.jpg',
+    image_url: 'https://example.com/video_image.jpg',
+    published_at: '2023-01-01T00:00:00Z',
+    duration: '00:30:00',
+    video_start_seconds: 0,
+    updated_at: '2023-01-01T00:00:00Z',
+    watched_at: '2023-01-01T00:00:00Z',
+    // Video properties for compatibility
+    views: 0,
+    image_processing_status: 'completed' as const,
+    image_processing_updated_at: '2023-01-01T00:00:00Z',
+    thumbnail_webp_url: 'https://example.com/thumb.webp',
+    thumbnail_avif_url: 'https://example.com/thumb.avif',
+    thumbnail_maxres_webp_url: 'https://example.com/thumb_maxres.webp',
+    thumbnail_maxres_avif_url: 'https://example.com/thumb_maxres.avif',
+    ...overrides,
+  };
+}
+
+/**
  * Mock Playlist data factory
  */
 export function createMockPlaylist(overrides: Partial<any> = {}) {
@@ -195,7 +233,7 @@ export function createMockPlaylist(overrides: Partial<any> = {}) {
     thumbnail_maxres_url: 'https://example.com/playlist_maxres_image.jpg',
     thumbnail_maxres_webp_url: 'https://example.com/playlist_maxres_image.webp',
     thumbnail_maxres_avif_url: 'https://example.com/playlist_maxres_image.avif',
-    image_processing_status: 'completed',
+    image_processing_status: 'completed' as const,
     image_processing_updated_at: '2023-01-01T00:00:00Z',
     image_properties: { x: 0, y: 0, width: 100, height: 100 },
     created_at: '2023-01-01T00:00:00Z',
@@ -204,6 +242,21 @@ export function createMockPlaylist(overrides: Partial<any> = {}) {
     description: 'Mock playlist description',
     profile_username: 'testuser',
     deleted_at: null,
+    // Add missing required properties
+    image_url: 'https://example.com/playlist_image.jpg',
+    thumbnail_video_id: 'video-1',
+    duration_seconds: 1800,
+    // Add missing database table properties
+    image_avif_url: 'https://example.com/playlist_image.avif',
+    image_jpg_url: 'https://example.com/playlist_image.jpg',
+    image_webp_url: 'https://example.com/playlist_image.webp',
+    updated_at: '2023-01-01T00:00:00Z',
+    // Add UserPlaylist properties
+    playlist_position: 1,
+    sorted_by: 'playlistOrder',
+    sort_order: 'ascending',
+    added_at: '2023-01-01T00:00:00Z',
+    avatar_url: null,
     ...overrides,
   };
 }

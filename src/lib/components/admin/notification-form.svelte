@@ -320,7 +320,7 @@
                 />
 
                 <p class="text-muted-foreground text-xs">
-                  When notification should automatically expire ({timezoneInfo.timezoneAbbr})
+                  When notification should automatically expire ({timezoneInfo.timezoneName})
                 </p>
 
                 {#if !$formData.endDatetime}

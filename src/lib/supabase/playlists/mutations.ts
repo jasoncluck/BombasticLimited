@@ -241,20 +241,19 @@ async function uploadPlaylistImage({
     // Generate filename with timestamp to prevent caching issues
     const timestamp = Date.now();
     const fileName = imageName || `playlist-${playlistId}-${timestamp}.jpg`;
-    // Updated to use playlist-images/{playlistId}/ structure
-    const filePath = `playlist-images/${playlistId}/${fileName}`;
+    const filePath = `playlists/${playlistId}/${fileName}`;
 
     // Delete old playlist images before uploading new one
     try {
       const { data: existingFiles } = await supabase.storage
         .from(IMAGES_BUCKET)
-        .list(`playlist-images/${playlistId}`, {
+        .list(`playlists/${playlistId}`, {
           search: `playlist-${playlistId}-`,
         });
 
       if (existingFiles && existingFiles.length > 0) {
         const oldFilePaths = existingFiles.map(
-          (file) => `playlist-images/${playlistId}/${file.name}`
+          (file) => `playlists/${playlistId}/${file.name}`
         );
         await supabase.storage.from(IMAGES_BUCKET).remove(oldFilePaths);
       }
@@ -276,14 +275,14 @@ async function uploadPlaylistImage({
       return { error: uploadError };
     }
 
-    // Get public URL for the uploaded image
+    // Get public URL for the uploaded image (for reference, but we'll use the path)
     const { data: publicUrl } = supabase.storage
       .from(IMAGES_BUCKET)
       .getPublicUrl(uploadData.path);
 
     return {
       data: {
-        imagePath: uploadData.path,
+        imagePath: uploadData.path, // This is just "playlists/{playlistId}/filename.jpg"
         publicUrl: publicUrl.publicUrl,
         success: true,
       },
@@ -347,11 +346,12 @@ export async function updatePlaylistImage({
   // Convert imageProperties to Json format
   const imagePropertiesJson = playlistImagePropertiesToJson(imageProperties);
 
+  // Use the storage path, not the full public URL
   const { data: updateData, error: updateError } = await supabase.rpc(
     'update_playlist_image',
     {
       p_playlist_id: playlistId,
-      p_image_url: uploadResult.data?.publicUrl,
+      p_image_url: uploadResult.data?.imagePath, // Use imagePath instead of publicUrl
       p_thumbnail_video_id: thumbnailVideoId,
       p_image_properties: imagePropertiesJson,
     }

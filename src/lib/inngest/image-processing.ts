@@ -61,8 +61,8 @@ function generateStoragePaths(
   const timestamp = Date.now();
 
   if (entityType === 'playlist') {
-    // Use playlist-images/{playlistId}/ structure
-    const basePath = `playlist-images/${entityId}/playlist-${entityId}-${timestamp}`;
+    // Use playlists/{playlistId}/ structure
+    const basePath = `playlists/${entityId}/playlist-${entityId}-${timestamp}`;
     return {
       // No JPG path for playlists in background processing
       webpPath: `${basePath}.webp`,
@@ -100,9 +100,9 @@ function generateStoragePaths(
  * Download and validate image from source URL
  */
 async function downloadImage(sourceUrl: string): Promise<Buffer> {
-  // Check if it's a Supabase Storage path (starts with playlist-images/ or thumbnails/)
+  // Check if it's a Supabase Storage path (starts with playlists/ or thumbnails/)
   if (
-    sourceUrl.startsWith('playlist-images/') ||
+    sourceUrl.startsWith('playlists/') ||
     sourceUrl.startsWith('thumbnails/')
   ) {
     // Download from Supabase Storage

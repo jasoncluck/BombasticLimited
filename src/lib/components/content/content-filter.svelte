@@ -15,7 +15,7 @@
     type CombinedContentFilter,
   } from './content-filter';
   import { page } from '$app/state';
-  import type { VideoTimestamp, Video } from '$lib/supabase/videos';
+  import type { VideoWithTimestamp, Video } from '$lib/supabase/videos';
   import { parseDate, type DateValue } from '@internationalized/date';
   import {
     isUserPlaylist,
@@ -115,7 +115,7 @@
       newContentFilter = {
         type: 'timestamp',
         sort: {
-          key: sortKey as SortKey<VideoTimestamp>,
+          key: sortKey as SortKey<VideoWithTimestamp>,
           order: sortOrder,
         },
         startDate: contentFilter.startDate,
@@ -215,7 +215,7 @@
               onclick={() => handleSort(sortKey)}
             >
               {#if view === 'continueWatching'}
-                {SORT_OPTIONS_TIMESTAMPS[sortKey as SortKey<VideoTimestamp>]
+                {SORT_OPTIONS_TIMESTAMPS[sortKey as SortKey<VideoWithTimestamp>]
                   .displayName}
               {:else if view === 'playlist'}
                 {SORT_OPTIONS_PLAYLIST_VIDEOS[sortKey as SortKey<PlaylistVideo>]
@@ -295,7 +295,7 @@
         >
           <span>
             {#if view === 'continueWatching'}
-              {SORT_OPTIONS_TIMESTAMPS[sortKey as SortKey<VideoTimestamp>]
+              {SORT_OPTIONS_TIMESTAMPS[sortKey as SortKey<VideoWithTimestamp>]
                 .displayName}
             {:else if view === 'playlist'}
               {SORT_OPTIONS_PLAYLIST_VIDEOS[sortKey as SortKey<PlaylistVideo>]

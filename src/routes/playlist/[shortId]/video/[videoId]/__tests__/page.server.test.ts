@@ -26,6 +26,7 @@ vi.mock('$lib/supabase/playlists', () => ({
 
 vi.mock('$lib/supabase/videos', () => ({
   isVideoWithTimestamp: vi.fn(),
+  incrementVideoView: vi.fn(),
 }));
 
 vi.mock('$lib/components/playlist/playlist', () => ({

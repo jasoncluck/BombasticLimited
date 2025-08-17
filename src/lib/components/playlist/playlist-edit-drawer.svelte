@@ -75,22 +75,19 @@
   // Handle cropped image - store it for later upload instead of immediate upload
   async function handleImageCrop() {
     try {
-      const croppedCanvas = await getCroppedImg(
+      const croppedDataUrl = await getCroppedImg(
         cropperState.rootState.tempUrl!,
         cropState.rootState.pixelCrop!
       );
 
-      // Convert canvas to data URL for storage until form submission
-      const croppedDataUrl = croppedCanvas.toDataURL('image/jpeg', 0.9);
+      // Store the cropped image data URL for later upload
       pendingCroppedImage = croppedDataUrl;
 
       // Close the cropper dialog
       cropperState.rootState.open = false;
 
       // Update the image properties to reflect the new crop
-      $formData.image_properties = JSON.stringify(
-        cropState.rootState.pixelCrop
-      );
+      $formData.image_properties = cropState.rootState.pixelCrop || null;
     } catch (error) {
       console.error('Error cropping image:', error);
     }
@@ -126,7 +123,7 @@
         const updatedPlaylist = Object.assign(playlist, data);
         if (isDeletingPlaylistImage) {
           updatedPlaylist.image_url = null;
-          updatedPlaylist.image_properties = null;
+          updatedPlaylist.image_properties = null; // Use null instead of undefined
         }
 
         // Force reactive update by creating new object reference if image_properties changed

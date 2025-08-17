@@ -31,6 +31,6 @@
     {@const isFollowedPlaylist = sidebarState
       .getFollowedPlaylists(session)
       .some((p) => p.id === playlist.id)}
-    <PlaylistCard {playlist} {supabase} {isFollowedPlaylist} {showUsername} />
+    <PlaylistCard {playlist} {isFollowedPlaylist} {showUsername} />
   {/each}
 </div>

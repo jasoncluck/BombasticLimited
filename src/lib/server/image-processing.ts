@@ -29,6 +29,17 @@ interface ImageProperties {
   height: number;
 }
 
+// Image processing options
+export interface ImageProcessingOptions {
+  format?: string;
+  quality?: number;
+  width?: number;
+  height?: number;
+  crop?: ImageProperties;
+  progressive?: boolean;
+  lossless?: boolean;
+}
+
 const PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS: ImageProperties = {
   x: 280,
   y: 0,
@@ -61,8 +72,8 @@ function generateStoragePaths(
   const timestamp = Date.now();
 
   if (entityType === 'playlist') {
-    // Use playlist-images/{playlistId}/ structure
-    const basePath = `playlist-images/${entityId}/playlist-${entityId}-${timestamp}`;
+    // Use playlists/{playlistId}/ structure
+    const basePath = `playlists/${entityId}/playlist-${entityId}-${timestamp}`;
     return {
       // No JPG path for playlists in background processing
       webpPath: `${basePath}.webp`,
@@ -100,9 +111,9 @@ function generateStoragePaths(
  * Download and validate image from source URL
  */
 async function downloadImage(sourceUrl: string): Promise<Buffer> {
-  // Check if it's a Supabase Storage path (starts with playlist-images/ or thumbnails/)
+  // Check if it's a Supabase Storage path (starts with playlists/ or thumbnails/)
   if (
-    sourceUrl.startsWith('playlist-images/') ||
+    sourceUrl.startsWith('playlists/') ||
     sourceUrl.startsWith('thumbnails/')
   ) {
     // Download from Supabase Storage
@@ -617,3 +628,185 @@ export const imageFunctions = [
   batchProcessImages,
   cleanupFailedJobs,
 ];
+
+// Utility functions for testing and API usage
+export function validateImageUrl(url: string): boolean {
+  try {
+    const urlObj = new URL(url);
+    const validDomains = [
+      'i.ytimg.com',
+      'ytimg.googleusercontent.com',
+      'static-cdn.jtvnw.net',
+      'vod-secure.twitch.tv',
+      'vod-metro.twitch.tv',
+    ];
+    return validDomains.some(domain => urlObj.hostname === domain || urlObj.hostname.endsWith('.' + domain));
+  } catch {
+    return false;
+  }
+}
+
+export function calculateOptimalQuality(format: string, width?: number, height?: number): number {
+  const baseQuality = 85;
+  
+  // Adjust quality based on format
+  switch (format) {
+    case 'avif':
+      return Math.min(baseQuality - 5, 85); // AVIF is more efficient
+    case 'webp':
+      return Math.min(baseQuality, 90);
+    case 'jpeg':
+    case 'jpg':
+      return Math.min(baseQuality, 90);
+    default:
+      return baseQuality;
+  }
+}
+
+export async function processImageServer(params: {
+  imageUrl: string;
+  acceptHeader?: string;
+  options?: {
+    format?: string;
+    quality?: number;
+    width?: number;
+    height?: number;
+  };
+  imageProperties?: ImageProperties;
+  isCropped?: boolean;
+  isMaxRes?: boolean;
+}): Promise<Buffer | null> {
+  try {
+    if (!validateImageUrl(params.imageUrl)) {
+      throw new Error('Invalid image URL domain');
+    }
+
+    const imageBuffer = await downloadImage(params.imageUrl);
+    let sharpInstance = sharp(imageBuffer);
+
+    if (params.imageProperties && params.isCropped) {
+      sharpInstance = sharpInstance.extract({
+        left: params.imageProperties.x,
+        top: params.imageProperties.y,
+        width: params.imageProperties.width,
+        height: params.imageProperties.height,
+      });
+    }
+
+    if (params.options?.width || params.options?.height) {
+      sharpInstance = sharpInstance.resize(params.options.width, params.options.height);
+    }
+
+    const format = params.options?.format || 'webp';
+    const quality = params.options?.quality || calculateOptimalQuality(format);
+
+    switch (format) {
+      case 'avif':
+        return await sharpInstance.avif({ quality }).toBuffer();
+      case 'jpeg':
+      case 'jpg':
+        return await sharpInstance.jpeg({ quality }).toBuffer();
+      case 'webp':
+      default:
+        return await sharpInstance.webp({ quality }).toBuffer();
+    }
+  } catch (error) {
+    console.error('Error processing image:', error);
+    return null;
+  }
+}
+
+export async function getCroppedPlaylistImageUrlServer(params: {
+  imageProperties?: ImageProperties | null;
+  thumbnailMaxResUrl?: string;
+  thumbnailUrl?: string;
+}): Promise<string | null> {
+  try {
+    const sourceUrl = params.thumbnailMaxResUrl || params.thumbnailUrl;
+    if (!sourceUrl) {
+      return null;
+    }
+
+    let crops = params.imageProperties;
+    if (!crops) {
+      // Use default crop properties
+      crops = sourceUrl.includes('maxres') 
+        ? PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS 
+        : PLAYLIST_IMAGE_CROP_DEFAULTS;
+    }
+
+    const processedBuffer = await processImageServer({
+      imageUrl: sourceUrl,
+      options: { format: 'webp' },
+      imageProperties: crops,
+      isCropped: true,
+    });
+
+    if (!processedBuffer) {
+      return null;
+    }
+
+    const base64 = processedBuffer.toString('base64');
+    return `data:image/webp;base64,${base64}`;
+  } catch (error) {
+    console.error('Error processing playlist image:', error);
+    return null;
+  }
+}
+
+export async function getVideoThumbnailWebpUrlServer(params: {
+  thumbnailUrl: string | null;
+  options?: { 
+    width?: number; 
+    height?: number;
+    quality?: number;
+  };
+}): Promise<string | null> {
+  try {
+    if (!params.thumbnailUrl) {
+      return null;
+    }
+
+    const processedBuffer = await processImageServer({
+      imageUrl: params.thumbnailUrl,
+      options: {
+        format: 'webp',
+        width: params.options?.width,
+        height: params.options?.height,
+        quality: params.options?.quality,
+      },
+    });
+
+    if (!processedBuffer) {
+      return null;
+    }
+
+    const base64 = processedBuffer.toString('base64');
+    return `data:image/webp;base64,${base64}`;
+  } catch (error) {
+    console.error('Error processing video thumbnail:', error);
+    return null;
+  }
+}
+
+export async function getVideoThumbnailWebpUrlsBatch(
+  thumbnails: Array<{ url: string; options?: { width?: number; height?: number } }>
+): Promise<Array<string | null>> {
+  return Promise.all(
+    thumbnails.map(({ url, options }) => getVideoThumbnailWebpUrlServer({ 
+      thumbnailUrl: url, 
+      options: options || {} 
+    }))
+  );
+}
+
+// Legacy function for compatibility
+export function generatePlaylistImageUrl(playlist: any): string | null {
+  return playlist?.processedImageUrl || null;
+}
+
+// Legacy function for compatibility  
+export function generateProgressiveImages(options: any): Promise<any> {
+  // This is a legacy function that's not actively used
+  return Promise.resolve(null);
+}

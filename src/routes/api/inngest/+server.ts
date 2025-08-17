@@ -10,9 +10,6 @@ export const { GET, POST, PUT } = serve({
   // Optional: Configure serving options
   streaming: false,
 
-  // Development mode configuration
-  isDev: process.env.NODE_ENV === 'development',
-
   // Signing key for production (set via environment variable)
   signingKey: process.env.INNGEST_SIGNING_KEY,
 });

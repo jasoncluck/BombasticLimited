@@ -24,9 +24,17 @@ const createMockVideo = (id: string, thumbnailUrl?: string): Video => ({
   description: `Description for video ${id}`,
   thumbnail_url: thumbnailUrl || `https://example.com/thumb-${id}.jpg`,
   published_at: '2023-01-01T00:00:00Z',
-  duration: null, // duration is string | null in the database
+  duration: '00:30:00', // duration should be string in the Video type
   source: 'giantbomb', // Use valid source enum value
   thumbnail_maxres_url: null,
+  image_url: null, // Add required image_url field
+  views: 0, // Add required views field
+  image_processing_status: 'completed', // Add required image_processing_status field
+  image_processing_updated_at: null, // Add required image_processing_updated_at field
+  thumbnail_webp_url: null, // Add required thumbnail_webp_url field
+  thumbnail_avif_url: null, // Add required thumbnail_avif_url field
+  thumbnail_maxres_webp_url: null, // Add required thumbnail_maxres_webp_url field
+  thumbnail_maxres_avif_url: null, // Add required thumbnail_maxres_avif_url field
 });
 
 describe('video-thumbnail-service', () => {

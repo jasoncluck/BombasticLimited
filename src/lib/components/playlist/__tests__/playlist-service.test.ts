@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   getCroppedPlaylistImageUrl,
   getVideoThumbnailWebpUrl,
-  getVideoThumbnailWebpUrlsBatch,
 } from '../playlist-service';
 import type { ImageProperties } from '../playlist';
 
@@ -441,103 +440,4 @@ describe('getVideoThumbnailWebpUrl', () => {
   });
 });
 
-describe('getVideoThumbnailWebpUrlsBatch', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
 
-    // Setup global mocks
-    global.fetch = mockFetch;
-    global.createImageBitmap = mockCreateImageBitmap;
-    global.OffscreenCanvas = MockOffscreenCanvas as any;
-  });
-
-  it('should process multiple video thumbnails in batch', async () => {
-    const mockImageBlob = new Blob(['fake-image-data'], { type: 'image/jpeg' });
-    const mockImageBitmap = { width: 320, height: 180 } as ImageBitmap;
-    const mockWebpBlob = new Blob(['fake-webp-data'], { type: 'image/webp' });
-
-    mockFetch.mockResolvedValue({
-      ok: true,
-      blob: () => Promise.resolve(mockImageBlob),
-    });
-
-    mockCreateImageBitmap.mockResolvedValue(mockImageBitmap);
-    mockGetContext.mockReturnValue({ drawImage: mockDrawImage });
-
-    // Mock ArrayBuffer and base64 conversion
-    const mockArrayBuffer = new ArrayBuffer(8);
-    const mockUint8Array = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]);
-    mockWebpBlob.arrayBuffer = vi.fn().mockResolvedValue(mockArrayBuffer);
-    Object.defineProperty(mockArrayBuffer, 'length', { value: 8 });
-
-    // Mock the Uint8Array constructor to return our mock
-    const originalUint8Array = global.Uint8Array;
-    global.Uint8Array = vi.fn().mockReturnValue(mockUint8Array) as any;
-
-    mockConvertToBlob.mockResolvedValue(mockWebpBlob);
-
-    const thumbnailUrls = [
-      'https://example.com/video1.jpg',
-      'https://example.com/video2.jpg',
-      null,
-      'https://example.com/video3.jpg',
-    ];
-
-    const results = await getVideoThumbnailWebpUrlsBatch(thumbnailUrls);
-
-    expect(results).toHaveLength(4);
-    expect(results[0]).toMatch(/^data:image\/webp;base64,/);
-    expect(results[1]).toMatch(/^data:image\/webp;base64,/);
-    expect(results[2]).toBe(null); // null input should return null
-    expect(results[3]).toMatch(/^data:image\/webp;base64,/);
-
-    // Verify fetch was called for non-null URLs
-    expect(mockFetch).toHaveBeenCalledTimes(3);
-
-    // Restore original constructor
-    global.Uint8Array = originalUint8Array;
-  });
-
-  it('should handle errors gracefully in batch processing', async () => {
-    const mockImageBlob = new Blob(['fake-image-data'], { type: 'image/jpeg' });
-    const mockImageBitmap = { width: 320, height: 180 } as ImageBitmap;
-    const mockWebpBlob = new Blob(['fake-webp-data'], { type: 'image/webp' });
-
-    // Mock successful and failed responses
-    mockFetch
-      .mockResolvedValueOnce({
-        ok: true,
-        blob: () => Promise.resolve(mockImageBlob),
-      })
-      .mockRejectedValueOnce(new Error('Fetch failed'));
-
-    mockCreateImageBitmap.mockResolvedValue(mockImageBitmap);
-    mockGetContext.mockReturnValue({ drawImage: mockDrawImage });
-
-    // Mock ArrayBuffer and base64 conversion
-    const mockArrayBuffer = new ArrayBuffer(8);
-    const mockUint8Array = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]);
-    mockWebpBlob.arrayBuffer = vi.fn().mockResolvedValue(mockArrayBuffer);
-    Object.defineProperty(mockArrayBuffer, 'length', { value: 8 });
-
-    // Mock the Uint8Array constructor to return our mock
-    const originalUint8Array = global.Uint8Array;
-    global.Uint8Array = vi.fn().mockReturnValue(mockUint8Array) as any;
-
-    mockConvertToBlob.mockResolvedValue(mockWebpBlob);
-
-    const thumbnailUrls = [
-      'https://example.com/video1.jpg',
-      'https://example.com/video2.jpg',
-    ];
-
-    const results = await getVideoThumbnailWebpUrlsBatch(thumbnailUrls);
-
-    expect(results).toHaveLength(2);
-    expect(results[0]).toMatch(/^data:image\/webp;base64,/);
-    expect(results[1]).toBe(null); // Failed processing should return null
-
-    // Restore original constructor
-    global.Uint8Array = originalUint8Array;
-  });
-});
