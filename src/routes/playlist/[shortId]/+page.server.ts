@@ -27,9 +27,12 @@ export const load: PageServerLoad = async ({
   url,
   parent,
   params,
+  request,
   depends,
 }) => {
   depends('supabase:db:videos', 'supabase:db:playlists');
+
+  const acceptHeader = request.headers.get('accept');
 
   const { contentFilter } = await parent();
 
@@ -50,6 +53,7 @@ export const load: PageServerLoad = async ({
       contentFilter,
       currentPage,
       limit: DEFAULT_NUM_VIDEOS_PAGINATION,
+      acceptHeader,
       supabase,
       session,
     });
@@ -60,12 +64,15 @@ export const load: PageServerLoad = async ({
   }
 
   const [form, creatorProfile] = await Promise.all([
-    superValidate({
-      ...playlist,
-      thumbnail_video_id: playlist.thumbnail_video_id || undefined,
-      thumbnail_url: playlist.thumbnail_url || undefined,
-      thumbnail_maxres_url: playlist.thumbnail_maxres_url || undefined,
-    }, zod(playlistSchema)),
+    superValidate(
+      {
+        ...playlist,
+        thumbnail_video_id: playlist.thumbnail_video_id || undefined,
+        thumbnail_url: playlist.thumbnail_url || undefined,
+        thumbnail_maxres_url: playlist.thumbnail_maxres_url || undefined,
+      },
+      zod(playlistSchema)
+    ),
     // Load creator profile for all playlists to ensure avatar is available
     getProfileById({ userId: playlist.created_by, supabase }).then(
       (result) => result.profile

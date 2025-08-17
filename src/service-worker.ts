@@ -662,10 +662,7 @@ sw.addEventListener('fetch', (event) => {
   }
 
   // Handle image API endpoints (video thumbnails and playlist images)
-  if (
-    url.pathname.startsWith('/api/video-thumbnail') ||
-    url.pathname.startsWith('/api/playlist-image')
-  ) {
+  if (url.pathname.startsWith('/api/video-thumbnail')) {
     event.respondWith(cacheStaticAsset(request));
     return;
   }

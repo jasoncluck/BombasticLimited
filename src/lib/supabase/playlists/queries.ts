@@ -10,7 +10,11 @@ import {
   DEFAULT_NUM_VIDEOS_PAGINATION,
   type Video,
 } from '../videos';
-import { detectPreferredImageFormat, getSortField } from './utils';
+import {
+  detectOptimalImageFormat,
+  getBestImageFormat,
+  getSortField,
+} from './utils';
 import {
   transformPlaylistFromRPC,
   transformUserPlaylistFromRPC,
@@ -37,6 +41,7 @@ export async function getPlaylistData({
   limit = DEFAULT_NUM_VIDEOS_PAGINATION,
   supabase,
   session,
+  acceptHeader,
 }: {
   shortId?: string;
   youtubeId?: string;
@@ -45,6 +50,7 @@ export async function getPlaylistData({
   limit?: number;
   supabase: SupabaseClient<Database>;
   session: Session | null;
+  acceptHeader: string | null;
 }): Promise<{
   playlist: UserPlaylist | ProfilePlaylist | null;
   videos: PlaylistVideoWithTimestamp[] | Video[];
@@ -59,7 +65,7 @@ export async function getPlaylistData({
 
   const sortKey = contentFilter ? contentFilter.sort.key : undefined;
   const sortOrder = contentFilter ? contentFilter.sort.order : undefined;
-  const preferredFormat = detectPreferredImageFormat();
+  const preferredFormat = getBestImageFormat('playlist', acceptHeader);
 
   const { data, error } = await supabase.rpc('get_playlist_data', {
     p_short_id: shortId,
@@ -185,7 +191,7 @@ export async function getPlaylistsForUsername({
   count?: number | null;
   error: PostgrestError | null;
 }> {
-  const preferredFormat = detectPreferredImageFormat();
+  const preferredFormat = detectOptimalImageFormat();
 
   const {
     data: playlists,
@@ -242,7 +248,7 @@ export async function getPlaylistByYoutubeId({
   youtubeId: string;
   supabase: SupabaseClient<Database>;
 }) {
-  const preferredFormat = detectPreferredImageFormat();
+  const preferredFormat = detectOptimalImageFormat();
 
   const { data, error } = await supabase
     .rpc('get_playlist_by_youtube_id', {
@@ -269,12 +275,14 @@ export async function getPlaylistVideoContext({
   contentFilter,
   supabase,
   contextLimit = 5,
+  acceptHeader,
 }: {
   shortId: string;
   videoId: string;
   contentFilter: PlaylistVideosFilter;
   supabase: SupabaseClient<Database>;
   contextLimit?: number;
+  acceptHeader: string | null;
 }): Promise<{
   playlist: UserPlaylist | ProfilePlaylist | null;
   currentVideo: PlaylistVideoWithTimestamp | null;
@@ -284,7 +292,7 @@ export async function getPlaylistVideoContext({
   nextVideo: PlaylistVideoWithTimestamp | null;
   error: PostgrestError | null;
 }> {
-  const preferredFormat = detectPreferredImageFormat();
+  const preferredFormat = getBestImageFormat('playlist', acceptHeader);
 
   // Call the simplified RPC function
   let query = supabase.rpc('get_playlist_video_context', {
@@ -405,9 +413,11 @@ export async function getPlaylistVideoContext({
 export async function getUserPlaylists({
   session,
   supabase,
+  acceptHeader,
 }: {
   session: Session | null;
   supabase: SupabaseClient<Database>;
+  acceptHeader: string | null;
 }): Promise<{
   userPlaylists: UserPlaylist[];
   count: number | null;
@@ -417,7 +427,7 @@ export async function getUserPlaylists({
     return { userPlaylists: [], count: null, error: null };
   }
 
-  const preferredFormat = detectPreferredImageFormat();
+  const preferredFormat = getBestImageFormat('playlist', acceptHeader);
 
   const { data, count, error } = await supabase
     .rpc('get_user_playlists', {
@@ -444,6 +454,7 @@ export async function searchPlaylists({
   searchString,
   limit = 15,
   currentPage = 1,
+  acceptHeader,
   supabase,
   session,
 }: {
@@ -452,6 +463,7 @@ export async function searchPlaylists({
   currentPage?: number;
   supabase: SupabaseClient<Database>;
   session: Session | null;
+  acceptHeader: string | null;
 }): Promise<{
   playlists: (ProfilePlaylist & {
     avatar_url?: string | null;
@@ -462,7 +474,7 @@ export async function searchPlaylists({
   error: PostgrestError | null;
   count?: number | null;
 }> {
-  const preferredImageFormat = detectPreferredImageFormat();
+  const preferredImageFormat = getBestImageFormat('playlist', acceptHeader);
 
   const {
     data: playlists,

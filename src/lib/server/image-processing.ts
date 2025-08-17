@@ -22,7 +22,6 @@ export interface ImageProcessingOptions {
 }
 
 // Memory management for large batch operations
-const MAX_CONCURRENT_PROCESSING = 5;
 
 // Domain validation for security
 const ALLOWED_DOMAINS = [

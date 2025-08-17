@@ -7,13 +7,13 @@ import {
   type SortKey,
   type SortOrder,
 } from '$lib/components/content/content-filter';
-import { detectPreferredImageFormat } from './utils';
 import type {
   PlaylistVideo,
   PlaylistType,
   PlaylistImageProperties,
 } from './types';
 import { playlistImagePropertiesToJson } from '$lib/components/playlist/playlist';
+import { getBestImageFormat } from './utils';
 
 /**
  * Create a new playlist
@@ -22,10 +22,12 @@ export async function createPlaylist({
   name,
   session,
   supabase,
+  acceptHeader,
 }: {
   name?: string;
   session: Session | null;
   supabase: SupabaseClient<Database>;
+  acceptHeader: string | null;
 }) {
   if (!session) {
     throw new Error('Unable to create playlist, invalid session');
@@ -36,7 +38,7 @@ export async function createPlaylist({
       p_created_by: session?.user.id,
       p_name: name,
       p_type: 'Private',
-      p_preferred_image_format: detectPreferredImageFormat(),
+      p_preferred_image_format: getBestImageFormat('playlist', acceptHeader),
     })
     .single();
 
