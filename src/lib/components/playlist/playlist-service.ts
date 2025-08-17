@@ -25,13 +25,13 @@ import {
   type SortKey,
   type SortOrder,
 } from '../content/content-filter';
-import { type ImageProperties } from './playlist';
+import { type PlaylistImageProperties } from '$lib/supabase/playlists';
 import type { SidebarState } from '$lib/state/sidebar.svelte';
 import { showToast } from '$lib/state/notifications.svelte';
 
 export type PlaylistImages = Record<string, string | undefined>;
 
-export const PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS: ImageProperties = {
+export const PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS: PlaylistImageProperties = {
   x: 280,
   y: 0,
   height: 720,
@@ -39,7 +39,7 @@ export const PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS: ImageProperties = {
 };
 
 // Updated to use medium thumbnail dimensions (320x180)
-export const PLAYLIST_IMAGE_CROP_DEFAULTS: ImageProperties = {
+export const PLAYLIST_IMAGE_CROP_DEFAULTS: PlaylistImageProperties = {
   x: 70, // (320-180)/2 = 70
   y: 0,
   height: 180,
@@ -91,9 +91,9 @@ export const YOUTUBE_THUMBNAIL_CROP_DEFAULTS = {
 function getOptimalCropDimensions(
   imageWidth: number,
   imageHeight: number,
-  imageProperties: ImageProperties | null,
+  imageProperties: PlaylistImageProperties | null,
   isMaxRes: boolean
-): ImageProperties {
+): PlaylistImageProperties {
   if (isMaxRes) {
     // For maxres images, use the provided image properties or defaults
     return imageProperties || PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS;
@@ -306,7 +306,7 @@ export async function handleUpdatePlaylistImage({
   playlist: Playlist;
   sidebarState: SidebarState;
   thumbnailVideo?: Video;
-  imageProperties?: ImageProperties | null;
+  imageProperties?: PlaylistImageProperties | null;
   supabase: SupabaseClient<Database>;
 }) {
   const processedPlaylistImage = thumbnailVideo
@@ -521,7 +521,7 @@ export async function getCroppedPlaylistImageUrl({
   thumbnailMaxResUrl,
   thumbnailUrl,
 }: {
-  imageProperties: ImageProperties | null;
+  imageProperties: PlaylistImageProperties | null;
   thumbnailMaxResUrl: string | null;
   thumbnailUrl?: string | null;
 }): Promise<string | null> {
@@ -557,7 +557,7 @@ export async function getCroppedPlaylistImageUrl({
  */
 async function processWithFastOffscreenCanvas(
   imageUrl: string,
-  imageProperties: ImageProperties | null,
+  imageProperties: PlaylistImageProperties | null,
   isMaxRes: boolean
 ): Promise<string> {
   const response = await fetch(imageUrl);
@@ -620,7 +620,7 @@ async function processWithFastOffscreenCanvas(
  */
 async function processWithFastCanvas(
   imageUrl: string,
-  imageProperties: ImageProperties | null,
+  imageProperties: PlaylistImageProperties | null,
   isMaxRes: boolean
 ): Promise<string> {
   return new Promise((resolve, reject) => {

@@ -3,8 +3,9 @@ import type { RequestHandler } from './$types';
 import { getUserPlaylists } from '$lib/supabase/playlists';
 import { getProfile } from '$lib/supabase/user-profiles';
 
-export const GET: RequestHandler = async ({ locals }) => {
+export const GET: RequestHandler = async ({ locals, request }) => {
   const { session, supabase } = locals;
+  const acceptHeader = request.headers.get('accept');
 
   if (!session) {
     return json({ playlists: [], userProfile: null, userPlaylistsCount: 0 });
@@ -14,7 +15,7 @@ export const GET: RequestHandler = async ({ locals }) => {
     { userPlaylists, count: userPlaylistsCount },
     { profile: userProfile },
   ] = await Promise.all([
-    getUserPlaylists({ session, supabase }),
+    getUserPlaylists({ session, supabase, acceptHeader }),
     getProfile({ supabase, session }),
   ]);
 

@@ -17,10 +17,12 @@ export const load: PageServerLoad = async ({
   parent,
   depends,
   locals: { supabase, session },
+  request,
 }) => {
   depends('supabase:db:videos');
 
   const source = params.source;
+  const acceptHeader = request.headers.get('accept');
 
   if (!isSource(source)) {
     redirect(303, '/');
@@ -58,6 +60,7 @@ export const load: PageServerLoad = async ({
               limit: DEFAULT_NUM_VIDEOS_OVERVIEW,
               supabase,
               session,
+              acceptHeader,
             });
 
             if (!playlist) {

@@ -9,10 +9,12 @@ export const load: PageServerLoad = async ({
   depends,
   params,
   parent,
+  request,
 }) => {
   depends('supabase:db:videos');
 
   const videoId = params.videoId;
+  const acceptHeader = request.headers.get('accept');
 
   // Run parent() first to get contentFilter
   const { contentFilter } = await parent();
@@ -28,6 +30,7 @@ export const load: PageServerLoad = async ({
     contentFilter, // This will be used for sorting in the query
     supabase,
     contextLimit: 5,
+    acceptHeader,
   });
 
   const {

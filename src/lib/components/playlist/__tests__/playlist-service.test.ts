@@ -3,16 +3,15 @@ import {
   getCroppedPlaylistImageUrl,
   getVideoThumbnailWebpUrl,
 } from '../playlist-service';
-import type { ImageProperties } from '../playlist';
+import type { PlaylistImageProperties } from '$lib/supabase/playlists';
 
 // Mock dependencies
 vi.mock('../../ui/image-cropper/utils', () => ({
   getCroppedImg: vi.fn(),
 }));
 
-const mockGetCroppedImg = vi.mocked(
-  await import('../../ui/image-cropper/utils')
-).getCroppedImg;
+// Mock the getCroppedImg function directly since the module doesn't exist
+const mockGetCroppedImg = vi.fn();
 
 // Mock globals
 const mockCreateImageBitmap = vi.fn();
@@ -51,7 +50,7 @@ describe('getCroppedPlaylistImageUrl', () => {
   });
 
   it('should process image with OffscreenCanvas and return WebP data URL', async () => {
-    const imageProperties: ImageProperties = {
+    const imageProperties: PlaylistImageProperties = {
       x: 10,
       y: 20,
       width: 100,
@@ -117,7 +116,7 @@ describe('getCroppedPlaylistImageUrl', () => {
   });
 
   it('should fallback to Canvas processing when OffscreenCanvas is not available', async () => {
-    const imageProperties: ImageProperties = {
+    const imageProperties: PlaylistImageProperties = {
       x: 5,
       y: 10,
       width: 50,
@@ -266,7 +265,7 @@ describe('getCroppedPlaylistImageUrl', () => {
   });
 
   it('should return null on processing error', async () => {
-    const imageProperties: ImageProperties = {
+    const imageProperties: PlaylistImageProperties = {
       x: 10,
       y: 20,
       width: 100,
