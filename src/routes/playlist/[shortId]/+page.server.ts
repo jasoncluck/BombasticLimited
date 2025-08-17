@@ -60,7 +60,12 @@ export const load: PageServerLoad = async ({
   }
 
   const [form, creatorProfile] = await Promise.all([
-    superValidate(playlist, zod(playlistSchema)),
+    superValidate({
+      ...playlist,
+      thumbnail_video_id: playlist.thumbnail_video_id || undefined,
+      thumbnail_url: playlist.thumbnail_url || undefined,
+      thumbnail_maxres_url: playlist.thumbnail_maxres_url || undefined,
+    }, zod(playlistSchema)),
     // Load creator profile for all playlists to ensure avatar is available
     getProfileById({ userId: playlist.created_by, supabase }).then(
       (result) => result.profile

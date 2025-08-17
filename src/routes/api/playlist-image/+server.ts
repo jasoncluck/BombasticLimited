@@ -50,8 +50,8 @@ export const GET: RequestHandler = async ({ url, request }) => {
     // Process playlist image with cropping using Sharp
     const dataUrl = await getCroppedPlaylistImageUrlServer({
       imageProperties,
-      thumbnailMaxResUrl,
-      thumbnailUrl,
+      thumbnailMaxResUrl: thumbnailMaxResUrl || undefined,
+      thumbnailUrl: thumbnailUrl || undefined,
       acceptHeader,
       options: {
         format,
