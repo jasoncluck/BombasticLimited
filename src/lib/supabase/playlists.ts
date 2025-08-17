@@ -51,7 +51,7 @@ export type Playlist = {
   thumbnail_video_id: GetPlaylistDataResponse['playlist_thumbnail_video_id'];
   thumbnail_url: GetPlaylistDataResponse['playlist_thumbnail_url'];
   thumbnail_maxres_url: GetPlaylistDataResponse['playlist_thumbnail_maxres_url'];
-  deleted_at: GetPlaylistDataResponse['playlist_deleted_at']; // Now uses actual deleted_at from DB
+  deleted_at: GetPlaylistDataResponse['playlist_deleted_at'];
   duration_seconds: GetPlaylistDataResponse['total_duration_seconds'];
   // Optional properties that may not always be present
   updated_at?: string | null;
@@ -98,7 +98,40 @@ export interface PlaylistImageProperties {
   width: number;
 }
 
-// Transform functions to map RPC responses to client types
+// Helper to detect browser format support
+function detectPreferredImageFormat(): 'avif' | 'webp' | 'jpeg' {
+  if (!browser) return 'jpeg'; // Server-side fallback
+
+  // Check AVIF support
+  try {
+    const avifCanvas = document.createElement('canvas');
+    avifCanvas.width = 1;
+    avifCanvas.height = 1;
+    const avifDataUrl = avifCanvas.toDataURL('image/avif');
+    if (avifDataUrl.startsWith('data:image/avif')) {
+      return 'avif';
+    }
+  } catch {
+    // AVIF not supported
+  }
+
+  // Check WebP support
+  try {
+    const webpCanvas = document.createElement('canvas');
+    webpCanvas.width = 1;
+    webpCanvas.height = 1;
+    const webpDataUrl = webpCanvas.toDataURL('image/webp');
+    if (webpDataUrl.startsWith('data:image/webp')) {
+      return 'webp';
+    }
+  } catch {
+    // WebP not supported
+  }
+
+  return 'jpeg';
+}
+
+// Transform functions - simplified since RPC functions already provide optimized URLs
 function transformPlaylistFromRPC(rpcData: GetPlaylistDataResponse): Playlist {
   return {
     id: rpcData.playlist_id,
@@ -107,7 +140,7 @@ function transformPlaylistFromRPC(rpcData: GetPlaylistDataResponse): Playlist {
     short_id: rpcData.playlist_short_id,
     created_by: rpcData.playlist_created_by,
     description: rpcData.playlist_description,
-    image_url: rpcData.playlist_image_url,
+    image_url: rpcData.playlist_image_url, // Already optimized by RPC function
     image_processing_status: rpcData.playlist_image_processing_status,
     type: rpcData.playlist_type,
     image_properties: rpcData.playlist_image_properties,
@@ -133,14 +166,14 @@ function transformUserPlaylistFromRPC(
     short_id: rpcData.short_id,
     created_by: rpcData.created_by,
     description: rpcData.description,
-    image_url: rpcData.image_url,
+    image_url: rpcData.image_url, // Already optimized by RPC function
     image_processing_status: rpcData.image_processing_status,
     type: rpcData.type,
     image_properties: rpcData.image_properties,
     youtube_id: rpcData.youtube_id,
-    thumbnail_video_id: rpcData.thumbnail_video_id, // Add thumbnail fields
-    thumbnail_url: rpcData.playlist_thumbnail_url, // Map from RPC response
-    thumbnail_maxres_url: rpcData.playlist_thumbnail_maxres_url, // Map from RPC response
+    thumbnail_video_id: rpcData.thumbnail_video_id,
+    thumbnail_url: rpcData.playlist_thumbnail_url,
+    thumbnail_maxres_url: rpcData.playlist_thumbnail_maxres_url,
     deleted_at: rpcData.deleted_at,
     duration_seconds: rpcData.duration_seconds,
     profile_username: rpcData.profile_username,
@@ -163,7 +196,7 @@ function transformVideoFromRPC(
     description: rpcData.video_description,
     thumbnail_url: rpcData.video_thumbnail_url,
     thumbnail_maxres_url: rpcData.video_thumbnail_maxres_url,
-    image_url: rpcData.video_image_url,
+    image_url: rpcData.video_image_url, // Already optimized by RPC function
     published_at: rpcData.video_published_at,
     duration: rpcData.video_duration,
     video_start_seconds: rpcData.video_start_seconds,
@@ -183,36 +216,13 @@ function transformVideoFromContextRPC(
     description: rpcData.video_description,
     thumbnail_url: rpcData.video_thumbnail_url,
     thumbnail_maxres_url: rpcData.video_thumbnail_maxres_url,
-    image_url: rpcData.video_image_url,
+    image_url: rpcData.video_image_url, // Already optimized by RPC function
     published_at: rpcData.video_published_at,
     duration: rpcData.video_duration,
     video_start_seconds: rpcData.video_start_seconds,
     updated_at: rpcData.video_updated_at,
     watched_at: rpcData.video_watched_at,
   };
-}
-
-// Helper to detect browser format support
-function detectPreferredImageFormat(): string {
-  if (!browser) return 'jpeg'; // Server-side fallback
-
-  // Check AVIF support
-  const avifCanvas = document.createElement('canvas');
-  avifCanvas.width = 1;
-  avifCanvas.height = 1;
-  if (avifCanvas.toDataURL('image/avif').indexOf('image/avif') === 5) {
-    return 'avif';
-  }
-
-  // Check WebP support
-  const webpCanvas = document.createElement('canvas');
-  webpCanvas.width = 1;
-  webpCanvas.height = 1;
-  if (webpCanvas.toDataURL('image/webp').indexOf('image/webp') === 5) {
-    return 'webp';
-  }
-
-  return 'jpeg';
 }
 
 export async function getPlaylistData({
@@ -281,7 +291,7 @@ export async function getPlaylistData({
 
   const firstRow = data[0];
 
-  // Transform using type-safe function - this creates the base playlist
+  // Transform using simplified function
   const basePlaylist = transformPlaylistFromRPC(firstRow);
 
   // Properly construct the playlist with all available fields
@@ -396,7 +406,7 @@ export async function getPlaylistsForUsername({
     short_id: playlist.short_id,
     created_by: playlist.created_by,
     description: playlist.description,
-    image_url: playlist.image_url,
+    image_url: playlist.image_url, // Already optimized by RPC function
     image_processing_status:
       playlist.image_processing_status as Playlist['image_processing_status'],
     type: playlist.type,
@@ -528,7 +538,7 @@ export async function getPlaylistVideoContext({
     short_id: metadataRow.playlist_short_id,
     created_by: metadataRow.playlist_created_by,
     description: metadataRow.playlist_description,
-    image_url: metadataRow.playlist_image_url,
+    image_url: metadataRow.playlist_image_url, // Already optimized by RPC function
     type: metadataRow.playlist_type,
     image_properties: metadataRow.playlist_image_properties,
     youtube_id: metadataRow.playlist_youtube_id,
@@ -646,6 +656,7 @@ export async function getUserPlaylists({
     console.error('Error when fetching playlists:', error);
   }
 
+  // Use simplified transform function
   const userPlaylists = (data || []).map(transformUserPlaylistFromRPC);
 
   return { userPlaylists, count, error };
@@ -693,8 +704,6 @@ export async function deletePlaylist({
   return { error };
 }
 
-// Replace the searchPlaylists function with this corrected version:
-
 export async function searchPlaylists({
   searchString,
   limit = 15,
@@ -739,39 +748,30 @@ export async function searchPlaylists({
     console.error('Error searching playlists:', error);
   }
 
-  // Transform search results with proper avatar_url and thumbnail fields typing
-  const transformedPlaylists = (playlists || []).map(
-    (
-      playlist
-    ): ProfilePlaylist & {
-      avatar_url?: string | null;
-      thumbnail_video_id?: string | null;
-      thumbnail_url?: string | null;
-      thumbnail_maxres_url?: string | null;
-    } => ({
-      id: playlist.id,
-      created_at: playlist.created_at,
-      name: playlist.name,
-      short_id: playlist.short_id,
-      created_by: playlist.created_by,
-      description: playlist.description,
-      image_url: playlist.image_url,
-      image_processing_status: playlist.image_processing_status,
-      type: playlist.type,
-      image_properties: playlist.image_properties,
-      youtube_id: playlist.youtube_id,
-      thumbnail_video_id: playlist.thumbnail_video_id,
-      thumbnail_url: playlist.playlist_thumbnail_url,
-      thumbnail_maxres_url: playlist.playlist_thumbnail_maxres_url,
-      deleted_at: playlist.deleted_at,
-      duration_seconds: playlist.duration_seconds,
-      profile_username: playlist.profile_username,
-      avatar_url:
-        'avatar_url' in playlist
-          ? (playlist.avatar_url as string | null)
-          : undefined,
-    })
-  );
+  // Transform search results - URLs already optimized by RPC function
+  const transformedPlaylists = (playlists || []).map((playlist) => ({
+    id: playlist.id,
+    created_at: playlist.created_at,
+    name: playlist.name,
+    short_id: playlist.short_id,
+    created_by: playlist.created_by,
+    description: playlist.description,
+    image_url: playlist.image_url, // Already optimized by RPC function
+    image_processing_status: playlist.image_processing_status,
+    type: playlist.type,
+    image_properties: playlist.image_properties,
+    youtube_id: playlist.youtube_id,
+    thumbnail_video_id: playlist.thumbnail_video_id,
+    thumbnail_url: playlist.playlist_thumbnail_url,
+    thumbnail_maxres_url: playlist.playlist_thumbnail_maxres_url,
+    deleted_at: playlist.deleted_at,
+    duration_seconds: playlist.duration_seconds,
+    profile_username: playlist.profile_username,
+    avatar_url:
+      'avatar_url' in playlist
+        ? (playlist.avatar_url as string | null)
+        : undefined,
+  }));
 
   return { playlists: transformedPlaylists, error, count };
 }
@@ -1015,19 +1015,20 @@ async function uploadPlaylistImage({
     // Generate filename with timestamp to prevent caching issues
     const timestamp = Date.now();
     const fileName = imageName || `playlist-${playlistId}-${timestamp}.jpg`;
-    const filePath = `playlist-images/${fileName}`;
+    // Updated to use playlist-images/{playlistId}/ structure
+    const filePath = `playlist-images/${playlistId}/${fileName}`;
 
     // Delete old playlist images before uploading new one
     try {
       const { data: existingFiles } = await supabase.storage
         .from(IMAGES_BUCKET)
-        .list('playlist-images', {
+        .list(`playlist-images/${playlistId}`, {
           search: `playlist-${playlistId}-`,
         });
 
       if (existingFiles && existingFiles.length > 0) {
         const oldFilePaths = existingFiles.map(
-          (file) => `playlist-images/${file.name}`
+          (file) => `playlist-images/${playlistId}/${file.name}`
         );
         await supabase.storage.from(IMAGES_BUCKET).remove(oldFilePaths);
       }

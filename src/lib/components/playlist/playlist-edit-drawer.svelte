@@ -253,8 +253,8 @@
                     <DropdownMenu.Content align="start">
                       {#if isLowResThumbnail}
                         <DropdownMenu.Item disabled
-                          >This video doesn't have a high-resolution thumbnail
-                          and cannot be cropped</DropdownMenu.Item
+                          >This video is missing a high-resolution thumbnail and
+                          cannot be cropped</DropdownMenu.Item
                         >
                       {:else}
                         <DropdownMenu.Item

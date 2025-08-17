@@ -52,10 +52,13 @@ interface Video {
 
 interface Playlist {
   id: string;
-  image_url: string | null;
+  thumbnail_video_id: string | null;
+  image_jpg_url: string | null;
   image_webp_url: string | null;
   image_avif_url: string | null;
   image_processing_status: string | null;
+  video_thumbnail_url: string | null;
+  video_thumbnail_maxres_url: string | null;
 }
 
 async function getVideosToProcess(): Promise<Video[]> {
@@ -97,33 +100,78 @@ async function getVideosToProcess(): Promise<Video[]> {
 async function getPlaylistsToProcess(): Promise<Playlist[]> {
   console.log('Fetching playlists that need image processing...');
 
-  let query = supabase
+  // Get all playlists with thumbnail_video_id (we'll filter by actual image existence later)
+  let playlistQuery = supabase
     .from('playlists')
     .select(
       `
       id,
-      image_url,
+      thumbnail_video_id,
+      image_jpg_url,
       image_webp_url,
       image_avif_url,
       image_processing_status
     `
     )
-    .or('image_url.not.is.null')
+    .not('thumbnail_video_id', 'is', null)
     .is('deleted_at', null);
 
-  if (!FORCE_REPROCESS) {
-    query = query.or(
-      'image_processing_status.is.null,image_processing_status.eq.pending,image_processing_status.eq.failed'
-    );
+  const { data: playlists, error: playlistError } = await playlistQuery.order(
+    'created_at',
+    { ascending: false }
+  );
+
+  if (playlistError) {
+    throw new Error(`Failed to fetch playlists: ${playlistError.message}`);
   }
 
-  const { data, error } = await query.order('created_at', { ascending: false });
-
-  if (error) {
-    throw new Error(`Failed to fetch playlists: ${error.message}`);
+  if (!playlists || playlists.length === 0) {
+    console.log('No playlists with thumbnail_video_id found');
+    return [];
   }
 
-  return data || [];
+  console.log(`Found ${playlists.length} playlists with thumbnail_video_id`);
+
+  // Now get the video thumbnail URLs for these playlists
+  const videoIds = playlists.map((p) => p.thumbnail_video_id).filter(Boolean);
+
+  if (videoIds.length === 0) {
+    return [];
+  }
+
+  const { data: videos, error: videoError } = await supabase
+    .from('videos')
+    .select('id, thumbnail_url, thumbnail_maxres_url')
+    .in('id', videoIds);
+
+  if (videoError) {
+    throw new Error(`Failed to fetch video thumbnails: ${videoError.message}`);
+  }
+
+  // Create a map of video thumbnails
+  const videoThumbnailMap = new Map();
+  videos?.forEach((video) => {
+    videoThumbnailMap.set(video.id, {
+      thumbnail_url: video.thumbnail_url,
+      thumbnail_maxres_url: video.thumbnail_maxres_url,
+    });
+  });
+
+  // Combine playlist data with video thumbnail data
+  const playlistsWithThumbnails: Playlist[] = playlists.map((playlist) => {
+    const videoThumbnails = videoThumbnailMap.get(playlist.thumbnail_video_id);
+    return {
+      ...playlist,
+      video_thumbnail_url: videoThumbnails?.thumbnail_url || null,
+      video_thumbnail_maxres_url: videoThumbnails?.thumbnail_maxres_url || null,
+    };
+  });
+
+  console.log(
+    `Successfully joined ${playlistsWithThumbnails.length} playlists with video thumbnail data`
+  );
+
+  return playlistsWithThumbnails;
 }
 
 function createVideoJobs(videos: Video[]) {
@@ -167,24 +215,56 @@ function createPlaylistJobs(playlists: Playlist[]) {
   const jobs = [];
 
   for (const playlist of playlists) {
-    // Skip if already has optimized images (unless forcing)
-    if (
-      !FORCE_REPROCESS &&
-      playlist.image_processing_status === 'completed' &&
-      (playlist.thumbnail_webp_url || playlist.thumbnail_avif_url)
-    ) {
+    console.log(`Processing playlist ${playlist.id}:`, {
+      thumbnail_video_id: playlist.thumbnail_video_id,
+      video_thumbnail_url: !!playlist.video_thumbnail_url,
+      video_thumbnail_maxres_url: !!playlist.video_thumbnail_maxres_url,
+      image_processing_status: playlist.image_processing_status,
+      has_jpg: !!playlist.image_jpg_url,
+      has_webp: !!playlist.image_webp_url,
+      has_avif: !!playlist.image_avif_url,
+    });
+
+    // For playlists, we only care about WebP and AVIF (not JPG)
+    // JPG might be an old format or user-uploaded image
+    const hasOptimizedImages =
+      playlist.image_webp_url && playlist.image_avif_url;
+
+    if (!FORCE_REPROCESS && hasOptimizedImages) {
+      console.log(
+        `Skipping playlist ${playlist.id} - already has WebP and AVIF images`
+      );
       continue;
     }
 
-    if (playlist.image_url) {
-      jobs.push({
-        entityType: 'playlist' as const,
-        entityId: playlist.id.toString(),
-        imageType: 'thumbnail' as const,
-        sourceUrl: playlist.image_url,
-        priority: 200,
-      });
+    // Skip if no thumbnail video or video thumbnails
+    if (!playlist.thumbnail_video_id) {
+      console.log(`Skipping playlist ${playlist.id} - no thumbnail_video_id`);
+      continue;
     }
+
+    // Use highest resolution available (maxres preferred)
+    const sourceUrl =
+      playlist.video_thumbnail_maxres_url || playlist.video_thumbnail_url;
+
+    if (!sourceUrl) {
+      console.log(
+        `Skipping playlist ${playlist.id} - no video thumbnail URLs available`
+      );
+      continue;
+    }
+
+    console.log(
+      `Creating job for playlist ${playlist.id} with source URL: ${sourceUrl} (missing WebP: ${!playlist.image_webp_url}, missing AVIF: ${!playlist.image_avif_url})`
+    );
+
+    jobs.push({
+      entityType: 'playlist' as const,
+      entityId: playlist.id.toString(),
+      imageType: 'playlist_image' as const,
+      sourceUrl: sourceUrl,
+      priority: 200,
+    });
   }
 
   return jobs;
@@ -196,7 +276,9 @@ async function processBatch(jobs: any[], batchNumber: number) {
   if (DRY_RUN) {
     console.log(
       'DRY RUN: Would process these jobs:',
-      jobs.map((j) => `${j.entityType}:${j.entityId}:${j.imageType}`)
+      jobs.map(
+        (j) => `${j.entityType}:${j.entityId}:${j.imageType} (${j.sourceUrl})`
+      )
     );
     return;
   }
