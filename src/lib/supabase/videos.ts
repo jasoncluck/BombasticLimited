@@ -44,6 +44,7 @@ export type Video = {
   description: string;
   thumbnail_url: string;
   thumbnail_maxres_url: string | null;
+  image_url: string | null; // Add image_url to Video type
   published_at: string;
   duration: string;
   views: number;
@@ -80,6 +81,7 @@ function transformVideoFromGetVideosWithTimestamps(
     description: rpcData.description,
     thumbnail_url: rpcData.thumbnail_url,
     thumbnail_maxres_url: rpcData.thumbnail_maxres_url || null,
+    image_url: (rpcData as any).image_url || null, // Add image_url with fallback
     published_at: rpcData.published_at,
     duration: rpcData.duration,
     views: rpcData.views || 0,
@@ -110,6 +112,7 @@ function transformVideoFromSearchVideos(
     description: rpcData.description,
     thumbnail_url: rpcData.thumbnail_url,
     thumbnail_maxres_url: rpcData.thumbnail_maxres_url || null,
+    image_url: (rpcData as any).image_url || null, // Add image_url with fallback
     published_at: rpcData.published_at,
     duration: rpcData.duration,
     views: rpcData.views || 0,
@@ -140,6 +143,7 @@ function transformVideoFromGetInProgressVideos(
     description: rpcData.description,
     thumbnail_url: rpcData.thumbnail_url,
     thumbnail_maxres_url: rpcData.thumbnail_maxres_url || null,
+    image_url: (rpcData as any).image_url || null, // Add image_url with fallback
     published_at: rpcData.published_at,
     duration: rpcData.duration,
     views: rpcData.views || 0,

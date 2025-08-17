@@ -64,7 +64,6 @@ export async function onPlaylistCreated(playlist: {
       await queuePlaylistImageProcessing(
         playlist.id.toString(),
         playlist.image_url,
-        null, // No maxres for uploaded images
         50 // Higher priority for new content
       );
       console.log(`Queued image processing for playlist: ${playlist.id}`);
@@ -90,7 +89,6 @@ export async function onPlaylistUpdated(playlist: {
       await queuePlaylistImageProcessing(
         playlist.id.toString(),
         playlist.image_url,
-        null, // No maxres for uploaded images
         75 // Medium priority for updates
       );
       console.log(`Queued image processing for updated playlist: ${playlist.id}`);

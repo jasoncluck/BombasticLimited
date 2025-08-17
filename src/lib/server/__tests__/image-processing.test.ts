@@ -257,7 +257,7 @@ describe('getCroppedPlaylistImageUrlServer', () => {
     const result = await getCroppedPlaylistImageUrlServer({
       imageProperties,
       thumbnailMaxResUrl: 'https://i.ytimg.com/image.jpg',
-      thumbnailUrl: null,
+      thumbnailUrl: undefined, // Change from null to undefined
     });
 
     // Verify fetch was called correctly
@@ -311,7 +311,7 @@ describe('getCroppedPlaylistImageUrlServer', () => {
     await getCroppedPlaylistImageUrlServer({
       imageProperties: null,
       thumbnailMaxResUrl: 'https://i.ytimg.com/image.jpg',
-      thumbnailUrl: null,
+      thumbnailUrl: undefined,
     });
 
     // Should use PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS
@@ -349,8 +349,8 @@ describe('getCroppedPlaylistImageUrlServer', () => {
   it('should return null when no image URL is provided', async () => {
     const result = await getCroppedPlaylistImageUrlServer({
       imageProperties: null,
-      thumbnailMaxResUrl: null,
-      thumbnailUrl: null,
+      thumbnailMaxResUrl: undefined,
+      thumbnailUrl: undefined,
     });
 
     expect(result).toBe(null);
@@ -369,7 +369,7 @@ describe('getCroppedPlaylistImageUrlServer', () => {
     const result = await getCroppedPlaylistImageUrlServer({
       imageProperties: null,
       thumbnailMaxResUrl: 'https://i.ytimg.com/image.jpg',
-      thumbnailUrl: null,
+      thumbnailUrl: undefined,
     });
 
     expect(result).toBe(null);
@@ -389,7 +389,7 @@ describe('getCroppedPlaylistImageUrlServer', () => {
     const result = await getCroppedPlaylistImageUrlServer({
       imageProperties: null,
       thumbnailMaxResUrl: 'https://i.ytimg.com/image.jpg',
-      thumbnailUrl: null,
+      thumbnailUrl: undefined,
     });
 
     expect(result).toBe(null);
@@ -457,7 +457,7 @@ describe('getVideoThumbnailWebpUrlServer', () => {
 
   it('should return null when no thumbnail URL is provided', async () => {
     const result = await getVideoThumbnailWebpUrlServer({
-      thumbnailUrl: null,
+      thumbnailUrl: null, // Change back to null
     });
 
     expect(result).toBe(null);
@@ -603,7 +603,7 @@ describe('Image Processing Cache Integration', () => {
     const result1 = await getCroppedPlaylistImageUrlServer({
       imageProperties,
       thumbnailMaxResUrl: 'https://i.ytimg.com/vi/cached-image.jpg',
-      thumbnailUrl: null,
+      thumbnailUrl: undefined,
     });
 
     expect(result1).toContain('data:image/'); // Accept any valid image format after fallback
@@ -613,7 +613,7 @@ describe('Image Processing Cache Integration', () => {
     const result2 = await getCroppedPlaylistImageUrlServer({
       imageProperties,
       thumbnailMaxResUrl: 'https://i.ytimg.com/vi/cached-image.jpg',
-      thumbnailUrl: null,
+      thumbnailUrl: undefined,
     });
 
     expect(result2).toContain('data:image/'); // Should return some valid image format

@@ -42,17 +42,17 @@ export type Playlist = {
   name: GetPlaylistDataResponse['playlist_name'];
   short_id: GetPlaylistDataResponse['playlist_short_id'];
   created_by: GetPlaylistDataResponse['playlist_created_by'];
-  description: GetPlaylistDataResponse['playlist_description'];
-  image_url: GetPlaylistDataResponse['playlist_image_url'];
-  image_processing_status: GetPlaylistDataResponse['playlist_image_processing_status'];
+  description: GetPlaylistDataResponse['playlist_description'] | null;
+  image_url: GetPlaylistDataResponse['playlist_image_url'] | null;
+  image_processing_status: GetPlaylistDataResponse['playlist_image_processing_status'] | null;
   type: GetPlaylistDataResponse['playlist_type'];
-  image_properties: GetPlaylistDataResponse['playlist_image_properties'];
-  youtube_id: GetPlaylistDataResponse['playlist_youtube_id'];
-  thumbnail_video_id: GetPlaylistDataResponse['playlist_thumbnail_video_id'];
-  thumbnail_url: GetPlaylistDataResponse['playlist_thumbnail_url'];
-  thumbnail_maxres_url: GetPlaylistDataResponse['playlist_thumbnail_maxres_url'];
-  deleted_at: GetPlaylistDataResponse['playlist_deleted_at']; // Now uses actual deleted_at from DB
-  duration_seconds: GetPlaylistDataResponse['total_duration_seconds'];
+  image_properties: GetPlaylistDataResponse['playlist_image_properties'] | null;
+  youtube_id: GetPlaylistDataResponse['playlist_youtube_id'] | null;
+  thumbnail_video_id: GetPlaylistDataResponse['playlist_thumbnail_video_id'] | null;
+  thumbnail_url: GetPlaylistDataResponse['playlist_thumbnail_url'] | null;
+  thumbnail_maxres_url: GetPlaylistDataResponse['playlist_thumbnail_maxres_url'] | null;
+  deleted_at: GetPlaylistDataResponse['playlist_deleted_at'] | null; // Allow null for compatibility
+  duration_seconds: GetPlaylistDataResponse['total_duration_seconds'] | null;
   // Optional properties that may not always be present
   updated_at?: string | null;
   image_processing_updated_at?: string | null;
@@ -78,8 +78,8 @@ export type PlaylistVideoWithTimestamp = {
   source: GetPlaylistDataResponse['video_source'];
   title: GetPlaylistDataResponse['video_title'];
   description: GetPlaylistDataResponse['video_description'];
-  thumbnail_url: GetPlaylistDataResponse['video_thumbnail_url'];
-  thumbnail_maxres_url: GetPlaylistDataResponse['video_thumbnail_maxres_url'];
+  thumbnail_url: GetPlaylistDataResponse['video_thumbnail_url'] | null;
+  thumbnail_maxres_url: GetPlaylistDataResponse['video_thumbnail_maxres_url'] | null;
   image_url: GetPlaylistDataResponse['video_image_url'];
   published_at: GetPlaylistDataResponse['video_published_at'];
   duration: GetPlaylistDataResponse['video_duration'];

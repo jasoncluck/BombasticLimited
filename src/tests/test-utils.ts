@@ -15,6 +15,7 @@ export function createMockVideo(overrides: Partial<Video> = {}): Video {
     source: 'giantbomb',
     thumbnail_url: 'https://example.com/thumb.jpg',
     thumbnail_maxres_url: 'https://example.com/thumb_maxres.jpg',
+    image_url: 'https://example.com/video_image.jpg', // Add missing image_url
     published_at: '2023-01-01T00:00:00Z',
     duration: '00:30:00',
     views: 0,
