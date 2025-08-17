@@ -52,11 +52,6 @@ export const GET: RequestHandler = async ({ url, request }) => {
       imageProperties,
       thumbnailMaxResUrl: thumbnailMaxResUrl || undefined,
       thumbnailUrl: thumbnailUrl || undefined,
-      acceptHeader,
-      options: {
-        format,
-        quality,
-      },
     });
 
     if (!dataUrl) {

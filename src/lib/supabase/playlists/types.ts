@@ -22,19 +22,20 @@ export type Playlist = {
   short_id: GetPlaylistDataResponse['playlist_short_id'];
   created_by: GetPlaylistDataResponse['playlist_created_by'];
   description: GetPlaylistDataResponse['playlist_description'];
-  image_url: GetPlaylistDataResponse['playlist_image_url'];
+  image_url: GetPlaylistDataResponse['playlist_image_url'] | null;
   image_processing_status: GetPlaylistDataResponse['playlist_image_processing_status'];
   type: GetPlaylistDataResponse['playlist_type'];
-  image_properties: GetPlaylistDataResponse['playlist_image_properties'];
-  youtube_id: GetPlaylistDataResponse['playlist_youtube_id'];
+  image_properties: GetPlaylistDataResponse['playlist_image_properties'] | null;
+  youtube_id: GetPlaylistDataResponse['playlist_youtube_id'] | null;
   thumbnail_video_id: GetPlaylistDataResponse['playlist_thumbnail_video_id'];
   thumbnail_url: GetPlaylistDataResponse['playlist_thumbnail_url'];
   thumbnail_maxres_url: GetPlaylistDataResponse['playlist_thumbnail_maxres_url'];
-  deleted_at: GetPlaylistDataResponse['playlist_deleted_at'];
+  deleted_at: GetPlaylistDataResponse['playlist_deleted_at'] | null;
   duration_seconds: GetPlaylistDataResponse['total_duration_seconds'];
   // Optional properties that may not always be present
   updated_at?: string | null;
   image_processing_updated_at?: string | null;
+  processedImageUrl?: string | null;
 };
 
 export type ProfilePlaylist = Playlist & {
@@ -57,13 +58,21 @@ export type PlaylistVideoWithTimestamp = {
   title: GetPlaylistDataResponse['video_title'];
   description: GetPlaylistDataResponse['video_description'];
   thumbnail_url: GetPlaylistDataResponse['video_thumbnail_url'];
-  thumbnail_maxres_url: GetPlaylistDataResponse['video_thumbnail_maxres_url'];
-  image_url: GetPlaylistDataResponse['video_image_url'];
+  thumbnail_maxres_url: GetPlaylistDataResponse['video_thumbnail_maxres_url'] | null;
+  image_url: GetPlaylistDataResponse['video_image_url'] | null;
   published_at: GetPlaylistDataResponse['video_published_at'];
   duration: GetPlaylistDataResponse['video_duration'];
-  video_start_seconds: GetPlaylistDataResponse['video_start_seconds'];
-  updated_at: GetPlaylistDataResponse['video_updated_at'];
-  watched_at: GetPlaylistDataResponse['video_watched_at'];
+  video_start_seconds: GetPlaylistDataResponse['video_start_seconds'] | null;
+  updated_at: GetPlaylistDataResponse['video_updated_at'] | null;
+  watched_at: GetPlaylistDataResponse['video_watched_at'] | null;
+  // Add missing Video properties for compatibility
+  views: number;
+  image_processing_status: 'pending' | 'processing' | 'completed' | 'failed';
+  image_processing_updated_at: string | null;
+  thumbnail_webp_url: string | null;
+  thumbnail_avif_url: string | null;
+  thumbnail_maxres_webp_url: string | null;
+  thumbnail_maxres_avif_url: string | null;
 };
 
 export type PlaylistVideo = Tables<'playlist_videos'>;

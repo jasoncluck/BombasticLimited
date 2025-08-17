@@ -8,7 +8,7 @@
   import Pagination from '$lib/components/pagination/pagination.svelte';
   import PlaylistTiles from '$lib/components/playlist/playlist-tiles.svelte';
   import { isSource, SOURCE_INFO } from '$lib/constants/source';
-  import { DEFAULT_NUM_PLAYLISTS_PAGINATION } from '$lib/supabase/playlists.js';
+  import { DEFAULT_NUM_PLAYLISTS_PAGINATION } from '$lib/supabase/playlists';
 
   const { data } = $props();
   let { processedPlaylists, playlistsCount, session, supabase } =

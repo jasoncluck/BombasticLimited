@@ -7,7 +7,7 @@
   } from '$lib/components/pagination/pagination.js';
   import Pagination from '$lib/components/pagination/pagination.svelte';
   import PlaylistTiles from '$lib/components/playlist/playlist-tiles.svelte';
-  import { DEFAULT_NUM_PLAYLISTS_PAGINATION } from '$lib/supabase/playlists.js';
+  import { DEFAULT_NUM_PLAYLISTS_PAGINATION } from '$lib/supabase/playlists';
 
   const { data } = $props();
   let { playlistResults, playlistsCount, session, supabase } = $derived(data);
