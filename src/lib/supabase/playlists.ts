@@ -56,6 +56,7 @@ export type Playlist = {
   // Optional properties that may not always be present
   updated_at?: string | null;
   image_processing_updated_at?: string | null;
+  processedImageUrl?: string;
 };
 
 export type ProfilePlaylist = Playlist & {
@@ -85,6 +86,14 @@ export type PlaylistVideoWithTimestamp = {
   video_start_seconds: GetPlaylistDataResponse['video_start_seconds'];
   updated_at: GetPlaylistDataResponse['video_updated_at'];
   watched_at: GetPlaylistDataResponse['video_watched_at'];
+  // Additional Video properties to make it compatible with VideoWithTimestamp
+  views: number;
+  image_processing_status: 'pending' | 'processing' | 'completed' | 'failed';
+  image_processing_updated_at: string | null;
+  thumbnail_webp_url: string | null;
+  thumbnail_avif_url: string | null;
+  thumbnail_maxres_webp_url: string | null;
+  thumbnail_maxres_avif_url: string | null;
 };
 
 export type PlaylistVideo = Tables<'playlist_videos'>;
@@ -169,6 +178,14 @@ function transformVideoFromRPC(
     video_start_seconds: rpcData.video_start_seconds,
     updated_at: rpcData.video_updated_at,
     watched_at: rpcData.video_watched_at,
+    // Default values for Video properties not available in playlist RPC
+    views: 0,
+    image_processing_status: 'completed',
+    image_processing_updated_at: null,
+    thumbnail_webp_url: null,
+    thumbnail_avif_url: null,
+    thumbnail_maxres_webp_url: null,
+    thumbnail_maxres_avif_url: null,
   };
 }
 
@@ -189,6 +206,14 @@ function transformVideoFromContextRPC(
     video_start_seconds: rpcData.video_start_seconds,
     updated_at: rpcData.video_updated_at,
     watched_at: rpcData.video_watched_at,
+    // Default values for Video properties not available in playlist context RPC
+    views: 0,
+    image_processing_status: 'completed',
+    image_processing_updated_at: null,
+    thumbnail_webp_url: null,
+    thumbnail_avif_url: null,
+    thumbnail_maxres_webp_url: null,
+    thumbnail_maxres_avif_url: null,
   };
 }
 

@@ -188,6 +188,36 @@ export function createMockProfileResponse(profile: UserProfile | null = null) {
 }
 
 /**
+ * Mock PlaylistVideoWithTimestamp data factory
+ */
+export function createMockPlaylistVideoWithTimestamp(overrides: Partial<any> = {}) {
+  return {
+    id: 'video-1',
+    video_position: 1,
+    source: 'giantbomb' as const,
+    title: 'Test Video in Playlist',
+    description: 'Test video description',
+    thumbnail_url: 'https://example.com/thumb.jpg',
+    thumbnail_maxres_url: 'https://example.com/thumb_maxres.jpg',
+    image_url: 'https://example.com/video_image.jpg',
+    published_at: '2023-01-01T00:00:00Z',
+    duration: '00:30:00',
+    video_start_seconds: 0,
+    updated_at: '2023-01-01T00:00:00Z',
+    watched_at: '2023-01-01T00:00:00Z',
+    // Video properties for compatibility
+    views: 0,
+    image_processing_status: 'completed' as const,
+    image_processing_updated_at: '2023-01-01T00:00:00Z',
+    thumbnail_webp_url: 'https://example.com/thumb.webp',
+    thumbnail_avif_url: 'https://example.com/thumb.avif',
+    thumbnail_maxres_webp_url: 'https://example.com/thumb_maxres.webp',
+    thumbnail_maxres_avif_url: 'https://example.com/thumb_maxres.avif',
+    ...overrides,
+  };
+}
+
+/**
  * Mock Playlist data factory
  */
 export function createMockPlaylist(overrides: Partial<any> = {}) {
@@ -215,6 +245,12 @@ export function createMockPlaylist(overrides: Partial<any> = {}) {
     image_url: 'https://example.com/playlist_image.jpg',
     thumbnail_video_id: 'video-1',
     duration_seconds: 1800,
+    // Add UserPlaylist properties
+    playlist_position: 1,
+    sorted_by: 'title',
+    sort_order: 'ascending',
+    added_at: '2023-01-01T00:00:00Z',
+    avatar_url: null,
     ...overrides,
   };
 }
