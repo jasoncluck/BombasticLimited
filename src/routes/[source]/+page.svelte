@@ -76,33 +76,31 @@
   });
 </script>
 
-<!-- Rest of your template remains the same -->
 <div class="flex flex-col">
-  <div
-    class="mx-2 flex flex-wrap items-center justify-between gap-2 sm:mx-0 @2xl:flex-nowrap"
-  >
-    <div class="mb-4 flex flex-col gap-2">
-      <h1 class="header-content">
-        {SOURCE_INFO[source].displayName}
-      </h1>
+  <div class="flex flex-wrap justify-between gap-4">
+    <h1 class="header-content">
+      {SOURCE_INFO[source].displayName}
+    </h1>
+    <div class="mb-4 ml-auto flex max-w-48 flex-col self-start">
+      <Button
+        variant="ghost"
+        href={SOURCE_INFO[source].supportUrl}
+        class="py-6 text-center text-wrap break-words whitespace-normal"
+        target="_blank"
+      >
+        Support {SOURCE_INFO[source].displayName}
+      </Button>
       {#if SOURCE_INFO[source].websiteUrlDomain}
-        <a
-          class="text-muted-foreground mt-1 text-sm hover:underline"
+        <Button
+          class="text-muted-foreground ml-auto text-sm hover:underline"
+          variant="link"
           target="_blank"
           href={`https://www.${SOURCE_INFO[source].websiteUrlDomain}`}
         >
-          {SOURCE_INFO[source].websiteUrlDomain}</a
+          {SOURCE_INFO[source].websiteUrlDomain}</Button
         >
       {/if}
     </div>
-    <Button
-      variant="secondary"
-      href={SOURCE_INFO[source].supportUrl}
-      class="mb-4 p-6 text-center leading-tight text-wrap break-words whitespace-normal"
-      target="_blank"
-    >
-      Support {SOURCE_INFO[source].displayName}
-    </Button>
   </div>
   {#if sidebarState.isSourceStreaming(source)}
     {#key source}

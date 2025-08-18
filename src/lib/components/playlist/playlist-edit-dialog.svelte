@@ -241,7 +241,7 @@
   }}
 >
   {#if isPlaylistOwner}
-    <Dialog.Trigger class="outline-none">
+    <Dialog.Trigger class="w-full outline-none">
       {@render trigger()}
     </Dialog.Trigger>
   {:else}

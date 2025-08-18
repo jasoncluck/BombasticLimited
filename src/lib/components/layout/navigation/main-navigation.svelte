@@ -111,7 +111,7 @@
 
   <!-- Right Section: User Controls -->
   <div class="ml-auto">
-    <div class="flex items-center gap-4">
+    <div class="flex items-center gap-2">
       <UserMenu
         {userProfile}
         {session}

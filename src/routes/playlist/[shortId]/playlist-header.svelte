@@ -114,9 +114,7 @@
           bind:open
         >
           {#snippet trigger()}
-            <div
-              class="flex flex-col items-center gap-6 @2xl:flex-row @2xl:items-end"
-            >
+            <div class="flex flex-col gap-6 @2xl:flex-row @2xl:items-end">
               <div class="flex justify-center">
                 <div
                   class="flex h-56 min-h-32 w-56 min-w-32 items-center justify-center overflow-hidden rounded-lg border-none bg-transparent p-0 {isPlaylistOwner &&
@@ -129,9 +127,7 @@
                       class="h-full w-full object-cover"
                     />
                   {:else}
-                    <div class="flex h-full w-full items-center justify-center">
-                      <ListVideo size={120} class="text-muted-foreground" />
-                    </div>
+                    <ListVideo size={120} class="text-muted-foreground" />
                   {/if}
                 </div>
               </div>

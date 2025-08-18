@@ -33,32 +33,6 @@
 
   const contentState = getContentState();
 
-  const selectedVideos = $derived(
-    contentState.selectedVideosBySection[sectionId] ?? []
-  );
-
-  const selectedVideoIds = $derived(
-    selectedVideos.length > 0
-      ? new Set(selectedVideos.map((v) => v.id))
-      : new Set()
-  );
-
-  const hoveredVideo = $derived(contentState.hoveredVideosBySection[sectionId]);
-
-  // Create drag drop functionality
-  const dragDrop = contentState.createDragDrop({
-    allowVideoReorder,
-    videos,
-    videosCount,
-    playlist,
-    contentFilter,
-    supabase,
-    clearSelection: true,
-    onVideosUpdate: (updatedVideos) => {
-      videos = updatedVideos;
-    },
-  });
-
   let api = $state<CarouselAPI>();
   let showPreviousButton = $state(false);
   let showNextButton = $state(videos.length > 0);

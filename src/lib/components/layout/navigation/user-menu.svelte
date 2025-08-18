@@ -13,7 +13,10 @@
     TriangleAlert,
   } from '@lucide/svelte';
   import NotificationBell from '$lib/components/notifications/notification-bell.svelte';
-  import { handleUpdateProfileContentDisplay } from '$lib/components/profile/profile-service';
+  import {
+    getUserInitials,
+    handleUpdateProfileContentDisplay,
+  } from '$lib/components/profile/profile-service';
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
   import type { UserProfile } from '$lib/supabase/user-profiles';
@@ -43,30 +46,29 @@
     data: { userNotifications },
   } = $derived(navigationState);
 
-  const { canHover, isSm } = $derived(mediaQueryState);
+  const { canHover, isMd } = $derived(mediaQueryState);
 </script>
 
 <!-- Content Display Preference (Desktop) -->
-{#if session && isSm}
+{#if session && isMd}
   <DropdownMenu.Root>
     <DropdownMenu.Trigger
       data-testid="user-preferences"
       id="user-preferences"
       class={buttonVariants({
         variant: 'ghost',
-        class: 'cursor-pointer outline-none',
+        size: 'icon',
+        class: 'ghost-button-minimal',
       })}
     >
       <div class="flex items-center gap-2">
         {#if userProfile?.content_display === 'TILES'}
           <div class="flex items-center gap-2">
             <GalleryHorizontal />
-            Card
           </div>
         {:else}
           <div class="flex items-center gap-2">
             <Table />
-            Table
           </div>
         {/if}
       </div>
@@ -115,7 +117,7 @@
 {/if}
 
 <!-- Notifications Bell -->
-{#if session && mediaQueryState.isSm && userNotifications.length > 0}
+{#if session && userNotifications.length > 0}
   <NotificationBell {supabase} {session} bind:openNotificationDrawer />
 {/if}
 
@@ -133,21 +135,19 @@
             'size-10 cursor-pointer !rounded-full outline-none hover:scale-105',
         })}
       >
-        {#if userProfile?.avatar_url}
-          <Avatar.Root class="size-10 rounded-full outline-none">
+        {#if userProfile}
+          <Avatar.Root class="size-10 rounded-full p-1.5 outline-none">
             <Avatar.Image
-              src={userProfile.avatar_url}
+              src={userProfile?.avatar_url}
               alt="User avatar"
               class="h-full w-full rounded-full object-cover p-1.5"
             />
             <Avatar.Fallback>
-              <CircleUser class="h-[1.2rem] w-[1.2rem]" />
-            </Avatar.Fallback>
+              {getUserInitials(userProfile.username)}</Avatar.Fallback
+            >
           </Avatar.Root>
-        {:else}
-          <CircleUser class="h-[1.2rem] w-[1.2rem]" />
+          <span class="sr-only">Profile</span>
         {/if}
-        <span class="sr-only">Profile</span>
       </DropdownMenu.Trigger>
       <DropdownMenu.Content>
         <DropdownMenu.Group>

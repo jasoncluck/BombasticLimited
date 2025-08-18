@@ -126,7 +126,7 @@
   }
 
   .header-content {
-    @apply text-4xl leading-none font-extrabold tracking-tight text-wrap break-words hyphens-auto transition-colors @2xl:text-5xl;
+    @apply text-4xl font-extrabold tracking-tight text-wrap break-words hyphens-auto transition-colors @4xl:text-5xl;
   }
 
   .header-playlist {

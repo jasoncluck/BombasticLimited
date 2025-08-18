@@ -58,10 +58,11 @@
   <DropdownMenu.Root onOpenChange={(open) => open && handleMenuOpen()}>
     <DropdownMenu.Trigger
       data-testid="notification-bell"
-      class="relative cursor-pointer outline-none {buttonVariants({
+      class={buttonVariants({
         variant: 'ghost',
         size: 'icon',
-      })}"
+        class: 'ghost-button-minimal',
+      })}
     >
       <Bell class="h-[1.2rem] w-[1.2rem]" />
       {#if unreadNotifications.length > 0}
