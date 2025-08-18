@@ -83,7 +83,7 @@
 
 <div>
   {#if session && continueWatchingVideos.length > 0}
-    <div class="mb-8 flex flex-col" data-testid="continue-watching-section">
+    <div class="mb-4 flex flex-col" data-testid="continue-watching-section">
       <a
         href={MAIN_ROUTES.CONTINUE}
         class={getContentView(mediaQueryState, userProfile) === 'TABLE'
@@ -107,7 +107,7 @@
       />
     </div>
   {/if}
-  <h1 class="header-primary">Latest Videos</h1>
+  <h1 class="header-content mb-2">Latest Videos</h1>
 
   <div class="mb-8 flex flex-col gap-4">
     {#each sources as source (source)}

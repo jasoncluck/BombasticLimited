@@ -126,15 +126,15 @@
   }
 
   .header-content {
-    @apply mb-0 text-5xl leading-none font-extrabold tracking-tight text-wrap break-words hyphens-auto transition-colors md:text-5xl lg:text-6xl;
+    @apply text-4xl leading-none font-extrabold tracking-tight text-wrap break-words hyphens-auto transition-colors md:text-4xl lg:text-5xl;
   }
 
   .header-playlist {
-    @apply mb-2 text-4xl leading-none font-extrabold tracking-tight text-wrap break-words hyphens-auto transition-colors md:text-4xl lg:text-5xl;
+    @apply mb-2 text-2xl leading-none font-extrabold tracking-tight text-wrap break-words hyphens-auto transition-colors lg:text-3xl;
   }
 
   .header-link {
-    @apply my-2 block cursor-pointer self-start truncate text-2xl font-semibold transition-colors hover:underline lg:text-3xl;
+    @apply my-2 block cursor-pointer self-start truncate text-2xl font-semibold transition-colors hover:underline @lg:text-4xl;
   }
 
   .header-link-sticky {
