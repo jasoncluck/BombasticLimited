@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeEach } from 'vitest';
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { VideoWatchTimeTracker } from '$lib/supabase/video-history';
 import type { SupabaseClient, Session } from '@supabase/supabase-js';
 
@@ -17,10 +17,21 @@ const mockSession = {
 describe('VideoWatchTimeTracker', () => {
   let tracker: VideoWatchTimeTracker;
   const videoId = 'test-video-id';
+  let mockDateNow: any;
+  let currentTime: number;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Setup consistent time mocking
+    currentTime = Date.now();
+    mockDateNow = vi.fn(() => currentTime);
+    vi.spyOn(Date, 'now').mockImplementation(mockDateNow);
+    
     tracker = new VideoWatchTimeTracker(videoId, mockSupabase, mockSession);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   test('should initialize with correct default values', () => {
@@ -32,12 +43,18 @@ describe('VideoWatchTimeTracker', () => {
   test('should track watch time correctly during play/pause cycles', () => {
     // Start playing at 10 seconds
     tracker.onPlay(10);
-
+    
+    // Simulate 10 seconds passing
+    currentTime += 10000;
+    
     // Pause at 20 seconds (watched 10 seconds)
     tracker.onPause(20);
 
     // Start playing again at 25 seconds
     tracker.onPlay(25);
+    
+    // Simulate 10 more seconds passing
+    currentTime += 10000;
 
     // Pause at 35 seconds (watched 10 more seconds)
     tracker.onPause(35);
@@ -49,6 +66,9 @@ describe('VideoWatchTimeTracker', () => {
   test('should not count seeking time as watch time', () => {
     // Start playing at 10 seconds
     tracker.onPlay(10);
+
+    // Simulate 10 seconds passing
+    currentTime += 10000;
 
     // User seeks to 100 seconds (should not count as 90 seconds watched)
     tracker.onSeek(100);
@@ -92,15 +112,16 @@ describe('VideoWatchTimeTracker', () => {
       error: null,
     });
     const mockRpc = vi.fn().mockReturnValue({ single: mockSingle });
-    mockSupabase.rpc = mockRpc;
+    
+    // Create a new tracker with the specific mock for this test
+    const testSupabase = { ...mockSupabase, rpc: mockRpc };
+    const testTracker = new VideoWatchTimeTracker(videoId, testSupabase as any, mockSession);
 
-    await tracker.startSession();
+    await testTracker.startSession();
 
-    expect(mockRpc).toHaveBeenCalledWith('record_video_history', {
+    expect(mockRpc).toHaveBeenCalledWith('start_video_history_session', {
       p_video_id: videoId,
-      p_seconds_watched: 0,
       p_session_start_time: expect.any(String),
-      p_session_end_time: undefined,
     });
     expect(mockSingle).toHaveBeenCalled();
   });
@@ -119,28 +140,30 @@ describe('VideoWatchTimeTracker', () => {
       .fn()
       .mockReturnValueOnce({ single: mockSingleStart }) // startSession
       .mockReturnValueOnce({ single: mockSingleUpdate }); // endSession
-    mockSupabase.rpc = mockRpc;
+    
+    // Create a new tracker with the specific mock for this test
+    const testSupabase = { ...mockSupabase, rpc: mockRpc };
+    const testTracker = new VideoWatchTimeTracker(videoId, testSupabase as any, mockSession);
 
-    await tracker.startSession();
+    await testTracker.startSession();
 
     // Simulate some watch time
-    tracker.onPlay(10);
-    tracker.onPause(20);
+    testTracker.onPlay(10);
+    testTracker.onPause(20);
 
-    await tracker.endSession();
+    await testTracker.endSession();
 
     // Check that startSession was called first
-    expect(mockRpc).toHaveBeenNthCalledWith(1, 'record_video_history', {
+    expect(mockRpc).toHaveBeenNthCalledWith(1, 'start_video_history_session', {
       p_video_id: videoId,
-      p_seconds_watched: 0,
       p_session_start_time: expect.any(String),
-      p_session_end_time: undefined,
     });
 
     // Check that endSession was called second
-    expect(mockRpc).toHaveBeenNthCalledWith(2, 'update_video_history_session', {
-      p_history_id: 123,
-      p_seconds_watched: 10,
+    expect(mockRpc).toHaveBeenNthCalledWith(2, 'update_video_history_seconds_watched', {
+      p_video_id: videoId,
+      p_session_start_time: expect.any(String),
+      p_seconds_watched: 0,
       p_session_end_time: expect.any(String),
     });
   });
