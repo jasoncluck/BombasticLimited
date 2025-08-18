@@ -229,7 +229,6 @@ describe('playlist/[shortId]/+page.server.ts', () => {
       expect(mockFlashRedirect).toHaveBeenCalledWith(302, '/');
     });
 
-
     it('should handle user playlist sort preferences', async () => {
       const userPlaylist = {
         ...mockPlaylist,

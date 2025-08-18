@@ -3,18 +3,15 @@
 -- Dependencies: Requires base tables from 03_base_tables.sql (playlists, playlist_videos, user_playlists)
 -- This migration includes playlist data access and search functions
 -- ============================================================================
-
 -- Helper function to select best available image format (unified for videos and playlists)
-CREATE OR REPLACE FUNCTION public.select_best_image_format(
+CREATE OR REPLACE FUNCTION public.select_best_image_format (
   avif_url text,
   webp_url text,
   jpg_url text,
   preferred_format text DEFAULT 'avif'
-) RETURNS text
-LANGUAGE plpgsql
-IMMUTABLE
-SET search_path = ''
-AS $$
+) RETURNS text LANGUAGE plpgsql IMMUTABLE
+SET
+  search_path = '' AS $$
 BEGIN
   -- Start from preferred format and fallback through the chain
   CASE preferred_format
@@ -81,8 +78,8 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data (
   total_duration_seconds integer,
   is_duration_row boolean
 )
-SET search_path = '' 
-LANGUAGE plpgsql AS $$
+SET
+  search_path = '' LANGUAGE plpgsql AS $$
 DECLARE
   playlist_record RECORD;
   video_count bigint;
@@ -317,9 +314,9 @@ CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
   playlist_type public.playlist_type,
   playlist_image_properties jsonb,
   playlist_youtube_id text,
-  playlist_thumbnail_video_id text,           -- The video ID used as thumbnail
-  playlist_thumbnail_url text,                -- thumbnail_url from the linked video
-  playlist_thumbnail_maxres_url text,         -- thumbnail_maxres_url from the linked video
+  playlist_thumbnail_video_id text, -- The video ID used as thumbnail
+  playlist_thumbnail_url text, -- thumbnail_url from the linked video
+  playlist_thumbnail_maxres_url text, -- thumbnail_maxres_url from the linked video
   playlist_deleted_at TIMESTAMP WITH TIME ZONE, -- Add deleted_at field
   profile_username text,
   playlist_sorted_by public.playlist_sorted_by,
@@ -524,9 +521,7 @@ SET
 $$;
 
 -- Function to get user playlists
-CREATE OR REPLACE FUNCTION public.get_user_playlists (
-  p_preferred_image_format text DEFAULT 'avif'
-) RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.get_user_playlists (p_preferred_image_format text DEFAULT 'avif') RETURNS TABLE (
   id bigint,
   created_by uuid,
   created_at timestamptz,
@@ -538,9 +533,9 @@ CREATE OR REPLACE FUNCTION public.get_user_playlists (
   type public.playlist_type,
   image_properties jsonb,
   youtube_id text,
-  thumbnail_video_id text,           
-  playlist_thumbnail_url text,      
-  playlist_thumbnail_maxres_url text, 
+  thumbnail_video_id text,
+  playlist_thumbnail_url text,
+  playlist_thumbnail_maxres_url text,
   duration_seconds integer,
   deleted_at TIMESTAMP WITH TIME ZONE,
   profile_username text,
@@ -550,8 +545,8 @@ CREATE OR REPLACE FUNCTION public.get_user_playlists (
   added_at TIMESTAMP WITH TIME ZONE,
   avatar_url text
 )
-SET search_path = '' 
-LANGUAGE sql AS $$
+SET
+  search_path = '' LANGUAGE sql AS $$
   SELECT
     p.id,
     p.created_by,
@@ -605,8 +600,8 @@ CREATE OR REPLACE FUNCTION public.get_playlists_for_username (
   type public.playlist_type,
   image_properties jsonb,
   youtube_id text,
-  thumbnail_video_id text,           -- The video ID used as thumbnail
-  playlist_thumbnail_url text,       -- thumbnail_url from the linked video
+  thumbnail_video_id text, -- The video ID used as thumbnail
+  playlist_thumbnail_url text, -- thumbnail_url from the linked video
   playlist_thumbnail_maxres_url text, -- thumbnail_maxres_url from the linked video
   duration_seconds integer,
   profile_username text,
@@ -670,8 +665,8 @@ CREATE OR REPLACE FUNCTION "public"."search_playlists" (
   "created_by" uuid,
   "type" public.playlist_type,
   "youtube_id" text,
-  "thumbnail_video_id" text,           -- The video ID used as thumbnail
-  "playlist_thumbnail_url" text,       -- thumbnail_url from the linked video
+  "thumbnail_video_id" text, -- The video ID used as thumbnail
+  "playlist_thumbnail_url" text, -- thumbnail_url from the linked video
   "playlist_thumbnail_maxres_url" text, -- thumbnail_maxres_url from the linked video
   "duration_seconds" integer,
   "profile_username" text,

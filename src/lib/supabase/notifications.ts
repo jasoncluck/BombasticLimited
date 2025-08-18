@@ -61,7 +61,7 @@ export interface NotificationUpdate {
 }
 
 export interface NotificationWithMeta extends Notification {
-  id?: string;  // Optional id property for demo notifications
+  id?: string; // Optional id property for demo notifications
   formatted_time?: string;
   is_new?: boolean;
 }

@@ -191,7 +191,9 @@ export function createMockProfileResponse(profile: UserProfile | null = null) {
 /**
  * Mock PlaylistVideoWithTimestamp data factory
  */
-export function createMockPlaylistVideoWithTimestamp(overrides: Partial<any> = {}) {
+export function createMockPlaylistVideoWithTimestamp(
+  overrides: Partial<any> = {}
+) {
   return {
     id: 'video-1',
     video_position: 1,

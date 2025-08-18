@@ -91,7 +91,9 @@ export async function onPlaylistUpdated(playlist: {
         playlist.image_url,
         75 // Medium priority for updates
       );
-      console.log(`Queued image processing for updated playlist: ${playlist.id}`);
+      console.log(
+        `Queued image processing for updated playlist: ${playlist.id}`
+      );
     }
   } catch (error) {
     console.error(

@@ -439,5 +439,3 @@ describe('getVideoThumbnailWebpUrl', () => {
     expect(result).toBe(null);
   });
 });
-
-

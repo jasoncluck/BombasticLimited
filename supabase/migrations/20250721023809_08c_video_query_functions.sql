@@ -3,7 +3,6 @@
 -- Dependencies: Requires base tables from 03_base_tables.sql (videos, timestamps)
 -- This migration includes video search, filtering, and retrieval functions
 -- ============================================================================
-
 -- Function to get videos with user timestamps
 CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps" () RETURNS TABLE (
   "id" "text",
@@ -276,10 +275,7 @@ END;
 $$;
 
 -- Function to increment video views safely
-CREATE OR REPLACE FUNCTION public.increment_video_views(video_id text)
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
+CREATE OR REPLACE FUNCTION public.increment_video_views (video_id text) RETURNS void LANGUAGE plpgsql SECURITY DEFINER
 SET
   search_path = '' AS $$
 BEGIN

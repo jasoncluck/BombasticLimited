@@ -64,21 +64,16 @@ CREATE TABLE IF NOT EXISTS "public"."playlists" (
   "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   "deleted_at" TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   "duration_seconds" integer DEFAULT 0,
-  
   -- Source video reference for thumbnail generation
-  "thumbnail_video_id" text REFERENCES "public"."videos"("id") ON DELETE SET NULL DEFAULT NULL,
-  
+  "thumbnail_video_id" text REFERENCES "public"."videos" ("id") ON DELETE SET NULL DEFAULT NULL,
   -- Crop dimensions for generating playlist thumbnails from video thumbnail
   "image_properties" jsonb, -- {x: number, y: number, width: number, height: number}
-  
   -- Generated cropped playlist images (stored in Supabase Storage)
-  "image_webp_url" text, 
+  "image_webp_url" text,
   "image_avif_url" text,
-  
   -- Image processing tracking
   "image_processing_status" public.image_processing_status DEFAULT 'pending',
   "image_processing_updated_at" TIMESTAMP WITH TIME ZONE DEFAULT now(),
-  
   CONSTRAINT "playlists_pkey" PRIMARY KEY ("id"),
   CONSTRAINT "playlists_name_check" CHECK (length("name") <= 50),
   CONSTRAINT "playlists_youtube_id_unique" UNIQUE ("youtube_id"),
@@ -89,9 +84,13 @@ ALTER TABLE "public"."playlists" OWNER TO "postgres";
 
 -- Comments for clarity
 COMMENT ON COLUMN "public"."playlists"."thumbnail_video_id" IS 'Reference to video used as source for playlist thumbnail';
+
 COMMENT ON COLUMN "public"."playlists"."image_properties" IS 'Crop dimensions {x, y, width, height} for generating playlist image from video thumbnail';
+
 COMMENT ON COLUMN "public"."playlists"."image_webp_url" IS 'Supabase Storage path for cropped playlist image in WebP format';
+
 COMMENT ON COLUMN "public"."playlists"."image_avif_url" IS 'Supabase Storage path for cropped playlist image in AVIF format';
+
 COMMENT ON COLUMN "public"."playlists"."image_processing_status" IS 'Status of background image processing for playlist thumbnail generation';
 
 ALTER TABLE "public"."playlists" OWNER TO "postgres";

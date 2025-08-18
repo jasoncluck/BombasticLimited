@@ -87,7 +87,7 @@ describe('Main Navigation Component', () => {
   it('should manage account drawer state like sidebar', () => {
     // Test drawer state management
     expect(mockNavigationState.openAccountDrawer).toBe(false);
-    
+
     mockNavigationState.setAccountDrawer(true);
     expect(mockNavigationState.setAccountDrawer).toHaveBeenCalledWith(true);
   });

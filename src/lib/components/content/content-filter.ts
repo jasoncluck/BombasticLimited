@@ -13,7 +13,9 @@ type SortOption<T extends Video | VideoWithTimestamp | PlaylistVideo> = {
   order: SortOrder;
 };
 
-export type ContentFilter<T extends Video | VideoWithTimestamp | PlaylistVideo> = {
+export type ContentFilter<
+  T extends Video | VideoWithTimestamp | PlaylistVideo,
+> = {
   sort: SortOption<T>;
   startDate?: string;
   endDate?: string;

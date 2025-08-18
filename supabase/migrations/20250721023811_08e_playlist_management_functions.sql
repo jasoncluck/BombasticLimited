@@ -3,7 +3,6 @@
 -- Dependencies: Requires base tables from 03_base_tables.sql and user profile functions (08a)
 -- This migration includes playlist creation, modification, and video management functions
 -- ============================================================================
-
 CREATE OR REPLACE FUNCTION public.insert_playlist (
   p_created_by uuid,
   p_name text DEFAULT NULL,
@@ -324,16 +323,13 @@ END;
 $$;
 
 -- Function to update the position of a playlist for a user in user_playlists
-CREATE OR REPLACE FUNCTION public.update_playlist_position (
-  p_playlist_id bigint, 
-  p_new_position int2
-) RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.update_playlist_position (p_playlist_id bigint, p_new_position int2) RETURNS TABLE (
   playlist_id bigint,
   playlist_position int2,
   success boolean
-) 
-SET search_path = '' 
-LANGUAGE plpgsql AS $$  
+)
+SET
+  search_path = '' LANGUAGE plpgsql AS $$  
 DECLARE
   current_position int2;
   max_position int2;
@@ -567,7 +563,7 @@ END;
 $$;
 
 -- Function to validate video thumbnails and update playlist image (WebP-first approach)
-CREATE OR REPLACE FUNCTION public.update_playlist_image(
+CREATE OR REPLACE FUNCTION public.update_playlist_image (
   p_playlist_id bigint,
   p_thumbnail_video_id text DEFAULT NULL,
   p_image_url text DEFAULT NULL,
@@ -578,8 +574,9 @@ CREATE OR REPLACE FUNCTION public.update_playlist_image(
   thumbnail_video_id text,
   image_webp_url text,
   error_message text
-) LANGUAGE plpgsql SECURITY DEFINER 
-SET search_path = '' AS $$
+) LANGUAGE plpgsql SECURITY DEFINER
+SET
+  search_path = '' AS $$
 DECLARE
   error_msg text := NULL;
   updated_row record;
@@ -716,16 +713,14 @@ END;
 $$;
 
 -- Function to insert videos into a playlist
-CREATE OR REPLACE FUNCTION "public"."insert_playlist_videos" (
-  "p_playlist_id" int8, 
-  "p_video_ids" TEXT[]
-) RETURNS TABLE (
+CREATE OR REPLACE FUNCTION "public"."insert_playlist_videos" ("p_playlist_id" int8, "p_video_ids" TEXT[]) RETURNS TABLE (
   result_id int8,
   result_playlist_id int8,
   result_video_id text,
   result_video_position int2
 ) LANGUAGE plpgsql
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
 DECLARE
   max_position int2;
   current_position int2;

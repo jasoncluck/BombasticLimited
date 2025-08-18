@@ -13,11 +13,9 @@ COMMENT ON COLUMN "public"."playlists"."duration_seconds" IS 'Total duration of 
 CREATE INDEX IF NOT EXISTS "idx_playlists_duration_seconds" ON "public"."playlists" USING btree ("duration_seconds");
 
 -- Function to convert ISO 8601 duration to seconds (matches video-service.ts logic)
-CREATE OR REPLACE FUNCTION public.duration_to_seconds (duration_text text) RETURNS integer 
-LANGUAGE plpgsql 
-IMMUTABLE
-SET search_path = ''
-AS $$
+CREATE OR REPLACE FUNCTION public.duration_to_seconds (duration_text text) RETURNS integer LANGUAGE plpgsql IMMUTABLE
+SET
+  search_path = '' AS $$
 DECLARE
   hours integer := 0;
   minutes integer := 0;
@@ -52,10 +50,9 @@ $$;
 COMMENT ON FUNCTION public.duration_to_seconds (text) IS 'Convert ISO 8601 duration string to total seconds';
 
 -- Function to calculate total duration for a playlist
-CREATE OR REPLACE FUNCTION public.calculate_playlist_duration (playlist_id_param bigint) RETURNS integer 
-LANGUAGE plpgsql
-SET search_path = ''
-AS $$
+CREATE OR REPLACE FUNCTION public.calculate_playlist_duration (playlist_id_param bigint) RETURNS integer LANGUAGE plpgsql
+SET
+  search_path = '' AS $$
 DECLARE
   total_duration integer := 0;
 BEGIN
@@ -74,10 +71,9 @@ $$;
 COMMENT ON FUNCTION public.calculate_playlist_duration (bigint) IS 'Calculate total duration in seconds for all videos in a playlist';
 
 -- Function to update playlist duration
-CREATE OR REPLACE FUNCTION public.update_playlist_duration (playlist_id_param bigint) RETURNS void 
-LANGUAGE plpgsql
-SET search_path = ''
-AS $$
+CREATE OR REPLACE FUNCTION public.update_playlist_duration (playlist_id_param bigint) RETURNS void LANGUAGE plpgsql
+SET
+  search_path = '' AS $$
 BEGIN
   UPDATE public.playlists
   SET duration_seconds = public.calculate_playlist_duration(playlist_id_param)
@@ -88,10 +84,9 @@ $$;
 COMMENT ON FUNCTION public.update_playlist_duration (bigint) IS 'Update the duration_seconds field for a specific playlist';
 
 -- Trigger function for playlist_videos changes
-CREATE OR REPLACE FUNCTION public.trigger_update_playlist_duration_from_videos () RETURNS TRIGGER 
-LANGUAGE plpgsql
-SET search_path = ''
-AS $$
+CREATE OR REPLACE FUNCTION public.trigger_update_playlist_duration_from_videos () RETURNS TRIGGER LANGUAGE plpgsql
+SET
+  search_path = '' AS $$
 BEGIN
   -- Handle INSERT and UPDATE
   IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
@@ -118,10 +113,9 @@ $$;
 COMMENT ON FUNCTION public.trigger_update_playlist_duration_from_videos () IS 'Trigger function to update playlist duration when videos are added/removed/moved';
 
 -- Trigger function for video duration changes
-CREATE OR REPLACE FUNCTION public.trigger_update_affected_playlist_durations () RETURNS TRIGGER 
-LANGUAGE plpgsql
-SET search_path = ''
-AS $$
+CREATE OR REPLACE FUNCTION public.trigger_update_affected_playlist_durations () RETURNS TRIGGER LANGUAGE plpgsql
+SET
+  search_path = '' AS $$
 BEGIN
   -- Only process if duration changed or video pending_delete status changed
   IF TG_OP = 'UPDATE' AND (
