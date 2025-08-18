@@ -196,7 +196,7 @@ describe('+layout.ts load function', () => {
 
     const result = await load(invalidEvent);
 
-    expect(result.layout).toBeNull();
+    // Layout property no longer exists in simplified version
     expect(result.isSidebarCollapsed).toBe(false);
   });
 
@@ -212,7 +212,7 @@ describe('+layout.ts load function', () => {
 
     const result = await load(noLayoutEvent);
 
-    expect(result.layout).toBeNull();
+    // Layout property no longer exists in simplified version
     expect(result.isSidebarCollapsed).toBe(false);
   });
 
@@ -228,7 +228,8 @@ describe('+layout.ts load function', () => {
 
     const result = await load(arrayEvent);
 
-    expect(result.layout).toEqual([300, 700]);
+    // Layout property no longer exists in simplified version
+    expect(result.isSidebarCollapsed).toBe(false);
   });
 
   it('should handle string layout data that can be parsed', async () => {
@@ -243,7 +244,8 @@ describe('+layout.ts load function', () => {
 
     const result = await load(stringEvent);
 
-    expect(result.layout).toEqual([400, 600]);
+    // Layout property no longer exists in simplified version
+    expect(result.isSidebarCollapsed).toBe(false);
   });
 
   it('should handle string layout data that cannot be parsed', async () => {
@@ -261,7 +263,8 @@ describe('+layout.ts load function', () => {
 
     const result = await load(invalidStringEvent);
 
-    expect(result.layout).toBeNull();
+    // Layout property no longer exists in simplified version
+    expect(result.isSidebarCollapsed).toBe(false);
   });
 
   it('should call depends with supabase:auth', async () => {
@@ -286,8 +289,7 @@ describe('+layout.ts load function', () => {
     const result = await load(minimalEvent);
 
     expect(result.userProfile).toBeNull();
-    expect(result.playlistsCount).toBeNull();
-    expect(result.layout).toBeNull();
+    // playlistsCount and layout properties no longer exist in simplified version
     expect(result.contentFilter).toBeNull();
   });
 

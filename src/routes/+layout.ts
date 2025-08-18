@@ -9,10 +9,7 @@ import {
 } from '$env/static/public';
 import type { LayoutLoad } from './$types';
 import { COLLAPSED_SIDEBAR_SIZE } from '$lib/constants/layout';
-import type {
-  CombinedContentFilter,
-  VideoFilter,
-} from '$lib/components/content/content-filter';
+import type { CombinedContentFilter } from '$lib/components/content/content-filter';
 import type { UserProfile } from '$lib/supabase/user-profiles';
 import type { NotificationWithMeta } from '$lib/supabase/notifications';
 
@@ -68,91 +65,20 @@ export const load = async ({
     session = data.session;
   }
 
-  // Handle the case where server returns minimal cached data
-  if (data.cached) {
-    return {
-      session,
-      supabase,
-      playlistsCount: null as number | null,
-      contentFilter: {
-        sort: { key: 'datePublished', order: 'descending' },
-        type: 'video',
-      } as VideoFilter,
-      userProfile: null as UserProfile | null,
-      isSidebarCollapsed: false,
-      // Cache-related data from server
-      etag: data.etag || null,
-      lastModified: data.lastModified || null,
-      cached: true,
-      cacheUserId: data.cacheUserId || null,
-      notifications: null,
-    };
-  }
-
-  // Destructure the full data when not cached with proper types
+  // Destructure the simplified data without complex caching
   const {
-    playlistsCount = null,
     userProfile = null,
-    layout = null,
     contentFilter,
-    etag = null,
-    lastModified = null,
-    cacheUserId = null,
-    notifications = null,
   }: {
-    playlistsCount?: number | null;
     userProfile?: UserProfile | null;
-    layout?: string | number[] | null;
     contentFilter?: CombinedContentFilter;
-    etag?: string | null;
-    lastModified?: string | null;
-    cacheUserId?: string | null;
-    notifications?: NotificationWithMeta[] | null;
   } = data;
-
-  // Handle layout safely
-  let parsedLayout: number[] | null = null;
-  if (layout) {
-    try {
-      // If it's already an array, use it directly
-      if (Array.isArray(layout)) {
-        parsedLayout = layout.every(
-          (item) => typeof item === 'number' && !isNaN(item)
-        )
-          ? layout
-          : null;
-      }
-      // If it's a string, try to parse it
-      else if (typeof layout === 'string') {
-        const parsed = JSON.parse(layout);
-        parsedLayout =
-          Array.isArray(parsed) &&
-          parsed.every((item) => typeof item === 'number' && !isNaN(item))
-            ? parsed
-            : null;
-      }
-    } catch (error) {
-      console.warn('Failed to process layout:', layout, error);
-      parsedLayout = null;
-    }
-  }
 
   return {
     session,
     supabase,
     contentFilter: contentFilter || null,
     userProfile,
-    playlistsCount,
-    layout: parsedLayout,
-    isSidebarCollapsed:
-      parsedLayout && Math.trunc(parsedLayout[0]) === COLLAPSED_SIDEBAR_SIZE
-        ? true
-        : false,
-    // Cache-related data from server
-    etag,
-    lastModified,
-    cached: false,
-    cacheUserId,
-    notifications,
+    isSidebarCollapsed: false, // Simplified - no complex layout parsing
   };
 };

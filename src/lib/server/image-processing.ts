@@ -517,24 +517,18 @@ function validateAndAdjustCropDimensions(
 }
 
 // Image cache management functions (unchanged)
-export async function clearImageCache(
-  authState?: 'auth' | 'anon'
-): Promise<void> {
-  await imageCacheManager.initialize();
-  await imageCacheManager.clear(authState);
+export async function clearImageCache(): Promise<void> {
+  await imageCacheManager.clear();
 }
 
 export async function getImageCacheStats(): Promise<{
-  memoryEntries: number;
-  memorySize: number;
-  authEntries: { auth: number; anon: number };
+  entries: number;
+  size: number;
 }> {
-  await imageCacheManager.initialize();
   return imageCacheManager.getStats();
 }
 
 export async function cleanupImageCache(): Promise<void> {
-  await imageCacheManager.initialize();
   await imageCacheManager.cleanup();
 }
 

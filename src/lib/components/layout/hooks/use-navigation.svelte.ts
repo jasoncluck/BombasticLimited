@@ -2,7 +2,7 @@ import { beforeNavigate, afterNavigate, invalidate } from '$app/navigation';
 import { navigating } from '$app/state';
 import { browser } from '$app/environment';
 import { tick } from 'svelte';
-import type { NavigationCacheState } from '$lib/state/navigation-cache/navigation-cache.svelte.js';
+// NavigationCacheState removed as part of cache simplification
 import type { PageState } from '$lib/state/page.svelte.js';
 import {
   getNavigationState,
@@ -11,7 +11,7 @@ import {
 import type { Session } from '@supabase/supabase-js';
 
 export function useNavigation(
-  navigationCache: NavigationCacheState,
+  // navigationCache: NavigationCacheState, // Removed as part of cache simplification
   pageState: PageState,
   etag: string | null,
   lastModified: string | null,
@@ -55,45 +55,30 @@ export function useNavigation(
         invalidate('supabase:db:videos');
       }
 
-      // Store ETag information with security validation
+      // Store ETag information with security validation - simplified approach
       if (browser && to && etag && lastModified && !cached) {
-        const currentUserId = session?.user?.id ?? null;
-        const currentCacheUserId = cacheUserId ?? null;
-
-        // Validate user context for both authenticated and non-authenticated users
-        if (currentUserId === currentCacheUserId) {
-          navigationCache.setCacheEntry(
-            to.url.href,
+        // Simple cache storage logic - store in session storage for basic navigation optimization
+        try {
+          const cacheEntry = {
+            url: to.url.href,
             etag,
             lastModified,
-            currentUserId,
-            currentCacheUserId
-          );
-        } else {
-          console.warn('User context mismatch, clearing cache');
-          navigationCache.clearUserCache();
+            userId: session?.user?.id ?? null,
+            timestamp: Date.now()
+          };
+          sessionStorage.setItem(`nav-cache-${to.url.href}`, JSON.stringify(cacheEntry));
+        } catch (error) {
+          console.warn('Failed to store navigation cache entry:', error);
         }
       }
     });
   }
 
-  // Function to get navigation loading state - this will be called from component
+  // Function to get navigation loading state - simplified
   function getIsNavigatingToContent() {
     if (!navigating) return false;
 
-    const from = navigating.from?.url;
-    const to = navigating.to?.url;
-
-    // Quick check with optimized navigation cache
-    if (browser && navigationCache.initialized) {
-      const shouldShow = navigationCache.shouldShowLoading(
-        from?.href,
-        to?.href,
-        session?.user?.id ?? null
-      );
-      if (!shouldShow) return false;
-    }
-
+    // Simplified navigation loading check - no complex caching
     return navigating.type === 'goto' || navigating.type === 'link';
   }
 

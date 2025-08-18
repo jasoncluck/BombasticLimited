@@ -2,7 +2,7 @@ import { browser } from '$app/environment';
 import { invalidateAll, invalidate } from '$app/navigation';
 import { toast } from 'svelte-sonner';
 import type { ContentState } from '$lib/state/content.svelte.js';
-import type { NavigationCacheState } from '$lib/state/navigation-cache/navigation-cache.svelte.js';
+// NavigationCacheState removed as part of cache simplification
 import type { MediaQueryState } from '$lib/state/media-query.svelte.js';
 import type { SidebarState } from '$lib/state/sidebar.svelte.js';
 import type { NavigationState } from '$lib/state/navigation.svelte.js';
@@ -13,7 +13,7 @@ import type { Database } from '$lib/supabase/database.types';
 export function useLayoutEffects(
   pageState: PageState,
   contentState: ContentState,
-  navigationCache: NavigationCacheState,
+  // navigationCache: NavigationCacheState, // Removed as part of cache simplification
   mediaQuery: MediaQueryState,
   sidebarState: SidebarState,
   navigationState: NavigationState,
@@ -40,19 +40,8 @@ export function useLayoutEffects(
     pageState.handleDrop();
   }
 
-  // Debug preload stats (remove in production)
-  $effect(() => {
-    if (browser && navigationCache.initialized) {
-      const stats = navigationCache.getPreloadStats();
-      if (stats.completed > 0 || stats.failed > 0) {
-        console.log('📊 Preload stats:', {
-          ...stats,
-          cacheHitRate:
-            (stats.completed / (stats.completed + stats.failed)) * 100,
-        });
-      }
-    }
-  });
+  // Debug preload stats - removed as part of cache simplification
+  // Simplified layout effects without complex navigation cache
 
   // Scroll position restoration
   $effect(() => {
@@ -85,31 +74,24 @@ export function useLayoutEffects(
         await invalidateAll();
       }
 
-      // Initialize navigation cache first for best performance
-      navigationCache.initialize();
+      // Initialize simplified layout - no complex navigation cache
       mediaQueryCleanup = mediaQuery.initialize();
       // Use non-blocking sidebar initialization to match main layout
       sidebarCleanup = sidebarState.initializeNonBlocking();
 
-      const currentUserId = session?.user.id ?? null;
-
-      // Clear cache when user changes for security
-      if (browser && navigationCache.currentUserId !== currentUserId) {
-        navigationCache.clearUserCache();
-      }
-
-      // Store initial page ETag if available
+      // Store initial page ETag if available - simplified approach
       if (browser && etag && lastModified && !cached) {
-        const currentCacheUserId = cacheUserId ?? null;
-
-        if (currentUserId === currentCacheUserId) {
-          navigationCache.setCacheEntry(
-            window.location.href,
+        try {
+          const cacheEntry = {
+            url: window.location.href,
             etag,
             lastModified,
-            currentUserId,
-            currentCacheUserId
-          );
+            userId: session?.user?.id ?? null,
+            timestamp: Date.now()
+          };
+          sessionStorage.setItem(`nav-cache-${window.location.href}`, JSON.stringify(cacheEntry));
+        } catch (error) {
+          console.warn('Failed to store navigation cache entry:', error);
         }
       }
 
@@ -139,7 +121,7 @@ export function useLayoutEffects(
       // Cleanup state initializations
       if (mediaQueryCleanup) mediaQueryCleanup();
       if (sidebarCleanup) sidebarCleanup();
-      navigationCache.cleanup();
+      // No navigationCache cleanup needed in simplified approach
     };
   }
 

@@ -1,37 +1,43 @@
 import { browser } from '$app/environment';
-import type { NavigationCacheState } from '$lib/state/navigation-cache/navigation-cache.svelte.js';
+// NavigationCacheState removed as part of cache simplification
 import type { Session } from '@supabase/supabase-js';
 import { MAIN_ROUTES, MAIN_ROUTE_CONFIG } from '$lib/constants/routes.js';
 
-export function usePreloading(navigationCache: NavigationCacheState) {
+export function usePreloading() {
+  // Simplified preloading without complex navigation cache
   // Main navigation routes for UI reference
   const mainRoutes = MAIN_ROUTE_CONFIG;
 
-  // Simplified preloading - only focus on paginated content since SW handles main routes
+  // Simplified preloading - basic route prefetch logic without complex cache
   function handleRoutePreload(currentPath: string, user: any) {
-    if (!navigationCache.initialized) return;
-
-    // Only preload paginated versions that service worker doesn't cache
-    const paginatedRoutes: Record<string, string[]> = {
-      [MAIN_ROUTES.GIANTBOMB]: ['/giantbomb?page=2', '/giantbomb/latest'],
-      [MAIN_ROUTES.NEXTLANDER]: ['/nextlander?page=2', '/nextlander/latest'],
-      [MAIN_ROUTES.REMAP]: ['/remap?page=2', '/remap/latest'],
-      [MAIN_ROUTES.JEFFGERSTMANN]: [
-        '/jeffgerstmann?page=2',
-        '/jeffgerstmann/latest',
-      ],
+    // Simple prefetch logic - basic static route preloading
+    const staticRoutes: Record<string, string[]> = {
+      [MAIN_ROUTES.GIANTBOMB]: ['/giantbomb?page=2'],
+      [MAIN_ROUTES.NEXTLANDER]: ['/nextlander?page=2'],
+      [MAIN_ROUTES.REMAP]: ['/remap?page=2'],
+      [MAIN_ROUTES.JEFFGERSTMANN]: ['/jeffgerstmann?page=2'],
     };
 
-    const routes = paginatedRoutes[currentPath as keyof typeof paginatedRoutes];
+    const routes = staticRoutes[currentPath as keyof typeof staticRoutes];
     if (routes) {
-      navigationCache.preloadRoutes(routes, 4);
+      // Simple prefetch using browser's native prefetch
+      routes.forEach(route => {
+        try {
+          const link = document.createElement('link');
+          link.rel = 'prefetch';
+          link.href = route;
+          document.head.appendChild(link);
+        } catch (error) {
+          console.warn('Failed to prefetch route:', route, error);
+        }
+      });
     }
   }
 
   function startInitialPreloading(session: Session | null) {
     if (!browser) return;
 
-    // Light initial preloading - only paginated content since SW handles main routes
+    // Light initial preloading - basic static prefetch without complex cache
     setTimeout(() => {
       handleRoutePreload(window.location.pathname, session);
     }, 2000);
