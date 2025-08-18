@@ -247,6 +247,7 @@ describe('[source]/+page.server.ts load function', () => {
         limit: 10,
         supabase: mockSupabase,
         session: mockSession,
+        acceptHeader: null,
       });
 
       expect(mockGetPlaylistDataByYoutubeId).toHaveBeenCalledWith({
@@ -258,6 +259,7 @@ describe('[source]/+page.server.ts load function', () => {
         limit: 10,
         supabase: mockSupabase,
         session: mockSession,
+        acceptHeader: null,
       });
     });
 
@@ -294,6 +296,7 @@ describe('[source]/+page.server.ts load function', () => {
         limit: 10,
         supabase: mockSupabase,
         session: mockSession,
+        acceptHeader: null,
       });
 
       expect(mockGetPlaylistsForUsername).toHaveBeenCalledWith({

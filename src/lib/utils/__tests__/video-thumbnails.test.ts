@@ -109,11 +109,8 @@ describe('video-thumbnails (server-side only)', () => {
 
       const result = getVideoThumbnailUrl(video, config);
 
-      // Should include all config parameters
-      expect(result).toContain('format=webp');
-      expect(result).toContain('quality=75');
-      expect(result).toContain('width=320');
-      expect(result).toContain('height=180');
+      // Should return direct YouTube URL (config parameters no longer included in URL)
+      expect(result).toBe('https://i.ytimg.com/vi/1/hqdefault.jpg');
     });
   });
 
@@ -153,7 +150,7 @@ describe('video-thumbnails (server-side only)', () => {
   });
 
   describe('getVideoThumbnailDataUrl', () => {
-    it('should return server API URL for data format', () => {
+    it('should return direct YouTube URL (no longer returns API endpoint)', () => {
       const video = createMockVideo(
         '1',
         'https://i.ytimg.com/vi/1/hqdefault.jpg',
@@ -162,9 +159,7 @@ describe('video-thumbnails (server-side only)', () => {
 
       const result = getVideoThumbnailDataUrl(video);
 
-      expect(result).toMatch(
-        /^\/api\/video-thumbnail\?url=https%3A%2F%2Fi\.ytimg\.com%2Fvi%2F1%2Fhqdefault\.jpg&type=json$/
-      );
+      expect(result).toBe('https://i.ytimg.com/vi/1/hqdefault.jpg');
     });
 
     it('should prefer thumbnail_url for better performance', () => {

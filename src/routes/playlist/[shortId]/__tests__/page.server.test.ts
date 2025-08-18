@@ -48,6 +48,7 @@ vi.mock('$lib/supabase/playlists', () => ({
   isUserPlaylist: vi.fn(),
   updatePlaylistInfo: vi.fn(),
   updatePlaylistImage: vi.fn(),
+  parseImageProperties: vi.fn(),
   PLAYLIST_TYPES: ['Public', 'Private'],
   DEFAULT_NUM_VIDEOS_PAGINATION: 20,
 }));

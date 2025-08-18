@@ -104,8 +104,8 @@ describe('getCroppedPlaylistImageUrl', () => {
       150, // source coordinates
       0,
       0,
-      100,
-      150 // destination coordinates
+      360,
+      360 // destination coordinates (previewSize for maxres)
     );
 
     // Verify result format (basic check since base64 encoding is complex to mock)
@@ -339,8 +339,14 @@ describe('getVideoThumbnailWebpUrl', () => {
       quality: 0.75,
     });
 
-    // Should draw the full image without cropping (0, 0 coordinates)
-    expect(mockDrawImage).toHaveBeenCalledWith(mockImageBitmap, 0, 0);
+    // Should draw the full image without cropping but with scaling to fit 320x180
+    expect(mockDrawImage).toHaveBeenCalledWith(
+      mockImageBitmap, 
+      0, 
+      0, 
+      320, // destination width (scaled)
+      180  // destination height (scaled)
+    );
 
     // Verify result format
     expect(result).toMatch(/^data:image\/webp;base64,/);
