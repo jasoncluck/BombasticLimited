@@ -670,6 +670,7 @@ CREATE OR REPLACE FUNCTION "public"."search_playlists" (
   "playlist_thumbnail_maxres_url" text, -- thumbnail_maxres_url from the linked video
   "duration_seconds" integer,
   "profile_username" text,
+  "avatar_url" text, -- Added avatar_url column
   "search_rank" real,
   "deleted_at" TIMESTAMP WITH TIME ZONE
 ) LANGUAGE "plpgsql"
@@ -732,6 +733,12 @@ BEGIN
             thumb_video.thumbnail_maxres_url as playlist_thumbnail_maxres_url, -- Get thumbnail_maxres_url from linked video (alias it properly)
             p.duration_seconds,
             prof.username AS profile_username,
+            public.select_best_image_format(
+              prof.avatar_avif_url,
+              prof.avatar_webp_url,
+              prof.avatar_url,
+              p_preferred_image_format
+            ) as profile_avatar_url,                 -- Added avatar URL selection
             p.deleted_at,                            -- Return actual deleted_at value
             -- Fixed: Cast ALL calculations to real explicitly
             (CASE 
@@ -786,6 +793,7 @@ BEGIN
         rp.playlist_thumbnail_maxres_url, -- Now this column exists in the CTE
         rp.duration_seconds,
         rp.profile_username,
+        rp.profile_avatar_url,          -- Added avatar URL to final SELECT
         rp.search_rank,
         rp.deleted_at
     FROM ranked_playlists rp

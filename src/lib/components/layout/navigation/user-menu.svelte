@@ -116,7 +116,9 @@
 
 <!-- Notifications Bell -->
 {#if session && userNotifications.length > 0}
-  <NotificationBell {supabase} {session} />
+  <div class="relative">
+    <NotificationBell {supabase} {session} />
+  </div>
 {/if}
 
 <!-- User Menu -->

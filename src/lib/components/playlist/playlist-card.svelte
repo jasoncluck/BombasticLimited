@@ -3,6 +3,7 @@
   import { Check, ListVideo } from '@lucide/svelte';
   import * as Avatar from '$lib/components/ui/avatar';
   import { isSource, SOURCE_INFO } from '$lib/constants/source';
+  import { getUserInitials } from '../profile/profile-service';
 
   const {
     playlist,
@@ -73,8 +74,8 @@
               alt="Profile picture for user: {playlist.profile_username}"
             />
             <Avatar.Fallback class="text-xs">
-              {playlist.profile_username.slice(0, 2).toUpperCase()}
-            </Avatar.Fallback>
+              {getUserInitials(playlist.profile_username)}</Avatar.Fallback
+            >
           </Avatar.Root>
           <p class="text-muted-foreground text-xs">
             {playlist.profile_username}
