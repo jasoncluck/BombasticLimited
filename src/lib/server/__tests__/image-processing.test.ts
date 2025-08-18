@@ -26,14 +26,14 @@ vi.mock('sharp', () => {
     default: Object.assign(
       (...args: any[]) => {
         const mockSharpInstance = {
-          metadata: vi.fn(),
-          extract: vi.fn().mockReturnThis(),
-          resize: vi.fn().mockReturnThis(),
-          webp: vi.fn().mockReturnThis(),
-          avif: vi.fn().mockReturnThis(),
-          jpeg: vi.fn().mockReturnThis(),
-          toBuffer: vi.fn(),
-          toColourspace: vi.fn().mockReturnThis(),
+          metadata: mockMetadata,
+          extract: mockExtract.mockReturnThis(),
+          resize: mockResize.mockReturnThis(),
+          webp: mockWebp.mockReturnThis(),
+          avif: mockAvif.mockReturnThis(),
+          jpeg: mockJpeg.mockReturnThis(),
+          toBuffer: mockToBuffer,
+          toColourspace: mockToColourspace.mockReturnThis(),
         };
         return mockSharpInstance;
       },
