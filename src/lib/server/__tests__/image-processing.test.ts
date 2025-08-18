@@ -1,8 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type MockedFunction } from 'vitest';
 import sharp from 'sharp';
 import {
   getCroppedPlaylistImageUrlServer,
   getVideoThumbnailWebpUrlServer,
+  getVideoThumbnailWebpUrlsBatch,
   processImageServer,
   validateImageUrl,
   calculateOptimalQuality,
@@ -21,10 +22,10 @@ const mockMetadata = vi.fn();
 const mockToColourspace = vi.fn();
 
 // This will be set by the mock factory
-let mockSharpConstructor: any;
+let mockSharpConstructor: typeof sharp;
 
 vi.mock('sharp', () => {
-  const mockConstructor = vi.fn().mockImplementation((...args: any[]) => {
+  const mockConstructor = vi.fn().mockImplementation((...args: unknown[]) => {
     const mockSharpInstance = {
       metadata: () => Promise.resolve({ width: 1280, height: 720 }),
       extract: mockExtract.mockReturnThis(),
@@ -39,7 +40,7 @@ vi.mock('sharp', () => {
   });
   
   // Make the constructor available to tests
-  (globalThis as any).__mockSharpConstructor = mockConstructor;
+  (globalThis as { __mockSharpConstructor?: typeof mockConstructor }).__mockSharpConstructor = mockConstructor;
   
   return {
     default: Object.assign(
@@ -546,10 +547,10 @@ describe('getVideoThumbnailWebpUrlsBatch', () => {
     const mockImageBuffer = new ArrayBuffer(1000);
     const mockProcessedBuffer = Buffer.from('processed-webp-video-data');
 
-    (global.fetch as any).mockResolvedValue({
+    (global.fetch as unknown as MockedFunction<typeof fetch>).mockResolvedValue({
       ok: true,
       arrayBuffer: () => Promise.resolve(mockImageBuffer),
-    });
+    } as Response);
 
     mockToBuffer.mockResolvedValue(mockProcessedBuffer);
 
@@ -559,13 +560,12 @@ describe('getVideoThumbnailWebpUrlsBatch', () => {
       { url: 'https://i.ytimg.com/video3.jpg' },
     ];
 
-    // TODO: Implement getVideoThumbnailWebpUrlsBatch function
-    // const results = await getVideoThumbnailWebpUrlsBatch(thumbnailUrls);
+    const results = await getVideoThumbnailWebpUrlsBatch(thumbnailUrls);
 
-    // expect(results).toHaveLength(3);
-    // expect(results[0]).toContain('data:image/webp;base64,');
-    // expect(results[1]).toContain('data:image/webp;base64,');
-    // expect(results[2]).toContain('data:image/webp;base64,');
+    expect(results).toHaveLength(3);
+    expect(results[0]).toContain('data:image/webp;base64,');
+    expect(results[1]).toContain('data:image/webp;base64,');
+    expect(results[2]).toContain('data:image/webp;base64,');
 
     // Verify fetch was called for all URLs
     expect(global.fetch).toHaveBeenCalledTimes(3);
