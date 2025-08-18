@@ -132,7 +132,7 @@
         })}"
       >
         {#if userProfile?.avatar_url}
-          <Avatar.Root class="rounded-full">
+          <Avatar.Root class="rounded-full outline-none">
             <Avatar.Image
               src={userProfile.avatar_url}
               alt="User avatar"

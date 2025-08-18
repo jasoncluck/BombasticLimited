@@ -101,7 +101,7 @@
   <div class="mb-2" {...restProps}>
     {@render children()}
 
-    <div class="mx-1 flex items-center gap-0 sm:my-4">
+    <div class="flex items-center gap-0 sm:my-4">
       {#if profilePlaylist}
         <!-- Play Button -->
         <Button

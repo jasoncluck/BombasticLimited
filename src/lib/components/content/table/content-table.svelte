@@ -119,7 +119,7 @@
   class="content-table outline-none"
   onmouseleave={handleTableMouseLeave}
 >
-  <Table.Body class="-mx-2">
+  <Table.Body>
     {#each table.getRowModel().rows as row, i (row.id)}
       <Table.Row
         data-state={row.getIsSelected() && 'selected'}

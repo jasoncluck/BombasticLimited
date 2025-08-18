@@ -115,7 +115,7 @@
         >
           {#snippet trigger()}
             <div
-              class="flex flex-col items-center gap-6 @lg:flex-row @lg:items-end"
+              class="flex flex-col items-center gap-6 @2xl:flex-row @2xl:items-end"
             >
               <div class="flex justify-center">
                 <div

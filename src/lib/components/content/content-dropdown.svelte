@@ -277,7 +277,7 @@
       {/snippet}
     </DropdownMenu.Trigger>
 
-    <DropdownMenu.Content align="end" class="stable-dropdown">
+    <DropdownMenu.Content align="end" class="stable-dropdown outline-none">
       {#if variant === 'header' && userProfile?.content_display === 'TABLE'}
         <DropdownMenu.Item
           class="p-2"

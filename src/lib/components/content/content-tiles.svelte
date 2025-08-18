@@ -61,7 +61,7 @@
   onmouseleave={handleTilesMouseLeave}
 >
   {#each videos as video, i (video.id)}
-    <div class="group basis-full rounded-md p-2 @sm:basis-1/3 @4xl:basis-1/5">
+    <div class="group basis-full rounded-md pr-2 @sm:basis-1/3 @4xl:basis-1/5">
       <ContentCard
         {video}
         {videos}
