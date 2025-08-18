@@ -30,7 +30,9 @@ describe('Image Cache', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset singleton instance
-    (ImageCacheManager as unknown as { instance: ImageCacheManager | null }).instance = null;
+    (
+      ImageCacheManager as unknown as { instance: ImageCacheManager | null }
+    ).instance = null;
     cacheManager = ImageCacheManager.getInstance();
   });
 
@@ -225,7 +227,9 @@ describe('Image Cache', () => {
       // Set a very small max size for testing
       const originalMaxSize = IMAGE_CACHE_CONFIG.MAX_CACHE_SIZE;
       // Reduce cache size for testing
-      (IMAGE_CACHE_CONFIG as unknown as { MAX_CACHE_SIZE: number }).MAX_CACHE_SIZE = 1000; // 1KB
+      (
+        IMAGE_CACHE_CONFIG as unknown as { MAX_CACHE_SIZE: number }
+      ).MAX_CACHE_SIZE = 1000; // 1KB
 
       const largeDataUrl = 'data:image/webp;base64,' + 'a'.repeat(2000); // ~2KB
       const options = { format: 'webp' as const, quality: 90 };
@@ -253,7 +257,9 @@ describe('Image Cache', () => {
 
       // Restore original size
       // Restore original cache size
-      (IMAGE_CACHE_CONFIG as unknown as { MAX_CACHE_SIZE: number }).MAX_CACHE_SIZE = originalMaxSize;
+      (
+        IMAGE_CACHE_CONFIG as unknown as { MAX_CACHE_SIZE: number }
+      ).MAX_CACHE_SIZE = originalMaxSize;
     });
 
     it('should provide accurate stats', async () => {
@@ -300,7 +306,9 @@ describe('Image Cache', () => {
       (global as unknown as { caches?: unknown }).caches = undefined;
 
       // Reset singleton to force re-initialization
-      (ImageCacheManager as unknown as { instance: ImageCacheManager | null }).instance = null;
+      (
+        ImageCacheManager as unknown as { instance: ImageCacheManager | null }
+      ).instance = null;
       const newManager = ImageCacheManager.getInstance();
       await newManager.initialize();
 
@@ -310,7 +318,14 @@ describe('Image Cache', () => {
       const options = { format: 'webp' as const, quality: 90 };
 
       // Should still work with memory cache only
-      await newManager.set(cacheKey, dataUrl, originalUrl, options, null, 'anon');
+      await newManager.set(
+        cacheKey,
+        dataUrl,
+        originalUrl,
+        options,
+        null,
+        'anon'
+      );
       const result = await newManager.get(cacheKey, null, 'anon');
       expect(result).toBe(dataUrl);
 

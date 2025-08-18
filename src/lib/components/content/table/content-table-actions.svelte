@@ -30,9 +30,7 @@
   const mediaQueryState = getMediaQueryState();
 </script>
 
-<div
-  class="content-table-row actions-column relative flex items-center justify-end"
->
+<div class="content-table-row flex items-center justify-center">
   {#if mediaQueryState.canHover}
     <div class="hover-actions relative">
       <ContentDropdown

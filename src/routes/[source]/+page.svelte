@@ -77,11 +77,11 @@
 </script>
 
 <div class="flex flex-col">
-  <div class="flex flex-wrap justify-between gap-4">
+  <div class="flex h-32 flex-wrap justify-between gap-6 sm:h-28">
     <h1 class="header-content">
       {SOURCE_INFO[source].displayName}
     </h1>
-    <div class="mb-4 flex max-w-48 flex-col self-start">
+    <div class="mx-auto mb-4 flex flex-row sm:flex-col md:mr-0 md:ml-auto">
       <Button
         variant="outline"
         href={SOURCE_INFO[source].supportUrl}
@@ -94,8 +94,8 @@
         class="text-muted-foreground py-6 text-sm hover:underline {SOURCE_INFO[
           source
         ].websiteUrlDomain
-          ? 'visible'
-          : 'invisible'}"
+          ? 'flex'
+          : 'hidden'}"
         variant="link"
         target="_blank"
         href={`https://www.${SOURCE_INFO[source].websiteUrlDomain}`}

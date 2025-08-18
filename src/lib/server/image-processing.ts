@@ -112,7 +112,7 @@ export async function processImageServer({
 
   // **SPEED: Create format fallback chain based on detected format**
   const formatFallbackChain: ('avif' | 'webp' | 'jpeg')[] = acceptHeader
-    ? targetFormat === 'avif' 
+    ? targetFormat === 'avif'
       ? ['avif', 'webp', 'jpeg'] // AVIF first when explicitly supported
       : ['webp', 'jpeg'] // WebP first for other formats
     : ['webp', 'jpeg']; // **SPEED: Skip AVIF for external sources**

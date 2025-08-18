@@ -728,8 +728,8 @@ BEGIN
             p.type,
             p.youtube_id,
             p.thumbnail_video_id,                    -- Include thumbnail_video_id
-            thumb_video.thumbnail_url,               -- Get thumbnail_url from linked video
-            thumb_video.thumbnail_maxres_url,        -- Get thumbnail_maxres_url from linked video
+            thumb_video.thumbnail_url as playlist_thumbnail_url,               -- Get thumbnail_url from linked video (alias it properly)
+            thumb_video.thumbnail_maxres_url as playlist_thumbnail_maxres_url, -- Get thumbnail_maxres_url from linked video (alias it properly)
             p.duration_seconds,
             prof.username AS profile_username,
             p.deleted_at,                            -- Return actual deleted_at value
@@ -782,8 +782,8 @@ BEGIN
         rp.type,
         rp.youtube_id,
         rp.thumbnail_video_id,
-        rp.playlist_thumbnail_url,
-        rp.playlist_thumbnail_maxres_url,
+        rp.playlist_thumbnail_url,      -- Now this column exists in the CTE
+        rp.playlist_thumbnail_maxres_url, -- Now this column exists in the CTE
         rp.duration_seconds,
         rp.profile_username,
         rp.search_rank,

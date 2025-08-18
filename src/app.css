@@ -126,7 +126,7 @@
   }
 
   .header-content {
-    @apply text-4xl font-extrabold tracking-tight text-wrap break-words hyphens-auto transition-colors @4xl:text-5xl;
+    @apply text-4xl font-semibold tracking-tight text-wrap break-words hyphens-auto transition-colors @4xl:text-5xl;
   }
 
   .header-playlist {
@@ -134,11 +134,11 @@
   }
 
   .header-link {
-    @apply my-2 block cursor-pointer self-start truncate text-3xl font-semibold transition-colors hover:underline @2xl:text-4xl;
+    @apply my-4 block cursor-pointer self-start truncate text-3xl font-semibold transition-colors hover:underline @2xl:text-4xl;
   }
 
   .header-link-sticky {
-    @apply bg-background-lighter sticky top-0 z-30 inline-block w-full cursor-pointer self-start px-2 py-2 text-2xl font-semibold transition-colors hover:underline @2xl:text-3xl;
+    @apply bg-background-lighter sticky top-0 z-30 inline-block w-full cursor-pointer self-start py-2 text-2xl font-semibold transition-colors hover:underline @2xl:text-3xl;
   }
 
   /* New elevated effect class */

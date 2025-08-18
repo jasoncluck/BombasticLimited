@@ -1,4 +1,11 @@
-import { describe, it, expect, vi, beforeEach, type MockedFunction } from 'vitest';
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  type MockedFunction,
+} from 'vitest';
 import sharp from 'sharp';
 import {
   getCroppedPlaylistImageUrlServer,
@@ -38,19 +45,18 @@ vi.mock('sharp', () => {
     };
     return mockSharpInstance;
   });
-  
+
   // Make the constructor available to tests
-  (globalThis as { __mockSharpConstructor?: typeof mockConstructor }).__mockSharpConstructor = mockConstructor;
-  
+  (
+    globalThis as { __mockSharpConstructor?: typeof mockConstructor }
+  ).__mockSharpConstructor = mockConstructor;
+
   return {
-    default: Object.assign(
-      mockConstructor,
-      {
-        kernel: {
-          nearest: 'nearest',
-        },
-      }
-    ),
+    default: Object.assign(mockConstructor, {
+      kernel: {
+        nearest: 'nearest',
+      },
+    }),
   };
 });
 
@@ -113,24 +119,39 @@ describe('detectOptimalFormat', () => {
 describe('calculateOptimalQuality', () => {
   it('should adjust quality based on format', () => {
     // AVIF should get lower quality (better compression)
-    const avifQuality = calculateOptimalQuality({ width: 1280, height: 720 }, 'avif');
+    const avifQuality = calculateOptimalQuality(
+      { width: 1280, height: 720 },
+      'avif'
+    );
     expect(avifQuality).toBeLessThan(90);
 
     // WebP should get slightly lower quality
-    const webpQuality = calculateOptimalQuality({ width: 1280, height: 720 }, 'webp');
+    const webpQuality = calculateOptimalQuality(
+      { width: 1280, height: 720 },
+      'webp'
+    );
     expect(webpQuality).toBeLessThanOrEqual(90);
 
     // JPEG should maintain higher quality
-    const jpegQuality = calculateOptimalQuality({ width: 1280, height: 720 }, 'jpeg');
+    const jpegQuality = calculateOptimalQuality(
+      { width: 1280, height: 720 },
+      'jpeg'
+    );
     expect(jpegQuality).toBeLessThanOrEqual(90);
   });
 
   it('should adjust quality based on image size', () => {
     // Large image
-    const largeQuality = calculateOptimalQuality({ width: 2560, height: 1440 }, 'webp');
+    const largeQuality = calculateOptimalQuality(
+      { width: 2560, height: 1440 },
+      'webp'
+    );
 
     // Small image
-    const smallQuality = calculateOptimalQuality({ width: 320, height: 180 }, 'webp');
+    const smallQuality = calculateOptimalQuality(
+      { width: 320, height: 180 },
+      'webp'
+    );
 
     // Both should return reasonable quality values
     expect(largeQuality).toBeGreaterThan(0);
@@ -150,7 +171,7 @@ describe('processImageServer', () => {
       height: 720,
     });
     mockToBuffer.mockResolvedValue(Buffer.from('mock-processed-data'));
-    
+
     // Setup default successful fetch mock
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -161,7 +182,7 @@ describe('processImageServer', () => {
   it('should reject invalid domains', async () => {
     // Mock fetch to fail for invalid domain
     global.fetch = vi.fn().mockResolvedValue(undefined);
-    
+
     const result = await processImageServer({
       imageUrl: 'https://evil.com/image.jpg',
       options: {},
@@ -302,11 +323,14 @@ describe('getCroppedPlaylistImageUrlServer', () => {
     });
 
     // Verify Sharp processing
-    expect((globalThis as any).__mockSharpConstructor).toHaveBeenCalledWith(mockImageBuffer, {
-      failOnError: false,
-      density: 72, // maxres URLs get 72, standard URLs get 150
-      pages: 1, // Added for animated image handling
-    });
+    expect((globalThis as any).__mockSharpConstructor).toHaveBeenCalledWith(
+      mockImageBuffer,
+      {
+        failOnError: false,
+        density: 72, // maxres URLs get 72, standard URLs get 150
+        pages: 1, // Added for animated image handling
+      }
+    );
 
     expect(mockExtract).toHaveBeenCalledWith({
       left: 10,
@@ -467,11 +491,14 @@ describe('getVideoThumbnailWebpUrlServer', () => {
     );
 
     // Verify Sharp processing without extract (no cropping)
-    expect((globalThis as any).__mockSharpConstructor).toHaveBeenCalledWith(mockImageBuffer, {
-      failOnError: false,
-      density: 72,
-      pages: 1,
-    });
+    expect((globalThis as any).__mockSharpConstructor).toHaveBeenCalledWith(
+      mockImageBuffer,
+      {
+        failOnError: false,
+        density: 72,
+        pages: 1,
+      }
+    );
 
     expect(mockExtract).not.toHaveBeenCalled(); // No cropping for video thumbnails
 
@@ -547,10 +574,12 @@ describe('getVideoThumbnailWebpUrlsBatch', () => {
     const mockImageBuffer = new ArrayBuffer(1000);
     const mockProcessedBuffer = Buffer.from('processed-webp-video-data');
 
-    (global.fetch as unknown as MockedFunction<typeof fetch>).mockResolvedValue({
-      ok: true,
-      arrayBuffer: () => Promise.resolve(mockImageBuffer),
-    } as Response);
+    (global.fetch as unknown as MockedFunction<typeof fetch>).mockResolvedValue(
+      {
+        ok: true,
+        arrayBuffer: () => Promise.resolve(mockImageBuffer),
+      } as Response
+    );
 
     mockToBuffer.mockResolvedValue(mockProcessedBuffer);
 

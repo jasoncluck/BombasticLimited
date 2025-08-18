@@ -37,7 +37,5 @@ export const load: PageServerLoad = async ({
     playlistResults, // No longer need client-side processedImageUrl
     playlistsCount,
     currentPage,
-    supabase, // Pass supabase client to component
-    session,
   };
 };

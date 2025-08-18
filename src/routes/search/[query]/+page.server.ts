@@ -78,9 +78,7 @@ export const load: PageServerLoad = async ({
     sourceVideosCount: sourceVideosCount,
     searchString,
     playlistsCount,
-    playlistSearchResults, // Use raw playlists with optimized image paths from database
+    playlistSearchResults,
     contentFilter,
-    supabase, // Pass supabase client to component
-    session,
   };
 };

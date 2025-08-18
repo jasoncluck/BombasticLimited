@@ -1,6 +1,5 @@
 <script lang="ts">
   import { getContentState } from '$lib/state/content.svelte';
-  import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import type { Video } from '$lib/supabase/videos';
 
   let {

@@ -29,13 +29,11 @@
     session,
     supabase,
     openAccountDrawer = $bindable(),
-    openNotificationDrawer = $bindable(),
   }: {
     userProfile: UserProfile | null;
     session: Session | null;
     supabase: SupabaseClient<Database>;
     openAccountDrawer: boolean;
-    openNotificationDrawer?: boolean;
   } = $props();
 
   const contentState = getContentState();
@@ -118,7 +116,7 @@
 
 <!-- Notifications Bell -->
 {#if session && userNotifications.length > 0}
-  <NotificationBell {supabase} {session} bind:openNotificationDrawer />
+  <NotificationBell {supabase} {session} />
 {/if}
 
 <!-- User Menu -->

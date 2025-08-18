@@ -34,7 +34,7 @@
 </script>
 
 {#if mediaQueryState.canHover}
-  <div class="flex h-[80px] items-center justify-center {className}">
+  <div class="content-table-row flex items-center justify-center {className}">
     <Button
       class="{isHovering ? 'opacity-100' : 'opacity-0'} ghost-button-minimal"
       variant="ghost"

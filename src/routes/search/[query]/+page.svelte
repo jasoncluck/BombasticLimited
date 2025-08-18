@@ -66,8 +66,6 @@
 </script>
 
 <div class="flex flex-col" data-testid="search-results">
-  <h1 class="header-primary">Results</h1>
-
   <div class="flex flex-col gap-8">
     {#if playlistSearchResults.length > 0}
       <div class="flex flex-col">
@@ -102,9 +100,7 @@
           >
             {SOURCE_INFO[source].displayName}
           </a>
-          <p
-            class="text-muted-foreground -mt-1 mb-2 ml-2 text-sm tracking-tight sm:ml-0"
-          >
+          <p class="text-muted-foreground -mt-1 mb-2 text-sm tracking-tight">
             {sourceVideosCount[source]}
             {sourceVideosCount[source] === 1 ? 'video' : 'videos'}
           </p>

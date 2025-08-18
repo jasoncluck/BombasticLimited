@@ -14,11 +14,9 @@
   let {
     supabase,
     session,
-    openNotificationDrawer = $bindable(),
   }: {
     supabase: SupabaseClient<Database>;
     session: Session | null;
-    openNotificationDrawer?: boolean;
   } = $props();
 
   const mediaQueryState = getMediaQueryState();
@@ -42,13 +40,6 @@
     if (unreadNotifications) {
       await markAsRead({ notificationIds, supabase, session });
       navigationState.refreshData();
-    }
-  }
-
-  // Close dropdown/drawer handler
-  function handleClose() {
-    if (openNotificationDrawer !== undefined) {
-      openNotificationDrawer = false;
     }
   }
 </script>
@@ -82,21 +73,13 @@
       </div>
 
       <div class="max-h-80 overflow-y-auto">
-        <NotificationList
-          {supabase}
-          {session}
-          onNotificationClick={handleClose}
-          showActions={false}
-        />
+        <NotificationList {supabase} {session} showActions={false} />
       </div>
     </DropdownMenu.Content>
   </DropdownMenu.Root>
 {:else}
   <!-- Mobile Notification Drawer -->
-  <Drawer.Root
-    bind:open={openNotificationDrawer}
-    onOpenChange={(open) => open && handleMenuOpen()}
-  >
+  <Drawer.Root onOpenChange={(open) => open && handleMenuOpen()}>
     <Drawer.Trigger
       data-testid="notification-bell-mobile"
       class="relative cursor-pointer outline-none {buttonVariants({
@@ -125,12 +108,7 @@
         </div>
 
         <div class="max-h-96 overflow-y-auto px-4 pb-4">
-          <NotificationList
-            {supabase}
-            {session}
-            onNotificationClick={handleClose}
-            showActions={false}
-          />
+          <NotificationList {supabase} {session} showActions={false} />
         </div>
 
         <Drawer.Footer>

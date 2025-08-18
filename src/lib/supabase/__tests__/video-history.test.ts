@@ -5,20 +5,22 @@ import type { SupabaseClient, Session } from '@supabase/supabase-js';
 // Mock Supabase client
 const mockSupabase = {
   rpc: vi.fn().mockReturnValue({
-    single: vi.fn().mockResolvedValue({ 
-      data: [{
-        id: 'test-session-id',
-        user_id: 'test-user-id',
-        video_id: 'test-video-id',
-        source: 'youtube',
-        session_start_time: '2025-08-18T05:36:15.603Z',
-        session_end_time: null,
-        seconds_watched: 0,
-        created_at: '2025-08-18T05:36:15.603Z',
-        updated_at: '2025-08-18T05:36:15.603Z',
-        is_resumed: false
-      }], 
-      error: null 
+    single: vi.fn().mockResolvedValue({
+      data: [
+        {
+          id: 'test-session-id',
+          user_id: 'test-user-id',
+          video_id: 'test-video-id',
+          source: 'youtube',
+          session_start_time: '2025-08-18T05:36:15.603Z',
+          session_end_time: null,
+          seconds_watched: 0,
+          created_at: '2025-08-18T05:36:15.603Z',
+          updated_at: '2025-08-18T05:36:15.603Z',
+          is_resumed: false,
+        },
+      ],
+      error: null,
     }),
   }),
 } as unknown as SupabaseClient;
@@ -40,26 +42,28 @@ describe('VideoWatchTimeTracker', () => {
     currentTime = Date.now();
     mockDateNow = vi.fn(() => currentTime);
     vi.spyOn(Date, 'now').mockImplementation(mockDateNow);
-    
+
     // Reset the mock for each test
     mockSupabase.rpc = vi.fn().mockReturnValue({
-      single: vi.fn().mockResolvedValue({ 
-        data: [{
-          id: 'test-session-id',
-          user_id: 'test-user-id',
-          video_id: 'test-video-id',
-          source: 'youtube',
-          session_start_time: '2025-08-18T05:36:15.603Z',
-          session_end_time: null,
-          seconds_watched: 0,
-          created_at: '2025-08-18T05:36:15.603Z',
-          updated_at: '2025-08-18T05:36:15.603Z',
-          is_resumed: false
-        }], 
-        error: null 
+      single: vi.fn().mockResolvedValue({
+        data: [
+          {
+            id: 'test-session-id',
+            user_id: 'test-user-id',
+            video_id: 'test-video-id',
+            source: 'youtube',
+            session_start_time: '2025-08-18T05:36:15.603Z',
+            session_end_time: null,
+            seconds_watched: 0,
+            created_at: '2025-08-18T05:36:15.603Z',
+            updated_at: '2025-08-18T05:36:15.603Z',
+            is_resumed: false,
+          },
+        ],
+        error: null,
       }),
     });
-    
+
     tracker = new VideoWatchTimeTracker(videoId, mockSupabase, mockSession);
   });
 
@@ -76,19 +80,19 @@ describe('VideoWatchTimeTracker', () => {
   test('should track watch time correctly during play/pause cycles', async () => {
     // Start session first
     await tracker.startSession();
-    
+
     // Start playing at 10 seconds
     tracker.onPlay(10);
-    
+
     // Simulate 10 seconds passing
     currentTime += 10000;
-    
+
     // Pause at 20 seconds (watched 10 seconds)
     tracker.onPause(20);
 
     // Start playing again at 25 seconds
     tracker.onPlay(25);
-    
+
     // Simulate 10 more seconds passing
     currentTime += 10000;
 
@@ -102,7 +106,7 @@ describe('VideoWatchTimeTracker', () => {
   test('should not count seeking time as watch time', async () => {
     // Start session first
     await tracker.startSession();
-    
+
     // Start playing at 10 seconds
     tracker.onPlay(10);
 
@@ -152,15 +156,19 @@ describe('VideoWatchTimeTracker', () => {
   });
 
   test('should start session and set up periodic saving', async () => {
-    const tracker = new VideoWatchTimeTracker(videoId, mockSupabase, mockSession);
-    
+    const tracker = new VideoWatchTimeTracker(
+      videoId,
+      mockSupabase,
+      mockSession
+    );
+
     await tracker.startSession();
-    
+
     // Check that the session is active by verifying that onPlay/onPause work
     tracker.onPlay(10);
     currentTime += 5000; // 5 seconds pass
     tracker.onPause(15);
-    
+
     const stats = tracker.getStats();
     expect(stats.totalSecondsWatched).toBe(5);
   });
@@ -179,10 +187,14 @@ describe('VideoWatchTimeTracker', () => {
       .fn()
       .mockReturnValueOnce({ single: mockSingleStart }) // startSession
       .mockReturnValueOnce({ single: mockSingleUpdate }); // endSession
-    
+
     // Create a new tracker with the specific mock for this test
     const testSupabase = { ...mockSupabase, rpc: mockRpc };
-    const testTracker = new VideoWatchTimeTracker(videoId, testSupabase as any, mockSession);
+    const testTracker = new VideoWatchTimeTracker(
+      videoId,
+      testSupabase as any,
+      mockSession
+    );
 
     await testTracker.startSession();
 
@@ -199,11 +211,15 @@ describe('VideoWatchTimeTracker', () => {
     });
 
     // Check that endSession was called second
-    expect(mockRpc).toHaveBeenNthCalledWith(2, 'update_video_history_seconds_watched', {
-      p_video_id: videoId,
-      p_session_start_time: expect.any(String),
-      p_seconds_watched: 0,
-      p_session_end_time: expect.any(String),
-    });
+    expect(mockRpc).toHaveBeenNthCalledWith(
+      2,
+      'update_video_history_seconds_watched',
+      {
+        p_video_id: videoId,
+        p_session_start_time: expect.any(String),
+        p_seconds_watched: 0,
+        p_session_end_time: expect.any(String),
+      }
+    );
   });
 });

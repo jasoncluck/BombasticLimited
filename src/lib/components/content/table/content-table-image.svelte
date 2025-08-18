@@ -35,7 +35,7 @@
       supabase
     )}
     <picture>
-      {#each pictureSources as source}
+      {#each pictureSources as source (source)}
         <source srcset={source.srcset} type={source.type} />
       {/each}
       <img
@@ -70,7 +70,7 @@
     />
   {:else if 'watched_at' in video && video.watched_at}
     <div
-      class="bg-background absolute right-0 bottom-0 flex w-full items-center justify-center gap-1 px-1"
+      class="bg-background absolute right-0 bottom-0 left-0 flex items-center justify-center"
     >
       <Check class="text-primary" />
       <p class="text-primary text-xs">Watched</p>

@@ -80,17 +80,17 @@
           'ml-2 hidden sm:ml-0 sm:block'
         )}
       >
-        <BrandLogo class="h-8 w-auto" />
+        <BrandLogo />
         <span class="sr-only">{brandLogoNavItem.label}</span>
       </a>
     {/if}
   </div>
 
-  <!-- Center Section: Home Button + Search -->
+  <!-- Center Section: Home Button + Search Input -->
   <div
-    class="absolute top-1/2 left-1/2 flex -translate-x-[calc(50%)] -translate-y-1/2 items-center gap-3"
+    class="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-3"
   >
-    <!-- Home Button (Desktop Only) - Now using navigation state -->
+    <!-- Home Button (Desktop Only) -->
     {#if homeNavItem && navigationState.config.enableHomeNavigation}
       <Button
         variant="outline"

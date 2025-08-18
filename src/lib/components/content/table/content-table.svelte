@@ -182,7 +182,12 @@
           })}
       >
         {#each row.getVisibleCells() as cell (cell.id)}
-          <Table.Cell class="content-table-row overflow-hidden py-3 align-top">
+          <Table.Cell
+            class="content-table-row overflow-hidden py-2 align-top {mediaQueryState.canHover &&
+            cell.id.includes('image')
+              ? 'pl-0'
+              : 'pl-2'}"
+          >
             <FlexRender
               content={cell.column.columnDef.cell}
               context={cell.getContext()}

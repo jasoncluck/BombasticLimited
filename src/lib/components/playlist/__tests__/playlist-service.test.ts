@@ -341,11 +341,11 @@ describe('getVideoThumbnailWebpUrl', () => {
 
     // Should draw the full image without cropping but with scaling to fit 320x180
     expect(mockDrawImage).toHaveBeenCalledWith(
-      mockImageBitmap, 
-      0, 
-      0, 
+      mockImageBitmap,
+      0,
+      0,
       320, // destination width (scaled)
-      180  // destination height (scaled)
+      180 // destination height (scaled)
     );
 
     // Verify result format

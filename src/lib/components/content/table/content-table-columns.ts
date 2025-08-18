@@ -53,6 +53,7 @@ export function createContentColumns({
       : []),
     {
       accessorKey: 'thumbnail_maxres_url',
+      id: 'image',
       cell: ({ row }) => {
         const video = row.original;
         return renderComponent(ContentTableImage, {
