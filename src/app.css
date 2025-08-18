@@ -126,19 +126,19 @@
   }
 
   .header-content {
-    @apply text-3xl leading-none font-extrabold tracking-tight text-wrap break-words hyphens-auto transition-colors @lg:text-4xl;
+    @apply text-4xl leading-none font-extrabold tracking-tight text-wrap break-words hyphens-auto transition-colors @2xl:text-5xl;
   }
 
   .header-playlist {
-    @apply mb-2 text-2xl font-extrabold tracking-tight text-wrap break-words hyphens-auto transition-colors @lg:text-3xl;
+    @apply mb-2 text-2xl font-extrabold tracking-tight text-wrap break-words hyphens-auto transition-colors @2xl:text-3xl;
   }
 
   .header-link {
-    @apply my-2 block cursor-pointer self-start truncate text-2xl font-semibold transition-colors hover:underline @lg:text-3xl;
+    @apply my-2 block cursor-pointer self-start truncate text-3xl font-semibold transition-colors hover:underline @2xl:text-4xl;
   }
 
   .header-link-sticky {
-    @apply bg-background-lighter sticky top-0 z-30 inline-block w-full cursor-pointer self-start px-2 py-2 text-2xl font-semibold transition-colors hover:underline lg:text-3xl;
+    @apply bg-background-lighter sticky top-0 z-30 inline-block w-full cursor-pointer self-start px-2 py-2 text-2xl font-semibold transition-colors hover:underline @2xl:text-3xl;
   }
 
   /* New elevated effect class */
