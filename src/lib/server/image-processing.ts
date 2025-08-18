@@ -110,9 +110,11 @@ export async function processImageServer({
     targetFormat = options.format as 'avif' | 'webp' | 'jpeg';
   }
 
-  // **SPEED: Prefer WebP over AVIF for faster processing**
+  // **SPEED: Create format fallback chain based on detected format**
   const formatFallbackChain: ('avif' | 'webp' | 'jpeg')[] = acceptHeader
-    ? ['webp', targetFormat === 'avif' ? 'avif' : 'jpeg'] // **SPEED: WebP first**
+    ? targetFormat === 'avif' 
+      ? ['avif', 'webp', 'jpeg'] // AVIF first when explicitly supported
+      : ['webp', 'jpeg'] // WebP first for other formats
     : ['webp', 'jpeg']; // **SPEED: Skip AVIF for external sources**
 
   const isStandardResolution = isCropped && !isMaxRes;
@@ -554,4 +556,26 @@ export function generatePlaylistImageUrl({
   // **SPEED: Return original URL directly for fastest response**
   // Background processing system handles optimization separately
   return effectiveUrl;
+}
+
+// Batch processing function for video thumbnails
+export async function getVideoThumbnailWebpUrlsBatch(
+  thumbnailData: Array<{ url: string }>
+): Promise<string[]> {
+  const results = await Promise.all(
+    thumbnailData.map(async ({ url }) => {
+      try {
+        return await getVideoThumbnailWebpUrlServer({
+          thumbnailUrl: url,
+          acceptHeader: 'image/webp,image/jpeg,*/*',
+          options: { format: 'webp', quality: 90 },
+        });
+      } catch (error) {
+        console.warn(`Failed to process video thumbnail ${url}:`, error);
+        return null;
+      }
+    })
+  );
+
+  return results.filter((result): result is string => result !== null);
 }

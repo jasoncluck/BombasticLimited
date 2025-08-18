@@ -48,6 +48,7 @@ vi.mock('$lib/supabase/playlists', () => ({
   isUserPlaylist: vi.fn(),
   updatePlaylistInfo: vi.fn(),
   updatePlaylistImage: vi.fn(),
+  parseImageProperties: vi.fn(),
   PLAYLIST_TYPES: ['Public', 'Private'],
   DEFAULT_NUM_VIDEOS_PAGINATION: 20,
 }));
@@ -133,6 +134,9 @@ describe('playlist/[shortId]/+page.server.ts', () => {
       supabase: mockSupabase,
       session: mockSession,
     },
+    params: {
+      shortId: 'abc123',
+    },
     cookies: {},
   };
 
@@ -191,6 +195,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
       );
       expect(mockGetPlaylistData).toHaveBeenCalledWith({
         shortId: 'abc123',
+        acceptHeader: null,
         contentFilter: {
           type: 'playlist',
           sort: { key: 'playlistOrder', order: 'ascending' },

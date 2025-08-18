@@ -30,7 +30,7 @@ describe('Image Cache', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset singleton instance
-    (ImageCacheManager as any).instance = null;
+    (ImageCacheManager as unknown as { instance: ImageCacheManager | null }).instance = null;
     cacheManager = ImageCacheManager.getInstance();
   });
 
@@ -224,7 +224,8 @@ describe('Image Cache', () => {
 
       // Set a very small max size for testing
       const originalMaxSize = IMAGE_CACHE_CONFIG.MAX_CACHE_SIZE;
-      (IMAGE_CACHE_CONFIG as any).MAX_CACHE_SIZE = 1000; // 1KB
+      // Reduce cache size for testing
+      (IMAGE_CACHE_CONFIG as unknown as { MAX_CACHE_SIZE: number }).MAX_CACHE_SIZE = 1000; // 1KB
 
       const largeDataUrl = 'data:image/webp;base64,' + 'a'.repeat(2000); // ~2KB
       const options = { format: 'webp' as const, quality: 90 };
@@ -251,7 +252,8 @@ describe('Image Cache', () => {
       expect(stats.memorySize).toBeLessThan(originalMaxSize);
 
       // Restore original size
-      (IMAGE_CACHE_CONFIG as any).MAX_CACHE_SIZE = originalMaxSize;
+      // Restore original cache size
+      (IMAGE_CACHE_CONFIG as unknown as { MAX_CACHE_SIZE: number }).MAX_CACHE_SIZE = originalMaxSize;
     });
 
     it('should provide accurate stats', async () => {
@@ -294,8 +296,11 @@ describe('Image Cache', () => {
 
     it('should handle service worker cache unavailable gracefully', async () => {
       // Mock caches as undefined to simulate unavailable environment
-      (global as any).caches = undefined;
+      const originalCaches = (global as unknown as { caches?: unknown }).caches;
+      (global as unknown as { caches?: unknown }).caches = undefined;
 
+      // Reset singleton to force re-initialization
+      (ImageCacheManager as unknown as { instance: ImageCacheManager | null }).instance = null;
       const newManager = ImageCacheManager.getInstance();
       await newManager.initialize();
 
@@ -305,12 +310,12 @@ describe('Image Cache', () => {
       const options = { format: 'webp' as const, quality: 90 };
 
       // Should still work with memory cache only
-      await newManager.set(cacheKey, dataUrl, originalUrl, options, 'anon');
-      const result = await newManager.get(cacheKey);
+      await newManager.set(cacheKey, dataUrl, originalUrl, options, null, 'anon');
+      const result = await newManager.get(cacheKey, null, 'anon');
       expect(result).toBe(dataUrl);
 
       // Restore caches
-      (global as any).caches = mockCaches;
+      (global as unknown as { caches?: unknown }).caches = originalCaches;
     });
 
     it('should cleanup expired entries', async () => {

@@ -19,6 +19,7 @@ export const load: PageServerLoad = async ({
   });
 
   const searchString = params.query;
+  const acceptHeader = request.headers.get('accept');
 
   const { playlists: playlistResults, count: playlistsCount } =
     await searchPlaylists({
@@ -27,6 +28,7 @@ export const load: PageServerLoad = async ({
       currentPage,
       supabase,
       session,
+      acceptHeader,
     });
 
   // Return playlists directly with optimized image paths from database

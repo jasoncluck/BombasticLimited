@@ -19,6 +19,7 @@ export const load: PageServerLoad = async ({
 
   const { contentFilter } = await parent();
   const searchString = params.query;
+  const acceptHeader = request.headers.get('accept');
 
   if (!isVideoFilter(contentFilter)) {
     throw new Error('Invalid content filter');
@@ -48,6 +49,7 @@ export const load: PageServerLoad = async ({
       limit: 6,
       supabase,
       session,
+      acceptHeader,
     }),
   ]);
 

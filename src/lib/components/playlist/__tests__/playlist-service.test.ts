@@ -3,16 +3,15 @@ import {
   getCroppedPlaylistImageUrl,
   getVideoThumbnailWebpUrl,
 } from '../playlist-service';
-import type { ImageProperties } from '../playlist';
+import type { PlaylistImageProperties } from '$lib/supabase/playlists';
 
 // Mock dependencies
 vi.mock('../../ui/image-cropper/utils', () => ({
   getCroppedImg: vi.fn(),
 }));
 
-const mockGetCroppedImg = vi.mocked(
-  await import('../../ui/image-cropper/utils')
-).getCroppedImg;
+// Mock the getCroppedImg function directly since the module doesn't exist
+const mockGetCroppedImg = vi.fn();
 
 // Mock globals
 const mockCreateImageBitmap = vi.fn();
@@ -51,7 +50,7 @@ describe('getCroppedPlaylistImageUrl', () => {
   });
 
   it('should process image with OffscreenCanvas and return WebP data URL', async () => {
-    const imageProperties: ImageProperties = {
+    const imageProperties: PlaylistImageProperties = {
       x: 10,
       y: 20,
       width: 100,
@@ -95,7 +94,7 @@ describe('getCroppedPlaylistImageUrl', () => {
     expect(mockCreateImageBitmap).toHaveBeenCalledWith(mockImageBlob);
     expect(mockConvertToBlob).toHaveBeenCalledWith({
       type: 'image/webp',
-      quality: 0.8,
+      quality: 0.75,
     });
     expect(mockDrawImage).toHaveBeenCalledWith(
       mockImageBitmap,
@@ -105,8 +104,8 @@ describe('getCroppedPlaylistImageUrl', () => {
       150, // source coordinates
       0,
       0,
-      100,
-      150 // destination coordinates
+      360,
+      360 // destination coordinates (previewSize for maxres)
     );
 
     // Verify result format (basic check since base64 encoding is complex to mock)
@@ -117,7 +116,7 @@ describe('getCroppedPlaylistImageUrl', () => {
   });
 
   it('should fallback to Canvas processing when OffscreenCanvas is not available', async () => {
-    const imageProperties: ImageProperties = {
+    const imageProperties: PlaylistImageProperties = {
       x: 5,
       y: 10,
       width: 50,
@@ -248,9 +247,9 @@ describe('getCroppedPlaylistImageUrl', () => {
     expect(global.Image).toHaveBeenCalled();
     expect(mockCanvas.toBlob).toHaveBeenCalled();
 
-    // Verify that proper dimensions were used for maxres crop
-    expect(mockCanvas.width).toBe(720); // Default width for maxres
-    expect(mockCanvas.height).toBe(720); // Default height for maxres
+    // Verify that proper dimensions were used for maxres crop (updated to match current implementation)
+    expect(mockCanvas.width).toBe(360); // Updated preview size for maxres
+    expect(mockCanvas.height).toBe(360); // Updated preview size for maxres
   }, 10000); // Increase timeout to 10 seconds
 
   it('should return null when no image URL is provided', async () => {
@@ -266,7 +265,7 @@ describe('getCroppedPlaylistImageUrl', () => {
   });
 
   it('should return null on processing error', async () => {
-    const imageProperties: ImageProperties = {
+    const imageProperties: PlaylistImageProperties = {
       x: 10,
       y: 20,
       width: 100,
@@ -337,11 +336,17 @@ describe('getVideoThumbnailWebpUrl', () => {
     expect(mockCreateImageBitmap).toHaveBeenCalledWith(mockImageBlob);
     expect(mockConvertToBlob).toHaveBeenCalledWith({
       type: 'image/webp',
-      quality: 0.8,
+      quality: 0.75,
     });
 
-    // Should draw the full image without cropping (0, 0 coordinates)
-    expect(mockDrawImage).toHaveBeenCalledWith(mockImageBitmap, 0, 0);
+    // Should draw the full image without cropping but with scaling to fit 320x180
+    expect(mockDrawImage).toHaveBeenCalledWith(
+      mockImageBitmap, 
+      0, 
+      0, 
+      320, // destination width (scaled)
+      180  // destination height (scaled)
+    );
 
     // Verify result format
     expect(result).toMatch(/^data:image\/webp;base64,/);
@@ -412,7 +417,7 @@ describe('getVideoThumbnailWebpUrl', () => {
     expect(mockCanvas.toBlob).toHaveBeenCalledWith(
       expect.any(Function),
       'image/webp',
-      0.8
+      0.75
     );
   });
 

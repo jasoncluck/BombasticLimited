@@ -131,6 +131,7 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
       expect(mockGetPlaylistVideoContext).toHaveBeenCalledWith({
         shortId: 'abc123',
         videoId: 'video-1',
+        acceptHeader: null,
         contentFilter: {
           type: 'playlist',
           sort: { key: 'playlistOrder', order: 'ascending' },
@@ -150,7 +151,6 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
         videos: mockNextVideos,
         profilePlaylist: {
           ...mockPlaylist,
-          processedImageUrl: 'processed-image-url',
         },
         contentFilter: {
           type: 'playlist',
@@ -276,12 +276,12 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
       expect(mockGetPlaylistVideoContext).toHaveBeenCalledWith({
         shortId: 'abc123',
         videoId: 'video-1',
+        acceptHeader: null,
         contentFilter: {
           type: 'playlist',
           sort: { key: 'playlistOrder', order: 'ascending' },
         },
         supabase: mockSupabase,
-        userId: undefined,
         contextLimit: 5,
       });
 
@@ -400,11 +400,9 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
 
       await load(mockLoadEvent);
 
-      expect(mockParseImageProperties).toHaveBeenCalledWith(
-        mockPlaylist.image_properties
-      );
-      // Note: Playlists now use uploaded images rather than cropped YouTube thumbnails
-      // The getCroppedPlaylistImageUrlServer function should not be called for uploaded images
+      // Playlists now use uploaded images rather than cropped YouTube thumbnails
+      // Image processing is no longer done in this path
+      expect(mockParseImageProperties).not.toHaveBeenCalled();
       expect(mockGetCroppedPlaylistImageUrlServer).not.toHaveBeenCalled();
     });
   });

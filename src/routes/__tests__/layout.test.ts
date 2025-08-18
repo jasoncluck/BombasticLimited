@@ -133,6 +133,7 @@ describe('+layout.ts load function', () => {
       session: mockSession,
       supabase: mockSupabase,
       playlistsCount: null,
+      notifications: null,
       contentFilter: {
         sort: { key: 'datePublished', order: 'descending' },
         type: 'video',
@@ -158,6 +159,7 @@ describe('+layout.ts load function', () => {
       contentFilter: mockLayoutData.contentFilter,
       userProfile: mockUserProfile,
       playlistsCount: 5,
+      notifications: null,
       layout: [250, 750],
       isSidebarCollapsed: false,
       etag: '"test-etag"',

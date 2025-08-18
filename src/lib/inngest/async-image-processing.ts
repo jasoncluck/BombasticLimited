@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
 import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 import { IMAGES_BUCKET } from '$lib/constants/images';
+import type { PlaylistImageProperties } from '$lib/supabase/playlists';
 
 // Initialize Supabase client with service role key for server-side operations
 const supabaseUrl = PUBLIC_SUPABASE_URL;
@@ -22,21 +23,14 @@ const MAX_RETRIES = 3;
 const PROCESSING_TIMEOUT = 60000; // Increased timeout for quality processing
 
 // Crop defaults
-interface ImageProperties {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-const PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS: ImageProperties = {
+const PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS: PlaylistImageProperties = {
   x: 280,
   y: 0,
   height: 720,
   width: 720,
 };
 
-const PLAYLIST_IMAGE_CROP_DEFAULTS: ImageProperties = {
+const PLAYLIST_IMAGE_CROP_DEFAULTS: PlaylistImageProperties = {
   x: 70, // (320-180)/2 = 70
   y: 0,
   height: 180,
@@ -224,7 +218,7 @@ async function downloadImage(sourceUrl: string): Promise<Buffer> {
 async function getPlaylistCropProperties(
   playlistId: string,
   sourceUrl: string
-): Promise<ImageProperties> {
+): Promise<PlaylistImageProperties> {
   // Get playlist image_properties
   const { data: playlist, error } = await supabase
     .from('playlists')
@@ -238,7 +232,7 @@ async function getPlaylistCropProperties(
 
   // If we have custom crop properties, use them
   if (playlist?.image_properties) {
-    const props = playlist.image_properties as ImageProperties;
+    const props = playlist.image_properties as PlaylistImageProperties;
     // Validate the properties have required fields
     if (
       typeof props.x === 'number' &&
