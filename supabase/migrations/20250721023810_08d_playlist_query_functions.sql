@@ -733,12 +733,7 @@ BEGIN
             thumb_video.thumbnail_maxres_url as playlist_thumbnail_maxres_url, -- Get thumbnail_maxres_url from linked video (alias it properly)
             p.duration_seconds,
             prof.username AS profile_username,
-            public.select_best_image_format(
-              prof.avatar_avif_url,
-              prof.avatar_webp_url,
-              prof.avatar_url,
-              p_preferred_image_format
-            ) as profile_avatar_url,                 -- Added avatar URL selection
+            prof.avatar_url,                         -- Direct avatar URL from profiles table
             p.deleted_at,                            -- Return actual deleted_at value
             -- Fixed: Cast ALL calculations to real explicitly
             (CASE 
@@ -793,7 +788,7 @@ BEGIN
         rp.playlist_thumbnail_maxres_url, -- Now this column exists in the CTE
         rp.duration_seconds,
         rp.profile_username,
-        rp.profile_avatar_url,          -- Added avatar URL to final SELECT
+        rp.avatar_url,                   -- Direct avatar URL from profiles table
         rp.search_rank,
         rp.deleted_at
     FROM ranked_playlists rp

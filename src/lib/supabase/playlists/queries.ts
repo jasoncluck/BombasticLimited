@@ -495,6 +495,8 @@ export async function searchPlaylists({
     )
     .range((currentPage - 1) * limit, currentPage * limit - 1);
 
+  console.log(playlists);
+
   if (error) {
     console.error('Error searching playlists:', error);
   }
@@ -518,10 +520,7 @@ export async function searchPlaylists({
     deleted_at: playlist.deleted_at,
     duration_seconds: playlist.duration_seconds,
     profile_username: playlist.profile_username,
-    avatar_url:
-      'avatar_url' in playlist
-        ? (playlist.avatar_url as string | null)
-        : undefined,
+    avatar_url: playlist.avatar_url, // Use avatar URL directly - no transformation needed
   }));
 
   return { playlists: transformedPlaylists, error, count };

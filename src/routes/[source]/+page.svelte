@@ -77,11 +77,11 @@
 </script>
 
 <div class="flex flex-col">
-  <div class="flex h-32 flex-wrap justify-between gap-6 sm:h-28">
-    <h1 class="header-content">
+  <div class="flex flex-wrap justify-between gap-6">
+    <h1 class="header-content min-w-80">
       {SOURCE_INFO[source].displayName}
     </h1>
-    <div class="mx-auto mb-4 flex flex-row sm:flex-col md:mr-0 md:ml-auto">
+    <div class="mx-auto mb-4 flex flex-row sm:mr-0 sm:ml-auto sm:flex-col">
       <Button
         variant="outline"
         href={SOURCE_INFO[source].supportUrl}
