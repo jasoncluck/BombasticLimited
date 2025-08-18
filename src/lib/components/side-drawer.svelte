@@ -108,7 +108,7 @@
   <Sheet.Trigger
     class={buttonVariants({
       variant: 'ghost',
-      class: 'cursor-pointer outline-none',
+      class: 'ghost-button-minimal',
     })}
     ><Menu class="cursor-pointer" />
     <span class="sr-only"> Toggle Menu</span></Sheet.Trigger

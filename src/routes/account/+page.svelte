@@ -278,7 +278,7 @@
         <div class="flex w-full flex-wrap items-center gap-4 @lg:flex-nowrap">
           <Label class="min-w-20">Discord</Label>
           <div
-            class="border-input bg-background flex min-w-[300px] flex-1 items-center gap-3 rounded-md border px-3 py-2"
+            class="border-input bg-background flex max-w-[300px] min-w-[200px] flex-1 items-center gap-3 rounded-md border px-3 py-2"
           >
             {#if profile.avatar_url}
               <Avatar.Root class="h-8 w-8">

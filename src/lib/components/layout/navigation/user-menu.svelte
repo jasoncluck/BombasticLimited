@@ -138,7 +138,7 @@
             <Avatar.Image
               src={userProfile?.avatar_url}
               alt="User avatar"
-              class="h-full w-full rounded-full object-cover p-1.5"
+              class=" rounded-full"
             />
             <Avatar.Fallback>
               {getUserInitials(userProfile.username)}</Avatar.Fallback
