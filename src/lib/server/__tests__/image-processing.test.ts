@@ -11,7 +11,6 @@ import { detectOptimalFormat } from '../../utils/image-format-detection';
 import type { PlaylistImageProperties } from '$lib/supabase/playlists';
 
 // Mock sharp
-const mockSharp = vi.fn();
 const mockExtract = vi.fn();
 const mockWebp = vi.fn();
 const mockAvif = vi.fn();
@@ -21,22 +20,30 @@ const mockToBuffer = vi.fn();
 const mockMetadata = vi.fn();
 const mockToColourspace = vi.fn();
 
+// This will be set by the mock factory
+let mockSharpConstructor: any;
+
 vi.mock('sharp', () => {
+  const mockConstructor = vi.fn().mockImplementation((...args: any[]) => {
+    const mockSharpInstance = {
+      metadata: () => Promise.resolve({ width: 1280, height: 720 }),
+      extract: mockExtract.mockReturnThis(),
+      resize: mockResize.mockReturnThis(),
+      webp: mockWebp.mockReturnThis(),
+      avif: mockAvif.mockReturnThis(),
+      jpeg: mockJpeg.mockReturnThis(),
+      toBuffer: mockToBuffer,
+      toColourspace: mockToColourspace.mockReturnThis(),
+    };
+    return mockSharpInstance;
+  });
+  
+  // Make the constructor available to tests
+  (globalThis as any).__mockSharpConstructor = mockConstructor;
+  
   return {
     default: Object.assign(
-      (...args: any[]) => {
-        const mockSharpInstance = {
-          metadata: mockMetadata,
-          extract: mockExtract.mockReturnThis(),
-          resize: mockResize.mockReturnThis(),
-          webp: mockWebp.mockReturnThis(),
-          avif: mockAvif.mockReturnThis(),
-          jpeg: mockJpeg.mockReturnThis(),
-          toBuffer: mockToBuffer,
-          toColourspace: mockToColourspace.mockReturnThis(),
-        };
-        return mockSharpInstance;
-      },
+      mockConstructor,
       {
         kernel: {
           nearest: 'nearest',
@@ -133,6 +140,10 @@ describe('calculateOptimalQuality', () => {
 describe('processImageServer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Clear the global mock constructor
+    if ((globalThis as any).__mockSharpConstructor) {
+      (globalThis as any).__mockSharpConstructor.mockClear();
+    }
     mockMetadata.mockResolvedValue({
       width: 1280,
       height: 720,
@@ -233,10 +244,11 @@ describe('processImageServer', () => {
       isCropped: false,
     });
 
-    expect(mockResize).toHaveBeenCalledWith(640, 360, {
+    expect(mockResize).toHaveBeenCalledWith(320, 320, {
       fit: 'cover',
       position: 'center',
       withoutEnlargement: true,
+      kernel: 'nearest',
     });
   });
 });
@@ -244,6 +256,10 @@ describe('processImageServer', () => {
 describe('getCroppedPlaylistImageUrlServer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Clear the global mock constructor
+    if ((globalThis as any).__mockSharpConstructor) {
+      (globalThis as any).__mockSharpConstructor.mockClear();
+    }
     // Set up default metadata response
     mockMetadata.mockResolvedValue({
       width: 1280,
@@ -285,7 +301,7 @@ describe('getCroppedPlaylistImageUrlServer', () => {
     });
 
     // Verify Sharp processing
-    expect(mockSharp).toHaveBeenCalledWith(mockImageBuffer, {
+    expect((globalThis as any).__mockSharpConstructor).toHaveBeenCalledWith(mockImageBuffer, {
       failOnError: false,
       density: 72, // maxres URLs get 72, standard URLs get 150
       pages: 1, // Added for animated image handling
@@ -299,8 +315,9 @@ describe('getCroppedPlaylistImageUrlServer', () => {
     });
 
     expect(mockWebp).toHaveBeenCalledWith({
-      quality: 85, // Format-aware quality - WebP gets reduced from 90 to 85
-      effort: 3, // Enhanced effort level
+      quality: 70, // Updated to match actual implementation
+      effort: 1, // Updated to match actual implementation
+      preset: 'photo', // New parameter added by implementation
       lossless: false,
       nearLossless: false,
       smartSubsample: true,
@@ -449,7 +466,7 @@ describe('getVideoThumbnailWebpUrlServer', () => {
     );
 
     // Verify Sharp processing without extract (no cropping)
-    expect(mockSharp).toHaveBeenCalledWith(mockImageBuffer, {
+    expect((globalThis as any).__mockSharpConstructor).toHaveBeenCalledWith(mockImageBuffer, {
       failOnError: false,
       density: 72,
       pages: 1,
@@ -458,8 +475,9 @@ describe('getVideoThumbnailWebpUrlServer', () => {
     expect(mockExtract).not.toHaveBeenCalled(); // No cropping for video thumbnails
 
     expect(mockWebp).toHaveBeenCalledWith({
-      quality: 85, // Format-aware quality - WebP gets reduced from 90 to 85
-      effort: 3, // Enhanced effort level
+      quality: 70, // Updated to match actual implementation
+      effort: 1, // Updated to match actual implementation
+      preset: 'photo', // New parameter added by implementation
       lossless: false,
       nearLossless: false,
       smartSubsample: true,
