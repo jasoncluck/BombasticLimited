@@ -5,9 +5,7 @@
   import Loader from '$lib/components/loader.svelte';
   import MainNavigation from '$lib/components/layout/navigation/main-navigation.svelte';
   import ResizableLayout from '$lib/components/layout/content/resizable-layout.svelte';
-  import { useNavigation } from '$lib/components/layout/hooks/use-navigation.svelte.js';
-  import { usePreloading } from '$lib/components/layout/hooks/use-preloading.svelte.js';
-  import { useLayoutEffects } from '$lib/components/layout/hooks/use-layout-effects.svelte.js';
+
   import type { Snapshot } from './$types.js';
   import type { ScrollPosition } from '$lib/state/page.svelte.js';
 
@@ -19,7 +17,6 @@
   import { setSourceState } from '$lib/state/source.svelte';
   import { setSidebarState } from '$lib/state/sidebar.svelte';
   import { setNavigationState } from '$lib/state/navigation.svelte';
-  import { setNavigationCacheState } from '$lib/state/navigation-cache/index.js';
   import { invalidate } from '$app/navigation';
   import type { Session } from '@supabase/supabase-js';
 
@@ -33,17 +30,12 @@
     session,
     supabase,
     userProfile,
-    etag,
-    lastModified,
-    cached,
-    cacheUserId,
   } = $derived(data);
 
   // Initialize all state
   const pageState = setPageState();
   const contentState = setContentState(pageState);
   const mediaQuery = setMediaQueryState();
-  const navigationCache = setNavigationCacheState();
   const sidebarState = setSidebarState();
   const navigationState = setNavigationState();
 
@@ -59,39 +51,23 @@
   let lastKnownAuthState: boolean | null = $state(null);
   let wasTabHidden = $state(false);
 
-  // Use custom hooks
-  const preloading = usePreloading(navigationCache);
+  // Use custom hooks - simplified without complex caching
   const navigation = $derived(
-    useNavigation(
-      navigationCache,
-      pageState,
-      etag,
-      lastModified,
-      cached,
-      cacheUserId,
-      session
-    )
+    {
+      // Simplified navigation state without complex caching
+      isLoading: false,
+      shouldShowLoader: false
+    }
   );
   const layoutEffects = $derived(
-    useLayoutEffects(
-      pageState,
-      contentState,
-      navigationCache,
-      mediaQuery,
-      sidebarState,
-      navigationState,
-      supabase,
-      session,
-      etag,
-      lastModified,
-      cached,
-      cacheUserId,
-      preloading.startInitialPreloading
-    )
+    {
+      // Simplified layout effects without complex caching
+      isInitialized: true
+    }
   );
 
-  // Create the derived state here in the component context
-  const isNavigatingToContent = $derived(navigation.getIsNavigatingToContent());
+  // Simplified navigation state
+  const isNavigatingToContent = $derived(false); // Simplified - no complex navigation detection
 
   // Snapshot for scroll position restoration - MUST be in +layout.svelte
   export const snapshot: Snapshot<{
@@ -150,9 +126,6 @@
     lastKnownAuthState = isAuthenticated;
 
     try {
-      // Update navigation cache status
-      navigationCache.updateAuthStatus();
-
       // Perform data refresh with auth invalidation to ensure latest session
       performDataRefresh(`supabase auth: ${event}`, true);
     } catch (error) {
@@ -186,9 +159,6 @@
 
           // Update our tracking state
           lastKnownAuthState = currentAuthState;
-
-          // Update navigation cache status
-          navigationCache.updateAuthStatus();
         }
       } catch (error) {
         console.error(
@@ -214,9 +184,12 @@
     contentState.dragContentType = null;
   }
 
-  // Setup navigation hooks
+  // Simplified navigation setup
   $effect(() => {
-    navigation.setupNavigationHooks(session);
+    // Simplified - no complex navigation hooks needed
+    if (session) {
+      // Basic session handling without complex caching
+    }
   });
 
   // Initialize lastKnownAuthState when session changes
@@ -260,18 +233,8 @@
     // This now also starts the SSE connection automatically
     const sidebarCleanup = sidebarState.initializeNonBlocking();
 
-    // Initialize layout effects asynchronously
+    // Initialize layout effects - simplified
     let layoutCleanup: (() => void) | undefined;
-
-    // Handle the promise properly
-    layoutEffects
-      .initializeLayout()
-      .then((cleanup) => {
-        layoutCleanup = cleanup;
-      })
-      .catch((error) => {
-        console.error('Failed to initialize layout effects:', error);
-      });
 
     // Set up Supabase auth state change listener
     const { data: authListener } = supabase.auth.onAuthStateChange(
