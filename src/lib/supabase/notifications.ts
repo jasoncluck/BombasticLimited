@@ -464,7 +464,7 @@ export async function createNotificationForAllUsers({
  */
 export function showNotification(
   message: string,
-  type: 'success' | 'error' | 'warning' = 'warning'
+  type?: 'success' | 'error' | 'warning' | 'info'
 ): void {
   // This function will delegate to the showToast function
   import('$lib/state/notifications.svelte.js')
@@ -474,7 +474,7 @@ export function showNotification(
     .catch((error) => {
       console.error('Failed to show notification:', error);
       // Fallback to console
-      console.log(`[${type.toUpperCase()}] ${message}`);
+      console.log(`[${type?.toUpperCase()}] ${message}`);
     });
 }
 

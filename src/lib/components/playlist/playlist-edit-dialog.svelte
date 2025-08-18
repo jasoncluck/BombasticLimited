@@ -259,7 +259,7 @@
         </Dialog.Header>
 
         <div class="mb-4 flex flex-col justify-center gap-4 sm:flex-row">
-          <div class="relative m-6 flex justify-center">
+          <div class="relative m-6 flex items-center justify-center">
             {#if ($formData.thumbnail_maxres_url || $formData.thumbnail_url) && !$formData.isDeletingPlaylistImage}
               <div class="relative h-56 w-56">
                 <!-- Preview the cropped image -->
@@ -273,7 +273,10 @@
                     {#snippet child({ props })}
                       <Button
                         {...props}
-                        class="hover:bg-secondary absolute -right-3 -bottom-3 rounded-full hover:brightness-110"
+                        class="hover:bg-secondary absolute -right-3 -bottom-3
+                        rounded-full opacity-75 transition-opacity duration-150 hover:scale-105 
+                        hover:opacity-100  hover:brightness-110
+                        "
                         variant="secondary"
                         size="icon"
                       >
@@ -372,7 +375,9 @@
               >
                 <Form.Control>
                   {#snippet children({ props })}
-                    <Form.Label for="isPublic" class="mr-1 cursor-pointer"
+                    <Form.Label
+                      for="isPublic"
+                      class="mr-1 cursor-pointer leading-5"
                       >Public Playlist</Form.Label
                     >
                     <Checkbox
@@ -482,12 +487,10 @@
 
     <div class="relative h-96 flex-1">
       {#if imageSrc}
-        <!-- Hidden img to preload -->
         <img
           src={imageSrc}
-          alt=""
-          style="display: none;"
           onload={handleImageLoad}
+          alt={`Image for playlist: ${playlist.name} `}
         />
 
         {#if imageLoaded}

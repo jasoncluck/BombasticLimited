@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import '@fontsource-variable/inter';
 
 /*
  The default border color has changed to `currentcolor` in Tailwind CSS v4,
@@ -52,6 +53,15 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Font Families */
+  --font-family-sans:
+    'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    'Roboto', sans-serif;
+  --font-family-serif:
+    ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+  --font-family-mono:
+    ui-monospace, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
 
   /* Colors */
   --color-background: var(--background);
@@ -115,8 +125,12 @@
     @apply mb-2 text-2xl font-semibold transition-colors lg:text-3xl;
   }
 
+  .header-content {
+    @apply mb-0 text-5xl leading-none font-extrabold tracking-tight text-wrap break-words hyphens-auto transition-colors md:text-5xl lg:text-6xl;
+  }
+
   .header-playlist {
-    @apply mb-2 text-4xl font-semibold transition-colors md:text-6xl lg:text-7xl;
+    @apply mb-2 text-4xl leading-none font-extrabold tracking-tight text-wrap break-words hyphens-auto transition-colors md:text-4xl lg:text-5xl;
   }
 
   .header-link {

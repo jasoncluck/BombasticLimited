@@ -19,11 +19,12 @@
   import { setSourceState } from '$lib/state/source.svelte';
   import { setSidebarState } from '$lib/state/sidebar.svelte';
   import { setNavigationState } from '$lib/state/navigation.svelte';
-
-  import '../app.css';
   import { setNavigationCacheState } from '$lib/state/navigation-cache/index.js';
   import { invalidate } from '$app/navigation';
   import type { Session } from '@supabase/supabase-js';
+
+  import '@fontsource/fira-sans';
+  import '../app.css';
 
   injectSpeedInsights();
 

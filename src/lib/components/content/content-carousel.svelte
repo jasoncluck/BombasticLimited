@@ -234,7 +234,7 @@
   <Carousel.Previous
     class={showPreviousButton
       ? '!bg-secondary visible cursor-pointer opacity-75 \
-      transition-all duration-150 hover:scale-105 \
+      transition-opacity duration-150 hover:scale-105 \
       hover:opacity-100 hover:brightness-110'
       : 'invisible'}
     onclick={handlePreviousButtonClick}

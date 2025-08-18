@@ -39,7 +39,7 @@
   }
 
   let {
-    breadcrumbs,
+    breadcrumbs = [],
     children,
     contentFilter,
     currentPage = $bindable(),
@@ -47,6 +47,7 @@
     playlist: profilePlaylist,
     session,
     showFloatingBreadcrumbs = $bindable(),
+    userProfile,
     supabase,
     videos,
     view,
@@ -84,6 +85,7 @@
       {videos}
       {breadcrumbs}
       playlist={profilePlaylist}
+      {userProfile}
       {supabase}
       {session}
     />
@@ -92,7 +94,7 @@
 
 <IntersectionObserver
   disableObserver={false}
-  threshold={0.1}
+  threshold={0.25}
   onActive={() => (showFloatingBreadcrumbs = false)}
   onInactive={() => (showFloatingBreadcrumbs = true)}
 >

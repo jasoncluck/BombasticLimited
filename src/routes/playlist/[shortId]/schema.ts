@@ -65,7 +65,7 @@ const jsonbImagePropertiesSchema = z
 
 export const playlistSchema = z.object({
   name: z.string().min(2).max(50),
-  description: z.string().max(500).nullable(),
+  description: z.string().max(250).nullable(),
   image_properties: jsonbImagePropertiesSchema,
   id: z.number(),
   type: z.enum(PLAYLIST_TYPES).default('Private'),

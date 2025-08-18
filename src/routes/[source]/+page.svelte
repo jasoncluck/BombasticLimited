@@ -81,8 +81,8 @@
   <div
     class="mx-2 flex flex-wrap items-center justify-between gap-2 sm:mx-0 @2xl:flex-nowrap"
   >
-    <div class="mb-4 flex flex-col">
-      <h1 class="header-primary-no-margin shrink-0">
+    <div class="mb-4 flex flex-col gap-2">
+      <h1 class="header-content">
         {SOURCE_INFO[source].displayName}
       </h1>
       {#if SOURCE_INFO[source].websiteUrlDomain}

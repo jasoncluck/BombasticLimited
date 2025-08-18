@@ -23,7 +23,7 @@ export class NotificationStateClass {
 // Legacy toast functions for backward compatibility (NOT related to bell notifications)
 export function showToast(
   message: string,
-  type?: 'success' | 'error' | 'warning'
+  type?: 'success' | 'error' | 'warning' | 'info'
 ) {
   switch (type) {
     case 'success':
@@ -34,6 +34,9 @@ export function showToast(
       break;
     case 'warning':
       toast.warning(message);
+      break;
+    case 'info':
+      toast.info(message);
       break;
     default:
       toast(message);

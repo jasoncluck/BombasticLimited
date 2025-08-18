@@ -24,6 +24,7 @@
   import { onMount } from 'svelte';
   import { handleContentNavigation } from './content';
   import type { Playlist } from '$lib/supabase/playlists';
+  import type { UserProfile } from '$lib/supabase/user-profiles';
 
   type ContentCardProps = {
     video?: Video;
@@ -38,6 +39,7 @@
     isCarousel?: boolean;
     slidesInView?: number[];
     carouselState?: CarouselState;
+    userProfile?: UserProfile;
   } & Pick<
     ContentDisplayProps,
     | 'isContinueVideos'
@@ -65,7 +67,6 @@
     videos,
     contentFilter,
     onVideosUpdate,
-    // Carousel-specific props
     isCarousel = false,
     slidesInView,
     carouselState = $bindable(),
@@ -104,6 +105,7 @@
           playlist,
           contentFilter,
           supabase,
+          setDraggedAsSelected: false,
           clearSelection: true,
           onVideosUpdate,
         })
@@ -212,7 +214,7 @@
       videos,
       playlist,
       sectionId,
-      enableDoubleClick: !isCarousel, // Disable double click for carousel
+      enableDoubleClick: false,
       onNavigate: (video, playlist) => {
         handleContentNavigation({
           video,

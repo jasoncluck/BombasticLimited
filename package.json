@@ -124,6 +124,9 @@
     "vitest-mock-extended": "^3.1.0"
   },
   "dependencies": {
+    "@fontsource-variable/inter": "^5.2.6",
+    "@fontsource-variable/rubik": "^5.2.6",
+    "@fontsource/fira-sans": "^5.2.6",
     "@googleapis/youtube": "^28.0.0",
     "@neodrag/svelte": "^2.3.3",
     "@supabase/ssr": "^0.6.1",

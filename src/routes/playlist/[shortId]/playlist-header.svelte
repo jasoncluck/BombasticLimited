@@ -114,7 +114,9 @@
           bind:open
         >
           {#snippet trigger()}
-            <div class="flex flex-col gap-4 md:flex-row">
+            <div
+              class="flex flex-col items-center gap-6 @lg:flex-row @lg:items-end"
+            >
               <div class="flex justify-center">
                 <div
                   class="flex h-56 min-h-32 w-56 min-w-32 items-center justify-center overflow-hidden rounded-lg border-none bg-transparent p-0 {isPlaylistOwner &&
@@ -134,25 +136,25 @@
                 </div>
               </div>
 
-              <div class="relative mt-4 flex min-w-2xs flex-1 flex-col">
+              <div
+                class="min-w-4xs relative mt-4 flex flex-1 flex-col gap-2 {isPlaylistOwner &&
+                  'cursor-pointer'} "
+              >
                 <div
-                  class="flex flex-col {isPlaylistOwner && 'cursor-pointer'} 
-            items-start border-none bg-transparent p-0 text-left"
+                  class="flex flex-col items-start border-none bg-transparent p-0 text-left"
                 >
                   <p class="text-muted-foreground mb-2 text-sm tracking-tight">
                     {playlist.type === 'Public'
                       ? 'Public Playlist'
                       : 'Private Playlist'}
                   </p>
-                  <h2
-                    class="header-playlist break-anywhere font-extrabold tracking-tight text-wrap"
-                  >
+                  <h2 class="header-content">
                     {playlist.name}
                   </h2>
 
                   {#if playlist.description && playlist.description.length > 1}
                     <p
-                      class="text-muted-foreground mb-3 text-left text-sm break-all"
+                      class="text-muted-foreground my-2 text-left text-sm break-all"
                     >
                       {playlist.description}
                     </p>
@@ -231,7 +233,7 @@
             bind:open={drawerOpen}
           >
             {#snippet trigger()}
-              <div class="flex flex-col gap-4">
+              <div class="flex flex-col items-center gap-4">
                 <div class="flex justify-center">
                   <div
                     class="flex h-56 min-h-32 w-56 min-w-32 items-center justify-center overflow-hidden rounded-lg border-none bg-transparent p-0 {isPlaylistOwner &&
@@ -268,7 +270,7 @@
                         : 'Private Playlist'}
                     </p>
                     <h2
-                      class="header-playlist break-anywhere font-extrabold text-wrap"
+                      class="header-content break-anywhere font-extrabold text-wrap"
                     >
                       {playlist.name}
                     </h2>
