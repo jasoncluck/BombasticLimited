@@ -126,17 +126,19 @@
     <DropdownMenu.Root>
       <DropdownMenu.Trigger
         data-testid="user-menu-trigger"
-        class="cursor-pointer !rounded-full outline-none {buttonVariants({
-          variant: userProfile?.avatar_url ? 'ghost' : 'outline',
+        class={buttonVariants({
+          variant: userProfile?.avatar_url ? 'outline' : 'outline',
           size: 'icon',
-        })}"
+          class:
+            'size-10 cursor-pointer !rounded-full outline-none hover:scale-105',
+        })}
       >
         {#if userProfile?.avatar_url}
-          <Avatar.Root class="rounded-full outline-none">
+          <Avatar.Root class="size-10 rounded-full outline-none">
             <Avatar.Image
               src={userProfile.avatar_url}
               alt="User avatar"
-              class="h-full w-full rounded-full object-cover"
+              class="h-full w-full rounded-full object-cover p-1.5"
             />
             <Avatar.Fallback>
               <CircleUser class="h-[1.2rem] w-[1.2rem]" />

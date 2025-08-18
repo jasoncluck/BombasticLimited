@@ -199,7 +199,10 @@
   <div class="flex flex-col items-center gap-4">
     <DropdownMenu.Root>
       <DropdownMenu.Trigger
-        class="hover:text-primary flex cursor-pointer items-center gap-1 outline-none"
+        class={buttonVariants({
+          variant: 'ghost',
+          class: 'flex cursor-pointer items-center gap-1 outline-none',
+        })}
       >
         <span class="mr-1 text-sm tracking-tight"
           >{sortOptionInfo.displayName}</span
