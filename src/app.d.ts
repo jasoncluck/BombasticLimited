@@ -4,7 +4,7 @@ import type { Database } from '$lib/supabase/database.types'; // import generate
 // MDsveX module declarations
 declare module '*.md' {
   import type { ComponentType, SvelteComponent } from 'svelte';
-  
+
   interface MarkdownMetadata {
     title?: string;
     description?: string;
@@ -20,7 +20,7 @@ declare module '*.md' {
 
 declare module '*.svx' {
   import type { ComponentType, SvelteComponent } from 'svelte';
-  
+
   interface MarkdownMetadata {
     title?: string;
     description?: string;

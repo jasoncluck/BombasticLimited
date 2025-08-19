@@ -8,89 +8,114 @@
   let { children }: Props = $props();
 </script>
 
-<article class="prose prose-neutral dark:prose-invert max-w-none mdx-layout">
+<article class="markdown-content">
   {@render children()}
 </article>
 
 <style>
-  .mdx-layout {
+  .markdown-content {
     margin: 0 auto;
     padding: 2rem 1rem;
+    max-width: none;
   }
 
-  :global(.prose h1) {
+  /* Header styles matching the existing design system */
+  :global(.markdown-content h1) {
+    margin: 0 0.5rem 1rem 0.5rem;
     font-size: 1.875rem;
-    font-weight: 700;
-    margin-bottom: 1.5rem;
-    margin-top: 2rem;
+    font-weight: 600;
+    transition: color 0.15s ease-in-out;
   }
 
-  :global(.prose h1:first-child) {
+  :global(.markdown-content h1:first-child) {
     margin-top: 0;
   }
 
-  :global(.prose h2) {
+  :global(.markdown-content h2) {
+    margin-bottom: 0.5rem;
     font-size: 1.5rem;
     font-weight: 600;
-    margin-bottom: 1rem;
-    margin-top: 1.5rem;
+    transition: color 0.15s ease-in-out;
   }
 
-  :global(.prose h3) {
+  :global(.markdown-content h3) {
+    margin: 1.5rem 0 0.75rem 0;
     font-size: 1.25rem;
     font-weight: 500;
-    margin-bottom: 0.75rem;
-    margin-top: 1.25rem;
   }
 
-  :global(.prose p) {
+  :global(.markdown-content h4) {
+    margin: 1rem 0 0.5rem 0;
+    font-size: 1.125rem;
+    font-weight: 500;
+  }
+
+  :global(.markdown-content p) {
     margin-bottom: 1rem;
-    line-height: 1.6;
+    line-height: 1.75;
   }
 
-  :global(.prose ul, .prose ol) {
+  :global(.markdown-content ul, .markdown-content ol) {
     margin-bottom: 1rem;
     padding-left: 1.5rem;
   }
 
-  :global(.prose li) {
+  :global(.markdown-content li) {
     margin-bottom: 0.5rem;
   }
 
-  :global(.prose pre) {
+  /* Code blocks using design system colors */
+  :global(.markdown-content pre) {
     border-radius: 0.5rem;
     padding: 1rem;
     overflow-x: auto;
-    background-color: #f3f4f6;
-    border: 1px solid #e5e7eb;
+    font-family: ui-monospace, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.875rem;
+    background-color: var(--color-muted);
+    border: 1px solid var(--color-border);
+    color: var(--color-foreground);
+    margin: 1rem 0;
   }
 
-  :global(.prose code) {
+  :global(.markdown-content code) {
     padding: 0.125rem 0.25rem;
     border-radius: 0.25rem;
+    font-family: ui-monospace, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
     font-size: 0.875rem;
-    background-color: #f3f4f6;
-    border: 1px solid #e5e7eb;
+    background-color: var(--color-muted);
+    border: 1px solid var(--color-border);
+    color: var(--color-foreground);
   }
 
-  :global(.prose blockquote) {
-    border-left: 4px solid #d1d5db;
+  /* Don't double-style code inside pre blocks */
+  :global(.markdown-content pre code) {
+    padding: 0;
+    border: 0;
+    background-color: transparent;
+  }
+
+  :global(.markdown-content blockquote) {
     padding-left: 1rem;
+    font-style: italic;
+    border-left: 4px solid var(--color-border);
+    color: var(--color-muted-foreground);
+    margin: 1rem 0;
+  }
+
+  :global(.markdown-content strong) {
+    font-weight: 600;
+  }
+
+  :global(.markdown-content em) {
     font-style: italic;
   }
 
-  /* Dark mode support */
-  :global(.dark .prose pre) {
-    background-color: #374151;
-    border-color: #4b5563;
+  :global(.markdown-content a) {
+    text-decoration: underline;
+    color: var(--color-primary);
   }
 
-  :global(.dark .prose code) {
-    background-color: #374151;
-    border-color: #4b5563;
-  }
-
-  :global(.dark .prose blockquote) {
-    border-left-color: #6b7280;
+  :global(.markdown-content a:hover) {
+    text-decoration: none;
   }
 </style>

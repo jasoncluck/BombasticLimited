@@ -12,21 +12,21 @@ description: 'Learn how to get started with our platform'
 
 # Getting Started
 
-Welcome to our **Getting Started** guide! This page demonstrates that markdown is working correctly.
+Welcome to our **Getting Started** guide! This page demonstrates that markdown
+is working correctly.
 
 ## Features
 
 This page shows:
+
 - **Headers** working properly (like this H2)
-- **Bold** and *italic* text
+- **Bold** and _italic_ text
 - Code blocks and inline `code`
 - Interactive Svelte components
 
 ### Interactive Component Test
 
-<button onclick={() => count++}>
-  Clicked {count} times
-</button>
+<button onclick={() => count++}> Clicked {count} times </button>
 
 ## Code Example
 

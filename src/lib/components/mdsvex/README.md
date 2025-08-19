@@ -1,12 +1,14 @@
 # MDsveX Layout Component
 
-The `DefaultLayout.svelte` component provides a clean, styled layout for markdown content processed through MDsveX.
+The `DefaultLayout.svelte` component provides a clean, styled layout for
+markdown content processed through MDsveX.
 
 ## Usage
 
 ### For Styled Markdown Pages
 
-To ensure your markdown content has proper styling (headers, typography, code blocks, etc.), wrap your markdown content with the `DefaultLayout` component:
+To ensure your markdown content has proper styling (headers, typography, code
+blocks, etc.), wrap your markdown content with the `DefaultLayout` component:
 
 ```markdown
 ---
@@ -36,7 +38,9 @@ Your markdown content goes here...
 
 ### Without DefaultLayout
 
-If you don't use the `DefaultLayout` component, your markdown will be converted to HTML but will appear unstyled (plain text without proper header sizing, spacing, etc.).
+If you don't use the `DefaultLayout` component, your markdown will be converted
+to HTML but will appear unstyled (plain text without proper header sizing,
+spacing, etc.).
 
 ## Features
 
@@ -50,11 +54,13 @@ If you don't use the `DefaultLayout` component, your markdown will be converted 
 ## Customization
 
 You can customize the layout by:
+
 1. Creating your own layout component
 2. Extending the existing component
 3. Overriding styles in individual markdown files
 
 ## Troubleshooting
 
-**Problem**: Markdown headers (`#`, `##`, etc.) appear as plain text without styling.
-**Solution**: Make sure to wrap your markdown content with `<DefaultLayout>` as shown above.
+**Problem**: Markdown headers (`#`, `##`, etc.) appear as plain text without
+styling. **Solution**: Make sure to wrap your markdown content with
+`<DefaultLayout>` as shown above.
