@@ -4,9 +4,9 @@ The `DefaultLayout.svelte` component provides a clean, styled layout for markdow
 
 ## Usage
 
-### Option 1: Manual Import (Recommended)
+### For Styled Markdown Pages
 
-For full control over layout, import and use the layout component explicitly in your markdown files:
+To ensure your markdown content has proper styling (headers, typography, code blocks, etc.), wrap your markdown content with the `DefaultLayout` component:
 
 ```markdown
 ---
@@ -24,28 +24,26 @@ description: 'Page description'
 
 Your markdown content goes here...
 
+## Features
+
+- Properly styled headers
+- Typography and spacing
+- Code syntax highlighting
+- Blockquotes and lists
+
 </DefaultLayout>
 ```
 
-### Option 2: Global Layout Configuration
+### Without DefaultLayout
 
-You can also configure a global layout in `svelte.config.js` (not currently enabled to avoid build issues):
-
-```javascript
-mdsvex({
-  extensions: ['.md', '.svx'],
-  layout: {
-    _: 'src/lib/components/mdsvex/DefaultLayout.svelte',
-  },
-})
-```
+If you don't use the `DefaultLayout` component, your markdown will be converted to HTML but will appear unstyled (plain text without proper header sizing, spacing, etc.).
 
 ## Features
 
 - Responsive typography with prose styling
 - Dark mode support
 - Proper spacing for all markdown elements
-- Code block styling
+- Code block styling with syntax highlighting
 - Blockquote styling
 - Clean, minimal design
 
@@ -55,3 +53,8 @@ You can customize the layout by:
 1. Creating your own layout component
 2. Extending the existing component
 3. Overriding styles in individual markdown files
+
+## Troubleshooting
+
+**Problem**: Markdown headers (`#`, `##`, etc.) appear as plain text without styling.
+**Solution**: Make sure to wrap your markdown content with `<DefaultLayout>` as shown above.
