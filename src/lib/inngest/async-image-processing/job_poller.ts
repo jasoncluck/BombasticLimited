@@ -37,7 +37,8 @@ export const pollPendingJobs = inngest.createFunction(
       limit: 1,
     },
   },
-  { cron: '0 */5 * * * *' }, // Every 5 minutes
+
+  { cron: '*/5 * * * *' }, // Every 5 minutes
   async ({ step }) => {
     const startTime = Date.now();
     let jobsPolled = 0;
