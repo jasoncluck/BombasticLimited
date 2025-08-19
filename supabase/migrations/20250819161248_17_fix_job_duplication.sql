@@ -81,14 +81,14 @@ BEGIN
   
   -- STEP 2: If we found a job, update it atomically
   IF selected_job_id IS NOT NULL THEN
-    UPDATE "public"."image_processing_jobs"
+    UPDATE "public"."image_processing_jobs" AS j
     SET 
       status = 'processing',
       processing_started_at = current_timestamp,
-      attempts = image_processing_jobs.attempts + 1,  -- Explicitly reference the table
+      attempts = j.attempts + 1,  -- Use table alias to avoid ambiguous column reference
       worker_id = p_worker_id,
       updated_at = current_timestamp
-    WHERE id = selected_job_id
+    WHERE j.id = selected_job_id
     RETURNING 
       id,
       entity_type,
