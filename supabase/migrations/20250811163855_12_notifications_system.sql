@@ -177,6 +177,17 @@ CREATE INDEX IF NOT EXISTS system_logs_created_at_idx ON public.system_logs (cre
 -- Add comment
 COMMENT ON TABLE public.system_logs IS 'System operation logs for monitoring and debugging';
 
+ALTER TABLE "public"."system_logs" ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Only admins can read system logs" ON public.system_logs 
+FOR SELECT 
+USING (public.is_admin());
+
+CREATE POLICY "Only admins can insert system logs" ON public.system_logs 
+FOR INSERT 
+WITH CHECK (public.is_admin());
+
+
 -- =====================================================
 -- STEP 6: Insert the welcome notification (ID = 1) and fix sequence
 -- =====================================================

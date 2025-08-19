@@ -282,8 +282,6 @@ async function getPlaylistCropProperties(
 /**
  * **HIGH-QUALITY** image processing with advanced optimization
  */
-// In your image_processing_worker.ts, update the processImageFormats function:
-
 async function processImageFormats(
   buffer: Buffer,
   entityType?: string,
@@ -434,19 +432,47 @@ export const processImage = inngest.createFunction(
     id: 'process-image-hq',
     name: 'Process Single Image (High Quality)',
     retries: MAX_RETRIES,
+    // Add entity-level concurrency control to prevent duplicate processing
+    concurrency: [
+      {
+        limit: 1,
+        key: 'event.data.entityType + "-" + event.data.entityId + "-" + event.data.imageType',
+      },
+    ],
   },
   { event: 'image.process' },
   async ({ event }): Promise<ProcessingResult> => {
-    const { entityType, entityId, imageType, sourceUrl } = event.data;
+    const { entityType, entityId, imageType, sourceUrl, jobId } = event.data;
 
     console.log(
-      `🚀 Starting HIGH-QUALITY processing for ${entityType} ${entityId}, type: ${imageType}`
+      `🚀 Starting HIGH-QUALITY processing for ${entityType} ${entityId}, type: ${imageType}, job: ${jobId}`
     );
     console.log(`📸 Source URL: ${sourceUrl}`);
 
     const startTime = Date.now();
 
     try {
+      // Ensure we have a job ID - this should always be provided by the poller
+      if (!jobId) {
+        throw new Error(
+          'No job ID provided - jobs should be created by database triggers only'
+        );
+      }
+
+      // Mark the existing job as processing
+      const { error: startError } = await supabase.rpc(
+        'start_image_processing_job',
+        {
+          job_id: jobId,
+        }
+      );
+
+      if (startError) {
+        throw new Error(`Failed to start job ${jobId}: ${startError.message}`);
+      }
+
+      console.log(`✅ Marked job ${jobId} as processing`);
+
       // Check existing images
       const { hasWebP, hasAVIF } = await checkExistingOptimizedImages(
         entityType,
@@ -461,24 +487,6 @@ export const processImage = inngest.createFunction(
       if (hasWebP || hasAVIF) {
         await deleteExistingOptimizedImages(entityType, entityId);
       }
-
-      // Get and mark job as processing
-      const { data: jobId, error: jobError } = await supabase.rpc(
-        'queue_image_processing_job',
-        {
-          p_entity_type: entityType,
-          p_entity_id: entityId,
-          p_image_type: imageType,
-          p_source_url: sourceUrl,
-          p_priority: event.data.priority || 100,
-        }
-      );
-
-      if (jobError) {
-        throw new Error(`Failed to queue job: ${jobError.message}`);
-      }
-
-      await supabase.rpc('start_image_processing_job', { job_id: jobId });
 
       // Download source image
       console.log('📥 Downloading source image...');
@@ -507,7 +515,7 @@ export const processImage = inngest.createFunction(
         avifPath
       );
 
-      // Mark job as completed
+      // Mark job as completed using the existing jobId
       const { error: completeError } = await supabase.rpc(
         'complete_image_processing_job',
         {
@@ -518,12 +526,14 @@ export const processImage = inngest.createFunction(
       );
 
       if (completeError) {
-        throw new Error(`Failed to complete job: ${completeError.message}`);
+        throw new Error(
+          `Failed to complete job ${jobId}: ${completeError.message}`
+        );
       }
 
       const processingTime = Date.now() - startTime;
       console.log(
-        `🎉 Successfully processed HIGH-QUALITY image for ${entityType} ${entityId} in ${processingTime}ms`
+        `🎉 Successfully processed HIGH-QUALITY image for ${entityType} ${entityId} in ${processingTime}ms (job: ${jobId})`
       );
 
       return {
@@ -532,29 +542,21 @@ export const processImage = inngest.createFunction(
       };
     } catch (error) {
       console.error(
-        `❌ Failed to process HIGH-QUALITY image for ${entityType} ${entityId}:`,
+        `❌ Failed to process HIGH-QUALITY image for ${entityType} ${entityId} (job: ${jobId}):`,
         error
       );
 
-      // Mark job as failed
-      try {
-        const { data } = await supabase
-          .from('image_processing_jobs')
-          .select('id')
-          .eq('entity_type', entityType)
-          .eq('entity_id', entityId)
-          .eq('image_type', imageType)
-          .eq('status', 'processing')
-          .single();
-
-        if (data?.id) {
+      // Mark the existing job as failed
+      if (jobId) {
+        try {
           await supabase.rpc('fail_image_processing_job', {
-            job_id: data.id,
+            job_id: jobId,
             error_msg: error instanceof Error ? error.message : String(error),
           });
+          console.log(`❌ Marked job ${jobId} as failed`);
+        } catch (jobError) {
+          console.error(`Failed to mark job ${jobId} as failed:`, jobError);
         }
-      } catch (jobError) {
-        console.error('Failed to mark job as failed:', jobError);
       }
 
       return {

@@ -113,13 +113,14 @@ export const pollPendingJobs = inngest.createFunction(
         for (const job of pendingJobs) {
           try {
             console.log(
-              `📤 Sending processing event for ${job.entity_type} ${job.entity_id} (${job.image_type})`
+              `📤 Sending processing event for ${job.entity_type} ${job.entity_id} (${job.image_type}) - Job ID: ${job.job_id}`
             );
 
-            // Send the image.process event that matches the existing worker expectations
+            // Send the image.process event with the job ID - this is crucial!
             await inngest.send({
               name: 'image.process',
               data: {
+                jobId: job.job_id, // Pass the actual job ID from database
                 entityType: job.entity_type,
                 entityId: job.entity_id,
                 imageType: job.image_type,
@@ -137,7 +138,7 @@ export const pollPendingJobs = inngest.createFunction(
 
             jobsSent++;
             console.log(
-              `✅ Successfully queued processing for ${job.entity_type} ${job.entity_id}`
+              `✅ Successfully queued processing for ${job.entity_type} ${job.entity_id} with job ID ${job.job_id}`
             );
           } catch (sendError) {
             console.error(

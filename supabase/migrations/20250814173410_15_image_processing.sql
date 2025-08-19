@@ -87,7 +87,7 @@ CREATE TRIGGER trigger_update_image_processing_jobs_updated_at BEFORE
 UPDATE ON "public"."image_processing_jobs" FOR EACH ROW
 EXECUTE FUNCTION public.update_image_processing_jobs_updated_at ();
 
--- Function to get next job for processing
+-- Function to get next job for processing (with atomic locking)
 CREATE OR REPLACE FUNCTION public.get_next_image_processing_job () RETURNS TABLE (
   job_id uuid,
   entity_type text,
@@ -100,6 +100,7 @@ SET
   search_path = '' AS $$
 BEGIN
   -- Get the next pending job with highest priority (lowest number)
+  -- FOR UPDATE SKIP LOCKED ensures atomic processing and prevents duplicates
   RETURN QUERY
   SELECT 
     j.id,
@@ -247,7 +248,7 @@ BEGIN
 END;
 $$;
 
--- Function to queue image processing job
+-- UPDATED: Function to queue image processing job with improved deduplication
 CREATE OR REPLACE FUNCTION public.queue_image_processing_job (
   p_entity_type text,
   p_entity_id text,
@@ -259,6 +260,7 @@ SET
   search_path = '' AS $$
 DECLARE
   job_id uuid;
+  recent_completion TIMESTAMP WITH TIME ZONE;
 BEGIN
   -- Check if job already exists for this entity/image combination
   SELECT id INTO job_id
@@ -268,23 +270,47 @@ BEGIN
     AND image_type = p_image_type
     AND status IN ('pending', 'processing');
   
-  -- If job doesn't exist, create it
-  IF job_id IS NULL THEN
-    INSERT INTO "public"."image_processing_jobs" (
-      entity_type,
-      entity_id,
-      image_type,
-      source_url,
-      priority
-    ) VALUES (
-      p_entity_type,
-      p_entity_id,
-      p_image_type,
-      p_source_url,
-      p_priority
-    ) RETURNING id INTO job_id;
+  -- If active job exists, return it
+  IF job_id IS NOT NULL THEN
+    RAISE LOG 'Returning existing job % for % % %', job_id, p_entity_type, p_entity_id, p_image_type;
+    RETURN job_id;
   END IF;
   
+  -- Check if we recently completed a job for this entity (within last 30 seconds)
+  -- This prevents rapid-fire duplicate job creation
+  SELECT processing_completed_at INTO recent_completion
+  FROM "public"."image_processing_jobs"
+  WHERE entity_type = p_entity_type
+    AND entity_id = p_entity_id
+    AND image_type = p_image_type
+    AND status = 'completed'
+    AND processing_completed_at > (now() - INTERVAL '30 seconds')
+  ORDER BY processing_completed_at DESC
+  LIMIT 1;
+  
+  -- If recently completed, don't create a new job
+  IF recent_completion IS NOT NULL THEN
+    RAISE LOG 'Skipping job creation for % % % - recently completed at %', 
+      p_entity_type, p_entity_id, p_image_type, recent_completion;
+    RETURN NULL;
+  END IF;
+  
+  -- Create new job
+  INSERT INTO "public"."image_processing_jobs" (
+    entity_type,
+    entity_id,
+    image_type,
+    source_url,
+    priority
+  ) VALUES (
+    p_entity_type,
+    p_entity_id,
+    p_image_type,
+    p_source_url,
+    p_priority
+  ) RETURNING id INTO job_id;
+  
+  RAISE LOG 'Created new job % for % % %', job_id, p_entity_type, p_entity_id, p_image_type;
   RETURN job_id;
 END;
 $$;
@@ -347,6 +373,7 @@ DECLARE
   source_url text;
   crop_changed boolean := false;
   webp_url_provided boolean := false;
+  job_id uuid;
 BEGIN
   -- Check if image_properties, thumbnail_video_id, or image_webp_url changed
   IF (TG_OP = 'INSERT') OR 
@@ -368,7 +395,7 @@ BEGIN
   IF crop_changed THEN
     IF webp_url_provided THEN
       -- Scenario 1: WebP image provided, generate AVIF optimization
-      PERFORM public.queue_image_processing_job(
+      job_id := public.queue_image_processing_job(
         'playlist',
         NEW.id::text,
         'playlist_image',
@@ -376,9 +403,11 @@ BEGIN
         25 -- High priority for playlist images
       );
       
-      -- Update processing status to pending for AVIF generation
-      NEW.image_processing_status = 'pending';
-      NEW.image_processing_updated_at = now();
+      -- Only update status if job was actually created
+      IF job_id IS NOT NULL THEN
+        NEW.image_processing_status = 'pending';
+        NEW.image_processing_updated_at = now();
+      END IF;
       
     ELSIF NEW.thumbnail_video_id IS NOT NULL THEN
       -- Scenario 2: Generate cropped image from video thumbnail
@@ -393,7 +422,7 @@ BEGIN
         source_url := COALESCE(source_video.thumbnail_maxres_url, source_video.thumbnail_url);
         
         IF source_url IS NOT NULL AND source_url != '' THEN
-          PERFORM public.queue_image_processing_job(
+          job_id := public.queue_image_processing_job(
             'playlist',
             NEW.id::text,
             'playlist_image',
@@ -401,9 +430,11 @@ BEGIN
             25 -- High priority for playlist images
           );
 
-          -- Update processing status to pending
-          NEW.image_processing_status = 'pending';
-          NEW.image_processing_updated_at = now();
+          -- Only update status if job was actually created
+          IF job_id IS NOT NULL THEN
+            NEW.image_processing_status = 'pending';
+            NEW.image_processing_updated_at = now();
+          END IF;
         END IF;
       END IF;
     END IF;
