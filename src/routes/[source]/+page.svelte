@@ -78,23 +78,23 @@
 
 <div class="flex flex-col">
   <div class="flex flex-wrap justify-between gap-6">
-    <h1 class="header-content">
+    <h1 class="header-content max-w-xl">
       {SOURCE_INFO[source].displayName}
     </h1>
     <div
-      class="mb-4 flex w-full flex-col items-center gap-2 px-6 sm:ml-auto sm:w-auto"
+      class="mb-4 flex w-full flex-col items-center gap-2 px-6 @2xl:ml-auto @2xl:w-auto @2xl:flex-row"
     >
       <Button
         variant="outline"
         href={SOURCE_INFO[source].supportUrl}
-        class="w-full py-6 text-center text-wrap break-words whitespace-normal"
+        class="w-full py-6 text-center text-wrap break-words whitespace-normal @2xl:w-auto"
         target="_blank"
       >
         Support {SOURCE_INFO[source].displayName}
       </Button>
       {#if SOURCE_INFO[source].websiteUrlDomain}
         <Button
-          class="text-muted-foreground w-full py-6 text-sm hover:underline"
+          class="text-muted-foreground w-full py-6 text-sm hover:underline @2xl:w-auto"
           variant="link"
           target="_blank"
           href={`https://www.${SOURCE_INFO[source].websiteUrlDomain}`}
