@@ -78,30 +78,30 @@
 
 <div class="flex flex-col">
   <div class="flex flex-wrap justify-between gap-6">
-    <h1 class="header-content min-w-80">
+    <h1 class="header-content">
       {SOURCE_INFO[source].displayName}
     </h1>
-    <div class="mx-auto mb-4 flex flex-row sm:mr-0 sm:ml-auto sm:flex-col">
+    <div
+      class="mb-4 flex w-full flex-col items-center gap-2 sm:ml-auto sm:w-auto sm:flex-row"
+    >
       <Button
         variant="outline"
         href={SOURCE_INFO[source].supportUrl}
-        class="py-6 text-center text-wrap break-words whitespace-normal"
+        class="max-w-sm py-6 text-center text-wrap break-words whitespace-normal sm:w-auto"
         target="_blank"
       >
         Support {SOURCE_INFO[source].displayName}
       </Button>
-      <Button
-        class="text-muted-foreground py-6 text-sm hover:underline {SOURCE_INFO[
-          source
-        ].websiteUrlDomain
-          ? 'flex'
-          : 'hidden'}"
-        variant="link"
-        target="_blank"
-        href={`https://www.${SOURCE_INFO[source].websiteUrlDomain}`}
-      >
-        {SOURCE_INFO[source].websiteUrlDomain}</Button
-      >
+      {#if SOURCE_INFO[source].websiteUrlDomain}
+        <Button
+          class="text-muted-foreground w-full py-6 text-sm hover:underline sm:w-auto"
+          variant="link"
+          target="_blank"
+          href={`https://www.${SOURCE_INFO[source].websiteUrlDomain}`}
+        >
+          {SOURCE_INFO[source].websiteUrlDomain}
+        </Button>
+      {/if}
     </div>
   </div>
   {#if sidebarState.isSourceStreaming(source)}
