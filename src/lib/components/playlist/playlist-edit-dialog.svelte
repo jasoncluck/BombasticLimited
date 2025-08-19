@@ -26,7 +26,10 @@
   import { invalidate } from '$app/navigation';
   import { isLowResolutionThumbnail } from './playlist-service';
   import { parseImageProperties } from './playlist';
-  import type { PlaylistSchema } from '../../../routes/(app)/playlist/[shortId]/schema';
+  import {
+    playlistSchema,
+    type PlaylistSchema,
+  } from '../../../routes/(app)/playlist/[shortId]/schema';
 
   let {
     form,

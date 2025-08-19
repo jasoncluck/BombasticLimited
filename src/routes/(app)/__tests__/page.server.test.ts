@@ -5,13 +5,12 @@ import { getVideos, getInProgressVideos } from '$lib/supabase/videos';
 import { SOURCES } from '$lib/constants/source';
 import {
   createMockSession,
-  createMockUserProfile,
   createMockSourceVideos,
   createMockContinueVideos,
   createMockVideoResponse,
   createMockContinueWatchingResponse,
   createMockErrorResponse,
-} from '../../tests/test-utils';
+} from '$lib/tests/test-utils';
 
 // Mock dependencies
 vi.mock('@sveltejs/kit', () => ({
@@ -37,7 +36,6 @@ const mockRedirect = vi.mocked(redirect);
 describe('+page.server.ts load function', () => {
   const mockSupabase = {} as any;
   const mockSession = createMockSession();
-  const mockUserProfile = createMockUserProfile();
   const mockSourceVideos = createMockSourceVideos();
   const mockContinueVideos = createMockContinueVideos();
 
@@ -232,7 +230,6 @@ describe('+page.server.ts load function', () => {
   });
 
   it('should fetch data concurrently for performance', async () => {
-    const startTime = Date.now();
     let getVideosCallTime: number | null = null;
     let getInProgressCallTime: number | null = null;
 

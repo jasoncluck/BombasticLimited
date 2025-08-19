@@ -8,10 +8,7 @@ import {
   getCroppedPlaylistImageUrlServer,
   generatePlaylistImageUrl,
 } from '$lib/server/image-processing';
-import {
-  createMockPlaylist,
-  createMockVideo,
-} from '../../../../../../tests/test-utils';
+import { createMockPlaylist, createMockVideo } from '$lib/tests/test-utils';
 
 // Mock dependencies
 vi.mock('@sveltejs/kit', () => ({

@@ -2,12 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { redirect } from '@sveltejs/kit';
 import { load } from '../+page.server';
 import { getInProgressVideos } from '$lib/supabase/videos';
+import { isTimestampFilter } from '$lib/components/content/content-filter';
+import { getPaginationQueryParams } from '$lib/components/pagination/pagination';
 import {
   createMockSession,
   createMockVideoWithTimestamp,
   createMockContinueWatchingResponse,
   createMockErrorResponse,
-} from '../../../tests/test-utils';
+} from '$lib/tests/test-utils';
 
 // Mock dependencies
 vi.mock('@sveltejs/kit', () => ({
@@ -31,9 +33,6 @@ vi.mock('$lib/components/pagination/pagination', () => ({
 const mockGetInProgressVideos = vi.mocked(getInProgressVideos);
 const mockRedirect = vi.mocked(redirect);
 
-// Import the mocked functions so we can control them
-import { isTimestampFilter } from '$lib/components/content/content-filter';
-import { getPaginationQueryParams } from '$lib/components/pagination/pagination';
 const mockIsTimestampFilter = vi.mocked(isTimestampFilter);
 const mockGetPaginationQueryParams = vi.mocked(getPaginationQueryParams);
 

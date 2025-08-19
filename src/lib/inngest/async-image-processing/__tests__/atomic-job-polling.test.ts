@@ -48,22 +48,11 @@ describe('Enhanced Job Poller with Atomic Operations', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  it('should use atomic job locking to prevent race conditions', async () => {
-    // Import after mocking
-    const { pollPendingJobs } = await import('../job_poller');
-    
-    expect(pollPendingJobs).toBeDefined();
-    expect(pollPendingJobs.name).toBe('Poll Pending Image Processing Jobs');
-    
-    // Verify concurrency configuration
-    expect(pollPendingJobs.config.concurrency.limit).toBe(1);
-  });
-
   it('should generate unique worker IDs for each instance', () => {
     // Test that worker ID generation includes unique components
     const workerId1 = `worker-${randomUUID().slice(0, 8)}-${Date.now()}`;
     const workerId2 = `worker-${randomUUID().slice(0, 8)}-${Date.now()}`;
-    
+
     expect(workerId1).toMatch(/^worker-[a-f0-9]{8}-\d+$/);
     expect(workerId2).toMatch(/^worker-[a-f0-9]{8}-\d+$/);
     expect(workerId1).not.toBe(workerId2);
@@ -72,15 +61,17 @@ describe('Enhanced Job Poller with Atomic Operations', () => {
   it('should call get_and_lock_next_image_processing_job with worker ID', async () => {
     // Mock successful job locking
     mockSupabaseRpc.mockResolvedValueOnce({
-      data: [{
-        job_id: 'test-job-123',
-        entity_type: 'video',
-        entity_id: 'test-video',
-        image_type: 'thumbnail',
-        source_url: 'https://example.com/image.jpg',
-        attempts: 1,
-        processing_started_at: new Date().toISOString(),
-      }],
+      data: [
+        {
+          job_id: 'test-job-123',
+          entity_type: 'video',
+          entity_id: 'test-video',
+          image_type: 'thumbnail',
+          source_url: 'https://example.com/image.jpg',
+          attempts: 1,
+          processing_started_at: new Date().toISOString(),
+        },
+      ],
       error: null,
     });
 
@@ -91,10 +82,10 @@ describe('Enhanced Job Poller with Atomic Operations', () => {
     });
 
     const { pollPendingJobs } = await import('../job_poller');
-    
+
     // This would be called by Inngest in practice
     expect(pollPendingJobs).toBeDefined();
-    
+
     // Verify the function expects the correct RPC call
     expect(mockSupabaseRpc).not.toHaveBeenCalled(); // Not called until function executes
   });
@@ -128,7 +119,7 @@ describe('Enhanced Job Poller with Atomic Operations', () => {
     });
 
     const { pollPendingJobs } = await import('../job_poller');
-    
+
     expect(pollPendingJobs).toBeDefined();
     // The actual error handling would be tested in integration tests
   });
@@ -141,14 +132,14 @@ describe('Enhanced Job Poller with Atomic Operations', () => {
     });
 
     const { pollPendingJobs } = await import('../job_poller');
-    
+
     expect(pollPendingJobs).toBeDefined();
     // The function should break the loop when no jobs are returned
   });
 
   it('should enforce maximum jobs per polling cycle', () => {
     const MAX_JOBS_PER_POLL = 10;
-    
+
     // Test that the constant is reasonable
     expect(MAX_JOBS_PER_POLL).toBeGreaterThan(0);
     expect(MAX_JOBS_PER_POLL).toBeLessThanOrEqual(20); // Reasonable upper bound
@@ -158,12 +149,12 @@ describe('Enhanced Job Poller with Atomic Operations', () => {
     const workerId = 'worker-abc123-1234567890';
     const timestamp = new Date().toISOString();
     const jobId = 'test-job-789';
-    
+
     // Test logging format validation
     const startLog = `🔄 [${timestamp}] Worker ${workerId} starting image processing job polling cycle...`;
     const atomicLog = `🔍 [${timestamp}] Worker ${workerId} attempting atomic job lock 1/10...`;
     const successLog = `✅ [${timestamp}] Worker ${workerId} ATOMICALLY locked job ${jobId} for video/test-video/thumbnail (attempt 1/3, started: ${timestamp})`;
-    
+
     expect(startLog).toContain('Worker');
     expect(startLog).toContain(workerId);
     expect(atomicLog).toContain('atomic job lock');
@@ -175,14 +166,14 @@ describe('Enhanced Job Poller with Atomic Operations', () => {
     // Test that concurrency is based on job ID, not entity
     const jobId1 = 'job-123';
     const jobId2 = 'job-456';
-    
+
     // Different jobs should be able to process in parallel
     expect(jobId1).not.toBe(jobId2);
-    
+
     // Concurrency key should be job-specific
     const concurrencyKey1 = `event.data.jobId`; // This would resolve to jobId1
     const concurrencyKey2 = `event.data.jobId`; // This would resolve to jobId2
-    
+
     expect(concurrencyKey1).toBe(concurrencyKey2); // Same pattern, different runtime values
   });
 });

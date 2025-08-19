@@ -1,10 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { page } from '$app/state';
 import {
+  createMockVideoWithTimestamp,
   createMockSession,
   createMockUserProfile,
-  createMockVideoWithTimestamp,
-} from '../../../tests/test-utils';
+} from '$lib/tests/test-utils';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock all dependencies
 vi.mock('$app/state', () => ({

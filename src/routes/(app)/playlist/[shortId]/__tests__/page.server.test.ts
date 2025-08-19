@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { redirect } from '@sveltejs/kit';
 import { fail, superValidate } from 'sveltekit-superforms';
 import { zod } from 'sveltekit-superforms/adapters';
 import { load, actions } from '../+page.server';
@@ -9,7 +8,6 @@ import {
   updatePlaylistInfo,
   updatePlaylistImage,
 } from '$lib/supabase/playlists';
-import { playlistSchema } from '../schema';
 import { getPaginationQueryParams } from '$lib/components/pagination/pagination';
 import { parseImageProperties } from '$lib/components/playlist/playlist';
 import {
@@ -17,15 +15,12 @@ import {
   generatePlaylistImageUrl,
 } from '$lib/server/image-processing';
 import { getUserProfile, getProfileById } from '$lib/supabase/user-profiles';
+import { redirect as flashRedirect } from 'sveltekit-flash-message/server';
 import {
-  redirect as flashRedirect,
-  setFlash,
-} from 'sveltekit-flash-message/server';
-import {
-  createMockSession,
   createMockPlaylist,
+  createMockSession,
   createMockSuperValidated,
-} from '../../../../tests/test-utils';
+} from '$lib/tests/test-utils';
 
 // Mock dependencies
 vi.mock('@sveltejs/kit', () => ({
@@ -84,7 +79,6 @@ vi.mock('$lib/supabase/user-profiles', () => ({
   getProfileById: vi.fn(),
 }));
 
-const mockRedirect = vi.mocked(redirect);
 const mockFlashRedirect = vi.mocked(flashRedirect);
 const mockFail = vi.mocked(fail);
 const mockSuperValidate = vi.mocked(superValidate);
@@ -101,7 +95,6 @@ const mockGetCroppedPlaylistImageUrlServer = vi.mocked(
 const mockGeneratePlaylistImageUrl = vi.mocked(generatePlaylistImageUrl);
 const mockGetUserProfile = vi.mocked(getUserProfile);
 const mockGetProfileById = vi.mocked(getProfileById);
-const mockSetFlash = vi.mocked(setFlash);
 
 describe('playlist/[shortId]/+page.server.ts', () => {
   const mockSupabase = {} as any;

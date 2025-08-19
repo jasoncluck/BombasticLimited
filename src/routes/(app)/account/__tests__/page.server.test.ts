@@ -9,12 +9,6 @@ import {
   linkDiscordIdentity,
   unlinkDiscordIdentity,
 } from '$lib/supabase/user-profiles';
-import {
-  createMockSession,
-  createMockUserProfile,
-  createMockProfileResponse,
-  createMockSuperValidated,
-} from '../../../tests/test-utils';
 
 // Mock dependencies
 vi.mock('@sveltejs/kit', () => ({}));
@@ -37,6 +31,12 @@ vi.mock('sveltekit-flash-message/server', () => ({
 
 // Import the mocked redirect from sveltekit-flash-message/server
 import { redirect as flashRedirect } from 'sveltekit-flash-message/server';
+import {
+  createMockProfileResponse,
+  createMockSession,
+  createMockSuperValidated,
+  createMockUserProfile,
+} from '$lib/tests/test-utils';
 const mockFlashRedirect = vi.mocked(flashRedirect);
 
 vi.mock('bad-words', () => {
@@ -89,9 +89,6 @@ const mockSetFlash = vi.mocked(setFlash);
 const mockGetUserProfile = vi.mocked(getUserProfile);
 const mockCheckIfUsernameIsUnique = vi.mocked(checkIfUsernameIsUnique);
 const mockGetUserDiscordIdentity = vi.mocked(getUserDiscordIdentity);
-
-const mockLinkDiscordIdentity = vi.mocked(linkDiscordIdentity);
-const mockUnlinkDiscordIdentity = vi.mocked(unlinkDiscordIdentity);
 
 describe('account/+page.server.ts', () => {
   const mockSupabase = {

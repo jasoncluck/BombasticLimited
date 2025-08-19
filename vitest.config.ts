@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [sveltekit()],
   test: {
     environment: 'jsdom',
-    setupFiles: ['./src/tests/setup-globals.ts'],
+    setupFiles: ['./src/lib/tests/setup-globals.ts'],
     globals: true,
     include: ['src/**/*.{test,spec}.{js,ts}'],
     exclude: ['tests/**/*', 'node_modules/**/*'],

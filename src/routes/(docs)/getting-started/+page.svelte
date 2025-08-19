@@ -308,36 +308,36 @@ Now that you're familiar with the basics, here are some next steps:
   </footer>
 </div>
 
-<style>
-  .getting-started-page {
-    min-height: 100vh;
-  }
-
-  /* Ensure the markdown content is responsive */
-  :global(.markdown-content) {
-    width: 100%;
-  }
-
-  /* Style the table of contents links */
-  aside nav a {
-    padding-left: 1rem;
-    border-left: 2px solid transparent;
-    transition: border-color 0.2s ease;
-  }
-
-  aside nav a:hover {
-    border-left-color: hsl(var(--primary) / 0.3);
-  }
-
-  /* Responsive adjustments */
-  @media (max-width: 768px) {
-    .getting-started-page header {
-      text-align: center;
-    }
-
-    .getting-started-page header .flex {
-      flex-direction: column;
-      align-items: center;
-    }
-  }
-</style>
+<!-- <style> -->
+<!--   .getting-started-page { -->
+<!--     min-height: 100vh; -->
+<!--   } -->
+<!---->
+<!--   /* Ensure the markdown content is responsive */ -->
+<!--   :global(.markdown-content) { -->
+<!--     width: 100%; -->
+<!--   } -->
+<!---->
+<!--   /* Style the table of contents links */ -->
+<!--   aside nav a { -->
+<!--     padding-left: 1rem; -->
+<!--     border-left: 2px solid transparent; -->
+<!--     transition: border-color 0.2s ease; -->
+<!--   } -->
+<!---->
+<!--   aside nav a:hover { -->
+<!--     border-left-color: hsl(var(--primary) / 0.3); -->
+<!--   } -->
+<!---->
+<!--   /* Responsive adjustments */ -->
+<!--   @media (max-width: 768px) { -->
+<!--     .getting-started-page header { -->
+<!--       text-align: center; -->
+<!--     } -->
+<!---->
+<!--     .getting-started-page header .flex { -->
+<!--       flex-direction: column; -->
+<!--       align-items: center; -->
+<!--     } -->
+<!--   } -->
+<!-- </style> -->

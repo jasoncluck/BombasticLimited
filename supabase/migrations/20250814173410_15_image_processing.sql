@@ -204,8 +204,9 @@ END;
 $$;
 
 -- Function to mark job as completed with comprehensive logging
-CREATE OR REPLACE FUNCTION public.complete_image_processing_job (
+CREATE OR REPLACE FUNCTION public.complete_image_processing_job_with_worker (
   job_id uuid,
+  p_worker_id text,
   jpg_path text DEFAULT NULL,
   webp_path text DEFAULT NULL,
   avif_path text DEFAULT NULL
@@ -218,14 +219,21 @@ DECLARE
   current_timestamp TIMESTAMP WITH TIME ZONE := now();
   update_success boolean := false;
 BEGIN
-  -- Get job details
-  SELECT entity_type, entity_id, image_type, status, attempts, processing_started_at, created_at
+  -- Get job details and verify worker ownership
+  SELECT entity_type, entity_id, image_type, status, attempts, worker_id, processing_started_at, created_at
   INTO job_record
   FROM "public"."image_processing_jobs"
   WHERE id = job_id;
   
   IF NOT FOUND THEN
-    RAISE LOG '[JOB_COMPLETION] ERROR: Job % not found when attempting to complete', job_id;
+    RAISE LOG '[JOB_COMPLETION] ERROR: Worker % - Job % not found when attempting to complete', p_worker_id, job_id;
+    RETURN FALSE;
+  END IF;
+  
+  -- Verify worker ownership to prevent cross-worker completion
+  IF job_record.worker_id IS NULL OR job_record.worker_id != p_worker_id THEN
+    RAISE LOG '[JOB_COMPLETION] ERROR: Worker % attempted to complete job % owned by worker %', 
+      p_worker_id, job_id, COALESCE(job_record.worker_id, 'NULL');
     RETURN FALSE;
   END IF;
   
@@ -236,66 +244,67 @@ BEGIN
     processing_duration_seconds := NULL;
   END IF;
   
-  RAISE LOG '[JOB_COMPLETION] Completing job % for %/%/% (duration: %s, webp: %, avif: %, timestamp: %)', 
-    job_id, job_record.entity_type, job_record.entity_id, job_record.image_type,
-    processing_duration_seconds, webp_path, avif_path, current_timestamp;
+  RAISE LOG '[JOB_COMPLETION] Worker % completing job % for %/%/% (duration: %s, webp: %, avif: %)', 
+    p_worker_id, job_id, job_record.entity_type, job_record.entity_id, job_record.image_type,
+    processing_duration_seconds, webp_path, avif_path;
   
   -- Update job status
   UPDATE "public"."image_processing_jobs"
   SET 
     status = 'completed',
     processing_completed_at = current_timestamp,
-    error_message = NULL
-  WHERE id = job_id;
+    error_message = NULL,
+    updated_at = current_timestamp
+  WHERE id = job_id AND worker_id = p_worker_id; -- Double-check worker ownership
   
   GET DIAGNOSTICS update_success = FOUND;
   
-  -- Update entity with new image paths
-  IF job_record.entity_type = 'video' THEN
-    IF job_record.image_type = 'thumbnail' THEN
-      UPDATE "public"."videos"
-      SET 
-        thumbnail_webp_url = COALESCE(webp_path, thumbnail_webp_url),
-        thumbnail_avif_url = COALESCE(avif_path, thumbnail_avif_url),
-        image_processing_status = 'completed'::public.image_processing_status,
-        image_processing_updated_at = current_timestamp
-      WHERE id = job_record.entity_id;
-      
-      RAISE LOG '[JOB_COMPLETION] Updated video % thumbnail URLs (webp: %, avif: %)', 
-        job_record.entity_id, webp_path, avif_path;
+  -- Update entity with new image paths (same logic as before)
+  IF update_success THEN
+    IF job_record.entity_type = 'video' THEN
+      IF job_record.image_type = 'thumbnail' THEN
+        UPDATE "public"."videos"
+        SET 
+          thumbnail_webp_url = COALESCE(webp_path, thumbnail_webp_url),
+          thumbnail_avif_url = COALESCE(avif_path, thumbnail_avif_url),
+          image_processing_status = 'completed'::public.image_processing_status,
+          image_processing_updated_at = current_timestamp
+        WHERE id = job_record.entity_id;
         
-    ELSIF job_record.image_type = 'thumbnail_maxres' THEN
-      UPDATE "public"."videos"
-      SET 
-        thumbnail_maxres_webp_url = COALESCE(webp_path, thumbnail_maxres_webp_url),
-        thumbnail_maxres_avif_url = COALESCE(avif_path, thumbnail_maxres_avif_url),
-        image_processing_status = 'completed'::public.image_processing_status,
-        image_processing_updated_at = current_timestamp
-      WHERE id = job_record.entity_id;
+        RAISE LOG '[JOB_COMPLETION] Worker % updated video % thumbnail URLs (webp: %, avif: %)', 
+          p_worker_id, job_record.entity_id, webp_path, avif_path;
+          
+      ELSIF job_record.image_type = 'thumbnail_maxres' THEN
+        UPDATE "public"."videos"
+        SET 
+          thumbnail_maxres_webp_url = COALESCE(webp_path, thumbnail_maxres_webp_url),
+          thumbnail_maxres_avif_url = COALESCE(avif_path, thumbnail_maxres_avif_url),
+          image_processing_status = 'completed'::public.image_processing_status,
+          image_processing_updated_at = current_timestamp
+        WHERE id = job_record.entity_id;
+        
+        RAISE LOG '[JOB_COMPLETION] Worker % updated video % maxres thumbnail URLs (webp: %, avif: %)', 
+          p_worker_id, job_record.entity_id, webp_path, avif_path;
+      END IF;
       
-      RAISE LOG '[JOB_COMPLETION] Updated video % maxres thumbnail URLs (webp: %, avif: %)', 
-        job_record.entity_id, webp_path, avif_path;
+    ELSIF job_record.entity_type = 'playlist' THEN
+      UPDATE "public"."playlists"
+      SET 
+        image_webp_url = COALESCE(webp_path, image_webp_url),
+        image_avif_url = COALESCE(avif_path, image_avif_url),
+        image_processing_status = 'completed',
+        image_processing_updated_at = current_timestamp
+      WHERE id = job_record.entity_id::bigint;
+      
+      RAISE LOG '[JOB_COMPLETION] Worker % updated playlist % image URLs (webp: %, avif: %)', 
+        p_worker_id, job_record.entity_id, webp_path, avif_path;
     END IF;
     
-  ELSIF job_record.entity_type = 'playlist' THEN
-    -- For playlists: WebP is primary, AVIF is optimization, JPG is legacy (backward compatibility only)
-    UPDATE "public"."playlists"
-    SET 
-      image_webp_url = COALESCE(webp_path, image_webp_url),   -- Primary format
-      image_avif_url = COALESCE(avif_path, image_avif_url),   -- Optimized format
-      image_processing_status = 'completed',
-      image_processing_updated_at = current_timestamp
-    WHERE id = job_record.entity_id::bigint;
-    
-    RAISE LOG '[JOB_COMPLETION] Updated playlist % image URLs (webp: %, avif: %)', 
-      job_record.entity_id, webp_path, avif_path;
-  END IF;
-  
-  IF update_success THEN
-    RAISE LOG '[JOB_COMPLETION] Successfully completed job % (total_time: %s)', 
-      job_id, EXTRACT(EPOCH FROM (current_timestamp - job_record.created_at));
+    RAISE LOG '[JOB_COMPLETION] Worker % successfully completed job % (total_time: %s)', 
+      p_worker_id, job_id, EXTRACT(EPOCH FROM (current_timestamp - job_record.created_at));
   ELSE
-    RAISE LOG '[JOB_COMPLETION] ERROR: Failed to mark job % as completed', job_id;
+    RAISE LOG '[JOB_COMPLETION] ERROR: Worker % failed to mark job % as completed (worker ownership check failed)', 
+      p_worker_id, job_id;
   END IF;
   
   RETURN update_success;
@@ -303,7 +312,7 @@ END;
 $$;
 
 -- Function to mark job as failed with comprehensive logging
-CREATE OR REPLACE FUNCTION public.fail_image_processing_job (job_id uuid, error_msg text) RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER
+CREATE OR REPLACE FUNCTION public.fail_image_processing_job_with_worker (job_id uuid, p_worker_id text, error_msg text) RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER
 SET
   search_path = '' AS $$
 DECLARE
@@ -313,14 +322,21 @@ DECLARE
   current_timestamp TIMESTAMP WITH TIME ZONE := now();
   update_success boolean := false;
 BEGIN
-  -- Get job details
-  SELECT attempts, max_attempts, entity_type, entity_id, image_type, processing_started_at, created_at
+  -- Get job details and verify worker ownership
+  SELECT attempts, max_attempts, entity_type, entity_id, image_type, worker_id, processing_started_at, created_at
   INTO job_record
   FROM "public"."image_processing_jobs"
   WHERE id = job_id;
   
   IF NOT FOUND THEN
-    RAISE LOG '[JOB_FAILURE] ERROR: Job % not found when attempting to mark as failed', job_id;
+    RAISE LOG '[JOB_FAILURE] ERROR: Worker % - Job % not found when attempting to mark as failed', p_worker_id, job_id;
+    RETURN FALSE;
+  END IF;
+  
+  -- Verify worker ownership
+  IF job_record.worker_id IS NULL OR job_record.worker_id != p_worker_id THEN
+    RAISE LOG '[JOB_FAILURE] ERROR: Worker % attempted to fail job % owned by worker %', 
+      p_worker_id, job_id, COALESCE(job_record.worker_id, 'NULL');
     RETURN FALSE;
   END IF;
   
@@ -335,8 +351,8 @@ BEGIN
   IF job_record.attempts >= job_record.max_attempts THEN
     new_status := 'failed';
     
-    RAISE LOG '[JOB_FAILURE] Job % for %/%/% PERMANENTLY FAILED after %/% attempts (duration: %s, error: %)', 
-      job_id, job_record.entity_type, job_record.entity_id, job_record.image_type,
+    RAISE LOG '[JOB_FAILURE] Worker % - Job % for %/%/% PERMANENTLY FAILED after %/% attempts (duration: %s, error: %)', 
+      p_worker_id, job_id, job_record.entity_type, job_record.entity_id, job_record.image_type,
       job_record.attempts, job_record.max_attempts, processing_duration_seconds, error_msg;
     
     -- Update entity status to failed
@@ -347,7 +363,7 @@ BEGIN
         image_processing_updated_at = current_timestamp
       WHERE id = job_record.entity_id;
       
-      RAISE LOG '[JOB_FAILURE] Marked video % image processing as failed', job_record.entity_id;
+      RAISE LOG '[JOB_FAILURE] Worker % marked video % image processing as failed', p_worker_id, job_record.entity_id;
       
     ELSIF job_record.entity_type = 'playlist' THEN
       UPDATE "public"."playlists"
@@ -356,30 +372,33 @@ BEGIN
         image_processing_updated_at = current_timestamp
       WHERE id = job_record.entity_id::bigint;
       
-      RAISE LOG '[JOB_FAILURE] Marked playlist % image processing as failed', job_record.entity_id;
+      RAISE LOG '[JOB_FAILURE] Worker % marked playlist % image processing as failed', p_worker_id, job_record.entity_id;
     END IF;
   ELSE
     new_status := 'pending'; -- Will be retried
-    RAISE LOG '[JOB_FAILURE] Job % for %/%/% will be RETRIED (%/% attempts, duration: %s, error: %)', 
-      job_id, job_record.entity_type, job_record.entity_id, job_record.image_type,
+    RAISE LOG '[JOB_FAILURE] Worker % - Job % for %/%/% will be RETRIED (%/% attempts, duration: %s, error: %)', 
+      p_worker_id, job_id, job_record.entity_type, job_record.entity_id, job_record.image_type,
       job_record.attempts, job_record.max_attempts, processing_duration_seconds, error_msg;
   END IF;
   
-  -- Update job
+  -- Update job with worker ownership check
   UPDATE "public"."image_processing_jobs"
   SET 
     status = new_status,
     error_message = error_msg,
-    processing_started_at = NULL
-  WHERE id = job_id;
+    processing_started_at = NULL,
+    worker_id = CASE WHEN new_status = 'failed' THEN worker_id ELSE NULL END, -- Keep worker_id for failed jobs, clear for retries
+    updated_at = current_timestamp
+  WHERE id = job_id AND worker_id = p_worker_id; -- Double-check worker ownership
   
   GET DIAGNOSTICS update_success = FOUND;
   
   IF update_success THEN
-    RAISE LOG '[JOB_FAILURE] Successfully updated job % status to % (total_time: %s)', 
-      job_id, new_status, EXTRACT(EPOCH FROM (current_timestamp - job_record.created_at));
+    RAISE LOG '[JOB_FAILURE] Worker % successfully updated job % status to % (total_time: %s)', 
+      p_worker_id, job_id, new_status, EXTRACT(EPOCH FROM (current_timestamp - job_record.created_at));
   ELSE
-    RAISE LOG '[JOB_FAILURE] ERROR: Failed to update job % failure status', job_id;
+    RAISE LOG '[JOB_FAILURE] ERROR: Worker % failed to update job % failure status (worker ownership check failed)', 
+      p_worker_id, job_id;
   END IF;
   
   RETURN update_success;

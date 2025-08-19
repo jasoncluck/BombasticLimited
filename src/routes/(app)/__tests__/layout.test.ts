@@ -8,7 +8,7 @@ import {
 import {
   createMockSession,
   createMockUserProfile,
-} from '../../tests/test-utils';
+} from '$lib/tests/test-utils';
 
 // Mock dependencies
 vi.mock('@supabase/ssr', () => ({

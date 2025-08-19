@@ -14,19 +14,16 @@
   } from 'sveltekit-superforms';
   import type { NotificationType } from '$lib/supabase/notifications';
   import {
-    adminNotificationSchema,
-    type AdminNotificationSchema,
-  } from '../../../routes/admin/notifications/admin-notifications-schema';
-  import {
     notificationTemplates,
     notificationTypes,
   } from './notification-templates';
   import { zodClient } from 'sveltekit-superforms/adapters';
-  import {
-    getCurrentLocalDateTime,
-    getTimezoneInfo,
-  } from '$lib/utils/datetime';
+  import { getTimezoneInfo } from '$lib/utils/datetime';
   import { showToast } from '$lib/state/notifications.svelte';
+  import {
+    adminNotificationSchema,
+    type AdminNotificationSchema,
+  } from '../../../routes/(app)/admin/notifications/admin-notifications-schema';
 
   let {
     form,
@@ -119,16 +116,6 @@
     $formData.message = '';
     $formData.startDatetime = '';
     $formData.endDatetime = '';
-  }
-
-  function setCurrentTime(field: 'start' | 'end') {
-    const currentTime = getCurrentLocalDateTime();
-
-    if (field === 'start') {
-      $formData.startDatetime = currentTime;
-    } else {
-      $formData.endDatetime = currentTime;
-    }
   }
 
   // Get current timezone info for display

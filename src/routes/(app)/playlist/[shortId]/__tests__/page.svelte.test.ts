@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
+  createMockPlaylist,
   createMockSession,
   createMockUserProfile,
-  createMockPlaylist,
-} from '../../../../tests/test-utils';
+} from '$lib/tests/test-utils';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock all dependencies
 vi.mock('$lib/state/content.svelte', () => ({

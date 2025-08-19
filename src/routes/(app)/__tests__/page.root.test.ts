@@ -1,12 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { goto } from '$app/navigation';
-import { page } from '$app/state';
 import {
-  createMockSession,
-  createMockUserProfile,
   createMockSourceVideos,
   createMockContinueVideos,
-} from '../../tests/test-utils.js';
+  createMockUserProfile,
+  createMockSession,
+} from '$lib/tests/test-utils';
 
 // Mock all dependencies
 vi.mock('$app/navigation', () => ({
@@ -75,8 +73,6 @@ vi.mock('$lib/components/content/content', () => ({
 vi.mock('@supabase/ssr', () => ({
   isBrowser: vi.fn(() => false),
 }));
-
-const mockGoto = vi.mocked(goto);
 
 describe('+page.svelte Logic Tests', () => {
   const createMockData = (overrides = {}) => ({

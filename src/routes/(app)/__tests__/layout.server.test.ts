@@ -6,7 +6,7 @@ import {
   createMockSession,
   createMockUserProfile,
   createMockProfileResponse,
-} from '../../tests/test-utils';
+} from '$lib/tests/test-utils';
 
 // Mock dependencies
 vi.mock('$lib/supabase/user-profiles', () => ({

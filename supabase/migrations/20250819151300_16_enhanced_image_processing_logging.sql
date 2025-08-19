@@ -24,49 +24,35 @@ VALUES
     now()
   );
 
--- NOTE: The comprehensive logging enhancements have been applied directly to the functions
--- in migration 15_image_processing.sql. This migration serves as a marker and documentation
--- of when the logging was enhanced.
--- The following functions now include comprehensive logging:
--- 1. queue_image_processing_job - logs job creation attempts, duplicates, and outcomes
--- 2. get_next_image_processing_job - logs job polling attempts and selections
--- 3. start_image_processing_job - logs job processing starts with timing
--- 4. complete_image_processing_job - logs job completions with duration and paths
--- 5. fail_image_processing_job - logs job failures with retry logic
--- 6. trigger_queue_video_image_processing - logs video trigger executions
--- 7. trigger_queue_playlist_image_processing - logs playlist trigger executions
--- All logging uses consistent prefixes for easy filtering:
--- [IMAGE_PROCESSING] - Job creation and management
--- [JOB_POLLER] - Job polling and discovery  
--- [JOB_PROCESSING] - Job processing state changes
--- [JOB_COMPLETION] - Job completion with results
--- [JOB_FAILURE] - Job failures and retries
--- [VIDEO_TRIGGER] - Video trigger events
--- [PLAYLIST_TRIGGER] - Playlist trigger events
--- Log the migration completion
-INSERT INTO
-  public.system_logs (event_type, details, created_at)
-VALUES
-  (
-    'migration_completed',
-    jsonb_build_object(
-      'migration_name',
-      '16_enhanced_image_processing_logging.sql',
-      'completion_time',
-      now(),
-      'author',
-      'jasoncluck',
-      'description',
-      'Enhanced comprehensive logging for image processing pipeline debugging - enables tracing complete job lifecycle to identify duplicate processing causes',
-      'features_added',
-      jsonb_build_array(
-        'Comprehensive database trigger logging',
-        'Detailed job polling and discovery logging',
-        'Complete job lifecycle state logging',
-        'Timing and performance metrics logging',
-        'Error tracking with context logging',
-        'Timestamp generation logging for duplicate detection'
-      )
-    ),
-    now()
-  );
+CREATE OR REPLACE FUNCTION public.cleanup_stale_processing_jobs (stale_threshold_minutes integer DEFAULT 30) RETURNS integer LANGUAGE plpgsql SECURITY DEFINER
+SET
+  search_path = '' AS $$
+DECLARE
+  stale_jobs_count integer;
+  current_timestamp TIMESTAMP WITH TIME ZONE := now();
+  stale_cutoff TIMESTAMP WITH TIME ZONE;
+BEGIN
+  stale_cutoff := current_timestamp - (stale_threshold_minutes || ' minutes')::interval;
+  
+  RAISE LOG '[JOB_CLEANUP] Starting cleanup of stale processing jobs older than % minutes (cutoff: %)', 
+    stale_threshold_minutes, stale_cutoff;
+  
+  -- Reset stale processing jobs back to pending
+  UPDATE "public"."image_processing_jobs"
+  SET 
+    status = 'pending',
+    processing_started_at = NULL,
+    worker_id = NULL,
+    error_message = 'Job was stale and reset for retry',
+    updated_at = current_timestamp
+  WHERE status = 'processing'
+    AND processing_started_at < stale_cutoff
+    AND attempts < max_attempts;
+  
+  GET DIAGNOSTICS stale_jobs_count = ROW_COUNT;
+  
+  RAISE LOG '[JOB_CLEANUP] Reset % stale processing jobs back to pending for retry', stale_jobs_count;
+  
+  RETURN stale_jobs_count;
+END;
+$$;

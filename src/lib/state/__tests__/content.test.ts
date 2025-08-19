@@ -10,8 +10,7 @@ import {
   createMockVideo,
   createMockPlaylist,
   createMockSession,
-  createMockSupabaseClient,
-} from '../../../tests/test-utils.js';
+} from '$lib/tests/test-utils.js';
 
 // Mock dependencies
 vi.mock('$lib/utils/dragdrop', () => ({

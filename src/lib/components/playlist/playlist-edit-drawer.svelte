@@ -236,7 +236,6 @@
       isPublic = playlist.type === 'Public';
 
       // Reset preview state
-      originalImageProperties = parseImageProperties(playlist.image_properties);
       previewImageUrl = null;
       cropSettingsBeforeEdit = null;
       previewBeforeEdit = null;

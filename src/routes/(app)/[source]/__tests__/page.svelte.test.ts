@@ -1,10 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
-  createMockSession,
-  createMockUserProfile,
   createMockVideo,
-  createMockVideoResponse,
-} from '../../../tests/test-utils';
+  createMockUserProfile,
+  createMockSession,
+} from '$lib/tests/test-utils';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock all dependencies
 vi.mock('$lib/state/streaming.svelte', () => ({

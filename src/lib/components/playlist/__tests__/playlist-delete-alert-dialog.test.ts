@@ -1,8 +1,5 @@
+import { createMockPlaylist, createMockSession } from '$lib/tests/test-utils';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  createMockSession,
-  createMockPlaylist,
-} from '../../../../tests/test-utils';
 
 // Mock all dependencies
 vi.mock('$lib/components/ui/alert-dialog/index.js', () => ({
@@ -222,7 +219,6 @@ describe('PlaylistDeleteAlertDialog Component Logic', () => {
     it('should close dialog without deletion when cancelled', () => {
       // Simulate the cancelDelete function logic
       const cancelDelete = () => {
-        let open = false;
         if (mockProps.onOpenChange) {
           mockProps.onOpenChange(false);
         }

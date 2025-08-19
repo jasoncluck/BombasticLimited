@@ -1,17 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render } from '@testing-library/svelte';
-
-// Since the about page is very simple, we'll create a mock component to test
-const AboutPageMock = `
-<script>
-  // Simple about page component
-  const content = "This is a test about page!";
-</script>
-
-<div data-testid="about-page">
-  {content}
-</div>
-`;
 
 describe('about/+page.svelte Component', () => {
   beforeEach(() => {

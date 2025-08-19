@@ -6,15 +6,6 @@ import {
   getPlaylistDataByYoutubeId,
   getPlaylistsForUsername,
 } from '$lib/supabase/playlists';
-import {
-  createMockSession,
-  createMockUserProfile,
-  createMockVideo,
-  createMockVideoResponse,
-  createMockPlaylist,
-  createMockPlaylistDataResponse,
-  createMockPlaylistsResponse,
-} from '../../../tests/test-utils';
 
 // Mock dependencies
 vi.mock('@sveltejs/kit', () => ({
@@ -82,6 +73,15 @@ const mockRedirect = vi.mocked(redirect);
 
 // Import the mocked functions so we can control them
 import { isVideoFilter } from '$lib/components/content/content-filter';
+import {
+  createMockSession,
+  createMockUserProfile,
+  createMockVideo,
+  createMockPlaylist,
+  createMockVideoResponse,
+  createMockPlaylistDataResponse,
+  createMockPlaylistsResponse,
+} from '$lib/tests/test-utils';
 const mockIsVideoFilter = vi.mocked(isVideoFilter);
 
 describe('[source]/+page.server.ts load function', () => {
