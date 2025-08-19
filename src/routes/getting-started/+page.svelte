@@ -250,27 +250,34 @@ Now that you're familiar with the basics, here are some next steps:
 
 <style>
   .getting-started-page {
-    @apply min-h-screen;
+    min-height: 100vh;
   }
 
   /* Ensure the markdown content is responsive */
   :global(.markdown-content) {
-    @apply w-full;
+    width: 100%;
   }
 
   /* Style the table of contents links */
   aside nav a {
-    @apply pl-4 border-l-2 border-transparent hover:border-primary/30;
+    padding-left: 1rem;
+    border-left: 2px solid transparent;
+    transition: border-color 0.2s ease;
+  }
+
+  aside nav a:hover {
+    border-left-color: hsl(var(--primary) / 0.3);
   }
 
   /* Responsive adjustments */
   @media (max-width: 768px) {
     .getting-started-page header {
-      @apply text-center;
+      text-align: center;
     }
     
     .getting-started-page header .flex {
-      @apply flex-col items-center;
+      flex-direction: column;
+      align-items: center;
     }
   }
 </style>

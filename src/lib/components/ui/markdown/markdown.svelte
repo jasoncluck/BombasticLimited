@@ -42,70 +42,122 @@
 
 <style>
   .markdown-content :global(h1) {
-    @apply text-4xl font-bold mb-6 text-foreground border-b border-border pb-2;
+    font-size: 2.25rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: hsl(var(--foreground));
+    border-bottom: 1px solid hsl(var(--border));
+    padding-bottom: 0.5rem;
   }
 
   .markdown-content :global(h2) {
-    @apply text-3xl font-semibold mb-4 text-foreground mt-8;
+    font-size: 1.875rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: hsl(var(--foreground));
+    margin-top: 2rem;
   }
 
   .markdown-content :global(h3) {
-    @apply text-2xl font-semibold mb-3 text-foreground mt-6;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: hsl(var(--foreground));
+    margin-top: 1.5rem;
   }
 
   .markdown-content :global(h4) {
-    @apply text-xl font-semibold mb-2 text-foreground mt-4;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: hsl(var(--foreground));
+    margin-top: 1rem;
   }
 
   .markdown-content :global(p) {
-    @apply mb-4 text-foreground leading-7;
+    margin-bottom: 1rem;
+    color: hsl(var(--foreground));
+    line-height: 1.75;
   }
 
   .markdown-content :global(ul) {
-    @apply mb-4 ml-6 list-disc;
+    margin-bottom: 1rem;
+    margin-left: 1.5rem;
+    list-style-type: disc;
   }
 
   .markdown-content :global(ol) {
-    @apply mb-4 ml-6 list-decimal;
+    margin-bottom: 1rem;
+    margin-left: 1.5rem;
+    list-style-type: decimal;
   }
 
   .markdown-content :global(li) {
-    @apply mb-2 text-foreground;
+    margin-bottom: 0.5rem;
+    color: hsl(var(--foreground));
   }
 
   .markdown-content :global(a) {
-    @apply text-primary hover:text-primary/80 underline;
+    color: hsl(var(--primary));
+    text-decoration: underline;
+    transition: color 0.2s ease;
+  }
+
+  .markdown-content :global(a:hover) {
+    color: hsl(var(--primary) / 0.8);
   }
 
   .markdown-content :global(code) {
-    @apply bg-muted px-2 py-1 rounded text-sm font-mono;
+    background-color: hsl(var(--muted));
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
   }
 
   .markdown-content :global(pre) {
-    @apply bg-muted p-4 rounded-lg overflow-x-auto mb-4;
+    background-color: hsl(var(--muted));
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin-bottom: 1rem;
   }
 
   .markdown-content :global(pre code) {
-    @apply bg-transparent p-0;
+    background-color: transparent;
+    padding: 0;
   }
 
   .markdown-content :global(blockquote) {
-    @apply border-l-4 border-primary pl-4 italic text-muted-foreground mb-4;
+    border-left: 4px solid hsl(var(--primary));
+    padding-left: 1rem;
+    font-style: italic;
+    color: hsl(var(--muted-foreground));
+    margin-bottom: 1rem;
   }
 
   .markdown-content :global(table) {
-    @apply w-full border-collapse border border-border mb-4;
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid hsl(var(--border));
+    margin-bottom: 1rem;
   }
 
   .markdown-content :global(th) {
-    @apply border border-border p-2 bg-muted font-semibold text-left;
+    border: 1px solid hsl(var(--border));
+    padding: 0.5rem;
+    background-color: hsl(var(--muted));
+    font-weight: 600;
+    text-align: left;
   }
 
   .markdown-content :global(td) {
-    @apply border border-border p-2;
+    border: 1px solid hsl(var(--border));
+    padding: 0.5rem;
   }
 
   .markdown-content :global(hr) {
-    @apply my-8 border-border;
+    margin: 2rem 0;
+    border-color: hsl(var(--border));
   }
 </style>
