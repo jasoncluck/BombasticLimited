@@ -2,7 +2,7 @@ import { Inngest } from 'inngest';
 
 // Create Inngest client for background image processing
 export const inngest = new Inngest({
-  id: 'bombastic-image-processing',
+  id: 'bombastic',
   name: 'Bombastic Image Processing',
   retries: {
     default: 3,

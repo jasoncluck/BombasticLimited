@@ -3,13 +3,7 @@ import { inngest } from '$lib/inngest/client';
 import { imageFunctions } from '$lib/inngest/async-image-processing';
 
 // Serve Inngest functions via SvelteKit API endpoint
-export const { GET, POST, PUT } = serve({
-  client: inngest,
-  functions: imageFunctions,
-
-  // Optional: Configure serving options
-  streaming: false,
-
-  // Signing key for production (set via environment variable)
-  signingKey: process.env.INNGEST_SIGNING_KEY,
-});
+const inngestServe = serve({ client: inngest, functions: imageFunctions });
+export const GET = inngestServe.GET;
+export const POST = inngestServe.POST;
+export const PUT = inngestServe.PUT;
