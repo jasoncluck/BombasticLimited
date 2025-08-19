@@ -777,70 +777,59 @@ export const processImage = inngest.createFunction(
 
 /**
  * Process multiple images in batch with HIGH QUALITY
+ * 
+ * DEPRECATED: This function is now primarily used for backward compatibility.
+ * New jobs should be created via database triggers and processed by the job poller system.
+ * 
+ * This function still exists to support any legacy direct calls, but the preferred
+ * approach is to create database jobs using queue_image_processing_job() which will
+ * be picked up by the job poller and sent to the individual processImage function.
  */
 export const batchProcessImages = inngest.createFunction(
   {
     id: 'batch-process-images-hq',
-    name: 'Batch Process Images (High Quality)',
-    concurrency: process.env.NODE_ENV === 'development' ? 1 : 3, // Reduced for quality processing
+    name: 'Batch Process Images (High Quality) - DEPRECATED',
+    concurrency: process.env.NODE_ENV === 'development' ? 1 : 3,
   },
   { event: 'image.batch.process' },
   async ({ event }) => {
     const { jobs } = event.data;
 
     console.log(
-      `🚀 Starting HIGH-QUALITY batch processing of ${jobs.length} images`
+      `⚠️ DEPRECATED: Batch processing ${jobs.length} images via direct Inngest call. Consider using database jobs instead.`
     );
 
     const results = [];
 
-    // Process sequentially in development, with longer delays for quality processing
-    if (process.env.NODE_ENV === 'development') {
-      console.log(
-        '🐌 Development mode: Processing HIGH-QUALITY images sequentially'
-      );
-      for (const job of jobs) {
-        try {
-          await inngest.send({
-            name: 'image.process',
-            data: job,
-          });
-          results.push({ success: true, entityId: job.entityId });
-
-          // Longer delay for quality processing
-          await new Promise((resolve) => setTimeout(resolve, 5000)); // 5 second delay
-        } catch (error) {
-          console.error(
-            `❌ Failed to queue HIGH-QUALITY processing for ${job.entityType} ${job.entityId}:`,
-            error
-          );
-          results.push({
-            success: false,
-            entityId: job.entityId,
-            error: error instanceof Error ? error.message : String(error),
-          });
-        }
-      }
-    } else {
-      // Production: parallel with reduced concurrency for quality
-      for (const job of jobs) {
-        try {
-          await inngest.send({
-            name: 'image.process',
-            data: job,
-          });
-          results.push({ success: true, entityId: job.entityId });
-        } catch (error) {
-          console.error(
-            `❌ Failed to queue HIGH-QUALITY processing for ${job.entityType} ${job.entityId}:`,
-            error
-          );
-          results.push({
-            success: false,
-            entityId: job.entityId,
-            error: error instanceof Error ? error.message : String(error),
-          });
-        }
+    // Convert legacy batch jobs to individual image.process events
+    // The individual processImage function will handle worker ID validation
+    for (const job of jobs) {
+      try {
+        await inngest.send({
+          name: 'image.process',
+          data: {
+            ...job,
+            // Note: These jobs won't have workerId, pollingTimestamp, etc.
+            // which may cause them to fail. This is intentional to encourage
+            // migration to the database job system.
+            jobId: null, // No database job ID for legacy calls
+            workerId: null, // No worker ID for legacy calls
+            pollingTimestamp: null,
+            jobAttempts: 1,
+            processingStartedAt: new Date().toISOString(),
+          },
+        });
+        results.push({ success: true, entityId: job.entityId });
+      } catch (error) {
+        console.error(
+          `❌ Failed to queue processing for ${job.entityType} ${job.entityId}:`,
+          error
+        );
+        results.push({
+          success: false,
+          entityId: job.entityId,
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     }
 
@@ -848,7 +837,7 @@ export const batchProcessImages = inngest.createFunction(
     const failed = results.filter((r) => !r.success).length;
 
     console.log(
-      `🎯 HIGH-QUALITY batch processing completed: ${successful} successful, ${failed} failed`
+      `🎯 DEPRECATED batch processing completed: ${successful} successful, ${failed} failed`
     );
 
     return {
@@ -856,6 +845,7 @@ export const batchProcessImages = inngest.createFunction(
       successful,
       failed,
       results,
+      warning: 'This batch processing method is deprecated. Use database jobs instead.',
     };
   }
 );

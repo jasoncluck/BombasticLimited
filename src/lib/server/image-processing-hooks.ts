@@ -104,7 +104,8 @@ export async function onPlaylistUpdated(playlist: {
 }
 
 /**
- * Batch process images for multiple videos (e.g., when importing videos)
+ * Batch process images for multiple videos using database jobs
+ * Note: This function now creates database jobs instead of sending direct Inngest events
  */
 export async function batchProcessVideoImages(
   videos: Array<{
@@ -113,48 +114,30 @@ export async function batchProcessVideoImages(
     thumbnail_maxres_url: string | null;
   }>
 ): Promise<void> {
-  const jobs = [];
+  console.log(`📋 Batch processing images for ${videos.length} videos using database jobs...`);
 
-  for (const video of videos) {
-    if (video.thumbnail_url) {
-      jobs.push({
-        entityType: 'video' as const,
-        entityId: video.id,
-        imageType: 'thumbnail' as const,
-        sourceUrl: video.thumbnail_url,
-        priority: 100,
-      });
-    }
+  // Process each video individually using the updated queue function
+  const processingPromises = videos.map(video => 
+    queueVideoImageProcessing(
+      video.id,
+      video.thumbnail_url,
+      video.thumbnail_maxres_url,
+      100 // Standard priority for batch operations
+    )
+  );
 
-    if (video.thumbnail_maxres_url) {
-      jobs.push({
-        entityType: 'video' as const,
-        entityId: video.id,
-        imageType: 'thumbnail_maxres' as const,
-        sourceUrl: video.thumbnail_maxres_url,
-        priority: 100,
-      });
-    }
-  }
-
-  if (jobs.length > 0) {
-    try {
-      const { inngest } = await import('../inngest/client');
-      await inngest.send({
-        name: 'image.batch.process',
-        data: { jobs },
-      });
-      console.log(
-        `Queued batch processing for ${videos.length} videos (${jobs.length} jobs)`
-      );
-    } catch (error) {
-      console.error('Failed to queue batch video image processing:', error);
-    }
+  try {
+    await Promise.all(processingPromises);
+    console.log(`✅ Successfully queued database jobs for ${videos.length} videos`);
+  } catch (error) {
+    console.error(`❌ Failed to queue some database jobs for video batch processing:`, error);
+    throw error;
   }
 }
 
 /**
- * Batch process images for multiple playlists
+ * Batch process images for multiple playlists using database jobs
+ * Note: This function now creates database jobs instead of sending direct Inngest events
  */
 export async function batchProcessPlaylistImages(
   playlists: Array<{
@@ -163,42 +146,22 @@ export async function batchProcessPlaylistImages(
     thumbnail_maxres_url: string | null;
   }>
 ): Promise<void> {
-  const jobs = [];
+  console.log(`📋 Batch processing images for ${playlists.length} playlists using database jobs...`);
 
-  for (const playlist of playlists) {
-    if (playlist.thumbnail_url) {
-      jobs.push({
-        entityType: 'playlist' as const,
-        entityId: playlist.id.toString(),
-        imageType: 'thumbnail' as const,
-        sourceUrl: playlist.thumbnail_url,
-        priority: 100,
-      });
-    }
+  // Process each playlist individually using the updated queue function
+  const processingPromises = playlists.map(playlist => 
+    queuePlaylistImageProcessing(
+      playlist.id.toString(),
+      playlist.thumbnail_url, // Note: This should be image_url for playlists in practice
+      100 // Standard priority for batch operations
+    )
+  );
 
-    if (playlist.thumbnail_maxres_url) {
-      jobs.push({
-        entityType: 'playlist' as const,
-        entityId: playlist.id.toString(),
-        imageType: 'thumbnail_maxres' as const,
-        sourceUrl: playlist.thumbnail_maxres_url,
-        priority: 100,
-      });
-    }
-  }
-
-  if (jobs.length > 0) {
-    try {
-      const { inngest } = await import('../inngest/client');
-      await inngest.send({
-        name: 'image.batch.process',
-        data: { jobs },
-      });
-      console.log(
-        `Queued batch processing for ${playlists.length} playlists (${jobs.length} jobs)`
-      );
-    } catch (error) {
-      console.error('Failed to queue batch playlist image processing:', error);
-    }
+  try {
+    await Promise.all(processingPromises);
+    console.log(`✅ Successfully queued database jobs for ${playlists.length} playlists`);
+  } catch (error) {
+    console.error(`❌ Failed to queue some database jobs for playlist batch processing:`, error);
+    throw error;
   }
 }

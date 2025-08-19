@@ -2,6 +2,7 @@ import { inngest } from '../client';
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
 import { PUBLIC_SUPABASE_URL } from '$env/static/public';
+import { randomBytes } from 'node:crypto';
 
 // Initialize Supabase client with service role key for server-side operations
 const supabaseUrl = PUBLIC_SUPABASE_URL;
@@ -17,6 +18,13 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 // Configuration
 const MAX_JOBS_PER_POLL = 10; // Limit jobs processed per polling cycle to avoid overwhelming the system
 const POLL_TIMEOUT = 30000; // 30 seconds timeout for database queries
+
+// Generate unique worker ID for this poller instance
+function generateWorkerId(): string {
+  const timestamp = Date.now().toString(36);
+  const random = randomBytes(4).toString('hex');
+  return `worker-${timestamp}-${random}`;
+}
 
 /**
  * Job polling function that runs every 5 minutes to check for pending image processing jobs
@@ -48,7 +56,7 @@ export const pollPendingJobs = inngest.createFunction(
     console.log('🔄 Starting image processing job polling cycle...');
 
     try {
-      // Step 1: Query for pending jobs with priority ordering
+      // Step 1: Query for pending jobs with priority ordering using worker-aware function
       const pendingJobs = await step.run('query-pending-jobs', async () => {
         console.log('📋 Querying for pending image processing jobs...');
 
@@ -57,12 +65,16 @@ export const pollPendingJobs = inngest.createFunction(
 
         try {
           const jobs = [];
+          const workerId = generateWorkerId();
 
-          // Query jobs one by one since get_next_image_processing_job() returns only 1 job
+          console.log(`🤖 Generated worker ID: ${workerId}`);
+
+          // Query jobs one by one using the new worker-aware function
           // This ensures proper priority ordering and prevents race conditions
           for (let i = 0; i < MAX_JOBS_PER_POLL; i++) {
             const { data, error } = await supabase.rpc(
-              'get_next_image_processing_job'
+              'get_next_image_processing_job_with_worker',
+              { p_worker_id: workerId }
             );
 
             if (error) {
@@ -113,18 +125,22 @@ export const pollPendingJobs = inngest.createFunction(
         for (const job of pendingJobs) {
           try {
             console.log(
-              `📤 Sending processing event for ${job.entity_type} ${job.entity_id} (${job.image_type}) - Job ID: ${job.job_id}`
+              `📤 Sending processing event for ${job.entity_type} ${job.entity_id} (${job.image_type}) - Job ID: ${job.job_id}, Worker: ${job.worker_id}`
             );
 
-            // Send the image.process event with the job ID - this is crucial!
+            // Send the image.process event with all required fields including workerId
             await inngest.send({
               name: 'image.process',
               data: {
                 jobId: job.job_id, // Pass the actual job ID from database
+                workerId: job.worker_id, // Worker ID assigned by database function
                 entityType: job.entity_type,
                 entityId: job.entity_id,
                 imageType: job.image_type,
                 sourceUrl: job.source_url,
+                pollingTimestamp: job.polling_timestamp,
+                jobAttempts: job.attempts,
+                processingStartedAt: job.processing_started_at,
                 priority: 100, // Use default priority since the database already handles priority ordering
               },
             });
@@ -132,13 +148,14 @@ export const pollPendingJobs = inngest.createFunction(
             sendResults.push({
               success: true,
               jobId: job.job_id,
+              workerId: job.worker_id,
               entityType: job.entity_type,
               entityId: job.entity_id,
             });
 
             jobsSent++;
             console.log(
-              `✅ Successfully queued processing for ${job.entity_type} ${job.entity_id} with job ID ${job.job_id}`
+              `✅ Successfully queued processing for ${job.entity_type} ${job.entity_id} with job ID ${job.job_id} and worker ${job.worker_id}`
             );
           } catch (sendError) {
             console.error(
@@ -149,6 +166,7 @@ export const pollPendingJobs = inngest.createFunction(
             sendResults.push({
               success: false,
               jobId: job.job_id,
+              workerId: job.worker_id,
               entityType: job.entity_type,
               entityId: job.entity_id,
               error:

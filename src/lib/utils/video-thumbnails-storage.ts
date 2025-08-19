@@ -1,9 +1,17 @@
-import type { Database } from '$lib/supabase/database.types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { detectOptimalFormat } from './image-format-detection';
 import { IMAGES_BUCKET } from '$lib/constants/images';
+import { createClient } from '@supabase/supabase-js';
+import { SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
+import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 
-// Initialize Supabase client
+// Initialize Supabase client with service role for database operations
+const supabaseServiceClient = createClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false,
+  },
+});
 
 export interface ThumbnailPaths {
   id?: string | number | bigint;
@@ -33,7 +41,7 @@ export interface OptimizedImageResult {
 export function getOptimizedImageUrl(
   paths: ThumbnailPaths,
   imageType: 'thumbnail' | 'thumbnail_maxres' = 'thumbnail',
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient<any>,
   acceptHeader?: string | null
 ): OptimizedImageResult {
   // Detect optimal format based on browser support
@@ -82,7 +90,7 @@ export function getOptimizedImageUrl(
  */
 export function getOptimizedPlaylistImageUrl(
   paths: ThumbnailPaths,
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient<any>,
   acceptHeader?: string | null
 ): OptimizedImageResult {
   // Detect optimal format based on browser support
@@ -128,7 +136,7 @@ export function getOptimizedPlaylistImageUrl(
  */
 function getStorageUrl(
   path: string,
-  supabase: SupabaseClient<Database>
+  supabase: SupabaseClient<any>
 ): string | null {
   if (!path) return null;
 
@@ -174,7 +182,7 @@ export function hasUploadedPlaylistImage(paths: ThumbnailPaths): boolean {
 export function getOptimizedVideoThumbnails(
   videos: ThumbnailPaths[],
   imageType: 'thumbnail' | 'thumbnail_maxres' = 'thumbnail',
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient<any>,
   acceptHeader?: string | null
 ): OptimizedImageResult[] {
   return videos.map((video) =>
@@ -188,7 +196,7 @@ export function getOptimizedVideoThumbnails(
 export function generatePictureSources(
   paths: ThumbnailPaths,
   imageType: 'thumbnail' | 'thumbnail_maxres' = 'thumbnail',
-  supabase: SupabaseClient<Database>
+  supabase: SupabaseClient<any>
 ): Array<{ srcset: string; type: string }> {
   const sources: Array<{ srcset: string; type: string }> = [];
 
@@ -222,7 +230,7 @@ export function generatePictureSources(
 }
 
 /**
- * Queue image processing for a video
+ * Queue image processing for a video using database jobs
  */
 export async function queueVideoImageProcessing(
   videoId: string,
@@ -230,66 +238,80 @@ export async function queueVideoImageProcessing(
   thumbnailMaxresUrl: string | null,
   priority: number = 100
 ): Promise<void> {
-  const jobs = [];
+  console.log(`📋 Queuing image processing for video ${videoId}...`);
+
+  // Create database jobs instead of sending Inngest events directly
+  const jobPromises = [];
 
   if (thumbnailUrl) {
-    jobs.push({
-      entityType: 'video' as const,
-      entityId: videoId,
-      imageType: 'thumbnail' as const,
-      sourceUrl: thumbnailUrl,
-      priority,
+    const jobPromise = supabaseServiceClient.rpc('queue_image_processing_job', {
+      p_entity_type: 'video',
+      p_entity_id: videoId,
+      p_image_type: 'thumbnail',
+      p_source_url: thumbnailUrl,
+      p_priority: priority,
     });
+    jobPromises.push(jobPromise);
   }
 
   if (thumbnailMaxresUrl) {
-    jobs.push({
-      entityType: 'video' as const,
-      entityId: videoId,
-      imageType: 'thumbnail_maxres' as const,
-      sourceUrl: thumbnailMaxresUrl,
-      priority,
+    const jobPromise = supabaseServiceClient.rpc('queue_image_processing_job', {
+      p_entity_type: 'video',
+      p_entity_id: videoId,
+      p_image_type: 'thumbnail_maxres',
+      p_source_url: thumbnailMaxresUrl,
+      p_priority: priority,
     });
+    jobPromises.push(jobPromise);
   }
 
-  if (jobs.length > 0) {
-    // Send batch processing event to Inngest
-    const { inngest } = await import('../inngest/client');
-    await inngest.send({
-      name: 'image.batch.process',
-      data: { jobs },
-    });
+  if (jobPromises.length > 0) {
+    try {
+      const results = await Promise.all(jobPromises);
+      const jobIds = results.map(r => r.data).filter(Boolean);
+      console.log(`✅ Created ${jobIds.length} database jobs for video ${videoId}: ${jobIds.join(', ')}`);
+    } catch (error) {
+      console.error(`❌ Failed to create database jobs for video ${videoId}:`, error);
+      throw error;
+    }
   }
 }
 
 /**
- * Queue image processing for a playlist (uploaded images only)
+ * Queue image processing for a playlist (uploaded images only) using database jobs
  */
 export async function queuePlaylistImageProcessing(
   playlistId: string,
   imageUrl: string | null,
   priority: number = 100
 ): Promise<void> {
-  const jobs = [];
+  console.log(`📋 Queuing image processing for playlist ${playlistId}...`);
 
   // Only process uploaded images for playlists
   if (imageUrl) {
-    jobs.push({
-      entityType: 'playlist' as const,
-      entityId: playlistId,
-      imageType: 'uploaded_image' as const,
-      sourceUrl: imageUrl,
-      priority,
-    });
-  }
+    try {
+      const { data, error } = await supabaseServiceClient.rpc('queue_image_processing_job', {
+        p_entity_type: 'playlist',
+        p_entity_id: playlistId,
+        p_image_type: 'playlist_image',
+        p_source_url: imageUrl,
+        p_priority: priority,
+      });
 
-  if (jobs.length > 0) {
-    // Send batch processing event to Inngest
-    const { inngest } = await import('../inngest/client');
-    await inngest.send({
-      name: 'image.batch.process',
-      data: { jobs },
-    });
+      if (error) {
+        console.error(`❌ Failed to create database job for playlist ${playlistId}:`, error);
+        throw error;
+      }
+
+      if (data) {
+        console.log(`✅ Created database job for playlist ${playlistId}: ${data}`);
+      } else {
+        console.log(`ℹ️ Skipped job creation for playlist ${playlistId} - duplicate or recently completed`);
+      }
+    } catch (error) {
+      console.error(`❌ Failed to create database job for playlist ${playlistId}:`, error);
+      throw error;
+    }
   }
 }
 
@@ -299,7 +321,7 @@ export async function queuePlaylistImageProcessing(
 export async function getImageProcessingStatus(
   entityType: 'video' | 'playlist',
   entityId: string,
-  supabase: SupabaseClient<Database>
+  supabase: SupabaseClient<any>
 ): Promise<'pending' | 'processing' | 'completed' | 'failed' | null> {
   try {
     const tableName = entityType === 'video' ? 'videos' : 'playlists';
