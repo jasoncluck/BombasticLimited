@@ -1,7 +1,6 @@
 <script lang="ts">
   import { Circle, ListVideo, Youtube } from '@lucide/svelte';
   import type { SuperValidated } from 'sveltekit-superforms';
-  import type { PlaylistSchema } from '../../../routes/playlist/[shortId]/schema';
   import type { BreadcrumbItem } from '$lib/components/breadcrumb-layout.svelte';
   import type { PlaylistVideosFilter } from '$lib/components/content/content-filter';
   import {
@@ -20,6 +19,7 @@
   import { getPlaylistState } from '$lib/state/playlist.svelte';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import * as Avatar from '$lib/components/ui/avatar';
+  import type { PlaylistSchema } from './schema';
 
   interface PlaylistHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];

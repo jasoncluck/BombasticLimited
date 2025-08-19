@@ -51,8 +51,10 @@ async function deleteExistingOptimizedImages(
   entityId: string
 ): Promise<void> {
   const deleteStartTimestamp = new Date().toISOString();
-  console.log(`🗑️ [${deleteStartTimestamp}] Starting deletion of existing optimized images for ${entityType} ${entityId}`);
-  
+  console.log(
+    `🗑️ [${deleteStartTimestamp}] Starting deletion of existing optimized images for ${entityType} ${entityId}`
+  );
+
   if (entityType === 'playlist') {
     // Get current image URLs from database
     const { data: playlist, error } = await supabase
@@ -62,7 +64,9 @@ async function deleteExistingOptimizedImages(
       .single();
 
     if (error) {
-      console.warn(`⚠️ [${new Date().toISOString()}] Failed to get existing playlist images for ${entityId}: ${error.message}`);
+      console.warn(
+        `⚠️ [${new Date().toISOString()}] Failed to get existing playlist images for ${entityId}: ${error.message}`
+      );
       return;
     }
 
@@ -74,7 +78,9 @@ async function deleteExistingOptimizedImages(
       filesToDelete.push(playlist.image_avif_url);
     }
 
-    console.log(`📋 [${new Date().toISOString()}] Found ${filesToDelete.length} existing files to delete for playlist ${entityId}: ${filesToDelete.join(', ')}`);
+    console.log(
+      `📋 [${new Date().toISOString()}] Found ${filesToDelete.length} existing files to delete for playlist ${entityId}: ${filesToDelete.join(', ')}`
+    );
 
     if (filesToDelete.length > 0) {
       const { error: deleteError } = await supabase.storage
@@ -82,15 +88,23 @@ async function deleteExistingOptimizedImages(
         .remove(filesToDelete);
 
       if (deleteError) {
-        console.warn(`⚠️ [${new Date().toISOString()}] Failed to delete existing images for playlist ${entityId}: ${deleteError.message}`);
+        console.warn(
+          `⚠️ [${new Date().toISOString()}] Failed to delete existing images for playlist ${entityId}: ${deleteError.message}`
+        );
       } else {
-        console.log(`✅ [${new Date().toISOString()}] Deleted ${filesToDelete.length} existing images for playlist ${entityId}`);
+        console.log(
+          `✅ [${new Date().toISOString()}] Deleted ${filesToDelete.length} existing images for playlist ${entityId}`
+        );
       }
     } else {
-      console.log(`ℹ️ [${new Date().toISOString()}] No existing images to delete for playlist ${entityId}`);
+      console.log(
+        `ℹ️ [${new Date().toISOString()}] No existing images to delete for playlist ${entityId}`
+      );
     }
   } else {
-    console.log(`ℹ️ [${new Date().toISOString()}] Deletion not implemented for entity type: ${entityType}`);
+    console.log(
+      `ℹ️ [${new Date().toISOString()}] Deletion not implemented for entity type: ${entityType}`
+    );
   }
 }
 
@@ -106,7 +120,9 @@ function generateStoragePaths(
   const timestamp = Date.now();
   const timestampStr = new Date(timestamp).toISOString();
 
-  console.log(`📂 [${timestampStr}] Generating storage paths for ${entityType}/${entityId}/${imageType} (job: ${jobId}, timestamp: ${timestamp})`);
+  console.log(
+    `📂 [${timestampStr}] Generating storage paths for ${entityType}/${entityId}/${imageType} (job: ${jobId}, timestamp: ${timestamp})`
+  );
 
   if (entityType === 'playlist') {
     // Use playlists/{playlistId}/ structure
@@ -115,8 +131,10 @@ function generateStoragePaths(
       webpPath: `${basePath}.webp`,
       avifPath: `${basePath}.avif`,
     };
-    
-    console.log(`📂 [${timestampStr}] Playlist paths generated - webp: ${paths.webpPath}, avif: ${paths.avifPath}`);
+
+    console.log(
+      `📂 [${timestampStr}] Playlist paths generated - webp: ${paths.webpPath}, avif: ${paths.avifPath}`
+    );
     return paths;
   } else if (entityType === 'video') {
     // Keep existing video structure
@@ -126,8 +144,10 @@ function generateStoragePaths(
         webpPath: `${basePath}.webp`,
         avifPath: `${basePath}.avif`,
       };
-      
-      console.log(`📂 [${timestampStr}] Video thumbnail paths generated - webp: ${paths.webpPath}, avif: ${paths.avifPath}`);
+
+      console.log(
+        `📂 [${timestampStr}] Video thumbnail paths generated - webp: ${paths.webpPath}, avif: ${paths.avifPath}`
+      );
       return paths;
     } else if (imageType === 'thumbnail_maxres') {
       const basePath = `thumbnails/${entityId}/thumbnail-maxres-${entityId}-${timestamp}`;
@@ -135,8 +155,10 @@ function generateStoragePaths(
         webpPath: `${basePath}.webp`,
         avifPath: `${basePath}.avif`,
       };
-      
-      console.log(`📂 [${timestampStr}] Video maxres paths generated - webp: ${paths.webpPath}, avif: ${paths.avifPath}`);
+
+      console.log(
+        `📂 [${timestampStr}] Video maxres paths generated - webp: ${paths.webpPath}, avif: ${paths.avifPath}`
+      );
       return paths;
     }
   }
@@ -147,8 +169,10 @@ function generateStoragePaths(
     webpPath: `${basePath}.webp`,
     avifPath: `${basePath}.avif`,
   };
-  
-  console.log(`📂 [${timestampStr}] Fallback paths generated - webp: ${paths.webpPath}, avif: ${paths.avifPath}`);
+
+  console.log(
+    `📂 [${timestampStr}] Fallback paths generated - webp: ${paths.webpPath}, avif: ${paths.avifPath}`
+  );
   return paths;
 }
 
@@ -409,7 +433,9 @@ async function uploadToStorage(
   avifPath: string
 ): Promise<{ webpPath: string; avifPath: string }> {
   const uploadStartTimestamp = new Date().toISOString();
-  console.log(`📤 [${uploadStartTimestamp}] Starting upload to storage - WebP: ${webpPath} (${Math.round(webpBuffer.length / 1024)}KB), AVIF: ${avifPath} (${Math.round(avifBuffer.length / 1024)}KB)`);
+  console.log(
+    `📤 [${uploadStartTimestamp}] Starting upload to storage - WebP: ${webpPath} (${Math.round(webpBuffer.length / 1024)}KB), AVIF: ${avifPath} (${Math.round(avifBuffer.length / 1024)}KB)`
+  );
 
   const results: { webpPath: string; avifPath: string } = {
     webpPath,
@@ -417,7 +443,9 @@ async function uploadToStorage(
   };
 
   // Upload WebP
-  console.log(`📤 [${new Date().toISOString()}] Uploading WebP image to ${webpPath}...`);
+  console.log(
+    `📤 [${new Date().toISOString()}] Uploading WebP image to ${webpPath}...`
+  );
   const webpUploadStart = Date.now();
   const { error: webpError } = await supabase.storage
     .from(STORAGE_BUCKET)
@@ -429,13 +457,19 @@ async function uploadToStorage(
 
   const webpUploadDuration = Date.now() - webpUploadStart;
   if (webpError) {
-    console.error(`❌ [${new Date().toISOString()}] Failed to upload WebP image after ${webpUploadDuration}ms: ${webpError.message}`);
+    console.error(
+      `❌ [${new Date().toISOString()}] Failed to upload WebP image after ${webpUploadDuration}ms: ${webpError.message}`
+    );
     throw new Error(`Failed to upload WebP image: ${webpError.message}`);
   }
-  console.log(`✅ [${new Date().toISOString()}] WebP upload completed in ${webpUploadDuration}ms`);
+  console.log(
+    `✅ [${new Date().toISOString()}] WebP upload completed in ${webpUploadDuration}ms`
+  );
 
   // Upload AVIF
-  console.log(`📤 [${new Date().toISOString()}] Uploading AVIF image to ${avifPath}...`);
+  console.log(
+    `📤 [${new Date().toISOString()}] Uploading AVIF image to ${avifPath}...`
+  );
   const avifUploadStart = Date.now();
   const { error: avifError } = await supabase.storage
     .from(STORAGE_BUCKET)
@@ -447,14 +481,20 @@ async function uploadToStorage(
 
   const avifUploadDuration = Date.now() - avifUploadStart;
   if (avifError) {
-    console.error(`❌ [${new Date().toISOString()}] Failed to upload AVIF image after ${avifUploadDuration}ms: ${avifError.message}`);
+    console.error(
+      `❌ [${new Date().toISOString()}] Failed to upload AVIF image after ${avifUploadDuration}ms: ${avifError.message}`
+    );
     throw new Error(`Failed to upload AVIF image: ${avifError.message}`);
   }
-  console.log(`✅ [${new Date().toISOString()}] AVIF upload completed in ${avifUploadDuration}ms`);
+  console.log(
+    `✅ [${new Date().toISOString()}] AVIF upload completed in ${avifUploadDuration}ms`
+  );
 
   const totalUploadTime = webpUploadDuration + avifUploadDuration;
-  console.log(`✅ [${new Date().toISOString()}] Successfully uploaded both images in ${totalUploadTime}ms total (WebP: ${webpUploadDuration}ms, AVIF: ${avifUploadDuration}ms)`);
-  
+  console.log(
+    `✅ [${new Date().toISOString()}] Successfully uploaded both images in ${totalUploadTime}ms total (WebP: ${webpUploadDuration}ms, AVIF: ${avifUploadDuration}ms)`
+  );
+
   return results;
 }
 
@@ -476,23 +516,40 @@ export const processImage = inngest.createFunction(
   },
   { event: 'image.process' },
   async ({ event }): Promise<ProcessingResult> => {
-    const { entityType, entityId, imageType, sourceUrl, jobId, pollingTimestamp, jobAttempts } = event.data;
+    const {
+      entityType,
+      entityId,
+      imageType,
+      sourceUrl,
+      jobId,
+      pollingTimestamp,
+      jobAttempts,
+    } = event.data;
     const processingStartTimestamp = new Date().toISOString();
     const startTime = Date.now();
 
-    console.log(`🚀 [${processingStartTimestamp}] Starting HIGH-QUALITY processing for ${entityType} ${entityId}, type: ${imageType}, job: ${jobId}`);
-    console.log(`📋 [${processingStartTimestamp}] Job context - attempts: ${jobAttempts}/3, polled at: ${pollingTimestamp}`);
+    console.log(
+      `🚀 [${processingStartTimestamp}] Starting HIGH-QUALITY processing for ${entityType} ${entityId}, type: ${imageType}, job: ${jobId}`
+    );
+    console.log(
+      `📋 [${processingStartTimestamp}] Job context - attempts: ${jobAttempts}/3, polled at: ${pollingTimestamp}`
+    );
     console.log(`📸 [${processingStartTimestamp}] Source URL: ${sourceUrl}`);
 
     try {
       // Ensure we have a job ID - this should always be provided by the poller
       if (!jobId) {
-        const errorMsg = 'No job ID provided - jobs should be created by database triggers only';
-        console.error(`❌ [${new Date().toISOString()}] CRITICAL ERROR: ${errorMsg}`);
+        const errorMsg =
+          'No job ID provided - jobs should be created by database triggers only';
+        console.error(
+          `❌ [${new Date().toISOString()}] CRITICAL ERROR: ${errorMsg}`
+        );
         throw new Error(errorMsg);
       }
 
-      console.log(`🔄 [${new Date().toISOString()}] Marking job ${jobId} as processing...`);
+      console.log(
+        `🔄 [${new Date().toISOString()}] Marking job ${jobId} as processing...`
+      );
 
       // Mark the existing job as processing
       const { error: startError } = await supabase.rpc(
@@ -509,7 +566,9 @@ export const processImage = inngest.createFunction(
       }
 
       const markingDuration = Date.now() - startTime;
-      console.log(`✅ [${new Date().toISOString()}] Marked job ${jobId} as processing in ${markingDuration}ms`);
+      console.log(
+        `✅ [${new Date().toISOString()}] Marked job ${jobId} as processing in ${markingDuration}ms`
+      );
 
       // Check existing images
       const existingCheckStart = Date.now();
@@ -519,27 +578,39 @@ export const processImage = inngest.createFunction(
       );
       const existingCheckDuration = Date.now() - existingCheckStart;
 
-      console.log(`🔍 [${new Date().toISOString()}] Existing images check completed in ${existingCheckDuration}ms - WebP: ${hasWebP}, AVIF: ${hasAVIF} - generating NEW high-quality versions`);
+      console.log(
+        `🔍 [${new Date().toISOString()}] Existing images check completed in ${existingCheckDuration}ms - WebP: ${hasWebP}, AVIF: ${hasAVIF} - generating NEW high-quality versions`
+      );
 
       // Delete existing images before creating new ones
       if (hasWebP || hasAVIF) {
         const deleteStart = Date.now();
         await deleteExistingOptimizedImages(entityType, entityId);
         const deleteDuration = Date.now() - deleteStart;
-        console.log(`🗑️ [${new Date().toISOString()}] Deleted existing images in ${deleteDuration}ms`);
+        console.log(
+          `🗑️ [${new Date().toISOString()}] Deleted existing images in ${deleteDuration}ms`
+        );
       } else {
-        console.log(`ℹ️ [${new Date().toISOString()}] No existing images to delete`);
+        console.log(
+          `ℹ️ [${new Date().toISOString()}] No existing images to delete`
+        );
       }
 
       // Download source image
-      console.log(`📥 [${new Date().toISOString()}] Downloading source image from: ${sourceUrl}`);
+      console.log(
+        `📥 [${new Date().toISOString()}] Downloading source image from: ${sourceUrl}`
+      );
       const downloadStart = Date.now();
       const imageBuffer = await downloadImage(sourceUrl);
       const downloadDuration = Date.now() - downloadStart;
-      console.log(`✅ [${new Date().toISOString()}] Downloaded ${Math.round(imageBuffer.length / 1024)}KB in ${downloadDuration}ms`);
+      console.log(
+        `✅ [${new Date().toISOString()}] Downloaded ${Math.round(imageBuffer.length / 1024)}KB in ${downloadDuration}ms`
+      );
 
       // Process image with HIGH QUALITY settings
-      console.log(`🎨 [${new Date().toISOString()}] Starting HIGH-QUALITY image processing...`);
+      console.log(
+        `🎨 [${new Date().toISOString()}] Starting HIGH-QUALITY image processing...`
+      );
       const processStart = Date.now();
       const { webp: webpBuffer, avif: avifBuffer } = await processImageFormats(
         imageBuffer,
@@ -548,10 +619,14 @@ export const processImage = inngest.createFunction(
         sourceUrl
       );
       const processDuration = Date.now() - processStart;
-      console.log(`✅ [${new Date().toISOString()}] Image processing completed in ${processDuration}ms (WebP: ${Math.round(webpBuffer.length / 1024)}KB, AVIF: ${Math.round(avifBuffer.length / 1024)}KB)`);
+      console.log(
+        `✅ [${new Date().toISOString()}] Image processing completed in ${processDuration}ms (WebP: ${Math.round(webpBuffer.length / 1024)}KB, AVIF: ${Math.round(avifBuffer.length / 1024)}KB)`
+      );
 
       // Generate storage paths with job context
-      console.log(`📂 [${new Date().toISOString()}] Generating storage paths...`);
+      console.log(
+        `📂 [${new Date().toISOString()}] Generating storage paths...`
+      );
       const pathStart = Date.now();
       const { webpPath, avifPath } = generateStoragePaths(
         entityType,
@@ -560,10 +635,14 @@ export const processImage = inngest.createFunction(
         jobId
       );
       const pathDuration = Date.now() - pathStart;
-      console.log(`📂 [${new Date().toISOString()}] Storage paths generated in ${pathDuration}ms`);
+      console.log(
+        `📂 [${new Date().toISOString()}] Storage paths generated in ${pathDuration}ms`
+      );
 
       // Upload to storage
-      console.log(`📤 [${new Date().toISOString()}] Uploading optimized images to storage...`);
+      console.log(
+        `📤 [${new Date().toISOString()}] Uploading optimized images to storage...`
+      );
       const uploadStart = Date.now();
       const uploadResult = await uploadToStorage(
         webpBuffer,
@@ -572,10 +651,14 @@ export const processImage = inngest.createFunction(
         avifPath
       );
       const uploadDuration = Date.now() - uploadStart;
-      console.log(`✅ [${new Date().toISOString()}] Upload completed in ${uploadDuration}ms`);
+      console.log(
+        `✅ [${new Date().toISOString()}] Upload completed in ${uploadDuration}ms`
+      );
 
       // Mark job as completed using the existing jobId
-      console.log(`🏁 [${new Date().toISOString()}] Marking job ${jobId} as completed...`);
+      console.log(
+        `🏁 [${new Date().toISOString()}] Marking job ${jobId} as completed...`
+      );
       const completeStart = Date.now();
       const { error: completeError } = await supabase.rpc(
         'complete_image_processing_job',
@@ -594,8 +677,12 @@ export const processImage = inngest.createFunction(
       }
 
       const totalProcessingTime = Date.now() - startTime;
-      console.log(`🎉 [${new Date().toISOString()}] Successfully processed HIGH-QUALITY image for ${entityType} ${entityId} in ${totalProcessingTime}ms (job: ${jobId})`);
-      console.log(`📊 [${new Date().toISOString()}] Processing breakdown - marking: ${markingDuration}ms, existing check: ${existingCheckDuration}ms, download: ${downloadDuration}ms, processing: ${processDuration}ms, upload: ${uploadDuration}ms, completion: ${completeDuration}ms`);
+      console.log(
+        `🎉 [${new Date().toISOString()}] Successfully processed HIGH-QUALITY image for ${entityType} ${entityId} in ${totalProcessingTime}ms (job: ${jobId})`
+      );
+      console.log(
+        `📊 [${new Date().toISOString()}] Processing breakdown - marking: ${markingDuration}ms, existing check: ${existingCheckDuration}ms, download: ${downloadDuration}ms, processing: ${processDuration}ms, upload: ${uploadDuration}ms, completion: ${completeDuration}ms`
+      );
 
       return {
         webpPath: uploadResult.webpPath,
@@ -604,24 +691,34 @@ export const processImage = inngest.createFunction(
     } catch (error) {
       const errorTimestamp = new Date().toISOString();
       const totalErrorTime = Date.now() - startTime;
-      
-      console.error(`❌ [${errorTimestamp}] Failed to process HIGH-QUALITY image for ${entityType} ${entityId} (job: ${jobId}) after ${totalErrorTime}ms:`, error);
+
+      console.error(
+        `❌ [${errorTimestamp}] Failed to process HIGH-QUALITY image for ${entityType} ${entityId} (job: ${jobId}) after ${totalErrorTime}ms:`,
+        error
+      );
 
       // Mark the existing job as failed
       if (jobId) {
         try {
-          console.log(`🔄 [${new Date().toISOString()}] Marking job ${jobId} as failed...`);
+          console.log(
+            `🔄 [${new Date().toISOString()}] Marking job ${jobId} as failed...`
+          );
           const failStart = Date.now();
-          
+
           await supabase.rpc('fail_image_processing_job', {
             job_id: jobId,
             error_msg: error instanceof Error ? error.message : String(error),
           });
-          
+
           const failDuration = Date.now() - failStart;
-          console.log(`❌ [${new Date().toISOString()}] Marked job ${jobId} as failed in ${failDuration}ms`);
+          console.log(
+            `❌ [${new Date().toISOString()}] Marked job ${jobId} as failed in ${failDuration}ms`
+          );
         } catch (jobError) {
-          console.error(`💥 [${new Date().toISOString()}] Failed to mark job ${jobId} as failed:`, jobError);
+          console.error(
+            `💥 [${new Date().toISOString()}] Failed to mark job ${jobId} as failed:`,
+            jobError
+          );
         }
       }
 

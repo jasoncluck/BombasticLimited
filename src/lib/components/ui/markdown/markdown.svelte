@@ -8,7 +8,7 @@
   }
 
   let { content, class: className = '' }: MarkdownProps = $props();
-  
+
   let renderedHtml = $state<string>('');
   let isLoading = $state<boolean>(true);
 
@@ -112,7 +112,9 @@
     padding: 0.125rem 0.5rem;
     border-radius: 0.25rem;
     font-size: 0.875rem;
-    font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+    font-family:
+      ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono',
+      Menlo, monospace;
   }
 
   .markdown-content :global(pre) {

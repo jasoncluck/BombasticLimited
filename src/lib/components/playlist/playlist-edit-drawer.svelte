@@ -1,9 +1,5 @@
 <script lang="ts">
   import { superForm, type SuperValidated } from 'sveltekit-superforms';
-  import {
-    playlistSchema,
-    type PlaylistSchema,
-  } from '../../../routes/playlist/[shortId]/schema';
   import * as Alert from '$lib/components/ui/alert/index.js';
   import { Input } from '$lib/components/ui/input';
   import * as Drawer from '$lib/components/ui/drawer';
@@ -30,6 +26,10 @@
   import { invalidate } from '$app/navigation';
   import { parseImageProperties } from './playlist';
   import { isLowResolutionThumbnail } from './playlist-service';
+  import {
+    playlistSchema,
+    type PlaylistSchema,
+  } from '../../../routes/(app)/playlist/[shortId]/schema';
 
   let {
     form,
@@ -56,11 +56,6 @@
   let isPublic = $state(playlist.type === 'Public');
 
   const triggerSnippet = trigger;
-
-  // Store the original image properties to restore on cancel
-  let originalImageProperties = $state<PlaylistImageProperties | null>(
-    parseImageProperties(playlist.image_properties)
-  );
 
   // Cropper state
   let cropperDialogOpen = $state(false);
@@ -134,7 +129,6 @@
   async function handleCropConfirm() {
     if (currentCropArea && imageSrc) {
       $formData.image_properties = currentCropArea;
-      originalImageProperties = currentCropArea;
       // Create preview of the cropped image
       previewImageUrl = await createCroppedPreview(imageSrc, currentCropArea);
 

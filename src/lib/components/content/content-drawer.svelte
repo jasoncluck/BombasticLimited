@@ -36,16 +36,15 @@
   import { SOURCE_INFO } from '$lib/constants/source';
   import { goto, invalidate } from '$app/navigation';
   import { page } from '$app/state';
-  import { getPlaylistState } from '$lib/state/playlist.svelte';
   import FullHeightDrawer from './drawer/full-height-drawer.svelte';
   import EditListDrawer from './drawer/edit-list-drawer.svelte';
   import type { CombinedContentFilter } from './content-filter';
   import type { SuperValidated } from 'sveltekit-superforms';
-  import type { PlaylistSchema } from '../../../routes/playlist/[shortId]/schema';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { getVideoThumbnailUrl } from '$lib/utils/video-thumbnails';
   import PlaylistDeleteAlertDrawer from '../playlist/playlist-delete-alert-drawer.svelte';
   import PlaylistEditDrawer from '../playlist/playlist-edit-drawer.svelte';
+  import type { PlaylistSchema } from '../../../routes/(app)/playlist/[shortId]/schema';
 
   interface ContentDrawerProps {
     videos?: Video[];

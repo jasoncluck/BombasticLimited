@@ -17,7 +17,7 @@ describe('Image Processing Logging', () => {
   it('should have comprehensive logging structure for job poller', async () => {
     // Import the job poller to test its structure
     const { pollPendingJobs } = await import('../job_poller');
-    
+
     expect(pollPendingJobs).toBeDefined();
     expect(pollPendingJobs.name).toBe('Poll Pending Image Processing Jobs');
     // Function id is accessed through the function's properties
@@ -34,7 +34,7 @@ describe('Image Processing Logging', () => {
 
     // Simulate path generation logging
     const logMessage = `📂 [${new Date(timestamp).toISOString()}] Generating storage paths for ${entityType}/${entityId}/${imageType} (job: ${jobId}, timestamp: ${timestamp})`;
-    
+
     expect(logMessage).toContain('Generating storage paths');
     expect(logMessage).toContain(jobId);
     expect(logMessage).toContain(timestamp.toString());
@@ -73,7 +73,7 @@ describe('Image Processing Logging', () => {
     expect(triggerLog).toContain(jobId);
     expect(triggerLog).toContain(entityId);
 
-    // Simulate job processing start logging  
+    // Simulate job processing start logging
     const processingLog = `[JOB_PROCESSING] Starting job ${jobId} for ${entityType}/${entityId}/${imageType} (previous_status: pending, attempts: ${attempts}, timestamp: ${timestamp})`;
     expect(processingLog).toContain('JOB_PROCESSING');
     expect(processingLog).toContain('Starting job');

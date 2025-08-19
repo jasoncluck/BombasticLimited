@@ -19,7 +19,7 @@
   import { setNavigationState } from '$lib/state/navigation.svelte';
   import { invalidate } from '$app/navigation';
   import type { Session } from '@supabase/supabase-js';
-  import '../app.css';
+  import '../../app.css';
 
   injectSpeedInsights();
 

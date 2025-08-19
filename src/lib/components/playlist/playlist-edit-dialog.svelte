@@ -1,9 +1,5 @@
 <script lang="ts">
   import { superForm, type SuperValidated } from 'sveltekit-superforms';
-  import {
-    playlistSchema,
-    type PlaylistSchema,
-  } from '../../../routes/playlist/[shortId]/schema';
   import { Input } from '$lib/components/ui/input';
   import * as Alert from '$lib/components/ui/alert/index.js';
   import * as Dialog from '$lib/components/ui/dialog';
@@ -30,6 +26,7 @@
   import { invalidate } from '$app/navigation';
   import { isLowResolutionThumbnail } from './playlist-service';
   import { parseImageProperties } from './playlist';
+  import type { PlaylistSchema } from '../../../routes/(app)/playlist/[shortId]/schema';
 
   let {
     form,
