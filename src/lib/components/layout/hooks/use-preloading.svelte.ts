@@ -21,7 +21,7 @@ export function usePreloading() {
     const routes = staticRoutes[currentPath as keyof typeof staticRoutes];
     if (routes) {
       // Simple prefetch using browser's native prefetch
-      routes.forEach(route => {
+      routes.forEach((route) => {
         try {
           const link = document.createElement('link');
           link.rel = 'prefetch';

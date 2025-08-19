@@ -41,7 +41,7 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
 // Preload critical static assets only
 const preloadCriticalAssets = async (): Promise<void> => {
   const cache = await caches.open(STATIC_CACHE);
-  
+
   // Only preload critical build assets (app bundles, CSS)
   const criticalAssets = build.filter(
     (asset) =>
@@ -71,9 +71,7 @@ const preloadCriticalAssets = async (): Promise<void> => {
 const cleanupOldCaches = async (): Promise<void> => {
   const cacheNames = await caches.keys();
   const oldCaches = cacheNames.filter(
-    (name) =>
-      name.startsWith('bombastic-') &&
-      name !== STATIC_CACHE
+    (name) => name.startsWith('bombastic-') && name !== STATIC_CACHE
   );
 
   await Promise.all(oldCaches.map((name) => caches.delete(name)));
@@ -95,10 +93,7 @@ sw.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
 
   // Only handle GET requests from same origin
-  if (
-    request.method !== 'GET' ||
-    url.origin !== sw.location.origin
-  ) {
+  if (request.method !== 'GET' || url.origin !== sw.location.origin) {
     return;
   }
 

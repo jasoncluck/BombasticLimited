@@ -687,9 +687,12 @@ export const cleanupFailedJobs = inngest.createFunction(
   }
 );
 
+import { pollPendingJobs } from './async-image-processing/job_poller';
+
 // Export all functions
 export const imageFunctions = [
   processImage,
   batchProcessImages,
   cleanupFailedJobs,
+  pollPendingJobs,
 ];
