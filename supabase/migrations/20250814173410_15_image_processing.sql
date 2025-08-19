@@ -87,7 +87,7 @@ CREATE TRIGGER trigger_update_image_processing_jobs_updated_at BEFORE
 UPDATE ON "public"."image_processing_jobs" FOR EACH ROW
 EXECUTE FUNCTION public.update_image_processing_jobs_updated_at ();
 
--- Function to get next job for processing with comprehensive logging
+-- Function to get next job for processing (with atomic locking)
 CREATE OR REPLACE FUNCTION public.get_next_image_processing_job () RETURNS TABLE (
   job_id uuid,
   entity_type text,
@@ -98,114 +98,45 @@ CREATE OR REPLACE FUNCTION public.get_next_image_processing_job () RETURNS TABLE
 ) LANGUAGE plpgsql SECURITY DEFINER
 SET
   search_path = '' AS $$
-DECLARE
-  total_pending_count integer;
-  total_processing_count integer;
-  selected_job_record RECORD;
-  current_timestamp TIMESTAMP WITH TIME ZONE := now();
 BEGIN
-  -- LOG: Count pending and processing jobs before selection
-  SELECT COUNT(*) INTO total_pending_count
-  FROM "public"."image_processing_jobs"
-  WHERE status = 'pending' AND attempts < max_attempts;
-  
-  SELECT COUNT(*) INTO total_processing_count
-  FROM "public"."image_processing_jobs"
-  WHERE status = 'processing';
-  
-  RAISE LOG '[JOB_POLLER] Job query attempt - pending_jobs: %, processing_jobs: %, timestamp: %', 
-    total_pending_count, total_processing_count, current_timestamp;
-  
   -- Get the next pending job with highest priority (lowest number)
+  -- FOR UPDATE SKIP LOCKED ensures atomic processing and prevents duplicates
+  RETURN QUERY
   SELECT 
     j.id,
     j.entity_type,
     j.entity_id,
     j.image_type,
     j.source_url,
-    j.attempts,
-    j.priority,
-    j.created_at
-  INTO selected_job_record
+    j.attempts
   FROM "public"."image_processing_jobs" j
   WHERE j.status = 'pending' 
     AND j.attempts < j.max_attempts
   ORDER BY j.priority ASC, j.created_at ASC
   LIMIT 1
   FOR UPDATE SKIP LOCKED;
-  
-  -- LOG: Result of job selection
-  IF selected_job_record.id IS NOT NULL THEN
-    RAISE LOG '[JOB_POLLER] Selected job % for %/%/% (priority: %, created: %, attempts: %/%)', 
-      selected_job_record.id, selected_job_record.entity_type, selected_job_record.entity_id, 
-      selected_job_record.image_type, selected_job_record.priority, selected_job_record.created_at,
-      selected_job_record.attempts, 3;
-      
-    -- Return the selected job with explicit type casting
-    RETURN QUERY
-    SELECT 
-      selected_job_record.id::uuid,
-      selected_job_record.entity_type::text,
-      selected_job_record.entity_id::text,
-      selected_job_record.image_type::text,
-      selected_job_record.source_url::text,
-      selected_job_record.attempts::integer;
-  ELSE
-    RAISE LOG '[JOB_POLLER] No jobs available for processing (pending: %, processing: %)', 
-      total_pending_count, total_processing_count;
-  END IF;
 END;
 $$;
 
--- Function to mark job as processing with comprehensive logging
+-- Function to mark job as processing
 CREATE OR REPLACE FUNCTION public.start_image_processing_job (job_id uuid) RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER
 SET
   search_path = '' AS $$
-DECLARE
-  job_record RECORD;
-  update_success boolean := false;
-  current_timestamp TIMESTAMP WITH TIME ZONE := now();
 BEGIN
-  -- Get job details before update
-  SELECT entity_type, entity_id, image_type, status, attempts, created_at 
-  INTO job_record
-  FROM "public"."image_processing_jobs"
-  WHERE id = job_id;
-  
-  IF FOUND THEN
-    RAISE LOG '[JOB_PROCESSING] Starting job % for %/%/% (previous_status: %, attempts: %, age: %s, timestamp: %)', 
-      job_id, job_record.entity_type, job_record.entity_id, job_record.image_type, 
-      job_record.status, job_record.attempts, 
-      EXTRACT(EPOCH FROM (current_timestamp - job_record.created_at)), current_timestamp;
-  ELSE
-    RAISE LOG '[JOB_PROCESSING] ERROR: Job % not found when attempting to start', job_id;
-    RETURN false;
-  END IF;
-
   UPDATE "public"."image_processing_jobs"
   SET 
     status = 'processing',
-    processing_started_at = current_timestamp,
+    processing_started_at = now(),
     attempts = attempts + 1
   WHERE id = job_id;
   
-  update_success = FOUND;
-  
-  IF update_success THEN
-    RAISE LOG '[JOB_PROCESSING] Successfully marked job % as processing (attempt %/%)', 
-      job_id, job_record.attempts + 1, 3;
-  ELSE
-    RAISE LOG '[JOB_PROCESSING] ERROR: Failed to update job % to processing status', job_id;
-  END IF;
-  
-  RETURN update_success;
+  RETURN FOUND;
 END;
 $$;
 
--- Function to mark job as completed with comprehensive logging
-CREATE OR REPLACE FUNCTION public.complete_image_processing_job_with_worker (
+-- Function to mark job as completed (updated for WebP-first playlists)
+CREATE OR REPLACE FUNCTION public.complete_image_processing_job (
   job_id uuid,
-  p_worker_id text,
   jpg_path text DEFAULT NULL,
   webp_path text DEFAULT NULL,
   avif_path text DEFAULT NULL
@@ -214,197 +145,110 @@ SET
   search_path = '' AS $$
 DECLARE
   job_record RECORD;
-  processing_duration_seconds numeric;
-  current_timestamp TIMESTAMP WITH TIME ZONE := now();
-  update_success boolean := false;
 BEGIN
-  -- Get job details and verify worker ownership
-  SELECT entity_type, entity_id, image_type, status, attempts, worker_id, processing_started_at, created_at
-  INTO job_record
+  -- Get job details
+  SELECT entity_type, entity_id, image_type INTO job_record
   FROM "public"."image_processing_jobs"
   WHERE id = job_id;
   
   IF NOT FOUND THEN
-    RAISE LOG '[JOB_COMPLETION] ERROR: Worker % - Job % not found when attempting to complete', p_worker_id, job_id;
     RETURN FALSE;
   END IF;
-  
-  -- Verify worker ownership to prevent cross-worker completion
-  IF job_record.worker_id IS NULL OR job_record.worker_id != p_worker_id THEN
-    RAISE LOG '[JOB_COMPLETION] ERROR: Worker % attempted to complete job % owned by worker %', 
-      p_worker_id, job_id, COALESCE(job_record.worker_id, 'NULL');
-    RETURN FALSE;
-  END IF;
-  
-  -- Calculate processing duration
-  IF job_record.processing_started_at IS NOT NULL THEN
-    processing_duration_seconds := EXTRACT(EPOCH FROM (current_timestamp - job_record.processing_started_at));
-  ELSE
-    processing_duration_seconds := NULL;
-  END IF;
-  
-  RAISE LOG '[JOB_COMPLETION] Worker % completing job % for %/%/% (duration: %s, webp: %, avif: %)', 
-    p_worker_id, job_id, job_record.entity_type, job_record.entity_id, job_record.image_type,
-    processing_duration_seconds, webp_path, avif_path;
   
   -- Update job status
   UPDATE "public"."image_processing_jobs"
   SET 
     status = 'completed',
-    processing_completed_at = current_timestamp,
-    error_message = NULL,
-    updated_at = current_timestamp
-  WHERE id = job_id AND worker_id = p_worker_id; -- Double-check worker ownership
+    processing_completed_at = now(),
+    error_message = NULL
+  WHERE id = job_id;
   
-  update_success = FOUND;
-  
-  -- Update entity with new image paths (same logic as before)
-  IF update_success THEN
-    IF job_record.entity_type = 'video' THEN
-      IF job_record.image_type = 'thumbnail' THEN
-        UPDATE "public"."videos"
-        SET 
-          thumbnail_webp_url = COALESCE(webp_path, thumbnail_webp_url),
-          thumbnail_avif_url = COALESCE(avif_path, thumbnail_avif_url),
-          image_processing_status = 'completed'::public.image_processing_status,
-          image_processing_updated_at = current_timestamp
-        WHERE id = job_record.entity_id;
-        
-        RAISE LOG '[JOB_COMPLETION] Worker % updated video % thumbnail URLs (webp: %, avif: %)', 
-          p_worker_id, job_record.entity_id, webp_path, avif_path;
-          
-      ELSIF job_record.image_type = 'thumbnail_maxres' THEN
-        UPDATE "public"."videos"
-        SET 
-          thumbnail_maxres_webp_url = COALESCE(webp_path, thumbnail_maxres_webp_url),
-          thumbnail_maxres_avif_url = COALESCE(avif_path, thumbnail_maxres_avif_url),
-          image_processing_status = 'completed'::public.image_processing_status,
-          image_processing_updated_at = current_timestamp
-        WHERE id = job_record.entity_id;
-        
-        RAISE LOG '[JOB_COMPLETION] Worker % updated video % maxres thumbnail URLs (webp: %, avif: %)', 
-          p_worker_id, job_record.entity_id, webp_path, avif_path;
-      END IF;
-      
-    ELSIF job_record.entity_type = 'playlist' THEN
-      UPDATE "public"."playlists"
+  -- Update entity with new image paths
+  IF job_record.entity_type = 'video' THEN
+    IF job_record.image_type = 'thumbnail' THEN
+      UPDATE "public"."videos"
       SET 
-        image_webp_url = COALESCE(webp_path, image_webp_url),
-        image_avif_url = COALESCE(avif_path, image_avif_url),
-        image_processing_status = 'completed',
-        image_processing_updated_at = current_timestamp
-      WHERE id = job_record.entity_id::bigint;
-      
-      RAISE LOG '[JOB_COMPLETION] Worker % updated playlist % image URLs (webp: %, avif: %)', 
-        p_worker_id, job_record.entity_id, webp_path, avif_path;
+        thumbnail_webp_url = COALESCE(webp_path, thumbnail_webp_url),
+        thumbnail_avif_url = COALESCE(avif_path, thumbnail_avif_url),
+        image_processing_status = 'completed'::public.image_processing_status,
+        image_processing_updated_at = now()
+      WHERE id = job_record.entity_id;
+    ELSIF job_record.image_type = 'thumbnail_maxres' THEN
+      UPDATE "public"."videos"
+      SET 
+        thumbnail_maxres_webp_url = COALESCE(webp_path, thumbnail_maxres_webp_url),
+        thumbnail_maxres_avif_url = COALESCE(avif_path, thumbnail_maxres_avif_url),
+        image_processing_status = 'completed'::public.image_processing_status,
+        image_processing_updated_at = now()
+      WHERE id = job_record.entity_id;
     END IF;
-    
-    RAISE LOG '[JOB_COMPLETION] Worker % successfully completed job % (total_time: %s)', 
-      p_worker_id, job_id, EXTRACT(EPOCH FROM (current_timestamp - job_record.created_at));
-  ELSE
-    RAISE LOG '[JOB_COMPLETION] ERROR: Worker % failed to mark job % as completed (worker ownership check failed)', 
-      p_worker_id, job_id;
+  ELSIF job_record.entity_type = 'playlist' THEN
+    -- For playlists: WebP is primary, AVIF is optimization, JPG is legacy (backward compatibility only)
+    UPDATE "public"."playlists"
+    SET 
+      image_webp_url = COALESCE(webp_path, image_webp_url),   -- Primary format
+      image_avif_url = COALESCE(avif_path, image_avif_url),   -- Optimized format
+      image_processing_status = 'completed',
+      image_processing_updated_at = now()
+    WHERE id = job_record.entity_id::bigint;
   END IF;
   
-  RETURN update_success;
+  RETURN TRUE;
 END;
 $$;
 
--- Function to mark job as failed with comprehensive logging
-CREATE OR REPLACE FUNCTION public.fail_image_processing_job_with_worker (job_id uuid, p_worker_id text, error_msg text) RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER
+-- Function to mark job as failed
+CREATE OR REPLACE FUNCTION public.fail_image_processing_job (job_id uuid, error_msg text) RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER
 SET
   search_path = '' AS $$
 DECLARE
   job_record RECORD;
   new_status text;
-  processing_duration_seconds numeric;
-  current_timestamp TIMESTAMP WITH TIME ZONE := now();
-  update_success boolean := false;
 BEGIN
-  -- Get job details and verify worker ownership
-  SELECT attempts, max_attempts, entity_type, entity_id, image_type, worker_id, processing_started_at, created_at
-  INTO job_record
+  -- Get job details
+  SELECT attempts, max_attempts, entity_type, entity_id INTO job_record
   FROM "public"."image_processing_jobs"
   WHERE id = job_id;
   
   IF NOT FOUND THEN
-    RAISE LOG '[JOB_FAILURE] ERROR: Worker % - Job % not found when attempting to mark as failed', p_worker_id, job_id;
     RETURN FALSE;
-  END IF;
-  
-  -- Verify worker ownership
-  IF job_record.worker_id IS NULL OR job_record.worker_id != p_worker_id THEN
-    RAISE LOG '[JOB_FAILURE] ERROR: Worker % attempted to fail job % owned by worker %', 
-      p_worker_id, job_id, COALESCE(job_record.worker_id, 'NULL');
-    RETURN FALSE;
-  END IF;
-  
-  -- Calculate processing duration if started
-  IF job_record.processing_started_at IS NOT NULL THEN
-    processing_duration_seconds := EXTRACT(EPOCH FROM (current_timestamp - job_record.processing_started_at));
-  ELSE
-    processing_duration_seconds := NULL;
   END IF;
   
   -- Determine new status based on attempts
   IF job_record.attempts >= job_record.max_attempts THEN
     new_status := 'failed';
     
-    RAISE LOG '[JOB_FAILURE] Worker % - Job % for %/%/% PERMANENTLY FAILED after %/% attempts (duration: %s, error: %)', 
-      p_worker_id, job_id, job_record.entity_type, job_record.entity_id, job_record.image_type,
-      job_record.attempts, job_record.max_attempts, processing_duration_seconds, error_msg;
-    
     -- Update entity status to failed
     IF job_record.entity_type = 'video' THEN
       UPDATE "public"."videos"
       SET 
         image_processing_status = 'failed',
-        image_processing_updated_at = current_timestamp
+        image_processing_updated_at = now()
       WHERE id = job_record.entity_id;
-      
-      RAISE LOG '[JOB_FAILURE] Worker % marked video % image processing as failed', p_worker_id, job_record.entity_id;
-      
     ELSIF job_record.entity_type = 'playlist' THEN
       UPDATE "public"."playlists"
       SET 
         image_processing_status = 'failed',
-        image_processing_updated_at = current_timestamp
+        image_processing_updated_at = now()
       WHERE id = job_record.entity_id::bigint;
-      
-      RAISE LOG '[JOB_FAILURE] Worker % marked playlist % image processing as failed', p_worker_id, job_record.entity_id;
     END IF;
   ELSE
     new_status := 'pending'; -- Will be retried
-    RAISE LOG '[JOB_FAILURE] Worker % - Job % for %/%/% will be RETRIED (%/% attempts, duration: %s, error: %)', 
-      p_worker_id, job_id, job_record.entity_type, job_record.entity_id, job_record.image_type,
-      job_record.attempts, job_record.max_attempts, processing_duration_seconds, error_msg;
   END IF;
   
-  -- Update job with worker ownership check
+  -- Update job
   UPDATE "public"."image_processing_jobs"
   SET 
     status = new_status,
     error_message = error_msg,
-    processing_started_at = NULL,
-    worker_id = CASE WHEN new_status = 'failed' THEN worker_id ELSE NULL END, -- Keep worker_id for failed jobs, clear for retries
-    updated_at = current_timestamp
-  WHERE id = job_id AND worker_id = p_worker_id; -- Double-check worker ownership
+    processing_started_at = NULL
+  WHERE id = job_id;
   
-  update_success = FOUND;
-  
-  IF update_success THEN
-    RAISE LOG '[JOB_FAILURE] Worker % successfully updated job % status to % (total_time: %s)', 
-      p_worker_id, job_id, new_status, EXTRACT(EPOCH FROM (current_timestamp - job_record.created_at));
-  ELSE
-    RAISE LOG '[JOB_FAILURE] ERROR: Worker % failed to update job % failure status (worker ownership check failed)', 
-      p_worker_id, job_id;
-  END IF;
-  
-  RETURN update_success;
+  RETURN TRUE;
 END;
 $$;
 
--- UPDATED: Function to queue image processing job with comprehensive logging
+-- UPDATED: Function to queue image processing job with improved deduplication
 CREATE OR REPLACE FUNCTION public.queue_image_processing_job (
   p_entity_type text,
   p_entity_id text,
@@ -417,37 +261,18 @@ SET
 DECLARE
   job_id uuid;
   recent_completion TIMESTAMP WITH TIME ZONE;
-  existing_jobs_count integer;
-  all_jobs_count integer;
-  current_timestamp TIMESTAMP WITH TIME ZONE := now();
 BEGIN
-  -- LOG: Start of job creation attempt
-  RAISE LOG '[IMAGE_PROCESSING] Job creation attempt - entity_type: %, entity_id: %, image_type: %, source_url: %, priority: %, timestamp: %', 
-    p_entity_type, p_entity_id, p_image_type, p_source_url, p_priority, current_timestamp;
-  
-  -- Count all existing jobs for this entity/image combination
-  SELECT COUNT(*) INTO all_jobs_count
-  FROM "public"."image_processing_jobs"
-  WHERE entity_type = p_entity_type
-    AND entity_id = p_entity_id
-    AND image_type = p_image_type;
-  
-  RAISE LOG '[IMAGE_PROCESSING] Total existing jobs for %/%/% = %', 
-    p_entity_type, p_entity_id, p_image_type, all_jobs_count;
-  
   -- Check if job already exists for this entity/image combination
-  SELECT id, COUNT(*) OVER() INTO job_id, existing_jobs_count
+  SELECT id INTO job_id
   FROM "public"."image_processing_jobs"
   WHERE entity_type = p_entity_type
     AND entity_id = p_entity_id
     AND image_type = p_image_type
-    AND status IN ('pending', 'processing')
-  LIMIT 1;
+    AND status IN ('pending', 'processing');
   
   -- If active job exists, return it
   IF job_id IS NOT NULL THEN
-    RAISE LOG '[IMAGE_PROCESSING] Returning existing active job % for %/%/% (active_count: %)', 
-      job_id, p_entity_type, p_entity_id, p_image_type, existing_jobs_count;
+    RAISE LOG 'Returning existing job % for % % %', job_id, p_entity_type, p_entity_id, p_image_type;
     RETURN job_id;
   END IF;
   
@@ -459,14 +284,14 @@ BEGIN
     AND entity_id = p_entity_id
     AND image_type = p_image_type
     AND status = 'completed'
-    AND processing_completed_at > (current_timestamp - INTERVAL '30 seconds')
+    AND processing_completed_at > (now() - INTERVAL '30 seconds')
   ORDER BY processing_completed_at DESC
   LIMIT 1;
   
   -- If recently completed, don't create a new job
   IF recent_completion IS NOT NULL THEN
-    RAISE LOG '[IMAGE_PROCESSING] Skipping job creation for %/%/% - recently completed at % (within 30s of %)', 
-      p_entity_type, p_entity_id, p_image_type, recent_completion, current_timestamp;
+    RAISE LOG 'Skipping job creation for % % % - recently completed at %', 
+      p_entity_type, p_entity_id, p_image_type, recent_completion;
     RETURN NULL;
   END IF;
   
@@ -485,9 +310,7 @@ BEGIN
     p_priority
   ) RETURNING id INTO job_id;
   
-  RAISE LOG '[IMAGE_PROCESSING] Created new job % for %/%/% (total_jobs_now: %, timestamp: %)', 
-    job_id, p_entity_type, p_entity_id, p_image_type, all_jobs_count + 1, current_timestamp;
-  
+  RAISE LOG 'Created new job % for % % %', job_id, p_entity_type, p_entity_id, p_image_type;
   RETURN job_id;
 END;
 $$;
@@ -498,88 +321,50 @@ ALTER TABLE "public"."image_processing_jobs" ENABLE ROW LEVEL SECURITY;
 -- Only allow service role to access image processing jobs
 CREATE POLICY "Service role can manage image processing jobs" ON "public"."image_processing_jobs" FOR ALL USING (auth.role () = 'service_role');
 
--- Function to queue image processing for videos with comprehensive logging
+-- Function to queue image processing for videos (unchanged)
 CREATE OR REPLACE FUNCTION public.trigger_queue_video_image_processing () RETURNS TRIGGER LANGUAGE plpgsql
 SET
   search_path = '' AS $$
-DECLARE
-  thumbnail_job_id uuid;
-  maxres_job_id uuid;
-  thumbnail_changed boolean := false;
-  maxres_changed boolean := false;
-  current_timestamp TIMESTAMP WITH TIME ZONE := now();
 BEGIN
-  -- LOG: Trigger execution start
-  RAISE LOG '[VIDEO_TRIGGER] Trigger fired for video % (operation: %)', 
-    COALESCE(NEW.id, OLD.id), TG_OP;
-  
-  -- Check what changed between OLD and NEW
-  IF TG_OP = 'INSERT' THEN
-    thumbnail_changed := (NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '');
-    maxres_changed := (NEW.thumbnail_maxres_url IS NOT NULL AND NEW.thumbnail_maxres_url != '');
-    
-    RAISE LOG '[VIDEO_TRIGGER] INSERT video % - thumbnail_url: %, maxres_url: %', 
-      NEW.id, NEW.thumbnail_url, NEW.thumbnail_maxres_url;
-      
-  ELSIF TG_OP = 'UPDATE' THEN
-    thumbnail_changed := (COALESCE(OLD.thumbnail_url, '') != COALESCE(NEW.thumbnail_url, ''));
-    maxres_changed := (COALESCE(OLD.thumbnail_maxres_url, '') != COALESCE(NEW.thumbnail_maxres_url, ''));
-    
-    RAISE LOG '[VIDEO_TRIGGER] UPDATE video % - thumbnail changed: % (old: %, new: %), maxres changed: % (old: %, new: %)', 
-      NEW.id, thumbnail_changed, OLD.thumbnail_url, NEW.thumbnail_url,
-      maxres_changed, OLD.thumbnail_maxres_url, NEW.thumbnail_maxres_url;
-  END IF;
-  
   -- Only queue processing if thumbnail URLs are provided and different from OLD values
-  IF (TG_OP = 'INSERT') OR (TG_OP = 'UPDATE' AND (thumbnail_changed OR maxres_changed)) THEN
+  IF (TG_OP = 'INSERT') OR 
+     (TG_OP = 'UPDATE' AND (
+       COALESCE(OLD.thumbnail_url, '') != COALESCE(NEW.thumbnail_url, '') OR
+       COALESCE(OLD.thumbnail_maxres_url, '') != COALESCE(NEW.thumbnail_maxres_url, '')
+     )) THEN
     
-    -- Queue thumbnail processing if URL exists and changed
-    IF thumbnail_changed AND NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '' THEN
-      thumbnail_job_id := public.queue_image_processing_job(
+    -- Queue thumbnail processing if URL exists
+    IF NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '' THEN
+      PERFORM public.queue_image_processing_job(
         'video',
         NEW.id,
         'thumbnail',
         NEW.thumbnail_url,
         100 -- Standard priority for videos
       );
-      
-      RAISE LOG '[VIDEO_TRIGGER] Queued thumbnail job % for video %', thumbnail_job_id, NEW.id;
     END IF;
 
-    -- Queue maxres thumbnail processing if URL exists and changed
-    IF maxres_changed AND NEW.thumbnail_maxres_url IS NOT NULL AND NEW.thumbnail_maxres_url != '' THEN
-      maxres_job_id := public.queue_image_processing_job(
+    -- Queue maxres thumbnail processing if URL exists
+    IF NEW.thumbnail_maxres_url IS NOT NULL AND NEW.thumbnail_maxres_url != '' THEN
+      PERFORM public.queue_image_processing_job(
         'video',
         NEW.id,
         'thumbnail_maxres',
         NEW.thumbnail_maxres_url,
         100 -- Standard priority for videos
       );
-      
-      RAISE LOG '[VIDEO_TRIGGER] Queued maxres job % for video %', maxres_job_id, NEW.id;
     END IF;
 
-    -- Update processing status to pending if any jobs were created
-    IF thumbnail_job_id IS NOT NULL OR maxres_job_id IS NOT NULL THEN
-      NEW.image_processing_status = 'pending';
-      NEW.image_processing_updated_at = current_timestamp;
-      
-      RAISE LOG '[VIDEO_TRIGGER] Updated video % processing status to pending (jobs created: thumbnail=%, maxres=%)', 
-        NEW.id, thumbnail_job_id, maxres_job_id;
-    ELSE
-      RAISE LOG '[VIDEO_TRIGGER] No jobs created for video % (thumbnail_changed: %, maxres_changed: %)', 
-        NEW.id, thumbnail_changed, maxres_changed;
-    END IF;
-  ELSE
-    RAISE LOG '[VIDEO_TRIGGER] No processing needed for video % (operation: %, changes: thumbnail=%, maxres=%)', 
-      COALESCE(NEW.id, OLD.id), TG_OP, thumbnail_changed, maxres_changed;
+    -- Update processing status to pending
+    NEW.image_processing_status = 'pending';
+    NEW.image_processing_updated_at = now();
   END IF;
 
   RETURN NEW;
 END;
 $$;
 
--- Function to queue image processing for playlists with comprehensive logging
+-- Function to queue image processing for playlists (updated for WebP-first)
 CREATE OR REPLACE FUNCTION public.trigger_queue_playlist_image_processing () RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER
 SET
   search_path = '' AS $$
@@ -589,31 +374,16 @@ DECLARE
   crop_changed boolean := false;
   webp_url_provided boolean := false;
   job_id uuid;
-  current_timestamp TIMESTAMP WITH TIME ZONE := now();
 BEGIN
-  -- LOG: Trigger execution start
-  RAISE LOG '[PLAYLIST_TRIGGER] Trigger fired for playlist % (operation: %)', 
-    COALESCE(NEW.id, OLD.id), TG_OP;
-  
   -- Check if image_properties, thumbnail_video_id, or image_webp_url changed
-  IF TG_OP = 'INSERT' THEN
+  IF (TG_OP = 'INSERT') OR 
+     (TG_OP = 'UPDATE' AND (
+       COALESCE(OLD.image_properties::text, '') != COALESCE(NEW.image_properties::text, '') OR
+       COALESCE(OLD.thumbnail_video_id, '') != COALESCE(NEW.thumbnail_video_id, '') OR
+       COALESCE(OLD.image_webp_url, '') != COALESCE(NEW.image_webp_url, '')
+     )) THEN
+    
     crop_changed := true;
-    
-    RAISE LOG '[PLAYLIST_TRIGGER] INSERT playlist % - image_properties: %, thumbnail_video_id: %, image_webp_url: %', 
-      NEW.id, NEW.image_properties::text, NEW.thumbnail_video_id, NEW.image_webp_url;
-      
-  ELSIF TG_OP = 'UPDATE' THEN
-    crop_changed := (
-      COALESCE(OLD.image_properties::text, '') != COALESCE(NEW.image_properties::text, '') OR
-      COALESCE(OLD.thumbnail_video_id, '') != COALESCE(NEW.thumbnail_video_id, '') OR
-      COALESCE(OLD.image_webp_url, '') != COALESCE(NEW.image_webp_url, '')
-    );
-    
-    RAISE LOG '[PLAYLIST_TRIGGER] UPDATE playlist % - crop_changed: % (image_properties: % -> %, thumbnail_video_id: % -> %, image_webp_url: % -> %)', 
-      NEW.id, crop_changed,
-      OLD.image_properties::text, NEW.image_properties::text,
-      OLD.thumbnail_video_id, NEW.thumbnail_video_id,
-      OLD.image_webp_url, NEW.image_webp_url;
   END IF;
   
   -- Check if a WebP URL was directly provided (from client upload)
@@ -625,8 +395,6 @@ BEGIN
   IF crop_changed THEN
     IF webp_url_provided THEN
       -- Scenario 1: WebP image provided, generate AVIF optimization
-      RAISE LOG '[PLAYLIST_TRIGGER] Scenario 1 - WebP provided for playlist %, queuing AVIF optimization job', NEW.id;
-      
       job_id := public.queue_image_processing_job(
         'playlist',
         NEW.id::text,
@@ -635,24 +403,14 @@ BEGIN
         25 -- High priority for playlist images
       );
       
-      RAISE LOG '[PLAYLIST_TRIGGER] Queued AVIF optimization job % for playlist % (webp_url: %)', 
-        job_id, NEW.id, NEW.image_webp_url;
-      
       -- Only update status if job was actually created
       IF job_id IS NOT NULL THEN
         NEW.image_processing_status = 'pending';
-        NEW.image_processing_updated_at = current_timestamp;
-        
-        RAISE LOG '[PLAYLIST_TRIGGER] Updated playlist % status to pending (job: %)', NEW.id, job_id;
-      ELSE
-        RAISE LOG '[PLAYLIST_TRIGGER] No job created for playlist % (possibly duplicate/recent)', NEW.id;
+        NEW.image_processing_updated_at = now();
       END IF;
       
     ELSIF NEW.thumbnail_video_id IS NOT NULL THEN
       -- Scenario 2: Generate cropped image from video thumbnail
-      RAISE LOG '[PLAYLIST_TRIGGER] Scenario 2 - Generating cropped image for playlist % from video %', 
-        NEW.id, NEW.thumbnail_video_id;
-        
       -- Get the video details to find the highest resolution thumbnail
       SELECT thumbnail_maxres_url, thumbnail_url 
       INTO source_video
@@ -663,10 +421,6 @@ BEGIN
         -- Use highest resolution available (maxres preferred)
         source_url := COALESCE(source_video.thumbnail_maxres_url, source_video.thumbnail_url);
         
-        RAISE LOG '[PLAYLIST_TRIGGER] Found source video % for playlist % (maxres: %, thumbnail: %, selected: %)', 
-          NEW.thumbnail_video_id, NEW.id, source_video.thumbnail_maxres_url, 
-          source_video.thumbnail_url, source_url;
-        
         IF source_url IS NOT NULL AND source_url != '' THEN
           job_id := public.queue_image_processing_job(
             'playlist',
@@ -676,31 +430,14 @@ BEGIN
             25 -- High priority for playlist images
           );
 
-          RAISE LOG '[PLAYLIST_TRIGGER] Queued cropping job % for playlist % (source: %)', 
-            job_id, NEW.id, source_url;
-
           -- Only update status if job was actually created
           IF job_id IS NOT NULL THEN
             NEW.image_processing_status = 'pending';
-            NEW.image_processing_updated_at = current_timestamp;
-            
-            RAISE LOG '[PLAYLIST_TRIGGER] Updated playlist % status to pending (job: %)', NEW.id, job_id;
-          ELSE
-            RAISE LOG '[PLAYLIST_TRIGGER] No job created for playlist % (possibly duplicate/recent)', NEW.id;
+            NEW.image_processing_updated_at = now();
           END IF;
-        ELSE
-          RAISE LOG '[PLAYLIST_TRIGGER] No valid source URL found for playlist % (video: %)', 
-            NEW.id, NEW.thumbnail_video_id;
         END IF;
-      ELSE
-        RAISE LOG '[PLAYLIST_TRIGGER] Source video % not found for playlist %', NEW.thumbnail_video_id, NEW.id;
       END IF;
-    ELSE
-      RAISE LOG '[PLAYLIST_TRIGGER] No processing needed for playlist % (no webp_url, no thumbnail_video_id)', NEW.id;
     END IF;
-  ELSE
-    RAISE LOG '[PLAYLIST_TRIGGER] No changes detected for playlist % - no processing triggered', 
-      COALESCE(NEW.id, OLD.id);
   END IF;
 
   RETURN NEW;
@@ -841,21 +578,25 @@ CREATE POLICY "Allow playlist image deletes" ON storage.objects FOR DELETE USING
 );
 
 -- Create trigger for videos table to queue image processing when videos are inserted/updated
-CREATE TRIGGER trigger_videos_queue_image_processing BEFORE INSERT
-OR
-UPDATE ON "public"."videos" FOR EACH ROW
-EXECUTE FUNCTION public.trigger_queue_video_image_processing ();
+CREATE TRIGGER trigger_videos_queue_image_processing
+  BEFORE INSERT OR UPDATE ON "public"."videos"
+  FOR EACH ROW
+  EXECUTE FUNCTION public.trigger_queue_video_image_processing();
 
 -- Create trigger for playlists table to queue image processing when playlists are inserted/updated
-CREATE TRIGGER trigger_playlists_queue_image_processing BEFORE INSERT
-OR
-UPDATE ON "public"."playlists" FOR EACH ROW
-EXECUTE FUNCTION public.trigger_queue_playlist_image_processing ();
+CREATE TRIGGER trigger_playlists_queue_image_processing
+  BEFORE INSERT OR UPDATE ON "public"."playlists"
+  FOR EACH ROW
+  EXECUTE FUNCTION public.trigger_queue_playlist_image_processing();
 
 -- Create trigger for cleanup when videos are deleted
-CREATE TRIGGER trigger_videos_cleanup_images BEFORE DELETE ON "public"."videos" FOR EACH ROW
-EXECUTE FUNCTION public.trigger_cleanup_optimized_images ();
+CREATE TRIGGER trigger_videos_cleanup_images
+  BEFORE DELETE ON "public"."videos"
+  FOR EACH ROW
+  EXECUTE FUNCTION public.trigger_cleanup_optimized_images();
 
 -- Create trigger for cleanup when playlists are deleted
-CREATE TRIGGER trigger_playlists_cleanup_images BEFORE DELETE ON "public"."playlists" FOR EACH ROW
-EXECUTE FUNCTION public.trigger_cleanup_optimized_images ();
+CREATE TRIGGER trigger_playlists_cleanup_images
+  BEFORE DELETE ON "public"."playlists"
+  FOR EACH ROW
+  EXECUTE FUNCTION public.trigger_cleanup_optimized_images();
