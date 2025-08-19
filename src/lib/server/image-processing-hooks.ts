@@ -1,7 +1,7 @@
 import {
   queueVideoImageProcessing,
   queuePlaylistImageProcessing,
-} from '../utils/video-thumbnails-storage';
+} from '$lib/inngest/image-queue';
 
 /**
  * Hook to queue image processing when a new video is created or updated

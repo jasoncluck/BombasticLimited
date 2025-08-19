@@ -20,7 +20,7 @@
     getOptimizedImageUrl,
     generatePictureSources,
     hasOptimizedImages,
-  } from '$lib/utils/video-thumbnails-storage';
+  } from '$lib/utils/video-thumbnails-client';
   import { onMount } from 'svelte';
   import { handleContentNavigation } from './content';
   import type { Playlist } from '$lib/supabase/playlists';

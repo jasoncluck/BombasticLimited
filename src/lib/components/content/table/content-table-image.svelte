@@ -8,7 +8,7 @@
     getOptimizedImageUrl,
     generatePictureSources,
     hasOptimizedImages,
-  } from '$lib/utils/video-thumbnails-storage';
+  } from '$lib/utils/video-thumbnails-client';
 
   import type { SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';

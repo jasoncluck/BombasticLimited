@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { queueVideoImageProcessing, queuePlaylistImageProcessing } from '$lib/utils/video-thumbnails-storage';
+import { queueVideoImageProcessing, queuePlaylistImageProcessing } from '$lib/inngest/image-queue';
 
 describe('Database Job Queue Functions', () => {
   it('should have the correct function signatures', () => {
