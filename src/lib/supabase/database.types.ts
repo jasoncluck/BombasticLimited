@@ -50,7 +50,6 @@ export type Database = {
           source_url: string
           status: string
           updated_at: string
-          worker_id: string | null
         }
         Insert: {
           attempts?: number
@@ -67,7 +66,6 @@ export type Database = {
           source_url: string
           status?: string
           updated_at?: string
-          worker_id?: string | null
         }
         Update: {
           attempts?: number
@@ -84,7 +82,6 @@ export type Database = {
           source_url?: string
           status?: string
           updated_at?: string
-          worker_id?: string | null
         }
         Relationships: []
       }
@@ -603,16 +600,11 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
-      cleanup_stale_processing_jobs: {
-        Args: { stale_threshold_minutes?: number }
-        Returns: number
-      }
-      complete_image_processing_job_with_worker: {
+      complete_image_processing_job: {
         Args: {
           avif_path?: string
           job_id: string
           jpg_path?: string
-          p_worker_id: string
           webp_path?: string
         }
         Returns: boolean
@@ -688,8 +680,8 @@ export type Database = {
         Args: { duration_text: string }
         Returns: number
       }
-      fail_image_processing_job_with_worker: {
-        Args: { error_msg: string; job_id: string; p_worker_id: string }
+      fail_image_processing_job: {
+        Args: { error_msg: string; job_id: string }
         Returns: boolean
       }
       follow_playlist: {
@@ -703,18 +695,6 @@ export type Database = {
       generate_unique_username: {
         Args: { base_username: string; exclude_user_id?: string }
         Returns: string
-      }
-      get_and_lock_next_image_processing_job: {
-        Args: { p_worker_id: string }
-        Returns: {
-          attempts: number
-          entity_id: string
-          entity_type: string
-          image_type: string
-          job_id: string
-          processing_started_at: string
-          source_url: string
-        }[]
       }
       get_discord_avatar_url: {
         Args: { user_id: string }
