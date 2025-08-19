@@ -82,19 +82,19 @@
       {SOURCE_INFO[source].displayName}
     </h1>
     <div
-      class="mb-4 flex w-full flex-col items-center gap-2 sm:ml-auto sm:w-auto sm:flex-row"
+      class="mb-4 flex w-full flex-col items-center gap-2 px-6 sm:ml-auto sm:w-auto"
     >
       <Button
         variant="outline"
         href={SOURCE_INFO[source].supportUrl}
-        class="max-w-sm py-6 text-center text-wrap break-words whitespace-normal sm:w-auto"
+        class="w-full py-6 text-center text-wrap break-words whitespace-normal"
         target="_blank"
       >
         Support {SOURCE_INFO[source].displayName}
       </Button>
       {#if SOURCE_INFO[source].websiteUrlDomain}
         <Button
-          class="text-muted-foreground w-full py-6 text-sm hover:underline sm:w-auto"
+          class="text-muted-foreground w-full py-6 text-sm hover:underline"
           variant="link"
           target="_blank"
           href={`https://www.${SOURCE_INFO[source].websiteUrlDomain}`}
