@@ -49,7 +49,7 @@ BEGIN
     AND processing_started_at < stale_cutoff
     AND attempts < max_attempts;
   
-  GET DIAGNOSTICS stale_jobs_count = ROW_COUNT;
+  stale_jobs_count = ROW_COUNT;
   
   RAISE LOG '[JOB_CLEANUP] Reset % stale processing jobs back to pending for retry', stale_jobs_count;
   

@@ -44,7 +44,7 @@
     "test:teardown": "supabase stop",
     "test:unit": "vitest run src/lib/",
     "test:watch": "vitest --ui",
-    "script:process-existing-images": "tsx scripts/process-existing-images.ts --playlists",
+    "script:process-existing-images": "tsx scripts/process-existing-images.ts --videos",
     "script:setup-local-dev": "tsx scripts/setup-local-dev.ts",
     "script:test-image-processing": "tsx scripts/test-image-processing.ts",
     "script:clear-processing-queue": "tsx scripts/clear-processing-queue.ts",

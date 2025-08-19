@@ -117,7 +117,6 @@ BEGIN
     total_pending_count, total_processing_count, current_timestamp;
   
   -- Get the next pending job with highest priority (lowest number)
-  -- FOR UPDATE SKIP LOCKED ensures atomic processing and prevents duplicates
   SELECT 
     j.id,
     j.entity_type,
@@ -142,15 +141,15 @@ BEGIN
       selected_job_record.image_type, selected_job_record.priority, selected_job_record.created_at,
       selected_job_record.attempts, 3;
       
-    -- Return the selected job
+    -- Return the selected job with explicit type casting
     RETURN QUERY
     SELECT 
-      selected_job_record.id,
-      selected_job_record.entity_type,
-      selected_job_record.entity_id,
-      selected_job_record.image_type,
-      selected_job_record.source_url,
-      selected_job_record.attempts;
+      selected_job_record.id::uuid,
+      selected_job_record.entity_type::text,
+      selected_job_record.entity_id::text,
+      selected_job_record.image_type::text,
+      selected_job_record.source_url::text,
+      selected_job_record.attempts::integer;
   ELSE
     RAISE LOG '[JOB_POLLER] No jobs available for processing (pending: %, processing: %)', 
       total_pending_count, total_processing_count;
@@ -190,7 +189,7 @@ BEGIN
     attempts = attempts + 1
   WHERE id = job_id;
   
-  GET DIAGNOSTICS update_success = FOUND;
+  update_success = FOUND;
   
   IF update_success THEN
     RAISE LOG '[JOB_PROCESSING] Successfully marked job % as processing (attempt %/%)', 
@@ -257,7 +256,7 @@ BEGIN
     updated_at = current_timestamp
   WHERE id = job_id AND worker_id = p_worker_id; -- Double-check worker ownership
   
-  GET DIAGNOSTICS update_success = FOUND;
+  update_success = FOUND;
   
   -- Update entity with new image paths (same logic as before)
   IF update_success THEN
@@ -391,7 +390,7 @@ BEGIN
     updated_at = current_timestamp
   WHERE id = job_id AND worker_id = p_worker_id; -- Double-check worker ownership
   
-  GET DIAGNOSTICS update_success = FOUND;
+  update_success = FOUND;
   
   IF update_success THEN
     RAISE LOG '[JOB_FAILURE] Worker % successfully updated job % status to % (total_time: %s)', 
