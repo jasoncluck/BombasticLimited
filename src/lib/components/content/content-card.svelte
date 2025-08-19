@@ -15,12 +15,6 @@
   import { goto } from '$app/navigation';
   import { getSortDisplayName } from './content-filter';
   import ContentCardSkeleton from './content-card-skeleton.svelte';
-  import { getVideoThumbnailUrl } from '$lib/utils/video-thumbnails';
-  import {
-    getOptimizedImageUrl,
-    generatePictureSources,
-    hasOptimizedImages,
-  } from '$lib/utils/video-thumbnails-client';
   import { onMount } from 'svelte';
   import { handleContentNavigation } from './content';
   import type { Playlist } from '$lib/supabase/playlists';
@@ -353,42 +347,15 @@
   >
     <div class="flex flex-1 cursor-pointer flex-col overflow-hidden text-left">
       <div class="relative flex-shrink-0">
-        {#if hasOptimizedImages(video)}
-          <!-- Use optimized images with smart fallback chain -->
-          {@const pictureSources = generatePictureSources(
-            video,
-            'thumbnail_maxres',
-            supabase
-          )}
-          {@const optimizedResult = getOptimizedImageUrl(
-            video,
-            'thumbnail_maxres',
-            supabase
-          )}
-          <picture>
-            {#each pictureSources as source (source.srcset)}
-              <source srcset={source.srcset} type={source.type} />
-            {/each}
-            <img
-              class="aspect-[16/9] h-auto w-full"
-              src={optimizedResult.url || getVideoThumbnailUrl(video)}
-              alt={video.title}
-              loading="eager"
-              decoding="async"
-              fetchpriority="high"
-            />
-          </picture>
-        {:else}
-          <!-- Fallback to current system for backward compatibility -->
-          <img
-            class="aspect-[16/9] h-auto w-full"
-            src={getVideoThumbnailUrl(video)}
-            alt={video.title}
-            loading="eager"
-            decoding="async"
-            fetchpriority="high"
-          />
-        {/if}
+        <!-- Use the optimized image_url directly from the database -->
+        <img
+          class="aspect-[16/9] h-auto w-full"
+          src={video.image_url || video.thumbnail_maxres_url || video.thumbnail_url}
+          alt={video.title}
+          loading="eager"
+          decoding="async"
+          fetchpriority="high"
+        />
         <div class="absolute top-0.5 right-0.5">
           <ContentDropdown
             videos={[video]}

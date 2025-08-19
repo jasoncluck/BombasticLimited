@@ -41,7 +41,6 @@
   import type { CombinedContentFilter } from './content-filter';
   import type { SuperValidated } from 'sveltekit-superforms';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
-  import { getVideoThumbnailUrl } from '$lib/utils/video-thumbnails';
   import PlaylistDeleteAlertDrawer from '../playlist/playlist-delete-alert-drawer.svelte';
   import PlaylistEditDrawer from '../playlist/playlist-edit-drawer.svelte';
   import type { PlaylistSchema } from '../../../routes/(app)/playlist/[shortId]/schema';
@@ -170,7 +169,7 @@
             {@const video = operationVideos[0]}
             <div class="flex items-center gap-2">
               <img
-                src={getVideoThumbnailUrl(video)}
+                src={video.image_url || video.thumbnail_maxres_url || video.thumbnail_url}
                 alt={video.title}
                 class="aspect-video h-12"
                 loading="lazy"
@@ -263,7 +262,7 @@
             {#snippet itemRenderer(item)}
               {@const video = item as Video}
               <img
-                src={getVideoThumbnailUrl(video)}
+                src={video.image_url || video.thumbnail_maxres_url || video.thumbnail_url}
                 alt={video.title}
                 class="pointer-events-none aspect-video h-[60px]"
                 loading="lazy"

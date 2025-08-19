@@ -188,7 +188,8 @@ export async function getVideos({
   limit = DEFAULT_NUM_VIDEOS_OVERVIEW,
   searchString,
   supabase,
-}: VideoQueryMultipleProps<Video>): Promise<{
+  preferredImageFormat = 'avif',
+}: VideoQueryMultipleProps<Video> & { preferredImageFormat?: string }): Promise<{
   videos: Video[] | VideoWithTimestamp[];
   count: number | null;
   error: PostgrestError | null;
@@ -198,10 +199,14 @@ export async function getVideos({
         'search_videos',
         {
           search_term: searchString,
+          offset_count: 0,
+          p_preferred_image_format: preferredImageFormat,
         },
         { count: 'exact' }
       )
-    : supabase.rpc('get_videos_with_timestamps', {}, { count: 'exact' });
+    : supabase.rpc('get_videos_with_timestamps', {
+        p_preferred_image_format: preferredImageFormat,
+      }, { count: 'exact' });
 
   query.limit(limit);
 
@@ -244,9 +249,15 @@ export async function getVideos({
 /**
  * Returns a single video
  */
-export async function getVideo({ videoId, supabase }: VideoQuerySingleProps) {
+export async function getVideo({ 
+  videoId, 
+  supabase, 
+  preferredImageFormat = 'avif' 
+}: VideoQuerySingleProps & { preferredImageFormat?: string }) {
   const { data: video, error } = await supabase
-    .rpc('get_videos_with_timestamps')
+    .rpc('get_videos_with_timestamps', {
+      p_preferred_image_format: preferredImageFormat,
+    })
     .eq('id', videoId)
     .single();
 
@@ -273,7 +284,8 @@ export async function getInProgressVideos({
   contentFilter,
   supabase,
   session,
-}: VideoQueryMultipleProps<VideoWithTimestamp>): Promise<{
+  preferredImageFormat = 'avif',
+}: VideoQueryMultipleProps<VideoWithTimestamp> & { preferredImageFormat?: string }): Promise<{
   videos: VideoWithTimestamp[];
   count: number | null;
   error?: PostgrestError | null;
@@ -285,7 +297,9 @@ export async function getInProgressVideos({
   const sortOptionInfo = SORT_OPTIONS_TIMESTAMPS[contentFilter.sort.key];
 
   const query = supabase
-    .rpc('get_in_progress_videos_with_timestamps', {}, { count: 'exact' })
+    .rpc('get_in_progress_videos_with_timestamps', {
+      p_preferred_image_format: preferredImageFormat,
+    }, { count: 'exact' })
     .limit(limit);
 
   // Sorting by playlist order

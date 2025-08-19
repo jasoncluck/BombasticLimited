@@ -10,6 +10,7 @@ import {
   getPlaylistDataByYoutubeId,
   getPlaylistsForUsername,
 } from '$lib/supabase/playlists';
+import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
@@ -23,6 +24,9 @@ export const load: PageServerLoad = async ({
 
   const source = params.source;
   const acceptHeader = request.headers.get('accept');
+  
+  // Detect optimal image format from Accept header
+  const preferredImageFormat = detectOptimalFormat(acceptHeader);
 
   if (!isSource(source)) {
     redirect(303, '/');
@@ -48,6 +52,7 @@ export const load: PageServerLoad = async ({
         limit: DEFAULT_NUM_VIDEOS_OVERVIEW,
         contentFilter,
         supabase,
+        preferredImageFormat,
       }).then((result) => result.videos),
 
       // Get all highlighted playlists using the enhanced function

@@ -4,7 +4,9 @@
 -- This migration includes video search, filtering, and retrieval functions
 -- ============================================================================
 -- Function to get videos with user timestamps
-CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps" () RETURNS TABLE (
+CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps" (
+  p_preferred_image_format text DEFAULT 'avif'
+) RETURNS TABLE (
   "id" "text",
   "source" "public"."source",
   "title" "text",
@@ -15,6 +17,7 @@ CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps" () RETURNS TABL
   "thumbnail_avif_url" "text",
   "thumbnail_maxres_webp_url" "text",
   "thumbnail_maxres_avif_url" "text",
+  "image_url" "text",
   "image_processing_status" public.image_processing_status,
   "image_processing_updated_at" TIMESTAMP WITH TIME ZONE,
   "published_at" TIMESTAMP WITH TIME ZONE,
@@ -42,6 +45,21 @@ SET
         v.thumbnail_avif_url,
         v.thumbnail_maxres_webp_url,
         v.thumbnail_maxres_avif_url,
+        -- Use unified select_best_image_format for video thumbnails (with JPG fallback)
+        COALESCE(
+          public.select_best_image_format(
+            v.thumbnail_maxres_avif_url,
+            v.thumbnail_maxres_webp_url,
+            v.thumbnail_maxres_url,  -- JPG fallback for videos
+            p_preferred_image_format
+          ),
+          public.select_best_image_format(
+            v.thumbnail_avif_url,
+            v.thumbnail_webp_url,
+            v.thumbnail_url,  -- JPG fallback for videos
+            p_preferred_image_format
+          )
+        ) as image_url,
         v.image_processing_status,
         v.image_processing_updated_at,
         v.published_at, 
@@ -69,7 +87,8 @@ $$;
 -- Function to search videos with advanced ranking
 CREATE OR REPLACE FUNCTION "public"."search_videos" (
   "search_term" "text",
-  "offset_count" integer DEFAULT 0
+  "offset_count" integer DEFAULT 0,
+  "p_preferred_image_format" text DEFAULT 'avif'
 ) RETURNS TABLE (
   "id" "text",
   "source" "public"."source",
@@ -81,6 +100,7 @@ CREATE OR REPLACE FUNCTION "public"."search_videos" (
   "thumbnail_avif_url" "text",
   "thumbnail_maxres_webp_url" "text",
   "thumbnail_maxres_avif_url" "text",
+  "image_url" "text",
   "image_processing_status" public.image_processing_status,
   "image_processing_updated_at" TIMESTAMP WITH TIME ZONE,
   "published_at" TIMESTAMP WITH TIME ZONE,
@@ -138,6 +158,21 @@ BEGIN
             v.thumbnail_avif_url,
             v.thumbnail_maxres_webp_url,
             v.thumbnail_maxres_avif_url,
+            -- Use unified select_best_image_format for video thumbnails (with JPG fallback)
+            COALESCE(
+              public.select_best_image_format(
+                v.thumbnail_maxres_avif_url,
+                v.thumbnail_maxres_webp_url,
+                v.thumbnail_maxres_url,  -- JPG fallback for videos
+                p_preferred_image_format
+              ),
+              public.select_best_image_format(
+                v.thumbnail_avif_url,
+                v.thumbnail_webp_url,
+                v.thumbnail_url,  -- JPG fallback for videos
+                p_preferred_image_format
+              )
+            ) as best_image_url,
             v.image_processing_status,
             v.image_processing_updated_at,
             v.published_at, 
@@ -188,6 +223,7 @@ BEGIN
         rv.thumbnail_avif_url,
         rv.thumbnail_maxres_webp_url,
         rv.thumbnail_maxres_avif_url,
+        rv.best_image_url,
         rv.image_processing_status,
         rv.image_processing_updated_at,
         rv.published_at, 
@@ -213,7 +249,9 @@ END;
 $$;
 
 -- Function to get in-progress videos with timestamps
-CREATE OR REPLACE FUNCTION "public"."get_in_progress_videos_with_timestamps" () RETURNS TABLE (
+CREATE OR REPLACE FUNCTION "public"."get_in_progress_videos_with_timestamps" (
+  p_preferred_image_format text DEFAULT 'avif'
+) RETURNS TABLE (
   id text,
   source public.source,
   title text,
@@ -224,6 +262,7 @@ CREATE OR REPLACE FUNCTION "public"."get_in_progress_videos_with_timestamps" () 
   thumbnail_avif_url text,
   thumbnail_maxres_webp_url text,
   thumbnail_maxres_avif_url text,
+  image_url text,
   image_processing_status public.image_processing_status,
   image_processing_updated_at TIMESTAMP WITH TIME ZONE,
   published_at TIMESTAMP WITH TIME ZONE,
@@ -252,6 +291,21 @@ BEGIN
         v.thumbnail_avif_url,
         v.thumbnail_maxres_webp_url,
         v.thumbnail_maxres_avif_url,
+        -- Use unified select_best_image_format for video thumbnails (with JPG fallback)
+        COALESCE(
+          public.select_best_image_format(
+            v.thumbnail_maxres_avif_url,
+            v.thumbnail_maxres_webp_url,
+            v.thumbnail_maxres_url,  -- JPG fallback for videos
+            p_preferred_image_format
+          ),
+          public.select_best_image_format(
+            v.thumbnail_avif_url,
+            v.thumbnail_webp_url,
+            v.thumbnail_url,  -- JPG fallback for videos
+            p_preferred_image_format
+          )
+        ) as image_url,
         v.image_processing_status,
         v.image_processing_updated_at,
         v.published_at, 
