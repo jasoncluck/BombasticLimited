@@ -144,6 +144,7 @@
     "sharp": "^0.34.3",
     "svelte-radix": "^2.0.1",
     "tailwindcss": "^4.1.11",
-    "tw-animate-css": "^1.3.6"
+    "tw-animate-css": "^1.3.6",
+    "zod": "^3.25.76"
   }
 }
