@@ -545,3 +545,27 @@ CREATE POLICY "Allow playlist image deletes" ON storage.objects FOR DELETE USING
     auth.uid ()
   )
 );
+
+-- Create trigger for videos table to queue image processing when videos are inserted/updated
+CREATE TRIGGER trigger_videos_queue_image_processing
+  BEFORE INSERT OR UPDATE ON "public"."videos"
+  FOR EACH ROW
+  EXECUTE FUNCTION public.trigger_queue_video_image_processing();
+
+-- Create trigger for playlists table to queue image processing when playlists are inserted/updated
+CREATE TRIGGER trigger_playlists_queue_image_processing
+  BEFORE INSERT OR UPDATE ON "public"."playlists"
+  FOR EACH ROW
+  EXECUTE FUNCTION public.trigger_queue_playlist_image_processing();
+
+-- Create trigger for cleanup when videos are deleted
+CREATE TRIGGER trigger_videos_cleanup_images
+  BEFORE DELETE ON "public"."videos"
+  FOR EACH ROW
+  EXECUTE FUNCTION public.trigger_cleanup_optimized_images();
+
+-- Create trigger for cleanup when playlists are deleted
+CREATE TRIGGER trigger_playlists_cleanup_images
+  BEFORE DELETE ON "public"."playlists"
+  FOR EACH ROW
+  EXECUTE FUNCTION public.trigger_cleanup_optimized_images();

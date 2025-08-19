@@ -9,7 +9,6 @@ function validateEnvironmentVariables(stage: 'Production' | 'Staging') {
     `GOOGLE_API_KEY_${suffix}`,
     `PUBLIC_SUPABASE_URL_${suffix}`,
     `SUPABASE_SERVICE_API_KEY_${suffix}`,
-    `SUPABASE_DB_URL_${suffix}`,
   ];
 
   const missing: string[] = [];
@@ -49,7 +48,6 @@ new AppStack(app, 'BombasticStack-Production', {
     GOOGLE_API_KEY: prodEnvVars.GOOGLE_API_KEY,
     PUBLIC_SUPABASE_URL: prodEnvVars.PUBLIC_SUPABASE_URL,
     SUPABASE_SERVICE_API_KEY: prodEnvVars.SUPABASE_SERVICE_API_KEY,
-    SUPABASE_DB_URL: prodEnvVars.SUPABASE_DB_URL,
   },
 });
 
@@ -64,6 +62,5 @@ new AppStack(app, 'BombasticStack-Staging', {
     GOOGLE_API_KEY: stagingEnvVars.GOOGLE_API_KEY,
     PUBLIC_SUPABASE_URL: stagingEnvVars.PUBLIC_SUPABASE_URL,
     SUPABASE_SERVICE_API_KEY: stagingEnvVars.SUPABASE_SERVICE_API_KEY,
-    SUPABASE_DB_URL: stagingEnvVars.SUPABASE_DB_URL,
   },
 });

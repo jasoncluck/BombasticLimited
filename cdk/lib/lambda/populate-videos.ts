@@ -138,6 +138,8 @@ export const populateVideos = async ({
         };
       });
 
+      console.log(videos);
+
       // Batch upsert for better performance
       const { error } = await supabaseClient
         .from('videos')
