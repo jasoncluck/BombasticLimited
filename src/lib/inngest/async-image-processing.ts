@@ -122,14 +122,12 @@ function generateStoragePaths(
   // Use a combination of current timestamp and job ID to ensure uniqueness
   // This prevents duplicate timestamps if multiple workers process simultaneously
   const timestamp = Date.now();
-  const uniqueSuffix = jobId
-    ? `${timestamp}-${jobId.slice(0, 8)}`
-    : timestamp.toString();
+  const uniqueSuffix = jobId ? `${timestamp}-${jobId.slice(0, 8)}` : timestamp.toString();
   const timestampStr = new Date(timestamp).toISOString();
 
-  console.log(
-    `📂 [${timestampStr}] Worker ${workerId || 'unknown'} generating storage paths for ${entityType}/${entityId}/${imageType} (job: ${jobId}, unique_suffix: ${uniqueSuffix})`
-  );
+
+  console.log(`📂 [${timestampStr}] Worker ${workerId || 'unknown'} generating storage paths for ${entityType}/${entityId}/${imageType} (job: ${jobId}, unique_suffix: ${uniqueSuffix})`);
+
 
   if (entityType === 'playlist') {
     // Use playlists/{playlistId}/ structure with unique suffix
@@ -139,9 +137,8 @@ function generateStoragePaths(
       avifPath: `${basePath}.avif`,
     };
 
-    console.log(
-      `📂 [${timestampStr}] Worker ${workerId || 'unknown'} playlist paths generated - webp: ${paths.webpPath}, avif: ${paths.avifPath}`
-    );
+    
+    console.log(`📂 [${timestampStr}] Worker ${workerId || 'unknown'} playlist paths generated - webp: ${paths.webpPath}, avif: ${paths.avifPath}`);
 
     return paths;
   } else if (entityType === 'video') {
@@ -153,9 +150,8 @@ function generateStoragePaths(
         avifPath: `${basePath}.avif`,
       };
 
-      console.log(
-        `📂 [${timestampStr}] Worker ${workerId || 'unknown'} video thumbnail paths generated - webp: ${paths.webpPath}, avif: ${paths.avifPath}`
-      );
+      
+      console.log(`📂 [${timestampStr}] Worker ${workerId || 'unknown'} video thumbnail paths generated - webp: ${paths.webpPath}, avif: ${paths.avifPath}`);
 
       return paths;
     } else if (imageType === 'thumbnail_maxres') {
@@ -165,9 +161,8 @@ function generateStoragePaths(
         avifPath: `${basePath}.avif`,
       };
 
-      console.log(
-        `📂 [${timestampStr}] Worker ${workerId || 'unknown'} video maxres paths generated - webp: ${paths.webpPath}, avif: ${paths.avifPath}`
-      );
+      
+      console.log(`📂 [${timestampStr}] Worker ${workerId || 'unknown'} video maxres paths generated - webp: ${paths.webpPath}, avif: ${paths.avifPath}`);
 
       return paths;
     }
@@ -180,9 +175,8 @@ function generateStoragePaths(
     avifPath: `${basePath}.avif`,
   };
 
-  console.log(
-    `📂 [${timestampStr}] Worker ${workerId || 'unknown'} fallback paths generated - webp: ${paths.webpPath}, avif: ${paths.avifPath}`
-  );
+  
+  console.log(`📂 [${timestampStr}] Worker ${workerId || 'unknown'} fallback paths generated - webp: ${paths.webpPath}, avif: ${paths.avifPath}`);
 
   return paths;
 }
@@ -529,61 +523,40 @@ export const processImage = inngest.createFunction(
   },
   { event: 'image.process' },
   async ({ event }): Promise<ProcessingResult> => {
-    const {
-      entityType,
-      entityId,
-      imageType,
-      sourceUrl,
-      jobId,
-      workerId,
-      pollingTimestamp,
-      jobAttempts,
-      processingStartedAt,
-    } = event.data;
+
+    const { entityType, entityId, imageType, sourceUrl, jobId, workerId, pollingTimestamp, jobAttempts, processingStartedAt } = event.data;
     const processingStartTimestamp = new Date().toISOString();
     const startTime = Date.now();
 
-    console.log(
-      `🚀 [${processingStartTimestamp}] Worker ${workerId || 'unknown'} starting HIGH-QUALITY processing for ${entityType} ${entityId}, type: ${imageType}, job: ${jobId}`
-    );
-    console.log(
-      `📋 [${processingStartTimestamp}] Job context - worker: ${workerId}, attempts: ${jobAttempts}/3, polled at: ${pollingTimestamp}, processing started: ${processingStartedAt}`
-    );
+    console.log(`🚀 [${processingStartTimestamp}] Worker ${workerId || 'unknown'} starting HIGH-QUALITY processing for ${entityType} ${entityId}, type: ${imageType}, job: ${jobId}`);
+    console.log(`📋 [${processingStartTimestamp}] Job context - worker: ${workerId}, attempts: ${jobAttempts}/3, polled at: ${pollingTimestamp}, processing started: ${processingStartedAt}`);
 
     console.log(`📸 [${processingStartTimestamp}] Source URL: ${sourceUrl}`);
 
     try {
       // Ensure we have both job ID and worker ID - these should always be provided by the enhanced poller
       if (!jobId) {
-        const errorMsg =
-          'No job ID provided - jobs should be created by database triggers and locked by poller';
-        console.error(
-          `❌ [${new Date().toISOString()}] Worker ${workerId || 'unknown'} CRITICAL ERROR: ${errorMsg}`
-        );
+
+        const errorMsg = 'No job ID provided - jobs should be created by database triggers and locked by poller';
+        console.error(`❌ [${new Date().toISOString()}] Worker ${workerId || 'unknown'} CRITICAL ERROR: ${errorMsg}`);
         throw new Error(errorMsg);
       }
 
       if (!workerId) {
-        const errorMsg =
-          'No worker ID provided - worker identification is required to prevent race conditions';
-        console.error(
-          `❌ [${new Date().toISOString()}] CRITICAL ERROR: ${errorMsg}`
-        );
+        const errorMsg = 'No worker ID provided - worker identification is required to prevent race conditions';
+        console.error(`❌ [${new Date().toISOString()}] CRITICAL ERROR: ${errorMsg}`);
 
         throw new Error(errorMsg);
       }
 
-      console.log(
-        `🔄 [${new Date().toISOString()}] Worker ${workerId} processing job ${jobId} (already locked by poller)...`
-      );
+      console.log(`🔄 [${new Date().toISOString()}] Worker ${workerId} processing job ${jobId} (already locked by poller)...`);
 
       // The job is already marked as processing by the atomic poller function
       // No need to call start_image_processing_job again
       const markingDuration = Date.now() - startTime;
 
-      console.log(
-        `✅ [${new Date().toISOString()}] Worker ${workerId} job ${jobId} already locked and processing in ${markingDuration}ms`
-      );
+      console.log(`✅ [${new Date().toISOString()}] Worker ${workerId} job ${jobId} already locked and processing in ${markingDuration}ms`);
+
 
       // Check existing images
       const existingCheckStart = Date.now();
@@ -593,9 +566,9 @@ export const processImage = inngest.createFunction(
       );
       const existingCheckDuration = Date.now() - existingCheckStart;
 
-      console.log(
-        `🔍 [${new Date().toISOString()}] Worker ${workerId} existing images check completed in ${existingCheckDuration}ms - WebP: ${hasWebP}, AVIF: ${hasAVIF} - generating NEW high-quality versions`
-      );
+
+      console.log(`🔍 [${new Date().toISOString()}] Worker ${workerId} existing images check completed in ${existingCheckDuration}ms - WebP: ${hasWebP}, AVIF: ${hasAVIF} - generating NEW high-quality versions`);
+
 
       // Delete existing images before creating new ones
       if (hasWebP || hasAVIF) {
@@ -603,30 +576,20 @@ export const processImage = inngest.createFunction(
         await deleteExistingOptimizedImages(entityType, entityId);
         const deleteDuration = Date.now() - deleteStart;
 
-        console.log(
-          `🗑️ [${new Date().toISOString()}] Worker ${workerId} deleted existing images in ${deleteDuration}ms`
-        );
+        console.log(`🗑️ [${new Date().toISOString()}] Worker ${workerId} deleted existing images in ${deleteDuration}ms`);
       } else {
-        console.log(
-          `ℹ️ [${new Date().toISOString()}] Worker ${workerId} no existing images to delete`
-        );
+        console.log(`ℹ️ [${new Date().toISOString()}] Worker ${workerId} no existing images to delete`);
       }
 
       // Download source image
-      console.log(
-        `📥 [${new Date().toISOString()}] Worker ${workerId} downloading source image from: ${sourceUrl}`
-      );
+      console.log(`📥 [${new Date().toISOString()}] Worker ${workerId} downloading source image from: ${sourceUrl}`);
       const downloadStart = Date.now();
       const imageBuffer = await downloadImage(sourceUrl);
       const downloadDuration = Date.now() - downloadStart;
-      console.log(
-        `✅ [${new Date().toISOString()}] Worker ${workerId} downloaded ${Math.round(imageBuffer.length / 1024)}KB in ${downloadDuration}ms`
-      );
+      console.log(`✅ [${new Date().toISOString()}] Worker ${workerId} downloaded ${Math.round(imageBuffer.length / 1024)}KB in ${downloadDuration}ms`);
 
       // Process image with HIGH QUALITY settings
-      console.log(
-        `🎨 [${new Date().toISOString()}] Worker ${workerId} starting HIGH-QUALITY image processing...`
-      );
+      console.log(`🎨 [${new Date().toISOString()}] Worker ${workerId} starting HIGH-QUALITY image processing...`);
       const processStart = Date.now();
       const { webp: webpBuffer, avif: avifBuffer } = await processImageFormats(
         imageBuffer,
@@ -636,14 +599,10 @@ export const processImage = inngest.createFunction(
       );
       const processDuration = Date.now() - processStart;
 
-      console.log(
-        `✅ [${new Date().toISOString()}] Worker ${workerId} image processing completed in ${processDuration}ms (WebP: ${Math.round(webpBuffer.length / 1024)}KB, AVIF: ${Math.round(avifBuffer.length / 1024)}KB)`
-      );
+      console.log(`✅ [${new Date().toISOString()}] Worker ${workerId} image processing completed in ${processDuration}ms (WebP: ${Math.round(webpBuffer.length / 1024)}KB, AVIF: ${Math.round(avifBuffer.length / 1024)}KB)`);
 
       // Generate storage paths with job and worker context
-      console.log(
-        `📂 [${new Date().toISOString()}] Worker ${workerId} generating storage paths...`
-      );
+      console.log(`📂 [${new Date().toISOString()}] Worker ${workerId} generating storage paths...`);
 
       const pathStart = Date.now();
       const { webpPath, avifPath } = generateStoragePaths(
@@ -655,14 +614,10 @@ export const processImage = inngest.createFunction(
       );
       const pathDuration = Date.now() - pathStart;
 
-      console.log(
-        `📂 [${new Date().toISOString()}] Worker ${workerId} storage paths generated in ${pathDuration}ms`
-      );
+      console.log(`📂 [${new Date().toISOString()}] Worker ${workerId} storage paths generated in ${pathDuration}ms`);
 
       // Upload to storage
-      console.log(
-        `📤 [${new Date().toISOString()}] Worker ${workerId} uploading optimized images to storage...`
-      );
+      console.log(`📤 [${new Date().toISOString()}] Worker ${workerId} uploading optimized images to storage...`);
       const uploadStart = Date.now();
       const uploadResult = await uploadToStorage(
         webpBuffer,
@@ -672,14 +627,10 @@ export const processImage = inngest.createFunction(
       );
       const uploadDuration = Date.now() - uploadStart;
 
-      console.log(
-        `✅ [${new Date().toISOString()}] Worker ${workerId} upload completed in ${uploadDuration}ms`
-      );
+      console.log(`✅ [${new Date().toISOString()}] Worker ${workerId} upload completed in ${uploadDuration}ms`);
 
       // Mark job as completed using the enhanced worker-aware function
-      console.log(
-        `🏁 [${new Date().toISOString()}] Worker ${workerId} marking job ${jobId} as completed...`
-      );
+      console.log(`🏁 [${new Date().toISOString()}] Worker ${workerId} marking job ${jobId} as completed...`);
       const completeStart = Date.now();
       const { error: completeError } = await supabase.rpc(
         'complete_image_processing_job_with_worker',
@@ -694,20 +645,15 @@ export const processImage = inngest.createFunction(
 
       if (completeError) {
         const errorMsg = `Failed to complete job ${jobId}: ${completeError.message}`;
-        console.error(
-          `❌ [${new Date().toISOString()}] Worker ${workerId} ${errorMsg}`
-        );
+        console.error(`❌ [${new Date().toISOString()}] Worker ${workerId} ${errorMsg}`);
         throw new Error(errorMsg);
       }
 
       const totalProcessingTime = Date.now() - startTime;
 
-      console.log(
-        `🎉 [${new Date().toISOString()}] Worker ${workerId} successfully processed HIGH-QUALITY image for ${entityType} ${entityId} in ${totalProcessingTime}ms (job: ${jobId})`
-      );
-      console.log(
-        `📊 [${new Date().toISOString()}] Worker ${workerId} processing breakdown - existing check: ${existingCheckDuration}ms, download: ${downloadDuration}ms, processing: ${processDuration}ms, upload: ${uploadDuration}ms, completion: ${completeDuration}ms`
-      );
+      console.log(`🎉 [${new Date().toISOString()}] Worker ${workerId} successfully processed HIGH-QUALITY image for ${entityType} ${entityId} in ${totalProcessingTime}ms (job: ${jobId})`);
+      console.log(`📊 [${new Date().toISOString()}] Worker ${workerId} processing breakdown - existing check: ${existingCheckDuration}ms, download: ${downloadDuration}ms, processing: ${processDuration}ms, upload: ${uploadDuration}ms, completion: ${completeDuration}ms`);
+
 
       return {
         webpPath: uploadResult.webpPath,
@@ -717,20 +663,19 @@ export const processImage = inngest.createFunction(
       const errorTimestamp = new Date().toISOString();
       const totalErrorTime = Date.now() - startTime;
 
-      console.error(
-        `❌ [${errorTimestamp}] Worker ${workerId || 'unknown'} failed to process HIGH-QUALITY image for ${entityType} ${entityId} (job: ${jobId}) after ${totalErrorTime}ms:`,
-        error
-      );
+      
+      console.error(`❌ [${errorTimestamp}] Worker ${workerId || 'unknown'} failed to process HIGH-QUALITY image for ${entityType} ${entityId} (job: ${jobId}) after ${totalErrorTime}ms:`, error);
+
 
       // Mark the job as failed using the enhanced worker-aware function
       if (jobId && workerId) {
         try {
-          console.log(
-            `🔄 [${new Date().toISOString()}] Worker ${workerId} marking job ${jobId} as failed...`
-          );
-          const failStart = Date.now();
 
+          console.log(`🔄 [${new Date().toISOString()}] Worker ${workerId} marking job ${jobId} as failed...`);
+          const failStart = Date.now();
+          
           await supabase.rpc('fail_image_processing_job_with_worker', {
+
             job_id: jobId,
             p_worker_id: workerId,
             error_msg: error instanceof Error ? error.message : String(error),
@@ -738,14 +683,10 @@ export const processImage = inngest.createFunction(
 
           const failDuration = Date.now() - failStart;
 
-          console.log(
-            `❌ [${new Date().toISOString()}] Worker ${workerId} marked job ${jobId} as failed in ${failDuration}ms`
-          );
+          console.log(`❌ [${new Date().toISOString()}] Worker ${workerId} marked job ${jobId} as failed in ${failDuration}ms`);
         } catch (jobError) {
-          console.error(
-            `💥 [${new Date().toISOString()}] Worker ${workerId} failed to mark job ${jobId} as failed:`,
-            jobError
-          );
+          console.error(`💥 [${new Date().toISOString()}] Worker ${workerId} failed to mark job ${jobId} as failed:`, jobError);
+
         }
       }
 
@@ -852,11 +793,7 @@ export const cleanupStaleJobs = inngest.createFunction(
   },
   { event: 'image.cleanup.stale' },
   async ({ event }) => {
-    const {
-      staleThresholdMinutes = 30,
-      cleanupFailedJobs = true,
-      olderThanHours = 24,
-    } = event.data;
+    const { staleThresholdMinutes = 30, cleanupFailedJobs = true, olderThanHours = 24 } = event.data;
 
     console.log(
       `🧹 Starting cleanup - stale jobs older than ${staleThresholdMinutes} minutes, failed jobs older than ${olderThanHours} hours`
@@ -876,9 +813,7 @@ export const cleanupStaleJobs = inngest.createFunction(
         console.error('Failed to cleanup stale jobs:', staleError);
       } else {
         staleJobsReset = staleResetData || 0;
-        console.log(
-          `✅ Reset ${staleJobsReset} stale processing jobs back to pending`
-        );
+        console.log(`✅ Reset ${staleJobsReset} stale processing jobs back to pending`);
       }
 
       // Cleanup old failed jobs if requested
@@ -902,20 +837,16 @@ export const cleanupStaleJobs = inngest.createFunction(
         }
       }
 
-      console.log(
-        `✅ Cleanup completed: ${staleJobsReset} stale jobs reset, ${failedJobsDeleted} failed jobs deleted`
-      );
-
-      return {
-        staleJobsReset,
+      console.log(`✅ Cleanup completed: ${staleJobsReset} stale jobs reset, ${failedJobsDeleted} failed jobs deleted`);
+      
+      return { 
+        staleJobsReset, 
         failedJobsDeleted,
-        success: true,
+        success: true 
       };
     } catch (error) {
       console.error('Cleanup failed:', error);
-      throw new Error(
-        `Cleanup failed: ${error instanceof Error ? error.message : String(error)}`
-      );
+      throw new Error(`Cleanup failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 );

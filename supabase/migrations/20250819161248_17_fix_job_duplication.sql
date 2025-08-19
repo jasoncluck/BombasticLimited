@@ -35,7 +35,9 @@ CREATE INDEX IF NOT EXISTS "idx_image_processing_jobs_worker_id" ON "public"."im
 
 -- Enhanced function to get and immediately lock next job for processing
 -- This eliminates the race condition by marking the job as processing in the same transaction
-CREATE OR REPLACE FUNCTION public.get_and_lock_next_image_processing_job (p_worker_id text) RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.get_and_lock_next_image_processing_job (
+  p_worker_id text
+) RETURNS TABLE (
   job_id uuid,
   entity_type text,
   entity_id text,
@@ -49,6 +51,7 @@ SET
 DECLARE
   total_pending_count integer;
   total_processing_count integer;
+  selected_job_id uuid;
   selected_job_record RECORD;
   current_timestamp TIMESTAMP WITH TIME ZONE := now();
   update_success boolean := false;
@@ -68,35 +71,38 @@ BEGIN
   RAISE LOG '[JOB_POLLER] Worker % - pending_jobs: %, processing_jobs: %, timestamp: %', 
     p_worker_id, total_pending_count, total_processing_count, current_timestamp;
   
-  -- ATOMIC OPERATION: Get and immediately lock the next pending job
-  -- This prevents race conditions by doing selection and status update in one transaction
-  UPDATE "public"."image_processing_jobs"
-  SET 
-    status = 'processing',
-    processing_started_at = current_timestamp,
-    attempts = attempts + 1,
-    worker_id = p_worker_id,
-    updated_at = current_timestamp
-  WHERE id = (
-    SELECT j.id
-    FROM "public"."image_processing_jobs" j
-    WHERE j.status = 'pending' 
-      AND j.attempts < j.max_attempts
-    ORDER BY j.priority ASC, j.created_at ASC
-    LIMIT 1
-    FOR UPDATE SKIP LOCKED
-  )
-  RETURNING 
-    id,
-    entity_type,
-    entity_id,
-    image_type,
-    source_url,
-    attempts,
-    processing_started_at
-  INTO selected_job_record;
+  -- STEP 1: Select the next job ID atomically
+  -- This avoids the ambiguous column reference by separating selection from update
+  SELECT j.id INTO selected_job_id
+  FROM "public"."image_processing_jobs" j
+  WHERE j.status = 'pending' 
+    AND j.attempts < j.max_attempts
+  ORDER BY j.priority ASC, j.created_at ASC
+  LIMIT 1
+  FOR UPDATE SKIP LOCKED;
   
-  GET DIAGNOSTICS update_success = FOUND;
+  -- STEP 2: If we found a job, update it atomically
+  IF selected_job_id IS NOT NULL THEN
+    UPDATE "public"."image_processing_jobs"
+    SET 
+      status = 'processing',
+      processing_started_at = current_timestamp,
+      attempts = image_processing_jobs.attempts + 1,  -- Explicitly reference the table
+      worker_id = p_worker_id,
+      updated_at = current_timestamp
+    WHERE id = selected_job_id
+    RETURNING 
+      id,
+      entity_type,
+      entity_id,
+      image_type,
+      source_url,
+      attempts,
+      processing_started_at
+    INTO selected_job_record;
+    
+    GET DIAGNOSTICS update_success = FOUND;
+  END IF;
   
   -- LOG: Result of atomic job selection and locking
   IF update_success AND selected_job_record.id IS NOT NULL THEN

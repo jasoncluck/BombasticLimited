@@ -17,9 +17,9 @@ const mockSupabaseRpc = vi.fn();
 const mockSupabaseStorage = {
   from: vi.fn(() => ({
     remove: vi.fn().mockResolvedValue({ error: null }),
-    download: vi.fn().mockResolvedValue({
-      data: new Blob(['test image data']),
-      error: null,
+    download: vi.fn().mockResolvedValue({ 
+      data: new Blob(['test image data']), 
+      error: null 
     }),
     upload: vi.fn().mockResolvedValue({ error: null }),
   })),
@@ -64,13 +64,13 @@ vi.mock('sharp', () => {
     avif: vi.fn().mockReturnThis(),
     toBuffer: vi.fn().mockResolvedValue(Buffer.from('processed image')),
   }));
-
+  
   // Add kernel property to the mock function
   Object.defineProperty(mockSharp, 'kernel', {
     value: { lanczos3: 'lanczos3' },
     writable: false,
   });
-
+  
   return { default: mockSharp };
 });
 
@@ -99,10 +99,10 @@ describe('Enhanced Image Processing with Worker Validation', () => {
 
   it('should use job-specific concurrency control instead of entity-level', async () => {
     const { processImage } = await import('../../async-image-processing');
-
+    
     expect(processImage).toBeDefined();
     expect(processImage.name).toBe('Process Single Image (High Quality)');
-
+    
     // Verify concurrency configuration uses job ID (test structural properties)
     // Note: The actual config structure may vary in the mocked environment
     expect(processImage).toHaveProperty('name');
@@ -111,9 +111,9 @@ describe('Enhanced Image Processing with Worker Validation', () => {
 
   it('should require both job ID and worker ID for processing', async () => {
     const { processImage } = await import('../../async-image-processing');
-
+    
     expect(processImage).toBeDefined();
-
+    
     // The function should validate these requirements in the handler
     // This would be tested by calling the handler with missing data
   });
@@ -124,13 +124,13 @@ describe('Enhanced Image Processing with Worker Validation', () => {
     const imageType = 'thumbnail';
     const jobId = 'job-abc123def456';
     const workerId = 'worker-xyz789-1234567890';
-
+    
     // Test path generation logic
     const timestamp = Date.now();
     const uniqueSuffix = `${timestamp}-${jobId.slice(0, 8)}`;
     const expectedWebpPath = `thumbnails/${entityId}/thumbnail-${entityId}-${uniqueSuffix}.webp`;
     const expectedAvifPath = `thumbnails/${entityId}/thumbnail-${entityId}-${uniqueSuffix}.avif`;
-
+    
     expect(uniqueSuffix).toContain(timestamp.toString());
     expect(uniqueSuffix).toContain(jobId.slice(0, 8));
     expect(expectedWebpPath).toContain(uniqueSuffix);
@@ -145,9 +145,9 @@ describe('Enhanced Image Processing with Worker Validation', () => {
     });
 
     const { processImage } = await import('../../async-image-processing');
-
+    
     expect(processImage).toBeDefined();
-
+    
     // Function should call complete_image_processing_job_with_worker
     // This would be verified in integration tests
   });
@@ -160,9 +160,9 @@ describe('Enhanced Image Processing with Worker Validation', () => {
     });
 
     const { processImage } = await import('../../async-image-processing');
-
+    
     expect(processImage).toBeDefined();
-
+    
     // Function should call fail_image_processing_job_with_worker
     // This would be verified in integration tests
   });
@@ -171,10 +171,10 @@ describe('Enhanced Image Processing with Worker Validation', () => {
     const jobId = 'test-job-123';
     const workerId = 'worker-abc-123';
     const wrongWorkerId = 'worker-xyz-456';
-
+    
     // Test that worker validation logic exists
     expect(workerId).not.toBe(wrongWorkerId);
-
+    
     // The database function should enforce this validation
     // complete_image_processing_job_with_worker should check worker_id matches
   });
@@ -185,12 +185,12 @@ describe('Enhanced Image Processing with Worker Validation', () => {
     const entityType = 'playlist';
     const entityId = 'playlist-123';
     const timestamp = new Date().toISOString();
-
+    
     // Test logging format
     const startLog = `🚀 [${timestamp}] Worker ${workerId} starting HIGH-QUALITY processing for ${entityType} ${entityId}, type: playlist_image, job: ${jobId}`;
     const pathLog = `📂 [${timestamp}] Worker ${workerId} generating storage paths for ${entityType}/${entityId}/playlist_image (job: ${jobId}, unique_suffix: 1234567890-${jobId.slice(0, 8)})`;
     const completeLog = `🎉 [${timestamp}] Worker ${workerId} successfully processed HIGH-QUALITY image for ${entityType} ${entityId} in 5000ms (job: ${jobId})`;
-
+    
     expect(startLog).toContain(`Worker ${workerId}`);
     expect(startLog).toContain(`job: ${jobId}`);
     expect(pathLog).toContain('unique_suffix');
@@ -202,11 +202,11 @@ describe('Enhanced Image Processing with Worker Validation', () => {
     const jobId = 'job-error-123';
     const errorMessage = 'Test processing error';
     const timestamp = new Date().toISOString();
-
+    
     // Test error logging format
     const errorLog = `❌ [${timestamp}] Worker ${workerId} failed to process HIGH-QUALITY image for video test-video (job: ${jobId}) after 3000ms: ${errorMessage}`;
     const failLog = `🔄 [${timestamp}] Worker ${workerId} marking job ${jobId} as failed...`;
-
+    
     expect(errorLog).toContain(`Worker ${workerId}`);
     expect(errorLog).toContain(`job: ${jobId}`);
     expect(errorLog).toContain(errorMessage);
@@ -215,19 +215,11 @@ describe('Enhanced Image Processing with Worker Validation', () => {
 
   it('should prevent processing without proper worker validation', () => {
     const testCases = [
-      {
-        jobId: null,
-        workerId: 'worker-123',
-        expectedError: 'No job ID provided',
-      },
-      {
-        jobId: 'job-123',
-        workerId: null,
-        expectedError: 'No worker ID provided',
-      },
+      { jobId: null, workerId: 'worker-123', expectedError: 'No job ID provided' },
+      { jobId: 'job-123', workerId: null, expectedError: 'No worker ID provided' },
       { jobId: null, workerId: null, expectedError: 'No job ID provided' },
     ];
-
+    
     testCases.forEach(({ jobId, workerId, expectedError }) => {
       // Test validation logic
       if (!jobId) {
@@ -240,7 +232,7 @@ describe('Enhanced Image Processing with Worker Validation', () => {
 
   it('should include stale job cleanup functionality', async () => {
     const { cleanupStaleJobs } = await import('../../async-image-processing');
-
+    
     expect(cleanupStaleJobs).toBeDefined();
     expect(cleanupStaleJobs.name).toBe('Cleanup Stale Processing Jobs');
   });
@@ -251,7 +243,7 @@ describe('Enhanced Image Processing with Worker Validation', () => {
       cleanupFailedJobs: true,
       olderThanHours: 24,
     };
-
+    
     expect(cleanupConfig.staleThresholdMinutes).toBeGreaterThan(0);
     expect(cleanupConfig.olderThanHours).toBeGreaterThan(0);
     expect(typeof cleanupConfig.cleanupFailedJobs).toBe('boolean');
