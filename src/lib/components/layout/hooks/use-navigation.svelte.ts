@@ -64,9 +64,12 @@ export function useNavigation(
             etag,
             lastModified,
             userId: session?.user?.id ?? null,
-            timestamp: Date.now()
+            timestamp: Date.now(),
           };
-          sessionStorage.setItem(`nav-cache-${to.url.href}`, JSON.stringify(cacheEntry));
+          sessionStorage.setItem(
+            `nav-cache-${to.url.href}`,
+            JSON.stringify(cacheEntry)
+          );
         } catch (error) {
           console.warn('Failed to store navigation cache entry:', error);
         }

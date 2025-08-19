@@ -17,7 +17,8 @@ export class SimpleMemoryCache {
   /**
    * Set a value in the cache with TTL
    */
-  set<T>(key: string, data: T, ttl: number = 5 * 60 * 1000): void { // 5 minutes default
+  set<T>(key: string, data: T, ttl: number = 5 * 60 * 1000): void {
+    // 5 minutes default
     // Evict oldest entries if we're at capacity
     if (this.cache.size >= this.maxEntries) {
       this.evictOldest();
@@ -26,7 +27,7 @@ export class SimpleMemoryCache {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
-      ttl
+      ttl,
     });
   }
 
@@ -65,7 +66,7 @@ export class SimpleMemoryCache {
    */
   clearPattern(pattern: string): void {
     const keys = Array.from(this.cache.keys());
-    keys.forEach(key => {
+    keys.forEach((key) => {
       if (key.includes(pattern)) {
         this.cache.delete(key);
       }
@@ -78,7 +79,7 @@ export class SimpleMemoryCache {
   getStats(): { entries: number; size: number } {
     return {
       entries: this.cache.size,
-      size: JSON.stringify(Array.from(this.cache.entries())).length
+      size: JSON.stringify(Array.from(this.cache.entries())).length,
     };
   }
 
@@ -119,7 +120,10 @@ export const simpleCache = new SimpleMemoryCache();
 
 // Auto-cleanup interval (every 5 minutes)
 if (typeof window !== 'undefined') {
-  setInterval(() => {
-    simpleCache.cleanup();
-  }, 5 * 60 * 1000);
+  setInterval(
+    () => {
+      simpleCache.cleanup();
+    },
+    5 * 60 * 1000
+  );
 }
