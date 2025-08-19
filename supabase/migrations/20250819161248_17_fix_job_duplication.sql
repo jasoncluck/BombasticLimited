@@ -35,9 +35,7 @@ CREATE INDEX IF NOT EXISTS "idx_image_processing_jobs_worker_id" ON "public"."im
 
 -- Enhanced function to get and immediately lock next job for processing
 -- This eliminates the race condition by marking the job as processing in the same transaction
-CREATE OR REPLACE FUNCTION public.get_and_lock_next_image_processing_job (
-  p_worker_id text
-) RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.get_and_lock_next_image_processing_job (p_worker_id text) RETURNS TABLE (
   job_id uuid,
   entity_type text,
   entity_id text,

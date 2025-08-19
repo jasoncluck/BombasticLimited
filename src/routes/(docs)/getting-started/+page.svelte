@@ -1,5 +1,4 @@
 <script lang="ts">
-  import GettingStarted from './getting-started.svx';
 </script>
 
 <div class="getting-started-page">
@@ -84,9 +83,7 @@
   </aside>
 
   <!-- Main Content -->
-  <article class="prose prose-slate dark:prose-invert max-w-none">
-    {GettingStarted}
-  </article>
+  <article class="prose prose-slate dark:prose-invert max-w-none"></article>
 
   <!-- Footer -->
   <footer class="border-border mt-12 border-t pt-8">
