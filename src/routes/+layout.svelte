@@ -19,18 +19,12 @@
   import { setNavigationState } from '$lib/state/navigation.svelte';
   import { invalidate } from '$app/navigation';
   import type { Session } from '@supabase/supabase-js';
-
-  import '@fontsource/fira-sans';
   import '../app.css';
 
   injectSpeedInsights();
 
   let { data, children } = $props();
-  let {
-    session,
-    supabase,
-    userProfile,
-  } = $derived(data);
+  let { session, supabase, userProfile } = $derived(data);
 
   // Initialize all state
   const pageState = setPageState();
@@ -52,19 +46,15 @@
   let wasTabHidden = $state(false);
 
   // Use custom hooks - simplified without complex caching
-  const navigation = $derived(
-    {
-      // Simplified navigation state without complex caching
-      isLoading: false,
-      shouldShowLoader: false
-    }
-  );
-  const layoutEffects = $derived(
-    {
-      // Simplified layout effects without complex caching
-      isInitialized: true
-    }
-  );
+  const navigation = $derived({
+    // Simplified navigation state without complex caching
+    isLoading: false,
+    shouldShowLoader: false,
+  });
+  const layoutEffects = $derived({
+    // Simplified layout effects without complex caching
+    isInitialized: true,
+  });
 
   // Simplified navigation state
   const isNavigatingToContent = $derived(false); // Simplified - no complex navigation detection
