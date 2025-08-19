@@ -99,7 +99,7 @@ BEGIN
       processing_started_at
     INTO selected_job_record;
     
-    GET DIAGNOSTICS update_success = FOUND;
+    update_success = FOUND;
   END IF;
   
   -- LOG: Result of atomic job selection and locking
