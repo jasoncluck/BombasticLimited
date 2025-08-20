@@ -1224,12 +1224,7 @@ export type Database = {
         }[];
       };
       select_best_image_format: {
-        Args: {
-          avif_url: string;
-          jpg_url: string;
-          preferred_format?: string;
-          webp_url: string;
-        };
+        Args: { avif_url: string; preferred_format?: string; webp_url: string };
         Returns: string;
       };
       setup_notification_cleanup_cron: {

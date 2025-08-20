@@ -128,7 +128,7 @@ export const populateVideos = async ({
           description: item.snippet?.description,
           published_at: item.snippet?.publishedAt,
           thumbnail_url: removeLiveSuffix(
-            item.snippet?.thumbnails?.medium?.url
+            item.snippet?.thumbnails?.standard?.url
           ),
           thumbnail_maxres_url: removeLiveSuffix(
             item.snippet?.thumbnails?.maxres?.url

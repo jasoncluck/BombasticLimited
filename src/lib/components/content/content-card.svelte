@@ -350,7 +350,7 @@
         <!-- Use the optimized image_url directly from the database -->
         <img
           class="aspect-[16/9] h-auto w-full"
-          src={video.image_url}
+          src={video.image_url ?? video.thumbnail_url}
           alt={video.title}
           loading="eager"
           decoding="async"

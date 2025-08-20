@@ -357,9 +357,7 @@ export async function getPlaylistVideoContext({
     short_id: metadataRow.playlist_short_id,
     created_by: metadataRow.playlist_created_by,
     description: metadataRow.playlist_description,
-    image_url:
-      getFullImageUrl(metadataRow.playlist_image_url, supabase) ??
-      metadataRow.playlist_image_url,
+    image_url: getFullImageUrl(metadataRow.playlist_image_url, supabase),
     type: metadataRow.playlist_type,
     image_properties: metadataRow.playlist_image_properties,
     youtube_id: metadataRow.playlist_youtube_id,

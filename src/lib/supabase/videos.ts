@@ -13,7 +13,7 @@ import type {
   SupabaseClient,
 } from '@supabase/supabase-js';
 import type { Database } from './database.types';
-import type { PlaylistVideo } from './playlists';
+import { getFullImageUrl, type PlaylistVideo } from './playlists';
 
 export const DEFAULT_NUM_VIDEOS_PAGINATION = 100;
 export const DEFAULT_NUM_VIDEOS_OVERVIEW = 15;
@@ -38,7 +38,7 @@ export type Video = {
   description: string;
   thumbnail_url: string;
   thumbnail_maxres_url: string | null;
-  image_url: string | null; // Add image_url to Video type
+  image_url: string | null;
   published_at: string;
   duration: string;
   views: number;
@@ -60,14 +60,16 @@ export type SourceVideosCount = Record<Source, number | null>;
 
 // Transform functions for different RPC responses
 function transformVideoFromGetVideosWithTimestamps(
-  rpcData: GetVideosWithTimestampsResponse
+  rpcData: GetVideosWithTimestampsResponse,
+  supabase: SupabaseClient<Database>
 ): VideoWithTimestamp {
   return {
     id: rpcData.id,
     source: rpcData.source as Source,
     title: rpcData.title,
     description: rpcData.description,
-    image_url: rpcData.image_url,
+    image_url:
+      getFullImageUrl(rpcData.image_url, supabase) ?? rpcData.thumbnail_url,
     thumbnail_url: rpcData.thumbnail_url,
     thumbnail_maxres_url: rpcData.thumbnail_maxres_url,
     published_at: rpcData.published_at,
@@ -85,14 +87,16 @@ function transformVideoFromGetVideosWithTimestamps(
 }
 
 function transformVideoFromSearchVideos(
-  rpcData: SearchVideosResponse
+  rpcData: SearchVideosResponse,
+  supabase: SupabaseClient<Database>
 ): VideoWithTimestamp {
   return {
     id: rpcData.id,
     source: rpcData.source as Source,
     title: rpcData.title,
     description: rpcData.description,
-    image_url: rpcData.image_url,
+    image_url:
+      getFullImageUrl(rpcData.image_url, supabase) ?? rpcData.image_url,
     thumbnail_url: rpcData.thumbnail_url,
     thumbnail_maxres_url: rpcData.thumbnail_maxres_url,
     published_at: rpcData.published_at,
@@ -110,14 +114,16 @@ function transformVideoFromSearchVideos(
 }
 
 function transformVideoFromGetInProgressVideos(
-  rpcData: GetInProgressVideosResponse
+  rpcData: GetInProgressVideosResponse,
+  supabase: SupabaseClient<Database>
 ): VideoWithTimestamp {
   return {
     id: rpcData.id,
     source: rpcData.source as Source,
     title: rpcData.title,
     description: rpcData.description,
-    image_url: rpcData.image_url,
+    image_url:
+      getFullImageUrl(rpcData.image_url, supabase) ?? rpcData.image_url,
     thumbnail_url: rpcData.thumbnail_url,
     thumbnail_maxres_url: rpcData.thumbnail_maxres_url,
     published_at: rpcData.published_at,
@@ -217,11 +223,12 @@ export async function getVideos({
   // Transform videos using appropriate transform function with type assertions
   const transformedVideos = searchString
     ? (videos || []).map((video) =>
-        transformVideoFromSearchVideos(video as SearchVideosResponse)
+        transformVideoFromSearchVideos(video as SearchVideosResponse, supabase)
       )
     : (videos || []).map((video) =>
         transformVideoFromGetVideosWithTimestamps(
-          video as GetVideosWithTimestampsResponse
+          video as GetVideosWithTimestampsResponse,
+          supabase
         )
       );
 
@@ -250,7 +257,8 @@ export async function getVideo({
 
   const transformedVideo = video
     ? transformVideoFromGetVideosWithTimestamps(
-        video as GetVideosWithTimestampsResponse
+        video as GetVideosWithTimestampsResponse,
+        supabase
       )
     : null;
 
@@ -322,7 +330,10 @@ export async function getInProgressVideos({
   }
 
   const transformedVideos = (videos || []).map((video) =>
-    transformVideoFromGetInProgressVideos(video as GetInProgressVideosResponse)
+    transformVideoFromGetInProgressVideos(
+      video as GetInProgressVideosResponse,
+      supabase
+    )
   );
 
   return { videos: transformedVideos, count, error };

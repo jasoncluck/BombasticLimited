@@ -7,7 +7,6 @@
 CREATE OR REPLACE FUNCTION public.select_best_image_format (
   avif_url text,
   webp_url text,
-  jpg_url text,
   preferred_format text DEFAULT 'avif'
 ) RETURNS text LANGUAGE plpgsql IMMUTABLE
 SET
@@ -16,14 +15,12 @@ BEGIN
   -- Start from preferred format and fallback through the chain
   CASE preferred_format
     WHEN 'avif' THEN
-      RETURN COALESCE(avif_url, webp_url, jpg_url);
+      RETURN COALESCE(avif_url, webp_url );
     WHEN 'webp' THEN
-      RETURN COALESCE(webp_url, jpg_url, avif_url);
-    WHEN 'jpeg', 'jpg' THEN
-      RETURN COALESCE(jpg_url, webp_url, avif_url);
+      RETURN COALESCE(webp_url,  avif_url);
     ELSE
       -- Default fallback order
-      RETURN COALESCE(avif_url, webp_url, jpg_url);
+      RETURN COALESCE(avif_url, webp_url);
   END CASE;
 END;
 $$;
@@ -102,7 +99,6 @@ BEGIN
     p.short_id,
     p.created_by,
     p.description,
-    -- Use unified select_best_image_format for playlist images (pass NULL for jpg_url)
     public.select_best_image_format(
       p.image_avif_url,
       p.image_webp_url,

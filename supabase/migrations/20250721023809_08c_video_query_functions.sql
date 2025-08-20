@@ -39,7 +39,6 @@ SET
         public.select_best_image_format(
           v.thumbnail_avif_url,
           v.thumbnail_webp_url,
-          v.thumbnail_url,  -- JPG fallback for videos
           p_preferred_image_format
         ) as image_url,
         v.image_processing_status,
@@ -136,7 +135,6 @@ BEGIN
             public.select_best_image_format(
               v.thumbnail_avif_url,
               v.thumbnail_webp_url,
-              v.thumbnail_url,  -- JPG fallback for videos
               p_preferred_image_format
             ) as best_image_url,
             v.image_processing_status,
@@ -247,7 +245,6 @@ BEGIN
         public.select_best_image_format(
           v.thumbnail_avif_url,
           v.thumbnail_webp_url,
-          v.thumbnail_url,  -- JPG fallback for videos
           p_preferred_image_format
         ) as image_url,
         v.image_processing_status,
