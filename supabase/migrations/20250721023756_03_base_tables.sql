@@ -35,10 +35,6 @@ COMMENT ON COLUMN "public"."videos"."thumbnail_webp_url" IS 'Supabase Storage pa
 
 COMMENT ON COLUMN "public"."videos"."thumbnail_avif_url" IS 'Supabase Storage path for AVIF thumbnail';
 
-COMMENT ON COLUMN "public"."videos"."thumbnail_maxres_webp_url" IS 'Supabase Storage path for WebP max-res thumbnail';
-
-COMMENT ON COLUMN "public"."videos"."thumbnail_maxres_avif_url" IS 'Supabase Storage path for AVIF max-res thumbnail';
-
 COMMENT ON COLUMN "public"."videos"."image_processing_status" IS 'Status of background image processing for this video';
 
 COMMENT ON COLUMN "public"."videos"."views" IS 'Total number of times this video has been viewed by users';
