@@ -1,4 +1,4 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env node
 
 /**
  * Script to process existing images in the database
@@ -7,13 +7,20 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { inngest } from '../src/lib/inngest/client.js';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
-dotenv.config();
+// Load environment variables from .env.local for local development
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const projectRoot = dirname(__dirname);
+
+dotenv.config({ path: join(projectRoot, '.env.local') });
+dotenv.config({ path: join(projectRoot, '.env') });
 
 // Configuration
-const BATCH_SIZE = 50;
+const BATCH_SIZE = 100; // Increased from 50 to 100 for better throughput
 const DRY_RUN = process.argv.includes('--dry-run');
 const ENTITY_TYPE = process.argv.includes('--videos')
   ? 'videos'
@@ -29,6 +36,12 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!supabaseUrl || !supabaseServiceKey) {
   console.error('Error: Missing Supabase environment variables');
   console.error('Required: PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY');
+  console.error('');
+  console.error('For local development, make sure you have a .env.local file with:');
+  console.error('PUBLIC_SUPABASE_URL=your_supabase_url');
+  console.error('SUPABASE_SERVICE_ROLE_KEY=your_service_role_key');
+  console.error('');
+  console.error('You can also run "supabase start" to use local Supabase instance.');
   process.exit(1);
 }
 
@@ -58,6 +71,14 @@ interface Playlist {
   image_processing_status: string | null;
   video_thumbnail_url: string | null;
   video_thumbnail_maxres_url: string | null;
+}
+
+interface Job {
+  entity_type: 'video' | 'playlist';
+  entity_id: string;
+  image_type: 'thumbnail' | 'thumbnail_maxres' | 'playlist_image';
+  source_url: string;
+  priority: number;
 }
 
 async function getVideosToProcess(): Promise<Video[]> {
@@ -172,8 +193,8 @@ async function getPlaylistsToProcess(): Promise<Playlist[]> {
   return playlistsWithThumbnails;
 }
 
-function createVideoJobs(videos: Video[]) {
-  const jobs = [];
+function createVideoJobs(videos: Video[]): Job[] {
+  const jobs: Job[] = [];
 
   for (const video of videos) {
     // Skip if already has optimized images (unless forcing)
@@ -187,20 +208,20 @@ function createVideoJobs(videos: Video[]) {
 
     if (video.thumbnail_url) {
       jobs.push({
-        entityType: 'video' as const,
-        entityId: video.id,
-        imageType: 'thumbnail' as const,
-        sourceUrl: video.thumbnail_url,
+        entity_type: 'video' as const,
+        entity_id: video.id,
+        image_type: 'thumbnail' as const,
+        source_url: video.thumbnail_url,
         priority: 200, // Lower priority for batch processing
       });
     }
 
     if (video.thumbnail_maxres_url) {
       jobs.push({
-        entityType: 'video' as const,
-        entityId: video.id,
-        imageType: 'thumbnail_maxres' as const,
-        sourceUrl: video.thumbnail_maxres_url,
+        entity_type: 'video' as const,
+        entity_id: video.id,
+        image_type: 'thumbnail_maxres' as const,
+        source_url: video.thumbnail_maxres_url,
         priority: 200,
       });
     }
@@ -209,8 +230,8 @@ function createVideoJobs(videos: Video[]) {
   return jobs;
 }
 
-function createPlaylistJobs(playlists: Playlist[]) {
-  const jobs = [];
+function createPlaylistJobs(playlists: Playlist[]): Job[] {
+  const jobs: Job[] = [];
 
   for (const playlist of playlists) {
     console.log(`Processing playlist ${playlist.id}:`, {
@@ -254,10 +275,10 @@ function createPlaylistJobs(playlists: Playlist[]) {
     );
 
     jobs.push({
-      entityType: 'playlist' as const,
-      entityId: playlist.id.toString(),
-      imageType: 'playlist_image' as const,
-      sourceUrl: sourceUrl,
+      entity_type: 'playlist' as const,
+      entity_id: playlist.id.toString(),
+      image_type: 'playlist_image' as const,
+      source_url: sourceUrl,
       priority: 200,
     });
   }
@@ -265,25 +286,45 @@ function createPlaylistJobs(playlists: Playlist[]) {
   return jobs;
 }
 
-async function processBatch(jobs: any[], batchNumber: number) {
+async function processBatch(jobs: Job[], batchNumber: number) {
   console.log(`Processing batch ${batchNumber}: ${jobs.length} jobs`);
 
   if (DRY_RUN) {
     console.log(
       'DRY RUN: Would process these jobs:',
       jobs.map(
-        (j) => `${j.entityType}:${j.entityId}:${j.imageType} (${j.sourceUrl})`
+        (j) => `${j.entity_type}:${j.entity_id}:${j.image_type} (${j.source_url})`
       )
     );
     return;
   }
 
   try {
-    await inngest.send({
-      name: 'image.batch.process',
-      data: { jobs },
-    });
-    console.log(`✅ Queued batch ${batchNumber} successfully`);
+    // Create database jobs using the queue_image_processing_job function
+    const jobPromises = jobs.map((job) =>
+      supabase.rpc('queue_image_processing_job', {
+        p_entity_type: job.entity_type,
+        p_entity_id: job.entity_id,
+        p_image_type: job.image_type,
+        p_source_url: job.source_url,
+        p_priority: job.priority,
+      })
+    );
+
+    const results = await Promise.all(jobPromises);
+    const successful = results.filter((r) => !r.error).length;
+    const failed = results.filter((r) => r.error).length;
+
+    if (failed > 0) {
+      console.error(`❌ Failed to queue ${failed} jobs in batch ${batchNumber}`);
+      results.forEach((result, index) => {
+        if (result.error) {
+          console.error(`  Job ${index + 1}: ${result.error.message}`);
+        }
+      });
+    }
+
+    console.log(`✅ Queued batch ${batchNumber}: ${successful} successful, ${failed} failed`);
   } catch (error) {
     console.error(`❌ Failed to queue batch ${batchNumber}:`, error);
     throw error;
@@ -299,7 +340,7 @@ async function main() {
   console.log('');
 
   try {
-    let allJobs = [];
+    let allJobs: Job[] = [];
 
     // Process videos
     if (ENTITY_TYPE === 'videos' || ENTITY_TYPE === 'both') {
@@ -356,7 +397,8 @@ async function main() {
       console.log(
         '\n📊 You can monitor progress by checking the image_processing_jobs table'
       );
-      console.log('🌐 Jobs will be processed in the background by Inngest');
+      console.log('🌐 Jobs will be processed by the job poller and Inngest workers');
+      console.log('⏰ The poller runs every 5 minutes and processes up to 50 jobs per cycle');
     }
   } catch (error) {
     console.error('❌ Script failed:', error);
@@ -380,6 +422,13 @@ Examples:
   npm run script:process-existing-images --dry-run
   npm run script:process-existing-images --videos
   npm run script:process-existing-images --force
+
+Environment Setup:
+  This script requires Supabase environment variables:
+  - PUBLIC_SUPABASE_URL
+  - SUPABASE_SERVICE_ROLE_KEY
+  
+  For local development, create a .env.local file or run "supabase start".
 `);
   process.exit(0);
 }
