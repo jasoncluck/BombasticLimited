@@ -43,20 +43,12 @@ SET
         v.thumbnail_avif_url,
         v.thumbnail_maxres_webp_url,
         v.thumbnail_maxres_avif_url,
-        -- Use unified select_best_image_format for video thumbnails (with JPG fallback)
-        COALESCE(
-          public.select_best_image_format(
-            v.thumbnail_maxres_avif_url,
-            v.thumbnail_maxres_webp_url,
-            v.thumbnail_maxres_url,  -- JPG fallback for videos
-            p_preferred_image_format
-          ),
-          public.select_best_image_format(
-            v.thumbnail_avif_url,
-            v.thumbnail_webp_url,
-            v.thumbnail_url,  -- JPG fallback for videos
-            p_preferred_image_format
-          )
+        -- Use unified select_best_image_format for video thumbnails (normal thumbnails only)
+        public.select_best_image_format(
+          v.thumbnail_avif_url,
+          v.thumbnail_webp_url,
+          v.thumbnail_url,  -- JPG fallback for videos
+          p_preferred_image_format
         ) as image_url,
         v.image_processing_status,
         v.image_processing_updated_at,
@@ -156,20 +148,12 @@ BEGIN
             v.thumbnail_avif_url,
             v.thumbnail_maxres_webp_url,
             v.thumbnail_maxres_avif_url,
-            -- Use unified select_best_image_format for video thumbnails (with JPG fallback)
-            COALESCE(
-              public.select_best_image_format(
-                v.thumbnail_maxres_avif_url,
-                v.thumbnail_maxres_webp_url,
-                v.thumbnail_maxres_url,  -- JPG fallback for videos
-                p_preferred_image_format
-              ),
-              public.select_best_image_format(
-                v.thumbnail_avif_url,
-                v.thumbnail_webp_url,
-                v.thumbnail_url,  -- JPG fallback for videos
-                p_preferred_image_format
-              )
+            -- Use unified select_best_image_format for video thumbnails (normal thumbnails only)
+            public.select_best_image_format(
+              v.thumbnail_avif_url,
+              v.thumbnail_webp_url,
+              v.thumbnail_url,  -- JPG fallback for videos
+              p_preferred_image_format
             ) as best_image_url,
             v.image_processing_status,
             v.image_processing_updated_at,
@@ -287,20 +271,12 @@ BEGIN
         v.thumbnail_avif_url,
         v.thumbnail_maxres_webp_url,
         v.thumbnail_maxres_avif_url,
-        -- Use unified select_best_image_format for video thumbnails (with JPG fallback)
-        COALESCE(
-          public.select_best_image_format(
-            v.thumbnail_maxres_avif_url,
-            v.thumbnail_maxres_webp_url,
-            v.thumbnail_maxres_url,  -- JPG fallback for videos
-            p_preferred_image_format
-          ),
-          public.select_best_image_format(
-            v.thumbnail_avif_url,
-            v.thumbnail_webp_url,
-            v.thumbnail_url,  -- JPG fallback for videos
-            p_preferred_image_format
-          )
+        -- Use unified select_best_image_format for video thumbnails (normal thumbnails only)
+        public.select_best_image_format(
+          v.thumbnail_avif_url,
+          v.thumbnail_webp_url,
+          v.thumbnail_url,  -- JPG fallback for videos
+          p_preferred_image_format
         ) as image_url,
         v.image_processing_status,
         v.image_processing_updated_at,
