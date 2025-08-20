@@ -98,12 +98,13 @@ export default async function globalSetup(config: FullConfig) {
       );
 
       // Navigate to login page
-      const baseURL =
+      const baseUrl =
         config.projects[0].use?.baseURL || 'http://localhost:5173';
-      await page.goto(`${baseURL}/auth/login`);
+      await page.goto(`${baseUrl}/auth/login`);
 
-      // Wait for the page to be fully loaded
-      await page.waitForLoadState('domcontentloaded');
+      console.log(baseUrl);
+      console.log(testUser.email);
+      console.log(testUser.password);
 
       // Fill in login form
       const emailField = page.locator('input[type="email"]');
@@ -123,9 +124,6 @@ export default async function globalSetup(config: FullConfig) {
       await page.waitForURL((url) => !url.href.includes('/auth/login'), {
         timeout: 10000,
       });
-
-      // Wait for the page to be in the authenticated state
-      await page.waitForLoadState('networkidle');
 
       // Wait for Profile button to confirm authentication
       await page.waitForSelector('button:has-text("Profile")', {

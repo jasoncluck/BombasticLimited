@@ -7,11 +7,11 @@
 
 <svelte:head>
   <title>Getting Started - Bombastic</title>
-  <meta name="description" content="Getting started guide for Bombastic" />
+  <meta name="description" content="Bombastic - Getting Started" />
 </svelte:head>
 
 <ScrollArea type="scroll" class="h-full grow" data-scroll-area="sidebar">
-  <div class="bg-background text-foreground min-h-screen">
+  <div class="bg-background-lighter text-foreground min-h-screen">
     <main class="container mx-auto max-w-4xl px-4 py-8">
       {@render children()}
     </main>

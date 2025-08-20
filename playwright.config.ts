@@ -6,8 +6,7 @@ dotenv.config();
 export default defineConfig({
   testDir: './tests/e2e',
   testMatch: '**/*.test.ts',
-  fullyParallel: false, // Disable full parallelism to prevent devserver overload
-  forbidOnly: !!process.env.CI,
+  fullyParallel: true,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : 2, // Reduce workers to prevent devserver overload (2 max)
   reporter: 'html',
@@ -23,35 +22,12 @@ export default defineConfig({
   },
 
   use: {
+    headless: false,
     baseURL: 'http://localhost:5173',
-    trace: 'retain-on-failure', // Only keep traces on failure to save disk space
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure', // Only keep videos on failure
-    testIdAttribute: 'data-testid',
 
     // Adjusted timeouts for sequential execution and server load
     navigationTimeout: 30000, // Increase navigation timeout for slower server
     actionTimeout: 15000, // Increase action timeout for slower server
-
-    // Performance optimizations and test environment setup
-    launchOptions: {
-      args: [
-        '--disable-web-security',
-        '--disable-features=TranslateUI',
-        '--disable-ipc-flooding-protection',
-        '--disable-renderer-backgrounding',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-background-timer-throttling',
-        '--disable-service-worker-cache', // Disable aggressive caching during tests
-        '--disable-background-networking', // Reduce background network requests
-        '--no-sandbox', // Only for CI/Docker environments
-      ],
-    },
-
-    // Test environment variables to optimize server behavior
-    extraHTTPHeaders: {
-      'X-Test-Environment': 'true', // Signal to server that this is a test
-    },
   },
 
   projects: [

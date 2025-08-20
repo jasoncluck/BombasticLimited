@@ -13,16 +13,13 @@ CREATE TABLE IF NOT EXISTS "public"."videos" (
   "source" "public"."source" NOT NULL,
   "title" "text" NOT NULL,
   "description" "text" NOT NULL,
-  "thumbnail_url" "text" NOT NULL,
   "published_at" TIMESTAMP WITH TIME ZONE DEFAULT "now" () NOT NULL,
   "search_vector" "tsvector",
   "pending_delete" boolean DEFAULT TRUE,
   "duration" "text" DEFAULT ''::"text",
-  "thumbnail_maxres_url" "text",
+  "thumbnail_url" "text" NOT NULL,
   "thumbnail_webp_url" text,
   "thumbnail_avif_url" text,
-  "thumbnail_maxres_webp_url" text,
-  "thumbnail_maxres_avif_url" text,
   "image_processing_status" public.image_processing_status DEFAULT 'pending',
   "image_processing_updated_at" TIMESTAMP WITH TIME ZONE DEFAULT now(),
   "views" bigint DEFAULT 0 NOT NULL
@@ -32,7 +29,7 @@ ALTER TABLE "public"."videos" OWNER TO "postgres";
 
 COMMENT ON COLUMN "public"."videos"."pending_delete" IS 'Pending delete flag is used for detecting and removing deleted videos from YouTube';
 
-COMMENT ON COLUMN "public"."videos"."thumbnail_maxres_url" IS 'Max res url';
+COMMENT ON COLUMN "public"."videos"."thumbnail_url" IS 'Best available thumbnail version';
 
 COMMENT ON COLUMN "public"."videos"."thumbnail_webp_url" IS 'Supabase Storage path for WebP thumbnail';
 
@@ -65,7 +62,7 @@ CREATE TABLE IF NOT EXISTS "public"."playlists" (
   "deleted_at" TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   "duration_seconds" integer DEFAULT 0,
   -- Source video reference for thumbnail generation
-  "thumbnail_video_id" text REFERENCES "public"."videos" ("id") ON DELETE SET NULL DEFAULT NULL,
+  "thumbnail_url"  DEFAULT NULL,
   -- Crop dimensions for generating playlist thumbnails from video thumbnail
   "image_properties" jsonb, -- {x: number, y: number, width: number, height: number}
   -- Generated cropped playlist images (stored in Supabase Storage)
@@ -83,7 +80,7 @@ CREATE TABLE IF NOT EXISTS "public"."playlists" (
 ALTER TABLE "public"."playlists" OWNER TO "postgres";
 
 -- Comments for clarity
-COMMENT ON COLUMN "public"."playlists"."thumbnail_video_id" IS 'Reference to video used as source for playlist thumbnail';
+COMMENT ON COLUMN "public"."playlists"."thumbnail_url" IS 'Base .jpg thumbnail ID for the playlist, will be processed into other formats.';
 
 COMMENT ON COLUMN "public"."playlists"."image_properties" IS 'Crop dimensions {x, y, width, height} for generating playlist image from video thumbnail';
 

@@ -58,8 +58,6 @@ CREATE INDEX IF NOT EXISTS "idx_playlists_image_processing" ON "public"."playlis
   "image_processing_updated_at"
 );
 
-CREATE INDEX IF NOT EXISTS "idx_playlists_thumbnail_video" ON "public"."playlists" USING btree ("thumbnail_video_id");
-
 -- ============================================================================
 -- SORTING PERFORMANCE INDEXES
 -- ============================================================================
