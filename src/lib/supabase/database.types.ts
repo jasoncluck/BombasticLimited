@@ -44,12 +44,14 @@ export type Database = {
           id: string;
           image_type: string;
           max_attempts: number;
+          polling_timestamp: string | null;
           priority: number;
           processing_completed_at: string | null;
           processing_started_at: string | null;
           source_url: string;
           status: string;
           updated_at: string;
+          worker_id: string | null;
         };
         Insert: {
           attempts?: number;
@@ -60,12 +62,14 @@ export type Database = {
           id?: string;
           image_type: string;
           max_attempts?: number;
+          polling_timestamp?: string | null;
           priority?: number;
           processing_completed_at?: string | null;
           processing_started_at?: string | null;
           source_url: string;
           status?: string;
           updated_at?: string;
+          worker_id?: string | null;
         };
         Update: {
           attempts?: number;
@@ -76,12 +80,14 @@ export type Database = {
           id?: string;
           image_type?: string;
           max_attempts?: number;
+          polling_timestamp?: string | null;
           priority?: number;
           processing_completed_at?: string | null;
           processing_started_at?: string | null;
           source_url?: string;
           status?: string;
           updated_at?: string;
+          worker_id?: string | null;
         };
         Relationships: [];
       };
@@ -606,11 +612,25 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: number;
       };
+      cleanup_stale_processing_jobs: {
+        Args: { stale_threshold_minutes?: number };
+        Returns: number;
+      };
       complete_image_processing_job: {
         Args: {
           avif_path?: string;
           job_id: string;
           jpg_path?: string;
+          webp_path?: string;
+        };
+        Returns: boolean;
+      };
+      complete_image_processing_job_with_worker: {
+        Args: {
+          avif_path?: string;
+          job_id: string;
+          jpg_path?: string;
+          p_worker_id: string;
           webp_path?: string;
         };
         Returns: boolean;
@@ -690,6 +710,10 @@ export type Database = {
         Args: { error_msg: string; job_id: string };
         Returns: boolean;
       };
+      fail_image_processing_job_with_worker: {
+        Args: { error_msg: string; job_id: string; p_worker_id: string };
+        Returns: boolean;
+      };
       follow_playlist: {
         Args: { p_playlist_id: number; p_playlist_position?: number };
         Returns: {
@@ -707,25 +731,22 @@ export type Database = {
         Returns: string;
       };
       get_in_progress_videos_with_timestamps: {
-        Args: Record<PropertyKey, never>;
+        Args: { p_preferred_image_format?: string };
         Returns: {
           description: string;
           duration: string;
           id: string;
           image_processing_status: Database['public']['Enums']['image_processing_status'];
           image_processing_updated_at: string;
+          image_url: string;
           playlist_name: string;
           playlist_short_id: string;
           playlist_sort_order: Database['public']['Enums']['playlist_sort_order'];
           playlist_sorted_by: Database['public']['Enums']['playlist_sorted_by'];
           published_at: string;
           source: Database['public']['Enums']['source'];
-          thumbnail_avif_url: string;
-          thumbnail_maxres_avif_url: string;
           thumbnail_maxres_url: string;
-          thumbnail_maxres_webp_url: string;
           thumbnail_url: string;
-          thumbnail_webp_url: string;
           title: string;
           updated_at: string;
           video_start_seconds: number;
@@ -742,6 +763,20 @@ export type Database = {
           image_type: string;
           job_id: string;
           source_url: string;
+        }[];
+      };
+      get_next_image_processing_job_with_worker: {
+        Args: { p_worker_id: string };
+        Returns: {
+          attempts: number;
+          entity_id: string;
+          entity_type: string;
+          image_type: string;
+          job_id: string;
+          polling_timestamp: string;
+          processing_started_at: string;
+          source_url: string;
+          worker_id: string;
         }[];
       };
       get_playlist_by_youtube_id: {
@@ -979,13 +1014,14 @@ export type Database = {
         }[];
       };
       get_videos_with_timestamps: {
-        Args: Record<PropertyKey, never>;
+        Args: { p_preferred_image_format?: string };
         Returns: {
           description: string;
           duration: string;
           id: string;
           image_processing_status: Database['public']['Enums']['image_processing_status'];
           image_processing_updated_at: string;
+          image_url: string;
           playlist_id: number;
           playlist_name: string;
           playlist_short_id: string;
@@ -993,12 +1029,8 @@ export type Database = {
           playlist_sorted_by: Database['public']['Enums']['playlist_sorted_by'];
           published_at: string;
           source: Database['public']['Enums']['source'];
-          thumbnail_avif_url: string;
-          thumbnail_maxres_avif_url: string;
           thumbnail_maxres_url: string;
-          thumbnail_maxres_webp_url: string;
           thumbnail_url: string;
-          thumbnail_webp_url: string;
           title: string;
           updated_at: string;
           video_start_seconds: number;
@@ -1163,13 +1195,18 @@ export type Database = {
         }[];
       };
       search_videos: {
-        Args: { offset_count?: number; search_term: string };
+        Args: {
+          offset_count?: number;
+          p_preferred_image_format?: string;
+          search_term: string;
+        };
         Returns: {
           description: string;
           duration: string;
           id: string;
           image_processing_status: Database['public']['Enums']['image_processing_status'];
           image_processing_updated_at: string;
+          image_url: string;
           playlist_name: string;
           playlist_short_id: string;
           playlist_sort_order: Database['public']['Enums']['playlist_sort_order'];
@@ -1177,12 +1214,8 @@ export type Database = {
           published_at: string;
           search_rank: number;
           source: Database['public']['Enums']['source'];
-          thumbnail_avif_url: string;
-          thumbnail_maxres_avif_url: string;
           thumbnail_maxres_url: string;
-          thumbnail_maxres_webp_url: string;
           thumbnail_url: string;
-          thumbnail_webp_url: string;
           title: string;
           updated_at: string;
           video_start_seconds: number;
@@ -1191,12 +1224,7 @@ export type Database = {
         }[];
       };
       select_best_image_format: {
-        Args: {
-          avif_url: string;
-          jpg_url: string;
-          preferred_format?: string;
-          webp_url: string;
-        };
+        Args: { avif_url: string; preferred_format?: string; webp_url: string };
         Returns: string;
       };
       setup_notification_cleanup_cron: {

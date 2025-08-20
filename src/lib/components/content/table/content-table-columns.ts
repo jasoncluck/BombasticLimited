@@ -52,7 +52,7 @@ export function createContentColumns({
         ]
       : []),
     {
-      accessorKey: 'thumbnail_maxres_url',
+      accessorKey: 'image_url',
       id: 'image',
       cell: ({ row }) => {
         const video = row.original;

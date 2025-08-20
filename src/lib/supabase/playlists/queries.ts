@@ -10,11 +10,7 @@ import {
   DEFAULT_NUM_VIDEOS_PAGINATION,
   type Video,
 } from '../videos';
-import {
-  detectOptimalImageFormat,
-  getBestImageFormat,
-  getSortField,
-} from './utils';
+import { getSortField } from './utils';
 import {
   transformPlaylistFromRPC,
   transformUserPlaylistFromRPC,
@@ -41,7 +37,7 @@ export async function getPlaylistData({
   limit = DEFAULT_NUM_VIDEOS_PAGINATION,
   supabase,
   session,
-  acceptHeader,
+  preferredImageFormat,
 }: {
   shortId?: string;
   youtubeId?: string;
@@ -50,7 +46,7 @@ export async function getPlaylistData({
   limit?: number;
   supabase: SupabaseClient<Database>;
   session: Session | null;
-  acceptHeader: string | null;
+  preferredImageFormat: string;
 }): Promise<{
   playlist: UserPlaylist | ProfilePlaylist | null;
   videos: PlaylistVideoWithTimestamp[] | Video[];
@@ -65,7 +61,6 @@ export async function getPlaylistData({
 
   const sortKey = contentFilter ? contentFilter.sort.key : undefined;
   const sortOrder = contentFilter ? contentFilter.sort.order : undefined;
-  const preferredFormat = getBestImageFormat('playlist', acceptHeader);
 
   const { data, error } = await supabase.rpc('get_playlist_data', {
     p_short_id: shortId,
@@ -75,7 +70,7 @@ export async function getPlaylistData({
     p_limit: limit,
     p_sort_key: sortKey,
     p_sort_order: sortOrder,
-    p_preferred_image_format: preferredFormat,
+    p_preferred_image_format: preferredImageFormat,
   });
 
   if (error) {
@@ -150,7 +145,7 @@ export async function getPlaylistDataByYoutubeId({
   limit = DEFAULT_NUM_VIDEOS_OVERVIEW,
   supabase,
   session,
-  acceptHeader,
+  preferredImageFormat,
 }: {
   youtubeId: string;
   contentFilter?: PlaylistVideosFilter;
@@ -158,7 +153,7 @@ export async function getPlaylistDataByYoutubeId({
   limit?: number;
   supabase: SupabaseClient<Database>;
   session: Session | null;
-  acceptHeader: string | null;
+  preferredImageFormat: string;
 }) {
   return getPlaylistData({
     youtubeId,
@@ -167,7 +162,7 @@ export async function getPlaylistDataByYoutubeId({
     limit,
     supabase,
     session,
-    acceptHeader,
+    preferredImageFormat,
   });
 }
 
@@ -179,11 +174,13 @@ export async function getPlaylistsForUsername({
   currentPage = 1,
   limit = DEFAULT_NUM_PLAYLISTS_OVERVIEW,
   supabase,
+  preferredImageFormat,
 }: {
   username: string;
   currentPage?: number;
   limit?: number;
   supabase: SupabaseClient<Database>;
+  preferredImageFormat: string;
 }): Promise<{
   playlists: (Playlist & {
     profile_username: string;
@@ -194,8 +191,6 @@ export async function getPlaylistsForUsername({
   count?: number | null;
   error: PostgrestError | null;
 }> {
-  const preferredFormat = detectOptimalImageFormat();
-
   const {
     data: playlists,
     count,
@@ -205,7 +200,7 @@ export async function getPlaylistsForUsername({
       'get_playlists_for_username',
       {
         p_username: username,
-        p_preferred_image_format: preferredFormat,
+        p_preferred_image_format: preferredImageFormat,
       },
       { count: 'exact' }
     )
@@ -247,16 +242,16 @@ export async function getPlaylistsForUsername({
 export async function getPlaylistByYoutubeId({
   youtubeId,
   supabase,
+  preferredImageFormat,
 }: {
   youtubeId: string;
   supabase: SupabaseClient<Database>;
+  preferredImageFormat: string;
 }) {
-  const preferredFormat = detectOptimalImageFormat();
-
   const { data, error } = await supabase
     .rpc('get_playlist_by_youtube_id', {
       p_youtube_id: youtubeId,
-      p_preferred_image_format: preferredFormat,
+      p_preferred_image_format: preferredImageFormat,
     })
     .single();
 
@@ -278,14 +273,14 @@ export async function getPlaylistVideoContext({
   contentFilter,
   supabase,
   contextLimit = 5,
-  acceptHeader,
+  preferredImageFormat,
 }: {
   shortId: string;
   videoId: string;
   contentFilter: PlaylistVideosFilter;
   supabase: SupabaseClient<Database>;
   contextLimit?: number;
-  acceptHeader: string | null;
+  preferredImageFormat: string;
 }): Promise<{
   playlist: UserPlaylist | ProfilePlaylist | null;
   currentVideo: PlaylistVideoWithTimestamp | null;
@@ -295,14 +290,12 @@ export async function getPlaylistVideoContext({
   nextVideo: PlaylistVideoWithTimestamp | null;
   error: PostgrestError | null;
 }> {
-  const preferredFormat = getBestImageFormat('playlist', acceptHeader);
-
   // Call the simplified RPC function
   let query = supabase.rpc('get_playlist_video_context', {
     p_short_id: shortId,
     p_video_id: videoId,
     p_context_limit: contextLimit,
-    p_preferred_image_format: preferredFormat,
+    p_preferred_image_format: preferredImageFormat,
   });
 
   // Apply sorting based on contentFilter
@@ -364,9 +357,7 @@ export async function getPlaylistVideoContext({
     short_id: metadataRow.playlist_short_id,
     created_by: metadataRow.playlist_created_by,
     description: metadataRow.playlist_description,
-    image_url:
-      getFullImageUrl(metadataRow.playlist_image_url, supabase) ??
-      metadataRow.playlist_image_url,
+    image_url: getFullImageUrl(metadataRow.playlist_image_url, supabase),
     type: metadataRow.playlist_type,
     image_properties: metadataRow.playlist_image_properties,
     youtube_id: metadataRow.playlist_youtube_id,
@@ -416,11 +407,11 @@ export async function getPlaylistVideoContext({
 export async function getUserPlaylists({
   session,
   supabase,
-  acceptHeader,
+  preferredImageFormat,
 }: {
   session: Session | null;
   supabase: SupabaseClient<Database>;
-  acceptHeader: string | null;
+  preferredImageFormat: string;
 }): Promise<{
   userPlaylists: UserPlaylist[];
   count: number | null;
@@ -430,11 +421,9 @@ export async function getUserPlaylists({
     return { userPlaylists: [], count: null, error: null };
   }
 
-  const preferredFormat = getBestImageFormat('playlist', acceptHeader);
-
   const { data, count, error } = await supabase
     .rpc('get_user_playlists', {
-      p_preferred_image_format: preferredFormat,
+      p_preferred_image_format: preferredImageFormat,
     })
     .order('playlist_position', { ascending: false });
 
@@ -457,7 +446,7 @@ export async function searchPlaylists({
   searchString,
   limit = 15,
   currentPage = 1,
-  acceptHeader,
+  preferredImageFormat,
   supabase,
   session,
 }: {
@@ -466,7 +455,7 @@ export async function searchPlaylists({
   currentPage?: number;
   supabase: SupabaseClient<Database>;
   session: Session | null;
-  acceptHeader: string | null;
+  preferredImageFormat: string;
 }): Promise<{
   playlists: (ProfilePlaylist & {
     avatar_url?: string | null;
@@ -477,8 +466,6 @@ export async function searchPlaylists({
   error: PostgrestError | null;
   count?: number | null;
 }> {
-  const preferredImageFormat = getBestImageFormat('playlist', acceptHeader);
-
   const {
     data: playlists,
     error,
@@ -494,8 +481,6 @@ export async function searchPlaylists({
       { count: 'exact' }
     )
     .range((currentPage - 1) * limit, currentPage * limit - 1);
-
-  console.log(playlists);
 
   if (error) {
     console.error('Error searching playlists:', error);

@@ -19,12 +19,6 @@ export function createMockVideo(overrides: Partial<Video> = {}): Video {
     published_at: '2023-01-01T00:00:00Z',
     duration: '00:30:00',
     views: 0,
-    image_processing_status: 'completed',
-    image_processing_updated_at: '2023-01-01T00:00:00Z',
-    thumbnail_webp_url: 'https://example.com/thumb.webp',
-    thumbnail_avif_url: 'https://example.com/thumb.avif',
-    thumbnail_maxres_webp_url: 'https://example.com/thumb_maxres.webp',
-    thumbnail_maxres_avif_url: 'https://example.com/thumb_maxres.avif',
     ...overrides,
   };
 }
@@ -210,12 +204,6 @@ export function createMockPlaylistVideoWithTimestamp(
     watched_at: '2023-01-01T00:00:00Z',
     // Video properties for compatibility
     views: 0,
-    image_processing_status: 'completed' as const,
-    image_processing_updated_at: '2023-01-01T00:00:00Z',
-    thumbnail_webp_url: 'https://example.com/thumb.webp',
-    thumbnail_avif_url: 'https://example.com/thumb.avif',
-    thumbnail_maxres_webp_url: 'https://example.com/thumb_maxres.webp',
-    thumbnail_maxres_avif_url: 'https://example.com/thumb_maxres.avif',
     ...overrides,
   };
 }
@@ -230,11 +218,7 @@ export function createMockPlaylist(overrides: Partial<any> = {}) {
     name: 'Test Playlist',
     youtube_id: 'youtube123',
     thumbnail_url: 'https://example.com/playlist_image.jpg',
-    thumbnail_webp_url: 'https://example.com/playlist_image.webp',
-    thumbnail_avif_url: 'https://example.com/playlist_image.avif',
-    thumbnail_maxres_url: 'https://example.com/playlist_maxres_image.jpg',
-    thumbnail_maxres_webp_url: 'https://example.com/playlist_maxres_image.webp',
-    thumbnail_maxres_avif_url: 'https://example.com/playlist_maxres_image.avif',
+    thumbnail_maxres_url: 'https://example.com/playlist_image_maxres.jpg',
     image_processing_status: 'completed' as const,
     image_processing_updated_at: '2023-01-01T00:00:00Z',
     image_properties: { x: 0, y: 0, width: 100, height: 100 },
@@ -248,7 +232,6 @@ export function createMockPlaylist(overrides: Partial<any> = {}) {
     image_url: 'https://example.com/playlist_image.jpg',
     thumbnail_video_id: 'video-1',
     duration_seconds: 1800,
-    // Add missing database table properties
     image_avif_url: 'https://example.com/playlist_image.avif',
     image_jpg_url: 'https://example.com/playlist_image.jpg',
     image_webp_url: 'https://example.com/playlist_image.webp',

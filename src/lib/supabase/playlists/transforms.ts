@@ -41,9 +41,7 @@ export function transformPlaylistFromRPC(
     short_id: rpcData.playlist_short_id,
     created_by: rpcData.playlist_created_by,
     description: rpcData.playlist_description,
-    image_url:
-      getFullImageUrl(rpcData.playlist_image_url, supabase) ??
-      rpcData.playlist_image_url,
+    image_url: getFullImageUrl(rpcData.playlist_image_url, supabase),
     image_processing_status: rpcData.playlist_image_processing_status,
     type: rpcData.playlist_type,
     image_properties: rpcData.playlist_image_properties,
@@ -73,8 +71,7 @@ export function transformUserPlaylistFromRPC(
     short_id: rpcData.short_id,
     created_by: rpcData.created_by,
     description: rpcData.description,
-    image_url:
-      getFullImageUrl(rpcData.image_url, supabase) ?? rpcData.image_url,
+    image_url: getFullImageUrl(rpcData.image_url, supabase),
     image_processing_status: rpcData.image_processing_status,
     type: rpcData.type,
     image_properties: rpcData.image_properties,
@@ -108,22 +105,13 @@ export function transformVideoFromRPC(
     description: rpcData.video_description,
     thumbnail_url: rpcData.video_thumbnail_url,
     thumbnail_maxres_url: rpcData.video_thumbnail_maxres_url,
-    image_url:
-      getFullImageUrl(rpcData.video_image_url, supabase) ??
-      rpcData.video_image_url,
+    image_url: getFullImageUrl(rpcData.video_image_url, supabase),
     published_at: rpcData.video_published_at,
     duration: rpcData.video_duration,
     video_start_seconds: rpcData.video_start_seconds,
     updated_at: rpcData.video_updated_at,
     watched_at: rpcData.video_watched_at,
-    // Add missing Video properties with defaults
     views: 0,
-    image_processing_status: 'completed' as const,
-    image_processing_updated_at: null,
-    thumbnail_webp_url: null,
-    thumbnail_avif_url: null,
-    thumbnail_maxres_webp_url: null,
-    thumbnail_maxres_avif_url: null,
   };
 }
 
@@ -142,9 +130,7 @@ export function transformVideoFromContextRPC(
     description: rpcData.video_description,
     thumbnail_url: rpcData.video_thumbnail_url,
     thumbnail_maxres_url: rpcData.video_thumbnail_maxres_url,
-    image_url:
-      getFullImageUrl(rpcData.video_image_url, supabase) ??
-      rpcData.video_image_url,
+    image_url: getFullImageUrl(rpcData.video_image_url, supabase),
     published_at: rpcData.video_published_at,
     duration: rpcData.video_duration,
     video_start_seconds: rpcData.video_start_seconds,
@@ -152,11 +138,5 @@ export function transformVideoFromContextRPC(
     watched_at: rpcData.video_watched_at,
     // Add missing Video properties with defaults
     views: 0,
-    image_processing_status: 'completed' as const,
-    image_processing_updated_at: null,
-    thumbnail_webp_url: null,
-    thumbnail_avif_url: null,
-    thumbnail_maxres_webp_url: null,
-    thumbnail_maxres_avif_url: null,
   };
 }

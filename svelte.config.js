@@ -17,7 +17,10 @@ const config = {
     vitePreprocess(),
     mdsvex({
       extensions: ['.md', '.svx'],
-      layout: resolve(__dirname, './src/lib/components/mdsvex/MdsvexLayout.svelte'),
+      layout: resolve(
+        __dirname,
+        './src/lib/components/mdsvex/MdsvexLayout.svelte'
+      ),
       remarkPlugins: [remarkGfm],
     }),
   ],

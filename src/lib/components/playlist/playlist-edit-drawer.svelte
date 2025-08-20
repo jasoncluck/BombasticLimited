@@ -27,9 +27,9 @@
   import { parseImageProperties } from './playlist';
   import { isLowResolutionThumbnail } from './playlist-service';
   import {
-    playlistSchema,
     type PlaylistSchema,
-  } from '../../../routes/(app)/playlist/[shortId]/schema';
+    playlistSchema,
+  } from '../../../routes/playlist/[shortId]/schema';
 
   let {
     form,
