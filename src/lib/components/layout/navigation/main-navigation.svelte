@@ -77,7 +77,7 @@
         onclick={(e) => navigationState.handleNavigation(e, brandLogoNavItem)}
         class={navigationState.getNavigationButtonClasses(
           brandLogoNavItem,
-          'ml-2 hidden sm:ml-0 sm:block'
+          'ml-2 hidden outline-hidden sm:ml-0 sm:block'
         )}
       >
         <BrandLogo />

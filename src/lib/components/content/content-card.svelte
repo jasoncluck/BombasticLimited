@@ -395,15 +395,8 @@
         {#if shouldShowDescription && userPreferences.contentDescription !== 'NONE'}
           <!-- Show description when hovering/selected -->
           <div
-            class="pointer-events-none transform overflow-hidden
-      text-xs leading-5 tracking-tight break-words will-change-transform
-      {userPreferences.contentDescription === 'BRIEF'
-              ? 'max-h-15'
-              : 'max-h-20'}"
-            style="display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: {userPreferences.contentDescription ===
-            'BRIEF'
-              ? '3'
-              : '4'};"
+            class="pointer-events-none line-clamp-3 transform
+      overflow-hidden text-xs leading-normal tracking-tight break-words will-change-transform"
           >
             {video.description}
           </div>
