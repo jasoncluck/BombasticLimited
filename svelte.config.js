@@ -1,13 +1,26 @@
 import { mdsvex } from 'mdsvex';
 import adapter from '@sveltejs/adapter-vercel';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+import remarkGfm from 'remark-gfm';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
   // Consult https://svelte.dev/docs/kit/integrations
   // for more information about preprocessors
-  extensions: ['.svelte', '.svelte.ts', '.svx'],
-  preprocess: [vitePreprocess(), mdsvex({ extensions: ['.svx'] })],
+  extensions: ['.svelte', '.md', '.svx'],
+  preprocess: [
+    vitePreprocess(),
+    mdsvex({
+      extensions: ['.md', '.svx'],
+      layout: resolve(__dirname, './src/lib/components/mdsvex/MdsvexLayout.svelte'),
+      remarkPlugins: [remarkGfm],
+    }),
+  ],
   kit: {
     // adapter-auto only supports some environments, see https://svelte.dev/docs/kit/adapter-auto for a list.
     // If your environment is not supported, or you settled on a specific environment, switch out the adapter.
@@ -120,7 +133,6 @@ const config = {
       },
     }),
   },
-  extensions: ['.svelte', '.svx'],
 };
 
 export default config;
