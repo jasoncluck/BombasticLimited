@@ -24,7 +24,7 @@ export const load: PageServerLoad = async ({
 
   const source = params.source;
   const acceptHeader = request.headers.get('accept');
-  
+
   // Detect optimal image format from Accept header
   const preferredImageFormat = detectOptimalFormat(acceptHeader);
 

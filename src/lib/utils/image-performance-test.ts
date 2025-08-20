@@ -4,7 +4,6 @@
  */
 
 import type { Video } from '$lib/supabase/videos';
-import { getBestThumbnailUrl } from './video-thumbnails';
 
 export interface ImageLoadingMetrics {
   approach: 'server' | 'direct';
@@ -101,7 +100,7 @@ function generateComparisonUrls(video: Video): {
   server: string | null;
   direct: string | null;
 } {
-  const thumbnailUrl = getBestThumbnailUrl(video);
+  const thumbnailUrl = video.thumbnail_url;
   if (!thumbnailUrl) {
     return { server: null, direct: null };
   }

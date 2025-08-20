@@ -1,22 +1,20 @@
 -- Migration: Add worker ID support to image processing system
 -- Purpose: Enable worker identification to prevent race conditions in image processing
 -- Dependencies: Requires 15_image_processing.sql
-
 -- Add worker_id field to image_processing_jobs table
 ALTER TABLE "public"."image_processing_jobs"
 ADD COLUMN IF NOT EXISTS "worker_id" text,
 ADD COLUMN IF NOT EXISTS "polling_timestamp" TIMESTAMP WITH TIME ZONE;
 
 COMMENT ON COLUMN "public"."image_processing_jobs"."worker_id" IS 'Unique identifier of the worker processing this job';
+
 COMMENT ON COLUMN "public"."image_processing_jobs"."polling_timestamp" IS 'Timestamp when job was picked up by poller';
 
 -- Create index for worker queries
 CREATE INDEX IF NOT EXISTS "idx_image_processing_jobs_worker_id" ON "public"."image_processing_jobs" USING btree ("worker_id");
 
 -- Enhanced function to get next job with worker assignment
-CREATE OR REPLACE FUNCTION public.get_next_image_processing_job_with_worker (
-  p_worker_id text
-) RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.get_next_image_processing_job_with_worker (p_worker_id text) RETURNS TABLE (
   job_id uuid,
   entity_type text,
   entity_id text,
@@ -136,11 +134,7 @@ END;
 $$;
 
 -- Function to mark job as failed with worker validation
-CREATE OR REPLACE FUNCTION public.fail_image_processing_job_with_worker (
-  job_id uuid,
-  p_worker_id text,
-  error_msg text
-) RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER
+CREATE OR REPLACE FUNCTION public.fail_image_processing_job_with_worker (job_id uuid, p_worker_id text, error_msg text) RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER
 SET
   search_path = '' AS $$
 DECLARE
@@ -201,9 +195,7 @@ END;
 $$;
 
 -- Function to cleanup stale processing jobs (jobs stuck in processing state)
-CREATE OR REPLACE FUNCTION public.cleanup_stale_processing_jobs (
-  stale_threshold_minutes integer DEFAULT 30
-) RETURNS integer LANGUAGE plpgsql SECURITY DEFINER
+CREATE OR REPLACE FUNCTION public.cleanup_stale_processing_jobs (stale_threshold_minutes integer DEFAULT 30) RETURNS integer LANGUAGE plpgsql SECURITY DEFINER
 SET
   search_path = '' AS $$
 DECLARE
@@ -226,7 +218,10 @@ END;
 $$;
 
 -- Add comments for documentation
-COMMENT ON FUNCTION public.get_next_image_processing_job_with_worker(text) IS 'Atomically get next pending job and assign to worker';
-COMMENT ON FUNCTION public.complete_image_processing_job_with_worker(uuid, text, text, text, text) IS 'Mark job as completed with worker validation';
-COMMENT ON FUNCTION public.fail_image_processing_job_with_worker(uuid, text, text) IS 'Mark job as failed with worker validation';
-COMMENT ON FUNCTION public.cleanup_stale_processing_jobs(integer) IS 'Reset stale processing jobs back to pending status';
+COMMENT ON FUNCTION public.get_next_image_processing_job_with_worker (text) IS 'Atomically get next pending job and assign to worker';
+
+COMMENT ON FUNCTION public.complete_image_processing_job_with_worker (uuid, text, text, text, text) IS 'Mark job as completed with worker validation';
+
+COMMENT ON FUNCTION public.fail_image_processing_job_with_worker (uuid, text, text) IS 'Mark job as failed with worker validation';
+
+COMMENT ON FUNCTION public.cleanup_stale_processing_jobs (integer) IS 'Reset stale processing jobs back to pending status';

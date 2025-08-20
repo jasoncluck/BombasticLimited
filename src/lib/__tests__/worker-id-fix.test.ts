@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { queueVideoImageProcessing, queuePlaylistImageProcessing } from '$lib/inngest/image-queue';
+import {
+  queueVideoImageProcessing,
+  queuePlaylistImageProcessing,
+} from '$lib/inngest/image-queue';
 
 describe('Database Job Queue Functions', () => {
   it('should have the correct function signatures', () => {
@@ -47,7 +50,7 @@ describe('Worker ID Generation', () => {
 
     const workerId1 = generateWorkerId();
     const workerId2 = generateWorkerId();
-    
+
     expect(workerId1).toMatch(/^worker-[a-z0-9]+-[a-z0-9]+$/);
     expect(workerId2).toMatch(/^worker-[a-z0-9]+-[a-z0-9]+$/);
     expect(workerId1).not.toBe(workerId2);

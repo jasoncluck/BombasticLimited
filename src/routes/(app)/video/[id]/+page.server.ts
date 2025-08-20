@@ -8,11 +8,11 @@ export const load: PageServerLoad = async ({
   request,
 }) => {
   const videoId = params.id;
-  
+
   // Detect optimal image format from Accept header
   const acceptHeader = request.headers.get('accept');
   const preferredImageFormat = detectOptimalFormat(acceptHeader);
-  
+
   const { video } = await getVideo({
     supabase,
     videoId,

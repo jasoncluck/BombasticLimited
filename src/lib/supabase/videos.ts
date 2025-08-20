@@ -189,7 +189,9 @@ export async function getVideos({
   searchString,
   supabase,
   preferredImageFormat = 'avif',
-}: VideoQueryMultipleProps<Video> & { preferredImageFormat?: string }): Promise<{
+}: VideoQueryMultipleProps<Video> & {
+  preferredImageFormat?: string;
+}): Promise<{
   videos: Video[] | VideoWithTimestamp[];
   count: number | null;
   error: PostgrestError | null;
@@ -204,9 +206,13 @@ export async function getVideos({
         },
         { count: 'exact' }
       )
-    : supabase.rpc('get_videos_with_timestamps', {
-        p_preferred_image_format: preferredImageFormat,
-      }, { count: 'exact' });
+    : supabase.rpc(
+        'get_videos_with_timestamps',
+        {
+          p_preferred_image_format: preferredImageFormat,
+        },
+        { count: 'exact' }
+      );
 
   query.limit(limit);
 
@@ -249,10 +255,10 @@ export async function getVideos({
 /**
  * Returns a single video
  */
-export async function getVideo({ 
-  videoId, 
-  supabase, 
-  preferredImageFormat = 'avif' 
+export async function getVideo({
+  videoId,
+  supabase,
+  preferredImageFormat = 'avif',
 }: VideoQuerySingleProps & { preferredImageFormat?: string }) {
   const { data: video, error } = await supabase
     .rpc('get_videos_with_timestamps', {
@@ -285,7 +291,9 @@ export async function getInProgressVideos({
   supabase,
   session,
   preferredImageFormat = 'avif',
-}: VideoQueryMultipleProps<VideoWithTimestamp> & { preferredImageFormat?: string }): Promise<{
+}: VideoQueryMultipleProps<VideoWithTimestamp> & {
+  preferredImageFormat?: string;
+}): Promise<{
   videos: VideoWithTimestamp[];
   count: number | null;
   error?: PostgrestError | null;
@@ -297,9 +305,13 @@ export async function getInProgressVideos({
   const sortOptionInfo = SORT_OPTIONS_TIMESTAMPS[contentFilter.sort.key];
 
   const query = supabase
-    .rpc('get_in_progress_videos_with_timestamps', {
-      p_preferred_image_format: preferredImageFormat,
-    }, { count: 'exact' })
+    .rpc(
+      'get_in_progress_videos_with_timestamps',
+      {
+        p_preferred_image_format: preferredImageFormat,
+      },
+      { count: 'exact' }
+    )
     .limit(limit);
 
   // Sorting by playlist order

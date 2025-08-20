@@ -4,9 +4,7 @@
 -- This migration includes video search, filtering, and retrieval functions
 -- ============================================================================
 -- Function to get videos with user timestamps
-CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps" (
-  p_preferred_image_format text DEFAULT 'avif'
-) RETURNS TABLE (
+CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps" (p_preferred_image_format text DEFAULT 'avif') RETURNS TABLE (
   "id" "text",
   "source" "public"."source",
   "title" "text",
@@ -249,9 +247,7 @@ END;
 $$;
 
 -- Function to get in-progress videos with timestamps
-CREATE OR REPLACE FUNCTION "public"."get_in_progress_videos_with_timestamps" (
-  p_preferred_image_format text DEFAULT 'avif'
-) RETURNS TABLE (
+CREATE OR REPLACE FUNCTION "public"."get_in_progress_videos_with_timestamps" (p_preferred_image_format text DEFAULT 'avif') RETURNS TABLE (
   id text,
   source public.source,
   title text,

@@ -114,10 +114,12 @@ export async function batchProcessVideoImages(
     thumbnail_maxres_url: string | null;
   }>
 ): Promise<void> {
-  console.log(`📋 Batch processing images for ${videos.length} videos using database jobs...`);
+  console.log(
+    `📋 Batch processing images for ${videos.length} videos using database jobs...`
+  );
 
   // Process each video individually using the updated queue function
-  const processingPromises = videos.map(video => 
+  const processingPromises = videos.map((video) =>
     queueVideoImageProcessing(
       video.id,
       video.thumbnail_url,
@@ -128,9 +130,14 @@ export async function batchProcessVideoImages(
 
   try {
     await Promise.all(processingPromises);
-    console.log(`✅ Successfully queued database jobs for ${videos.length} videos`);
+    console.log(
+      `✅ Successfully queued database jobs for ${videos.length} videos`
+    );
   } catch (error) {
-    console.error(`❌ Failed to queue some database jobs for video batch processing:`, error);
+    console.error(
+      `❌ Failed to queue some database jobs for video batch processing:`,
+      error
+    );
     throw error;
   }
 }
@@ -146,10 +153,12 @@ export async function batchProcessPlaylistImages(
     thumbnail_maxres_url: string | null;
   }>
 ): Promise<void> {
-  console.log(`📋 Batch processing images for ${playlists.length} playlists using database jobs...`);
+  console.log(
+    `📋 Batch processing images for ${playlists.length} playlists using database jobs...`
+  );
 
   // Process each playlist individually using the updated queue function
-  const processingPromises = playlists.map(playlist => 
+  const processingPromises = playlists.map((playlist) =>
     queuePlaylistImageProcessing(
       playlist.id.toString(),
       playlist.thumbnail_url, // Note: This should be image_url for playlists in practice
@@ -159,9 +168,14 @@ export async function batchProcessPlaylistImages(
 
   try {
     await Promise.all(processingPromises);
-    console.log(`✅ Successfully queued database jobs for ${playlists.length} playlists`);
+    console.log(
+      `✅ Successfully queued database jobs for ${playlists.length} playlists`
+    );
   } catch (error) {
-    console.error(`❌ Failed to queue some database jobs for playlist batch processing:`, error);
+    console.error(
+      `❌ Failed to queue some database jobs for playlist batch processing:`,
+      error
+    );
     throw error;
   }
 }

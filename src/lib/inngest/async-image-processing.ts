@@ -777,10 +777,10 @@ export const processImage = inngest.createFunction(
 
 /**
  * Process multiple images in batch with HIGH QUALITY
- * 
+ *
  * DEPRECATED: This function is now primarily used for backward compatibility.
  * New jobs should be created via database triggers and processed by the job poller system.
- * 
+ *
  * This function still exists to support any legacy direct calls, but the preferred
  * approach is to create database jobs using queue_image_processing_job() which will
  * be picked up by the job poller and sent to the individual processImage function.
@@ -845,7 +845,8 @@ export const batchProcessImages = inngest.createFunction(
       successful,
       failed,
       results,
-      warning: 'This batch processing method is deprecated. Use database jobs instead.',
+      warning:
+        'This batch processing method is deprecated. Use database jobs instead.',
     };
   }
 );

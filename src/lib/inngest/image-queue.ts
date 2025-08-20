@@ -3,12 +3,16 @@ import { SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
 import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 
 // Initialize Supabase client with service role for database operations
-const supabaseServiceClient = createClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-});
+const supabaseServiceClient = createClient(
+  PUBLIC_SUPABASE_URL,
+  SUPABASE_SERVICE_ROLE_KEY,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  }
+);
 
 /**
  * Queue image processing for a video using database jobs
@@ -49,10 +53,15 @@ export async function queueVideoImageProcessing(
   if (jobPromises.length > 0) {
     try {
       const results = await Promise.all(jobPromises);
-      const jobIds = results.map(r => r.data).filter(Boolean);
-      console.log(`✅ Created ${jobIds.length} database jobs for video ${videoId}: ${jobIds.join(', ')}`);
+      const jobIds = results.map((r) => r.data).filter(Boolean);
+      console.log(
+        `✅ Created ${jobIds.length} database jobs for video ${videoId}: ${jobIds.join(', ')}`
+      );
     } catch (error) {
-      console.error(`❌ Failed to create database jobs for video ${videoId}:`, error);
+      console.error(
+        `❌ Failed to create database jobs for video ${videoId}:`,
+        error
+      );
       throw error;
     }
   }
@@ -71,26 +80,39 @@ export async function queuePlaylistImageProcessing(
   // Only process uploaded images for playlists
   if (imageUrl) {
     try {
-      const { data, error } = await supabaseServiceClient.rpc('queue_image_processing_job', {
-        p_entity_type: 'playlist',
-        p_entity_id: playlistId,
-        p_image_type: 'playlist_image',
-        p_source_url: imageUrl,
-        p_priority: priority,
-      });
+      const { data, error } = await supabaseServiceClient.rpc(
+        'queue_image_processing_job',
+        {
+          p_entity_type: 'playlist',
+          p_entity_id: playlistId,
+          p_image_type: 'playlist_image',
+          p_source_url: imageUrl,
+          p_priority: priority,
+        }
+      );
 
       if (error) {
-        console.error(`❌ Failed to create database job for playlist ${playlistId}:`, error);
+        console.error(
+          `❌ Failed to create database job for playlist ${playlistId}:`,
+          error
+        );
         throw error;
       }
 
       if (data) {
-        console.log(`✅ Created database job for playlist ${playlistId}: ${data}`);
+        console.log(
+          `✅ Created database job for playlist ${playlistId}: ${data}`
+        );
       } else {
-        console.log(`ℹ️ Skipped job creation for playlist ${playlistId} - duplicate or recently completed`);
+        console.log(
+          `ℹ️ Skipped job creation for playlist ${playlistId} - duplicate or recently completed`
+        );
       }
     } catch (error) {
-      console.error(`❌ Failed to create database job for playlist ${playlistId}:`, error);
+      console.error(
+        `❌ Failed to create database job for playlist ${playlistId}:`,
+        error
+      );
       throw error;
     }
   }
@@ -107,10 +129,12 @@ export async function batchProcessVideoImages(
     thumbnail_maxres_url: string | null;
   }>
 ): Promise<void> {
-  console.log(`📋 Batch processing images for ${videos.length} videos using database jobs...`);
+  console.log(
+    `📋 Batch processing images for ${videos.length} videos using database jobs...`
+  );
 
   // Process each video individually using the updated queue function
-  const processingPromises = videos.map(video => 
+  const processingPromises = videos.map((video) =>
     queueVideoImageProcessing(
       video.id,
       video.thumbnail_url,
@@ -121,9 +145,14 @@ export async function batchProcessVideoImages(
 
   try {
     await Promise.all(processingPromises);
-    console.log(`✅ Successfully queued database jobs for ${videos.length} videos`);
+    console.log(
+      `✅ Successfully queued database jobs for ${videos.length} videos`
+    );
   } catch (error) {
-    console.error(`❌ Failed to queue some database jobs for video batch processing:`, error);
+    console.error(
+      `❌ Failed to queue some database jobs for video batch processing:`,
+      error
+    );
     throw error;
   }
 }
@@ -139,10 +168,12 @@ export async function batchProcessPlaylistImages(
     thumbnail_maxres_url: string | null;
   }>
 ): Promise<void> {
-  console.log(`📋 Batch processing images for ${playlists.length} playlists using database jobs...`);
+  console.log(
+    `📋 Batch processing images for ${playlists.length} playlists using database jobs...`
+  );
 
   // Process each playlist individually using the updated queue function
-  const processingPromises = playlists.map(playlist => 
+  const processingPromises = playlists.map((playlist) =>
     queuePlaylistImageProcessing(
       playlist.id.toString(),
       playlist.thumbnail_url, // Note: This should be image_url for playlists in practice
@@ -152,9 +183,14 @@ export async function batchProcessPlaylistImages(
 
   try {
     await Promise.all(processingPromises);
-    console.log(`✅ Successfully queued database jobs for ${playlists.length} playlists`);
+    console.log(
+      `✅ Successfully queued database jobs for ${playlists.length} playlists`
+    );
   } catch (error) {
-    console.error(`❌ Failed to queue some database jobs for playlist batch processing:`, error);
+    console.error(
+      `❌ Failed to queue some database jobs for playlist batch processing:`,
+      error
+    );
     throw error;
   }
 }
