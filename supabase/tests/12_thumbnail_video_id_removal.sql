@@ -3,61 +3,70 @@
 BEGIN;
 
 -- Test 1: Check that functions exist with updated signatures
-SELECT has_function(
-  'public', 
-  'get_playlist_data',
-  'Function get_playlist_data should exist'
-);
+SELECT
+  has_function (
+    'public',
+    'get_playlist_data',
+    'Function get_playlist_data should exist'
+  );
 
-SELECT has_function(
-  'public', 
-  'get_playlist_video_context',
-  'Function get_playlist_video_context should exist'
-);
+SELECT
+  has_function (
+    'public',
+    'get_playlist_video_context',
+    'Function get_playlist_video_context should exist'
+  );
 
-SELECT has_function(
-  'public', 
-  'get_user_playlists',
-  'Function get_user_playlists should exist'
-);
+SELECT
+  has_function (
+    'public',
+    'get_user_playlists',
+    'Function get_user_playlists should exist'
+  );
 
-SELECT has_function(
-  'public', 
-  'get_playlists_for_username',
-  'Function get_playlists_for_username should exist'
-);
+SELECT
+  has_function (
+    'public',
+    'get_playlists_for_username',
+    'Function get_playlists_for_username should exist'
+  );
 
-SELECT has_function(
-  'public', 
-  'search_playlists',
-  'Function search_playlists should exist'
-);
+SELECT
+  has_function (
+    'public',
+    'search_playlists',
+    'Function search_playlists should exist'
+  );
 
-SELECT has_function(
-  'public', 
-  'update_playlist_image',
-  'Function update_playlist_image should exist'
-);
+SELECT
+  has_function (
+    'public',
+    'update_playlist_image',
+    'Function update_playlist_image should exist'
+  );
 
-SELECT has_function(
-  'public', 
-  'insert_playlist_videos',
-  'Function insert_playlist_videos should exist'
-);
+SELECT
+  has_function (
+    'public',
+    'insert_playlist_videos',
+    'Function insert_playlist_videos should exist'
+  );
 
-SELECT has_function(
-  'public', 
-  'delete_playlist_videos',
-  'Function delete_playlist_videos should exist'
-);
+SELECT
+  has_function (
+    'public',
+    'delete_playlist_videos',
+    'Function delete_playlist_videos should exist'
+  );
 
 -- Test 2: Check that playlists table has thumbnail_url column
-SELECT has_column(
-  'public', 
-  'playlists', 
-  'thumbnail_url',
-  'playlists table should have thumbnail_url column'
-);
+SELECT
+  has_column (
+    'public',
+    'playlists',
+    'thumbnail_url',
+    'playlists table should have thumbnail_url column'
+  );
 
 -- Test 3: Verify updated function can be called (basic syntax check)
 -- This tests that the function compiles and returns the expected structure

@@ -25,7 +25,6 @@
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { invalidate } from '$app/navigation';
   import { parseImageProperties } from './playlist';
-  import { isLowResolutionThumbnail } from './playlist-service';
   import {
     type PlaylistSchema,
     playlistSchema,
@@ -73,12 +72,6 @@
   let previewImageUrl = $state<string | null>(null);
 
   const isPlaylistOwner = $derived(playlist.created_by === session?.user.id);
-  const isLowResThumbnail = $derived(
-    isLowResolutionThumbnail(
-      playlist.thumbnail_maxres_url,
-      playlist.thumbnail_url
-    )
-  );
 
   // Function to create cropped preview
   async function createCroppedPreview(
@@ -170,9 +163,7 @@
   }
 
   // Get the image source for the cropper
-  const imageSrc = $derived(
-    playlist.thumbnail_maxres_url ?? playlist.thumbnail_url
-  );
+  const imageSrc = $derived(playlist.thumbnail_url);
 
   // Computed property for the display image
   const displayImageUrl = $derived(previewImageUrl || playlist.image_url);
@@ -300,7 +291,7 @@
         <div class="px-4 pb-2">
           <div class="mb-4 flex flex-col justify-center gap-4 sm:flex-row">
             <div class="relative m-6 flex justify-center">
-              {#if (playlist.thumbnail_maxres_url || playlist.thumbnail_url) && !$formData.isDeletingPlaylistImage}
+              {#if playlist.thumbnail_url && !$formData.isDeletingPlaylistImage}
                 <div class="relative h-56 w-56">
                   <!-- Preview the cropped image -->
                   <img
@@ -322,18 +313,18 @@
                       {/snippet}
                     </DropdownMenu.Trigger>
                     <DropdownMenu.Content align="start">
-                      {#if isLowResThumbnail}
-                        <DropdownMenu.Item disabled
-                          >This video is missing a high-resolution thumbnail and
-                          cannot be cropped</DropdownMenu.Item
-                        >
-                      {:else}
-                        <DropdownMenu.Item
-                          onclick={() => {
-                            cropperDialogOpen = true;
-                          }}>Update crop</DropdownMenu.Item
-                        >
-                      {/if}
+                      <!-- {#if isLowResThumbnail} -->
+                      <!--   <DropdownMenu.Item disabled -->
+                      <!--     >This video is missing a high-resolution thumbnail and -->
+                      <!--     cannot be cropped</DropdownMenu.Item -->
+                      <!--   > -->
+                      <!-- {:else} -->
+                      <DropdownMenu.Item
+                        onclick={() => {
+                          cropperDialogOpen = true;
+                        }}>Update crop</DropdownMenu.Item
+                      >
+                      <!-- {/if} -->
                       <DropdownMenu.Item
                         onclick={() => {
                           $formData.isDeletingPlaylistImage = true;

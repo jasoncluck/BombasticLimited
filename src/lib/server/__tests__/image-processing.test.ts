@@ -653,7 +653,9 @@ describe('Image Processing Cache Integration', () => {
       thumbnailUrl: 'https://i.ytimg.com/vi/cached-image.jpg',
     });
 
-    if (result1 !== null) { expect(result1).toContain('data:image/'); } // Accept any valid image format after fallback
+    if (result1 !== null) {
+      expect(result1).toContain('data:image/');
+    } // Accept any valid image format after fallback
     expect(global.fetch).toHaveBeenCalled(); // Just ensure fetch was called
 
     // Second call - may or may not be cached depending on simplified cache behavior
@@ -664,7 +666,9 @@ describe('Image Processing Cache Integration', () => {
 
     // With simplified cache, result may be null or cached - both are acceptable
     if (result2 !== null) {
-      if (result2 !== null) { expect(result2).toContain('data:image/'); }
+      if (result2 !== null) {
+        expect(result2).toContain('data:image/');
+      }
     }
     // Note: Simplified cache behavior - caching is not guaranteed for all edge cases
   });
@@ -685,7 +689,9 @@ describe('Image Processing Cache Integration', () => {
       thumbnailUrl: 'https://i.ytimg.com/vi/cached-video-thumb.jpg',
     });
 
-    if (result1 !== null) { expect(result1).toContain('data:image/'); } // Accept any valid image format after fallback
+    if (result1 !== null) {
+      expect(result1).toContain('data:image/');
+    } // Accept any valid image format after fallback
     expect(global.fetch).toHaveBeenCalled(); // Just ensure fetch was called
 
     // Second call should return cached result
@@ -693,7 +699,9 @@ describe('Image Processing Cache Integration', () => {
       thumbnailUrl: 'https://i.ytimg.com/vi/cached-video-thumb.jpg',
     });
 
-    if (result2 !== null) { expect(result2).toContain('data:image/'); } // Should return some valid image format
+    if (result2 !== null) {
+      expect(result2).toContain('data:image/');
+    } // Should return some valid image format
     // Note: Cache behavior may vary based on implementation details
   });
 

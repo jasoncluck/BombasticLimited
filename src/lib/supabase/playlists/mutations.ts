@@ -368,7 +368,6 @@ export async function updatePlaylistImage({
     {
       p_playlist_id: playlistId,
       p_image_url: uploadResult.data?.imagePath,
-      p_thumbnail_video_id: thumbnailVideoId,
       p_image_properties: imagePropertiesJson,
     }
   );

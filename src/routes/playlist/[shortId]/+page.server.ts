@@ -73,8 +73,7 @@ export const load: PageServerLoad = async ({
     superValidate(
       {
         ...playlist,
-        thumbnail_video_id: playlist.thumbnail_video_id || undefined,
-        thumbnail_url: playlist.thumbnail_url || undefined,
+        thumbnail_url: playlist.thumbnail_url,
       },
       zod(playlistSchema)
     ),
@@ -231,8 +230,7 @@ export const actions: Actions = {
 
       // Check if thumbnail URLs have changed
       const hasThumbnailChanged =
-        currentPlaylist.thumbnail_url !== thumbnail_url ||
-        currentPlaylist.thumbnail_video_id !== thumbnail_video_id;
+        currentPlaylist.thumbnail_url !== thumbnail_url;
 
       // Only process image if something image-related has changed
       if (hasImagePropertiesChanged || hasThumbnailChanged) {

@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS "public"."playlists" (
   "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   "deleted_at" TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   "duration_seconds" integer DEFAULT 0,
- "thumbnail_url" text DEFAULT NULL,
+  "thumbnail_url" text DEFAULT NULL,
   -- Crop dimensions for generating playlist thumbnails from video thumbnail
   "image_properties" jsonb, -- {x: number, y: number, width: number, height: number}
   -- Generated cropped playlist images (stored in Supabase Storage)
