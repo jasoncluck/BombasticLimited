@@ -95,10 +95,10 @@ describe('generateStoragePaths', () => {
 
       // Verify exact path structure
       expect(result1.webpPath).toBe(
-        'videos/test-video-id/video-test-video-id.webp'
+        'thumbnails/test-video-id/test-video-id-unknown.webp'
       );
       expect(result1.avifPath).toBe(
-        'videos/test-video-id/video-test-video-id.avif'
+        'thumbnails/test-video-id/test-video-id-unknown.avif'
       );
     });
   });

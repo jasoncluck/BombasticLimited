@@ -124,33 +124,13 @@ export function generateStoragePaths(
   jobId?: string,
   workerId?: string
 ): { webpPath: string; avifPath: string } {
-  // Generate timestamp and unique suffix for entities that need them (playlists)
-  const timestamp = Date.now();
-  const uniqueSuffix = jobId
-    ? `${timestamp}-${jobId.slice(0, 8)}`
-    : timestamp.toString();
-  const timestampStr = new Date(timestamp).toISOString();
-
   console.log(
-    `📂 [${timestampStr}] Worker ${workerId || 'unknown'} generating storage paths for ${entityType}/${entityId}/${imageType} (job: ${jobId})`
+    `📂 Worker ${workerId || 'unknown'} generating storage paths for ${entityType}/${entityId}/${imageType} (job: ${jobId})`
   );
 
-  if (entityType === 'playlist') {
-    // Playlists use timestamped paths to support multiple snapshots over time
-    const basePath = `playlists/${entityId}/playlist-${entityId}-${uniqueSuffix}`;
-    const paths = {
-      webpPath: `${basePath}.webp`,
-      avifPath: `${basePath}.avif`,
-    };
-
-    console.log(
-      `📂 [${timestampStr}] Worker ${workerId || 'unknown'} playlist paths generated (with timestamp) - webp: ${paths.webpPath}, avif: ${paths.avifPath}`
-    );
-
-    return paths;
-  } else if (entityType === 'video') {
-    // Videos use deterministic paths WITHOUT timestamps for consistent naming
-    // This prevents the same video from being processed multiple times with different filenames
+  if (entityType === 'video') {
+    // Videos use completely deterministic paths WITHOUT any timestamps, job IDs, or worker IDs
+    // This ensures the same video always generates the same file paths, preventing duplicates
     if (imageType === 'thumbnail') {
       const basePath = `thumbnails/${entityId}/thumbnail-${entityId}`;
       const paths = {
@@ -159,7 +139,7 @@ export function generateStoragePaths(
       };
 
       console.log(
-        `📂 [${timestampStr}] Worker ${workerId || 'unknown'} video thumbnail paths generated (deterministic) - webp: ${paths.webpPath}, avif: ${paths.avifPath}`
+        `📂 Worker ${workerId || 'unknown'} video thumbnail paths generated (deterministic, no timestamps) - webp: ${paths.webpPath}, avif: ${paths.avifPath}`
       );
 
       return paths;
@@ -171,27 +151,47 @@ export function generateStoragePaths(
       };
 
       console.log(
-        `📂 [${timestampStr}] Worker ${workerId || 'unknown'} video maxres paths generated (deterministic) - webp: ${paths.webpPath}, avif: ${paths.avifPath}`
+        `📂 Worker ${workerId || 'unknown'} video maxres paths generated (deterministic, no timestamps) - webp: ${paths.webpPath}, avif: ${paths.avifPath}`
+      );
+
+      return paths;
+    } else {
+      // Fallback for other video image types - still deterministic
+      const basePath = `thumbnails/${entityId}/${entityId}-${imageType}`;
+      const paths = {
+        webpPath: `${basePath}.webp`,
+        avifPath: `${basePath}.avif`,
+      };
+
+      console.log(
+        `📂 Worker ${workerId || 'unknown'} video fallback paths generated (deterministic, no timestamps) - webp: ${paths.webpPath}, avif: ${paths.avifPath}`
       );
 
       return paths;
     }
-  }
-
-  // Fallback: Videos get deterministic paths, other entities get timestamps
-  if (entityType === 'video') {
-    const basePath = `${entityType}s/${entityId}/${entityType}-${entityId}`;
+  } else if (entityType === 'playlist') {
+    // Playlists use timestamped paths to support multiple snapshots over time
+    const timestamp = Date.now();
+    const uniqueSuffix = jobId
+      ? `${timestamp}-${jobId.slice(0, 8)}`
+      : timestamp.toString();
+    const basePath = `playlists/${entityId}/playlist-${entityId}-${uniqueSuffix}`;
     const paths = {
       webpPath: `${basePath}.webp`,
       avifPath: `${basePath}.avif`,
     };
 
     console.log(
-      `📂 [${timestampStr}] Worker ${workerId || 'unknown'} video fallback paths generated (deterministic) - webp: ${paths.webpPath}, avif: ${paths.avifPath}`
+      `📂 Worker ${workerId || 'unknown'} playlist paths generated (with timestamp) - webp: ${paths.webpPath}, avif: ${paths.avifPath}`
     );
 
     return paths;
   } else {
+    // Other entities get timestamped paths for uniqueness
+    const timestamp = Date.now();
+    const uniqueSuffix = jobId
+      ? `${timestamp}-${jobId.slice(0, 8)}`
+      : timestamp.toString();
     const basePath = `${entityType}s/${entityId}/${entityType}-${entityId}-${uniqueSuffix}`;
     const paths = {
       webpPath: `${basePath}.webp`,
@@ -199,7 +199,7 @@ export function generateStoragePaths(
     };
 
     console.log(
-      `📂 [${timestampStr}] Worker ${workerId || 'unknown'} fallback paths generated (with timestamp) - webp: ${paths.webpPath}, avif: ${paths.avifPath}`
+      `📂 Worker ${workerId || 'unknown'} fallback paths generated (with timestamp) - webp: ${paths.webpPath}, avif: ${paths.avifPath}`
     );
 
     return paths;
@@ -537,12 +537,13 @@ export const processImage = inngest.createFunction(
     id: 'process-image-hq',
     name: 'Process Single Image (High Quality)',
     retries: MAX_RETRIES,
-    // ENHANCED: Use job-specific concurrency control instead of entity-level
-    // This prevents the same job from being processed multiple times
+    // ENHANCED: Use entity+imageType combination for concurrency control
+    // This prevents the same video+imageType from being processed multiple times
+    // even if duplicate jobs somehow exist with different job IDs
     concurrency: [
       {
         limit: 1,
-        key: 'event.data.jobId', // Use job ID for exact duplicate prevention
+        key: 'event.data.entityType + "-" + event.data.entityId + "-" + event.data.imageType',
       },
     ],
   },
@@ -563,13 +564,16 @@ export const processImage = inngest.createFunction(
     const startTime = Date.now();
 
     console.log(
-      `🚀 [${processingStartTimestamp}] Worker ${workerId || 'unknown'} starting HIGH-QUALITY processing for ${entityType} ${entityId}, type: ${imageType}, job: ${jobId}`
+      `🚀 Worker ${workerId || 'unknown'} starting HIGH-QUALITY processing for ${entityType} ${entityId}, type: ${imageType}, job: ${jobId}`
     );
     console.log(
-      `📋 [${processingStartTimestamp}] Job context - worker: ${workerId}, attempts: ${jobAttempts}/3, polled at: ${pollingTimestamp}, processing started: ${processingStartedAt}`
+      `📋 Job context - worker: ${workerId}, attempts: ${jobAttempts}/3, polled at: ${pollingTimestamp}, processing started: ${processingStartedAt}`
+    );
+    console.log(
+      `🔒 Concurrency key: ${entityType}-${entityId}-${imageType} (prevents duplicate processing of same content)`
     );
 
-    console.log(`📸 [${processingStartTimestamp}] Source URL: ${sourceUrl}`);
+    console.log(`📸 Source URL: ${sourceUrl}`);
 
     try {
       // Ensure we have both job ID and worker ID - these should always be provided by the enhanced poller
@@ -577,7 +581,7 @@ export const processImage = inngest.createFunction(
         const errorMsg =
           'No job ID provided - jobs should be created by database triggers and locked by poller';
         console.error(
-          `❌ [${new Date().toISOString()}] Worker ${workerId || 'unknown'} CRITICAL ERROR: ${errorMsg}`
+          `❌ Worker ${workerId || 'unknown'} CRITICAL ERROR: ${errorMsg}`
         );
         throw new Error(errorMsg);
       }
@@ -586,14 +590,14 @@ export const processImage = inngest.createFunction(
         const errorMsg =
           'No worker ID provided - worker identification is required to prevent race conditions';
         console.error(
-          `❌ [${new Date().toISOString()}] CRITICAL ERROR: ${errorMsg}`
+          `❌ CRITICAL ERROR: ${errorMsg}`
         );
 
         throw new Error(errorMsg);
       }
 
       console.log(
-        `🔄 [${new Date().toISOString()}] Worker ${workerId} processing job ${jobId} (already locked by poller)...`
+        `🔄 Worker ${workerId} processing job ${jobId} (already locked by poller)...`
       );
 
       // The job is already marked as processing by the atomic poller function
@@ -601,7 +605,7 @@ export const processImage = inngest.createFunction(
       const markingDuration = Date.now() - startTime;
 
       console.log(
-        `✅ [${new Date().toISOString()}] Worker ${workerId} job ${jobId} already locked and processing in ${markingDuration}ms`
+        `✅ Worker ${workerId} job ${jobId} already locked and processing in ${markingDuration}ms`
       );
 
       // Check existing images
@@ -613,7 +617,7 @@ export const processImage = inngest.createFunction(
       const existingCheckDuration = Date.now() - existingCheckStart;
 
       console.log(
-        `🔍 [${new Date().toISOString()}] Worker ${workerId} existing images check completed in ${existingCheckDuration}ms - WebP: ${hasWebP}, AVIF: ${hasAVIF} - generating NEW high-quality versions`
+        `🔍 Worker ${workerId} existing images check completed in ${existingCheckDuration}ms - WebP: ${hasWebP}, AVIF: ${hasAVIF} - generating NEW high-quality versions`
       );
 
       // Delete existing images before creating new ones
