@@ -59,11 +59,8 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 interface Video {
   id: string;
   thumbnail_url: string | null;
-  thumbnail_maxres_url: string | null;
   thumbnail_webp_url: string | null;
   thumbnail_avif_url: string | null;
-  thumbnail_maxres_webp_url: string | null;
-  thumbnail_maxres_avif_url: string | null;
   image_processing_status: string | null;
 }
 
@@ -74,13 +71,12 @@ interface Playlist {
   image_avif_url: string | null;
   image_processing_status: string | null;
   video_thumbnail_url: string | null;
-  video_thumbnail_maxres_url: string | null;
 }
 
 interface Job {
   entity_type: 'video' | 'playlist';
   entity_id: string;
-  image_type: 'thumbnail' | 'thumbnail_maxres' | 'playlist_image';
+  image_type: 'thumbnail' | 'playlist_image';
   source_url: string;
   priority: number;
 }
@@ -94,15 +90,12 @@ async function getVideosToProcess(): Promise<Video[]> {
       `
       id,
       thumbnail_url,
-      thumbnail_maxres_url,
       thumbnail_webp_url,
       thumbnail_avif_url,
-      thumbnail_maxres_webp_url,
-      thumbnail_maxres_avif_url,
       image_processing_status
     `
     )
-    .or('thumbnail_url.not.is.null,thumbnail_maxres_url.not.is.null');
+    .or('thumbnail_url.not.is.null');
 
   if (!FORCE_REPROCESS) {
     query = query.or(
@@ -164,7 +157,7 @@ async function getPlaylistsToProcess(): Promise<Playlist[]> {
 
   const { data: videos, error: videoError } = await supabase
     .from('videos')
-    .select('id, thumbnail_url, thumbnail_maxres_url')
+    .select('id, thumbnail_url ')
     .in('id', videoIds);
 
   if (videoError) {
@@ -176,7 +169,6 @@ async function getPlaylistsToProcess(): Promise<Playlist[]> {
   videos?.forEach((video) => {
     videoThumbnailMap.set(video.id, {
       thumbnail_url: video.thumbnail_url,
-      thumbnail_maxres_url: video.thumbnail_maxres_url,
     });
   });
 
@@ -186,7 +178,6 @@ async function getPlaylistsToProcess(): Promise<Playlist[]> {
     return {
       ...playlist,
       video_thumbnail_url: videoThumbnails?.thumbnail_url || null,
-      video_thumbnail_maxres_url: videoThumbnails?.thumbnail_maxres_url || null,
     };
   });
 
@@ -219,16 +210,6 @@ function createVideoJobs(videos: Video[]): Job[] {
         priority: 200, // Lower priority for batch processing
       });
     }
-
-    if (video.thumbnail_maxres_url) {
-      jobs.push({
-        entity_type: 'video' as const,
-        entity_id: video.id,
-        image_type: 'thumbnail_maxres' as const,
-        source_url: video.thumbnail_maxres_url,
-        priority: 200,
-      });
-    }
   }
 
   return jobs;
@@ -241,7 +222,6 @@ function createPlaylistJobs(playlists: Playlist[]): Job[] {
     console.log(`Processing playlist ${playlist.id}:`, {
       thumbnail_video_id: playlist.thumbnail_video_id,
       video_thumbnail_url: !!playlist.video_thumbnail_url,
-      video_thumbnail_maxres_url: !!playlist.video_thumbnail_maxres_url,
       image_processing_status: playlist.image_processing_status,
       has_webp: !!playlist.image_webp_url,
       has_avif: !!playlist.image_avif_url,
@@ -263,9 +243,7 @@ function createPlaylistJobs(playlists: Playlist[]): Job[] {
       continue;
     }
 
-    // Use highest resolution available (maxres preferred)
-    const sourceUrl =
-      playlist.video_thumbnail_maxres_url || playlist.video_thumbnail_url;
+    const sourceUrl = playlist.video_thumbnail_url;
 
     if (!sourceUrl) {
       console.log(

@@ -505,7 +505,7 @@ async function uploadToStorage(
     .from(STORAGE_BUCKET)
     .upload(avifPath, avifBuffer, {
       contentType: 'image/avif',
-      cacheControl: '31536000', // 1 year
+      cacheControl: '31536000',
       upsert: true,
     });
 
@@ -560,7 +560,6 @@ export const processImage = inngest.createFunction(
       jobAttempts,
       processingStartedAt,
     } = event.data;
-    const processingStartTimestamp = new Date().toISOString();
     const startTime = Date.now();
 
     console.log(

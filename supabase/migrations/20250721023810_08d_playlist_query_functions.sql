@@ -100,7 +100,6 @@ BEGIN
     public.select_best_image_format(
       p.image_avif_url,
       p.image_webp_url,
-      NULL, -- No JPG support for playlists
       p_preferred_image_format
     ) as best_playlist_image_url,
     p.image_processing_status,
@@ -212,20 +211,12 @@ BEGIN
     v.thumbnail_url as video_thumbnail_url,
     v.thumbnail_maxres_url as video_thumbnail_maxres_url,
     -- Use unified select_best_image_format for video thumbnails (with JPG fallback)
-    COALESCE(
-      public.select_best_image_format(
-        v.thumbnail_maxres_avif_url,
-        v.thumbnail_maxres_webp_url,
-        v.thumbnail_maxres_url,  -- JPG fallback for videos
-        p_preferred_image_format
-      ),
-      public.select_best_image_format(
-        v.thumbnail_avif_url,
-        v.thumbnail_webp_url,
-        v.thumbnail_url,  -- JPG fallback for videos
-        p_preferred_image_format
-      )
-    ) as video_image_url,
+    public.select_best_image_format(
+      v.thumbnail_maxres_avif_url,
+      v.thumbnail_maxres_webp_url,
+      p_preferred_image_format
+    )
+    as video_image_url,
     v.image_processing_status as video_image_processing_status,
     v.published_at as video_published_at,
     v.duration as video_duration,
@@ -341,7 +332,6 @@ SET
       public.select_best_image_format(
         p.image_avif_url,
         p.image_webp_url,
-        NULL, -- No JPG support for playlists
         p_preferred_image_format
       ) as best_playlist_image_url,
       p.image_processing_status,
@@ -386,13 +376,11 @@ SET
         public.select_best_image_format(
           v.thumbnail_maxres_avif_url,
           v.thumbnail_maxres_webp_url,
-          v.thumbnail_maxres_url,  -- JPG fallback for videos
           p_preferred_image_format
         ),
         public.select_best_image_format(
           v.thumbnail_avif_url,
           v.thumbnail_webp_url,
-          v.thumbnail_url,  -- JPG fallback for videos
           p_preferred_image_format
         )
       ) as best_video_image_url,
@@ -534,7 +522,6 @@ SET
     public.select_best_image_format(
       p.image_avif_url,
       p.image_webp_url,
-      NULL, -- No JPG support for playlists
       p_preferred_image_format
     ) as image_url,
     p.image_processing_status::public.image_processing_status,
@@ -593,7 +580,6 @@ SET
     public.select_best_image_format(
       p.image_avif_url,
       p.image_webp_url,
-      NULL, -- No JPG support for playlists
       p_preferred_image_format
     ) as image_url,
     p.image_processing_status::public.image_processing_status,
@@ -686,7 +672,6 @@ BEGIN
             public.select_best_image_format(
               p.image_avif_url,
               p.image_webp_url,
-              NULL, -- No JPG support for playlists
               p_preferred_image_format
             ) as best_image_url,
             p.image_processing_status::public.image_processing_status,

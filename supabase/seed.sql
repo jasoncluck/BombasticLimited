@@ -533,12 +533,7 @@ INSERT INTO "public"."image_processing_jobs" ("id", "entity_type", "entity_id", 
 	('34d7fc54-c673-4946-bb53-7c78549b200c', 'video', 'zZ-OKEEleu8', 'thumbnail', 'https://i.ytimg.com/vi/zZ-OKEEleu8/maxresdefault.jpg', 'processing', 100, 3, 3, NULL, '2025-08-20 21:34:22.851101+00', '2025-08-20 21:34:16.796661+00', '2025-08-20 21:12:25.231837+00', '2025-08-20 21:34:22.851101+00', 'worker-mekhf4gg-3f1a334c', '2025-08-20 21:25:45.671688+00');
 
 
---
--- Data for Name: notifications; Type: TABLE DATA; Schema: public; Owner: postgres
---
 
-INSERT INTO "public"."notifications" ("id", "type", "title", "message", "metadata", "action_url", "is_test", "start_datetime", "end_datetime", "created_by", "created_at", "updated_at") VALUES
-	(1, 'system', 'Welcome to Bombastic!', 'Thanks for joining our community! Explore playlists, discover great content, and enjoy your experience.<br><br>Get started by browsing our <a href="/playlists">featured playlists</a> or <a href="/account">customizing your preferences</a>.', '{"source": "welcome_new_user", "reusable": true, "is_welcome": true}', NULL, false, '2025-08-20 21:09:32.977366+00', NULL, NULL, '2025-08-20 21:09:32.977366+00', '2025-08-20 21:09:32.977366+00');
 
 
 --

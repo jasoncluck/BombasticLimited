@@ -109,6 +109,7 @@ BEGIN
         image_processing_status = 'completed'::public.image_processing_status,
         image_processing_updated_at = now()
       WHERE id = job_record.entity_id;
+    END IF;
   ELSIF job_record.entity_type = 'playlist' THEN
     -- For playlists: WebP is primary, AVIF is optimization
     UPDATE "public"."playlists"

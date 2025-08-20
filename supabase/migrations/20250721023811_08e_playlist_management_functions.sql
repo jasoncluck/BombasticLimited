@@ -155,7 +155,6 @@ BEGIN
   SELECT public.select_best_image_format(
     inserted_playlist.image_avif_url,
     inserted_playlist.image_webp_url,
-    NULL, 
     p_preferred_image_format
   ) INTO selected_image_url;
 
