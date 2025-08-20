@@ -181,13 +181,9 @@ export const populatePlaylists = async ({
           youtube_id: item.id,
           name: item.snippet?.title ?? 'Untitled',
           created_by: userId,
-<<<<<<< HEAD
           thumbnail_url: removeLiveSuffix(
             getBestThumbnailUrl(item.snippet?.thumbnails)
           ),
-=======
-          thumbnail_url: removeLiveSuffix(thumbnailUrl),
->>>>>>> copilot/fix-b4e7520d-8f78-4e6e-8864-8edf7a471575
           created_at: item.snippet?.publishedAt,
           type: 'Public',
         };

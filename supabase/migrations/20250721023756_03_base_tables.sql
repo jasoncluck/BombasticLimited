@@ -17,10 +17,7 @@ CREATE TABLE IF NOT EXISTS "public"."videos" (
   "search_vector" "tsvector",
   "pending_delete" boolean DEFAULT TRUE,
   "duration" "text" DEFAULT ''::"text",
-<<<<<<< HEAD
   "thumbnail_url" "text" NOT NULL,
-=======
->>>>>>> copilot/fix-b4e7520d-8f78-4e6e-8864-8edf7a471575
   "thumbnail_webp_url" text,
   "thumbnail_avif_url" text,
   "image_processing_status" public.image_processing_status DEFAULT 'pending',
