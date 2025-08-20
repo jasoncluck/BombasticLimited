@@ -1,6 +1,6 @@
 <script lang="ts">
   import ScrollArea from '$lib/components/ui/scroll-area/scroll-area.svelte';
-  import '../../../app.css';
+  import '../../app.css';
 
   let { children } = $props();
 </script>

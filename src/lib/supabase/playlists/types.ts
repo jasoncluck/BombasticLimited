@@ -67,14 +67,7 @@ export type PlaylistVideoWithTimestamp = {
   video_start_seconds: GetPlaylistDataResponse['video_start_seconds'] | null;
   updated_at: GetPlaylistDataResponse['video_updated_at'] | null;
   watched_at: GetPlaylistDataResponse['video_watched_at'] | null;
-  // Add missing Video properties for compatibility
   views: number;
-  image_processing_status: 'pending' | 'processing' | 'completed' | 'failed';
-  image_processing_updated_at: string | null;
-  thumbnail_webp_url: string | null;
-  thumbnail_avif_url: string | null;
-  thumbnail_maxres_webp_url: string | null;
-  thumbnail_maxres_avif_url: string | null;
 };
 
 export type PlaylistVideo = Tables<'playlist_videos'>;

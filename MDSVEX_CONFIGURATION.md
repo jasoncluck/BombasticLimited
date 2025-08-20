@@ -1,33 +1,41 @@
 # MDsveX Configuration - Automatic Layout and GitHub Flavored Markdown
 
-This document explains the improved MDsveX configuration that addresses the issues raised in the feedback.
+This document explains the improved MDsveX configuration that addresses the
+issues raised in the feedback.
 
 ## What Changed
 
 ### 1. Automatic Layout
+
 - **Before**: Manual wrapping required with `<DefaultLayout>`
 - **After**: Automatic layout applied to all `.md` and `.svx` files
-- **Configuration**: Set `layout` option in `svelte.config.js` to automatically wrap all markdown files
+- **Configuration**: Set `layout` option in `svelte.config.js` to automatically
+  wrap all markdown files
 
 ### 2. Tailwind Typography Integration
+
 - **Before**: Custom CSS with hardcoded colors
 - **After**: Uses `@tailwindcss/typography` with design system integration
 - **Benefits**: Comprehensive prose styling with proper semantic HTML styling
 
 ### 3. GitHub Flavored Markdown Support
+
 - **Added**: `remark-gfm` plugin for enhanced markdown features
 - **Features**: Tables, task lists, strikethrough, automatic links, etc.
 
 ### 4. Design System Integration
-- **Headers**: Inherit your existing `.header-primary` and `.header-secondary` styles
+
+- **Headers**: Inherit your existing `.header-primary` and `.header-secondary`
+  styles
 - **Colors**: Uses CSS variables (`--color-*`) from your design system
-- **Code blocks**: Properly themed with design system colors, visible in dark mode
+- **Code blocks**: Properly themed with design system colors, visible in dark
+  mode
 
 ## Usage
 
 Simply create `.md` or `.svx` files in your routes - no manual wrapping needed:
 
-```markdown
+````markdown
 ---
 title: 'My Page'
 ---
@@ -43,14 +51,16 @@ Your markdown content with **bold text**, _italic text_, and proper typography.
 - Tables are supported
 - ~~Strikethrough~~ text
 
-| Column 1 | Column 2 |
-|----------|----------|
-| Data     | More data|
+| Column 1 | Column 2  |
+| -------- | --------- |
+| Data     | More data |
 
 ```javascript
 // Code blocks with proper theming
 console.log('Hello, world!');
 ```
+````
+
 ```
 
 ## Technical Details
@@ -73,12 +83,12 @@ console.log('Hello, world!');
 
 ### Benefits
 
-✅ **No Manual Wrapping**: Write pure markdown without layout components  
-✅ **Comprehensive Styling**: Tailwind Typography provides extensive prose styling  
-✅ **Design System Integration**: Seamlessly integrates with existing styles  
-✅ **GitHub Flavored Markdown**: Full support for tables, task lists, etc.  
-✅ **Dark Mode Compatible**: Code blocks and elements properly themed  
-✅ **TypeScript Support**: Full type checking and IntelliSense  
+✅ **No Manual Wrapping**: Write pure markdown without layout components
+✅ **Comprehensive Styling**: Tailwind Typography provides extensive prose styling
+✅ **Design System Integration**: Seamlessly integrates with existing styles
+✅ **GitHub Flavored Markdown**: Full support for tables, task lists, etc.
+✅ **Dark Mode Compatible**: Code blocks and elements properly themed
+✅ **TypeScript Support**: Full type checking and IntelliSense
 
 ### Compatibility
 
@@ -87,3 +97,4 @@ console.log('Hello, world!');
 - ✅ Full SvelteKit integration
 - ✅ Build process optimized
 - ✅ No breaking changes to existing functionality
+```

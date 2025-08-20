@@ -12,7 +12,6 @@ export const load: PageServerLoad = async ({
   locals: { supabase, session },
   setHeaders,
   isDataRequest,
-  request,
 }) => {
   depends('supabase:db:playlistsForProfile');
 
@@ -25,8 +24,6 @@ export const load: PageServerLoad = async ({
   const cacheKey = `playlists-${username}-${userId || 'anon'}-${timeSlot}`;
   const etag = `"${cacheKey}"`;
   const lastModified = new Date(timeSlot * 120000);
-
-  const clientEtag = request.headers.get('if-none-match');
 
   if (!isDataRequest) {
     try {
@@ -52,6 +49,7 @@ export const load: PageServerLoad = async ({
   const { playlists: playlistsForUsername, count: playlistsCount } =
     await getPlaylistsForUsername({
       username,
+      preferredImageFormat: 'avif',
       limit: DEFAULT_NUM_PLAYLISTS_PAGINATION,
       currentPage,
       supabase,

@@ -103,7 +103,7 @@ describe('continue/+page.svelte Component Logic', () => {
       expect(videoSample).toHaveProperty('title');
       expect(videoSample).toHaveProperty('video_start_seconds');
       expect(videoSample).toHaveProperty('watched_at');
-      expect(videoSample).toHaveProperty('thumbnail_url');
+      expect(videoSample).toHaveProperty('image_url');
       expect(typeof videoSample.video_start_seconds).toBe('number');
     });
 

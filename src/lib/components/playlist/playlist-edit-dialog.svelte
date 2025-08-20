@@ -29,7 +29,7 @@
   import {
     playlistSchema,
     type PlaylistSchema,
-  } from '../../../routes/(app)/playlist/[shortId]/schema';
+  } from '../../../routes/playlist/[shortId]/schema';
 
   let {
     form,

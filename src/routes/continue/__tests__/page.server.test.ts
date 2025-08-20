@@ -65,7 +65,11 @@ describe('continue/+page.server.ts load function', () => {
     depends: vi.fn(),
     request: {
       headers: {
-        get: vi.fn().mockReturnValue('text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'),
+        get: vi
+          .fn()
+          .mockReturnValue(
+            'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+          ),
       },
     },
   };

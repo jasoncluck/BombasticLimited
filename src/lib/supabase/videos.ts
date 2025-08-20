@@ -42,12 +42,6 @@ export type Video = {
   published_at: string;
   duration: string;
   views: number;
-  image_processing_status: 'pending' | 'processing' | 'completed' | 'failed';
-  image_processing_updated_at: string | null;
-  thumbnail_webp_url: string | null;
-  thumbnail_avif_url: string | null;
-  thumbnail_maxres_webp_url: string | null;
-  thumbnail_maxres_avif_url: string | null;
 };
 
 // Video with timestamp information (for in-progress videos, etc.)
@@ -73,18 +67,12 @@ function transformVideoFromGetVideosWithTimestamps(
     source: rpcData.source as Source,
     title: rpcData.title,
     description: rpcData.description,
+    image_url: rpcData.image_url,
     thumbnail_url: rpcData.thumbnail_url,
-    thumbnail_maxres_url: rpcData.thumbnail_maxres_url || null,
-    image_url: (rpcData as any).image_url || null, // Add image_url with fallback
+    thumbnail_maxres_url: rpcData.thumbnail_maxres_url,
     published_at: rpcData.published_at,
     duration: rpcData.duration,
     views: rpcData.views || 0,
-    image_processing_status: rpcData.image_processing_status,
-    image_processing_updated_at: rpcData.image_processing_updated_at || null,
-    thumbnail_webp_url: rpcData.thumbnail_webp_url || null,
-    thumbnail_avif_url: rpcData.thumbnail_avif_url || null,
-    thumbnail_maxres_webp_url: rpcData.thumbnail_maxres_webp_url || null,
-    thumbnail_maxres_avif_url: rpcData.thumbnail_maxres_avif_url || null,
     video_start_seconds: rpcData.video_start_seconds || null,
     updated_at: rpcData.updated_at || null,
     watched_at: rpcData.watched_at || null,
@@ -104,18 +92,12 @@ function transformVideoFromSearchVideos(
     source: rpcData.source as Source,
     title: rpcData.title,
     description: rpcData.description,
+    image_url: rpcData.image_url,
     thumbnail_url: rpcData.thumbnail_url,
-    thumbnail_maxres_url: rpcData.thumbnail_maxres_url || null,
-    image_url: (rpcData as any).image_url || null, // Add image_url with fallback
+    thumbnail_maxres_url: rpcData.thumbnail_maxres_url,
     published_at: rpcData.published_at,
     duration: rpcData.duration,
     views: rpcData.views || 0,
-    image_processing_status: rpcData.image_processing_status,
-    image_processing_updated_at: rpcData.image_processing_updated_at || null,
-    thumbnail_webp_url: rpcData.thumbnail_webp_url || null,
-    thumbnail_avif_url: rpcData.thumbnail_avif_url || null,
-    thumbnail_maxres_webp_url: rpcData.thumbnail_maxres_webp_url || null,
-    thumbnail_maxres_avif_url: rpcData.thumbnail_maxres_avif_url || null,
     video_start_seconds: rpcData.video_start_seconds || null,
     updated_at: rpcData.updated_at || null,
     watched_at: rpcData.watched_at || null,
@@ -135,18 +117,12 @@ function transformVideoFromGetInProgressVideos(
     source: rpcData.source as Source,
     title: rpcData.title,
     description: rpcData.description,
+    image_url: rpcData.image_url,
     thumbnail_url: rpcData.thumbnail_url,
-    thumbnail_maxres_url: rpcData.thumbnail_maxres_url || null,
-    image_url: (rpcData as any).image_url || null, // Add image_url with fallback
+    thumbnail_maxres_url: rpcData.thumbnail_maxres_url,
     published_at: rpcData.published_at,
     duration: rpcData.duration,
     views: rpcData.views || 0,
-    image_processing_status: rpcData.image_processing_status,
-    image_processing_updated_at: rpcData.image_processing_updated_at || null,
-    thumbnail_webp_url: rpcData.thumbnail_webp_url || null,
-    thumbnail_avif_url: rpcData.thumbnail_avif_url || null,
-    thumbnail_maxres_webp_url: rpcData.thumbnail_maxres_webp_url || null,
-    thumbnail_maxres_avif_url: rpcData.thumbnail_maxres_avif_url || null,
     video_start_seconds: rpcData.video_start_seconds || null,
     updated_at: rpcData.updated_at || null,
     watched_at: rpcData.watched_at || null,

@@ -589,9 +589,7 @@ export const processImage = inngest.createFunction(
       if (!workerId) {
         const errorMsg =
           'No worker ID provided - worker identification is required to prevent race conditions';
-        console.error(
-          `❌ CRITICAL ERROR: ${errorMsg}`
-        );
+        console.error(`❌ CRITICAL ERROR: ${errorMsg}`);
 
         throw new Error(errorMsg);
       }

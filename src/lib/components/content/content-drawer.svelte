@@ -43,7 +43,7 @@
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import PlaylistDeleteAlertDrawer from '../playlist/playlist-delete-alert-drawer.svelte';
   import PlaylistEditDrawer from '../playlist/playlist-edit-drawer.svelte';
-  import type { PlaylistSchema } from '../../../routes/(app)/playlist/[shortId]/schema';
+  import type { PlaylistSchema } from '../../../routes/playlist/[shortId]/schema';
 
   interface ContentDrawerProps {
     videos?: Video[];

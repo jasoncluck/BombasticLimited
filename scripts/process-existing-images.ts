@@ -37,11 +37,15 @@ if (!supabaseUrl || !supabaseServiceKey) {
   console.error('Error: Missing Supabase environment variables');
   console.error('Required: PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY');
   console.error('');
-  console.error('For local development, make sure you have a .env.local file with:');
+  console.error(
+    'For local development, make sure you have a .env.local file with:'
+  );
   console.error('PUBLIC_SUPABASE_URL=your_supabase_url');
   console.error('SUPABASE_SERVICE_ROLE_KEY=your_service_role_key');
   console.error('');
-  console.error('You can also run "supabase start" to use local Supabase instance.');
+  console.error(
+    'You can also run "supabase start" to use local Supabase instance.'
+  );
   process.exit(1);
 }
 
@@ -293,7 +297,8 @@ async function processBatch(jobs: Job[], batchNumber: number) {
     console.log(
       'DRY RUN: Would process these jobs:',
       jobs.map(
-        (j) => `${j.entity_type}:${j.entity_id}:${j.image_type} (${j.source_url})`
+        (j) =>
+          `${j.entity_type}:${j.entity_id}:${j.image_type} (${j.source_url})`
       )
     );
     return;
@@ -316,7 +321,9 @@ async function processBatch(jobs: Job[], batchNumber: number) {
     const failed = results.filter((r) => r.error).length;
 
     if (failed > 0) {
-      console.error(`❌ Failed to queue ${failed} jobs in batch ${batchNumber}`);
+      console.error(
+        `❌ Failed to queue ${failed} jobs in batch ${batchNumber}`
+      );
       results.forEach((result, index) => {
         if (result.error) {
           console.error(`  Job ${index + 1}: ${result.error.message}`);
@@ -324,7 +331,9 @@ async function processBatch(jobs: Job[], batchNumber: number) {
       });
     }
 
-    console.log(`✅ Queued batch ${batchNumber}: ${successful} successful, ${failed} failed`);
+    console.log(
+      `✅ Queued batch ${batchNumber}: ${successful} successful, ${failed} failed`
+    );
   } catch (error) {
     console.error(`❌ Failed to queue batch ${batchNumber}:`, error);
     throw error;
@@ -397,8 +406,12 @@ async function main() {
       console.log(
         '\n📊 You can monitor progress by checking the image_processing_jobs table'
       );
-      console.log('🌐 Jobs will be processed by the job poller and Inngest workers');
-      console.log('⏰ The poller runs every 5 minutes and processes up to 50 jobs per cycle');
+      console.log(
+        '🌐 Jobs will be processed by the job poller and Inngest workers'
+      );
+      console.log(
+        '⏰ The poller runs every 5 minutes and processes up to 50 jobs per cycle'
+      );
     }
   } catch (error) {
     console.error('❌ Script failed:', error);

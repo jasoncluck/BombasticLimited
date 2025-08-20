@@ -23,7 +23,7 @@
   import {
     adminNotificationSchema,
     type AdminNotificationSchema,
-  } from '../../../routes/(app)/admin/notifications/admin-notifications-schema';
+  } from '../../../routes/admin/notifications/admin-notifications-schema';
 
   let {
     form,

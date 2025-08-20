@@ -116,14 +116,7 @@ export function transformVideoFromRPC(
     video_start_seconds: rpcData.video_start_seconds,
     updated_at: rpcData.video_updated_at,
     watched_at: rpcData.video_watched_at,
-    // Add missing Video properties with defaults
     views: 0,
-    image_processing_status: 'completed' as const,
-    image_processing_updated_at: null,
-    thumbnail_webp_url: null,
-    thumbnail_avif_url: null,
-    thumbnail_maxres_webp_url: null,
-    thumbnail_maxres_avif_url: null,
   };
 }
 
@@ -152,11 +145,5 @@ export function transformVideoFromContextRPC(
     watched_at: rpcData.video_watched_at,
     // Add missing Video properties with defaults
     views: 0,
-    image_processing_status: 'completed' as const,
-    image_processing_updated_at: null,
-    thumbnail_webp_url: null,
-    thumbnail_avif_url: null,
-    thumbnail_maxres_webp_url: null,
-    thumbnail_maxres_avif_url: null,
   };
 }
