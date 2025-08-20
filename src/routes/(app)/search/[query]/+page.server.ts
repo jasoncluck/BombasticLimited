@@ -6,6 +6,7 @@ import {
   type SourceVideos,
   type SourceVideosCount,
 } from '$lib/supabase/videos';
+import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
@@ -20,6 +21,9 @@ export const load: PageServerLoad = async ({
   const { contentFilter } = await parent();
   const searchString = params.query;
   const acceptHeader = request.headers.get('accept');
+
+  // Detect optimal image format from Accept header
+  const preferredImageFormat = detectOptimalFormat(acceptHeader);
 
   if (!isVideoFilter(contentFilter)) {
     throw new Error('Invalid content filter');
@@ -39,6 +43,7 @@ export const load: PageServerLoad = async ({
           searchString,
           supabase,
           session,
+          preferredImageFormat,
         });
         return { source, videos, count };
       })
@@ -49,7 +54,7 @@ export const load: PageServerLoad = async ({
       limit: 6,
       supabase,
       session,
-      acceptHeader,
+      preferredImageFormat,
     }),
   ]);
 

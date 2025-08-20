@@ -23,6 +23,7 @@ import { Filter } from 'bad-words';
 import { redirect, setFlash } from 'sveltekit-flash-message/server';
 import { getProfileById } from '$lib/supabase/user-profiles';
 import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
+import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 
 export const load: PageServerLoad = async ({
   locals: { supabase, session },
@@ -35,6 +36,9 @@ export const load: PageServerLoad = async ({
   depends('supabase:db:videos', 'supabase:db:playlists');
 
   const acceptHeader = request.headers.get('accept');
+
+  // Detect optimal image format from Accept header
+  const preferredImageFormat = detectOptimalFormat(acceptHeader);
 
   const { contentFilter } = await parent();
 
@@ -55,7 +59,7 @@ export const load: PageServerLoad = async ({
       contentFilter,
       currentPage,
       limit: DEFAULT_NUM_VIDEOS_PAGINATION,
-      acceptHeader,
+      preferredImageFormat,
       supabase,
       session,
     });
@@ -194,7 +198,7 @@ export const actions: Actions = {
       shortId: params.shortId,
       currentPage: 1,
       limit: 1,
-      acceptHeader: null,
+      preferredImageFormat: 'avif',
       supabase,
       session,
     });

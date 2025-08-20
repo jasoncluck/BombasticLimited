@@ -65,7 +65,7 @@ export const load: PageServerLoad = async ({
               limit: DEFAULT_NUM_VIDEOS_OVERVIEW,
               supabase,
               session,
-              acceptHeader,
+              preferredImageFormat,
             });
 
             if (!playlist) {
@@ -85,6 +85,7 @@ export const load: PageServerLoad = async ({
         username: source,
         limit: DEFAULT_NUM_PLAYLISTS_OVERVIEW,
         supabase,
+        preferredImageFormat,
       }),
     ]);
 

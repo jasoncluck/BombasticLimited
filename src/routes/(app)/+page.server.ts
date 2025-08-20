@@ -10,18 +10,25 @@ import {
   type SourceVideos,
 } from '$lib/supabase/videos';
 import { redirect } from '@sveltejs/kit';
+import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
   locals: { supabase, session },
   url,
   depends,
+  request,
 }) => {
   depends('supabase:db:videos');
 
   if (url.searchParams.has('error')) {
     redirect(303, '/auth/error');
   }
+
+  const acceptHeader = request.headers.get('accept');
+
+  // Detect optimal image format from Accept header
+  const preferredImageFormat = detectOptimalFormat(acceptHeader);
 
   const sourceVideosContentFilters: VideoFilter = {
     sort: {
@@ -50,6 +57,7 @@ export const load: PageServerLoad = async ({
           contentFilter: sourceVideosContentFilters,
           supabase,
           session,
+          preferredImageFormat,
         });
         return { source, videos };
       })
@@ -60,6 +68,7 @@ export const load: PageServerLoad = async ({
       limit: DEFAULT_NUM_VIDEOS_OVERVIEW,
       supabase,
       session,
+      preferredImageFormat,
     }).then((result) => result.videos),
   ]);
 

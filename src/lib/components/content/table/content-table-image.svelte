@@ -19,7 +19,7 @@
   <!-- Use the optimized image_url directly from the database -->
   <img
     class="h-full w-full object-cover"
-    src={video.image_url || video.thumbnail_url}
+    src={video.image_url}
     alt={video.title}
     loading="lazy"
     decoding="async"

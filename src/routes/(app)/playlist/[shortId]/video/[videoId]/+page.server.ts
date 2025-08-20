@@ -1,6 +1,7 @@
 import { isPlaylistVideosFilter } from '$lib/components/content/content-filter';
 import { getPlaylistVideoContext } from '$lib/supabase/playlists';
 import { incrementVideoView, isVideoWithTimestamp } from '$lib/supabase/videos';
+import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
@@ -16,6 +17,9 @@ export const load: PageServerLoad = async ({
   const videoId = params.videoId;
   const acceptHeader = request.headers.get('accept');
 
+  // Detect optimal image format from Accept header
+  const preferredImageFormat = detectOptimalFormat(acceptHeader);
+
   // Run parent() first to get contentFilter
   const { contentFilter } = await parent();
 
@@ -30,7 +34,7 @@ export const load: PageServerLoad = async ({
     contentFilter, // This will be used for sorting in the query
     supabase,
     contextLimit: 5,
-    acceptHeader,
+    preferredImageFormat,
   });
 
   const {
