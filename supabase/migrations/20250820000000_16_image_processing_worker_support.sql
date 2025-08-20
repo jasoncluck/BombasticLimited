@@ -38,7 +38,7 @@ BEGIN
     worker_id = p_worker_id,
     polling_timestamp = now(),
     processing_started_at = now(),
-    attempts = attempts + 1
+    attempts = j.attempts + 1
   WHERE j.id = (
     SELECT j2.id
     FROM "public"."image_processing_jobs" j2
