@@ -46,6 +46,11 @@ describe('+page.server.ts load function', () => {
     },
     url: new URL('http://localhost:5173'),
     depends: vi.fn(),
+    request: {
+      headers: {
+        get: vi.fn().mockReturnValue('text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'),
+      },
+    },
   };
 
   const mockDepends = mockLoadEvent.depends;
@@ -83,6 +88,7 @@ describe('+page.server.ts load function', () => {
           },
           type: 'video',
         },
+        preferredImageFormat: 'webp',
         supabase: mockSupabase,
         session: mockSession,
       });
@@ -98,6 +104,7 @@ describe('+page.server.ts load function', () => {
         },
         type: 'timestamp',
       },
+      preferredImageFormat: 'webp',
       supabase: mockSupabase,
       session: mockSession,
     });
@@ -159,6 +166,7 @@ describe('+page.server.ts load function', () => {
         },
         type: 'timestamp',
       },
+      preferredImageFormat: 'webp',
       supabase: mockSupabase,
       session: null,
     });

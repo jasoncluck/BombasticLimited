@@ -63,6 +63,11 @@ describe('continue/+page.server.ts load function', () => {
       session: mockSession,
     },
     depends: vi.fn(),
+    request: {
+      headers: {
+        get: vi.fn().mockReturnValue('text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'),
+      },
+    },
   };
 
   beforeEach(() => {
@@ -133,6 +138,7 @@ describe('continue/+page.server.ts load function', () => {
           sort: { key: 'dateTimestamp', order: 'descending' },
           type: 'timestamp',
         },
+        preferredImageFormat: 'webp',
         supabase: mockSupabase,
         session: mockSession,
       });
@@ -159,6 +165,7 @@ describe('continue/+page.server.ts load function', () => {
           sort: { key: 'dateTimestamp', order: 'descending' },
           type: 'timestamp',
         },
+        preferredImageFormat: 'webp',
         supabase: mockSupabase,
         session: mockSession,
       });

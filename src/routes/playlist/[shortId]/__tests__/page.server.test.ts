@@ -188,7 +188,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
       );
       expect(mockGetPlaylistData).toHaveBeenCalledWith({
         shortId: 'abc123',
-        acceptHeader: null,
+        preferredImageFormat: 'webp',
         contentFilter: {
           type: 'playlist',
           sort: { key: 'playlistOrder', order: 'ascending' },

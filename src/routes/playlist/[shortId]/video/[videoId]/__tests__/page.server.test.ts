@@ -128,7 +128,7 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
       expect(mockGetPlaylistVideoContext).toHaveBeenCalledWith({
         shortId: 'abc123',
         videoId: 'video-1',
-        acceptHeader: null,
+        preferredImageFormat: 'webp',
         contentFilter: {
           type: 'playlist',
           sort: { key: 'playlistOrder', order: 'ascending' },
@@ -273,7 +273,7 @@ describe('playlist/[shortId]/video/[videoId]/+page.server.ts', () => {
       expect(mockGetPlaylistVideoContext).toHaveBeenCalledWith({
         shortId: 'abc123',
         videoId: 'video-1',
-        acceptHeader: null,
+        preferredImageFormat: 'webp',
         contentFilter: {
           type: 'playlist',
           sort: { key: 'playlistOrder', order: 'ascending' },

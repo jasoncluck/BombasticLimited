@@ -248,7 +248,7 @@ describe('[source]/+page.server.ts load function', () => {
         limit: 10,
         supabase: mockSupabase,
         session: mockSession,
-        acceptHeader: null,
+        preferredImageFormat: 'webp',
       });
 
       expect(mockGetPlaylistDataByYoutubeId).toHaveBeenCalledWith({
@@ -260,7 +260,7 @@ describe('[source]/+page.server.ts load function', () => {
         limit: 10,
         supabase: mockSupabase,
         session: mockSession,
-        acceptHeader: null,
+        preferredImageFormat: 'webp',
       });
     });
 
@@ -270,6 +270,7 @@ describe('[source]/+page.server.ts load function', () => {
       expect(mockGetPlaylistsForUsername).toHaveBeenCalledWith({
         username: 'giantbomb',
         limit: 12,
+        preferredImageFormat: 'webp',
         supabase: mockSupabase,
       });
     });
@@ -298,12 +299,13 @@ describe('[source]/+page.server.ts load function', () => {
         limit: 10,
         supabase: mockSupabase,
         session: mockSession,
-        acceptHeader: null,
+        preferredImageFormat: 'webp',
       });
 
       expect(mockGetPlaylistsForUsername).toHaveBeenCalledWith({
         username: 'giantbomb',
         limit: 12,
+        preferredImageFormat: 'webp',
         supabase: mockSupabase,
       });
     });
