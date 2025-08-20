@@ -252,7 +252,7 @@
   }
 </script>
 
-<aside class="h-full overflow-hidden">
+<aside class="h-full overflow-hidden pt-2">
   {#if sidebarState.showPlaceholder}
     <!-- Simple centered loader for entire sidebar -->
     <div class="flex h-full items-center justify-center">

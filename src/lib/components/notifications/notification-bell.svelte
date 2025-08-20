@@ -58,8 +58,7 @@
       <Bell class="h-[1.2rem] w-[1.2rem]" />
       {#if unreadNotifications.length > 0}
         <Badge
-          variant="destructive"
-          class="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-medium"
+          class="bg-primary absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-xs font-medium"
         >
           {unreadNotifications.length > 99 ? '99+' : unreadNotifications.length}
         </Badge>
