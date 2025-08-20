@@ -227,6 +227,7 @@ describe('[source]/+page.server.ts load function', () => {
       expect(mockGetVideos).toHaveBeenCalledWith({
         source: 'giantbomb',
         limit: 10,
+        preferredImageFormat: 'webp',
         contentFilter: {
           sort: { key: 'datePublished', order: 'descending' },
           type: 'video',
@@ -280,6 +281,7 @@ describe('[source]/+page.server.ts load function', () => {
       expect(mockGetVideos).toHaveBeenCalledWith({
         source: 'giantbomb',
         limit: 10,
+        preferredImageFormat: 'webp',
         contentFilter: {
           sort: { key: 'datePublished', order: 'descending' },
           type: 'video',
