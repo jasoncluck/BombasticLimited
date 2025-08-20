@@ -37,7 +37,6 @@ export type Video = {
   title: string;
   description: string;
   thumbnail_url: string;
-  thumbnail_maxres_url: string | null;
   image_url: string | null;
   published_at: string;
   duration: string;
@@ -71,7 +70,6 @@ function transformVideoFromGetVideosWithTimestamps(
     image_url:
       getFullImageUrl(rpcData.image_url, supabase) ?? rpcData.thumbnail_url,
     thumbnail_url: rpcData.thumbnail_url,
-    thumbnail_maxres_url: rpcData.thumbnail_maxres_url,
     published_at: rpcData.published_at,
     duration: rpcData.duration,
     views: rpcData.views || 0,
@@ -98,7 +96,6 @@ function transformVideoFromSearchVideos(
     image_url:
       getFullImageUrl(rpcData.image_url, supabase) ?? rpcData.image_url,
     thumbnail_url: rpcData.thumbnail_url,
-    thumbnail_maxres_url: rpcData.thumbnail_maxres_url,
     published_at: rpcData.published_at,
     duration: rpcData.duration,
     views: rpcData.views || 0,
@@ -125,7 +122,6 @@ function transformVideoFromGetInProgressVideos(
     image_url:
       getFullImageUrl(rpcData.image_url, supabase) ?? rpcData.image_url,
     thumbnail_url: rpcData.thumbnail_url,
-    thumbnail_maxres_url: rpcData.thumbnail_maxres_url,
     published_at: rpcData.published_at,
     duration: rpcData.duration,
     views: rpcData.views || 0,

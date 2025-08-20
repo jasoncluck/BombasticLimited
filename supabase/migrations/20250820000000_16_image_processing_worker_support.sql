@@ -109,15 +109,6 @@ BEGIN
         image_processing_status = 'completed'::public.image_processing_status,
         image_processing_updated_at = now()
       WHERE id = job_record.entity_id;
-    ELSIF job_record.image_type = 'thumbnail_maxres' THEN
-      UPDATE "public"."videos"
-      SET 
-        thumbnail_maxres_webp_url = COALESCE(webp_path, thumbnail_maxres_webp_url),
-        thumbnail_maxres_avif_url = COALESCE(avif_path, thumbnail_maxres_avif_url),
-        image_processing_status = 'completed'::public.image_processing_status,
-        image_processing_updated_at = now()
-      WHERE id = job_record.entity_id;
-    END IF;
   ELSIF job_record.entity_type = 'playlist' THEN
     -- For playlists: WebP is primary, AVIF is optimization
     UPDATE "public"."playlists"

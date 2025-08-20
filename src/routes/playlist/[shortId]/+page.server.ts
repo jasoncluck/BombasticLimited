@@ -75,7 +75,6 @@ export const load: PageServerLoad = async ({
         ...playlist,
         thumbnail_video_id: playlist.thumbnail_video_id || undefined,
         thumbnail_url: playlist.thumbnail_url || undefined,
-        thumbnail_maxres_url: playlist.thumbnail_maxres_url || undefined,
       },
       zod(playlistSchema)
     ),
@@ -156,7 +155,6 @@ export const actions: Actions = {
       type,
       isDeletingPlaylistImage,
       thumbnail_video_id,
-      thumbnail_maxres_url,
       thumbnail_url,
     } = form.data;
     let { image_properties } = form.data;
@@ -234,14 +232,12 @@ export const actions: Actions = {
       // Check if thumbnail URLs have changed
       const hasThumbnailChanged =
         currentPlaylist.thumbnail_url !== thumbnail_url ||
-        currentPlaylist.thumbnail_maxres_url !== thumbnail_maxres_url ||
         currentPlaylist.thumbnail_video_id !== thumbnail_video_id;
 
       // Only process image if something image-related has changed
       if (hasImagePropertiesChanged || hasThumbnailChanged) {
         const processedPlaylistImage = await getCroppedPlaylistImageUrlServer({
           thumbnailUrl: thumbnail_url,
-          thumbnailMaxResUrl: thumbnail_maxres_url,
           imageProperties: image_properties,
         });
 

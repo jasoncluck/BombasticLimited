@@ -20,7 +20,6 @@ const supabaseServiceClient = createClient(
 export async function queueVideoImageProcessing(
   videoId: string,
   thumbnailUrl: string | null,
-  thumbnailMaxresUrl: string | null,
   priority: number = 100
 ): Promise<void> {
   console.log(`📋 Queuing image processing for video ${videoId}...`);
@@ -34,17 +33,6 @@ export async function queueVideoImageProcessing(
       p_entity_id: videoId,
       p_image_type: 'thumbnail',
       p_source_url: thumbnailUrl,
-      p_priority: priority,
-    });
-    jobPromises.push(jobPromise);
-  }
-
-  if (thumbnailMaxresUrl) {
-    const jobPromise = supabaseServiceClient.rpc('queue_image_processing_job', {
-      p_entity_type: 'video',
-      p_entity_id: videoId,
-      p_image_type: 'thumbnail_maxres',
-      p_source_url: thumbnailMaxresUrl,
       p_priority: priority,
     });
     jobPromises.push(jobPromise);
@@ -138,7 +126,6 @@ export async function batchProcessVideoImages(
     queueVideoImageProcessing(
       video.id,
       video.thumbnail_url,
-      video.thumbnail_maxres_url,
       100 // Standard priority for batch operations
     )
   );

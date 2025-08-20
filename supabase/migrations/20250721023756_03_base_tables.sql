@@ -17,7 +17,10 @@ CREATE TABLE IF NOT EXISTS "public"."videos" (
   "search_vector" "tsvector",
   "pending_delete" boolean DEFAULT TRUE,
   "duration" "text" DEFAULT ''::"text",
+<<<<<<< HEAD
   "thumbnail_url" "text" NOT NULL,
+=======
+>>>>>>> copilot/fix-b4e7520d-8f78-4e6e-8864-8edf7a471575
   "thumbnail_webp_url" text,
   "thumbnail_avif_url" text,
   "image_processing_status" public.image_processing_status DEFAULT 'pending',
@@ -29,7 +32,7 @@ ALTER TABLE "public"."videos" OWNER TO "postgres";
 
 COMMENT ON COLUMN "public"."videos"."pending_delete" IS 'Pending delete flag is used for detecting and removing deleted videos from YouTube';
 
-COMMENT ON COLUMN "public"."videos"."thumbnail_url" IS 'Best available thumbnail version';
+COMMENT ON COLUMN "public"."videos"."thumbnail_url" IS 'Primary thumbnail URL for video display and processing source';
 
 COMMENT ON COLUMN "public"."videos"."thumbnail_webp_url" IS 'Supabase Storage path for WebP thumbnail';
 
@@ -61,8 +64,7 @@ CREATE TABLE IF NOT EXISTS "public"."playlists" (
   "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   "deleted_at" TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   "duration_seconds" integer DEFAULT 0,
-  -- Source video reference for thumbnail generation
-  "thumbnail_url"  DEFAULT NULL,
+ "thumbnail_url" text DEFAULT NULL,
   -- Crop dimensions for generating playlist thumbnails from video thumbnail
   "image_properties" jsonb, -- {x: number, y: number, width: number, height: number}
   -- Generated cropped playlist images (stored in Supabase Storage)
@@ -80,7 +82,7 @@ CREATE TABLE IF NOT EXISTS "public"."playlists" (
 ALTER TABLE "public"."playlists" OWNER TO "postgres";
 
 -- Comments for clarity
-COMMENT ON COLUMN "public"."playlists"."thumbnail_url" IS 'Base .jpg thumbnail ID for the playlist, will be processed into other formats.';
+COMMENT ON COLUMN "public"."playlists"."thumbnail_url" IS 'Direct thumbnail URL for playlist display';
 
 COMMENT ON COLUMN "public"."playlists"."image_properties" IS 'Crop dimensions {x, y, width, height} for generating playlist image from video thumbnail';
 

@@ -326,11 +326,10 @@ CREATE OR REPLACE FUNCTION public.trigger_queue_video_image_processing () RETURN
 SET
   search_path = '' AS $$
 BEGIN
-  -- Only queue processing if thumbnail URLs are provided and different from OLD values
+  -- Only queue processing if thumbnail URL is provided and different from OLD value
   IF (TG_OP = 'INSERT') OR 
      (TG_OP = 'UPDATE' AND (
-       COALESCE(OLD.thumbnail_url, '') != COALESCE(NEW.thumbnail_url, '') OR
-       COALESCE(OLD.thumbnail_maxres_url, '') != COALESCE(NEW.thumbnail_maxres_url, '')
+       COALESCE(OLD.thumbnail_url, '') != COALESCE(NEW.thumbnail_url, '')
      )) THEN
     
     -- Queue thumbnail processing if URL exists
@@ -340,17 +339,6 @@ BEGIN
         NEW.id,
         'thumbnail',
         NEW.thumbnail_url,
-        100 -- Standard priority for videos
-      );
-    END IF;
-
-    -- Queue maxres thumbnail processing if URL exists
-    IF NEW.thumbnail_maxres_url IS NOT NULL AND NEW.thumbnail_maxres_url != '' THEN
-      PERFORM public.queue_image_processing_job(
-        'video',
-        NEW.id,
-        'thumbnail_maxres',
-        NEW.thumbnail_maxres_url,
         100 -- Standard priority for videos
       );
     END IF;
@@ -375,11 +363,11 @@ DECLARE
   webp_url_provided boolean := false;
   job_id uuid;
 BEGIN
-  -- Check if image_properties, thumbnail_video_id, or image_webp_url changed
+  -- Check if image_properties, thumbnail_url, or image_webp_url changed
   IF (TG_OP = 'INSERT') OR 
      (TG_OP = 'UPDATE' AND (
        COALESCE(OLD.image_properties::text, '') != COALESCE(NEW.image_properties::text, '') OR
-       COALESCE(OLD.thumbnail_video_id, '') != COALESCE(NEW.thumbnail_video_id, '') OR
+       COALESCE(OLD.thumbnail_url, '') != COALESCE(NEW.thumbnail_url, '') OR
        COALESCE(OLD.image_webp_url, '') != COALESCE(NEW.image_webp_url, '')
      )) THEN
     
@@ -409,20 +397,12 @@ BEGIN
         NEW.image_processing_updated_at = now();
       END IF;
       
-    ELSIF NEW.thumbnail_video_id IS NOT NULL THEN
-      -- Scenario 2: Generate cropped image from video thumbnail
-      -- Get the video details to find the highest resolution thumbnail
-      SELECT thumbnail_maxres_url, thumbnail_url 
-      INTO source_video
-      FROM "public"."videos" 
-      WHERE id = NEW.thumbnail_video_id;
+    ELSIF NEW.thumbnail_url IS NOT NULL THEN
+      -- Scenario 2: Generate cropped image from direct thumbnail URL
+      source_url := NEW.thumbnail_url;
       
-      IF FOUND THEN
-        -- Use highest resolution available (maxres preferred)
-        source_url := COALESCE(source_video.thumbnail_maxres_url, source_video.thumbnail_url);
-        
-        IF source_url IS NOT NULL AND source_url != '' THEN
-          job_id := public.queue_image_processing_job(
+      IF source_url IS NOT NULL AND source_url != '' THEN
+        job_id := public.queue_image_processing_job(
             'playlist',
             NEW.id::text,
             'playlist_image',

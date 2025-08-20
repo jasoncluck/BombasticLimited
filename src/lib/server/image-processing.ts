@@ -290,29 +290,24 @@ export async function processImageServer({
 
 export async function getCroppedPlaylistImageUrlServer({
   imageProperties,
-  thumbnailMaxResUrl,
   thumbnailUrl,
   options = {},
   acceptHeader = null,
 }: {
   imageProperties: PlaylistImageProperties | null;
-  thumbnailMaxResUrl?: string;
   thumbnailUrl?: string;
   options?: ImageProcessingOptions;
   acceptHeader?: string | null;
 }) {
-  const imageUrl = thumbnailMaxResUrl || thumbnailUrl;
-  if (!imageUrl) return null;
-
-  const isMaxRes = !!thumbnailMaxResUrl;
+  if (!thumbnailUrl) return null;
 
   return processImageServer({
-    imageUrl,
+    imageUrl: thumbnailUrl,
     imageProperties,
     acceptHeader,
     options,
     isCropped: true,
-    isMaxRes,
+    isMaxRes: false,
     contentType: 'playlist', // **FIXED: Specify playlist content type**
   });
 }
@@ -535,21 +530,18 @@ export async function cleanupImageCache(): Promise<void> {
 // **SPEED: Direct URL return for fastest response**
 export function generatePlaylistImageUrl({
   thumbnailUrl,
-  thumbnailMaxResUrl,
 }: {
   thumbnailUrl?: string | null;
-  thumbnailMaxResUrl?: string | null;
   imageProperties?: PlaylistImageProperties | null;
   format?: 'auto' | 'webp' | 'jpeg' | 'avif';
   quality?: number;
   responseType?: 'image' | 'json';
 }): string | null {
-  const effectiveUrl = thumbnailMaxResUrl || thumbnailUrl;
-  if (!effectiveUrl) return null;
+  if (!thumbnailUrl) return null;
 
   // **SPEED: Return original URL directly for fastest response**
   // Background processing system handles optimization separately
-  return effectiveUrl;
+  return thumbnailUrl;
 }
 
 // Batch processing function for video thumbnails

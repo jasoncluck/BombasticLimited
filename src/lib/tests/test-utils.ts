@@ -14,7 +14,6 @@ export function createMockVideo(overrides: Partial<Video> = {}): Video {
     description: 'Test video description',
     source: 'giantbomb',
     thumbnail_url: 'https://example.com/thumb.jpg',
-    thumbnail_maxres_url: 'https://example.com/thumb_maxres.jpg',
     image_url: 'https://example.com/video_image.jpg', // Add missing image_url
     published_at: '2023-01-01T00:00:00Z',
     duration: '00:30:00',
@@ -195,7 +194,6 @@ export function createMockPlaylistVideoWithTimestamp(
     title: 'Test Video in Playlist',
     description: 'Test video description',
     thumbnail_url: 'https://example.com/thumb.jpg',
-    thumbnail_maxres_url: 'https://example.com/thumb_maxres.jpg',
     image_url: 'https://example.com/video_image.jpg',
     published_at: '2023-01-01T00:00:00Z',
     duration: '00:30:00',
@@ -218,7 +216,6 @@ export function createMockPlaylist(overrides: Partial<any> = {}) {
     name: 'Test Playlist',
     youtube_id: 'youtube123',
     thumbnail_url: 'https://example.com/playlist_image.jpg',
-    thumbnail_maxres_url: 'https://example.com/playlist_image_maxres.jpg',
     image_processing_status: 'completed' as const,
     image_processing_updated_at: '2023-01-01T00:00:00Z',
     image_properties: { x: 0, y: 0, width: 100, height: 100 },

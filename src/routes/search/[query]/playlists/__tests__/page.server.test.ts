@@ -30,7 +30,6 @@ describe('Search Playlists Page Server Load', () => {
       id: 1,
       name: 'Test Playlist',
       thumbnail_url: 'https://example.com/thumb.jpg',
-      thumbnail_maxres_url: 'https://example.com/maxres.jpg',
       image_properties: { x: 0, y: 0, width: 100, height: 100 },
       type: 'Public' as const,
       created_at: '2024-01-01T00:00:00Z',

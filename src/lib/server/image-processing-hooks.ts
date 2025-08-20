@@ -9,13 +9,11 @@ import {
 export async function onVideoCreated(video: {
   id: string;
   thumbnail_url: string | null;
-  thumbnail_maxres_url: string | null;
 }): Promise<void> {
   try {
     await queueVideoImageProcessing(
       video.id,
       video.thumbnail_url,
-      video.thumbnail_maxres_url,
       50 // Higher priority for new content
     );
     console.log(`Queued image processing for video: ${video.id}`);
@@ -33,13 +31,11 @@ export async function onVideoCreated(video: {
 export async function onVideoUpdated(video: {
   id: string;
   thumbnail_url: string | null;
-  thumbnail_maxres_url: string | null;
 }): Promise<void> {
   try {
     await queueVideoImageProcessing(
       video.id,
       video.thumbnail_url,
-      video.thumbnail_maxres_url,
       75 // Medium priority for updates
     );
     console.log(`Queued image processing for updated video: ${video.id}`);
@@ -123,7 +119,6 @@ export async function batchProcessVideoImages(
     queueVideoImageProcessing(
       video.id,
       video.thumbnail_url,
-      video.thumbnail_maxres_url,
       100 // Standard priority for batch operations
     )
   );

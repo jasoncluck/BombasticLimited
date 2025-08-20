@@ -562,16 +562,16 @@ BEGIN
 END;
 $$;
 
--- Function to validate video thumbnails and update playlist image (WebP-first approach)
+-- Function to update playlist image (WebP-first approach)
 CREATE OR REPLACE FUNCTION public.update_playlist_image (
   p_playlist_id bigint,
-  p_thumbnail_video_id text DEFAULT NULL,
+  p_thumbnail_url text DEFAULT NULL,
   p_image_url text DEFAULT NULL,
   p_image_properties jsonb DEFAULT NULL
 ) RETURNS TABLE (
   success boolean,
   playlist_id bigint,
-  thumbnail_video_id text,
+  thumbnail_url text,
   image_webp_url text,
   error_message text
 ) LANGUAGE plpgsql SECURITY DEFINER
@@ -611,26 +611,12 @@ BEGIN
     RETURN;
   END IF;
 
-  -- **CRITICAL SECURITY CHECK**: If setting a thumbnail_video_id, verify it exists in THIS playlist
-  IF p_thumbnail_video_id IS NOT NULL THEN
-    IF NOT EXISTS(
-      SELECT 1 
-      FROM public.playlist_videos pv 
-      WHERE pv.playlist_id = p_playlist_id 
-      AND pv.video_id = p_thumbnail_video_id
-    ) THEN
-      error_msg := format('Video with ID %s is not in this playlist', p_thumbnail_video_id);
-      RETURN QUERY SELECT false, p_playlist_id, NULL::text, NULL::text, error_msg;
-      RETURN;
-    END IF;
-  END IF;
-
   -- Update the playlist based on what's being set (WebP-first approach)
-  IF p_image_url IS NOT NULL AND p_thumbnail_video_id IS NOT NULL THEN
-    -- Setting a processed image from a video thumbnail - keep both references
+  IF p_image_url IS NOT NULL AND p_thumbnail_url IS NOT NULL THEN
+    -- Setting a processed image from a thumbnail URL - keep both references
     UPDATE public.playlists pl
     SET 
-      thumbnail_video_id = p_thumbnail_video_id,  -- Keep the video reference
+      thumbnail_url = p_thumbnail_url,           -- Set the direct thumbnail URL
       image_webp_url = p_image_url,              -- Set the processed WebP image
       image_avif_url = NULL,                     -- Clear AVIF (will be generated later)
       image_properties = p_image_properties,
@@ -639,10 +625,10 @@ BEGIN
     WHERE pl.id = p_playlist_id;
     
   ELSIF p_image_url IS NOT NULL THEN
-    -- Setting a custom cropped image without video reference - clear video thumbnail
+    -- Setting a custom cropped image without thumbnail URL reference - clear thumbnail
     UPDATE public.playlists pl
     SET 
-      thumbnail_video_id = NULL,
+      thumbnail_url = NULL,
       image_webp_url = p_image_url,             -- Set the processed WebP image
       image_avif_url = NULL,                    -- Clear AVIF (will be generated later)
       image_properties = p_image_properties,
@@ -650,11 +636,11 @@ BEGIN
       image_processing_updated_at = now()
     WHERE pl.id = p_playlist_id;
     
-  ELSIF p_thumbnail_video_id IS NOT NULL THEN
-    -- Setting a video thumbnail - clear custom image and set video reference
+  ELSIF p_thumbnail_url IS NOT NULL THEN
+    -- Setting a thumbnail URL - clear custom image and set thumbnail reference
     UPDATE public.playlists pl
     SET 
-      thumbnail_video_id = p_thumbnail_video_id,
+      thumbnail_url = p_thumbnail_url,
       image_webp_url = NULL,  -- Clear WebP
       image_avif_url = NULL,  -- Clear AVIF
       image_properties = p_image_properties,
@@ -663,10 +649,10 @@ BEGIN
     WHERE pl.id = p_playlist_id;
     
   ELSE
-    -- Both p_thumbnail_video_id and p_image_url are NULL - reset everything
+    -- Both p_thumbnail_url and p_image_url are NULL - reset everything
     UPDATE public.playlists pl
     SET 
-      thumbnail_video_id = NULL,
+      thumbnail_url = NULL,
       image_webp_url = NULL,  -- Clear WebP
       image_avif_url = NULL,  -- Clear AVIF
       image_properties = NULL,
@@ -684,7 +670,7 @@ BEGIN
   END IF;
   
   -- Get the actual updated values
-  SELECT pl.thumbnail_video_id, pl.image_webp_url
+  SELECT pl.thumbnail_url, pl.image_webp_url
   INTO updated_row
   FROM public.playlists pl
   WHERE pl.id = p_playlist_id;
@@ -693,18 +679,12 @@ BEGIN
   RETURN QUERY SELECT 
     true, 
     p_playlist_id, 
-    updated_row.thumbnail_video_id, 
+    updated_row.thumbnail_url, 
     updated_row.image_webp_url,
     NULL::text;
 
 EXCEPTION
-  -- Handle foreign key constraint violations
-  WHEN foreign_key_violation THEN
-    error_msg := format('Video with ID %s not found', p_thumbnail_video_id);
-    RETURN QUERY SELECT false, p_playlist_id, NULL::text, NULL::text, error_msg;
-    RETURN;
-    
-  -- Handle any other errors
+  -- Handle any errors
   WHEN OTHERS THEN
     error_msg := format('Unexpected error: %s', SQLERRM);
     RETURN QUERY SELECT false, p_playlist_id, NULL::text, NULL::text, error_msg;
@@ -732,7 +712,6 @@ DECLARE
   first_video_id text;
   playlist_has_thumbnail boolean := false;
   new_videos_added boolean := false;
-  current_thumbnail_video_id text;
   valid_video_count int;
 BEGIN
   -- Get the current authenticated user
@@ -761,9 +740,9 @@ BEGIN
   -- Lock operations for the current user to prevent concurrent modifications
   PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || current_user_id::text));
 
-  -- Lock the playlist and get owner + thumbnail info
-  SELECT pl.created_by, pl.thumbnail_video_id 
-  INTO playlist_owner_id, current_thumbnail_video_id
+  -- Lock the playlist and get owner info
+  SELECT pl.created_by 
+  INTO playlist_owner_id
   FROM public.playlists pl 
   WHERE pl.id = p_playlist_id 
   FOR UPDATE;
@@ -778,33 +757,11 @@ BEGIN
     RAISE EXCEPTION 'You can only add videos to your own playlists';
   END IF;
   
-  -- Check if playlist already has a valid thumbnail video set
-  -- Also verify the current thumbnail video still exists in the playlist
-  playlist_has_thumbnail := false;
-  IF current_thumbnail_video_id IS NOT NULL AND TRIM(current_thumbnail_video_id) != '' THEN
-    -- Verify the current thumbnail video still exists in this playlist
-    IF EXISTS(
-      SELECT 1 
-      FROM public.playlist_videos pv 
-      WHERE pv.playlist_id = p_playlist_id 
-      AND pv.video_id = current_thumbnail_video_id
-    ) THEN
-      playlist_has_thumbnail := true;
-    ELSE
-      -- Current thumbnail video doesn't exist in playlist, clear it (WebP-first approach)
-      UPDATE public.playlists 
-      SET 
-        thumbnail_video_id = NULL,
-        image_webp_url = NULL,   -- Clear WebP
-        image_avif_url = NULL,   -- Clear AVIF
-        image_properties = NULL,
-        image_processing_status = NULL,
-        image_processing_updated_at = now()
-      WHERE id = p_playlist_id;
-      
-      RAISE NOTICE 'Cleared invalid thumbnail_video_id % for playlist %', current_thumbnail_video_id, p_playlist_id;
-    END IF;
-  END IF;
+  -- Check if playlist already has a thumbnail URL set
+  SELECT (pl.thumbnail_url IS NOT NULL AND TRIM(pl.thumbnail_url) != '')
+  INTO playlist_has_thumbnail
+  FROM public.playlists pl
+  WHERE pl.id = p_playlist_id;
   
   -- Get the current max position for this playlist
   SELECT COALESCE(MAX(pv.video_position), 0)
@@ -859,17 +816,20 @@ BEGIN
     END IF;
   END LOOP;
   
-  -- Set thumbnail video ID if playlist doesn't have one
-  -- Just set the reference - let the client handle image processing
+  -- Set thumbnail URL from first video if playlist doesn't have one
   IF NOT playlist_has_thumbnail THEN
     UPDATE public.playlists 
     SET 
-      thumbnail_video_id = first_video_id,
+      thumbnail_url = (
+        SELECT v.thumbnail_url
+        FROM public.videos v 
+        WHERE v.id = first_video_id
+      ),
       image_processing_status = 'pending',
       image_processing_updated_at = now()
     WHERE id = p_playlist_id;
     
-    RAISE NOTICE 'Set thumbnail_video_id to % for playlist % - client will process image', first_video_id, p_playlist_id;
+    RAISE NOTICE 'Set thumbnail_url from video % for playlist %', first_video_id, p_playlist_id;
   END IF;
   
 END;
@@ -887,8 +847,6 @@ DECLARE
   max_position int2;
   current_user_id uuid;
   playlist_owner_id uuid;
-  playlist_thumbnail_video_id text;
-  thumbnail_video_deleted boolean := FALSE;
 BEGIN
   -- Get the current authenticated user
   current_user_id := auth.uid();
@@ -904,9 +862,9 @@ BEGIN
     RAISE EXCEPTION 'Video IDs array cannot be empty';
   END IF;
 
-  -- Lock the playlist and get owner info + thumbnail video ID to prevent concurrent modifications
-  SELECT pl.created_by, pl.thumbnail_video_id 
-  INTO playlist_owner_id, playlist_thumbnail_video_id
+  -- Lock the playlist and get owner info to prevent concurrent modifications
+  SELECT pl.created_by 
+  INTO playlist_owner_id
   FROM public.playlists pl WHERE pl.id = p_playlist_id FOR UPDATE;
   
   -- Check if playlist exists
@@ -917,11 +875,6 @@ BEGIN
   -- If current user is not the owner, also lock the owner's operations to prevent conflicts
   IF playlist_owner_id != current_user_id THEN
     PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || playlist_owner_id::text));
-  END IF;
-
-  -- Check if any of the videos being deleted is the current thumbnail video
-  IF playlist_thumbnail_video_id IS NOT NULL AND playlist_thumbnail_video_id = ANY(p_video_ids) THEN
-    thumbnail_video_deleted := TRUE;
   END IF;
 
   -- Start a transaction to ensure consistency
@@ -961,21 +914,6 @@ BEGIN
         RETURN NEXT;
       END IF;
     END LOOP;
-    
-    -- If the thumbnail video was deleted, clear ALL related fields including the video ID reference (WebP-first approach)
-    IF thumbnail_video_deleted THEN
-      UPDATE public.playlists pl
-      SET 
-        thumbnail_video_id = NULL,           -- NULL out the video ID reference
-        image_webp_url = NULL,               -- Clear WebP
-        image_avif_url = NULL,               -- Clear AVIF
-        image_properties = NULL,
-        image_processing_status = NULL,
-        image_processing_updated_at = now()
-      WHERE pl.id = p_playlist_id;
-      
-      RAISE INFO 'Cleared thumbnail video ID and custom playlist image for playlist % because thumbnail video was deleted', p_playlist_id;
-    END IF;
     
     -- Sort the deleted positions to process them in ascending order
     SELECT array_agg(pos ORDER BY pos)

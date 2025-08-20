@@ -71,7 +71,6 @@ export const playlistSchema = z.object({
   type: z.enum(PLAYLIST_TYPES).default('Private'),
   isDeletingPlaylistImage: z.boolean().default(false),
   thumbnail_url: z.string().optional(),
-  thumbnail_maxres_url: z.string().optional(),
   thumbnail_video_id: z.string().optional(),
 });
 

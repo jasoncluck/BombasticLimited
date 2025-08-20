@@ -10,7 +10,6 @@ CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps" (p_preferred_im
   "title" "text",
   "description" "text",
   "thumbnail_url" "text",
-  "thumbnail_maxres_url" "text",
   "image_url" "text",
   "image_processing_status" public.image_processing_status,
   "image_processing_updated_at" TIMESTAMP WITH TIME ZONE,
@@ -34,7 +33,6 @@ SET
         v.title, 
         v.description, 
         v.thumbnail_url, 
-        v.thumbnail_maxres_url, 
         -- Use unified select_best_image_format for video thumbnails (normal thumbnails only)
         public.select_best_image_format(
           v.thumbnail_avif_url,
@@ -76,7 +74,6 @@ CREATE OR REPLACE FUNCTION "public"."search_videos" (
   "title" "text",
   "description" "text",
   "thumbnail_url" "text",
-  "thumbnail_maxres_url" "text",
   "image_url" "text",
   "image_processing_status" public.image_processing_status,
   "image_processing_updated_at" TIMESTAMP WITH TIME ZONE,
@@ -130,7 +127,6 @@ BEGIN
             v.title, 
             v.description, 
             v.thumbnail_url, 
-            v.thumbnail_maxres_url, 
             -- Use unified select_best_image_format for video thumbnails (normal thumbnails only)
             public.select_best_image_format(
               v.thumbnail_avif_url,
@@ -182,7 +178,6 @@ BEGIN
         rv.title, 
         rv.description, 
         rv.thumbnail_url, 
-        rv.thumbnail_maxres_url, 
         rv.best_image_url,
         rv.image_processing_status,
         rv.image_processing_updated_at,
@@ -215,7 +210,6 @@ CREATE OR REPLACE FUNCTION "public"."get_in_progress_videos_with_timestamps" (p_
   title text,
   description text,
   thumbnail_url text,
-  thumbnail_maxres_url text,
   image_url text,
   image_processing_status public.image_processing_status,
   image_processing_updated_at TIMESTAMP WITH TIME ZONE,
@@ -240,7 +234,6 @@ BEGIN
         v.title, 
         v.description, 
         v.thumbnail_url, 
-        v.thumbnail_maxres_url, 
         -- Use unified select_best_image_format for video thumbnails (normal thumbnails only)
         public.select_best_image_format(
           v.thumbnail_avif_url,
