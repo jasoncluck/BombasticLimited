@@ -1,5 +1,5 @@
 import { AppTokenAuthProvider } from '@twurple/auth';
-import { ApiClient } from '@twurple/api';
+import { ApiClient, extractUserId } from '@twurple/api';
 
 import { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } from '$env/static/private';
 
@@ -91,71 +91,38 @@ export async function getStreamStatus(
 }
 
 /**
+ * Helper funciton for getting a Twitch ID, only used to figure out IDs and not called at the moment
+ */
+// export async function getTwitchUserName(userName: string) {
+//   const authProvider = new AppTokenAuthProvider(
+//     TWITCH_CLIENT_ID,
+//     TWITCH_CLIENT_SECRET
+//   );
+//   const apiClient = new ApiClient({ authProvider });
+//
+//   const user = await apiClient.users.getUserByName(userName);
+//   console.log(user);
+//   const stream = await user?.getStream();
+//   console.log(stream);
+//   console.log(stream?.userId);
+//   if (user) {
+//     console.log(extractUserId(user));
+//   }
+//
+//   if (user) {
+//     return user; // This will return the username
+//   } else {
+//     return null; // User not found
+//   }
+// }
+
+/**
  * Get stream status for multiple users with rate limiting
  */
 
 export async function getMultipleStreamStatus(
   userIds: string[]
 ): Promise<StreamStatus[]> {
-  // Development testing mode
-  if (process.env.NODE_ENV === 'development') {
-    const now = Date.now();
-
-    // Initialize test start time on first call
-    if (testStartTime === null) {
-      testStartTime = now;
-      console.log('🚀 DEVELOPMENT MODE: Test sequence started');
-      console.log('📅 Schedule: Nextlander goes live in 10s, offline in 20s');
-    }
-
-    const elapsedTime = now - testStartTime;
-    const isLive =
-      elapsedTime >= TEST_LIVE_START && elapsedTime < TEST_LIVE_END;
-
-    // Log status changes
-    if (elapsedTime < TEST_LIVE_START) {
-      const secondsUntilLive = Math.ceil(
-        (TEST_LIVE_START - elapsedTime) / 1000
-      );
-      if (secondsUntilLive <= 5 && elapsedTime % 1000 < 500) {
-        // Log every second for last 5 seconds
-        console.log(
-          `⏰ Nextlander goes live in ${secondsUntilLive} seconds...`
-        );
-      }
-    } else if (
-      elapsedTime >= TEST_LIVE_START &&
-      elapsedTime < TEST_LIVE_START + 1000
-    ) {
-      // Just went live (within first second)
-      console.log('🔴 TEST: Nextlander stream has started!');
-    } else if (isLive && elapsedTime < TEST_LIVE_END) {
-      const secondsUntilOffline = Math.ceil(
-        (TEST_LIVE_END - elapsedTime) / 1000
-      );
-      if (secondsUntilOffline <= 3 && elapsedTime % 1000 < 500) {
-        // Log countdown for last 3 seconds
-        console.log(
-          `📺 TEST: Nextlander stream ends in ${secondsUntilOffline} seconds...`
-        );
-      }
-    } else if (
-      elapsedTime >= TEST_LIVE_END &&
-      elapsedTime < TEST_LIVE_END + 1000
-    ) {
-      // Just went offline (within first second)
-      console.log('⚫ TEST: Nextlander stream has ended!');
-    }
-
-    return userIds.map((userId) => ({
-      userId,
-      isLive: userId === '689331234' && isLive, // Nextlander live between 10-20 seconds
-      lastChecked: now,
-    }));
-  }
-
-  // Production mode - use real API
-
   if (!apiClient) {
     console.warn('Twitch API client not initialized - missing credentials');
     return [];
