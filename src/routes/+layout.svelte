@@ -20,6 +20,10 @@
   import { invalidate } from '$app/navigation';
   import type { Session } from '@supabase/supabase-js';
   import '../app.css';
+  import {
+    useLayoutEffects,
+    useNavigation,
+  } from '$lib/components/layout/index.js';
 
   injectSpeedInsights();
 
@@ -29,7 +33,7 @@
   // Initialize all state
   const pageState = setPageState();
   const contentState = setContentState(pageState);
-  const mediaQuery = setMediaQueryState();
+  const mediaQueryState = setMediaQueryState();
   const sidebarState = setSidebarState();
   const navigationState = setNavigationState();
 
@@ -45,15 +49,20 @@
   let lastKnownAuthState: boolean | null = $state(null);
   let wasTabHidden = $state(false);
 
-  // Use custom hooks - simplified without complex caching
-  const navigation = $derived({
-    // Simplified navigation state without complex caching
-    isLoading: false,
-    shouldShowLoader: false,
-  });
-  const layoutEffects = $derived({
-    // Simplified layout effects without complex caching
-    isInitialized: true,
+  const navigation = $derived(useNavigation(pageState));
+
+  const layoutEffects = $derived(
+    useLayoutEffects(
+      pageState,
+      contentState,
+      mediaQueryState,
+      sidebarState,
+      navigationState
+    )
+  );
+
+  $effect(() => {
+    navigation.setupNavigationHooks();
   });
 
   // Simplified navigation state
@@ -217,7 +226,7 @@
     const navigationCleanup = navigationState.initializeNonBlocking();
 
     // Initialize media queries immediately (fast, synchronous)
-    const mediaCleanup = mediaQuery.initialize();
+    const mediaCleanup = mediaQueryState.initialize();
 
     // Initialize sidebar non-blocking (fast UI, loads data in background)
     // This now also starts the SSE connection automatically
@@ -225,6 +234,15 @@
 
     // Initialize layout effects - simplified
     let layoutCleanup: (() => void) | undefined;
+
+    layoutEffects
+      .initializeLayout()
+      .then((cleanup) => {
+        layoutCleanup = cleanup;
+      })
+      .catch((error) => {
+        console.error('Failed to initialize layout effects:', error);
+      });
 
     // Set up Supabase auth state change listener
     const { data: authListener } = supabase.auth.onAuthStateChange(

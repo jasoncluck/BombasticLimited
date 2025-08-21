@@ -69,6 +69,14 @@ export const load: PageServerLoad = async ({
     redirect(302, '/');
   }
 
+  // If the image URL hasn't been uploaded yet process it
+  if (!playlist.image_url) {
+    playlist.image_url = await getCroppedPlaylistImageUrlServer({
+      thumbnailUrl: playlist.thumbnail_url ?? undefined,
+      imageProperties: parseImageProperties(playlist.image_properties),
+    });
+  }
+
   const [form, creatorProfile] = await Promise.all([
     superValidate(
       {
@@ -226,9 +234,6 @@ export const actions: Actions = {
         parseImageProperties(currentPlaylist.image_properties),
         image_properties
       );
-
-      console.log(image_properties);
-      console.log(hasImagePropertiesChanged);
 
       // Check if thumbnail URLs have changed
       const hasThumbnailChanged =

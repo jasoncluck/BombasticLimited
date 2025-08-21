@@ -16,7 +16,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 });
 
 // Configuration
-const MAX_JOBS_PER_POLL = import.meta.env.DEV ? 10 : 25;
+const MAX_JOBS_PER_POLL = import.meta.env.DEV ? 25 : 50;
 const POLL_TIMEOUT = 30000; // 30 seconds timeout for database queries
 const STALE_JOB_THRESHOLD_MINUTES = 10; // Reduced from 30 to 10 minutes for faster recovery
 const MAX_DATABASE_RETRIES = 3;
