@@ -4,6 +4,94 @@ import { CHANNEL_INFO, ChannelSource } from '../channel';
 
 const MAX_RESULTS = 5; // Reduced from 50 since playlists are not added frequently
 
+/**
+ * Queue image processing for a playlist thumbnail using database jobs
+ * This follows the same pattern as the main app's image processing system
+ */
+async function queuePlaylistThumbnailProcessing(
+  supabaseClient: any, // Use any to avoid complex typing issues in Lambda context
+  playlistId: number,
+  thumbnailUrl: string | null,
+  priority: number = 100
+): Promise<void> {
+  if (!thumbnailUrl) {
+    console.log(
+      JSON.stringify({
+        stage: 'queue_image_processing',
+        message: `No thumbnail URL provided for playlist ${playlistId}, skipping image processing`,
+        playlistId,
+      })
+    );
+    return;
+  }
+
+  console.log(
+    JSON.stringify({
+      stage: 'queue_image_processing',
+      message: `Queuing image processing for playlist ${playlistId}`,
+      playlistId,
+      thumbnailUrl,
+    })
+  );
+
+  try {
+    const { data: jobId, error } = await supabaseClient.rpc(
+      'queue_image_processing_job',
+      {
+        p_entity_type: 'playlist',
+        p_entity_id: playlistId.toString(),
+        p_image_type: 'playlist_image',
+        p_source_url: thumbnailUrl,
+        p_priority: priority,
+      }
+    );
+
+    if (error) {
+      console.error(
+        JSON.stringify({
+          stage: 'queue_image_processing',
+          error,
+          message: `Failed to queue image processing for playlist ${playlistId}`,
+          playlistId,
+          thumbnailUrl,
+        })
+      );
+      // Don't throw here - image processing failure shouldn't break playlist sync
+      return;
+    }
+
+    if (jobId) {
+      console.log(
+        JSON.stringify({
+          stage: 'queue_image_processing',
+          message: `Successfully queued image processing job for playlist ${playlistId}`,
+          playlistId,
+          jobId,
+        })
+      );
+    } else {
+      console.log(
+        JSON.stringify({
+          stage: 'queue_image_processing',
+          message: `Image processing job skipped for playlist ${playlistId} - duplicate or recently completed`,
+          playlistId,
+        })
+      );
+    }
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        stage: 'queue_image_processing',
+        error: error instanceof Error ? error.message : error,
+        message: `Exception while queuing image processing for playlist ${playlistId}`,
+        playlistId,
+        thumbnailUrl,
+      })
+    );
+    // Don't throw here - image processing failure shouldn't break playlist sync
+  }
+}
+
 // Helper function to get the highest resolution thumbnail available
 const getBestThumbnailUrl = (
   thumbnails?: youtube_v3.Schema$ThumbnailDetails | null
@@ -209,6 +297,22 @@ export const populatePlaylists = async ({
             })
           );
           continue;
+        }
+
+        // Queue image processing for the playlist thumbnail
+        // This will process the YouTube thumbnail and upload it to Supabase storage
+        // The processed image path will be stored in image_webp_url column
+        const thumbnailUrl = removeLiveSuffix(
+          getBestThumbnailUrl(item.snippet?.thumbnails)
+        );
+        
+        if (thumbnailUrl) {
+          await queuePlaylistThumbnailProcessing(
+            supabaseClient,
+            upsertedPlaylist.id,
+            thumbnailUrl,
+            50 // Higher priority for playlist thumbnails during sync
+          );
         }
 
         // Now fetch video IDs for this playlist from YouTube
