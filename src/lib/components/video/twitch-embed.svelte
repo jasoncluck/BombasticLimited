@@ -87,34 +87,3 @@
     </div>
   </div>
 </AspectRatio>
-<!---->
-<!-- Use 21:9 aspect ratio when chat is enabled, 16:9 when not -->
-<!-- <AspectRatio ratio={shouldShowChat ? 21 / 9 : 16 / 9}> -->
-<!--   <div -->
-<!--     class="grid h-full w-full gap-4 transition-all duration-300 ease-in-out {shouldShowChat -->
-<!--       ? 'grid-cols-[1fr_320px]' -->
-<!--       : 'grid-cols-1'}" -->
-<!--   > -->
-<!--     <!-- Video container --> -->
-<!--     <div class="relative"> -->
-<!--       <div -->
-<!--         id="twitch-embed" -->
-<!--         bind:this={embedElement} -->
-<!--         class="absolute inset-0 h-full w-full rounded bg-black" -->
-<!--       ></div> -->
-<!--     </div> -->
-<!---->
-<!--     <!-- Chat container - only rendered when needed --> -->
-<!--     {#if shouldShowChat} -->
-<!--       <div class="overflow-hidden rounded bg-gray-900"> -->
-<!--         <iframe -->
-<!--           src="https://www.twitch.tv/embed/{channel}/chat?darkpopout&parent={window -->
-<!--             .location.hostname}&parent=localhost" -->
-<!--           class="h-full w-full border-0" -->
-<!--           title="Twitch Chat for {channel}" -->
-<!--           allow="accelerometer;" -->
-<!--         ></iframe> -->
-<!--       </div> -->
-<!--     {/if} -->
-<!--   </div> -->
-<!-- </AspectRatio> -->

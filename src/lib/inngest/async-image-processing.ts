@@ -46,7 +46,7 @@ async function deleteExistingOptimizedImages(
       .from('playlists')
       .select('image_webp_url, image_avif_url')
       .eq('id', entityId)
-      .single();
+      .maybeSingle(); // Changed from .single() to .maybeSingle()
 
     if (error) {
       console.warn(
@@ -55,7 +55,15 @@ async function deleteExistingOptimizedImages(
       return;
     }
 
-    const filesToDelete = [];
+    // Handle case where no playlist is found
+    if (!playlist) {
+      console.warn(
+        `⚠️ [${new Date().toISOString()}] No playlist found with id ${entityId}`
+      );
+      return;
+    }
+
+    const filesToDelete: string[] = [];
     if (playlist?.image_webp_url) {
       filesToDelete.push(playlist.image_webp_url);
     }
@@ -641,7 +649,6 @@ export const processImage = inngest.createFunction(
   {
     id: 'process-image-hq',
     name: 'Process Single Image (High Quality)',
-    timeouts: { start: '2m', finish: '4m' },
     retries: MAX_RETRIES,
     // ENHANCED: Use entity+imageType combination for concurrency control
     // This prevents the same video+imageType from being processed multiple times

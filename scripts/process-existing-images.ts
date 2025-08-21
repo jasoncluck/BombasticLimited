@@ -118,7 +118,7 @@ async function getPlaylistsToProcess(): Promise<Playlist[]> {
   console.log('Fetching playlists that need image processing...');
 
   // Get all playlists with thumbnail_video_id (we'll filter by actual image existence later)
-  let playlistQuery = supabase
+  const playlistQuery = supabase
     .from('playlists')
     .select(
       `
@@ -327,7 +327,7 @@ async function main() {
   console.log('');
 
   try {
-    let allJobs: Job[] = [];
+    const allJobs: Job[] = [];
 
     // Process videos
     if (ENTITY_TYPE === 'videos' || ENTITY_TYPE === 'both') {
