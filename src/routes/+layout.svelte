@@ -147,10 +147,8 @@
 
       try {
         // Get current session from Supabase to check if auth state changed
-        const {
-          data: { session: currentSession },
-        } = await supabase.auth.getSession();
-        const currentAuthState = !!currentSession?.user;
+        const { data } = await supabase.auth.getClaims();
+        const currentAuthState = !!data?.claims;
 
         // Check if auth state has changed
         if (lastKnownAuthState !== currentAuthState) {

@@ -358,7 +358,7 @@
 {:else}
   <div
     bind:this={cardElement}
-    class="{getCardClasses()} flex flex-col"
+    class="{getCardClasses()} flex flex-col outline-none"
     data-testid="video-card"
     role="button"
     tabindex="0"
@@ -426,7 +426,7 @@
       </p>
 
       <!-- Date/Description section with flex-1 to fill remaining space -->
-      <div class="flex flex-1 flex-col justify-start overflow-hidden px-2 pb-2">
+      <div class="flex flex-1 flex-col justify-start overflow-hidden px-2 pb-6">
         {#if shouldShowPlaylistInfo}
           <!-- Show playlist info when hovering and playlist exists -->
           <div class="text-secondary-foreground flex flex-col gap-1 text-xs">
@@ -459,8 +459,9 @@
         {:else if shouldShowDescription}
           <!-- Show description when hovering and no playlist exists -->
           <div
-            class="pointer-events-none line-clamp-3 transform
-            overflow-hidden text-xs leading-normal tracking-tight break-words will-change-transform"
+            class="pointer-events-none line-clamp-3 transform overflow-hidden
+            text-xs leading-normal tracking-tight will-change-transform"
+            style="word-break: normal; overflow-wrap: break-word; hyphens: auto;"
           >
             {video.description}
           </div>

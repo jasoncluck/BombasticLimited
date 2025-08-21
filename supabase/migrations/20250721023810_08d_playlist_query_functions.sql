@@ -388,7 +388,7 @@ SET
     LEFT JOIN public.timestamps t ON v.id = t.video_id AND t.user_id = auth.uid()
     CROSS JOIN total_count tc
     CROSS JOIN target_video tv
-    WHERE pv.video_position BETWEEN (tv.position - p_context_limit) AND (tv.position + p_context_limit)
+    WHERE pv.video_position BETWEEN tv.position AND (tv.position + p_context_limit)
     ORDER BY pv.video_position
   )
   SELECT 

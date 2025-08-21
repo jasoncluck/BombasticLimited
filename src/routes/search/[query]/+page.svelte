@@ -117,8 +117,8 @@
       {/if}
     {/each}
     {#if isEmptyResults}
-      <div class="flex w-full justify-center" data-testid="no-results">
-        <h1 class="text-xl">No results found</h1>
+      <div class="mt-40 flex w-full justify-center" data-testid="no-results">
+        <h1 class="header-primary">No Results Found</h1>
       </div>
     {/if}
   </div>
