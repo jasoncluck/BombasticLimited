@@ -28,6 +28,7 @@ import {
 import { type PlaylistImageProperties } from '$lib/supabase/playlists';
 import type { SidebarState } from '$lib/state/sidebar.svelte';
 import { showToast } from '$lib/state/notifications.svelte';
+import { calculateDynamicCropDimensions } from '$lib/utils/dynamic-crop-dimensions';
 
 export type PlaylistImages = Record<string, string | undefined>;
 
@@ -87,38 +88,21 @@ export const YOUTUBE_THUMBNAIL_CROP_DEFAULTS = {
   },
 } as const;
 
-// Helper function to detect YouTube thumbnail size and get appropriate crop dimensions
+// Helper function to detect image dimensions and get appropriate crop dimensions
+// Now uses dynamic calculation instead of hardcoded YouTube sizes
 function getOptimalCropDimensions(
   imageWidth: number,
   imageHeight: number,
   imageProperties: PlaylistImageProperties | null,
   isMaxRes: boolean
 ): PlaylistImageProperties {
-  if (isMaxRes) {
-    // For maxres images, use the provided image properties or defaults
-    return imageProperties || PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS;
-  }
-
-  // For standard resolution, detect YouTube thumbnail size
-  if (imageWidth === 320 && imageHeight === 180) {
-    // Medium thumbnail
-    return YOUTUBE_THUMBNAIL_CROP_DEFAULTS.medium;
-  } else if (imageWidth === 480 && imageHeight === 360) {
-    // High thumbnail
-    return YOUTUBE_THUMBNAIL_CROP_DEFAULTS.high;
-  } else if (imageWidth === 120 && imageHeight === 90) {
-    // Default thumbnail
-    return YOUTUBE_THUMBNAIL_CROP_DEFAULTS.default;
-  } else {
-    // Unknown size - create centered square crop
-    const cropSize = Math.min(imageWidth, imageHeight);
-    return {
-      x: Math.round((imageWidth - cropSize) / 2),
-      y: Math.round((imageHeight - cropSize) / 2),
-      width: cropSize,
-      height: cropSize,
-    };
-  }
+  // Use the new dynamic crop calculation
+  return calculateDynamicCropDimensions(
+    imageWidth,
+    imageHeight,
+    true, // Prefer square crop
+    isMaxRes ? (imageProperties || PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS) : null
+  );
 }
 
 // ... (all your existing handler functions remain the same until the image processing functions)
@@ -600,10 +584,10 @@ async function processWithFastOffscreenCanvas(
     previewSize
   );
 
-  // **BRIGHTNESS FIX: Use quality that matches server processing**
+  // **ENHANCED: Improved WebP quality for better output**
   const blob = await canvas.convertToBlob({
     type: 'image/webp',
-    quality: 0.75, // **CHANGED: Match server quality more closely**
+    quality: 0.82, // **IMPROVED: Enhanced quality for better WebP compression**
   });
 
   const arrayBuffer = await blob.arrayBuffer();
@@ -664,7 +648,7 @@ async function processWithFastCanvas(
           previewSize
         );
 
-        // **BRIGHTNESS FIX: Match server quality**
+        // **ENHANCED: Improved WebP quality**
         canvas.toBlob(
           (blob) => {
             if (!blob) {
@@ -678,7 +662,7 @@ async function processWithFastCanvas(
             reader.readAsDataURL(blob);
           },
           'image/webp',
-          0.75 // **CHANGED: Match server quality**
+          0.82 // **IMPROVED: Enhanced quality for better WebP**
         );
       } catch (error) {
         reject(error);
@@ -745,11 +729,11 @@ async function processVideoThumbnailWithFastOffscreenCanvas(
 
   ctx.drawImage(imageBitmap, 0, 0, width, height);
 
-  // **BRIGHTNESS FIX: Match server quality**
+  // **ENHANCED: Improved WebP quality for video thumbnails**
   const blob = await canvas.convertToBlob({
     type: 'image/webp',
-    quality: 0.75,
-  }); // **CHANGED: Match server quality**
+    quality: 0.80, // **IMPROVED: Good quality for video thumbnails**
+  });
   const arrayBuffer = await blob.arrayBuffer();
   const uint8Array = new Uint8Array(arrayBuffer);
   const base64 = btoa(String.fromCharCode(...uint8Array));
@@ -796,7 +780,7 @@ async function processVideoThumbnailWithFastCanvas(
             reader.readAsDataURL(blob);
           },
           'image/webp',
-          0.75 // **CHANGED: Match server quality**
+          0.80 // **IMPROVED: Enhanced quality for video thumbnails**
         );
       } catch (error) {
         reject(error);
