@@ -584,10 +584,10 @@ async function processWithFastOffscreenCanvas(
     previewSize
   );
 
-  // **BRIGHTNESS FIX: Use quality that matches server processing**
+  // **ENHANCED: Improved WebP quality for better output**
   const blob = await canvas.convertToBlob({
     type: 'image/webp',
-    quality: 0.75, // **CHANGED: Match server quality more closely**
+    quality: 0.82, // **IMPROVED: Enhanced quality for better WebP compression**
   });
 
   const arrayBuffer = await blob.arrayBuffer();
@@ -648,7 +648,7 @@ async function processWithFastCanvas(
           previewSize
         );
 
-        // **BRIGHTNESS FIX: Match server quality**
+        // **ENHANCED: Improved WebP quality**
         canvas.toBlob(
           (blob) => {
             if (!blob) {
@@ -662,7 +662,7 @@ async function processWithFastCanvas(
             reader.readAsDataURL(blob);
           },
           'image/webp',
-          0.75 // **CHANGED: Match server quality**
+          0.82 // **IMPROVED: Enhanced quality for better WebP**
         );
       } catch (error) {
         reject(error);
@@ -729,11 +729,11 @@ async function processVideoThumbnailWithFastOffscreenCanvas(
 
   ctx.drawImage(imageBitmap, 0, 0, width, height);
 
-  // **BRIGHTNESS FIX: Match server quality**
+  // **ENHANCED: Improved WebP quality for video thumbnails**
   const blob = await canvas.convertToBlob({
     type: 'image/webp',
-    quality: 0.75,
-  }); // **CHANGED: Match server quality**
+    quality: 0.80, // **IMPROVED: Good quality for video thumbnails**
+  });
   const arrayBuffer = await blob.arrayBuffer();
   const uint8Array = new Uint8Array(arrayBuffer);
   const base64 = btoa(String.fromCharCode(...uint8Array));
@@ -780,7 +780,7 @@ async function processVideoThumbnailWithFastCanvas(
             reader.readAsDataURL(blob);
           },
           'image/webp',
-          0.75 // **CHANGED: Match server quality**
+          0.80 // **IMPROVED: Enhanced quality for video thumbnails**
         );
       } catch (error) {
         reject(error);

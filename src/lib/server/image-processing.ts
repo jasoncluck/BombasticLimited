@@ -55,27 +55,33 @@ export function getMemoryUsage() {
   };
 }
 
-// **SPEED: Lower quality for fast server processing**
+// **OPTIMIZED: Balanced quality for WebP processing efficiency**
 export function calculateOptimalQuality(
   metadata: Partial<sharp.Metadata>,
   targetFormat: string,
-  baseQuality = 75 // **SPEED: Reduced from 90 to 75**
+  baseQuality = 78 // **IMPROVED: Slightly higher base for WebP efficiency**
 ): number {
   const imageSize = (metadata.width || 0) * (metadata.height || 0);
 
-  // **SPEED: Lower quality adjustments for faster processing**
+  // **ENHANCED: Format-specific quality optimization**
   let formatQuality = baseQuality;
   if (targetFormat === 'avif') {
-    formatQuality = Math.max(baseQuality - 10, 65); // **SPEED: More aggressive reduction**
+    formatQuality = Math.max(baseQuality - 8, 68); // **IMPROVED: Less aggressive AVIF reduction**
   } else if (targetFormat === 'webp') {
-    formatQuality = Math.max(baseQuality - 5, 70);
+    // WebP handles quality differently - optimize for its compression characteristics
+    formatQuality = Math.max(baseQuality - 3, 75); // **IMPROVED: Better WebP quality**
   }
 
-  // **SPEED: Less quality variation based on size**
+  // **ENHANCED: Smarter size-based quality adjustment**
   if (imageSize > 1920 * 1080) {
-    return Math.max(formatQuality - 5, 65); // **SPEED: Reduced quality for large images**
+    // Large images can use slightly lower quality due to viewing distance
+    return Math.max(formatQuality - 3, 72); // **IMPROVED: Less aggressive reduction**
+  } else if (imageSize < 320 * 180) {
+    // Very small thumbnails need even higher quality (check this first)
+    return Math.min(formatQuality + 5, 88); // **NEW: Special handling for tiny images**
   } else if (imageSize < 640 * 360) {
-    return Math.min(formatQuality + 5, 85); // **SPEED: Cap at 85 instead of 95**
+    // Small images need higher quality to remain sharp
+    return Math.min(formatQuality + 3, 85); // **BALANCED: Moderate increase**
   }
 
   return formatQuality;
@@ -111,12 +117,14 @@ export async function processImageServer({
     targetFormat = options.format as 'avif' | 'webp' | 'jpeg';
   }
 
-  // **SPEED: Create format fallback chain based on detected format**
+  // **ENHANCED: Improved format fallback chain prioritizing WebP**
   const formatFallbackChain: ('avif' | 'webp' | 'jpeg')[] = acceptHeader
     ? targetFormat === 'avif'
       ? ['avif', 'webp', 'jpeg'] // AVIF first when explicitly supported
-      : ['webp', 'jpeg'] // WebP first for other formats
-    : ['webp', 'jpeg']; // **SPEED: Skip AVIF for external sources**
+      : targetFormat === 'webp'
+      ? ['webp', 'jpeg'] // WebP focused chain  
+      : ['webp', 'jpeg'] // Default to WebP for better compression
+    : ['webp', 'jpeg']; // **OPTIMIZED: Always prefer WebP for external sources**
 
   const isStandardResolution = isCropped && !isMaxRes;
 
@@ -200,13 +208,13 @@ export async function processImageServer({
 
     processedInstance = processedInstance.toColourspace('srgb'); // **FIX: Force sRGB color space (British spelling)**
 
-    // **SPEED: Lower quality calculation**
+    // **ENHANCED: Improved quality calculation for WebP optimization**
     const quality =
       options.quality ||
       calculateOptimalQuality(
         metadata,
         targetFormat,
-        isStandardResolution ? 75 : 70 // **SPEED & BRIGHTNESS: Match browser quality**
+        isStandardResolution ? 78 : 75 // **IMPROVED: Better base quality for WebP**
       );
 
     console.log(
@@ -234,7 +242,7 @@ export async function processImageServer({
             processedImageBuffer = await processedInstance
               .webp({
                 quality,
-                effort: 1,
+                effort: 2, // **IMPROVED: Better compression vs speed balance**
                 lossless: false,
                 nearLossless: false,
                 smartSubsample: true,
@@ -341,7 +349,7 @@ export async function getVideoThumbnailWebpUrlServer({
   });
 }
 
-// **SPEED: Simplified progressive image generation**
+// **ENHANCED: Improved progressive image generation with better WebP**
 export async function generateProgressiveImages(
   thumbnailUrl: string,
   sizes: Array<{ width: number; height: number; quality?: number }>,
@@ -349,18 +357,18 @@ export async function generateProgressiveImages(
 ): Promise<Array<{ size: string; dataUrl: string | null }>> {
   const results: Array<{ size: string; dataUrl: string | null }> = [];
 
-  // **SPEED: Process only essential sizes**
-  const limitedSizes = sizes.slice(0, 3); // **SPEED: Limit to first 3 sizes**
+  // **ENHANCED: Process optimal number of sizes for WebP**
+  const limitedSizes = sizes.slice(0, 4); // **IMPROVED: Support one more size for better progressive loading**
 
   for (const size of limitedSizes) {
     try {
       const dataUrl = await getVideoThumbnailWebpUrlServer({
         thumbnailUrl,
         options: {
-          width: Math.min(size.width, 320), // **SPEED: Cap width**
-          height: Math.min(size.height, 320), // **SPEED: Cap height**
-          quality: Math.min(size.quality || 75, 75), // **SPEED: Lower quality**
-          format: 'webp', // **SPEED: Force WebP for speed**
+          width: Math.min(size.width, 480), // **IMPROVED: Allow larger sizes for WebP efficiency**
+          height: Math.min(size.height, 480), // **IMPROVED: Allow larger sizes**
+          quality: Math.min(size.quality || 80, 85), // **IMPROVED: Better default quality**
+          format: 'webp', // **ENHANCED: Force WebP for optimal compression**
         },
         acceptHeader,
       });
@@ -458,7 +466,7 @@ export function generatePlaylistImageUrl({
   return thumbnailUrl;
 }
 
-// Batch processing function for video thumbnails
+// **ENHANCED: Batch processing function for video thumbnails with better WebP**
 export async function getVideoThumbnailWebpUrlsBatch(
   thumbnailData: Array<{ url: string }>
 ): Promise<string[]> {
@@ -468,7 +476,7 @@ export async function getVideoThumbnailWebpUrlsBatch(
         return await getVideoThumbnailWebpUrlServer({
           thumbnailUrl: url,
           acceptHeader: 'image/webp,image/jpeg,*/*',
-          options: { format: 'webp', quality: 90 },
+          options: { format: 'webp', quality: 82 }, // **IMPROVED: Better quality for batch processing**
         });
       } catch (error) {
         console.warn(`Failed to process video thumbnail ${url}:`, error);

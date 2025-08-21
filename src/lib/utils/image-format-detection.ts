@@ -5,6 +5,7 @@
 
 /**
  * Browser format support detection based on Accept header
+ * Enhanced to better prioritize WebP for optimal compression and compatibility
  */
 export function detectOptimalFormat(
   acceptHeader?: string | null
@@ -17,21 +18,32 @@ export function detectOptimalFormat(
 
   const accept = acceptHeader.toLowerCase();
 
-  // Explicit AVIF support
+  // Explicit AVIF support - best compression
   if (accept.includes('image/avif')) {
     return 'avif';
   }
 
-  // Explicit WebP support
+  // Explicit WebP support - good compression and wide compatibility
   if (accept.includes('image/webp')) {
     return 'webp';
   }
 
-  // For modern browsers that accept all image types but don't explicitly list AVIF/WebP
-  // We should try AVIF first for supporting browsers, but fallback to WebP for better compatibility
+  // Enhanced detection for modern browsers
   if (accept.includes('image/*') || accept.includes('*/*')) {
-    // Since we can't be certain about AVIF support with generic headers,
-    // use WebP as a safer default that still provides good compression
+    // Check for quality preferences in Accept header
+    const webpQuality = accept.match(/image\/webp;q=([0-9\.]+)/);
+    const jpegQuality = accept.match(/image\/jpeg;q=([0-9\.]+)/);
+    
+    // If WebP has higher or equal quality preference, use it
+    if (webpQuality && jpegQuality) {
+      const webpQ = parseFloat(webpQuality[1]);
+      const jpegQ = parseFloat(jpegQuality[1]);
+      if (webpQ >= jpegQ) {
+        return 'webp';
+      }
+    }
+    
+    // Default to WebP for modern browsers for better compression
     return 'webp';
   }
 

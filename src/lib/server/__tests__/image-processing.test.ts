@@ -332,8 +332,8 @@ describe('getCroppedPlaylistImageUrlServer', () => {
     });
 
     expect(mockWebp).toHaveBeenCalledWith({
-      quality: 70, // Updated to match actual implementation
-      effort: 1, // Updated to match actual implementation
+      quality: 75, // Updated to match improved implementation
+      effort: 2, // Updated to match improved implementation
       preset: 'photo', // New parameter added by implementation
       lossless: false,
       nearLossless: false,
@@ -489,8 +489,8 @@ describe('getVideoThumbnailWebpUrlServer', () => {
     expect(mockExtract).not.toHaveBeenCalled(); // No cropping for video thumbnails
 
     expect(mockWebp).toHaveBeenCalledWith({
-      quality: 70, // Updated to match actual implementation
-      effort: 1, // Updated to match actual implementation
+      quality: 75, // Updated to match improved implementation
+      effort: 2, // Updated to match improved implementation
       preset: 'photo', // New parameter added by implementation
       lossless: false,
       nearLossless: false,
