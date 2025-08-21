@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { ScrollArea } from '$lib/components/ui/scroll-area';
+  import '../../app.css';
 
   interface Props {
     children: Snippet;

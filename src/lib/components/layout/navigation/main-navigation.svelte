@@ -74,7 +74,6 @@
       <a
         href={brandLogoNavItem.href}
         data-testid={brandLogoNavItem.testId}
-        onclick={(e) => navigationState.handleNavigation(e, brandLogoNavItem)}
         class={navigationState.getNavigationButtonClasses(
           brandLogoNavItem,
           'ml-2 hidden outline-hidden sm:ml-0 sm:block'
@@ -96,7 +95,7 @@
         variant="outline"
         size="icon"
         class="hidden rounded-full hover:scale-105 sm:flex"
-        onclick={(e) => navigationState.handleNavigation(e, homeNavItem)}
+        href="/"
         data-testid={homeNavItem.testId}
         disabled={navigationState.isNavigating}
       >
