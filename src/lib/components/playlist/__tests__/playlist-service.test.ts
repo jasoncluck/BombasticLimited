@@ -336,7 +336,7 @@ describe('getVideoThumbnailWebpUrl', () => {
     expect(mockCreateImageBitmap).toHaveBeenCalledWith(mockImageBlob);
     expect(mockConvertToBlob).toHaveBeenCalledWith({
       type: 'image/webp',
-      quality: 0.80, // Updated to match improved quality for video thumbnails
+      quality: 0.8, // Updated to match improved quality for video thumbnails
     });
 
     // Should draw the full image without cropping but with scaling to fit 320x180
@@ -417,7 +417,7 @@ describe('getVideoThumbnailWebpUrl', () => {
     expect(mockCanvas.toBlob).toHaveBeenCalledWith(
       expect.any(Function),
       'image/webp',
-      0.80 // Updated to match improved quality for video thumbnails
+      0.8 // Updated to match improved quality for video thumbnails
     );
   });
 
