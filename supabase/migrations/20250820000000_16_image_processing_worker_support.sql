@@ -13,8 +13,8 @@ COMMENT ON COLUMN "public"."image_processing_jobs"."polling_timestamp" IS 'Times
 -- Create index for worker queries
 CREATE INDEX IF NOT EXISTS "idx_image_processing_jobs_worker_id" ON "public"."image_processing_jobs" USING btree ("worker_id");
 
--- Enhanced function to get next job with worker assignment
-CREATE OR REPLACE FUNCTION public.get_next_image_processing_job_with_worker (p_worker_id text) RETURNS TABLE (
+-- Enhanced function to get multiple jobs with worker assignment in a single call
+CREATE OR REPLACE FUNCTION public.get_multiple_image_processing_jobs_with_worker (p_worker_id text, p_limit integer DEFAULT 50) RETURNS TABLE (
   job_id uuid,
   entity_type text,
   entity_id text,
@@ -27,10 +27,27 @@ CREATE OR REPLACE FUNCTION public.get_next_image_processing_job_with_worker (p_w
 ) LANGUAGE plpgsql SECURITY DEFINER
 SET
   search_path = '' AS $$
+DECLARE
+  job_ids uuid[];
 BEGIN
-  -- Get the next pending job with highest priority (lowest number)
-  -- Atomically assign it to the worker and mark as processing
-  -- FOR UPDATE SKIP LOCKED ensures no race conditions
+  -- First, get the IDs of jobs we want to process
+  -- Using FOR UPDATE SKIP LOCKED to prevent race conditions
+  SELECT ARRAY(
+    SELECT j.id
+    FROM "public"."image_processing_jobs" j
+    WHERE j.status = 'pending' 
+      AND j.attempts < j.max_attempts
+    ORDER BY j.priority ASC, j.created_at ASC
+    LIMIT p_limit
+    FOR UPDATE SKIP LOCKED
+  ) INTO job_ids;
+  
+  -- If no jobs found, return empty result
+  IF array_length(job_ids, 1) IS NULL THEN
+    RETURN;
+  END IF;
+  
+  -- Update all selected jobs atomically and return them
   RETURN QUERY
   UPDATE "public"."image_processing_jobs" j
   SET 
@@ -39,15 +56,7 @@ BEGIN
     polling_timestamp = now(),
     processing_started_at = now(),
     attempts = j.attempts + 1
-  WHERE j.id = (
-    SELECT j2.id
-    FROM "public"."image_processing_jobs" j2
-    WHERE j2.status = 'pending' 
-      AND j2.attempts < j2.max_attempts
-    ORDER BY j2.priority ASC, j2.created_at ASC
-    LIMIT 1
-    FOR UPDATE SKIP LOCKED
-  )
+  WHERE j.id = ANY(job_ids)
   RETURNING 
     j.id,
     j.entity_type,
@@ -209,8 +218,7 @@ BEGIN
 END;
 $$;
 
--- Add comments for documentation
-COMMENT ON FUNCTION public.get_next_image_processing_job_with_worker (text) IS 'Atomically get next pending job and assign to worker';
+COMMENT ON FUNCTION public.get_multiple_image_processing_jobs_with_worker (text, integer) IS 'Atomically get multiple pending jobs and assign to worker in a single call';
 
 COMMENT ON FUNCTION public.complete_image_processing_job_with_worker (uuid, text, text, text, text) IS 'Mark job as completed with worker validation';
 

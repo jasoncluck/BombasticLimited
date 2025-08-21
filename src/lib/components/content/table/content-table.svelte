@@ -5,7 +5,10 @@
     FlexRender,
   } from '$lib/components/ui/data-table/index.js';
   import * as Table from '$lib/components/ui/table/index.js';
-  import { handleContentNavigation } from '../content';
+  import {
+    handleContentNavigation,
+    generateContentNavigationUrl,
+  } from '../content';
   import type { Playlist } from '$lib/supabase/playlists';
   import { type Video } from '$lib/supabase/videos';
   import { getContentState } from '$lib/state/content.svelte';
@@ -80,7 +83,8 @@
   });
 
   function getRowClasses(video: Video, index: number) {
-    let classes = 'selection-mode transition-none content-table-row';
+    let classes =
+      'selection-mode transition-none content-table-row no-underline block';
 
     const isSelected = selectedVideoIds.has(video.id);
     const hoveredVideo = contentState.hoveredVideosBySection[sectionId];
@@ -113,6 +117,15 @@
       contentState.hoverTimeoutId = null;
     }
   }
+
+  // Generate navigation URL for each video
+  function getNavigationUrl(video: Video): string {
+    return generateContentNavigationUrl({
+      video,
+      contentFilter,
+      playlist,
+    });
+  }
 </script>
 
 <Table.Root
@@ -121,7 +134,8 @@
 >
   <Table.Body>
     {#each table.getRowModel().rows as row, i (row.id)}
-      <Table.Row
+      <a
+        href={getNavigationUrl(row.original)}
         data-state={row.getIsSelected() && 'selected'}
         class={getRowClasses(row.original, i)}
         draggable={true}
@@ -131,6 +145,7 @@
         ondrop={(e) => dragDrop.handleDrop(e, i, sectionId)}
         ondragend={dragDrop.handleDragEnd}
         onclick={(e) => {
+          e.preventDefault();
           contentState.handleVideoClick({
             event: e,
             video: row.original,
@@ -181,20 +196,22 @@
             sectionId,
           })}
       >
-        {#each row.getVisibleCells() as cell (cell.id)}
-          <Table.Cell
-            class="content-table-row overflow-hidden py-2 align-top {mediaQueryState.canHover &&
-            cell.id.includes('image')
-              ? 'pl-0'
-              : 'pl-2'}"
-          >
-            <FlexRender
-              content={cell.column.columnDef.cell}
-              context={cell.getContext()}
-            />
-          </Table.Cell>
-        {/each}
-      </Table.Row>
+        <div class="table-row">
+          {#each row.getVisibleCells() as cell (cell.id)}
+            <div
+              class="content-table-row table-cell overflow-hidden py-2 align-top {mediaQueryState.canHover &&
+              cell.id.includes('image')
+                ? 'pl-0'
+                : 'pl-2'}"
+            >
+              <FlexRender
+                content={cell.column.columnDef.cell}
+                context={cell.getContext()}
+              />
+            </div>
+          {/each}
+        </div>
+      </a>
     {/each}
   </Table.Body>
 </Table.Root>

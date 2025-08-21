@@ -735,19 +735,8 @@ export type Database = {
           watched_at: string;
         }[];
       };
-      get_next_image_processing_job: {
-        Args: Record<PropertyKey, never>;
-        Returns: {
-          attempts: number;
-          entity_id: string;
-          entity_type: string;
-          image_type: string;
-          job_id: string;
-          source_url: string;
-        }[];
-      };
-      get_next_image_processing_job_with_worker: {
-        Args: { p_worker_id: string };
+      get_multiple_image_processing_jobs_with_worker: {
+        Args: { p_limit?: number; p_worker_id: string };
         Returns: {
           attempts: number;
           entity_id: string;
@@ -758,6 +747,17 @@ export type Database = {
           processing_started_at: string;
           source_url: string;
           worker_id: string;
+        }[];
+      };
+      get_next_image_processing_job: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          attempts: number;
+          entity_id: string;
+          entity_type: string;
+          image_type: string;
+          job_id: string;
+          source_url: string;
         }[];
       };
       get_playlist_by_youtube_id: {

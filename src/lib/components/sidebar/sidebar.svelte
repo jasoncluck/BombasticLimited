@@ -82,17 +82,13 @@
 
   // Enhanced source selection with immediate feedback
   function handleSourceClick(source: string) {
-    // Update selection immediately - this deselects any playlist
     currentSelection = { type: 'source', value: source };
-
-    goto(`/${source}`);
   }
 
   // Enhanced playlist selection with immediate feedback
   function handlePlaylistClick(playlist: Playlist) {
     // Update selection immediately - this deselects any source
     currentSelection = { type: 'playlist', value: playlist.short_id };
-    goto(`/playlist/${encodeURI(playlist.short_id)}`);
   }
 
   // Source drag and drop handlers with optimistic updates
@@ -273,6 +269,7 @@
           })} {getSourceDragClasses(i)}"
           size={!isSidebarCollapsed ? 'default' : 'icon'}
           onclick={() => handleSourceClick(source)}
+          href={`/${source}`}
           title={SOURCE_INFO[source].displayName}
           onmouseenter={() => sourceState.handleMouseEnter(i)}
           onmouseleave={() => sourceState.handleMouseLeave(i)}
@@ -392,6 +389,7 @@
                   onclick={() => {
                     handlePlaylistClick(playlist);
                   }}
+                  href={`/playlist/${encodeURI(playlist.short_id)}`}
                   title={playlist.name}
                   value={playlist.name}
                   onmouseenter={() => playlistState.handleMouseEnter(i)}

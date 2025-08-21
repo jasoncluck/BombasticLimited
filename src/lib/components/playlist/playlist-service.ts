@@ -174,17 +174,13 @@ export async function handleAddVideosToPlaylist({
     });
 
     // Update with the processed image
-    const { error: imageError } = await updatePlaylistImage({
+    updatePlaylistImage({
       playlistId: playlist.id,
       processedPlaylistImage,
       thumbnailUrl: videos[0].thumbnail_url,
       imageProperties: null,
       supabase,
     });
-
-    if (imageError) {
-      console.error('Failed to process playlist image:', imageError);
-    }
   }
 
   // Refresh data

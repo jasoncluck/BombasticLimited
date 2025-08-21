@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_SERVICE_ROLE_KEY } from '$env/static/private';
 import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 import { randomBytes } from 'node:crypto';
+import type { Database } from '$lib/supabase/database.types';
 
 // Initialize Supabase client with service role key for server-side operations
 const supabaseUrl = PUBLIC_SUPABASE_URL;
@@ -22,6 +23,38 @@ const STALE_JOB_THRESHOLD_MINUTES = 10; // Reduced from 30 to 10 minutes for fas
 const MAX_DATABASE_RETRIES = 3;
 const LARGE_STALE_COUNT_WARNING_THRESHOLD = 10;
 
+// Types for better type safety
+type JobStatus = Database['public']['Enums']['image_processing_status'];
+
+interface JobStatusCounts {
+  pending: number;
+  processing: number;
+  completed: number;
+  failed: number;
+  total: number;
+}
+
+interface ImageProcessingJob {
+  job_id: string;
+  entity_type: string;
+  entity_id: string;
+  image_type: string;
+  source_url: string;
+  attempts: number;
+  worker_id: string;
+  polling_timestamp: string;
+  processing_started_at: string;
+}
+
+interface ProcessingResult {
+  success: boolean;
+  jobId: string;
+  workerId: string;
+  entityType: string;
+  entityId: string;
+  error?: string;
+}
+
 // Generate unique worker ID for this poller instance
 function generateWorkerId(): string {
   const timestamp = Date.now().toString(36);
@@ -30,13 +63,7 @@ function generateWorkerId(): string {
 }
 
 // Get job status counts for diagnostics
-async function getJobStatusCounts(): Promise<{
-  pending: number;
-  processing: number;
-  completed: number;
-  failed: number;
-  total: number;
-}> {
+async function getJobStatusCounts(): Promise<JobStatusCounts> {
   const { data, error } = await supabase
     .from('image_processing_jobs')
     .select('status')
@@ -46,7 +73,7 @@ async function getJobStatusCounts(): Promise<{
     throw new Error(`Failed to get job status counts: ${error.message}`);
   }
 
-  const counts = {
+  const counts: JobStatusCounts = {
     pending: 0,
     processing: 0,
     completed: 0,
@@ -55,9 +82,24 @@ async function getJobStatusCounts(): Promise<{
   };
 
   data?.forEach((row) => {
-    const status = row.status as keyof typeof counts;
-    if (status in counts) {
-      counts[status]++;
+    const status = row.status as JobStatus;
+    // Type-safe counting using switch statement
+    switch (status) {
+      case 'pending':
+        counts.pending++;
+        break;
+      case 'processing':
+        counts.processing++;
+        break;
+      case 'completed':
+        counts.completed++;
+        break;
+      case 'failed':
+        counts.failed++;
+        break;
+      default:
+        // Handle unexpected status values gracefully
+        console.warn(`Unknown job status encountered: ${status}`);
     }
   });
 
@@ -214,7 +256,7 @@ export const pollPendingJobs = inngest.createFunction(
         });
       }
 
-      // Step 4: Query for pending jobs with priority ordering using worker-aware function
+      // Step 4: Query for pending jobs using the new batch function
       const pendingJobs = await step.run('query-pending-jobs', async () => {
         console.log('📋 Querying for pending image processing jobs...');
 
@@ -223,45 +265,30 @@ export const pollPendingJobs = inngest.createFunction(
           const timeoutId = setTimeout(() => controller.abort(), POLL_TIMEOUT);
 
           try {
-            const jobs = [];
             const workerId = generateWorkerId();
-
             console.log(`🤖 Generated worker ID: ${workerId}`);
 
-            // Query jobs one by one using the new worker-aware function
-            // This ensures proper priority ordering and prevents race conditions
-            for (let i = 0; i < MAX_JOBS_PER_POLL; i++) {
-              const { data, error } = await supabase.rpc(
-                'get_next_image_processing_job_with_worker',
-                { p_worker_id: workerId }
-              );
+            // Use the new batch function to get multiple jobs in one call
+            const { data, error } = await supabase
+              .rpc('get_multiple_image_processing_jobs_with_worker', {
+                p_worker_id: workerId,
+                p_limit: MAX_JOBS_PER_POLL,
+              })
+              .abortSignal(controller.signal);
 
-              if (error) {
-                throw new Error(`Database query failed: ${error.message}`);
-              }
-
-              // If no job is returned, we've processed all pending jobs
-              if (!data || (Array.isArray(data) && data.length === 0)) {
-                break;
-              }
-
-              // Handle both single job return and array return (should be single)
-              const job = Array.isArray(data) ? data[0] : data;
-              if (job) {
-                jobs.push(job);
-              } else {
-                break;
-              }
+            if (error) {
+              throw new Error(`Database query failed: ${error.message}`);
             }
 
             clearTimeout(timeoutId);
+            const jobs = (data as ImageProcessingJob[]) || [];
             console.log(`📊 Found ${jobs.length} pending jobs to process`);
             return jobs;
           } catch (queryError) {
             clearTimeout(timeoutId);
             throw queryError;
           }
-        }, 'pending jobs query');
+        }, 'pending jobs batch query');
       });
 
       jobsPolled = pendingJobs.length;
@@ -291,7 +318,7 @@ export const pollPendingJobs = inngest.createFunction(
 
       // Step 5: Process each job by sending Inngest events with retry logic
       const results = await step.run('send-processing-events', async () => {
-        const sendResults = [];
+        const sendResults: ProcessingResult[] = [];
 
         for (const job of pendingJobs) {
           try {

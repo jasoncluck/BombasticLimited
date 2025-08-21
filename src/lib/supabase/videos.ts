@@ -348,7 +348,7 @@ export function incrementVideoView({
 }
 
 export function isVideoWithTimestamp(
-  video: Video
+  video?: Video
 ): video is VideoWithTimestamp {
   return (
     !!video &&
