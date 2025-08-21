@@ -363,7 +363,8 @@ async function processImageFormats(
       cropProps,
       sourceWidth,
       sourceHeight,
-      imageType
+      imageType,
+      null // This comes from getPlaylistCropProperties which already handles custom properties
     );
 
     console.log(

@@ -157,12 +157,14 @@ export async function processImageServer({
       const cropProperties =
         imageProperties ?? PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS;
 
-      // Validate and adjust crop dimensions
+      // Validate and adjust crop dimensions with correct image type
+      // Pass the original imageProperties to distinguish custom vs default
       const validatedCrop = validateAndAdjustCropDimensions(
         cropProperties,
         imageWidth,
         imageHeight,
-        'maxres'
+        isMaxRes ? 'maxres' : 'standard',
+        imageProperties // Original custom properties (null if none provided)
       );
 
       // Extract the crop area

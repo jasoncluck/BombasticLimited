@@ -4,13 +4,14 @@ import { calculateDynamicCropDimensions, validateAndAdjustCropDimensions } from 
 
 describe('Dynamic Crop Dimensions', () => {
   describe('calculateDynamicCropDimensions', () => {
-    it('should handle YouTube 320x180 thumbnails (currently hardcoded)', () => {
+    it('should handle YouTube 320x180 thumbnails with conservative cropping', () => {
       const result = calculateDynamicCropDimensions(320, 180, true);
       
-      expect(result.width).toBe(180);
-      expect(result.height).toBe(180);
-      expect(result.x).toBe(70); // (320-180)/2
-      expect(result.y).toBe(0);
+      // New conservative behavior: 90% of smaller dimension
+      expect(result.width).toBe(162); // 90% of 180
+      expect(result.height).toBe(162);
+      expect(result.x).toBe(79); // (320-162)/2
+      expect(result.y).toBe(9); // (180-162)/2
     });
 
     it('should handle YouTube 480x360 thumbnails (currently hardcoded)', () => {
@@ -22,13 +23,14 @@ describe('Dynamic Crop Dimensions', () => {
       expect(result.y).toBe(0);
     });
 
-    it('should handle YouTube 120x90 thumbnails (currently hardcoded)', () => {
+    it('should handle YouTube 120x90 thumbnails with conservative cropping', () => {
       const result = calculateDynamicCropDimensions(120, 90, true);
       
-      expect(result.width).toBe(90);
-      expect(result.height).toBe(90);
-      expect(result.x).toBe(15); // (120-90)/2
-      expect(result.y).toBe(0);
+      // New conservative behavior: 85% of smaller dimension for very small images
+      expect(result.width).toBe(77); // 85% of 90
+      expect(result.height).toBe(77);
+      expect(result.x).toBe(22); // (120-77)/2
+      expect(result.y).toBe(7); // (90-77)/2
     });
 
     it('should handle arbitrary aspect ratios dynamically', () => {
@@ -91,13 +93,14 @@ describe('Dynamic Crop Dimensions', () => {
       expect(result.height).toBe(1); // Corrected because y=599 leaves only 1 pixel height
     });
 
-    it('should handle edge case of very small images', () => {
+    it('should handle edge case of very small images with conservative cropping', () => {
       const result = calculateDynamicCropDimensions(50, 30, true);
       
-      expect(result.width).toBe(30);
-      expect(result.height).toBe(30);
-      expect(result.x).toBe(10); // (50-30)/2
-      expect(result.y).toBe(0);
+      // New conservative behavior: 85% for very small images
+      expect(result.width).toBe(26); // 85% of 30
+      expect(result.height).toBe(26);
+      expect(result.x).toBe(12); // (50-26)/2
+      expect(result.y).toBe(2); // (30-26)/2
     });
 
     it('should handle square images correctly', () => {
@@ -134,19 +137,23 @@ describe('Dynamic Crop Dimensions', () => {
   });
 
   describe('Compatibility with existing behavior', () => {
-    it('should produce same results as hardcoded YouTube medium thumbnail logic', () => {
-      // This tests that our dynamic approach produces the same results as the current hardcoded logic
+    it('should use new conservative cropping for YouTube medium thumbnails (320x180)', () => {
+      // This tests that our dynamic approach now uses conservative cropping for small images
       const dynamicResult = calculateDynamicCropDimensions(320, 180, true);
       
-      // Current hardcoded logic for YouTube medium (320x180):
-      const hardcodedResult = {
-        x: Math.round((320 - 180) / 2), // 70px from left
-        y: 0,
-        width: 180,
-        height: 180,
+      // New conservative logic for 320x180 (90% of smaller dimension):
+      const newExpectedResult = {
+        x: Math.round((320 - 162) / 2), // 79px from left
+        y: Math.round((180 - 162) / 2), // 9px from top
+        width: 162, // 90% of 180
+        height: 162,
       };
       
-      expect(dynamicResult).toEqual(hardcodedResult);
+      expect(dynamicResult).toEqual(newExpectedResult);
+      
+      // Verify it's more conservative than the old hardcoded approach
+      expect(dynamicResult.width).toBeLessThan(180); // Old was 180x180
+      expect(dynamicResult.height).toBeLessThan(180);
     });
 
     it('should produce same results as hardcoded YouTube high thumbnail logic', () => {
@@ -163,18 +170,22 @@ describe('Dynamic Crop Dimensions', () => {
       expect(dynamicResult).toEqual(hardcodedResult);
     });
 
-    it('should produce same results as hardcoded YouTube default thumbnail logic', () => {
+    it('should use new conservative cropping for YouTube default thumbnails (120x90)', () => {
       const dynamicResult = calculateDynamicCropDimensions(120, 90, true);
       
-      // Current hardcoded logic for YouTube default (120x90):
-      const hardcodedResult = {
-        x: Math.round((120 - 90) / 2), // 15px from left
-        y: 0,
-        width: 90,
-        height: 90,
+      // New conservative logic for 120x90 (85% of smaller dimension):
+      const newExpectedResult = {
+        x: Math.round((120 - 77) / 2), // 22px from left
+        y: Math.round((90 - 77) / 2), // 7px from top
+        width: 77, // 85% of 90
+        height: 77,
       };
       
-      expect(dynamicResult).toEqual(hardcodedResult);
+      expect(dynamicResult).toEqual(newExpectedResult);
+      
+      // Verify it's more conservative than the old hardcoded approach
+      expect(dynamicResult.width).toBeLessThan(90); // Old was 90x90
+      expect(dynamicResult.height).toBeLessThan(90);
     });
 
     it('should produce same results as current fallback logic for unknown sizes', () => {
@@ -194,20 +205,20 @@ describe('Dynamic Crop Dimensions', () => {
   });
 
   describe('Enhanced validateAndAdjustCropDimensions', () => {
-    it('should handle standard images with dynamic cropping', () => {
+    it('should handle standard images with conservative dynamic cropping', () => {
       const properties: PlaylistImageProperties = { x: 0, y: 0, width: 100, height: 100 };
-      const result = validateAndAdjustCropDimensions(properties, 320, 180, 'standard');
+      const result = validateAndAdjustCropDimensions(properties, 320, 180, 'standard', null);
       
-      // Should produce square crop for standard images
+      // Should produce square crop for standard images with conservative sizing
       expect(result.width).toBe(result.height);
-      expect(result.width).toBe(180); // Minimum dimension
-      expect(result.x).toBe(70); // Centered: (320-180)/2
-      expect(result.y).toBe(0);
+      expect(result.width).toBe(162); // 90% of 180 (conservative cropping)
+      expect(result.x).toBe(79); // Centered: (320-162)/2
+      expect(result.y).toBe(9); // Centered: (180-162)/2
     });
 
     it('should handle maxres images with custom properties', () => {
       const properties: PlaylistImageProperties = { x: 280, y: 0, width: 720, height: 720 };
-      const result = validateAndAdjustCropDimensions(properties, 1280, 720, 'maxres');
+      const result = validateAndAdjustCropDimensions(properties, 1280, 720, 'maxres', properties);
       
       expect(result.x).toBe(280);
       expect(result.y).toBe(0);
@@ -217,7 +228,7 @@ describe('Dynamic Crop Dimensions', () => {
 
     it('should validate bounds for invalid properties', () => {
       const properties: PlaylistImageProperties = { x: -10, y: 800, width: 2000, height: 1000 };
-      const result = validateAndAdjustCropDimensions(properties, 1280, 720, 'maxres');
+      const result = validateAndAdjustCropDimensions(properties, 1280, 720, 'maxres', properties);
       
       expect(result.x).toBe(0); // Corrected from -10
       expect(result.y).toBe(719); // Corrected from 800 to max valid (720-1)
@@ -227,7 +238,7 @@ describe('Dynamic Crop Dimensions', () => {
 
     it('should handle zero or negative image dimensions gracefully', () => {
       const properties: PlaylistImageProperties = { x: 10, y: 10, width: 100, height: 100 };
-      const result = validateAndAdjustCropDimensions(properties, 0, 0, 'standard');
+      const result = validateAndAdjustCropDimensions(properties, 0, 0, 'standard', null);
       
       expect(result.x).toBe(10);
       expect(result.y).toBe(10);
@@ -235,17 +246,18 @@ describe('Dynamic Crop Dimensions', () => {
       expect(result.height).toBe(100);
     });
 
-    it('should allow custom crop properties for maxres while using dynamic for standard', () => {
+    it('should allow custom crop properties for both maxres and standard when provided', () => {
       const customProps: PlaylistImageProperties = { x: 100, y: 50, width: 400, height: 300 };
       
-      // Standard should ignore custom properties
-      const standardResult = validateAndAdjustCropDimensions(customProps, 800, 600, 'standard');
-      expect(standardResult.width).toBe(standardResult.height); // Should be square
-      expect(standardResult.width).toBe(600); // Should use minimum dimension
-      expect(standardResult.x).toBe(100); // Should be centered: (800-600)/2
+      // Standard should use custom properties when provided (new behavior)
+      const standardResult = validateAndAdjustCropDimensions(customProps, 800, 600, 'standard', customProps);
+      expect(standardResult.x).toBe(100);
+      expect(standardResult.y).toBe(50);
+      expect(standardResult.width).toBe(400);
+      expect(standardResult.height).toBe(300);
       
       // Maxres should respect custom properties  
-      const maxresResult = validateAndAdjustCropDimensions(customProps, 800, 600, 'maxres');
+      const maxresResult = validateAndAdjustCropDimensions(customProps, 800, 600, 'maxres', customProps);
       expect(maxresResult.x).toBe(100);
       expect(maxresResult.y).toBe(50);
       expect(maxresResult.width).toBe(400);
@@ -265,11 +277,23 @@ describe('Dynamic Crop Dimensions', () => {
       ];
       
       cases.forEach(({ width, height, expectedCrop }) => {
-        const result = validateAndAdjustCropDimensions(properties, width, height, 'standard');
-        expect(result.width).toBe(expectedCrop);
-        expect(result.height).toBe(expectedCrop);
-        expect(result.x).toBe(Math.round((width - expectedCrop) / 2));
-        expect(result.y).toBe(Math.round((height - expectedCrop) / 2));
+        const result = validateAndAdjustCropDimensions(properties, width, height, 'standard', null);
+        // Note: For small images, conservative cropping will apply
+        if (expectedCrop <= 180) {
+          // Conservative cropping applied
+          const conservativeRatio = expectedCrop <= 90 ? 0.85 : 0.90;
+          const actualCrop = Math.round(expectedCrop * conservativeRatio);
+          expect(result.width).toBe(actualCrop);
+          expect(result.height).toBe(actualCrop);
+          expect(result.x).toBe(Math.round((width - actualCrop) / 2));
+          expect(result.y).toBe(Math.round((height - actualCrop) / 2));
+        } else {
+          // Normal cropping for larger images
+          expect(result.width).toBe(expectedCrop);
+          expect(result.height).toBe(expectedCrop);
+          expect(result.x).toBe(Math.round((width - expectedCrop) / 2));
+          expect(result.y).toBe(Math.round((height - expectedCrop) / 2));
+        }
       });
     });
   });

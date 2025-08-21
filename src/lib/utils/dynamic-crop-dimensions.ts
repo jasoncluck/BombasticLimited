@@ -37,7 +37,19 @@ export function calculateDynamicCropDimensions(
 
   if (preferSquareCrop) {
     // Create a square crop centered on the image
-    const cropSize = Math.min(imageWidth, imageHeight);
+    let cropSize = Math.min(imageWidth, imageHeight);
+    
+    // Apply conservative cropping for small images to prevent over-cropping
+    // Detect small YouTube thumbnails and similar sizes
+    const isSmallImage = cropSize <= 180; // 320x180, 120x90, etc.
+    
+    if (isSmallImage) {
+      // Use 85-90% of the smaller dimension to preserve more content
+      // This prevents extreme zoom on small thumbnails
+      const conservativeRatio = cropSize <= 90 ? 0.85 : 0.90; // More conservative for very small images
+      cropSize = Math.round(cropSize * conservativeRatio);
+    }
+    
     return {
       x: Math.round((imageWidth - cropSize) / 2),
       y: Math.round((imageHeight - cropSize) / 2),
@@ -81,7 +93,8 @@ export function validateAndAdjustCropDimensions(
   imageProperties: PlaylistImageProperties,
   imageWidth: number,
   imageHeight: number,
-  imageType: 'maxres' | 'standard'
+  imageType: 'maxres' | 'standard',
+  originalCustomProperties?: PlaylistImageProperties | null
 ): PlaylistImageProperties {
   if (imageWidth <= 0 || imageHeight <= 0) {
     return {
@@ -94,22 +107,34 @@ export function validateAndAdjustCropDimensions(
 
   let scaledProperties = { ...imageProperties };
 
-  if (imageType === 'standard') {
-    // For standard images, prioritize dynamic crop calculation over provided properties
-    // This ensures we get consistent square crops regardless of provided properties
-    scaledProperties = calculateDynamicCropDimensions(
-      imageWidth,
-      imageHeight,
-      true, // Prefer square crop for standard images
-      null // Ignore provided properties for standard images to ensure consistency
-    );
-  } else {
-    // For maxres images, validate the provided properties
+  // Check if we have actual custom properties (not just defaults)
+  const hasCustomProperties = originalCustomProperties !== undefined && originalCustomProperties !== null;
+
+  if (hasCustomProperties) {
+    // Always use custom properties if provided, regardless of image type
+    // This ensures user preferences are respected
     scaledProperties = calculateDynamicCropDimensions(
       imageWidth,
       imageHeight,
       true,
-      imageProperties // Custom properties for maxres images
+      originalCustomProperties // Use the provided custom properties
+    );
+  } else if (imageType === 'standard') {
+    // Only fall back to dynamic cropping when no custom properties are set
+    // Apply conservative cropping for small standard images
+    scaledProperties = calculateDynamicCropDimensions(
+      imageWidth,
+      imageHeight,
+      true, // Prefer square crop for standard images
+      null // No custom properties - use conservative dynamic cropping
+    );
+  } else {
+    // For maxres images without custom properties, use defaults
+    scaledProperties = calculateDynamicCropDimensions(
+      imageWidth,
+      imageHeight,
+      true,
+      imageProperties // Use provided default properties for maxres images
     );
   }
 
