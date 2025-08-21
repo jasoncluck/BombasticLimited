@@ -171,26 +171,6 @@
     cropperDialogOpen = false;
   }
 
-  // Handle image load in cropper
-  function handleImageLoad() {
-    // Set initial crop area if we have saved properties
-    const savedProps = parseImageProperties($formData.image_properties);
-    if (savedProps) {
-      currentCropArea = {
-        x: savedProps.x,
-        y: savedProps.y,
-        width: savedProps.width,
-        height: savedProps.height,
-      };
-    } else {
-      // Reset to defaults if no saved properties
-      crop = { x: 0, y: 0 };
-      zoom = 1;
-      currentCropArea = null;
-    }
-  }
-
-  console.log(playlist);
   // Get the image source for the cropper
   const imageSrc = $derived(playlist.thumbnail_url);
 

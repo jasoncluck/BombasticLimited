@@ -265,7 +265,6 @@ async function downloadImage(sourceUrl: string): Promise<Buffer> {
  */
 async function getPlaylistCropProperties(
   playlistId: string,
-  sourceUrl: string,
   imageWidth: number,
   imageHeight: number
 ): Promise<PlaylistImageProperties> {

@@ -31,8 +31,8 @@ export function detectOptimalFormat(
   // Enhanced detection for modern browsers
   if (accept.includes('image/*') || accept.includes('*/*')) {
     // Check for quality preferences in Accept header
-    const webpQuality = accept.match(/image\/webp;q=([0-9\.]+)/);
-    const jpegQuality = accept.match(/image\/jpeg;q=([0-9\.]+)/);
+    const webpQuality = accept.match(/image\/webp;q=([0-9.]+)/);
+    const jpegQuality = accept.match(/image\/jpeg;q=([0-9.]+)/);
 
     // If WebP has higher or equal quality preference, use it
     if (webpQuality && jpegQuality) {
