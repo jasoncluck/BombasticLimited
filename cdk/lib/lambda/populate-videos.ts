@@ -11,12 +11,10 @@ const getBestThumbnailUrl = (
 ): string | null | undefined => {
   if (!thumbnails) return null;
 
-  // Prioritize maxres for image processing pipeline, then fallback to other resolutions
+  // Prioritize maxres for image processing pipeline, then fallback to other resolutions. Only using 16:9 to avoid black bars on the bottom and top
   // https://developers.google.com/youtube/v3/docs/thumbnails
   const candidates = [
     thumbnails.maxres?.url, // 1280x720 (highest quality for processing)
-    thumbnails.standard?.url,
-    thumbnails.high?.url, // 480x360
     thumbnails.medium?.url, // 320x180
     thumbnails.default?.url, // 120x90
   ];
