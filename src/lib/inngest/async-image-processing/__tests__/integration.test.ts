@@ -72,15 +72,14 @@ describe('Image Processing Job Duplication Fix - Integration', () => {
   });
 
   it('should validate only 2 images per video (WebP + AVIF for thumbnail and maxres)', async () => {
-    // Test the expected outcome: exactly 2 jobs per video
+    // Test the expected outcome: exactly 1 job per video (thumbnail only)
     const videoId = 'gpVAbAVQ32s';
     const expectedJobs = [
       { entityType: 'video', entityId: videoId, imageType: 'thumbnail' },
     ];
 
-    expect(expectedJobs).toHaveLength(2);
+    expect(expectedJobs).toHaveLength(1);
     expect(expectedJobs[0].imageType).toBe('thumbnail');
-    expect(expectedJobs[1].imageType).toBe('thumbnail_maxres');
   });
 
   it('should handle stale job cleanup correctly', () => {

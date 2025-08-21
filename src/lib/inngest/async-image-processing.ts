@@ -265,7 +265,6 @@ async function downloadImage(sourceUrl: string): Promise<Buffer> {
  */
 async function getPlaylistCropProperties(
   playlistId: string,
-  sourceUrl: string,
   imageWidth: number,
   imageHeight: number
 ): Promise<PlaylistImageProperties> {
@@ -423,7 +422,8 @@ async function processImageFormats(
       cropProps,
       sourceWidth,
       sourceHeight,
-      imageType
+      imageType,
+      null // This comes from getPlaylistCropProperties which already handles custom properties
     );
 
     console.log(

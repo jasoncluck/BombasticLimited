@@ -19,7 +19,7 @@ describe('Worker ID Fix Validation', () => {
       expect(result.avifPath).toContain('thumbnail-test-video');
     });
 
-    it('should generate deterministic paths for videos (2 files per video)', () => {
+    it('should generate deterministic paths for videos (1 file per video)', () => {
       // Test thumbnail
       const thumbnailPaths = generateStoragePaths(
         'video',
@@ -29,27 +29,12 @@ describe('Worker ID Fix Validation', () => {
         'worker-789'
       );
 
-      // Test maxres thumbnail
-      const maxresPaths = generateStoragePaths(
-        'video',
-        'test-video-123',
-        'thumbnail',
-        'job-456',
-        'worker-789'
-      );
-
-      // Both should be deterministic (no timestamps in video paths)
+      // Should be deterministic (no timestamps in video paths)
       expect(thumbnailPaths.webpPath).toBe(
         'thumbnails/test-video-123/thumbnail-test-video-123.webp'
       );
       expect(thumbnailPaths.avifPath).toBe(
         'thumbnails/test-video-123/thumbnail-test-video-123.avif'
-      );
-      expect(maxresPaths.webpPath).toBe(
-        'thumbnails/test-video-123/thumbnail-maxres-test-video-123.webp'
-      );
-      expect(maxresPaths.avifPath).toBe(
-        'thumbnails/test-video-123/thumbnail-maxres-test-video-123.avif'
       );
     });
 
