@@ -2,11 +2,6 @@ import { mdsvex } from 'mdsvex';
 import adapter from '@sveltejs/adapter-vercel';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import remarkGfm from 'remark-gfm';
-import { fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -17,10 +12,6 @@ const config = {
     vitePreprocess(),
     mdsvex({
       extensions: ['.md', '.svx'],
-      layout: resolve(
-        __dirname,
-        './src/lib/components/mdsvex/MdsvexLayout.svelte'
-      ),
       remarkPlugins: [remarkGfm],
     }),
   ],

@@ -28,7 +28,7 @@
   import {
     type PlaylistSchema,
     playlistSchema,
-  } from '../../../routes/playlist/[shortId]/schema';
+  } from '$lib/schema/playlist-schema';
 
   let {
     form,

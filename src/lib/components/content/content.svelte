@@ -34,7 +34,7 @@
   import Pagination from '../pagination/pagination.svelte';
   import { getPageState } from '$lib/state/page.svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
-  import type { PlaylistSchema } from '../../../routes/playlist/[shortId]/schema';
+  import type { PlaylistSchema } from '$lib/schema/playlist-schema';
 
   type ContentProps = HTMLAttributes<HTMLDivElement> & {
     videos: Video[] | VideoWithTimestamp[];
