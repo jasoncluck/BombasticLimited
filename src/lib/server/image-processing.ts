@@ -69,7 +69,6 @@ export function calculateOptimalQuality(
     formatQuality = Math.max(baseQuality - 3, 75); // **IMPROVED: Better WebP quality**
   }
 
-  // **ENHANCED: Smarter size-based quality adjustment**
   if (imageSize > 1920 * 1080) {
     // Large images can use slightly lower quality due to viewing distance
     return Math.max(formatQuality - 3, 72); // **IMPROVED: Less aggressive reduction**
@@ -118,8 +117,8 @@ export async function processImageServer({
     ? targetFormat === 'avif'
       ? ['avif', 'webp', 'jpeg'] // AVIF first when explicitly supported
       : targetFormat === 'webp'
-      ? ['webp', 'jpeg'] // WebP focused chain  
-      : ['webp', 'jpeg'] // Default to WebP for better compression
+        ? ['webp', 'jpeg'] // WebP focused chain
+        : ['webp', 'jpeg'] // Default to WebP for better compression
     : ['webp', 'jpeg']; // **OPTIMIZED: Always prefer WebP for external sources**
 
   const isStandardResolution = isCropped && !isMaxRes;

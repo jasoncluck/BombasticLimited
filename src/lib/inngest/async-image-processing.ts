@@ -22,21 +22,6 @@ const STORAGE_BUCKET = IMAGES_BUCKET;
 const MAX_RETRIES = 3;
 const PROCESSING_TIMEOUT = 60000; // Increased timeout for quality processing
 
-// Crop defaults
-const PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS: PlaylistImageProperties = {
-  x: 280,
-  y: 0,
-  height: 720,
-  width: 720,
-};
-
-const PLAYLIST_IMAGE_CROP_DEFAULTS: PlaylistImageProperties = {
-  x: 70, // (320-180)/2 = 70
-  y: 0,
-  height: 180,
-  width: 180,
-};
-
 interface ProcessingResult {
   webpPath?: string;
   avifPath?: string;
@@ -276,13 +261,18 @@ async function downloadImage(sourceUrl: string): Promise<Buffer> {
 }
 
 /**
- * Get playlist crop properties from database or use defaults
+ * Get playlist crop properties using the new dynamic crop calculation system
  */
 async function getPlaylistCropProperties(
   playlistId: string,
-  sourceUrl: string
+  imageWidth: number,
+  imageHeight: number
 ): Promise<PlaylistImageProperties> {
-  // Get playlist image_properties
+  console.log(
+    `🎯 Calculating dynamic crop for playlist ${playlistId} (${imageWidth}x${imageHeight})`
+  );
+
+  // Get playlist image_properties from database
   const { data: playlist, error } = await supabase
     .from('playlists')
     .select('image_properties')
@@ -293,7 +283,8 @@ async function getPlaylistCropProperties(
     console.warn(`Failed to get playlist crop properties: ${error.message}`);
   }
 
-  // If we have custom crop properties, use them
+  // Check if we have custom crop properties from the database
+  let customProperties: PlaylistImageProperties | null = null;
   if (playlist?.image_properties) {
     const props = playlist.image_properties as PlaylistImageProperties;
     // Validate the properties have required fields
@@ -303,47 +294,28 @@ async function getPlaylistCropProperties(
       typeof props.width === 'number' &&
       typeof props.height === 'number'
     ) {
-      return props;
+      customProperties = props;
+      console.log(
+        `📋 Using custom crop properties for playlist ${playlistId}:`,
+        customProperties
+      );
     }
   }
 
-  // Use defaults based on source URL resolution detection
-  try {
-    const imageBuffer = await downloadImage(sourceUrl);
-    const metadata = await sharp(imageBuffer).metadata();
+  // Use the new dynamic crop calculation system
+  const cropProperties = calculateDynamicCropDimensions(
+    imageWidth,
+    imageHeight,
+    true, // Prefer square crop for playlists
+    customProperties
+  );
 
-    const imageWidth = metadata.width || 0;
-    const imageHeight = metadata.height || 0;
-
-    // Detect if this is a maxres image (1280x720)
-    if (imageWidth === 1280 && imageHeight === 720) {
-      return PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS;
-    }
-    // Detect if this is a medium thumbnail (320x180)
-    else if (imageWidth === 320 && imageHeight === 180) {
-      return PLAYLIST_IMAGE_CROP_DEFAULTS;
-    }
-    // For other sizes, create a centered square crop
-    else {
-      const cropSize = Math.min(imageWidth, imageHeight);
-      return {
-        x: Math.round((imageWidth - cropSize) / 2),
-        y: Math.round((imageHeight - cropSize) / 2),
-        width: cropSize,
-        height: cropSize,
-      };
-    }
-  } catch (error) {
-    console.warn(
-      'Failed to detect image dimensions, using standard defaults:',
-      error
-    );
-    return PLAYLIST_IMAGE_CROP_DEFAULTS;
-  }
+  console.log(`✨ Calculated dynamic crop properties:`, cropProperties);
+  return cropProperties;
 }
 
 /**
- * **HIGH-QUALITY** image processing with advanced optimization
+ * **HIGH-QUALITY** image processing with aggressive compression and advanced optimization
  */
 async function processImageFormats(
   buffer: Buffer,
@@ -351,7 +323,9 @@ async function processImageFormats(
   playlistId?: string,
   sourceUrl?: string
 ): Promise<{ webp: Buffer; avif: Buffer }> {
-  console.log('🎨 Starting HIGH-QUALITY image processing...');
+  console.log(
+    '🎨 Starting HIGH-QUALITY image processing with aggressive compression...'
+  );
 
   const sharpInstance = sharp(buffer, {
     failOnError: false,
@@ -361,27 +335,63 @@ async function processImageFormats(
 
   // Get metadata
   const metadata = await sharpInstance.metadata();
+  const sourceWidth = metadata.width || 1920;
+  const sourceHeight = metadata.height || 1080;
+
   console.log(
-    `📐 Source image: ${metadata.width}x${metadata.height}, ${metadata.format}, ${Math.round((metadata.size || 0) / 1024)}KB`
+    `📐 Source image: ${sourceWidth}x${sourceHeight}, ${metadata.format}, ${Math.round((metadata.size || 0) / 1024)}KB`
   );
 
   let pipeline = sharpInstance;
   let finalOutputSize = {
-    width: metadata.width || 1920,
-    height: metadata.height || 1080,
+    width: sourceWidth,
+    height: sourceHeight,
   };
 
   if (entityType === 'playlist' && playlistId && sourceUrl) {
-    const cropProps = await getPlaylistCropProperties(playlistId, sourceUrl);
+    // Use the new dynamic crop system
+    const cropProps = await getPlaylistCropProperties(
+      playlistId,
+      sourceWidth,
+      sourceHeight
+    );
+
+    // Validate and adjust crop dimensions using the enhanced function
+    const imageType =
+      sourceWidth === 1280 && sourceHeight === 720 ? 'maxres' : 'standard';
+    const validatedCropProps = validateAndAdjustCropDimensions(
+      cropProps,
+      sourceWidth,
+      sourceHeight,
+      imageType
+    );
+
+    console.log(
+      `🎯 Applying validated crop: x=${validatedCropProps.x}, y=${validatedCropProps.y}, w=${validatedCropProps.width}, h=${validatedCropProps.height}`
+    );
 
     pipeline = pipeline.extract({
-      left: cropProps.x,
-      top: cropProps.y,
-      width: cropProps.width,
-      height: cropProps.height,
+      left: validatedCropProps.x,
+      top: validatedCropProps.y,
+      width: validatedCropProps.width,
+      height: validatedCropProps.height,
     });
 
-    const outputSize = cropProps.width <= 180 ? 512 : 1024;
+    // Determine output size based on crop size for better compression
+    const cropSize = Math.min(
+      validatedCropProps.width,
+      validatedCropProps.height
+    );
+    let outputSize: number;
+
+    if (cropSize <= 180) {
+      outputSize = 256; // Smaller output for small crops
+    } else if (cropSize <= 360) {
+      outputSize = 512; // Medium output
+    } else {
+      outputSize = 768; // Larger output but still compressed
+    }
+
     finalOutputSize = { width: outputSize, height: outputSize };
 
     pipeline = pipeline
@@ -391,52 +401,100 @@ async function processImageFormats(
         kernel: sharp.kernel.lanczos3,
       })
       .sharpen({
-        sigma: 1.0,
+        sigma: 0.8, // Reduced sharpening for better compression
         m1: 1.0,
-        m2: 2.0,
+        m2: 1.8,
         x1: 2.0,
-        y2: 10.0,
-        y3: 20.0,
+        y2: 8.0,
+        y3: 15.0,
       });
+  } else {
+    // For non-playlist images, apply smart resizing for compression
+    const maxDimension = Math.max(sourceWidth, sourceHeight);
+    let targetSize: number;
+
+    if (maxDimension > 1920) {
+      targetSize = 1920; // 4x compression for very large images
+    } else if (maxDimension > 1280) {
+      targetSize = 1280; // 3x compression for large images
+    } else if (maxDimension > 640) {
+      targetSize = 640; // 2x compression for medium images
+    } else {
+      targetSize = maxDimension; // Keep original size for small images
+    }
+
+    if (targetSize < maxDimension) {
+      const aspectRatio = sourceWidth / sourceHeight;
+      const newWidth =
+        aspectRatio >= 1 ? targetSize : Math.round(targetSize * aspectRatio);
+      const newHeight =
+        aspectRatio >= 1 ? Math.round(targetSize / aspectRatio) : targetSize;
+
+      finalOutputSize = { width: newWidth, height: newHeight };
+
+      pipeline = pipeline.resize(newWidth, newHeight, {
+        fit: 'inside',
+        withoutEnlargement: true,
+        kernel: sharp.kernel.lanczos3,
+      });
+    }
   }
 
+  // Apply color space conversion for better compression
   pipeline = pipeline.toColourspace('srgb');
 
   const pixelCount = finalOutputSize.width * finalOutputSize.height;
-  const isLargeImage = pixelCount > 500000;
+  const isLargeImage = pixelCount > 300000; // Lowered threshold
 
-  const webpQuality = isLargeImage ? 92 : 95;
-  const avifQuality = isLargeImage ? 85 : 88;
+  // Aggressive compression settings - much lower quality for smaller file sizes
+  const webpQuality = isLargeImage ? 65 : 75; // Reduced from 92/95
+  const avifQuality = isLargeImage ? 55 : 65; // Reduced from 85/88
 
   const result: { webp: Buffer; avif: Buffer } = {
     webp: Buffer.alloc(0),
     avif: Buffer.alloc(0),
   };
 
-  console.log('🔄 Generating HIGH-QUALITY WebP...');
+  console.log(`🔄 Generating COMPRESSED WebP (quality: ${webpQuality})...`);
   result.webp = await pipeline
     .clone()
     .webp({
       quality: webpQuality,
-      effort: 6,
+      effort: 6, // Max effort for best compression
       lossless: false,
       nearLossless: false,
       smartSubsample: true,
       preset: 'photo',
-      alphaQuality: 100,
+      alphaQuality: 80, // Reduced alpha quality
     })
     .toBuffer();
 
-  console.log('🔄 Generating HIGH-QUALITY AVIF...');
+  console.log(`🔄 Generating COMPRESSED AVIF (quality: ${avifQuality})...`);
   result.avif = await pipeline
     .clone()
     .avif({
       quality: avifQuality,
-      effort: 9,
+      effort: 9, // Max effort for best compression
       lossless: false,
-      chromaSubsampling: '4:4:4',
+      chromaSubsampling: '4:2:0', // More aggressive chroma subsampling
     })
     .toBuffer();
+
+  const webpCompressionRatio = metadata.size
+    ? ((result.webp.length / metadata.size) * 100).toFixed(1)
+    : 'N/A';
+  const avifCompressionRatio = metadata.size
+    ? ((result.avif.length / metadata.size) * 100).toFixed(1)
+    : 'N/A';
+
+  console.log(`📊 Compression results:`);
+  console.log(`   Original: ${Math.round((metadata.size || 0) / 1024)}KB`);
+  console.log(
+    `   WebP: ${Math.round(result.webp.length / 1024)}KB (${webpCompressionRatio}% of original)`
+  );
+  console.log(
+    `   AVIF: ${Math.round(result.avif.length / 1024)}KB (${avifCompressionRatio}% of original)`
+  );
 
   return result;
 }
@@ -551,7 +609,7 @@ export const processImage = inngest.createFunction(
     const startTime = Date.now();
 
     console.log(
-      `🚀 Worker ${workerId || 'unknown'} starting HIGH-QUALITY processing for ${entityType} ${entityId}, type: ${imageType}, job: ${jobId}`
+      `🚀 Worker ${workerId || 'unknown'} starting HIGH-QUALITY processing with AGGRESSIVE COMPRESSION for ${entityType} ${entityId}, type: ${imageType}, job: ${jobId}`
     );
     console.log(
       `📋 Job context - worker: ${workerId}, attempts: ${jobAttempts}/3, polled at: ${pollingTimestamp}, processing started: ${processingStartedAt}`
@@ -602,7 +660,7 @@ export const processImage = inngest.createFunction(
       const existingCheckDuration = Date.now() - existingCheckStart;
 
       console.log(
-        `🔍 Worker ${workerId} existing images check completed in ${existingCheckDuration}ms - WebP: ${hasWebP}, AVIF: ${hasAVIF} - generating NEW high-quality versions`
+        `🔍 Worker ${workerId} existing images check completed in ${existingCheckDuration}ms - WebP: ${hasWebP}, AVIF: ${hasAVIF} - generating NEW compressed versions`
       );
 
       // Delete existing images before creating new ones
@@ -631,9 +689,9 @@ export const processImage = inngest.createFunction(
         `✅ [${new Date().toISOString()}] Worker ${workerId} downloaded ${Math.round(imageBuffer.length / 1024)}KB in ${downloadDuration}ms`
       );
 
-      // Process image with HIGH QUALITY settings
+      // Process image with HIGH QUALITY settings and AGGRESSIVE COMPRESSION
       console.log(
-        `🎨 [${new Date().toISOString()}] Worker ${workerId} starting HIGH-QUALITY image processing...`
+        `🎨 [${new Date().toISOString()}] Worker ${workerId} starting HIGH-QUALITY image processing with AGGRESSIVE COMPRESSION...`
       );
       const processStart = Date.now();
       const { webp: webpBuffer, avif: avifBuffer } = await processImageFormats(
@@ -711,7 +769,7 @@ export const processImage = inngest.createFunction(
       const totalProcessingTime = Date.now() - startTime;
 
       console.log(
-        `🎉 [${new Date().toISOString()}] Worker ${workerId} successfully processed HIGH-QUALITY image for ${entityType} ${entityId} in ${totalProcessingTime}ms (job: ${jobId})`
+        `🎉 [${new Date().toISOString()}] Worker ${workerId} successfully processed HIGH-QUALITY COMPRESSED image for ${entityType} ${entityId} in ${totalProcessingTime}ms (job: ${jobId})`
       );
       console.log(
         `📊 [${new Date().toISOString()}] Worker ${workerId} processing breakdown - existing check: ${existingCheckDuration}ms, download: ${downloadDuration}ms, processing: ${processDuration}ms, upload: ${uploadDuration}ms, completion: ${completeDuration}ms`
@@ -726,7 +784,7 @@ export const processImage = inngest.createFunction(
       const totalErrorTime = Date.now() - startTime;
 
       console.error(
-        `❌ [${errorTimestamp}] Worker ${workerId || 'unknown'} failed to process HIGH-QUALITY image for ${entityType} ${entityId} (job: ${jobId}) after ${totalErrorTime}ms:`,
+        `❌ [${errorTimestamp}] Worker ${workerId || 'unknown'} failed to process HIGH-QUALITY COMPRESSED image for ${entityType} ${entityId} (job: ${jobId}) after ${totalErrorTime}ms:`,
         error
       );
 
@@ -920,6 +978,10 @@ export const cleanupStaleJobs = inngest.createFunction(
 );
 
 import { pollPendingJobs } from './async-image-processing/job_poller';
+import {
+  calculateDynamicCropDimensions,
+  validateAndAdjustCropDimensions,
+} from '$lib/utils/dynamic-crop-dimensions';
 
 // Export all functions
 export const imageFunctions = [
