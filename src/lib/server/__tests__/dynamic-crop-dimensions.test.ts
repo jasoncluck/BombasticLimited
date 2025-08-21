@@ -234,5 +234,43 @@ describe('Dynamic Crop Dimensions', () => {
       expect(result.width).toBe(100);
       expect(result.height).toBe(100);
     });
+
+    it('should allow custom crop properties for maxres while using dynamic for standard', () => {
+      const customProps: PlaylistImageProperties = { x: 100, y: 50, width: 400, height: 300 };
+      
+      // Standard should ignore custom properties
+      const standardResult = validateAndAdjustCropDimensions(customProps, 800, 600, 'standard');
+      expect(standardResult.width).toBe(standardResult.height); // Should be square
+      expect(standardResult.width).toBe(600); // Should use minimum dimension
+      expect(standardResult.x).toBe(100); // Should be centered: (800-600)/2
+      
+      // Maxres should respect custom properties  
+      const maxresResult = validateAndAdjustCropDimensions(customProps, 800, 600, 'maxres');
+      expect(maxresResult.x).toBe(100);
+      expect(maxresResult.y).toBe(50);
+      expect(maxresResult.width).toBe(400);
+      expect(maxresResult.height).toBe(300);
+    });
+
+    it('should handle various resolutions dynamically without hardcoded sizes', () => {
+      const properties: PlaylistImageProperties = { x: 0, y: 0, width: 100, height: 100 };
+      
+      // Test non-YouTube sizes that would have failed with hardcoded approach
+      const cases = [
+        { width: 640, height: 360, expectedCrop: 360 }, // 16:9 aspect ratio
+        { width: 1024, height: 768, expectedCrop: 768 }, // 4:3 aspect ratio
+        { width: 1200, height: 800, expectedCrop: 800 }, // 3:2 aspect ratio
+        { width: 500, height: 500, expectedCrop: 500 },  // Square
+        { width: 300, height: 200, expectedCrop: 200 },  // Random size
+      ];
+      
+      cases.forEach(({ width, height, expectedCrop }) => {
+        const result = validateAndAdjustCropDimensions(properties, width, height, 'standard');
+        expect(result.width).toBe(expectedCrop);
+        expect(result.height).toBe(expectedCrop);
+        expect(result.x).toBe(Math.round((width - expectedCrop) / 2));
+        expect(result.y).toBe(Math.round((height - expectedCrop) / 2));
+      });
+    });
   });
 });
