@@ -4,9 +4,6 @@ import { Inngest } from 'inngest';
 export const inngest = new Inngest({
   id: 'bombastic',
   name: 'Bombastic Image Processing',
-  retries: {
-    default: 3,
-  },
 });
 
 // Type definitions for image processing events

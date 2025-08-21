@@ -30,7 +30,6 @@
         src={playlist.image_url}
         alt={playlist.name}
         class="h-full w-full rounded object-cover"
-        decoding="async"
         loading="eager"
       />
     </div>

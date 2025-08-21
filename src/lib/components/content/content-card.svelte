@@ -353,7 +353,6 @@
           src={video.image_url ?? video.thumbnail_url}
           alt={video.title}
           loading="eager"
-          decoding="async"
           fetchpriority="high"
         />
         <div class="absolute top-0.5 right-0.5">

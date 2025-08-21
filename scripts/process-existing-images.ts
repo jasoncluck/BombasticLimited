@@ -66,11 +66,10 @@ interface Video {
 
 interface Playlist {
   id: string;
-  thumbnail_video_id: string | null;
   image_webp_url: string | null;
   image_avif_url: string | null;
   image_processing_status: string | null;
-  video_thumbnail_url: string | null;
+  thumbnail_url: string;
 }
 
 interface Job {
@@ -117,20 +116,26 @@ async function getVideosToProcess(): Promise<Video[]> {
 async function getPlaylistsToProcess(): Promise<Playlist[]> {
   console.log('Fetching playlists that need image processing...');
 
-  // Get all playlists with thumbnail_video_id (we'll filter by actual image existence later)
+  // Get playlists with their thumbnail_url
   const playlistQuery = supabase
     .from('playlists')
     .select(
       `
       id,
-      thumbnail_video_id,
+      thumbnail_url,
       image_webp_url,
       image_avif_url,
       image_processing_status
     `
     )
-    .not('thumbnail_video_id', 'is', null)
+    .not('thumbnail_url', 'is', null)
     .is('deleted_at', null);
+
+  if (!FORCE_REPROCESS) {
+    playlistQuery.or(
+      'image_processing_status.is.null,image_processing_status.eq.pending,image_processing_status.eq.failed'
+    );
+  }
 
   const { data: playlists, error: playlistError } = await playlistQuery.order(
     'created_at',
@@ -142,39 +147,48 @@ async function getPlaylistsToProcess(): Promise<Playlist[]> {
   }
 
   if (!playlists || playlists.length === 0) {
-    console.log('No playlists with thumbnail_video_id found');
+    console.log('No playlists with thumbnail_url found');
     return [];
   }
 
-  console.log(`Found ${playlists.length} playlists with thumbnail_video_id`);
+  console.log(`Found ${playlists.length} playlists with thumbnail_url`);
 
-  // Now get the video thumbnail URLs for these playlists
-  const videoIds = playlists.map((p) => p.thumbnail_video_id).filter(Boolean);
+  // Get the actual video IDs (not playlist IDs)
+  const videoIds = playlists.map((p) => p.thumbnail_url).filter(Boolean);
 
   if (videoIds.length === 0) {
     return [];
   }
 
-  const { data: videos, error: videoError } = await supabase
-    .from('videos')
-    .select('id, thumbnail_url ')
-    .in('id', videoIds);
-
-  if (videoError) {
-    throw new Error(`Failed to fetch video thumbnails: ${videoError.message}`);
-  }
-
-  // Create a map of video thumbnails
+  // Process in batches to avoid URI too long error
+  const BATCH_SIZE = 100;
   const videoThumbnailMap = new Map();
-  videos?.forEach((video) => {
-    videoThumbnailMap.set(video.id, {
-      thumbnail_url: video.thumbnail_url,
+
+  for (let i = 0; i < videoIds.length; i += BATCH_SIZE) {
+    const batchVideoIds = videoIds.slice(i, i + BATCH_SIZE);
+
+    const { data: videos, error: videoError } = await supabase
+      .from('videos')
+      .select('id, thumbnail_url')
+      .in('id', batchVideoIds);
+
+    if (videoError) {
+      throw new Error(
+        `Failed to fetch video thumbnails: ${videoError.message}`
+      );
+    }
+
+    // Add to map
+    videos?.forEach((video) => {
+      videoThumbnailMap.set(video.id, {
+        thumbnail_url: video.thumbnail_url,
+      });
     });
-  });
+  }
 
   // Combine playlist data with video thumbnail data
   const playlistsWithThumbnails: Playlist[] = playlists.map((playlist) => {
-    const videoThumbnails = videoThumbnailMap.get(playlist.thumbnail_video_id);
+    const videoThumbnails = videoThumbnailMap.get(playlist.thumbnail_url);
     return {
       ...playlist,
       video_thumbnail_url: videoThumbnails?.thumbnail_url || null,
@@ -220,8 +234,7 @@ function createPlaylistJobs(playlists: Playlist[]): Job[] {
 
   for (const playlist of playlists) {
     console.log(`Processing playlist ${playlist.id}:`, {
-      thumbnail_video_id: playlist.thumbnail_video_id,
-      video_thumbnail_url: !!playlist.video_thumbnail_url,
+      thumbnail_url: !!playlist.thumbnail_url,
       image_processing_status: playlist.image_processing_status,
       has_webp: !!playlist.image_webp_url,
       has_avif: !!playlist.image_avif_url,
@@ -238,12 +251,12 @@ function createPlaylistJobs(playlists: Playlist[]): Job[] {
     }
 
     // Skip if no thumbnail video or video thumbnails
-    if (!playlist.thumbnail_video_id) {
+    if (!playlist.thumbnail_url) {
       console.log(`Skipping playlist ${playlist.id} - no thumbnail_video_id`);
       continue;
     }
 
-    const sourceUrl = playlist.video_thumbnail_url;
+    const sourceUrl = playlist.thumbnail_url;
 
     if (!sourceUrl) {
       console.log(
