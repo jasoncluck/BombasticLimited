@@ -49,7 +49,9 @@ function getOptimalCropDimensions(
     imageWidth,
     imageHeight,
     true, // Prefer square crop
+
     imageProperties
+
   );
 }
 
@@ -668,7 +670,7 @@ async function processVideoThumbnailWithFastOffscreenCanvas(
   // **ENHANCED: Improved WebP quality for video thumbnails**
   const blob = await canvas.convertToBlob({
     type: 'image/webp',
-    quality: 0.80, // **IMPROVED: Good quality for video thumbnails**
+    quality: 0.8, // **IMPROVED: Good quality for video thumbnails**
   });
   const arrayBuffer = await blob.arrayBuffer();
   const uint8Array = new Uint8Array(arrayBuffer);
@@ -716,7 +718,7 @@ async function processVideoThumbnailWithFastCanvas(
             reader.readAsDataURL(blob);
           },
           'image/webp',
-          0.80 // **IMPROVED: Enhanced quality for video thumbnails**
+          0.8 // **IMPROVED: Enhanced quality for video thumbnails**
         );
       } catch (error) {
         reject(error);

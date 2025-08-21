@@ -176,4 +176,3 @@ export function validateAndAdjustCropDimensions(
     height: Math.max(1, Math.min(scaledProperties.height, maxHeight)),
   };
 }
-
