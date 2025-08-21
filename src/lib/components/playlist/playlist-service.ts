@@ -97,11 +97,17 @@ function getOptimalCropDimensions(
   isMaxRes: boolean
 ): PlaylistImageProperties {
   // Use the new dynamic crop calculation
+  // Always pass imageProperties to enable conservative cropping for small images
+  // For maxRes images, use defaults if no custom properties provided
+  const customProperties = isMaxRes && !imageProperties 
+    ? PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS 
+    : imageProperties;
+    
   return calculateDynamicCropDimensions(
     imageWidth,
     imageHeight,
     true, // Prefer square crop
-    isMaxRes ? (imageProperties || PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS) : null
+    customProperties
   );
 }
 

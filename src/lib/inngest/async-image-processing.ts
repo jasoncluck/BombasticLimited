@@ -411,6 +411,7 @@ async function processImageFormats(
     // Use the new dynamic crop system
     const cropProps = await getPlaylistCropProperties(
       playlistId,
+      sourceUrl,
       sourceWidth,
       sourceHeight
     );
