@@ -32,82 +32,24 @@ import { calculateDynamicCropDimensions } from '$lib/utils/dynamic-crop-dimensio
 
 export type PlaylistImages = Record<string, string | undefined>;
 
-export const PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS: PlaylistImageProperties = {
-  x: 280,
-  y: 0,
-  height: 720,
-  width: 720,
-};
 
-// Updated to use medium thumbnail dimensions (320x180)
-export const PLAYLIST_IMAGE_CROP_DEFAULTS: PlaylistImageProperties = {
-  x: 70, // (320-180)/2 = 70
-  y: 0,
-  height: 180,
-  width: 180,
-};
 
-/**
- * Determines if a playlist thumbnail is low-resolution and cannot be cropped effectively
- */
-export function isLowResolutionThumbnail(
-  thumbnailMaxResUrl: string | null,
-  thumbnailUrl: string | null
-): boolean {
-  // If there's a maxres URL available, it's high resolution
-  if (thumbnailMaxResUrl) {
-    return false;
-  }
 
-  // If there's only a standard thumbnail URL, it's low resolution
-  return !!thumbnailUrl;
-}
 
-// Add specific defaults for different YouTube thumbnail sizes
-export const YOUTUBE_THUMBNAIL_CROP_DEFAULTS = {
-  // 120x90 default thumbnails
-  default: {
-    x: 15, // (120-90)/2
-    y: 0,
-    width: 90,
-    height: 90,
-  },
-  // 320x180 medium thumbnails
-  medium: {
-    x: 70, // (320-180)/2
-    y: 0,
-    width: 180,
-    height: 180,
-  },
-  // 480x360 high thumbnails
-  high: {
-    x: 60, // (480-360)/2
-    y: 0,
-    width: 360,
-    height: 360,
-  },
-} as const;
 
-// Helper function to detect image dimensions and get appropriate crop dimensions
-// Now uses dynamic calculation instead of hardcoded YouTube sizes
+
+// Helper function to get appropriate crop dimensions using dynamic calculation
 function getOptimalCropDimensions(
   imageWidth: number,
   imageHeight: number,
-  imageProperties: PlaylistImageProperties | null,
-  isMaxRes: boolean
+  imageProperties: PlaylistImageProperties | null
 ): PlaylistImageProperties {
-  // Use the new dynamic crop calculation
-  // Always pass imageProperties to enable conservative cropping for small images
-  // For maxRes images, use defaults if no custom properties provided
-  const customProperties = isMaxRes && !imageProperties 
-    ? PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS 
-    : imageProperties;
-    
+  // Always use dynamic crop calculation for all images
   return calculateDynamicCropDimensions(
     imageWidth,
     imageHeight,
     true, // Prefer square crop
-    customProperties
+    imageProperties
   );
 }
 
@@ -233,7 +175,6 @@ export async function handleAddVideosToPlaylist({
     // The RPC function set the thumbnail_video_id, now process the image
     const processedPlaylistImage = await getCroppedPlaylistImageUrl({
       imageProperties: null, // No existing properties for new thumbnail
-      thumbnailMaxResUrl: videos[0].thumbnail_url,
       thumbnailUrl: videos[0].thumbnail_url,
     });
 
@@ -302,7 +243,6 @@ export async function handleUpdatePlaylistImage({
   const processedPlaylistImage = thumbnailVideo
     ? await getCroppedPlaylistImageUrl({
         imageProperties: imageProperties, // Remove the fallback to existing properties
-        thumbnailMaxResUrl: thumbnailVideo.thumbnail_url,
         thumbnailUrl: thumbnailVideo.thumbnail_url,
       })
     : null;
@@ -508,17 +448,12 @@ export async function handleUpdatePlaylistSort({
  */
 export async function getCroppedPlaylistImageUrl({
   imageProperties,
-  thumbnailMaxResUrl,
   thumbnailUrl,
 }: {
   imageProperties: PlaylistImageProperties | null;
-  thumbnailMaxResUrl: string | null;
-  thumbnailUrl?: string | null;
+  thumbnailUrl: string | null;
 }): Promise<string | null> {
-  const imageUrl = thumbnailMaxResUrl ?? thumbnailUrl;
-  if (!imageUrl) return null;
-
-  const isMaxRes = !!thumbnailMaxResUrl;
+  if (!thumbnailUrl) return null;
 
   try {
     // Use fast OffscreenCanvas processing for immediate results
@@ -527,13 +462,12 @@ export async function getCroppedPlaylistImageUrl({
       typeof createImageBitmap !== 'undefined'
     ) {
       return await processWithFastOffscreenCanvas(
-        imageUrl,
-        imageProperties,
-        isMaxRes
+        thumbnailUrl,
+        imageProperties
       );
     } else {
       // Fallback to regular Canvas with speed optimizations
-      return await processWithFastCanvas(imageUrl, imageProperties, isMaxRes);
+      return await processWithFastCanvas(thumbnailUrl, imageProperties);
     }
   } catch (error) {
     console.error('Fast browser image processing failed:', error);
@@ -547,8 +481,7 @@ export async function getCroppedPlaylistImageUrl({
  */
 async function processWithFastOffscreenCanvas(
   imageUrl: string,
-  imageProperties: PlaylistImageProperties | null,
-  isMaxRes: boolean
+  imageProperties: PlaylistImageProperties | null
 ): Promise<string> {
   const response = await fetch(imageUrl);
   if (!response.ok) throw new Error('Failed to fetch image');
@@ -560,13 +493,12 @@ async function processWithFastOffscreenCanvas(
   const optimalCrop = getOptimalCropDimensions(
     imageBitmap.width,
     imageBitmap.height,
-    imageProperties,
-    isMaxRes
+    imageProperties
   );
 
   // **SPEED OPTIMIZATION: Use smaller output size for browser preview**
   // Background processing will create high-quality versions
-  const previewSize = isMaxRes ? 360 : 180; // Much smaller for speed
+  const previewSize = 180; // Consistent preview size for all images
 
   const canvas = new OffscreenCanvas(previewSize, previewSize);
   const ctx = canvas.getContext('2d');
@@ -610,8 +542,7 @@ async function processWithFastOffscreenCanvas(
  */
 async function processWithFastCanvas(
   imageUrl: string,
-  imageProperties: PlaylistImageProperties | null,
-  isMaxRes: boolean
+  imageProperties: PlaylistImageProperties | null
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -623,12 +554,11 @@ async function processWithFastCanvas(
         const optimalCrop = getOptimalCropDimensions(
           img.width,
           img.height,
-          imageProperties,
-          isMaxRes
+          imageProperties
         );
 
-        // **SPEED: Smaller preview size**
-        const previewSize = isMaxRes ? 360 : 180;
+        // **SPEED: Consistent preview size for all images**
+        const previewSize = 180;
 
         const canvas = document.createElement('canvas');
         canvas.width = previewSize;

@@ -36,7 +36,7 @@ describe('generateStoragePaths', () => {
       );
     });
 
-    it('should generate consistent maxres thumbnail paths without timestamps', () => {
+    it('should generate consistent thumbnail paths without timestamps', () => {
       const entityId = 'test-video-id';
       const imageType = 'thumbnail';
 
@@ -62,10 +62,10 @@ describe('generateStoragePaths', () => {
 
       // Verify exact path structure
       expect(result1.webpPath).toBe(
-        'thumbnails/test-video-id/thumbnail-maxres-test-video-id.webp'
+        'thumbnails/test-video-id/thumbnail-test-video-id.webp'
       );
       expect(result1.avifPath).toBe(
-        'thumbnails/test-video-id/thumbnail-maxres-test-video-id.avif'
+        'thumbnails/test-video-id/thumbnail-test-video-id.avif'
       );
     });
 

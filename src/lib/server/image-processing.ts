@@ -1,4 +1,3 @@
-import { PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS } from '$lib/components/playlist/playlist-service';
 import sharp from 'sharp';
 import { ImageCacheManager } from './image-cache';
 import { detectOptimalFormat } from '$lib/utils/image-format-detection';
@@ -89,7 +88,6 @@ export async function processImageServer({
   acceptHeader = null,
   options = {},
   isCropped = false,
-  isMaxRes = false,
   contentType = 'video',
 }: {
   imageUrl: string | null;
@@ -97,7 +95,6 @@ export async function processImageServer({
   acceptHeader?: string | null;
   options?: ImageProcessingOptions;
   isCropped?: boolean;
-  isMaxRes?: boolean;
   contentType?: 'playlist' | 'video';
 }) {
   if (!imageUrl) {
@@ -120,8 +117,6 @@ export async function processImageServer({
         ? ['webp', 'jpeg'] // WebP focused chain
         : ['webp', 'jpeg'] // Default to WebP for better compression
     : ['webp', 'jpeg']; // **OPTIMIZED: Always prefer WebP for external sources**
-
-  const isStandardResolution = isCropped && !isMaxRes;
 
   try {
     // **SPEED: Reduced timeout for faster responses**
@@ -153,17 +148,13 @@ export async function processImageServer({
 
     // Apply cropping if needed
     if (isCropped) {
-      // Use provided image properties or defaults
-      const cropProperties =
-        imageProperties ?? PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS;
-
-      // Validate and adjust crop dimensions with correct image type
-      // Pass the original imageProperties to distinguish custom vs default
+      // Always use dynamic crop calculation when imageProperties is null
+      // Validate and adjust crop dimensions - always treat as 'standard' type
       const validatedCrop = validateAndAdjustCropDimensions(
-        cropProperties,
+        imageProperties || { x: 0, y: 0, width: imageWidth, height: imageHeight },
         imageWidth,
         imageHeight,
-        isMaxRes ? 'maxres' : 'standard',
+        'standard',
         imageProperties // Original custom properties (null if none provided)
       );
 
@@ -175,8 +166,8 @@ export async function processImageServer({
         height: validatedCrop.height,
       });
 
-      // **SPEED: Resize to smaller output sizes like browser**
-      const previewSize = isMaxRes ? 360 : 180; // **SPEED: Match browser preview sizes**
+      // **SPEED: Consistent output size for all images**
+      const previewSize = 180; // Consistent preview size for all images
       processedInstance = processedInstance.resize(previewSize, previewSize, {
         fit: 'cover',
         withoutEnlargement: false,
@@ -207,7 +198,7 @@ export async function processImageServer({
       calculateOptimalQuality(
         metadata,
         targetFormat,
-        isStandardResolution ? 78 : 75 // **IMPROVED: Better base quality for WebP**
+        75 // **IMPROVED: Consistent base quality for WebP**
       );
 
     console.log(
@@ -309,7 +300,6 @@ export async function getCroppedPlaylistImageUrlServer({
     acceptHeader,
     options,
     isCropped: true,
-    isMaxRes: false,
     contentType: 'playlist',
   });
 }

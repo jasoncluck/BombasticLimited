@@ -83,8 +83,7 @@ describe('getCroppedPlaylistImageUrl', () => {
 
     const result = await getCroppedPlaylistImageUrl({
       imageProperties,
-      thumbnailMaxResUrl: 'https://example.com/image.jpg',
-      thumbnailUrl: null,
+      thumbnailUrl: 'https://example.com/image.jpg',
     });
 
     // Verify fetch was called
@@ -104,8 +103,8 @@ describe('getCroppedPlaylistImageUrl', () => {
       150, // source coordinates
       0,
       0,
-      360,
-      360 // destination coordinates (previewSize for maxres)
+      180,
+      180 // destination coordinates (consistent preview size)
     );
 
     // Verify result format (basic check since base64 encoding is complex to mock)
@@ -167,7 +166,6 @@ describe('getCroppedPlaylistImageUrl', () => {
 
     const resultPromise = getCroppedPlaylistImageUrl({
       imageProperties,
-      thumbnailMaxResUrl: null,
       thumbnailUrl: 'https://example.com/thumbnail.jpg',
     });
 
@@ -230,8 +228,7 @@ describe('getCroppedPlaylistImageUrl', () => {
 
     const resultPromise = getCroppedPlaylistImageUrl({
       imageProperties: null,
-      thumbnailMaxResUrl: 'https://example.com/maxres.jpg',
-      thumbnailUrl: null,
+      thumbnailUrl: 'https://example.com/maxres.jpg',
     });
 
     // Simulate image load after a short delay
@@ -247,15 +244,14 @@ describe('getCroppedPlaylistImageUrl', () => {
     expect(global.Image).toHaveBeenCalled();
     expect(mockCanvas.toBlob).toHaveBeenCalled();
 
-    // Verify that proper dimensions were used for maxres crop (updated to match current implementation)
-    expect(mockCanvas.width).toBe(360); // Updated preview size for maxres
-    expect(mockCanvas.height).toBe(360); // Updated preview size for maxres
+    // Verify that proper dimensions were used (consistent preview size)
+    expect(mockCanvas.width).toBe(180); // Consistent preview size for all images
+    expect(mockCanvas.height).toBe(180); // Consistent preview size for all images
   }, 10000); // Increase timeout to 10 seconds
 
   it('should return null when no image URL is provided', async () => {
     const result = await getCroppedPlaylistImageUrl({
       imageProperties: null,
-      thumbnailMaxResUrl: null,
       thumbnailUrl: null,
     });
 
@@ -280,8 +276,7 @@ describe('getCroppedPlaylistImageUrl', () => {
 
     const result = await getCroppedPlaylistImageUrl({
       imageProperties,
-      thumbnailMaxResUrl: 'https://example.com/image.jpg',
-      thumbnailUrl: null,
+      thumbnailUrl: 'https://example.com/image.jpg',
     });
 
     expect(result).toBe(null);
