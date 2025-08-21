@@ -237,7 +237,6 @@ describe('processImageServer', () => {
       imageProperties,
       options: { format: 'webp' },
       isCropped: true,
-      isMaxRes: true,
     });
 
     // Should use provided image properties

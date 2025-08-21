@@ -191,7 +191,7 @@ async function checkExistingOptimizedImages(
       .from('playlists')
       .select('image_webp_url, image_avif_url, image_processing_status')
       .eq('id', entityId)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.warn(
@@ -410,7 +410,6 @@ async function processImageFormats(
     // Use the new dynamic crop system
     const cropProps = await getPlaylistCropProperties(
       playlistId,
-      sourceUrl,
       sourceWidth,
       sourceHeight
     );
@@ -642,6 +641,7 @@ export const processImage = inngest.createFunction(
   {
     id: 'process-image-hq',
     name: 'Process Single Image (High Quality)',
+    timeouts: { start: '2m', finish: '4m' },
     retries: MAX_RETRIES,
     // ENHANCED: Use entity+imageType combination for concurrency control
     // This prevents the same video+imageType from being processed multiple times

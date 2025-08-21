@@ -32,12 +32,6 @@ import { calculateDynamicCropDimensions } from '$lib/utils/dynamic-crop-dimensio
 
 export type PlaylistImages = Record<string, string | undefined>;
 
-
-
-
-
-
-
 // Helper function to get appropriate crop dimensions using dynamic calculation
 function getOptimalCropDimensions(
   imageWidth: number,
@@ -51,7 +45,6 @@ function getOptimalCropDimensions(
     true, // Prefer square crop
 
     imageProperties
-
   );
 }
 

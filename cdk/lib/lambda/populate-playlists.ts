@@ -305,7 +305,7 @@ export const populatePlaylists = async ({
         const thumbnailUrl = removeLiveSuffix(
           getBestThumbnailUrl(item.snippet?.thumbnails)
         );
-        
+
         if (thumbnailUrl) {
           await queuePlaylistThumbnailProcessing(
             supabaseClient,

@@ -24,9 +24,7 @@ CREATE TABLE IF NOT EXISTS "public"."image_processing_jobs" (
   "id" uuid DEFAULT gen_random_uuid() NOT NULL,
   "entity_type" text NOT NULL CHECK (entity_type IN ('video', 'playlist')),
   "entity_id" text NOT NULL,
-  "image_type" text NOT NULL CHECK (
-    image_type IN ('thumbnail',  'playlist_image')
-  ),
+  "image_type" text NOT NULL CHECK (image_type IN ('thumbnail', 'playlist_image')),
   "source_url" text NOT NULL,
   "status" text DEFAULT 'pending' NOT NULL CHECK (
     status IN (

@@ -151,7 +151,12 @@ export async function processImageServer({
       // Always use dynamic crop calculation when imageProperties is null
       // Validate and adjust crop dimensions - always treat as 'standard' type
       const validatedCrop = validateAndAdjustCropDimensions(
-        imageProperties || { x: 0, y: 0, width: imageWidth, height: imageHeight },
+        imageProperties || {
+          x: 0,
+          y: 0,
+          width: imageWidth,
+          height: imageHeight,
+        },
         imageWidth,
         imageHeight,
         'standard',
