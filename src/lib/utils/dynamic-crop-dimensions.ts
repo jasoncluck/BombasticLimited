@@ -2,7 +2,7 @@ import type { PlaylistImageProperties } from '$lib/supabase/playlists';
 
 /**
  * Calculate dynamic crop dimensions for any image size and aspect ratio
- * This replaces hardcoded YouTube thumbnail size checks with intelligent cropping
+ * Enhanced to handle small thumbnails more conservatively
  */
 export function calculateDynamicCropDimensions(
   imageWidth: number,
@@ -23,10 +23,13 @@ export function calculateDynamicCropDimensions(
   // If custom properties are provided, validate and use them
   if (customProperties) {
     const adjustedX = Math.max(0, Math.min(customProperties.x, imageWidth - 1));
-    const adjustedY = Math.max(0, Math.min(customProperties.y, imageHeight - 1));
+    const adjustedY = Math.max(
+      0,
+      Math.min(customProperties.y, imageHeight - 1)
+    );
     const maxWidth = imageWidth - adjustedX;
     const maxHeight = imageHeight - adjustedY;
-    
+
     return {
       x: adjustedX,
       y: adjustedY,
@@ -35,7 +38,13 @@ export function calculateDynamicCropDimensions(
     };
   }
 
+  // Determine if this is a small thumbnail that needs conservative cropping
+  const imageArea = imageWidth * imageHeight;
+  const isSmallThumbnail = imageArea <= 100000; // ~320x313 or smaller
+  const isVerySmallThumbnail = imageArea <= 60000; // ~320x188 or smaller (like YouTube default)
+
   if (preferSquareCrop) {
+
     // Create a square crop centered on the image
     let cropSize = Math.min(imageWidth, imageHeight);
     
@@ -67,14 +76,29 @@ export function calculateDynamicCropDimensions(
     // Wide image - crop to more reasonable aspect ratio
     cropHeight = imageHeight;
     cropWidth = Math.round(imageHeight * 1.5); // 3:2 aspect ratio
+
+    // For small images, reduce cropping intensity
+    if (isSmallThumbnail) {
+      cropWidth = Math.min(cropWidth, imageWidth * 0.9);
+    }
   } else if (aspectRatio < 0.75) {
-    // Tall image - crop to more reasonable aspect ratio  
+    // Tall image - crop to more reasonable aspect ratio
     cropWidth = imageWidth;
     cropHeight = Math.round(imageWidth / 0.75); // 4:3 aspect ratio
+
+    // For small images, reduce cropping intensity
+    if (isSmallThumbnail) {
+      cropHeight = Math.min(cropHeight, imageHeight * 0.9);
+    }
   } else {
-    // Reasonable aspect ratio - use full image
-    cropWidth = imageWidth;
-    cropHeight = imageHeight;
+    // Reasonable aspect ratio - use full image for small thumbnails
+    if (isSmallThumbnail) {
+      cropWidth = imageWidth;
+      cropHeight = imageHeight;
+    } else {
+      cropWidth = imageWidth;
+      cropHeight = imageHeight;
+    }
   }
 
   return {
@@ -87,7 +111,7 @@ export function calculateDynamicCropDimensions(
 
 /**
  * Validate and adjust crop dimensions to ensure they are within image bounds
- * This is the enhanced version of the current validateAndAdjustCropDimensions function
+ * Enhanced with size-aware validation
  */
 export function validateAndAdjustCropDimensions(
   imageProperties: PlaylistImageProperties,
@@ -106,6 +130,7 @@ export function validateAndAdjustCropDimensions(
   }
 
   let scaledProperties = { ...imageProperties };
+
 
   // Check if we have actual custom properties (not just defaults)
   const hasCustomProperties = originalCustomProperties !== undefined && originalCustomProperties !== null;
@@ -143,7 +168,7 @@ export function validateAndAdjustCropDimensions(
   const adjustedY = Math.max(0, Math.min(scaledProperties.y, imageHeight - 1));
   const maxWidth = imageWidth - adjustedX;
   const maxHeight = imageHeight - adjustedY;
-  
+
   return {
     x: adjustedX,
     y: adjustedY,
@@ -151,3 +176,4 @@ export function validateAndAdjustCropDimensions(
     height: Math.max(1, Math.min(scaledProperties.height, maxHeight)),
   };
 }
+

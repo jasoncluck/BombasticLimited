@@ -33,7 +33,7 @@ export function detectOptimalFormat(
     // Check for quality preferences in Accept header
     const webpQuality = accept.match(/image\/webp;q=([0-9\.]+)/);
     const jpegQuality = accept.match(/image\/jpeg;q=([0-9\.]+)/);
-    
+
     // If WebP has higher or equal quality preference, use it
     if (webpQuality && jpegQuality) {
       const webpQ = parseFloat(webpQuality[1]);
@@ -42,7 +42,7 @@ export function detectOptimalFormat(
         return 'webp';
       }
     }
-    
+
     // Default to WebP for modern browsers for better compression
     return 'webp';
   }

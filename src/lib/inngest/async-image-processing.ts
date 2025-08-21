@@ -265,11 +265,24 @@ async function downloadImage(sourceUrl: string): Promise<Buffer> {
  */
 async function getPlaylistCropProperties(
   playlistId: string,
+  sourceUrl: string,
   imageWidth: number,
   imageHeight: number
 ): Promise<PlaylistImageProperties> {
   console.log(
-    `🎯 Calculating dynamic crop for playlist ${playlistId} (${imageWidth}x${imageHeight})`
+    `🎯 Calculating smart dynamic crop for playlist ${playlistId} (${imageWidth}x${imageHeight})`
+  );
+
+  // Analyze image characteristics
+  const imageArea = imageWidth * imageHeight;
+  const aspectRatio = imageWidth / imageHeight;
+  const isSmallThumbnail = imageArea <= 100000; // ~320x313 or smaller
+  const isVerySmallThumbnail = imageArea <= 60000; // ~320x188 or smaller (YouTube default)
+  const isMaxRes = imageWidth === 1280 && imageHeight === 720;
+  const isStandardYouTube = imageWidth === 320 && imageHeight === 180;
+
+  console.log(
+    `📊 Image analysis: area=${imageArea}, aspectRatio=${aspectRatio.toFixed(2)}, small=${isSmallThumbnail}, verySmall=${isVerySmallThumbnail}, maxRes=${isMaxRes}, standardYT=${isStandardYouTube}`
   );
 
   // Get playlist image_properties from database
@@ -285,7 +298,8 @@ async function getPlaylistCropProperties(
 
   // Check if we have custom crop properties from the database
   let customProperties: PlaylistImageProperties | null = null;
-  if (playlist?.image_properties) {
+  if (playlist?.image_properties && !isSmallThumbnail) {
+    // Only use custom properties for larger images to avoid over-cropping small thumbnails
     const props = playlist.image_properties as PlaylistImageProperties;
     // Validate the properties have required fields
     if (
@@ -300,17 +314,62 @@ async function getPlaylistCropProperties(
         customProperties
       );
     }
+  } else if (playlist?.image_properties && isSmallThumbnail) {
+    console.log(
+      `⚠️ Ignoring custom crop properties for small thumbnail to prevent over-cropping`
+    );
   }
 
-  // Use the new dynamic crop calculation system
-  const cropProperties = calculateDynamicCropDimensions(
-    imageWidth,
-    imageHeight,
-    true, // Prefer square crop for playlists
-    customProperties
+  // Use size-aware crop calculation
+  let cropProperties: PlaylistImageProperties;
+
+  if (isVerySmallThumbnail) {
+    // For very small thumbnails (like YouTube 320x180), use minimal cropping
+    console.log(`🔍 Applying conservative crop for very small thumbnail`);
+    cropProperties = calculateDynamicCropDimensions(
+      imageWidth,
+      imageHeight,
+      true, // Prefer square crop
+      null // Force dynamic calculation, ignore custom properties
+    );
+  } else if (isSmallThumbnail) {
+    // For small thumbnails, use moderate cropping
+    console.log(`🔍 Applying moderate crop for small thumbnail`);
+    cropProperties = calculateDynamicCropDimensions(
+      imageWidth,
+      imageHeight,
+      true, // Prefer square crop
+      null // Force dynamic calculation for consistency
+    );
+  } else if (isMaxRes) {
+    // For max resolution images, use custom properties if available
+    console.log(`🔍 Applying crop for max resolution image`);
+    cropProperties = calculateDynamicCropDimensions(
+      imageWidth,
+      imageHeight,
+      true, // Prefer square crop
+      customProperties // Use custom properties for high-res images
+    );
+  } else {
+    // For other sizes, use standard dynamic calculation
+    console.log(`🔍 Applying standard dynamic crop`);
+    cropProperties = calculateDynamicCropDimensions(
+      imageWidth,
+      imageHeight,
+      true, // Prefer square crop
+      customProperties // Use custom properties if available
+    );
+  }
+
+  // Calculate crop percentage for logging
+  const cropArea = cropProperties.width * cropProperties.height;
+  const originalArea = imageWidth * imageHeight;
+  const cropPercentage = ((cropArea / originalArea) * 100).toFixed(1);
+
+  console.log(
+    `✨ Calculated smart crop properties: x=${cropProperties.x}, y=${cropProperties.y}, w=${cropProperties.width}, h=${cropProperties.height} (${cropPercentage}% of original)`
   );
 
-  console.log(`✨ Calculated dynamic crop properties:`, cropProperties);
   return cropProperties;
 }
 
