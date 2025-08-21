@@ -5,6 +5,7 @@ import {
 import sharp from 'sharp';
 import { ImageCacheManager } from './image-cache';
 import { detectOptimalFormat } from '$lib/utils/image-format-detection';
+import { validateAndAdjustCropDimensions } from '$lib/utils/dynamic-crop-dimensions';
 import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 import type { PlaylistImageProperties } from '$lib/supabase/playlists';
 
@@ -422,93 +423,6 @@ async function fetchWithRetry(
   }
 
   throw lastError;
-}
-
-/**
- * **SPEED-OPTIMIZED** validation function
- */
-function validateAndAdjustCropDimensions(
-  imageProperties: PlaylistImageProperties,
-  imageWidth: number,
-  imageHeight: number,
-  imageType: 'maxres' | 'standard'
-): PlaylistImageProperties {
-  if (imageWidth > 0 && imageHeight > 0) {
-    let scaledProperties = { ...imageProperties };
-
-    if (imageType === 'standard') {
-      // Handle known YouTube thumbnail sizes - **SPEED: Same logic as browser**
-      const isYouTubeMedium = imageWidth === 320 && imageHeight === 180;
-      const isYouTubeDefault = imageWidth === 120 && imageHeight === 90;
-      const isYouTubeHigh = imageWidth === 480 && imageHeight === 360;
-
-      if (isYouTubeMedium) {
-        scaledProperties = {
-          x: Math.round((320 - 180) / 2), // 70px from left
-          y: 0,
-          width: 180,
-          height: 180,
-        };
-      } else if (isYouTubeDefault) {
-        scaledProperties = {
-          x: Math.round((120 - 90) / 2), // 15px from left
-          y: 0,
-          width: 90,
-          height: 90,
-        };
-      } else if (isYouTubeHigh) {
-        scaledProperties = {
-          x: Math.round((480 - 360) / 2), // 60px from left
-          y: 0,
-          width: 360,
-          height: 360,
-        };
-      } else {
-        // **SPEED: Quick square crop**
-        const cropSize = Math.min(imageWidth, imageHeight);
-        scaledProperties = {
-          x: Math.round((imageWidth - cropSize) / 2),
-          y: Math.round((imageHeight - cropSize) / 2),
-          width: cropSize,
-          height: cropSize,
-        };
-      }
-    } else {
-      scaledProperties = { ...imageProperties };
-    }
-
-    // **SPEED: Quick bounds validation**
-    const adjustedX = Math.max(0, Math.min(scaledProperties.x, imageWidth - 1));
-    const adjustedY = Math.max(
-      0,
-      Math.min(scaledProperties.y, imageHeight - 1)
-    );
-
-    const maxWidth = imageWidth - adjustedX;
-    const maxHeight = imageHeight - adjustedY;
-    const adjustedWidth = Math.max(
-      1,
-      Math.min(scaledProperties.width, maxWidth)
-    );
-    const adjustedHeight = Math.max(
-      1,
-      Math.min(scaledProperties.height, maxHeight)
-    );
-
-    return {
-      x: adjustedX,
-      y: adjustedY,
-      width: adjustedWidth,
-      height: adjustedHeight,
-    };
-  }
-
-  return {
-    x: Math.max(0, imageProperties.x),
-    y: Math.max(0, imageProperties.y),
-    width: Math.max(1, imageProperties.width),
-    height: Math.max(1, imageProperties.height),
-  };
 }
 
 // Image cache management functions (unchanged)
