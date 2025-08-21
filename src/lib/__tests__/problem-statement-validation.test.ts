@@ -33,7 +33,7 @@ describe('Worker ID Fix Validation', () => {
       const maxresPaths = generateStoragePaths(
         'video',
         'test-video-123',
-        'thumbnail_maxres',
+        'thumbnail',
         'job-456',
         'worker-789'
       );
@@ -105,7 +105,7 @@ describe('Worker ID Fix Validation', () => {
       const maxres = generateStoragePaths(
         'video',
         videoId,
-        'thumbnail_maxres',
+        'thumbnail',
         jobId,
         workerId
       );

@@ -36,9 +36,6 @@ describe('Image Processing Job Duplication Fix - Integration', () => {
   });
 
   it('should validate worker ownership throughout job lifecycle', async () => {
-    const workerId = 'worker-integration-test';
-    const jobId = 'test-job-12345';
-
     // Test that only the worker that locked the job can complete/fail it
     const testScenarios = [
       {
@@ -79,7 +76,6 @@ describe('Image Processing Job Duplication Fix - Integration', () => {
     const videoId = 'gpVAbAVQ32s';
     const expectedJobs = [
       { entityType: 'video', entityId: videoId, imageType: 'thumbnail' },
-      { entityType: 'video', entityId: videoId, imageType: 'thumbnail_maxres' },
     ];
 
     expect(expectedJobs).toHaveLength(2);
@@ -134,7 +130,6 @@ describe('Image Processing Job Duplication Fix - Integration', () => {
     expect(expectedMaxImagesPerType).toBe(1);
     expect(expectedImageTypes).toHaveLength(2);
     expect(expectedImageTypes).toContain('thumbnail');
-    expect(expectedImageTypes).toContain('thumbnail_maxres');
   });
 
   it('should validate database migration adds required columns and functions', () => {

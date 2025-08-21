@@ -114,7 +114,6 @@ export async function batchProcessVideoImages(
   videos: Array<{
     id: string;
     thumbnail_url: string | null;
-    thumbnail_maxres_url: string | null;
   }>
 ): Promise<void> {
   console.log(
@@ -152,7 +151,6 @@ export async function batchProcessPlaylistImages(
   playlists: Array<{
     id: string;
     thumbnail_url: string | null;
-    thumbnail_maxres_url: string | null;
   }>
 ): Promise<void> {
   console.log(

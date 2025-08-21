@@ -57,7 +57,6 @@
   let crop = $state({ x: 0, y: 0 });
   let zoom = $state(1);
   let currentCropArea: CropArea | null = null;
-  let imageLoaded = $state(false);
 
   // Track what the crop settings were BEFORE opening the cropper dialog
   let cropSettingsBeforeEdit = $state<PlaylistImageProperties | null>(null);
@@ -174,8 +173,6 @@
 
   // Handle image load in cropper
   function handleImageLoad() {
-    imageLoaded = true;
-
     // Set initial crop area if we have saved properties
     const savedProps = parseImageProperties($formData.image_properties);
     if (savedProps) {
@@ -193,6 +190,7 @@
     }
   }
 
+  console.log(playlist);
   // Get the image source for the cropper
   const imageSrc = $derived(playlist.thumbnail_url);
 
@@ -215,7 +213,6 @@
       cropSettingsBeforeEdit = parseImageProperties($formData.image_properties);
       previewBeforeEdit = previewImageUrl;
 
-      imageLoaded = false;
       crop = { x: 0, y: 0 };
       zoom = 1;
       currentCropArea = null;
@@ -466,31 +463,17 @@
     </Dialog.Header>
 
     <div class="relative h-96 flex-1">
-      {#if imageSrc}
-        <img
-          src={imageSrc}
-          onload={handleImageLoad}
-          alt={`Image for playlist: ${playlist.name} `}
-        />
-
-        {#if imageLoaded}
-          <Cropper
-            image={imageSrc}
-            bind:crop
-            bind:zoom
-            aspect={1}
-            cropShape="rect"
-            showGrid={true}
-            oncropcomplete={({ pixels }) => {
-              currentCropArea = pixels;
-            }}
-          />
-        {:else}
-          <div class="flex h-full items-center justify-center">
-            <Loader class="animate-spin" />
-          </div>
-        {/if}
-      {/if}
+      <Cropper
+        image={imageSrc}
+        bind:crop
+        bind:zoom
+        aspect={1}
+        cropShape="rect"
+        showGrid={true}
+        oncropcomplete={({ pixels }) => {
+          currentCropArea = pixels;
+        }}
+      />
     </div>
 
     <Dialog.Footer class="flex justify-between">

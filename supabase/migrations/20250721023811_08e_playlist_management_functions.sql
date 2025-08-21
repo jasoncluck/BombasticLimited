@@ -327,8 +327,9 @@ CREATE OR REPLACE FUNCTION public.update_playlist_position (p_playlist_id bigint
   playlist_position int2,
   success boolean
 )
-SET
-  search_path = '' LANGUAGE plpgsql AS $$  
+LANGUAGE plpgsql 
+SET 
+  search_path = '' AS $$
 DECLARE
   current_position int2;
   max_position int2;

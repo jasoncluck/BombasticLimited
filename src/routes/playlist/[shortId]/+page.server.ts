@@ -153,7 +153,6 @@ export const actions: Actions = {
       id,
       type,
       isDeletingPlaylistImage,
-      thumbnail_video_id,
       thumbnail_url,
     } = form.data;
     let { image_properties } = form.data;
@@ -228,6 +227,9 @@ export const actions: Actions = {
         image_properties
       );
 
+      console.log(image_properties);
+      console.log(hasImagePropertiesChanged);
+
       // Check if thumbnail URLs have changed
       const hasThumbnailChanged =
         currentPlaylist.thumbnail_url !== thumbnail_url;
@@ -243,7 +245,7 @@ export const actions: Actions = {
           playlistId: id,
           processedPlaylistImage,
           imageProperties: image_properties,
-          thumbnailVideoId: thumbnail_video_id,
+          thumbnailUrl: thumbnail_url,
           supabase,
         });
       }

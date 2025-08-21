@@ -812,7 +812,6 @@ export type Database = {
           video_published_at: string
           video_source: Database["public"]["Enums"]["source"]
           video_start_seconds: number
-          video_thumbnail_maxres_url: string
           video_thumbnail_url: string
           video_title: string
           video_updated_at: string
@@ -854,7 +853,6 @@ export type Database = {
           video_published_at: string
           video_source: Database["public"]["Enums"]["source"]
           video_start_seconds: number
-          video_thumbnail_maxres_url: string
           video_thumbnail_url: string
           video_timestamp_playlist_id: number
           video_timestamp_sort_order: Database["public"]["Enums"]["playlist_sort_order"]

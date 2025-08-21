@@ -13,9 +13,10 @@ OR
 UPDATE ON "public"."playlists" FOR EACH ROW
 EXECUTE FUNCTION "public"."set_playlist_search_vector" ();
 
-CREATE OR REPLACE FUNCTION public.update_playlists_updated_at () RETURNS TRIGGER LANGUAGE plpgsql
-SET
-  search_path = '' AS $$
+CREATE OR REPLACE FUNCTION public.update_playlists_updated_at () RETURNS TRIGGER 
+LANGUAGE plpgsql
+SET search_path = '' 
+  AS $$
 BEGIN
   NEW.updated_at = now();
   RETURN NEW;

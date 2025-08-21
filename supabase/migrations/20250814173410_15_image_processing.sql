@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS "public"."image_processing_jobs" (
   "entity_type" text NOT NULL CHECK (entity_type IN ('video', 'playlist')),
   "entity_id" text NOT NULL,
   "image_type" text NOT NULL CHECK (
-    image_type IN ('thumbnail', 'thumbnail_maxres', 'playlist_image')
+    image_type IN ('thumbnail',  'playlist_image')
   ),
   "source_url" text NOT NULL,
   "status" text DEFAULT 'pending' NOT NULL CHECK (
@@ -56,7 +56,7 @@ COMMENT ON COLUMN "public"."image_processing_jobs"."entity_type" IS 'Type of ent
 
 COMMENT ON COLUMN "public"."image_processing_jobs"."entity_id" IS 'ID of the video or playlist being processed';
 
-COMMENT ON COLUMN "public"."image_processing_jobs"."image_type" IS 'Type of image being processed (thumbnail, thumbnail_maxres, or playlist_image)';
+COMMENT ON COLUMN "public"."image_processing_jobs"."image_type" IS 'Type of image being processed (thumbnail or playlist_image)';
 
 COMMENT ON COLUMN "public"."image_processing_jobs"."priority" IS 'Job priority (lower numbers = higher priority)';
 
@@ -170,14 +170,6 @@ BEGIN
       SET 
         thumbnail_webp_url = COALESCE(webp_path, thumbnail_webp_url),
         thumbnail_avif_url = COALESCE(avif_path, thumbnail_avif_url),
-        image_processing_status = 'completed'::public.image_processing_status,
-        image_processing_updated_at = now()
-      WHERE id = job_record.entity_id;
-    ELSIF job_record.image_type = 'thumbnail_maxres' THEN
-      UPDATE "public"."videos"
-      SET 
-        thumbnail_maxres_webp_url = COALESCE(webp_path, thumbnail_maxres_webp_url),
-        thumbnail_maxres_avif_url = COALESCE(avif_path, thumbnail_maxres_avif_url),
         image_processing_status = 'completed'::public.image_processing_status,
         image_processing_updated_at = now()
       WHERE id = job_record.entity_id;
@@ -362,6 +354,7 @@ DECLARE
   crop_changed boolean := false;
   webp_url_provided boolean := false;
   job_id uuid;
+
 BEGIN
   -- Check if image_properties, thumbnail_url, or image_webp_url changed
   IF (TG_OP = 'INSERT') OR 
@@ -416,9 +409,8 @@ BEGIN
             NEW.image_processing_updated_at = now();
           END IF;
         END IF;
-      END IF;
     END IF;
-  END IF;
+  END IF; 
 
   RETURN NEW;
 END;
@@ -442,14 +434,6 @@ BEGIN
     
     IF OLD.thumbnail_avif_url IS NOT NULL THEN
       storage_paths := array_append(storage_paths, OLD.thumbnail_avif_url);
-    END IF;
-    
-    IF OLD.thumbnail_maxres_webp_url IS NOT NULL THEN
-      storage_paths := array_append(storage_paths, OLD.thumbnail_maxres_webp_url);
-    END IF;
-    
-    IF OLD.thumbnail_maxres_avif_url IS NOT NULL THEN
-      storage_paths := array_append(storage_paths, OLD.thumbnail_maxres_avif_url);
     END IF;
   END IF;
 

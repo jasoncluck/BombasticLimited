@@ -100,7 +100,9 @@ export function transformVideoFromRPC(
     title: rpcData.video_title,
     description: rpcData.video_description,
     thumbnail_url: rpcData.video_thumbnail_url,
-    image_url: getFullImageUrl(rpcData.video_image_url, supabase),
+    image_url: rpcData.video_image_url
+      ? getFullImageUrl(rpcData.video_image_url, supabase)
+      : rpcData.video_thumbnail_url,
     published_at: rpcData.video_published_at,
     duration: rpcData.video_duration,
     video_start_seconds: rpcData.video_start_seconds,

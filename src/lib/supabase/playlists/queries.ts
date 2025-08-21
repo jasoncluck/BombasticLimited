@@ -186,7 +186,6 @@ export async function getPlaylistsForUsername({
     profile_username: string;
     thumbnail_video_id?: string | null;
     thumbnail_url?: string | null;
-    thumbnail_maxres_url?: string | null;
   })[];
   count?: number | null;
   error: PostgrestError | null;
@@ -457,7 +456,6 @@ export async function searchPlaylists({
     avatar_url?: string | null;
     thumbnail_video_id?: string | null;
     thumbnail_url?: string | null;
-    thumbnail_maxres_url?: string | null;
   })[];
   error: PostgrestError | null;
   count?: number | null;

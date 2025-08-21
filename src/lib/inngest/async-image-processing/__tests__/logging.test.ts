@@ -64,7 +64,7 @@ describe('Image Processing Logging', () => {
     const jobId = 'test-job-789';
     const entityType = 'video';
     const entityId = 'test-video-2';
-    const imageType = 'thumbnail_maxres';
+    const imageType = 'thumbnail';
     const attempts = 2;
 
     // Simulate database trigger logging

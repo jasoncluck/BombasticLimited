@@ -1,7 +1,4 @@
-import {
-  PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS,
-  PLAYLIST_IMAGE_CROP_DEFAULTS,
-} from '$lib/components/playlist/playlist-service';
+import { PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS } from '$lib/components/playlist/playlist-service';
 import sharp from 'sharp';
 import { ImageCacheManager } from './image-cache';
 import { detectOptimalFormat } from '$lib/utils/image-format-detection';
@@ -80,7 +77,6 @@ export function calculateOptimalQuality(
   return formatQuality;
 }
 
-// **SPEED-OPTIMIZED** unified image processing function
 export async function processImageServer({
   imageUrl,
   imageProperties = null,
@@ -88,7 +84,7 @@ export async function processImageServer({
   options = {},
   isCropped = false,
   isMaxRes = false,
-  contentType = 'video', // **NEW: Add content type**
+  contentType = 'video',
 }: {
   imageUrl: string | null;
   imageProperties?: PlaylistImageProperties | null;
@@ -96,7 +92,7 @@ export async function processImageServer({
   options?: ImageProcessingOptions;
   isCropped?: boolean;
   isMaxRes?: boolean;
-  contentType?: 'playlist' | 'video'; // **NEW: Content type parameter**
+  contentType?: 'playlist' | 'video';
 }) {
   if (!imageUrl) {
     return null;
@@ -134,7 +130,6 @@ export async function processImageServer({
 
     const imageBuffer = await response.arrayBuffer();
 
-    // **BRIGHTNESS FIX: Consistent Sharp initialization**
     const sharpInstance = sharp(imageBuffer, {
       failOnError: false,
       density: 72, // **SPEED: Use standard density for all**
@@ -152,17 +147,14 @@ export async function processImageServer({
     if (isCropped) {
       // Use provided image properties or defaults
       const cropProperties =
-        imageProperties ||
-        (isMaxRes
-          ? PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS
-          : PLAYLIST_IMAGE_CROP_DEFAULTS);
+        imageProperties ?? PLAYLIST_MAX_RES_IMAGE_CROP_DEFAULTS;
 
       // Validate and adjust crop dimensions
       const validatedCrop = validateAndAdjustCropDimensions(
         cropProperties,
         imageWidth,
         imageHeight,
-        isMaxRes ? 'maxres' : 'standard'
+        'maxres'
       );
 
       // Extract the crop area
@@ -197,7 +189,7 @@ export async function processImageServer({
       });
     }
 
-    processedInstance = processedInstance.toColourspace('srgb'); // **FIX: Force sRGB color space (British spelling)**
+    processedInstance = processedInstance.toColourspace('srgb');
 
     // **SPEED: Lower quality calculation**
     const quality =
@@ -308,7 +300,7 @@ export async function getCroppedPlaylistImageUrlServer({
     options,
     isCropped: true,
     isMaxRes: false,
-    contentType: 'playlist', // **FIXED: Specify playlist content type**
+    contentType: 'playlist',
   });
 }
 

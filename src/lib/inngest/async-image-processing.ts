@@ -143,18 +143,6 @@ export function generateStoragePaths(
       );
 
       return paths;
-    } else if (imageType === 'thumbnail_maxres') {
-      const basePath = `thumbnails/${entityId}/thumbnail-maxres-${entityId}`;
-      const paths = {
-        webpPath: `${basePath}.webp`,
-        avifPath: `${basePath}.avif`,
-      };
-
-      console.log(
-        `📂 Worker ${workerId || 'unknown'} video maxres paths generated (deterministic, no timestamps) - webp: ${paths.webpPath}, avif: ${paths.avifPath}`
-      );
-
-      return paths;
     } else {
       // Fallback for other video image types - still deterministic
       const basePath = `thumbnails/${entityId}/${entityId}-${imageType}`;

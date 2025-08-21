@@ -16,7 +16,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 });
 
 // Configuration
-const MAX_JOBS_PER_POLL = 50; // Increased from 10 to 50 for better throughput (5x improvement)
+const MAX_JOBS_PER_POLL = import.meta.env.DEV ? 10 : 25;
 const POLL_TIMEOUT = 30000; // 30 seconds timeout for database queries
 
 // Generate unique worker ID for this poller instance

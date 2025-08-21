@@ -316,17 +316,17 @@ async function uploadPlaylistImage({
 export async function updatePlaylistImage({
   playlistId,
   processedPlaylistImage,
-  thumbnailVideoId,
+  thumbnailUrl,
   imageProperties,
   supabase,
 }: {
   playlistId: number;
   processedPlaylistImage: string | null;
-  thumbnailVideoId?: string;
+  thumbnailUrl?: string;
   imageProperties: PlaylistImageProperties | null;
   supabase: SupabaseClient<Database>;
 }) {
-  const isResetImage = !processedPlaylistImage || !thumbnailVideoId;
+  const isResetImage = !processedPlaylistImage || !thumbnailUrl;
 
   if (isResetImage) {
     const { error } = await supabase
@@ -368,6 +368,7 @@ export async function updatePlaylistImage({
     {
       p_playlist_id: playlistId,
       p_image_url: uploadResult.data?.imagePath,
+      p_thumbnail_url: thumbnailUrl,
       p_image_properties: imagePropertiesJson,
     }
   );

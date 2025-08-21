@@ -239,7 +239,7 @@ export async function handleAddVideosToPlaylist({
   );
 
   // If playlist didn't have a thumbnail, process the image
-  if (!playlist.thumbnail_url) {
+  if (!playlist.image_url) {
     // The RPC function set the thumbnail_video_id, now process the image
     const processedPlaylistImage = await getCroppedPlaylistImageUrl({
       imageProperties: null, // No existing properties for new thumbnail
@@ -251,7 +251,7 @@ export async function handleAddVideosToPlaylist({
     const { error: imageError } = await updatePlaylistImage({
       playlistId: playlist.id,
       processedPlaylistImage,
-      thumbnailVideoId: videos[0].id,
+      thumbnailUrl: videos[0].thumbnail_url,
       imageProperties: null,
       supabase,
     });
@@ -320,7 +320,7 @@ export async function handleUpdatePlaylistImage({
   const { error } = await updatePlaylistImage({
     playlistId: playlist.id,
     processedPlaylistImage,
-    thumbnailVideoId: thumbnailVideo?.id,
+    thumbnailUrl: thumbnailVideo?.thumbnail_url,
     imageProperties,
     supabase,
   });

@@ -14,7 +14,7 @@ export interface ImageProcessingEvent {
   data: {
     entityType: 'video' | 'playlist';
     entityId: string;
-    imageType: 'thumbnail' | 'thumbnail_maxres';
+    imageType: 'thumbnail';
     sourceUrl: string;
     priority?: number;
   };
@@ -25,7 +25,7 @@ export interface BatchImageProcessingEvent {
     jobs: Array<{
       entityType: 'video' | 'playlist';
       entityId: string;
-      imageType: 'thumbnail' | 'thumbnail_maxres';
+      imageType: 'thumbnail';
       sourceUrl: string;
       priority?: number;
     }>;

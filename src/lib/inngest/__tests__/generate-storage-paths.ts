@@ -38,7 +38,7 @@ describe('generateStoragePaths', () => {
 
     it('should generate consistent maxres thumbnail paths without timestamps', () => {
       const entityId = 'test-video-id';
-      const imageType = 'thumbnail_maxres';
+      const imageType = 'thumbnail';
 
       // Call multiple times to ensure consistent paths
       const result1 = generateStoragePaths(

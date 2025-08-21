@@ -60,7 +60,6 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data (
   video_title text,
   video_description text,
   video_thumbnail_url text,
-  video_thumbnail_maxres_url text,
   video_image_url text,
   video_image_processing_status public.image_processing_status,
   video_published_at TIMESTAMP WITH TIME ZONE,
@@ -169,7 +168,6 @@ BEGIN
       NULL::text as video_title,
       NULL::text as video_description,
       NULL::text as video_thumbnail_url,
-      NULL::text as video_thumbnail_maxres_url,
       NULL::text as video_image_url,
       NULL::public.image_processing_status as video_image_processing_status,
       NULL::TIMESTAMP WITH TIME ZONE as video_published_at,
@@ -209,11 +207,10 @@ BEGIN
     v.title as video_title,
     v.description as video_description,
     v.thumbnail_url as video_thumbnail_url,
-    v.thumbnail_maxres_url as video_thumbnail_maxres_url,
     -- Use unified select_best_image_format for video thumbnails (with JPG fallback)
     public.select_best_image_format(
-      v.thumbnail_maxres_avif_url,
-      v.thumbnail_maxres_webp_url,
+      v.thumbnail_avif_url,
+      v.thumbnail_webp_url,
       p_preferred_image_format
     )
     as video_image_url,
@@ -303,7 +300,6 @@ CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
   video_title text,
   video_description text,
   video_thumbnail_url text,
-  video_thumbnail_maxres_url text,
   video_image_url text,
   video_published_at TIMESTAMP WITH TIME ZONE,
   video_duration text,
@@ -370,19 +366,10 @@ SET
       v.title AS video_title,
       v.description AS video_description,
       v.thumbnail_url AS video_thumbnail_url,
-      v.thumbnail_maxres_url AS video_thumbnail_maxres_url,
-      -- Use unified select_best_image_format for video thumbnails (with JPG fallback)
-      COALESCE(
-        public.select_best_image_format(
-          v.thumbnail_maxres_avif_url,
-          v.thumbnail_maxres_webp_url,
-          p_preferred_image_format
-        ),
-        public.select_best_image_format(
-          v.thumbnail_avif_url,
-          v.thumbnail_webp_url,
-          p_preferred_image_format
-        )
+      public.select_best_image_format(
+        v.thumbnail_avif_url,
+        v.thumbnail_webp_url,
+        p_preferred_image_format
       ) as best_video_image_url,
       v.published_at AS video_published_at,
       v.duration AS video_duration,
@@ -427,7 +414,6 @@ SET
     video_title,
     video_description,
     video_thumbnail_url,
-    video_thumbnail_maxres_url,
     best_video_image_url,
     video_published_at,
     video_duration,
