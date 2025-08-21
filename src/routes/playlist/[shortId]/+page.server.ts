@@ -70,12 +70,12 @@ export const load: PageServerLoad = async ({
   }
 
   // If the image URL hasn't been uploaded yet process it
-  if (!playlist.image_url) {
-    playlist.image_url = await getCroppedPlaylistImageUrlServer({
-      thumbnailUrl: playlist.thumbnail_url ?? undefined,
-      imageProperties: parseImageProperties(playlist.image_properties),
-    });
-  }
+  // if (!playlist.image_url) {
+  //   playlist.image_url = await getCroppedPlaylistImageUrlServer({
+  //     thumbnailUrl: playlist.thumbnail_url ?? undefined,
+  //     imageProperties: parseImageProperties(playlist.image_properties),
+  //   });
+  // }
 
   const [form, creatorProfile] = await Promise.all([
     superValidate(

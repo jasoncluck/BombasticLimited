@@ -41,24 +41,22 @@ export function calculateDynamicCropDimensions(
   // Determine if this is a small thumbnail that needs conservative cropping
   const imageArea = imageWidth * imageHeight;
   const isSmallThumbnail = imageArea <= 100000; // ~320x313 or smaller
-  const isVerySmallThumbnail = imageArea <= 60000; // ~320x188 or smaller (like YouTube default)
 
   if (preferSquareCrop) {
-
     // Create a square crop centered on the image
     let cropSize = Math.min(imageWidth, imageHeight);
-    
+
     // Apply conservative cropping for small images to prevent over-cropping
     // Detect small YouTube thumbnails and similar sizes
     const isSmallImage = cropSize <= 180; // 320x180, 120x90, etc.
-    
+
     if (isSmallImage) {
       // Use 85-90% of the smaller dimension to preserve more content
       // This prevents extreme zoom on small thumbnails
-      const conservativeRatio = cropSize <= 90 ? 0.85 : 0.90; // More conservative for very small images
+      const conservativeRatio = cropSize <= 90 ? 0.85 : 0.9; // More conservative for very small images
       cropSize = Math.round(cropSize * conservativeRatio);
     }
-    
+
     return {
       x: Math.round((imageWidth - cropSize) / 2),
       y: Math.round((imageHeight - cropSize) / 2),
@@ -131,9 +129,9 @@ export function validateAndAdjustCropDimensions(
 
   let scaledProperties = { ...imageProperties };
 
-
   // Check if we have actual custom properties (not just defaults)
-  const hasCustomProperties = originalCustomProperties !== undefined && originalCustomProperties !== null;
+  const hasCustomProperties =
+    originalCustomProperties !== undefined && originalCustomProperties !== null;
 
   if (hasCustomProperties) {
     // Always use custom properties if provided, regardless of image type
