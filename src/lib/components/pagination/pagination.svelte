@@ -1,5 +1,7 @@
 <script lang="ts">
   import * as Pagination from '$lib/components/ui/pagination/index.js';
+  import { preloadData } from '$app/navigation';
+  import { generatePaginationUrl } from './pagination.js';
 
   let {
     count,
@@ -12,6 +14,39 @@
     perPage: number;
     onPageChange: (pageNum: number) => void;
   } = $props();
+
+  // Track preloaded pages to avoid duplicate preloading
+  let preloadedPages = $state(new Set<number>());
+
+  // Preload a specific page
+  async function preloadPage(pageNum: number): Promise<void> {
+    if (preloadedPages.has(pageNum) || pageNum === currentPage) return;
+
+    try {
+      const url = generatePaginationUrl({
+        url: new URL(window.location.href),
+        pageNum,
+      });
+      await preloadData(url);
+      preloadedPages.add(pageNum);
+    } catch (error) {
+      // Silently fail if preloading doesn't work
+      console.debug('Pagination preload failed:', error);
+    }
+  }
+
+  // Handle page hover for preloading
+  function handlePageHover(pageNum: number): void {
+    preloadPage(pageNum);
+  }
+
+  // Handle page click
+  function handlePageClick(pageNum: number): void {
+    onPageChange(pageNum);
+  }
+
+  // Calculate max page for bounds checking
+  const maxPage = $derived(Math.ceil(count / perPage));
 </script>
 
 <div class="flex w-full justify-center px-2">
@@ -19,12 +54,16 @@
     {count}
     {perPage}
     bind:page={currentPage}
-    onPageChange={(pageNum) => onPageChange(pageNum)}
+    onPageChange={handlePageClick}
   >
     {#snippet children({ pages })}
       <Pagination.Content class="flex-wrap justify-center gap-1">
         <Pagination.Item>
-          <Pagination.PrevButton class="cursor-pointer" />
+          <Pagination.PrevButton
+            class="cursor-pointer"
+            onmouseenter={() =>
+              currentPage > 1 && handlePageHover(currentPage - 1)}
+          />
         </Pagination.Item>
         {#each pages as page (page.key)}
           {#if page.type === 'ellipsis'}
@@ -37,6 +76,7 @@
                 class="cursor-pointer"
                 {page}
                 isActive={currentPage === page.value}
+                onmouseenter={() => handlePageHover(page.value)}
               >
                 {page.value}
               </Pagination.Link>
@@ -44,7 +84,11 @@
           {/if}
         {/each}
         <Pagination.Item>
-          <Pagination.NextButton class="cursor-pointer" />
+          <Pagination.NextButton
+            class="cursor-pointer"
+            onmouseenter={() =>
+              currentPage < maxPage && handlePageHover(currentPage + 1)}
+          />
         </Pagination.Item>
       </Pagination.Content>
     {/snippet}

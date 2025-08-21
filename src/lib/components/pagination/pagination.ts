@@ -1,4 +1,4 @@
-import { goto } from '$app/navigation';
+import { goto, preloadData } from '$app/navigation';
 
 export const PAGINATION_QUERY_KEY = 'page';
 
@@ -46,4 +46,38 @@ export function getNumberOfPages({
   perPage: number;
 }) {
   return Math.ceil(count / perPage);
+}
+
+export function generatePaginationUrl({
+  url,
+  pageNum,
+}: {
+  url: URL;
+  pageNum: number;
+}): string {
+  const newUrl = new URL(url);
+  const searchParams = newUrl.searchParams;
+
+  searchParams.set(PAGINATION_QUERY_KEY, pageNum.toString());
+
+  return newUrl.toString();
+}
+
+export async function preloadPaginationPage({
+  url,
+  pageNum,
+}: {
+  url: URL;
+  pageNum: number;
+}): Promise<void> {
+  try {
+    const paginationUrl = generatePaginationUrl({
+      url,
+      pageNum,
+    });
+    await preloadData(paginationUrl);
+  } catch (error) {
+    // Silently fail if preloading doesn't work
+    console.debug('Pagination preload failed:', error);
+  }
 }

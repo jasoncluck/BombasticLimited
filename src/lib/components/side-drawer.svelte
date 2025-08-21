@@ -123,8 +123,8 @@
           <Button
             variant="ghost"
             class="flex h-[64px] w-full cursor-pointer justify-start"
+            href="/"
             onclick={() => {
-              goto(`/`);
               isOpen = false;
             }}
           >
