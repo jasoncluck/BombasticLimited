@@ -95,10 +95,43 @@
     await sidebarState.refreshData();
   }
 
-  // Centralized data refresh function with proper ordering
+  // Centralized auth error handler with cleanup and retry logic
+  async function handleAuthError(error: any, context: string): Promise<boolean> {
+    // Check if this is a 403 auth error
+    const is403Error = error?.status === 403 || 
+                      error?.code === 403 ||
+                      error?.message?.includes('403') ||
+                      (error?.response?.status === 403);
+
+    if (is403Error) {
+      console.warn(`🔐 Auth 403 error detected in ${context}, cleaning up auth state:`, error);
+      
+      try {
+        // Clean up auth state using signOut
+        await supabase.auth.signOut();
+        
+        // Update our tracking state to reflect signed out state
+        lastKnownAuthState = false;
+        
+        // Invalidate auth to ensure fresh state
+        await invalidate('supabase:auth');
+        
+        console.log(`✅ Auth state cleaned up successfully after 403 error in ${context}`);
+        return true; // Indicate successful cleanup
+      } catch (cleanupError) {
+        console.error(`❌ Failed to clean up auth state after 403 error in ${context}:`, cleanupError);
+        return false;
+      }
+    }
+    
+    return false; // Not a 403 error, no cleanup performed
+  }
+
+  // Centralized data refresh function with proper ordering and auth error handling
   async function performDataRefresh(
     reason: string,
-    includeAuth: boolean = false
+    includeAuth: boolean = false,
+    retryAfterAuthCleanup: boolean = false
   ) {
     try {
       // Step 1: Invalidate auth first if requested
@@ -111,10 +144,23 @@
       navigationState.refreshData();
     } catch (error) {
       console.error(`Failed to perform data refresh - ${reason}:`, error);
+      
+      // Handle 403 auth errors with cleanup and retry
+      const cleanupPerformed = await handleAuthError(error, `performDataRefresh - ${reason}`);
+      
+      if (cleanupPerformed && !retryAfterAuthCleanup) {
+        // Retry once after successful auth cleanup
+        console.log(`🔄 Retrying data refresh after auth cleanup for: ${reason}`);
+        try {
+          await performDataRefresh(`${reason} (retry after auth cleanup)`, true, true);
+        } catch (retryError) {
+          console.error(`Failed to retry data refresh after auth cleanup - ${reason}:`, retryError);
+        }
+      }
     }
   }
 
-  // Auth state change handler using Supabase events
+  // Auth state change handler using Supabase events with enhanced error handling
   async function handleSupabaseAuthStateChange(
     event: string,
     session: Session | null
@@ -126,16 +172,19 @@
 
     try {
       // Perform data refresh with auth invalidation to ensure latest session
-      performDataRefresh(`supabase auth: ${event}`, true);
+      await performDataRefresh(`supabase auth: ${event}`, true);
     } catch (error) {
       console.error(
         `Failed to handle Supabase auth state change - ${event}:`,
         error
       );
+      
+      // Handle potential auth errors during state change
+      await handleAuthError(error, `handleSupabaseAuthStateChange - ${event}`);
     }
   }
 
-  // Enhanced visibility change handler with auth state checking
+  // Enhanced visibility change handler with auth state checking and 403 error handling
   async function handleVisibilityChange() {
     if (document.hidden) {
       // Tab became hidden
@@ -144,6 +193,7 @@
       // Tab became visible again after being hidden
 
       let authStateChanged = false;
+      let authErrorOccurred = false;
 
       try {
         // Get current session from Supabase to check if auth state changed
@@ -162,15 +212,27 @@
           'Failed to check auth state on visibility change:',
           error
         );
-        // If we can't check auth state, assume it might have changed for safety
-        authStateChanged = true;
+        
+        // Handle 403 auth errors with cleanup
+        const cleanupPerformed = await handleAuthError(error, 'handleVisibilityChange');
+        
+        if (cleanupPerformed) {
+          authErrorOccurred = true;
+          authStateChanged = true; // Auth state definitely changed after cleanup
+        } else {
+          // If we can't check auth state and it's not a 403 error, assume it might have changed for safety
+          authStateChanged = true;
+        }
       }
 
       // Always refresh navigation and sidebar data, but only invalidate auth if it changed
-      await performDataRefresh(
-        `visibility change${authStateChanged ? ' - auth state changed' : ''}`,
-        authStateChanged
-      );
+      const refreshReason = authErrorOccurred 
+        ? 'visibility change - 403 error handled'
+        : authStateChanged 
+        ? 'visibility change - auth state changed' 
+        : 'visibility change';
+        
+      await performDataRefresh(refreshReason, authStateChanged);
 
       wasTabHidden = false;
     }
@@ -200,14 +262,19 @@
     }
   });
 
-  // 5-minute periodic sync interval
+  // 5-minute periodic sync interval with auth error handling
   $effect(() => {
     if (!session || !isHydrated) return;
 
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
       // Only sync if tab is visible and user is authenticated
       if (!document.hidden && session) {
-        performDataRefresh('5-minute interval', false);
+        try {
+          await performDataRefresh('5-minute interval', false);
+        } catch (error) {
+          // Handle potential auth errors during periodic sync
+          await handleAuthError(error, '5-minute interval sync');
+        }
       }
     }, 300000); // 5 minutes = 300,000ms
 
