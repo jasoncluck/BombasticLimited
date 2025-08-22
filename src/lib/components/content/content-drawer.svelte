@@ -163,7 +163,7 @@
     {@render children()}
 
     {#if (operationVideos.length > 0 || (variant === 'header' && playlist)) && session}
-      <Drawer.Content class="outline-none" data-drawer-content>
+      <Drawer.Content class="outline-hiddden" data-drawer-content>
         <Drawer.Header class="mx-4 text-left">
           {#if variant === 'list-items' && operationVideos.length === 1}
             {@const video = operationVideos[0]}

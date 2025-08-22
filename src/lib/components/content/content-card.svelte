@@ -358,7 +358,7 @@
 {:else}
   <div
     bind:this={cardElement}
-    class="{getCardClasses()} flex flex-col outline-none"
+    class="{getCardClasses()} flex flex-col outline-hiddden"
     data-testid="video-card"
     role="button"
     tabindex="0"

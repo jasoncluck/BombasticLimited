@@ -22,6 +22,8 @@
   } from '@supabase/supabase-js';
   import {
     checkIfUsernameIsUnique,
+    linkDiscordIdentity,
+    unlinkDiscordIdentity,
     type UserProfile,
   } from '$lib/supabase/user-profiles';
   import type { Database } from '$lib/supabase/database.types';
@@ -32,6 +34,8 @@
   import DiscordIcon from '$lib/assets/icons/DiscordIcon.svelte';
 
   import Label from '$lib/components/ui/label/label.svelte';
+  import { goto, invalidate } from '$app/navigation';
+  import { showNotification } from '$lib/supabase/notifications';
 
   let {
     data,
@@ -299,23 +303,24 @@
               <p class="text-muted-foreground text-xs">Account linked</p>
             </div>
           </div>
-          <!-- <form -->
-          <!--   use:enhance={() => { -->
-          <!--     return async () => { -->
-          <!--       await updateFlash(page); -->
-          <!--     }; -->
-          <!--   }} -->
-          <!--   method="POST" -->
-          <!--   action="?/unlinkDiscord" -->
-          <!-- > -->
-          <!--   <Button -->
-          <!--     type="submit" -->
-          <!--     variant="destructive" -->
-          <!--     class="w-full cursor-pointer @lg:w-auto" -->
-          <!--   > -->
-          <!--     Unlink -->
-          <!--   </Button> -->
-          <!-- </form> -->
+          <Button
+            type="submit"
+            variant="destructive"
+            class="w-full cursor-pointer @lg:w-auto"
+            onclick={async (e) => {
+              e.preventDefault();
+              const { error } = await unlinkDiscordIdentity({
+                supabase,
+              });
+
+              if (error) {
+                showNotification(error.message, 'error');
+              }
+              invalidate('supabase:db:profiles');
+            }}
+          >
+            Unlink
+          </Button>
         </div>
       {:else}
         <!-- Discord Account Not Linked -->
@@ -340,6 +345,21 @@
               type="submit"
               variant="secondary"
               class="w-full cursor-pointer @lg:w-auto"
+              onclick={async (e) => {
+                e.preventDefault();
+                const { data, error } = await linkDiscordIdentity({
+                  supabase,
+                  redirectTo: `${page.url.origin}/account`,
+                });
+
+                if (error) {
+                  showNotification(error.message, 'error');
+                }
+
+                if (data.url) {
+                  goto(data.url);
+                }
+              }}
             >
               <DiscordIcon size={16} class="mr-2 text-[#5865F2]" />
               Link Discord

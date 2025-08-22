@@ -224,7 +224,7 @@
   <Carousel.Content>
     {#each videos as video, i (video.id)}
       <Carousel.Item
-        class="group basis-full rounded-md pr-2 outline-none @sm:basis-1/3 @4xl:basis-1/5"
+        class="group basis-full rounded-md pr-2 outline-hiddden @sm:basis-1/3 @4xl:basis-1/5"
         data-testid="carousel-item"
       >
         <ContentCard

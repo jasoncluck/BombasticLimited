@@ -114,7 +114,7 @@
 
 <ContextMenu.Root bind:open={isThisSectionMenuOpen}>
   <ContextMenu.Trigger
-    class="outline-none"
+    class="outline-hiddden"
     onmousedown={(event) => {
       const isCtrlPressed = event.ctrlKey || event.metaKey;
       const isLeftClick = event.button === 0;
@@ -155,7 +155,7 @@
 
   {#if operationVideos.length > 0 && session}
     <ContextMenu.Content
-      class="max-h-64 overflow-visible outline-none {mediaQueryState.isTouchDevice &&
+      class="max-h-64 overflow-visible outline-hiddden {mediaQueryState.isTouchDevice &&
         'hidden'} 
         transition-opacity duration-75"
     >
@@ -174,7 +174,7 @@
             <Portal>
               <ContextMenu.SubContent
                 align="start"
-                class="z-50 overflow-hidden transition-opacity duration-150 outline-none"
+                class="z-50 overflow-hidden transition-opacity duration-150 outline-hiddden"
                 avoidCollisions={true}
                 sideOffset={5}
               >

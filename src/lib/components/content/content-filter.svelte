@@ -201,7 +201,7 @@
       <DropdownMenu.Trigger
         class={buttonVariants({
           variant: 'ghost',
-          class: 'flex cursor-pointer items-center gap-1 outline-none',
+          class: 'flex cursor-pointer items-center gap-1 outline-hiddden',
         })}
       >
         <span class="mr-1 text-sm tracking-tight"
@@ -209,7 +209,7 @@
         >
         <List size={15} />
       </DropdownMenu.Trigger>
-      <DropdownMenu.Content class="outline-none">
+      <DropdownMenu.Content class="outline-hiddden">
         <DropdownMenu.Group>
           <DropdownMenu.GroupHeading>Sort by</DropdownMenu.GroupHeading>
           {#each sortKeys as sortKey (sortKey)}
@@ -280,12 +280,12 @@
 {:else}
   <Drawer.Root bind:open={contentFilterDrawerOpen}>
     <Drawer.Trigger
-      class="hover:text-primary flex cursor-pointer items-center gap-1 outline-none"
+      class="hover:text-primary flex cursor-pointer items-center gap-1 outline-hiddden"
     >
       <span class="text-sm">{sortOptionInfo.displayName}</span>
       <List size={20} />
     </Drawer.Trigger>
-    <Drawer.Content class="outline-none">
+    <Drawer.Content class="outline-hiddden">
       <Drawer.Header class="m-2 text-left">Sort by</Drawer.Header>
       {#each sortKeys as sortKey (sortKey)}
         <Button

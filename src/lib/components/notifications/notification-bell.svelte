@@ -81,7 +81,7 @@
   <Drawer.Root onOpenChange={(open) => open && handleMenuOpen()}>
     <Drawer.Trigger
       data-testid="notification-bell-mobile"
-      class="relative cursor-pointer outline-none {buttonVariants({
+      class="relative cursor-pointer outline-hidden {buttonVariants({
         variant: 'ghost',
         size: 'icon',
       })}"

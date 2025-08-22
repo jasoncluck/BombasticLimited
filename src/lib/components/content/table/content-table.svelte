@@ -117,7 +117,7 @@
 </script>
 
 <Table.Root
-  class="content-table outline-none"
+  class="content-table outline-hiddden"
   onmouseleave={handleTableMouseLeave}
 >
   <Table.Body>

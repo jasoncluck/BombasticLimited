@@ -57,7 +57,7 @@
 <div
   role="region"
   bind:this={containerElement}
-  class="relative flex flex-col gap-x-2 gap-y-12 outline-none @sm:grid @sm:grid-cols-3 @4xl:grid-cols-5"
+  class="relative flex flex-col gap-x-2 gap-y-12 outline-hiddden @sm:grid @sm:grid-cols-3 @4xl:grid-cols-5"
   onmouseleave={handleTilesMouseLeave}
 >
   {#each videos as video, i (video.id)}

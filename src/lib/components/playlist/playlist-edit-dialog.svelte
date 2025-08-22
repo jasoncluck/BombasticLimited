@@ -209,11 +209,11 @@
   }}
 >
   {#if isPlaylistOwner}
-    <Dialog.Trigger class="w-full outline-none">
+    <Dialog.Trigger class="w-full outline-hiddden">
       {@render trigger()}
     </Dialog.Trigger>
   {:else}
-    <div class="outline-none">
+    <div class="outline-hiddden">
       {@render trigger()}
     </div>
   {/if}
@@ -237,7 +237,7 @@
                   class="h-full w-full rounded-md object-cover"
                 />
                 <DropdownMenu.Root>
-                  <DropdownMenu.Trigger class="outline-none">
+                  <DropdownMenu.Trigger class="outline-hiddden">
                     {#snippet child({ props })}
                       <Button
                         {...props}

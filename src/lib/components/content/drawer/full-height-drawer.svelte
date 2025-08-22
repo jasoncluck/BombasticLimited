@@ -37,7 +37,7 @@
 </script>
 
 <Drawer.Root bind:open {onClose} {handleOnly} {nested}>
-  <Drawer.Trigger class="outline-none">
+  <Drawer.Trigger class="outline-hiddden">
     {@render trigger()}
   </Drawer.Trigger>
 

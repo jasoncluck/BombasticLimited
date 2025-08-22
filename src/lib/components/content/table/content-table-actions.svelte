@@ -47,7 +47,7 @@
       {#if session}
         <Button
           variant="ghost"
-          class="ghost-button-minimal outline-none"
+          class="ghost-button-minimal outline-hiddden"
           onclick={(e) => {
             e.preventDefault();
             e.stopPropagation();

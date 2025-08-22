@@ -264,11 +264,11 @@
   }}
 >
   {#if !isPlaylistOwner}
-    <div class="outline-none">
+    <div class="outline-hiddden">
       {@render triggerSnippet()}
     </div>
   {:else}
-    <Drawer.Trigger class="outline-none">
+    <Drawer.Trigger class="outline-hiddden">
       {@render triggerSnippet()}
     </Drawer.Trigger>
   {/if}
@@ -300,7 +300,7 @@
                     class="h-full w-full rounded-md object-cover"
                   />
                   <DropdownMenu.Root>
-                    <DropdownMenu.Trigger class="outline-none">
+                    <DropdownMenu.Trigger class="outline-hiddden">
                       {#snippet child({ props })}
                         <Button
                           {...props}
