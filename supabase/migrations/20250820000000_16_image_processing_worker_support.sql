@@ -240,9 +240,12 @@ END;
 $$;
 
 -- Optimized function to cleanup stale processing jobs
-CREATE OR REPLACE FUNCTION public.cleanup_stale_processing_jobs (stale_threshold_minutes integer DEFAULT 30) RETURNS integer LANGUAGE sql SECURITY DEFINER
+CREATE OR REPLACE FUNCTION public.cleanup_stale_processing_jobs (stale_threshold_minutes integer DEFAULT 30) RETURNS integer LANGUAGE plpgsql SECURITY DEFINER
 SET
   search_path = '' AS $$
+DECLARE
+  rows_updated integer;
+BEGIN
   UPDATE "public"."image_processing_jobs"
   SET 
     status = 'pending',
@@ -251,8 +254,11 @@ SET
     processing_started_at = NULL
   WHERE status = 'processing'
     AND processing_started_at < (now() - INTERVAL '1 minute' * stale_threshold_minutes);
+    
+  GET DIAGNOSTICS rows_updated = ROW_COUNT;
   
-  SELECT ROW_COUNT();
+  RETURN rows_updated;
+END;
 $$;
 
 -- Function to detect orphaned jobs (jobs that reference non-existent entities)
