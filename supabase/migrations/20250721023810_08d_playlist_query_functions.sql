@@ -322,8 +322,8 @@ SET
       p.thumbnail_url,
       p.deleted_at,
       prof.username AS profile_username,
-      COALESCE(up.sorted_by, 'position'::public.playlist_sorted_by) AS sorted_by,
-      COALESCE(up.sort_order, 'asc'::public.playlist_sort_order) AS sort_order
+      COALESCE(up.sorted_by, 'playlistOrder'::public.playlist_sorted_by) AS sorted_by,
+      COALESCE(up.sort_order, 'ascending'::public.playlist_sort_order) AS sort_order
     FROM public.playlists p
     LEFT JOIN public.profiles prof ON p.created_by = prof.id
     LEFT JOIN public.user_playlists up ON p.id = up.id AND up.user_id = auth.uid()

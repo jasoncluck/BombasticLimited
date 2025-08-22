@@ -1,5 +1,5 @@
 -- Migration: 11_video_history_system.sql
--- Purpose: Create comprehensive video history tracking system
+-- Purpose: Create comprehensive video history tracking system (Fixed - no user_id returns)
 -- Dependencies: Requires base tables from 03_base_tables.sql (videos, timestamps)
 -- ============================================================================
 -- Create video_history table to track viewing analytics
@@ -54,8 +54,7 @@ CREATE POLICY "Users can access their own video history" ON "public"."video_hist
 -- ============================================================================
 -- Optimized function to calculate seconds_watched
 CREATE OR REPLACE FUNCTION "public"."calculate_seconds_watched" () RETURNS TRIGGER LANGUAGE plpgsql
-SET
-  search_path = '' AS $$
+SET search_path = '' AS $$
 BEGIN
   -- Calculate seconds_watched if both timestamps are present
   IF NEW.session_start_time IS NOT NULL AND NEW.session_end_time IS NOT NULL THEN
@@ -70,8 +69,7 @@ $$;
 
 -- Optimized function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION "public"."update_video_history_updated_at" () RETURNS TRIGGER LANGUAGE plpgsql
-SET
-  search_path = '' AS $$
+SET search_path = '' AS $$
 BEGIN
   NEW.updated_at = now();
   RETURN NEW;
@@ -80,24 +78,19 @@ $$;
 
 -- Create triggers
 CREATE TRIGGER "trigger_calculate_seconds_watched" BEFORE INSERT
-OR
-UPDATE ON "public"."video_history" FOR EACH ROW
+OR UPDATE ON "public"."video_history" FOR EACH ROW
 EXECUTE FUNCTION "public"."calculate_seconds_watched" ();
 
 CREATE TRIGGER "trigger_update_video_history_updated_at" BEFORE
 UPDATE ON "public"."video_history" FOR EACH ROW
 EXECUTE FUNCTION "public"."update_video_history_updated_at" ();
 
--- ============================================================================
--- OPTIMIZED RPC FUNCTIONS FOR VIDEO HISTORY
--- ============================================================================
 -- Optimized function to start video history session
 CREATE OR REPLACE FUNCTION "public"."start_video_history_session" (
   p_video_id text,
   p_session_start_time TIMESTAMP WITH TIME ZONE DEFAULT NULL
 ) RETURNS TABLE (
   id text,
-  user_id uuid,
   video_id text,
   source "public"."source",
   seconds_watched numeric,
@@ -107,14 +100,13 @@ CREATE OR REPLACE FUNCTION "public"."start_video_history_session" (
   updated_at TIMESTAMP WITH TIME ZONE,
   is_resumed boolean
 ) LANGUAGE plpgsql SECURITY DEFINER
-SET
-  search_path = '' AS $$
+SET search_path = '' AS $$
 DECLARE
   current_user_id uuid;
   video_source "public"."source";
   session_time TIMESTAMP WITH TIME ZONE;
   recent_session RECORD;
-  result_record RECORD;
+  session_result RECORD;
 BEGIN
   -- Get current user and session time
   current_user_id := auth.uid();
@@ -153,29 +145,28 @@ BEGIN
 
   IF recent_session.user_id IS NOT NULL THEN
     -- Resume existing session
-    UPDATE public.video_history 
+    UPDATE public.video_history vh
     SET 
       session_end_time = NULL,
       updated_at = now()
-    WHERE user_id = current_user_id
-      AND video_id = p_video_id
-      AND session_start_time = recent_session.session_start_time
+    WHERE vh.user_id = current_user_id
+      AND vh.video_id = p_video_id
+      AND vh.session_start_time = recent_session.session_start_time
     RETURNING 
-      user_id, video_id, source, seconds_watched,
-      session_start_time, session_end_time, created_at, updated_at
-    INTO result_record;
+      vh.video_id, vh.source, vh.seconds_watched,
+      vh.session_start_time, vh.session_end_time, vh.created_at, vh.updated_at
+    INTO session_result;
     
-    -- Return resumed session
+    -- Return resumed session (no user_id)
     RETURN QUERY SELECT
-      result_record.user_id::text || '|' || result_record.video_id || '|' || EXTRACT(EPOCH FROM result_record.session_start_time)::bigint::text,
-      result_record.user_id,
-      result_record.video_id,
-      result_record.source,
-      result_record.seconds_watched,
-      result_record.session_start_time,
-      result_record.session_end_time,
-      result_record.created_at,
-      result_record.updated_at,
+      current_user_id::text || '|' || session_result.video_id || '|' || EXTRACT(EPOCH FROM session_result.session_start_time)::bigint::text,
+      session_result.video_id,
+      session_result.source,
+      session_result.seconds_watched,
+      session_result.session_start_time,
+      session_result.session_end_time,
+      session_result.created_at,
+      session_result.updated_at,
       true;
   ELSE
     -- Create new session
@@ -187,27 +178,26 @@ BEGIN
       session_time, NULL
     )
     RETURNING 
-      user_id, video_id, source, seconds_watched,
+      video_id, source, seconds_watched,
       session_start_time, session_end_time, created_at, updated_at
-    INTO result_record;
+    INTO session_result;
     
-    -- Return new session
+    -- Return new session (no user_id)
     RETURN QUERY SELECT
-      result_record.user_id::text || '|' || result_record.video_id || '|' || EXTRACT(EPOCH FROM result_record.session_start_time)::bigint::text,
-      result_record.user_id,
-      result_record.video_id,
-      result_record.source,
-      result_record.seconds_watched,
-      result_record.session_start_time,
-      result_record.session_end_time,
-      result_record.created_at,
-      result_record.updated_at,
+      current_user_id::text || '|' || session_result.video_id || '|' || EXTRACT(EPOCH FROM session_result.session_start_time)::bigint::text,
+      session_result.video_id,
+      session_result.source,
+      session_result.seconds_watched,
+      session_result.session_start_time,
+      session_result.session_end_time,
+      session_result.created_at,
+      session_result.updated_at,
       false;
   END IF;
 END;
 $$;
 
--- Optimized function to update seconds watched
+-- Optimized function to update seconds watched (removed user_id from return)
 CREATE OR REPLACE FUNCTION "public"."update_video_history_seconds_watched" (
   p_video_id text,
   p_session_start_time TIMESTAMP WITH TIME ZONE,
@@ -215,7 +205,6 @@ CREATE OR REPLACE FUNCTION "public"."update_video_history_seconds_watched" (
   p_session_end_time TIMESTAMP WITH TIME ZONE DEFAULT NULL
 ) RETURNS TABLE (
   id text,
-  user_id uuid,
   video_id text,
   source "public"."source",
   seconds_watched numeric,
@@ -224,8 +213,7 @@ CREATE OR REPLACE FUNCTION "public"."update_video_history_seconds_watched" (
   created_at TIMESTAMP WITH TIME ZONE,
   updated_at TIMESTAMP WITH TIME ZONE
 ) LANGUAGE plpgsql SECURITY DEFINER
-SET
-  search_path = '' AS $$
+SET search_path = '' AS $$
 DECLARE
   current_user_id uuid;
   current_end_time TIMESTAMP WITH TIME ZONE;
@@ -238,19 +226,21 @@ BEGIN
     RETURN;
   END IF;
 
-  UPDATE public.video_history 
+  UPDATE public.video_history vh
   SET 
     seconds_watched = p_seconds_watched,
     session_end_time = current_end_time,
     updated_at = now()
-  WHERE user_id = current_user_id 
-    AND video_id = p_video_id
-    AND session_start_time = p_session_start_time
-  RETURNING * INTO result_record;
+  WHERE vh.user_id = current_user_id 
+    AND vh.video_id = p_video_id
+    AND vh.session_start_time = p_session_start_time
+  RETURNING 
+    vh.video_id, vh.source, vh.seconds_watched,
+    vh.session_start_time, vh.session_end_time, vh.created_at, vh.updated_at
+  INTO result_record;
 
   RETURN QUERY SELECT
-    result_record.user_id::text || '|' || result_record.video_id || '|' || EXTRACT(EPOCH FROM result_record.session_start_time)::bigint::text,
-    result_record.user_id,
+    current_user_id::text || '|' || result_record.video_id || '|' || EXTRACT(EPOCH FROM result_record.session_start_time)::bigint::text,
     result_record.video_id,
     result_record.source,
     result_record.seconds_watched,
@@ -261,14 +251,13 @@ BEGIN
 END;
 $$;
 
--- Optimized function to update end time
+-- Optimized function to update end time (removed user_id from return)
 CREATE OR REPLACE FUNCTION "public"."update_video_history_end_time" (
   p_video_id text,
   p_session_start_time TIMESTAMP WITH TIME ZONE,
   p_session_end_time TIMESTAMP WITH TIME ZONE DEFAULT NULL
 ) RETURNS TABLE (
   id text,
-  user_id uuid,
   video_id text,
   source "public"."source",
   seconds_watched numeric,
@@ -277,8 +266,7 @@ CREATE OR REPLACE FUNCTION "public"."update_video_history_end_time" (
   created_at TIMESTAMP WITH TIME ZONE,
   updated_at TIMESTAMP WITH TIME ZONE
 ) LANGUAGE plpgsql SECURITY DEFINER
-SET
-  search_path = '' AS $$
+SET search_path = '' AS $$
 DECLARE
   current_user_id uuid;
   current_end_time TIMESTAMP WITH TIME ZONE;
@@ -291,18 +279,20 @@ BEGIN
     RETURN;
   END IF;
 
-  UPDATE public.video_history 
+  UPDATE public.video_history vh
   SET 
     session_end_time = current_end_time,
     updated_at = now()
-  WHERE user_id = current_user_id 
-    AND video_id = p_video_id
-    AND session_start_time = p_session_start_time
-  RETURNING * INTO result_record;
+  WHERE vh.user_id = current_user_id 
+    AND vh.video_id = p_video_id
+    AND vh.session_start_time = p_session_start_time
+  RETURNING 
+    vh.video_id, vh.source, vh.seconds_watched,
+    vh.session_start_time, vh.session_end_time, vh.created_at, vh.updated_at
+  INTO result_record;
 
   RETURN QUERY SELECT
-    result_record.user_id::text || '|' || result_record.video_id || '|' || EXTRACT(EPOCH FROM result_record.session_start_time)::bigint::text,
-    result_record.user_id,
+    current_user_id::text || '|' || result_record.video_id || '|' || EXTRACT(EPOCH FROM result_record.session_start_time)::bigint::text,
     result_record.video_id,
     result_record.source,
     result_record.seconds_watched,
@@ -313,14 +303,13 @@ BEGIN
 END;
 $$;
 
--- Optimized function to get user video history
+-- Optimized function to get user video history (removed user_id from return)
 CREATE OR REPLACE FUNCTION "public"."get_user_video_history" (
   p_video_id text DEFAULT NULL,
   p_limit integer DEFAULT 50,
   p_offset integer DEFAULT 0
 ) RETURNS TABLE (
   id text,
-  user_id uuid,
   video_id text,
   source "public"."source",
   seconds_watched numeric,
@@ -332,11 +321,9 @@ CREATE OR REPLACE FUNCTION "public"."get_user_video_history" (
   video_duration text,
   video_thumbnail_url text
 ) LANGUAGE sql SECURITY DEFINER
-SET
-  search_path = '' AS $$
+SET search_path = '' AS $$
   SELECT
-    vh.user_id::text || '|' || vh.video_id || '|' || EXTRACT(EPOCH FROM vh.session_start_time)::bigint::text AS id,
-    vh.user_id,
+    auth.uid()::text || '|' || vh.video_id || '|' || EXTRACT(EPOCH FROM vh.session_start_time)::bigint::text AS id,
     vh.video_id,
     vh.source,
     vh.seconds_watched,
@@ -356,7 +343,7 @@ SET
   OFFSET p_offset;
 $$;
 
--- Optimized function to get video analytics
+-- Optimized function to get video analytics (no user_id needed in return)
 CREATE OR REPLACE FUNCTION "public"."get_video_analytics" (
   p_video_id text DEFAULT NULL,
   p_days_back integer DEFAULT 30
@@ -369,8 +356,7 @@ CREATE OR REPLACE FUNCTION "public"."get_video_analytics" (
   last_watched TIMESTAMP WITH TIME ZONE,
   first_watched TIMESTAMP WITH TIME ZONE
 ) LANGUAGE sql SECURITY DEFINER
-SET
-  search_path = '' AS $$
+SET search_path = '' AS $$
   SELECT
     vh.video_id,
     v.title AS video_title,
@@ -389,12 +375,11 @@ SET
 $$;
 
 -- ============================================================================
--- OPTIMIZED AUTO-RECORD TRIGGER
+-- OPTIMIZED AUTO-RECORD TRIGGER (no changes needed)
 -- ============================================================================
 -- Optimized function to auto-record video history
 CREATE OR REPLACE FUNCTION "public"."auto_record_video_history" () RETURNS TRIGGER LANGUAGE plpgsql
-SET
-  search_path = '' AS $$
+SET search_path = '' AS $$
 DECLARE
   video_source "public"."source";
   current_session_start TIMESTAMP WITH TIME ZONE; 
@@ -441,7 +426,5 @@ $$;
 
 -- Create trigger
 CREATE TRIGGER "trigger_auto_record_video_history"
-AFTER INSERT
-OR
-UPDATE ON "public"."timestamps" FOR EACH ROW
+AFTER INSERT OR UPDATE ON "public"."timestamps" FOR EACH ROW
 EXECUTE FUNCTION "public"."auto_record_video_history" ();

@@ -413,6 +413,7 @@ END;
 $$;
 
 -- Optimized function to update playlist thumbnail
+-- Optimized function to update playlist thumbnail
 CREATE OR REPLACE FUNCTION public.update_playlist_thumbnail (
   p_playlist_id bigint,
   p_thumbnail_url text DEFAULT NULL,
@@ -437,6 +438,9 @@ BEGIN
     RETURN QUERY SELECT false, p_playlist_id, NULL::text, 'User must be authenticated to update playlist thumbnails'::text;
     RETURN;
   END IF;
+
+  -- Lock all operations for this user to prevent concurrent playlist modifications
+  PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || current_user_id::text));
 
   -- Check playlist ownership in one optimized query
   SELECT pl.created_by INTO playlist_owner_id
