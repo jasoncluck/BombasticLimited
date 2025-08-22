@@ -589,6 +589,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      cleanup_orphaned_image_processing_jobs: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       cleanup_stale_processing_jobs: {
         Args: { stale_threshold_minutes?: number }
         Returns: number
@@ -677,6 +681,17 @@ export type Database = {
       delete_user: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      detect_orphaned_image_processing_jobs: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          entity_id: string
+          entity_type: string
+          image_type: string
+          job_id: string
+          status: string
+        }[]
       }
       duration_to_seconds: {
         Args: { duration_text: string }
