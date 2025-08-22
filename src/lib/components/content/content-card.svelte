@@ -74,7 +74,13 @@
   const contentState = getContentState();
 
   let cardElement = $state<HTMLElement>();
-  let hasPreloaded = $state(false);
+
+  const isVideoInPlaylist = $derived(
+    isContinueVideos &&
+      isVideoWithTimestamp(video) &&
+      video.playlist_name &&
+      video.playlist_short_id
+  );
 
   const selectedVideos = $derived(
     contentState.selectedVideosBySection[sectionId] ?? []
@@ -89,6 +95,7 @@
   const isContextMenuOpen = $derived(
     contentState.isContextMenuOpenForSection(sectionId) && isSelected
   );
+
   const isDragActive = $derived(
     contentState.dragContentType === 'video' &&
       contentState.draggedFromSectionId === sectionId &&
@@ -162,7 +169,7 @@
 
   // Preload content data
   async function preloadContent() {
-    if (!video || hasPreloaded) return;
+    if (!video) return;
 
     try {
       const url = generateContentNavigationUrl({
@@ -171,7 +178,6 @@
         playlist,
       });
       await preloadData(url);
-      hasPreloaded = true;
     } catch (error) {
       // Silently fail if preloading doesn't work
       console.debug('Preload failed:', error);
@@ -429,7 +435,7 @@
           >
             {video.description}
           </div>
-        {:else if !isContinueVideos}
+        {:else if !isVideoInPlaylist}
           <!-- Show date by default -->
           <p class="text-muted-foreground pointer-events-none text-xs">
             {new Date(video.published_at).toLocaleDateString('en-US', {
@@ -441,7 +447,7 @@
         {/if}
 
         <!-- Playlist section with flex-shrink-0 to prevent compression -->
-        {#if isContinueVideos && isVideoWithTimestamp(video) && video.playlist_name && video.playlist_short_id}
+        {#if isVideoInPlaylist}
           <div
             class="text-secondary-foreground hover:text-primary z-10 line-clamp-2 flex flex-shrink-0 items-center gap-2 py-2 text-xs"
           >
