@@ -3,7 +3,7 @@
   import { type SupabaseClient, type Session } from '@supabase/supabase-js';
   import { SOURCE_INFO, SOURCES } from '$lib/constants/source';
   import * as Popover from '$lib/components/ui/popover';
-  import { goto, invalidate } from '$app/navigation';
+  import { invalidate } from '$app/navigation';
   import { getContentState } from '$lib/state/content.svelte';
   import { getPlaylistState } from '$lib/state/playlist.svelte';
   import { page } from '$app/state';

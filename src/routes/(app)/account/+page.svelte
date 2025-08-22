@@ -2,7 +2,7 @@
   import * as Form from '$lib/components/ui/form';
   import Input from '$lib/components/ui/input/input.svelte';
   import { superForm, type SuperValidated } from 'sveltekit-superforms';
-  import { zodClient, type Infer } from 'sveltekit-superforms/adapters';
+  import { zodClient } from 'sveltekit-superforms/adapters';
   import * as Alert from '$lib/components/ui/alert/index.js';
   import {
     emailSchema,
@@ -43,8 +43,8 @@
     data: {
       profile: UserProfile;
       discordIdentity: UserIdentity;
-      emailForm: SuperValidated<Infer<EmailSchema>>;
-      usernameForm: SuperValidated<Infer<UsernameSchema>>;
+      emailForm: SuperValidated<EmailSchema>;
+      usernameForm: SuperValidated<UsernameSchema>;
       supabase: SupabaseClient<Database>;
       session: Session;
     };

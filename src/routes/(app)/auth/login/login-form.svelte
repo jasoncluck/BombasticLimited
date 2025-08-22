@@ -4,7 +4,7 @@
   import { Input } from '$lib/components/ui/input';
   import { Loader } from '@lucide/svelte';
   import { superForm, type SuperValidated } from 'sveltekit-superforms';
-  import { zodClient, type Infer } from 'sveltekit-superforms/adapters';
+  import { zodClient } from 'sveltekit-superforms/adapters';
   import * as Alert from '$lib/components/ui/alert/index.js';
   import * as Form from '$lib/components/ui/form';
   import { getFlash, updateFlash } from 'sveltekit-flash-message';
@@ -19,7 +19,7 @@
     form,
     supabase,
   }: {
-    form: SuperValidated<Infer<LoginSchema>>;
+    form: SuperValidated<LoginSchema>;
     supabase: SupabaseClient<Database>;
   } = $props();
 

@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { SuperValidated } from 'sveltekit-superforms';
-  import type { Infer } from 'sveltekit-superforms/adapters';
   import type { SignupSchema } from '$lib/schema/auth-schema';
   import SignupForm from './signup-form.svelte';
   import type { SupabaseClient } from '@supabase/supabase-js';
@@ -10,7 +9,7 @@
     data,
   }: {
     data: {
-      signupForm: SuperValidated<Infer<SignupSchema>>;
+      signupForm: SuperValidated<SignupSchema>;
       supabase: SupabaseClient<Database>;
     };
   } = $props();

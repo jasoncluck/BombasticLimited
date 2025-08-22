@@ -89,7 +89,7 @@ describe('playlist schema validation', () => {
     it('should reject descriptions that are too long', () => {
       const invalidData = {
         name: 'My Playlist',
-        description: 'A'.repeat(501),
+        description: 'A'.repeat(251), // Updated to 251 to match max(250)
         image_properties: null,
         id: 1,
         type: 'Private' as const,
@@ -140,7 +140,7 @@ describe('playlist schema validation', () => {
       }
     });
 
-    it('should default to Private when type is not provided', () => {
+    it('should require type field when not provided', () => {
       const dataWithoutType = {
         name: 'My Playlist',
         description: null,
@@ -150,9 +150,10 @@ describe('playlist schema validation', () => {
       };
 
       const result = playlistSchema.safeParse(dataWithoutType);
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.type).toBe('Private');
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].path).toEqual(['type']);
+        expect(result.error.issues[0].code).toBe('invalid_type');
       }
     });
 
@@ -286,7 +287,7 @@ describe('playlist schema validation', () => {
   });
 
   describe('isDeletingPlaylistImage validation', () => {
-    it('should default to false when not provided', () => {
+    it('should require isDeletingPlaylistImage field when not provided', () => {
       const dataWithoutFlag = {
         name: 'My Playlist',
         description: null,
@@ -296,6 +297,26 @@ describe('playlist schema validation', () => {
       };
 
       const result = playlistSchema.safeParse(dataWithoutFlag);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].path).toEqual([
+          'isDeletingPlaylistImage',
+        ]);
+        expect(result.error.issues[0].code).toBe('invalid_type');
+      }
+    });
+
+    it('should accept boolean false', () => {
+      const validData = {
+        name: 'My Playlist',
+        description: null,
+        image_properties: null,
+        id: 1,
+        type: 'Private' as const,
+        isDeletingPlaylistImage: false,
+      };
+
+      const result = playlistSchema.safeParse(validData);
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.isDeletingPlaylistImage).toBe(false);

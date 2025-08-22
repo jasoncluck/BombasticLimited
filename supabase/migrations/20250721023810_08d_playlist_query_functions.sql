@@ -300,9 +300,8 @@ CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
   total_videos_count bigint,
   current_video_index int2
 )
-SET search_path = '' 
-LANGUAGE sql 
-SECURITY DEFINER AS $$
+SET
+  search_path = '' LANGUAGE sql SECURITY DEFINER AS $$
   WITH playlist_info AS (
     SELECT 
       p.id,
@@ -325,6 +324,10 @@ SECURITY DEFINER AS $$
       prof.username AS profile_username,
       COALESCE(up.sorted_by, 'position'::public.playlist_sorted_by) AS sorted_by,
       COALESCE(up.sort_order, 'asc'::public.playlist_sort_order) AS sort_order
+    FROM public.playlists p
+    LEFT JOIN public.profiles prof ON p.created_by = prof.id
+    LEFT JOIN public.user_playlists up ON p.id = up.id AND up.user_id = auth.uid()
+    WHERE p.short_id = p_short_id
       AND p.deleted_at IS NULL
   ),
   target_video AS (

@@ -3,7 +3,6 @@
 -- Dependencies: Requires base tables from 03_base_tables.sql and user profile functions (08a)
 -- This migration includes playlist creation, modification, and video management functions
 -- ============================================================================
-
 -- Optimized function to insert/create a playlist
 CREATE OR REPLACE FUNCTION public.insert_playlist (
   p_created_by uuid,
@@ -28,7 +27,8 @@ CREATE OR REPLACE FUNCTION public.insert_playlist (
   image_properties jsonb,
   playlist_position int2
 ) LANGUAGE plpgsql
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
 DECLARE
   max_position int2;
   actual_position int2;
@@ -167,7 +167,8 @@ CREATE OR REPLACE FUNCTION public.follow_playlist (
   user_id uuid,
   playlist_position int2
 ) LANGUAGE plpgsql
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
 DECLARE
   max_position int2;
   actual_position int2;
@@ -224,10 +225,9 @@ END;
 $$;
 
 -- Optimized function to unfollow (remove) a playlist from user's account
-CREATE OR REPLACE FUNCTION public.unfollow_playlist (p_playlist_id bigint) 
-RETURNS TABLE (playlist_id bigint, user_id uuid) 
-LANGUAGE plpgsql
-SET search_path = '' AS $$
+CREATE OR REPLACE FUNCTION public.unfollow_playlist (p_playlist_id bigint) RETURNS TABLE (playlist_id bigint, user_id uuid) LANGUAGE plpgsql
+SET
+  search_path = '' AS $$
 DECLARE
   removed_position int2;
   current_user_id uuid;
@@ -261,15 +261,13 @@ END;
 $$;
 
 -- Optimized function to update the position of a playlist for a user
-CREATE OR REPLACE FUNCTION public.update_playlist_position (
-  p_playlist_id bigint, 
-  p_new_position int2
-) RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.update_playlist_position (p_playlist_id bigint, p_new_position int2) RETURNS TABLE (
   playlist_id bigint,
   playlist_position int2,
   success boolean
 ) LANGUAGE plpgsql
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
 DECLARE
   current_position int2;
   max_position int2;
@@ -312,25 +310,24 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Optimized position updates using CASE statements
-  UPDATE public.user_playlists 
+  -- Fixed: Use explicit table alias to avoid ambiguous column references
+  UPDATE public.user_playlists up
   SET playlist_position = CASE 
-    WHEN id = p_playlist_id THEN p_new_position
-    WHEN p_new_position > current_position AND playlist_position > current_position AND playlist_position <= p_new_position THEN playlist_position - 1
-    WHEN p_new_position < current_position AND playlist_position >= p_new_position AND playlist_position < current_position THEN playlist_position + 1
-    ELSE playlist_position
+    WHEN up.id = p_playlist_id THEN p_new_position
+    WHEN p_new_position > current_position AND up.playlist_position > current_position AND up.playlist_position <= p_new_position THEN up.playlist_position - 1
+    WHEN p_new_position < current_position AND up.playlist_position >= p_new_position AND up.playlist_position < current_position THEN up.playlist_position + 1
+    ELSE up.playlist_position
   END
-  WHERE user_id = current_user_id;
+  WHERE up.user_id = current_user_id;
 
   RETURN QUERY SELECT p_playlist_id, p_new_position, true;
 END;
 $$;
 
 -- Optimized function to delete a playlist
-CREATE OR REPLACE FUNCTION public.delete_playlist (p_playlist_id bigint) 
-RETURNS BOOLEAN 
-LANGUAGE plpgsql
-SET search_path = '' AS $$
+CREATE OR REPLACE FUNCTION public.delete_playlist (p_playlist_id bigint) RETURNS BOOLEAN LANGUAGE plpgsql
+SET
+  search_path = '' AS $$
 DECLARE
   deleted_position int2;
   playlist_owner uuid;
@@ -374,10 +371,9 @@ END;
 $$;
 
 -- Optimized function to restore a playlist
-CREATE OR REPLACE FUNCTION public.restore_playlist (p_playlist_id bigint) 
-RETURNS BOOLEAN 
-LANGUAGE plpgsql
-SET search_path = '' AS $$
+CREATE OR REPLACE FUNCTION public.restore_playlist (p_playlist_id bigint) RETURNS BOOLEAN LANGUAGE plpgsql
+SET
+  search_path = '' AS $$
 BEGIN
   -- Check and restore in one operation
   UPDATE public.playlists
@@ -397,10 +393,9 @@ END;
 $$;
 
 -- Optimized function to initialize playlist positions
-CREATE OR REPLACE FUNCTION public.initialize_user_playlist_positions () 
-RETURNS VOID 
-LANGUAGE plpgsql
-SET search_path = '' AS $$
+CREATE OR REPLACE FUNCTION public.initialize_user_playlist_positions () RETURNS VOID LANGUAGE plpgsql
+SET
+  search_path = '' AS $$
 BEGIN
   -- Use window function for efficient bulk update
   WITH ordered_playlists AS (
@@ -428,20 +423,22 @@ CREATE OR REPLACE FUNCTION public.update_playlist_thumbnail (
   thumbnail_url text,
   error_message text
 ) LANGUAGE plpgsql SECURITY DEFINER
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
 DECLARE
   current_user_id uuid;
   playlist_owner_id uuid;
   thumbnail_exists boolean := false;
   updated_thumbnail_url text;
 BEGIN
+  -- Get current authenticated user
   current_user_id := auth.uid();
   IF current_user_id IS NULL THEN
     RETURN QUERY SELECT false, p_playlist_id, NULL::text, 'User must be authenticated to update playlist thumbnails'::text;
     RETURN;
   END IF;
 
-  -- Combined ownership check and thumbnail validation
+  -- Check playlist ownership in one optimized query
   SELECT pl.created_by INTO playlist_owner_id
   FROM public.playlists pl 
   WHERE pl.id = p_playlist_id;
@@ -451,15 +448,18 @@ BEGIN
     RETURN;
   END IF;
 
+  -- Verify user owns the playlist (security check)
   IF playlist_owner_id != current_user_id THEN
     RETURN QUERY SELECT false, p_playlist_id, NULL::text, 'You can only update thumbnails for your own playlists'::text;
     RETURN;
   END IF;
 
-  -- Verify thumbnail_url exists if provided
+  -- Verify thumbnail_url exists in videos table if provided
   IF p_thumbnail_url IS NOT NULL THEN
-    SELECT EXISTS (SELECT 1 FROM public.videos v WHERE v.thumbnail_url = p_thumbnail_url) 
-    INTO thumbnail_exists;
+    SELECT EXISTS (
+      SELECT 1 FROM public.videos v 
+      WHERE v.thumbnail_url = p_thumbnail_url
+    ) INTO thumbnail_exists;
     
     IF NOT thumbnail_exists THEN
       RETURN QUERY SELECT false, p_playlist_id, NULL::text, format('Thumbnail URL %s not found in videos table', p_thumbnail_url);
@@ -467,37 +467,58 @@ BEGIN
     END IF;
   END IF;
 
-  -- Update playlist in one operation
-  UPDATE public.playlists
-  SET 
-    thumbnail_url = p_thumbnail_url,
-    image_webp_url = CASE WHEN p_thumbnail_url IS NOT NULL THEN NULL ELSE image_webp_url END,
-    image_avif_url = CASE WHEN p_thumbnail_url IS NOT NULL THEN NULL ELSE image_avif_url END,
-    image_properties = CASE WHEN p_thumbnail_url IS NOT NULL THEN p_image_properties ELSE NULL END,
-    image_processing_status = CASE WHEN p_thumbnail_url IS NOT NULL THEN 'pending' ELSE NULL END,
-    image_processing_updated_at = now()
-  WHERE id = p_playlist_id
-  RETURNING thumbnail_url INTO updated_thumbnail_url;
+  -- Update the playlist using the reliable two-branch approach but optimized
+  IF p_thumbnail_url IS NOT NULL THEN
+    -- Setting a thumbnail URL - clear processed images and set thumbnail reference
+    UPDATE public.playlists pl
+    SET 
+      thumbnail_url = p_thumbnail_url,
+      image_webp_url = NULL,  -- Clear WebP (will be generated later)
+      image_avif_url = NULL,  -- Clear AVIF (will be generated later)  
+      image_properties = p_image_properties,
+      image_processing_status = 'pending',
+      image_processing_updated_at = now()
+    WHERE pl.id = p_playlist_id
+    RETURNING pl.thumbnail_url INTO updated_thumbnail_url;
+  ELSE
+    -- p_thumbnail_url is NULL - reset everything
+    UPDATE public.playlists pl
+    SET 
+      thumbnail_url = NULL,
+      image_webp_url = NULL,
+      image_avif_url = NULL,
+      image_properties = NULL,
+      image_processing_status = NULL,
+      image_processing_updated_at = now()
+    WHERE pl.id = p_playlist_id
+    RETURNING pl.thumbnail_url INTO updated_thumbnail_url;
+  END IF;
   
-  RETURN QUERY SELECT true, p_playlist_id, updated_thumbnail_url, NULL::text;
+  -- Return success result with actual stored thumbnail_url
+  RETURN QUERY SELECT 
+    true, 
+    p_playlist_id, 
+    updated_thumbnail_url,
+    NULL::text;
 
 EXCEPTION
+  -- Handle any errors with detailed logging
   WHEN OTHERS THEN
     RETURN QUERY SELECT false, p_playlist_id, NULL::text, format('Unexpected error: %s', SQLERRM);
 END;
 $$;
 
+COMMENT ON FUNCTION public.update_playlist_thumbnail (bigint, text, jsonb) IS 'Update playlist thumbnail with video thumbnail URL reference (optimized and reliable)';
+
 -- Optimized function to insert videos into a playlist
-CREATE OR REPLACE FUNCTION "public"."insert_playlist_videos" (
-  "p_playlist_id" int8, 
-  "p_video_ids" TEXT[]
-) RETURNS TABLE (
+CREATE OR REPLACE FUNCTION "public"."insert_playlist_videos" ("p_playlist_id" int8, "p_video_ids" TEXT[]) RETURNS TABLE (
   result_id int8,
   result_playlist_id int8,
   result_video_id text,
   result_video_position int2
 ) LANGUAGE plpgsql
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
 DECLARE
   max_position int2;
   current_user_id uuid;
@@ -629,12 +650,9 @@ END;
 $$;
 
 -- Optimized function to delete videos from a playlist
-CREATE OR REPLACE FUNCTION public.delete_playlist_videos (
-  p_playlist_id int8, 
-  p_video_ids TEXT[]
-) RETURNS TABLE (video_id text, success boolean, message text) 
-LANGUAGE plpgsql
-SET search_path = '' AS $$
+CREATE OR REPLACE FUNCTION public.delete_playlist_videos (p_playlist_id int8, p_video_ids TEXT[]) RETURNS TABLE (video_id text, success boolean, message text) LANGUAGE plpgsql
+SET
+  search_path = '' AS $$
 DECLARE
   current_user_id uuid;
   playlist_owner_id uuid;
@@ -728,7 +746,8 @@ CREATE OR REPLACE FUNCTION "public"."update_playlist_videos_positions" (
   result_video_id text,
   result_video_position int2
 ) LANGUAGE plpgsql
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
 DECLARE
   video_count int;
   max_position int2;

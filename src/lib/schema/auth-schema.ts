@@ -1,22 +1,22 @@
 import { z } from 'zod';
 
 export const emailSchema = z.object({
-  email: z.string().email().max(50).default(''),
+  email: z.string().email().max(50),
 });
 
 export const usernameSchema = z.object({
-  username: z.string().min(2).max(32).default(''),
+  username: z.string().min(2).max(32),
 });
 
 export const passwordSchema = z.object({
-  password: z.string().min(8).max(256).default(''),
+  password: z.string().min(8).max(256),
 });
 
 // Schema for password confirmation (used in signup and password reset)
 export const passwordConfirmationSchema = z
   .object({
-    password: z.string().min(8).max(256).default(''),
-    confirmPassword: z.string().min(8).max(256).default(''),
+    password: z.string().min(8).max(256),
+    confirmPassword: z.string().min(8).max(256),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
@@ -30,8 +30,8 @@ export const signupSchema = emailSchema
   .merge(usernameSchema)
   .merge(
     z.object({
-      password: z.string().min(8).max(256).default(''),
-      confirmPassword: z.string().min(8).max(256).default(''),
+      password: z.string().min(8).max(256),
+      confirmPassword: z.string().min(8).max(256),
     })
   )
   .refine((data) => data.password === data.confirmPassword, {
@@ -41,11 +41,13 @@ export const signupSchema = emailSchema
 
 export const forgotPasswordSchema = emailSchema;
 
-export type EmailSchema = typeof emailSchema;
-export type UsernameSchema = typeof usernameSchema;
-export type PasswordSchema = typeof passwordSchema;
-export type PasswordConfirmationSchema = typeof passwordConfirmationSchema;
-
-export type LoginSchema = typeof loginSchema;
-export type SignupSchema = typeof signupSchema;
-export type ForgotPasswordSchema = typeof forgotPasswordSchema;
+// Updated type exports for better v4 compatibility
+export type EmailSchema = z.infer<typeof emailSchema>;
+export type UsernameSchema = z.infer<typeof usernameSchema>;
+export type PasswordSchema = z.infer<typeof passwordSchema>;
+export type PasswordConfirmationSchema = z.infer<
+  typeof passwordConfirmationSchema
+>;
+export type LoginSchema = z.infer<typeof loginSchema>;
+export type SignupSchema = z.infer<typeof signupSchema>;
+export type ForgotPasswordSchema = z.infer<typeof forgotPasswordSchema>;

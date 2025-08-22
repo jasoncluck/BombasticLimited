@@ -1,5 +1,5 @@
 import type { Session, SupabaseClient, User } from '@supabase/supabase-js';
-import type { Database } from '$lib/supabase/database.types'; // import generated types
+import type { Database } from '$lib/supabase/database.types';
 
 // MDsveX module declarations
 declare module '*.md' {

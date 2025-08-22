@@ -7,11 +7,7 @@
   import * as Card from '$lib/components/ui/card';
   import * as Form from '$lib/components/ui/form';
   import { Send, TestTube, RotateCcw, Loader } from '@lucide/svelte';
-  import {
-    superForm,
-    type Infer,
-    type SuperValidated,
-  } from 'sveltekit-superforms';
+  import { superForm, type SuperValidated } from 'sveltekit-superforms';
   import type { NotificationType } from '$lib/supabase/notifications';
   import {
     notificationTemplates,
@@ -29,7 +25,7 @@
     form,
     onSuccess,
   }: {
-    form: SuperValidated<Infer<AdminNotificationSchema>>;
+    form: SuperValidated<AdminNotificationSchema>;
     onSuccess?: () => void;
   } = $props();
 

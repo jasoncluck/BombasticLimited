@@ -68,8 +68,8 @@ export const playlistSchema = z.object({
   description: z.string().max(250).nullable(),
   image_properties: jsonbImagePropertiesSchema,
   id: z.number(),
-  type: z.enum(PLAYLIST_TYPES).default('Private'),
-  isDeletingPlaylistImage: z.boolean().default(false),
+  type: z.enum(PLAYLIST_TYPES),
+  isDeletingPlaylistImage: z.boolean(),
   thumbnail_url: z.string().optional(),
   thumbnail_video_id: z.string().optional(),
 });

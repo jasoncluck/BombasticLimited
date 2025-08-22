@@ -4,11 +4,7 @@
   import * as Alert from '$lib/components/ui/alert/index.js';
   import * as Card from '$lib/components/ui/card';
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
-  import {
-    superForm,
-    type Infer,
-    type SuperValidated,
-  } from 'sveltekit-superforms';
+  import { superForm, type SuperValidated } from 'sveltekit-superforms';
   import {
     passwordConfirmationSchema,
     type PasswordConfirmationSchema,
@@ -31,7 +27,7 @@
     data,
   }: {
     data: {
-      form: SuperValidated<Infer<PasswordConfirmationSchema>>;
+      form: SuperValidated<PasswordConfirmationSchema>;
       supabase: SupabaseClient<Database>;
       session: Session;
     };

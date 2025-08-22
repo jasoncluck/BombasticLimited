@@ -74,7 +74,7 @@ export const adminNotificationSchema = z
       }
 
       const startDate = new Date(data.startDatetime);
-      const now = new Date('2025-08-13T22:16:46Z'); // Current time for jasoncluck
+      const now = new Date(); // Use current time instead of hardcoded date
 
       // Skip if start date is invalid
       if (isNaN(startDate.getTime())) {
@@ -91,4 +91,4 @@ export const adminNotificationSchema = z
     }
   );
 
-export type AdminNotificationSchema = typeof adminNotificationSchema;
+export type AdminNotificationSchema = z.infer<typeof adminNotificationSchema>;

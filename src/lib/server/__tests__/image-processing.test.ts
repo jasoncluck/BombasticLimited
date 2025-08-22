@@ -317,8 +317,7 @@ describe('getCroppedPlaylistImageUrlServer', () => {
       mockImageBuffer,
       {
         failOnError: false,
-        density: 150,
-        limitInputPixels: false,
+        density: 96,
         pages: 1,
       }
     );
@@ -467,7 +466,6 @@ describe('getVideoThumbnailWebpUrlServer', () => {
       {
         failOnError: false,
         density: 96,
-        limitInputPixels: false,
         pages: 1,
       }
     );
@@ -475,9 +473,8 @@ describe('getVideoThumbnailWebpUrlServer', () => {
     expect(mockExtract).not.toHaveBeenCalled(); // No cropping for video thumbnails
 
     expect(mockWebp).toHaveBeenCalledWith({
-      quality: 77, // Updated to match improved implementation
-      effort: 4, // Updated to match improved implementation
-      alphaQuality: 80,
+      quality: 75, // Updated to match improved implementation
+      effort: 3, // Updated to match improved implementation
       preset: 'photo', // New parameter added by implementation
       lossless: false,
       nearLossless: false,
