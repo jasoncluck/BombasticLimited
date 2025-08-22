@@ -20,7 +20,7 @@
 >
   {#if !isContinueVideos}
     <p
-      class="text-muted-foreground pointer-events-none line-clamp-1 transform text-xs"
+      class="text-muted-foreground pointer-events-none line-clamp-1 transform text-xs tracking-tight"
     >
       {new Date(video?.published_at).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -29,7 +29,9 @@
       })}
     </p>
   {/if}
-  <p class="line-clamp-3 text-sm leading-5 break-words whitespace-normal">
+  <p
+    class="line-clamp-3 text-sm leading-5 tracking-tight break-words whitespace-normal"
+  >
     {video.title}
   </p>
   {#if isVideoInPlaylist && isVideoWithTimestamp(video)}
@@ -44,11 +46,13 @@
           goto(`playlist/${video.playlist_short_id}`);
         }}
         href={`playlist/${video.playlist_short_id}`}
-        class="flex items-center gap-2 truncate whitespace-normal"
+        class="flex items-center gap-2 truncate tracking-tight whitespace-normal"
       >
         <span class="truncate">{video.playlist_name}</span>
       </a>
-      <div class="text-muted-foreground flex shrink-0 items-center">
+      <div
+        class="text-muted-foreground flex shrink-0 items-center tracking-tight"
+      >
         {#if video.playlist_sorted_by}
           <Circle
             size="5"

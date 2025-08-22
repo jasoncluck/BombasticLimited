@@ -24,7 +24,7 @@
 <div class="content-table-row flex items-center {className}">
   <div class="max-w-xs min-w-0 justify-center">
     <p
-      class="hidden text-sm lg:line-clamp-2 {!isSelected &&
+      class="hidden text-sm tracking-tight lg:line-clamp-2 {!isSelected &&
         'text-muted-foreground'} leading-relaxed break-words whitespace-normal"
     >
       {video.description}

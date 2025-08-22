@@ -437,7 +437,9 @@
           </div>
         {:else if !isVideoInPlaylist}
           <!-- Show date by default -->
-          <p class="text-muted-foreground pointer-events-none text-xs">
+          <p
+            class="text-muted-foreground pointer-events-none text-xs tracking-tight"
+          >
             {new Date(video.published_at).toLocaleDateString('en-US', {
               year: 'numeric',
               month: 'long',
@@ -447,7 +449,7 @@
         {/if}
 
         <!-- Playlist section with flex-shrink-0 to prevent compression -->
-        {#if isVideoInPlaylist}
+        {#if isVideoInPlaylist && isVideoWithTimestamp(video)}
           <div
             class="text-secondary-foreground hover:text-primary z-10 line-clamp-2 flex flex-shrink-0 items-center gap-2 py-2 text-xs"
           >
@@ -462,9 +464,13 @@
                 href={`playlist/${video.playlist_short_id}`}
                 class="flex cursor-pointer items-center gap-2 truncate whitespace-normal"
               >
-                <span class="overflow-auto">{video.playlist_name}</span>
+                <span class="overflow-auto text-xs tracking-tight"
+                  >{video.playlist_name}</span
+                >
               </a>
-              <div class="text-muted-foreground flex shrink-0 items-center">
+              <div
+                class="text-muted-foreground flex shrink-0 items-center tracking-tight"
+              >
                 {#if video.playlist_sorted_by}
                   <div class="flex shrink-0 items-center">
                     <span class="truncate text-xs">

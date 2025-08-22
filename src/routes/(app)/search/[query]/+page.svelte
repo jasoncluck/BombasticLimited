@@ -72,7 +72,7 @@
         <a
           class={getContentView(mediaQueryState, userProfile) === 'TABLE'
             ? 'header-link-sticky'
-            : 'header-link mb-1'}
+            : 'header-link'}
           href={`/search/${searchString}/playlists`}
         >
           Playlists
@@ -96,7 +96,7 @@
             href={`${page.url}/${source}`}
             class={getContentView(mediaQueryState, userProfile) === 'TABLE'
               ? 'header-link-sticky'
-              : 'header-link mb-1'}
+              : 'header-link '}
           >
             {SOURCE_INFO[source].displayName}
           </a>
