@@ -154,19 +154,35 @@ SET
   search_path = '' AS $$
 DECLARE
   job_record RECORD;
+  entity_exists boolean := FALSE;
+  entity_updated boolean := FALSE;
+  playlist_id_bigint bigint;
 BEGIN
-  -- Get job details and delete in one transaction
-  DELETE FROM "public"."image_processing_jobs"
-  WHERE id = job_id
-  RETURNING entity_type, entity_id, image_type INTO job_record;
+  -- Get job details before any updates
+  SELECT entity_type, entity_id, image_type INTO job_record
+  FROM "public"."image_processing_jobs"
+  WHERE id = job_id;
   
   IF NOT FOUND THEN
+    RAISE WARNING 'Job % not found', job_id;
     RETURN FALSE;
   END IF;
   
-  -- Update entity with new image paths
+  -- Update entity FIRST, then delete job
+  -- This prevents orphaned jobs if entity update fails
   IF job_record.entity_type = 'video' THEN
     IF job_record.image_type = 'thumbnail' THEN
+      -- Verify video exists before updating
+      SELECT EXISTS (
+        SELECT 1 FROM "public"."videos" WHERE id = job_record.entity_id
+      ) INTO entity_exists;
+      
+      IF NOT entity_exists THEN
+        RAISE WARNING 'Video entity % not found for job %', job_record.entity_id, job_id;
+        RETURN FALSE;
+      END IF;
+      
+      -- Update video entity
       UPDATE "public"."videos"
       SET 
         thumbnail_webp_url = COALESCE(webp_path, thumbnail_webp_url),
@@ -174,17 +190,58 @@ BEGIN
         image_processing_status = 'completed'::public.image_processing_status,
         image_processing_updated_at = now()
       WHERE id = job_record.entity_id;
+      
+      GET DIAGNOSTICS entity_updated = ROW_COUNT > 0;
     END IF;
   ELSIF job_record.entity_type = 'playlist' THEN
-    -- For playlists: WebP is primary, AVIF is optimization
+    -- Safely convert entity_id to bigint with proper error handling
+    BEGIN
+      playlist_id_bigint := job_record.entity_id::bigint;
+    EXCEPTION
+      WHEN invalid_text_representation THEN
+        RAISE WARNING 'Invalid playlist ID format % for job %', job_record.entity_id, job_id;
+        RETURN FALSE;
+    END;
+    
+    -- Verify playlist exists before updating
+    SELECT EXISTS (
+      SELECT 1 FROM "public"."playlists" WHERE id = playlist_id_bigint
+    ) INTO entity_exists;
+    
+    IF NOT entity_exists THEN
+      RAISE WARNING 'Playlist entity % not found for job %', playlist_id_bigint, job_id;
+      RETURN FALSE;
+    END IF;
+    
+    -- Update playlist entity
     UPDATE "public"."playlists"
     SET 
       image_webp_url = COALESCE(webp_path, image_webp_url),
       image_avif_url = COALESCE(avif_path, image_avif_url),
       image_processing_status = 'completed',
       image_processing_updated_at = now()
-    WHERE id = job_record.entity_id::bigint;
+    WHERE id = playlist_id_bigint;
+    
+    GET DIAGNOSTICS entity_updated = ROW_COUNT > 0;
+  ELSE
+    RAISE WARNING 'Unknown entity type % for job %', job_record.entity_type, job_id;
+    RETURN FALSE;
   END IF;
+  
+  -- Verify entity was actually updated
+  IF NOT entity_updated THEN
+    RAISE WARNING 'Failed to update entity % (type: %) for job %', 
+      job_record.entity_id, job_record.entity_type, job_id;
+    RETURN FALSE;
+  END IF;
+  
+  -- Only remove job after successful entity update
+  DELETE FROM "public"."image_processing_jobs"
+  WHERE id = job_id;
+  
+  -- Log successful completion
+  RAISE LOG 'Successfully completed job % for % %', 
+    job_id, job_record.entity_type, job_record.entity_id;
   
   RETURN TRUE;
 END;

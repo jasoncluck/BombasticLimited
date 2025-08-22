@@ -91,34 +91,94 @@ SET
   search_path = '' AS $$
 DECLARE
   job_record RECORD;
+  entity_exists boolean := FALSE;
+  entity_updated boolean := FALSE;
+  playlist_id_bigint bigint;
 BEGIN
-  -- Get job details and validate worker in one operation
-  DELETE FROM "public"."image_processing_jobs"
-  WHERE id = job_id AND worker_id = p_worker_id
-  RETURNING entity_type, entity_id, image_type INTO job_record;
+  -- Start transaction to ensure atomicity
+  -- Get job details and verify worker before any updates
+  SELECT entity_type, entity_id, image_type, worker_id INTO job_record
+  FROM "public"."image_processing_jobs"
+  WHERE id = job_id;
   
   IF NOT FOUND THEN
     RETURN FALSE;
   END IF;
   
-  -- Update entity with new image paths
-  IF job_record.entity_type = 'video' AND job_record.image_type = 'thumbnail' THEN
-    UPDATE "public"."videos"
-    SET 
-      thumbnail_webp_url = COALESCE(webp_path, thumbnail_webp_url),
-      thumbnail_avif_url = COALESCE(avif_path, thumbnail_avif_url),
-      image_processing_status = 'completed'::public.image_processing_status,
-      image_processing_updated_at = now()
-    WHERE id = job_record.entity_id;
+  --  Update entity FIRST, then delete job
+  -- This prevents orphaned jobs if entity update fails
+  IF job_record.entity_type = 'video' THEN
+    IF job_record.image_type = 'thumbnail' THEN
+      -- Verify video exists before updating
+      SELECT EXISTS (
+        SELECT 1 FROM "public"."videos" WHERE id = job_record.entity_id
+      ) INTO entity_exists;
+      
+      IF NOT entity_exists THEN
+        RAISE WARNING 'Video entity % not found for job %', job_record.entity_id, job_id;
+        RETURN FALSE;
+      END IF;
+      
+      -- Update video entity
+      UPDATE "public"."videos"
+      SET 
+        thumbnail_webp_url = COALESCE(webp_path, thumbnail_webp_url),
+        thumbnail_avif_url = COALESCE(avif_path, thumbnail_avif_url),
+        image_processing_status = 'completed'::public.image_processing_status,
+        image_processing_updated_at = now()
+      WHERE id = job_record.entity_id;
+      
+      GET DIAGNOSTICS entity_updated = ROW_COUNT > 0;
+    END IF;
   ELSIF job_record.entity_type = 'playlist' THEN
+    -- Safely convert entity_id to bigint with proper error handling
+    BEGIN
+      playlist_id_bigint := job_record.entity_id::bigint;
+    EXCEPTION
+      WHEN invalid_text_representation THEN
+        RAISE WARNING 'Invalid playlist ID format % for job %', job_record.entity_id, job_id;
+        RETURN FALSE;
+    END;
+    
+    -- Verify playlist exists before updating
+    SELECT EXISTS (
+      SELECT 1 FROM "public"."playlists" WHERE id = playlist_id_bigint
+    ) INTO entity_exists;
+    
+    IF NOT entity_exists THEN
+      RAISE WARNING 'Playlist entity % not found for job %', playlist_id_bigint, job_id;
+      RETURN FALSE;
+    END IF;
+    
+    -- Update playlist entity
     UPDATE "public"."playlists"
     SET 
       image_webp_url = COALESCE(webp_path, image_webp_url),
       image_avif_url = COALESCE(avif_path, image_avif_url),
       image_processing_status = 'completed',
       image_processing_updated_at = now()
-    WHERE id = job_record.entity_id::bigint;
+    WHERE id = playlist_id_bigint;
+    
+    GET DIAGNOSTICS entity_updated = ROW_COUNT > 0;
+  ELSE
+    RAISE WARNING 'Unknown entity type % for job %', job_record.entity_type, job_id;
+    RETURN FALSE;
   END IF;
+  
+  -- Verify entity was actually updated
+  IF NOT entity_updated THEN
+    RAISE WARNING 'Failed to update entity % (type: %) for job %', 
+      job_record.entity_id, job_record.entity_type, job_id;
+    RETURN FALSE;
+  END IF;
+  
+  -- Only remove job after successful entity update
+  DELETE FROM "public"."image_processing_jobs"
+  WHERE id = job_id;
+  
+  -- Log successful completion
+  RAISE LOG 'Successfully completed job % for % % with worker %', 
+    job_id, job_record.entity_type, job_record.entity_id, p_worker_id;
   
   RETURN TRUE;
 END;
@@ -195,35 +255,98 @@ SET
   SELECT ROW_COUNT();
 $$;
 
--- Optimized function to get worker job statistics
-CREATE OR REPLACE FUNCTION public.get_worker_job_statistics (p_worker_id text DEFAULT NULL) RETURNS TABLE (
-  worker_id text,
-  active_jobs integer,
-  last_poll_time TIMESTAMP WITH TIME ZONE,
-  oldest_job_started TIMESTAMP WITH TIME ZONE
-) LANGUAGE sql SECURITY DEFINER
+-- Function to detect orphaned jobs (jobs that reference non-existent entities)
+CREATE OR REPLACE FUNCTION public.detect_orphaned_image_processing_jobs () RETURNS TABLE (
+  job_id uuid,
+  entity_type text,
+  entity_id text,
+  image_type text,
+  status text,
+  created_at TIMESTAMP WITH TIME ZONE
+) LANGUAGE plpgsql SECURITY DEFINER
 SET
   search_path = '' AS $$
+BEGIN
+  -- Find jobs for videos that no longer exist
+  RETURN QUERY
   SELECT 
-    j.worker_id,
-    COUNT(*)::integer as active_jobs,
-    MAX(j.polling_timestamp) as last_poll_time,
-    MIN(j.processing_started_at) as oldest_job_started
+    j.id,
+    j.entity_type,
+    j.entity_id,
+    j.image_type,
+    j.status,
+    j.created_at
   FROM "public"."image_processing_jobs" j
-  WHERE j.status = 'processing'
-    AND j.worker_id IS NOT NULL
-    AND (p_worker_id IS NULL OR j.worker_id = p_worker_id)
-  GROUP BY j.worker_id
-  ORDER BY active_jobs DESC;
+  WHERE j.entity_type = 'video'
+    AND NOT EXISTS (
+      SELECT 1 FROM "public"."videos" v WHERE v.id = j.entity_id
+    )
+  
+  UNION ALL
+  
+  -- Find jobs for playlists that no longer exist (with safe bigint conversion)
+  SELECT 
+    j.id,
+    j.entity_type,
+    j.entity_id,
+    j.image_type,
+    j.status,
+    j.created_at
+  FROM "public"."image_processing_jobs" j
+  WHERE j.entity_type = 'playlist'
+    AND (
+      j.entity_id !~ '^[0-9]+$' OR  -- Invalid bigint format
+      NOT EXISTS (
+        SELECT 1 FROM "public"."playlists" p 
+        WHERE p.id = j.entity_id::bigint
+      )
+    );
+END;
 $$;
 
--- Add function comments
-COMMENT ON FUNCTION public.get_multiple_image_processing_jobs_with_worker (text, integer) IS 'Atomically get multiple pending jobs and assign to worker (optimized)';
+-- Function to cleanup orphaned jobs
+CREATE OR REPLACE FUNCTION public.cleanup_orphaned_image_processing_jobs () RETURNS integer LANGUAGE plpgsql SECURITY DEFINER
+SET
+  search_path = '' AS $$
+DECLARE
+  deleted_count integer;
+BEGIN
+  -- Delete jobs for videos that no longer exist
+  DELETE FROM "public"."image_processing_jobs" j
+  WHERE j.entity_type = 'video'
+    AND NOT EXISTS (
+      SELECT 1 FROM "public"."videos" v WHERE v.id = j.entity_id
+    );
+  
+  GET DIAGNOSTICS deleted_count = ROW_COUNT;
+  
+  -- Delete jobs for playlists that no longer exist or have invalid IDs
+  DELETE FROM "public"."image_processing_jobs" j
+  WHERE j.entity_type = 'playlist'
+    AND (
+      j.entity_id !~ '^[0-9]+$' OR  -- Invalid bigint format
+      NOT EXISTS (
+        SELECT 1 FROM "public"."playlists" p 
+        WHERE p.id = j.entity_id::bigint
+      )
+    );
+  
+  GET DIAGNOSTICS deleted_count = deleted_count + ROW_COUNT;
+  
+  RAISE LOG 'Cleaned up % orphaned image processing jobs', deleted_count;
+  
+  RETURN deleted_count;
+END;
+$$;
+
+COMMENT ON FUNCTION public.get_multiple_image_processing_jobs_with_worker (text, integer) IS 'Atomically get multiple pending jobs and assign to worker in a single call';
+
+COMMENT ON FUNCTION public.complete_image_processing_job_with_worker (uuid, text, text, text, text) IS 'Mark job as completed with worker validation, entity verification, and atomic updates';
 
 COMMENT ON FUNCTION public.complete_image_processing_job_with_worker (uuid, text, text, text, text) IS 'Complete job with worker validation and atomic deletion (optimized)';
 
-COMMENT ON FUNCTION public.fail_image_processing_job_with_worker (uuid, text, text) IS 'Fail job with worker validation (optimized)';
+COMMENT ON FUNCTION public.cleanup_stale_processing_jobs (integer) IS 'Reset stale processing jobs back to pending status';
 
-COMMENT ON FUNCTION public.cleanup_stale_processing_jobs (integer) IS 'Bulk reset stale processing jobs (optimized SQL function)';
+COMMENT ON FUNCTION public.detect_orphaned_image_processing_jobs () IS 'Find jobs that reference non-existent entities';
 
-COMMENT ON FUNCTION public.get_worker_job_statistics (text) IS 'Get job statistics by worker for monitoring (optimized)';
+COMMENT ON FUNCTION public.cleanup_orphaned_image_processing_jobs () IS 'Remove jobs that reference non-existent entities';
