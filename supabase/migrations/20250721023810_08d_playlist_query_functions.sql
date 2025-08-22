@@ -300,8 +300,9 @@ CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
   total_videos_count bigint,
   current_video_index int2
 )
-SET
-  search_path = '' LANGUAGE sql SECURITY DEFINER AS $$
+SET search_path = '' 
+LANGUAGE sql 
+SECURITY DEFINER AS $$
   WITH playlist_info AS (
     SELECT 
       p.id,
@@ -322,68 +323,73 @@ SET
       p.thumbnail_url,
       p.deleted_at,
       prof.username AS profile_username,
-      CASE WHEN auth.uid() IS NOT NULL THEN up.sorted_by ELSE NULL END AS sorted_by,
-      CASE WHEN auth.uid() IS NOT NULL THEN up.sort_order ELSE NULL END AS sort_order
-    FROM public.playlists p
-    LEFT JOIN public.profiles prof ON p.created_by = prof.id
-    LEFT JOIN public.user_playlists up ON p.id = up.id AND up.user_id = auth.uid()
-    WHERE p.short_id = p_short_id
+      COALESCE(up.sorted_by, 'position'::public.playlist_sorted_by) AS sorted_by,
+      COALESCE(up.sort_order, 'asc'::public.playlist_sort_order) AS sort_order
+      AND p.deleted_at IS NULL
   ),
   target_video AS (
-    SELECT pv.video_position as position
-    FROM public.playlist_videos pv
-    JOIN playlist_info pi ON pv.playlist_id = pi.id
-    WHERE pv.video_id = p_video_id
+    SELECT COALESCE(pv.video_position, 1) as position
+    FROM playlist_info pi
+    LEFT JOIN public.playlist_videos pv ON pv.playlist_id = pi.id AND pv.video_id = p_video_id
   ),
   total_count AS (
     SELECT COUNT(*) as total
     FROM public.playlist_videos pv
     JOIN playlist_info pi ON pv.playlist_id = pi.id
-  ),
-  context_videos AS (
-    SELECT 
-      pi.*,
-      pv.video_id,
-      pv.video_position,
-      v.source,
-      v.title,
-      v.description,
-      v.thumbnail_url,
-      public.select_best_image_format(
-        v.thumbnail_avif_url,
-        v.thumbnail_webp_url,
-        p_preferred_image_format
-      ) as best_video_image_url,
-      v.published_at,
-      v.duration,
-      t.video_start_seconds,
-      t.watched_at,
-      t.updated_at,
-      t.playlist_id AS video_timestamp_playlist_id,
-      t.sorted_by AS video_timestamp_sorted_by,
-      t.sort_order AS video_timestamp_sort_order,
-      (pv.video_id = p_video_id) AS is_current_video,
-      tc.total AS total_videos_count,
-      pv.video_position AS current_video_index
-    FROM playlist_info pi
-    JOIN public.playlist_videos pv ON pi.id = pv.playlist_id
-    JOIN public.videos v ON pv.video_id = v.id
-    LEFT JOIN public.timestamps t ON v.id = t.video_id AND t.user_id = auth.uid()
-    CROSS JOIN total_count tc
-    CROSS JOIN target_video tv
-    WHERE pv.video_position BETWEEN tv.position AND (tv.position + p_context_limit)
-    ORDER BY pv.video_position
   )
   SELECT 
-    id, created_at, name, short_id, created_by, description,
-    best_playlist_image_url, image_processing_status, type, image_properties,
-    youtube_id, thumbnail_url, deleted_at, profile_username, sorted_by, sort_order,
-    video_id, video_position, source, title, description,
-    thumbnail_url, best_video_image_url, published_at, duration,
-    video_start_seconds, watched_at, updated_at,
-    video_timestamp_playlist_id, video_timestamp_sorted_by, video_timestamp_sort_order,
-    is_current_video, total_videos_count, current_video_index
-  FROM context_videos;
+    -- Playlist columns (with proper aliases)
+    pi.id as playlist_id,
+    pi.created_at as playlist_created_at,
+    pi.name as playlist_name,
+    pi.short_id as playlist_short_id,
+    pi.created_by as playlist_created_by,
+    pi.description as playlist_description,
+    pi.best_playlist_image_url as playlist_image_url,
+    pi.image_processing_status as playlist_image_processing_status,
+    pi.type as playlist_type,
+    pi.image_properties as playlist_image_properties,
+    pi.youtube_id as playlist_youtube_id,
+    pi.thumbnail_url as playlist_thumbnail_url,
+    pi.deleted_at as playlist_deleted_at,
+    pi.profile_username,
+    pi.sorted_by as playlist_sorted_by,
+    pi.sort_order as playlist_sort_order,
+    
+    -- Video columns (with proper aliases)
+    pv.video_id,
+    pv.video_position,
+    v.source as video_source,
+    v.title as video_title,
+    v.description as video_description,
+    v.thumbnail_url as video_thumbnail_url,
+    public.select_best_image_format(
+      v.thumbnail_avif_url,
+      v.thumbnail_webp_url,
+      p_preferred_image_format
+    ) as video_image_url,
+    v.published_at as video_published_at,
+    v.duration as video_duration,
+    t.video_start_seconds,
+    t.watched_at as video_watched_at,
+    t.updated_at as video_updated_at,
+    t.playlist_id as video_timestamp_playlist_id,
+    t.sorted_by as video_timestamp_sorted_by,
+    t.sort_order as video_timestamp_sort_order,
+    
+    -- Context columns
+    (pv.video_id = p_video_id) as is_current_video,
+    tc.total as total_videos_count,
+    pv.video_position as current_video_index
+    
+  FROM playlist_info pi
+  JOIN public.playlist_videos pv ON pi.id = pv.playlist_id
+  JOIN public.videos v ON pv.video_id = v.id AND v.pending_delete = FALSE
+  LEFT JOIN public.timestamps t ON v.id = t.video_id AND t.user_id = auth.uid()
+  CROSS JOIN total_count tc
+  CROSS JOIN target_video tv
+  WHERE pv.video_position BETWEEN tv.position AND (tv.position + p_context_limit - 1)
+  ORDER BY pv.video_position;
 $$;
 
 -- Optimized function to get playlist by youtube_id

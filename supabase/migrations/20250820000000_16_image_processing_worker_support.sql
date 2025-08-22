@@ -345,7 +345,27 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.get_multiple_image_processing_jobs_with_worker (text, integer) IS 'Atomically get multiple pending jobs and assign to worker in a single call';
+-- Optimized function to get worker job statistics
+CREATE OR REPLACE FUNCTION public.get_worker_job_statistics (p_worker_id text DEFAULT NULL) RETURNS TABLE (
+  worker_id text,
+  active_jobs integer,
+  last_poll_time TIMESTAMP WITH TIME ZONE,
+  oldest_job_started TIMESTAMP WITH TIME ZONE
+) LANGUAGE sql SECURITY DEFINER
+SET
+  search_path = '' AS $$
+  SELECT 
+    j.worker_id,
+    COUNT(*)::integer as active_jobs,
+    MAX(j.polling_timestamp) as last_poll_time,
+    MIN(j.processing_started_at) as oldest_job_started
+  FROM "public"."image_processing_jobs" j
+  WHERE j.status = 'processing'
+    AND j.worker_id IS NOT NULL
+    AND (p_worker_id IS NULL OR j.worker_id = p_worker_id)
+  GROUP BY j.worker_id
+  ORDER BY active_jobs DESC;
+$$;
 
 COMMENT ON FUNCTION public.complete_image_processing_job_with_worker (uuid, text, text, text, text) IS 'Mark job as completed with worker validation, entity verification, and atomic updates';
 
