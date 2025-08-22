@@ -28,6 +28,7 @@
     isLoading?: boolean;
     // Drag and drop props
     allowVideoReorder?: boolean;
+    isContinueVideos?: boolean;
     index?: number;
     playlist?: Playlist;
     videosCount?: number | null;
@@ -63,6 +64,7 @@
     videosCount,
     videos,
     contentFilter,
+    isContinueVideos,
     onVideosUpdate,
     isCarousel = false,
     slidesInView,
@@ -124,14 +126,6 @@
     return slidesInView.includes(index);
   });
 
-  // Show playlist info when hovering and playlist exists
-  const shouldShowPlaylistInfo = $derived(
-    (isHovered || isSelected || isContextMenuOpen || isDragActive) &&
-      isVideoWithTimestamp(video) &&
-      video.playlist_name &&
-      video.playlist_short_id
-  );
-
   // Show description when hovering but no playlist exists
   const shouldShowDescription = $derived(
     (isHovered || isSelected || isContextMenuOpen || isDragActive) &&
@@ -151,7 +145,7 @@
     const isHoveredCard = hoveredVideo?.id === video.id;
     const isInViewCard = isInView();
 
-    let classes = `group h-64 w-full transform cursor-pointer will-change-transform `;
+    let classes = `group w-full transform cursor-pointer will-change-transform ${isContinueVideos ? 'h-76' : 'h-72 '}`;
 
     // Only apply hover and selected states to cards that are in view
     if (isInViewCard && (isSelectedCard || isHoveredCard)) {
@@ -413,7 +407,7 @@
         {:else if 'watched_at' in video && video.watched_at}
           <div
             class="bg-background-lighter absolute right-0 bottom-0 flex
-            w-full items-center justify-center gap-1 px-1"
+            w-full items-center justify-center px-1"
           >
             <Check class="text-primary" />
             <p class="text-primary text-xs">Watched</p>
@@ -421,55 +415,23 @@
         {/if}
       </div>
 
-      <p class="flex-shrink-0 p-2 text-sm/5 tracking-tight">
+      <p class="mt-2 flex-shrink-0 p-2 text-sm tracking-tight">
         {video.title}
       </p>
 
       <!-- Date/Description section with flex-1 to fill remaining space -->
-      <div class="flex flex-1 flex-col justify-start overflow-hidden px-2 pb-6">
-        {#if shouldShowPlaylistInfo}
-          <!-- Show playlist info when hovering and playlist exists -->
-          <div class="text-secondary-foreground flex flex-col gap-1 text-xs">
-            <div class="flex items-center gap-2">
-              <ListVideo size="14" class="shrink-0" />
-              <span class="truncate font-medium"
-                >{isVideoWithTimestamp(video) ? video.playlist_name : ''}</span
-              >
-            </div>
-            {#if isVideoWithTimestamp(video) && video.playlist_sorted_by}
-              <div class="text-muted-foreground flex items-center gap-1 pl-5">
-                <span class="text-xs">
-                  {getSortDisplayName({
-                    key: video.playlist_sorted_by,
-                    view: 'playlist',
-                  })}
-                </span>
-                {#if video.playlist_sort_order}
-                  {#if video.playlist_sort_order === 'ascending'}
-                    <ArrowUp size="12" class="shrink-0" />
-                    <span class="sr-only">Sorted Ascending</span>
-                  {:else}
-                    <ArrowDown size="12" class="shrink-0" />
-                    <span class="sr-only">Sorted Descending</span>
-                  {/if}
-                {/if}
-              </div>
-            {/if}
-          </div>
-        {:else if shouldShowDescription}
+      <div class="flex flex-1 flex-col justify-start overflow-hidden px-2 pb-2">
+        {#if shouldShowDescription}
           <!-- Show description when hovering and no playlist exists -->
           <div
             class="pointer-events-none line-clamp-3 transform overflow-hidden
-            text-xs leading-normal tracking-tight will-change-transform"
-            style="word-break: normal; overflow-wrap: break-word; hyphens: auto;"
+            text-xs leading-normal tracking-tight break-words will-change-transform"
           >
             {video.description}
           </div>
-        {:else}
+        {:else if !isContinueVideos}
           <!-- Show date by default -->
-          <p
-            class="text-muted-foreground pointer-events-none text-xs leading-5"
-          >
+          <p class="text-muted-foreground pointer-events-none text-xs">
             {new Date(video.published_at).toLocaleDateString('en-US', {
               year: 'numeric',
               month: 'long',
@@ -477,50 +439,50 @@
             })}
           </p>
         {/if}
-      </div>
 
-      <!-- Playlist section with flex-shrink-0 to prevent compression -->
-      {#if isVideoWithTimestamp(video) && video.playlist_name && video.playlist_short_id}
-        <div
-          class="text-secondary-foreground hover:text-primary z-10 mt-1 mb-3 line-clamp-2 flex flex-shrink-0 items-center gap-2 px-2 text-xs"
-        >
-          <ListVideo size="16" class="shrink-0 self-start" />
-          <div class="flex w-full flex-col justify-center gap-2">
-            <a
-              onclick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                goto(`playlist/${video.playlist_short_id}`);
-              }}
-              href={`playlist/${video.playlist_short_id}`}
-              class="flex cursor-pointer items-center gap-2 truncate whitespace-normal"
-            >
-              <span class="truncate">{video.playlist_name}</span>
-            </a>
-            <div class="text-muted-foreground flex shrink-0 items-center">
-              {#if video.playlist_sorted_by}
-                <div class="flex shrink-0 items-center">
-                  <span class="truncate text-xs">
-                    {getSortDisplayName({
-                      key: video.playlist_sorted_by,
-                      view: 'playlist',
-                    })}
-                  </span>
-                  {#if video.playlist_sort_order}
-                    {#if video.playlist_sort_order === 'ascending'}
-                      <ArrowUp size="14" class="ml-1 shrink-0" />
-                      <span class="sr-only">Sorted Ascending</span>
-                    {:else}
-                      <ArrowDown size="14" class="ml-1 shrink-0" />
-                      <span class="sr-only">Sorted Descending</span>
+        <!-- Playlist section with flex-shrink-0 to prevent compression -->
+        {#if isContinueVideos && isVideoWithTimestamp(video) && video.playlist_name && video.playlist_short_id}
+          <div
+            class="text-secondary-foreground hover:text-primary z-10 line-clamp-2 flex flex-shrink-0 items-center gap-2 py-2 text-xs"
+          >
+            <ListVideo size="16" class="mt-2 shrink-0 self-start" />
+            <div class="flex w-full flex-col justify-center gap-2">
+              <a
+                onclick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  goto(`playlist/${video.playlist_short_id}`);
+                }}
+                href={`playlist/${video.playlist_short_id}`}
+                class="flex cursor-pointer items-center gap-2 truncate whitespace-normal"
+              >
+                <span class="overflow-auto">{video.playlist_name}</span>
+              </a>
+              <div class="text-muted-foreground flex shrink-0 items-center">
+                {#if video.playlist_sorted_by}
+                  <div class="flex shrink-0 items-center">
+                    <span class="truncate text-xs">
+                      {getSortDisplayName({
+                        key: video.playlist_sorted_by,
+                        view: 'playlist',
+                      })}
+                    </span>
+                    {#if video.playlist_sort_order}
+                      {#if video.playlist_sort_order === 'ascending'}
+                        <ArrowUp size="14" class="ml-1 shrink-0" />
+                        <span class="sr-only">Sorted Ascending</span>
+                      {:else}
+                        <ArrowDown size="14" class="ml-1 shrink-0" />
+                        <span class="sr-only">Sorted Descending</span>
+                      {/if}
                     {/if}
-                  {/if}
-                </div>
-              {/if}
+                  </div>
+                {/if}
+              </div>
             </div>
           </div>
-        </div>
-      {/if}
+        {/if}
+      </div>
     </div>
   </div>
 {/if}

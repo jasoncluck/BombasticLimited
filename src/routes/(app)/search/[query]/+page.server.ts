@@ -1,6 +1,7 @@
 import { isVideoFilter } from '$lib/components/content/content-filter';
 import { SOURCES } from '$lib/constants/source';
-import { searchPlaylists } from '$lib/supabase/playlists';
+import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
+import { parseImageProperties, searchPlaylists } from '$lib/supabase/playlists';
 import {
   getVideos,
   type SourceVideos,
@@ -58,6 +59,19 @@ export const load: PageServerLoad = async ({
     }),
   ]);
 
+  // Process image URLs in parallel
+  const playlistSearchResultsWithImages = await Promise.all(
+    playlistSearchResults.map(async (p) => {
+      if (!p.image_url) {
+        p.image_url = await getCroppedPlaylistImageUrlServer({
+          thumbnailUrl: p.thumbnail_url ?? undefined,
+          imageProperties: parseImageProperties(p.image_properties),
+        });
+      }
+      return p;
+    })
+  );
+
   // Process source videos
   const sourceVideos: SourceVideos = {
     giantbomb: [],
@@ -83,7 +97,7 @@ export const load: PageServerLoad = async ({
     sourceVideosCount: sourceVideosCount,
     searchString,
     playlistsCount,
-    playlistSearchResults,
+    playlistSearchResults: playlistSearchResultsWithImages,
     contentFilter,
   };
 };

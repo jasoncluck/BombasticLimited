@@ -561,33 +561,30 @@ BEGIN
 END;
 $$;
 
--- Function to update playlist image (WebP-first approach)
-CREATE OR REPLACE FUNCTION public.update_playlist_image (
+CREATE OR REPLACE FUNCTION public.update_playlist_thumbnail (
   p_playlist_id bigint,
   p_thumbnail_url text DEFAULT NULL,
-  p_image_url text DEFAULT NULL,
   p_image_properties jsonb DEFAULT NULL
 ) RETURNS TABLE (
   success boolean,
   playlist_id bigint,
   thumbnail_url text,
-  image_webp_url text,
   error_message text
 ) LANGUAGE plpgsql SECURITY DEFINER
 SET
   search_path = '' AS $$
 DECLARE
   error_msg text := NULL;
-  updated_row record;
-  rows_affected integer;
+  updated_thumbnail_url text;
   current_user_id uuid;
   playlist_owner_id uuid;
+  thumbnail_exists boolean := false;
 BEGIN
   -- Get current authenticated user
   current_user_id := auth.uid();
   IF current_user_id IS NULL THEN
-    error_msg := 'User must be authenticated to update playlist images';
-    RETURN QUERY SELECT false, p_playlist_id, NULL::text, NULL::text, error_msg;
+    error_msg := 'User must be authenticated to update playlist thumbnails';
+    RETURN QUERY SELECT false, p_playlist_id, NULL::text, error_msg;
     RETURN;
   END IF;
 
@@ -599,94 +596,75 @@ BEGIN
   
   IF playlist_owner_id IS NULL THEN
     error_msg := format('Playlist with ID %s not found', p_playlist_id);
-    RETURN QUERY SELECT false, p_playlist_id, NULL::text, NULL::text, error_msg;
+    RETURN QUERY SELECT false, p_playlist_id, NULL::text, error_msg;
     RETURN;
   END IF;
 
   -- Verify user owns the playlist (security check)
   IF playlist_owner_id != current_user_id THEN
-    error_msg := 'You can only update images for your own playlists';
-    RETURN QUERY SELECT false, p_playlist_id, NULL::text, NULL::text, error_msg;
+    error_msg := 'You can only update thumbnails for your own playlists';
+    RETURN QUERY SELECT false, p_playlist_id, NULL::text, error_msg;
     RETURN;
   END IF;
 
-  -- Update the playlist based on what's being set (WebP-first approach)
-  IF p_image_url IS NOT NULL AND p_thumbnail_url IS NOT NULL THEN
-    -- Setting a processed image from a thumbnail URL - keep both references
-    UPDATE public.playlists pl
-    SET 
-      thumbnail_url = p_thumbnail_url,           -- Set the direct thumbnail URL
-      image_webp_url = p_image_url,              -- Set the processed WebP image
-      image_avif_url = NULL,                     -- Clear AVIF (will be generated later)
-      image_properties = p_image_properties,
-      image_processing_status = 'pending',       -- Mark for AVIF generation
-      image_processing_updated_at = now()
-    WHERE pl.id = p_playlist_id;
+  -- Verify thumbnail_url exists in videos table if provided
+  IF p_thumbnail_url IS NOT NULL THEN
+    SELECT EXISTS (
+      SELECT 1 
+      FROM public.videos v 
+      WHERE v.thumbnail_url = p_thumbnail_url
+    ) INTO thumbnail_exists;
     
-  ELSIF p_image_url IS NOT NULL THEN
-    -- Setting a custom cropped image without thumbnail URL reference - clear thumbnail
-    UPDATE public.playlists pl
-    SET 
-      thumbnail_url = NULL,
-      image_webp_url = p_image_url,             -- Set the processed WebP image
-      image_avif_url = NULL,                    -- Clear AVIF (will be generated later)
-      image_properties = p_image_properties,
-      image_processing_status = 'pending',      -- Mark for AVIF generation
-      image_processing_updated_at = now()
-    WHERE pl.id = p_playlist_id;
-    
-  ELSIF p_thumbnail_url IS NOT NULL THEN
-    -- Setting a thumbnail URL - clear custom image and set thumbnail reference
-    UPDATE public.playlists pl
+    IF NOT thumbnail_exists THEN
+      error_msg := format('Thumbnail URL %s not found in videos table', p_thumbnail_url);
+      RETURN QUERY SELECT false, p_playlist_id, NULL::text, error_msg;
+      RETURN;
+    END IF;
+  END IF;
+
+  -- Update the playlist thumbnail and properties
+  IF p_thumbnail_url IS NOT NULL THEN
+    -- Setting a thumbnail URL - clear processed images and set thumbnail reference
+    UPDATE public.playlists
     SET 
       thumbnail_url = p_thumbnail_url,
-      image_webp_url = NULL,  -- Clear WebP
-      image_avif_url = NULL,  -- Clear AVIF
+      image_webp_url = NULL,  -- Clear WebP (will be generated later)
+      image_avif_url = NULL,  -- Clear AVIF (will be generated later)
       image_properties = p_image_properties,
       image_processing_status = 'pending',
       image_processing_updated_at = now()
-    WHERE pl.id = p_playlist_id;
-    
+    WHERE id = p_playlist_id;
   ELSE
-    -- Both p_thumbnail_url and p_image_url are NULL - reset everything
-    UPDATE public.playlists pl
+    -- p_thumbnail_url is NULL - reset everything
+    UPDATE public.playlists
     SET 
       thumbnail_url = NULL,
-      image_webp_url = NULL,  -- Clear WebP
-      image_avif_url = NULL,  -- Clear AVIF
+      image_webp_url = NULL,
+      image_avif_url = NULL,
       image_properties = NULL,
       image_processing_status = NULL,
       image_processing_updated_at = now()
-    WHERE pl.id = p_playlist_id;
+    WHERE id = p_playlist_id;
   END IF;
   
-  GET DIAGNOSTICS rows_affected = ROW_COUNT;
-  
-  IF rows_affected = 0 THEN
-    error_msg := format('Failed to update playlist with ID %s', p_playlist_id);
-    RETURN QUERY SELECT false, p_playlist_id, NULL::text, NULL::text, error_msg;
-    RETURN;
-  END IF;
-  
-  -- Get the actual updated values
-  SELECT pl.thumbnail_url, pl.image_webp_url
-  INTO updated_row
+  -- Get the updated thumbnail_url
+  SELECT pl.thumbnail_url
+  INTO updated_thumbnail_url
   FROM public.playlists pl
   WHERE pl.id = p_playlist_id;
   
-  -- Return success result with actual stored values
+  -- Return success result with actual stored thumbnail_url
   RETURN QUERY SELECT 
     true, 
     p_playlist_id, 
-    updated_row.thumbnail_url, 
-    updated_row.image_webp_url,
+    updated_thumbnail_url,
     NULL::text;
 
 EXCEPTION
   -- Handle any errors
   WHEN OTHERS THEN
     error_msg := format('Unexpected error: %s', SQLERRM);
-    RETURN QUERY SELECT false, p_playlist_id, NULL::text, NULL::text, error_msg;
+    RETURN QUERY SELECT false, p_playlist_id, NULL::text, error_msg;
     RETURN;
 END;
 $$;
@@ -846,6 +824,8 @@ DECLARE
   max_position int2;
   current_user_id uuid;
   playlist_owner_id uuid;
+  playlist_thumbnail_url text;
+  should_clear_playlist_image boolean := false;
 BEGIN
   -- Get the current authenticated user
   current_user_id := auth.uid();
@@ -861,9 +841,9 @@ BEGIN
     RAISE EXCEPTION 'Video IDs array cannot be empty';
   END IF;
 
-  -- Lock the playlist and get owner info to prevent concurrent modifications
-  SELECT pl.created_by 
-  INTO playlist_owner_id
+  -- Lock the playlist and get owner info and thumbnail_url to prevent concurrent modifications
+  SELECT pl.created_by, pl.thumbnail_url
+  INTO playlist_owner_id, playlist_thumbnail_url
   FROM public.playlists pl WHERE pl.id = p_playlist_id FOR UPDATE;
   
   -- Check if playlist exists
@@ -878,6 +858,16 @@ BEGIN
 
   -- Start a transaction to ensure consistency
   BEGIN
+    -- Check if any of the videos to be deleted have a thumbnail_url that matches the playlist's thumbnail_url
+    IF playlist_thumbnail_url IS NOT NULL THEN
+      SELECT EXISTS (
+        SELECT 1 
+        FROM public.videos v 
+        WHERE v.id = ANY(p_video_ids) 
+        AND v.thumbnail_url = playlist_thumbnail_url
+      ) INTO should_clear_playlist_image;
+    END IF;
+
     -- Get the positions of all videos to be deleted and store in a jsonb map
     SELECT jsonb_object_agg(pv.video_id, pv.video_position)
     INTO video_positions
@@ -913,6 +903,19 @@ BEGIN
         RETURN NEXT;
       END IF;
     END LOOP;
+
+    -- Clear playlist image fields if any deleted video's thumbnail matches playlist thumbnail
+    IF should_clear_playlist_image THEN
+      UPDATE public.playlists
+      SET 
+        thumbnail_url = NULL,
+        image_webp_url = NULL,
+        image_avif_url = NULL,
+        image_properties = NULL,
+        image_processing_status = NULL,
+        image_processing_updated_at = now()
+      WHERE id = p_playlist_id;
+    END IF;
     
     -- Sort the deleted positions to process them in ascending order
     SELECT array_agg(pos ORDER BY pos)

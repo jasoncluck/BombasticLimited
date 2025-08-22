@@ -8,7 +8,7 @@
   let {
     video,
     videos,
-    profilePlaylist,
+    playlist,
     contentFilter,
     supabase,
     session,
@@ -22,8 +22,8 @@
       <VideoPlayer
         {video}
         {contentFilter}
-        baseUrl={`/playlist/${profilePlaylist.short_id}`}
-        playlist={profilePlaylist}
+        baseUrl={`/playlist/${playlist.short_id}`}
+        {playlist}
         {supabase}
         {session}
       />
@@ -33,11 +33,11 @@
   {#if videos.length > 0}
     <div class="flex flex-col">
       <div class="mb-4 flex items-center gap-4">
-        {#if 'processedImageUrl' in profilePlaylist && profilePlaylist.processedImageUrl}
+        {#if playlist.image_url}
           <img
-            src={(profilePlaylist as Playlist).processedImageUrl}
+            src={playlist.image_url}
             class="h-20 w-20 flex-shrink-0"
-            alt={`Image for playlist: ${profilePlaylist.name}`}
+            alt={`Image for playlist: ${playlist.name}`}
           />
         {:else}
           <ListVideo class="!h-20 !w-20 flex-shrink-0" />
@@ -46,9 +46,9 @@
           <p class="text-muted-foreground text-sm tracking-tight">Next up</p>
           <a
             class="cursor-pointer self-start text-3xl font-semibold hover:underline lg:text-4xl"
-            href={`/playlist/${profilePlaylist.short_id}`}
+            href={`/playlist/${playlist.short_id}`}
           >
-            {profilePlaylist.name}
+            {playlist.name}
           </a>
         </div>
       </div>
@@ -56,7 +56,7 @@
         tilesDisplay="TILES"
         {videos}
         {contentFilter}
-        playlist={profilePlaylist}
+        {playlist}
         {userProfile}
         {supabase}
         {session}

@@ -117,7 +117,7 @@
             <div class="flex flex-col gap-6 @2xl:flex-row @2xl:items-end">
               <div class="flex justify-center">
                 <div
-                  class="flex h-56 min-h-32 w-56 min-w-32 items-center justify-center overflow-hidden rounded-lg border-none bg-transparent p-0 {isPlaylistOwner &&
+                  class="flex h-56 min-h-32 w-56 min-w-32 items-center justify-center overflow-hidden border-none bg-transparent p-0 {isPlaylistOwner &&
                     'cursor-pointer'}"
                 >
                   {#if playlist.image_url}

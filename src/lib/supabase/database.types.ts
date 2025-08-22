@@ -1226,27 +1226,25 @@ export type Database = {
         Args: { playlist_id_param: number };
         Returns: undefined;
       };
-      update_playlist_image: {
-        Args: {
-          p_image_properties?: Json;
-          p_image_url?: string;
-          p_playlist_id: number;
-          p_thumbnail_url?: string;
-        };
-        Returns: {
-          error_message: string;
-          image_webp_url: string;
-          playlist_id: number;
-          success: boolean;
-          thumbnail_url: string;
-        }[];
-      };
       update_playlist_position: {
         Args: { p_new_position: number; p_playlist_id: number };
         Returns: {
           playlist_id: number;
           playlist_position: number;
           success: boolean;
+        }[];
+      };
+      update_playlist_thumbnail: {
+        Args: {
+          p_image_properties?: Json;
+          p_playlist_id: number;
+          p_thumbnail_url?: string;
+        };
+        Returns: {
+          error_message: string;
+          playlist_id: number;
+          success: boolean;
+          thumbnail_url: string;
         }[];
       };
       update_playlist_videos_positions: {

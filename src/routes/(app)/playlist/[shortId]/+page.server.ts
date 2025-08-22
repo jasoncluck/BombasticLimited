@@ -2,7 +2,7 @@ import {
   getPlaylistData,
   isUserPlaylist,
   parseImageProperties,
-  updatePlaylistImage,
+  updatePlaylistThumbnail,
   updatePlaylistInfo,
   type PlaylistImageProperties,
   type PlaylistVideo,
@@ -70,12 +70,12 @@ export const load: PageServerLoad = async ({
   }
 
   // If the image URL hasn't been uploaded yet process it
-  // if (!playlist.image_url) {
-  //   playlist.image_url = await getCroppedPlaylistImageUrlServer({
-  //     thumbnailUrl: playlist.thumbnail_url ?? undefined,
-  //     imageProperties: parseImageProperties(playlist.image_properties),
-  //   });
-  // }
+  if (!playlist.image_url) {
+    playlist.image_url = await getCroppedPlaylistImageUrlServer({
+      thumbnailUrl: playlist.thumbnail_url ?? undefined,
+      imageProperties: parseImageProperties(playlist.image_properties),
+    });
+  }
 
   const [form, creatorProfile] = await Promise.all([
     superValidate(
@@ -212,9 +212,8 @@ export const actions: Actions = {
     }
 
     if (isDeletingPlaylistImage) {
-      await updatePlaylistImage({
+      await updatePlaylistThumbnail({
         playlistId: id,
-        processedPlaylistImage: null,
         imageProperties: null,
         supabase,
       });
@@ -239,16 +238,10 @@ export const actions: Actions = {
       const hasThumbnailChanged =
         currentPlaylist.thumbnail_url !== thumbnail_url;
 
-      // Only process image if something image-related has changed
+      // Only update image if something image-related has changed
       if (hasImagePropertiesChanged || hasThumbnailChanged) {
-        const processedPlaylistImage = await getCroppedPlaylistImageUrlServer({
-          thumbnailUrl: thumbnail_url,
-          imageProperties: image_properties,
-        });
-
-        await updatePlaylistImage({
+        await updatePlaylistThumbnail({
           playlistId: id,
-          processedPlaylistImage,
           imageProperties: image_properties,
           thumbnailUrl: thumbnail_url,
           supabase,

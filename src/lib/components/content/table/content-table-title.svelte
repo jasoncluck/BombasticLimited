@@ -4,25 +4,35 @@
   import { goto } from '$app/navigation';
   import { getSortDisplayName } from '../content-filter';
 
-  let { video }: { video: Video } = $props();
+  let { video, isContinueVideos }: { video: Video; isContinueVideos: boolean } =
+    $props();
+
+  const isVideoInPlaylist = $derived(
+    isContinueVideos &&
+      isVideoWithTimestamp(video) &&
+      video.playlist_name &&
+      video.playlist_short_id
+  );
 </script>
 
 <div
-  class="content-table-row flex flex-col justify-center gap-1 overflow-hidden sm:w-auto sm:max-w-sm sm:min-w-[170px]"
+  class="content-table-row flex w-[160px] flex-col justify-center gap-1 overflow-hidden sm:max-w-sm sm:min-w-[170px]"
 >
-  <p
-    class="text-muted-foreground pointer-events-none line-clamp-1 transform text-xs"
-  >
-    {new Date(video?.published_at).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })}
-  </p>
+  {#if !isContinueVideos}
+    <p
+      class="text-muted-foreground pointer-events-none line-clamp-1 transform text-xs"
+    >
+      {new Date(video?.published_at).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })}
+    </p>
+  {/if}
   <p class="line-clamp-3 text-sm leading-5 break-words whitespace-normal">
     {video.title}
   </p>
-  {#if isVideoWithTimestamp(video) && video.playlist_name && video.playlist_short_id}
+  {#if isVideoInPlaylist && isVideoWithTimestamp(video)}
     <div
       class="text-secondary-foreground hover:text-primary mt-1 flex items-center gap-2 text-xs transition-colors"
     >

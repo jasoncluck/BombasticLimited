@@ -1,9 +1,13 @@
 import { isPlaylistVideosFilter } from '$lib/components/content/content-filter';
-import { getPlaylistVideoContext } from '$lib/supabase/playlists';
-import { incrementVideoView, isVideoWithTimestamp } from '$lib/supabase/videos';
+import {
+  getPlaylistVideoContext,
+  parseImageProperties,
+} from '$lib/supabase/playlists';
+import { incrementVideoView } from '$lib/supabase/videos';
 import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
+import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
 
 export const load: PageServerLoad = async ({
   locals: { supabase },
@@ -38,7 +42,7 @@ export const load: PageServerLoad = async ({
   });
 
   const {
-    playlist: profilePlaylist,
+    playlist,
     currentVideo,
     nextVideos,
     totalVideosCount,
@@ -46,7 +50,7 @@ export const load: PageServerLoad = async ({
     nextVideo,
   } = videoContextResult;
 
-  if (!profilePlaylist) {
+  if (!playlist) {
     console.error('Could not find playlist with that ID, redirecting to video');
     redirect(303, `/video/${params.videoId}`);
   }
@@ -56,12 +60,20 @@ export const load: PageServerLoad = async ({
     redirect(303, `/video/${params.videoId}`);
   }
 
+  // If the image URL hasn't been uploaded yet process it
+  if (!playlist.image_url) {
+    playlist.image_url = await getCroppedPlaylistImageUrlServer({
+      thumbnailUrl: playlist.thumbnail_url ?? undefined,
+      imageProperties: parseImageProperties(playlist.image_properties),
+    });
+  }
+
   incrementVideoView({ videoId, supabase });
 
   return {
     video: currentVideo,
     videos: nextVideos,
-    profilePlaylist,
+    playlist,
     contentFilter,
     timestampStartSeconds: currentVideo.video_start_seconds
       ? currentVideo.video_start_seconds

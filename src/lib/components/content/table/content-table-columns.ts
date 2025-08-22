@@ -17,6 +17,7 @@ export function createContentColumns({
   getContentFilter,
   getCanHover,
   getIsSm,
+  getIsContinueVideos,
   sectionId,
   supabase,
   session,
@@ -26,6 +27,7 @@ export function createContentColumns({
   getVideos: () => Video[];
   getCanHover: () => boolean;
   getIsSm: () => boolean;
+  getIsContinueVideos: () => boolean;
   getContentFilter: () => CombinedContentFilter;
   sectionId: string;
   session: Session | null;
@@ -69,6 +71,7 @@ export function createContentColumns({
         const video = row.original;
         return renderComponent(ContentTableTitle, {
           video,
+          isContinueVideos: getIsContinueVideos(),
         });
       },
     },

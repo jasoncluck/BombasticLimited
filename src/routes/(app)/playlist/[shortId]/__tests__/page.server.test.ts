@@ -6,7 +6,7 @@ import {
   getPlaylistData,
   isUserPlaylist,
   updatePlaylistInfo,
-  updatePlaylistImage,
+  updatePlaylistThumbnail,
 } from '$lib/supabase/playlists';
 import { getPaginationQueryParams } from '$lib/components/pagination/pagination';
 import { parseImageProperties } from '$lib/components/playlist/playlist';
@@ -86,7 +86,7 @@ const mockZod = vi.mocked(zod);
 const mockGetPlaylistData = vi.mocked(getPlaylistData);
 const mockIsUserPlaylist = vi.mocked(isUserPlaylist);
 const mockUpdatePlaylistInfo = vi.mocked(updatePlaylistInfo);
-const mockUpdatePlaylistImage = vi.mocked(updatePlaylistImage);
+const mockUpdatePlaylistImage = vi.mocked(updatePlaylistThumbnail);
 const mockGetPaginationQueryParams = vi.mocked(getPaginationQueryParams);
 const mockParseImageProperties = vi.mocked(parseImageProperties);
 const mockGetCroppedPlaylistImageUrlServer = vi.mocked(

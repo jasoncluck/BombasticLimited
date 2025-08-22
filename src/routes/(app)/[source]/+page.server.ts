@@ -9,9 +9,11 @@ import {
   DEFAULT_NUM_PLAYLISTS_OVERVIEW,
   getPlaylistDataByYoutubeId,
   getPlaylistsForUsername,
+  parseImageProperties,
 } from '$lib/supabase/playlists';
 import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import type { PageServerLoad } from './$types';
+import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
 
 export const load: PageServerLoad = async ({
   params,
@@ -94,12 +96,25 @@ export const load: PageServerLoad = async ({
     (result) => result !== null
   );
 
+  // Process image URLs in parallel
+  const sourcePlaylistsWithImages = await Promise.all(
+    sourcePlaylistsData.playlists.map(async (sp) => {
+      if (!sp.image_url) {
+        sp.image_url = await getCroppedPlaylistImageUrlServer({
+          thumbnailUrl: sp.thumbnail_url ?? undefined,
+          imageProperties: parseImageProperties(sp.image_properties),
+        });
+      }
+      return sp;
+    })
+  );
+
   // Return playlists directly with optimized image paths from database
   // The new playlist-image component will handle fallback and processing
   return {
     videos: videos ?? [],
     highlightPlaylists,
-    processedSourcePlaylists: sourcePlaylistsData.playlists, // Use raw playlists with optimized paths
+    processedSourcePlaylists: sourcePlaylistsWithImages, // Use raw playlists with optimized paths
     source,
     contentFilter,
   };

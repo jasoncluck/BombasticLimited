@@ -91,6 +91,7 @@
       getCanHover: () => mediaQueryState.canHover,
       getIsSm: () => mediaQueryState.isSm ?? true,
       getContentFilter: () => contentFilter,
+      getIsContinueVideos: () => isContinueVideos,
       sectionId,
       supabase,
       session,

@@ -1,8 +1,12 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getUserPlaylists } from '$lib/supabase/playlists';
+import {
+  getUserPlaylists,
+  parseImageProperties,
+} from '$lib/supabase/playlists';
 import { getProfile } from '$lib/supabase/user-profiles';
 import { detectOptimalFormat } from '$lib/utils/image-format-detection';
+import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
 
 export const GET: RequestHandler = async ({ locals, request }) => {
   const { session, supabase } = locals;
@@ -23,9 +27,22 @@ export const GET: RequestHandler = async ({ locals, request }) => {
     getProfile({ supabase, session }),
   ]);
 
+  // Process image URLs in parallel
+  const playlistsWithImages = await Promise.all(
+    userPlaylists.map(async (up) => {
+      if (!up.image_url) {
+        up.image_url = await getCroppedPlaylistImageUrlServer({
+          thumbnailUrl: up.thumbnail_url ?? undefined,
+          imageProperties: parseImageProperties(up.image_properties),
+        });
+      }
+      return up;
+    })
+  );
+
   return json(
     {
-      playlists: userPlaylists ?? [],
+      playlists: playlistsWithImages ?? [],
       userProfile,
       userPlaylistsCount: userPlaylistsCount ?? 0,
     },
