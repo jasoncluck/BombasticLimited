@@ -189,7 +189,7 @@
                       </div>
                     {:else}
                       <div class="flex items-center gap-2">
-                        <Avatar.Root class="h-6 w-6">
+                        <Avatar.Root class="h-7 w-7">
                           <Avatar.Image
                             src={creatorProfile?.avatar_url}
                             alt="{playlist.profile_username} avatar"

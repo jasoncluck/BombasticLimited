@@ -3,7 +3,7 @@
 -- Dependencies: Requires base tables from 03_base_tables.sql (playlists, playlist_videos, user_playlists)
 -- This migration includes playlist data access and search functions
 -- ============================================================================
--- Helper function to select best available image format (unified for videos and playlists)
+-- Optimized helper function to select best available image format
 CREATE OR REPLACE FUNCTION public.select_best_image_format (
   avif_url text,
   webp_url text,
@@ -12,12 +12,12 @@ CREATE OR REPLACE FUNCTION public.select_best_image_format (
 SET
   search_path = '' AS $$
 BEGIN
-  -- Start from preferred format and fallback through the chain
+  -- Optimized CASE statement with early returns
   CASE preferred_format
     WHEN 'avif' THEN
-      RETURN COALESCE(avif_url, webp_url );
+      RETURN COALESCE(avif_url, webp_url);
     WHEN 'webp' THEN
-      RETURN COALESCE(webp_url,  avif_url);
+      RETURN COALESCE(webp_url, avif_url);
     ELSE
       -- Default fallback order
       RETURN COALESCE(avif_url, webp_url);
@@ -25,7 +25,7 @@ BEGIN
 END;
 $$;
 
--- Function to get comprehensive playlist data with pagination and sorting
+-- Optimized function to get comprehensive playlist data with pagination and sorting
 CREATE OR REPLACE FUNCTION public.get_playlist_data (
   p_short_id text DEFAULT NULL,
   p_youtube_id text DEFAULT NULL,
@@ -88,141 +88,126 @@ BEGIN
     RAISE EXCEPTION 'Exactly one of p_short_id or p_youtube_id must be provided';
   END IF;
   
-  -- Get the playlist data by either short_id or youtube_id
-  SELECT
-    p.id,
-    p.created_at,
-    p.name,
-    p.short_id,
-    p.created_by,
-    p.description,
-    public.select_best_image_format(
-      p.image_avif_url,
-      p.image_webp_url,
-      p_preferred_image_format
-    ) as best_playlist_image_url,
-    p.image_processing_status,
-    p.type,
-    p.image_properties,
-    p.youtube_id,
-    p.thumbnail_url,
-    p.deleted_at,
-    p.duration_seconds,
-    prof.username AS profile_username,
-    COALESCE(up.sorted_by, 'playlistOrder'::public.playlist_sorted_by) as sorted_by,
-    COALESCE(up.sort_order, 'ascending'::public.playlist_sort_order) as sort_order
-  INTO playlist_record
-  FROM public.playlists p
-  LEFT JOIN public.profiles prof ON p.created_by = prof.id
-  LEFT JOIN public.user_playlists up ON up.id = p.id AND up.user_id = p_user_id
-  WHERE ((p_short_id IS NOT NULL AND p.short_id = p_short_id)
-     OR (p_youtube_id IS NOT NULL AND p.youtube_id = p_youtube_id));
+  -- Get playlist data, profile, and user settings in one optimized query
+  WITH playlist_data AS (
+    SELECT
+      p.id,
+      p.created_at,
+      p.name,
+      p.short_id,
+      p.created_by,
+      p.description,
+      public.select_best_image_format(
+        p.image_avif_url,
+        p.image_webp_url,
+        p_preferred_image_format
+      ) as best_playlist_image_url,
+      p.image_processing_status,
+      p.type,
+      p.image_properties,
+      p.youtube_id,
+      p.thumbnail_url,
+      p.deleted_at,
+      p.duration_seconds,
+      prof.username AS profile_username,
+      COALESCE(up.sorted_by, 'playlistOrder'::public.playlist_sorted_by) as sorted_by,
+      COALESCE(up.sort_order, 'ascending'::public.playlist_sort_order) as sort_order,
+      -- Get video count in the same query
+      (
+        SELECT COUNT(*)
+        FROM public.playlist_videos pv
+        JOIN public.videos v ON pv.video_id = v.id
+        WHERE pv.playlist_id = p.id AND v.pending_delete = FALSE
+      ) as video_count
+    FROM public.playlists p
+    LEFT JOIN public.profiles prof ON p.created_by = prof.id
+    LEFT JOIN public.user_playlists up ON up.id = p.id AND up.user_id = p_user_id
+    WHERE ((p_short_id IS NOT NULL AND p.short_id = p_short_id)
+       OR (p_youtube_id IS NOT NULL AND p.youtube_id = p_youtube_id))
+  )
+  SELECT * INTO playlist_record FROM playlist_data;
   
   -- If playlist not found, return empty
   IF playlist_record.id IS NULL THEN
     RETURN;
   END IF;
   
-  -- Determine effective sort key and order
+  -- Set variables from record
+  video_count := playlist_record.video_count;
+  total_duration := playlist_record.duration_seconds;
   effective_sort_key := COALESCE(p_sort_key, playlist_record.sorted_by::text, 'playlistOrder');
   effective_sort_order := COALESCE(p_sort_order, playlist_record.sort_order::text, 'ascending');
-  
-  -- Get total video count and duration
-  SELECT COUNT(*)
-  INTO video_count
-  FROM public.playlist_videos pv
-  JOIN public.videos v ON pv.video_id = v.id
-  WHERE pv.playlist_id = playlist_record.id
-    AND v.pending_delete = FALSE;
-  
-  -- Use pre-calculated duration from playlist table
-  total_duration := playlist_record.duration_seconds;
-  
-  -- Calculate pagination
   start_index := (p_current_page - 1) * p_limit;
   
   -- If no videos in playlist, return just the playlist metadata
   IF video_count = 0 THEN
     RETURN QUERY
     SELECT 
-      playlist_record.id as playlist_id,
-      playlist_record.created_at as playlist_created_at,
-      playlist_record.name as playlist_name,
-      playlist_record.short_id as playlist_short_id,
-      playlist_record.created_by as playlist_created_by,
-      playlist_record.description as playlist_description,
-      playlist_record.best_playlist_image_url as playlist_image_url,
-      playlist_record.image_processing_status as playlist_image_processing_status,
-      playlist_record.type as playlist_type,
-      playlist_record.image_properties as playlist_image_properties,
-      playlist_record.youtube_id as playlist_youtube_id,
-      playlist_record.thumbnail_url as playlist_thumbnail_url,
-      playlist_record.deleted_at as playlist_deleted_at,
-      playlist_record.profile_username as profile_username,
-      playlist_record.sorted_by as playlist_sorted_by,
-      playlist_record.sort_order as playlist_sort_order,
+      playlist_record.id,
+      playlist_record.created_at,
+      playlist_record.name,
+      playlist_record.short_id,
+      playlist_record.created_by,
+      playlist_record.description,
+      playlist_record.best_playlist_image_url,
+      playlist_record.image_processing_status,
+      playlist_record.type,
+      playlist_record.image_properties,
+      playlist_record.youtube_id,
+      playlist_record.thumbnail_url,
+      playlist_record.deleted_at,
+      playlist_record.profile_username,
+      playlist_record.sorted_by,
+      playlist_record.sort_order,
       -- Video data (all NULL since no videos)
-      NULL::text as video_id,
-      NULL::int2 as video_position,
-      NULL::public.source as video_source,
-      NULL::text as video_title,
-      NULL::text as video_description,
-      NULL::text as video_thumbnail_url,
-      NULL::text as video_image_url,
-      NULL::public.image_processing_status as video_image_processing_status,
-      NULL::TIMESTAMP WITH TIME ZONE as video_published_at,
-      NULL::text as video_duration,
-      0::numeric as video_start_seconds,
-      NULL::TIMESTAMP WITH TIME ZONE as video_watched_at,
-      NULL::TIMESTAMP WITH TIME ZONE as video_updated_at,
-      0::bigint as total_videos_count,
-      COALESCE(total_duration, 0) as total_duration_seconds,
-      false as is_duration_row;
+      NULL::text, NULL::int2, NULL::public.source, NULL::text, NULL::text,
+      NULL::text, NULL::text, NULL::public.image_processing_status,
+      NULL::TIMESTAMP WITH TIME ZONE, NULL::text, 0::numeric,
+      NULL::TIMESTAMP WITH TIME ZONE, NULL::TIMESTAMP WITH TIME ZONE,
+      0::bigint, COALESCE(total_duration, 0), false;
     RETURN;
   END IF;
   
-  -- Return main data query with videos
+  -- Return main data query with videos using optimized sorting
   RETURN QUERY
   SELECT 
-    playlist_record.id as playlist_id,
-    playlist_record.created_at as playlist_created_at,
-    playlist_record.name as playlist_name,
-    playlist_record.short_id as playlist_short_id,
-    playlist_record.created_by as playlist_created_by,
-    playlist_record.description as playlist_description,
-    playlist_record.best_playlist_image_url as playlist_image_url,
-    playlist_record.image_processing_status as playlist_image_processing_status,
-    playlist_record.type as playlist_type,
-    playlist_record.image_properties as playlist_image_properties,
-    playlist_record.youtube_id as playlist_youtube_id,
-    playlist_record.thumbnail_url as playlist_thumbnail_url,
-    playlist_record.deleted_at as playlist_deleted_at,
-    playlist_record.profile_username as profile_username,
-    playlist_record.sorted_by as playlist_sorted_by,
-    playlist_record.sort_order as playlist_sort_order,
+    playlist_record.id,
+    playlist_record.created_at,
+    playlist_record.name,
+    playlist_record.short_id,
+    playlist_record.created_by,
+    playlist_record.description,
+    playlist_record.best_playlist_image_url,
+    playlist_record.image_processing_status,
+    playlist_record.type,
+    playlist_record.image_properties,
+    playlist_record.youtube_id,
+    playlist_record.thumbnail_url,
+    playlist_record.deleted_at,
+    playlist_record.profile_username,
+    playlist_record.sorted_by,
+    playlist_record.sort_order,
     -- Video data from JOIN
-    pv.video_id as video_id,
-    pv.video_position as video_position,
-    v.source as video_source,
-    v.title as video_title,
-    v.description as video_description,
-    v.thumbnail_url as video_thumbnail_url,
-    -- Use unified select_best_image_format for video thumbnails (with JPG fallback)
+    pv.video_id,
+    pv.video_position,
+    v.source,
+    v.title,
+    v.description,
+    v.thumbnail_url,
     public.select_best_image_format(
       v.thumbnail_avif_url,
       v.thumbnail_webp_url,
       p_preferred_image_format
-    )
-    as video_image_url,
-    v.image_processing_status as video_image_processing_status,
-    v.published_at as video_published_at,
-    v.duration as video_duration,
-    COALESCE(t.video_start_seconds, 0) as video_start_seconds,
-    t.watched_at as video_watched_at,
-    t.updated_at as video_updated_at,
-    video_count as total_videos_count,
-    total_duration as total_duration_seconds,
-    false as is_duration_row
+    ) as video_image_url,
+    v.image_processing_status,
+    v.published_at,
+    v.duration,
+    COALESCE(t.video_start_seconds, 0),
+    t.watched_at,
+    t.updated_at,
+    video_count,
+    total_duration,
+    false
   FROM public.playlist_videos pv
   JOIN public.videos v ON pv.video_id = v.id
   LEFT JOIN public.timestamps t ON v.id = t.video_id AND t.user_id = p_user_id
@@ -270,13 +255,14 @@ BEGIN
 END;
 $$;
 
+-- Optimized function to get playlist video context
 CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
   p_short_id text,
   p_video_id text,
   p_context_limit integer DEFAULT 5,
   p_preferred_image_format text DEFAULT 'avif'
 ) RETURNS TABLE (
-  -- Playlist metadata (first row only)
+  -- Playlist metadata
   playlist_id bigint,
   playlist_created_at TIMESTAMP WITH TIME ZONE,
   playlist_name text,
@@ -288,8 +274,8 @@ CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
   playlist_type public.playlist_type,
   playlist_image_properties jsonb,
   playlist_youtube_id text,
-  playlist_thumbnail_url text, -- Direct thumbnail URL for playlist
-  playlist_deleted_at TIMESTAMP WITH TIME ZONE, -- Add deleted_at field
+  playlist_thumbnail_url text,
+  playlist_deleted_at TIMESTAMP WITH TIME ZONE,
   profile_username text,
   playlist_sorted_by public.playlist_sorted_by,
   playlist_sort_order public.playlist_sort_order,
@@ -324,7 +310,6 @@ SET
       p.short_id,
       p.created_by,
       p.description,
-      -- Use unified select_best_image_format for playlist images (pass NULL for jpg_url)
       public.select_best_image_format(
         p.image_avif_url,
         p.image_webp_url,
@@ -334,17 +319,15 @@ SET
       p.type,
       p.image_properties,
       p.youtube_id,
-      p.thumbnail_url as playlist_thumbnail_url,   -- Use direct thumbnail_url
-      p.deleted_at,                            -- Include deleted_at
+      p.thumbnail_url,
+      p.deleted_at,
       prof.username AS profile_username,
-      -- Get user-specific sorted_by and sort_order if user is authenticated
       CASE WHEN auth.uid() IS NOT NULL THEN up.sorted_by ELSE NULL END AS sorted_by,
       CASE WHEN auth.uid() IS NOT NULL THEN up.sort_order ELSE NULL END AS sort_order
     FROM public.playlists p
     LEFT JOIN public.profiles prof ON p.created_by = prof.id
     LEFT JOIN public.user_playlists up ON p.id = up.id AND up.user_id = auth.uid()
-    WHERE p.short_id = p_short_id 
-      -- REMOVED: AND p.deleted_at IS NULL  -- Now allow deleted playlists
+    WHERE p.short_id = p_short_id
   ),
   target_video AS (
     SELECT pv.video_position as position
@@ -361,21 +344,21 @@ SET
     SELECT 
       pi.*,
       pv.video_id,
-      pv.video_position AS video_position,
-      v.source AS video_source,
-      v.title AS video_title,
-      v.description AS video_description,
-      v.thumbnail_url AS video_thumbnail_url,
+      pv.video_position,
+      v.source,
+      v.title,
+      v.description,
+      v.thumbnail_url,
       public.select_best_image_format(
         v.thumbnail_avif_url,
         v.thumbnail_webp_url,
         p_preferred_image_format
       ) as best_video_image_url,
-      v.published_at AS video_published_at,
-      v.duration AS video_duration,
+      v.published_at,
+      v.duration,
       t.video_start_seconds,
-      t.watched_at AS video_watched_at,
-      t.updated_at AS video_updated_at,
+      t.watched_at,
+      t.updated_at,
       t.playlist_id AS video_timestamp_playlist_id,
       t.sorted_by AS video_timestamp_sorted_by,
       t.sort_order AS video_timestamp_sort_order,
@@ -392,44 +375,18 @@ SET
     ORDER BY pv.video_position
   )
   SELECT 
-    id,
-    created_at,
-    name,
-    short_id,
-    created_by,
-    description,
-    best_playlist_image_url,
-    image_processing_status,
-    type,
-    image_properties,
-    youtube_id,
-    playlist_thumbnail_url,
-    deleted_at,                             -- Add deleted_at to output
-    profile_username,
-    sorted_by,
-    sort_order,
-    video_id,
-    video_position,
-    video_source,
-    video_title,
-    video_description,
-    video_thumbnail_url,
-    best_video_image_url,
-    video_published_at,
-    video_duration,
-    video_start_seconds,
-    video_watched_at,
-    video_updated_at,
-    video_timestamp_playlist_id,
-    video_timestamp_sorted_by,
-    video_timestamp_sort_order,
-    is_current_video,
-    total_videos_count,
-    current_video_index
+    id, created_at, name, short_id, created_by, description,
+    best_playlist_image_url, image_processing_status, type, image_properties,
+    youtube_id, thumbnail_url, deleted_at, profile_username, sorted_by, sort_order,
+    video_id, video_position, source, title, description,
+    thumbnail_url, best_video_image_url, published_at, duration,
+    video_start_seconds, watched_at, updated_at,
+    video_timestamp_playlist_id, video_timestamp_sorted_by, video_timestamp_sort_order,
+    is_current_video, total_videos_count, current_video_index
   FROM context_videos;
 $$;
 
--- Function to get playlist by youtube_id
+-- Optimized function to get playlist by youtube_id
 CREATE OR REPLACE FUNCTION public.get_playlist_by_youtube_id (
   p_youtube_id text,
   p_preferred_image_format text DEFAULT 'avif'
@@ -466,14 +423,13 @@ SET
     up.sort_order
   FROM public.playlists p
   LEFT JOIN public.profiles prof ON p.created_by = prof.id
-  LEFT JOIN public.user_playlists up 
-    ON up.id = p.id 
+  LEFT JOIN public.user_playlists up ON up.id = p.id 
   WHERE p.youtube_id = p_youtube_id
-    AND p.deleted_at IS NULL  -- Filter out soft-deleted playlists
+    AND p.deleted_at IS NULL
   LIMIT 1;
 $$;
 
--- Function to get user playlists
+-- Optimized function to get user playlists
 CREATE OR REPLACE FUNCTION public.get_user_playlists (p_preferred_image_format text DEFAULT 'avif') RETURNS TABLE (
   id bigint,
   created_by uuid,
@@ -510,13 +466,13 @@ SET
       p.image_webp_url,
       p_preferred_image_format
     ) as image_url,
-    p.image_processing_status::public.image_processing_status,
+    p.image_processing_status,
     p.type,
     p.image_properties,
     p.youtube_id,
-    p.thumbnail_url as playlist_thumbnail_url,              
+    p.thumbnail_url,
     p.duration_seconds,
-    p.deleted_at,                    
+    p.deleted_at,
     prof.username AS profile_username,
     up.sorted_by,
     up.sort_order,
@@ -527,11 +483,11 @@ SET
   JOIN public.playlists p ON up.id = p.id
   LEFT JOIN public.profiles prof ON p.created_by = prof.id
   WHERE up.user_id = auth.uid()
-    AND p.deleted_at IS NULL  -- Re-add filter for active playlists only
+    AND p.deleted_at IS NULL
   ORDER BY up.playlist_position ASC;
 $$;
 
--- Function to get playlists for a specific username 
+-- Optimized function to get playlists for a specific username 
 CREATE OR REPLACE FUNCTION public.get_playlists_for_username (
   p_username text,
   p_preferred_image_format text DEFAULT 'avif'
@@ -547,7 +503,7 @@ CREATE OR REPLACE FUNCTION public.get_playlists_for_username (
   type public.playlist_type,
   image_properties jsonb,
   youtube_id text,
-  playlist_thumbnail_url text, -- Direct thumbnail URL for playlist
+  playlist_thumbnail_url text,
   duration_seconds integer,
   profile_username text,
   sorted_by public.playlist_sorted_by,
@@ -568,26 +524,24 @@ SET
       p.image_webp_url,
       p_preferred_image_format
     ) as image_url,
-    p.image_processing_status::public.image_processing_status,
+    p.image_processing_status,
     p.type,
     p.image_properties,
     p.youtube_id,
-    p.thumbnail_url,               -- Use direct thumbnail_url
+    p.thumbnail_url,
     p.duration_seconds,
     prof.username AS profile_username,
     up.sorted_by,
     up.sort_order,
-    p.deleted_at                             -- Return actual deleted_at value
+    p.deleted_at
   FROM public.playlists p
   JOIN public.profiles prof ON p.created_by = prof.id
-  LEFT JOIN public.user_playlists up 
-    ON up.id = p.id
+  LEFT JOIN public.user_playlists up ON up.id = p.id
   WHERE prof.username = p_username
-    -- REMOVED: AND p.deleted_at IS NULL  -- Now allow deleted playlists to be returned
   ORDER BY p.created_at DESC;
 $$;
 
--- Function to search playlists
+-- Optimized function to search playlists
 CREATE OR REPLACE FUNCTION "public"."search_playlists" (
   "search_term" "text",
   "current_user_id" uuid DEFAULT NULL,
@@ -606,16 +560,15 @@ CREATE OR REPLACE FUNCTION "public"."search_playlists" (
   "created_by" uuid,
   "type" public.playlist_type,
   "youtube_id" text,
-  "playlist_thumbnail_url" text, -- Direct thumbnail URL for playlist
+  "playlist_thumbnail_url" text,
   "duration_seconds" integer,
   "profile_username" text,
-  "avatar_url" text, -- Added avatar_url column
+  "avatar_url" text,
   "search_rank" real,
   "deleted_at" TIMESTAMP WITH TIME ZONE
 ) LANGUAGE "plpgsql"
 SET
   search_path = '' STABLE AS $$
-
 DECLARE
     clean_term text;
     words text[];
@@ -660,18 +613,18 @@ BEGIN
               p.image_webp_url,
               p_preferred_image_format
             ) as best_image_url,
-            p.image_processing_status::public.image_processing_status,
+            p.image_processing_status,
             p.image_properties,
             p.created_at,
             p.created_by,
             p.type,
             p.youtube_id,
-            p.thumbnail_url as playlist_thumbnail_url,               -- Use direct thumbnail_url
+            p.thumbnail_url,
             p.duration_seconds,
             prof.username AS profile_username,
-            prof.avatar_url,                         -- Direct avatar URL from profiles table
-            p.deleted_at,                            -- Return actual deleted_at value
-            -- Fixed: Cast ALL calculations to real explicitly
+            prof.avatar_url,
+            p.deleted_at,
+            -- Optimized ranking calculation
             (CASE 
                 WHEN lower(p.name) LIKE '%' || clean_term || '%' THEN 1000.0
                 WHEN lower(p.name) LIKE clean_term || '%' THEN 950.0
@@ -693,42 +646,26 @@ BEGIN
             END)::real AS search_rank
         FROM public.playlists p
         LEFT JOIN public.profiles prof ON p.created_by = prof.id
-        WHERE 
-            -- REMOVED: p.deleted_at IS NULL  -- Now allow deleted playlists to be returned
-            (
-                lower(p.name) LIKE '%' || clean_term || '%'
-                OR lower(p.description) LIKE '%' || clean_term || '%'
-                OR (phrase_query IS NOT NULL AND p.search_vector @@ phrase_query)
-                OR (plain_query IS NOT NULL AND p.search_vector @@ plain_query)
-                OR (word_count = 1 AND (
-                    lower(p.name) LIKE '%' || words[1] || '%'
-                    OR lower(p.description) LIKE '%' || words[1] || '%'
-                ))
-            )
+        WHERE (
+            lower(p.name) LIKE '%' || clean_term || '%'
+            OR lower(p.description) LIKE '%' || clean_term || '%'
+            OR (phrase_query IS NOT NULL AND p.search_vector @@ phrase_query)
+            OR (plain_query IS NOT NULL AND p.search_vector @@ plain_query)
+            OR (word_count = 1 AND (
+                lower(p.name) LIKE '%' || words[1] || '%'
+                OR lower(p.description) LIKE '%' || words[1] || '%'
+            ))
+        )
     )
     SELECT 
-        rp.id,
-        rp.short_id,
-        rp.name,
-        rp.description,
-        rp.best_image_url,
-        rp.image_processing_status,
-        rp.image_properties,
-        rp.created_at,
-        rp.created_by,
-        rp.type,
-        rp.youtube_id,
-        rp.playlist_thumbnail_url,      -- Now this column exists in the CTE
-        rp.duration_seconds,
-        rp.profile_username,
-        rp.avatar_url,                   -- Direct avatar URL from profiles table
-        rp.search_rank,
-        rp.deleted_at
+        rp.id, rp.short_id, rp.name, rp.description, rp.best_image_url,
+        rp.image_processing_status, rp.image_properties, rp.created_at,
+        rp.created_by, rp.type, rp.youtube_id, rp.thumbnail_url,
+        rp.duration_seconds, rp.profile_username, rp.avatar_url,
+        rp.search_rank, rp.deleted_at
     FROM ranked_playlists rp
     WHERE rp.search_rank > 0
-    ORDER BY 
-        rp.search_rank DESC,
-        rp.created_at DESC
+    ORDER BY rp.search_rank DESC, rp.created_at DESC
     LIMIT limit_count
     OFFSET offset_count;
 END;

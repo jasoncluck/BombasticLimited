@@ -108,7 +108,7 @@
     {#key source}
       <div class="mb-8 flex w-full flex-col items-start">
         <h2 class="header-link">
-          <div class="flex items-center">
+          <div class="mb-2 flex items-center">
             <Radio class="mr-2" /> Live
           </div>
         </h2>

@@ -9,6 +9,11 @@
       "copilot*": false
     }
   },
+  "functions": {
+    "src/routes/(app)/api/inngest/+server.ts": {
+      "maxDuration": 300
+    }
+  },
   "headers": [
     {
       "source": "/site.webmanifest",
