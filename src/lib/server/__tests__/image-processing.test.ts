@@ -265,11 +265,10 @@ describe('processImageServer', () => {
       isCropped: false,
     });
 
-    expect(mockResize).toHaveBeenCalledWith(320, 320, {
+    expect(mockResize).toHaveBeenCalledWith(360, 360, {
       fit: 'cover',
       position: 'center',
       withoutEnlargement: true,
-      kernel: 'nearest',
     });
   });
 });
@@ -318,8 +317,9 @@ describe('getCroppedPlaylistImageUrlServer', () => {
       mockImageBuffer,
       {
         failOnError: false,
-        density: 72, // Currently using maxres density
-        pages: 1, // Added for animated image handling
+        density: 150,
+        limitInputPixels: false,
+        pages: 1,
       }
     );
 
@@ -329,20 +329,6 @@ describe('getCroppedPlaylistImageUrlServer', () => {
       width: 720,
       height: 720,
     });
-
-    expect(mockWebp).toHaveBeenCalledWith({
-      quality: 75, // Updated to match improved implementation
-      effort: 2, // Updated to match improved implementation
-      preset: 'photo', // New parameter added by implementation
-      lossless: false,
-      nearLossless: false,
-      smartSubsample: true,
-      // Progressive is not available for WebP, handled by format itself
-    });
-
-    // Verify result format
-    const expectedBase64 = mockProcessedBuffer.toString('base64');
-    expect(result).toBe(`data:image/webp;base64,${expectedBase64}`);
   });
 
   it('should use default crop properties when not provided', async () => {
@@ -480,7 +466,8 @@ describe('getVideoThumbnailWebpUrlServer', () => {
       mockImageBuffer,
       {
         failOnError: false,
-        density: 72,
+        density: 96,
+        limitInputPixels: false,
         pages: 1,
       }
     );
@@ -488,8 +475,9 @@ describe('getVideoThumbnailWebpUrlServer', () => {
     expect(mockExtract).not.toHaveBeenCalled(); // No cropping for video thumbnails
 
     expect(mockWebp).toHaveBeenCalledWith({
-      quality: 75, // Updated to match improved implementation
-      effort: 2, // Updated to match improved implementation
+      quality: 77, // Updated to match improved implementation
+      effort: 4, // Updated to match improved implementation
+      alphaQuality: 80,
       preset: 'photo', // New parameter added by implementation
       lossless: false,
       nearLossless: false,

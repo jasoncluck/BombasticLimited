@@ -16,10 +16,12 @@ describe('Image Processing Logging', () => {
 
   it('should have comprehensive logging structure for job poller', async () => {
     // Import the job poller to test its structure
-    const { pollPendingJobs } = await import('../job_poller');
+    const { pollPendingJobs } = await import('../job-poller');
 
     expect(pollPendingJobs).toBeDefined();
-    expect(pollPendingJobs.name).toBe('Poll Pending Image Processing Jobs');
+    expect(pollPendingJobs.name).toBe(
+      'Adaptive Poll Pending Image Processing Jobs'
+    );
     // Function id is accessed through the function's properties
     expect(typeof pollPendingJobs.id).toBe('function');
   });

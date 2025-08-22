@@ -168,7 +168,7 @@ export async function getVideos({
   supabase,
   preferredImageFormat = 'avif',
 }: VideoQueryMultipleProps<Video> & {
-  preferredImageFormat?: string;
+  preferredImageFormat: string;
 }): Promise<{
   videos: Video[] | VideoWithTimestamp[];
   count: number | null;

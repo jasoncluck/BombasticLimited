@@ -40,7 +40,7 @@ describe('Database Job Queue Functions', () => {
 
 describe('Worker ID Generation', () => {
   it('should generate unique worker IDs', () => {
-    // Import the generateWorkerId function from job_poller.ts
+    // Import the generateWorkerId function from job-poller.ts
     // Since it's not exported, we'll test the concept
     const generateWorkerId = (): string => {
       const timestamp = Date.now().toString(36);

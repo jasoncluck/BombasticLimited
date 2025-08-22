@@ -184,36 +184,6 @@ export function getFormatMimeType(format: 'avif' | 'webp' | 'jpeg'): string {
 }
 
 /**
- * Get the best image URL from playlist data based on browser support
- */
-export function getBestPlaylistImageUrl(
-  playlist: {
-    image_avif_url: string | null;
-    image_webp_url: string | null;
-    image_url: string | null;
-  },
-  acceptHeader: string | null
-): string | null {
-  const preferredFormat = detectOptimalImageFormat(acceptHeader);
-
-  // Try to return the best format first
-  switch (preferredFormat) {
-    case 'avif':
-      if (playlist.image_avif_url) return playlist.image_avif_url;
-      if (playlist.image_webp_url) return playlist.image_webp_url;
-      return playlist.image_url;
-    case 'webp':
-      if (playlist.image_webp_url) return playlist.image_webp_url;
-      if (playlist.image_avif_url) return playlist.image_avif_url;
-      return playlist.image_url;
-    default:
-      return (
-        playlist.image_url || playlist.image_webp_url || playlist.image_avif_url
-      );
-  }
-}
-
-/**
  * Helper function to map contentFilter sort keys to database column names
  */
 export function getSortField(sortKey: string): string | null {

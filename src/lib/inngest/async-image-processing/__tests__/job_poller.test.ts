@@ -29,7 +29,7 @@ vi.mock('../../client', () => ({
 }));
 
 // Import after mocking
-import { pollPendingJobs } from '../job_poller';
+import { pollPendingJobs } from '../job-poller';
 
 describe('pollPendingJobs', () => {
   it('should be defined with correct configuration', () => {

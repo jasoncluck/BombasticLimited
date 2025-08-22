@@ -1044,7 +1044,7 @@ export const cleanupStaleJobs = inngest.createFunction(
   }
 );
 
-import { pollPendingJobs } from './async-image-processing/job_poller';
+import { pollPendingJobs } from './async-image-processing/job-poller';
 import {
   calculateDynamicCropDimensions,
   validateAndAdjustCropDimensions,

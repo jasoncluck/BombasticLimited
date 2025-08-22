@@ -133,6 +133,7 @@ END;
 $$;
 
 -- Function to mark job as completed (updated for WebP-first playlists)
+-- Function to mark job as completed and remove it from the queue (updated for WebP-first playlists)
 CREATE OR REPLACE FUNCTION public.complete_image_processing_job (
   job_id uuid,
   jpg_path text DEFAULT NULL,
@@ -144,7 +145,7 @@ SET
 DECLARE
   job_record RECORD;
 BEGIN
-  -- Get job details
+  -- Get job details before deletion
   SELECT entity_type, entity_id, image_type INTO job_record
   FROM "public"."image_processing_jobs"
   WHERE id = job_id;
@@ -152,14 +153,6 @@ BEGIN
   IF NOT FOUND THEN
     RETURN FALSE;
   END IF;
-  
-  -- Update job status
-  UPDATE "public"."image_processing_jobs"
-  SET 
-    status = 'completed',
-    processing_completed_at = now(),
-    error_message = NULL
-  WHERE id = job_id;
   
   -- Update entity with new image paths
   IF job_record.entity_type = 'video' THEN
@@ -182,6 +175,10 @@ BEGIN
       image_processing_updated_at = now()
     WHERE id = job_record.entity_id::bigint;
   END IF;
+  
+  -- Remove the completed job from the queue
+  DELETE FROM "public"."image_processing_jobs"
+  WHERE id = job_id;
   
   RETURN TRUE;
 END;
@@ -311,30 +308,40 @@ ALTER TABLE "public"."image_processing_jobs" ENABLE ROW LEVEL SECURITY;
 -- Only allow service role to access image processing jobs
 CREATE POLICY "Service role can manage image processing jobs" ON "public"."image_processing_jobs" FOR ALL USING (auth.role () = 'service_role');
 
--- Function to queue image processing for videos (unchanged)
+-- Function to queue image processing for videos 
 CREATE OR REPLACE FUNCTION public.trigger_queue_video_image_processing () RETURNS TRIGGER LANGUAGE plpgsql
 SET
   search_path = '' AS $$
 BEGIN
-  -- Only queue processing if thumbnail URL is provided and different from OLD value
-  IF (TG_OP = 'INSERT') OR 
-     (TG_OP = 'UPDATE' AND (
-       COALESCE(OLD.thumbnail_url, '') != COALESCE(NEW.thumbnail_url, '')
-     )) THEN
+  -- Only queue processing if thumbnail URL changed and is not null
+  IF (TG_OP = 'INSERT' AND NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '') OR 
+     (TG_OP = 'UPDATE' AND 
+       COALESCE(OLD.thumbnail_url, '') != COALESCE(NEW.thumbnail_url, '') AND
+       NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '') THEN
     
-    -- Queue thumbnail processing if URL exists
-    IF NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '' THEN
-      PERFORM public.queue_image_processing_job(
-        'video',
-        NEW.id,
-        'thumbnail',
-        NEW.thumbnail_url,
-        100 -- Standard priority for videos
-      );
-    END IF;
+    -- Queue thumbnail processing
+    PERFORM public.queue_image_processing_job(
+      'video',
+      NEW.id,
+      'thumbnail',
+      NEW.thumbnail_url,
+      100 -- Standard priority for videos
+    );
 
-    -- Update processing status to pending
+    -- Update processing status to pending and clear existing optimized URLs
     NEW.image_processing_status = 'pending';
+    NEW.image_processing_updated_at = now();
+    NEW.image_webp_url = NULL;
+    NEW.image_avif_url = NULL;
+    
+  ELSIF (TG_OP = 'UPDATE' AND 
+         COALESCE(OLD.thumbnail_url, '') != COALESCE(NEW.thumbnail_url, '') AND
+         (NEW.thumbnail_url IS NULL OR NEW.thumbnail_url = '')) THEN
+    
+    -- If thumbnail_url was cleared, clear optimized URLs and set status to completed
+    NEW.image_webp_url = NULL;
+    NEW.image_avif_url = NULL;
+    NEW.image_processing_status = 'completed';
     NEW.image_processing_updated_at = now();
   END IF;
 
@@ -347,68 +354,51 @@ CREATE OR REPLACE FUNCTION public.trigger_queue_playlist_image_processing () RET
 SET
   search_path = '' AS $$
 DECLARE
-  source_video RECORD;
   source_url text;
-  crop_changed boolean := false;
-  webp_url_provided boolean := false;
+  should_process boolean := false;
   job_id uuid;
-
 BEGIN
-  -- Check if image_properties, thumbnail_url, or image_webp_url changed
-  IF (TG_OP = 'INSERT') OR 
-     (TG_OP = 'UPDATE' AND (
-       COALESCE(OLD.image_properties::text, '') != COALESCE(NEW.image_properties::text, '') OR
-       COALESCE(OLD.thumbnail_url, '') != COALESCE(NEW.thumbnail_url, '') OR
-       COALESCE(OLD.image_webp_url, '') != COALESCE(NEW.image_webp_url, '')
-     )) THEN
-    
-    crop_changed := true;
+  -- Check if we should trigger processing based on your requirements:
+  -- 1. thumbnail_url changed to non-null
+  -- 2. image_properties changed to non-null
+  
+  IF TG_OP = 'INSERT' THEN
+    -- On insert, process if we have either thumbnail_url or image_properties
+    should_process := (NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '') OR 
+                     (NEW.image_properties IS NOT NULL);
+  ELSIF TG_OP = 'UPDATE' THEN
+    -- On update, process only if these specific fields changed
+    IF COALESCE(OLD.thumbnail_url, '') != COALESCE(NEW.thumbnail_url, '') THEN
+      -- thumbnail_url changed - process if new value is non-null
+      should_process := (NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '');
+    ELSIF COALESCE(OLD.image_properties::text, '') != COALESCE(NEW.image_properties::text, '') THEN
+      -- image_properties changed - process if new value is non-null
+      should_process := (NEW.image_properties IS NOT NULL);
+    END IF;
   END IF;
   
-  -- Check if a WebP URL was directly provided (from client upload)
-  webp_url_provided := (NEW.image_webp_url IS NOT NULL AND NEW.image_webp_url != '');
-  
-  -- Queue processing in two scenarios:
-  -- 1. WebP image was uploaded (generate AVIF optimization)
-  -- 2. Crop settings changed and we have a thumbnail video (generate cropped image)
-  IF crop_changed THEN
-    IF webp_url_provided THEN
-      -- Scenario 1: WebP image provided, generate AVIF optimization
+  -- Only proceed if we determined processing is needed
+  IF should_process THEN
+    -- Determine source URL - prefer direct thumbnail_url
+    source_url := NEW.thumbnail_url;
+    
+    -- If we have a source URL, queue the job
+    IF source_url IS NOT NULL AND source_url != '' THEN
       job_id := public.queue_image_processing_job(
         'playlist',
         NEW.id::text,
         'playlist_image',
-        NEW.image_webp_url,
+        source_url,
         25 -- High priority for playlist images
       );
-      
+
       -- Only update status if job was actually created
       IF job_id IS NOT NULL THEN
         NEW.image_processing_status = 'pending';
         NEW.image_processing_updated_at = now();
       END IF;
-      
-    ELSIF NEW.thumbnail_url IS NOT NULL THEN
-      -- Scenario 2: Generate cropped image from direct thumbnail URL
-      source_url := NEW.thumbnail_url;
-      
-      IF source_url IS NOT NULL AND source_url != '' THEN
-        job_id := public.queue_image_processing_job(
-            'playlist',
-            NEW.id::text,
-            'playlist_image',
-            source_url,
-            25 -- High priority for playlist images
-          );
-
-          -- Only update status if job was actually created
-          IF job_id IS NOT NULL THEN
-            NEW.image_processing_status = 'pending';
-            NEW.image_processing_updated_at = now();
-          END IF;
-        END IF;
     END IF;
-  END IF; 
+  END IF;
 
   RETURN NEW;
 END;

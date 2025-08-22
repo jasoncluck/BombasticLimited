@@ -4,15 +4,19 @@ import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { isVideoFilter } from '$lib/components/content/content-filter';
 import { getPaginationQueryParams } from '$lib/components/pagination/pagination';
+import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 
 export const load: PageServerLoad = async ({
   params,
   url,
   parent,
   locals: { supabase, session },
+  request,
   depends,
 }) => {
   depends('supabase:db:videos');
+
+  const acceptHeader = request.headers.get('accept');
 
   const { contentFilter } = await parent();
   const source = params.source as Source;
@@ -26,6 +30,8 @@ export const load: PageServerLoad = async ({
     throw new Error('Invalid content filter');
   }
 
+  const preferredImageFormat = detectOptimalFormat(acceptHeader);
+
   const currentPage = getPaginationQueryParams({
     searchParams: url.searchParams,
   });
@@ -36,6 +42,7 @@ export const load: PageServerLoad = async ({
     searchString,
     currentPage,
     contentFilter,
+    preferredImageFormat,
     supabase,
     session,
   });

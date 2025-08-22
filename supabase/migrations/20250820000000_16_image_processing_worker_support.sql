@@ -70,7 +70,7 @@ BEGIN
 END;
 $$;
 
--- Function to mark job as completed with worker validation
+-- Function to mark job as completed with worker validation and remove from queue
 CREATE OR REPLACE FUNCTION public.complete_image_processing_job_with_worker (
   job_id uuid,
   p_worker_id text,
@@ -83,7 +83,7 @@ SET
 DECLARE
   job_record RECORD;
 BEGIN
-  -- Get job details and verify worker
+  -- Get job details and verify worker before deletion
   SELECT entity_type, entity_id, image_type, worker_id INTO job_record
   FROM "public"."image_processing_jobs"
   WHERE id = job_id;
@@ -99,14 +99,6 @@ BEGIN
       job_id, job_record.worker_id, p_worker_id;
     RETURN FALSE;
   END IF;
-  
-  -- Update job status
-  UPDATE "public"."image_processing_jobs"
-  SET 
-    status = 'completed',
-    processing_completed_at = now(),
-    error_message = NULL
-  WHERE id = job_id;
   
   -- Update entity with new image paths
   IF job_record.entity_type = 'video' THEN
@@ -129,6 +121,10 @@ BEGIN
       image_processing_updated_at = now()
     WHERE id = job_record.entity_id::bigint;
   END IF;
+  
+  -- Remove the completed job from the queue
+  DELETE FROM "public"."image_processing_jobs"
+  WHERE id = job_id;
   
   RETURN TRUE;
 END;

@@ -81,7 +81,7 @@ describe('Enhanced Job Poller with Atomic Operations', () => {
       error: null,
     });
 
-    const { pollPendingJobs } = await import('../job_poller');
+    const { pollPendingJobs } = await import('../job-poller');
 
     // This would be called by Inngest in practice
     expect(pollPendingJobs).toBeDefined();
@@ -118,7 +118,7 @@ describe('Enhanced Job Poller with Atomic Operations', () => {
       error: { message: 'Database connection failed' },
     });
 
-    const { pollPendingJobs } = await import('../job_poller');
+    const { pollPendingJobs } = await import('../job-poller');
 
     expect(pollPendingJobs).toBeDefined();
     // The actual error handling would be tested in integration tests
@@ -131,7 +131,7 @@ describe('Enhanced Job Poller with Atomic Operations', () => {
       error: null,
     });
 
-    const { pollPendingJobs } = await import('../job_poller');
+    const { pollPendingJobs } = await import('../job-poller');
 
     expect(pollPendingJobs).toBeDefined();
     // The function should break the loop when no jobs are returned

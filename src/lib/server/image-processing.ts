@@ -8,7 +8,7 @@ import type { PlaylistImageProperties } from '$lib/supabase/playlists';
 // Initialize image cache manager
 const imageCacheManager = ImageCacheManager.getInstance();
 
-// **SPEED-OPTIMIZED** image processing configuration
+// **BALANCED QUALITY** image processing configuration
 export interface ImageProcessingOptions {
   format?: 'auto' | 'webp' | 'jpeg' | 'avif';
   quality?: number;
@@ -16,6 +16,7 @@ export interface ImageProcessingOptions {
   height?: number;
   progressive?: boolean;
   lossless?: boolean;
+  highQuality?: boolean; // **NEW: Optional high quality mode**
 }
 
 // Domain validation for security
@@ -51,32 +52,37 @@ export function getMemoryUsage() {
   };
 }
 
-// **OPTIMIZED: Balanced quality for WebP processing efficiency**
+// **IMPROVED: Better quality calculation matching async processor**
 export function calculateOptimalQuality(
   metadata: Partial<sharp.Metadata>,
   targetFormat: string,
-  baseQuality = 78 // **IMPROVED: Slightly higher base for WebP efficiency**
+  baseQuality = 82, // **IMPROVED: Higher base quality**
+  highQuality = false
 ): number {
   const imageSize = (metadata.width || 0) * (metadata.height || 0);
 
-  // **ENHANCED: Format-specific quality optimization**
+  // **IMPROVED: Better format-specific quality optimization**
   let formatQuality = baseQuality;
   if (targetFormat === 'avif') {
-    formatQuality = Math.max(baseQuality - 8, 68); // **IMPROVED: Less aggressive AVIF reduction**
+    formatQuality = Math.max(baseQuality - 12, 65); // **IMPROVED: Better AVIF quality**
   } else if (targetFormat === 'webp') {
-    // WebP handles quality differently - optimize for its compression characteristics
-    formatQuality = Math.max(baseQuality - 3, 75); // **IMPROVED: Better WebP quality**
+    formatQuality = Math.max(baseQuality - 5, 75); // **IMPROVED: Better WebP quality**
+  }
+
+  // **NEW: High quality mode for better results**
+  if (highQuality) {
+    formatQuality = Math.min(formatQuality + 8, 92);
   }
 
   if (imageSize > 1920 * 1080) {
-    // Large images can use slightly lower quality due to viewing distance
-    return Math.max(formatQuality - 3, 72); // **IMPROVED: Less aggressive reduction**
+    // Large images can use slightly lower quality
+    return Math.max(formatQuality - 5, 70);
   } else if (imageSize < 320 * 180) {
-    // Very small thumbnails need even higher quality (check this first)
-    return Math.min(formatQuality + 5, 88); // **NEW: Special handling for tiny images**
+    // Very small thumbnails need higher quality
+    return Math.min(formatQuality + 8, 90);
   } else if (imageSize < 640 * 360) {
     // Small images need higher quality to remain sharp
-    return Math.min(formatQuality + 3, 85); // **BALANCED: Moderate increase**
+    return Math.min(formatQuality + 5, 88);
   }
 
   return formatQuality;
@@ -109,19 +115,17 @@ export async function processImageServer({
     targetFormat = options.format as 'avif' | 'webp' | 'jpeg';
   }
 
-  // **ENHANCED: Improved format fallback chain prioritizing WebP**
   const formatFallbackChain: ('avif' | 'webp' | 'jpeg')[] = acceptHeader
     ? targetFormat === 'avif'
-      ? ['avif', 'webp', 'jpeg'] // AVIF first when explicitly supported
+      ? ['avif', 'webp', 'jpeg']
       : targetFormat === 'webp'
-        ? ['webp', 'jpeg'] // WebP focused chain
-        : ['webp', 'jpeg'] // Default to WebP for better compression
-    : ['webp', 'jpeg']; // **OPTIMIZED: Always prefer WebP for external sources**
+        ? ['webp', 'jpeg']
+        : ['webp', 'jpeg']
+    : ['webp', 'jpeg'];
 
   try {
-    // **SPEED: Reduced timeout for faster responses**
     const response = await fetchWithRetry(imageUrl, {
-      signal: AbortSignal.timeout(5000), // **SPEED: Reduced from 10s to 5s**
+      signal: AbortSignal.timeout(8000), // **IMPROVED: Slightly longer timeout for quality**
       headers: {
         Accept: 'image/*',
         'User-Agent': isCropped ? 'Playlist-Service/1.0' : 'Video-Service/1.0',
@@ -133,10 +137,12 @@ export async function processImageServer({
 
     const imageBuffer = await response.arrayBuffer();
 
+    // **IMPROVED: Better Sharp configuration for quality**
     const sharpInstance = sharp(imageBuffer, {
       failOnError: false,
-      density: 72, // **SPEED: Use standard density for all**
+      density: options.highQuality ? 150 : 96, // **IMPROVED: Better density**
       pages: 1,
+      limitInputPixels: false, // **NEW: Allow larger images**
     });
 
     // Get image metadata for optimization
@@ -148,8 +154,6 @@ export async function processImageServer({
 
     // Apply cropping if needed
     if (isCropped) {
-      // Always use dynamic crop calculation when imageProperties is null
-      // Validate and adjust crop dimensions - always treat as 'standard' type
       const validatedCrop = validateAndAdjustCropDimensions(
         imageProperties || {
           x: 0,
@@ -160,10 +164,9 @@ export async function processImageServer({
         imageWidth,
         imageHeight,
         'standard',
-        imageProperties // Original custom properties (null if none provided)
+        imageProperties
       );
 
-      // Extract the crop area
       processedInstance = processedInstance.extract({
         left: validatedCrop.x,
         top: validatedCrop.y,
@@ -171,43 +174,82 @@ export async function processImageServer({
         height: validatedCrop.height,
       });
 
-      // **SPEED: Consistent output size for all images**
-      const previewSize = 180; // Consistent preview size for all images
-      processedInstance = processedInstance.resize(previewSize, previewSize, {
+      // **IMPROVED: Smart output sizing based on crop size**
+      const cropSize = Math.min(validatedCrop.width, validatedCrop.height);
+      let outputSize: number;
+
+      if (options.highQuality) {
+        // High quality mode - larger outputs
+        if (cropSize <= 180) {
+          outputSize = 384; // 2x larger for small crops
+        } else if (cropSize <= 360) {
+          outputSize = 512; // Better quality for medium crops
+        } else {
+          outputSize = 768; // High quality for large crops
+        }
+      } else {
+        // Balanced mode
+        if (cropSize <= 180) {
+          outputSize = 256; // Better than 180px
+        } else if (cropSize <= 360) {
+          outputSize = 384; // Improved medium size
+        } else {
+          outputSize = 512; // Better large size
+        }
+      }
+
+      processedInstance = processedInstance.resize(outputSize, outputSize, {
         fit: 'cover',
         withoutEnlargement: false,
-        kernel: sharp.kernel.nearest, // **SPEED: Fastest resampling**
+        kernel: options.highQuality
+          ? sharp.kernel.lanczos3
+          : sharp.kernel.lanczos2, // **IMPROVED: Better resampling**
       });
+
+      // **NEW: Add sharpening for cropped images**
+      if (options.highQuality) {
+        processedInstance = processedInstance.sharpen({
+          sigma: 0.8,
+          m1: 1.0,
+          m2: 1.8,
+          x1: 2.0,
+          y2: 8.0,
+          y3: 15.0,
+        });
+      }
     }
 
-    // **SPEED: Resize for non-cropped images to smaller sizes**
+    // **IMPROVED: Resize for non-cropped images with better sizing**
     if (!isCropped && (options.width || options.height)) {
-      const maxSize = Math.min(
-        options.width || 320,
-        options.height || 320,
-        320
-      ); // **SPEED: Cap at 320px**
+      const maxSize = options.highQuality
+        ? Math.min(options.width || 640, options.height || 640, 640) // **IMPROVED: Larger max size**
+        : Math.min(options.width || 480, options.height || 480, 480); // **IMPROVED: Better default size**
+
       processedInstance = processedInstance.resize(maxSize, maxSize, {
         fit: 'cover',
         position: 'center',
         withoutEnlargement: true,
-        kernel: sharp.kernel.nearest, // **SPEED: Fastest resampling**
+        kernel: options.highQuality
+          ? sharp.kernel.lanczos3
+          : sharp.kernel.lanczos2, // **IMPROVED: Better resampling**
       });
     }
 
+    // **IMPROVED: Better color space handling**
     processedInstance = processedInstance.toColourspace('srgb');
 
-    // **ENHANCED: Improved quality calculation for WebP optimization**
+    // **IMPROVED: Better quality calculation**
     const quality =
       options.quality ||
       calculateOptimalQuality(
         metadata,
         targetFormat,
-        75 // **IMPROVED: Consistent base quality for WebP**
+        82, // **IMPROVED: Higher base quality**
+        options.highQuality || false
       );
 
     console.log(
-      `🖼️ Processing ${contentType} image: ${targetFormat}, quality: ${quality}, size: ${imageWidth}x${imageHeight}`
+      `🖼️ Processing ${contentType} image: ${targetFormat}, quality: ${quality}, size: ${imageWidth}x${imageHeight}, highQuality: ${options.highQuality || false}`
     );
 
     let processedImageBuffer: Buffer | undefined;
@@ -219,9 +261,10 @@ export async function processImageServer({
           case 'avif':
             processedImageBuffer = await processedInstance
               .avif({
-                quality: Math.min(quality, 75), // **SPEED: Lower max quality**
-                effort: 2, // **SPEED: Reduced effort from 4 to 2**
+                quality: Math.min(quality, 80), // **IMPROVED: Better max quality**
+                effort: options.highQuality ? 6 : 4, // **IMPROVED: Better effort balance**
                 lossless: false,
+                chromaSubsampling: options.highQuality ? '4:4:4' : '4:2:0', // **NEW: Better chroma for HQ**
               })
               .toBuffer();
             mimeType = 'image/avif';
@@ -231,11 +274,12 @@ export async function processImageServer({
             processedImageBuffer = await processedInstance
               .webp({
                 quality,
-                effort: 2, // **IMPROVED: Better compression vs speed balance**
+                effort: options.highQuality ? 6 : 4, // **IMPROVED: Better effort balance**
                 lossless: false,
                 nearLossless: false,
                 smartSubsample: true,
                 preset: 'photo',
+                alphaQuality: options.highQuality ? 90 : 80, // **NEW: Better alpha quality**
               })
               .toBuffer();
             mimeType = 'image/webp';
@@ -245,15 +289,15 @@ export async function processImageServer({
             processedImageBuffer = await processedInstance
               .jpeg({
                 quality,
-                progressive: false, // **SPEED: Disable progressive for speed**
-                mozjpeg: false, // **SPEED: Use standard JPEG encoder**
+                progressive: options.highQuality, // **IMPROVED: Progressive for HQ mode**
+                mozjpeg: options.highQuality, // **IMPROVED: Better encoder for HQ**
+                optimiseScans: options.highQuality, // **NEW: Better optimization**
               })
               .toBuffer();
             mimeType = 'image/jpeg';
             break;
         }
 
-        // If we get here, the format worked - break out of the fallback loop
         break;
       } catch (formatError) {
         console.warn(
@@ -261,7 +305,6 @@ export async function processImageServer({
           formatError
         );
 
-        // If this was the last format in the chain, re-throw the error
         if (format === formatFallbackChain[formatFallbackChain.length - 1]) {
           throw formatError;
         }
@@ -272,16 +315,12 @@ export async function processImageServer({
       throw new Error('Failed to process image with any available format');
     }
 
-    // Convert to base64 data URL
     const base64 = processedImageBuffer.toString('base64');
     const dataUrl = `data:${mimeType};base64,${base64}`;
 
     return dataUrl;
   } catch (error) {
-    console.error(
-      `Fast server image processing failed for ${imageUrl}:`,
-      error
-    );
+    console.error(`Server image processing failed for ${imageUrl}:`, error);
     return null;
   }
 }
@@ -299,17 +338,23 @@ export async function getCroppedPlaylistImageUrlServer({
 }) {
   if (!thumbnailUrl) return null;
 
+  // **IMPROVED: Enable high quality for playlist images**
+  const enhancedOptions = {
+    ...options,
+    highQuality: options.highQuality !== false, // Default to true for playlists
+  };
+
   return processImageServer({
     imageUrl: thumbnailUrl,
     imageProperties,
     acceptHeader,
-    options,
+    options: enhancedOptions,
     isCropped: true,
     contentType: 'playlist',
   });
 }
 
-// **SPEED-OPTIMIZED** video thumbnail processing
+// **IMPROVED: Better video thumbnail processing**
 export async function getVideoThumbnailWebpUrlServer({
   thumbnailUrl,
   options = {},
@@ -321,42 +366,41 @@ export async function getVideoThumbnailWebpUrlServer({
 }) {
   if (!thumbnailUrl) return null;
 
-  // **SPEED: Force smaller dimensions for video thumbnails**
-  const fastOptions = {
+  // **IMPROVED: Better sizing for video thumbnails**
+  const enhancedOptions = {
     ...options,
-    width: Math.min(options.width || 320, 320),
-    height: Math.min(options.height || 320, 320),
+    width: Math.min(options.width || 480, options.highQuality ? 640 : 480), // **IMPROVED: Better default size**
+    height: Math.min(options.height || 480, options.highQuality ? 640 : 480),
   };
 
   return processImageServer({
     imageUrl: thumbnailUrl,
     acceptHeader,
-    options: fastOptions,
+    options: enhancedOptions,
     isCropped: false,
-    contentType: 'video', // **FIXED: Specify video content type**
+    contentType: 'video',
   });
 }
 
-// **ENHANCED: Improved progressive image generation with better WebP**
+// **IMPROVED: Better progressive image generation**
 export async function generateProgressiveImages(
   thumbnailUrl: string,
   sizes: Array<{ width: number; height: number; quality?: number }>,
   acceptHeader: string | null = null
 ): Promise<Array<{ size: string; dataUrl: string | null }>> {
   const results: Array<{ size: string; dataUrl: string | null }> = [];
-
-  // **ENHANCED: Process optimal number of sizes for WebP**
-  const limitedSizes = sizes.slice(0, 4); // **IMPROVED: Support one more size for better progressive loading**
+  const limitedSizes = sizes.slice(0, 4);
 
   for (const size of limitedSizes) {
     try {
       const dataUrl = await getVideoThumbnailWebpUrlServer({
         thumbnailUrl,
         options: {
-          width: Math.min(size.width, 480), // **IMPROVED: Allow larger sizes for WebP efficiency**
-          height: Math.min(size.height, 480), // **IMPROVED: Allow larger sizes**
-          quality: Math.min(size.quality || 80, 85), // **IMPROVED: Better default quality**
-          format: 'webp', // **ENHANCED: Force WebP for optimal compression**
+          width: Math.min(size.width, 640), // **IMPROVED: Larger max size**
+          height: Math.min(size.height, 640),
+          quality: Math.min(size.quality || 85, 90), // **IMPROVED: Better quality**
+          format: 'webp',
+          highQuality: size.width > 320 || size.height > 320, // **NEW: Auto HQ for larger sizes**
         },
         acceptHeader,
       });
@@ -380,12 +424,12 @@ export async function generateProgressiveImages(
   return results;
 }
 
-// **SPEED: Faster fetch with shorter timeouts**
+// **IMPROVED: Better fetch with longer timeouts for quality**
 async function fetchWithRetry(
   url: string,
   options: RequestInit,
-  maxRetries = 2, // **SPEED: Reduced retries**
-  delay = 500 // **SPEED: Shorter delay**
+  maxRetries = 3, // **IMPROVED: More retries for reliability**
+  delay = 750 // **IMPROVED: Slightly longer delay**
 ): Promise<Response> {
   let lastError: Error = new Error('Unknown error');
 
@@ -394,7 +438,6 @@ async function fetchWithRetry(
       const response = await fetch(url, options);
       if (response.ok) return response;
 
-      // Don't retry on client errors (4xx)
       if (response.status >= 400 && response.status < 500) {
         throw new Error(`Client error: ${response.status}`);
       }
@@ -403,7 +446,6 @@ async function fetchWithRetry(
     } catch (error) {
       lastError = error as Error;
 
-      // Don't retry on client errors or last attempt
       if (
         attempt === maxRetries ||
         (error as Error).message.includes('Client error')
@@ -411,9 +453,8 @@ async function fetchWithRetry(
         break;
       }
 
-      // **SPEED: Shorter exponential backoff**
       await new Promise(
-        (resolve) => setTimeout(resolve, delay * Math.pow(1.5, attempt - 1)) // **SPEED: Reduced multiplier**
+        (resolve) => setTimeout(resolve, delay * Math.pow(1.8, attempt - 1)) // **IMPROVED: Better backoff**
       );
     }
   }
@@ -437,7 +478,7 @@ export async function cleanupImageCache(): Promise<void> {
   await imageCacheManager.cleanup();
 }
 
-// **SPEED: Direct URL return for fastest response**
+// **IMPROVED: Smart URL generation**
 export function generatePlaylistImageUrl({
   thumbnailUrl,
 }: {
@@ -448,13 +489,10 @@ export function generatePlaylistImageUrl({
   responseType?: 'image' | 'json';
 }): string | null {
   if (!thumbnailUrl) return null;
-
-  // **SPEED: Return original URL directly for fastest response**
-  // Background processing system handles optimization separately
   return thumbnailUrl;
 }
 
-// **ENHANCED: Batch processing function for video thumbnails with better WebP**
+// **IMPROVED: Better batch processing**
 export async function getVideoThumbnailWebpUrlsBatch(
   thumbnailData: Array<{ url: string }>
 ): Promise<string[]> {
@@ -464,7 +502,11 @@ export async function getVideoThumbnailWebpUrlsBatch(
         return await getVideoThumbnailWebpUrlServer({
           thumbnailUrl: url,
           acceptHeader: 'image/webp,image/jpeg,*/*',
-          options: { format: 'webp', quality: 82 }, // **IMPROVED: Better quality for batch processing**
+          options: {
+            format: 'webp',
+            quality: 85, // **IMPROVED: Better quality**
+            highQuality: false, // Balanced for batch processing
+          },
         });
       } catch (error) {
         console.warn(`Failed to process video thumbnail ${url}:`, error);
