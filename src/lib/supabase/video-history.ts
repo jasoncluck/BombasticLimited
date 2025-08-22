@@ -26,7 +26,6 @@ type GetVideoAnalyticsResponse =
 // Type definitions for video history
 export type VideoHistoryRecord = {
   id: string;
-  user_id: string;
   video_id: string;
   source: Source;
   session_start_time: string;
@@ -59,7 +58,6 @@ function transformVideoHistoryFromStartSession(
 ): VideoHistoryRecord {
   return {
     id: rpcData.id,
-    user_id: rpcData.user_id,
     video_id: rpcData.video_id,
     source: rpcData.source as Source,
     session_start_time: rpcData.session_start_time,
@@ -78,7 +76,6 @@ function transformVideoHistoryFromUpdate(
 ): VideoHistoryRecord {
   return {
     id: rpcData.id,
-    user_id: rpcData.user_id,
     video_id: rpcData.video_id,
     source: rpcData.source as Source,
     session_start_time: rpcData.session_start_time,
@@ -94,7 +91,6 @@ function transformVideoHistoryWithVideo(
 ): VideoHistoryWithVideo {
   return {
     id: rpcData.id,
-    user_id: rpcData.user_id,
     video_id: rpcData.video_id,
     source: rpcData.source as Source,
     session_start_time: rpcData.session_start_time,

@@ -54,7 +54,8 @@ CREATE POLICY "Users can access their own video history" ON "public"."video_hist
 -- ============================================================================
 -- Optimized function to calculate seconds_watched
 CREATE OR REPLACE FUNCTION "public"."calculate_seconds_watched" () RETURNS TRIGGER LANGUAGE plpgsql
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
 BEGIN
   -- Calculate seconds_watched if both timestamps are present
   IF NEW.session_start_time IS NOT NULL AND NEW.session_end_time IS NOT NULL THEN
@@ -69,7 +70,8 @@ $$;
 
 -- Optimized function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION "public"."update_video_history_updated_at" () RETURNS TRIGGER LANGUAGE plpgsql
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
 BEGIN
   NEW.updated_at = now();
   RETURN NEW;
@@ -78,7 +80,8 @@ $$;
 
 -- Create triggers
 CREATE TRIGGER "trigger_calculate_seconds_watched" BEFORE INSERT
-OR UPDATE ON "public"."video_history" FOR EACH ROW
+OR
+UPDATE ON "public"."video_history" FOR EACH ROW
 EXECUTE FUNCTION "public"."calculate_seconds_watched" ();
 
 CREATE TRIGGER "trigger_update_video_history_updated_at" BEFORE
@@ -100,7 +103,8 @@ CREATE OR REPLACE FUNCTION "public"."start_video_history_session" (
   updated_at TIMESTAMP WITH TIME ZONE,
   is_resumed boolean
 ) LANGUAGE plpgsql SECURITY DEFINER
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
 DECLARE
   current_user_id uuid;
   video_source "public"."source";
@@ -178,8 +182,13 @@ BEGIN
       session_time, NULL
     )
     RETURNING 
-      video_id, source, seconds_watched,
-      session_start_time, session_end_time, created_at, updated_at
+      public.video_history.video_id, 
+      public.video_history.source, 
+      public.video_history.seconds_watched,
+      public.video_history.session_start_time, 
+      public.video_history.session_end_time, 
+      public.video_history.created_at, 
+      public.video_history.updated_at
     INTO session_result;
     
     -- Return new session (no user_id)
@@ -213,7 +222,8 @@ CREATE OR REPLACE FUNCTION "public"."update_video_history_seconds_watched" (
   created_at TIMESTAMP WITH TIME ZONE,
   updated_at TIMESTAMP WITH TIME ZONE
 ) LANGUAGE plpgsql SECURITY DEFINER
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
 DECLARE
   current_user_id uuid;
   current_end_time TIMESTAMP WITH TIME ZONE;
@@ -266,7 +276,8 @@ CREATE OR REPLACE FUNCTION "public"."update_video_history_end_time" (
   created_at TIMESTAMP WITH TIME ZONE,
   updated_at TIMESTAMP WITH TIME ZONE
 ) LANGUAGE plpgsql SECURITY DEFINER
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
 DECLARE
   current_user_id uuid;
   current_end_time TIMESTAMP WITH TIME ZONE;
@@ -321,7 +332,8 @@ CREATE OR REPLACE FUNCTION "public"."get_user_video_history" (
   video_duration text,
   video_thumbnail_url text
 ) LANGUAGE sql SECURITY DEFINER
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
   SELECT
     auth.uid()::text || '|' || vh.video_id || '|' || EXTRACT(EPOCH FROM vh.session_start_time)::bigint::text AS id,
     vh.video_id,
@@ -356,7 +368,8 @@ CREATE OR REPLACE FUNCTION "public"."get_video_analytics" (
   last_watched TIMESTAMP WITH TIME ZONE,
   first_watched TIMESTAMP WITH TIME ZONE
 ) LANGUAGE sql SECURITY DEFINER
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
   SELECT
     vh.video_id,
     v.title AS video_title,
@@ -379,7 +392,8 @@ $$;
 -- ============================================================================
 -- Optimized function to auto-record video history
 CREATE OR REPLACE FUNCTION "public"."auto_record_video_history" () RETURNS TRIGGER LANGUAGE plpgsql
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
 DECLARE
   video_source "public"."source";
   current_session_start TIMESTAMP WITH TIME ZONE; 
@@ -426,5 +440,7 @@ $$;
 
 -- Create trigger
 CREATE TRIGGER "trigger_auto_record_video_history"
-AFTER INSERT OR UPDATE ON "public"."timestamps" FOR EACH ROW
+AFTER INSERT
+OR
+UPDATE ON "public"."timestamps" FOR EACH ROW
 EXECUTE FUNCTION "public"."auto_record_video_history" ();

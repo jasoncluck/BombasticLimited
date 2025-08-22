@@ -96,34 +96,46 @@
   }
 
   // Centralized auth error handler with cleanup and retry logic
-  async function handleAuthError(error: any, context: string): Promise<boolean> {
+  async function handleAuthError(
+    error: any,
+    context: string
+  ): Promise<boolean> {
     // Check if this is a 403 auth error
-    const is403Error = error?.status === 403 || 
-                      error?.code === 403 ||
-                      error?.message?.includes('403') ||
-                      (error?.response?.status === 403);
+    const is403Error =
+      error?.status === 403 ||
+      error?.code === 403 ||
+      error?.message?.includes('403') ||
+      error?.response?.status === 403;
 
     if (is403Error) {
-      console.warn(`🔐 Auth 403 error detected in ${context}, cleaning up auth state:`, error);
-      
+      console.warn(
+        `🔐 Auth 403 error detected in ${context}, cleaning up auth state:`,
+        error
+      );
+
       try {
         // Clean up auth state using signOut
         await supabase.auth.signOut();
-        
+
         // Update our tracking state to reflect signed out state
         lastKnownAuthState = false;
-        
+
         // Invalidate auth to ensure fresh state
         await invalidate('supabase:auth');
-        
-        console.log(`✅ Auth state cleaned up successfully after 403 error in ${context}`);
+
+        console.log(
+          `✅ Auth state cleaned up successfully after 403 error in ${context}`
+        );
         return true; // Indicate successful cleanup
       } catch (cleanupError) {
-        console.error(`❌ Failed to clean up auth state after 403 error in ${context}:`, cleanupError);
+        console.error(
+          `❌ Failed to clean up auth state after 403 error in ${context}:`,
+          cleanupError
+        );
         return false;
       }
     }
-    
+
     return false; // Not a 403 error, no cleanup performed
   }
 
@@ -144,17 +156,29 @@
       navigationState.refreshData();
     } catch (error) {
       console.error(`Failed to perform data refresh - ${reason}:`, error);
-      
+
       // Handle 403 auth errors with cleanup and retry
-      const cleanupPerformed = await handleAuthError(error, `performDataRefresh - ${reason}`);
-      
+      const cleanupPerformed = await handleAuthError(
+        error,
+        `performDataRefresh - ${reason}`
+      );
+
       if (cleanupPerformed && !retryAfterAuthCleanup) {
         // Retry once after successful auth cleanup
-        console.log(`🔄 Retrying data refresh after auth cleanup for: ${reason}`);
+        console.log(
+          `🔄 Retrying data refresh after auth cleanup for: ${reason}`
+        );
         try {
-          await performDataRefresh(`${reason} (retry after auth cleanup)`, true, true);
+          await performDataRefresh(
+            `${reason} (retry after auth cleanup)`,
+            true,
+            true
+          );
         } catch (retryError) {
-          console.error(`Failed to retry data refresh after auth cleanup - ${reason}:`, retryError);
+          console.error(
+            `Failed to retry data refresh after auth cleanup - ${reason}:`,
+            retryError
+          );
         }
       }
     }
@@ -178,7 +202,7 @@
         `Failed to handle Supabase auth state change - ${event}:`,
         error
       );
-      
+
       // Handle potential auth errors during state change
       await handleAuthError(error, `handleSupabaseAuthStateChange - ${event}`);
     }
@@ -212,10 +236,13 @@
           'Failed to check auth state on visibility change:',
           error
         );
-        
+
         // Handle 403 auth errors with cleanup
-        const cleanupPerformed = await handleAuthError(error, 'handleVisibilityChange');
-        
+        const cleanupPerformed = await handleAuthError(
+          error,
+          'handleVisibilityChange'
+        );
+
         if (cleanupPerformed) {
           authErrorOccurred = true;
           authStateChanged = true; // Auth state definitely changed after cleanup
@@ -226,12 +253,12 @@
       }
 
       // Always refresh navigation and sidebar data, but only invalidate auth if it changed
-      const refreshReason = authErrorOccurred 
+      const refreshReason = authErrorOccurred
         ? 'visibility change - 403 error handled'
-        : authStateChanged 
-        ? 'visibility change - auth state changed' 
-        : 'visibility change';
-        
+        : authStateChanged
+          ? 'visibility change - auth state changed'
+          : 'visibility change';
+
       await performDataRefresh(refreshReason, authStateChanged);
 
       wasTabHidden = false;

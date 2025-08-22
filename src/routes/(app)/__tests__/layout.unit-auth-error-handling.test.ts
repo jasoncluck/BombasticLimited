@@ -13,11 +13,13 @@ describe('Layout Auth Error Handling Logic', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    
+
     mockSupabaseAuth = {
       signOut: vi.fn().mockResolvedValue({ error: null }),
       getClaims: vi.fn(),
-      getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+      getSession: vi
+        .fn()
+        .mockResolvedValue({ data: { session: null }, error: null }),
       onAuthStateChange: vi.fn().mockReturnValue({
         data: { subscription: { unsubscribe: vi.fn() } },
       }),
@@ -34,31 +36,43 @@ describe('Layout Auth Error Handling Logic', () => {
 
   // Create the auth error handler function to test
   const createHandleAuthError = (supabase: any, invalidate: any) => {
-    return async function handleAuthError(error: any, context: string): Promise<boolean> {
+    return async function handleAuthError(
+      error: any,
+      context: string
+    ): Promise<boolean> {
       // Check if this is a 403 auth error
-      const is403Error = error?.status === 403 || 
-                        error?.code === 403 ||
-                        error?.message?.includes('403') ||
-                        (error?.response?.status === 403);
+      const is403Error =
+        error?.status === 403 ||
+        error?.code === 403 ||
+        error?.message?.includes('403') ||
+        error?.response?.status === 403;
 
       if (is403Error) {
-        console.warn(`🔐 Auth 403 error detected in ${context}, cleaning up auth state:`, error);
-        
+        console.warn(
+          `🔐 Auth 403 error detected in ${context}, cleaning up auth state:`,
+          error
+        );
+
         try {
           // Clean up auth state using signOut
           await supabase.auth.signOut();
-          
+
           // Invalidate auth to ensure fresh state
           await invalidate('supabase:auth');
-          
-          console.log(`✅ Auth state cleaned up successfully after 403 error in ${context}`);
+
+          console.log(
+            `✅ Auth state cleaned up successfully after 403 error in ${context}`
+          );
           return true; // Indicate successful cleanup
         } catch (cleanupError) {
-          console.error(`❌ Failed to clean up auth state after 403 error in ${context}:`, cleanupError);
+          console.error(
+            `❌ Failed to clean up auth state after 403 error in ${context}:`,
+            cleanupError
+          );
           return false;
         }
       }
-      
+
       return false; // Not a 403 error, no cleanup performed
     };
   };
@@ -127,7 +141,7 @@ describe('Layout Auth Error Handling Logic', () => {
   it('should handle signOut errors gracefully', async () => {
     const handleAuthError = createHandleAuthError(mockSupabase, mockInvalidate);
     const error403 = { status: 403 };
-    
+
     // Mock signOut to throw an error
     mockSupabaseAuth.signOut.mockRejectedValue(new Error('SignOut failed'));
 
@@ -142,7 +156,7 @@ describe('Layout Auth Error Handling Logic', () => {
   it('should handle invalidate errors gracefully', async () => {
     const handleAuthError = createHandleAuthError(mockSupabase, mockInvalidate);
     const error403 = { status: 403 };
-    
+
     // Mock invalidate to throw an error
     mockInvalidate.mockRejectedValue(new Error('Invalidate failed'));
 
@@ -154,7 +168,12 @@ describe('Layout Auth Error Handling Logic', () => {
   });
 
   // Test the data refresh function with auth error handling
-  const createPerformDataRefresh = (handleAuthError: any, sidebarState: any, navigationState: any, invalidate: any) => {
+  const createPerformDataRefresh = (
+    handleAuthError: any,
+    sidebarState: any,
+    navigationState: any,
+    invalidate: any
+  ) => {
     return async function performDataRefresh(
       reason: string,
       includeAuth: boolean = false,
@@ -171,17 +190,29 @@ describe('Layout Auth Error Handling Logic', () => {
         navigationState.refreshData();
       } catch (error) {
         console.error(`Failed to perform data refresh - ${reason}:`, error);
-        
+
         // Handle 403 auth errors with cleanup and retry
-        const cleanupPerformed = await handleAuthError(error, `performDataRefresh - ${reason}`);
-        
+        const cleanupPerformed = await handleAuthError(
+          error,
+          `performDataRefresh - ${reason}`
+        );
+
         if (cleanupPerformed && !retryAfterAuthCleanup) {
           // Retry once after successful auth cleanup
-          console.log(`🔄 Retrying data refresh after auth cleanup for: ${reason}`);
+          console.log(
+            `🔄 Retrying data refresh after auth cleanup for: ${reason}`
+          );
           try {
-            await performDataRefresh(`${reason} (retry after auth cleanup)`, true, true);
+            await performDataRefresh(
+              `${reason} (retry after auth cleanup)`,
+              true,
+              true
+            );
           } catch (retryError) {
-            console.error(`Failed to retry data refresh after auth cleanup - ${reason}:`, retryError);
+            console.error(
+              `Failed to retry data refresh after auth cleanup - ${reason}:`,
+              retryError
+            );
           }
         }
       }
@@ -191,20 +222,23 @@ describe('Layout Auth Error Handling Logic', () => {
   it('should retry data refresh after successful auth cleanup', async () => {
     // Reset invalidate to not fail for this test
     const workingInvalidate = vi.fn().mockResolvedValue(undefined);
-    const handleAuthError = createHandleAuthError(mockSupabase, workingInvalidate);
-    
+    const handleAuthError = createHandleAuthError(
+      mockSupabase,
+      workingInvalidate
+    );
+
     const mockSidebarState = {
       refreshData: vi.fn(),
     };
-    
+
     const mockNavigationState = {
       refreshData: vi.fn(),
     };
 
     const performDataRefresh = createPerformDataRefresh(
-      handleAuthError, 
-      mockSidebarState, 
-      mockNavigationState, 
+      handleAuthError,
+      mockSidebarState,
+      mockNavigationState,
       workingInvalidate
     );
 
@@ -222,29 +256,29 @@ describe('Layout Auth Error Handling Logic', () => {
 
     // Verify auth cleanup was triggered
     expect(mockSupabaseAuth.signOut).toHaveBeenCalledOnce();
-    
+
     // Verify retry happened (original call + retry call)
     expect(mockSidebarState.refreshData).toHaveBeenCalledTimes(2);
   });
 
   it('should not retry if cleanup was not successful', async () => {
     const handleAuthError = createHandleAuthError(mockSupabase, mockInvalidate);
-    
+
     // Mock signOut to fail
     mockSupabaseAuth.signOut.mockRejectedValue(new Error('SignOut failed'));
-    
+
     const mockSidebarState = {
       refreshData: vi.fn().mockRejectedValue({ status: 403 }),
     };
-    
+
     const mockNavigationState = {
       refreshData: vi.fn(),
     };
 
     const performDataRefresh = createPerformDataRefresh(
-      handleAuthError, 
-      mockSidebarState, 
-      mockNavigationState, 
+      handleAuthError,
+      mockSidebarState,
+      mockNavigationState,
       mockInvalidate
     );
 
