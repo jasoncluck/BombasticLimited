@@ -7,7 +7,7 @@
 
 <div class="flex items-center gap-2">
   <svg
-    class={`${className} cursor-pointer`}
+    class={`${className} cursor-pointer will-change-auto hover:brightness-150`}
     viewBox="0 0 105 40"
     width="105"
     xmlns="http://www.w3.org/2000/svg"
@@ -59,13 +59,3 @@
     >
   </svg>
 </div>
-
-<style>
-  svg {
-    will-change: filter;
-  }
-
-  svg:hover {
-    filter: brightness(1.6);
-  }
-</style>

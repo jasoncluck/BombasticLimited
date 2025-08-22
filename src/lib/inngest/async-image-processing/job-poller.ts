@@ -38,7 +38,7 @@ interface AdaptivePollingState {
 }
 
 // In-memory state (could be moved to Redis/database for multi-instance deployments)
-let pollingState: AdaptivePollingState = {
+const pollingState: AdaptivePollingState = {
   lastPollTime: 0,
   lastJobCount: 0,
   consecutiveEmptyPolls: 0,
@@ -112,9 +112,9 @@ function getNextPollInterval(pendingJobCount: number): number {
   } else if (pendingJobCount >= LOW_ACTIVITY_THRESHOLD) {
     return 10; // Low activity: every 10 minutes
   } else if (pollingState.consecutiveEmptyPolls >= 3) {
-    return 30; // Very low activity: every 30 minutes
+    return 15; // Very low activity: every 30 minutes
   } else {
-    return 15; // Default: every 15 minutes
+    return 10; // Default: every 10 minutes
   }
 }
 

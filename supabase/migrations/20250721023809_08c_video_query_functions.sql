@@ -3,7 +3,7 @@
 -- Dependencies: Requires base tables from 03_base_tables.sql (videos, timestamps)
 -- This migration includes video search, filtering, and retrieval functions
 -- ============================================================================
--- Function to get videos with user timestamps
+-- Optimized function to get videos with user timestamps
 CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps" (p_preferred_image_format text DEFAULT 'avif') RETURNS TABLE (
   "id" "text",
   "source" "public"."source",
@@ -33,7 +33,7 @@ SET
         v.title, 
         v.description, 
         v.thumbnail_url, 
-        -- Use unified select_best_image_format for video thumbnails (normal thumbnails only)
+        -- Use unified select_best_image_format for video thumbnails
         public.select_best_image_format(
           v.thumbnail_avif_url,
           v.thumbnail_webp_url,
@@ -52,18 +52,14 @@ SET
         p.short_id as playlist_short_id,
         t.sorted_by as playlist_sorted_by,
         t.sort_order as playlist_sort_order
-    FROM 
-        public.videos v
-    LEFT JOIN public.timestamps t ON v.id = t.video_id 
-        AND t.user_id = auth.uid()
+    FROM public.videos v
+    LEFT JOIN public.timestamps t ON v.id = t.video_id AND t.user_id = auth.uid()
     LEFT JOIN public.playlists p ON t.playlist_id = p.id
-    WHERE 
-        v.pending_delete = FALSE
-    ORDER BY 
-        v.published_at DESC;
+    WHERE v.pending_delete = FALSE
+    ORDER BY v.published_at DESC;
 $$;
 
--- Function to search videos with advanced ranking
+-- Optimized function to search videos with advanced ranking
 CREATE OR REPLACE FUNCTION "public"."search_videos" (
   "search_term" "text",
   "offset_count" integer DEFAULT 0,
@@ -99,12 +95,15 @@ DECLARE
     phrase_query tsquery;
     plain_query tsquery;
 BEGIN
-    current_user_id := auth.uid();
-    
+    -- Early exit for invalid search terms
     IF search_term IS NULL OR trim(search_term) = '' OR length(trim(search_term)) < 1 THEN
         RETURN;
     END IF;
 
+    -- Get current user once
+    current_user_id := auth.uid();
+    
+    -- Pre-process search term
     clean_term := lower(trim(regexp_replace(search_term, '\s+', ' ', 'g')));
     words := string_to_array(clean_term, ' ');
     word_count := array_length(words, 1);
@@ -127,7 +126,7 @@ BEGIN
             v.title, 
             v.description, 
             v.thumbnail_url, 
-            -- Use unified select_best_image_format for video thumbnails (normal thumbnails only)
+            -- Use unified select_best_image_format for video thumbnails
             public.select_best_image_format(
               v.thumbnail_avif_url,
               v.thumbnail_webp_url,
@@ -138,7 +137,7 @@ BEGIN
             v.published_at, 
             v.duration,
             v.views,
-            -- Fixed: Cast ALL calculations to real explicitly
+            -- Optimized ranking calculation
             (CASE 
                 WHEN lower(v.title) LIKE '%' || clean_term || '%' THEN 1000.0
                 WHEN lower(v.title) LIKE clean_term || '%' THEN 950.0
@@ -203,7 +202,7 @@ BEGIN
 END;
 $$;
 
--- Function to get in-progress videos with timestamps
+-- Optimized function to get in-progress videos with timestamps
 CREATE OR REPLACE FUNCTION "public"."get_in_progress_videos_with_timestamps" (p_preferred_image_format text DEFAULT 'avif') RETURNS TABLE (
   id text,
   source public.source,
@@ -223,18 +222,16 @@ CREATE OR REPLACE FUNCTION "public"."get_in_progress_videos_with_timestamps" (p_
   playlist_sort_order public.playlist_sort_order,
   playlist_name text,
   playlist_short_id text
-) LANGUAGE plpgsql
+) LANGUAGE SQL STABLE
 SET
   search_path = '' AS $$
-BEGIN
-    RETURN QUERY
     SELECT 
         v.id, 
         v.source, 
         v.title, 
         v.description, 
         v.thumbnail_url, 
-        -- Use unified select_best_image_format for video thumbnails (normal thumbnails only)
+        -- Use unified select_best_image_format for video thumbnails
         public.select_best_image_format(
           v.thumbnail_avif_url,
           v.thumbnail_webp_url,
@@ -255,26 +252,25 @@ BEGIN
     FROM public.timestamps t
     JOIN public.videos v ON t.video_id = v.id
     LEFT JOIN public.playlists p ON t.playlist_id = p.id
-    WHERE t.user_id = (SELECT auth.uid())
+    WHERE t.user_id = auth.uid()
       AND t.video_start_seconds > 0
       AND v.pending_delete = FALSE
     ORDER BY t.watched_at DESC;
-END;
 $$;
 
--- Function to increment video views safely
+-- Optimized function to increment video views safely
 CREATE OR REPLACE FUNCTION public.increment_video_views (video_id text) RETURNS void LANGUAGE plpgsql SECURITY DEFINER
 SET
   search_path = '' AS $$
 BEGIN
+  -- Single atomic operation
   UPDATE public.videos 
   SET views = views + 1 
-  WHERE id = video_id;
+  WHERE id = video_id AND pending_delete = FALSE;
 END;
 $$;
 
 -- Add RLS policy to allow reading views but restrict direct updates
--- Note: Only creates policy if RLS is enabled and policy doesn't already exist
 DO $$
 BEGIN
   -- Check if RLS is enabled on videos table and policy doesn't exist
@@ -290,7 +286,6 @@ BEGIN
     AND tablename = 'videos' 
     AND policyname = 'Allow read access to video views'
   ) THEN
-    -- Create the policy
     EXECUTE 'CREATE POLICY "Allow read access to video views" ON "public"."videos" FOR SELECT USING (true)';
   END IF;
 END $$;
