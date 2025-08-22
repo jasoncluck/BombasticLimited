@@ -21,6 +21,7 @@ WHERE
   status = 'processing';
 
 -- Optimized function to get multiple jobs with worker assignment
+-- Optimized function to get multiple jobs with worker assignment
 CREATE OR REPLACE FUNCTION public.get_multiple_image_processing_jobs_with_worker (p_worker_id text, p_limit integer DEFAULT 50) RETURNS TABLE (
   job_id uuid,
   entity_type text,
@@ -36,9 +37,9 @@ SET
   search_path = '' AS $$
 DECLARE
   job_ids uuid[];
-  current_time TIMESTAMP WITH TIME ZONE;
+  current_timestamp_val TIMESTAMP WITH TIME ZONE;
 BEGIN
-  current_time := now();
+  current_timestamp_val := now();
   
   -- Get job IDs atomically using FOR UPDATE SKIP LOCKED
   SELECT ARRAY(
@@ -62,8 +63,8 @@ BEGIN
   SET 
     status = 'processing',
     worker_id = p_worker_id,
-    polling_timestamp = current_time,
-    processing_started_at = current_time,
+    polling_timestamp = current_timestamp_val,
+    processing_started_at = current_timestamp_val,
     attempts = j.attempts + 1
   WHERE j.id = ANY(job_ids)
   RETURNING 
