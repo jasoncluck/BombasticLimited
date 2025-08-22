@@ -155,7 +155,7 @@
 
   {#if operationVideos.length > 0 && session}
     <ContextMenu.Content
-      class="max-h-64 overflow-visible outline-hiddden {mediaQueryState.isTouchDevice &&
+      class="outline-hiddden max-h-64 overflow-visible {mediaQueryState.isTouchDevice &&
         'hidden'} 
         transition-opacity duration-75"
     >
@@ -174,7 +174,7 @@
             <Portal>
               <ContextMenu.SubContent
                 align="start"
-                class="z-50 overflow-hidden transition-opacity duration-150 outline-hiddden"
+                class="outline-hiddden z-50 overflow-hidden transition-opacity duration-150"
                 avoidCollisions={true}
                 sideOffset={5}
               >

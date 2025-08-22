@@ -42,7 +42,7 @@ vi.mock('$lib/supabase/playlists', () => ({
   getPlaylistData: vi.fn(),
   isUserPlaylist: vi.fn(),
   updatePlaylistInfo: vi.fn(),
-  updatePlaylistImage: vi.fn(),
+  updatePlaylistThumbnail: vi.fn(),
   parseImageProperties: vi.fn(),
   PLAYLIST_TYPES: ['Public', 'Private'],
   DEFAULT_NUM_VIDEOS_PAGINATION: 20,
@@ -86,7 +86,7 @@ const mockZod = vi.mocked(zod);
 const mockGetPlaylistData = vi.mocked(getPlaylistData);
 const mockIsUserPlaylist = vi.mocked(isUserPlaylist);
 const mockUpdatePlaylistInfo = vi.mocked(updatePlaylistInfo);
-const mockUpdatePlaylistImage = vi.mocked(updatePlaylistThumbnail);
+const mockUpdatePlaylistThumbnail = vi.mocked(updatePlaylistThumbnail);
 const mockGetPaginationQueryParams = vi.mocked(getPaginationQueryParams);
 const mockParseImageProperties = vi.mocked(parseImageProperties);
 const mockGetCroppedPlaylistImageUrlServer = vi.mocked(
@@ -384,9 +384,8 @@ describe('playlist/[shortId]/+page.server.ts', () => {
 
       await actions.default(mockActionEvent);
 
-      expect(mockUpdatePlaylistImage).toHaveBeenCalledWith({
+      expect(mockUpdatePlaylistThumbnail).toHaveBeenCalledWith({
         playlistId: 1,
-        processedPlaylistImage: null,
         imageProperties: null,
         supabase: mockSupabase,
       });

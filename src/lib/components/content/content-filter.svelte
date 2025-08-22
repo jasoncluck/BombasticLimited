@@ -201,7 +201,7 @@
       <DropdownMenu.Trigger
         class={buttonVariants({
           variant: 'ghost',
-          class: 'flex cursor-pointer items-center gap-1 outline-hiddden',
+          class: 'outline-hiddden flex cursor-pointer items-center gap-1',
         })}
       >
         <span class="mr-1 text-sm tracking-tight"
@@ -280,7 +280,7 @@
 {:else}
   <Drawer.Root bind:open={contentFilterDrawerOpen}>
     <Drawer.Trigger
-      class="hover:text-primary flex cursor-pointer items-center gap-1 outline-hiddden"
+      class="hover:text-primary outline-hiddden flex cursor-pointer items-center gap-1"
     >
       <span class="text-sm">{sortOptionInfo.displayName}</span>
       <List size={20} />

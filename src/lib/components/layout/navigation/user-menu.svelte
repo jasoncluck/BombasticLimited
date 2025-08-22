@@ -132,11 +132,11 @@
           variant: userProfile?.avatar_url ? 'outline' : 'outline',
           size: 'icon',
           class:
-            'size-10 cursor-pointer !rounded-full outline-hiddden hover:scale-105',
+            'outline-hiddden size-10 cursor-pointer !rounded-full hover:scale-105',
         })}
       >
         {#if userProfile}
-          <Avatar.Root class="size-10 rounded-full p-1.5 outline-hiddden">
+          <Avatar.Root class="outline-hiddden size-10 rounded-full p-1.5">
             <Avatar.Image
               src={userProfile?.avatar_url}
               alt="User avatar"
@@ -189,7 +189,7 @@
     <Drawer.Root bind:open={openAccountDrawer}>
       <Drawer.Trigger
         data-testid="user-menu-drawer-trigger"
-        class="cursor-pointer !rounded-full outline-hiddden {buttonVariants({
+        class="outline-hiddden cursor-pointer !rounded-full {buttonVariants({
           variant: userProfile?.avatar_url ? 'ghost' : 'outline',
           size: 'icon',
         })}"
