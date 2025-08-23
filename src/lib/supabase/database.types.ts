@@ -124,10 +124,6 @@ export type Database = {
           duration_seconds: number | null
           id: number
           image_avif_url: string | null
-          image_processing_status:
-            | Database["public"]["Enums"]["image_processing_status"]
-            | null
-          image_processing_updated_at: string | null
           image_properties: Json | null
           image_webp_url: string | null
           name: string
@@ -146,10 +142,6 @@ export type Database = {
           duration_seconds?: number | null
           id?: number
           image_avif_url?: string | null
-          image_processing_status?:
-            | Database["public"]["Enums"]["image_processing_status"]
-            | null
-          image_processing_updated_at?: string | null
           image_properties?: Json | null
           image_webp_url?: string | null
           name: string
@@ -168,10 +160,6 @@ export type Database = {
           duration_seconds?: number | null
           id?: number
           image_avif_url?: string | null
-          image_processing_status?:
-            | Database["public"]["Enums"]["image_processing_status"]
-            | null
-          image_processing_updated_at?: string | null
           image_properties?: Json | null
           image_webp_url?: string | null
           name?: string
@@ -434,10 +422,6 @@ export type Database = {
           description: string
           duration: string | null
           id: string
-          image_processing_status:
-            | Database["public"]["Enums"]["image_processing_status"]
-            | null
-          image_processing_updated_at: string | null
           pending_delete: boolean | null
           published_at: string
           search_vector: unknown | null
@@ -452,10 +436,6 @@ export type Database = {
           description: string
           duration?: string | null
           id: string
-          image_processing_status?:
-            | Database["public"]["Enums"]["image_processing_status"]
-            | null
-          image_processing_updated_at?: string | null
           pending_delete?: boolean | null
           published_at?: string
           search_vector?: unknown | null
@@ -470,10 +450,6 @@ export type Database = {
           description?: string
           duration?: string | null
           id?: string
-          image_processing_status?:
-            | Database["public"]["Enums"]["image_processing_status"]
-            | null
-          image_processing_updated_at?: string | null
           pending_delete?: boolean | null
           published_at?: string
           search_vector?: unknown | null
@@ -620,8 +596,6 @@ export type Database = {
           description: string
           duration: string
           id: string
-          image_processing_status: Database["public"]["Enums"]["image_processing_status"]
-          image_processing_updated_at: string
           image_url: string
           playlist_name: string
           playlist_short_id: string
@@ -673,7 +647,6 @@ export type Database = {
           playlist_deleted_at: string
           playlist_description: string
           playlist_id: number
-          playlist_image_processing_status: Database["public"]["Enums"]["image_processing_status"]
           playlist_image_properties: Json
           playlist_image_url: string
           playlist_name: string
@@ -689,7 +662,6 @@ export type Database = {
           video_description: string
           video_duration: string
           video_id: string
-          video_image_processing_status: Database["public"]["Enums"]["image_processing_status"]
           video_image_url: string
           video_position: number
           video_published_at: string
@@ -716,7 +688,6 @@ export type Database = {
           playlist_deleted_at: string
           playlist_description: string
           playlist_id: number
-          playlist_image_processing_status: Database["public"]["Enums"]["image_processing_status"]
           playlist_image_properties: Json
           playlist_image_url: string
           playlist_name: string
@@ -754,7 +725,6 @@ export type Database = {
           description: string
           duration_seconds: number
           id: number
-          image_processing_status: Database["public"]["Enums"]["image_processing_status"]
           image_properties: Json
           image_url: string
           name: string
@@ -818,7 +788,6 @@ export type Database = {
           description: string
           duration_seconds: number
           id: number
-          image_processing_status: Database["public"]["Enums"]["image_processing_status"]
           image_properties: Json
           image_url: string
           name: string
@@ -866,8 +835,6 @@ export type Database = {
           description: string
           duration: string
           id: string
-          image_processing_status: Database["public"]["Enums"]["image_processing_status"]
-          image_processing_updated_at: string
           image_url: string
           playlist_id: number
           playlist_name: string
@@ -1014,7 +981,6 @@ export type Database = {
           description: string
           duration_seconds: number
           id: number
-          image_processing_status: Database["public"]["Enums"]["image_processing_status"]
           image_properties: Json
           image_url: string
           name: string
@@ -1036,8 +1002,6 @@ export type Database = {
           description: string
           duration: string
           id: string
-          image_processing_status: Database["public"]["Enums"]["image_processing_status"]
-          image_processing_updated_at: string
           image_url: string
           playlist_name: string
           playlist_short_id: string
@@ -1160,7 +1124,6 @@ export type Database = {
     Enums: {
       content_description: "FULL" | "BRIEF" | "NONE"
       content_display: "TABLE" | "TILES"
-      image_processing_status: "pending" | "processing" | "completed" | "failed"
       notification_type: "system"
       playlist_sort_order: "ascending" | "descending"
       playlist_sorted_by: "title" | "datePublished" | "playlistOrder"
@@ -1299,7 +1262,6 @@ export const Constants = {
     Enums: {
       content_description: ["FULL", "BRIEF", "NONE"],
       content_display: ["TABLE", "TILES"],
-      image_processing_status: ["pending", "processing", "completed", "failed"],
       notification_type: ["system"],
       playlist_sort_order: ["ascending", "descending"],
       playlist_sorted_by: ["title", "datePublished", "playlistOrder"],
