@@ -126,7 +126,7 @@
   }
 
   .header-content {
-    @apply text-4xl font-semibold tracking-tight text-wrap break-words hyphens-auto transition-colors @2xl:text-5xl;
+    @apply mb-2 text-4xl font-semibold tracking-tight text-wrap break-words hyphens-auto transition-colors @2xl:text-5xl;
   }
 
   .header-playlist {
@@ -134,7 +134,7 @@
   }
 
   .header-link {
-    @apply my-2 block cursor-pointer self-start truncate text-3xl font-semibold transition-colors hover:underline @2xl:text-4xl;
+    @apply hover:text-primary block cursor-pointer self-start truncate pb-2 text-3xl font-semibold transition-all duration-200 @2xl:text-4xl;
   }
 
   .header-link-sticky {

@@ -72,7 +72,7 @@
           </h2>
         {/if}
 
-        <p class="text-muted-foreground mt-1 text-sm tracking-tight">
+        <p class="text-muted-foreground text-sm tracking-tight">
           {videosCount}
           {videosCount === 1 ? 'video' : 'videos'}
         </p>

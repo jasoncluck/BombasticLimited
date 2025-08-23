@@ -107,15 +107,18 @@
       />
     </div>
   {/if}
-  <h1 class="header-content mb-2">Latest Videos</h1>
+  <h1
+    class="header-content mb-4 {getContentView(mediaQueryState, userProfile) ===
+    'TABLE'
+      ? 'ml-2'
+      : ''}"
+  >
+    Latest Videos
+  </h1>
 
-  <div class="mb-8 flex flex-col gap-8">
+  <div class="mt-4 mb-8 flex flex-col gap-8">
     {#each sources as source (source)}
-      <div
-        class="content-section"
-        data-testid="source-section"
-        data-source={source}
-      >
+      <div data-testid="source-section" data-source={source}>
         <a
           href={`/${source}/latest`}
           class={getContentView(mediaQueryState, userProfile) === 'TABLE'

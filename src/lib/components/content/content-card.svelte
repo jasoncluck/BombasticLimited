@@ -152,7 +152,7 @@
     const isHoveredCard = hoveredVideo?.id === video.id;
     const isInViewCard = isInView();
 
-    let classes = `group w-full transform cursor-pointer will-change-transform ${isContinueVideos ? 'h-76' : 'h-72 '}`;
+    let classes = `group w-full transform cursor-pointer will-change-transform ${isContinueVideos ? 'h-76' : 'h-76 '}`;
 
     // Only apply hover and selected states to cards that are in view
     if (isInViewCard && (isSelectedCard || isHoveredCard)) {
