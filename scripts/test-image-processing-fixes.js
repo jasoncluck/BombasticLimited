@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * Test script to validate image processing removal
- * This script checks that image processing functionality has been properly removed
+ * Simple test script to validate image processing job completion fixes
+ * This script checks that our SQL functions work as expected
  */
 
 import { readFileSync } from 'fs';
@@ -11,112 +11,119 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-console.log('🧪 Testing Image Processing Removal');
+console.log('🧪 Testing Image Processing Job Completion Fixes');
 console.log('='.repeat(60));
 
-console.log('📋 Validating migration file updates...\n');
+// Read our test SQL file
+const testFile = join(
+  __dirname,
+  '../supabase/tests/13_image_processing_job_completion.sql'
+);
 
-// Check key migration files for proper removal of image processing
+try {
+  const testContent = readFileSync(testFile, 'utf8');
+
+  // Basic validation that our test file contains the expected elements
+  const expectedPatterns = [
+    /complete_image_processing_job_with_worker/,
+    /orphaned job detection/i,
+    /cleanup_orphaned_image_processing_jobs/,
+    /entity verification/i,
+    /atomic updates/i,
+    /nonexistent entity should fail/i,
+  ];
+
+  let passed = 0;
+  let total = expectedPatterns.length;
+
+  console.log('📋 Validating test file structure...\n');
+
+  expectedPatterns.forEach((pattern, index) => {
+    const matches = pattern.test(testContent);
+    console.log(
+      `${matches ? '✅' : '❌'} Test ${index + 1}: ${pattern.source}`
+    );
+    if (matches) passed++;
+  });
+
+  console.log(`\n📊 Test file validation: ${passed}/${total} checks passed`);
+
+  if (passed === total) {
+    console.log('\n🎉 Test file structure looks good!');
+    console.log('\n📝 Key improvements implemented:');
+    console.log('   • Entity existence validation before updates');
+    console.log('   • Safe type casting with error handling');
+    console.log('   • Update entities BEFORE deleting jobs');
+    console.log('   • Orphaned job detection and cleanup');
+    console.log('   • Better error messages and logging');
+    console.log('\n💡 To run full tests: npm run test:sql');
+  } else {
+    console.log(
+      '\n⚠️  Some test patterns are missing - please review the test file'
+    );
+    process.exit(1);
+  }
+} catch (error) {
+  console.error('❌ Error reading test file:', error.message);
+  process.exit(1);
+}
+
+// Check migration files for our key fixes
+console.log('\n🔧 Validating migration file changes...\n');
+
 const migrations = [
-  '../supabase/migrations/20250721023754_01_extensions_and_types.sql',
-  '../supabase/migrations/20250721023756_03_base_tables.sql', 
-  '../supabase/migrations/20250823044958_15_image-processing.sql',
-  '../supabase/migrations/20250823162000_16_remove_image_processing_fields.sql'
+  '../supabase/migrations/20250820000000_16_image_processing_worker_support.sql',
+  '../supabase/migrations/20250814173410_15_image_processing.sql',
 ];
 
 let migrationsPassed = 0;
-let total = migrations.length;
 
 migrations.forEach((migrationPath, index) => {
   try {
     const fullPath = join(__dirname, migrationPath);
     const content = readFileSync(fullPath, 'utf8');
-    const filename = migrationPath.split('/').pop();
 
-    console.log(`Migration ${index + 1}: ${filename}`);
+    // Check for key improvements
+    const hasEntityValidation =
+      content.includes('entity_exists') && content.includes('SELECT EXISTS');
+    const hasSafeTypeCasting =
+      content.includes('invalid_text_representation') &&
+      content.includes('EXCEPTION');
+    const hasEntityUpdateFirst =
+      content.indexOf('UPDATE') < content.indexOf('DELETE FROM');
+    const hasBetterLogging =
+      content.includes('RAISE LOG') || content.includes('RAISE WARNING');
 
-    if (filename.includes('01_extensions_and_types')) {
-      // Should NOT contain image_processing_status enum
-      const hasEnumRemoved = !content.includes('CREATE TYPE "public"."image_processing_status"');
-      console.log(`  ${hasEnumRemoved ? '✅' : '❌'} image_processing_status enum removed`);
-      if (hasEnumRemoved) migrationsPassed++;
-    }
-    else if (filename.includes('03_base_tables')) {
-      // Should NOT contain image_processing fields in tables
-      const hasVideoFieldsRemoved = !content.includes('"image_processing_status"') && 
-                                    !content.includes('"image_processing_updated_at"');
-      const hasPlaylistFieldsRemoved = !content.includes('public.image_processing_status');
-      console.log(`  ${hasVideoFieldsRemoved ? '✅' : '❌'} Video table image_processing fields removed`);
-      console.log(`  ${hasPlaylistFieldsRemoved ? '✅' : '❌'} Playlist table image_processing fields removed`);
-      if (hasVideoFieldsRemoved && hasPlaylistFieldsRemoved) migrationsPassed++;
-    }
-    else if (filename.includes('15_image-processing')) {
-      // Should be disabled/commented out
-      const isDisabled = content.includes('disabled') || content.includes('commented out');
-      console.log(`  ${isDisabled ? '✅' : '❌'} Image processing migration disabled`);
-      if (isDisabled) migrationsPassed++;
-    }
-    else if (filename.includes('16_remove_image_processing_fields')) {
-      // Should be converted to no-op
-      const isNoOp = content.includes('disabled') && content.length < 500;
-      console.log(`  ${isNoOp ? '✅' : '❌'} Remove fields migration converted to no-op`);
-      if (isNoOp) migrationsPassed++;
-    }
+    console.log(`Migration ${index + 1}: ${migrationPath.split('/').pop()}`);
+    console.log(
+      `  ${hasEntityValidation ? '✅' : '❌'} Entity existence validation`
+    );
+    console.log(`  ${hasSafeTypeCasting ? '✅' : '❌'} Safe type casting`);
+    console.log(`  ${hasEntityUpdateFirst ? '✅' : '❌'} Update before delete`);
+    console.log(`  ${hasBetterLogging ? '✅' : '❌'} Enhanced logging`);
 
+    if (
+      hasEntityValidation &&
+      hasSafeTypeCasting &&
+      hasEntityUpdateFirst &&
+      hasBetterLogging
+    ) {
+      migrationsPassed++;
+    }
     console.log('');
   } catch (error) {
     console.log(`❌ Error reading ${migrationPath}: ${error.message}\n`);
   }
 });
 
-console.log(`📊 Migration validation: ${migrationsPassed}/${total} files correctly updated`);
+console.log(
+  `📊 Migration validation: ${migrationsPassed}/${migrations.length} files passed all checks`
+);
 
-// Check SQL function files
-console.log('\n🔧 Validating SQL function updates...\n');
-
-const functionFiles = [
-  '../supabase/migrations/20250721023809_08c_video_query_functions.sql',
-  '../supabase/migrations/20250721023810_08d_playlist_query_functions.sql',
-  '../supabase/migrations/20250721023811_08e_playlist_management_functions.sql'
-];
-
-let functionsPassed = 0;
-
-functionFiles.forEach((filePath, index) => {
-  try {
-    const fullPath = join(__dirname, filePath);
-    const content = readFileSync(fullPath, 'utf8');
-    const filename = filePath.split('/').pop();
-
-    // Count image_processing references (should be zero)
-    const imageProcessingRefs = (content.match(/image_processing_status|image_processing_updated_at/g) || []).length;
-    const hasNoReferences = imageProcessingRefs === 0;
-
-    console.log(`Function file ${index + 1}: ${filename}`);
-    console.log(`  ${hasNoReferences ? '✅' : '❌'} No image_processing field references (found: ${imageProcessingRefs})`);
-
-    if (hasNoReferences) functionsPassed++;
-    console.log('');
-  } catch (error) {
-    console.log(`❌ Error reading ${filePath}: ${error.message}\n`);
-  }
-});
-
-console.log(`📊 Function file validation: ${functionsPassed}/${functionFiles.length} files correctly updated`);
-
-const totalPassed = migrationsPassed + functionsPassed;
-const totalChecks = total + functionFiles.length;
-
-if (totalPassed === totalChecks) {
-  console.log('\n🎉 All files have been properly updated!');
-  console.log('\n📝 Image processing removal complete:');
-  console.log('   • Enum type removed from base types');
-  console.log('   • Database columns removed from tables');
-  console.log('   • SQL functions updated to remove field references');
-  console.log('   • Image processing migration disabled');
-  console.log('   • Static image fields preserved (thumbnail_url, image_webp_url, image_avif_url, image_properties)');
-  console.log('\n🚀 Database schema is now clean without image processing functionality');
+if (migrationsPassed === migrations.length) {
+  console.log('\n🎉 All migration files contain the required fixes!');
+  console.log('\n🚀 Ready to test with: npm run test:sql');
 } else {
-  console.log(`\n⚠️  ${totalChecks - totalPassed} files still need updates`);
+  console.log('\n⚠️  Some migration files are missing key improvements');
   process.exit(1);
 }

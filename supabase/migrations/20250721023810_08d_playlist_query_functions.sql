@@ -44,6 +44,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data (
   playlist_created_by uuid,
   playlist_description text,
   playlist_image_url text,
+  playlist_image_processing_status public.image_processing_status,
   playlist_type public.playlist_type,
   playlist_image_properties jsonb,
   playlist_youtube_id text,
@@ -60,6 +61,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data (
   video_description text,
   video_thumbnail_url text,
   video_image_url text,
+  video_image_processing_status public.image_processing_status,
   video_published_at TIMESTAMP WITH TIME ZONE,
   video_duration text,
   video_start_seconds numeric,
@@ -100,6 +102,7 @@ BEGIN
         p.image_webp_url,
         p_preferred_image_format
       ) as best_playlist_image_url,
+      p.image_processing_status,
       p.type,
       p.image_properties,
       p.youtube_id,
@@ -147,6 +150,7 @@ BEGIN
       playlist_record.created_by,
       playlist_record.description,
       playlist_record.best_playlist_image_url,
+      playlist_record.image_processing_status,
       playlist_record.type,
       playlist_record.image_properties,
       playlist_record.youtube_id,
@@ -157,7 +161,7 @@ BEGIN
       playlist_record.sort_order,
       -- Video data (all NULL since no videos)
       NULL::text, NULL::int2, NULL::public.source, NULL::text, NULL::text,
-      NULL::text, NULL::text,
+      NULL::text, NULL::text, NULL::public.image_processing_status,
       NULL::TIMESTAMP WITH TIME ZONE, NULL::text, 0::numeric,
       NULL::TIMESTAMP WITH TIME ZONE, NULL::TIMESTAMP WITH TIME ZONE,
       0::bigint, COALESCE(total_duration, 0), false;
@@ -174,6 +178,7 @@ BEGIN
     playlist_record.created_by,
     playlist_record.description,
     playlist_record.best_playlist_image_url,
+    playlist_record.image_processing_status,
     playlist_record.type,
     playlist_record.image_properties,
     playlist_record.youtube_id,
@@ -194,6 +199,7 @@ BEGIN
       v.thumbnail_webp_url,
       p_preferred_image_format
     ) as video_image_url,
+    v.image_processing_status,
     v.published_at,
     v.duration,
     COALESCE(t.video_start_seconds, 0),
@@ -264,6 +270,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
   playlist_created_by uuid,
   playlist_description text,
   playlist_image_url text,
+  playlist_image_processing_status public.image_processing_status,
   playlist_type public.playlist_type,
   playlist_image_properties jsonb,
   playlist_youtube_id text,
@@ -308,6 +315,7 @@ SET
         p.image_webp_url,
         p_preferred_image_format
       ) as best_playlist_image_url,
+      p.image_processing_status,
       p.type,
       p.image_properties,
       p.youtube_id,
@@ -341,6 +349,7 @@ SET
     pi.created_by as playlist_created_by,
     pi.description as playlist_description,
     pi.best_playlist_image_url as playlist_image_url,
+    pi.image_processing_status as playlist_image_processing_status,
     pi.type as playlist_type,
     pi.image_properties as playlist_image_properties,
     pi.youtube_id as playlist_youtube_id,
@@ -438,6 +447,7 @@ CREATE OR REPLACE FUNCTION public.get_user_playlists (p_preferred_image_format t
   short_id text,
   description text,
   image_url text,
+  image_processing_status public.image_processing_status,
   type public.playlist_type,
   image_properties jsonb,
   youtube_id text,
@@ -465,6 +475,7 @@ SET
       p.image_webp_url,
       p_preferred_image_format
     ) as image_url,
+    p.image_processing_status,
     p.type,
     p.image_properties,
     p.youtube_id,
@@ -497,6 +508,7 @@ CREATE OR REPLACE FUNCTION public.get_playlists_for_username (
   created_by uuid,
   description text,
   image_url text,
+  image_processing_status public.image_processing_status,
   type public.playlist_type,
   image_properties jsonb,
   youtube_id text,
@@ -521,6 +533,7 @@ SET
       p.image_webp_url,
       p_preferred_image_format
     ) as image_url,
+    p.image_processing_status,
     p.type,
     p.image_properties,
     p.youtube_id,
@@ -550,6 +563,7 @@ CREATE OR REPLACE FUNCTION "public"."search_playlists" (
   "name" text,
   "description" text,
   "image_url" text,
+  "image_processing_status" public.image_processing_status,
   "image_properties" jsonb,
   "created_at" TIMESTAMP WITH TIME ZONE,
   "created_by" uuid,
@@ -608,6 +622,7 @@ BEGIN
               p.image_webp_url,
               p_preferred_image_format
             ) as best_image_url,
+            p.image_processing_status,
             p.image_properties,
             p.created_at,
             p.created_by,
@@ -653,7 +668,7 @@ BEGIN
     )
     SELECT 
         rp.id, rp.short_id, rp.name, rp.description, rp.best_image_url,
-        rp.image_properties, rp.created_at,
+        rp.image_processing_status, rp.image_properties, rp.created_at,
         rp.created_by, rp.type, rp.youtube_id, rp.thumbnail_url,
         rp.duration_seconds, rp.profile_username, rp.avatar_url,
         rp.search_rank, rp.deleted_at

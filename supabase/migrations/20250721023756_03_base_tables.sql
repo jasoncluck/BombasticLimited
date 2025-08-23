@@ -20,6 +20,8 @@ CREATE TABLE IF NOT EXISTS "public"."videos" (
   "thumbnail_url" "text" NOT NULL,
   "thumbnail_webp_url" text,
   "thumbnail_avif_url" text,
+  "image_processing_status" public.image_processing_status DEFAULT 'pending',
+  "image_processing_updated_at" TIMESTAMP WITH TIME ZONE DEFAULT now(),
   "views" bigint DEFAULT 0 NOT NULL
 );
 
@@ -32,6 +34,8 @@ COMMENT ON COLUMN "public"."videos"."thumbnail_url" IS 'Primary thumbnail URL fo
 COMMENT ON COLUMN "public"."videos"."thumbnail_webp_url" IS 'Supabase Storage path for WebP thumbnail';
 
 COMMENT ON COLUMN "public"."videos"."thumbnail_avif_url" IS 'Supabase Storage path for AVIF thumbnail';
+
+COMMENT ON COLUMN "public"."videos"."image_processing_status" IS 'Status of background image processing for this video';
 
 COMMENT ON COLUMN "public"."videos"."views" IS 'Total number of times this video has been viewed by users';
 
@@ -59,6 +63,9 @@ CREATE TABLE IF NOT EXISTS "public"."playlists" (
   -- Generated cropped playlist images (stored in Supabase Storage)
   "image_webp_url" text,
   "image_avif_url" text,
+  -- Image processing tracking
+  "image_processing_status" public.image_processing_status DEFAULT 'pending',
+  "image_processing_updated_at" TIMESTAMP WITH TIME ZONE DEFAULT now(),
   CONSTRAINT "playlists_pkey" PRIMARY KEY ("id"),
   CONSTRAINT "playlists_name_check" CHECK (length("name") <= 50),
   CONSTRAINT "playlists_youtube_id_unique" UNIQUE ("youtube_id"),
@@ -75,6 +82,8 @@ COMMENT ON COLUMN "public"."playlists"."image_properties" IS 'Crop dimensions {x
 COMMENT ON COLUMN "public"."playlists"."image_webp_url" IS 'Supabase Storage path for cropped playlist image in WebP format';
 
 COMMENT ON COLUMN "public"."playlists"."image_avif_url" IS 'Supabase Storage path for cropped playlist image in AVIF format';
+
+COMMENT ON COLUMN "public"."playlists"."image_processing_status" IS 'Status of background image processing for playlist thumbnail generation';
 
 ALTER TABLE "public"."playlists" OWNER TO "postgres";
 
