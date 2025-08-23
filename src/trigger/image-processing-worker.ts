@@ -16,15 +16,9 @@ if (!supabaseUrl || !supabaseServiceRoleKey) {
 }
 
 // Supabase client setup
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-});
+const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
 // Configuration constants
-const STORAGE_BUCKET = IMAGES_BUCKET;
 const PROCESSING_TIMEOUT = 60000;
 
 interface WebhookPayload {
@@ -39,13 +33,37 @@ interface WebhookPayload {
     thumbnail_url?: string;
     image_properties?: PlaylistImageProperties;
   };
+  jobId?: string;
+  timestamp: string;
+}
+
+interface ProcessingResult {
+  processed: boolean;
+  reason?: string;
+  entityType?: string;
+  entityId?: string;
+  webpPath?: string;
+  avifPath?: string;
+  webpSize?: number;
+  avifSize?: number;
+  jobId?: string;
+}
+
+interface StoragePaths {
+  webpPath: string;
+  avifPath: string;
+}
+
+interface ProcessedImages {
+  webp: Buffer;
+  avif: Buffer;
 }
 
 // Generate storage paths for optimized images
 function generateStoragePaths(
   entityType: string,
   entityId: string
-): { webpPath: string; avifPath: string } {
+): StoragePaths {
   const timestamp = Date.now();
 
   if (entityType === 'video') {
@@ -80,7 +98,7 @@ async function downloadImage(sourceUrl: string): Promise<Buffer> {
     sourceUrl.startsWith('thumbnails/')
   ) {
     const { data, error } = await supabase.storage
-      .from(STORAGE_BUCKET)
+      .from(IMAGES_BUCKET)
       .download(sourceUrl);
 
     if (error) {
@@ -128,7 +146,7 @@ async function getPlaylistCropProperties(
     .from('playlists')
     .select('image_properties')
     .eq('id', playlistId)
-    .single();
+    .maybeSingle(); // Changed from .single() to .maybeSingle()
 
   if (error) {
     console.warn(`Failed to get playlist crop properties: ${error.message}`);
@@ -168,7 +186,7 @@ async function processImageFormats(
   entityType?: string,
   playlistId?: string,
   sourceUrl?: string
-): Promise<{ webp: Buffer; avif: Buffer }> {
+): Promise<ProcessedImages> {
   const sharpInstance = sharp(buffer, {
     failOnError: false,
     density: 300,
@@ -281,7 +299,7 @@ async function processImageFormats(
   const webpQuality = isLargeImage ? 65 : 75;
   const avifQuality = isLargeImage ? 55 : 65;
 
-  const result: { webp: Buffer; avif: Buffer } = {
+  const result: ProcessedImages = {
     webp: Buffer.alloc(0),
     avif: Buffer.alloc(0),
   };
@@ -320,10 +338,10 @@ async function uploadToStorage(
   avifBuffer: Buffer,
   webpPath: string,
   avifPath: string
-): Promise<{ webpPath: string; avifPath: string }> {
+): Promise<StoragePaths> {
   // Upload WebP
   const { error: webpError } = await supabase.storage
-    .from(STORAGE_BUCKET)
+    .from(IMAGES_BUCKET)
     .upload(webpPath, webpBuffer, {
       contentType: 'image/webp',
       cacheControl: '31536000',
@@ -336,7 +354,7 @@ async function uploadToStorage(
 
   // Upload AVIF
   const { error: avifError } = await supabase.storage
-    .from(STORAGE_BUCKET)
+    .from(IMAGES_BUCKET)
     .upload(avifPath, avifBuffer, {
       contentType: 'image/avif',
       cacheControl: '31536000',
@@ -375,7 +393,7 @@ async function deleteExistingOptimizedImages(
     }
 
     if (filesToDelete.length > 0) {
-      await supabase.storage.from(STORAGE_BUCKET).remove(filesToDelete);
+      await supabase.storage.from(IMAGES_BUCKET).remove(filesToDelete);
     }
   }
 }
@@ -387,32 +405,41 @@ async function updateEntityWithProcessedImages(
   webpPath: string,
   avifPath: string
 ): Promise<void> {
+  console.log(`Updating ${entityType} ${entityId} with paths:`, {
+    webpPath,
+    avifPath,
+  });
+
   if (entityType === 'playlist') {
     const { error } = await supabase
       .from('playlists')
       .update({
         image_webp_url: webpPath,
         image_avif_url: avifPath,
-        updated_at: new Date().toISOString(),
+        image_processing_status: 'completed',
+        image_processing_updated_at: new Date().toISOString(),
       })
       .eq('id', entityId);
 
     if (error) {
       throw new Error(`Failed to update playlist: ${error.message}`);
     }
+    console.log(`Successfully updated playlist ${entityId}`);
   } else if (entityType === 'video') {
     const { error } = await supabase
       .from('videos')
       .update({
         thumbnail_webp_url: webpPath,
         thumbnail_avif_url: avifPath,
-        updated_at: new Date().toISOString(),
+        image_processing_status: 'completed',
+        image_processing_updated_at: new Date().toISOString(),
       })
       .eq('id', entityId);
 
     if (error) {
       throw new Error(`Failed to update video: ${error.message}`);
     }
+    console.log(`Successfully updated video ${entityId}`);
   }
 }
 
@@ -425,10 +452,13 @@ export const processImageWebhook = task({
     minTimeoutInMs: 1000,
     maxTimeoutInMs: 10000,
   },
-  run: async (payload: WebhookPayload) => {
-    const { type, table, record, old_record } = payload;
+  run: async (payload: WebhookPayload): Promise<ProcessingResult> => {
+    const { type, table, record, old_record, jobId } = payload;
 
-    console.log(`Processing ${type} webhook for ${table} ${record.id}`);
+    console.log(`Processing ${type} webhook for ${table} ${record.id}`, {
+      jobId,
+      timestamp: payload.timestamp,
+    });
 
     // Determine if we need to process
     let shouldProcess = false;
@@ -457,6 +487,26 @@ export const processImageWebhook = task({
 
     if (!shouldProcess || !sourceUrl) {
       console.log(`No processing needed for ${table} ${record.id}`);
+
+      // Mark job as completed if jobId provided
+      if (jobId) {
+        try {
+          console.log(
+            `Marking job ${jobId} as completed (no processing needed)`
+          );
+          const { data: completionResult, error: completionError } =
+            await supabase.rpc('complete_image_processing_job', {
+              job_id: jobId,
+            });
+          console.log('Job completion result:', {
+            completionResult,
+            completionError,
+          });
+        } catch (error) {
+          console.warn(`Failed to mark job ${jobId} as completed:`, error);
+        }
+      }
+
       return { processed: false, reason: 'No changes requiring processing' };
     }
 
@@ -489,13 +539,62 @@ export const processImageWebhook = task({
       console.log(`Uploading optimized images for ${entityType} ${record.id}`);
       await uploadToStorage(webpBuffer, avifBuffer, webpPath, avifPath);
 
-      // Update database
-      await updateEntityWithProcessedImages(
-        entityType,
-        record.id,
-        webpPath,
-        avifPath
-      );
+      console.log(`Uploaded images to storage:`, { webpPath, avifPath });
+
+      // Mark job as completed if jobId provided, otherwise update directly
+      if (jobId) {
+        try {
+          console.log(`Attempting to complete job ${jobId} with paths:`, {
+            webpPath,
+            avifPath,
+          });
+
+          const { data: completionResult, error: completionError } =
+            await supabase.rpc('complete_image_processing_job', {
+              job_id: jobId,
+              webp_path: webpPath,
+              avif_path: avifPath,
+            });
+
+          console.log('Job completion result:', {
+            completionResult,
+            completionError,
+          });
+
+          if (completionError) {
+            throw new Error(
+              `Job completion failed: ${completionError.message}`
+            );
+          }
+
+          if (!completionResult) {
+            throw new Error(
+              'Job completion returned false - job may not exist or update failed'
+            );
+          }
+
+          console.log(`Successfully marked job ${jobId} as completed`);
+        } catch (error) {
+          console.error(`Failed to mark job ${jobId} as completed:`, error);
+          // Fallback to direct database update
+          console.log('Attempting fallback database update...');
+          await updateEntityWithProcessedImages(
+            entityType,
+            record.id,
+            webpPath,
+            avifPath
+          );
+          console.log('Fallback update completed');
+        }
+      } else {
+        // No job ID, update directly
+        await updateEntityWithProcessedImages(
+          entityType,
+          record.id,
+          webpPath,
+          avifPath
+        );
+      }
 
       console.log(
         `Successfully processed image for ${entityType} ${record.id}`
@@ -509,12 +608,33 @@ export const processImageWebhook = task({
         avifPath,
         webpSize: Math.round(webpBuffer.length / 1024),
         avifSize: Math.round(avifBuffer.length / 1024),
+        jobId,
       };
     } catch (error) {
       console.error(
         `Failed to process image for ${table} ${record.id}:`,
         error
       );
+
+      // Mark job as failed if jobId provided
+      if (jobId) {
+        try {
+          const errorMessage =
+            error instanceof Error ? error.message : 'Unknown error';
+          console.log(`Marking job ${jobId} as failed:`, errorMessage);
+          const { data: failResult, error: failError } = await supabase.rpc(
+            'fail_image_processing_job',
+            {
+              job_id: jobId,
+              error_msg: errorMessage,
+            }
+          );
+          console.log('Job failure result:', { failResult, failError });
+        } catch (dbError) {
+          console.error(`Failed to mark job ${jobId} as failed:`, dbError);
+        }
+      }
+
       throw error;
     }
   },

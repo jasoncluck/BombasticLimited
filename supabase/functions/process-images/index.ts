@@ -41,9 +41,9 @@ if (!supabaseUrl || !supabaseServiceKey) {
   throw new Error('Missing required Supabase environment variables');
 }
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
 async function processImageJobs(): Promise<ApiResponse> {
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
   try {
     // Validate required environment variable
     if (!Deno.env.get('TRIGGER_SECRET_KEY')) {
@@ -111,6 +111,8 @@ async function processImageJobs(): Promise<ApiResponse> {
           timestamp: new Date().toISOString(),
         };
 
+        console.log('Webhook payload being sent:', webhookPayload);
+
         // Trigger the task using the SDK
         const run = await tasks.trigger<typeof processImageWebhook>(
           'process-image-webhook',
@@ -161,7 +163,7 @@ async function processImageJobs(): Promise<ApiResponse> {
 }
 
 serve(async (req: Request): Promise<Response> => {
-  // Only accept POST requests from cron
+  // Only accept POST requests
   if (req.method !== 'POST') {
     return new Response(
       JSON.stringify({ success: false, error: 'Method not allowed' }),

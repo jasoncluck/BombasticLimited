@@ -104,16 +104,24 @@ UPDATE ON "public"."image_processing_jobs" FOR EACH ROW
 EXECUTE FUNCTION public.update_image_processing_jobs_updated_at ();
 
 -- Optimized function to get next job for processing (with atomic locking)
-CREATE OR REPLACE FUNCTION public.get_next_image_processing_job () RETURNS TABLE (
+-- Enhanced get_next_image_processing_job function
+CREATE OR REPLACE FUNCTION public.get_next_image_processing_job () 
+RETURNS TABLE (
   job_id uuid,
   entity_type text,
   entity_id text,
   image_type text,
   source_url text,
   attempts integer
-) LANGUAGE sql SECURITY DEFINER
-SET
-  search_path = '' AS $$
+) 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = '' 
+AS $$
+DECLARE
+  selected_job RECORD;
+BEGIN
+  -- Use FOR UPDATE SKIP LOCKED to prevent race conditions
   SELECT 
     j.id,
     j.entity_type,
@@ -121,18 +129,45 @@ SET
     j.image_type,
     j.source_url,
     j.attempts
+  INTO selected_job
   FROM "public"."image_processing_jobs" j
   WHERE j.status = 'pending' 
     AND j.attempts < j.max_attempts
   ORDER BY j.priority ASC, j.created_at ASC
   LIMIT 1
   FOR UPDATE SKIP LOCKED;
+  
+  IF NOT FOUND THEN
+    RAISE LOG 'No pending jobs found in queue';
+    RETURN;
+  END IF;
+  
+  RAISE LOG 'Selected job % for processing: entity_type=%, entity_id=%, attempts=%', 
+    selected_job.id, selected_job.entity_type, selected_job.entity_id, selected_job.attempts;
+  
+  -- Return the job data
+  job_id := selected_job.id;
+  entity_type := selected_job.entity_type;
+  entity_id := selected_job.entity_id;
+  image_type := selected_job.image_type;
+  source_url := selected_job.source_url;
+  attempts := selected_job.attempts;
+  
+  RETURN NEXT;
+END;
 $$;
 
 -- Optimized function to mark job as processing
-CREATE OR REPLACE FUNCTION public.start_image_processing_job (job_id uuid) RETURNS boolean LANGUAGE sql SECURITY DEFINER
-SET
-  search_path = '' AS $$
+-- Fix the start_image_processing_job function
+CREATE OR REPLACE FUNCTION public.start_image_processing_job (job_id uuid) 
+RETURNS boolean 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = '' 
+AS $$
+DECLARE
+  rows_affected integer;
+BEGIN
   UPDATE "public"."image_processing_jobs"
   SET 
     status = 'processing',
@@ -140,33 +175,52 @@ SET
     attempts = attempts + 1
   WHERE id = job_id;
   
-  SELECT FOUND;
+  GET DIAGNOSTICS rows_affected = ROW_COUNT;
+  
+  RETURN rows_affected > 0;
+END;
 $$;
 
 -- Optimized function to mark job as completed and remove from queue
+-- Enhanced complete_image_processing_job function with better debugging
 CREATE OR REPLACE FUNCTION public.complete_image_processing_job (
   job_id uuid,
   jpg_path text DEFAULT NULL,
   webp_path text DEFAULT NULL,
   avif_path text DEFAULT NULL
-) RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER
-SET
-  search_path = '' AS $$
+) RETURNS boolean 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = '' 
+AS $$
 DECLARE
   job_record RECORD;
   entity_exists boolean := FALSE;
-  entity_updated boolean := FALSE;
+  entity_updated_count integer := 0;
+  job_deleted_count integer := 0;
   playlist_id_bigint bigint;
+  debug_info text;
 BEGIN
   -- Get job details before any updates
-  SELECT entity_type, entity_id, image_type INTO job_record
+  SELECT entity_type, entity_id, image_type, status INTO job_record
   FROM "public"."image_processing_jobs"
   WHERE id = job_id;
   
   IF NOT FOUND THEN
-    RAISE WARNING 'Job % not found', job_id;
+    RAISE WARNING 'Job % not found in image_processing_jobs table', job_id;
+    
+    -- Check if job was recently deleted
+    SELECT COUNT(*) INTO entity_updated_count
+    FROM "public"."image_processing_jobs"
+    WHERE entity_type = 'playlist';
+    
+    RAISE WARNING 'Total playlist jobs in queue: %', entity_updated_count;
     RETURN FALSE;
   END IF;
+  
+  debug_info := format('Job found: entity_type=%s, entity_id=%s, image_type=%s, status=%s', 
+                      job_record.entity_type, job_record.entity_id, job_record.image_type, job_record.status);
+  RAISE LOG '%', debug_info;
   
   -- Update entity FIRST, then delete job
   -- This prevents orphaned jobs if entity update fails
@@ -187,11 +241,12 @@ BEGIN
       SET 
         thumbnail_webp_url = COALESCE(webp_path, thumbnail_webp_url),
         thumbnail_avif_url = COALESCE(avif_path, thumbnail_avif_url),
-        image_processing_status = 'completed'::public.image_processing_status,
+        image_processing_status = 'completed',
         image_processing_updated_at = now()
       WHERE id = job_record.entity_id;
       
-      GET DIAGNOSTICS entity_updated = ROW_COUNT > 0;
+      GET DIAGNOSTICS entity_updated_count = ROW_COUNT;
+      RAISE LOG 'Updated % video rows for entity %', entity_updated_count, job_record.entity_id;
     END IF;
   ELSIF job_record.entity_type = 'playlist' THEN
     -- Safely convert entity_id to bigint with proper error handling
@@ -213,6 +268,8 @@ BEGIN
       RETURN FALSE;
     END IF;
     
+    RAISE LOG 'Updating playlist % with webp_path=% avif_path=%', playlist_id_bigint, webp_path, avif_path;
+    
     -- Update playlist entity
     UPDATE "public"."playlists"
     SET 
@@ -222,15 +279,16 @@ BEGIN
       image_processing_updated_at = now()
     WHERE id = playlist_id_bigint;
     
-    GET DIAGNOSTICS entity_updated = ROW_COUNT > 0;
+    GET DIAGNOSTICS entity_updated_count = ROW_COUNT;
+    RAISE LOG 'Updated % playlist rows for entity %', entity_updated_count, playlist_id_bigint;
   ELSE
     RAISE WARNING 'Unknown entity type % for job %', job_record.entity_type, job_id;
     RETURN FALSE;
   END IF;
   
   -- Verify entity was actually updated
-  IF NOT entity_updated THEN
-    RAISE WARNING 'Failed to update entity % (type: %) for job %', 
+  IF entity_updated_count = 0 THEN
+    RAISE WARNING 'Failed to update entity % (type: %) for job % - no rows affected', 
       job_record.entity_id, job_record.entity_type, job_id;
     RETURN FALSE;
   END IF;
@@ -239,21 +297,27 @@ BEGIN
   DELETE FROM "public"."image_processing_jobs"
   WHERE id = job_id;
   
+  GET DIAGNOSTICS job_deleted_count = ROW_COUNT;
+  
   -- Log successful completion
-  RAISE LOG 'Successfully completed job % for % %', 
-    job_id, job_record.entity_type, job_record.entity_id;
+  RAISE LOG 'Successfully completed job % for % % (job deleted: %, entity updated: %)', 
+    job_id, job_record.entity_type, job_record.entity_id, job_deleted_count > 0, entity_updated_count > 0;
   
   RETURN TRUE;
 END;
 $$;
 
 -- Optimized function to mark job as failed
-CREATE OR REPLACE FUNCTION public.fail_image_processing_job (job_id uuid, error_msg text) RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER
-SET
-  search_path = '' AS $$
+CREATE OR REPLACE FUNCTION public.fail_image_processing_job (job_id uuid, error_msg text) 
+RETURNS boolean 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = '' 
+AS $$
 DECLARE
   job_record RECORD;
   new_status text;
+  job_updated_count integer := 0;
 BEGIN
   -- Get job details
   SELECT attempts, max_attempts, entity_type, entity_id INTO job_record
@@ -278,6 +342,8 @@ BEGIN
     processing_started_at = NULL
   WHERE id = job_id;
   
+  GET DIAGNOSTICS job_updated_count = ROW_COUNT;
+  
   -- Update entity status if permanently failed
   IF new_status = 'failed' THEN
     IF job_record.entity_type = 'video' THEN
@@ -295,7 +361,7 @@ BEGIN
     END IF;
   END IF;
   
-  RETURN TRUE;
+  RETURN job_updated_count > 0;
 END;
 $$;
 
@@ -565,3 +631,17 @@ CREATE TRIGGER trigger_playlists_cleanup_images BEFORE DELETE ON "public"."playl
 EXECUTE FUNCTION public.trigger_cleanup_optimized_images ();
 
 
+-- Setup Supabase cron for process images edge function, run every minute
+SELECT cron.schedule(
+    'invoke-process-images-every-minute',
+    '* * * * *', -- every minute
+    $$
+    SELECT net.http_post(
+        url := (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'project_url') || '/functions/v1/process-images',
+        headers := jsonb_build_object(
+            'Content-Type', 'application/json'
+        ),
+        body := jsonb_build_object('time', now()::text)
+    );
+    $$
+);
