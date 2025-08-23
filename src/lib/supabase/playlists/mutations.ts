@@ -333,6 +333,8 @@ export async function updatePlaylistThumbnail({
         image_webp_url: null,
         image_avif_url: null,
         image_properties: null,
+        image_processing_status: null,
+        image_processing_updated_at: null,
       })
       .eq('id', playlistId)
       .select();

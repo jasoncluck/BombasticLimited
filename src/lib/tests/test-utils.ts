@@ -216,6 +216,8 @@ export function createMockPlaylist(overrides: Partial<any> = {}) {
     name: 'Test Playlist',
     youtube_id: 'youtube123',
     thumbnail_url: 'https://example.com/playlist_image.jpg',
+    image_processing_status: 'completed' as const,
+    image_processing_updated_at: '2023-01-01T00:00:00Z',
     image_properties: { x: 0, y: 0, width: 100, height: 100 },
     created_at: '2023-01-01T00:00:00Z',
     type: 'Public' as const,
