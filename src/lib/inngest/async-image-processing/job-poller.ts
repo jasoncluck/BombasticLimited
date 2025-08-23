@@ -63,6 +63,7 @@ interface ImageProcessingJob {
   image_type: string;
   source_url: string;
   attempts: number;
+  priority: number;
   worker_id: string;
   polling_timestamp: string;
   processing_started_at: string;
@@ -73,6 +74,7 @@ interface BatchResult {
   jobsSent: number;
   errors: number;
   batchIndex: number;
+  priorityRange: { min: number; max: number };
 }
 
 // Generate unique worker ID for this poller instance
@@ -232,17 +234,20 @@ async function performDatabaseOperation<T>(
 
 async function processBatch(
   jobs: ImageProcessingJob[],
-  batchIndex: number
+  batchIndex: number,
+  priorityRange: { min: number; max: number }
 ): Promise<BatchResult> {
   let jobsSent = 0;
   let errors = 0;
 
-  console.log(`📦 Processing batch ${batchIndex + 1} with ${jobs.length} jobs`);
+  console.log(
+    `📦 Processing batch ${batchIndex + 1} with ${jobs.length} jobs (priority range: ${priorityRange.min}-${priorityRange.max})`
+  );
 
   const batchPromises = jobs.map(async (job) => {
     try {
       console.log(
-        `📤 Sending processing event for ${job.entity_type} ${job.entity_id} (${job.image_type}) - Job ID: ${job.job_id}, Worker: ${job.worker_id}, Batch: ${batchIndex + 1}`
+        `📤 Sending processing event for ${job.entity_type} ${job.entity_id} (${job.image_type}) - Job ID: ${job.job_id}, Priority: ${job.priority}, Worker: ${job.worker_id}, Batch: ${batchIndex + 1}`
       );
 
       await inngest.send({
@@ -257,7 +262,7 @@ async function processBatch(
           pollingTimestamp: job.polling_timestamp,
           jobAttempts: job.attempts,
           processingStartedAt: job.processing_started_at,
-          priority: job.entity_type === 'playlist' ? 25 : 100,
+          priority: job.priority,
         },
       });
 
@@ -274,7 +279,7 @@ async function processBatch(
   await Promise.allSettled(batchPromises);
 
   console.log(
-    `📦 Batch ${batchIndex + 1} completed: ${jobsSent}/${jobs.length} jobs sent, ${errors} errors`
+    `📦 Batch ${batchIndex + 1} completed: ${jobsSent}/${jobs.length} jobs sent, ${errors} errors (priority: ${priorityRange.min}-${priorityRange.max})`
   );
 
   return {
@@ -282,6 +287,7 @@ async function processBatch(
     jobsSent,
     errors,
     batchIndex,
+    priorityRange,
   };
 }
 
@@ -291,6 +297,120 @@ function chunkArray<T>(array: T[], chunkSize: number): T[][] {
     chunks.push(array.slice(i, i + chunkSize));
   }
   return chunks;
+}
+
+// Priority ranges for batch separation
+const HIGH_PRIORITY_THRESHOLD = 50; // Playlists and other high-priority jobs
+const MEDIUM_PRIORITY_THRESHOLD = 100; // Videos and medium-priority jobs
+
+// Function to separate jobs by priority tiers
+function separateJobsByPriority(jobs: ImageProcessingJob[]): {
+  highPriority: ImageProcessingJob[];
+  mediumPriority: ImageProcessingJob[];
+  lowPriority: ImageProcessingJob[];
+} {
+  const separated = {
+    highPriority: [] as ImageProcessingJob[],
+    mediumPriority: [] as ImageProcessingJob[],
+    lowPriority: [] as ImageProcessingJob[],
+  };
+
+  jobs.forEach((job) => {
+    if (job.priority < HIGH_PRIORITY_THRESHOLD) {
+      separated.highPriority.push(job);
+    } else if (job.priority <= MEDIUM_PRIORITY_THRESHOLD) {
+      separated.mediumPriority.push(job);
+    } else {
+      separated.lowPriority.push(job);
+    }
+  });
+
+  return separated;
+}
+
+// Process priority tier with batch separation
+async function processPriorityTier(
+  jobs: ImageProcessingJob[],
+  tierName: string,
+  priorityRange: { min: number; max: number },
+  startBatchIndex: number
+): Promise<{
+  totalJobsSent: number;
+  totalErrors: number;
+  batchResults: BatchResult[];
+  endBatchIndex: number;
+}> {
+  if (jobs.length === 0) {
+    console.log(`📊 No ${tierName} priority jobs to process`);
+    return {
+      totalJobsSent: 0,
+      totalErrors: 0,
+      batchResults: [],
+      endBatchIndex: startBatchIndex,
+    };
+  }
+
+  console.log(
+    `🎯 Processing ${tierName} priority tier: ${jobs.length} jobs (priority range: ${priorityRange.min}-${priorityRange.max})`
+  );
+
+  const jobBatches = chunkArray(jobs, BATCH_SIZE);
+  const batchResults: BatchResult[] = [];
+  let currentBatchIndex = startBatchIndex;
+
+  // Process batches sequentially within the priority tier to maintain order
+  for (let i = 0; i < jobBatches.length; i += MAX_CONCURRENT_BATCHES) {
+    const concurrentBatches = jobBatches.slice(i, i + MAX_CONCURRENT_BATCHES);
+
+    const concurrentPromises = concurrentBatches.map(
+      (batch: ImageProcessingJob[], index: number) =>
+        processBatch(batch, currentBatchIndex + index, priorityRange)
+    );
+
+    const results = await Promise.allSettled(concurrentPromises);
+
+    results.forEach(
+      (result: PromiseSettledResult<BatchResult>, index: number) => {
+        if (result.status === 'fulfilled') {
+          batchResults.push(result.value);
+        } else {
+          console.error(
+            `Batch processing failed for ${tierName} priority tier:`,
+            result.reason
+          );
+          batchResults.push({
+            success: false,
+            jobsSent: 0,
+            errors: concurrentBatches[index]?.length || BATCH_SIZE,
+            batchIndex: currentBatchIndex + index,
+            priorityRange,
+          });
+        }
+      }
+    );
+
+    currentBatchIndex += concurrentBatches.length;
+  }
+
+  const totalJobsSent = batchResults.reduce(
+    (sum, batch) => sum + batch.jobsSent,
+    0
+  );
+  const totalErrors = batchResults.reduce(
+    (sum, batch) => sum + batch.errors,
+    0
+  );
+
+  console.log(
+    `✅ ${tierName} priority tier completed: ${totalJobsSent}/${jobs.length} jobs sent, ${totalErrors} errors`
+  );
+
+  return {
+    totalJobsSent,
+    totalErrors,
+    batchResults,
+    endBatchIndex: currentBatchIndex,
+  };
 }
 
 /**
@@ -377,44 +497,112 @@ export const pollPendingJobs = inngest.createFunction(
         }
       );
 
-      // Step 4: Query for pending jobs
-      const pendingJobs = await step.run('query-pending-jobs', async () => {
-        console.log(
-          `📋 Querying for up to ${MAX_JOBS_PER_POLL} pending image processing jobs...`
-        );
+      // Step 4: Query for high-priority jobs first
+      const highPriorityJobs = await step.run(
+        'query-high-priority-jobs',
+        async () => {
+          console.log(
+            `📋 Querying for high-priority jobs (priority < ${HIGH_PRIORITY_THRESHOLD})...`
+          );
 
-        return await performDatabaseOperation(async () => {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), POLL_TIMEOUT);
+          return await performDatabaseOperation(async () => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(
+              () => controller.abort(),
+              POLL_TIMEOUT
+            );
 
-          try {
-            const workerId = generateWorkerId();
+            try {
+              const workerId = generateWorkerId();
 
-            const { data, error } = await supabase
-              .rpc('get_multiple_image_processing_jobs_with_worker', {
-                p_worker_id: workerId,
-                p_limit: MAX_JOBS_PER_POLL,
-              })
-              .abortSignal(controller.signal);
+              const { data, error } = await supabase
+                .rpc(
+                  'get_priority_filtered_image_processing_jobs_with_worker',
+                  {
+                    p_worker_id: workerId,
+                    p_limit: MAX_JOBS_PER_POLL,
+                    p_max_priority: HIGH_PRIORITY_THRESHOLD - 1,
+                  }
+                )
+                .abortSignal(controller.signal);
 
-            if (error) {
-              throw new Error(`Database query failed: ${error.message}`);
+              if (error) {
+                throw new Error(`Database query failed: ${error.message}`);
+              }
+
+              clearTimeout(timeoutId);
+              const jobs = (data as ImageProcessingJob[]) || [];
+              console.log(
+                `📊 Found ${jobs.length} high-priority jobs (playlists)`
+              );
+              return jobs;
+            } catch (queryError) {
+              clearTimeout(timeoutId);
+              throw queryError;
             }
+          }, 'high-priority jobs query');
+        }
+      );
 
-            clearTimeout(timeoutId);
-            const jobs = (data as ImageProcessingJob[]) || [];
-            console.log(`📊 Found ${jobs.length} pending jobs to process`);
-            return jobs;
-          } catch (queryError) {
-            clearTimeout(timeoutId);
-            throw queryError;
+      // Step 5: Query for remaining jobs only if high-priority slots remain
+      const remainingSlots = MAX_JOBS_PER_POLL - highPriorityJobs.length;
+      const additionalJobs = await step.run(
+        'query-additional-jobs',
+        async () => {
+          if (remainingSlots <= 0) {
+            console.log(
+              '⚡ High-priority jobs filled all slots - skipping additional jobs'
+            );
+            return [];
           }
-        }, 'pending jobs batch query');
-      });
 
-      jobsPolled = pendingJobs.length;
+          console.log(
+            `📋 Querying for additional jobs (${remainingSlots} slots remaining)...`
+          );
 
-      // Step 5: Schedule next poll based on current activity
+          return await performDatabaseOperation(async () => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(
+              () => controller.abort(),
+              POLL_TIMEOUT
+            );
+
+            try {
+              const workerId = generateWorkerId();
+
+              const { data, error } = await supabase
+                .rpc(
+                  'get_priority_filtered_image_processing_jobs_with_worker',
+                  {
+                    p_worker_id: workerId,
+                    p_limit: remainingSlots,
+                    p_min_priority: HIGH_PRIORITY_THRESHOLD,
+                  }
+                )
+                .abortSignal(controller.signal);
+
+              if (error) {
+                throw new Error(`Database query failed: ${error.message}`);
+              }
+
+              clearTimeout(timeoutId);
+              const jobs = (data as ImageProcessingJob[]) || [];
+              console.log(
+                `📊 Found ${jobs.length} additional jobs (videos and others)`
+              );
+              return jobs;
+            } catch (queryError) {
+              clearTimeout(timeoutId);
+              throw queryError;
+            }
+          }, 'additional jobs query');
+        }
+      );
+
+      const allJobs = [...highPriorityJobs, ...additionalJobs];
+      jobsPolled = allJobs.length;
+
+      // Step 6: Schedule next poll based on current activity
       await step.run('schedule-next-poll', async () => {
         await scheduleNextPoll(updatedJobCounts.pending);
       });
@@ -436,70 +624,79 @@ export const pollPendingJobs = inngest.createFunction(
         };
       }
 
-      // Step 6: Process jobs in parallel batches
-      const batchResults = await step.run(
-        'send-processing-events-parallel',
+      // Step 7: Process jobs with priority-based batch separation
+      const processedResults = await step.run(
+        'process-priority-separated-batches',
         async () => {
-          const jobBatches = chunkArray(pendingJobs, BATCH_SIZE);
+          const separated = separateJobsByPriority(allJobs);
+
           console.log(
-            `📦 Split ${jobsPolled} jobs into ${jobBatches.length} batches`
+            `🎯 Priority separation: ${separated.highPriority.length} high, ${separated.mediumPriority.length} medium, ${separated.lowPriority.length} low priority jobs`
           );
 
-          const batchPromises: Promise<BatchResult>[] = [];
-
-          for (let i = 0; i < jobBatches.length; i += MAX_CONCURRENT_BATCHES) {
-            const concurrentBatches = jobBatches.slice(
-              i,
-              i + MAX_CONCURRENT_BATCHES
-            );
-
-            const concurrentPromises = concurrentBatches.map((batch, index) =>
-              processBatch(batch, i + index)
-            );
-
-            const results = await Promise.allSettled(concurrentPromises);
-
-            results.forEach((result) => {
-              if (result.status === 'fulfilled') {
-                batchPromises.push(Promise.resolve(result.value));
-              } else {
-                console.error('Batch processing failed:', result.reason);
-                batchPromises.push(
-                  Promise.resolve({
-                    success: false,
-                    jobsSent: 0,
-                    errors: BATCH_SIZE,
-                    batchIndex: -1,
-                  })
-                );
-              }
-            });
-          }
-
-          const allBatchResults = await Promise.all(batchPromises);
-
-          const aggregatedResults = allBatchResults.reduce(
-            (acc, batch) => ({
-              totalJobsSent: acc.totalJobsSent + batch.jobsSent,
-              totalErrors: acc.totalErrors + batch.errors,
-              successfulBatches:
-                acc.successfulBatches + (batch.success ? 1 : 0),
-              totalBatches: acc.totalBatches + 1,
-            }),
-            {
-              totalJobsSent: 0,
-              totalErrors: 0,
-              successfulBatches: 0,
-              totalBatches: 0,
-            }
+          // Process high-priority jobs first (playlists)
+          const highPriorityResults = await processPriorityTier(
+            separated.highPriority,
+            'HIGH',
+            { min: 1, max: HIGH_PRIORITY_THRESHOLD - 1 },
+            0
           );
 
-          return aggregatedResults;
+          // Process medium-priority jobs only after high-priority jobs complete
+          const mediumPriorityResults = await processPriorityTier(
+            separated.mediumPriority,
+            'MEDIUM',
+            { min: HIGH_PRIORITY_THRESHOLD, max: MEDIUM_PRIORITY_THRESHOLD },
+            highPriorityResults.endBatchIndex
+          );
+
+          // Process low-priority jobs only after medium-priority jobs complete
+          const lowPriorityResults = await processPriorityTier(
+            separated.lowPriority,
+            'LOW',
+            { min: MEDIUM_PRIORITY_THRESHOLD + 1, max: 999 },
+            mediumPriorityResults.endBatchIndex
+          );
+
+          const allBatchResults = [
+            ...highPriorityResults.batchResults,
+            ...mediumPriorityResults.batchResults,
+            ...lowPriorityResults.batchResults,
+          ];
+
+          return {
+            totalJobsSent:
+              highPriorityResults.totalJobsSent +
+              mediumPriorityResults.totalJobsSent +
+              lowPriorityResults.totalJobsSent,
+            totalErrors:
+              highPriorityResults.totalErrors +
+              mediumPriorityResults.totalErrors +
+              lowPriorityResults.totalErrors,
+            batchResults: allBatchResults,
+            priorityBreakdown: {
+              high: {
+                jobs: separated.highPriority.length,
+                sent: highPriorityResults.totalJobsSent,
+                errors: highPriorityResults.totalErrors,
+              },
+              medium: {
+                jobs: separated.mediumPriority.length,
+                sent: mediumPriorityResults.totalJobsSent,
+                errors: mediumPriorityResults.totalErrors,
+              },
+              low: {
+                jobs: separated.lowPriority.length,
+                sent: lowPriorityResults.totalJobsSent,
+                errors: lowPriorityResults.totalErrors,
+              },
+            },
+          };
         }
       );
 
-      totalJobsSent = batchResults.totalJobsSent;
-      totalErrors = batchResults.totalErrors;
+      totalJobsSent = processedResults.totalJobsSent;
+      totalErrors = processedResults.totalErrors;
 
       const duration = Date.now() - startTime;
       const throughputPerSecond =
@@ -507,7 +704,10 @@ export const pollPendingJobs = inngest.createFunction(
       const nextInterval = getNextPollInterval(updatedJobCounts.pending);
 
       console.log(
-        `🎯 Adaptive polling cycle completed: ${totalJobsSent}/${jobsPolled} jobs sent, ${totalErrors} errors, next poll in ${nextInterval}min (${throughputPerSecond} jobs/sec)`
+        `🎯 Priority-aware polling cycle completed: ${totalJobsSent}/${jobsPolled} jobs sent, ${totalErrors} errors, next poll in ${nextInterval}min (${throughputPerSecond} jobs/sec)`
+      );
+      console.log(
+        `📊 Priority breakdown - High: ${processedResults.priorityBreakdown.high.sent}/${processedResults.priorityBreakdown.high.jobs}, Medium: ${processedResults.priorityBreakdown.medium.sent}/${processedResults.priorityBreakdown.medium.jobs}, Low: ${processedResults.priorityBreakdown.low.sent}/${processedResults.priorityBreakdown.low.jobs}`
       );
 
       return {
@@ -519,9 +719,10 @@ export const pollPendingJobs = inngest.createFunction(
         duration,
         throughputPerSecond: parseFloat(throughputPerSecond),
         nextPollInterval: nextInterval,
-        batchResults,
+        batchResults: processedResults.batchResults,
+        priorityBreakdown: processedResults.priorityBreakdown,
         jobCounts: updatedJobCounts,
-        message: `Processed ${totalJobsSent}/${jobsPolled} jobs, next poll in ${nextInterval} minutes`,
+        message: `Processed ${totalJobsSent}/${jobsPolled} jobs with priority separation, next poll in ${nextInterval} minutes`,
       };
     } catch (error) {
       const duration = Date.now() - startTime;

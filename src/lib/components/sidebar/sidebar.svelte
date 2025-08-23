@@ -349,92 +349,89 @@
     </div>
 
     <div
-      class="rounded-md border-2 transition-colors duration-150 {!isSidebarCollapsed
+      class="relative transition-colors duration-150 {!isSidebarCollapsed
         ? 'mx-2'
         : 'mx-1'}
-      {sidebarState.playlists.length > 0 &&
-      contentState.dragContentType === 'video'
-        ? 'border-secondary/80'
-        : 'border-transparent'}"
+  {sidebarState.playlists.length > 0 && contentState.dragContentType === 'video'
+        ? 'before:border-secondary/80 before:pointer-events-none before:absolute before:inset-0 before:rounded-md before:border-2'
+        : ''}"
     >
       <div class="flex flex-col">
         {#if sidebarState.playlists === null}
           <Loader variant="block" size="sm" message="" />
         {:else if session && sidebarState.playlists.length > 0}
-          <div class="flex flex-col">
-            {#each sidebarState.playlists as playlist, i (playlist.id)}
-              <PlaylistContextMenu
-                {playlist}
-                {selectedPlaylistIdParam}
-                {isSidebarCollapsed}
-                {supabase}
-                {session}
+          {#each sidebarState.playlists as playlist, i (playlist.id)}
+            <PlaylistContextMenu
+              {playlist}
+              {selectedPlaylistIdParam}
+              {isSidebarCollapsed}
+              {supabase}
+              {session}
+            >
+              <Button
+                variant="ghost"
+                draggable={true}
+                class="{playlistState.getButtonClasses({
+                  index: i,
+                  isSelected: isPlaylistSelected(playlist),
+                  itemType: 'playlist',
+                  isSidebarCollapsed,
+                  playlists: sidebarState.playlists,
+                  selectedPlaylistIdParam:
+                    currentSelection?.type === 'playlist'
+                      ? currentSelection.value
+                      : undefined,
+                  session,
+                })} relative z-0"
+                size={!isSidebarCollapsed ? 'default' : 'icon'}
+                onclick={() => {
+                  handlePlaylistClick(playlist);
+                }}
+                href={`/playlist/${encodeURI(playlist.short_id)}`}
+                title={playlist.name}
+                value={playlist.name}
+                onmouseenter={() => playlistState.handleMouseEnter(i)}
+                onmouseleave={() => playlistState.handleMouseLeave(i)}
+                ondragstart={(e) =>
+                  playlistDragDropHandlers.handleDragStart(e, i)}
+                ondragover={(e) =>
+                  playlistDragDropHandlers.handleDragOver(e, i)}
+                ondragleave={(e) =>
+                  playlistDragDropHandlers.handleDragLeave(e, i)}
+                ondrop={(e) => playlistDragDropHandlers.handleDrop(e, i)}
+                ondragend={playlistDragDropHandlers.handleDragEnd}
               >
-                <Button
-                  variant="ghost"
-                  draggable={true}
-                  class={playlistState.getButtonClasses({
-                    index: i,
-                    isSelected: isPlaylistSelected(playlist),
-                    itemType: 'playlist',
-                    isSidebarCollapsed,
-                    playlists: sidebarState.playlists,
-                    selectedPlaylistIdParam:
-                      currentSelection?.type === 'playlist'
-                        ? currentSelection.value
-                        : undefined,
-                    session,
-                  })}
-                  size={!isSidebarCollapsed ? 'default' : 'icon'}
-                  onclick={() => {
-                    handlePlaylistClick(playlist);
-                  }}
-                  href={`/playlist/${encodeURI(playlist.short_id)}`}
-                  title={playlist.name}
-                  value={playlist.name}
-                  onmouseenter={() => playlistState.handleMouseEnter(i)}
-                  onmouseleave={() => playlistState.handleMouseLeave(i)}
-                  ondragstart={(e) =>
-                    playlistDragDropHandlers.handleDragStart(e, i)}
-                  ondragover={(e) =>
-                    playlistDragDropHandlers.handleDragOver(e, i)}
-                  ondragleave={(e) =>
-                    playlistDragDropHandlers.handleDragLeave(e, i)}
-                  ondrop={(e) => playlistDragDropHandlers.handleDrop(e, i)}
-                  ondragend={playlistDragDropHandlers.handleDragEnd}
+                <div
+                  class="absolute flex grow items-center
+                {!isSidebarCollapsed ? 'w-full grow' : 'item-center'}"
                 >
-                  <div
-                    class="absolute flex grow items-center
-                    {!isSidebarCollapsed ? 'w-full grow' : 'item-center'}"
-                  >
-                    {#if playlist.image_url}
-                      <div class="h-12 w-12 shrink-0">
-                        <img
-                          src={playlist.image_url}
-                          class="h-full w-full cursor-pointer rounded object-cover"
-                          alt={`Image for playlist: ${playlist.name}`}
-                          loading="lazy"
-                        />
-                      </div>
-                    {:else}
-                      <div
-                        class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded"
-                      >
-                        <ListVideo class="!h-8 !w-8" />
-                      </div>
-                    {/if}
-                    {#if !isSidebarCollapsed}
-                      <span
-                        class="mr-6 max-h-10 justify-start overflow-hidden px-3 text-left text-sm text-wrap"
-                      >
-                        {playlist.name}
-                      </span>
-                    {/if}
-                  </div>
-                </Button>
-              </PlaylistContextMenu>
-            {/each}
-          </div>
+                  {#if playlist.image_url}
+                    <div class="h-12 w-12 shrink-0">
+                      <img
+                        src={playlist.image_url}
+                        class="h-full w-full cursor-pointer rounded object-cover"
+                        alt={`Image for playlist: ${playlist.name}`}
+                        loading="lazy"
+                      />
+                    </div>
+                  {:else}
+                    <div
+                      class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded"
+                    >
+                      <ListVideo class="!h-8 !w-8" />
+                    </div>
+                  {/if}
+                  {#if !isSidebarCollapsed}
+                    <span
+                      class="mr-6 max-h-10 justify-start overflow-hidden px-3 text-left text-sm text-wrap"
+                    >
+                      {playlist.name}
+                    </span>
+                  {/if}
+                </div>
+              </Button>
+            </PlaylistContextMenu>
+          {/each}
         {/if}
       </div>
     </div>
