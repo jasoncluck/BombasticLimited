@@ -42,7 +42,6 @@ describe('Search Playlists Page Server Load', () => {
       profile_username: 'testuser',
       // Add missing required properties
       image_url: 'https://example.com/playlist_image.jpg',
-      image_processing_status: 'completed' as const,
       thumbnail_video_id: 'video-1',
       duration_seconds: 1800,
     };
