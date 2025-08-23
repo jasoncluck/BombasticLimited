@@ -94,6 +94,7 @@ DECLARE
   job_record RECORD;
   entity_exists boolean := FALSE;
   entity_updated boolean := FALSE;
+  update_count integer;
   playlist_id_bigint bigint;
 BEGIN
   -- Start transaction to ensure atomicity
@@ -129,7 +130,8 @@ BEGIN
         image_processing_updated_at = now()
       WHERE id = job_record.entity_id;
       
-      GET DIAGNOSTICS entity_updated = ROW_COUNT > 0;
+      GET DIAGNOSTICS update_count = ROW_COUNT;
+      entity_updated := update_count > 0;
     END IF;
   ELSIF job_record.entity_type = 'playlist' THEN
     -- Safely convert entity_id to bigint with proper error handling
@@ -160,7 +162,8 @@ BEGIN
       image_processing_updated_at = now()
     WHERE id = playlist_id_bigint;
     
-    GET DIAGNOSTICS entity_updated = ROW_COUNT > 0;
+    GET DIAGNOSTICS update_count = ROW_COUNT;
+    entity_updated := update_count > 0;
   ELSE
     RAISE WARNING 'Unknown entity type % for job %', job_record.entity_type, job_id;
     RETURN FALSE;
