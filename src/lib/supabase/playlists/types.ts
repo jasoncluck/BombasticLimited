@@ -23,7 +23,6 @@ export type Playlist = {
   created_by: GetPlaylistDataResponse['playlist_created_by'];
   description: GetPlaylistDataResponse['playlist_description'];
   image_url: GetPlaylistDataResponse['playlist_image_url'] | null;
-  image_processing_status: GetPlaylistDataResponse['playlist_image_processing_status'];
   type: GetPlaylistDataResponse['playlist_type'];
   image_properties: GetPlaylistDataResponse['playlist_image_properties'] | null;
   youtube_id: GetPlaylistDataResponse['playlist_youtube_id'] | null;

@@ -1,0 +1,3 @@
+-- Migration: 16_remove_image_processing_fields.sql  
+-- This migration has been disabled as image processing fields are now removed from base tables
+-- All image processing functionality has been removed from the base migrations

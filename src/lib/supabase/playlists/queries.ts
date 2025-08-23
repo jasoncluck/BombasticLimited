@@ -219,8 +219,6 @@ export async function getPlaylistsForUsername({
     created_by: playlist.created_by,
     description: playlist.description,
     image_url: getFullImageUrl(playlist.image_url, supabase), // Convert to full URL
-    image_processing_status:
-      playlist.image_processing_status as Playlist['image_processing_status'],
     type: playlist.type,
     image_properties: playlist.image_properties,
     youtube_id: playlist.youtube_id,
@@ -362,7 +360,6 @@ export async function getPlaylistVideoContext({
     deleted_at: metadataRow.playlist_deleted_at,
     profile_username: metadataRow.profile_username,
     duration_seconds: 0, // Use 0 instead of null for context queries
-    image_processing_status: metadataRow.playlist_image_processing_status,
     ...(metadataRow.playlist_sorted_by && {
       sorted_by: metadataRow.playlist_sorted_by,
       sort_order: metadataRow.playlist_sort_order,
@@ -489,7 +486,6 @@ export async function searchPlaylists({
     created_by: playlist.created_by,
     description: playlist.description,
     image_url: getFullImageUrl(playlist.image_url, supabase), // Convert to full URL
-    image_processing_status: playlist.image_processing_status,
     type: playlist.type,
     image_properties: playlist.image_properties,
     youtube_id: playlist.youtube_id,
