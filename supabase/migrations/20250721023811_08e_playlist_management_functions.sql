@@ -479,9 +479,7 @@ BEGIN
       thumbnail_url = p_thumbnail_url,
       image_webp_url = NULL,  -- Clear WebP (will be generated later)
       image_avif_url = NULL,  -- Clear AVIF (will be generated later)  
-      image_properties = p_image_properties,
-      image_processing_status = 'pending',
-      image_processing_updated_at = now()
+      image_properties = p_image_properties
     WHERE pl.id = p_playlist_id
     RETURNING pl.thumbnail_url INTO updated_thumbnail_url;
   ELSE
@@ -491,9 +489,7 @@ BEGIN
       thumbnail_url = NULL,
       image_webp_url = NULL,
       image_avif_url = NULL,
-      image_properties = NULL,
-      image_processing_status = NULL,
-      image_processing_updated_at = now()
+      image_properties = NULL
     WHERE pl.id = p_playlist_id
     RETURNING pl.thumbnail_url INTO updated_thumbnail_url;
   END IF;
@@ -645,9 +641,7 @@ BEGIN
         SELECT v.thumbnail_url
         FROM public.videos v 
         WHERE v.id = first_video_id
-      ),
-      image_processing_status = 'pending',
-      image_processing_updated_at = now()
+      )
     WHERE id = p_playlist_id;
   END IF;
 END;
@@ -712,8 +706,7 @@ BEGIN
   IF should_clear_playlist_image THEN
     UPDATE public.playlists
     SET thumbnail_url = NULL, image_webp_url = NULL, image_avif_url = NULL,
-        image_properties = NULL, image_processing_status = NULL,
-        image_processing_updated_at = now()
+        image_properties = NULL
     WHERE id = p_playlist_id;
   END IF;
   
