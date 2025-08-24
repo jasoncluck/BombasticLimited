@@ -3,6 +3,31 @@
 -- Dependencies: Requires base tables from 03_base_tables.sql (videos, timestamps)
 -- This migration includes video search, filtering, and retrieval functions
 -- ============================================================================
+
+
+-- Optimized helper function to select best available image format
+CREATE OR REPLACE FUNCTION public.select_best_image_format (
+  avif_url text,
+  webp_url text,
+  preferred_format text DEFAULT 'avif'
+) RETURNS text LANGUAGE plpgsql IMMUTABLE
+SET
+  search_path = '' AS $$
+BEGIN
+  -- Optimized CASE statement with early returns
+  CASE preferred_format
+    WHEN 'avif' THEN
+      RETURN COALESCE(avif_url, webp_url);
+    WHEN 'webp' THEN
+      RETURN COALESCE(webp_url, avif_url);
+    ELSE
+      -- Default fallback order
+      RETURN COALESCE(avif_url, webp_url);
+  END CASE;
+END;
+$$;
+
+
 -- Optimized function to get videos with user timestamps
 CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps" (p_preferred_image_format text DEFAULT 'avif') RETURNS TABLE (
   "id" "text",

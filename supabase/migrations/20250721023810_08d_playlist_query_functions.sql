@@ -3,27 +3,6 @@
 -- Dependencies: Requires base tables from 03_base_tables.sql (playlists, playlist_videos, user_playlists)
 -- This migration includes playlist data access and search functions
 -- ============================================================================
--- Optimized helper function to select best available image format
-CREATE OR REPLACE FUNCTION public.select_best_image_format (
-  avif_url text,
-  webp_url text,
-  preferred_format text DEFAULT 'avif'
-) RETURNS text LANGUAGE plpgsql IMMUTABLE
-SET
-  search_path = '' AS $$
-BEGIN
-  -- Optimized CASE statement with early returns
-  CASE preferred_format
-    WHEN 'avif' THEN
-      RETURN COALESCE(avif_url, webp_url);
-    WHEN 'webp' THEN
-      RETURN COALESCE(webp_url, avif_url);
-    ELSE
-      -- Default fallback order
-      RETURN COALESCE(avif_url, webp_url);
-  END CASE;
-END;
-$$;
 
 -- Optimized function to get comprehensive playlist data with pagination and sorting
 CREATE OR REPLACE FUNCTION public.get_playlist_data (
