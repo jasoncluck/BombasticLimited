@@ -10,9 +10,14 @@ import type { PlaylistImageProperties } from '$lib/supabase/playlists';
 
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const triggerSecretKey = process.env.TRIGGER_SECRET_KEY;
 
 if (!supabaseUrl || !supabaseServiceRoleKey) {
   throw new Error('Missing supabase env vars.');
+}
+
+if (!triggerSecretKey) {
+  throw new Error('Missing TRIGGER_SECRET_KEY environment variable.');
 }
 
 // Supabase client setup
@@ -47,6 +52,7 @@ interface ProcessingResult {
   webpSize?: number;
   avifSize?: number;
   jobId?: string;
+  cancelledRuns?: string[];
 }
 
 interface StoragePaths {
@@ -57,6 +63,135 @@ interface StoragePaths {
 interface ProcessedImages {
   webp: Buffer;
   avif: Buffer;
+}
+
+interface TriggerRun {
+  id: string;
+  status: string;
+  taskIdentifier: string;
+  payload?: {
+    record?: {
+      id?: string;
+    };
+    table?: string;
+  };
+  createdAt: string;
+}
+
+interface TriggerRunsResponse {
+  data: TriggerRun[];
+  pagination: {
+    total: number;
+    page: number;
+    perPage: number;
+    totalPages: number;
+  };
+}
+
+// Cancel duplicate runs for the same entity
+async function cancelDuplicateRuns(
+  entityType: string,
+  entityId: string,
+  currentTimestamp: string
+): Promise<string[]> {
+  const cancelledRuns: string[] = [];
+
+  try {
+    // Query for pending/running runs for our specific task
+    const response = await fetch(
+      'https://api.trigger.dev/api/v1/runs?' +
+        new URLSearchParams({
+          status: 'PENDING,EXECUTING,QUEUED,WAITING_FOR_DEPLOY',
+          taskIdentifier: 'process-image-webhook',
+          limit: '100',
+        }),
+      {
+        headers: {
+          Authorization: `Bearer ${triggerSecretKey}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.error(
+        'Failed to fetch trigger runs for deduplication:',
+        response.status,
+        response.statusText
+      );
+      return cancelledRuns;
+    }
+
+    const data: TriggerRunsResponse = await response.json();
+    const currentTime = new Date(currentTimestamp);
+
+    // Find runs for the same entity that are older than the current one
+    const duplicateRuns = data.data.filter((run) => {
+      try {
+        // Check if this run is for the same entity
+        const runEntityId = run.payload?.record?.id;
+        const runTable = run.payload?.table;
+        const runEntityType = runTable === 'playlists' ? 'playlist' : 'video';
+
+        if (runEntityType !== entityType || runEntityId !== entityId) {
+          return false;
+        }
+
+        // Check if this run is older than the current one
+        const runTime = new Date(run.createdAt);
+        return runTime < currentTime;
+      } catch (error) {
+        console.warn('Error checking run for deduplication:', error);
+        return false;
+      }
+    });
+
+    console.log(
+      `Found ${duplicateRuns.length} duplicate runs to cancel for ${entityType} ${entityId}`
+    );
+
+    // Cancel each duplicate run
+    for (const run of duplicateRuns) {
+      try {
+        const cancelResponse = await fetch(
+          `https://api.trigger.dev/api/v1/runs/${run.id}/cancel`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${triggerSecretKey}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (cancelResponse.ok) {
+          cancelledRuns.push(run.id);
+          console.log(
+            `Successfully cancelled duplicate run ${run.id} for ${entityType} ${entityId}`
+          );
+        } else {
+          console.warn(
+            `Failed to cancel run ${run.id}:`,
+            cancelResponse.status,
+            cancelResponse.statusText
+          );
+        }
+      } catch (error) {
+        console.warn(`Error cancelling run ${run.id}:`, error);
+      }
+    }
+
+    if (cancelledRuns.length > 0) {
+      console.log(
+        `Cancelled ${cancelledRuns.length} duplicate runs for ${entityType} ${entityId}:`,
+        cancelledRuns
+      );
+    }
+  } catch (error) {
+    console.error('Error in cancelDuplicateRuns:', error);
+  }
+
+  return cancelledRuns;
 }
 
 // Generate storage paths for optimized images
@@ -453,12 +588,21 @@ export const processImageWebhook = task({
     maxTimeoutInMs: 10000,
   },
   run: async (payload: WebhookPayload): Promise<ProcessingResult> => {
-    const { type, table, record, old_record, jobId } = payload;
+    const { type, table, record, old_record, jobId, timestamp } = payload;
 
     console.log(`Processing ${type} webhook for ${table} ${record.id}`, {
       jobId,
-      timestamp: payload.timestamp,
+      timestamp,
     });
+
+    const entityType = table === 'playlists' ? 'playlist' : 'video';
+
+    // Cancel any duplicate runs for the same entity before processing
+    const cancelledRuns = await cancelDuplicateRuns(
+      entityType,
+      record.id,
+      timestamp
+    );
 
     // Determine if we need to process
     let shouldProcess = false;
@@ -507,12 +651,14 @@ export const processImageWebhook = task({
         }
       }
 
-      return { processed: false, reason: 'No changes requiring processing' };
+      return {
+        processed: false,
+        reason: 'No changes requiring processing',
+        cancelledRuns: cancelledRuns.length > 0 ? cancelledRuns : undefined,
+      };
     }
 
     try {
-      const entityType = table === 'playlists' ? 'playlist' : 'video';
-
       // Delete existing optimized images
       await deleteExistingOptimizedImages(entityType, record.id);
 
@@ -609,6 +755,7 @@ export const processImageWebhook = task({
         webpSize: Math.round(webpBuffer.length / 1024),
         avifSize: Math.round(avifBuffer.length / 1024),
         jobId,
+        cancelledRuns: cancelledRuns.length > 0 ? cancelledRuns : undefined,
       };
     } catch (error) {
       console.error(

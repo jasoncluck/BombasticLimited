@@ -51,7 +51,7 @@ async function processImageJobs(): Promise<ApiResponse> {
     }
 
     // Get up to 10 pending jobs using the database function
-    const maxJobsPerRequest = 10;
+    const maxJobsPerRequest = 25;
     const allJobs: ImageProcessingJob[] = [];
 
     // Fetch jobs one by one and immediately mark as processing to avoid duplicates
