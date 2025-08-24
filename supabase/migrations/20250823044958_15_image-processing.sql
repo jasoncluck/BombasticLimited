@@ -3,7 +3,6 @@
 -- Dependencies: Requires base tables from 03_base_tables.sql (videos, playlists)
 -- This migration adds storage paths for optimized images and job processing queue
 -- ============================================================================
-
 -- Add optimized image storage paths to playlists table (WebP-first approach)
 ALTER TABLE "public"."playlists"
 ADD COLUMN IF NOT EXISTS "image_processing_status" text DEFAULT 'pending' CHECK (
@@ -24,10 +23,15 @@ ADD COLUMN IF NOT EXISTS "thumbnail_avif_url" text;
 
 -- Add comments
 COMMENT ON COLUMN "public"."playlists"."image_processing_status" IS 'Status of background image processing for this playlist';
+
 COMMENT ON COLUMN "public"."playlists"."image_webp_url" IS 'Supabase Storage path for cropped playlist image in WebP format (primary)';
+
 COMMENT ON COLUMN "public"."playlists"."image_avif_url" IS 'Supabase Storage path for cropped playlist image in AVIF format (optimized)';
+
 COMMENT ON COLUMN "public"."videos"."image_processing_status" IS 'Status of background image processing for this video';
+
 COMMENT ON COLUMN "public"."videos"."thumbnail_webp_url" IS 'Supabase Storage path for optimized video thumbnail in WebP format';
+
 COMMENT ON COLUMN "public"."videos"."thumbnail_avif_url" IS 'Supabase Storage path for optimized video thumbnail in AVIF format';
 
 -- Create optimized image processing jobs queue table with properties_hash for tracking
@@ -62,63 +66,74 @@ ALTER TABLE "public"."image_processing_jobs" OWNER TO "postgres";
 
 -- Add comments
 COMMENT ON TABLE "public"."image_processing_jobs" IS 'Queue for background image processing tasks';
+
 COMMENT ON COLUMN "public"."image_processing_jobs"."entity_type" IS 'Type of entity being processed (video or playlist)';
+
 COMMENT ON COLUMN "public"."image_processing_jobs"."entity_id" IS 'ID of the video or playlist being processed';
+
 COMMENT ON COLUMN "public"."image_processing_jobs"."image_type" IS 'Type of image being processed (thumbnail or playlist_image)';
+
 COMMENT ON COLUMN "public"."image_processing_jobs"."properties_hash" IS 'Hash of image_properties to track when reprocessing is needed';
+
 COMMENT ON COLUMN "public"."image_processing_jobs"."priority" IS 'Job priority (lower numbers = higher priority)';
+
 COMMENT ON COLUMN "public"."image_processing_jobs"."attempts" IS 'Number of processing attempts';
 
 -- Create indexes
 DROP INDEX IF EXISTS "idx_image_processing_jobs_status_priority";
+
 CREATE INDEX "idx_image_processing_jobs_status_priority" ON "public"."image_processing_jobs" (status, priority, created_at)
-WHERE status = 'pending';
+WHERE
+  status = 'pending';
 
 CREATE INDEX IF NOT EXISTS "idx_image_processing_jobs_completed" ON "public"."image_processing_jobs" (status, processing_completed_at)
-WHERE status = 'completed';
+WHERE
+  status = 'completed';
 
 CREATE INDEX IF NOT EXISTS "idx_image_processing_jobs_entity_type_id" ON "public"."image_processing_jobs" (entity_type, entity_id, image_type);
 
 CREATE INDEX IF NOT EXISTS "idx_image_processing_jobs_processing" ON "public"."image_processing_jobs" (status, processing_started_at)
-WHERE status = 'processing';
+WHERE
+  status = 'processing';
 
 CREATE INDEX IF NOT EXISTS "idx_videos_image_processing_status" ON "public"."videos" (image_processing_status)
-WHERE image_processing_status != 'completed';
+WHERE
+  image_processing_status != 'completed';
 
 CREATE INDEX IF NOT EXISTS "idx_playlists_image_processing_status" ON "public"."playlists" (image_processing_status)
-WHERE image_processing_status != 'completed';
+WHERE
+  image_processing_status != 'completed';
 
 -- Index for properties_hash lookups
 CREATE INDEX IF NOT EXISTS "idx_image_processing_jobs_properties_hash" ON "public"."image_processing_jobs" (entity_type, entity_id, properties_hash, status);
 
 -- Add unique constraint to prevent duplicate jobs for same entity/type/source/properties combination
-CREATE UNIQUE INDEX IF NOT EXISTS "idx_image_processing_jobs_unique_active" ON "public"."image_processing_jobs" 
-(entity_type, entity_id, image_type, source_url, COALESCE(properties_hash, 'null'))
-WHERE status IN ('pending', 'processing');
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_image_processing_jobs_unique_active" ON "public"."image_processing_jobs" (
+  entity_type,
+  entity_id,
+  image_type,
+  source_url,
+  COALESCE(properties_hash, 'null')
+)
+WHERE
+  status IN ('pending', 'processing');
 
 -- Optimized trigger to update updated_at timestamp
-CREATE OR REPLACE FUNCTION public.update_image_processing_jobs_updated_at() 
-RETURNS TRIGGER 
-LANGUAGE plpgsql
-SET search_path = '' 
-AS $$
+CREATE OR REPLACE FUNCTION public.update_image_processing_jobs_updated_at () RETURNS TRIGGER LANGUAGE plpgsql
+SET
+  search_path = '' AS $$
 BEGIN
   NEW.updated_at = now();
   RETURN NEW;
 END;
 $$;
 
-CREATE TRIGGER trigger_update_image_processing_jobs_updated_at 
-BEFORE UPDATE ON "public"."image_processing_jobs" 
-FOR EACH ROW
-EXECUTE FUNCTION public.update_image_processing_jobs_updated_at();
+CREATE TRIGGER trigger_update_image_processing_jobs_updated_at BEFORE
+UPDATE ON "public"."image_processing_jobs" FOR EACH ROW
+EXECUTE FUNCTION public.update_image_processing_jobs_updated_at ();
 
 -- Helper function to generate hash for image properties
-CREATE OR REPLACE FUNCTION public.hash_image_properties(properties jsonb)
-RETURNS text
-LANGUAGE plpgsql
-IMMUTABLE
-AS $$
+CREATE OR REPLACE FUNCTION public.hash_image_properties (properties jsonb) RETURNS text LANGUAGE plpgsql IMMUTABLE AS $$
 BEGIN
   IF properties IS NULL THEN
     RETURN 'null';
@@ -130,19 +145,16 @@ END;
 $$;
 
 -- Function to get next job for processing (with atomic locking)
-CREATE OR REPLACE FUNCTION public.get_next_image_processing_job() 
-RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.get_next_image_processing_job () RETURNS TABLE (
   job_id uuid,
   entity_type text,
   entity_id text,
   image_type text,
   source_url text,
   attempts integer
-) 
-LANGUAGE sql 
-SECURITY DEFINER
-SET search_path = '' 
-AS $$
+) LANGUAGE sql SECURITY DEFINER
+SET
+  search_path = '' AS $$
   SELECT 
     j.id,
     j.entity_type,
@@ -159,12 +171,9 @@ AS $$
 $$;
 
 -- Function to mark job as started/processing (with atomic locking)
-CREATE OR REPLACE FUNCTION public.start_image_processing_job(job_id uuid) 
-RETURNS boolean 
-LANGUAGE plpgsql 
-SECURITY DEFINER
-SET search_path = '' 
-AS $$
+CREATE OR REPLACE FUNCTION public.start_image_processing_job (job_id uuid) RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER
+SET
+  search_path = '' AS $$
 DECLARE
   job_updated_count integer := 0;
 BEGIN
@@ -191,19 +200,16 @@ END;
 $$;
 
 -- Function to queue image processing jobs with duplicate prevention
-CREATE OR REPLACE FUNCTION public.queue_image_processing_job(
+CREATE OR REPLACE FUNCTION public.queue_image_processing_job (
   p_entity_type text,
   p_entity_id text,
   p_image_type text,
   p_source_url text,
   p_image_properties jsonb DEFAULT NULL,
   p_priority integer DEFAULT 100
-) 
-RETURNS uuid 
-LANGUAGE plpgsql 
-SECURITY DEFINER
-SET search_path = '' 
-AS $$
+) RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER
+SET
+  search_path = '' AS $$
 DECLARE
   job_id uuid;
   new_properties_hash text;
@@ -265,17 +271,14 @@ END;
 $$;
 
 -- Function to mark job as completed
-CREATE OR REPLACE FUNCTION public.complete_image_processing_job(
+CREATE OR REPLACE FUNCTION public.complete_image_processing_job (
   job_id uuid,
   jpg_path text DEFAULT NULL,
   webp_path text DEFAULT NULL,
   avif_path text DEFAULT NULL
-) 
-RETURNS boolean 
-LANGUAGE plpgsql 
-SECURITY DEFINER
-SET search_path = '' 
-AS $$
+) RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER
+SET
+  search_path = '' AS $$
 DECLARE
   job_record RECORD;
   entity_exists boolean := FALSE;
@@ -387,12 +390,9 @@ END;
 $$;
 
 -- Function to mark job as failed
-CREATE OR REPLACE FUNCTION public.fail_image_processing_job(job_id uuid, error_msg text) 
-RETURNS boolean 
-LANGUAGE plpgsql 
-SECURITY DEFINER
-SET search_path = '' 
-AS $$
+CREATE OR REPLACE FUNCTION public.fail_image_processing_job (job_id uuid, error_msg text) RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER
+SET
+  search_path = '' AS $$
 DECLARE
   job_record RECORD;
   new_status text;
@@ -445,16 +445,13 @@ END;
 $$;
 
 -- Function to cleanup old completed jobs
-CREATE OR REPLACE FUNCTION public.cleanup_old_completed_jobs(days_old integer DEFAULT 30)
-RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.cleanup_old_completed_jobs (days_old integer DEFAULT 30) RETURNS TABLE (
   deleted_count integer,
-  oldest_deleted timestamp with time zone,
-  newest_deleted timestamp with time zone
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
+  oldest_deleted TIMESTAMP WITH TIME ZONE,
+  newest_deleted TIMESTAMP WITH TIME ZONE
+) LANGUAGE plpgsql SECURITY DEFINER
+SET
+  search_path = '' AS $$
 DECLARE
   deleted_info RECORD;
 BEGIN
@@ -481,16 +478,12 @@ END;
 $$;
 
 -- Function to cleanup duplicate jobs
-CREATE OR REPLACE FUNCTION public.cleanup_duplicate_image_processing_jobs()
-RETURNS TABLE(
+CREATE OR REPLACE FUNCTION public.cleanup_duplicate_image_processing_jobs () RETURNS TABLE (
   removed_job_id uuid,
   entity_type text,
   entity_id text,
   reason text
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
+) LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
   -- Remove duplicate pending jobs (keep the oldest one for each unique configuration)
   RETURN QUERY
@@ -534,12 +527,9 @@ END;
 $$;
 
 -- Playlist ownership check function
-CREATE OR REPLACE FUNCTION public.check_playlist_ownership(playlist_id bigint, user_id uuid) 
-RETURNS boolean 
-LANGUAGE sql 
-SECURITY DEFINER
-SET search_path = public 
-AS $$
+CREATE OR REPLACE FUNCTION public.check_playlist_ownership (playlist_id bigint, user_id uuid) RETURNS boolean LANGUAGE sql SECURITY DEFINER
+SET
+  search_path = public AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.playlists p 
     WHERE p.id = playlist_id AND p.created_by = user_id
@@ -547,12 +537,9 @@ AS $$
 $$;
 
 -- Video trigger function
-CREATE OR REPLACE FUNCTION public.trigger_queue_video_image_processing() 
-RETURNS TRIGGER 
-LANGUAGE plpgsql 
-SECURITY DEFINER
-SET search_path = '' 
-AS $$
+CREATE OR REPLACE FUNCTION public.trigger_queue_video_image_processing () RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER
+SET
+  search_path = '' AS $$
 DECLARE
   job_id uuid;
   thumbnail_changed boolean := false;
@@ -673,12 +660,9 @@ END;
 $$;
 
 -- Playlist trigger function (SINGLE COMPREHENSIVE VERSION)
-CREATE OR REPLACE FUNCTION public.trigger_queue_playlist_image_processing() 
-RETURNS TRIGGER 
-LANGUAGE plpgsql 
-SECURITY DEFINER
-SET search_path = '' 
-AS $$
+CREATE OR REPLACE FUNCTION public.trigger_queue_playlist_image_processing () RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER
+SET
+  search_path = '' AS $$
 DECLARE
   job_id uuid;
   thumbnail_changed boolean := false;
@@ -752,83 +736,82 @@ $$;
 -- Set up RLS policies
 ALTER TABLE "public"."image_processing_jobs" ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Service role can manage image processing jobs" ON "public"."image_processing_jobs" 
-FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "Service role can manage image processing jobs" ON "public"."image_processing_jobs" FOR ALL USING (auth.role () = 'service_role');
 
 -- Create storage policies for playlist images
-CREATE POLICY "Allow playlist image uploads" ON storage.objects 
-FOR INSERT
-WITH CHECK (
-  auth.role() = 'authenticated'
-  AND bucket_id = 'content-images'
-  AND name ~ '^playlists/[0-9]+/'
-  AND public.check_playlist_ownership(
-    (regexp_split_to_array(name, '/'))[2]::bigint,
-    auth.uid()
-  )
-);
+CREATE POLICY "Allow playlist image uploads" ON storage.objects FOR INSERT
+WITH
+  CHECK (
+    auth.role () = 'authenticated'
+    AND bucket_id = 'content-images'
+    AND name ~ '^playlists/[0-9]+/'
+    AND public.check_playlist_ownership (
+      (regexp_split_to_array(name, '/')) [2]::bigint,
+      auth.uid ()
+    )
+  );
 
-CREATE POLICY "Allow playlist image reads" ON storage.objects 
-FOR SELECT
-USING (
-  auth.role() = 'authenticated'
-  AND bucket_id = 'content-images'
-  AND name ~ '^playlists/[0-9]+/'
-  AND public.check_playlist_ownership(
-    (regexp_split_to_array(name, '/'))[2]::bigint,
-    auth.uid()
-  )
-);
+CREATE POLICY "Allow playlist image reads" ON storage.objects FOR
+SELECT
+  USING (
+    auth.role () = 'authenticated'
+    AND bucket_id = 'content-images'
+    AND name ~ '^playlists/[0-9]+/'
+    AND public.check_playlist_ownership (
+      (regexp_split_to_array(name, '/')) [2]::bigint,
+      auth.uid ()
+    )
+  );
 
 CREATE POLICY "Allow playlist image updates" ON storage.objects
 FOR UPDATE
-USING (
-  auth.role() = 'authenticated'
-  AND bucket_id = 'content-images'
-  AND name ~ '^playlists/[0-9]+/'
-  AND public.check_playlist_ownership(
-    (regexp_split_to_array(name, '/'))[2]::bigint,
-    auth.uid()
+  USING (
+    auth.role () = 'authenticated'
+    AND bucket_id = 'content-images'
+    AND name ~ '^playlists/[0-9]+/'
+    AND public.check_playlist_ownership (
+      (regexp_split_to_array(name, '/')) [2]::bigint,
+      auth.uid ()
+    )
   )
-)
-WITH CHECK (
-  auth.role() = 'authenticated'
-  AND bucket_id = 'content-images'
-  AND name ~ '^playlists/[0-9]+/'
-  AND public.check_playlist_ownership(
-    (regexp_split_to_array(name, '/'))[2]::bigint,
-    auth.uid()
-  )
-);
+WITH
+  CHECK (
+    auth.role () = 'authenticated'
+    AND bucket_id = 'content-images'
+    AND name ~ '^playlists/[0-9]+/'
+    AND public.check_playlist_ownership (
+      (regexp_split_to_array(name, '/')) [2]::bigint,
+      auth.uid ()
+    )
+  );
 
-CREATE POLICY "Allow playlist image deletes" ON storage.objects 
-FOR DELETE 
-USING (
-  auth.role() = 'authenticated'
+CREATE POLICY "Allow playlist image deletes" ON storage.objects FOR DELETE USING (
+  auth.role () = 'authenticated'
   AND bucket_id = 'content-images'
   AND name ~ '^playlists/[0-9]+/'
-  AND public.check_playlist_ownership(
-    (regexp_split_to_array(name, '/'))[2]::bigint,
-    auth.uid()
+  AND public.check_playlist_ownership (
+    (regexp_split_to_array(name, '/')) [2]::bigint,
+    auth.uid ()
   )
 );
 
 -- Create optimized triggers (SINGLE TRIGGER PER TABLE)
-CREATE TRIGGER trigger_videos_queue_image_processing 
-BEFORE INSERT OR UPDATE ON "public"."videos" 
-FOR EACH ROW
-EXECUTE FUNCTION public.trigger_queue_video_image_processing();
+CREATE TRIGGER trigger_videos_queue_image_processing BEFORE INSERT
+OR
+UPDATE ON "public"."videos" FOR EACH ROW
+EXECUTE FUNCTION public.trigger_queue_video_image_processing ();
 
-CREATE TRIGGER trigger_playlists_queue_image_processing 
-BEFORE INSERT OR UPDATE ON "public"."playlists" 
-FOR EACH ROW
-EXECUTE FUNCTION public.trigger_queue_playlist_image_processing();
+CREATE TRIGGER trigger_playlists_queue_image_processing BEFORE INSERT
+OR
+UPDATE ON "public"."playlists" FOR EACH ROW
+EXECUTE FUNCTION public.trigger_queue_playlist_image_processing ();
 
 -- Setup Supabase cron for process images edge function, run every minute
-SELECT cron.schedule(
-  'invoke-process-images-every-minute',
-  '* * * * *', -- every minute
-  $$
+SELECT
+  cron.schedule (
+    'invoke-process-images-every-minute',
+    '* * * * *', -- every minute
+    $$
   SELECT net.http_post(
       url := (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'project_url') || '/functions/v1/process-images',
       headers := jsonb_build_object(
@@ -837,4 +820,4 @@ SELECT cron.schedule(
       body := jsonb_build_object('time', now()::text)
   );
   $$
-);
+  );

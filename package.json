@@ -21,7 +21,7 @@
     "lint": "node --max-old-space-size=4096 ./node_modules/.bin/prettier --check . && node --max-old-space-size=4096 ./node_modules/.bin/eslint .",
     "prepare": "svelte-kit sync || echo ''",
     "preview": "vite preview",
-    "supabase:seed": "supabase db dump -f supabase/seed.sql --data-only",
+    "supabase:seed": "supabase db dump -f supabase/seed.sql --data-only -x image_processing_jobs",
     "test": "vitest",
     "test:ci": "vitest run --coverage --reporter=verbose",
     "test:db:reset": "supabase db reset",

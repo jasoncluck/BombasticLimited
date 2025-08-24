@@ -3,8 +3,6 @@
 -- Dependencies: Requires base tables from 03_base_tables.sql (videos, timestamps)
 -- This migration includes video search, filtering, and retrieval functions
 -- ============================================================================
-
-
 -- Optimized helper function to select best available image format
 CREATE OR REPLACE FUNCTION public.select_best_image_format (
   avif_url text,
@@ -26,7 +24,6 @@ BEGIN
   END CASE;
 END;
 $$;
-
 
 -- Optimized function to get videos with user timestamps
 CREATE OR REPLACE FUNCTION "public"."get_videos_with_timestamps" (p_preferred_image_format text DEFAULT 'avif') RETURNS TABLE (

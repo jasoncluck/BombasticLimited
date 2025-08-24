@@ -26,4 +26,3 @@ export const firstScheduledTask = schedules.task({
     logger.log(formatted);
   },
 });
-

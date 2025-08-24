@@ -58,6 +58,7 @@ describe('Search Playlists Page Server Load', () => {
       params: { query: 'test' },
       url: new URL('http://localhost/search/test/playlists'),
       locals: { supabase: {} as any, session: null },
+      parent: { preferredImageFormat: 'avif' },
       request: new Request('http://localhost/search/test/playlists'),
     } as any);
 
