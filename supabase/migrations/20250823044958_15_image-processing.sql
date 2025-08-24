@@ -491,7 +491,6 @@ BEGIN
 END;
 $$;
 
--- FIXED: Playlist trigger function with proper thumbnail_url as source_url
 CREATE OR REPLACE FUNCTION public.trigger_queue_playlist_image_processing() 
 RETURNS TRIGGER 
 LANGUAGE plpgsql 
@@ -504,45 +503,48 @@ DECLARE
   properties_changed boolean := false;
   already_in_queue boolean := FALSE;
   needs_processing boolean := FALSE;
+  already_fully_processed boolean := FALSE;
 BEGIN
   -- For INSERT: check if playlist needs processing
   IF TG_OP = 'INSERT' THEN
     IF NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '' THEN
       
-      -- Check if already in processing queue for this thumbnail_url
-      SELECT EXISTS (
-        SELECT 1 FROM "public"."image_processing_jobs"
-        WHERE entity_type = 'playlist'
-          AND entity_id = NEW.id::text
-          AND image_type = 'playlist_image'
-          AND source_url = NEW.thumbnail_url  -- FIXED: Use thumbnail_url as source_url
-          AND status IN ('pending', 'processing')
-      ) INTO already_in_queue;
-      
-      -- For INSERT, we always need to process if we have a thumbnail_url and no optimized images
-      needs_processing := (
-        NEW.image_webp_url IS NULL OR 
-        NEW.image_avif_url IS NULL OR
-        NEW.image_processing_status != 'completed'
+      -- Check if already fully processed (has optimized images AND status is completed)
+      already_fully_processed := (
+        NEW.image_webp_url IS NOT NULL AND 
+        NEW.image_avif_url IS NOT NULL AND
+        NEW.image_processing_status = 'completed'
       );
       
-      -- Only queue if not already in queue and needs processing
-      IF NOT already_in_queue AND needs_processing THEN
-        -- FIXED: Pass thumbnail_url as source_url for playlists
-        job_id := public.queue_image_processing_job(
-          'playlist', NEW.id::text, 'playlist_image', NEW.thumbnail_url, 25
-        );
+      -- Only process if not already fully processed
+      IF NOT already_fully_processed THEN
+        -- Check if already in processing queue for this thumbnail_url
+        SELECT EXISTS (
+          SELECT 1 FROM "public"."image_processing_jobs"
+          WHERE entity_type = 'playlist'
+            AND entity_id = NEW.id::text
+            AND image_type = 'playlist_image'
+            AND source_url = NEW.thumbnail_url
+            AND status IN ('pending', 'processing')
+        ) INTO already_in_queue;
+        
+        -- Only queue if not already in queue
+        IF NOT already_in_queue THEN
+          job_id := public.queue_image_processing_job(
+            'playlist', NEW.id::text, 'playlist_image', NEW.thumbnail_url, 25
+          );
 
-        IF job_id IS NOT NULL THEN
+          IF job_id IS NOT NULL THEN
+            NEW.image_processing_status = 'pending';
+            NEW.image_processing_updated_at = now();
+          END IF;
+        ELSE
           NEW.image_processing_status = 'pending';
           NEW.image_processing_updated_at = now();
         END IF;
-      ELSIF NOT needs_processing THEN
-        -- Already has optimized images
+      ELSE
+        -- Already fully processed, ensure status is correct
         NEW.image_processing_status = 'completed';
-        NEW.image_processing_updated_at = now();
-      ELSIF already_in_queue THEN
-        NEW.image_processing_status = 'pending';
         NEW.image_processing_updated_at = now();
       END IF;
     ELSE
@@ -557,9 +559,9 @@ BEGIN
     thumbnail_changed := COALESCE(OLD.thumbnail_url, '') != COALESCE(NEW.thumbnail_url, '');
     properties_changed := COALESCE(OLD.image_properties::text, '') != COALESCE(NEW.image_properties::text, '');
     
-    -- FIXED: Process if thumbnail_url OR image_properties changed, OR if we don't have optimized images
-    IF thumbnail_changed OR properties_changed OR 
-       NEW.image_webp_url IS NULL OR NEW.image_avif_url IS NULL THEN
+    -- FIXED: Only process if something actually changed that affects the image output
+    -- Don't reprocess if we already have optimized images for the same thumbnail_url and properties
+    IF thumbnail_changed OR properties_changed THEN
       
       IF NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '' THEN
         -- Check if already in processing queue for this specific thumbnail_url
@@ -568,13 +570,12 @@ BEGIN
           WHERE entity_type = 'playlist'
             AND entity_id = NEW.id::text
             AND image_type = 'playlist_image'
-            AND source_url = NEW.thumbnail_url  -- FIXED: Use thumbnail_url as source_url
+            AND source_url = NEW.thumbnail_url
             AND status IN ('pending', 'processing')
         ) INTO already_in_queue;
         
         -- Only queue if not already in queue
         IF NOT already_in_queue THEN
-          -- FIXED: Pass thumbnail_url as source_url for playlists
           job_id := public.queue_image_processing_job(
             'playlist', NEW.id::text, 'playlist_image', NEW.thumbnail_url, 25
           );
@@ -585,15 +586,15 @@ BEGIN
             
             -- Clear optimized URLs when source or properties change
             -- This ensures we generate new images with the updated crop
-            IF thumbnail_changed OR properties_changed THEN
-              NEW.image_webp_url = NULL;
-              NEW.image_avif_url = NULL;
-            END IF;
+            NEW.image_webp_url = NULL;
+            NEW.image_avif_url = NULL;
           END IF;
         ELSE
-          -- Already in queue, just update status
-          NEW.image_processing_status = 'pending';
-          NEW.image_processing_updated_at = now();
+          -- Already in queue, just update status if needed
+          IF NEW.image_processing_status != 'pending' THEN
+            NEW.image_processing_status = 'pending';
+            NEW.image_processing_updated_at = now();
+          END IF;
         END IF;
       ELSE
         -- No thumbnail_url, clear optimized URLs and mark as completed
@@ -602,6 +603,10 @@ BEGIN
         NEW.image_processing_status = 'completed';
         NEW.image_processing_updated_at = now();
       END IF;
+    ELSE
+      -- FIXED: Nothing relevant changed, don't modify processing status or queue new jobs
+      -- This prevents unnecessary reprocessing of already completed playlists
+      RAISE LOG 'Playlist % update detected but no relevant changes (thumbnail or properties)', NEW.id;
     END IF;
   END IF;
 
