@@ -392,63 +392,124 @@ ALTER TABLE "public"."image_processing_jobs" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Service role can manage image processing jobs" ON "public"."image_processing_jobs" FOR ALL USING (auth.role () = 'service_role');
 
 -- Optimized trigger function to queue video image processing
-CREATE OR REPLACE FUNCTION public.trigger_queue_video_image_processing () RETURNS TRIGGER LANGUAGE plpgsql
-SET
-  search_path = '' AS $$
+CREATE OR REPLACE FUNCTION public.trigger_queue_video_image_processing() 
+RETURNS TRIGGER 
+LANGUAGE plpgsql
+SET search_path = '' 
+AS $$
 BEGIN
-  -- Queue processing if thumbnail URL changed to non-null
-  IF (TG_OP = 'INSERT' AND NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '') OR 
-     (TG_OP = 'UPDATE' AND 
-       COALESCE(OLD.thumbnail_url, '') != COALESCE(NEW.thumbnail_url, '') AND
-       NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '') THEN
+  -- For INSERT: queue processing if thumbnail_url is not null
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '' THEN
+      PERFORM public.queue_image_processing_job(
+        'video', NEW.id, 'thumbnail', NEW.thumbnail_url, 100
+      );
+      
+      -- Update processing status
+      NEW.image_processing_status = 'pending';
+      NEW.image_processing_updated_at = now();
+      NEW.thumbnail_webp_url = NULL;
+      NEW.thumbnail_avif_url = NULL;
+    END IF;
     
-    -- Queue thumbnail processing
-    PERFORM public.queue_image_processing_job(
-      'video', NEW.id, 'thumbnail', NEW.thumbnail_url, 100
-    );
-
-    -- Update processing status
-    NEW.image_processing_status = 'pending';
-    NEW.image_processing_updated_at = now();
-    NEW.thumbnail_webp_url = NULL;
-    NEW.thumbnail_avif_url = NULL;
-    
-  ELSIF (TG_OP = 'UPDATE' AND 
-         COALESCE(OLD.thumbnail_url, '') != COALESCE(NEW.thumbnail_url, '') AND
-         (NEW.thumbnail_url IS NULL OR NEW.thumbnail_url = '')) THEN
-    
-    -- Clear optimized URLs if thumbnail_url was cleared
-    NEW.thumbnail_webp_url = NULL;
-    NEW.thumbnail_avif_url = NULL;
-    NEW.image_processing_status = 'completed';
-    NEW.image_processing_updated_at = now();
+  -- For UPDATE: queue processing if thumbnail_url changed OR optimized images are missing
+  ELSIF TG_OP = 'UPDATE' THEN
+    DECLARE
+      thumbnail_changed boolean;
+      missing_optimized boolean;
+    BEGIN
+      -- Check if thumbnail_url changed
+      thumbnail_changed := COALESCE(OLD.thumbnail_url, '') != COALESCE(NEW.thumbnail_url, '');
+      
+      -- Check if optimized images are missing (and we have a thumbnail_url)
+      missing_optimized := (NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '') AND 
+                          (NEW.thumbnail_webp_url IS NULL OR NEW.thumbnail_avif_url IS NULL);
+      
+      -- Queue job if thumbnail changed OR optimized images are missing
+      IF thumbnail_changed OR missing_optimized THEN
+        IF NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '' THEN
+          PERFORM public.queue_image_processing_job(
+            'video', NEW.id, 'thumbnail', NEW.thumbnail_url, 100
+          );
+          
+          -- Update processing status
+          NEW.image_processing_status = 'pending';
+          NEW.image_processing_updated_at = now();
+          
+          -- Clear optimized URLs if thumbnail changed
+          IF thumbnail_changed THEN
+            NEW.thumbnail_webp_url = NULL;
+            NEW.thumbnail_avif_url = NULL;
+          END IF;
+        ELSIF thumbnail_changed AND (NEW.thumbnail_url IS NULL OR NEW.thumbnail_url = '') THEN
+          -- Clear optimized URLs if thumbnail_url was cleared
+          NEW.thumbnail_webp_url = NULL;
+          NEW.thumbnail_avif_url = NULL;
+          NEW.image_processing_status = 'completed';
+          NEW.image_processing_updated_at = now();
+        END IF;
+      END IF;
+    END;
   END IF;
 
   RETURN NEW;
 END;
 $$;
 
--- Optimized trigger function to queue playlist image processing
-CREATE OR REPLACE FUNCTION public.trigger_queue_playlist_image_processing () RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER
-SET
-  search_path = '' AS $$
+-- Updated trigger function for playlist image processing
+CREATE OR REPLACE FUNCTION public.trigger_queue_playlist_image_processing() 
+RETURNS TRIGGER 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = '' 
+AS $$
 DECLARE
   source_url text;
   should_process boolean := false;
   job_id uuid;
+  thumbnail_changed boolean := false;
+  properties_changed boolean := false;
+  missing_optimized boolean := false;
 BEGIN
-  -- Determine if processing should be triggered
+  -- For INSERT: queue processing if thumbnail_url or image_properties exist
   IF TG_OP = 'INSERT' THEN
     should_process := (NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '') OR 
                      (NEW.image_properties IS NOT NULL);
+                     
+  -- For UPDATE: check various conditions
   ELSIF TG_OP = 'UPDATE' THEN
-    should_process := (
-      COALESCE(OLD.thumbnail_url, '') != COALESCE(NEW.thumbnail_url, '') AND
-      NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != ''
-    ) OR (
-      COALESCE(OLD.image_properties::text, '') != COALESCE(NEW.image_properties::text, '') AND
-      NEW.image_properties IS NOT NULL
-    );
+    -- Check if thumbnail_url changed
+    thumbnail_changed := COALESCE(OLD.thumbnail_url, '') != COALESCE(NEW.thumbnail_url, '');
+    
+    -- Check if image_properties changed
+    properties_changed := COALESCE(OLD.image_properties::text, '') != COALESCE(NEW.image_properties::text, '');
+    
+    -- Check if optimized images are missing (and we have a thumbnail_url)
+    missing_optimized := (NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '') AND 
+                        (NEW.image_webp_url IS NULL OR NEW.image_avif_url IS NULL);
+    
+    -- Process if any condition is met
+    should_process := thumbnail_changed OR properties_changed OR missing_optimized;
+    
+    -- Log why we're processing (for debugging)
+    IF should_process THEN
+      DECLARE
+        reasons text[];
+      BEGIN
+        reasons := ARRAY[]::text[];
+        IF thumbnail_changed THEN
+          reasons := array_append(reasons, 'thumbnail_url changed');
+        END IF;
+        IF properties_changed THEN
+          reasons := array_append(reasons, 'image_properties changed');
+        END IF;
+        IF missing_optimized THEN
+          reasons := array_append(reasons, 'optimized images missing');
+        END IF;
+        
+        RAISE LOG 'Playlist % processing triggered: %', NEW.id, array_to_string(reasons, ', ');
+      END;
+    END IF;
   END IF;
   
   -- Queue job if needed
@@ -464,6 +525,12 @@ BEGIN
       IF job_id IS NOT NULL THEN
         NEW.image_processing_status = 'pending';
         NEW.image_processing_updated_at = now();
+        
+        -- Clear optimized URLs if thumbnail or properties changed
+        IF thumbnail_changed OR properties_changed THEN
+          NEW.image_webp_url = NULL;
+          NEW.image_avif_url = NULL;
+        END IF;
       END IF;
     END IF;
   END IF;

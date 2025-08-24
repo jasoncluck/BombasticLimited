@@ -50,16 +50,46 @@ async function processImageJobs(): Promise<ApiResponse> {
       throw new Error('Missing TRIGGER_SECRET_KEY environment variable');
     }
 
-    // Get next pending job using the database function
-    const { data: jobs, error: fetchError } = await supabase
-      .rpc('get_next_image_processing_job')
-      .returns<ImageProcessingJob[]>();
+    // Get up to 10 pending jobs using the database function
+    const maxJobsPerRequest = 10;
+    const allJobs: ImageProcessingJob[] = [];
 
-    if (fetchError) {
-      throw new Error(`Failed to fetch next job: ${fetchError.message}`);
+    // Fetch jobs one by one and immediately mark as processing to avoid duplicates
+    for (let i = 0; i < maxJobsPerRequest; i++) {
+      const { data: jobs, error: fetchError } = await supabase
+        .rpc('get_next_image_processing_job')
+        .returns<ImageProcessingJob[]>();
+
+      if (fetchError) {
+        throw new Error(`Failed to fetch next job: ${fetchError.message}`);
+      }
+
+      if (!jobs || jobs.length === 0) {
+        // No more jobs available
+        break;
+      }
+
+      const job = jobs[0]; // get_next_image_processing_job returns one job
+
+      // Immediately mark this job as processing to prevent it from being fetched again
+      const { data: startSuccess, error: startError } = await supabase
+        .rpc('start_image_processing_job', { job_id: job.job_id })
+        .returns<boolean>();
+
+      if (startError || !startSuccess) {
+        console.error(
+          `Failed to mark job ${job.job_id} as processing:`,
+          startError
+        );
+        // Skip this job if we can't mark it as processing
+        continue;
+      }
+
+      // Add the job to our list only after successfully marking it as processing
+      allJobs.push(job);
     }
 
-    if (!jobs || jobs.length === 0) {
+    if (allJobs.length === 0) {
       return {
         success: true,
         processed: 0,
@@ -67,26 +97,13 @@ async function processImageJobs(): Promise<ApiResponse> {
       };
     }
 
-    console.log(`Processing ${jobs.length} image processing jobs`);
+    console.log(`Processing ${allJobs.length} image processing jobs`);
 
     const processedJobs: ProcessedJob[] = [];
 
-    // Process each job (should typically be just one due to the function design)
-    for (const job of jobs) {
+    // Process each job (they're already marked as processing)
+    for (const job of allJobs) {
       try {
-        // Mark job as processing using the database function
-        const { data: startSuccess, error: startError } = await supabase
-          .rpc('start_image_processing_job', { job_id: job.job_id })
-          .returns<boolean>();
-
-        if (startError || !startSuccess) {
-          console.error(
-            `Failed to mark job ${job.job_id} as processing:`,
-            startError
-          );
-          continue;
-        }
-
         console.log('Processing job:', {
           jobId: job.job_id,
           entityType: job.entity_type,
@@ -96,6 +113,25 @@ async function processImageJobs(): Promise<ApiResponse> {
           attempts: job.attempts,
         });
 
+        // Get current entity data to include in webhook payload
+        let currentEntity: Record<string, unknown> = {
+          id: job.entity_id,
+          thumbnail_url: job.source_url,
+        };
+
+        if (job.entity_type === 'playlist') {
+          // Include image_properties for playlists
+          const { data: playlist } = await supabase
+            .from('playlists')
+            .select('image_properties')
+            .eq('id', job.entity_id)
+            .maybeSingle();
+
+          if (playlist?.image_properties) {
+            currentEntity.image_properties = playlist.image_properties;
+          }
+        }
+
         // Create webhook payload in the format expected by the trigger
         const webhookPayload = {
           type: 'UPDATE' as const,
@@ -103,10 +139,7 @@ async function processImageJobs(): Promise<ApiResponse> {
             job.entity_type === 'video'
               ? ('videos' as const)
               : ('playlists' as const),
-          record: {
-            id: job.entity_id,
-            thumbnail_url: job.source_url,
-          },
+          record: currentEntity,
           jobId: job.job_id, // Include job ID for completion tracking
           timestamp: new Date().toISOString(),
         };
@@ -151,7 +184,7 @@ async function processImageJobs(): Promise<ApiResponse> {
       success: true,
       processed: processedJobs.length,
       message: `Processed ${processedJobs.length} jobs successfully`,
-      jobs: processedJobs,
+      jobs: processedJobs.length > 0 ? processedJobs : undefined,
     };
   } catch (error) {
     console.error('Image processing error:', error);
