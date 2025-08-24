@@ -152,7 +152,7 @@
     const isHoveredCard = hoveredVideo?.id === video.id;
     const isInViewCard = isInView();
 
-    let classes = `group w-full transform cursor-pointer will-change-transform ${isContinueVideos ? 'h-76' : 'h-76 '}`;
+    let classes = `group w-full outline-primary transform cursor-pointer will-change-transform ${isContinueVideos ? 'h-76' : 'h-76 '}`;
 
     // Only apply hover and selected states to cards that are in view
     if (isInViewCard && (isSelectedCard || isHoveredCard)) {
@@ -358,7 +358,7 @@
 {:else}
   <div
     bind:this={cardElement}
-    class="{getCardClasses()} outline-hiddden flex flex-col"
+    class="{getCardClasses()} flex flex-col"
     data-testid="video-card"
     role="button"
     tabindex="0"

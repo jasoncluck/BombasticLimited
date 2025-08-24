@@ -104,24 +104,16 @@ UPDATE ON "public"."image_processing_jobs" FOR EACH ROW
 EXECUTE FUNCTION public.update_image_processing_jobs_updated_at ();
 
 -- Optimized function to get next job for processing (with atomic locking)
--- Enhanced get_next_image_processing_job function
-CREATE OR REPLACE FUNCTION public.get_next_image_processing_job () 
-RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.get_next_image_processing_job () RETURNS TABLE (
   job_id uuid,
   entity_type text,
   entity_id text,
   image_type text,
   source_url text,
   attempts integer
-) 
-LANGUAGE plpgsql 
-SECURITY DEFINER
-SET search_path = '' 
-AS $$
-DECLARE
-  selected_job RECORD;
-BEGIN
-  -- Use FOR UPDATE SKIP LOCKED to prevent race conditions
+) LANGUAGE sql SECURITY DEFINER
+SET
+  search_path = '' AS $$
   SELECT 
     j.id,
     j.entity_type,
@@ -129,32 +121,12 @@ BEGIN
     j.image_type,
     j.source_url,
     j.attempts
-  INTO selected_job
   FROM "public"."image_processing_jobs" j
   WHERE j.status = 'pending' 
     AND j.attempts < j.max_attempts
   ORDER BY j.priority ASC, j.created_at ASC
   LIMIT 1
   FOR UPDATE SKIP LOCKED;
-  
-  IF NOT FOUND THEN
-    RAISE LOG 'No pending jobs found in queue';
-    RETURN;
-  END IF;
-  
-  RAISE LOG 'Selected job % for processing: entity_type=%, entity_id=%, attempts=%', 
-    selected_job.id, selected_job.entity_type, selected_job.entity_id, selected_job.attempts;
-  
-  -- Return the job data
-  job_id := selected_job.id;
-  entity_type := selected_job.entity_type;
-  entity_id := selected_job.entity_id;
-  image_type := selected_job.image_type;
-  source_url := selected_job.source_url;
-  attempts := selected_job.attempts;
-  
-  RETURN NEXT;
-END;
 $$;
 
 -- Optimized function to mark job as processing
