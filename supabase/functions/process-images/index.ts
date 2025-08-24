@@ -33,6 +33,16 @@ interface SuccessResponse {
 
 type ApiResponse = SuccessResponse | ErrorResponse;
 
+interface PlaylistEntity {
+  image_properties: Record<string, unknown> | null;
+  thumbnail_url: string | null;
+  thumbnail_maxres_url: string | null;
+}
+
+interface VideoEntity {
+  thumbnail_url: string | null;
+}
+
 // Initialize Supabase client
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -50,7 +60,9 @@ async function processImageJobs(): Promise<ApiResponse> {
       throw new Error('Missing TRIGGER_SECRET_KEY environment variable');
     }
 
-    // Get up to 10 pending jobs using the database function
+    console.log('Starting image processing job batch...');
+
+    // Get up to 25 pending jobs using the database function
     const maxJobsPerRequest = 25;
     const allJobs: ImageProcessingJob[] = [];
 
@@ -61,22 +73,29 @@ async function processImageJobs(): Promise<ApiResponse> {
         .returns<ImageProcessingJob[]>();
 
       if (fetchError) {
+        console.error(`Failed to fetch next job:`, fetchError);
         throw new Error(`Failed to fetch next job: ${fetchError.message}`);
       }
 
       if (!jobs || jobs.length === 0) {
         // No more jobs available
+        console.log(
+          `No more jobs available after fetching ${allJobs.length} jobs`
+        );
         break;
       }
 
       const job = jobs[0]; // get_next_image_processing_job returns one job
+      console.log(
+        `Fetched job ${job.job_id} for ${job.entity_type} ${job.entity_id}`
+      );
 
       // Immediately mark this job as processing to prevent it from being fetched again
       const { data: startSuccess, error: startError } = await supabase
         .rpc('start_image_processing_job', { job_id: job.job_id })
         .returns<boolean>();
 
-      if (startError || !startSuccess) {
+      if (startError) {
         console.error(
           `Failed to mark job ${job.job_id} as processing:`,
           startError
@@ -85,11 +104,22 @@ async function processImageJobs(): Promise<ApiResponse> {
         continue;
       }
 
+      if (!startSuccess) {
+        console.warn(
+          `Job ${job.job_id} was not updated (likely already processing or completed)`
+        );
+        // Skip this job as it's no longer available
+        continue;
+      }
+
+      console.log(`Successfully marked job ${job.job_id} as processing`);
+
       // Add the job to our list only after successfully marking it as processing
       allJobs.push(job);
     }
 
     if (allJobs.length === 0) {
+      console.log('No pending jobs found in queue');
       return {
         success: true,
         processed: 0,
@@ -100,6 +130,7 @@ async function processImageJobs(): Promise<ApiResponse> {
     console.log(`Processing ${allJobs.length} image processing jobs`);
 
     const processedJobs: ProcessedJob[] = [];
+    const failedJobs: string[] = [];
 
     // Process each job (they're already marked as processing)
     for (const job of allJobs) {
@@ -121,15 +152,60 @@ async function processImageJobs(): Promise<ApiResponse> {
 
         if (job.entity_type === 'playlist') {
           // Include image_properties for playlists
-          const { data: playlist } = await supabase
+          const { data: playlist, error: playlistError } = await supabase
             .from('playlists')
-            .select('image_properties')
+            .select('image_properties, thumbnail_url, thumbnail_maxres_url')
             .eq('id', job.entity_id)
-            .maybeSingle();
+            .maybeSingle()
+            .returns<PlaylistEntity>();
 
-          if (playlist?.image_properties) {
-            currentEntity.image_properties = playlist.image_properties;
+          if (playlistError) {
+            console.error(
+              `Failed to fetch playlist ${job.entity_id}:`,
+              playlistError
+            );
+            throw new Error(
+              `Failed to fetch playlist data: ${playlistError.message}`
+            );
           }
+
+          if (!playlist) {
+            throw new Error(`Playlist ${job.entity_id} not found`);
+          }
+
+          currentEntity = {
+            id: job.entity_id,
+            thumbnail_url: playlist.thumbnail_url,
+            thumbnail_maxres_url: playlist.thumbnail_maxres_url,
+            image_properties: playlist.image_properties,
+          };
+        } else if (job.entity_type === 'video') {
+          // Get video data
+          const { data: video, error: videoError } = await supabase
+            .from('videos')
+            .select('thumbnail_url')
+            .eq('id', job.entity_id)
+            .maybeSingle()
+            .returns<VideoEntity>();
+
+          if (videoError) {
+            console.error(
+              `Failed to fetch video ${job.entity_id}:`,
+              videoError
+            );
+            throw new Error(
+              `Failed to fetch video data: ${videoError.message}`
+            );
+          }
+
+          if (!video) {
+            throw new Error(`Video ${job.entity_id} not found`);
+          }
+
+          currentEntity = {
+            id: job.entity_id,
+            thumbnail_url: video.thumbnail_url,
+          };
         }
 
         // Create webhook payload in the format expected by the trigger
@@ -144,7 +220,10 @@ async function processImageJobs(): Promise<ApiResponse> {
           timestamp: new Date().toISOString(),
         };
 
-        console.log('Webhook payload being sent:', webhookPayload);
+        console.log(
+          'Webhook payload being sent:',
+          JSON.stringify(webhookPayload, null, 2)
+        );
 
         // Trigger the task using the SDK
         const run = await tasks.trigger<typeof processImageWebhook>(
@@ -153,8 +232,7 @@ async function processImageJobs(): Promise<ApiResponse> {
         );
 
         console.log(
-          `Successfully triggered image processing for job ${job.job_id}:`,
-          run.id
+          `Successfully triggered image processing for job ${job.job_id}: run ${run.id}`
         );
 
         processedJobs.push({
@@ -168,22 +246,43 @@ async function processImageJobs(): Promise<ApiResponse> {
         // calling complete_image_processing_job() when processing is done
       } catch (jobError) {
         console.error(`Failed to process job ${job.job_id}:`, jobError);
+        failedJobs.push(job.job_id);
 
         // Mark job as failed using the database function
         const errorMessage =
           jobError instanceof Error ? jobError.message : 'Unknown error';
 
-        await supabase.rpc('fail_image_processing_job', {
-          job_id: job.job_id,
-          error_msg: errorMessage,
-        });
+        const { error: failError } = await supabase.rpc(
+          'fail_image_processing_job',
+          {
+            job_id: job.job_id,
+            error_msg: errorMessage,
+          }
+        );
+
+        if (failError) {
+          console.error(
+            `Failed to mark job ${job.job_id} as failed:`,
+            failError
+          );
+        }
       }
+    }
+
+    const message =
+      failedJobs.length > 0
+        ? `Processed ${processedJobs.length} jobs successfully, ${failedJobs.length} failed`
+        : `Processed ${processedJobs.length} jobs successfully`;
+
+    console.log(message);
+    if (failedJobs.length > 0) {
+      console.log('Failed job IDs:', failedJobs);
     }
 
     return {
       success: true,
       processed: processedJobs.length,
-      message: `Processed ${processedJobs.length} jobs successfully`,
+      message,
       jobs: processedJobs.length > 0 ? processedJobs : undefined,
     };
   } catch (error) {
@@ -208,7 +307,10 @@ serve(async (req: Request): Promise<Response> => {
   }
 
   try {
+    console.log('Image processing edge function called');
     const result = await processImageJobs();
+
+    console.log('Edge function result:', result);
 
     return new Response(JSON.stringify(result), {
       headers: { 'Content-Type': 'application/json' },

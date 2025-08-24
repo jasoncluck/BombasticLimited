@@ -123,6 +123,10 @@ export async function handleAddVideosToPlaylist({
     return { error: null };
   }
 
+  // Check if playlist has thumbnail BEFORE adding videos to prevent race condition
+  const shouldSetThumbnail = !playlist.image_url;
+  const thumbnailVideoForThisRequest = shouldSetThumbnail ? videos[0] : null;
+
   const { error } = await addVideosToPlaylist({
     videoIds: videos.map((v) => v.id),
     playlistId: playlist.id,
@@ -146,23 +150,16 @@ export async function handleAddVideosToPlaylist({
     `Added ${videos.length > 1 ? 'videos' : 'video'} to ${playlist.name}`
   );
 
-  // If playlist didn't have a thumbnail, process the image
-  if (!playlist.image_url) {
-    // The RPC function set the thumbnail_video_id, now process the image
-    // const processedPlaylistImage = await getCroppedPlaylistImageUrl({
-    //   imageProperties: null, // No existing properties for new thumbnail
-    //   thumbnailUrl: videos[0].thumbnail_url,
-    // });
-
-    // Update with the processed image
-    const { error } = await updatePlaylistThumbnail({
+  // Only set thumbnail if this request determined it should AND we have a video for it
+  if (shouldSetThumbnail && thumbnailVideoForThisRequest) {
+    const { error: thumbnailError } = await updatePlaylistThumbnail({
       playlistId: playlist.id,
-      thumbnailUrl: videos[0].thumbnail_url,
+      thumbnailUrl: thumbnailVideoForThisRequest.thumbnail_url,
       imageProperties: null,
       supabase,
     });
 
-    if (error) {
+    if (thumbnailError) {
       showNotification('Unable update playlist image');
     }
   }

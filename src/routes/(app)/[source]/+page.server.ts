@@ -96,6 +96,9 @@ export const load: PageServerLoad = async ({
     (result) => result !== null
   );
 
+  console.log('JMC videos');
+  console.log(videos);
+
   // Process image URLs in parallel
   const sourcePlaylistsWithImages = await Promise.all(
     sourcePlaylistsData.playlists.map(async (sp) => {

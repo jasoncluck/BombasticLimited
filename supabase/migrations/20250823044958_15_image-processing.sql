@@ -1,4 +1,4 @@
--- Migration: image_processing_system.sql (COMPLETE FIXED VERSION - CORRECTED SOURCE_URL)
+-- Migration: image_processing_system.sql (COMPLETE FIXED VERSION - SIMPLIFIED WITHOUT PROCESSED_IMAGE_PROPERTIES)
 -- Purpose: Add background image processing with Supabase Storage support (WebP-first for playlists)
 -- Dependencies: Requires base tables from 03_base_tables.sql (videos, playlists)
 -- This migration adds storage paths for optimized images and job processing queue
@@ -28,13 +28,14 @@ COMMENT ON COLUMN "public"."videos"."thumbnail_webp_url" IS 'Supabase Storage pa
 
 COMMENT ON COLUMN "public"."videos"."thumbnail_avif_url" IS 'Supabase Storage path for optimized video thumbnail in AVIF format';
 
--- Create optimized image processing jobs queue table
+-- Create optimized image processing jobs queue table with properties_hash for tracking
 CREATE TABLE IF NOT EXISTS "public"."image_processing_jobs" (
   "id" uuid DEFAULT gen_random_uuid() NOT NULL,
   "entity_type" text NOT NULL CHECK (entity_type IN ('video', 'playlist')),
   "entity_id" text NOT NULL,
   "image_type" text NOT NULL CHECK (image_type IN ('thumbnail', 'playlist_image')),
   "source_url" text NOT NULL,
+  "properties_hash" text,
   "status" text DEFAULT 'pending' NOT NULL CHECK (
     status IN (
       'pending',
@@ -66,14 +67,20 @@ COMMENT ON COLUMN "public"."image_processing_jobs"."entity_id" IS 'ID of the vid
 
 COMMENT ON COLUMN "public"."image_processing_jobs"."image_type" IS 'Type of image being processed (thumbnail or playlist_image)';
 
+COMMENT ON COLUMN "public"."image_processing_jobs"."properties_hash" IS 'Hash of image_properties to track when reprocessing is needed';
+
 COMMENT ON COLUMN "public"."image_processing_jobs"."priority" IS 'Job priority (lower numbers = higher priority)';
 
 COMMENT ON COLUMN "public"."image_processing_jobs"."attempts" IS 'Number of processing attempts';
 
--- Create optimized indexes for performance
-CREATE INDEX IF NOT EXISTS "idx_image_processing_jobs_status_priority" ON "public"."image_processing_jobs" (status, priority, created_at)
-WHERE
-  status = 'pending';
+-- Create indexes
+DROP INDEX IF EXISTS "idx_image_processing_jobs_status_priority";
+CREATE INDEX "idx_image_processing_jobs_status_priority" ON "public"."image_processing_jobs" (status, priority, created_at)
+WHERE status = 'pending';
+
+-- Add a new index for completed jobs (for analytics/cleanup)
+CREATE INDEX IF NOT EXISTS "idx_image_processing_jobs_completed" ON "public"."image_processing_jobs" (status, processing_completed_at)
+WHERE status = 'completed';
 
 CREATE INDEX IF NOT EXISTS "idx_image_processing_jobs_entity_type_id" ON "public"."image_processing_jobs" (entity_type, entity_id, image_type);
 
@@ -88,6 +95,9 @@ WHERE
 CREATE INDEX IF NOT EXISTS "idx_playlists_image_processing_status" ON "public"."playlists" (image_processing_status)
 WHERE
   image_processing_status != 'completed';
+
+-- Index for properties_hash lookups
+CREATE INDEX IF NOT EXISTS "idx_image_processing_jobs_properties_hash" ON "public"."image_processing_jobs" (entity_type, entity_id, properties_hash, status);
 
 -- Optimized trigger to update updated_at timestamp
 CREATE OR REPLACE FUNCTION public.update_image_processing_jobs_updated_at () RETURNS TRIGGER LANGUAGE plpgsql
@@ -129,7 +139,7 @@ SET
   FOR UPDATE SKIP LOCKED;
 $$;
 
--- Optimized function to mark job as processing
+-- Function to mark job as started/processing (with atomic locking)
 CREATE OR REPLACE FUNCTION public.start_image_processing_job (job_id uuid) 
 RETURNS boolean 
 LANGUAGE plpgsql 
@@ -137,22 +147,137 @@ SECURITY DEFINER
 SET search_path = '' 
 AS $$
 DECLARE
-  rows_affected integer;
+  job_updated_count integer := 0;
 BEGIN
+  -- Update job status to processing with timestamp
   UPDATE "public"."image_processing_jobs"
   SET 
     status = 'processing',
     processing_started_at = now(),
     attempts = attempts + 1
-  WHERE id = job_id;
+  WHERE id = job_id 
+    AND status = 'pending'
+    AND attempts < max_attempts;
   
-  GET DIAGNOSTICS rows_affected = ROW_COUNT;
+  GET DIAGNOSTICS job_updated_count = ROW_COUNT;
   
-  RETURN rows_affected > 0;
+  IF job_updated_count > 0 THEN
+    RAISE LOG 'Started processing job %', job_id;
+  ELSE
+    RAISE LOG 'Failed to start job % (not pending or max attempts reached)', job_id;
+  END IF;
+  
+  RETURN job_updated_count > 0;
 END;
 $$;
 
--- Optimized function to mark job as completed and remove from queue
+-- Helper function to generate hash for image properties
+CREATE OR REPLACE FUNCTION public.hash_image_properties(properties jsonb) 
+RETURNS text 
+LANGUAGE sql 
+IMMUTABLE 
+AS $$
+  SELECT CASE 
+    WHEN properties IS NULL THEN 'null'
+    ELSE encode(extensions.digest(properties::text, 'sha256'), 'hex')
+  END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.queue_image_processing_job (
+  p_entity_type text,
+  p_entity_id text,
+  p_image_type text,
+  p_source_url text,
+  p_image_properties jsonb DEFAULT NULL,
+  p_priority integer DEFAULT 100
+) RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = '' AS $$
+DECLARE
+  job_id uuid;
+  video_already_processed boolean := FALSE;
+  playlist_already_processed boolean := FALSE;
+  new_properties_hash text;
+  existing_completed_hash text;
+BEGIN
+  -- Generate hash for the properties
+  new_properties_hash := public.hash_image_properties(p_image_properties);
+  
+  -- Check for existing active job (pending or processing) with same entity, type, and properties
+  SELECT id INTO job_id
+  FROM "public"."image_processing_jobs"
+  WHERE entity_type = p_entity_type
+    AND entity_id = p_entity_id
+    AND image_type = p_image_type
+    AND COALESCE(properties_hash, 'null') = COALESCE(new_properties_hash, 'null')
+    AND status IN ('pending', 'processing');
+  
+  -- Return existing active job if found
+  IF job_id IS NOT NULL THEN
+    RAISE LOG 'Existing active job found for % % with properties hash %: %', p_entity_type, p_entity_id, new_properties_hash, job_id;
+    RETURN job_id;
+  END IF;
+  
+  -- Check if entity already has optimized images for this exact configuration
+  IF p_entity_type = 'video' THEN
+    -- For videos: check if optimized images exist for this exact source URL
+    SELECT EXISTS (
+      SELECT 1 FROM "public"."videos" 
+      WHERE id = p_entity_id 
+        AND thumbnail_url = p_source_url
+        AND thumbnail_webp_url IS NOT NULL 
+        AND thumbnail_avif_url IS NOT NULL
+        AND image_processing_status = 'completed'
+    ) INTO video_already_processed;
+    
+    IF video_already_processed THEN
+      RAISE LOG 'Video % already has optimized images for source %', p_entity_id, p_source_url;
+      RETURN NULL;
+    END IF;
+    
+  ELSIF p_entity_type = 'playlist' THEN
+    -- For playlists: check if we have a completed job with the same properties hash
+    SELECT properties_hash INTO existing_completed_hash
+    FROM "public"."image_processing_jobs"
+    WHERE entity_type = 'playlist'
+      AND entity_id = p_entity_id
+      AND image_type = 'playlist_image'
+      AND status = 'completed'
+      AND source_url = p_source_url
+    ORDER BY processing_completed_at DESC
+    LIMIT 1;
+    
+    -- If we found a completed job with the same properties hash, check if playlist still has those images
+    IF existing_completed_hash IS NOT NULL AND existing_completed_hash = new_properties_hash THEN
+      SELECT EXISTS (
+        SELECT 1 
+        FROM "public"."playlists" p
+        WHERE p.id = p_entity_id::bigint
+          AND p.thumbnail_url = p_source_url
+          AND p.image_webp_url IS NOT NULL 
+          AND p.image_avif_url IS NOT NULL
+          AND p.image_processing_status = 'completed'
+      ) INTO playlist_already_processed;
+      
+      IF playlist_already_processed THEN
+        RAISE LOG 'Playlist % already has optimized images for properties hash %', p_entity_id, new_properties_hash;
+        RETURN NULL;
+      END IF;
+    END IF;
+  END IF;
+  
+  -- Create new job
+  INSERT INTO "public"."image_processing_jobs" (
+    entity_type, entity_id, image_type, source_url, properties_hash, priority
+  ) VALUES (
+    p_entity_type, p_entity_id, p_image_type, p_source_url, new_properties_hash, p_priority
+  ) RETURNING id INTO job_id;
+  
+  RAISE LOG 'Created new job % for % % with properties hash %', job_id, p_entity_type, p_entity_id, new_properties_hash;
+  RETURN job_id;
+END;
+$$;
+
+-- Updated function to mark job as completed
 CREATE OR REPLACE FUNCTION public.complete_image_processing_job (
   job_id uuid,
   jpg_path text DEFAULT NULL,
@@ -167,7 +292,7 @@ DECLARE
   job_record RECORD;
   entity_exists boolean := FALSE;
   entity_updated_count integer := 0;
-  job_deleted_count integer := 0;
+  job_updated_count integer := 0;
   playlist_id_bigint bigint;
   debug_info text;
 BEGIN
@@ -185,7 +310,7 @@ BEGIN
                       job_record.entity_type, job_record.entity_id, job_record.image_type, job_record.status);
   RAISE LOG '%', debug_info;
   
-  -- Update entity FIRST, then delete job
+  -- Update entity FIRST, then update job status
   IF job_record.entity_type = 'video' THEN
     IF job_record.image_type = 'thumbnail' THEN
       -- Verify video exists before updating
@@ -220,12 +345,7 @@ BEGIN
         RETURN FALSE;
     END;
     
-    -- Verify playlist exists before updating
-    SELECT EXISTS (
-      SELECT 1 FROM "public"."playlists" WHERE id = playlist_id_bigint
-    ) INTO entity_exists;
-    
-    IF NOT entity_exists THEN
+    IF NOT EXISTS (SELECT 1 FROM "public"."playlists" WHERE id = playlist_id_bigint) THEN
       RAISE WARNING 'Playlist entity % not found for job %', playlist_id_bigint, job_id;
       RETURN FALSE;
     END IF;
@@ -255,17 +375,21 @@ BEGIN
     RETURN FALSE;
   END IF;
   
-  -- Only remove job after successful entity update
-  DELETE FROM "public"."image_processing_jobs"
+  -- Update job status to 'completed'
+  UPDATE "public"."image_processing_jobs"
+  SET 
+    status = 'completed',
+    processing_completed_at = now(),
+    error_message = NULL  -- Clear any previous error messages
   WHERE id = job_id;
   
-  GET DIAGNOSTICS job_deleted_count = ROW_COUNT;
+  GET DIAGNOSTICS job_updated_count = ROW_COUNT;
   
   -- Log successful completion
-  RAISE LOG 'Successfully completed job % for % % (job deleted: %, entity updated: %)', 
-    job_id, job_record.entity_type, job_record.entity_id, job_deleted_count > 0, entity_updated_count > 0;
+  RAISE LOG 'Successfully completed job % for % % (job updated: %, entity updated: %)', 
+    job_id, job_record.entity_type, job_record.entity_id, job_updated_count > 0, entity_updated_count > 0;
   
-  RETURN TRUE;
+  RETURN job_updated_count > 0;
 END;
 $$;
 
@@ -327,336 +451,38 @@ BEGIN
 END;
 $$;
 
--- FIXED: queue_image_processing_job function with proper source_url handling
-CREATE OR REPLACE FUNCTION public.queue_image_processing_job (
-  p_entity_type text,
-  p_entity_id text,
-  p_image_type text,
-  p_source_url text,
-  p_priority integer DEFAULT 100
-) RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER
-SET
-  search_path = '' AS $$
-DECLARE
-  job_id uuid;
-  video_already_processed boolean := FALSE;
-BEGIN
-  -- Check for existing active job with same entity and type
-  SELECT id INTO job_id
-  FROM "public"."image_processing_jobs"
-  WHERE entity_type = p_entity_type
-    AND entity_id = p_entity_id
-    AND image_type = p_image_type
-    AND status IN ('pending', 'processing');
-  
-  -- Return existing job if found
-  IF job_id IS NOT NULL THEN
-    RAISE LOG 'Existing job found for % %: %', p_entity_type, p_entity_id, job_id;
-    RETURN job_id;
-  END IF;
-  
-  -- Check if entity already has optimized images for current state
-  IF p_entity_type = 'video' THEN
-    -- For videos: check if optimized images exist for this exact source URL
-    SELECT EXISTS (
-      SELECT 1 FROM "public"."videos" 
-      WHERE id = p_entity_id 
-        AND thumbnail_url = p_source_url
-        AND thumbnail_webp_url IS NOT NULL 
-        AND thumbnail_avif_url IS NOT NULL
-        AND image_processing_status = 'completed'
-    ) INTO video_already_processed;
-    
-    IF video_already_processed THEN
-      RAISE LOG 'Video % already has optimized images for source %', p_entity_id, p_source_url;
-      RETURN NULL;
-    END IF;
-    
-  ELSIF p_entity_type = 'playlist' THEN
-    -- FIXED: For playlists, we don't check if already processed here
-    -- because image_properties changes require reprocessing
-    -- The caller (trigger) will handle this logic with more context
-    RAISE LOG 'Playlist % queued for processing with source %', p_entity_id, p_source_url;
-  END IF;
-  
-  -- Create new job
-  INSERT INTO "public"."image_processing_jobs" (
-    entity_type, entity_id, image_type, source_url, priority
-  ) VALUES (
-    p_entity_type, p_entity_id, p_image_type, p_source_url, p_priority
-  ) RETURNING id INTO job_id;
-  
-  RAISE LOG 'Created new job % for % %', job_id, p_entity_type, p_entity_id;
-  RETURN job_id;
-END;
-$$;
-
--- Set up RLS policies
-ALTER TABLE "public"."image_processing_jobs" ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Service role can manage image processing jobs" ON "public"."image_processing_jobs" FOR ALL USING (auth.role () = 'service_role');
-
--- Video trigger function with proper duplicate detection
-CREATE OR REPLACE FUNCTION public.trigger_queue_video_image_processing() 
-RETURNS TRIGGER 
+CREATE OR REPLACE FUNCTION public.cleanup_old_completed_jobs(days_old integer DEFAULT 30)
+RETURNS TABLE (
+  deleted_count integer,
+  oldest_deleted timestamp with time zone,
+  newest_deleted timestamp with time zone
+)
 LANGUAGE plpgsql
-SET search_path = '' 
-AS $$
-DECLARE
-  already_in_queue boolean := FALSE;
-  already_processed boolean := FALSE;
-  thumbnail_changed boolean := FALSE;
-BEGIN
-  -- For INSERT: check if video needs processing
-  IF TG_OP = 'INSERT' THEN
-    -- Only process if thumbnail_url exists
-    IF NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '' THEN
-      -- Check if already processed (has optimized images for this thumbnail)
-      already_processed := (
-        NEW.thumbnail_webp_url IS NOT NULL AND 
-        NEW.thumbnail_avif_url IS NOT NULL AND
-        NEW.image_processing_status = 'completed'
-      );
-      
-      -- Only queue if not already processed
-      IF NOT already_processed THEN
-        -- Check if already in processing queue
-        SELECT EXISTS (
-          SELECT 1 FROM "public"."image_processing_jobs"
-          WHERE entity_type = 'video'
-            AND entity_id = NEW.id
-            AND image_type = 'thumbnail'
-            AND source_url = NEW.thumbnail_url
-            AND status IN ('pending', 'processing')
-        ) INTO already_in_queue;
-        
-        IF NOT already_in_queue THEN
-          PERFORM public.queue_image_processing_job(
-            'video', NEW.id, 'thumbnail', NEW.thumbnail_url, 100
-          );
-          
-          NEW.image_processing_status = 'pending';
-          NEW.image_processing_updated_at = now();
-        ELSE
-          NEW.image_processing_status = 'pending';
-          NEW.image_processing_updated_at = now();
-        END IF;
-      ELSE
-        -- Already has optimized images, mark as completed
-        NEW.image_processing_status = 'completed';
-        NEW.image_processing_updated_at = now();
-      END IF;
-    END IF;
-    
-  -- For UPDATE: only process if thumbnail_url changed
-  ELSIF TG_OP = 'UPDATE' THEN
-    -- Check if thumbnail_url changed
-    thumbnail_changed := COALESCE(OLD.thumbnail_url, '') != COALESCE(NEW.thumbnail_url, '');
-    
-    IF thumbnail_changed THEN
-      IF NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '' THEN
-        -- Check if already in processing queue for this new thumbnail
-        SELECT EXISTS (
-          SELECT 1 FROM "public"."image_processing_jobs"
-          WHERE entity_type = 'video'
-            AND entity_id = NEW.id
-            AND image_type = 'thumbnail'
-            AND source_url = NEW.thumbnail_url
-            AND status IN ('pending', 'processing')
-        ) INTO already_in_queue;
-        
-        -- Only queue if not already in queue for this thumbnail
-        IF NOT already_in_queue THEN
-          PERFORM public.queue_image_processing_job(
-            'video', NEW.id, 'thumbnail', NEW.thumbnail_url, 100
-          );
-          
-          NEW.image_processing_status = 'pending';
-          NEW.image_processing_updated_at = now();
-          -- Clear optimized URLs since source changed
-          NEW.thumbnail_webp_url = NULL;
-          NEW.thumbnail_avif_url = NULL;
-        END IF;
-      ELSE
-        -- Thumbnail was removed, clear optimized URLs
-        NEW.thumbnail_webp_url = NULL;
-        NEW.thumbnail_avif_url = NULL;
-        NEW.image_processing_status = 'completed';
-        NEW.image_processing_updated_at = now();
-      END IF;
-    END IF;
-  END IF;
-
-  RETURN NEW;
-END;
-$$;
-
-CREATE OR REPLACE FUNCTION public.trigger_queue_playlist_image_processing() 
-RETURNS TRIGGER 
-LANGUAGE plpgsql 
 SECURITY DEFINER
-SET search_path = '' 
+SET search_path = ''
 AS $$
 DECLARE
-  job_id uuid;
-  thumbnail_changed boolean := false;
-  properties_changed boolean := false;
-  already_in_queue boolean := FALSE;
-  needs_processing boolean := FALSE;
-  already_fully_processed boolean := FALSE;
+  deleted_info RECORD;
 BEGIN
-  -- For INSERT: check if playlist needs processing
-  IF TG_OP = 'INSERT' THEN
-    IF NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '' THEN
-      
-      -- Check if already fully processed (has optimized images AND status is completed)
-      already_fully_processed := (
-        NEW.image_webp_url IS NOT NULL AND 
-        NEW.image_avif_url IS NOT NULL AND
-        NEW.image_processing_status = 'completed'
-      );
-      
-      -- Only process if not already fully processed
-      IF NOT already_fully_processed THEN
-        -- Check if already in processing queue for this thumbnail_url
-        SELECT EXISTS (
-          SELECT 1 FROM "public"."image_processing_jobs"
-          WHERE entity_type = 'playlist'
-            AND entity_id = NEW.id::text
-            AND image_type = 'playlist_image'
-            AND source_url = NEW.thumbnail_url
-            AND status IN ('pending', 'processing')
-        ) INTO already_in_queue;
-        
-        -- Only queue if not already in queue
-        IF NOT already_in_queue THEN
-          job_id := public.queue_image_processing_job(
-            'playlist', NEW.id::text, 'playlist_image', NEW.thumbnail_url, 25
-          );
-
-          IF job_id IS NOT NULL THEN
-            NEW.image_processing_status = 'pending';
-            NEW.image_processing_updated_at = now();
-          END IF;
-        ELSE
-          NEW.image_processing_status = 'pending';
-          NEW.image_processing_updated_at = now();
-        END IF;
-      ELSE
-        -- Already fully processed, ensure status is correct
-        NEW.image_processing_status = 'completed';
-        NEW.image_processing_updated_at = now();
-      END IF;
-    ELSE
-      -- No thumbnail_url, mark as completed
-      NEW.image_processing_status = 'completed';
-      NEW.image_processing_updated_at = now();
-    END IF;
-                     
-  -- For UPDATE: check if thumbnail_url or image_properties changed
-  ELSIF TG_OP = 'UPDATE' THEN
-    -- Check what changed
-    thumbnail_changed := COALESCE(OLD.thumbnail_url, '') != COALESCE(NEW.thumbnail_url, '');
-    properties_changed := COALESCE(OLD.image_properties::text, '') != COALESCE(NEW.image_properties::text, '');
-    
-    -- FIXED: Only process if something actually changed that affects the image output
-    -- Don't reprocess if we already have optimized images for the same thumbnail_url and properties
-    IF thumbnail_changed OR properties_changed THEN
-      
-      IF NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '' THEN
-        -- Check if already in processing queue for this specific thumbnail_url
-        SELECT EXISTS (
-          SELECT 1 FROM "public"."image_processing_jobs"
-          WHERE entity_type = 'playlist'
-            AND entity_id = NEW.id::text
-            AND image_type = 'playlist_image'
-            AND source_url = NEW.thumbnail_url
-            AND status IN ('pending', 'processing')
-        ) INTO already_in_queue;
-        
-        -- Only queue if not already in queue
-        IF NOT already_in_queue THEN
-          job_id := public.queue_image_processing_job(
-            'playlist', NEW.id::text, 'playlist_image', NEW.thumbnail_url, 25
-          );
-
-          IF job_id IS NOT NULL THEN
-            NEW.image_processing_status = 'pending';
-            NEW.image_processing_updated_at = now();
-            
-            -- Clear optimized URLs when source or properties change
-            -- This ensures we generate new images with the updated crop
-            NEW.image_webp_url = NULL;
-            NEW.image_avif_url = NULL;
-          END IF;
-        ELSE
-          -- Already in queue, just update status if needed
-          IF NEW.image_processing_status != 'pending' THEN
-            NEW.image_processing_status = 'pending';
-            NEW.image_processing_updated_at = now();
-          END IF;
-        END IF;
-      ELSE
-        -- No thumbnail_url, clear optimized URLs and mark as completed
-        NEW.image_webp_url = NULL;
-        NEW.image_avif_url = NULL;
-        NEW.image_processing_status = 'completed';
-        NEW.image_processing_updated_at = now();
-      END IF;
-    ELSE
-      -- FIXED: Nothing relevant changed, don't modify processing status or queue new jobs
-      -- This prevents unnecessary reprocessing of already completed playlists
-      RAISE LOG 'Playlist % update detected but no relevant changes (thumbnail or properties)', NEW.id;
-    END IF;
-  END IF;
-
-  RETURN NEW;
-END;
-$$;
-
--- Optimized cleanup function for deleted entities
-CREATE OR REPLACE FUNCTION public.trigger_cleanup_optimized_images () RETURNS TRIGGER LANGUAGE plpgsql
-SET
-  search_path = '' AS $$
-DECLARE
-  storage_paths text[];
-  entity_type_val text;
-BEGIN
-  -- Determine entity type and collect paths
-  IF TG_TABLE_NAME = 'videos' THEN
-    entity_type_val := 'video';
-    storage_paths := ARRAY[]::text[];
-    
-    IF OLD.thumbnail_webp_url IS NOT NULL THEN
-      storage_paths := array_append(storage_paths, OLD.thumbnail_webp_url);
-    END IF;
-    IF OLD.thumbnail_avif_url IS NOT NULL THEN
-      storage_paths := array_append(storage_paths, OLD.thumbnail_avif_url);
-    END IF;
-  ELSIF TG_TABLE_NAME = 'playlists' THEN
-    entity_type_val := 'playlist';
-    storage_paths := ARRAY[]::text[];
-    
-    IF OLD.image_webp_url IS NOT NULL THEN
-      storage_paths := array_append(storage_paths, OLD.image_webp_url);
-    END IF;
-    IF OLD.image_avif_url IS NOT NULL THEN
-      storage_paths := array_append(storage_paths, OLD.image_avif_url);
-    END IF;
-  END IF;
-
-  -- Log paths for cleanup (actual file deletion would be handled externally)
-  IF array_length(storage_paths, 1) > 0 THEN
-    RAISE LOG 'Optimized images to cleanup: %', array_to_string(storage_paths, ', ');
-  END IF;
-
-  -- Remove pending jobs for this entity
-  DELETE FROM public.image_processing_jobs 
-  WHERE entity_type = entity_type_val
-    AND entity_id = (CASE WHEN TG_TABLE_NAME = 'videos' THEN OLD.id ELSE OLD.id::text END)
-    AND status IN ('pending', 'processing');
-
-  RETURN OLD;
+  -- Get info about jobs to be deleted
+  SELECT 
+    COUNT(*) as count,
+    MIN(processing_completed_at) as oldest,
+    MAX(processing_completed_at) as newest
+  INTO deleted_info
+  FROM "public"."image_processing_jobs"
+  WHERE status = 'completed'
+    AND processing_completed_at < (now() - (days_old || ' days')::interval);
+  
+  -- Delete old completed jobs
+  DELETE FROM "public"."image_processing_jobs"
+  WHERE status = 'completed'
+    AND processing_completed_at < (now() - (days_old || ' days')::interval);
+  
+  RETURN QUERY SELECT 
+    deleted_info.count::integer,
+    deleted_info.oldest,
+    deleted_info.newest;
 END;
 $$;
 
@@ -727,6 +553,235 @@ CREATE POLICY "Allow playlist image deletes" ON storage.objects FOR DELETE USING
   )
 );
 
+-- Simplified video trigger function
+CREATE OR REPLACE FUNCTION public.trigger_queue_video_image_processing() 
+RETURNS TRIGGER 
+LANGUAGE plpgsql
+SET search_path = '' 
+AS $$
+DECLARE
+  already_in_queue boolean := FALSE;
+  already_processed boolean := FALSE;
+  thumbnail_changed boolean := FALSE;
+BEGIN
+  -- For INSERT: check if video needs processing
+  IF TG_OP = 'INSERT' THEN
+    -- Only process if thumbnail_url exists
+    IF NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '' THEN
+      -- Check if already processed (has optimized images for this thumbnail)
+      already_processed := (
+        NEW.thumbnail_webp_url IS NOT NULL AND 
+        NEW.thumbnail_avif_url IS NOT NULL AND
+        NEW.image_processing_status = 'completed'
+      );
+      
+      -- Only queue if not already processed
+      IF NOT already_processed THEN
+        -- Check if already in processing queue
+        SELECT EXISTS (
+          SELECT 1 FROM "public"."image_processing_jobs"
+          WHERE entity_type = 'video'
+            AND entity_id = NEW.id
+            AND image_type = 'thumbnail'
+            AND status IN ('pending', 'processing')
+        ) INTO already_in_queue;
+        
+        IF NOT already_in_queue THEN
+          PERFORM public.queue_image_processing_job(
+            'video', NEW.id, 'thumbnail', NEW.thumbnail_url, NULL, 100
+          );
+          
+          NEW.image_processing_status = 'pending';
+          NEW.image_processing_updated_at = now();
+        ELSE
+          NEW.image_processing_status = 'pending';
+          NEW.image_processing_updated_at = now();
+        END IF;
+      ELSE
+        -- Already has optimized images, mark as completed
+        NEW.image_processing_status = 'completed';
+        NEW.image_processing_updated_at = now();
+      END IF;
+    END IF;
+    
+  -- For UPDATE: only process if thumbnail_url changed
+  ELSIF TG_OP = 'UPDATE' THEN
+    -- Check if thumbnail_url changed
+    thumbnail_changed := COALESCE(OLD.thumbnail_url, '') != COALESCE(NEW.thumbnail_url, '');
+    
+    IF thumbnail_changed THEN
+      IF NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '' THEN
+        -- Check if already in processing queue for this new thumbnail
+        SELECT EXISTS (
+          SELECT 1 FROM "public"."image_processing_jobs"
+          WHERE entity_type = 'video'
+            AND entity_id = NEW.id
+            AND image_type = 'thumbnail'
+            AND status IN ('pending', 'processing')
+        ) INTO already_in_queue;
+        
+        -- Only queue if not already in queue for this thumbnail
+        IF NOT already_in_queue THEN
+          PERFORM public.queue_image_processing_job(
+            'video', NEW.id, 'thumbnail', NEW.thumbnail_url, NULL, 100
+          );
+          
+          NEW.image_processing_status = 'pending';
+          NEW.image_processing_updated_at = now();
+          -- Clear optimized URLs since source changed
+          NEW.thumbnail_webp_url = NULL;
+          NEW.thumbnail_avif_url = NULL;
+        END IF;
+      ELSE
+        -- Thumbnail was removed, clear optimized URLs
+        NEW.thumbnail_webp_url = NULL;
+        NEW.thumbnail_avif_url = NULL;
+        NEW.image_processing_status = 'completed';
+        NEW.image_processing_updated_at = now();
+      END IF;
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.trigger_queue_playlist_image_processing() 
+RETURNS TRIGGER 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = '' 
+AS $$
+DECLARE
+  job_id uuid;
+  thumbnail_changed boolean := false;
+  properties_changed boolean := false;
+  new_properties_hash text;
+  existing_completed_hash text;
+  already_in_queue boolean := FALSE;
+  already_fully_processed boolean := FALSE;
+BEGIN
+  -- For INSERT: check if playlist needs processing
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '' THEN
+      -- Generate hash for current properties
+      new_properties_hash := public.hash_image_properties(NEW.image_properties);
+      
+      -- Check if we have a completed job with the same properties hash
+      SELECT properties_hash INTO existing_completed_hash
+      FROM "public"."image_processing_jobs"
+      WHERE entity_type = 'playlist'
+        AND entity_id = NEW.id::text
+        AND image_type = 'playlist_image'
+        AND status = 'completed'
+        AND source_url = NEW.thumbnail_url
+      ORDER BY processing_completed_at DESC
+      LIMIT 1;
+      
+      -- Check if playlist already has optimized images for current properties
+      already_fully_processed := (
+        NEW.image_webp_url IS NOT NULL AND 
+        NEW.image_avif_url IS NOT NULL AND
+        NEW.image_processing_status = 'completed' AND
+        existing_completed_hash IS NOT NULL AND
+        existing_completed_hash = new_properties_hash
+      );
+      
+      -- Only process if not already fully processed with same properties
+      IF NOT already_fully_processed THEN
+        job_id := public.queue_image_processing_job(
+          'playlist', NEW.id::text, 'playlist_image', NEW.thumbnail_url, NEW.image_properties, 25
+        );
+
+        IF job_id IS NOT NULL THEN
+          NEW.image_processing_status = 'pending';
+          NEW.image_processing_updated_at = now();
+        END IF;
+      ELSE
+        -- Already fully processed with same properties, ensure status is correct
+        NEW.image_processing_status = 'completed';
+        NEW.image_processing_updated_at = now();
+        RAISE LOG 'Playlist % already fully processed with matching properties hash %', NEW.id, new_properties_hash;
+      END IF;
+    ELSE
+      -- No thumbnail_url, mark as completed
+      NEW.image_processing_status = 'completed';
+      NEW.image_processing_updated_at = now();
+    END IF;
+                     
+  -- For UPDATE: check if thumbnail_url or image_properties changed
+  ELSIF TG_OP = 'UPDATE' THEN
+    -- Check what changed
+    thumbnail_changed := COALESCE(OLD.thumbnail_url, '') != COALESCE(NEW.thumbnail_url, '');
+    properties_changed := COALESCE(OLD.image_properties::text, '') != COALESCE(NEW.image_properties::text, '');
+    
+    -- Only process if something actually changed that affects the image output
+    IF thumbnail_changed OR properties_changed THEN
+      
+      IF NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '' THEN
+        -- Generate hash for current properties
+        new_properties_hash := public.hash_image_properties(NEW.image_properties);
+        
+        -- Check if we have a completed job with the same properties hash and source URL
+        SELECT properties_hash INTO existing_completed_hash
+        FROM "public"."image_processing_jobs"
+        WHERE entity_type = 'playlist'
+          AND entity_id = NEW.id::text
+          AND image_type = 'playlist_image'
+          AND status = 'completed'
+          AND source_url = NEW.thumbnail_url
+        ORDER BY processing_completed_at DESC
+        LIMIT 1;
+        
+        -- Check if playlist already has optimized images for current properties
+        already_fully_processed := (
+          NEW.image_webp_url IS NOT NULL AND 
+          NEW.image_avif_url IS NOT NULL AND
+          NEW.image_processing_status = 'completed' AND
+          existing_completed_hash IS NOT NULL AND
+          existing_completed_hash = new_properties_hash
+        );
+        
+        -- Only queue if not already processed with same properties
+        IF NOT already_fully_processed THEN
+          job_id := public.queue_image_processing_job(
+            'playlist', NEW.id::text, 'playlist_image', NEW.thumbnail_url, NEW.image_properties, 25
+          );
+
+          IF job_id IS NOT NULL THEN
+            NEW.image_processing_status = 'pending';
+            NEW.image_processing_updated_at = now();
+            
+            -- Clear optimized URLs when source or properties change and reprocessing
+            NEW.image_webp_url = NULL;
+            NEW.image_avif_url = NULL;
+          END IF;
+        ELSE
+          -- Already processed with same properties, keep existing status
+          RAISE LOG 'Playlist % already processed with matching properties hash %, keeping existing images', NEW.id, new_properties_hash;
+        END IF;
+      ELSE
+        -- No thumbnail_url, clear optimized URLs and mark as completed
+        NEW.image_webp_url = NULL;
+        NEW.image_avif_url = NULL;
+        NEW.image_processing_status = 'completed';
+        NEW.image_processing_updated_at = now();
+      END IF;
+    ELSE
+      -- Nothing relevant changed, don't modify processing status or queue new jobs
+      RAISE LOG 'Playlist % update detected but no relevant changes (thumbnail or properties)', NEW.id;
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+-- Set up RLS policies
+ALTER TABLE "public"."image_processing_jobs" ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Service role can manage image processing jobs" ON "public"."image_processing_jobs" FOR ALL USING (auth.role () = 'service_role');
+
 -- Create optimized triggers
 CREATE TRIGGER trigger_videos_queue_image_processing BEFORE INSERT
 OR
@@ -737,12 +792,6 @@ CREATE TRIGGER trigger_playlists_queue_image_processing BEFORE INSERT
 OR
 UPDATE ON "public"."playlists" FOR EACH ROW
 EXECUTE FUNCTION public.trigger_queue_playlist_image_processing ();
-
-CREATE TRIGGER trigger_videos_cleanup_images BEFORE DELETE ON "public"."videos" FOR EACH ROW
-EXECUTE FUNCTION public.trigger_cleanup_optimized_images ();
-
-CREATE TRIGGER trigger_playlists_cleanup_images BEFORE DELETE ON "public"."playlists" FOR EACH ROW
-EXECUTE FUNCTION public.trigger_cleanup_optimized_images ();
 
 -- Setup Supabase cron for process images edge function, run every minute
 SELECT cron.schedule(
@@ -758,152 +807,3 @@ SELECT cron.schedule(
     );
     $$
 );
-
--- FIXED: Cleanup function with proper thumbnail_url matching
-CREATE OR REPLACE FUNCTION public.cleanup_duplicate_playlist_jobs()
-RETURNS TABLE (
-  playlist_id bigint,
-  action_taken text,
-  job_ids_removed uuid[]
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
-DECLARE
-  playlist_record RECORD;
-  job_ids_to_remove uuid[];
-BEGIN
-  -- Find playlists that already have optimized images but still have active jobs
-  FOR playlist_record IN 
-    SELECT DISTINCT
-      p.id,
-      p.thumbnail_url,
-      p.image_webp_url,
-      p.image_avif_url,
-      p.image_processing_status
-    FROM playlists p
-    JOIN image_processing_jobs j ON (
-      j.entity_type = 'playlist' 
-      AND j.entity_id = p.id::text 
-      AND j.image_type = 'playlist_image'
-      AND j.status IN ('pending', 'processing')
-    )
-    WHERE p.image_webp_url IS NOT NULL 
-      AND p.image_avif_url IS NOT NULL
-      AND p.image_processing_status = 'completed'
-      AND p.thumbnail_url = j.source_url  -- FIXED: Match thumbnail_url to source_url
-  LOOP
-    -- Get all active job IDs for this playlist with same thumbnail_url
-    SELECT array_agg(j.id) INTO job_ids_to_remove
-    FROM image_processing_jobs j
-    WHERE j.entity_type = 'playlist'
-      AND j.entity_id = playlist_record.id::text
-      AND j.image_type = 'playlist_image'
-      AND j.source_url = playlist_record.thumbnail_url  -- FIXED: Match thumbnail_url
-      AND j.status IN ('pending', 'processing');
-    
-    -- Remove the duplicate jobs
-    DELETE FROM image_processing_jobs
-    WHERE id = ANY(job_ids_to_remove);
-    
-    RETURN QUERY SELECT 
-      playlist_record.id,
-      'removed_duplicate_jobs'::text,
-      job_ids_to_remove;
-  END LOOP;
-END;
-$$;
-
--- FIXED: Function to fix current stuck playlists with proper thumbnail_url handling
-CREATE OR REPLACE FUNCTION public.fix_playlists_with_changed_properties()
-RETURNS TABLE (
-  playlist_id bigint,
-  action_taken text,
-  old_status text,
-  has_properties boolean
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = ''
-AS $$
-DECLARE
-  playlist_record RECORD;
-  job_exists boolean;
-  new_job_id uuid;
-BEGIN
-  -- Find playlists that have image_properties but are marked as completed
-  -- These might need reprocessing if properties changed after completion
-  FOR playlist_record IN 
-    SELECT 
-      p.id,
-      p.thumbnail_url,
-      p.image_webp_url,
-      p.image_avif_url,
-      p.image_properties,
-      p.image_processing_status,
-      p.image_processing_updated_at
-    FROM playlists p 
-    WHERE p.thumbnail_url IS NOT NULL
-      AND p.thumbnail_url != ''
-      AND p.image_processing_status = 'completed'
-      AND (
-        -- Has properties but no optimized images (shouldn't happen but let's fix it)
-        (p.image_properties IS NOT NULL AND (p.image_webp_url IS NULL OR p.image_avif_url IS NULL))
-        OR
-        -- Or updated very recently (might indicate properties changed after processing)
-        p.image_processing_updated_at > (now() - INTERVAL '1 hour')
-      )
-  LOOP
-    -- Check if there's already a job for this playlist
-    SELECT EXISTS (
-      SELECT 1 FROM image_processing_jobs j
-      WHERE j.entity_type = 'playlist'
-        AND j.entity_id = playlist_record.id::text
-        AND j.image_type = 'playlist_image'
-        AND j.status IN ('pending', 'processing')
-    ) INTO job_exists;
-    
-    IF NOT job_exists THEN
-      -- FIXED: Create new job with thumbnail_url as source_url
-      SELECT public.queue_image_processing_job(
-        'playlist', 
-        playlist_record.id::text, 
-        'playlist_image', 
-        playlist_record.thumbnail_url,  -- FIXED: Use thumbnail_url as source_url
-        25
-      ) INTO new_job_id;
-      
-      IF new_job_id IS NOT NULL THEN
-        -- Update playlist status
-        UPDATE playlists 
-        SET 
-          image_processing_status = 'pending',
-          image_processing_updated_at = now(),
-          -- Clear optimized images to force regeneration
-          image_webp_url = NULL,
-          image_avif_url = NULL
-        WHERE id = playlist_record.id;
-        
-        RETURN QUERY SELECT 
-          playlist_record.id,
-          'queued_for_reprocessing'::text,
-          playlist_record.image_processing_status,
-          playlist_record.image_properties IS NOT NULL;
-      ELSE
-        RETURN QUERY SELECT 
-          playlist_record.id,
-          'failed_to_queue'::text,
-          playlist_record.image_processing_status,
-          playlist_record.image_properties IS NOT NULL;
-      END IF;
-    ELSE
-      RETURN QUERY SELECT 
-        playlist_record.id,
-        'already_in_queue'::text,
-        playlist_record.image_processing_status,
-        playlist_record.image_properties IS NOT NULL;
-    END IF;
-  END LOOP;
-END;
-$$;
