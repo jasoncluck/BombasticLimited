@@ -85,6 +85,7 @@ describe('continue/+page.server.ts load function', () => {
         sort: { key: 'dateTimestamp', order: 'descending' },
         type: 'timestamp',
       },
+      preferredImageFormat: 'webp',
     });
   });
 
@@ -211,7 +212,9 @@ describe('continue/+page.server.ts load function', () => {
     });
 
     it('should handle missing content filter from parent', async () => {
-      mockLoadEvent.parent.mockResolvedValue({});
+      mockLoadEvent.parent.mockResolvedValue({
+        preferredImageFormat: 'webp',
+      });
       // Override the mock to return false for missing contentFilter
       mockIsTimestampFilter.mockReturnValue(false);
 
@@ -235,6 +238,7 @@ describe('continue/+page.server.ts load function', () => {
             sort: { key: 'dateTimestamp', order: 'descending' },
             type: 'timestamp',
           },
+          preferredImageFormat: 'webp',
         };
       });
 
@@ -350,6 +354,7 @@ describe('continue/+page.server.ts load function', () => {
 
       mockLoadEvent.parent.mockResolvedValue({
         contentFilter: customContentFilter,
+        preferredImageFormat: 'webp',
       });
 
       mockGetInProgressVideos.mockResolvedValue(
@@ -387,6 +392,7 @@ describe('continue/+page.server.ts load function', () => {
             sort: { key: 'dateTimestamp', order: 'descending' },
             type: 'timestamp',
           },
+          preferredImageFormat: 'webp',
         };
       });
 

@@ -145,6 +145,7 @@ describe('[source]/+page.server.ts load function', () => {
         sort: { key: 'datePublished', order: 'descending' },
         type: 'video',
       },
+      preferredImageFormat: 'webp',
     });
 
     // Mock headers.get method
