@@ -467,17 +467,16 @@ BEGIN
     END IF;
   END IF;
 
-  -- Update the playlist using the reliable two-branch approach but optimized
+  -- Update the playlist - LET THE TRIGGER HANDLE PROCESSING STATUS
   IF p_thumbnail_url IS NOT NULL THEN
-    -- Setting a thumbnail URL - clear processed images and set thumbnail reference
+    -- Setting a thumbnail URL - only update the thumbnail and properties
+    -- The trigger will handle clearing processed images and setting status
     UPDATE public.playlists pl
     SET 
       thumbnail_url = p_thumbnail_url,
-      image_webp_url = NULL,  -- Clear WebP (will be generated later)
-      image_avif_url = NULL,  -- Clear AVIF (will be generated later)  
-      image_properties = p_image_properties,
-      image_processing_status = 'pending',
-      image_processing_updated_at = now()
+      image_properties = p_image_properties
+      -- DO NOT manually set image_processing_status, image_webp_url, image_avif_url
+      -- Let the trigger handle these based on the changes
     WHERE pl.id = p_playlist_id
     RETURNING pl.thumbnail_url INTO updated_thumbnail_url;
   ELSE
@@ -485,11 +484,8 @@ BEGIN
     UPDATE public.playlists pl
     SET 
       thumbnail_url = NULL,
-      image_webp_url = NULL,
-      image_avif_url = NULL,
-      image_properties = NULL,
-      image_processing_status = NULL,
-      image_processing_updated_at = now()
+      image_properties = NULL
+      -- DO NOT manually set other fields - let trigger handle them
     WHERE pl.id = p_playlist_id
     RETURNING pl.thumbnail_url INTO updated_thumbnail_url;
   END IF;

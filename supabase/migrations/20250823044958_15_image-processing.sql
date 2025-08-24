@@ -220,12 +220,6 @@ BEGIN
     AND image_type = p_image_type
     AND status IN ('pending', 'processing');
   
-  -- Return existing active job if found
-  IF job_id IS NOT NULL THEN
-    RAISE LOG 'Existing active job found for % %: %', p_entity_type, p_entity_id, job_id;
-    RETURN job_id;
-  END IF;
-  
   -- Check for existing completed job with same configuration
   SELECT id INTO existing_completed_job_id
   FROM "public"."image_processing_jobs"
@@ -678,7 +672,7 @@ BEGIN
 END;
 $$;
 
--- Playlist trigger function
+-- Playlist trigger function (SINGLE COMPREHENSIVE VERSION)
 CREATE OR REPLACE FUNCTION public.trigger_queue_playlist_image_processing() 
 RETURNS TRIGGER 
 LANGUAGE plpgsql 
@@ -690,18 +684,12 @@ DECLARE
   thumbnail_changed boolean := false;
   properties_changed boolean := false;
   needs_processing boolean := false;
-  already_processed boolean := false;
 BEGIN
   -- For INSERT
   IF TG_OP = 'INSERT' THEN
     IF NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '' THEN
-      already_processed := (
-        NEW.image_webp_url IS NOT NULL AND 
-        NEW.image_avif_url IS NOT NULL AND
-        NEW.image_processing_status = 'completed'
-      );
-      
-      IF NOT already_processed THEN
+      -- For new records, always queue processing if we don't have optimized images
+      IF NEW.image_webp_url IS NULL OR NEW.image_avif_url IS NULL OR NEW.image_processing_status != 'completed' THEN
         job_id := public.queue_image_processing_job(
           'playlist', NEW.id::text, 'playlist_image', NEW.thumbnail_url, NEW.image_properties, 25
         );
@@ -732,30 +720,23 @@ BEGIN
     RAISE LOG 'Playlist % update: thumbnail_changed=%, properties_changed=%, needs_processing=%', 
       NEW.id, thumbnail_changed, properties_changed, needs_processing;
     
+    -- FIXED: Always process if anything changed, regardless of previous processing status
     IF needs_processing THEN
       IF NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '' THEN
-        -- Only skip processing if we have optimized images AND nothing changed
-        already_processed := (
-          NEW.image_webp_url IS NOT NULL AND 
-          NEW.image_avif_url IS NOT NULL AND
-          NEW.image_processing_status = 'completed' AND
-          NOT needs_processing
+        job_id := public.queue_image_processing_job(
+          'playlist', NEW.id::text, 'playlist_image', NEW.thumbnail_url, NEW.image_properties, 25
         );
-        
-        IF NOT already_processed THEN
-          job_id := public.queue_image_processing_job(
-            'playlist', NEW.id::text, 'playlist_image', NEW.thumbnail_url, NEW.image_properties, 25
-          );
 
-          IF job_id IS NOT NULL THEN
-            NEW.image_processing_status = 'pending';
-            NEW.image_processing_updated_at = now();
-            NEW.image_webp_url = NULL;
-            NEW.image_avif_url = NULL;
-            RAISE LOG 'Queued job % for playlist %', job_id, NEW.id;
-          END IF;
+        IF job_id IS NOT NULL THEN
+          NEW.image_processing_status = 'pending';
+          NEW.image_processing_updated_at = now();
+          -- Clear optimized URLs when reprocessing
+          NEW.image_webp_url = NULL;
+          NEW.image_avif_url = NULL;
+          RAISE LOG 'Queued job % for playlist % due to changes', job_id, NEW.id;
         END IF;
       ELSE
+        -- No thumbnail_url, clear everything
         NEW.image_webp_url = NULL;
         NEW.image_avif_url = NULL;
         NEW.image_processing_status = 'completed';
@@ -832,7 +813,7 @@ USING (
   )
 );
 
--- Create optimized triggers
+-- Create optimized triggers (SINGLE TRIGGER PER TABLE)
 CREATE TRIGGER trigger_videos_queue_image_processing 
 BEFORE INSERT OR UPDATE ON "public"."videos" 
 FOR EACH ROW

@@ -40,3 +40,5 @@ SET
 WHERE
   updated_at IS NULL
   OR updated_at = created_at;
+
+
