@@ -36,7 +36,6 @@ type ApiResponse = SuccessResponse | ErrorResponse;
 interface PlaylistEntity {
   image_properties: Record<string, unknown> | null;
   thumbnail_url: string | null;
-  thumbnail_maxres_url: string | null;
 }
 
 interface VideoEntity {
@@ -154,7 +153,7 @@ async function processImageJobs(): Promise<ApiResponse> {
           // Include image_properties for playlists
           const { data: playlist, error: playlistError } = await supabase
             .from('playlists')
-            .select('image_properties, thumbnail_url, thumbnail_maxres_url')
+            .select('image_properties, thumbnail_url')
             .eq('id', job.entity_id)
             .maybeSingle()
             .returns<PlaylistEntity>();
@@ -176,7 +175,6 @@ async function processImageJobs(): Promise<ApiResponse> {
           currentEntity = {
             id: job.entity_id,
             thumbnail_url: playlist.thumbnail_url,
-            thumbnail_maxres_url: playlist.thumbnail_maxres_url,
             image_properties: playlist.image_properties,
           };
         } else if (job.entity_type === 'video') {
