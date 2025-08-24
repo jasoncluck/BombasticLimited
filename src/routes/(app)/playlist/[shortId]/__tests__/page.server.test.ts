@@ -140,6 +140,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
         type: 'playlist',
         sort: { key: 'playlistOrder', order: 'ascending' },
       },
+      preferredImageFormat: 'webp',
     });
     mockGetPaginationQueryParams.mockReturnValue(1);
     mockParseImageProperties.mockReturnValue({
@@ -290,6 +291,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
     it('should handle invalid content filter', async () => {
       mockLoadEvent.parent.mockResolvedValue({
         contentFilter: { type: 'invalid' },
+        preferredImageFormat: 'webp',
       });
 
       await expect(load(mockLoadEvent)).rejects.toThrow(

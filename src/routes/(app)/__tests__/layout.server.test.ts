@@ -41,6 +41,9 @@ describe('+layout.server.ts load function', () => {
     isDataRequest: false,
     setHeaders: vi.fn(),
     depends: vi.fn(),
+    parent: vi.fn().mockResolvedValue({
+      preferredImageFormat: 'webp',
+    }),
     request: {
       headers: {
         get: vi.fn(),
