@@ -46,6 +46,9 @@ describe('+page.server.ts load function', () => {
     },
     url: new URL('http://localhost:5173'),
     depends: vi.fn(),
+    parent: vi.fn().mockResolvedValue({
+      preferredImageFormat: 'webp',
+    }),
     request: {
       headers: {
         get: vi
@@ -139,6 +142,9 @@ describe('+page.server.ts load function', () => {
     const loadEventWithError = {
       ...mockLoadEvent,
       url: urlWithError,
+      parent: vi.fn().mockResolvedValue({
+        preferredImageFormat: 'webp',
+      }),
     };
 
     await expect(load(loadEventWithError)).rejects.toThrow('Redirect');
@@ -152,6 +158,9 @@ describe('+page.server.ts load function', () => {
         ...mockLoadEvent.locals,
         session: null,
       },
+      parent: vi.fn().mockResolvedValue({
+        preferredImageFormat: 'webp',
+      }),
     };
 
     mockGetVideos.mockResolvedValue(createMockVideoResponse([]));
