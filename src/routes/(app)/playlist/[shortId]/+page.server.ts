@@ -23,24 +23,17 @@ import { Filter } from 'bad-words';
 import { redirect, setFlash } from 'sveltekit-flash-message/server';
 import { getProfileById } from '$lib/supabase/user-profiles';
 import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
-import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 
 export const load: PageServerLoad = async ({
   locals: { supabase, session },
   url,
   parent,
   params,
-  request,
   depends,
 }) => {
   depends('supabase:db:videos', 'supabase:db:playlists');
 
-  const acceptHeader = request.headers.get('accept');
-
-  // Detect optimal image format from Accept header
-  const preferredImageFormat = detectOptimalFormat(acceptHeader);
-
-  const { contentFilter } = await parent();
+  const { contentFilter, preferredImageFormat } = await parent();
 
   if (!isPlaylistVideosFilter(contentFilter)) {
     throw new Error(`Invalid content filter`);

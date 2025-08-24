@@ -216,10 +216,6 @@ export async function processImageServer({
         80 // **IMPROVED: Higher base quality than 75**
       );
 
-    console.log(
-      `🖼️ Processing ${contentType} image: ${targetFormat}, quality: ${quality}, size: ${imageWidth}x${imageHeight}`
-    );
-
     let processedImageBuffer: Buffer | undefined;
     let mimeType: string = 'image/jpeg';
 

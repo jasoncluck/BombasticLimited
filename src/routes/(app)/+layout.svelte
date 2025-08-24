@@ -28,16 +28,15 @@
   injectSpeedInsights();
 
   let { data, children } = $props();
-  let { session, supabase, userProfile } = $derived(data);
+  let { session, supabase, userProfile, preferredImageFormat } = $derived(data);
 
   // Initialize all state
   const pageState = setPageState();
   const contentState = setContentState(pageState);
   const mediaQueryState = setMediaQueryState();
-  const sidebarState = setSidebarState();
+  const sidebarState = $derived(setSidebarState(preferredImageFormat));
   const navigationState = setNavigationState();
 
-  setPlaylistState(pageState, contentState, sidebarState);
   setSourceState(pageState);
 
   let openAccountDrawer = $derived(sidebarState.openAccountDrawer);
@@ -60,6 +59,10 @@
       navigationState
     )
   );
+
+  $effect(() => {
+    setPlaylistState(pageState, contentState, sidebarState);
+  });
 
   $effect(() => {
     navigation.setupNavigationHooks();
@@ -221,8 +224,8 @@
 
       try {
         // Get current session from Supabase to check if auth state changed
-        const { data } = await supabase.auth.getClaims();
-        const currentAuthState = !!data?.claims;
+        const { data: claimsData } = await supabase.auth.getClaims();
+        const currentAuthState = !!claimsData?.claims;
 
         // Check if auth state has changed
         if (lastKnownAuthState !== currentAuthState) {

@@ -8,16 +8,11 @@ import {
   PUBLIC_SUPABASE_URL,
 } from '$env/static/public';
 import type { LayoutLoad } from './$types';
-import { COLLAPSED_SIDEBAR_SIZE } from '$lib/constants/layout';
 import type { CombinedContentFilter } from '$lib/components/content/content-filter';
 import type { UserProfile } from '$lib/supabase/user-profiles';
-import type { NotificationWithMeta } from '$lib/supabase/notifications';
+import type { ImageFormat } from '$lib/utils/image-format-detection';
 
-export const load = async ({
-  data,
-  depends,
-  fetch,
-}: Parameters<LayoutLoad>[0]) => {
+export const load: LayoutLoad = async ({ data, depends, fetch }) => {
   /**
    * Declare a dependency so the layout can be invalidated, for example, on
    * session refresh.
@@ -51,9 +46,9 @@ export const load = async ({
    */
   let session = null;
   try {
-    const { data, error } = await supabase.auth.getClaims();
+    const { data: claimsData, error } = await supabase.auth.getClaims();
 
-    if (!error && data?.claims) {
+    if (!error && claimsData?.claims) {
       // If claims are valid, get the session
       const { data: sessionData } = await supabase.auth.getSession();
       session = sessionData.session;
@@ -61,17 +56,19 @@ export const load = async ({
   } catch (error) {
     // Fallback to getSession if getClaims is not available
     console.warn('getClaims not available, falling back to getSession:', error);
-    const { data } = await supabase.auth.getSession();
-    session = data.session;
+    const { data: sessionData } = await supabase.auth.getSession();
+    session = sessionData.session;
   }
 
   // Destructure the simplified data without complex caching
   const {
     userProfile = null,
     contentFilter,
+    preferredImageFormat,
   }: {
     userProfile?: UserProfile | null;
     contentFilter?: CombinedContentFilter;
+    preferredImageFormat: ImageFormat;
   } = data;
 
   return {
@@ -79,6 +76,7 @@ export const load = async ({
     supabase,
     contentFilter: contentFilter || null,
     userProfile,
+    preferredImageFormat,
     isSidebarCollapsed: false, // Simplified - no complex layout parsing
   };
 };

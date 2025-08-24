@@ -12,6 +12,7 @@ import {
   SIDEBAR_COOKIE_NAME,
   SIDEBAR_COOKIE_MAX_AGE,
 } from '$lib/components/ui/sidebar/constants';
+import type { ImageFormat } from '$lib/utils/image-format-detection';
 
 export interface SidebarData {
   playlists: Playlist[];
@@ -181,6 +182,9 @@ export class SidebarStateClass implements SidebarState {
   collapsed = $state(false);
   openAccountDrawer = $state(false);
 
+  // Preferred image format from layout
+  preferredImageFormat = $state<ImageFormat | null>(null);
+
   // Derived values for easier access
   playlists = $derived(this.data?.playlists ?? []);
   userProfile = $derived(this.data?.userProfile ?? null);
@@ -206,7 +210,8 @@ export class SidebarStateClass implements SidebarState {
     searchDebounceMs: 250,
   });
 
-  constructor() {
+  constructor(preferredImageFormat: ImageFormat) {
+    this.preferredImageFormat = preferredImageFormat;
     // Initialize sidebar state from cookie on construction
     this.loadStateFromCookie();
     // Also initialize sidebar collapsed state from localStorage (from layout pattern)
@@ -578,7 +583,16 @@ export class SidebarStateClass implements SidebarState {
     this.error = null;
 
     try {
-      const response = await fetch('/api/sidebar');
+      const response = await fetch('/api/sidebar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          preferredImageFormat: this.preferredImageFormat,
+        }),
+      });
+
       if (response.ok) {
         this.data = await response.json();
         this.#hasLoadedOnce = true; // Mark that we've successfully loaded data
@@ -601,7 +615,15 @@ export class SidebarStateClass implements SidebarState {
     this.error = null;
 
     try {
-      const response = await fetch('/api/sidebar');
+      const response = await fetch('/api/sidebar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          preferredImageFormat: this.preferredImageFormat,
+        }),
+      });
       if (response.ok) {
         this.data = await response.json();
         this.#hasLoadedOnce = true; // Mark that we've successfully loaded data
@@ -658,6 +680,7 @@ export class SidebarStateClass implements SidebarState {
     this.#hasLoadedOnce = false;
     this.#isInitialStreamLoad = true;
     this.isDraggingDivider = false;
+    this.preferredImageFormat = null;
     // Note: Don't reset isSidebarCollapsed or collapsed - they should persist across page refreshes
   }
 
@@ -690,7 +713,7 @@ export class SidebarStateClass implements SidebarState {
   }
 
   // Convenience methods for backward compatibility
-  setSidebarState(state: any): void {
+  setSidebarState(): void {
     // This method exists for compatibility but doesn't need to do anything
     // since the sidebar state is already "this"
     console.log('setSidebarState called - sidebar state is already set');
@@ -709,8 +732,11 @@ export class SidebarStateClass implements SidebarState {
 
 const DEFAULT_KEY = '$_sidebar_state';
 
-export function setSidebarState(key = DEFAULT_KEY): SidebarStateClass {
-  const sidebarState = new SidebarStateClass();
+export function setSidebarState(
+  preferredImageFormat: ImageFormat,
+  key = DEFAULT_KEY
+): SidebarStateClass {
+  const sidebarState = new SidebarStateClass(preferredImageFormat);
   return setContext(key, sidebarState);
 }
 

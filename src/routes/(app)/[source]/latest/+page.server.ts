@@ -4,13 +4,11 @@ import type { PageServerLoad } from './$types';
 import { isSource } from '$lib/constants/source';
 import { isVideoFilter } from '$lib/components/content/content-filter';
 import { getPaginationQueryParams } from '$lib/components/pagination/pagination';
-import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 
 export const load: PageServerLoad = async ({
   params,
   url,
   parent,
-  request,
   locals: { supabase, session },
   depends,
 }) => {
@@ -21,7 +19,7 @@ export const load: PageServerLoad = async ({
     redirect(303, '/');
   }
 
-  const { contentFilter } = await parent();
+  const { contentFilter, preferredImageFormat } = await parent();
 
   if (!isVideoFilter(contentFilter)) {
     throw new Error('Invalid content filter');
@@ -30,11 +28,6 @@ export const load: PageServerLoad = async ({
   const currentPage = getPaginationQueryParams({
     searchParams: url.searchParams,
   });
-
-  const acceptHeader = request.headers.get('accept');
-
-  // Detect optimal image format from Accept header
-  const preferredImageFormat = detectOptimalFormat(acceptHeader);
 
   const { videos, count: videosCount } = await getVideos({
     source,

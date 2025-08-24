@@ -7,7 +7,6 @@ import {
   type SourceVideos,
   type SourceVideosCount,
 } from '$lib/supabase/videos';
-import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
@@ -15,16 +14,11 @@ export const load: PageServerLoad = async ({
   parent,
   locals: { supabase, session },
   depends,
-  request,
 }) => {
   depends('supabase:db:videos');
 
-  const { contentFilter } = await parent();
+  const { contentFilter, preferredImageFormat } = await parent();
   const searchString = params.query;
-  const acceptHeader = request.headers.get('accept');
-
-  // Detect optimal image format from Accept header
-  const preferredImageFormat = detectOptimalFormat(acceptHeader);
 
   if (!isVideoFilter(contentFilter)) {
     throw new Error('Invalid content filter');

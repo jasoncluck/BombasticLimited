@@ -9,6 +9,7 @@ export const load: LayoutServerLoad = loadFlash(
   async ({
     locals: { safeGetSession, supabase },
     cookies,
+    parent,
     url,
     isDataRequest,
     setHeaders,
@@ -17,6 +18,8 @@ export const load: LayoutServerLoad = loadFlash(
     depends('supabase:db:profiles');
 
     const sessionPromise = safeGetSession();
+
+    const { preferredImageFormat } = await parent();
 
     let view: ContentView;
     if (url.pathname === MAIN_ROUTES.CONTINUE) {
@@ -62,6 +65,7 @@ export const load: LayoutServerLoad = loadFlash(
       contentFilter,
       cookies: cookies.getAll(),
       userProfile,
+      preferredImageFormat,
     };
   }
 );

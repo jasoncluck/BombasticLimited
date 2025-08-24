@@ -10,25 +10,21 @@ import {
   type SourceVideos,
 } from '$lib/supabase/videos';
 import { redirect } from '@sveltejs/kit';
-import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
   locals: { supabase, session },
   url,
   depends,
-  request,
+  parent,
 }) => {
   depends('supabase:db:videos');
+
+  const { preferredImageFormat } = await parent();
 
   if (url.searchParams.has('error')) {
     redirect(303, '/auth/error');
   }
-
-  const acceptHeader = request.headers.get('accept');
-
-  // Detect optimal image format from Accept header
-  const preferredImageFormat = detectOptimalFormat(acceptHeader);
 
   const sourceVideosContentFilters: VideoFilter = {
     sort: {

@@ -3,13 +3,14 @@
  * This file can be imported by both client and server code
  */
 
+export const imageFormats = ['avif', 'webp', 'jpeg'] as const;
+export type ImageFormat = (typeof imageFormats)[number];
+
 /**
  * Browser format support detection based on Accept header
  * Enhanced to better prioritize WebP for optimal compression and compatibility
  */
-export function detectOptimalFormat(
-  acceptHeader?: string | null
-): 'avif' | 'webp' | 'jpeg' {
+export function detectOptimalFormat(acceptHeader?: string | null): ImageFormat {
   if (!acceptHeader) {
     // For external images (like YouTube) without Accept headers,
     // default to WebP for broader compatibility while still providing good compression
@@ -94,9 +95,7 @@ export function detectBrowserImageSupport(): Promise<{
 /**
  * Get optimal format based on browser support (client-side)
  */
-export async function getOptimalFormatForBrowser(): Promise<
-  'avif' | 'webp' | 'jpeg'
-> {
+export async function getOptimalFormatForBrowser(): Promise<ImageFormat> {
   try {
     const support = await detectBrowserImageSupport();
 

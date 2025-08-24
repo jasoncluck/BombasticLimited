@@ -4,7 +4,6 @@ import {
   parseImageProperties,
 } from '$lib/supabase/playlists';
 import { incrementVideoView } from '$lib/supabase/videos';
-import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
@@ -14,18 +13,13 @@ export const load: PageServerLoad = async ({
   depends,
   params,
   parent,
-  request,
 }) => {
   depends('supabase:db:videos');
 
   const videoId = params.videoId;
-  const acceptHeader = request.headers.get('accept');
-
-  // Detect optimal image format from Accept header
-  const preferredImageFormat = detectOptimalFormat(acceptHeader);
 
   // Run parent() first to get contentFilter
-  const { contentFilter } = await parent();
+  const { contentFilter, preferredImageFormat } = await parent();
 
   if (!isPlaylistVideosFilter(contentFilter)) {
     throw new Error(`Invalid content filter`);

@@ -1,17 +1,14 @@
 import { getVideo, incrementVideoView } from '$lib/supabase/videos';
-import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
   locals: { supabase, session },
+  parent,
   params,
-  request,
 }) => {
   const videoId = params.id;
 
-  // Detect optimal image format from Accept header
-  const acceptHeader = request.headers.get('accept');
-  const preferredImageFormat = detectOptimalFormat(acceptHeader);
+  const { preferredImageFormat } = await parent();
 
   const { video } = await getVideo({
     supabase,

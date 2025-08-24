@@ -11,7 +11,6 @@ import {
   getPlaylistsForUsername,
   parseImageProperties,
 } from '$lib/supabase/playlists';
-import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import type { PageServerLoad } from './$types';
 import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
 
@@ -20,21 +19,16 @@ export const load: PageServerLoad = async ({
   parent,
   depends,
   locals: { supabase, session },
-  request,
 }) => {
   depends('supabase:db:videos');
 
   const source = params.source;
-  const acceptHeader = request.headers.get('accept');
-
-  // Detect optimal image format from Accept header
-  const preferredImageFormat = detectOptimalFormat(acceptHeader);
 
   if (!isSource(source)) {
     redirect(303, '/');
   }
 
-  const { contentFilter } = await parent();
+  const { contentFilter, preferredImageFormat } = await parent();
 
   if (!isVideoFilter(contentFilter)) {
     throw new Error('Invalid content filter');

@@ -3,15 +3,14 @@ import {
   DEFAULT_NUM_PLAYLISTS_PAGINATION,
   searchPlaylists,
 } from '$lib/supabase/playlists';
-import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
   depends,
   params,
+  parent,
   url,
   locals: { supabase, session },
-  request,
 }) => {
   depends('supabase:db:playlistsForProfile');
 
@@ -19,11 +18,9 @@ export const load: PageServerLoad = async ({
     searchParams: url.searchParams,
   });
 
-  const searchString = params.query;
-  const acceptHeader = request.headers.get('accept');
+  const { preferredImageFormat } = await parent();
 
-  // Detect optimal image format from Accept header
-  const preferredImageFormat = detectOptimalFormat(acceptHeader);
+  const searchString = params.query;
 
   const { playlists: playlistResults, count: playlistsCount } =
     await searchPlaylists({

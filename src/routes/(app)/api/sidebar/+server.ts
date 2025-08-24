@@ -8,12 +8,18 @@ import { getProfile } from '$lib/supabase/user-profiles';
 import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
 
-export const GET: RequestHandler = async ({ locals, request }) => {
-  const { session, supabase } = locals;
-  const acceptHeader = request.headers.get('accept');
+interface RequestBody {
+  preferredImageFormat?: string;
+}
 
-  // Detect optimal image format from Accept header
-  const preferredImageFormat = detectOptimalFormat(acceptHeader);
+export const POST: RequestHandler = async ({ locals, request }) => {
+  const { session, supabase } = locals;
+
+  // Parse the request body
+  const body: RequestBody = await request.json();
+  const preferredImageFormat =
+    body.preferredImageFormat ??
+    detectOptimalFormat(request.headers.get('accept') || '');
 
   if (!session) {
     return json({ playlists: [], userProfile: null, userPlaylistsCount: 0 });
