@@ -263,7 +263,7 @@
             }
             e.stopPropagation();
           }}
-          class="ghost-button-minimal outline-none {open
+          class="ghost-button-minimal outline-hidden {open
             ? 'scale-105'
             : ''} {shouldShowButton ? 'opacity-100' : 'opacity-0'}"
         >
@@ -277,7 +277,7 @@
       {/snippet}
     </DropdownMenu.Trigger>
 
-    <DropdownMenu.Content align="end" class="stable-dropdown">
+    <DropdownMenu.Content align="end" class="stable-dropdown outline-hidden">
       {#if variant === 'header' && userProfile?.content_display === 'TABLE'}
         <DropdownMenu.Item
           class="p-2"
@@ -401,9 +401,7 @@
               const { error } = await handleUpdatePlaylistImage({
                 playlist,
                 sidebarState,
-                thumbnailUrl: frozenOperationVideos[0].thumbnail_url,
-                thumbnailMaxResUrl:
-                  frozenOperationVideos[0].thumbnail_maxres_url,
+                thumbnailVideo: frozenOperationVideos[0],
                 supabase,
               });
 

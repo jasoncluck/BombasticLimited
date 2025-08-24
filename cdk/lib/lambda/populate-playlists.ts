@@ -4,47 +4,114 @@ import { CHANNEL_INFO, ChannelSource } from '../channel';
 
 const MAX_RESULTS = 5; // Reduced from 50 since playlists are not added frequently
 
-// Helper function to get the best quality thumbnail URL with fallbacks
-function getBestThumbnailUrl(thumbnails?: youtube_v3.Schema$ThumbnailDetails): {
-  thumbnailUrl: string | null;
-  thumbnailMaxResUrl: string | null;
-} {
-  if (!thumbnails) {
-    return { thumbnailUrl: null, thumbnailMaxResUrl: null };
+/**
+ * Queue image processing for a playlist thumbnail using database jobs
+ * This follows the same pattern as the main app's image processing system
+ */
+async function queuePlaylistThumbnailProcessing(
+  supabaseClient: any, // Use any to avoid complex typing issues in Lambda context
+  playlistId: number,
+  thumbnailUrl: string | null,
+  priority: number = 100
+): Promise<void> {
+  if (!thumbnailUrl) {
+    console.log(
+      JSON.stringify({
+        stage: 'queue_image_processing',
+        message: `No thumbnail URL provided for playlist ${playlistId}, skipping image processing`,
+        playlistId,
+      })
+    );
+    return;
   }
 
-  // Priority order: maxres > high > medium > default
-  const maxresUrl = thumbnails.maxres?.url || null;
+  console.log(
+    JSON.stringify({
+      stage: 'queue_image_processing',
+      message: `Queuing image processing for playlist ${playlistId}`,
+      playlistId,
+      thumbnailUrl,
+    })
+  );
 
-  // For thumbnailUrl, prefer medium (320x180) over default (120x90)
-  // If maxres exists, we'll use medium for thumbnailUrl
-  // If no maxres, use the highest available for thumbnailUrl
-  let thumbnailUrl: string | null = null;
+  try {
+    const { data: jobId, error } = await supabaseClient.rpc(
+      'queue_image_processing_job',
+      {
+        p_entity_type: 'playlist',
+        p_entity_id: playlistId.toString(),
+        p_image_type: 'playlist_image',
+        p_source_url: thumbnailUrl,
+        p_priority: priority,
+      }
+    );
 
-  if (maxresUrl) {
-    // If we have maxres, use medium for standard thumbnailUrl
-    thumbnailUrl =
-      thumbnails.medium?.url ||
-      thumbnails.high?.url ||
-      thumbnails.default?.url ||
-      null;
-  } else {
-    // If no maxres, use the highest quality available for thumbnailUrl
-    thumbnailUrl =
-      thumbnails.high?.url ||
-      thumbnails.medium?.url ||
-      thumbnails.default?.url ||
-      null;
+    if (error) {
+      console.error(
+        JSON.stringify({
+          stage: 'queue_image_processing',
+          error,
+          message: `Failed to queue image processing for playlist ${playlistId}`,
+          playlistId,
+          thumbnailUrl,
+        })
+      );
+      // Don't throw here - image processing failure shouldn't break playlist sync
+      return;
+    }
+
+    if (jobId) {
+      console.log(
+        JSON.stringify({
+          stage: 'queue_image_processing',
+          message: `Successfully queued image processing job for playlist ${playlistId}`,
+          playlistId,
+          jobId,
+        })
+      );
+    } else {
+      console.log(
+        JSON.stringify({
+          stage: 'queue_image_processing',
+          message: `Image processing job skipped for playlist ${playlistId} - duplicate or recently completed`,
+          playlistId,
+        })
+      );
+    }
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        stage: 'queue_image_processing',
+        error: error instanceof Error ? error.message : error,
+        message: `Exception while queuing image processing for playlist ${playlistId}`,
+        playlistId,
+        thumbnailUrl,
+      })
+    );
+    // Don't throw here - image processing failure shouldn't break playlist sync
   }
-
-  return {
-    thumbnailUrl,
-    thumbnailMaxResUrl: maxresUrl,
-  };
 }
 
+// Helper function to get the highest resolution thumbnail available
+const getBestThumbnailUrl = (
+  thumbnails?: youtube_v3.Schema$ThumbnailDetails | null
+): string | null => {
+  if (!thumbnails) return null;
+
+  // Prioritize maxres for image processing pipeline, then fallback to other resolutions
+  const candidates = [
+    thumbnails.maxres?.url, // 1280x720 (highest quality for processing)
+    thumbnails.standard?.url, // 640x480
+    thumbnails.high?.url, // 480x360
+    thumbnails.medium?.url, // 320x180
+    thumbnails.default?.url, // 120x90
+  ];
+
+  return candidates.find((url) => url) || null;
+};
+
 // Helper to remove "_live" suffix from thumbnail URLs (same as in video processing)
-const removeLiveSuffix = (url?: string | null) =>
+const removeLiveSuffix = (url?: string | null): string | null | undefined =>
   url ? url.replace(/_live(\.\w+)$/, '$1') : url;
 
 export const populatePlaylists = async ({
@@ -143,7 +210,7 @@ export const populatePlaylists = async ({
     let uploadsPlaylistSkipped = false;
 
     do {
-      let items;
+      let items: youtube_v3.Schema$Playlist[] | undefined;
       try {
         const { data } = await youtubeClient.playlists.list({
           part: ['id', 'snippet'],
@@ -197,71 +264,107 @@ export const populatePlaylists = async ({
         youtubePlaylistIds.add(item.id);
         totalPlaylistsProcessed++;
 
-        // Get the best quality thumbnails with proper fallbacks
-        const { thumbnailUrl, thumbnailMaxResUrl } = getBestThumbnailUrl(
-          item.snippet?.thumbnails
-        );
+        // Check if playlist already exists
+        const { data: existingPlaylist } = await supabaseClient
+          .from('playlists')
+          .select('id, created_by')
+          .eq('youtube_id', item.id)
+          .single();
 
-        // Log thumbnail information for debugging
-        console.log(
-          JSON.stringify({
-            stage: 'thumbnail_selection',
-            playlistId: item.id,
-            playlistName: item.snippet?.title,
-            availableThumbnails: {
-              default: item.snippet?.thumbnails?.default?.url
-                ? 'available'
-                : 'missing',
-              medium: item.snippet?.thumbnails?.medium?.url
-                ? 'available'
-                : 'missing',
-              high: item.snippet?.thumbnails?.high?.url
-                ? 'available'
-                : 'missing',
-              maxres: item.snippet?.thumbnails?.maxres?.url
-                ? 'available'
-                : 'missing',
-            },
-            selectedThumbnails: {
-              thumbnailUrl: thumbnailUrl ? 'selected' : 'none',
-              thumbnailMaxResUrl: thumbnailMaxResUrl ? 'selected' : 'none',
-            },
-            source,
-          })
-        );
-
-        // Use autogenerated ID
-        const playlistObj = {
-          youtube_id: item.id,
-          name: item.snippet?.title ?? 'Untitled',
-          created_by: userId,
-          thumbnail_url: removeLiveSuffix(thumbnailUrl),
-          thumbnail_maxres_url: removeLiveSuffix(thumbnailMaxResUrl),
-          created_at: item.snippet?.publishedAt,
-          type: 'Public',
-        };
-
-        // Upsert playlist and get the row (to get the internal playlist id)
-        const { data: upsertedPlaylist, error: playlistError } =
-          await supabaseClient
+        let upsertedPlaylist;
+        if (existingPlaylist) {
+          // Update existing playlist but keep the original created_by
+          const { data, error: playlistError } = await supabaseClient
             .from('playlists')
-            .upsert(playlistObj, {
-              onConflict: 'youtube_id',
+            .update({
+              name: item.snippet?.title ?? 'Untitled',
+              thumbnail_url: removeLiveSuffix(
+                getBestThumbnailUrl(item.snippet?.thumbnails)
+              ),
+              created_at: item.snippet?.publishedAt,
+              type: 'Public',
+            })
+            .eq('youtube_id', item.id)
+            .select()
+            .single();
+
+          upsertedPlaylist = data;
+          if (playlistError) {
+            console.error(
+              JSON.stringify({
+                stage: 'update_playlist',
+                source,
+                playlistId: item.id,
+                error: playlistError,
+              })
+            );
+            continue;
+          }
+
+          console.log(
+            JSON.stringify({
+              stage: 'update_playlist',
+              message: `Updated existing playlist ${item.snippet?.title}`,
+              source,
+              playlistId: item.id,
+              internalId: upsertedPlaylist.id,
+            })
+          );
+        } else {
+          // Insert new playlist with the correct created_by
+          const { data, error: playlistError } = await supabaseClient
+            .from('playlists')
+            .insert({
+              youtube_id: item.id,
+              name: item.snippet?.title ?? 'Untitled',
+              created_by: userId,
+              thumbnail_url: removeLiveSuffix(
+                getBestThumbnailUrl(item.snippet?.thumbnails)
+              ),
+              created_at: item.snippet?.publishedAt,
+              type: 'Public',
             })
             .select()
             .single();
 
-        if (playlistError || !upsertedPlaylist) {
-          console.error(
+          upsertedPlaylist = data;
+          if (playlistError) {
+            console.error(
+              JSON.stringify({
+                stage: 'insert_playlist',
+                source,
+                playlistId: item.id,
+                error: playlistError,
+              })
+            );
+            continue;
+          }
+
+          console.log(
             JSON.stringify({
-              stage: 'upsert_playlist',
+              stage: 'insert_playlist',
+              message: `Created new playlist ${item.snippet?.title}`,
               source,
               playlistId: item.id,
-              error: playlistError,
-              playlistObj,
+              internalId: upsertedPlaylist.id,
             })
           );
-          continue;
+        }
+
+        // Queue image processing for the playlist thumbnail
+        // This will process the YouTube thumbnail and upload it to Supabase storage
+        // The processed image path will be stored in image_webp_url column
+        const thumbnailUrl = removeLiveSuffix(
+          getBestThumbnailUrl(item.snippet?.thumbnails)
+        );
+
+        if (thumbnailUrl) {
+          await queuePlaylistThumbnailProcessing(
+            supabaseClient,
+            upsertedPlaylist.id,
+            thumbnailUrl,
+            50 // Higher priority for playlist thumbnails during sync
+          );
         }
 
         // Now fetch video IDs for this playlist from YouTube
@@ -305,7 +408,7 @@ export const populatePlaylists = async ({
           console.log(
             JSON.stringify({
               stage: 'no_videos_in_playlist',
-              message: `No videos found for playlist ${playlistObj.name}. Will clean up any existing playlist_videos.`,
+              message: `No videos found for playlist ${item.snippet?.title}. Will clean up any existing playlist_videos.`,
               source,
               playlistId: item.id,
             })
@@ -363,7 +466,7 @@ export const populatePlaylists = async ({
             console.log(
               JSON.stringify({
                 stage: 'delete_stale_playlist_videos',
-                message: `Removed ${videosToRemove.length} stale videos from playlist ${playlistObj.name}`,
+                message: `Removed ${videosToRemove.length} stale videos from playlist ${item.snippet?.title}`,
                 source,
                 playlistId: item.id,
                 removedVideoIds: videosToRemove,
@@ -405,7 +508,7 @@ export const populatePlaylists = async ({
         console.log(
           JSON.stringify({
             stage: 'playlist_processing_complete',
-            message: `Processed playlist ${playlistObj.name}: ${allVideoIds.length} videos total, ${videosToRemove.length} removed`,
+            message: `Processed playlist ${item.snippet?.title}: ${allVideoIds.length} videos total, ${videosToRemove.length} removed`,
             source,
             playlistId: item.id,
             totalVideos: allVideoIds.length,
@@ -416,7 +519,7 @@ export const populatePlaylists = async ({
     } while (pageToken);
 
     // Step 2: Handle playlists that no longer exist on YouTube (excluding uploads playlist)
-    // Get all playlists for this user that are "Official" type, excluding uploads playlist
+    // Get all playlists for this user that are "Public" type, excluding uploads playlist
     const { data: existingPlaylists, error: existingPlaylistsError } =
       await supabaseClient
         .from('playlists')

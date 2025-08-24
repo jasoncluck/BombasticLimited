@@ -114,7 +114,7 @@
 
 <ContextMenu.Root bind:open={isThisSectionMenuOpen}>
   <ContextMenu.Trigger
-    class="outline-none"
+    class="outline-hiddden"
     onmousedown={(event) => {
       const isCtrlPressed = event.ctrlKey || event.metaKey;
       const isLeftClick = event.button === 0;
@@ -155,7 +155,7 @@
 
   {#if operationVideos.length > 0 && session}
     <ContextMenu.Content
-      class="max-h-64 overflow-visible outline-none {mediaQueryState.isTouchDevice &&
+      class="outline-hiddden max-h-64 overflow-visible {mediaQueryState.isTouchDevice &&
         'hidden'} 
         transition-opacity duration-75"
     >
@@ -174,7 +174,7 @@
             <Portal>
               <ContextMenu.SubContent
                 align="start"
-                class="z-50 overflow-hidden transition-opacity duration-150 outline-none"
+                class="outline-hiddden z-50 overflow-hidden transition-opacity duration-150"
                 avoidCollisions={true}
                 sideOffset={5}
               >
@@ -240,17 +240,14 @@
           <ContextMenu.Item
             class="p-2"
             onclick={async () => {
-              const { error } = await handleUpdatePlaylistImage({
+              handleUpdatePlaylistImage({
                 playlist,
                 sidebarState,
-                thumbnailUrl: operationVideos[0].thumbnail_url,
-                thumbnailMaxResUrl: operationVideos[0].thumbnail_maxres_url,
+                thumbnailVideo: operationVideos[0],
                 supabase,
               });
 
-              if (!error) {
-                handleSelectionAfterAction();
-              }
+              handleSelectionAfterAction();
             }}
           >
             <ImagePlay class="dropdown-icon" />

@@ -3,19 +3,23 @@
   import Progress from '$lib/components/ui/progress/progress.svelte';
   import { getVideoSecondsOffset } from '$lib/components/video/video-service';
   import { Check } from '@lucide/svelte';
-  import { getVideoThumbnailUrl } from '$lib/utils/video-thumbnails';
+
+  import type { SupabaseClient } from '@supabase/supabase-js';
+  import type { Database } from '$lib/supabase/database.types';
 
   type ContentCardProps = {
     video: Video;
+    supabase: SupabaseClient<Database>;
   };
 
-  const { video = $bindable() }: ContentCardProps = $props();
+  const { video = $bindable(), supabase }: ContentCardProps = $props();
 </script>
 
 <div class="relative flex aspect-video h-[80px] w-32 shrink-0 items-center">
+  <!-- Use the optimized image_url directly from the database -->
   <img
     class="h-full w-full object-cover"
-    src={getVideoThumbnailUrl(video)}
+    src={video.image_url ?? video.thumbnail_url}
     alt={video.title}
     loading="lazy"
     decoding="async"
@@ -33,7 +37,7 @@
     />
   {:else if 'watched_at' in video && video.watched_at}
     <div
-      class="bg-background absolute right-0 bottom-0 flex w-full items-center justify-center gap-1 px-1"
+      class="bg-background absolute right-0 bottom-0 left-0 flex items-center justify-center"
     >
       <Check class="text-primary" />
       <p class="text-primary text-xs">Watched</p>

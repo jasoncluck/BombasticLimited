@@ -13,7 +13,10 @@
     TriangleAlert,
   } from '@lucide/svelte';
   import NotificationBell from '$lib/components/notifications/notification-bell.svelte';
-  import { handleUpdateProfileContentDisplay } from '$lib/components/profile/profile-service';
+  import {
+    getUserInitials,
+    handleUpdateProfileContentDisplay,
+  } from '$lib/components/profile/profile-service';
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
   import type { UserProfile } from '$lib/supabase/user-profiles';
@@ -26,13 +29,11 @@
     session,
     supabase,
     openAccountDrawer = $bindable(),
-    openNotificationDrawer = $bindable(),
   }: {
     userProfile: UserProfile | null;
     session: Session | null;
     supabase: SupabaseClient<Database>;
     openAccountDrawer: boolean;
-    openNotificationDrawer?: boolean;
   } = $props();
 
   const contentState = getContentState();
@@ -43,30 +44,29 @@
     data: { userNotifications },
   } = $derived(navigationState);
 
-  const { canHover, isSm } = $derived(mediaQueryState);
+  const { canHover, isMd } = $derived(mediaQueryState);
 </script>
 
 <!-- Content Display Preference (Desktop) -->
-{#if session && isSm}
+{#if session && isMd}
   <DropdownMenu.Root>
     <DropdownMenu.Trigger
       data-testid="user-preferences"
       id="user-preferences"
       class={buttonVariants({
         variant: 'ghost',
-        class: 'cursor-pointer outline-none',
+        size: 'icon',
+        class: 'ghost-button-minimal',
       })}
     >
       <div class="flex items-center gap-2">
         {#if userProfile?.content_display === 'TILES'}
           <div class="flex items-center gap-2">
             <GalleryHorizontal />
-            Card
           </div>
         {:else}
           <div class="flex items-center gap-2">
             <Table />
-            Table
           </div>
         {/if}
       </div>
@@ -116,7 +116,9 @@
 
 <!-- Notifications Bell -->
 {#if session && userNotifications.length > 0}
-  <NotificationBell {supabase} {session} bind:openNotificationDrawer />
+  <div class="relative">
+    <NotificationBell {supabase} {session} />
+  </div>
 {/if}
 
 <!-- User Menu -->
@@ -126,26 +128,26 @@
     <DropdownMenu.Root>
       <DropdownMenu.Trigger
         data-testid="user-menu-trigger"
-        class="cursor-pointer !rounded-full outline-none {buttonVariants({
-          variant: userProfile?.avatar_url ? 'ghost' : 'outline',
+        class={buttonVariants({
+          variant: userProfile?.avatar_url ? 'outline' : 'outline',
           size: 'icon',
-        })}"
+          class:
+            'outline-hiddden size-10 cursor-pointer !rounded-full hover:scale-105',
+        })}
       >
-        {#if userProfile?.avatar_url}
-          <Avatar.Root class="rounded-full">
+        {#if userProfile}
+          <Avatar.Root class="outline-hiddden size-10 rounded-full p-1.5">
             <Avatar.Image
-              src={userProfile.avatar_url}
+              src={userProfile?.avatar_url}
               alt="User avatar"
-              class="h-full w-full rounded-full object-cover"
+              class=" rounded-full"
             />
             <Avatar.Fallback>
-              <CircleUser class="h-[1.2rem] w-[1.2rem]" />
-            </Avatar.Fallback>
+              {getUserInitials(userProfile.username)}</Avatar.Fallback
+            >
           </Avatar.Root>
-        {:else}
-          <CircleUser class="h-[1.2rem] w-[1.2rem]" />
+          <span class="sr-only">Profile</span>
         {/if}
-        <span class="sr-only">Profile</span>
       </DropdownMenu.Trigger>
       <DropdownMenu.Content>
         <DropdownMenu.Group>
@@ -187,7 +189,7 @@
     <Drawer.Root bind:open={openAccountDrawer}>
       <Drawer.Trigger
         data-testid="user-menu-drawer-trigger"
-        class="cursor-pointer !rounded-full outline-none {buttonVariants({
+        class="outline-hiddden cursor-pointer !rounded-full {buttonVariants({
           variant: userProfile?.avatar_url ? 'ghost' : 'outline',
           size: 'icon',
         })}"

@@ -2,13 +2,12 @@
   import { goto, invalidate } from '$app/navigation';
   import { SOURCES, SOURCE_INFO, type Source } from '$lib/constants/source';
   import {
-    Circle,
-    Edit,
     House,
     ListVideo,
     LogIn,
     LogOut,
     Menu,
+    Pencil,
     Plus,
     Settings,
   } from '@lucide/svelte';
@@ -109,7 +108,7 @@
   <Sheet.Trigger
     class={buttonVariants({
       variant: 'ghost',
-      class: 'cursor-pointer outline-none',
+      class: 'ghost-button-minimal',
     })}
     ><Menu class="cursor-pointer" />
     <span class="sr-only"> Toggle Menu</span></Sheet.Trigger
@@ -124,8 +123,8 @@
           <Button
             variant="ghost"
             class="flex h-[64px] w-full cursor-pointer justify-start"
+            href="/"
             onclick={() => {
-              goto(`/`);
               isOpen = false;
             }}
           >
@@ -154,7 +153,7 @@
                   <Badge
                     class="bg-secondary flex cursor-pointer items-center gap-2"
                   >
-                    <Edit />
+                    <Pencil />
                     Reorder
                   </Badge>
                 {/snippet}
@@ -224,7 +223,7 @@
               >
                 {#snippet trigger()}
                   <Badge class="bg-secondary flex items-center gap-2">
-                    <Edit />
+                    <Pencil />
                     Reorder</Badge
                   >
                 {/snippet}
@@ -232,10 +231,10 @@
                 {#snippet itemRenderer(item)}
                   {@const playlist = item as Playlist}
                   <div class="m-1 flex w-full items-center gap-2">
-                    {#if playlist.processedImageUrl}
+                    {#if playlist.image_url}
                       <div class="h-12 w-12 flex-none">
                         <img
-                          src={playlist.processedImageUrl}
+                          src={playlist.image_url}
                           class="h-12 w-12 cursor-pointer object-cover"
                           alt={`Image for playlist: ${playlist.name}`}
                         />
@@ -308,10 +307,10 @@
                   title={playlist.name}
                 >
                   <div class="flex items-center overflow-hidden">
-                    {#if playlist.processedImageUrl}
+                    {#if playlist.image_url}
                       <div class="h-12 w-12 flex-none">
                         <img
-                          src={playlist.processedImageUrl}
+                          src={playlist.image_url}
                           class="h-12 w-12 cursor-pointer object-cover"
                           alt={`Image for playlist: ${playlist.name}`}
                         />
@@ -335,54 +334,57 @@
             {/each}
           {/if}
 
-          {#if session}
-            <Button
-              variant="ghost"
-              class="flex h-[64px] w-full cursor-pointer justify-start"
-              onclick={() => {
-                goto(`/account`);
-                isOpen = false;
-              }}
-            >
-              <div class="flex h-12 w-12 items-center">
-                <Settings class="mx-2 flex !h-8 !w-8" />
-              </div>
-              <span class="m-3 text-sm font-medium overflow-ellipsis">
-                Settings
-              </span>
-            </Button>
-            <Button
-              variant="ghost"
-              class="flex h-[64px] w-full cursor-pointer justify-start"
-              onclick={() => {
-                handleLogout();
-                isOpen = false;
-              }}
-            >
-              <div class="flex h-12 w-12 items-center">
-                <LogOut class="mx-2 flex !h-8 !w-8" />
-              </div>
-              <span class="m-3 text-sm font-medium overflow-ellipsis">
-                Logout
-              </span>
-            </Button>
-          {:else}
-            <Button
-              variant="ghost"
-              class="flex h-[64px] w-full cursor-pointer justify-start"
-              onclick={() => {
-                goto('/auth/login');
-                isOpen = false;
-              }}
-            >
-              <div class="flex h-12 w-12 items-center">
-                <LogIn class="mx-2 flex !h-8 !w-8" />
-              </div>
-              <span class="m-3 text-sm font-medium overflow-ellipsis">
-                Login
-              </span>
-            </Button>
-          {/if}
+          <Sheet.Title class="mx-2 mt-4 mb-2 flex flex-col gap-4">
+            Account
+            {#if session}
+              <Button
+                variant="ghost"
+                class="flex h-[64px] w-full cursor-pointer justify-start"
+                onclick={() => {
+                  goto(`/account`);
+                  isOpen = false;
+                }}
+              >
+                <div class="flex h-12 w-12 items-center">
+                  <Settings class="mx-2 flex !h-8 !w-8" />
+                </div>
+                <span class="m-3 text-sm font-medium overflow-ellipsis">
+                  Settings
+                </span>
+              </Button>
+              <Button
+                variant="ghost"
+                class="flex h-[64px] w-full cursor-pointer justify-start"
+                onclick={() => {
+                  handleLogout();
+                  isOpen = false;
+                }}
+              >
+                <div class="flex h-12 w-12 items-center">
+                  <LogOut class="mx-2 flex !h-8 !w-8" />
+                </div>
+                <span class="m-3 text-sm font-medium overflow-ellipsis">
+                  Logout
+                </span>
+              </Button>
+            {:else}
+              <Button
+                variant="ghost"
+                class="flex h-[64px] w-full cursor-pointer justify-start"
+                onclick={() => {
+                  goto('/auth/login');
+                  isOpen = false;
+                }}
+              >
+                <div class="flex h-12 w-12 items-center">
+                  <LogIn class="mx-2 flex !h-8 !w-8" />
+                </div>
+                <span class="m-3 text-sm font-medium overflow-ellipsis">
+                  Login
+                </span>
+              </Button>
+            {/if}
+          </Sheet.Title>
         </div>
       {/if}
     </ScrollArea>

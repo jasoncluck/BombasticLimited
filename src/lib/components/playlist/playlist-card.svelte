@@ -3,6 +3,7 @@
   import { Check, ListVideo } from '@lucide/svelte';
   import * as Avatar from '$lib/components/ui/avatar';
   import { isSource, SOURCE_INFO } from '$lib/constants/source';
+  import { getUserInitials } from '../profile/profile-service';
 
   const {
     playlist,
@@ -23,13 +24,12 @@
       gap-4 rounded p-3 hover:brightness-110"
   href={`/playlist/${playlist.short_id}`}
 >
-  {#if playlist.processedImageUrl}
+  {#if playlist.image_url}
     <div class="h-16 w-16 flex-shrink-0 justify-self-center">
       <img
-        src={playlist.processedImageUrl}
+        src={playlist.image_url}
         alt={playlist.name}
         class="h-full w-full rounded object-cover"
-        decoding="async"
         loading="eager"
       />
     </div>
@@ -73,8 +73,8 @@
               alt="Profile picture for user: {playlist.profile_username}"
             />
             <Avatar.Fallback class="text-xs">
-              {playlist.profile_username.slice(0, 2).toUpperCase()}
-            </Avatar.Fallback>
+              {getUserInitials(playlist.profile_username)}</Avatar.Fallback
+            >
           </Avatar.Root>
           <p class="text-muted-foreground text-xs">
             {playlist.profile_username}

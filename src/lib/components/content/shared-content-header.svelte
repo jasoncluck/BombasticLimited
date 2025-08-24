@@ -16,7 +16,7 @@
     handleFollowPlaylist,
     handleUnfollowPlaylist,
   } from '../playlist/playlist-service';
-  import { MinusCircle, Play, PlusCircle } from '@lucide/svelte';
+  import { CircleMinus, CirclePlus, Play } from '@lucide/svelte';
   import { fade } from 'svelte/transition';
   import Button from '../ui/button/button.svelte';
   import * as Popover from '$lib/components/ui/popover';
@@ -39,7 +39,7 @@
   }
 
   let {
-    breadcrumbs,
+    breadcrumbs = [],
     children,
     contentFilter,
     currentPage = $bindable(),
@@ -47,6 +47,7 @@
     playlist: profilePlaylist,
     session,
     showFloatingBreadcrumbs = $bindable(),
+    userProfile,
     supabase,
     videos,
     view,
@@ -84,6 +85,7 @@
       {videos}
       {breadcrumbs}
       playlist={profilePlaylist}
+      {userProfile}
       {supabase}
       {session}
     />
@@ -92,14 +94,14 @@
 
 <IntersectionObserver
   disableObserver={false}
-  threshold={0.1}
+  threshold={0.25}
   onActive={() => (showFloatingBreadcrumbs = false)}
   onInactive={() => (showFloatingBreadcrumbs = true)}
 >
   <div class="mb-2" {...restProps}>
     {@render children()}
 
-    <div class="mx-1 flex items-center gap-0 sm:my-4">
+    <div class="flex items-center gap-0 sm:my-4">
       {#if profilePlaylist}
         <!-- Play Button -->
         <Button
@@ -125,10 +127,10 @@
                   variant="ghost"
                   class="ghost-button-minimal !px-3 !py-2"
                 >
-                  <PlusCircle class="!h-8 !w-8" />
+                  <CirclePlus class="!h-8 !w-8" />
                 </Button>
               </Popover.Trigger>
-              <Popover.Content>
+              <Popover.Content class="text-sm">
                 Create an account or login to follow playlists.
               </Popover.Content>
             </Popover.Root>
@@ -146,7 +148,7 @@
                 });
               }}
             >
-              <PlusCircle class="!h-8 !w-8" />
+              <CirclePlus class="!h-8 !w-8" />
             </Button>
           {/if}
         {/if}
@@ -163,7 +165,7 @@
               });
             }}
           >
-            <MinusCircle class="!h-8 !w-8" />
+            <CircleMinus class="!h-8 !w-8" />
           </Button>
         {/if}
 

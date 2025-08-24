@@ -57,11 +57,11 @@
 <div
   role="region"
   bind:this={containerElement}
-  class="relative flex flex-col gap-x-2 gap-y-12 outline-none @sm:grid @sm:grid-cols-3 @4xl:grid-cols-5"
+  class="outline-hiddden relative flex flex-col gap-x-2 gap-y-12 @sm:grid @sm:grid-cols-3 @4xl:grid-cols-5"
   onmouseleave={handleTilesMouseLeave}
 >
   {#each videos as video, i (video.id)}
-    <div class="group basis-full rounded-md p-2 @sm:basis-1/3 @4xl:basis-1/5">
+    <div class="group basis-full rounded-md pr-2 @sm:basis-1/3 @4xl:basis-1/5">
       <ContentCard
         {video}
         {videos}

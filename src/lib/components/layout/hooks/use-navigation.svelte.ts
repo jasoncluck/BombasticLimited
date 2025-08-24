@@ -1,27 +1,13 @@
 import { beforeNavigate, afterNavigate, invalidate } from '$app/navigation';
 import { navigating } from '$app/state';
-import { browser } from '$app/environment';
 import { tick } from 'svelte';
-import type { NavigationCacheState } from '$lib/state/navigation-cache/navigation-cache.svelte.js';
 import type { PageState } from '$lib/state/page.svelte.js';
-import {
-  getNavigationState,
-  type NavigationState,
-} from '$lib/state/navigation.svelte.js';
-import type { Session } from '@supabase/supabase-js';
+import { getNavigationState } from '$lib/state/navigation.svelte.js';
 
-export function useNavigation(
-  navigationCache: NavigationCacheState,
-  pageState: PageState,
-  etag: string | null,
-  lastModified: string | null,
-  cached: boolean,
-  cacheUserId: string | null,
-  session: Session | null
-) {
+export function useNavigation(pageState: PageState) {
   const navigationState = getNavigationState();
 
-  function setupNavigationHooks(session: Session | null) {
+  function setupNavigationHooks() {
     beforeNavigate(({ from }) => {
       if (from) {
         pageState.contentScrollPosition = pageState.createViewportSnapshot(
@@ -54,46 +40,14 @@ export function useNavigation(
       if (from?.url.pathname.includes('/video')) {
         invalidate('supabase:db:videos');
       }
-
-      // Store ETag information with security validation
-      if (browser && to && etag && lastModified && !cached) {
-        const currentUserId = session?.user?.id ?? null;
-        const currentCacheUserId = cacheUserId ?? null;
-
-        // Validate user context for both authenticated and non-authenticated users
-        if (currentUserId === currentCacheUserId) {
-          navigationCache.setCacheEntry(
-            to.url.href,
-            etag,
-            lastModified,
-            currentUserId,
-            currentCacheUserId
-          );
-        } else {
-          console.warn('User context mismatch, clearing cache');
-          navigationCache.clearUserCache();
-        }
-      }
     });
   }
 
-  // Function to get navigation loading state - this will be called from component
+  // Function to get navigation loading state - simplified
   function getIsNavigatingToContent() {
     if (!navigating) return false;
 
-    const from = navigating.from?.url;
-    const to = navigating.to?.url;
-
-    // Quick check with optimized navigation cache
-    if (browser && navigationCache.initialized) {
-      const shouldShow = navigationCache.shouldShowLoading(
-        from?.href,
-        to?.href,
-        session?.user?.id ?? null
-      );
-      if (!shouldShow) return false;
-    }
-
+    // Simplified navigation loading check - no complex caching
     return navigating.type === 'goto' || navigating.type === 'link';
   }
 

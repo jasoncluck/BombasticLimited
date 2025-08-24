@@ -80,17 +80,18 @@ export type SourceWithCarouselState = Record<
   CarouselState
 >;
 
-export function handleContentNavigation({
+export function generateContentNavigationUrl({
   video,
   contentFilter,
   playlist,
+  baseUrl = window.location.href,
 }: {
   video: Video;
   contentFilter: CombinedContentFilter;
   playlist?: Playlist;
-}) {
-  const url = new URL(window.location.href);
-
+  baseUrl?: string;
+}): string {
+  const url = new URL(baseUrl);
   const searchParams = url.searchParams;
 
   // Build the base URL path
@@ -121,7 +122,9 @@ export function handleContentNavigation({
   } else if (isVideoWithPlaylistTimestamp(video)) {
     if (
       isSortKey(video.playlist_sorted_by, 'playlist') &&
-      isSortOrder(video.playlist_sort_order)
+      isSortOrder(video.playlist_sort_order) &&
+      video.playlist_sorted_by &&
+      video.playlist_sort_order
     ) {
       searchParams.set(video.playlist_sorted_by, video.playlist_sort_order);
     }
@@ -132,7 +135,25 @@ export function handleContentNavigation({
   const newUrl = new URL(targetPath, window.location.origin);
   newUrl.search = searchParams.toString();
 
-  goto(newUrl.toString(), {
+  return newUrl.toString();
+}
+
+export function handleContentNavigation({
+  video,
+  contentFilter,
+  playlist,
+}: {
+  video: Video;
+  contentFilter: CombinedContentFilter;
+  playlist?: Playlist;
+}) {
+  const url = generateContentNavigationUrl({
+    video,
+    contentFilter,
+    playlist,
+  });
+
+  goto(url, {
     invalidate: ['supabase:db:videos'],
   });
 }

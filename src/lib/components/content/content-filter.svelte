@@ -15,7 +15,7 @@
     type CombinedContentFilter,
   } from './content-filter';
   import { page } from '$app/state';
-  import type { VideoTimestamp, Video } from '$lib/supabase/videos';
+  import type { VideoWithTimestamp, Video } from '$lib/supabase/videos';
   import { parseDate, type DateValue } from '@internationalized/date';
   import {
     isUserPlaylist,
@@ -115,7 +115,7 @@
       newContentFilter = {
         type: 'timestamp',
         sort: {
-          key: sortKey as SortKey<VideoTimestamp>,
+          key: sortKey as SortKey<VideoWithTimestamp>,
           order: sortOrder,
         },
         startDate: contentFilter.startDate,
@@ -199,14 +199,17 @@
   <div class="flex flex-col items-center gap-4">
     <DropdownMenu.Root>
       <DropdownMenu.Trigger
-        class="hover:text-primary flex cursor-pointer items-center gap-1 outline-none"
+        class={buttonVariants({
+          variant: 'ghost',
+          class: 'outline-hiddden flex cursor-pointer items-center gap-1',
+        })}
       >
         <span class="mr-1 text-sm tracking-tight"
           >{sortOptionInfo.displayName}</span
         >
         <List size={15} />
       </DropdownMenu.Trigger>
-      <DropdownMenu.Content class="outline-none">
+      <DropdownMenu.Content class="outline-hiddden">
         <DropdownMenu.Group>
           <DropdownMenu.GroupHeading>Sort by</DropdownMenu.GroupHeading>
           {#each sortKeys as sortKey (sortKey)}
@@ -215,7 +218,7 @@
               onclick={() => handleSort(sortKey)}
             >
               {#if view === 'continueWatching'}
-                {SORT_OPTIONS_TIMESTAMPS[sortKey as SortKey<VideoTimestamp>]
+                {SORT_OPTIONS_TIMESTAMPS[sortKey as SortKey<VideoWithTimestamp>]
                   .displayName}
               {:else if view === 'playlist'}
                 {SORT_OPTIONS_PLAYLIST_VIDEOS[sortKey as SortKey<PlaylistVideo>]
@@ -277,12 +280,12 @@
 {:else}
   <Drawer.Root bind:open={contentFilterDrawerOpen}>
     <Drawer.Trigger
-      class="hover:text-primary flex cursor-pointer items-center gap-1 outline-none"
+      class="hover:text-primary outline-hiddden flex cursor-pointer items-center gap-1"
     >
       <span class="text-sm">{sortOptionInfo.displayName}</span>
       <List size={20} />
     </Drawer.Trigger>
-    <Drawer.Content class="outline-none">
+    <Drawer.Content class="outline-hiddden">
       <Drawer.Header class="m-2 text-left">Sort by</Drawer.Header>
       {#each sortKeys as sortKey (sortKey)}
         <Button
@@ -295,7 +298,7 @@
         >
           <span>
             {#if view === 'continueWatching'}
-              {SORT_OPTIONS_TIMESTAMPS[sortKey as SortKey<VideoTimestamp>]
+              {SORT_OPTIONS_TIMESTAMPS[sortKey as SortKey<VideoWithTimestamp>]
                 .displayName}
             {:else if view === 'playlist'}
               {SORT_OPTIONS_PLAYLIST_VIDEOS[sortKey as SortKey<PlaylistVideo>]

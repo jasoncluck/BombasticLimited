@@ -13,19 +13,31 @@ CREATE TABLE IF NOT EXISTS "public"."videos" (
   "source" "public"."source" NOT NULL,
   "title" "text" NOT NULL,
   "description" "text" NOT NULL,
-  "thumbnail_url" "text" NOT NULL,
   "published_at" TIMESTAMP WITH TIME ZONE DEFAULT "now" () NOT NULL,
   "search_vector" "tsvector",
   "pending_delete" boolean DEFAULT TRUE,
   "duration" "text" DEFAULT ''::"text",
-  "thumbnail_maxres_url" "text"
+  "thumbnail_url" "text" NOT NULL,
+  "thumbnail_webp_url" text,
+  "thumbnail_avif_url" text,
+  "image_processing_status" public.image_processing_status DEFAULT 'pending',
+  "image_processing_updated_at" TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  "views" bigint DEFAULT 0 NOT NULL
 );
 
 ALTER TABLE "public"."videos" OWNER TO "postgres";
 
 COMMENT ON COLUMN "public"."videos"."pending_delete" IS 'Pending delete flag is used for detecting and removing deleted videos from YouTube';
 
-COMMENT ON COLUMN "public"."videos"."thumbnail_maxres_url" IS 'Max res url';
+COMMENT ON COLUMN "public"."videos"."thumbnail_url" IS 'Primary thumbnail URL for video display and processing source';
+
+COMMENT ON COLUMN "public"."videos"."thumbnail_webp_url" IS 'Supabase Storage path for WebP thumbnail';
+
+COMMENT ON COLUMN "public"."videos"."thumbnail_avif_url" IS 'Supabase Storage path for AVIF thumbnail';
+
+COMMENT ON COLUMN "public"."videos"."image_processing_status" IS 'Status of background image processing for this video';
+
+COMMENT ON COLUMN "public"."videos"."views" IS 'Total number of times this video has been viewed by users';
 
 -- Videos constraints (no foreign keys)
 ALTER TABLE ONLY "public"."videos"
@@ -41,11 +53,19 @@ CREATE TABLE IF NOT EXISTS "public"."playlists" (
   "search_vector" tsvector,
   "youtube_id" text DEFAULT NULL,
   "description" text,
-  "thumbnail_url" text,
-  "thumbnail_maxres_url" text,
-  "image_properties" jsonb,
   "type" "public"."playlist_type" NOT NULL DEFAULT 'Private',
+  "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT NULL,
   "deleted_at" TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+  "duration_seconds" integer DEFAULT 0,
+  "thumbnail_url" text DEFAULT NULL,
+  -- Crop dimensions for generating playlist thumbnails from video thumbnail
+  "image_properties" jsonb, -- {x: number, y: number, width: number, height: number}
+  -- Generated cropped playlist images (stored in Supabase Storage)
+  "image_webp_url" text,
+  "image_avif_url" text,
+  -- Image processing tracking
+  "image_processing_status" public.image_processing_status DEFAULT 'pending',
+  "image_processing_updated_at" TIMESTAMP WITH TIME ZONE DEFAULT now(),
   CONSTRAINT "playlists_pkey" PRIMARY KEY ("id"),
   CONSTRAINT "playlists_name_check" CHECK (length("name") <= 50),
   CONSTRAINT "playlists_youtube_id_unique" UNIQUE ("youtube_id"),
@@ -54,11 +74,18 @@ CREATE TABLE IF NOT EXISTS "public"."playlists" (
 
 ALTER TABLE "public"."playlists" OWNER TO "postgres";
 
-COMMENT ON COLUMN "public"."playlists"."name" IS 'Playlist name';
+-- Comments for clarity
+COMMENT ON COLUMN "public"."playlists"."thumbnail_url" IS 'Direct thumbnail URL for playlist display';
 
-COMMENT ON COLUMN "public"."playlists"."short_id" IS 'Short ID for nicer URLs';
+COMMENT ON COLUMN "public"."playlists"."image_properties" IS 'Crop dimensions {x, y, width, height} for generating playlist image from video thumbnail';
 
-COMMENT ON COLUMN "public"."playlists"."deleted_at" IS 'Timestamp when playlist was soft deleted. NULL means not deleted.';
+COMMENT ON COLUMN "public"."playlists"."image_webp_url" IS 'Supabase Storage path for cropped playlist image in WebP format';
+
+COMMENT ON COLUMN "public"."playlists"."image_avif_url" IS 'Supabase Storage path for cropped playlist image in AVIF format';
+
+COMMENT ON COLUMN "public"."playlists"."image_processing_status" IS 'Status of background image processing for playlist thumbnail generation';
+
+ALTER TABLE "public"."playlists" OWNER TO "postgres";
 
 -- Playlist videos table (without foreign keys initially)
 CREATE TABLE IF NOT EXISTS "public"."playlist_videos" (
@@ -144,6 +171,7 @@ CREATE TABLE IF NOT EXISTS "public"."user_playlists" (
   "playlist_position" int2 DEFAULT NULL,
   "sorted_by" "public"."playlist_sorted_by" DEFAULT 'playlistOrder' NOT NULL,
   "sort_order" "public"."playlist_sort_order" DEFAULT 'ascending' NOT NULL,
+  "added_at" TIMESTAMP WITH TIME ZONE DEFAULT "now" () NOT NULL,
   PRIMARY KEY ("id", "user_id")
 );
 

@@ -19,6 +19,7 @@
     videos: Video[];
     playlist?: Playlist;
     contentFilter: CombinedContentFilter;
+    isContinueVideos?: boolean;
     allowVideoReorder?: boolean;
     sectionId: string;
     supabase: SupabaseClient<Database>;
@@ -116,10 +117,10 @@
 </script>
 
 <Table.Root
-  class="content-table outline-none"
+  class="content-table outline-hiddden"
   onmouseleave={handleTableMouseLeave}
 >
-  <Table.Body class="-mx-2">
+  <Table.Body>
     {#each table.getRowModel().rows as row, i (row.id)}
       <Table.Row
         data-state={row.getIsSelected() && 'selected'}
@@ -182,7 +183,12 @@
           })}
       >
         {#each row.getVisibleCells() as cell (cell.id)}
-          <Table.Cell class="content-table-row overflow-hidden py-3 align-top">
+          <Table.Cell
+            class="content-table-row overflow-hidden py-2 align-top {mediaQueryState.canHover &&
+            cell.id.includes('image')
+              ? 'pl-0'
+              : 'pl-2'}"
+          >
             <FlexRender
               content={cell.column.columnDef.cell}
               context={cell.getContext()}

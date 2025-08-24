@@ -1,5 +1,6 @@
 -- Migration: 10_add_avatar_and_providers_to_profiles.sql
 -- Purpose: Add avatar_url and providers columns to profiles table and create functions to manage them
+-- ============================================================================
 -- Add avatar_url column to profiles table
 ALTER TABLE "public"."profiles"
 ADD COLUMN IF NOT EXISTS "avatar_url" text DEFAULT NULL;
@@ -12,35 +13,29 @@ COMMENT ON COLUMN "public"."profiles"."avatar_url" IS 'Avatar URL from linked Di
 
 COMMENT ON COLUMN "public"."profiles"."providers" IS 'Array of linked identity providers (e.g., ["email", "discord"])';
 
--- Constraint to ensure providers array is never empty (as provider is required for login)
+-- Constraint to ensure providers array is never empty
 ALTER TABLE "public"."profiles"
 ADD CONSTRAINT profiles_providers_not_empty CHECK (array_length(providers, 1) > 0);
 
--- Function to extract Discord avatar URL from auth.identities
+-- Optimized function to extract Discord avatar URL from auth.identities
 CREATE OR REPLACE FUNCTION public.get_discord_avatar_url (user_id uuid) RETURNS text LANGUAGE plpgsql
 SET
   search_path = '' STABLE AS $$
 DECLARE
-    discord_identity record;
     avatar_hash text;
     user_id_discord text;
 BEGIN
-    -- Get Discord identity for the user
-    SELECT * INTO discord_identity
+    -- Get Discord identity data in single query
+    SELECT 
+        identity_data->>'avatar',
+        identity_data->>'sub'
+    INTO avatar_hash, user_id_discord
     FROM auth.identities 
     WHERE identities.user_id = get_discord_avatar_url.user_id 
     AND provider = 'discord' 
     LIMIT 1;
     
-    IF discord_identity IS NULL THEN
-        RETURN NULL;
-    END IF;
-    
-    -- Extract avatar hash and user ID from identity_data
-    avatar_hash := discord_identity.identity_data->>'avatar';
-    user_id_discord := discord_identity.identity_data->>'sub';
-    
-    -- Return Discord CDN URL if avatar exists
+    -- Return Discord CDN URL if both values exist
     IF avatar_hash IS NOT NULL AND user_id_discord IS NOT NULL THEN
         RETURN 'https://cdn.discordapp.com/avatars/' || user_id_discord || '/' || avatar_hash || '.png';
     END IF;
@@ -49,7 +44,7 @@ BEGIN
 END;
 $$;
 
--- Function to update profile avatar_url and providers when identities are linked/unlinked
+-- Optimized function to update profile avatar_url and providers when identities are linked/unlinked
 CREATE OR REPLACE FUNCTION public.update_profile_from_identity_changes () RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
 SET
   search_path = '' AS $$
@@ -58,61 +53,44 @@ DECLARE
     current_providers text[];
     discord_avatar text;
     user_metadata jsonb;
-    debug_msg text;
 BEGIN
-    -- Get the user ID for the operation
+    -- Get user ID based on operation
     current_user_id := CASE 
         WHEN TG_OP = 'DELETE' THEN OLD.user_id
         ELSE NEW.user_id
     END;
 
-    -- Get all current providers for this user
-    SELECT array_agg(DISTINCT provider ORDER BY provider)
-    INTO current_providers
-    FROM auth.identities 
-    WHERE user_id = current_user_id
-    AND (TG_OP != 'DELETE' OR id != OLD.id); -- Exclude the deleted identity if this is a DELETE
+    -- Get all current providers for this user in one query
+    WITH provider_data AS (
+        SELECT array_agg(DISTINCT provider ORDER BY provider) as providers
+        FROM auth.identities 
+        WHERE user_id = current_user_id
+        AND (TG_OP != 'DELETE' OR id != OLD.id)
+    )
+    SELECT COALESCE(providers, ARRAY['email']) INTO current_providers FROM provider_data;
 
-    -- Include the new provider if this is an INSERT
+    -- Include new provider if this is an INSERT
     IF TG_OP = 'INSERT' THEN
         current_providers := array_append(current_providers, NEW.provider);
         current_providers := array(SELECT DISTINCT unnest(current_providers) ORDER BY 1);
     END IF;
 
-    -- Ensure we always have at least one provider (fallback to 'email')
-    IF current_providers IS NULL OR array_length(current_providers, 1) = 0 THEN
-        current_providers := ARRAY['email'];
-    END IF;
-
-    -- Get Discord avatar URL from auth.users.raw_user_meta_data if Discord is in providers
+    -- Get Discord avatar URL if Discord is in providers
     discord_avatar := NULL;
     IF 'discord' = ANY(current_providers) THEN
-        -- Extract avatar URL from raw_user_meta_data using same logic as handle_user_changes
         SELECT raw_user_meta_data INTO user_metadata
         FROM auth.users 
         WHERE id = current_user_id;
         
         IF user_metadata IS NOT NULL THEN
-            -- Discord OAuth provides avatar in both 'avatar_url' and 'picture' fields
             discord_avatar := COALESCE(
                 user_metadata->>'avatar_url',
                 user_metadata->>'picture'
             );
-            
-            -- Debug logging for avatar extraction
-            debug_msg := format('IDENTITY_CHANGE: User %s - TG_OP: %s, avatar_url: %s, picture: %s, final: %s, providers: %s', 
-                current_user_id::text,
-                TG_OP,
-                user_metadata->>'avatar_url',
-                user_metadata->>'picture',
-                discord_avatar,
-                current_providers::text
-            );
-            RAISE LOG '%', debug_msg;
         END IF;
     END IF;
 
-    -- Update the profile with new providers array and avatar_url
+    -- Update profile in single operation
     UPDATE public.profiles 
     SET 
         providers = current_providers,
@@ -123,12 +101,12 @@ BEGIN
 END;
 $$;
 
--- Trigger to automatically update providers and avatar_url when identity changes
--- FIXED: Remove WHEN clause and handle filtering inside the function
+-- Drop existing triggers if they exist
 DROP TRIGGER IF EXISTS trigger_update_profile_avatar_discord ON auth.identities;
 
 DROP TRIGGER IF EXISTS trigger_update_profile_from_identity_changes ON auth.identities;
 
+-- Create optimized trigger
 CREATE TRIGGER trigger_update_profile_from_identity_changes
 AFTER INSERT
 OR
@@ -136,60 +114,42 @@ UPDATE
 OR DELETE ON auth.identities FOR EACH ROW
 EXECUTE FUNCTION public.update_profile_from_identity_changes ();
 
--- Update existing profiles with correct providers and Discord avatars
-UPDATE public.profiles
-SET
-  providers = (
+-- Optimized bulk update for existing profiles
+WITH
+  profile_updates AS (
     SELECT
+      p.id,
       COALESCE(
         array_agg(
-          DISTINCT provider
+          DISTINCT i.provider
           ORDER BY
-            provider
+            i.provider
+        ) FILTER (
+          WHERE
+            i.provider IS NOT NULL
         ),
         ARRAY['email']
-      )
-    FROM
-      auth.identities
-    WHERE
-      user_id = profiles.id
-  ),
-  avatar_url = (
-    SELECT
+      ) AS new_providers,
       CASE
-        WHEN EXISTS (
-          SELECT
-            1
-          FROM
-            auth.identities
-          WHERE
-            user_id = profiles.id
-            AND provider = 'discord'
-        ) THEN COALESCE(
-          (
-            SELECT
-              raw_user_meta_data ->> 'avatar_url'
-            FROM
-              auth.users
-            WHERE
-              id = profiles.id
-          ),
-          (
-            SELECT
-              raw_user_meta_data ->> 'picture'
-            FROM
-              auth.users
-            WHERE
-              id = profiles.id
-          )
+        WHEN 'discord' = ANY (array_agg(i.provider)) THEN COALESCE(
+          u.raw_user_meta_data ->> 'avatar_url',
+          u.raw_user_meta_data ->> 'picture'
         )
         ELSE NULL
-      END
-  )
-WHERE
-  id IN (
-    SELECT DISTINCT
-      user_id
+      END AS new_avatar_url
     FROM
-      auth.identities
-  );
+      public.profiles p
+      LEFT JOIN auth.identities i ON i.user_id = p.id
+      LEFT JOIN auth.users u ON u.id = p.id
+    GROUP BY
+      p.id,
+      u.raw_user_meta_data
+  )
+UPDATE public.profiles
+SET
+  providers = pu.new_providers,
+  avatar_url = pu.new_avatar_url
+FROM
+  profile_updates pu
+WHERE
+  profiles.id = pu.id;

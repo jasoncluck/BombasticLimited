@@ -1,6 +1,10 @@
 import { goto } from '$app/navigation';
 import type { Json } from '$lib/supabase/database.types';
-import { type Playlist, isUserPlaylist } from '$lib/supabase/playlists';
+import {
+  type Playlist,
+  type PlaylistImageProperties,
+  isUserPlaylist,
+} from '$lib/supabase/playlists';
 import {
   type CombinedContentFilter,
   getSortKeysForView,
@@ -8,13 +12,6 @@ import {
   isSortKey,
   isSortOrder,
 } from '../content/content-filter';
-
-export interface ImageProperties extends Record<string, Json> {
-  x: number;
-  y: number;
-  height: number;
-  width: number;
-}
 
 export function handlePlaylistNavigation({
   playlist,
@@ -53,7 +50,9 @@ export function handlePlaylistNavigation({
   goto(targetUrl);
 }
 
-export function parseImageProperties(jsonb: Json): ImageProperties | null {
+export function parseImageProperties(
+  jsonb: Json
+): PlaylistImageProperties | null {
   if (!jsonb) return null;
 
   try {
@@ -68,7 +67,7 @@ export function parseImageProperties(jsonb: Json): ImageProperties | null {
       typeof obj.height === 'number' &&
       typeof obj.width === 'number'
     ) {
-      return obj as ImageProperties;
+      return obj as PlaylistImageProperties;
     }
 
     return null;
@@ -77,6 +76,15 @@ export function parseImageProperties(jsonb: Json): ImageProperties | null {
   }
 }
 
-export function serializeImageProperties(props: ImageProperties | null): Json {
-  return props;
+export function playlistImagePropertiesToJson(
+  properties: PlaylistImageProperties | null
+): Json {
+  if (!properties) return null;
+
+  return {
+    x: properties.x,
+    y: properties.y,
+    width: properties.width,
+    height: properties.height,
+  } as Json;
 }

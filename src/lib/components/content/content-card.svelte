@@ -12,19 +12,23 @@
   import { ArrowDown, ArrowUp, Check, ListVideo } from '@lucide/svelte';
   import type { ContentDisplayProps } from './content';
   import ContentDropdown from './content-dropdown.svelte';
-  import { goto } from '$app/navigation';
+  import { goto, preloadData } from '$app/navigation';
   import { getSortDisplayName } from './content-filter';
   import ContentCardSkeleton from './content-card-skeleton.svelte';
-  import { getVideoThumbnailUrl } from '$lib/utils/video-thumbnails';
   import { onMount } from 'svelte';
-  import { handleContentNavigation } from './content';
+  import {
+    handleContentNavigation,
+    generateContentNavigationUrl,
+  } from './content';
   import type { Playlist } from '$lib/supabase/playlists';
+  import type { UserProfile } from '$lib/supabase/user-profiles';
 
   type ContentCardProps = {
     video?: Video;
     isLoading?: boolean;
     // Drag and drop props
     allowVideoReorder?: boolean;
+    isContinueVideos?: boolean;
     index?: number;
     playlist?: Playlist;
     videosCount?: number | null;
@@ -33,6 +37,7 @@
     isCarousel?: boolean;
     slidesInView?: number[];
     carouselState?: CarouselState;
+    userProfile?: UserProfile;
   } & Pick<
     ContentDisplayProps,
     | 'isContinueVideos'
@@ -59,8 +64,8 @@
     videosCount,
     videos,
     contentFilter,
+    isContinueVideos,
     onVideosUpdate,
-    // Carousel-specific props
     isCarousel = false,
     slidesInView,
     carouselState = $bindable(),
@@ -69,6 +74,13 @@
   const contentState = getContentState();
 
   let cardElement = $state<HTMLElement>();
+
+  const isVideoInPlaylist = $derived(
+    isContinueVideos &&
+      isVideoWithTimestamp(video) &&
+      video.playlist_name &&
+      video.playlist_short_id
+  );
 
   const selectedVideos = $derived(
     contentState.selectedVideosBySection[sectionId] ?? []
@@ -83,6 +95,7 @@
   const isContextMenuOpen = $derived(
     contentState.isContextMenuOpenForSection(sectionId) && isSelected
   );
+
   const isDragActive = $derived(
     contentState.dragContentType === 'video' &&
       contentState.draggedFromSectionId === sectionId &&
@@ -99,6 +112,7 @@
           playlist,
           contentFilter,
           supabase,
+          setDraggedAsSelected: false,
           clearSelection: true,
           onVideosUpdate,
         })
@@ -119,6 +133,17 @@
     return slidesInView.includes(index);
   });
 
+  // Show description when hovering but no playlist exists
+  const shouldShowDescription = $derived(
+    (isHovered || isSelected || isContextMenuOpen || isDragActive) &&
+      userPreferences.contentDescription !== 'NONE' &&
+      !(
+        isVideoWithTimestamp(video) &&
+        video.playlist_name &&
+        video.playlist_short_id
+      )
+  );
+
   // Get CSS classes for drag drop styling
   function getCardClasses() {
     if (!video || index === undefined) return '';
@@ -127,7 +152,7 @@
     const isHoveredCard = hoveredVideo?.id === video.id;
     const isInViewCard = isInView();
 
-    let classes = `group h-64 w-full transform cursor-pointer will-change-transform `;
+    let classes = `group w-full outline-primary transform cursor-pointer will-change-transform ${isContinueVideos ? 'h-76' : 'h-76 '}`;
 
     // Only apply hover and selected states to cards that are in view
     if (isInViewCard && (isSelectedCard || isHoveredCard)) {
@@ -140,6 +165,23 @@
     }
 
     return classes;
+  }
+
+  // Preload content data
+  async function preloadContent() {
+    if (!video) return;
+
+    try {
+      const url = generateContentNavigationUrl({
+        video,
+        contentFilter,
+        playlist,
+      });
+      await preloadData(url);
+    } catch (error) {
+      // Silently fail if preloading doesn't work
+      console.debug('Preload failed:', error);
+    }
   }
 
   // Mouse event handlers
@@ -155,6 +197,9 @@
       video,
       sectionId,
     });
+
+    // Preload content on hover
+    preloadContent();
   }
 
   function handleMouseLeave() {
@@ -207,7 +252,7 @@
       videos,
       playlist,
       sectionId,
-      enableDoubleClick: !isCarousel, // Disable double click for carousel
+      enableDoubleClick: false,
       onNavigate: (video, playlist) => {
         handleContentNavigation({
           video,
@@ -259,14 +304,6 @@
       });
     }
   }
-
-  // Show description when:
-  // 1. Card is hovered (regardless of context menu state)
-  // 2. Card has context menu open (and is selected)
-  // 3. Card is being dragged
-  const shouldShowDescription = $derived(
-    isHovered || isSelected || isContextMenuOpen || isDragActive
-  );
 
   // Check if mouse is already over the card when component mounts
   onMount(() => {
@@ -346,12 +383,12 @@
   >
     <div class="flex flex-1 cursor-pointer flex-col overflow-hidden text-left">
       <div class="relative flex-shrink-0">
+        <!-- Use the optimized image_url directly from the database -->
         <img
           class="aspect-[16/9] h-auto w-full"
-          src={getVideoThumbnailUrl(video)}
+          src={video.image_url ?? video.thumbnail_url}
           alt={video.title}
           loading="eager"
-          decoding="async"
           fetchpriority="high"
         />
         <div class="absolute top-0.5 right-0.5">
@@ -376,7 +413,7 @@
         {:else if 'watched_at' in video && video.watched_at}
           <div
             class="bg-background-lighter absolute right-0 bottom-0 flex
-            w-full items-center justify-center gap-1 px-1"
+            w-full items-center justify-center px-1"
           >
             <Check class="text-primary" />
             <p class="text-primary text-xs">Watched</p>
@@ -384,31 +421,24 @@
         {/if}
       </div>
 
-      <p class="flex-shrink-0 p-2 text-sm/5 tracking-tight">
+      <p class="mt-2 flex-shrink-0 p-2 text-sm tracking-tight">
         {video.title}
       </p>
 
       <!-- Date/Description section with flex-1 to fill remaining space -->
       <div class="flex flex-1 flex-col justify-start overflow-hidden px-2 pb-2">
-        {#if shouldShowDescription && userPreferences.contentDescription !== 'NONE'}
-          <!-- Show description when hovering/selected -->
+        {#if shouldShowDescription}
+          <!-- Show description when hovering and no playlist exists -->
           <div
-            class="pointer-events-none transform overflow-hidden
-      text-xs leading-5 tracking-tight break-words will-change-transform
-      {userPreferences.contentDescription === 'BRIEF'
-              ? 'max-h-15'
-              : 'max-h-20'}"
-            style="display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: {userPreferences.contentDescription ===
-            'BRIEF'
-              ? '3'
-              : '4'};"
+            class="pointer-events-none line-clamp-3 transform overflow-hidden
+            text-xs leading-normal tracking-tight break-words will-change-transform"
           >
             {video.description}
           </div>
-        {:else}
+        {:else if !isVideoInPlaylist}
           <!-- Show date by default -->
           <p
-            class="text-muted-foreground pointer-events-none text-xs leading-5"
+            class="text-muted-foreground pointer-events-none text-xs tracking-tight"
           >
             {new Date(video.published_at).toLocaleDateString('en-US', {
               year: 'numeric',
@@ -417,50 +447,54 @@
             })}
           </p>
         {/if}
-      </div>
 
-      <!-- Playlist section with flex-shrink-0 to prevent compression -->
-      {#if isVideoWithTimestamp(video) && video.playlist_name && video.playlist_short_id}
-        <div
-          class="text-secondary-foreground hover:text-primary z-10 mt-1 mb-3 line-clamp-2 flex flex-shrink-0 items-center gap-2 px-2 text-xs"
-        >
-          <ListVideo size="16" class="shrink-0 self-start" />
-          <div class="flex w-full flex-col justify-center gap-2">
-            <a
-              onclick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                goto(`playlist/${video.playlist_short_id}`);
-              }}
-              href={`playlist/${video.playlist_short_id}`}
-              class="flex cursor-pointer items-center gap-2 truncate whitespace-normal"
-            >
-              <span class="truncate">{video.playlist_name}</span>
-            </a>
-            <div class="text-muted-foreground flex shrink-0 items-center">
-              {#if video.playlist_sorted_by}
-                <div class="flex shrink-0 items-center">
-                  <span class="truncate text-xs">
-                    {getSortDisplayName({
-                      key: video.playlist_sorted_by,
-                      view: 'playlist',
-                    })}
-                  </span>
-                  {#if video.playlist_sort_order}
-                    {#if video.playlist_sort_order === 'ascending'}
-                      <ArrowUp size="14" class="ml-1 shrink-0" />
-                      <span class="sr-only">Sorted Ascending</span>
-                    {:else}
-                      <ArrowDown size="14" class="ml-1 shrink-0" />
-                      <span class="sr-only">Sorted Descending</span>
+        <!-- Playlist section with flex-shrink-0 to prevent compression -->
+        {#if isVideoInPlaylist && isVideoWithTimestamp(video)}
+          <div
+            class="text-secondary-foreground hover:text-primary z-10 line-clamp-2 flex flex-shrink-0 items-center gap-2 py-2 text-xs"
+          >
+            <ListVideo size="16" class="mt-2 shrink-0 self-start" />
+            <div class="flex w-full flex-col justify-center gap-2">
+              <a
+                onclick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  goto(`playlist/${video.playlist_short_id}`);
+                }}
+                href={`playlist/${video.playlist_short_id}`}
+                class="flex cursor-pointer items-center gap-2 truncate whitespace-normal"
+              >
+                <span class="overflow-auto text-xs tracking-tight"
+                  >{video.playlist_name}</span
+                >
+              </a>
+              <div
+                class="text-muted-foreground flex shrink-0 items-center tracking-tight"
+              >
+                {#if video.playlist_sorted_by}
+                  <div class="flex shrink-0 items-center">
+                    <span class="truncate text-xs">
+                      {getSortDisplayName({
+                        key: video.playlist_sorted_by,
+                        view: 'playlist',
+                      })}
+                    </span>
+                    {#if video.playlist_sort_order}
+                      {#if video.playlist_sort_order === 'ascending'}
+                        <ArrowUp size="14" class="ml-1 shrink-0" />
+                        <span class="sr-only">Sorted Ascending</span>
+                      {:else}
+                        <ArrowDown size="14" class="ml-1 shrink-0" />
+                        <span class="sr-only">Sorted Descending</span>
+                      {/if}
                     {/if}
-                  {/if}
-                </div>
-              {/if}
+                  </div>
+                {/if}
+              </div>
             </div>
           </div>
-        </div>
-      {/if}
+        {/if}
+      </div>
     </div>
   </div>
 {/if}

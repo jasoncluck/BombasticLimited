@@ -11,10 +11,21 @@ import type {
 import type { Database } from './database.types';
 import type { Source } from '$lib/constants/source';
 
+// Infer types from Supabase RPC functions
+type StartVideoHistorySessionResponse =
+  Database['public']['Functions']['start_video_history_session']['Returns'][0];
+type UpdateVideoHistorySecondsWatchedResponse =
+  Database['public']['Functions']['update_video_history_seconds_watched']['Returns'][0];
+type UpdateVideoHistoryEndTimeResponse =
+  Database['public']['Functions']['update_video_history_end_time']['Returns'][0];
+type GetUserVideoHistoryResponse =
+  Database['public']['Functions']['get_user_video_history']['Returns'][0];
+type GetVideoAnalyticsResponse =
+  Database['public']['Functions']['get_video_analytics']['Returns'][0];
+
 // Type definitions for video history
 export type VideoHistoryRecord = {
   id: string;
-  user_id: string;
   video_id: string;
   source: Source;
   session_start_time: string;
@@ -40,6 +51,72 @@ export type VideoAnalytics = {
   last_watched: string;
   first_watched: string;
 };
+
+// Transform functions for RPC responses
+function transformVideoHistoryFromStartSession(
+  rpcData: StartVideoHistorySessionResponse
+): VideoHistoryRecord {
+  return {
+    id: rpcData.id,
+    video_id: rpcData.video_id,
+    source: rpcData.source as Source,
+    session_start_time: rpcData.session_start_time,
+    session_end_time: rpcData.session_end_time || null,
+    seconds_watched: rpcData.seconds_watched,
+    created_at: rpcData.created_at,
+    updated_at: rpcData.updated_at,
+    is_resumed: rpcData.is_resumed || false,
+  };
+}
+
+function transformVideoHistoryFromUpdate(
+  rpcData:
+    | UpdateVideoHistorySecondsWatchedResponse
+    | UpdateVideoHistoryEndTimeResponse
+): VideoHistoryRecord {
+  return {
+    id: rpcData.id,
+    video_id: rpcData.video_id,
+    source: rpcData.source as Source,
+    session_start_time: rpcData.session_start_time,
+    session_end_time: rpcData.session_end_time || null,
+    seconds_watched: rpcData.seconds_watched,
+    created_at: rpcData.created_at,
+    updated_at: rpcData.updated_at,
+  };
+}
+
+function transformVideoHistoryWithVideo(
+  rpcData: GetUserVideoHistoryResponse
+): VideoHistoryWithVideo {
+  return {
+    id: rpcData.id,
+    video_id: rpcData.video_id,
+    source: rpcData.source as Source,
+    session_start_time: rpcData.session_start_time,
+    session_end_time: rpcData.session_end_time || null,
+    seconds_watched: rpcData.seconds_watched,
+    created_at: rpcData.created_at,
+    updated_at: rpcData.updated_at,
+    video_title: rpcData.video_title,
+    video_duration: rpcData.video_duration || null,
+    video_thumbnail_url: rpcData.video_thumbnail_url,
+  };
+}
+
+function transformVideoAnalytics(
+  rpcData: GetVideoAnalyticsResponse
+): VideoAnalytics {
+  return {
+    video_id: rpcData.video_id,
+    video_title: rpcData.video_title,
+    total_sessions: rpcData.total_sessions,
+    total_seconds_watched: rpcData.total_seconds_watched,
+    average_session_length: rpcData.average_session_length,
+    last_watched: rpcData.last_watched,
+    first_watched: rpcData.first_watched,
+  };
+}
 
 interface VideoHistoryCommonProps {
   supabase: SupabaseClient<Database>;
@@ -102,25 +179,42 @@ export async function startVideoHistorySession({
   console.log('📽️ Starting/resuming video history session for:', videoId);
   console.log('📅 Session start time:', sessionStartTime?.toISOString());
 
-  const { data, error } = await supabase
-    .rpc('start_video_history_session', {
-      p_video_id: videoId,
-      p_session_start_time: sessionStartTime?.toISOString() || undefined,
-    })
-    .single();
+  const { data, error } = await supabase.rpc('start_video_history_session', {
+    p_video_id: videoId,
+    p_session_start_time: sessionStartTime?.toISOString(),
+  });
 
   if (error) {
     console.error('❌ Error starting/resuming video history session:', error);
-  } else if (data) {
-    if (data.is_resumed) {
-      console.log('🔄 Video history session RESUMED successfully:', data);
-      console.log(`⏱️ Resuming with ${data.seconds_watched}s already watched`);
+    return { history: null, error };
+  }
+
+  // The RPC returns an array, so we need to get the first element
+  const historyData = data && data.length > 0 ? data[0] : null;
+  const transformedHistory = historyData
+    ? transformVideoHistoryFromStartSession(
+        historyData as StartVideoHistorySessionResponse
+      )
+    : null;
+
+  if (transformedHistory) {
+    if (transformedHistory.is_resumed) {
+      console.log(
+        '🔄 Video history session RESUMED successfully:',
+        transformedHistory
+      );
+      console.log(
+        `⏱️ Resuming with ${transformedHistory.seconds_watched}s already watched`
+      );
     } else {
-      console.log('✅ Video history session STARTED successfully:', data);
+      console.log(
+        '✅ Video history session STARTED successfully:',
+        transformedHistory
+      );
     }
   }
 
-  return { history: data as VideoHistoryRecord | null, error };
+  return { history: transformedHistory, error };
 }
 
 /**
@@ -156,26 +250,40 @@ export async function updateVideoHistorySecondsWatched({
     console.log('📅 Session end time:', sessionEndTime.toISOString());
   }
 
-  const { data, error } = await supabase
-    .rpc('update_video_history_seconds_watched', {
+  const { data, error } = await supabase.rpc(
+    'update_video_history_seconds_watched',
+    {
       p_video_id: videoId,
       p_session_start_time: sessionStartTime.toISOString(),
       p_seconds_watched: secondsWatched,
-      p_session_end_time: sessionEndTime?.toISOString() || undefined,
-    })
-    .single();
+      p_session_end_time: sessionEndTime?.toISOString(),
+    }
+  );
 
   if (error) {
     console.error('❌ Error updating video history seconds watched:', error);
-  } else if (data) {
+    return { history: null, error };
+  }
+
+  // The RPC returns an array, so we need to get the first element
+  const historyData = data && data.length > 0 ? data[0] : null;
+  const transformedHistory = historyData
+    ? transformVideoHistoryFromUpdate(
+        historyData as UpdateVideoHistorySecondsWatchedResponse
+      )
+    : null;
+
+  if (transformedHistory) {
     console.log('✅ Video history seconds watched updated successfully');
-    console.log(`⏱️ Total seconds watched: ${data.seconds_watched}s`);
+    console.log(
+      `⏱️ Total seconds watched: ${transformedHistory.seconds_watched}s`
+    );
   } else {
     console.log('⚠️ No matching session found to update for video:', videoId);
     console.log('⚠️ Session start time was:', sessionStartTime.toISOString());
   }
 
-  return { history: data as VideoHistoryRecord | null, error };
+  return { history: transformedHistory, error };
 }
 
 /**
@@ -208,25 +316,36 @@ export async function updateVideoHistoryEndTime({
   console.log('📅 Session start time:', sessionStartTime.toISOString());
   console.log('📅 Session end time:', endTime.toISOString());
 
-  const { data, error } = await supabase
-    .rpc('update_video_history_end_time', {
-      p_video_id: videoId,
-      p_session_start_time: sessionStartTime.toISOString(),
-      p_session_end_time: endTime.toISOString(),
-    })
-    .single();
+  const { data, error } = await supabase.rpc('update_video_history_end_time', {
+    p_video_id: videoId,
+    p_session_start_time: sessionStartTime.toISOString(),
+    p_session_end_time: endTime.toISOString(),
+  });
 
   if (error) {
     console.error('❌ Error updating video history end time:', error);
-  } else if (data) {
+    return { history: null, error };
+  }
+
+  // The RPC returns an array, so we need to get the first element
+  const historyData = data && data.length > 0 ? data[0] : null;
+  const transformedHistory = historyData
+    ? transformVideoHistoryFromUpdate(
+        historyData as UpdateVideoHistoryEndTimeResponse
+      )
+    : null;
+
+  if (transformedHistory) {
     console.log('✅ Video history end time updated successfully');
-    console.log(`⏱️ Total seconds watched: ${data.seconds_watched}s`);
+    console.log(
+      `⏱️ Total seconds watched: ${transformedHistory.seconds_watched}s`
+    );
   } else {
     console.log('⚠️ No matching session found to update for video:', videoId);
     console.log('⚠️ Session start time was:', sessionStartTime.toISOString());
   }
 
-  return { history: data as VideoHistoryRecord | null, error };
+  return { history: transformedHistory, error };
 }
 
 /**
@@ -238,7 +357,10 @@ export async function getUserVideoHistory({
   offset = 0,
   supabase,
   session,
-}: GetVideoHistoryProps) {
+}: GetVideoHistoryProps): Promise<{
+  history: VideoHistoryWithVideo[];
+  error?: PostgrestError | null;
+}> {
   if (!session?.user) {
     return {
       history: [],
@@ -252,16 +374,21 @@ export async function getUserVideoHistory({
   }
 
   const { data, error } = await supabase.rpc('get_user_video_history', {
-    p_video_id: videoId || undefined,
+    p_video_id: videoId,
     p_limit: limit,
     p_offset: offset,
   });
 
   if (error) {
     console.error('Error getting user video history:', error);
+    return { history: [], error };
   }
 
-  return { history: data || [], error };
+  const transformedHistory = (data || []).map((item) =>
+    transformVideoHistoryWithVideo(item as GetUserVideoHistoryResponse)
+  );
+
+  return { history: transformedHistory, error };
 }
 
 /**
@@ -289,17 +416,23 @@ export async function getVideoAnalytics({
   }
 
   const { data, error } = await supabase.rpc('get_video_analytics', {
-    p_video_id: videoId || undefined,
+    p_video_id: videoId,
     p_days_back: daysBack,
   });
 
   if (error) {
     console.error('Error getting video analytics:', error);
+    return { analytics: [], error };
   }
 
-  return { analytics: (data as VideoAnalytics[]) || [], error };
+  const transformedAnalytics = (data || []).map((item) =>
+    transformVideoAnalytics(item as GetVideoAnalyticsResponse)
+  );
+
+  return { analytics: transformedAnalytics, error };
 }
 
+// Rest of the VideoWatchTimeTracker class remains the same...
 /**
  * Enhanced video watch time tracker that tracks actual seconds watched
  * Now supports resuming existing sessions within 5 minutes with proper time tracking

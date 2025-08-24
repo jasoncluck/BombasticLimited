@@ -5,6 +5,27 @@ import { CHANNEL_INFO, ChannelSource } from '../channel';
 const MAX_RESULTS = 50;
 const DEFAULT_NUM_PAGES = 2;
 
+// Helper function to get the highest resolution thumbnail available
+const getBestThumbnailUrl = (
+  thumbnails?: youtube_v3.Schema$ThumbnailDetails | null
+): string | null | undefined => {
+  if (!thumbnails) return null;
+
+  // Prioritize maxres for image processing pipeline, then fallback to other resolutions. Only using 16:9 to avoid black bars on the bottom and top
+  // https://developers.google.com/youtube/v3/docs/thumbnails
+  const candidates = [
+    thumbnails.maxres?.url, // 1280x720 (highest quality for processing)
+    thumbnails.medium?.url, // 320x180
+    thumbnails.default?.url, // 120x90
+  ];
+
+  return candidates.find((url) => url) || null;
+};
+
+// Helper to remove "_live" suffix from thumbnail URLs
+const removeLiveSuffix = (url?: string | null): string | null | undefined =>
+  url ? url.replace(/_live(\.\w+)$/, '$1') : url;
+
 export const populateVideos = async ({
   source,
   repopulate = false,
@@ -113,10 +134,6 @@ export const populateVideos = async ({
         }
       }
 
-      // Helper to remove "_live" suffix from thumbnail URLs
-      const removeLiveSuffix = (url?: string | null) =>
-        url ? url.replace(/_live(\.\w+)$/, '$1') : url;
-
       const videos = items.map((item) => {
         const videoDetail = videoDetails.find(
           (v) => v.id === item.contentDetails?.videoId
@@ -128,15 +145,14 @@ export const populateVideos = async ({
           description: item.snippet?.description,
           published_at: item.snippet?.publishedAt,
           thumbnail_url: removeLiveSuffix(
-            item.snippet?.thumbnails?.medium?.url
-          ),
-          thumbnail_maxres_url: removeLiveSuffix(
-            item.snippet?.thumbnails?.maxres?.url
+            getBestThumbnailUrl(item.snippet?.thumbnails)
           ),
           duration: videoDetail?.duration,
           pending_delete: false, // All YouTube videos are current
         };
       });
+
+      console.log(videos);
 
       // Batch upsert for better performance
       const { error } = await supabaseClient

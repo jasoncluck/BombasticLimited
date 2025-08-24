@@ -36,17 +36,14 @@
   import { SOURCE_INFO } from '$lib/constants/source';
   import { goto, invalidate } from '$app/navigation';
   import { page } from '$app/state';
-  import { getPlaylistState } from '$lib/state/playlist.svelte';
   import FullHeightDrawer from './drawer/full-height-drawer.svelte';
   import EditListDrawer from './drawer/edit-list-drawer.svelte';
   import type { CombinedContentFilter } from './content-filter';
   import type { SuperValidated } from 'sveltekit-superforms';
-  import type { PlaylistSchema } from '../../../routes/playlist/[shortId]/schema';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
-  import { getVideoThumbnailUrl } from '$lib/utils/video-thumbnails';
   import PlaylistDeleteAlertDrawer from '../playlist/playlist-delete-alert-drawer.svelte';
   import PlaylistEditDrawer from '../playlist/playlist-edit-drawer.svelte';
-  import * as ImageCropper from '$lib/components/ui/image-cropper';
+  import type { PlaylistSchema } from '$lib/schema/playlist-schema';
 
   interface ContentDrawerProps {
     videos?: Video[];
@@ -74,7 +71,6 @@
   }: ContentDrawerProps = $props();
 
   const contentState = getContentState();
-  const playlistState = getPlaylistState();
   const mediaQueryState = getMediaQueryState();
   const sidebarState = getSidebarState();
 
@@ -167,13 +163,13 @@
     {@render children()}
 
     {#if (operationVideos.length > 0 || (variant === 'header' && playlist)) && session}
-      <Drawer.Content class="outline-none" data-drawer-content>
+      <Drawer.Content class="outline-hiddden" data-drawer-content>
         <Drawer.Header class="mx-4 text-left">
           {#if variant === 'list-items' && operationVideos.length === 1}
             {@const video = operationVideos[0]}
             <div class="flex items-center gap-2">
               <img
-                src={getVideoThumbnailUrl(video)}
+                src={video.image_url ?? video.thumbnail_url}
                 alt={video.title}
                 class="aspect-video h-12"
                 loading="lazy"
@@ -219,29 +215,27 @@
         <!-- Edit button for header variant -->
         {#if variant === 'header' && isPlaylistOwner && form && playlist}
           <!-- Nested Edit Playlist Drawer - only render when open to prevent spacing issues -->
-          <ImageCropper.Root src={playlist.processedImageUrl ?? undefined}>
-            <PlaylistEditDrawer
-              {form}
-              {playlist}
-              {session}
-              formId="content-drawer-nested-edit-form"
-              bind:open={editPlaylistDrawerOpen}
-              nested={true}
-            >
-              {#snippet trigger()}
-                <Button
-                  class="drawer-button"
-                  variant="ghost"
-                  onclick={() => {
-                    editPlaylistDrawerOpen = true;
-                  }}
-                >
-                  <Pencil class="drawer-icon" />
-                  Edit
-                </Button>
-              {/snippet}
-            </PlaylistEditDrawer>
-          </ImageCropper.Root>
+          <PlaylistEditDrawer
+            {form}
+            {playlist}
+            {session}
+            formId="content-drawer-nested-edit-form"
+            bind:open={editPlaylistDrawerOpen}
+            nested={true}
+          >
+            {#snippet trigger()}
+              <Button
+                class="drawer-button"
+                variant="ghost"
+                onclick={() => {
+                  editPlaylistDrawerOpen = true;
+                }}
+              >
+                <Pencil class="drawer-icon" />
+                Edit
+              </Button>
+            {/snippet}
+          </PlaylistEditDrawer>
         {/if}
         <!-- Reorder content -->
         {#if contentFilter.sort.key === 'playlistOrder' && isPlaylistOwner && variant === 'header' && videos && videos.length > 0}
@@ -268,7 +262,7 @@
             {#snippet itemRenderer(item)}
               {@const video = item as Video}
               <img
-                src={getVideoThumbnailUrl(video)}
+                src={video.image_url ?? video.thumbnail_url}
                 alt={video.title}
                 class="pointer-events-none aspect-video h-[60px]"
                 loading="lazy"
@@ -390,8 +384,7 @@
               handleUpdatePlaylistImage({
                 playlist,
                 sidebarState,
-                thumbnailUrl: operationVideos[0].thumbnail_url,
-                thumbnailMaxResUrl: operationVideos[0].thumbnail_maxres_url,
+                thumbnailVideo: operationVideos[0],
                 supabase,
               });
 

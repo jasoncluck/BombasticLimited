@@ -33,32 +33,6 @@
 
   const contentState = getContentState();
 
-  const selectedVideos = $derived(
-    contentState.selectedVideosBySection[sectionId] ?? []
-  );
-
-  const selectedVideoIds = $derived(
-    selectedVideos.length > 0
-      ? new Set(selectedVideos.map((v) => v.id))
-      : new Set()
-  );
-
-  const hoveredVideo = $derived(contentState.hoveredVideosBySection[sectionId]);
-
-  // Create drag drop functionality
-  const dragDrop = contentState.createDragDrop({
-    allowVideoReorder,
-    videos,
-    videosCount,
-    playlist,
-    contentFilter,
-    supabase,
-    clearSelection: true,
-    onVideosUpdate: (updatedVideos) => {
-      videos = updatedVideos;
-    },
-  });
-
   let api = $state<CarouselAPI>();
   let showPreviousButton = $state(false);
   let showNextButton = $state(videos.length > 0);
@@ -234,7 +208,7 @@
   <Carousel.Previous
     class={showPreviousButton
       ? '!bg-secondary visible cursor-pointer opacity-75 \
-      transition-all duration-150 hover:scale-105 \
+      transition-opacity duration-150 hover:scale-105 \
       hover:opacity-100 hover:brightness-110'
       : 'invisible'}
     onclick={handlePreviousButtonClick}
@@ -250,7 +224,7 @@
   <Carousel.Content>
     {#each videos as video, i (video.id)}
       <Carousel.Item
-        class="group basis-full rounded-md p-2 outline-none @sm:basis-1/3 @4xl:basis-1/5"
+        class="group outline-hiddden basis-full rounded-md pr-2 @sm:basis-1/3 @4xl:basis-1/5"
         data-testid="carousel-item"
       >
         <ContentCard

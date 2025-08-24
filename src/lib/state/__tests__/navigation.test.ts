@@ -13,15 +13,15 @@ describe('Navigation State Management', () => {
 
   it('should initialize with default navigation items', () => {
     expect(navigationState.navigationItems).toHaveLength(2);
-    
+
     const homeItem = navigationState.getNavigationItem('home');
     const brandItem = navigationState.getNavigationItem('brand-logo');
-    
+
     expect(homeItem).toBeDefined();
     expect(homeItem?.label).toBe('Home');
     expect(homeItem?.href).toBe('/');
     expect(homeItem?.testId).toBe('home-link');
-    
+
     expect(brandItem).toBeDefined();
     expect(brandItem?.label).toBe('Bombastic Home');
     expect(brandItem?.href).toBe('/');
@@ -45,35 +45,35 @@ describe('Navigation State Management', () => {
 
   it('should check navigation item active state', () => {
     navigationState.updateActiveRoute('/');
-    
+
     const homeItem = navigationState.getNavigationItem('home');
     expect(homeItem).toBeDefined();
     expect(navigationState.isNavigationItemActive(homeItem!)).toBe(true);
-    
+
     navigationState.updateActiveRoute('/other-path');
     expect(navigationState.isNavigationItemActive(homeItem!)).toBe(false);
   });
 
   it('should manage account drawer state like sidebar', () => {
     expect(navigationState.openAccountDrawer).toBe(false);
-    
+
     navigationState.toggleAccountDrawer();
     expect(navigationState.openAccountDrawer).toBe(true);
-    
+
     navigationState.setAccountDrawer(false);
     expect(navigationState.openAccountDrawer).toBe(false);
   });
 
   it('should provide navigation button classes following sidebar pattern', () => {
     const homeItem = navigationState.getNavigationItem('home')!;
-    
+
     // Test when not active
     navigationState.updateActiveRoute('/other');
     let classes = navigationState.getNavigationButtonClasses(homeItem);
     expect(classes).toContain('transition-opacity');
     expect(classes).toContain('duration-200');
     expect(classes).toContain('hover:opacity-80');
-    
+
     // Test when active
     navigationState.updateActiveRoute('/');
     classes = navigationState.getNavigationButtonClasses(homeItem);

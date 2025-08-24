@@ -62,7 +62,7 @@
 </script>
 
 <Drawer.Root bind:open {onOpenChange}>
-  <Drawer.Content class="outline-none" data-drawer-content>
+  <Drawer.Content class="outline-hiddden" data-drawer-content>
     <Drawer.Header class="mx-4 text-left">
       <div class="mb-4 flex items-center gap-3">
         <div

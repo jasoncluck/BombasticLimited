@@ -77,7 +77,7 @@ SELECT
       SELECT
         COUNT(*)
       FROM
-        public.search_videos ('Function Test', 0)
+        public.search_videos ('Function Test', 0, 'avif')
     ) >= 2,
     'search_videos should find videos matching title search'
   );
@@ -88,7 +88,7 @@ SELECT
       SELECT
         COUNT(*)
       FROM
-        public.search_videos ('Special Search', 0)
+        public.search_videos ('Special Search', 0, 'avif')
     ) >= 1,
     'search_videos should find videos matching description search'
   );
@@ -115,7 +115,7 @@ SELECT
       SELECT
         COUNT(*)
       FROM
-        public.get_videos_with_timestamps ()
+        public.get_videos_with_timestamps ('avif')
     ) >= 0,
     'get_videos_with_timestamps should execute without error'
   );
@@ -127,7 +127,7 @@ SELECT
       SELECT
         COUNT(*)
       FROM
-        public.get_in_progress_videos_with_timestamps ()
+        public.get_in_progress_videos_with_timestamps ('avif')
     ) >= 0,
     'get_in_progress_videos_with_timestamps should execute without error'
   );

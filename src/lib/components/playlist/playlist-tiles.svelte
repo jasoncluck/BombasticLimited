@@ -1,15 +1,18 @@
 <script lang="ts">
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import type { Playlist } from '$lib/supabase/playlists';
-  import type { Session } from '@supabase/supabase-js';
+  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { Database } from '$lib/supabase/database.types';
   import PlaylistCard from './playlist-card.svelte';
 
   const {
     playlists,
+    supabase,
     showUsername = true,
     session,
   }: {
     playlists: Playlist[];
+    supabase: SupabaseClient<Database>;
     showUsername?: boolean;
     session: Session | null;
   } = $props();

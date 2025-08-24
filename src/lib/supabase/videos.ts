@@ -13,34 +13,128 @@ import type {
   SupabaseClient,
 } from '@supabase/supabase-js';
 import type { Database } from './database.types';
-import type { PlaylistVideo } from './playlists';
-import {
-  getUserVideoHistory,
-  getVideoAnalytics,
-  type VideoHistoryWithVideo,
-  type VideoAnalytics,
-} from './video-history';
+import { getFullImageUrl, type PlaylistVideo } from './playlists';
 
 export const DEFAULT_NUM_VIDEOS_PAGINATION = 100;
 export const DEFAULT_NUM_VIDEOS_OVERVIEW = 15;
-export type TimestampResponse = Tables<'timestamps'>;
 
-export type VideoTimestamp = Pick<
-  TimestampResponse,
-  'video_start_seconds' | 'updated_at' | 'watched_at'
-> & {
-  playlist_name?: string | null;
-  playlist_short_id?: string | null;
-  playlist_sorted_by?: SortKey<PlaylistVideo>;
-  playlist_sort_order?: SortOrder;
+// Infer types from Supabase RPC functions
+type GetVideosWithTimestampsResponse =
+  Database['public']['Functions']['get_videos_with_timestamps']['Returns'][0];
+type SearchVideosResponse =
+  Database['public']['Functions']['search_videos']['Returns'][0];
+type GetInProgressVideosResponse =
+  Database['public']['Functions']['get_in_progress_videos_with_timestamps']['Returns'][0];
+
+// Base types
+export type TimestampResponse = Tables<'timestamps'>;
+export type VideoResponse = Tables<'videos'>;
+
+// Core video type (without timestamps)
+export type Video = {
+  id: string;
+  source: Source;
+  title: string;
+  description: string;
+  thumbnail_url: string;
+  image_url: string | null;
+  published_at: string;
+  duration: string;
+  views: number;
 };
 
-export type VideoResponse = Tables<'videos'>;
-export type Video = Omit<VideoResponse, 'search_vector' | 'pending_delete'>;
-export type VideoWithTimestamp = Video & VideoTimestamp;
+// Video with timestamp information (for in-progress videos, etc.)
+export type VideoWithTimestamp = Video & {
+  video_start_seconds: number | null;
+  updated_at: string | null;
+  watched_at: string | null;
+  playlist_name?: string | null;
+  playlist_short_id?: string | null;
+  playlist_sorted_by?: SortKey<PlaylistVideo> | null;
+  playlist_sort_order?: SortOrder | null;
+};
 
 export type SourceVideos = Record<Source, Video[]>;
 export type SourceVideosCount = Record<Source, number | null>;
+
+// Transform functions for different RPC responses
+function transformVideoFromGetVideosWithTimestamps(
+  rpcData: GetVideosWithTimestampsResponse,
+  supabase: SupabaseClient<Database>
+): VideoWithTimestamp {
+  return {
+    id: rpcData.id,
+    source: rpcData.source as Source,
+    title: rpcData.title,
+    description: rpcData.description,
+    image_url:
+      getFullImageUrl(rpcData.image_url, supabase) ?? rpcData.thumbnail_url,
+    thumbnail_url: rpcData.thumbnail_url,
+    published_at: rpcData.published_at,
+    duration: rpcData.duration,
+    views: rpcData.views || 0,
+    video_start_seconds: rpcData.video_start_seconds || null,
+    updated_at: rpcData.updated_at || null,
+    watched_at: rpcData.watched_at || null,
+    playlist_name: rpcData.playlist_name || null,
+    playlist_short_id: rpcData.playlist_short_id || null,
+    playlist_sorted_by:
+      (rpcData.playlist_sorted_by as SortKey<PlaylistVideo>) || null,
+    playlist_sort_order: (rpcData.playlist_sort_order as SortOrder) || null,
+  };
+}
+
+function transformVideoFromSearchVideos(
+  rpcData: SearchVideosResponse,
+  supabase: SupabaseClient<Database>
+): VideoWithTimestamp {
+  return {
+    id: rpcData.id,
+    source: rpcData.source as Source,
+    title: rpcData.title,
+    description: rpcData.description,
+    image_url:
+      getFullImageUrl(rpcData.image_url, supabase) ?? rpcData.image_url,
+    thumbnail_url: rpcData.thumbnail_url,
+    published_at: rpcData.published_at,
+    duration: rpcData.duration,
+    views: rpcData.views || 0,
+    video_start_seconds: rpcData.video_start_seconds || null,
+    updated_at: rpcData.updated_at || null,
+    watched_at: rpcData.watched_at || null,
+    playlist_name: rpcData.playlist_name || null,
+    playlist_short_id: rpcData.playlist_short_id || null,
+    playlist_sorted_by:
+      (rpcData.playlist_sorted_by as SortKey<PlaylistVideo>) || null,
+    playlist_sort_order: (rpcData.playlist_sort_order as SortOrder) || null,
+  };
+}
+
+function transformVideoFromGetInProgressVideos(
+  rpcData: GetInProgressVideosResponse,
+  supabase: SupabaseClient<Database>
+): VideoWithTimestamp {
+  return {
+    id: rpcData.id,
+    source: rpcData.source as Source,
+    title: rpcData.title,
+    description: rpcData.description,
+    image_url:
+      getFullImageUrl(rpcData.image_url, supabase) ?? rpcData.image_url,
+    thumbnail_url: rpcData.thumbnail_url,
+    published_at: rpcData.published_at,
+    duration: rpcData.duration,
+    views: rpcData.views || 0,
+    video_start_seconds: rpcData.video_start_seconds || null,
+    updated_at: rpcData.updated_at || null,
+    watched_at: rpcData.watched_at || null,
+    playlist_name: rpcData.playlist_name || null,
+    playlist_short_id: rpcData.playlist_short_id || null,
+    playlist_sorted_by:
+      (rpcData.playlist_sorted_by as SortKey<PlaylistVideo>) || null,
+    playlist_sort_order: (rpcData.playlist_sort_order as SortOrder) || null,
+  };
+}
 
 interface VideoQueryCommonProps {
   supabase: SupabaseClient<Database>;
@@ -51,7 +145,7 @@ interface VideoQuerySingleProps extends VideoQueryCommonProps {
   videoId: string;
 }
 
-interface VideoQueryMultipleProps<T extends Video | VideoTimestamp>
+interface VideoQueryMultipleProps<T extends Video | VideoWithTimestamp>
   extends VideoQueryCommonProps {
   videoIds?: string[];
   searchString?: string;
@@ -72,7 +166,10 @@ export async function getVideos({
   limit = DEFAULT_NUM_VIDEOS_OVERVIEW,
   searchString,
   supabase,
-}: VideoQueryMultipleProps<Video>): Promise<{
+  preferredImageFormat = 'avif',
+}: VideoQueryMultipleProps<Video> & {
+  preferredImageFormat: string;
+}): Promise<{
   videos: Video[] | VideoWithTimestamp[];
   count: number | null;
   error: PostgrestError | null;
@@ -82,37 +179,25 @@ export async function getVideos({
         'search_videos',
         {
           search_term: searchString,
+          offset_count: 0,
+          p_preferred_image_format: preferredImageFormat,
         },
         { count: 'exact' }
       )
-    : supabase.rpc('get_videos_with_timestamps', {}, { count: 'exact' });
+    : supabase.rpc(
+        'get_videos_with_timestamps',
+        {
+          p_preferred_image_format: preferredImageFormat,
+        },
+        { count: 'exact' }
+      );
 
   query.limit(limit);
 
   const sortOptionInfo = SORT_OPTIONS_VIDEO[contentFilter.sort.key];
-  query.order(sortOptionInfo.tableColumn, {
+  query.order(sortOptionInfo.tableColumn as string, {
     ascending: contentFilter.sort.order === 'ascending',
   });
-
-  // NOTE: Date filters removed for now
-  // if (contentFilter.startDate) {
-  //   try {
-  //     // Parse the input date string and explicitly set it to midnight (local time)
-  //     const startDate = new Date(`${contentFilter.startDate}T00:00:00`);
-  //     query.gte("published_at", startDate.toISOString());
-  //   } catch {
-  //     console.error("Unable to parse start date, ignoring.");
-  //   }
-  // }
-  // if (contentFilter.endDate) {
-  //   try {
-  //     // Parse the input date string and set it to the end of the day (local time)
-  //     const endDate = new Date(`${contentFilter.endDate}T23:59:59.999`);
-  //     query.lte("published_at", endDate.toISOString());
-  //   } catch {
-  //     console.error("Unable to parse end date, ignoring.");
-  //   }
-  // }
 
   if (currentPage && currentPage > 1) {
     const startIndex = (currentPage - 1) * limit;
@@ -128,25 +213,52 @@ export async function getVideos({
 
   if (error) {
     console.error('Error fetching videos:', error);
+    return { videos: [], count, error };
   }
 
-  return { videos: videos ?? [], count, error };
+  // Transform videos using appropriate transform function with type assertions
+  const transformedVideos = searchString
+    ? (videos || []).map((video) =>
+        transformVideoFromSearchVideos(video as SearchVideosResponse, supabase)
+      )
+    : (videos || []).map((video) =>
+        transformVideoFromGetVideosWithTimestamps(
+          video as GetVideosWithTimestampsResponse,
+          supabase
+        )
+      );
+
+  return { videos: transformedVideos, count, error };
 }
 
 /**
  * Returns a single video
  */
-export async function getVideo({ videoId, supabase }: VideoQuerySingleProps) {
+export async function getVideo({
+  videoId,
+  supabase,
+  preferredImageFormat = 'avif',
+}: VideoQuerySingleProps & { preferredImageFormat?: string }) {
   const { data: video, error } = await supabase
-    .rpc('get_videos_with_timestamps')
+    .rpc('get_videos_with_timestamps', {
+      p_preferred_image_format: preferredImageFormat,
+    })
     .eq('id', videoId)
     .single();
 
   if (error) {
     console.error('Error fetching video:', error);
+    return { video: null, error };
   }
 
-  return { video, error };
+  const transformedVideo = video
+    ? transformVideoFromGetVideosWithTimestamps(
+        video as GetVideosWithTimestampsResponse,
+        supabase
+      )
+    : null;
+
+  return { video: transformedVideo, error };
 }
 
 /**
@@ -158,7 +270,10 @@ export async function getInProgressVideos({
   contentFilter,
   supabase,
   session,
-}: VideoQueryMultipleProps<VideoTimestamp>): Promise<{
+  preferredImageFormat = 'avif',
+}: VideoQueryMultipleProps<VideoWithTimestamp> & {
+  preferredImageFormat?: string;
+}): Promise<{
   videos: VideoWithTimestamp[];
   count: number | null;
   error?: PostgrestError | null;
@@ -170,11 +285,17 @@ export async function getInProgressVideos({
   const sortOptionInfo = SORT_OPTIONS_TIMESTAMPS[contentFilter.sort.key];
 
   const query = supabase
-    .rpc('get_in_progress_videos_with_timestamps', {}, { count: 'exact' })
+    .rpc(
+      'get_in_progress_videos_with_timestamps',
+      {
+        p_preferred_image_format: preferredImageFormat,
+      },
+      { count: 'exact' }
+    )
     .limit(limit);
 
   // Sorting by playlist order
-  query.order(sortOptionInfo.tableColumn, {
+  query.order(sortOptionInfo.tableColumn as string, {
     ascending: contentFilter.sort.order === 'ascending',
   });
 
@@ -199,11 +320,35 @@ export async function getInProgressVideos({
 
   const { data: videos, count, error } = await query;
 
-  return { videos: videos ?? [], count, error };
+  if (error) {
+    console.error('Error fetching in-progress videos:', error);
+    return { videos: [], count, error };
+  }
+
+  const transformedVideos = (videos || []).map((video) =>
+    transformVideoFromGetInProgressVideos(
+      video as GetInProgressVideosResponse,
+      supabase
+    )
+  );
+
+  return { videos: transformedVideos, count, error };
+}
+
+export function incrementVideoView({
+  videoId,
+  supabase,
+}: {
+  videoId: string;
+  supabase: SupabaseClient<Database>;
+}) {
+  supabase.rpc('increment_video_views', {
+    video_id: videoId,
+  });
 }
 
 export function isVideoWithTimestamp(
-  video: Video
+  video?: Video
 ): video is VideoWithTimestamp {
   return (
     !!video &&
@@ -227,57 +372,4 @@ export function isVideoWithPlaylistTimestamp(
     'playlist_sort_order' in video &&
     !!video.playlist_sort_order
   );
-}
-
-/**
- * Get video history for a user with optional video filtering
- */
-export async function getVideosHistory({
-  videoId,
-  limit = DEFAULT_NUM_VIDEOS_OVERVIEW,
-  offset = 0,
-  supabase,
-  session,
-}: {
-  videoId?: string;
-  limit?: number;
-  offset?: number;
-  supabase: SupabaseClient<Database>;
-  session?: Session | null;
-}): Promise<{
-  history: VideoHistoryWithVideo[];
-  error?: PostgrestError | null;
-}> {
-  return getUserVideoHistory({
-    videoId,
-    limit,
-    offset,
-    supabase,
-    session,
-  });
-}
-
-/**
- * Get video analytics for a user
- */
-export async function getVideosAnalytics({
-  videoId,
-  daysBack = 30,
-  supabase,
-  session,
-}: {
-  videoId?: string;
-  daysBack?: number;
-  supabase: SupabaseClient<Database>;
-  session?: Session | null;
-}): Promise<{
-  analytics: VideoAnalytics[];
-  error?: PostgrestError | null;
-}> {
-  return getVideoAnalytics({
-    videoId,
-    daysBack,
-    supabase,
-    session,
-  });
 }

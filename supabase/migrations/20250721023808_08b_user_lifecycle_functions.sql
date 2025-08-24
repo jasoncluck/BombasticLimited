@@ -3,8 +3,7 @@
 -- Dependencies: Requires auth schema and user profile functions (08a)
 -- This migration includes user creation/deletion handlers and triggers
 -- ============================================================================
---
--- Function to handle user changes (creates profile on user creation)
+-- Optimized function to handle user changes (creates profile on user creation)
 CREATE OR REPLACE FUNCTION "public"."handle_user_changes" () RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
 SET
   search_path = '' AS $$
@@ -13,59 +12,27 @@ DECLARE
     new_avatar_url text;
     providers_array text[];
     providers_json text;
-    debug_msg text;
     user_username text;
     old_username text;
     new_username text;
+    account_type_val public.profile_account_type;
 BEGIN
     -- Handle INSERT operations (new user creation)
     IF TG_OP = 'INSERT' THEN
-        -- First check if username is provided in raw_user_meta_data (Discord OAuth)
+        -- Extract all needed data in one go
         user_username := NEW.raw_user_meta_data->>'username';
-        
-        -- If no username provided, generate one from full_name or email
-        IF user_username IS NULL OR TRIM(user_username) = '' THEN
-            generated_username := public.generate_unique_username(
-                COALESCE(
-                    NEW.raw_user_meta_data->>'full_name',
-                    split_part(NEW.email, '@', 1),
-                    'user'
-                )
-            );
-        ELSE
-            -- Use the provided username, but still ensure it's unique
-            generated_username := public.generate_unique_username(user_username);
-        END IF;
-        
-        -- Extract avatar URL from raw_user_meta_data if it exists
-        -- Discord OAuth provides avatar in both 'avatar_url' and 'picture' fields
-        -- For email sign-ups, both fields will be NULL or missing, resulting in NULL avatar_url
         new_avatar_url := COALESCE(
             NEW.raw_user_meta_data->>'avatar_url',
             NEW.raw_user_meta_data->>'picture'
         );
+        providers_json := NEW.raw_app_meta_data->>'providers';
         
-        -- Explicitly handle NULL case for email sign-ups
+        -- Explicitly handle NULL/empty avatar case
         IF new_avatar_url = '' THEN
             new_avatar_url := NULL;
         END IF;
         
-        -- Debug logging for avatar extraction
-        debug_msg := format('INSERT: User %s - avatar_url: %s, picture: %s, final: %s (email signup: %s), username from meta: %s, final username: %s', 
-            NEW.id::text, 
-            NEW.raw_user_meta_data->>'avatar_url',
-            NEW.raw_user_meta_data->>'picture',
-            COALESCE(new_avatar_url, 'NULL'),
-            CASE WHEN new_avatar_url IS NULL THEN 'true' ELSE 'false' END,
-            COALESCE(user_username, 'NULL'),
-            generated_username
-        );
-        RAISE LOG '%', debug_msg;
-        
-        -- Extract providers from raw_app_meta_data
-        providers_json := NEW.raw_app_meta_data->>'providers';
-        
-        -- Error if providers is null - we should not fallback to default
+        -- Error if providers is null
         IF providers_json IS NULL THEN
             RAISE EXCEPTION 'Providers field is null in auth metadata for user %', NEW.id;
         END IF;
@@ -75,54 +42,56 @@ BEGIN
         INTO providers_array
         FROM json_array_elements_text(providers_json::json);
         
-        -- Insert the new profile with username, avatar_url (can be NULL), isAdmin, and providers from auth schema
+        -- Generate username (optimized to use the improved function)
+        IF user_username IS NULL OR TRIM(user_username) = '' THEN
+            generated_username := public.generate_unique_username(
+                COALESCE(
+                    NEW.raw_user_meta_data->>'full_name',
+                    split_part(NEW.email, '@', 1),
+                    'user'
+                )
+            );
+        ELSE
+            generated_username := public.generate_unique_username(user_username);
+        END IF;
+        
+        -- Determine account type
+        account_type_val := CASE 
+            WHEN NEW.email = 'jason@bombastic.ltd' THEN 'admin'::public.profile_account_type 
+            ELSE 'default'::public.profile_account_type 
+        END;
+        
+        -- Single INSERT with all data
         INSERT INTO public.profiles (id, username, avatar_url, providers, account_type)
-        VALUES (NEW.id, generated_username, new_avatar_url, providers_array, 
-                CASE WHEN NEW.email = 'jason@bombastic.ltd' THEN 'admin'::public.profile_account_type ELSE 'default'::public.profile_account_type END)
+        VALUES (NEW.id, generated_username, new_avatar_url, providers_array, account_type_val)
         ON CONFLICT (id) DO NOTHING;
     
     -- Handle UPDATE operations (when user metadata gets updated)
     ELSIF TG_OP = 'UPDATE' THEN
         -- Check if raw_user_meta_data was updated
         IF (OLD.raw_user_meta_data IS DISTINCT FROM NEW.raw_user_meta_data) THEN
-            -- Check for username changes
+            -- Extract username and avatar data
             old_username := OLD.raw_user_meta_data->>'username';
             new_username := NEW.raw_user_meta_data->>'username';
-            
-            IF old_username IS DISTINCT FROM new_username AND new_username IS NOT NULL THEN
-                -- Update username in profiles table
-                UPDATE public.profiles 
-                SET username = new_username
-                WHERE id = NEW.id;
-                
-                RAISE LOG 'Username updated for user %: % -> %', NEW.id, old_username, new_username;
-            END IF;
-            
-            -- Handle avatar updates
             new_avatar_url := COALESCE(
                 NEW.raw_user_meta_data->>'avatar_url',
                 NEW.raw_user_meta_data->>'picture'
             );
             
-            -- Explicitly handle empty string case
+            -- Handle empty string case
             IF new_avatar_url = '' THEN
                 new_avatar_url := NULL;
             END IF;
             
-            -- Debug logging for avatar update
-            debug_msg := format('UPDATE: User %s - old avatar_url: %s, old picture: %s, new avatar_url: %s, new picture: %s, final: %s', 
-                NEW.id::text,
-                OLD.raw_user_meta_data->>'avatar_url',
-                OLD.raw_user_meta_data->>'picture',
-                NEW.raw_user_meta_data->>'avatar_url',
-                NEW.raw_user_meta_data->>'picture',
-                COALESCE(new_avatar_url, 'NULL')
-            );
-            RAISE LOG '%', debug_msg;
-            
-            -- Update the profile with the new avatar_url (can be NULL)
+            -- Bulk update profile data
             UPDATE public.profiles 
-            SET avatar_url = new_avatar_url
+            SET 
+                username = CASE 
+                    WHEN old_username IS DISTINCT FROM new_username AND new_username IS NOT NULL 
+                    THEN new_username 
+                    ELSE username 
+                END,
+                avatar_url = new_avatar_url
             WHERE id = NEW.id;
         END IF;
         
@@ -156,21 +125,26 @@ OR
 UPDATE ON "auth"."users" FOR EACH ROW
 EXECUTE PROCEDURE "public"."handle_user_changes" ();
 
--- User deletion function
+-- Optimized user deletion function
 CREATE OR REPLACE FUNCTION "public"."delete_user" () RETURNS void
 SET
   search_path = '' LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE
-    user_id uuid := (SELECT auth.uid());
+    user_id uuid;
     deleted_count integer;
 BEGIN
+    -- Get user ID once
+    user_id := auth.uid();
+    
+    IF user_id IS NULL THEN
+        RAISE EXCEPTION 'User must be authenticated to delete account';
+    END IF;
+    
     -- Lock operations for this user to prevent concurrent modifications
     PERFORM pg_advisory_xact_lock(hashtext('user_lifecycle_operations_' || user_id::text));
     
-    -- Attempt to delete the user and check if any rows were affected
-    DELETE FROM auth.users 
-    WHERE id = user_id;
-    
+    -- Delete user and check result in one operation
+    DELETE FROM auth.users WHERE id = user_id;
     GET DIAGNOSTICS deleted_count = ROW_COUNT;
     
     IF deleted_count = 0 THEN
@@ -179,17 +153,25 @@ BEGIN
 END;
 $$;
 
--- Function to create a user or return existing user (for testing purposes)
+-- Optimized function to create a user or return existing user (for testing purposes)
+-- Optimized function to create a user or return existing user (for testing purposes)
 CREATE OR REPLACE FUNCTION public.create_user (email text, password text, username text) RETURNS uuid AS $$
 DECLARE
   user_id uuid;
   encrypted_pw text;
+  normalized_email text;
 BEGIN
-  -- First, check if user already exists
-  SELECT id INTO user_id FROM auth.users WHERE auth.users.email = create_user.email;
+  -- Normalize email (trim and lowercase) for consistent matching
+  normalized_email := LOWER(TRIM(email));
+  
+  -- Check if user already exists (case-insensitive email comparison)
+  SELECT id INTO user_id 
+  FROM auth.users 
+  WHERE LOWER(TRIM(auth.users.email)) = normalized_email;
   
   -- If user exists, return their ID
   IF user_id IS NOT NULL THEN
+    RAISE LOG 'Returning existing user ID % for email %', user_id, normalized_email;
     RETURN user_id;
   END IF;
 
@@ -197,42 +179,45 @@ BEGIN
   user_id := gen_random_uuid();
   encrypted_pw := extensions.crypt(password, extensions.gen_salt('bf'));
 
-  INSERT INTO auth.users
-    (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, recovery_sent_at, last_sign_in_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token)
-  VALUES
-    (
-      '00000000-0000-0000-0000-000000000000',
-      user_id,
-      'authenticated',
-      'authenticated',
-      email,
-      encrypted_pw,
-      '2023-05-03 19:41:43.585805+00',
-      '2023-04-22 13:10:03.275387+00',
-      '2023-04-22 13:10:31.458239+00',
-      '{"provider":"email","providers":["email"]}',
-      format('{"username": "%s"}', username)::jsonb,
-      '2023-05-03 19:41:43.580424+00',
-      '2023-05-03 19:41:43.585948+00',
-      '',
-      '',
-      '',
-      ''
-    );
+  RAISE LOG 'Creating new user with ID % for email %', user_id, normalized_email;
 
-  -- Add identity for the new user
-  INSERT INTO auth.identities (id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at)
-  VALUES
-    (
-      gen_random_uuid(),
-      user_id,
-      format('{"sub":"%s","email":"%s"}', user_id::text, email)::jsonb,
-      'email',
-      user_id::text,
-      '2023-05-03 19:41:43.582456+00',
-      '2023-05-03 19:41:43.582497+00',
-      '2023-05-03 19:41:43.582497+00'
-    );
+  -- Insert user with all required data
+  INSERT INTO auth.users (
+    instance_id, id, aud, role, email, encrypted_password, 
+    email_confirmed_at, recovery_sent_at, last_sign_in_at, 
+    raw_app_meta_data, raw_user_meta_data, created_at, updated_at, 
+    confirmation_token, email_change, email_change_token_new, recovery_token
+  ) VALUES (
+    '00000000-0000-0000-0000-000000000000',
+    user_id,
+    'authenticated',
+    'authenticated',
+    normalized_email, -- Use normalized email
+    encrypted_pw,
+    '2023-05-03 19:41:43.585805+00',
+    '2023-04-22 13:10:03.275387+00',
+    '2023-04-22 13:10:31.458239+00',
+    '{"provider":"email","providers":["email"]}',
+    format('{"username": "%s"}', username)::jsonb,
+    '2023-05-03 19:41:43.580424+00',
+    '2023-05-03 19:41:43.585948+00',
+    '', '', '', ''
+  );
+
+  -- Insert identity for the new user
+  INSERT INTO auth.identities (
+    id, user_id, identity_data, provider, provider_id, 
+    last_sign_in_at, created_at, updated_at
+  ) VALUES (
+    gen_random_uuid(),
+    user_id,
+    format('{"sub":"%s","email":"%s"}', user_id::text, normalized_email)::jsonb,
+    'email',
+    user_id::text,
+    '2023-05-03 19:41:43.582456+00',
+    '2023-05-03 19:41:43.582497+00',
+    '2023-05-03 19:41:43.582497+00'
+  );
 
   RETURN user_id;
 END;

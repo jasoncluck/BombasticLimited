@@ -124,7 +124,7 @@
       {:else}
         <Button
           variant="ghost"
-          class="ghost-button-minimal outline-none"
+          class="ghost-button-minimal outline-hidden"
           onclick={(e) => {
             e.preventDefault();
             e.stopPropagation();

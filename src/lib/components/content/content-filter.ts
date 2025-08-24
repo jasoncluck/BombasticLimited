@@ -1,4 +1,4 @@
-import type { Video, VideoTimestamp } from '$lib/supabase/videos';
+import type { Video, VideoWithTimestamp } from '$lib/supabase/videos';
 import { type DateValue } from '@internationalized/date';
 import { goto } from '$app/navigation';
 import type {
@@ -8,12 +8,14 @@ import type {
 import type { ContentView } from './content';
 import { PAGINATION_QUERY_KEY } from '../pagination/pagination';
 
-type SortOption<T extends Video | VideoTimestamp | PlaylistVideo> = {
+type SortOption<T extends Video | VideoWithTimestamp | PlaylistVideo> = {
   key: SortKey<T>;
   order: SortOrder;
 };
 
-export type ContentFilter<T extends Video | VideoTimestamp | PlaylistVideo> = {
+export type ContentFilter<
+  T extends Video | VideoWithTimestamp | PlaylistVideo,
+> = {
   sort: SortOption<T>;
   startDate?: string;
   endDate?: string;
@@ -27,7 +29,7 @@ export type PlaylistVideosFilter = ContentFilter<PlaylistVideo> & {
   type: 'playlist';
 };
 
-export type TimestampFilter = ContentFilter<VideoTimestamp> & {
+export type TimestampFilter = ContentFilter<VideoWithTimestamp> & {
   type: 'timestamp';
 };
 
@@ -36,7 +38,7 @@ export type CombinedContentFilter =
   | PlaylistVideosFilter
   | TimestampFilter;
 
-interface SortOptionInfo<T extends Video | VideoTimestamp | PlaylistVideo> {
+interface SortOptionInfo<T extends Video | VideoWithTimestamp | PlaylistVideo> {
   displayName: string;
   tableColumn: keyof T;
 }
@@ -53,12 +55,12 @@ export const playlistVideosSortKeys = [
 ] as const;
 export const timestampSortKeys = ['dateTimestamp', ...videoSortKeys] as const;
 
-export type SortKey<T extends Video | VideoTimestamp | PlaylistVideo> =
-  T extends Video
-    ? (typeof videoSortKeys)[number]
-    : T extends PlaylistVideo
-      ? (typeof playlistVideosSortKeys)[number]
-      : (typeof timestampSortKeys)[number];
+export type SortKey<T extends Video | VideoWithTimestamp | PlaylistVideo> =
+  T extends PlaylistVideo
+    ? (typeof playlistVideosSortKeys)[number]
+    : T extends VideoWithTimestamp
+      ? (typeof timestampSortKeys)[number]
+      : (typeof videoSortKeys)[number];
 
 export const sortOrder = ['ascending', 'descending'] as const;
 export type SortOrder = (typeof sortOrder)[number];
@@ -76,9 +78,13 @@ export const SORT_OPTIONS_VIDEO: Record<
 
 export const SORT_OPTIONS_PLAYLIST_VIDEOS: Record<
   SortKey<PlaylistVideo>,
-  SortOptionInfo<PlaylistVideoWithTimestamp>
+  SortOptionInfo<any>
 > = {
-  ...SORT_OPTIONS_VIDEO,
+  datePublished: {
+    displayName: 'Date Published',
+    tableColumn: 'published_at',
+  },
+  title: { displayName: 'Title', tableColumn: 'title' },
   playlistOrder: {
     displayName: 'Custom',
     tableColumn: 'video_position',
@@ -86,10 +92,14 @@ export const SORT_OPTIONS_PLAYLIST_VIDEOS: Record<
 };
 
 export const SORT_OPTIONS_TIMESTAMPS: Record<
-  SortKey<VideoTimestamp>,
-  SortOptionInfo<Video & VideoTimestamp>
+  SortKey<VideoWithTimestamp>,
+  SortOptionInfo<any>
 > = {
-  ...SORT_OPTIONS_VIDEO,
+  datePublished: {
+    displayName: 'Date Published',
+    tableColumn: 'published_at',
+  },
+  title: { displayName: 'Title', tableColumn: 'title' },
   dateTimestamp: {
     displayName: 'Date Watched',
     tableColumn: 'updated_at',
@@ -117,7 +127,7 @@ export function getFilterOptionFromQueryParams({
     case 'continueWatching':
       baseFilter = {
         sort: {
-          key: 'dateTimestamp' as SortKey<VideoTimestamp>,
+          key: 'dateTimestamp' as SortKey<VideoWithTimestamp>,
           order: 'descending',
         },
         type: 'timestamp',
@@ -147,7 +157,7 @@ export function getFilterOptionFromQueryParams({
       : 'descending';
 
     baseFilter.sort = {
-      key: querySortKey,
+      key: querySortKey as any,
       order: querySortOrder,
     };
   }
@@ -229,7 +239,7 @@ export function updateFilter({
   });
 }
 
-export function isSortKey<T extends Video | VideoTimestamp | PlaylistVideo>(
+export function isSortKey<T extends Video | VideoWithTimestamp | PlaylistVideo>(
   testKey: unknown,
   view: ContentView
 ): testKey is SortKey<T> {
@@ -255,7 +265,7 @@ export function isSortOrder(testOrder: unknown): testOrder is SortOrder {
   );
 }
 
-export function isSortOption<T extends Video | VideoTimestamp>(
+export function isSortOption<T extends Video | VideoWithTimestamp>(
   sortOption: unknown,
   view: ContentView
 ): sortOption is SortOption<T> {

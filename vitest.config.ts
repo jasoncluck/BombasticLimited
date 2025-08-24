@@ -6,10 +6,7 @@ export default defineConfig({
   plugins: [sveltekit()],
   test: {
     environment: 'jsdom',
-    setupFiles: [
-      './src/tests/setup-globals.ts',
-      './src/lib/state/navigation-cache/__tests__/setup.ts',
-    ],
+    setupFiles: ['./src/lib/tests/setup-globals.ts'],
     globals: true,
     include: ['src/**/*.{test,spec}.{js,ts}'],
     exclude: ['tests/**/*', 'node_modules/**/*'],
@@ -17,19 +14,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '$app/environment': path.resolve(
-        __dirname,
-        'src/lib/state/navigation-cache/__tests__/mocks/app-environment.ts'
-      ),
-      '$app/navigation': path.resolve(
-        __dirname,
-        'src/lib/state/navigation-cache/__tests__/mocks/app-navigation.ts'
-      ),
       $lib: path.resolve(__dirname, 'src/lib'),
-      '$service-worker': path.resolve(
-        __dirname,
-        'src/lib/state/navigation-cache/__tests__/mocks/service-worker.ts'
-      ),
     },
   },
 });

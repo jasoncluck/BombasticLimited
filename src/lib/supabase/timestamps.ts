@@ -9,6 +9,11 @@ import type {
   SortOrder,
 } from '$lib/components/content/content-filter';
 import type { PlaylistVideo } from './playlists';
+import type { VideoWithTimestamp } from './videos';
+
+// Infer types from Supabase RPC functions for timestamp operations
+type GetVideosWithTimestampsResponse =
+  Database['public']['Functions']['get_videos_with_timestamps']['Returns'][0];
 
 export type TimestampWithVideoId = {
   videoId: string;
@@ -18,6 +23,33 @@ export type TimestampWithVideoId = {
   sortedBy?: SortKey<PlaylistVideo> | null;
   sortOrder?: SortOrder | null;
 };
+
+// Video timestamp type based on RPC response
+export type VideoTimestamp = {
+  video_start_seconds: number | null;
+  updated_at: string | null;
+  watched_at: string | null;
+  playlist_name?: string | null;
+  playlist_short_id?: string | null;
+  playlist_sorted_by?: SortKey<PlaylistVideo> | null;
+  playlist_sort_order?: SortOrder | null;
+};
+
+// Transform timestamp data from RPC response
+export function transformTimestampFromRPC(
+  rpcData: GetVideosWithTimestampsResponse
+): VideoTimestamp {
+  return {
+    video_start_seconds: rpcData.video_start_seconds || null,
+    updated_at: rpcData.updated_at || null,
+    watched_at: rpcData.watched_at || null,
+    playlist_name: rpcData.playlist_name || null,
+    playlist_short_id: rpcData.playlist_short_id || null,
+    playlist_sorted_by:
+      (rpcData.playlist_sorted_by as SortKey<PlaylistVideo>) || null,
+    playlist_sort_order: (rpcData.playlist_sort_order as SortOrder) || null,
+  };
+}
 
 export async function saveVideoTimestamp({
   videoTimestamp,
@@ -144,4 +176,19 @@ export async function getLatestTimestamp({
     return { videoTimestamp, error };
   }
   return { error };
+}
+
+// Helper function to check if video has playlist timestamp info
+export function hasPlaylistTimestamp(
+  video: VideoWithTimestamp
+): video is VideoWithTimestamp & {
+  playlist_short_id: string;
+  playlist_sorted_by: SortKey<PlaylistVideo>;
+  playlist_sort_order: SortOrder;
+} {
+  return !!(
+    video.playlist_short_id &&
+    video.playlist_sorted_by &&
+    video.playlist_sort_order
+  );
 }

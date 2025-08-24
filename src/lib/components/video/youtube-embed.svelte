@@ -298,7 +298,7 @@
             watchTimeTracker.onPlay(currentTime);
             isActuallyPlaying = true;
           }
-        } catch (error) {
+        } catch {
           console.log(
             '⚠️ Video tracking: Could not check player state on visibility change'
           );

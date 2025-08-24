@@ -1,7 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { VideoStack } from './video-stack';
-import { BackupStack } from './backup-stack';
 
 interface AppStackProps extends cdk.StackProps {
   stage: 'Production' | 'Staging';
@@ -9,7 +8,7 @@ interface AppStackProps extends cdk.StackProps {
     GOOGLE_API_KEY?: string;
     PUBLIC_SUPABASE_URL?: string;
     SUPABASE_SERVICE_API_KEY?: string;
-    SUPABASE_DB_URL?: string;
+    // SUPABASE_DB_URL?: string;
   };
 }
 
@@ -31,9 +30,9 @@ export class AppStack extends cdk.Stack {
     });
 
     if (stage === 'Production') {
-      new BackupStack(this, 'BackupStack', {
-        stackName: `BackupStack-${stage}`,
-      });
+      // new BackupStack(this, 'BackupStack', {
+      //   stackName: `BackupStack-${stage}`,
+      // });
     }
 
     new cdk.CfnOutput(this, 'Region', {

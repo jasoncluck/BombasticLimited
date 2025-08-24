@@ -1,8 +1,5 @@
+import { createMockPlaylist, createMockSession } from '$lib/tests/test-utils';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  createMockSession,
-  createMockPlaylist,
-} from '../../../../tests/test-utils';
 
 // Mock all dependencies
 vi.mock('$lib/components/ui/drawer', () => ({

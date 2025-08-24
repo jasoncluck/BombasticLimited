@@ -1,12 +1,20 @@
+import { mdsvex } from 'mdsvex';
 import adapter from '@sveltejs/adapter-vercel';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+import remarkGfm from 'remark-gfm';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
   // Consult https://svelte.dev/docs/kit/integrations
   // for more information about preprocessors
-  preprocess: vitePreprocess(),
-
+  extensions: ['.svelte', '.md', '.svx'],
+  preprocess: [
+    vitePreprocess(),
+    mdsvex({
+      extensions: ['.md', '.svx'],
+      remarkPlugins: [remarkGfm],
+    }),
+  ],
   kit: {
     // adapter-auto only supports some environments, see https://svelte.dev/docs/kit/adapter-auto for a list.
     // If your environment is not supported, or you settled on a specific environment, switch out the adapter.
@@ -28,7 +36,6 @@ const config = {
             'https://www.googletagmanager.com',
             'https://googletagmanager.com',
             'https://gql.twitch.tv',
-
             'https://s.ytimg.com',
             'https://embed.twitch.tv/',
             'https://player.twitch.tv/',
@@ -40,7 +47,6 @@ const config = {
           'frame-src': [
             'self',
             'https://www.youtube.com',
-
             'https://www.google.com',
             'https://googleads.g.doubleclick.net',
             'https://googlesyndication.com',

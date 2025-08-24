@@ -14,11 +14,9 @@
   let {
     supabase,
     session,
-    openNotificationDrawer = $bindable(),
   }: {
     supabase: SupabaseClient<Database>;
     session: Session | null;
-    openNotificationDrawer?: boolean;
   } = $props();
 
   const mediaQueryState = getMediaQueryState();
@@ -44,13 +42,6 @@
       navigationState.refreshData();
     }
   }
-
-  // Close dropdown/drawer handler
-  function handleClose() {
-    if (openNotificationDrawer !== undefined) {
-      openNotificationDrawer = false;
-    }
-  }
 </script>
 
 {#if canHover}
@@ -58,16 +49,16 @@
   <DropdownMenu.Root onOpenChange={(open) => open && handleMenuOpen()}>
     <DropdownMenu.Trigger
       data-testid="notification-bell"
-      class="relative cursor-pointer outline-none {buttonVariants({
+      class={buttonVariants({
         variant: 'ghost',
         size: 'icon',
-      })}"
+        class: 'ghost-button-minimal',
+      })}
     >
       <Bell class="h-[1.2rem] w-[1.2rem]" />
       {#if unreadNotifications.length > 0}
         <Badge
-          variant="destructive"
-          class="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-medium"
+          class="bg-primary absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-xs font-medium"
         >
           {unreadNotifications.length > 99 ? '99+' : unreadNotifications.length}
         </Badge>
@@ -81,24 +72,16 @@
       </div>
 
       <div class="max-h-80 overflow-y-auto">
-        <NotificationList
-          {supabase}
-          {session}
-          onNotificationClick={handleClose}
-          showActions={false}
-        />
+        <NotificationList {supabase} {session} showActions={false} />
       </div>
     </DropdownMenu.Content>
   </DropdownMenu.Root>
 {:else}
   <!-- Mobile Notification Drawer -->
-  <Drawer.Root
-    bind:open={openNotificationDrawer}
-    onOpenChange={(open) => open && handleMenuOpen()}
-  >
+  <Drawer.Root onOpenChange={(open) => open && handleMenuOpen()}>
     <Drawer.Trigger
       data-testid="notification-bell-mobile"
-      class="relative cursor-pointer outline-none {buttonVariants({
+      class="relative cursor-pointer outline-hidden {buttonVariants({
         variant: 'ghost',
         size: 'icon',
       })}"
@@ -124,12 +107,7 @@
         </div>
 
         <div class="max-h-96 overflow-y-auto px-4 pb-4">
-          <NotificationList
-            {supabase}
-            {session}
-            onNotificationClick={handleClose}
-            showActions={false}
-          />
+          <NotificationList {supabase} {session} showActions={false} />
         </div>
 
         <Drawer.Footer>

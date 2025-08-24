@@ -5,7 +5,7 @@
 
   let {
     navigationState,
-    class: className = 'sm:w-72 w-52',
+    class: className = 'md:w-60 w-36 sm:w-44',
   }: {
     navigationState: NavigationState;
     class?: string;

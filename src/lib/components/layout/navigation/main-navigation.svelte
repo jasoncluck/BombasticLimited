@@ -57,7 +57,7 @@
   );
 </script>
 
-<nav class="relative m-2 flex items-center p-1" data-testid="main-navigation">
+<nav class="relative flex items-center p-2" data-testid="main-navigation">
   <!-- Left Section: Mobile Menu + Brand Logo -->
   <div class="flex items-center">
     <!-- Mobile Menu -->
@@ -74,29 +74,28 @@
       <a
         href={brandLogoNavItem.href}
         data-testid={brandLogoNavItem.testId}
-        onclick={(e) => navigationState.handleNavigation(e, brandLogoNavItem)}
         class={navigationState.getNavigationButtonClasses(
           brandLogoNavItem,
-          'ml-2 hidden sm:ml-0 sm:block'
+          'ml-2 hidden outline-hidden sm:ml-0 sm:block'
         )}
       >
-        <BrandLogo class="h-8 w-auto" />
+        <BrandLogo />
         <span class="sr-only">{brandLogoNavItem.label}</span>
       </a>
     {/if}
   </div>
 
-  <!-- Center Section: Home Button + Search -->
+  <!-- Center Section: Home Button + Search Input -->
   <div
-    class="absolute top-1/2 left-1/2 flex -translate-x-[calc(50%-28px)] -translate-y-1/2 items-center gap-3"
+    class="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-3"
   >
-    <!-- Home Button (Desktop Only) - Now using navigation state -->
+    <!-- Home Button (Desktop Only) -->
     {#if homeNavItem && navigationState.config.enableHomeNavigation}
       <Button
         variant="outline"
         size="icon"
-        class="hidden rounded-full sm:flex"
-        onclick={(e) => navigationState.handleNavigation(e, homeNavItem)}
+        class="hidden rounded-full hover:scale-105 sm:flex"
+        href="/"
         data-testid={homeNavItem.testId}
         disabled={navigationState.isNavigating}
       >
@@ -111,7 +110,7 @@
 
   <!-- Right Section: User Controls -->
   <div class="ml-auto">
-    <div class="flex items-center gap-4">
+    <div class="flex items-center gap-2">
       <UserMenu
         {userProfile}
         {session}

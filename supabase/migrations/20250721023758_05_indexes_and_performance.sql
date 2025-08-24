@@ -53,6 +53,11 @@ CREATE INDEX IF NOT EXISTS idx_playlist_videos_video_id ON public.playlist_video
 -- User playlists join optimization
 CREATE INDEX IF NOT EXISTS idx_user_playlists_playlist_user ON public.user_playlists (id, user_id);
 
+CREATE INDEX IF NOT EXISTS "idx_playlists_image_processing" ON "public"."playlists" USING btree (
+  "image_processing_status",
+  "image_processing_updated_at"
+);
+
 -- ============================================================================
 -- SORTING PERFORMANCE INDEXES
 -- ============================================================================
@@ -60,6 +65,8 @@ CREATE INDEX IF NOT EXISTS idx_user_playlists_playlist_user ON public.user_playl
 CREATE INDEX IF NOT EXISTS idx_videos_published_title ON public.videos (published_at DESC, title);
 
 CREATE INDEX IF NOT EXISTS idx_videos_duration_title ON public.videos (duration, title);
+
+CREATE INDEX IF NOT EXISTS "idx_playlists_updated_at" ON "public"."playlists" USING btree ("updated_at");
 
 -- ============================================================================
 -- FOREIGN KEY AND JOIN INDEXES
@@ -109,3 +116,103 @@ CREATE INDEX IF NOT EXISTS idx_playlists_id_type_created ON public.playlists (id
 CREATE INDEX IF NOT EXISTS idx_timestamps_user_id_rls ON public.timestamps (user_id)
 WHERE
   user_id IS NOT NULL;
+
+-- ============================================================================
+-- CRITICAL MISSING INDEXES FOR PLAYLIST MANAGEMENT FUNCTIONS
+-- ============================================================================
+-- Most critical: user_playlists composite indexes for position management
+CREATE INDEX IF NOT EXISTS idx_user_playlists_user_position ON public.user_playlists (user_id, playlist_position);
+
+-- Essential for playlist count and max position queries
+CREATE INDEX IF NOT EXISTS idx_user_playlists_user_id_covering ON public.user_playlists (user_id) INCLUDE (playlist_position);
+
+-- Critical for playlist ownership and position updates
+CREATE INDEX IF NOT EXISTS idx_user_playlists_user_playlist_covering ON public.user_playlists (user_id, id) INCLUDE (playlist_position);
+
+-- ============================================================================
+-- PLAYLIST VIDEOS OPTIMIZATION INDEXES
+-- ============================================================================
+-- For bulk video validation in insert_playlist_videos
+CREATE INDEX IF NOT EXISTS idx_videos_id_pending_delete ON public.videos (id)
+WHERE
+  pending_delete = FALSE;
+
+-- For video position reordering operations
+CREATE INDEX IF NOT EXISTS idx_playlist_videos_position_covering ON public.playlist_videos (playlist_id, video_position) INCLUDE (id, video_id);
+
+-- For video existence checks in playlist operations
+CREATE INDEX IF NOT EXISTS idx_playlist_videos_playlist_video_covering ON public.playlist_videos (playlist_id, video_id) INCLUDE (id, video_position);
+
+-- ============================================================================
+-- PLAYLIST NAME UNIQUENESS AND SEARCH OPTIMIZATION
+-- ============================================================================
+-- For unique name generation in insert_playlist function
+CREATE INDEX IF NOT EXISTS idx_playlists_name_lower ON public.playlists (lower(name));
+
+-- Composite index for playlist ownership queries with name
+CREATE INDEX IF NOT EXISTS idx_playlists_created_by_name ON public.playlists (created_by, name)
+WHERE
+  deleted_at IS NULL;
+
+-- ============================================================================
+-- THUMBNAIL AND IMAGE PROCESSING OPTIMIZATION
+-- ============================================================================
+-- For thumbnail URL lookups in video validation
+CREATE INDEX IF NOT EXISTS idx_videos_thumbnail_url ON public.videos (thumbnail_url)
+WHERE
+  thumbnail_url IS NOT NULL;
+
+-- For playlist thumbnail matching in delete operations
+CREATE INDEX IF NOT EXISTS idx_playlists_thumbnail_url ON public.playlists (thumbnail_url)
+WHERE
+  thumbnail_url IS NOT NULL;
+
+-- ============================================================================
+-- PROFILE AND USER SEARCH OPTIMIZATION
+-- ============================================================================
+-- For profile username lookups in playlist search
+CREATE INDEX IF NOT EXISTS idx_profiles_username_lower ON public.profiles (lower(username));
+
+-- ============================================================================
+-- ADVISORY LOCK OPTIMIZATION
+-- ============================================================================
+-- For user-specific locking patterns (helps with lock contention)
+CREATE INDEX IF NOT EXISTS idx_user_playlists_user_id_for_locks ON public.user_playlists (user_id)
+WHERE
+  user_id IS NOT NULL;
+
+-- ============================================================================
+-- BULK OPERATIONS OPTIMIZATION
+-- ============================================================================
+-- For efficient bulk position updates
+CREATE INDEX IF NOT EXISTS idx_user_playlists_position_range ON public.user_playlists (user_id, playlist_position)
+WHERE
+  playlist_position IS NOT NULL;
+
+-- For playlist video bulk operations
+CREATE INDEX IF NOT EXISTS idx_playlist_videos_video_array ON public.playlist_videos (video_id, playlist_id);
+
+-- ============================================================================
+-- SEARCH AND FILTERING OPTIMIZATION
+-- ============================================================================
+-- For playlist search with access control
+CREATE INDEX IF NOT EXISTS idx_playlists_type_created_by_deleted ON public.playlists (type, created_by, deleted_at);
+
+-- For deleted playlist filtering
+CREATE INDEX IF NOT EXISTS idx_playlists_deleted_at_null ON public.playlists (id)
+WHERE
+  deleted_at IS NULL;
+
+-- ============================================================================
+-- ARRAY OPERATION OPTIMIZATION
+-- ============================================================================
+-- For ANY() array operations in video validation
+CREATE INDEX IF NOT EXISTS idx_videos_id_hash ON public.videos USING hash (id)
+WHERE
+  pending_delete = FALSE;
+
+-- ============================================================================
+-- CONCURRENT MODIFICATION PROTECTION
+-- ============================================================================
+-- For FOR UPDATE operations on user playlists
+CREATE INDEX IF NOT EXISTS idx_user_playlists_user_for_update ON public.user_playlists (user_id, id, playlist_position);

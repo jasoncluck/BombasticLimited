@@ -1,23 +1,19 @@
 <script lang="ts">
   import { superForm, type SuperValidated } from 'sveltekit-superforms';
-  import {
-    playlistSchema,
-    type PlaylistSchema,
-  } from '../../../routes/playlist/[shortId]/schema';
   import * as Alert from '$lib/components/ui/alert/index.js';
   import { Input } from '$lib/components/ui/input';
   import * as Drawer from '$lib/components/ui/drawer';
+  import * as Dialog from '$lib/components/ui/dialog';
   import * as Form from '$lib/components/ui/form';
   import { Button, buttonVariants } from '$lib/components/ui/button';
-  import type { Playlist } from '$lib/supabase/playlists';
+  import type {
+    Playlist,
+    PlaylistImageProperties,
+  } from '$lib/supabase/playlists';
   import { zodClient } from 'sveltekit-superforms/adapters';
-  import { EditIcon, ListVideo, Loader } from '@lucide/svelte';
+  import { Pencil, ListVideo, Loader } from '@lucide/svelte';
   import Textarea from '$lib/components/ui/textarea/textarea.svelte';
-  import * as ImageCropper from '$lib/components/ui/image-cropper';
-  import {
-    useImageCropperCrop,
-    useImageCropperCropper,
-  } from '$lib/components/ui/image-cropper/image-cropper.svelte.js';
+  import Cropper, { type CropArea } from 'svelte-easy-crop';
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
   import * as Popover from '$lib/components/ui/popover';
   import { getFlash, updateFlash } from 'sveltekit-flash-message';
@@ -27,8 +23,12 @@
   import { page } from '$app/state';
   import { getPlaylistState } from '$lib/state/playlist.svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
+  import { invalidate } from '$app/navigation';
   import { parseImageProperties } from './playlist';
-  import { isLowResolutionThumbnail } from './playlist-service';
+  import {
+    type PlaylistSchema,
+    playlistSchema,
+  } from '$lib/schema/playlist-schema';
 
   let {
     form,
@@ -49,29 +49,130 @@
   } = $props();
 
   const playlistState = getPlaylistState();
+  const sidebarState = getSidebarState();
+  const flash = getFlash(page);
   let isSubmitting = $state(false);
   let isPublic = $state(playlist.type === 'Public');
-  const flash = getFlash(page);
 
   const triggerSnippet = trigger;
 
-  const cropperState = useImageCropperCropper();
-  const cropState = useImageCropperCrop();
+  // Cropper state
+  let cropperDialogOpen = $state(false);
+  let crop = $state({ x: 0, y: 0 });
+  let zoom = $state(1);
+  let currentCropArea: CropArea | null = null;
+  let imageLoaded = $state(false);
+
+  // Track what the crop settings were BEFORE opening the cropper dialog
+  let cropSettingsBeforeEdit = $state<PlaylistImageProperties | null>(null);
+  let previewBeforeEdit = $state<string | null>(null);
+
+  // Preview state
+  let previewCanvas: HTMLCanvasElement | null = null;
+  let previewImageUrl = $state<string | null>(null);
 
   const isPlaylistOwner = $derived(playlist.created_by === session?.user.id);
-  const isLowResThumbnail = $derived(
-    isLowResolutionThumbnail(
-      playlist.thumbnail_maxres_url,
-      playlist.thumbnail_url
-    )
-  );
-  const sidebarState = getSidebarState();
+
+  // Function to create cropped preview
+  async function createCroppedPreview(
+    imageSrc: string,
+    cropArea: CropArea
+  ): Promise<string> {
+    return new Promise((resolve) => {
+      const image = new Image();
+      image.onload = () => {
+        if (!previewCanvas) {
+          previewCanvas = document.createElement('canvas');
+        }
+
+        const canvas = previewCanvas;
+        const ctx = canvas.getContext('2d');
+
+        if (!ctx) {
+          resolve(imageSrc);
+          return;
+        }
+
+        // Set canvas size to crop area size
+        canvas.width = cropArea.width;
+        canvas.height = cropArea.height;
+
+        // Draw the cropped portion
+        ctx.drawImage(
+          image,
+          cropArea.x,
+          cropArea.y,
+          cropArea.width,
+          cropArea.height,
+          0,
+          0,
+          cropArea.width,
+          cropArea.height
+        );
+
+        // Convert to data URL
+        resolve(canvas.toDataURL('image/jpeg', 0.95));
+      };
+      image.crossOrigin = 'anonymous';
+      image.src = imageSrc;
+    });
+  }
+
+  // Handle crop confirmation - called when user clicks save
+  async function handleCropConfirm() {
+    if (currentCropArea && imageSrc) {
+      $formData.image_properties = currentCropArea;
+      // Create preview of the cropped image
+      previewImageUrl = await createCroppedPreview(imageSrc, currentCropArea);
+
+      // Update the "before edit" state since this is now the new baseline
+      cropSettingsBeforeEdit = currentCropArea;
+      previewBeforeEdit = previewImageUrl;
+    }
+    cropperDialogOpen = false;
+  }
+
+  // Handle crop cancellation - called when user clicks cancel
+  function handleCropCancel() {
+    // Restore to the state before we opened the cropper
+    $formData.image_properties = cropSettingsBeforeEdit;
+    previewImageUrl = previewBeforeEdit;
+
+    cropperDialogOpen = false;
+  }
+
+  // Handle image load in cropper
+  function handleImageLoad() {
+    imageLoaded = true;
+
+    // Set initial crop area if we have saved properties
+    const savedProps = parseImageProperties($formData.image_properties);
+    if (savedProps) {
+      currentCropArea = {
+        x: savedProps.x,
+        y: savedProps.y,
+        width: savedProps.width,
+        height: savedProps.height,
+      };
+    } else {
+      // Reset to defaults if no saved properties
+      crop = { x: 0, y: 0 };
+      zoom = 1;
+      currentCropArea = null;
+    }
+  }
+
+  // Get the image source for the cropper
+  const imageSrc = $derived(playlist.thumbnail_url);
+
+  // Computed property for the display image
+  const displayImageUrl = $derived(previewImageUrl || playlist.image_url);
 
   const playlistForm = superForm(form, {
     validators: zodClient(playlistSchema),
     id: formId ?? 'playlist-drawer-form',
     dataType: 'json',
-    onSubmit() {
+    async onSubmit() {
       $flash = undefined;
       isSubmitting = true;
     },
@@ -81,6 +182,19 @@
       if (event.form.valid) {
         const { isDeletingPlaylistImage, ...data } = event.form.data;
 
+        // Update playlist object with new data including image_properties
+        const updatedPlaylist = Object.assign(playlist, data);
+        if (isDeletingPlaylistImage) {
+          updatedPlaylist.image_url = null;
+          updatedPlaylist.image_properties = null;
+        }
+
+        // Force reactive update by creating new object reference if image_properties changed
+        if (data.image_properties !== playlist.image_properties) {
+          // Create new playlist object to trigger reactivity in PlaylistImage component
+          Object.assign(playlist, { ...playlist, ...data });
+        }
+
         // Delay closing to allow animation to complete
         setTimeout(() => {
           open = false;
@@ -88,13 +202,10 @@
 
         playlistForm.reset();
 
-        const updatedPlaylist = Object.assign(playlist, data);
-        if (isDeletingPlaylistImage) {
-          updatedPlaylist.thumbnail_url = null;
-          updatedPlaylist.thumbnail_maxres_url = null;
-        }
         // Sidebar refresh will get server-processed images with AVIF support
         sidebarState.refreshData();
+        // Add invalidate to refresh playlist data like in dialog version
+        invalidate('supabase:db:playlists');
       }
     },
   });
@@ -114,18 +225,30 @@
       );
       $formData.isDeletingPlaylistImage = false;
       isPublic = playlist.type === 'Public';
+
+      // Reset preview state
+      previewImageUrl = null;
+      cropSettingsBeforeEdit = null;
+      previewBeforeEdit = null;
     }
   });
 
   $effect(() => {
     $formData.type = isPublic ? 'Public' : 'Private';
+  });
 
-    if (cropState.rootState.pixelCrop) {
-      $formData.image_properties = cropState.rootState.pixelCrop;
+  // Capture state when cropper dialog opens
+  $effect(() => {
+    if (cropperDialogOpen) {
+      // Save current state before we start editing
+      cropSettingsBeforeEdit = parseImageProperties($formData.image_properties);
+      previewBeforeEdit = previewImageUrl;
+
+      imageLoaded = false;
+      crop = { x: 0, y: 0 };
+      zoom = 1;
+      currentCropArea = null;
     }
-
-    cropperState.rootState.tempUrl =
-      playlist.thumbnail_maxres_url ?? playlist.thumbnail_url;
   });
 </script>
 
@@ -141,11 +264,11 @@
   }}
 >
   {#if !isPlaylistOwner}
-    <div class="outline-none">
+    <div class="outline-hiddden">
       {@render triggerSnippet()}
     </div>
   {:else}
-    <Drawer.Trigger class="outline-none">
+    <Drawer.Trigger class="outline-hiddden">
       {@render triggerSnippet()}
     </Drawer.Trigger>
   {/if}
@@ -168,13 +291,16 @@
         <div class="px-4 pb-2">
           <div class="mb-4 flex flex-col justify-center gap-4 sm:flex-row">
             <div class="relative m-6 flex justify-center">
-              {#if (playlist.thumbnail_maxres_url || playlist.thumbnail_url) && !$formData.isDeletingPlaylistImage}
+              {#if playlist.thumbnail_url && !$formData.isDeletingPlaylistImage}
                 <div class="relative h-56 w-56">
-                  <ImageCropper.Preview
-                    class="h-full w-full overflow-scroll rounded-md"
+                  <!-- Preview the cropped image -->
+                  <img
+                    src={displayImageUrl}
+                    alt="Playlist thumbnail"
+                    class="h-full w-full rounded-md object-cover"
                   />
                   <DropdownMenu.Root>
-                    <DropdownMenu.Trigger class="outline-none">
+                    <DropdownMenu.Trigger class="outline-hiddden">
                       {#snippet child({ props })}
                         <Button
                           {...props}
@@ -182,23 +308,23 @@
                           variant="outline"
                           size="icon"
                         >
-                          <EditIcon class="size-4" />
+                          <Pencil class="size-4" />
                         </Button>
                       {/snippet}
                     </DropdownMenu.Trigger>
                     <DropdownMenu.Content align="start">
-                      {#if isLowResThumbnail}
-                        <DropdownMenu.Item disabled
-                          >This video doesn't have a high-resolution thumbnail
-                          and cannot be cropped</DropdownMenu.Item
-                        >
-                      {:else}
-                        <DropdownMenu.Item
-                          onclick={() => {
-                            cropperState.rootState.open = true;
-                          }}>Update crop</DropdownMenu.Item
-                        >
-                      {/if}
+                      <!-- {#if isLowResThumbnail} -->
+                      <!--   <DropdownMenu.Item disabled -->
+                      <!--     >This video is missing a high-resolution thumbnail and -->
+                      <!--     cannot be cropped</DropdownMenu.Item -->
+                      <!--   > -->
+                      <!-- {:else} -->
+                      <DropdownMenu.Item
+                        onclick={() => {
+                          cropperDialogOpen = true;
+                        }}>Update crop</DropdownMenu.Item
+                      >
+                      <!-- {/if} -->
                       <DropdownMenu.Item
                         onclick={() => {
                           $formData.isDeletingPlaylistImage = true;
@@ -220,7 +346,7 @@
                         variant="outline"
                         size="icon"
                       >
-                        <EditIcon class="size-4" />
+                        <Pencil class="size-4" />
                       </Button>
                     {/snippet}
                   </Popover.Trigger>
@@ -235,14 +361,6 @@
                 </Popover.Root>
               {/if}
             </div>
-
-            <ImageCropper.Dialog>
-              <ImageCropper.Cropper cropShape="rect" />
-              <ImageCropper.Controls>
-                <ImageCropper.Crop />
-                <ImageCropper.Cancel />
-              </ImageCropper.Controls>
-            </ImageCropper.Dialog>
 
             <div class="relative flex grow flex-col gap-2">
               <Form.Field form={playlistForm} name="name">
@@ -350,9 +468,14 @@
         <div class="p-4">
           <div class="flex flex-col gap-2">
             <Drawer.Footer class="drawer-footer flex gap-2">
-              <Button type="submit" class="drawer-button-footer">
+              <Button
+                type="submit"
+                class="drawer-button-footer"
+                disabled={isSubmitting}
+              >
                 {#if isSubmitting}
-                  <Loader class="animate-spin" />
+                  <Loader class="mr-2 animate-spin" />
+                  Saving...
                 {:else}
                   Save Changes
                 {/if}
@@ -376,3 +499,47 @@
     </form>
   </Drawer.Content>
 </Drawer.Root>
+
+<!-- Crop Dialog using svelte-easy-crop -->
+<Dialog.Root bind:open={cropperDialogOpen}>
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Crop Image</Dialog.Title>
+    </Dialog.Header>
+
+    <div class="relative h-96 flex-1">
+      {#if imageSrc}
+        <!-- Hidden img to preload -->
+        <img
+          src={imageSrc}
+          alt=""
+          style="display: none;"
+          onload={handleImageLoad}
+        />
+
+        {#if imageLoaded}
+          <Cropper
+            image={imageSrc}
+            bind:crop
+            bind:zoom
+            aspect={1}
+            cropShape="rect"
+            showGrid={true}
+            oncropcomplete={({ pixels }) => {
+              currentCropArea = pixels;
+            }}
+          />
+        {:else}
+          <div class="flex h-full items-center justify-center">
+            <Loader class="animate-spin" />
+          </div>
+        {/if}
+      {/if}
+    </div>
+
+    <Dialog.Footer class="flex justify-between">
+      <Button variant="outline" onclick={handleCropCancel}>Cancel</Button>
+      <Button onclick={handleCropConfirm}>Apply Crop</Button>
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog.Root>

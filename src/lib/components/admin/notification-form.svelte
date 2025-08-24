@@ -7,32 +7,25 @@
   import * as Card from '$lib/components/ui/card';
   import * as Form from '$lib/components/ui/form';
   import { Send, TestTube, RotateCcw, Loader } from '@lucide/svelte';
-  import {
-    superForm,
-    type Infer,
-    type SuperValidated,
-  } from 'sveltekit-superforms';
+  import { superForm, type SuperValidated } from 'sveltekit-superforms';
   import type { NotificationType } from '$lib/supabase/notifications';
-  import {
-    adminNotificationSchema,
-    type AdminNotificationSchema,
-  } from '../../../routes/admin/notifications/admin-notifications-schema';
   import {
     notificationTemplates,
     notificationTypes,
   } from './notification-templates';
   import { zodClient } from 'sveltekit-superforms/adapters';
-  import {
-    getCurrentLocalDateTime,
-    getTimezoneInfo,
-  } from '$lib/utils/datetime';
+  import { getTimezoneInfo } from '$lib/utils/datetime';
   import { showToast } from '$lib/state/notifications.svelte';
+  import {
+    adminNotificationSchema,
+    type AdminNotificationSchema,
+  } from '$lib/schema/admin-notification-schema';
 
   let {
     form,
     onSuccess,
   }: {
-    form: SuperValidated<Infer<AdminNotificationSchema>>;
+    form: SuperValidated<AdminNotificationSchema>;
     onSuccess?: () => void;
   } = $props();
 
@@ -119,16 +112,6 @@
     $formData.message = '';
     $formData.startDatetime = '';
     $formData.endDatetime = '';
-  }
-
-  function setCurrentTime(field: 'start' | 'end') {
-    const currentTime = getCurrentLocalDateTime();
-
-    if (field === 'start') {
-      $formData.startDatetime = currentTime;
-    } else {
-      $formData.endDatetime = currentTime;
-    }
   }
 
   // Get current timezone info for display
@@ -293,7 +276,7 @@
                   name="startDatetime"
                   type="datetime-local"
                   bind:value={$formData.startDatetime}
-                  class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                  class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring focus-visible:outline-hiddden flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
             {/snippet}
@@ -316,11 +299,11 @@
                   name="endDatetime"
                   type="datetime-local"
                   bind:value={$formData.endDatetime}
-                  class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                  class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring focus-visible:outline-hiddden flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 />
 
                 <p class="text-muted-foreground text-xs">
-                  When notification should automatically expire ({timezoneInfo.timezoneAbbr})
+                  When notification should automatically expire ({timezoneInfo.timezoneName})
                 </p>
 
                 {#if !$formData.endDatetime}

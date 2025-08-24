@@ -54,31 +54,29 @@
   {supabase}
   {session}
 >
-  <div class="mx-2 flex gap-6">
+  <div class="flex gap-6">
     <div class="relative flex flex-col">
       <div
-        class="flex flex-col items-start border-none bg-transparent p-0 text-left"
+        class="flex flex-col items-start gap-1 border-none bg-transparent text-left"
       >
-        <p class="text-muted-foreground text-sm tracking-tight"></p>
-
         {#if source}
           <p class="text-muted-foreground text-sm tracking-tight">
             {title}
           </p>
-          <h2 class="header-primary-no-margin text-left">
+          <h2 class="header-content">
             {SOURCE_INFO[source].displayName}
           </h2>
         {:else}
-          <h2 class="header-primary-no-margin text-left">
+          <h2 class="header-content">
             {title}
           </h2>
         {/if}
-      </div>
 
-      <p class="text-muted-foreground mt-1 text-sm tracking-tight">
-        {videosCount}
-        {videosCount === 1 ? 'video' : 'videos'}
-      </p>
+        <p class="text-muted-foreground text-sm tracking-tight">
+          {videosCount}
+          {videosCount === 1 ? 'video' : 'videos'}
+        </p>
+      </div>
     </div>
   </div>
 </SharedContentHeader>

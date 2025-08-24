@@ -59,47 +59,6 @@ export async function fetchMoreInProgressVideos({
   return newVideos;
 }
 
-export async function fetchMoreSourceVideos({
-  source,
-  searchString,
-  contentFilter,
-  limit,
-  session,
-  supabase,
-  setHasMoreVideos,
-}: {
-  searchString?: string;
-  source: Source;
-  contentFilter: VideoFilter;
-  limit: number;
-  setHasMoreVideos: (hasMore: boolean) => void;
-  supabase: SupabaseClient<Database>;
-  session?: Session | null;
-}) {
-  const { videos: newVideos, error } = await getVideos({
-    limit,
-    searchString,
-    contentFilter,
-    source,
-    supabase,
-    session,
-  });
-
-  if (error) {
-    showToast(
-      `Unable to retrieve next set of videos for ${source}: ${error.message}`,
-      'error'
-    );
-    return [];
-  }
-
-  if (newVideos.length < limit || !newVideos.length) {
-    setHasMoreVideos(false);
-  }
-
-  return newVideos;
-}
-
 export async function handleAddVideoTimestamp({
   videoTimestamp,
   session,

@@ -49,7 +49,7 @@ export class SourceStateClass {
     // Apply hover styling only through JavaScript state, not CSS hover
     if (isHovered) {
       if (isSelected) {
-        classes += ' brightness-110';
+        classes += ' !brightness-120 !bg-secondary';
       } else {
         classes += ' bg-secondary/50 brightness-110';
       }

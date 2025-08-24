@@ -71,7 +71,7 @@
 
   // Initialize local value from props
   $effect(() => {
-    localValue = formatDateTimeLocal(value);
+    localValue = formatDateTimeLocal(value || '');
   });
 
   // Update parent value when local value changes
@@ -99,4 +99,3 @@
     <p class="text-muted-foreground text-xs">{description}</p>
   {/if}
 </div>
-
