@@ -413,7 +413,6 @@ END;
 $$;
 
 -- Optimized function to update playlist thumbnail
--- Optimized function to update playlist thumbnail
 CREATE OR REPLACE FUNCTION public.update_playlist_thumbnail (
   p_playlist_id bigint,
   p_thumbnail_url text DEFAULT NULL,
@@ -438,9 +437,6 @@ BEGIN
     RETURN QUERY SELECT false, p_playlist_id, NULL::text, 'User must be authenticated to update playlist thumbnails'::text;
     RETURN;
   END IF;
-
-  -- Lock all operations for this user to prevent concurrent playlist modifications
-  PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || current_user_id::text));
 
   -- Check playlist ownership in one optimized query
   SELECT pl.created_by INTO playlist_owner_id
@@ -545,8 +541,8 @@ BEGIN
     RAISE EXCEPTION 'Video IDs array cannot be empty';
   END IF;
 
-  -- ADDED: Advisory lock specifically for this playlist to prevent race conditions
-  PERFORM pg_advisory_xact_lock(hashtext('playlist_video_operations_' || p_playlist_id::text));
+  -- Lock operations for the current user to prevent concurrent modifications
+  PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || current_user_id::text));
 
   -- Lock the playlist and get owner info + thumbnail status in one query
   SELECT 
@@ -601,17 +597,13 @@ BEGIN
   INTO max_position, existing_video_positions
   FROM playlist_data;
   
-  -- Determine which videos are new (not already in playlist) AND preserve order
-  WITH ordered_new_videos AS (
-    SELECT vid, row_number() OVER (ORDER BY ordinality) as order_index
-    FROM unnest(p_video_ids) WITH ORDINALITY AS t(vid, ordinality)
-    WHERE NOT (existing_video_positions ? vid)
-  )
-  SELECT array_agg(vid ORDER BY order_index), vid
-  INTO new_videos_to_insert, first_new_video_id
-  FROM ordered_new_videos
-  ORDER BY order_index
-  LIMIT 1;
+  -- Determine which videos are new (not already in playlist)
+  SELECT array_agg(vid)
+  INTO new_videos_to_insert
+  FROM unnest(p_video_ids) AS vid
+  WHERE NOT (existing_video_positions ? vid);
+  
+  first_video_id := p_video_ids[1];
   
   -- Bulk insert new videos if any exist
   IF new_videos_to_insert IS NOT NULL AND array_length(new_videos_to_insert, 1) > 0 THEN
@@ -641,8 +633,19 @@ BEGIN
   AND pv.video_id = ANY(p_video_ids)
   ORDER BY pv.video_position;
   
-  -- REMOVED: Don't set thumbnail in SQL function anymore - let the application handle it
-  -- This prevents race conditions between multiple concurrent requests
+  -- Set thumbnail URL from first video if playlist doesn't have one
+  IF NOT playlist_has_thumbnail AND new_videos_added THEN
+    UPDATE public.playlists 
+    SET 
+      thumbnail_url = (
+        SELECT v.thumbnail_url
+        FROM public.videos v 
+        WHERE v.id = first_video_id
+      ),
+      image_processing_status = 'pending',
+      image_processing_updated_at = now()
+    WHERE id = p_playlist_id;
+  END IF;
 END;
 $$;
 

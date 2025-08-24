@@ -334,54 +334,57 @@
             {/each}
           {/if}
 
-          {#if session}
-            <Button
-              variant="ghost"
-              class="flex h-[64px] w-full cursor-pointer justify-start"
-              onclick={() => {
-                goto(`/account`);
-                isOpen = false;
-              }}
-            >
-              <div class="flex h-12 w-12 items-center">
-                <Settings class="mx-2 flex !h-8 !w-8" />
-              </div>
-              <span class="m-3 text-sm font-medium overflow-ellipsis">
-                Settings
-              </span>
-            </Button>
-            <Button
-              variant="ghost"
-              class="flex h-[64px] w-full cursor-pointer justify-start"
-              onclick={() => {
-                handleLogout();
-                isOpen = false;
-              }}
-            >
-              <div class="flex h-12 w-12 items-center">
-                <LogOut class="mx-2 flex !h-8 !w-8" />
-              </div>
-              <span class="m-3 text-sm font-medium overflow-ellipsis">
-                Logout
-              </span>
-            </Button>
-          {:else}
-            <Button
-              variant="ghost"
-              class="flex h-[64px] w-full cursor-pointer justify-start"
-              onclick={() => {
-                goto('/auth/login');
-                isOpen = false;
-              }}
-            >
-              <div class="flex h-12 w-12 items-center">
-                <LogIn class="mx-2 flex !h-8 !w-8" />
-              </div>
-              <span class="m-3 text-sm font-medium overflow-ellipsis">
-                Login
-              </span>
-            </Button>
-          {/if}
+          <Sheet.Title class="mx-2 mt-4 mb-2 flex flex-col gap-4">
+            Account
+            {#if session}
+              <Button
+                variant="ghost"
+                class="flex h-[64px] w-full cursor-pointer justify-start"
+                onclick={() => {
+                  goto(`/account`);
+                  isOpen = false;
+                }}
+              >
+                <div class="flex h-12 w-12 items-center">
+                  <Settings class="mx-2 flex !h-8 !w-8" />
+                </div>
+                <span class="m-3 text-sm font-medium overflow-ellipsis">
+                  Settings
+                </span>
+              </Button>
+              <Button
+                variant="ghost"
+                class="flex h-[64px] w-full cursor-pointer justify-start"
+                onclick={() => {
+                  handleLogout();
+                  isOpen = false;
+                }}
+              >
+                <div class="flex h-12 w-12 items-center">
+                  <LogOut class="mx-2 flex !h-8 !w-8" />
+                </div>
+                <span class="m-3 text-sm font-medium overflow-ellipsis">
+                  Logout
+                </span>
+              </Button>
+            {:else}
+              <Button
+                variant="ghost"
+                class="flex h-[64px] w-full cursor-pointer justify-start"
+                onclick={() => {
+                  goto('/auth/login');
+                  isOpen = false;
+                }}
+              >
+                <div class="flex h-12 w-12 items-center">
+                  <LogIn class="mx-2 flex !h-8 !w-8" />
+                </div>
+                <span class="m-3 text-sm font-medium overflow-ellipsis">
+                  Login
+                </span>
+              </Button>
+            {/if}
+          </Sheet.Title>
         </div>
       {/if}
     </ScrollArea>

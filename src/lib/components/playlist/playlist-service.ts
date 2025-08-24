@@ -166,7 +166,7 @@ export async function handleAddVideosToPlaylist({
 
   // Refresh data
   invalidate('supabase:db:videos');
-  sidebarState.refreshData();
+  await sidebarState.refreshData();
 
   return { error: null };
 }

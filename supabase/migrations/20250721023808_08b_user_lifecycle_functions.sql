@@ -154,24 +154,32 @@ END;
 $$;
 
 -- Optimized function to create a user or return existing user (for testing purposes)
+-- Optimized function to create a user or return existing user (for testing purposes)
 CREATE OR REPLACE FUNCTION public.create_user (email text, password text, username text) RETURNS uuid AS $$
 DECLARE
   user_id uuid;
   encrypted_pw text;
+  normalized_email text;
 BEGIN
-  -- Check if user already exists
+  -- Normalize email (trim and lowercase) for consistent matching
+  normalized_email := LOWER(TRIM(email));
+  
+  -- Check if user already exists (case-insensitive email comparison)
   SELECT id INTO user_id 
   FROM auth.users 
-  WHERE auth.users.email = create_user.email;
+  WHERE LOWER(TRIM(auth.users.email)) = normalized_email;
   
   -- If user exists, return their ID
   IF user_id IS NOT NULL THEN
+    RAISE LOG 'Returning existing user ID % for email %', user_id, normalized_email;
     RETURN user_id;
   END IF;
 
   -- User doesn't exist, create new one
   user_id := gen_random_uuid();
   encrypted_pw := extensions.crypt(password, extensions.gen_salt('bf'));
+
+  RAISE LOG 'Creating new user with ID % for email %', user_id, normalized_email;
 
   -- Insert user with all required data
   INSERT INTO auth.users (
@@ -184,7 +192,7 @@ BEGIN
     user_id,
     'authenticated',
     'authenticated',
-    email,
+    normalized_email, -- Use normalized email
     encrypted_pw,
     '2023-05-03 19:41:43.585805+00',
     '2023-04-22 13:10:03.275387+00',
@@ -203,7 +211,7 @@ BEGIN
   ) VALUES (
     gen_random_uuid(),
     user_id,
-    format('{"sub":"%s","email":"%s"}', user_id::text, email)::jsonb,
+    format('{"sub":"%s","email":"%s"}', user_id::text, normalized_email)::jsonb,
     'email',
     user_id::text,
     '2023-05-03 19:41:43.582456+00',
