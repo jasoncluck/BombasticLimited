@@ -107,16 +107,16 @@ WHERE
 -- Index for properties_hash lookups
 CREATE INDEX IF NOT EXISTS "idx_image_processing_jobs_properties_hash" ON "public"."image_processing_jobs" (entity_type, entity_id, properties_hash, status);
 
--- Add unique constraint to prevent duplicate jobs for same entity/type/source/properties combination
-CREATE UNIQUE INDEX IF NOT EXISTS "idx_image_processing_jobs_unique_active" ON "public"."image_processing_jobs" (
+-- Updated unique constraint to only prevent duplicates for processing jobs
+-- (pending jobs can be replaced, but processing jobs should remain unique)
+DROP INDEX IF EXISTS "idx_image_processing_jobs_unique_active";
+
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_image_processing_jobs_unique_processing" ON "public"."image_processing_jobs" (
   entity_type,
   entity_id,
-  image_type,
-  source_url,
-  COALESCE(properties_hash, 'null')
+  image_type
 )
-WHERE
-  status IN ('pending', 'processing');
+WHERE status = 'processing';
 
 -- Optimized trigger to update updated_at timestamp
 CREATE OR REPLACE FUNCTION public.update_image_processing_jobs_updated_at () RETURNS TRIGGER LANGUAGE plpgsql
@@ -199,7 +199,7 @@ BEGIN
 END;
 $$;
 
--- Function to queue image processing jobs with duplicate prevention
+-- Function to queue image processing jobs with duplicate prevention and pending job replacement
 CREATE OR REPLACE FUNCTION public.queue_image_processing_job (
   p_entity_type text,
   p_entity_id text,
@@ -214,17 +214,10 @@ DECLARE
   job_id uuid;
   new_properties_hash text;
   existing_completed_job_id uuid;
+  existing_pending_job_id uuid;
 BEGIN
   -- Generate hash for the properties
   new_properties_hash := public.hash_image_properties(p_image_properties);
-  
-  -- Check for existing active job (pending or processing) with same entity and type
-  SELECT id INTO job_id
-  FROM "public"."image_processing_jobs"
-  WHERE entity_type = p_entity_type
-    AND entity_id = p_entity_id
-    AND image_type = p_image_type
-    AND status IN ('pending', 'processing');
   
   -- Check for existing completed job with same configuration
   SELECT id INTO existing_completed_job_id
@@ -239,10 +232,48 @@ BEGIN
   -- If we found a completed job with same configuration, don't create a new one
   IF existing_completed_job_id IS NOT NULL THEN
     RAISE LOG 'Existing completed job found for % % with same configuration: %, skipping duplicate', p_entity_type, p_entity_id, existing_completed_job_id;
-    RETURN NULL;
+    RETURN existing_completed_job_id;
   END IF;
   
-  -- Create new job (will fail if unique constraint is violated due to concurrent access)
+  -- Check for existing pending job with same entity and type (regardless of source/properties)
+  SELECT id INTO existing_pending_job_id
+  FROM "public"."image_processing_jobs"
+  WHERE entity_type = p_entity_type
+    AND entity_id = p_entity_id
+    AND image_type = p_image_type
+    AND status = 'pending';
+  
+  -- If we found a pending job, replace it with new configuration
+  IF existing_pending_job_id IS NOT NULL THEN
+    UPDATE "public"."image_processing_jobs"
+    SET 
+      source_url = p_source_url,
+      properties_hash = new_properties_hash,
+      priority = p_priority,
+      created_at = now(),
+      updated_at = now(),
+      attempts = 0,
+      error_message = NULL
+    WHERE id = existing_pending_job_id;
+    
+    RAISE LOG 'Replaced existing pending job % for % % with new configuration', existing_pending_job_id, p_entity_type, p_entity_id;
+    RETURN existing_pending_job_id;
+  END IF;
+  
+  -- Check for processing job - don't replace, just return existing job ID
+  SELECT id INTO job_id
+  FROM "public"."image_processing_jobs"
+  WHERE entity_type = p_entity_type
+    AND entity_id = p_entity_id
+    AND image_type = p_image_type
+    AND status = 'processing';
+    
+  IF job_id IS NOT NULL THEN
+    RAISE LOG 'Found existing processing job % for % %, not replacing', job_id, p_entity_type, p_entity_id;
+    RETURN job_id;
+  END IF;
+  
+  -- Create new job since no existing job found
   BEGIN
     INSERT INTO "public"."image_processing_jobs" (
       entity_type, entity_id, image_type, source_url, properties_hash, priority
@@ -254,15 +285,15 @@ BEGIN
     RETURN job_id;
   EXCEPTION
     WHEN unique_violation THEN
-      -- Another concurrent transaction already created a job, find and return it
+      -- Another concurrent transaction created a job, find and return it
       SELECT id INTO job_id
       FROM "public"."image_processing_jobs"
       WHERE entity_type = p_entity_type
         AND entity_id = p_entity_id
         AND image_type = p_image_type
-        AND source_url = p_source_url
-        AND COALESCE(properties_hash, 'null') = COALESCE(new_properties_hash, 'null')
-        AND status IN ('pending', 'processing');
+        AND status IN ('pending', 'processing')
+      ORDER BY created_at DESC
+      LIMIT 1;
       
       RAISE LOG 'Concurrent job creation detected, returning existing job % for % %', job_id, p_entity_type, p_entity_id;
       RETURN job_id;
@@ -545,7 +576,6 @@ DECLARE
   thumbnail_changed boolean := false;
   needs_processing boolean := false;
   already_processed boolean := false;
-  existing_job_id uuid;
 BEGIN
   -- For INSERT: check if we already have processed images or pending jobs for this config
   IF TG_OP = 'INSERT' THEN
@@ -557,16 +587,7 @@ BEGIN
         NEW.image_processing_status = 'completed'
       );
       
-      -- Check if there's already a pending/processing job for this video
-      SELECT id INTO existing_job_id
-      FROM "public"."image_processing_jobs"
-      WHERE entity_type = 'video'
-        AND entity_id = NEW.id
-        AND image_type = 'thumbnail'
-        AND source_url = NEW.thumbnail_url
-        AND status IN ('pending', 'processing');
-      
-      IF NOT already_processed AND existing_job_id IS NULL THEN
+      IF NOT already_processed THEN
         job_id := public.queue_image_processing_job(
           'video', NEW.id, 'thumbnail', NEW.thumbnail_url, NULL, 50
         );
@@ -579,11 +600,7 @@ BEGIN
           NEW.thumbnail_avif_url = NULL;
         END IF;
       ELSE
-        IF already_processed THEN
-          RAISE LOG 'Video % already has optimized images for current config, skipping processing', NEW.id;
-        ELSE
-          RAISE LOG 'Video % already has pending job %, skipping duplicate processing', NEW.id, existing_job_id;
-        END IF;
+        RAISE LOG 'Video % already has optimized images for current config, skipping processing', NEW.id;
       END IF;
     ELSE
       -- No thumbnail_url, mark as completed
@@ -613,16 +630,7 @@ BEGIN
           OLD.thumbnail_url = NEW.thumbnail_url
         );
         
-        -- Check if there's already a pending/processing job for this video with same source
-        SELECT id INTO existing_job_id
-        FROM "public"."image_processing_jobs"
-        WHERE entity_type = 'video'
-          AND entity_id = NEW.id
-          AND image_type = 'thumbnail'
-          AND source_url = NEW.thumbnail_url
-          AND status IN ('pending', 'processing');
-        
-        IF NOT already_processed AND existing_job_id IS NULL THEN
+        IF NOT already_processed THEN
           job_id := public.queue_image_processing_job(
             'video', NEW.id, 'thumbnail', NEW.thumbnail_url, NULL, 50
           );
@@ -636,11 +644,7 @@ BEGIN
             NEW.thumbnail_avif_url = NULL;
           END IF;
         ELSE
-          IF already_processed THEN
-            RAISE LOG 'Video % already has optimized images for thumbnail_url %, skipping processing', NEW.id, NEW.thumbnail_url;
-          ELSE
-            RAISE LOG 'Video % already has pending job % for thumbnail_url %, skipping duplicate processing', NEW.id, existing_job_id, NEW.thumbnail_url;
-          END IF;
+          RAISE LOG 'Video % already has optimized images for thumbnail_url %, skipping processing', NEW.id, NEW.thumbnail_url;
         END IF;
       ELSE
         -- No thumbnail_url, clear optimized URLs and mark as completed

@@ -467,7 +467,7 @@ BEGIN
     END IF;
   END IF;
 
-  -- Update the playlist - LET THE TRIGGER HANDLE PROCESSING STATUS
+  -- Update the playlist - trigger will update the image processing status
   IF p_thumbnail_url IS NOT NULL THEN
     -- Setting a thumbnail URL - only update the thumbnail and properties
     -- The trigger will handle clearing processed images and setting status

@@ -223,8 +223,8 @@ export async function handleUpdatePlaylistImage({
     showNotification('Unable update playlist image');
   }
 
-  invalidate('supabase:db:videos');
   sidebarState.refreshData();
+  invalidate('supabase:db:videos');
   return { error };
 }
 

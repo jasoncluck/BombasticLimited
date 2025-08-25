@@ -178,6 +178,7 @@
     },
     async onUpdated(event) {
       isSubmitting = false;
+      playlistForm.reset();
       updateFlash(page);
       if (event.form.valid) {
         const { isDeletingPlaylistImage, ...data } = event.form.data;

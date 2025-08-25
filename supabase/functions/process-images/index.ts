@@ -10,6 +10,8 @@ interface ImageProcessingJob {
   image_type: 'thumbnail' | 'playlist_image';
   source_url: string;
   attempts: number;
+  created_at: string;
+  updated_at: string;
 }
 
 interface ProcessedJob {
@@ -29,6 +31,7 @@ interface SuccessResponse {
   processed: number;
   message: string;
   jobs?: ProcessedJob[];
+  skipped?: number;
 }
 
 type ApiResponse = SuccessResponse | ErrorResponse;
@@ -42,12 +45,51 @@ interface VideoEntity {
   thumbnail_url: string | null;
 }
 
+interface PendingJobRow {
+  id: string;
+  entity_type: string;
+  entity_id: string;
+  image_type: string;
+  source_url: string;
+  attempts: number;
+  max_attempts: number;
+  created_at: string;
+  updated_at: string;
+}
+
 // Initialize Supabase client
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
 if (!supabaseUrl || !supabaseServiceKey) {
   throw new Error('Missing required Supabase environment variables');
+}
+
+function isJobReadyForProcessing(job: ImageProcessingJob): boolean {
+  // Videos are always ready for processing (no cooldown)
+  if (job.entity_type === 'video') {
+    console.log(`Video job ${job.job_id} is ready for immediate processing`);
+    return true;
+  }
+
+  // Playlists have a 5-minute cooldown period
+  if (job.entity_type === 'playlist') {
+    const now = new Date();
+    const updatedAt = new Date(job.updated_at);
+    const timeDifferenceMs = now.getTime() - updatedAt.getTime();
+    const fiveMinutesMs = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+    const isReady = timeDifferenceMs >= fiveMinutesMs;
+
+    console.log(
+      `Playlist job ${job.job_id} updated at ${job.updated_at}, current time: ${now.toISOString()}, difference: ${Math.floor(timeDifferenceMs / 1000)}s, ready: ${isReady}`
+    );
+
+    return isReady;
+  }
+
+  // Default to ready for unknown entity types
+  return true;
 }
 
 async function processImageJobs(): Promise<ApiResponse> {
@@ -61,63 +103,24 @@ async function processImageJobs(): Promise<ApiResponse> {
 
     console.log('Starting image processing job batch...');
 
-    // Get up to 25 pending jobs using the database function
-    const maxJobsPerRequest = 25;
-    const allJobs: ImageProcessingJob[] = [];
+    // Get pending jobs directly from the table with more details including timestamps
+    const { data: allPendingJobs, error: fetchError } = await supabase
+      .from('image_processing_jobs')
+      .select(
+        'id, entity_type, entity_id, image_type, source_url, attempts, max_attempts, created_at, updated_at'
+      )
+      .eq('status', 'pending')
+      .order('priority', { ascending: true })
+      .order('created_at', { ascending: true })
+      .limit(50) // Get more jobs to filter from
+      .returns<PendingJobRow[]>();
 
-    // Fetch jobs one by one and immediately mark as processing to avoid duplicates
-    for (let i = 0; i < maxJobsPerRequest; i++) {
-      const { data: jobs, error: fetchError } = await supabase
-        .rpc('get_next_image_processing_job')
-        .returns<ImageProcessingJob[]>();
-
-      if (fetchError) {
-        console.error(`Failed to fetch next job:`, fetchError);
-        throw new Error(`Failed to fetch next job: ${fetchError.message}`);
-      }
-
-      if (!jobs || jobs.length === 0) {
-        // No more jobs available
-        console.log(
-          `No more jobs available after fetching ${allJobs.length} jobs`
-        );
-        break;
-      }
-
-      const job = jobs[0]; // get_next_image_processing_job returns one job
-      console.log(
-        `Fetched job ${job.job_id} for ${job.entity_type} ${job.entity_id}`
-      );
-
-      // Immediately mark this job as processing to prevent it from being fetched again
-      const { data: startSuccess, error: startError } = await supabase
-        .rpc('start_image_processing_job', { job_id: job.job_id })
-        .returns<boolean>();
-
-      if (startError) {
-        console.error(
-          `Failed to mark job ${job.job_id} as processing:`,
-          startError
-        );
-        // Skip this job if we can't mark it as processing
-        continue;
-      }
-
-      if (!startSuccess) {
-        console.warn(
-          `Job ${job.job_id} was not updated (likely already processing or completed)`
-        );
-        // Skip this job as it's no longer available
-        continue;
-      }
-
-      console.log(`Successfully marked job ${job.job_id} as processing`);
-
-      // Add the job to our list only after successfully marking it as processing
-      allJobs.push(job);
+    if (fetchError) {
+      console.error('Failed to fetch pending jobs:', fetchError);
+      throw new Error(`Failed to fetch pending jobs: ${fetchError.message}`);
     }
 
-    if (allJobs.length === 0) {
+    if (!allPendingJobs || allPendingJobs.length === 0) {
       console.log('No pending jobs found in queue');
       return {
         success: true,
@@ -126,14 +129,146 @@ async function processImageJobs(): Promise<ApiResponse> {
       };
     }
 
-    console.log(`Processing ${allJobs.length} image processing jobs`);
+    console.log(
+      `Found ${allPendingJobs.length} pending jobs, filtering for jobs ready for processing...`
+    );
+
+    // Filter jobs that are eligible (attempts < max_attempts)
+    const eligibleJobs = allPendingJobs.filter(
+      (job: PendingJobRow): boolean => {
+        // First check if job hasn't exceeded max attempts
+        if (job.attempts >= job.max_attempts) {
+          console.log(
+            `Job ${job.id} has exceeded max attempts (${job.attempts}/${job.max_attempts}), skipping`
+          );
+          return false;
+        }
+        return true;
+      }
+    );
+
+    // Separate videos and playlists for different processing logic
+    const videoJobs = eligibleJobs.filter(
+      (job: PendingJobRow) => job.entity_type === 'video'
+    );
+    const playlistJobs = eligibleJobs.filter(
+      (job: PendingJobRow) => job.entity_type === 'playlist'
+    );
+
+    // Videos are always ready (no cooldown)
+    const readyVideoJobs = videoJobs.map(
+      (job: PendingJobRow): ImageProcessingJob => ({
+        job_id: job.id,
+        entity_type: job.entity_type as 'video' | 'playlist',
+        entity_id: job.entity_id,
+        image_type: job.image_type as 'thumbnail' | 'playlist_image',
+        source_url: job.source_url,
+        attempts: job.attempts,
+        created_at: job.created_at,
+        updated_at: job.updated_at,
+      })
+    );
+
+    // Playlists need to pass the 5-minute cooldown check
+    const readyPlaylistJobs = playlistJobs
+      .filter((job: PendingJobRow): boolean => {
+        const mappedJob: ImageProcessingJob = {
+          job_id: job.id,
+          entity_type: job.entity_type as 'video' | 'playlist',
+          entity_id: job.entity_id,
+          image_type: job.image_type as 'thumbnail' | 'playlist_image',
+          source_url: job.source_url,
+          attempts: job.attempts,
+          created_at: job.created_at,
+          updated_at: job.updated_at,
+        };
+        return isJobReadyForProcessing(mappedJob);
+      })
+      .map(
+        (job: PendingJobRow): ImageProcessingJob => ({
+          job_id: job.id,
+          entity_type: job.entity_type as 'video' | 'playlist',
+          entity_id: job.entity_id,
+          image_type: job.image_type as 'thumbnail' | 'playlist_image',
+          source_url: job.source_url,
+          attempts: job.attempts,
+          created_at: job.created_at,
+          updated_at: job.updated_at,
+        })
+      );
+
+    // Combine ready jobs (videos + ready playlists)
+    const allReadyJobs = [...readyVideoJobs, ...readyPlaylistJobs];
+
+    const skippedPlaylistsCount =
+      playlistJobs.length - readyPlaylistJobs.length;
+    const ineligibleJobsCount = allPendingJobs.length - eligibleJobs.length;
+
+    if (allReadyJobs.length === 0) {
+      let message = '';
+      if (eligibleJobs.length === 0) {
+        message = `All ${allPendingJobs.length} pending jobs have exceeded max attempts`;
+      } else if (videoJobs.length === 0 && playlistJobs.length > 0) {
+        message = `All ${playlistJobs.length} playlist jobs are within 5-minute cooldown period`;
+      } else {
+        message = `No jobs ready for processing (${skippedPlaylistsCount} playlists in cooldown period)`;
+      }
+
+      console.log(message);
+      return {
+        success: true,
+        processed: 0,
+        skipped: skippedPlaylistsCount,
+        message,
+      };
+    }
+
+    console.log(
+      `${allReadyJobs.length} jobs are ready for processing (${readyVideoJobs.length} videos immediate, ${readyPlaylistJobs.length} playlists ready, ${skippedPlaylistsCount} playlists in cooldown, ${ineligibleJobsCount} jobs exceeded max attempts)`
+    );
+
+    // Limit to maximum number of jobs we want to process in one batch
+    const maxJobsPerRequest = 25;
+    const jobsToProcess = allReadyJobs.slice(0, maxJobsPerRequest);
 
     const processedJobs: ProcessedJob[] = [];
     const failedJobs: string[] = [];
 
-    // Process each job (they're already marked as processing)
-    for (const job of allJobs) {
+    // Process each ready job
+    for (const job of jobsToProcess) {
       try {
+        // Immediately mark this job as processing to prevent it from being fetched again
+        const { data: startSuccess, error: startError } = await supabase
+          .rpc('start_image_processing_job', { job_id: job.job_id })
+          .returns<boolean>();
+
+        if (startError) {
+          console.error(
+            `Failed to mark job ${job.job_id} as processing:`,
+            startError
+          );
+          // Skip this job if we can't mark it as processing
+          continue;
+        }
+
+        if (!startSuccess) {
+          console.warn(
+            `Job ${job.job_id} was not updated (likely already processing or completed)`
+          );
+          // Skip this job as it's no longer available
+          continue;
+        }
+
+        console.log(`Successfully marked job ${job.job_id} as processing`);
+
+        const ageMinutes =
+          job.entity_type === 'playlist'
+            ? Math.floor(
+                (new Date().getTime() - new Date(job.updated_at).getTime()) /
+                  (1000 * 60)
+              )
+            : 0; // Videos don't have cooldown, so age is not relevant
+
         console.log('Processing job:', {
           jobId: job.job_id,
           entityType: job.entity_type,
@@ -141,6 +276,7 @@ async function processImageJobs(): Promise<ApiResponse> {
           imageType: job.image_type,
           sourceUrl: job.source_url,
           attempts: job.attempts,
+          ageMinutes: job.entity_type === 'playlist' ? ageMinutes : 'immediate',
         });
 
         // Get current entity data to include in webhook payload
@@ -267,10 +403,20 @@ async function processImageJobs(): Promise<ApiResponse> {
       }
     }
 
-    const message =
-      failedJobs.length > 0
-        ? `Processed ${processedJobs.length} jobs successfully, ${failedJobs.length} failed`
-        : `Processed ${processedJobs.length} jobs successfully`;
+    let message = '';
+    if (failedJobs.length > 0) {
+      message = `Processed ${processedJobs.length} jobs successfully, ${failedJobs.length} failed`;
+    } else {
+      message = `Processed ${processedJobs.length} jobs successfully`;
+    }
+
+    if (skippedPlaylistsCount > 0) {
+      message += `, ${skippedPlaylistsCount} playlists skipped (cooldown period)`;
+    }
+
+    if (ineligibleJobsCount > 0) {
+      message += `, ${ineligibleJobsCount} jobs exceeded max attempts`;
+    }
 
     console.log(message);
     if (failedJobs.length > 0) {
@@ -280,6 +426,7 @@ async function processImageJobs(): Promise<ApiResponse> {
     return {
       success: true,
       processed: processedJobs.length,
+      skipped: skippedPlaylistsCount,
       message,
       jobs: processedJobs.length > 0 ? processedJobs : undefined,
     };

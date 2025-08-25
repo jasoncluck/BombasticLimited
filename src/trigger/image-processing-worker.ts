@@ -8,9 +8,13 @@ import {
 } from '$lib/utils/dynamic-crop-dimensions';
 import type { PlaylistImageProperties } from '$lib/supabase/playlists';
 
-const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+//FIX: Do not commit, just for testing
+// const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
+// const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const triggerSecretKey = process.env.TRIGGER_SECRET_KEY;
+const supabaseServiceRoleKey = 'sb_secret_KbOPFiPjUeHUVd0jPTV1Kg_Rndl23de';
+
+const supabaseUrl = 'https://blrvnfwxtzzbofsdrvwv.supabase.co';
 
 if (!supabaseUrl || !supabaseServiceRoleKey) {
   throw new Error('Missing supabase env vars.');
