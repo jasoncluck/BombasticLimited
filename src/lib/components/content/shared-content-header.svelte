@@ -104,16 +104,16 @@
     <div class="flex items-center gap-0 sm:my-4">
       {#if profilePlaylist}
         <!-- Play Button -->
-        <button
+        <Button
+          size="icon"
           disabled={!nextVideoToPlay}
-          class="bg-primary hover:!bg-primary mr-2 rounded-full p-7
-      transition-transform duration-200 outline-none
-      hover:scale-105 hover:shadow-2xl hover:brightness-[150%]
-      "
+          class="bg-primary hover:!bg-primary mr-2 rounded-full border-none p-7 
+        shadow-xl transition-transform duration-200
+        outline-none hover:scale-105 hover:shadow-2xl hover:brightness-[150%] focus:border-none focus:outline-none active:border-none active:outline-none"
           onclick={handlePlayVideo}
         >
-          <Play class="h-6! w-6! fill-black stroke-black" />
-        </button>
+          <Play class="fill-background-lighter h-6! w-6! stroke-black" />
+        </Button>
 
         <!-- Plus/Minus Button -->
         {#if !isPlaylistCreator && !playlists.some((pl) => pl.id === profilePlaylist.id)}
