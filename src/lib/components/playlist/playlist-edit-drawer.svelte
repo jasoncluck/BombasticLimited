@@ -72,7 +72,6 @@
   let previewImageUrl = $state<string | null>(null);
 
   // Mobile touch handling state
-  let touchStartTime = $state(0);
   let isDragging = $state(false);
   let touchStartY = $state(0);
 
@@ -80,7 +79,6 @@
 
   // Touch event handlers for better mobile experience
   function handleTouchStart(event: TouchEvent): void {
-    touchStartTime = Date.now();
     touchStartY = event.touches[0].clientY;
     isDragging = false;
   }
@@ -95,12 +93,8 @@
     }
   }
 
-  function handleTouchEnd(event: TouchEvent): void {
-    const touchEndTime = Date.now();
-    const touchDuration = touchEndTime - touchStartTime;
-
-    // Prevent focus if it was a quick tap or drag gesture
-    if (touchDuration < 150 || isDragging) {
+  function handleTouchEnd(): void {
+    if (isDragging) {
       // Blur any focused inputs to prevent keyboard
       const activeElement = document.activeElement as HTMLElement;
       if (
