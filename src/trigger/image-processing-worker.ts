@@ -8,12 +8,11 @@ import {
 } from '$lib/utils/dynamic-crop-dimensions';
 import type { PlaylistImageProperties } from '$lib/supabase/playlists';
 
-const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseServiceRoleKey) {
-  throw new Error('Missing supabase env vars.');
-}
+//FIX: Do not commit, just for testing
+// const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
+// const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseUrl = 'https://blrvnfwxtzzbofsdrvwv.supabase.co';
+const supabaseServiceRoleKey = 'sb_secret_KbOPFiPjUeHUVd0jPTV1Kg_Rndl23de';
 
 // Supabase client setup
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
@@ -59,86 +58,6 @@ interface ProcessedImages {
   webp: Buffer;
   avif: Buffer;
 }
-
-interface ExistingVideoData {
-  image_processing_updated_at: string | null;
-  thumbnail_url: string | null;
-  thumbnail_webp_url: string | null;
-  thumbnail_avif_url: string | null;
-}
-
-interface ExistingPlaylistData {
-  image_processing_updated_at: string | null;
-  thumbnail_url: string | null;
-  image_webp_url: string | null;
-  image_avif_url: string | null;
-}
-
-// Check if entity was recently processed to avoid unnecessary work
-async function checkRecentProcessing(
-  entityType: string,
-  entityId: string,
-  currentThumbnailUrl: string
-): Promise<{ shouldSkip: boolean; reason?: string }> {
-  const table = entityType === 'playlist' ? 'playlists' : 'videos';
-  const selectFields =
-    entityType === 'playlist'
-      ? 'image_processing_updated_at, thumbnail_url, image_webp_url, image_avif_url'
-      : 'image_processing_updated_at, thumbnail_url, thumbnail_webp_url, thumbnail_avif_url';
-
-  const { data: existing, error } = await supabase
-    .from(table)
-    .select(selectFields)
-    .eq('id', entityId)
-    .maybeSingle();
-
-  if (error || !existing) {
-    return { shouldSkip: false };
-  }
-
-  // Check if already processed recently with same thumbnail URL
-  if (
-    existing.image_processing_updated_at &&
-    existing.thumbnail_url === currentThumbnailUrl
-  ) {
-    const lastProcessed = new Date(existing.image_processing_updated_at);
-    const now = new Date();
-    const hoursSinceProcessed =
-      (now.getTime() - lastProcessed.getTime()) / (1000 * 60 * 60);
-
-    // Skip if processed within last hour with same thumbnail
-    if (hoursSinceProcessed < 1) {
-      return {
-        shouldSkip: true,
-        reason: `Recently processed ${hoursSinceProcessed.toFixed(1)}h ago with same thumbnail`,
-      };
-    }
-  }
-
-  // Check if optimized images already exist for same thumbnail
-  let hasOptimizedImages = false;
-  if (entityType === 'playlist') {
-    const playlistData = existing as ExistingPlaylistData;
-    hasOptimizedImages = Boolean(
-      playlistData.image_webp_url && playlistData.image_avif_url
-    );
-  } else {
-    const videoData = existing as ExistingVideoData;
-    hasOptimizedImages = Boolean(
-      videoData.thumbnail_webp_url && videoData.thumbnail_avif_url
-    );
-  }
-
-  if (hasOptimizedImages && existing.thumbnail_url === currentThumbnailUrl) {
-    return {
-      shouldSkip: true,
-      reason: 'Optimized images already exist for current thumbnail',
-    };
-  }
-
-  return { shouldSkip: false };
-}
-
 // Generate storage paths for optimized images
 function generateStoragePaths(
   entityType: string,
@@ -559,39 +478,6 @@ export const processImageWebhook = task({
       return {
         processed: false,
         reason: 'No thumbnail URL provided',
-      };
-    }
-
-    // Check if recently processed to avoid unnecessary work
-    console.log(`Checking recent processing for ${entityType} ${record.id}`);
-    const { shouldSkip, reason: skipReason } = await checkRecentProcessing(
-      entityType,
-      record.id,
-      record.thumbnail_url
-    );
-
-    if (shouldSkip) {
-      console.log(
-        `Skipping processing for ${entityType} ${record.id}: ${skipReason}`
-      );
-      if (jobId) {
-        try {
-          const { data: completionResult, error: completionError } =
-            await supabase.rpc('complete_image_processing_job', {
-              job_id: jobId,
-            });
-          console.log('Job completion result:', {
-            completionResult,
-            completionError,
-          });
-        } catch (error) {
-          console.warn(`Failed to complete job ${jobId}:`, error);
-        }
-      }
-      return {
-        processed: false,
-        reason: skipReason,
-        skippedDuplicate: true,
       };
     }
 
