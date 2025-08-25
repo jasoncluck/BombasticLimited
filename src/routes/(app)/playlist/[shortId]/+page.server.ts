@@ -208,6 +208,7 @@ export const actions: Actions = {
       await updatePlaylistThumbnail({
         playlistId: id,
         imageProperties: null,
+        thumbnailUrl: null,
         supabase,
       });
     } else {

@@ -97,7 +97,7 @@
     >
       <!-- Simplified content wrapper to reduce nesting -->
       <div class="min-h-full w-full">
-        <div class="m-4 flex items-start justify-center">
+        <div class="m-2 flex items-start justify-center sm:m-6">
           <div class="w-full max-w-[1000px] @xl:max-w-[1450px]">
             <div class="relative mb-20 flex flex-col">
               <LoadingOverlay {isNavigatingToContent} />

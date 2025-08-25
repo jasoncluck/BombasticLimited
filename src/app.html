@@ -42,6 +42,12 @@
       media="(prefers-color-scheme: dark)"
     />
 
+    <!-- Permissions Policy to allow sensor access for YouTube/Twitch embeds -->
+    <meta
+      http-equiv="Permissions-Policy"
+      content="accelerometer=(self https://www.youtube.com https://www.youtube-nocookie.com https://embed.twitch.tv https://player.twitch.tv https://googleads.g.doubleclick.net https://googlesyndication.com https://www.googlesyndication.com), gyroscope=(self https://www.youtube.com https://www.youtube-nocookie.com https://embed.twitch.tv https://player.twitch.tv https://googleads.g.doubleclick.net https://googlesyndication.com https://www.googlesyndication.com), microphone=(self https://www.youtube.com https://www.youtube-nocookie.com https://embed.twitch.tv https://player.twitch.tv), camera=(self https://www.youtube.com https://www.youtube-nocookie.com https://embed.twitch.tv https://player.twitch.tv)"
+    />
+
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     %sveltekit.head%
   </head>

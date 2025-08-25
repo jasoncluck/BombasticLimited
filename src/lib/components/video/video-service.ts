@@ -8,8 +8,7 @@ import type {
   SupabaseClient,
 } from '@supabase/supabase-js';
 import type { Database } from '$lib/supabase/database.types';
-import type { Source } from '$lib/constants/source';
-import type { TimestampFilter, VideoFilter } from '../content/content-filter';
+import type { TimestampFilter } from '../content/content-filter';
 import { goto, invalidate } from '$app/navigation';
 import {
   deleteVideoTimestamps,

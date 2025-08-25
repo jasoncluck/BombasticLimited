@@ -105,17 +105,14 @@
       {#if profilePlaylist}
         <!-- Play Button -->
         <Button
-          variant="ghost"
           size="icon"
           disabled={!nextVideoToPlay}
-          class="bg-primary hover:!bg-primary mr-2 rounded-full p-7 shadow-xl 
-        transition-transform duration-200 hover:scale-105
-        hover:shadow-2xl hover:brightness-[150%]"
+          class="bg-primary hover:!bg-primary mr-2 rounded-full border-none p-7 
+        shadow-xl transition-transform duration-200
+        outline-none hover:scale-105 hover:shadow-2xl hover:brightness-[150%] focus:border-none focus:outline-none active:border-none active:outline-none"
           onclick={handlePlayVideo}
         >
-          <Play
-            class="stroke-background-lighter fill-background-lighter h-6! w-6! "
-          />
+          <Play class="h-6! w-6! fill-black stroke-0" />
         </Button>
 
         <!-- Plus/Minus Button -->

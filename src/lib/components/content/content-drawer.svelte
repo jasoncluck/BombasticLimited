@@ -299,7 +299,7 @@
             bind:open={addToPlaylistDrawerOpen}
           >
             {#snippet trigger()}
-              <Button class="drawer-button" variant="ghost" data-drawer-trigger>
+              <Button class="drawer-button" variant="ghost">
                 <CirclePlus class="drawer-icon" />
                 Add video to playlist
                 <ChevronRight class="ml-auto" />
@@ -384,7 +384,7 @@
               handleUpdatePlaylistImage({
                 playlist,
                 sidebarState,
-                thumbnailVideo: operationVideos[0],
+                thumbnailUrl: operationVideos[0].thumbnail_url,
                 supabase,
               });
 

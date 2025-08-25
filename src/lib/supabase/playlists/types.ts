@@ -27,7 +27,7 @@ export type Playlist = {
   type: GetPlaylistDataResponse['playlist_type'];
   image_properties: GetPlaylistDataResponse['playlist_image_properties'] | null;
   youtube_id: GetPlaylistDataResponse['playlist_youtube_id'] | null;
-  thumbnail_url: GetPlaylistDataResponse['playlist_thumbnail_url'];
+  thumbnail_url: GetPlaylistDataResponse['playlist_thumbnail_url'] | null;
   deleted_at: GetPlaylistDataResponse['playlist_deleted_at'] | null;
   duration_seconds: GetPlaylistDataResponse['total_duration_seconds'];
   // Optional properties that may not always be present
