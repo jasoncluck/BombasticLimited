@@ -105,7 +105,6 @@
       {#if profilePlaylist}
         <!-- Play Button -->
         <Button
-          variant="ghost"
           size="icon"
           disabled={!nextVideoToPlay}
           class="bg-primary hover:!bg-primary mr-2 rounded-full border-none p-7 
