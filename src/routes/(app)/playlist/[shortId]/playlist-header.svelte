@@ -102,7 +102,7 @@
   {session}
   {...props}
 >
-  <div class="mb-8 flex flex-col">
+  <div class="mb-6 flex flex-col">
     <div class="playlist-header-content min-h-[230px]">
       <!-- Desktop/Hover layout -->
       {#if mediaQueryState.canHover}

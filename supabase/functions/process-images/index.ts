@@ -12,6 +12,7 @@ interface ImageProcessingJob {
   attempts: number;
   created_at: string;
   updated_at: string;
+  processing_started_at?: string | null;
 }
 
 interface ProcessedJob {
@@ -32,6 +33,7 @@ interface SuccessResponse {
   message: string;
   jobs?: ProcessedJob[];
   skipped?: number;
+  resubmitted?: number;
 }
 
 type ApiResponse = SuccessResponse | ErrorResponse;
@@ -55,6 +57,8 @@ interface PendingJobRow {
   max_attempts: number;
   created_at: string;
   updated_at: string;
+  processing_started_at: string | null;
+  status: string;
 }
 
 // Initialize Supabase client
@@ -63,6 +67,30 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
 if (!supabaseUrl || !supabaseServiceKey) {
   throw new Error('Missing required Supabase environment variables');
+}
+
+/**
+ * Check if a job has been processing for over 30 minutes
+ */
+function isJobStuck(job: PendingJobRow): boolean {
+  if (!job.processing_started_at) {
+    return false;
+  }
+
+  const now = new Date();
+  const processingStarted = new Date(job.processing_started_at);
+  const thirtyMinutesMs = 30 * 60 * 1000; // 30 minutes in milliseconds
+  const timeDifferenceMs = now.getTime() - processingStarted.getTime();
+
+  const isStuck = timeDifferenceMs >= thirtyMinutesMs;
+
+  if (isStuck) {
+    console.log(
+      `Job ${job.id} has been processing for ${Math.floor(timeDifferenceMs / 1000 / 60)} minutes (started: ${job.processing_started_at})`
+    );
+  }
+
+  return isStuck;
 }
 
 function isJobReadyForProcessing(job: ImageProcessingJob): boolean {
@@ -103,49 +131,100 @@ async function processImageJobs(): Promise<ApiResponse> {
 
     console.log('Starting image processing job batch...');
 
-    // Get pending jobs directly from the table with more details including timestamps
-    const { data: allPendingJobs, error: fetchError } = await supabase
+    // Get both pending jobs and stuck processing jobs
+    const { data: allJobs, error: fetchError } = await supabase
       .from('image_processing_jobs')
       .select(
-        'id, entity_type, entity_id, image_type, source_url, attempts, max_attempts, created_at, updated_at'
+        'id, entity_type, entity_id, image_type, source_url, attempts, max_attempts, created_at, updated_at, processing_started_at, status'
       )
-      .eq('status', 'pending')
+      .in('status', ['pending', 'processing'])
       .order('priority', { ascending: true })
       .order('created_at', { ascending: true })
-      .limit(50) // Get more jobs to filter from
+      .limit(100) // Get more jobs to filter from
       .returns<PendingJobRow[]>();
 
     if (fetchError) {
-      console.error('Failed to fetch pending jobs:', fetchError);
-      throw new Error(`Failed to fetch pending jobs: ${fetchError.message}`);
+      console.error('Failed to fetch jobs:', fetchError);
+      throw new Error(`Failed to fetch jobs: ${fetchError.message}`);
     }
 
-    if (!allPendingJobs || allPendingJobs.length === 0) {
-      console.log('No pending jobs found in queue');
+    if (!allJobs || allJobs.length === 0) {
+      console.log('No pending or processing jobs found in queue');
       return {
         success: true,
         processed: 0,
-        message: 'No pending jobs in queue',
+        message: 'No pending or processing jobs in queue',
       };
     }
 
     console.log(
-      `Found ${allPendingJobs.length} pending jobs, filtering for jobs ready for processing...`
+      `Found ${allJobs.length} jobs (pending and processing), analyzing...`
     );
 
-    // Filter jobs that are eligible (attempts < max_attempts)
-    const eligibleJobs = allPendingJobs.filter(
-      (job: PendingJobRow): boolean => {
-        // First check if job hasn't exceeded max attempts
-        if (job.attempts >= job.max_attempts) {
-          console.log(
-            `Job ${job.id} has exceeded max attempts (${job.attempts}/${job.max_attempts}), skipping`
-          );
-          return false;
-        }
-        return true;
-      }
+    // Separate pending jobs from processing jobs
+    const pendingJobs = allJobs.filter(
+      (job: PendingJobRow) => job.status === 'pending'
     );
+    const processingJobs = allJobs.filter(
+      (job: PendingJobRow) => job.status === 'processing'
+    );
+
+    // Find stuck processing jobs (over 30 minutes)
+    const stuckJobs = processingJobs.filter((job: PendingJobRow) =>
+      isJobStuck(job)
+    );
+
+    console.log(
+      `Found ${pendingJobs.length} pending jobs, ${processingJobs.length} processing jobs, ${stuckJobs.length} stuck jobs`
+    );
+
+    // Reset stuck jobs back to pending status
+    let resubmittedCount = 0;
+    if (stuckJobs.length > 0) {
+      console.log(
+        `Resetting ${stuckJobs.length} stuck jobs back to pending status...`
+      );
+
+      for (const stuckJob of stuckJobs) {
+        const { error: resetError } = await supabase
+          .from('image_processing_jobs')
+          .update({
+            status: 'pending',
+            processing_started_at: null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', stuckJob.id);
+
+        if (resetError) {
+          console.error(
+            `Failed to reset stuck job ${stuckJob.id}:`,
+            resetError
+          );
+        } else {
+          console.log(`Reset stuck job ${stuckJob.id} back to pending`);
+          resubmittedCount++;
+          // Add the reset job to pending jobs for potential processing
+          pendingJobs.push({
+            ...stuckJob,
+            status: 'pending',
+            processing_started_at: null,
+            updated_at: new Date().toISOString(),
+          });
+        }
+      }
+    }
+
+    // Filter jobs that are eligible (attempts < max_attempts)
+    const eligibleJobs = pendingJobs.filter((job: PendingJobRow): boolean => {
+      // First check if job hasn't exceeded max attempts
+      if (job.attempts >= job.max_attempts) {
+        console.log(
+          `Job ${job.id} has exceeded max attempts (${job.attempts}/${job.max_attempts}), skipping`
+        );
+        return false;
+      }
+      return true;
+    });
 
     // Separate videos and playlists for different processing logic
     const videoJobs = eligibleJobs.filter(
@@ -166,6 +245,7 @@ async function processImageJobs(): Promise<ApiResponse> {
         attempts: job.attempts,
         created_at: job.created_at,
         updated_at: job.updated_at,
+        processing_started_at: job.processing_started_at,
       })
     );
 
@@ -181,6 +261,7 @@ async function processImageJobs(): Promise<ApiResponse> {
           attempts: job.attempts,
           created_at: job.created_at,
           updated_at: job.updated_at,
+          processing_started_at: job.processing_started_at,
         };
         return isJobReadyForProcessing(mappedJob);
       })
@@ -194,6 +275,7 @@ async function processImageJobs(): Promise<ApiResponse> {
           attempts: job.attempts,
           created_at: job.created_at,
           updated_at: job.updated_at,
+          processing_started_at: job.processing_started_at,
         })
       );
 
@@ -202,16 +284,20 @@ async function processImageJobs(): Promise<ApiResponse> {
 
     const skippedPlaylistsCount =
       playlistJobs.length - readyPlaylistJobs.length;
-    const ineligibleJobsCount = allPendingJobs.length - eligibleJobs.length;
+    const ineligibleJobsCount = pendingJobs.length - eligibleJobs.length;
 
     if (allReadyJobs.length === 0) {
       let message = '';
       if (eligibleJobs.length === 0) {
-        message = `All ${allPendingJobs.length} pending jobs have exceeded max attempts`;
+        message = `All ${pendingJobs.length} pending jobs have exceeded max attempts`;
       } else if (videoJobs.length === 0 && playlistJobs.length > 0) {
         message = `All ${playlistJobs.length} playlist jobs are within 5-minute cooldown period`;
       } else {
         message = `No jobs ready for processing (${skippedPlaylistsCount} playlists in cooldown period)`;
+      }
+
+      if (resubmittedCount > 0) {
+        message += `, ${resubmittedCount} stuck jobs reset to pending`;
       }
 
       console.log(message);
@@ -219,12 +305,13 @@ async function processImageJobs(): Promise<ApiResponse> {
         success: true,
         processed: 0,
         skipped: skippedPlaylistsCount,
+        resubmitted: resubmittedCount,
         message,
       };
     }
 
     console.log(
-      `${allReadyJobs.length} jobs are ready for processing (${readyVideoJobs.length} videos immediate, ${readyPlaylistJobs.length} playlists ready, ${skippedPlaylistsCount} playlists in cooldown, ${ineligibleJobsCount} jobs exceeded max attempts)`
+      `${allReadyJobs.length} jobs are ready for processing (${readyVideoJobs.length} videos immediate, ${readyPlaylistJobs.length} playlists ready, ${skippedPlaylistsCount} playlists in cooldown, ${ineligibleJobsCount} jobs exceeded max attempts, ${resubmittedCount} stuck jobs reset)`
     );
 
     // Limit to maximum number of jobs we want to process in one batch
@@ -418,6 +505,10 @@ async function processImageJobs(): Promise<ApiResponse> {
       message += `, ${ineligibleJobsCount} jobs exceeded max attempts`;
     }
 
+    if (resubmittedCount > 0) {
+      message += `, ${resubmittedCount} stuck jobs reset to pending`;
+    }
+
     console.log(message);
     if (failedJobs.length > 0) {
       console.log('Failed job IDs:', failedJobs);
@@ -427,6 +518,7 @@ async function processImageJobs(): Promise<ApiResponse> {
       success: true,
       processed: processedJobs.length,
       skipped: skippedPlaylistsCount,
+      resubmitted: resubmittedCount,
       message,
       jobs: processedJobs.length > 0 ? processedJobs : undefined,
     };
