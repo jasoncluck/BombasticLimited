@@ -70,7 +70,8 @@ if (!supabaseUrl || !supabaseServiceKey) {
 }
 
 /**
- * Check if a job has been processing for over 30 minutes
+ * Check if a job has been processing for over 2 hours (extended from 30 minutes)
+ * This accounts for jobs that may have been stuck for many hours
  */
 function isJobStuck(job: PendingJobRow): boolean {
   if (!job.processing_started_at) {
@@ -79,10 +80,10 @@ function isJobStuck(job: PendingJobRow): boolean {
 
   const now = new Date();
   const processingStarted = new Date(job.processing_started_at);
-  const thirtyMinutesMs = 30 * 60 * 1000; // 30 minutes in milliseconds
+  const twoHoursMs = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
   const timeDifferenceMs = now.getTime() - processingStarted.getTime();
 
-  const isStuck = timeDifferenceMs >= thirtyMinutesMs;
+  const isStuck = timeDifferenceMs >= twoHoursMs;
 
   if (isStuck) {
     console.log(
@@ -131,7 +132,27 @@ async function processImageJobs(): Promise<ApiResponse> {
 
     console.log('Starting image processing job batch...');
 
-    // Get both pending jobs and stuck processing jobs
+    // First, reset any jobs that have been stuck for more than 4 hours (very long stuck jobs)
+    console.log('Checking for very stuck jobs (processing > 4 hours)...');
+    const { data: veryStuckJobsReset, error: veryStuckJobsError } =
+      await supabase.rpc('reset_stuck_image_processing_jobs', {
+        stuck_after_minutes: 240,
+      });
+
+    if (veryStuckJobsError) {
+      console.error('Failed to reset very stuck jobs:', veryStuckJobsError);
+    } else if (veryStuckJobsReset && veryStuckJobsReset.length > 0) {
+      console.log(
+        `Reset ${veryStuckJobsReset.length} very stuck jobs back to pending`
+      );
+      for (const stuckJob of veryStuckJobsReset) {
+        console.log(
+          `Reset job ${stuckJob.reset_job_id} (${stuckJob.entity_type} ${stuckJob.entity_id}) - stuck for ${Math.round(stuckJob.minutes_stuck)} minutes`
+        );
+      }
+    }
+
+    // Get both pending jobs and recently stuck processing jobs (2 hour threshold)
     const { data: allJobs, error: fetchError } = await supabase
       .from('image_processing_jobs')
       .select(
@@ -140,7 +161,7 @@ async function processImageJobs(): Promise<ApiResponse> {
       .in('status', ['pending', 'processing'])
       .order('priority', { ascending: true })
       .order('created_at', { ascending: true })
-      .limit(100) // Get more jobs to filter from
+      .limit(100)
       .returns<PendingJobRow[]>();
 
     if (fetchError) {
@@ -169,20 +190,20 @@ async function processImageJobs(): Promise<ApiResponse> {
       (job: PendingJobRow) => job.status === 'processing'
     );
 
-    // Find stuck processing jobs (over 30 minutes)
+    // Find stuck processing jobs (over 2 hours) - these will be reset at the 2hr level
     const stuckJobs = processingJobs.filter((job: PendingJobRow) =>
       isJobStuck(job)
     );
 
     console.log(
-      `Found ${pendingJobs.length} pending jobs, ${processingJobs.length} processing jobs, ${stuckJobs.length} stuck jobs`
+      `Found ${pendingJobs.length} pending jobs, ${processingJobs.length} processing jobs, ${stuckJobs.length} stuck jobs (>2 hrs)`
     );
 
-    // Reset stuck jobs back to pending status
+    // Reset stuck jobs back to pending status (2 hour threshold)
     let resubmittedCount = 0;
     if (stuckJobs.length > 0) {
       console.log(
-        `Resetting ${stuckJobs.length} stuck jobs back to pending status...`
+        `Resetting ${stuckJobs.length} stuck jobs (>2 hrs) back to pending status...`
       );
 
       for (const stuckJob of stuckJobs) {

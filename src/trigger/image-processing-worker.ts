@@ -8,27 +8,18 @@ import {
 } from '$lib/utils/dynamic-crop-dimensions';
 import type { PlaylistImageProperties } from '$lib/supabase/playlists';
 
-//FIX: Do not merge to main, just for testing
-// const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
-// const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const triggerSecretKey = process.env.TRIGGER_SECRET_KEY;
-const supabaseServiceRoleKey = 'sb_secret_KbOPFiPjUeHUVd0jPTV1Kg_Rndl23de';
-
-const supabaseUrl = 'https://blrvnfwxtzzbofsdrvwv.supabase.co';
+const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseServiceRoleKey) {
   throw new Error('Missing supabase env vars.');
 }
 
-if (!triggerSecretKey) {
-  throw new Error('Missing TRIGGER_SECRET_KEY environment variable.');
-}
-
 // Supabase client setup
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-// Configuration constants
-const PROCESSING_TIMEOUT = 60000;
+// Configuration constants - reduced from 60s to 25s to fit within task timeout
+const PROCESSING_TIMEOUT = 25000;
 
 interface WebhookPayload {
   type: 'INSERT' | 'UPDATE';
@@ -56,7 +47,7 @@ interface ProcessingResult {
   webpSize?: number;
   avifSize?: number;
   jobId?: string;
-  cancelledRuns?: string[];
+  skippedDuplicate?: boolean;
 }
 
 interface StoragePaths {
@@ -69,133 +60,83 @@ interface ProcessedImages {
   avif: Buffer;
 }
 
-interface TriggerRun {
-  id: string;
-  status: string;
-  taskIdentifier: string;
-  payload?: {
-    record?: {
-      id?: string;
-    };
-    table?: string;
-  };
-  createdAt: string;
+interface ExistingVideoData {
+  image_processing_updated_at: string | null;
+  thumbnail_url: string | null;
+  thumbnail_webp_url: string | null;
+  thumbnail_avif_url: string | null;
 }
 
-interface TriggerRunsResponse {
-  data: TriggerRun[];
-  pagination: {
-    total: number;
-    page: number;
-    perPage: number;
-    totalPages: number;
-  };
+interface ExistingPlaylistData {
+  image_processing_updated_at: string | null;
+  thumbnail_url: string | null;
+  image_webp_url: string | null;
+  image_avif_url: string | null;
 }
 
-// Cancel duplicate runs for the same entity
-async function cancelDuplicateRuns(
+// Check if entity was recently processed to avoid unnecessary work
+async function checkRecentProcessing(
   entityType: string,
   entityId: string,
-  currentTimestamp: string
-): Promise<string[]> {
-  const cancelledRuns: string[] = [];
+  currentThumbnailUrl: string
+): Promise<{ shouldSkip: boolean; reason?: string }> {
+  const table = entityType === 'playlist' ? 'playlists' : 'videos';
+  const selectFields =
+    entityType === 'playlist'
+      ? 'image_processing_updated_at, thumbnail_url, image_webp_url, image_avif_url'
+      : 'image_processing_updated_at, thumbnail_url, thumbnail_webp_url, thumbnail_avif_url';
 
-  try {
-    // Query for pending/running runs for our specific task
-    const response = await fetch(
-      'https://api.trigger.dev/api/v1/runs?' +
-        new URLSearchParams({
-          status: 'PENDING,EXECUTING,QUEUED,WAITING_FOR_DEPLOY',
-          taskIdentifier: 'process-image-webhook',
-          limit: '100',
-        }),
-      {
-        headers: {
-          Authorization: `Bearer ${triggerSecretKey}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+  const { data: existing, error } = await supabase
+    .from(table)
+    .select(selectFields)
+    .eq('id', entityId)
+    .maybeSingle();
 
-    if (!response.ok) {
-      console.error(
-        'Failed to fetch trigger runs for deduplication:',
-        response.status,
-        response.statusText
-      );
-      return cancelledRuns;
-    }
-
-    const data: TriggerRunsResponse = await response.json();
-    const currentTime = new Date(currentTimestamp);
-
-    // Find runs for the same entity that are older than the current one
-    const duplicateRuns = data.data.filter((run) => {
-      try {
-        // Check if this run is for the same entity
-        const runEntityId = run.payload?.record?.id;
-        const runTable = run.payload?.table;
-        const runEntityType = runTable === 'playlists' ? 'playlist' : 'video';
-
-        if (runEntityType !== entityType || runEntityId !== entityId) {
-          return false;
-        }
-
-        // Check if this run is older than the current one
-        const runTime = new Date(run.createdAt);
-        return runTime < currentTime;
-      } catch (error) {
-        console.warn('Error checking run for deduplication:', error);
-        return false;
-      }
-    });
-
-    console.log(
-      `Found ${duplicateRuns.length} duplicate runs to cancel for ${entityType} ${entityId}`
-    );
-
-    // Cancel each duplicate run
-    for (const run of duplicateRuns) {
-      try {
-        const cancelResponse = await fetch(
-          `https://api.trigger.dev/api/v1/runs/${run.id}/cancel`,
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${triggerSecretKey}`,
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-
-        if (cancelResponse.ok) {
-          cancelledRuns.push(run.id);
-          console.log(
-            `Successfully cancelled duplicate run ${run.id} for ${entityType} ${entityId}`
-          );
-        } else {
-          console.warn(
-            `Failed to cancel run ${run.id}:`,
-            cancelResponse.status,
-            cancelResponse.statusText
-          );
-        }
-      } catch (error) {
-        console.warn(`Error cancelling run ${run.id}:`, error);
-      }
-    }
-
-    if (cancelledRuns.length > 0) {
-      console.log(
-        `Cancelled ${cancelledRuns.length} duplicate runs for ${entityType} ${entityId}:`,
-        cancelledRuns
-      );
-    }
-  } catch (error) {
-    console.error('Error in cancelDuplicateRuns:', error);
+  if (error || !existing) {
+    return { shouldSkip: false };
   }
 
-  return cancelledRuns;
+  // Check if already processed recently with same thumbnail URL
+  if (
+    existing.image_processing_updated_at &&
+    existing.thumbnail_url === currentThumbnailUrl
+  ) {
+    const lastProcessed = new Date(existing.image_processing_updated_at);
+    const now = new Date();
+    const hoursSinceProcessed =
+      (now.getTime() - lastProcessed.getTime()) / (1000 * 60 * 60);
+
+    // Skip if processed within last hour with same thumbnail
+    if (hoursSinceProcessed < 1) {
+      return {
+        shouldSkip: true,
+        reason: `Recently processed ${hoursSinceProcessed.toFixed(1)}h ago with same thumbnail`,
+      };
+    }
+  }
+
+  // Check if optimized images already exist for same thumbnail
+  let hasOptimizedImages = false;
+  if (entityType === 'playlist') {
+    const playlistData = existing as ExistingPlaylistData;
+    hasOptimizedImages = Boolean(
+      playlistData.image_webp_url && playlistData.image_avif_url
+    );
+  } else {
+    const videoData = existing as ExistingVideoData;
+    hasOptimizedImages = Boolean(
+      videoData.thumbnail_webp_url && videoData.thumbnail_avif_url
+    );
+  }
+
+  if (hasOptimizedImages && existing.thumbnail_url === currentThumbnailUrl) {
+    return {
+      shouldSkip: true,
+      reason: 'Optimized images already exist for current thumbnail',
+    };
+  }
+
+  return { shouldSkip: false };
 }
 
 // Generate storage paths for optimized images
@@ -285,7 +226,7 @@ async function getPlaylistCropProperties(
     .from('playlists')
     .select('image_properties')
     .eq('id', playlistId)
-    .maybeSingle(); // Changed from .single() to .maybeSingle()
+    .maybeSingle();
 
   if (error) {
     console.warn(`Failed to get playlist crop properties: ${error.message}`);
@@ -544,11 +485,6 @@ async function updateEntityWithProcessedImages(
   webpPath: string,
   avifPath: string
 ): Promise<void> {
-  console.log(`Updating ${entityType} ${entityId} with paths:`, {
-    webpPath,
-    avifPath,
-  });
-
   if (entityType === 'playlist') {
     const { error } = await supabase
       .from('playlists')
@@ -563,7 +499,6 @@ async function updateEntityWithProcessedImages(
     if (error) {
       throw new Error(`Failed to update playlist: ${error.message}`);
     }
-    console.log(`Successfully updated playlist ${entityId}`);
   } else if (entityType === 'video') {
     const { error } = await supabase
       .from('videos')
@@ -578,37 +513,89 @@ async function updateEntityWithProcessedImages(
     if (error) {
       throw new Error(`Failed to update video: ${error.message}`);
     }
-    console.log(`Successfully updated video ${entityId}`);
   }
 }
 
 // Main image processing task
 export const processImageWebhook = task({
   id: 'process-image-webhook',
-  retry: {
-    maxAttempts: 3,
-    factor: 2,
-    minTimeoutInMs: 1000,
-    maxTimeoutInMs: 10000,
+  // Increased timeout to 45 seconds to allow for image processing
+  machine: {
+    preset: 'small-1x',
   },
+  // Set a longer timeout for image processing
   run: async (payload: WebhookPayload): Promise<ProcessingResult> => {
     const { type, table, record, old_record, jobId, timestamp } = payload;
 
-    console.log(`Processing ${type} webhook for ${table} ${record.id}`, {
-      jobId,
-      timestamp,
-    });
-
     const entityType = table === 'playlists' ? 'playlist' : 'video';
 
-    // Cancel any duplicate runs for the same entity before processing
-    const cancelledRuns = await cancelDuplicateRuns(
+    console.log(`Starting image processing for ${entityType} ${record.id}`, {
+      type,
+      table,
+      jobId,
+      timestamp,
+      thumbnailUrl: record.thumbnail_url,
+    });
+
+    // Early validation - exit before any expensive operations
+    if (!record.thumbnail_url) {
+      console.log(
+        `No thumbnail URL for ${entityType} ${record.id}, completing job`
+      );
+      if (jobId) {
+        try {
+          const { data: completionResult, error: completionError } =
+            await supabase.rpc('complete_image_processing_job', {
+              job_id: jobId,
+            });
+          console.log('Job completion result:', {
+            completionResult,
+            completionError,
+          });
+        } catch (error) {
+          console.warn(`Failed to complete job ${jobId}:`, error);
+        }
+      }
+      return {
+        processed: false,
+        reason: 'No thumbnail URL provided',
+      };
+    }
+
+    // Check if recently processed to avoid unnecessary work
+    console.log(`Checking recent processing for ${entityType} ${record.id}`);
+    const { shouldSkip, reason: skipReason } = await checkRecentProcessing(
       entityType,
       record.id,
-      timestamp
+      record.thumbnail_url
     );
 
-    // Determine if we need to process
+    if (shouldSkip) {
+      console.log(
+        `Skipping processing for ${entityType} ${record.id}: ${skipReason}`
+      );
+      if (jobId) {
+        try {
+          const { data: completionResult, error: completionError } =
+            await supabase.rpc('complete_image_processing_job', {
+              job_id: jobId,
+            });
+          console.log('Job completion result:', {
+            completionResult,
+            completionError,
+          });
+        } catch (error) {
+          console.warn(`Failed to complete job ${jobId}:`, error);
+        }
+      }
+      return {
+        processed: false,
+        reason: skipReason,
+        skippedDuplicate: true,
+      };
+    }
+
+    // Determine if we need to process based on changes
     let shouldProcess = false;
     let sourceUrl: string | null = null;
 
@@ -617,6 +604,7 @@ export const processImageWebhook = task({
       if (record.thumbnail_url) {
         shouldProcess = true;
         sourceUrl = record.thumbnail_url;
+        console.log(`INSERT: Will process new ${entityType} ${record.id}`);
       }
     } else if (type === 'UPDATE') {
       // Check if thumbnail_url or image_properties changed
@@ -627,6 +615,13 @@ export const processImageWebhook = task({
         JSON.stringify(record.image_properties) !==
           JSON.stringify(old_record?.image_properties);
 
+      console.log(`UPDATE: ${entityType} ${record.id}`, {
+        thumbnailChanged,
+        imagePropertiesChanged,
+        oldThumbnail: old_record?.thumbnail_url,
+        newThumbnail: record.thumbnail_url,
+      });
+
       if (thumbnailChanged || imagePropertiesChanged) {
         shouldProcess = true;
         sourceUrl = record.thumbnail_url || null;
@@ -634,14 +629,9 @@ export const processImageWebhook = task({
     }
 
     if (!shouldProcess || !sourceUrl) {
-      console.log(`No processing needed for ${table} ${record.id}`);
-
-      // Mark job as completed if jobId provided
+      console.log(`No processing needed for ${entityType} ${record.id}`);
       if (jobId) {
         try {
-          console.log(
-            `Marking job ${jobId} as completed (no processing needed)`
-          );
           const { data: completionResult, error: completionError } =
             await supabase.rpc('complete_image_processing_job', {
               job_id: jobId,
@@ -651,24 +641,30 @@ export const processImageWebhook = task({
             completionError,
           });
         } catch (error) {
-          console.warn(`Failed to mark job ${jobId} as completed:`, error);
+          console.warn(`Failed to complete job ${jobId}:`, error);
         }
       }
-
       return {
         processed: false,
         reason: 'No changes requiring processing',
-        cancelledRuns: cancelledRuns.length > 0 ? cancelledRuns : undefined,
       };
     }
 
     try {
+      console.log(
+        `Processing ${entityType} ${record.id} with source: ${sourceUrl}`
+      );
+
       // Delete existing optimized images
+      console.log(
+        `Deleting existing optimized images for ${entityType} ${record.id}`
+      );
       await deleteExistingOptimizedImages(entityType, record.id);
 
       // Download source image
       console.log(`Downloading image from: ${sourceUrl}`);
       const imageBuffer = await downloadImage(sourceUrl);
+      console.log(`Downloaded ${imageBuffer.length} bytes`);
 
       // Process image
       console.log(`Processing image for ${entityType} ${record.id}`);
@@ -677,6 +673,9 @@ export const processImageWebhook = task({
         entityType,
         entityType === 'playlist' ? record.id : undefined,
         sourceUrl
+      );
+      console.log(
+        `Processed images: WebP ${webpBuffer.length} bytes, AVIF ${avifBuffer.length} bytes`
       );
 
       // Generate storage paths
@@ -688,17 +687,15 @@ export const processImageWebhook = task({
       // Upload to storage
       console.log(`Uploading optimized images for ${entityType} ${record.id}`);
       await uploadToStorage(webpBuffer, avifBuffer, webpPath, avifPath);
-
       console.log(`Uploaded images to storage:`, { webpPath, avifPath });
 
       // Mark job as completed if jobId provided, otherwise update directly
       if (jobId) {
         try {
-          console.log(`Attempting to complete job ${jobId} with paths:`, {
+          console.log(`Completing job ${jobId} with paths:`, {
             webpPath,
             avifPath,
           });
-
           const { data: completionResult, error: completionError } =
             await supabase.rpc('complete_image_processing_job', {
               job_id: jobId,
@@ -723,9 +720,9 @@ export const processImageWebhook = task({
             );
           }
 
-          console.log(`Successfully marked job ${jobId} as completed`);
+          console.log(`Successfully completed job ${jobId}`);
         } catch (error) {
-          console.error(`Failed to mark job ${jobId} as completed:`, error);
+          console.error(`Failed to complete job ${jobId}:`, error);
           // Fallback to direct database update
           console.log('Attempting fallback database update...');
           await updateEntityWithProcessedImages(
@@ -734,21 +731,21 @@ export const processImageWebhook = task({
             webpPath,
             avifPath
           );
-          console.log('Fallback update completed');
+          console.log('Fallback database update completed');
         }
       } else {
         // No job ID, update directly
+        console.log(`No job ID, updating ${entityType} ${record.id} directly`);
         await updateEntityWithProcessedImages(
           entityType,
           record.id,
           webpPath,
           avifPath
         );
+        console.log('Direct database update completed');
       }
 
-      console.log(
-        `Successfully processed image for ${entityType} ${record.id}`
-      );
+      console.log(`Successfully processed ${entityType} ${record.id}`);
 
       return {
         processed: true,
@@ -759,20 +756,16 @@ export const processImageWebhook = task({
         webpSize: Math.round(webpBuffer.length / 1024),
         avifSize: Math.round(avifBuffer.length / 1024),
         jobId,
-        cancelledRuns: cancelledRuns.length > 0 ? cancelledRuns : undefined,
       };
     } catch (error) {
-      console.error(
-        `Failed to process image for ${table} ${record.id}:`,
-        error
-      );
+      console.error(`Failed to process ${entityType} ${record.id}:`, error);
 
       // Mark job as failed if jobId provided
       if (jobId) {
         try {
           const errorMessage =
             error instanceof Error ? error.message : 'Unknown error';
-          console.log(`Marking job ${jobId} as failed:`, errorMessage);
+          console.log(`Failing job ${jobId} with error: ${errorMessage}`);
           const { data: failResult, error: failError } = await supabase.rpc(
             'fail_image_processing_job',
             {
@@ -781,8 +774,8 @@ export const processImageWebhook = task({
             }
           );
           console.log('Job failure result:', { failResult, failError });
-        } catch (dbError) {
-          console.error(`Failed to mark job ${jobId} as failed:`, dbError);
+        } catch (failError) {
+          console.error(`Failed to mark job ${jobId} as failed:`, failError);
         }
       }
 

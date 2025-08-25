@@ -10,7 +10,13 @@ declare module '*.md' {
     description?: string;
     date?: string;
     published?: boolean;
-    [key: string]: any;
+    tags?: string[];
+    slug?: string;
+    author?: string;
+    excerpt?: string;
+    image?: string;
+    category?: string;
+    [key: string]: string | number | boolean | string[] | undefined;
   }
 
   const component: ComponentType<SvelteComponent>;
@@ -26,7 +32,13 @@ declare module '*.svx' {
     description?: string;
     date?: string;
     published?: boolean;
-    [key: string]: any;
+    tags?: string[];
+    slug?: string;
+    author?: string;
+    excerpt?: string;
+    image?: string;
+    category?: string;
+    [key: string]: string | number | boolean | string[] | undefined;
   }
 
   const component: ComponentType<SvelteComponent>;
@@ -57,5 +69,11 @@ declare global {
     // interface PageState {}
     // interface Platform {}
   }
+
+  // Global window extensions
+  interface Window {
+    Twitch?: TwitchEmbedAPI;
+  }
 }
+
 export {};

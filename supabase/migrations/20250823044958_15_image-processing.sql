@@ -737,7 +737,88 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION public.reset_stuck_image_processing_jobs (
+  stuck_after_minutes integer DEFAULT 30
+) RETURNS TABLE (
+  reset_job_id uuid,
+  entity_type text,
+  entity_id text,
+  stuck_since timestamp with time zone,
+  minutes_stuck numeric
+) LANGUAGE plpgsql SECURITY DEFINER
+SET
+  search_path = '' AS $$
+DECLARE
+  reset_count integer := 0;
+BEGIN
+  -- Update stuck jobs and return information about them
+  RETURN QUERY
+  WITH stuck_jobs AS (
+    SELECT 
+      id,
+      entity_type,
+      entity_id,
+      processing_started_at,
+      EXTRACT(EPOCH FROM (now() - processing_started_at))/60 as minutes_stuck
+    FROM "public"."image_processing_jobs"
+    WHERE status = 'processing'
+      AND processing_started_at IS NOT NULL
+      AND processing_started_at < now() - (stuck_after_minutes || ' minutes')::interval
+  ),
+  reset_jobs AS (
+    UPDATE "public"."image_processing_jobs"
+    SET 
+      status = 'pending',
+      processing_started_at = NULL,
+      updated_at = now()
+    WHERE id IN (SELECT id FROM stuck_jobs)
+    RETURNING id, entity_type, entity_id
+  )
+  SELECT 
+    sj.id::uuid,
+    sj.entity_type::text,
+    sj.entity_id::text,
+    sj.processing_started_at,
+    sj.minutes_stuck::numeric
+  FROM stuck_jobs sj
+  JOIN reset_jobs rj ON sj.id = rj.id;
+  
+  GET DIAGNOSTICS reset_count = ROW_COUNT;
+  
+  IF reset_count > 0 THEN
+    RAISE LOG 'Reset % stuck jobs (stuck for more than % minutes)', reset_count, stuck_after_minutes;
+  END IF;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.get_image_processing_queue_status ()
+RETURNS TABLE (
+  status text,
+  count bigint,
+  oldest_job timestamp with time zone,
+  newest_job timestamp with time zone
+) LANGUAGE sql SECURITY DEFINER
+SET
+  search_path = '' AS $$
+  SELECT 
+    j.status,
+    COUNT(*) as count,
+    MIN(j.created_at) as oldest_job,
+    MAX(j.created_at) as newest_job
+  FROM "public"."image_processing_jobs" j
+  GROUP BY j.status
+  ORDER BY 
+    CASE j.status 
+      WHEN 'processing' THEN 1
+      WHEN 'pending' THEN 2
+      WHEN 'failed' THEN 3
+      WHEN 'completed' THEN 4
+      ELSE 5
+    END;
+$$;
+
 -- Set up RLS policies
+-- TODO: Fix RLS policies
 ALTER TABLE "public"."image_processing_jobs" ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Service role can manage image processing jobs" ON "public"."image_processing_jobs" FOR ALL USING (auth.role () = 'service_role');

@@ -202,19 +202,19 @@ export async function handleRemoveVideosFromPlaylist({
 export async function handleUpdatePlaylistImage({
   playlist,
   sidebarState,
-  thumbnailVideo,
+  thumbnailUrl,
   imageProperties = null,
   supabase,
 }: {
   playlist: Playlist;
   sidebarState: SidebarState;
-  thumbnailVideo?: Video;
+  thumbnailUrl: string | null;
   imageProperties?: PlaylistImageProperties | null;
   supabase: SupabaseClient<Database>;
 }) {
   const { error } = await updatePlaylistThumbnail({
     playlistId: playlist.id,
-    thumbnailUrl: thumbnailVideo?.thumbnail_url,
+    thumbnailUrl,
     imageProperties,
     supabase,
   });

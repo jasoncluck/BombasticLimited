@@ -386,6 +386,7 @@ describe('playlist schema validation', () => {
           height: 180,
           width: 180,
         },
+        thumbnail_url: null,
         id: 456,
         type: 'Public',
         isDeletingPlaylistImage: false,

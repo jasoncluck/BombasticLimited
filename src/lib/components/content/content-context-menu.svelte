@@ -243,7 +243,7 @@
               handleUpdatePlaylistImage({
                 playlist,
                 sidebarState,
-                thumbnailVideo: operationVideos[0],
+                thumbnailUrl: operationVideos[0].thumbnail_url,
                 supabase,
               });
 

@@ -140,7 +140,7 @@
   }
 
   .header-link {
-    @apply hover:text-primary outline-primary block cursor-pointer self-start truncate pb-2 text-3xl font-semibold transition-all duration-200 @2xl:text-4xl;
+    @apply outline-primary block cursor-pointer self-start truncate pb-2 text-3xl font-semibold transition-all duration-200 hover:underline @2xl:text-4xl;
   }
 
   .header-link-sticky {
