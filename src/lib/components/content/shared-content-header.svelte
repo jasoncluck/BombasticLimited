@@ -114,7 +114,7 @@
           onclick={handlePlayVideo}
         >
           <Play
-            class="stroke-background-lighter fill-background-lighter h-6! w-6! "
+            class="stroke-background-lighter fill-background-lighter h-6! w-6! border-none! "
           />
         </Button>
 

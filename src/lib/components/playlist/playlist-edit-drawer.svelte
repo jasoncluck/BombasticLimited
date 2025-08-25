@@ -264,15 +264,9 @@
     }
   }}
 >
-  {#if !isPlaylistOwner}
-    <div class="outline-hiddden">
-      {@render triggerSnippet()}
-    </div>
-  {:else}
-    <Drawer.Trigger class="outline-hiddden">
-      {@render triggerSnippet()}
-    </Drawer.Trigger>
-  {/if}
+  <div class="outline-hiddden flex grow">
+    {@render triggerSnippet()}
+  </div>
 
   <Drawer.Content class="bg-background drawer flex min-h-[100%] flex-col">
     <div class="flex-shrink-0 p-4 pb-0">
@@ -290,8 +284,10 @@
     >
       <div class="min-h-0 flex-1 overflow-y-auto p-1">
         <div class="px-4 pb-2">
-          <div class="mb-4 flex flex-col justify-center gap-4 sm:flex-row">
-            <div class="relative m-6 flex justify-center">
+          <div
+            class="mb-4 flex w-full flex-col justify-center gap-4 sm:flex-row"
+          >
+            <div class="relative m-6 flex grow justify-center">
               {#if playlist.thumbnail_url && !$formData.isDeletingPlaylistImage}
                 <div class="relative h-56 w-56">
                   <!-- Preview the cropped image -->

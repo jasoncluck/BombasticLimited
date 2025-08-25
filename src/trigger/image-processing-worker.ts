@@ -8,7 +8,7 @@ import {
 } from '$lib/utils/dynamic-crop-dimensions';
 import type { PlaylistImageProperties } from '$lib/supabase/playlists';
 
-//FIX: Do not commit, just for testing
+//FIX: Do not merge to main, just for testing
 // const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 // const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const triggerSecretKey = process.env.TRIGGER_SECRET_KEY;

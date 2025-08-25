@@ -213,7 +213,7 @@
       {@render trigger()}
     </Dialog.Trigger>
   {:else}
-    <div class="outline-hiddden">
+    <div class="outline-hiddden w-full">
       {@render trigger()}
     </div>
   {/if}

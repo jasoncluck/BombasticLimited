@@ -110,12 +110,6 @@
 }
 
 @layer component {
-  button:focus,
-  button:active {
-    border: none !important;
-    outline: none !important;
-  }
-
   .break-anywhere {
     overflow-wrap: anywhere;
   }
