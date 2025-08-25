@@ -66,12 +66,11 @@ const jsonbImagePropertiesSchema = z
 export const playlistSchema = z.object({
   name: z.string().min(2).max(50),
   description: z.string().max(250).nullable(),
-  image_properties: jsonbImagePropertiesSchema,
+  image_properties: jsonbImagePropertiesSchema.default(null),
   id: z.number(),
   type: z.enum(PLAYLIST_TYPES),
   isDeletingPlaylistImage: z.boolean(),
-  thumbnail_url: z.string().optional(),
-  thumbnail_video_id: z.string().optional(),
+  thumbnail_url: z.string().nullable().default(null),
 });
 
 export type PlaylistSchema = z.infer<typeof playlistSchema>;

@@ -184,7 +184,6 @@ export async function getPlaylistsForUsername({
 }): Promise<{
   playlists: (Playlist & {
     profile_username: string;
-    thumbnail_video_id?: string | null;
     thumbnail_url?: string | null;
   })[];
   count?: number | null;
@@ -454,7 +453,6 @@ export async function searchPlaylists({
 }): Promise<{
   playlists: (ProfilePlaylist & {
     avatar_url?: string | null;
-    thumbnail_video_id?: string | null;
     thumbnail_url?: string | null;
   })[];
   error: PostgrestError | null;

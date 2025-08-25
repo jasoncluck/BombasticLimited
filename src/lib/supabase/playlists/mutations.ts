@@ -178,6 +178,7 @@ export async function deleteVideosFromPlaylist({
  */
 export async function updatePlaylistInfo({
   playlistId,
+  imageProperties,
   name,
   description,
   type,
@@ -196,6 +197,7 @@ export async function updatePlaylistInfo({
     .update({
       name: name.trim(),
       description: description?.trim(),
+      image_properties: JSON.stringify(imageProperties),
       type,
     })
     .eq('id', playlistId)
@@ -219,7 +221,7 @@ export async function updatePlaylistThumbnail({
   supabase,
 }: {
   playlistId: number;
-  thumbnailUrl?: string;
+  thumbnailUrl: string | null;
   imageProperties: PlaylistImageProperties | null;
   supabase: SupabaseClient<Database>;
 }) {
@@ -229,7 +231,7 @@ export async function updatePlaylistThumbnail({
     const { error } = await supabase
       .from('playlists')
       .update({
-        thumbnail_video_id: null,
+        thumbnail_url: null,
         image_webp_url: null,
         image_avif_url: null,
         image_properties: null,

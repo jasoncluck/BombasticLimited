@@ -268,7 +268,7 @@
                     <DropdownMenu.Item
                       onclick={() => {
                         $formData.isDeletingPlaylistImage = true;
-                      }}>Remove photo</DropdownMenu.Item
+                      }}>Remove image</DropdownMenu.Item
                     >
                   </DropdownMenu.Content>
                 </DropdownMenu.Root>
@@ -385,17 +385,6 @@
                     {...props}
                     hidden
                     bind:value={$formData.isDeletingPlaylistImage}
-                  />
-                {/snippet}
-              </Form.Control>
-            </Form.Field>
-            <Form.Field form={playlistForm} name="thumbnail_video_id">
-              <Form.Control>
-                {#snippet children({ props })}
-                  <Input
-                    {...props}
-                    hidden
-                    bind:value={$formData.thumbnail_video_id}
                   />
                 {/snippet}
               </Form.Control>
