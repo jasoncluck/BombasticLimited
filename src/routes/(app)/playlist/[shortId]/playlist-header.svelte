@@ -253,7 +253,7 @@
                   </div>
                 </div>
 
-                <div class="relative flex min-w-2xs flex-1 flex-col">
+                <div class="relative flex w-full min-w-2xs flex-1 flex-col">
                   <div
                     class="flex flex-col {isPlaylistOwner && 'cursor-pointer'} 
             items-start border-none bg-transparent p-0 text-left"
