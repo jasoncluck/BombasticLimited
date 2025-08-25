@@ -71,7 +71,58 @@
   let previewCanvas: HTMLCanvasElement | null = null;
   let previewImageUrl = $state<string | null>(null);
 
+  // Mobile touch handling state
+  let touchStartTime = $state(0);
+  let isDragging = $state(false);
+  let touchStartY = $state(0);
+
   const isPlaylistOwner = $derived(playlist.created_by === session?.user.id);
+
+  // Touch event handlers for better mobile experience
+  function handleTouchStart(event: TouchEvent): void {
+    touchStartTime = Date.now();
+    touchStartY = event.touches[0].clientY;
+    isDragging = false;
+  }
+
+  function handleTouchMove(event: TouchEvent): void {
+    const touchMoveY = event.touches[0].clientY;
+    const deltaY = Math.abs(touchMoveY - touchStartY);
+
+    // If user moved more than 10px, consider it a drag
+    if (deltaY > 10) {
+      isDragging = true;
+    }
+  }
+
+  function handleTouchEnd(event: TouchEvent): void {
+    const touchEndTime = Date.now();
+    const touchDuration = touchEndTime - touchStartTime;
+
+    // Prevent focus if it was a quick tap or drag gesture
+    if (touchDuration < 150 || isDragging) {
+      // Blur any focused inputs to prevent keyboard
+      const activeElement = document.activeElement as HTMLElement;
+      if (
+        activeElement &&
+        (activeElement.tagName === 'INPUT' ||
+          activeElement.tagName === 'TEXTAREA')
+      ) {
+        activeElement.blur();
+      }
+    }
+
+    isDragging = false;
+  }
+
+  // Prevent input focus on touch for hidden inputs
+  function preventInputFocus(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    if (target && target.hasAttribute('hidden')) {
+      event.preventDefault();
+      target.blur();
+    }
+  }
 
   // Function to create cropped preview
   async function createCroppedPreview(
@@ -119,7 +170,7 @@
   }
 
   // Handle crop confirmation - called when user clicks save
-  async function handleCropConfirm() {
+  async function handleCropConfirm(): Promise<void> {
     if (currentCropArea && imageSrc) {
       $formData.image_properties = currentCropArea;
       // Create preview of the cropped image
@@ -133,7 +184,7 @@
   }
 
   // Handle crop cancellation - called when user clicks cancel
-  function handleCropCancel() {
+  function handleCropCancel(): void {
     // Restore to the state before we opened the cropper
     $formData.image_properties = cropSettingsBeforeEdit;
     previewImageUrl = previewBeforeEdit;
@@ -142,7 +193,7 @@
   }
 
   // Handle image load in cropper
-  function handleImageLoad() {
+  function handleImageLoad(): void {
     imageLoaded = true;
 
     // Set initial crop area if we have saved properties
@@ -265,16 +316,21 @@
   }}
 >
   {#if !isPlaylistOwner}
-    <div class="outline-hiddden w-full">
+    <div class="w-full outline-hidden">
       {@render triggerSnippet()}
     </div>
   {:else}
-    <Drawer.Trigger class="outline-hiddden w-full">
+    <Drawer.Trigger class="w-full outline-hidden">
       {@render triggerSnippet()}
     </Drawer.Trigger>
   {/if}
 
-  <Drawer.Content class="bg-background drawer flex min-h-[100%] flex-col">
+  <Drawer.Content
+    class="bg-background drawer flex min-h-[100%] flex-col"
+    ontouchstart={handleTouchStart}
+    ontouchmove={handleTouchMove}
+    ontouchend={handleTouchEnd}
+  >
     <div class="flex-shrink-0 p-4 pb-0">
       <Drawer.Header class="px-0">
         <Drawer.Title class="text-xl">Edit Playlist</Drawer.Title>
@@ -301,7 +357,7 @@
                     class="h-full w-full rounded-md object-cover"
                   />
                   <DropdownMenu.Root>
-                    <DropdownMenu.Trigger class="outline-hiddden">
+                    <DropdownMenu.Trigger class="outline-hidden">
                       {#snippet child({ props })}
                         <Button
                           {...props}
@@ -314,18 +370,11 @@
                       {/snippet}
                     </DropdownMenu.Trigger>
                     <DropdownMenu.Content align="start">
-                      <!-- {#if isLowResThumbnail} -->
-                      <!--   <DropdownMenu.Item disabled -->
-                      <!--     >This video is missing a high-resolution thumbnail and -->
-                      <!--     cannot be cropped</DropdownMenu.Item -->
-                      <!--   > -->
-                      <!-- {:else} -->
                       <DropdownMenu.Item
                         onclick={() => {
                           cropperDialogOpen = true;
                         }}>Update crop</DropdownMenu.Item
                       >
-                      <!-- {/if} -->
                       <DropdownMenu.Item
                         onclick={() => {
                           $formData.isDeletingPlaylistImage = true;
@@ -370,12 +419,17 @@
                 >
                   <Form.Control>
                     {#snippet children({ props })}
-                      <Form.Label for="name" class="text-right">Name</Form.Label
+                      <Form.Label for="name" class="mb-1 text-right"
+                        >Name</Form.Label
                       >
                       <Input
                         {...props}
                         class="col-span-3"
                         bind:value={$formData.name}
+                        inputmode="text"
+                        autocomplete="off"
+                        autocapitalize="words"
+                        spellcheck="true"
                       />
                     {/snippet}
                   </Form.Control>
@@ -389,13 +443,18 @@
                 >
                   <Form.Control>
                     {#snippet children({ props })}
-                      <Form.Label for="description" class="mt-[9px] text-right"
-                        >Description</Form.Label
+                      <Form.Label
+                        for="description"
+                        class="mt-[9px] mb-1 text-right">Description</Form.Label
                       >
                       <Textarea
                         {...props}
                         class="col-span-3 max-h-40 md:min-h-40"
                         bind:value={$formData.description}
+                        inputmode="text"
+                        autocomplete="off"
+                        autocapitalize="sentences"
+                        spellcheck="true"
                       />
                     {/snippet}
                   </Form.Control>
@@ -411,7 +470,7 @@
                     {#snippet children({ props })}
                       <Form.Label
                         for="isPublic"
-                        class="cursor-pointer text-right"
+                        class="mr-1 cursor-pointer text-right"
                         >Public Playlist</Form.Label
                       >
                       <Checkbox
@@ -428,7 +487,14 @@
               <Form.Field form={playlistForm} name="id">
                 <Form.Control>
                   {#snippet children({ props })}
-                    <Input {...props} hidden bind:value={$formData.id} />
+                    <Input
+                      {...props}
+                      hidden
+                      bind:value={$formData.id}
+                      tabindex={-1}
+                      onfocus={preventInputFocus}
+                      readonly
+                    />
                   {/snippet}
                 </Form.Control>
               </Form.Field>
@@ -440,6 +506,9 @@
                       {...props}
                       hidden
                       bind:value={$formData.image_properties}
+                      tabindex={-1}
+                      onfocus={preventInputFocus}
+                      readonly
                     />
                   {/snippet}
                 </Form.Control>
@@ -452,6 +521,9 @@
                       {...props}
                       hidden
                       bind:value={$formData.isDeletingPlaylistImage}
+                      tabindex={-1}
+                      onfocus={preventInputFocus}
+                      readonly
                     />
                   {/snippet}
                 </Form.Control>
