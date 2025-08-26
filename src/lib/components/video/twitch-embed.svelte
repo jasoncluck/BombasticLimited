@@ -1,6 +1,7 @@
 <script lang="ts">
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import { onMount } from 'svelte';
+  import { browser } from '$app/environment';
   import AspectRatio from '../ui/aspect-ratio/aspect-ratio.svelte';
 
   interface Props {
@@ -11,6 +12,8 @@
 
   interface TwitchEmbedPlayer {
     destroy(): void;
+    addEventListener?(event: string, callback: () => void): void;
+    removeEventListener?(event: string, callback: () => void): void;
   }
 
   interface TwitchEmbedOptions {
@@ -28,28 +31,66 @@
   let mounted = $state(false);
   let embedElement: HTMLElement | undefined = $state();
   let playerCreated = $state(false);
+  let hostname = $state('localhost');
+  let adDebugInfo = $state<string[]>([]);
 
   const mediaQuery = getMediaQueryState();
   let shouldShowChat = $derived(mediaQuery.isLg);
 
+  function addDebugInfo(message: string): void {
+    console.log(`[TwitchEmbed] ${message}`);
+    adDebugInfo = [
+      ...adDebugInfo,
+      `${new Date().toLocaleTimeString()}: ${message}`,
+    ];
+  }
+
+  async function loadTwitchScript(): Promise<void> {
+    if (typeof window.Twitch !== 'undefined') {
+      addDebugInfo('Twitch script already loaded');
+      return;
+    }
+
+    addDebugInfo('Loading Twitch embed script...');
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://embed.twitch.tv/embed/v1.js';
+      script.async = true;
+      script.onload = () => {
+        addDebugInfo('Twitch script loaded successfully');
+        resolve();
+      };
+      script.onerror = () => {
+        addDebugInfo('Failed to load Twitch embed script');
+        reject(new Error('Failed to load Twitch embed script'));
+      };
+      document.head.appendChild(script);
+    });
+  }
+
   async function createPlayer(): Promise<void> {
-    if (
-      !mounted ||
-      typeof window.Twitch === 'undefined' ||
-      !channel ||
-      playerCreated
-    ) {
+    if (!mounted || !browser || !channel || playerCreated) {
       return;
     }
 
     try {
+      addDebugInfo(`Starting player creation for channel: ${channel}`);
+
+      // Ensure Twitch script is loaded
+      await loadTwitchScript();
+
+      // Wait a bit for the DOM to be ready
       await new Promise<void>((resolve) => setTimeout(resolve, 100));
 
       const embedEl = document.getElementById('twitch-embed');
       if (!embedEl) {
-        console.warn('Twitch embed element not found');
+        addDebugInfo('ERROR: Twitch embed element not found');
         return;
       }
+
+      // Get the current hostname
+      const currentHostname = window.location.hostname;
+      hostname = currentHostname;
 
       const embedOptions: TwitchEmbedOptions = {
         width: '100%',
@@ -57,22 +98,61 @@
         channel: channel,
         layout: 'video',
         theme: 'dark',
-        parent: [window.location.hostname, 'localhost'],
+        parent: [currentHostname, 'localhost'],
         autoplay: false,
         muted: false,
       };
 
+      addDebugInfo(
+        `Creating player with parent domains: ${embedOptions.parent.join(', ')}`
+      );
+      addDebugInfo(`Player options: ${JSON.stringify(embedOptions, null, 2)}`);
+
       player = new window.Twitch.Embed('twitch-embed', embedOptions);
 
+      // Add event listeners if available
+      if (player && typeof player.addEventListener === 'function') {
+        player.addEventListener('ready', () => {
+          addDebugInfo('Player ready event fired');
+        });
+      }
+
       playerCreated = true;
-      console.log('Twitch player created successfully');
+      addDebugInfo('Twitch player created successfully');
+
+      // Additional debugging for ad-related events
+      setTimeout(() => {
+        addDebugInfo('Checking for ad-related errors in console...');
+        if (window.console && window.console.error) {
+          const originalError = window.console.error;
+          window.console.error = function (...args: unknown[]) {
+            const message = args.join(' ');
+            if (
+              message.includes('ad') ||
+              message.includes('Ad') ||
+              message.includes('advertisement')
+            ) {
+              addDebugInfo(`Ad-related error detected: ${message}`);
+            }
+            originalError.apply(console, args);
+          };
+        }
+      }, 1000);
     } catch (error) {
+      addDebugInfo(
+        `Error creating Twitch player: ${error instanceof Error ? error.message : String(error)}`
+      );
       console.error('Error creating Twitch player:', error);
     }
   }
 
   onMount(() => {
     mounted = true;
+    if (browser) {
+      hostname = window.location.hostname;
+      addDebugInfo(`Component mounted on hostname: ${hostname}`);
+    }
+
     const cleanup = mediaQuery.initialize();
 
     createPlayer();
@@ -82,8 +162,11 @@
       if (player) {
         try {
           player.destroy();
+          addDebugInfo('Player destroyed on unmount');
         } catch (error) {
-          console.warn('Error destroying Twitch player on unmount:', error);
+          addDebugInfo(
+            `Error destroying player: ${error instanceof Error ? error.message : String(error)}`
+          );
         }
       }
     };
@@ -110,13 +193,29 @@
     {#if shouldShowChat}
       <div class="overflow-hidden rounded bg-gray-900">
         <iframe
-          src="https://www.twitch.tv/embed/{channel}/chat?darkpopout&parent={window
-            .location.hostname}&parent=localhost"
+          src="https://www.twitch.tv/embed/{channel}/chat?darkpopout&parent={hostname}&parent=localhost"
           class="h-full w-full border-0"
           title="Twitch Chat for {channel}"
-          allow="accelerometer; gyroscope; microphone; camera;"
+          allow="microphone; camera;"
         ></iframe>
       </div>
     {/if}
   </div>
+
+  <!-- Debug information panel (only shown in development) -->
+  {#if browser && window.location.hostname === 'localhost'}
+    <div class="mt-4 rounded bg-gray-800 p-4 text-xs text-white">
+      <h3 class="mb-2 font-bold">Twitch Embed Debug Info:</h3>
+      <div class="max-h-40 overflow-y-auto">
+        {#each adDebugInfo as info}
+          <div class="mb-1">{info}</div>
+        {/each}
+      </div>
+      <div class="mt-2 text-yellow-300">
+        <strong>Note:</strong> Twitch ads may not appear on localhost or for all
+        channels/regions. Try testing on a deployed version with a popular, monetized
+        channel.
+      </div>
+    </div>
+  {/if}
 </AspectRatio>
