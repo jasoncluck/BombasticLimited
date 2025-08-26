@@ -38,7 +38,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
     userPlaylists.map(async (up) => {
       if (!up.image_url) {
         up.image_url = await getCroppedPlaylistImageUrlServer({
-          thumbnailUrl: up.thumbnail_url ?? null,
+          thumbnailUrl: up.thumbnail_url ?? undefined,
           imageProperties: parseImageProperties(up.image_properties),
         });
       }
