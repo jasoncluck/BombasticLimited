@@ -114,7 +114,7 @@
 
 <ContextMenu.Root bind:open={isThisSectionMenuOpen}>
   <ContextMenu.Trigger
-    class="outline-hiddden"
+    class="outline-hiddden contents"
     onmousedown={(event) => {
       const isCtrlPressed = event.ctrlKey || event.metaKey;
       const isLeftClick = event.button === 0;

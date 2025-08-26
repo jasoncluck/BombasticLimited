@@ -96,7 +96,7 @@
         : 'Unfollow playlist'}
     </ContextMenu.Item>
   </ContextMenu.Content>
-  <ContextMenu.Trigger class="contents">
+  <ContextMenu.Trigger class="contents outline-hidden">
     {@render children()}
   </ContextMenu.Trigger>
 </ContextMenu.Root>

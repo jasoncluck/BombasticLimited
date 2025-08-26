@@ -198,7 +198,7 @@
     watchDrag: false,
     inViewThreshold: 0.5,
   }}
-  class="z-40 overflow-x-clip"
+  class="z-40"
   data-testid="video-carousel"
   setApi={(emblaApi) => {
     api = emblaApi;
@@ -221,10 +221,13 @@
       hover:opacity-100 hover:brightness-110'
       : 'invisible'}
   />
-  <Carousel.Content>
+  <Carousel.Content class="ml-1">
     {#each videos as video, i (video.id)}
       <Carousel.Item
-        class="group outline-hiddden basis-full rounded-md pr-2 @sm:basis-1/3 @4xl:basis-1/5"
+        class="group basis-full rounded-md pr-2 outline-hidden @sm:basis-1/3 @4xl:basis-1/5 {i ===
+        0
+          ? 'overflow-visible'
+          : ''}"
         data-testid="carousel-item"
       >
         <ContentCard

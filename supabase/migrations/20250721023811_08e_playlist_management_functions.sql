@@ -310,15 +310,15 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Fixed: Use explicit table alias to avoid ambiguous column references
-  UPDATE public.user_playlists up
+  -- Fixed: Use explicit table aliases and proper WHERE clause to avoid ambiguous column references
+  UPDATE public.user_playlists
   SET playlist_position = CASE 
-    WHEN up.id = p_playlist_id THEN p_new_position
-    WHEN p_new_position > current_position AND up.playlist_position > current_position AND up.playlist_position <= p_new_position THEN up.playlist_position - 1
-    WHEN p_new_position < current_position AND up.playlist_position >= p_new_position AND up.playlist_position < current_position THEN up.playlist_position + 1
-    ELSE up.playlist_position
+    WHEN id = p_playlist_id THEN p_new_position
+    WHEN p_new_position > current_position AND playlist_position > current_position AND playlist_position <= p_new_position THEN playlist_position - 1
+    WHEN p_new_position < current_position AND playlist_position >= p_new_position AND playlist_position < current_position THEN playlist_position + 1
+    ELSE playlist_position
   END
-  WHERE up.user_id = current_user_id;
+  WHERE user_id = current_user_id;
 
   RETURN QUERY SELECT p_playlist_id, p_new_position, true;
 END;

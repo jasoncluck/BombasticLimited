@@ -181,7 +181,11 @@
       {session}
       {form}
     >
-      <div bind:this={contentRef} {...restProps} class="flex flex-col gap-5">
+      <div
+        bind:this={contentRef}
+        {...restProps}
+        class="flex flex-col gap-5 overflow-x-clip"
+      >
         <!-- Table view for small screens (up to sm breakpoint) -->
         <div class="sm:hidden">
           <ContentTable

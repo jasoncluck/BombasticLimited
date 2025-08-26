@@ -9,7 +9,7 @@
     getContentState,
     type CarouselState,
   } from '$lib/state/content.svelte';
-  import { ArrowDown, ArrowUp, Check, ListVideo } from '@lucide/svelte';
+  import { ArrowDown, ArrowUp, Check, ListVideo, Circle } from '@lucide/svelte';
   import type { ContentDisplayProps } from './content';
   import ContentDropdown from './content-dropdown.svelte';
   import { goto, preloadData } from '$app/navigation';
@@ -152,7 +152,7 @@
     const isHoveredCard = hoveredVideo?.id === video.id;
     const isInViewCard = isInView();
 
-    let classes = `group w-full outline-primary transform cursor-pointer will-change-transform ${isContinueVideos ? 'h-76' : 'h-76 '}`;
+    let classes = `group w-full outline-primary transform cursor-pointer will-change-transform h-68`;
 
     // Only apply hover and selected states to cards that are in view
     if (isInViewCard && (isSelectedCard || isHoveredCard)) {
@@ -381,7 +381,9 @@
     oncontextmenu={handleContextMenu}
     onkeydown={handleKeyDown}
   >
-    <div class="flex flex-1 cursor-pointer flex-col overflow-hidden text-left">
+    <div
+      class="mx-1 mt-1 flex flex-1 cursor-pointer flex-col overflow-hidden text-left"
+    >
       <div class="relative flex-shrink-0">
         <!-- Use the optimized image_url directly from the database -->
         <img
@@ -430,8 +432,13 @@
         {#if shouldShowDescription}
           <!-- Show description when hovering and no playlist exists -->
           <div
-            class="pointer-events-none line-clamp-3 transform overflow-hidden
-            text-xs leading-normal tracking-tight break-words will-change-transform"
+            class="pointer-events-none transform overflow-hidden
+            text-xs leading-normal tracking-tight break-words will-change-transform
+            {video.title.length > 80
+              ? 'line-clamp-1'
+              : video.title.length > 50
+                ? 'line-clamp-2'
+                : 'line-clamp-3'}"
           >
             {video.description}
           </div>
@@ -451,46 +458,46 @@
         <!-- Playlist section with flex-shrink-0 to prevent compression -->
         {#if isVideoInPlaylist && isVideoWithTimestamp(video)}
           <div
-            class="text-secondary-foreground hover:text-primary z-10 line-clamp-2 flex flex-shrink-0 items-center gap-2 py-2 text-xs"
+            class="text-secondary-foreground hover:text-primary z-10 flex flex-shrink-0 items-center gap-2 text-xs"
           >
-            <ListVideo size="16" class="mt-2 shrink-0 self-start" />
-            <div class="flex w-full flex-col justify-center gap-2">
-              <a
-                onclick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  goto(`playlist/${video.playlist_short_id}`);
-                }}
-                href={`playlist/${video.playlist_short_id}`}
-                class="flex cursor-pointer items-center gap-2 truncate whitespace-normal"
-              >
-                <span class="overflow-auto text-xs tracking-tight"
-                  >{video.playlist_name}</span
-                >
-              </a>
-              <div
-                class="text-muted-foreground flex shrink-0 items-center tracking-tight"
-              >
-                {#if video.playlist_sorted_by}
-                  <div class="flex shrink-0 items-center">
-                    <span class="truncate text-xs">
-                      {getSortDisplayName({
-                        key: video.playlist_sorted_by,
-                        view: 'playlist',
-                      })}
-                    </span>
-                    {#if video.playlist_sort_order}
-                      {#if video.playlist_sort_order === 'ascending'}
-                        <ArrowUp size="14" class="ml-1 shrink-0" />
-                        <span class="sr-only">Sorted Ascending</span>
-                      {:else}
-                        <ArrowDown size="14" class="ml-1 shrink-0" />
-                        <span class="sr-only">Sorted Descending</span>
-                      {/if}
+            <ListVideo size="16" class="shrink-0" />
+            <a
+              onclick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                goto(`playlist/${video.playlist_short_id}`);
+              }}
+              href={`playlist/${video.playlist_short_id}`}
+              class="flex items-center gap-2 truncate tracking-tight whitespace-normal"
+            >
+              <span class="truncate">{video.playlist_name}</span>
+            </a>
+            <div
+              class="text-muted-foreground flex shrink-0 items-center tracking-tight"
+            >
+              {#if video.playlist_sorted_by}
+                <Circle
+                  size="5"
+                  class="stroke-muted-foreground fill-muted-foreground mr-2 shrink-0 justify-center"
+                />
+                <div class="flex shrink-0 items-center">
+                  <span class="truncate text-xs">
+                    {getSortDisplayName({
+                      key: video.playlist_sorted_by,
+                      view: 'playlist',
+                    })}
+                  </span>
+                  {#if video.playlist_sort_order}
+                    {#if video.playlist_sort_order === 'ascending'}
+                      <ArrowUp size="14" class="ml-1 shrink-0" />
+                      <span class="sr-only">Sorted Ascending</span>
+                    {:else}
+                      <ArrowDown size="14" class="ml-1 shrink-0" />
+                      <span class="sr-only">Sorted Descending</span>
                     {/if}
-                  </div>
-                {/if}
-              </div>
+                  {/if}
+                </div>
+              {/if}
             </div>
           </div>
         {/if}
