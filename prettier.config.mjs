@@ -1,10 +1,9 @@
 /** @type {import('prettier').Config} */
-const prettierConfig = {
+const config = {
   plugins: [
     'prettier-plugin-svelte',
     'prettier-plugin-tailwindcss',
     'prettier-plugin-embed',
-    'prettier-plugin-sql',
   ],
   printWidth: 80,
   proseWrap: 'always',
@@ -13,23 +12,7 @@ const prettierConfig = {
   semi: true,
   singleQuote: true,
   trailingComma: 'es5',
-};
-
-/** @type {import('prettier-plugin-embed').PrettierPluginEmbedOptions} */
-const prettierPluginEmbedConfig = {
   embeddedSqlTags: ['sql'],
-};
-
-/** @type {import('prettier-plugin-sql').SqlBaseOptions} */
-const prettierPluginSqlConfig = {
-  language: 'postgresql',
-  keywordCase: 'upper',
-};
-
-const config = {
-  ...prettierConfig,
-  ...prettierPluginEmbedConfig,
-  ...prettierPluginSqlConfig,
   overrides: [
     {
       files: '*.svelte',
@@ -39,7 +22,9 @@ const config = {
     },
     {
       files: '*.sql',
+      excludeFiles: ['supabase/seed.sql'],
       options: {
+        plugins: ['prettier-plugin-sql'],
         parser: 'sql',
         language: 'postgresql',
         keywordCase: 'upper',

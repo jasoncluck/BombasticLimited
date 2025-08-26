@@ -310,109 +310,6 @@
     }
   }
 
-  // Monitor for ad-related network requests
-  function monitorAdRequests(): void {
-    if (!browser || !dev) return;
-
-    try {
-      // Override fetch to monitor ad requests
-      const originalFetch = window.fetch;
-      window.fetch = async (...args) => {
-        const [resource] = args;
-        let url: string;
-
-        // Handle both string URLs and Request objects
-        if (typeof resource === 'string') {
-          url = resource;
-        } else if (resource instanceof Request) {
-          url = resource.url;
-        } else if (resource instanceof URL) {
-          url = resource.href;
-        } else {
-          url = String(resource);
-        }
-
-        networkRequestCount = networkRequestCount + 1;
-
-        // Check for ad-related requests
-        const adKeywords = [
-          'ad',
-          'ads',
-          'amazon-adsystem',
-          'ads.twitch.tv',
-          'advertising',
-          'doubleclick',
-          'googlesyndication',
-          'dsp',
-          'aax',
-          'fls-na',
-          'unagi',
-          'completion.amazon',
-          'ad-delivery',
-        ];
-
-        const isAdRequest = adKeywords.some((keyword) =>
-          url.toLowerCase().includes(keyword)
-        );
-
-        if (isAdRequest) {
-          adRequestCount = adRequestCount + 1;
-          addDebugInfo(
-            `🌐 AD REQUEST #${adRequestCount}: ${url.substring(0, 100)}${url.length > 100 ? '...' : ''}`
-          );
-        }
-
-        return originalFetch.apply(window, args);
-      };
-
-      // Override XMLHttpRequest as well
-      const originalXHROpen = XMLHttpRequest.prototype.open;
-      XMLHttpRequest.prototype.open = function (
-        method: string,
-        url: string | URL,
-        ...rest: unknown[]
-      ) {
-        const urlString = typeof url === 'string' ? url : url.href;
-        networkRequestCount = networkRequestCount + 1;
-
-        const adKeywords = [
-          'ad',
-          'ads',
-          'amazon-adsystem',
-          'ads.twitch.tv',
-          'advertising',
-          'doubleclick',
-          'googlesyndication',
-          'dsp',
-          'aax',
-          'fls-na',
-          'unagi',
-          'completion.amazon',
-          'ad-delivery',
-        ];
-
-        const isAdRequest = adKeywords.some((keyword) =>
-          urlString.toLowerCase().includes(keyword)
-        );
-
-        if (isAdRequest) {
-          adRequestCount = adRequestCount + 1;
-          addDebugInfo(
-            `🌐 XHR AD REQUEST #${adRequestCount}: ${urlString.substring(0, 100)}${urlString.length > 100 ? '...' : ''}`
-          );
-        }
-
-        return originalXHROpen.call(this, method, url, ...rest);
-      };
-
-      addDebugInfo('Network monitoring for ad requests enabled');
-    } catch (error) {
-      addDebugInfo(
-        `Error setting up network monitoring: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  }
-
   async function createPlayer(): Promise<void> {
     if (!mounted || !browser || !channel || playerCreated) {
       return;
@@ -461,7 +358,6 @@
 
       // Setup comprehensive event monitoring
       setupAdEventListeners();
-      monitorAdRequests();
 
       playerCreated = true;
       addDebugInfo('✅ Twitch player created successfully');
