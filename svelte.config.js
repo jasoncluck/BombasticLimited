@@ -44,7 +44,7 @@ const config = {
             'https://googleadservices.com',
             'https://googletag.com',
             'https://imasdk.googleapis.com',
-            // Twitch domains
+            // Twitch core domains
             'https://gql.twitch.tv',
             'https://embed.twitch.tv',
             'https://player.twitch.tv',
@@ -60,7 +60,7 @@ const config = {
             'https://pubsub-edge.twitch.tv',
             'https://video-weaver.*.hls.ttvnw.net',
             'https://usher.ttvnw.net',
-            // Twitch ad-related domains
+            // Twitch ad-specific domains - CRITICAL FOR ADS
             'https://ads.twitch.tv',
             'https://amazon-adsystem.com',
             'https://s.amazon-adsystem.com',
@@ -69,12 +69,25 @@ const config = {
             'https://aax.amazon-adsystem.com',
             'https://completion.amazon.com',
             'https://unagi.amazon.com',
-            // Additional Amazon advertising domains
-            'https://amazon.com',
-            'https://advertising.amazon.com',
-            'https://c.amazon-adsystem.com',
             'https://z-na.amazon-adsystem.com',
             'https://rcm-na.amazon-adsystem.com',
+            'https://advertising.amazon.com',
+            'https://dsp.amazon.com',
+            'https://prod.advertising.amazon.com',
+            // Additional Amazon DSP domains
+            'https://amazon.com',
+            'https://images-na.ssl-images-amazon.com',
+            'https://m.media-amazon.com',
+            'https://images-na.ssl-images-amazon.com',
+            // IVS (Interactive Video Service) - Amazon's video streaming service used by Twitch
+            'https://ivs.amazonaws.com',
+            'https://d2nvs31859zcd8.cloudfront.net',
+            'https://d1m7jfoe9zdc1j.cloudfront.net',
+            // Additional Twitch ad networks
+            'https://pubads.g.doubleclick.net',
+            'https://tpc.googlesyndication.com',
+            'https://www.googletagservices.com',
+            'https://googletagservices.com',
             // Supabase
             'https://hguqxixjgwazwsuvhkmo.supabase.co',
           ],
@@ -93,13 +106,15 @@ const config = {
             'https://www.youtube-nocookie.com',
             'https://doubleclick.net',
             'https://imasdk.googleapis.com',
-            // Twitch domains
+            'https://pubads.g.doubleclick.net',
+            'https://googletagservices.com',
+            // Twitch core domains
             'https://embed.twitch.tv',
             'https://player.twitch.tv',
             'https://www.twitch.tv',
             'https://id.twitch.tv',
             'https://passport.twitch.tv',
-            // Twitch ad-related domains
+            // Twitch ad-specific domains - CRITICAL FOR AD FRAMES
             'https://ads.twitch.tv',
             'https://amazon-adsystem.com',
             'https://s.amazon-adsystem.com',
@@ -110,6 +125,13 @@ const config = {
             'https://unagi.amazon.com',
             'https://z-na.amazon-adsystem.com',
             'https://rcm-na.amazon-adsystem.com',
+            'https://advertising.amazon.com',
+            'https://dsp.amazon.com',
+            'https://prod.advertising.amazon.com',
+            // IVS domains
+            'https://ivs.amazonaws.com',
+            'https://d2nvs31859zcd8.cloudfront.net',
+            'https://d1m7jfoe9zdc1j.cloudfront.net',
           ],
           'child-src': [
             'self',
@@ -126,6 +148,7 @@ const config = {
             'https://googlesyndication.com',
             'https://doubleclick.net',
             'https://imasdk.googleapis.com',
+            'https://pubads.g.doubleclick.net',
           ],
           'frame-ancestors': [
             'self',
@@ -154,7 +177,9 @@ const config = {
             'https://doubleclick.net',
             'https://googleadservices.com',
             'https://googletag.com',
-            // Twitch domains
+            'https://pubads.g.doubleclick.net',
+            'https://googletagservices.com',
+            // Twitch core domains
             'https://api.twitch.tv',
             'https://gql.twitch.tv',
             'https://usher.ttvnw.net',
@@ -171,7 +196,7 @@ const config = {
             'https://spade.twitch.tv',
             'https://pubsub-edge.twitch.tv',
             'https://video-weaver.*.hls.ttvnw.net',
-            // Twitch ad-related domains
+            // Twitch ad-specific domains - CRITICAL FOR AD API CALLS
             'https://ads.twitch.tv',
             'https://amazon-adsystem.com',
             'https://s.amazon-adsystem.com',
@@ -182,6 +207,13 @@ const config = {
             'https://unagi.amazon.com',
             'https://z-na.amazon-adsystem.com',
             'https://rcm-na.amazon-adsystem.com',
+            'https://advertising.amazon.com',
+            'https://dsp.amazon.com',
+            'https://prod.advertising.amazon.com',
+            // IVS domains
+            'https://ivs.amazonaws.com',
+            'https://d2nvs31859zcd8.cloudfront.net',
+            'https://d1m7jfoe9zdc1j.cloudfront.net',
             // Supabase
             'https://hguqxixjgwazwsuvhkmo.supabase.co',
             // Development
@@ -206,7 +238,8 @@ const config = {
             'https://www.gstatic.com',
             'https://yt3.ggpht.com',
             'https://www.youtube-nocookie.com',
-            // Twitch domains
+            'https://pubads.g.doubleclick.net',
+            // Twitch core domains
             'https://static-cdn.jtvnw.net',
             'https://clips-media-assets2.twitch.tv',
             'https://vod-secure.twitch.tv',
@@ -214,7 +247,7 @@ const config = {
             'https://*.cloudfront.net',
             'https://static.twitchcdn.net',
             'https://assets.twitch.tv',
-            // Twitch ad-related domains
+            // Twitch ad-specific domains - CRITICAL FOR AD IMAGES
             'https://ads.twitch.tv',
             'https://amazon-adsystem.com',
             'https://s.amazon-adsystem.com',
@@ -225,6 +258,15 @@ const config = {
             'https://unagi.amazon.com',
             'https://z-na.amazon-adsystem.com',
             'https://rcm-na.amazon-adsystem.com',
+            'https://advertising.amazon.com',
+            'https://dsp.amazon.com',
+            'https://prod.advertising.amazon.com',
+            'https://images-na.ssl-images-amazon.com',
+            'https://m.media-amazon.com',
+            // IVS domains
+            'https://ivs.amazonaws.com',
+            'https://d2nvs31859zcd8.cloudfront.net',
+            'https://d1m7jfoe9zdc1j.cloudfront.net',
           ],
           'media-src': [
             'self',
@@ -236,19 +278,23 @@ const config = {
             'https://*.googlevideo.com',
             'https://googleads.g.doubleclick.net',
             'https://www.youtube-nocookie.com',
-            // Twitch domains
+            // Twitch core domains
             'https://vod-secure.twitch.tv',
             'https://vod-metro.twitch.tv',
             'https://clips-media-assets2.twitch.tv',
             'https://*.cloudfront.net',
             'https://video-weaver.*.hls.ttvnw.net',
-            // Twitch ad-related domains
+            // Twitch ad-specific domains - CRITICAL FOR AD VIDEO/AUDIO
             'https://ads.twitch.tv',
             'https://amazon-adsystem.com',
             'https://s.amazon-adsystem.com',
             'https://c.amazon-adsystem.com',
             'https://fls-na.amazon-adsystem.com',
             'https://aax.amazon-adsystem.com',
+            // IVS domains for video delivery
+            'https://ivs.amazonaws.com',
+            'https://d2nvs31859zcd8.cloudfront.net',
+            'https://d1m7jfoe9zdc1j.cloudfront.net',
           ],
           'style-src': [
             'self',
