@@ -336,7 +336,7 @@ async function processImageJobs(): Promise<ApiResponse> {
     );
 
     // Limit to maximum number of jobs we want to process in one batch
-    const maxJobsPerRequest = 25;
+    const maxJobsPerRequest = 50;
     const jobsToProcess = allReadyJobs.slice(0, maxJobsPerRequest);
 
     const processedJobs: ProcessedJob[] = [];

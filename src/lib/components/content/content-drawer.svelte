@@ -187,9 +187,9 @@
             </div>
           {:else if playlist}
             <div class="flex items-center gap-2">
-              {#if playlist.processedImageUrl}
+              {#if playlist.image_url}
                 <div class="h-12 w-12 shrink-0">
-                  <img src={playlist.processedImageUrl} alt={playlist.name} />
+                  <img src={playlist.image_url} alt={playlist.name} />
                 </div>
               {:else}
                 <div
@@ -210,7 +210,7 @@
           {/if}
         </Drawer.Header>
 
-        <hr />
+        <hr class="bg-muted-foreground" />
 
         <!-- Edit button for header variant -->
         {#if variant === 'header' && isPlaylistOwner && form && playlist}
@@ -323,12 +323,12 @@
                     contentState.openDrawerSection = null;
                   }}
                 >
-                  {#if addPlaylist.processedImageUrl}
+                  {#if addPlaylist.image_url}
                     <div
                       class="flex h-12 w-12 flex-shrink-0 items-center justify-center"
                     >
                       <img
-                        src={addPlaylist.processedImageUrl}
+                        src={addPlaylist.image_url}
                         class="h-full w-full cursor-pointer object-cover"
                         alt={`Image for playlist: ${addPlaylist.name}`}
                       />

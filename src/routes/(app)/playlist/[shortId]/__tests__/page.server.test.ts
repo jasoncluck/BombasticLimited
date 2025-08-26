@@ -390,6 +390,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
         playlistId: 1,
         imageProperties: null,
         supabase: mockSupabase,
+        thumbnailUrl: null,
       });
     });
 

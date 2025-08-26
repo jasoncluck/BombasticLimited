@@ -303,24 +303,26 @@
               <p class="text-muted-foreground text-xs">Account linked</p>
             </div>
           </div>
-          <Button
-            type="submit"
-            variant="destructive"
-            class="w-full cursor-pointer @lg:w-auto"
-            onclick={async (e) => {
-              e.preventDefault();
-              const { error } = await unlinkDiscordIdentity({
-                supabase,
-              });
+          {#if profile.providers.length > 1}
+            <Button
+              type="submit"
+              variant="destructive"
+              class="w-full cursor-pointer @lg:w-auto"
+              onclick={async (e) => {
+                e.preventDefault();
+                const { error } = await unlinkDiscordIdentity({
+                  supabase,
+                });
 
-              if (error) {
-                showNotification(error.message, 'error');
-              }
-              invalidate('supabase:db:profiles');
-            }}
-          >
-            Unlink
-          </Button>
+                if (error) {
+                  showNotification(error.message, 'error');
+                }
+                invalidate('supabase:db:profiles');
+              }}
+            >
+              Unlink
+            </Button>
+          {/if}
         </div>
       {:else}
         <!-- Discord Account Not Linked -->
@@ -391,8 +393,8 @@
           </Dialog.Header>
 
           <p class="mb-8">
-            This action cannot be undone. Deleting your account will delete all
-            associated data including any public playlists.
+            This action cannot be undone. Deleting your account will remove all
+            associated data including any playlists.
           </p>
           <Dialog.Footer>
             <Dialog.Close>

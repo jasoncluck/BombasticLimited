@@ -136,8 +136,8 @@
             </span>
           </Button>
 
-          <Sheet.Title class="mx-2 mt-4 mb-2 flex flex-col gap-4">
-            Channels
+          <div class="mx-2 mt-4 mb-2 flex flex-col gap-4">
+            <Sheet.Title>Channels</Sheet.Title>
 
             {#if userProfile}
               <EditSourceDrawer
@@ -177,7 +177,7 @@
                 {/snippet}
               </EditSourceDrawer>
             {/if}
-          </Sheet.Title>
+          </div>
 
           {#each userProfile?.sources ?? SOURCES as source (source)}
             <div animate:flip={{ duration: flipDurationMs }}>
@@ -190,27 +190,29 @@
                 }}
                 title={SOURCE_INFO[source].displayName}
               >
-                <StreamingIndicator
-                  isStreaming={sidebarState.isSourceStreaming(source)}
-                  size="sm"
-                />
-                <span class="sr-only">Live now</span>
-                <div class="h-12 w-12 flex-none">
-                  <enhanced:img
-                    src={SOURCE_INFO[source].image}
-                    alt={SOURCE_INFO[source].displayName}
-                    class="h-12 w-12 cursor-pointer object-cover"
+                <div class="absolute flex w-full grow items-center">
+                  <StreamingIndicator
+                    isStreaming={sidebarState.isSourceStreaming(source)}
+                    size="sm"
                   />
+                  <span class="sr-only">Live now</span>
+                  <div class="h-12 w-12 flex-none">
+                    <enhanced:img
+                      src={SOURCE_INFO[source].image}
+                      alt={SOURCE_INFO[source].displayName}
+                      class="h-12 w-12 cursor-pointer object-cover"
+                    />
+                  </div>
+                  <span class="m-3 text-sm font-medium overflow-ellipsis">
+                    {SOURCE_INFO[source].displayName}
+                  </span>
                 </div>
-                <span class="m-3 text-sm font-medium overflow-ellipsis">
-                  {SOURCE_INFO[source].displayName}
-                </span>
               </Button>
             </div>
           {/each}
 
-          <Sheet.Title class="mx-2 mt-4 mb-2 flex flex-col gap-4">
-            Playlists
+          <div class="mx-2 mt-4 mb-2 flex flex-col gap-4">
+            <Sheet.Title>Playlists</Sheet.Title>
 
             {#if session && playlists.length > 1}
               <EditListDrawer
@@ -258,7 +260,7 @@
                 {/snippet}
               </EditListDrawer>
             {/if}
-          </Sheet.Title>
+          </div>
 
           {#if session}
             <Button
@@ -334,57 +336,58 @@
             {/each}
           {/if}
 
-          <Sheet.Title class="mx-2 mt-4 mb-2 flex flex-col gap-4">
-            Account
-            {#if session}
-              <Button
-                variant="ghost"
-                class="flex h-[64px] w-full cursor-pointer justify-start"
-                onclick={() => {
-                  goto(`/account`);
-                  isOpen = false;
-                }}
-              >
-                <div class="flex h-12 w-12 items-center">
-                  <Settings class="mx-2 flex !h-8 !w-8" />
-                </div>
-                <span class="m-3 text-sm font-medium overflow-ellipsis">
-                  Settings
-                </span>
-              </Button>
-              <Button
-                variant="ghost"
-                class="flex h-[64px] w-full cursor-pointer justify-start"
-                onclick={() => {
-                  handleLogout();
-                  isOpen = false;
-                }}
-              >
-                <div class="flex h-12 w-12 items-center">
-                  <LogOut class="mx-2 flex !h-8 !w-8" />
-                </div>
-                <span class="m-3 text-sm font-medium overflow-ellipsis">
-                  Logout
-                </span>
-              </Button>
-            {:else}
-              <Button
-                variant="ghost"
-                class="flex h-[64px] w-full cursor-pointer justify-start"
-                onclick={() => {
-                  goto('/auth/login');
-                  isOpen = false;
-                }}
-              >
-                <div class="flex h-12 w-12 items-center">
-                  <LogIn class="mx-2 flex !h-8 !w-8" />
-                </div>
-                <span class="m-3 text-sm font-medium overflow-ellipsis">
-                  Login
-                </span>
-              </Button>
-            {/if}
-          </Sheet.Title>
+          <div class="mx-2 mt-4 mb-2 flex flex-col gap-4">
+            <Sheet.Title>Account</Sheet.Title>
+          </div>
+
+          {#if session}
+            <Button
+              variant="ghost"
+              class="flex h-[64px] w-full cursor-pointer justify-start"
+              onclick={() => {
+                goto(`/account`);
+                isOpen = false;
+              }}
+            >
+              <div class="flex h-12 w-12 items-center">
+                <Settings class="mx-2 flex !h-8 !w-8" />
+              </div>
+              <span class="m-3 text-sm font-medium overflow-ellipsis">
+                Settings
+              </span>
+            </Button>
+            <Button
+              variant="ghost"
+              class="flex h-[64px] w-full cursor-pointer justify-start"
+              onclick={() => {
+                handleLogout();
+                isOpen = false;
+              }}
+            >
+              <div class="flex h-12 w-12 items-center">
+                <LogOut class="mx-2 flex !h-8 !w-8" />
+              </div>
+              <span class="m-3 text-sm font-medium overflow-ellipsis">
+                Logout
+              </span>
+            </Button>
+          {:else}
+            <Button
+              variant="ghost"
+              class="flex h-[64px] w-full cursor-pointer justify-start"
+              onclick={() => {
+                goto('/auth/login');
+                isOpen = false;
+              }}
+            >
+              <div class="flex h-12 w-12 items-center">
+                <LogIn class="mx-2 flex !h-8 !w-8" />
+              </div>
+              <span class="m-3 text-sm font-medium overflow-ellipsis">
+                Login
+              </span>
+            </Button>
+          {/if}
         </div>
       {/if}
     </ScrollArea>

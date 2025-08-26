@@ -184,8 +184,9 @@
       >
         {#each row.getVisibleCells() as cell (cell.id)}
           <Table.Cell
-            class="content-table-row overflow-hidden py-2 align-top {mediaQueryState.canHover &&
-            cell.id.includes('image')
+            class="content-table-row overflow-hidden py-2 align-top {cell.id.includes(
+              'image'
+            )
               ? 'pl-0'
               : 'pl-2'}"
           >

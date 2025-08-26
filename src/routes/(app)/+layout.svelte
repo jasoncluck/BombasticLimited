@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { Toaster } from '$lib/components/ui/sonner/index.js';
-  import { injectSpeedInsights } from '@vercel/speed-insights/sveltekit';
   import Loader from '$lib/components/loader.svelte';
   import MainNavigation from '$lib/components/layout/navigation/main-navigation.svelte';
   import ResizableLayout from '$lib/components/layout/content/resizable-layout.svelte';
@@ -24,8 +23,6 @@
     useLayoutEffects,
     useNavigation,
   } from '$lib/components/layout/index.js';
-
-  injectSpeedInsights();
 
   let { data, children } = $props();
   let { session, supabase, userProfile, preferredImageFormat } = $derived(data);
@@ -399,6 +396,7 @@
       {supabase}
       {session}
       {refreshSidebar}
+      {userProfile}
       {pageState}
       {isNavigatingToContent}
     >

@@ -189,7 +189,7 @@ async function processImageFormats(
   const sharpInstance = sharp(buffer, {
     failOnError: false,
     density: 300,
-    limitInputPixels: false,
+    limitInputPixels: 268402689, // ~16MP limit to prevent OOM
   });
 
   // Get metadata
@@ -197,138 +197,149 @@ async function processImageFormats(
   const sourceWidth = metadata.width || 1920;
   const sourceHeight = metadata.height || 1080;
 
-  let pipeline = sharpInstance;
-  let finalOutputSize = { width: sourceWidth, height: sourceHeight };
+  try {
+    let pipeline = sharpInstance;
+    let finalOutputSize = { width: sourceWidth, height: sourceHeight };
 
-  if (entityType === 'playlist' && playlistId && sourceUrl) {
-    // Apply cropping for playlists
-    const cropProps = await getPlaylistCropProperties(
-      playlistId,
-      sourceWidth,
-      sourceHeight
-    );
+    if (entityType === 'playlist' && playlistId && sourceUrl) {
+      // Apply cropping for playlists
+      const cropProps = await getPlaylistCropProperties(
+        playlistId,
+        sourceWidth,
+        sourceHeight
+      );
 
-    const imageType =
-      sourceWidth === 1280 && sourceHeight === 720 ? 'maxres' : 'standard';
-    const validatedCropProps = validateAndAdjustCropDimensions(
-      cropProps,
-      sourceWidth,
-      sourceHeight,
-      imageType,
-      null
-    );
+      const imageType =
+        sourceWidth === 1280 && sourceHeight === 720 ? 'maxres' : 'standard';
+      const validatedCropProps = validateAndAdjustCropDimensions(
+        cropProps,
+        sourceWidth,
+        sourceHeight,
+        imageType,
+        null
+      );
 
-    pipeline = pipeline.extract({
-      left: validatedCropProps.x,
-      top: validatedCropProps.y,
-      width: validatedCropProps.width,
-      height: validatedCropProps.height,
-    });
+      pipeline = pipeline.extract({
+        left: validatedCropProps.x,
+        top: validatedCropProps.y,
+        width: validatedCropProps.width,
+        height: validatedCropProps.height,
+      });
 
-    // Determine output size based on crop
-    const cropSize = Math.min(
-      validatedCropProps.width,
-      validatedCropProps.height
-    );
-    let outputSize: number;
+      // Determine output size based on crop
+      const cropSize = Math.min(
+        validatedCropProps.width,
+        validatedCropProps.height
+      );
+      let outputSize: number;
 
-    if (cropSize <= 180) {
-      outputSize = 256;
-    } else if (cropSize <= 360) {
-      outputSize = 512;
+      if (cropSize <= 180) {
+        outputSize = 256;
+      } else if (cropSize <= 360) {
+        outputSize = 512;
+      } else {
+        outputSize = 768;
+      }
+
+      finalOutputSize = { width: outputSize, height: outputSize };
+
+      pipeline = pipeline
+        .resize(outputSize, outputSize, {
+          fit: 'cover',
+          withoutEnlargement: false,
+          kernel: sharp.kernel.lanczos3,
+        })
+        .sharpen({
+          sigma: 0.8,
+          m1: 1.0,
+          m2: 1.8,
+          x1: 2.0,
+          y2: 8.0,
+          y3: 15.0,
+        });
     } else {
-      outputSize = 768;
+      // For videos, apply smart resizing
+      const maxDimension = Math.max(sourceWidth, sourceHeight);
+      let targetSize: number;
+
+      if (maxDimension > 1920) {
+        targetSize = 1920;
+      } else if (maxDimension > 1280) {
+        targetSize = 1280;
+      } else if (maxDimension > 640) {
+        targetSize = 640;
+      } else {
+        targetSize = maxDimension;
+      }
+
+      if (targetSize < maxDimension) {
+        const aspectRatio = sourceWidth / sourceHeight;
+        const newWidth =
+          aspectRatio >= 1 ? targetSize : Math.round(targetSize * aspectRatio);
+        const newHeight =
+          aspectRatio >= 1 ? Math.round(targetSize / aspectRatio) : targetSize;
+
+        finalOutputSize = { width: newWidth, height: newHeight };
+
+        pipeline = pipeline.resize(newWidth, newHeight, {
+          fit: 'inside',
+          withoutEnlargement: true,
+          kernel: sharp.kernel.lanczos3,
+        });
+      }
     }
 
-    finalOutputSize = { width: outputSize, height: outputSize };
+    // Apply color space conversion
+    pipeline = pipeline.toColourspace('srgb');
 
-    pipeline = pipeline
-      .resize(outputSize, outputSize, {
-        fit: 'cover',
-        withoutEnlargement: false,
-        kernel: sharp.kernel.lanczos3,
+    const pixelCount = finalOutputSize.width * finalOutputSize.height;
+    const isLargeImage = pixelCount > 300000;
+
+    // Compression settings
+    const webpQuality = isLargeImage ? 65 : 75;
+    const avifQuality = isLargeImage ? 55 : 65;
+
+    const result: ProcessedImages = {
+      webp: Buffer.alloc(0),
+      avif: Buffer.alloc(0),
+    };
+
+    // Generate WebP
+    result.webp = await pipeline
+      .clone()
+      .webp({
+        quality: webpQuality,
+        effort: 6,
+        lossless: false,
+        nearLossless: false,
+        smartSubsample: true,
+        preset: 'photo',
+        alphaQuality: 80,
       })
-      .sharpen({
-        sigma: 0.8,
-        m1: 1.0,
-        m2: 1.8,
-        x1: 2.0,
-        y2: 8.0,
-        y3: 15.0,
-      });
-  } else {
-    // For videos, apply smart resizing
-    const maxDimension = Math.max(sourceWidth, sourceHeight);
-    let targetSize: number;
+      .toBuffer();
 
-    if (maxDimension > 1920) {
-      targetSize = 1920;
-    } else if (maxDimension > 1280) {
-      targetSize = 1280;
-    } else if (maxDimension > 640) {
-      targetSize = 640;
-    } else {
-      targetSize = maxDimension;
+    // Generate AVIF
+    result.avif = await pipeline
+      .clone()
+      .avif({
+        quality: avifQuality,
+        effort: 9,
+        lossless: false,
+        chromaSubsampling: '4:2:0',
+      })
+      .toBuffer();
+
+    return result;
+  } finally {
+    // Cleanup Sharp instance
+    if (sharpInstance) {
+      sharpInstance.destroy();
     }
-
-    if (targetSize < maxDimension) {
-      const aspectRatio = sourceWidth / sourceHeight;
-      const newWidth =
-        aspectRatio >= 1 ? targetSize : Math.round(targetSize * aspectRatio);
-      const newHeight =
-        aspectRatio >= 1 ? Math.round(targetSize / aspectRatio) : targetSize;
-
-      finalOutputSize = { width: newWidth, height: newHeight };
-
-      pipeline = pipeline.resize(newWidth, newHeight, {
-        fit: 'inside',
-        withoutEnlargement: true,
-        kernel: sharp.kernel.lanczos3,
-      });
+    // Force garbage collection hint
+    if (global.gc) {
+      global.gc();
     }
   }
-
-  // Apply color space conversion
-  pipeline = pipeline.toColourspace('srgb');
-
-  const pixelCount = finalOutputSize.width * finalOutputSize.height;
-  const isLargeImage = pixelCount > 300000;
-
-  // Compression settings
-  const webpQuality = isLargeImage ? 65 : 75;
-  const avifQuality = isLargeImage ? 55 : 65;
-
-  const result: ProcessedImages = {
-    webp: Buffer.alloc(0),
-    avif: Buffer.alloc(0),
-  };
-
-  // Generate WebP
-  result.webp = await pipeline
-    .clone()
-    .webp({
-      quality: webpQuality,
-      effort: 6,
-      lossless: false,
-      nearLossless: false,
-      smartSubsample: true,
-      preset: 'photo',
-      alphaQuality: 80,
-    })
-    .toBuffer();
-
-  // Generate AVIF
-  result.avif = await pipeline
-    .clone()
-    .avif({
-      quality: avifQuality,
-      effort: 9,
-      lossless: false,
-      chromaSubsampling: '4:2:0',
-    })
-    .toBuffer();
-
-  return result;
 }
 
 // Upload processed images to Supabase Storage
@@ -438,10 +449,17 @@ async function updateEntityWithProcessedImages(
 // Main image processing task
 export const processImageWebhook = task({
   id: 'process-image-webhook',
-  // Increased timeout to 45 seconds to allow for image processing
-  machine: {
-    preset: 'small-1x',
+  // Add explicit timeout
+  maxDuration: 10 * 60, // 10 minutes
+  // Add retry configuration for OOM errors
+  retry: {
+    maxAttempts: 3,
+    factor: 2,
+    minTimeoutInMs: 1000,
+    maxTimeoutInMs: 10000,
+    randomize: false,
   },
+
   // Set a longer timeout for image processing
   run: async (payload: WebhookPayload): Promise<ProcessingResult> => {
     const { type, table, record, old_record, jobId, timestamp } = payload;

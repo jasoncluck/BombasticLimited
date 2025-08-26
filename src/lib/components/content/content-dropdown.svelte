@@ -99,6 +99,7 @@
   let open = $state(false);
   let subMenuOpen = $state(false);
   let showDeleteDialog = $state(false);
+  let isFocused = $state(false);
 
   // Capture the operation videos when dropdown opens and keep them fixed
   let frozenOperationVideos = $state<Video[]>([]);
@@ -191,10 +192,15 @@
   });
 
   // Keep the button visible when dropdown OR sub-menu is open, but also check if actions are available
+  // Now includes focus state for keyboard navigation
   const shouldShowButton = $derived.by(() => {
     return (
       hasAvailableActions &&
-      (variant !== 'list-items' || isHovering || open || subMenuOpen)
+      (variant !== 'list-items' ||
+        isHovering ||
+        open ||
+        subMenuOpen ||
+        isFocused)
     );
   });
 
@@ -263,7 +269,13 @@
             }
             e.stopPropagation();
           }}
-          class="ghost-button-minimal outline-hidden {open
+          onfocus={() => {
+            isFocused = true;
+          }}
+          onblur={() => {
+            isFocused = false;
+          }}
+          class="ghost-button-minimal outline-primary {open
             ? 'scale-105'
             : ''} {shouldShowButton ? 'opacity-100' : 'opacity-0'}"
         >

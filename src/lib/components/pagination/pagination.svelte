@@ -2,6 +2,7 @@
   import * as Pagination from '$lib/components/ui/pagination/index.js';
   import { preloadData } from '$app/navigation';
   import { generatePaginationUrl } from './pagination.js';
+  import { MediaQuery } from 'svelte/reactivity';
 
   let {
     count,
@@ -14,6 +15,10 @@
     perPage: number;
     onPageChange: (pageNum: number) => void;
   } = $props();
+
+  // Responsive design
+  const isDesktop = new MediaQuery('(min-width: 768px)');
+  const siblingCount = $derived(isDesktop.current ? 1 : 0);
 
   // Track preloaded pages to avoid duplicate preloading
   let preloadedPages = $state(new Set<number>());
@@ -53,11 +58,12 @@
   <Pagination.Root
     {count}
     {perPage}
+    {siblingCount}
     bind:page={currentPage}
     onPageChange={handlePageClick}
   >
     {#snippet children({ pages })}
-      <Pagination.Content class="flex-wrap justify-center gap-1">
+      <Pagination.Content class="justify-center gap-1">
         <Pagination.Item>
           <Pagination.PrevButton
             class="cursor-pointer"

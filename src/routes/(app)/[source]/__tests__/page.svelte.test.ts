@@ -107,7 +107,7 @@ describe('[source]/+page.svelte Component Logic', () => {
       id: 'sp1',
       short_id: 'def456',
       name: 'Source Playlist 1',
-      processedImageUrl: 'https://example.com/processed.jpg',
+      image_url: 'https://example.com/processed.jpg',
     },
   ];
 
@@ -176,7 +176,7 @@ describe('[source]/+page.svelte Component Logic', () => {
       expect(sourcePlaylist).toHaveProperty('id');
       expect(sourcePlaylist).toHaveProperty('short_id');
       expect(sourcePlaylist).toHaveProperty('name');
-      expect(sourcePlaylist).toHaveProperty('processedImageUrl');
+      expect(sourcePlaylist).toHaveProperty('image_url');
     });
   });
 

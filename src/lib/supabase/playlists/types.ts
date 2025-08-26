@@ -33,7 +33,6 @@ export type Playlist = {
   // Optional properties that may not always be present
   updated_at?: string | null;
   image_processing_updated_at?: string | null;
-  processedImageUrl?: string | null;
 };
 
 export type ProfilePlaylist = Playlist & {
