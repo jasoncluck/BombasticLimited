@@ -69,10 +69,12 @@ const config = {
             'https://aax.amazon-adsystem.com',
             'https://completion.amazon.com',
             'https://unagi.amazon.com',
-            // Additional Twitch domains that may be needed
-            'https://mixer.com',
-            'https://edge.mixer.com',
-            'https://beam.pro',
+            // Additional Amazon advertising domains
+            'https://amazon.com',
+            'https://advertising.amazon.com',
+            'https://c.amazon-adsystem.com',
+            'https://z-na.amazon-adsystem.com',
+            'https://rcm-na.amazon-adsystem.com',
             // Supabase
             'https://hguqxixjgwazwsuvhkmo.supabase.co',
           ],
@@ -106,6 +108,8 @@ const config = {
             'https://aax.amazon-adsystem.com',
             'https://completion.amazon.com',
             'https://unagi.amazon.com',
+            'https://z-na.amazon-adsystem.com',
+            'https://rcm-na.amazon-adsystem.com',
           ],
           'child-src': [
             'self',
@@ -176,6 +180,8 @@ const config = {
             'https://aax.amazon-adsystem.com',
             'https://completion.amazon.com',
             'https://unagi.amazon.com',
+            'https://z-na.amazon-adsystem.com',
+            'https://rcm-na.amazon-adsystem.com',
             // Supabase
             'https://hguqxixjgwazwsuvhkmo.supabase.co',
             // Development
@@ -217,6 +223,8 @@ const config = {
             'https://aax.amazon-adsystem.com',
             'https://completion.amazon.com',
             'https://unagi.amazon.com',
+            'https://z-na.amazon-adsystem.com',
+            'https://rcm-na.amazon-adsystem.com',
           ],
           'media-src': [
             'self',

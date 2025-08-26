@@ -2,6 +2,7 @@
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
+  import { dev } from '$app/environment';
   import AspectRatio from '../ui/aspect-ratio/aspect-ratio.svelte';
 
   interface Props {
@@ -12,8 +13,24 @@
 
   interface TwitchEmbedPlayer {
     destroy(): void;
-    addEventListener?(event: string, callback: () => void): void;
-    removeEventListener?(event: string, callback: () => void): void;
+    addEventListener?(event: string, callback: (event?: unknown) => void): void;
+    removeEventListener?(
+      event: string,
+      callback: (event?: unknown) => void
+    ): void;
+    getVideo?(): TwitchVideo | null;
+    setVolume?(volume: number): void;
+    getVolume?(): number;
+    play?(): void;
+    pause?(): void;
+  }
+
+  interface TwitchVideo {
+    addEventListener?(event: string, callback: (event?: unknown) => void): void;
+    removeEventListener?(
+      event: string,
+      callback: (event?: unknown) => void
+    ): void;
   }
 
   interface TwitchEmbedOptions {
@@ -21,28 +38,48 @@
     height: string;
     channel: string;
     layout: 'video' | 'video-with-chat';
-    theme: 'dark';
+    theme: 'dark' | 'light';
     parent: string[];
     autoplay: boolean;
     muted: boolean;
   }
 
   let player: TwitchEmbedPlayer | null = $state(null);
+  let video: TwitchVideo | null = $state(null);
   let mounted = $state(false);
   let embedElement: HTMLElement | undefined = $state();
   let playerCreated = $state(false);
   let hostname = $state('localhost');
   let adDebugInfo = $state<string[]>([]);
+  let adsDetected = $state(false);
+  let lastAdEvent = $state<string>('');
 
   const mediaQuery = getMediaQueryState();
   let shouldShowChat = $derived(mediaQuery.isLg);
 
   function addDebugInfo(message: string): void {
-    console.log(`[TwitchEmbed] ${message}`);
-    adDebugInfo = [
-      ...adDebugInfo,
-      `${new Date().toLocaleTimeString()}: ${message}`,
-    ];
+    if (dev) {
+      console.log(`[TwitchEmbed] ${message}`);
+      adDebugInfo = [
+        ...adDebugInfo.slice(-10),
+        `${new Date().toLocaleTimeString()}: ${message}`,
+      ];
+    }
+  }
+
+  function getParentDomains(): string[] {
+    if (!browser) return ['localhost'];
+
+    const currentHostname = window.location.hostname;
+    const domains: string[] = [currentHostname];
+
+    // Only add localhost if we're actually running on localhost
+    if (currentHostname === 'localhost' || currentHostname === '127.0.0.1') {
+      domains.push('localhost');
+    }
+
+    // Remove duplicates
+    return [...new Set(domains)];
   }
 
   async function loadTwitchScript(): Promise<void> {
@@ -68,6 +105,67 @@
     });
   }
 
+  function setupAdEventListeners(): void {
+    if (!player) return;
+
+    try {
+      // Listen for video events which might include ad events
+      if (typeof player.getVideo === 'function') {
+        video = player.getVideo();
+        if (video && typeof video.addEventListener === 'function') {
+          const adEvents = [
+            'ads-ad-started',
+            'ads-ad-ended',
+            'ads-ad-break-started',
+            'ads-ad-break-ended',
+            'ads-ad-impression',
+            'ads-midroll-request',
+            'ads-preroll-request',
+          ];
+
+          adEvents.forEach((eventName) => {
+            video?.addEventListener?.(eventName, (event: unknown) => {
+              adsDetected = true;
+              lastAdEvent = eventName;
+              addDebugInfo(`Ad event detected: ${eventName}`);
+              if (dev && event) {
+                console.log(`[TwitchEmbed] Ad event data:`, event);
+              }
+            });
+          });
+
+          addDebugInfo('Ad event listeners setup complete');
+        }
+      }
+
+      // Listen for player-level events
+      if (typeof player.addEventListener === 'function') {
+        player.addEventListener('ready', () => {
+          addDebugInfo('Player ready event fired');
+          // Try to get video reference after player is ready
+          setTimeout(() => {
+            if (typeof player?.getVideo === 'function') {
+              video = player.getVideo();
+              addDebugInfo('Video reference obtained');
+            }
+          }, 1000);
+        });
+
+        player.addEventListener('offline', () => {
+          addDebugInfo('Channel is offline');
+        });
+
+        player.addEventListener('online', () => {
+          addDebugInfo('Channel is online');
+        });
+      }
+    } catch (error) {
+      addDebugInfo(
+        `Error setting up ad event listeners: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
   async function createPlayer(): Promise<void> {
     if (!mounted || !browser || !channel || playerCreated) {
       return;
@@ -88,9 +186,9 @@
         return;
       }
 
-      // Get the current hostname
-      const currentHostname = window.location.hostname;
-      hostname = currentHostname;
+      // Get parent domains
+      const parentDomains = getParentDomains();
+      hostname = parentDomains[0];
 
       const embedOptions: TwitchEmbedOptions = {
         width: '100%',
@@ -98,46 +196,27 @@
         channel: channel,
         layout: 'video',
         theme: 'dark',
-        parent: [currentHostname, 'localhost'],
+        parent: parentDomains,
         autoplay: false,
         muted: false,
       };
 
       addDebugInfo(
-        `Creating player with parent domains: ${embedOptions.parent.join(', ')}`
+        `Creating player with parent domains: ${parentDomains.join(', ')}`
       );
-      addDebugInfo(`Player options: ${JSON.stringify(embedOptions, null, 2)}`);
+      if (dev) {
+        addDebugInfo(
+          `Player options: ${JSON.stringify(embedOptions, null, 2)}`
+        );
+      }
 
       player = new window.Twitch.Embed('twitch-embed', embedOptions);
 
-      // Add event listeners if available
-      if (player && typeof player.addEventListener === 'function') {
-        player.addEventListener('ready', () => {
-          addDebugInfo('Player ready event fired');
-        });
-      }
+      // Setup event listeners
+      setupAdEventListeners();
 
       playerCreated = true;
       addDebugInfo('Twitch player created successfully');
-
-      // Additional debugging for ad-related events
-      setTimeout(() => {
-        addDebugInfo('Checking for ad-related errors in console...');
-        if (window.console && window.console.error) {
-          const originalError = window.console.error;
-          window.console.error = function (...args: unknown[]) {
-            const message = args.join(' ');
-            if (
-              message.includes('ad') ||
-              message.includes('Ad') ||
-              message.includes('advertisement')
-            ) {
-              addDebugInfo(`Ad-related error detected: ${message}`);
-            }
-            originalError.apply(console, args);
-          };
-        }
-      }, 1000);
     } catch (error) {
       addDebugInfo(
         `Error creating Twitch player: ${error instanceof Error ? error.message : String(error)}`
@@ -149,7 +228,7 @@
   onMount(() => {
     mounted = true;
     if (browser) {
-      hostname = window.location.hostname;
+      hostname = getParentDomains()[0];
       addDebugInfo(`Component mounted on hostname: ${hostname}`);
     }
 
@@ -187,13 +266,22 @@
         bind:this={embedElement}
         class="absolute inset-0 h-full w-full rounded bg-black"
       ></div>
+
+      <!-- Ad status indicator (only in development) -->
+      {#if dev && adsDetected}
+        <div
+          class="absolute top-2 right-2 rounded bg-green-600 px-2 py-1 text-xs text-white"
+        >
+          Ads Working! Last: {lastAdEvent}
+        </div>
+      {/if}
     </div>
 
     <!-- Chat container - only rendered when needed -->
     {#if shouldShowChat}
       <div class="overflow-hidden rounded bg-gray-900">
         <iframe
-          src="https://www.twitch.tv/embed/{channel}/chat?darkpopout&parent={hostname}&parent=localhost"
+          src="https://www.twitch.tv/embed/{channel}/chat?darkpopout&parent={hostname}"
           class="h-full w-full border-0"
           title="Twitch Chat for {channel}"
           allow="microphone; camera;"
@@ -203,19 +291,30 @@
   </div>
 
   <!-- Debug information panel (only shown in development) -->
-  {#if browser && window.location.hostname === 'localhost'}
-    <div class="mt-4 rounded bg-gray-800 p-4 text-xs text-white">
-      <h3 class="mb-2 font-bold">Twitch Embed Debug Info:</h3>
-      <div class="max-h-40 overflow-y-auto">
+  {#if dev && adDebugInfo.length > 0}
+    <details class="mt-4 rounded bg-gray-800 p-4 text-xs text-white">
+      <summary class="cursor-pointer font-bold"
+        >Twitch Embed Debug Info ({adDebugInfo.length})</summary
+      >
+      <div class="mt-2 max-h-40 overflow-y-auto">
         {#each adDebugInfo as info}
-          <div class="mb-1">{info}</div>
+          <div class="mb-1 font-mono">{info}</div>
         {/each}
       </div>
-      <div class="mt-2 text-yellow-300">
-        <strong>Note:</strong> Twitch ads may not appear on localhost or for all
-        channels/regions. Try testing on a deployed version with a popular, monetized
-        channel.
+      <div class="mt-2 grid grid-cols-2 gap-4 text-yellow-300">
+        <div>
+          <strong>Ads Detected:</strong>
+          {adsDetected ? '✅ Yes' : '❌ No'}
+        </div>
+        <div>
+          <strong>Last Ad Event:</strong>
+          {lastAdEvent || 'None'}
+        </div>
       </div>
-    </div>
+      <div class="mt-2 text-gray-400">
+        <strong>Note:</strong> Ad availability depends on channel monetization, geographic
+        location, and viewer authentication status.
+      </div>
+    </details>
   {/if}
 </AspectRatio>
