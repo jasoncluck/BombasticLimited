@@ -141,6 +141,8 @@
     "jose": "^6.0.12",
     "marked": "^16.2.0",
     "paneforge": "^1.0.2",
+    "posthog-js": "^1.260.2",
+    "posthog-node": "^5.7.0",
     "sharp": "^0.34.3",
     "svelte-radix": "^2.0.1",
     "tailwindcss": "^4.1.11",

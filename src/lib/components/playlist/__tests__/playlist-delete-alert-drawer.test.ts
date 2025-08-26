@@ -68,7 +68,7 @@ describe('PlaylistDeleteAlertDrawer Component Logic', () => {
     type: 'Public',
     created_by: 'user-1',
     name: 'My Test Playlist',
-    processedImageUrl: 'https://example.com/playlist-image.jpg',
+    image_url: 'https://example.com/playlist-image.jpg',
   });
   const mockSession = createMockSession();
   const mockSidebarState = {
@@ -111,7 +111,7 @@ describe('PlaylistDeleteAlertDrawer Component Logic', () => {
     it('should validate playlist type and properties', () => {
       expect(mockProps.playlist.type).toBe('Public');
       expect(mockProps.playlist.name).toBe('My Test Playlist');
-      expect((mockProps.playlist as any).processedImageUrl).toBe(
+      expect((mockProps.playlist as any).image_url).toBe(
         'https://example.com/playlist-image.jpg'
       );
     });
@@ -284,7 +284,7 @@ describe('PlaylistDeleteAlertDrawer Component Logic', () => {
 
       expect(playlist.name).toBe('My Test Playlist');
       expect(playlist.type).toBe('Public');
-      expect((playlist as any).processedImageUrl).toBe(
+      expect((playlist as any).image_url).toBe(
         'https://example.com/playlist-image.jpg'
       );
     });
@@ -314,10 +314,10 @@ describe('PlaylistDeleteAlertDrawer Component Logic', () => {
     it('should handle playlist without image', () => {
       const playlistWithoutImage = {
         ...mockProps.playlist,
-        processedImageUrl: null,
+        image_url: null,
       };
 
-      expect(playlistWithoutImage.processedImageUrl).toBeNull();
+      expect(playlistWithoutImage.image_url).toBeNull();
       // Component should show ListVideo icon instead
     });
   });

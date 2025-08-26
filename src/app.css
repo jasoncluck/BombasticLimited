@@ -144,7 +144,7 @@
   }
 
   .header-link-sticky {
-    @apply bg-background-lighter outline-primary sticky top-0 z-30 inline-block w-full cursor-pointer self-start px-2 py-2 text-2xl font-semibold transition-colors hover:underline sm:px-0 @2xl:text-3xl;
+    @apply bg-background-lighter outline-primary sticky top-0 z-30 inline-block w-full cursor-pointer self-start py-2 text-2xl font-semibold transition-colors hover:underline sm:px-0 @2xl:text-3xl;
   }
 
   /* New elevated effect class */

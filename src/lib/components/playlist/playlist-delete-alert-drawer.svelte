@@ -78,10 +78,10 @@
       </div>
 
       <div class="bg-muted/50 mb-4 flex items-center gap-3 rounded-lg p-3">
-        {#if playlist.processedImageUrl}
+        {#if playlist.image_url}
           <div class="h-12 w-12 shrink-0 overflow-hidden rounded">
             <img
-              src={playlist.processedImageUrl}
+              src={playlist.image_url}
               alt={playlist.name}
               class="h-full w-full object-cover"
             />

@@ -111,12 +111,9 @@ CREATE INDEX IF NOT EXISTS "idx_image_processing_jobs_properties_hash" ON "publi
 -- (pending jobs can be replaced, but processing jobs should remain unique)
 DROP INDEX IF EXISTS "idx_image_processing_jobs_unique_active";
 
-CREATE UNIQUE INDEX IF NOT EXISTS "idx_image_processing_jobs_unique_processing" ON "public"."image_processing_jobs" (
-  entity_type,
-  entity_id,
-  image_type
-)
-WHERE status = 'processing';
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_image_processing_jobs_unique_processing" ON "public"."image_processing_jobs" (entity_type, entity_id, image_type)
+WHERE
+  status = 'processing';
 
 -- Optimized trigger to update updated_at timestamp
 CREATE OR REPLACE FUNCTION public.update_image_processing_jobs_updated_at () RETURNS TRIGGER LANGUAGE plpgsql
@@ -737,13 +734,11 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.reset_stuck_image_processing_jobs (
-  stuck_after_minutes integer DEFAULT 30
-) RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.reset_stuck_image_processing_jobs (stuck_after_minutes integer DEFAULT 30) RETURNS TABLE (
   reset_job_id uuid,
   entity_type text,
   entity_id text,
-  stuck_since timestamp with time zone,
+  stuck_since TIMESTAMP WITH TIME ZONE,
   minutes_stuck numeric
 ) LANGUAGE plpgsql SECURITY DEFINER
 SET
@@ -791,12 +786,11 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.get_image_processing_queue_status ()
-RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.get_image_processing_queue_status () RETURNS TABLE (
   status text,
   count bigint,
-  oldest_job timestamp with time zone,
-  newest_job timestamp with time zone
+  oldest_job TIMESTAMP WITH TIME ZONE,
+  newest_job TIMESTAMP WITH TIME ZONE
 ) LANGUAGE sql SECURITY DEFINER
 SET
   search_path = '' AS $$
