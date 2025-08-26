@@ -297,7 +297,18 @@
       const originalFetch = window.fetch;
       window.fetch = async (...args) => {
         const [resource] = args;
-        const url = typeof resource === 'string' ? resource : resource.url;
+        let url: string;
+
+        // Handle both string URLs and Request objects
+        if (typeof resource === 'string') {
+          url = resource;
+        } else if (resource instanceof Request) {
+          url = resource.url;
+        } else if (resource instanceof URL) {
+          url = resource.href;
+        } else {
+          url = String(resource);
+        }
 
         if (
           url.includes('ad') ||
@@ -479,7 +490,7 @@
         {/if}
       </summary>
       <div class="mt-2 max-h-60 overflow-y-auto border-t border-gray-600 pt-2">
-        {#each adDebugInfo as info}
+        {#each adDebugInfo as info, index (index)}
           <div
             class="mb-1 font-mono text-xs {info.includes('AD EVENT') ||
             info.includes('AD REQUEST')
