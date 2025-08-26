@@ -56,10 +56,7 @@
       {#if isSource(playlist.profile_username)}
         <div class=" flex items-center gap-2">
           <Avatar.Root class="h-6 w-6">
-            <Avatar.Image
-              src={SOURCE_INFO[playlist.profile_username].image.img.src}
-              alt={`Profile picture for user: ${SOURCE_INFO[playlist.profile_username].displayName}`}
-            />
+            <Avatar.Image src={playlist.avatar_url} />
           </Avatar.Root>
           <p class="text-muted-foreground text-xs">
             {SOURCE_INFO[playlist.profile_username].displayName}

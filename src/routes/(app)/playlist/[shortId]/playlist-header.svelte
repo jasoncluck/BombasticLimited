@@ -20,6 +20,7 @@
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import * as Avatar from '$lib/components/ui/avatar';
   import type { PlaylistSchema } from '$lib/schema/playlist-schema';
+  import { getUserInitials } from '$lib/components/profile/profile-service';
 
   interface PlaylistHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
@@ -240,12 +241,9 @@
                   <!-- Username and avatar - non-interactive -->
                   <div class="flex items-center gap-2">
                     <Avatar.Root class="h-7 w-7">
-                      <Avatar.Image
-                        src={creatorProfile?.avatar_url}
-                        alt="{playlist.profile_username} avatar"
-                      />
+                      <Avatar.Image src={creatorProfile?.avatar_url} />
                       <Avatar.Fallback class="text-xs">
-                        {playlist.profile_username?.slice(0, 2).toUpperCase()}
+                        {getUserInitials(playlist.profile_username)}
                       </Avatar.Fallback>
                     </Avatar.Root>
                     <p class="text-sm">{playlist.profile_username}</p>
