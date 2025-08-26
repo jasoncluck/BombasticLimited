@@ -64,6 +64,8 @@
   let adsDetected = $state(false);
   let lastAdEvent = $state<string>('');
   let adEventCount = $state(0);
+  let networkRequestCount = $state(0);
+  let adRequestCount = $state(0);
 
   const mediaQuery = getMediaQueryState();
   let shouldShowChat = $derived(mediaQuery.isLg);
@@ -72,7 +74,7 @@
     if (dev) {
       console.log(`[TwitchEmbed] ${message}`);
       adDebugInfo = [
-        ...adDebugInfo.slice(-15),
+        ...adDebugInfo.slice(-20),
         `${new Date().toLocaleTimeString()}: ${message}`,
       ];
     }
@@ -82,7 +84,7 @@
     if (!browser) return ['localhost'];
 
     const currentHostname = window.location.hostname;
-    const domains: string[] = [currentHostname];
+    const domains: string[] = [currentHostname, `www.${currentHostname}`];
 
     // Only add localhost if we're actually running on localhost
     if (currentHostname === 'localhost' || currentHostname === '127.0.0.1') {
@@ -132,6 +134,7 @@
         'ads-ad-impression',
         'ads-midroll-request',
         'ads-preroll-request',
+        'ads-postroll-request',
         // Additional ad events
         'ad-break-begin',
         'ad-break-end',
@@ -141,15 +144,23 @@
         'ad-skipped',
         'ad-click',
         'ad-error',
+        'ad-complete',
+        'ad-first-quartile',
+        'ad-midpoint',
+        'ad-third-quartile',
         'preroll-ad-started',
         'preroll-ad-ended',
         'midroll-ad-started',
         'midroll-ad-ended',
+        'postroll-ad-started',
+        'postroll-ad-ended',
         // Amazon/IVS ad events
         'amazon-ad-started',
         'amazon-ad-ended',
         'ivs-ad-started',
         'ivs-ad-ended',
+        'dsp-ad-started',
+        'dsp-ad-ended',
         // Player events that might indicate ads
         'play',
         'pause',
@@ -161,13 +172,19 @@
         'canplay',
         'playing',
         'waiting',
+        'ended',
+        'error',
       ];
 
       // Listen on the main player object
       if (typeof player.addEventListener === 'function') {
         adEvents.forEach((eventName) => {
           player?.addEventListener?.(eventName, (event: unknown) => {
-            if (eventName.includes('ad') || eventName.includes('Ad')) {
+            if (
+              eventName.includes('ad') ||
+              eventName.includes('Ad') ||
+              eventName.includes('dsp')
+            ) {
               adsDetected = true;
               lastAdEvent = eventName;
               adEventCount = adEventCount + 1;
@@ -230,6 +247,11 @@
         'ad-impression',
         'ad-started',
         'ad-ended',
+        'ad-complete',
+        'amazon-ad-started',
+        'amazon-ad-ended',
+        'dsp-ad-started',
+        'dsp-ad-ended',
       ];
 
       if (typeof video.addEventListener === 'function') {
@@ -310,15 +332,77 @@
           url = String(resource);
         }
 
-        if (
-          url.includes('ad') ||
-          url.includes('amazon-adsystem') ||
-          url.includes('ads.twitch.tv')
-        ) {
-          addDebugInfo(`🌐 AD REQUEST: ${url}`);
+        networkRequestCount = networkRequestCount + 1;
+
+        // Check for ad-related requests
+        const adKeywords = [
+          'ad',
+          'ads',
+          'amazon-adsystem',
+          'ads.twitch.tv',
+          'advertising',
+          'doubleclick',
+          'googlesyndication',
+          'dsp',
+          'aax',
+          'fls-na',
+          'unagi',
+          'completion.amazon',
+          'ad-delivery',
+        ];
+
+        const isAdRequest = adKeywords.some((keyword) =>
+          url.toLowerCase().includes(keyword)
+        );
+
+        if (isAdRequest) {
+          adRequestCount = adRequestCount + 1;
+          addDebugInfo(
+            `🌐 AD REQUEST #${adRequestCount}: ${url.substring(0, 100)}${url.length > 100 ? '...' : ''}`
+          );
         }
 
         return originalFetch.apply(window, args);
+      };
+
+      // Override XMLHttpRequest as well
+      const originalXHROpen = XMLHttpRequest.prototype.open;
+      XMLHttpRequest.prototype.open = function (
+        method: string,
+        url: string | URL,
+        ...rest: unknown[]
+      ) {
+        const urlString = typeof url === 'string' ? url : url.href;
+        networkRequestCount = networkRequestCount + 1;
+
+        const adKeywords = [
+          'ad',
+          'ads',
+          'amazon-adsystem',
+          'ads.twitch.tv',
+          'advertising',
+          'doubleclick',
+          'googlesyndication',
+          'dsp',
+          'aax',
+          'fls-na',
+          'unagi',
+          'completion.amazon',
+          'ad-delivery',
+        ];
+
+        const isAdRequest = adKeywords.some((keyword) =>
+          urlString.toLowerCase().includes(keyword)
+        );
+
+        if (isAdRequest) {
+          adRequestCount = adRequestCount + 1;
+          addDebugInfo(
+            `🌐 XHR AD REQUEST #${adRequestCount}: ${urlString.substring(0, 100)}${urlString.length > 100 ? '...' : ''}`
+          );
+        }
+
+        return originalXHROpen.call(this, method, url, ...rest);
       };
 
       addDebugInfo('Network monitoring for ad requests enabled');
@@ -389,13 +473,15 @@
         addDebugInfo(
           `- getVideo method available: ${!!(player && typeof player.getVideo === 'function')}`
         );
+        addDebugInfo(`- Network requests made: ${networkRequestCount}`);
+        addDebugInfo(`- Ad-related requests: ${adRequestCount}`);
 
         // Check if we can access the video element
         if (player && typeof player.getVideo === 'function') {
           const videoRef = player.getVideo();
           addDebugInfo(`- Video reference obtained: ${!!videoRef}`);
         }
-      }, 2000);
+      }, 3000);
     } catch (error) {
       addDebugInfo(
         `❌ Error creating Twitch player: ${error instanceof Error ? error.message : String(error)}`
@@ -455,9 +541,9 @@
         </div>
       {:else if dev}
         <div
-          class="absolute top-2 right-2 rounded bg-yellow-600 px-2 py-1 text-xs text-white shadow-lg"
+          class="absolute top-2 right-2 rounded bg-orange-600 px-2 py-1 text-xs text-white shadow-lg"
         >
-          ⏳ Monitoring for ads...
+          ⏳ Monitoring... ({adRequestCount} ad requests)
         </div>
       {/if}
     </div>
@@ -479,12 +565,16 @@
   {#if dev && adDebugInfo.length > 0}
     <details
       class="mt-4 rounded bg-gray-800 p-4 text-xs text-white"
-      open={adsDetected}
+      open={adsDetected || adRequestCount > 0}
     >
       <summary class="cursor-pointer font-bold">
         🔍 Twitch Ad Debug Console ({adDebugInfo.length} logs)
         {#if adsDetected}
           <span class="ml-2 rounded bg-green-600 px-2 py-1">ADS DETECTED!</span>
+        {:else if adRequestCount > 0}
+          <span class="ml-2 rounded bg-blue-600 px-2 py-1"
+            >AD REQUESTS: {adRequestCount}</span
+          >
         {:else}
           <span class="ml-2 rounded bg-red-600 px-2 py-1">NO ADS YET</span>
         {/if}
@@ -495,22 +585,28 @@
             class="mb-1 font-mono text-xs {info.includes('AD EVENT') ||
             info.includes('AD REQUEST')
               ? 'font-bold text-green-300'
-              : 'text-gray-300'}"
+              : info.includes('Player event')
+                ? 'text-blue-300'
+                : 'text-gray-300'}"
           >
             {info}
           </div>
         {/each}
       </div>
       <div
-        class="mt-3 grid grid-cols-3 gap-4 border-t border-gray-600 pt-2 text-yellow-300"
+        class="mt-3 grid grid-cols-4 gap-4 border-t border-gray-600 pt-2 text-yellow-300"
       >
         <div>
           <strong>Ads Status:</strong>
           {adsDetected ? '✅ Detected' : '❌ None'}
         </div>
         <div>
-          <strong>Event Count:</strong>
+          <strong>Ad Events:</strong>
           {adEventCount}
+        </div>
+        <div>
+          <strong>Ad Requests:</strong>
+          {adRequestCount}
         </div>
         <div>
           <strong>Last Event:</strong>
@@ -518,12 +614,15 @@
         </div>
       </div>
       <div class="mt-2 text-xs text-gray-400">
-        <strong>💡 Troubleshooting:</strong>
+        <strong>💡 Ad Troubleshooting Tips:</strong>
         <ul class="mt-1 ml-4 list-disc">
-          <li>Try a popular partnered channel (e.g., shroud, pokimane)</li>
-          <li>Disable ad blockers and privacy extensions</li>
-          <li>Check if you're in a supported geographic region</li>
-          <li>Ads may not show for every viewer/session</li>
+          <li>Try a popular partnered channel with high viewership</li>
+          <li>Disable ad blockers, privacy extensions, and VPNs</li>
+          <li>Clear cookies and try incognito/private browsing</li>
+          <li>Geographic location affects ad availability</li>
+          <li>Some channels opt out of pre-roll ads</li>
+          <li>Twitch may not serve ads to every viewer session</li>
+          <li>Try refreshing the page multiple times</li>
         </ul>
       </div>
     </details>
