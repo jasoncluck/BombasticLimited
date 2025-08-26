@@ -10,11 +10,15 @@
   import type { Database } from '$lib/supabase/database.types';
   import type { Snippet } from 'svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
+  import { getMediaQueryState } from '$lib/state/media-query.svelte';
+  import { getContentView } from '$lib/components/content/content';
+  import type { UserProfile } from '$lib/supabase/user-profiles';
 
   let {
     supabase,
     session,
     refreshSidebar,
+    userProfile,
     pageState,
     isNavigatingToContent,
     children,
@@ -22,12 +26,14 @@
     supabase: SupabaseClient<Database>;
     session: Session | null;
     refreshSidebar: () => Promise<void>;
+    userProfile: UserProfile | null;
     pageState: PageState;
     isNavigatingToContent: boolean;
     children: Snippet;
   } = $props();
 
   const sidebarState = getSidebarState();
+  const mediaQueryState = getMediaQueryState();
 
   // Use the navigation state's sidebar collapsed state
   const isSidebarCollapsed = $derived(sidebarState.isSidebarCollapsed);
@@ -97,7 +103,11 @@
     >
       <!-- Simplified content wrapper to reduce nesting -->
       <div class="min-h-full w-full">
-        <div class="m-2 flex items-start justify-center sm:m-6">
+        <div
+          class="flex items-start justify-center sm:m-6 {mediaQueryState.canHover
+            ? 'm-4'
+            : 'm-2'}"
+        >
           <div class="w-full max-w-[1000px] @xl:max-w-[1450px]">
             <div class="relative mb-20 flex flex-col">
               <LoadingOverlay {isNavigatingToContent} />
