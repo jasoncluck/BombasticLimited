@@ -396,6 +396,7 @@
       {supabase}
       {session}
       {refreshSidebar}
+      {userProfile}
       {pageState}
       {isNavigatingToContent}
     >
