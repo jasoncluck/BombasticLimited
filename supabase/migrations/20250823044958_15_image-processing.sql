@@ -802,6 +802,82 @@ SET
     END;
 $$;
 
+-- FIXED: Function to handle playlist image clearing when videos are removed
+CREATE OR REPLACE FUNCTION public.handle_playlist_image_on_video_removal()
+RETURNS TRIGGER 
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = '' AS $$
+DECLARE
+  playlist_record RECORD;
+  video_was_thumbnail_source boolean := false;
+BEGIN
+  -- Only process DELETE operations
+  IF TG_OP != 'DELETE' THEN
+    RETURN COALESCE(NEW, OLD);
+  END IF;
+
+  -- Get playlist info to check if we need to clear the image
+  SELECT 
+    p.id,
+    p.thumbnail_url,
+    p.image_webp_url,
+    p.image_avif_url,
+    p.image_properties,
+    p.image_processing_status
+  INTO playlist_record
+  FROM public.playlists p 
+  WHERE p.id = OLD.playlist_id;
+
+  -- If playlist doesn't exist, nothing to do
+  IF playlist_record.id IS NULL THEN
+    RETURN OLD;
+  END IF;
+
+  -- Check if the deleted video was the source of the playlist thumbnail
+  -- by comparing the video's thumbnail_url with the playlist's thumbnail_url
+  SELECT EXISTS (
+    SELECT 1 FROM public.videos v 
+    WHERE v.id = OLD.video_id 
+    AND v.thumbnail_url = playlist_record.thumbnail_url
+  ) INTO video_was_thumbnail_source;
+
+  -- If the deleted video was the source of the playlist thumbnail, clear it
+  IF video_was_thumbnail_source THEN
+    RAISE LOG 'Video % was thumbnail source for playlist %, clearing playlist image', 
+      OLD.video_id, OLD.playlist_id;
+
+    UPDATE public.playlists
+    SET 
+      thumbnail_url = NULL,
+      image_webp_url = NULL, 
+      image_avif_url = NULL,
+      image_properties = NULL,
+      image_processing_status = 'completed',
+      image_processing_updated_at = now()
+    WHERE id = OLD.playlist_id;
+
+    RAISE LOG 'Cleared image for playlist % due to video % removal', 
+      OLD.playlist_id, OLD.video_id;
+  ELSE
+    RAISE LOG 'Video % removal from playlist % does not affect playlist thumbnail', 
+      OLD.video_id, OLD.playlist_id;
+  END IF;
+
+  RETURN OLD;
+END;
+$$;
+
+-- Create the trigger on playlist_videos table
+DROP TRIGGER IF EXISTS trigger_handle_playlist_image_on_video_removal ON public.playlist_videos;
+
+CREATE TRIGGER trigger_handle_playlist_image_on_video_removal
+  AFTER DELETE ON public.playlist_videos
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_playlist_image_on_video_removal();
+
+COMMENT ON FUNCTION public.handle_playlist_image_on_video_removal() IS 'Automatically clears playlist thumbnail when the source video is removed from the playlist';
+
 -- Set up RLS policies
 ALTER TABLE "public"."image_processing_jobs" ENABLE ROW LEVEL SECURITY;
 

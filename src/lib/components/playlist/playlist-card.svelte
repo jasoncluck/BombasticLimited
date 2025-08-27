@@ -14,8 +14,6 @@
     isFollowedPlaylist: boolean;
     showUsername?: boolean;
   } = $props();
-
-  console.log(playlist);
 </script>
 
 <a

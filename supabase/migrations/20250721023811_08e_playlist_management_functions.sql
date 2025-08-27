@@ -646,15 +646,13 @@ END;
 $$;
 
 -- Optimized function to delete videos from a playlist
-CREATE OR REPLACE FUNCTION public.delete_playlist_videos (p_playlist_id int8, p_video_ids TEXT[]) RETURNS TABLE (video_id text, success boolean, message text) LANGUAGE plpgsql
-SET
-  search_path = '' AS $$
+CREATE OR REPLACE FUNCTION public.delete_playlist_videos (p_playlist_id int8, p_video_ids TEXT[]) 
+RETURNS TABLE (video_id text, success boolean, message text) 
+LANGUAGE plpgsql
+SET search_path = '' AS $$
 DECLARE
   current_user_id uuid;
   playlist_owner_id uuid;
-  playlist_thumbnail_url text;
-  should_clear_playlist_image boolean := false;
-  deleted_positions int2[];
 BEGIN
   current_user_id := auth.uid();
   IF current_user_id IS NULL THEN
@@ -667,16 +665,9 @@ BEGIN
 
   PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || current_user_id::text));
 
-  -- Get playlist info and check image clearing in one query
-  SELECT 
-    pl.created_by, 
-    pl.thumbnail_url,
-    EXISTS (
-      SELECT 1 FROM public.videos v 
-      WHERE v.id = ANY(p_video_ids) 
-      AND v.thumbnail_url = pl.thumbnail_url
-    )
-  INTO playlist_owner_id, playlist_thumbnail_url, should_clear_playlist_image
+  -- Get playlist owner for security check
+  SELECT pl.created_by
+  INTO playlist_owner_id
   FROM public.playlists pl 
   WHERE pl.id = p_playlist_id;
   
@@ -684,11 +675,23 @@ BEGIN
     RAISE EXCEPTION 'Playlist with ID % does not exist', p_playlist_id;
   END IF;
 
-  -- Bulk delete and return results
+  -- Security check: Verify user owns the playlist
+  IF playlist_owner_id != current_user_id THEN
+    RAISE EXCEPTION 'You can only delete videos from your own playlists';
+  END IF;
+
+  -- Create a temporary table to store results
+  CREATE TEMPORARY TABLE temp_deletion_results (
+    video_id text,
+    success boolean,
+    message text
+  ) ON COMMIT DROP;
+
+  -- Bulk delete and store results in temp table
   WITH deleted_videos AS (
     DELETE FROM public.playlist_videos pv
     WHERE pv.playlist_id = p_playlist_id AND pv.video_id = ANY(p_video_ids)
-    RETURNING video_id, video_position
+    RETURNING pv.video_id, pv.video_position
   ),
   video_results AS (
     SELECT 
@@ -698,17 +701,9 @@ BEGIN
     FROM unnest(p_video_ids) AS vid
     LEFT JOIN deleted_videos dv ON vid = dv.video_id
   )
+  INSERT INTO temp_deletion_results (video_id, success, message)
   SELECT vr.vid, vr.success, vr.message FROM video_results vr;
 
-  -- Clear playlist image if needed
-  IF should_clear_playlist_image THEN
-    UPDATE public.playlists
-    SET thumbnail_url = NULL, image_webp_url = NULL, image_avif_url = NULL,
-        image_properties = NULL, image_processing_status = NULL,
-        image_processing_updated_at = now()
-    WHERE id = p_playlist_id;
-  END IF;
-  
   -- Reorder positions using window function
   WITH reordered AS (
     SELECT 
@@ -721,6 +716,11 @@ BEGIN
   SET video_position = r.new_position::int2
   FROM reordered r
   WHERE pv.id = r.id;
+
+  -- Return the stored results
+  RETURN QUERY 
+  SELECT tdr.video_id, tdr.success, tdr.message 
+  FROM temp_deletion_results tdr;
 
 EXCEPTION
   WHEN OTHERS THEN
