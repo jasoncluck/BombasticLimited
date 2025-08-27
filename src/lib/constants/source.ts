@@ -20,6 +20,9 @@ export type HighlightPlaylist = {
 
 interface SourceInfo {
   displayName: string;
+  // Twitch username override for using when twitch
+  // username different than source
+  twitchUserName?: string;
   urlParam: string;
   image: Picture;
   twitchId: string;
@@ -88,6 +91,7 @@ export const SOURCE_INFO: Record<Source, SourceInfo> = {
   },
   remap: {
     displayName: 'Remap',
+    twitchUserName: 'RemapRadio',
     urlParam: 'remap',
     image: remapImage,
     twitchId: '913491352',

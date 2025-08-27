@@ -29,6 +29,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data (
   playlist_thumbnail_url text,
   playlist_deleted_at TIMESTAMP WITH TIME ZONE,
   profile_username text,
+  profile_avatar_url text,
   playlist_sorted_by public.playlist_sorted_by,
   playlist_sort_order public.playlist_sort_order,
   -- Video data with optimized image paths  
@@ -88,6 +89,7 @@ BEGIN
       p.deleted_at,
       p.duration_seconds,
       prof.username AS profile_username,
+      prof.avatar_url AS profile_avatar_url,
       COALESCE(up.sorted_by, 'playlistOrder'::public.playlist_sorted_by) as sorted_by,
       COALESCE(up.sort_order, 'ascending'::public.playlist_sort_order) as sort_order,
       -- Get video count in the same query
@@ -135,6 +137,7 @@ BEGIN
       playlist_record.thumbnail_url,
       playlist_record.deleted_at,
       playlist_record.profile_username,
+      playlist_record.profile_avatar_url,
       playlist_record.sorted_by,
       playlist_record.sort_order,
       -- Video data (all NULL since no videos)
@@ -163,6 +166,7 @@ BEGIN
     playlist_record.thumbnail_url,
     playlist_record.deleted_at,
     playlist_record.profile_username,
+    playlist_record.profile_avatar_url,
     playlist_record.sorted_by,
     playlist_record.sort_order,
     -- Video data from JOIN
@@ -255,6 +259,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
   playlist_thumbnail_url text,
   playlist_deleted_at TIMESTAMP WITH TIME ZONE,
   profile_username text,
+  profile_avatar_url text,
   playlist_sorted_by public.playlist_sorted_by,
   playlist_sort_order public.playlist_sort_order,
   -- Video data
@@ -300,6 +305,7 @@ SET
       p.thumbnail_url,
       p.deleted_at,
       prof.username AS profile_username,
+      prof.avatar_url AS profile_avatar_url,
       COALESCE(up.sorted_by, 'playlistOrder'::public.playlist_sorted_by) AS sorted_by,
       COALESCE(up.sort_order, 'ascending'::public.playlist_sort_order) AS sort_order
     FROM public.playlists p
@@ -334,6 +340,7 @@ SET
     pi.thumbnail_url as playlist_thumbnail_url,
     pi.deleted_at as playlist_deleted_at,
     pi.profile_username,
+    pi.profile_avatar_url,
     pi.sorted_by as playlist_sorted_by,
     pi.sort_order as playlist_sort_order,
     
@@ -389,6 +396,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_by_youtube_id (
   youtube_id text,
   duration_seconds integer,
   profile_username text,
+  profile_avatar_url text,
   sorted_by public.playlist_sorted_by,
   sort_order public.playlist_sort_order
 )
@@ -406,6 +414,7 @@ SET
     p.youtube_id,
     p.duration_seconds,
     prof.username AS profile_username,
+    prof.avatar_url AS profile_avatar_url,
     up.sorted_by,
     up.sort_order
   FROM public.playlists p
@@ -433,11 +442,11 @@ CREATE OR REPLACE FUNCTION public.get_user_playlists (p_preferred_image_format t
   duration_seconds integer,
   deleted_at TIMESTAMP WITH TIME ZONE,
   profile_username text,
+  profile_avatar_url text,
   sorted_by public.playlist_sorted_by,
   sort_order public.playlist_sort_order,
   playlist_position integer,
-  added_at TIMESTAMP WITH TIME ZONE,
-  avatar_url text
+  added_at TIMESTAMP WITH TIME ZONE
 )
 SET
   search_path = '' LANGUAGE sql AS $$
@@ -461,11 +470,11 @@ SET
     p.duration_seconds,
     p.deleted_at,
     prof.username AS profile_username,
+    prof.avatar_url AS profile_avatar_url,
     up.sorted_by,
     up.sort_order,
     up.playlist_position,
-    up.added_at,
-    prof.avatar_url
+    up.added_at
   FROM public.user_playlists up
   JOIN public.playlists p ON up.id = p.id
   LEFT JOIN public.profiles prof ON p.created_by = prof.id
@@ -493,6 +502,7 @@ CREATE OR REPLACE FUNCTION public.get_playlists_for_username (
   playlist_thumbnail_url text,
   duration_seconds integer,
   profile_username text,
+  profile_avatar_url text,
   sorted_by public.playlist_sorted_by,
   sort_order public.playlist_sort_order,
   deleted_at TIMESTAMP WITH TIME ZONE
@@ -518,6 +528,7 @@ SET
     p.thumbnail_url,
     p.duration_seconds,
     prof.username AS profile_username,
+    prof.avatar_url AS profile_avatar_url,
     up.sorted_by,
     up.sort_order,
     p.deleted_at
@@ -550,7 +561,7 @@ CREATE OR REPLACE FUNCTION "public"."search_playlists" (
   "playlist_thumbnail_url" text,
   "duration_seconds" integer,
   "profile_username" text,
-  "avatar_url" text,
+  "profile_avatar_url" text,
   "search_rank" real,
   "deleted_at" TIMESTAMP WITH TIME ZONE
 ) LANGUAGE "plpgsql"
@@ -609,7 +620,7 @@ BEGIN
             p.thumbnail_url,
             p.duration_seconds,
             prof.username AS profile_username,
-            prof.avatar_url,
+            prof.avatar_url AS profile_avatar_url,
             p.deleted_at,
             -- Optimized ranking calculation
             (CASE 
@@ -648,7 +659,7 @@ BEGIN
         rp.id, rp.short_id, rp.name, rp.description, rp.best_image_url,
         rp.image_processing_status, rp.image_properties, rp.created_at,
         rp.created_by, rp.type, rp.youtube_id, rp.thumbnail_url,
-        rp.duration_seconds, rp.profile_username, rp.avatar_url,
+        rp.duration_seconds, rp.profile_username, rp.profile_avatar_url,
         rp.search_rank, rp.deleted_at
     FROM ranked_playlists rp
     WHERE rp.search_rank > 0

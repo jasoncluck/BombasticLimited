@@ -34,6 +34,8 @@ interface SuccessResponse {
   jobs?: ProcessedJob[];
   skipped?: number;
   resubmitted?: number;
+  deleted?: number;
+  videoEntitiesRemoved?: number;
 }
 
 type ApiResponse = SuccessResponse | ErrorResponse;
@@ -58,6 +60,17 @@ interface PendingJobRow {
   created_at: string;
   updated_at: string;
   processing_started_at: string | null;
+  status: string;
+}
+
+interface FailedJobRow {
+  id: string;
+  entity_type: string;
+  entity_id: string;
+  image_type: string;
+  attempts: number;
+  max_attempts: number;
+  error_message: string | null;
   status: string;
 }
 
@@ -121,6 +134,207 @@ function isJobReadyForProcessing(job: ImageProcessingJob): boolean {
   return true;
 }
 
+/**
+ * Check if entity exists and delete job if it doesn't
+ * Returns the entity data if it exists, null if deleted
+ */
+async function checkEntityExistsOrDeleteJob(
+  supabase: ReturnType<typeof createClient>,
+  job: ImageProcessingJob
+): Promise<Record<string, unknown> | null> {
+  if (job.entity_type === 'playlist') {
+    // Check if playlist exists
+    const { data: playlist, error: playlistError } = await supabase
+      .from('playlists')
+      .select('image_properties, thumbnail_url')
+      .eq('id', job.entity_id)
+      .maybeSingle()
+      .returns<PlaylistEntity>();
+
+    if (playlistError) {
+      console.error(
+        `Failed to fetch playlist ${job.entity_id}:`,
+        playlistError
+      );
+      throw new Error(
+        `Failed to fetch playlist data: ${playlistError.message}`
+      );
+    }
+
+    if (!playlist) {
+      console.log(
+        `Playlist ${job.entity_id} not found, deleting job ${job.job_id}`
+      );
+
+      // Delete the job since the playlist no longer exists
+      const { error: deleteError } = await supabase
+        .from('image_processing_jobs')
+        .delete()
+        .eq('id', job.job_id);
+
+      if (deleteError) {
+        console.error(`Failed to delete job ${job.job_id}:`, deleteError);
+        throw new Error(
+          `Failed to delete orphaned job: ${deleteError.message}`
+        );
+      }
+
+      console.log(
+        `Successfully deleted orphaned job ${job.job_id} for non-existent playlist ${job.entity_id}`
+      );
+      return null;
+    }
+
+    return {
+      id: job.entity_id,
+      thumbnail_url: playlist.thumbnail_url,
+      image_properties: playlist.image_properties,
+    };
+  } else if (job.entity_type === 'video') {
+    // Check if video exists
+    const { data: video, error: videoError } = await supabase
+      .from('videos')
+      .select('thumbnail_url')
+      .eq('id', job.entity_id)
+      .maybeSingle()
+      .returns<VideoEntity>();
+
+    if (videoError) {
+      console.error(`Failed to fetch video ${job.entity_id}:`, videoError);
+      throw new Error(`Failed to fetch video data: ${videoError.message}`);
+    }
+
+    if (!video) {
+      console.log(
+        `Video ${job.entity_id} not found, deleting job ${job.job_id}`
+      );
+
+      // Delete the job since the video no longer exists
+      const { error: deleteError } = await supabase
+        .from('image_processing_jobs')
+        .delete()
+        .eq('id', job.job_id);
+
+      if (deleteError) {
+        console.error(`Failed to delete job ${job.job_id}:`, deleteError);
+        throw new Error(
+          `Failed to delete orphaned job: ${deleteError.message}`
+        );
+      }
+
+      console.log(
+        `Successfully deleted orphaned job ${job.job_id} for non-existent video ${job.entity_id}`
+      );
+      return null;
+    }
+
+    return {
+      id: job.entity_id,
+      thumbnail_url: video.thumbnail_url,
+    };
+  }
+
+  throw new Error(`Unknown entity type: ${job.entity_type}`);
+}
+
+/**
+ * Clean up failed video jobs by removing the video entity if thumbnail processing failed
+ * Returns the number of video entities removed
+ */
+async function cleanupFailedVideoJobs(
+  supabase: ReturnType<typeof createClient>
+): Promise<number> {
+  try {
+    console.log('Checking for failed video thumbnail processing jobs...');
+
+    // Find failed video thumbnail jobs that have exceeded max attempts
+    const { data: failedVideoJobs, error: fetchError } = await supabase
+      .from('image_processing_jobs')
+      .select(
+        'id, entity_type, entity_id, image_type, attempts, max_attempts, error_message, status'
+      )
+      .eq('entity_type', 'video')
+      .eq('image_type', 'thumbnail')
+      .eq('status', 'failed')
+      .gte('attempts', 3) // Only jobs that have failed after 3+ attempts
+      .returns<FailedJobRow[]>();
+
+    if (fetchError) {
+      console.error('Failed to fetch failed video jobs:', fetchError);
+      return 0;
+    }
+
+    if (!failedVideoJobs || failedVideoJobs.length === 0) {
+      console.log('No failed video thumbnail jobs found');
+      return 0;
+    }
+
+    console.log(
+      `Found ${failedVideoJobs.length} failed video thumbnail jobs to clean up`
+    );
+
+    let removedCount = 0;
+
+    for (const job of failedVideoJobs) {
+      try {
+        console.log(
+          `Removing video ${job.entity_id} due to failed thumbnail processing (job ${job.id}, attempts: ${job.attempts}/${job.max_attempts})`
+        );
+
+        // Remove the video entity from the videos table
+        const { error: deleteVideoError } = await supabase
+          .from('videos')
+          .delete()
+          .eq('id', job.entity_id);
+
+        if (deleteVideoError) {
+          console.error(
+            `Failed to delete video ${job.entity_id}:`,
+            deleteVideoError
+          );
+          continue;
+        }
+
+        // Remove the failed job from image_processing_jobs
+        const { error: deleteJobError } = await supabase
+          .from('image_processing_jobs')
+          .delete()
+          .eq('id', job.id);
+
+        if (deleteJobError) {
+          console.error(
+            `Failed to delete failed job ${job.id}:`,
+            deleteJobError
+          );
+          // Video was deleted but job wasn't - not critical, continue
+        }
+
+        console.log(
+          `Successfully removed video ${job.entity_id} and its failed processing job ${job.id}`
+        );
+        removedCount++;
+      } catch (jobError) {
+        console.error(
+          `Error cleaning up failed video job ${job.id}:`,
+          jobError
+        );
+        // Continue with other jobs even if one fails
+      }
+    }
+
+    if (removedCount > 0) {
+      console.log(
+        `Successfully removed ${removedCount} videos with failed thumbnail processing`
+      );
+    }
+
+    return removedCount;
+  } catch (error) {
+    console.error('Error in cleanupFailedVideoJobs:', error);
+    return 0;
+  }
+}
+
 async function processImageJobs(): Promise<ApiResponse> {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -132,7 +346,10 @@ async function processImageJobs(): Promise<ApiResponse> {
 
     console.log('Starting image processing job batch...');
 
-    // First, reset any jobs that have been stuck for more than 4 hours (very long stuck jobs)
+    // First, clean up failed video jobs by removing video entities
+    const videoEntitiesRemoved = await cleanupFailedVideoJobs(supabase);
+
+    // Reset any jobs that have been stuck for more than 4 hours (very long stuck jobs)
     console.log('Checking for very stuck jobs (processing > 4 hours)...');
     const { data: veryStuckJobsReset, error: veryStuckJobsError } =
       await supabase.rpc('reset_stuck_image_processing_jobs', {
@@ -171,10 +388,18 @@ async function processImageJobs(): Promise<ApiResponse> {
 
     if (!allJobs || allJobs.length === 0) {
       console.log('No pending or processing jobs found in queue');
+
+      // Include video entities removed in the response even when no jobs to process
+      const message =
+        videoEntitiesRemoved > 0
+          ? `No pending or processing jobs in queue, ${videoEntitiesRemoved} failed videos removed`
+          : 'No pending or processing jobs in queue';
+
       return {
         success: true,
         processed: 0,
-        message: 'No pending or processing jobs in queue',
+        videoEntitiesRemoved,
+        message,
       };
     }
 
@@ -321,12 +546,17 @@ async function processImageJobs(): Promise<ApiResponse> {
         message += `, ${resubmittedCount} stuck jobs reset to pending`;
       }
 
+      if (videoEntitiesRemoved > 0) {
+        message += `, ${videoEntitiesRemoved} failed videos removed`;
+      }
+
       console.log(message);
       return {
         success: true,
         processed: 0,
         skipped: skippedPlaylistsCount,
         resubmitted: resubmittedCount,
+        videoEntitiesRemoved,
         message,
       };
     }
@@ -341,6 +571,7 @@ async function processImageJobs(): Promise<ApiResponse> {
 
     const processedJobs: ProcessedJob[] = [];
     const failedJobs: string[] = [];
+    let deletedJobsCount = 0;
 
     // Process each ready job
     for (const job of jobsToProcess) {
@@ -387,67 +618,13 @@ async function processImageJobs(): Promise<ApiResponse> {
           ageMinutes: job.entity_type === 'playlist' ? ageMinutes : 'immediate',
         });
 
-        // Get current entity data to include in webhook payload
-        let currentEntity: Record<string, unknown> = {
-          id: job.entity_id,
-          thumbnail_url: job.source_url,
-        };
+        // Check if entity exists and get current entity data, or delete job if entity doesn't exist
+        const currentEntity = await checkEntityExistsOrDeleteJob(supabase, job);
 
-        if (job.entity_type === 'playlist') {
-          // Include image_properties for playlists
-          const { data: playlist, error: playlistError } = await supabase
-            .from('playlists')
-            .select('image_properties, thumbnail_url')
-            .eq('id', job.entity_id)
-            .maybeSingle()
-            .returns<PlaylistEntity>();
-
-          if (playlistError) {
-            console.error(
-              `Failed to fetch playlist ${job.entity_id}:`,
-              playlistError
-            );
-            throw new Error(
-              `Failed to fetch playlist data: ${playlistError.message}`
-            );
-          }
-
-          if (!playlist) {
-            throw new Error(`Playlist ${job.entity_id} not found`);
-          }
-
-          currentEntity = {
-            id: job.entity_id,
-            thumbnail_url: playlist.thumbnail_url,
-            image_properties: playlist.image_properties,
-          };
-        } else if (job.entity_type === 'video') {
-          // Get video data
-          const { data: video, error: videoError } = await supabase
-            .from('videos')
-            .select('thumbnail_url')
-            .eq('id', job.entity_id)
-            .maybeSingle()
-            .returns<VideoEntity>();
-
-          if (videoError) {
-            console.error(
-              `Failed to fetch video ${job.entity_id}:`,
-              videoError
-            );
-            throw new Error(
-              `Failed to fetch video data: ${videoError.message}`
-            );
-          }
-
-          if (!video) {
-            throw new Error(`Video ${job.entity_id} not found`);
-          }
-
-          currentEntity = {
-            id: job.entity_id,
-            thumbnail_url: video.thumbnail_url,
-          };
+        // If entity doesn't exist (job was deleted), skip to next job
+        if (currentEntity === null) {
+          deletedJobsCount++;
+          continue;
         }
 
         // Create webhook payload in the format expected by the trigger
@@ -518,6 +695,14 @@ async function processImageJobs(): Promise<ApiResponse> {
       message = `Processed ${processedJobs.length} jobs successfully`;
     }
 
+    if (deletedJobsCount > 0) {
+      message += `, ${deletedJobsCount} orphaned jobs deleted`;
+    }
+
+    if (videoEntitiesRemoved > 0) {
+      message += `, ${videoEntitiesRemoved} failed videos removed`;
+    }
+
     if (skippedPlaylistsCount > 0) {
       message += `, ${skippedPlaylistsCount} playlists skipped (cooldown period)`;
     }
@@ -540,6 +725,8 @@ async function processImageJobs(): Promise<ApiResponse> {
       processed: processedJobs.length,
       skipped: skippedPlaylistsCount,
       resubmitted: resubmittedCount,
+      deleted: deletedJobsCount,
+      videoEntitiesRemoved,
       message,
       jobs: processedJobs.length > 0 ? processedJobs : undefined,
     };

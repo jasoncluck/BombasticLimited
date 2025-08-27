@@ -331,7 +331,7 @@ export async function handleFollowPlaylist({
         'error'
       );
     } else {
-      showNotification('Error creating playlist', 'error');
+      showNotification('Unable to follow playlist', 'error');
     }
   } else {
     if (!error) {

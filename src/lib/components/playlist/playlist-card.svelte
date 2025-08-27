@@ -10,13 +10,12 @@
     isFollowedPlaylist = false,
     showUsername = true,
   }: {
-    playlist: Playlist & {
-      avatar_url?: string | null;
-      profile_username?: string;
-    };
+    playlist: Playlist;
     isFollowedPlaylist: boolean;
     showUsername?: boolean;
   } = $props();
+
+  console.log(playlist);
 </script>
 
 <a
@@ -56,7 +55,10 @@
       {#if isSource(playlist.profile_username)}
         <div class=" flex items-center gap-2">
           <Avatar.Root class="h-6 w-6">
-            <Avatar.Image src={playlist.avatar_url} />
+            <Avatar.Image
+              src={playlist.profile_avatar_url}
+              alt="{playlist.profile_username} avatar"
+            />
           </Avatar.Root>
           <p class="text-muted-foreground text-xs">
             {SOURCE_INFO[playlist.profile_username].displayName}
@@ -66,7 +68,7 @@
         <div class="mt-2 flex items-center gap-2">
           <Avatar.Root class="h-6 w-6">
             <Avatar.Image
-              src={playlist.avatar_url}
+              src={playlist.profile_avatar_url}
               alt="Profile picture for user: {playlist.profile_username}"
             />
             <Avatar.Fallback class="text-xs">

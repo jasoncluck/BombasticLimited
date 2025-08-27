@@ -46,7 +46,6 @@ interface ProcessingResult {
   webpSize?: number;
   avifSize?: number;
   jobId?: string;
-  skippedDuplicate?: boolean;
 }
 
 interface StoragePaths {
@@ -63,8 +62,6 @@ function generateStoragePaths(
   entityType: string,
   entityId: string
 ): StoragePaths {
-  const timestamp = Date.now();
-
   if (entityType === 'video') {
     // Videos use deterministic paths for consistency
     const basePath = `thumbnails/${entityId}/thumbnail-${entityId}`;
@@ -73,15 +70,13 @@ function generateStoragePaths(
       avifPath: `${basePath}.avif`,
     };
   } else if (entityType === 'playlist') {
-    // Playlists use timestamped paths for multiple snapshots
-    const basePath = `playlists/${entityId}/playlist-${entityId}-${timestamp}`;
+    const basePath = `playlists/${entityId}/playlist-${entityId}`;
     return {
       webpPath: `${basePath}.webp`,
       avifPath: `${basePath}.avif`,
     };
   } else {
-    // Other entities get timestamped paths
-    const basePath = `${entityType}s/${entityId}/${entityType}-${entityId}-${timestamp}`;
+    const basePath = `${entityType}s/${entityId}/${entityType}-${entityId}`;
     return {
       webpPath: `${basePath}.webp`,
       avifPath: `${basePath}.avif`,

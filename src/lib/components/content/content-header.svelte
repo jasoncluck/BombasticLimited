@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { BreadcrumbItem } from '../breadcrumb-layout.svelte';
   import type { CombinedContentFilter } from './content-filter';
-  import type { ProfilePlaylist } from '$lib/supabase/playlists';
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
   import SharedContentHeader from './shared-content-header.svelte';
@@ -9,6 +8,7 @@
   import type { ContentView } from './content';
   import type { Video } from '$lib/supabase/videos';
   import type { UserProfile } from '$lib/supabase/user-profiles';
+  import type { Playlist } from '$lib/supabase/playlists';
 
   let {
     breadcrumbs,
@@ -29,7 +29,7 @@
     contentFilter: CombinedContentFilter;
     currentPage: number;
     imageUrl?: string | null;
-    profilePlaylist?: ProfilePlaylist;
+    profilePlaylist?: Playlist;
     session: Session | null;
     showFloatingBreadcrumbs: boolean;
     source?: Source;

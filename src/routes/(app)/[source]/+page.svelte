@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { Radio } from '@lucide/svelte';
   import TwitchEmbed from '$lib/components/video/twitch-embed.svelte';
   import Content from '$lib/components/content/content.svelte';
   import { SOURCE_INFO } from '$lib/constants/source';
@@ -77,7 +76,7 @@
 </script>
 
 <div class="flex flex-col">
-  <div class="flex flex-wrap justify-between gap-6">
+  <div class="flex flex-wrap justify-between">
     <h1 class="header-content max-w-xl">
       {SOURCE_INFO[source].displayName}
     </h1>
@@ -107,13 +106,13 @@
   {#if sidebarState.isSourceStreaming(source)}
     {#key source}
       <div class="mb-8 flex w-full flex-col items-start">
-        <TwitchEmbed channel={source} />
+        <TwitchEmbed channel={SOURCE_INFO[source].twitchUserName ?? source} />
       </div>
     {/key}
   {/if}
 
-  <div class="flex flex-col gap-8">
-    <div class="flex flex-col">
+  <div class="mt-4 mb-8 flex flex-col gap-8">
+    <div data-testid="latest-videos-section">
       <a
         href={`/${source}/latest`}
         class={getContentView(mediaQueryState, userProfile) === 'TABLE'
@@ -132,7 +131,12 @@
         {session}
         {supabase}
       />
-      {#each highlightPlaylists as highlightPlaylist (highlightPlaylist.playlist.name)}
+    </div>
+    {#each highlightPlaylists as highlightPlaylist (highlightPlaylist.playlist.name)}
+      <div
+        data-testid="highlight-playlist-section"
+        data-playlist={highlightPlaylist.playlist.short_id}
+      >
         <a
           href={`/playlist/${highlightPlaylist.playlist.short_id}`}
           class={getContentView(mediaQueryState, userProfile) === 'TABLE'
@@ -163,9 +167,9 @@
           {session}
           {supabase}
         />
-      {/each}
-    </div>
-    <div class="flex flex-col">
+      </div>
+    {/each}
+    <div data-testid="playlists-section">
       <a
         href={`/profile/${source}/playlists`}
         class={getContentView(mediaQueryState, userProfile) === 'TABLE'

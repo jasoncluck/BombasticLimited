@@ -617,31 +617,21 @@ BEGIN
     
     -- Only process if thumbnail actually changed
     IF needs_processing THEN
-      
       IF NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '' THEN
-        -- Check if we already have optimized images for this exact configuration
-        already_processed := (
-          NEW.thumbnail_webp_url IS NOT NULL AND 
-          NEW.thumbnail_avif_url IS NOT NULL AND
-          NEW.image_processing_status = 'completed' AND
-          OLD.thumbnail_url = NEW.thumbnail_url
-        );
+        -- When thumbnail URL changes, we ALWAYS need to reprocess
+        -- Clear existing optimized URLs and reset status
+        NEW.thumbnail_webp_url = NULL;
+        NEW.thumbnail_avif_url = NULL;
+        NEW.image_processing_status = 'pending';
+        NEW.image_processing_updated_at = now();
         
-        IF NOT already_processed THEN
-          job_id := public.queue_image_processing_job(
-            'video', NEW.id, 'thumbnail', NEW.thumbnail_url, NULL, 50
-          );
+        job_id := public.queue_image_processing_job(
+          'video', NEW.id, 'thumbnail', NEW.thumbnail_url, NULL, 50
+        );
 
-          IF job_id IS NOT NULL THEN
-            NEW.image_processing_status = 'pending';
-            NEW.image_processing_updated_at = now();
-            
-            -- Clear optimized URLs when source changes and reprocessing
-            NEW.thumbnail_webp_url = NULL;
-            NEW.thumbnail_avif_url = NULL;
-          END IF;
-        ELSE
-          RAISE LOG 'Video % already has optimized images for thumbnail_url %, skipping processing', NEW.id, NEW.thumbnail_url;
+        IF job_id IS NULL THEN
+          -- If job creation failed, reset to completed to avoid stuck state
+          NEW.image_processing_status = 'completed';
         END IF;
       ELSE
         -- No thumbnail_url, clear optimized URLs and mark as completed
@@ -734,6 +724,7 @@ BEGIN
 END;
 $$;
 
+-- FIXED: Function to reset stuck image processing jobs with proper column aliasing
 CREATE OR REPLACE FUNCTION public.reset_stuck_image_processing_jobs (stuck_after_minutes integer DEFAULT 30) RETURNS TABLE (
   reset_job_id uuid,
   entity_type text,
@@ -750,33 +741,33 @@ BEGIN
   RETURN QUERY
   WITH stuck_jobs AS (
     SELECT 
-      id,
-      entity_type,
-      entity_id,
-      processing_started_at,
-      EXTRACT(EPOCH FROM (now() - processing_started_at))/60 as minutes_stuck
-    FROM "public"."image_processing_jobs"
-    WHERE status = 'processing'
-      AND processing_started_at IS NOT NULL
-      AND processing_started_at < now() - (stuck_after_minutes || ' minutes')::interval
+      j.id as job_id,
+      j.entity_type as job_entity_type,
+      j.entity_id as job_entity_id,
+      j.processing_started_at as job_processing_started_at,
+      EXTRACT(EPOCH FROM (now() - j.processing_started_at))/60 as job_minutes_stuck
+    FROM "public"."image_processing_jobs" j
+    WHERE j.status = 'processing'
+      AND j.processing_started_at IS NOT NULL
+      AND j.processing_started_at < now() - (stuck_after_minutes || ' minutes')::interval
   ),
   reset_jobs AS (
-    UPDATE "public"."image_processing_jobs"
+    UPDATE "public"."image_processing_jobs" ipj
     SET 
       status = 'pending',
       processing_started_at = NULL,
       updated_at = now()
-    WHERE id IN (SELECT id FROM stuck_jobs)
-    RETURNING id, entity_type, entity_id
+    WHERE ipj.id IN (SELECT sj.job_id FROM stuck_jobs sj)
+    RETURNING ipj.id, ipj.entity_type, ipj.entity_id
   )
   SELECT 
-    sj.id::uuid,
-    sj.entity_type::text,
-    sj.entity_id::text,
-    sj.processing_started_at,
-    sj.minutes_stuck::numeric
+    sj.job_id::uuid,
+    sj.job_entity_type::text,
+    sj.job_entity_id::text,
+    sj.job_processing_started_at,
+    sj.job_minutes_stuck::numeric
   FROM stuck_jobs sj
-  JOIN reset_jobs rj ON sj.id = rj.id;
+  JOIN reset_jobs rj ON sj.job_id = rj.id;
   
   GET DIAGNOSTICS reset_count = ROW_COUNT;
   
@@ -812,67 +803,7 @@ SET
 $$;
 
 -- Set up RLS policies
--- TODO: Fix RLS policies
 ALTER TABLE "public"."image_processing_jobs" ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Service role can manage image processing jobs" ON "public"."image_processing_jobs" FOR ALL USING (auth.role () = 'service_role');
-
--- Create storage policies for playlist images
-CREATE POLICY "Allow playlist image uploads" ON storage.objects FOR INSERT
-WITH
-  CHECK (
-    auth.role () = 'authenticated'
-    AND bucket_id = 'content-images'
-    AND name ~ '^playlists/[0-9]+/'
-    AND public.check_playlist_ownership (
-      (regexp_split_to_array(name, '/')) [2]::bigint,
-      auth.uid ()
-    )
-  );
-
-CREATE POLICY "Allow playlist image reads" ON storage.objects FOR
-SELECT
-  USING (
-    auth.role () = 'authenticated'
-    AND bucket_id = 'content-images'
-    AND name ~ '^playlists/[0-9]+/'
-    AND public.check_playlist_ownership (
-      (regexp_split_to_array(name, '/')) [2]::bigint,
-      auth.uid ()
-    )
-  );
-
-CREATE POLICY "Allow playlist image updates" ON storage.objects
-FOR UPDATE
-  USING (
-    auth.role () = 'authenticated'
-    AND bucket_id = 'content-images'
-    AND name ~ '^playlists/[0-9]+/'
-    AND public.check_playlist_ownership (
-      (regexp_split_to_array(name, '/')) [2]::bigint,
-      auth.uid ()
-    )
-  )
-WITH
-  CHECK (
-    auth.role () = 'authenticated'
-    AND bucket_id = 'content-images'
-    AND name ~ '^playlists/[0-9]+/'
-    AND public.check_playlist_ownership (
-      (regexp_split_to_array(name, '/')) [2]::bigint,
-      auth.uid ()
-    )
-  );
-
-CREATE POLICY "Allow playlist image deletes" ON storage.objects FOR DELETE USING (
-  auth.role () = 'authenticated'
-  AND bucket_id = 'content-images'
-  AND name ~ '^playlists/[0-9]+/'
-  AND public.check_playlist_ownership (
-    (regexp_split_to_array(name, '/')) [2]::bigint,
-    auth.uid ()
-  )
-);
 
 -- Create optimized triggers (SINGLE TRIGGER PER TABLE)
 CREATE TRIGGER trigger_videos_queue_image_processing BEFORE INSERT

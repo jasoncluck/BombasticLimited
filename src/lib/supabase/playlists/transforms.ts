@@ -49,6 +49,8 @@ export function transformPlaylistFromRPC(
     thumbnail_url: rpcData.playlist_thumbnail_url,
     deleted_at: rpcData.playlist_deleted_at,
     duration_seconds: rpcData.total_duration_seconds,
+    profile_username: rpcData.profile_username,
+    profile_avatar_url: rpcData.profile_avatar_url,
     // Optional fields that aren't returned by get_playlist_data RPC
     updated_at: null,
     image_processing_updated_at: null,
@@ -78,11 +80,11 @@ export function transformUserPlaylistFromRPC(
     deleted_at: rpcData.deleted_at,
     duration_seconds: rpcData.duration_seconds,
     profile_username: rpcData.profile_username,
+    profile_avatar_url: rpcData.profile_avatar_url,
     playlist_position: rpcData.playlist_position,
     sorted_by: rpcData.sorted_by,
     sort_order: rpcData.sort_order,
     added_at: rpcData.added_at,
-    avatar_url: rpcData.avatar_url,
   };
 }
 

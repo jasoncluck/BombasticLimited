@@ -7,7 +7,7 @@
   import { Input } from '$lib/components/ui/input';
   import type { Playlist } from '$lib/supabase/playlists';
   import { zodClient } from 'sveltekit-superforms/adapters';
-  import { ListVideo, Loader, Pencil } from '@lucide/svelte';
+  import { Crop, ListVideo, Loader, Pencil, X } from '@lucide/svelte';
   import Textarea from '$lib/components/ui/textarea/textarea.svelte';
   import Cropper, { type CropArea } from 'svelte-easy-crop';
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
@@ -288,10 +288,18 @@
                     {/snippet}
                   </DropdownMenu.Trigger>
                   <DropdownMenu.Content align="start">
-                    <DropdownMenu.Item onclick={handleUpdateImageCrop}>
-                      Update crop
+                    <DropdownMenu.Item
+                      onclick={handleUpdateImageCrop}
+                      class="flex gap-2"
+                    >
+                      <Crop class="dropdown-icon" />
+                      Update image crop
                     </DropdownMenu.Item>
-                    <DropdownMenu.Item onclick={handleRemoveImage}>
+                    <DropdownMenu.Item
+                      onclick={handleRemoveImage}
+                      class="flex gap-2"
+                    >
+                      <X class="dropdown-icon" />
                       Remove image
                     </DropdownMenu.Item>
                   </DropdownMenu.Content>

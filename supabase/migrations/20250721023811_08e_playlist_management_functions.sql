@@ -97,10 +97,10 @@ BEGIN
 
   -- Shift existing playlists if inserting at a specific position (bulk update)
   IF actual_position <= max_position THEN
-    UPDATE public.user_playlists 
-    SET playlist_position = playlist_position + 1
-    WHERE user_id = p_created_by 
-      AND playlist_position >= actual_position;
+    UPDATE public.user_playlists up
+    SET playlist_position = up.playlist_position + 1
+    WHERE up.user_id = p_created_by 
+      AND up.playlist_position >= actual_position;
   END IF;
 
   -- Insert the new playlist
@@ -209,12 +209,12 @@ BEGIN
 
   actual_position := COALESCE(LEAST(GREATEST(p_playlist_position, 1), 50), LEAST(max_position + 1, 50));
 
-  -- Bulk shift and insert
+  -- Bulk shift and insert - FIXED: Add table alias to avoid ambiguous column reference
   IF actual_position <= max_position THEN
-    UPDATE public.user_playlists 
-    SET playlist_position = playlist_position + 1
-    WHERE user_id = current_user_id 
-      AND playlist_position >= actual_position;
+    UPDATE public.user_playlists up
+    SET playlist_position = up.playlist_position + 1
+    WHERE up.user_id = current_user_id 
+      AND up.playlist_position >= actual_position;
   END IF;
 
   INSERT INTO public.user_playlists (id, user_id, playlist_position)
@@ -242,19 +242,19 @@ BEGIN
   PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || current_user_id::text));
 
   -- Get position and delete in one operation
-  DELETE FROM public.user_playlists 
-  WHERE user_id = current_user_id AND id = p_playlist_id
-  RETURNING playlist_position INTO removed_position;
+  DELETE FROM public.user_playlists up
+  WHERE up.user_id = current_user_id AND up.id = p_playlist_id
+  RETURNING up.playlist_position INTO removed_position;
 
   IF removed_position IS NULL THEN
     RAISE EXCEPTION 'Playlist not found in user''s account';
   END IF;
 
-  -- Bulk shift remaining playlists
-  UPDATE public.user_playlists 
-  SET playlist_position = playlist_position - 1
-  WHERE user_id = current_user_id 
-    AND playlist_position > removed_position;
+  -- Bulk shift remaining playlists - FIXED: Add table alias
+  UPDATE public.user_playlists up
+  SET playlist_position = up.playlist_position - 1
+  WHERE up.user_id = current_user_id 
+    AND up.playlist_position > removed_position;
 
   RETURN QUERY SELECT p_playlist_id, current_user_id;
 END;
@@ -311,14 +311,14 @@ BEGIN
   END IF;
 
   -- Fixed: Use explicit table aliases and proper WHERE clause to avoid ambiguous column references
-  UPDATE public.user_playlists
+  UPDATE public.user_playlists up
   SET playlist_position = CASE 
-    WHEN id = p_playlist_id THEN p_new_position
-    WHEN p_new_position > current_position AND playlist_position > current_position AND playlist_position <= p_new_position THEN playlist_position - 1
-    WHEN p_new_position < current_position AND playlist_position >= p_new_position AND playlist_position < current_position THEN playlist_position + 1
-    ELSE playlist_position
+    WHEN up.id = p_playlist_id THEN p_new_position
+    WHEN p_new_position > current_position AND up.playlist_position > current_position AND up.playlist_position <= p_new_position THEN up.playlist_position - 1
+    WHEN p_new_position < current_position AND up.playlist_position >= p_new_position AND up.playlist_position < current_position THEN up.playlist_position + 1
+    ELSE up.playlist_position
   END
-  WHERE user_id = current_user_id;
+  WHERE up.user_id = current_user_id;
 
   RETURN QUERY SELECT p_playlist_id, p_new_position, true;
 END;
@@ -358,12 +358,12 @@ BEGIN
     UPDATE public.playlists SET deleted_at = NOW() WHERE id = p_playlist_id AND deleted_at IS NULL;
     DELETE FROM public.user_playlists WHERE id = p_playlist_id;
   ELSE
-    -- Follower: remove mapping and reorder positions
-    DELETE FROM public.user_playlists WHERE user_id = current_user_id AND id = p_playlist_id;
+    -- Follower: remove mapping and reorder positions - FIXED: Add table alias
+    DELETE FROM public.user_playlists up WHERE up.user_id = current_user_id AND up.id = p_playlist_id;
     
-    UPDATE public.user_playlists 
-    SET playlist_position = playlist_position - 1
-    WHERE user_id = current_user_id AND playlist_position > deleted_position;
+    UPDATE public.user_playlists up
+    SET playlist_position = up.playlist_position - 1
+    WHERE up.user_id = current_user_id AND up.playlist_position > deleted_position;
   END IF;
 
   RETURN TRUE;

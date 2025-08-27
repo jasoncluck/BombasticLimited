@@ -3,10 +3,7 @@
   import type { SuperValidated } from 'sveltekit-superforms';
   import type { BreadcrumbItem } from '$lib/components/breadcrumb-layout.svelte';
   import type { PlaylistVideosFilter } from '$lib/components/content/content-filter';
-  import {
-    type ProfilePlaylist,
-    type UserPlaylist,
-  } from '$lib/supabase/playlists';
+  import { type Playlist, type UserPlaylist } from '$lib/supabase/playlists';
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
   import type { HTMLAttributes } from 'svelte/elements';
@@ -27,12 +24,11 @@
     showFloatingBreadcrumbs: boolean;
     contentFilter: PlaylistVideosFilter;
     form: SuperValidated<PlaylistSchema>;
-    playlist: ProfilePlaylist | UserPlaylist;
+    playlist: Playlist | UserPlaylist;
     videos: Video[];
     playlistDuration: { hours: number; minutes: number; seconds: number };
     videosCount: number;
     userProfile: UserProfile | null;
-    creatorProfile: UserProfile | null;
     currentPage: number;
     supabase: SupabaseClient<Database>;
     session: Session | null;
@@ -49,7 +45,6 @@
     videosCount,
     currentPage,
     userProfile,
-    creatorProfile,
     supabase,
     session,
     ...props
@@ -278,7 +273,7 @@
                   <Avatar.Root
                     class={mediaQueryState.canHover ? 'h-7 w-7' : 'h-6 w-6'}
                   >
-                    <Avatar.Image src={creatorProfile?.avatar_url} />
+                    <Avatar.Image src={playlist?.profile_avatar_url} />
                     <Avatar.Fallback class="text-xs">
                       {getUserInitials(playlist.profile_username)}
                     </Avatar.Fallback>
