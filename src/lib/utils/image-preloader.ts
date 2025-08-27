@@ -340,7 +340,6 @@ export function optimizePageImageLoading(
   const { maxPreload = 25, priority = 'auto' } = options;
 
   // Only preload the first few critical images to avoid overwhelming the system
-  // Using 25 as default since @jasoncluck mentioned 20-25 images above the fold
   const criticalVideos = videos.slice(0, maxPreload);
   const criticalImageUrls = extractImageUrls(criticalVideos);
 
