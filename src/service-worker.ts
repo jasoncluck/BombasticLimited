@@ -22,15 +22,17 @@ const IMAGE_DOMAINS = [
   'i.ytimg.com',
   'img.youtube.com',
   'i1.ytimg.com',
-  'i2.ytimg.com', 
+  'i2.ytimg.com',
   'i3.ytimg.com',
   'i4.ytimg.com',
-  'static-cdn.jtvnw.net'
+  'static-cdn.jtvnw.net',
 ];
 
 // Check if URL is from Supabase (dynamic hostname)
 const isSupabaseImageUrl = (url: URL): boolean => {
-  return url.hostname.includes('.supabase.co') && url.pathname.includes('/storage/');
+  return (
+    url.hostname.includes('.supabase.co') && url.pathname.includes('/storage/')
+  );
 };
 
 // Cache images with stale-while-revalidate strategy
@@ -42,7 +44,7 @@ const cacheImage = async (request: Request): Promise<Response> => {
   if (cached) {
     // Update in background
     fetch(request)
-      .then(response => {
+      .then((response) => {
         if (response.ok && response.status === 200) {
           cache.put(request, response.clone());
         }
@@ -50,7 +52,7 @@ const cacheImage = async (request: Request): Promise<Response> => {
       .catch(() => {
         // Silently fail background update
       });
-    
+
     return cached;
   }
 
@@ -93,7 +95,7 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
 // Preload critical images
 const preloadCriticalImages = async (imageUrls: string[]): Promise<void> => {
   const cache = await caches.open(IMAGE_CACHE);
-  
+
   const promises = imageUrls.map(async (url) => {
     try {
       const cached = await cache.match(url);
@@ -144,9 +146,10 @@ const preloadCriticalAssets = async (): Promise<void> => {
 const cleanupOldCaches = async (): Promise<void> => {
   const cacheNames = await caches.keys();
   const oldCaches = cacheNames.filter(
-    (name) => name.startsWith('bombastic-') && 
-              name !== STATIC_CACHE && 
-              name !== IMAGE_CACHE
+    (name) =>
+      name.startsWith('bombastic-') &&
+      name !== STATIC_CACHE &&
+      name !== IMAGE_CACHE
   );
 
   await Promise.all(oldCaches.map((name) => caches.delete(name)));
@@ -173,21 +176,22 @@ sw.addEventListener('fetch', (event) => {
   }
 
   // Handle static assets from same origin
-  if (url.origin === sw.location.origin && (
-    STATIC_ASSETS.includes(url.pathname) ||
-    STATIC_EXTENSIONS.test(url.pathname)
-  )) {
+  if (
+    url.origin === sw.location.origin &&
+    (STATIC_ASSETS.includes(url.pathname) ||
+      STATIC_EXTENSIONS.test(url.pathname))
+  ) {
     event.respondWith(cacheStaticAsset(request));
     return;
   }
 
   // Handle images from allowed domains
-  if (
-    IMAGE_DOMAINS.includes(url.hostname) || 
-    isSupabaseImageUrl(url)
-  ) {
+  if (IMAGE_DOMAINS.includes(url.hostname) || isSupabaseImageUrl(url)) {
     // Only cache image requests
-    if (STATIC_EXTENSIONS.test(url.pathname) || url.pathname.includes('/storage/')) {
+    if (
+      STATIC_EXTENSIONS.test(url.pathname) ||
+      url.pathname.includes('/storage/')
+    ) {
       event.respondWith(cacheImage(request));
       return;
     }
@@ -206,10 +210,9 @@ sw.addEventListener('message', (event) => {
       break;
 
     case 'CLEAR_CACHE':
-      event.waitUntil(Promise.all([
-        caches.delete(STATIC_CACHE),
-        caches.delete(IMAGE_CACHE)
-      ]));
+      event.waitUntil(
+        Promise.all([caches.delete(STATIC_CACHE), caches.delete(IMAGE_CACHE)])
+      );
       break;
 
     case 'PRELOAD_IMAGE':
