@@ -23,6 +23,7 @@
     useLayoutEffects,
     useNavigation,
   } from '$lib/components/layout/index.js';
+  import { dev } from '$app/environment';
 
   let { data, children } = $props();
   let { session, supabase, userProfile, preferredImageFormat } = $derived(data);
@@ -380,7 +381,15 @@
   <script src="https://embed.twitch.tv/embed/v1.js"></script>
 </svelte:head>
 
-<div class="flex h-full flex-col">
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+  class="flex h-full flex-col"
+  oncontextmenu={(e) => {
+    if (!dev && window.location.hostname.includes('bombastic.ltd')) {
+      e.preventDefault();
+    }
+  }}
+>
   <!-- Main Content Area with Progressive Loading -->
   {#if !isHydrated}
     <!-- SSR/Initial Load State -->
