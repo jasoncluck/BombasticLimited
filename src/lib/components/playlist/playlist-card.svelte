@@ -53,15 +53,16 @@
     <!-- Avatar and username display -->
     {#if showUsername}
       {#if isSource(playlist.profile_username)}
+        {@const sourceInfo = SOURCE_INFO[playlist.profile_username]}
         <div class=" flex items-center gap-2">
           <Avatar.Root class="h-6 w-6">
             <Avatar.Image
-              src={playlist.profile_avatar_url}
-              alt="{playlist.profile_username} avatar"
+              src={sourceInfo.image.img.src}
+              alt={`${sourceInfo.displayName} playlist`}
             />
           </Avatar.Root>
           <p class="text-muted-foreground text-xs">
-            {SOURCE_INFO[playlist.profile_username].displayName}
+            {sourceInfo.displayName}
           </p>
         </div>
       {:else if playlist.profile_username}

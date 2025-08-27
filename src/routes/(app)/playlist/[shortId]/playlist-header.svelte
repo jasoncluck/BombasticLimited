@@ -242,11 +242,12 @@
               {#if isSource(playlist.profile_username)}
                 {@const sourceInfo = SOURCE_INFO[playlist.profile_username]}
                 <div class="flex items-center gap-2">
-                  <img
-                    alt={`${sourceInfo.displayName} playlist`}
-                    class="h-6 w-6"
-                    src={sourceInfo.image.img.src}
-                  />
+                  <Avatar.Root class="h-6 w-6">
+                    <Avatar.Image
+                      src={sourceInfo.image.img.src}
+                      alt={`${sourceInfo.displayName} playlist`}
+                    />
+                  </Avatar.Root>
                   <p class="text-sm">
                     {sourceInfo.displayName}
                   </p>
