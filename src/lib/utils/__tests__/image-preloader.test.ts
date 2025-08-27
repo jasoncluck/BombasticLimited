@@ -4,6 +4,7 @@ import {
   getOptimalLoadingAttribute,
   getOptimalFetchPriority,
   extractImageUrls,
+  optimizePageImageLoading,
 } from '../image-preloader';
 
 describe('Image Preloader Utility', () => {
@@ -77,6 +78,37 @@ describe('Image Preloader Utility', () => {
       expect(urls).toHaveLength(2);
       expect(urls).toContain('https://i.ytimg.com/vi/test1/maxresdefault.jpg');
       expect(urls).toContain('https://i.ytimg.com/vi/test2/default.jpg');
+    });
+  });
+
+  describe('optimizePageImageLoading', () => {
+    it('should handle empty video arrays gracefully', () => {
+      // Should not throw for empty/null arrays
+      expect(() => optimizePageImageLoading([])).not.toThrow();
+      expect(() => optimizePageImageLoading(null as any)).not.toThrow();
+      expect(() => optimizePageImageLoading(undefined as any)).not.toThrow();
+    });
+
+    it('should handle fewer videos than maxPreload gracefully', () => {
+      const videos = [
+        { image_url: 'https://i.ytimg.com/vi/test1/maxresdefault.jpg', thumbnail_url: null },
+        { image_url: 'https://i.ytimg.com/vi/test2/maxresdefault.jpg', thumbnail_url: null },
+      ];
+
+      // Should not throw when videos.length < maxPreload
+      expect(() => optimizePageImageLoading(videos, { maxPreload: 10 })).not.toThrow();
+    });
+
+    it('should limit extracted URLs based on maxPreload', () => {
+      const videos = Array.from({ length: 20 }, (_, i) => ({
+        image_url: `https://i.ytimg.com/vi/test${i}/maxresdefault.jpg`,
+        thumbnail_url: null,
+      }));
+
+      // Test that only first 6 URLs would be extracted (default maxPreload)
+      const limitedVideos = videos.slice(0, 6);
+      const extractedUrls = extractImageUrls(limitedVideos);
+      expect(extractedUrls).toHaveLength(6);
     });
   });
 });

@@ -25,8 +25,6 @@
   import {
     getOptimalLoadingAttribute,
     getOptimalFetchPriority,
-    createImageIntersectionObserver,
-    preloadImageWithServiceWorker,
   } from '$lib/utils/image-preloader';
 
   type ContentCardProps = {
@@ -81,7 +79,6 @@
 
   let cardElement = $state<HTMLElement>();
   let imageElement = $state<HTMLImageElement>();
-  let isImageIntersecting = $state(false);
 
   // Smart loading attributes based on position and intersection
   const loadingAttribute = $derived(
@@ -367,35 +364,6 @@
       // Then perform periodic re-checks to handle any race conditions
       setTimeout(performHoverDetection, initialDelay);
     }
-
-    // Set up intersection observer for image loading optimization
-    const imageObserver = createImageIntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.target === imageElement) {
-            isImageIntersecting = entry.isIntersecting;
-            
-            // Preload image with service worker when it comes into view
-            if (entry.isIntersecting && video?.image_url) {
-              preloadImageWithServiceWorker(video.image_url);
-            }
-          }
-        });
-      },
-      { threshold: 0.1, rootMargin: '50px' }
-    );
-
-    // Observe image element when available
-    if (imageObserver && imageElement) {
-      imageObserver.observe(imageElement);
-    }
-
-    // Cleanup observer
-    return () => {
-      if (imageObserver) {
-        imageObserver.disconnect();
-      }
-    };
   });
 </script>
 

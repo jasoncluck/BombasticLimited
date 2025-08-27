@@ -9,6 +9,9 @@
   } from '$lib/components/pagination/pagination.js';
   import Pagination from '$lib/components/pagination/pagination.svelte';
   import { DEFAULT_NUM_VIDEOS_PAGINATION } from '$lib/supabase/videos.js';
+  import { optimizePageImageLoading } from '$lib/utils/image-preloader';
+  import { onMount } from 'svelte';
+  import { isBrowser } from '@supabase/ssr';
   import type { Snapshot } from '../$types.js';
 
   const { data } = $props();
@@ -42,6 +45,17 @@
       perPage: DEFAULT_NUM_VIDEOS_PAGINATION,
     })
   );
+
+  // Optimize image loading for paginated content
+  onMount(() => {
+    if (isBrowser() && videos?.length > 0) {
+      // For continue watching, preload more images since they're high priority
+      optimizePageImageLoading(videos, { 
+        maxPreload: 10, 
+        priority: 'high' 
+      });
+    }
+  });
 </script>
 
 <div>

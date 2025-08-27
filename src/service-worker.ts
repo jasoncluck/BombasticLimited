@@ -42,16 +42,18 @@ const cacheImage = async (request: Request): Promise<Response> => {
 
   // Serve from cache if available (stale-while-revalidate)
   if (cached) {
-    // Update in background
-    fetch(request)
-      .then((response) => {
-        if (response.ok && response.status === 200) {
-          cache.put(request, response.clone());
-        }
-      })
-      .catch(() => {
-        // Silently fail background update
-      });
+    // Update in background with throttling to avoid overwhelming the network
+    setTimeout(() => {
+      fetch(request)
+        .then((response) => {
+          if (response.ok && response.status === 200) {
+            cache.put(request, response.clone());
+          }
+        })
+        .catch(() => {
+          // Silently fail background update
+        });
+    }, 100); // Small delay to avoid request flooding
 
     return cached;
   }
@@ -92,25 +94,36 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
   }
 };
 
-// Preload critical images
+// Preload critical images with throttling
 const preloadCriticalImages = async (imageUrls: string[]): Promise<void> => {
   const cache = await caches.open(IMAGE_CACHE);
 
-  const promises = imageUrls.map(async (url) => {
-    try {
-      const cached = await cache.match(url);
-      if (!cached) {
-        const response = await fetch(url);
-        if (response.ok) {
-          await cache.put(url, response);
+  // Process images in batches to avoid overwhelming the cache
+  const batchSize = 3;
+  for (let i = 0; i < imageUrls.length; i += batchSize) {
+    const batch = imageUrls.slice(i, i + batchSize);
+    
+    const promises = batch.map(async (url) => {
+      try {
+        const cached = await cache.match(url);
+        if (!cached) {
+          const response = await fetch(url);
+          if (response.ok) {
+            await cache.put(url, response);
+          }
         }
+      } catch (error) {
+        console.warn('SW: Critical image preload failed:', url, error);
       }
-    } catch (error) {
-      console.warn('SW: Critical image preload failed:', url, error);
-    }
-  });
+    });
 
-  await Promise.allSettled(promises);
+    await Promise.allSettled(promises);
+    
+    // Add small delay between batches to avoid overwhelming the system
+    if (i + batchSize < imageUrls.length) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+  }
 };
 
 // Preload critical static assets only

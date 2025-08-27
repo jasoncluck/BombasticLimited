@@ -10,6 +10,9 @@
     getContentState,
   } from '$lib/state/content.svelte.js';
   import { PAGINATION_QUERY_KEY } from '$lib/components/pagination/pagination.js';
+  import { optimizePageImageLoading } from '$lib/utils/image-preloader';
+  import { onMount } from 'svelte';
+  import { isBrowser } from '@supabase/ssr';
 
   const { data } = $props();
   const {
@@ -50,6 +53,17 @@
       contentState.selectedVideosBySection[sectionId] = restored.selectedVideos;
     },
   };
+
+  // Optimize image loading for paginated content
+  onMount(() => {
+    if (isBrowser() && videos?.length > 0) {
+      // Only preload first 6 images to avoid overwhelming the cache systems
+      optimizePageImageLoading(videos, { 
+        maxPreload: 6, 
+        priority: 'auto' 
+      });
+    }
+  });
 </script>
 
 <div class="relative">

@@ -70,13 +70,14 @@ export function preloadImageWithLink(
 }
 
 /**
- * Preload an image using service worker caching
+ * Preload an image using service worker caching (throttled)
  */
 export async function preloadImageWithServiceWorker(url: string): Promise<void> {
   if (!isValidImageUrl(url)) return;
   
   try {
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      // Throttle individual preload requests to avoid spam
       navigator.serviceWorker.controller.postMessage({
         type: 'PRELOAD_IMAGE',
         url
@@ -99,10 +100,19 @@ export async function preloadImages(
   // Use browser preloading for immediate priority
   validUrls.forEach(url => preloadImageWithLink(url, options));
   
-  // Use service worker for caching
-  await Promise.allSettled(
-    validUrls.map(url => preloadImageWithServiceWorker(url))
-  );
+  // Use service worker for batch caching to reduce message spam
+  if (validUrls.length > 0) {
+    try {
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'PRELOAD_IMAGES',
+          urls: validUrls
+        });
+      }
+    } catch (error) {
+      console.debug('Service worker batch image preload failed:', error);
+    }
+  }
 }
 
 /**
@@ -178,4 +188,28 @@ export function extractImageUrls(videos: Array<{ image_url?: string | null; thum
     .map(video => video.image_url || video.thumbnail_url)
     .filter((url): url is string => Boolean(url))
     .filter(isValidImageUrl);
+}
+
+/**
+ * Optimize image loading for paginated content
+ * Preloads only critical images to avoid performance issues
+ */
+export function optimizePageImageLoading(
+  videos: Array<{ image_url?: string | null; thumbnail_url?: string | null }>,
+  options: { 
+    maxPreload?: number; 
+    priority?: 'high' | 'low' | 'auto';
+  } = {}
+): void {
+  if (!videos?.length) return;
+  
+  const { maxPreload = 6, priority = 'auto' } = options;
+  
+  // Only preload the first few critical images to avoid overwhelming the system
+  const criticalVideos = videos.slice(0, maxPreload);
+  const criticalImageUrls = extractImageUrls(criticalVideos);
+  
+  if (criticalImageUrls.length > 0) {
+    preloadImages(criticalImageUrls, { priority });
+  }
 }

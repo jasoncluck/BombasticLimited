@@ -11,6 +11,9 @@
   } from '$lib/state/content.svelte.js';
   import type { SourceWithCarouselState } from '$lib/components/content/content.js';
   import { PAGINATION_QUERY_KEY } from '$lib/components/pagination/pagination.js';
+  import { optimizePageImageLoading } from '$lib/utils/image-preloader';
+  import { onMount } from 'svelte';
+  import { isBrowser } from '@supabase/ssr';
 
   const { data } = $props();
   const {
@@ -52,6 +55,17 @@
       contentState.selectedVideosBySection[sectionId] = restored.selectedVideos;
     },
   };
+
+  // Optimize image loading for search results
+  onMount(() => {
+    if (isBrowser() && videos?.length > 0) {
+      // Search results get moderate preload priority
+      optimizePageImageLoading(videos, { 
+        maxPreload: 8, 
+        priority: 'auto' 
+      });
+    }
+  });
 </script>
 
 <div class="relative">
