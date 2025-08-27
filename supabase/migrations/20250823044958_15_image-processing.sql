@@ -130,7 +130,10 @@ UPDATE ON "public"."image_processing_jobs" FOR EACH ROW
 EXECUTE FUNCTION public.update_image_processing_jobs_updated_at ();
 
 -- Helper function to generate hash for image properties
-CREATE OR REPLACE FUNCTION public.hash_image_properties (properties jsonb) RETURNS text LANGUAGE plpgsql IMMUTABLE AS $$
+CREATE OR REPLACE FUNCTION public.hash_image_properties (properties jsonb) RETURNS text LANGUAGE plpgsql
+IMMUTABLE 
+SET
+  search_path = '' AS $$
 BEGIN
   IF properties IS NULL THEN
     RETURN 'null';
@@ -505,59 +508,10 @@ BEGIN
 END;
 $$;
 
--- Function to cleanup duplicate jobs
-CREATE OR REPLACE FUNCTION public.cleanup_duplicate_image_processing_jobs () RETURNS TABLE (
-  removed_job_id uuid,
-  entity_type text,
-  entity_id text,
-  reason text
-) LANGUAGE plpgsql SECURITY DEFINER AS $$
-BEGIN
-  -- Remove duplicate pending jobs (keep the oldest one for each unique configuration)
-  RETURN QUERY
-  WITH duplicates AS (
-    SELECT 
-      id,
-      entity_type,
-      entity_id,
-      source_url,
-      properties_hash,
-      status,
-      created_at,
-      ROW_NUMBER() OVER (
-        PARTITION BY entity_type, entity_id, source_url, COALESCE(properties_hash, 'null')
-        ORDER BY 
-          CASE status 
-            WHEN 'processing' THEN 1
-            WHEN 'pending' THEN 2
-            WHEN 'completed' THEN 3
-            ELSE 4
-          END,
-          created_at ASC
-      ) as rn
-    FROM "public"."image_processing_jobs"
-    WHERE status IN ('pending', 'processing')
-  ),
-  to_delete AS (
-    DELETE FROM "public"."image_processing_jobs"
-    WHERE id IN (
-      SELECT id FROM duplicates WHERE rn > 1
-    )
-    RETURNING id, entity_type, entity_id
-  )
-  SELECT 
-    td.id,
-    td.entity_type,
-    td.entity_id,
-    'Duplicate job removed'::text
-  FROM to_delete td;
-END;
-$$;
-
 -- Playlist ownership check function
 CREATE OR REPLACE FUNCTION public.check_playlist_ownership (playlist_id bigint, user_id uuid) RETURNS boolean LANGUAGE sql SECURITY DEFINER
 SET
-  search_path = public AS $$
+  search_path = '' AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.playlists p 
     WHERE p.id = playlist_id AND p.created_by = user_id
