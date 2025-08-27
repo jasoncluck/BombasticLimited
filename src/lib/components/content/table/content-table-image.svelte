@@ -3,27 +3,44 @@
   import Progress from '$lib/components/ui/progress/progress.svelte';
   import { getVideoSecondsOffset } from '$lib/components/video/video-service';
   import { Check } from '@lucide/svelte';
+  import {
+    getOptimalLoadingAttribute,
+    getOptimalFetchPriority,
+  } from '$lib/utils/image-preloader';
 
   import type { SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
+  import { onMount } from 'svelte';
 
   type ContentCardProps = {
     video: Video;
     supabase: SupabaseClient<Database>;
+    index?: number;
   };
 
-  const { video = $bindable(), supabase }: ContentCardProps = $props();
+  const { video = $bindable(), supabase, index }: ContentCardProps = $props();
+  
+  let imageContainer = $state<HTMLDivElement>();
+  
+  // Smart loading attributes for table images (usually below-the-fold)
+  const loadingAttribute = $derived(
+    getOptimalLoadingAttribute(imageContainer || null, index)
+  );
+  
+  const fetchPriorityAttribute = $derived(
+    getOptimalFetchPriority(imageContainer || null, index)
+  );
 </script>
 
-<div class="relative flex aspect-video h-[80px] w-32 shrink-0 items-center">
+<div bind:this={imageContainer} class="relative flex aspect-video h-[80px] w-32 shrink-0 items-center">
   <!-- Use the optimized image_url directly from the database -->
   <img
     class="h-full w-full object-cover"
     src={video.image_url ?? video.thumbnail_url}
     alt={video.title}
-    loading="lazy"
+    loading={loadingAttribute}
     decoding="async"
-    fetchpriority="auto"
+    fetchpriority={fetchPriorityAttribute}
   />
   {#if isVideoWithTimestamp(video) && !video.watched_at && video.video_start_seconds && video.duration}
     <Progress

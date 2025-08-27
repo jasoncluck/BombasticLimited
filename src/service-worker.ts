@@ -8,13 +8,65 @@ import { build, files, version } from '$service-worker';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
-// Simple static cache name
+// Cache names
 const STATIC_CACHE = `bombastic-static-${version}`;
+const IMAGE_CACHE = `bombastic-images-${version}`;
 const STATIC_ASSETS = [...build, ...files];
 
 // Static assets that should be cached
 const STATIC_EXTENSIONS =
   /\.(js|css|woff2?|ttf|eot|jpg|jpeg|png|gif|svg|webp|ico|avif)$/;
+
+// Image domains that should be cached
+const IMAGE_DOMAINS = [
+  'i.ytimg.com',
+  'img.youtube.com',
+  'i1.ytimg.com',
+  'i2.ytimg.com', 
+  'i3.ytimg.com',
+  'i4.ytimg.com',
+  'static-cdn.jtvnw.net'
+];
+
+// Check if URL is from Supabase (dynamic hostname)
+const isSupabaseImageUrl = (url: URL): boolean => {
+  return url.hostname.includes('.supabase.co') && url.pathname.includes('/storage/');
+};
+
+// Cache images with stale-while-revalidate strategy
+const cacheImage = async (request: Request): Promise<Response> => {
+  const cache = await caches.open(IMAGE_CACHE);
+  const cached = await cache.match(request);
+
+  // Serve from cache if available (stale-while-revalidate)
+  if (cached) {
+    // Update in background
+    fetch(request)
+      .then(response => {
+        if (response.ok && response.status === 200) {
+          cache.put(request, response.clone());
+        }
+      })
+      .catch(() => {
+        // Silently fail background update
+      });
+    
+    return cached;
+  }
+
+  // Fetch and cache if not in cache
+  try {
+    const response = await fetch(request);
+    if (response.ok && response.status === 200) {
+      const responseToCache = response.clone();
+      cache.put(request, responseToCache);
+    }
+    return response;
+  } catch (error) {
+    console.warn('SW: Image fetch failed:', error);
+    throw error;
+  }
+};
 
 // Simple static asset caching function
 const cacheStaticAsset = async (request: Request): Promise<Response> => {
@@ -36,6 +88,27 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
     console.warn('SW: Static asset fetch failed:', error);
     throw error;
   }
+};
+
+// Preload critical images
+const preloadCriticalImages = async (imageUrls: string[]): Promise<void> => {
+  const cache = await caches.open(IMAGE_CACHE);
+  
+  const promises = imageUrls.map(async (url) => {
+    try {
+      const cached = await cache.match(url);
+      if (!cached) {
+        const response = await fetch(url);
+        if (response.ok) {
+          await cache.put(url, response);
+        }
+      }
+    } catch (error) {
+      console.warn('SW: Critical image preload failed:', url, error);
+    }
+  });
+
+  await Promise.allSettled(promises);
 };
 
 // Preload critical static assets only
@@ -71,7 +144,9 @@ const preloadCriticalAssets = async (): Promise<void> => {
 const cleanupOldCaches = async (): Promise<void> => {
   const cacheNames = await caches.keys();
   const oldCaches = cacheNames.filter(
-    (name) => name.startsWith('bombastic-') && name !== STATIC_CACHE
+    (name) => name.startsWith('bombastic-') && 
+              name !== STATIC_CACHE && 
+              name !== IMAGE_CACHE
   );
 
   await Promise.all(oldCaches.map((name) => caches.delete(name)));
@@ -87,31 +162,43 @@ sw.addEventListener('activate', (event) => {
   event.waitUntil(Promise.all([cleanupOldCaches(), sw.clients.claim()]));
 });
 
-// Fetch event - handle static assets only
+// Fetch event - handle static assets and images
 sw.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Only handle GET requests from same origin
-  if (request.method !== 'GET' || url.origin !== sw.location.origin) {
+  // Only handle GET requests
+  if (request.method !== 'GET') {
     return;
   }
 
-  // Only cache static assets
-  if (
+  // Handle static assets from same origin
+  if (url.origin === sw.location.origin && (
     STATIC_ASSETS.includes(url.pathname) ||
     STATIC_EXTENSIONS.test(url.pathname)
-  ) {
+  )) {
     event.respondWith(cacheStaticAsset(request));
     return;
+  }
+
+  // Handle images from allowed domains
+  if (
+    IMAGE_DOMAINS.includes(url.hostname) || 
+    isSupabaseImageUrl(url)
+  ) {
+    // Only cache image requests
+    if (STATIC_EXTENSIONS.test(url.pathname) || url.pathname.includes('/storage/')) {
+      event.respondWith(cacheImage(request));
+      return;
+    }
   }
 
   // Let everything else go to network
 });
 
-// Simple message handling for cache clearing
+// Message handling for cache operations and image preloading
 sw.addEventListener('message', (event) => {
-  const { type } = event.data || {};
+  const { type, url, urls } = event.data || {};
 
   switch (type) {
     case 'SKIP_WAITING':
@@ -119,7 +206,22 @@ sw.addEventListener('message', (event) => {
       break;
 
     case 'CLEAR_CACHE':
-      event.waitUntil(caches.delete(STATIC_CACHE));
+      event.waitUntil(Promise.all([
+        caches.delete(STATIC_CACHE),
+        caches.delete(IMAGE_CACHE)
+      ]));
+      break;
+
+    case 'PRELOAD_IMAGE':
+      if (url) {
+        event.waitUntil(preloadCriticalImages([url]));
+      }
+      break;
+
+    case 'PRELOAD_IMAGES':
+      if (urls && Array.isArray(urls)) {
+        event.waitUntil(preloadCriticalImages(urls));
+      }
       break;
 
     default:

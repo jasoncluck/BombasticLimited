@@ -18,6 +18,11 @@
   import { getMediaQueryState } from '$lib/state/media-query.svelte.js';
   import { getSidebarState } from '$lib/state/sidebar.svelte.js';
   import { getNavigationState } from '$lib/state/navigation.svelte.js';
+  import { 
+    preloadImages, 
+    extractImageUrls 
+  } from '$lib/utils/image-preloader';
+  import { onMount } from 'svelte';
 
   let { data } = $props();
 
@@ -79,6 +84,25 @@
       contentState.selectedVideosBySection = restored.selectedVideos;
     },
   };
+
+  // Preload critical images on page mount
+  onMount(() => {
+    if (isBrowser()) {
+      // Preload images from continue watching (above-the-fold)
+      if (continueWatchingVideos.length > 0) {
+        const continueWatchingUrls = extractImageUrls(continueWatchingVideos.slice(0, 5));
+        preloadImages(continueWatchingUrls, { priority: 'high' });
+      }
+
+      // Preload first few images from each source section
+      Object.entries(sourceVideos).forEach(([source, videos]) => {
+        if (videos.length > 0) {
+          const firstFewUrls = extractImageUrls(videos.slice(0, 3));
+          preloadImages(firstFewUrls, { priority: source === 'YOUTUBE' ? 'high' : 'auto' });
+        }
+      });
+    }
+  });
 </script>
 
 <div>

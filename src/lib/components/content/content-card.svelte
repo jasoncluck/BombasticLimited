@@ -22,6 +22,12 @@
   } from './content';
   import type { Playlist } from '$lib/supabase/playlists';
   import type { UserProfile } from '$lib/supabase/user-profiles';
+  import {
+    getOptimalLoadingAttribute,
+    getOptimalFetchPriority,
+    createImageIntersectionObserver,
+    preloadImageWithServiceWorker,
+  } from '$lib/utils/image-preloader';
 
   type ContentCardProps = {
     video?: Video;
@@ -74,6 +80,17 @@
   const contentState = getContentState();
 
   let cardElement = $state<HTMLElement>();
+  let imageElement = $state<HTMLImageElement>();
+  let isImageIntersecting = $state(false);
+
+  // Smart loading attributes based on position and intersection
+  const loadingAttribute = $derived(
+    getOptimalLoadingAttribute(cardElement || null, index)
+  );
+  
+  const fetchPriorityAttribute = $derived(
+    getOptimalFetchPriority(cardElement || null, index)
+  );
 
   const isVideoInPlaylist = $derived(
     isContinueVideos &&
@@ -350,6 +367,35 @@
       // Then perform periodic re-checks to handle any race conditions
       setTimeout(performHoverDetection, initialDelay);
     }
+
+    // Set up intersection observer for image loading optimization
+    const imageObserver = createImageIntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.target === imageElement) {
+            isImageIntersecting = entry.isIntersecting;
+            
+            // Preload image with service worker when it comes into view
+            if (entry.isIntersecting && video?.image_url) {
+              preloadImageWithServiceWorker(video.image_url);
+            }
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '50px' }
+    );
+
+    // Observe image element when available
+    if (imageObserver && imageElement) {
+      imageObserver.observe(imageElement);
+    }
+
+    // Cleanup observer
+    return () => {
+      if (imageObserver) {
+        imageObserver.disconnect();
+      }
+    };
   });
 </script>
 
@@ -387,11 +433,13 @@
       <div class="relative flex-shrink-0">
         <!-- Use the optimized image_url directly from the database -->
         <img
+          bind:this={imageElement}
           class="aspect-[16/9] h-auto w-full"
           src={video.image_url ?? video.thumbnail_url}
           alt={video.title}
-          loading="eager"
-          fetchpriority="high"
+          loading={loadingAttribute}
+          fetchpriority={fetchPriorityAttribute}
+          decoding="async"
         />
         <div class="absolute top-0.5 right-0.5">
           <ContentDropdown
