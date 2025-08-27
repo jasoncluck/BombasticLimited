@@ -182,6 +182,7 @@ export async function handleRemoveVideosFromPlaylist({
   playlist: Playlist;
   supabase: SupabaseClient<Database>;
 }) {
+  console.log('in handle remvoe');
   const { error } = await deleteVideosFromPlaylist({
     videoIds: videos.map((v) => v.id),
     playlistId: playlist.id,

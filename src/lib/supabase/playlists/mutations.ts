@@ -167,7 +167,7 @@ export async function deleteVideosFromPlaylist({
 
   if (error) {
     console.error(error);
-    invalidate('supabase:db:playlists');
+    invalidate('supabase:db:videos');
   }
 
   return { error };

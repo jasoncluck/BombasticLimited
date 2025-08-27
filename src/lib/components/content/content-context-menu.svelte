@@ -155,7 +155,7 @@
 
   {#if operationVideos.length > 0 && session}
     <ContextMenu.Content
-      class="outline-hiddden max-h-64 overflow-visible {mediaQueryState.isTouchDevice &&
+      class="max-h-64 overflow-visible outline-none {mediaQueryState.isTouchDevice &&
         'hidden'} 
         transition-opacity duration-75"
     >
