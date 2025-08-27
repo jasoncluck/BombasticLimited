@@ -11,9 +11,10 @@
   } from '$lib/state/content.svelte.js';
   import type { SourceWithCarouselState } from '$lib/components/content/content.js';
   import { PAGINATION_QUERY_KEY } from '$lib/components/pagination/pagination.js';
-  import { optimizePageImageLoading } from '$lib/utils/image-preloader';
+  import { optimizePageImageLoadingWithViewport } from '$lib/utils/image-preloader';
   import { onMount } from 'svelte';
   import { isBrowser } from '@supabase/ssr';
+  import { getPageState } from '$lib/state/page.svelte';
 
   const { data } = $props();
   const {
@@ -25,6 +26,8 @@
     userProfile,
     contentFilter,
   } = $derived(data);
+
+  const pageState = getPageState();
 
   let showFloatingBreadcrumbs = $state(false);
   const sectionId = DEFAULT_SECTION_ID;
@@ -60,10 +63,14 @@
   onMount(() => {
     if (isBrowser() && videos?.length > 0) {
       // Search results get moderate preload priority
-      optimizePageImageLoading(videos, { 
-        maxPreload: 8, 
-        priority: 'auto' 
-      });
+      optimizePageImageLoadingWithViewport(
+        videos,
+        pageState.viewportRefs.contentViewportRef,
+        {
+          maxPreload: 22,
+          priority: 'auto',
+        }
+      );
     }
   });
 </script>

@@ -10,17 +10,29 @@ import {
 describe('Image Preloader Utility', () => {
   describe('isValidImageUrl', () => {
     it('should validate YouTube image URLs', () => {
-      expect(isValidImageUrl('https://i.ytimg.com/vi/test/maxresdefault.jpg')).toBe(true);
-      expect(isValidImageUrl('https://img.youtube.com/vi/test/default.jpg')).toBe(true);
-      expect(isValidImageUrl('https://i1.ytimg.com/vi/test/hqdefault.jpg')).toBe(true);
+      expect(
+        isValidImageUrl('https://i.ytimg.com/vi/test/maxresdefault.jpg')
+      ).toBe(true);
+      expect(
+        isValidImageUrl('https://img.youtube.com/vi/test/default.jpg')
+      ).toBe(true);
+      expect(
+        isValidImageUrl('https://i1.ytimg.com/vi/test/hqdefault.jpg')
+      ).toBe(true);
     });
 
     it('should validate Supabase image URLs', () => {
-      expect(isValidImageUrl('https://example.supabase.co/storage/v1/object/test.jpg')).toBe(true);
+      expect(
+        isValidImageUrl(
+          'https://example.supabase.co/storage/v1/object/test.jpg'
+        )
+      ).toBe(true);
     });
 
     it('should reject invalid URLs', () => {
-      expect(isValidImageUrl('https://malicious-site.com/image.jpg')).toBe(false);
+      expect(isValidImageUrl('https://malicious-site.com/image.jpg')).toBe(
+        false
+      );
       expect(isValidImageUrl('')).toBe(false);
       expect(isValidImageUrl('invalid-url')).toBe(false);
     });
@@ -40,12 +52,15 @@ describe('Image Preloader Utility', () => {
 
     it('should return eager for above-the-fold elements', () => {
       const mockElement = {
-        getBoundingClientRect: () => ({ top: 100, bottom: 200 })
+        getBoundingClientRect: () => ({ top: 100, bottom: 200 }),
       } as HTMLElement;
-      
+
       // Mock window dimensions
-      Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true });
-      
+      Object.defineProperty(window, 'innerHeight', {
+        value: 800,
+        configurable: true,
+      });
+
       expect(getOptimalLoadingAttribute(mockElement, 5)).toBe('eager');
     });
   });
@@ -68,9 +83,18 @@ describe('Image Preloader Utility', () => {
   describe('extractImageUrls', () => {
     it('should extract valid image URLs from video objects', () => {
       const videos = [
-        { image_url: 'https://i.ytimg.com/vi/test1/maxresdefault.jpg', thumbnail_url: null },
-        { image_url: null, thumbnail_url: 'https://i.ytimg.com/vi/test2/default.jpg' },
-        { image_url: 'https://malicious-site.com/image.jpg', thumbnail_url: null }, // Should be filtered out
+        {
+          image_url: 'https://i.ytimg.com/vi/test1/maxresdefault.jpg',
+          thumbnail_url: null,
+        },
+        {
+          image_url: null,
+          thumbnail_url: 'https://i.ytimg.com/vi/test2/default.jpg',
+        },
+        {
+          image_url: 'https://malicious-site.com/image.jpg',
+          thumbnail_url: null,
+        }, // Should be filtered out
         { image_url: null, thumbnail_url: null },
       ];
 
@@ -91,12 +115,20 @@ describe('Image Preloader Utility', () => {
 
     it('should handle fewer videos than maxPreload gracefully', () => {
       const videos = [
-        { image_url: 'https://i.ytimg.com/vi/test1/maxresdefault.jpg', thumbnail_url: null },
-        { image_url: 'https://i.ytimg.com/vi/test2/maxresdefault.jpg', thumbnail_url: null },
+        {
+          image_url: 'https://i.ytimg.com/vi/test1/maxresdefault.jpg',
+          thumbnail_url: null,
+        },
+        {
+          image_url: 'https://i.ytimg.com/vi/test2/maxresdefault.jpg',
+          thumbnail_url: null,
+        },
       ];
 
       // Should not throw when videos.length < maxPreload
-      expect(() => optimizePageImageLoading(videos, { maxPreload: 10 })).not.toThrow();
+      expect(() =>
+        optimizePageImageLoading(videos, { maxPreload: 10 })
+      ).not.toThrow();
     });
 
     it('should limit extracted URLs based on maxPreload', () => {

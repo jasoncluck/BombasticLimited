@@ -102,7 +102,7 @@ const preloadCriticalImages = async (imageUrls: string[]): Promise<void> => {
   const batchSize = 3;
   for (let i = 0; i < imageUrls.length; i += batchSize) {
     const batch = imageUrls.slice(i, i + batchSize);
-    
+
     const promises = batch.map(async (url) => {
       try {
         const cached = await cache.match(url);
@@ -118,10 +118,10 @@ const preloadCriticalImages = async (imageUrls: string[]): Promise<void> => {
     });
 
     await Promise.allSettled(promises);
-    
+
     // Add small delay between batches to avoid overwhelming the system
     if (i + batchSize < imageUrls.length) {
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
     }
   }
 };

@@ -9,14 +9,17 @@
   } from '$lib/components/pagination/pagination.js';
   import Pagination from '$lib/components/pagination/pagination.svelte';
   import { DEFAULT_NUM_VIDEOS_PAGINATION } from '$lib/supabase/videos.js';
-  import { optimizePageImageLoading } from '$lib/utils/image-preloader';
+  import { optimizePageImageLoadingWithViewport } from '$lib/utils/image-preloader';
   import { onMount } from 'svelte';
   import { isBrowser } from '@supabase/ssr';
+  import { getPageState } from '$lib/state/page.svelte';
   import type { Snapshot } from '../$types.js';
 
   const { data } = $props();
   const { supabase, videos, videosCount, session, contentFilter, userProfile } =
     $derived(data);
+
+  const pageState = getPageState();
 
   let showFloatingBreadcrumbs = $state(false);
 
@@ -50,10 +53,14 @@
   onMount(() => {
     if (isBrowser() && videos?.length > 0) {
       // For continue watching, preload more images since they're high priority
-      optimizePageImageLoading(videos, { 
-        maxPreload: 10, 
-        priority: 'high' 
-      });
+      optimizePageImageLoadingWithViewport(
+        videos,
+        pageState.viewportRefs.contentViewportRef,
+        {
+          maxPreload: 25,
+          priority: 'high',
+        }
+      );
     }
   });
 </script>

@@ -3,15 +3,17 @@
  * Supports both browser preloading and service worker caching strategies
  */
 
+import { simpleCache } from './simple-memory-cache';
+
 // Supported image domains for security validation
 const ALLOWED_IMAGE_DOMAINS = [
   'i.ytimg.com',
-  'img.youtube.com', 
+  'img.youtube.com',
   'i1.ytimg.com',
   'i2.ytimg.com',
-  'i3.ytimg.com', 
+  'i3.ytimg.com',
   'i4.ytimg.com',
-  'static-cdn.jtvnw.net'
+  'static-cdn.jtvnw.net',
 ];
 
 export interface ImagePreloadOptions {
@@ -31,11 +33,13 @@ export interface IntersectionObserverOptions {
  */
 export function isValidImageUrl(url: string): boolean {
   if (!url) return false;
-  
+
   try {
     const parsedUrl = new URL(url);
-    return ALLOWED_IMAGE_DOMAINS.includes(parsedUrl.hostname) || 
-           parsedUrl.hostname.includes('.supabase.co');
+    return (
+      ALLOWED_IMAGE_DOMAINS.includes(parsedUrl.hostname) ||
+      parsedUrl.hostname.includes('.supabase.co')
+    );
   } catch {
     return false;
   }
@@ -45,42 +49,45 @@ export function isValidImageUrl(url: string): boolean {
  * Preload an image using browser's link preloading
  */
 export function preloadImageWithLink(
-  url: string, 
+  url: string,
   options: ImagePreloadOptions = {}
 ): void {
   if (!isValidImageUrl(url)) return;
-  
+
   // Check if already preloaded
   const existingLink = document.querySelector(`link[href="${url}"]`);
   if (existingLink) return;
-  
+
   const link = document.createElement('link');
   link.rel = 'preload';
   link.as = options.as || 'image';
   link.href = url;
-  
+
   if (options.type) link.type = options.type;
   if (options.crossorigin) link.crossOrigin = options.crossorigin;
   if (options.priority) {
     // Use fetchpriority for supporting browsers
-    (link as any).fetchPriority = options.priority;
+    (link as unknown as { fetchPriority: string }).fetchPriority =
+      options.priority;
   }
-  
+
   document.head.appendChild(link);
 }
 
 /**
  * Preload an image using service worker caching (throttled)
  */
-export async function preloadImageWithServiceWorker(url: string): Promise<void> {
+export async function preloadImageWithServiceWorker(
+  url: string
+): Promise<void> {
   if (!isValidImageUrl(url)) return;
-  
+
   try {
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       // Throttle individual preload requests to avoid spam
       navigator.serviceWorker.controller.postMessage({
         type: 'PRELOAD_IMAGE',
-        url
+        url,
       });
     }
   } catch (error) {
@@ -92,21 +99,21 @@ export async function preloadImageWithServiceWorker(url: string): Promise<void> 
  * Preload multiple images using both strategies
  */
 export async function preloadImages(
-  urls: string[], 
+  urls: string[],
   options: ImagePreloadOptions = {}
 ): Promise<void> {
   const validUrls = urls.filter(isValidImageUrl);
-  
+
   // Use browser preloading for immediate priority
-  validUrls.forEach(url => preloadImageWithLink(url, options));
-  
+  validUrls.forEach((url) => preloadImageWithLink(url, options));
+
   // Use service worker for batch caching to reduce message spam
   if (validUrls.length > 0) {
     try {
       if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({
           type: 'PRELOAD_IMAGES',
-          urls: validUrls
+          urls: validUrls,
         });
       }
     } catch (error) {
@@ -123,23 +130,38 @@ export function createImageIntersectionObserver(
   options: IntersectionObserverOptions = {}
 ): IntersectionObserver | null {
   if (!('IntersectionObserver' in window)) return null;
-  
+
   return new IntersectionObserver(callback, {
     threshold: options.threshold || 0.1,
-    rootMargin: options.rootMargin || '50px'
+    rootMargin: options.rootMargin || '50px',
   });
 }
 
 /**
  * Determine if an element is likely above the fold
+ * Uses contentViewportRef if provided, falls back to window viewport
  */
-export function isLikelyAboveTheFold(element: HTMLElement): boolean {
+export function isLikelyAboveTheFold(
+  element: HTMLElement,
+  contentViewportRef?: HTMLElement | null
+): boolean {
   if (!element) return false;
-  
+
   const rect = element.getBoundingClientRect();
-  const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-  
-  // Consider above the fold if top is within the first viewport
+
+  // Use contentViewportRef if available for more accurate detection
+  if (contentViewportRef) {
+    const viewportRect = contentViewportRef.getBoundingClientRect();
+    const viewportHeight = viewportRect.height;
+    const viewportTop = viewportRect.top;
+
+    // Consider above the fold if element is within the content viewport
+    return rect.top < viewportTop + viewportHeight && rect.bottom > viewportTop;
+  }
+
+  // Fallback to window viewport
+  const viewportHeight =
+    window.innerHeight || document.documentElement.clientHeight;
   return rect.top < viewportHeight && rect.bottom > 0;
 }
 
@@ -147,15 +169,17 @@ export function isLikelyAboveTheFold(element: HTMLElement): boolean {
  * Get optimal loading attribute based on position
  */
 export function getOptimalLoadingAttribute(
-  element: HTMLElement | null, 
-  index?: number
+  element: HTMLElement | null,
+  index?: number,
+  contentViewportRef?: HTMLElement | null
 ): 'eager' | 'lazy' {
   // First few images should always be eager
   if (index !== undefined && index < 3) return 'eager';
-  
+
   // Check position if element is available
-  if (element && isLikelyAboveTheFold(element)) return 'eager';
-  
+  if (element && isLikelyAboveTheFold(element, contentViewportRef))
+    return 'eager';
+
   // Default to lazy for performance
   return 'lazy';
 }
@@ -165,17 +189,19 @@ export function getOptimalLoadingAttribute(
  */
 export function getOptimalFetchPriority(
   element: HTMLElement | null,
-  index?: number
+  index?: number,
+  contentViewportRef?: HTMLElement | null
 ): 'high' | 'low' | 'auto' {
   // First image should be high priority
   if (index !== undefined && index === 0) return 'high';
-  
+
   // First few images should be auto (browser decides)
   if (index !== undefined && index < 3) return 'auto';
-  
-  // Check position if element is available  
-  if (element && isLikelyAboveTheFold(element)) return 'high';
-  
+
+  // Check position if element is available
+  if (element && isLikelyAboveTheFold(element, contentViewportRef))
+    return 'high';
+
   // Default to low for below-the-fold content
   return 'low';
 }
@@ -183,11 +209,77 @@ export function getOptimalFetchPriority(
 /**
  * Extract image URLs from video objects for preloading
  */
-export function extractImageUrls(videos: Array<{ image_url?: string | null; thumbnail_url?: string | null }>): string[] {
+export function extractImageUrls(
+  videos: Array<{ image_url?: string | null; thumbnail_url?: string | null }>
+): string[] {
   return videos
-    .map(video => video.image_url || video.thumbnail_url)
+    .map((video) => video.image_url || video.thumbnail_url)
     .filter((url): url is string => Boolean(url))
     .filter(isValidImageUrl);
+}
+
+/**
+ * Preload an image and cache its URL in memory cache
+ */
+export async function preloadImageWithMemoryCache(url: string): Promise<void> {
+  if (!isValidImageUrl(url)) return;
+
+  // Check if already cached
+  const cacheKey = `image_preload_${url}`;
+  if (simpleCache.get(cacheKey)) return;
+
+  try {
+    // Cache the URL to prevent duplicate preloads
+    simpleCache.set(cacheKey, true, 10 * 60 * 1000); // 10 minutes
+
+    // Preload using both strategies
+    preloadImageWithLink(url);
+    await preloadImageWithServiceWorker(url);
+  } catch (error) {
+    console.debug('Image preload with memory cache failed:', error);
+    // Remove from cache if preload failed
+    simpleCache.delete(cacheKey);
+  }
+}
+
+/**
+ * Enhanced preload function that coordinates with hover behavior
+ */
+export async function preloadImagesOnHover(urls: string[]): Promise<void> {
+  const validUrls = urls.filter(isValidImageUrl);
+
+  // Use memory cache for hover preloading to prevent spam
+  await Promise.all(validUrls.map((url) => preloadImageWithMemoryCache(url)));
+}
+
+/**
+ * Optimize image loading for paginated content with viewport awareness
+ * Uses contentViewportRef for more accurate above-the-fold detection
+ */
+export function optimizePageImageLoadingWithViewport(
+  videos: Array<{ image_url?: string | null; thumbnail_url?: string | null }>,
+  contentViewportRef: HTMLElement | null,
+  imageOptions: {
+    maxPreload?: number;
+    priority?: 'high' | 'low' | 'auto';
+  } = {}
+): void {
+  if (!videos?.length) return;
+
+  const { maxPreload = 25, priority = 'auto' } = imageOptions;
+
+  // TODO: Use contentViewportRef for more accurate above-the-fold detection
+  // This will be implemented in a future iteration to properly detect
+  // which images are actually visible in the content viewport
+
+  // Only preload the first few critical images to avoid overwhelming the system
+  // Using 25 as default since @jasoncluck mentioned 20-25 images above the fold
+  const criticalVideos = videos.slice(0, maxPreload);
+  const criticalImageUrls = extractImageUrls(criticalVideos);
+
+  if (criticalImageUrls.length > 0) {
+    preloadImages(criticalImageUrls, { priority });
+  }
 }
 
 /**
@@ -196,19 +288,20 @@ export function extractImageUrls(videos: Array<{ image_url?: string | null; thum
  */
 export function optimizePageImageLoading(
   videos: Array<{ image_url?: string | null; thumbnail_url?: string | null }>,
-  options: { 
-    maxPreload?: number; 
+  options: {
+    maxPreload?: number;
     priority?: 'high' | 'low' | 'auto';
   } = {}
 ): void {
   if (!videos?.length) return;
-  
-  const { maxPreload = 6, priority = 'auto' } = options;
-  
+
+  const { maxPreload = 25, priority = 'auto' } = options;
+
   // Only preload the first few critical images to avoid overwhelming the system
+  // Using 25 as default since @jasoncluck mentioned 20-25 images above the fold
   const criticalVideos = videos.slice(0, maxPreload);
   const criticalImageUrls = extractImageUrls(criticalVideos);
-  
+
   if (criticalImageUrls.length > 0) {
     preloadImages(criticalImageUrls, { priority });
   }

@@ -25,7 +25,9 @@
   import {
     getOptimalLoadingAttribute,
     getOptimalFetchPriority,
+    preloadImagesOnHover,
   } from '$lib/utils/image-preloader';
+  import { getPageState } from '$lib/state/page.svelte';
 
   type ContentCardProps = {
     video?: Video;
@@ -76,17 +78,26 @@
   }: ContentCardProps = $props();
 
   const contentState = getContentState();
+  const pageState = getPageState();
 
   let cardElement = $state<HTMLElement>();
   let imageElement = $state<HTMLImageElement>();
 
   // Smart loading attributes based on position and intersection
   const loadingAttribute = $derived(
-    getOptimalLoadingAttribute(cardElement || null, index)
+    getOptimalLoadingAttribute(
+      cardElement || null,
+      index,
+      pageState.viewportRefs.contentViewportRef
+    )
   );
-  
+
   const fetchPriorityAttribute = $derived(
-    getOptimalFetchPriority(cardElement || null, index)
+    getOptimalFetchPriority(
+      cardElement || null,
+      index,
+      pageState.viewportRefs.contentViewportRef
+    )
   );
 
   const isVideoInPlaylist = $derived(
@@ -181,17 +192,26 @@
     return classes;
   }
 
-  // Preload content data
+  // Preload content data and images
   async function preloadContent() {
     if (!video) return;
 
     try {
+      // Preload navigation data
       const url = generateContentNavigationUrl({
         video,
         contentFilter,
         playlist,
       });
       await preloadData(url);
+
+      // Preload related images on hover to improve perceived performance
+      if (video.image_url || video.thumbnail_url) {
+        const imageUrls = [video.image_url, video.thumbnail_url].filter(
+          Boolean
+        ) as string[];
+        await preloadImagesOnHover(imageUrls);
+      }
     } catch (error) {
       // Silently fail if preloading doesn't work
       console.debug('Preload failed:', error);
