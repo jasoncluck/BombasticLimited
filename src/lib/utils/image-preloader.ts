@@ -268,17 +268,59 @@ export function optimizePageImageLoadingWithViewport(
 
   const { maxPreload = 25, priority = 'auto' } = imageOptions;
 
-  // TODO: Use contentViewportRef for more accurate above-the-fold detection
-  // This will be implemented in a future iteration to properly detect
-  // which images are actually visible in the content viewport
+  // If no contentViewportRef, fall back to simple slice approach
+  if (!contentViewportRef) {
+    const criticalVideos = videos.slice(0, maxPreload);
+    const criticalImageUrls = extractImageUrls(criticalVideos);
+    if (criticalImageUrls.length > 0) {
+      preloadImages(criticalImageUrls, { priority });
+    }
+    return;
+  }
 
-  // Only preload the first few critical images to avoid overwhelming the system
-  // Using 25 as default since @jasoncluck mentioned 20-25 images above the fold
-  const criticalVideos = videos.slice(0, maxPreload);
-  const criticalImageUrls = extractImageUrls(criticalVideos);
+  // Use contentViewportRef for accurate above-the-fold detection
+  try {
+    // Find video cards in the DOM - they are typically wrapped in content tiles
+    const videoCards = contentViewportRef.querySelectorAll('[role="region"] > div');
+    
+    const videosToPreload: Array<{ image_url?: string | null; thumbnail_url?: string | null }> = [];
+    const visibleVideos: Array<{ image_url?: string | null; thumbnail_url?: string | null }> = [];
+    const belowFoldVideos: Array<{ image_url?: string | null; thumbnail_url?: string | null }> = [];
+    
+    // Categorize videos by viewport visibility
+    videos.forEach((video, index) => {
+      if (index < videoCards.length) {
+        const cardElement = videoCards[index] as HTMLElement;
+        if (isLikelyAboveTheFold(cardElement, contentViewportRef)) {
+          visibleVideos.push(video);
+        } else {
+          belowFoldVideos.push(video);
+        }
+      } else {
+        // If we have more videos than DOM elements, treat as below fold
+        belowFoldVideos.push(video);
+      }
+    });
 
-  if (criticalImageUrls.length > 0) {
-    preloadImages(criticalImageUrls, { priority });
+    // Prioritize visible videos first, then add below-fold videos up to maxPreload limit
+    videosToPreload.push(...visibleVideos);
+    const remainingSlots = maxPreload - visibleVideos.length;
+    if (remainingSlots > 0) {
+      videosToPreload.push(...belowFoldVideos.slice(0, remainingSlots));
+    }
+
+    const criticalImageUrls = extractImageUrls(videosToPreload);
+    if (criticalImageUrls.length > 0) {
+      preloadImages(criticalImageUrls, { priority });
+    }
+  } catch (error) {
+    console.debug('Viewport-aware image preloading failed, falling back to simple approach:', error);
+    // Fallback to simple approach if viewport detection fails
+    const criticalVideos = videos.slice(0, maxPreload);
+    const criticalImageUrls = extractImageUrls(criticalVideos);
+    if (criticalImageUrls.length > 0) {
+      preloadImages(criticalImageUrls, { priority });
+    }
   }
 }
 
