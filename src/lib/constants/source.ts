@@ -52,7 +52,7 @@ export const SOURCE_INFO: Record<Source, SourceInfo> = {
     supportUrl: 'https://www.giantbomb.com/upgrade/',
   },
   jeffgerstmann: {
-    displayName: 'The Jeff Gerstmann Show',
+    displayName: 'Jeff Gerstmann',
     urlParam: 'jeffgerstmann',
     image: jeffgerstmannImage,
     twitchId: '504350',
