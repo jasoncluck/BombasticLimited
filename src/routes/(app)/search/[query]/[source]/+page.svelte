@@ -28,10 +28,20 @@
   let showFloatingBreadcrumbs = $state(false);
   const sectionId = DEFAULT_SECTION_ID;
 
+  // Initialize currentPage from URL params
   const pageFromQueryParams = page.url.searchParams.get(PAGINATION_QUERY_KEY);
   let currentPage = $state(
     pageFromQueryParams ? parseInt(pageFromQueryParams) : 1
   );
+
+  // Update currentPage when URL changes (for browser back/forward support)
+  $effect(() => {
+    const urlPage = page.url.searchParams.get(PAGINATION_QUERY_KEY);
+    const newPage = urlPage ? parseInt(urlPage) : 1;
+    if (newPage !== currentPage) {
+      currentPage = newPage;
+    }
+  });
 
   const contentState = getContentState();
 

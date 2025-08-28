@@ -113,8 +113,10 @@ const preloadPredictiveImages = async (imageUrls: string[], priority: 'high' | '
           priority: priority === 'high' ? 'high' : 'low',
         } as RequestInit);
         
-        if (response.ok) {
-          await cache.put(url, response);
+        if (response.ok && response.status === 200) {
+          // Clone response to preserve headers and properties for image preview
+          const responseToCache = response.clone();
+          await cache.put(url, responseToCache);
         }
       } catch (error) {
         console.warn('SW: Predictive image preload failed:', url, error);
@@ -237,7 +239,9 @@ const handleImageRequest = async (request: Request): Promise<Response> => {
   
   if (predictiveCached) {
     // Move from predictive to primary cache for faster future access
-    primaryCache.put(request, predictiveCached.clone());
+    // Clone the response to ensure headers and properties are preserved
+    const responseClone = predictiveCached.clone();
+    primaryCache.put(request, responseClone);
     return predictiveCached;
   }
   

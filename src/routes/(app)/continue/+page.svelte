@@ -17,22 +17,37 @@
 
   let showFloatingBreadcrumbs = $state(false);
 
+  // Initialize currentPage from URL params
   const pageFromQueryParams = page.url.searchParams.get(PAGINATION_QUERY_KEY);
   let currentPage = $state(
     pageFromQueryParams ? parseInt(pageFromQueryParams) : 1
   );
 
+  // Update currentPage when URL changes (for browser back/forward support)
+  $effect(() => {
+    const urlPage = page.url.searchParams.get(PAGINATION_QUERY_KEY);
+    const newPage = urlPage ? parseInt(urlPage) : 1;
+    if (newPage !== currentPage) {
+      currentPage = newPage;
+    }
+  });
+
   export const snapshot: Snapshot<{
     showFloatingBreadcrumbs: boolean;
+    currentPage: number;
   }> = {
     capture: () => {
       return {
         showFloatingBreadcrumbs,
+        currentPage,
       };
     },
     restore: (restored) => {
       if (restored?.showFloatingBreadcrumbs) {
         showFloatingBreadcrumbs = restored.showFloatingBreadcrumbs;
+      }
+      if (restored?.currentPage) {
+        currentPage = restored.currentPage;
       }
     },
   };
