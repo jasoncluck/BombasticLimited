@@ -472,7 +472,7 @@
             text-xs leading-normal tracking-tight break-words will-change-transform
             {video.title.length > 70
               ? 'line-clamp-1'
-              : video.title.length > 40
+              : video.title.length > 30
                 ? 'line-clamp-2'
                 : 'line-clamp-3'}"
           >
