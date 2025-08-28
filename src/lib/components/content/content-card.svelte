@@ -75,7 +75,6 @@
   const contentState = getContentState();
 
   let cardElement = $state<HTMLElement>();
-  let imageElement = $state<HTMLImageElement>();
 
   const isVideoInPlaylist = $derived(
     isContinueVideos &&

@@ -29,17 +29,7 @@
   const finalFetchpriority =
     fetchpriority ?? (isHighPriority ? 'high' : 'auto');
 
-  let imageLoaded = $state(false);
-  let imageError = $state(false);
   let shouldLoad = $state(isHighPriority); // High priority images load immediately
-
-  function handleLoad() {
-    imageLoaded = true;
-  }
-
-  function handleError() {
-    imageError = true;
-  }
 
   function handleIntersection() {
     shouldLoad = true;
@@ -54,8 +44,6 @@
     loading={finalLoading}
     fetchpriority={finalFetchpriority}
     {decoding}
-    onload={handleLoad}
-    onerror={handleError}
   />
 {:else}
   <IntersectionObserver
