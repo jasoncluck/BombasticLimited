@@ -11,6 +11,8 @@
   } from '$lib/state/content.svelte.js';
   import type { SourceWithCarouselState } from '$lib/components/content/content.js';
   import { PAGINATION_QUERY_KEY } from '$lib/components/pagination/pagination.js';
+  import { simpleImagePreloader } from '$lib/utils/predictive-image-preloader.js';
+  import { onMount, onDestroy } from 'svelte';
 
   const { data } = $props();
   const {
@@ -26,10 +28,20 @@
   let showFloatingBreadcrumbs = $state(false);
   const sectionId = DEFAULT_SECTION_ID;
 
+  // Initialize currentPage from URL params
   const pageFromQueryParams = page.url.searchParams.get(PAGINATION_QUERY_KEY);
   let currentPage = $state(
     pageFromQueryParams ? parseInt(pageFromQueryParams) : 1
   );
+
+  // Update currentPage when URL changes (for browser back/forward support)
+  $effect(() => {
+    const urlPage = page.url.searchParams.get(PAGINATION_QUERY_KEY);
+    const newPage = urlPage ? parseInt(urlPage) : 1;
+    if (newPage !== currentPage) {
+      currentPage = newPage;
+    }
+  });
 
   const contentState = getContentState();
 
@@ -38,6 +50,17 @@
       SOURCES.map((key) => [key, { lastViewedIndex: 0 }])
     ) as SourceWithCarouselState
   );
+
+  // Image preloading setup for source-specific search
+  onMount(() => {
+    setTimeout(() => {
+      simpleImagePreloader.observeSearchContainers();
+    }, 100);
+  });
+
+  onDestroy(() => {
+    simpleImagePreloader.clearPreloadCache();
+  });
 
   export const snapshot: Snapshot<{
     carouselsState: SourceWithCarouselState;

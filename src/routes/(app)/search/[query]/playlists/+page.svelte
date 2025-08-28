@@ -8,14 +8,26 @@
   import Pagination from '$lib/components/pagination/pagination.svelte';
   import PlaylistTiles from '$lib/components/playlist/playlist-tiles.svelte';
   import { DEFAULT_NUM_PLAYLISTS_PAGINATION } from '$lib/supabase/playlists';
+  import { simpleImagePreloader } from '$lib/utils/predictive-image-preloader.js';
+  import { onMount, onDestroy } from 'svelte';
 
   const { data } = $props();
   let { playlistResults, playlistsCount, session, supabase } = $derived(data);
 
+  // Initialize currentPage from URL params
   const pageFromQueryParams = page.url.searchParams.get(PAGINATION_QUERY_KEY);
   let currentPage = $state(
     pageFromQueryParams ? parseInt(pageFromQueryParams) : 1
   );
+
+  // Update currentPage when URL changes (for browser back/forward support)
+  $effect(() => {
+    const urlPage = page.url.searchParams.get(PAGINATION_QUERY_KEY);
+    const newPage = urlPage ? parseInt(urlPage) : 1;
+    if (newPage !== currentPage) {
+      currentPage = newPage;
+    }
+  });
 
   const numPages = $derived(
     getNumberOfPages({
@@ -23,6 +35,17 @@
       perPage: DEFAULT_NUM_PLAYLISTS_PAGINATION,
     })
   );
+
+  // Image preloading setup for playlist search
+  onMount(() => {
+    setTimeout(() => {
+      simpleImagePreloader.observeSearchContainers();
+    }, 100);
+  });
+
+  onDestroy(() => {
+    simpleImagePreloader.clearPreloadCache();
+  });
 
   // No need for client-side processing - playlists are already processed server-side
 </script>
