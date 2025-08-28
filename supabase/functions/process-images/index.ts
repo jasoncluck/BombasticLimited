@@ -1,7 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { tasks } from 'npm:@trigger.dev/sdk@3.0.0/v3';
-import type { processImageWebhook } from '../../../src/trigger/image-processing-worker.ts';
+import type { processImageWebhookBatch } from '../../../src/trigger/image-processing-worker.ts';
 
 interface ImageProcessingJob {
   job_id: string;
@@ -74,6 +74,16 @@ interface FailedJobRow {
   status: string;
 }
 
+interface BatchWebhookPayload {
+  type: 'BATCH_UPDATE';
+  jobs: Array<{
+    jobId: string;
+    table: 'videos' | 'playlists';
+    record: Record<string, unknown>;
+  }>;
+  timestamp: string;
+}
+
 // Initialize Supabase client
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -83,8 +93,7 @@ if (!supabaseUrl || !supabaseServiceKey) {
 }
 
 /**
- * Check if a job has been processing for over 2 hours (extended from 30 minutes)
- * This accounts for jobs that may have been stuck for many hours
+ * Check if a job has been processing for over 30 minutes
  */
 function isJobStuck(job: PendingJobRow): boolean {
   if (!job.processing_started_at) {
@@ -93,10 +102,10 @@ function isJobStuck(job: PendingJobRow): boolean {
 
   const now = new Date();
   const processingStarted = new Date(job.processing_started_at);
-  const twoHoursMs = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+  const thirtyMinutesMs = 30 * 60 * 1000; // 30 minutes in milliseconds
   const timeDifferenceMs = now.getTime() - processingStarted.getTime();
 
-  const isStuck = timeDifferenceMs >= twoHoursMs;
+  const isStuck = timeDifferenceMs >= thirtyMinutesMs;
 
   if (isStuck) {
     console.log(
@@ -335,6 +344,180 @@ async function cleanupFailedVideoJobs(
   }
 }
 
+/**
+ * Process jobs in batches and send to trigger
+ */
+async function processBatchOfJobs(
+  supabase: ReturnType<typeof createClient>,
+  jobs: ImageProcessingJob[],
+  batchNumber: number
+): Promise<{
+  processedJobs: ProcessedJob[];
+  failedJobs: string[];
+  deletedJobsCount: number;
+}> {
+  const processedJobs: ProcessedJob[] = [];
+  const failedJobs: string[] = [];
+  let deletedJobsCount = 0;
+
+  console.log(`Processing batch ${batchNumber} with ${jobs.length} jobs`);
+
+  // First, mark all jobs as processing and validate entities exist
+  const validJobsForBatch: Array<{
+    job: ImageProcessingJob;
+    entity: Record<string, unknown>;
+  }> = [];
+
+  for (const job of jobs) {
+    try {
+      // Immediately mark this job as processing to prevent it from being fetched again
+      const { data: startSuccess, error: startError } = await supabase
+        .rpc('start_image_processing_job', { job_id: job.job_id })
+        .returns<boolean>();
+
+      if (startError) {
+        console.error(
+          `Failed to mark job ${job.job_id} as processing:`,
+          startError
+        );
+        failedJobs.push(job.job_id);
+        continue;
+      }
+
+      if (!startSuccess) {
+        console.warn(
+          `Job ${job.job_id} was not updated (likely already processing or completed)`
+        );
+        // Skip this job as it's no longer available
+        continue;
+      }
+
+      console.log(`Successfully marked job ${job.job_id} as processing`);
+
+      // Check if entity exists and get current entity data, or delete job if entity doesn't exist
+      const currentEntity = await checkEntityExistsOrDeleteJob(supabase, job);
+
+      // If entity doesn't exist (job was deleted), skip to next job
+      if (currentEntity === null) {
+        deletedJobsCount++;
+        continue;
+      }
+
+      validJobsForBatch.push({
+        job,
+        entity: currentEntity,
+      });
+    } catch (jobError) {
+      console.error(`Failed to prepare job ${job.job_id} for batch:`, jobError);
+      failedJobs.push(job.job_id);
+
+      // Mark job as failed using the database function
+      const errorMessage =
+        jobError instanceof Error ? jobError.message : 'Unknown error';
+
+      const { error: failError } = await supabase.rpc(
+        'fail_image_processing_job',
+        {
+          job_id: job.job_id,
+          error_msg: errorMessage,
+        }
+      );
+
+      if (failError) {
+        console.error(`Failed to mark job ${job.job_id} as failed:`, failError);
+      }
+    }
+  }
+
+  // If no valid jobs, return early
+  if (validJobsForBatch.length === 0) {
+    console.log(`Batch ${batchNumber} has no valid jobs to process`);
+    return { processedJobs, failedJobs, deletedJobsCount };
+  }
+
+  try {
+    // Create batch webhook payload
+    const batchWebhookPayload: BatchWebhookPayload = {
+      type: 'BATCH_UPDATE',
+      jobs: validJobsForBatch.map(({ job, entity }) => ({
+        jobId: job.job_id,
+        table: job.entity_type === 'video' ? 'videos' : 'playlists',
+        record: entity,
+      })),
+      timestamp: new Date().toISOString(),
+    };
+
+    console.log(
+      `Batch ${batchNumber} webhook payload:`,
+      JSON.stringify(batchWebhookPayload, null, 2)
+    );
+
+    // Trigger the batch task using the SDK
+    const run = await tasks.trigger<typeof processImageWebhookBatch>(
+      'process-image-webhook-batch',
+      batchWebhookPayload
+    );
+
+    console.log(
+      `Successfully triggered batch ${batchNumber} image processing: run ${run.id} with ${validJobsForBatch.length} jobs`
+    );
+
+    // Add all valid jobs to processed list
+    for (const { job } of validJobsForBatch) {
+      processedJobs.push({
+        jobId: job.job_id,
+        runId: run.id,
+        entityType: job.entity_type,
+        entityId: job.entity_id,
+      });
+
+      const ageMinutes =
+        job.entity_type === 'playlist'
+          ? Math.floor(
+              (new Date().getTime() - new Date(job.updated_at).getTime()) /
+                (1000 * 60)
+            )
+          : 0; // Videos don't have cooldown, so age is not relevant
+
+      console.log('Added job to batch:', {
+        jobId: job.job_id,
+        entityType: job.entity_type,
+        entityId: job.entity_id,
+        imageType: job.image_type,
+        sourceUrl: job.source_url,
+        attempts: job.attempts,
+        ageMinutes: job.entity_type === 'playlist' ? ageMinutes : 'immediate',
+      });
+    }
+  } catch (batchError) {
+    console.error(`Failed to process batch ${batchNumber}:`, batchError);
+
+    // Mark all jobs in this batch as failed
+    for (const { job } of validJobsForBatch) {
+      failedJobs.push(job.job_id);
+
+      const errorMessage =
+        batchError instanceof Error
+          ? batchError.message
+          : 'Batch processing failed';
+
+      const { error: failError } = await supabase.rpc(
+        'fail_image_processing_job',
+        {
+          job_id: job.job_id,
+          error_msg: errorMessage,
+        }
+      );
+
+      if (failError) {
+        console.error(`Failed to mark job ${job.job_id} as failed:`, failError);
+      }
+    }
+  }
+
+  return { processedJobs, failedJobs, deletedJobsCount };
+}
+
 async function processImageJobs(): Promise<ApiResponse> {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -349,27 +532,27 @@ async function processImageJobs(): Promise<ApiResponse> {
     // First, clean up failed video jobs by removing video entities
     const videoEntitiesRemoved = await cleanupFailedVideoJobs(supabase);
 
-    // Reset any jobs that have been stuck for more than 4 hours (very long stuck jobs)
-    console.log('Checking for very stuck jobs (processing > 4 hours)...');
-    const { data: veryStuckJobsReset, error: veryStuckJobsError } =
-      await supabase.rpc('reset_stuck_image_processing_jobs', {
-        stuck_after_minutes: 240,
-      });
+    // Reset any jobs that have been stuck for more than 30 minutes
+    console.log('Checking for stuck jobs (processing > 30 minutes)...');
+    const { data: stuckJobsReset, error: stuckJobsError } = await supabase.rpc(
+      'reset_stuck_image_processing_jobs',
+      {
+        stuck_after_minutes: 30,
+      }
+    );
 
-    if (veryStuckJobsError) {
-      console.error('Failed to reset very stuck jobs:', veryStuckJobsError);
-    } else if (veryStuckJobsReset && veryStuckJobsReset.length > 0) {
-      console.log(
-        `Reset ${veryStuckJobsReset.length} very stuck jobs back to pending`
-      );
-      for (const stuckJob of veryStuckJobsReset) {
+    if (stuckJobsError) {
+      console.error('Failed to reset stuck jobs:', stuckJobsError);
+    } else if (stuckJobsReset && stuckJobsReset.length > 0) {
+      console.log(`Reset ${stuckJobsReset.length} stuck jobs back to pending`);
+      for (const stuckJob of stuckJobsReset) {
         console.log(
           `Reset job ${stuckJob.reset_job_id} (${stuckJob.entity_type} ${stuckJob.entity_id}) - stuck for ${Math.round(stuckJob.minutes_stuck)} minutes`
         );
       }
     }
 
-    // Get both pending jobs and recently stuck processing jobs (2 hour threshold)
+    // Get both pending jobs and recently stuck processing jobs (30 minute threshold)
     const { data: allJobs, error: fetchError } = await supabase
       .from('image_processing_jobs')
       .select(
@@ -415,20 +598,20 @@ async function processImageJobs(): Promise<ApiResponse> {
       (job: PendingJobRow) => job.status === 'processing'
     );
 
-    // Find stuck processing jobs (over 2 hours) - these will be reset at the 2hr level
+    // Find stuck processing jobs (over 30 minutes) - these will be reset at the 30min level
     const stuckJobs = processingJobs.filter((job: PendingJobRow) =>
       isJobStuck(job)
     );
 
     console.log(
-      `Found ${pendingJobs.length} pending jobs, ${processingJobs.length} processing jobs, ${stuckJobs.length} stuck jobs (>2 hrs)`
+      `Found ${pendingJobs.length} pending jobs, ${processingJobs.length} processing jobs, ${stuckJobs.length} stuck jobs (>30 mins)`
     );
 
-    // Reset stuck jobs back to pending status (2 hour threshold)
+    // Reset stuck jobs back to pending status (30 minute threshold)
     let resubmittedCount = 0;
     if (stuckJobs.length > 0) {
       console.log(
-        `Resetting ${stuckJobs.length} stuck jobs (>2 hrs) back to pending status...`
+        `Resetting ${stuckJobs.length} stuck jobs (>30 mins) back to pending status...`
       );
 
       for (const stuckJob of stuckJobs) {
@@ -565,138 +748,63 @@ async function processImageJobs(): Promise<ApiResponse> {
       `${allReadyJobs.length} jobs are ready for processing (${readyVideoJobs.length} videos immediate, ${readyPlaylistJobs.length} playlists ready, ${skippedPlaylistsCount} playlists in cooldown, ${ineligibleJobsCount} jobs exceeded max attempts, ${resubmittedCount} stuck jobs reset)`
     );
 
-    // Limit to maximum number of jobs we want to process in one batch
+    // Limit to maximum number of jobs we want to process in one request
     const maxJobsPerRequest = 50;
     const jobsToProcess = allReadyJobs.slice(0, maxJobsPerRequest);
 
-    const processedJobs: ProcessedJob[] = [];
-    const failedJobs: string[] = [];
-    let deletedJobsCount = 0;
+    // Process jobs in batches (e.g., 10 jobs per batch)
+    const batchSize = 10;
+    const batches: ImageProcessingJob[][] = [];
 
-    // Process each ready job
-    for (const job of jobsToProcess) {
+    for (let i = 0; i < jobsToProcess.length; i += batchSize) {
+      batches.push(jobsToProcess.slice(i, i + batchSize));
+    }
+
+    console.log(
+      `Processing ${jobsToProcess.length} jobs in ${batches.length} batches of ${batchSize}`
+    );
+
+    const allProcessedJobs: ProcessedJob[] = [];
+    const allFailedJobs: string[] = [];
+    let totalDeletedJobsCount = 0;
+
+    // Process each batch
+    for (let i = 0; i < batches.length; i++) {
+      const batch = batches[i];
+      const batchNumber = i + 1;
+
       try {
-        // Immediately mark this job as processing to prevent it from being fetched again
-        const { data: startSuccess, error: startError } = await supabase
-          .rpc('start_image_processing_job', { job_id: job.job_id })
-          .returns<boolean>();
+        const batchResult = await processBatchOfJobs(
+          supabase,
+          batch,
+          batchNumber
+        );
 
-        if (startError) {
-          console.error(
-            `Failed to mark job ${job.job_id} as processing:`,
-            startError
-          );
-          // Skip this job if we can't mark it as processing
-          continue;
-        }
-
-        if (!startSuccess) {
-          console.warn(
-            `Job ${job.job_id} was not updated (likely already processing or completed)`
-          );
-          // Skip this job as it's no longer available
-          continue;
-        }
-
-        console.log(`Successfully marked job ${job.job_id} as processing`);
-
-        const ageMinutes =
-          job.entity_type === 'playlist'
-            ? Math.floor(
-                (new Date().getTime() - new Date(job.updated_at).getTime()) /
-                  (1000 * 60)
-              )
-            : 0; // Videos don't have cooldown, so age is not relevant
-
-        console.log('Processing job:', {
-          jobId: job.job_id,
-          entityType: job.entity_type,
-          entityId: job.entity_id,
-          imageType: job.image_type,
-          sourceUrl: job.source_url,
-          attempts: job.attempts,
-          ageMinutes: job.entity_type === 'playlist' ? ageMinutes : 'immediate',
-        });
-
-        // Check if entity exists and get current entity data, or delete job if entity doesn't exist
-        const currentEntity = await checkEntityExistsOrDeleteJob(supabase, job);
-
-        // If entity doesn't exist (job was deleted), skip to next job
-        if (currentEntity === null) {
-          deletedJobsCount++;
-          continue;
-        }
-
-        // Create webhook payload in the format expected by the trigger
-        const webhookPayload = {
-          type: 'UPDATE' as const,
-          table:
-            job.entity_type === 'video'
-              ? ('videos' as const)
-              : ('playlists' as const),
-          record: currentEntity,
-          jobId: job.job_id, // Include job ID for completion tracking
-          timestamp: new Date().toISOString(),
-        };
+        allProcessedJobs.push(...batchResult.processedJobs);
+        allFailedJobs.push(...batchResult.failedJobs);
+        totalDeletedJobsCount += batchResult.deletedJobsCount;
 
         console.log(
-          'Webhook payload being sent:',
-          JSON.stringify(webhookPayload, null, 2)
+          `Batch ${batchNumber} completed: ${batchResult.processedJobs.length} processed, ${batchResult.failedJobs.length} failed, ${batchResult.deletedJobsCount} deleted`
         );
-
-        // Trigger the task using the SDK
-        const run = await tasks.trigger<typeof processImageWebhook>(
-          'process-image-webhook',
-          webhookPayload
-        );
-
-        console.log(
-          `Successfully triggered image processing for job ${job.job_id}: run ${run.id}`
-        );
-
-        processedJobs.push({
-          jobId: job.job_id,
-          runId: run.id,
-          entityType: job.entity_type,
-          entityId: job.entity_id,
-        });
-
-        // Note: Job completion will be handled by the trigger function
-        // calling complete_image_processing_job() when processing is done
-      } catch (jobError) {
-        console.error(`Failed to process job ${job.job_id}:`, jobError);
-        failedJobs.push(job.job_id);
-
-        // Mark job as failed using the database function
-        const errorMessage =
-          jobError instanceof Error ? jobError.message : 'Unknown error';
-
-        const { error: failError } = await supabase.rpc(
-          'fail_image_processing_job',
-          {
-            job_id: job.job_id,
-            error_msg: errorMessage,
-          }
-        );
-
-        if (failError) {
-          console.error(
-            `Failed to mark job ${job.job_id} as failed:`,
-            failError
-          );
+      } catch (batchError) {
+        console.error(`Batch ${batchNumber} failed completely:`, batchError);
+        // Mark all jobs in this batch as failed
+        for (const job of batch) {
+          allFailedJobs.push(job.job_id);
         }
       }
     }
 
     let message = '';
-    if (failedJobs.length > 0) {
-      message = `Processed ${processedJobs.length} jobs successfully, ${failedJobs.length} failed`;
+    if (allFailedJobs.length > 0) {
+      message = `Processed ${allProcessedJobs.length} jobs successfully in ${batches.length} batches, ${allFailedJobs.length} failed`;
     } else {
-      message = `Processed ${processedJobs.length} jobs successfully`;
+      message = `Processed ${allProcessedJobs.length} jobs successfully in ${batches.length} batches`;
     }
 
-    if (deletedJobsCount > 0) {
-      message += `, ${deletedJobsCount} orphaned jobs deleted`;
+    if (totalDeletedJobsCount > 0) {
+      message += `, ${totalDeletedJobsCount} orphaned jobs deleted`;
     }
 
     if (videoEntitiesRemoved > 0) {
@@ -716,19 +824,19 @@ async function processImageJobs(): Promise<ApiResponse> {
     }
 
     console.log(message);
-    if (failedJobs.length > 0) {
-      console.log('Failed job IDs:', failedJobs);
+    if (allFailedJobs.length > 0) {
+      console.log('Failed job IDs:', allFailedJobs);
     }
 
     return {
       success: true,
-      processed: processedJobs.length,
+      processed: allProcessedJobs.length,
       skipped: skippedPlaylistsCount,
       resubmitted: resubmittedCount,
-      deleted: deletedJobsCount,
+      deleted: totalDeletedJobsCount,
       videoEntitiesRemoved,
       message,
-      jobs: processedJobs.length > 0 ? processedJobs : undefined,
+      jobs: allProcessedJobs.length > 0 ? allProcessedJobs : undefined,
     };
   } catch (error) {
     console.error('Image processing error:', error);

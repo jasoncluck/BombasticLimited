@@ -1,86 +1,64 @@
 import { createClient } from '@supabase/supabase-js';
+import { writeFile, mkdir } from 'fs/promises';
+import { join, dirname } from 'path';
+import { existsSync } from 'fs';
 
 // Remote Supabase configuration
 const remoteUrl = 'https://blrvnfwxtzzbofsdrvwv.supabase.co';
 const remoteKey = 'sb_secret_KbOPFiPjUeHUVd0jPTV1Kg_Rndl23de';
 
-// Local Supabase configuration (default local setup)
-const localUrl = 'http://127.0.0.1:54321';
-const localKey =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU';
-
 const bucketName = 'content-images';
+const localDownloadPath = join(process.cwd(), 'supabase', 'content-images');
 
 const remoteSupabase = createClient(remoteUrl, remoteKey);
-const localSupabase = createClient(localUrl, localKey);
 
-interface FileItem {
-  name: string;
-  id: string | null;
-  updated_at: string;
-  created_at: string;
-  last_accessed_at: string;
-  metadata: Record<string, unknown>;
-}
-
-interface MigrationStats {
+interface DownloadStats {
   totalFiles: number;
-  migratedFiles: number;
+  downloadedFiles: number;
   skippedFiles: number;
   errorFiles: number;
 }
 
-const stats: MigrationStats = {
+const stats: DownloadStats = {
   totalFiles: 0,
-  migratedFiles: 0,
+  downloadedFiles: 0,
   skippedFiles: 0,
   errorFiles: 0,
 };
 
-async function migrateStorageBucket(): Promise<void> {
+async function ensureDirectoryExists(dirPath: string): Promise<void> {
   try {
-    console.log('Starting storage migration...');
-
-    // First, ensure the bucket exists in local storage
-    const { data: existingBuckets } = await localSupabase.storage.listBuckets();
-    const bucketExists = existingBuckets?.some(
-      (bucket) => bucket.name === bucketName
-    );
-
-    if (!bucketExists) {
-      console.log(`Creating bucket: ${bucketName}`);
-      const { error: createBucketError } =
-        await localSupabase.storage.createBucket(bucketName, {
-          public: true,
-          allowedMimeTypes: [
-            'image/png',
-            'image/jpeg',
-            'image/webp',
-            'image/avif',
-          ],
-          fileSizeLimit: 52428800, // 50MB
-        });
-
-      if (createBucketError) {
-        console.error('Error creating bucket:', createBucketError);
-        return;
-      }
-    }
-
-    // Get all files from remote bucket with pagination
-    await migrateFolder();
-
-    console.log('\n=== Migration Complete ===');
-    console.log(`Total files found: ${stats.totalFiles}`);
-    console.log(`Files migrated: ${stats.migratedFiles}`);
-    console.log(`Files skipped (already exist): ${stats.skippedFiles}`);
-    console.log(`Files with errors: ${stats.errorFiles}`);
+    await mkdir(dirPath, { recursive: true });
   } catch (error) {
-    console.error('Migration failed:', error);
+    // Directory might already exist, check if it's actually an error
+    if (!existsSync(dirPath)) {
+      throw error;
+    }
   }
 }
 
-async function migrateFolder(folderPath: string = ''): Promise<void> {
+async function downloadContentImages(): Promise<void> {
+  try {
+    console.log('Starting content images download...');
+    console.log(`Download path: ${localDownloadPath}`);
+
+    // Ensure the download directory exists
+    await ensureDirectoryExists(localDownloadPath);
+
+    // Download all files from remote bucket
+    await downloadFolder();
+
+    console.log('\n=== Download Complete ===');
+    console.log(`Total files found: ${stats.totalFiles}`);
+    console.log(`Files downloaded: ${stats.downloadedFiles}`);
+    console.log(`Files skipped (already exist): ${stats.skippedFiles}`);
+    console.log(`Files with errors: ${stats.errorFiles}`);
+  } catch (error) {
+    console.error('Download failed:', error);
+  }
+}
+
+async function downloadFolder(folderPath: string = ''): Promise<void> {
   try {
     let offset = 0;
     const limit = 1000; // Maximum limit per request
@@ -116,8 +94,8 @@ async function migrateFolder(folderPath: string = ''): Promise<void> {
         `Found ${files.length} items in ${folderPath || 'root'} (batch ${Math.floor(offset / limit) + 1})`
       );
 
-      // Process files in parallel batches to speed up migration
-      const batchSize = 10; // Process 10 files at a time
+      // Process files in parallel batches to speed up download
+      const batchSize = 20; // Process 10 files at a time
       for (let i = 0; i < files.length; i += batchSize) {
         const batch = files.slice(i, i + batchSize);
 
@@ -130,11 +108,11 @@ async function migrateFolder(folderPath: string = ''): Promise<void> {
             if (file.id === null) {
               // It's a folder, recurse into it
               console.log(`Processing folder: ${fullPath}`);
-              await migrateFolder(fullPath);
+              await downloadFolder(fullPath);
             } else {
-              // It's a file, migrate it
+              // It's a file, download it
               stats.totalFiles++;
-              await migrateFile(fullPath);
+              await downloadFile(fullPath);
             }
           })
         );
@@ -155,27 +133,20 @@ async function migrateFolder(folderPath: string = ''): Promise<void> {
   }
 }
 
-async function migrateFile(filePath: string): Promise<void> {
+async function downloadFile(filePath: string): Promise<void> {
   try {
-    // Check if file already exists in local storage
-    const folderPath = filePath.includes('/')
-      ? filePath.substring(0, filePath.lastIndexOf('/'))
-      : '';
-    const fileName = filePath.includes('/')
-      ? filePath.substring(filePath.lastIndexOf('/') + 1)
-      : filePath;
+    const localFilePath = join(localDownloadPath, filePath);
 
-    const { data: existingFile } = await localSupabase.storage
-      .from(bucketName)
-      .list(folderPath, {
-        search: fileName,
-      });
-
-    if (existingFile && existingFile.length > 0) {
+    // Check if file already exists locally
+    if (existsSync(localFilePath)) {
       console.log(`  ⏭️  Skipping ${filePath} - already exists locally`);
       stats.skippedFiles++;
       return;
     }
+
+    // Ensure the directory for this file exists
+    const fileDir = dirname(localFilePath);
+    await ensureDirectoryExists(fileDir);
 
     // Download from remote
     const { data: fileData, error: downloadError } =
@@ -193,26 +164,19 @@ async function migrateFile(filePath: string): Promise<void> {
       return;
     }
 
-    // Upload to local
-    const { error: uploadError } = await localSupabase.storage
-      .from(bucketName)
-      .upload(filePath, fileData, {
-        upsert: true,
-      });
+    // Convert blob to buffer and write to file
+    const arrayBuffer = await fileData.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
-    if (uploadError) {
-      console.error(`  ❌ Error uploading ${filePath}:`, uploadError);
-      stats.errorFiles++;
-      return;
-    }
+    await writeFile(localFilePath, buffer);
 
-    console.log(`  ✅ Migrated: ${filePath}`);
-    stats.migratedFiles++;
+    console.log(`  ✅ Downloaded: ${filePath}`);
+    stats.downloadedFiles++;
   } catch (error) {
-    console.error(`  ❌ Error migrating ${filePath}:`, error);
+    console.error(`  ❌ Error downloading ${filePath}:`, error);
     stats.errorFiles++;
   }
 }
 
-// Run the migration
-migrateStorageBucket();
+// Run the download
+downloadContentImages();

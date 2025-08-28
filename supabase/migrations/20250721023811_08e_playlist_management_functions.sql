@@ -646,10 +646,9 @@ END;
 $$;
 
 -- Optimized function to delete videos from a playlist
-CREATE OR REPLACE FUNCTION public.delete_playlist_videos (p_playlist_id int8, p_video_ids TEXT[]) 
-RETURNS TABLE (video_id text, success boolean, message text) 
-LANGUAGE plpgsql
-SET search_path = '' AS $$
+CREATE OR REPLACE FUNCTION public.delete_playlist_videos (p_playlist_id int8, p_video_ids TEXT[]) RETURNS TABLE (video_id text, success boolean, message text) LANGUAGE plpgsql
+SET
+  search_path = '' AS $$
 DECLARE
   current_user_id uuid;
   playlist_owner_id uuid;

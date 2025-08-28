@@ -281,12 +281,23 @@ export function optimizePageImageLoadingWithViewport(
   // Use contentViewportRef for accurate above-the-fold detection
   try {
     // Find video cards in the DOM - they are typically wrapped in content tiles
-    const videoCards = contentViewportRef.querySelectorAll('[role="region"] > div');
-    
-    const videosToPreload: Array<{ image_url?: string | null; thumbnail_url?: string | null }> = [];
-    const visibleVideos: Array<{ image_url?: string | null; thumbnail_url?: string | null }> = [];
-    const belowFoldVideos: Array<{ image_url?: string | null; thumbnail_url?: string | null }> = [];
-    
+    const videoCards = contentViewportRef.querySelectorAll(
+      '[role="region"] > div'
+    );
+
+    const videosToPreload: Array<{
+      image_url?: string | null;
+      thumbnail_url?: string | null;
+    }> = [];
+    const visibleVideos: Array<{
+      image_url?: string | null;
+      thumbnail_url?: string | null;
+    }> = [];
+    const belowFoldVideos: Array<{
+      image_url?: string | null;
+      thumbnail_url?: string | null;
+    }> = [];
+
     // Categorize videos by viewport visibility
     videos.forEach((video, index) => {
       if (index < videoCards.length) {
@@ -314,7 +325,10 @@ export function optimizePageImageLoadingWithViewport(
       preloadImages(criticalImageUrls, { priority });
     }
   } catch (error) {
-    console.debug('Viewport-aware image preloading failed, falling back to simple approach:', error);
+    console.debug(
+      'Viewport-aware image preloading failed, falling back to simple approach:',
+      error
+    );
     // Fallback to simple approach if viewport detection fails
     const criticalVideos = videos.slice(0, maxPreload);
     const criticalImageUrls = extractImageUrls(criticalVideos);
@@ -337,7 +351,7 @@ export function optimizePageImageLoading(
 ): void {
   if (!videos?.length) return;
 
-  const { maxPreload = 25, priority = 'auto' } = options;
+  const { maxPreload = 15, priority = 'auto' } = options;
 
   // Only preload the first few critical images to avoid overwhelming the system
   const criticalVideos = videos.slice(0, maxPreload);

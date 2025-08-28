@@ -130,8 +130,7 @@ UPDATE ON "public"."image_processing_jobs" FOR EACH ROW
 EXECUTE FUNCTION public.update_image_processing_jobs_updated_at ();
 
 -- Helper function to generate hash for image properties
-CREATE OR REPLACE FUNCTION public.hash_image_properties (properties jsonb) RETURNS text LANGUAGE plpgsql
-IMMUTABLE 
+CREATE OR REPLACE FUNCTION public.hash_image_properties (properties jsonb) RETURNS text LANGUAGE plpgsql IMMUTABLE
 SET
   search_path = '' AS $$
 BEGIN
@@ -757,11 +756,9 @@ SET
 $$;
 
 -- FIXED: Function to handle playlist image clearing when videos are removed
-CREATE OR REPLACE FUNCTION public.handle_playlist_image_on_video_removal()
-RETURNS TRIGGER 
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = '' AS $$
+CREATE OR REPLACE FUNCTION public.handle_playlist_image_on_video_removal () RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER
+SET
+  search_path = '' AS $$
 DECLARE
   playlist_record RECORD;
   video_was_thumbnail_source boolean := false;
@@ -826,11 +823,10 @@ $$;
 DROP TRIGGER IF EXISTS trigger_handle_playlist_image_on_video_removal ON public.playlist_videos;
 
 CREATE TRIGGER trigger_handle_playlist_image_on_video_removal
-  AFTER DELETE ON public.playlist_videos
-  FOR EACH ROW
-  EXECUTE FUNCTION public.handle_playlist_image_on_video_removal();
+AFTER DELETE ON public.playlist_videos FOR EACH ROW
+EXECUTE FUNCTION public.handle_playlist_image_on_video_removal ();
 
-COMMENT ON FUNCTION public.handle_playlist_image_on_video_removal() IS 'Automatically clears playlist thumbnail when the source video is removed from the playlist';
+COMMENT ON FUNCTION public.handle_playlist_image_on_video_removal () IS 'Automatically clears playlist thumbnail when the source video is removed from the playlist';
 
 -- Set up RLS policies
 ALTER TABLE "public"."image_processing_jobs" ENABLE ROW LEVEL SECURITY;
