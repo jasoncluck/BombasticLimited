@@ -8,6 +8,7 @@ import type { Database } from '$lib/supabase/database.types';
 import type { UserProfile } from '$lib/supabase/user-profiles';
 import { browser } from '$app/environment';
 import type { NotificationWithMeta } from '$lib/supabase/notifications';
+import { simpleImagePreloader } from '$lib/utils/predictive-image-preloader.js';
 
 /**
  * Navigation item interface defining structure for navigation elements
@@ -512,6 +513,11 @@ export class NavigationStateClass implements NavigationState {
     if (this.searchAbortController) {
       this.searchAbortController.abort();
       this.searchAbortController = null;
+    }
+
+    // Trigger predictive image preloading for searches >= 2 characters
+    if (searchValue.length >= 2) {
+      simpleImagePreloader.preloadSearchImages(searchValue);
     }
 
     // If we're starting from empty and hit the minimum threshold, search immediately

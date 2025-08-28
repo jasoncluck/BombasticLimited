@@ -13,6 +13,8 @@
   } from '$lib/components/content/content.js';
   import PlaylistTiles from '$lib/components/playlist/playlist-tiles.svelte';
   import { getMediaQueryState } from '$lib/state/media-query.svelte.js';
+  import { simpleImagePreloader } from '$lib/utils/predictive-image-preloader.js';
+  import { onMount, onDestroy } from 'svelte';
 
   let { data } = $props();
   let {
@@ -40,6 +42,19 @@
   }
 
   let carouselsState = $state<SourceWithCarouselState>(initialCarouselState);
+
+  // Image preloading setup
+  onMount(() => {
+    // Set up search container observation
+    setTimeout(() => {
+      simpleImagePreloader.observeSearchContainers();
+    }, 100);
+  });
+
+  onDestroy(() => {
+    // Clean up preloading when leaving the page
+    simpleImagePreloader.clearPreloadCache();
+  });
 
   export const snapshot: Snapshot<{
     carouselsState: SourceWithCarouselState;

@@ -8,26 +8,60 @@ interface CacheEntry<T = any> {
   data: T;
   timestamp: number;
   ttl: number;
+  accessCount: number;
+  lastAccessed: number;
+}
+
+interface CacheConfig {
+  maxEntries: number;
+  defaultTtl: number;
+  enableLRU: boolean;
 }
 
 export class SimpleMemoryCache {
   private cache = new Map<string, CacheEntry>();
-  private maxEntries = 100; // Limit to prevent memory issues
+  private config: CacheConfig = {
+    maxEntries: 500, // Increased from 100 to handle search images
+    defaultTtl: 5 * 60 * 1000, // 5 minutes
+    enableLRU: true
+  };
+
+  /**
+   * Update cache configuration
+   */
+  updateConfig(updates: Partial<CacheConfig>): void {
+    this.config = { ...this.config, ...updates };
+  }
+
+  /**
+   * Get current cache configuration
+   */
+  getConfig(): CacheConfig {
+    return { ...this.config };
+  }
 
   /**
    * Set a value in the cache with TTL
    */
-  set<T>(key: string, data: T, ttl: number = 5 * 60 * 1000): void {
-    // 5 minutes default
-    // Evict oldest entries if we're at capacity
-    if (this.cache.size >= this.maxEntries) {
-      this.evictOldest();
+  set<T>(key: string, data: T, ttl?: number): void {
+    const entryTtl = ttl ?? this.config.defaultTtl;
+    
+    // Evict entries if we're at capacity
+    if (this.cache.size >= this.config.maxEntries) {
+      if (this.config.enableLRU) {
+        this.evictLRU();
+      } else {
+        this.evictOldest();
+      }
     }
 
+    const now = Date.now();
     this.cache.set(key, {
       data,
-      timestamp: Date.now(),
-      ttl,
+      timestamp: now,
+      ttl: entryTtl,
+      accessCount: 0,
+      lastAccessed: now,
     });
   }
 
@@ -39,9 +73,16 @@ export class SimpleMemoryCache {
     if (!entry) return null;
 
     // Check if expired
-    if (Date.now() - entry.timestamp > entry.ttl) {
+    const now = Date.now();
+    if (now - entry.timestamp > entry.ttl) {
       this.cache.delete(key);
       return null;
+    }
+
+    // Update access tracking for LRU
+    if (this.config.enableLRU) {
+      entry.accessCount++;
+      entry.lastAccessed = now;
     }
 
     return entry.data as T;
@@ -76,10 +117,22 @@ export class SimpleMemoryCache {
   /**
    * Get cache statistics
    */
-  getStats(): { entries: number; size: number } {
+  getStats(): { 
+    entries: number; 
+    maxEntries: number;
+    size: number; 
+    hitRate?: number;
+    totalAccesses?: number;
+  } {
+    const totalAccesses = Array.from(this.cache.values())
+      .reduce((sum, entry) => sum + entry.accessCount, 0);
+    
     return {
       entries: this.cache.size,
+      maxEntries: this.config.maxEntries,
       size: JSON.stringify(Array.from(this.cache.entries())).length,
+      totalAccesses,
+      hitRate: totalAccesses > 0 ? totalAccesses / this.cache.size : 0,
     };
   }
 
@@ -96,7 +149,7 @@ export class SimpleMemoryCache {
   }
 
   /**
-   * Evict the oldest entry
+   * Evict the oldest entry by timestamp
    */
   private evictOldest(): void {
     let oldestKey: string | null = null;
@@ -111,6 +164,29 @@ export class SimpleMemoryCache {
 
     if (oldestKey) {
       this.cache.delete(oldestKey);
+    }
+  }
+
+  /**
+   * Evict the least recently used entry
+   */
+  private evictLRU(): void {
+    let lruKey: string | null = null;
+    let lruTime = Date.now();
+    let lruAccess = Infinity;
+
+    for (const [key, entry] of this.cache) {
+      // Prioritize entries with fewer accesses, then by last access time
+      if (entry.accessCount < lruAccess || 
+          (entry.accessCount === lruAccess && entry.lastAccessed < lruTime)) {
+        lruTime = entry.lastAccessed;
+        lruAccess = entry.accessCount;
+        lruKey = key;
+      }
+    }
+
+    if (lruKey) {
+      this.cache.delete(lruKey);
     }
   }
 }
