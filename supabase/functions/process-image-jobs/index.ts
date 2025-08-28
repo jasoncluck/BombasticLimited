@@ -164,8 +164,6 @@ async function checkTriggerQueueHealth(): Promise<boolean> {
   }
 }
 
-
-
 /**
  * Check if a job is ready for processing based on the 30-minute retry cooldown
  */
