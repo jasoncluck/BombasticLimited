@@ -76,7 +76,7 @@
 </script>
 
 <div class="flex flex-col">
-  <div class="flex flex-wrap justify-between">
+  <div class="flex flex-wrap justify-between gap-4">
     <h1 class="header-content max-w-xl">
       {SOURCE_INFO[source].displayName}
     </h1>

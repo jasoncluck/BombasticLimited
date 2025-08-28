@@ -15,6 +15,7 @@
   import { goto, preloadData } from '$app/navigation';
   import { getSortDisplayName } from './content-filter';
   import ContentCardSkeleton from './content-card-skeleton.svelte';
+  import LazyImage from './LazyImage.svelte';
   import { onMount } from 'svelte';
   import {
     handleContentNavigation,
@@ -74,7 +75,6 @@
   const contentState = getContentState();
 
   let cardElement = $state<HTMLElement>();
-  let imageElement = $state<HTMLImageElement>();
 
   const isVideoInPlaylist = $derived(
     isContinueVideos &&
@@ -388,12 +388,11 @@
     >
       <div class="relative flex-shrink-0">
         <!-- Use the optimized image_url directly from the database -->
-        <img
-          bind:this={imageElement}
-          class="aspect-[16/9] h-auto w-full"
+        <LazyImage
           src={video.image_url ?? video.thumbnail_url}
           alt={video.title}
-          loading="lazy"
+          class="aspect-[16/9] h-auto w-full"
+          {index}
         />
         <div class="absolute top-0.5 right-0.5">
           <ContentDropdown

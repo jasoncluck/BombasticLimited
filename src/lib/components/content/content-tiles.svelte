@@ -6,7 +6,8 @@
     getContentState,
     DEFAULT_SECTION_ID,
   } from '$lib/state/content.svelte';
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
+  import { simpleImagePreloader } from '$lib/utils/predictive-image-preloader';
 
   type ContentTilesProps = ContentDisplayProps & {
     allowVideoReorder?: boolean;
@@ -42,13 +43,26 @@
     }
   }
 
-  // Set up click outside listener
+  // Set up click outside listener and image preloading
   onMount(() => {
     if (containerElement) {
-      return contentState.setupClickOutsideListener(
+      // Setup click outside listener
+      const cleanup = contentState.setupClickOutsideListener(
         containerElement,
         sectionId
       );
+
+      // Observe container for image preloading
+      simpleImagePreloader.observeContainer(containerElement);
+
+      return cleanup;
+    }
+  });
+
+  // Cleanup observer when component is destroyed
+  onDestroy(() => {
+    if (containerElement) {
+      simpleImagePreloader.unobserveContainer(containerElement);
     }
   });
 </script>

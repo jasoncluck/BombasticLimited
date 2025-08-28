@@ -24,6 +24,7 @@
     useNavigation,
   } from '$lib/components/layout/index.js';
   import { dev } from '$app/environment';
+  import { simpleImagePreloader } from '$lib/utils/predictive-image-preloader';
 
   let { data, children } = $props();
   let { session, supabase, userProfile, preferredImageFormat } = $derived(data);
@@ -346,6 +347,12 @@
 
     // Set up visibility change listener for data refresh and auth state checking
     document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Initialize predictive image preloader (already auto-initialized, but ensuring it's active)
+    // The preloader automatically sets up scroll tracking when in browser environment
+    if (dev) {
+      console.log('Predictive image preloader initialized for improved image loading performance');
+    }
 
     // Return cleanup function
     return () => {
