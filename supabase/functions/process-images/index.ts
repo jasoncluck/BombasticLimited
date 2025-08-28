@@ -13,6 +13,7 @@ interface ImageProcessingJob {
   created_at: string;
   updated_at: string;
   processing_started_at?: string | null;
+  status: string;
 }
 
 interface ProcessedJob {
@@ -33,6 +34,7 @@ interface SuccessResponse {
   message: string;
   jobs?: ProcessedJob[];
   skipped?: number;
+  stuckJobsRetried?: number;
   queueLimitReached?: boolean;
   queueStatus?: {
     processing: number;
@@ -53,7 +55,7 @@ interface VideoEntity {
   thumbnail_url: string | null;
 }
 
-interface PendingJobRow {
+interface JobRow {
   id: string;
   entity_type: string;
   entity_id: string;
@@ -166,16 +168,18 @@ async function checkTriggerQueueHealth(): Promise<boolean> {
 
 /**
  * Check if a job is ready for processing based on the 30-minute retry cooldown
- * Now allows jobs to be retried regardless of max attempts if enough time has passed
+ * Now allows jobs in any state to be retried if enough time has passed
  */
-function isJobReadyForRetry(job: PendingJobRow): boolean {
-  // For new jobs (attempts = 0), they're always ready
-  if (job.attempts === 0) {
-    console.log(`Job ${job.id} is new (0 attempts), ready for processing`);
+function isJobReadyForRetry(job: JobRow): boolean {
+  // For new jobs (attempts = 0 and status = pending), they're always ready
+  if (job.attempts === 0 && job.status === 'pending') {
+    console.log(
+      `Job ${job.id} is new (0 attempts, pending), ready for processing`
+    );
     return true;
   }
 
-  // For retry jobs, check the 30-minute cooldown period
+  // For all other jobs, check the 30-minute cooldown period
   const now = new Date();
   const updatedAt = new Date(job.updated_at);
   const timeDifferenceMs = now.getTime() - updatedAt.getTime();
@@ -184,13 +188,16 @@ function isJobReadyForRetry(job: PendingJobRow): boolean {
   const isReady = timeDifferenceMs >= cooldownMs;
 
   const minutesElapsed = Math.floor(timeDifferenceMs / 1000 / 60);
-  const maxAttemptsStatus =
-    job.attempts >= job.max_attempts
-      ? ' (exceeded max attempts but retrying after cooldown)'
-      : '';
+
+  let statusSuffix = '';
+  if (job.status !== 'pending') {
+    statusSuffix = ` (retrying stuck ${job.status} job after cooldown)`;
+  } else if (job.attempts >= job.max_attempts) {
+    statusSuffix = ' (exceeded max attempts but retrying after cooldown)';
+  }
 
   console.log(
-    `Job ${job.id} (attempt ${job.attempts}/${job.max_attempts}) updated at ${job.updated_at}, ${minutesElapsed} minutes ago, ready: ${isReady} (cooldown: ${RETRY_COOLDOWN_MINUTES}min)${maxAttemptsStatus}`
+    `Job ${job.id} (attempt ${job.attempts}/${job.max_attempts}, status: ${job.status}) updated at ${job.updated_at}, ${minutesElapsed} minutes ago, ready: ${isReady} (cooldown: ${RETRY_COOLDOWN_MINUTES}min)${statusSuffix}`
   );
 
   return isReady;
@@ -296,13 +303,53 @@ async function checkEntityExistsOrDeleteJob(
 }
 
 /**
+ * Reset job back to pending status before processing
+ */
+async function resetJobToPending(
+  supabase: ReturnType<typeof createClient>,
+  jobId: string,
+  currentStatus: string
+): Promise<void> {
+  if (currentStatus === 'pending') {
+    // Job is already pending, no need to reset
+    return;
+  }
+
+  const { error } = await supabase
+    .from('image_processing_jobs')
+    .update({
+      status: 'pending',
+      updated_at: new Date().toISOString(),
+      processing_started_at: null, // Clear any stuck processing timestamp
+    })
+    .eq('id', jobId);
+
+  if (error) {
+    console.error(
+      `Failed to reset job ${jobId} from ${currentStatus} to pending:`,
+      error
+    );
+    throw new Error(`Failed to reset job status: ${error.message}`);
+  }
+
+  console.log(`Reset job ${jobId} from ${currentStatus} to pending status`);
+}
+
+/**
  * Process a job by triggering the image processing workflow
  */
 async function processJob(
   supabase: ReturnType<typeof createClient>,
   job: ImageProcessingJob,
-  entity: Record<string, unknown>
+  entity: Record<string, unknown>,
+  wasStuckJob: boolean,
+  originalStatus?: string
 ): Promise<ProcessedJob> {
+  // If this was a stuck job (not pending), reset it to pending first
+  if (wasStuckJob && originalStatus) {
+    await resetJobToPending(supabase, job.job_id, originalStatus);
+  }
+
   // Mark job as processing
   const { data: startSuccess, error: startError } = await supabase
     .rpc('start_image_processing_job', { job_id: job.job_id })
@@ -318,7 +365,12 @@ async function processJob(
     );
   }
 
-  console.log(`Successfully marked job ${job.job_id} as processing`);
+  const retryMessage = wasStuckJob
+    ? ` (retrying stuck ${originalStatus} job)`
+    : '';
+  console.log(
+    `Successfully marked job ${job.job_id} as processing${retryMessage}`
+  );
 
   // Create webhook payload for the trigger
   const webhookPayload = {
@@ -338,6 +390,9 @@ async function processJob(
     imageType: job.image_type,
     sourceUrl: job.source_url,
     attempts: job.attempts,
+    status: job.status,
+    wasStuckJob,
+    originalStatus,
   });
 
   // Trigger the task using the SDK
@@ -347,7 +402,7 @@ async function processJob(
   );
 
   console.log(
-    `Successfully triggered image processing for job ${job.job_id}: run ${run.id}`
+    `Successfully triggered image processing for job ${job.job_id}: run ${run.id}${retryMessage}`
   );
 
   return {
@@ -389,7 +444,7 @@ async function processImageJobs(): Promise<ApiResponse> {
 
   try {
     console.log(
-      'Starting enhanced image processing job batch with safeguards...'
+      'Starting enhanced image processing job batch with stuck job retry support for all states...'
     );
 
     // 1. Queue Availability Check
@@ -424,7 +479,7 @@ async function processImageJobs(): Promise<ApiResponse> {
       `Queue status acceptable: ${queueStatus.processing}/${PROCESSING_QUEUE_LIMIT} jobs processing`
     );
 
-    // 4. Reset stuck jobs
+    // 4. Reset stuck jobs (this is separate from our manual retry logic)
     console.log(
       `Checking for stuck jobs (processing > ${STUCK_JOB_THRESHOLD_MINUTES} minutes)...`
     );
@@ -446,39 +501,52 @@ async function processImageJobs(): Promise<ApiResponse> {
       }
     }
 
-    // 5. Fetch pending jobs
-    console.log('Fetching pending jobs...');
-    const { data: pendingJobs, error: fetchError } = await supabase
+    // 5. Fetch jobs in ALL states for potential reprocessing (key change here!)
+    console.log('Fetching jobs in all states for potential reprocessing...');
+    const { data: allJobs, error: fetchError } = await supabase
       .from('image_processing_jobs')
       .select(
         'id, entity_type, entity_id, image_type, source_url, attempts, max_attempts, created_at, updated_at, processing_started_at, status'
       )
-      .eq('status', 'pending')
+      // Removed status filter completely - fetch jobs in any state
       .order('priority', { ascending: true })
       .order('created_at', { ascending: true })
       .limit(100)
-      .returns<PendingJobRow[]>();
+      .returns<JobRow[]>();
 
     if (fetchError) {
-      console.error('Failed to fetch pending jobs:', fetchError);
-      throw new Error(`Failed to fetch pending jobs: ${fetchError.message}`);
+      console.error('Failed to fetch jobs:', fetchError);
+      throw new Error(`Failed to fetch jobs: ${fetchError.message}`);
     }
 
-    if (!pendingJobs || pendingJobs.length === 0) {
-      console.log('No pending jobs found in queue');
+    if (!allJobs || allJobs.length === 0) {
+      console.log('No jobs found in queue');
       return {
         success: true,
         processed: 0,
         queueStatus,
-        message: 'No pending jobs in queue',
+        message: 'No jobs in queue',
       };
     }
 
-    console.log(`Found ${pendingJobs.length} pending jobs`);
+    // Count jobs by status
+    const statusCounts = allJobs.reduce(
+      (counts, job) => {
+        counts[job.status] = (counts[job.status] || 0) + 1;
+        return counts;
+      },
+      {} as Record<string, number>
+    );
 
-    // 6. Filter jobs based on retry cooldown only (removed max attempts check)
-    const eligibleJobs = pendingJobs.filter((job: PendingJobRow): boolean => {
-      // Only check retry cooldown - allow jobs to retry after cooldown regardless of attempts
+    const statusSummary = Object.entries(statusCounts)
+      .map(([status, count]) => `${count} ${status}`)
+      .join(', ');
+
+    console.log(`Found ${allJobs.length} jobs total: ${statusSummary}`);
+
+    // 6. Filter jobs based on retry cooldown only (allow any status)
+    const eligibleJobs = allJobs.filter((job: JobRow): boolean => {
+      // Only check retry cooldown - allow jobs in any state to retry after cooldown
       if (!isJobReadyForRetry(job)) {
         return false;
       }
@@ -486,7 +554,7 @@ async function processImageJobs(): Promise<ApiResponse> {
       return true;
     });
 
-    const skippedJobs = pendingJobs.length - eligibleJobs.length;
+    const skippedJobs = allJobs.length - eligibleJobs.length;
     console.log(
       `${eligibleJobs.length} jobs are eligible for processing, ${skippedJobs} jobs skipped (cooldown period)`
     );
@@ -512,10 +580,18 @@ async function processImageJobs(): Promise<ApiResponse> {
     const processedJobs: ProcessedJob[] = [];
     const failedJobs: string[] = [];
     let deletedJobsCount = 0;
+    let stuckJobsRetriedCount = 0;
 
     // 8. Process each job
     for (const jobRow of jobsToProcess) {
       try {
+        const wasStuckJob = jobRow.status !== 'pending';
+        const originalStatus = jobRow.status;
+
+        if (wasStuckJob) {
+          stuckJobsRetriedCount++;
+        }
+
         const job: ImageProcessingJob = {
           job_id: jobRow.id,
           entity_type: jobRow.entity_type as 'video' | 'playlist',
@@ -526,6 +602,7 @@ async function processImageJobs(): Promise<ApiResponse> {
           created_at: jobRow.created_at,
           updated_at: jobRow.updated_at,
           processing_started_at: jobRow.processing_started_at,
+          status: jobRow.status,
         };
 
         // Check if entity exists, delete job if not
@@ -536,7 +613,13 @@ async function processImageJobs(): Promise<ApiResponse> {
         }
 
         // Process the job
-        const processedJob = await processJob(supabase, job, entity);
+        const processedJob = await processJob(
+          supabase,
+          job,
+          entity,
+          wasStuckJob,
+          originalStatus
+        );
         processedJobs.push(processedJob);
       } catch (jobError) {
         console.error(`Failed to process job ${jobRow.id}:`, jobError);
@@ -558,6 +641,10 @@ async function processImageJobs(): Promise<ApiResponse> {
 
     // 9. Build response message
     let message = `Processed ${processedJobs.length} jobs successfully`;
+
+    if (stuckJobsRetriedCount > 0) {
+      message += ` (including ${stuckJobsRetriedCount} stuck jobs retried)`;
+    }
 
     if (failedJobs.length > 0) {
       message += `, ${failedJobs.length} failed`;
@@ -585,6 +672,7 @@ async function processImageJobs(): Promise<ApiResponse> {
       success: true,
       processed: processedJobs.length,
       skipped: skippedJobs,
+      stuckJobsRetried: stuckJobsRetriedCount,
       queueStatus,
       message,
       jobs: processedJobs.length > 0 ? processedJobs : undefined,
