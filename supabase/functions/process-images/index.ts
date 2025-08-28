@@ -702,11 +702,11 @@ async function processImageJobs(): Promise<ApiResponse> {
     );
 
     // Process more jobs aggressively
-    const maxJobsPerRequest = 100; // Increased from 50
+    const maxJobsPerRequest = 50;
     const jobsToProcess = allReadyJobs.slice(0, maxJobsPerRequest);
 
     // Process jobs in batches
-    const batchSize = 20; // Increased batch size
+    const batchSize = 10;
     const batches: ImageProcessingJob[][] = [];
 
     for (let i = 0; i < jobsToProcess.length; i += batchSize) {
