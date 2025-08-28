@@ -1,12 +1,8 @@
 import sharp from 'sharp';
-import { ImageCacheManager } from './image-cache';
 import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import { validateAndAdjustCropDimensions } from '$lib/utils/dynamic-crop-dimensions';
 import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 import type { PlaylistImageProperties } from '$lib/supabase/playlists';
-
-// Initialize image cache manager
-const imageCacheManager = ImageCacheManager.getInstance();
 
 // **SPEED-BALANCED** image processing configuration
 export interface ImageProcessingOptions {
@@ -425,22 +421,6 @@ async function fetchWithRetry(
   }
 
   throw lastError;
-}
-
-// Image cache management functions (unchanged)
-export async function clearImageCache(): Promise<void> {
-  await imageCacheManager.clear();
-}
-
-export async function getImageCacheStats(): Promise<{
-  entries: number;
-  size: number;
-}> {
-  return imageCacheManager.getStats();
-}
-
-export async function cleanupImageCache(): Promise<void> {
-  await imageCacheManager.cleanup();
 }
 
 // **SPEED: Direct URL return for fastest response**
