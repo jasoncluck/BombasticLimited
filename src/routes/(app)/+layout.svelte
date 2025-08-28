@@ -24,7 +24,7 @@
     useNavigation,
   } from '$lib/components/layout/index.js';
   import { dev } from '$app/environment';
-  import { predictivePreloader } from '$lib/utils/predictive-image-preloader';
+  import { simpleImagePreloader } from '$lib/utils/predictive-image-preloader';
 
   let { data, children } = $props();
   let { session, supabase, userProfile, preferredImageFormat } = $derived(data);
