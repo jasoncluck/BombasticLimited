@@ -92,13 +92,18 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
   }
 };
 // Predictive image preloading with smart prioritization
-const preloadPredictiveImages = async (imageUrls: string[], priority: 'high' | 'low' = 'low'): Promise<void> => {
-  const cache = await caches.open(priority === 'high' ? IMAGE_CACHE : PREDICTIVE_CACHE);
-  
+const preloadPredictiveImages = async (
+  imageUrls: string[],
+  priority: 'high' | 'low' = 'low'
+): Promise<void> => {
+  const cache = await caches.open(
+    priority === 'high' ? IMAGE_CACHE : PREDICTIVE_CACHE
+  );
+
   // Batch size based on priority
   const batchSize = priority === 'high' ? 10 : 5;
   const delay = priority === 'high' ? 25 : 100;
-  
+
   // Process images in batches to avoid overwhelming the cache
   for (let i = 0; i < imageUrls.length; i += batchSize) {
     const batch = imageUrls.slice(i, i + batchSize);
@@ -108,11 +113,11 @@ const preloadPredictiveImages = async (imageUrls: string[], priority: 'high' | '
         // Check both caches before fetching
         const regularCached = await caches.match(url);
         if (regularCached) return; // Already cached
-        
+
         const response = await fetch(url, {
           priority: priority === 'high' ? 'high' : 'low',
         } as RequestInit);
-        
+
         if (response.ok && response.status === 200) {
           // Clone response to preserve headers and properties for image preview
           const responseToCache = response.clone();
@@ -228,15 +233,15 @@ const handleImageRequest = async (request: Request): Promise<Response> => {
   // Check primary image cache first
   const primaryCache = await caches.open(IMAGE_CACHE);
   const primaryCached = await primaryCache.match(request);
-  
+
   if (primaryCached) {
     return primaryCached;
   }
-  
+
   // Check predictive cache
   const predictiveCache = await caches.open(PREDICTIVE_CACHE);
   const predictiveCached = await predictiveCache.match(request);
-  
+
   if (predictiveCached) {
     // Move from predictive to primary cache for faster future access
     // Clone the response to ensure headers and properties are preserved
@@ -244,7 +249,7 @@ const handleImageRequest = async (request: Request): Promise<Response> => {
     primaryCache.put(request, responseClone);
     return predictiveCached;
   }
-  
+
   // Fall back to regular cache image logic
   return cacheImage(request);
 };
@@ -260,9 +265,9 @@ sw.addEventListener('message', (event) => {
     case 'CLEAR_CACHE':
       event.waitUntil(
         Promise.all([
-          caches.delete(STATIC_CACHE), 
+          caches.delete(STATIC_CACHE),
           caches.delete(IMAGE_CACHE),
-          caches.delete(PREDICTIVE_CACHE)
+          caches.delete(PREDICTIVE_CACHE),
         ])
       );
       break;
@@ -287,7 +292,7 @@ sw.addEventListener('message', (event) => {
 
     case 'CLEANUP_PREDICTIVE_CACHE':
       event.waitUntil(
-        caches.open(PREDICTIVE_CACHE).then(cache => {
+        caches.open(PREDICTIVE_CACHE).then((cache) => {
           // Optional: implement LRU cleanup logic here
           // For now, just acknowledge the request
         })

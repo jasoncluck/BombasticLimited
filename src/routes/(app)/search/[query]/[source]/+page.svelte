@@ -8,10 +8,10 @@
   import {
     DEFAULT_SECTION_ID,
     getContentState,
-  } from '$lib/state/content.svelte.js';
-  import type { SourceWithCarouselState } from '$lib/components/content/content.js';
-  import { PAGINATION_QUERY_KEY } from '$lib/components/pagination/pagination.js';
-  import { simpleImagePreloader } from '$lib/utils/predictive-image-preloader.js';
+  } from '$lib/state/content.svelte';
+  import type { SourceWithCarouselState } from '$lib/components/content/content';
+  import { PAGINATION_QUERY_KEY } from '$lib/components/pagination/pagination';
+  import { simpleImagePreloader } from '$lib/utils/image-preloader';
   import { onMount, onDestroy } from 'svelte';
 
   const { data } = $props();

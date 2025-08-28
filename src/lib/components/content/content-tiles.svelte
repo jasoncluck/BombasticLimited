@@ -7,7 +7,7 @@
     DEFAULT_SECTION_ID,
   } from '$lib/state/content.svelte';
   import { onMount, onDestroy } from 'svelte';
-  import { simpleImagePreloader } from '$lib/utils/predictive-image-preloader';
+  import { simpleImagePreloader } from '$lib/utils/image-preloader';
 
   type ContentTilesProps = ContentDisplayProps & {
     allowVideoReorder?: boolean;

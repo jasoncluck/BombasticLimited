@@ -8,7 +8,7 @@ import type { Database } from '$lib/supabase/database.types';
 import type { UserProfile } from '$lib/supabase/user-profiles';
 import { browser } from '$app/environment';
 import type { NotificationWithMeta } from '$lib/supabase/notifications';
-import { simpleImagePreloader } from '$lib/utils/predictive-image-preloader.js';
+import { simpleImagePreloader } from '$lib/utils/image-preloader';
 
 /**
  * Navigation item interface defining structure for navigation elements

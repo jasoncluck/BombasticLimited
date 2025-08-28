@@ -60,7 +60,8 @@
         showFloatingBreadcrumbs = restored.showFloatingBreadcrumbs;
       }
       if (restored?.selectedVideos) {
-        contentState.selectedVideosBySection[sectionId] = restored.selectedVideos;
+        contentState.selectedVideosBySection[sectionId] =
+          restored.selectedVideos;
       }
       if (restored?.currentPage) {
         currentPage = restored.currentPage;

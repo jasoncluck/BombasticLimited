@@ -23,7 +23,7 @@ export class SimpleMemoryCache {
   private config: CacheConfig = {
     maxEntries: 500, // Increased from 100 to handle search images
     defaultTtl: 5 * 60 * 1000, // 5 minutes
-    enableLRU: true
+    enableLRU: true,
   };
 
   /**
@@ -45,7 +45,7 @@ export class SimpleMemoryCache {
    */
   set<T>(key: string, data: T, ttl?: number): void {
     const entryTtl = ttl ?? this.config.defaultTtl;
-    
+
     // Evict entries if we're at capacity
     if (this.cache.size >= this.config.maxEntries) {
       if (this.config.enableLRU) {
@@ -117,16 +117,18 @@ export class SimpleMemoryCache {
   /**
    * Get cache statistics
    */
-  getStats(): { 
-    entries: number; 
+  getStats(): {
+    entries: number;
     maxEntries: number;
-    size: number; 
+    size: number;
     hitRate?: number;
     totalAccesses?: number;
   } {
-    const totalAccesses = Array.from(this.cache.values())
-      .reduce((sum, entry) => sum + entry.accessCount, 0);
-    
+    const totalAccesses = Array.from(this.cache.values()).reduce(
+      (sum, entry) => sum + entry.accessCount,
+      0
+    );
+
     return {
       entries: this.cache.size,
       maxEntries: this.config.maxEntries,
@@ -177,8 +179,10 @@ export class SimpleMemoryCache {
 
     for (const [key, entry] of this.cache) {
       // Prioritize entries with fewer accesses, then by last access time
-      if (entry.accessCount < lruAccess || 
-          (entry.accessCount === lruAccess && entry.lastAccessed < lruTime)) {
+      if (
+        entry.accessCount < lruAccess ||
+        (entry.accessCount === lruAccess && entry.lastAccessed < lruTime)
+      ) {
         lruTime = entry.lastAccessed;
         lruAccess = entry.accessCount;
         lruKey = key;

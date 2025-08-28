@@ -13,7 +13,7 @@
   } from '$lib/components/content/content.js';
   import PlaylistTiles from '$lib/components/playlist/playlist-tiles.svelte';
   import { getMediaQueryState } from '$lib/state/media-query.svelte.js';
-  import { simpleImagePreloader } from '$lib/utils/predictive-image-preloader.js';
+  import { simpleImagePreloader } from '$lib/utils/image-preloader';
   import { onMount, onDestroy } from 'svelte';
 
   let { data } = $props();

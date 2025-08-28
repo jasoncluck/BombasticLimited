@@ -8,7 +8,7 @@
   import Pagination from '$lib/components/pagination/pagination.svelte';
   import PlaylistTiles from '$lib/components/playlist/playlist-tiles.svelte';
   import { DEFAULT_NUM_PLAYLISTS_PAGINATION } from '$lib/supabase/playlists';
-  import { simpleImagePreloader } from '$lib/utils/predictive-image-preloader.js';
+  import { simpleImagePreloader } from '$lib/utils/image-preloader';
   import { onMount, onDestroy } from 'svelte';
 
   const { data } = $props();

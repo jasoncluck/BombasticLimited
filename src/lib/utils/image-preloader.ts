@@ -16,7 +16,7 @@ export class SimpleImagePreloader {
   private readonly PRELOAD_THRESHOLD = 0.5; // When 50% of container is visible
   private readonly PRELOAD_BATCH_SIZE = 10; // Preload next 10 images
   private readonly MAX_PRELOAD_DISTANCE = 1500; // Max pixels ahead to look for images
-  
+
   // Search-specific configuration
   private readonly SEARCH_PRELOAD_DELAY = 200; // Delay before search preloading
   private readonly SEARCH_PRELOAD_BATCH_SIZE = 15; // Larger batch for search results
@@ -84,7 +84,7 @@ export class SimpleImagePreloader {
 
     // Find next images that aren't loaded yet
     const nextImages = this.findNextImagesToPreload(container);
-    
+
     if (nextImages.length > 0) {
       this.preloadImages(nextImages);
     }
@@ -96,24 +96,26 @@ export class SimpleImagePreloader {
   private findNextImagesToPreload(fromContainer: HTMLElement): string[] {
     const containerRect = fromContainer.getBoundingClientRect();
     const containerBottom = containerRect.bottom + window.scrollY;
-    
+
     // Look for images below the current container
-    const allImages = Array.from(document.querySelectorAll('img[data-image-index]')) as HTMLImageElement[];
+    const allImages = Array.from(
+      document.querySelectorAll('img[data-image-index]')
+    ) as HTMLImageElement[];
     const nextImages: string[] = [];
 
     for (const img of allImages) {
       const imgRect = img.getBoundingClientRect();
       const imgTop = imgRect.top + window.scrollY;
-      
+
       // Only consider images that are below the container and within preload distance
       if (
-        imgTop > containerBottom && 
+        imgTop > containerBottom &&
         imgTop < containerBottom + this.MAX_PRELOAD_DISTANCE
       ) {
         const src = img.src;
         if (src && !this.preloadedUrls.has(src)) {
           nextImages.push(src);
-          
+
           // Stop when we have enough images for this batch
           if (nextImages.length >= this.PRELOAD_BATCH_SIZE) {
             break;
@@ -134,7 +136,7 @@ export class SimpleImagePreloader {
     this.isPreloading = true;
 
     // Mark as preloaded to avoid duplicates
-    urls.forEach(url => this.preloadedUrls.add(url));
+    urls.forEach((url) => this.preloadedUrls.add(url));
 
     try {
       // Send to service worker for caching
@@ -142,11 +144,13 @@ export class SimpleImagePreloader {
         navigator.serviceWorker.controller.postMessage({
           type: 'PRELOAD_PREDICTIVE_IMAGES',
           urls,
-          priority: 'low'
+          priority: 'low',
         });
       }
 
-      console.log(`Simple preloader: Queued ${urls.length} images for preloading`);
+      console.log(
+        `Simple preloader: Queued ${urls.length} images for preloading`
+      );
     } catch (error) {
       console.warn('Simple preloader: Failed to preload images', error);
     } finally {
@@ -163,7 +167,7 @@ export class SimpleImagePreloader {
   public preloadSpecificImages(urls: string[]): void {
     if (!this.serviceWorkerReady) return;
 
-    const filteredUrls = urls.filter(url => !this.preloadedUrls.has(url));
+    const filteredUrls = urls.filter((url) => !this.preloadedUrls.has(url));
     if (filteredUrls.length === 0) return;
 
     this.preloadImages(filteredUrls);
@@ -194,14 +198,18 @@ export class SimpleImagePreloader {
 
     try {
       // Look for search result containers that are likely to appear
-      const searchContainers = document.querySelectorAll('[data-testid="search-results"], [data-testid="content-tiles"]');
+      const searchContainers = document.querySelectorAll(
+        '[data-testid="search-results"], [data-testid="content-tiles"]'
+      );
       const visibleImages: string[] = [];
 
-      searchContainers.forEach(container => {
+      searchContainers.forEach((container) => {
         // Find images in search result containers
-        const images = container.querySelectorAll('img[data-image-index], img[src*="supabase"]') as NodeListOf<HTMLImageElement>;
-        
-        images.forEach(img => {
+        const images = container.querySelectorAll(
+          'img[data-image-index], img[src*="supabase"]'
+        ) as NodeListOf<HTMLImageElement>;
+
+        images.forEach((img) => {
           if (img.src && !this.preloadedUrls.has(img.src)) {
             visibleImages.push(img.src);
           }
@@ -210,12 +218,19 @@ export class SimpleImagePreloader {
 
       // Also preload images that are just below the viewport for search results
       const belowViewportImages = this.findImagesNearViewport();
-      const combinedImages = [...new Set([...visibleImages, ...belowViewportImages])];
+      const combinedImages = [
+        ...new Set([...visibleImages, ...belowViewportImages]),
+      ];
 
       if (combinedImages.length > 0) {
-        const batchSize = Math.min(combinedImages.length, this.SEARCH_PRELOAD_BATCH_SIZE);
+        const batchSize = Math.min(
+          combinedImages.length,
+          this.SEARCH_PRELOAD_BATCH_SIZE
+        );
         await this.preloadImages(combinedImages.slice(0, batchSize));
-        console.log(`Search preloader: Queued ${batchSize} images for search query: ${searchQuery}`);
+        console.log(
+          `Search preloader: Queued ${batchSize} images for search query: ${searchQuery}`
+        );
       }
     } catch (error) {
       console.warn('Search preloader: Error during search preload', error);
@@ -229,15 +244,22 @@ export class SimpleImagePreloader {
     const viewportHeight = window.innerHeight;
     const scrollY = window.scrollY;
     const preloadZone = scrollY + viewportHeight + this.MAX_PRELOAD_DISTANCE;
-    
-    const nearbyImages: string[] = [];
-    const allImages = document.querySelectorAll('img[data-image-index], img[src*="supabase"]') as NodeListOf<HTMLImageElement>;
 
-    allImages.forEach(img => {
+    const nearbyImages: string[] = [];
+    const allImages = document.querySelectorAll(
+      'img[data-image-index], img[src*="supabase"]'
+    ) as NodeListOf<HTMLImageElement>;
+
+    allImages.forEach((img) => {
       const rect = img.getBoundingClientRect();
       const imgTop = rect.top + scrollY;
-      
-      if (imgTop <= preloadZone && imgTop > scrollY + viewportHeight && img.src && !this.preloadedUrls.has(img.src)) {
+
+      if (
+        imgTop <= preloadZone &&
+        imgTop > scrollY + viewportHeight &&
+        img.src &&
+        !this.preloadedUrls.has(img.src)
+      ) {
         nearbyImages.push(img.src);
       }
     });
@@ -254,14 +276,14 @@ export class SimpleImagePreloader {
     // Look for search-specific containers
     const searchSelectors = [
       '[data-testid="search-results"]',
-      '[data-testid="content-tiles"]', 
+      '[data-testid="content-tiles"]',
       '[data-testid="playlist-tiles"]',
-      '.content-carousel'
+      '.content-carousel',
     ];
 
-    searchSelectors.forEach(selector => {
+    searchSelectors.forEach((selector) => {
       const containers = document.querySelectorAll(selector);
-      containers.forEach(container => {
+      containers.forEach((container) => {
         this.observeContainer(container as HTMLElement);
       });
     });
@@ -272,16 +294,16 @@ export class SimpleImagePreloader {
    */
   public clearPreloadCache(): void {
     this.preloadedUrls.clear();
-    
+
     // Clear search timer
     if (this.searchPreloadTimer) {
       window.clearTimeout(this.searchPreloadTimer);
       this.searchPreloadTimer = null;
     }
-    
+
     if (this.serviceWorkerReady && navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({
-        type: 'CLEANUP_PREDICTIVE_CACHE'
+        type: 'CLEANUP_PREDICTIVE_CACHE',
       });
     }
   }
@@ -294,7 +316,7 @@ export class SimpleImagePreloader {
       this.observer.disconnect();
       this.observer = null;
     }
-    
+
     if (this.searchPreloadTimer) {
       window.clearTimeout(this.searchPreloadTimer);
       this.searchPreloadTimer = null;

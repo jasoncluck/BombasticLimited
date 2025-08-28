@@ -2,26 +2,33 @@
 
 ## Overview
 
-The `process-image-jobs` Supabase Edge Function is an enhanced version of image processing with built-in queue management safeguards. It implements three key improvements to prevent queue overload and manage retry timing.
+The `process-image-jobs` Supabase Edge Function is an enhanced version of image
+processing with built-in queue management safeguards. It implements three key
+improvements to prevent queue overload and manage retry timing.
 
 ## Key Features
 
 ### 1. Queue Limit Check
+
 - **Purpose**: Prevents queue overload
-- **Behavior**: Checks if 100+ jobs are currently processing before submitting new jobs
-- **Implementation**: Uses `get_image_processing_queue_status()` database function
+- **Behavior**: Checks if 100+ jobs are currently processing before submitting
+  new jobs
+- **Implementation**: Uses `get_image_processing_queue_status()` database
+  function
 - **Action**: Aborts processing if limit reached, returns status message
 
-### 2. Retry Cooldown Management  
+### 2. Retry Cooldown Management
+
 - **Purpose**: Prevents rapid retry loops for failed jobs
 - **Behavior**: Implements 30-minute cooldown period before jobs can be retried
-- **Implementation**: 
+- **Implementation**:
   - New jobs (0 attempts) process immediately
   - Failed jobs must wait 30 minutes from last `updated_at` timestamp
   - Uses `fail_image_processing_job()` to properly update timestamps
 - **Action**: Skips jobs that are within cooldown period
 
 ### 3. Queue Availability Check
+
 - **Purpose**: Ensures trigger queue is healthy before processing
 - **Behavior**: Validates environment and queue health
 - **Implementation**: Checks `TRIGGER_SECRET_KEY` environment variable
@@ -30,14 +37,15 @@ The `process-image-jobs` Supabase Edge Function is an enhanced version of image 
 ## Configuration
 
 ```typescript
-const PROCESSING_QUEUE_LIMIT = 100;        // Max concurrent processing jobs
-const RETRY_COOLDOWN_MINUTES = 30;         // Cooldown period for retries
-const STUCK_JOB_THRESHOLD_MINUTES = 30;    // Threshold for stuck job reset
+const PROCESSING_QUEUE_LIMIT = 100; // Max concurrent processing jobs
+const RETRY_COOLDOWN_MINUTES = 30; // Cooldown period for retries
+const STUCK_JOB_THRESHOLD_MINUTES = 30; // Threshold for stuck job reset
 ```
 
 ## API Response
 
 ### Success Response
+
 ```typescript
 {
   success: true,
@@ -56,6 +64,7 @@ const STUCK_JOB_THRESHOLD_MINUTES = 30;    // Threshold for stuck job reset
 ```
 
 ### Error Response
+
 ```typescript
 {
   success: false,
@@ -88,7 +97,7 @@ curl -X POST https://your-project.supabase.co/functions/v1/process-image-jobs \
 ## Backward Compatibility
 
 - Uses same database functions as existing system
-- Maintains same trigger mechanism 
+- Maintains same trigger mechanism
 - Response structure includes all existing fields
 - No changes to existing `process-images` function
 

@@ -9,7 +9,7 @@
     getContentState,
   } from '$lib/state/content.svelte';
   import type { CombinedContentFilter } from './content-filter';
-  import { simpleImagePreloader } from '$lib/utils/predictive-image-preloader';
+  import { simpleImagePreloader } from '$lib/utils/image-preloader';
 
   type ContentCarouselProps = ContentDisplayProps & {
     carouselState?: CarouselState;
@@ -161,7 +161,7 @@
       const carouselElement = api.containerNode();
       if (carouselElement) {
         simpleImagePreloader.observeContainer(carouselElement);
-        
+
         // Cleanup function will be called when effect is cleaned up
         return () => {
           simpleImagePreloader.unobserveContainer(carouselElement);

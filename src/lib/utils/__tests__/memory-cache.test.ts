@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { SimpleMemoryCache } from '../simple-memory-cache';
+import { SimpleMemoryCache } from '../memory-cache';
 
 describe('SimpleMemoryCache', () => {
   let cache: SimpleMemoryCache;
