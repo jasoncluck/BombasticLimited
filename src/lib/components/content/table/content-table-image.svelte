@@ -3,6 +3,7 @@
   import Progress from '$lib/components/ui/progress/progress.svelte';
   import { getVideoSecondsOffset } from '$lib/components/video/video-service';
   import { Check } from '@lucide/svelte';
+  import LazyImage from '../LazyImage.svelte';
 
   import type { SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
@@ -13,7 +14,7 @@
     index?: number;
   };
 
-  const { video = $bindable() }: ContentCardProps = $props();
+  const { video = $bindable(), index = 0 }: ContentCardProps = $props();
 
   let imageContainer = $state<HTMLDivElement>();
 </script>
@@ -23,11 +24,11 @@
   class="relative flex aspect-video h-[80px] w-32 shrink-0 items-center"
 >
   <!-- Use the optimized image_url directly from the database -->
-  <img
-    class="h-full w-full object-cover"
+  <LazyImage
     src={video.image_url ?? video.thumbnail_url}
     alt={video.title}
-    decoding="async"
+    class="h-full w-full object-cover"
+    {index}
   />
   {#if isVideoWithTimestamp(video) && !video.watched_at && video.video_start_seconds && video.duration}
     <Progress
