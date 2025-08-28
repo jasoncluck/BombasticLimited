@@ -99,7 +99,7 @@ const preloadCriticalImages = async (imageUrls: string[]): Promise<void> => {
   const cache = await caches.open(IMAGE_CACHE);
 
   // Process images in batches to avoid overwhelming the cache
-  const batchSize = 3;
+  const batchSize = 20;
   for (let i = 0; i < imageUrls.length; i += batchSize) {
     const batch = imageUrls.slice(i, i + batchSize);
 
