@@ -33,9 +33,13 @@ interface SuccessResponse {
   message: string;
   jobs?: ProcessedJob[];
   skipped?: number;
-  resubmitted?: number;
-  deleted?: number;
-  videoEntitiesRemoved?: number;
+  queueLimitReached?: boolean;
+  queueStatus?: {
+    processing: number;
+    pending: number;
+    failed: number;
+    completed: number;
+  };
 }
 
 type ApiResponse = SuccessResponse | ErrorResponse;
@@ -63,25 +67,11 @@ interface PendingJobRow {
   status: string;
 }
 
-interface FailedJobRow {
-  id: string;
-  entity_type: string;
-  entity_id: string;
-  image_type: string;
-  attempts: number;
-  max_attempts: number;
-  error_message: string | null;
+interface QueueStatusRow {
   status: string;
-}
-
-interface BatchWebhookPayload {
-  type: 'BATCH_UPDATE';
-  jobs: Array<{
-    jobId: string;
-    table: 'videos' | 'playlists';
-    record: Record<string, unknown>;
-  }>;
-  timestamp: string;
+  count: number;
+  oldest_job: string | null;
+  newest_job: string | null;
 }
 
 // Initialize Supabase client
@@ -92,55 +82,118 @@ if (!supabaseUrl || !supabaseServiceKey) {
   throw new Error('Missing required Supabase environment variables');
 }
 
+// Configuration constants
+const PROCESSING_QUEUE_LIMIT = 100;
+const RETRY_COOLDOWN_MINUTES = 30;
+const STUCK_JOB_THRESHOLD_MINUTES = 30;
+
 /**
- * Check if a job has been processing for over 30 minutes
+ * Get current queue status from the database
  */
-function isJobStuck(job: PendingJobRow): boolean {
-  if (!job.processing_started_at) {
-    return false;
+async function getQueueStatus(
+  supabase: ReturnType<typeof createClient>
+): Promise<{
+  processing: number;
+  pending: number;
+  failed: number;
+  completed: number;
+}> {
+  const { data: queueStatus, error } = await supabase
+    .rpc('get_image_processing_queue_status')
+    .returns<QueueStatusRow[]>();
+
+  if (error) {
+    console.error('Failed to get queue status:', error);
+    throw new Error(`Failed to get queue status: ${error.message}`);
   }
 
-  const now = new Date();
-  const processingStarted = new Date(job.processing_started_at);
-  const thirtyMinutesMs = 30 * 60 * 1000; // 30 minutes in milliseconds
-  const timeDifferenceMs = now.getTime() - processingStarted.getTime();
+  const status = {
+    processing: 0,
+    pending: 0,
+    failed: 0,
+    completed: 0,
+  };
 
-  const isStuck = timeDifferenceMs >= thirtyMinutesMs;
-
-  if (isStuck) {
-    console.log(
-      `Job ${job.id} has been processing for ${Math.floor(timeDifferenceMs / 1000 / 60)} minutes (started: ${job.processing_started_at})`
-    );
+  if (queueStatus) {
+    for (const row of queueStatus) {
+      const count = Number(row.count);
+      switch (row.status) {
+        case 'processing':
+          status.processing = count;
+          break;
+        case 'pending':
+          status.pending = count;
+          break;
+        case 'failed':
+          status.failed = count;
+          break;
+        case 'completed':
+          status.completed = count;
+          break;
+      }
+    }
   }
 
-  return isStuck;
+  console.log('Current queue status:', status);
+  return status;
 }
 
-function isJobReadyForProcessing(job: ImageProcessingJob): boolean {
-  // Videos are always ready for processing (no cooldown)
-  if (job.entity_type === 'video') {
-    console.log(`Video job ${job.job_id} is ready for immediate processing`);
+/**
+ * Check if the trigger queue is healthy and available
+ */
+async function checkTriggerQueueHealth(): Promise<boolean> {
+  try {
+    // Validate required environment variable exists
+    const triggerSecret = Deno.env.get('TRIGGER_SECRET_KEY');
+    if (!triggerSecret) {
+      console.error('TRIGGER_SECRET_KEY environment variable is missing');
+      return false;
+    }
+
+    // For now, we'll consider the queue healthy if the environment is properly configured
+    // In a production environment, this could include additional health checks like:
+    // - Making a test API call to the trigger service
+    // - Checking if the worker is responsive
+    // - Validating network connectivity
+
+    console.log('Trigger queue health check passed');
+    return true;
+  } catch (error) {
+    console.error('Trigger queue health check failed:', error);
+    return false;
+  }
+}
+
+/**
+ * Check if a job is ready for processing based on the 30-minute retry cooldown
+ * Now allows jobs to be retried regardless of max attempts if enough time has passed
+ */
+function isJobReadyForRetry(job: PendingJobRow): boolean {
+  // For new jobs (attempts = 0), they're always ready
+  if (job.attempts === 0) {
+    console.log(`Job ${job.id} is new (0 attempts), ready for processing`);
     return true;
   }
 
-  // Playlists have a 5-minute cooldown period
-  if (job.entity_type === 'playlist') {
-    const now = new Date();
-    const updatedAt = new Date(job.updated_at);
-    const timeDifferenceMs = now.getTime() - updatedAt.getTime();
-    const fiveMinutesMs = 5 * 60 * 1000; // 5 minutes in milliseconds
+  // For retry jobs, check the 30-minute cooldown period
+  const now = new Date();
+  const updatedAt = new Date(job.updated_at);
+  const timeDifferenceMs = now.getTime() - updatedAt.getTime();
+  const cooldownMs = RETRY_COOLDOWN_MINUTES * 60 * 1000;
 
-    const isReady = timeDifferenceMs >= fiveMinutesMs;
+  const isReady = timeDifferenceMs >= cooldownMs;
 
-    console.log(
-      `Playlist job ${job.job_id} updated at ${job.updated_at}, current time: ${now.toISOString()}, difference: ${Math.floor(timeDifferenceMs / 1000)}s, ready: ${isReady}`
-    );
+  const minutesElapsed = Math.floor(timeDifferenceMs / 1000 / 60);
+  const maxAttemptsStatus =
+    job.attempts >= job.max_attempts
+      ? ' (exceeded max attempts but retrying after cooldown)'
+      : '';
 
-    return isReady;
-  }
+  console.log(
+    `Job ${job.id} (attempt ${job.attempts}/${job.max_attempts}) updated at ${job.updated_at}, ${minutesElapsed} minutes ago, ready: ${isReady} (cooldown: ${RETRY_COOLDOWN_MINUTES}min)${maxAttemptsStatus}`
+  );
 
-  // Default to ready for unknown entity types
-  return true;
+  return isReady;
 }
 
 /**
@@ -152,7 +205,6 @@ async function checkEntityExistsOrDeleteJob(
   job: ImageProcessingJob
 ): Promise<Record<string, unknown> | null> {
   if (job.entity_type === 'playlist') {
-    // Check if playlist exists
     const { data: playlist, error: playlistError } = await supabase
       .from('playlists')
       .select('image_properties, thumbnail_url')
@@ -175,7 +227,6 @@ async function checkEntityExistsOrDeleteJob(
         `Playlist ${job.entity_id} not found, deleting job ${job.job_id}`
       );
 
-      // Delete the job since the playlist no longer exists
       const { error: deleteError } = await supabase
         .from('image_processing_jobs')
         .delete()
@@ -200,7 +251,6 @@ async function checkEntityExistsOrDeleteJob(
       image_properties: playlist.image_properties,
     };
   } else if (job.entity_type === 'video') {
-    // Check if video exists
     const { data: video, error: videoError } = await supabase
       .from('videos')
       .select('thumbnail_url')
@@ -218,7 +268,6 @@ async function checkEntityExistsOrDeleteJob(
         `Video ${job.entity_id} not found, deleting job ${job.job_id}`
       );
 
-      // Delete the job since the video no longer exists
       const { error: deleteError } = await supabase
         .from('image_processing_jobs')
         .delete()
@@ -247,296 +296,142 @@ async function checkEntityExistsOrDeleteJob(
 }
 
 /**
- * Clean up failed video jobs by removing the video entity if thumbnail processing failed
- * Returns the number of video entities removed
+ * Process a job by triggering the image processing workflow
  */
-async function cleanupFailedVideoJobs(
-  supabase: ReturnType<typeof createClient>
-): Promise<number> {
-  try {
-    console.log('Checking for failed video thumbnail processing jobs...');
+async function processJob(
+  supabase: ReturnType<typeof createClient>,
+  job: ImageProcessingJob,
+  entity: Record<string, unknown>
+): Promise<ProcessedJob> {
+  // Mark job as processing
+  const { data: startSuccess, error: startError } = await supabase
+    .rpc('start_image_processing_job', { job_id: job.job_id })
+    .returns<boolean>();
 
-    // Find failed video thumbnail jobs that have exceeded max attempts
-    const { data: failedVideoJobs, error: fetchError } = await supabase
-      .from('image_processing_jobs')
-      .select(
-        'id, entity_type, entity_id, image_type, attempts, max_attempts, error_message, status'
-      )
-      .eq('entity_type', 'video')
-      .eq('image_type', 'thumbnail')
-      .eq('status', 'failed')
-      .gte('attempts', 3) // Only jobs that have failed after 3+ attempts
-      .returns<FailedJobRow[]>();
-
-    if (fetchError) {
-      console.error('Failed to fetch failed video jobs:', fetchError);
-      return 0;
-    }
-
-    if (!failedVideoJobs || failedVideoJobs.length === 0) {
-      console.log('No failed video thumbnail jobs found');
-      return 0;
-    }
-
-    console.log(
-      `Found ${failedVideoJobs.length} failed video thumbnail jobs to clean up`
-    );
-
-    let removedCount = 0;
-
-    for (const job of failedVideoJobs) {
-      try {
-        console.log(
-          `Removing video ${job.entity_id} due to failed thumbnail processing (job ${job.id}, attempts: ${job.attempts}/${job.max_attempts})`
-        );
-
-        // Remove the video entity from the videos table
-        const { error: deleteVideoError } = await supabase
-          .from('videos')
-          .delete()
-          .eq('id', job.entity_id);
-
-        if (deleteVideoError) {
-          console.error(
-            `Failed to delete video ${job.entity_id}:`,
-            deleteVideoError
-          );
-          continue;
-        }
-
-        // Remove the failed job from image_processing_jobs
-        const { error: deleteJobError } = await supabase
-          .from('image_processing_jobs')
-          .delete()
-          .eq('id', job.id);
-
-        if (deleteJobError) {
-          console.error(
-            `Failed to delete failed job ${job.id}:`,
-            deleteJobError
-          );
-          // Video was deleted but job wasn't - not critical, continue
-        }
-
-        console.log(
-          `Successfully removed video ${job.entity_id} and its failed processing job ${job.id}`
-        );
-        removedCount++;
-      } catch (jobError) {
-        console.error(
-          `Error cleaning up failed video job ${job.id}:`,
-          jobError
-        );
-        // Continue with other jobs even if one fails
-      }
-    }
-
-    if (removedCount > 0) {
-      console.log(
-        `Successfully removed ${removedCount} videos with failed thumbnail processing`
-      );
-    }
-
-    return removedCount;
-  } catch (error) {
-    console.error('Error in cleanupFailedVideoJobs:', error);
-    return 0;
+  if (startError) {
+    throw new Error(`Failed to mark job as processing: ${startError.message}`);
   }
+
+  if (!startSuccess) {
+    throw new Error(
+      'Job was not updated (likely already processing or completed)'
+    );
+  }
+
+  console.log(`Successfully marked job ${job.job_id} as processing`);
+
+  // Create webhook payload for the trigger
+  const webhookPayload = {
+    type: 'UPDATE' as const,
+    table:
+      job.entity_type === 'video'
+        ? ('videos' as const)
+        : ('playlists' as const),
+    record: entity,
+    jobId: job.job_id,
+    timestamp: new Date().toISOString(),
+  };
+
+  console.log(`Triggering image processing for job ${job.job_id}:`, {
+    entityType: job.entity_type,
+    entityId: job.entity_id,
+    imageType: job.image_type,
+    sourceUrl: job.source_url,
+    attempts: job.attempts,
+  });
+
+  // Trigger the task using the SDK
+  const run = await tasks.trigger<typeof processImageWebhook>(
+    'process-image-webhook',
+    webhookPayload
+  );
+
+  console.log(
+    `Successfully triggered image processing for job ${job.job_id}: run ${run.id}`
+  );
+
+  return {
+    jobId: job.job_id,
+    runId: run.id,
+    entityType: job.entity_type,
+    entityId: job.entity_id,
+  };
 }
 
 /**
- * Process jobs in batches and send to trigger
+ * Update job's updated_at timestamp to implement retry cooldown
  */
-async function processBatchOfJobs(
+async function updateJobForRetryCooldown(
   supabase: ReturnType<typeof createClient>,
-  jobs: ImageProcessingJob[],
-  batchNumber: number
-): Promise<{
-  processedJobs: ProcessedJob[];
-  failedJobs: string[];
-  deletedJobsCount: number;
-}> {
-  const processedJobs: ProcessedJob[] = [];
-  const failedJobs: string[] = [];
-  let deletedJobsCount = 0;
+  jobId: string,
+  errorMessage: string
+): Promise<void> {
+  // Use the fail_image_processing_job function which automatically updates updated_at
+  const { error } = await supabase.rpc('fail_image_processing_job', {
+    job_id: jobId,
+    error_msg: errorMessage,
+  });
 
-  console.log(`Processing batch ${batchNumber} with ${jobs.length} jobs`);
-
-  // First, mark all jobs as processing and validate entities exist
-  const validJobsForBatch: Array<{
-    job: ImageProcessingJob;
-    entity: Record<string, unknown>;
-  }> = [];
-
-  for (const job of jobs) {
-    try {
-      // Immediately mark this job as processing to prevent it from being fetched again
-      const { data: startSuccess, error: startError } = await supabase
-        .rpc('start_image_processing_job', { job_id: job.job_id })
-        .returns<boolean>();
-
-      if (startError) {
-        console.error(
-          `Failed to mark job ${job.job_id} as processing:`,
-          startError
-        );
-        failedJobs.push(job.job_id);
-        continue;
-      }
-
-      if (!startSuccess) {
-        console.warn(
-          `Job ${job.job_id} was not updated (likely already processing or completed)`
-        );
-        // Skip this job as it's no longer available
-        continue;
-      }
-
-      console.log(`Successfully marked job ${job.job_id} as processing`);
-
-      // Check if entity exists and get current entity data, or delete job if entity doesn't exist
-      const currentEntity = await checkEntityExistsOrDeleteJob(supabase, job);
-
-      // If entity doesn't exist (job was deleted), skip to next job
-      if (currentEntity === null) {
-        deletedJobsCount++;
-        continue;
-      }
-
-      validJobsForBatch.push({
-        job,
-        entity: currentEntity,
-      });
-    } catch (jobError) {
-      console.error(`Failed to prepare job ${job.job_id} for batch:`, jobError);
-      failedJobs.push(job.job_id);
-
-      // Mark job as failed using the database function
-      const errorMessage =
-        jobError instanceof Error ? jobError.message : 'Unknown error';
-
-      const { error: failError } = await supabase.rpc(
-        'fail_image_processing_job',
-        {
-          job_id: job.job_id,
-          error_msg: errorMessage,
-        }
-      );
-
-      if (failError) {
-        console.error(`Failed to mark job ${job.job_id} as failed:`, failError);
-      }
-    }
+  if (error) {
+    console.error(`Failed to update job ${jobId} for retry cooldown:`, error);
+    throw new Error(
+      `Failed to update job for retry cooldown: ${error.message}`
+    );
   }
 
-  // If no valid jobs, return early
-  if (validJobsForBatch.length === 0) {
-    console.log(`Batch ${batchNumber} has no valid jobs to process`);
-    return { processedJobs, failedJobs, deletedJobsCount };
-  }
-
-  // Process each job individually (keeping current approach for now)
-  for (const { job, entity } of validJobsForBatch) {
-    try {
-      const ageMinutes =
-        job.entity_type === 'playlist'
-          ? Math.floor(
-              (new Date().getTime() - new Date(job.updated_at).getTime()) /
-                (1000 * 60)
-            )
-          : 0; // Videos don't have cooldown, so age is not relevant
-
-      console.log('Processing job:', {
-        jobId: job.job_id,
-        entityType: job.entity_type,
-        entityId: job.entity_id,
-        imageType: job.image_type,
-        sourceUrl: job.source_url,
-        attempts: job.attempts,
-        ageMinutes: job.entity_type === 'playlist' ? ageMinutes : 'immediate',
-      });
-
-      // Create webhook payload in the format expected by the trigger
-      const webhookPayload = {
-        type: 'UPDATE' as const,
-        table:
-          job.entity_type === 'video'
-            ? ('videos' as const)
-            : ('playlists' as const),
-        record: entity,
-        jobId: job.job_id, // Include job ID for completion tracking
-        timestamp: new Date().toISOString(),
-      };
-
-      console.log(
-        'Webhook payload being sent:',
-        JSON.stringify(webhookPayload, null, 2)
-      );
-
-      // Trigger the task using the SDK
-      const run = await tasks.trigger<typeof processImageWebhook>(
-        'process-image-webhook',
-        webhookPayload
-      );
-
-      console.log(
-        `Successfully triggered image processing for job ${job.job_id}: run ${run.id}`
-      );
-
-      processedJobs.push({
-        jobId: job.job_id,
-        runId: run.id,
-        entityType: job.entity_type,
-        entityId: job.entity_id,
-      });
-
-      // Note: Job completion will be handled by the trigger function
-      // calling complete_image_processing_job() when processing is done
-    } catch (jobError) {
-      console.error(`Failed to trigger job ${job.job_id}:`, jobError);
-      failedJobs.push(job.job_id);
-
-      // Mark job as failed using the database function
-      const errorMessage =
-        jobError instanceof Error ? jobError.message : 'Unknown error';
-
-      const { error: failError } = await supabase.rpc(
-        'fail_image_processing_job',
-        {
-          job_id: job.job_id,
-          error_msg: errorMessage,
-        }
-      );
-
-      if (failError) {
-        console.error(`Failed to mark job ${job.job_id} as failed:`, failError);
-      }
-    }
-  }
-
-  return { processedJobs, failedJobs, deletedJobsCount };
+  console.log(
+    `Updated job ${jobId} with error message and retry cooldown timestamp`
+  );
 }
 
 async function processImageJobs(): Promise<ApiResponse> {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
-    // Validate required environment variable
-    if (!Deno.env.get('TRIGGER_SECRET_KEY')) {
-      throw new Error('Missing TRIGGER_SECRET_KEY environment variable');
+    console.log(
+      'Starting enhanced image processing job batch with safeguards...'
+    );
+
+    // 1. Queue Availability Check
+    console.log('Checking trigger queue health...');
+    const isQueueHealthy = await checkTriggerQueueHealth();
+    if (!isQueueHealthy) {
+      console.warn('Trigger queue is not healthy, aborting job processing');
+      return {
+        success: false,
+        error: 'Trigger queue is not available or healthy',
+      };
     }
 
-    console.log('Starting image processing job batch...');
+    // 2. Get current queue status
+    const queueStatus = await getQueueStatus(supabase);
 
-    // First, clean up failed video jobs by removing video entities
-    const videoEntitiesRemoved = await cleanupFailedVideoJobs(supabase);
+    // 3. Queue Limit Check
+    if (queueStatus.processing >= PROCESSING_QUEUE_LIMIT) {
+      console.warn(
+        `Queue limit reached: ${queueStatus.processing} jobs currently processing (limit: ${PROCESSING_QUEUE_LIMIT})`
+      );
+      return {
+        success: true,
+        processed: 0,
+        queueLimitReached: true,
+        queueStatus,
+        message: `Queue limit reached: ${queueStatus.processing}/${PROCESSING_QUEUE_LIMIT} jobs processing`,
+      };
+    }
 
-    // Reset any jobs that have been stuck for more than 30 minutes (aggressive reset)
-    console.log('Checking for stuck jobs (processing > 30 minutes)...');
+    console.log(
+      `Queue status acceptable: ${queueStatus.processing}/${PROCESSING_QUEUE_LIMIT} jobs processing`
+    );
+
+    // 4. Reset stuck jobs
+    console.log(
+      `Checking for stuck jobs (processing > ${STUCK_JOB_THRESHOLD_MINUTES} minutes)...`
+    );
     const { data: stuckJobsReset, error: stuckJobsError } = await supabase.rpc(
       'reset_stuck_image_processing_jobs',
       {
-        stuck_after_minutes: 30, // Changed from 240 to 30 minutes
+        stuck_after_minutes: STUCK_JOB_THRESHOLD_MINUTES,
       }
     );
 
@@ -551,243 +446,151 @@ async function processImageJobs(): Promise<ApiResponse> {
       }
     }
 
-    // Get ALL pending jobs aggressively (removed processing status filter for now)
-    console.log('Fetching ALL pending jobs aggressively...');
-    const { data: allJobs, error: fetchError } = await supabase
+    // 5. Fetch pending jobs
+    console.log('Fetching pending jobs...');
+    const { data: pendingJobs, error: fetchError } = await supabase
       .from('image_processing_jobs')
       .select(
         'id, entity_type, entity_id, image_type, source_url, attempts, max_attempts, created_at, updated_at, processing_started_at, status'
       )
-      .eq('status', 'pending') // Only get pending jobs to be more aggressive
+      .eq('status', 'pending')
       .order('priority', { ascending: true })
       .order('created_at', { ascending: true })
-      .limit(500) // Increased limit to process more jobs
+      .limit(100)
       .returns<PendingJobRow[]>();
 
     if (fetchError) {
-      console.error('Failed to fetch jobs:', fetchError);
-      throw new Error(`Failed to fetch jobs: ${fetchError.message}`);
+      console.error('Failed to fetch pending jobs:', fetchError);
+      throw new Error(`Failed to fetch pending jobs: ${fetchError.message}`);
     }
 
-    console.log(`Raw query returned ${allJobs?.length || 0} pending jobs`);
-
-    if (!allJobs || allJobs.length === 0) {
+    if (!pendingJobs || pendingJobs.length === 0) {
       console.log('No pending jobs found in queue');
-
-      // Include video entities removed in the response even when no jobs to process
-      const message =
-        videoEntitiesRemoved > 0
-          ? `No pending jobs in queue, ${videoEntitiesRemoved} failed videos removed`
-          : 'No pending jobs in queue';
-
       return {
         success: true,
         processed: 0,
-        videoEntitiesRemoved,
-        message,
+        queueStatus,
+        message: 'No pending jobs in queue',
       };
     }
 
-    console.log(`Found ${allJobs.length} pending jobs, analyzing...`);
+    console.log(`Found ${pendingJobs.length} pending jobs`);
 
-    // Filter jobs that are eligible (attempts < max_attempts)
-    const eligibleJobs = allJobs.filter((job: PendingJobRow): boolean => {
-      // First check if job hasn't exceeded max attempts
-      if (job.attempts >= job.max_attempts) {
-        console.log(
-          `Job ${job.id} has exceeded max attempts (${job.attempts}/${job.max_attempts}), skipping`
-        );
+    // 6. Filter jobs based on retry cooldown only (removed max attempts check)
+    const eligibleJobs = pendingJobs.filter((job: PendingJobRow): boolean => {
+      // Only check retry cooldown - allow jobs to retry after cooldown regardless of attempts
+      if (!isJobReadyForRetry(job)) {
         return false;
       }
+
       return true;
     });
 
+    const skippedJobs = pendingJobs.length - eligibleJobs.length;
     console.log(
-      `${eligibleJobs.length} jobs are eligible for processing (haven't exceeded max attempts)`
+      `${eligibleJobs.length} jobs are eligible for processing, ${skippedJobs} jobs skipped (cooldown period)`
     );
 
-    // Separate videos and playlists for different processing logic
-    const videoJobs = eligibleJobs.filter(
-      (job: PendingJobRow) => job.entity_type === 'video'
-    );
-    const playlistJobs = eligibleJobs.filter(
-      (job: PendingJobRow) => job.entity_type === 'playlist'
-    );
-
-    console.log(
-      `Separated into ${videoJobs.length} video jobs and ${playlistJobs.length} playlist jobs`
-    );
-
-    // Videos are always ready (no cooldown)
-    const readyVideoJobs = videoJobs.map(
-      (job: PendingJobRow): ImageProcessingJob => ({
-        job_id: job.id,
-        entity_type: job.entity_type as 'video' | 'playlist',
-        entity_id: job.entity_id,
-        image_type: job.image_type as 'thumbnail' | 'playlist_image',
-        source_url: job.source_url,
-        attempts: job.attempts,
-        created_at: job.created_at,
-        updated_at: job.updated_at,
-        processing_started_at: job.processing_started_at,
-      })
-    );
-
-    // For playlists, be more aggressive - reduce cooldown to 1 minute for urgent processing
-    const readyPlaylistJobs = playlistJobs
-      .filter((job: PendingJobRow): boolean => {
-        const now = new Date();
-        const updatedAt = new Date(job.updated_at);
-        const timeDifferenceMs = now.getTime() - updatedAt.getTime();
-        const oneMinuteMs = 1 * 60 * 1000; // Reduced to 1 minute for aggressive processing
-
-        const isReady = timeDifferenceMs >= oneMinuteMs;
-
-        console.log(
-          `Playlist job ${job.id} updated at ${job.updated_at}, age: ${Math.floor(timeDifferenceMs / 1000)}s, ready: ${isReady}`
-        );
-        return isReady;
-      })
-      .map(
-        (job: PendingJobRow): ImageProcessingJob => ({
-          job_id: job.id,
-          entity_type: job.entity_type as 'video' | 'playlist',
-          entity_id: job.entity_id,
-          image_type: job.image_type as 'thumbnail' | 'playlist_image',
-          source_url: job.source_url,
-          attempts: job.attempts,
-          created_at: job.created_at,
-          updated_at: job.updated_at,
-          processing_started_at: job.processing_started_at,
-        })
-      );
-
-    // Combine ready jobs (videos + ready playlists)
-    const allReadyJobs = [...readyVideoJobs, ...readyPlaylistJobs];
-
-    const skippedPlaylistsCount =
-      playlistJobs.length - readyPlaylistJobs.length;
-    const ineligibleJobsCount = allJobs.length - eligibleJobs.length;
-
-    console.log(
-      `${allReadyJobs.length} total jobs ready for processing (${readyVideoJobs.length} videos + ${readyPlaylistJobs.length} playlists)`
-    );
-
-    if (allReadyJobs.length === 0) {
-      let message = '';
-      if (eligibleJobs.length === 0) {
-        message = `All ${allJobs.length} pending jobs have exceeded max attempts`;
-      } else if (videoJobs.length === 0 && playlistJobs.length > 0) {
-        message = `All ${playlistJobs.length} playlist jobs are within 1-minute cooldown period`;
-      } else {
-        message = `No jobs ready for processing (${skippedPlaylistsCount} playlists in cooldown period)`;
-      }
-
-      if (videoEntitiesRemoved > 0) {
-        message += `, ${videoEntitiesRemoved} failed videos removed`;
-      }
-
-      console.log(message);
+    if (eligibleJobs.length === 0) {
       return {
         success: true,
         processed: 0,
-        skipped: skippedPlaylistsCount,
-        videoEntitiesRemoved,
-        message,
+        skipped: skippedJobs,
+        queueStatus,
+        message: `No jobs ready for processing (${skippedJobs} jobs in cooldown period)`,
       };
     }
 
-    console.log(
-      `${allReadyJobs.length} jobs are ready for processing (${readyVideoJobs.length} videos immediate, ${readyPlaylistJobs.length} playlists ready, ${skippedPlaylistsCount} playlists in cooldown, ${ineligibleJobsCount} jobs exceeded max attempts)`
-    );
-
-    // Process more jobs aggressively
-    const maxJobsPerRequest = 50;
-    const jobsToProcess = allReadyJobs.slice(0, maxJobsPerRequest);
-
-    // Process jobs in batches
-    const batchSize = 10;
-    const batches: ImageProcessingJob[][] = [];
-
-    for (let i = 0; i < jobsToProcess.length; i += batchSize) {
-      batches.push(jobsToProcess.slice(i, i + batchSize));
-    }
+    // 7. Calculate how many jobs we can process without exceeding the queue limit
+    const availableSlots = PROCESSING_QUEUE_LIMIT - queueStatus.processing;
+    const jobsToProcess = eligibleJobs.slice(0, Math.min(availableSlots, 20)); // Limit to 20 jobs per batch
 
     console.log(
-      `Processing ${jobsToProcess.length} jobs in ${batches.length} batches of ${batchSize}`
+      `Processing ${jobsToProcess.length} jobs (${availableSlots} slots available, ${eligibleJobs.length} eligible)`
     );
 
-    const allProcessedJobs: ProcessedJob[] = [];
-    const allFailedJobs: string[] = [];
-    let totalDeletedJobsCount = 0;
+    const processedJobs: ProcessedJob[] = [];
+    const failedJobs: string[] = [];
+    let deletedJobsCount = 0;
 
-    // Process each batch
-    for (let i = 0; i < batches.length; i++) {
-      const batch = batches[i];
-      const batchNumber = i + 1;
-
+    // 8. Process each job
+    for (const jobRow of jobsToProcess) {
       try {
-        const batchResult = await processBatchOfJobs(
-          supabase,
-          batch,
-          batchNumber
-        );
+        const job: ImageProcessingJob = {
+          job_id: jobRow.id,
+          entity_type: jobRow.entity_type as 'video' | 'playlist',
+          entity_id: jobRow.entity_id,
+          image_type: jobRow.image_type as 'thumbnail' | 'playlist_image',
+          source_url: jobRow.source_url,
+          attempts: jobRow.attempts,
+          created_at: jobRow.created_at,
+          updated_at: jobRow.updated_at,
+          processing_started_at: jobRow.processing_started_at,
+        };
 
-        allProcessedJobs.push(...batchResult.processedJobs);
-        allFailedJobs.push(...batchResult.failedJobs);
-        totalDeletedJobsCount += batchResult.deletedJobsCount;
+        // Check if entity exists, delete job if not
+        const entity = await checkEntityExistsOrDeleteJob(supabase, job);
+        if (entity === null) {
+          deletedJobsCount++;
+          continue;
+        }
 
-        console.log(
-          `Batch ${batchNumber} completed: ${batchResult.processedJobs.length} processed, ${batchResult.failedJobs.length} failed, ${batchResult.deletedJobsCount} deleted`
-        );
-      } catch (batchError) {
-        console.error(`Batch ${batchNumber} failed completely:`, batchError);
-        // Mark all jobs in this batch as failed
-        for (const job of batch) {
-          allFailedJobs.push(job.job_id);
+        // Process the job
+        const processedJob = await processJob(supabase, job, entity);
+        processedJobs.push(processedJob);
+      } catch (jobError) {
+        console.error(`Failed to process job ${jobRow.id}:`, jobError);
+        failedJobs.push(jobRow.id);
+
+        // Update job with error message and retry cooldown timestamp
+        try {
+          const errorMessage =
+            jobError instanceof Error ? jobError.message : 'Unknown error';
+          await updateJobForRetryCooldown(supabase, jobRow.id, errorMessage);
+        } catch (updateError) {
+          console.error(
+            `Failed to update job ${jobRow.id} for retry cooldown:`,
+            updateError
+          );
         }
       }
     }
 
-    let message = '';
-    if (allFailedJobs.length > 0) {
-      message = `Processed ${allProcessedJobs.length} jobs successfully in ${batches.length} batches, ${allFailedJobs.length} failed`;
-    } else {
-      message = `Processed ${allProcessedJobs.length} jobs successfully in ${batches.length} batches`;
+    // 9. Build response message
+    let message = `Processed ${processedJobs.length} jobs successfully`;
+
+    if (failedJobs.length > 0) {
+      message += `, ${failedJobs.length} failed`;
     }
 
-    if (totalDeletedJobsCount > 0) {
-      message += `, ${totalDeletedJobsCount} orphaned jobs deleted`;
+    if (deletedJobsCount > 0) {
+      message += `, ${deletedJobsCount} orphaned jobs deleted`;
     }
 
-    if (videoEntitiesRemoved > 0) {
-      message += `, ${videoEntitiesRemoved} failed videos removed`;
+    if (skippedJobs > 0) {
+      message += `, ${skippedJobs} jobs skipped (cooldown period)`;
     }
 
-    if (skippedPlaylistsCount > 0) {
-      message += `, ${skippedPlaylistsCount} playlists skipped (cooldown period)`;
-    }
-
-    if (ineligibleJobsCount > 0) {
-      message += `, ${ineligibleJobsCount} jobs exceeded max attempts`;
+    const remainingEligible = eligibleJobs.length - jobsToProcess.length;
+    if (remainingEligible > 0) {
+      message += `, ${remainingEligible} jobs remain (queue limit reached)`;
     }
 
     console.log(message);
-    if (allFailedJobs.length > 0) {
-      console.log('Failed job IDs:', allFailedJobs);
+    if (failedJobs.length > 0) {
+      console.log('Failed job IDs:', failedJobs);
     }
 
     return {
       success: true,
-      processed: allProcessedJobs.length,
-      skipped: skippedPlaylistsCount,
-      deleted: totalDeletedJobsCount,
-      videoEntitiesRemoved,
+      processed: processedJobs.length,
+      skipped: skippedJobs,
+      queueStatus,
       message,
-      jobs: allProcessedJobs.length > 0 ? allProcessedJobs : undefined,
+      jobs: processedJobs.length > 0 ? processedJobs : undefined,
     };
   } catch (error) {
-    console.error('Image processing error:', error);
+    console.error('Enhanced image processing error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -808,17 +611,17 @@ serve(async (req: Request): Promise<Response> => {
   }
 
   try {
-    console.log('Image processing edge function called');
+    console.log('Enhanced image processing edge function called');
     const result = await processImageJobs();
 
-    console.log('Edge function result:', result);
+    console.log('Enhanced edge function result:', result);
 
     return new Response(JSON.stringify(result), {
       headers: { 'Content-Type': 'application/json' },
       status: result.success ? 200 : 500,
     });
   } catch (error) {
-    console.error('Edge function error:', error);
+    console.error('Enhanced edge function error:', error);
 
     const errorResponse: ErrorResponse = {
       success: false,
