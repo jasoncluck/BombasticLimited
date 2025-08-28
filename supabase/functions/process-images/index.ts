@@ -553,6 +553,7 @@ async function processImageJobs(): Promise<ApiResponse> {
     }
 
     // Get both pending jobs and recently stuck processing jobs (30 minute threshold)
+    console.log('Fetching pending and processing jobs...');
     const { data: allJobs, error: fetchError } = await supabase
       .from('image_processing_jobs')
       .select(
@@ -568,6 +569,8 @@ async function processImageJobs(): Promise<ApiResponse> {
       console.error('Failed to fetch jobs:', fetchError);
       throw new Error(`Failed to fetch jobs: ${fetchError.message}`);
     }
+
+    console.log(`Raw query returned ${allJobs?.length || 0} jobs`);
 
     if (!allJobs || allJobs.length === 0) {
       console.log('No pending or processing jobs found in queue');
@@ -596,6 +599,10 @@ async function processImageJobs(): Promise<ApiResponse> {
     );
     const processingJobs = allJobs.filter(
       (job: PendingJobRow) => job.status === 'processing'
+    );
+
+    console.log(
+      `Separated into ${pendingJobs.length} pending jobs and ${processingJobs.length} processing jobs`
     );
 
     // Find stuck processing jobs (over 30 minutes) - these will be reset at the 30min level
@@ -655,12 +662,20 @@ async function processImageJobs(): Promise<ApiResponse> {
       return true;
     });
 
+    console.log(
+      `${eligibleJobs.length} jobs are eligible for processing (haven't exceeded max attempts)`
+    );
+
     // Separate videos and playlists for different processing logic
     const videoJobs = eligibleJobs.filter(
       (job: PendingJobRow) => job.entity_type === 'video'
     );
     const playlistJobs = eligibleJobs.filter(
       (job: PendingJobRow) => job.entity_type === 'playlist'
+    );
+
+    console.log(
+      `Separated into ${videoJobs.length} video jobs and ${playlistJobs.length} playlist jobs`
     );
 
     // Videos are always ready (no cooldown)
@@ -692,7 +707,9 @@ async function processImageJobs(): Promise<ApiResponse> {
           updated_at: job.updated_at,
           processing_started_at: job.processing_started_at,
         };
-        return isJobReadyForProcessing(mappedJob);
+        const isReady = isJobReadyForProcessing(mappedJob);
+        console.log(`Playlist job ${job.id} cooldown check result: ${isReady}`);
+        return isReady;
       })
       .map(
         (job: PendingJobRow): ImageProcessingJob => ({
@@ -714,6 +731,10 @@ async function processImageJobs(): Promise<ApiResponse> {
     const skippedPlaylistsCount =
       playlistJobs.length - readyPlaylistJobs.length;
     const ineligibleJobsCount = pendingJobs.length - eligibleJobs.length;
+
+    console.log(
+      `${allReadyJobs.length} total jobs ready for processing (${readyVideoJobs.length} videos + ${readyPlaylistJobs.length} playlists)`
+    );
 
     if (allReadyJobs.length === 0) {
       let message = '';
