@@ -32,6 +32,8 @@
   const contentState = getContentState();
   const mediaQueryState = getMediaQueryState();
 
+  const sources = $derived(userProfile?.sources ?? SOURCES);
+
   let sectionIds = sourceWithContinueStateKeys;
 
   const initialCarouselState: SourceWithCarouselState =
@@ -104,7 +106,7 @@
     {/if}
 
     <!-- The rest of your content remains unchanged -->
-    {#each SOURCES as source (source)}
+    {#each sources as source (source)}
       {#if sourceVideos[source].length > 0}
         <div class="bg-background-lighter flex flex-col">
           <a

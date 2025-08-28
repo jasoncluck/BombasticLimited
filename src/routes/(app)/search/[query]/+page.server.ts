@@ -16,6 +16,7 @@ export const load: PageServerLoad = async ({
   depends,
 }) => {
   depends('supabase:db:videos');
+  depends('supabase:db:profiles');
 
   const { contentFilter, preferredImageFormat } = await parent();
   const searchString = params.query;
