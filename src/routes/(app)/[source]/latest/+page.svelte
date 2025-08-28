@@ -10,10 +10,6 @@
     getContentState,
   } from '$lib/state/content.svelte.js';
   import { PAGINATION_QUERY_KEY } from '$lib/components/pagination/pagination.js';
-  import { optimizePageImageLoadingWithViewport } from '$lib/utils/image-preloader';
-  import { onMount } from 'svelte';
-  import { isBrowser } from '@supabase/ssr';
-  import { getPageState } from '$lib/state/page.svelte';
 
   const { data } = $props();
   const {
@@ -27,7 +23,6 @@
   } = $derived(data);
 
   const contentState = getContentState();
-  const pageState = getPageState();
 
   const sectionId = DEFAULT_SECTION_ID;
 
@@ -55,21 +50,6 @@
       contentState.selectedVideosBySection[sectionId] = restored.selectedVideos;
     },
   };
-
-  // Optimize image loading for paginated content
-  onMount(() => {
-    if (isBrowser() && videos?.length > 0) {
-      // Preload 20-25 images using viewport-aware optimization
-      optimizePageImageLoadingWithViewport(
-        videos,
-        pageState.viewportRefs.contentViewportRef,
-        {
-          maxPreload: 20,
-          priority: 'auto',
-        }
-      );
-    }
-  });
 </script>
 
 <div class="relative">

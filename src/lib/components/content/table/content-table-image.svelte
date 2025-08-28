@@ -3,14 +3,9 @@
   import Progress from '$lib/components/ui/progress/progress.svelte';
   import { getVideoSecondsOffset } from '$lib/components/video/video-service';
   import { Check } from '@lucide/svelte';
-  import {
-    getOptimalLoadingAttribute,
-    getOptimalFetchPriority,
-  } from '$lib/utils/image-preloader';
 
   import type { SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
-  import { onMount } from 'svelte';
 
   type ContentCardProps = {
     video: Video;
@@ -18,18 +13,9 @@
     index?: number;
   };
 
-  const { video = $bindable(), supabase, index }: ContentCardProps = $props();
+  const { video = $bindable() }: ContentCardProps = $props();
 
   let imageContainer = $state<HTMLDivElement>();
-
-  // Smart loading attributes for table images (usually below-the-fold)
-  const loadingAttribute = $derived(
-    getOptimalLoadingAttribute(imageContainer || null, index)
-  );
-
-  const fetchPriorityAttribute = $derived(
-    getOptimalFetchPriority(imageContainer || null, index)
-  );
 </script>
 
 <div
@@ -41,9 +27,7 @@
     class="h-full w-full object-cover"
     src={video.image_url ?? video.thumbnail_url}
     alt={video.title}
-    loading={loadingAttribute}
     decoding="async"
-    fetchpriority={fetchPriorityAttribute}
   />
   {#if isVideoWithTimestamp(video) && !video.watched_at && video.video_start_seconds && video.duration}
     <Progress

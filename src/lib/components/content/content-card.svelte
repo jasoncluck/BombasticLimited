@@ -22,12 +22,6 @@
   } from './content';
   import type { Playlist } from '$lib/supabase/playlists';
   import type { UserProfile } from '$lib/supabase/user-profiles';
-  import {
-    getOptimalLoadingAttribute,
-    getOptimalFetchPriority,
-    preloadImagesOnHover,
-  } from '$lib/utils/image-preloader';
-  import { getPageState } from '$lib/state/page.svelte';
 
   type ContentCardProps = {
     video?: Video;
@@ -78,27 +72,9 @@
   }: ContentCardProps = $props();
 
   const contentState = getContentState();
-  const pageState = getPageState();
 
   let cardElement = $state<HTMLElement>();
   let imageElement = $state<HTMLImageElement>();
-
-  // Smart loading attributes based on position and intersection
-  const loadingAttribute = $derived(
-    getOptimalLoadingAttribute(
-      cardElement || null,
-      index,
-      pageState.viewportRefs.contentViewportRef
-    )
-  );
-
-  const fetchPriorityAttribute = $derived(
-    getOptimalFetchPriority(
-      cardElement || null,
-      index,
-      pageState.viewportRefs.contentViewportRef
-    )
-  );
 
   const isVideoInPlaylist = $derived(
     isContinueVideos &&
@@ -204,14 +180,6 @@
         playlist,
       });
       await preloadData(url);
-
-      // Preload related images on hover to improve perceived performance
-      if (video.image_url || video.thumbnail_url) {
-        const imageUrls = [video.image_url, video.thumbnail_url].filter(
-          Boolean
-        ) as string[];
-        await preloadImagesOnHover(imageUrls);
-      }
     } catch (error) {
       // Silently fail if preloading doesn't work
       console.debug('Preload failed:', error);
@@ -425,9 +393,7 @@
           class="aspect-[16/9] h-auto w-full"
           src={video.image_url ?? video.thumbnail_url}
           alt={video.title}
-          loading={loadingAttribute}
-          fetchpriority={fetchPriorityAttribute}
-          decoding="async"
+          loading="lazy"
         />
         <div class="absolute top-0.5 right-0.5">
           <ContentDropdown
