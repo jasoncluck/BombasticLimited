@@ -300,7 +300,84 @@ BEGIN
 END;
 $$;
 
--- Function to mark job as completed
+-- Helper function to clean up old images from storage bucket
+CREATE OR REPLACE FUNCTION public.cleanup_old_bucket_images (
+  p_entity_type text,
+  p_entity_id text,
+  p_current_webp_path text,
+  p_current_avif_path text
+) RETURNS text LANGUAGE plpgsql SECURITY DEFINER
+SET
+  search_path = '' AS $$
+DECLARE
+  folder_prefix text;
+  file_record RECORD;
+  files_to_delete text[] := ARRAY[]::text[];
+  delete_result jsonb;
+  cleanup_summary text := '';
+  webp_count integer := 0;
+  avif_count integer := 0;
+  deleted_count integer := 0;
+BEGIN
+  -- Determine folder prefix based on entity type
+  IF p_entity_type = 'video' THEN
+    folder_prefix := 'thumbnails/' || p_entity_id || '/';
+  ELSIF p_entity_type = 'playlist' THEN
+    folder_prefix := 'playlists/' || p_entity_id || '/';
+  ELSE
+    RAISE WARNING 'Unknown entity type for cleanup: %', p_entity_type;
+    RETURN 'ERROR: Unknown entity type';
+  END IF;
+
+  -- Get list of all files in the entity folder
+  -- Note: This requires the storage.objects table access
+  BEGIN
+    -- Query the storage.objects table to find existing files
+    FOR file_record IN
+      SELECT o.name, o.id
+      FROM storage.objects o
+      WHERE o.bucket_id = 'images'
+        AND o.name LIKE folder_prefix || '%'
+        AND (o.name LIKE '%.webp' OR o.name LIKE '%.avif')
+    LOOP
+      -- Check if this file should be kept (matches current paths)
+      IF file_record.name != p_current_webp_path AND file_record.name != p_current_avif_path THEN
+        files_to_delete := array_append(files_to_delete, file_record.name);
+        
+        -- Count by type for logging
+        IF file_record.name LIKE '%.webp' THEN
+          webp_count := webp_count + 1;
+        ELSIF file_record.name LIKE '%.avif' THEN
+          avif_count := avif_count + 1;
+        END IF;
+      END IF;
+    END LOOP;
+
+    -- Delete old files if any found
+    IF array_length(files_to_delete, 1) > 0 THEN
+      -- Use storage.remove to delete files
+      SELECT storage.remove(files_to_delete) INTO delete_result;
+      deleted_count := array_length(files_to_delete, 1);
+      
+      cleanup_summary := format('Deleted %s old files (%s webp, %s avif) from %s', 
+                               deleted_count, webp_count, avif_count, folder_prefix);
+      RAISE LOG '%', cleanup_summary;
+    ELSE
+      cleanup_summary := format('No old files to delete in %s', folder_prefix);
+      RAISE LOG '%', cleanup_summary;
+    END IF;
+
+  EXCEPTION
+    WHEN OTHERS THEN
+      cleanup_summary := format('Cleanup failed for %s: %s', folder_prefix, SQLERRM);
+      RAISE WARNING '%', cleanup_summary;
+  END;
+
+  RETURN cleanup_summary;
+END;
+$$;
+
+-- Function to mark job as completed (UPDATED WITH BUCKET CLEANUP)
 CREATE OR REPLACE FUNCTION public.complete_image_processing_job (
   job_id uuid,
   jpg_path text DEFAULT NULL,
@@ -316,6 +393,7 @@ DECLARE
   job_updated_count integer := 0;
   playlist_id_bigint bigint;
   debug_info text;
+  cleanup_result text;
 BEGIN
   -- Get job details before any updates
   SELECT entity_type, entity_id, image_type, status INTO job_record
@@ -399,6 +477,26 @@ BEGIN
     RAISE WARNING 'Failed to update entity % (type: %) for job % - no rows affected', 
       job_record.entity_id, job_record.entity_type, job_id;
     RETURN FALSE;
+  END IF;
+
+  -- Clean up old images from storage bucket (only if both webp and avif paths provided)
+  IF webp_path IS NOT NULL AND avif_path IS NOT NULL THEN
+    BEGIN
+      cleanup_result := public.cleanup_old_bucket_images(
+        job_record.entity_type,
+        job_record.entity_id,
+        webp_path,
+        avif_path
+      );
+      RAISE LOG 'Bucket cleanup result: %', cleanup_result;
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- Log cleanup failure but don't fail the entire job completion
+        RAISE WARNING 'Bucket cleanup failed for job % (entity: % %): %', 
+          job_id, job_record.entity_type, job_record.entity_id, SQLERRM;
+    END;
+  ELSE
+    RAISE LOG 'Skipping bucket cleanup for job % - missing webp_path or avif_path', job_id;
   END IF;
   
   -- Update job status to 'completed' instead of deleting the row

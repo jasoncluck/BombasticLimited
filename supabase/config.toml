@@ -92,14 +92,7 @@ enabled = true
 [storage.buckets.content-images]
 public = true
 file_size_limit = "50MiB"
-allowed_mime_types = [
-  "image/png",
-  "image/jpeg",
-  "image/webp",
-  "image/avif",
-  "application/octet-stream",
-]
-objects_path = "../../content-images"
+allowed_mime_types = ["image/png", "image/jpeg", "image/webp", "image/avif"]
 
 [storage.buckets.bug-report-images]
 public = false

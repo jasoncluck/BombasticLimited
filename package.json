@@ -23,6 +23,7 @@
     "preview": "vite preview",
     "supabase:seed": "supabase db dump -f supabase/seed.sql --data-only -x notifications",
     "supabase:seed-images": "tsx supabase/scripts/seed-content-images.ts",
+    "supabase:upload-images": "tsx supabase/scripts/upload-content-images.ts",
     "test": "vitest",
     "test:ci": "vitest run --coverage --reporter=verbose",
     "test:db:reset": "supabase db reset",
