@@ -3,7 +3,7 @@
   import ContentCard from './content-card.svelte';
   import { type CarouselState, type ContentDisplayProps } from './content';
   import type { CarouselAPI } from '../ui/carousel/context';
-  import { onDestroy, onMount } from 'svelte';
+  import { onDestroy } from 'svelte';
   import {
     DEFAULT_SECTION_ID,
     getContentState,

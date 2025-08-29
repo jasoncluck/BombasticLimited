@@ -7,6 +7,15 @@ export const load = async () => {
       api_host: 'https://alpine.bombastic.ltd',
       ui_host: 'https://us.posthog.com',
       person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
+
+      // Enable error tracking features
+      capture_pageview: true,
+      capture_pageleave: true,
+
+      // Session recording (optional - helps with debugging)
+      session_recording: {
+        maskAllInputs: true,
+      },
     });
   }
 

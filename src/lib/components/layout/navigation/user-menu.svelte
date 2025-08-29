@@ -13,6 +13,8 @@
     TriangleAlert,
   } from '@lucide/svelte';
   import NotificationBell from '$lib/components/notifications/notification-bell.svelte';
+  import BugReportDialog from '$lib/components/bug-report/bug-report-dialog.svelte';
+  import BugReportDrawer from '$lib/components/bug-report/bug-report-drawer.svelte';
   import {
     getUserInitials,
     handleUpdateProfileContentDisplay,
@@ -45,6 +47,10 @@
   } = $derived(navigationState);
 
   const { canHover, isMd } = $derived(mediaQueryState);
+
+  // Bug report dialog state
+  let bugReportDialogOpen = $state(false);
+  let bugReportDrawerOpen = $state(false);
 </script>
 
 <!-- Content Display Preference (Desktop) -->
@@ -160,16 +166,14 @@
               Settings
             </div>
           </DropdownMenu.Item>
-          <DropdownMenu.Item class="cursor-pointer">
-            <a
-              href="https://github.com/jasoncluck/Bombastic/issues/new?template=bug_report.md"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="flex items-center gap-2 text-inherit no-underline"
-            >
+          <DropdownMenu.Item
+            class="cursor-pointer"
+            onclick={() => (bugReportDialogOpen = true)}
+          >
+            <div class="flex items-center gap-2">
               <TriangleAlert />
               Report Bug
-            </a>
+            </div>
           </DropdownMenu.Item>
           <DropdownMenu.Item
             class="cursor-pointer"
@@ -223,20 +227,17 @@
           <Cog />
           Settings
         </Button>
-        <a
-          href="https://github.com/jasoncluck/Bombastic/issues/new?template=bug_report.md"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="drawer-button text-inherit no-underline {buttonVariants({
-            variant: 'ghost',
-          })}"
+        <Button
+          variant="ghost"
+          class="drawer-button"
           onclick={() => {
+            bugReportDrawerOpen = true;
             openAccountDrawer = false;
           }}
         >
           <TriangleAlert />
           Report Bug
-        </a>
+        </Button>
         <Button
           variant="ghost"
           class="drawer-button"
@@ -272,3 +273,9 @@
     Login
   </Button>
 {/if}
+
+<!-- Bug Report Dialog (Desktop) -->
+<BugReportDialog bind:open={bugReportDialogOpen} {supabase} {session} />
+
+<!-- Bug Report Drawer (Mobile) -->
+<BugReportDrawer bind:open={bugReportDrawerOpen} {supabase} {session} />

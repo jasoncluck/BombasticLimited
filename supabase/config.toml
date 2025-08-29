@@ -99,7 +99,12 @@ allowed_mime_types = [
   "image/avif",
   "application/octet-stream",
 ]
-objects_path = "./content-images"
+objects_path = "../../content-images"
+
+[storage.buckets.bug-report-images]
+public = false
+file_size_limit = "50MiB"
+allowed_mime_types = ["image/png", "image/jpeg", "image/webp", "image/gif"]
 
 
 # Image transformation API is available to Supabase Pro plan.
