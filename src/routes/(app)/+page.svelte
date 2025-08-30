@@ -107,14 +107,7 @@
       />
     </div>
   {/if}
-  <h1
-    class="header-content mb-4 {getContentView(mediaQueryState, userProfile) ===
-    'TABLE'
-      ? 'ml-2'
-      : ''}"
-  >
-    Latest Videos
-  </h1>
+  <h1 class="header-content mb-4">Latest Videos</h1>
 
   <div class="mt-4 mb-8 flex flex-col gap-8">
     {#each sources as source (source)}
