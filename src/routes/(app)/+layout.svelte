@@ -355,7 +355,7 @@
     }
   });
 
-  function initializeComponents(): void {
+  function initializeComponents(): () => void {
     const navigationCleanup = navigationState.initializeNonBlocking();
 
     // Initialize media queries immediately (fast, synchronous)
