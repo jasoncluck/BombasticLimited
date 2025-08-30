@@ -20,6 +20,8 @@ interface DownloadStats {
   invalidFiles: number;
   mimeTypeBreakdown: Record<string, number>;
   apiCalls: number;
+  foldersProcessed: number;
+  totalFolders: number;
 }
 
 interface MimeDetectionResult {
@@ -33,6 +35,7 @@ interface RateLimitConfig {
   delayBetweenBatches: number;
   retryDelay: number;
   maxRetries: number;
+  discoveryBatchSize: number;
 }
 
 interface StorageFileItem {
@@ -52,14 +55,17 @@ const stats: DownloadStats = {
   invalidFiles: 0,
   mimeTypeBreakdown: {},
   apiCalls: 0,
+  foldersProcessed: 0,
+  totalFolders: 0,
 };
 
-// Optimized rate limiting configuration
+// More conservative rate limiting to prevent API exhaustion
 const RATE_LIMIT: RateLimitConfig = {
-  maxConcurrent: 20,
-  delayBetweenBatches: 300,
-  retryDelay: 5000,
-  maxRetries: 3,
+  maxConcurrent: 25, // Reduced from 50 to be more conservative
+  delayBetweenBatches: 200, // Slightly increased
+  retryDelay: 2000,
+  maxRetries: 5, // Increased retries
+  discoveryBatchSize: 500, // Smaller batches for discovery
 };
 
 // File signature validation functions
@@ -174,7 +180,7 @@ async function ensureDirectoryExists(dirPath: string): Promise<void> {
 }
 
 async function delay(ms: number, attempt: number = 0): Promise<void> {
-  const backoffMs = ms * Math.pow(1.5, attempt);
+  const backoffMs = ms * Math.pow(1.2, attempt); // Gentler backoff
   return new Promise((resolve) => setTimeout(resolve, backoffMs));
 }
 
@@ -191,15 +197,24 @@ async function withRateLimit<T>(
     const isRateLimit =
       apiError?.status === 429 ||
       apiError?.message?.includes('rate limit') ||
-      apiError?.message?.includes('too many requests');
+      apiError?.message?.includes('too many requests') ||
+      apiError?.message?.includes('timeout');
 
     if (isRateLimit && retryCount < RATE_LIMIT.maxRetries) {
+      const delayMs = RATE_LIMIT.retryDelay * Math.pow(2, retryCount); // Exponential backoff
       console.log(
-        `  ⏳ Rate limited, retrying ${operationName} in ${RATE_LIMIT.retryDelay}ms... (attempt ${retryCount + 1})`
+        `  ⏳ Rate limited/timeout, retrying ${operationName} in ${delayMs}ms... (attempt ${retryCount + 1}/${RATE_LIMIT.maxRetries})`
       );
-      await delay(RATE_LIMIT.retryDelay, retryCount);
+      await delay(delayMs);
       return withRateLimit(operation, operationName, retryCount + 1);
     }
+
+    // Log the error for debugging but don't always throw
+    console.error(`❌ Operation failed: ${operationName}`, {
+      status: apiError?.status,
+      message: apiError?.message,
+      retryCount,
+    });
 
     throw error;
   }
@@ -238,95 +253,129 @@ class Semaphore {
 
 const downloadSemaphore = new Semaphore(RATE_LIMIT.maxConcurrent);
 
-// Simplified function to get all files using bucket-wide search
-async function getAllFiles(): Promise<string[]> {
-  console.log('Getting all files from bucket...');
+// Robust file discovery with comprehensive error handling
+async function getAllFilesRobust(): Promise<string[]> {
+  console.log('🚀 Starting comprehensive file discovery...');
 
-  const { data: files, error } = await withRateLimit(
-    () =>
-      remoteSupabase.storage.from(bucketName).list('', {
-        limit: 10000, // Large limit to get all files
-        sortBy: { column: 'name', order: 'asc' },
-      }),
-    'listing all bucket files'
-  );
-
-  if (error) {
-    console.error('Error listing files:', error);
-    throw error;
-  }
-
-  if (!files) {
-    console.log('No files found in bucket');
-    return [];
-  }
-
-  // Filter to only get actual files (not folders) and build full paths
   const allFiles: string[] = [];
+  const processedPaths = new Set<string>();
+  const pendingPaths: string[] = [''];
+  let totalFoldersFound = 0;
 
-  for (const file of files) {
-    if (file.id !== null) {
-      // Only actual files, not folders
-      allFiles.push(file.name);
+  while (pendingPaths.length > 0) {
+    const currentPath = pendingPaths.shift()!;
+
+    if (processedPaths.has(currentPath)) {
+      continue;
+    }
+    processedPaths.add(currentPath);
+    stats.foldersProcessed++;
+
+    try {
+      console.log(
+        `📂 Scanning folder ${stats.foldersProcessed}: ${currentPath || 'root'} (${pendingPaths.length} folders remaining)`
+      );
+
+      // Use pagination to handle large folders
+      let pageToken: string | undefined;
+      let filesInThisFolder = 0;
+      let foldersInThisFolder = 0;
+
+      do {
+        const listParams: any = {
+          limit: RATE_LIMIT.discoveryBatchSize,
+          sortBy: { column: 'name', order: 'asc' },
+        };
+
+        if (pageToken) {
+          listParams.offset = pageToken;
+        }
+
+        const { data: items, error } = await withRateLimit(
+          () =>
+            remoteSupabase.storage
+              .from(bucketName)
+              .list(currentPath, listParams),
+          `listing ${currentPath || 'root'} (page ${pageToken || 'first'})`
+        );
+
+        if (error) {
+          console.error(`❌ Error listing ${currentPath}:`, error);
+          break; // Skip this folder but continue with others
+        }
+
+        if (!items || items.length === 0) {
+          break; // No more items
+        }
+
+        for (const item of items) {
+          const fullPath = currentPath
+            ? `${currentPath}/${item.name}`
+            : item.name;
+
+          if (item.id !== null) {
+            // It's a file
+            allFiles.push(fullPath);
+            filesInThisFolder++;
+          } else {
+            // It's a folder
+            if (
+              !processedPaths.has(fullPath) &&
+              !pendingPaths.includes(fullPath)
+            ) {
+              pendingPaths.push(fullPath);
+              foldersInThisFolder++;
+              totalFoldersFound++;
+            }
+          }
+        }
+
+        // Check if we got a full batch (indicating there might be more)
+        if (items.length < RATE_LIMIT.discoveryBatchSize) {
+          break; // This was the last page
+        }
+
+        // Set up for next page (simple offset-based pagination)
+        pageToken = (
+          parseInt(pageToken || '0') + RATE_LIMIT.discoveryBatchSize
+        ).toString();
+      } while (true);
+
+      console.log(
+        `  📁 Found ${foldersInThisFolder} subfolders, ${filesInThisFolder} files. Total files so far: ${allFiles.length}`
+      );
+
+      // Add a small delay between folder scans to prevent overwhelming the API
+      if (pendingPaths.length > 0) {
+        await delay(50); // Small delay between folders
+      }
+    } catch (error) {
+      console.error(
+        `❌ Critical error processing folder ${currentPath}:`,
+        error
+      );
+      // Continue with next folder instead of failing entirely
+      continue;
     }
   }
 
-  // If we have folders, we'll need to recursively get their contents
-  const folders = files.filter(
-    (item): item is StorageFileItem => item.id === null
-  );
+  stats.totalFiles = allFiles.length;
+  stats.totalFolders = totalFoldersFound;
 
-  for (const folder of folders) {
-    const folderFiles = await getFolderFiles(folder.name);
-    allFiles.push(...folderFiles);
-  }
+  console.log(`✅ Discovery complete!`);
+  console.log(`  📁 Total folders processed: ${stats.foldersProcessed}`);
+  console.log(`  📄 Total files found: ${allFiles.length}`);
+  console.log(`  🔗 API calls used for discovery: ${stats.apiCalls}`);
 
   return allFiles;
 }
 
-// Helper function to get files from a specific folder
-async function getFolderFiles(folderPath: string): Promise<string[]> {
-  const { data: items, error } = await withRateLimit(
-    () =>
-      remoteSupabase.storage.from(bucketName).list(folderPath, {
-        limit: 10000,
-        sortBy: { column: 'name', order: 'asc' },
-      }),
-    `listing folder ${folderPath}`
-  );
-
-  if (error) {
-    console.error(`Error listing files in ${folderPath}:`, error);
-    return [];
-  }
-
-  if (!items) {
-    return [];
-  }
-
-  const files: string[] = [];
-
-  for (const item of items) {
-    const fullPath = `${folderPath}/${item.name}`;
-
-    if (item.id !== null) {
-      // It's a file
-      files.push(fullPath);
-    } else {
-      // It's a folder, recurse into it
-      const subFiles = await getFolderFiles(fullPath);
-      files.push(...subFiles);
-    }
-  }
-
-  return files;
-}
-
 async function downloadContentImages(): Promise<void> {
   const startTime = Date.now();
+  let lastProgressTime = startTime;
 
   try {
-    console.log('Starting content images download...');
+    console.log('Starting robust content images download...');
     console.log(`Download path: ${localDownloadPath}`);
     console.log(
       `Rate limiting: ${RATE_LIMIT.maxConcurrent} concurrent downloads`
@@ -334,20 +383,16 @@ async function downloadContentImages(): Promise<void> {
 
     await ensureDirectoryExists(localDownloadPath);
 
-    // Get all files at once
-    console.log('\n=== Getting all files from bucket ===');
-    const allFiles = await getAllFiles();
-
-    stats.totalFiles = allFiles.length;
-    console.log(`\n📁 Found ${allFiles.length} total files`);
-    console.log(`🔗 Used ${stats.apiCalls} API calls for listing`);
+    // Get all files first with robust error handling
+    console.log('\n=== Starting comprehensive file discovery ===');
+    const allFiles = await getAllFilesRobust();
 
     if (allFiles.length === 0) {
       console.log('No files to download.');
       return;
     }
 
-    // Download files in batches
+    // Download files in batches with progress reporting
     console.log('\n=== Starting downloads ===');
     const batchSize = RATE_LIMIT.maxConcurrent;
     const totalBatches = Math.ceil(allFiles.length / batchSize);
@@ -355,18 +400,49 @@ async function downloadContentImages(): Promise<void> {
     for (let i = 0; i < allFiles.length; i += batchSize) {
       const batch = allFiles.slice(i, i + batchSize);
       const batchNumber = Math.floor(i / batchSize) + 1;
+      const now = Date.now();
+
+      // Progress reporting every 30 seconds
+      if (now - lastProgressTime > 30000 || batchNumber === 1) {
+        const progress = ((i / allFiles.length) * 100).toFixed(1);
+        const elapsed = ((now - startTime) / 1000).toFixed(0);
+        const rate = stats.downloadedFiles / (parseInt(elapsed) || 1);
+
+        console.log(`\n📊 Progress Report:`);
+        console.log(
+          `  📦 Batch ${batchNumber}/${totalBatches} (${progress}% complete)`
+        );
+        console.log(
+          `  ⏱️  Elapsed: ${elapsed}s | Rate: ${rate.toFixed(1)} files/sec`
+        );
+        console.log(
+          `  ✅ Downloaded: ${stats.downloadedFiles} | ⏭️  Skipped: ${stats.skippedFiles} | ❌ Errors: ${stats.errorFiles}`
+        );
+        console.log(`  🔗 API calls: ${stats.apiCalls}`);
+
+        lastProgressTime = now;
+      }
 
       console.log(
-        `\n📦 Processing batch ${batchNumber}/${totalBatches} (${batch.length} files)`
+        `📦 Processing batch ${batchNumber}/${totalBatches} (${batch.length} files)`
       );
 
-      await Promise.all(batch.map(async (filePath) => downloadFile(filePath)));
+      await Promise.allSettled(
+        batch.map(async (filePath) => {
+          try {
+            await downloadFile(filePath);
+          } catch (error) {
+            console.error(`❌ Failed to download ${filePath}:`, error);
+            stats.errorFiles++;
+          }
+        })
+      );
 
-      // Short delay between batches
-      if (i + batchSize < allFiles.length) {
-        console.log(
-          `  ⏳ Batch complete, waiting ${RATE_LIMIT.delayBetweenBatches}ms...`
-        );
+      // Delay between batches to prevent overwhelming the server
+      if (
+        i + batchSize < allFiles.length &&
+        RATE_LIMIT.delayBetweenBatches > 0
+      ) {
         await delay(RATE_LIMIT.delayBetweenBatches);
       }
     }
@@ -378,10 +454,29 @@ async function downloadContentImages(): Promise<void> {
     console.log(
       `Average API calls per second: ${(stats.apiCalls / parseFloat(duration)).toFixed(1)}`
     );
+    console.log(`Files processed: ${stats.totalFiles}`);
     console.log(`Files downloaded: ${stats.downloadedFiles}`);
     console.log(`Files skipped (already exist): ${stats.skippedFiles}`);
     console.log(`Files with errors: ${stats.errorFiles}`);
     console.log(`Invalid files detected: ${stats.invalidFiles}`);
+    console.log(
+      `Folders processed: ${stats.foldersProcessed}/${stats.totalFolders}`
+    );
+
+    // Verify we got everything
+    if (
+      stats.downloadedFiles +
+        stats.skippedFiles +
+        stats.errorFiles +
+        stats.invalidFiles !==
+      stats.totalFiles
+    ) {
+      console.warn(`⚠️  Warning: File count mismatch detected!`);
+      console.warn(`  Expected: ${stats.totalFiles}`);
+      console.warn(
+        `  Processed: ${stats.downloadedFiles + stats.skippedFiles + stats.errorFiles + stats.invalidFiles}`
+      );
+    }
 
     if (Object.keys(stats.mimeTypeBreakdown).length > 0) {
       console.log('\n=== MIME Type Breakdown ===');
@@ -393,6 +488,10 @@ async function downloadContentImages(): Promise<void> {
     }
   } catch (error) {
     console.error('Download failed:', error);
+    console.log('\nPartial results:');
+    console.log(`Files downloaded so far: ${stats.downloadedFiles}`);
+    console.log(`Files skipped so far: ${stats.skippedFiles}`);
+    console.log(`Files with errors so far: ${stats.errorFiles}`);
     process.exit(1);
   } finally {
     console.log('\nCleaning up and exiting...');
@@ -407,7 +506,12 @@ async function downloadFile(filePath: string): Promise<void> {
     const localFilePath = join(localDownloadPath, filePath);
 
     if (existsSync(localFilePath)) {
-      console.log(`    ⏭️  Skipping ${filePath} - already exists locally`);
+      // Only log occasionally to reduce noise
+      if (stats.skippedFiles % 100 === 0) {
+        console.log(
+          `    ⏭️  Skipping ${filePath} - already exists locally (${stats.skippedFiles + 1} total skipped)`
+        );
+      }
       stats.skippedFiles++;
       return;
     }
@@ -451,9 +555,14 @@ async function downloadFile(filePath: string): Promise<void> {
     await writeFile(localFilePath, buffer);
 
     const fileSize = formatFileSize(buffer.length);
-    console.log(
-      `    ✅ Downloaded: ${filePath} (${mimeResult.detectedMimeType}, ${fileSize})`
-    );
+
+    // Only log downloads occasionally to reduce noise
+    if (stats.downloadedFiles % 50 === 0) {
+      console.log(
+        `    ✅ Downloaded: ${filePath} (${mimeResult.detectedMimeType}, ${fileSize}) - ${stats.downloadedFiles + 1} total`
+      );
+    }
+
     stats.downloadedFiles++;
   } catch (error) {
     console.error(`    ❌ Error downloading ${filePath}:`, error);
@@ -468,6 +577,10 @@ process.on('SIGINT', () => {
   console.log('\n\nReceived SIGINT. Gracefully shutting down...');
   console.log('Current stats:');
   console.log(`  API calls made: ${stats.apiCalls}`);
+  console.log(
+    `  Folders processed: ${stats.foldersProcessed}/${stats.totalFolders}`
+  );
+  console.log(`  Files found: ${stats.totalFiles}`);
   console.log(`  Downloaded: ${stats.downloadedFiles}`);
   console.log(`  Skipped: ${stats.skippedFiles}`);
   console.log(`  Errors: ${stats.errorFiles}`);
@@ -481,11 +594,19 @@ process.on('SIGTERM', () => {
 
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
+  console.log('Current stats before crash:');
+  console.log(`  Downloaded: ${stats.downloadedFiles}`);
+  console.log(`  Skipped: ${stats.skippedFiles}`);
+  console.log(`  Errors: ${stats.errorFiles}`);
   process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  console.log('Current stats before crash:');
+  console.log(`  Downloaded: ${stats.downloadedFiles}`);
+  console.log(`  Skipped: ${stats.skippedFiles}`);
+  console.log(`  Errors: ${stats.errorFiles}`);
   process.exit(1);
 });
 

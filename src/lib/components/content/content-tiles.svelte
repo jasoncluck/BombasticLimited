@@ -7,7 +7,6 @@
     DEFAULT_SECTION_ID,
   } from '$lib/state/content.svelte';
   import { onMount, onDestroy } from 'svelte';
-  import { simpleImagePreloader } from '$lib/utils/image-preloader';
 
   type ContentTilesProps = ContentDisplayProps & {
     allowVideoReorder?: boolean;
@@ -53,7 +52,7 @@
       );
 
       // Observe container for image preloading
-      simpleImagePreloader.observeContainer(containerElement);
+      // simpleImagePreloader.observeContainer(containerElement);
 
       return cleanup;
     }
@@ -62,7 +61,7 @@
   // Cleanup observer when component is destroyed
   onDestroy(() => {
     if (containerElement) {
-      simpleImagePreloader.unobserveContainer(containerElement);
+      // simpleImagePreloader.unobserveContainer(containerElement);
     }
   });
 </script>

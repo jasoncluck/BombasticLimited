@@ -35,7 +35,6 @@ interface SuccessResponse {
   jobs?: ProcessedJob[];
   skipped?: number;
   stuckJobsRetried?: number;
-  queueLimitReached?: boolean;
   queueStatus?: {
     processing: number;
     pending: number;
@@ -76,6 +75,13 @@ interface QueueStatusRow {
   newest_job: string | null;
 }
 
+interface StuckJobResult {
+  reset_job_id: string;
+  entity_type: string;
+  entity_id: string;
+  minutes_stuck: number;
+}
+
 // Initialize Supabase client
 const supabaseUrl = Deno.env.get('SUPABASE_URL');
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -84,10 +90,10 @@ if (!supabaseUrl || !supabaseServiceKey) {
   throw new Error('Missing required Supabase environment variables');
 }
 
-// Configuration constants
-const PROCESSING_QUEUE_LIMIT = 100;
+// Configuration constants - FIXED: Reduced stuck job threshold to 5 minutes
 const RETRY_COOLDOWN_MINUTES = 5;
-const STUCK_JOB_THRESHOLD_MINUTES = 10; // More aggressive stuck job detection
+const STUCK_JOB_THRESHOLD_MINUTES = 5; // Changed from 10 to 5 minutes
+const PLAYLIST_PROCESSING_COOLDOWN_MINUTES = 5; // New constant for playlist processing cooldown
 
 /**
  * Get current queue status from the database
@@ -141,47 +147,75 @@ async function getQueueStatus(
 }
 
 /**
- * Check if the trigger queue is healthy and available
+ * Check if a job is stuck (processing for more than 5 minutes)
  */
-async function checkTriggerQueueHealth(): Promise<boolean> {
-  try {
-    // Validate required environment variable exists
-    const triggerSecret = Deno.env.get('TRIGGER_SECRET_KEY');
-    if (!triggerSecret) {
-      console.error('TRIGGER_SECRET_KEY environment variable is missing');
-      return false;
-    }
-
-    // For now, we'll consider the queue healthy if the environment is properly configured
-    // In a production environment, this could include additional health checks like:
-    // - Making a test API call to the trigger service
-    // - Checking if the worker is responsive
-    // - Validating network connectivity
-
-    console.log('Trigger queue health check passed');
-    return true;
-  } catch (error) {
-    console.error('Trigger queue health check failed:', error);
+function isJobStuckProcessing(job: JobRow): boolean {
+  if (job.status !== 'processing' || !job.processing_started_at) {
     return false;
   }
+
+  const now = new Date();
+  const processingStarted = new Date(job.processing_started_at);
+  const stuckThresholdMs = STUCK_JOB_THRESHOLD_MINUTES * 60 * 1000;
+  const timeDifferenceMs = now.getTime() - processingStarted.getTime();
+
+  const isStuck = timeDifferenceMs >= stuckThresholdMs;
+
+  if (isStuck) {
+    const minutesStuck = Math.floor(timeDifferenceMs / 1000 / 60);
+    console.log(
+      `🚨 Job ${job.id} has been processing for ${minutesStuck} minutes (threshold: ${STUCK_JOB_THRESHOLD_MINUTES}min) - STUCK`
+    );
+  }
+
+  return isStuck;
 }
 
 /**
- * Check if a job is ready for processing - simplified logic
- * Focuses on pending jobs first, with basic cooldown for failed jobs
- * Also handles "fresh retry" logic for jobs that exceeded max attempts
+ * Check if a job is ready for processing
+ * For playlist images, they can only be processed if 5 minutes have passed since created_at
  */
 function isJobReadyForProcessing(job: JobRow): {
   ready: boolean;
   needsFreshRetry: boolean;
 } {
-  // Always process pending jobs (these are either new or have been reset from stuck/failed)
+  // Always process pending jobs
   if (job.status === 'pending') {
+    // For playlist image jobs, check if 5 minutes have passed since creation
+    if (job.entity_type === 'playlist' && job.image_type === 'playlist_image') {
+      const now = new Date();
+      const createdAt = new Date(job.created_at);
+      const timeDifferenceMs = now.getTime() - createdAt.getTime();
+      const cooldownMs = PLAYLIST_PROCESSING_COOLDOWN_MINUTES * 60 * 1000;
+
+      const isAfterCooldown = timeDifferenceMs >= cooldownMs;
+      const minutesElapsed = Math.floor(timeDifferenceMs / 1000 / 60);
+
+      if (!isAfterCooldown) {
+        console.log(
+          `⏳ Playlist image job ${job.id} still in cooldown (${minutesElapsed}/${PLAYLIST_PROCESSING_COOLDOWN_MINUTES}min since creation)`
+        );
+        return { ready: false, needsFreshRetry: false };
+      }
+
+      console.log(
+        `✅ Playlist image job ${job.id} ready for processing after ${minutesElapsed} minutes since creation`
+      );
+    }
+
+    // Check if this pending job has exceeded max attempts (needs fresh retry)
+    if (job.attempts >= job.max_attempts) {
+      console.log(
+        `🔄 Job ${job.id} is pending but exceeded max attempts (${job.attempts}/${job.max_attempts}) - needs fresh retry`
+      );
+      return { ready: true, needsFreshRetry: true };
+    }
+
     console.log(`✅ Job ${job.id} is pending and ready for processing`);
     return { ready: true, needsFreshRetry: false };
   }
 
-  // Skip jobs that are currently processing (they should be handled by stuck job reset)
+  // Skip jobs that are currently processing (unless they're stuck - handled separately)
   if (job.status === 'processing') {
     return { ready: false, needsFreshRetry: false };
   }
@@ -223,8 +257,7 @@ function isJobReadyForProcessing(job: JobRow): {
 }
 
 /**
- * Check if entity exists - returns entity data if it exists, null if it doesn't
- * Note: No longer deletes job rows to preserve data for analysis
+ * Check if entity exists
  */
 async function checkEntityExists(
   supabase: ReturnType<typeof createClient>,
@@ -290,62 +323,54 @@ async function checkEntityExists(
 }
 
 /**
- * Reset job back to pending status before processing
- * Fixed to preserve the updated_at timestamp to avoid interfering with cooldown logic
+ * Reset stuck job back to pending status
  */
-async function resetJobToPending(
+async function resetStuckJob(
   supabase: ReturnType<typeof createClient>,
-  jobId: string,
-  currentStatus: string
+  job: JobRow
 ): Promise<void> {
-  if (currentStatus === 'pending') {
-    // Job is already pending, no need to reset
-    return;
-  }
+  const minutesStuck = job.processing_started_at
+    ? Math.floor(
+        (new Date().getTime() - new Date(job.processing_started_at).getTime()) /
+          1000 /
+          60
+      )
+    : 0;
 
-  // Use a direct database update to avoid the automatic updated_at trigger
-  // This preserves the cooldown timestamp logic
   const { error } = await supabase
     .from('image_processing_jobs')
     .update({
       status: 'pending',
-      processing_started_at: null, // Clear any stuck processing timestamp
-      error_message: null, // Clear any previous error message
-      // Deliberately NOT updating updated_at to preserve cooldown logic
+      processing_started_at: null,
+      updated_at: new Date().toISOString(),
     })
-    .eq('id', jobId);
+    .eq('id', job.id);
 
   if (error) {
-    console.error(
-      `Failed to reset job ${jobId} from ${currentStatus} to pending:`,
-      error
-    );
-    throw new Error(`Failed to reset job status: ${error.message}`);
+    console.error(`Failed to reset stuck job ${job.id}:`, error);
+    throw new Error(`Failed to reset stuck job: ${error.message}`);
   }
 
   console.log(
-    `Reset job ${jobId} from ${currentStatus} to pending status (preserved cooldown timestamp)`
+    `🔄 Reset stuck job ${job.id} (${job.entity_type} ${job.entity_id}) - was processing for ${minutesStuck} minutes`
   );
 }
 
 /**
- * Reset job completely with fresh retry (reset attempts to 0)
- * Used for jobs that have exceeded max attempts but are ready for a complete fresh start
+ * Reset job for fresh retry (reset attempts to 0)
  */
 async function resetJobForFreshRetry(
   supabase: ReturnType<typeof createClient>,
   jobId: string,
   currentStatus: string
 ): Promise<void> {
-  // Reset job to pending with attempts = 0 for a completely fresh start
   const { error } = await supabase
     .from('image_processing_jobs')
     .update({
       status: 'pending',
-      attempts: 0, // Reset attempts to 0 for fresh retry
-      processing_started_at: null, // Clear any stuck processing timestamp
-      error_message: null, // Clear any previous error message
-      // Deliberately NOT updating updated_at to preserve cooldown logic
+      attempts: 0,
+      processing_started_at: null,
+      error_message: null,
     })
     .eq('id', jobId);
 
@@ -366,13 +391,12 @@ async function processJob(
   supabase: ReturnType<typeof createClient>,
   job: ImageProcessingJob,
   entity: Record<string, unknown>,
-  needsStatusReset: boolean,
   needsFreshRetry: boolean,
   originalStatus?: string
 ): Promise<ProcessedJob> {
   const jobContext = `Job ${job.job_id} (${job.entity_type} ${job.entity_id})`;
 
-  // If this job needs fresh retry (exceeded max attempts), reset it completely
+  // CRITICAL FIX: Reset fresh retry jobs BEFORE attempting to mark as processing
   if (needsFreshRetry && originalStatus) {
     console.log(
       `🆕 ${jobContext}: Performing FRESH RETRY - resetting from ${originalStatus} to pending with attempts=0...`
@@ -389,24 +413,6 @@ async function processJob(
       );
       throw new Error(
         `Failed to reset job for fresh retry: ${resetError instanceof Error ? resetError.message : 'Unknown error'}`
-      );
-    }
-  }
-  // If this job needs status reset (not already pending), reset it to pending first
-  else if (needsStatusReset && originalStatus) {
-    console.log(
-      `🔄 ${jobContext}: Resetting from ${originalStatus} to pending...`
-    );
-    try {
-      await resetJobToPending(supabase, job.job_id, originalStatus);
-      console.log(`✅ ${jobContext}: Successfully reset to pending`);
-    } catch (resetError) {
-      console.error(
-        `❌ ${jobContext}: Failed to reset to pending:`,
-        resetError
-      );
-      throw new Error(
-        `Failed to reset job to pending: ${resetError instanceof Error ? resetError.message : 'Unknown error'}`
       );
     }
   }
@@ -454,7 +460,7 @@ async function processJob(
 
   const retryMessage = needsFreshRetry
     ? ` (FRESH RETRY from ${originalStatus} - reset attempts to 0)`
-    : needsStatusReset
+    : originalStatus && originalStatus !== 'pending'
       ? ` (retrying ${originalStatus} job after cooldown)`
       : '';
   console.log(
@@ -480,7 +486,6 @@ async function processJob(
     sourceUrl: job.source_url,
     attempts: job.attempts,
     status: job.status,
-    needsStatusReset,
     needsFreshRetry,
     originalStatus,
   });
@@ -514,8 +519,7 @@ async function processJob(
 }
 
 /**
- * Handle job processing failure with proper error tracking
- * Fixed to not interfere with cooldown logic by avoiding timestamp updates
+ * Handle job processing failure
  */
 async function handleJobProcessingFailure(
   supabase: ReturnType<typeof createClient>,
@@ -523,16 +527,6 @@ async function handleJobProcessingFailure(
   errorMessage: string
 ): Promise<void> {
   console.error(`Job ${jobId} processing failed: ${errorMessage}`);
-
-  // We don't call fail_image_processing_job here because that would update
-  // the updated_at timestamp and interfere with retry cooldown logic.
-  // Instead, we let the job remain in its current state and rely on the
-  // existing retry mechanism to handle it after the cooldown period.
-
-  // The job will naturally fail through the trigger.dev workflow timeout
-  // or explicit failure handling in the worker, which will call the
-  // appropriate database functions with proper state management.
-
   console.log(
     `Job ${jobId} failure recorded. Job will be available for retry after cooldown period.`
   );
@@ -542,79 +536,28 @@ async function processImageJobs(): Promise<ApiResponse> {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
-    console.log('🚀 Starting simplified image processing job batch...');
+    console.log('🚀 Starting image processing job batch...');
 
-    // 1. Queue Availability Check
-    console.log('🔍 Checking trigger queue health...');
-    const isQueueHealthy = await checkTriggerQueueHealth();
-    if (!isQueueHealthy) {
-      console.warn('⚠️ Trigger queue is not healthy, aborting job processing');
-      return {
-        success: false,
-        error: 'Trigger queue is not available or healthy',
-      };
-    }
-
-    // 2. Reset stuck jobs first (more aggressive 10-minute threshold)
+    // 1. Get queue status for reporting
+    const queueStatus = await getQueueStatus(supabase);
     console.log(
-      `🧹 Resetting stuck jobs (processing > ${STUCK_JOB_THRESHOLD_MINUTES} minutes)...`
-    );
-    const { data: stuckJobsReset, error: stuckJobsError } = await supabase.rpc(
-      'reset_stuck_image_processing_jobs',
-      {
-        stuck_after_minutes: STUCK_JOB_THRESHOLD_MINUTES,
-      }
+      `📊 Queue status: ${queueStatus.processing} jobs processing, ${queueStatus.pending} pending, ${queueStatus.failed} failed`
     );
 
-    let stuckJobsResetCount = 0;
-    if (stuckJobsError) {
-      console.error('❌ Failed to reset stuck jobs:', stuckJobsError);
-    } else if (stuckJobsReset && stuckJobsReset.length > 0) {
-      stuckJobsResetCount = stuckJobsReset.length;
-      console.log(`✅ Reset ${stuckJobsResetCount} stuck jobs back to pending`);
-      for (const stuckJob of stuckJobsReset) {
-        console.log(
-          `  📌 Reset job ${stuckJob.reset_job_id} (${stuckJob.entity_type} ${stuckJob.entity_id}) - stuck for ${Math.round(stuckJob.minutes_stuck)} minutes`
-        );
-      }
-    } else {
-      console.log('✅ No stuck jobs found');
-    }
-
-    // 3. Get updated queue status after stuck job reset
-    const updatedQueueStatus = await getQueueStatus(supabase);
-
-    // 4. Queue Limit Check (after resetting stuck jobs)
-    if (updatedQueueStatus.processing >= PROCESSING_QUEUE_LIMIT) {
-      console.warn(
-        `⛔ Queue limit still reached after stuck job reset: ${updatedQueueStatus.processing} jobs currently processing (limit: ${PROCESSING_QUEUE_LIMIT})`
-      );
-      return {
-        success: true,
-        processed: 0,
-        queueLimitReached: true,
-        queueStatus: updatedQueueStatus,
-        message: `Queue limit reached: ${updatedQueueStatus.processing}/${PROCESSING_QUEUE_LIMIT} jobs processing`,
-      };
-    }
-
+    // 2. Fetch all jobs that could potentially be processed (pending, failed, and processing)
     console.log(
-      `📊 Queue status after cleanup: ${updatedQueueStatus.processing}/${PROCESSING_QUEUE_LIMIT} jobs processing, ${updatedQueueStatus.pending} pending, ${updatedQueueStatus.failed} failed`
+      '📋 Fetching jobs (pending, failed, and processing for stuck detection)...'
     );
-
-    // 5. Fetch jobs with focus on pending jobs first, then failed jobs ready for retry
-    console.log('📋 Fetching jobs prioritizing pending jobs...');
     const { data: allJobs, error: fetchError } = await supabase
       .from('image_processing_jobs')
       .select(
         'id, entity_type, entity_id, image_type, source_url, attempts, max_attempts, created_at, updated_at, processing_started_at, status'
       )
-      // Focus on pending and failed jobs only - processing jobs handled by stuck reset above
-      .in('status', ['pending', 'failed'])
-      .order('status', { ascending: true }) // 'failed' comes before 'pending' alphabetically, but we'll prioritize pending in filtering
+      .in('status', ['pending', 'failed', 'processing'])
+      .order('status', { ascending: true }) // pending first, then failed, then processing
       .order('priority', { ascending: true })
       .order('created_at', { ascending: true })
-      .limit(100)
+      .limit(200) // Increased limit to catch stuck processing jobs
       .returns<JobRow[]>();
 
     if (fetchError) {
@@ -627,32 +570,97 @@ async function processImageJobs(): Promise<ApiResponse> {
       return {
         success: true,
         processed: 0,
-        queueStatus: updatedQueueStatus,
+        queueStatus: queueStatus,
         message: 'No jobs in queue',
       };
     }
 
-    // Separate pending and failed jobs for logging
     const pendingJobs = allJobs.filter((job) => job.status === 'pending');
     const failedJobs = allJobs.filter((job) => job.status === 'failed');
+    const processingJobs = allJobs.filter((job) => job.status === 'processing');
 
     console.log(
-      `📋 Found ${allJobs.length} jobs total: ${pendingJobs.length} pending, ${failedJobs.length} failed`
+      `📋 Found ${allJobs.length} jobs total: ${pendingJobs.length} pending, ${failedJobs.length} failed, ${processingJobs.length} processing`
     );
 
-    // 6. Filter jobs based on simplified readiness logic - prioritize pending jobs
-    const eligibleJobs = allJobs.filter((job: JobRow): boolean => {
-      // Check if job is ready for processing
-      const jobReadiness = isJobReadyForProcessing(job);
-      if (!jobReadiness.ready) {
-        return false;
-      }
+    // 3. Detect and reset stuck processing jobs (5-minute threshold)
+    let stuckJobsResetCount = 0;
+    const stuckJobs = processingJobs.filter(isJobStuckProcessing);
 
+    if (stuckJobs.length > 0) {
       console.log(
-        `✅ Job ${job.id} passed all checks and is eligible for processing${jobReadiness.needsFreshRetry ? ' (FRESH RETRY)' : ''}`
+        `🧹 Resetting ${stuckJobs.length} stuck processing jobs (>${STUCK_JOB_THRESHOLD_MINUTES} minutes)...`
       );
-      return true;
-    });
+
+      for (const stuckJob of stuckJobs) {
+        try {
+          await resetStuckJob(supabase, stuckJob);
+          stuckJobsResetCount++;
+          // Add the reset job to pending jobs for potential processing this cycle
+          pendingJobs.push({
+            ...stuckJob,
+            status: 'pending',
+            processing_started_at: null,
+            updated_at: new Date().toISOString(),
+          });
+        } catch (resetError) {
+          console.error(
+            `Failed to reset stuck job ${stuckJob.id}:`,
+            resetError
+          );
+        }
+      }
+      console.log(
+        `✅ Successfully reset ${stuckJobsResetCount} stuck jobs to pending`
+      );
+    } else {
+      console.log('✅ No stuck processing jobs found');
+    }
+
+    // 4. Also use database function for very old stuck jobs (30+ minutes) as backup
+    if (processingJobs.length > 0) {
+      console.log(
+        '🧹 Running database cleanup for very old stuck jobs (30+ minutes)...'
+      );
+      const { data: dbStuckJobsReset, error: dbStuckJobsError } =
+        await supabase.rpc('reset_stuck_image_processing_jobs', {
+          stuck_after_minutes: 30, // Database function for very old jobs
+        });
+
+      if (dbStuckJobsError) {
+        console.error(
+          '❌ Database stuck job cleanup failed:',
+          dbStuckJobsError
+        );
+      } else if (dbStuckJobsReset && dbStuckJobsReset.length > 0) {
+        const dbResetCount = dbStuckJobsReset.length;
+        console.log(
+          `✅ Database cleanup reset ${dbResetCount} very old stuck jobs`
+        );
+        for (const stuckJob of dbStuckJobsReset as StuckJobResult[]) {
+          console.log(
+            `  📌 DB reset job ${stuckJob.reset_job_id} (${stuckJob.entity_type} ${stuckJob.entity_id}) - stuck for ${Math.round(stuckJob.minutes_stuck)} minutes`
+          );
+        }
+      } else {
+        console.log('✅ No very old stuck jobs found by database cleanup');
+      }
+    }
+
+    // 5. Filter jobs based on readiness logic - prioritize pending jobs
+    const eligibleJobs = [...pendingJobs, ...failedJobs].filter(
+      (job: JobRow): boolean => {
+        const jobReadiness = isJobReadyForProcessing(job);
+        if (!jobReadiness.ready) {
+          return false;
+        }
+
+        console.log(
+          `✅ Job ${job.id} passed all checks and is eligible for processing${jobReadiness.needsFreshRetry ? ' (FRESH RETRY)' : ''}`
+        );
+        return true;
+      }
+    );
 
     // Sort eligible jobs to prioritize pending over failed
     eligibleJobs.sort((a, b) => {
@@ -661,44 +669,38 @@ async function processImageJobs(): Promise<ApiResponse> {
       return 0;
     });
 
-    const skippedJobs = allJobs.length - eligibleJobs.length;
+    const totalSkipped = allJobs.length - eligibleJobs.length;
     console.log(
-      `✅ ${eligibleJobs.length} jobs eligible for processing, ${skippedJobs} jobs skipped (cooldown or max attempts)`
+      `✅ ${eligibleJobs.length} jobs eligible for processing, ${totalSkipped} jobs skipped (cooldown, max attempts, or processing)`
     );
 
     if (eligibleJobs.length === 0) {
       return {
         success: true,
         processed: 0,
-        skipped: skippedJobs,
-        queueStatus: updatedQueueStatus,
-        message: `No jobs ready for processing (${skippedJobs} jobs in cooldown period or exceeded max attempts)`,
+        skipped: totalSkipped,
+        stuckJobsRetried: stuckJobsResetCount,
+        queueStatus: queueStatus,
+        message: `No jobs ready for processing (${totalSkipped} jobs in cooldown, processing, or exceeded max attempts). ${stuckJobsResetCount} stuck jobs reset.`,
       };
     }
 
-    // 7. Calculate how many jobs we can process without exceeding the queue limit
-    const availableSlots =
-      PROCESSING_QUEUE_LIMIT - updatedQueueStatus.processing;
-    const jobsToProcess = eligibleJobs.slice(0, Math.min(availableSlots, 50)); // Limit to 20 jobs per batch
-
-    console.log(
-      `🎯 Processing ${jobsToProcess.length} jobs (${availableSlots} slots available, ${eligibleJobs.length} eligible)`
-    );
+    // 6. Process eligible jobs (reasonable batch size)
+    const jobsToProcess = eligibleJobs.slice(0, 50);
+    console.log(`🎯 Processing ${jobsToProcess.length} jobs`);
 
     const processedJobs: ProcessedJob[] = [];
     const failedJobIds: string[] = [];
     let skippedJobsCount = 0;
     let retriedJobsCount = 0;
 
-    // 8. Process each job
+    // 7. Process each job
     for (const jobRow of jobsToProcess) {
       const jobContext = `Job ${jobRow.id} (${jobRow.entity_type} ${jobRow.entity_id})`;
       console.log(`🎯 ${jobContext}: Starting processing...`);
 
       try {
-        // Determine what type of processing this job needs
         const jobReadiness = isJobReadyForProcessing(jobRow);
-        const needsStatusReset = jobRow.status !== 'pending';
         const needsFreshRetry = jobReadiness.needsFreshRetry;
         const originalStatus = jobRow.status;
 
@@ -707,7 +709,7 @@ async function processImageJobs(): Promise<ApiResponse> {
           console.log(
             `🆕 ${jobContext}: This is a FRESH RETRY from ${originalStatus} status (resetting attempts to 0)`
           );
-        } else if (needsStatusReset) {
+        } else if (originalStatus !== 'pending') {
           retriedJobsCount++;
           console.log(
             `🔄 ${jobContext}: This is a retry from ${originalStatus} status`
@@ -730,7 +732,6 @@ async function processImageJobs(): Promise<ApiResponse> {
         };
 
         console.log(`📝 ${jobContext}: Checking entity exists...`);
-        // Check if entity exists, skip job if not (preserve job for analysis)
         const entity = await checkEntityExists(supabase, job);
         if (entity === null) {
           skippedJobsCount++;
@@ -743,13 +744,11 @@ async function processImageJobs(): Promise<ApiResponse> {
           `✅ ${jobContext}: Entity exists, proceeding with processing`
         );
 
-        // Process the job
         console.log(`🚀 ${jobContext}: Calling processJob function...`);
         const processedJob = await processJob(
           supabase,
           job,
           entity,
-          needsStatusReset,
           needsFreshRetry,
           originalStatus
         );
@@ -764,7 +763,6 @@ async function processImageJobs(): Promise<ApiResponse> {
         );
         failedJobIds.push(jobRow.id);
 
-        // Handle job processing failure without interfering with cooldown logic
         try {
           const errorMessage =
             jobError instanceof Error ? jobError.message : 'Unknown error';
@@ -780,11 +778,11 @@ async function processImageJobs(): Promise<ApiResponse> {
       }
     }
 
-    // 9. Build response message
+    // 8. Build response message
     let message = `✅ Processed ${processedJobs.length} jobs successfully`;
 
     if (stuckJobsResetCount > 0) {
-      message += `, reset ${stuckJobsResetCount} stuck jobs`;
+      message += `, reset ${stuckJobsResetCount} stuck jobs (>${STUCK_JOB_THRESHOLD_MINUTES}min)`;
     }
 
     if (retriedJobsCount > 0) {
@@ -799,13 +797,13 @@ async function processImageJobs(): Promise<ApiResponse> {
       message += `, ${skippedJobsCount} jobs skipped due to missing entities`;
     }
 
-    if (skippedJobs > 0) {
-      message += `, ${skippedJobs} jobs skipped (cooldown or max attempts)`;
+    if (totalSkipped > 0) {
+      message += `, ${totalSkipped} jobs skipped (cooldown, processing, or max attempts)`;
     }
 
     const remainingEligible = eligibleJobs.length - jobsToProcess.length;
     if (remainingEligible > 0) {
-      message += `, ${remainingEligible} jobs remain (queue limit reached)`;
+      message += `, ${remainingEligible} jobs remain for next batch`;
     }
 
     console.log(`🎉 ${message}`);
@@ -816,9 +814,9 @@ async function processImageJobs(): Promise<ApiResponse> {
     return {
       success: true,
       processed: processedJobs.length,
-      skipped: skippedJobs,
+      skipped: totalSkipped,
       stuckJobsRetried: stuckJobsResetCount,
-      queueStatus: updatedQueueStatus,
+      queueStatus: queueStatus,
       message,
       jobs: processedJobs.length > 0 ? processedJobs : undefined,
     };
@@ -832,7 +830,6 @@ async function processImageJobs(): Promise<ApiResponse> {
 }
 
 serve(async (req: Request): Promise<Response> => {
-  // Only accept POST requests
   if (req.method !== 'POST') {
     return new Response(
       JSON.stringify({ success: false, error: 'Method not allowed' }),
@@ -844,7 +841,7 @@ serve(async (req: Request): Promise<Response> => {
   }
 
   try {
-    console.log('🚀 Simplified image processing edge function called');
+    console.log('🚀 Image processing edge function called');
     const result = await processImageJobs();
 
     console.log('📋 Edge function result:', result);

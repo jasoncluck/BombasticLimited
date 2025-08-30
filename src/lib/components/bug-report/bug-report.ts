@@ -1,7 +1,14 @@
 import posthog from 'posthog-js';
 import { browser } from '$app/environment';
 import type { Session } from '@supabase/supabase-js';
-import type { BugReportFormData, BugReportMetadata, BugReportEvent, BugReportSubmissionResult, ImageUploadResult, ImageFile } from '$lib/types/bug-report';
+import type {
+  BugReportFormData,
+  BugReportMetadata,
+  BugReportEvent,
+  BugReportSubmissionResult,
+  ImageUploadResult,
+  ImageFile,
+} from '$lib/types/bug-report';
 
 /**
  * Submits a bug report to PostHog
@@ -59,4 +66,10 @@ export function isPostHogReady(): boolean {
 }
 
 // Re-export types for convenience
-export type { BugReportFormData, BugReportEvent, BugReportSubmissionResult, ImageUploadResult, ImageFile };
+export type {
+  BugReportFormData,
+  BugReportEvent,
+  BugReportSubmissionResult,
+  ImageUploadResult,
+  ImageFile,
+};
