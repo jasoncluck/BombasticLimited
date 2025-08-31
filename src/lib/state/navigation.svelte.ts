@@ -516,14 +516,16 @@ export class NavigationStateClass implements NavigationState {
     try {
       if (searchValue === '') {
         // Only navigate to "/" if completely empty
-        goto(`/`, { keepFocus: true, replaceState: true });
+        goto(`/`, { keepFocus: true, replaceState: false });
       } else if (searchValue.length >= 2) {
         // Only navigate to search if 2+ characters
         // Create new abort controller for this search
         this.searchAbortController = new AbortController();
 
+        // Use replaceState: true to avoid creating new history entries for search
         goto(`/search/${encodeURIComponent(searchValue)}`, {
           keepFocus: true,
+          replaceState: true, // This prevents creating new history entries
         });
       }
       // For single characters (length === 1), do nothing - stay on current page

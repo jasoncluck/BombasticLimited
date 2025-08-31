@@ -11,14 +11,11 @@
   import type { Snippet } from 'svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
-  import { getContentView } from '$lib/components/content/content';
-  import type { UserProfile } from '$lib/supabase/user-profiles';
 
   let {
     supabase,
     session,
     refreshSidebar,
-    userProfile,
     pageState,
     isNavigatingToContent,
     children,
@@ -26,7 +23,6 @@
     supabase: SupabaseClient<Database>;
     session: Session | null;
     refreshSidebar: () => Promise<void>;
-    userProfile: UserProfile | null;
     pageState: PageState;
     isNavigatingToContent: boolean;
     children: Snippet;

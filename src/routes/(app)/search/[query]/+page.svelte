@@ -44,6 +44,18 @@
   }
 
   let carouselsState = $state<SourceWithCarouselState>(initialCarouselState);
+  let previousSearchString = navigationState.searchQuery;
+
+  // Reset carousel state when searchString changes
+  $effect(() => {
+    console.log(searchString);
+    console.log(previousSearchString);
+    if (searchString && searchString !== previousSearchString) {
+      // Reset to initial state when search changes
+      carouselsState = { ...initialCarouselState };
+      previousSearchString = searchString;
+    }
+  });
 
   export const snapshot: Snapshot<{
     carouselsState: SourceWithCarouselState;
@@ -64,6 +76,7 @@
       carouselsState = restored.carouselsState;
       navigationState.setSearchQuery(restored.searchString);
       contentState.selectedVideosBySection = restored.selectedVideos;
+      previousSearchString = restored.searchString;
     },
   };
 
@@ -110,15 +123,18 @@
             {sourceVideosCount[source]}
             {sourceVideosCount[source] === 1 ? 'video' : 'videos'}
           </p>
-          <Content
-            tilesDisplay="CAROUSEL"
-            {userProfile}
-            videos={sourceVideos[source]}
-            bind:carouselState={carouselsState[source]}
-            {contentFilter}
-            {session}
-            {supabase}
-          />
+
+          {#key `${source}-${searchString}`}
+            <Content
+              tilesDisplay="CAROUSEL"
+              {userProfile}
+              videos={sourceVideos[source]}
+              bind:carouselState={carouselsState[source]}
+              {contentFilter}
+              {session}
+              {supabase}
+            />
+          {/key}
         </div>
       {/if}
     {/each}
