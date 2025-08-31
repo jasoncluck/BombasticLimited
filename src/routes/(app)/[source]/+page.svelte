@@ -25,7 +25,7 @@
     supabase,
     source,
     contentFilter,
-    processedSourcePlaylists = [], // Use server-processed playlists
+    sourcePlaylists = [],
   } = $derived(data);
 
   const contentState = getContentState();
@@ -180,7 +180,7 @@
       </a>
 
       <PlaylistTiles
-        playlists={processedSourcePlaylists}
+        playlists={sourcePlaylists}
         showUsername={false}
         {supabase}
         {session}

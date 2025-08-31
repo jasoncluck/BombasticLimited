@@ -31,7 +31,7 @@ export const load: PageServerLoad = async ({
   // Return playlists directly with optimized image paths from database
   // The new playlist-image component will handle fallback and processing
   return {
-    processedPlaylists: playlistsForUsername, // No longer need client-side processedImageUrl
+    playlists: playlistsForUsername,
     playlistsCount,
     currentPage,
   };

@@ -11,8 +11,7 @@
   import { DEFAULT_NUM_PLAYLISTS_PAGINATION } from '$lib/supabase/playlists';
 
   const { data } = $props();
-  let { processedPlaylists, playlistsCount, session, supabase } =
-    $derived(data);
+  let { playlists, playlistsCount, session, supabase } = $derived(data);
 
   const username = page.params.username;
 
@@ -72,5 +71,5 @@
     />
   {/if}
 
-  <PlaylistTiles playlists={processedPlaylists} {supabase} {session} />
+  <PlaylistTiles {playlists} {supabase} {session} />
 </div>

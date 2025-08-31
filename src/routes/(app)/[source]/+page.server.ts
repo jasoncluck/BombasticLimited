@@ -51,8 +51,7 @@ export const load: PageServerLoad = async ({
         preferredImageFormat,
       }).then((result) => result.videos),
 
-      // Get all highlighted playlists using the enhanced function
-      Promise.all(
+      await Promise.all(
         SOURCE_INFO[source].highlightedPlaylists.map(
           async (highlightPlaylist) => {
             const { playlist, videos } = await getPlaylistDataByYoutubeId({
@@ -91,7 +90,7 @@ export const load: PageServerLoad = async ({
   );
 
   // Process image URLs in parallel
-  const sourcePlaylistsWithImages = await Promise.all(
+  const sourcePlaylists = await Promise.all(
     sourcePlaylistsData.playlists.map(async (sp) => {
       if (!sp.image_url) {
         sp.image_url = await getCroppedPlaylistImageUrlServer({
@@ -108,7 +107,7 @@ export const load: PageServerLoad = async ({
   return {
     videos: videos ?? [],
     highlightPlaylists,
-    processedSourcePlaylists: sourcePlaylistsWithImages, // Use raw playlists with optimized paths
+    sourcePlaylists: sourcePlaylists,
     source,
     contentFilter,
   };
