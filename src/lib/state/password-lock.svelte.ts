@@ -1,4 +1,4 @@
-import { browser } from '$app/environment';
+import { browser, dev } from '$app/environment';
 
 export interface PasswordLockState {
   checkPassword: (password: string) => boolean;
@@ -22,7 +22,7 @@ function createPasswordLockState(): PasswordLockState {
 
   return {
     get isUnlocked() {
-      return isUnlocked;
+      return dev ? true : isUnlocked;
     },
 
     checkPassword(password: string): boolean {

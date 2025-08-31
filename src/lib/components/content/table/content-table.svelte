@@ -14,7 +14,6 @@
   import type { CombinedContentFilter } from '../content-filter';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import { onMount } from 'svelte';
-  import { simpleImagePreloader } from '$lib/utils/image-preloader';
 
   type DataTableProps<TValue> = {
     columns: ColumnDef<Video, TValue>[];
@@ -116,21 +115,6 @@
       contentState.hoverTimeoutId = null;
     }
   }
-
-  // Setup container observation for image preloading
-  // We'll observe the table body element since it contains the content
-  onMount(() => {
-    const tableElement = document.querySelector(
-      `[data-testid="content-table-${sectionId}"]`
-    );
-    if (tableElement) {
-      simpleImagePreloader.observeContainer(tableElement as HTMLElement);
-
-      return () => {
-        simpleImagePreloader.unobserveContainer(tableElement as HTMLElement);
-      };
-    }
-  });
 </script>
 
 <Table.Root

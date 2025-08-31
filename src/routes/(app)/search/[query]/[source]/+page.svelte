@@ -11,8 +11,6 @@
   } from '$lib/state/content.svelte';
   import type { SourceWithCarouselState } from '$lib/components/content/content';
   import { PAGINATION_QUERY_KEY } from '$lib/components/pagination/pagination';
-  import { simpleImagePreloader } from '$lib/utils/image-preloader';
-  import { onMount, onDestroy } from 'svelte';
 
   const { data } = $props();
   const {
@@ -50,17 +48,6 @@
       SOURCES.map((key) => [key, { lastViewedIndex: 0 }])
     ) as SourceWithCarouselState
   );
-
-  // Image preloading setup for source-specific search
-  onMount(() => {
-    setTimeout(() => {
-      simpleImagePreloader.observeSearchContainers();
-    }, 100);
-  });
-
-  onDestroy(() => {
-    simpleImagePreloader.clearPreloadCache();
-  });
 
   export const snapshot: Snapshot<{
     carouselsState: SourceWithCarouselState;

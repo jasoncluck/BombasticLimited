@@ -8,7 +8,7 @@ import type { Database } from '$lib/supabase/database.types';
 import type { UserProfile } from '$lib/supabase/user-profiles';
 import { browser } from '$app/environment';
 import type { NotificationWithMeta } from '$lib/supabase/notifications';
-import { simpleImagePreloader } from '$lib/utils/image-preloader';
+import { page } from '$app/state';
 
 /**
  * Navigation item interface defining structure for navigation elements
@@ -85,6 +85,7 @@ export interface NavigationState {
   // Search methods
   setSearchQuery: (value: string) => void;
   clearSearchQuery: () => void;
+  syncSearchWithUrl: (pathname: string, searchString?: string) => void;
 
   // Account drawer methods
   toggleAccountDrawer: () => void;
@@ -137,6 +138,7 @@ export class NavigationStateClass implements NavigationState {
   private lastSearchValue: string = '';
   private refreshInterval: number | null = null;
   private lastRefreshTime: number = 0;
+  private pageStore: any = null; // Will be set in initializeEffects
 
   // Core data state
   data = $state<NavigationData>({
@@ -245,6 +247,9 @@ export class NavigationStateClass implements NavigationState {
   // Initialize effects (should be called when component is mounted)
   initializeEffects() {
     if (browser) {
+      // Store reference to page store
+      this.pageStore = page;
+
       // Initialize navigation items from data when loaded
       $effect(() => {
         if (this.data?.navigationItems) {
@@ -258,6 +263,17 @@ export class NavigationStateClass implements NavigationState {
           this.startRefreshInterval();
         } else {
           this.stopRefreshInterval();
+        }
+      });
+
+      // Sync search query with URL when page changes
+      $effect(() => {
+        if (this.pageStore) {
+          const currentPage = this.pageStore;
+          this.syncSearchWithUrl(
+            currentPage.url.pathname,
+            currentPage.params?.searchString
+          );
         }
       });
     }
@@ -339,6 +355,32 @@ export class NavigationStateClass implements NavigationState {
    */
   updateActiveRoute(pathname: string): void {
     this.activeRoute = pathname;
+  }
+
+  /**
+   * Sync search query with URL - called when navigating or page loads
+   */
+  syncSearchWithUrl(pathname: string, searchString?: string): void {
+    // Check if we're on a search route
+    const searchRouteMatch = pathname.match(/^\/search\/(.+)$/);
+
+    if (searchRouteMatch) {
+      // We're on a search route, extract the search string from URL
+      const urlSearchString =
+        searchString || decodeURIComponent(searchRouteMatch[1]);
+
+      // Only update if different to avoid unnecessary re-renders
+      if (this.searchQuery !== urlSearchString) {
+        this.searchQuery = urlSearchString;
+        this.lastSearchValue = urlSearchString;
+      }
+    } else {
+      // We're not on a search route, clear the search query
+      if (this.searchQuery !== '') {
+        this.searchQuery = '';
+        this.lastSearchValue = '';
+      }
+    }
   }
 
   /**
@@ -451,6 +493,7 @@ export class NavigationStateClass implements NavigationState {
 
   clearSearchQuery = (): void => {
     this.searchQuery = '';
+    this.lastSearchValue = '';
   };
 
   async searchRedirect(e: Event, expectedValue?: string): Promise<Event> {
@@ -473,7 +516,7 @@ export class NavigationStateClass implements NavigationState {
     try {
       if (searchValue === '') {
         // Only navigate to "/" if completely empty
-        goto(`/`, { keepFocus: true });
+        goto(`/`, { keepFocus: true, replaceState: true });
       } else if (searchValue.length >= 2) {
         // Only navigate to search if 2+ characters
         // Create new abort controller for this search
@@ -513,11 +556,6 @@ export class NavigationStateClass implements NavigationState {
     if (this.searchAbortController) {
       this.searchAbortController.abort();
       this.searchAbortController = null;
-    }
-
-    // Trigger predictive image preloading for searches >= 2 characters
-    if (searchValue.length >= 2) {
-      simpleImagePreloader.preloadSearchImages(searchValue);
     }
 
     // If we're starting from empty and hit the minimum threshold, search immediately
@@ -718,6 +756,7 @@ export class NavigationStateClass implements NavigationState {
     this.searchQuery = '';
     this.openAccountDrawer = false;
     this.lastRefreshTime = 0;
+    this.pageStore = null;
   }
 }
 

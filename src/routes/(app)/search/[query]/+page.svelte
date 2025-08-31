@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { page } from '$app/state';
   import { SOURCE_INFO, SOURCES } from '$lib/constants/source.js';
   import Content from '$lib/components/content/content.svelte';
   import type { Snapshot } from '@sveltejs/kit';
@@ -13,14 +12,14 @@
   } from '$lib/components/content/content.js';
   import PlaylistTiles from '$lib/components/playlist/playlist-tiles.svelte';
   import { getMediaQueryState } from '$lib/state/media-query.svelte.js';
-  import { simpleImagePreloader } from '$lib/utils/image-preloader';
-  import { onMount, onDestroy } from 'svelte';
+  import type { PageData } from './$types';
+  import { getNavigationState } from '$lib/state/navigation.svelte';
 
-  let { data } = $props();
+  let { data }: { data: PageData } = $props();
   let {
     supabase,
     session,
-    searchString,
+    searchString, // Now comes from the server load function
     sourceVideos,
     sourceVideosCount,
     playlistSearchResults,
@@ -31,6 +30,7 @@
 
   const contentState = getContentState();
   const mediaQueryState = getMediaQueryState();
+  const navigationState = getNavigationState();
 
   const sources = $derived(userProfile?.sources ?? SOURCES);
 
@@ -45,25 +45,14 @@
 
   let carouselsState = $state<SourceWithCarouselState>(initialCarouselState);
 
-  // Image preloading setup
-  onMount(() => {
-    // Set up search container observation
-    setTimeout(() => {
-      simpleImagePreloader.observeSearchContainers();
-    }, 100);
-  });
-
-  onDestroy(() => {
-    // Clean up preloading when leaving the page
-    simpleImagePreloader.clearPreloadCache();
-  });
-
   export const snapshot: Snapshot<{
     carouselsState: SourceWithCarouselState;
     selectedVideos: Record<SourceWithStateKeys, Video[]>;
+    searchString: string;
   }> = {
     capture: () => ({
       carouselsState,
+      searchString,
       selectedVideos: Object.fromEntries(
         sectionIds.map((sid: SourceWithStateKeys) => [
           sid,
@@ -73,6 +62,7 @@
     }),
     restore: async (restored) => {
       carouselsState = restored.carouselsState;
+      navigationState.setSearchQuery(restored.searchString);
       contentState.selectedVideosBySection = restored.selectedVideos;
     },
   };
@@ -105,12 +95,11 @@
       </div>
     {/if}
 
-    <!-- The rest of your content remains unchanged -->
     {#each sources as source (source)}
       {#if sourceVideos[source].length > 0}
         <div class="bg-background-lighter flex flex-col">
           <a
-            href={`${page.url}/${source}`}
+            href={`/search/${searchString}/${source}`}
             class={getContentView(mediaQueryState, userProfile) === 'TABLE'
               ? 'header-link-sticky'
               : 'header-link '}

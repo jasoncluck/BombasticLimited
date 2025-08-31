@@ -9,7 +9,6 @@
     getContentState,
   } from '$lib/state/content.svelte';
   import type { CombinedContentFilter } from './content-filter';
-  import { simpleImagePreloader } from '$lib/utils/image-preloader';
 
   type ContentCarouselProps = ContentDisplayProps & {
     carouselState?: CarouselState;
@@ -151,22 +150,6 @@
         carouselState.lastViewedIndex = firstVisibleVideoIndex;
       }
       api.destroy();
-    }
-  });
-
-  // Setup container observation for image preloading
-  // Note: We'll observe the carousel content area instead of the root element
-  $effect(() => {
-    if (api) {
-      const carouselElement = api.containerNode();
-      if (carouselElement) {
-        simpleImagePreloader.observeContainer(carouselElement);
-
-        // Cleanup function will be called when effect is cleaned up
-        return () => {
-          simpleImagePreloader.unobserveContainer(carouselElement);
-        };
-      }
     }
   });
 

@@ -105,7 +105,7 @@
     {/if}
 
     <!-- Search Input -->
-    <SearchInput {navigationState} />
+    <SearchInput />
   </div>
 
   <!-- Right Section: User Controls -->

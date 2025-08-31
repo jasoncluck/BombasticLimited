@@ -28,11 +28,7 @@ export function useNavigation(pageState: PageState) {
       await tick();
 
       // Clear search query when navigating away from search
-      if (
-        to &&
-        !to.url.pathname.startsWith('/search/') &&
-        to.url.pathname !== '/'
-      ) {
+      if (to && !to.url.pathname.startsWith('/search/')) {
         navigationState.clearSearchQuery();
       }
 
