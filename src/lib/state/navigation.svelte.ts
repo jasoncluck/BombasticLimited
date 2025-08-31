@@ -32,6 +32,7 @@ export interface NavigationConfig {
   enableBrandLogo: boolean;
   homeRouteReplaceState: boolean;
   searchDebounceMs: number;
+  preloadDebounceMs: number;
   notificationRefreshIntervalMs: number; // New config option
 }
 
@@ -176,6 +177,7 @@ export class NavigationStateClass implements NavigationState {
     enableBrandLogo: true,
     homeRouteReplaceState: true,
     searchDebounceMs: 450,
+    preloadDebounceMs: 125,
     notificationRefreshIntervalMs: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -580,8 +582,6 @@ export class NavigationStateClass implements NavigationState {
 
     // Set up preloading at half the debounce time if search value is valid for navigation
     if (capturedSearchValue.length >= 2) {
-      const preloadDelay = Math.floor(this.config.searchDebounceMs / 4);
-
       this.preloadTimeout = window.setTimeout(() => {
         // Only preload if the search value hasn't changed
         if (this.searchQuery.trim() === capturedSearchValue) {
@@ -592,7 +592,7 @@ export class NavigationStateClass implements NavigationState {
             console.debug('Search preload failed:', error);
           });
         }
-      }, preloadDelay);
+      }, this.config.preloadDebounceMs);
     }
 
     this.currentDebouncedSearch = debounce(() => {
