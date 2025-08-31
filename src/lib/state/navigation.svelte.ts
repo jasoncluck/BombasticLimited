@@ -580,12 +580,13 @@ export class NavigationStateClass implements NavigationState {
 
     // Set up preloading at half the debounce time if search value is valid for navigation
     if (capturedSearchValue.length >= 2) {
-      const preloadDelay = Math.floor(this.config.searchDebounceMs / 2);
+      const preloadDelay = Math.floor(this.config.searchDebounceMs / 4);
 
       this.preloadTimeout = window.setTimeout(() => {
         // Only preload if the search value hasn't changed
         if (this.searchQuery.trim() === capturedSearchValue) {
           const searchUrl = `/search/${encodeURIComponent(capturedSearchValue)}`;
+          console.log('PRELOADING');
           preloadData(searchUrl).catch((error) => {
             // Silently handle preload errors - they shouldn't affect the user experience
             console.debug('Search preload failed:', error);
