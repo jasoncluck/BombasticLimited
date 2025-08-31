@@ -3,8 +3,8 @@ import type { PageLoad } from './$types';
 
 export const load: PageLoad = ({ data }) => {
   if (browser) {
-    // Preload images for the first 10 videos
-    const videosToPreload = data.videos.slice(0, 10);
+    // Preload images
+    const videosToPreload = data.videos.slice(0, 20);
 
     videosToPreload.forEach((video) => {
       if (video.image_url) {

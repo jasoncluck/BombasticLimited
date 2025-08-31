@@ -23,6 +23,9 @@
   // Track preloaded pages to avoid duplicate preloading
   let preloadedPages = $state(new Set<number>());
 
+  // Calculate max page for bounds checking
+  const maxPage = $derived(Math.ceil(count / perPage));
+
   // Preload a specific page
   async function preloadPage(pageNum: number): Promise<void> {
     if (preloadedPages.has(pageNum) || pageNum === currentPage) return;
@@ -40,6 +43,19 @@
     }
   }
 
+  // Preload adjacent pages when current page changes
+  $effect(() => {
+    // Preload next page if not at the end
+    if (currentPage < maxPage) {
+      preloadPage(currentPage + 1);
+    }
+
+    // Preload previous page if not at the beginning
+    if (currentPage > 1) {
+      preloadPage(currentPage - 1);
+    }
+  });
+
   // Handle page hover for preloading
   function handlePageHover(pageNum: number): void {
     preloadPage(pageNum);
@@ -49,9 +65,6 @@
   function handlePageClick(pageNum: number): void {
     onPageChange(pageNum);
   }
-
-  // Calculate max page for bounds checking
-  const maxPage = $derived(Math.ceil(count / perPage));
 </script>
 
 <div class="flex w-full justify-center px-2">
