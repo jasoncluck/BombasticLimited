@@ -87,7 +87,6 @@ export interface NavigationState {
   // Search methods
   setSearchQuery: (value: string) => void;
   clearSearchQuery: () => void;
-  syncSearchWithUrl: (pathname: string, searchString?: string) => void;
 
   // Account drawer methods
   toggleAccountDrawer: () => void;
@@ -269,17 +268,6 @@ export class NavigationStateClass implements NavigationState {
           this.stopRefreshInterval();
         }
       });
-
-      // Sync search query with URL when page changes
-      $effect(() => {
-        if (this.pageStore) {
-          const currentPage = this.pageStore;
-          this.syncSearchWithUrl(
-            currentPage.url.pathname,
-            currentPage.params?.searchString
-          );
-        }
-      });
     }
   }
 
@@ -359,32 +347,6 @@ export class NavigationStateClass implements NavigationState {
    */
   updateActiveRoute(pathname: string): void {
     this.activeRoute = pathname;
-  }
-
-  /**
-   * Sync search query with URL - called when navigating or page loads
-   */
-  syncSearchWithUrl(pathname: string, searchString?: string): void {
-    // Check if we're on a search route
-    const searchRouteMatch = pathname.match(/^\/search\/(.+)$/);
-
-    if (searchRouteMatch) {
-      // We're on a search route, extract the search string from URL
-      const urlSearchString =
-        searchString || decodeURIComponent(searchRouteMatch[1]);
-
-      // Only update if different to avoid unnecessary re-renders
-      if (this.searchQuery !== urlSearchString) {
-        this.searchQuery = urlSearchString;
-        this.lastSearchValue = urlSearchString;
-      }
-    } else {
-      // We're not on a search route, clear the search query
-      if (this.searchQuery !== '') {
-        this.searchQuery = '';
-        this.lastSearchValue = '';
-      }
-    }
   }
 
   /**
