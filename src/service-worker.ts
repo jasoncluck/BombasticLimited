@@ -5,13 +5,13 @@
 /// <reference lib="DOM.Iterable" />
 
 import { build, files, version } from '$service-worker';
+import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
 // Cache names
 const STATIC_CACHE = `bombastic-static-${version}`;
 const IMAGE_CACHE = `bombastic-images-${version}`;
-const API_CACHE = `bombastic-api-${version}`;
 
 // Static assets that should be cached
 const STATIC_ASSETS = [...build, ...files];
@@ -27,86 +27,264 @@ const IMAGE_DOMAINS = [
   'i3.ytimg.com',
   'i4.ytimg.com',
   'static-cdn.jtvnw.net',
-];
+] as const;
 
-// API endpoints that should be cached
-const API_ENDPOINTS = [
-  '/api/search',
-  '/api/playlists',
-  '/api/content',
-  '/api/user',
-];
+// Parse Supabase URL to get hostname for image caching
+const SUPABASE_HOSTNAME = (() => {
+  try {
+    return new URL(PUBLIC_SUPABASE_URL).hostname;
+  } catch {
+    return null;
+  }
+})();
 
-// In-memory cache for coordination with main thread
-interface CacheMetadata {
+// Image cache metadata for tracking
+interface ImageCacheMetadata {
   url: string;
   timestamp: number;
-  size: number;
   hitCount: number;
-  type: 'static' | 'image' | 'api';
+  lastAccessed: number;
+  contentType?: string;
+  corsError?: boolean;
 }
 
-const cacheMetadata = new Map<string, CacheMetadata>();
+const imageCacheMetadata = new Map<string, ImageCacheMetadata>();
 
-// Check if URL is from Supabase (dynamic hostname)
+// Essential headers to preserve for image responses
+const ESSENTIAL_IMAGE_HEADERS = [
+  'content-type',
+  'content-length',
+  'content-encoding',
+  'cache-control',
+  'expires',
+  'last-modified',
+  'etag',
+  'accept-ranges',
+  'content-disposition',
+  'x-content-type-options',
+  'access-control-allow-origin',
+  'access-control-allow-methods',
+  'access-control-allow-headers',
+  'vary',
+] as const;
+
+// Check if URL is from Supabase storage
 const isSupabaseImageUrl = (url: URL): boolean => {
+  if (!SUPABASE_HOSTNAME) return false;
   return (
-    url.hostname.includes('.supabase.co') && url.pathname.includes('/storage/')
+    url.hostname === SUPABASE_HOSTNAME && url.pathname.includes('/storage/')
   );
 };
 
-// Check if URL is an API endpoint
-const isApiEndpoint = (url: URL): boolean => {
+// Check if URL is an image based on file extension only
+const isImageUrl = (url: URL): boolean => {
+  return STATIC_EXTENSIONS.test(url.pathname);
+};
+
+// Check if URL should be cached as an image
+const shouldCacheAsImage = (url: URL): boolean => {
+  // Check if it's from a known image domain
+  if ((IMAGE_DOMAINS as readonly string[]).includes(url.hostname)) {
+    return isImageUrl(url);
+  }
+
+  // Check if it's a Supabase image
+  if (isSupabaseImageUrl(url)) {
+    return true;
+  }
+
+  return false;
+};
+
+// Check if response indicates a CORS error
+const isCorsError = (response: Response): boolean => {
   return (
-    url.origin === sw.location.origin &&
-    API_ENDPOINTS.some((endpoint) => url.pathname.startsWith(endpoint))
+    response.status === 0 ||
+    response.type === 'opaque' ||
+    response.type === 'opaqueredirect'
   );
 };
 
-// Enhanced image caching with metadata tracking
+// Create a proper response with preserved headers
+const createCachedResponse = (originalResponse: Response): Response => {
+  const headers = new Headers();
+
+  // Preserve essential headers
+  for (const headerName of ESSENTIAL_IMAGE_HEADERS) {
+    const headerValue = originalResponse.headers.get(headerName);
+    if (headerValue) {
+      headers.set(headerName, headerValue);
+    }
+  }
+
+  // Ensure content-type is set for images if missing
+  if (!headers.has('content-type')) {
+    const url = new URL(originalResponse.url);
+    const contentType = getContentTypeFromUrl(url);
+    if (contentType) {
+      headers.set('content-type', contentType);
+    }
+  }
+
+  // Add cache headers to indicate this came from service worker
+  headers.set('x-served-by', 'service-worker');
+  headers.set('x-cache-status', 'HIT');
+
+  return new Response(originalResponse.body, {
+    status: originalResponse.status,
+    statusText: originalResponse.statusText,
+    headers,
+  });
+};
+
+// Get content type from URL extension
+const getContentTypeFromUrl = (url: URL): string | null => {
+  const pathname = url.pathname.toLowerCase();
+
+  if (pathname.endsWith('.avif')) {
+    return 'image/avif';
+  } else if (pathname.endsWith('.webp')) {
+    return 'image/webp';
+  } else if (pathname.endsWith('.jpg') || pathname.endsWith('.jpeg')) {
+    return 'image/jpeg';
+  } else if (pathname.endsWith('.png')) {
+    return 'image/png';
+  } else if (pathname.endsWith('.gif')) {
+    return 'image/gif';
+  } else if (pathname.endsWith('.svg')) {
+    return 'image/svg+xml';
+  } else if (pathname.endsWith('.ico')) {
+    return 'image/x-icon';
+  }
+
+  return null;
+};
+
+// Create fetch request with proper CORS handling for Supabase
+const createCorsRequest = (originalRequest: Request): Request => {
+  const url = new URL(originalRequest.url);
+
+  // For Supabase storage URLs, ensure proper CORS mode
+  if (isSupabaseImageUrl(url)) {
+    return new Request(originalRequest.url, {
+      method: originalRequest.method,
+      headers: originalRequest.headers,
+      mode: 'cors',
+      credentials: 'omit',
+      cache: 'default',
+    });
+  }
+
+  // For other image domains, use no-cors to avoid CORS issues
+  if ((IMAGE_DOMAINS as readonly string[]).includes(url.hostname)) {
+    return new Request(originalRequest.url, {
+      method: originalRequest.method,
+      headers: new Headers(), // Don't include potentially problematic headers
+      mode: 'no-cors',
+      credentials: 'omit',
+      cache: 'default',
+    });
+  }
+
+  return originalRequest;
+};
+
+// Enhanced image caching with CORS error handling
 const cacheImage = async (request: Request): Promise<Response> => {
   const cache = await caches.open(IMAGE_CACHE);
   const cached = await cache.match(request);
 
-  // Update hit count for cached images
+  // Update hit count and serve from cache if available
   if (cached) {
-    const metadata = cacheMetadata.get(request.url);
+    const metadata = imageCacheMetadata.get(request.url);
     if (metadata) {
       metadata.hitCount++;
-      metadata.timestamp = Date.now();
+      metadata.lastAccessed = Date.now();
     }
 
-    // Background update with smart throttling
-    updateImageInBackground(request, cache);
-    return cached;
+    // Create response with proper headers from cached response
+    const response = createCachedResponse(cached);
+
+    // Background update for frequently accessed images (hit count > 3)
+    if (metadata && metadata.hitCount > 3 && !metadata.corsError) {
+      updateImageInBackground(request, cache);
+    }
+
+    return response;
   }
 
-  // Fetch and cache new image
+  // Fetch and cache new image with CORS handling
   try {
-    const response = await fetch(request);
+    // Create a proper CORS request
+    const corsRequest = createCorsRequest(request);
+    const response = await fetch(corsRequest);
+
+    // Handle CORS errors (status 0)
+    if (isCorsError(response)) {
+      // Track CORS error in metadata
+      const now = Date.now();
+      imageCacheMetadata.set(request.url, {
+        url: request.url,
+        timestamp: now,
+        hitCount: 1,
+        lastAccessed: now,
+        corsError: true,
+      });
+
+      // Don't cache CORS errors, but still return the response
+      // The browser might still be able to display it
+      return response;
+    }
+
     if (response.ok && response.status === 200) {
+      // Clone the response for caching
       const responseToCache = response.clone();
-      await cache.put(request, responseToCache);
+
+      const contentType = response.headers.get('content-type');
+
+      // Store the response directly in cache
+      try {
+        await cache.put(request, responseToCache);
+      } catch {
+        // Silent fail on cache errors
+      }
 
       // Track metadata
-      const contentLength = response.headers.get('content-length');
-      cacheMetadata.set(request.url, {
+      const now = Date.now();
+      const metadataContentType =
+        contentType || getContentTypeFromUrl(new URL(request.url));
+
+      imageCacheMetadata.set(request.url, {
         url: request.url,
-        timestamp: Date.now(),
-        size: contentLength ? parseInt(contentLength) : 0,
+        timestamp: now,
         hitCount: 1,
-        type: 'image',
+        lastAccessed: now,
+        contentType: metadataContentType || undefined,
+        corsError: false,
       });
+
+      // Return the original response
+      return response;
+    } else {
+      return response;
     }
-    return response;
-  } catch (error) {
-    console.warn('SW: Image fetch failed:', error);
-    throw error;
+  } catch {
+    // Track fetch error in metadata
+    const now = Date.now();
+    imageCacheMetadata.set(request.url, {
+      url: request.url,
+      timestamp: now,
+      hitCount: 1,
+      lastAccessed: now,
+      corsError: true,
+    });
+
+    throw new Error('Image fetch failed');
   }
 };
 
-// Smart background update with rate limiting
-let backgroundUpdateQueue = new Set<string>();
+// Background image update with CORS handling
+const backgroundUpdateQueue = new Set<string>();
 let isUpdatingBackground = false;
 
 const updateImageInBackground = async (
@@ -118,6 +296,12 @@ const updateImageInBackground = async (
   // Avoid duplicate updates
   if (backgroundUpdateQueue.has(url)) return;
 
+  // Skip if we know this URL has CORS issues
+  const metadata = imageCacheMetadata.get(url);
+  if (metadata?.corsError) {
+    return;
+  }
+
   backgroundUpdateQueue.add(url);
 
   // Rate limit background updates
@@ -127,18 +311,31 @@ const updateImageInBackground = async (
     if (backgroundUpdateQueue.size === 0) return;
 
     isUpdatingBackground = true;
-    const urlsToUpdate = Array.from(backgroundUpdateQueue).slice(0, 3); // Max 3 at a time
+    const urlsToUpdate = Array.from(backgroundUpdateQueue).slice(0, 3);
     backgroundUpdateQueue.clear();
 
     try {
       const updatePromises = urlsToUpdate.map(async (updateUrl) => {
         try {
-          const response = await fetch(updateUrl);
-          if (response.ok && response.status === 200) {
-            await cache.put(updateUrl, response.clone());
+          const corsRequest = createCorsRequest(new Request(updateUrl));
+          const response = await fetch(corsRequest);
+
+          if (
+            response.ok &&
+            response.status === 200 &&
+            !isCorsError(response)
+          ) {
+            await cache.put(updateUrl, response);
+
+            // Update metadata timestamp
+            const existingMetadata = imageCacheMetadata.get(updateUrl);
+            if (existingMetadata) {
+              existingMetadata.timestamp = Date.now();
+              existingMetadata.corsError = false;
+            }
           }
-        } catch (error) {
-          // Silently fail background updates
+        } catch {
+          // Silent fail on background updates
         }
       });
 
@@ -147,60 +344,6 @@ const updateImageInBackground = async (
       isUpdatingBackground = false;
     }
   }, 100);
-};
-
-// API response caching with TTL
-const cacheApiResponse = async (request: Request): Promise<Response> => {
-  const cache = await caches.open(API_CACHE);
-  const cached = await cache.match(request);
-
-  // Check if cached response is still fresh (5 minutes)
-  if (cached) {
-    const cacheDate = cached.headers.get('sw-cache-date');
-    if (cacheDate) {
-      const age = Date.now() - parseInt(cacheDate);
-      if (age < 5 * 60 * 1000) {
-        // 5 minutes
-        const metadata = cacheMetadata.get(request.url);
-        if (metadata) {
-          metadata.hitCount++;
-        }
-        return cached;
-      }
-    }
-  }
-
-  try {
-    const response = await fetch(request);
-    if (response.ok && response.status === 200) {
-      const responseToCache = response.clone();
-
-      // Add cache timestamp header
-      const headers = new Headers(responseToCache.headers);
-      headers.set('sw-cache-date', Date.now().toString());
-
-      const cachedResponse = new Response(responseToCache.body, {
-        status: responseToCache.status,
-        statusText: responseToCache.statusText,
-        headers,
-      });
-
-      await cache.put(request, cachedResponse);
-
-      // Track metadata
-      cacheMetadata.set(request.url, {
-        url: request.url,
-        timestamp: Date.now(),
-        size: 0, // API responses are typically small
-        hitCount: 1,
-        type: 'api',
-      });
-    }
-    return response;
-  } catch (error) {
-    console.warn('SW: API fetch failed:', error);
-    throw error;
-  }
 };
 
 // Static asset caching
@@ -219,9 +362,8 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
       await cache.put(request, responseToCache);
     }
     return response;
-  } catch (error) {
-    console.warn('SW: Static asset fetch failed:', error);
-    throw error;
+  } catch {
+    throw new Error('Static asset fetch failed');
   }
 };
 
@@ -235,19 +377,13 @@ sw.addEventListener('activate', (event) => {
   event.waitUntil(Promise.all([cleanupOldCaches(), sw.clients.claim()]));
 });
 
-// Enhanced fetch event with proper routing
+// Fetch event with CORS-aware image caching
 sw.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
   // Only handle GET requests
   if (request.method !== 'GET') {
-    return;
-  }
-
-  // Handle API endpoints
-  if (isApiEndpoint(url)) {
-    event.respondWith(cacheApiResponse(request));
     return;
   }
 
@@ -261,50 +397,38 @@ sw.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle images from allowed domains
-  if (IMAGE_DOMAINS.includes(url.hostname) || isSupabaseImageUrl(url)) {
-    if (
-      STATIC_EXTENSIONS.test(url.pathname) ||
-      url.pathname.includes('/storage/')
-    ) {
-      event.respondWith(cacheImage(request));
-      return;
-    }
+  // Handle images from all supported sources
+  if (shouldCacheAsImage(url)) {
+    event.respondWith(cacheImage(request));
+    return;
   }
-
-  // Let everything else go to network
 });
 
-// Enhanced message handling with cache coordination
+// Message handling
 sw.addEventListener('message', (event) => {
-  const { type, data } = event.data || {};
+  const { type } = event.data || {};
 
   switch (type) {
     case 'SKIP_WAITING':
       sw.skipWaiting();
       break;
 
-    case 'CLEAR_CACHE':
+    case 'CLEAR_IMAGE_CACHE':
+      event.waitUntil(clearImageCache());
+      break;
+
+    case 'CLEAR_ALL_CACHE':
       event.waitUntil(clearAllCaches());
       break;
 
     case 'GET_CACHE_STATS':
-      event.waitUntil(sendCacheStats(event));
-      break;
-
-    case 'INVALIDATE_API_CACHE':
-      event.waitUntil(invalidateApiCache(data?.pattern));
-      break;
-
-    case 'PRELOAD_CRITICAL_IMAGES':
-      if (data?.urls && Array.isArray(data.urls)) {
-        event.waitUntil(preloadImages(data.urls));
-      }
-      break;
-
-    case 'SYNC_MEMORY_CACHE':
-      // Coordination point for memory cache synchronization
-      event.waitUntil(handleMemoryCacheSync(data));
+      event.waitUntil(
+        getCacheStats().then((stats) => {
+          if (event.ports && event.ports[0]) {
+            event.ports[0].postMessage(stats);
+          }
+        })
+      );
       break;
 
     default:
@@ -313,77 +437,62 @@ sw.addEventListener('message', (event) => {
 });
 
 // Cache management functions
+const clearImageCache = async (): Promise<void> => {
+  await caches.delete(IMAGE_CACHE);
+  imageCacheMetadata.clear();
+};
+
 const clearAllCaches = async (): Promise<void> => {
-  await Promise.all([
-    caches.delete(STATIC_CACHE),
-    caches.delete(IMAGE_CACHE),
-    caches.delete(API_CACHE),
-  ]);
-  cacheMetadata.clear();
+  await Promise.all([caches.delete(STATIC_CACHE), caches.delete(IMAGE_CACHE)]);
+  imageCacheMetadata.clear();
 };
 
-const sendCacheStats = async (event: ExtendableMessageEvent): Promise<void> => {
-  const stats = {
-    static: await getCacheSize(STATIC_CACHE),
-    images: await getCacheSize(IMAGE_CACHE),
-    api: await getCacheSize(API_CACHE),
-    metadata: Array.from(cacheMetadata.values()),
+// Cache statistics function
+const getCacheStats = async (): Promise<{
+  imageCache: { size: number; entries: string[]; cacheExists: boolean };
+  staticCache: { size: number; entries: string[]; cacheExists: boolean };
+  metadata: {
+    size: number;
+    entries: ImageCacheMetadata[];
+    corsErrors: number;
+    successfulCaches: number;
   };
-
-  event.source?.postMessage({
-    type: 'CACHE_STATS_RESPONSE',
-    data: stats,
-  });
-};
-
-const getCacheSize = async (cacheName: string): Promise<number> => {
+  allCaches: string[];
+}> => {
   try {
-    const cache = await caches.open(cacheName);
-    const keys = await cache.keys();
-    return keys.length;
-  } catch {
-    return 0;
-  }
-};
+    const allCaches = await caches.keys();
 
-const invalidateApiCache = async (pattern?: string): Promise<void> => {
-  const cache = await caches.open(API_CACHE);
-  const keys = await cache.keys();
+    const imageCache = await caches.open(IMAGE_CACHE);
+    const staticCache = await caches.open(STATIC_CACHE);
 
-  for (const request of keys) {
-    if (!pattern || request.url.includes(pattern)) {
-      await cache.delete(request);
-      cacheMetadata.delete(request.url);
-    }
-  }
-};
+    const imageCacheKeys = await imageCache.keys();
+    const staticCacheKeys = await staticCache.keys();
 
-const preloadImages = async (urls: string[]): Promise<void> => {
-  const cache = await caches.open(IMAGE_CACHE);
-  const promises = urls.slice(0, 5).map(async (url) => {
-    // Limit to 5 to avoid overwhelming
-    try {
-      const cached = await cache.match(url);
-      if (!cached) {
-        const response = await fetch(url, { priority: 'low' } as RequestInit);
-        if (response.ok) {
-          await cache.put(url, response);
-        }
-      }
-    } catch (error) {
-      console.warn('SW: Image preload failed:', url, error);
-    }
-  });
+    const metadataArray = Array.from(imageCacheMetadata.values());
+    const corsErrors = metadataArray.filter((m) => m.corsError).length;
+    const successfulCaches = metadataArray.filter((m) => !m.corsError).length;
 
-  await Promise.allSettled(promises);
-};
-
-const handleMemoryCacheSync = async (data: any): Promise<void> => {
-  // This is where we can coordinate between SW cache and memory cache
-  // For example, if memory cache is cleared, we might want to prioritize certain SW cached items
-  if (data?.action === 'cleared') {
-    // Memory cache was cleared, maybe preload some critical API responses
-    console.log('SW: Memory cache cleared, adjusting cache priorities');
+    return {
+      imageCache: {
+        size: imageCacheKeys.length,
+        entries: imageCacheKeys.map((req) => req.url),
+        cacheExists: allCaches.includes(IMAGE_CACHE),
+      },
+      staticCache: {
+        size: staticCacheKeys.length,
+        entries: staticCacheKeys.map((req) => req.url),
+        cacheExists: allCaches.includes(STATIC_CACHE),
+      },
+      metadata: {
+        size: imageCacheMetadata.size,
+        entries: metadataArray,
+        corsErrors,
+        successfulCaches,
+      },
+      allCaches,
+    };
+  } catch (error) {
+    throw new Error('Failed to get cache stats');
   }
 };
 
@@ -404,8 +513,8 @@ const preloadCriticalAssets = async (): Promise<void> => {
         if (response.ok) {
           await cache.put(asset, response);
         }
-      } catch (error) {
-        console.warn('SW: Critical asset preload failed:', asset, error);
+      } catch {
+        // Silent fail on preload errors
       }
     }
   });
@@ -419,9 +528,51 @@ const cleanupOldCaches = async (): Promise<void> => {
     (name) =>
       name.startsWith('bombastic-') &&
       name !== STATIC_CACHE &&
-      name !== IMAGE_CACHE &&
-      name !== API_CACHE
+      name !== IMAGE_CACHE
   );
 
   await Promise.all(oldCaches.map((name) => caches.delete(name)));
 };
+
+// Conservative cache maintenance with CORS error handling
+const performCacheMaintenance = async (): Promise<void> => {
+  try {
+    const cache = await caches.open(IMAGE_CACHE);
+    const keys = await cache.keys();
+
+    const now = Date.now();
+    const fourteenDaysMs = 14 * 24 * 60 * 60 * 1000; // 14 days
+    const threeDaysMs = 3 * 24 * 60 * 60 * 1000; // 3 days
+
+    for (const request of keys) {
+      const metadata = imageCacheMetadata.get(request.url);
+
+      if (metadata) {
+        const ageFromCreation = now - metadata.timestamp;
+        const ageFromLastAccess = now - metadata.lastAccessed;
+
+        // Remove CORS error entries more aggressively
+        if (metadata.corsError) {
+          await cache.delete(request);
+          imageCacheMetadata.delete(request.url);
+          continue;
+        }
+
+        // Normal cleanup for successful caches
+        const shouldRemove =
+          (ageFromCreation > fourteenDaysMs && metadata.hitCount < 2) ||
+          (ageFromLastAccess > threeDaysMs && metadata.hitCount === 1);
+
+        if (shouldRemove) {
+          await cache.delete(request);
+          imageCacheMetadata.delete(request.url);
+        }
+      }
+    }
+  } catch {
+    // Silent fail on maintenance errors
+  }
+};
+
+// Set up periodic maintenance
+setInterval(performCacheMaintenance, 60 * 60 * 1000); // 60 minutes

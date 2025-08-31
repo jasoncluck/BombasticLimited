@@ -27,10 +27,6 @@
   import { dev } from '$app/environment';
   import PasswordLock from '$lib/components/auth/password-lock.svelte';
 
-  // Import the enhanced cache system
-  import { enhancedCache } from '$lib/cache/memory-cache';
-  import { imageCacheManager } from '$lib/cache/image-cache-manager';
-
   let { data, children } = $props();
   let { session, supabase, userProfile, preferredImageFormat } = $derived(data);
 
@@ -50,7 +46,6 @@
 
   // Progressive loading states
   let isHydrated = $state(false);
-  let cacheInitialized = $state(false);
 
   // Track auth state for visibility change detection
   let lastKnownAuthState: boolean | null = $state(null);
@@ -82,13 +77,6 @@
     }
   });
 
-  // Initialize cache system when unlocked and hydrated
-  $effect(() => {
-    if (passwordLockState.isUnlocked && isHydrated && !cacheInitialized) {
-      initializeCacheSystem();
-    }
-  });
-
   // Simplified navigation state
   const isNavigatingToContent = $derived(false); // Simplified - no complex navigation detection
 
@@ -116,72 +104,7 @@
     await sidebarState.refreshData();
   }
 
-  // Initialize cache system
-  async function initializeCacheSystem(): Promise<void> {
-    try {
-      console.log('🚀 Initializing enhanced cache system...');
-
-      // Preload critical data if user is authenticated
-      if (session) {
-        const criticalEndpoints = [
-          '/api/user/profile',
-          '/api/playlists?limit=50',
-          '/api/content/recent?limit=20',
-        ];
-
-        await enhancedCache.preloadCritical(criticalEndpoints);
-        console.log('✅ Critical API data preloaded');
-      }
-
-      // Preload critical images that are likely visible
-      const criticalImages = findCriticalImages();
-      if (criticalImages.length > 0) {
-        await imageCacheManager.preloadCritical(criticalImages);
-        console.log(
-          `✅ ${criticalImages.length} critical images queued for preload`
-        );
-      }
-
-      cacheInitialized = true;
-      console.log('✅ Enhanced cache system initialized successfully');
-    } catch (error) {
-      console.error('❌ Failed to initialize cache system:', error);
-    }
-  }
-
-  // Find critical images that should be preloaded immediately
-  function findCriticalImages(): string[] {
-    const criticalImages: string[] = [];
-
-    // Look for images with high priority (index < 10)
-    const highPriorityImages = document.querySelectorAll(
-      'img[data-image-index][loading="eager"]'
-    ) as unknown as HTMLImageElement[];
-
-    for (const img of highPriorityImages) {
-      if (img.src && !img.complete) {
-        criticalImages.push(img.src);
-      }
-    }
-
-    // Also include any images in the initial viewport
-    const viewportImages = document.querySelectorAll(
-      'img[src]'
-    ) as unknown as HTMLImageElement[];
-
-    for (const img of viewportImages) {
-      const rect = img.getBoundingClientRect();
-      if (rect.top < window.innerHeight && rect.bottom > 0 && img.src) {
-        if (!criticalImages.includes(img.src)) {
-          criticalImages.push(img.src);
-        }
-      }
-    }
-
-    return criticalImages.slice(0, 10); // Limit to first 10 critical images
-  }
-
-  // Enhanced cache-aware data refresh function
+  // Simplified data refresh function
   async function performDataRefresh(
     reason: string,
     includeAuth: boolean = false,
@@ -196,27 +119,11 @@
       // Step 1: Invalidate auth first if requested
       if (includeAuth) {
         await invalidate('supabase:auth');
-
-        // Clear memory cache for auth-related data
-        if (cacheInitialized) {
-          await enhancedCache.invalidate('/api/user');
-        }
       }
 
       // Step 2: Refresh sidebar and navigation state concurrently
       sidebarState.refreshData();
       navigationState.refreshData();
-
-      // Step 3: Refresh cache for current page if needed
-      if (cacheInitialized && reason.includes('visibility change')) {
-        // Preload critical images for current page after tab becomes visible
-        setTimeout(() => {
-          const currentPageImages = findCriticalImages();
-          if (currentPageImages.length > 0) {
-            imageCacheManager.preloadCritical(currentPageImages);
-          }
-        }, 100);
-      }
     } catch (error) {
       console.error(`Failed to perform data refresh - ${reason}:`, error);
 
@@ -227,12 +134,6 @@
       );
 
       if (cleanupPerformed && !retryAfterAuthCleanup) {
-        // Clear all cache on auth error
-        if (cacheInitialized) {
-          await enhancedCache.clear();
-          imageCacheManager.clear();
-        }
-
         // Retry once after successful auth cleanup
         console.log(
           `🔄 Retrying data refresh after auth cleanup for: ${reason}`
@@ -283,12 +184,6 @@
         // Clean up auth state using signOut
         await supabase.auth.signOut();
 
-        // Clear all cache data
-        if (cacheInitialized) {
-          await enhancedCache.clear();
-          imageCacheManager.clear();
-        }
-
         // Update our tracking state to reflect signed out state
         lastKnownAuthState = false;
 
@@ -322,23 +217,8 @@
     lastKnownAuthState = isAuthenticated;
 
     try {
-      // Clear cache on sign out
-      if (!isAuthenticated && cacheInitialized) {
-        await enhancedCache.clear();
-        imageCacheManager.clear();
-        console.log('🧹 Cache cleared due to sign out');
-      }
-
       // Perform data refresh with auth invalidation to ensure latest session
       await performDataRefresh(`supabase auth: ${event}`, true);
-
-      // Reinitialize cache system for new user
-      if (isAuthenticated && cacheInitialized) {
-        // Small delay to ensure auth state is fully updated
-        setTimeout(() => {
-          initializeCacheSystem();
-        }, 100);
-      }
     } catch (error) {
       console.error(
         `Failed to handle Supabase auth state change - ${event}:`,
@@ -416,7 +296,7 @@
   $effect(() => {
     // Simplified - no complex navigation hooks needed
     if (session && passwordLockState.isUnlocked) {
-      // Basic session handling without complex caching
+      // Basic session handling
     }
   });
 
@@ -431,7 +311,7 @@
     }
   });
 
-  // 5-minute periodic sync interval with auth error handling and cache stats
+  // 5-minute periodic sync interval with auth error handling
   $effect(() => {
     if (!session || !isHydrated || !passwordLockState.isUnlocked) return;
 
@@ -516,12 +396,6 @@
 
       // Clean up visibility change listener
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-
-      // Clean up cache system
-      if (cacheInitialized) {
-        enhancedCache.destroy();
-        imageCacheManager.clear();
-      }
 
       if (navigationCleanup && typeof navigationCleanup === 'function') {
         navigationCleanup();
