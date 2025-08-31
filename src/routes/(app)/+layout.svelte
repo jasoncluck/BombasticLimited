@@ -144,9 +144,6 @@
 
       cacheInitialized = true;
       console.log('✅ Enhanced cache system initialized successfully');
-
-      // Log cache stats after initialization
-      logCacheStats();
     } catch (error) {
       console.error('❌ Failed to initialize cache system:', error);
     }
@@ -182,25 +179,6 @@
     }
 
     return criticalImages.slice(0, 10); // Limit to first 10 critical images
-  }
-
-  // Helper function to log cache statistics
-  async function logCacheStats(): Promise<void> {
-    try {
-      const [memoryStats, imageStats] = await Promise.all([
-        enhancedCache.getStats(),
-        imageCacheManager.getStats(),
-      ]);
-
-      console.log('📊 Cache System Stats:', {
-        memory: memoryStats.memory,
-        serviceWorker: memoryStats.serviceWorker,
-        images: imageStats,
-        coordination: memoryStats.coordination,
-      });
-    } catch (error) {
-      console.warn('Failed to get cache stats:', error);
-    }
   }
 
   // Enhanced cache-aware data refresh function
@@ -462,12 +440,6 @@
       if (!document.hidden && session && passwordLockState.isUnlocked) {
         try {
           await performDataRefresh('5-minute interval', false);
-
-          // Log cache stats every 15 minutes (every 3rd interval)
-          const now = Date.now();
-          if (cacheInitialized && now % (15 * 60 * 1000) < 300000) {
-            logCacheStats();
-          }
         } catch (error) {
           // Handle potential auth errors during periodic sync
           await handleAuthError(error, '5-minute interval sync');
@@ -614,7 +586,6 @@
         {supabase}
         {session}
         {refreshSidebar}
-        {userProfile}
         {pageState}
         {isNavigatingToContent}
       >
