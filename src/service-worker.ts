@@ -175,17 +175,6 @@ const createCorsRequest = (originalRequest: Request): Request => {
     });
   }
 
-  // For other image domains, use no-cors to avoid CORS issues
-  if ((IMAGE_DOMAINS as readonly string[]).includes(url.hostname)) {
-    return new Request(originalRequest.url, {
-      method: originalRequest.method,
-      headers: new Headers(), // Don't include potentially problematic headers
-      mode: 'no-cors',
-      credentials: 'omit',
-      cache: 'default',
-    });
-  }
-
   return originalRequest;
 };
 
