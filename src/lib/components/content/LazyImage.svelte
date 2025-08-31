@@ -20,7 +20,7 @@
   }: LazyImageProps = $props();
 
   // Determine if this image should be loaded with priority
-  const isHighPriority = index < 10;
+  const isHighPriority = index < 20;
 
   // Override loading and fetchpriority based on priority unless explicitly set
   const finalLoading = loading ?? (isHighPriority ? 'eager' : 'lazy');

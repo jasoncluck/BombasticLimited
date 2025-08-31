@@ -9,39 +9,43 @@ import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
-// Cache configuration - optimized for handling hundreds of images per page
+// Cache configuration optimized for 5000 images with smart queuing
 interface CacheConfig {
   readonly maxImageCacheSize: number;
   readonly maxMetadataSize: number;
   readonly maxCacheAgeMs: number;
   readonly cleanupIntervalMs: number;
-  readonly backgroundUpdateThreshold: number;
-  readonly maxBackgroundQueueSize: number;
   readonly maxRemovePerCycle: number;
   readonly corsErrorRetentionMs: number;
+  readonly aggressiveCleanupThreshold: number;
+  readonly maxConcurrentRequests: number;
+  readonly queueTimeout: number;
+  readonly priorityThreshold: number;
 }
 
 const CACHE_CONFIG: CacheConfig = {
-  maxImageCacheSize: 5000, // 5000 images for heavy image usage
-  maxMetadataSize: 6000, // Slightly higher to account for metadata overhead
-  maxCacheAgeMs: 14 * 24 * 60 * 60 * 1000, // 14 days max cache age
-  cleanupIntervalMs: 20 * 60 * 1000, // 20 minutes cleanup interval
-  backgroundUpdateThreshold: 10, // Higher threshold for background updates
-  maxBackgroundQueueSize: 20, // Larger queue for more concurrent updates
-  maxRemovePerCycle: 50, // More aggressive cleanup per cycle
-  corsErrorRetentionMs: 2 * 60 * 60 * 1000, // 2 hours for CORS errors
-} as const;
+  maxImageCacheSize: 5000,
+  maxMetadataSize: 6000,
+  maxCacheAgeMs: 14 * 24 * 60 * 60 * 1000, // 14 days
+  cleanupIntervalMs: 15 * 60 * 1000, // 15 minutes
+  maxRemovePerCycle: 100,
+  corsErrorRetentionMs: 30 * 60 * 1000, // 30 minutes
+  aggressiveCleanupThreshold: 0.85, // Start cleanup at 85%
+  maxConcurrentRequests: 6, // Limit concurrent fetches
+  queueTimeout: 30000, // 30 second timeout for queued requests
+  priorityThreshold: 3, // High priority after 3 hits
+};
 
-// Cache names
+// Cache names with versioning
 const STATIC_CACHE = `bombastic-static-${version}` as const;
 const IMAGE_CACHE = `bombastic-images-${version}` as const;
 
-// Static assets that should be cached
-const STATIC_ASSETS: readonly string[] = [...build, ...files] as const;
+// Static assets configuration
+const STATIC_ASSETS: readonly string[] = [...build, ...files];
 const STATIC_EXTENSIONS =
   /\.(js|css|woff2?|ttf|eot|jpg|jpeg|png|gif|svg|webp|ico|avif)$/;
 
-// Image domains that should be cached
+// Supported image domains
 const IMAGE_DOMAINS = [
   'i.ytimg.com',
   'img.youtube.com',
@@ -54,7 +58,7 @@ const IMAGE_DOMAINS = [
 
 type ImageDomain = (typeof IMAGE_DOMAINS)[number];
 
-// Parse Supabase URL to get hostname for image caching
+// Supabase hostname for image caching
 const SUPABASE_HOSTNAME: string | null = (() => {
   try {
     return new URL(PUBLIC_SUPABASE_URL).hostname;
@@ -63,25 +67,38 @@ const SUPABASE_HOSTNAME: string | null = (() => {
   }
 })();
 
-// Image cache metadata for tracking - fixed readonly issues
+// Image cache metadata interface
 interface ImageCacheMetadata {
   readonly url: string;
-  readonly initialTimestamp: number;
-  timestamp: number; // Made mutable for updates
+  readonly createdAt: number;
+  readonly contentType?: string;
+  readonly estimatedSize: number;
+  readonly corsError: boolean;
   hitCount: number;
   lastAccessed: number;
-  readonly contentType?: string;
-  readonly corsError: boolean;
-  readonly estimatedSize: number;
+  lastUpdated: number;
+  priority: number;
 }
 
-type CacheMetadataMap = Map<string, ImageCacheMetadata>;
-type UrlSet = Set<string>;
+// Request queue interfaces
+interface QueuedRequest {
+  readonly id: string;
+  readonly request: Request;
+  readonly timestamp: ReturnType<typeof setTimeout>;
+  readonly priority: number;
+  resolve: (response: Response) => void;
+  reject: (error: Error) => void;
+  timeoutId?: number;
+}
 
-// Use a more memory-efficient approach for metadata
-const imageCacheMetadata: CacheMetadataMap = new Map();
+interface RequestQueue {
+  highPriority: Map<string, QueuedRequest>;
+  normal: Map<string, QueuedRequest>;
+  activeFetches: Set<string>;
+  processing: boolean;
+}
 
-// Essential headers to preserve for image responses
+// Essential headers for image responses
 const ESSENTIAL_IMAGE_HEADERS = [
   'content-type',
   'content-length',
@@ -99,22 +116,43 @@ const ESSENTIAL_IMAGE_HEADERS = [
   'vary',
 ] as const;
 
-// Background processing state with better management
-interface BackgroundState {
-  updateQueue: UrlSet;
-  isUpdating: boolean;
+// Global state management
+interface ServiceWorkerState {
+  metadata: Map<string, ImageCacheMetadata>;
+  requestQueue: RequestQueue;
   lastCleanup: number;
   cleanupInProgress: boolean;
+  totalEstimatedSize: number;
+  requestCount: number;
 }
 
-const backgroundState: BackgroundState = {
-  updateQueue: new Set<string>(),
-  isUpdating: false,
+const state: ServiceWorkerState = {
+  metadata: new Map<string, ImageCacheMetadata>(),
+  requestQueue: {
+    highPriority: new Map<string, QueuedRequest>(),
+    normal: new Map<string, QueuedRequest>(),
+    activeFetches: new Set<string>(),
+    processing: false,
+  },
   lastCleanup: Date.now(),
   cleanupInProgress: false,
+  totalEstimatedSize: 0,
+  requestCount: 0,
 };
 
-// Type guards and utility functions
+// Content type mapping for images
+const CONTENT_TYPE_MAP: Record<string, string> = {
+  '.avif': 'image/avif',
+  '.webp': 'image/webp',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+} as const;
+
+// Utility functions
 const isSupabaseImageUrl = (url: URL): boolean => {
   if (!SUPABASE_HOSTNAME) return false;
   return (
@@ -127,17 +165,10 @@ const isImageUrl = (url: URL): boolean => {
 };
 
 const shouldCacheAsImage = (url: URL): boolean => {
-  // Check if it's from a known image domain
-  if ((IMAGE_DOMAINS as readonly string[]).includes(url.hostname)) {
-    return isImageUrl(url);
-  }
-
-  // Check if it's a Supabase image
-  if (isSupabaseImageUrl(url)) {
-    return true;
-  }
-
-  return false;
+  const isKnownImageDomain = (IMAGE_DOMAINS as readonly string[]).includes(
+    url.hostname
+  );
+  return (isKnownImageDomain && isImageUrl(url)) || isSupabaseImageUrl(url);
 };
 
 const isCorsError = (response: Response): boolean => {
@@ -147,18 +178,6 @@ const isCorsError = (response: Response): boolean => {
     response.type === 'opaqueredirect'
   );
 };
-
-// Content type mapping
-const CONTENT_TYPE_MAP: Record<string, string> = {
-  '.avif': 'image/avif',
-  '.webp': 'image/webp',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.png': 'image/png',
-  '.gif': 'image/gif',
-  '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon',
-} as const;
 
 const getContentTypeFromUrl = (url: URL): string | null => {
   const pathname = url.pathname.toLowerCase();
@@ -172,7 +191,6 @@ const getContentTypeFromUrl = (url: URL): string | null => {
   return null;
 };
 
-// Estimate response size for cache management
 const estimateResponseSize = (response: Response): number => {
   const contentLength = response.headers.get('content-length');
   if (contentLength) {
@@ -182,22 +200,25 @@ const estimateResponseSize = (response: Response): number => {
     }
   }
 
-  // Rough estimate based on content type
+  // Enhanced size estimation based on content type
   const contentType = response.headers.get('content-type') || '';
   if (contentType.includes('image/')) {
-    // More conservative estimates for different image types
-    if (contentType.includes('avif')) return 30000; // 30KB
-    if (contentType.includes('webp')) return 40000; // 40KB
-    if (contentType.includes('jpeg')) return 80000; // 80KB
-    if (contentType.includes('png')) return 100000; // 100KB
-    if (contentType.includes('gif')) return 150000; // 150KB
-    return 60000; // 60KB default for images
+    if (contentType.includes('avif')) return 25000; // 25KB
+    if (contentType.includes('webp')) return 35000; // 35KB
+    if (contentType.includes('jpeg')) return 70000; // 70KB
+    if (contentType.includes('png')) return 90000; // 90KB
+    if (contentType.includes('gif')) return 120000; // 120KB
+    if (contentType.includes('svg')) return 8000; // 8KB
+    return 50000; // 50KB default for images
   }
 
-  return 10000; // 10KB default estimate
+  return 10000; // 10KB default
 };
 
-// Create a proper response with preserved headers
+const generateRequestId = (): string => {
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+};
+
 const createCachedResponse = (originalResponse: Response): Response => {
   const headers = new Headers();
 
@@ -209,7 +230,7 @@ const createCachedResponse = (originalResponse: Response): Response => {
     }
   }
 
-  // Ensure content-type is set for images if missing
+  // Ensure content-type is set
   if (!headers.has('content-type')) {
     const url = new URL(originalResponse.url);
     const contentType = getContentTypeFromUrl(url);
@@ -218,9 +239,10 @@ const createCachedResponse = (originalResponse: Response): Response => {
     }
   }
 
-  // Add cache headers to indicate this came from service worker
+  // Add service worker cache indicators
   headers.set('x-served-by', 'service-worker');
   headers.set('x-cache-status', 'HIT');
+  headers.set('x-cache-version', version);
 
   return new Response(originalResponse.body, {
     status: originalResponse.status,
@@ -229,11 +251,9 @@ const createCachedResponse = (originalResponse: Response): Response => {
   });
 };
 
-// Create fetch request with proper CORS handling for Supabase
 const createCorsRequest = (originalRequest: Request): Request => {
   const url = new URL(originalRequest.url);
 
-  // For Supabase storage URLs, ensure proper CORS mode
   if (isSupabaseImageUrl(url)) {
     return new Request(originalRequest.url, {
       method: originalRequest.method,
@@ -247,326 +267,431 @@ const createCorsRequest = (originalRequest: Request): Request => {
   return originalRequest;
 };
 
-// Priority calculation for cache eviction
-interface CacheEntry {
-  url: string;
-  metadata: ImageCacheMetadata;
-  priority: number;
-}
+// Smart request queue management
+const determineRequestPriority = (url: string): number => {
+  const metadata = state.metadata.get(url);
 
+  // High priority for frequently accessed images
+  if (metadata && metadata.hitCount >= CACHE_CONFIG.priorityThreshold) {
+    return 10;
+  }
+
+  // Medium priority for known images
+  if (metadata) {
+    return 5;
+  }
+
+  // Normal priority for new images
+  return 1;
+};
+
+const addToQueue = (request: Request): Promise<Response> => {
+  const url = request.url;
+  const requestId = generateRequestId();
+  const priority = determineRequestPriority(url);
+  const now = Date.now();
+
+  return new Promise<Response>((resolve, reject) => {
+    // Check if already queued or being fetched
+    if (
+      state.requestQueue.activeFetches.has(url) ||
+      state.requestQueue.highPriority.has(url) ||
+      state.requestQueue.normal.has(url)
+    ) {
+      // Find existing request and piggyback on it
+      const existingRequest =
+        state.requestQueue.highPriority.get(url) ||
+        state.requestQueue.normal.get(url);
+
+      if (existingRequest) {
+        const originalResolve = existingRequest.resolve;
+        existingRequest.resolve = (response: Response) => {
+          // Clone response for multiple consumers
+          resolve(response.clone());
+          originalResolve(response);
+        };
+        return;
+      }
+    }
+
+    const queuedRequest: QueuedRequest = {
+      id: requestId,
+      request,
+      timestamp: now,
+      priority,
+      resolve,
+      reject,
+    };
+
+    // Set timeout for queued request
+    queuedRequest.timeoutId = setTimeout(() => {
+      removeFromQueue(url);
+      reject(new Error('Request timeout'));
+    }, CACHE_CONFIG.queueTimeout);
+
+    // Add to appropriate queue
+    if (priority >= 5) {
+      state.requestQueue.highPriority.set(url, queuedRequest);
+    } else {
+      state.requestQueue.normal.set(url, queuedRequest);
+    }
+
+    // Process queue
+    processRequestQueue().catch(() => {
+      // Silent fail on queue processing errors
+    });
+  });
+};
+
+const removeFromQueue = (url: string): void => {
+  const highPriorityRequest = state.requestQueue.highPriority.get(url);
+  const normalRequest = state.requestQueue.normal.get(url);
+
+  if (highPriorityRequest) {
+    if (highPriorityRequest.timeoutId) {
+      clearTimeout(highPriorityRequest.timeoutId);
+    }
+    state.requestQueue.highPriority.delete(url);
+  }
+
+  if (normalRequest) {
+    if (normalRequest.timeoutId) {
+      clearTimeout(normalRequest.timeoutId);
+    }
+    state.requestQueue.normal.delete(url);
+  }
+};
+
+const processRequestQueue = async (): Promise<void> => {
+  if (state.requestQueue.processing) return;
+
+  state.requestQueue.processing = true;
+
+  try {
+    while (
+      (state.requestQueue.highPriority.size > 0 ||
+        state.requestQueue.normal.size > 0) &&
+      state.requestQueue.activeFetches.size < CACHE_CONFIG.maxConcurrentRequests
+    ) {
+      // Process high priority first
+      let queuedRequest: QueuedRequest | undefined;
+      let url: string | undefined;
+
+      if (state.requestQueue.highPriority.size > 0) {
+        const [firstUrl, firstRequest] = state.requestQueue.highPriority
+          .entries()
+          .next().value;
+        url = firstUrl;
+        queuedRequest = firstRequest;
+        if (url) {
+          state.requestQueue.highPriority.delete(url);
+        }
+      } else if (state.requestQueue.normal.size > 0) {
+        const [firstUrl, firstRequest] = state.requestQueue.normal
+          .entries()
+          .next().value;
+        url = firstUrl;
+        queuedRequest = firstRequest;
+        if (url) {
+          state.requestQueue.normal.delete(url);
+        }
+      }
+
+      if (!queuedRequest || !url) break;
+
+      // Clear timeout
+      if (queuedRequest.timeoutId) {
+        clearTimeout(queuedRequest.timeoutId);
+      }
+
+      // Mark as active
+      state.requestQueue.activeFetches.add(url);
+
+      // Process request
+      processQueuedRequest(queuedRequest, url).catch(() => {
+        // Silent fail - error handling is done in processQueuedRequest
+      });
+    }
+  } finally {
+    state.requestQueue.processing = false;
+  }
+};
+
+const processQueuedRequest = async (
+  queuedRequest: QueuedRequest,
+  url: string
+): Promise<void> => {
+  try {
+    const corsRequest = createCorsRequest(queuedRequest.request);
+    const response = await fetch(corsRequest);
+
+    // Handle successful response
+    if (response.ok && response.status === 200 && !isCorsError(response)) {
+      await cacheSuccessfulResponse(queuedRequest.request, response.clone());
+    } else if (isCorsError(response)) {
+      await handleCorsError(url);
+    }
+
+    queuedRequest.resolve(response);
+  } catch (error) {
+    await handleFetchError(url, error);
+    queuedRequest.reject(
+      error instanceof Error ? error : new Error('Unknown fetch error')
+    );
+  } finally {
+    state.requestQueue.activeFetches.delete(url);
+
+    // Continue processing queue
+    if (
+      state.requestQueue.highPriority.size > 0 ||
+      state.requestQueue.normal.size > 0
+    ) {
+      processRequestQueue().catch(() => {
+        // Silent fail
+      });
+    }
+  }
+};
+
+const cacheSuccessfulResponse = async (
+  request: Request,
+  response: Response
+): Promise<void> => {
+  const url = request.url;
+  const now = Date.now();
+
+  try {
+    const cache = await caches.open(IMAGE_CACHE);
+    const contentType = response.headers.get('content-type');
+    const estimatedSize = estimateResponseSize(response);
+
+    // Check if we have room or if it's a small file
+    const hasRoom = state.metadata.size < CACHE_CONFIG.maxMetadataSize;
+    const isSmallFile = estimatedSize < 30000;
+
+    if (hasRoom || isSmallFile) {
+      await cache.put(request, response);
+
+      const metadataContentType =
+        contentType || getContentTypeFromUrl(new URL(url));
+      const existingMetadata = state.metadata.get(url);
+
+      if (existingMetadata) {
+        // Update existing metadata
+        existingMetadata.hitCount++;
+        existingMetadata.lastAccessed = now;
+        existingMetadata.lastUpdated = now;
+        existingMetadata.priority = determineRequestPriority(url);
+        state.totalEstimatedSize +=
+          estimatedSize - existingMetadata.estimatedSize;
+      } else {
+        // Create new metadata
+        state.metadata.set(url, {
+          url,
+          createdAt: now,
+          hitCount: 1,
+          lastAccessed: now,
+          lastUpdated: now,
+          contentType: metadataContentType || undefined,
+          corsError: false,
+          estimatedSize,
+          priority: 1,
+        });
+
+        state.totalEstimatedSize += estimatedSize;
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to cache successful response:', error);
+  }
+};
+
+const handleCorsError = async (url: string): Promise<void> => {
+  const now = Date.now();
+
+  if (state.metadata.size < CACHE_CONFIG.maxMetadataSize) {
+    state.metadata.set(url, {
+      url,
+      createdAt: now,
+      hitCount: 1,
+      lastAccessed: now,
+      lastUpdated: now,
+      corsError: true,
+      estimatedSize: 0,
+      priority: 0,
+    });
+  }
+};
+
+const handleFetchError = async (url: string, error: unknown): Promise<void> => {
+  const now = Date.now();
+
+  console.warn(`Fetch failed for ${url}:`, error);
+
+  if (state.metadata.size < CACHE_CONFIG.maxMetadataSize) {
+    state.metadata.set(url, {
+      url,
+      createdAt: now,
+      hitCount: 1,
+      lastAccessed: now,
+      lastUpdated: now,
+      corsError: true,
+      estimatedSize: 0,
+      priority: 0,
+    });
+  }
+};
+
+// Cache eviction priority calculation
 const calculateEvictionPriority = (
   metadata: ImageCacheMetadata,
   now: number
 ): number => {
-  // Higher priority = more likely to be evicted
-  const ageWeight = 0.4;
-  const hitCountWeight = 0.3;
-  const lastAccessedWeight = 0.3;
+  const ageInDays = (now - metadata.createdAt) / (24 * 60 * 60 * 1000);
+  const daysSinceLastAccess =
+    (now - metadata.lastAccessed) / (24 * 60 * 60 * 1000);
+  const hitFrequency = metadata.hitCount / Math.max(ageInDays, 0.1);
 
-  const age = (now - metadata.initialTimestamp) / CACHE_CONFIG.maxCacheAgeMs;
-  const hitScore = 1 / (metadata.hitCount + 1);
-  const lastAccessedScore =
-    (now - metadata.lastAccessed) / (24 * 60 * 60 * 1000); // Days since last access
-
-  // CORS errors get maximum priority for eviction
+  // CORS errors get highest priority for removal
   if (metadata.corsError) {
-    return (
-      1000 +
-      age * ageWeight +
-      hitScore * hitCountWeight +
-      lastAccessedScore * lastAccessedWeight
-    );
+    return 1000 + ageInDays;
   }
 
-  return (
-    age * ageWeight +
-    hitScore * hitCountWeight +
-    lastAccessedScore * lastAccessedWeight
-  );
+  // Calculate composite score (higher = more likely to be evicted)
+  const ageScore = ageInDays * 0.3;
+  const accessScore = daysSinceLastAccess * 0.4;
+  const frequencyScore = (1 / (hitFrequency + 0.1)) * 0.3;
+
+  return ageScore + accessScore + frequencyScore;
 };
 
-// Aggressive cache cleanup with intelligent prioritization
-const performAggressiveCacheCleanup = async (): Promise<void> => {
-  if (backgroundState.cleanupInProgress) return;
+// Optimized cache cleanup
+const performSmartCacheCleanup = async (): Promise<void> => {
+  if (state.cleanupInProgress) return;
 
-  backgroundState.cleanupInProgress = true;
+  state.cleanupInProgress = true;
 
   try {
     const cache = await caches.open(IMAGE_CACHE);
     const keys = await cache.keys();
 
-    // If we're over the size limit, perform aggressive cleanup
-    const needsCleanup =
-      keys.length > CACHE_CONFIG.maxImageCacheSize ||
-      imageCacheMetadata.size > CACHE_CONFIG.maxMetadataSize;
+    const currentSize = keys.length;
+    const metadataSize = state.metadata.size;
 
-    if (needsCleanup) {
-      const now = Date.now();
-      const metadataEntries: CacheEntry[] = Array.from(
-        imageCacheMetadata.entries()
-      ).map(([url, metadata]) => ({
+    // Determine if cleanup is needed
+    const needsCleanup =
+      currentSize >
+        CACHE_CONFIG.maxImageCacheSize *
+          CACHE_CONFIG.aggressiveCleanupThreshold ||
+      metadataSize >
+        CACHE_CONFIG.maxMetadataSize * CACHE_CONFIG.aggressiveCleanupThreshold;
+
+    if (!needsCleanup) {
+      return;
+    }
+
+    const now = Date.now();
+
+    // Create eviction candidates with priorities
+    interface EvictionCandidate {
+      url: string;
+      metadata: ImageCacheMetadata;
+      priority: number;
+    }
+
+    const candidates: EvictionCandidate[] = Array.from(state.metadata.entries())
+      .map(([url, metadata]) => ({
         url,
         metadata,
         priority: calculateEvictionPriority(metadata, now),
-      }));
+      }))
+      .sort((a, b) => b.priority - a.priority); // Highest priority first
 
-      // Sort by priority (highest priority = first to be evicted)
-      metadataEntries.sort((a, b) => b.priority - a.priority);
+    // Calculate removal target
+    const targetReduction = Math.max(
+      currentSize - CACHE_CONFIG.maxImageCacheSize + 200,
+      metadataSize - CACHE_CONFIG.maxMetadataSize + 200
+    );
 
-      // Calculate how many to remove
-      const targetRemoval = Math.max(
-        keys.length - CACHE_CONFIG.maxImageCacheSize + 100, // Remove 100 extra for buffer
-        metadataEntries.length - CACHE_CONFIG.maxMetadataSize + 100
-      );
+    const toRemove = candidates.slice(
+      0,
+      Math.min(targetReduction, CACHE_CONFIG.maxRemovePerCycle)
+    );
 
-      const entriesToRemove = metadataEntries.slice(
-        0,
-        Math.min(targetRemoval, CACHE_CONFIG.maxRemovePerCycle)
-      );
+    // Remove entries in optimized batches
+    const batchSize = 20;
+    let removed = 0;
 
-      // Remove entries in batches to avoid blocking
-      const batchSize = 10;
-      for (let i = 0; i < entriesToRemove.length; i += batchSize) {
-        const batch = entriesToRemove.slice(i, i + batchSize);
+    for (let i = 0; i < toRemove.length; i += batchSize) {
+      const batch = toRemove.slice(i, i + batchSize);
 
-        await Promise.allSettled(
-          batch.map(async ({ url }) => {
-            try {
-              await cache.delete(url);
-              imageCacheMetadata.delete(url);
-            } catch {
-              // Silent fail on individual deletions
-            }
-          })
-        );
-
-        // Yield control to prevent blocking
-        if (i + batchSize < entriesToRemove.length) {
-          await new Promise((resolve) => setTimeout(resolve, 1));
+      const deletionPromises = batch.map(async ({ url, metadata }) => {
+        try {
+          await cache.delete(url);
+          state.metadata.delete(url);
+          state.totalEstimatedSize -= metadata.estimatedSize;
+          removed++;
+        } catch {
+          // Silent fail on individual deletions
         }
+      });
+
+      await Promise.allSettled(deletionPromises);
+
+      // Micro-yield to prevent blocking
+      if (i + batchSize < toRemove.length) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
       }
     }
 
-    // Clean up any orphaned metadata
+    // Clean up orphaned metadata
     const cacheUrls = new Set((await cache.keys()).map((req) => req.url));
-    const orphanedUrls: string[] = [];
-
-    for (const [url] of imageCacheMetadata) {
+    for (const [url, metadata] of state.metadata) {
       if (!cacheUrls.has(url)) {
-        orphanedUrls.push(url);
+        state.metadata.delete(url);
+        state.totalEstimatedSize -= metadata.estimatedSize;
       }
     }
 
-    // Remove orphaned metadata in batches
-    const batchSize = 50;
-    for (let i = 0; i < orphanedUrls.length; i += batchSize) {
-      const batch = orphanedUrls.slice(i, i + batchSize);
-      batch.forEach((url) => imageCacheMetadata.delete(url));
-    }
-
-    backgroundState.lastCleanup = Date.now();
+    console.log(`Cache cleanup completed: removed ${removed} entries`);
   } catch (error) {
     console.warn('Cache cleanup failed:', error);
   } finally {
-    backgroundState.cleanupInProgress = false;
+    state.cleanupInProgress = false;
+    state.lastCleanup = Date.now();
   }
 };
 
-// Enhanced image caching with better size management
+// Main image caching function with smart queuing
 const cacheImage = async (request: Request): Promise<Response> => {
   const cache = await caches.open(IMAGE_CACHE);
   const cached = await cache.match(request);
+  const now = Date.now();
+  const url = request.url;
 
-  // Update hit count and serve from cache if available
+  state.requestCount++;
+
+  // Serve from cache if available
   if (cached) {
-    const metadata = imageCacheMetadata.get(request.url);
+    const metadata = state.metadata.get(url);
     if (metadata) {
       metadata.hitCount++;
-      metadata.lastAccessed = Date.now();
+      metadata.lastAccessed = now;
+      metadata.priority = determineRequestPriority(url);
     }
 
-    // Create response with proper headers from cached response
-    const response = createCachedResponse(cached);
-
-    // Background update for frequently accessed images
-    if (
-      metadata &&
-      metadata.hitCount > CACHE_CONFIG.backgroundUpdateThreshold &&
-      !metadata.corsError
-    ) {
-      updateImageInBackground(request, cache).catch(() => {
-        // Silent fail on background updates
-      });
-    }
-
-    return response;
+    return createCachedResponse(cached);
   }
 
-  // Check if we need cleanup before caching new items
-  const now = Date.now();
-  if (now - backgroundState.lastCleanup > CACHE_CONFIG.cleanupIntervalMs) {
-    // Don't await this - let it run in background
-    performAggressiveCacheCleanup().catch(() => {
-      // Silent fail on cleanup
+  // Proactive cleanup check
+  if (now - state.lastCleanup > CACHE_CONFIG.cleanupIntervalMs) {
+    performSmartCacheCleanup().catch(() => {
+      // Silent fail
     });
   }
 
-  // Fetch and cache new image with CORS handling
-  try {
-    // Create a proper CORS request
-    const corsRequest = createCorsRequest(request);
-    const response = await fetch(corsRequest);
-
-    // Handle CORS errors (status 0)
-    if (isCorsError(response)) {
-      // Track CORS error in metadata but limit metadata size
-      if (imageCacheMetadata.size < CACHE_CONFIG.maxMetadataSize) {
-        const now = Date.now();
-        imageCacheMetadata.set(request.url, {
-          url: request.url,
-          initialTimestamp: now,
-          timestamp: now,
-          hitCount: 1,
-          lastAccessed: now,
-          corsError: true,
-          estimatedSize: 0,
-        });
-      }
-
-      // Don't cache CORS errors, but still return the response
-      return response;
-    }
-
-    if (response.ok && response.status === 200) {
-      // Check cache size before adding new items
-      const keys = await cache.keys();
-      if (keys.length >= CACHE_CONFIG.maxImageCacheSize) {
-        // Trigger aggressive cleanup but don't wait for it
-        performAggressiveCacheCleanup().catch(() => {
-          // Silent fail
-        });
-      }
-
-      // Clone the response for caching
-      const responseToCache = response.clone();
-      const contentType = response.headers.get('content-type');
-      const estimatedSize = estimateResponseSize(response);
-
-      // Store the response directly in cache
-      try {
-        await cache.put(request, responseToCache);
-
-        // Track metadata only if we have space
-        if (imageCacheMetadata.size < CACHE_CONFIG.maxMetadataSize) {
-          const now = Date.now();
-          const metadataContentType =
-            contentType || getContentTypeFromUrl(new URL(request.url));
-
-          imageCacheMetadata.set(request.url, {
-            url: request.url,
-            initialTimestamp: now,
-            timestamp: now,
-            hitCount: 1,
-            lastAccessed: now,
-            contentType: metadataContentType || undefined,
-            corsError: false,
-            estimatedSize,
-          });
-        }
-      } catch (error) {
-        console.warn('Failed to cache image:', error);
-      }
-
-      // Return the original response
-      return response;
-    } else {
-      return response;
-    }
-  } catch (error) {
-    // Track fetch error in metadata but limit size
-    if (imageCacheMetadata.size < CACHE_CONFIG.maxMetadataSize) {
-      const now = Date.now();
-      imageCacheMetadata.set(request.url, {
-        url: request.url,
-        initialTimestamp: now,
-        timestamp: now,
-        hitCount: 1,
-        lastAccessed: now,
-        corsError: true,
-        estimatedSize: 0,
-      });
-    }
-
-    throw new Error(
-      `Image fetch failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-    );
-  }
-};
-
-// Improved background image update with better queue management
-const updateImageInBackground = async (
-  request: Request,
-  cache: Cache
-): Promise<void> => {
-  const url = request.url;
-
-  // Avoid duplicate updates and limit queue size
-  if (
-    backgroundState.updateQueue.has(url) ||
-    backgroundState.updateQueue.size > CACHE_CONFIG.maxBackgroundQueueSize
-  ) {
-    return;
-  }
-
-  // Skip if we know this URL has CORS issues
-  const metadata = imageCacheMetadata.get(url);
-  if (metadata?.corsError) {
-    return;
-  }
-
-  backgroundState.updateQueue.add(url);
-
-  // Rate limit background updates
-  if (backgroundState.isUpdating) return;
-
-  setTimeout(async () => {
-    if (backgroundState.updateQueue.size === 0) return;
-
-    backgroundState.isUpdating = true;
-    const urlsToUpdate = Array.from(backgroundState.updateQueue).slice(0, 3);
-
-    // Clear the queue entries we're processing
-    urlsToUpdate.forEach((url) => backgroundState.updateQueue.delete(url));
-
-    try {
-      const updatePromises = urlsToUpdate.map(async (updateUrl) => {
-        try {
-          const corsRequest = createCorsRequest(new Request(updateUrl));
-          const response = await fetch(corsRequest);
-
-          if (
-            response.ok &&
-            response.status === 200 &&
-            !isCorsError(response)
-          ) {
-            await cache.put(updateUrl, response);
-
-            // Update metadata timestamp
-            const existingMetadata = imageCacheMetadata.get(updateUrl);
-            if (existingMetadata) {
-              existingMetadata.timestamp = Date.now();
-            }
-          }
-        } catch {
-          // Silent fail on background updates
-        }
-      });
-
-      await Promise.allSettled(updatePromises);
-    } finally {
-      backgroundState.isUpdating = false;
-    }
-  }, 100);
+  // Use smart queuing for new requests
+  return addToQueue(request);
 };
 
 // Static asset caching
@@ -592,17 +717,15 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
   }
 };
 
-// Install event
+// Event listeners
 sw.addEventListener('install', (event) => {
   event.waitUntil(Promise.all([preloadCriticalAssets(), sw.skipWaiting()]));
 });
 
-// Activate event
 sw.addEventListener('activate', (event) => {
   event.waitUntil(Promise.all([cleanupOldCaches(), sw.clients.claim()]));
 });
 
-// Fetch event with CORS-aware image caching
 sw.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -622,27 +745,27 @@ sw.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle images from all supported sources
+  // Handle images from supported sources
   if (shouldCacheAsImage(url)) {
     event.respondWith(cacheImage(request));
     return;
   }
 });
 
-// Service worker message types
+// Message handling
 type ServiceWorkerMessageType =
   | 'SKIP_WAITING'
   | 'CLEAR_IMAGE_CACHE'
   | 'CLEAR_ALL_CACHE'
   | 'GET_CACHE_STATS'
-  | 'FORCE_CLEANUP';
+  | 'FORCE_CLEANUP'
+  | 'GET_QUEUE_STATS';
 
 interface ServiceWorkerMessage {
   type: ServiceWorkerMessageType;
   payload?: unknown;
 }
 
-// Message handling with enhanced types
 sw.addEventListener('message', (event) => {
   const messageData = event.data as ServiceWorkerMessage | undefined;
   const { type } = messageData || {};
@@ -670,8 +793,14 @@ sw.addEventListener('message', (event) => {
       );
       break;
 
+    case 'GET_QUEUE_STATS':
+      if (event.ports && event.ports[0]) {
+        event.ports[0].postMessage(getQueueStats());
+      }
+      break;
+
     case 'FORCE_CLEANUP':
-      event.waitUntil(performAggressiveCacheCleanup());
+      event.waitUntil(performSmartCacheCleanup());
       break;
 
     default:
@@ -682,30 +811,61 @@ sw.addEventListener('message', (event) => {
 // Cache management functions
 const clearImageCache = async (): Promise<void> => {
   await caches.delete(IMAGE_CACHE);
-  imageCacheMetadata.clear();
-  // Reset background state
-  backgroundState.updateQueue.clear();
-  backgroundState.isUpdating = false;
-  backgroundState.cleanupInProgress = false;
+  state.metadata.clear();
+  state.totalEstimatedSize = 0;
+  state.cleanupInProgress = false;
+
+  // Clear queue
+  state.requestQueue.highPriority.clear();
+  state.requestQueue.normal.clear();
+  state.requestQueue.activeFetches.clear();
+  state.requestQueue.processing = false;
 };
 
 const clearAllCaches = async (): Promise<void> => {
   await Promise.all([caches.delete(STATIC_CACHE), caches.delete(IMAGE_CACHE)]);
-  imageCacheMetadata.clear();
-  // Reset background state
-  backgroundState.updateQueue.clear();
-  backgroundState.isUpdating = false;
-  backgroundState.cleanupInProgress = false;
+  state.metadata.clear();
+  state.totalEstimatedSize = 0;
+  state.cleanupInProgress = false;
+
+  // Clear queue
+  state.requestQueue.highPriority.clear();
+  state.requestQueue.normal.clear();
+  state.requestQueue.activeFetches.clear();
+  state.requestQueue.processing = false;
+};
+
+// Queue statistics
+interface QueueStatistics {
+  highPriorityQueue: number;
+  normalQueue: number;
+  activeFetches: number;
+  processing: boolean;
+  totalRequests: number;
+  maxConcurrentRequests: number;
+  queueTimeout: number;
+}
+
+const getQueueStats = (): QueueStatistics => {
+  return {
+    highPriorityQueue: state.requestQueue.highPriority.size,
+    normalQueue: state.requestQueue.normal.size,
+    activeFetches: state.requestQueue.activeFetches.size,
+    processing: state.requestQueue.processing,
+    totalRequests: state.requestCount,
+    maxConcurrentRequests: CACHE_CONFIG.maxConcurrentRequests,
+    queueTimeout: CACHE_CONFIG.queueTimeout,
+  };
 };
 
 // Enhanced cache statistics
-interface CacheStats {
+interface CacheStatistics {
   imageCache: {
     size: number;
     entries: string[];
     cacheExists: boolean;
-    estimatedTotalSize: number;
-    averageImageSize: number;
+    estimatedTotalSizeMB: number;
+    averageImageSizeKB: number;
   };
   staticCache: {
     size: number;
@@ -714,37 +874,43 @@ interface CacheStats {
   };
   metadata: {
     size: number;
-    entries: ImageCacheMetadata[];
     corsErrors: number;
     successfulCaches: number;
-    totalEstimatedSize: number;
+    totalEstimatedSizeMB: number;
     averageHitCount: number;
+    oldestEntryAge: number;
+    newestEntryAge: number;
+    highPriorityCount: number;
   };
-  backgroundState: {
-    updateQueueSize: number;
-    isUpdating: boolean;
+  performance: {
     cleanupInProgress: boolean;
     lastCleanup: number;
-    timeSinceLastCleanup: number;
+    timeSinceLastCleanupMinutes: number;
+    cacheUtilization: number;
+    totalRequests: number;
   };
+  queue: QueueStatistics;
   config: CacheConfig;
   allCaches: string[];
 }
 
-const getCacheStats = async (): Promise<CacheStats> => {
+const getCacheStats = async (): Promise<CacheStatistics> => {
   try {
     const allCaches = await caches.keys();
-
     const imageCache = await caches.open(IMAGE_CACHE);
     const staticCache = await caches.open(STATIC_CACHE);
 
     const imageCacheKeys = await imageCache.keys();
     const staticCacheKeys = await staticCache.keys();
 
-    const metadataArray = Array.from(imageCacheMetadata.values());
+    const metadataArray = Array.from(state.metadata.values());
     const corsErrors = metadataArray.filter((m) => m.corsError).length;
     const successfulCaches = metadataArray.filter((m) => !m.corsError).length;
-    const totalEstimatedSize = metadataArray.reduce(
+    const highPriorityCount = metadataArray.filter(
+      (m) => m.priority >= CACHE_CONFIG.priorityThreshold
+    ).length;
+
+    const totalEstimatedSizeBytes = metadataArray.reduce(
       (sum, m) => sum + m.estimatedSize,
       0
     );
@@ -753,18 +919,28 @@ const getCacheStats = async (): Promise<CacheStats> => {
         ? metadataArray.reduce((sum, m) => sum + m.hitCount, 0) /
           metadataArray.length
         : 0;
-    const averageImageSize =
-      successfulCaches > 0 ? totalEstimatedSize / successfulCaches : 0;
 
     const now = Date.now();
+    const ages = metadataArray.map((m) => now - m.createdAt);
+    const oldestEntryAge = ages.length > 0 ? Math.max(...ages) : 0;
+    const newestEntryAge = ages.length > 0 ? Math.min(...ages) : 0;
+
+    const cacheUtilization =
+      imageCacheKeys.length / CACHE_CONFIG.maxImageCacheSize;
 
     return {
       imageCache: {
         size: imageCacheKeys.length,
         entries: imageCacheKeys.map((req) => req.url),
         cacheExists: allCaches.includes(IMAGE_CACHE),
-        estimatedTotalSize: totalEstimatedSize,
-        averageImageSize,
+        estimatedTotalSizeMB:
+          Math.round((totalEstimatedSizeBytes / (1024 * 1024)) * 100) / 100,
+        averageImageSizeKB:
+          successfulCaches > 0
+            ? Math.round(
+                (totalEstimatedSizeBytes / successfulCaches / 1024) * 100
+              ) / 100
+            : 0,
       },
       staticCache: {
         size: staticCacheKeys.length,
@@ -772,20 +948,26 @@ const getCacheStats = async (): Promise<CacheStats> => {
         cacheExists: allCaches.includes(STATIC_CACHE),
       },
       metadata: {
-        size: imageCacheMetadata.size,
-        entries: metadataArray,
+        size: state.metadata.size,
         corsErrors,
         successfulCaches,
-        totalEstimatedSize,
-        averageHitCount,
+        totalEstimatedSizeMB:
+          Math.round((totalEstimatedSizeBytes / (1024 * 1024)) * 100) / 100,
+        averageHitCount: Math.round(averageHitCount * 100) / 100,
+        oldestEntryAge: Math.round(oldestEntryAge / (1000 * 60 * 60)), // Hours
+        newestEntryAge: Math.round(newestEntryAge / (1000 * 60 * 60)), // Hours
+        highPriorityCount,
       },
-      backgroundState: {
-        updateQueueSize: backgroundState.updateQueue.size,
-        isUpdating: backgroundState.isUpdating,
-        cleanupInProgress: backgroundState.cleanupInProgress,
-        lastCleanup: backgroundState.lastCleanup,
-        timeSinceLastCleanup: now - backgroundState.lastCleanup,
+      performance: {
+        cleanupInProgress: state.cleanupInProgress,
+        lastCleanup: state.lastCleanup,
+        timeSinceLastCleanupMinutes: Math.round(
+          (now - state.lastCleanup) / (1000 * 60)
+        ),
+        cacheUtilization: Math.round(cacheUtilization * 100) / 100,
+        totalRequests: state.requestCount,
       },
+      queue: getQueueStats(),
       config: CACHE_CONFIG,
       allCaches,
     };
@@ -796,6 +978,7 @@ const getCacheStats = async (): Promise<CacheStats> => {
   }
 };
 
+// Utility functions
 const preloadCriticalAssets = async (): Promise<void> => {
   const cache = await caches.open(STATIC_CACHE);
   const criticalAssets = build.filter(
@@ -834,71 +1017,71 @@ const cleanupOldCaches = async (): Promise<void> => {
   await Promise.all(oldCaches.map((name) => caches.delete(name)));
 };
 
-// Periodic maintenance with smarter cleanup
+// Periodic maintenance
 const performPeriodicMaintenance = async (): Promise<void> => {
-  // Only run if cleanup isn't already in progress
-  if (backgroundState.cleanupInProgress) return;
+  if (state.cleanupInProgress) return;
 
   try {
     const cache = await caches.open(IMAGE_CACHE);
     const keys = await cache.keys();
-
     const now = Date.now();
+
     let removedCount = 0;
+    const maxRemovePerCycle = Math.min(CACHE_CONFIG.maxRemovePerCycle, 50);
 
-    // Process in smaller batches to avoid blocking
-    const batchSize = 25;
-    for (
-      let i = 0;
-      i < keys.length && removedCount < CACHE_CONFIG.maxRemovePerCycle;
-      i += batchSize
-    ) {
-      const batch = keys.slice(i, i + batchSize);
+    // Quick cleanup of obvious candidates
+    const quickCleanupCandidates: Array<{
+      request: Request;
+      metadata?: ImageCacheMetadata;
+    }> = [];
 
-      await Promise.allSettled(
-        batch.map(async (request) => {
-          if (removedCount >= CACHE_CONFIG.maxRemovePerCycle) return;
+    for (const request of keys) {
+      if (removedCount >= maxRemovePerCycle) break;
 
-          const metadata = imageCacheMetadata.get(request.url);
+      const metadata = state.metadata.get(request.url);
 
-          if (metadata) {
-            const ageFromCreation = now - metadata.initialTimestamp;
-            const ageFromLastAccess = now - metadata.lastAccessed;
-
-            // Remove CORS error entries aggressively
-            if (
-              metadata.corsError &&
-              ageFromCreation > CACHE_CONFIG.corsErrorRetentionMs
-            ) {
-              await cache.delete(request);
-              imageCacheMetadata.delete(request.url);
-              removedCount++;
-              return;
-            }
-
-            // Normal cleanup for successful caches
-            const shouldRemove =
-              ageFromCreation > CACHE_CONFIG.maxCacheAgeMs ||
-              (ageFromLastAccess > 24 * 60 * 60 * 1000 &&
-                metadata.hitCount === 1); // 1 day for single hits
-
-            if (shouldRemove) {
-              await cache.delete(request);
-              imageCacheMetadata.delete(request.url);
-              removedCount++;
-            }
-          } else {
-            // Remove items without metadata
-            await cache.delete(request);
-            removedCount++;
-          }
-        })
-      );
-
-      // Yield control between batches
-      if (i + batchSize < keys.length) {
-        await new Promise((resolve) => setTimeout(resolve, 1));
+      if (!metadata) {
+        quickCleanupCandidates.push({ request });
+        continue;
       }
+
+      const ageFromCreation = now - metadata.createdAt;
+      const ageFromLastAccess = now - metadata.lastAccessed;
+
+      // Aggressive CORS error cleanup
+      if (
+        metadata.corsError &&
+        ageFromCreation > CACHE_CONFIG.corsErrorRetentionMs
+      ) {
+        quickCleanupCandidates.push({ request, metadata });
+        continue;
+      }
+
+      // Remove very old or unused entries
+      if (
+        ageFromCreation > CACHE_CONFIG.maxCacheAgeMs ||
+        (ageFromLastAccess > 48 * 60 * 60 * 1000 && metadata.hitCount === 1)
+      ) {
+        quickCleanupCandidates.push({ request, metadata });
+      }
+    }
+
+    // Batch delete candidates
+    for (const { request, metadata } of quickCleanupCandidates) {
+      try {
+        await cache.delete(request);
+        if (metadata) {
+          state.metadata.delete(request.url);
+          state.totalEstimatedSize -= metadata.estimatedSize;
+        }
+        removedCount++;
+      } catch {
+        // Silent fail
+      }
+    }
+
+    if (removedCount > 0) {
+      console.log(`Periodic maintenance: removed ${removedCount} entries`);
     }
   } catch (error) {
     console.warn('Periodic maintenance failed:', error);
