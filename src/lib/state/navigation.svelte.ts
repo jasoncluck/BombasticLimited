@@ -6,6 +6,7 @@ import debounce from 'debounce';
 import type { SupabaseClient, Session } from '@supabase/supabase-js';
 import type { Database } from '$lib/supabase/database.types';
 import type { UserProfile } from '$lib/supabase/user-profiles';
+import { preloadData } from '$app/navigation';
 import { browser } from '$app/environment';
 import type { NotificationWithMeta } from '$lib/supabase/notifications';
 import { page } from '$app/state';
@@ -139,6 +140,7 @@ export class NavigationStateClass implements NavigationState {
   private refreshInterval: number | null = null;
   private lastRefreshTime: number = 0;
   private pageStore: any = null; // Will be set in initializeEffects
+  private preloadTimeout: number | null = null; // Track preload timeout
 
   // Core data state
   data = $state<NavigationData>({
@@ -560,9 +562,13 @@ export class NavigationStateClass implements NavigationState {
       this.searchAbortController = null;
     }
 
-    // If we're starting from empty and hit the minimum threshold, search immediately
-    // This makes the first search more responsive
-    if (searchValue.length === 2 && !this.lastSearchValue) {
+    // Clear any existing preload timeout
+    if (this.preloadTimeout) {
+      window.clearTimeout(this.preloadTimeout);
+      this.preloadTimeout = null;
+    }
+
+    if (!this.lastSearchValue) {
       this.lastSearchValue = searchValue;
       this.searchRedirect(e, searchValue);
       return;
@@ -571,6 +577,23 @@ export class NavigationStateClass implements NavigationState {
     // For all cases, use debounced search (including empty and single character)
     // Capture the search value at the time of creating the debounced function
     const capturedSearchValue = searchValue;
+
+    // Set up preloading at half the debounce time if search value is valid for navigation
+    if (capturedSearchValue.length >= 2) {
+      const preloadDelay = Math.floor(this.config.searchDebounceMs / 2);
+
+      this.preloadTimeout = window.setTimeout(() => {
+        // Only preload if the search value hasn't changed
+        if (this.searchQuery.trim() === capturedSearchValue) {
+          const searchUrl = `/search/${encodeURIComponent(capturedSearchValue)}`;
+          preloadData(searchUrl).catch((error) => {
+            // Silently handle preload errors - they shouldn't affect the user experience
+            console.debug('Search preload failed:', error);
+          });
+        }
+      }, preloadDelay);
+    }
+
     this.currentDebouncedSearch = debounce(() => {
       this.lastSearchValue = capturedSearchValue;
       this.searchRedirect(e, capturedSearchValue);
@@ -741,6 +764,12 @@ export class NavigationStateClass implements NavigationState {
     if (this.searchAbortController) {
       this.searchAbortController.abort();
       this.searchAbortController = null;
+    }
+
+    // Clear preload timeout
+    if (this.preloadTimeout) {
+      window.clearTimeout(this.preloadTimeout);
+      this.preloadTimeout = null;
     }
 
     // Reset all state
