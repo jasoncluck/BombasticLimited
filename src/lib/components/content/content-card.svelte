@@ -270,9 +270,10 @@
 
     const isCtrlPressed = event.ctrlKey || event.metaKey;
 
-    if (isCtrlPressed) {
+    if (isCtrlPressed || !session) {
       event.preventDefault();
       event.stopPropagation();
+      contentState.selectedVideosBySection[sectionId] = [];
       return;
     } else {
       // Handle right-click context menu behavior
