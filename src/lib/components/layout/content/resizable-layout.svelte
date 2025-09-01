@@ -55,7 +55,7 @@
   >
     <ScrollArea
       type="scroll"
-      class="h-full grow"
+      class="h-full grow overflow-hidden"
       bind:viewportRef={pageState.viewportRefs.sidebarViewportRef}
       data-scroll-area="sidebar"
     >

@@ -46,7 +46,7 @@
     data: { userNotifications },
   } = $derived(navigationState);
 
-  const { canHover, isMd } = $derived(mediaQueryState);
+  const { canHover, isSm } = $derived(mediaQueryState);
 
   // Bug report dialog state
   let bugReportDialogOpen = $state(false);
@@ -54,7 +54,7 @@
 </script>
 
 <!-- Content Display Preference (Desktop) -->
-{#if session && isMd}
+{#if session && isSm}
   <DropdownMenu.Root>
     <DropdownMenu.Trigger
       data-testid="user-preferences"

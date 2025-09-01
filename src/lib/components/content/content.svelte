@@ -120,20 +120,31 @@
   const currentPlaylist = $derived(playlistState.currentPlaylist);
 
   let contentRef = $state<HTMLDivElement>();
+  let clickOutsideCleanup: (() => void) | null = null;
 
   onMount(() => {
     if (contentRef) {
-      contentState.setupClickOutsideListener(contentRef, sectionId);
+      clickOutsideCleanup = contentState.setupClickOutsideListener(
+        contentRef,
+        sectionId
+      );
     }
+
+    // Cleanup function for when component unmounts
+    return () => {
+      if (clickOutsideCleanup) {
+        clickOutsideCleanup();
+        clickOutsideCleanup = null;
+      }
+      // Reset the section state when component unmounts
+      contentState.resetSectionState(sectionId);
+    };
   });
 
+  // Handle navigation - reset all relevant state
   onNavigate(() => {
-    if (contentState.hoveredVideosBySection[sectionId]) {
-      contentState.hoveredVideosBySection[sectionId] = null;
-    }
-    if (contentState.selectedVideosBySection[sectionId]) {
-      contentState.selectedVideosBySection[sectionId] = [];
-    }
+    // Reset the section state completely when navigating
+    contentState.resetSectionState(sectionId);
   });
 
   // Set the current playlist context for the global context menu
