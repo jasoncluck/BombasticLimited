@@ -39,7 +39,6 @@
   $effect(() => {
     const sidebarViewport = pageState.viewportRefs.sidebarViewportRef;
     const contentViewport = pageState.viewportRefs.contentViewportRef;
-    console.log(contentState.isDropdownMenuOpen);
 
     if (
       contentState.isDropdownMenuOpen ||

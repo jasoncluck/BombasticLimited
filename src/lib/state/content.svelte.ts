@@ -389,49 +389,6 @@ export class ContentState {
     onNavigate?: (video: Video, playlist?: Playlist) => void;
     enableDoubleClick?: boolean;
   }): void {
-    // Enhanced debugging for carousel vs tiles difference
-    console.log('handleVideoClick called:', {
-      sectionId,
-      videoId: video.id,
-      openContextMenuSection: this.openContextMenuSection,
-      isAnyContextMenuOpen: this.isAnyContextMenuOpen,
-      enableDoubleClick,
-      eventType: event.type,
-      eventTarget: (event.target as HTMLElement)?.tagName,
-      eventCurrentTarget: (event.currentTarget as HTMLElement)?.tagName,
-    });
-
-    // Check if context menu is open in any section - use direct property check for reliability
-    if (this.openContextMenuSection !== null) {
-      console.log(
-        'Context menu is open, closing it and preventing navigation',
-        {
-          openSection: this.openContextMenuSection,
-          clickedSection: sectionId,
-        }
-      );
-
-      // Prevent default behavior and stop propagation IMMEDIATELY
-      if ('preventDefault' in event) {
-        event.preventDefault();
-      }
-      if ('stopPropagation' in event) {
-        event.stopPropagation();
-      }
-
-      // Close the context menu by clearing the open section
-      this.openContextMenuSection = null;
-
-      // Clear selections from ALL sections, not just the current one
-      this.clearAllSections();
-
-      // Set the clicked video as the new hovered video for the current section
-      this.hoveredVideosBySection[sectionId] = video;
-
-      // Return early to prevent any other click handling
-      return;
-    }
-
     const now = Date.now();
     const doubleClickDelay = 300; // milliseconds
 
@@ -463,10 +420,37 @@ export class ContentState {
         // No navigation timeout - only double-click navigates
       }
     } else {
+      // Check if context menu is open in any section - use direct property check for reliability
+      if (this.openContextMenuSection !== null) {
+        // Prevent default behavior and stop propagation IMMEDIATELY
+        if ('preventDefault' in event) {
+          event.preventDefault();
+        }
+        if ('stopPropagation' in event) {
+          event.stopPropagation();
+        }
+
+        // Close the context menu by clearing the open section
+        this.openContextMenuSection = null;
+
+        // Clear selections from ALL sections, not just the current one
+        this.clearAllSections();
+
+        // Set the clicked video as the new hovered video for the current section
+        this.hoveredVideosBySection[sectionId] = video;
+
+        // Return early to prevent any other click handling
+        return;
+      }
+
+      // If a dropdown is open just close that and don't redirect
+      if (this.isDropdownMenuOpen) {
+        this.closeAllDropdowns();
+        return;
+      }
       // Single-click behavior - no selection, just navigate immediately
       // Only navigate for non-modifier clicks
       if (!event.shiftKey && !event.ctrlKey && !event.metaKey) {
-        console.log('Navigating to video:', video.id);
         onNavigate?.(video, playlist);
       }
 
@@ -769,12 +753,6 @@ export class ContentState {
     this.closeAllDropdowns();
 
     this.openContextMenuSection = sectionId;
-
-    console.log('Context menu opened for section:', {
-      sectionId,
-      openContextMenuSection: this.openContextMenuSection,
-      isAnyContextMenuOpen: this.isAnyContextMenuOpen,
-    });
 
     // Use nullish coalescing to get selected videos for this section
     const selectedVideos = this.selectedVideosBySection[sectionId] ?? [];
