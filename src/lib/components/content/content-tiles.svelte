@@ -41,19 +41,6 @@
       contentState.hoverTimeoutId = null;
     }
   }
-
-  // Set up click outside listener and image preloading
-  onMount(() => {
-    if (containerElement) {
-      // Setup click outside listener
-      const cleanup = contentState.setupClickOutsideListener(
-        containerElement,
-        sectionId
-      );
-
-      return cleanup;
-    }
-  });
 </script>
 
 <!-- Switch to single column layout for smaller sizes, grid for larger -->

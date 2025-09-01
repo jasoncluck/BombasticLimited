@@ -174,7 +174,7 @@
             <Portal>
               <ContextMenu.SubContent
                 align="start"
-                class="outline-hiddden z-50 overflow-hidden transition-opacity duration-150"
+                class="z-50 overflow-hidden transition-opacity duration-150 outline-none"
                 avoidCollisions={true}
                 sideOffset={5}
               >

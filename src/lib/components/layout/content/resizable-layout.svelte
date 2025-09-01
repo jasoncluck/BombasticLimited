@@ -11,7 +11,7 @@
   import type { Snippet } from 'svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
-
+  import { getContentState } from '$lib/state/content.svelte';
   let {
     supabase,
     session,
@@ -30,9 +30,38 @@
 
   const sidebarState = getSidebarState();
   const mediaQueryState = getMediaQueryState();
+  const contentState = getContentState();
 
   // Use the navigation state's sidebar collapsed state
   const isSidebarCollapsed = $derived(sidebarState.isSidebarCollapsed);
+
+  // Effect to control scroll blocking when dropdown is open
+  $effect(() => {
+    const sidebarViewport = pageState.viewportRefs.sidebarViewportRef;
+    const contentViewport = pageState.viewportRefs.contentViewportRef;
+    console.log(contentState.isDropdownMenuOpen);
+
+    if (
+      contentState.isDropdownMenuOpen ||
+      contentState.openContextMenuSection
+    ) {
+      // Block scrolling when dropdown is open
+      if (sidebarViewport) {
+        sidebarViewport.style.overflow = 'hidden';
+      }
+      if (contentViewport) {
+        contentViewport.style.overflow = 'hidden';
+      }
+    } else {
+      // Restore scrolling when dropdown is closed
+      if (sidebarViewport) {
+        sidebarViewport.style.overflow = 'auto';
+      }
+      if (contentViewport) {
+        contentViewport.style.overflow = 'auto';
+      }
+    }
+  });
 </script>
 
 <Resizable.PaneGroup

@@ -110,6 +110,9 @@ export class ContentState {
   lastClickTime = $state(0);
   lastClickedVideo = $state<Video | null>(null);
 
+  // Track context menu state to prevent race conditions
+  private contextMenuCloseScheduled = $state<NodeJS.Timeout | null>(null);
+
   constructor(pageState: PageState) {
     this.pageState = pageState;
   }
@@ -120,15 +123,7 @@ export class ContentState {
   }
 
   isContextMenuOpenForAnySection(): boolean {
-    for (const sectionId in this.selectedVideosBySection) {
-      if (
-        this.openContextMenuSection &&
-        this.isContextMenuOpenForSection(sectionId)
-      ) {
-        return true;
-      }
-    }
-    return false;
+    return this.openContextMenuSection !== null;
   }
 
   isDrawerOpenForSection(sectionId: string = DEFAULT_SECTION_ID): boolean {
@@ -145,6 +140,9 @@ export class ContentState {
   }
 
   resetState(): void {
+    // Reset carousel state
+    this.carouselState = { lastViewedIndex: 0 };
+
     // Reset selections
     this.selectedVideosBySection = {};
 
@@ -178,9 +176,20 @@ export class ContentState {
       this.hoverTimeoutId = null;
     }
 
+    // Clear any pending context menu close
+    if (this.contextMenuCloseScheduled) {
+      clearTimeout(this.contextMenuCloseScheduled);
+      this.contextMenuCloseScheduled = null;
+    }
+
     // Reset menu states
     this.isMenuOpen = false;
     this.isMouseOverMenu = false;
+
+    // Clear any global CSS classes that might persist
+    if (typeof document !== 'undefined' && document.body) {
+      document.body.classList.remove('dragging');
+    }
   }
 
   // Reset state for a specific section
@@ -285,10 +294,6 @@ export class ContentState {
     video,
     sectionId = DEFAULT_SECTION_ID,
   }: MouseHoverOptions): void {
-    // if (this.isContextMenuOpenForSection(sectionId)) {
-    //   return;
-    // }
-
     // Don't update hoveredVideo if we're dragging
     if (!this.dragContentType) {
       // Clear any existing timeout when entering a new element
@@ -296,12 +301,6 @@ export class ContentState {
         clearTimeout(this.hoverTimeoutId);
         this.hoverTimeoutId = null;
       }
-
-      // If this is a different section and we're starting to hover,
-      // clear selections from other sections
-      // if (this.hoveredVideosBySection[sectionId] === null) {
-      //   this.clearOtherSections(sectionId);
-      // }
 
       this.hoveredVideosBySection[sectionId] = video;
     }
@@ -314,11 +313,6 @@ export class ContentState {
     sectionId?: string;
     removeSelectedOnHover?: boolean;
   }): void {
-    // If context menu is open for this section, don't clear hover state
-    // if (this.isContextMenuOpenForSection(sectionId)) {
-    //   return;
-    // }
-
     // Only delay clearing hover if dropdown menu is not open
     // Store the timeout ID so it can be cleared if needed
     const timeoutId = setTimeout(() => {
@@ -395,9 +389,29 @@ export class ContentState {
     onNavigate?: (video: Video, playlist?: Playlist) => void;
     enableDoubleClick?: boolean;
   }): void {
-    // Check if context menu is open in any section
-    if (this.isAnyContextMenuOpen) {
-      // Prevent default behavior and stop propagation
+    // Enhanced debugging for carousel vs tiles difference
+    console.log('handleVideoClick called:', {
+      sectionId,
+      videoId: video.id,
+      openContextMenuSection: this.openContextMenuSection,
+      isAnyContextMenuOpen: this.isAnyContextMenuOpen,
+      enableDoubleClick,
+      eventType: event.type,
+      eventTarget: (event.target as HTMLElement)?.tagName,
+      eventCurrentTarget: (event.currentTarget as HTMLElement)?.tagName,
+    });
+
+    // Check if context menu is open in any section - use direct property check for reliability
+    if (this.openContextMenuSection !== null) {
+      console.log(
+        'Context menu is open, closing it and preventing navigation',
+        {
+          openSection: this.openContextMenuSection,
+          clickedSection: sectionId,
+        }
+      );
+
+      // Prevent default behavior and stop propagation IMMEDIATELY
       if ('preventDefault' in event) {
         event.preventDefault();
       }
@@ -408,10 +422,10 @@ export class ContentState {
       // Close the context menu by clearing the open section
       this.openContextMenuSection = null;
 
-      // Clear selections but preserve the hovered video if it exists
-      this.selectedVideosBySection[sectionId] = [];
+      // Clear selections from ALL sections, not just the current one
+      this.clearAllSections();
 
-      // Set the clicked video as the new hovered video
+      // Set the clicked video as the new hovered video for the current section
       this.hoveredVideosBySection[sectionId] = video;
 
       // Return early to prevent any other click handling
@@ -452,6 +466,7 @@ export class ContentState {
       // Single-click behavior - no selection, just navigate immediately
       // Only navigate for non-modifier clicks
       if (!event.shiftKey && !event.ctrlKey && !event.metaKey) {
+        console.log('Navigating to video:', video.id);
         onNavigate?.(video, playlist);
       }
 
@@ -736,14 +751,17 @@ export class ContentState {
     video: Video;
     sectionId?: string;
   }): void {
+    // Clear any scheduled context menu close to prevent race conditions
+    if (this.contextMenuCloseScheduled) {
+      clearTimeout(this.contextMenuCloseScheduled);
+      this.contextMenuCloseScheduled = null;
+    }
+
     // Clear selections from all other sections first
     this.clearOtherSections(sectionId);
 
     // Close any existing context menu from other sections
-    if (
-      this.openContextMenuSection &&
-      this.openContextMenuSection !== sectionId
-    ) {
+    if (this.isAnyContextMenuOpen) {
       this.openContextMenuSection = null;
     }
 
@@ -751,6 +769,12 @@ export class ContentState {
     this.closeAllDropdowns();
 
     this.openContextMenuSection = sectionId;
+
+    console.log('Context menu opened for section:', {
+      sectionId,
+      openContextMenuSection: this.openContextMenuSection,
+      isAnyContextMenuOpen: this.isAnyContextMenuOpen,
+    });
 
     // Use nullish coalescing to get selected videos for this section
     const selectedVideos = this.selectedVideosBySection[sectionId] ?? [];
@@ -760,9 +784,6 @@ export class ContentState {
       // If the video isn't already selected, make it the only selected video
       this.selectedVideosBySection[sectionId] = [video];
     }
-
-    // Remove the hovered video setting since we're using selected state
-    // this.hoveredVideosBySection[sectionId] = video;
   }
 
   handleDrawer({
@@ -833,10 +854,12 @@ export class ContentState {
 
         // If context menu is open and we're clicking elsewhere (like dropdown),
         // close the context menu but preserve selection temporarily
-        if (this.isContextMenuOpenForAnySection()) {
-          this.openContextMenuSection = null;
-          // Don't clear selection immediately - let the dropdown action complete
-          // The selection will be cleared by other mechanisms or timeout
+        if (this.openContextMenuSection) {
+          // Use a small delay to allow the click handler to run first
+          this.contextMenuCloseScheduled = setTimeout(() => {
+            this.openContextMenuSection = null;
+            this.contextMenuCloseScheduled = null;
+          }, 0);
           return;
         }
 

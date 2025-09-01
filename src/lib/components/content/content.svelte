@@ -137,14 +137,14 @@
         clickOutsideCleanup = null;
       }
       // Reset the section state when component unmounts
-      contentState.resetSectionState(sectionId);
+      contentState.resetState();
     };
   });
 
   // Handle navigation - reset all relevant state
   onNavigate(() => {
     // Reset the section state completely when navigating
-    contentState.resetSectionState(sectionId);
+    contentState.resetState();
   });
 
   // Set the current playlist context for the global context menu
@@ -271,19 +271,21 @@
   </ContentContextMenu>
 
   {#if currentPage && numPages > 1}
-    <Pagination
-      count={videosCount ?? 0}
-      bind:currentPage
-      perPage={DEFAULT_NUM_VIDEOS_PAGINATION}
-      onPageChange={(pageNum) => {
-        updatePaginationQueryParams({
-          pageNum,
-          url: page.url,
-          invalidate: ['supabase:db:videos'],
-        });
+    <div class="mt-4">
+      <Pagination
+        count={videosCount ?? 0}
+        bind:currentPage
+        perPage={DEFAULT_NUM_VIDEOS_PAGINATION}
+        onPageChange={(pageNum) => {
+          updatePaginationQueryParams({
+            pageNum,
+            url: page.url,
+            invalidate: ['supabase:db:videos'],
+          });
 
-        pageState.contentScrollPosition = { scrollTop: 0, scrollLeft: 0 };
-      }}
-    />
+          pageState.contentScrollPosition = { scrollTop: 0, scrollLeft: 0 };
+        }}
+      />
+    </div>
   {/if}
 </div>
