@@ -51,6 +51,7 @@
     font-weight: 600;
     transition: color 0.15s ease-in-out;
     color: var(--color-foreground);
+    margin: 0 0 1rem 0;
   }
 
   @media (min-width: 1024px) {
@@ -108,10 +109,9 @@
     word-wrap: break-word;
   }
 
-  /* Better list spacing and styling - FIXED */
+  /* Default list styling for regular content lists */
   :global(.prose ul, .prose ol) {
-    margin: 0;
-    padding-left: 1.25rem;
+    padding-left: 1.5rem;
   }
 
   /* Ensure list style types are preserved */
@@ -124,18 +124,12 @@
   }
 
   :global(.prose li) {
-    margin: 0;
     display: list-item; /* Ensure proper list item display */
   }
 
-  :global(.prose li p) {
-    margin: 0 0 0.25rem 0; /* Tight spacing for paragraphs in lists */
-  }
-
-  /* Nested list styling */
+  /* Nested list styling for regular content */
   :global(.prose ul ul, .prose ol ol, .prose ul ol, .prose ol ul) {
-    margin: 0.25rem 0; /* Minimal spacing for nested lists */
-    padding-left: 1.25rem; /* Nested indentation */
+    padding-left: 1.25rem;
   }
 
   /* Nested list style types */
@@ -155,16 +149,80 @@
     list-style-type: lower-roman;
   }
 
-  /* List marker styling - IMPROVED */
+  /* List marker styling */
   :global(.prose ul > li::marker) {
     color: var(--color-primary);
-    font-size: 1em; /* Ensure marker is visible */
+    font-size: 1em;
   }
 
   :global(.prose ol > li::marker) {
     color: var(--color-primary);
     font-weight: 600;
-    font-size: 1em; /* Ensure marker is visible */
+    font-size: 1em;
+  }
+
+  /* Special styling for Table of Contents */
+  /* Target the first unordered list after an h2 (Table of Contents) */
+  :global(.prose h2 + ul) {
+    padding-left: 0;
+    line-height: 0.75;
+    list-style-type: none;
+    border-left: 2px solid var(--color-border);
+    background-color: var(--color-muted);
+    padding: 1rem;
+  }
+
+  :global(.prose h2 + ul li) {
+    margin: 0; /* Tight spacing between TOC items */
+    position: relative;
+  }
+
+  :global(.prose h2 + ul li::before) {
+    content: '•';
+    color: var(--color-primary); /* Primary color for all TOC bullets */
+    margin-right: 0.5rem;
+    font-weight: bold;
+  }
+
+  /* Nested items in TOC */
+  :global(.prose h2 + ul ul) {
+    list-style-type: none;
+    border-left: 1px solid var(--color-border);
+    background-color: transparent;
+    border-radius: 0;
+    padding: 0.75rem 0 0 0.5rem;
+  }
+
+  :global(.prose h2 + ul ul li::before) {
+    content: '•';
+    color: var(--color-primary); /* Primary color for nested bullets too */
+    font-weight: normal;
+  }
+
+  /* Third level nesting in TOC */
+  :global(.prose h2 + ul ul ul) {
+    border-left: 1px solid var(--color-border);
+    margin: 0.125rem 0 0.125rem 0; /* Consistent tight spacing */
+    padding: 0.75rem 0 0 0.5rem;
+  }
+
+  :global(.prose h2 + ul ul ul li::before) {
+    content: '•';
+    color: var(--color-primary); /* Primary color for third level too */
+    font-weight: normal;
+  }
+
+  /* TOC links styling */
+  :global(.prose h2 + ul a) {
+    color: var(--color-foreground);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.15s ease-in-out;
+  }
+
+  :global(.prose h2 + ul a:hover) {
+    color: var(--color-primary);
+    text-decoration: underline;
   }
 
   /* Code blocks with design system integration */
@@ -172,7 +230,7 @@
     background-color: var(--color-muted) !important;
     border: 1px solid var(--color-border);
     color: var(--color-foreground) !important;
-    margin: 0.75rem 0; /* Moderate spacing */
+    margin: 1rem 0;
     border-radius: 0.5rem;
     overflow-x: auto;
     padding: 1rem;
@@ -202,7 +260,7 @@
     border-left: 4px solid var(--color-primary);
     background-color: var(--color-muted);
     padding: 0.75rem 1rem;
-    margin: 0.75rem 0; /* Moderate spacing */
+    margin: 1rem 0;
     border-radius: 0.5rem;
     font-style: italic;
   }
@@ -213,7 +271,7 @@
 
   /* Table improvements */
   :global(.prose table) {
-    margin: 0.75rem 0; /* Moderate spacing */
+    margin: 1rem 0;
     border-collapse: collapse;
     width: 100%;
     border-radius: 0.5rem;
@@ -239,7 +297,7 @@
 
   /* Horizontal rule styling */
   :global(.prose hr) {
-    margin: 1.5rem 0; /* Moderate spacing */
+    margin: 2rem 0;
     border: none;
     height: 1px;
     background-color: var(--color-border);
@@ -305,6 +363,17 @@
     :global(.prose h4) {
       font-size: 1rem;
     }
+
+    /* Adjust TOC on mobile */
+    :global(.prose h2 + ul) {
+      padding: 0.75rem;
+      margin: 0.5rem 0 1.5rem 0;
+    }
+
+    :global(.prose h2 + ul ul) {
+      padding-left: 0.75rem;
+      padding: 0.125rem 0 0 0.75rem; /* Added top padding for mobile too */
+    }
   }
 
   /* Print styles */
@@ -325,6 +394,13 @@
 
     :global(.prose p) {
       margin-bottom: 0.375rem;
+    }
+
+    /* Hide TOC styling for print */
+    :global(.prose h2 + ul) {
+      background-color: transparent;
+      border: none;
+      padding: 0;
     }
   }
 </style>

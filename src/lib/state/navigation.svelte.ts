@@ -139,7 +139,6 @@ export class NavigationStateClass implements NavigationState {
   private lastSearchValue: string = '';
   private refreshInterval: number | null = null;
   private lastRefreshTime: number = 0;
-  private pageStore: any = null; // Will be set in initializeEffects
   private preloadTimeout: number | null = null; // Track preload timeout
 
   // Core data state
@@ -532,13 +531,21 @@ export class NavigationStateClass implements NavigationState {
       this.preloadTimeout = null;
     }
 
-    if (!this.lastSearchValue) {
+    // Handle empty search immediately - don't debounce it
+    if (searchValue === '') {
+      this.lastSearchValue = '';
+      this.searchRedirect(e, searchValue);
+      return;
+    }
+
+    // Handle immediate navigation for first non-empty search after empty
+    if (!this.lastSearchValue && searchValue.length >= 2) {
       this.lastSearchValue = searchValue;
       this.searchRedirect(e, searchValue);
       return;
     }
 
-    // For all cases, use debounced search (including empty and single character)
+    // For all other cases (single character, or subsequent searches), use debounced search
     // Capture the search value at the time of creating the debounced function
     const capturedSearchValue = searchValue;
 
@@ -548,18 +555,17 @@ export class NavigationStateClass implements NavigationState {
         // Only preload if the search value hasn't changed
         if (this.searchQuery.trim() === capturedSearchValue) {
           const searchUrl = `/search/${encodeURIComponent(capturedSearchValue)}`;
-          console.log('PRELOADING');
-          preloadData(searchUrl).catch((error) => {
-            // Silently handle preload errors - they shouldn't affect the user experience
-            console.debug('Search preload failed:', error);
-          });
+          preloadData(searchUrl);
         }
       }, this.config.preloadDebounceMs);
     }
 
     this.currentDebouncedSearch = debounce(() => {
-      this.lastSearchValue = capturedSearchValue;
-      this.searchRedirect(e, capturedSearchValue);
+      // Only execute if the search value hasn't changed since this debounce was created
+      if (this.searchQuery.trim() === capturedSearchValue) {
+        this.lastSearchValue = capturedSearchValue;
+        this.searchRedirect(e, capturedSearchValue);
+      }
     }, this.config.searchDebounceMs);
     this.currentDebouncedSearch();
   }

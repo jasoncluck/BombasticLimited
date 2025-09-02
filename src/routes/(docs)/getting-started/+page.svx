@@ -1,4 +1,27 @@
 # About Bombastic
+
+## Table of Contents
+- [About Bombastic](#about-bombastic)
+- [Features](#features)
+  - [Account Management](#account-management)
+  - [Search Functionality](#search-functionality)
+  - [Playlist Management](#playlist-management)
+    - [Create a playlist](#create-a-playlist)
+    - [Edit a playlist](#edit-a-playlist)
+    - [Delete a playlist](#delete-a-playlist)
+    - [Follow a public playlist](#follow-a-public-playlist)
+    - [Unfollow a public playlist](#unfollow-a-public-playlist)
+    - [Add a video to a playlist](#add-a-video-to-a-playlist)
+    - [Remove a video from a playlist](#remove-a-video-from-a-playlist)
+    - [Update playlist thumbnail](#update-playlist-thumbnail)
+  - [Watch Tracking](#watch-tracking)
+    - [Mark a video as watched](#mark-a-video-as-watched)
+    - [Reset video progress](#reset-video-progress)
+  - [Notifications](#notifications)
+- [Reporting Issues](#reporting-issues)
+
+---
+
 Bombastic Limited is a no-frills video consolidation service with a focus on content produced by past and present members of Giant Bomb.  Between modern video platforms primarily recommending new content creators and folks associated with Giant Bomb starting new companies, it has become challenging to track all the available content.  Bombastic's goal is to provide a consolidated platform for the expanded Giant Bomb community.
 
 Bombastic retrieves data from YouTube for the video game media creators that have been onboarded.  This not only creates a simplified cross-channel search view, but also allows for the creation of custom playlists that can contain content from multiple YouTube channels.  Bombastic's watch tracking feature allows users to easily resume watching videos and playlists where they previously left off. 
@@ -86,4 +109,3 @@ In the event that the bug report form is broken, please click the "Contact" butt
 * Description of what happened when you encountered the issue
 * Steps to reproduce the issue
 * (Optional) Screenshots of the issue
-
