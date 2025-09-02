@@ -55,7 +55,6 @@ export const load: LayoutLoad = async ({ data, depends, fetch }) => {
     }
   } catch (error) {
     // Fallback to getSession if getClaims is not available
-    console.warn('getClaims not available, falling back to getSession:', error);
     const { data: sessionData } = await supabase.auth.getSession();
     session = sessionData.session;
   }

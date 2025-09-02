@@ -758,7 +758,6 @@ const performSmartCacheCleanup = async (): Promise<void> => {
       }
     }
 
-    console.log(`Cache cleanup completed: removed ${removed} entries`);
   } catch (error) {
     console.warn('Cache cleanup failed:', error);
   } finally {
@@ -1312,7 +1311,6 @@ const performPeriodicMaintenance = async (): Promise<void> => {
     }
 
     if (removedCount > 0) {
-      console.log(`Periodic maintenance: removed ${removedCount} entries`);
     }
   } catch (error) {
     console.warn('Periodic maintenance failed:', error);

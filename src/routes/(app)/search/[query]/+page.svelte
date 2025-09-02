@@ -48,8 +48,6 @@
 
   // Reset carousel state when searchString changes
   $effect(() => {
-    console.log(searchString);
-    console.log(previousSearchString);
     if (searchString && searchString !== previousSearchString) {
       // Reset to initial state when search changes
       carouselsState = { ...initialCarouselState };

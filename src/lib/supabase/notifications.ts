@@ -474,7 +474,6 @@ export function showNotification(
     .catch((error) => {
       console.error('Failed to show notification:', error);
       // Fallback to console
-      console.log(`[${type?.toUpperCase()}] ${message}`);
     });
 }
 
