@@ -12,7 +12,7 @@
   const navigationState = getNavigationState();
 </script>
 
-<div class="relative flex items-center">
+<div class="relative flex">
   <Input
     type="search"
     data-testid="search-input"
@@ -21,5 +21,4 @@
     class={className}
     bind:value={navigationState.searchQuery}
   />
-  <Loader message="" size="sm" visible={navigationState.isSearching} />
 </div>

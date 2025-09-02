@@ -165,7 +165,7 @@
   /* Target the first unordered list after an h2 (Table of Contents) */
   :global(.prose h2 + ul) {
     padding-left: 0;
-    line-height: 0.75;
+    line-height: 0.9;
     list-style-type: none;
     border-left: 2px solid var(--color-border);
     background-color: var(--color-muted);
@@ -362,17 +362,6 @@
 
     :global(.prose h4) {
       font-size: 1rem;
-    }
-
-    /* Adjust TOC on mobile */
-    :global(.prose h2 + ul) {
-      padding: 0.75rem;
-      margin: 0.5rem 0 1.5rem 0;
-    }
-
-    :global(.prose h2 + ul ul) {
-      padding-left: 0.75rem;
-      padding: 0.125rem 0 0 0.75rem; /* Added top padding for mobile too */
     }
   }
 
