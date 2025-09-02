@@ -30,25 +30,18 @@
 
   // Function to clean up intervals
   function cleanupIntervals() {
-    console.log('🧹 Cleaning up admin notification intervals');
     if (refreshInterval !== null) {
       window.clearInterval(refreshInterval);
       refreshInterval = null;
-      console.log('   ✓ Refresh interval cleared');
     }
   }
 
   // Function to refresh admin notification data
   async function refreshAdminNotifications() {
     if (adminNotifications.loading) {
-      console.log('⏭️ Skipping refresh - already loading');
       return;
     }
 
-    console.log(
-      '🔄 Starting admin notifications refresh at',
-      new Date().toISOString()
-    );
     adminNotifications.loading = true;
 
     try {

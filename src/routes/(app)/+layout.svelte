@@ -121,9 +121,6 @@
 
       if (cleanupPerformed && !retryAfterAuthCleanup) {
         // Retry once after successful auth cleanup
-        console.log(
-          `🔄 Retrying data refresh after auth cleanup for: ${reason}`
-        );
         try {
           await performDataRefresh(
             `${reason} (retry after auth cleanup)`,
@@ -161,11 +158,6 @@
       errorObj?.response?.status === 403;
 
     if (is403Error) {
-      console.warn(
-        `🔐 Auth 403 error detected in ${context}, cleaning up auth state:`,
-        error
-      );
-
       try {
         // Clean up auth state using signOut
         await supabase.auth.signOut();
@@ -176,9 +168,6 @@
         // Invalidate auth to ensure fresh state
         await invalidate('supabase:auth');
 
-        console.log(
-          `✅ Auth state cleaned up successfully after 403 error in ${context}`
-        );
         return true; // Indicate successful cleanup
       } catch (cleanupError) {
         console.error(

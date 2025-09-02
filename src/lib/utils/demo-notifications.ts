@@ -126,7 +126,6 @@ export function createDemoNotifications(): NotificationWithMeta[] {
 export function showDemoToast(type: NotificationType = 'system') {
   // This function is kept for backward compatibility but should not trigger toasts
   // Demo notifications should only appear under the bell icon
-  console.log(`Demo ${type} notification created for bell display only`);
 }
 
 /**
@@ -136,5 +135,4 @@ export function showDemoToast(type: NotificationType = 'system') {
 export function simulateRealtimeNotification() {
   // This function is kept for backward compatibility but should not trigger toasts
   // Simulated notifications should only appear under the bell icon
-  console.log('Demo notification created for bell display only');
 }
