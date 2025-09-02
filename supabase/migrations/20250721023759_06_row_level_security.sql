@@ -36,10 +36,8 @@ CREATE INDEX IF NOT EXISTS idx_timestamps_user_id_rls ON public.timestamps (user
 WHERE
   user_id IS NOT NULL;
 
--- User playlists performance indexes
-CREATE INDEX IF NOT EXISTS idx_user_playlists_user_id_rls ON public.user_playlists (user_id)
-WHERE
-  user_id IS NOT NULL;
+-- Note: Removed duplicate idx_user_playlists_user_id_rls index
+-- The idx_user_playlists_user_id_for_locks index in 05_indexes_and_performance.sql provides the same functionality
 
 CREATE INDEX IF NOT EXISTS idx_user_playlists_id_covering ON public.user_playlists (id) INCLUDE (user_id);
 
