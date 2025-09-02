@@ -16,6 +16,7 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
+  import { getPageState } from '$lib/state/page.svelte';
 
   interface ContentContextMenuProps {
     playlist: Playlist;
@@ -35,15 +36,43 @@
     children,
   }: ContentContextMenuProps = $props();
 
+  const pageState = getPageState();
   const contentState = getContentState();
   const sidebarState = getSidebarState();
 
-  let open = $state(false);
+  let openDialog = $state(false);
+  let openContextMenu = $state(false);
   let showDeleteDialog = $state(false);
 
   $effect(() => {
-    if (open && contentState.selectedVideosBySection[sectionId].length < 1) {
-      open = false;
+    if (
+      openDialog &&
+      contentState.selectedVideosBySection[sectionId].length < 1
+    ) {
+      openDialog = false;
+    }
+  });
+
+  $effect(() => {
+    const sidebarViewport = pageState.viewportRefs.sidebarViewportRef;
+    const contentViewport = pageState.viewportRefs.contentViewportRef;
+
+    if (openContextMenu) {
+      // Block scrolling when dropdown is open
+      if (sidebarViewport) {
+        sidebarViewport.style.overflow = 'hidden';
+      }
+      if (contentViewport) {
+        contentViewport.style.overflow = 'hidden';
+      }
+    } else {
+      // Restore scrolling when dropdown is closed
+      if (sidebarViewport) {
+        sidebarViewport.style.overflow = 'auto';
+      }
+      if (contentViewport) {
+        contentViewport.style.overflow = 'auto';
+      }
     }
   });
 
@@ -88,7 +117,7 @@
   }
 </script>
 
-<ContextMenu.Root>
+<ContextMenu.Root bind:open={openContextMenu}>
   <ContextMenu.Content class="p-1">
     <ContextMenu.Item onclick={handleDeleteOrUnfollow}>
       {playlist.created_by === session?.user.id

@@ -5,7 +5,7 @@
   import Loader from '$lib/components/loader.svelte';
   import { COLLAPSED_SIDEBAR_SIZE } from '$lib/constants/layout';
   import LoadingOverlay from './loading-overlay.svelte';
-  import type { PageState } from '$lib/state/page.svelte.js';
+  import { getPageState } from '$lib/state/page.svelte.js';
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
   import type { Snippet } from 'svelte';
@@ -16,18 +16,17 @@
     supabase,
     session,
     refreshSidebar,
-    pageState,
     isNavigatingToContent,
     children,
   }: {
     supabase: SupabaseClient<Database>;
     session: Session | null;
     refreshSidebar: () => Promise<void>;
-    pageState: PageState;
     isNavigatingToContent: boolean;
     children: Snippet;
   } = $props();
 
+  const pageState = getPageState();
   const sidebarState = getSidebarState();
   const mediaQueryState = getMediaQueryState();
   const contentState = getContentState();

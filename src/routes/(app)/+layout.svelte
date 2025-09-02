@@ -460,7 +460,6 @@
         {supabase}
         {session}
         {refreshSidebar}
-        {pageState}
         {isNavigatingToContent}
       >
         {@render children()}
