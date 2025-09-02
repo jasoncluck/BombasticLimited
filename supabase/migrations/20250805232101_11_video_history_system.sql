@@ -47,7 +47,7 @@ CREATE INDEX IF NOT EXISTS "idx_video_history_user_video" ON "public"."video_his
 ALTER TABLE "public"."video_history" ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policy: Users can only access their own video history
-CREATE POLICY "Users can access their own video history" ON "public"."video_history" FOR ALL USING (auth.uid () = "user_id");
+CREATE POLICY "Users can access their own video history" ON "public"."video_history" FOR ALL USING ((SELECT auth.uid ()) = "user_id");
 
 -- ============================================================================
 -- OPTIMIZED TRIGGER FUNCTIONS
