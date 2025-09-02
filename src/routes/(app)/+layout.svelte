@@ -16,7 +16,6 @@
   import { setSourceState } from '$lib/state/source.svelte';
   import { setSidebarState } from '$lib/state/sidebar.svelte';
   import { setNavigationState } from '$lib/state/navigation.svelte';
-  import { setPasswordLockState } from '$lib/state/password-lock.svelte';
   import { invalidate } from '$app/navigation';
   import type { Session } from '@supabase/supabase-js';
   import '../../app.css';
@@ -25,15 +24,11 @@
     useNavigation,
   } from '$lib/components/layout/index.js';
   import { dev } from '$app/environment';
-  import PasswordLock from '$lib/components/auth/password-lock.svelte';
 
   let { data, children } = $props();
   let { session, supabase, userProfile, preferredImageFormat } = $derived(data);
 
-  // Initialize password lock state first
-  const passwordLockState = setPasswordLockState();
-
-  // Initialize all other state
+  // Initialize all state
   const pageState = setPageState();
   const contentState = setContentState(pageState);
   const mediaQueryState = setMediaQueryState();
@@ -64,17 +59,13 @@
   );
 
   $effect(() => {
-    // Only initialize playlist state if unlocked
-    if (passwordLockState.isUnlocked) {
-      setPlaylistState(pageState, contentState, sidebarState);
-    }
+    // Initialize playlist state
+    setPlaylistState(pageState, contentState, sidebarState);
   });
 
   $effect(() => {
-    // Only setup navigation hooks if unlocked
-    if (passwordLockState.isUnlocked) {
-      navigation.setupNavigationHooks();
-    }
+    // Setup navigation hooks
+    navigation.setupNavigationHooks();
   });
 
   // Simplified navigation state
@@ -110,11 +101,6 @@
     includeAuth: boolean = false,
     retryAfterAuthCleanup: boolean = false
   ): Promise<void> {
-    // Only perform data refresh if unlocked
-    if (!passwordLockState.isUnlocked) {
-      return;
-    }
-
     try {
       // Step 1: Invalidate auth first if requested
       if (includeAuth) {
@@ -292,17 +278,9 @@
     contentState.dragContentType = null;
   }
 
-  // Simplified navigation setup
-  $effect(() => {
-    // Simplified - no complex navigation hooks needed
-    if (session && passwordLockState.isUnlocked) {
-      // Basic session handling
-    }
-  });
-
   // Initialize lastKnownAuthState when session changes
   $effect(() => {
-    if (isHydrated && passwordLockState.isUnlocked) {
+    if (isHydrated) {
       const currentAuthState = !!session;
       if (lastKnownAuthState === null) {
         // Initialize on first run
@@ -313,11 +291,11 @@
 
   // 5-minute periodic sync interval with auth error handling
   $effect(() => {
-    if (!session || !isHydrated || !passwordLockState.isUnlocked) return;
+    if (!session || !isHydrated) return;
 
     const interval = setInterval(async () => {
-      // Only sync if tab is visible and user is authenticated and unlocked
-      if (!document.hidden && session && passwordLockState.isUnlocked) {
+      // Only sync if tab is visible and user is authenticated
+      if (!document.hidden && session) {
         try {
           await performDataRefresh('5-minute interval', false);
         } catch (error) {
@@ -337,22 +315,10 @@
     // Mark as hydrated immediately
     isHydrated = true;
 
-    // Only initialize components if unlocked
-    if (!passwordLockState.isUnlocked) {
-      return;
-    }
-
     const cleanup = initializeComponents();
 
     // Return cleanup function for onDestroy
     return cleanup;
-  });
-
-  // Re-initialize when unlocked
-  $effect(() => {
-    if (passwordLockState.isUnlocked && isHydrated) {
-      initializeComponents();
-    }
   });
 
   function initializeComponents(): (() => void) | undefined {
@@ -426,44 +392,34 @@
   ></script>
 </svelte:head>
 
-<!-- Password Lock Gate -->
-{#if !passwordLockState.isUnlocked}
-  <PasswordLock {passwordLockState} />
-{:else}
-  <!-- Main Application -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div
-    class="flex h-full flex-col"
-    oncontextmenu={(e) => {
-      if (!dev && window.location.hostname.includes('bombastic.ltd')) {
-        e.preventDefault();
-      }
-    }}
-  >
-    <!-- Main Content Area with Progressive Loading -->
-    {#if !isHydrated}
-      <!-- SSR/Initial Load State -->
-      <div
-        class="relative flex h-[calc(100dvh)] w-full items-center justify-center"
-      >
-        <Loader size="lg" message="Loading..." />
-      </div>
-    {:else}
-      <!-- Full UI - sidebar may still be loading data -->
-      <MainNavigation
-        {userProfile}
-        {session}
-        {supabase}
-        bind:openAccountDrawer
-      />
-      <ResizableLayout
-        {supabase}
-        {session}
-        {refreshSidebar}
-        {isNavigatingToContent}
-      >
-        {@render children()}
-      </ResizableLayout>
-    {/if}
-  </div>
-{/if}
+<!-- Main Application -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+  class="flex h-full flex-col"
+  oncontextmenu={(e) => {
+    if (!dev && window.location.hostname.includes('bombastic.ltd')) {
+      e.preventDefault();
+    }
+  }}
+>
+  <!-- Main Content Area with Progressive Loading -->
+  {#if !isHydrated}
+    <!-- SSR/Initial Load State -->
+    <div
+      class="relative flex h-[calc(100dvh)] w-full items-center justify-center"
+    >
+      <Loader size="lg" message="Loading..." />
+    </div>
+  {:else}
+    <!-- Full UI - sidebar may still be loading data -->
+    <MainNavigation {userProfile} {session} {supabase} bind:openAccountDrawer />
+    <ResizableLayout
+      {supabase}
+      {session}
+      {refreshSidebar}
+      {isNavigatingToContent}
+    >
+      {@render children()}
+    </ResizableLayout>
+  {/if}
+</div>
