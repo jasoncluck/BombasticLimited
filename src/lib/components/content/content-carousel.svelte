@@ -130,7 +130,8 @@
       api &&
       isInitializing &&
       !userInteracting &&
-      carouselState?.lastViewedIndex !== undefined &&
+      carouselState &&
+      carouselState.lastViewedIndex !== undefined &&
       carouselState.lastViewedIndex > -1
     ) {
       waitForCarouselReady(api).then((isReady) => {

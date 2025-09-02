@@ -2,6 +2,7 @@ import { mdsvex } from 'mdsvex';
 import adapter from '@sveltejs/adapter-vercel';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import remarkGfm from 'remark-gfm';
+import remarkSlug from 'remark-slug';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -10,7 +11,7 @@ const config = {
     vitePreprocess(),
     mdsvex({
       extensions: ['.md', '.svx'],
-      remarkPlugins: [remarkGfm],
+      remarkPlugins: [remarkGfm, remarkSlug],
     }),
   ],
   kit: {
