@@ -80,18 +80,12 @@ function getContentType(filePath: string): string {
   const fileExtension = extname(filePath).slice(1).toLowerCase();
 
   if (!fileExtension) {
-    console.warn(
-      `  ⚠️  No file extension found for ${filePath}, using default MIME type`
-    );
     return 'application/octet-stream';
   }
 
   const contentType = CONTENT_TYPES[fileExtension];
 
   if (!contentType) {
-    console.warn(
-      `  ⚠️  Unknown file extension .${fileExtension} for ${filePath}, using default MIME type`
-    );
     return 'application/octet-stream';
   }
 
@@ -244,8 +238,6 @@ async function verifyUploadedFile(
 
 async function uploadContentImages(): Promise<void> {
   try {
-    console.log('Starting content images upload...');
-    console.log(`Upload path: ${localUploadPath}`);
 
     // Check if the upload directory exists
     if (!existsSync(localUploadPath)) {
@@ -256,12 +248,6 @@ async function uploadContentImages(): Promise<void> {
     // Upload all files from local directory
     await uploadFolder(localUploadPath);
 
-    console.log('\n=== Upload Complete ===');
-    console.log(`Total files found: ${stats.totalFiles}`);
-    console.log(`Files uploaded: ${stats.uploadedFiles}`);
-    console.log(`Files skipped (already exist): ${stats.skippedFiles}`);
-    console.log(`Files with errors: ${stats.errorFiles}`);
-    console.log(`Corrupted files detected: ${stats.corruptedFiles}`);
   } catch (error) {
     console.error('Upload failed:', error);
   }
@@ -282,9 +268,6 @@ async function uploadFolder(folderPath: string): Promise<void> {
 
           if (item.isDirectory()) {
             // It's a folder, recurse into it
-            console.log(
-              `Processing folder: ${relative(localUploadPath, fullLocalPath)}`
-            );
             await uploadFolder(fullLocalPath);
           } else {
             // It's a file, upload it
@@ -314,9 +297,6 @@ async function uploadFile(localFilePath: string): Promise<void> {
       await remoteSupabase.storage.from(bucketName).download(supabasePath);
 
     if (!checkError && existingFile) {
-      console.log(
-        `  ⏭️  Skipping ${supabasePath} - already exists in Supabase`
-      );
       stats.skippedFiles++;
       return;
     }
@@ -341,9 +321,6 @@ async function uploadFile(localFilePath: string): Promise<void> {
     // Determine content type based on file extension
     const contentType = getContentType(localFilePath);
 
-    console.log(
-      `  📁 Uploading ${supabasePath} (${contentType}, ${fileSize} bytes)`
-    );
 
     // Create a new Uint8Array from the buffer to ensure proper binary handling
     const uploadData = new Uint8Array(fileBuffer);
@@ -376,10 +353,8 @@ async function uploadFile(localFilePath: string): Promise<void> {
       return;
     }
 
-    console.log(`  ✅ Uploaded: ${supabasePath}`);
 
     // Verify the uploaded file integrity
-    console.log(`  🔍 Verifying upload integrity for ${supabasePath}...`);
     const isValid = await verifyUploadedFile(
       supabasePath,
       originalHash,
@@ -404,12 +379,10 @@ async function uploadFile(localFilePath: string): Promise<void> {
           deleteError
         );
       } else {
-        console.log(`  🗑️  Deleted corrupted file ${supabasePath}`);
       }
       return;
     }
 
-    console.log(`  ✅ Upload verification passed for ${supabasePath}`);
     stats.uploadedFiles++;
   } catch (error) {
     const relativePath = relative(localUploadPath, localFilePath);

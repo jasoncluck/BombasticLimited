@@ -28,9 +28,6 @@ export const handler = async (
   let supabaseDbUrl = process.env.SUPABASE_DB_URL_PROD;
 
   // Add debugging
-  console.log('Environment variables check:');
-  console.log('bucketName:', bucketName ? 'SET' : 'NOT SET');
-  console.log('supabaseDbUrl:', supabaseDbUrl ? 'SET' : 'NOT SET');
 
   if (!bucketName) {
     throw new Error('BACKUP_BUCKET_NAME environment variable is not set');
@@ -47,7 +44,6 @@ export const handler = async (
     const [, username, password, hostAndDb] = urlMatch;
     const encodedPassword = encodeURIComponent(password);
     supabaseDbUrl = `postgresql://${username}:${encodedPassword}@${hostAndDb}`;
-    console.log('Fixed connection string with encoded password');
   }
 
   // Clean the connection string of any whitespace/newlines
@@ -56,7 +52,6 @@ export const handler = async (
   const timestamp = new Date().toISOString();
   const backupKey = `backups/${environment}/${timestamp.split('T')[0]}/database-backup-${timestamp.replace(/[:.]/g, '-')}.json`;
 
-  console.log(`Starting database backup to s3://${bucketName}/${backupKey}`);
 
   try {
     // Define tables to backup (can be customized via event)
@@ -69,7 +64,6 @@ export const handler = async (
       'user_playlists',
     ];
 
-    console.log('Attempting to connect to PostgreSQL...');
 
     // Initialize PostgreSQL client
     const pgClient = new Client({
@@ -80,21 +74,15 @@ export const handler = async (
     });
 
     await pgClient.connect();
-    console.log('Connected to PostgreSQL database');
 
     const backupData: Record<string, any> = {};
 
     // Backup public schema tables only
-    console.log('Backing up public schema tables...');
     for (const table of tablesToBackup) {
-      console.log(`Backing up table: public.${table}`);
 
       try {
         const result = await pgClient.query(`SELECT * FROM public.${table}`);
         backupData[`public.${table}`] = result.rows;
-        console.log(
-          `Backed up ${result.rows.length} records from public.${table}`
-        );
       } catch (error) {
         console.error(`Error backing up table public.${table}:`, error);
         throw new Error(`Failed to backup table public.${table}: ${error}`);
@@ -102,7 +90,6 @@ export const handler = async (
     }
 
     await pgClient.end();
-    console.log('Disconnected from PostgreSQL database');
 
     // Create backup metadata
     const backupMetadata = {
@@ -128,11 +115,6 @@ export const handler = async (
     const backupJson = JSON.stringify(backup, null, 2);
 
     if (event.dryRun) {
-      console.log('Dry run mode - not uploading to S3');
-      console.log(
-        `Backup size: ${Buffer.byteLength(backupJson, 'utf8')} bytes`
-      );
-      console.log(`Public tables: ${tablesToBackup.join(', ')}`);
 
       return {
         success: true,
@@ -144,7 +126,6 @@ export const handler = async (
     }
 
     // Upload to S3
-    console.log('Uploading backup to S3...');
 
     const putCommand = new PutObjectCommand({
       Bucket: bucketName,
@@ -170,11 +151,6 @@ export const handler = async (
     await s3Client.send(putCommand);
 
     const backupSize = Buffer.byteLength(backupJson, 'utf8');
-    console.log(
-      `Successfully uploaded backup to s3://${bucketName}/${backupKey}`
-    );
-    console.log(`Backup size: ${backupSize} bytes`);
-    console.log(`Public tables backed up: ${tablesToBackup.join(', ')}`);
 
     return {
       success: true,

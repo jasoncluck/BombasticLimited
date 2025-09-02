@@ -86,7 +86,6 @@ export const mixedTest = base.extend<
 >({
   // Initialize unauthenticated context FIRST and independently
   unauthenticatedContext: async ({ browser }, use) => {
-    console.log('Creating unauthenticated context...');
     const context = await browser.newContext({
       // Force completely clean state
       storageState: { cookies: [], origins: [] },
@@ -96,29 +95,24 @@ export const mixedTest = base.extend<
         'Cache-Control': 'no-cache',
       },
     });
-    console.log('Unauthenticated context created successfully');
     await use(context);
     await context.close();
   },
 
   unauthenticatedPage: async ({ unauthenticatedContext }, use) => {
-    console.log('Creating unauthenticated page...');
     const page = await unauthenticatedContext.newPage();
 
     // Add debugging to see what's happening
     page.on('response', (response) => {
       if (response.status() >= 400 || response.url().includes('auth')) {
-        console.log(`Unauth response: ${response.status()} ${response.url()}`);
       }
     });
 
     page.on('request', (request) => {
       if (request.url().includes('auth')) {
-        console.log(`Unauth request: ${request.method()} ${request.url()}`);
       }
     });
 
-    console.log('Unauthenticated page created successfully');
     await use(page);
     await page.close();
   },

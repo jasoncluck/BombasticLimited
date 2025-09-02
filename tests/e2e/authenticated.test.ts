@@ -158,9 +158,6 @@ test.describe('Authenticated User Features', () => {
       await authenticatedPage.goto('/account');
       await expect(authenticatedPage).toHaveURL(/\/auth\/login/);
     } else {
-      console.log(
-        'Logout functionality not found in UI - skipping logout test'
-      );
     }
   });
 });
