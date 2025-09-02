@@ -104,7 +104,7 @@
   onActive={() => (showFloatingBreadcrumbs = false)}
   onInactive={() => (showFloatingBreadcrumbs = true)}
 >
-  <div class="mb-2" {...restProps}>
+  <div class="mb-4" {...restProps}>
     {@render children()}
 
     <div class="flex items-center gap-0 sm:my-4">
