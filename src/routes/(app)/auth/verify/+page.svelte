@@ -38,8 +38,8 @@
     <Card.Content>
       <p>
         Account creation requires email verification. An email has been sent to {email}
-        with a link which will create and log you into the new account. Once complete
-        this tab can be closed.
+        with a link which will create your account and login. Once complete this
+        tab can be closed.
       </p>
     </Card.Content>
 
@@ -55,7 +55,10 @@
     </div>
     <Card.Footer class="flex items-center justify-center">
       <div class="flex flex-col gap-4">
-        <p>Use the button below to send a new verification email.</p>
+        <p class="self-start">
+          Check your email for an email from admin@bombastic.ltd. If it's still
+          not there you can get another code.
+        </p>
 
         {#if loading}
           <Loader class="mr-2 w-full animate-spin" />
