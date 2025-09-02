@@ -44,7 +44,7 @@
     url.searchParams.delete('code');
     goto(url.pathname + url.search, {
       replaceState: true,
-      invalidate: ['supabase:db:profiles'],
+      invalidate: ['supabase:db:profiles', 'supbase:db:notifications'],
     });
     sidebarState.refreshData();
     navigationState.refreshData();
