@@ -1,6 +1,6 @@
 -- Optimized timestamp management functions
 -- ============================================================================
--- Optimized function to insert/update timestamp
+--
 CREATE OR REPLACE FUNCTION public.insert_timestamp (
   p_video_id text,
   p_video_start_seconds numeric DEFAULT NULL,
@@ -27,6 +27,7 @@ SET
   search_path = '' AS $$ 
 DECLARE
   current_user_id uuid;
+  final_video_start_seconds numeric;
 BEGIN
   -- Get current user once
   current_user_id := auth.uid();
@@ -35,6 +36,13 @@ BEGIN
   IF current_user_id IS NULL THEN
     RAISE EXCEPTION 'AUTHENTICATION_REQUIRED: User must be authenticated to insert timestamps'
       USING ERRCODE = 'P0001';
+  END IF;
+
+  -- If watched_at is being set, clear video_start_seconds to 0
+  IF p_watched_at IS NOT NULL THEN
+    final_video_start_seconds := 0;
+  ELSE
+    final_video_start_seconds := p_video_start_seconds;
   END IF;
 
   -- Upsert timestamp in single operation
@@ -50,7 +58,7 @@ BEGIN
   ) VALUES (
     current_user_id,
     p_video_id,
-    p_video_start_seconds,
+    final_video_start_seconds,
     p_watched_at,
     NOW(),
     p_playlist_id,
@@ -58,7 +66,10 @@ BEGIN
     p_sort_order
   )
   ON CONFLICT (user_id, video_id) DO UPDATE SET
-    video_start_seconds = COALESCE(EXCLUDED.video_start_seconds, timestamps.video_start_seconds),
+    video_start_seconds = CASE 
+      WHEN EXCLUDED.watched_at IS NOT NULL THEN 0
+      ELSE COALESCE(EXCLUDED.video_start_seconds, timestamps.video_start_seconds)
+    END,
     watched_at = COALESCE(EXCLUDED.watched_at, timestamps.watched_at),
     updated_at = NOW(),
     playlist_id = COALESCE(EXCLUDED.playlist_id, timestamps.playlist_id),
@@ -138,7 +149,11 @@ BEGIN
   WITH video_data AS (
     SELECT 
       vid,
-      CASE WHEN update_video_start THEN p_video_start_seconds[idx] ELSE NULL END as start_seconds,
+      CASE 
+        WHEN update_watched_at AND p_watched_at[idx] IS NOT NULL THEN 0
+        WHEN update_video_start THEN p_video_start_seconds[idx] 
+        ELSE NULL 
+      END as start_seconds,
       CASE WHEN update_watched_at THEN p_watched_at[idx] ELSE NULL END as watched_time
     FROM unnest(p_video_ids) WITH ORDINALITY AS t(vid, idx)
   )
@@ -158,6 +173,7 @@ BEGIN
   FROM video_data vd
   ON CONFLICT (user_id, video_id) DO UPDATE SET
     video_start_seconds = CASE 
+      WHEN update_watched_at AND EXCLUDED.watched_at IS NOT NULL THEN 0
       WHEN update_video_start AND EXCLUDED.video_start_seconds IS NOT NULL 
       THEN EXCLUDED.video_start_seconds
       ELSE timestamps.video_start_seconds

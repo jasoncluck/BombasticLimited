@@ -15,6 +15,7 @@
   import { goto, preloadData } from '$app/navigation';
   import { getSortDisplayName } from './content-filter';
   import ContentCardSkeleton from './content-card-skeleton.svelte';
+  import LazyImage from './LazyImage.svelte';
   import { onMount } from 'svelte';
   import {
     handleContentNavigation,
@@ -167,11 +168,12 @@
     return classes;
   }
 
-  // Preload content data
+  // Preload content data and images
   async function preloadContent() {
     if (!video) return;
 
     try {
+      // Preload navigation data
       const url = generateContentNavigationUrl({
         video,
         contentFilter,
@@ -268,9 +270,10 @@
 
     const isCtrlPressed = event.ctrlKey || event.metaKey;
 
-    if (isCtrlPressed) {
+    if (isCtrlPressed || !session) {
       event.preventDefault();
       event.stopPropagation();
+      contentState.selectedVideosBySection[sectionId] = [];
       return;
     } else {
       // Handle right-click context menu behavior
@@ -386,12 +389,11 @@
     >
       <div class="relative flex-shrink-0">
         <!-- Use the optimized image_url directly from the database -->
-        <img
-          class="aspect-[16/9] h-auto w-full"
+        <LazyImage
           src={video.image_url ?? video.thumbnail_url}
           alt={video.title}
-          loading="eager"
-          fetchpriority="high"
+          class="aspect-[16/9] h-auto w-full"
+          {index}
         />
         <div class="absolute top-0.5 right-0.5">
           <ContentDropdown
@@ -434,9 +436,9 @@
           <div
             class="pointer-events-none transform overflow-hidden
             text-xs leading-normal tracking-tight break-words will-change-transform
-            {video.title.length > 80
+            {video.title.length > 70
               ? 'line-clamp-1'
-              : video.title.length > 50
+              : video.title.length > 30
                 ? 'line-clamp-2'
                 : 'line-clamp-3'}"
           >

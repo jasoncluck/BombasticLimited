@@ -2,7 +2,6 @@
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
-  import { dev } from '$app/environment';
   import AspectRatio from '../ui/aspect-ratio/aspect-ratio.svelte';
 
   interface Props {
@@ -54,31 +53,13 @@
   }
 
   let player: TwitchEmbedPlayer | null = $state(null);
-  let video: TwitchVideo | null = $state(null);
-  let twitchPlayer: TwitchPlayer | null = $state(null);
   let mounted = $state(false);
   let embedElement: HTMLElement | undefined = $state();
   let playerCreated = $state(false);
   let hostname = $state('localhost');
-  let adDebugInfo = $state<string[]>([]);
-  let adsDetected = $state(false);
-  let lastAdEvent = $state<string>('');
-  let adEventCount = $state(0);
-  let networkRequestCount = $state(0);
-  let adRequestCount = $state(0);
 
   const mediaQuery = getMediaQueryState();
   let shouldShowChat = $derived(mediaQuery.isLg);
-
-  function addDebugInfo(message: string): void {
-    if (dev) {
-      console.log(`[TwitchEmbed] ${message}`);
-      adDebugInfo = [
-        ...adDebugInfo.slice(-20),
-        `${new Date().toLocaleTimeString()}: ${message}`,
-      ];
-    }
-  }
 
   function getParentDomains(): string[] {
     if (!browser) return ['localhost'];
@@ -97,320 +78,18 @@
 
   async function loadTwitchScript(): Promise<void> {
     if (typeof window.Twitch !== 'undefined') {
-      addDebugInfo('Twitch script already loaded');
       return;
     }
 
-    addDebugInfo('Loading Twitch embed script...');
     return new Promise((resolve, reject) => {
       const script = document.createElement('script');
       script.src = 'https://embed.twitch.tv/embed/v1.js';
       script.async = true;
-      script.onload = () => {
-        addDebugInfo('Twitch script loaded successfully');
-        resolve();
-      };
-      script.onerror = () => {
-        addDebugInfo('Failed to load Twitch embed script');
+      script.onload = () => resolve();
+      script.onerror = () =>
         reject(new Error('Failed to load Twitch embed script'));
-      };
       document.head.appendChild(script);
     });
-  }
-
-  function setupAdEventListeners(): void {
-    if (!player) return;
-
-    try {
-      addDebugInfo('Setting up comprehensive ad event listeners...');
-
-      // All possible Twitch ad events
-      const adEvents = [
-        // Standard ad events
-        'ads-ad-started',
-        'ads-ad-ended',
-        'ads-ad-break-started',
-        'ads-ad-break-ended',
-        'ads-ad-impression',
-        'ads-midroll-request',
-        'ads-preroll-request',
-        'ads-postroll-request',
-        // Additional ad events
-        'ad-break-begin',
-        'ad-break-end',
-        'ad-impression',
-        'ad-started',
-        'ad-ended',
-        'ad-skipped',
-        'ad-click',
-        'ad-error',
-        'ad-complete',
-        'ad-first-quartile',
-        'ad-midpoint',
-        'ad-third-quartile',
-        'preroll-ad-started',
-        'preroll-ad-ended',
-        'midroll-ad-started',
-        'midroll-ad-ended',
-        'postroll-ad-started',
-        'postroll-ad-ended',
-        // Amazon/IVS ad events
-        'amazon-ad-started',
-        'amazon-ad-ended',
-        'ivs-ad-started',
-        'ivs-ad-ended',
-        'dsp-ad-started',
-        'dsp-ad-ended',
-        // Player events that might indicate ads
-        'play',
-        'pause',
-        'seeking',
-        'seeked',
-        'timeupdate',
-        'loadstart',
-        'loadedmetadata',
-        'canplay',
-        'playing',
-        'waiting',
-        'ended',
-        'error',
-      ];
-
-      // Listen on the main player object
-      if (typeof player.addEventListener === 'function') {
-        adEvents.forEach((eventName) => {
-          player?.addEventListener?.(eventName, (event: unknown) => {
-            if (
-              eventName.includes('ad') ||
-              eventName.includes('Ad') ||
-              eventName.includes('dsp')
-            ) {
-              adsDetected = true;
-              lastAdEvent = eventName;
-              adEventCount = adEventCount + 1;
-              addDebugInfo(
-                `🎯 AD EVENT: ${eventName} (Total: ${adEventCount + 1})`
-              );
-              if (dev && event) {
-                console.log(
-                  `[TwitchEmbed] Ad event data for ${eventName}:`,
-                  event
-                );
-              }
-            } else {
-              addDebugInfo(`Player event: ${eventName}`);
-            }
-          });
-        });
-
-        // Special ready event handler
-        player.addEventListener('ready', () => {
-          addDebugInfo('Player ready - attempting to get video reference...');
-          setTimeout(() => {
-            if (typeof player?.getVideo === 'function') {
-              video = player.getVideo();
-              if (video) {
-                addDebugInfo(
-                  'Video reference obtained, setting up video-level ad listeners...'
-                );
-                setupVideoAdListeners();
-              } else {
-                addDebugInfo('Video reference is null');
-              }
-            } else {
-              addDebugInfo('getVideo method not available');
-            }
-          }, 1000);
-        });
-
-        addDebugInfo(`Set up ${adEvents.length} event listeners on player`);
-      }
-    } catch (error) {
-      addDebugInfo(
-        `Error setting up ad event listeners: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  }
-
-  function setupVideoAdListeners(): void {
-    if (!video) return;
-
-    try {
-      const videoAdEvents = [
-        'ads-ad-started',
-        'ads-ad-ended',
-        'ads-ad-break-started',
-        'ads-ad-break-ended',
-        'ads-ad-impression',
-        'ad-break-begin',
-        'ad-break-end',
-        'ad-impression',
-        'ad-started',
-        'ad-ended',
-        'ad-complete',
-        'amazon-ad-started',
-        'amazon-ad-ended',
-        'dsp-ad-started',
-        'dsp-ad-ended',
-      ];
-
-      if (typeof video.addEventListener === 'function') {
-        videoAdEvents.forEach((eventName) => {
-          video?.addEventListener?.(eventName, (event: unknown) => {
-            adsDetected = true;
-            lastAdEvent = `video.${eventName}`;
-            adEventCount = adEventCount + 1;
-            addDebugInfo(
-              `🎯 VIDEO AD EVENT: ${eventName} (Total: ${adEventCount + 1})`
-            );
-            if (dev && event) {
-              console.log(
-                `[TwitchEmbed] Video ad event data for ${eventName}:`,
-                event
-              );
-            }
-          });
-        });
-
-        addDebugInfo(
-          `Set up ${videoAdEvents.length} video-level ad event listeners`
-        );
-      }
-
-      // Try to get the underlying player if available
-      if (typeof video.getPlayer === 'function') {
-        twitchPlayer = video.getPlayer();
-        if (
-          twitchPlayer &&
-          typeof twitchPlayer.addEventListener === 'function'
-        ) {
-          videoAdEvents.forEach((eventName) => {
-            twitchPlayer?.addEventListener?.(eventName, (event: unknown) => {
-              adsDetected = true;
-              lastAdEvent = `player.${eventName}`;
-              adEventCount = adEventCount + 1;
-              addDebugInfo(
-                `🎯 PLAYER AD EVENT: ${eventName} (Total: ${adEventCount + 1})`
-              );
-              if (dev && event) {
-                console.log(
-                  `[TwitchEmbed] Player ad event data for ${eventName}:`,
-                  event
-                );
-              }
-            });
-          });
-          addDebugInfo('Set up player-level ad event listeners');
-        }
-      }
-    } catch (error) {
-      addDebugInfo(
-        `Error setting up video ad listeners: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  }
-
-  // Monitor for ad-related network requests
-  function monitorAdRequests(): void {
-    if (!browser || !dev) return;
-
-    try {
-      // Override fetch to monitor ad requests
-      const originalFetch = window.fetch;
-      window.fetch = async (...args) => {
-        const [resource] = args;
-        let url: string;
-
-        // Handle both string URLs and Request objects
-        if (typeof resource === 'string') {
-          url = resource;
-        } else if (resource instanceof Request) {
-          url = resource.url;
-        } else if (resource instanceof URL) {
-          url = resource.href;
-        } else {
-          url = String(resource);
-        }
-
-        networkRequestCount = networkRequestCount + 1;
-
-        // Check for ad-related requests
-        const adKeywords = [
-          'ad',
-          'ads',
-          'amazon-adsystem',
-          'ads.twitch.tv',
-          'advertising',
-          'doubleclick',
-          'googlesyndication',
-          'dsp',
-          'aax',
-          'fls-na',
-          'unagi',
-          'completion.amazon',
-          'ad-delivery',
-        ];
-
-        const isAdRequest = adKeywords.some((keyword) =>
-          url.toLowerCase().includes(keyword)
-        );
-
-        if (isAdRequest) {
-          adRequestCount = adRequestCount + 1;
-          addDebugInfo(
-            `🌐 AD REQUEST #${adRequestCount}: ${url.substring(0, 100)}${url.length > 100 ? '...' : ''}`
-          );
-        }
-
-        return originalFetch.apply(window, args);
-      };
-
-      // Override XMLHttpRequest as well
-      const originalXHROpen = XMLHttpRequest.prototype.open;
-      XMLHttpRequest.prototype.open = function (
-        method: string,
-        url: string | URL,
-        ...rest: unknown[]
-      ) {
-        const urlString = typeof url === 'string' ? url : url.href;
-        networkRequestCount = networkRequestCount + 1;
-
-        const adKeywords = [
-          'ad',
-          'ads',
-          'amazon-adsystem',
-          'ads.twitch.tv',
-          'advertising',
-          'doubleclick',
-          'googlesyndication',
-          'dsp',
-          'aax',
-          'fls-na',
-          'unagi',
-          'completion.amazon',
-          'ad-delivery',
-        ];
-
-        const isAdRequest = adKeywords.some((keyword) =>
-          urlString.toLowerCase().includes(keyword)
-        );
-
-        if (isAdRequest) {
-          adRequestCount = adRequestCount + 1;
-          addDebugInfo(
-            `🌐 XHR AD REQUEST #${adRequestCount}: ${urlString.substring(0, 100)}${urlString.length > 100 ? '...' : ''}`
-          );
-        }
-
-        return originalXHROpen.call(this, method, url, ...rest);
-      };
-
-      addDebugInfo('Network monitoring for ad requests enabled');
-    } catch (error) {
-      addDebugInfo(
-        `Error setting up network monitoring: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
   }
 
   async function createPlayer(): Promise<void> {
@@ -419,8 +98,6 @@
     }
 
     try {
-      addDebugInfo(`🚀 Starting player creation for channel: ${channel}`);
-
       // Ensure Twitch script is loaded
       await loadTwitchScript();
 
@@ -429,7 +106,7 @@
 
       const embedEl = document.getElementById('twitch-embed');
       if (!embedEl) {
-        addDebugInfo('❌ ERROR: Twitch embed element not found');
+        console.error('Twitch embed element not found');
         return;
       }
 
@@ -448,44 +125,9 @@
         muted: false,
       };
 
-      addDebugInfo(
-        `🔧 Creating player with parent domains: ${parentDomains.join(', ')}`
-      );
-      if (dev) {
-        addDebugInfo(
-          `Player options: ${JSON.stringify(embedOptions, null, 2)}`
-        );
-      }
-
       player = new window.Twitch.Embed('twitch-embed', embedOptions);
-
-      // Setup comprehensive event monitoring
-      setupAdEventListeners();
-      monitorAdRequests();
-
       playerCreated = true;
-      addDebugInfo('✅ Twitch player created successfully');
-
-      // Additional debugging after player creation
-      setTimeout(() => {
-        addDebugInfo('🔍 Post-creation diagnostics:');
-        addDebugInfo(`- Player object exists: ${!!player}`);
-        addDebugInfo(
-          `- getVideo method available: ${!!(player && typeof player.getVideo === 'function')}`
-        );
-        addDebugInfo(`- Network requests made: ${networkRequestCount}`);
-        addDebugInfo(`- Ad-related requests: ${adRequestCount}`);
-
-        // Check if we can access the video element
-        if (player && typeof player.getVideo === 'function') {
-          const videoRef = player.getVideo();
-          addDebugInfo(`- Video reference obtained: ${!!videoRef}`);
-        }
-      }, 3000);
     } catch (error) {
-      addDebugInfo(
-        `❌ Error creating Twitch player: ${error instanceof Error ? error.message : String(error)}`
-      );
       console.error('Error creating Twitch player:', error);
     }
   }
@@ -494,7 +136,6 @@
     mounted = true;
     if (browser) {
       hostname = getParentDomains()[0];
-      addDebugInfo(`🏠 Component mounted on hostname: ${hostname}`);
     }
 
     const cleanup = mediaQuery.initialize();
@@ -506,11 +147,8 @@
       if (player) {
         try {
           player.destroy();
-          addDebugInfo('🧹 Player destroyed on unmount');
         } catch (error) {
-          addDebugInfo(
-            `❌ Error destroying player: ${error instanceof Error ? error.message : String(error)}`
-          );
+          console.error('Error destroying player:', error);
         }
       }
     };
@@ -531,21 +169,6 @@
         bind:this={embedElement}
         class="absolute inset-0 h-full w-full rounded bg-black"
       ></div>
-
-      <!-- Ad status indicator -->
-      {#if adsDetected}
-        <div
-          class="absolute top-2 right-2 rounded bg-green-600 px-2 py-1 text-xs text-white shadow-lg"
-        >
-          🎯 Ads Working! ({adEventCount} events)
-        </div>
-      {:else if dev}
-        <div
-          class="absolute top-2 right-2 rounded bg-orange-600 px-2 py-1 text-xs text-white shadow-lg"
-        >
-          ⏳ Monitoring... ({adRequestCount} ad requests)
-        </div>
-      {/if}
     </div>
 
     <!-- Chat container - only rendered when needed -->
@@ -560,71 +183,4 @@
       </div>
     {/if}
   </div>
-
-  <!-- Debug information panel (only shown in development) -->
-  {#if dev && adDebugInfo.length > 0}
-    <details
-      class="mt-4 rounded bg-gray-800 p-4 text-xs text-white"
-      open={adsDetected || adRequestCount > 0}
-    >
-      <summary class="cursor-pointer font-bold">
-        🔍 Twitch Ad Debug Console ({adDebugInfo.length} logs)
-        {#if adsDetected}
-          <span class="ml-2 rounded bg-green-600 px-2 py-1">ADS DETECTED!</span>
-        {:else if adRequestCount > 0}
-          <span class="ml-2 rounded bg-blue-600 px-2 py-1"
-            >AD REQUESTS: {adRequestCount}</span
-          >
-        {:else}
-          <span class="ml-2 rounded bg-red-600 px-2 py-1">NO ADS YET</span>
-        {/if}
-      </summary>
-      <div class="mt-2 max-h-60 overflow-y-auto border-t border-gray-600 pt-2">
-        {#each adDebugInfo as info, index (index)}
-          <div
-            class="mb-1 font-mono text-xs {info.includes('AD EVENT') ||
-            info.includes('AD REQUEST')
-              ? 'font-bold text-green-300'
-              : info.includes('Player event')
-                ? 'text-blue-300'
-                : 'text-gray-300'}"
-          >
-            {info}
-          </div>
-        {/each}
-      </div>
-      <div
-        class="mt-3 grid grid-cols-4 gap-4 border-t border-gray-600 pt-2 text-yellow-300"
-      >
-        <div>
-          <strong>Ads Status:</strong>
-          {adsDetected ? '✅ Detected' : '❌ None'}
-        </div>
-        <div>
-          <strong>Ad Events:</strong>
-          {adEventCount}
-        </div>
-        <div>
-          <strong>Ad Requests:</strong>
-          {adRequestCount}
-        </div>
-        <div>
-          <strong>Last Event:</strong>
-          {lastAdEvent || 'None'}
-        </div>
-      </div>
-      <div class="mt-2 text-xs text-gray-400">
-        <strong>💡 Ad Troubleshooting Tips:</strong>
-        <ul class="mt-1 ml-4 list-disc">
-          <li>Try a popular partnered channel with high viewership</li>
-          <li>Disable ad blockers, privacy extensions, and VPNs</li>
-          <li>Clear cookies and try incognito/private browsing</li>
-          <li>Geographic location affects ad availability</li>
-          <li>Some channels opt out of pre-roll ads</li>
-          <li>Twitch may not serve ads to every viewer session</li>
-          <li>Try refreshing the page multiple times</li>
-        </ul>
-      </div>
-    </details>
-  {/if}
 </AspectRatio>

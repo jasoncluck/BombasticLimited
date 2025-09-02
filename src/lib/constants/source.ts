@@ -20,6 +20,9 @@ export type HighlightPlaylist = {
 
 interface SourceInfo {
   displayName: string;
+  // Twitch username override for using when twitch
+  // username different than source
+  twitchUserName?: string;
   urlParam: string;
   image: Picture;
   twitchId: string;
@@ -49,7 +52,7 @@ export const SOURCE_INFO: Record<Source, SourceInfo> = {
     supportUrl: 'https://www.giantbomb.com/upgrade/',
   },
   jeffgerstmann: {
-    displayName: 'The Jeff Gerstmann Show',
+    displayName: 'Jeff Gerstmann',
     urlParam: 'jeffgerstmann',
     image: jeffgerstmannImage,
     twitchId: '504350',
@@ -88,6 +91,7 @@ export const SOURCE_INFO: Record<Source, SourceInfo> = {
   },
   remap: {
     displayName: 'Remap',
+    twitchUserName: 'RemapRadio',
     urlParam: 'remap',
     image: remapImage,
     twitchId: '913491352',

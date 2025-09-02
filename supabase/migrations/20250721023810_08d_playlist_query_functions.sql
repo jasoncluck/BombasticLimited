@@ -29,6 +29,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data (
   playlist_thumbnail_url text,
   playlist_deleted_at TIMESTAMP WITH TIME ZONE,
   profile_username text,
+  profile_avatar_url text,
   playlist_sorted_by public.playlist_sorted_by,
   playlist_sort_order public.playlist_sort_order,
   -- Video data with optimized image paths  
@@ -88,6 +89,7 @@ BEGIN
       p.deleted_at,
       p.duration_seconds,
       prof.username AS profile_username,
+      prof.avatar_url AS profile_avatar_url,
       COALESCE(up.sorted_by, 'playlistOrder'::public.playlist_sorted_by) as sorted_by,
       COALESCE(up.sort_order, 'ascending'::public.playlist_sort_order) as sort_order,
       -- Get video count in the same query
@@ -135,6 +137,7 @@ BEGIN
       playlist_record.thumbnail_url,
       playlist_record.deleted_at,
       playlist_record.profile_username,
+      playlist_record.profile_avatar_url,
       playlist_record.sorted_by,
       playlist_record.sort_order,
       -- Video data (all NULL since no videos)
@@ -163,6 +166,7 @@ BEGIN
     playlist_record.thumbnail_url,
     playlist_record.deleted_at,
     playlist_record.profile_username,
+    playlist_record.profile_avatar_url,
     playlist_record.sorted_by,
     playlist_record.sort_order,
     -- Video data from JOIN
@@ -255,6 +259,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
   playlist_thumbnail_url text,
   playlist_deleted_at TIMESTAMP WITH TIME ZONE,
   profile_username text,
+  profile_avatar_url text,
   playlist_sorted_by public.playlist_sorted_by,
   playlist_sort_order public.playlist_sort_order,
   -- Video data
@@ -300,6 +305,7 @@ SET
       p.thumbnail_url,
       p.deleted_at,
       prof.username AS profile_username,
+      prof.avatar_url AS profile_avatar_url,
       COALESCE(up.sorted_by, 'playlistOrder'::public.playlist_sorted_by) AS sorted_by,
       COALESCE(up.sort_order, 'ascending'::public.playlist_sort_order) AS sort_order
     FROM public.playlists p
@@ -334,6 +340,7 @@ SET
     pi.thumbnail_url as playlist_thumbnail_url,
     pi.deleted_at as playlist_deleted_at,
     pi.profile_username,
+    pi.profile_avatar_url,
     pi.sorted_by as playlist_sorted_by,
     pi.sort_order as playlist_sort_order,
     
@@ -389,6 +396,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_by_youtube_id (
   youtube_id text,
   duration_seconds integer,
   profile_username text,
+  profile_avatar_url text,
   sorted_by public.playlist_sorted_by,
   sort_order public.playlist_sort_order
 )
@@ -406,6 +414,7 @@ SET
     p.youtube_id,
     p.duration_seconds,
     prof.username AS profile_username,
+    prof.avatar_url AS profile_avatar_url,
     up.sorted_by,
     up.sort_order
   FROM public.playlists p
@@ -433,11 +442,11 @@ CREATE OR REPLACE FUNCTION public.get_user_playlists (p_preferred_image_format t
   duration_seconds integer,
   deleted_at TIMESTAMP WITH TIME ZONE,
   profile_username text,
+  profile_avatar_url text,
   sorted_by public.playlist_sorted_by,
   sort_order public.playlist_sort_order,
   playlist_position integer,
-  added_at TIMESTAMP WITH TIME ZONE,
-  avatar_url text
+  added_at TIMESTAMP WITH TIME ZONE
 )
 SET
   search_path = '' LANGUAGE sql AS $$
@@ -461,11 +470,11 @@ SET
     p.duration_seconds,
     p.deleted_at,
     prof.username AS profile_username,
+    prof.avatar_url AS profile_avatar_url,
     up.sorted_by,
     up.sort_order,
     up.playlist_position,
-    up.added_at,
-    prof.avatar_url
+    up.added_at
   FROM public.user_playlists up
   JOIN public.playlists p ON up.id = p.id
   LEFT JOIN public.profiles prof ON p.created_by = prof.id
@@ -493,6 +502,7 @@ CREATE OR REPLACE FUNCTION public.get_playlists_for_username (
   playlist_thumbnail_url text,
   duration_seconds integer,
   profile_username text,
+  profile_avatar_url text,
   sorted_by public.playlist_sorted_by,
   sort_order public.playlist_sort_order,
   deleted_at TIMESTAMP WITH TIME ZONE
@@ -518,6 +528,7 @@ SET
     p.thumbnail_url,
     p.duration_seconds,
     prof.username AS profile_username,
+    prof.avatar_url AS profile_avatar_url,
     up.sorted_by,
     up.sort_order,
     p.deleted_at
@@ -550,7 +561,7 @@ CREATE OR REPLACE FUNCTION "public"."search_playlists" (
   "playlist_thumbnail_url" text,
   "duration_seconds" integer,
   "profile_username" text,
-  "avatar_url" text,
+  "profile_avatar_url" text,
   "search_rank" real,
   "deleted_at" TIMESTAMP WITH TIME ZONE
 ) LANGUAGE "plpgsql"
@@ -559,9 +570,21 @@ SET
 DECLARE
     clean_term text;
     words text[];
+    filtered_words text[];
     word_count int;
+    filtered_word_count int;
     phrase_query tsquery;
     plain_query tsquery;
+    stemmed_query tsquery;
+    -- Common English stop words to filter out
+    stop_words text[] := ARRAY[
+        'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 
+        'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+        'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+        'should', 'may', 'might', 'must', 'can', 'this', 'that', 'these',
+        'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him',
+        'her', 'us', 'them', 'my', 'your', 'his', 'its', 'our', 'their'
+    ];
 BEGIN
     -- Get current user if not provided
     IF current_user_id IS NULL THEN
@@ -573,86 +596,152 @@ BEGIN
         RETURN;
     END IF;
 
-    -- Pre-compute all values
-    clean_term := lower(trim(regexp_replace(search_term, '\s+', ' ', 'g')));
+    -- Normalize and process search term
+    clean_term := public.normalize_search_term(search_term);
     words := string_to_array(clean_term, ' ');
     word_count := array_length(words, 1);
     
-    -- Pre-compile tsqueries (handle potential errors)
+    -- Filter out stop words but keep original term for exact matching
+    SELECT array_agg(word) INTO filtered_words
+    FROM unnest(words) AS word
+    WHERE word IS NOT NULL 
+      AND length(word) >= 2 
+      AND word != ALL(stop_words);
+    
+    filtered_word_count := COALESCE(array_length(filtered_words, 1), 0);
+    
+    -- If all words are filtered out, use original words
+    IF filtered_word_count = 0 THEN
+        filtered_words := words;
+        filtered_word_count := word_count;
+    END IF;
+    
+    -- Create search queries with stemming support
     BEGIN
-        phrase_query := phraseto_tsquery('english', search_term);
-        plain_query := plainto_tsquery('english', search_term);
+        IF filtered_word_count > 0 THEN
+            phrase_query := phraseto_tsquery('english', array_to_string(filtered_words, ' '));
+            plain_query := plainto_tsquery('english', array_to_string(filtered_words, ' '));
+            -- Stemmed query using wildcards for word variations
+            stemmed_query := to_tsquery('english', 
+                array_to_string(
+                    ARRAY(SELECT word || ':*' FROM unnest(filtered_words) AS word WHERE length(word) >= 2), 
+                    ' | '
+                )
+            );
+        ELSE
+            phrase_query := phraseto_tsquery('english', search_term);
+            plain_query := plainto_tsquery('english', search_term);
+            stemmed_query := NULL;
+        END IF;
     EXCEPTION
         WHEN OTHERS THEN
             phrase_query := NULL;
             plain_query := NULL;
+            stemmed_query := NULL;
     END;
     
     RETURN QUERY
-    WITH ranked_playlists AS (
-        SELECT 
-            p.id,
-            p.short_id,
-            p.name,
-            p.description,
-            public.select_best_image_format(
-              p.image_avif_url,
-              p.image_webp_url,
-              p_preferred_image_format
-            ) as best_image_url,
-            p.image_processing_status,
-            p.image_properties,
-            p.created_at,
-            p.created_by,
-            p.type,
-            p.youtube_id,
-            p.thumbnail_url,
-            p.duration_seconds,
-            prof.username AS profile_username,
-            prof.avatar_url,
-            p.deleted_at,
-            -- Optimized ranking calculation
-            (CASE 
-                WHEN lower(p.name) LIKE '%' || clean_term || '%' THEN 1000.0
-                WHEN lower(p.name) LIKE clean_term || '%' THEN 950.0
-                WHEN p.search_vector @@ phrase_query AND phrase_query IS NOT NULL THEN 
-                    850.0 + (ts_rank_cd(p.search_vector, phrase_query) * 100.0)::real
-                WHEN p.search_vector @@ plain_query AND plain_query IS NOT NULL THEN 
-                    800.0 + (ts_rank_cd(p.search_vector, plain_query) * 100.0)::real
-                WHEN lower(p.name) ~ ('\y' || clean_term || '\y') THEN 750.0
-                WHEN word_count > 1 AND (
-                    SELECT COUNT(*) 
-                    FROM unnest(words) AS word 
-                    WHERE lower(p.name) LIKE '%' || word || '%'
-                ) >= word_count THEN 700.0
-                WHEN lower(p.description) LIKE '%' || clean_term || '%' THEN 500.0
-                WHEN word_count = 1 AND lower(p.name) LIKE '%' || words[1] || '%' THEN 450.0
-                WHEN lower(p.description) LIKE clean_term || '%' THEN 350.0
-                WHEN word_count = 1 AND lower(p.description) LIKE '%' || words[1] || '%' THEN 300.0
-                ELSE 0.0 
-            END)::real AS search_rank
-        FROM public.playlists p
-        LEFT JOIN public.profiles prof ON p.created_by = prof.id
-        WHERE (
-            lower(p.name) LIKE '%' || clean_term || '%'
-            OR lower(p.description) LIKE '%' || clean_term || '%'
-            OR (phrase_query IS NOT NULL AND p.search_vector @@ phrase_query)
-            OR (plain_query IS NOT NULL AND p.search_vector @@ plain_query)
-            OR (word_count = 1 AND (
-                lower(p.name) LIKE '%' || words[1] || '%'
-                OR lower(p.description) LIKE '%' || words[1] || '%'
-            ))
-        )
-    )
     SELECT 
-        rp.id, rp.short_id, rp.name, rp.description, rp.best_image_url,
-        rp.image_processing_status, rp.image_properties, rp.created_at,
-        rp.created_by, rp.type, rp.youtube_id, rp.thumbnail_url,
-        rp.duration_seconds, rp.profile_username, rp.avatar_url,
-        rp.search_rank, rp.deleted_at
-    FROM ranked_playlists rp
-    WHERE rp.search_rank > 0
-    ORDER BY rp.search_rank DESC, rp.created_at DESC
+        p.id,
+        p.short_id,
+        p.name,
+        p.description,
+        public.select_best_image_format(
+          p.image_avif_url,
+          p.image_webp_url,
+          p_preferred_image_format
+        ) as image_url,
+        p.image_processing_status,
+        p.image_properties,
+        p.created_at,
+        p.created_by,
+        p.type,
+        p.youtube_id,
+        p.thumbnail_url as playlist_thumbnail_url,
+        p.duration_seconds,
+        prof.username AS profile_username,
+        prof.avatar_url AS profile_avatar_url,
+        -- Enhanced ranking with stemming and stop word filtering
+        (CASE 
+            -- Exact name match (highest priority)
+            WHEN lower(p.name) = clean_term THEN 1000.0
+            -- Name starts with search term
+            WHEN lower(p.name) LIKE clean_term || '%' THEN 900.0
+            -- Exact phrase in name
+            WHEN lower(p.name) LIKE '%' || clean_term || '%' THEN 800.0
+            -- Full-text search with phrase query (filtered words)
+            WHEN phrase_query IS NOT NULL AND p.search_vector @@ phrase_query THEN 
+                700.0 + (ts_rank_cd(p.search_vector, phrase_query, 32) * 100.0)::real
+            -- Stemmed search for word variations (e.g., run -> running, runs)
+            WHEN stemmed_query IS NOT NULL AND p.search_vector @@ stemmed_query THEN 
+                650.0 + (ts_rank_cd(p.search_vector, stemmed_query, 32) * 100.0)::real
+            -- Full-text search with plain query (filtered words)
+            WHEN plain_query IS NOT NULL AND p.search_vector @@ plain_query THEN 
+                600.0 + (ts_rank_cd(p.search_vector, plain_query, 32) * 100.0)::real
+            -- Description contains search term
+            WHEN p.description IS NOT NULL AND lower(p.description) LIKE '%' || clean_term || '%' THEN 400.0
+            -- Multiple filtered word match in name
+            WHEN filtered_word_count > 1 AND (
+                SELECT COUNT(*) 
+                FROM unnest(filtered_words) AS word 
+                WHERE lower(p.name) LIKE '%' || word || '%'
+            ) >= GREATEST(filtered_word_count - 1, 1) THEN 350.0
+            -- Single filtered word match in name
+            WHEN filtered_word_count >= 1 AND lower(p.name) LIKE '%' || filtered_words[1] || '%' THEN 300.0
+            -- Single filtered word in description
+            WHEN filtered_word_count >= 1 AND p.description IS NOT NULL AND lower(p.description) LIKE '%' || filtered_words[1] || '%' THEN 200.0
+            ELSE 0.0 
+        END)::real AS search_rank,
+        p.deleted_at
+    FROM public.playlists p
+    LEFT JOIN public.profiles prof ON p.created_by = prof.id
+    WHERE (
+        -- Basic text matching
+        lower(p.name) LIKE '%' || clean_term || '%'
+        OR (p.description IS NOT NULL AND lower(p.description) LIKE '%' || clean_term || '%')
+        -- Full-text search with filtered terms
+        OR (phrase_query IS NOT NULL AND p.search_vector @@ phrase_query)
+        OR (plain_query IS NOT NULL AND p.search_vector @@ plain_query)
+        OR (stemmed_query IS NOT NULL AND p.search_vector @@ stemmed_query)
+        -- Individual filtered word matching
+        OR (filtered_word_count > 0 AND EXISTS (
+            SELECT 1 FROM unnest(filtered_words) AS word 
+            WHERE lower(p.name) LIKE '%' || word || '%'
+               OR (p.description IS NOT NULL AND lower(p.description) LIKE '%' || word || '%')
+        ))
+    )
+    ORDER BY 
+        (CASE 
+            -- Exact name match (highest priority)
+            WHEN lower(p.name) = clean_term THEN 1000.0
+            -- Name starts with search term
+            WHEN lower(p.name) LIKE clean_term || '%' THEN 900.0
+            -- Exact phrase in name
+            WHEN lower(p.name) LIKE '%' || clean_term || '%' THEN 800.0
+            -- Full-text search with phrase query (filtered words)
+            WHEN phrase_query IS NOT NULL AND p.search_vector @@ phrase_query THEN 
+                700.0 + (ts_rank_cd(p.search_vector, phrase_query, 32) * 100.0)::real
+            -- Stemmed search for word variations
+            WHEN stemmed_query IS NOT NULL AND p.search_vector @@ stemmed_query THEN 
+                650.0 + (ts_rank_cd(p.search_vector, stemmed_query, 32) * 100.0)::real
+            -- Full-text search with plain query (filtered words)
+            WHEN plain_query IS NOT NULL AND p.search_vector @@ plain_query THEN 
+                600.0 + (ts_rank_cd(p.search_vector, plain_query, 32) * 100.0)::real
+            -- Description contains search term
+            WHEN p.description IS NOT NULL AND lower(p.description) LIKE '%' || clean_term || '%' THEN 400.0
+            -- Multiple filtered word match in name
+            WHEN filtered_word_count > 1 AND (
+                SELECT COUNT(*) 
+                FROM unnest(filtered_words) AS word 
+                WHERE lower(p.name) LIKE '%' || word || '%'
+            ) >= GREATEST(filtered_word_count - 1, 1) THEN 350.0
+            -- Single filtered word match in name
+            WHEN filtered_word_count >= 1 AND lower(p.name) LIKE '%' || filtered_words[1] || '%' THEN 300.0
+            -- Single filtered word in description
+            WHEN filtered_word_count >= 1 AND p.description IS NOT NULL AND lower(p.description) LIKE '%' || filtered_words[1] || '%' THEN 200.0
+            ELSE 0.0 
+        END) DESC,
+        p.created_at DESC
     LIMIT limit_count
     OFFSET offset_count;
 END;

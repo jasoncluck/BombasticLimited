@@ -78,10 +78,20 @@
   const sidebarState = getSidebarState();
   const { playlists } = $derived(sidebarState);
 
+  // Initialize currentPage from URL params
   const pageFromQueryParams = page.url.searchParams.get(PAGINATION_QUERY_KEY);
   let currentPage = $state(
     pageFromQueryParams ? parseInt(pageFromQueryParams) : 1
   );
+
+  // Update currentPage when URL changes (for browser back/forward support)
+  $effect(() => {
+    const urlPage = page.url.searchParams.get(PAGINATION_QUERY_KEY);
+    const newPage = urlPage ? parseInt(urlPage) : 1;
+    if (newPage !== currentPage) {
+      currentPage = newPage;
+    }
+  });
 
   const columns = $derived(
     createContentColumns({
@@ -110,20 +120,31 @@
   const currentPlaylist = $derived(playlistState.currentPlaylist);
 
   let contentRef = $state<HTMLDivElement>();
+  let clickOutsideCleanup: (() => void) | null = null;
 
   onMount(() => {
     if (contentRef) {
-      contentState.setupClickOutsideListener(contentRef, sectionId);
+      clickOutsideCleanup = contentState.setupClickOutsideListener(
+        contentRef,
+        sectionId
+      );
     }
+
+    // Cleanup function for when component unmounts
+    return () => {
+      if (clickOutsideCleanup) {
+        clickOutsideCleanup();
+        clickOutsideCleanup = null;
+      }
+      // Reset the section state when component unmounts
+      contentState.resetState();
+    };
   });
 
+  // Handle navigation - reset all relevant state
   onNavigate(() => {
-    if (contentState.hoveredVideosBySection[sectionId]) {
-      contentState.hoveredVideosBySection[sectionId] = null;
-    }
-    if (contentState.selectedVideosBySection[sectionId]) {
-      contentState.selectedVideosBySection[sectionId] = [];
-    }
+    // Reset the section state completely when navigating
+    contentState.resetState();
   });
 
   // Set the current playlist context for the global context menu
@@ -250,19 +271,21 @@
   </ContentContextMenu>
 
   {#if currentPage && numPages > 1}
-    <Pagination
-      count={videosCount ?? 0}
-      bind:currentPage
-      perPage={DEFAULT_NUM_VIDEOS_PAGINATION}
-      onPageChange={(pageNum) => {
-        updatePaginationQueryParams({
-          pageNum,
-          url: page.url,
-          invalidate: ['supabase:db:videos'],
-        });
+    <div class="mt-4">
+      <Pagination
+        count={videosCount ?? 0}
+        bind:currentPage
+        perPage={DEFAULT_NUM_VIDEOS_PAGINATION}
+        onPageChange={(pageNum) => {
+          updatePaginationQueryParams({
+            pageNum,
+            url: page.url,
+            invalidate: ['supabase:db:videos'],
+          });
 
-        pageState.contentScrollPosition = { scrollTop: 0, scrollLeft: 0 };
-      }}
-    />
+          pageState.contentScrollPosition = { scrollTop: 0, scrollLeft: 0 };
+        }}
+      />
+    </div>
   {/if}
 </div>

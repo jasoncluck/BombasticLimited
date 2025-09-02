@@ -5,9 +5,21 @@ import { enhancedImages } from '@sveltejs/enhanced-img';
 import viteCompression from 'vite-plugin-compression';
 
 const isTest = process.env.NODE_ENV === 'test';
+const isProduction = process.env.NODE_ENV === 'production';
 
 export default defineConfig({
   plugins: [sveltekit(), tailwindcss(), enhancedImages(), viteCompression()],
+
+  // Generate source maps in production for error tracking
+  build: {
+    sourcemap: isProduction ? 'hidden' : true,
+    rollupOptions: {
+      output: {
+        // Ensure source maps are generated with proper naming
+        sourcemapFileNames: 'assets/[name]-[hash].js.map',
+      },
+    },
+  },
 
   // Disable HMR during testing to prevent dev server hangs
   server: isTest

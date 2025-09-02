@@ -32,7 +32,7 @@
         url: new URL(window.location.href),
         pageNum,
       });
-      await preloadData(url);
+      preloadData(url);
       preloadedPages.add(pageNum);
     } catch (error) {
       // Silently fail if preloading doesn't work

@@ -11,15 +11,24 @@
   import { DEFAULT_NUM_PLAYLISTS_PAGINATION } from '$lib/supabase/playlists';
 
   const { data } = $props();
-  let { processedPlaylists, playlistsCount, session, supabase } =
-    $derived(data);
+  let { playlists, playlistsCount, session, supabase } = $derived(data);
 
   const username = page.params.username;
 
+  // Initialize currentPage from URL params
   const pageFromQueryParams = page.url.searchParams.get(PAGINATION_QUERY_KEY);
   let currentPage = $state(
     pageFromQueryParams ? parseInt(pageFromQueryParams) : 1
   );
+
+  // Update currentPage when URL changes (for browser back/forward support)
+  $effect(() => {
+    const urlPage = page.url.searchParams.get(PAGINATION_QUERY_KEY);
+    const newPage = urlPage ? parseInt(urlPage) : 1;
+    if (newPage !== currentPage) {
+      currentPage = newPage;
+    }
+  });
 
   const numPages = $derived(
     getNumberOfPages({
@@ -62,5 +71,5 @@
     />
   {/if}
 
-  <PlaylistTiles playlists={processedPlaylists} {supabase} {session} />
+  <PlaylistTiles {playlists} {supabase} {session} />
 </div>

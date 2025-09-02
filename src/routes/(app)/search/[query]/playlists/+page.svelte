@@ -12,10 +12,20 @@
   const { data } = $props();
   let { playlistResults, playlistsCount, session, supabase } = $derived(data);
 
+  // Initialize currentPage from URL params
   const pageFromQueryParams = page.url.searchParams.get(PAGINATION_QUERY_KEY);
   let currentPage = $state(
     pageFromQueryParams ? parseInt(pageFromQueryParams) : 1
   );
+
+  // Update currentPage when URL changes (for browser back/forward support)
+  $effect(() => {
+    const urlPage = page.url.searchParams.get(PAGINATION_QUERY_KEY);
+    const newPage = urlPage ? parseInt(urlPage) : 1;
+    if (newPage !== currentPage) {
+      currentPage = newPage;
+    }
+  });
 
   const numPages = $derived(
     getNumberOfPages({
@@ -23,8 +33,6 @@
       perPage: DEFAULT_NUM_PLAYLISTS_PAGINATION,
     })
   );
-
-  // No need for client-side processing - playlists are already processed server-side
 </script>
 
 <div class="mx-2 flex gap-6">

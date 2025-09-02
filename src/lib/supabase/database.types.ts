@@ -47,6 +47,7 @@ export type Database = {
           priority: number;
           processing_completed_at: string | null;
           processing_started_at: string | null;
+          properties_hash: string | null;
           source_url: string;
           status: string;
           updated_at: string;
@@ -63,6 +64,7 @@ export type Database = {
           priority?: number;
           processing_completed_at?: string | null;
           processing_started_at?: string | null;
+          properties_hash?: string | null;
           source_url: string;
           status?: string;
           updated_at?: string;
@@ -79,6 +81,7 @@ export type Database = {
           priority?: number;
           processing_completed_at?: string | null;
           processing_started_at?: string | null;
+          properties_hash?: string | null;
           source_url?: string;
           status?: string;
           updated_at?: string;
@@ -581,6 +584,15 @@ export type Database = {
         Args: { playlist_id: number; user_id: string };
         Returns: boolean;
       };
+      cleanup_duplicate_image_processing_jobs: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          entity_id: string;
+          entity_type: string;
+          reason: string;
+          removed_job_id: string;
+        }[];
+      };
       cleanup_expired_notifications: {
         Args: Record<PropertyKey, never>;
         Returns: number;
@@ -588,6 +600,14 @@ export type Database = {
       cleanup_expired_notifications_cron: {
         Args: Record<PropertyKey, never>;
         Returns: number;
+      };
+      cleanup_old_completed_jobs: {
+        Args: { days_old?: number };
+        Returns: {
+          deleted_count: number;
+          newest_deleted: string;
+          oldest_deleted: string;
+        }[];
       };
       complete_image_processing_job: {
         Args: {
@@ -688,6 +708,15 @@ export type Database = {
         Args: { user_id: string };
         Returns: string;
       };
+      get_image_processing_queue_status: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          count: number;
+          newest_job: string;
+          oldest_job: string;
+          status: string;
+        }[];
+      };
       get_in_progress_videos_with_timestamps: {
         Args: { p_preferred_image_format?: string };
         Returns: {
@@ -732,6 +761,7 @@ export type Database = {
           id: number;
           image_properties: Json;
           name: string;
+          profile_avatar_url: string;
           profile_username: string;
           short_id: string;
           sort_order: Database['public']['Enums']['playlist_sort_order'];
@@ -768,6 +798,7 @@ export type Database = {
           playlist_thumbnail_url: string;
           playlist_type: Database['public']['Enums']['playlist_type'];
           playlist_youtube_id: string;
+          profile_avatar_url: string;
           profile_username: string;
           total_duration_seconds: number;
           total_videos_count: number;
@@ -811,6 +842,7 @@ export type Database = {
           playlist_thumbnail_url: string;
           playlist_type: Database['public']['Enums']['playlist_type'];
           playlist_youtube_id: string;
+          profile_avatar_url: string;
           profile_username: string;
           total_videos_count: number;
           video_description: string;
@@ -844,6 +876,7 @@ export type Database = {
           image_url: string;
           name: string;
           playlist_thumbnail_url: string;
+          profile_avatar_url: string;
           profile_username: string;
           short_id: string;
           sort_order: Database['public']['Enums']['playlist_sort_order'];
@@ -896,7 +929,6 @@ export type Database = {
         Args: { p_preferred_image_format?: string };
         Returns: {
           added_at: string;
-          avatar_url: string;
           created_at: string;
           created_by: string;
           deleted_at: string;
@@ -909,6 +941,7 @@ export type Database = {
           name: string;
           playlist_position: number;
           playlist_thumbnail_url: string;
+          profile_avatar_url: string;
           profile_username: string;
           short_id: string;
           sort_order: Database['public']['Enums']['playlist_sort_order'];
@@ -968,6 +1001,10 @@ export type Database = {
           views: number;
           watched_at: string;
         }[];
+      };
+      hash_image_properties: {
+        Args: { properties: Json };
+        Returns: string;
       };
       increment_video_views: {
         Args: { video_id: string };
@@ -1075,6 +1112,7 @@ export type Database = {
         Args: {
           p_entity_id: string;
           p_entity_type: string;
+          p_image_properties?: Json;
           p_image_type: string;
           p_priority?: number;
           p_source_url: string;
@@ -1089,6 +1127,16 @@ export type Database = {
         Args: { notification_ids: number[] };
         Returns: number;
       };
+      reset_stuck_image_processing_jobs: {
+        Args: { stuck_after_minutes?: number };
+        Returns: {
+          entity_id: string;
+          entity_type: string;
+          minutes_stuck: number;
+          reset_job_id: string;
+          stuck_since: string;
+        }[];
+      };
       restore_playlist: {
         Args: { p_playlist_id: number };
         Returns: boolean;
@@ -1102,7 +1150,6 @@ export type Database = {
           search_term: string;
         };
         Returns: {
-          avatar_url: string;
           created_at: string;
           created_by: string;
           deleted_at: string;
@@ -1114,6 +1161,7 @@ export type Database = {
           image_url: string;
           name: string;
           playlist_thumbnail_url: string;
+          profile_avatar_url: string;
           profile_username: string;
           search_rank: number;
           short_id: string;

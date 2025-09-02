@@ -1,4 +1,5 @@
 node_modules
+supabase/content-images
 
 # Output
 .output

@@ -1,5 +1,4 @@
 import { type Video, getInProgressVideos } from '$lib/supabase/videos';
-import { getVideos } from '$lib/supabase/videos';
 import { showToast } from '$lib/state/notifications.svelte';
 import { showNotification } from '$lib/supabase/notifications';
 import type {
@@ -21,42 +20,6 @@ import {
   startVideoHistorySession,
   updateVideoHistoryEndTime,
 } from '$lib/supabase/video-history';
-
-export async function fetchMoreInProgressVideos({
-  contentFilter,
-  limit,
-  session,
-  supabase,
-  setHasMoreVideos,
-}: {
-  lastSeenVideo: Video;
-  contentFilter: TimestampFilter;
-  limit: number;
-  session?: Session | null;
-  supabase: SupabaseClient<Database>;
-  setHasMoreVideos: (hasMore: boolean) => void;
-}) {
-  const { videos: newVideos, error } = await getInProgressVideos({
-    contentFilter,
-    limit,
-    supabase,
-    session,
-  });
-
-  if (error) {
-    showToast(
-      `Unable to retrieve next set of videos: ${error.message}`,
-      'error'
-    );
-    return [];
-  }
-
-  if (newVideos.length < limit || !newVideos.length) {
-    setHasMoreVideos(false);
-  }
-
-  return newVideos;
-}
 
 export async function handleAddVideoTimestamp({
   videoTimestamp,

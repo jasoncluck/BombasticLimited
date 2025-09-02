@@ -8,16 +8,5 @@
     "deploymentEnabled": {
       "copilot*": false
     }
-  },
-  "headers": [
-    {
-      "source": "/site.webmanifest",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "application/manifest+json"
-        }
-      ]
-    }
-  ]
+  }
 }

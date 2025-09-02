@@ -13,6 +13,7 @@
   import type { Database } from '$lib/supabase/database.types';
   import type { CombinedContentFilter } from '../content-filter';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
+  import { onMount } from 'svelte';
 
   type DataTableProps<TValue> = {
     columns: ColumnDef<Video, TValue>[];
@@ -118,6 +119,7 @@
 
 <Table.Root
   class="content-table outline-hiddden"
+  data-testid="content-table-{sectionId}"
   onmouseleave={handleTableMouseLeave}
 >
   <Table.Body>

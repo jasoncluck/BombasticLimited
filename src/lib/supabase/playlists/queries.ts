@@ -21,7 +21,6 @@ import {
 import {
   type Playlist,
   type UserPlaylist,
-  type ProfilePlaylist,
   type PlaylistVideoWithTimestamp,
   DEFAULT_NUM_PLAYLISTS_OVERVIEW,
 } from './types';
@@ -48,7 +47,7 @@ export async function getPlaylistData({
   session: Session | null;
   preferredImageFormat: string;
 }): Promise<{
-  playlist: UserPlaylist | ProfilePlaylist | null;
+  playlist: Playlist | null;
   videos: PlaylistVideoWithTimestamp[] | Video[];
   videosCount: number;
   playlistDuration: { hours: number; minutes: number; seconds: number };
@@ -100,18 +99,16 @@ export async function getPlaylistData({
   const basePlaylist = transformPlaylistFromRPC(firstRow, supabase);
 
   // Properly construct the playlist with all available fields
-  const playlist: UserPlaylist | ProfilePlaylist = {
+  const playlist: Playlist = {
     ...basePlaylist,
     // Add profile username which is always available
     profile_username: firstRow.profile_username,
+    profile_avatar_url: firstRow.profile_avatar_url,
     // Add user-specific playlist fields if they exist (when user is authenticated and it's their playlist)
     ...(firstRow.playlist_sorted_by &&
       firstRow.playlist_sort_order && {
         sorted_by: firstRow.playlist_sorted_by,
         sort_order: firstRow.playlist_sort_order,
-        playlist_position: null, // This would come from user_playlists table, not available in this RPC
-        added_at: undefined, // Not available from get_playlist_data RPC
-        avatar_url: undefined, // Not available from get_playlist_data RPC
       }),
   };
 
@@ -227,6 +224,7 @@ export async function getPlaylistsForUsername({
     deleted_at: playlist.deleted_at,
     duration_seconds: playlist.duration_seconds,
     profile_username: playlist.profile_username,
+    profile_avatar_url: playlist.profile_avatar_url,
   }));
 
   return { playlists: transformedPlaylists, count, error };
@@ -278,7 +276,7 @@ export async function getPlaylistVideoContext({
   contextLimit?: number;
   preferredImageFormat: string;
 }): Promise<{
-  playlist: UserPlaylist | ProfilePlaylist | null;
+  playlist: UserPlaylist | Playlist | null;
   currentVideo: PlaylistVideoWithTimestamp | null;
   nextVideos: PlaylistVideoWithTimestamp[];
   totalVideosCount: number;
@@ -346,7 +344,7 @@ export async function getPlaylistVideoContext({
     };
   }
 
-  const playlist: UserPlaylist | ProfilePlaylist = {
+  const playlist: UserPlaylist | Playlist = {
     id: metadataRow.playlist_id,
     created_at: metadataRow.playlist_created_at,
     name: metadataRow.playlist_name,
@@ -360,6 +358,7 @@ export async function getPlaylistVideoContext({
     thumbnail_url: metadataRow.playlist_thumbnail_url,
     deleted_at: metadataRow.playlist_deleted_at,
     profile_username: metadataRow.profile_username,
+    profile_avatar_url: metadataRow.profile_avatar_url,
     duration_seconds: 0, // Use 0 instead of null for context queries
     image_processing_status: metadataRow.playlist_image_processing_status,
     ...(metadataRow.playlist_sorted_by && {
@@ -451,10 +450,7 @@ export async function searchPlaylists({
   session: Session | null;
   preferredImageFormat: string;
 }): Promise<{
-  playlists: (ProfilePlaylist & {
-    avatar_url?: string | null;
-    thumbnail_url?: string | null;
-  })[];
+  playlists: Playlist[];
   error: PostgrestError | null;
   count?: number | null;
 }> {
@@ -495,7 +491,7 @@ export async function searchPlaylists({
     deleted_at: playlist.deleted_at,
     duration_seconds: playlist.duration_seconds,
     profile_username: playlist.profile_username,
-    avatar_url: playlist.avatar_url, // Use avatar URL directly - no transformation needed
+    profile_avatar_url: playlist.profile_avatar_url,
   }));
 
   return { playlists: transformedPlaylists, error, count };

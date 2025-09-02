@@ -7,7 +7,6 @@
 
   const {
     playlists,
-    supabase,
     showUsername = true,
     session,
   }: {

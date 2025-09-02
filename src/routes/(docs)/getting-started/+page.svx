@@ -1,3 +1,23 @@
 # Welcome to Bombastic
 
-The chart is rendered inside our MDsveX document.
+Bombastic Limited was created to simplify the process of finding and watching videos 
+from the long-running website about video games: Giant Bomb. Between modern video platforms putting a focus on 
+recommending new creators and people departing Giant Bomb to join or start their own companies, 
+it became challenging to keep track of all. Bombastic's goal is to provide this for the "greater" Giant Bomb 
+community. It also includes some features so you can better keep track of what 
+you're watching and what you want to watch next.
+
+## Features
+
+No account required:
+## Searchable Videos and Playlists from YouTube
+Bombastic pulls data from YouTube to provide all the latest videos along with any playlists created by each channel. 
+These can be searched for at anytime using the bar in the top navigation.
+
+The next features do require an account. 
+If you sign up with Discord or link your Discord account afterwards your avatar will be used for playlists. 
+
+## Video Timestamps
+When you stop watching a video, by navigating elsewhere or closing the tab, your progress automatically saved and added to your "Continue Watching" queue 
+found at the top of the homepage, you can't miss it. 
+

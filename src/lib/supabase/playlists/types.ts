@@ -30,21 +30,22 @@ export type Playlist = {
   thumbnail_url: GetPlaylistDataResponse['playlist_thumbnail_url'] | null;
   deleted_at: GetPlaylistDataResponse['playlist_deleted_at'] | null;
   duration_seconds: GetPlaylistDataResponse['total_duration_seconds'];
-  // Optional properties that may not always be present
   updated_at?: string | null;
   image_processing_updated_at?: string | null;
-};
-
-export type ProfilePlaylist = Playlist & {
   profile_username: GetPlaylistDataResponse['profile_username'];
+  profile_avatar_url?: GetPlaylistDataResponse['profile_avatar_url'];
 };
 
-export type UserPlaylist = ProfilePlaylist & {
+// export type ProfilePlaylist = Playlist & {
+//   profile_username: GetPlaylistDataResponse['profile_username'];
+//   profile_avatar_url?: GetPlaylistDataResponse['profile_avatar_url'];
+// };
+
+export type UserPlaylist = Playlist & {
   playlist_position: GetUserPlaylistsResponse['playlist_position'];
   sorted_by: GetUserPlaylistsResponse['sorted_by'];
   sort_order: GetUserPlaylistsResponse['sort_order'];
   added_at?: GetUserPlaylistsResponse['added_at'];
-  avatar_url?: GetUserPlaylistsResponse['avatar_url'];
 };
 
 // Video types from RPC response

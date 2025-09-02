@@ -65,22 +65,21 @@ function generateStoragePaths(
 ): StoragePaths {
   const timestamp = Date.now();
 
+  // Timestamps for cache-busting previous entries
+
   if (entityType === 'video') {
-    // Videos use deterministic paths for consistency
-    const basePath = `thumbnails/${entityId}/thumbnail-${entityId}`;
+    const basePath = `thumbnails/${entityId}/thumbnail-${entityId}-${timestamp}`;
     return {
       webpPath: `${basePath}.webp`,
       avifPath: `${basePath}.avif`,
     };
   } else if (entityType === 'playlist') {
-    // Playlists use timestamped paths for multiple snapshots
     const basePath = `playlists/${entityId}/playlist-${entityId}-${timestamp}`;
     return {
       webpPath: `${basePath}.webp`,
       avifPath: `${basePath}.avif`,
     };
   } else {
-    // Other entities get timestamped paths
     const basePath = `${entityType}s/${entityId}/${entityType}-${entityId}-${timestamp}`;
     return {
       webpPath: `${basePath}.webp`,

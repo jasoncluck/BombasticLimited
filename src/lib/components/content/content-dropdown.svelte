@@ -213,7 +213,7 @@
 
   // Close dropdown when context menu opens
   $effect(() => {
-    if (contentState.isContextMenuOpenForAnySection()) {
+    if (contentState.openContextMenuSection) {
       open = false;
     }
   });
@@ -246,15 +246,15 @@
         frozenOperationVideos = determineOperationVideos();
         contentState.openDropdownId = dropdownId;
         contentState.isDropdownMenuOpen = true;
-      } else {
+      }
+    }}
+    onOpenChangeComplete={(isOpen) => {
+      // use open change complete event for closing so click outside event handler runs with dropdown "open"
+      if (!isOpen) {
         if (contentState.openDropdownId === dropdownId) {
           contentState.openDropdownId = null;
           contentState.isDropdownMenuOpen = false;
         }
-        // Reset sub-menu state when main dropdown closes
-        subMenuOpen = false;
-        // Clear frozen videos when dropdown closes
-        frozenOperationVideos = [];
       }
     }}
   >
@@ -289,7 +289,7 @@
       {/snippet}
     </DropdownMenu.Trigger>
 
-    <DropdownMenu.Content align="end" class="stable-dropdown outline-hidden">
+    <DropdownMenu.Content align="end" class="stable-dropdown outline-none">
       {#if variant === 'header' && userProfile?.content_display === 'TABLE'}
         <DropdownMenu.Item
           class="p-2"

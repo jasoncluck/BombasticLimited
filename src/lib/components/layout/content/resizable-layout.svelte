@@ -5,38 +5,61 @@
   import Loader from '$lib/components/loader.svelte';
   import { COLLAPSED_SIDEBAR_SIZE } from '$lib/constants/layout';
   import LoadingOverlay from './loading-overlay.svelte';
-  import type { PageState } from '$lib/state/page.svelte.js';
+  import { getPageState } from '$lib/state/page.svelte.js';
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
   import type { Snippet } from 'svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
-  import { getContentView } from '$lib/components/content/content';
-  import type { UserProfile } from '$lib/supabase/user-profiles';
-
+  import { getContentState } from '$lib/state/content.svelte';
   let {
     supabase,
     session,
     refreshSidebar,
-    userProfile,
-    pageState,
     isNavigatingToContent,
     children,
   }: {
     supabase: SupabaseClient<Database>;
     session: Session | null;
     refreshSidebar: () => Promise<void>;
-    userProfile: UserProfile | null;
-    pageState: PageState;
     isNavigatingToContent: boolean;
     children: Snippet;
   } = $props();
 
+  const pageState = getPageState();
   const sidebarState = getSidebarState();
   const mediaQueryState = getMediaQueryState();
+  const contentState = getContentState();
 
   // Use the navigation state's sidebar collapsed state
   const isSidebarCollapsed = $derived(sidebarState.isSidebarCollapsed);
+
+  // Effect to control scroll blocking when dropdown is open
+  $effect(() => {
+    const sidebarViewport = pageState.viewportRefs.sidebarViewportRef;
+    const contentViewport = pageState.viewportRefs.contentViewportRef;
+
+    if (
+      contentState.isDropdownMenuOpen ||
+      contentState.openContextMenuSection
+    ) {
+      // Block scrolling when dropdown is open
+      if (sidebarViewport) {
+        sidebarViewport.style.overflow = 'hidden';
+      }
+      if (contentViewport) {
+        contentViewport.style.overflow = 'hidden';
+      }
+    } else {
+      // Restore scrolling when dropdown is closed
+      if (sidebarViewport) {
+        sidebarViewport.style.overflow = 'auto';
+      }
+      if (contentViewport) {
+        contentViewport.style.overflow = 'auto';
+      }
+    }
+  });
 </script>
 
 <Resizable.PaneGroup
@@ -59,7 +82,7 @@
   >
     <ScrollArea
       type="scroll"
-      class="h-full grow"
+      class="h-full grow overflow-hidden"
       bind:viewportRef={pageState.viewportRefs.sidebarViewportRef}
       data-scroll-area="sidebar"
     >

@@ -43,7 +43,7 @@
           <ListVideo class="!h-20 !w-20 flex-shrink-0" />
         {/if}
         <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
-          <p class="text-muted-foreground text-sm tracking-tight">Next up</p>
+          <p class="text-muted-foreground text-sm tracking-tight">Next on</p>
           <a
             class="cursor-pointer self-start text-3xl font-semibold hover:underline lg:text-4xl"
             href={`/playlist/${playlist.short_id}`}

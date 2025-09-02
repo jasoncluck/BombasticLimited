@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { page } from '$app/state';
   import { SOURCE_INFO, SOURCES } from '$lib/constants/source.js';
   import Content from '$lib/components/content/content.svelte';
   import type { Snapshot } from '@sveltejs/kit';
@@ -13,12 +12,14 @@
   } from '$lib/components/content/content.js';
   import PlaylistTiles from '$lib/components/playlist/playlist-tiles.svelte';
   import { getMediaQueryState } from '$lib/state/media-query.svelte.js';
+  import type { PageData } from './$types';
+  import { getNavigationState } from '$lib/state/navigation.svelte';
 
-  let { data } = $props();
+  let { data }: { data: PageData } = $props();
   let {
     supabase,
     session,
-    searchString,
+    searchString, // Now comes from the server load function
     sourceVideos,
     sourceVideosCount,
     playlistSearchResults,
@@ -29,6 +30,9 @@
 
   const contentState = getContentState();
   const mediaQueryState = getMediaQueryState();
+  const navigationState = getNavigationState();
+
+  const sources = $derived(userProfile?.sources ?? SOURCES);
 
   let sectionIds = sourceWithContinueStateKeys;
 
@@ -40,13 +44,27 @@
   }
 
   let carouselsState = $state<SourceWithCarouselState>(initialCarouselState);
+  let previousSearchString = navigationState.searchQuery;
+
+  // Reset carousel state when searchString changes
+  $effect(() => {
+    console.log(searchString);
+    console.log(previousSearchString);
+    if (searchString && searchString !== previousSearchString) {
+      // Reset to initial state when search changes
+      carouselsState = { ...initialCarouselState };
+      previousSearchString = searchString;
+    }
+  });
 
   export const snapshot: Snapshot<{
     carouselsState: SourceWithCarouselState;
     selectedVideos: Record<SourceWithStateKeys, Video[]>;
+    searchString: string;
   }> = {
     capture: () => ({
       carouselsState,
+      searchString,
       selectedVideos: Object.fromEntries(
         sectionIds.map((sid: SourceWithStateKeys) => [
           sid,
@@ -56,7 +74,9 @@
     }),
     restore: async (restored) => {
       carouselsState = restored.carouselsState;
+      navigationState.setSearchQuery(restored.searchString);
       contentState.selectedVideosBySection = restored.selectedVideos;
+      previousSearchString = restored.searchString;
     },
   };
 
@@ -88,12 +108,11 @@
       </div>
     {/if}
 
-    <!-- The rest of your content remains unchanged -->
-    {#each SOURCES as source (source)}
+    {#each sources as source (source)}
       {#if sourceVideos[source].length > 0}
         <div class="bg-background-lighter flex flex-col">
           <a
-            href={`${page.url}/${source}`}
+            href={`/search/${searchString}/${source}`}
             class={getContentView(mediaQueryState, userProfile) === 'TABLE'
               ? 'header-link-sticky'
               : 'header-link '}
@@ -104,15 +123,18 @@
             {sourceVideosCount[source]}
             {sourceVideosCount[source] === 1 ? 'video' : 'videos'}
           </p>
-          <Content
-            tilesDisplay="CAROUSEL"
-            {userProfile}
-            videos={sourceVideos[source]}
-            bind:carouselState={carouselsState[source]}
-            {contentFilter}
-            {session}
-            {supabase}
-          />
+
+          {#key `${source}-${searchString}`}
+            <Content
+              tilesDisplay="CAROUSEL"
+              {userProfile}
+              videos={sourceVideos[source]}
+              bind:carouselState={carouselsState[source]}
+              {contentFilter}
+              {session}
+              {supabase}
+            />
+          {/key}
         </div>
       {/if}
     {/each}

@@ -41,16 +41,6 @@
       contentState.hoverTimeoutId = null;
     }
   }
-
-  // Set up click outside listener
-  onMount(() => {
-    if (containerElement) {
-      return contentState.setupClickOutsideListener(
-        containerElement,
-        sectionId
-      );
-    }
-  });
 </script>
 
 <!-- Switch to single column layout for smaller sizes, grid for larger -->

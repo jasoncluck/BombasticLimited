@@ -1,15 +1,15 @@
 <script lang="ts">
   import Input from '$lib/components/ui/input/input.svelte';
   import Loader from '$lib/components/loader.svelte';
-  import type { NavigationState } from '$lib/state/navigation.svelte.js';
+  import { getNavigationState } from '$lib/state/navigation.svelte';
 
   let {
-    navigationState,
     class: className = 'md:w-60 w-36 sm:w-44',
   }: {
-    navigationState: NavigationState;
     class?: string;
   } = $props();
+
+  const navigationState = getNavigationState();
 </script>
 
 <div class="relative flex items-center">

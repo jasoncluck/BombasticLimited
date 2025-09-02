@@ -130,7 +130,9 @@ UPDATE ON "public"."image_processing_jobs" FOR EACH ROW
 EXECUTE FUNCTION public.update_image_processing_jobs_updated_at ();
 
 -- Helper function to generate hash for image properties
-CREATE OR REPLACE FUNCTION public.hash_image_properties (properties jsonb) RETURNS text LANGUAGE plpgsql IMMUTABLE AS $$
+CREATE OR REPLACE FUNCTION public.hash_image_properties (properties jsonb) RETURNS text LANGUAGE plpgsql IMMUTABLE
+SET
+  search_path = '' AS $$
 BEGIN
   IF properties IS NULL THEN
     RETURN 'null';
@@ -298,7 +300,84 @@ BEGIN
 END;
 $$;
 
--- Function to mark job as completed
+-- Helper function to clean up old images from storage bucket
+CREATE OR REPLACE FUNCTION public.cleanup_old_bucket_images (
+  p_entity_type text,
+  p_entity_id text,
+  p_current_webp_path text,
+  p_current_avif_path text
+) RETURNS text LANGUAGE plpgsql SECURITY DEFINER
+SET
+  search_path = '' AS $$
+DECLARE
+  folder_prefix text;
+  file_record RECORD;
+  files_to_delete text[] := ARRAY[]::text[];
+  delete_result jsonb;
+  cleanup_summary text := '';
+  webp_count integer := 0;
+  avif_count integer := 0;
+  deleted_count integer := 0;
+BEGIN
+  -- Determine folder prefix based on entity type
+  IF p_entity_type = 'video' THEN
+    folder_prefix := 'thumbnails/' || p_entity_id || '/';
+  ELSIF p_entity_type = 'playlist' THEN
+    folder_prefix := 'playlists/' || p_entity_id || '/';
+  ELSE
+    RAISE WARNING 'Unknown entity type for cleanup: %', p_entity_type;
+    RETURN 'ERROR: Unknown entity type';
+  END IF;
+
+  -- Get list of all files in the entity folder
+  -- Note: This requires the storage.objects table access
+  BEGIN
+    -- Query the storage.objects table to find existing files
+    FOR file_record IN
+      SELECT o.name, o.id
+      FROM storage.objects o
+      WHERE o.bucket_id = 'images'
+        AND o.name LIKE folder_prefix || '%'
+        AND (o.name LIKE '%.webp' OR o.name LIKE '%.avif')
+    LOOP
+      -- Check if this file should be kept (matches current paths)
+      IF file_record.name != p_current_webp_path AND file_record.name != p_current_avif_path THEN
+        files_to_delete := array_append(files_to_delete, file_record.name);
+        
+        -- Count by type for logging
+        IF file_record.name LIKE '%.webp' THEN
+          webp_count := webp_count + 1;
+        ELSIF file_record.name LIKE '%.avif' THEN
+          avif_count := avif_count + 1;
+        END IF;
+      END IF;
+    END LOOP;
+
+    -- Delete old files if any found
+    IF array_length(files_to_delete, 1) > 0 THEN
+      -- Use storage.remove to delete files
+      SELECT storage.remove(files_to_delete) INTO delete_result;
+      deleted_count := array_length(files_to_delete, 1);
+      
+      cleanup_summary := format('Deleted %s old files (%s webp, %s avif) from %s', 
+                               deleted_count, webp_count, avif_count, folder_prefix);
+      RAISE LOG '%', cleanup_summary;
+    ELSE
+      cleanup_summary := format('No old files to delete in %s', folder_prefix);
+      RAISE LOG '%', cleanup_summary;
+    END IF;
+
+  EXCEPTION
+    WHEN OTHERS THEN
+      cleanup_summary := format('Cleanup failed for %s: %s', folder_prefix, SQLERRM);
+      RAISE WARNING '%', cleanup_summary;
+  END;
+
+  RETURN cleanup_summary;
+END;
+$$;
+
+-- Function to mark job as completed (UPDATED WITH BUCKET CLEANUP)
 CREATE OR REPLACE FUNCTION public.complete_image_processing_job (
   job_id uuid,
   jpg_path text DEFAULT NULL,
@@ -314,6 +393,7 @@ DECLARE
   job_updated_count integer := 0;
   playlist_id_bigint bigint;
   debug_info text;
+  cleanup_result text;
 BEGIN
   -- Get job details before any updates
   SELECT entity_type, entity_id, image_type, status INTO job_record
@@ -397,6 +477,26 @@ BEGIN
     RAISE WARNING 'Failed to update entity % (type: %) for job % - no rows affected', 
       job_record.entity_id, job_record.entity_type, job_id;
     RETURN FALSE;
+  END IF;
+
+  -- Clean up old images from storage bucket (only if both webp and avif paths provided)
+  IF webp_path IS NOT NULL AND avif_path IS NOT NULL THEN
+    BEGIN
+      cleanup_result := public.cleanup_old_bucket_images(
+        job_record.entity_type,
+        job_record.entity_id,
+        webp_path,
+        avif_path
+      );
+      RAISE LOG 'Bucket cleanup result: %', cleanup_result;
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- Log cleanup failure but don't fail the entire job completion
+        RAISE WARNING 'Bucket cleanup failed for job % (entity: % %): %', 
+          job_id, job_record.entity_type, job_record.entity_id, SQLERRM;
+    END;
+  ELSE
+    RAISE LOG 'Skipping bucket cleanup for job % - missing webp_path or avif_path', job_id;
   END IF;
   
   -- Update job status to 'completed' instead of deleting the row
@@ -505,59 +605,10 @@ BEGIN
 END;
 $$;
 
--- Function to cleanup duplicate jobs
-CREATE OR REPLACE FUNCTION public.cleanup_duplicate_image_processing_jobs () RETURNS TABLE (
-  removed_job_id uuid,
-  entity_type text,
-  entity_id text,
-  reason text
-) LANGUAGE plpgsql SECURITY DEFINER AS $$
-BEGIN
-  -- Remove duplicate pending jobs (keep the oldest one for each unique configuration)
-  RETURN QUERY
-  WITH duplicates AS (
-    SELECT 
-      id,
-      entity_type,
-      entity_id,
-      source_url,
-      properties_hash,
-      status,
-      created_at,
-      ROW_NUMBER() OVER (
-        PARTITION BY entity_type, entity_id, source_url, COALESCE(properties_hash, 'null')
-        ORDER BY 
-          CASE status 
-            WHEN 'processing' THEN 1
-            WHEN 'pending' THEN 2
-            WHEN 'completed' THEN 3
-            ELSE 4
-          END,
-          created_at ASC
-      ) as rn
-    FROM "public"."image_processing_jobs"
-    WHERE status IN ('pending', 'processing')
-  ),
-  to_delete AS (
-    DELETE FROM "public"."image_processing_jobs"
-    WHERE id IN (
-      SELECT id FROM duplicates WHERE rn > 1
-    )
-    RETURNING id, entity_type, entity_id
-  )
-  SELECT 
-    td.id,
-    td.entity_type,
-    td.entity_id,
-    'Duplicate job removed'::text
-  FROM to_delete td;
-END;
-$$;
-
 -- Playlist ownership check function
 CREATE OR REPLACE FUNCTION public.check_playlist_ownership (playlist_id bigint, user_id uuid) RETURNS boolean LANGUAGE sql SECURITY DEFINER
 SET
-  search_path = public AS $$
+  search_path = '' AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.playlists p 
     WHERE p.id = playlist_id AND p.created_by = user_id
@@ -617,31 +668,21 @@ BEGIN
     
     -- Only process if thumbnail actually changed
     IF needs_processing THEN
-      
       IF NEW.thumbnail_url IS NOT NULL AND NEW.thumbnail_url != '' THEN
-        -- Check if we already have optimized images for this exact configuration
-        already_processed := (
-          NEW.thumbnail_webp_url IS NOT NULL AND 
-          NEW.thumbnail_avif_url IS NOT NULL AND
-          NEW.image_processing_status = 'completed' AND
-          OLD.thumbnail_url = NEW.thumbnail_url
-        );
+        -- When thumbnail URL changes, we ALWAYS need to reprocess
+        -- Clear existing optimized URLs and reset status
+        NEW.thumbnail_webp_url = NULL;
+        NEW.thumbnail_avif_url = NULL;
+        NEW.image_processing_status = 'pending';
+        NEW.image_processing_updated_at = now();
         
-        IF NOT already_processed THEN
-          job_id := public.queue_image_processing_job(
-            'video', NEW.id, 'thumbnail', NEW.thumbnail_url, NULL, 50
-          );
+        job_id := public.queue_image_processing_job(
+          'video', NEW.id, 'thumbnail', NEW.thumbnail_url, NULL, 50
+        );
 
-          IF job_id IS NOT NULL THEN
-            NEW.image_processing_status = 'pending';
-            NEW.image_processing_updated_at = now();
-            
-            -- Clear optimized URLs when source changes and reprocessing
-            NEW.thumbnail_webp_url = NULL;
-            NEW.thumbnail_avif_url = NULL;
-          END IF;
-        ELSE
-          RAISE LOG 'Video % already has optimized images for thumbnail_url %, skipping processing', NEW.id, NEW.thumbnail_url;
+        IF job_id IS NULL THEN
+          -- If job creation failed, reset to completed to avoid stuck state
+          NEW.image_processing_status = 'completed';
         END IF;
       ELSE
         -- No thumbnail_url, clear optimized URLs and mark as completed
@@ -734,6 +775,7 @@ BEGIN
 END;
 $$;
 
+-- FIXED: Function to reset stuck image processing jobs with proper column aliasing
 CREATE OR REPLACE FUNCTION public.reset_stuck_image_processing_jobs (stuck_after_minutes integer DEFAULT 30) RETURNS TABLE (
   reset_job_id uuid,
   entity_type text,
@@ -750,33 +792,33 @@ BEGIN
   RETURN QUERY
   WITH stuck_jobs AS (
     SELECT 
-      id,
-      entity_type,
-      entity_id,
-      processing_started_at,
-      EXTRACT(EPOCH FROM (now() - processing_started_at))/60 as minutes_stuck
-    FROM "public"."image_processing_jobs"
-    WHERE status = 'processing'
-      AND processing_started_at IS NOT NULL
-      AND processing_started_at < now() - (stuck_after_minutes || ' minutes')::interval
+      j.id as job_id,
+      j.entity_type as job_entity_type,
+      j.entity_id as job_entity_id,
+      j.processing_started_at as job_processing_started_at,
+      EXTRACT(EPOCH FROM (now() - j.processing_started_at))/60 as job_minutes_stuck
+    FROM "public"."image_processing_jobs" j
+    WHERE j.status = 'processing'
+      AND j.processing_started_at IS NOT NULL
+      AND j.processing_started_at < now() - (stuck_after_minutes || ' minutes')::interval
   ),
   reset_jobs AS (
-    UPDATE "public"."image_processing_jobs"
+    UPDATE "public"."image_processing_jobs" ipj
     SET 
       status = 'pending',
       processing_started_at = NULL,
       updated_at = now()
-    WHERE id IN (SELECT id FROM stuck_jobs)
-    RETURNING id, entity_type, entity_id
+    WHERE ipj.id IN (SELECT sj.job_id FROM stuck_jobs sj)
+    RETURNING ipj.id, ipj.entity_type, ipj.entity_id
   )
   SELECT 
-    sj.id::uuid,
-    sj.entity_type::text,
-    sj.entity_id::text,
-    sj.processing_started_at,
-    sj.minutes_stuck::numeric
+    sj.job_id::uuid,
+    sj.job_entity_type::text,
+    sj.job_entity_id::text,
+    sj.job_processing_started_at,
+    sj.job_minutes_stuck::numeric
   FROM stuck_jobs sj
-  JOIN reset_jobs rj ON sj.id = rj.id;
+  JOIN reset_jobs rj ON sj.job_id = rj.id;
   
   GET DIAGNOSTICS reset_count = ROW_COUNT;
   
@@ -811,68 +853,81 @@ SET
     END;
 $$;
 
+-- FIXED: Function to handle playlist image clearing when videos are removed
+CREATE OR REPLACE FUNCTION public.handle_playlist_image_on_video_removal () RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER
+SET
+  search_path = '' AS $$
+DECLARE
+  playlist_record RECORD;
+  video_was_thumbnail_source boolean := false;
+BEGIN
+  -- Only process DELETE operations
+  IF TG_OP != 'DELETE' THEN
+    RETURN COALESCE(NEW, OLD);
+  END IF;
+
+  -- Get playlist info to check if we need to clear the image
+  SELECT 
+    p.id,
+    p.thumbnail_url,
+    p.image_webp_url,
+    p.image_avif_url,
+    p.image_properties,
+    p.image_processing_status
+  INTO playlist_record
+  FROM public.playlists p 
+  WHERE p.id = OLD.playlist_id;
+
+  -- If playlist doesn't exist, nothing to do
+  IF playlist_record.id IS NULL THEN
+    RETURN OLD;
+  END IF;
+
+  -- Check if the deleted video was the source of the playlist thumbnail
+  -- by comparing the video's thumbnail_url with the playlist's thumbnail_url
+  SELECT EXISTS (
+    SELECT 1 FROM public.videos v 
+    WHERE v.id = OLD.video_id 
+    AND v.thumbnail_url = playlist_record.thumbnail_url
+  ) INTO video_was_thumbnail_source;
+
+  -- If the deleted video was the source of the playlist thumbnail, clear it
+  IF video_was_thumbnail_source THEN
+    RAISE LOG 'Video % was thumbnail source for playlist %, clearing playlist image', 
+      OLD.video_id, OLD.playlist_id;
+
+    UPDATE public.playlists
+    SET 
+      thumbnail_url = NULL,
+      image_webp_url = NULL, 
+      image_avif_url = NULL,
+      image_properties = NULL,
+      image_processing_status = 'completed',
+      image_processing_updated_at = now()
+    WHERE id = OLD.playlist_id;
+
+    RAISE LOG 'Cleared image for playlist % due to video % removal', 
+      OLD.playlist_id, OLD.video_id;
+  ELSE
+    RAISE LOG 'Video % removal from playlist % does not affect playlist thumbnail', 
+      OLD.video_id, OLD.playlist_id;
+  END IF;
+
+  RETURN OLD;
+END;
+$$;
+
+-- Create the trigger on playlist_videos table
+DROP TRIGGER IF EXISTS trigger_handle_playlist_image_on_video_removal ON public.playlist_videos;
+
+CREATE TRIGGER trigger_handle_playlist_image_on_video_removal
+AFTER DELETE ON public.playlist_videos FOR EACH ROW
+EXECUTE FUNCTION public.handle_playlist_image_on_video_removal ();
+
+COMMENT ON FUNCTION public.handle_playlist_image_on_video_removal () IS 'Automatically clears playlist thumbnail when the source video is removed from the playlist';
+
 -- Set up RLS policies
--- TODO: Fix RLS policies
 ALTER TABLE "public"."image_processing_jobs" ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Service role can manage image processing jobs" ON "public"."image_processing_jobs" FOR ALL USING (auth.role () = 'service_role');
-
--- Create storage policies for playlist images
-CREATE POLICY "Allow playlist image uploads" ON storage.objects FOR INSERT
-WITH
-  CHECK (
-    auth.role () = 'authenticated'
-    AND bucket_id = 'content-images'
-    AND name ~ '^playlists/[0-9]+/'
-    AND public.check_playlist_ownership (
-      (regexp_split_to_array(name, '/')) [2]::bigint,
-      auth.uid ()
-    )
-  );
-
-CREATE POLICY "Allow playlist image reads" ON storage.objects FOR
-SELECT
-  USING (
-    auth.role () = 'authenticated'
-    AND bucket_id = 'content-images'
-    AND name ~ '^playlists/[0-9]+/'
-    AND public.check_playlist_ownership (
-      (regexp_split_to_array(name, '/')) [2]::bigint,
-      auth.uid ()
-    )
-  );
-
-CREATE POLICY "Allow playlist image updates" ON storage.objects
-FOR UPDATE
-  USING (
-    auth.role () = 'authenticated'
-    AND bucket_id = 'content-images'
-    AND name ~ '^playlists/[0-9]+/'
-    AND public.check_playlist_ownership (
-      (regexp_split_to_array(name, '/')) [2]::bigint,
-      auth.uid ()
-    )
-  )
-WITH
-  CHECK (
-    auth.role () = 'authenticated'
-    AND bucket_id = 'content-images'
-    AND name ~ '^playlists/[0-9]+/'
-    AND public.check_playlist_ownership (
-      (regexp_split_to_array(name, '/')) [2]::bigint,
-      auth.uid ()
-    )
-  );
-
-CREATE POLICY "Allow playlist image deletes" ON storage.objects FOR DELETE USING (
-  auth.role () = 'authenticated'
-  AND bucket_id = 'content-images'
-  AND name ~ '^playlists/[0-9]+/'
-  AND public.check_playlist_ownership (
-    (regexp_split_to_array(name, '/')) [2]::bigint,
-    auth.uid ()
-  )
-);
 
 -- Create optimized triggers (SINGLE TRIGGER PER TABLE)
 CREATE TRIGGER trigger_videos_queue_image_processing BEFORE INSERT

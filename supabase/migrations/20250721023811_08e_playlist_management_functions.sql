@@ -97,10 +97,10 @@ BEGIN
 
   -- Shift existing playlists if inserting at a specific position (bulk update)
   IF actual_position <= max_position THEN
-    UPDATE public.user_playlists 
-    SET playlist_position = playlist_position + 1
-    WHERE user_id = p_created_by 
-      AND playlist_position >= actual_position;
+    UPDATE public.user_playlists up
+    SET playlist_position = up.playlist_position + 1
+    WHERE up.user_id = p_created_by 
+      AND up.playlist_position >= actual_position;
   END IF;
 
   -- Insert the new playlist
@@ -209,12 +209,12 @@ BEGIN
 
   actual_position := COALESCE(LEAST(GREATEST(p_playlist_position, 1), 50), LEAST(max_position + 1, 50));
 
-  -- Bulk shift and insert
+  -- Bulk shift and insert - FIXED: Add table alias to avoid ambiguous column reference
   IF actual_position <= max_position THEN
-    UPDATE public.user_playlists 
-    SET playlist_position = playlist_position + 1
-    WHERE user_id = current_user_id 
-      AND playlist_position >= actual_position;
+    UPDATE public.user_playlists up
+    SET playlist_position = up.playlist_position + 1
+    WHERE up.user_id = current_user_id 
+      AND up.playlist_position >= actual_position;
   END IF;
 
   INSERT INTO public.user_playlists (id, user_id, playlist_position)
@@ -242,19 +242,19 @@ BEGIN
   PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || current_user_id::text));
 
   -- Get position and delete in one operation
-  DELETE FROM public.user_playlists 
-  WHERE user_id = current_user_id AND id = p_playlist_id
-  RETURNING playlist_position INTO removed_position;
+  DELETE FROM public.user_playlists up
+  WHERE up.user_id = current_user_id AND up.id = p_playlist_id
+  RETURNING up.playlist_position INTO removed_position;
 
   IF removed_position IS NULL THEN
     RAISE EXCEPTION 'Playlist not found in user''s account';
   END IF;
 
-  -- Bulk shift remaining playlists
-  UPDATE public.user_playlists 
-  SET playlist_position = playlist_position - 1
-  WHERE user_id = current_user_id 
-    AND playlist_position > removed_position;
+  -- Bulk shift remaining playlists - FIXED: Add table alias
+  UPDATE public.user_playlists up
+  SET playlist_position = up.playlist_position - 1
+  WHERE up.user_id = current_user_id 
+    AND up.playlist_position > removed_position;
 
   RETURN QUERY SELECT p_playlist_id, current_user_id;
 END;
@@ -311,14 +311,14 @@ BEGIN
   END IF;
 
   -- Fixed: Use explicit table aliases and proper WHERE clause to avoid ambiguous column references
-  UPDATE public.user_playlists
+  UPDATE public.user_playlists up
   SET playlist_position = CASE 
-    WHEN id = p_playlist_id THEN p_new_position
-    WHEN p_new_position > current_position AND playlist_position > current_position AND playlist_position <= p_new_position THEN playlist_position - 1
-    WHEN p_new_position < current_position AND playlist_position >= p_new_position AND playlist_position < current_position THEN playlist_position + 1
-    ELSE playlist_position
+    WHEN up.id = p_playlist_id THEN p_new_position
+    WHEN p_new_position > current_position AND up.playlist_position > current_position AND up.playlist_position <= p_new_position THEN up.playlist_position - 1
+    WHEN p_new_position < current_position AND up.playlist_position >= p_new_position AND up.playlist_position < current_position THEN up.playlist_position + 1
+    ELSE up.playlist_position
   END
-  WHERE user_id = current_user_id;
+  WHERE up.user_id = current_user_id;
 
   RETURN QUERY SELECT p_playlist_id, p_new_position, true;
 END;
@@ -358,12 +358,12 @@ BEGIN
     UPDATE public.playlists SET deleted_at = NOW() WHERE id = p_playlist_id AND deleted_at IS NULL;
     DELETE FROM public.user_playlists WHERE id = p_playlist_id;
   ELSE
-    -- Follower: remove mapping and reorder positions
-    DELETE FROM public.user_playlists WHERE user_id = current_user_id AND id = p_playlist_id;
+    -- Follower: remove mapping and reorder positions - FIXED: Add table alias
+    DELETE FROM public.user_playlists up WHERE up.user_id = current_user_id AND up.id = p_playlist_id;
     
-    UPDATE public.user_playlists 
-    SET playlist_position = playlist_position - 1
-    WHERE user_id = current_user_id AND playlist_position > deleted_position;
+    UPDATE public.user_playlists up
+    SET playlist_position = up.playlist_position - 1
+    WHERE up.user_id = current_user_id AND up.playlist_position > deleted_position;
   END IF;
 
   RETURN TRUE;
@@ -652,9 +652,6 @@ SET
 DECLARE
   current_user_id uuid;
   playlist_owner_id uuid;
-  playlist_thumbnail_url text;
-  should_clear_playlist_image boolean := false;
-  deleted_positions int2[];
 BEGIN
   current_user_id := auth.uid();
   IF current_user_id IS NULL THEN
@@ -667,16 +664,9 @@ BEGIN
 
   PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || current_user_id::text));
 
-  -- Get playlist info and check image clearing in one query
-  SELECT 
-    pl.created_by, 
-    pl.thumbnail_url,
-    EXISTS (
-      SELECT 1 FROM public.videos v 
-      WHERE v.id = ANY(p_video_ids) 
-      AND v.thumbnail_url = pl.thumbnail_url
-    )
-  INTO playlist_owner_id, playlist_thumbnail_url, should_clear_playlist_image
+  -- Get playlist owner for security check
+  SELECT pl.created_by
+  INTO playlist_owner_id
   FROM public.playlists pl 
   WHERE pl.id = p_playlist_id;
   
@@ -684,11 +674,23 @@ BEGIN
     RAISE EXCEPTION 'Playlist with ID % does not exist', p_playlist_id;
   END IF;
 
-  -- Bulk delete and return results
+  -- Security check: Verify user owns the playlist
+  IF playlist_owner_id != current_user_id THEN
+    RAISE EXCEPTION 'You can only delete videos from your own playlists';
+  END IF;
+
+  -- Create a temporary table to store results
+  CREATE TEMPORARY TABLE temp_deletion_results (
+    video_id text,
+    success boolean,
+    message text
+  ) ON COMMIT DROP;
+
+  -- Bulk delete and store results in temp table
   WITH deleted_videos AS (
     DELETE FROM public.playlist_videos pv
     WHERE pv.playlist_id = p_playlist_id AND pv.video_id = ANY(p_video_ids)
-    RETURNING video_id, video_position
+    RETURNING pv.video_id, pv.video_position
   ),
   video_results AS (
     SELECT 
@@ -698,17 +700,9 @@ BEGIN
     FROM unnest(p_video_ids) AS vid
     LEFT JOIN deleted_videos dv ON vid = dv.video_id
   )
+  INSERT INTO temp_deletion_results (video_id, success, message)
   SELECT vr.vid, vr.success, vr.message FROM video_results vr;
 
-  -- Clear playlist image if needed
-  IF should_clear_playlist_image THEN
-    UPDATE public.playlists
-    SET thumbnail_url = NULL, image_webp_url = NULL, image_avif_url = NULL,
-        image_properties = NULL, image_processing_status = NULL,
-        image_processing_updated_at = now()
-    WHERE id = p_playlist_id;
-  END IF;
-  
   -- Reorder positions using window function
   WITH reordered AS (
     SELECT 
@@ -721,6 +715,11 @@ BEGIN
   SET video_position = r.new_position::int2
   FROM reordered r
   WHERE pv.id = r.id;
+
+  -- Return the stored results
+  RETURN QUERY 
+  SELECT tdr.video_id, tdr.success, tdr.message 
+  FROM temp_deletion_results tdr;
 
 EXCEPTION
   WHEN OTHERS THEN

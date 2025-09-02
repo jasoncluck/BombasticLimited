@@ -6,8 +6,10 @@ import debounce from 'debounce';
 import type { SupabaseClient, Session } from '@supabase/supabase-js';
 import type { Database } from '$lib/supabase/database.types';
 import type { UserProfile } from '$lib/supabase/user-profiles';
+import { preloadData } from '$app/navigation';
 import { browser } from '$app/environment';
 import type { NotificationWithMeta } from '$lib/supabase/notifications';
+import { page } from '$app/state';
 
 /**
  * Navigation item interface defining structure for navigation elements
@@ -30,6 +32,7 @@ export interface NavigationConfig {
   enableBrandLogo: boolean;
   homeRouteReplaceState: boolean;
   searchDebounceMs: number;
+  preloadDebounceMs: number;
   notificationRefreshIntervalMs: number; // New config option
 }
 
@@ -136,6 +139,8 @@ export class NavigationStateClass implements NavigationState {
   private lastSearchValue: string = '';
   private refreshInterval: number | null = null;
   private lastRefreshTime: number = 0;
+  private pageStore: any = null; // Will be set in initializeEffects
+  private preloadTimeout: number | null = null; // Track preload timeout
 
   // Core data state
   data = $state<NavigationData>({
@@ -170,7 +175,8 @@ export class NavigationStateClass implements NavigationState {
     enableHomeNavigation: true,
     enableBrandLogo: true,
     homeRouteReplaceState: true,
-    searchDebounceMs: 250,
+    searchDebounceMs: 450,
+    preloadDebounceMs: 125,
     notificationRefreshIntervalMs: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -244,6 +250,9 @@ export class NavigationStateClass implements NavigationState {
   // Initialize effects (should be called when component is mounted)
   initializeEffects() {
     if (browser) {
+      // Store reference to page store
+      this.pageStore = page;
+
       // Initialize navigation items from data when loaded
       $effect(() => {
         if (this.data?.navigationItems) {
@@ -450,6 +459,7 @@ export class NavigationStateClass implements NavigationState {
 
   clearSearchQuery = (): void => {
     this.searchQuery = '';
+    this.lastSearchValue = '';
   };
 
   async searchRedirect(e: Event, expectedValue?: string): Promise<Event> {
@@ -472,14 +482,16 @@ export class NavigationStateClass implements NavigationState {
     try {
       if (searchValue === '') {
         // Only navigate to "/" if completely empty
-        goto(`/`, { keepFocus: true });
+        goto(`/`, { keepFocus: true, replaceState: false });
       } else if (searchValue.length >= 2) {
         // Only navigate to search if 2+ characters
         // Create new abort controller for this search
         this.searchAbortController = new AbortController();
 
+        // Use replaceState: true to avoid creating new history entries for search
         goto(`/search/${encodeURIComponent(searchValue)}`, {
           keepFocus: true,
+          replaceState: true, // This prevents creating new history entries
         });
       }
       // For single characters (length === 1), do nothing - stay on current page
@@ -514,9 +526,13 @@ export class NavigationStateClass implements NavigationState {
       this.searchAbortController = null;
     }
 
-    // If we're starting from empty and hit the minimum threshold, search immediately
-    // This makes the first search more responsive
-    if (searchValue.length === 2 && !this.lastSearchValue) {
+    // Clear any existing preload timeout
+    if (this.preloadTimeout) {
+      window.clearTimeout(this.preloadTimeout);
+      this.preloadTimeout = null;
+    }
+
+    if (!this.lastSearchValue) {
       this.lastSearchValue = searchValue;
       this.searchRedirect(e, searchValue);
       return;
@@ -525,6 +541,22 @@ export class NavigationStateClass implements NavigationState {
     // For all cases, use debounced search (including empty and single character)
     // Capture the search value at the time of creating the debounced function
     const capturedSearchValue = searchValue;
+
+    // Set up preloading at half the debounce time if search value is valid for navigation
+    if (capturedSearchValue.length >= 2) {
+      this.preloadTimeout = window.setTimeout(() => {
+        // Only preload if the search value hasn't changed
+        if (this.searchQuery.trim() === capturedSearchValue) {
+          const searchUrl = `/search/${encodeURIComponent(capturedSearchValue)}`;
+          console.log('PRELOADING');
+          preloadData(searchUrl).catch((error) => {
+            // Silently handle preload errors - they shouldn't affect the user experience
+            console.debug('Search preload failed:', error);
+          });
+        }
+      }, this.config.preloadDebounceMs);
+    }
+
     this.currentDebouncedSearch = debounce(() => {
       this.lastSearchValue = capturedSearchValue;
       this.searchRedirect(e, capturedSearchValue);
@@ -697,6 +729,12 @@ export class NavigationStateClass implements NavigationState {
       this.searchAbortController = null;
     }
 
+    // Clear preload timeout
+    if (this.preloadTimeout) {
+      window.clearTimeout(this.preloadTimeout);
+      this.preloadTimeout = null;
+    }
+
     // Reset all state
     this.data = {
       userProfile: null,
@@ -712,6 +750,7 @@ export class NavigationStateClass implements NavigationState {
     this.searchQuery = '';
     this.openAccountDrawer = false;
     this.lastRefreshTime = 0;
+    this.pageStore = null;
   }
 }
 

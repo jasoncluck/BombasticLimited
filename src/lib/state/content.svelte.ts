@@ -67,6 +67,12 @@ export interface MouseHoverOptions {
   isHoveringElement?: boolean;
 }
 
+export interface Session {
+  user: {
+    id: string;
+  };
+}
+
 export class ContentState {
   // Page state dependency
   pageState: PageState;
@@ -104,6 +110,9 @@ export class ContentState {
   lastClickTime = $state(0);
   lastClickedVideo = $state<Video | null>(null);
 
+  // Track context menu state to prevent race conditions
+  private contextMenuCloseScheduled = $state<NodeJS.Timeout | null>(null);
+
   constructor(pageState: PageState) {
     this.pageState = pageState;
   }
@@ -114,15 +123,7 @@ export class ContentState {
   }
 
   isContextMenuOpenForAnySection(): boolean {
-    for (const sectionId in this.selectedVideosBySection) {
-      if (
-        this.openContextMenuSection &&
-        this.isContextMenuOpenForSection(sectionId)
-      ) {
-        return true;
-      }
-    }
-    return false;
+    return this.openContextMenuSection !== null;
   }
 
   isDrawerOpenForSection(sectionId: string = DEFAULT_SECTION_ID): boolean {
@@ -137,7 +138,11 @@ export class ContentState {
     }
     return false;
   }
-  resetState() {
+
+  resetState(): void {
+    // Reset carousel state
+    this.carouselState = { lastViewedIndex: 0 };
+
     // Reset selections
     this.selectedVideosBySection = {};
 
@@ -151,11 +156,73 @@ export class ContentState {
     // Reset context menu states
     this.openContextMenuSection = null;
 
-    // Reset any other state that should be cleared when switching views
+    // Reset drawer states
+    this.openDrawerSection = null;
+    this.drawerVariant = null;
+
+    // Reset drag and drop states
     this.dragContentType = null;
+    this.draggedIndex = null;
+    this.targetIndex = null;
+    this.draggedFromSectionId = null;
+
+    // Reset click tracking for double-click detection
+    this.lastClickTime = 0;
+    this.lastClickedVideo = null;
+
+    // Clear any pending hover timeout
+    if (this.hoverTimeoutId) {
+      clearTimeout(this.hoverTimeoutId);
+      this.hoverTimeoutId = null;
+    }
+
+    // Clear any pending context menu close
+    if (this.contextMenuCloseScheduled) {
+      clearTimeout(this.contextMenuCloseScheduled);
+      this.contextMenuCloseScheduled = null;
+    }
+
+    // Reset menu states
+    this.isMenuOpen = false;
+    this.isMouseOverMenu = false;
+
+    // Clear any global CSS classes that might persist
+    if (typeof document !== 'undefined' && document.body) {
+      document.body.classList.remove('dragging');
+    }
   }
 
-  private clearOtherSections(currentSectionId: string) {
+  // Reset state for a specific section
+  resetSectionState(sectionId: string = DEFAULT_SECTION_ID): void {
+    // Reset selections for this section
+    this.selectedVideosBySection[sectionId] = [];
+
+    // Reset hover states for this section
+    this.hoveredVideosBySection[sectionId] = null;
+
+    // If this section has an open context menu, close it
+    if (this.openContextMenuSection === sectionId) {
+      this.openContextMenuSection = null;
+    }
+
+    // If this section has an open drawer, close it
+    if (this.openDrawerSection === sectionId) {
+      this.openDrawerSection = null;
+      this.drawerVariant = null;
+    }
+
+    // Reset click tracking for double-click detection
+    this.lastClickTime = 0;
+    this.lastClickedVideo = null;
+
+    // Clear any pending hover timeout
+    if (this.hoverTimeoutId) {
+      clearTimeout(this.hoverTimeoutId);
+      this.hoverTimeoutId = null;
+    }
+  }
+
+  private clearOtherSections(currentSectionId: string): void {
     for (const sectionId in this.selectedVideosBySection) {
       if (sectionId !== currentSectionId) {
         this.selectedVideosBySection[sectionId] = [];
@@ -165,7 +232,7 @@ export class ContentState {
     }
   }
 
-  private clearAllSections() {
+  private clearAllSections(): void {
     for (const sectionId in this.selectedVideosBySection) {
       this.selectedVideosBySection[sectionId] = [];
       // Also clear hovered videos from other sections
@@ -178,7 +245,10 @@ export class ContentState {
   }
 
   // Video drag and drop CSS classes
-  getVideoDropzoneClasses(playlist: Playlist, session: any): string[] {
+  getVideoDropzoneClasses(
+    playlist: Playlist,
+    session: Session | null
+  ): string[] {
     if (
       this.dragContentType === 'video' &&
       playlist.created_by === session?.user.id
@@ -193,7 +263,7 @@ export class ContentState {
   }
 
   // Helper method to clear hover states during drag operations
-  clearHoverStatesDuringDrag() {
+  clearHoverStatesDuringDrag(): void {
     // Clear all hover states when drag starts to prevent CSS conflicts
     for (const sectionId in this.hoveredVideosBySection) {
       this.hoveredVideosBySection[sectionId] = null;
@@ -212,7 +282,7 @@ export class ContentState {
   }
 
   // Helper method to restore hover states after drag operations
-  enableHoverStatesAfterDrag() {
+  enableHoverStatesAfterDrag(): void {
     // Remove global dragging class to re-enable CSS hover effects
     if (typeof document !== 'undefined' && document.body) {
       document.body.classList.remove('dragging');
@@ -223,11 +293,7 @@ export class ContentState {
   handleMouseEnter({
     video,
     sectionId = DEFAULT_SECTION_ID,
-  }: MouseHoverOptions) {
-    // if (this.isContextMenuOpenForSection(sectionId)) {
-    //   return;
-    // }
-
+  }: MouseHoverOptions): void {
     // Don't update hoveredVideo if we're dragging
     if (!this.dragContentType) {
       // Clear any existing timeout when entering a new element
@@ -235,12 +301,6 @@ export class ContentState {
         clearTimeout(this.hoverTimeoutId);
         this.hoverTimeoutId = null;
       }
-
-      // If this is a different section and we're starting to hover,
-      // clear selections from other sections
-      // if (this.hoveredVideosBySection[sectionId] === null) {
-      //   this.clearOtherSections(sectionId);
-      // }
 
       this.hoveredVideosBySection[sectionId] = video;
     }
@@ -252,12 +312,7 @@ export class ContentState {
   }: {
     sectionId?: string;
     removeSelectedOnHover?: boolean;
-  }) {
-    // If context menu is open for this section, don't clear hover state
-    // if (this.isContextMenuOpenForSection(sectionId)) {
-    //   return;
-    // }
-
+  }): void {
     // Only delay clearing hover if dropdown menu is not open
     // Store the timeout ID so it can be cleared if needed
     const timeoutId = setTimeout(() => {
@@ -333,21 +388,7 @@ export class ContentState {
     playlist?: Playlist;
     onNavigate?: (video: Video, playlist?: Playlist) => void;
     enableDoubleClick?: boolean;
-  }) {
-    // Check if context menu is open in any sectionId
-    if (this.isAnyContextMenuOpen) {
-      // Close the context menu by clearing the open section
-      this.openContextMenuSection = null;
-
-      if (this.hoveredVideosBySection[sectionId]) {
-        this.selectedVideosBySection[sectionId] = [];
-      } else {
-        this.selectedVideosBySection[sectionId] = [];
-        this.hoveredVideosBySection[sectionId] = null;
-      }
-      return;
-    }
-
+  }): void {
     const now = Date.now();
     const doubleClickDelay = 300; // milliseconds
 
@@ -379,6 +420,34 @@ export class ContentState {
         // No navigation timeout - only double-click navigates
       }
     } else {
+      // Check if context menu is open in any section - use direct property check for reliability
+      if (this.openContextMenuSection !== null) {
+        // Prevent default behavior and stop propagation IMMEDIATELY
+        if ('preventDefault' in event) {
+          event.preventDefault();
+        }
+        if ('stopPropagation' in event) {
+          event.stopPropagation();
+        }
+
+        // Close the context menu by clearing the open section
+        this.openContextMenuSection = null;
+
+        // Clear selections from ALL sections, not just the current one
+        this.clearAllSections();
+
+        // Set the clicked video as the new hovered video for the current section
+        this.hoveredVideosBySection[sectionId] = video;
+
+        // Return early to prevent any other click handling
+        return;
+      }
+
+      // If a dropdown is open just close that and don't redirect
+      if (this.isDropdownMenuOpen) {
+        this.closeAllDropdowns();
+        return;
+      }
       // Single-click behavior - no selection, just navigate immediately
       // Only navigate for non-modifier clicks
       if (!event.shiftKey && !event.ctrlKey && !event.metaKey) {
@@ -392,7 +461,7 @@ export class ContentState {
   }
 
   createDragDrop(options: DragDropOptions): DragDropHandlers {
-    const handleDragOver = (event: DragEvent, index: number) => {
+    const handleDragOver = (event: DragEvent, index: number): void => {
       if (!options.allowVideoReorder) return;
 
       event.preventDefault();
@@ -405,7 +474,7 @@ export class ContentState {
       }
     };
 
-    const handleDragEnd = () => {
+    const handleDragEnd = (): void => {
       // Clear drag visual state
       this.draggedIndex = null;
       this.targetIndex = null;
@@ -426,7 +495,7 @@ export class ContentState {
 
     const handleDragLeave = (
       e: DragEvent & { currentTarget: EventTarget & HTMLElement }
-    ) => {
+    ): void => {
       if (!options.allowVideoReorder) return;
       // Only set targetIndex to null if we're actually leaving the container
       // and not just moving between its child elements. This avoids having a flickering issue.
@@ -440,7 +509,7 @@ export class ContentState {
       event: DragEvent & { currentTarget: HTMLElement },
       index: number,
       sectionId: string = DEFAULT_SECTION_ID
-    ) => {
+    ): void => {
       // Clear hover states to prevent CSS conflicts during drag
       this.clearHoverStatesDuringDrag();
 
@@ -498,7 +567,7 @@ export class ContentState {
       event: DragEvent,
       index: number,
       sectionId: string = DEFAULT_SECTION_ID
-    ) => {
+    ): void => {
       if (!options.allowVideoReorder || !options.supabase) return;
       if (
         !options.playlist ||
@@ -601,7 +670,7 @@ export class ContentState {
     video: Video;
     videos: Video[];
     sectionId?: string;
-  }) {
+  }): void {
     const isShiftPressed = event.shiftKey;
     const isCtrlPressed = event.ctrlKey || event.metaKey;
 
@@ -654,7 +723,7 @@ export class ContentState {
     this.selectedVideosBySection[sectionId] = selectedVideos;
   }
 
-  closeAllDropdowns() {
+  closeAllDropdowns(): void {
     this.isDropdownMenuOpen = false;
     this.openDropdownId = null;
   }
@@ -665,15 +734,18 @@ export class ContentState {
   }: {
     video: Video;
     sectionId?: string;
-  }) {
+  }): void {
+    // Clear any scheduled context menu close to prevent race conditions
+    if (this.contextMenuCloseScheduled) {
+      clearTimeout(this.contextMenuCloseScheduled);
+      this.contextMenuCloseScheduled = null;
+    }
+
     // Clear selections from all other sections first
     this.clearOtherSections(sectionId);
 
     // Close any existing context menu from other sections
-    if (
-      this.openContextMenuSection &&
-      this.openContextMenuSection !== sectionId
-    ) {
+    if (this.isAnyContextMenuOpen) {
       this.openContextMenuSection = null;
     }
 
@@ -690,9 +762,6 @@ export class ContentState {
       // If the video isn't already selected, make it the only selected video
       this.selectedVideosBySection[sectionId] = [video];
     }
-
-    // Remove the hovered video setting since we're using selected state
-    // this.hoveredVideosBySection[sectionId] = video;
   }
 
   handleDrawer({
@@ -703,7 +772,7 @@ export class ContentState {
     video?: Video;
     sectionId?: string;
     variant: ContentSelectVariant;
-  }) {
+  }): void {
     // Clear selections from all other sections first
     this.clearOtherSections(sectionId);
 
@@ -735,8 +804,8 @@ export class ContentState {
   setupClickOutsideListener(
     containerElement: HTMLElement,
     sectionId: string = DEFAULT_SECTION_ID
-  ) {
-    const handleClickOutside = (event: MouseEvent) => {
+  ): () => void {
+    const handleClickOutside = (event: MouseEvent): void => {
       this.hoverTimeoutId = null;
 
       // Check if click is outside the container
@@ -763,10 +832,12 @@ export class ContentState {
 
         // If context menu is open and we're clicking elsewhere (like dropdown),
         // close the context menu but preserve selection temporarily
-        if (this.isContextMenuOpenForAnySection()) {
-          this.openContextMenuSection = null;
-          // Don't clear selection immediately - let the dropdown action complete
-          // The selection will be cleared by other mechanisms or timeout
+        if (this.openContextMenuSection) {
+          // Use a small delay to allow the click handler to run first
+          this.contextMenuCloseScheduled = setTimeout(() => {
+            this.openContextMenuSection = null;
+            this.contextMenuCloseScheduled = null;
+          }, 0);
           return;
         }
 
@@ -802,7 +873,7 @@ export class ContentState {
     // Use capture phase to ensure our listener runs first
     document.addEventListener('click', handleClickOutside, { capture: true });
 
-    return () => {
+    return (): void => {
       document.removeEventListener('click', handleClickOutside, {
         capture: true,
       });
@@ -812,11 +883,14 @@ export class ContentState {
 
 const DEFAULT_KEY = '$_content_state';
 
-export function setContentState(pageState: PageState, key = DEFAULT_KEY) {
+export function setContentState(
+  pageState: PageState,
+  key = DEFAULT_KEY
+): ContentState {
   const contentState = new ContentState(pageState);
   return setContext(key, contentState);
 }
 
-export function getContentState(key = DEFAULT_KEY) {
+export function getContentState(key = DEFAULT_KEY): ContentState {
   return getContext<ContentState>(key);
 }

@@ -4,14 +4,18 @@
   import FloatingBreadcrumbs from '$lib/components/floating-breadcrumbs.svelte';
   import IntersectionObserver from '$lib/components/intersection-observer.svelte';
   import ContentSelect from '$lib/components/content/content-select.svelte';
-  import type { ProfilePlaylist, UserPlaylist } from '$lib/supabase/playlists';
+  import type { Playlist, UserPlaylist } from '$lib/supabase/playlists';
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
   import type { HTMLAttributes } from 'svelte/elements';
   import type { Snippet } from 'svelte';
   import type { CombinedContentFilter } from './content-filter';
   import { isVideoWithTimestamp, type Video } from '$lib/supabase/videos';
-  import { handleContentNavigation, type ContentView } from './content';
+  import {
+    getContentView,
+    handleContentNavigation,
+    type ContentView,
+  } from './content';
   import {
     handleFollowPlaylist,
     handleUnfollowPlaylist,
@@ -22,6 +26,7 @@
   import * as Popover from '$lib/components/ui/popover';
   import type { UserProfile } from '$lib/supabase/user-profiles';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
+  import { getMediaQueryState } from '$lib/state/media-query.svelte';
 
   interface SharedContentHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
@@ -29,7 +34,7 @@
     contentFilter: CombinedContentFilter;
     currentPage?: number;
     open?: boolean;
-    playlist?: ProfilePlaylist | UserPlaylist;
+    playlist?: Playlist | UserPlaylist;
     session: Session | null;
     showFloatingBreadcrumbs: boolean;
     userProfile: UserProfile | null;
@@ -55,6 +60,7 @@
   }: SharedContentHeaderProps = $props();
 
   const sidebarState = getSidebarState();
+  const mediaQueryState = getMediaQueryState();
   const { playlists } = $derived(sidebarState);
 
   const isPlaylistCreator = $derived(
@@ -102,20 +108,20 @@
     {@render children()}
 
     <div class="flex items-center gap-0 sm:my-4">
-      {#if profilePlaylist}
-        <!-- Play Button -->
-        <Button
-          size="icon"
-          disabled={!nextVideoToPlay}
-          class="bg-primary hover:!bg-primary mr-2 rounded-full border-none p-7 
+      <!-- Play Button -->
+      <Button
+        size="icon"
+        disabled={!nextVideoToPlay}
+        class="bg-primary hover:!bg-primary mr-2 rounded-full border-none p-7 
         shadow-xl transition-transform duration-200
         outline-none hover:scale-105 hover:shadow-2xl hover:brightness-[150%] focus:border-none focus:outline-none active:border-none active:outline-none"
-          onclick={handlePlayVideo}
-        >
-          <Play class="h-6! w-6! fill-black stroke-0" />
-        </Button>
+        onclick={handlePlayVideo}
+      >
+        <Play class="h-6! w-6! fill-black stroke-0" />
+      </Button>
 
-        <!-- Plus/Minus Button -->
+      <!-- Plus/Minus Button -->
+      {#if profilePlaylist}
         {#if !isPlaylistCreator && !playlists.some((pl) => pl.id === profilePlaylist.id)}
           {#if !session?.user.id}
             <Popover.Root>
@@ -165,20 +171,20 @@
             <CircleMinus class="!h-8 !w-8" />
           </Button>
         {/if}
+      {/if}
 
-        <!-- ContentSelect Button -->
-        {#if session}
-          <div class="relative">
-            <ContentSelect
-              {videos}
-              playlist={profilePlaylist}
-              {contentFilter}
-              {supabase}
-              {session}
-              displayLabel={true}
-            />
-          </div>
-        {/if}
+      <!-- ContentSelect Button -->
+      {#if session && (getContentView(mediaQueryState, userProfile) === 'TABLE' || profilePlaylist)}
+        <div class="relative">
+          <ContentSelect
+            {videos}
+            playlist={profilePlaylist}
+            {contentFilter}
+            {supabase}
+            {session}
+            displayLabel={true}
+          />
+        </div>
       {/if}
 
       <!-- Content Filters (pushed to the right) -->

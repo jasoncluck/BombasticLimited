@@ -36,7 +36,7 @@ export type Video = {
   source: Source;
   title: string;
   description: string;
-  thumbnail_url: string | null;
+  thumbnail_url: string;
   image_url: string | null;
   published_at: string;
   duration: string;

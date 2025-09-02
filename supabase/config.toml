@@ -89,10 +89,17 @@ port = 54324
 enabled = true
 
 # Configure storage buckets for image processing
-[storage.buckets.content-images]
-public = true
+# Commented out to not recreate, create manually instead
+# [storage.buckets.content-images]
+# public = true
+# file_size_limit = "50MiB"
+# allowed_mime_types = ["image/png", "image/jpeg", "image/webp", "image/avif"]
+
+[storage.buckets.bug-report-images]
+public = false
 file_size_limit = "50MiB"
-allowed_mime_types = ["image/png", "image/jpeg", "image/webp", "image/avif"]
+allowed_mime_types = ["image/png", "image/jpeg", "image/webp", "image/gif"]
+
 
 # Image transformation API is available to Supabase Pro plan.
 # [storage.image_transformation]
