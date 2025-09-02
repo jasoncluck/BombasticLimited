@@ -1,5 +1,5 @@
 import type { Session, SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '../database.types';
+import type { Database, Json } from '../database.types';
 import type { CropArea } from 'svelte-easy-crop';
 import { invalidate } from '$app/navigation';
 import {
@@ -193,7 +193,7 @@ export async function updatePlaylistInfo({
   name: string;
   description: string | null;
   session: Session;
-  imageProperties: CropArea | null;
+  imageProperties: PlaylistImageProperties | null;
   type: PlaylistType;
   supabase: SupabaseClient<Database>;
 }) {
@@ -202,7 +202,7 @@ export async function updatePlaylistInfo({
     .update({
       name: name.trim(),
       description: description?.trim(),
-      image_properties: JSON.stringify(imageProperties),
+      image_properties: imageProperties as Json,
       type,
     })
     .eq('id', playlistId)
