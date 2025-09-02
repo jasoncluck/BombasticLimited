@@ -91,7 +91,7 @@ export const actions: Actions = {
       setFlash(
         {
           type: 'success',
-          message: `Emails with confirmation links have sent to both the new email: ${data.user.new_email} and the current email ${data.user.email}. The email will be updated once both links have been confirmed. `,
+          message: `Emails with confirmation links have been sent to both the new email: ${data.user.new_email} and the current email ${data.user.email}. The email will be updated once both links have been confirmed. `,
           field: 'email',
         },
         cookies
