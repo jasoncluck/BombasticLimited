@@ -17,7 +17,7 @@
   import { setSidebarState } from '$lib/state/sidebar.svelte';
   import { setNavigationState } from '$lib/state/navigation.svelte';
   import { setPasswordLockState } from '$lib/state/password-lock.svelte';
-  import { afterNavigate, invalidate } from '$app/navigation';
+  import { invalidate } from '$app/navigation';
   import type { Session } from '@supabase/supabase-js';
   import '../../app.css';
   import {

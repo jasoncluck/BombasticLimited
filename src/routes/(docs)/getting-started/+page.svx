@@ -1,23 +1,89 @@
-# Welcome to Bombastic
+# About Bombastic
+Bombastic Limited is a no-frills video consolidation service with a focus on content produced by past and present members of Giant Bomb.  Between modern video platforms primarily recommending new content creators and folks associated with Giant Bomb starting new companies, it has become challenging to track all the available content.  Bombastic's goal is to provide a consolidated platform for the expanded Giant Bomb community.
 
-Bombastic Limited was created to simplify the process of finding and watching videos 
-from the long-running website about video games: Giant Bomb. Between modern video platforms putting a focus on 
-recommending new creators and people departing Giant Bomb to join or start their own companies, 
-it became challenging to keep track of all. Bombastic's goal is to provide this for the "greater" Giant Bomb 
-community. It also includes some features so you can better keep track of what 
-you're watching and what you want to watch next.
+Bombastic retrieves data from YouTube for the video game media creators that have been onboarded.  This not only creates a simplified cross-channel search view, but also allows for the creation of custom playlists that can contain content from multiple YouTube channels.  Bombastic's watch tracking feature allows users to easily resume watching videos and playlists where they previously left off. 
 
 ## Features
+All features of Bombastic are available for free.  An account is required to use all features except for search functionality.
 
-No account required:
-## Searchable Videos and Playlists from YouTube
-Bombastic pulls data from YouTube to provide all the latest videos along with any playlists created by each channel. 
-These can be searched for at anytime using the bar in the top navigation.
+### Account Management
+Creating a Bombastic account grants you access to all features.  An account can be created through Bombastic, or you can log in with an existing Discord account. If you create a Bombastic account, you can link a Discord account later; this action will update your user avatar on Bombastic to match your Discord avatar.
 
-The next features do require an account. 
-If you sign up with Discord or link your Discord account afterwards your avatar will be used for playlists. 
+Account settings can be found by clicking on your avatar in the upper right corner and selecting "Settings".  The following options are available in the settings menu:
+* Update your email address
+* Update your username
+* Reset your password
+* Link your Discord account
+* Delete your account
 
-## Video Timestamps
-When you stop watching a video, by navigating elsewhere or closing the tab, your progress automatically saved and added to your "Continue Watching" queue 
-found at the top of the homepage, you can't miss it. 
+If you delete your account, all data associated with the account, including playlists created by the account, will be deleted.
+
+### Search Functionality
+The search bar is in the top navigation bar.  Only video titles and video descriptions are searched as part of queries.  Search result links can be copied and sent to friends.  
+
+### Playlist Management
+Playlists can be public or private.  Public playlists are searchable by all users where as private playlists are only visible to you.  Only owners of public playlists are able to add or remove videos from it; if you follow a public playlist, you can only change the sort order of the videos for yourself.
+
+#### Create a playlist
+Click the add button next to the "Playlists" header on the left hand navigation.  
+
+#### Edit a playlist
+Click on the playlist in the left hand navigation.  On the playlist page, click the playlist title or select "Edit Playlist" from the dot menu.  
+
+#### Delete a playlist
+Right-click the playlist in the left hand navigation and select "Delete Playlist", or navigate to the playlist page and select "Delete Playlist" from the dot menu.  
+
+If a public playlist is deleted, users that are following the playlist will receive a notification that the playlist has been deleted.  Users will have the option to make a clone of the playlist before it is permanently deleted.
+
+#### Follow a public playlist
+On the playlist page, click the add button to follow the playlist.  This action will add the playlist to your left hand navigation.
+
+#### Unfollow a public playlist 
+Right-click the playlist in the left hand navigation and select "Unfollow", or navigate to the playlist page and click the minus button to unfollow.  This action will remove the playlist from your left hand navigation. 
+
+#### Add a video to a playlist
+How videos are added depends on whether you're in Card or Table mode.  You can swap between "Card" and "Table" mode from the view menu in the upper right hand corner.  Card mode only allows one video to be added to a playlist at a time when Table mode allows you to add multiple videos at once.
+
+* Adding a video in card mode:  Right-click on the video, hover on "Add video to playlist", then select the desired playlist.
+* Adding a video in table mode: Select the desired videos from the table.  This can be done by holding Shift to select a range of consecutive videos, or by holding Cmd/Ctrl to select non-consecutive videos.  Once the videos are selected, right-click, hover on "Add videos to playlist", then select the desired playlist. 
+
+#### Remove a video from a playlist
+How videos are removed depends on whether you're in Card or Table mode.  You can swap between "Card" and "Table" mode from the view menu in the upper right hand corner.  Card mode only allows one video to be removed from a playlist at a time when Table mode allows you to remove multiple videos at once.
+
+* Removing a video in card mode:  Navigate to the playlist page.  Right-click on the video and select "Remove video from playlist".
+* Removing a video in table mode: Navigate to the playlist page and select the desired videos from the table.  This can be done by holding Shift to select a range of consecutive videos, or by holding Cmd/Ctrl to select non-consecutive videos.  Once the videos are selected, right-click and select "Remove videos from playlist".
+
+#### Update playlist thumbnail
+The thumbnail of a playlist can only be set to an image that is a thumbnail of a video in the playlist.  To update the playlist thumbnail, navigate to the playlist page and find the video thumbnail you want to use as the playlist thumbnail.  Right-click on the video and select "Set as playlist image".  After the image is set, you can then go to the Edit Playlist menu to zoom or crop the thumbnail image. 
+
+### Watch Tracking
+When you stop watching a video (either by pausing, navigating to a different page, or closing the browser tab) your progress is automatically saved.  The video will now show up in your "Continue Watching" queue at the top of the Bombastic homepage.  At the end of the video, the video will be marked as "Watched".
+
+Playlists will automatically track where you are in the playlist.  Clicking the play button on a playlist's page will automatically resume the playlist at the next video that is not yet marked as "Watched".  If you change the sort order of the playlist after some videos have only been watched, the play will resume at the first video in the new sort order that is not yet marked as "Watched". 
+
+#### Mark a video as watched
+How videos are marked as watched depends on whether you're in Card or Table mode.  You can swap between "Card" and "Table" mode from the view menu in the upper right hand corner.  Card mode only allows one video to be marked as watched at a time when Table mode allows you to mark multiple videos as watched at once.
+
+* Mark a video as watched in card mode: Right-click on the video and select "Set as watched".
+* Mark a video as watched in table mode: Select the desired videos from the table.  This can be done by holding Shift to select a range of consecutive videos, or by holding Cmd/Ctrl to select non-consecutive videos.  Once the videos are selected, right-click and select "Set as watched".
+
+#### Reset video progress
+Resetting video progress can be done for videos that are marked as "Watched" or videos that have been partially watched.  How videos are reset depends on whether you're in Card or Table mode.  You can swap between "Card" and "Table" mode from the view menu in the upper right hand corner.  Card mode only allows one video to be marked as watched at a time when Table mode allows you to mark multiple videos as watched at once.
+
+* Reset a video in card mode: Right-click on the video and select "Reset progress".
+* Reset a video in table mode: Select the desired videos from the table.  This can be done by holding Shift to select a range of consecutive videos, or by holding Cmd/Ctrl to select non-consecutive videos.  Once the videos are selected, right-click and select "Reset progress".
+
+### Notifications
+`TODO - very incomplete`
+Notifications are sent when there are changes to playlists that you follow (anything other than delete?) (TODO - when else are notifications sent?).  When you have a notification, a bell will appear in the upper right hand corner of the page.  Click on the bell to view the notification, then click the "X" on the notification to delete it. 
+
+Include note on streams going live here? 
+
+## Reporting Issues
+If you notice an issue with the website, please let us know so we can investigate and address it.  Click your avatar in the upper right hand corner and select "Report Bug" from the drop-down.  Fill out the form with as much information about the issue you encountered as possible, then click "Submit Report".  
+
+In the event that the bug report form is broken, please click the "Contact" button at the bottom of the website to email us.  Please include the following information in your report:
+* Description of what happened when you encountered the issue
+* Steps to reproduce the issue
+* (Optional) Screenshots of the issue
 
