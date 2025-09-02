@@ -42,6 +42,7 @@
 
   let startSeconds = $state(0);
   let player = $state<any>();
+  let hasInitialSeekOccurred = $state(false);
 
   // Video history tracking
   let watchTimeTracker = $state<ReturnType<
@@ -89,34 +90,26 @@
     };
   });
 
-  $effect(() => {
-    if (!player || typeof window === 'undefined') return;
+  // Function to seek to the start position
+  function seekToStartPosition(): void {
+    if (!player || !player.seekTo) return;
 
-    const checkAndSeek = () => {
-      try {
-        if (player.getPlayerState && player.getPlayerState() !== -1) {
-          if (player.seekTo && startSeconds) {
-            player.seekTo(startSeconds);
-          } else if (player.seekTo) {
-            player.seekTo(0);
-          }
+    try {
+      if (player.getPlayerState && player.getPlayerState() !== -1) {
+        if (startSeconds > 0) {
+          player.seekTo(startSeconds);
         } else {
-          setTimeout(checkAndSeek, 100);
+          player.seekTo(0);
         }
-      } catch (error) {
-        console.error('Error seeking in video:', error);
-      }
-    };
-
-    setTimeout(checkAndSeek, 100);
-    if (player.seekTo) {
-      if (startSeconds) {
-        player.seekTo(startSeconds);
+        hasInitialSeekOccurred = true;
       } else {
-        player.seekTo(0);
+        // If player is not ready, try again after a short delay
+        setTimeout(seekToStartPosition, 100);
       }
+    } catch (error) {
+      console.error('Error seeking in video:', error);
     }
-  });
+  }
 
   // Helper function to save timestamp for a specific video with its duration (async for in-app use)
   async function saveTimestampForVideo(
@@ -281,9 +274,8 @@
   function onPlayerReady(event: {
     target: { seekTo: (startSeconds: number) => void };
   }) {
-    if (startSeconds) {
-      event.target.seekTo(startSeconds);
-    }
+    // Don't seek automatically on ready - wait for user to press play
+    // event.target is now available as player
   }
 
   // Handle YouTube player state changes for video history tracking
@@ -297,6 +289,10 @@
     // YouTube player states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (cued)
     switch (event.data) {
       case 1: // Playing
+        // Seek to start position when user first presses play
+        if (!hasInitialSeekOccurred && startSeconds > 0) {
+          seekToStartPosition();
+        }
         watchTimeTracker.onPlay(currentTime);
         isActuallyPlaying = true;
         break;
