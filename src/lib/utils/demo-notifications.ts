@@ -124,8 +124,6 @@ export function createDemoNotifications(): NotificationWithMeta[] {
  * NOTE: These are for bell notifications only - no toast popups should be triggered
  */
 export function showDemoToast(type: NotificationType = 'system') {
-  // This function is kept for backward compatibility but should not trigger toasts
-  // Demo notifications should only appear under the bell icon
 }
 
 /**
@@ -133,6 +131,4 @@ export function showDemoToast(type: NotificationType = 'system') {
  * NOTE: This should only create bell notifications, not toast popups
  */
 export function simulateRealtimeNotification() {
-  // This function is kept for backward compatibility but should not trigger toasts
-  // Simulated notifications should only appear under the bell icon
 }

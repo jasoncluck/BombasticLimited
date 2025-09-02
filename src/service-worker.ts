@@ -428,7 +428,6 @@ const addToQueue = (request: Request): Promise<Response> => {
       reject,
     };
 
-    // Set timeout for queued request
     queuedRequest.timeoutId = setTimeout(() => {
       removeFromQueue(url);
       reject(new Error('Request timeout'));
@@ -441,7 +440,6 @@ const addToQueue = (request: Request): Promise<Response> => {
       state.requestQueue.normal.set(url, queuedRequest);
     }
 
-    // Process queue
     processRequestQueue().catch(() => {
       // Silent fail on queue processing errors
     });

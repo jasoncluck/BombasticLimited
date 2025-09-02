@@ -8,7 +8,6 @@
   import type { Snapshot } from './$types.js';
   import type { ScrollPosition } from '$lib/state/page.svelte.js';
 
-  // Import all state dependencies
   import { setContentState } from '$lib/state/content.svelte';
   import { setMediaQueryState } from '$lib/state/media-query.svelte';
   import { setPlaylistState } from '$lib/state/playlist.svelte';
@@ -39,7 +38,6 @@
 
   let openAccountDrawer = $derived(sidebarState.openAccountDrawer);
 
-  // Progressive loading states
   let isHydrated = $state(false);
 
   // Track auth state for visibility change detection
@@ -68,8 +66,7 @@
     navigation.setupNavigationHooks();
   });
 
-  // Simplified navigation state
-  const isNavigatingToContent = $derived(false); // Simplified - no complex navigation detection
+  const isNavigatingToContent = $derived(false);
 
   // Snapshot for scroll position restoration - MUST be in +layout.svelte
   export const snapshot: Snapshot<{
