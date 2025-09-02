@@ -5,7 +5,10 @@
 -- ============================================================================
 --
 -- Helper for normalizing search terms
-CREATE OR REPLACE FUNCTION "public"."normalize_search_term" ("search_term" text) RETURNS text LANGUAGE "plpgsql" IMMUTABLE AS $$
+CREATE OR REPLACE FUNCTION "public"."normalize_search_term" ("search_term" text) RETURNS text LANGUAGE "plpgsql" IMMUTABLE
+SET
+  search_path = '' AS $$
+AS $$
 BEGIN
     RETURN lower(trim(regexp_replace(search_term, '\s+', ' ', 'g')));
 END;
@@ -369,22 +372,5 @@ BEGIN
 END;
 $$;
 
--- Add RLS policy to allow reading views but restrict direct updates
-DO $$
-BEGIN
-  -- Check if RLS is enabled on videos table and policy doesn't exist
-  IF EXISTS (
-    SELECT 1 FROM pg_class c
-    JOIN pg_namespace n ON n.oid = c.relnamespace
-    WHERE c.relname = 'videos' 
-    AND n.nspname = 'public' 
-    AND c.relrowsecurity = true
-  ) AND NOT EXISTS (
-    SELECT 1 FROM pg_policies 
-    WHERE schemaname = 'public' 
-    AND tablename = 'videos' 
-    AND policyname = 'Allow read access to video views'
-  ) THEN
-    EXECUTE 'CREATE POLICY "Allow read access to video views" ON "public"."videos" FOR SELECT USING (true)';
-  END IF;
-END $$;
+-- Note: Removed duplicate "Allow read access to video views" policy creation
+-- The "Enable read access for all users" policy in 06_row_level_security.sql already provides this functionality

@@ -21,6 +21,8 @@ interface CacheConfig {
   readonly maxConcurrentRequests: number;
   readonly queueTimeout: number;
   readonly priorityThreshold: number;
+  readonly preloadDelayMs: number;
+  readonly criticalResourceTimeout: number;
 }
 
 const CACHE_CONFIG: CacheConfig = {
@@ -34,6 +36,8 @@ const CACHE_CONFIG: CacheConfig = {
   maxConcurrentRequests: 6, // Limit concurrent fetches
   queueTimeout: 30000, // 30 second timeout for queued requests
   priorityThreshold: 3, // High priority after 3 hits
+  preloadDelayMs: 2000, // Delay non-critical preloading by 2 seconds
+  criticalResourceTimeout: 5000, // 5 second timeout for critical resources
 };
 
 // Cache names with versioning
@@ -44,6 +48,21 @@ const IMAGE_CACHE = `bombastic-images-${version}` as const;
 const STATIC_ASSETS: readonly string[] = [...build, ...files];
 const STATIC_EXTENSIONS =
   /\.(js|css|woff2?|ttf|eot|jpg|jpeg|png|gif|svg|webp|ico|avif)$/;
+
+// Critical resource patterns - these should be preloaded immediately
+const CRITICAL_PATTERNS = [
+  /app\.[a-zA-Z0-9]+\.css$/, // Main app CSS
+  /app\.[a-zA-Z0-9]+\.js$/, // Main app JS
+  /layout\.[a-zA-Z0-9]+\.css$/, // Layout CSS
+  /vendor\.[a-zA-Z0-9]+\.js$/, // Vendor JS
+] as const;
+
+// Non-critical patterns - these can be delayed
+const NON_CRITICAL_PATTERNS = [
+  /scroll-area\.[a-zA-Z0-9]+\.css$/,
+  /components?\.[a-zA-Z0-9]+\.css$/,
+  /chunk\.[a-zA-Z0-9]+\.js$/,
+] as const;
 
 // Supported image domains
 const IMAGE_DOMAINS = [
@@ -78,6 +97,14 @@ interface ImageCacheMetadata {
   lastAccessed: number;
   lastUpdated: number;
   priority: number;
+}
+
+// Resource priority classification
+interface ResourceClassification {
+  readonly isCritical: boolean;
+  readonly category: 'css' | 'js' | 'font' | 'image' | 'other';
+  readonly shouldPreload: boolean;
+  readonly preloadDelay: number;
 }
 
 // Request queue interfaces
@@ -116,6 +143,18 @@ const ESSENTIAL_IMAGE_HEADERS = [
   'vary',
 ] as const;
 
+// Essential headers for static assets
+const ESSENTIAL_STATIC_HEADERS = [
+  'content-type',
+  'content-length',
+  'content-encoding',
+  'cache-control',
+  'expires',
+  'last-modified',
+  'etag',
+  'vary',
+] as const;
+
 // Global state management
 interface ServiceWorkerState {
   metadata: Map<string, ImageCacheMetadata>;
@@ -124,6 +163,8 @@ interface ServiceWorkerState {
   cleanupInProgress: boolean;
   totalEstimatedSize: number;
   requestCount: number;
+  preloadedResources: Set<string>;
+  criticalResourcesLoaded: Set<string>;
 }
 
 const state: ServiceWorkerState = {
@@ -138,6 +179,8 @@ const state: ServiceWorkerState = {
   cleanupInProgress: false,
   totalEstimatedSize: 0,
   requestCount: 0,
+  preloadedResources: new Set<string>(),
+  criticalResourcesLoaded: new Set<string>(),
 };
 
 // Content type mapping for images
@@ -191,6 +234,46 @@ const getContentTypeFromUrl = (url: URL): string | null => {
   return null;
 };
 
+const classifyResource = (url: URL): ResourceClassification => {
+  const pathname = url.pathname.toLowerCase();
+
+  // Determine category
+  let category: ResourceClassification['category'] = 'other';
+  if (pathname.endsWith('.css')) {
+    category = 'css';
+  } else if (pathname.endsWith('.js')) {
+    category = 'js';
+  } else if (pathname.match(/\.(woff2?|ttf|eot)$/)) {
+    category = 'font';
+  } else if (pathname.match(/\.(jpg|jpeg|png|gif|svg|webp|ico|avif)$/)) {
+    category = 'image';
+  }
+
+  // Check if critical
+  const isCritical = CRITICAL_PATTERNS.some((pattern) =>
+    pattern.test(pathname)
+  );
+  const isNonCritical = NON_CRITICAL_PATTERNS.some((pattern) =>
+    pattern.test(pathname)
+  );
+
+  // Determine preload strategy
+  const shouldPreload =
+    category === 'css' || category === 'js' || category === 'font';
+  const preloadDelay = isCritical
+    ? 0
+    : isNonCritical
+      ? CACHE_CONFIG.preloadDelayMs
+      : 1000;
+
+  return {
+    isCritical,
+    category,
+    shouldPreload,
+    preloadDelay,
+  };
+};
+
 const estimateResponseSize = (response: Response): number => {
   const contentLength = response.headers.get('content-length');
   if (contentLength) {
@@ -212,6 +295,10 @@ const estimateResponseSize = (response: Response): number => {
     return 50000; // 50KB default for images
   }
 
+  if (contentType.includes('javascript')) return 150000; // 150KB for JS
+  if (contentType.includes('css')) return 50000; // 50KB for CSS
+  if (contentType.includes('font')) return 80000; // 80KB for fonts
+
   return 10000; // 10KB default
 };
 
@@ -219,11 +306,17 @@ const generateRequestId = (): string => {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 };
 
-const createCachedResponse = (originalResponse: Response): Response => {
+const createCachedResponse = (
+  originalResponse: Response,
+  isStatic = false
+): Response => {
   const headers = new Headers();
+  const essentialHeaders = isStatic
+    ? ESSENTIAL_STATIC_HEADERS
+    : ESSENTIAL_IMAGE_HEADERS;
 
   // Preserve essential headers
-  for (const headerName of ESSENTIAL_IMAGE_HEADERS) {
+  for (const headerName of essentialHeaders) {
     const headerValue = originalResponse.headers.get(headerName);
     if (headerValue) {
       headers.set(headerName, headerValue);
@@ -243,6 +336,11 @@ const createCachedResponse = (originalResponse: Response): Response => {
   headers.set('x-served-by', 'service-worker');
   headers.set('x-cache-status', 'HIT');
   headers.set('x-cache-version', version);
+
+  // Add appropriate cache control for static assets
+  if (isStatic && !headers.has('cache-control')) {
+    headers.set('cache-control', 'public, max-age=31536000, immutable');
+  }
 
   return new Response(originalResponse.body, {
     status: originalResponse.status,
@@ -270,6 +368,13 @@ const createCorsRequest = (originalRequest: Request): Request => {
 // Smart request queue management
 const determineRequestPriority = (url: string): number => {
   const metadata = state.metadata.get(url);
+  const urlObj = new URL(url);
+  const classification = classifyResource(urlObj);
+
+  // Critical resources get highest priority
+  if (classification.isCritical) {
+    return 20;
+  }
 
   // High priority for frequently accessed images
   if (metadata && metadata.hitCount >= CACHE_CONFIG.priorityThreshold) {
@@ -694,13 +799,20 @@ const cacheImage = async (request: Request): Promise<Response> => {
   return addToQueue(request);
 };
 
-// Static asset caching
+// Static asset caching with intelligent preloading
 const cacheStaticAsset = async (request: Request): Promise<Response> => {
   const cache = await caches.open(STATIC_CACHE);
   const cached = await cache.match(request);
+  const url = new URL(request.url);
 
   if (cached) {
-    return cached;
+    // Mark critical resources as loaded
+    const classification = classifyResource(url);
+    if (classification.isCritical) {
+      state.criticalResourcesLoaded.add(request.url);
+    }
+
+    return createCachedResponse(cached, true);
   }
 
   try {
@@ -708,12 +820,56 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
     if (response.ok && response.status === 200) {
       const responseToCache = response.clone();
       await cache.put(request, responseToCache);
+
+      // Mark critical resources as loaded
+      const classification = classifyResource(url);
+      if (classification.isCritical) {
+        state.criticalResourcesLoaded.add(request.url);
+      }
     }
     return response;
   } catch (error) {
     throw new Error(
       `Static asset fetch failed: ${error instanceof Error ? error.message : 'Unknown error'}`
     );
+  }
+};
+
+// Intelligent preloading with delays
+const preloadResourceWithDelay = async (
+  asset: string,
+  delay: number
+): Promise<void> => {
+  if (state.preloadedResources.has(asset)) {
+    return;
+  }
+
+  if (delay > 0) {
+    await new Promise((resolve) => setTimeout(resolve, delay));
+  }
+
+  try {
+    const cache = await caches.open(STATIC_CACHE);
+    const cached = await cache.match(asset);
+
+    if (!cached) {
+      const response = await Promise.race([
+        fetch(asset),
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error('Timeout')),
+            CACHE_CONFIG.criticalResourceTimeout
+          )
+        ),
+      ]);
+
+      if (response.ok) {
+        await cache.put(asset, response);
+        state.preloadedResources.add(asset);
+      }
+    }
+  } catch (error) {
+    console.warn(`Failed to preload ${asset}:`, error);
   }
 };
 
@@ -759,7 +915,8 @@ type ServiceWorkerMessageType =
   | 'CLEAR_ALL_CACHE'
   | 'GET_CACHE_STATS'
   | 'FORCE_CLEANUP'
-  | 'GET_QUEUE_STATS';
+  | 'GET_QUEUE_STATS'
+  | 'GET_PRELOAD_STATS';
 
 interface ServiceWorkerMessage {
   type: ServiceWorkerMessageType;
@@ -799,6 +956,12 @@ sw.addEventListener('message', (event) => {
       }
       break;
 
+    case 'GET_PRELOAD_STATS':
+      if (event.ports && event.ports[0]) {
+        event.ports[0].postMessage(getPreloadStats());
+      }
+      break;
+
     case 'FORCE_CLEANUP':
       event.waitUntil(performSmartCacheCleanup());
       break;
@@ -827,12 +990,37 @@ const clearAllCaches = async (): Promise<void> => {
   state.metadata.clear();
   state.totalEstimatedSize = 0;
   state.cleanupInProgress = false;
+  state.preloadedResources.clear();
+  state.criticalResourcesLoaded.clear();
 
   // Clear queue
   state.requestQueue.highPriority.clear();
   state.requestQueue.normal.clear();
   state.requestQueue.activeFetches.clear();
   state.requestQueue.processing = false;
+};
+
+// Preload statistics
+interface PreloadStatistics {
+  preloadedResources: number;
+  criticalResourcesLoaded: number;
+  totalCriticalResources: number;
+  preloadSuccess: boolean;
+}
+
+const getPreloadStats = (): PreloadStatistics => {
+  const totalCriticalResources = STATIC_ASSETS.filter((asset) => {
+    const url = new URL(asset, sw.location.origin);
+    return classifyResource(url).isCritical;
+  }).length;
+
+  return {
+    preloadedResources: state.preloadedResources.size,
+    criticalResourcesLoaded: state.criticalResourcesLoaded.size,
+    totalCriticalResources,
+    preloadSuccess:
+      state.criticalResourcesLoaded.size >= totalCriticalResources * 0.8,
+  };
 };
 
 // Queue statistics
@@ -889,6 +1077,7 @@ interface CacheStatistics {
     cacheUtilization: number;
     totalRequests: number;
   };
+  preload: PreloadStatistics;
   queue: QueueStatistics;
   config: CacheConfig;
   allCaches: string[];
@@ -967,6 +1156,7 @@ const getCacheStats = async (): Promise<CacheStatistics> => {
         cacheUtilization: Math.round(cacheUtilization * 100) / 100,
         totalRequests: state.requestCount,
       },
+      preload: getPreloadStats(),
       queue: getQueueStats(),
       config: CACHE_CONFIG,
       allCaches,
@@ -978,31 +1168,72 @@ const getCacheStats = async (): Promise<CacheStatistics> => {
   }
 };
 
-// Utility functions
+// Improved preloading with resource classification
 const preloadCriticalAssets = async (): Promise<void> => {
   const cache = await caches.open(STATIC_CACHE);
-  const criticalAssets = build.filter(
-    (asset) =>
-      asset.includes('app') ||
-      asset.includes('vendor') ||
-      asset.endsWith('.css')
+
+  // Classify all assets
+  interface ClassifiedAsset {
+    asset: string;
+    classification: ResourceClassification;
+  }
+
+  const classifiedAssets: ClassifiedAsset[] = build.map((asset) => {
+    const url = new URL(asset, sw.location.origin);
+    return {
+      asset,
+      classification: classifyResource(url),
+    };
+  });
+
+  // Separate critical and non-critical assets
+  const criticalAssets = classifiedAssets.filter(
+    ({ classification }) => classification.isCritical
   );
 
-  const promises = criticalAssets.map(async (asset) => {
+  const nonCriticalAssets = classifiedAssets.filter(
+    ({ classification }) =>
+      !classification.isCritical && classification.shouldPreload
+  );
+
+  // Preload critical assets immediately
+  const criticalPromises = criticalAssets.map(async ({ asset }) => {
     const cached = await cache.match(asset);
     if (!cached) {
       try {
-        const response = await fetch(asset);
+        const response = await Promise.race([
+          fetch(asset),
+          new Promise<never>((_, reject) =>
+            setTimeout(
+              () => reject(new Error('Timeout')),
+              CACHE_CONFIG.criticalResourceTimeout
+            )
+          ),
+        ]);
+
         if (response.ok) {
           await cache.put(asset, response);
+          state.preloadedResources.add(asset);
+          state.criticalResourcesLoaded.add(asset);
         }
-      } catch {
-        // Silent fail on preload errors
+      } catch (error) {
+        console.warn(`Failed to preload critical asset ${asset}:`, error);
       }
+    } else {
+      state.preloadedResources.add(asset);
+      state.criticalResourcesLoaded.add(asset);
     }
   });
 
-  await Promise.allSettled(promises);
+  // Wait for critical assets
+  await Promise.allSettled(criticalPromises);
+
+  // Preload non-critical assets with delays
+  nonCriticalAssets.forEach(({ asset, classification }) => {
+    preloadResourceWithDelay(asset, classification.preloadDelay).catch(() => {
+      // Silent fail for non-critical assets
+    });
+  });
 };
 
 const cleanupOldCaches = async (): Promise<void> => {

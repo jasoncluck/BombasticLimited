@@ -168,7 +168,6 @@
     line-height: 0.9;
     list-style-type: none;
     border-left: 2px solid var(--color-border);
-    background-color: var(--color-muted);
     padding: 1rem;
   }
 
