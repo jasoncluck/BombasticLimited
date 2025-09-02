@@ -5,16 +5,11 @@
 -- ============================================================================
 --
 -- Helper for normalizing search terms
-CREATE OR REPLACE FUNCTION "public"."normalize_search_term"("search_term" text)
-RETURNS text
-LANGUAGE "plpgsql"
-IMMUTABLE
-AS $$
+CREATE OR REPLACE FUNCTION "public"."normalize_search_term" ("search_term" text) RETURNS text LANGUAGE "plpgsql" IMMUTABLE AS $$
 BEGIN
     RETURN lower(trim(regexp_replace(search_term, '\s+', ' ', 'g')));
 END;
 $$;
-
 
 -- Optimized helper function to select best available image format
 CREATE OR REPLACE FUNCTION public.select_best_image_format (

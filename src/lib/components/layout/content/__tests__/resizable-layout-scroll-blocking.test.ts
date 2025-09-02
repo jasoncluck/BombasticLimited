@@ -20,11 +20,11 @@ describe('ResizableLayout scroll blocking logic', () => {
     // Create mock viewport elements
     mockSidebarViewport = document.createElement('div');
     mockContentViewport = document.createElement('div');
-    
+
     // Set up the viewport refs
     mockPageState.viewportRefs.sidebarViewportRef = mockSidebarViewport;
     mockPageState.viewportRefs.contentViewportRef = mockContentViewport;
-    
+
     // Reset dropdown state
     mockContentState.isDropdownMenuOpen = false;
   });
@@ -58,7 +58,7 @@ describe('ResizableLayout scroll blocking logic', () => {
   it('should not apply overflow hidden when dropdown is closed', () => {
     mockContentState.isDropdownMenuOpen = false;
     applyScrollBlocking();
-    
+
     expect(mockSidebarViewport.style.overflow).toBe('');
     expect(mockContentViewport.style.overflow).toBe('');
   });
@@ -66,7 +66,7 @@ describe('ResizableLayout scroll blocking logic', () => {
   it('should apply overflow hidden when dropdown is opened', () => {
     mockContentState.isDropdownMenuOpen = true;
     applyScrollBlocking();
-    
+
     expect(mockSidebarViewport.style.overflow).toBe('hidden');
     expect(mockContentViewport.style.overflow).toBe('hidden');
   });
@@ -75,14 +75,14 @@ describe('ResizableLayout scroll blocking logic', () => {
     // Start with dropdown open
     mockContentState.isDropdownMenuOpen = true;
     applyScrollBlocking();
-    
+
     expect(mockSidebarViewport.style.overflow).toBe('hidden');
     expect(mockContentViewport.style.overflow).toBe('hidden');
-    
+
     // Close dropdown
     mockContentState.isDropdownMenuOpen = false;
     applyScrollBlocking();
-    
+
     expect(mockSidebarViewport.style.overflow).toBe('');
     expect(mockContentViewport.style.overflow).toBe('');
   });
@@ -90,9 +90,9 @@ describe('ResizableLayout scroll blocking logic', () => {
   it('should handle null viewport refs gracefully when dropdown opens', () => {
     mockPageState.viewportRefs.sidebarViewportRef = null;
     mockPageState.viewportRefs.contentViewportRef = null;
-    
+
     mockContentState.isDropdownMenuOpen = true;
-    
+
     // Should not throw
     expect(() => applyScrollBlocking()).not.toThrow();
   });
@@ -100,9 +100,9 @@ describe('ResizableLayout scroll blocking logic', () => {
   it('should handle null viewport refs gracefully when dropdown closes', () => {
     mockPageState.viewportRefs.sidebarViewportRef = null;
     mockPageState.viewportRefs.contentViewportRef = null;
-    
+
     mockContentState.isDropdownMenuOpen = false;
-    
+
     // Should not throw
     expect(() => applyScrollBlocking()).not.toThrow();
   });
@@ -110,15 +110,15 @@ describe('ResizableLayout scroll blocking logic', () => {
   it('should work correctly when only one viewport exists', () => {
     // Only content viewport exists
     mockPageState.viewportRefs.sidebarViewportRef = null;
-    
+
     mockContentState.isDropdownMenuOpen = true;
     applyScrollBlocking();
-    
+
     expect(mockContentViewport.style.overflow).toBe('hidden');
-    
+
     mockContentState.isDropdownMenuOpen = false;
     applyScrollBlocking();
-    
+
     expect(mockContentViewport.style.overflow).toBe('');
   });
 
@@ -128,14 +128,14 @@ describe('ResizableLayout scroll blocking logic', () => {
       // Open dropdown
       mockContentState.isDropdownMenuOpen = true;
       applyScrollBlocking();
-      
+
       expect(mockSidebarViewport.style.overflow).toBe('hidden');
       expect(mockContentViewport.style.overflow).toBe('hidden');
-      
+
       // Close dropdown
       mockContentState.isDropdownMenuOpen = false;
       applyScrollBlocking();
-      
+
       expect(mockSidebarViewport.style.overflow).toBe('');
       expect(mockContentViewport.style.overflow).toBe('');
     }
