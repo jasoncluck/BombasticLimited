@@ -62,7 +62,6 @@
     },
 
     onUpdated({ form }) {
-      console.log(form.data);
       if (form.valid) {
         if (currentAction === 'sendTestNotification') {
           showToast('✅ Test notification sent successfully!', 'success');
