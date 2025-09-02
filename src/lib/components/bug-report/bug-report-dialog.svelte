@@ -267,7 +267,7 @@
         <Dialog.Header class="mb-4 flex-shrink-0 px-6">
           <Dialog.Title class="flex items-center gap-2">
             <TriangleAlert class="h-5 w-5" />
-            Report Bug
+            Report Issue
           </Dialog.Title>
           <Dialog.Description class="text-start">
             Thanks for taking the time to help improve the site. If there are

@@ -132,7 +132,7 @@ Resetting video progress can be done for videos that are marked as "Watched" or 
 * Reset a video in table mode: Select the desired videos from the table.  This can be done by holding Shift to select a range of consecutive videos, or by holding Cmd/Ctrl to select non-consecutive videos.  Once the videos are selected, right-click and select "Reset progress".
 
 ## Reporting Issues
-If you notice an issue with the website, please let us know so we can investigate and address it.  Click your avatar in the upper right hand corner and select "Report Bug" from the drop-down.  Fill out the form with as much information about the issue you encountered as possible, then click "Submit Report".  
+If you notice an issue with the website, please let us know so we can investigate and address it.  Click your avatar in the upper right hand corner and select "Report Issue" from the drop-down.  Fill out the form with as much information about the issue you encountered as possible, then click "Submit Report".  
 
 In the event that the bug report form is broken, please click the "Contact" button at the bottom of the website to email us.  Please include the following information in your report:
 * Description of what happened when you encountered the issue

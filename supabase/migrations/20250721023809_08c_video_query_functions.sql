@@ -8,7 +8,6 @@
 CREATE OR REPLACE FUNCTION "public"."normalize_search_term" ("search_term" text) RETURNS text LANGUAGE "plpgsql" IMMUTABLE
 SET
   search_path = '' AS $$
-AS $$
 BEGIN
     RETURN lower(trim(regexp_replace(search_term, '\s+', ' ', 'g')));
 END;

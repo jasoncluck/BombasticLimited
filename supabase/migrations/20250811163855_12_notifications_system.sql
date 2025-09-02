@@ -196,8 +196,8 @@ INSERT INTO
 VALUES
   (
     'system',
-    'Welcome to Bombastic!',
-    'Thanks for joining our community! Explore playlists, discover great content, and enjoy your experience.<br><br>Get started by browsing our <a href="/playlists">featured playlists</a> or <a href="/account">customizing your preferences</a>.',
+    'Welcome to Bombastic',
+    'Take a look at the <a href="/getting-started">getting started</a> guide for an overview of the website. If you have any problems using Bombastic let me know by clicking the Report Issue button in the user dropdown. You can click the X button in the upper right to remove notifications like this. Hope you enjoy Bombastic!',
     '{"source": "welcome_new_user", "is_welcome": true, "reusable": true}'::jsonb,
     FALSE,
     now(),
