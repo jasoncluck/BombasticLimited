@@ -15,24 +15,9 @@ async function queuePlaylistThumbnailProcessing(
   priority: number = 100
 ): Promise<void> {
   if (!thumbnailUrl) {
-    console.log(
-      JSON.stringify({
-        stage: 'queue_image_processing',
-        message: `No thumbnail URL provided for playlist ${playlistId}, skipping image processing`,
-        playlistId,
-      })
-    );
     return;
   }
 
-  console.log(
-    JSON.stringify({
-      stage: 'queue_image_processing',
-      message: `Queuing image processing for playlist ${playlistId}`,
-      playlistId,
-      thumbnailUrl,
-    })
-  );
 
   try {
     const { data: jobId, error } = await supabaseClient.rpc(
@@ -61,22 +46,7 @@ async function queuePlaylistThumbnailProcessing(
     }
 
     if (jobId) {
-      console.log(
-        JSON.stringify({
-          stage: 'queue_image_processing',
-          message: `Successfully queued image processing job for playlist ${playlistId}`,
-          playlistId,
-          jobId,
-        })
-      );
     } else {
-      console.log(
-        JSON.stringify({
-          stage: 'queue_image_processing',
-          message: `Image processing job skipped for playlist ${playlistId} - duplicate or recently completed`,
-          playlistId,
-        })
-      );
     }
   } catch (error) {
     console.error(
@@ -189,13 +159,6 @@ export const populatePlaylists = async ({
       throw new Error(`No user ID returned for source: ${source}`);
     }
 
-    console.log(
-      JSON.stringify({
-        stage: 'user_handled',
-        message: `Successfully handled user for source: ${source}`,
-        userId,
-      })
-    );
 
     const youtubeClient = youtube({
       version: 'v3',
@@ -222,13 +185,6 @@ export const populatePlaylists = async ({
         ({ nextPageToken: pageToken, items } = data);
 
         if (!items || items.length === 0) {
-          console.log(
-            JSON.stringify({
-              stage: 'fetch_youtube_playlists',
-              message: `No playlists found for: ${source}`,
-              source,
-            })
-          );
           break;
         }
       } catch (e) {
@@ -249,15 +205,6 @@ export const populatePlaylists = async ({
         // Skip the uploads playlist since it's handled by populateVideos
         if (item.id === uploadPlaylistId) {
           uploadsPlaylistSkipped = true;
-          console.log(
-            JSON.stringify({
-              stage: 'skip_uploads_playlist',
-              message: `Skipping uploads playlist ${item.id} as it's handled by populateVideos`,
-              source,
-              playlistId: item.id,
-              playlistName: item.snippet?.title,
-            })
-          );
           continue;
         }
 
@@ -301,15 +248,6 @@ export const populatePlaylists = async ({
             continue;
           }
 
-          console.log(
-            JSON.stringify({
-              stage: 'update_playlist',
-              message: `Updated existing playlist ${item.snippet?.title}`,
-              source,
-              playlistId: item.id,
-              internalId: upsertedPlaylist.id,
-            })
-          );
         } else {
           // Insert new playlist with the correct created_by
           const { data, error: playlistError } = await supabaseClient
@@ -340,15 +278,6 @@ export const populatePlaylists = async ({
             continue;
           }
 
-          console.log(
-            JSON.stringify({
-              stage: 'insert_playlist',
-              message: `Created new playlist ${item.snippet?.title}`,
-              source,
-              playlistId: item.id,
-              internalId: upsertedPlaylist.id,
-            })
-          );
         }
 
         // Queue image processing for the playlist thumbnail
@@ -405,14 +334,6 @@ export const populatePlaylists = async ({
         } while (videoPageToken);
 
         if (allVideoIds.length === 0) {
-          console.log(
-            JSON.stringify({
-              stage: 'no_videos_in_playlist',
-              message: `No videos found for playlist ${item.snippet?.title}. Will clean up any existing playlist_videos.`,
-              source,
-              playlistId: item.id,
-            })
-          );
         }
 
         // Get existing playlist_videos for this playlist to identify what to delete
@@ -463,15 +384,6 @@ export const populatePlaylists = async ({
               })
             );
           } else {
-            console.log(
-              JSON.stringify({
-                stage: 'delete_stale_playlist_videos',
-                message: `Removed ${videosToRemove.length} stale videos from playlist ${item.snippet?.title}`,
-                source,
-                playlistId: item.id,
-                removedVideoIds: videosToRemove,
-              })
-            );
           }
         }
 
@@ -505,16 +417,6 @@ export const populatePlaylists = async ({
           videoPosition++;
         }
 
-        console.log(
-          JSON.stringify({
-            stage: 'playlist_processing_complete',
-            message: `Processed playlist ${item.snippet?.title}: ${allVideoIds.length} videos total, ${videosToRemove.length} removed`,
-            source,
-            playlistId: item.id,
-            totalVideos: allVideoIds.length,
-            removedVideos: videosToRemove.length,
-          })
-        );
       }
     } while (pageToken);
 
@@ -583,31 +485,9 @@ export const populatePlaylists = async ({
           })
         );
       } else {
-        console.log(
-          JSON.stringify({
-            stage: 'delete_removed_playlists',
-            message: `Removed ${playlistsToRemove.length} playlists that no longer exist on YouTube`,
-            source,
-            removedPlaylists: playlistsToRemove.map((p) => ({
-              id: p.id,
-              name: p.name,
-              youtube_id: p.youtube_id,
-            })),
-          })
-        );
       }
     }
 
-    console.log(
-      JSON.stringify({
-        stage: 'sync_complete',
-        message: `Playlist sync completed for ${source}. Processed ${totalPlaylistsProcessed} YouTube playlists (skipped uploads playlist), removed ${playlistsToRemove.length} stale playlists`,
-        source,
-        youtubePlaylistsProcessed: totalPlaylistsProcessed,
-        playlistsRemoved: playlistsToRemove.length,
-        uploadsPlaylistSkipped,
-      })
-    );
   } catch (e) {
     // Final catch-all for unhandled errors
     console.error(

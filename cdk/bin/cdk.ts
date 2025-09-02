@@ -32,7 +32,6 @@ function validateEnvironmentVariables(stage: 'Production' | 'Staging') {
     process.exit(1);
   }
 
-  console.log(`✅ All required environment variables validated for ${stage}`);
   return envValues;
 }
 
@@ -52,7 +51,6 @@ new AppStack(app, 'BombasticStack-Production', {
 });
 
 // Validate and create Staging Stack
-console.log('🔍 Validating Staging environment variables...');
 const stagingEnvVars = validateEnvironmentVariables('Staging');
 
 new AppStack(app, 'BombasticStack-Staging', {

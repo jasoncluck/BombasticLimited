@@ -166,7 +166,6 @@ describe('Layout Loading States and Timeouts', () => {
 
       // Create the timeout
       createTimeout(() => {
-        console.log('Timeout fired');
       }, 5000);
 
       // Wait for the promise to resolve and clear timeout
@@ -296,7 +295,6 @@ describe('Layout Loading States and Timeouts', () => {
       let forceShowUI = false;
 
       const debugForceShowUI = () => {
-        console.log('🔧 Manually forcing UI to show');
         forceShowUI = true;
       };
 

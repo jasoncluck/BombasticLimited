@@ -428,7 +428,6 @@ const addToQueue = (request: Request): Promise<Response> => {
       reject,
     };
 
-    // Set timeout for queued request
     queuedRequest.timeoutId = setTimeout(() => {
       removeFromQueue(url);
       reject(new Error('Request timeout'));
@@ -441,7 +440,6 @@ const addToQueue = (request: Request): Promise<Response> => {
       state.requestQueue.normal.set(url, queuedRequest);
     }
 
-    // Process queue
     processRequestQueue().catch(() => {
       // Silent fail on queue processing errors
     });
@@ -758,7 +756,6 @@ const performSmartCacheCleanup = async (): Promise<void> => {
       }
     }
 
-    console.log(`Cache cleanup completed: removed ${removed} entries`);
   } catch (error) {
     console.warn('Cache cleanup failed:', error);
   } finally {
@@ -1312,7 +1309,6 @@ const performPeriodicMaintenance = async (): Promise<void> => {
     }
 
     if (removedCount > 0) {
-      console.log(`Periodic maintenance: removed ${removedCount} entries`);
     }
   } catch (error) {
     console.warn('Periodic maintenance failed:', error);

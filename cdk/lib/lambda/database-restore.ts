@@ -59,7 +59,6 @@ export const handler = async (
   }
   supabaseDbUrl = supabaseDbUrl.trim().replace(/[\r\n]/g, '');
 
-  console.log(`Starting database restore from bucket: ${bucketName}`);
 
   try {
     // Initialize both Supabase client and PostgreSQL client
@@ -95,7 +94,6 @@ export const handler = async (
       backupKey = backups[0].Key!;
     }
 
-    console.log(`Restoring from backup: ${backupKey}`);
 
     // Download backup from S3
     const getCommand = new GetObjectCommand({
@@ -108,16 +106,11 @@ export const handler = async (
     const backup = JSON.parse(backupContent);
 
     const { metadata, data } = backup;
-    console.log(`Backup metadata:`, metadata);
 
-    console.log('=== BACKUP CONTENT DEBUG ===');
-    console.log('Available data keys:', Object.keys(data));
     Object.entries(data).forEach(([tableName, tableData]) => {
       if (Array.isArray(tableData)) {
-        console.log(`${tableName}: ${tableData.length} records`);
       }
     });
-    console.log('=== END BACKUP DEBUG ===');
 
     // Build a list of public schema tables that exist in the backup
     const availableTables = Object.keys(data)
@@ -130,16 +123,12 @@ export const handler = async (
     const validationResults: Record<string, boolean> = {};
 
     if (event.validateOnly) {
-      console.log('Validation mode: checking backup integrity...');
 
       for (const table of tablesToRestore) {
         const publicTableKey = `public.${table}`;
         const tableData = data[publicTableKey];
 
         if (!tableData) {
-          console.warn(
-            `Table ${table} not found in backup (looked for: ${publicTableKey})`
-          );
           validationResults[table] = false;
           continue;
         }
@@ -149,9 +138,6 @@ export const handler = async (
           (tableData.length === 0 || typeof tableData[0] === 'object');
 
         validationResults[table] = isValid;
-        console.log(
-          `Table ${table}: ${isValid ? 'VALID' : 'INVALID'} (${tableData.length} records)`
-        );
       }
 
       return {
@@ -165,7 +151,6 @@ export const handler = async (
     }
 
     if (event.dryRun) {
-      console.log('Dry run mode - analyzing restore without making changes');
 
       for (const table of tablesToRestore) {
         const publicTableKey = `public.${table}`;
@@ -173,12 +158,8 @@ export const handler = async (
 
         if (tableData && Array.isArray(tableData)) {
           recordsRestored[table] = tableData.length;
-          console.log(
-            `Would restore ${tableData.length} records to table: ${table}`
-          );
         } else {
           recordsRestored[table] = 0;
-          console.log(`No data found for table: ${table}`);
         }
       }
 
@@ -192,14 +173,11 @@ export const handler = async (
     }
 
     // Actual restore process
-    console.log('Starting actual restore process...');
 
     // Connect to PostgreSQL for creating placeholder users
     await pgClient.connect();
-    console.log('Connected to PostgreSQL for restore operations');
 
     // Step 1: Create placeholder users for foreign key constraints
-    console.log('🔐 Creating placeholder users for foreign key constraints...');
 
     const allUserIds = new Set<string>();
 
@@ -220,9 +198,6 @@ export const handler = async (
       }
     }
 
-    console.log(
-      `Found ${allUserIds.size} unique user IDs that need placeholder users`
-    );
 
     // Create minimal placeholder users
     for (const userId of allUserIds) {
@@ -236,33 +211,27 @@ export const handler = async (
           [userId, `placeholder-${userId.substring(0, 8)}@restore.placeholder`]
         );
       } catch (error) {
-        console.warn(`Could not create placeholder user ${userId}:`, error);
         // Continue with other users
       }
     }
 
-    console.log(`✅ Created placeholder users for ${allUserIds.size} user IDs`);
 
     // Step 2: Restore public schema tables
-    console.log('📊 Restoring public schema data...');
 
     for (const table of tablesToRestore) {
       const publicTableKey = `public.${table}`;
       const tableData = data[publicTableKey];
 
       if (!tableData || !Array.isArray(tableData)) {
-        console.log(`Skipping ${table}: no data found`);
         recordsRestored[table] = 0;
         continue;
       }
 
       if (tableData.length === 0) {
-        console.log(`Skipping ${table}: table is empty`);
         recordsRestored[table] = 0;
         continue;
       }
 
-      console.log(`Restoring ${tableData.length} records to public.${table}`);
 
       try {
         // Insert in batches of 1000 records
@@ -284,15 +253,9 @@ export const handler = async (
           }
 
           insertedCount += batch.length;
-          console.log(
-            `Restored ${insertedCount}/${tableData.length} records for ${table}`
-          );
         }
 
         recordsRestored[table] = insertedCount;
-        console.log(
-          `✅ Successfully restored ${insertedCount} records to ${table}`
-        );
       } catch (error) {
         console.error(`Error restoring table ${table}:`, error);
         throw new Error(`Failed to restore table ${table}: ${error}`);
@@ -300,10 +263,7 @@ export const handler = async (
     }
 
     await pgClient.end();
-    console.log('Disconnected from PostgreSQL');
 
-    console.log(`🎉 Successfully restored data from backup: ${backupKey}`);
-    console.log(`Records restored:`, recordsRestored);
 
     return {
       success: true,
