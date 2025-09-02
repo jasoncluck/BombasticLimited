@@ -4,7 +4,7 @@ import type { PageLoad } from './$types';
 export const load: PageLoad = ({ data }) => {
   if (browser) {
     // Preload images
-    const videosToPreload = data.videos.slice(0, 10);
+    const videosToPreload = data.videos.slice(0, 20);
 
     videosToPreload.forEach((video) => {
       if (video.image_url) {

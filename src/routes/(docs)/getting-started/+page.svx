@@ -42,6 +42,8 @@ If you delete your account, all data associated with the account, including play
 ### Search Functionality
 The search bar is in the top navigation bar.  Only video titles and video descriptions are searched as part of queries.  Search result links can be copied and sent to friends.  
 
+![image info](docs/getting-started/search-example.png)
+
 ### Playlist Management
 Playlists can be public or private.  Public playlists are searchable by all users where as private playlists are only visible to you.  Only owners of public playlists are able to add or remove videos from it; if you follow a public playlist, you can only change the sort order of the videos for yourself.
 
