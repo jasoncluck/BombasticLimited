@@ -21,7 +21,9 @@ export interface RequestCancellation {
  * @param rejection - The rejection reason to check
  * @returns true if this is a planned cancellation, false if it's an actual error
  */
-export function isRequestCancellation(rejection: unknown): rejection is RequestCancellation {
+export function isRequestCancellation(
+  rejection: unknown
+): rejection is RequestCancellation {
   return (
     typeof rejection === 'object' &&
     rejection !== null &&

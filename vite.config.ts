@@ -10,6 +10,11 @@ const isProduction = process.env.NODE_ENV === 'production';
 export default defineConfig({
   plugins: [sveltekit(), tailwindcss(), enhancedImages(), viteCompression()],
 
+  // Configure CSS handling to prevent preload warnings
+  css: {
+    devSourcemap: true,
+  },
+
   // Generate source maps in production for error tracking
   build: {
     sourcemap: isProduction ? 'hidden' : true,
@@ -17,8 +22,17 @@ export default defineConfig({
       output: {
         // Ensure source maps are generated with proper naming
         sourcemapFileNames: 'assets/[name]-[hash].js.map',
+        // Optimize CSS chunking to reduce unnecessary preloads
+        manualChunks: (id) => {
+          // Group CSS imports more efficiently to reduce preload warnings
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        },
       },
     },
+    // Configure CSS code splitting to reduce preload warnings
+    cssCodeSplit: true,
   },
 
   // Disable HMR during testing to prevent dev server hangs

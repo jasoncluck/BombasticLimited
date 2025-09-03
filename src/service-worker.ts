@@ -503,7 +503,7 @@ const cancelPendingRequests = (): void => {
 
   // Note: We don't cancel activeFetches as they're already in progress
   // We let them complete but their results may be ignored
-  
+
   // Reset processing state to allow new requests
   state.requestQueue.processing = false;
 };
@@ -809,7 +809,9 @@ const performSmartCacheCleanup = async (): Promise<void> => {
 };
 
 // Helper function to check if a rejection is a cancellation
-const isCancellation = (rejection: unknown): rejection is RequestCancellation => {
+const isCancellation = (
+  rejection: unknown
+): rejection is RequestCancellation => {
   return (
     typeof rejection === 'object' &&
     rejection !== null &&
@@ -864,7 +866,7 @@ const cacheImage = async (request: Request): Promise<Response> => {
         // If network also fails, return a simple error response
         return new Response('Request cancelled and network unavailable', {
           status: 503,
-          statusText: 'Service Unavailable'
+          statusText: 'Service Unavailable',
         });
       }
     }

@@ -117,4 +117,18 @@ const authGuard: Handle = async ({ event, resolve }) => {
   return resolve(event);
 };
 
-export const handle: Handle = sequence(supabase, authGuard);
+const cssPreloadOptimizer: Handle = async ({ event, resolve }) => {
+  const response = await resolve(event, {
+    transformPageChunk: ({ html }) => {
+      // Add proper 'as' attribute to CSS preload links to prevent browser warnings
+      return html.replace(
+        /<link\s+rel="preload"\s+href="[^"]*\.css"(?!\s+as=)/g,
+        (match) => match + ' as="style"'
+      );
+    },
+  });
+
+  return response;
+};
+
+export const handle: Handle = sequence(supabase, authGuard, cssPreloadOptimizer);

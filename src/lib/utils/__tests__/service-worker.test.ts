@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { 
-  cancelPendingImageRequests, 
-  sendMessageToServiceWorker, 
+import {
+  cancelPendingImageRequests,
+  sendMessageToServiceWorker,
   isRequestCancellation,
-  type RequestCancellation 
+  type RequestCancellation,
 } from '../service-worker';
 
 // Mock navigator.serviceWorker
@@ -30,9 +30,9 @@ describe('service-worker utils', () => {
   describe('sendMessageToServiceWorker', () => {
     it('should send message to service worker controller when available', async () => {
       const message = { type: 'TEST_MESSAGE', payload: { test: true } };
-      
+
       await sendMessageToServiceWorker(message);
-      
+
       expect(mockPostMessage).toHaveBeenCalledWith(message);
     });
 
@@ -41,12 +41,14 @@ describe('service-worker utils', () => {
       const originalController = mockServiceWorker.controller;
       // @ts-expect-error - Testing null controller scenario
       mockServiceWorker.controller = null;
-      
+
       const message = { type: 'TEST_MESSAGE' };
-      
-      await expect(sendMessageToServiceWorker(message)).resolves.toBeUndefined();
+
+      await expect(
+        sendMessageToServiceWorker(message)
+      ).resolves.toBeUndefined();
       expect(mockPostMessage).not.toHaveBeenCalled();
-      
+
       // Restore controller
       mockServiceWorker.controller = originalController;
     });
@@ -55,7 +57,7 @@ describe('service-worker utils', () => {
   describe('cancelPendingImageRequests', () => {
     it('should send CANCEL_PENDING_REQUESTS message', async () => {
       await cancelPendingImageRequests();
-      
+
       expect(mockPostMessage).toHaveBeenCalledWith({
         type: 'CANCEL_PENDING_REQUESTS',
       });
@@ -69,7 +71,7 @@ describe('service-worker utils', () => {
         message: 'Request cancelled due to navigation',
         cancelled: true,
       };
-      
+
       expect(isRequestCancellation(cancellation)).toBe(true);
     });
 
@@ -84,8 +86,15 @@ describe('service-worker utils', () => {
     });
 
     it('should reject objects with wrong properties', () => {
-      expect(isRequestCancellation({ reason: 'OTHER_REASON', cancelled: true })).toBe(false);
-      expect(isRequestCancellation({ reason: 'NAVIGATION_CANCELLED', cancelled: false })).toBe(false);
+      expect(
+        isRequestCancellation({ reason: 'OTHER_REASON', cancelled: true })
+      ).toBe(false);
+      expect(
+        isRequestCancellation({
+          reason: 'NAVIGATION_CANCELLED',
+          cancelled: false,
+        })
+      ).toBe(false);
       expect(isRequestCancellation({ message: 'test' })).toBe(false);
     });
 
