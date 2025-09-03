@@ -195,9 +195,12 @@ export async function getVideos({
   query.limit(limit);
 
   const sortOptionInfo = SORT_OPTIONS_VIDEO[contentFilter.sort.key];
-  query.order(sortOptionInfo.tableColumn as string, {
-    ascending: contentFilter.sort.order === 'ascending',
-  });
+
+  if (sortOptionInfo && typeof sortOptionInfo.tableColumn === 'string') {
+    query.order(sortOptionInfo.tableColumn, {
+      ascending: contentFilter.sort.order === 'ascending',
+    });
+  }
 
   if (currentPage && currentPage > 1) {
     const startIndex = (currentPage - 1) * limit;
@@ -295,9 +298,11 @@ export async function getInProgressVideos({
     .limit(limit);
 
   // Sorting by playlist order
-  query.order(sortOptionInfo.tableColumn as string, {
-    ascending: contentFilter.sort.order === 'ascending',
-  });
+  if (sortOptionInfo && typeof sortOptionInfo.tableColumn === 'string') {
+    query.order(sortOptionInfo.tableColumn, {
+      ascending: contentFilter.sort.order === 'ascending',
+    });
+  }
 
   if (contentFilter.startDate) {
     try {

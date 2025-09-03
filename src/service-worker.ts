@@ -21,7 +21,6 @@ interface CacheConfig {
   readonly maxConcurrentRequests: number;
   readonly queueTimeout: number;
   readonly priorityThreshold: number;
-  readonly preloadDelayMs: number;
   readonly criticalResourceTimeout: number;
 }
 
@@ -36,7 +35,6 @@ const CACHE_CONFIG: CacheConfig = {
   maxConcurrentRequests: 6, // Limit concurrent fetches
   queueTimeout: 30000, // 30 second timeout for queued requests
   priorityThreshold: 3, // High priority after 3 hits
-  preloadDelayMs: 2000, // Delay non-critical preloading by 2 seconds
   criticalResourceTimeout: 5000, // 5 second timeout for critical resources
 };
 
@@ -57,13 +55,6 @@ const CRITICAL_PATTERNS = [
   /vendor\.[a-zA-Z0-9]+\.js$/, // Vendor JS
 ] as const;
 
-// Non-critical patterns - these can be delayed
-const NON_CRITICAL_PATTERNS = [
-  /scroll-area\.[a-zA-Z0-9]+\.css$/,
-  /components?\.[a-zA-Z0-9]+\.css$/,
-  /chunk\.[a-zA-Z0-9]+\.js$/,
-] as const;
-
 // Supported image domains
 const IMAGE_DOMAINS = [
   'i.ytimg.com',
@@ -74,8 +65,6 @@ const IMAGE_DOMAINS = [
   'i4.ytimg.com',
   'static-cdn.jtvnw.net',
 ] as const;
-
-type ImageDomain = (typeof IMAGE_DOMAINS)[number];
 
 // Supabase hostname for image caching
 const SUPABASE_HOSTNAME: string | null = (() => {
@@ -104,18 +93,17 @@ interface ResourceClassification {
   readonly isCritical: boolean;
   readonly category: 'css' | 'js' | 'font' | 'image' | 'other';
   readonly shouldPreload: boolean;
-  readonly preloadDelay: number;
 }
 
 // Request queue interfaces
 interface QueuedRequest {
   readonly id: string;
   readonly request: Request;
-  readonly timestamp: ReturnType<typeof setTimeout>;
+  readonly timestamp: number;
   readonly priority: number;
   resolve: (response: Response) => void;
   reject: (error: Error) => void;
-  timeoutId?: number;
+  timeoutId?: ReturnType<typeof setTimeout>;
 }
 
 interface RequestQueue {
@@ -253,24 +241,14 @@ const classifyResource = (url: URL): ResourceClassification => {
   const isCritical = CRITICAL_PATTERNS.some((pattern) =>
     pattern.test(pathname)
   );
-  const isNonCritical = NON_CRITICAL_PATTERNS.some((pattern) =>
-    pattern.test(pathname)
-  );
 
-  // Determine preload strategy
-  const shouldPreload =
-    category === 'css' || category === 'js' || category === 'font';
-  const preloadDelay = isCritical
-    ? 0
-    : isNonCritical
-      ? CACHE_CONFIG.preloadDelayMs
-      : 1000;
+  // Determine preload strategy (exclude fonts to prevent preload warnings)
+  const shouldPreload = category === 'css' || category === 'js';
 
   return {
     isCritical,
     category,
     shouldPreload,
-    preloadDelay,
   };
 };
 
@@ -396,6 +374,28 @@ const addToQueue = (request: Request): Promise<Response> => {
   const priority = determineRequestPriority(url);
   const now = Date.now();
 
+  // Auto-cleanup if queue is getting too large (performance protection)
+  const totalQueueSize =
+    state.requestQueue.highPriority.size + state.requestQueue.normal.size;
+  if (totalQueueSize > 50) {
+    console.warn(
+      `Service worker: Queue size (${totalQueueSize}) exceeding threshold, performing cleanup`
+    );
+    // Cancel oldest requests from normal queue first
+    const normalEntries = Array.from(state.requestQueue.normal.entries());
+    const oldestRequests = normalEntries
+      .sort(([, a], [, b]) => a.timestamp - b.timestamp)
+      .slice(0, 25);
+
+    for (const [url, request] of oldestRequests) {
+      if (request.timeoutId) {
+        clearTimeout(request.timeoutId);
+      }
+      request.reject(new Error('Request cancelled due to queue overflow'));
+      state.requestQueue.normal.delete(url);
+    }
+  }
+
   return new Promise<Response>((resolve, reject) => {
     // Check if already queued or being fetched
     if (
@@ -428,6 +428,7 @@ const addToQueue = (request: Request): Promise<Response> => {
       reject,
     };
 
+    // Set timeout for queued request
     queuedRequest.timeoutId = setTimeout(() => {
       removeFromQueue(url);
       reject(new Error('Request timeout'));
@@ -440,6 +441,7 @@ const addToQueue = (request: Request): Promise<Response> => {
       state.requestQueue.normal.set(url, queuedRequest);
     }
 
+    // Process queue
     processRequestQueue().catch(() => {
       // Silent fail on queue processing errors
     });
@@ -462,6 +464,44 @@ const removeFromQueue = (url: string): void => {
       clearTimeout(normalRequest.timeoutId);
     }
     state.requestQueue.normal.delete(url);
+  }
+};
+
+const cancelPendingRequests = (): void => {
+  // Track metrics for debugging
+  const totalCancelled =
+    state.requestQueue.highPriority.size + state.requestQueue.normal.size;
+
+  // Cancel all pending requests in high priority queue
+  for (const [, request] of state.requestQueue.highPriority) {
+    if (request.timeoutId) {
+      clearTimeout(request.timeoutId);
+    }
+    request.reject(new Error('Request cancelled due to navigation'));
+  }
+  state.requestQueue.highPriority.clear();
+
+  // Cancel all pending requests in normal queue
+  for (const [, request] of state.requestQueue.normal) {
+    if (request.timeoutId) {
+      clearTimeout(request.timeoutId);
+    }
+    request.reject(new Error('Request cancelled due to navigation'));
+  }
+  state.requestQueue.normal.clear();
+
+  // Clear active fetches tracking to make cancellation more aggressive
+  // While we can't cancel in-flight requests, we prevent their results from being cached
+  state.requestQueue.activeFetches.clear();
+
+  // Reset processing state to allow new requests
+  state.requestQueue.processing = false;
+
+  // Log for debugging queue performance issues
+  if (totalCancelled > 10) {
+    console.log(
+      `Service worker: Cancelled ${totalCancelled} queued requests on navigation`
+    );
   }
 };
 
@@ -756,6 +796,7 @@ const performSmartCacheCleanup = async (): Promise<void> => {
       }
     }
 
+    console.log(`Cache cleanup completed: removed ${removed} entries`);
   } catch (error) {
     console.warn('Cache cleanup failed:', error);
   } finally {
@@ -792,8 +833,25 @@ const cacheImage = async (request: Request): Promise<Response> => {
     });
   }
 
-  // Use smart queuing for new requests
-  return addToQueue(request);
+  // Use smart queuing for new requests with cancellation handling
+  try {
+    return await addToQueue(request);
+  } catch {
+    // If this is a planned cancellation, fall back to network request
+    // This prevents unhandled promise rejections in the console
+    // For cancelled requests, try to fetch directly from network as fallback
+    // This ensures the fetch event always resolves with a response
+    try {
+      const corsRequest = createCorsRequest(request);
+      return await fetch(corsRequest);
+    } catch {
+      // If network also fails, return a simple error response
+      return new Response('Request cancelled and network unavailable', {
+        status: 503,
+        statusText: 'Service Unavailable',
+      });
+    }
+  }
 };
 
 // Static asset caching with intelligent preloading
@@ -888,11 +946,13 @@ sw.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle static assets from same origin
+  // Handle static assets from same origin (excluding CSS and fonts to prevent preload conflicts)
   if (
     url.origin === sw.location.origin &&
     (STATIC_ASSETS.includes(url.pathname) ||
-      STATIC_EXTENSIONS.test(url.pathname))
+      STATIC_EXTENSIONS.test(url.pathname)) &&
+    !url.pathname.endsWith('.css') && // Exclude CSS files to prevent preload warnings
+    !url.pathname.match(/\.(woff2?|ttf|eot)$/) // Exclude font files to prevent preload warnings
   ) {
     event.respondWith(cacheStaticAsset(request));
     return;
@@ -913,7 +973,8 @@ type ServiceWorkerMessageType =
   | 'GET_CACHE_STATS'
   | 'FORCE_CLEANUP'
   | 'GET_QUEUE_STATS'
-  | 'GET_PRELOAD_STATS';
+  | 'GET_PRELOAD_STATS'
+  | 'CANCEL_PENDING_REQUESTS';
 
 interface ServiceWorkerMessage {
   type: ServiceWorkerMessageType;
@@ -961,6 +1022,10 @@ sw.addEventListener('message', (event) => {
 
     case 'FORCE_CLEANUP':
       event.waitUntil(performSmartCacheCleanup());
+      break;
+
+    case 'CANCEL_PENDING_REQUESTS':
+      cancelPendingRequests();
       break;
 
     default:
@@ -1309,6 +1374,7 @@ const performPeriodicMaintenance = async (): Promise<void> => {
     }
 
     if (removedCount > 0) {
+      console.log(`Periodic maintenance: removed ${removedCount} entries`);
     }
   } catch (error) {
     console.warn('Periodic maintenance failed:', error);

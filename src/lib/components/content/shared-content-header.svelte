@@ -107,7 +107,7 @@
   <div class="mb-4" {...restProps}>
     {@render children()}
 
-    <div class="flex items-center gap-0 sm:my-4">
+    <div class="my-4 flex items-center gap-0">
       <!-- Play Button -->
       <Button
         size="icon"

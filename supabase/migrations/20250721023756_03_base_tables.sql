@@ -145,13 +145,12 @@ ADD CONSTRAINT "user_video_timestamps_pkey" PRIMARY KEY ("id");
 ALTER TABLE ONLY "public"."timestamps"
 ADD CONSTRAINT "unique_user_video" UNIQUE ("user_id", "video_id");
 
-
 -- Profiles table (without foreign keys initially) - FIXED TYPE REFERENCES
-  CREATE TABLE IF NOT EXISTS "public"."profiles" (
-    "id" uuid NOT NULL,
-    "username" text,
-    "username_history" jsonb DEFAULT '[]'::jsonb,
-    "sources" "public"."source" [] DEFAULT ARRAY[
+CREATE TABLE IF NOT EXISTS "public"."profiles" (
+  "id" uuid NOT NULL,
+  "username" text,
+  "username_history" jsonb DEFAULT '[]'::jsonb,
+  "sources" "public"."source" [] DEFAULT ARRAY[
     'giantbomb',
     'jeffgerstmann',
     'nextlander',

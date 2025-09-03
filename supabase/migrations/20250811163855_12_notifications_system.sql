@@ -140,17 +140,32 @@ WITH
 
 CREATE POLICY "Users can view their own user notifications" ON public.user_notifications FOR
 SELECT
-  USING ((SELECT auth.uid ()) = user_id);
+  USING (
+    (
+      SELECT
+        auth.uid ()
+    ) = user_id
+  );
 
 CREATE POLICY "Users can update their own user notifications" ON public.user_notifications
 FOR UPDATE
-  USING ((SELECT auth.uid ()) = user_id);
+  USING (
+    (
+      SELECT
+        auth.uid ()
+    ) = user_id
+  );
 
 CREATE POLICY "System can insert user notifications" ON public.user_notifications FOR INSERT
 WITH
   CHECK (TRUE);
 
-CREATE POLICY "Users can delete their own user notifications" ON public.user_notifications FOR DELETE USING ((SELECT auth.uid ()) = user_id);
+CREATE POLICY "Users can delete their own user notifications" ON public.user_notifications FOR DELETE USING (
+  (
+    SELECT
+      auth.uid ()
+  ) = user_id
+);
 
 -- =====================================================
 -- STEP 5: Create system logs table

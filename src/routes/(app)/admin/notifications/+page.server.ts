@@ -135,6 +135,13 @@ export const actions: Actions = {
     const startDatetimeUtc = convertLocalToUtc(startDatetime);
     const endDatetimeUtc = convertLocalToUtc(endDatetime);
 
+    console.log('🧪 Server: Test notification datetime conversion:', {
+      localStart: startDatetime,
+      utcStart: startDatetimeUtc,
+      localEnd: endDatetime,
+      utcEnd: endDatetimeUtc,
+    });
+
     try {
       const { error } = await createNotification({
         supabase,

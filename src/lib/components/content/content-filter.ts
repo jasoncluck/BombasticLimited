@@ -40,7 +40,7 @@ export type CombinedContentFilter =
 
 interface SortOptionInfo<T extends Video | VideoWithTimestamp | PlaylistVideo> {
   displayName: string;
-  tableColumn: keyof T;
+  tableColumn?: keyof T;
 }
 
 export const START_DATE_KEY = 'startDate';
@@ -48,12 +48,21 @@ export const END_DATE_KEY = 'endDate';
 
 // There are 2 main data access paths at the moment: either by the videos table or the timestamps tables.
 // The filtering options are split to reflect that.
-export const videoSortKeys = ['datePublished', 'title'] as const;
+export const videoSortKeys = [
+  'searchRelevance',
+  'datePublished',
+  'title',
+] as const;
 export const playlistVideosSortKeys = [
   'playlistOrder',
-  ...videoSortKeys,
+  'datePublished',
+  'title',
 ] as const;
-export const timestampSortKeys = ['dateTimestamp', ...videoSortKeys] as const;
+export const timestampSortKeys = [
+  'dateTimestamp',
+  'datePublished',
+  'title',
+] as const;
 
 export type SortKey<T extends Video | VideoWithTimestamp | PlaylistVideo> =
   T extends PlaylistVideo
@@ -74,6 +83,7 @@ export const SORT_OPTIONS_VIDEO: Record<
     tableColumn: 'published_at',
   },
   title: { displayName: 'Title', tableColumn: 'title' },
+  searchRelevance: { displayName: 'Search Relevence' },
 };
 
 export const SORT_OPTIONS_PLAYLIST_VIDEOS: Record<
@@ -141,6 +151,15 @@ export function getFilterOptionFromQueryParams({
         },
         type: 'playlist',
       } as PlaylistVideosFilter;
+      break;
+    case 'search':
+      baseFilter = {
+        sort: {
+          key: 'searchRelevance' as SortKey<Video>,
+          order: 'ascending',
+        },
+        type: 'video',
+      } as VideoFilter;
       break;
     default:
       baseFilter = {

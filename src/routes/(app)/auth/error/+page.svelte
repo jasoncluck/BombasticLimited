@@ -9,12 +9,14 @@
   }
 
   const hashParams = parseHashParams(page.url.hash);
+  console.log(hashParams);
 
   const errorCode = hashParams.get('error_code');
   const errorDescription = hashParams.get('error_description');
 
   let errorTitle: string = 'An error occurred';
 
+  console.log(errorCode);
   switch (errorCode) {
     case 'identity_already_exists':
       errorTitle = 'Unable to link Discord account';

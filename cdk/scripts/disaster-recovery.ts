@@ -47,12 +47,17 @@ class DisasterRecoveryManager {
   async executeRecovery(
     options: DisasterRecoveryOptions
   ): Promise<DisasterRecoveryResult> {
+    console.log('🚨 Starting Disaster Recovery Process');
+    console.log('='.repeat(60));
+    console.log(`Scenario: ${options.scenario}`);
+    console.log(`Dry Run: ${options.dryRun || false}`);
 
     const operations: any = {};
 
     try {
       // Step 1: Create a pre-recovery backup if requested
       if (options.createBackupFirst) {
+        console.log('\n📦 Step 1: Creating pre-recovery backup...');
         operations.preBackup = await this.triggerBackup({
           backupType: 'full',
           dryRun: options.dryRun,
@@ -64,13 +69,20 @@ class DisasterRecoveryManager {
           );
         }
 
+        console.log(
+          `✅ Pre-recovery backup completed: ${operations.preBackup.backupKey}`
+        );
       }
 
       // Step 2: Find and validate the target backup
+      console.log('\n🔍 Step 2: Locating target backup...');
       const targetBackup = await this.findTargetBackup(options);
+      console.log(`Found backup: ${targetBackup.key}`);
+      console.log(`Backup date: ${targetBackup.timestamp}`);
 
       // Step 3: Validate backup integrity
       if (options.validateFirst !== false) {
+        console.log('\n✅ Step 3: Validating backup integrity...');
         operations.validation = await this.validateBackup(
           targetBackup.key,
           options.tables
@@ -94,9 +106,11 @@ class DisasterRecoveryManager {
           );
         }
 
+        console.log('✅ Backup validation passed');
       }
 
       // Step 4: Execute restore
+      console.log('\n🔄 Step 4: Executing restore operation...');
       operations.restore = await this.triggerRestore({
         backupKey: targetBackup.key,
         tables: options.tables,
@@ -109,10 +123,15 @@ class DisasterRecoveryManager {
         );
       }
 
+      console.log('✅ Restore operation completed successfully');
 
       // Generate summary
       const summary = this.generateSummary(options, operations, targetBackup);
 
+      console.log('\n' + '='.repeat(60));
+      console.log('🎉 DISASTER RECOVERY COMPLETED SUCCESSFULLY');
+      console.log('='.repeat(60));
+      console.log(summary);
 
       return {
         success: true,
@@ -294,6 +313,40 @@ async function main() {
   const dryRun = process.argv.includes('--dry-run');
 
   if (process.argv.includes('--help') || process.argv.includes('-h')) {
+    console.log(`
+🚨 Disaster Recovery Automation Tool
+
+Usage: npm run disaster-recovery [options]
+
+Options:
+  --scenario <type>      Recovery scenario (default: latest)
+                        - latest: Restore from latest backup
+                        - point-in-time: Restore from specific timestamp
+                        - validate-and-restore: Validate then restore
+                        - full-recovery: Full DR process with pre-backup
+  
+  --timestamp <time>     Specific timestamp for point-in-time recovery
+  --tables <list>        Comma-separated list of tables to restore
+  --backup-first         Create backup before starting recovery
+  --no-validate          Skip backup validation step
+  --dry-run              Test recovery process without making changes
+  --help, -h             Show this help message
+
+Examples:
+  npm run disaster-recovery                                    # Restore latest backup
+  npm run disaster-recovery -- --dry-run                      # Test latest restore
+  npm run disaster-recovery -- --scenario point-in-time --timestamp 2024-01-15T02:00:00.000Z
+  npm run disaster-recovery -- --scenario full-recovery --backup-first
+  npm run disaster-recovery -- --tables auth.users,playlists --validate-first
+
+Environment Variables:
+  AWS_REGION                      AWS region (default: us-west-2)
+  BACKUP_LAMBDA_FUNCTION_NAME     Backup function name
+  RESTORE_LAMBDA_FUNCTION_NAME    Restore function name
+  BACKUP_BUCKET_NAME             S3 backup bucket name
+
+⚠️  WARNING: This tool modifies your database. Always test with --dry-run first!
+    `);
     process.exit(0);
   }
 
@@ -313,6 +366,7 @@ async function main() {
     process.exit(1);
   }
 
+  console.log('\n🎉 Disaster recovery completed successfully!');
 }
 
 // Export for use as a module

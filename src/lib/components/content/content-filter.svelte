@@ -46,6 +46,9 @@
   const mediaQueryState = getMediaQueryState();
   let contentFilterDrawerOpen = $state(false);
 
+  // Search routes have a unique case of showing Search Relevence sort option
+  const isSearchRoute = $derived(/^\/search\//.test(page.url.pathname));
+
   // Determine sort keys based on the view type
   const sortKeys = $derived.by(() => {
     switch (view) {
@@ -54,7 +57,10 @@
       case 'playlist':
         return playlistVideosSortKeys;
       default:
-        return videoSortKeys;
+        // Remove searchRelevance from videoSortKeys if on search route
+        return isSearchRoute
+          ? videoSortKeys
+          : videoSortKeys.filter((key) => key !== 'searchRelevance');
     }
   });
 
@@ -227,7 +233,7 @@
                 {SORT_OPTIONS_VIDEO[sortKey as SortKey<Video>].displayName}
               {/if}
 
-              {#if contentFilter.sort.key === sortKey && sortKey === 'playlistOrder'}
+              {#if (contentFilter.sort.key === sortKey && sortKey === 'playlistOrder') || (contentFilter.sort.key === sortKey && sortKey === 'searchRelevance')}
                 <Check
                   class={contentFilter.sort.key === sortKey
                     ? 'text-primary'
