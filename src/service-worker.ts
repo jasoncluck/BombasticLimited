@@ -111,11 +111,11 @@ interface ResourceClassification {
 interface QueuedRequest {
   readonly id: string;
   readonly request: Request;
-  readonly timestamp: ReturnType<typeof setTimeout>;
+  readonly timestamp: number;
   readonly priority: number;
   resolve: (response: Response) => void;
   reject: (error: Error) => void;
-  timeoutId?: number;
+  timeoutId?: ReturnType<typeof setTimeout>;
 }
 
 interface RequestQueue {
@@ -465,6 +465,32 @@ const removeFromQueue = (url: string): void => {
     }
     state.requestQueue.normal.delete(url);
   }
+};
+
+const cancelPendingRequests = (): void => {
+  // Cancel all pending requests in high priority queue
+  for (const [url, request] of state.requestQueue.highPriority) {
+    if (request.timeoutId) {
+      clearTimeout(request.timeoutId);
+    }
+    request.reject(new Error('Request cancelled due to navigation'));
+  }
+  state.requestQueue.highPriority.clear();
+
+  // Cancel all pending requests in normal queue
+  for (const [url, request] of state.requestQueue.normal) {
+    if (request.timeoutId) {
+      clearTimeout(request.timeoutId);
+    }
+    request.reject(new Error('Request cancelled due to navigation'));
+  }
+  state.requestQueue.normal.clear();
+
+  // Note: We don't cancel activeFetches as they're already in progress
+  // We let them complete but their results may be ignored
+  
+  // Reset processing state to allow new requests
+  state.requestQueue.processing = false;
 };
 
 const processRequestQueue = async (): Promise<void> => {
@@ -916,7 +942,8 @@ type ServiceWorkerMessageType =
   | 'GET_CACHE_STATS'
   | 'FORCE_CLEANUP'
   | 'GET_QUEUE_STATS'
-  | 'GET_PRELOAD_STATS';
+  | 'GET_PRELOAD_STATS'
+  | 'CANCEL_PENDING_REQUESTS';
 
 interface ServiceWorkerMessage {
   type: ServiceWorkerMessageType;
@@ -964,6 +991,10 @@ sw.addEventListener('message', (event) => {
 
     case 'FORCE_CLEANUP':
       event.waitUntil(performSmartCacheCleanup());
+      break;
+
+    case 'CANCEL_PENDING_REQUESTS':
+      cancelPendingRequests();
       break;
 
     default:
