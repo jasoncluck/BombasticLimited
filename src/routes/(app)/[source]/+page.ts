@@ -24,8 +24,6 @@ export const load: PageLoad = ({ data }) => {
           new Image().src = video.thumbnail_url;
         }
       });
-
-      return data;
     }
   }
 
