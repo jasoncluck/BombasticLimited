@@ -501,8 +501,9 @@ const cancelPendingRequests = (): void => {
   }
   state.requestQueue.normal.clear();
 
-  // Note: We don't cancel activeFetches as they're already in progress
-  // We let them complete but their results may be ignored
+  // Clear active fetches tracking to make cancellation more aggressive
+  // While we can't cancel in-flight requests, we prevent their results from being cached
+  state.requestQueue.activeFetches.clear();
 
   // Reset processing state to allow new requests
   state.requestQueue.processing = false;
@@ -967,11 +968,12 @@ sw.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle static assets from same origin
+  // Handle static assets from same origin (excluding CSS to prevent preload conflicts)
   if (
     url.origin === sw.location.origin &&
     (STATIC_ASSETS.includes(url.pathname) ||
-      STATIC_EXTENSIONS.test(url.pathname))
+      STATIC_EXTENSIONS.test(url.pathname)) &&
+    !url.pathname.endsWith('.css') // Exclude CSS files to prevent preload warnings
   ) {
     event.respondWith(cacheStaticAsset(request));
     return;
