@@ -6,7 +6,6 @@
 
 import { build, files, version } from '$service-worker';
 import { PUBLIC_SUPABASE_URL } from '$env/static/public';
-import { dev } from '$app/environment';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
@@ -50,9 +49,7 @@ const STATIC_EXTENSIONS =
 
 // Critical resource patterns - these should be preloaded immediately
 const CRITICAL_PATTERNS = [
-  /app\.[a-zA-Z0-9]+\.css$/, // Main app CSS
   /app\.[a-zA-Z0-9]+\.js$/, // Main app JS
-  /layout\.[a-zA-Z0-9]+\.css$/, // Layout CSS
   /vendor\.[a-zA-Z0-9]+\.js$/, // Vendor JS
 ] as const;
 
@@ -379,11 +376,9 @@ const addToQueue = (request: Request): Promise<Response> => {
   const totalQueueSize =
     state.requestQueue.highPriority.size + state.requestQueue.normal.size;
   if (totalQueueSize > 50) {
-    if (dev) {
-      console.warn(
-        `Service worker: Queue size (${totalQueueSize}) exceeding threshold, performing cleanup`
-      );
-    }
+    // console.warn(
+    //   `Service worker: Queue size (${totalQueueSize}) exceeding threshold, performing cleanup`
+    // );
     // Cancel oldest requests from normal queue first
     const normalEntries = Array.from(state.requestQueue.normal.entries());
     const oldestRequests = normalEntries
