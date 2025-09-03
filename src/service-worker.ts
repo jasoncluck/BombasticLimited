@@ -808,6 +808,18 @@ const performSmartCacheCleanup = async (): Promise<void> => {
   }
 };
 
+// Helper function to check if a rejection is a cancellation
+const isCancellation = (rejection: unknown): rejection is RequestCancellation => {
+  return (
+    typeof rejection === 'object' &&
+    rejection !== null &&
+    'reason' in rejection &&
+    'cancelled' in rejection &&
+    (rejection as RequestCancellation).reason === 'NAVIGATION_CANCELLED' &&
+    (rejection as RequestCancellation).cancelled === true
+  );
+};
+
 // Main image caching function with smart queuing
 const cacheImage = async (request: Request): Promise<Response> => {
   const cache = await caches.open(IMAGE_CACHE);
@@ -836,8 +848,29 @@ const cacheImage = async (request: Request): Promise<Response> => {
     });
   }
 
-  // Use smart queuing for new requests
-  return addToQueue(request);
+  // Use smart queuing for new requests with cancellation handling
+  try {
+    return await addToQueue(request);
+  } catch (rejection) {
+    // If this is a planned cancellation, fall back to network request
+    // This prevents unhandled promise rejections in the console
+    if (isCancellation(rejection)) {
+      // For cancelled requests, try to fetch directly from network as fallback
+      // This ensures the fetch event always resolves with a response
+      try {
+        const corsRequest = createCorsRequest(request);
+        return await fetch(corsRequest);
+      } catch (networkError) {
+        // If network also fails, return a simple error response
+        return new Response('Request cancelled and network unavailable', {
+          status: 503,
+          statusText: 'Service Unavailable'
+        });
+      }
+    }
+    // Re-throw actual errors (not cancellations)
+    throw rejection;
+  }
 };
 
 // Static asset caching with intelligent preloading

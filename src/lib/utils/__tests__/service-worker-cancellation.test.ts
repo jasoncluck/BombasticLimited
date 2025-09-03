@@ -146,4 +146,28 @@ describe('Service Worker Request Cancellation Logic', () => {
     // Verify it's not an Error instance (which would show in console)
     expect(cancellation).not.toBeInstanceOf(Error);
   });
+
+  it('should identify cancellation objects correctly', () => {
+    const cancellation = createCancellation('Test cancellation');
+    const error = new Error('Real error');
+    const randomObject = { foo: 'bar' };
+    
+    // This function mimics the isCancellation function in the service worker
+    const isCancellation = (rejection: unknown) => {
+      return (
+        typeof rejection === 'object' &&
+        rejection !== null &&
+        'reason' in rejection &&
+        'cancelled' in rejection &&
+        (rejection as any).reason === 'NAVIGATION_CANCELLED' &&
+        (rejection as any).cancelled === true
+      );
+    };
+    
+    expect(isCancellation(cancellation)).toBe(true);
+    expect(isCancellation(error)).toBe(false);
+    expect(isCancellation(randomObject)).toBe(false);
+    expect(isCancellation(null)).toBe(false);
+    expect(isCancellation(undefined)).toBe(false);
+  });
 });
