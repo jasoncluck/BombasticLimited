@@ -12,7 +12,7 @@
 
 <ScrollArea type="scroll" class="h-full grow" data-scroll-area="sidebar">
   <div class="bg-background-lighter text-foreground min-h-screen">
-    <main class="prose prose-invert container mx-auto max-w-4xl! py-8">
+    <main class="prose prose-invert container mx-auto max-w-3xl! p-8">
       {@render children()}
     </main>
   </div>
