@@ -111,11 +111,11 @@ interface ResourceClassification {
 interface QueuedRequest {
   readonly id: string;
   readonly request: Request;
-  readonly timestamp: ReturnType<typeof setTimeout>;
+  readonly timestamp: number;
   readonly priority: number;
   resolve: (response: Response) => void;
   reject: (error: Error) => void;
-  timeoutId?: number;
+  timeoutId?: ReturnType<typeof setTimeout>;
 }
 
 interface RequestQueue {
@@ -257,9 +257,8 @@ const classifyResource = (url: URL): ResourceClassification => {
     pattern.test(pathname)
   );
 
-  // Determine preload strategy
-  const shouldPreload =
-    category === 'css' || category === 'js' || category === 'font';
+  // Determine preload strategy (exclude fonts to prevent preload warnings)
+  const shouldPreload = category === 'css' || category === 'js';
   const preloadDelay = isCritical
     ? 0
     : isNonCritical
@@ -396,6 +395,30 @@ const addToQueue = (request: Request): Promise<Response> => {
   const priority = determineRequestPriority(url);
   const now = Date.now();
 
+  // Auto-cleanup if queue is getting too large (performance protection)
+  const totalQueueSize =
+    state.requestQueue.highPriority.size + state.requestQueue.normal.size;
+  if (totalQueueSize > 50) {
+    console.warn(
+      `Service worker: Queue size (${totalQueueSize}) exceeding threshold, performing cleanup`
+    );
+    // Cancel oldest requests from normal queue first
+    const normalEntries = Array.from(state.requestQueue.normal.entries());
+    const oldestRequests = normalEntries
+      .sort(([, a], [, b]) => a.timestamp - b.timestamp)
+      .slice(0, 25);
+
+    for (const [url, request] of oldestRequests) {
+      if (request.timeoutId) {
+        clearTimeout(request.timeoutId);
+      }
+      request.reject(
+        createCancellation('Request cancelled due to queue overflow')
+      );
+      state.requestQueue.normal.delete(url);
+    }
+  }
+
   return new Promise<Response>((resolve, reject) => {
     // Check if already queued or being fetched
     if (
@@ -464,6 +487,59 @@ const removeFromQueue = (url: string): void => {
       clearTimeout(normalRequest.timeoutId);
     }
     state.requestQueue.normal.delete(url);
+  }
+};
+
+// Custom cancellation object that doesn't inherit from Error to avoid console errors
+interface RequestCancellation {
+  readonly reason: 'NAVIGATION_CANCELLED';
+  readonly message: string;
+  readonly cancelled: true;
+}
+
+const createCancellation = (message: string): RequestCancellation => ({
+  reason: 'NAVIGATION_CANCELLED',
+  message,
+  cancelled: true,
+});
+
+const cancelPendingRequests = (): void => {
+  // Track metrics for debugging
+  const totalCancelled =
+    state.requestQueue.highPriority.size + state.requestQueue.normal.size;
+
+  // Cancel all pending requests in high priority queue
+  for (const [url, request] of state.requestQueue.highPriority) {
+    if (request.timeoutId) {
+      clearTimeout(request.timeoutId);
+    }
+    // Use custom cancellation object instead of Error to avoid console errors
+    request.reject(createCancellation('Request cancelled due to navigation'));
+  }
+  state.requestQueue.highPriority.clear();
+
+  // Cancel all pending requests in normal queue
+  for (const [url, request] of state.requestQueue.normal) {
+    if (request.timeoutId) {
+      clearTimeout(request.timeoutId);
+    }
+    // Use custom cancellation object instead of Error to avoid console errors
+    request.reject(createCancellation('Request cancelled due to navigation'));
+  }
+  state.requestQueue.normal.clear();
+
+  // Clear active fetches tracking to make cancellation more aggressive
+  // While we can't cancel in-flight requests, we prevent their results from being cached
+  state.requestQueue.activeFetches.clear();
+
+  // Reset processing state to allow new requests
+  state.requestQueue.processing = false;
+
+  // Log for debugging queue performance issues
+  if (totalCancelled > 10) {
+    console.log(
+      `Service worker: Cancelled ${totalCancelled} queued requests on navigation`
+    );
   }
 };
 
@@ -767,6 +843,20 @@ const performSmartCacheCleanup = async (): Promise<void> => {
   }
 };
 
+// Helper function to check if a rejection is a cancellation
+const isCancellation = (
+  rejection: unknown
+): rejection is RequestCancellation => {
+  return (
+    typeof rejection === 'object' &&
+    rejection !== null &&
+    'reason' in rejection &&
+    'cancelled' in rejection &&
+    (rejection as RequestCancellation).reason === 'NAVIGATION_CANCELLED' &&
+    (rejection as RequestCancellation).cancelled === true
+  );
+};
+
 // Main image caching function with smart queuing
 const cacheImage = async (request: Request): Promise<Response> => {
   const cache = await caches.open(IMAGE_CACHE);
@@ -795,8 +885,29 @@ const cacheImage = async (request: Request): Promise<Response> => {
     });
   }
 
-  // Use smart queuing for new requests
-  return addToQueue(request);
+  // Use smart queuing for new requests with cancellation handling
+  try {
+    return await addToQueue(request);
+  } catch (rejection) {
+    // If this is a planned cancellation, fall back to network request
+    // This prevents unhandled promise rejections in the console
+    if (isCancellation(rejection)) {
+      // For cancelled requests, try to fetch directly from network as fallback
+      // This ensures the fetch event always resolves with a response
+      try {
+        const corsRequest = createCorsRequest(request);
+        return await fetch(corsRequest);
+      } catch (networkError) {
+        // If network also fails, return a simple error response
+        return new Response('Request cancelled and network unavailable', {
+          status: 503,
+          statusText: 'Service Unavailable',
+        });
+      }
+    }
+    // Re-throw actual errors (not cancellations)
+    throw rejection;
+  }
 };
 
 // Static asset caching with intelligent preloading
@@ -891,11 +1002,13 @@ sw.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle static assets from same origin
+  // Handle static assets from same origin (excluding CSS and fonts to prevent preload conflicts)
   if (
     url.origin === sw.location.origin &&
     (STATIC_ASSETS.includes(url.pathname) ||
-      STATIC_EXTENSIONS.test(url.pathname))
+      STATIC_EXTENSIONS.test(url.pathname)) &&
+    !url.pathname.endsWith('.css') && // Exclude CSS files to prevent preload warnings
+    !url.pathname.match(/\.(woff2?|ttf|eot)$/) // Exclude font files to prevent preload warnings
   ) {
     event.respondWith(cacheStaticAsset(request));
     return;
@@ -916,7 +1029,8 @@ type ServiceWorkerMessageType =
   | 'GET_CACHE_STATS'
   | 'FORCE_CLEANUP'
   | 'GET_QUEUE_STATS'
-  | 'GET_PRELOAD_STATS';
+  | 'GET_PRELOAD_STATS'
+  | 'CANCEL_PENDING_REQUESTS';
 
 interface ServiceWorkerMessage {
   type: ServiceWorkerMessageType;
@@ -964,6 +1078,10 @@ sw.addEventListener('message', (event) => {
 
     case 'FORCE_CLEANUP':
       event.waitUntil(performSmartCacheCleanup());
+      break;
+
+    case 'CANCEL_PENDING_REQUESTS':
+      cancelPendingRequests();
       break;
 
     default:
