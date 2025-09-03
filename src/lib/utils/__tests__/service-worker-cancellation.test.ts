@@ -36,6 +36,13 @@ const createMockServiceWorkerEnvironment = () => {
   };
 };
 
+// Custom cancellation object that matches service worker implementation
+const createCancellation = (message: string) => ({
+  reason: 'NAVIGATION_CANCELLED' as const,
+  message,
+  cancelled: true as const,
+});
+
 describe('Service Worker Request Cancellation Logic', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -43,7 +50,7 @@ describe('Service Worker Request Cancellation Logic', () => {
     global.clearTimeout = vi.fn();
   });
 
-  it('should properly cancel pending requests', () => {
+  it('should properly cancel pending requests without throwing errors', () => {
     const { mockState, mockResolve, mockReject, mockTimeoutId, addMockRequest } =
       createMockServiceWorkerEnvironment();
 
@@ -61,7 +68,8 @@ describe('Service Worker Request Cancellation Logic', () => {
         if (request.timeoutId) {
           clearTimeout(request.timeoutId);
         }
-        request.reject(new Error('Request cancelled due to navigation'));
+        // Use custom cancellation object instead of Error to avoid console errors
+        request.reject(createCancellation('Request cancelled due to navigation'));
       }
       mockState.requestQueue.highPriority.clear();
 
@@ -70,7 +78,8 @@ describe('Service Worker Request Cancellation Logic', () => {
         if (request.timeoutId) {
           clearTimeout(request.timeoutId);
         }
-        request.reject(new Error('Request cancelled due to navigation'));
+        // Use custom cancellation object instead of Error to avoid console errors
+        request.reject(createCancellation('Request cancelled due to navigation'));
       }
       mockState.requestQueue.normal.clear();
 
@@ -87,7 +96,7 @@ describe('Service Worker Request Cancellation Logic', () => {
     expect(mockState.requestQueue.processing).toBe(false);
     expect(clearTimeout).toHaveBeenCalledWith(mockTimeoutId);
     expect(mockReject).toHaveBeenCalledWith(
-      new Error('Request cancelled due to navigation')
+      createCancellation('Request cancelled due to navigation')
     );
     expect(mockResolve).not.toHaveBeenCalled();
   });
@@ -105,7 +114,7 @@ describe('Service Worker Request Cancellation Logic', () => {
         if (request.timeoutId) {
           clearTimeout(request.timeoutId);
         }
-        request.reject(new Error('Request cancelled due to navigation'));
+        request.reject(createCancellation('Request cancelled due to navigation'));
       }
       mockState.requestQueue.highPriority.clear();
 
@@ -113,7 +122,7 @@ describe('Service Worker Request Cancellation Logic', () => {
         if (request.timeoutId) {
           clearTimeout(request.timeoutId);
         }
-        request.reject(new Error('Request cancelled due to navigation'));
+        request.reject(createCancellation('Request cancelled due to navigation'));
       }
       mockState.requestQueue.normal.clear();
 
@@ -123,5 +132,18 @@ describe('Service Worker Request Cancellation Logic', () => {
     // Should not throw error
     expect(() => cancelPendingRequests()).not.toThrow();
     expect(mockState.requestQueue.processing).toBe(false);
+  });
+
+  it('should create proper cancellation objects', () => {
+    const cancellation = createCancellation('Test cancellation');
+    
+    expect(cancellation).toEqual({
+      reason: 'NAVIGATION_CANCELLED',
+      message: 'Test cancellation',
+      cancelled: true,
+    });
+    
+    // Verify it's not an Error instance (which would show in console)
+    expect(cancellation).not.toBeInstanceOf(Error);
   });
 });

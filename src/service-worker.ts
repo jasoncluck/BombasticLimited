@@ -467,13 +467,27 @@ const removeFromQueue = (url: string): void => {
   }
 };
 
+// Custom cancellation object that doesn't inherit from Error to avoid console errors
+interface RequestCancellation {
+  readonly reason: 'NAVIGATION_CANCELLED';
+  readonly message: string;
+  readonly cancelled: true;
+}
+
+const createCancellation = (message: string): RequestCancellation => ({
+  reason: 'NAVIGATION_CANCELLED',
+  message,
+  cancelled: true,
+});
+
 const cancelPendingRequests = (): void => {
   // Cancel all pending requests in high priority queue
   for (const [url, request] of state.requestQueue.highPriority) {
     if (request.timeoutId) {
       clearTimeout(request.timeoutId);
     }
-    request.reject(new Error('Request cancelled due to navigation'));
+    // Use custom cancellation object instead of Error to avoid console errors
+    request.reject(createCancellation('Request cancelled due to navigation'));
   }
   state.requestQueue.highPriority.clear();
 
@@ -482,7 +496,8 @@ const cancelPendingRequests = (): void => {
     if (request.timeoutId) {
       clearTimeout(request.timeoutId);
     }
-    request.reject(new Error('Request cancelled due to navigation'));
+    // Use custom cancellation object instead of Error to avoid console errors
+    request.reject(createCancellation('Request cancelled due to navigation'));
   }
   state.requestQueue.normal.clear();
 
