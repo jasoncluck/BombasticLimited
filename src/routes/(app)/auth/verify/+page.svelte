@@ -57,7 +57,7 @@
       <div class="flex flex-col gap-4">
         <p class="self-start">
           Check your email for an email from admin@bombastic.ltd. If it's still
-          not there you can get another code.
+          not there you can request another code.
         </p>
 
         {#if loading}

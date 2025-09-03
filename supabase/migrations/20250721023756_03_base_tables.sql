@@ -145,11 +145,13 @@ ADD CONSTRAINT "user_video_timestamps_pkey" PRIMARY KEY ("id");
 ALTER TABLE ONLY "public"."timestamps"
 ADD CONSTRAINT "unique_user_video" UNIQUE ("user_id", "video_id");
 
+
 -- Profiles table (without foreign keys initially) - FIXED TYPE REFERENCES
-CREATE TABLE IF NOT EXISTS "public"."profiles" (
-  "id" uuid NOT NULL,
-  "username" text,
-  "sources" "public"."source" [] DEFAULT ARRAY[
+  CREATE TABLE IF NOT EXISTS "public"."profiles" (
+    "id" uuid NOT NULL,
+    "username" text,
+    "username_history" jsonb DEFAULT '[]'::jsonb,
+    "sources" "public"."source" [] DEFAULT ARRAY[
     'giantbomb',
     'jeffgerstmann',
     'nextlander',
@@ -162,7 +164,7 @@ CREATE TABLE IF NOT EXISTS "public"."profiles" (
   PRIMARY KEY ("id")
 );
 
-ALTER TABLE "public"."profiles" OWNER TO "postgres";
+COMMENT ON COLUMN "public"."profiles"."username_history" IS 'JSON array storing username history with timestamps. Format: [{"username": "old_name", "used_from": "2023-01-01T00:00:00Z", "used_until": "2023-06-01T00:00:00Z"}]';
 
 -- User playlists table (without foreign keys initially)
 CREATE TABLE IF NOT EXISTS "public"."user_playlists" (

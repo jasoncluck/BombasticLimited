@@ -40,7 +40,7 @@
     --tw-prose-td-borders: var(--color-border);
 
     /* Improve line spacing and text flow */
-    line-height: 1.2;
+    line-height: 1.25;
     white-space: pre-wrap;
     max-width: none;
   }

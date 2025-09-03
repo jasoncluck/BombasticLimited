@@ -138,3 +138,14 @@ In the event that the bug report form is broken, please click the "Contact" butt
 * Description of what happened when you encountered the issue
 * Steps to reproduce the issue
 * (Optional) Screenshots of the issue
+
+
+
+
+<div class="mt-8">
+<a class="w-32" href="/"> 
+<Button class="mb-4 flex gap-2 cursor-pointer " > 
+<MoveLeft /> Bombastic
+</Button>
+</a>
+</div>
