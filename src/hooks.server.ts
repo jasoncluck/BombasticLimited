@@ -44,7 +44,6 @@ const supabase: Handle = async ({ event, resolve }) => {
         await event.locals.supabase.auth.exchangeCodeForSession(code);
       if (!error && data.session) {
         // Session established, the user can now update their password
-        console.log('Password reset session established');
       }
     } catch (err) {
       console.error('Error exchanging code for session:', err);

@@ -1,6 +1,5 @@
 <script lang="ts">
   import Input from '$lib/components/ui/input/input.svelte';
-  import Loader from '$lib/components/loader.svelte';
   import { getNavigationState } from '$lib/state/navigation.svelte';
 
   let {

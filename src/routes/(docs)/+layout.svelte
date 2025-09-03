@@ -12,7 +12,7 @@
 
 <ScrollArea type="scroll" class="h-full grow" data-scroll-area="sidebar">
   <div class="bg-background-lighter text-foreground min-h-screen">
-    <main class="prose prose-invert container mx-auto max-w-4xl px-4 py-8">
+    <main class="prose prose-invert container mx-auto max-w-3xl! p-8">
       {@render children()}
     </main>
   </div>
@@ -40,7 +40,7 @@
     --tw-prose-td-borders: var(--color-border);
 
     /* Improve line spacing and text flow */
-    line-height: 1.2;
+    line-height: 1.25;
     white-space: pre-wrap;
     max-width: none;
   }

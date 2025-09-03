@@ -1,7 +1,6 @@
 import { TestDataManager } from './utils/TestDataManager';
 
 export default async function globalTeardown() {
-  console.log('Starting global teardown...');
 
   // Clean up test data (playlists, etc.) but NOT test users
   // We keep test users persistent for reuse across test runs
@@ -13,24 +12,14 @@ export default async function globalTeardown() {
       try {
         const testUser = await testDataManager.getOrCreateTestUser(workerId);
         await testDataManager.cleanupUserTestData(testUser.id);
-        console.log(`Cleaned up test data for worker ${workerId}`);
       } catch (error) {
-        console.warn(
-          `Failed to cleanup test data for worker ${workerId}:`,
-          error
-        );
       }
     }
 
-    console.log(
-      'Test data cleaned up successfully (users preserved for reuse)'
-    );
   } catch (error) {
-    console.warn('Failed to cleanup test data:', error);
   }
 
   // Keep authentication files for reuse - only clean up if they're very old
   // This is handled by the setup process, so we don't need to do it here
 
-  console.log('Global teardown completed');
 }

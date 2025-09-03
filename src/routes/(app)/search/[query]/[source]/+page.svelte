@@ -11,6 +11,8 @@
   } from '$lib/state/content.svelte';
   import type { SourceWithCarouselState } from '$lib/components/content/content';
   import { PAGINATION_QUERY_KEY } from '$lib/components/pagination/pagination';
+  import { getNavigationState } from '$lib/state/navigation.svelte.js';
+  import { onMount } from 'svelte';
 
   const { data } = $props();
   const {
@@ -23,6 +25,8 @@
     contentFilter,
   } = $derived(data);
 
+  const navigationState = getNavigationState();
+
   let showFloatingBreadcrumbs = $state(false);
   const sectionId = DEFAULT_SECTION_ID;
 
@@ -31,6 +35,12 @@
   let currentPage = $state(
     pageFromQueryParams ? parseInt(pageFromQueryParams) : 1
   );
+
+  onMount(() => {
+    if (page.params.query) {
+      navigationState.setSearchQuery(page.params.query);
+    }
+  });
 
   // Update currentPage when URL changes (for browser back/forward support)
   $effect(() => {

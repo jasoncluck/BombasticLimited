@@ -144,8 +144,9 @@
           <div class="border-t border-gray-200 pt-8 dark:border-gray-700">
             <nav class="mb-4 flex justify-center gap-8">
               <a
-                href="/about"
-                class="text-muted-foreground text-xs hover:underline">About</a
+                href="/getting-started"
+                class="text-muted-foreground text-xs hover:underline"
+                >Getting Started</a
               >
               <a
                 href="mailto:jason@bombastic.ltd"

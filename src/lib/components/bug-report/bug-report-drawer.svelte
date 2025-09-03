@@ -261,7 +261,7 @@
       <Drawer.Header class="px-0">
         <Drawer.Title class="flex items-center gap-2">
           <TriangleAlert class="h-5 w-5" />
-          Report Bug
+          Report Issue
         </Drawer.Title>
         <Drawer.Description class="text-start">
           Thanks for taking the time to help improve the site. If there are any

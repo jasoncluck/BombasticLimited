@@ -79,6 +79,21 @@
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
   const currentUsername = $derived($usernameFormData.username);
 
+  const hashParams = parseHashParams(page.url.hash);
+  console.log(hashParams);
+
+  const errorCode = hashParams.get('error_code');
+  const errorDescription = hashParams.get('error_description');
+
+  let errorTitle = $state<string | undefined>();
+
+  switch (errorCode) {
+    case 'identity_already_exists':
+      errorTitle = 'Unable to link Discord account';
+      break;
+    default:
+  }
+
   $effect(() => {
     if (timeoutId) {
       clearTimeout(timeoutId);
@@ -130,9 +145,15 @@
       }
     };
   });
+
+  function parseHashParams(hash: string): URLSearchParams {
+    // Remove the leading # and parse as URLSearchParams
+    const hashWithoutFragment = hash.startsWith('#') ? hash.slice(1) : hash;
+    return new URLSearchParams(hashWithoutFragment);
+  }
 </script>
 
-<div class="m-4 flex flex-row justify-center">
+<div class="m-4 mx-auto flex flex-col justify-center">
   <div class="flex max-w-[500px] flex-col gap-4">
     <h1 class="header-primary">Account Settings</h1>
     <form use:emailEnhance method="POST" action="?/updateEmail">
@@ -334,40 +355,41 @@
             <DiscordIcon size={20} class="text-[#5865F2]" />
             <span class="text-sm">No Discord account linked</span>
           </div>
-          <form
-            use:enhance={() => {
-              return async () => {
-                await updateFlash(page);
-              };
+          <Button
+            type="submit"
+            variant="secondary"
+            class="w-full cursor-pointer @lg:w-auto"
+            onclick={async (e) => {
+              e.preventDefault();
+              const { data, error } = await linkDiscordIdentity({
+                supabase,
+                redirectTo: `${page.url.origin}/account`,
+              });
+
+              if (error) {
+                showNotification(error.message, 'error');
+              }
+
+              if (data.url) {
+                goto(data.url);
+              }
             }}
-            method="POST"
-            action="?/linkDiscord"
           >
-            <Button
-              type="submit"
-              variant="secondary"
-              class="w-full cursor-pointer @lg:w-auto"
-              onclick={async (e) => {
-                e.preventDefault();
-                const { data, error } = await linkDiscordIdentity({
-                  supabase,
-                  redirectTo: `${page.url.origin}/account`,
-                });
-
-                if (error) {
-                  showNotification(error.message, 'error');
-                }
-
-                if (data.url) {
-                  goto(data.url);
-                }
-              }}
-            >
-              <DiscordIcon size={16} class="mr-2 text-[#5865F2]" />
-              Link Discord
-            </Button>
-          </form>
+            <DiscordIcon size={16} class="mr-2 text-[#5865F2]" />
+            Link Discord
+          </Button>
         </div>
+
+        {#if errorTitle || errorDescription}
+          <div class="mt-4 flex w-full items-center justify-center">
+            <div class="w-[500px]">
+              <Alert.Root>
+                <Alert.Title>{errorTitle}</Alert.Title>
+                <Alert.Description>{errorDescription}</Alert.Description>
+              </Alert.Root>
+            </div>
+          </div>
+        {/if}
       {/if}
 
       {#if $flash?.field === 'discord' && $flash?.message && $flash?.type}

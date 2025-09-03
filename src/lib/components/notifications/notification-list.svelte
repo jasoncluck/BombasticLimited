@@ -40,7 +40,6 @@
       session,
     });
 
-    console.log('refreshing after delete');
     navigationState.refreshData();
   }
 

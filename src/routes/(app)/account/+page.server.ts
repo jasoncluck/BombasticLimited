@@ -10,8 +10,6 @@ import {
   checkIfUsernameIsUnique,
   getUserDiscordIdentity,
   getUserProfile,
-  linkDiscordIdentity,
-  unlinkDiscordIdentity,
 } from '$lib/supabase/user-profiles';
 import type { Actions, PageServerLoad } from './$types';
 import { Filter } from 'bad-words';
@@ -93,7 +91,7 @@ export const actions: Actions = {
       setFlash(
         {
           type: 'success',
-          message: `Emails with confirmation links have sent to both the new email: ${data.user.new_email} and the current email ${data.user.email}. The email will be updated once both links have been confirmed. `,
+          message: `Emails with confirmation links have been sent to both the new email: ${data.user.new_email} and the current email ${data.user.email}. The email will be updated once both links have been confirmed. `,
           field: 'email',
         },
         cookies
@@ -190,71 +188,6 @@ export const actions: Actions = {
         cookies
       );
     }
-  },
-
-  linkDiscord: async ({ url, cookies, locals: { supabase, session } }) => {
-    if (!session) {
-      redirect(303, '/auth/login');
-    }
-
-    const { data, error } = await linkDiscordIdentity({
-      supabase,
-      redirectTo: `${url.origin}/account`,
-    });
-
-    if (error) {
-      setFlash(
-        { type: 'error', message: error.message, field: 'discord' },
-        cookies
-      );
-      return fail(400);
-    }
-
-    // Redirect to Discord OAuth flow
-    if (data?.url) {
-      redirect(303, data.url);
-    }
-
-    setFlash(
-      {
-        type: 'error',
-        message: 'Failed to initiate Discord linking',
-        field: 'discord',
-      },
-      cookies
-    );
-    return fail(400);
-  },
-
-  unlinkDiscord: async ({ cookies, locals: { supabase, session } }) => {
-    if (!session) {
-      redirect(303, '/auth/login');
-    }
-
-    const { error } = await unlinkDiscordIdentity({
-      supabase,
-    });
-
-    if (error) {
-      setFlash(
-        {
-          type: 'error',
-          message: error.message || 'Failed to unlink Discord account',
-          field: 'discord',
-        },
-        cookies
-      );
-      return fail(400);
-    }
-
-    setFlash(
-      {
-        type: 'success',
-        message: 'Discord account unlinked successfully',
-        field: 'discord',
-      },
-      cookies
-    );
   },
 
   deleteAccount: async ({ cookies, locals: { supabase, session } }) => {

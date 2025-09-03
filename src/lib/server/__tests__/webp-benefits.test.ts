@@ -46,13 +46,6 @@ describe('WebP vs JPEG Compression Benefits', () => {
     const webpSize = webpBuffer.length;
     const reduction = ((jpegSize - webpSize) / jpegSize) * 100;
 
-    console.log('\n📸 WebP vs JPEG Compression Results:');
-    console.log(`   JPEG size: ${jpegSize.toLocaleString()} bytes`);
-    console.log(`   WebP size: ${webpSize.toLocaleString()} bytes`);
-    console.log(`   Reduction: ${reduction.toFixed(1)}% smaller`);
-    console.log(
-      `   Savings:   ${(jpegSize - webpSize).toLocaleString()} bytes`
-    );
 
     // Calculate data URL sizes (as they would be stored)
     const jpegDataUrl = `data:image/jpeg;base64,${jpegBuffer.toString('base64')}`;
@@ -63,14 +56,6 @@ describe('WebP vs JPEG Compression Benefits', () => {
     const dataUrlReduction =
       ((jpegDataUrlSize - webpDataUrlSize) / jpegDataUrlSize) * 100;
 
-    console.log('\n📄 Data URL sizes (as stored in application):');
-    console.log(
-      `   JPEG data URL: ${jpegDataUrlSize.toLocaleString()} characters`
-    );
-    console.log(
-      `   WebP data URL: ${webpDataUrlSize.toLocaleString()} characters`
-    );
-    console.log(`   Reduction:     ${dataUrlReduction.toFixed(1)}% smaller`);
 
     // Assert that WebP provides meaningful compression benefits
     expect(webpSize).toBeLessThan(jpegSize);

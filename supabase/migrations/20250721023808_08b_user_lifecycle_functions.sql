@@ -1,9 +1,9 @@
--- Migration: 08b_user_lifecycle_functions.sql
--- Purpose: Create user lifecycle management functions and triggers
--- Dependencies: Requires auth schema and user profile functions (08a)
--- This migration includes user creation/deletion handlers and triggers
+-- Migration: Update handle_user_changes function to track username timestamps
+-- Purpose: Modify user lifecycle function to store username history with timestamps
+-- Dependencies: Requires previous migration with username_history column
+-- Date: 2025-09-03 01:50:16 UTC
 -- ============================================================================
--- Optimized function to handle user changes (creates profile on user creation)
+
 CREATE OR REPLACE FUNCTION "public"."handle_user_changes" () RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
 SET
   search_path = '' AS $$
@@ -15,6 +15,10 @@ DECLARE
     user_username text;
     old_username text;
     new_username text;
+    current_username text;
+    current_username_history jsonb;
+    updated_history jsonb;
+    timestamp_now timestamp with time zone;
     account_type_val public.profile_account_type;
 BEGIN
     -- Handle INSERT operations (new user creation)
@@ -61,13 +65,36 @@ BEGIN
             ELSE 'default'::public.profile_account_type 
         END;
         
-        -- Single INSERT with all data
-        INSERT INTO public.profiles (id, username, avatar_url, providers, account_type)
-        VALUES (NEW.id, generated_username, new_avatar_url, providers_array, account_type_val)
+        -- Single INSERT with all data, including initial username history entry
+        INSERT INTO public.profiles (
+            id, 
+            username, 
+            avatar_url, 
+            providers, 
+            account_type,
+            username_history
+        )
+        VALUES (
+            NEW.id, 
+            generated_username, 
+            new_avatar_url, 
+            providers_array, 
+            account_type_val,
+            jsonb_build_array(
+                jsonb_build_object(
+                    'username', generated_username,
+                    'used_from', now(),
+                    'used_until', null
+                )
+            )
+        )
         ON CONFLICT (id) DO NOTHING;
     
     -- Handle UPDATE operations (when user metadata gets updated)
     ELSIF TG_OP = 'UPDATE' THEN
+        -- Get current timestamp once
+        timestamp_now := now();
+        
         -- Check if raw_user_meta_data was updated
         IF (OLD.raw_user_meta_data IS DISTINCT FROM NEW.raw_user_meta_data) THEN
             -- Extract username and avatar data
@@ -83,16 +110,53 @@ BEGIN
                 new_avatar_url := NULL;
             END IF;
             
-            -- Bulk update profile data
-            UPDATE public.profiles 
-            SET 
-                username = CASE 
-                    WHEN old_username IS DISTINCT FROM new_username AND new_username IS NOT NULL 
-                    THEN new_username 
-                    ELSE username 
-                END,
-                avatar_url = new_avatar_url
+            -- Get current username and history from profiles table
+            SELECT username, COALESCE(username_history, '[]'::jsonb) 
+            INTO current_username, current_username_history
+            FROM public.profiles 
             WHERE id = NEW.id;
+            
+            -- Check if username is actually changing
+            IF old_username IS DISTINCT FROM new_username 
+               AND new_username IS NOT NULL 
+               AND current_username IS NOT NULL
+               AND current_username != new_username THEN
+                
+                -- Update the last entry's used_until timestamp
+                updated_history := (
+                    SELECT jsonb_agg(
+                        CASE 
+                            WHEN (elem->>'used_until') IS NULL 
+                            THEN jsonb_set(elem, '{used_until}', to_jsonb(timestamp_now))
+                            ELSE elem
+                        END
+                    )
+                    FROM jsonb_array_elements(current_username_history) AS elem
+                );
+                
+                -- Add new entry for the new username
+                updated_history := COALESCE(updated_history, '[]'::jsonb) || 
+                    jsonb_build_array(
+                        jsonb_build_object(
+                            'username', new_username,
+                            'used_from', timestamp_now,
+                            'used_until', null
+                        )
+                    );
+                
+                -- Update profile with new username and history
+                UPDATE public.profiles 
+                SET 
+                    username = new_username,
+                    avatar_url = new_avatar_url,
+                    username_history = updated_history
+                WHERE id = NEW.id;
+            ELSE
+                -- No username change, just update avatar
+                UPDATE public.profiles 
+                SET avatar_url = new_avatar_url
+                WHERE id = NEW.id;
+            END IF;
         END IF;
         
         -- Check if raw_app_meta_data was updated with providers

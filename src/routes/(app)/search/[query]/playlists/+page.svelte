@@ -7,10 +7,20 @@
   } from '$lib/components/pagination/pagination.js';
   import Pagination from '$lib/components/pagination/pagination.svelte';
   import PlaylistTiles from '$lib/components/playlist/playlist-tiles.svelte';
+  import { getNavigationState } from '$lib/state/navigation.svelte.js';
   import { DEFAULT_NUM_PLAYLISTS_PAGINATION } from '$lib/supabase/playlists';
+  import { onMount } from 'svelte';
 
   const { data } = $props();
   let { playlistResults, playlistsCount, session, supabase } = $derived(data);
+
+  const navigationState = getNavigationState();
+
+  onMount(() => {
+    if (page.params.query) {
+      navigationState.setSearchQuery(page.params.query);
+    }
+  });
 
   // Initialize currentPage from URL params
   const pageFromQueryParams = page.url.searchParams.get(PAGINATION_QUERY_KEY);

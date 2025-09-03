@@ -1,8 +1,10 @@
 import { getPaginationQueryParams } from '$lib/components/pagination/pagination';
+import { isSource } from '$lib/constants/source';
 import {
   DEFAULT_NUM_PLAYLISTS_PAGINATION,
   getPlaylistsForUsername,
 } from '$lib/supabase/playlists';
+import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
@@ -14,6 +16,11 @@ export const load: PageServerLoad = async ({
   depends('supabase:db:playlistsForProfile');
 
   const username = params.username;
+
+  // Only sources have playlist pages - at least for now
+  if (!isSource(username)) {
+    redirect(303, '/');
+  }
 
   const currentPage = getPaginationQueryParams({
     searchParams: url.searchParams,

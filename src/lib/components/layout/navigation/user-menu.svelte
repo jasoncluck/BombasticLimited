@@ -172,7 +172,7 @@
           >
             <div class="flex items-center gap-2">
               <TriangleAlert />
-              Report Bug
+              Report Issue
             </div>
           </DropdownMenu.Item>
           <DropdownMenu.Item
@@ -236,7 +236,7 @@
           }}
         >
           <TriangleAlert />
-          Report Bug
+          Report Issue
         </Button>
         <Button
           variant="ghost"
