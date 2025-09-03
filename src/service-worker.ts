@@ -257,9 +257,8 @@ const classifyResource = (url: URL): ResourceClassification => {
     pattern.test(pathname)
   );
 
-  // Determine preload strategy
-  const shouldPreload =
-    category === 'css' || category === 'js' || category === 'font';
+  // Determine preload strategy (exclude fonts to prevent preload warnings)
+  const shouldPreload = category === 'css' || category === 'js';
   const preloadDelay = isCritical
     ? 0
     : isNonCritical
@@ -968,12 +967,13 @@ sw.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle static assets from same origin (excluding CSS to prevent preload conflicts)
+  // Handle static assets from same origin (excluding CSS and fonts to prevent preload conflicts)
   if (
     url.origin === sw.location.origin &&
     (STATIC_ASSETS.includes(url.pathname) ||
       STATIC_EXTENSIONS.test(url.pathname)) &&
-    !url.pathname.endsWith('.css') // Exclude CSS files to prevent preload warnings
+    !url.pathname.endsWith('.css') && // Exclude CSS files to prevent preload warnings
+    !url.pathname.match(/\.(woff2?|ttf|eot)$/) // Exclude font files to prevent preload warnings
   ) {
     event.respondWith(cacheStaticAsset(request));
     return;

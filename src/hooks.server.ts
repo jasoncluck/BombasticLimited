@@ -102,15 +102,6 @@ const supabase: Handle = async ({ event, resolve }) => {
        */
       return name === 'content-range' || name === 'x-supabase-api-version';
     },
-    preload({ type, path }) {
-      // Disable CSS preloading to prevent browser warnings about unused preloaded resources
-      // CSS files will still be loaded when needed, but won't generate preload links
-      if (type === 'css') {
-        return false;
-      }
-      // Continue preloading JS, fonts, and other assets as normal
-      return true;
-    },
   });
 };
 
