@@ -482,7 +482,7 @@
                   size="5"
                   class="stroke-muted-foreground fill-muted-foreground mr-2 shrink-0 justify-center"
                 />
-                <div class="flex shrink-0 items-center">
+                <div class="flex shrink-1 items-center">
                   <span class="truncate text-xs">
                     {getSortDisplayName({
                       key: video.playlist_sorted_by,
