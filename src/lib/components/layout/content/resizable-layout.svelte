@@ -149,6 +149,18 @@
                 >Documentation</a
               >
               <a
+                href="/privacy"
+                class="text-muted-foreground text-xs hover:underline"
+                target="_blank"
+                rel="noopener">Privacy Policy</a
+              >
+              <a
+                href="/cookies"
+                class="text-muted-foreground text-xs hover:underline"
+                target="_blank"
+                rel="noopener">Cookie Policy</a
+              >
+              <a
                 href="mailto:jason@bombastic.ltd"
                 class="text-muted-foreground text-xs hover:underline">Contact</a
               >
