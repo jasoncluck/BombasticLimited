@@ -434,7 +434,7 @@
 
             <!-- Form Footer -->
             <div class="flex flex-col gap-2 pt-4">
-              <Drawer.Footer class="drawer-footer flex gap-2">
+              <Drawer.Footer class="flex gap-2">
                 <Button
                   type="submit"
                   class="drawer-button-footer"

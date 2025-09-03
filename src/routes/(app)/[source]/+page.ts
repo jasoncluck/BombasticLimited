@@ -25,6 +25,11 @@ export const load: PageLoad = ({ data }) => {
         }
       });
     }
+    for (const playlist of data.sourcePlaylists) {
+      if (playlist.image_url) {
+        new Image().src = playlist.image_url;
+      }
+    }
   }
 
   return data;
