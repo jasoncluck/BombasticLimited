@@ -182,7 +182,7 @@ export class NavigationStateClass implements NavigationState {
     enableHomeNavigation: true,
     enableBrandLogo: true,
     homeRouteReplaceState: true,
-    searchDebounceMs: 250, // Further reduced for better responsiveness
+    searchDebounceMs: 400, // Further reduced for better responsiveness
     preloadDebounceMs: 125,
     notificationRefreshIntervalMs: 5 * 60 * 1000, // 5 minutes
   });
