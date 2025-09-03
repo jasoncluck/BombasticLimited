@@ -21,7 +21,6 @@ interface CacheConfig {
   readonly maxConcurrentRequests: number;
   readonly queueTimeout: number;
   readonly priorityThreshold: number;
-  readonly preloadDelayMs: number;
   readonly criticalResourceTimeout: number;
 }
 
@@ -36,7 +35,6 @@ const CACHE_CONFIG: CacheConfig = {
   maxConcurrentRequests: 6, // Limit concurrent fetches
   queueTimeout: 30000, // 30 second timeout for queued requests
   priorityThreshold: 3, // High priority after 3 hits
-  preloadDelayMs: 2000, // Delay non-critical preloading by 2 seconds
   criticalResourceTimeout: 5000, // 5 second timeout for critical resources
 };
 
@@ -55,13 +53,6 @@ const CRITICAL_PATTERNS = [
   /app\.[a-zA-Z0-9]+\.js$/, // Main app JS
   /layout\.[a-zA-Z0-9]+\.css$/, // Layout CSS
   /vendor\.[a-zA-Z0-9]+\.js$/, // Vendor JS
-] as const;
-
-// Non-critical patterns - these can be delayed
-const NON_CRITICAL_PATTERNS = [
-  /scroll-area\.[a-zA-Z0-9]+\.css$/,
-  /components?\.[a-zA-Z0-9]+\.css$/,
-  /chunk\.[a-zA-Z0-9]+\.js$/,
 ] as const;
 
 // Supported image domains
@@ -102,7 +93,6 @@ interface ResourceClassification {
   readonly isCritical: boolean;
   readonly category: 'css' | 'js' | 'font' | 'image' | 'other';
   readonly shouldPreload: boolean;
-  readonly preloadDelay: number;
 }
 
 // Request queue interfaces
@@ -251,23 +241,14 @@ const classifyResource = (url: URL): ResourceClassification => {
   const isCritical = CRITICAL_PATTERNS.some((pattern) =>
     pattern.test(pathname)
   );
-  const isNonCritical = NON_CRITICAL_PATTERNS.some((pattern) =>
-    pattern.test(pathname)
-  );
 
   // Determine preload strategy (exclude fonts to prevent preload warnings)
   const shouldPreload = category === 'css' || category === 'js';
-  const preloadDelay = isCritical
-    ? 0
-    : isNonCritical
-      ? CACHE_CONFIG.preloadDelayMs
-      : 1000;
 
   return {
     isCritical,
     category,
     shouldPreload,
-    preloadDelay,
   };
 };
 

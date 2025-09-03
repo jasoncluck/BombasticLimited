@@ -117,31 +117,4 @@ const authGuard: Handle = async ({ event, resolve }) => {
   return resolve(event);
 };
 
-// Handle to suppress CSS preload warnings by removing CSS preload links
-const suppressCSSPreloads: Handle = async ({ event, resolve }) => {
-  const response = await resolve(event);
-
-  // Only transform HTML responses
-  if (response.headers.get('content-type')?.includes('text/html')) {
-    const html = await response.text();
-
-    // Remove CSS preload links that cause warnings
-    const modifiedHtml = html
-      .replace(/<link[^>]*rel="preload"[^>]*as="style"[^>]*>/gi, '')
-      .replace(/<link[^>]*as="style"[^>]*rel="preload"[^>]*>/gi, '');
-
-    return new Response(modifiedHtml, {
-      status: response.status,
-      statusText: response.statusText,
-      headers: response.headers,
-    });
-  }
-
-  return response;
-};
-
-export const handle: Handle = sequence(
-  supabase,
-  authGuard,
-  suppressCSSPreloads
-);
+export const handle: Handle = sequence(supabase, authGuard);
