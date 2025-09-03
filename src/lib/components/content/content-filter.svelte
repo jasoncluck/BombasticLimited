@@ -151,6 +151,19 @@
           session,
         });
       }
+    } else if (view === 'search') {
+      newContentFilter = {
+        type: 'video',
+        sort: {
+          key: sortKey as SortKey<Video>,
+          order:
+            (sortKey as SortKey<Video>) === 'searchRelevance'
+              ? 'ascending'
+              : sortOrder,
+        },
+        startDate: contentFilter.startDate,
+        endDate: contentFilter.endDate,
+      };
     } else {
       newContentFilter = {
         type: 'video',

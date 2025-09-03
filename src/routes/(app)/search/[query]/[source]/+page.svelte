@@ -83,6 +83,7 @@
     videosCount={videosCount ?? 0}
     {currentPage}
     {source}
+    view="search"
     bind:showFloatingBreadcrumbs
     breadcrumbs={[
       {
