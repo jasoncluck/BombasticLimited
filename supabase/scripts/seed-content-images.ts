@@ -202,6 +202,9 @@ async function withRateLimit<T>(
 
     if (isRateLimit && retryCount < RATE_LIMIT.maxRetries) {
       const delayMs = RATE_LIMIT.retryDelay * Math.pow(2, retryCount); // Exponential backoff
+      console.log(
+        `  ⏳ Rate limited/timeout, retrying ${operationName} in ${delayMs}ms... (attempt ${retryCount + 1}/${RATE_LIMIT.maxRetries})`
+      );
       await delay(delayMs);
       return withRateLimit(operation, operationName, retryCount + 1);
     }
@@ -252,6 +255,7 @@ const downloadSemaphore = new Semaphore(RATE_LIMIT.maxConcurrent);
 
 // Robust file discovery with comprehensive error handling
 async function getAllFilesRobust(): Promise<string[]> {
+  console.log('🚀 Starting comprehensive file discovery...');
 
   const allFiles: string[] = [];
   const processedPaths = new Set<string>();
@@ -268,6 +272,9 @@ async function getAllFilesRobust(): Promise<string[]> {
     stats.foldersProcessed++;
 
     try {
+      console.log(
+        `📂 Scanning folder ${stats.foldersProcessed}: ${currentPath || 'root'} (${pendingPaths.length} folders remaining)`
+      );
 
       // Use pagination to handle large folders
       let pageToken: string | undefined;
@@ -334,6 +341,9 @@ async function getAllFilesRobust(): Promise<string[]> {
         ).toString();
       } while (true);
 
+      console.log(
+        `  📁 Found ${foldersInThisFolder} subfolders, ${filesInThisFolder} files. Total files so far: ${allFiles.length}`
+      );
 
       // Add a small delay between folder scans to prevent overwhelming the API
       if (pendingPaths.length > 0) {
@@ -352,6 +362,10 @@ async function getAllFilesRobust(): Promise<string[]> {
   stats.totalFiles = allFiles.length;
   stats.totalFolders = totalFoldersFound;
 
+  console.log(`✅ Discovery complete!`);
+  console.log(`  📁 Total folders processed: ${stats.foldersProcessed}`);
+  console.log(`  📄 Total files found: ${allFiles.length}`);
+  console.log(`  🔗 API calls used for discovery: ${stats.apiCalls}`);
 
   return allFiles;
 }
@@ -361,17 +375,25 @@ async function downloadContentImages(): Promise<void> {
   let lastProgressTime = startTime;
 
   try {
+    console.log('Starting robust content images download...');
+    console.log(`Download path: ${localDownloadPath}`);
+    console.log(
+      `Rate limiting: ${RATE_LIMIT.maxConcurrent} concurrent downloads`
+    );
 
     await ensureDirectoryExists(localDownloadPath);
 
     // Get all files first with robust error handling
+    console.log('\n=== Starting comprehensive file discovery ===');
     const allFiles = await getAllFilesRobust();
 
     if (allFiles.length === 0) {
+      console.log('No files to download.');
       return;
     }
 
     // Download files in batches with progress reporting
+    console.log('\n=== Starting downloads ===');
     const batchSize = RATE_LIMIT.maxConcurrent;
     const totalBatches = Math.ceil(allFiles.length / batchSize);
 
@@ -386,10 +408,24 @@ async function downloadContentImages(): Promise<void> {
         const elapsed = ((now - startTime) / 1000).toFixed(0);
         const rate = stats.downloadedFiles / (parseInt(elapsed) || 1);
 
+        console.log(`\n📊 Progress Report:`);
+        console.log(
+          `  📦 Batch ${batchNumber}/${totalBatches} (${progress}% complete)`
+        );
+        console.log(
+          `  ⏱️  Elapsed: ${elapsed}s | Rate: ${rate.toFixed(1)} files/sec`
+        );
+        console.log(
+          `  ✅ Downloaded: ${stats.downloadedFiles} | ⏭️  Skipped: ${stats.skippedFiles} | ❌ Errors: ${stats.errorFiles}`
+        );
+        console.log(`  🔗 API calls: ${stats.apiCalls}`);
 
         lastProgressTime = now;
       }
 
+      console.log(
+        `📦 Processing batch ${batchNumber}/${totalBatches} (${batch.length} files)`
+      );
 
       await Promise.allSettled(
         batch.map(async (filePath) => {
@@ -412,6 +448,20 @@ async function downloadContentImages(): Promise<void> {
     }
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+    console.log('\n=== Download Complete ===');
+    console.log(`Total time: ${duration} seconds`);
+    console.log(`Total API calls made: ${stats.apiCalls}`);
+    console.log(
+      `Average API calls per second: ${(stats.apiCalls / parseFloat(duration)).toFixed(1)}`
+    );
+    console.log(`Files processed: ${stats.totalFiles}`);
+    console.log(`Files downloaded: ${stats.downloadedFiles}`);
+    console.log(`Files skipped (already exist): ${stats.skippedFiles}`);
+    console.log(`Files with errors: ${stats.errorFiles}`);
+    console.log(`Invalid files detected: ${stats.invalidFiles}`);
+    console.log(
+      `Folders processed: ${stats.foldersProcessed}/${stats.totalFolders}`
+    );
 
     // Verify we got everything
     if (
@@ -421,18 +471,30 @@ async function downloadContentImages(): Promise<void> {
         stats.invalidFiles !==
       stats.totalFiles
     ) {
+      console.warn(`⚠️  Warning: File count mismatch detected!`);
+      console.warn(`  Expected: ${stats.totalFiles}`);
+      console.warn(
+        `  Processed: ${stats.downloadedFiles + stats.skippedFiles + stats.errorFiles + stats.invalidFiles}`
+      );
     }
 
     if (Object.keys(stats.mimeTypeBreakdown).length > 0) {
+      console.log('\n=== MIME Type Breakdown ===');
       Object.entries(stats.mimeTypeBreakdown)
         .sort(([, a], [, b]) => b - a)
         .forEach(([mimeType, count]) => {
+          console.log(`${mimeType}: ${count} files`);
         });
     }
   } catch (error) {
     console.error('Download failed:', error);
+    console.log('\nPartial results:');
+    console.log(`Files downloaded so far: ${stats.downloadedFiles}`);
+    console.log(`Files skipped so far: ${stats.skippedFiles}`);
+    console.log(`Files with errors so far: ${stats.errorFiles}`);
     process.exit(1);
   } finally {
+    console.log('\nCleaning up and exiting...');
     process.exit(0);
   }
 }
@@ -446,6 +508,9 @@ async function downloadFile(filePath: string): Promise<void> {
     if (existsSync(localFilePath)) {
       // Only log occasionally to reduce noise
       if (stats.skippedFiles % 100 === 0) {
+        console.log(
+          `    ⏭️  Skipping ${filePath} - already exists locally (${stats.skippedFiles + 1} total skipped)`
+        );
       }
       stats.skippedFiles++;
       return;
@@ -493,6 +558,9 @@ async function downloadFile(filePath: string): Promise<void> {
 
     // Only log downloads occasionally to reduce noise
     if (stats.downloadedFiles % 50 === 0) {
+      console.log(
+        `    ✅ Downloaded: ${filePath} (${mimeResult.detectedMimeType}, ${fileSize}) - ${stats.downloadedFiles + 1} total`
+      );
     }
 
     stats.downloadedFiles++;
@@ -506,20 +574,39 @@ async function downloadFile(filePath: string): Promise<void> {
 
 // Process signal handlers
 process.on('SIGINT', () => {
+  console.log('\n\nReceived SIGINT. Gracefully shutting down...');
+  console.log('Current stats:');
+  console.log(`  API calls made: ${stats.apiCalls}`);
+  console.log(
+    `  Folders processed: ${stats.foldersProcessed}/${stats.totalFolders}`
+  );
+  console.log(`  Files found: ${stats.totalFiles}`);
+  console.log(`  Downloaded: ${stats.downloadedFiles}`);
+  console.log(`  Skipped: ${stats.skippedFiles}`);
+  console.log(`  Errors: ${stats.errorFiles}`);
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
+  console.log('\n\nReceived SIGTERM. Gracefully shutting down...');
   process.exit(0);
 });
 
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
+  console.log('Current stats before crash:');
+  console.log(`  Downloaded: ${stats.downloadedFiles}`);
+  console.log(`  Skipped: ${stats.skippedFiles}`);
+  console.log(`  Errors: ${stats.errorFiles}`);
   process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  console.log('Current stats before crash:');
+  console.log(`  Downloaded: ${stats.downloadedFiles}`);
+  console.log(`  Skipped: ${stats.skippedFiles}`);
+  console.log(`  Errors: ${stats.errorFiles}`);
   process.exit(1);
 });
 

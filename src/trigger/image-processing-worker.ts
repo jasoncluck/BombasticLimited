@@ -465,15 +465,29 @@ export const processImageWebhook = task({
 
     const entityType = table === 'playlists' ? 'playlist' : 'video';
 
+    console.log(`Starting image processing for ${entityType} ${record.id}`, {
+      type,
+      table,
+      jobId,
+      timestamp,
+      thumbnailUrl: record.thumbnail_url,
+    });
 
     // Early validation - exit before any expensive operations
     if (!record.thumbnail_url) {
+      console.log(
+        `No thumbnail URL for ${entityType} ${record.id}, completing job`
+      );
       if (jobId) {
         try {
           const { data: completionResult, error: completionError } =
             await supabase.rpc('complete_image_processing_job', {
               job_id: jobId,
             });
+          console.log('Job completion result:', {
+            completionResult,
+            completionError,
+          });
         } catch (error) {
           console.warn(`Failed to complete job ${jobId}:`, error);
         }
@@ -493,6 +507,7 @@ export const processImageWebhook = task({
       if (record.thumbnail_url) {
         shouldProcess = true;
         sourceUrl = record.thumbnail_url;
+        console.log(`INSERT: Will process new ${entityType} ${record.id}`);
       }
     } else if (type === 'UPDATE') {
       // Check if thumbnail_url or image_properties changed
@@ -503,6 +518,12 @@ export const processImageWebhook = task({
         JSON.stringify(record.image_properties) !==
           JSON.stringify(old_record?.image_properties);
 
+      console.log(`UPDATE: ${entityType} ${record.id}`, {
+        thumbnailChanged,
+        imagePropertiesChanged,
+        oldThumbnail: old_record?.thumbnail_url,
+        newThumbnail: record.thumbnail_url,
+      });
 
       if (thumbnailChanged || imagePropertiesChanged) {
         shouldProcess = true;
@@ -511,12 +532,17 @@ export const processImageWebhook = task({
     }
 
     if (!shouldProcess || !sourceUrl) {
+      console.log(`No processing needed for ${entityType} ${record.id}`);
       if (jobId) {
         try {
           const { data: completionResult, error: completionError } =
             await supabase.rpc('complete_image_processing_job', {
               job_id: jobId,
             });
+          console.log('Job completion result:', {
+            completionResult,
+            completionError,
+          });
         } catch (error) {
           console.warn(`Failed to complete job ${jobId}:`, error);
         }
@@ -528,19 +554,31 @@ export const processImageWebhook = task({
     }
 
     try {
+      console.log(
+        `Processing ${entityType} ${record.id} with source: ${sourceUrl}`
+      );
 
       // Delete existing optimized images
+      console.log(
+        `Deleting existing optimized images for ${entityType} ${record.id}`
+      );
       await deleteExistingOptimizedImages(entityType, record.id);
 
       // Download source image
+      console.log(`Downloading image from: ${sourceUrl}`);
       const imageBuffer = await downloadImage(sourceUrl);
+      console.log(`Downloaded ${imageBuffer.length} bytes`);
 
       // Process image
+      console.log(`Processing image for ${entityType} ${record.id}`);
       const { webp: webpBuffer, avif: avifBuffer } = await processImageFormats(
         imageBuffer,
         entityType,
         entityType === 'playlist' ? record.id : undefined,
         sourceUrl
+      );
+      console.log(
+        `Processed images: WebP ${webpBuffer.length} bytes, AVIF ${avifBuffer.length} bytes`
       );
 
       // Generate storage paths
@@ -550,11 +588,17 @@ export const processImageWebhook = task({
       );
 
       // Upload to storage
+      console.log(`Uploading optimized images for ${entityType} ${record.id}`);
       await uploadToStorage(webpBuffer, avifBuffer, webpPath, avifPath);
+      console.log(`Uploaded images to storage:`, { webpPath, avifPath });
 
       // Mark job as completed if jobId provided, otherwise update directly
       if (jobId) {
         try {
+          console.log(`Completing job ${jobId} with paths:`, {
+            webpPath,
+            avifPath,
+          });
           const { data: completionResult, error: completionError } =
             await supabase.rpc('complete_image_processing_job', {
               job_id: jobId,
@@ -562,6 +606,10 @@ export const processImageWebhook = task({
               avif_path: avifPath,
             });
 
+          console.log('Job completion result:', {
+            completionResult,
+            completionError,
+          });
 
           if (completionError) {
             throw new Error(
@@ -575,26 +623,32 @@ export const processImageWebhook = task({
             );
           }
 
+          console.log(`Successfully completed job ${jobId}`);
         } catch (error) {
           console.error(`Failed to complete job ${jobId}:`, error);
           // Fallback to direct database update
+          console.log('Attempting fallback database update...');
           await updateEntityWithProcessedImages(
             entityType,
             record.id,
             webpPath,
             avifPath
           );
+          console.log('Fallback database update completed');
         }
       } else {
         // No job ID, update directly
+        console.log(`No job ID, updating ${entityType} ${record.id} directly`);
         await updateEntityWithProcessedImages(
           entityType,
           record.id,
           webpPath,
           avifPath
         );
+        console.log('Direct database update completed');
       }
 
+      console.log(`Successfully processed ${entityType} ${record.id}`);
 
       return {
         processed: true,
@@ -614,6 +668,7 @@ export const processImageWebhook = task({
         try {
           const errorMessage =
             error instanceof Error ? error.message : 'Unknown error';
+          console.log(`Failing job ${jobId} with error: ${errorMessage}`);
           const { data: failResult, error: failError } = await supabase.rpc(
             'fail_image_processing_job',
             {
@@ -621,6 +676,7 @@ export const processImageWebhook = task({
               error_msg: errorMessage,
             }
           );
+          console.log('Job failure result:', { failResult, failError });
         } catch (failError) {
           console.error(`Failed to mark job ${jobId} as failed:`, failError);
         }

@@ -63,6 +63,7 @@
   let previewImageUrl = $state<string | null>(null);
 
   const isPlaylistOwner = $derived(playlist.created_by === session?.user.id);
+  console.log(playlist.thumbnail_url);
   const imageSrc = $derived(playlist.thumbnail_url);
   const displayImageUrl = $derived(previewImageUrl || playlist.image_url);
 

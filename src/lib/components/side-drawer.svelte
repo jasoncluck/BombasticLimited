@@ -75,6 +75,7 @@
     }
   }
 
+  // Update the handleSourceReorder function in your navigation drawer:
   async function handleSourceReorder(sources: Source[]) {
     if (!session || !userProfile) return;
 

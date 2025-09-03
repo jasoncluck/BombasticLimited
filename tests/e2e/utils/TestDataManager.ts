@@ -47,6 +47,7 @@ export class TestDataManager {
     );
 
     if (existingUser) {
+      console.log(`Reusing existing test user: ${email}`);
       const testUser: TestUser = {
         id: existingUser.id,
         email,
@@ -58,6 +59,7 @@ export class TestDataManager {
     }
 
     // Create user with admin client only if it doesn't exist
+    console.log(`Creating new test user: ${email}`);
     const { data: authData, error: authError } =
       await this.supabase.auth.admin.createUser({
         email,
@@ -98,6 +100,9 @@ export class TestDataManager {
           return existing;
         }
       } catch {
+        console.warn(
+          `Test user ${existing.id} no longer exists, creating new one`
+        );
       }
     }
 
@@ -130,6 +135,7 @@ export class TestDataManager {
           // Delete auth user
           await this.supabase.auth.admin.deleteUser(testUser.id);
         } catch (error) {
+          console.warn(`Failed to clean up test user ${testUser.id}:`, error);
         }
       }
     );
@@ -151,6 +157,7 @@ export class TestDataManager {
 
       this.testUsers.delete(workerId);
     } catch (error) {
+      console.warn(`Failed to clean up test user ${testUser.id}:`, error);
     }
   }
 
@@ -232,6 +239,7 @@ export class TestDataManager {
 
       // Add other cleanup operations as needed
     } catch (error) {
+      console.warn(`Failed to clean up test data for user ${userId}:`, error);
     }
   }
 
@@ -240,13 +248,18 @@ export class TestDataManager {
    * This is useful for completely resetting the test environment
    */
   async forceCleanupAllTestUsers(): Promise<void> {
+    console.log(
+      '⚠️  Force cleaning up all test users - this will break user reuse'
+    );
 
     // Clean up users from memory
     const deletePromises = Array.from(this.testUsers.values()).map(
       async (testUser) => {
         try {
           await this.supabase.auth.admin.deleteUser(testUser.id);
+          console.log(`Deleted test user: ${testUser.email}`);
         } catch (error) {
+          console.warn(`Failed to delete test user ${testUser.id}:`, error);
         }
       }
     );
@@ -264,15 +277,22 @@ export class TestDataManager {
           .map(async (user) => {
             try {
               await this.supabase.auth.admin.deleteUser(user.id);
+              console.log(`Deleted persistent test user: ${user.email}`);
             } catch (error) {
+              console.warn(
+                `Failed to delete persistent test user ${user.id}:`,
+                error
+              );
             }
           }) || [];
 
       await Promise.allSettled([...deletePromises, ...testUserDeletePromises]);
     } catch (error) {
+      console.warn('Failed to list/delete persistent test users:', error);
       await Promise.allSettled(deletePromises);
     }
 
     this.testUsers.clear();
+    console.log('Force cleanup completed');
   }
 }

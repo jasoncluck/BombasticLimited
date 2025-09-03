@@ -158,6 +158,7 @@ export function clearStreamCache(): void {
  */
 export function resetTestTimer(): void {
   testStartTime = null;
+  console.log('🔄 Test timer reset - next call will restart the sequence');
 }
 
 /**

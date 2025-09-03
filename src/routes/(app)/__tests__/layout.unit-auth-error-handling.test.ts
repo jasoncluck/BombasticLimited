@@ -60,6 +60,9 @@ describe('Layout Auth Error Handling Logic', () => {
           // Invalidate auth to ensure fresh state
           await invalidate('supabase:auth');
 
+          console.log(
+            `✅ Auth state cleaned up successfully after 403 error in ${context}`
+          );
           return true; // Indicate successful cleanup
         } catch (cleanupError) {
           console.error(
@@ -196,6 +199,9 @@ describe('Layout Auth Error Handling Logic', () => {
 
         if (cleanupPerformed && !retryAfterAuthCleanup) {
           // Retry once after successful auth cleanup
+          console.log(
+            `🔄 Retrying data refresh after auth cleanup for: ${reason}`
+          );
           try {
             await performDataRefresh(
               `${reason} (retry after auth cleanup)`,

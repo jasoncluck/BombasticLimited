@@ -200,6 +200,8 @@ export const actions: Actions = {
       session,
     });
 
+    console.log(currentPlaylist);
+
     if (!currentPlaylist) {
       return fail(404, { form });
     }
