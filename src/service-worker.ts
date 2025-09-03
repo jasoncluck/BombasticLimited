@@ -49,7 +49,9 @@ const STATIC_EXTENSIONS =
 
 // Critical resource patterns - these should be preloaded immediately
 const CRITICAL_PATTERNS = [
+  /app\.[a-zA-Z0-9]+\.css$/, // Main app CSS
   /app\.[a-zA-Z0-9]+\.js$/, // Main app JS
+  /layout\.[a-zA-Z0-9]+\.css$/, // Layout CSS
   /vendor\.[a-zA-Z0-9]+\.js$/, // Vendor JS
 ] as const;
 
@@ -467,8 +469,8 @@ const removeFromQueue = (url: string): void => {
 
 const cancelPendingRequests = (): void => {
   // Track metrics for debugging
-  const totalCancelled =
-    state.requestQueue.highPriority.size + state.requestQueue.normal.size;
+  // const totalCancelled =
+  //   state.requestQueue.highPriority.size + state.requestQueue.normal.size;
 
   // Cancel all pending requests in high priority queue
   for (const [, request] of state.requestQueue.highPriority) {
@@ -496,11 +498,11 @@ const cancelPendingRequests = (): void => {
   state.requestQueue.processing = false;
 
   // Log for debugging queue performance issues
-  if (totalCancelled > 10) {
-    console.log(
-      `Service worker: Cancelled ${totalCancelled} queued requests on navigation`
-    );
-  }
+  // if (totalCancelled > 10) {
+  //   console.log(
+  //     `Service worker: Cancelled ${totalCancelled} queued requests on navigation`
+  //   );
+  // }
 };
 
 const processRequestQueue = async (): Promise<void> => {
