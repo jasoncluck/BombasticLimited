@@ -3,7 +3,6 @@
 -- Dependencies: Requires previous migration with username_history column
 -- Date: 2025-09-03 01:50:16 UTC
 -- ============================================================================
-
 CREATE OR REPLACE FUNCTION "public"."handle_user_changes" () RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
 SET
   search_path = '' AS $$

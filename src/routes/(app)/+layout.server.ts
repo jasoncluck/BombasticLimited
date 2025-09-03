@@ -26,6 +26,8 @@ export const load: LayoutServerLoad = loadFlash(
       view = 'continueWatching';
     } else if (/^\/playlist\//.test(url.pathname)) {
       view = 'playlist';
+    } else if (/^\/search\//.test(url.pathname)) {
+      view = 'search';
     } else {
       view = 'default';
     }

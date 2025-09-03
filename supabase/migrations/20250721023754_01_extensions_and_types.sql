@@ -121,11 +121,10 @@ CREATE TYPE "public"."profile_account_type" AS ENUM('default', 'admin');
 
 CREATE TYPE "public"."image_processing_status" AS ENUM('pending', 'processing', 'completed', 'failed');
 
-
 CREATE TYPE public.username_history_entry AS (
-    username text,
-    used_from timestamp with time zone,
-    used_until timestamp with time zone
+  username text,
+  used_from TIMESTAMP WITH TIME ZONE,
+  used_until TIMESTAMP WITH TIME ZONE
 );
 
 ALTER TYPE "public"."playlist_sort_order" OWNER TO "postgres";

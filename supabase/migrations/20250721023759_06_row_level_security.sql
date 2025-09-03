@@ -38,7 +38,6 @@ WHERE
 
 -- Note: Removed duplicate idx_user_playlists_user_id_rls index
 -- The idx_user_playlists_user_id_for_locks index in 05_indexes_and_performance.sql provides the same functionality
-
 CREATE INDEX IF NOT EXISTS idx_user_playlists_id_covering ON public.user_playlists (id) INCLUDE (user_id);
 
 -- ============================================================================

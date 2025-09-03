@@ -35,7 +35,11 @@ export const TILES_DISPLAY = {
 
 export type TilesDisplay = (typeof TILES_DISPLAY)[keyof typeof TILES_DISPLAY];
 
-export type ContentView = 'continueWatching' | 'playlist' | 'default';
+export type ContentView =
+  | 'continueWatching'
+  | 'playlist'
+  | 'search'
+  | 'default';
 
 export type ContentSelectVariant = 'header' | 'item' | 'list-items';
 
